@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.36 2011/07/26 20:51:24 dyoung Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.36.12.1 2014/08/20 00:03:42 tls Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.36 2011/07/26 20:51:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.36.12.1 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,6 +186,7 @@ en_pci_attach(device_t parent, device_t self, void *aux)
   pci_intr_handle_t ih;
   const char *intrstr;
   int retval;
+  char intrbuf[PCI_INTRSTR_LEN];
 
   sc->sc_dev = self;
 
@@ -210,7 +211,7 @@ en_pci_attach(device_t parent, device_t self, void *aux)
     aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
     return;
   }
-  intrstr = pci_intr_string(scp->en_pc, ih);
+  intrstr = pci_intr_string(scp->en_pc, ih, intrbuf, sizeof(intrbuf));
   scp->sc_ih = pci_intr_establish(scp->en_pc, ih, IPL_NET, en_intr, sc);
   if (scp->sc_ih == NULL) {
     aprint_error_dev(sc->sc_dev, "couldn't establish interrupt\n");

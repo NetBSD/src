@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_tape.c,v 1.12 2011/07/17 20:54:44 joerg Exp $	*/
+/*	$NetBSD: dev_tape.c,v 1.12.12.1 2014/08/20 00:03:14 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -114,9 +114,6 @@ tape_open(struct open_file *f, ...)
 int
 tape_close(struct open_file *f)
 {
-	struct mvmeprom_dskio *ti;
-
-	ti = f->f_devdata;
 	f->f_devdata = NULL;
 	return 0;
 }

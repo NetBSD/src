@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.86.6.2 2013/06/23 06:18:57 tls Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.86.6.3 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.86.6.2 2013/06/23 06:18:57 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.86.6.3 2014/08/20 00:04:29 tls Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -99,6 +99,8 @@ static void	module_enqueue(module_t *);
 static bool	module_merge_dicts(prop_dictionary_t, const prop_dictionary_t);
 
 static void	sysctl_module_setup(void);
+static int	sysctl_module_autotime(SYSCTLFN_PROTO);
+
 #define MODULE_CLASS_MATCH(mi, class) \
 	((class) == MODULE_CLASS_ANY || (class) == (mi)->mi_class)
 
@@ -367,6 +369,7 @@ module_init(void)
 	}
 
 	sysctl_module_setup();
+	aprint_normal("kern.module.path=%s\n", module_base);
 }
 
 /*
@@ -405,16 +408,32 @@ module_builtin_require_force(void)
 
 static struct sysctllog *module_sysctllog;
 
+static int
+sysctl_module_autotime(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int t, error;
+
+	t = *(int *)rnode->sysctl_data;
+
+	node = *rnode;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (t < 0)
+		return (EINVAL);
+
+	*(int *)rnode->sysctl_data = t;
+	return (0);
+}
+
 static void
 sysctl_module_setup(void)
 {
 	const struct sysctlnode *node = NULL;
 
-	sysctl_createv(&module_sysctllog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
 	sysctl_createv(&module_sysctllog, 0, NULL, &node,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "module",
@@ -436,6 +455,18 @@ sysctl_module_setup(void)
 		CTLTYPE_BOOL, "verbose",
 		SYSCTL_DESCR("Enable verbose output"),
 		NULL, 0, &module_verbose_on, 0,
+		CTL_CREATE, CTL_EOL);
+	sysctl_createv(&module_sysctllog, 0, &node, NULL,
+		CTLFLAG_PERMANENT | CTLFLAG_READONLY,
+		CTLTYPE_STRING, "path",
+		SYSCTL_DESCR("Default module load path"),
+		NULL, 0, module_base, 0,
+		CTL_CREATE, CTL_EOL);
+	sysctl_createv(&module_sysctllog, 0, &node, NULL,
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		CTLTYPE_INT, "autotime",
+		SYSCTL_DESCR("Auto-unload delay"),
+		sysctl_module_autotime, 0, &module_autotime, 0,
 		CTL_CREATE, CTL_EOL);
 }
 
@@ -926,8 +957,15 @@ module_do_load(const char *name, bool isdep, int flags,
 					    &filedict);
 		if (error != 0) {
 #ifdef DEBUG
-			module_error("vfs load failed for `%s', error %d",
-			    name, error);
+			/*
+			 * The exec class of modules contains a list of
+			 * modules that is the union of all the modules
+			 * available for each architecture, so we don't
+			 * print an error if they are missing.
+			 */
+			if (class != MODULE_CLASS_EXEC || error != ENOENT)
+				module_error("vfs load failed for `%s', "
+				    "error %d", name, error);
 #endif
 			kmem_free(mod, sizeof(*mod));
 			depth--;
@@ -1050,8 +1088,9 @@ module_do_load(const char *name, bool isdep, int flags,
 			error = module_do_load(buf, true, flags, NULL,
 			    &mod2, MODULE_CLASS_ANY, true);
 			if (error != 0) {
-				module_error("recursive load failed for `%s', "
-				    "error %d", mi->mi_name, error);
+				module_error("recursive load failed for `%s' "
+				    "(`%s' required), error %d", mi->mi_name,
+				    buf, error);
 				goto fail;
 			}
 			mod->mod_required[mod->mod_nrequired++] = mod2;
@@ -1100,10 +1139,10 @@ module_do_load(const char *name, bool isdep, int flags,
 	if (modp != NULL) {
 		*modp = mod;
 	}
-	if (autoload) {
+	if (autoload && module_autotime > 0) {
 		/*
 		 * Arrange to try unloading the module after
-		 * a short delay.
+		 * a short delay unless auto-unload is disabled.
 		 */
 		mod->mod_autotime = time_second + module_autotime;
 		mod->mod_flags |= MODFLG_AUTO_LOADED;
@@ -1281,7 +1320,9 @@ module_find_section(const char *name, void **addr, size_t *size)
  *
  *	Automatically unload modules.  We try once to unload autoloaded
  *	modules after module_autotime seconds.  If the system is under
- *	severe memory pressure, we'll try unloading all modules.
+ *	severe memory pressure, we'll try unloading all modules, else if
+ *	module_autotime is zero, we don't try to unload, even if the
+ *	module was previously scheduled for unload.
  */
 static void
 module_thread(void *cookie)
@@ -1304,7 +1345,8 @@ module_thread(void *cookie)
 
 			if (uvmexp.free < uvmexp.freemin) {
 				module_thread_ticks = hz;
-			} else if (mod->mod_autotime == 0) {
+			} else if (module_autotime == 0 ||
+				   mod->mod_autotime == 0) {
 				continue;
 			} else if (time_second < mod->mod_autotime) {
 				module_thread_ticks = hz;

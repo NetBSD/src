@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.42 2011/08/01 11:20:27 drochner Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.42.12.1 2014/08/20 00:03:36 tls Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.42 2011/08/01 11:20:27 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.42.12.1 2014/08/20 00:03:36 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -203,7 +203,6 @@ rtw_cardbus_attach(device_t parent, device_t self, void *aux)
 	cardbus_devfunc_t ct = ca->ca_ct;
 	const struct rtw_cardbus_product *rcp;
 	bus_addr_t adr;
-	int rev;
 
 	sc->sc_dev = self;
 	sc->sc_dmat = ca->ca_dmat;
@@ -216,15 +215,17 @@ rtw_cardbus_attach(device_t parent, device_t self, void *aux)
 		panic("rtw_cardbus_attach: impossible");
 	}
 
-	/* Get revision info. */
-	rev = PCI_REVISION(ca->ca_class);
-
 	printf(": %s\n", rcp->rcp_product_name);
+
+#ifdef notyet
+	/* Get revision info. */
+	int rev = PCI_REVISION(ca->ca_class);
 
 	RTW_DPRINTF(RTW_DEBUG_ATTACH,
 	    ("%s: pass %d.%d signature %08x\n", device_xname(self),
 	     (rev >> 4) & 0xf, rev & 0xf,
 	     Cardbus_conf_read(ct, csc->sc_tag, 0x80)));
+#endif
 
 	/*
 	 * Map the device.

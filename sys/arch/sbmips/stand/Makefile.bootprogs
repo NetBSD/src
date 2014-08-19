@@ -1,7 +1,7 @@
-# $NetBSD: Makefile.bootprogs,v 1.10 2012/01/19 19:58:16 matt Exp $
+# $NetBSD: Makefile.bootprogs,v 1.10.6.1 2014/08/20 00:03:22 tls Exp $
 
 .include <bsd.own.mk>
-.include <bsd.sys.mk>		# for HOST_SH
+.include <bsd.klinks.mk>
 
 S=	${.CURDIR}/../../../..
 
@@ -12,6 +12,7 @@ BINMODE= 444
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
@@ -19,18 +20,6 @@ LIBCRTEND=
 STRIP?=	strip
 
 CHECKSIZE_CMD=	SIZE=${SIZE} ${HOST_SH} ${.CURDIR}/../common/checksize.sh
-
-.PHONY: machine-links
-beforedepend: machine-links .WAIT
-# ${MACHINE} then ${MACHINE_ARCH}
-machine-links:
-	-rm -f machine && \
-	    ln -s $S/arch/sbmips/include machine
-	-rm -f mips && \
-	    ln -s $S/arch/mips/include mips
-CLEANFILES+=machine mips
-
-realall: machine-links ${PROG}
 
 AFLAGS+=	-DASSEMBLER -D_LOCORE -mno-abicalls -mips64
 # -I${.CURDIR}/../.. done by Makefile.inc

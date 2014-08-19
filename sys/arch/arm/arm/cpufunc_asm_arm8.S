@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm8.S,v 1.6.22.1 2012/11/20 03:01:02 tls Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm8.S,v 1.6.22.2 2014/08/20 00:02:44 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 ARM Limited
@@ -35,8 +35,9 @@
  * ARM8 assembly functions for CPU / MMU / TLB specific operations
  */
  
-#include <machine/cpu.h>
+#include "assym.h"
 #include <machine/asm.h>
+#include <arm/locore.h>
 
 ENTRY(arm8_clock_config)
 	mrc	p15, 0, r3, c15, c0, 0	/* Read the clock register */
@@ -57,6 +58,7 @@ ENTRY(arm8_clock_config)
 	mcr	p15, 0, r2, c15, c0, 0 	/* Write clock register */
 	mov	r0, r3			/* Return old value */
 	mov	pc, lr
+END(arm8_clock_config)
 
 /*
  * Functions to set the MMU Translation Table Base register
@@ -65,7 +67,7 @@ ENTRY(arm8_clock_config)
  * addresses that are about to change.
  */
 ENTRY(arm8_setttb)
-	mrs	r3, cpsr_all
+	mrs	r3, cpsr
 	orr	r2, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all, r2
 
@@ -92,6 +94,7 @@ ENTRY(arm8_setttb)
 	msr	cpsr_all, r3
 
 	mov	pc, lr
+END(arm8_setttb)
 
 /*
  * TLB functions
@@ -99,10 +102,16 @@ ENTRY(arm8_setttb)
 ENTRY(arm8_tlb_flushID)
 	mcr	p15, 0, r0, c8, c7, 0	/* flush I+D tlb */
 	mov	pc, lr
+END(arm8_tlb_flushID)
 
 ENTRY(arm8_tlb_flushID_SE)
 	mcr	p15, 0, r0, c8, c7, 1	/* flush I+D tlb single entry */
+#if PAGE_SIZE == 2 * L2_S_SIZE
+	add	r0, r0, #L2_S_SIZE
+	mcr	p15, 0, r0, c8, c7, 1	/* flush I+D tlb single entry */
+#endif
 	mov	pc, lr
+END(arm8_tlb_flushID_SE)
 
 /*
  * Cache functions
@@ -110,10 +119,12 @@ ENTRY(arm8_tlb_flushID_SE)
 ENTRY(arm8_cache_flushID)
 	mcr	p15, 0, r0, c7, c7, 0	/* flush I+D cache */
 	mov	pc, lr
+END(arm8_cache_flushID)
 
 ENTRY(arm8_cache_flushID_E)
 	mcr	p15, 0, r0, c7, c7, 1	/* flush I+D single entry */
 	mov	pc, lr
+END(arm8_cache_flushID_E)
 
 ENTRY(arm8_cache_cleanID)
 	mov	r0, #0x00000000
@@ -155,10 +166,12 @@ ENTRY(arm8_cache_cleanID)
 	bne	1b
 
 	mov	pc, lr
+END(arm8_cache_cleanID)
 
 ENTRY(arm8_cache_cleanID_E)
 	mcr	p15, 0, r0, c7, c11, 1	/* clean I+D single entry */
 	mov	pc, lr
+END(arm8_cache_cleanID_E)
 
 ENTRY(arm8_cache_purgeID)
 	/*
@@ -176,7 +189,7 @@ ENTRY(arm8_cache_purgeID)
 
 	mov	r0, #0x00000000
 
-	mrs	r3, cpsr_all
+	mrs	r3, cpsr
 	orr	r2, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all, r2
 
@@ -234,6 +247,7 @@ ENTRY(arm8_cache_purgeID)
 
 	msr	cpsr_all, r3
 	mov	pc, lr
+END(arm8_cache_purgeID)
 
 ENTRY(arm8_cache_purgeID_E)
 	/*
@@ -248,13 +262,14 @@ ENTRY(arm8_cache_purgeID_E)
 	 * mcr p15, 0, rd, c7, c11, 1
 	 * mcr p15, 0, rd, c7, c7, 1
 	 */
-	mrs	r3, cpsr_all
+	mrs	r3, cpsr
 	orr	r2, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all, r2
 	mcr	p15, 0, r0, c7, c11, 1	/* clean I+D single entry */
 	mcr	p15, 0, r0, c7, c7, 1	/* flush I+D single entry */
 	msr	cpsr_all, r3
 	mov	pc, lr
+END(arm8_cache_purgeID_E)
 
 /*
  * Context switch.
@@ -281,3 +296,4 @@ ENTRY(arm8_context_switch)
 	mov	r0, r0
 	mov	r0, r0
 	mov	pc, lr
+END(arm8_context_switch)

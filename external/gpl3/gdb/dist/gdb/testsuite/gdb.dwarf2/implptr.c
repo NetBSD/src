@@ -1,4 +1,4 @@
-/* Copyright (C) 2010, 2011 Free Software Foundation, Inc.
+/* Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,7 +31,7 @@ int u[6];
 static inline void
 add (struct S *a, struct S *b, int c)
 {
-  *a->x += *b->x;
+  *a->x += *b->x;		/* baz breakpoint */
   a->y += b->y;
   u[c + 0]++;
   a = (struct S *) 0;
@@ -52,12 +52,16 @@ foo (int i)
   return i + j;			/* foo breakpoint */
 }
 
+typedef int *intp;
+typedef intp *intpp;
+typedef intpp *intppp;
+
 int __attribute__ ((noinline, used, noclone)) 
 bar (int i) 
 {
-  int *j = &i;
-  int **k = &j;
-  int ***l = &k;
+  intp j = &i;
+  intpp k = &j;
+  intppp l = &k;
   i++;				/* bar breakpoint */
   return i;
 }

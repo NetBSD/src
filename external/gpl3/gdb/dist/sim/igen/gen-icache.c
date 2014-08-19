@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2002-2014 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -424,6 +424,8 @@ print_icache_body (lf *file,
 	     cur_field->first < options.insn_bit_size;
 	     cur_field = cur_field->next)
 	  {
+	    /* Always expand named fields (even if constant), so
+	       references are valid.  */
 	    if (cur_field->type == insn_field_string)
 	      {
 		cache_entry *cache_rule;

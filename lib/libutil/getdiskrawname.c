@@ -1,4 +1,4 @@
-/*	$NetBSD: getdiskrawname.c,v 1.1 2012/04/07 16:44:39 christos Exp $	*/
+/*	$NetBSD: getdiskrawname.c,v 1.1.4.1 2014/08/20 00:02:21 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getdiskrawname.c,v 1.1 2012/04/07 16:44:39 christos Exp $");
+__RCSID("$NetBSD: getdiskrawname.c,v 1.1.4.1 2014/08/20 00:02:21 tls Exp $");
 
 #include <sys/stat.h>
 
@@ -37,16 +37,24 @@ __RCSID("$NetBSD: getdiskrawname.c,v 1.1 2012/04/07 16:44:39 christos Exp $");
 #include <string.h>
 #include <errno.h>
 #include <util.h>
+#include <unistd.h>
 
 const char *
 getdiskrawname(char *buf, size_t bufsiz, const char *name)
 {
 	const char *dp = strrchr(name, '/');
 	struct stat st;
+	ssize_t len;
 
 	if (dp == NULL) {
 		errno = EINVAL;
 		return NULL;
+	}
+
+	len = readlink(name, buf, bufsiz-1);
+	if (len > 0) {
+		buf[len] = '\0';
+		name = buf;
 	}
 
 	if (stat(name, &st) == -1)
@@ -67,11 +75,19 @@ getdiskcookedname(char *buf, size_t bufsiz, const char *name)
 {
 	const char *dp;
 	struct stat st;
+	ssize_t len;
 
 	if ((dp = strrchr(name, '/')) == NULL) {
 		errno = EINVAL;
 		return NULL;
 	}
+
+	len = readlink(name, buf, bufsiz-1);
+	if (len > 0) {
+		buf[len] = '\0';
+		name = buf;
+	}
+
 	if (stat(name, &st) == -1)
 		return NULL;
 
@@ -79,10 +95,12 @@ getdiskcookedname(char *buf, size_t bufsiz, const char *name)
 		errno = EFTYPE;
 		return NULL;
 	}
+
 	if (dp[1] != 'r') {
 		errno = EINVAL;
 		return NULL;
 	}
+
 	(void)snprintf(buf, bufsiz, "%.*s/%s", (int)(dp - name), name, dp + 2);
 
 	return buf;

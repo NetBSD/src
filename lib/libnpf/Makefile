@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.2.2.2 2013/02/25 00:27:59 tls Exp $
+# $NetBSD: Makefile,v 1.2.2.3 2014/08/20 00:02:18 tls Exp $
 
 .include <bsd.own.mk>
 
 USE_SHLIBDIR=   yes
 
 LIB=		npf
-MAN=		npf.3
+MAN=		libnpf.3
 
 SRCS=		npf.c
 

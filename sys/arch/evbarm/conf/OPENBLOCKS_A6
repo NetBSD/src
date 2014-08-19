@@ -1,6 +1,6 @@
-#	$NetBSD: OPENBLOCKS_A6,v 1.7.2.2 2013/06/23 06:20:04 tls Exp $
+#	$NetBSD: OPENBLOCKS_A6,v 1.7.2.3 2014/08/20 00:02:53 tls Exp $
 #
-#  OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6 kernel
+#	OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6 kernel
 #
 
 include 	"arch/evbarm/conf/std.marvell"
@@ -36,21 +36,20 @@ file-system 	FFS		# UFS
 file-system 	EXT2FS		# second extended file system (linux)
 #file-system 	LFS		# log-structured file system
 #file-system 	MFS		# memory file system
-file-system 	NFS		# Network File System client
-#file-system 	NTFS		# Windows/NT file system (experimental)
-#file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	NFS		# Network file system
+file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
-file-system 	FDESC		# /dev/fd
+#file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
-#file-system 	NULLFS		# loopback file system
+file-system 	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
 file-system 	PROCFS		# /proc
-#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
+file-system 	PTYFS		# /dev/ptm support
+#file-system 	PUFFS		# Pass-to-Userspace Framework File System
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
-#file-system 	UNION		# union file system
+file-system 	UNION		# union file system
 #file-system 	CODA		# Coda File System; also needs vcoda (below)
 #file-system 	SMBFS		# experimental - CIFS; also needs nsmb (below)
-file-system 	PTYFS		# /dev/ptm support
 file-system 	TMPFS		# Efficient memory file-system
 #file-system 	UDF		# experimental - OSTA UDF CD/DVD file-system
 #file-system 	HFS		# experimental - Apple HFS+ (read-only)
@@ -75,13 +74,12 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
-#options 	MROUTING	# IP multicast routing
-#options 	PIM		# Protocol Independent Multicast
+options 	MROUTING	# IP multicast routing
+options 	PIM		# Protocol Independent Multicast
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT	# Compat for IP-Filter
@@ -94,6 +92,7 @@ options 	NFS_BOOT_DHCP
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_11	# NetBSD 1.1 compatibility.
@@ -132,11 +131,11 @@ options 	SYSVSHM		# System V-like memory sharing
 
 #options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
-options 	MIIVERBOSE	# Verbose MII autoconfuration messages
+#options 	MIIVERBOSE	# Verbose MII auto configuration messages
 #options 	PCIVERBOSE	# Verbose PCI descriptions
-options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	SCSIVERBOSE	# Verbose SCSI errors
+options 	USBVERBOSE	# Verbose USB device auto configuration messages
 #options 	DDB_KEYCODE=0x40
 #options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -145,7 +144,7 @@ options 	USBVERBOSE	# verbose USB device autoconfig messages
 # Development and Debugging options
 
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
@@ -173,8 +172,8 @@ mvsoc0	at mainbus?
 mvsata* at mvsoc? offset ? irq ?
 
 # On-chip Gigabit Ethernet Controller Interface
-mvgbec0 at mvsoc? offset 0x70000
-mvgbe*	at mvgbec0 port 0 irq ?
+mvgbec* at mvsoc? offset ?
+mvgbe*	at mvgbec? port ? irq ?
 makphy* at mii? phy ?
 
 # On-chip USB 2.0 Interface
@@ -368,7 +367,7 @@ pseudo-device	faith			# IPv[46] TCP relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
-options	BRIDGE_IPF			# bridge uses IP/IPv6 pfil hooks too
+options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	pf			# PF packet filter
 pseudo-device	pflog			# PF log if

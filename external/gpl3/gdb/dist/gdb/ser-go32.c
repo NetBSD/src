@@ -1,6 +1,5 @@
 /* Remote serial interface for local (hardwired) serial ports for GO32.
-   Copyright (C) 1992, 1993, 2000, 2001, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1992-2014 Free Software Foundation, Inc.
 
    Contributed by Nigel Stephens, Algorithmics Ltd. (nigel@algor.co.uk).
 
@@ -25,7 +24,7 @@
 #include "defs.h"
 #include "gdbcmd.h"
 #include "serial.h"
-#include "gdb_string.h"
+#include <string.h>
 
 
 /*
@@ -149,7 +148,7 @@ typedef unsigned long u_long;
 #define NCNT		20
 
 static int intrcnt;
-static int cnts[NCNT];
+static size_t cnts[NCNT];
 static char *cntnames[NCNT] =
 {
   /* h/w interrupt counts.  */
@@ -231,7 +230,7 @@ static int dos_open (struct serial *scb, const char *name);
 static void dos_raw (struct serial *scb);
 static int dos_readchar (struct serial *scb, int timeout);
 static int dos_setbaudrate (struct serial *scb, int rate);
-static int dos_write (struct serial *scb, const char *str, int len);
+static int dos_write (struct serial *scb, const void *buf, size_t count);
 static void dos_close (struct serial *scb);
 static serial_ttystate dos_get_tty_state (struct serial *scb);
 static int dos_set_tty_state (struct serial *scb, serial_ttystate state);
@@ -788,26 +787,27 @@ dos_setstopbits (struct serial *scb, int num)
 }
 
 static int
-dos_write (struct serial *scb, const char *str, int len)
+dos_write (struct serial *scb, const void *buf, size_t count)
 {
   volatile struct dos_ttystate *port = &ports[scb->fd];
-  int fifosize = port->fifo ? 16 : 1;
+  size_t fifosize = port->fifo ? 16 : 1;
   long then;
-  int cnt;
+  size_t cnt;
+  const char *str = buf;
 
-  while (len > 0)
+  while (count > 0)
     {
       /* Send the data, fifosize bytes at a time.  */
-      cnt = fifosize > len ? len : fifosize;
+      cnt = fifosize > count ? count : fifosize;
       port->txbusy = 1;
       /* Francisco Pastor <fpastor.etra-id@etra.es> says OUTSB messes
 	 up the communications with UARTs with FIFOs.  */
 #ifdef UART_FIFO_WORKS
       outportsb (port->base + com_data, str, cnt);
       str += cnt;
-      len -= cnt;
+      count -= cnt;
 #else
-      for ( ; cnt > 0; cnt--, len--)
+      for ( ; cnt > 0; cnt--, count--)
 	outportb (port->base + com_data, *str++);
 #endif
 #ifdef DOS_STATS
@@ -848,10 +848,9 @@ dos_sendbreak (struct serial *scb)
 }
 
 
-static struct serial_ops dos_ops =
+static const struct serial_ops dos_ops =
 {
   "hardwire",
-  0,
   dos_open,
   dos_close,
   NULL,				/* fdopen, not implemented */
@@ -905,10 +904,12 @@ dos_info (char *arg, int from_tty)
   printf_filtered ("\nTotal interrupts: %d\n", intrcnt);
   for (i = 0; i < NCNT; i++)
     if (cnts[i])
-      printf_filtered ("%s:\t%d\n", cntnames[i], cnts[i]);
+      printf_filtered ("%s:\t%lu\n", cntnames[i], (unsigned long) cnts[i]);
 #endif
 }
 
+/* -Wmissing-prototypes */
+extern initialize_file_ftype _initialize_ser_dos;
 
 void
 _initialize_ser_dos (void)

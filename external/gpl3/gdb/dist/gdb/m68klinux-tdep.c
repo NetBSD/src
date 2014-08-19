@@ -1,7 +1,6 @@
 /* Motorola m68k target-dependent support for GNU/Linux.
 
-   Copyright (C) 1996, 1998, 2000, 2001, 2002, 2003, 2004, 2007, 2008, 2009,
-   2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +23,7 @@
 #include "floatformat.h"
 #include "frame.h"
 #include "target.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdbtypes.h"
 #include "osabi.h"
 #include "regcache.h"
@@ -68,7 +67,6 @@ m68k_linux_pc_in_sigtramp (struct frame_info *this_frame)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  CORE_ADDR sp;
   gdb_byte buf[12];
   unsigned long insn0, insn1, insn2;
   CORE_ADDR pc = get_frame_pc (this_frame);
@@ -230,16 +228,10 @@ m68k_linux_get_sigtramp_info (struct frame_info *this_frame)
   CORE_ADDR sp;
   struct m68k_linux_sigtramp_info info;
 
+  /* Determine whether we are running on a uClinux or normal GNU/Linux
+     target so we can use the correct sigcontext layouts.  */
   if (target_is_uclinux == -1)
-    {
-      /* Determine whether we are running on a uClinux or normal GNU/Linux
-         target so we can use the correct sigcontext layouts.  */
-      CORE_ADDR dummy;
-
-      target_is_uclinux
-        = (target_auxv_search (&current_target, AT_NULL, &dummy) > 0
-	   && target_auxv_search (&current_target, AT_PAGESZ, &dummy) == 0);
-    }
+    target_is_uclinux = linux_is_uclinux ();
 
   sp = get_frame_register_unsigned (this_frame, M68K_SP_REGNUM);
 
@@ -372,6 +364,8 @@ m68k_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
                                              svr4_fetch_objfile_link_map);
+
+  set_gdbarch_get_siginfo_type (gdbarch, linux_get_siginfo_type);
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */

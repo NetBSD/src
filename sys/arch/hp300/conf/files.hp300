@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.85 2011/06/12 03:35:40 rmind Exp $
+#	$NetBSD: files.hp300,v 1.85.12.1 2014/08/20 00:03:00 tls Exp $
 #
 # hp300-specific configuration info
 
@@ -84,6 +84,11 @@ device	dnkbd: wskbddev, wsmousedev
 attach	dnkbd at frodo
 file	arch/hp300/dev/dnkbd.c			dnkbd	needs-flag
 file	arch/hp300/dev/dnkbdmap.c		dnkbd
+
+# An mc146818-like calendar on 425e
+device	mcclock: mc146818
+attach mcclock at frodo with mcclock_frodo
+file	arch/hp300/dev/mcclock_frodo.c		mcclock_frodo
 
 #
 # Frame buffer devices on Internal I/O and the DIO bus
@@ -187,7 +192,7 @@ file	arch/hp300/dev/spc.c		spc needs-flag
 #
 
 attach	sti at sgc with sti_sgc
-file	arch/hp300/dev/sti_sgc.c	sti_sgc
+file	arch/hp300/dev/sti_sgc.c	sti_sgc needs-flag
 
 # Memory Disk for ramdisk
 file	dev/md_root.c			memory_disk_hooks
@@ -208,6 +213,7 @@ file	arch/hp300/hp300/trap.c
 file	arch/hp300/hp300/disksubr.c
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
+file	arch/m68k/m68k/fpu.c
 file	arch/m68k/m68k/kgdb_machdep.c		kgdb
 file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/procfs_machdep.c		procfs
@@ -215,6 +221,10 @@ file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c
 
 file	dev/cons.c
+
+# Emulation modules
+# 6888x emulator (FPU_EMULATE)
+include "arch/m68k/fpe/files.fpe"
 
 # NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
 include	"compat/aoutm68k/files.aoutm68k"

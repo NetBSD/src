@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.10 2009/01/18 01:19:32 bjh21 Exp $	*/
+/*	$NetBSD: copystr.S,v 1.10.24.1 2014/08/20 00:02:44 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -42,10 +42,12 @@
 #include "opt_cpuoptions.h"
 	
 #include "assym.h"
-#include <machine/asm.h>
-#include <machine/cpu.h>
 
-RCSID("$NetBSD: copystr.S,v 1.10 2009/01/18 01:19:32 bjh21 Exp $")
+#include <machine/asm.h>
+
+#include <arm/locore.h>
+
+RCSID("$NetBSD: copystr.S,v 1.10.24.1 2014/08/20 00:02:44 tls Exp $")
 
 #include <sys/errno.h>
 
@@ -60,7 +62,7 @@ RCSID("$NetBSD: copystr.S,v 1.10 2009/01/18 01:19:32 bjh21 Exp $")
  * Copy string from r0 to r1
  */
 ENTRY(copystr)
-	stmfd	sp!, {r4-r5}			/* stack is 8 byte aligned */
+	push	{r4-r5}			/* stack is 8 byte aligned */
 	teq	r2, #0x00000000
 	mov	r5, #0x00000000
 	moveq	r0, #ENAMETOOLONG
@@ -80,12 +82,13 @@ ENTRY(copystr)
 2:	teq	r3, #0x00000000
 	strne	r5, [r3]
 
-	ldmfd	sp!, {r4-r5}			/* stack is 8 byte aligned */
+	pop	{r4-r5}			/* stack is 8 byte aligned */
 	RET
+END(copystr)
 
 #ifdef __PROG32
-#define SAVE_REGS	stmfd	sp!, {r4-r6}
-#define RESTORE_REGS	ldmfd	sp!, {r4-r6}
+#define SAVE_REGS	push	{r3-r6}
+#define RESTORE_REGS	pop	{r3-r6}
 #else
 /* Need to save R14_svc because it'll get trampled if we take a page fault. */
 #define SAVE_REGS	stmfd	sp!, {r4-r6, r14}
@@ -137,6 +140,7 @@ ENTRY(copyinstr)
 
 	RESTORE_REGS
 	RET
+END(copyinstr)
 
 /*
  * r0 - kernel space address
@@ -195,11 +199,12 @@ ENTRY(copyoutstr)
 .Lcopystrpcbfault:
 	mov	r2, r1
 	mov	r1, r0
-	adr	r0, Lcopystrpcbfaulttext
+	adr	r0, .Lcopystrpcbfaulttext
 	bic	sp, sp, #7			/* align stack to 8 bytes */
 	b	_C_LABEL(panic)
 
-Lcopystrpcbfaulttext:
+.Lcopystrpcbfaulttext:
 	.asciz	"No valid PCB during copyinoutstr() addr1=%08x addr2=%08x\n"
 	.align	0
 #endif
+END(copyoutstr)

@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_fiq.S,v 1.2 2003/05/20 04:44:52 simonb Exp $	*/
+/*	$NetBSD: shark_fiq.S,v 1.2.154.1 2014/08/20 00:03:24 tls Exp $	*/
 
 /*
  * Copyright 1997
@@ -129,7 +129,7 @@ _C_LABEL(shark_fiq):
 	str	r11, [r12]
 	
 	cmp	r9, #0
-	subeqs	pc, lr, #4             /* no routine => return from trap */
+	subseq	pc, lr, #4             /* no routine => return from trap */
 
 	/* assume that the C routine follows the ARM procedure call standard.
 	   save only user registers and let the C code save the rest.

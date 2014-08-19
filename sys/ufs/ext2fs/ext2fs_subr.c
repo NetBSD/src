@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_subr.c,v 1.27.22.2 2013/06/23 06:18:39 tls Exp $	*/
+/*	$NetBSD: ext2fs_subr.c,v 1.27.22.3 2014/08/20 00:04:44 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.27.22.2 2013/06/23 06:18:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.27.22.3 2014/08/20 00:04:44 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ ext2fs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
 
 	ip = VTOI(vp);
 	fs = ip->i_e2fs;
-	lbn = lblkno(fs, offset);
+	lbn = ext2_lblkno(fs, offset);
 
 	*bpp = NULL;
 	if ((error = bread(vp, lbn, fs->e2fs_bsize, NOCRED, 0, &bp)) != 0) {

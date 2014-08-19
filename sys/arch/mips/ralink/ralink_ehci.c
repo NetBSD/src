@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_ehci.c,v 1.3 2012/07/20 02:14:02 matt Exp $	*/
+/*	$NetBSD: ralink_ehci.c,v 1.3.2.1 2014/08/20 00:03:13 tls Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_ehci.c -- Ralink EHCI USB Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_ehci.c,v 1.3 2012/07/20 02:14:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_ehci.c,v 1.3.2.1 2014/08/20 00:03:13 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,9 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: ralink_ehci.c,v 1.3 2012/07/20 02:14:02 matt Exp $")
 
 #include <mips/ralink/ralink_var.h>
 #include <mips/ralink/ralink_reg.h>
-
-#define RT3XXX_EHCI_BASE 	0x101c0000
-#define RT3XXX_BLOCK_SIZE	0x1000
 
 struct ralink_ehci_softc {
 	struct ehci_softc	sc_ehci;
@@ -89,13 +86,8 @@ ralink_ehci_attach(device_t parent, device_t self, void *aux)
 	struct ralink_ehci_softc * const sc = device_private(self);
 	const struct mainbus_attach_args *ma = aux;
 	struct ralink_usb_hc *ruh;
-	uint32_t r;
-	bus_space_handle_t sysctl_memh;
 	usbd_status status;
 	int error;
-#ifdef RALINK_EHCI_DEBUG
-	const char *const devname = device_xname(self);
-#endif
 
 	aprint_naive(": EHCI USB controller\n");
 	aprint_normal(": EHCI USB controller\n");
@@ -105,43 +97,27 @@ ralink_ehci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ehci.iot = ma->ma_memt;
 	sc->sc_ehci.sc_bus.dmatag = ma->ma_dmat;
 
-	/* Map Sysctl registers */
-	if (((error = bus_space_map(ma->ma_memt, RA_SYSCTL_BASE, 0x10000,
-	    0, &sysctl_memh) != 0)) != 0) {
-		aprint_error_dev(self, "can't map Sysctl registers, "
-			"error=%d\n", error);
-		return;
-	}
-
-	/* The USB block defaults PHY0 to device mode, change to host mode */
-	r = bus_space_read_4(ma->ma_memt, sysctl_memh, RA_SYSCTL_CFG1);
-	r |= (1 << 10);
-	bus_space_write_4(ma->ma_memt, sysctl_memh, RA_SYSCTL_CFG1, r);
-
-	/* done with Sysctl regs */
-	bus_space_unmap(ma->ma_memt, sysctl_memh, 0x10000);
-
 	/* Map EHCI registers */
-	if ((error = bus_space_map(sc->sc_ehci.iot, RT3XXX_EHCI_BASE,
-	    RT3XXX_BLOCK_SIZE, 0, &sc->sc_ehci.ioh)) != 0) {
+	if ((error = bus_space_map(sc->sc_ehci.iot, RA_USB_EHCI_BASE,
+	    RA_USB_BLOCK_SIZE, 0, &sc->sc_ehci.ioh)) != 0) {
 		aprint_error_dev(self, "can't map EHCI registers, "
 			"error=%d\n", error);
 		return;
 	}
 
-	sc->sc_ehci.sc_size = RT3XXX_BLOCK_SIZE;
+	sc->sc_ehci.sc_size = RA_USB_BLOCK_SIZE;
 	sc->sc_ehci.sc_bus.usbrev = USBREV_2_0;
 
-#ifdef RALINK_EHCI_DEBUG
-	printf("%s sc: %p ma: %p\n", devname, sc, ma);
-	printf("%s memt: %p dmat: %p\n", devname, ma->ma_memt, ma->ma_dmat);
-	printf("%s: EHCI HCCAPBASE=0x%x\n", devname,
+#if defined(RALINK_EHCI_DEBUG)
+	aprint_normal_dev(self, "sc %p ma %p\n", sc, ma);
+	aprint_normal_dev(self, "memt %p dmat %p\n", ma->ma_memt, ma->ma_dmat);
+	aprint_normal_dev(self, "EHCI HCCAPBASE=%#x\n",
 		EREAD4(&sc->sc_ehci, EHCI_CAPLENGTH));
-	printf("%s: EHCI HCSPARAMS=0x%x\n", devname,
+	aprint_normal_dev(self, "EHCI HCSPARAMS=%#x\n",
 		EREAD4(&sc->sc_ehci, EHCI_HCSPARAMS));
-	printf("%s: EHCI HCCPARAMS=0x%x\n", devname,
+	aprint_normal_dev(self, "EHCI HCCPARAMS=%#x\n",
 		EREAD4(&sc->sc_ehci, EHCI_HCCPARAMS));
-	printf("%s: EHCI HCSP_PORTROUTE=0x%x\n", devname,
+	aprint_normal_dev(self, "EHCI HCSP_PORTROUTE=%#x\n",
 		EREAD4(&sc->sc_ehci, EHCI_HCSP_PORTROUTE));
 #endif
 
@@ -149,12 +125,10 @@ ralink_ehci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ehci.sc_offs = EREAD1(&sc->sc_ehci, EHCI_CAPLENGTH);
 	EOWRITE4(&sc->sc_ehci, EHCI_USBINTR, 0);
 
-#ifdef RALINK_EHCI_DEBUG
-	printf("%s: EHCI USBCMD=0x%x\n", devname,
-		EOREAD4(&sc->sc_ehci, EHCI_USBCMD));
-	printf("%s: EHCI USBSTS=0x%x\n", devname,
-		EOREAD4(&sc->sc_ehci, EHCI_USBSTS));
-	printf("%s: EHCI USBINTR=0x%x\n", devname,
+#if defined(RALINK_EHCI_DEBUG)
+	aprint_normal_dev(self, "EHCI USBCMD=%#x USBSTS=%#x USBINTR=%#x\n",
+		EOREAD4(&sc->sc_ehci, EHCI_USBCMD),
+		EOREAD4(&sc->sc_ehci, EHCI_USBSTS),
 		EOREAD4(&sc->sc_ehci, EHCI_USBINTR));
 #endif
 

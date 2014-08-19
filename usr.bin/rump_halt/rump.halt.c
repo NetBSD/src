@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.halt.c,v 1.3 2011/09/16 15:39:28 joerg Exp $	*/
+/*	$NetBSD: rump.halt.c,v 1.3.8.1 2014/08/20 00:05:03 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -25,9 +25,11 @@
  * SUCH DAMAGE.
  */
 
+#include <rump/rumpuser_port.h>
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump.halt.c,v 1.3 2011/09/16 15:39:28 joerg Exp $");
+__RCSID("$NetBSD: rump.halt.c,v 1.3.8.1 2014/08/20 00:05:03 tls Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -44,6 +46,10 @@ __RCSID("$NetBSD: rump.halt.c,v 1.3 2011/09/16 15:39:28 joerg Exp $");
 #include <unistd.h>
 
 #define ARGFLAGS "dhn"
+
+#ifndef PLATFORM_HAS_SETGETPROGNAME
+#define getprogname() "rump_halt"
+#endif
 
 __dead static void
 usage(void)

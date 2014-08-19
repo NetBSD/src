@@ -1,4 +1,4 @@
-/*	$NetBSD: max6900.c,v 1.12 2009/12/12 14:44:10 tsutsui Exp $	*/
+/*	$NetBSD: max6900.c,v 1.12.22.1 2014/08/20 00:03:37 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: max6900.c,v 1.12 2009/12/12 14:44:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: max6900.c,v 1.12.22.1 2014/08/20 00:03:37 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,8 +73,18 @@ dev_type_read(maxrtc_read);
 dev_type_write(maxrtc_write);
 
 const struct cdevsw maxrtc_cdevsw = {
-	maxrtc_open, maxrtc_close, maxrtc_read, maxrtc_write, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = maxrtc_open,
+	.d_close = maxrtc_close,
+	.d_read = maxrtc_read,
+	.d_write = maxrtc_write,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 static int maxrtc_clock_read(struct maxrtc_softc *, struct clock_ymdhms *);

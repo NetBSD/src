@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.64.2.3 2013/06/23 06:20:16 tls Exp $	*/
+/*	$NetBSD: dk.c,v 1.64.2.4 2014/08/20 00:03:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.64.2.3 2013/06/23 06:20:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.64.2.4 2014/08/20 00:03:36 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -108,14 +108,32 @@ static dev_type_ioctl(dkioctl);
 static dev_type_strategy(dkstrategy);
 static dev_type_dump(dkdump);
 static dev_type_size(dksize);
+static dev_type_discard(dkdiscard);
 
 const struct bdevsw dk_bdevsw = {
-	dkopen, dkclose, dkstrategy, dkioctl, dkdump, dksize, D_DISK
+	.d_open = dkopen,
+	.d_close = dkclose,
+	.d_strategy = dkstrategy,
+	.d_ioctl = dkioctl,
+	.d_dump = dkdump,
+	.d_psize = dksize,
+	.d_discard = dkdiscard,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw dk_cdevsw = {
-	dkopen, dkclose, dkread, dkwrite, dkioctl,
-	    nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = dkopen,
+	.d_close = dkclose,
+	.d_read = dkread,
+	.d_write = dkwrite,
+	.d_ioctl = dkioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = dkdiscard,
+	.d_flag = D_DISK
 };
 
 const struct dkdriver dk_dkdriver = { dkstrategy, dkminphys };
@@ -848,8 +866,9 @@ dkwedge_discover(struct disk *pdk)
 
 	error = VOP_OPEN(vp, FREAD | FSILENT, NOCRED);
 	if (error) {
-		aprint_error("%s: unable to open device, error = %d\n",
-		    pdk->dk_name, error);
+		if (error != ENODEV)
+			aprint_error("%s: unable to open device, error = %d\n",
+			    pdk->dk_name, error);
 		vput(vp);
 		goto out;
 	}
@@ -1325,6 +1344,26 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 }
 
 /*
+ * dkdiscard:		[devsw entry point]
+ *
+ *	Perform a discard-range request on a wedge.
+ */
+static int
+dkdiscard(dev_t dev, off_t pos, off_t len)
+{
+	struct dkwedge_softc *sc = dkwedge_lookup(dev);
+
+	if (sc == NULL)
+		return (ENODEV);
+	if (sc->sc_state != DKW_STATE_RUNNING)
+		return (ENXIO);
+	if (sc->sc_parent->dk_rawvp == NULL)
+		return (ENXIO);
+
+	return VOP_FDISCARD(sc->sc_parent->dk_rawvp, pos, len);
+}
+
+/*
  * dksize:		[devsw entry point]
  *
  *	Query the size of a wedge for the purpose of performing a dump
@@ -1447,3 +1486,16 @@ dkwedge_find_partition(device_t parent, daddr_t startblk, uint64_t nblks)
 	return wedge;
 }
 
+const char *
+dkwedge_get_parent_name(dev_t dev)
+{
+	/* XXX: perhaps do this in lookup? */
+	int bmaj = bdevsw_lookup_major(&dk_bdevsw);
+	int cmaj = cdevsw_lookup_major(&dk_cdevsw);
+	if (major(dev) != bmaj && major(dev) != cmaj)
+		return NULL;
+	struct dkwedge_softc *sc = dkwedge_lookup(dev);
+	if (sc == NULL)
+		return NULL;
+	return sc->sc_parent->dk_name;
+}

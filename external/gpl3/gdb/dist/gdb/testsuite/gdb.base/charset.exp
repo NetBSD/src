@@ -1,7 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2001, 2004, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 2001-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,15 +20,10 @@
 
 # Test GDB's character set support.
 
-if $tracelevel then {
-	strace $tracelevel
-}
 
+standard_testfile .c charset-malloc.c
 
-set testfile "charset"
-set srcfile ${testfile}.c
-set srcmallocfile ${testfile}-malloc.c
-if { [prepare_for_testing ${testfile}.exp ${testfile} [list $srcfile $srcmallocfile]] } {
+if { [prepare_for_testing ${testfile}.exp ${testfile} [list $srcfile $srcfile2]] } {
     return -1
 }
 
@@ -546,6 +540,12 @@ if {$wchar_ok} {
 }
 
 set ucs2_ok [expr {[get_sizeof char16_t 99] == 2}]
+
+if ![valid_host_charset "UTF-16"] {
+    verbose -log "Disabling UTF-16 tests."
+    set ucs2_ok 0
+}
+
 if {$ucs2_ok} {
     test_wide_or_unicode u UTF-16
 }
@@ -577,7 +577,7 @@ if {$ucs2_ok && $ucs4_ok} {
 
 if {$ucs2_ok} {
     set go 1
-    gdb_test_multiple "python print 'hello, world!'" \
+    gdb_test_multiple "python print ('hello, world!')" \
 	"verify python support for charset tests" {
 	    -re "not supported.*$gdb_prompt $"	{
 		unsupported "python support is disabled"
@@ -590,7 +590,7 @@ if {$ucs2_ok} {
 	gdb_test "print u\"abcdef\"" " = u\"abcdef\"" \
 	    "set up for python printing of utf-16 string"
 
-	gdb_test "python print gdb.history(0).string()" "abcdef" \
+	gdb_test "python print (gdb.history(0).string())" "abcdef" \
 	    "extract utf-16 string using python"
     }
 }
@@ -603,14 +603,16 @@ gdb_test "print 'a' == 'a' || 'b' == 'b'" \
 
 proc string_display { var_name set_prefix x_size x_type} {
   gdb_test_no_output "set ${var_name} = ${set_prefix}\"Test String\\0with zeroes\"" "Assign ${var_name} with prefix ${set_prefix}"
-  gdb_test "x /2${x_size}s ${var_name}" ".* ${x_type}\"Test String\"\[\r\n\]+.* ${x_type}\"with zeroes\"" "Display String ${var_name} with x/${x_size}s"
+  gdb_test "x /2${x_size}s ${var_name}" ".*\t${x_type}\"Test String\"\[\r\n\]+.*\t${x_type}\"with zeroes\"" "Display String ${var_name} with x/${x_size}s"
 }
 
-string_display String16 u h u
-if {$wchar_size == 2} {
-  string_display String16 L h u
+if {$ucs2_ok} {
+    string_display String16 u h u
+    if {$wchar_size == 2} {
+	string_display String16 L h u
+    }
 }
- 
+
 string_display String32 U w U
 if {$wchar_size == 4} {
   string_display String32 L w U

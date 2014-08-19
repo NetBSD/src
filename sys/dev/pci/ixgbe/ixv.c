@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: src/sys/dev/ixgbe/ixv.c,v 1.2 2011/03/23 13:10:15 jhb Exp $*/
-/*$NetBSD: ixv.c,v 1.1 2011/08/12 21:55:29 dyoung Exp $*/
+/*$NetBSD: ixv.c,v 1.1.12.1 2014/08/20 00:03:48 tls Exp $*/
 
 #include "opt_inet.h"
 
@@ -269,9 +269,9 @@ ixv_probe(device_t dev)
 
 		    ((pci_subdevice_id == ent->subdevice_id) ||
 		     (ent->subdevice_id == 0))) {
-			sprintf(adapter_name, "%s, Version - %s",
-				ixv_strings[ent->index],
-				ixv_driver_version);
+			snprintf(adapter_name, sizeof(adapter_name),
+			    "%s, Version - %s", ixv_strings[ent->index],
+			    ixv_driver_version);
 			device_set_desc_copy(dev, adapter_name);
 			return (0);
 		}

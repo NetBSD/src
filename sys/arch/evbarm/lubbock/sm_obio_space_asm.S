@@ -1,4 +1,4 @@
-/*	$NetBSD: sm_obio_space_asm.S,v 1.4 2005/12/11 12:17:09 christos Exp $ */
+/*	$NetBSD: sm_obio_space_asm.S,v 1.4.122.1 2014/08/20 00:02:55 tls Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: sm_obio_space_asm.S,v 1.4 2005/12/11 12:17:09 christos Exp $")
+RCSID("$NetBSD: sm_obio_space_asm.S,v 1.4.122.1 2014/08/20 00:02:55 tls Exp $")
 
 /*
  * bus_space I/O functions with offset*4, 8-bit access.
@@ -51,7 +51,8 @@ ENTRY(smobio8_bs_r_2)
 	ldrb	r0, [r1], #4
 	ldrb	r2, [r1]
 	orr	r0, r0, r2, LSL #8
-	mov	pc, lr
+	RET
+END(smobio8_bs_r_2)
 
 /*
  * write single
@@ -62,7 +63,8 @@ ENTRY(smobio8_bs_w_2)
 	strb	r3, [r1], #4
 	mov	r3, r3, LSR #8
 	strb	r3, [r1]
-	mov	pc, lr
+	RET
+END(smobio8_bs_w_2)
 
 /*
  * read multiple
@@ -71,9 +73,8 @@ ENTRY(smobio8_bs_rm_2)
 	add	r0, r1, r2, LSL #2
 	ldr	r2, [sp, #0]
 	cmp     r2, #0x00000000
-	movle   pc, lr
+	RETc(le)
 
-	stmfd	sp!, {lr}
 Lbs_rm_2_loop:
 	ldrb	r1, [r0]
 	ldrb	lr, [r0, #4]
@@ -82,7 +83,8 @@ Lbs_rm_2_loop:
 	strh	r1, [r3], #0x0002
 	bgt	Lbs_rm_2_loop
 
-	ldmfd	sp!, {pc}
+	RET
+END(smobio8_bs_rm_2)
 
 
 
@@ -93,7 +95,7 @@ ENTRY(smobio8_bs_wm_2)
 	add	r0, r1, r2, LSL #2
 	ldr	r2, [sp, #0]
 	cmp     r2, #0x00000000
-	movle   pc, lr
+	RETc(le)
 
 Lbs_wm_2_loop:
 	ldrh	r1, [r3], #0x0002
@@ -103,7 +105,8 @@ Lbs_wm_2_loop:
 	strb	r1, [r0,#4]
 	bgt	Lbs_wm_2_loop
 
-	mov	pc, lr
+	RET
+END(smobio8_bs_wm_2)
 
 
 /*
@@ -116,15 +119,16 @@ Lbs_wm_2_loop:
 
 ENTRY(smobio16_bs_r_1)
 	tst	r2, #1    /* Even/Odd ? */
-	ldreqb	r0, [r1, r2, LSL #2]
-	moveq	pc,lr
+	ldrbeq	r0, [r1, r2, LSL #2]
+	RETc(eq)
 
 	/* Odd byte.  read 16bits and get high byte */
 	bic	r2, r2, #1
 	add	r1, r1, r2, LSL #2
 	ldrh	r0, [r1]
 	mov	r0, r0, LSR #8
-	mov	pc, lr
+	RET
+END(smobio16_bs_r_1)
 
 
 /*
@@ -133,12 +137,13 @@ ENTRY(smobio16_bs_r_1)
 
 ENTRY(smobio16_bs_w_1)
 	tst	r2, #1    /* Even/Odd ? */
-	streqb	r3, [r1, r2, LSL #2]
-	moveq	pc,lr
+	strbeq	r3, [r1, r2, LSL #2]
+	RETc(eq)
 
 	/* Odd byte.  write 16bit with low byte is 0. */
 	bic	r2, r2, #1
 	mov	r3, r3, LSL #8
 	add	r1, r1, r2, LSL #2
 	strh	r3, [r1]
-	mov	pc, lr
+	RET
+END(smobio16_bs_w_1)

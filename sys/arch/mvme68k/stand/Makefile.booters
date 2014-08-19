@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.booters,v 1.22 2011/01/22 19:19:20 joerg Exp $
+#	$NetBSD: Makefile.booters,v 1.22.14.1 2014/08/20 00:03:14 tls Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
 RELOC?=		0x3F0000
 COPTS?=		-Os -Wall -Wno-main -Wmissing-prototypes -Wstrict-prototypes \
-		-ffreestanding -fomit-frame-pointer
+		-ffreestanding -fomit-frame-pointer -fno-unwind-tables
 DEFS?= 
 STRIPFLAG?=
 
@@ -26,6 +26,7 @@ BINDIR= ${MDEC_DIR}
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
@@ -58,6 +59,8 @@ LIB_SA_DIR=	${.CURDIR}/../libsa
 LIBSA_DIR!=	cd ${LIB_SA_DIR} && ${PRINTOBJDIR}
 LIBSA=		${LIBSA_DIR}/lib/sa/libsa.a
 LIBKERN=	${LIBSA_DIR}/lib/kern/libkern.a
+
+SRTOBJ?= ${LIBSA_DIR}/SRT0.o
 
 LIB_BUG_DIR=	${.CURDIR}/../libbug
 LIBBUG_DIR!=	cd ${LIB_BUG_DIR} && ${PRINTOBJDIR}

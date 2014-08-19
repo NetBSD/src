@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.3.6.2 2013/02/25 00:28:48 tls Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.3.6.3 2014/08/20 00:03:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -104,7 +104,7 @@ dkcksum(struct disklabel *lp)
 	end = (u_short *)&lp->d_partitions[lp->d_npartitions];
 	while (start < end)
 		sum ^= *start++;
-	return (sum);
+	return sum;
 }
 #endif
 
@@ -121,7 +121,7 @@ disklabel(int argc, char *argv[])
 
 	if (argc < 2) {
 		printf("This command is required sub command !!\n");
-		return(ST_ERROR);
+		return ST_ERROR;
 	}
 
 	if (!strcmp(argv[1], "help")) {
@@ -129,11 +129,12 @@ disklabel(int argc, char *argv[])
 		printf("\thelp:\t\tthis command\n");
 		printf("\tread:\t\tread disklabel from scsi_device\n");
 		printf("\twrite:\t\twrite disklabel to scsi_device\n");
-		printf("\tomron:\t\tshow OMRON disklabel infomation\n");
-		printf("\tbsd:\t\tshow BSD disklabel infomation\n");
-		printf("\tcopy:\t\tcopy disklabel infomation from OMRON to BSD\n");
+		printf("\tomron:\t\tshow OMRON disklabel information\n");
+		printf("\tbsd:\t\tshow BSD disklabel information\n");
+		printf("\tcopy:\t\tcopy disklabel information from OMRON"
+		    " to BSD\n");
 		printf("\tchecksum:\tdoing checksum\n");
-		printf("\tset:\t\tchange BSD disklabel infomation\n");
+		printf("\tset:\t\tchange BSD disklabel information\n");
 		printf("\n\n");
 	} else if (!strcmp(argv[1], "read")) {
 		if (scsi_read( 0, lbl_buff, LABEL_SIZE)) {
@@ -146,29 +147,37 @@ disklabel(int argc, char *argv[])
 		i -= (int) lbl_buff;
 		printf("Offset = %d\n", i);
 		printf("\n");
-		printf("Checksum of Bad Track:\t0x%x\n",	omp->dkl_badchk);
-		printf("Logical Block Total:\t%u(0x%x)\n",	omp->dkl_maxblk, omp->dkl_maxblk);
-		printf("Disk Drive Type:\t0x%x\n",		omp->dkl_dtype);
-		printf("Number of Disk Drives:\t%d(0x%x)\n",	omp->dkl_ndisk, omp->dkl_ndisk);
-		printf("Number of Data Cylinders:\t%d(0x%x)\n",	omp->dkl_ncyl, omp->dkl_ncyl);
+		printf("Checksum of Bad Track:\t0x%x\n",
+		    omp->dkl_badchk);
+		printf("Logical Block Total:\t%u(0x%x)\n",
+		    omp->dkl_maxblk, omp->dkl_maxblk);
+		printf("Disk Drive Type:\t0x%x\n",
+		    omp->dkl_dtype);
+		printf("Number of Disk Drives:\t%d(0x%x)\n",
+		    omp->dkl_ndisk, omp->dkl_ndisk);
+		printf("Number of Data Cylinders:\t%d(0x%x)\n",
+		    omp->dkl_ncyl, omp->dkl_ncyl);
 		printf("Number of Alternate Cylinders:\t%d(0x%x)\n",
-		       omp->dkl_acyl,omp->dkl_acyl);
+		    omp->dkl_acyl,omp->dkl_acyl);
 		printf("Number of Heads in This Partition:\t%d(0x%x)\n",
-		       omp->dkl_nhead, omp->dkl_nhead);
+		    omp->dkl_nhead, omp->dkl_nhead);
 		printf("Number of 512 byte Sectors per Track:\t%d(0x%x)\n",
-		       omp->dkl_nsect, omp->dkl_nsect);
+		    omp->dkl_nsect, omp->dkl_nsect);
 		printf("Identifies Proper Label Locations:\t0x%x\n",
-		       omp->dkl_bhead);
+		    omp->dkl_bhead);
 		printf("Physical Partition Number:\t%d(0x%x)\n",
-		       omp->dkl_ppart, omp->dkl_ppart);
+		    omp->dkl_ppart, omp->dkl_ppart);
 		for (i = 0; i < NLPART; i++)
 			printf("\t%d:\t%d\t%d\n", i,
-			       omp->dkl_map[i].dkl_blkno, omp->dkl_map[i].dkl_nblk);
-		printf("Identifies This Label Format:\t0x%x\n",	omp->dkl_magic);
-		printf("XOR Checksum of Sector:\t0x%x\n",	omp->dkl_cksum);
+			    omp->dkl_map[i].dkl_blkno,
+			    omp->dkl_map[i].dkl_nblk);
+		printf("Identifies This Label Format:\t0x%x\n",
+		    omp->dkl_magic);
+		printf("XOR Checksum of Sector:\t0x%x\n",
+		    omp->dkl_cksum);
 	} else if (!strcmp(argv[1], "checksum")) {
 		if (omp->dkl_magic == DKL_MAGIC){
-							/* checksum of disk-label */
+			/* checksum of disk-label */
 			chksum = 0;
 			count = sizeof(struct scd_dk_label) / sizeof(short int);
 			for (p= (u_short *) lbl_buff; count > 0; count--) {
@@ -209,8 +218,10 @@ disklabel(int argc, char *argv[])
 		bp->d_sbsize     = SBSIZE;
 
 		for (i = 0; i < MAXPARTITIONS; i++) {
-			bp->d_partitions[i].p_size   = omp->dkl_map[i].dkl_nblk;
-			bp->d_partitions[i].p_offset = omp->dkl_map[i].dkl_blkno;
+			bp->d_partitions[i].p_size   =
+			    omp->dkl_map[i].dkl_nblk;
+			bp->d_partitions[i].p_offset =
+			    omp->dkl_map[i].dkl_blkno;
 			bp->d_partitions[i].p_fsize  = 1024;
 			bp->d_partitions[i].p_frag   = 8192 / 1024;
 			bp->d_partitions[i].p_fstype = FS_UNUSED;
@@ -254,7 +265,8 @@ disklabel(int argc, char *argv[])
 		}
 		switch (*argv[2]) {
 		case 'b':
-			bp->d_partitions[i].p_frag = j / bp->d_partitions[i].p_fsize;
+			bp->d_partitions[i].p_frag =
+			    j / bp->d_partitions[i].p_fsize;
 			break;
 		case 'f':	/* fragment size */
 			bp->d_partitions[i].p_fsize = j;
@@ -281,7 +293,7 @@ disklabel(int argc, char *argv[])
 		/* restump checksum of OMRON disklabel */
 		chksum = 0;
 		count = sizeof(struct scd_dk_label) / sizeof(short int);
-		for (p= (u_short *) lbl_buff; count > 1; count--) {
+		for (p = (u_short *)lbl_buff; count > 1; count--) {
 			chksum ^= *p++;
 		}
 		omp->dkl_cksum = chksum;
@@ -289,10 +301,10 @@ disklabel(int argc, char *argv[])
 	} else if (!strcmp(argv[1], "sb")) {
 #define BLOCK_SIZE	SBSIZE
 
-		printf("checking Super Block: block size = %d bytes, seek amount = 1 blocks\n",
-			BLOCK_SIZE);
+		printf("checking Super Block: block size = %d bytes,"
+		    " seek amount = 1 blocks\n", BLOCK_SIZE);
 		i = j = 0;
-		while(1) {
+		while (1) {
 			if (!scsi_read( i, lbl_buff, BLOCK_SIZE))
 			break;
 
@@ -305,7 +317,7 @@ disklabel(int argc, char *argv[])
 	} else if (!strcmp(argv[1], "sbcopy")) {
 		if (!scsi_read(32, lbl_buff, BLOCK_SIZE)) {
 			printf("sbcopy: read failed\n");
-			return(ST_ERROR);
+			return ST_ERROR;
 		}
 		if (scsi_write(16, lbl_buff, BLOCK_SIZE)) {
 			printf("sbcopy: copy done\n");
@@ -314,7 +326,7 @@ disklabel(int argc, char *argv[])
 		}
 	}
 
-	return(ST_NORMAL);
+	return ST_NORMAL;
 }
 
 void

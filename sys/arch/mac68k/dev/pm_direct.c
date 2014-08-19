@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.28 2007/01/24 13:08:12 hubertf Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.28.92.1 2014/08/20 00:03:11 tls Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -32,7 +32,7 @@
 /* From: pm_direct.c 1.3 03/18/98 Takashi Hamada */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.28 2007/01/24 13:08:12 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.28.92.1 2014/08/20 00:03:11 tls Exp $");
 
 #include "opt_adb.h"
 
@@ -598,7 +598,6 @@ pm_intr_pm1(void *arg)
 int
 pm_receive_pm2(u_char *data)
 {
-	int i;
 	int rval;
 
 	rval = 0xffffcd34;
@@ -608,7 +607,7 @@ pm_receive_pm2(u_char *data)
 			/* set VIA SR to input mode */
 			via_reg(VIA1, vACR) |= 0x0c;
 			via_reg(VIA1, vACR) &= ~0x10;
-			i = PM_SR();
+			PM_SR();
 
 			PM_SET_STATE_ACKOFF();
 			if (pm_wait_busy((int)ADBDelay*32) != 0)
@@ -1137,7 +1136,6 @@ pm_adb_poll_next_device_pm1(PMData *pmdata)
 	int i;
 	int ndid;
 	u_short bendid = 0x1;
-	int rval;
 	PMData tmp_pmdata;
 
 	/* find another existent ADB device to poll */
@@ -1156,8 +1154,5 @@ pm_adb_poll_next_device_pm1(PMData *pmdata)
 	tmp_pmdata.data[0] = (u_char)(ndid << 4) | 0xc;
 	tmp_pmdata.data[1] = 0x04;	/* magic spell for awaking the PM */
 	tmp_pmdata.data[2] = 0x00;
-	rval = pmgrop(&tmp_pmdata);
+	pmgrop(&tmp_pmdata);
 }
-
-
-

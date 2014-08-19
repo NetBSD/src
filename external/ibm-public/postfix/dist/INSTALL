@@ -43,7 +43,7 @@ should be executed as the superuser.
 
 A command written as
 
-    % command
+    $ command
 
 should be executed as an unprivileged user.
 
@@ -58,14 +58,14 @@ because the files use backspace characters in order to produce bboolldd font
 print a README file without backspace characters, use the col(1) command. For
 example:
 
-    % col -bx <file | lpr
+    $ col -bx <file | lpr
 
 In order to view the manual pages before installing Postfix, point your MANPATH
 environment variable to the "man" subdirectory; be sure to use an absolute
 path.
 
-    % export MANPATH; MANPATH="`pwd`/man:$MANPATH"
-    % setenv MANPATH "`pwd`/man:$MANPATH"
+    $ export MANPATH; MANPATH="`pwd`/man:$MANPATH"
+    $ setenv MANPATH "`pwd`/man:$MANPATH"
 
 Of particular interest is the postconf(5) manual page that lists all the 500+
 configuration parameters. The HTML version of this text makes it easy to
@@ -80,22 +80,20 @@ At some point in time, a version of Postfix was supported on:
 
     AIX 3.2.5, 4.1.x, 4.2.0, 4.3.x, 5.2
     BSD/OS 2.x, 3.x, 4.x
-    Darwin 1.x
-    FreeBSD 2.x, 3.x, 4.x, 5.x
+    FreeBSD 2.x .. 9.x
     HP-UX 9.x, 10.x, 11.x
     IRIX 5.x, 6.x
-    Linux Debian 1.3.1, 2.x, 3.x
-    Linux RedHat 3.x (January 2004) - 9.x
-    Linux Slackware 3.x, 4.x, 7.x
-    Linux SuSE 5.x, 6.x, 7.x
-    Linux Ubuntu 4.10..7.04
+    Linux Debian 1.3.1 and later
+    Linux RedHat 3.x (January 2004) and later
+    Linux Slackware 3.x and later
+    Linux SuSE 5.x and later
+    Linux Ubuntu 4.10 and later
     Mac OS X
     NEXTSTEP 3.x
-    NetBSD 1.x
+    NetBSD 1.x and later
     OPENSTEP 4.x
     OSF1.V3 - OSF1.V5 (Digital UNIX)
     Reliant UNIX 5.x
-    Rhapsody 5.x
     SunOS 4.1.4 (March 2007)
     SunOS 5.4 - 5.10 (Solaris 2.4..10)
     Ultrix 4.x (well, that was long ago)
@@ -118,12 +116,12 @@ If at any time in the build process you get messages like: "make: don't know
 how to ..." you should be able to recover by running the following command from
 the Postfix top-level directory:
 
-    % make -f Makefile.init makefiles
+    $ make -f Makefile.init makefiles
 
 If you copied the Postfix source code after building it on another machine, it
 is a good idea to cd into the top-level directory and first do this:
 
-    % make tidy
+    $ make tidy
 
 This will get rid of any system dependencies left over from compiling the
 software elsewhere.
@@ -134,33 +132,35 @@ To build with GCC, or with the native compiler if people told me that is better
 for your system, just cd into the top-level Postfix directory of the source
 tree and type:
 
-    % make
+    $ make
 
 To build with a non-default compiler, you need to specify the name of the
 compiler. Here are a few examples:
 
-    % make makefiles CC=/opt/SUNWspro/bin/cc        (Solaris)
-    % make
+    $ make makefiles CC=/opt/SUNWspro/bin/cc        (Solaris)
+    $ make
 
-    % make makefiles CC="/opt/ansic/bin/cc -Ae"     (HP-UX)
-    % make
+    $ make makefiles CC="/opt/ansic/bin/cc -Ae"     (HP-UX)
+    $ make
 
-    % make makefiles CC="purify cc"
-    % make
+    $ make makefiles CC="purify cc"
+    $ make
 
 and so on. In some cases, optimization is turned off automatically.
 
-44..33 -- BBuuiillddiinngg wwiitthh ooppttiioonnaall eexxtteennssiioonnss
+44..33 -- BBuuiillddiinngg wwiitthh ooppttiioonnaall ffeeaattuurreess
 
 By default, Postfix builds as a mail system with relatively few bells and
 whistles. Support for third-party databases etc. must be configured when
 Postfix is compiled. The following documents describe how to build Postfix with
-support for extensions:
+support for optional features:
 
      _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-    |PPoossttffiixx eexxtteennssiioonn                 |DDooccuummeenntt     |AAvvaaiillaabbiilliittyy|
+    |OOppttiioonnaall ffeeaattuurree                  |DDooccuummeenntt     |AAvvaaiillaabbiilliittyy|
     |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ |
     |Berkeley DB database              |DB_README    |Postfix 1.0 |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ |
+    |LMDB database                     |LMDB_README  |Postfix 2.11|
     |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ |
     |LDAP database                     |LDAP_README  |Postfix 1.0 |
     |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ |
@@ -187,38 +187,40 @@ configuration file, except for one: the parameter that specifies the location
 of Postfix configuration files. In order to build Postfix with a configuration
 directory other than /etc/postfix, use:
 
-    % make makefiles CCARGS='-DDEF_CONFIG_DIR=\"/some/where\"'
-    % make
+    $ make makefiles CCARGS='-DDEF_CONFIG_DIR=\"/some/where\"'
+    $ make
 
 IMPORTANT: Be sure to get the quotes right. These details matter a lot.
 
 Parameters whose defaults can be specified in this way are:
 
-     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-    |MMaaccrroo nnaammee       |ddeeffaauulltt vvaalluuee ffoorr|ttyyppiiccaall ddeeffaauulltt     |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |DEF_COMMAND_DIR  |command_directory|/usr/sbin           |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |DEF_CONFIG_DIR   |config_directory |/etc/postfix        |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |DEF_DAEMON_DIR   |daemon_directory |/usr/libexec/postfix|
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |DEF_DATA_DIR     |data_directory   |/var/lib/postfix    |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |DEF_MAILQ_PATH   |mailq_path       |/usr/bin/mailq      |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |DEF_HTML_DIR     |html_directory   |no                  |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |DEF_MANPAGE_DIR  |manpage_directory|/usr/local/man      |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |DEF_NEWALIAS_PATH|newaliases_path  |/usr/bin/newaliases |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |DEF_QUEUE_DIR    |queue_directory  |/var/spool/postfix  |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |DEF_README_DIR   |readme_directory |no                  |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |DEF_SENDMAIL_PATH|sendmail_path    |/usr/sbin/sendmail  |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    |MMaaccrroo nnaammee       |ddeeffaauulltt vvaalluuee ffoorr    |ttyyppiiccaall ddeeffaauulltt     |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |DEF_COMMAND_DIR  |command_directory    |/usr/sbin           |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |DEF_CONFIG_DIR   |config_directory     |/etc/postfix        |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |DEF_DB_TYPE      |default_database_type|hash                |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |DEF_DAEMON_DIR   |daemon_directory     |/usr/libexec/postfix|
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |DEF_DATA_DIR     |data_directory       |/var/lib/postfix    |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |DEF_MAILQ_PATH   |mailq_path           |/usr/bin/mailq      |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |DEF_HTML_DIR     |html_directory       |no                  |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |DEF_MANPAGE_DIR  |manpage_directory    |/usr/local/man      |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |DEF_NEWALIAS_PATH|newaliases_path      |/usr/bin/newaliases |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |DEF_QUEUE_DIR    |queue_directory      |/var/spool/postfix  |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |DEF_README_DIR   |readme_directory     |no                  |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |DEF_SENDMAIL_PATH|sendmail_path        |/usr/sbin/sendmail  |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
 
 Note: the data_directory parameter (for caches and pseudo-random numbers) was
 introduced with Postfix version 2.5.
@@ -227,8 +229,8 @@ introduced with Postfix version 2.5.
 
 The general method to override Postfix compile-time features is as follows:
 
-    % make makefiles name=value name=value...
-    % make
+    $ make makefiles name=value name=value...
+    $ make
 
 The following is an extensive list of names and values.
 
@@ -247,9 +249,11 @@ The following is an extensive list of names and values.
 |                              |at compile time:                              |
 |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
 ||                             |Do not build with Berkeley DB support. By     |
-||-DNO_DB                      |default, Berkeley DB support is compiled in on|
-||                             |platforms that are known to support this      |
-||                             |feature.                                      |
+||                             |default, Berkeley DB support is compiled in on|
+||-DNO_DB                      |platforms that are known to support this      |
+||                             |feature. If you override this, then you       |
+||                             |probably should also override DEF_DB_TYPE as  |
+||                             |described in section 4.4.                     |
 |_|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
 ||                             |Do not build with Solaris /dev/poll support.  |
 ||-DNO_DEVPOLL                 |By default, /dev/poll support is compiled in  |
@@ -273,8 +277,12 @@ The following is an extensive list of names and values.
 ||                             |known to support it.                          |
 |_|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
 ||                             |Do not build with NIS or NISPLUS support. NIS |
-||-DNO_NIS                     |is not available on some recent Linux or      |
-||                             |Solaris distributions.                        |
+||-DNO_NIS                     |is not available on some recent Linux         |
+||                             |distributions.                                |
+|_|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+||                             |Do not build with NISPLUS support. NISPLUS is |
+||-DNO_NISPLUS                 |not available on some recent Solaris          |
+||                             |distributions.                                |
 |_|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
 ||                             |Do not build with PCRE support. By default,   |
 ||-DNO_PCRE                    |PCRE support is compiled in when the pcre-    |
@@ -322,7 +330,7 @@ descriptors per process is limited by the value of the FD_SETSIZE macro. If you
 expect to run more than 1000 mail delivery processes, you may need to override
 the definition of the FD_SETSIZE macro to make select() work correctly:
 
-    % make makefiles CCARGS=-DFD_SETSIZE=2048
+    $ make makefiles CCARGS=-DFD_SETSIZE=2048
 
 Warning: the above has no effect on some Linux versions. Apparently, on these
 systems the FD_SETSIZE value can be changed only by using undocumented
@@ -338,7 +346,7 @@ examples of how to increase the number of open sockets or files.
 
 If the command
 
-    % make
+    $ make
 
 is successful, then you can proceed to install Postfix (section 6).
 
@@ -485,18 +493,18 @@ and watch your maillog file for any error messages. The pathname is /var/log/
 maillog, /var/log/mail, /var/log/syslog, or something else. Typically, the
 pathname is defined in the /etc/syslog.conf file.
 
-    % egrep '(reject|warning|error|fatal|panic):' /some/log/file
+    $ egrep '(reject|warning|error|fatal|panic):' /some/log/file
 
 Note: the most important error message is logged first. Later messages are not
 as useful.
 
 In order to inspect the mail queue, use one of the following commands:
 
-    % mailq
+    $ mailq
 
-    % sendmail -bp
+    $ sendmail -bp
 
-    % postqueue -p
+    $ postqueue -p
 
 See also the "Care and feeding" section 12 below.
 
@@ -535,18 +543,18 @@ and watch your maillog file for any error messages. The pathname is /var/log/
 maillog, /var/log/mail, /var/log/syslog, or something else. Typically, the
 pathname is defined in the /etc/syslog.conf file.
 
-    % egrep '(reject|warning|error|fatal|panic):' /some/log/file
+    $ egrep '(reject|warning|error|fatal|panic):' /some/log/file
 
 Note: the most important error message is logged first. Later messages are not
 as useful.
 
 In order to inspect the mail queue, use one of the following commands:
 
-    % mailq
+    $ mailq
 
-    % sendmail -bp
+    $ sendmail -bp
 
-    % postqueue -p
+    $ postqueue -p
 
 See also the "Care and feeding" section 12 below.
 
@@ -575,18 +583,18 @@ and watch your maillog file for any error messages. The pathname is /var/log/
 maillog, /var/log/mail, /var/log/syslog, or something else. Typically, the
 pathname is defined in the /etc/syslog.conf file.
 
-    % egrep '(reject|warning|error|fatal|panic):' /some/log/file
+    $ egrep '(reject|warning|error|fatal|panic):' /some/log/file
 
 Note: the most important error message is logged first. Later messages are not
 as useful.
 
 In order to inspect the mail queue, use one of the following commands:
 
-    % mailq
+    $ mailq
 
-    % sendmail -bp
+    $ sendmail -bp
 
-    % postqueue -p
+    $ postqueue -p
 
 See also the "Care and feeding" section 12 below.
 

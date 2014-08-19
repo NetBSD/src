@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/10/02 18:16:06 christos Exp $
+#	$NetBSD: Makefile,v 1.2.8.1 2014/08/19 23:59:26 tls Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -7,21 +7,21 @@ LIBISPRIVATE=	yes
 
 LIB=		bfd
 
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/arch/${GDB_MACHINE_ARCH}/defs.mk"
 
 GCPPFLAGS=	${G_archdefs} ${G_DEFS} ${G_INCLUDES} ${G_TDEFAULTS}
-CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH} -I${DIST}/include -I. \
+CPPFLAGS+=	-I${.CURDIR}/arch/${GDB_MACHINE_ARCH} -I${DIST}/include -I. \
 		-I${DIST}/bfd ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*} \
-		-DDEBUGDIR=\"${DESTDIR}/usr/libdata/debug\"
+		-DDEBUGDIR=\"/usr/libdata/debug\"
 
 GSRCS=		${G_libbfd_la_OBJECTS:libbfd.lo=lib_bfd.lo} \
 		${G_libbfd_la_DEPENDENCIES:M*.lo}
 SRCS=		${GSRCS:.lo=.c}
 
 DPSRCS+=	elf32-target.h elf64-target.h targmatch.h \
-		elf32-ia64.c elf64-ia64.c
+		elf32-ia64.c elf64-ia64.c peigen.c pex64igen.c
 CLEANFILES+=	elf32-target.h elf64-target.h targmatch.h \
-		elf32-ia64.c elf64-ia64.c
+		elf32-ia64.c elf64-ia64.c peigen.c pex64igen.c
 
 .PATH: ${DIST}/bfd
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: prephandlers.c,v 1.3 2011/01/04 09:25:21 wiz Exp $	*/
+/*	$NetBSD: prephandlers.c,v 1.3.12.1 2014/08/20 00:05:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ extern int verbose;
 
 static char err_str[BUFSIZE];
 
-static void prep_notsupp(struct extabent *, struct pnviocdesc *, char *);
+static void prep_notsupp(const struct extabent *, struct pnviocdesc *, char *);
 
 /*
  * XXX
@@ -65,7 +65,7 @@ static void prep_notsupp(struct extabent *, struct pnviocdesc *, char *);
  * There are several known fields that I either don't know how to
  * deal with or require special treatment.
  */
-static struct extabent prepextab[] = {
+static const struct extabent prepextab[] = {
 	{NULL, prep_notsupp},
 };
 #define BARF(str1, str2) {						\
@@ -88,7 +88,7 @@ char *
 prep_handler(char *keyword, char *arg)
 {
 	struct pnviocdesc nvio;
-	struct extabent *ex;
+	const struct extabent *ex;
 	char nvio_buf[BUFSIZE];
 	int fd;
 
@@ -169,7 +169,7 @@ out:
 }
 /* ARGSUSED */
 static void
-prep_notsupp(struct extabent * exent, struct pnviocdesc * nviop, char *arg)
+prep_notsupp(const struct extabent * exent, struct pnviocdesc * nviop, char *arg)
 {
 
 	warnx("property `%s' not yet supported", exent->ex_keyword);
@@ -180,7 +180,7 @@ prep_notsupp(struct extabent * exent, struct pnviocdesc * nviop, char *arg)
  */
 
 void
-prep_dump()
+prep_dump(void)
 {
 	struct pnviocdesc nvio1, nvio2;
 	char buf1[BUFSIZE], buf2[BUFSIZE], buf3[BUFSIZE], buf4[BUFSIZE];

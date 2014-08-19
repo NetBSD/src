@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.3 2009/07/20 04:59:03 kiyohara Exp $	*/
+/*	$NetBSD: commands.c,v 1.3.22.1 2014/08/20 00:03:08 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -35,8 +35,24 @@
 
 #include "bootstrap.h"
 
-char		*command_errmsg;
-char		command_errbuf[256];	/* XXX should have procedural interface for setting, size limit? */
+static char command_errbuf[256];
+
+int
+command_seterr(const char *fmt, ...)
+{
+	int len;
+	va_list ap;
+	va_start(ap, fmt);
+	len = vsnprintf(command_errbuf, sizeof(command_errbuf), fmt, ap);
+	va_end(ap);
+	return len;
+}
+
+const char *
+command_geterr(void)
+{
+	return command_errbuf;
+}
 
 static int page_file(char *filename);
 
@@ -133,7 +149,7 @@ command_help(int argc, char *argv[])
     char	*topic, *subtopic, *t, *s, *d;
 
     /* page the help text from our load path */
-    sprintf(buf, "%s/boot/loader.help", getenv("loaddev"));
+    snprintf(buf, sizeof(buf), "%s/boot/loader.help", getenv("loaddev"));
     if ((hfd = open(buf, O_RDONLY)) < 0) {
 	printf("Verbose help not available, use '?' to list commands\n");
 	return(CMD_OK);
@@ -151,7 +167,7 @@ command_help(int argc, char *argv[])
 	topic = strdup("help");
 	break;
     default:
-	command_errmsg = "usage is 'help <topic> [<subtopic>]";
+	command_seterr("usage is 'help <topic> [<subtopic>]");
 	return(CMD_ERROR);
     }
 
@@ -197,7 +213,7 @@ command_help(int argc, char *argv[])
     pager_close();
     close(hfd);
     if (!matched) {
-	sprintf(command_errbuf, "no help available for '%s'", topic);
+	command_seterr("no help available for '%s'", topic);
 	free(topic);
 	if (subtopic)
 	    free(subtopic);
@@ -226,7 +242,7 @@ command_commandlist(int argc, char *argv[])
 	    if (res)
 	    break;
 	if ((cmdp->c_name != NULL) && (cmdp->c_desc != NULL)) {
-	    sprintf(name, "  %s  ", cmdp->c_name);
+	    snprintf(name, sizeof(name), "  %s  ", cmdp->c_name);
 	    pager_output(name);
 	    pager_output(cmdp->c_desc);
 	    res = pager_output("\n");
@@ -267,7 +283,7 @@ command_show(int argc, char *argv[])
 	if ((cp = getenv(argv[1])) != NULL) {
 	    printf("%s\n", cp);
 	} else {
-	    sprintf(command_errbuf, "variable '%s' not found", argv[1]);
+	    command_seterr("variable '%s' not found", argv[1]);
 	    return(CMD_ERROR);
 	}
     }
@@ -281,11 +297,11 @@ command_set(int argc, char *argv[])
     int		err;
     
     if (argc != 2) {
-	command_errmsg = "wrong number of arguments";
+	command_seterr("wrong number of arguments");
 	return(CMD_ERROR);
     } else {
 	if ((err = putenv(argv[1])) != 0) {
-	    command_errmsg = strerror(err);
+	    command_seterr("%s", strerror(err));
 	    return(CMD_ERROR);
 	}
     }
@@ -299,11 +315,11 @@ command_unset(int argc, char *argv[])
     int		err;
     
     if (argc != 2) {
-	command_errmsg = "wrong number of arguments";
+	command_seterr("wrong number of arguments");
 	return(CMD_ERROR);
     } else {
 	if ((err = unsetenv(argv[1])) != 0) {
-	    command_errmsg = strerror(err);
+	    command_seterr("%s", strerror(err));
 	    return(CMD_ERROR);
 	}
     }
@@ -373,7 +389,7 @@ command_read(int argc, char *argv[])
 	case 't':
 	    timeout = strtol(optarg, &cp, 0);
 	    if (cp == optarg) {
-		sprintf(command_errbuf, "bad timeout '%s'", optarg);
+		command_seterr("bad timeout '%s'", optarg);
 		return(CMD_ERROR);
 	    }
 	    break;
@@ -416,12 +432,12 @@ command_more(int argc, char *argv[])
     res=0;
     pager_open();
     for (i = 1; (i < argc) && (res == 0); i++) {
-	sprintf(line, "*** FILE %s BEGIN ***\n", argv[i]);
+	snprintf(line, sizeof(line), "*** FILE %s BEGIN ***\n", argv[i]);
 	if (pager_output(line))
 		break;
         res = page_file(argv[i]);
 	if (!res) {
-	    sprintf(line, "*** FILE %s END ***\n", argv[i]);
+	    snprintf(line, sizeof(line), "*** FILE %s END ***\n", argv[i]);
 	    res = pager_output(line);
 	}
     }
@@ -441,7 +457,7 @@ page_file(char *filename)
     result = pager_file(filename);
 
     if (result == -1)
-	sprintf(command_errbuf, "error showing %s", filename);
+	command_seterr("error showing %s", filename);
 
     return result;
 }   
@@ -475,11 +491,11 @@ command_lsdev(int argc, char *argv[])
 
     pager_open();
 
-    sprintf(line, "Device Enumeration:\n");
+    snprintf(line, sizeof(line), "Device Enumeration:\n");
     pager_output(line);
 
     for (i = 0; i < ndevs; i++) {
-	 sprintf(line, "%s\n", devsw[i].dv_name);
+	 snprintf(line, sizeof(line), "%s\n", devsw[i].dv_name);
 	    if (pager_output(line))
 		    break;
     }

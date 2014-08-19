@@ -1,4 +1,4 @@
-/*	$NetBSD: w16copy.s,v 1.2 2008/04/28 20:23:27 martin Exp $	*/
+/*	$NetBSD: w16copy.s,v 1.2.44.1 2014/08/20 00:03:11 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,15 +41,15 @@
  * properly aligned 8- and 16-bit accesses.
  */
 ENTRY(w16zero)
-	movl	%sp@(8), %d0		| get our count
+	movl	8(%sp), %d0		| get our count
 	beq	6f			| return if count is zero
-	movl	%sp@(4), %a0		| get our address
+	movl	4(%sp), %a0		| get our address
 
 | align %a0 to a 16-bit boundary:
 	movl	%a0, %d1
 	btst	#0, %d1			| is %a0 even?
 	beq	1f			| if so, skip ahead
-	clrb	%a0@+			| zero one byte
+	clrb	(%a0)+			| zero one byte
 	subql	#1, %d0			| decrement count
 
 | now zero 32 bits at a time:
@@ -59,11 +59,11 @@ ENTRY(w16zero)
 	bcs	3f			| skip ahead if long count % 64k == 0
 #ifdef	__mc68010__
 | on a 68010, 32-bit accesses become 16-bit accesses externally:
-2:	clrl	%a0@+
+2:	clrl	(%a0)+
 	dbf	%d1, 2b			| will use the 68010 loop mode
 #else	/* !__mc68010__ */
-2:	clrw	%a0@+
-	clrw	%a0@+
+2:	clrw	(%a0)+
+	clrw	(%a0)+
 	dbf	%d1, 2b
 #endif	/* !__mc68010__ */
 | since DBcc only uses the low 16-bits of the count
@@ -75,7 +75,7 @@ ENTRY(w16zero)
 4:	andil	#3, %d0			| odd byte count in %d0
 	subqw	#1, %d0			| set up for dbf
 	bcs	6f			| skip ahead if no odd bytes
-5:	clrb	%a0@+
+5:	clrb	(%a0)+
 	dbf	%d0, 5b			| will use the 68010 loop mode
 
 6:	rts
@@ -86,16 +86,16 @@ ENTRY(w16zero)
  * 16-bit accesses.
  */
 ENTRY(w16copy)
-	movl	%sp@(12), %d0		| get our count
+	movl	12(%sp), %d0		| get our count
 	beq	8f			| return if count is zero
-	movl	%sp@(4), %a0		| get our source address
-	movl	%sp@(8), %a1		| get our destination address
+	movl	4(%sp), %a0		| get our source address
+	movl	8(%sp), %a1		| get our destination address
 
 | align %a0 to a 16-bit boundary:
 	movl	%a0, %d1
 	btst	#0, %d1			| is %a0 even?
 	beq	1f			| if so, skip ahead
-	movb	%a0@+, %a1@+		| copy one byte
+	movb	(%a0)+, (%a1)+		| copy one byte
 	subql	#1, %d0			| decrement count
 
 | branch on whether or not %a1 is aligned to a 16-bit boundary:
@@ -111,11 +111,11 @@ ENTRY(w16copy)
 	bcs	3f			| skip ahead if long count % 64k == 0
 #ifdef	__mc68010__
 | on a 68010, 32-bit accesses become 16-bit accesses externally:
-2:	movl	%a0@+, %a1@+
+2:	movl	(%a0)+, (%a1)+
 	dbf	%d1, 2b			| will use the 68010 loop mode
 #else	/* !__mc68010__ */
-2:	movw	%a0@+, %a1@+
-	movw	%a0@+, %a1@+
+2:	movw	(%a0)+, (%a1)+
+	movw	(%a0)+, (%a1)+
 	dbf	%d1, 2b
 #endif	/* !__mc68010__ */
 | since DBcc only uses the low 16-bits of the count
@@ -129,27 +129,27 @@ ENTRY(w16copy)
 4:	cmpil	#4, %d0			| is count less than 4?
 	bcs	6f			| if so, skip ahead
 | prime the FIFO:
-	movw	%a0@+, %d1		| FIFO: xx01
+	movw	(%a0)+, %d1		| FIFO: xx01
 	rorl	#8, %d1			| FIFO: 1xx0
-	movb	%d1, %a1@+		| FIFO: 1xxx
+	movb	%d1, (%a1)+		| FIFO: 1xxx
 	subql	#4, %d0			| subtract 4 from count
 | run the FIFO:
 5:	rorl	#8, %d1			| FIFO: x1xx
-	movw	%a0@+, %d1		| FIFO: x123
+	movw	(%a0)+, %d1		| FIFO: x123
 	rorl	#8, %d1			| FIFO: 3x12
-	movw	%d1, %a1@+		| FIFO: 3xxx -> 1xxx
+	movw	%d1, (%a1)+		| FIFO: 3xxx -> 1xxx
 	subql	#2, %d0			| two or more bytes remaining?
 	bcc	5b			| loop back, if so.
 | flush the FIFO:
 	roll	#8, %d1			| FIFO: xxx1
-	movb	%d1, %a1@+		| FIFO: xxxx
+	movb	%d1, (%a1)+		| FIFO: xxxx
 	addl	#2, %d0			| fix up count
 
 | copy the odd bytes:
 6:	andil	#3, %d0			| odd byte count in %d0
 	subqw	#1, %d0			| set up for dbf
 	bcs	8f			| skip ahead if no odd bytes
-7:	movb	%a0@+, %a1@+
+7:	movb	(%a0)+, (%a1)+
 	dbf	%d0, 7b			| use loop mode
 
 8:	rts

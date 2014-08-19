@@ -1,0 +1,17 @@
+# $NetBSD: GENERIC_USERMODE,v 1.1.10.2 2014/08/20 00:02:53 tls Exp $
+
+machine usermode
+include "arch/usermode/conf/GENERIC.common"
+include "arch/arm/conf/majors.arm32"
+
+no options EXEC_ELF64
+
+options 	INSECURE		# required by sysinst
+
+options		TEXTADDR=0x20000000	# 1 Gb `phys ram' / total space
+options		KVMSIZE= 0x10000000	# KVM space reserved in VM map, 256 Mb
+options		NKMEMPAGES_MAX=32768	# 128 Mb max
+
+#options 	INCLUDE_CONFIG_FILE
+#ident 		"GENERIC_USERMODE-$Revision: 1.1.10.2 $"
+

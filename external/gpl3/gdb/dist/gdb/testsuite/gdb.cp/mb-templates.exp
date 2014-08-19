@@ -1,4 +1,4 @@
-# Copyright 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2007-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,10 +16,6 @@
 # This test verifies that setting breakpoint on line in template
 # function will fire in all instantiations of that template.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 if { [skip_stl_tests] } { continue }
 
 # On SPU this test fails because the executable exceeds local storage size.
@@ -28,23 +24,15 @@ if { [istarget "spu*-*-*"] } {
 }
 
 
-set testfile "mb-templates"
-set srcfile ${testfile}.cc
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .cc
 
-if [get_compiler_info ${binfile} "c++"] {
+if [get_compiler_info "c++"] {
     return -1
 }
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
-     untested mb-templates.exp
-     return -1
+if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
+    return -1
 }
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 
 set bp_location [gdb_get_line_number "set breakpoint here"]
 
@@ -52,19 +40,16 @@ set bp_location [gdb_get_line_number "set breakpoint here"]
 # and a condition.
 
 gdb_test "break $srcfile:$bp_location if i==1" \
-    "Breakpoint.*at.* file .*$srcfile, line.*\\(2 locations\\).*" \
+    "Breakpoint.*at.*: $srcfile:$bp_location. \\(2 locations\\).*" \
     "initial condition: set breakpoint"
 
 gdb_run_cmd
-gdb_expect {
+
+set test "initial condition: run to breakpoint"
+gdb_test_multiple "" $test {
     -re "Breakpoint \[0-9\]+,.*foo<int> \\(i=1\\).*$gdb_prompt $" {
-	pass "initial condition: run to breakpoint"
-    }
-    -re "$gdb_prompt $" {
-	fail "initial condition: run to breakpoint"
-    }
-    timeout {
-	fail "initial condition: run to breakpoint (timeout)"
+	pass $test
+	break
     }
 }
 
@@ -74,16 +59,16 @@ gdb_test "continue" \
 
 # Set breakpoint with multiple locations.
 # Separately set the condition.
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+
+delete_breakpoints
+gdb_test "kill" "" "kill" \
+         {Kill the program being debugged\? \(y or n\) } "y"
 
 gdb_test "break $srcfile:$bp_location" \
-    "Breakpoint.*at.* file .*$srcfile, line.*\\(2 locations\\).*" \
+    "Breakpoint.*at.*: $srcfile:$bp_location. \\(2 locations\\).*" \
     "separate condition: set breakpoint"
 
-gdb_test_no_output "condition 1 i==1" \
+gdb_test_no_output {condition $bpnum i==1} \
     "separate condition: set condition"
     
 gdb_run_cmd
@@ -106,7 +91,7 @@ gdb_test "continue" \
 # Try disabling a single location. We also test
 # that at least in simple cases, the enable/disable
 # state of locations surive "run".
-gdb_test_no_output "disable 1.1" "disabling location: disable"
+gdb_test_no_output {disable $bpnum.1} "disabling location: disable"
 
 gdb_run_cmd
 gdb_expect {
@@ -122,10 +107,10 @@ gdb_expect {
 }
 
 # Try disabling entire breakpoint
-gdb_test_no_output "enable 1.1" "disabling location: enable"
+gdb_test_no_output {enable $bpnum.1} "disabling location: enable"
 
 
-gdb_test_no_output "disable 1" "disable breakpoint: disable"
+gdb_test_no_output {disable $bpnum} "disable breakpoint: disable"
 
 gdb_run_cmd
 gdb_expect {
@@ -177,7 +162,7 @@ if { ![runto_main] } {
 }
 
 gdb_test "break $srcfile:$bp_location" \
-    "Breakpoint.*at.* file .*$srcfile, line.*\\(2 locations\\).*" \
+    "Breakpoint.*at.*: $srcfile:$bp_location. \\(2 locations\\).*" \
     "set multi_line_foo breakpoint"
 gdb_test "continue" \
     ".*Breakpoint.*multi_line_foo<int> \\(i=0\\).*" \

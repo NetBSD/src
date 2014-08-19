@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.26.12.1 2012/11/20 03:01:31 tls Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.26.12.2 2014/08/20 00:03:11 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.26.12.1 2012/11/20 03:01:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.26.12.2 2014/08/20 00:03:11 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -79,8 +79,18 @@ dev_type_tty(ofctty);
 dev_type_poll(ofcpoll);
 
 const struct cdevsw macofcons_cdevsw = {
-	ofcopen, ofcclose, ofcread, ofcwrite, ofcioctl,
-	nostop, ofctty, ofcpoll, nommap, ttykqfilter, D_TTY
+	.d_open = ofcopen,
+	.d_close = ofcclose,
+	.d_read = ofcread,
+	.d_write = ofcwrite,
+	.d_ioctl = ofcioctl,
+	.d_stop = nostop,
+	.d_tty = ofctty,
+	.d_poll = ofcpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 /* For polled ADB mode */

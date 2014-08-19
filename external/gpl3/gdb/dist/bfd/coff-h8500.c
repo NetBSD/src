@@ -1,6 +1,6 @@
 /* BFD back-end for Renesas H8/500 COFF binaries.
    Copyright 1993, 1994, 1995, 1997, 1999, 2000, 2001, 2002, 2003, 2004,
-   2005, 2007, 2008  Free Software Foundation, Inc.
+   2005, 2007, 2008, 2012  Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Written by Steve Chamberlain, <sac@cygnus.com>.
 
@@ -29,10 +29,6 @@
 #include "coff/internal.h"
 #include "libcoff.h"
 
-static int  coff_h8500_select_reloc PARAMS ((reloc_howto_type *));
-static void rtype2howto      PARAMS ((arelent *, struct internal_reloc *));
-static void reloc_processing PARAMS ((arelent *, struct internal_reloc *, asymbol **, bfd *, asection *));
-static void extra_case       PARAMS ((bfd *, struct bfd_link_info *, struct bfd_link_order *, arelent *, bfd_byte *, unsigned int *, unsigned int *));
 
 #define COFF_DEFAULT_SECTION_ALIGNMENT_POWER (1)
 
@@ -73,8 +69,7 @@ HOWTO (R_H8500_HIGH16, 0, 1, 8, FALSE, 0,
 /* Turn a howto into a reloc number.  */
 
 static int
-coff_h8500_select_reloc (howto)
-     reloc_howto_type *howto;
+coff_h8500_select_reloc (reloc_howto_type *howto)
 {
   return howto->type;
 }
@@ -96,9 +91,7 @@ coff_h8500_select_reloc (howto)
 /* Code to turn a r_type into a howto ptr, uses the above howto table.  */
 
 static void
-rtype2howto (internal, dst)
-     arelent * internal;
-     struct internal_reloc *dst;
+rtype2howto (arelent * internal, struct internal_reloc *dst)
 {
   switch (dst->r_type)
     {
@@ -145,12 +138,12 @@ rtype2howto (internal, dst)
 #define RELOC_PROCESSING(relent,reloc,symbols,abfd,section) \
  reloc_processing(relent, reloc, symbols, abfd, section)
 
-static void reloc_processing (relent, reloc, symbols, abfd, section)
-     arelent * relent;
-     struct internal_reloc *reloc;
-     asymbol ** symbols;
-     bfd * abfd;
-     asection * section;
+static void
+reloc_processing (arelent * relent,
+		  struct internal_reloc *reloc,
+		  asymbol ** symbols,
+		  bfd * abfd,
+		  asection * section)
 {
   relent->address = reloc->r_vaddr;
   rtype2howto (relent, reloc);
@@ -165,14 +158,13 @@ static void reloc_processing (relent, reloc, symbols, abfd, section)
 }
 
 static void
-extra_case (in_abfd, link_info, link_order, reloc, data, src_ptr, dst_ptr)
-     bfd *in_abfd;
-     struct bfd_link_info *link_info;
-     struct bfd_link_order *link_order;
-     arelent *reloc;
-     bfd_byte *data;
-     unsigned int *src_ptr;
-     unsigned int *dst_ptr;
+extra_case (bfd *in_abfd,
+	    struct bfd_link_info *link_info,
+	    struct bfd_link_order *link_order,
+	    arelent *reloc,
+	    bfd_byte *data,
+	    unsigned int *src_ptr,
+	    unsigned int *dst_ptr)
 {
   bfd_byte *d = data+*dst_ptr;
   asection *input_section = link_order->u.indirect.section;
@@ -230,7 +222,7 @@ extra_case (in_abfd, link_info, link_order, reloc, data, src_ptr, dst_ptr)
 	v = (v & 0x00ffffff) | (o & 0xff00000);
 	bfd_put_32 (in_abfd, (bfd_vma) v, data  + *dst_ptr -1);
 	(*dst_ptr) += 3;
-	(*src_ptr) += 3;;
+	(*src_ptr) += 3;
       }
       break;
     case R_H8500_IMM32:
@@ -238,7 +230,7 @@ extra_case (in_abfd, link_info, link_order, reloc, data, src_ptr, dst_ptr)
 	int v = bfd_coff_reloc16_get_value (reloc, link_info, input_section);
 	bfd_put_32 (in_abfd, (bfd_vma) v, data  + *dst_ptr);
 	(*dst_ptr) += 4;
-	(*src_ptr) += 4;;
+	(*src_ptr) += 4;
       }
       break;
 

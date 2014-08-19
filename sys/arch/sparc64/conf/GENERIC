@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.152.2.3 2013/06/23 06:20:12 tls Exp $
+# $NetBSD: GENERIC,v 1.152.2.4 2014/08/20 00:03:25 tls Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.152.2.3 $"
+#ident 		"GENERIC-$Revision: 1.152.2.4 $"
 
 maxusers	64
 
@@ -31,6 +31,7 @@ maxusers	64
 
 # Options for variants of the Sun SPARC architecure.
 options 	SUN4U		# sun4u - UltraSPARC
+options 	SUN4V		# sun4v - UltraSPARC T1/T2+/T3/T4/T5
 #options 	BLINK		# blink the system LED
 
 #### System options that are the same for all ports
@@ -85,7 +86,7 @@ options 	NFS_BOOT_DHCP
 options 	DDB			# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 options 	DDB_VERBOSE_HELP	# enable verbose online help
-#options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
+#options 	DDB_ONPANIC=1		# see also sysctl(7): `ddb.onpanic'
 
 ## You may also use gdb, on another computer connected to this machine over
 ## a serial port.
@@ -200,7 +201,6 @@ options 	PIM		# Protocol Independent Multicast
 options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
-options 	PFIL_HOOKS	# Add pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
@@ -942,10 +942,6 @@ lom*		at ebus?		# LOMlite lights out management
 # Netra X1 / T1 style environmental monitoring
 alipm*		at pci?
 iic*		at alipm?
-
-# I2C devices
-spdmem*		at iic? addr 0x50	# SPARCle memory
-spdmem*		at iic? addr 0x51	# SPARCle memory
 
 spdmem*		at iic? addr?
 admtemp*	at iic? addr?

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 2012/07/29 18:05:45 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25.2.1 2014/08/20 00:03:21 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2012/07/29 18:05:45 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25.2.1 2014/08/20 00:03:21 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,7 @@ device_register(device_t dev, void *aux)
 	device_t parent;
 	char devpath[256];
 	prop_string_t str1;
+	int n;
 
 	/* Certain devices will *never* be bootable.  short circuit them. */
 
@@ -144,17 +145,18 @@ device_register(device_t dev, void *aux)
 	}
 	parent = device_parent(dev);
 
+	n = 0;
 	if (device_is_a(dev, "pci")) {
 		if (device_is_a(parent, "ppb"))
-			sprintf(devpath, "");
+			n = snprintf(devpath, sizeof(devpath), "");
 		else
-			sprintf(devpath, "pci@%x",
+			n = snprintf(devpath, sizeof(devpath), "pci@%x",
 			    prep_io_space_tag.pbs_offset);
 	}
 	if (device_is_a(parent, "pci")) {
 		struct pci_attach_args *pa = aux;
 
-		sprintf(devpath, "pci%x,%x@%x,%x",
+		n = snprintf(devpath, sizeof(devpath), "pci%x,%x@%x,%x",
 		    PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id),
 		    pa->pa_device, pa->pa_function);
 	}
@@ -162,42 +164,59 @@ device_register(device_t dev, void *aux)
 		struct pnpbus_dev_attach_args *pna = aux;
 		struct pnpbus_io *io;
 
-		sprintf(devpath, "%s@", pna->pna_devid);
+		n = snprintf(devpath, sizeof(devpath), "%s@",
+		    pna->pna_devid);
 		io = SIMPLEQ_FIRST(&pna->pna_res.io);
+		if (n > sizeof(devpath))
+			n = sizeof(devpath);
 		if (io != NULL)
-			sprintf(devpath, "%s%x", devpath, io->minbase);
+			n += snprintf(devpath + n, sizeof(devpath) - n, "%x",
+			    io->minbase);
 	}
 
+	if (n > sizeof(devpath))
+		n = sizeof(devpath);
 	/* we can't trust the device tag on the ethernet, because
 	 * the spec lies about how it is formed.  Therefore we will leave it
 	 * blank, and trim the end off any ethernet stuff. */
 	if (device_class(dev) == DV_IFNET)
-		sprintf(devpath, "%s:", devpath);
+		n += snprintf(devpath + n, sizeof(devpath) - n, ":");
 	else if (device_is_a(dev, "cd"))
-		sprintf(devpath, "cdrom@");
+		n = snprintf(devpath, sizeof(devpath), "cdrom@");
 	else if (device_class(dev) == DV_DISK)
-		sprintf(devpath, "harddisk@");
+		n = snprintf(devpath, sizeof(devpath), "harddisk@");
 	else if (device_class(dev) == DV_TAPE)
-		sprintf(devpath, "tape@");
+		n = snprintf(devpath, sizeof(devpath), "tape@");
 	else if (device_is_a(dev, "fd"))
-		sprintf(devpath, "floppy@");
+		n = snprintf(devpath, sizeof(devpath), "floppy@");
 
 	if (device_is_a(parent, "scsibus") || device_is_a(parent, "atapibus")) {
 		struct scsipibus_attach_args *sa = aux;
 
 		/* periph_target is target for scsi, drive # for atapi */
-		sprintf(devpath, "%s%d", devpath, sa->sa_periph->periph_target);
+		if (n > sizeof(devpath))
+			n = sizeof(devpath);
+		n += snprintf(devpath + n, sizeof(devpath) - n, "%d",
+		    sa->sa_periph->periph_target);
+		if (n > sizeof(devpath))
+			n = sizeof(devpath);
 		if (device_is_a(parent, "scsibus"))
-			sprintf(devpath, "%s,%d", devpath,
+			n += snprintf(devpath + n, sizeof(devpath) - n, ",%d",
 			    sa->sa_periph->periph_lun);
 	} else if (device_is_a(parent, "atabus") ||
 	    device_is_a(parent, "pciide")) {
 		struct ata_device *adev = aux;
 
-		sprintf(devpath, "%s%d", devpath, adev->adev_drv_data->drive);
+		if (n > sizeof(devpath))
+			n = sizeof(devpath);
+		n += snprintf(devpath + n, sizeof(devpath) - n, "%d",
+		    adev->adev_drv_data->drive);
 	} else if (device_is_a(dev, "fd")) {
+		if (n > sizeof(devpath))
+			n = sizeof(devpath);
 		/* XXX device_unit() abuse */
-		sprintf(devpath, "%s%d", devpath, device_unit(dev));
+		n += snprintf(devpath + n, sizeof(devpath) - n, "%d",
+		    device_unit(dev));
 	}
 
 	str1 = prop_string_create_cstring(devpath);

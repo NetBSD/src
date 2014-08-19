@@ -1,7 +1,6 @@
 /* Target-dependent code for the Xtensa port of GDB, the GNU debugger.
 
-   Copyright (C) 2003, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,7 +37,6 @@
 #include "dwarf2.h"
 #include "dwarf2-frame.h"
 #include "dwarf2loc.h"
-#include "frame.h"
 #include "frame-base.h"
 #include "frame-unwind.h"
 
@@ -56,7 +54,7 @@
 #include "xtensa-config.h"
 
 
-static int xtensa_debug_level = 0;
+static unsigned int xtensa_debug_level = 0;
 
 #define DEBUGWARN(args...) \
   if (xtensa_debug_level > 0) \
@@ -318,15 +316,14 @@ xtensa_register_type (struct gdbarch *gdbarch, int regnum)
 
 	      if (tp == NULL)
 		{
-		  char *name = xmalloc (16);
+		  char *name = xstrprintf ("int%d", size * 8);
 		  tp = xmalloc (sizeof (struct ctype_cache));
 		  tp->next = tdep->type_entries;
 		  tdep->type_entries = tp;
 		  tp->size = size;
-
-		  sprintf (name, "int%d", size * 8);
 		  tp->virtual_type
-		    = arch_integer_type (gdbarch, size * 8, 1, xstrdup (name));
+		    = arch_integer_type (gdbarch, size * 8, 1, name);
+		  xfree (name);
 		}
 
 	      reg->ctype = tp->virtual_type;
@@ -667,7 +664,6 @@ xtensa_pseudo_register_write (struct gdbarch *gdbarch,
       && (regnum <= gdbarch_tdep (gdbarch)->a0_base + 15))
     {
       gdb_byte *buf = (gdb_byte *) alloca (MAX_REGISTER_SIZE);
-      unsigned int wb;
 
       regcache_raw_read (regcache,
 			 gdbarch_tdep (gdbarch)->wb_regnum, buf);
@@ -843,7 +839,8 @@ xtensa_register_reggroup_p (struct gdbarch *gdbarch,
   if (group == restore_reggroup)
     return (regnum < gdbarch_num_regs (gdbarch)
 	    && (reg->flags & SAVE_REST_FLAGS) == SAVE_REST_VALID);
-  if ((cp_number = xtensa_coprocessor_register_group (group)) >= 0)
+  cp_number = xtensa_coprocessor_register_group (group);
+  if (cp_number >= 0)
     return rg & (xtRegisterGroupCP0 << cp_number);
   else
     return 1;
@@ -1156,7 +1153,7 @@ xtensa_scan_prologue (struct gdbarch *gdbarch, CORE_ADDR current_pc)
   CORE_ADDR start_addr;
   xtensa_isa isa;
   xtensa_insnbuf ins, slot;
-  char ibuf[XTENSA_ISA_BSZ];
+  gdb_byte ibuf[XTENSA_ISA_BSZ];
   CORE_ADDR ia, bt, ba;
   xtensa_format ifmt;
   int ilen, islots, is;
@@ -1683,7 +1680,7 @@ xtensa_store_return_value (struct type *type,
 
 static enum return_value_convention
 xtensa_return_value (struct gdbarch *gdbarch,
-		     struct type *func_type,
+		     struct value *function,
 		     struct type *valtype,
 		     struct regcache *regcache,
 		     gdb_byte *readbuf,
@@ -2034,7 +2031,7 @@ call0_ret (CORE_ADDR start_pc, CORE_ADDR finish_pc)
 #define RETURN_RET goto done
   xtensa_isa isa;
   xtensa_insnbuf ins, slot;
-  char ibuf[XTENSA_ISA_BSZ];
+  gdb_byte ibuf[XTENSA_ISA_BSZ];
   CORE_ADDR ia, bt, ba;
   xtensa_format ifmt;
   int ilen, islots, is;
@@ -2392,7 +2389,7 @@ call0_analyze_prologue (struct gdbarch *gdbarch,
   CORE_ADDR ia;		    /* Current insn address in prologue.  */
   CORE_ADDR ba = 0;	    /* Current address at base of insn buffer.  */
   CORE_ADDR bt;		    /* Current address at top+1 of insn buffer.  */
-  char ibuf[XTENSA_ISA_BSZ];/* Instruction buffer for decoding prologue.  */
+  gdb_byte ibuf[XTENSA_ISA_BSZ];/* Instruction buffer for decoding prologue.  */
   xtensa_isa isa;	    /* libisa ISA handle.  */
   xtensa_insnbuf ins, slot; /* libisa handle to decoded insn, slot.  */
   xtensa_format ifmt;	    /* libisa instruction format.  */
@@ -2715,9 +2712,9 @@ call0_frame_cache (struct frame_info *this_frame,
 	 too bad.  */
 
       int i;
-      for (i = 0; 
-	   (i < C0_NREGS) &&
-	     (i == C0_RA || cache->c0.c0_rt[i].fr_reg != C0_RA);
+      for (i = 0;
+	   (i < C0_NREGS)
+	   && (i == C0_RA || cache->c0.c0_rt[i].fr_reg != C0_RA);
 	   ++i);
       if (i >= C0_NREGS && cache->c0.c0_rt[C0_RA].fr_reg == C0_RA)
 	i = C0_RA;
@@ -2807,7 +2804,7 @@ execute_code (struct gdbarch *gdbarch, CORE_ADDR current_pc, CORE_ADDR wb)
 {
   xtensa_isa isa;
   xtensa_insnbuf ins, slot;
-  char ibuf[XTENSA_ISA_BSZ];
+  gdb_byte ibuf[XTENSA_ISA_BSZ];
   CORE_ADDR ia, bt, ba;
   xtensa_format ifmt;
   int ilen, islots, is;
@@ -2816,8 +2813,7 @@ execute_code (struct gdbarch *gdbarch, CORE_ADDR current_pc, CORE_ADDR wb)
   int fail = 0;
   void (*func) (struct gdbarch *, int, int, int, CORE_ADDR);
 
-  int at, as, offset;
-  int num_operands;
+  uint32_t at, as, offset;
 
   /* WindowUnderflow12 = true, when inside _WindowUnderflow12.  */ 
   int WindowUnderflow12 = (current_pc & 0x1ff) >= 0x140; 
@@ -3311,14 +3307,14 @@ _initialize_xtensa_tdep (void)
   gdbarch_register (bfd_arch_xtensa, xtensa_gdbarch_init, xtensa_dump_tdep);
   xtensa_init_reggroups ();
 
-  add_setshow_zinteger_cmd ("xtensa",
-			    class_maintenance,
-			    &xtensa_debug_level,
+  add_setshow_zuinteger_cmd ("xtensa",
+			     class_maintenance,
+			     &xtensa_debug_level,
 			    _("Set Xtensa debugging."),
 			    _("Show Xtensa debugging."), _("\
 When non-zero, Xtensa-specific debugging is enabled. \
 Can be 1, 2, 3, or 4 indicating the level of debugging."),
-			    NULL,
-			    NULL,
-			    &setdebuglist, &showdebuglist);
+			     NULL,
+			     NULL,
+			     &setdebuglist, &showdebuglist);
 }

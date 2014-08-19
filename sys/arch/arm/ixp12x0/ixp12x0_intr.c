@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.23.2.1 2012/11/20 03:01:06 tls Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.23.2.2 2014/08/20 00:02:46 tls Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.23.2.1 2012/11/20 03:01:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.23.2.2 2014/08/20 00:02:46 tls Exp $");
 
 /*
  * Interrupt support for the Intel ixp12x0
@@ -39,13 +39,11 @@ __KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.23.2.1 2012/11/20 03:01:06 tls Ex
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/simplelock.h>
 #include <sys/termios.h>
-
 #include <sys/bus.h>
-#include <machine/intr.h>
+#include <sys/intr.h>
 
-#include <arm/cpufunc.h>
+#include <arm/locore.h>
 
 #include <arm/ixp12x0/ixp12x0reg.h> 
 #include <arm/ixp12x0/ixp12x0var.h> 
@@ -70,9 +68,6 @@ volatile int hardware_spl_level;
 /* Software copy of the IRQs we have enabled. */
 volatile uint32_t intr_enabled;
 volatile uint32_t pci_intr_enabled;
-
-/* Interrupts pending. */
-static volatile int ipending;
 
 void	ixp12x0_intr_dispatch(struct trapframe *);
 
@@ -259,11 +254,9 @@ ixp12x0_intr_calculate_masks(void)
 inline void
 splx(int new)
 {
-	int	old;
 	u_int	oldirqstate;
 
 	oldirqstate = disable_interrupts(I32_bit);
-	old = curcpl();
 	set_curcpl(new);
 	if (new != hardware_spl_level) {
 		hardware_spl_level = new;
@@ -319,7 +312,7 @@ ixp12x0_intr_init(void)
 		iq = &intrq[i];
 		TAILQ_INIT(&iq->iq_list);
 
-		sprintf(iq->iq_name, "ipl %d", i);
+		snprintf(iq->iq_name, sizeof(iq->iq_name), "ipl %d", i);
 		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
 				     NULL, "ixpintr", iq->iq_name);
 	}

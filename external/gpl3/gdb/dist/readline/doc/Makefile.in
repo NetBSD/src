@@ -1,25 +1,24 @@
 # This makefile for Readline library documentation is in -*- text -*- mode.
 # Emacs likes it that way.
 
-# Copyright (C) 1996-2004 Free Software Foundation, Inc.
+# Copyright (C) 1996-2009 Free Software Foundation, Inc.
 
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2, or (at your option)
-# any later version.
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
 
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
 
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111 USA.
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 topdir = @top_srcdir@
 srcdir = @srcdir@
-VPATH = .:@srcdir@
+VPATH = @srcdir@
 
 prefix = @prefix@
 
@@ -64,9 +63,9 @@ PSPDF       = gs -sPAPERSIZE=${PAPERSIZE} -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -s
 
 RLSRC = $(srcdir)/rlman.texi $(srcdir)/rluser.texi \
 	$(srcdir)/rltech.texi $(srcdir)/version.texi \
-	$(srcdir)/rluserman.texi
+	$(srcdir)/rluserman.texi $(srcdir)/fdl.texi
 HISTSRC = $(srcdir)/history.texi $(srcdir)/hsuser.texi \
-	  $(srcdir)/hstech.texi $(srcdir)/version.texi
+	  $(srcdir)/hstech.texi $(srcdir)/version.texi $(srcdir)/fdl.texi
 
 # This should be a program that converts troff to an ascii-readable format
 NROFF       = groff -Tascii
@@ -83,7 +82,7 @@ PDFOBJ = readline.pdf history.pdf rluserman.pdf
 
 INTERMEDIATE_OBJ = rlman.dvi
 
-DIST_DOCS = $(DVIOBJ) $(PSOBJ) $(HTMLOBJ) $(INFOOBJ) $(TEXTOBJ)
+DIST_DOCS = $(DVIOBJ) $(PSOBJ) $(HTMLOBJ) $(INFOOBJ) $(TEXTOBJ) $(PDFOBJ)
 
 .SUFFIXES:      .0 .3 .ps .txt .dvi .html .pdf
 
@@ -99,8 +98,10 @@ DIST_DOCS = $(DVIOBJ) $(PSOBJ) $(HTMLOBJ) $(INFOOBJ) $(TEXTOBJ)
 	$(RM) $@
 	-${DVIPDF} $<
 
-all: info dvi html ps text
+all: info dvi html ps text pdf
 nodvi: info html text
+
+xdist: $(DIST_DOCS)
 
 info:	$(INFOOBJ)
 dvi:	$(DVIOBJ)
@@ -156,13 +157,13 @@ history.html:	${HISTSRC}
 
 readline.0: readline.3
 
-readline_3.ps: readline.3
+readline_3.ps: $(srcdir)/readline.3
 	${RM} $@
 	${GROFF} -man < $(srcdir)/readline.3 > $@ 
 
 history.0: history.3
 
-history_3.ps: history.3
+history_3.ps: $(srcdir)/history.3
 	${RM} $@
 	${GROFF} -man < $(srcdir)/history.3 > $@ 
 
@@ -182,7 +183,7 @@ distclean: clean maybe-clean
 	$(RM) Makefile
 
 maybe-clean:
-	-if test "X$(topdir)" != "X$(BUILD_DIR)"; then \
+	-if test "X$(topdir)" != "X.." && test "X$(topdir)" != "X$(BUILD_DIR)"; then \
 		$(RM) $(DIST_DOCS); \
 	fi
 

@@ -10,7 +10,7 @@
    GNU MP RELEASE.
 
 Copyright 1991, 1992, 1993, 1994, 1996, 2000, 2001, 2002, 2004, 2006, 2007,
-2008 Free Software Foundation, Inc.
+2008, 2012, 2013 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -131,8 +131,7 @@ mpn_set_str_compute_powtab (powers_t *powtab, mp_ptr powtab_mem, mp_size_t un, i
   long i, pi;
   mp_size_t n;
   mp_ptr p, t;
-  unsigned normalization_steps;
-  mp_limb_t big_base, big_base_inverted;
+  mp_limb_t big_base;
   int chars_per_limb;
   size_t digits_in_base;
   mp_size_t shift;
@@ -141,8 +140,6 @@ mpn_set_str_compute_powtab (powers_t *powtab, mp_ptr powtab_mem, mp_size_t un, i
 
   chars_per_limb = mp_bases[base].chars_per_limb;
   big_base = mp_bases[base].big_base;
-  big_base_inverted = mp_bases[base].big_base_inverted;
-  count_leading_zeros (normalization_steps, big_base);
 
   p = powtab_mem_ptr;
   powtab_mem_ptr += 1;
@@ -239,7 +236,9 @@ mpn_dc_set_str (mp_ptr rp, const unsigned char *str, size_t str_len,
 
   if (hn == 0)
     {
-      MPN_ZERO (rp, powtab->n + sn);
+      /* Zero +1 limb here, to avoid reading an allocated but uninitialised
+	 limb in mpn_incr_u below.  */
+      MPN_ZERO (rp, powtab->n + sn + 1);
     }
   else
     {

@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.38 2011/11/24 03:35:57 mrg Exp $	*/
+/*	$NetBSD: snapper.c,v 1.38.8.1 2014/08/20 00:03:11 tls Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.38 2011/11/24 03:35:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.38.8.1 2014/08/20 00:03:11 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -725,7 +725,7 @@ snapper_attach(device_t parent, device_t self, void *aux)
 {
 	struct snapper_softc *sc;
 	struct confargs *ca;
-	int cirq, oirq, iirq, cirq_type, oirq_type, iirq_type, soundbus;
+	int cirq, oirq, iirq, /*cirq_type,*/ oirq_type, iirq_type, soundbus;
 	uint32_t intr[6], reg[6];
 	char compat[32];
 
@@ -782,7 +782,7 @@ snapper_attach(device_t parent, device_t self, void *aux)
 	cirq = intr[0];
 	oirq = intr[2];
 	iirq = intr[4];
-	cirq_type = intr[1] ? IST_LEVEL : IST_EDGE;
+	/* cirq_type = intr[1] ? IST_LEVEL : IST_EDGE; */
 	oirq_type = intr[3] ? IST_LEVEL : IST_EDGE;
 	iirq_type = intr[5] ? IST_LEVEL : IST_EDGE;
 
@@ -2045,7 +2045,7 @@ static void
 snapper_init(struct snapper_softc *sc, int node)
 {
 	int gpio;
-	int headphone_detect_intr, headphone_detect_intrtype;
+	int headphone_detect_intr;
 	uint32_t gpio_base, reg[1];
 #ifdef SNAPPER_DEBUG
 	char fcr[32];
@@ -2096,7 +2096,6 @@ snapper_init(struct snapper_softc *sc, int node)
 			    &headphone_detect_active, 4);
 			if (OF_getprop(gpio, "interrupts", intr, 8) == 8) {
 				headphone_detect_intr = intr[0];
-				headphone_detect_intrtype = intr[1];
 			}
 		}
 		/* gpio11 (keywest-11) */

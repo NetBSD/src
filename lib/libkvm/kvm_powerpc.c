@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_powerpc.c,v 1.12 2010/09/20 23:23:16 jym Exp $	*/
+/*	$NetBSD: kvm_powerpc.c,v 1.12.12.1 2014/08/20 00:02:17 tls Exp $	*/
 
 /*
  * Copyright (c) 2005 Wasabi Systems, Inc.
@@ -90,6 +90,8 @@
 #include <powerpc/oea/spr.h>
 #include <powerpc/oea/bat.h>
 #include <powerpc/oea/pte.h>
+
+__RCSID("$NetBSD: kvm_powerpc.c,v 1.12.12.1 2014/08/20 00:02:17 tls Exp $");
 
 static int	_kvm_match_601bat(kvm_t *, vaddr_t, paddr_t *, int *);
 static int	_kvm_match_bat(kvm_t *, vaddr_t, paddr_t *, int *);

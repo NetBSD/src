@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_htable.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: ip_htable.c,v 1.3.2.1 2014/08/20 00:04:24 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -60,7 +60,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_htable.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_htable.c,v 1.3.2.1 2014/08/20 00:04:24 tls Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_htable.c,v 1.1.1.2 2012/07/22 13:45:19 darrenr Exp";
 #endif
@@ -326,11 +326,7 @@ ipf_htable_create(ipf_main_softc_t *softc, void *arg, iplookupop_t *op)
 		i = IPHASH_ANON;
 		do {
 			i++;
-#if defined(SNPRINTF) && defined(_KERNEL)
-			SNPRINTF(name, sizeof(name), "%u", i);
-#else
-			(void)sprintf(name, "%u", i);
-#endif
+			snprintf(name, sizeof(name), "%u", i);
 			for (oiph = softh->ipf_htables[unit + 1]; oiph != NULL;
 			     oiph = oiph->iph_next)
 				if (strncmp(oiph->iph_name, name,
@@ -625,8 +621,7 @@ ipf_htent_remove(ipf_main_softc_t *softc, void *arg, iphtable_t *iph,
 	switch (iph->iph_type & ~IPHASH_ANON)
 	{
 	case IPHASH_GROUPMAP :
-		if (ipe->ipe_group != NULL)
-			ipf_group_del(softc, ipe->ipe_ptr, NULL);
+		ipf_group_del(softc, ipe->ipe_ptr, NULL);
 		break;
 
 	default :
@@ -995,7 +990,6 @@ ipf_htent_find(iphtable_t *iph, iphtent_t *ipeo)
 {
 	iphtent_t ipe, *ent;
 	u_int hv;
-	int bits;
 
 	bcopy((char *)ipeo, (char *)&ipe, sizeof(ipe));
 	ipe.ipe_addr.i6[0] &= ipe.ipe_mask.i6[0];
@@ -1003,7 +997,6 @@ ipf_htent_find(iphtable_t *iph, iphtent_t *ipeo)
 	ipe.ipe_addr.i6[2] &= ipe.ipe_mask.i6[2];
 	ipe.ipe_addr.i6[3] &= ipe.ipe_mask.i6[3];
 	if (ipe.ipe_family == AF_INET) {
-		bits = count4bits(ipe.ipe_mask.in4_addr);
 		ipe.ipe_addr.i6[1] = 0;
 		ipe.ipe_addr.i6[2] = 0;
 		ipe.ipe_addr.i6[3] = 0;
@@ -1015,7 +1008,6 @@ ipf_htent_find(iphtable_t *iph, iphtent_t *ipeo)
 	} else
 #ifdef USE_INET6
 	if (ipe.ipe_family == AF_INET6) {
-		bits = count6bits(ipe.ipe_mask.i6);
 		hv = IPE_V6_HASH_FN(ipe.ipe_addr.i6,
 				    ipe.ipe_mask.i6, iph->iph_size);
 	} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.17 2011/03/03 09:37:21 skrll Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.17.14.1 2014/08/20 00:03:04 tls Exp $	*/
 
 /*	$OpenBSD: process_machdep.c,v 1.3 1999/06/18 05:19:52 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.17 2011/03/03 09:37:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.17.14.1 2014/08/20 00:03:04 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ process_read_regs(struct lwp *l, struct reg *regs)
 }
 
 int
-process_read_fpregs(struct lwp *l, struct fpreg *fpregs)
+process_read_fpregs(struct lwp *l, struct fpreg *fpregs, size_t *sz)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 
@@ -177,7 +177,7 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 }
 
 int
-process_write_fpregs(struct lwp *l, const struct fpreg *fpregs)
+process_write_fpregs(struct lwp *l, const struct fpreg *fpregs, size_t sz)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 

@@ -1,6 +1,6 @@
 /* Program and address space management, for GDB, the GNU debugger.
 
-   Copyright (C) 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,20 +37,31 @@ struct program_space *current_program_space;
 /* The last address space number assigned.  */
 static int highest_address_space_num;
 
-/* Prototypes for local functions */
-
-static void program_space_alloc_data (struct program_space *);
-static void program_space_free_data (struct program_space *);
 
 
-/* An address space.  Currently this is not used for much other than
-   for comparing if pspaces/inferior/threads see the same address
+/* Keep a registry of per-program_space data-pointers required by other GDB
+   modules.  */
+
+DEFINE_REGISTRY (program_space, REGISTRY_ACCESS_FIELD)
+
+/* An address space.  It is used for comparing if pspaces/inferior/threads
+   see the same address space and for associating caches to each address
    space.  */
 
 struct address_space
 {
   int num;
+
+  /* Per aspace data-pointers required by other GDB modules.  */
+  REGISTRY_FIELDS;
 };
+
+/* Keep a registry of per-address_space data-pointers required by other GDB
+   modules.  */
+
+DEFINE_REGISTRY (address_space, REGISTRY_ACCESS_FIELD)
+
+
 
 /* Create a new address space object, and add it to the list.  */
 
@@ -61,6 +72,7 @@ new_address_space (void)
 
   aspace = XZALLOC (struct address_space);
   aspace->num = ++highest_address_space_num;
+  address_space_alloc_data (aspace);
 
   return aspace;
 }
@@ -72,7 +84,7 @@ new_address_space (void)
 struct address_space *
 maybe_new_address_space (void)
 {
-  int shared_aspace = gdbarch_has_shared_address_space (target_gdbarch);
+  int shared_aspace = gdbarch_has_shared_address_space (target_gdbarch ());
 
   if (shared_aspace)
     {
@@ -86,6 +98,7 @@ maybe_new_address_space (void)
 static void
 free_address_space (struct address_space *aspace)
 {
+  address_space_free_data (aspace);
   xfree (aspace);
 }
 
@@ -145,10 +158,11 @@ release_program_space (struct program_space *pspace)
   no_shared_libraries (NULL, 0);
   exec_close ();
   free_all_objfiles ();
-  if (!gdbarch_has_shared_address_space (target_gdbarch))
+  if (!gdbarch_has_shared_address_space (target_gdbarch ()))
     free_address_space (pspace->aspace);
   resize_section_table (&pspace->target_sections,
 			-resize_section_table (&pspace->target_sections, 0));
+  clear_program_space_solib_cache (pspace);
     /* Discard any data modules have associated with the PSPACE.  */
   program_space_free_data (pspace);
   xfree (pspace);
@@ -192,11 +206,11 @@ clone_program_space (struct program_space *dest, struct program_space *src)
 
   set_current_program_space (dest);
 
-  if (src->ebfd != NULL)
-    exec_file_attach (bfd_get_filename (src->ebfd), 0);
+  if (src->pspace_exec_filename != NULL)
+    exec_file_attach (src->pspace_exec_filename, 0);
 
   if (src->symfile_object_file != NULL)
-    symbol_file_add_main (src->symfile_object_file->name, 0);
+    symbol_file_add_main (objfile_name (src->symfile_object_file), 0);
 
   do_cleanups (old_chain);
   return dest;
@@ -332,9 +346,8 @@ print_program_space (struct ui_out *uiout, int requested)
 
       ui_out_field_int (uiout, "id", pspace->num);
 
-      if (pspace->ebfd)
-	ui_out_field_string (uiout, "exec",
-			     bfd_get_filename (pspace->ebfd));
+      if (pspace->pspace_exec_filename)
+	ui_out_field_string (uiout, "exec", pspace->pspace_exec_filename);
       else
 	ui_out_field_skip (uiout, "exec");
 
@@ -397,7 +410,7 @@ maintenance_info_program_spaces_command (char *args, int from_tty)
 	error (_("program space ID %d not known."), requested);
     }
 
-  print_program_space (uiout, requested);
+  print_program_space (current_uiout, requested);
 }
 
 /* Simply returns the count of program spaces.  */
@@ -428,7 +441,7 @@ number_of_program_spaces (void)
 void
 update_address_spaces (void)
 {
-  int shared_aspace = gdbarch_has_shared_address_space (target_gdbarch);
+  int shared_aspace = gdbarch_has_shared_address_space (target_gdbarch ());
   struct program_space *pspace;
   struct inferior *inf;
 
@@ -450,7 +463,7 @@ update_address_spaces (void)
       }
 
   for (inf = inferior_list; inf; inf = inf->next)
-    if (gdbarch_has_global_solist (target_gdbarch))
+    if (gdbarch_has_global_solist (target_gdbarch ()))
       inf->aspace = maybe_new_address_space ();
     else
       inf->aspace = inf->pspace->aspace;
@@ -468,7 +481,8 @@ save_current_space_and_thread (void)
   /* If restoring to null thread, we need to restore the pspace as
      well, hence, we need to save the current program space first.  */
   old_chain = save_current_program_space ();
-  save_current_inferior ();
+  /* There's no need to save the current inferior here.
+     That is handled by make_cleanup_restore_current_thread.  */
   make_cleanup_restore_current_thread ();
 
   return old_chain;
@@ -503,104 +517,15 @@ switch_to_program_space_and_thread (struct program_space *pspace)
 
 
 
-/* Keep a registry of per-program_space data-pointers required by other GDB
-   modules.  */
-
-struct program_space_data
-{
-  unsigned index;
-  void (*cleanup) (struct program_space *, void *);
-};
-
-struct program_space_data_registration
-{
-  struct program_space_data *data;
-  struct program_space_data_registration *next;
-};
-
-struct program_space_data_registry
-{
-  struct program_space_data_registration *registrations;
-  unsigned num_registrations;
-};
-
-static struct program_space_data_registry program_space_data_registry
-  = { NULL, 0 };
-
-const struct program_space_data *
-register_program_space_data_with_cleanup
-  (void (*cleanup) (struct program_space *, void *))
-{
-  struct program_space_data_registration **curr;
-
-  /* Append new registration.  */
-  for (curr = &program_space_data_registry.registrations;
-       *curr != NULL; curr = &(*curr)->next);
-
-  *curr = XMALLOC (struct program_space_data_registration);
-  (*curr)->next = NULL;
-  (*curr)->data = XMALLOC (struct program_space_data);
-  (*curr)->data->index = program_space_data_registry.num_registrations++;
-  (*curr)->data->cleanup = cleanup;
-
-  return (*curr)->data;
-}
-
-const struct program_space_data *
-register_program_space_data (void)
-{
-  return register_program_space_data_with_cleanup (NULL);
-}
-
-static void
-program_space_alloc_data (struct program_space *pspace)
-{
-  gdb_assert (pspace->data == NULL);
-  pspace->num_data = program_space_data_registry.num_registrations;
-  pspace->data = XCALLOC (pspace->num_data, void *);
-}
-
-static void
-program_space_free_data (struct program_space *pspace)
-{
-  gdb_assert (pspace->data != NULL);
-  clear_program_space_data (pspace);
-  xfree (pspace->data);
-  pspace->data = NULL;
-}
+/* See progspace.h.  */
 
 void
-clear_program_space_data (struct program_space *pspace)
+clear_program_space_solib_cache (struct program_space *pspace)
 {
-  struct program_space_data_registration *registration;
-  int i;
+  VEC_free (so_list_ptr, pspace->added_solibs);
 
-  gdb_assert (pspace->data != NULL);
-
-  for (registration = program_space_data_registry.registrations, i = 0;
-       i < pspace->num_data;
-       registration = registration->next, i++)
-    if (pspace->data[i] != NULL && registration->data->cleanup)
-      registration->data->cleanup (pspace, pspace->data[i]);
-
-  memset (pspace->data, 0, pspace->num_data * sizeof (void *));
-}
-
-void
-set_program_space_data (struct program_space *pspace,
-		       const struct program_space_data *data,
-		       void *value)
-{
-  gdb_assert (data->index < pspace->num_data);
-  pspace->data[data->index] = value;
-}
-
-void *
-program_space_data (struct program_space *pspace,
-		    const struct program_space_data *data)
-{
-  gdb_assert (data->index < pspace->num_data);
-  return pspace->data[data->index];
+  free_char_ptr_vec (pspace->deleted_solibs);
+  pspace->deleted_solibs = NULL;
 }
 
 

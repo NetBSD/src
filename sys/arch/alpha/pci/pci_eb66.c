@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb66.c,v 1.23 2012/02/06 02:14:15 matt Exp $ */
+/* $NetBSD: pci_eb66.c,v 1.23.6.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb66.c,v 1.23 2012/02/06 02:14:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb66.c,v 1.23.6.1 2014/08/20 00:02:41 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_eb66.c,v 1.23 2012/02/06 02:14:15 matt Exp $");
 
 int	dec_eb66_intr_map(const struct pci_attach_args *,
 	    pci_intr_handle_t *);
-const char *dec_eb66_intr_string(void *, pci_intr_handle_t);
+const char *dec_eb66_intr_string(void *, pci_intr_handle_t, char *, size_t);
 const struct evcnt *dec_eb66_intr_evcnt(void *, pci_intr_handle_t);
 void	*dec_eb66_intr_establish(void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *);
@@ -130,13 +130,14 @@ pci_eb66_pickintr(struct lca_config *lcp)
 	for (i = 0; i < EB66_MAX_IRQ; i++)
 		eb66_intr_disable(i);	
 
-	eb66_pci_intr = alpha_shared_intr_alloc(EB66_MAX_IRQ, 8);
+#define PCI_EB66_IRQ_STR	8
+	eb66_pci_intr = alpha_shared_intr_alloc(EB66_MAX_IRQ, PCI_EB66_IRQ_STR);
 	for (i = 0; i < EB66_MAX_IRQ; i++) {
 		alpha_shared_intr_set_maxstrays(eb66_pci_intr, i,
 			PCI_STRAY_MAX);
 		
 		cp = alpha_shared_intr_string(eb66_pci_intr, i);
-		sprintf(cp, "irq %d", i);
+		snprintf(cp, PCI_EB66_IRQ_STR, "irq %d", i);
 		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
 		    eb66_pci_intr, i), EVCNT_TYPE_INTR, NULL,
 		    "eb66", cp);
@@ -185,14 +186,12 @@ dec_eb66_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 const char *
-dec_eb66_intr_string(void *lcv, pci_intr_handle_t ih)
+dec_eb66_intr_string(void *lcv, pci_intr_handle_t ih, char *buf, size_t len)
 {
-	static char irqstr[15];          /* 11 + 2 + NULL + sanity */
-
 	if (ih >= EB66_MAX_IRQ)
-		panic("dec_eb66_intr_string: bogus eb66 IRQ 0x%lx", ih);
-	sprintf(irqstr, "eb66 irq %ld", ih);
-	return (irqstr);
+		panic("%s: bogus eb66 IRQ 0x%lx", __func__, ih);
+	snprintf(buf, len, "eb66 irq %ld", ih);
+	return buf;
 }
 
 const struct evcnt *
@@ -200,7 +199,7 @@ dec_eb66_intr_evcnt(void *lcv, pci_intr_handle_t ih)
 {
 
 	if (ih >= EB66_MAX_IRQ)
-		panic("dec_eb66_intr_string: bogus eb66 IRQ 0x%lx", ih);
+		panic("dec_eb66_intr_evcnt: bogus eb66 IRQ 0x%lx", ih);
 	return (alpha_shared_intr_evcnt(eb66_pci_intr, ih));
 }
 

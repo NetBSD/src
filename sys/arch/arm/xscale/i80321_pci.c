@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_pci.c,v 1.13.2.1 2012/11/20 03:01:08 tls Exp $	*/
+/*	$NetBSD: i80321_pci.c,v 1.13.2.2 2014/08/20 00:02:48 tls Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,27 +40,29 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.13.2.1 2012/11/20 03:01:08 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.13.2.2 2014/08/20 00:02:48 tls Exp $");
+
+#include "opt_pci.h"
+#include "opt_i80321.h"
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <sys/bus.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pciconf.h>
+#include <dev/pci/ppbreg.h>
+
+#include <arm/locore.h>
 
 #include <arm/xscale/i80321reg.h>
 #include <arm/xscale/i80321var.h>
-
-#include <dev/pci/ppbreg.h>
-#include <dev/pci/pciconf.h>
-
-#include "opt_pci.h"
-#include "opt_i80321.h"
-#include "pci.h"
 
 void		i80321_pci_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);

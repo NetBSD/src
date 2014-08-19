@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.8 2012/08/01 16:19:43 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.8.2.1 2014/08/20 00:03:19 tls Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-RCSID("$NetBSD: trap_subr.S,v 1.8 2012/08/01 16:19:43 matt Exp $")
+RCSID("$NetBSD: trap_subr.S,v 1.8.2.1 2014/08/20 00:03:19 tls Exp $")
 
 	.globl	_C_LABEL(sctrapexit), _C_LABEL(trapexit), _C_LABEL(intrcall)
 
@@ -858,7 +858,7 @@ _C_LABEL(exception_init):
 	ori	%r5,%r6,_C_LABEL(perfmon_vector)@l
 	mtspr	SPR_IVOR35, %r5
 
-	mfpir	%r5		/* get Process ID register */
+	mfspr	%r5, SPR_PIR	/* get Processor ID register */
 	cmplwi	%r5,0
 	bnelr			/* return if non-0 (non-primary) */
 

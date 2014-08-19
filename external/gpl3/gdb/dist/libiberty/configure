@@ -675,8 +675,8 @@ with_cross_host
 with_newlib
 enable_maintainer_mode
 enable_multilib
-enable_largefile
 enable_install_libiberty
+enable_largefile
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1303,8 +1303,8 @@ Optional Features:
                           enable make rules and dependencies not useful
                           (and sometimes confusing) to the casual installer
   --enable-multilib       build many library versions (default)
+  --enable-install-libiberty       Install headers and library for end users
   --disable-largefile     omit support for large files
-  --enable-install-libiberty       Install headers for end users
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -2784,6 +2784,35 @@ if test $cross_compiling = no && test $multilib = yes \
    cross_compiling=maybe
 fi
 
+# We may wish to install the target headers somewhere.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to install libiberty headers and static library" >&5
+$as_echo_n "checking whether to install libiberty headers and static library... " >&6; }
+
+# Check whether --enable-install-libiberty was given.
+if test "${enable_install_libiberty+set}" = set; then :
+  enableval=$enable_install_libiberty; enable_install_libiberty=$enableval
+else
+  enable_install_libiberty=no
+fi
+
+# Option parsed, now set things appropriately.
+case x"$enable_install_libiberty" in
+  xyes|x)
+    target_header_dir=libiberty
+    ;;
+  xno)
+    target_header_dir=
+    ;;
+  *)
+    # This could be sanity-checked in various ways...
+    target_header_dir="${enable_install_libiberty}"
+    ;;
+esac
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_install_libiberty" >&5
+$as_echo "$enable_install_libiberty" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: target_header_dir = $target_header_dir" >&5
+$as_echo "$as_me: target_header_dir = $target_header_dir" >&6;}
+
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -3920,8 +3949,14 @@ ac_c_preproc_warn_flag=yes
 
 ac_libiberty_warn_cflags=
 save_CFLAGS="$CFLAGS"
-for option in -W -Wall -Wwrite-strings -Wc++-compat \
+for real_option in -W -Wall -Wwrite-strings -Wc++-compat \
 			  -Wstrict-prototypes; do
+  # Do the check with the no- prefix removed since gcc silently
+  # accepts any -Wno-* option on purpose
+  case $real_option in
+    -Wno-*) option=-W`expr x$real_option : 'x-Wno-\(.*\)'` ;;
+    *) option=$real_option ;;
+  esac
   as_acx_Woption=`$as_echo "acx_cv_prog_cc_warning_$option" | $as_tr_sh`
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports $option" >&5
@@ -3953,11 +3988,13 @@ eval ac_res=\$$as_acx_Woption
 	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
 $as_echo "$ac_res" >&6; }
   if test `eval 'as_val=${'$as_acx_Woption'};$as_echo "$as_val"'` = yes; then :
-  ac_libiberty_warn_cflags="$ac_libiberty_warn_cflags${ac_libiberty_warn_cflags:+ }$option"
+  ac_libiberty_warn_cflags="$ac_libiberty_warn_cflags${ac_libiberty_warn_cflags:+ }$real_option"
 fi
   done
 CFLAGS="$save_CFLAGS"
 
+# Do the check with the no- prefix removed from the warning options
+# since gcc silently accepts any -Wno-* option on purpose
 if test "$GCC" = yes; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -pedantic " >&5
 $as_echo_n "checking whether $CC supports -pedantic ... " >&6; }
@@ -4840,6 +4877,82 @@ if [ -n "${frag}" ]; then
   frag=${libiberty_topdir}/libiberty/config/$frag
 fi
 
+
+
+
+
+case "${host}" in
+    # PIC is the default on some targets or must not be used.
+    *-*-darwin*)
+	# PIC is the default on this platform
+	# Common symbols not allowed in MH_DYLIB files
+	PICFLAG=-fno-common
+	;;
+    alpha*-dec-osf5*)
+	# PIC is the default.
+	;;
+    hppa*64*-*-hpux*)
+	# PIC is the default for 64-bit PA HP-UX.
+	;;
+    i[34567]86-*-cygwin* | x86_64-*-cygwin*)
+	;;
+    i[34567]86-*-mingw* | x86_64-*-mingw*)
+	;;
+    i[34567]86-*-interix[3-9]*)
+	# Interix 3.x gcc -fpic/-fPIC options generate broken code.
+	# Instead, we relocate shared libraries at runtime.
+	;;
+    i[34567]86-*-nto-qnx*)
+	# QNX uses GNU C++, but need to define -shared option too, otherwise
+	# it will coredump.
+	PICFLAG='-fPIC -shared'
+	;;
+    i[34567]86-pc-msdosdjgpp*)
+	# DJGPP does not support shared libraries at all.
+	;;
+    ia64*-*-hpux*)
+	# On IA64 HP-UX, PIC is the default but the pic flag
+	# sets the default TLS model and affects inlining.
+	PICFLAG=-fPIC
+	;;
+    mips-sgi-irix6*)
+	# PIC is the default.
+	;;
+    rs6000-ibm-aix* | powerpc-ibm-aix*)
+	# All AIX code is PIC.
+	;;
+
+    # Some targets support both -fPIC and -fpic, but prefer the latter.
+    # FIXME: Why?
+    i[34567]86-*-* | x86_64-*-*)
+	PICFLAG=-fpic
+	;;
+    # FIXME: Override -fPIC default in libgcc only?
+    sh-*-linux* | sh[2346lbe]*-*-linux*)
+	PICFLAG=-fpic
+	;;
+    # FIXME: Simplify to sh*-*-netbsd*?
+    sh-*-netbsdelf* | shl*-*-netbsdelf* | sh5-*-netbsd* | sh5l*-*-netbsd* | \
+      sh64-*-netbsd* | sh64l*-*-netbsd*)
+	PICFLAG=-fpic
+	;;
+    # Default to -fPIC unless specified otherwise.
+    *)
+	PICFLAG=-fPIC
+	;;
+esac
+
+# If the user explicitly uses -fpic/-fPIC, keep that.
+case "${CFLAGS}" in
+    *-fpic*)
+	PICFLAG=-fpic
+	;;
+    *-fPIC*)
+	PICFLAG=-fPIC
+	;;
+esac
+
+
 # If they didn't specify --enable-shared, don't generate shared libs.
 case "${enable_shared}" in
   yes) shared=yes ;;
@@ -4847,27 +4960,14 @@ case "${enable_shared}" in
   "") shared=no ;;
   *) shared=yes ;;
 esac
-if [ "${shared}" = "yes" ]; then
-  case "${host}" in
-    *-*-cygwin*)	;;
-    alpha*-*-linux*)	PICFLAG=-fPIC ;;
-    arm*-*-*)		PICFLAG=-fPIC ;;
-    hppa*-*-*)		PICFLAG=-fPIC ;;
-    i370-*-*)		PICFLAG=-fPIC ;;
-    ia64-*-*)		PICFLAG=-fpic ;;
-    i[34567]86-*-* | x86_64-*-*)
-			PICFLAG=-fpic ;;
-    m68k-*-*)		PICFLAG=-fpic ;;
-    mips*-*-linux*)	PICFLAG=-fPIC ;;
-    powerpc*-*-aix*)	;;
-    powerpc*-*-*)	PICFLAG=-fPIC ;;
-    sparc*-*-*)		case "${CFLAGS}" in
-			  *-fpic* ) PICFLAG=-fpic ;;
-			  * ) PICFLAG=-fPIC ;;
-			esac ;;
-    s390*-*-*)		PICFLAG=-fpic ;;
-    sh*-*-*)		PICFLAG=-fPIC ;;
-  esac
+
+# ...unless --enable-host-shared was passed from top-level config:
+if [ "${enable_host_shared}" = "yes" ]; then
+  shared=yes
+fi
+
+if [ "${shared}" != "yes" ]; then
+  PICFLAG=
 fi
 
 
@@ -5274,6 +5374,7 @@ funcs="$funcs strchr"
 funcs="$funcs strdup"
 funcs="$funcs strncasecmp"
 funcs="$funcs strndup"
+funcs="$funcs strnlen"
 funcs="$funcs strrchr"
 funcs="$funcs strstr"
 funcs="$funcs strtod"
@@ -5293,10 +5394,10 @@ funcs="$funcs setproctitle"
 
 vars="sys_errlist sys_nerr sys_siglist"
 
-checkfuncs="__fsetlocking canonicalize_file_name dup3 getrusage getsysinfo \
- gettimeofday on_exit psignal pstat_getdynamic pstat_getstatic realpath \
- sbrk spawnve spawnvpe strerror strsignal sysconf sysctl sysmp table \
- times wait3 wait4"
+checkfuncs="__fsetlocking canonicalize_file_name dup3 getrlimit getrusage \
+ getsysinfo gettimeofday on_exit psignal pstat_getdynamic pstat_getstatic \
+ realpath setrlimit sbrk spawnve spawnvpe strerror strsignal sysconf sysctl \
+ sysmp table times wait3 wait4"
 
 # These are neither executed nor required, but they help keep
 # autoheader happy without adding a bunch of text to acconfig.h.
@@ -5306,16 +5407,16 @@ if test "x" = "y"; then
     calloc canonicalize_file_name clock \
     dup3 \
     ffs __fsetlocking \
-    getcwd getpagesize getrusage getsysinfo gettimeofday \
+    getcwd getpagesize getrlimit getrusage getsysinfo gettimeofday \
     index insque \
     memchr memcmp memcpy memmem memmove memset mkstemps \
     on_exit \
     psignal pstat_getdynamic pstat_getstatic putenv \
     random realpath rename rindex \
-    sbrk setenv setproctitle sigsetmask snprintf spawnve spawnvpe \
+    sbrk setenv setproctitle setrlimit sigsetmask snprintf spawnve spawnvpe \
      stpcpy stpncpy strcasecmp strchr strdup \
-     strerror strncasecmp strndup strrchr strsignal strstr strtod strtol \
-     strtoul strverscmp sysconf sysctl sysmp \
+     strerror strncasecmp strndup strnlen strrchr strsignal strstr strtod \
+     strtol strtoul strverscmp sysconf sysctl sysmp \
     table times tmpnam \
     vasprintf vfprintf vprintf vsprintf \
     wait3 wait4 waitpid
@@ -5409,7 +5510,6 @@ fi
 
 setobjs=
 CHECK=
-target_header_dir=
 if test -n "${with_target_subdir}"; then
 
   # We are being configured as a target library.  AC_REPLACE_FUNCS
@@ -5597,6 +5697,12 @@ esac
 esac
 
     case " $LIBOBJS " in
+  *" strnlen.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS strnlen.$ac_objext"
+ ;;
+esac
+
+    case " $LIBOBJS " in
   *" strverscmp.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS strverscmp.$ac_objext"
  ;;
@@ -5617,7 +5723,7 @@ esac
 
     for f in $funcs; do
       case "$f" in
-	asprintf | basename | bcmp | bcopy | bzero | clock | ffs | getpagesize | index | insque | mempcpy | mkstemps | random | rindex | sigsetmask | stpcpy | stpncpy | strdup | strndup | strverscmp | vasprintf | waitpid)
+	asprintf | basename | bcmp | bcopy | bzero | clock | ffs | getpagesize | index | insque | mempcpy | mkstemps | random | rindex | sigsetmask | stpcpy | stpncpy | strdup | strndup | strnlen | strverscmp | vasprintf | waitpid)
 	  ;;
 	*)
 	  n=HAVE_`echo $f | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
@@ -5685,29 +5791,6 @@ _ACEOF
     ;;
 
   esac
-
-  # We may wish to install the target headers somewhere.
-  # Check whether --enable-install-libiberty was given.
-if test "${enable_install_libiberty+set}" = set; then :
-  enableval=$enable_install_libiberty; enable_install_libiberty=$enableval
-else
-  enable_install_libiberty=no
-fi
-
-  # Option parsed, now set things appropriately.
-  case x"$enable_install_libiberty" in
-    xyes|x)
-      target_header_dir=libiberty
-      ;;
-    xno)
-      target_header_dir=
-      ;;
-    *)
-      # This could be sanity-checked in various ways...
-      target_header_dir="${enable_install_libiberty}"
-      ;;
-  esac
-
 
 else
 
@@ -6755,7 +6838,7 @@ if test "${ac_cv_func_strncmp_works+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   if test "$cross_compiling" = yes; then :
-  ac_cv_func_strncmp_works=no
+  ac_cv_func_strncmp_works=yes
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */

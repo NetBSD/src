@@ -1,4 +1,4 @@
-/*	$NetBSD: eehandlers.c,v 1.15.12.2 2013/06/23 06:29:04 tls Exp $	*/
+/*	$NetBSD: eehandlers.c,v 1.15.12.3 2014/08/20 00:05:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -56,10 +56,23 @@ extern	u_short writecount;
 
 static	char err_str[BUFSIZE];
 
-static	void badval (struct keytabent *, char *);
-static	int doio (struct keytabent *, u_char *, ssize_t, int);
+static	void badval(const struct keytabent *, char *);
+static	int doio(const struct keytabent *, u_char *, ssize_t, int);
 
-struct	keytabent eekeytab[] = {
+static	u_char ee_checksum(u_char *, size_t);
+static	void ee_hwupdate(const struct keytabent *, char *);
+static	void ee_num8(const struct keytabent *, char *);
+static	void ee_num16(const struct keytabent *, char *);
+static	void ee_screensize(const struct keytabent *, char *);
+static	void ee_truefalse(const struct keytabent *, char *);
+static	void ee_bootdev(const struct keytabent *, char *);
+static	void ee_kbdtype(const struct keytabent *, char *);
+static	void ee_constype(const struct keytabent *, char *);
+static	void ee_diagpath(const struct keytabent *, char *);
+static	void ee_banner(const struct keytabent *, char *);
+static	void ee_notsupp(const struct keytabent *, char *);
+
+static const struct	keytabent eekeytab[] = {
 	{ "hwupdate",		0x10,	ee_hwupdate },
 	{ "memsize",		0x14,	ee_num8 },
 	{ "memtest",		0x15,	ee_num8 },
@@ -108,10 +121,9 @@ struct	keytabent eekeytab[] = {
 }
 
 void
-ee_action(keyword, arg)
-	char *keyword, *arg;
+ee_action(char *keyword, char *arg)
 {
-	struct keytabent *ktent;
+	const struct keytabent *ktent;
 
 	for (ktent = eekeytab; ktent->kt_keyword != NULL; ++ktent) {
 		if (strcmp(ktent->kt_keyword, keyword) == 0) {
@@ -125,18 +137,16 @@ ee_action(keyword, arg)
 }
 
 void
-ee_dump()
+ee_dump(void)
 {
-	struct keytabent *ktent;
+	const struct keytabent *ktent;
 
 	for (ktent = eekeytab; ktent->kt_keyword != NULL; ++ktent)
 		(*ktent->kt_handler)(ktent, NULL);
 }
 
-void
-ee_hwupdate(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+static void
+ee_hwupdate(const struct keytabent *ktent, char *arg)
 {
 	uint32_t hwtime;
 	time_t t;
@@ -175,10 +185,8 @@ ee_hwupdate(ktent, arg)
 	printf("\n");
 }
 
-void
-ee_num8(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+static void
+ee_num8(const struct keytabent *ktent, char *arg)
 {
 	u_char num8 = 0;
 	u_int num32;
@@ -201,10 +209,8 @@ ee_num8(ktent, arg)
 	printf("%s=%d\n", ktent->kt_keyword, num8);
 }
 
-void
-ee_num16(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+static void
+ee_num16(const struct keytabent *ktent, char *arg)
 {
 	u_int16_t num16 = 0;
 	u_int num32;
@@ -227,7 +233,7 @@ ee_num16(ktent, arg)
 	printf("%s=%d\n", ktent->kt_keyword, num16);
 }
 
-static	struct strvaltabent scrsizetab[] = {
+static	const struct strvaltabent scrsizetab[] = {
 	{ "1152x900",		EE_SCR_1152X900 },
 	{ "1024x1024",		EE_SCR_1024X1024 },
 	{ "1600x1280",		EE_SCR_1600X1280 },
@@ -235,12 +241,10 @@ static	struct strvaltabent scrsizetab[] = {
 	{ NULL,			0 },
 };
 
-void
-ee_screensize(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+static void
+ee_screensize(const struct keytabent *ktent, char *arg)
 {
-	struct strvaltabent *svp;
+	const struct strvaltabent *svp;
 	u_char scsize;
 
 	if (arg) {
@@ -269,18 +273,16 @@ ee_screensize(ktent, arg)
 	printf("%s=%s\n", ktent->kt_keyword, svp->sv_str);
 }
 
-static	struct strvaltabent truthtab[] = {
+static	const struct strvaltabent truthtab[] = {
 	{ "true",		EE_TRUE },
 	{ "false",		EE_FALSE },
 	{ NULL,			0 },
 };
 
-void
-ee_truefalse(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+static void
+ee_truefalse(const struct keytabent *ktent, char *arg)
 {
-	struct strvaltabent *svp;
+	const struct strvaltabent *svp;
 	u_char truth;
 
 	if (arg) {
@@ -309,10 +311,8 @@ ee_truefalse(ktent, arg)
 	printf("%s=%s\n", ktent->kt_keyword, svp->sv_str);
 }
 
-void
-ee_bootdev(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+static void
+ee_bootdev(const struct keytabent *ktent, char *arg)
 {
 	u_char dev[5];
 	int i;
@@ -381,10 +381,8 @@ ee_bootdev(ktent, arg)
 	     dev[1], dev[2], dev[3], dev[4]);
 }
 
-void
-ee_kbdtype(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+static void
+ee_kbdtype(const struct keytabent *ktent, char *arg)
 {
 	u_char kbd = 0;
 	u_int kbd2;
@@ -407,7 +405,7 @@ ee_kbdtype(ktent, arg)
 	printf("%s=%d (%s)\n", ktent->kt_keyword, kbd, kbd ? "other" : "Sun");
 }
 
-static	struct strvaltabent constab[] = {
+static	const struct strvaltabent constab[] = {
 	{ "b&w",		EE_CONS_BW },
 	{ "ttya",		EE_CONS_TTYA },
 	{ "ttyb",		EE_CONS_TTYB },
@@ -416,12 +414,10 @@ static	struct strvaltabent constab[] = {
 	{ NULL,			0 },
 };
 
-void
-ee_constype(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+static void
+ee_constype(const struct keytabent *ktent, char *arg)
 {
-	struct strvaltabent *svp;
+	const struct strvaltabent *svp;
 	u_char cons;
 
 	if (arg) {
@@ -451,10 +447,8 @@ ee_constype(ktent, arg)
 		
 }
 
-void
-ee_diagpath(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+static void
+ee_diagpath(const struct keytabent *ktent, char *arg)
 {
 	char path[40];
 
@@ -472,10 +466,8 @@ ee_diagpath(ktent, arg)
 	printf("%s=%s\n", ktent->kt_keyword, path);
 }
 
-void
-ee_banner(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+static void
+ee_banner(const struct keytabent *ktent, char *arg)
 {
 	char string[80];
 	u_char enable;
@@ -515,19 +507,15 @@ ee_banner(ktent, arg)
 }
 
 /* ARGSUSED */
-void
-ee_notsupp(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+static void
+ee_notsupp(const struct keytabent *ktent, char *arg)
 {
 
 	warnx("field `%s' not yet supported", ktent->kt_keyword);
 }
 
 static void
-badval(ktent, arg)
-	struct keytabent *ktent;
-	char *arg;
+badval(const struct keytabent *ktent, char *arg)
 {
 
 	warnx("inappropriate value `%s' for field `%s'", arg,
@@ -535,11 +523,7 @@ badval(ktent, arg)
 }
 
 static int
-doio(ktent, buf, len, wr)
-	struct keytabent *ktent;
-	u_char *buf;
-	ssize_t len;
-	int wr;
+doio(const struct keytabent *ktent, u_char *buf, ssize_t len, int wr)
 {
 	int fd, rval = 0;
 	u_char *buf2;
@@ -605,7 +589,7 @@ doio(ktent, buf, len, wr)
  * of it sequentially starting at eeWriteCount[0].
  */
 void
-ee_updatechecksums()
+ee_updatechecksums(void)
 {
 	struct keytabent kt;
 	u_char checkme[EE_SIZE - EE_HWUPDATE_LOC];
@@ -644,7 +628,7 @@ ee_updatechecksums()
 }
 
 void
-ee_verifychecksums()
+ee_verifychecksums(void)
 {
 	struct keytabent kt;
 	u_char checkme[EE_SIZE - EE_HWUPDATE_LOC];
@@ -728,10 +712,8 @@ ee_verifychecksums()
 		ee_updatechecksums();
 }
 
-u_char
-ee_checksum(area, len)
-	u_char *area;
-	size_t len;
+static u_char
+ee_checksum(u_char *area, size_t len)
 {
 	u_char sum = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.25 2011/08/01 10:33:26 drochner Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.25.12.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.25 2011/08/01 10:33:26 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.25.12.1 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,8 +56,6 @@ static int userconf_histsz = sizeof(userconf_history);
 static char userconf_argbuf[40];		/* Additional input         */
 static char userconf_cmdbuf[40];		/* Command line             */
 static char userconf_histbuf[40];
-
-static int getsn(char *, int);
 
 #define UC_CHANGE 'c'
 #define UC_DISABLE 'd'
@@ -352,7 +350,7 @@ userconf_modify(const struct cflocdesc *item, int *val)
 			userconf_pnum(*val);
 		printf("] ? ");
 
-		getsn(userconf_argbuf, sizeof(userconf_argbuf));
+		cngetsn(userconf_argbuf, sizeof(userconf_argbuf));
 
 		c = userconf_argbuf;
 		while (*c == ' ' || *c == '\t' || *c == '\n') c++;
@@ -813,58 +811,9 @@ userconf_prompt(void)
 
 	while (1) {
 		printf(prompt);
-		if (getsn(userconf_cmdbuf, sizeof(userconf_cmdbuf)) > 0 &&
+		if (cngetsn(userconf_cmdbuf, sizeof(userconf_cmdbuf)) > 0 &&
 		    userconf_parse(userconf_cmdbuf))
 			break;
 	}
 	printf("Continuing...\n");
-}
-
-/*
- * XXX shouldn't this be a common function?
- */
-static int
-getsn(char *cp, int size)
-{
-	char *lp;
-	int c, len;
-
-	cnpollc(1);
-
-	lp = cp;
-	len = 0;
-	for (;;) {
-		c = cngetc();
-		switch (c) {
-		case '\n':
-		case '\r':
-			printf("\n");
-			*lp++ = '\0';
-			cnpollc(0);
-			return (len);
-		case '\b':
-		case '\177':
-		case '#':
-			if (len) {
-				--len;
-				--lp;
-				printf("\b \b");
-			}
-			continue;
-		case '@':
-		case 'u'&037:
-			len = 0;
-			lp = cp;
-			printf("\n");
-			continue;
-		default:
-			if (len + 1 >= size || c < ' ') {
-				printf("\007");
-				continue;
-			}
-			printf("%c", c);
-			++len;
-			*lp++ = c;
-		}
-	}
 }

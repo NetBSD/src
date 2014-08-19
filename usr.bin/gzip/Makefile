@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2011/06/21 13:25:45 joerg Exp $
+#	$NetBSD: Makefile,v 1.16.8.1 2014/08/20 00:04:59 tls Exp $
 
 USE_FORT?= yes	# data-driven bugs?
 
@@ -15,13 +15,15 @@ MLINKS+=	gzip.1 gunzip.1 \
 		gzip.1 zcat.1 \
 		zdiff.1 zcmp.1 \
 		zgrep.1 zegrep.1 \
-		zgrep.1 zfgrep.1
+		zgrep.1 zfgrep.1 \
+		zmore.1 zless.1
 
 LINKS+=		${BINDIR}/gzip ${BINDIR}/gunzip \
 		${BINDIR}/gzip ${BINDIR}/gzcat \
 		${BINDIR}/gzip ${BINDIR}/zcat \
 		${BINDIR}/zdiff ${BINDIR}/zcmp \
 		${BINDIR}/zgrep ${BINDIR}/zegrep \
-		${BINDIR}/zgrep ${BINDIR}/zfgrep
+		${BINDIR}/zgrep ${BINDIR}/zfgrep \
+		${BINDIR}/zmore ${BINDIR}/zless
 
 .include <bsd.prog.mk>

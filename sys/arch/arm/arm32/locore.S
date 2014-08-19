@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.28.2.3 2013/06/23 06:19:59 tls Exp $	*/
+/*	$NetBSD: locore.S,v 1.28.2.4 2014/08/20 00:02:45 tls Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -34,14 +34,13 @@
 #include "assym.h"
 #include <sys/syscall.h>
 #include <sys/errno.h>
-#include <machine/asm.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
+#include <arm/asm.h>
+#include <arm/locore.h>
 
 /* What size should this really be ? It is only used by init_arm() */
 #define INIT_ARM_STACK_SIZE	2048
 
-	RCSID("$NetBSD: locore.S,v 1.28.2.3 2013/06/23 06:19:59 tls Exp $")
+	RCSID("$NetBSD: locore.S,v 1.28.2.4 2014/08/20 00:02:45 tls Exp $")
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
@@ -73,7 +72,7 @@ ASENTRY_NP(start)
 #endif
 .L1:
 #ifdef _ARM_ARCH_DWORD_OK
-	strd	r4, [r1], #0x0008	/* Zero the bss */
+	strd	r4, r5, [r1], #0x0008	/* Zero the bss */
 #else
 	str	r4, [r1], #0x0004	/* Zero the bss */
 #endif
@@ -91,7 +90,7 @@ ASENTRY_NP(start)
 
 	mov	fp, #0x00000000		/* trace back starts here */
 	mov	ip, sp
-	stmfd	sp!, {fp, ip, lr, pc}
+	push	{fp, ip, lr, pc}
 	sub	fp, ip, #4
 
 	bl	_C_LABEL(main)		/* call main()! */
@@ -113,6 +112,7 @@ ASENTRY_NP(start)
 .Lmainreturned:
 	.asciz	"main() returned"
 	.align	0
+ASEND(start)
 
 	.bss
 svcstk:
@@ -123,8 +123,8 @@ svcstk:
 
 #ifndef OFW
 	/* OFW based systems will used OF_boot() */
-	
-.Lcpufuncs:	
+
+.Lcpufuncs:
 	.word	_C_LABEL(cpufuncs)
 
 ENTRY_NP(cpu_reset)
@@ -176,6 +176,7 @@ ENTRY_NP(cpu_reset)
 	.word	_C_LABEL(cpu_reset_address)
 .Lcpu_reset_address_paddr:
 	.word	_C_LABEL(cpu_reset_address_paddr)
+END(cpu_reset)
 #endif	/* OFW */
 
 /*
@@ -184,12 +185,14 @@ ENTRY_NP(cpu_reset)
 ENTRY(setjmp)
 	stmia	r0, {r4-r14}
 	mov	r0, #0x00000000
-	mov	pc, lr
+	RET
+END(setjmp)
 
 ENTRY(longjmp)
 	ldmia	r0, {r4-r14}
 	mov	r0, #0x00000001
-	mov	pc, lr
+	RET
+END(longjmp)
 
 	.data
 	.global _C_LABEL(esym)
@@ -197,6 +200,7 @@ _C_LABEL(esym):	.word	_C_LABEL(end)
 
 ENTRY_NP(abort)
 	b	_C_LABEL(abort)
+END(abort)
 
 /*
  * Part of doing a system dump, we need to save a switchframe onto the
@@ -205,7 +209,7 @@ ENTRY_NP(abort)
 ENTRY(dumpsys)
 	/* push registers onto stack */
 	mov	ip, sp
-	stmfd	sp!, {r4-r7, ip, lr}
+	push	{r4-r7, ip, lr}
 
 	/* fill in dumppcb */
 	ldr	r0, .Ldumppcb
@@ -214,17 +218,18 @@ ENTRY(dumpsys)
         add     r2, r0, #(PCB_R8)
         stmia   r2, {r8-r13}
 #else
-        strd    r8, [r0, #(PCB_R8)]
-        strd    r10, [r0, #(PCB_R10)]
-        strd    r12, [r0, #(PCB_R12)]
+        strd    r8, r9, [r0, #(PCB_R8)]
+        strd    r10, r11, [r0, #(PCB_R10)]
+        strd    r12, r13, [r0, #(PCB_R12)]
 #endif
 
 	bl	_C_LABEL(dodumpsys)
 
 	/* unwind the stack */
-	ldmfd	sp, {r4-r7, sp, pc}
+	pop	{r4-r7, ip, pc}
 
 .Ldumppcb:
 	.word	_C_LABEL(dumppcb)
+END(dumpsys)
 
 /* End of locore.S */

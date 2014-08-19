@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl_compat.h,v 1.15 2005/12/03 17:10:46 christos Exp $	*/
+/*	$NetBSD: ioctl_compat.h,v 1.15.120.1 2014/08/20 00:04:44 tls Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -89,10 +89,14 @@ struct sgttyb {
 #define	TIOCSETN	_IOW('t',10,struct sgttyb)/* as above, but no flushtty*/
 #define	TIOCSETC	_IOW('t',17,struct tchars)/* set special characters */
 #define	TIOCGETC	_IOR('t',18,struct tchars)/* get special characters */
+/*
+ * The entries marked as termios below, are common and should have the
+ * same values.
+ */
 #define		TANDEM		0x00000001	/* send stopc on out q full */
 #define		CBREAK		0x00000002	/* half-cooked mode */
 #define		LCASE		0x00000004	/* simulate lower case */
-#define		ECHO		0x00000008	/* enable echoing */
+/* termios	ECHO		0x00000008	   enable echoing */
 #define		CRMOD		0x00000010	/* map \r to \r\n on output */
 #define		RAW		0x00000020	/* no i/o processing */
 #define		ODDP		0x00000040	/* get/send odd parity */
@@ -124,18 +128,18 @@ struct sgttyb {
 #define		PRTERA		0x00020000	/* \ ... / erase */
 #define		CRTERA		0x00040000	/* " \b " to wipe out char */
 #define		TILDE		0x00080000	/* hazeltine tilde kludge */
-#define		MDMBUF		0x00100000	/* DTR/DCD hardware flow control */
+/* termios	MDMBUF		0x00100000	   DTR/DCD hardware flow control */
 #define		LITOUT		0x00200000	/* literal output */
-#define		TOSTOP		0x00400000	/* stop background jobs on output */
-#define		FLUSHO		0x00800000	/* output being flushed (state) */
+/* termios	TOSTOP		0x00400000	   stop background jobs on output */
+/* termios	FLUSHO		0x00800000	   output being flushed (state) */
 #define		NOHANG		0x01000000	/* (no-op) was no SIGHUP on carrier drop */
 #define		L001000		0x02000000
 #define		CRTKIL		0x04000000	/* kill line with " \b " */
 #define		PASS8		0x08000000
 #define		CTLECH		0x10000000	/* echo control chars as ^X */
-#define		PENDIN		0x20000000	/* re-echo input buffer at next read */
+/* termios	PENDIN		0x20000000	   re-echo input buffer at next read */
 #define		DECCTQ		0x40000000	/* only ^Q starts after ^S */
-#define		NOFLSH		0x80000000	/* don't flush output on signal */
+/* termios 	NOFLSH		0x80000000	   don't flush output on signal */
 #define	TIOCLBIS	_IOW('t', 127, int)	/* bis local mode bits */
 #define	TIOCLBIC	_IOW('t', 126, int)	/* bic local mode bits */
 #define	TIOCLSET	_IOW('t', 125, int)	/* set entire local mode word */

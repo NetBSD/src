@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.25.2.2 2013/06/23 06:20:22 tls Exp $	*/
+/*	$NetBSD: u3g.c,v 1.25.2.3 2014/08/20 00:03:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.25.2.2 2013/06/23 06:20:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.25.2.3 2014/08/20 00:03:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,8 +219,6 @@ static const struct usb_devno u3g_devs[] = {
 	{ USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_HSDPA },
 	{ USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_GTMAXHSUPA },
 	/* OEM: Qualcomm, Inc. */
-	{ USB_VENDOR_QUALCOMMINC, USB_PRODUCT_QUALCOMMINC_CDMA_MSM },
-	{ USB_VENDOR_QUALCOMMINC, USB_PRODUCT_QUALCOMMINC_ZTE_MF626 },
 	{ USB_VENDOR_QUALCOMM, USB_PRODUCT_QUALCOMM_NTT_DOCOMO_L02C_MODEM },
 
 	/* OEM: Sierra Wireless: */
@@ -254,8 +252,15 @@ static const struct usb_devno u3g_devs[] = {
 	/* Toshiba */
 	{ USB_VENDOR_TOSHIBA, USB_PRODUCT_TOSHIBA_HSDPA_MODEM_EU870DT1 },
 
+	/* ZTE */
+	{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_MF622 },
+	{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_MF626 },
+	{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_MF628 },
+	{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_MF820D },
+
 	/* 4G Systems */
 	{ USB_VENDOR_4GSYSTEMS, USB_PRODUCT_4GSYSTEMS_XSSTICK_P14 },
+	{ USB_VENDOR_4GSYSTEMS, USB_PRODUCT_4GSYSTEMS_XSSTICK_W14 },
 };
 
 static int
@@ -271,7 +276,7 @@ send_bulkmsg(usbd_device_handle dev, void *cmd, size_t cmdlen)
 	/* Move the device into the configured state. */
 	err = usbd_set_config_index(dev, 0, 0);
 	if (err) {
-		aprint_error("u3g: failed to set configuration index\n");
+		aprint_error("u3ginit: failed to set config index\n");
 		return UMATCH_NONE;
 	}
 
@@ -330,7 +335,7 @@ send_bulkmsg(usbd_device_handle dev, void *cmd, size_t cmdlen)
 }
 
 static int
-u3g_novatel_reinit(usbd_device_handle dev)
+u3g_bulk_scsi_eject(usbd_device_handle dev)
 {
 	unsigned char cmd[31];
 
@@ -347,12 +352,45 @@ u3g_novatel_reinit(usbd_device_handle dev)
 	/* 13: CBW Lun: 0 */
 	/* 14: CBW Length */
 	cmd[14] = 0x06;
+
 	/* Rest is the SCSI payload */
+
 	/* 0: SCSI START/STOP opcode */
 	cmd[15] = 0x1b;
 	/* 1..3 unused */
 	/* 4 Load/Eject command */
 	cmd[19] = 0x02;
+	/* 5: unused */
+
+	return send_bulkmsg(dev, cmd, sizeof(cmd));
+}
+
+static int
+u3g_bulk_ata_eject(usbd_device_handle dev)
+{
+	unsigned char cmd[31];
+
+	memset(cmd, 0, sizeof(cmd));
+	/* Byte 0..3: Command Block Wrapper (CBW) signature */
+	cmd[0] = 0x55; 
+	cmd[1] = 0x53;
+	cmd[2] = 0x42;
+	cmd[3] = 0x43;
+	/* 4..7: CBW Tag, has to unique, but only a single transfer used. */
+	cmd[4] = 0x01;
+	/* 8..11: CBW Transfer Length, no data here */
+	/* 12: CBW Flag: output, so 0 */
+	/* 13: CBW Lun: 0 */
+	/* 14: CBW Length */
+	cmd[14] = 0x06;
+
+	/* Rest is the SCSI payload */
+
+	/* 0: ATA pass-through */
+	cmd[15] = 0x85;
+	/* 1..3 unused */
+	/* 4 XXX What is this command? */
+	cmd[19] = 0x24;
 	/* 5: unused */
 
 	return send_bulkmsg(dev, cmd, sizeof(cmd));
@@ -517,7 +555,7 @@ u3ginit_match(device_t parent, cfdata_t match, void *aux)
 		switch (uaa->product){
 		case USB_PRODUCT_NOVATEL2_MC950D_DRIVER:
 		case USB_PRODUCT_NOVATEL2_U760_DRIVER:
-			return u3g_novatel_reinit(uaa->device);
+			return u3g_bulk_scsi_eject(uaa->device);
 			break;
 		default:
 			break;
@@ -529,14 +567,21 @@ u3ginit_match(device_t parent, cfdata_t match, void *aux)
 			return u3g_sierra_reinit(uaa->device);
 		break;
 
-	case USB_VENDOR_QUALCOMMINC:
-		if (uaa->product == USB_PRODUCT_QUALCOMMINC_ZTE_STOR)
-			return u3g_novatel_reinit(uaa->device);
-		break;
-
 	case USB_VENDOR_QUALCOMM:
 		if (uaa->product == USB_PRODUCT_QUALCOMM_NTT_DOCOMO_L02C_STORAGE)
-			return u3g_novatel_reinit(uaa->device);
+			return u3g_bulk_scsi_eject(uaa->device);
+		break;
+
+	case USB_VENDOR_ZTE:
+		switch (uaa->product){
+		case USB_PRODUCT_ZTE_INSTALLER:
+		case USB_PRODUCT_ZTE_MF820D_INSTALLER:
+			(void)u3g_bulk_ata_eject(uaa->device);
+			(void)u3g_bulk_scsi_eject(uaa->device);
+			return UMATCH_HIGHEST;
+		default:
+			break;
+		}
 		break;
 
 	case USB_VENDOR_4GSYSTEMS:
@@ -612,6 +657,14 @@ u3g_match(device_t parent, cfdata_t match, void *aux)
 		printf("u3g_match: failed to get interface descriptor\n");
 		return (UMATCH_NONE);
 	}
+
+	/*
+	 * Huawei modems use the vendor-specific class for all interfaces,
+	 * both tty and CDC NCM, which we should avoid attaching to.
+	 */
+	if (uaa->vendor == USB_VENDOR_HUAWEI && id->bInterfaceSubClass == 2 &&
+	    (id->bInterfaceProtocol & 0xf) == 6)	/* 0x16, 0x46, 0x76 */
+		return (UMATCH_NONE);
 
 	/*
 	 * 3G modems generally report vendor-specific class

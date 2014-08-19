@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.125.2.2 2013/06/23 06:20:16 tls Exp $	*/
+/*	$NetBSD: ata.c,v 1.125.2.3 2014/08/20 00:03:35 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.125.2.2 2013/06/23 06:20:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.125.2.3 2014/08/20 00:03:35 tls Exp $");
 
 #include "opt_ata.h"
 
@@ -106,8 +106,18 @@ dev_type_close(atabusclose);
 dev_type_ioctl(atabusioctl);
 
 const struct cdevsw atabus_cdevsw = {
-	atabusopen, atabusclose, noread, nowrite, atabusioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = atabusopen,
+	.d_close = atabusclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = atabusioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 extern struct cfdriver atabus_cd;
@@ -267,7 +277,7 @@ atabusconfig(struct atabus_softc *atabus_sc)
 
 	ata_delref(chp);
 
-	config_pending_decr();
+	config_pending_decr(atac->atac_dev);
 }
 
 /*
@@ -394,7 +404,7 @@ atabusconfig_thread(void *arg)
 
 	ata_delref(chp);
 
-	config_pending_decr();
+	config_pending_decr(atac->atac_dev);
 	kthread_exit(0);
 }
 
@@ -518,7 +528,7 @@ atabus_attach(device_t parent, device_t self, void *aux)
 	initq = malloc(sizeof(*initq), M_DEVBUF, M_WAITOK);
 	initq->atabus_sc = sc;
 	TAILQ_INSERT_TAIL(&atabus_initq_head, initq, atabus_initq);
-	config_pending_incr();
+	config_pending_incr(sc->sc_dev);
 
 	if ((error = kthread_create(PRI_NONE, 0, NULL, atabus_thread, sc,
 	    &chp->ch_thread, "%s", device_xname(self))) != 0)
@@ -1678,7 +1688,10 @@ atabus_resume(device_t dv, const pmf_qual_t *qual)
 	KASSERT(chp->ch_queue->queue_freeze > 0);
 	/* unfreeze the queue and reset drives */
 	chp->ch_queue->queue_freeze--;
-	ata_reset_channel(chp, AT_WAIT);
+
+	/* reset channel only if there are drives attached */
+	if (chp->ch_ndrives > 0)
+		ata_reset_channel(chp, AT_WAIT);
 	splx(s);
 
 	return true;
@@ -1712,7 +1725,7 @@ atabus_rescan(device_t self, const char *ifattr, const int *locators)
 	initq = malloc(sizeof(*initq), M_DEVBUF, M_WAITOK);
 	initq->atabus_sc = sc;
 	TAILQ_INSERT_TAIL(&atabus_initq_head, initq, atabus_initq);
-	config_pending_incr();
+	config_pending_incr(sc->sc_dev);
 
 	chp->ch_flags |= ATACH_TH_RESCAN;
 	wakeup(&chp->ch_thread);

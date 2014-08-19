@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2002-2014 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -110,10 +110,6 @@ do { \
 
 #define ZALLOC(TYPE) ((TYPE*) zalloc (sizeof(TYPE)))
 #define NZALLOC(TYPE,N) ((TYPE*) zalloc (sizeof(TYPE) * (N)))
-#if 0
-#define STRDUP(STRING) (strcpy (zalloc (strlen (STRING) + 1), (STRING)))
-#define STRNDUP(STRING,LEN) (strncpy (zalloc ((LEN) + 1), (STRING), (LEN)))
-#endif
 
 extern void *zalloc (long size);
 

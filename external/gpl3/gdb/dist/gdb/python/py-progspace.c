@@ -1,6 +1,6 @@
 /* Python interface to program spaces.
 
-   Copyright (C) 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,9 +34,15 @@ typedef struct
 
   /* The pretty-printer list of functions.  */
   PyObject *printers;
+
+  /* The frame filter list of functions.  */
+  PyObject *frame_filters;
+  /* The type-printer list.  */
+  PyObject *type_printers;
 } pspace_object;
 
-static PyTypeObject pspace_object_type;
+static PyTypeObject pspace_object_type
+    CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("pspace_object");
 
 static const struct program_space_data *pspy_pspace_data_key;
 
@@ -54,7 +60,8 @@ pspy_get_filename (PyObject *self, void *closure)
       struct objfile *objfile = obj->pspace->symfile_object_file;
 
       if (objfile)
-	return PyString_Decode (objfile->name, strlen (objfile->name),
+	return PyString_Decode (objfile_name (objfile),
+				strlen (objfile_name (objfile)),
 				host_charset (), NULL);
     }
   Py_RETURN_NONE;
@@ -66,7 +73,9 @@ pspy_dealloc (PyObject *self)
   pspace_object *ps_self = (pspace_object *) self;
 
   Py_XDECREF (ps_self->printers);
-  self->ob_type->tp_free (self);
+  Py_XDECREF (ps_self->frame_filters);
+  Py_XDECREF (ps_self->type_printers);
+  Py_TYPE (self)->tp_free (self);
 }
 
 static PyObject *
@@ -80,6 +89,20 @@ pspy_new (PyTypeObject *type, PyObject *args, PyObject *keywords)
 
       self->printers = PyList_New (0);
       if (!self->printers)
+	{
+	  Py_DECREF (self);
+	  return NULL;
+	}
+
+      self->frame_filters = PyDict_New ();
+      if (!self->frame_filters)
+	{
+	  Py_DECREF (self);
+	  return NULL;
+	}
+
+      self->type_printers = PyList_New (0);
+      if (!self->type_printers)
 	{
 	  Py_DECREF (self);
 	  return NULL;
@@ -121,6 +144,89 @@ pspy_set_printers (PyObject *o, PyObject *value, void *ignore)
   tmp = self->printers;
   Py_INCREF (value);
   self->printers = value;
+  Py_XDECREF (tmp);
+
+  return 0;
+}
+
+/* Return the Python dictionary attribute containing frame filters for
+   this program space.  */
+PyObject *
+pspy_get_frame_filters (PyObject *o, void *ignore)
+{
+  pspace_object *self = (pspace_object *) o;
+
+  Py_INCREF (self->frame_filters);
+  return self->frame_filters;
+}
+
+/* Set this object file's frame filters dictionary to FILTERS.  */
+static int
+pspy_set_frame_filters (PyObject *o, PyObject *frame, void *ignore)
+{
+  PyObject *tmp;
+  pspace_object *self = (pspace_object *) o;
+
+  if (! frame)
+    {
+      PyErr_SetString (PyExc_TypeError,
+		       "cannot delete the frame filter attribute");
+      return -1;
+    }
+
+  if (! PyDict_Check (frame))
+    {
+      PyErr_SetString (PyExc_TypeError,
+		       "the frame filter attribute must be a dictionary");
+      return -1;
+    }
+
+  /* Take care in case the LHS and RHS are related somehow.  */
+  tmp = self->frame_filters;
+  Py_INCREF (frame);
+  self->frame_filters = frame;
+  Py_XDECREF (tmp);
+
+  return 0;
+}
+
+/* Get the 'type_printers' attribute.  */
+
+static PyObject *
+pspy_get_type_printers (PyObject *o, void *ignore)
+{
+  pspace_object *self = (pspace_object *) o;
+
+  Py_INCREF (self->type_printers);
+  return self->type_printers;
+}
+
+/* Set the 'type_printers' attribute.  */
+
+static int
+pspy_set_type_printers (PyObject *o, PyObject *value, void *ignore)
+{
+  PyObject *tmp;
+  pspace_object *self = (pspace_object *) o;
+
+  if (! value)
+    {
+      PyErr_SetString (PyExc_TypeError,
+		       "cannot delete the type_printers attribute");
+      return -1;
+    }
+
+  if (! PyList_Check (value))
+    {
+      PyErr_SetString (PyExc_TypeError,
+		       "the type_printers attribute must be a list");
+      return -1;
+    }
+
+  /* Take care in case the LHS and RHS are related somehow.  */
+  tmp = self->type_printers;
+  Py_INCREF (value);
+  self->type_printers = value;
   Py_XDECREF (tmp);
 
   return 0;
@@ -168,6 +274,20 @@ pspace_to_pspace_object (struct program_space *pspace)
 	      return NULL;
 	    }
 
+	  object->frame_filters = PyDict_New ();
+	  if (!object->frame_filters)
+	    {
+	      Py_DECREF (object);
+	      return NULL;
+	    }
+
+	  object->type_printers = PyList_New (0);
+	  if (!object->type_printers)
+	    {
+	      Py_DECREF (object);
+	      return NULL;
+	    }
+
 	  set_program_space_data (pspace, pspy_pspace_data_key, object);
 	}
     }
@@ -175,18 +295,17 @@ pspace_to_pspace_object (struct program_space *pspace)
   return (PyObject *) object;
 }
 
-void
+int
 gdbpy_initialize_pspace (void)
 {
   pspy_pspace_data_key
-    = register_program_space_data_with_cleanup (py_free_pspace);
+    = register_program_space_data_with_cleanup (NULL, py_free_pspace);
 
   if (PyType_Ready (&pspace_object_type) < 0)
-    return;
+    return -1;
 
-  Py_INCREF (&pspace_object_type);
-  PyModule_AddObject (gdb_module, "Progspace",
-		      (PyObject *) &pspace_object_type);
+  return gdb_pymodule_addobject (gdb_module, "Progspace",
+				 (PyObject *) &pspace_object_type);
 }
 
 
@@ -197,13 +316,16 @@ static PyGetSetDef pspace_getset[] =
     "The progspace's main filename, or None.", NULL },
   { "pretty_printers", pspy_get_printers, pspy_set_printers,
     "Pretty printers.", NULL },
+  { "frame_filters", pspy_get_frame_filters, pspy_set_frame_filters,
+    "Frame filters.", NULL },
+  { "type_printers", pspy_get_type_printers, pspy_set_type_printers,
+    "Type printers.", NULL },
   { NULL }
 };
 
 static PyTypeObject pspace_object_type =
 {
-  PyObject_HEAD_INIT (NULL)
-  0,				  /*ob_size*/
+  PyVarObject_HEAD_INIT (NULL, 0)
   "gdb.Progspace",		  /*tp_name*/
   sizeof (pspace_object),	  /*tp_basicsize*/
   0,				  /*tp_itemsize*/

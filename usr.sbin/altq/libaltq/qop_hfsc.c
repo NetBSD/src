@@ -1,4 +1,4 @@
-/*	$NetBSD: qop_hfsc.c,v 1.9 2010/03/01 00:13:47 joerg Exp $	*/
+/*	$NetBSD: qop_hfsc.c,v 1.9.12.1 2014/08/20 00:05:06 tls Exp $	*/
 /*	$KAME: qop_hfsc.c,v 1.12 2005/01/05 04:53:47 itojun Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -1071,9 +1071,7 @@ hfsc_add_class(struct classinfo *clinfo)
 {
 	struct hfsc_add_class class_add;
 	struct hfsc_classinfo *hfsc_clinfo;
-	struct hfsc_ifinfo *hfsc_ifinfo;
 
-	hfsc_ifinfo = clinfo->ifinfo->private;
 	hfsc_clinfo = clinfo->private;
 
 	memset(&class_add, 0, sizeof(class_add));

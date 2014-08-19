@@ -1,4 +1,4 @@
-/*	$NetBSD: direntry.h,v 1.5.120.1 2013/02/25 00:29:47 tls Exp $	*/
+/*	$NetBSD: direntry.h,v 1.5.120.2 2014/08/20 00:04:26 tls Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -77,6 +77,12 @@ struct direntry {
 	u_int8_t	deStartCluster[2]; /* starting cluster of file */
 	u_int8_t	deFileSize[4];	/* size of file in bytes */
 };
+
+static __inline uint8_t
+msdos_dirchar(const struct direntry *de, size_t i) {
+	return i < sizeof(de->deName) ? de->deName[i] :
+	    de->deExtension[i - sizeof(de->deName)];
+}
 
 /*
  * Structure of a Win95 long name directory entry

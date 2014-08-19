@@ -1,4 +1,4 @@
-/* Copyright (C) 2010 Free Software Foundation, Inc.
+/* Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -154,12 +154,12 @@ ia64_hpux_wait (struct target_ops *ops, ptid_t ptid,
      process it, and then resume the execution as if the event did
      not happen.  */
   if (ourstatus->kind == TARGET_WAITKIND_STOPPED
-      && ourstatus->value.sig == TARGET_SIGNAL_TRAP
+      && ourstatus->value.sig == GDB_SIGNAL_TRAP
       && ia64_hpux_at_dld_breakpoint_p (new_ptid))
     {
       ia64_hpux_handle_dld_breakpoint (new_ptid);
 
-      target_resume (new_ptid, 0, TARGET_SIGNAL_0);
+      target_resume (new_ptid, 0, GDB_SIGNAL_0);
       ourstatus->kind = TARGET_WAITKIND_IGNORE;
     }
 
@@ -337,9 +337,7 @@ ia64_hpux_store_registers (struct target_ops *ops,
    need to be handled manually.  So we override this routine and
    delegate back if we detect that we are not in a special case.  */
 
-static LONGEST (*super_xfer_partial) (struct target_ops *, enum target_object,
-				      const char *, gdb_byte *,
-				      const gdb_byte *, ULONGEST, LONGEST);
+static target_xfer_partial_ftype *super_xfer_partial;
 
 /* The "xfer_partial" routine for a memory region that is completely
    outside of the backing-store region.  */
@@ -485,6 +483,37 @@ ia64_hpux_xfer_memory_bs (struct target_ops *ops, const char *annex,
     return 0;
 }
 
+/* Get a register value as a unsigned value directly from the system,
+   instead of going through the regcache.
+
+   This function is meant to be used when inferior_ptid is not
+   a thread/process known to GDB.  */
+
+static ULONGEST
+ia64_hpux_get_register_from_save_state_t (int regnum, int reg_size)
+{
+  gdb_byte *buf = alloca (reg_size);
+  int offset = u_offsets[regnum];
+  int status;
+
+  /* The register is assumed to be available for fetching.  */
+  gdb_assert (offset != -1);
+
+  status = ia64_hpux_read_register_from_save_state_t (offset, buf, reg_size);
+  if (status < 0)
+    {
+      /* This really should not happen.  If it does, emit a warning
+	 and pretend the register value is zero.  Not exactly the best
+	 error recovery mechanism, but better than nothing.  We will
+	 try to do better if we can demonstrate that this can happen
+	 under normal circumstances.  */
+      warning (_("Failed to read value of register number %d."), regnum);
+      return 0;
+    }
+
+  return extract_unsigned_integer (buf, reg_size, BFD_ENDIAN_BIG);
+}
+
 /* The "xfer_partial" target_ops routine for ia64-hpux, in the case
    where the requested object is TARGET_OBJECT_MEMORY.  */
 
@@ -504,9 +533,24 @@ ia64_hpux_xfer_memory (struct target_ops *ops, const char *annex,
        (3) The region inside the backing-store, which needs to be
            read/written specially.  */
 
-  regcache_raw_read_unsigned (get_current_regcache (), IA64_BSP_REGNUM, &bsp);
-  regcache_raw_read_unsigned (get_current_regcache (), IA64_BSPSTORE_REGNUM,
-                              &bspstore);
+  if (in_inferior_list (ptid_get_pid (inferior_ptid)))
+    {
+      struct regcache *regcache = get_current_regcache ();
+
+      regcache_raw_read_unsigned (regcache, IA64_BSP_REGNUM, &bsp);
+      regcache_raw_read_unsigned (regcache, IA64_BSPSTORE_REGNUM, &bspstore);
+    }
+  else
+    {
+      /* This is probably a child of our inferior created by a fork.
+	 Because this process has not been added to our inferior list
+	 (we are probably in the process of handling that child
+	 process), we do not have a regcache to read the registers
+	 from.  So get those values directly from the kernel.  */
+      bsp = ia64_hpux_get_register_from_save_state_t (IA64_BSP_REGNUM, 8);
+      bspstore =
+	ia64_hpux_get_register_from_save_state_t (IA64_BSPSTORE_REGNUM, 8);
+    }
 
   /* 1. Memory region before BSPSTORE.  */
 
@@ -679,10 +723,10 @@ ia64_hpux_mourn_inferior (struct target_ops *ops)
 }
 
 /* Prevent warning from -Wmissing-prototypes.  */
-void _initialize_hppa_hpux_nat (void);
+void _initialize_ia64_hpux_nat (void);
 
 void
-_initialize_hppa_hpux_nat (void)
+_initialize_ia64_hpux_nat (void)
 {
   struct target_ops *t;
 

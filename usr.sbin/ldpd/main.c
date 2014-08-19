@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.6.8.1 2012/11/20 03:03:02 tls Exp $ */
+/* $NetBSD: main.c,v 1.6.8.2 2014/08/20 00:05:09 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,6 @@
 #include <netinet/in.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-#include <sys/select.h>
 #include <arpa/inet.h>
 
 #include <stdio.h>
@@ -101,10 +100,6 @@ main(int argc, char *argv[])
 			return EXIT_FAILURE;
 			break;
 		}
-	if (geteuid()) {
-		fatalp("You have to run this as ROOT\n");
-		return EXIT_FAILURE;
-	}
 
 	cpf = conf_parsefile(conffile);
 	if (cpf < 0 && strcmp(conffile, CONFFILE)) {
@@ -123,8 +118,8 @@ main(int argc, char *argv[])
 		strlcpy(my_ldp_id, inet_ntoa(conf_ldp_id), INET_ADDRSTRLEN);
 
 	if (mplssockaddr.sa_len == 0) {
-		fatalp("You need one mpls interface up and an IP "
-		    "address set for it\n");
+		fatalp("FATAL: Create an mpls interface using ifconfig\n"
+		    "e.g. ifconfig mpls0 create up\n");
 		return EXIT_FAILURE;
 	}
 	if (mpls_start_ldp() == -1)

@@ -1,9 +1,9 @@
-/*	$NetBSD: content-bozo.c,v 1.7 2011/11/18 09:51:31 mrg Exp $	*/
+/*	$NetBSD: content-bozo.c,v 1.7.6.1 2014/08/20 00:02:22 tls Exp $	*/
 
 /*	$eterna: content-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2011 Matthew R. Green
+ * Copyright (c) 1997-2014 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -73,6 +73,7 @@ static bozo_content_map_t static_content_map[] = {
 	{ ".z",		2, "unknown",			"x-pack",	"x-pack", NULL },
 	{ ".bz2",	4, "application/x-bzip2",	"x-bzip2",	"x-bzip2", NULL },
 	{ ".ogg",	4, "application/x-ogg",		"",		"", NULL },
+	{ ".mkv",	4, "video/x-matroska",		"",		"", NULL },
 	{ ".xbel",	5, "text/xml",			"",		"", NULL },
 	{ ".xml",	4, "text/xml",			"",		"", NULL },
 	{ ".xsl",	4, "text/xml",			"",		"", NULL },
@@ -171,6 +172,7 @@ static bozo_content_map_t static_content_map[] = {
 	{ ".ice",	4, "x-conference/x-cooltalk",	"",		"", NULL },
 	{ ".wrl",	4, "x-world/x-vrml",		"",		"", NULL },
 	{ ".vrml",	5, "x-world/x-vrml",		"",		"", NULL },
+	{ ".svg",	5, "image/svg+xml",		"",		"", NULL },
 	{ NULL,		0, NULL,		NULL,		NULL, NULL }
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.126.2.2 2013/06/23 06:20:29 tls Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.126.2.3 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -73,8 +73,6 @@ typedef uint64_t	Elf64_Addr;
 typedef uint64_t	Elf64_Off;
 typedef int64_t		Elf64_SOff;
 #define ELF64_FSZ_OFF	8
-typedef int32_t		Elf64_Shalf;
-#define ELF64_FSZ_SHALF 4
 
 typedef int32_t		Elf64_Sword;
 #define ELF64_FSZ_SWORD 4
@@ -301,6 +299,7 @@ typedef struct {
 #define EM_SEP		108	/* Sharp embedded microprocessor */
 #define EM_ARCA		109	/* Arca RISC microprocessor */
 #define EM_UNICORE	110	/* UNICORE from PKU-Unity Ltd. and MPRC Peking University */
+#define EM_AARCH64	183	/* AArch64 64-bit ARM microprocessor */
 
 /* Unofficial machine types follow */
 #define EM_AVR32	6317	/* used by NetBSD/avr32 */
@@ -417,8 +416,16 @@ typedef struct {
 #define SHT_NUM		     19
 
 #define SHT_LOOS	     0x60000000 /* Operating system specific range */
+#define SHT_GNU_INCREMENTAL_INPUTS 0x6fff4700   /* GNU incremental build data */
+#define	SHT_LOSUNW	     0x6ffffff4
+#define	SHT_SUNW_dof	     0x6ffffff4
+#define	SHT_GNU_ATTRIBUTES   0x6ffffff5	/* GNU object attributes */
+#define	SHT_SUNW_cap	     0x6ffffff5
+#define	SHT_SUNW_SIGNATURE   0x6ffffff6
 #define SHT_GNU_HASH	     0x6ffffff6 /* GNU style symbol hash table */
+#define SHT_GNU_LIBLIST	     0x6ffffff7 /* GNU list of prelink dependencies */
 #define SHT_SUNW_move	     0x6ffffffa
+#define	SHT_SUNW_COMDAT	     0x6ffffffb
 #define SHT_SUNW_syminfo     0x6ffffffc
 #define SHT_SUNW_verdef	     0x6ffffffd /* Versions defined by file */
 #define SHT_GNU_verdef	     SHT_SUNW_verdef
@@ -426,6 +433,7 @@ typedef struct {
 #define SHT_GNU_verneed	     SHT_SUNW_verneed
 #define SHT_SUNW_versym	     0x6fffffff /* Symbol versions */
 #define SHT_GNU_versym	     SHT_SUNW_versym
+#define	SHT_HISUNW	     0x6fffffff
 #define SHT_HIOS	     0x6fffffff
 #define SHT_LOPROC	     0x70000000 /* Processor-specific range */
 #define SHT_AMD64_UNWIND     0x70000001 /* unwind information */
@@ -436,6 +444,9 @@ typedef struct {
 					 * attributes */
 #define SHT_ARM_DEBUGOVERLAY 0x70000004 /* See DBGOVL for details */
 #define SHT_ARM_OVERLAYSECTION 0x70000005
+#define	SHT_MIPS_REGINFO     0x70000006
+#define	SHT_MIPS_OPTIONS     0x7000000d
+#define	SHT_MIPS_DWARF	     0x7000001e	/* MIPS gcc uses MIPS_DWARF */
 #define SHT_HIPROC	     0x7fffffff
 #define SHT_LOUSER	     0x80000000 /* Application-specific range */
 #define SHT_HIUSER	     0xffffffff
@@ -693,6 +704,13 @@ typedef struct {
 #define DT_LOPROC	0x70000000	/* Processor-specific range */
 #define DT_HIPROC	0x7fffffff
 
+/* Flag values for DT_FLAGS */
+#define DF_ORIGIN	0x00000001	/* uses $ORIGIN */
+#define DF_SYMBOLIC	0x00000002	/* */
+#define DF_TEXTREL	0x00000004	/* */
+#define DF_BIND_NOW	0x00000008	/* */
+#define DF_STATIC_TLS	0x00000010	/* */
+
 /* Flag values for DT_FLAGS_1 (incomplete) */
 #define DF_1_BIND_NOW	0x00000001	/* Same as DF_BIND_NOW */
 #define DF_1_NODELETE	0x00000008	/* Set the RTLD_NODELETE for object */
@@ -752,6 +770,16 @@ typedef struct {
 #define AT_SUN_EMUL_EXECFD 2013 /* coff file descriptor */
 	/* Executable's fully resolved name */
 #define AT_SUN_EXECNAME 2014
+
+/*
+ * The header for GNU-style hash sections.
+ */
+typedef struct {
+	uint32_t	gh_nbuckets;	/* Number of hash buckets. */
+	uint32_t	gh_symndx;	/* First visible symbol in .dynsym. */
+	uint32_t	gh_maskwords;	/* #maskwords used in bloom filter. */
+	uint32_t	gh_shift2;	/* Bloom filter shift count. */
+} Elf_GNU_Hash_Header;
 
 /*
  * Note Headers
@@ -961,6 +989,35 @@ struct netbsd_elfcore_procinfo {
 	int32_t		cpi_siglwp;	/* LWP target of killing signal */
 };
 
+/*
+ * NetBSD-specific note type: MACHINE_ARCH.
+ * There should be 1 NOTE per executable.
+ * name:	NetBSD\0
+ * namesz:	7
+ * desc:	string
+ * descsz:	variable
+ */
+#define ELF_NOTE_TYPE_MARCH_TAG		5
+/* NetBSD-specific note name and description sizes */
+#define ELF_NOTE_MARCH_NAMESZ		ELF_NOTE_NETBSD_NAMESZ
+/* NetBSD-specific note name */
+#define ELF_NOTE_MARCH_NAME		ELF_NOTE_NETBSD_NAME
+
+/*
+ * NetBSD-specific note type: MCMODEL
+ * There should be 1 NOTE per executable.
+ * name:	NetBSD\0
+ * namesz:	7
+ * code model:	string
+ */
+
+#define ELF_NOTE_TYPE_MCMODEL_TAG	6
+/* NetBSD-specific note name and description sizes */
+#define ELF_NOTE_MCMODEL_NAMESZ		ELF_NOTE_NETBSD_NAMESZ
+/* NetBSD-specific note name */
+#define ELF_NOTE_MCMODEL_NAME		ELF_NOTE_NETBSD_NAME
+
+
 #if !defined(ELFSIZE) && defined(ARCH_ELFSIZE)
 #define ELFSIZE ARCH_ELFSIZE
 #endif
@@ -1168,6 +1225,13 @@ typedef Elf32_Versym	Elf64_Versym;
 
 #ifdef _KERNEL
 
+/*
+ * Arbitrary limits to avoid DoS for excessive memory allocation.
+ */
+#define ELF_MAXPHNUM	128
+#define ELF_MAXSHNUM	32768
+#define ELF_MAXNOTESIZE	1024
+
 #define ELF_AUX_ENTRIES 15	/* Max size of aux array passed to loader */
 #define ELF32_NO_ADDR	(~(Elf32_Addr)0) /* Indicates addr. not yet filled in */
 #define ELF32_LINK_ADDR ((Elf32_Addr)-2) /* advises to use link address */
@@ -1211,17 +1275,19 @@ struct elf_args {
 #endif
 
 struct ps_strings;
+struct coredump_iostate;
+struct note_state;
 
 #ifdef EXEC_ELF32
 int	exec_elf32_makecmds(struct lwp *, struct exec_package *);
 int	elf32_copyargs(struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *);
 
-int	coredump_elf32(struct lwp *, void *);
-int	coredump_writenote_elf32(struct proc *, void *, Elf32_Nhdr *,
-    const char *, void *);
+int	coredump_elf32(struct lwp *, struct coredump_iostate *);
+void	coredump_savenote_elf32(struct note_state *, unsigned int,
+	    const char *, void *, size_t);
 
-int	elf32_check_header(Elf32_Ehdr *, int);
+int	elf32_check_header(Elf32_Ehdr *);
 #endif
 
 #ifdef EXEC_ELF64
@@ -1229,11 +1295,11 @@ int	exec_elf64_makecmds(struct lwp *, struct exec_package *);
 int	elf64_copyargs(struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *);
 
-int	coredump_elf64(struct lwp *, void *);
-int	coredump_writenote_elf64(struct proc *, void *, Elf64_Nhdr *,
-    const char *, void *);
+int	coredump_elf64(struct lwp *, struct coredump_iostate *);
+void	coredump_savenote_elf64(struct note_state *, unsigned int,
+	    const char *, void *, size_t);
 
-int	elf64_check_header(Elf64_Ehdr *, int);
+int	elf64_check_header(Elf64_Ehdr *);
 #endif
 
 #endif /* _KERNEL */

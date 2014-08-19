@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.28 2012/05/21 14:15:17 martin Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.28.2.1 2014/08/20 00:03:04 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.28 2012/05/21 14:15:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.28.2.1 2014/08/20 00:03:04 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
 /*
  * XXX fredette - much of the TLB trap handler setup should
- * probably be moved here from hp700/hp700/machdep.c, seeing
+ * probably be moved here from hppa/hppa/machdep.c, seeing
  * that there's related code already in hppa/hppa/trap.S.
  */
 

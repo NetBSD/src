@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.59 2012/06/23 03:14:04 christos Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.59.2.1 2014/08/20 00:04:36 tls Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -312,11 +312,11 @@ extern int	ip6_hashsize;		/* size of hash table */
 #endif
 
 struct in6pcb;
+extern const struct pr_usrreqs rip6_usrreqs;
 
 int	icmp6_ctloutput(int, struct socket *, struct sockopt *);
 
 void	ip6_init(void);
-void	ip6intr(void);
 void	ip6_input(struct mbuf *);
 const struct ip6aux *ip6_getdstifaddr(struct mbuf *);
 void	ip6_freepcbopts(struct ip6_pktopts *);
@@ -380,6 +380,7 @@ void	*rip6_ctlinput(int, const struct sockaddr *, void *);
 int	rip6_ctloutput(int, struct socket *, struct sockopt *);
 int	rip6_output(struct mbuf *, struct socket *, struct sockaddr_in6 *,
 			 struct mbuf *);
+int	rip6_attach(struct socket *, int);
 int	rip6_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 

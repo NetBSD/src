@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_timer.c,v 1.20 2011/07/01 20:32:51 dyoung Exp $ */
+/*	$NetBSD: i80321_timer.c,v 1.20.12.1 2014/08/20 00:02:48 tls Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.20 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.20.12.1 2014/08/20 00:02:48 tls Exp $");
 
 #include "opt_perfctrs.h"
 #include "opt_i80321.h"
@@ -76,7 +76,7 @@ static uint32_t counts_per_hz;
 
 int	clockhandler(void *);
 
-static inline uint32_t
+__unused static inline uint32_t
 tmr0_read(void)
 {
 	uint32_t rv;
@@ -123,7 +123,7 @@ trr0_write(uint32_t val)
 		: "r" (val));
 }
 
-static inline uint32_t
+__unused static inline uint32_t
 tmr1_read(void)
 {
 	uint32_t rv;

@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.44.12.1 2012/11/20 03:01:11 tls Exp $	*/
+/*	$NetBSD: maple.c,v 1.44.12.2 2014/08/20 00:02:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.44.12.1 2012/11/20 03:01:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.44.12.2 2014/08/20 00:02:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -111,7 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.44.12.1 2012/11/20 03:01:11 tls Exp $");
 static int	maplematch(device_t, cfdata_t, void *);
 static void	mapleattach(device_t, device_t, void *);
 static void	maple_scanbus(struct maple_softc *);
-static char *	maple_unit_name(char *, int port, int subunit);
+static char *	maple_unit_name(char *, size_t, int port, int subunit);
 static void	maple_begin_txbuf(struct maple_softc *);
 static int	maple_end_txbuf(struct maple_softc *);
 static void	maple_queue_command(struct maple_softc *, struct maple_unit *,
@@ -165,8 +165,18 @@ dev_type_close(mapleclose);
 dev_type_ioctl(mapleioctl);
 
 const struct cdevsw maple_cdevsw = {
-	mapleopen, mapleclose, noread, nowrite, mapleioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	.d_open = mapleopen,
+	.d_close = mapleclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = mapleioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 static int
@@ -242,7 +252,7 @@ mapleattach(device_t parent, device_t self, void *aux)
 	sc->sc_intrhand = sysasic_intr_establish(SYSASIC_EVENT_MAPLE_DMADONE,
 	    IPL_MAPLE, IRL_MAPLE, maple_intr, sc);
 
-	config_pending_incr();	/* create thread before mounting root */
+	config_pending_incr(self); /* create thread before mounting root */
 
 	if (kthread_create(PRI_NONE, 0, NULL, maple_event_thread, sc,
 	    &sc->event_thread, "%s", device_xname(self)) == 0)
@@ -271,7 +281,7 @@ maple_scanbus(struct maple_softc *sc)
 		{
 			char buf[16];
 			printf("%s: queued to probe 1\n",
-			    maple_unit_name(buf, u->port, u->subunit));
+			    maple_unit_name(buf, sizeof(buf), u->port, u->subunit));
 		}
 #endif
 		TAILQ_INSERT_TAIL(&sc->sc_probeq, u, u_q);
@@ -342,12 +352,13 @@ maple_run_polling(device_t dev)
 }
 
 static char *
-maple_unit_name(char *buf, int port, int subunit)
+maple_unit_name(char *buf, size_t len, int port, int subunit)
 {
-
-	sprintf(buf, "maple%c", port + 'A');
+	size_t l = snprintf(buf, len, "maple%c", port + 'A');
+	if (l > len)
+		l = len;
 	if (subunit)
-		sprintf(buf+6, "%d", subunit);
+		snprintf(buf + l, len - l, "%d", subunit);
 
 	return buf;
 }
@@ -463,8 +474,8 @@ maple_write_command(struct maple_softc *sc, struct maple_unit *u, int command,
 	char buf[16];
 
 	if (u->u_retrycnt)
-		printf("%s: retrycnt %d\n",
-		    maple_unit_name(buf, u->port, u->subunit), u->u_retrycnt);
+		printf("%s: retrycnt %d\n", maple_unit_name(buf, sizeof(buf),
+		    u->port, u->subunit), u->u_retrycnt);
 #endif
 	u->u_retrycnt = 0;
 	u->u_command = command;
@@ -515,7 +526,7 @@ maple_check_subunit_change(struct maple_softc *sc, struct maple_unit *u)
 	{
 		char buf[16];
 		printf("%s: unit_map 0x%x -> 0x%x (units 0x%x)\n",
-		    maple_unit_name(buf, u->port, u->subunit),
+		    maple_unit_name(buf, sizeof(buf), u->port, u->subunit),
 		    sc->sc_port_unit_map[port], unit_map, units);
 	}
 #endif
@@ -541,7 +552,8 @@ maple_check_subunit_change(struct maple_softc *sc, struct maple_unit *u)
 			{
 				char buf[16];
 				printf("%s: queued to probe 2\n",
-				    maple_unit_name(buf, u1->port, u1->subunit));
+				    maple_unit_name(buf, sizeof(buf),
+				    u1->port, u1->subunit));
 			}
 #endif
 			TAILQ_INSERT_HEAD(&sc->sc_probeq, u1, u_q);
@@ -554,10 +566,7 @@ static void
 maple_check_unit_change(struct maple_softc *sc, struct maple_unit *u)
 {
 	struct maple_devinfo *newinfo = (void *) (u->u_rxbuf + 1);
-	int port, subunit;
 
-	port = u->port;
-	subunit = u->subunit;
 	if (memcmp(&u->devinfo, newinfo, sizeof(struct maple_devinfo)) == 0)
 		goto out;	/* no change */
 
@@ -573,7 +582,7 @@ out:
 	{
 		char buf[16];
 		printf("%s: queued to ping\n",
-		    maple_unit_name(buf, u->port, u->subunit));
+		    maple_unit_name(buf, sizeof(buf), u->port, u->subunit));
 	}
 #endif
 	TAILQ_INSERT_TAIL(&sc->sc_pingq, u, u_q);
@@ -592,7 +601,8 @@ maple_print_unit(void *aux, const char *pnp)
 	subunit = ma->ma_unit->subunit;
 
 	if (pnp != NULL)
-		printf("%s at %s", maple_unit_name(buf, port, subunit), pnp);
+		printf("%s at %s", maple_unit_name(buf, sizeof(buf), port,
+		    subunit), pnp);
 
 	printf(" port %d", port);
 
@@ -673,7 +683,8 @@ maple_attach_unit(struct maple_softc *sc, struct maple_unit *u)
 	maple_print_unit(&ma, device_xname(sc->sc_dev));
 	printf("\n");
 	strcpy(oldxname, device_xname(sc->sc_dev));
-	maple_unit_name(sc->sc_dev->dv_xname, u->port, u->subunit);
+	maple_unit_name(sc->sc_dev->dv_xname, sizeof(sc->sc_dev->dv_xname),
+	    u->port, u->subunit);
 
 	for (f = 0; f < MAPLE_NFUNC; f++) {
 		u->u_func[f].f_callback = NULL;
@@ -717,7 +728,7 @@ maple_detach_unit_nofix(struct maple_softc *sc, struct maple_unit *u)
 	char buf[16];
 
 #if defined(MAPLE_DEBUG) && MAPLE_DEBUG > 1
-	printf("%s: remove\n", maple_unit_name(buf, u->port, u->subunit));
+	printf("%s: remove\n", maple_unit_name(buf, sizeof(buf), u->port, u->subunit));
 #endif
 	maple_remove_from_queues(sc, u);
 	port = u->port;
@@ -732,7 +743,7 @@ maple_detach_unit_nofix(struct maple_softc *sc, struct maple_unit *u)
 		if ((dev = fn->f_dev) != NULL) {
 #if defined(MAPLE_DEBUG) && MAPLE_DEBUG > 1
 			printf("%s: detaching func %d\n",
-			    maple_unit_name(buf, port, u->subunit),
+			    maple_unit_name(buf, sizeof(buf), port, u->subunit),
 			    fn->f_funcno);
 #endif
 
@@ -757,7 +768,7 @@ maple_detach_unit_nofix(struct maple_softc *sc, struct maple_unit *u)
 			 */
 			if ((error = config_detach(fn->f_dev, DETACH_FORCE))) {
 				printf("%s: failed to detach %s (func %d), errno %d\n",
-				    maple_unit_name(buf, port, u->subunit),
+				    maple_unit_name(buf, sizeof(buf), port, u->subunit),
 				    device_xname(fn->f_dev), fn->f_funcno, error);
 			}
 		}
@@ -775,7 +786,7 @@ maple_detach_unit_nofix(struct maple_softc *sc, struct maple_unit *u)
 			if (u1 == u) {
 #if defined(MAPLE_DEBUG) && MAPLE_DEBUG > 1
 				printf("%s: abort retry\n",
-				    maple_unit_name(buf, port, u->subunit));
+				    maple_unit_name(buf, sizeof(buf), port, u->subunit));
 #endif
 				SIMPLEQ_REMOVE(&sc->sc_retryq, u, maple_unit,
 				    u_dmaq);
@@ -795,7 +806,7 @@ maple_detach_unit_nofix(struct maple_softc *sc, struct maple_unit *u)
 		{
 			char buf2[16];
 			printf("%s: queued to probe 3\n",
-			    maple_unit_name(buf2, port, u->subunit));
+			    maple_unit_name(buf2, sizeof(buf2), port, u->subunit));
 		}
 #endif
 		TAILQ_INSERT_TAIL(&sc->sc_probeq, u, u_q);
@@ -837,7 +848,7 @@ maple_command(device_t dev, struct maple_unit *u, int func,
 	{char buf[16];
 	if (fn->f_cmdstat != MAPLE_CMDSTAT_NONE)
 		panic("maple_command: %s func %d: requesting more than one commands",
-		    maple_unit_name(buf, u->port, u->subunit), func);
+		    maple_unit_name(buf, sizeof(buf), u->port, u->subunit), func);
 	}
 #endif
 	fn->f_command = command;
@@ -1123,7 +1134,7 @@ maple_remove_from_queues(struct maple_softc *sc, struct maple_unit *u)
 	if (u->u_queuestat != MAPLE_QUEUE_NONE) {
 		char buf[16];
 		printf("%s: dequeued\n",
-		    maple_unit_name(buf, u->port, u->subunit));
+		    maple_unit_name(buf, sizeof(buf), u->port, u->subunit));
 	}
 #endif
 
@@ -1144,7 +1155,7 @@ maple_retry(struct maple_softc *sc, struct maple_unit *u,
 	if (u->u_retrycnt == 0) {
 		char buf[16];
 		printf("%s: retrying: %#x, %#x, %p\n",
-		    maple_unit_name(buf, u->port, u->subunit),
+		    maple_unit_name(buf, sizeof(buf), u->port, u->subunit),
 		    u->u_command, u->u_datalen, u->u_dataaddr);
 	}
 #endif
@@ -1247,7 +1258,7 @@ maple_check_responses(struct maple_softc *sc)
 				/* detach */
 #if defined(MAPLE_DEBUG) && MAPLE_DEBUG > 2
 				printf("%s: func: %d: periodic response %d\n",
-				    maple_unit_name(buf, u->port, u->subunit),
+				    maple_unit_name(buf, sizeof(buf), u->port, u->subunit),
 				    u->u_dma_func,
 				    response);
 #endif
@@ -1273,13 +1284,13 @@ maple_check_responses(struct maple_softc *sc)
 				if (u->subunit != 0 &&
 				    ++u->u_proberetry > MAPLE_PROBERETRY_MAX) {
 					printf("%s: no response\n",
-					    maple_unit_name(buf,
+					    maple_unit_name(buf, sizeof(buf),
 						u->port, u->subunit));
 				} else {
 					/* probe again */
 #if defined(MAPLE_DEBUG) && MAPLE_DEBUG > 2
 					printf("%s: queued to probe 4\n",
-					    maple_unit_name(buf, u->port, u->subunit));
+					    maple_unit_name(buf, sizeof(buf), u->port, u->subunit));
 #endif
 					TAILQ_INSERT_TAIL(&sc->sc_probeq, u,
 					    u_q);
@@ -1306,7 +1317,7 @@ maple_check_responses(struct maple_softc *sc)
 					/* detach */
 #if defined(MAPLE_DEBUG) && MAPLE_DEBUG > 1
 					printf("%s: ping response %d\n",
-					    maple_unit_name(buf, u->port,
+					    maple_unit_name(buf, sizeof(buf), u->port,
 						u->subunit),
 					    response);
 #endif
@@ -1323,7 +1334,7 @@ maple_check_responses(struct maple_softc *sc)
 						 */
 #ifdef MAPLE_DEBUG
 						printf("%s: switching ping method\n",
-						    maple_unit_name(buf,
+						    maple_unit_name(buf, sizeof(buf),
 							u->port, u->subunit));
 #endif
 						u->u_ping_stat
@@ -1363,7 +1374,7 @@ maple_check_responses(struct maple_softc *sc)
 					/* detach */
 #if defined(MAPLE_DEBUG) && MAPLE_DEBUG > 1
 					printf("%s: command response %d\n",
-					    maple_unit_name(buf, u->port,
+					    maple_unit_name(buf, sizeof(buf), u->port,
 						u->subunit),
 					    response);
 #endif
@@ -1382,7 +1393,7 @@ maple_check_responses(struct maple_softc *sc)
 				/* detached right now */
 #ifdef MAPLE_DEBUG
 				printf("%s: unknown function: function %d, response %d\n",
-				    maple_unit_name(buf, u->port, u->subunit),
+				    maple_unit_name(buf, sizeof(buf), u->port, u->subunit),
 				    func_code, response);
 #endif
 				continue;
@@ -1428,7 +1439,7 @@ maple_event_thread(void *arg)
 
 	/* OK, continue booting system */
 	maple_polling = 0;
-	config_pending_decr();
+	config_pending_decr(sc->sc_dev);
 
 	for (;;) {
 		/*

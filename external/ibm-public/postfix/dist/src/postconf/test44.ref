@@ -1,0 +1,5 @@
+foo        unix  -       n       n       -       0       other
+xx         inet  -       n       n       -       0       aa -stuff
+    -o bb=cc
+    dd
+baz        unix  -       n       n       -       0       other

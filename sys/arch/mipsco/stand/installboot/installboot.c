@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.8 2009/03/18 10:22:32 cegger Exp $	*/
+/*	$NetBSD: installboot.c,v 1.8.22.1 2014/08/20 00:03:13 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -219,6 +219,7 @@ do_install(const char *disk, const char *bootstrap, const char *bootname)
 	if ((fd = open(disk, O_WRONLY)) == -1)
 		FATALIO("open %s", bootstrap);
 	len = pwrite(fd, boot_code, boot_size, BOOTBLOCK_OFFSET);
+	free(boot_code);
 	if (len == -1)
 		FATAL("write %s", disk);
 	if (len != boot_size)

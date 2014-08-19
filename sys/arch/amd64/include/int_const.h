@@ -1,4 +1,4 @@
-/*	$NetBSD: int_const.h,v 1.4 2010/05/29 17:33:57 tnozaki Exp $	*/
+/*	$NetBSD: int_const.h,v 1.4.18.1 2014/08/20 00:02:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,6 +32,10 @@
 #ifndef _AMD64_INT_CONST_H_
 #define _AMD64_INT_CONST_H_
 
+#ifdef __INTMAX_C_SUFFIX__
+#include <sys/common_int_const.h>
+#else
+
 #ifdef __x86_64__
 
 /*
@@ -60,5 +64,7 @@
 #include <i386/int_const.h>
 
 #endif	/*	__x86_64__	*/
+
+#endif
 
 #endif /* !_AMD64_INT_CONST_H_ */

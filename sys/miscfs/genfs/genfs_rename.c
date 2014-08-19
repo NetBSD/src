@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_rename.c,v 1.1 2012/05/08 23:53:26 riastradh Exp $	*/
+/*	$NetBSD: genfs_rename.c,v 1.1.8.1 2014/08/20 00:04:31 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_rename.c,v 1.1 2012/05/08 23:53:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_rename.c,v 1.1.8.1 2014/08/20 00:04:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kauth.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_rename.c,v 1.1 2012/05/08 23:53:26 riastradh E
 #include <sys/namei.h>
 #include <sys/stat.h>
 #include <sys/vnode.h>
+#include <sys/fstrans.h>
 #include <sys/types.h>
 
 #include <miscfs/genfs/genfs.h>
@@ -176,6 +177,7 @@ genfs_insane_rename(void *v,
 	struct componentname *fcnp = ap->a_fcnp;
 	struct vnode *tdvp = ap->a_tdvp;
 	struct vnode *tvp = ap->a_tvp;
+	struct mount *mp = fdvp->v_mount;
 	struct componentname *tcnp = ap->a_tcnp;
 	kauth_cred_t cred;
 	int error;
@@ -193,6 +195,8 @@ genfs_insane_rename(void *v,
 	KASSERT((tvp == NULL) || (VOP_ISLOCKED(tvp) == LK_EXCLUSIVE));
 	KASSERT(fdvp->v_type == VDIR);
 	KASSERT(tdvp->v_type == VDIR);
+
+	fstrans_start(mp, FSTRANS_SHARED);
 
 	cred = fcnp->cn_cred;
 
@@ -227,6 +231,8 @@ genfs_insane_rename(void *v,
 	 */
 	vrele(fdvp);
 	vrele(tdvp);
+
+	fstrans_done(mp);
 
 	return error;
 }

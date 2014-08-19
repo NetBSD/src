@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.46.6.1 2012/11/20 03:00:57 tls Exp $ */
+/*	$NetBSD: grf_cl.c,v 1.46.6.2 2014/08/20 00:02:43 tls Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.46.6.1 2012/11/20 03:00:57 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.46.6.2 2014/08/20 00:02:43 tls Exp $");
 
 #include "grfcl.h"
 #include "ite.h"
@@ -198,10 +198,9 @@ int
 grfclmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct zbus_args *zap;
-	static int regprod, fbprod, fbprod2;
+	static int regprod, fbprod;
 	int error;
 
-	fbprod2 = 0;
 	zap = aux;
 
 #ifndef CL5426CONSOLE
@@ -223,7 +222,6 @@ grfclmatch(device_t parent, cfdata_t cf, void *aux)
 				error = 0;
 				break;
 			    case 22:
-				fbprod2 = 22;
 				error = 0;
 				break;
 			    case 21:
@@ -829,7 +827,7 @@ int
 cl_setmousepos(struct grf_softc *gp, struct grf_position *data)
 {
 	volatile char *ba = gp->g_regkva;
-        short rx, ry, prx, pry;
+        short rx, ry;
 #ifdef CL_SHIFTSPRITE
 	volatile char *fb = gp->g_fbkva;
         volatile char *sprite = fb + (cl_fbsize - 1024);
@@ -842,8 +840,6 @@ cl_setmousepos(struct grf_softc *gp, struct grf_position *data)
         /* current and previous real coordinates */
 	rx = data->x - cl_cursprite.hot.x;
 	ry = data->y - cl_cursprite.hot.y;
-	prx = cl_cursprite.pos.x - cl_cursprite.hot.x;
-	pry = cl_cursprite.pos.y - cl_cursprite.hot.y;
 
         /*
 	 * if we are/were on an edge, create (un)shifted bitmap --
@@ -1339,7 +1335,7 @@ cl_load_mon(struct grf_softc *gp, struct grfcltext_mode *md)
 	unsigned char num0, denom0, clkdoub;
 	unsigned short HT, HDE, HBS, HBE, HSS, HSE, VDE, VBS, VBE, VSS,
 	        VSE, VT;
-	int	clkmul, offsmul, clkmode;
+	int	clkmul, clkmode;
 	int	vmul;
 	int	sr15;
 	unsigned char hvsync_pulse;
@@ -1403,13 +1399,11 @@ cl_load_mon(struct grf_softc *gp, struct grfcltext_mode *md)
 	switch (gv->depth) {
 	    case 8:
 		clkmul = 1;
-		offsmul = 1;
 		clkmode = 0x0;
 		break;
 	    case 15:
 	    case 16:
 		clkmul = 1;
-		offsmul = 2;
 		clkmode = 0x6;
 		break;
 	    case 24:
@@ -1417,17 +1411,14 @@ cl_load_mon(struct grf_softc *gp, struct grfcltext_mode *md)
 			clkmul = 1;
 		else
 			clkmul = 3;
-		offsmul = 3;
 		clkmode = 0x4;
 		break;
 	    case 32:
 		clkmul = 1;
-		offsmul = 2;
 		clkmode = 0x8;
 		break;
 	    default:
 		clkmul = 1;
-		offsmul = 1;
 		clkmode = 0x0;
 		break;
 	}

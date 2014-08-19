@@ -1,7 +1,6 @@
 /* Host support routines for MinGW, for GDB, the GNU debugger.
 
-   Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,12 +18,13 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
+#include "main.h"
 #include "serial.h"
 #include "event-loop.h"
 
 #include "gdb_assert.h"
 #include "gdb_select.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "readline/readline.h"
 
 #include <windows.h>
@@ -79,6 +79,19 @@ safe_strerror (int errnum)
     buffer[len - 3] = '\0';
 
   return buffer;
+}
+
+/* Return an absolute file name of the running GDB, if possible, or
+   ARGV0 if not.  The return value is in malloc'ed storage.  */
+
+char *
+windows_get_absolute_argv0 (const char *argv0)
+{
+  char full_name[PATH_MAX];
+
+  if (GetModuleFileName (NULL, full_name, PATH_MAX))
+    return xstrdup (full_name);
+  return xstrdup (argv0);
 }
 
 /* Wrapper for select.  On Windows systems, where the select interface
@@ -251,6 +264,9 @@ gdb_call_async_signal_handler (struct async_signal_handler *handler,
     }
   SetEvent (sigint_event);
 }
+
+/* -Wmissing-prototypes */
+extern initialize_file_ftype _initialize_mingw_hdep;
 
 void
 _initialize_mingw_hdep (void)

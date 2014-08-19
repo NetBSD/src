@@ -1,7 +1,6 @@
 /* Target-dependent code for FreeBSD/sparc64.
 
-   Copyright (C) 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,7 +28,7 @@
 #include "trad-frame.h"
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 
 #include "sparc64-tdep.h"
 #include "solib-svr4.h"
@@ -70,7 +69,7 @@ sparc64fbsd_supply_fpregset (const struct regset *regset,
 			     struct regcache *regcache,
 			     int regnum, const void *fpregs, size_t len)
 {
-  sparc64_supply_fpregset (regcache, regnum, fpregs);
+  sparc64_supply_fpregset (&sparc64_bsd_fpregset, regcache, regnum, fpregs);
 }
 
 static void
@@ -78,14 +77,14 @@ sparc64fbsd_collect_fpregset (const struct regset *regset,
 			      const struct regcache *regcache,
 			      int regnum, void *fpregs, size_t len)
 {
-  sparc64_collect_fpregset (regcache, regnum, fpregs);
+  sparc64_collect_fpregset (&sparc64_bsd_fpregset, regcache, regnum, fpregs);
 }
 
 
 /* Signal trampolines.  */
 
 static int
-sparc64fbsd_pc_in_sigtramp (CORE_ADDR pc, char *name)
+sparc64fbsd_pc_in_sigtramp (CORE_ADDR pc, const char *name)
 {
   return (name && strcmp (name, "__sigtramp") == 0);
 }
@@ -190,7 +189,7 @@ sparc64fbsd_sigtramp_frame_sniffer (const struct frame_unwind *self,
 				    void **this_cache)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
-  char *name;
+  const char *name;
 
   find_pc_partial_function (pc, &name, NULL, NULL);
   if (sparc64fbsd_pc_in_sigtramp (pc, name))

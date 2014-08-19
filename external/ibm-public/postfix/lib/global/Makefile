@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.2.1 2013/02/25 00:27:33 tls Exp $
+#	$NetBSD: Makefile,v 1.3.2.2 2014/08/19 23:59:45 tls Exp $
 
 LIBISPRIVATE=	yes
 
@@ -42,6 +42,7 @@ SRCS=	abounce.c anvil_clnt.c been_here.c bounce.c bounce_log.c \
 	delivered_hdr.c fold_addr.c mkmap_proxy.c header_body_checks.c \
 	mail_conf_nint.c match_service.c match_service.h mail_conf_nbool.c \
 	smtp_reply_footer.c memcache_proto.c mkmap_fail.c safe_ultostr.c \
-	server_acl.c verify_sender_addr.c mail_version.c
+	server_acl.c verify_sender_addr.c mail_version.c haproxy_srvr.c \
+	mkmap_lmdb.c
 
 .include <bsd.lib.mk>

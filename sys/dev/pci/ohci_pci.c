@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.50 2012/06/10 06:15:53 mrg Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.50.2.1 2014/08/20 00:03:43 tls Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.50 2012/06/10 06:15:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.50.2.1 2014/08/20 00:03:43 tls Exp $");
 
 #include "ehci.h"
 
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.50 2012/06/10 06:15:53 mrg Exp $");
 #include <sys/bus.h>
 
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 #include <dev/pci/usb_pci.h>
 
 #include <dev/usb/usb.h>
@@ -90,9 +91,15 @@ ohci_pci_attach(device_t parent, device_t self, void *aux)
 	pcireg_t csr;
 	usbd_status r;
 	const char *vendor;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_bus.hci_private = sc;
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NS &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NS_USB) {
+		sc->sc.sc_flags = OHCIF_SUPERIO;
+	}
 
 	pci_aprint_devinfo(pa, "USB Controller");
 
@@ -135,7 +142,7 @@ ohci_pci_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Allocate IRQ
 	 */
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_SCHED, ohci_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");

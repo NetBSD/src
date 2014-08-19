@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_fiq.S,v 1.2 2001/12/20 01:20:23 thorpej Exp $	*/
+/*	$NetBSD: iomd_fiq.S,v 1.2.172.1 2014/08/20 00:02:46 tls Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -41,8 +41,8 @@
  * Created      : 27/09/94
  */
 
-#include <machine/asm.h>
-#include <machine/cpu.h>
+#include <arm/asm.h>
+#include <arm/locore.h>
 
 
 /*
@@ -69,13 +69,14 @@ ENTRY_NP(floppy_read_fiq)
 	ldrb	r8, [r12]
 	strb	r8, [r11], #0x0001
 #ifndef NOFDFIQLOOPS
-	subeqs	pc, lr, #0x00000004
+	subseq	pc, lr, #0x00000004
 	ldrb	r8, [r9]
 	tst	r8, #0x01
 	addne	r13, r13, #0x00000001
 	bne	_C_LABEL(floppy_read_fiq)
 #endif
 	subs	pc, lr, #0x00000004
+END(floppy_read_fiq)
 
 	.global	_C_LABEL(floppy_read_fiq_end)
 _C_LABEL(floppy_read_fiq_end):
@@ -99,13 +100,14 @@ ENTRY_NP(floppy_write_fiq)
 	ldrb	r8, [r11], #0x0001
 	strb	r8, [r12]
 #ifndef NOFDFIQLOOPS
-	subeqs	pc, lr, #0x00000004
+	subseq	pc, lr, #0x00000004
 	ldrb	r8, [r9]
 	tst	r8, #0x01
 	addne	r13, r13, #0x00000001
 	bne	_C_LABEL(floppy_write_fiq)
 #endif
 	subs	pc, lr, #0x00000004
+END(floppy_write_fiq)
 
 	.global	_C_LABEL(floppy_write_fiq_end)
 _C_LABEL(floppy_write_fiq_end):

@@ -1,4 +1,4 @@
-/*	$NetBSD: diskio.c,v 1.3 2009/03/18 10:22:26 cegger Exp $	*/
+/*	$NetBSD: diskio.c,v 1.3.22.1 2014/08/20 00:02:49 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -237,18 +237,18 @@ setnames(disk_t *dd)
 		error(-1, "invalid %s target `%d'", bs, u);
 		return(-1);
 	}
-	sprintf(us, " target %d", u);
+	snprintf(us, sizeof(us), " target %d", u);
 
 	if (l < 0 || l > 7 || (b == IDE && l > 0)) {
 		error(-1, "invalid %s lun `%d'", bs, l);
 		return(-1);
 	}
 	if (b == IDE) {
-		sprintf(sn, "i%d", u);
+		snprintf(sn, sizeof(sn), "i%d", u);
 		ls[0] = '\0';
 	} else {
-		sprintf(sn, "%c%d%d", tolower(*bs), u, l);
-		sprintf(ls, " lun %d", l);
+		snprintf(sn, sizeof(sn), "%c%d%d", tolower(*bs), u, l);
+		snprintf(ls, sizeof(ls), " lun %d", l);
 	}
 
 	dd->fname = strbd(bs, us, ls, NULL);

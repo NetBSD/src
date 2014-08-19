@@ -1,4 +1,4 @@
-/*	$NetBSD: rccide.c,v 1.26.2.1 2012/10/09 13:36:06 bouyer Exp $	*/
+/*	$NetBSD: rccide.c,v 1.26.2.2 2014/08/20 00:03:48 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.26.2.1 2012/10/09 13:36:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.26.2.2 2014/08/20 00:03:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ static int  rccide_match(device_t, cfdata_t, void *);
 static void rccide_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(rccide, sizeof(struct pciide_softc),
-    rccide_match, rccide_attach, NULL, NULL);
+    rccide_match, rccide_attach, pciide_detach, NULL);
 
 static const struct pciide_product_desc pciide_serverworks_products[] =  {
 	{ PCI_PRODUCT_SERVERWORKS_OSB4_IDE,

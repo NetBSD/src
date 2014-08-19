@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27.12.1 2013/06/23 06:28:50 tls Exp $
+#	$NetBSD: Makefile,v 1.27.12.2 2014/08/20 00:02:23 tls Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -6,7 +6,7 @@
 WARNS=		1
 # XXX
 .if ${MACHINE_ARCH} != "m68000"
-DBG=		-Os
+DBG+=		-Os
 .endif
 
 CRUNCHGEN_FLAGS=-d "${DBG}"
@@ -46,6 +46,9 @@ LISTS+=		${.CURDIR}/list.ldd
 LDD_ELF32DIR!=	cd ${NETBSDSRCDIR}/usr.bin/ldd/elf32 && ${PRINTOBJDIR}
 LDD_ELF64DIR!=	cd ${NETBSDSRCDIR}/usr.bin/ldd/elf64 && ${PRINTOBJDIR}
 PARSELISTENV+=	LDD_ELF32DIR=${LDD_ELF32DIR} LDD_ELF64DIR=${LDD_ELF64DIR}
+
+SMB_LIBDIR!=	cd ${NETBSDSRCDIR}/external/bsd/smbfs/lib/libsmb && ${PRINTOBJDIR}
+PARSELISTENV+=	SMB_LIBDIR=${SMB_LIBDIR}
 
 #	Specially built objects to override the behaviour of
 #	various library functions

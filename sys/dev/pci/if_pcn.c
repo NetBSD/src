@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.55.2.1 2013/06/23 06:20:18 tls Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.55.2.2 2014/08/20 00:03:42 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.55.2.1 2013/06/23 06:20:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.55.2.2 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -578,6 +578,7 @@ pcn_attach(device_t parent, device_t self, void *aux)
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	prop_object_t obj;
 	bool is_vmware;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	callout_init(&sc->sc_tick_ch, 0);
@@ -682,7 +683,7 @@ pcn_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "unable to map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, pcn_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt");
@@ -813,7 +814,7 @@ pcn_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 #ifdef PCN_EVENT_COUNTERS
 	/* Attach event counters. */

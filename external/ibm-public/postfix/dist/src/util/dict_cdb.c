@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_cdb.c,v 1.1.1.1.16.1 2013/02/25 00:27:31 tls Exp $	*/
+/*	$NetBSD: dict_cdb.c,v 1.1.1.1.16.2 2014/08/19 23:59:45 tls Exp $	*/
 
 /*++
 /* NAME
@@ -184,11 +184,21 @@ static DICT *dict_cdbq_open(const char *path, int dict_flags)
     char   *cdb_path;
     int     fd;
 
+    /*
+     * Let the optimizer worry about eliminating redundant code.
+     */
+#define DICT_CDBQ_OPEN_RETURN(d) { \
+	DICT *__d = (d); \
+	myfree(cdb_path); \
+	return (__d); \
+    } while (0)
+
     cdb_path = concatenate(path, CDB_SUFFIX, (char *) 0);
 
     if ((fd = open(cdb_path, O_RDONLY)) < 0)
-	return (dict_surrogate(DICT_TYPE_CDB, path, O_RDONLY, dict_flags,
-			       "open database %s: %m", cdb_path));
+	DICT_CDBQ_OPEN_RETURN(dict_surrogate(DICT_TYPE_CDB, path,
+					   O_RDONLY, dict_flags,
+					 "open database %s: %m", cdb_path));
 
     dict_cdbq = (DICT_CDBQ *) dict_alloc(DICT_TYPE_CDB,
 					 cdb_path, sizeof(*dict_cdbq));
@@ -227,8 +237,7 @@ static DICT *dict_cdbq_open(const char *path, int dict_flags)
     if (dict_flags & DICT_FLAG_FOLD_FIX)
 	dict_cdbq->dict.fold_buf = vstring_alloc(10);
 
-    myfree(cdb_path);
-    return (&dict_cdbq->dict);
+    DICT_CDBQ_OPEN_RETURN(DICT_DEBUG (&dict_cdbq->dict));
 }
 
 /* dict_cdbm_update - add database entry, create mode */
@@ -332,6 +341,18 @@ static DICT *dict_cdbm_open(const char *path, int dict_flags)
     int     fd;
     struct stat st0, st1;
 
+    /*
+     * Let the optimizer worry about eliminating redundant code.
+     */
+#define DICT_CDBM_OPEN_RETURN(d) { \
+	DICT *__d = (d); \
+	if (cdb_path) \
+	    myfree(cdb_path); \
+	if (tmp_path) \
+	    myfree(tmp_path); \
+	return (__d); \
+    } while (0)
+
     cdb_path = concatenate(path, CDB_SUFFIX, (char *) 0);
     tmp_path = concatenate(path, CDB_TMP_SUFFIX, (char *) 0);
 
@@ -344,8 +365,10 @@ static DICT *dict_cdbm_open(const char *path, int dict_flags)
      */
     for (;;) {
 	if ((fd = open(tmp_path, O_RDWR | O_CREAT, 0644)) < 0)
-	    return (dict_surrogate(DICT_TYPE_CDB, path, O_RDWR, dict_flags,
-				   "open database %s: %m", tmp_path));
+	    DICT_CDBM_OPEN_RETURN(dict_surrogate(DICT_TYPE_CDB, path,
+						 O_RDWR, dict_flags,
+						 "open database %s: %m",
+						 tmp_path));
 	if (fstat(fd, &st0) < 0)
 	    msg_fatal("fstat(%s): %m", tmp_path);
 
@@ -385,6 +408,7 @@ static DICT *dict_cdbm_open(const char *path, int dict_flags)
     dict_cdbm->dict.update = dict_cdbm_update;
     dict_cdbm->cdb_path = cdb_path;
     dict_cdbm->tmp_path = tmp_path;
+    cdb_path = tmp_path = 0;			/* DICT_CDBM_OPEN_RETURN() */
     dict_cdbm->dict.owner.uid = st1.st_uid;
     dict_cdbm->dict.owner.status = (st1.st_uid != 0);
     close_on_exec(fd, CLOSE_ON_EXEC);
@@ -402,7 +426,7 @@ static DICT *dict_cdbm_open(const char *path, int dict_flags)
     if (dict_flags & DICT_FLAG_FOLD_FIX)
 	dict_cdbm->dict.fold_buf = vstring_alloc(10);
 
-    return (&dict_cdbm->dict);
+    DICT_CDBM_OPEN_RETURN(DICT_DEBUG (&dict_cdbm->dict));
 }
 
 /* dict_cdb_open - open data base for query mode or create mode */

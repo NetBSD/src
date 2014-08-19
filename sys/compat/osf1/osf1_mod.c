@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mod.c,v 1.2 2008/11/19 22:02:21 cegger Exp $	*/
+/*	$NetBSD: osf1_mod.c,v 1.2.34.1 2014/08/20 00:03:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mod.c,v 1.2 2008/11/19 22:02:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mod.c,v 1.2.34.1 2014/08/20 00:03:33 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -46,20 +46,24 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_mod.c,v 1.2 2008/11/19 22:02:21 cegger Exp $");
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_exec.h>
 
-MODULE(MODULE_CLASS_MISC, compat_osf1, "compat,exec_ecoff");
+MODULE(MODULE_CLASS_EXEC, compat_osf1, "compat,exec_ecoff");
 
-static struct execsw osf1_execsw[] = {
-	{ ECOFF_HDR_SIZE,
-	  exec_ecoff_makecmds,
-	  { .ecoff_probe_func = osf1_exec_ecoff_probe },
-	  &emul_osf1,
-	  EXECSW_PRIO_ANY,
-  	  howmany(OSF1_MAX_AUX_ENTRIES * sizeof (struct osf1_auxv) +
-	    2 * (MAXPATHLEN + 1), sizeof (char *)), /* exec & loader names */
-	  osf1_copyargs,
-	  cpu_exec_ecoff_setregs,
-	  coredump_netbsd,
-	  exec_setup_stack },
+#define OSF1_ARGLEN howmany(OSF1_MAX_AUX_ENTRIES * sizeof (struct osf1_auxv) + \
+      2 * (MAXPATHLEN + 1), sizeof (char *)) /* exec & loader names */
+
+static struct execsw osf1_execsw = {
+	.es_hdrsz = ECOFF_HDR_SIZE,
+	.es_makecmds = exec_ecoff_makecmds,
+	.u = {
+		.ecoff_probe_func = osf1_exec_ecoff_probe,
+	},
+	.es_emul = &emul_osf1,
+	.es_prio = EXECSW_PRIO_ANY,
+	.es_arglen = OSF1_ARGLEN,
+	.es_copyargs = osf1_copyargs,
+	.es_setregs = cpu_exec_ecoff_setregs,
+	.es_coredump = coredump_netbsd,
+	.es_setup_stack = exec_setup_stack,
 };
 
 static int
@@ -68,12 +72,10 @@ compat_osf1_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return exec_add(osf1_execsw,
-		    __arraycount(osf1_execsw));
+		return exec_add(&osf1_execsw, 1);
 
 	case MODULE_CMD_FINI:
-		return exec_remove(osf1_execsw,
-		    __arraycount(osf1_execsw));
+		return exec_remove(&osf1_execsw, 1);
 
 	default:
 		return ENOTTY;

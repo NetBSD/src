@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.140.2.2 2013/06/23 06:20:26 tls Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.140.2.3 2014/08/20 00:04:36 tls Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,13 +62,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.140.2.2 2013/06/23 06:20:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.140.2.3 2014/08/20 00:04:36 tls Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
 #include "opt_inet6.h"
 #include "opt_ipsec.h"
-#include "opt_pfil_hooks.h"
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
@@ -91,15 +90,14 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.140.2.2 2013/06/23 06:20:26 tls Exp 
 #include <net/if_types.h>
 #include <net/if_dl.h>
 #include <net/route.h>
-#include <net/netisr.h>
-#ifdef PFIL_HOOKS
+#include <net/pktqueue.h>
 #include <net/pfil.h>
-#endif
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #ifdef INET
 #include <netinet/ip.h>
+#include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
 #endif /* INET */
 #include <netinet/ip6.h>
@@ -138,9 +136,8 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.140.2.2 2013/06/23 06:20:26 tls Exp 
 extern struct domain inet6domain;
 
 u_char ip6_protox[IPPROTO_MAX];
-static int ip6qmaxlen = IFQ_MAXLEN;
 struct in6_ifaddr *in6_ifaddr;
-struct ifqueue ip6intrq;
+pktqueue_t *ip6_pktq __read_mostly;
 
 extern callout_t in6_tmpaddrtimer_ch;
 
@@ -148,13 +145,12 @@ int ip6_forward_srcrt;			/* XXX */
 int ip6_sourcecheck;			/* XXX */
 int ip6_sourcecheck_interval;		/* XXX */
 
-#ifdef PFIL_HOOKS
-struct pfil_head inet6_pfil_hook;
-#endif
+pfil_head_t *inet6_pfil_hook;
 
 percpu_t *ip6stat_percpu;
 
 static void ip6_init2(void *);
+static void ip6intr(void *);
 static struct m_tag *ip6_setdstifaddr(struct mbuf *, const struct in6_ifaddr *);
 
 static int ip6_process_hopopts(struct mbuf *, u_int8_t *, int, u_int32_t *,
@@ -183,7 +179,10 @@ ip6_init(void)
 		if (pr->pr_domain->dom_family == PF_INET6 &&
 		    pr->pr_protocol && pr->pr_protocol != IPPROTO_RAW)
 			ip6_protox[pr->pr_protocol] = pr - inet6sw;
-	ip6intrq.ifq_maxlen = ip6qmaxlen;
+
+	ip6_pktq = pktq_create(IFQ_MAXLEN, ip6intr, NULL);
+	KASSERT(ip6_pktq != NULL);
+
 	scope6_init();
 	addrsel_policy_init();
 	nd6_init();
@@ -194,16 +193,9 @@ ip6_init(void)
 #ifdef GATEWAY
 	ip6flow_init(ip6_hashsize);
 #endif
-
-#ifdef PFIL_HOOKS
 	/* Register our Packet Filter hook. */
-	inet6_pfil_hook.ph_type = PFIL_TYPE_AF;
-	inet6_pfil_hook.ph_af   = AF_INET6;
-	i = pfil_head_register(&inet6_pfil_hook);
-	if (i != 0)
-		printf("ip6_init: WARNING: unable to register pfil hook, "
-		    "error %d\n", i);
-#endif /* PFIL_HOOKS */
+	inet6_pfil_hook = pfil_head_create(PFIL_TYPE_AF, (void *)AF_INET6);
+	KASSERT(inet6_pfil_hook != NULL);
 
 	ip6stat_percpu = percpu_alloc(sizeof(uint64_t) * IP6_NSTATS);
 }
@@ -227,28 +219,24 @@ ip6_init2(void *dummy)
 /*
  * IP6 input interrupt handling. Just pass the packet to ip6_input.
  */
-void
-ip6intr(void)
+static void
+ip6intr(void *arg __unused)
 {
-	int s;
 	struct mbuf *m;
 
 	mutex_enter(softnet_lock);
-	KERNEL_LOCK(1, NULL);
-	for (;;) {
-		s = splnet();
-		IF_DEQUEUE(&ip6intrq, m);
-		splx(s);
-		if (m == 0)
-			break;
-		/* drop the packet if IPv6 operation is disabled on the IF */
-		if ((ND_IFINFO(m->m_pkthdr.rcvif)->flags & ND6_IFF_IFDISABLED)) {
+	while ((m = pktq_dequeue(ip6_pktq)) != NULL) {
+		const ifnet_t *ifp = m->m_pkthdr.rcvif;
+
+		/*
+		 * Drop the packet if IPv6 is disabled on the interface.
+		 */
+		if ((ND_IFINFO(ifp)->flags & ND6_IFF_IFDISABLED)) {
 			m_freem(m);
-			break;
+			continue;
 		}
 		ip6_input(m);
 	}
-	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
 }
 
@@ -269,12 +257,6 @@ ip6_input(struct mbuf *m)
 		struct sockaddr		dst;
 		struct sockaddr_in6	dst6;
 	} u;
-#ifdef IPSEC
-	struct m_tag *mtag;
-	struct tdb_ident *tdbi;
-	struct secpolicy *sp;
-	int s, error;
-#endif
 
 	/*
 	 * make sure we don't have onion peering information into m_tag.
@@ -345,7 +327,6 @@ ip6_input(struct mbuf *m)
 	 */
 	m->m_flags |= M_CANFASTFWD;
 
-#ifdef PFIL_HOOKS
 	/*
 	 * Run through list of hooks for input packets.  If there are any
 	 * filters which require that additional packets in the flow are
@@ -358,7 +339,7 @@ ip6_input(struct mbuf *m)
 	 * not the decapsulated packet.
 	 */
 #if defined(IPSEC)
-	if (!ipsec_indone(m))
+	if (!ipsec_used || !ipsec_indone(m))
 #else
 	if (1)
 #endif
@@ -366,7 +347,7 @@ ip6_input(struct mbuf *m)
 		struct in6_addr odst;
 
 		odst = ip6->ip6_dst;
-		if (pfil_run_hooks(&inet6_pfil_hook, &m, m->m_pkthdr.rcvif,
+		if (pfil_run_hooks(inet6_pfil_hook, &m, m->m_pkthdr.rcvif,
 				   PFIL_IN) != 0)
 			return;
 		if (m == NULL)
@@ -374,7 +355,6 @@ ip6_input(struct mbuf *m)
 		ip6 = mtod(m, struct ip6_hdr *);
 		srcrt = !IN6_ARE_ADDR_EQUAL(&odst, &ip6->ip6_dst);
 	}
-#endif /* PFIL_HOOKS */
 
 	IP6_STATINC(IP6_STAT_NXTHIST + ip6->ip6_nxt);
 
@@ -767,44 +747,57 @@ ip6_input(struct mbuf *m)
 		}
 
 #ifdef IPSEC
-	/*
-	 * enforce IPsec policy checking if we are seeing last header.
-	 * note that we do not visit this with protocols with pcb layer
-	 * code - like udp/tcp/raw ip.
-	 */
-	if ((inet6sw[ip_protox[nxt]].pr_flags & PR_LASTHDR) != 0) {
-		/*
-		 * Check if the packet has already had IPsec processing
-		 * done.  If so, then just pass it along.  This tag gets
-		 * set during AH, ESP, etc. input handling, before the
-		 * packet is returned to the ip input queue for delivery.
-		 */
-		mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
-		s = splsoftnet();
-		if (mtag != NULL) {
-			tdbi = (struct tdb_ident *)(mtag + 1);
-			sp = ipsec_getpolicy(tdbi, IPSEC_DIR_INBOUND);
-		} else {
-			sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND,
-									IP_FORWARDING, &error);
-		}
-		if (sp != NULL) {
-			/*
-			 * Check security policy against packet attributes.
-			 */
-			error = ipsec_in_reject(sp, m);
-			KEY_FREESP(&sp);
-		} else {
-			/* XXX error stat??? */
-			error = EINVAL;
-			DPRINTF(("ip6_input: no SP, packet discarded\n"));/*XXX*/
-		}
-		splx(s);
-		if (error)
-			goto bad;
-	}
-#endif /* IPSEC */
+		if (ipsec_used) {
+			struct m_tag *mtag;
+			struct tdb_ident *tdbi;
+			struct secpolicy *sp;
+			int s, error;
 
+			/*
+			 * enforce IPsec policy checking if we are seeing last
+			 * header. note that we do not visit this with
+			 * protocols with pcb layer code - like udp/tcp/raw ip.
+			 */
+			if ((inet6sw[ip_protox[nxt]].pr_flags
+			    & PR_LASTHDR) != 0) {
+				/*
+				 * Check if the packet has already had IPsec
+				 * processing done. If so, then just pass it
+				 * along. This tag gets set during AH, ESP,
+				 * etc. input handling, before the packet is
+				 * returned to the ip input queue for delivery.
+				 */
+				mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE,
+				    NULL);
+				s = splsoftnet();
+				if (mtag != NULL) {
+					tdbi = (struct tdb_ident *)(mtag + 1);
+					sp = ipsec_getpolicy(tdbi,
+					    IPSEC_DIR_INBOUND);
+				} else {
+					sp = ipsec_getpolicybyaddr(m,
+					    IPSEC_DIR_INBOUND, IP_FORWARDING,
+					    &error);
+				}
+				if (sp != NULL) {
+					/*
+					 * Check security policy against packet
+					 * attributes.
+					 */
+					error = ipsec_in_reject(sp, m);
+					KEY_FREESP(&sp);
+				} else {
+					/* XXX error stat??? */
+					error = EINVAL;
+					DPRINTF(("ip6_input: no SP, packet"
+					    " discarded\n"));/*XXX*/
+				}
+				splx(s);
+				if (error)
+					goto bad;
+			}
+		}
+#endif /* IPSEC */
 
 		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &off, nxt);
 	}
@@ -820,17 +813,21 @@ static struct m_tag *
 ip6_setdstifaddr(struct mbuf *m, const struct in6_ifaddr *ia)
 {
 	struct m_tag *mtag;
+	struct ip6aux *ip6a;
 
 	mtag = ip6_addaux(m);
-	if (mtag != NULL) {
-		struct ip6aux *ip6a;
+	if (mtag == NULL)
+		return NULL;
 
-		ip6a = (struct ip6aux *)(mtag + 1);
-		in6_setscope(&ip6a->ip6a_src, ia->ia_ifp, &ip6a->ip6a_scope_id);
-		ip6a->ip6a_src = ia->ia_addr.sin6_addr;
-		ip6a->ip6a_flags = ia->ia6_flags;
+	ip6a = (struct ip6aux *)(mtag + 1);
+	if (in6_setscope(&ip6a->ip6a_src, ia->ia_ifp, &ip6a->ip6a_scope_id)) {
+		IP6_STATINC(IP6_STAT_BADSCOPE);
+		return NULL;
 	}
-	return mtag;	/* NULL if failed to set */
+
+	ip6a->ip6a_src = ia->ia_addr.sin6_addr;
+	ip6a->ip6a_flags = ia->ia6_flags;
+	return mtag;
 }
 
 const struct ip6aux *
@@ -1667,11 +1664,6 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet6",
 		       SYSCTL_DESCR("PF_INET6 related settings"),
 		       NULL, 0, NULL, 0,
@@ -1860,6 +1852,15 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 		       NULL, 0, &ip6_v6only, 0,
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       IPV6CTL_V6ONLY, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "auto_linklocal",
+		       SYSCTL_DESCR("Default value of per-interface flag for "
+		                    "adding an IPv6 link-local address to "
+				    "interfaces when attached"),
+		       NULL, 0, &ip6_auto_linklocal, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_AUTO_LINKLOCAL, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "anonportmin",

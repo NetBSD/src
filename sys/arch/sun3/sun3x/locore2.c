@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.39 2012/08/10 14:33:35 tsutsui Exp $	*/
+/*	$NetBSD: locore2.c,v 1.39.2.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.39 2012/08/10 14:33:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.39.2.1 2014/08/20 00:03:26 tls Exp $");
 
 #include "opt_ddb.h"
 
@@ -91,7 +91,7 @@ static void _save_symtab(void);
 /*
  * Preserve DDB symbols and strings by setting esym.
  */
-static void 
+static void
 _save_symtab(void)
 {
 	int i;
@@ -141,7 +141,7 @@ _save_symtab(void)
  * Once that is done, pmap_bootstrap() is called to do the
  * usual preparations for our use of the MMU.
  */
-static void 
+static void
 _vm_init(void)
 {
 	vaddr_t nextva;
@@ -191,7 +191,7 @@ _vm_init(void)
  * hp300 port (and other m68k) but which we prefer to do in C code.
  * Also do setup specific to the Sun PROM monitor and IDPROM here.
  */
-void 
+void
 _bootstrap(void)
 {
 	extern struct consdev consdev_prom;	/* XXX */

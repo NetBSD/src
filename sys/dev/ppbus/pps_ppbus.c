@@ -1,4 +1,4 @@
-/* $NetBSD: pps_ppbus.c,v 1.14 2008/06/11 19:28:52 cegger Exp $ */
+/* $NetBSD: pps_ppbus.c,v 1.14.40.1 2014/08/20 00:03:49 tls Exp $ */
 
 /*
  * ported to timecounters by Frank Kardel 2006
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.14 2008/06/11 19:28:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.14.40.1 2014/08/20 00:03:49 tls Exp $");
 
 #include "opt_ntp.h"
 
@@ -62,8 +62,18 @@ static dev_type_open(ppsopen);
 static dev_type_close(ppsclose);
 static dev_type_ioctl(ppsioctl);
 const struct cdevsw pps_cdevsw = {
-	ppsopen, ppsclose, noread, nowrite, ppsioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = ppsopen,
+	.d_close = ppsclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = ppsioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 static void ppsintr(void *arg);

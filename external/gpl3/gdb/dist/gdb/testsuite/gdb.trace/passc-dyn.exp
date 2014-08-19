@@ -1,5 +1,4 @@
-#   Copyright 1998, 2005, 2007, 2008, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright 1998-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,18 +15,12 @@
 
 # This file was written by Michael Snyder (msnyder@cygnus.com)
 
-load_lib "trace-support.exp";
-
-if $tracelevel then {
-    strace $tracelevel
-}
+load_lib "trace-support.exp"
 
 
 gdb_exit
 gdb_start
-set testfile "actions"
-set srcfile ${testfile}.c
-set binfile $objdir/$subdir/passc-dyn
+standard_testfile actions.c
 if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
 	  executable {debug nowarnings}] != "" } {
     untested passc-dyn.exp
@@ -39,11 +32,9 @@ gdb_test "tfind none"  ".*" ""
 runto_main
 gdb_reinitialize_dir $srcdir/$subdir
 
-# We generously give ourselves one "pass" if we successfully 
-# detect that this test cannot be run on this target!
 if { ![gdb_target_supports_trace] } then {
-    pass "Current target does not support trace"
-    return 1;
+    unsupported "Current target does not support trace"
+    return 1
 
 }
 
@@ -55,11 +46,11 @@ if { ![gdb_target_supports_trace] } then {
 # test passcount dynamically (live target)
 #
 
-set baseline [gdb_find_recursion_test_baseline $srcfile];
+set baseline [gdb_find_recursion_test_baseline $srcfile]
 
 if { $baseline == -1 } then {
     fail "Could not find gdb_recursion_test function"
-    return;
+    return
 }
 
 # define relative source line numbers:
@@ -83,7 +74,7 @@ set tdp3 [gdb_gettpnum "$testline3"]
 set tdp4 [gdb_gettpnum "$testline4"]
 if { $tdp2 <= 0 || $tdp3 <= 0 || $tdp4 <= 0 } then {
     fail "setting tracepoints"
-    return;
+    return
 }
 
 gdb_test "passcount 4 $tdp2" "Setting tracepoint $tdp2's passcount to 4" \

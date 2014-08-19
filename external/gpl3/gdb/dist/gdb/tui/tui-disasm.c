@@ -1,7 +1,6 @@
 /* Disassembly display.
 
-   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2007, 2008, 2009,
-   2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -28,7 +27,7 @@
 #include "value.h"
 #include "source.h"
 #include "disasm.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "tui/tui.h"
 #include "tui/tui-data.h"
 #include "tui/tui-win.h"
@@ -122,7 +121,7 @@ tui_find_disassembly_address (struct gdbarch *gdbarch, CORE_ADDR pc, int from)
       pos = max_lines - 1;
       do {
          new_low -= 1 * max_lines;
-         msymbol = lookup_minimal_symbol_by_pc_section (new_low, 0);
+         msymbol = lookup_minimal_symbol_by_pc_section (new_low, 0).minsym;
 
          if (msymbol)
             new_low = SYMBOL_VALUE_ADDRESS (msymbol);
@@ -174,7 +173,7 @@ tui_set_disassem_content (struct gdbarch *gdbarch, CORE_ADDR pc)
   enum tui_status ret = TUI_FAILURE;
   int i;
   int offset = TUI_DISASM_WIN->detail.source_info.horizontal_offset;
-  int line_width, max_lines;
+  int max_lines;
   CORE_ADDR cur_pc;
   struct tui_gen_win_info *locator = tui_locator_win_info_ptr ();
   int tab_len = tui_default_tab_len ();
@@ -203,8 +202,6 @@ tui_set_disassem_content (struct gdbarch *gdbarch, CORE_ADDR pc)
   asm_lines = (struct tui_asm_line*) alloca (sizeof (struct tui_asm_line)
                                          * max_lines);
   memset (asm_lines, 0, sizeof (struct tui_asm_line) * max_lines);
-
-  line_width = TUI_DISASM_WIN->generic.width - 1;
 
   tui_disassemble (gdbarch, asm_lines, pc, max_lines);
 
@@ -319,10 +316,10 @@ tui_show_disassem_and_update_source (struct gdbarch *gdbarch,
       if (sal.symtab)
 	{
 	  set_current_source_symtab_and_line (&sal);
-	  tui_update_locator_filename (sal.symtab->filename);
+	  tui_update_locator_fullname (symtab_to_fullname (sal.symtab));
 	}
       else
-	tui_update_locator_filename ("?");
+	tui_update_locator_fullname ("?");
     }
 
   return;

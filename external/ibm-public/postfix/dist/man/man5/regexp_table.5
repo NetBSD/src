@@ -1,4 +1,4 @@
-.\"	$NetBSD: regexp_table.5,v 1.1.1.2 2010/06/17 18:06:28 tron Exp $
+.\"	$NetBSD: regexp_table.5,v 1.1.1.2.12.1 2014/08/19 23:59:41 tls Exp $
 .\"
 .TH REGEXP_TABLE 5 
 .ad
@@ -12,7 +12,7 @@ format of Postfix regular expression tables
 .nf
 \fBpostmap -q "\fIstring\fB" regexp:/etc/postfix/\fIfilename\fR
 
-\fBpostmap -q - regexp:/etc/postfix/\fIfilename\fR <\fIinputfile\fR
+\fBpostmap -q - regexp:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
 .SH DESCRIPTION
 .ad
 .fi
@@ -122,12 +122,12 @@ broken up into \fIuser\fR and \fIfoo\fR.
 .nf
 .ad
 .fi
-Substitution of substrings from the matched expression into the result
-string is possible using $1, $2, etc.;
-specify $$ to produce a $ character as output.
-The macros in the result string
-may need to be written as ${n} or $(n) if they aren't followed
-by whitespace.
+Substitution of substrings (text that matches patterns
+inside "()") from the matched expression into the result
+string is requested with $1, $2, etc.; specify $$ to produce
+a $ character as output.
+The macros in the result string may need to be written as
+${n} or $(n) if they aren't followed by whitespace.
 
 Note: since negated patterns (those preceded by \fB!\fR) return a
 result when the expression does not match, substitutions are not

@@ -1,4 +1,4 @@
-# Copyright 2009, 2011 Free Software Foundation, Inc.
+# Copyright 2009-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,11 +13,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-set test valgrind-db-attach
-set srcfile $test.c
-set executable $test
-set binfile ${objdir}/${subdir}/${executable}
-if {[build_executable $test.exp $executable $srcfile {debug}] == -1} {
+if [is_remote target] {
+    # The test always runs locally.
+    return 0
+}
+
+standard_testfile .c
+if {[build_executable $testfile.exp $testfile $srcfile {debug}] == -1} {
     return -1
 }
 
@@ -31,7 +33,7 @@ regsub -all " " $db_command "\\ " db_command
 
 set test "spawn valgrind"
 set cmd "valgrind --db-attach=yes $db_command $binfile"
-set res [remote_spawn host $cmd];
+set res [remote_spawn host $cmd]
 if { $res < 0 || $res == "" } {
     verbose -log "Spawning $cmd failed."
     unsupported $test
@@ -40,6 +42,11 @@ if { $res < 0 || $res == "" } {
 pass $test
 # Declare GDB now as running.
 set gdb_spawn_id -1
+
+# GDB spawned by `valgrind --db-attach=yes' stops already after the startup is
+# executed, like with non-extended gdbserver.  It is also not correct to
+# run/attach the inferior.
+set use_gdb_stub 1
 
 set test "valgrind started"
 # The trailing '.' differs for different memcheck versions.
@@ -67,7 +74,7 @@ set double_free [gdb_get_line_number "double-free"]
 
 set test "attach to debugger"
 gdb_test_multiple "" $test {
-    -re "Invalid free\\(\\) / delete / delete\\\[\\\]\r\n.*: main \\(${srcfile}:$double_free\\)\r\n.*---- Attach to debugger \\? --- \[^\r\n\]* ---- " {
+    -re "Invalid free\\(\\).*: main \\(${srcfile}:$double_free\\)\r\n.*---- Attach to debugger \\? --- \[^\r\n\]* ---- " {
 	send_gdb "y\r"
     }
     -re "---- Attach to debugger \\? --- \[^\r\n\]* ---- " {
@@ -83,3 +90,6 @@ gdb_test_no_output "set height 0"
 gdb_test_no_output "set width 0"
 
 gdb_test "bt" "in main \\(.*\\) at .*${srcfile}:$double_free"
+
+# Explicitly kill the program so it doesn't dump core when we quit->detach.
+gdb_test "kill" "" "kill program" "Kill the program being debugged.*y or n. $" "y"

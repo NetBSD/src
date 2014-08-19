@@ -1,4 +1,4 @@
-/* $NetBSD: tc_bus_mem.c,v 1.34 2012/02/06 02:14:16 matt Exp $ */
+/* $NetBSD: tc_bus_mem.c,v 1.34.6.1 2014/08/20 00:02:42 tls Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.34 2012/02/06 02:14:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.34.6.1 2014/08/20 00:02:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -466,16 +466,10 @@ tc_mem_write_1(void *v, bus_space_handle_t memh, bus_size_t off, uint8_t val)
 {
 
 	if ((memh & TC_SPACE_SPARSE) != 0) {
-		volatile uint64_t *p, vl;
-		uint64_t shift, msk;
-
-		shift = off & 0x3;
+		volatile uint64_t *p;
 		off &= 0x3;
 
 		p = (uint64_t *)(memh + (off << 1));
-
-		msk = ~(0x1 << shift) & 0xf;
-		vl = (msk << 32) | (((uint64_t)val) << (shift * 8));
 
 		*p = val;
 	} else {
@@ -492,16 +486,11 @@ tc_mem_write_2(void *v, bus_space_handle_t memh, bus_size_t off, uint16_t val)
 {
 
 	if ((memh & TC_SPACE_SPARSE) != 0) {
-		volatile uint64_t *p, vl;
-		uint64_t shift, msk;
+		volatile uint64_t *p;
 
-		shift = off & 0x2;
 		off &= 0x3;
 
 		p = (uint64_t *)(memh + (off << 1));
-
-		msk = ~(0x3 << shift) & 0xf;
-		vl = (msk << 32) | (((uint64_t)val) << (shift * 8));
 
 		*p = val;
 	} else {

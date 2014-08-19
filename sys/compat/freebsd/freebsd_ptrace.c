@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ptrace.c,v 1.19 2009/11/23 00:46:06 rmind Exp $	*/
+/*	$NetBSD: freebsd_ptrace.c,v 1.19.22.1 2014/08/20 00:03:31 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.19 2009/11/23 00:46:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.19.22.1 2014/08/20 00:03:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.19 2009/11/23 00:46:06 rmind Ex
 
 #include <compat/common/compat_util.h>
 #include <compat/freebsd/freebsd_syscallargs.h>
-#include <compat/freebsd/freebsd_ptrace.h>
 
 /*
  * Process debugging system call.
@@ -99,108 +98,5 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.19 2009/11/23 00:46:06 rmind Ex
 int
 freebsd_sys_ptrace(struct lwp *l, const struct freebsd_sys_ptrace_args *uap, register_t *retval)
 {
-	/* {
-		syscallarg(int) req;
-		syscallarg(pid_t) pid;
-		syscallarg(void *) addr;
-		syscallarg(int) data;
-	} */
-	struct sys_ptrace_args npa;
-	sy_call_t *fn = sysent[SYS_ptrace].sy_call;
-
-	switch (SCARG(uap, req)) {
-#ifdef PT_STEP
-	case FREEBSD_PT_STEP:
-		SCARG(&npa, req) = PT_STEP;
-		SCARG(&npa, pid) = SCARG(uap, pid);
-		SCARG(&npa, addr) = SCARG(uap, addr);
-		SCARG(&npa, data) = SCARG(uap, data);
-		return (*fn)(l, &npa, retval);
-#endif
-	case FREEBSD_PT_TRACE_ME:
-	case FREEBSD_PT_READ_I:
-	case FREEBSD_PT_READ_D:
-	case FREEBSD_PT_WRITE_I:
-	case FREEBSD_PT_WRITE_D:
-	case FREEBSD_PT_CONTINUE:
-	case FREEBSD_PT_KILL:
-		/* These requests are compatible with NetBSD */
-		return (*fn)(l, (const void *)uap, retval);
-
-#if 0
-/*
- * XXX: I've commented out this code, it is broken on too many fronts to fix.
- *	1) It is doing an unlocked read-modify-write cycle on process that
- *	   I assume might be running!
- *	   and in code that might sleep (due to a pagefault), never mind
- *	   what happens on an SMP system
- *      2) It accesses data in userspace without using copyin/out.
- *	3) It all looks like a nasty hack that isn't likely to work.
- *	4) It uses the stackgap.
- * dsl June 2007
- */
-	case FREEBSD_PT_READ_U:
-	case FREEBSD_PT_WRITE_U:
-    {
-	int error;
-	struct {
-		struct reg regs;
-		struct fpreg fpregs;
-	} *nrp;
-	struct freebsd_ptrace_reg fr;
-		sg = stackgap_init(p, 0);
-		nrp = stackgap_alloc(p, &sg, sizeof(*nrp));
-#ifdef PT_GETREGS
-		SCARG(&npa, req) = PT_GETREGS;
-		SCARG(&npa, pid) = SCARG(uap, pid);
-		SCARG(&npa, addr) = (void *)&nrp->regs;
-		if ((error = (*fn)(l, &npa, retval)) != 0)
-			return error;
-#endif
-#ifdef PT_GETFPREGS
-		SCARG(&npa, req) = PT_GETFPREGS;
-		SCARG(&npa, pid) = SCARG(uap, pid);
-		SCARG(&npa, addr) = (void *)&nrp->fpregs;
-		if ((error = (*fn)(l, &npa, retval)) != 0)
-			return error;
-#endif
-		netbsd_to_freebsd_ptrace_regs(&nrp->regs, &nrp->fpregs, &fr);
-		switch (SCARG(uap, req)) {
-		case FREEBSD_PT_READ_U:
-			return freebsd_ptrace_getregs(&fr, SCARG(uap, addr),
-						      retval);
-
-		case FREEBSD_PT_WRITE_U:
-			error = freebsd_ptrace_setregs(&fr,
-			    SCARG(uap, addr), SCARG(uap, data));
-			if (error)
-				return error;
-			freebsd_to_netbsd_ptrace_regs(&fr,
-						&nrp->regs, &nrp->fpregs);
-#ifdef PT_SETREGS
-			SCARG(&npa, req) = PT_SETREGS;
-			SCARG(&npa, pid) = SCARG(uap, pid);
-			SCARG(&npa, addr) = (void *)&nrp->regs;
-			if ((error = (*fn)(l, &npa, retval)) != 0)
-				return error;
-#endif
-#ifdef PT_SETFPREGS
-			SCARG(&npa, req) = PT_SETFPREGS;
-			SCARG(&npa, pid) = SCARG(uap, pid);
-			SCARG(&npa, addr) = (void *)&nrp->fpregs;
-			if ((error = (*fn)(l, &npa, retval)) != 0)
-				return error;
-#endif
-			return 0;
-		}
-    }
-#endif
-
-	default:			/* It was not a legal request. */
-		return (EINVAL);
-	}
-
-#ifdef DIAGNOSTIC
-	panic("freebsd_ptrace: impossible");
-#endif
+	return (EINVAL);
 }

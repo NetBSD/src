@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.154 2012/01/02 22:17:11 liamjfoy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.154.6.1 2014/08/20 00:04:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.154 2012/01/02 22:17:11 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.154.6.1 2014/08/20 00:04:35 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -249,14 +249,13 @@ const struct protosw arpsw[] = {
 	  .pr_output = 0,
 	  .pr_ctlinput = 0,
 	  .pr_ctloutput = 0,
-	  .pr_usrreq =  0,
+	  .pr_usrreqs = 0,
 	  .pr_init = arp_init,
 	  .pr_fasttimo = arp_fasttimo,
 	  .pr_slowtimo = 0,
 	  .pr_drain = arp_drainstub,
 	}
 };
-
 
 struct domain arpdomain = {
 	.dom_family = PF_ARP,
@@ -1473,15 +1472,19 @@ revarprequest(struct ifnet *ifp)
 
 	memcpy(ar_sha(ah), CLLADDR(ifp->if_sadl), ah->ar_hln);
 	tha = ar_tha(ah);
-	if (tha == NULL)
+	if (tha == NULL) {
+		m_free(m);
 		return;
+	}
 	memcpy(tha, CLLADDR(ifp->if_sadl), ah->ar_hln);
 
 	sa.sa_family = AF_ARP;
 	sa.sa_len = 2;
 	m->m_flags |= M_BCAST;
-	(*ifp->if_output)(ifp, m, &sa, NULL);
 
+	KERNEL_LOCK(1, NULL);
+	(*ifp->if_output)(ifp, m, &sa, NULL);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /*
@@ -1631,11 +1634,6 @@ sysctl_net_inet_arp_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *node;
 
-	sysctl_createv(clog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT,
-			CTLTYPE_NODE, "net", NULL,
-			NULL, 0, NULL, 0,
-			CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT,
 			CTLTYPE_NODE, "inet", NULL,

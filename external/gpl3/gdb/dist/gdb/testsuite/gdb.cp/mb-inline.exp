@@ -1,4 +1,4 @@
-# Copyright 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2008-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,52 +18,32 @@
 # This test verifies that setting breakpoint on line in inline
 # function will fire in all instantiations of that function.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 if { [skip_cplus_tests] } { continue }
 
-
-set testfile "mb-inline"
+standard_testfile mb-inline1.cc mb-inline2.cc
 set hdrfile "${testfile}.h"
-set srcfile1 "${testfile}1.cc"
-set objfile1 "${testfile}1.o"
-set srcfile2 "${testfile}2.cc"
-set objfile2 "${testfile}2.o"
-set binfile  "${objdir}/${subdir}/${testfile}"
 
-if  { [gdb_compile "$srcdir/$subdir/$srcfile1" "$objdir/$subdir/$objfile1" object {debug c++}] != "" } {
-     untested mb-inline.exp
-     return -1
-}
-
-if  { [gdb_compile "$srcdir/$subdir/$srcfile2" "$objdir/$subdir/$objfile2" object {debug c++}] != "" } {
-     untested mb-inline.exp
-     return -1
-}
-
-if  { [gdb_compile "$objdir/$subdir/$objfile1 $objdir/$subdir/$objfile2" "${binfile}" executable {debug c++}] != "" } {
-     untested mb-inline.exp
-     return -1
-}
-
-if [get_compiler_info ${binfile} "c++"] {
+if [get_compiler_info "c++"] {
     return -1
 }
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+if {[prepare_for_testing $testfile.exp $testfile \
+	 [list $srcfile $srcfile2] {debug c++}]} {
+    return -1
+}
 
 set bp_location [gdb_get_line_number "set breakpoint here" $hdrfile]
 
 # Set a breakpoint with multiple locations.
 
 gdb_test "break $hdrfile:$bp_location" \
-    "Breakpoint.*at.* file .*$hdrfile, line.*\\(2 locations\\).*" \
+    "Breakpoint.*at.*: $hdrfile:$bp_location. \\(2 locations\\).*" \
     "set breakpoint"
+
+# Do "info break" now so we can easily compare it with the later "info break"
+# if problems arise.
+gdb_test "info break" \
+    "\[\r\n\]1\.1.* y .* at .*$hdrfile:$bp_location.*\[\r\n\]1\.2.* y .* at .*$hdrfile:$bp_location.*"
 
 gdb_run_cmd
 gdb_expect {
@@ -101,7 +81,19 @@ gdb_expect {
     }
 }
 
-gdb_continue_to_end "disabled breakpoint 1.2"
+gdb_test_multiple "info break" "disabled breakpoint 1.2" {
+    -re "1\.2.* n .* at .*$hdrfile:$bp_location.*$gdb_prompt $" {
+	pass "disabled breakpoint 1.2"
+    }
+    -re "1\.2.* y .* at .*$hdrfile:$bp_location.*$gdb_prompt $" {
+	# When inferior is restarted, breakpoint locations will be updated.
+	# On uclinux, it is not guaranteed that new inferior is located the
+	# same address as previous one, so status/state of breakpoint location
+	# will loose.  The heuristic of GDB should be improved.
+	setup_kfail gdb/12924 "*-*-uclinux*"
+	fail "disabled breakpoint 1.2"
+    }    
+}
 
 # Make sure we can set a breakpoint on a source statement that spans
 # multiple lines.
@@ -116,7 +108,7 @@ if { ![runto_main] } {
 }
 
 gdb_test "break $hdrfile:$bp_location" \
-    "Breakpoint.*at.* file .*$hdrfile, line.*\\(2 locations\\).*" \
+    "Breakpoint.*at.*: $hdrfile:$bp_location. \\(2 locations\\).*" \
     "set multi_line_foo breakpoint"
 gdb_test "continue" \
     ".*Breakpoint.*multi_line_foo \\(i=0\\).*" \

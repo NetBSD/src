@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.37 2012/03/12 02:58:55 dholland Exp $	*/
+/*	$NetBSD: gram.y,v 1.37.2.1 2014/08/20 00:04:57 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -627,6 +627,7 @@ config_item:
 	| OPTIONS opt_list
 	| MAXUSERS NUMBER		{ setmaxusers($2.val); }
 	| IDENT stringvalue		{ setident($2); }
+	| NO IDENT			{ setident(NULL); }
 	| CONFIG conf root_spec sysparam_list
 					{ addconf(&conf); }
 	| NO CONFIG WORD		{ delconf($3); }
@@ -1126,7 +1127,6 @@ setmachine(const char *mch, const char *mcharch, struct nvlist *mchsubarches,
 	struct nvlist *nv;
 
 	if (isioconf) {
-		fprintf(stderr, "WARNING: ioconf is an experimental feature\n");
 		if (include(_PATH_DEVNULL, ENDDEFS, 0, 0) != 0)
 			exit(1);
 		ioconfname = mch;

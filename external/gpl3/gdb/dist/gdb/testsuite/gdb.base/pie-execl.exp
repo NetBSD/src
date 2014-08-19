@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,18 +26,17 @@ if [is_remote target] {
     continue
 }
 
-set testfile "pie-execl"
-set srcfile ${testfile}.c
+standard_testfile .c
 set executable1 ${testfile}1
 set executable2 ${testfile}2
-set binfile1 ${objdir}/${subdir}/${executable1}
-set binfile2 ${objdir}/${subdir}/${executable2}
+set binfile1 ${binfile}1
+set binfile2 ${binfile}2
 set binfile2_test_msg OBJDIR/${subdir}/${executable2}
 
 # Use conditional compilation according to `BIN' as GDB remembers the source
 # file name of the breakpoint.
 
-set opts [list debug {additional_flags=-fPIE -pie}]
+set opts [list debug additional_flags=-fPIE ldflags=-pie]
 if {[build_executable ${testfile}.exp $executable1 $srcfile [concat $opts {additional_flags=-DBIN=1}]] == ""
     || [build_executable ${testfile}.exp $executable2 $srcfile [concat $opts {additional_flags=-DBIN=2}]] == ""} {
     return -1

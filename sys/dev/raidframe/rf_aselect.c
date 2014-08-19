@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.27 2011/08/31 18:31:02 plunky Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.27.12.1 2014/08/20 00:03:49 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.27 2011/08/31 18:31:02 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.27.12.1 2014/08/20 00:03:49 tls Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -115,8 +115,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 	int     i, j, k;
 	RF_FuncList_t *stripeFuncsList, *stripeFuncs, *stripeFuncsEnd, *temp;
 	RF_AccessStripeMap_t *asm_up, *asm_bp;
-	RF_AccessStripeMapHeader_t ***asmh_u, *endASMList;
-	RF_AccessStripeMapHeader_t ***asmh_b;
+	RF_AccessStripeMapHeader_t *endASMList;
 	RF_ASMHeaderListElem_t *asmhle, *tmpasmhle;
 	RF_VoidFunctionPointerListElem_t *vfple, *tmpvfple;
 	RF_FailedStripe_t *failed_stripes_list, *failed_stripes_list_end;
@@ -125,8 +124,8 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 	RF_ASMHeaderListElem_t *failed_stripes_asmh_b_end = NULL;
 	RF_VoidFunctionPointerListElem_t *failed_stripes_vfple_end = NULL;
 	RF_VoidFunctionPointerListElem_t *failed_stripes_bvfple_end = NULL;
-	RF_VoidFuncPtr **stripeUnitFuncs, uFunc;
-	RF_VoidFuncPtr **blockFuncs, bFunc;
+	RF_VoidFuncPtr uFunc;
+	RF_VoidFuncPtr bFunc;
 	int     numStripesBailed = 0, cantCreateDAGs = RF_FALSE;
 	int     numStripeUnitsBailed = 0;
 	int     stripeNum, numUnitDags = 0, stripeUnitNum, numBlockDags = 0;
@@ -138,9 +137,6 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 	void *buffer;
 
 	lastdag_h = NULL;
-	asmh_u = asmh_b = NULL;
-	stripeUnitFuncs = NULL;
-	blockFuncs = NULL;
 
 	stripeFuncsList = NULL;
 	stripeFuncsEnd = NULL;

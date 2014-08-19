@@ -1,8 +1,6 @@
 /* Reading symbol files from memory.
 
-   Copyright (C) 1986, 1987, 1989, 1991, 1994, 1995, 1996, 1998, 2000, 2001,
-   2002, 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -55,7 +53,27 @@
 #include "observer.h"
 #include "auxv.h"
 #include "elf/common.h"
+#include "gdb_bfd.h"
 
+/* Verify parameters of target_read_memory_bfd and target_read_memory are
+   compatible.  */
+
+gdb_static_assert (sizeof (CORE_ADDR) == sizeof (bfd_vma));
+gdb_static_assert (sizeof (gdb_byte) == sizeof (bfd_byte));
+gdb_static_assert (sizeof (ssize_t) <= sizeof (bfd_size_type));
+
+/* Provide bfd/ compatible prototype for target_read_memory.  Casting would not
+   be enough as LEN width may differ.  */
+
+static int
+target_read_memory_bfd (bfd_vma memaddr, bfd_byte *myaddr, bfd_size_type len)
+{
+  /* MYADDR must be already allocated for the LEN size so it has to fit in
+     ssize_t.  */
+  gdb_assert ((ssize_t) len == len);
+
+  return target_read_memory (memaddr, myaddr, len);
+}
 
 /* Read inferior memory at ADDR to find the header of a loaded object file
    and read its in-core symbols out of inferior memory.  TEMPL is a bfd
@@ -72,29 +90,28 @@ symbol_file_add_from_memory (struct bfd *templ, CORE_ADDR addr, char *name,
   bfd_vma loadbase;
   struct section_addr_info *sai;
   unsigned int i;
+  struct cleanup *cleanup;
 
   if (bfd_get_flavour (templ) != bfd_target_elf_flavour)
     error (_("add-symbol-file-from-memory not supported for this target"));
 
   nbfd = bfd_elf_bfd_from_remote_memory (templ, addr, &loadbase,
-					 target_read_memory);
+					 target_read_memory_bfd);
   if (nbfd == NULL)
     error (_("Failed to read a valid object file image from memory."));
 
+  gdb_bfd_ref (nbfd);
+  xfree (bfd_get_filename (nbfd));
   if (name == NULL)
     nbfd->filename = xstrdup ("shared object read from target memory");
   else
     nbfd->filename = name;
 
+  cleanup = make_cleanup_bfd_unref (nbfd);
+
   if (!bfd_check_format (nbfd, bfd_object))
-    {
-      /* FIXME: should be checking for errors from bfd_close (for one thing,
-         on error it does not free all the storage associated with the
-         bfd).  */
-      bfd_close (nbfd);
-      error (_("Got object file from memory but can't read symbols: %s."),
-	     bfd_errmsg (bfd_get_error ()));
-    }
+    error (_("Got object file from memory but can't read symbols: %s."),
+	   bfd_errmsg (bfd_get_error ()));
 
   sai = alloc_section_addr_info (bfd_count_sections (nbfd));
   make_cleanup (xfree, sai);
@@ -107,13 +124,16 @@ symbol_file_add_from_memory (struct bfd *templ, CORE_ADDR addr, char *name,
 	sai->other[i].sectindex = sec->index;
 	++i;
       }
+  sai->num_sections = i;
 
-  objf = symbol_file_add_from_bfd (nbfd, from_tty ? SYMFILE_VERBOSE : 0,
-                                   sai, OBJF_SHARED);
+  objf = symbol_file_add_from_bfd (nbfd, bfd_get_filename (nbfd),
+				   from_tty ? SYMFILE_VERBOSE : 0,
+                                   sai, OBJF_SHARED, NULL);
 
   /* This might change our ideas about frames already looked at.  */
   reinit_frame_cache ();
 
+  do_cleanups (cleanup);
   return objf;
 }
 
@@ -198,12 +218,12 @@ add_vsyscall_page (struct target_ops *target, int from_tty)
       args.bfd = bfd;
       args.sysinfo_ehdr = sysinfo_ehdr;
       args.name = xstrprintf ("system-supplied DSO at %s",
-			      paddress (target_gdbarch, sysinfo_ehdr));
+			      paddress (target_gdbarch (), sysinfo_ehdr));
       /* Pass zero for FROM_TTY, because the action of loading the
 	 vsyscall DSO was not triggered by the user, even if the user
 	 typed "run" at the TTY.  */
       args.from_tty = 0;
-      catch_exceptions (uiout, symbol_file_add_from_memory_wrapper,
+      catch_exceptions (current_uiout, symbol_file_add_from_memory_wrapper,
 			&args, RETURN_MASK_ALL);
     }
 }

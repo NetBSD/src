@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_rcmd_pxy.c,v 1.4 2012/07/30 19:27:47 pgoyette Exp $	*/
+/*	$NetBSD: ip_rcmd_pxy.c,v 1.4.2.1 2014/08/20 00:04:24 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -12,7 +12,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_rcmd_pxy.c,v 1.4 2012/07/30 19:27:47 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_rcmd_pxy.c,v 1.4.2.1 2014/08/20 00:04:24 tls Exp $");
 
 #define	IPF_RCMD_PROXY
 
@@ -72,13 +72,9 @@ ipf_p_rcmd_new(void *arg, fr_info_t *fin, ap_session_t *aps, nat_t *nat)
 	tcphdr_t *tcp = (tcphdr_t *)fin->fin_dp;
 	rcmdinfo_t *rc;
 	ipnat_t *ipn;
-	ipnat_t *np;
-	int size;
 
 	fin = fin;	/* LINT */
 
-	np = nat->nat_ptr;
-	size = np->in_size;
 	KMALLOC(rc, rcmdinfo_t *);
 	if (rc == NULL) {
 		printf("ipf_p_rcmd_new:KMALLOCS(%zu) failed\n", sizeof(*rc));

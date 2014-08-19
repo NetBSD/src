@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.58.22.1 2013/06/23 06:20:25 tls Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.58.22.2 2014/08/20 00:04:36 tls Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.58.22.1 2013/06/23 06:20:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.58.22.2 2014/08/20 00:04:36 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -441,16 +441,20 @@ in6_gif_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
 PR_WRAP_CTLINPUT(in6_gif_ctlinput)
 PR_WRAP_CTLOUTPUT(rip6_ctloutput)
-PR_WRAP_USRREQ(rip6_usrreq)
 
 #define	in6_gif_ctlinput	in6_gif_ctlinput_wrapper
 #define	rip6_ctloutput		rip6_ctloutput_wrapper
-#define	rip6_usrreq		rip6_usrreq_wrapper
 
 extern struct domain inet6domain;
-const struct ip6protosw in6_gif_protosw =
-{ SOCK_RAW,	&inet6domain,	0/* IPPROTO_IPV[46] */,	PR_ATOMIC|PR_ADDR,
-  in6_gif_input, rip6_output,	in6_gif_ctlinput, rip6_ctloutput,
-  rip6_usrreq,
-  0,            0,              0,              0,
+
+const struct ip6protosw in6_gif_protosw = {
+	.pr_type	= SOCK_RAW,
+	.pr_domain	= &inet6domain,
+	.pr_protocol	= 0 /* IPPROTO_IPV[46] */,
+	.pr_flags	= PR_ATOMIC | PR_ADDR,
+	.pr_input	= in6_gif_input,
+	.pr_output	= rip6_output,
+	.pr_ctlinput	= in6_gif_ctlinput,
+	.pr_ctloutput	= rip6_ctloutput,
+	.pr_usrreqs	= &rip6_usrreqs,
 };

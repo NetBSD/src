@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.3.12.3 2013/06/23 06:20:01 tls Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.3.12.4 2014/08/20 00:02:47 tls Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.3.12.3 2013/06/23 06:20:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.3.12.4 2014/08/20 00:02:47 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	unsigned long		defattr;
 	bool			is_console = false;
 	uint32_t		sz, reg;
-	int			segs, i, j, adr;
+	int			segs, i, j;
 
 	sc->sc_iot = obio->obio_iot;
 	sc->sc_dev = self;
@@ -378,9 +378,9 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	    OMAP_DSSCTRL_DAC_DEMEN);
 #endif
 
-	/* VENC to NTSC mode */
-	adr = OMAPFB_VENC_F_CONTROL;
 #if 0
+	/* VENC to NTSC mode */
+	int adr = OMAPFB_VENC_F_CONTROL;
 	for (i = 0; i < __arraycount(venc_mode_ntsc); i++) {
 		bus_space_write_4(sc->sc_iot, sc->sc_regh, adr,
 		    venc_mode_ntsc[i]);
@@ -915,10 +915,6 @@ omapfb_bitblt(struct omapfb_softc *sc, int xs, int ys, int xd, int yd,
 	int hstep, vstep;
 	uint32_t saddr, daddr;
 
-	/*
-	 * TODO:
-	 * - use 32bit transfers if we're properly aligned
-	 */
 	saddr = sc->sc_fbhwaddr + sc->sc_stride * ys + xs * bpp;
 	daddr = sc->sc_fbhwaddr + sc->sc_stride * yd + xd * bpp;
 
@@ -981,10 +977,8 @@ omapfb_cursor(void *cookie, int on, int row, int col)
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
 	struct omapfb_softc *sc = scr->scr_cookie;
-	int wi, he, pos;
+	int pos;
 
-	wi = ri->ri_font->fontwidth;
-	he = ri->ri_font->fontheight;
 	pos = col + row * ri->ri_cols;
 #ifdef WSDISPLAY_SCROLLSUPPORT
 	pos += scr->scr_offset_to_zero;

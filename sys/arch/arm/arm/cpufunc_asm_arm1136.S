@@ -1,4 +1,4 @@
-/* $NetBSD: cpufunc_asm_arm1136.S,v 1.3 2012/07/21 12:19:15 skrll Exp $ */
+/* $NetBSD: cpufunc_asm_arm1136.S,v 1.3.2.1 2014/08/20 00:02:44 tls Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -30,10 +30,10 @@
  */
 
 #include "assym.h"
-#include <machine/cpu.h>
 #include <machine/asm.h>
+#include <arm/locore.h>
 
-RCSID("$NetBSD: cpufunc_asm_arm1136.S,v 1.3 2012/07/21 12:19:15 skrll Exp $")
+RCSID("$NetBSD: cpufunc_asm_arm1136.S,v 1.3.2.1 2014/08/20 00:02:44 tls Exp $")
 
 ENTRY_NP(arm1136_sleep_rev0)		/* errata 336501 */
 	mov	r0, #0
@@ -41,3 +41,4 @@ ENTRY_NP(arm1136_sleep_rev0)		/* errata 336501 */
 	mcr	p15, 0, r0, c7, c10, 5	/* data memory barrier */
 	mcr	p15, 0, r0, c7, c0, 4	/* wait for interrupt */
 	RET
+END(arm1136_sleep_rev0)

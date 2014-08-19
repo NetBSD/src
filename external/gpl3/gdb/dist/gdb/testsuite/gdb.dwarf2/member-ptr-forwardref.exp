@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,11 +21,9 @@ if {![dwarf2_support]} {
 
 if { [skip_cplus_tests] } { continue }
 
-set testfile member-ptr-forwardref
-set executable ${testfile}
-set binfile ${objdir}/${subdir}/${executable}.x
+standard_testfile .S
 
-if { [gdb_compile "${srcdir}/${subdir}/${testfile}.S" ${binfile} object {debug}] != "" } {
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" ${binfile} object {debug}] != "" } {
     untested ${testfile}.exp
     return -1
 }

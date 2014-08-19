@@ -1,4 +1,4 @@
-/*	$NetBSD: pdinfo.c,v 1.4 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: pdinfo.c,v 1.4.44.1 2014/08/20 00:03:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdinfo.c,v 1.4 2008/04/28 20:23:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdinfo.c,v 1.4.44.1 2014/08/20 00:03:00 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -71,16 +71,16 @@ pdinfo_valid(const struct pdinfo_sector *disk)
 bool
 pdinfo_sanity(const struct pdinfo_sector *disk)
 {
-	const struct disk_geometory *geom;
-	const struct disk_ux *ux;
 
 	if (!pdinfo_valid(disk)) {
 		DPRINTF("no physical disk info.\n");
 		return false;
 	}
 
-	geom = &disk->geometory;
-	ux = &disk->ux;
+#ifdef PDINFO_DEBUG
+	const struct disk_geometory *geom = &disk->geometory;
+	const struct disk_ux *ux = &disk->ux;
+#endif
 	DPRINTF("physical disk sector size %dbyte\n", sizeof *disk);
 	DPRINTF("[disk]\n");
 	DPRINTF("drive_id = %#x\n", disk->drive_id);

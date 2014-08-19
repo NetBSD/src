@@ -1,4 +1,4 @@
-/*	$NetBSD: sliplogin.c,v 1.23 2011/08/30 20:42:22 joerg Exp $	*/
+/*	$NetBSD: sliplogin.c,v 1.23.8.1 2014/08/20 00:05:13 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)sliplogin.c	8.2 (Berkeley) 2/1/94";
 #else
-__RCSID("$NetBSD: sliplogin.c,v 1.23 2011/08/30 20:42:22 joerg Exp $");
+__RCSID("$NetBSD: sliplogin.c,v 1.23.8.1 2014/08/20 00:05:13 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,7 +120,6 @@ findid(const char *name)
 	static char raddr[16];
 	static char mask[16];
 	char user[16];
-	int n;
 
 	(void)strlcpy(loginname, name, sizeof(loginname));
 	if ((fp = fopen(_PATH_ACCESS, "r")) == NULL) {
@@ -130,9 +129,11 @@ findid(const char *name)
 	while (fgets(loginargs, sizeof(loginargs) - 1, fp)) {
 		if (ferror(fp))
 			break;
-		n = sscanf(loginargs, "%15s%*[ \t]%15s%*[ \t]%15s%*[ \t]%15s%*[ \t]%15s%*[ \t]%15s%*[ \t]%15s%*[ \t]%15s%*[ \t]%15s\n",
-                        user, laddr, raddr, mask, slopt[0], slopt[1], 
-			slopt[2], slopt[3], slopt[4]);
+		(void)sscanf(loginargs, "%15s%*[ \t]%15s%*[ \t]%15s%*[ \t]"
+		    "%15s%*[ \t]%15s%*[ \t]%15s%*[ \t]%15s%*[ \t]%15s"
+		    "%*[ \t]%15s\n",
+		    user, laddr, raddr, mask, slopt[0], slopt[1], 
+		    slopt[2], slopt[3], slopt[4]);
 		if (user[0] == '#' || isspace((unsigned char)user[0]))
 			continue;
 		if (strcmp(user, name) != 0)

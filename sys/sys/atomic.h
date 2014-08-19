@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.11 2009/11/20 02:17:07 christos Exp $	*/
+/*	$NetBSD: atomic.h,v 1.11.22.1 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -89,6 +89,13 @@ unsigned long	atomic_cas_ulong(volatile unsigned long *, unsigned long,
 				 unsigned long);
 void *		atomic_cas_ptr(volatile void *, void *, void *);
 uint64_t	atomic_cas_64(volatile uint64_t *, uint64_t, uint64_t);
+
+/*
+ * This operations will be provided for userland, but may not be
+ * implemented efficiently.
+ */
+uint16_t	atomic_cas_16(volatile uint16_t *, uint16_t, uint16_t);
+uint8_t 	atomic_cas_8(volatile uint8_t *, uint8_t, uint8_t);
 
 /*
  * Non-interlocked atomic COMPARE-AND-SWAP.

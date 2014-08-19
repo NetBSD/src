@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.7.8.2 2013/06/23 06:28:51 tls Exp $");
+__RCSID("$NetBSD: show.c,v 1.7.8.3 2014/08/20 00:02:25 tls Exp $");
 #endif
 
 #include <sys/types.h>
@@ -46,8 +46,10 @@ __RCSID("$NetBSD: show.c,v 1.7.8.2 2013/06/23 06:28:51 tls Exp $");
 
 static int show_label = 0;
 static int show_uuid = 0;
+static int show_guid = 0;
+static unsigned int entry = 0;
 
-const char showmsg[] = "show [-lu] device ...";
+const char showmsg[] = "show [-glu] [-i index] device ...";
 
 __dead static void
 usage_show(void)
@@ -72,6 +74,7 @@ friendly(uuid_t *t)
 	static const uuid_t swap = GPT_ENT_TYPE_FREEBSD_SWAP;
 	static const uuid_t ufs = GPT_ENT_TYPE_FREEBSD_UFS;
 	static const uuid_t vinum = GPT_ENT_TYPE_FREEBSD_VINUM;
+	static const uuid_t zfs = GPT_ENT_TYPE_FREEBSD_ZFS;
 	static const uuid_t nb_swap = GPT_ENT_TYPE_NETBSD_SWAP;
 	static const uuid_t nb_ffs = GPT_ENT_TYPE_NETBSD_FFS;
 	static const uuid_t nb_lfs = GPT_ENT_TYPE_NETBSD_LFS;
@@ -106,7 +109,8 @@ friendly(uuid_t *t)
 		return ("FreeBSD UFS/UFS2");
 	if (uuid_equal(t, &vinum, NULL))
 		return ("FreeBSD vinum");
-
+	if (uuid_equal(t, &zfs, NULL))
+		return ("FreeBSD ZFS");
 	if (uuid_equal(t, &freebsd, NULL))
 		return ("FreeBSD legacy");
 	if (uuid_equal(t, &msdata, NULL))
@@ -128,14 +132,15 @@ unfriendly:
 }
 
 static void
-show(int fd __unused)
+show(void)
 {
-	uuid_t type;
+	uuid_t guid, type;
 	off_t start;
 	map_t *m, *p;
 	struct mbr *mbr;
 	struct gpt_ent *ent;
 	unsigned int i;
+	char *s;
 
 	printf("  %*s", lbawidth, "start");
 	printf("  %*s", lbawidth, "size");
@@ -192,6 +197,11 @@ show(int fd __unused)
 			if (show_label) {
 				printf("- \"%s\"",
 				    utf16_to_utf8(ent->ent_name));
+			} else if (show_guid) {
+				le_uuid_dec(ent->ent_guid, &guid);
+				uuid_to_string(&guid, &s, NULL);
+				printf("- %s", s);
+				free(s);
 			} else {
 				le_uuid_dec(ent->ent_type, &type);
 				printf("- %s", friendly(&type));
@@ -206,13 +216,94 @@ show(int fd __unused)
 	}
 }
 
+static void
+show_one(void)
+{
+	uuid_t guid, type;
+	map_t *m;
+	struct gpt_ent *ent;
+	const char *s1;
+	char *s2, human_num[5];
+
+	for (m = map_first(); m != NULL; m = m->map_next)
+		if (entry == m->map_index)
+			break;
+	if (m == NULL) {
+		warnx("%s: error: could not find index %d",
+		    device_name, entry);
+		return;
+	}
+	ent = m->map_data;
+
+	printf("Details for index %d:\n", entry);
+	if (humanize_number(human_num, 5, (int64_t)(m->map_start * secsz),
+	    "", HN_AUTOSCALE, HN_NOSPACE|HN_B) < 0)
+		human_num[0] = '\0';
+	if (human_num[0] != '\0')
+		printf("Start: %llu (%s)\n", (long long)m->map_start,
+		    human_num);
+	else
+		printf("Start: %llu\n", (long long)m->map_start);
+	if (humanize_number(human_num, 5, (int64_t)(m->map_size * secsz),
+	    "", HN_AUTOSCALE, HN_NOSPACE|HN_B) < 0)
+		human_num[0] = '\0';
+	if (human_num[0] != '\0')
+		printf("Size: %llu (%s)\n", (long long)m->map_size, human_num);
+	else
+		printf("Size: %llu\n", (long long)m->map_size);
+
+	le_uuid_dec(ent->ent_type, &type);
+	s1 = friendly(&type);
+	uuid_to_string(&type, &s2, NULL);
+	if (strcmp(s1, s2) == 0)
+		s1 = "unknown";
+	printf("Type: %s (%s)\n", s1, s2);
+	free(s2);
+
+	le_uuid_dec(ent->ent_guid, &guid);
+	uuid_to_string(&guid, &s2, NULL);
+	printf("GUID: %s\n", s2);
+	free(s2);
+
+	printf("Label: %s\n", utf16_to_utf8(ent->ent_name));
+
+	printf("Attributes:\n");
+	if (ent->ent_attr == 0)
+		printf("  None\n");
+	else {
+		if (ent->ent_attr & GPT_ENT_ATTR_REQUIRED_PARTITION)
+			printf("  required for platform to function\n");
+		if (ent->ent_attr & GPT_ENT_ATTR_NO_BLOCK_IO_PROTOCOL)
+			printf("  UEFI won't recognize file system\n");
+		if (ent->ent_attr & GPT_ENT_ATTR_LEGACY_BIOS_BOOTABLE)
+			printf("  legacy BIOS boot partition\n");
+		if (ent->ent_attr & GPT_ENT_ATTR_BOOTME)
+			printf("  indicates a bootable partition\n");
+		if (ent->ent_attr & GPT_ENT_ATTR_BOOTONCE)
+			printf("  attempt to boot this partition only once\n");
+		if (ent->ent_attr & GPT_ENT_ATTR_BOOTFAILED)
+			printf("  partition that was marked bootonce but failed to boot\n");
+	}
+}
+
 int
 cmd_show(int argc, char *argv[])
 {
+	char *p;
 	int ch, fd;
 
-	while ((ch = getopt(argc, argv, "lu")) != -1) {
+	while ((ch = getopt(argc, argv, "gi:lu")) != -1) {
 		switch(ch) {
+		case 'g':
+			show_guid = 1;
+			break;
+		case 'i':
+			if (entry > 0)
+				usage_show();
+			entry = strtoul(optarg, &p, 10);
+			if (*p != 0 || entry < 1)
+				usage_show();
+			break;
 		case 'l':
 			show_label = 1;
 			break;
@@ -234,7 +325,10 @@ cmd_show(int argc, char *argv[])
 			continue;
 		}
 
-		show(fd);
+		if (entry > 0)
+			show_one();
+		else
+			show();
 
 		gpt_close(fd);
 	}

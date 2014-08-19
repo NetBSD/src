@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.57 2011/07/09 07:57:53 wiz Exp $
+.\" $NetBSD: bus_dma.9,v 1.57.8.1 2014/08/20 00:02:37 tls Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@
 .Fn bus_dmamap_destroy "bus_dma_tag_t tag" "bus_dmamap_t dmam"
 .Ft int
 .Fn bus_dmamap_load "bus_dma_tag_t tag" "bus_dmamap_t dmam" "void *buf" \
-"bus_size_t buflen" "struct lwp *l" "int flags"
+"bus_size_t buflen" "struct proc *p" "int flags"
 .Ft int
 .Fn bus_dmamap_load_mbuf "bus_dma_tag_t tag" "bus_dmamap_t dmam" \
 "struct mbuf *chain" "int flags"
@@ -243,7 +243,7 @@ Behavior is not defined if invalid arguments are passed to
 If given valid arguments,
 .Fn bus_dmamap_destroy
 always succeeds.
-.It Fn bus_dmamap_load "tag" "dmam" "buf" "buflen" "l" "flags"
+.It Fn bus_dmamap_load "tag" "dmam" "buf" "buflen" "p" "flags"
 Loads a DMA handle with mappings for a DMA transfer.
 It assumes that all pages involved in a DMA transfer are wired.
 Arguments are as follows:
@@ -257,13 +257,13 @@ The DMA handle with which to map the transfer.
 The buffer to be used for the DMA transfer.
 .It Fa buflen
 The size of the buffer.
-.It Fa l
+.It Fa p
 Used to indicate the address space in which the buffer is located.
 If
 .Dv NULL ,
 the buffer is assumed to be in kernel space.
-Otherwise, the buffer is assumed to be in lwp
-.Fa l Ap s
+Otherwise, the buffer is assumed to be in proc
+.Fa p Ap s
 address space.
 .It Fa flags
 are defined as follows:
@@ -804,7 +804,7 @@ The arguments are as follows:
 This is the bus_dma_tag_t to subregion.
 .It Fa min_addr
 The smallest address this new tag can address.
-.It Fa max_addr .
+.It Fa max_addr
 The largest address this new tag can address.
 .It Fa newtag
 Pointer filled in with the address of the new bus_dma_tag_t.

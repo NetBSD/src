@@ -172,7 +172,12 @@ ada_demangle (const char *mangled, int options);
 enum gnu_v3_ctor_kinds {
   gnu_v3_complete_object_ctor = 1,
   gnu_v3_base_object_ctor,
-  gnu_v3_complete_object_allocating_ctor
+  gnu_v3_complete_object_allocating_ctor,
+  /* These are not part of the V3 ABI.  Unified constructors are generated
+     as a speed-for-space optimization when the -fdeclone-ctor-dtor option
+     is used, and are always internal symbols.  */
+  gnu_v3_unified_ctor,
+  gnu_v3_object_ctor_group
 };
 
 /* Return non-zero iff NAME is the mangled form of a constructor name
@@ -186,7 +191,12 @@ extern enum gnu_v3_ctor_kinds
 enum gnu_v3_dtor_kinds {
   gnu_v3_deleting_dtor = 1,
   gnu_v3_complete_object_dtor,
-  gnu_v3_base_object_dtor
+  gnu_v3_base_object_dtor,
+  /* These are not part of the V3 ABI.  Unified destructors are generated
+     as a speed-for-space optimization when the -fdeclone-ctor-dtor option
+     is used, and are always internal symbols.  */
+  gnu_v3_unified_dtor,
+  gnu_v3_object_dtor_group
 };
 
 /* Return non-zero iff NAME is the mangled form of a destructor name
@@ -270,6 +280,9 @@ enum demangle_component_type
   /* A guard variable.  This has one subtree, the name for which this
      is a guard variable.  */
   DEMANGLE_COMPONENT_GUARD,
+  /* The init and wrapper functions for C++11 thread_local variables.  */
+  DEMANGLE_COMPONENT_TLS_INIT,
+  DEMANGLE_COMPONENT_TLS_WRAPPER,
   /* A reference temporary.  This has one subtree, the name for which
      this is a temporary.  */
   DEMANGLE_COMPONENT_REFTEMP,
@@ -297,6 +310,12 @@ enum demangle_component_type
   /* The const qualifier modifying a member function.  The one subtree
      is the type which is being qualified.  */
   DEMANGLE_COMPONENT_CONST_THIS,
+  /* C++11 A reference modifying a member function.  The one subtree is the
+     type which is being referenced.  */
+  DEMANGLE_COMPONENT_REFERENCE_THIS,
+  /* C++11: An rvalue reference modifying a member function.  The one
+     subtree is the type which is being referenced.  */
+  DEMANGLE_COMPONENT_RVALUE_REFERENCE_THIS,
   /* A vendor qualifier.  The left subtree is the type which is being
      qualified, and the right subtree is the name of the
      qualifier.  */
@@ -342,6 +361,9 @@ enum demangle_component_type
      template argument, and the right subtree is either NULL or
      another TEMPLATE_ARGLIST node.  */
   DEMANGLE_COMPONENT_TEMPLATE_ARGLIST,
+  /* An initializer list.  The left subtree is either an explicit type or
+     NULL, and the right subtree is a DEMANGLE_COMPONENT_ARGLIST.  */
+  DEMANGLE_COMPONENT_INITIALIZER_LIST,
   /* An operator.  This holds information about a standard
      operator.  */
   DEMANGLE_COMPONENT_OPERATOR,
@@ -351,6 +373,8 @@ enum demangle_component_type
   /* A typecast, represented as a unary operator.  The one subtree is
      the type to which the argument should be cast.  */
   DEMANGLE_COMPONENT_CAST,
+  /* A nullary expression.  The left subtree is the operator.  */
+  DEMANGLE_COMPONENT_NULLARY,
   /* A unary expression.  The left subtree is the operator, and the
      right subtree is the single argument.  */
   DEMANGLE_COMPONENT_UNARY,
@@ -401,8 +425,19 @@ enum demangle_component_type
   DEMANGLE_COMPONENT_DEFAULT_ARG,
   /* An unnamed type.  */
   DEMANGLE_COMPONENT_UNNAMED_TYPE,
+  /* A transactional clone.  This has one subtree, the encoding for
+     which it is providing alternative linkage.  */
+  DEMANGLE_COMPONENT_TRANSACTION_CLONE,
+  /* A non-transactional clone entry point.  In the i386/x86_64 abi,
+     the unmangled symbol of a tm_callable becomes a thunk and the
+     non-transactional function version is mangled thus.  */
+  DEMANGLE_COMPONENT_NONTRANSACTION_CLONE,
   /* A pack expansion.  */
-  DEMANGLE_COMPONENT_PACK_EXPANSION
+  DEMANGLE_COMPONENT_PACK_EXPANSION,
+  /* A name with an ABI tag.  */
+  DEMANGLE_COMPONENT_TAGGED_NAME,
+  /* A cloned function.  */
+  DEMANGLE_COMPONENT_CLONE
 };
 
 /* Types which are only used internally.  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: npfstream.c,v 1.3.2.1 2012/11/20 03:03:03 tls Exp $	*/
+/*	$NetBSD: npfstream.c,v 1.3.2.2 2014/08/20 00:05:11 tls Exp $	*/
 
 /*
  * NPF stream processor.
@@ -33,7 +33,7 @@ static int		snd_packet_no = 0;
 static int		rcv_packet_no = 0;
 
 static void
-process_tcpip(const void *data, size_t len, FILE *fp, unsigned idx)
+process_tcpip(const void *data, size_t len, FILE *fp, ifnet_t *ifp)
 {
 	const struct ether_header *eth = data;
 	const struct ip *ip;
@@ -71,7 +71,7 @@ process_tcpip(const void *data, size_t len, FILE *fp, unsigned idx)
 	memset(result, 0, sizeof(result));
 
 	len = ntohs(ip->ip_len);
-	error = rumpns_npf_test_handlepkt(ip, len, idx, forw, result);
+	error = rumpns_npf_test_statetrack(ip, len, ifp, forw, result);
 
 	fprintf(fp, "%s%2x %5d %3d %11u %11u %11u %11u %12" PRIxPTR,
 	    forw ? ">" : "<", (th->th_flags & (TH_SYN | TH_ACK | TH_FIN)),
@@ -85,7 +85,7 @@ process_tcpip(const void *data, size_t len, FILE *fp, unsigned idx)
 }
 
 int
-process_stream(const char *input, const char *output, unsigned idx)
+process_stream(const char *input, const char *output, ifnet_t *ifp)
 {
 	pcap_t *pcap;
 	char pcap_errbuf[PCAP_ERRBUF_SIZE];
@@ -111,7 +111,7 @@ process_stream(const char *input, const char *output, unsigned idx)
 		if (phdr->len != phdr->caplen) {
 			warnx("process_stream: truncated packet");
 		}
-		process_tcpip(data, phdr->caplen, fp, idx);
+		process_tcpip(data, phdr->caplen, fp, ifp);
 	}
 	pcap_close(pcap);
 	fclose(fp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.119.2.1 2012/11/20 03:03:04 tls Exp $	*/
+/*	$NetBSD: pstat.c,v 1.119.2.2 2014/08/20 00:05:12 tls Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.119.2.1 2012/11/20 03:03:04 tls Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.119.2.2 2014/08/20 00:05:12 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -330,6 +330,9 @@ vnodemode(void)
 			maddr = vp->v_mount;
 			mount_print(mp);
 			vnode_header();
+			/*
+			 * XXX do this in a more fs-independent way
+			 */
 			if (FSTYPE_IS(mp, MOUNT_FFS) ||
 			    FSTYPE_IS(mp, MOUNT_MFS)) {
 				ufs_header();
@@ -384,7 +387,6 @@ const struct flagbit_desc vnode_flags[] = {
 	{ VV_SYSTEM,	'S' },
 	{ VV_ISTTY,	'I' },
 	{ VI_EXECMAP,	'E' },
-	{ VI_XLOCK,	'L' },
 	{ VU_DIROP,	'D' },
 	{ VI_LAYER,	'Y' },
 	{ VI_ONWORKLST,	'O' },
@@ -456,8 +458,6 @@ const struct flagbit_desc ufs_flags[] = {
 	{ IN_ACCESSED,	'a' },
 	{ IN_SHLOCK,	'S' },
 	{ IN_EXLOCK,	'E' },
-	{ IN_CLEANING,	'c' },
-	{ IN_ADIROP,	'D' },
 	{ IN_SPACECOUNTED, 's' },
 	{ 0,		'\0' },
 };
@@ -683,7 +683,10 @@ loadvnodes(int *avnodes)
 {
 	int mib[2];
 	int status;
-	size_t copysize, oldsize;
+	size_t copysize;
+#if 0
+	size_t oldsize;
+#endif
 	char *vnodebase;
 
 	if (totalflag) {
@@ -709,7 +712,9 @@ loadvnodes(int *avnodes)
 	 */
 	if (sysctl(mib, 2, NULL, &copysize, NULL, 0) == -1)
 		err(1, "sysctl: KERN_VNODE");
+#if 0
 	oldsize = copysize;
+#endif
 	copysize += 100 * sizeof(struct vnode) + copysize / 20;
 	if ((vnodebase = malloc(copysize)) == NULL)
 		err(1, "malloc");
@@ -751,8 +756,7 @@ kinfo_vnodes(int *avnodes)
 	beg = bp;
 	ep = bp + (numvnodes + 20) * (VPTRSZ + VNODESZ);
 	KGET(V_MOUNTLIST, mlist);
-	for (mp = mlist.cqh_first;;
-	    mp = mount.mnt_list.cqe_next) {
+	TAILQ_FOREACH(mp, &mlist, mnt_list) {
 		KGET2(mp, &mount, sizeof(mount), "mount entry");
 		TAILQ_FOREACH(vp, &mount.mnt_vnodelist, v_mntvnodes) {
 			KGET2(vp, &vnode, sizeof(vnode), "vnode");
@@ -764,8 +768,6 @@ kinfo_vnodes(int *avnodes)
 			memmove(bp, &vnode, VNODESZ);
 			bp += VNODESZ;
 		}
-		if (mp == mlist.cqh_last)
-			break;
 	}
 	*avnodes = (bp - beg) / (VPTRSZ + VNODESZ);
 	return (beg);

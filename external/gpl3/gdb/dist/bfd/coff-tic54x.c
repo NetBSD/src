@@ -1,5 +1,5 @@
 /* BFD back-end for TMS320C54X coff binaries.
-   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008
+   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2011, 2012
    Free Software Foundation, Inc.
    Contributed by Timothy Wall (twall@cygnus.com)
 
@@ -31,22 +31,9 @@
 #undef  F_LSYMS
 #define	F_LSYMS		F_LSYMS_TICOFF
 
-static void tic54x_reloc_processing
-  PARAMS ((arelent *, struct internal_reloc *, asymbol **, bfd *, asection *));
-static bfd_reloc_status_type tic54x_relocation
-  PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
-static bfd_boolean tic54x_set_section_contents
-  PARAMS ((bfd *, sec_ptr, const PTR, file_ptr, bfd_size_type));
-static reloc_howto_type *coff_tic54x_rtype_to_howto
-  PARAMS ((bfd *, asection *, struct internal_reloc *, struct coff_link_hash_entry *, struct internal_syment *, bfd_vma *));
-static bfd_boolean tic54x_set_arch_mach
-  PARAMS ((bfd *, enum bfd_architecture, unsigned long));
-static reloc_howto_type * tic54x_coff_reloc_type_lookup
-  PARAMS ((bfd *, bfd_reloc_code_real_type));
-static void tic54x_lookup_howto
-  PARAMS ((arelent *, struct internal_reloc *));
-static bfd_boolean ticoff_bfd_is_local_label_name
-  PARAMS ((bfd *, const char *));
+static void
+tic54x_reloc_processing (arelent *, struct internal_reloc *,
+			 asymbol **, bfd *, asection *);
 
 /* 32-bit operations
    The octet order is screwy.  words are LSB first (LS octet, actually), but
@@ -97,26 +84,24 @@ tic54x_getl_signed_32 (const void *p)
 #define coff_set_section_load_page bfd_ticoff_set_section_load_page
 
 void
-bfd_ticoff_set_section_load_page (sect, page)
-  asection *sect;
-  int page;
+bfd_ticoff_set_section_load_page (asection *sect,
+				  int page)
 {
   sect->lma = (sect->lma & ADDR_MASK) | PG_TO_FLAG(page);
 }
 
 int
-bfd_ticoff_get_section_load_page (sect)
-  asection *sect;
+bfd_ticoff_get_section_load_page (asection *sect)
 {
   int page;
 
   /* Provide meaningful defaults for predefined sections.  */
-  if (sect == &bfd_com_section)
+  if (sect == bfd_com_section_ptr)
     page = PG_DATA;
 
-  else if (sect == &bfd_und_section
-      || sect == &bfd_abs_section
-      || sect == &bfd_ind_section)
+  else if (bfd_is_und_section (sect)
+	   || bfd_is_abs_section (sect)
+	   || bfd_is_ind_section (sect))
     page = PG_PROG;
 
   else
@@ -129,10 +114,9 @@ bfd_ticoff_get_section_load_page (sect)
    (e.g. binary).  */
 
 static bfd_boolean
-tic54x_set_arch_mach (abfd, arch, machine)
-     bfd *abfd;
-     enum bfd_architecture arch;
-     unsigned long machine;
+tic54x_set_arch_mach (bfd *abfd,
+		      enum bfd_architecture arch,
+		      unsigned long machine)
 {
   if (arch == bfd_arch_unknown)
     arch = bfd_arch_tic54x;
@@ -144,15 +128,13 @@ tic54x_set_arch_mach (abfd, arch, machine)
 }
 
 static bfd_reloc_status_type
-tic54x_relocation (abfd, reloc_entry, symbol, data, input_section,
-                   output_bfd, error_message)
-  bfd *abfd ATTRIBUTE_UNUSED;
-  arelent *reloc_entry;
-  asymbol *symbol ATTRIBUTE_UNUSED;
-  PTR data ATTRIBUTE_UNUSED;
-  asection *input_section;
-  bfd *output_bfd;
-  char **error_message ATTRIBUTE_UNUSED;
+tic54x_relocation (bfd *abfd ATTRIBUTE_UNUSED,
+		   arelent *reloc_entry,
+		   asymbol *symbol ATTRIBUTE_UNUSED,
+		   void * data ATTRIBUTE_UNUSED,
+		   asection *input_section,
+		   bfd *output_bfd,
+		   char **error_message ATTRIBUTE_UNUSED)
 {
   if (output_bfd != (bfd *) NULL)
     {
@@ -234,10 +216,9 @@ reloc_howto_type tic54x_howto_table[] =
 /* For the case statement use the code values used tc_gen_reloc (defined in
    bfd/reloc.c) to map to the howto table entries.  */
 
-reloc_howto_type *
-tic54x_coff_reloc_type_lookup (abfd, code)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     bfd_reloc_code_real_type code;
+static reloc_howto_type *
+tic54x_coff_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
+			       bfd_reloc_code_real_type code)
 {
   switch (code)
     {
@@ -280,9 +261,8 @@ tic54x_coff_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
    Called after some initial checking by the tic54x_rtype_to_howto fn below.  */
 
 static void
-tic54x_lookup_howto (internal, dst)
-     arelent *internal;
-     struct internal_reloc *dst;
+tic54x_lookup_howto (arelent *internal,
+		     struct internal_reloc *dst)
 {
   unsigned i;
   int bank = (dst->r_symndx == -1) ? HOWTO_BANK : 0;
@@ -307,13 +287,12 @@ tic54x_lookup_howto (internal, dst)
 #define coff_rtype_to_howto coff_tic54x_rtype_to_howto
 
 static reloc_howto_type *
-coff_tic54x_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     asection *sec;
-     struct internal_reloc *rel;
-     struct coff_link_hash_entry *h ATTRIBUTE_UNUSED;
-     struct internal_syment *sym ATTRIBUTE_UNUSED;
-     bfd_vma *addendp;
+coff_tic54x_rtype_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
+			    asection *sec,
+			    struct internal_reloc *rel,
+			    struct coff_link_hash_entry *h ATTRIBUTE_UNUSED,
+			    struct internal_syment *sym ATTRIBUTE_UNUSED,
+			    bfd_vma *addendp)
 {
   arelent genrel;
 
@@ -334,9 +313,8 @@ coff_tic54x_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
    labels.  */
 
 static bfd_boolean
-ticoff_bfd_is_local_label_name (abfd, name)
-  bfd *abfd ATTRIBUTE_UNUSED;
-  const char *name;
+ticoff_bfd_is_local_label_name (bfd *abfd ATTRIBUTE_UNUSED,
+				const char *name)
 {
   if (TICOFF_LOCAL_LABEL_P(name))
     return TRUE;
@@ -344,15 +322,6 @@ ticoff_bfd_is_local_label_name (abfd, name)
 }
 
 #define coff_bfd_is_local_label_name ticoff_bfd_is_local_label_name
-
-/* Clear the r_reserved field in relocs.  */
-#define SWAP_OUT_RELOC_EXTRA(abfd,src,dst) \
-  do \
-    { \
-      dst->r_reserved[0] = 0; \
-      dst->r_reserved[1] = 0; \
-    } \
-  while (0)
 
 /* Customize coffcode.h; the default coff_ functions are set up to use COFF2;
    coff_bad_format_hook uses BADMAG, so set that for COFF2.  The COFF1
@@ -367,24 +336,22 @@ ticoff_bfd_is_local_label_name (abfd, name)
 #include "coffcode.h"
 
 static bfd_boolean
-tic54x_set_section_contents (abfd, section, location, offset, bytes_to_do)
-     bfd *abfd;
-     sec_ptr section;
-     const PTR location;
-     file_ptr offset;
-     bfd_size_type bytes_to_do;
+tic54x_set_section_contents (bfd *abfd,
+			     sec_ptr section,
+			     const void * location,
+			     file_ptr offset,
+			     bfd_size_type bytes_to_do)
 {
   return coff_set_section_contents (abfd, section, location,
                                     offset, bytes_to_do);
 }
 
 static void
-tic54x_reloc_processing (relent, reloc, symbols, abfd, section)
-     arelent *relent;
-     struct internal_reloc *reloc;
-     asymbol **symbols;
-     bfd *abfd;
-     asection *section;
+tic54x_reloc_processing (arelent *relent,
+			 struct internal_reloc *reloc,
+			 asymbol **symbols,
+			 bfd *abfd,
+			 asection *section)
 {
   asymbol *ptr;
 
@@ -446,6 +413,7 @@ const bfd_target tic54x_coff0_vec =
     '_',				/* leading symbol underscore */
     '/',				/* ar_pad_char */
     15,				/* ar_max_namelen */
+    0,				/* match priority.  */
     bfd_getl64, bfd_getl_signed_64, bfd_putl64,
     tic54x_getl32, tic54x_getl_signed_32, tic54x_putl32,
     bfd_getl16, bfd_getl_signed_16, bfd_putl16,	/* data */
@@ -471,7 +439,7 @@ const bfd_target tic54x_coff0_vec =
     BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
     NULL,
 
-    (PTR) & ticoff0_swap_table
+    & ticoff0_swap_table
   };
 
 /* TI COFF v0, SPARC tools (big-endian headers).  */
@@ -490,6 +458,7 @@ const bfd_target tic54x_coff0_beh_vec =
     '_',				/* leading symbol underscore */
     '/',				/* ar_pad_char */
     15,				/* ar_max_namelen */
+    0,				/* match priority.  */
     bfd_getl64, bfd_getl_signed_64, bfd_putl64,
     tic54x_getl32, tic54x_getl_signed_32, tic54x_putl32,
     bfd_getl16, bfd_getl_signed_16, bfd_putl16,	/* data */
@@ -516,7 +485,7 @@ const bfd_target tic54x_coff0_beh_vec =
 
     & tic54x_coff0_vec,
 
-    (PTR) & ticoff0_swap_table
+    & ticoff0_swap_table
   };
 
 /* TI COFF v1, DOS tools (little-endian headers).  */
@@ -535,6 +504,7 @@ const bfd_target tic54x_coff1_vec =
     '_',				/* leading symbol underscore */
     '/',				/* ar_pad_char */
     15,				/* ar_max_namelen */
+    0,				/* match priority.  */
     bfd_getl64, bfd_getl_signed_64, bfd_putl64,
     tic54x_getl32, tic54x_getl_signed_32, tic54x_putl32,
     bfd_getl16, bfd_getl_signed_16, bfd_putl16,	/* data */
@@ -561,7 +531,7 @@ const bfd_target tic54x_coff1_vec =
 
     & tic54x_coff0_beh_vec,
 
-    (PTR) & ticoff1_swap_table
+    & ticoff1_swap_table
 };
 
 /* TI COFF v1, SPARC tools (big-endian headers).  */
@@ -580,6 +550,7 @@ const bfd_target tic54x_coff1_beh_vec =
     '_',				/* leading symbol underscore */
     '/',				/* ar_pad_char */
     15,				/* ar_max_namelen */
+    0,				/* match priority.  */
     bfd_getl64, bfd_getl_signed_64, bfd_putl64,
     tic54x_getl32, tic54x_getl_signed_32, tic54x_putl32,
     bfd_getl16, bfd_getl_signed_16, bfd_putl16,	/* data */
@@ -606,7 +577,7 @@ const bfd_target tic54x_coff1_beh_vec =
 
     & tic54x_coff1_vec,
 
-    (PTR) & ticoff1_swap_table
+    & ticoff1_swap_table
   };
 
 /* TI COFF v2, TI DOS tools output (little-endian headers).  */
@@ -625,6 +596,7 @@ const bfd_target tic54x_coff2_vec =
     '_',				/* leading symbol underscore */
     '/',				/* ar_pad_char */
     15,				/* ar_max_namelen */
+    0,				/* match priority.  */
     bfd_getl64, bfd_getl_signed_64, bfd_putl64,
     tic54x_getl32, tic54x_getl_signed_32, tic54x_putl32,
     bfd_getl16, bfd_getl_signed_16, bfd_putl16,	/* data */
@@ -670,6 +642,7 @@ const bfd_target tic54x_coff2_beh_vec =
     '_',				/* leading symbol underscore */
     '/',				/* ar_pad_char */
     15,				/* ar_max_namelen */
+    0,				/* match priority.  */
     bfd_getl64, bfd_getl_signed_64, bfd_putl64,
     tic54x_getl32, tic54x_getl_signed_32, tic54x_putl32,
     bfd_getl16, bfd_getl_signed_16, bfd_putl16,	/* data */

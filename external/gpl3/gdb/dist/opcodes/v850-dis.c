@@ -1,6 +1,5 @@
 /* Disassemble V850 instructions.
-   Copyright 1996, 1997, 1998, 2000, 2001, 2002, 2003, 2005, 2007, 2010
-   Free Software Foundation, Inc.
+   Copyright 1996-2013 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -20,9 +19,9 @@
    MA 02110-1301, USA.  */
 
 
-#include <stdio.h>
-
 #include "sysdep.h"
+#include <stdio.h>
+#include <string.h>
 #include "opcode/v850.h"
 #include "dis-asm.h"
 #include "opintl.h"
@@ -60,12 +59,44 @@ static const char *const v850_float_cc_names[] =
 };
 
 
+static const char *const v850_vreg_names[] =
+{
+  "vr0", "vr1", "vr2", "vr3", "vr4", "vr5", "vr6", "vr7", "vr8", "vr9",
+  "vr10", "vr11", "vr12", "vr13", "vr14", "vr15", "vr16", "vr17", "vr18",
+  "vr19", "vr20", "vr21", "vr22", "vr23", "vr24", "vr25", "vr26", "vr27",
+  "vr28", "vr29", "vr30", "vr31"
+};
+
+static const char *const v850_cacheop_names[] =
+{
+  "chbii", "cibii", "cfali", "cisti", "cildi", "chbid", "chbiwbd",
+  "chbwbd", "cibid", "cibiwbd", "cibwbd", "cfald", "cistd", "cildd"
+};
+
+static const int v850_cacheop_codes[] =
+{
+  0x00, 0x20, 0x40, 0x60, 0x61, 0x04, 0x06,
+  0x07, 0x24, 0x26, 0x27, 0x44, 0x64, 0x65, -1
+};
+
+static const char *const v850_prefop_names[] =
+{ "prefi", "prefd" };
+
+static const int v850_prefop_codes[] =
+{ 0x00, 0x04, -1};
+
 static void
-print_value (int flags, bfd_vma memaddr, struct disassemble_info *info, long value)
+print_value (int flags,
+	     bfd_vma memaddr,
+	     struct disassemble_info *info,
+	     long value)
 {
   if (flags & V850_PCREL)
     {
       bfd_vma addr = value + memaddr;
+
+      if (flags & V850_INVERSE_PCREL)
+	addr = memaddr - value;
       info->print_address_func (addr, info);
     }
   else if (flags & V850_OPERAND_DISP)
@@ -79,7 +110,8 @@ print_value (int flags, bfd_vma memaddr, struct disassemble_info *info, long val
           info->fprintf_func (info->stream, "%lu", value);
         }
     }
-  else if (flags & V850E_IMMEDIATE32)
+  else if ((flags & V850E_IMMEDIATE32)
+	   || (flags & V850E_IMMEDIATE16HI))
     {
       info->fprintf_func (info->stream, "0x%lx", value);
     }
@@ -119,6 +151,8 @@ get_operand_value (const struct v850_operand *operand,
 
 	  if (operand->flags & V850E_IMMEDIATE16HI)
 	    value <<= 16;
+	  else if (value & 0x8000)
+	    value |= (-1L << 16);
 
 	  return value;
 	}
@@ -185,9 +219,12 @@ get_operand_value (const struct v850_operand *operand,
 
 
 static int
-disassemble (bfd_vma memaddr, struct disassemble_info *info, int bytes_read, unsigned long insn)
+disassemble (bfd_vma memaddr,
+	     struct disassemble_info *info,
+	     int bytes_read,
+	     unsigned long insn)
 {
-  struct v850_opcode *op = (struct v850_opcode *)v850_opcodes;
+  struct v850_opcode *op = (struct v850_opcode *) v850_opcodes;
   const struct v850_operand *operand;
   int match = 0;
   int target_processor;
@@ -213,6 +250,10 @@ disassemble (bfd_vma memaddr, struct disassemble_info *info, int bytes_read, uns
 
     case bfd_mach_v850e2v3:
       target_processor = PROCESSOR_V850E2V3;
+      break;
+
+    case bfd_mach_v850e3v5:
+      target_processor = PROCESSOR_V850E3V5;
       break;
     }
 
@@ -241,7 +282,8 @@ disassemble (bfd_vma memaddr, struct disassemble_info *info, int bytes_read, uns
 
 	      operand = &v850_operands[*opindex_ptr];
 
-	      value = get_operand_value (operand, insn, bytes_read, memaddr, info, 1, &invalid);
+	      value = get_operand_value (operand, insn, bytes_read, memaddr,
+					 info, 1, &invalid);
 
 	      if (invalid)
 		goto next_opcode;
@@ -283,13 +325,15 @@ disassemble (bfd_vma memaddr, struct disassemble_info *info, int bytes_read, uns
 	       *opindex_ptr != 0;
 	       opindex_ptr++, opnum++)
 	    {
+	      bfd_boolean square = FALSE;
 	      long value;
 	      int flag;
 	      char *prefix;
 
 	      operand = &v850_operands[*opindex_ptr];
 
-	      value = get_operand_value (operand, insn, bytes_read, memaddr, info, 0, 0);
+	      value = get_operand_value (operand, insn, bytes_read, memaddr,
+					 info, 0, 0);
 
 	      /* The first operand is always output without any
 		 special handling.
@@ -309,9 +353,11 @@ disassemble (bfd_vma memaddr, struct disassemble_info *info, int bytes_read, uns
 		   We may need to output a trailing ']' if the last operand
 		   in an instruction is the register for a memory address.
 
-		   The exception (and there's always an exception) is the
+		   The exception (and there's always an exception) are the
 		   "jmp" insn which needs square brackets around it's only
-		   register argument.  */
+		   register argument, and the clr1/not1/set1/tst1 insns
+		   which [...] around their second register argument.  */
+
 	      prefix = "";
 	      if (operand->flags & V850_OPERAND_BANG)
 		{
@@ -323,30 +369,73 @@ disassemble (bfd_vma memaddr, struct disassemble_info *info, int bytes_read, uns
 		}
 
 	      if (opnum == 1 && opnum == memop)
-		info->fprintf_func (info->stream, "%s[", prefix);
+		{
+		  info->fprintf_func (info->stream, "%s[", prefix);
+		  square = TRUE;
+		}
+	      else if (   (strcmp ("stc.w", op->name) == 0
+			|| strcmp ("cache", op->name) == 0
+			|| strcmp ("pref",  op->name) == 0)
+		       && opnum == 2 && opnum == memop)
+		{
+		  info->fprintf_func (info->stream, ", [");
+		  square = TRUE;
+		}
+	      else if (   (strcmp (op->name, "pushsp") == 0
+			|| strcmp (op->name, "popsp") == 0
+			|| strcmp (op->name, "dbpush" ) == 0)
+		       && opnum == 2)
+		{
+		  info->fprintf_func (info->stream, "-");
+		}
 	      else if (opnum > 1
-		       && (v850_operands[*(opindex_ptr - 1)].flags & V850_OPERAND_DISP) != 0
+		       && (v850_operands[*(opindex_ptr - 1)].flags
+			   & V850_OPERAND_DISP) != 0
 		       && opnum == memop)
-		info->fprintf_func (info->stream, "%s[", prefix);
+		{
+		  info->fprintf_func (info->stream, "%s[", prefix);
+		  square = TRUE;
+		}
+	      else if (opnum == 2
+		       && (   op->opcode == 0x00e407e0 /* clr1 */
+			   || op->opcode == 0x00e207e0 /* not1 */
+			   || op->opcode == 0x00e007e0 /* set1 */
+			   || op->opcode == 0x00e607e0 /* tst1 */
+			   ))
+		{
+		  info->fprintf_func (info->stream, ", %s[", prefix);
+		  square = TRUE;
+		}
 	      else if (opnum > 1)
 		info->fprintf_func (info->stream, ", %s", prefix);
 
- 	      /* Extract the flags, ignoring ones which do not effect disassembly output.  */
+ 	      /* Extract the flags, ignoring ones which do not
+		 effect disassembly output.  */
 	      flag = operand->flags & (V850_OPERAND_REG
 				       | V850_REG_EVEN
 				       | V850_OPERAND_EP
 				       | V850_OPERAND_SRG
 				       | V850E_OPERAND_REG_LIST
 				       | V850_OPERAND_CC
+				       | V850_OPERAND_VREG
+				       | V850_OPERAND_CACHEOP
+				       | V850_OPERAND_PREFOP
 				       | V850_OPERAND_FLOAT_CC);
 
 	      switch (flag)
 		{
-		case V850_OPERAND_REG:  info->fprintf_func (info->stream, "%s", v850_reg_names[value]); break;
-		case (V850_OPERAND_REG|V850_REG_EVEN):  info->fprintf_func (info->stream, "%s", v850_reg_names[value*2]); break;
-		case V850_OPERAND_EP:   info->fprintf_func (info->stream, "ep"); break;
-		case V850_OPERAND_SRG:  info->fprintf_func (info->stream, "%s", v850_sreg_names[value]); break;
-
+		case V850_OPERAND_REG:
+		  info->fprintf_func (info->stream, "%s", v850_reg_names[value]);
+		  break;
+		case (V850_OPERAND_REG|V850_REG_EVEN):
+		  info->fprintf_func (info->stream, "%s", v850_reg_names[value * 2]);
+		  break;
+		case V850_OPERAND_EP:
+		  info->fprintf_func (info->stream, "ep");
+		  break;
+		case V850_OPERAND_SRG:
+		  info->fprintf_func (info->stream, "%s", v850_sreg_names[value]);
+		  break;
 		case V850E_OPERAND_REG_LIST:
 		  {
 		    static int list12_regs[32]   = { 30, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -356,13 +445,12 @@ disassemble (bfd_vma memaddr, struct disassemble_info *info, int bytes_read, uns
 		    unsigned long int mask = 0;
 		    int pc = 0;
 
-
 		    switch (operand->shift)
 		      {
 		      case 0xffe00001: regs = list12_regs; break;
 		      default:
 			/* xgettext:c-format */
-			fprintf (stderr, _("unknown operand shift: %x\n"), operand->shift );
+			fprintf (stderr, _("unknown operand shift: %x\n"), operand->shift);
 			abort ();
 		      }
 
@@ -400,7 +488,7 @@ disassemble (bfd_vma memaddr, struct disassemble_info *info, int bytes_read, uns
 				  else
 				    shown_one = 1;
 
-				  info->fprintf_func (info->stream, v850_reg_names[first]);
+				  info->fprintf_func (info->stream, "%s", v850_reg_names[first]);
 
 				  for (bit++; bit < 32; bit++)
 				    if ((mask & (1 << bit)) == 0)
@@ -423,15 +511,60 @@ disassemble (bfd_vma memaddr, struct disassemble_info *info, int bytes_read, uns
 		  }
 		  break;
 
-		case V850_OPERAND_CC:   info->fprintf_func (info->stream, "%s", v850_cc_names[value]); break;
-		case V850_OPERAND_FLOAT_CC:   info->fprintf_func (info->stream, "%s", v850_float_cc_names[value]); break;
+		case V850_OPERAND_CC:
+		  info->fprintf_func (info->stream, "%s", v850_cc_names[value]);
+		  break;
+
+		case V850_OPERAND_FLOAT_CC:
+		  info->fprintf_func (info->stream, "%s", v850_float_cc_names[value]);
+		  break;
+
+		case V850_OPERAND_CACHEOP:
+		  {
+		    int idx;
+
+		    for (idx = 0; v850_cacheop_codes[idx] != -1; idx++)
+		      {
+			if (value == v850_cacheop_codes[idx])
+			  {
+			    info->fprintf_func (info->stream, "%s",
+						v850_cacheop_names[idx]);
+			    goto MATCH_CACHEOP_CODE;
+			  }
+		      }
+		    info->fprintf_func (info->stream, "%d", (int) value);
+		  }
+		MATCH_CACHEOP_CODE:
+		  break;
+
+		case V850_OPERAND_PREFOP:
+		  {
+		    int idx;
+
+		    for (idx = 0; v850_prefop_codes[idx] != -1; idx++)
+		      {
+			if (value == v850_prefop_codes[idx])
+			  {
+			    info->fprintf_func (info->stream, "%s",
+			      v850_prefop_names[idx]);
+			    goto MATCH_PREFOP_CODE;
+			  }
+		      }
+		    info->fprintf_func (info->stream, "%d", (int) value);
+		  }
+		MATCH_PREFOP_CODE:
+		  break;
+
+		case V850_OPERAND_VREG:
+		  info->fprintf_func (info->stream, "%s", v850_vreg_names[value]);
+		  break;
 
 		default:
 		  print_value (operand->flags, memaddr, info, value);
 		  break;
 		}
 
-	      if (opnum == 2 && opnum == memop)
+	      if (square)
 		(*info->fprintf_func) (info->stream, "]");
 	    }
 
@@ -476,6 +609,10 @@ print_insn_v850 (bfd_vma memaddr, struct disassemble_info * info)
     case bfd_mach_v850e2v3:
       target_processor = PROCESSOR_V850E2V3;
       break;
+
+    case bfd_mach_v850e3v5:
+      target_processor = PROCESSOR_V850E3V5;
+      break;
     }
 
   status = info->read_memory_func (memaddr, buffer, 2, info);
@@ -498,8 +635,7 @@ print_insn_v850 (bfd_vma memaddr, struct disassemble_info * info)
 
   /* Special case.  */
   if (length == 0
-      && (target_processor == PROCESSOR_V850E2
-	  || target_processor == PROCESSOR_V850E2V3))
+      && ((target_processor & PROCESSOR_V850E2_UP) != 0))
     {
       if ((insn & 0xffff) == 0x02e0		/* jr 32bit */
 	  && !status2 && (insn2 & 0x1) == 0)
@@ -522,7 +658,20 @@ print_insn_v850 (bfd_vma memaddr, struct disassemble_info * info)
     }
 
   if (length == 0
-      && target_processor == PROCESSOR_V850E2V3)
+      && ((target_processor & PROCESSOR_V850E3V5_UP) != 0))
+    {
+      if (   ((insn & 0xffe0) == 0x07a0		/* ld.dw 23bit (v850e3v5) */
+	      && !status2 && (insn2 & 0x000f) == 0x0009)
+	  || ((insn & 0xffe0) == 0x07a0		/* st.dw 23bit (v850e3v5) */
+	      && !status2 && (insn2 & 0x000f) == 0x000f))
+	{
+	  length = 4;
+	  code_length = 6;
+	}
+    }
+
+  if (length == 0
+      && ((target_processor & PROCESSOR_V850E2V3_UP) != 0))
     {
       if (((insn & 0xffe0) == 0x0780		/* ld.b 23bit */
 	   && !status2 && (insn2 & 0x000f) == 0x0005)
@@ -605,6 +754,10 @@ print_insn_v850 (bfd_vma memaddr, struct disassemble_info * info)
 
   if (length == 2)
     insn &= 0xffff;
+
+  /* when the last 2 bytes of section is 0xffff, length will be 0 and cause infinitive loop */
+  if (length == 0)
+    return -1;
 
   match = disassemble (memaddr, info, length, insn);
 

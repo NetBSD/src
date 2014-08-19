@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.52 2012/06/04 20:56:40 joerg Exp $	*/
+/*	$NetBSD: getcap.c,v 1.52.2.1 2014/08/20 00:02:14 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.52 2012/06/04 20:56:40 joerg Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.52.2.1 2014/08/20 00:02:14 tls Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -254,13 +254,6 @@ static int
 getent(char **cap, size_t *len, const char * const *db_array, int fd,
     const char *name, int depth, char *nfield)
 {
-#ifndef SMALL
-	DB *capdbp;
-	char pbuf[MAXPATHLEN];
-	char *cbuf;
-	int retval;
-	size_t clen;
-#endif
 	char *record, *newrecord;
 	char *r_end, *rp;	/* pacify gcc */
 	const char * const *db_p;
@@ -322,9 +315,14 @@ getent(char **cap, size_t *len, const char * const *db_array, int fd,
 			(void)lseek(fd, (off_t)0, SEEK_SET);
 		} else {
 #ifndef SMALL
+			DB *capdbp;
+			char pbuf[MAXPATHLEN];
+			char *cbuf;
+			int retval;
+			size_t clen;
+
 			(void)snprintf(pbuf, sizeof(pbuf), "%s.db", *db_p);
-			if (expandtc &&
-			    (capdbp = dbopen(pbuf, O_RDONLY, 0, DB_HASH, 0))
+			if ((capdbp = dbopen(pbuf, O_RDONLY, 0, DB_HASH, 0))
 			     != NULL) {
 				free(record);
 				retval = cdbget(capdbp, &record, name);

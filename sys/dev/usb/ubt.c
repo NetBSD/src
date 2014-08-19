@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.48.2.1 2012/11/20 03:02:34 tls Exp $	*/
+/*	$NetBSD: ubt.c,v 1.48.2.2 2014/08/20 00:03:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.48.2.1 2012/11/20 03:02:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.48.2.2 2014/08/20 00:03:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -113,14 +113,6 @@ int	ubt_debug = 0;
 
 SYSCTL_SETUP(sysctl_hw_ubt_debug_setup, "sysctl hw.ubt_debug setup")
 {
-
-	sysctl_createv(NULL, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "hw",
-		NULL,
-		NULL, 0,
-		NULL, 0,
-		CTL_HW, CTL_EOL);
 
 	sysctl_createv(NULL, 0, NULL, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
@@ -479,20 +471,12 @@ ubt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Attach HCI */
-	sc->sc_unit = hci_attach(&ubt_hci, sc->sc_dev, 0);
+	sc->sc_unit = hci_attach_pcb(&ubt_hci, sc->sc_dev, 0);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   sc->sc_dev);
 
 	/* sysctl set-up for alternate configs */
-	sysctl_createv(&sc->sc_log, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "hw",
-		NULL,
-		NULL, 0,
-		NULL, 0,
-		CTL_HW, CTL_EOL);
-
 	sysctl_createv(&sc->sc_log, 0, NULL, &node,
 		0,
 		CTLTYPE_NODE, device_xname(sc->sc_dev),
@@ -568,16 +552,16 @@ ubt_detach(device_t self, int flags)
 
 	/* Detach HCI interface */
 	if (sc->sc_unit) {
-		hci_detach(sc->sc_unit);
+		hci_detach_pcb(sc->sc_unit);
 		sc->sc_unit = NULL;
 	}
 
 	/*
 	 * Abort all pipes. Causes processes waiting for transfer to wake.
 	 *
-	 * Actually, hci_detach() above will call ubt_disable() which may
-	 * call ubt_abortdealloc(), but lets be sure since doing it twice
-	 * wont cause an error.
+	 * Actually, hci_detach_pcb() above will call ubt_disable() which
+	 * may call ubt_abortdealloc(), but lets be sure since doing it
+	 * twice wont cause an error.
 	 */
 	ubt_abortdealloc(sc);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rogue.h,v 1.22 2011/08/26 06:18:17 dholland Exp $	*/
+/*	$NetBSD: rogue.h,v 1.22.8.1 2014/08/20 00:00:23 tls Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -221,7 +221,7 @@ struct obj {				/* comment is monster meaning */
 	unsigned long m_flags;	/* monster flags */
 	const char *damage;		/* damage it does */
 	short quantity;			/* hit points to kill */
-	short ichar;			/* 'A' is for aquatar */
+	short ichar;			/* 'A' is for aquator */
 	short kill_exp;			/* exp for killing it */
 	short is_protected;		/* level starts */
 	short is_cursed;		/* level ends */
@@ -248,7 +248,7 @@ typedef struct obj object;
 #define INIT_STR	16
 #define INIT_EXPLEVEL	1
 #define INIT_EXP	0
-#define INIT_PACK	{0}
+#define INIT_PACK	{0,NULL,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,NULL}
 #define INIT_GOLD	0
 #define INIT_CHAR	'@'
 #define INIT_MOVES	1250

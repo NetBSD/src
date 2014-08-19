@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2007/11/29 12:35:05 mjf Exp $
+#	$NetBSD: Makefile,v 1.20.34.1 2014/08/20 00:02:29 tls Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 5/10/94
 
 .include <bsd.own.mk>
@@ -6,17 +6,10 @@
 # The following modules do not build/install:
 # 10.named, 13.amd
 
-# Missing:
-# 02.config
-
 # Missing from 4.4BSD-Lite:
 # 14.uucpimpl 15.uucpnet 16.security
 
-BINDIR=	/usr/share/doc/smm
-.if ${MKDOC} != "no"
-FILES=	00.contents Makefile Title
-.endif
-SUBDIR=	01.setup 04.quotas 05.fastfs 06.nfs 17.password 18.net
+SUBDIR=	01.setup config 04.quotas 05.fastfs 06.nfs 17.password 18.net
 .if exists(03.fsck_ffs)
 SUBDIR+= 03.fsck_ffs
 .endif
@@ -33,11 +26,11 @@ SUBDIR+= 09.sendmail
 #	08.sendmailop 09.sendmail 14.uucpimpl \
 #	15.uucpnet 16.security 17.password 18.net 19.perl
 
-Title.ps: ${FILES}
-	${TOOL_ROFF_PS} -ms Title > ${.TARGET}
+SECTION=smm
+SUBARTICLES=title contents
+SRCS.title=Title
+SRCS.contents=00.contents
+MACROS=-ms
 
-contents.ps: ${FILES}
-	${TOOL_ROFF_PS} -ms 00.contents > ${.TARGET}
-
-.include <bsd.prog.mk>
+.include <bsd.doc.mk>
 .include <bsd.subdir.mk>

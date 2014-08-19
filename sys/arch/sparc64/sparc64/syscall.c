@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.41 2012/02/19 21:06:31 rmind Exp $ */
+/*	$NetBSD: syscall.c,v 1.41.2.1 2014/08/20 00:03:25 tls Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.41 2012/02/19 21:06:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.41.2.1 2014/08/20 00:03:25 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,8 +114,7 @@ union args {
 static inline int handle_old(struct trapframe64 *, register_t *);
 static inline int getargs(struct proc *, struct trapframe64 *,
     register_t *, const struct sysent **, union args *, int *);
-void syscall_plain(struct trapframe64 *, register_t, register_t);
-void syscall_fancy(struct trapframe64 *, register_t, register_t);
+void syscall(struct trapframe64 *, register_t, register_t);
 
 /*
  * Handle old style system calls.
@@ -242,10 +241,8 @@ void
 syscall_intern(struct proc *p)
 {
 
-	if (trace_is_enabled(p))
-		p->p_md.md_syscall = syscall_fancy;
-	else
-		p->p_md.md_syscall = syscall_plain;
+	p->p_trace_enabled = trace_is_enabled(p);
+	p->p_md.md_syscall = syscall;
 }
 
 /*
@@ -278,7 +275,7 @@ syscall_intern(struct proc *p)
  *  
  */
 void
-syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
+syscall(struct trapframe64 *tf, register_t code, register_t pc)
 {
 	const struct sysent *callp;
 	struct lwp *l = curlwp;
@@ -312,7 +309,7 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 
-	error = sy_call(callp, l, &args, rval);
+	error = sy_invoke(callp, l, args.r, rval, code);
 
 	switch (error) {
 	case 0:
@@ -345,107 +342,6 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 		tf->tf_npc = tf->tf_pc + 4;
 		break;
 	}
-
-	userret(l, pc, sticks);
-	share_fpu(l, tf);
-}
-
-void
-syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
-{
-	const struct sysent *callp;
-	struct lwp *l = curlwp;
-	union args args, *ap = NULL;
-#ifdef __arch64__
-	union args args64;
-	int i;
-#endif
-	struct proc *p = l->l_proc;
-	int error, new;
-	register_t rval[2];
-	u_quad_t sticks;
-	vaddr_t opc, onpc;
-	int s64;
-
-	LWP_CACHE_CREDS(l, p);
-	curcpu()->ci_data.cpu_nsyscall++;
-	sticks = p->p_sticks;
-	l->l_md.md_tf = tf;
-
-	/*
-	 * save pc/npc in case of ERESTART
-	 * adjust pc/npc to new values
-	 */
-	opc = tf->tf_pc;
-	onpc = tf->tf_npc;
-
-	new = handle_old(tf, &code);
-
-	tf->tf_npc = tf->tf_pc + 4;
-
-	if ((error = getargs(p, tf, &code, &callp, &args, &s64)) != 0)
-		goto bad;
-		
-#ifdef __arch64__
-	if (s64)
-		ap = &args;
-	else {
-		for (i = 0; i < callp->sy_narg; i++)
-			args64.l[i] = args.i[i];
-		ap = &args64;
-	}
-#else
-	ap = &args;
-#endif
-
-	if ((error = trace_enter(code, ap->r, callp->sy_narg)) != 0) {
-		goto out;
-	}
-#ifdef __arch64__
-	if (!s64)
-		for (i = 0; i < callp->sy_narg; i++)
-			args.i[i] = args64.l[i];
-#endif
-
-	rval[0] = 0;
-	rval[1] = tf->tf_out[1];
-
-	error = sy_call(callp, l, &args, rval);
-out:
-	switch (error) {
-	case 0:
-		/* Note: fork() does not return here in the child */
-		tf->tf_out[0] = rval[0];
-		tf->tf_out[1] = rval[1];
-		if (!new)
-			/* old system call convention: clear C on success */
-			tf->tf_tstate &= ~(((int64_t)(ICC_C | XCC_C)) <<
-			    TSTATE_CCR_SHIFT);	/* success */
-		break;
-
-	case ERESTART:
-		tf->tf_pc = opc;
-		tf->tf_npc = onpc;
-		break;
-
-	case EJUSTRETURN:
-		/* nothing to do */
-		break;
-
-	default:
-	bad:
-		if (p->p_emul->e_errno)
-			error = p->p_emul->e_errno[error];
-		tf->tf_out[0] = error;
-		tf->tf_tstate |= (((int64_t)(ICC_C | XCC_C)) <<
-				  TSTATE_CCR_SHIFT);	/* fail */
-		tf->tf_pc = onpc;
-		tf->tf_npc = tf->tf_pc + 4;
-		break;
-	}
-
-	if (ap)
-		trace_exit(code, rval, error);
 
 	userret(l, pc, sticks);
 	share_fpu(l, tf);
@@ -484,7 +380,7 @@ startlwp(void *arg)
 {
 	ucontext_t *uc = arg;
 	lwp_t *l = curlwp;
-	int error;
+	int error __diagused;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);

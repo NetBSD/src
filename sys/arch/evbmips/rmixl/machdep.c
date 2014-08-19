@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2012/03/03 00:20:33 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13.2.1 2014/08/20 00:02:58 tls Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2012/03/03 00:20:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13.2.1 2014/08/20 00:02:58 tls Exp $");
 
 #define __INTR_PRIVATE
 
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2012/03/03 00:20:33 matt Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
+#include <sys/cpu.h>
 #include <sys/reboot.h>
 #include <sys/mount.h>
 #include <sys/kcore.h>
@@ -194,9 +195,6 @@ static u_long rmixl_physaddr_storage[
 	EXTENT_FIXED_STORAGE_SIZE(32)/sizeof(u_long)
 ];
 
-/* For sysctl_hw. */
-extern char cpu_model[];
-
 /* Maps for VM objects. */
 struct vm_map *phys_map = NULL;
 
@@ -262,7 +260,7 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 #endif
 
 	/* mips_vector_init initialized mips_options */
-	strcpy(cpu_model, mips_options.mips_cpu->cpu_name);
+	cpu_setmodel("%s", mips_options.mips_cpu->cpu_name);
 
 	/* get system info from firmware */
 	memsize = rmixlfw_init(infop);

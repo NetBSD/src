@@ -35,7 +35,7 @@
  *	trace.c - print traces of D (B) channel activity for isdn4bsd
  *	-------------------------------------------------------------
  *
- *	$Id: trace.c,v 1.13 2011/08/31 16:24:59 plunky Exp $ 
+ *	$Id: trace.c,v 1.13.8.1 2014/08/20 00:05:08 tls Exp $ 
  *
  * $FreeBSD$
  *
@@ -80,7 +80,7 @@ static int switch_driver( int value, int rx, int tx );
 __dead static void usage( void );
 static void exit_hdl( void );
 static void reopenfiles( int );
-void add_datetime(char *filename, char *rfilename);
+void add_datetime(const char *filename, char *rfilename, size_t);
 char * fmt_hdr(struct i4b_trace_hdr *hdr, int frm_len);
 
 /*---------------------------------------------------------------------------*
@@ -242,7 +242,7 @@ main(int argc, char *argv[])
 			snprintf(BPfilename, sizeof(BPfilename), "%s%d",
 			    BIN_FILE_NAME, unit);
 			
-		add_datetime(BPfilename, rBPfilename);
+		add_datetime(BPfilename, rBPfilename, sizeof(rBPfilename));
 
 		if ((BP = fopen(rBPfilename, "w")) == NULL)
 		{
@@ -321,7 +321,7 @@ main(int argc, char *argv[])
 		else
 			strlcpy(outfilename, outfile, sizeof(outfilename));
 			
-		add_datetime(outfilename, routfilename);
+		add_datetime(outfilename, routfilename, sizeof(routfilename));
 			
 		if ((Fout = fopen(routfilename, "w")) == NULL)
 		{
@@ -777,7 +777,7 @@ reopenfiles(int dummy)
 	{
 		fclose(Fout);
 
-		add_datetime(outfilename, routfilename);
+		add_datetime(outfilename, routfilename, sizeof(routfilename));
 		
 		if ((Fout = fopen(routfilename, "a")) == NULL)
 		{
@@ -806,7 +806,7 @@ reopenfiles(int dummy)
 		
 		fclose(BP);
 
-		add_datetime(BPfilename, rBPfilename);
+		add_datetime(BPfilename, rBPfilename, sizeof(rBPfilename));
 		
 		if ((BP = fopen(rBPfilename, "a")) == NULL)
 		{
@@ -832,19 +832,21 @@ reopenfiles(int dummy)
 }
 
 void
-add_datetime(char *filename, char *rfilename)
+add_datetime(const char *filename, char *rfilename, size_t len)
 {
 	time_t timeb;
-	struct tm *tmp;
 	FILE *fx;
+	int c;
+	struct tm *tmp;
 
 	time(&timeb);
 	tmp = localtime(&timeb);
 	
-	snprintf(rfilename, sizeof(rfilename), "%s-", filename);
+	c = snprintf(rfilename, len, "%s-", filename);
+	if (c < 0)
+		return;
 
-	strftime(rfilename+strlen(rfilename), MAXPATHLEN-strlen(rfilename)-1,
-		"%Y%m%d-%H%M%S", tmp);
+	strftime(rfilename + c, len - c - 1, "%Y%m%d-%H%M%S", tmp);
 		
 	if ((fx = fopen(rfilename, "r")) != NULL)
 	{
@@ -855,10 +857,11 @@ add_datetime(char *filename, char *rfilename)
 		time(&timeb);
 		tmp = localtime(&timeb);
 	
-		snprintf(rfilename, sizeof(rfilename), "%s-", filename);
+		c = snprintf(rfilename, len, "%s-", filename);
+		if (c < 0)
+			return;
 
-		strftime(rfilename+strlen(rfilename), MAXPATHLEN-strlen(rfilename)-1,
-			"%Y%m%d-%H%M%S", tmp);
+		strftime(rfilename, len - c - 1, "%Y%m%d-%H%M%S", tmp);
 	}
 }
 	

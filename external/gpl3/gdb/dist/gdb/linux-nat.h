@@ -1,7 +1,6 @@
 /* Native debugging support for GNU/Linux (LWP layer).
 
-   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-   2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +20,8 @@
 #include "target.h"
 
 #include <signal.h>
+
+struct arch_lwp_info;
 
 /* Structure describing an LWP.  This is public only for the purposes
    of ALL_LWPS; target-specific code should generally not access it
@@ -52,15 +53,14 @@ struct lwp_info
      didn't try to let the LWP run.  */
   int resumed;
 
+  /* The last resume GDB requested on this thread.  */
+  enum resume_kind last_resume_kind;
+
   /* If non-zero, a pending wait status.  */
   int status;
 
   /* Non-zero if we were stepping this LWP.  */
   int step;
-
-  /* Non-zero si_signo if this LWP stopped with a trap.  si_addr may
-     be the address of a hardware watchpoint.  */
-  struct siginfo siginfo;
 
   /* STOPPED_BY_WATCHPOINT is non-zero if this LWP stopped with a data
      watchpoint trap.  */
@@ -92,6 +92,9 @@ struct lwp_info
   /* The processor core this LWP was last seen on.  */
   int core;
 
+  /* Arch-specific additions.  */
+  struct arch_lwp_info *arch_private;
+
   /* Next LWP in list.  */
   struct lwp_info *next;
 };
@@ -101,17 +104,11 @@ struct lwp_info
    native target is active.  */
 extern struct lwp_info *lwp_list;
 
-/* Iterate over the PTID each active thread (light-weight process).  There
-   must be at least one.  */
-#define ALL_LWPS(LP, PTID)						\
-  for ((LP) = lwp_list, (PTID) = (LP)->ptid;				\
+/* Iterate over each active thread (light-weight process).  */
+#define ALL_LWPS(LP)							\
+  for ((LP) = lwp_list;							\
        (LP) != NULL;							\
-       (LP) = (LP)->next, (PTID) = (LP) ? (LP)->ptid : (PTID))
-
-#define GET_LWP(ptid)		ptid_get_lwp (ptid)
-#define GET_PID(ptid)		ptid_get_pid (ptid)
-#define is_lwp(ptid)		(GET_LWP (ptid) != 0)
-#define BUILD_LWP(lwp, pid)	ptid_build (pid, lwp, 0)
+       (LP) = (LP)->next)
 
 /* Attempt to initialize libthread_db.  */
 void check_for_thread_db (void);
@@ -125,14 +122,9 @@ extern void lin_thread_get_thread_signals (sigset_t *mask);
 void linux_proc_pending_signals (int pid, sigset_t *pending,
 				 sigset_t *blocked, sigset_t *ignored);
 
-/* Return the TGID of LWPID from /proc/pid/status.  Returns -1 if not
-   found.  */
-extern int linux_proc_get_tgid (int lwpid);
-
-/* linux-nat functions for handling fork events.  */
-extern void linux_enable_event_reporting (ptid_t ptid);
-
 extern int lin_lwp_attach_lwp (ptid_t ptid);
+
+extern void linux_stop_lwp (struct lwp_info *lwp);
 
 /* Iterator function for lin-lwp's lwp list.  */
 struct lwp_info *iterate_over_lwps (ptid_t filter,
@@ -154,25 +146,46 @@ linux_trad_target (CORE_ADDR (*register_u_offset)(struct gdbarch *, int, int));
 void linux_nat_add_target (struct target_ops *);
 
 /* Register a method to call whenever a new thread is attached.  */
-void linux_nat_set_new_thread (struct target_ops *, void (*) (ptid_t));
+void linux_nat_set_new_thread (struct target_ops *, void (*) (struct lwp_info *));
+
+
+/* Register a method to call whenever a new fork is attached.  */
+typedef void (linux_nat_new_fork_ftype) (struct lwp_info *parent,
+					 pid_t child_pid);
+void linux_nat_set_new_fork (struct target_ops *ops,
+			     linux_nat_new_fork_ftype *fn);
+
+/* Register a method to call whenever a process is killed or
+   detached.  */
+typedef void (linux_nat_forget_process_ftype) (pid_t pid);
+void linux_nat_set_forget_process (struct target_ops *ops,
+				   linux_nat_forget_process_ftype *fn);
+
+/* Call the method registered with the function above.  PID is the
+   process to forget about.  */
+void linux_nat_forget_process (pid_t pid);
 
 /* Register a method that converts a siginfo object between the layout
    that ptrace returns, and the layout in the architecture of the
    inferior.  */
 void linux_nat_set_siginfo_fixup (struct target_ops *,
-				  int (*) (struct siginfo *,
+				  int (*) (siginfo_t *,
 					   gdb_byte *,
 					   int));
+
+/* Register a method to call prior to resuming a thread.  */
+
+void linux_nat_set_prepare_to_resume (struct target_ops *,
+				      void (*) (struct lwp_info *));
 
 /* Update linux-nat internal state when changing from one fork
    to another.  */
 void linux_nat_switch_fork (ptid_t new_ptid);
 
-/* Return the saved siginfo associated with PTID.  */
-struct siginfo *linux_nat_get_siginfo (ptid_t ptid);
-
-/* Compute and return the processor core of a given thread.  */
-int linux_nat_core_of_thread_1 (ptid_t ptid);
+/* Store the saved siginfo associated with PTID in *SIGINFO.
+   Return 1 if it was retrieved successfully, 0 otherwise (*SIGINFO is
+   uninitialized in such case).  */
+int linux_nat_get_siginfo (ptid_t ptid, siginfo_t *siginfo);
 
 /* Set alternative SIGTRAP-like events recognizer.  */
 void linux_nat_set_status_is_event (struct target_ops *t,

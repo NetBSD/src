@@ -1,4 +1,4 @@
-/*	$NetBSD: sljit_mod.c,v 1.1.4.2 2012/10/22 21:21:08 christos Exp $	*/
+/*	$NetBSD: sljit_mod.c,v 1.1.4.3 2014/08/20 00:04:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -27,14 +27,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sljit_mod.c,v 1.1.4.2 2012/10/22 21:21:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sljit_mod.c,v 1.1.4.3 2014/08/20 00:04:25 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/module.h>
+#include <sys/mutex.h>
 
 MODULE(MODULE_CLASS_MISC, sljit, NULL)
 
+/* Used in sljitUtils.c */
+kmutex_t sljit_allocator_mutex;
+kmutex_t sljit_global_mutex;
 
 static int
 sljit_modcmd(modcmd_t cmd, void *arg)
@@ -42,6 +46,8 @@ sljit_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		mutex_init(&sljit_allocator_mutex, MUTEX_DEFAULT, IPL_NONE);
+		mutex_init(&sljit_global_mutex, MUTEX_DEFAULT, IPL_NONE);
 		return 0;
 
 	case MODULE_CMD_FINI:

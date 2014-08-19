@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_scan.l,v 1.5.2.3 2013/06/23 06:29:05 tls Exp $	*/
+/*	$NetBSD: npf_scan.l,v 1.5.2.4 2014/08/20 00:05:11 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -82,8 +82,9 @@ npfctl_parse_string(const char *str)
 %option noyywrap nounput noinput
 
 ID	[a-zA-Z_][a-zA-Z_0-9]*
-NID	[a-zA-Z_0-9]+
+DID	[a-zA-Z_][a-zA-Z_0-9-]*
 NUMBER	[0-9]+
+HEXDIG	[0-9a-fA-F]+
 
 %%
 alg			return ALG;
@@ -91,6 +92,7 @@ table			return TABLE;
 type			return TYPE;
 hash			return HASH;
 tree			return TREE;
+cdb			return CDB;
 static			return TSTATIC;
 dynamic			return TDYNAMIC;
 file			return TFILE;
@@ -98,6 +100,8 @@ map			return MAP;
 "<->"			return ARROWBOTH;
 "<-"			return ARROWLEFT;
 "->"			return ARROWRIGHT;
+algo			return ALGO;
+npt66			return NPT66;
 "-"			return MINUS;
 procedure		return PROCEDURE;
 \\\n			yylineno++; yycolumn = 0;
@@ -113,15 +117,15 @@ interface		return INTERFACE;
 all			return ALL;
 block			return BLOCK;
 pass			return PASS;
+pcap-filter		return PCAP_FILTER;
 stateful		return STATEFUL;
+stateful-ends		return STATEFUL_ENDS;
 apply			return APPLY;
 final			return FINAL;
 quick			return FINAL;
 on			return ON;
-ifnet			return IFNET;
 inet6			return INET6;
-inet4			return INET;
-inet			return INET;
+inet4			return INET4;
 proto			return PROTO;
 family			return FAMILY;
 tcp			return TCP;
@@ -148,7 +152,7 @@ any			return ANY;
 ","			return COMMA;
 "="			return EQ;
 
-"0x"[0-9a-fA-F]+ {
+"0x"{HEXDIG} {
 			char *endp, *buf = ecalloc(1, yyleng + 1);
 			buf[yyleng] = 0;
 			yylval.num = strtoul(buf+2, &endp, 16);
@@ -163,7 +167,12 @@ any			return ANY;
 			return FPNUM;
 		}
 
-[0-9a-fA-F]+":"[0-9a-fA-F:]* {
+{HEXDIG}":"[0-9a-fA-F:]* {
+			yylval.str = estrndup(yytext, yyleng);
+			return IPV6ADDR;
+		}
+
+"::"{HEXDIG}[0-9a-fA-F:]* {
 			yylval.str = estrndup(yytext, yyleng);
 			return IPV6ADDR;
 		}
@@ -180,12 +189,12 @@ any			return ANY;
 			return NUM;
 		}
 
-"<"{NID}">"	{
+"<"{DID}">"	{
 			yylval.str = estrndup(yytext + 1, yyleng - 2);
 			return TABLE_ID;
 		}
 
-"$"{NID}	{
+"$"{ID}		{
 			yylval.str = estrndup(yytext + 1, yyleng - 1);
 			return VAR_ID;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fcntl.h,v 1.4 2010/11/02 18:01:25 chs Exp $ */
+/*	$NetBSD: linux_fcntl.h,v 1.4.18.1 2014/08/20 00:03:31 tls Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -50,7 +50,11 @@
 #define LINUX_O_NDELAY		LINUX_O_NONBLOCK
 #define LINUX_O_SYNC		0x01000
 #define LINUX_FASYNC		0x02000
+#define LINUX_O_DIRECT		0x04000
+#define LINUX_O_LARGEFILE	0x08000
 #define LINUX_O_DIRECTORY	0x10000
+#define LINUX_O_NOFOLLOW	0x20000
+#define LINUX_O_NOATIME		0x40000
 #define LINUX_O_CLOEXEC		0x80000
 
 /* fcntl(2) operations */

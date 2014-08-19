@@ -1,6 +1,5 @@
 /* Low level interface to ptrace, for the remote server for GDB.
-   Copyright (C) 1995, 1996, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -101,6 +100,7 @@ static const struct regs_range_t fpregs_ranges[] = {
 
 /* Defined in auto-generated file reg-sparc64.c.  */
 void init_registers_sparc64 (void);
+extern const struct target_desc *tdesc_sparc64;
 
 static int
 sparc_cannot_store_register (int regno)
@@ -120,19 +120,21 @@ sparc_fill_gregset_to_stack (struct regcache *regcache, const void *buf)
   int i;
   CORE_ADDR addr = 0;
   unsigned char tmp_reg_buf[8];
-  const int l0_regno = find_regno("l0");
+  const int l0_regno = find_regno (regcache->tdesc, "l0");
   const int i7_regno = l0_regno + 15;
 
   /* These registers have to be stored in the stack.  */
-  memcpy(&addr, ((char *) buf) + sparc_regmap[find_regno("sp")], sizeof(addr));
+  memcpy (&addr,
+	  ((char *) buf) + sparc_regmap[find_regno (regcache->tdesc, "sp")],
+	  sizeof (addr));
 
   addr += BIAS;
 
   for (i = l0_regno; i <= i7_regno; i++)
     {
       collect_register (regcache, i, tmp_reg_buf);
-      (*the_target->write_memory) (addr, tmp_reg_buf, sizeof(tmp_reg_buf));
-      addr += sizeof(tmp_reg_buf);
+      (*the_target->write_memory) (addr, tmp_reg_buf, sizeof (tmp_reg_buf));
+      addr += sizeof (tmp_reg_buf);
     }
 }
 
@@ -170,19 +172,21 @@ sparc_store_gregset_from_stack (struct regcache *regcache, const void *buf)
   int i;
   CORE_ADDR addr = 0;
   unsigned char tmp_reg_buf[8];
-  const int l0_regno = find_regno("l0");
+  const int l0_regno = find_regno (regcache->tdesc, "l0");
   const int i7_regno = l0_regno + 15;
 
   /* These registers have to be obtained from the stack.  */
-  memcpy(&addr, ((char *) buf) + sparc_regmap[find_regno("sp")], sizeof(addr));
+  memcpy (&addr,
+	  ((char *) buf) + sparc_regmap[find_regno (regcache->tdesc, "sp")],
+	  sizeof (addr));
 
   addr += BIAS;
 
   for (i = l0_regno; i <= i7_regno; i++)
     {
-      (*the_target->read_memory) (addr, tmp_reg_buf, sizeof(tmp_reg_buf));
+      (*the_target->read_memory) (addr, tmp_reg_buf, sizeof (tmp_reg_buf));
       supply_register (regcache, i, tmp_reg_buf);
-      addr += sizeof(tmp_reg_buf);
+      addr += sizeof (tmp_reg_buf);
     }
 }
 
@@ -193,7 +197,7 @@ sparc_store_gregset (struct regcache *regcache, const void *buf)
   char zerobuf[8];
   int range;
 
-  memset (zerobuf, 0, sizeof(zerobuf));
+  memset (zerobuf, 0, sizeof (zerobuf));
 
   for (range = 0; range < N_GREGS_RANGES; range++)
     for (i = gregs_ranges[range].regno_start;
@@ -242,9 +246,9 @@ sparc_breakpoint_at (CORE_ADDR where)
 {
   unsigned char insn[INSN_SIZE];
 
-  (*the_target->read_memory) (where, (unsigned char *) insn, sizeof(insn));
+  (*the_target->read_memory) (where, (unsigned char *) insn, sizeof (insn));
 
-  if (memcmp(sparc_breakpoint, insn, sizeof(insn)) == 0)
+  if (memcmp (sparc_breakpoint, insn, sizeof (insn)) == 0)
     return 1;
 
   /* If necessary, recognize more trap instructions here.  GDB only
@@ -266,8 +270,13 @@ sparc_reinsert_addr (void)
   return lr;
 }
 
+static void
+sparc_arch_setup (void)
+{
+  current_process ()->tdesc = tdesc_sparc64;
+}
 
-struct regset_info target_regsets[] = {
+static struct regset_info sparc_regsets[] = {
   { PTRACE_GETREGS, PTRACE_SETREGS, 0, sizeof (elf_gregset_t),
     GENERAL_REGS,
     sparc_fill_gregset, sparc_store_gregset },
@@ -277,13 +286,40 @@ struct regset_info target_regsets[] = {
   { 0, 0, 0, -1, -1, NULL, NULL }
 };
 
+static struct regsets_info sparc_regsets_info =
+  {
+    sparc_regsets, /* regsets */
+    0, /* num_regsets */
+    NULL, /* disabled_regsets */
+  };
+
+static struct usrregs_info sparc_usrregs_info =
+  {
+    sparc_num_regs,
+    /* No regmap needs to be provided since this impl. doesn't use
+       USRREGS.  */
+    NULL
+  };
+
+static struct regs_info regs_info =
+  {
+    NULL, /* regset_bitmap */
+    &sparc_usrregs_info,
+    &sparc_regsets_info
+  };
+
+static const struct regs_info *
+sparc_regs_info (void)
+{
+  return &regs_info;
+}
+
 struct linux_target_ops the_low_target = {
-  init_registers_sparc64,
-  sparc_num_regs,
-  /* No regmap needs to be provided since this impl. doesn't use USRREGS.  */
-  NULL,
+  sparc_arch_setup,
+  sparc_regs_info,
   sparc_cannot_fetch_register,
   sparc_cannot_store_register,
+  NULL, /* fetch_register */
   sparc_get_pc,
   /* No sparc_set_pc is needed.  */
   NULL,
@@ -295,3 +331,12 @@ struct linux_target_ops the_low_target = {
   NULL, NULL, NULL, NULL,
   NULL, NULL
 };
+
+void
+initialize_low_arch (void)
+{
+  /* Initialize the Linux target descriptions.  */
+  init_registers_sparc64 ();
+
+  initialize_regsets_info (&sparc_regsets_info);
+}

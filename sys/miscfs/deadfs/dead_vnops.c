@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.51 2011/06/12 03:35:57 rmind Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.51.12.1 2014/08/20 00:04:30 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.51 2011/06/12 03:35:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.51.12.1 2014/08/20 00:04:30 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.51 2011/06/12 03:35:57 rmind Exp $"
 /*
  * Prototypes for dead operations on vnodes.
  */
+#define dead_bwrite	genfs_nullop
+int	dead_lookup(void *);
 int	dead_open(void *);
 #define dead_close	genfs_nullop
 int	dead_read(void *);
@@ -55,36 +57,45 @@ int	dead_write(void *);
 #define dead_fcntl	genfs_nullop
 int	dead_ioctl(void *);
 int	dead_poll(void *);
+int	dead_remove(void *);
+int	dead_link(void *);
+int	dead_rename(void *);
+int	dead_rmdir(void *);
 #define dead_fsync	genfs_nullop
 #define dead_seek	genfs_nullop
-#define dead_inactive	genfs_nullop
+int	dead_inactive(void *);
 #define dead_reclaim	genfs_nullop
-int	dead_lock(void *);
-#define dead_unlock	genfs_unlock
+#define dead_lock	genfs_deadlock
+#define dead_unlock	genfs_deadunlock
 int	dead_bmap(void *);
 int	dead_strategy(void *);
 int	dead_print(void *);
-#define dead_islocked	genfs_islocked
-#define dead_bwrite	genfs_nullop
+#define dead_islocked	genfs_deadislocked
 #define dead_revoke	genfs_nullop
 int	dead_getpages(void *);
-#define dead_putpages	genfs_null_putpages
+int	dead_putpages(void *);
 
-int	chkvnlock(struct vnode *);
 int	dead_default_error(void *);
 
 int (**dead_vnodeop_p)(void *);
 
 const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_default_desc, dead_default_error },
+	{ &vop_bwrite_desc, dead_bwrite },		/* bwrite */
+	{ &vop_lookup_desc, dead_lookup },		/* lookup */
 	{ &vop_open_desc, dead_open },			/* open */
 	{ &vop_close_desc, dead_close },		/* close */
 	{ &vop_read_desc, dead_read },			/* read */
 	{ &vop_write_desc, dead_write },		/* write */
+	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
+	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_fcntl_desc, dead_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, dead_ioctl },		/* ioctl */
 	{ &vop_poll_desc, dead_poll },			/* poll */
-	{ &vop_revoke_desc, dead_revoke },		/* revoke */
+	{ &vop_remove_desc, dead_remove },		/* remove */
+	{ &vop_link_desc, dead_link },			/* link */
+	{ &vop_rename_desc, dead_rename },		/* rename */
+	{ &vop_rmdir_desc, dead_rmdir },		/* rmdir */
 	{ &vop_fsync_desc, dead_fsync },		/* fsync */
 	{ &vop_seek_desc, dead_seek },			/* seek */
 	{ &vop_inactive_desc, dead_inactive },		/* inactive */
@@ -95,7 +106,7 @@ const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_strategy_desc, dead_strategy },		/* strategy */
 	{ &vop_print_desc, dead_print },		/* print */
 	{ &vop_islocked_desc, dead_islocked },		/* islocked */
-	{ &vop_bwrite_desc, dead_bwrite },		/* bwrite */
+	{ &vop_revoke_desc, dead_revoke },		/* revoke */
 	{ &vop_getpages_desc, dead_getpages },		/* getpages */
 	{ &vop_putpages_desc, dead_putpages },		/* putpages */
 	{ NULL, NULL }
@@ -103,6 +114,7 @@ const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 const struct vnodeopv_desc dead_vnodeop_opv_desc =
 	{ &dead_vnodeop_p, dead_vnodeop_entries };
 
+/* ARGSUSED */
 int
 dead_default_error(void *v)
 {
@@ -110,21 +122,48 @@ dead_default_error(void *v)
 	return EBADF;
 }
 
-/*
- * Open always fails as if device did not exist.
- */
+/* ARGSUSED */
+int
+dead_bmap(void *v)
+{
+	/* struct vop_bmap_args {
+		struct vnode *a_vp;
+		daddr_t  a_bn;
+		struct vnode **a_vpp;
+		daddr_t *a_bnp;
+		int *a_runp;
+	} *ap = v; */
+
+	return (EIO);
+}
+
+int
+dead_lookup(void *v)
+{
+	struct vop_lookup_v2_args /* {
+		struct vnode *a_dvp;
+		struct vnode **a_vpp;
+		struct componentname *a_cnp;
+	} */ *ap = v;
+
+	*(ap->a_vpp) = NULL;
+
+	return ENOENT;
+}
+
 /* ARGSUSED */
 int
 dead_open(void *v)
 {
+	/* struct vop_open_args {
+		struct vnode *a_vp;
+		int a_mode;
+		kauth_cred_t a_cred;
+	} *ap = v; */
 
 	return (ENXIO);
 }
 
-/*
- * Vnode op for read
- */
-/* ARGSUSED */
 int
 dead_read(void *v)
 {
@@ -135,8 +174,6 @@ dead_read(void *v)
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 
-	if (chkvnlock(ap->a_vp))
-		panic("dead_read: lock");
 	/*
 	 * Return EOF for tty devices, EIO for others
 	 */
@@ -145,47 +182,36 @@ dead_read(void *v)
 	return (0);
 }
 
-/*
- * Vnode op for write
- */
 /* ARGSUSED */
 int
 dead_write(void *v)
 {
-	struct vop_write_args /* {
+	/* struct vop_write_args {
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
 		kauth_cred_t a_cred;
-	} */ *ap = v;
+	} *ap = v; */
 
-	if (chkvnlock(ap->a_vp))
-		panic("dead_write: lock");
 	return (EIO);
 }
 
-/*
- * Device ioctl operation.
- */
 /* ARGSUSED */
 int
 dead_ioctl(void *v)
 {
-	struct vop_ioctl_args /* {
+	/* struct vop_ioctl_args {
 		struct vnode *a_vp;
 		u_long a_command;
 		void *a_data;
 		int  a_fflag;
 		kauth_cred_t a_cred;
 		struct lwp *a_l;
-	} */ *ap = v;
+	} *ap = v; */
 
-	if (!chkvnlock(ap->a_vp))
-		return (EBADF);
-	return (VCALL(ap->a_vp, VOFFSET(vop_ioctl), ap));
+	return (EBADF);
 }
 
-/* ARGSUSED */
 int
 dead_poll(void *v)
 {
@@ -201,68 +227,103 @@ dead_poll(void *v)
 	return (ap->a_events);
 }
 
-/*
- * Just call the device strategy routine
- */
+int
+dead_remove(void *v)
+{
+	struct vop_remove_args /* {
+		struct vnode *a_dvp;
+		struct vnode *a_vp;
+		struct componentname *a_cnp;
+	} */ *ap = v;
+
+	vput(ap->a_dvp);
+	vput(ap->a_vp);
+
+	return EIO;
+}
+
+int
+dead_link(void *v)
+{
+	struct vop_link_args /* {
+		struct vnode *a_dvp;
+		struct vnode *a_vp;
+		struct componentname *a_cnp;
+	} */ *ap = v;
+
+	vput(ap->a_dvp);
+
+	return EIO;
+}
+
+int
+dead_rename(void *v)
+{
+	struct vop_rename_args /* {
+		struct vnode *a_fdvp;
+		struct vnode *a_fvp;
+		struct componentname *a_fcnp;
+		struct vnode *a_tdvp;
+		struct vnode *a_tvp;
+		struct componentname *a_tcnp;
+	} */ *ap = v;
+
+	vrele(ap->a_fdvp);
+	vrele(ap->a_fvp);
+	if (ap->a_tvp != NULL && ap->a_tvp != ap->a_tdvp)
+		VOP_UNLOCK(ap->a_tvp);
+	vput(ap->a_tdvp);
+	if (ap->a_tvp != NULL)
+		vrele(ap->a_tvp);
+
+	return EIO;
+}
+
+int
+dead_rmdir(void *v)
+{
+	struct vop_rmdir_args /* {
+		struct vnode *a_dvp;
+		struct vnode *a_vp;
+		struct componentname *a_cnp;
+	} */ *ap = v;
+
+	vput(ap->a_dvp);
+	vput(ap->a_vp);
+
+	return EIO;
+}
+
+int
+dead_inactive(void *v)
+{
+	struct vop_inactive_args /* {
+		struct vnode *a_vp;
+		bool *a_recycle;
+	} */ *ap = v;
+
+	*ap->a_recycle = false;
+	VOP_UNLOCK(ap->a_vp);
+
+	return 0;
+}
+
 int
 dead_strategy(void *v)
 {
-
 	struct vop_strategy_args /* {
 		struct vnode *a_vp;
 		struct buf *a_bp;
 	} */ *ap = v;
 	struct buf *bp;
-	if (ap->a_vp == NULL || !chkvnlock(ap->a_vp)) {
-		bp = ap->a_bp;
-		bp->b_error = EIO;
-		bp->b_resid = bp->b_bcount;
-		biodone(ap->a_bp);
-		return (EIO);
-	}
-	return (VOP_STRATEGY(ap->a_vp, ap->a_bp));
+
+	bp = ap->a_bp;
+	bp->b_error = EIO;
+	bp->b_resid = bp->b_bcount;
+	biodone(ap->a_bp);
+	return (EIO);
 }
 
-/*
- * Wait until the vnode has finished changing state.
- */
-int
-dead_lock(void *v)
-{
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-		struct proc *a_p;
-	} */ *ap = v;
-
-	if (!chkvnlock(ap->a_vp)) {
-		return genfs_lock(v);
-	}
-	return (VCALL(ap->a_vp, VOFFSET(vop_lock), ap));
-}
-
-/*
- * Wait until the vnode has finished changing state.
- */
-int
-dead_bmap(void *v)
-{
-	struct vop_bmap_args /* {
-		struct vnode *a_vp;
-		daddr_t  a_bn;
-		struct vnode **a_vpp;
-		daddr_t *a_bnp;
-		int *a_runp;
-	} */ *ap = v;
-
-	if (!chkvnlock(ap->a_vp))
-		return (EIO);
-	return (VOP_BMAP(ap->a_vp, ap->a_bn, ap->a_vpp, ap->a_bnp, ap->a_runp));
-}
-
-/*
- * Print out the contents of a dead vnode.
- */
 /* ARGSUSED */
 int
 dead_print(void *v)
@@ -291,21 +352,16 @@ dead_getpages(void *v)
 	return (EFAULT);
 }
 
-/*
- * We have to wait during times when the vnode is
- * in a state of change.
- */
 int
-chkvnlock(struct vnode *vp)
+dead_putpages(void *v)
 {
-	int locked = 0;
+        struct vop_putpages_args /* {
+	struct vnode *a_vp;
+		voff_t a_offlo;
+		voff_t a_offhi;
+		int a_flags;
+	} */ *ap = v;
 
-	mutex_enter(vp->v_interlock);
-	while (vp->v_iflag & VI_XLOCK) {
-		vwait(vp, VI_XLOCK);
-		locked = 1;
-	}
-	mutex_exit(vp->v_interlock);
-
-	return (locked);
+	mutex_exit(ap->a_vp->v_interlock);
+	return (EFAULT);
 }

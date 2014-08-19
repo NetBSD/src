@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.26.14.1 2013/06/23 06:20:29 tls Exp $	*/
+/*	$NetBSD: sockin.c,v 1.26.14.2 2014/08/20 00:04:43 tls Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.26.14.1 2013/06/23 06:20:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.26.14.2 2014/08/20 00:04:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.26.14.1 2013/06/23 06:20:29 tls Exp $")
 #include <sys/kthread.h>
 #include <sys/mbuf.h>
 #include <sys/mutex.h>
+#include <sys/once.h>
 #include <sys/poll.h>
 #include <sys/protosw.h>
 #include <sys/queue.h>
@@ -53,22 +54,64 @@ __KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.26.14.1 2013/06/23 06:20:29 tls Exp $")
 #include <rump/rumpuser.h>
 
 #include "rump_private.h"
-#include "rumpcomp_user.h"
+#include "sockin_user.h"
 
 /*
  * An inet communication domain which uses the socket interface.
- * Currently supports only IPv4 UDP, but could easily be extended to
- * support IPv6 and TCP by adding more stuff to the protosw.
+ * Supports IPv4 & IPv6 UDP/TCP.
  */
 
 DOMAIN_DEFINE(sockindomain);
 DOMAIN_DEFINE(sockin6domain);
 
-
+static int	sockin_do_init(void);
 static void	sockin_init(void);
+static int	sockin_attach(struct socket *, int);
+static void	sockin_detach(struct socket *);
+static int	sockin_accept(struct socket *, struct mbuf *);
+static int	sockin_connect2(struct socket *, struct socket *);
+static int	sockin_bind(struct socket *, struct mbuf *, struct lwp *);
+static int	sockin_listen(struct socket *, struct lwp *);
+static int	sockin_connect(struct socket *, struct mbuf *, struct lwp *);
+static int	sockin_disconnect(struct socket *);
+static int	sockin_shutdown(struct socket *);
+static int	sockin_abort(struct socket *);
+static int	sockin_ioctl(struct socket *, u_long, void *, struct ifnet *);
+static int	sockin_stat(struct socket *, struct stat *);
+static int	sockin_peeraddr(struct socket *, struct mbuf *);
+static int	sockin_sockaddr(struct socket *, struct mbuf *);
+static int	sockin_rcvd(struct socket *, int, struct lwp *);
+static int	sockin_recvoob(struct socket *, struct mbuf *, int);
+static int	sockin_send(struct socket *, struct mbuf *, struct mbuf *,
+			    struct mbuf *, struct lwp *);
+static int	sockin_sendoob(struct socket *, struct mbuf *, struct mbuf *);
+static int	sockin_purgeif(struct socket *, struct ifnet *);
 static int	sockin_usrreq(struct socket *, int, struct mbuf *,
 			      struct mbuf *, struct mbuf *, struct lwp *);
 static int	sockin_ctloutput(int op, struct socket *, struct sockopt *);
+
+static const struct pr_usrreqs sockin_usrreqs = {
+	.pr_attach = sockin_attach,
+	.pr_detach = sockin_detach,
+	.pr_accept = sockin_accept,
+	.pr_bind = sockin_bind,
+	.pr_listen = sockin_listen,
+	.pr_connect = sockin_connect,
+	.pr_connect2 = sockin_connect2,
+	.pr_disconnect = sockin_disconnect,
+	.pr_shutdown = sockin_shutdown,
+	.pr_abort = sockin_abort,
+	.pr_ioctl = sockin_ioctl,
+	.pr_stat = sockin_stat,
+	.pr_peeraddr = sockin_peeraddr,
+	.pr_sockaddr = sockin_sockaddr,
+	.pr_rcvd = sockin_rcvd,
+	.pr_recvoob = sockin_recvoob,
+	.pr_send = sockin_send,
+	.pr_sendoob = sockin_sendoob,
+	.pr_purgeif = sockin_purgeif,
+	.pr_generic = sockin_usrreq,
+};
 
 const struct protosw sockinsw[] = {
 {
@@ -76,7 +119,7 @@ const struct protosw sockinsw[] = {
 	.pr_domain = &sockindomain,
 	.pr_protocol = IPPROTO_UDP,
 	.pr_flags = PR_ATOMIC|PR_ADDR,
-	.pr_usrreq = sockin_usrreq,
+	.pr_usrreqs = &sockin_usrreqs,
 	.pr_ctloutput = sockin_ctloutput,
 },
 {
@@ -84,7 +127,7 @@ const struct protosw sockinsw[] = {
 	.pr_domain = &sockindomain,
 	.pr_protocol = IPPROTO_TCP,
 	.pr_flags = PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN|PR_ABRTACPTDIS,
-	.pr_usrreq = sockin_usrreq,
+	.pr_usrreqs = &sockin_usrreqs,
 	.pr_ctloutput = sockin_ctloutput,
 }};
 const struct protosw sockin6sw[] = {
@@ -93,7 +136,7 @@ const struct protosw sockin6sw[] = {
 	.pr_domain = &sockin6domain,
 	.pr_protocol = IPPROTO_UDP,
 	.pr_flags = PR_ATOMIC|PR_ADDR,
-	.pr_usrreq = sockin_usrreq,
+	.pr_usrreqs = &sockin_usrreqs,
 	.pr_ctloutput = sockin_ctloutput,
 },
 {
@@ -101,7 +144,7 @@ const struct protosw sockin6sw[] = {
 	.pr_domain = &sockin6domain,
 	.pr_protocol = IPPROTO_TCP,
 	.pr_flags = PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN|PR_ABRTACPTDIS,
-	.pr_usrreq = sockin_usrreq,
+	.pr_usrreqs = &sockin_usrreqs,
 	.pr_ctloutput = sockin_ctloutput,
 }};
 
@@ -266,7 +309,7 @@ sockin_process(struct socket *so)
 }
 
 static void
-sockin_accept(struct socket *so)
+sockin_waccept(struct socket *so)
 {
 	struct socket *nso;
 	struct sockaddr_in6 sin;
@@ -279,7 +322,7 @@ sockin_accept(struct socket *so)
 		return;
 
 	mutex_enter(softnet_lock);
-	nso = sonewconn(so, SS_ISCONNECTED);
+	nso = sonewconn(so, true);
 	if (nso == NULL)
 		goto errout;
 	if (registersock(nso, news) != 0)
@@ -345,7 +388,7 @@ sockinworker(void *arg)
 						so = su_iter->su_so;
 						mutex_exit(&su_mtx);
 						if(so->so_options&SO_ACCEPTCONN)
-							sockin_accept(so);
+							sockin_waccept(so);
 						else
 							sockin_process(so);
 						mutex_enter(&su_mtx);
@@ -372,8 +415,8 @@ sockinworker(void *arg)
 
 }
 
-static void
-sockin_init(void)
+static int
+sockin_do_init(void)
 {
 	int rv;
 
@@ -387,160 +430,297 @@ sockin_init(void)
 	mutex_init(&su_mtx, MUTEX_DEFAULT, IPL_NONE);
 	strlcpy(sockin_if.if_xname, "sockin0", sizeof(sockin_if.if_xname));
 	bpf_attach(&sockin_if, DLT_NULL, 0);
+	return 0;
+}
+
+static void
+sockin_init(void)
+{
+	static ONCE_DECL(init);
+
+	RUN_ONCE(&init, sockin_do_init);
+}
+
+static int
+sockin_attach(struct socket *so, int proto)
+{
+	const int type = so->so_proto->pr_type;
+	int error, news, family;
+
+	sosetlock(so);
+	if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
+		error = soreserve(so, SOCKIN_SBSIZE, SOCKIN_SBSIZE);
+		if (error)
+			return error;
+	}
+
+	family = so->so_proto->pr_domain->dom_family;
+	KASSERT(family == PF_INET || family == PF_INET6);
+	error = rumpcomp_sockin_socket(family, type, 0, &news);
+	if (error)
+		return error;
+
+	/* For UDP sockets, make sure we can send/recv maximum. */
+	if (type == SOCK_DGRAM) {
+		int sbsize = SOCKIN_SBSIZE;
+		error = rumpcomp_sockin_setsockopt(news,
+		    SOL_SOCKET, SO_SNDBUF,
+		    &sbsize, sizeof(sbsize));
+		sbsize = SOCKIN_SBSIZE;
+		error = rumpcomp_sockin_setsockopt(news,
+		    SOL_SOCKET, SO_RCVBUF,
+		    &sbsize, sizeof(sbsize));
+	}
+
+	if ((error = registersock(so, news)) != 0)
+		rumpuser_close(news);
+
+	return error;
+}
+
+static void
+sockin_detach(struct socket *so)
+{
+	panic("sockin_detach: IMPLEMENT ME\n");
+}
+
+static int
+sockin_accept(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+
+	/* we do all the work in the worker thread */
+	return 0;
+}
+
+static int
+sockin_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+{
+	KASSERT(solocked(so));
+	KASSERT(nam != NULL);
+
+	return rumpcomp_sockin_bind(SO2S(so),
+	    mtod(nam, const struct sockaddr *),
+	    nam->m_len);
+}
+
+static int
+sockin_listen(struct socket *so, struct lwp *l)
+{
+	KASSERT(solocked(so));
+
+	return rumpcomp_sockin_listen(SO2S(so), so->so_qlimit);
+}
+
+static int
+sockin_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+{
+	int error = 0;
+
+	KASSERT(solocked(so));
+	KASSERT(nam != NULL);
+
+	error = rumpcomp_sockin_connect(SO2S(so),
+	    mtod(nam, struct sockaddr *), nam->m_len);
+	if (error == 0)
+		soisconnected(so);
+
+	return error;
+}
+
+static int
+sockin_connect2(struct socket *so, struct socket *so2)
+{
+	KASSERT(solocked(so));
+
+	panic("sockin_connect2: IMPLEMENT ME, connect2 not supported");
+}
+
+static int
+sockin_disconnect(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	panic("sockin_disconnect: IMPLEMENT ME, disconnect not supported");
+}
+
+static int
+sockin_shutdown(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	removesock(so);
+	return 0;
+}
+
+static int
+sockin_abort(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	panic("sockin_abort: IMPLEMENT ME, abort not supported");
+}
+
+static int
+sockin_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
+{
+	return ENOTTY;
+}
+
+static int
+sockin_stat(struct socket *so, struct stat *ub)
+{
+	KASSERT(solocked(so));
+
+	return 0;
+}
+
+static int
+sockin_peeraddr(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+
+	int error = 0;
+	int slen = nam->m_len;
+
+	error = rumpcomp_sockin_getname(SO2S(so),
+	    mtod(nam, struct sockaddr *), &slen, RUMPCOMP_SOCKIN_PEERNAME);
+	if (error == 0)
+		nam->m_len = slen;
+	return error;
+}
+
+static int
+sockin_sockaddr(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+
+	int error = 0;
+	int slen = nam->m_len;
+
+	error = rumpcomp_sockin_getname(SO2S(so),
+	    mtod(nam, struct sockaddr *), &slen, RUMPCOMP_SOCKIN_SOCKNAME);
+	if (error == 0)
+		nam->m_len = slen;
+	return error;
+}
+
+static int
+sockin_rcvd(struct socket *so, int flags, struct lwp *l)
+{
+	KASSERT(solocked(so));
+
+	panic("sockin_rcvd: IMPLEMENT ME, rcvd not supported");
+}
+
+static int
+sockin_recvoob(struct socket *so, struct mbuf *m, int flags)
+{
+	KASSERT(solocked(so));
+
+	panic("sockin_recvoob: IMPLEMENT ME, recvoob not supported");
+}
+
+static int
+sockin_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
+{
+	struct sockaddr *saddr;
+	struct msghdr mhdr;
+	size_t iov_max, i;
+	struct iovec iov_buf[32], *iov;
+	struct mbuf *m2;
+	size_t tot, n;
+	int error = 0;
+	int s;
+
+	bpf_mtap_af(&sockin_if, AF_UNSPEC, m);
+
+	memset(&mhdr, 0, sizeof(mhdr));
+
+	iov_max = 0;
+	for (m2 = m; m2 != NULL; m2 = m2->m_next) {
+		iov_max++;
+	}
+
+	if (iov_max <= __arraycount(iov_buf)) {
+		iov = iov_buf;
+	} else {
+		iov = kmem_alloc(sizeof(struct iovec) * iov_max,
+		    KM_SLEEP);
+	}
+
+	tot = 0;
+	for (i = 0, m2 = m; m2 != NULL; m2 = m2->m_next, i++) {
+		iov[i].iov_base = m2->m_data;
+		iov[i].iov_len = m2->m_len;
+		tot += m2->m_len;
+	}
+	mhdr.msg_iov = iov;
+	mhdr.msg_iovlen = i;
+	s = SO2S(so);
+
+	if (nam != NULL) {
+		saddr = mtod(nam, struct sockaddr *);
+		mhdr.msg_name = saddr;
+		mhdr.msg_namelen = saddr->sa_len;
+	}
+
+	rumpcomp_sockin_sendmsg(s, &mhdr, 0, &n);
+
+	if (iov != iov_buf)
+		kmem_free(iov, sizeof(struct iovec) * iov_max);
+
+	m_freem(m);
+	m_freem(control);
+
+	/* this assumes too many things to list.. buthey, testing */
+	if (!rump_threads)
+		sockin_process(so);
+
+	return error;
+}
+
+static int
+sockin_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
+{
+	KASSERT(solocked(so));
+
+	panic("sockin_sendoob: IMPLEMENT ME, sendoob not supported");
+}
+
+static int
+sockin_purgeif(struct socket *so, struct ifnet *ifp)
+{
+
+	panic("sockin_purgeif: IMPLEMENT ME, purgeif not supported");
 }
 
 static int
 sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct mbuf *control, struct lwp *l)
 {
-	int error = 0;
+	KASSERT(req != PRU_ACCEPT);
+	KASSERT(req != PRU_BIND);
+	KASSERT(req != PRU_LISTEN);
+	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_CONNECT2);
+	KASSERT(req != PRU_DISCONNECT);
+	KASSERT(req != PRU_SHUTDOWN);
+	KASSERT(req != PRU_ABORT);
+	KASSERT(req != PRU_CONTROL);
+	KASSERT(req != PRU_SENSE);
+	KASSERT(req != PRU_PEERADDR);
+	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVD);
+	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SEND);
+	KASSERT(req != PRU_SENDOOB);
+	KASSERT(req != PRU_PURGEIF);
 
-	switch (req) {
-	case PRU_ATTACH:
-	{
-		int news;
-		int sbsize;
-		int family;
+	panic("sockin_usrreq: IMPLEMENT ME, req %d not supported", req);
 
-		sosetlock(so);
-		if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
-			error = soreserve(so, SOCKIN_SBSIZE, SOCKIN_SBSIZE);
-			if (error)
-				break;
-		}
-
-		family = so->so_proto->pr_domain->dom_family;
-		KASSERT(family == PF_INET || family == PF_INET6);
-		error = rumpcomp_sockin_socket(family,
-		    so->so_proto->pr_type, 0, &news);
-		if (error)
-			break;
-
-		/* for UDP sockets, make sure we can send&recv max */
-		if (so->so_proto->pr_type == SOCK_DGRAM) {
-			sbsize = SOCKIN_SBSIZE;
-			error = rumpcomp_sockin_setsockopt(news,
-			    SOL_SOCKET, SO_SNDBUF,
-			    &sbsize, sizeof(sbsize));
-			sbsize = SOCKIN_SBSIZE;
-			error = rumpcomp_sockin_setsockopt(news,
-			    SOL_SOCKET, SO_RCVBUF,
-			    &sbsize, sizeof(sbsize));
-		}
-
-		if ((error = registersock(so, news)) != 0)
-			rumpuser_close(news);
-
-		break;
-	}
-
-	case PRU_ACCEPT:
-		/* we do all the work in the worker thread */
-		break;
-
-	case PRU_BIND:
-		error = rumpcomp_sockin_bind(SO2S(so),
-		    mtod(nam, const struct sockaddr *),
-		    nam->m_len);
-		break;
-
-	case PRU_CONNECT:
-		error = rumpcomp_sockin_connect(SO2S(so),
-		    mtod(nam, struct sockaddr *), nam->m_len);
-		if (error == 0)
-			soisconnected(so);
-		break;
-
-	case PRU_LISTEN:
-		error = rumpcomp_sockin_listen(SO2S(so), so->so_qlimit);
-		break;
-
-	case PRU_SEND:
-	{
-		struct sockaddr *saddr;
-		struct msghdr mhdr;
-		size_t iov_max, i;
-		struct iovec iov_buf[32], *iov;
-		struct mbuf *m2;
-		size_t tot, n;
-		int s;
-
-		bpf_mtap_af(&sockin_if, AF_UNSPEC, m);
-
-		memset(&mhdr, 0, sizeof(mhdr));
-
-		iov_max = 0;
-		for (m2 = m; m2 != NULL; m2 = m2->m_next) {
-			iov_max++;
-		}
-
-		if (iov_max <= __arraycount(iov_buf)) {
-			iov = iov_buf;
-		} else {
-			iov = kmem_alloc(sizeof(struct iovec) * iov_max,
-			    KM_SLEEP);
-		}
-
-		tot = 0;
-		for (i = 0, m2 = m; m2 != NULL; m2 = m2->m_next, i++) {
-			iov[i].iov_base = m2->m_data;
-			iov[i].iov_len = m2->m_len;
-			tot += m2->m_len;
-		}
-		mhdr.msg_iov = iov;
-		mhdr.msg_iovlen = i;
-		s = SO2S(so);
-
-		if (nam != NULL) {
-			saddr = mtod(nam, struct sockaddr *);
-			mhdr.msg_name = saddr;
-			mhdr.msg_namelen = saddr->sa_len;
-		}
-
-		rumpcomp_sockin_sendmsg(s, &mhdr, 0, &n);
-
-		if (iov != iov_buf)
-			kmem_free(iov, sizeof(struct iovec) * iov_max);
-
-		m_freem(m);
-		m_freem(control);
-
-		/* this assumes too many things to list.. buthey, testing */
-		if (!rump_threads)
-			sockin_process(so);
-	}
-		break;
-
-	case PRU_SHUTDOWN:
-		removesock(so);
-		break;
-
-	case PRU_SOCKADDR:
-	case PRU_PEERADDR:
-	{
-		int slen = nam->m_len;
-		enum rumpcomp_sockin_getnametype which;
-
-		if (req == PRU_SOCKADDR)
-			which = RUMPCOMP_SOCKIN_SOCKNAME;
-		else
-			which = RUMPCOMP_SOCKIN_PEERNAME;
-		error = rumpcomp_sockin_getname(SO2S(so),
-		    mtod(nam, struct sockaddr *), &slen, which);
-		if (error == 0)
-			nam->m_len = slen;
-		break;
-	}
-
-	case PRU_CONTROL:
-		error = ENOTTY;
-		break;
-
-	default:
-		panic("sockin_usrreq: IMPLEMENT ME, req %d not supported", req);
-	}
-
-	return error;
+	return 0;
 }
 
 static int
@@ -550,3 +730,14 @@ sockin_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 	return rumpcomp_sockin_setsockopt(SO2S(so), sopt->sopt_level,
 	    sopt->sopt_name, sopt->sopt_data, sopt->sopt_size);
 }
+
+int sockin_unavailable(void);
+int
+sockin_unavailable(void)
+{
+
+        panic("interface not available in with sockin");
+}
+__strong_alias(rtrequest,sockin_unavailable);
+__strong_alias(ifunit,sockin_unavailable);
+__strong_alias(ifreq_setaddr,sockin_unavailable);

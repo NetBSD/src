@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_sa1.S,v 1.11.22.1 2012/11/20 03:01:02 tls Exp $	*/
+/*	$NetBSD: cpufunc_asm_sa1.S,v 1.11.22.2 2014/08/20 00:02:44 tls Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,8 +35,9 @@
  * SA-1 assembly functions for CPU / MMU / TLB specific operations
  */
  
-#include <machine/cpu.h>
-#include <machine/asm.h>
+#include "assym.h"
+#include <arm/asm.h>
+#include <arm/locore.h>
 
 .Lblock_userspace_access:
 	.word	_C_LABEL(block_userspace_access)
@@ -49,7 +50,7 @@
  */
 ENTRY(sa1_setttb)
 #ifdef CACHE_CLEAN_BLOCK_INTR
-	mrs	r3, cpsr_all
+	mrs	r3, cpsr
 	orr	r2, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all, r2
 #else
@@ -85,6 +86,7 @@ ENTRY(sa1_setttb)
 	str	r2, [r3]
 #endif
 	RET
+END(sa1_setttb)
 
 /*
  * TLB functions
@@ -92,7 +94,13 @@ ENTRY(sa1_setttb)
 ENTRY(sa1_tlb_flushID_SE)
 	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
 	mcr	p15, 0, r0, c8, c5, 0	/* flush I tlb */
+#if PAGE_SIZE == 2 * L2_S_SIZE
+	add	r0, r0, #L2_S_SIZE
+	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
+	mcr	p15, 0, r0, c8, c5, 0	/* flush I tlb */
+#endif
 	mov	pc, lr
+END(sa1_tlb_flushID_SE)
 
 /*
  * Cache functions
@@ -100,22 +108,27 @@ ENTRY(sa1_tlb_flushID_SE)
 ENTRY(sa1_cache_flushID)
 	mcr	p15, 0, r0, c7, c7, 0	/* flush I+D cache */
 	mov	pc, lr
+END(sa1_cache_flushID)
 
 ENTRY(sa1_cache_flushI)
 	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache */
 	mov	pc, lr
+END(sa1_cache_flushI)
 
 ENTRY(sa1_cache_flushD)
 	mcr	p15, 0, r0, c7, c6, 0	/* flush D cache */
 	mov	pc, lr
+END(sa1_cache_flushD)
 
 ENTRY(sa1_cache_flushD_SE)
 	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
 	mov	pc, lr
+END(sa1_cache_flushD_SE)
 
 ENTRY(sa1_cache_cleanD_E)
 	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
 	mov	pc, lr
+END(sa1_cache_cleanD_E)
 
 /*
  * Information for the SA-1 cache clean/purge functions:
@@ -146,7 +159,7 @@ _C_LABEL(sa1_cache_clean_size):
 
 #ifdef CACHE_CLEAN_BLOCK_INTR
 #define	SA1_CACHE_CLEAN_BLOCK						\
-	mrs	r3, cpsr_all					;	\
+	mrs	r3, cpsr					;	\
 	orr	r0, r3, #(I32_bit | F32_bit)			;	\
 	msr	cpsr_all, r0
 
@@ -196,6 +209,7 @@ ENTRY(sa1_cache_cleanD)
 
 	SA1_CACHE_CLEAN_EPILOGUE
 	mov	pc, lr
+END(sa1_cache_cleanD)
 
 ENTRY(sa1_cache_purgeID_E)
 	mcr	p15, 0, r0, c7, c10, 1	/* clean dcache entry */
@@ -203,12 +217,14 @@ ENTRY(sa1_cache_purgeID_E)
 	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache */
 	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
 	mov	pc, lr
+END(sa1_cache_purgeID_E)
 
 ENTRY(sa1_cache_purgeD_E)
 	mcr	p15, 0, r0, c7, c10, 1	/* clean dcache entry */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mcr	p15, 0, r0, c7, c6, 1	/* flush D cache single entry */
 	mov	pc, lr
+END(sa1_cache_purgeD_E)
 
 /*
  * Soft functions
@@ -231,6 +247,8 @@ ENTRY(sa1_cache_cleanD_rng)
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
+END(sa1_cache_cleanD_rng)
+END(sa1_cache_cleanID_rng)
 
 ENTRY(sa1_cache_purgeID_rng)
 	cmp	r1, #0x4000
@@ -249,6 +267,7 @@ ENTRY(sa1_cache_purgeID_rng)
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache */
 	mov	pc, lr
+END(sa1_cache_purgeID_rng)
 
 ENTRY(sa1_cache_purgeD_rng)
 	cmp	r1, #0x4000
@@ -266,6 +285,7 @@ ENTRY(sa1_cache_purgeD_rng)
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
+END(sa1_cache_purgeD_rng)
 
 ENTRY(sa1_cache_syncI_rng)
 	cmp	r1, #0x4000
@@ -284,6 +304,7 @@ ENTRY(sa1_cache_syncI_rng)
 	mcr	p15, 0, r0, c7, c5, 0	/* flush I cache */
 
 	mov	pc, lr
+END(sa1_cache_syncI_rng)
 
 /*
  * Context switch.
@@ -310,4 +331,5 @@ ENTRY(sa110_context_switch)
 	mov	r0, r0
 	mov	r0, r0
 	mov	pc, lr
+END(sa110_context_switch)
 #endif

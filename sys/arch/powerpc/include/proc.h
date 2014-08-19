@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.12 2011/06/05 16:52:25 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.12.12.1 2014/08/20 00:03:19 tls Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -42,8 +42,6 @@ struct mdlwp {
 	volatile int md_astpending;
 	struct trapframe *md_utf;		/* user trampframe */
 };
-#define MDLWP_USEDFPU	__BIT(PCU_FPU)	/* this thread has used the FPU */
-#define	MDLWP_USEDVEC	__BIT(PCU_VEC)	/* this thread has used the VEC */
 
 struct trapframe;
 

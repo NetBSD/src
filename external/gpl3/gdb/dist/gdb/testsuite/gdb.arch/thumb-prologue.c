@@ -1,6 +1,6 @@
 /* Unwinder test program.
 
-   Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2006-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,11 +18,15 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 void tpcs_frame (void);
+void switch_stack_to_same (void);
+void switch_stack_to_other (void);
 
 int
 main (void)
 {
   tpcs_frame ();
+  switch_stack_to_same ();
+  switch_stack_to_other ();
   return 0;
 }
 
@@ -104,3 +108,33 @@ asm(".text\n"
     "	mov	lr, r3\n"
     "	bx	lr\n"
 );
+
+asm(".text\n"
+    "	.align 2\n"
+    "	.thumb_func\n"
+    "	.code 16\n"
+    "write_sp:\n"
+    "	mov	sp, r0\n"
+    "	bx	lr\n"
+
+    "	.align 2\n"
+    "	.thumb_func\n"
+    "	.code 16\n"
+    "switch_stack_to_same:\n"
+    "	push	{lr}\n"
+    "	mov	r0, sp\n"
+    "	bl	write_sp\n"
+    "	pop	{r1}\n"
+    "	bx	r1\n"
+
+    "	.align 2\n"
+    "	.thumb_func\n"
+    "	.code 16\n"
+    "switch_stack_to_other:\n"
+    "	push	{lr}\n"
+    "	mov	r7, sp\n"
+    "	mov	r0, #128\n"
+    "	bl	write_sp\n"
+    "	mov	sp, r7\n"
+    "	pop	{r1}\n"
+    "	bx	r1\n");

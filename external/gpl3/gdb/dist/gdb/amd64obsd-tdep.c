@@ -1,7 +1,6 @@
 /* Target-dependent code for OpenBSD/amd64.
 
-   Copyright (C) 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,7 +30,7 @@
 #include "trad-frame.h"
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 
 #include "amd64-tdep.h"
 #include "i387-tdep.h"
@@ -88,15 +87,21 @@ amd64obsd_sigtramp_p (struct frame_info *this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
   CORE_ADDR start_pc = (pc & ~(amd64obsd_page_size - 1));
-  const gdb_byte sigreturn[] =
+  const gdb_byte osigreturn[] =
   {
     0x48, 0xc7, 0xc0,
     0x67, 0x00, 0x00, 0x00,	/* movq $SYS_sigreturn, %rax */
     0xcd, 0x80			/* int $0x80 */
   };
+  const gdb_byte sigreturn[] =
+  {
+    0x48, 0xc7, 0xc0,
+    0x67, 0x00, 0x00, 0x00,	/* movq $SYS_sigreturn, %rax */
+    0x0f, 0x05			/* syscall */
+  };
   size_t buflen = (sizeof sigreturn) + 1;
   gdb_byte *buf;
-  char *name;
+  const char *name;
 
   /* If the function has a valid symbol name, it isn't a
      trampoline.  */
@@ -116,9 +121,12 @@ amd64obsd_sigtramp_p (struct frame_info *this_frame)
 
   /* Check for sigreturn(2).  Depending on how the assembler encoded
      the `movq %rsp, %rdi' instruction, the code starts at offset 6 or
-     7.  */
+     7.  OpenBSD 5.0 and later use the `syscall' instruction.  Older
+     versions use `int $0x80'.  Check for both.  */
   if (memcmp (buf, sigreturn, sizeof sigreturn)
-      && memcpy (buf + 1, sigreturn, sizeof sigreturn))
+      && memcmp (buf + 1, sigreturn, sizeof sigreturn)
+      && memcmp (buf, osigreturn, sizeof osigreturn)
+      && memcmp (buf + 1, osigreturn, sizeof osigreturn))
     return 0;
 
   return 1;
@@ -352,7 +360,7 @@ amd64obsd_trapframe_cache (struct frame_info *this_frame, void **this_cache)
   struct trad_frame_cache *cache;
   CORE_ADDR func, sp, addr;
   ULONGEST cs;
-  char *name;
+  const char *name;
   int i;
 
   if (*this_cache)
@@ -417,7 +425,7 @@ amd64obsd_trapframe_sniffer (const struct frame_unwind *self,
 			     void **this_prologue_cache)
 {
   ULONGEST cs;
-  char *name;
+  const char *name;
 
   /* Check Current Privilege Level and bail out if we're not executing
      in kernel space.  */
@@ -457,9 +465,6 @@ amd64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->gregset_num_regs = ARRAY_SIZE (amd64obsd_r_reg_offset);
   tdep->sizeof_gregset = 24 * 8;
 
-  set_gdbarch_regset_from_core_section (gdbarch,
-					amd64obsd_regset_from_core_section);
-
   tdep->jb_pc_offset = 7 * 8;
 
   tdep->sigtramp_p = amd64obsd_sigtramp_p;
@@ -478,6 +483,17 @@ amd64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Unwind kernel trap frames correctly.  */
   frame_unwind_prepend_unwinder (gdbarch, &amd64obsd_trapframe_unwind);
 }
+
+/* Traditional (a.out) NetBSD-style core dumps.  */
+
+static void
+amd64obsd_core_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
+{
+  amd64obsd_init_abi (info, gdbarch);
+
+  set_gdbarch_regset_from_core_section
+    (gdbarch, amd64obsd_regset_from_core_section);
+}
 
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */
@@ -494,5 +510,5 @@ _initialize_amd64obsd_tdep (void)
 
   /* OpenBSD uses traditional (a.out) NetBSD-style core dumps.  */
   gdbarch_register_osabi (bfd_arch_i386, bfd_mach_x86_64,
-			  GDB_OSABI_NETBSD_AOUT, amd64obsd_init_abi);
+			  GDB_OSABI_NETBSD_AOUT, amd64obsd_core_init_abi);
 }

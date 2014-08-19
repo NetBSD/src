@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.20 2012/03/21 19:59:18 he Exp $	*/
+/*	$NetBSD: profile.h,v 1.20.2.1 2014/08/20 00:03:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
 #define	MCOUNT_ENTRY	"mcount"
 #endif
 
-#ifndef	__mc68010__
+#if !defined(__mc68010__) && !defined(__mcoldfire__)
 #define	MCOUNT \
 extern void mcount(void) __asm(MCOUNT_ENTRY) \
 	__attribute__((__no_instrument_function__)); \

@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.30.8.1 2013/06/23 06:28:49 tls Exp $	*/
+/*	$NetBSD: wchar.h,v 1.30.8.2 2014/08/20 00:02:05 tls Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -145,7 +145,8 @@ long int wcstol(const wchar_t * __restrict,
 double wcstod(const wchar_t * __restrict, wchar_t ** __restrict);
 
 #if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) > 199901L || \
-    defined(_NETBSD_SOURCE)
+    defined(_NETBSD_SOURCE) || \
+	(_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600
 float wcstof(const wchar_t * __restrict, wchar_t ** __restrict);
 long double wcstold(const wchar_t * __restrict, wchar_t ** __restrict);
 
@@ -181,7 +182,8 @@ int vwprintf(const wchar_t * __restrict, __va_list);
 int wprintf(const wchar_t * __restrict, ...);
 int wscanf(const wchar_t * __restrict, ...);
 #if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) > 199901L || \
-    defined(_NETBSD_SOURCE)
+    defined(_NETBSD_SOURCE) || \
+	(_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600
 int vfwscanf(FILE * __restrict, const wchar_t * __restrict, __va_list);
 int vswscanf(const wchar_t * __restrict, const wchar_t * __restrict,
     __va_list);
@@ -221,6 +223,9 @@ int	wcscoll_l(const wchar_t *, const wchar_t *, locale_t);
 size_t	wcsxfrm_l(wchar_t *, const wchar_t *, size_t, locale_t);
 int wcsncasecmp_l(const wchar_t *, const wchar_t *, size_t, locale_t);
 int wcscasecmp_l(const wchar_t *, const wchar_t *, locale_t);
+
+size_t	wcsftime_l(wchar_t * __restrict, size_t, const wchar_t * __restrict,
+	    const struct tm * __restrict, locale_t);
 
 float wcstof_l(const wchar_t * __restrict, wchar_t ** __restrict, locale_t);
 double wcstod_l(const wchar_t * __restrict, wchar_t ** __restrict, locale_t);

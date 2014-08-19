@@ -1,4 +1,4 @@
-# Copyright 2008, 2011 Free Software Foundation, Inc.
+# Copyright 2008-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,8 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-set testfile koenig
-set srcfile ${testfile}.cc
+standard_testfile .cc
+
 if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} {debug c++}] } {
      return -1
 }
@@ -32,6 +32,9 @@ gdb_test "p first(c)" "= 11"
 # Change the number of parameters and position of
 # the qualifying parameter
 gdb_test "p second(0,0,c,0,0)" "= 33"
+
+# Test the name "entry" being used for `variablename@entry' entry values.
+gdb_test "p entry (c)" " = 44"
 
 # Test that koenig lookup finds correct function
 # even if it is overloaded

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.15 2008/10/26 00:08:15 mrg Exp $	*/
+/*	$NetBSD: frame.h,v 1.15.38.1 2014/08/20 00:02:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #ifdef __x86_64__
 
 #include <sys/signal.h>
-#include <machine/fpu.h>
+#include <sys/ucontext.h>
 #include <machine/frame_regs.h>
 
 /*
@@ -119,6 +119,7 @@ struct sigframe_siginfo {
 };
 
 #ifdef _KERNEL
+struct lwp;
 void buildcontext(struct lwp *, void *, void *);
 #endif
 

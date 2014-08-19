@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcpuset.c,v 1.7.2.1 2012/11/20 03:02:43 tls Exp $	*/
+/*	$NetBSD: subr_kcpuset.c,v 1.7.2.2 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.7.2.1 2012/11/20 03:02:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.7.2.2 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -72,6 +72,7 @@ typedef struct kcpuset_impl {
 
 #define	KC_BITS_OFF		(offsetof(struct kcpuset_impl, kc_field))
 #define	KC_GETSTRUCT(b)		((kcpuset_impl_t *)((char *)(b) - KC_BITS_OFF))
+#define	KC_GETCSTRUCT(b)	((const kcpuset_impl_t *)((const char *)(b) - KC_BITS_OFF))
 
 /* Sizes of a single bitset. */
 #define	KC_SHIFT		5
@@ -218,6 +219,13 @@ kcpuset_create(kcpuset_t **retkcp, bool zero)
 }
 
 void
+kcpuset_clone(kcpuset_t **retkcp, const kcpuset_t *kcp)
+{
+	kcpuset_create(retkcp, false);
+	memcpy(*retkcp, kcp, kc_bitsize);
+}
+
+void
 kcpuset_destroy(kcpuset_t *kcp)
 {
 	kcpuset_impl_t *kc;
@@ -274,7 +282,7 @@ kcpuset_unuse(kcpuset_t *kcp, kcpuset_t **lst)
 int
 kcpuset_copyin(const cpuset_t *ucp, kcpuset_t *kcp, size_t len)
 {
-	kcpuset_impl_t *kc __unused = KC_GETSTRUCT(kcp);
+	kcpuset_impl_t *kc __diagused = KC_GETSTRUCT(kcp);
 
 	KASSERT(kc_initialised);
 	KASSERT(kc->kc_refcnt > 0);
@@ -289,7 +297,7 @@ kcpuset_copyin(const cpuset_t *ucp, kcpuset_t *kcp, size_t len)
 int
 kcpuset_copyout(kcpuset_t *kcp, cpuset_t *ucp, size_t len)
 {
-	kcpuset_impl_t *kc __unused = KC_GETSTRUCT(kcp);
+	kcpuset_impl_t *kc __diagused = KC_GETSTRUCT(kcp);
 
 	KASSERT(kc_initialised);
 	KASSERT(kc->kc_refcnt > 0);
@@ -333,7 +341,7 @@ kcpuset_fill(kcpuset_t *kcp)
 }
 
 void
-kcpuset_copy(kcpuset_t *dkcp, kcpuset_t *skcp)
+kcpuset_copy(kcpuset_t *dkcp, const kcpuset_t *skcp)
 {
 
 	KASSERT(!kc_initialised || KC_GETSTRUCT(dkcp)->kc_refcnt > 0);
@@ -357,27 +365,27 @@ kcpuset_clear(kcpuset_t *kcp, cpuid_t i)
 {
 	const size_t j = i >> KC_SHIFT;
 
-	KASSERT(!kc_initialised || KC_GETSTRUCT(kcp)->kc_next == NULL);
+	KASSERT(!kc_initialised || KC_GETCSTRUCT(kcp)->kc_next == NULL);
 	KASSERT(j < kc_nfields);
 
 	kcp->bits[j] &= ~(1 << (i & KC_MASK));
 }
 
 bool
-kcpuset_isset(kcpuset_t *kcp, cpuid_t i)
+kcpuset_isset(const kcpuset_t *kcp, cpuid_t i)
 {
 	const size_t j = i >> KC_SHIFT;
 
 	KASSERT(kcp != NULL);
-	KASSERT(!kc_initialised || KC_GETSTRUCT(kcp)->kc_refcnt > 0);
-	KASSERT(!kc_initialised || KC_GETSTRUCT(kcp)->kc_next == NULL);
+	KASSERT(!kc_initialised || KC_GETCSTRUCT(kcp)->kc_refcnt > 0);
+	KASSERT(!kc_initialised || KC_GETCSTRUCT(kcp)->kc_next == NULL);
 	KASSERT(j < kc_nfields);
 
 	return ((1 << (i & KC_MASK)) & kcp->bits[j]) != 0;
 }
 
 bool
-kcpuset_isotherset(kcpuset_t *kcp, cpuid_t i)
+kcpuset_isotherset(const kcpuset_t *kcp, cpuid_t i)
 {
 	const size_t j2 = i >> KC_SHIFT;
 	const uint32_t mask = ~(1 << (i & KC_MASK));
@@ -392,7 +400,7 @@ kcpuset_isotherset(kcpuset_t *kcp, cpuid_t i)
 }
 
 bool
-kcpuset_iszero(kcpuset_t *kcp)
+kcpuset_iszero(const kcpuset_t *kcp)
 {
 
 	for (size_t j = 0; j < kc_nfields; j++) {
@@ -410,8 +418,42 @@ kcpuset_match(const kcpuset_t *kcp1, const kcpuset_t *kcp2)
 	return memcmp(kcp1, kcp2, kc_bitsize) == 0;
 }
 
+bool
+kcpuset_intersecting_p(const kcpuset_t *kcp1, const kcpuset_t *kcp2)
+{
+
+	for (size_t j = 0; j < kc_nfields; j++) {
+		if (kcp1->bits[j] & kcp2->bits[j])
+			return true;
+	}
+	return false;
+}
+
+cpuid_t
+kcpuset_ffs(const kcpuset_t *kcp)
+{
+
+	for (size_t j = 0; j < kc_nfields; j++) {
+		if (kcp->bits[j])
+			return 32 * j + ffs(kcp->bits[j]);
+	}
+	return 0;
+}
+
+cpuid_t
+kcpuset_ffs_intersecting(const kcpuset_t *kcp1, const kcpuset_t *kcp2)
+{
+
+	for (size_t j = 0; j < kc_nfields; j++) {
+		uint32_t bits = kcp1->bits[j] & kcp2->bits[j];
+		if (bits)
+			return 32 * j + ffs(bits);
+	}
+	return 0;
+}
+
 void
-kcpuset_merge(kcpuset_t *kcp1, kcpuset_t *kcp2)
+kcpuset_merge(kcpuset_t *kcp1, const kcpuset_t *kcp2)
 {
 
 	for (size_t j = 0; j < kc_nfields; j++) {
@@ -420,7 +462,7 @@ kcpuset_merge(kcpuset_t *kcp1, kcpuset_t *kcp2)
 }
 
 void
-kcpuset_intersect(kcpuset_t *kcp1, kcpuset_t *kcp2)
+kcpuset_intersect(kcpuset_t *kcp1, const kcpuset_t *kcp2)
 {
 
 	for (size_t j = 0; j < kc_nfields; j++) {
@@ -428,8 +470,17 @@ kcpuset_intersect(kcpuset_t *kcp1, kcpuset_t *kcp2)
 	}
 }
 
+void
+kcpuset_remove(kcpuset_t *kcp1, const kcpuset_t *kcp2)
+{
+
+	for (size_t j = 0; j < kc_nfields; j++) {
+		kcp1->bits[j] &= ~kcp2->bits[j];
+	}
+}
+
 int
-kcpuset_countset(kcpuset_t *kcp)
+kcpuset_countset(const kcpuset_t *kcp)
 {
 	int count = 0;
 
@@ -459,4 +510,34 @@ kcpuset_atomic_clear(kcpuset_t *kcp, cpuid_t i)
 
 	KASSERT(j < kc_nfields);
 	atomic_and_32(&kcp->bits[j], ~(1 << (i & KC_MASK)));
+}
+
+void
+kcpuset_atomicly_intersect(kcpuset_t *kcp1, const kcpuset_t *kcp2)
+{
+
+	for (size_t j = 0; j < kc_nfields; j++) {
+		if (kcp2->bits[j])
+			atomic_and_32(&kcp1->bits[j], kcp2->bits[j]);
+	}
+}
+
+void
+kcpuset_atomicly_merge(kcpuset_t *kcp1, const kcpuset_t *kcp2)
+{
+
+	for (size_t j = 0; j < kc_nfields; j++) {
+		if (kcp2->bits[j])
+			atomic_or_32(&kcp1->bits[j], kcp2->bits[j]);
+	}
+}
+
+void
+kcpuset_atomicly_remove(kcpuset_t *kcp1, const kcpuset_t *kcp2)
+{
+
+	for (size_t j = 0; j < kc_nfields; j++) {
+		if (kcp2->bits[j])
+			atomic_and_32(&kcp1->bits[j], ~kcp2->bits[j]);
+	}
 }

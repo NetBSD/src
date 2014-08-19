@@ -1,4 +1,4 @@
-/* $NetBSD: pckbport.c,v 1.14.12.1 2013/06/23 06:20:21 tls Exp $ */
+/* $NetBSD: pckbport.c,v 1.14.12.2 2014/08/20 00:03:49 tls Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.14.12.1 2013/06/23 06:20:21 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.14.12.2 2014/08/20 00:03:49 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,6 +396,7 @@ pckbport_start(struct pckbport_tag *t, pckbport_slot_t slot)
 	struct pckbport_slotdata *q = t->t_slotdata[slot];
 	struct pckbport_devcmd *cmd = TAILQ_FIRST(&q->cmdqueue);
 
+	KASSERT(cmd != NULL);
 	if (q->polling) {
 		do {
 			pckbport_poll_cmd1(t, slot, cmd);
@@ -432,10 +433,7 @@ pckbport_cmdresponse(struct pckbport_tag *t, pckbport_slot_t slot, u_char data)
 	struct pckbport_slotdata *q = t->t_slotdata[slot];
 	struct pckbport_devcmd *cmd = TAILQ_FIRST(&q->cmdqueue);
 
-#ifdef DIAGNOSTIC
-	if (!cmd)
-		panic("pckbport_cmdresponse: no active command");
-#endif
+	KASSERT(cmd != NULL);
 	if (cmd->cmdidx < cmd->cmdlen) {
 		if (data != KBR_ACK && data != KBR_RESEND)
 			return 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.24.6.2 2013/06/23 06:28:51 tls Exp $	 */
+/* $NetBSD: pass6.c,v 1.24.6.3 2014/08/20 00:02:25 tls Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -214,12 +214,10 @@ remove_ino(struct uvnode *vp, ino_t ino)
 	struct ubuf *bp, *sbp, *cbp;
 	struct inodesc idesc;
 	ulfs_daddr_t daddr;
-	int obfree;
 
 	if (debug)
 		pwarn("remove ino %d\n", (int)ino);
 
-	obfree = fs->lfs_bfree;
 	LFS_IENTRY(ifp, fs, ino, bp);
 	daddr = ifp->if_daddr;
 	if (daddr > 0) {
@@ -543,7 +541,7 @@ alloc_inode(ino_t thisino, ulfs_daddr_t daddr)
 void
 pass6(void)
 {
-	ulfs_daddr_t daddr, ibdaddr, odaddr, lastgood, nextseg, *idaddrp;
+	ulfs_daddr_t daddr, ibdaddr, odaddr, lastgood, *idaddrp;
 	struct uvnode *vp, *devvp;
 	CLEANERINFO *cip;
 	SEGUSE *sup;
@@ -588,7 +586,6 @@ pass6(void)
 	ibbuf = emalloc(fs->lfs_ibsize);
 	nnewfiles = ndelfiles = nmvfiles = nnewblocks = 0;
 	daddr = fs->lfs_offset;
-	nextseg = fs->lfs_nextseg;
 	hassuper = 0;
 	lastserial = 0;
 	while (daddr != lastgood) {
@@ -628,7 +625,6 @@ pass6(void)
 		fs->lfs_bfree -= lfs_btofsb(fs, fs->lfs_sumsize);
 		fs->lfs_dmeta += lfs_btofsb(fs, fs->lfs_sumsize);
 		sbdirty();
-		nextseg = sp->ss_next;
 		if (lfs_sntod(fs, lfs_dtosn(fs, daddr)) == daddr +
 		    hassuper * lfs_btofsb(fs, LFS_SBPAD) &&
 		    lfs_dtosn(fs, daddr) != lfs_dtosn(fs, fs->lfs_offset)) {

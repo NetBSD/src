@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile,v 1.10 2009/04/14 22:15:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.10.12.1 2014/08/20 00:04:59 tls Exp $
 
 PROG=	ipcs
-DPADD+=	${LIBKVM}
-LDADD+=	-lkvm
 
 .include <bsd.prog.mk>

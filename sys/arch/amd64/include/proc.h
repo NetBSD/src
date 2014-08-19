@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.15 2012/07/15 15:17:56 dsl Exp $	*/
+/*	$NetBSD: proc.h,v 1.15.2.1 2014/08/20 00:02:42 tls Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -53,7 +53,6 @@ struct mdlwp {
 	volatile int md_astpending;
 };
 
-#define	MDL_USEDFPU	0x0001	/* has used the FPU */
 #define	MDL_COMPAT32	0x0008	/* i386, always return via iret */
 #define	MDL_IRET	0x0010	/* force return via iret, not sysret */
 
@@ -65,11 +64,6 @@ struct mdproc {
 
 /* md_flags */
 #define MDP_USEDMTRR	0x0008	/* has set volatile MTRRs */
-
-#define	UAREA_PCB_OFFSET	(USPACE - ALIGN(sizeof(struct pcb)))
-#define	KSTACK_LOWEST_ADDR(l)	\
-    ((void *)((vaddr_t)(l)->l_addr - UAREA_PCB_OFFSET))
-#define	KSTACK_SIZE		UAREA_PCB_OFFSET
 
 #else	/*	__x86_64__	*/
 

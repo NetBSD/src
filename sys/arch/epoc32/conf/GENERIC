@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.1.4.2 2013/06/23 06:20:02 tls Exp $
+#	$NetBSD: GENERIC,v 1.1.4.3 2014/08/20 00:02:52 tls Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/epoc32/conf/std.epoc32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1.4.2 $"
+#ident 		"GENERIC-$Revision: 1.1.4.3 $"
 
 maxusers	32			# estimated number of users
 
@@ -65,6 +65,7 @@ options 	INET6		# IPv6
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
 # Compatibility options
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_09	# NetBSD 0.9,
 #options 	COMPAT_10	# NetBSD 1.0,
 #options 	COMPAT_11	# NetBSD 1.1,
@@ -157,7 +158,6 @@ wsdisplay* at wmlcd? console ?
 
 epockbd* at clpssoc?
 epockbd* at windermere?
-#epockbd* at external? addr 0x10000030, 0x10000004
 wskbd*	at epockbd?
 
 #spi*	at clpsssi*
@@ -167,7 +167,12 @@ wskbd*	at epockbd?
 #audio* at audio?
 
 # External devices
-etna* at external?				# ETNA Controller
+
+#epockbd* at external? addr 0x10000030 addr2 0x10000004		# Series 7
+
+# ETNA Controller
+etna* at external? addr 0x20000000 addr2 0x40000000 irq 5	# 5mx
+etna* at external? addr 0x50000000 addr2 0x30000000 irq 5	# 5mx Pro
 pcmcia* at etna?
 
 wdc* at pcmcia?					# CF

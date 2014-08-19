@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom_s3c2800.c,v 1.8.12.1 2012/11/20 03:01:07 tls Exp $ */
+/*	$NetBSD: sscom_s3c2800.c,v 1.8.12.2 2014/08/20 00:02:47 tls Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom_s3c2800.c,v 1.8.12.1 2012/11/20 03:01:07 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom_s3c2800.c,v 1.8.12.2 2014/08/20 00:02:47 tls Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -99,6 +99,22 @@ sscom_match(device_t parent, cfdata_t cf, void *aux)
 }
 
 static void
+s3c2800_change_txrx_interrupts(struct sscom_softc *sc, bool unmask_p,
+    u_int flags)
+{
+	int intbits = 0;
+	if (flags & SSCOM_HW_RXINT)
+		intbits |= 1 << sc->sc_rx_irqno;
+	if (flags & SSCOM_HW_TXINT)
+		intbits |= 1 << sc->sc_tx_irqno;
+	if (unmask_p) {
+		s3c2xx0_unmask_interrupts(intbits);
+	} else {
+		s3c2xx0_mask_interrupts(intbits);
+	}
+}
+
+static void
 sscom_attach(device_t parent, device_t self, void *aux)
 {
 	struct sscom_softc *sc = device_private(self);
@@ -112,6 +128,8 @@ sscom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = s3c2xx0_softc->sc_iot;
 	sc->sc_unit = unit;
 	sc->sc_frequency = s3c2xx0_softc->sc_pclk;
+
+	sc->sc_change_txrx_interrupts = s3c2800_change_txrx_interrupts;
 
 	sc->sc_rx_irqno = S3C2800_INT_RXD0 + sa->sa_index;
 	sc->sc_tx_irqno = S3C2800_INT_TXD0 + sa->sa_index;

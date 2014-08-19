@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_debug.c,v 1.8 2011/10/17 16:40:53 mbalmer Exp $	*/
+/*	$NetBSD: mpt_debug.c,v 1.8.12.1 2014/08/20 00:03:38 tls Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_debug.c,v 1.8 2011/10/17 16:40:53 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_debug.c,v 1.8.12.1 2014/08/20 00:03:38 tls Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -195,14 +195,17 @@ mpt_ioc_diag(u_int32_t code)
 {
 	const struct Error_Map *status = IOC_Diag;
 	static char tbuf[128];
-	char *ptr = tbuf;
-	char *end = &tbuf[128];
-	tbuf[0] = '\0';
-	ptr += snprintf(tbuf, sizeof tbuf, "(0x%08x)", code);
+	size_t len;
+	len = snprintf(tbuf, sizeof(tbuf), "(0x%08x)", code);
+	if (len > sizeof(tbuf))
+		return tbuf;
 	while (status->Error_Code >= 0) {
-		if ((status->Error_Code & code) != 0)
-			ptr += snprintf(ptr, (size_t)(end-ptr), "%s ",
-				status->Error_String);
+		if ((status->Error_Code & code) != 0) {
+			if (len >= sizeof(tbuf))
+				return tbuf;
+			len += snprintf(tbuf + len, sizeof(tbuf) - len, "%s ",
+			    status->Error_String);
+		}
 		status++;
 	}
 	return tbuf;
@@ -239,14 +242,17 @@ mpt_scsi_state(int code)
 {
 	const struct Error_Map *status = IOC_SCSIState;
 	static char tbuf[128];
-	char *ptr = tbuf;
-	char *end = &tbuf[128];
-	tbuf[0] = '\0';
-	ptr += snprintf(tbuf, sizeof tbuf, "(0x%08x)", code);
+	size_t len;
+	len = snprintf(tbuf, sizeof(tbuf), "(0x%08x)", code);
+	if (len > sizeof(tbuf))
+		return tbuf;
 	while (status->Error_Code >= 0) {
-		if ((status->Error_Code & code) != 0)
-			ptr += snprintf(ptr, (size_t)(end-ptr), "%s ",
+		if ((status->Error_Code & code) != 0) {
+			if (len >= sizeof(tbuf))
+				return tbuf;
+			len += snprintf(tbuf + len, sizeof(tbuf) - len, "%s ",
 				status->Error_String);
+		}
 		status++;
 	}
 	return tbuf;

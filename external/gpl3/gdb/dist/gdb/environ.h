@@ -1,6 +1,5 @@
 /* Header for environment manipulation library.
-   Copyright (C) 1989, 1992, 2000, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1989-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by

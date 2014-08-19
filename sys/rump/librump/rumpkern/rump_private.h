@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.70.14.3 2013/06/23 06:20:28 tls Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.70.14.4 2014/08/20 00:04:41 tls Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -54,6 +54,7 @@ extern struct sysent rump_sysent[];
 
 enum rump_component_type {
 	RUMP_COMPONENT_DEV,
+		RUMP_COMPONENT_DEV_AFTERMAINBUS,
 	RUMP_COMPONENT_NET,
 		RUMP_COMPONENT_NET_ROUTE,
 		RUMP_COMPONENT_NET_IF,
@@ -62,6 +63,7 @@ enum rump_component_type {
 	RUMP_COMPONENT_KERN,
 		RUMP_COMPONENT_KERN_VFS,
 	RUMP_COMPONENT_POSTINIT,
+	RUMP_COMPONENT_SYSCALL,
 
 	RUMP__FACTION_DEV,
 	RUMP__FACTION_VFS,
@@ -72,14 +74,37 @@ enum rump_component_type {
 struct rump_component {
 	enum rump_component_type rc_type;
 	void (*rc_init)(void);
+	LIST_ENTRY(rump_component) rc_entries;
 };
+
+/*
+ * If RUMP_USE_CTOR is defined, we use __attribute__((constructor)) to
+ * determine which components are present when rump_init() is called.
+ * Otherwise, we use link sets and the __start/__stop symbols generated
+ * by the toolchain.
+ */
+
+#ifdef RUMP_USE_CTOR
+#define _RUMP_COMPONENT_REGISTER(type)					\
+static void rumpcomp_ctor##type(void) __attribute__((constructor));	\
+static void rumpcomp_ctor##type(void)					\
+{									\
+	rump_component_load(&rumpcomp##type);				\
+}
+
+#else /* RUMP_USE_CTOR */
+
+#define _RUMP_COMPONENT_REGISTER(type)					\
+__link_set_add_rodata(rump_components, rumpcomp##type);
+#endif /* RUMP_USE_CTOR */
+
 #define RUMP_COMPONENT(type)				\
 static void rumpcompinit##type(void);			\
-static const struct rump_component rumpcomp##type = {	\
+static struct rump_component rumpcomp##type = {	\
 	.rc_type = type,				\
 	.rc_init = rumpcompinit##type,			\
 };							\
-__link_set_add_rodata(rump_components, rumpcomp##type);	\
+_RUMP_COMPONENT_REGISTER(type)				\
 static void rumpcompinit##type(void)
 
 #define FLAWLESSCALL(call)						\
@@ -94,6 +119,7 @@ extern unsigned long rump_physmemlimit;
 
 #define RUMP_LOCALPROC_P(p) (p->p_vmspace == vmspace_kernel())
 
+void		rump_component_load(const struct rump_component *);
 void		rump_component_init(enum rump_component_type);
 int		rump_component_count(enum rump_component_type);
 
@@ -107,6 +133,8 @@ extern struct cpu_info *rump_cpu;
 extern bool rump_ttycomponent;
 
 struct lwp *	rump__lwproc_alloclwp(struct proc *);
+void		rump__lwproc_lwphold(void);
+void		rump__lwproc_lwprele(void);
 
 void	rump_cpus_bootstrap(int *);
 void	rump_biglock_init(void);
@@ -118,6 +146,13 @@ void 	rump_schedule_cpu_interlock(struct lwp *, void *);
 void	rump_unschedule_cpu(struct lwp *);
 void	rump_unschedule_cpu_interlock(struct lwp *, void *);
 void	rump_unschedule_cpu1(struct lwp *, void *);
+int	rump_syscall(int, void *, size_t, register_t *);
+
+struct rump_onesyscall {
+	int ros_num;
+	sy_call_t *ros_handler;
+};
+void	rump_syscall_boot_establish(const struct rump_onesyscall *, size_t);
 
 void	rump_schedlock_cv_wait(struct rumpuser_cv *);
 int	rump_schedlock_cv_timedwait(struct rumpuser_cv *,
@@ -142,6 +177,14 @@ void	rump_hyperfree(void *, size_t);
 void	rump_xc_highpri(struct cpu_info *);
 
 void	rump_thread_init(void);
-void	rump_thread_allow(void);
+void	rump_thread_allow(struct lwp *);
+
+void	rump_consdev_init(void);
+
+void	rump_hyperentropy_init(void);
+
+void	rump_lwproc_init(void);
+void	rump_lwproc_curlwp_set(struct lwp *);
+void	rump_lwproc_curlwp_clear(struct lwp *);
 
 #endif /* _SYS_RUMP_PRIVATE_H_ */

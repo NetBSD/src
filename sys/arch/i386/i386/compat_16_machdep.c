@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.22 2012/04/22 20:36:52 christos Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.22.2.1 2014/08/20 00:03:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.22 2012/04/22 20:36:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.22.2.1 2014/08/20 00:03:06 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_vm86.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.22 2012/04/22 20:36:52 chris
 
 #include <machine/pmap.h>
 #include <machine/vmparam.h>
+#include <x86/fpu.h>
 
 #if defined(COMPAT_16) || defined(COMPAT_IBCS2)
 
@@ -260,9 +261,8 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 		/* NOTREACHED */
 	}
 
-	int svufpu = l->l_md.md_flags & MDL_USEDFPU;
+	fpu_save_area_reset(l);
 	buildcontext(l, sel, catcher, fp);
-	l->l_md.md_flags |= svufpu;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)

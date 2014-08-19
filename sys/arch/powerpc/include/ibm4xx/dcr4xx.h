@@ -1,4 +1,4 @@
-/*	$NetBSD: dcr4xx.h,v 1.2 2010/11/06 16:32:08 uebayasi Exp $	*/
+/*	$NetBSD: dcr4xx.h,v 1.2.18.1 2014/08/20 00:03:19 tls Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -239,6 +239,50 @@
 
 /* Indirectly accessed Clocking Controller DCRs */
 
+#define	DCR_SDR0_SRST0		0x0200	/* Soft Reset */
+#define	  SDR0_SRST0_BGO	  (1 << 31)	/* PLB4 to OPB bridge */
+#define	  SDR0_SRST0_PLB4	  (1 << 30)	/* PLB4 arbiter */
+#define	  SDR0_SRST0_EBC	  (1 << 29)	/* External bus controller */
+#define	  SDR0_SRST0_OPB	  (1 << 28)	/* OPB arbiter */
+#define	  SDR0_SRST0_UART0	  (1 << 27)	/* Universal asynchronous receiver/transmitter 0 */
+#define	  SDR0_SRST0_UART1	  (1 << 26)	/* Universal asynchronous receiver/transmitter 1 */
+#define	  SDR0_SRST0_IIC0	  (1 << 25)	/* Inter integrated circuit 0 */
+#define	  SDR0_SRST0_BGI	  (1 << 24)	/* OPB to PLB bridge */
+#define	  SDR0_SRST0_GPIO	  (1 << 23)	/* General purpose I/O */
+#define	  SDR0_SRST0_GPT	  (1 << 22)	/* General purpose timer */
+#define	  SDR0_SRST0_DMC	  (1 << 21)	/* DDR1/2 SDRAM memory controller */
+#define	  SDR0_SRST0_RGMII	  (1 << 20)	/* RGMII bridge */
+#define	  SDR0_SRST0_EMAC0	  (1 << 19)	/* Ethernet media access controller 0 */
+#define	  SDR0_SRST0_EMAC1	  (1 << 18)	/* Ethernet media access controller 1 */
+#define	  SDR0_SRST0_CPM	  (1 << 17)	/* Clock and power management */
+#define	  SDR0_SRST0_EPLL	  (1 << 16)	/* Ethernet PLL */
+#define	  SDR0_SRST0_UIC	  (1 << 15)	/* UIC0, UIC1, UIC2 */
+#define	  SDR0_SRST0_UPRST	  (1 << 14)	/* USB PRST */
+#define	  SDR0_SRST0_IIC1	  (1 << 13)	/* Inter integrated circuit 1 */
+#define	  SDR0_SRST0_SCP	  (1 << 12)	/* Serial communications port */
+#define	  SDR0_SRST0_UHRST	  (1 << 11)	/* USB HRESET (AHB) */
+#define	  SDR0_SRST0_DMA	  (1 << 10)	/* Direct memory access controller */
+#define	  SDR0_SRST0_DMAC	  (1 << 9)	/* DMA channel */
+#define	  SDR0_SRST0_MAL	  (1 << 8)	/* Media access layer */
+#define	  SDR0_SRST0_EBM	  (1 << 7)	/* External bus master */
+#define	  SDR0_SRST0_GPTR	  (1 << 6)	/* General purpose timer */
+#define	  SDR0_SRST0_PE0	  (1 << 5)	/* PCI Express 0 */
+#define	  SDR0_SRST0_PE1	  (1 << 4)	/* PCI Express 1 */
+#define	  SDR0_SRST0_CRYP	  (1 << 3)	/* Security */
+#define	  SDR0_SRST0_PKP	  (1 << 2)	/* Public Key Accelerator and TRNG1 */
+#define	  SDR0_SRST0_AHB	  (1 << 1)	/* AHB to PLB bridge */
+#define	  SDR0_SRST0_NDFC	  (1 << 0)	/* NAND Flash controller */
+#define	DCR_SDR0_PFC1		0x4101	/* Pin Function Control Register 1 */
+#define   SDR0_PFC1_U1ME	  (1 << 25)	/* UART1 Mode Enable */
+#define   SDR0_PFC1_U0ME	  (1 << 19)	/* UART0 Mode Enable */
+#define   SDR0_PFC1_U0IM	  (1 << 18)	/* UART0 Interface Mode */
+#define   SDR0_PFC1_SIS		  (1 << 17)	/* SPI/IIC 1 Selection */
+#define   SDR0_PFC1_DMAAEN	  (1 << 16)	/* DMA Channel A Enable */
+#define   SDR0_PFC1_DMADEN	  (1 << 15)	/* DMA Channel D Enable */
+#define   SDR0_PFC1_USBEN	  (1 << 14)	/* USB OTG Enable */
+#define   SDR0_PFC1_AHBSWAP	  (1 << 5)	/* AHB Data Swap Enable */
+#define   SDR0_PFC1_USBBIGEN	  (1 << 4)	/* USB OTG - AHB Interface Endian Mode */
+#define   SDR0_PFC1_GPTFREQ(x)	  ((x) & 0xf)	/* GPT Variable Frequency Generator */
 #define	DCR_SDR0_MFR		0x4300	/* Miscellaneous Function Register */
 #define	  SDR0_MFR_ECS(n)	  (1 << (27 - (n)))	/* Ethernet n Clock Selection */
 #define	  SDR0_MFR_ETXFL(n)	  (1 << (15 - ((n) << 2)))	/* Force Parity Error EMACn Tx FIFO Bits 0:63 */

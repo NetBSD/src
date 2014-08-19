@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.137 2008/11/19 18:36:06 ad Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.137.26.1 2014/08/20 00:04:28 tls Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_elf32.c,v 1.137 2008/11/19 18:36:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_elf32.c,v 1.137.26.1 2014/08/20 00:04:28 tls Exp $");
 
 #define	ELFSIZE	32
 
@@ -49,37 +49,66 @@ __KERNEL_RCSID(0, "$NetBSD: exec_elf32.c,v 1.137 2008/11/19 18:36:06 ad Exp $");
 #define	DEP	NULL
 #endif
 
-MODULE(MODULE_CLASS_MISC, exec_elf32, DEP);
+MODULE(MODULE_CLASS_EXEC, exec_elf32, DEP);
 
 static struct execsw exec_elf32_execsw[] = {
-	{ sizeof (Elf32_Ehdr),
-	  exec_elf32_makecmds,
-	  { netbsd_elf32_probe },
-	  &emul_netbsd,
-	  EXECSW_PRIO_ANY,
-	  ELF32_AUXSIZE,
-	  elf32_copyargs,
-	  NULL,
-	  coredump_elf32,
-	  exec_setup_stack },
+	{
+		.es_hdrsz = sizeof (Elf32_Ehdr),
+	  	.es_makecmds = exec_elf32_makecmds,
+	  	.u = {
+			.elf_probe_func = netbsd_elf32_probe,
+		},
+		.es_emul = &emul_netbsd,
+		.es_prio = EXECSW_PRIO_FIRST,
+		.es_arglen = ELF32_AUXSIZE,
+		.es_copyargs = elf32_copyargs,
+		.es_setregs = NULL,
+		.es_coredump = coredump_elf32,
+		.es_setup_stack = exec_setup_stack,
+	},
 #if EXEC_ELF_NOTELESS
-	{ sizeof (Elf32_Ehdr),
-	  exec_elf32_makecmds,
-	  { NULL },
-	  &emul_netbsd,
-	  EXECSW_PRIO_LAST,
-	  ELF32_AUXSIZE,
-	  elf32_copyargs,
-	  NULL,
-	  coredump_elf32,
-	  exec_setup_stack },
+	{
+		.es_hdrsz = sizeof (Elf32_Ehdr),
+	  	.es_makecmds = exec_elf32_makecmds,
+	  	.u {
+			elf_probe_func = NULL,
+		},
+		.es_emul = &emul_netbsd,
+		.es_prio = EXECSW_PRIO_LAST,
+		.es_arglen = ELF32_AUXSIZE,
+		.es_copyargs = elf32_copyargs,
+		.es_setregs = NULL,
+		.es_coredump = coredump_elf32,
+		.es_setup_stack = exec_setup_stack,
+	},
 #endif
 };
 
 static int
 exec_elf32_modcmd(modcmd_t cmd, void *arg)
 {
+#if ARCH_ELFSIZE == 64
+	/*
+	 * If we are on a 64bit system, we don't want the 32bit execsw[] to be
+	 * added in the global array, because the exec_elf32 module only works
+	 * on 32bit systems.
+	 *
+	 * However, we need the exec_elf32 module, because it will make the 32bit
+	 * functions available for netbsd32 and linux32.
+	 *
+	 * Therefore, allow this module on 64bit systems, but make it dormant.
+	 */
 
+	(void)exec_elf32_execsw; /* unused */
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+	case MODULE_CMD_FINI:
+		return 0;
+	default:
+		return ENOTTY;
+	}
+#else /* ARCH_ELFSIZE == 64 */
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		return exec_add(exec_elf32_execsw,
@@ -92,4 +121,5 @@ exec_elf32_modcmd(modcmd_t cmd, void *arg)
 	default:
 		return ENOTTY;
         }
+#endif /* ARCH_ELFSIZE == 64 */
 }

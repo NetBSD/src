@@ -1,4 +1,4 @@
-/* $NetBSD: ifpci2.c,v 1.19.22.1 2012/11/20 03:02:19 tls Exp $	*/
+/* $NetBSD: ifpci2.c,v 1.19.22.2 2014/08/20 00:03:43 tls Exp $	*/
 /*
  *   Copyright (c) 1999 Gary Jennejohn. All rights reserved.
  *
@@ -36,14 +36,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci2.c,v 1.19.22.1 2012/11/20 03:02:19 tls Exp $
+ *	$Id: ifpci2.c,v 1.19.22.2 2014/08/20 00:03:43 tls Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci2.c,v 1.19.22.1 2012/11/20 03:02:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci2.c,v 1.19.22.2 2014/08/20 00:03:43 tls Exp $");
 
 
 #include <sys/param.h>
@@ -249,7 +249,6 @@ ifpci2_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct isic_softc *sc = &psc->sc_isic;
 	struct isdn_l3_driver *drv;
-	u_int v;
 
 	sc->sc_dev = self;
 
@@ -297,7 +296,7 @@ ifpci2_attach(device_t parent, device_t self, void *aux)
 
 	/* init the card */
 
-	v = bus_space_read_4(sc->sc_maps[0].t, sc->sc_maps[0].h, 0);
+	bus_space_read_4(sc->sc_maps[0].t, sc->sc_maps[0].h, 0);
 	bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, STAT0_OFFSET, 0);
 	DELAY(SEC_DELAY/20); /* 50 ms */
 	bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, STAT0_OFFSET, ASL_RESET);
@@ -318,7 +317,7 @@ ifpci2_attach(device_t parent, device_t self, void *aux)
 	/* init the ISAC */
 	isic_isacsx_init(sc);
 
-	v = ISAC_READ(I_CIR0); /* Leo: reset generates status change */
+	ISAC_READ(I_CIR0); /* Leo: reset generates status change */
 
 	/* init the "HSCX" */
 	avma1pp2_bchannel_setup(sc, HSCX_CH_A, BPROT_NONE, 0);
@@ -945,6 +944,7 @@ avma1pp2_map_int(struct ifpci_softc *psc, struct pci_attach_args *pa)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
@@ -953,7 +953,7 @@ avma1pp2_map_int(struct ifpci_softc *psc, struct pci_attach_args *pa)
 		return;
 	}
 	psc->sc_pc = pc;
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, avma1pp2_intr, sc);
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");

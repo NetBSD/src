@@ -631,6 +631,8 @@ int savage_driver_firstopen(struct drm_device *dev)
 		aperture_base = drm_get_resource_start(dev, 2);
 		/* Automatic MTRR setup will do the right thing. */
 	}
+	__USE(fb_rsrc);
+	__USE(aper_rsrc);
 
 	ret = drm_addmap(dev, mmio_base, SAVAGE_MMIO_SIZE, _DRM_REGISTERS,
 			 _DRM_READ_ONLY, &dev_priv->mmio);

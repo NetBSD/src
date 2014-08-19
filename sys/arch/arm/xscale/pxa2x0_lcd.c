@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.c,v 1.33 2012/01/11 21:15:46 macallan Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.33.6.1 2014/08/20 00:02:48 tls Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.33 2012/01/11 21:15:46 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.33.6.1 2014/08/20 00:02:48 tls Exp $");
 
 #include "opt_pxa2x0_lcd.h"
 
@@ -475,8 +475,6 @@ int
 pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *sc, int depth,
      struct pxa2x0_lcd_screen **scrpp)
 {
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
 	bus_dma_tag_t dma_tag;
 	const struct lcd_panel_geometry *geometry;
 	struct pxa2x0_lcd_screen *scr = NULL;
@@ -487,8 +485,6 @@ pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *sc, int depth,
 	struct lcd_dma_descriptor *desc;
 	paddr_t buf_pa, desc_pa;
 
-	iot = sc->iot;
-	ioh = sc->ioh;
 	dma_tag = sc->dma_tag;
 	geometry = sc->geometry;
 
@@ -554,7 +550,6 @@ pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *sc, int depth,
 
 	/* XXX: should we have BUS_DMA_WRITETHROUGH in MI bus_dma(9) API? */
 	if (pxa2x0_lcd_writethrough) {
-		pt_entry_t *ptep;
 		vaddr_t va, eva;
 
 		va = (vaddr_t)scr->buf_va;
@@ -563,13 +558,15 @@ pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *sc, int depth,
 			/* taken from arm/arm32/bus_dma.c:_bus_dmamem_map() */
 			cpu_dcache_wbinv_range(va, PAGE_SIZE);
 			cpu_drain_writebuf();
-			ptep = vtopte(va);
-			*ptep &= ~L2_S_CACHE_MASK;
-			*ptep |= L2_C;
+			pt_entry_t * const ptep = vtopte(va);
+			const pt_entry_t opte = *ptep;
+			const pt_entry_t npte = (opte & ~L2_S_CACHE_MASK)
+			    | L2_C;
+			l2pte_set(ptep, npte, opte);
 			PTE_SYNC(ptep);
-			tlb_flush();
 			va += PAGE_SIZE;
 		}
+		tlb_flush();
 	}
 
 	memset(scr->buf_va, 0, scr->buf_size);

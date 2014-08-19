@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_com.c,v 1.4 2011/07/01 20:30:21 dyoung Exp $	*/
+/*	$NetBSD: obio_com.c,v 1.4.12.1 2014/08/20 00:02:47 tls Exp $	*/
 
 /*
  * Based on arch/arm/omap/omap_com.c
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.4 2011/07/01 20:30:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.4.12.1 2014/08/20 00:02:47 tls Exp $");
 
 #include "opt_omap.h"
 #include "opt_com.h"
@@ -171,7 +171,7 @@ uart_enable(struct obio_attach_args *obio)
 #endif
 	uint32_t fclken1;
 	uint32_t iclken1;
-	int err;
+	int err __diagused;
 	int n=-1;
 
 	KASSERT(obio != NULL);

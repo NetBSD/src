@@ -1,29 +1,30 @@
+/* isearch.c - incremental searching */
+
 /* **************************************************************** */
 /*								    */
 /*			I-Search and Searching			    */
 /*								    */
 /* **************************************************************** */
 
-/* Copyright (C) 1987-2005 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2009 Free Software Foundation, Inc.
 
-   This file contains the Readline Library (the Library), a set of
-   routines for providing Emacs style line input to programs that ask
-   for it.
+   This file is part of the GNU Readline Library (Readline), a library
+   for reading lines of text with interactive input and history editing.      
 
-   The Library is free software; you can redistribute it and/or modify
+   Readline is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
 
-   The Library is distributed in the hope that it will be useful, but
-   WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-   General Public License for more details.
+   Readline is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-   The GNU General Public License is often shipped with GNU software, and
-   is generally kept in a file called COPYING or LICENSE.  If you do not
-   have a copy of the license, write to the Free Software Foundation,
-   59 Temple Place, Suite 330, Boston, MA 02111 USA. */
+   You should have received a copy of the GNU General Public License
+   along with Readline.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #define READLINE_LIBRARY
 
 #if defined (HAVE_CONFIG_H)
@@ -68,14 +69,14 @@ static void _rl_isearch_fini PARAMS((_rl_search_cxt *));
 static int _rl_isearch_cleanup PARAMS((_rl_search_cxt *, int));
 
 /* Last line found by the current incremental search, so we don't `find'
-   identical lines many times in a row. */
-static char *prev_line_found;
+   identical lines many times in a row.  Now part of isearch context. */
+/* static char *prev_line_found; */
 
 /* Last search string and its length. */
 static char *last_isearch_string;
 static int last_isearch_string_len;
 
-static char *default_isearch_terminators = "\033\012";
+static char * const default_isearch_terminators = "\033\012";
 
 _rl_search_cxt *
 _rl_scxt_alloc (type, flags)
@@ -103,6 +104,9 @@ _rl_scxt_alloc (type, flags)
 
   cxt->save_undo_list = 0;
 
+  cxt->keymap = _rl_keymap;
+  cxt->okeymap = _rl_keymap;
+
   cxt->history_pos = 0;
   cxt->direction = 0;
 
@@ -125,7 +129,7 @@ _rl_scxt_dispose (cxt, flags)
   FREE (cxt->allocated_line);
   FREE (cxt->lines);
 
-  free (cxt);
+  xfree (cxt);
 }
 
 /* Search backwards through the history looking for a string which is typed
@@ -192,7 +196,7 @@ rl_display_search (search_string, reverse_p, where)
   strcpy (message + msglen, "': ");
 
   rl_message ("%s", message);
-  free (message);
+  xfree (message);
   (*rl_redisplay_function) ();
 }
 
@@ -327,11 +331,30 @@ _rl_isearch_dispatch (cxt, c)
   rl_command_func_t *f;
 
   f = (rl_command_func_t *)NULL;
- 
- /* Translate the keys we do something with to opcodes. */
-  if (c >= 0 && _rl_keymap[c].type == ISFUNC)
+
+  if (c < 0)
     {
-      f = _rl_keymap[c].function;
+      cxt->sflags |= SF_FAILED;
+      cxt->history_pos = cxt->last_found_line;
+      return -1;
+    }
+
+  /* If we are moving into a new keymap, modify cxt->keymap and go on.
+     This can be a problem if c == ESC and we want to terminate the
+     incremental search, so we check */
+  if (c >= 0 && cxt->keymap[c].type == ISKMAP && strchr (cxt->search_terminators, cxt->lastc) == 0)
+    {
+      cxt->keymap = FUNCTION_TO_KEYMAP (cxt->keymap, c);
+      cxt->sflags |= SF_CHGKMAP;
+      /* XXX - we should probably save this sequence, so we can do
+	 something useful if this doesn't end up mapping to a command. */
+      return 1;
+    }
+
+  /* Translate the keys we do something with to opcodes. */
+  if (c >= 0 && cxt->keymap[c].type == ISFUNC)
+    {
+      f = cxt->keymap[c].function;
 
       if (f == rl_reverse_search_history)
 	cxt->lastc = (cxt->sflags & SF_REVERSE) ? -1 : -2;
@@ -339,19 +362,27 @@ _rl_isearch_dispatch (cxt, c)
 	cxt->lastc = (cxt->sflags & SF_REVERSE) ? -2 : -1;
       else if (f == rl_rubout)
 	cxt->lastc = -3;
-      else if (c == CTRL ('G'))
+      else if (c == CTRL ('G') || f == rl_abort)
 	cxt->lastc = -4;
-      else if (c == CTRL ('W'))	/* XXX */
+      else if (c == CTRL ('W') || f == rl_unix_word_rubout)	/* XXX */
 	cxt->lastc = -5;
-      else if (c == CTRL ('Y'))	/* XXX */
+      else if (c == CTRL ('Y') || f == rl_yank)	/* XXX */
 	cxt->lastc = -6;
+    }
+
+  /* If we changed the keymap earlier while translating a key sequence into
+     a command, restore it now that we've succeeded. */
+  if (cxt->sflags & SF_CHGKMAP)
+    {
+      cxt->keymap = cxt->okeymap;
+      cxt->sflags &= ~SF_CHGKMAP;
     }
 
   /* The characters in isearch_terminators (set from the user-settable
      variable isearch-terminators) are used to terminate the search but
      not subsequently execute the character as a command.  The default
      value is "\033\012" (ESC and C-J). */
-  if (strchr (cxt->search_terminators, cxt->lastc))
+  if (cxt->lastc > 0 && strchr (cxt->search_terminators, cxt->lastc))
     {
       /* ESC still terminates the search, but if there is pending
 	 input or if input arrives within 0.1 seconds (on systems
@@ -375,7 +406,7 @@ _rl_isearch_dispatch (cxt, c)
     {
       if (cxt->lastc >= 0 && (cxt->mb[0] && cxt->mb[1] == '\0') && ENDSRCH_CHAR (cxt->lastc))
 	{
-	  /* This sets rl_pending_input to c; it will be picked up the next
+	  /* This sets rl_pending_input to LASTC; it will be picked up the next
 	     time rl_read_key is called. */
 	  rl_execute_next (cxt->lastc);
 	  return (0);

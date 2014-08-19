@@ -1,4 +1,4 @@
-/*	$NetBSD: master_wakeup.c,v 1.1.1.1 2009/06/23 10:08:49 tron Exp $	*/
+/*	$NetBSD: master_wakeup.c,v 1.1.1.1.16.1 2014/08/19 23:59:43 tls Exp $	*/
 
 /*++
 /* NAME
@@ -109,7 +109,7 @@ static void master_wakeup_timer_event(int unused_event, char *context)
 	    break;
 #ifdef MASTER_SERV_TYPE_PASS
 	case MASTER_SERV_TYPE_PASS:
-	    status = PASS_TRIGGER(serv->name, &wakeup, sizeof(wakeup), BRIEFLY);
+	    status = pass_trigger(serv->name, &wakeup, sizeof(wakeup), BRIEFLY);
 	    break;
 #endif
 

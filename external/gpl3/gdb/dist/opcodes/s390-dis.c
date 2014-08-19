@@ -1,5 +1,5 @@
 /* s390-dis.c -- Disassemble S390 instructions
-   Copyright 2000, 2001, 2002, 2003, 2005, 2007, 2008
+   Copyright 2000, 2001, 2002, 2003, 2005, 2007, 2008, 2012
    Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
@@ -20,9 +20,9 @@
    Free Software Foundation, 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
+#include "sysdep.h"
 #include <stdio.h>
 #include "ansidecl.h"
-#include "sysdep.h"
 #include "dis-asm.h"
 #include "opintl.h"
 #include "opcode/s390.h"
@@ -65,17 +65,7 @@ init_disasm (struct disassemble_info *info)
     }
 
   if (!current_arch_mask)
-    switch (info->mach)
-      {
-      case bfd_mach_s390_31:
-	current_arch_mask = 1 << S390_OPCODE_ESA;
-	break;
-      case bfd_mach_s390_64:
-	current_arch_mask = 1 << S390_OPCODE_ZARCH;
-	break;
-      default:
-	abort ();
-      }
+    current_arch_mask = 1 << S390_OPCODE_ZARCH;
 
   init_flag = 1;
 }

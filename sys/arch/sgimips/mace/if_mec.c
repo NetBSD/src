@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.49 2012/07/22 14:32:53 matt Exp $ */
+/* $NetBSD: if_mec.c,v 1.49.2.1 2014/08/20 00:03:22 tls Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.49 2012/07/22 14:32:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.49.2.1 2014/08/20 00:03:22 tls Exp $");
 
 #include "opt_ddb.h"
 
@@ -620,7 +620,7 @@ mec_attach(device_t parent, device_t self, void *aux)
 	cpu_intr_establish(maa->maa_intr, maa->maa_intrmask, mec_intr, sc);
 
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(self),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 #ifdef MEC_EVENT_COUNTERS
 	evcnt_attach_dynamic(&sc->sc_ev_txpkts , EVCNT_TYPE_MISC,

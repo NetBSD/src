@@ -1,4 +1,4 @@
-/*	$NetBSD: value.c,v 1.14 2006/12/14 17:09:43 christos Exp $	*/
+/*	$NetBSD: value.c,v 1.14.40.1 2014/08/20 00:05:04 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)value.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: value.c,v 1.14 2006/12/14 17:09:43 christos Exp $");
+__RCSID("$NetBSD: value.c,v 1.14.40.1 2014/08/20 00:05:04 tls Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -101,7 +101,7 @@ vassign(value_t *p, char *v)
 	switch (p->v_type&TMASK) {
 
 	case STRING:
-		if (p->v_value && equal(p->v_value, v))
+		if (p->v_value && strcmp(p->v_value, v) == 0)
 			return;
 		if (!(p->v_type&(ENVIRON|INIT)))
 			free(p->v_value);
@@ -137,7 +137,7 @@ vlex(char *s)
 {
 	value_t *p;
 
-	if (equal(s, "all")) {
+	if (strcmp(s, "all") == 0) {
 		for (p = vtable; p->v_name; p++)
 			if (vaccess(p->v_access, READ))
 				vprint(p);
@@ -264,7 +264,8 @@ vlookup(const char *s)
 	value_t *p;
 
 	for (p = vtable; p->v_name; p++)
-		if (equal(p->v_name, s) || (p->v_abrev && equal(p->v_abrev, s)))
+		if (strcmp(p->v_name, s) == 0 ||
+		    (p->v_abrev && strcmp(p->v_abrev, s) == 0))
 			return (p);
 	return (NULL);
 }

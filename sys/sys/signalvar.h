@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.83 2012/02/19 21:07:00 rmind Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.83.2.1 2014/08/20 00:04:44 tls Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@
 /*
  * Queue of signals.
  */
-typedef CIRCLEQ_HEAD(ksiginfoq, ksiginfo) ksiginfoq_t;
+typedef TAILQ_HEAD(ksiginfoq, ksiginfo) ksiginfoq_t;
 
 /*
  * Process signal actions, possibly shared between processes.
@@ -114,11 +114,12 @@ struct sigctx {
 extern sigset_t contsigmask, sigcantmask;
 
 struct vnode;
+struct coredump_iostate;
 
 /*
  * Machine-independent functions:
  */
-int	coredump_netbsd(struct lwp *, void *);
+int	coredump_netbsd(struct lwp *, struct coredump_iostate *);
 void	execsigs(struct proc *);
 int	issignal(struct lwp *);
 void	pgsignal(struct pgrp *, int, int);
@@ -129,7 +130,7 @@ void	kpsignal(struct proc *, struct ksiginfo *, void *);
 void	child_psignal(struct proc *, int);
 void	siginit(struct proc *);
 void	trapsignal(struct lwp *, struct ksiginfo *);
-void	sigexit(struct lwp *, int);
+void	sigexit(struct lwp *, int) __dead;
 void	killproc(struct proc *, const char *);
 void	setsigvec(struct proc *, int, struct sigaction *);
 int	killpg1(struct lwp *, struct ksiginfo *, int, int);
@@ -222,13 +223,13 @@ firstsig(const sigset_t *ss)
 static inline void
 ksiginfo_queue_init(ksiginfoq_t *kq)
 {
-	CIRCLEQ_INIT(kq);
+	TAILQ_INIT(kq);
 }
 
 static inline void
 ksiginfo_queue_drain(ksiginfoq_t *kq)
 {
-	if (!CIRCLEQ_EMPTY(kq))
+	if (!TAILQ_EMPTY(kq))
 		ksiginfo_queue_drain0(kq);
 }
 

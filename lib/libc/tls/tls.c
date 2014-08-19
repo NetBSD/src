@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.6 2011/04/07 02:19:28 matt Exp $	*/
+/*	$NetBSD: tls.c,v 1.6.10.1 2014/08/20 00:02:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.6 2011/04/07 02:19:28 matt Exp $");
+__RCSID("$NetBSD: tls.c,v 1.6.10.1 2014/08/20 00:02:16 tls Exp $");
 
 #include "namespace.h"
 
@@ -133,7 +133,7 @@ _rtld_tls_free(struct tls_tcb *tcb)
 
 __weakref_visible int rtld_DYNAMIC __weak_reference(_DYNAMIC);
 
-static int
+static int __section(".text.startup")
 __libc_static_tls_setup_cb(struct dl_phdr_info *data, size_t len, void *cookie)
 {
 	const Elf_Phdr *phdr = data->dlpi_phdr;

@@ -1,10 +1,10 @@
-.\"	$NetBSD: cprng.9,v 1.6 2012/08/23 11:59:02 drochner Exp $
+.\"	$NetBSD: cprng.9,v 1.6.2.1 2014/08/20 00:02:37 tls Exp $
 .\"
-.\" Copyright (c) 2011 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Thor Lancelot Simon.
+.\" by Thor Lancelot Simon and Taylor R. Campbell.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -27,74 +27,51 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 17, 2011
+.Dd July 18, 2013
 .Dt CPRNG 9
 .Os
 .Sh NAME
 .Nm cprng ,
 .Nm cprng_strong_create ,
+.Nm cprng_strong_destroy ,
 .Nm cprng_strong ,
 .Nm cprng_strong32 ,
 .Nm cprng_strong64 ,
-.Nm cprng_strong_getflags ,
-.Nm cprng_strong_setflags ,
-.Nm cprng_strong_ready ,
-.Nm cprng_strong_destroy ,
 .Nm cprng_fast ,
 .Nm cprng_fast32 ,
 .Nm cprng_fast64 ,
-.Nd cryptographic pseudo-random number generators
+.Nd cryptographic pseudorandom number generators
 .Sh SYNOPSIS
 .In sys/cprng.h
 .Ft cprng_strong_t *
-.Fn cprng_strong_create "const char *const name" "int ipl" "int flags"
+.Fn cprng_strong_create "const char *name" "int ipl" "int flags"
 .Ft void
 .Fn cprng_strong_destroy "cprng_strong_t *cprng"
 .Ft size_t
-.Fn cprng_strong "cprng_strong_t *const cprng" "void *buf" "size_t len" "int blocking"
-.Ft size_t
-.Fn cprng_fast "void *buf" "size_t len"
+.Fn cprng_strong "cprng_strong_t *cprng" "void *buf" "size_t len" "int flags"
 .Ft uint32_t
 .Fn cprng_strong32 "void"
 .Ft uint64_t
 .Fn cprng_strong64 "void"
+.Ft size_t
+.Fn cprng_fast "void *buf" "size_t len"
 .Ft uint32_t
 .Fn cprng_fast32 "void"
 .Ft uint32_t
 .Fn cprng_fast64 "void"
-.Ft int
-.Fn cprng_strong_getflags "cprng_strong_t *const cprng"
-.Ft void
-.Fn cprng_strong_setflags "cprng_strong_t *const cprng" "int flags"
 .Bd -literal
 #define CPRNG_MAX_LEN   524288
-
-typedef struct _cprng_strong {
-        kmutex_t	mtx;
-        kcondvar_t	cv;
-	struct selinfo	selq;
-        NIST_CTR_DRBG	drbg;
-        int		flags;
-        char		name[16];
-        int		reseed_pending;
-        rndsink_t	reseed;
-} cprng_strong_t;
 .Ed
 .Sh DESCRIPTION
 The
 .Nm
-family of functions supply randomness to callers within the
-.Nx
-kernel.
+family of functions provide cryptographic pseudorandom number
+generators automatically seeded from the kernel entropy pool.
 They replace the
 .Xr arc4random 9
 and
 .Xr rnd_extract_data 9
 functions for this purpose.
-The
-.Nm
-functions provide stream generators automatically keyed (and if
-necessary rekeyed) from the kernel entropy pool.
 The
 .Nx
 kernel no longer supports direct reading from the kernel entropy pool; all
@@ -104,137 +81,181 @@ functions.
 .Pp
 The
 .Dq strong
-family of functions supply cryptographically strong random numbers
-suitable for keying crypto systems and similar purposes.
+family of functions use cryptographically strong pseudorandom number
+generators suitable for keying crypto systems and similar purposes.
 Calls to
 .Xr rnd_extract_data 9
-should be replaced with calls to
-.Nm cprng_strong .
+should be replaced by calls to
+.Fn cprng_strong .
 .Pp
 The
 .Dq fast
-family of functions supply less strong random numbers, suitable for
-initialization vectors, nonces in certain protocols, and other
-similar purposes, using a faster but less secure stream-cipher generator.
-stream-cipher generator.
+family of functions use cryptographically weaker pseudorandom number
+generators suitable for initialization vectors, nonces in certain
+protocols, and other similar purposes, using a faster but less secure
+stream-cipher-based generator.
 Calls to
 .Xr arc4random 9
-should be replaced with calls to
-.Nm cprng_fast32 ,
+should be replaced by calls to
+.Fn cprng_fast32 ,
 and calls to
 .Xr arc4randbytes 9
-should be replaced with calls to
-.Nm cprng_fast .
+should be replaced by calls to
+.Fn cprng_fast .
 .Pp
-A single instance of the
-.Nm cprng_fast
-generator serves the entire kernel.
-A single, well-known instance of the
-.Nm cprng_strong
-generator,
+A single instance of the fast generator serves the entire kernel.
+A well-known instance of the strong generator,
 .Dv kern_cprng ,
-may be used by any in-kernel caller, but
-new separately-keyed instances of the
-.Nm cprng_strong
-generator can also be created by calling
-.Nm cprng_strong_create .
+may be used by any in-kernel caller, but separately seeded instances of
+the strong generator can also be created by calling
+.Fn cprng_strong_create .
 .Sh FUNCTIONS
 .Bl -tag -width abcd
 .It Fn cprng_strong_create "name" "ipl" "flags"
-.Pp
 Create an instance of the cprng_strong generator.
-This generator
-implements the NIST SP 800-90 CTR_DRBG with AES128 as the block transform.
+This generator implements the NIST SP 800-90 CTR_DRBG with AES128 as
+the block transform.
+.Pp
 The
 .Fa name
-argument is used to "personalize" the CTR_DRBG according to the standard,
-so that its initial state will depend both on keying material from the
-entropy pool and also on the personalization string (name).
+argument is used to
+.Dq personalize
+the CTR_DRBG according to the standard, so that its initial state will
+depend both on seed material from the entropy pool and also on the
+personalization string (name).
+.Pp
 The
 .Fa ipl
-argument specifies the interrupt priority level for the mutex which will
-serialize access to the new instance of the generator (see
-.Xr spl 9 ) .
+argument specifies the interrupt priority level for the mutex which
+will serialize access to the new instance of the generator (see
+.Xr spl 9 ) ,
+and must be no higher than
+.Dv IPL_VM .
+.Pp
 The
 .Fa flags
 argument controls the behavior of the generator:
 .Bl -tag -width CPRNG_REKEY_ANY
 .It Dv CPRNG_INIT_ANY
-Perform initial keying of the generator from the entropy pool even if
-the current estimate of entropy in the pool is less than the required
-number of key bits for the generator.
+Suppress a warning message to the console if, during
+.Fn cprng_strong_create ,
+only partial entropy for the generator is available from the entropy
+pool.
 .It Dv CPRNG_REKEY_ANY
-When rekeying of the generator is required, key the generator from the
-entropy pool even if the current estimate of entropy in the pool is less
-than the required number of key bits for the generator.
+Suppress a warning message to the console if, during
+.Fn cprng_strong
+after the generator has been exhausted and must be reseeded, only
+partial entropy for the generator is available from the entropy pool.
 .It Dv CPRNG_USE_CV
-Perform a
-.Xr cv_broadcast 9
-operation on the "cv" member of the returned cprng_strong_t each time
-the generator is successfully rekeyed.
-.Em If this flag is set, the generator will sleep when rekeying is needed,
-.Em and will therefore always return the requested number of bytes.
+Make
+.Fn cprng_strong
+sleep if the generator has not been seeded with full entropy until full
+entropy is available.
+Otherwise,
+.Fn cprng_strong
+will never sleep when passed this generator.
+.It Dv CPRNG_HARD
+Limit the number of bits of output from the generator before reseeding
+to the number of bits in its seed, so that it approximates the
+information-theoretic entropy of its seed.
+Otherwise, the generator may provide many more bits of output than it
+was seeded with.
 .El
 .Pp
-Creation will succeed even if key material for the generator is not
+Creation will succeed even if full entropy for the generator is not
 available.
-In this case, the first request to read from the generator
-may cause rekeying.
+In this case, the first request to read from the generator may cause
+reseeding.
+.Pp
+.Fn cprng_strong_create
+may sleep to allocate memory.
 .It Fn cprng_strong_destroy "cprng"
+Destroy
+.Fa cprng .
 .Pp
-Destroy an instance of the cprng_strong generator.
-.It Fn cprng_strong "cprng" "buf" "len" "blocking"
-.Pp
+.Fn cprng_strong_destroy
+may sleep.
+.It Fn cprng_strong "cprng" "buf" "len" "flags"
 Fill memory location
 .Fa buf
-with
+with up to
 .Fa len
 bytes from the generator
-.Fa cprng .
-The
-.Fa blocking
-argument controls the blocking/non-blocking behavior of the
-generator: if it is set to
-.Dv FNONBLOCK ,
-the generator may return less than
+.Fa cprng ,
+and return the number of bytes.
 .Fa len
-bytes if it requires rekeying.
-If the
+must be at most
+.Dv CPRNG_MAX_LEN .
+.Pp
+If
+.Fa cprng
+was created with the
 .Dv CPRNG_USE_CV
-flag is set on the generator, the caller can wait on
-.Dv cprng->cv
-for notification that the generator can again supply bytes.
-A maximum of
-.Dv CPRNG_MAX_LEN
-bytes may be requested at once; this is a restriction of the
-CTR_DRBG specification.
+flag and has been exhausted, then
+.Fn cprng_strong
+may sleep until full entropy can be obtained from the entropy pool to
+reseed it.
+However, if
+.Fa flags
+includes the
+.Dv FNONBLOCK
+flag, then
+.Fn cprng_strong
+will immediately return zero in this case instead.
+.Pp
+If
+.Fa cprng
+was created with the
+.Dv CPRNG_HARD
+flag, then
+.Fn cprng_strong
+will return at most as many bytes as are left from its seed size since
+the last reseeding.
+.Pp
+If
+.Fa cprng
+was created with neither the
+.Dv CPRNG_USE_CV
+flag nor the
+.Dv CPRNG_HARD
+flag, then
+.Fn cprng_strong
+is guaranteed to return as many bytes as requested, up to
+.Dv CPRNG_MAX_LEN ,
+without sleeping.
 .It Fn cprng_strong32
 Generate 32 bits using the
-.Dq kern_cprng
-cprng_strong generator.
+.Dv kern_cprng
+strong generator.
+.Pp
+.Fn cprng_strong32
+does not sleep.
 .It Fn cprng_strong64
 Generate 64 bits using the
-.Dq kern_cprng
-cprng_strong generator.
-.It Fn cprng_strong_getflags "cprng"
+.Dv kern_cprng
+strong generator.
 .Pp
-Get the flags currently in use by generator
-.Fa cprng .
-.It Fn cprng_strong_setflags "cprng" "flags"
-Set the flags on generator
-.Fa cprng
-to
-.Fa flags .
+.Fn cprng_strong64
+does not sleep.
 .It Fn cprng_fast "buf" "len"
 Fill memory location
 .Fa buf
 with
 .Fa len
 bytes from the fast generator.
+.Pp
+.Fn cprng_fast
+does not sleep.
 .It Fn cprng_fast32
 Generate 32 bits using the fast generator.
+.Pp
+.Fn cprng_fast32
+does not sleep.
 .It Fn cprng_fast64
 Generate 64 bits using the fast generator.
+.Pp
+.Fn cprng_fast64
+does not sleep.
 .El
 .Sh CODE REFERENCES
 The cprng API is implemented by
@@ -253,7 +274,6 @@ generator uses the arc4random implementation in
 .Xr condvar 9 ,
 .Xr rnd 9 ,
 .Xr spl 9
-.Pp
 .Rs
 .%A Elaine Barker
 .%A John Kelsey

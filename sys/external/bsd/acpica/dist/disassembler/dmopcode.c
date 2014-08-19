@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,6 +57,229 @@
 static void
 AcpiDmMatchKeyword (
     ACPI_PARSE_OBJECT       *Op);
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDmPredefinedDescription
+ *
+ * PARAMETERS:  Op              - Name() parse object
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Emit a description comment for a predefined ACPI name.
+ *              Used for iASL compiler only.
+ *
+ ******************************************************************************/
+
+void
+AcpiDmPredefinedDescription (
+    ACPI_PARSE_OBJECT       *Op)
+{
+#ifdef ACPI_ASL_COMPILER
+    const AH_PREDEFINED_NAME    *Info;
+    char                        *NameString;
+    int                         LastCharIsDigit;
+    int                         LastCharsAreHex;
+
+
+    if (!Op)
+    {
+        return;
+    }
+
+    /* Ensure that the comment field is emitted only once */
+
+    if (Op->Common.DisasmFlags & ACPI_PARSEOP_PREDEF_CHECKED)
+    {
+        return;
+    }
+    Op->Common.DisasmFlags |= ACPI_PARSEOP_PREDEF_CHECKED;
+
+    /* Predefined name must start with an underscore */
+
+    NameString = ACPI_CAST_PTR (char, &Op->Named.Name);
+    if (NameString[0] != '_')
+    {
+        return;
+    }
+
+    /*
+     * Check for the special ACPI names:
+     * _ACd, _ALd, _EJd, _Exx, _Lxx, _Qxx, _Wxx, _T_a
+     * (where d=decimal_digit, x=hex_digit, a=anything)
+     *
+     * Convert these to the generic name for table lookup.
+     * Note: NameString is guaranteed to be upper case here.
+     */
+    LastCharIsDigit =
+        (ACPI_IS_DIGIT (NameString[3]));    /* d */
+    LastCharsAreHex =
+        (ACPI_IS_XDIGIT (NameString[2]) &&  /* xx */
+         ACPI_IS_XDIGIT (NameString[3]));
+
+    switch (NameString[1])
+    {
+    case 'A':
+
+        if ((NameString[2] == 'C') && (LastCharIsDigit))
+        {
+            NameString = "_ACx";
+        }
+        else if ((NameString[2] == 'L') && (LastCharIsDigit))
+        {
+            NameString = "_ALx";
+        }
+        break;
+
+    case 'E':
+
+        if ((NameString[2] == 'J') && (LastCharIsDigit))
+        {
+            NameString = "_EJx";
+        }
+        else if (LastCharsAreHex)
+        {
+            NameString = "_Exx";
+        }
+        break;
+
+    case 'L':
+
+        if (LastCharsAreHex)
+        {
+            NameString = "_Lxx";
+        }
+        break;
+
+    case 'Q':
+
+        if (LastCharsAreHex)
+        {
+            NameString = "_Qxx";
+        }
+        break;
+
+    case 'T':
+
+        if (NameString[2] == '_')
+        {
+            NameString = "_T_x";
+        }
+        break;
+
+    case 'W':
+
+        if (LastCharsAreHex)
+        {
+            NameString = "_Wxx";
+        }
+        break;
+
+    default:
+
+        break;
+    }
+
+    /* Match the name in the info table */
+
+    for (Info = AslPredefinedInfo; Info->Name; Info++)
+    {
+        if (ACPI_COMPARE_NAME (NameString, Info->Name))
+        {
+            AcpiOsPrintf ("  // %4.4s: %s",
+                NameString, ACPI_CAST_PTR (char, Info->Description));
+            return;
+        }
+    }
+
+#endif
+    return;
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDmFieldPredefinedDescription
+ *
+ * PARAMETERS:  Op              - Parse object
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Emit a description comment for a resource descriptor tag
+ *              (which is a predefined ACPI name.) Used for iASL compiler only.
+ *
+ ******************************************************************************/
+
+void
+AcpiDmFieldPredefinedDescription (
+    ACPI_PARSE_OBJECT       *Op)
+{
+#ifdef ACPI_ASL_COMPILER
+    ACPI_PARSE_OBJECT       *IndexOp;
+    char                    *Tag;
+    const ACPI_OPCODE_INFO  *OpInfo;
+    const AH_PREDEFINED_NAME *Info;
+
+
+    if (!Op)
+    {
+        return;
+    }
+
+    /* Ensure that the comment field is emitted only once */
+
+    if (Op->Common.DisasmFlags & ACPI_PARSEOP_PREDEF_CHECKED)
+    {
+        return;
+    }
+    Op->Common.DisasmFlags |= ACPI_PARSEOP_PREDEF_CHECKED;
+
+    /*
+     * Op must be one of the Create* operators: CreateField, CreateBitField,
+     * CreateByteField, CreateWordField, CreateDwordField, CreateQwordField
+     */
+    OpInfo = AcpiPsGetOpcodeInfo (Op->Common.AmlOpcode);
+    if (!(OpInfo->Flags & AML_CREATE))
+    {
+        return;
+    }
+
+    /* Second argument is the Index argument */
+
+    IndexOp = Op->Common.Value.Arg;
+    IndexOp = IndexOp->Common.Next;
+
+    /* Index argument must be a namepath */
+
+    if (IndexOp->Common.AmlOpcode != AML_INT_NAMEPATH_OP)
+    {
+        return;
+    }
+
+    /* Major cheat: We previously put the Tag ptr in the Node field */
+
+    Tag = ACPI_CAST_PTR (char, IndexOp->Common.Node);
+    if (!Tag)
+    {
+        return;
+    }
+
+    /* Match the name in the info table */
+
+    for (Info = AslPredefinedInfo; Info->Name; Info++)
+    {
+        if (ACPI_COMPARE_NAME (Tag, Info->Name))
+        {
+            AcpiOsPrintf ("  // %4.4s: %s", Tag,
+                ACPI_CAST_PTR (char, Info->Description));
+            return;
+        }
+    }
+
+#endif
+    return;
+}
 
 
 /*******************************************************************************
@@ -303,6 +526,7 @@ AcpiDmDisassembleOneOp (
     UINT32                  Length;
     ACPI_PARSE_OBJECT       *Child;
     ACPI_STATUS             Status;
+    UINT8                   *Aml;
 
 
     if (!Op)
@@ -319,21 +543,26 @@ AcpiDmDisassembleOneOp (
         return;
 
     case ACPI_DASM_LNOT_SUFFIX:
+
         switch (Op->Common.AmlOpcode)
         {
         case AML_LEQUAL_OP:
+
             AcpiOsPrintf ("LNotEqual");
             break;
 
         case AML_LGREATER_OP:
+
             AcpiOsPrintf ("LLessEqual");
             break;
 
         case AML_LLESS_OP:
+
             AcpiOsPrintf ("LGreaterEqual");
             break;
 
         default:
+
             break;
         }
         Op->Common.DisasmOpcode = 0;
@@ -372,7 +601,6 @@ AcpiDmDisassembleOneOp (
         AcpiOsPrintf ("0x%2.2X", (UINT32) Op->Common.Value.Integer);
         break;
 
-
     case AML_WORD_OP:
 
         if (Op->Common.DisasmOpcode == ACPI_DASM_EISAID)
@@ -384,7 +612,6 @@ AcpiDmDisassembleOneOp (
             AcpiOsPrintf ("0x%4.4X", (UINT32) Op->Common.Value.Integer);
         }
         break;
-
 
     case AML_DWORD_OP:
 
@@ -398,24 +625,20 @@ AcpiDmDisassembleOneOp (
         }
         break;
 
-
     case AML_QWORD_OP:
 
         AcpiOsPrintf ("0x%8.8X%8.8X",
             ACPI_FORMAT_UINT64 (Op->Common.Value.Integer));
         break;
 
-
     case AML_STRING_OP:
 
-        AcpiUtPrintString (Op->Common.Value.String, ACPI_UINT8_MAX);
+        AcpiUtPrintString (Op->Common.Value.String, ACPI_UINT16_MAX);
         break;
 
-
     case AML_BUFFER_OP:
-
         /*
-         * Determine the type of buffer.  We can have one of the following:
+         * Determine the type of buffer. We can have one of the following:
          *
          * 1) ResourceTemplate containing Resource Descriptors.
          * 2) Unicode String buffer
@@ -426,16 +649,19 @@ AcpiDmDisassembleOneOp (
          * types of buffers, we have to closely look at the data in the
          * buffer to determine the type.
          */
-        Status = AcpiDmIsResourceTemplate (Op);
-        if (ACPI_SUCCESS (Status))
+        if (!AcpiGbl_NoResourceDisassembly)
         {
-            Op->Common.DisasmOpcode = ACPI_DASM_RESOURCE;
-            AcpiOsPrintf ("ResourceTemplate");
-            break;
-        }
-        else if (Status == AE_AML_NO_RESOURCE_END_TAG)
-        {
-            AcpiOsPrintf ("/**** Is ResourceTemplate, but EndTag not at buffer end ****/ ");
+            Status = AcpiDmIsResourceTemplate (WalkState, Op);
+            if (ACPI_SUCCESS (Status))
+            {
+                Op->Common.DisasmOpcode = ACPI_DASM_RESOURCE;
+                AcpiOsPrintf ("ResourceTemplate");
+                break;
+            }
+            else if (Status == AE_AML_NO_RESOURCE_END_TAG)
+            {
+                AcpiOsPrintf ("/**** Is ResourceTemplate, but EndTag not at buffer end ****/ ");
+            }
         }
 
         if (AcpiDmIsUnicodeBuffer (Op))
@@ -448,13 +674,17 @@ AcpiDmDisassembleOneOp (
             Op->Common.DisasmOpcode = ACPI_DASM_STRING;
             AcpiOsPrintf ("Buffer");
         }
+        else if (AcpiDmIsPldBuffer (Op))
+        {
+            Op->Common.DisasmOpcode = ACPI_DASM_PLD_METHOD;
+            AcpiOsPrintf ("Buffer");
+        }
         else
         {
             Op->Common.DisasmOpcode = ACPI_DASM_BUFFER;
             AcpiOsPrintf ("Buffer");
         }
         break;
-
 
     case AML_INT_STATICSTRING_OP:
 
@@ -468,12 +698,10 @@ AcpiDmDisassembleOneOp (
         }
         break;
 
-
     case AML_INT_NAMEPATH_OP:
 
         AcpiDmNamestring (Op->Common.Value.Name);
         break;
-
 
     case AML_INT_NAMEDFIELD_OP:
 
@@ -485,7 +713,6 @@ AcpiDmDisassembleOneOp (
         Info->BitOffset += (UINT32) Op->Common.Value.Integer;
         break;
 
-
     case AML_INT_RESERVEDFIELD_OP:
 
         /* Offset() -- Must account for previous offsets */
@@ -495,7 +722,7 @@ AcpiDmDisassembleOneOp (
 
         if (Info->BitOffset % 8 == 0)
         {
-            AcpiOsPrintf ("        Offset (0x%.2X)", ACPI_DIV_8 (Info->BitOffset));
+            AcpiOsPrintf ("Offset (0x%.2X)", ACPI_DIV_8 (Info->BitOffset));
         }
         else
         {
@@ -505,23 +732,62 @@ AcpiDmDisassembleOneOp (
         AcpiDmCommaIfFieldMember (Op);
         break;
 
-
     case AML_INT_ACCESSFIELD_OP:
+    case AML_INT_EXTACCESSFIELD_OP:
 
-        AcpiOsPrintf ("        AccessAs (%s, ",
-            AcpiGbl_AccessTypes [(UINT32) (Op->Common.Value.Integer >> 8) & 0x7]);
+        AcpiOsPrintf ("AccessAs (%s, ",
+            AcpiGbl_AccessTypes [(UINT32) (Op->Common.Value.Integer & 0x7)]);
 
-        AcpiDmDecodeAttribute ((UINT8) Op->Common.Value.Integer);
+        AcpiDmDecodeAttribute ((UINT8) (Op->Common.Value.Integer >> 8));
+
+        if (Op->Common.AmlOpcode == AML_INT_EXTACCESSFIELD_OP)
+        {
+            AcpiOsPrintf (" (0x%2.2X)", (unsigned) ((Op->Common.Value.Integer >> 16) & 0xFF));
+        }
+
         AcpiOsPrintf (")");
         AcpiDmCommaIfFieldMember (Op);
         break;
 
+    case AML_INT_CONNECTION_OP:
+        /*
+         * Two types of Connection() - one with a buffer object, the
+         * other with a namestring that points to a buffer object.
+         */
+        AcpiOsPrintf ("Connection (");
+        Child = Op->Common.Value.Arg;
+
+        if (Child->Common.AmlOpcode == AML_INT_BYTELIST_OP)
+        {
+            AcpiOsPrintf ("\n");
+
+            Aml = Child->Named.Data;
+            Length = (UINT32) Child->Common.Value.Integer;
+
+            Info->Level += 1;
+            Op->Common.DisasmOpcode = ACPI_DASM_RESOURCE;
+            AcpiDmResourceTemplate (Info, Op->Common.Parent, Aml, Length);
+
+            Info->Level -= 1;
+            AcpiDmIndent (Info->Level);
+        }
+        else
+        {
+            AcpiDmNamestring (Child->Common.Value.Name);
+        }
+
+        AcpiOsPrintf (")");
+        AcpiDmCommaIfFieldMember (Op);
+        AcpiOsPrintf ("\n");
+
+        Op->Common.DisasmFlags |= ACPI_PARSEOP_IGNORE; /* for now, ignore in AcpiDmAscendingOp */
+        Child->Common.DisasmFlags |= ACPI_PARSEOP_IGNORE;
+        break;
 
     case AML_INT_BYTELIST_OP:
 
         AcpiDmByteList (Info, Op);
         break;
-
 
     case AML_INT_METHODCALL_OP:
 
@@ -530,7 +796,6 @@ AcpiDmDisassembleOneOp (
 
         AcpiDmNamestring (Op->Common.Value.Name);
         break;
-
 
     default:
 

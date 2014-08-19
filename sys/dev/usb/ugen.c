@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.120.2.1 2013/02/25 00:29:38 tls Exp $	*/
+/*	$NetBSD: ugen.c,v 1.120.2.2 2014/08/20 00:03:51 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.120.2.1 2013/02/25 00:29:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.120.2.2 2014/08/20 00:03:51 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -141,8 +141,18 @@ dev_type_poll(ugenpoll);
 dev_type_kqfilter(ugenkqfilter);
 
 const struct cdevsw ugen_cdevsw = {
-	ugenopen, ugenclose, ugenread, ugenwrite, ugenioctl,
-	nostop, notty, ugenpoll, nommap, ugenkqfilter, D_OTHER,
+	.d_open = ugenopen,
+	.d_close = ugenclose,
+	.d_read = ugenread,
+	.d_write = ugenwrite,
+	.d_ioctl = ugenioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = ugenpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ugenkqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER,
 };
 
 Static void ugenintr(usbd_xfer_handle xfer, usbd_private_handle addr,

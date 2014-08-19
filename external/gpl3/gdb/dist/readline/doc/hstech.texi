@@ -1,7 +1,7 @@
 @ignore
 This file documents the user interface to the GNU History library.
 
-Copyright (C) 1988-2002 Free Software Foundation, Inc.
+Copyright (C) 1988-2011 Free Software Foundation, Inc.
 Authored by Brian Fox and Chet Ramey.
 
 Permission is granted to make and distribute verbatim copies of this manual
@@ -426,6 +426,10 @@ The maximum number of history entries.  This must be changed using
 If non-zero, timestamps are written to the history file, so they can be
 preserved between sessions.  The default value is 0, meaning that
 timestamps are not saved.
+
+The current timestamp format uses the value of @var{history_comment_char}
+to delimit timestamp entries in the history file.  If that variable does
+not have a value (the default), timestamps will not be written.
 @end deftypevar
 
 @deftypevar char history_expansion_char

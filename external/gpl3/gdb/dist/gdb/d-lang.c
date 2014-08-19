@@ -1,7 +1,6 @@
 /* D language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 2005, 2006, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,9 +20,10 @@
 #include "defs.h"
 #include "symtab.h"
 #include "language.h"
+#include "varobj.h"
 #include "d-lang.h"
 #include "c-lang.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "parser-defs.h"
 #include "gdb_obstack.h"
 
@@ -239,9 +239,9 @@ static const struct op_print d_op_print_tab[] =
 static const struct language_defn d_language_defn =
 {
   "d",
+  "D",
   language_d,
   range_check_off,
-  type_check_off,
   case_sensitive_on,
   array_row_major,
   macro_expansion_c,
@@ -257,6 +257,7 @@ static const struct language_defn d_language_defn =
 				   syntax.  */
   d_val_print,			/* Print a value using appropriate syntax.  */
   c_value_print,		/* Print a top-level value.  */
+  default_read_var_value,	/* la_read_var_value */
   NULL,				/* Language specific skip_trampoline.  */
   "this",
   basic_lookup_symbol_nonlocal, 
@@ -273,8 +274,14 @@ static const struct language_defn d_language_defn =
   default_print_array_index,
   default_pass_by_reference,
   c_get_string,
+  NULL,				/* la_get_symbol_name_cmp */
+  iterate_over_symbols,
+  &default_varobj_ops,
   LANG_MAGIC
 };
+
+/* Provide a prototype to silence -Wmissing-prototypes.  */
+extern initialize_file_ftype _initialize_d_language;
 
 void
 _initialize_d_language (void)

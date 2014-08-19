@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.31.2.1 2012/11/20 03:02:51 tls Exp $	*/
+/*	$NetBSD: module.h,v 1.31.2.2 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,35 @@ typedef struct module {
  * containing only one entry, pointing to the module's modinfo_t record.
  * For the kernel, `link_set_modules' can contain multiple entries and
  * records all modules built into the kernel at link time.
+ *
+ * Alternatively, in some environments rump kernels use
+ * __attribute__((constructor)) due to link sets being
+ * difficult (impossible?) to implement (e.g. GNU gold, OS X, etc.)
  */
+
+#ifdef RUMP_USE_CTOR
+struct modinfo_chain {
+	const struct modinfo	*mc_info;
+	LIST_ENTRY(modinfo_chain) mc_entries;
+};
+LIST_HEAD(modinfo_boot_chain, modinfo_chain);
+#define _MODULE_REGISTER(name)						\
+static void modctor_##name(void) __attribute__((constructor));		\
+static void modctor_##name(void)					\
+{									\
+	static struct modinfo_chain mc = {				\
+		.mc_info = &name##_modinfo,				\
+	};								\
+	extern struct modinfo_boot_chain modinfo_boot_chain;		\
+	LIST_INSERT_HEAD(&modinfo_boot_chain, &mc, mc_entries);		\
+}
+
+#else /* RUMP_USE_CTOR */
+
+#define _MODULE_REGISTER(name) __link_set_add_rodata(modules, name##_modinfo);
+
+#endif /* RUMP_USE_CTOR */
+
 #define	MODULE(class, name, required)				\
 static int name##_modcmd(modcmd_t, void *);			\
 static const modinfo_t name##_modinfo = {			\
@@ -111,7 +139,7 @@ static const modinfo_t name##_modinfo = {			\
 	.mi_name = #name,					\
 	.mi_required = (required)				\
 }; 								\
-__link_set_add_rodata(modules, name##_modinfo);
+_MODULE_REGISTER(name)
 
 TAILQ_HEAD(modlist, module);
 

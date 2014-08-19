@@ -1,4 +1,4 @@
-/* $NetBSD: core_machdep.c,v 1.7 2012/02/06 02:14:10 matt Exp $ */
+/* $NetBSD: core_machdep.c,v 1.7.6.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.7 2012/02/06 02:14:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.7.6.1 2014/08/20 00:02:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.7 2012/02/06 02:14:10 matt Exp $"
  * Dump the machine specific header information at the start of a core dump.
  */
 int
-cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
+cpu_coredump(struct lwp *l, struct coredump_iostate *iocookie,
+    struct core *chdr)
 {
 	int error;
 	struct md_coredump cpustate;
@@ -69,7 +70,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 	pcu_save_all(l);
 	cpustate.md_tf = *l->l_md.md_tf;
 	cpustate.md_tf.tf_regs[FRAME_SP] = alpha_pal_rdusp();	/* XXX */
-	if (fpu_used_p(l)) {
+	if (fpu_valid_p(l)) {
 		cpustate.md_fpstate = ((struct pcb *)lwp_getpcb(l))->pcb_fp;
 	} else
 		memset(&cpustate.md_fpstate, 0, sizeof(cpustate.md_fpstate));

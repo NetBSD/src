@@ -1,4 +1,4 @@
-/*	$NetBSD: nor.c,v 1.4 2011/08/02 20:44:09 cliff Exp $	*/
+/*	$NetBSD: nor.c,v 1.4.14.1 2014/08/20 00:03:41 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NOR chips implementing the ONFI CFI specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nor.c,v 1.4 2011/08/02 20:44:09 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nor.c,v 1.4.14.1 2014/08/20 00:03:41 tls Exp $");
 
 #include "locators.h"
 #include "opt_nor.h"
@@ -1008,12 +1008,6 @@ SYSCTL_SETUP(sysctl_nor, "sysctl nor subtree setup")
 {
 	int rc, nor_root_num;
 	const struct sysctlnode *node;
-
-	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
-		goto error;
-	}
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "nor",

@@ -1,4 +1,4 @@
-.\"	$NetBSD: arp.9,v 1.25 2010/05/14 18:52:53 joerg Exp $
+.\"	$NetBSD: arp.9,v 1.25.12.1 2014/08/20 00:02:37 tls Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -114,6 +114,12 @@ translation to the routing table, if a matching route entry is found.
 If the route entry contained a pointer to a held packet, that packet is
 sent.
 .El
+.Sh CODE REFERENCES
+The ARP code is implemented in
+.Pa sys/net/if_arp.h ,
+.Pa sys/netinet/if_inarp.h
+and
+.Pa sys/netinet/if_arp.c .
 .Sh SEE ALSO
 .Xr ether_ifattach 9
 .\" .Xr fddi_ifattach 9 ,
@@ -130,9 +136,3 @@ Rewritten to support other than Ethernet link level addresses in
 (original implementation)
 .An Ignatios Souvatzis
 (support for non-Ethernet)
-.Sh CODE REFERENCES
-The ARP code is implemented in
-.Pa sys/net/if_arp.h ,
-.Pa sys/netinet/if_inarp.h
-and
-.Pa sys/netinet/if_arp.c .

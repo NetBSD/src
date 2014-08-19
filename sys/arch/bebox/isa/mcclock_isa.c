@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.5 2011/07/01 20:34:53 dyoung Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.5.12.1 2014/08/20 00:02:49 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -117,7 +117,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.5 2011/07/01 20:34:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.5.12.1 2014/08/20 00:02:49 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,9 +225,9 @@ mcclock_isa_attach(device_t parent, device_t self, void *aux)
 	mcclock_isa_write(sc, MC_REGA, MC_BASE_32_KHz | MC_RATE_1024_Hz);
 
 	/*
-	 * 24 Hour clock, no interrupts please.
+	 * 24 Hour clock, binary-format, no auto-DST and no interrupts please.
 	 */
-	mcclock_isa_write(sc, MC_REGB, MC_REGB_24HR);
+	mcclock_isa_write(sc, MC_REGB, MC_REGB_24HR | MC_REGB_BINARY);
 
 	sc->sc_year0 = 1900;
 	sc->sc_flag = 0;

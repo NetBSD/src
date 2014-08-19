@@ -1,7 +1,7 @@
 /* Classify numbers as probable primes, primes or composites.
    With -q return true if the following argument is a (probable) prime.
 
-Copyright 1999, 2000, 2002, 2005 Free Software Foundation, Inc.
+Copyright 1999, 2000, 2002, 2005, 2012 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -47,7 +47,7 @@ main (int argc, char **argv)
     {
       if (mpz_set_str (n, argv[2], 0) != 0)
 	print_usage_and_exit ();
-      exit (mpz_probab_prime_p (n, 5) == 0);
+      exit (mpz_probab_prime_p (n, 25) == 0);
     }
 
   for (i = 1; i < argc; i++)
@@ -55,7 +55,7 @@ main (int argc, char **argv)
       int class;
       if (mpz_set_str (n, argv[i], 0) != 0)
 	print_usage_and_exit ();
-      class = mpz_probab_prime_p (n, 5);
+      class = mpz_probab_prime_p (n, 25);
       mpz_out_str (stdout, 10, n);
       if (class == 0)
 	puts (" is composite");

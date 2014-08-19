@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpufreq.c,v 1.8 2011/10/27 05:25:07 jruoho Exp $ */
+/*	$NetBSD: subr_cpufreq.c,v 1.8.12.1 2014/08/20 00:04:29 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpufreq.c,v 1.8 2011/10/27 05:25:07 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpufreq.c,v 1.8.12.1 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -361,7 +361,7 @@ cpufreq_get_state_index(uint32_t index, struct cpufreq_state *cfs)
 	}
 
 	if (index >= cf->cf_state_count) {
-		mutex_exit(&cpu_lock);
+		mutex_exit(&cpufreq_lock);
 		return EINVAL;
 	}
 

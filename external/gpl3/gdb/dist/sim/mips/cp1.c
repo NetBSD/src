@@ -1,7 +1,6 @@
 /*> cp1.c <*/
 /* MIPS Simulator FPU (CoProcessor 1) support.
-   Copyright (C) 2002, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    Originally created by Cygnus Solutions.  Extensive modifications,
    including paired-single operation support and MIPS-3D support
    contributed by Ed Satterthwaite and Chris Demetriou, of Broadcom

@@ -1,4 +1,4 @@
-/*	$NetBSD: split_addr.h,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: split_addr.h,v 1.1.1.1.16.1 2014/08/19 23:59:42 tls Exp $	*/
 
 #ifndef _SPLIT_ADDR_H_INCLUDED_
 #define _SPLIT_ADDR_H_INCLUDED_
@@ -15,7 +15,7 @@
 
  /* External interface. */
 
-extern char *split_addr(char *, int);
+extern char *split_addr(char *, const char *);
 
 /* LICENSE
 /* .ad

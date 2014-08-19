@@ -1,4 +1,4 @@
-/*	$NetBSD: dict.c,v 1.1.1.4.2.1 2013/02/25 00:27:31 tls Exp $	*/
+/*	$NetBSD: dict.c,v 1.1.1.4.2.2 2014/08/19 23:59:45 tls Exp $	*/
 
 /*++
 /* NAME
@@ -61,6 +61,9 @@
 /*
 /*	const char *dict_flags_str(dict_flags)
 /*	int	dict_flags;
+/*
+/*	int	dict_flags_mask(names)
+/*	const char *names;
 /* DESCRIPTION
 /*	This module maintains a collection of name-value dictionaries.
 /*	Each dictionary has its own name and has its own methods to read
@@ -155,6 +158,9 @@
 /*	dict_flags_str() returns a printable representation of the
 /*	specified dictionary flags. The result is overwritten upon
 /*	each call.
+/*
+/*	dict_flags_mask() returns the bitmask for the specified
+/*	comma/space-separated dictionary flag names.
 /* SEE ALSO
 /*	htable(3)
 /* BUGS
@@ -218,6 +224,7 @@
 #include "dict.h"
 #include "dict_ht.h"
 #include "warn_stat.h"
+#include "line_number.h"
 
 static HTABLE *dict_table;
 
@@ -426,6 +433,8 @@ void    dict_load_fp(const char *dict_name, VSTREAM *fp)
     VSTRING *buf;
     char   *member;
     char   *val;
+    const char *old;
+    int     old_lineno;
     int     lineno;
     const char *err;
     struct stat st;
@@ -436,16 +445,23 @@ void    dict_load_fp(const char *dict_name, VSTREAM *fp)
      */
     DICT_FIND_FOR_UPDATE(dict, dict_name);
     buf = vstring_alloc(100);
-    lineno = 0;
+    old_lineno = lineno = 0;
 
     if (fstat(vstream_fileno(fp), &st) < 0)
 	msg_fatal("fstat %s: %m", VSTREAM_PATH(fp));
-    while (readlline(buf, fp, &lineno)) {
+    for ( /* void */ ; readlline(buf, fp, &lineno); old_lineno = lineno) {
 	if ((err = split_nameval(STR(buf), &member, &val)) != 0)
-	    msg_fatal("%s, line %d: %s: \"%s\"",
-		      VSTREAM_PATH(fp), lineno, err, STR(buf));
+	    msg_fatal("%s, line %s: %s: \"%s\"",
+		      VSTREAM_PATH(fp),
+		      format_line_number((VSTRING *) 0,
+					 old_lineno + 1, lineno),
+		      err, STR(buf));
 	if (msg_verbose > 1)
 	    msg_info("%s: %s = %s", myname, member, val);
+	if ((old = dict->lookup(dict, member)) != 0
+	    && strcmp(old, val) != 0)
+	    msg_warn("%s, line %d: overriding earlier entry: %s=%s",
+		     VSTREAM_PATH(fp), lineno, member, old);
 	if (dict->update(dict, member, val) != 0)
 	    msg_fatal("%s, line %d: unable to update %s:%s",
 		      VSTREAM_PATH(fp), lineno, dict->type, dict->name);
@@ -541,7 +557,9 @@ const char *dict_changed_name(void)
 	    msg_warn("%s: table %s: null time stamp", myname, h->key);
 	if (fstat(dict->stat_fd, &st) < 0)
 	    msg_fatal("%s: fstat: %m", myname);
-	if (st.st_mtime != dict->mtime || st.st_nlink == 0)
+	if (((dict->flags & DICT_FLAG_MULTI_WRITER) == 0
+	     && st.st_mtime != dict->mtime)
+	    || st.st_nlink == 0)
 	    status = h->key;
     }
     myfree((char *) ht_info_list);
@@ -575,10 +593,12 @@ static const NAME_MASK dict_mask[] = {
     "fold_fix", DICT_FLAG_FOLD_FIX,	/* case-fold with fixed-case key map */
     "fold_mul", DICT_FLAG_FOLD_MUL,	/* case-fold with multi-case key map */
     "open_lock", DICT_FLAG_OPEN_LOCK,	/* permanent lock upon open */
+    "bulk_update", DICT_FLAG_BULK_UPDATE,	/* bulk update if supported */
+    "multi_writer", DICT_FLAG_MULTI_WRITER,	/* multi-writer safe */
     0,
 };
 
-/* dict_flags_str - convert mask to string for debugging purposes */
+/* dict_flags_str - convert bitmask to symbolic flag names */
 
 const char *dict_flags_str(int dict_flags)
 {
@@ -589,4 +609,11 @@ const char *dict_flags_str(int dict_flags)
 
     return (str_name_mask_opt(buf, "dictionary flags", dict_mask, dict_flags,
 			      NAME_MASK_NUMBER | NAME_MASK_PIPE));
+}
+
+/* dict_flags_mask - convert symbolic flag names to bitmask */
+
+int     dict_flags_mask(const char *names)
+{
+    return (name_mask("dictionary flags", dict_mask, names));
 }

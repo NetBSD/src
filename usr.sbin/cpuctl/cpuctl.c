@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.21.2.1 2013/02/25 00:30:42 tls Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.21.2.2 2014/08/20 00:05:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.21.2.1 2013/02/25 00:30:42 tls Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.21.2.2 2014/08/20 00:05:07 tls Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -82,26 +82,38 @@ static struct cmdtab {
 };
 
 static int	fd;
+int		verbose;
 
 int
 main(int argc, char **argv)
 {
 	const struct cmdtab *ct;
+	int ch;
 
-	if (argc < 2)
+	while ((ch = getopt(argc, argv, "v")) != -1)
+		switch (ch) {
+		case 'v':
+			verbose = 1;
+			break;
+		default:
+			usage();
+		}
+	argc -= optind;
+	argv += optind;
+	if (argc < 1)
 		usage();
 
 	if ((fd = open(_PATH_CPUCTL, O_RDWR)) < 0)
 		err(EXIT_FAILURE, _PATH_CPUCTL);
 
 	for (ct = cpu_cmdtab; ct->label != NULL; ct++) {
-		if (strcmp(argv[1], ct->label) == 0) {
+		if (strcmp(argv[0], ct->label) == 0) {
 			if (!ct->argsoptional &&
-			    ((ct->takesargs == 0) ^ (argv[2] == NULL)))
+			    ((ct->takesargs == 0) ^ (argv[1] == NULL)))
 			{
 				usage();
 			}
-			(*ct->func)(argv + 2);
+			(*ct->func)(argv + 1);
 			break;
 		}
 	}

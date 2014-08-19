@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.72.2.1 2013/02/25 00:29:42 tls Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.72.2.2 2014/08/20 00:03:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.72.2.1 2013/02/25 00:29:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.72.2.2 2014/08/20 00:03:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,9 +241,18 @@ dev_type_poll(uscannerpoll);
 dev_type_kqfilter(uscannerkqfilter);
 
 const struct cdevsw uscanner_cdevsw = {
-	uscanneropen, uscannerclose, uscannerread, uscannerwrite,
-	uscannerioctl, nostop, notty, uscannerpoll, nommap, uscannerkqfilter,
-	D_OTHER,
+	.d_open = uscanneropen,
+	.d_close = uscannerclose,
+	.d_read = uscannerread,
+	.d_write = uscannerwrite,
+	.d_ioctl = uscannerioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = uscannerpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = uscannerkqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 Static int uscanner_do_read(struct uscanner_softc *, struct uio *, int);

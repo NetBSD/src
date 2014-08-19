@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.22 2012/08/02 14:07:47 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.22.2.1 2014/08/20 00:03:19 tls Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.22 2012/08/02 14:07:47 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.22.2.1 2014/08/20 00:03:19 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,7 +428,9 @@ emulate_opcode(struct trapframe *tf, ksiginfo_t *ksi)
 	}
 
 	if (OPC_MFSPR_P(opcode, SPR_PIR)) {
-		__asm ("mfpir %0" : "=r"(tf->tf_fixreg[OPC_MFSPR_REG(opcode)]));
+		__asm ("mfspr %0, %1"
+		    :	"=r"(tf->tf_fixreg[OPC_MFSPR_REG(opcode)])
+		    :	"n"(SPR_PIR));
 		return true;
 	}
 
@@ -480,9 +482,9 @@ pgm_exception(struct trapframe *tf, ksiginfo_t *ksi)
 
 	if (tf->tf_esr & ESR_PIL) {
 		struct pcb * const pcb = lwp_getpcb(curlwp);
-		if (__predict_false(!(curlwp->l_md.md_flags & MDLWP_USEDFPU))) {
+		if (__predict_false(!fpu_used_p(curlwp))) {
 			memset(&pcb->pcb_fpu, 0, sizeof(pcb->pcb_fpu));
-			curlwp->l_md.md_flags |= MDLWP_USEDFPU;
+			fpu_mark_used(curlwp);
 		}
 		if (fpu_emulate(tf, &pcb->pcb_fpu, ksi)) {
 			if (ksi->ksi_signo == 0) {
@@ -525,7 +527,7 @@ debug_exception(struct trapframe *tf, ksiginfo_t *ksi)
 	 * Ack the interrupt.
 	 */
 	mtspr(SPR_DBSR, tf->tf_esr);
-	KASSERT(tf->tf_esr & (DBSR_IAC1|DBSR_IAC2));
+	KASSERT(tf->tf_esr & (DBSR_IAC1|DBSR_IAC2|DBSR_BRT));
 	KASSERT((tf->tf_srr1 & PSL_SE) == 0);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.18 2008/05/09 10:59:55 tsutsui Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.18.42.1 2014/08/20 00:02:50 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18 2008/05/09 10:59:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18.42.1 2014/08/20 00:02:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ mainbus_print(void *aux, const char *pnp)
 		return QUIET;
 
 	if (ma->ma_addr != MAINBUSCF_ADDR_DEFAULT)
-		aprint_normal(" addr 0x%lx", ma->ma_addr);
+		aprint_normal(" addr 0x%"PRIxBUSADDR, ma->ma_addr);
 	if (ma->ma_level != MAINBUSCF_LEVEL_DEFAULT)
 		aprint_normal(" level %d", ma->ma_level);
 	if (ma->ma_irq != MAINBUSCF_IRQ_DEFAULT)

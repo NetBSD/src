@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.11 2011/07/28 10:01:44 tsutsui Exp $ */
+/* $NetBSD: sio.c,v 1.11.12.1 2014/08/20 00:03:10 tls Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.11 2011/07/28 10:01:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.11.12.1 2014/08/20 00:03:10 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ static int  sio_print(void *, const char *);
 CFATTACH_DECL_NEW(sio, sizeof(struct sio_softc),
     sio_match, sio_attach, NULL, NULL);
 
-static void nullintr(int);
+static void nullintr(void *);
 static int xsiointr(void *);
 
 static int
@@ -78,10 +78,10 @@ sio_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal(": uPD7201A\n");
 
-	sc->scp_dev = self;
-	sc->scp_ctl = (void *)ma->ma_addr;
-	sc->scp_intr[0] = sc->scp_intr[1] = nullintr;
+	sc->sc_dev = self;
+	sc->sc_ctl = (void *)ma->ma_addr;
 	for (channel = 0; channel < 2; channel++) {
+		sc->sc_intrhand[channel].ih_func = nullintr;
 		sio_args.channel = channel;
 		sio_args.hwflags = (channel == sysconsole);
 		config_found(self, (void *)&sio_args, sio_print);
@@ -109,12 +109,16 @@ xsiointr(void *arg)
 {
 	struct sio_softc *sc = arg;
 
-	(*sc->scp_intr[0])(0); 	/* 0: ttya system serial port */
-	(*sc->scp_intr[1])(1);	/* 1: keyboard and mouse */
+	/* channel 0: ttya system serial port */
+	(*sc->sc_intrhand[0].ih_func)(sc->sc_intrhand[0].ih_arg);
+
+	/* channel 1: keyboard and mouse */
+	(*sc->sc_intrhand[1].ih_func)(sc->sc_intrhand[1].ih_arg);
+
 	return 1;
 }
 
 static void
-nullintr(int v)
+nullintr(void *arg)
 {
 }

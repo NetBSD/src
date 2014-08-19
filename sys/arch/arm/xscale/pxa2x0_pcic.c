@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_pcic.c,v 1.10.12.1 2012/11/20 03:01:08 tls Exp $	*/
+/*	$NetBSD: pxa2x0_pcic.c,v 1.10.12.2 2014/08/20 00:02:48 tls Exp $	*/
 /*	$OpenBSD: pxa2x0_pcic.c,v 1.17 2005/12/14 15:08:51 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_pcic.c,v 1.10.12.1 2012/11/20 03:01:08 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_pcic.c,v 1.10.12.2 2014/08/20 00:02:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -417,7 +417,7 @@ pxapcic_doattach(device_t self)
 	for (i = 0; i < sc->sc_nslots; i++) {
 		sock = &sc->sc_socket[s[i]];
 
-		config_pending_incr();
+		config_pending_incr(self);
 
 		/* If there's a card there, attach it. */
 		cs = (*sock->pcictag->read)(sock, PXAPCIC_CARD_STATUS);
@@ -455,7 +455,7 @@ pxapcic_event_thread(void *arg)
 	u_int cs;
 	int present;
 
-	config_pending_decr();
+	config_pending_decr(sock->sc->sc_dev);
 
 	while (sock->sc->sc_shutdown == 0) {
 		(void) tsleep(sock, PWAIT, "pxapcicev", 0);

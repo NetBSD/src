@@ -1,4 +1,4 @@
-/*	$NetBSD: flock.c,v 1.6.2.3 2013/02/25 00:30:34 tls Exp $	*/
+/*	$NetBSD: flock.c,v 1.6.2.4 2014/08/20 00:04:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: flock.c,v 1.6.2.3 2013/02/25 00:30:34 tls Exp $");
+__RCSID("$NetBSD: flock.c,v 1.6.2.4 2014/08/20 00:04:58 tls Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -63,7 +63,7 @@ static struct option flock_longopts[] = {
 
 static sig_atomic_t timeout_expired;
 
-static __dead void
+static __dead __printflike(1, 2) void
 usage(const char *fmt, ...) 
 {
 	if (fmt) {
@@ -149,7 +149,7 @@ int
 main(int argc, char *argv[])
 {
 	int c;
-	int lock = LOCK_EX;
+	int lock = 0;
 	double timeout = 0;
 	int cls = 0;
 	int fd = -1;
@@ -170,7 +170,8 @@ main(int argc, char *argv[])
 			debug++;
 			break;
 		case 'x':
-			if (lock & ~LOCK_NB)
+#define T(l)	(lock & ~LOCK_NB) != (l) && (lock & ~LOCK_NB) != 0
+			if (T(LOCK_EX))
 				goto badlock;
 			lock |= LOCK_EX;
 			break;
@@ -178,12 +179,12 @@ main(int argc, char *argv[])
 			lock |= LOCK_NB;
 			break;
 		case 's':
-			if (lock & ~LOCK_NB)
+			if (T(LOCK_SH))
 				goto badlock;
 			lock |= LOCK_SH;
 			break;
 		case 'u':
-			if (lock & ~LOCK_NB)
+			if (T(LOCK_UN))
 				goto badlock;
 			lock |= LOCK_UN;
 			break;
@@ -204,6 +205,9 @@ main(int argc, char *argv[])
 
 	argc -= optind;
 	argv += optind;
+
+	if ((lock & ~LOCK_NB) == 0)
+		usage("Missing lock type flag");
 
 	switch (argc) {
 	case 0:

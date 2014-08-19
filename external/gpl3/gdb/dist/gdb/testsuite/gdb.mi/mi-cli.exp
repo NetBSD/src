@@ -1,5 +1,4 @@
-# Copyright 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 2002-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,10 +27,9 @@ if [mi_gdb_start] {
     continue
 }
 
-set testfile "basics"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/mi-cli
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-DFAKEARGV}] != "" } {
+standard_testfile basics.c
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
      untested mi-cli.exp
      return -1
 }
@@ -58,7 +56,7 @@ mi_gdb_test "-interpreter-exec console bogus" \
 #   {(=.*)+\^done} \
 #   "-interpreter-exec console \"file \$binfile\""
 mi_gdb_test "-interpreter-exec console \"file $binfile\"" \
-  {~"Reading symbols from .*mi-cli...".*done} \
+  {~"Reading symbols from .*mi-cli...".*\^done} \
   "-interpreter-exec console \"file \$binfile\""
 
 mi_run_to_main
@@ -72,27 +70,23 @@ set line_callee4_body [expr $line_callee4_head + 2]
 set line_callee4_next [expr $line_callee4_body + 1]
 
 mi_gdb_test "-interpreter-exec console \"set args foobar\"" \
-  {\^done} \
+  ".*=cmd-param-changed,param=\"args\",value=\"foobar\".*\\^done" \
   "-interpreter-exec console \"set args foobar\""
 
 mi_gdb_test "-interpreter-exec console \"show args\"" \
   {\~"Argument list to give program being debugged when it is started is \\\"foobar\\\"\.\\n".*\^done} \
   "-interpreter-exec console \"show args\""
 
-# NOTE: cagney/2003-02-03: Not yet.
-# mi_gdb_test "-interpreter-exec console \"break callee4\"" \
-#   {(&.*)*.*~"Breakpoint 2 at.*\\n".*=breakpoint-create,number="2".*\^done} \
-#   "-interpreter-exec console \"break callee4\""
 mi_gdb_test "-interpreter-exec console \"break callee4\"" \
-  {(&.*)*.*~"Breakpoint 2 at.*\\n".*\^done} \
-  "-interpreter-exec console \"break callee4\""
+    {(&.*)*.*~"Breakpoint 2 at.*\\n".*=breakpoint-created,bkpt=\{number="2",type="breakpoint".*\}.*\n\^done} \
+    "-interpreter-exec console \"break callee4\""
 
 mi_gdb_test "-interpreter-exec console \"info break\"" \
   {\~"Num[ \t]*Type[ \t]*Disp[ \t]*Enb[ \t]*Address[ \t]*What\\n".*~"2[ \t]*breakpoint[ \t]*keep[ \t]*y[ \t]*0x[0-9A-Fa-f]+[ \t]*in callee4 at .*basics.c:[0-9]+\\n".*\^done} \
   "-interpreter-exec console \"info break\""
 
 mi_gdb_test "-interpreter-exec console \"set listsize 1\"" \
-  {\^done} \
+  ".*=cmd-param-changed,param=\"listsize\",value=\"1\".*\\^done" \
   "-interpreter-exec console \"set listsize 1\""
 
 # {.*\~"32[ \t(\\t)]*callee1.*\\n".*\^done }
@@ -101,15 +95,12 @@ mi_gdb_test "-interpreter-exec console \"list\"" \
   "-interpreter-exec console \"list\""
 
 mi_execute_to "exec-continue" "breakpoint-hit" "callee4" "" ".*basics.c" $line_callee4_body \
-    { "" "disp=\"keep\"" } "continue to callee4"
+    { "" "disp=\"keep\"" } \
+    "continue to callee4"
 
-# NOTE: cagney/2003-02-03: Not yet.
-# mi_gdb_test "100-interpreter-exec console \"delete 2\"" \
-#   {.*=breakpoint-delete,number=\"2\".*\^done} \
-#   "-interpreter-exec console \"delete 2\""
 mi_gdb_test "100-interpreter-exec console \"delete 2\"" \
-  {100\^done} \
-  "-interpreter-exec console \"delete 2\""
+    {.*=breakpoint-deleted,id=\"2\".*\^done} \
+    "-interpreter-exec console \"delete 2\""
 
 # NOTE: cagney/2003-02-03: Not yet.
 # mi_gdb_test "200-interpreter-exec console \"up\"" \
@@ -161,17 +152,13 @@ if {$async} {
 mi_execute_to "interpreter-exec console step" $reason "callee4" "" ".*basics.c" $line_callee4_next \
     "" "check *stopped from CLI command"
 
-# NOTE: cagney/2003-02-03: Not yet.
-# mi_gdb_test "-break-insert -t basics.c:$line_main_hello" \
-#   {.*=breakpoint-create,number="3".*\^done} \
-#   "-break-insert -t basics.c:\$line_main_hello"
 mi_gdb_test "600-break-insert -t basics.c:$line_main_hello" \
 	{600\^done,bkpt=.number="3",type="breakpoint".*\}} \
 	"-break-insert -t basics.c:\$line_main_hello"
 
 mi_execute_to "exec-continue" "breakpoint-hit" "main" "" ".*basics.c" \
     $line_main_hello { "" "disp=\"del\"" } \
-    "-exec-continue to line $line_main_hello"
+    "-exec-continue to line \$line_main_hello"
 
 # Test that the token is output even for CLI commands
 # Also test that *stopped includes frame information.

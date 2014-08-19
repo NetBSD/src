@@ -1,8 +1,6 @@
 /* Code dealing with dummy stack frames, for GDB, the GNU debugger.
 
-   Copyright (C) 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
-   1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2007, 2008, 2009,
-   2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,8 +27,9 @@
 #include "frame-unwind.h"
 #include "command.h"
 #include "gdbcmd.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "observer.h"
+#include "gdbthread.h"
 
 /* Dummy frame.  This saves the processor state just prior to setting
    up the inferior function call.  Older targets save the registers
@@ -47,40 +46,6 @@ struct dummy_frame
 };
 
 static struct dummy_frame *dummy_frame_stack = NULL;
-
-/* Function: deprecated_pc_in_call_dummy (pc)
-
-   Return non-zero if the PC falls in a dummy frame created by gdb for
-   an inferior call.  The code below which allows gdbarch_decr_pc_after_break
-   is for infrun.c, which may give the function a PC without that
-   subtracted out.
-
-   FIXME: cagney/2002-11-23: This is silly.  Surely "infrun.c" can
-   figure out what the real PC (as in the resume address) is BEFORE
-   calling this function.
-
-   NOTE: cagney/2004-08-02: I'm pretty sure that, with the introduction of
-   infrun.c:adjust_pc_after_break (thanks), this function is now
-   always called with a correctly adjusted PC!
-
-   NOTE: cagney/2004-08-02: Code should not need to call this.  */
-
-int
-deprecated_pc_in_call_dummy (struct gdbarch *gdbarch, CORE_ADDR pc)
-{
-  struct dummy_frame *dummyframe;
-
-  for (dummyframe = dummy_frame_stack;
-       dummyframe != NULL;
-       dummyframe = dummyframe->next)
-    {
-      if ((pc >= dummyframe->id.code_addr)
-	  && (pc <= dummyframe->id.code_addr
-		    + gdbarch_decr_pc_after_break (gdbarch)))
-	return 1;
-    }
-  return 0;
-}
 
 /* Push the caller's state, along with the dummy frame info, onto the
    dummy-frame stack.  */
@@ -110,19 +75,44 @@ remove_dummy_frame (struct dummy_frame **dummy_ptr)
   xfree (dummy);
 }
 
+/* Delete any breakpoint B which is a momentary breakpoint for return from
+   inferior call matching DUMMY_VOIDP.  */
+
+static int
+pop_dummy_frame_bpt (struct breakpoint *b, void *dummy_voidp)
+{
+  struct dummy_frame *dummy = dummy_voidp;
+
+  if (b->thread == pid_to_thread_id (inferior_ptid)
+      && b->disposition == disp_del && frame_id_eq (b->frame_id, dummy->id))
+    {
+      while (b->related_breakpoint != b)
+	delete_breakpoint (b->related_breakpoint);
+
+      delete_breakpoint (b);
+
+      /* Stop the traversal.  */
+      return 1;
+    }
+
+  /* Continue the traversal.  */
+  return 0;
+}
+
 /* Pop *DUMMY_PTR, restoring program state to that before the
    frame was created.  */
 
 static void
 pop_dummy_frame (struct dummy_frame **dummy_ptr)
 {
-  struct dummy_frame *dummy;
+  struct dummy_frame *dummy = *dummy_ptr;
 
-  restore_infcall_suspend_state ((*dummy_ptr)->caller_state);
+  restore_infcall_suspend_state (dummy->caller_state);
+
+  iterate_over_breakpoints (pop_dummy_frame_bpt, dummy);
 
   /* restore_infcall_control_state frees inf_state,
      all that remains is to pop *dummy_ptr.  */
-  dummy = *dummy_ptr;
   *dummy_ptr = dummy->next;
   xfree (dummy);
 
@@ -168,9 +158,22 @@ dummy_frame_pop (struct frame_id dummy_id)
   pop_dummy_frame (dp);
 }
 
-/* There may be stale dummy frames, perhaps left over from when a longjump took
-   us out of a function that was called by the debugger.  Clean them up at
-   least once whenever we start a new inferior.  */
+/* Drop dummy frame DUMMY_ID.  Do nothing if it is not found.  Do not restore
+   its state into inferior, just free its memory.  */
+
+void
+dummy_frame_discard (struct frame_id dummy_id)
+{
+  struct dummy_frame **dp;
+
+  dp = lookup_dummy_frame (dummy_id);
+  if (dp)
+    remove_dummy_frame (dp);
+}
+
+/* There may be stale dummy frames, perhaps left over from when an uncaught
+   longjmp took us out of a function that was called by the debugger.  Clean
+   them up at least once whenever we start a new inferior.  */
 
 static void
 cleanup_dummy_frames (struct target_ops *target, int from_tty)
@@ -261,7 +264,7 @@ dummy_frame_prev_register (struct frame_info *this_frame,
 /* Assuming that THIS_FRAME is a dummy, return its ID.  That ID is
    determined by examining the NEXT frame's unwound registers using
    the method dummy_id().  As a side effect, THIS dummy frame's
-   dummy cache is located and and saved in THIS_PROLOGUE_CACHE.  */
+   dummy cache is located and saved in THIS_PROLOGUE_CACHE.  */
 
 static void
 dummy_frame_this_id (struct frame_info *this_frame,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.69.6.2 2013/06/23 06:20:16 tls Exp $	*/
+/*	$NetBSD: ld.c,v 1.69.6.3 2014/08/20 00:03:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.69.6.2 2013/06/23 06:20:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.69.6.3 2014/08/20 00:03:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,12 +82,29 @@ static dev_type_dump(lddump);
 static dev_type_size(ldsize);
 
 const struct bdevsw ld_bdevsw = {
-	ldopen, ldclose, ldstrategy, ldioctl, lddump, ldsize, D_DISK
+	.d_open = ldopen,
+	.d_close = ldclose,
+	.d_strategy = ldstrategy,
+	.d_ioctl = ldioctl,
+	.d_dump = lddump,
+	.d_psize = ldsize,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw ld_cdevsw = {
-	ldopen, ldclose, ldread, ldwrite, ldioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = ldopen,
+	.d_close = ldclose,
+	.d_read = ldread,
+	.d_write = ldwrite,
+	.d_ioctl = ldioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 static struct	dkdriver lddkdriver = { ldstrategy, ldminphys };
@@ -147,7 +164,7 @@ ldattach(struct ld_softc *sc)
 
 	/* Attach the device into the rnd source list. */
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dv),
-	    RND_TYPE_DISK, 0);
+	    RND_TYPE_DISK, RND_FLAG_DEFAULT);
 
 	/* Register with PMF */
 	if (!pmf_device_register1(sc->sc_dv, ld_suspend, NULL, ld_shutdown))

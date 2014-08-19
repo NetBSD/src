@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.26.6.1 2012/11/20 03:00:57 tls Exp $ */
+/*	$NetBSD: grf_cv3d.c,v 1.26.6.2 2014/08/20 00:02:43 tls Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.26.6.1 2012/11/20 03:00:57 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.26.6.2 2014/08/20 00:02:43 tls Exp $");
 
 #include "ite.h"
 #include "wsdisplay.h"
@@ -424,10 +424,7 @@ grfcv3dattach(device_t parent, device_t self, void *aux)
 	static struct grf_softc congrf;
 	static char attachflag = 0;
 	struct device temp;
-	struct zbus_args *zap;
 	struct grf_softc *gp;
-
-	zap = aux;
 
 	printf("\n");
 
@@ -1040,12 +1037,10 @@ cv3d_setmonitor(struct grf_softc *gp, struct grfvideo_mode *gv)
 int
 cv3d_getcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 {
-	volatile void *ba;
 	u_char red[256], green[256], blue[256], *rp, *gp, *bp;
 	short x;
 	int error;
 
-	ba = gfp->g_regkva;
 	if (cmap->count == 0 || cmap->index >= 256)
 		return (0);
 
@@ -1078,12 +1073,10 @@ cv3d_getcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 int
 cv3d_putcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 {
-	volatile void *ba;
 	u_char red[256], green[256], blue[256], *rp, *gp, *bp;
 	short x;
 	int error;
 
-	ba = gfp->g_regkva;
 	if (cmap->count == 0 || cmap->index >= 256)
 		return (0);
 
@@ -1115,9 +1108,6 @@ cv3d_putcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 int
 cv3d_toggle(struct grf_softc *gp)
 {
-	volatile void *ba;
-
-	ba = gp->g_regkva;
 #ifndef CV3DCONSOLE
 	cv3d_pass_toggle = 1;
 #endif /* !CV3DCONSOLE */
@@ -1203,7 +1193,7 @@ cv3d_load_mon(struct grf_softc *gp, struct grfcv3dtext_mode *md)
 {
 	struct grfvideo_mode *gv;
 	struct grfinfo *gi;
-	volatile void *ba, *fb;
+	volatile void *ba;
 	unsigned short mnr;
 	unsigned short HT, HDE, HBS, HBE, HSS, HSE, VDE, VBS, VBE, VSS,
 		VSE, VT;
@@ -1225,7 +1215,6 @@ cv3d_load_mon(struct grf_softc *gp, struct grfcv3dtext_mode *md)
 	}
 
 	ba = gp->g_regkva;
-	fb = gp->g_fbkva;
 
 	/* turn gfx off, don't mess up the display */
 	cv3d_gfx_on_off(1, ba);
@@ -1573,12 +1562,11 @@ void
 cv3d_inittextmode(struct grf_softc *gp)
 {
 	struct grfcv3dtext_mode *tm = (struct grfcv3dtext_mode *)gp->g_data;
-	volatile void *ba, *fb;
+	volatile void *fb;
 	volatile unsigned char *c;
 	unsigned char *f, y;
 	unsigned short z;
 
-	ba = gp->g_regkva;
 	fb = gp->g_fbkva;
 
 	/* load text font into beginning of display memory.

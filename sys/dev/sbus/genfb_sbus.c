@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_sbus.c,v 1.10 2010/10/07 07:53:54 macallan Exp $ */
+/*	$NetBSD: genfb_sbus.c,v 1.10.18.1 2014/08/20 00:03:50 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -29,7 +29,7 @@
 /* an SBus frontend for the generic fb console driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_sbus.c,v 1.10 2010/10/07 07:53:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_sbus.c,v 1.10.18.1 2014/08/20 00:03:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,8 @@ genfb_attach_sbus(device_t parent, device_t self, void *args)
 {
 	struct genfb_sbus_softc *sc = device_private(self);
 	struct sbus_attach_args *sa = args;
-	struct genfb_ops ops;
+	static const struct genfb_ops zero_ops;
+	struct genfb_ops ops = zero_ops;
 	prop_dictionary_t dict;
 	bus_space_handle_t bh;
 	paddr_t fbpa;

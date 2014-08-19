@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2010-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,6 +23,6 @@ int
 main (int argc, char *argv[])
 {
   func1 ();
-  func2 ();
+  func2 ();      /* Break at func2 call site.  */
   return 0;      /* Break to end.  */
 }

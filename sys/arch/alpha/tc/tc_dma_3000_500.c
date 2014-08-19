@@ -1,4 +1,4 @@
-/* $NetBSD: tc_dma_3000_500.c,v 1.18 2012/02/06 02:14:16 matt Exp $ */
+/* $NetBSD: tc_dma_3000_500.c,v 1.18.6.1 2014/08/20 00:02:42 tls Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_500.c,v 1.18 2012/02/06 02:14:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_500.c,v 1.18.6.1 2014/08/20 00:02:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,6 @@ tc_bus_dmamap_create_sgmap(
 	int flags,
 	bus_dmamap_t *dmamp)
 {
-	bus_dmamap_t map;
 	int error;
 
 	error = _bus_dmamap_create(t, size, nsegments, maxsegsz,
@@ -128,7 +127,7 @@ tc_bus_dmamap_create_sgmap(
 	if (error)
 		return (error);
 
-	map = *dmamp;
+	(void)*dmamp;
 
 	/* XXX BUS_DMA_ALLOCNOW */
 

@@ -1,6 +1,5 @@
 /* Generic simulator stop_reason.
-   Copyright (C) 1997, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -37,7 +36,7 @@ sim_stop_reason (SIM_DESC sd, enum sim_stop *reason, int *sigrc)
       break;
     case sim_stopped :
     case sim_signalled :
-      *sigrc = sim_signal_to_target (sd, engine->sigrc);
+      *sigrc = sim_signal_to_gdb_signal (sd, engine->sigrc);
       break;
     default :
       abort ();

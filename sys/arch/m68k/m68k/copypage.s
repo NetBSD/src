@@ -1,4 +1,4 @@
-/*	$NetBSD: copypage.s,v 1.14 2010/06/06 04:50:07 mrg Exp $	*/
+/*	$NetBSD: copypage.s,v 1.14.18.1 2014/08/20 00:03:11 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -50,13 +50,13 @@
  */
 #if defined(M68040) || defined(M68060)
 ENTRY(copypage040)
-	movl	%sp@(4),%a0		| source address
-	movl	%sp@(8),%a1		| destiniation address
+	movl	4(%sp),%a0		| source address
+	movl	8(%sp),%a1		| destiniation address
 	movw	#PAGE_SIZE/32-1,%d0	| number of 32 byte chunks - 1
-Lm16loop:
-	.long	0xf6209000		| move16 %a0@+,%a1@+
-	.long	0xf6209000		| move16 %a0@+,%a1@+
-	dbf	%d0,Lm16loop
+.Lm16loop:
+	.long	0xf6209000		| move16 (%a0)+,(%a1)+
+	.long	0xf6209000		| move16 (%a0)+,(%a1)+
+	dbf	%d0,.Lm16loop
 	rts
 #endif /* M68040 || M68060 */
 
@@ -66,25 +66,25 @@ Lm16loop:
  * Optimized version of bcopy for a single page-aligned PAGE_SIZE byte copy.
  */
 ENTRY(copypage)
-	movl	%sp@(4),%a0		| source address
-	movl	%sp@(8),%a1		| destiniation address
+	movl	4(%sp),%a0		| source address
+	movl	8(%sp),%a1		| destiniation address
 #ifndef	__mc68010__
 	movw	#PAGE_SIZE/32-1,%d0	| number of 32 byte chunks - 1
-Lmlloop:
-	movl	%a0@+,%a1@+
-	movl	%a0@+,%a1@+
-	movl	%a0@+,%a1@+
-	movl	%a0@+,%a1@+
-	movl	%a0@+,%a1@+
-	movl	%a0@+,%a1@+
-	movl	%a0@+,%a1@+
-	movl	%a0@+,%a1@+
-	dbf	%d0,Lmlloop
+.Lmlloop:
+	movl	(%a0)+,(%a1)+
+	movl	(%a0)+,(%a1)+
+	movl	(%a0)+,(%a1)+
+	movl	(%a0)+,(%a1)+
+	movl	(%a0)+,(%a1)+
+	movl	(%a0)+,(%a1)+
+	movl	(%a0)+,(%a1)+
+	movl	(%a0)+,(%a1)+
+	dbf	%d0,.Lmlloop
 #else	/* __mc68010__ */	
 	movw	#PAGE_SIZE/4-1,%d0	| number of 4 byte chunks - 1
-Lmlloop:
-	movl	%a0@+,%a1@+
-	dbf	%d0,Lmlloop		| use the 68010 loop mode
+.Lmlloop:
+	movl	(%a0)+,(%a1)+
+	dbf	%d0,.Lmlloop		| use the 68010 loop mode
 #endif	/* __mc68010__ */	
 	rts
 
@@ -94,10 +94,10 @@ Lmlloop:
  * Optimized version of bzero for a single page-aligned PAGE_SIZE byte zero.
  */
 ENTRY(zeropage)
-	movl	%sp@(4),%a0		| dest address
+	movl	4(%sp),%a0		| dest address
 #ifndef	__mc68010__
 	movql	#PAGE_SIZE/256-1,%d0	| number of 256 byte chunks - 1
-	movml	%d2-%d7,%sp@-
+	movml	%d2-%d7,-(%sp)
 	movql	#0,%d1
 	movql	#0,%d2
 	movql	#0,%d3
@@ -106,22 +106,22 @@ ENTRY(zeropage)
 	movql	#0,%d6
 	movql	#0,%d7
 	movl	%d1,%a1
-	lea	%a0@(PAGE_SIZE),%a0
-Lzloop:
-	movml	%d1-%d7/%a1,%a0@-
-	movml	%d1-%d7/%a1,%a0@-
-	movml	%d1-%d7/%a1,%a0@-
-	movml	%d1-%d7/%a1,%a0@-
-	movml	%d1-%d7/%a1,%a0@-
-	movml	%d1-%d7/%a1,%a0@-
-	movml	%d1-%d7/%a1,%a0@-
-	movml	%d1-%d7/%a1,%a0@-
-	dbf	%d0,Lzloop
-	movml	%sp@+,%d2-%d7
+	lea	PAGE_SIZE(%a0),%a0
+.Lzloop:
+	movml	%d1-%d7/%a1,-(%a0)
+	movml	%d1-%d7/%a1,-(%a0)
+	movml	%d1-%d7/%a1,-(%a0)
+	movml	%d1-%d7/%a1,-(%a0)
+	movml	%d1-%d7/%a1,-(%a0)
+	movml	%d1-%d7/%a1,-(%a0)
+	movml	%d1-%d7/%a1,-(%a0)
+	movml	%d1-%d7/%a1,-(%a0)
+	dbf	%d0,.Lzloop
+	movml	(%sp)+,%d2-%d7
 #else	/* __mc68010__ */
 	movw	#PAGE_SIZE/4-1,%d0	| number of 4 byte chunks - 1
-Lzloop:
-	clrl	%a0@+
-	dbf	%d0,Lzloop		| use the 68010 loop mode
+.Lzloop:
+	clrl	(%a0)+
+	dbf	%d0,.Lzloop		| use the 68010 loop mode
 #endif	/* __mc68010__ */
 	rts

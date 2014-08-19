@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_quotactl.c,v 1.38 2012/02/01 05:43:54 dholland Exp $	*/
+/*	$NetBSD: vfs_quotactl.c,v 1.38.10.1 2014/08/20 00:04:29 tls Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.38 2012/02/01 05:43:54 dholland Exp $$");
+__KERNEL_RCSID(0, "$NetBSD: vfs_quotactl.c,v 1.38.10.1 2014/08/20 00:04:29 tls Exp $$");
 
 #include <sys/mount.h>
 #include <sys/quotactl.h>
@@ -93,12 +93,12 @@ vfs_quotactl_put(struct mount *mp, const struct quotakey *key,
 }
 
 int
-vfs_quotactl_delete(struct mount *mp, const struct quotakey *key)
+vfs_quotactl_del(struct mount *mp, const struct quotakey *key)
 {
 	struct quotactl_args args;
 
-	args.qc_op = QUOTACTL_DELETE;
-	args.u.delete.qc_key = key;
+	args.qc_op = QUOTACTL_DEL;
+	args.u.del.qc_key = key;
 	return VFS_QUOTACTL(mp, &args);
 }
 

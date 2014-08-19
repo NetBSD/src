@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.14 2012/07/12 15:59:32 jakllsch Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.14.2.1 2014/08/20 00:03:50 tls Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -125,6 +125,7 @@ struct sdmmc_command {
 #define SCF_RSP_R5B	(SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX|SCF_RSP_BSY)
 #define SCF_RSP_R6	(SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX)
 #define SCF_RSP_R7	(SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX)
+#define SCF_RSP_MASK	(0x1f << 1)
 /* SPI */
 #define SCF_RSP_SPI_R1	(SCF_RSP_SPI_S1)
 #define SCF_RSP_SPI_R1B	(SCF_RSP_SPI_S1|SCF_RSP_SPI_BSY)
@@ -133,6 +134,7 @@ struct sdmmc_command {
 #define SCF_RSP_SPI_R4	(SCF_RSP_SPI_S1|SCF_RSP_SPI_B4)
 #define SCF_RSP_SPI_R5	(SCF_RSP_SPI_S1|SCF_RSP_SPI_S2)
 #define SCF_RSP_SPI_R7	(SCF_RSP_SPI_S1|SCF_RSP_SPI_B4)
+#define SCF_RSP_SPI_MASK (0xf << 10)
 	int		 c_error;	/* errno value on completion */
 
 	/* Host controller owned fields for data xfer in progress */
@@ -338,7 +340,8 @@ void	sdmmc_mem_scan(struct sdmmc_softc *);
 int	sdmmc_mem_init(struct sdmmc_softc *, struct sdmmc_function *);
 int	sdmmc_mem_send_op_cond(struct sdmmc_softc *, uint32_t, uint32_t *);
 int	sdmmc_mem_send_if_cond(struct sdmmc_softc *, uint32_t, uint32_t *);
-int	sdmmc_mem_set_blocklen(struct sdmmc_softc *, struct sdmmc_function *);
+int	sdmmc_mem_set_blocklen(struct sdmmc_softc *, struct sdmmc_function *,
+	    int);
 int	sdmmc_mem_read_block(struct sdmmc_function *, uint32_t, u_char *,
 	    size_t);
 int	sdmmc_mem_write_block(struct sdmmc_function *, uint32_t, u_char *,

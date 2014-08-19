@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ndis.c,v 1.22.14.1 2012/11/20 03:01:56 tls Exp $	*/
+/*	$NetBSD: kern_ndis.c,v 1.22.14.2 2014/08/20 00:03:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.22.14.1 2012/11/20 03:01:56 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.22.14.2 2014/08/20 00:03:33 tls Exp $");
 #endif
 
 #include <sys/param.h>
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.22.14.1 2012/11/20 03:01:56 tls Exp 
 #include <compat/ndis/usbd_var.h>
 #include <dev/if_ndis/if_ndisvar.h>
 
-MODULE(MODULE_CLASS_MISC, ndis, NULL);
+MODULE(MODULE_CLASS_EXEC, ndis, NULL);
 
 #define NDIS_DUMMY_PATH "\\\\some\\bogus\\path"
 
@@ -579,14 +579,11 @@ ndis_unsched(void (*func)(void *), void *arg, int t)
 {
 	struct ndis_req		*r;
 	struct ndisqhead	*q;
-	struct proc		*p;
 
 	if (t == NDIS_TASKQUEUE) {
 		q = &ndis_ttodo;
-		p = ndis_tproc.np_p;
 	} else {
 		q = &ndis_itodo;
-		p = ndis_iproc.np_p;
 	}
 
 	mtx_lock_spin(&ndis_thr_mtx);
@@ -923,17 +920,18 @@ ndis_create_sysctls(void *arg)
 	    "NDIS API Version", "0x00050001", CTLFLAG_RD);
 
 	/* Bus type (PCI, PCMCIA, etc...) */
-	sprintf(buf, "%d", (int)sc->ndis_iftype);
+	snprintf(buf, sizeof(buf), "%d", (int)sc->ndis_iftype);
 	ndis_add_sysctl(sc, "BusType", "Bus Type", buf, CTLFLAG_RD);
 
 	if (sc->ndis_res_io != NULL) {
-		sprintf(buf, "0x%lx", rman_get_start(sc->ndis_res_io));
+		snprintf(buf, sizeof(buf), "0x%lx",
+		    rman_get_start(sc->ndis_res_io));
 		ndis_add_sysctl(sc, "IOBaseAddress",
 		    "Base I/O Address", buf, CTLFLAG_RD);
 	}
 
 	if (sc->ndis_irq != NULL) {
-		sprintf(buf, "%lu", rman_get_start(sc->ndis_irq));
+		snprintf(buf, sizeof(buf), "%lu", rman_get_start(sc->ndis_irq));
 		ndis_add_sysctl(sc, "InterruptNumber",
 		    "Interrupt Number", buf, CTLFLAG_RD);
 	}
@@ -1018,17 +1016,18 @@ ndis_create_sysctls(void *arg)
 						/*"NDIS API Version"*/ "Version", "0x00050001", CTLFLAG_RD);
 		
 		/* Bus type (PCI, PCMCIA, etc...) */
-		sprintf(buf, "%d", (int)sc->ndis_iftype);
+		snprintf(buf, sizeof(buf), "%d", (int)sc->ndis_iftype);
 		ndis_add_sysctl(sc, "BusType", "Bus Type", buf, CTLFLAG_RD);
 
 		if (sc->ndis_res_io != NULL) {
-			sprintf(buf, "0x%lx", (long unsigned int)rman_get_start(sc->ndis_res_io));
+			snprintf(buf, sizeof(buf), "0x%lx",
+			    (long unsigned int)rman_get_start(sc->ndis_res_io));
 			ndis_add_sysctl(sc, "IOBaseAddress",
 							/*"Base I/O Address"*/ "Base I/O", buf, CTLFLAG_RD);
 		}
 
 		if (sc->ndis_irq != NULL) {
-			sprintf(buf, "%lu", (long unsigned int)rman_get_start(sc->ndis_irq));
+			snprintf(buf, sizeof(buf), "%lu", (long unsigned int)rman_get_start(sc->ndis_irq));
 			ndis_add_sysctl(sc, "InterruptNumber",
 							"Interrupt Number", buf, CTLFLAG_RD);
 		}
@@ -1484,7 +1483,6 @@ ndis_set_info(void *arg, ndis_oid oid, void *buf, int *buflen)
 	ndis_handle		adapter;
 	__stdcall ndis_setinfo_handler	setfunc;
 	uint32_t		byteswritten = 0, bytesneeded = 0;
-	int			error;
 	uint8_t			irql = 0;	/* XXX: gcc */
 
 	/*
@@ -1527,9 +1525,8 @@ ndis_set_info(void *arg, ndis_oid oid, void *buf, int *buflen)
 
 	if (rval == NDIS_STATUS_PENDING) {
 		mtx_lock(&ndis_req_mtx);
-		error = mtsleep(&sc->ndis_block->nmb_setstat,
-				PZERO | PNORELOCK, 
-				"ndisset", 5 * hz, &ndis_req_mtx);
+		mtsleep(&sc->ndis_block->nmb_setstat, PZERO | PNORELOCK, 
+		    "ndisset", 5 * hz, &ndis_req_mtx);
 		rval = sc->ndis_block->nmb_setstat;
 	}
 
@@ -1708,16 +1705,10 @@ ndis_reset_nic(void *arg)
 	ndis_handle		adapter;
 	__stdcall ndis_reset_handler	resetfunc;
 	uint8_t			addressing_reset;
-	struct ifnet		*ifp;
 	int			rval;
 	uint8_t			irql = 0;	/* XXX: gcc */
 
 	sc = arg;
-#ifdef __FreeBSD__
-	ifp = &sc->arpcom.ac_if;
-#else
-	ifp = &sc->arpcom.ec_if;
-#endif
 
 	adapter = sc->ndis_block->nmb_miniportadapterctx;
 	resetfunc = sc->ndis_chars->nmc_reset_func;
@@ -1746,14 +1737,8 @@ ndis_halt_nic(void *arg)
 	struct ndis_softc	*sc;
 	ndis_handle		adapter;
 	__stdcall ndis_halt_handler	haltfunc;
-	struct ifnet		*ifp;
 
 	sc = arg;
-#ifdef __FreeBSD__
-	ifp = &sc->arpcom.ac_if;
-#else
-	ifp = &sc->arpcom.ec_if;
-#endif
 
 	NDIS_LOCK(sc);
 	

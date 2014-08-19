@@ -1,5 +1,5 @@
 /* Cell SPU GNU/Linux support -- shared library handling.
-   Copyright (C) 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    Contributed by Ulrich Weigand <uweigand@de.ibm.com>.
 
@@ -19,10 +19,11 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
+#include "solib-spu.h"
 #include "gdbcore.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdb_assert.h"
-#include "gdb_stat.h"
+#include <sys/stat.h>
 #include "arch-utils.h"
 #include "bfd.h"
 #include "symtab.h"
@@ -35,6 +36,7 @@
 #include "breakpoint.h"
 #include "gdbthread.h"
 #include "exceptions.h"
+#include "gdb_bfd.h"
 
 #include "spu-tdep.h"
 
@@ -87,7 +89,7 @@ spu_skip_standalone_loader (void)
 
       inferior_thread ()->control.in_infcall = 1; /* Suppress MI messages.  */
 
-      target_resume (inferior_ptid, 1, TARGET_SIGNAL_0);
+      target_resume (inferior_ptid, 1, GDB_SIGNAL_0);
       target_wait (minus_one_ptid, &ws, 0);
       set_executing (minus_one_ptid, 0);
 
@@ -156,11 +158,11 @@ append_ocl_sos (struct so_list **link_ptr)
 static struct so_list *
 spu_current_sos (void)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch);
+  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
   struct so_list *head;
   struct so_list **link_ptr;
 
-  char buf[MAX_SPE_FD * 4];
+  gdb_byte buf[MAX_SPE_FD * 4];
   int i, size;
 
   /* First, retrieve the SVR4 shared library list.  */
@@ -207,7 +209,7 @@ spu_current_sos (void)
 	 yet.  Skip such entries; we'll be back for them later.  */
       xsnprintf (annex, sizeof annex, "%d/object-id", fd);
       len = target_read (&current_target, TARGET_OBJECT_SPU, annex,
-			 id, 0, sizeof id);
+			 (gdb_byte *) id, 0, sizeof id);
       if (len <= 0 || len >= sizeof id)
 	continue;
       id[len] = 0;
@@ -284,7 +286,9 @@ static int
 spu_bfd_iovec_close (bfd *nbfd, void *stream)
 {
   xfree (stream);
-  return 1;
+
+  /* Zero means success.  */
+  return 0;
 }
 
 static file_ptr
@@ -324,16 +328,16 @@ spu_bfd_fopen (char *name, CORE_ADDR addr)
   CORE_ADDR *open_closure = xmalloc (sizeof (CORE_ADDR));
   *open_closure = addr;
 
-  nbfd = bfd_openr_iovec (xstrdup (name), "elf32-spu",
-                          spu_bfd_iovec_open, open_closure,
-                          spu_bfd_iovec_pread, spu_bfd_iovec_close,
-			  spu_bfd_iovec_stat);
+  nbfd = gdb_bfd_openr_iovec (name, "elf32-spu",
+			      spu_bfd_iovec_open, open_closure,
+			      spu_bfd_iovec_pread, spu_bfd_iovec_close,
+			      spu_bfd_iovec_stat);
   if (!nbfd)
     return NULL;
 
   if (!bfd_check_format (nbfd, bfd_object))
     {
-      bfd_close (nbfd);
+      gdb_bfd_unref (nbfd);
       return NULL;
     }
 
@@ -416,9 +420,9 @@ spu_enable_break (struct objfile *objfile)
     {
       CORE_ADDR addr = SYMBOL_VALUE_ADDRESS (spe_event_sym);
 
-      addr = gdbarch_convert_from_func_ptr_addr (target_gdbarch, addr,
+      addr = gdbarch_convert_from_func_ptr_addr (target_gdbarch (), addr,
                                                  &current_target);
-      create_solib_event_breakpoint (target_gdbarch, addr);
+      create_solib_event_breakpoint (target_gdbarch (), addr);
       return 1;
     }
 
@@ -540,6 +544,9 @@ spu_solib_loaded (struct so_list *so)
       ocl_enable_break (so->objfile);
     }
 }
+
+/* -Wmissing-prototypes */
+extern initialize_file_ftype _initialize_spu_solib;
 
 void
 _initialize_spu_solib (void)

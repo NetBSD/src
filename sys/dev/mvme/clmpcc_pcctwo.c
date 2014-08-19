@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.18.22.1 2012/11/20 03:02:12 tls Exp $	*/
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.18.22.2 2014/08/20 00:03:41 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.18.22.1 2012/11/20 03:02:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.18.22.2 2014/08/20 00:03:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,6 +168,7 @@ clmpcc_pcctwo_iackhook(struct clmpcc_softc *sc, int which)
 	}
 
 	foo = pcc2_reg_read(sys_pcctwo, offset);
+	__USE(foo);
 }
 
 /*
@@ -210,6 +211,7 @@ clmpcc_pcctwo_consiackhook(struct clmpcc_softc *sc, int which)
 		PCCTWO_REG_OFF]);
 
 	foo = bus_space_read_1(&_mainbus_space_tag, bush, offset);
+	__USE(foo);
 #else
 #error Need consiack hook
 #endif

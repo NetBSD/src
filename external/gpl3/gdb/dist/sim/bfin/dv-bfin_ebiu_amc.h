@@ -1,7 +1,7 @@
 /* Blackfin External Bus Interface Unit (EBIU) Asynchronous Memory Controller
    (AMC) model.
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -21,10 +21,6 @@
 
 #ifndef DV_BFIN_EBIU_AMC_H
 #define DV_BFIN_EBIU_AMC_H
-
-#define BFIN_MMR_EBIU_AMC_SIZE	(4 * 3)
-#define BF50X_MMR_EBIU_AMC_SIZE	0x28
-#define BF54X_MMR_EBIU_AMC_SIZE	(4 * 7)
 
 #define BFIN_EBIU_AMC_BASE	0x20000000
 

@@ -22,7 +22,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp-impl.h"
 
 size_t
-mpf_size (mpf_srcptr f)
+mpf_size (mpf_srcptr f) __GMP_NOTHROW
 {
   return __GMP_ABS (f->_mp_size);
 }

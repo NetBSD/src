@@ -1,4 +1,4 @@
-/* $NetBSD: newlocale.c,v 1.2.2.2 2013/06/23 06:21:05 tls Exp $ */
+/* $NetBSD: newlocale.c,v 1.2.2.3 2014/08/20 00:02:15 tls Exp $ */
 
 /*-
  * Copyright (c)2008, 2011 Citrus Project,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: newlocale.c,v 1.2.2.2 2013/06/23 06:21:05 tls Exp $");
+__RCSID("$NetBSD: newlocale.c,v 1.2.2.3 2014/08/20 00:02:15 tls Exp $");
 
 #include "namespace.h"
 #include <assert.h>
@@ -96,6 +96,10 @@ newlocale(int mask, const char *name, locale_t src)
 				(*l)(tokens[i], dst);
 			}
 		}
+	}
+	if (_setlocale_cache(dst, NULL)) {
+		free(dst);
+		return NULL;
 	}
 	return (locale_t)dst;
 }

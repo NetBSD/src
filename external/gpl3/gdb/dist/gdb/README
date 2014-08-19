@@ -144,7 +144,7 @@ format.  On its own, TeX cannot read, much less typeset a Texinfo file.
 `gdb-VERSION/texinfo' directory.
 
    If you have TeX and a DVI printer program installed, you can typeset
-and print this manual.  First switch to the the `gdb' subdirectory of
+and print this manual.  First switch to the `gdb' subdirectory of
 the main source directory (for example, to `gdb-VERSION/gdb') and then type:
 
       make doc/gdb.dvi
@@ -446,10 +446,10 @@ prefer; but you may abbreviate option names if you use `--'.
      Build GDB with the gdbtk GUI interface.  Requires TCL/Tk to be
      installed.
 
-`--with-libunwind'
-     Use the libunwind library for unwinding function call stack.  See
-     http://www.nongnu.org/libunwind/index.html fro details.
-     Supported only on some platforms.
+`--with-libunwind-ia64'
+     Use the libunwind library for unwinding function call stack on ia64
+     target platforms.
+     See http://www.nongnu.org/libunwind/index.html for details.
 
 `--with-curses'
      Use the curses library instead of the termcap library, for
@@ -577,15 +577,16 @@ try typing `M-x gdb RET'.
 Writing Code for GDB
 =====================
 
-   There is a lot of information about writing code for GDB in the
-internals manual, distributed with GDB in gdb/doc/gdbint.texinfo.  You
-can read it by hand, print it by using TeX and texinfo, or process it
-into an `info' file for use with Emacs' info mode or the standalone
-`info' program.
+   There is information about writing code for GDB in the file
+`CONTRIBUTE' and at the website:
+
+	http://www.gnu.org/software/gdb/
+
+in particular in the wiki.
 
    If you are pondering writing anything but a short patch, especially
-take note of the information about copyrights in the node Submitting
-Patches.  It can take quite a while to get all the paperwork done, so
+take note of the information about copyrights and copyright assignment.
+It can take quite a while to get all the paperwork done, so
 we encourage you to start that process as soon as you decide you are
 planning to work on something, or at least well ahead of when you
 think you will be ready to submit the patches.
@@ -637,6 +638,26 @@ with building one or more test executables or if you are using the
 testsuite `standalone', without it being part of the GDB source tree.
 
 See the DejaGNU documentation for further details.
+
+
+Copyright and License Notices
+=============================
+
+Most files maintained by the GDB Project contain a copyright notice
+as well as a license notice, usually at the start of the file.
+
+To reduce the length of copyright notices, consecutive years in the
+copyright notice can be combined into a single range.  For instance,
+the following list of copyright years...
+
+    1986, 1988, 1989, 1991-1993, 1999, 2000, 2007, 2008, 2009, 2010, 2011
+
+... is abbreviated into:
+
+    1986, 1988-1989, 1991-1993, 1999-2000, 2007-2011
+
+Every year of each range, inclusive, is a copyrightable year that
+could be listed individually.
 
 
 (this is for editing this file with GNU emacs)

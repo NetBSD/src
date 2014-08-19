@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.15.2.2 2013/06/23 06:20:01 tls Exp $
+#	$NetBSD: files.omap2,v 1.15.2.3 2014/08/20 00:02:47 tls Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -143,12 +143,24 @@ file	arch/arm/omap/obio_ohci.c		obioohci
 attach	ehci at obio with omap3_ehci
 file	arch/arm/omap/omap3_ehci.c		omap3_ehci
 
+# TI OTG controller
+define  tiotg_port {[port = -1], [mode = -1]}
+device	tiotg: tiotg_port
+attach	tiotg at obio
+file	arch/arm/omap/tiotg.c			tiotg
+attach  motg at tiotg_port
+
 attach	ahcisata at obio with omap5_ahcisata
 file	arch/arm/omap/omap5_ahcisata.c		omap5_ahcisata
 
 device	omapfb: rasops16, rasops8, wsemuldisplaydev, vcons, edid
 attach	omapfb at obio
 file	arch/arm/omap/omapfb.c			omapfb
+
+# TI AM335x framebuffer
+device	tifb: rasops16, rasops8, wsemuldisplaydev, vcons, edid
+attach	tifb at obio
+file	arch/arm/omap/tifb.c			tifb
 
 device	cpsw: ether, ifnet, arp, mii, mii_phy
 attach	cpsw at obio

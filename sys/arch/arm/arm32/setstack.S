@@ -1,4 +1,4 @@
-/*	$NetBSD: setstack.S,v 1.5 2012/02/16 02:35:52 christos Exp $	*/
+/*	$NetBSD: setstack.S,v 1.5.2.1 2014/08/20 00:02:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -49,7 +49,7 @@
 #include <arm/armreg.h>
 #include <machine/asm.h>
 
-	RCSID("$NetBSD: setstack.S,v 1.5 2012/02/16 02:35:52 christos Exp $")
+	RCSID("$NetBSD: setstack.S,v 1.5.2.1 2014/08/20 00:02:45 tls Exp $")
 
 /* To set the stack pointer for a particular mode we must switch
  * to that mode update the banked r13 and then switch back.
@@ -69,7 +69,8 @@ ENTRY(set_stackptr)
 
         msr	cpsr_c, r3		/* Restore the old mode */
 
-	mov	pc, lr			/* Exit */
+	RET				/* Exit */
+END(set_stackptr)
 
 /* To get the stack pointer for a particular mode we must switch
  * to that mode copy the banked r13 and then switch back.
@@ -84,10 +85,11 @@ ENTRY(get_stackptr)
 	orr	r2, r2, r0
         msr	cpsr_c, r2
 
-	mov	r0, sp			/* Set the stack pointer */
+	mov	r0, sp			/* Get the stack pointer */
 
         msr	cpsr_c, r3		/* Restore the old mode */
 
-	mov	pc, lr			/* Exit */
+	RET				/* Exit */
+END(get_stackptr)
 
 /* End of setstack.S */

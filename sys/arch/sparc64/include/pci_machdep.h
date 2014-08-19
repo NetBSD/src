@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.25.14.1 2012/11/20 03:01:45 tls Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.25.14.2 2014/08/20 00:03:25 tls Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -88,7 +88,8 @@ int		pci_bus_maxdevs(pci_chipset_tag_t, int);
 pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
 void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t, int *, int *,
 		    int *);
-const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
+const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t,
+		    char *, size_t);
 const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 int		pci_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);

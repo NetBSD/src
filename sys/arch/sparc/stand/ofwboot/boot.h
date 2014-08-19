@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.9 2011/06/01 11:43:12 tsutsui Exp $	*/
+/*	$NetBSD: boot.h,v 1.9.14.1 2014/08/20 00:03:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -68,5 +68,8 @@ void	freeall(void);
 
 /* ofdev.c */
 char *filename(char *, char *);
+
+/* boot.c */
+void main(void *);
 
 #endif /* _BOOT_H_ */

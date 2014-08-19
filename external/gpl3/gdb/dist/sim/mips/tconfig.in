@@ -10,8 +10,12 @@
 #include "gdb/remote-sim.h"
 #include "sim-module.h"
 
+/* FIXME: Revisit.  */
+#ifdef HAVE_DV_SOCKSER
 MODULE_INSTALL_FN dv_sockser_install;
 #define MODULE_LIST dv_sockser_install,
+#endif
+
 #else
 #define SIM_HANDLES_LMA 0
 #endif

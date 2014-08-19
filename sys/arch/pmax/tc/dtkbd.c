@@ -1,4 +1,4 @@
-/*	$NetBSD: dtkbd.c,v 1.10 2011/07/09 17:32:31 matt Exp $	*/
+/*	$NetBSD: dtkbd.c,v 1.10.12.1 2014/08/20 00:03:19 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtkbd.c,v 1.10 2011/07/09 17:32:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtkbd.c,v 1.10.12.1 2014/08/20 00:03:19 tls Exp $");
 
 #include "locators.h"
 
@@ -187,9 +187,6 @@ dtkbd_cnpollc(void *v, int on)
 int
 dtkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct dtkbd_softc *sc;
-
-	sc = v;
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:

@@ -1,4 +1,4 @@
-# Copyright 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2008-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,35 +18,28 @@
 # Test loading of line number information with absolute path in #line,
 # PR symtab/9465.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 # srcfile is in objdir because we need to machine generate it in order
 # to get the correct path in the #line directive.
 
-set testfile "hashline1"
-set srcfile "${testfile}.c"
-set binfile "${objdir}/${subdir}/${testfile}"
+standard_testfile .c
 
-set fd [open ${objdir}/${subdir}/${srcfile} w]
-puts $fd "#line 2 \"[pwd]/${subdir}/${srcfile}\""
+set new_srcfile [standard_output_file $srcfile]
+set fd [open $new_srcfile w]
+puts $fd "#line 2 \"$new_srcfile\""
 puts $fd "int main () { return 0; } /* set breakpoint here */"
 close $fd
 
 # The choice of path name for the source file is important in order to trigger
-# the bug.  Using ${objdir}/${subdir}/${srcfile} here won't trigger the bug.
-if { [gdb_compile "./${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+# the bug.  Using $new_srcfile here won't trigger the bug.
+set compile_name [relative_filename $objdir $new_srcfile]
+if { [gdb_compile $compile_name "${binfile}" executable {debug}] != "" } {
     untested hashline1.exp
     return -1
 }
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart ${binfile}
 
-set bp_location [gdb_get_line_number "set breakpoint here" ${objdir}/${subdir}/${srcfile}]
+set bp_location [gdb_get_line_number "set breakpoint here" $new_srcfile]
 
 # Try to set a breakpoint on the specified file location.
 

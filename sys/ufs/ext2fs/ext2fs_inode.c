@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.75.6.2 2013/06/23 06:18:39 tls Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.75.6.3 2014/08/20 00:04:44 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.75.6.2 2013/06/23 06:18:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.75.6.3 2014/08/20 00:04:44 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ ext2fs_nblock(struct inode *ip)
 		nblock |= (uint64_t)ip->i_e2fs_nblock_high << 32;
 
 		if ((ip->i_e2fs_flags & EXT2_HUGE_FILE)) {
-			nblock = fsbtodb(fs, nblock);
+			nblock = EXT2_FSBTODB(fs, nblock);
 		}
 	}
 
@@ -174,10 +174,10 @@ ext2fs_setnblock(struct inode *ip, uint64_t nblock)
 		return 0;
 	}
 
-	if (dbtofsb(fs, nblock) <= 0xffffffffffffULL) {
+	if (EXT2_DBTOFSB(fs, nblock) <= 0xffffffffffffULL) {
 		SET(ip->i_e2fs_flags, EXT2_HUGE_FILE);
-		ip->i_e2fs_nblock = dbtofsb(fs, nblock) & 0xffffffff;
-		ip->i_e2fs_nblock_high = (dbtofsb(fs, nblock) >> 32) & 0xffff;
+		ip->i_e2fs_nblock = EXT2_DBTOFSB(fs, nblock) & 0xffffffff;
+		ip->i_e2fs_nblock_high = (EXT2_DBTOFSB(fs, nblock) >> 32) & 0xffff;
 		return 0;
 	}
 
@@ -261,7 +261,7 @@ ext2fs_update(struct vnode *vp, const struct timespec *acc,
 	fs = ip->i_e2fs;
 
 	error = bread(ip->i_devvp,
-			  fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
+			  EXT2_FSBTODB(fs, ino_to_fsba(fs, ip->i_number)),
 			  (int)fs->e2fs_bsize, NOCRED, B_MODIFY, &bp);
 	if (error) {
 		return (error);
@@ -377,7 +377,7 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 	 * which we want to keep.  Lastblock is -1 when
 	 * the file is truncated to 0.
 	 */
-	lastblock = lblkno(fs, length + fs->e2fs_bsize - 1) - 1;
+	lastblock = ext2_lblkno(fs, length + fs->e2fs_bsize - 1) - 1;
 	lastiblock[SINGLE] = lastblock - EXT2FS_NDADDR;
 	lastiblock[DOUBLE] = lastiblock[SINGLE] - EXT2_NINDIR(fs);
 	lastiblock[TRIPLE] = lastiblock[DOUBLE] - EXT2_NINDIR(fs) * EXT2_NINDIR(fs);
@@ -435,7 +435,7 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 		bn = fs2h32(oip->i_e2fs_blocks[EXT2FS_NDADDR + level]);
 		if (bn != 0) {
 			error = ext2fs_indirtrunc(oip, indir_lbn[level],
-			    fsbtodb(fs, bn), lastiblock[level], level, &count);
+			    EXT2_FSBTODB(fs, bn), lastiblock[level], level, &count);
 			if (error)
 				allerror = error;
 			blocksreleased += count;
@@ -577,7 +577,7 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 		if (nb == 0)
 			continue;
 		if (level > SINGLE) {
-			error = ext2fs_indirtrunc(ip, nlbn, fsbtodb(fs, nb),
+			error = ext2fs_indirtrunc(ip, nlbn, EXT2_FSBTODB(fs, nb),
 						   (daddr_t)-1, level - 1,
 						   &blkcount);
 			if (error)
@@ -596,7 +596,7 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 		/* XXX ondisk32 */
 		nb = fs2h32(bap[i]);
 		if (nb != 0) {
-			error = ext2fs_indirtrunc(ip, nlbn, fsbtodb(fs, nb),
+			error = ext2fs_indirtrunc(ip, nlbn, EXT2_FSBTODB(fs, nb),
 						   last, level - 1, &blkcount);
 			if (error)
 				allerror = error;

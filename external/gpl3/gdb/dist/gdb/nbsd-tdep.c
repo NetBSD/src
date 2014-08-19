@@ -1,7 +1,6 @@
 /* Common target-dependent code for NetBSD systems.
 
-   Copyright (C) 2002, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
   
@@ -21,7 +20,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "solib-svr4.h"
 #include "nbsd-tdep.h"
 
@@ -41,7 +40,7 @@ nbsd_lp64_solib_svr4_fetch_link_map_offsets (void)
 }
 
 int
-nbsd_pc_in_sigtramp (CORE_ADDR pc, char *func_name)
+nbsd_pc_in_sigtramp (CORE_ADDR pc, const char *func_name)
 {
   /* Check for libc-provided signal trampoline.  All such trampolines
      have function names which begin with "__sigtramp".  */

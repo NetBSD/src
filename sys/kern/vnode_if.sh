@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.58 2011/07/11 08:23:00 hannken Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.58.12.1 2014/08/20 00:04:29 tls Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -97,6 +97,7 @@ awk_parser='
 # First line of description
 /^vop_/	{
 	name=$1;
+	args_name=$1;
 	argc=0;
 	willmake=-1;
 	next;
@@ -108,6 +109,11 @@ awk_parser='
 }
 # Middle lines of description
 {
+	if ($1 == "VERSION") {
+		args_name=args_name "_v" $2;
+		next;
+	}
+
 	argdir[argc] = $1; i=2;
 
 	if ($2 == "LOCKED=YES") {
@@ -150,6 +156,8 @@ awk_parser='
 			at = "off_t";
 		if (at == "kauth_cred_t")
 			at = "struct kauth_cred *"
+		if (at == "daddr_t")
+			at = "int64_t"
 	}
 	argtype[argc] = at;
 	i++;
@@ -220,7 +228,7 @@ function doit() {
 	if (!rump) {
 		printf("\n#define %s_DESCOFFSET %d\n",
 		    toupper(name), vop_offset++);
-		printf("struct %s_args {\n", name);
+		printf("struct %s_args {\n", args_name);
 		printf("\tconst struct vnodeop_desc * a_desc;\n");
 		for (i=0; i<argc; i++) {
 			printf("\t%s a_%s;\n", argtype[i], argname[i]);
@@ -320,7 +328,7 @@ function do_offset(typematch) {
 	for (i=0; i<argc; i++) {
 		if (argtype[i] == typematch) {
 			printf("\tVOPARG_OFFSETOF(struct %s_args, a_%s),\n",
-				name, argname[i]);
+				args_name, argname[i]);
 			return i;
 		};
 	};
@@ -334,7 +342,7 @@ function offsets() {
 	for (i=0; i<argc; i++) {
 		if (argtype[i] == "struct vnode *") {
 			printf ("\tVOPARG_OFFSETOF(struct %s_args,a_%s),\n",
-				name, argname[i]);
+				args_name, argname[i]);
 		}
 	}
 	print "\tVDESC_NO_OFFSET";
@@ -387,7 +395,8 @@ function bodyrump() {
 }
 
 function bodynorm() {
-	printf("{\n\tint error;\n\tbool mpsafe;\n\tstruct %s_args a;\n", name);
+	printf("{\n\tint error;\n\tbool mpsafe;\n\tstruct %s_args a;\n",
+		args_name);
 	if (lockdebug) {
 		printf("#ifdef VNODE_LOCKDEBUG\n");
 		for (i=0; i<argc; i++) {

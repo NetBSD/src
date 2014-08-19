@@ -1,4 +1,4 @@
-/*	$NetBSD: inphy.c,v 1.52 2009/10/19 18:41:14 bouyer Exp $	*/
+/*	$NetBSD: inphy.c,v 1.52.22.1 2014/08/20 00:03:41 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.52 2009/10/19 18:41:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.52.22.1 2014/08/20 00:03:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,8 +252,11 @@ inphy_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_100_T4;
 		else
 			mii->mii_media_active |= IFM_10_T;
+
 		if (scr & SCR_FDX)
 			mii->mii_media_active |= IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
 
 		if (mii->mii_media_active & IFM_FDX)
 			mii->mii_media_active |= mii_phy_flowstatus(sc);

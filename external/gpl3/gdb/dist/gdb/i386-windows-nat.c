@@ -1,4 +1,4 @@
-/* Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,7 @@
 #include "defs.h"
 #include "windows-nat.h"
 #include "i386-nat.h"
+#include "i386-tdep.h"
 
 #include <windows.h>
 
@@ -70,9 +71,21 @@ static const int mappings[] =
 };
 #undef context_offset
 
+/* segment_register_p_ftype implementation for x86.  */
+
+static int
+i386_windows_segment_register_p (int regnum)
+{
+  return regnum >= I386_CS_REGNUM && regnum <= I386_GS_REGNUM;
+}
+
+/* -Wmissing-prototypes */
+extern initialize_file_ftype _initialize_i386_windows_nat;
+
 void
 _initialize_i386_windows_nat (void)
 {
   windows_set_context_register_offsets (mappings);
+  windows_set_segment_register_p (i386_windows_segment_register_p);
   i386_set_debug_register_length (4);
 }

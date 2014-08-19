@@ -1,4 +1,4 @@
-/*	$NetBSD: n_cbrt.S,v 1.6 2003/08/07 16:44:45 agc Exp $	*/
+/*	$NetBSD: n_cbrt.S,v 1.6.60.1 2014/08/20 00:02:18 tls Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,6 +39,16 @@
  * Revised and tested by K.C. Ng, 5/2/85
  * Max error less than 0.667 ulps (unit in the last places)
  */
+
+ENTRY(cbrtf, 0)
+	cvtfd	4(%ap),-(%sp)
+	calls	$2,_C_LABEL(cbrt)
+	cvtdf	%r0,%r0
+	ret
+
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(cbrtl, cbrt)
+#endif
 
 ALTENTRY(cbrt)
 ENTRY(d_cbrt, 0x00c0)		# save %r6 & %r7

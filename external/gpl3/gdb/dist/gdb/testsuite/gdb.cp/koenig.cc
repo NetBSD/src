@@ -24,6 +24,11 @@ namespace A
     return 33;
   }
 
+  int
+  entry (C c)
+  {
+    return 44;
+  }
 }
 
 struct B
@@ -245,6 +250,7 @@ main ()
   A::first (c);
   first (0, c);
   second (0, 0, c, 0, 0);
+  entry (c);
   A::first (b.c);
 
   E::O eo;

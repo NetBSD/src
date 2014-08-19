@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.29 2008/11/19 18:36:02 ad Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.29.26.1 2014/08/20 00:03:31 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.29 2008/11/19 18:36:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.29.26.1 2014/08/20 00:03:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,11 +118,9 @@ ttcompat(struct tty *tp, u_long com, void *data, int flag, struct lwp *l)
 	switch (com) {
 	case TIOCGETP: {
 		struct sgttyb *sg = (struct sgttyb *)data;
-		u_char *cc;
 		int speed;
 
 		mutex_spin_enter(&tty_lock);
-		cc = tp->t_cc;
 		speed = ttspeedtab(tp->t_ospeed, compatspeeds);
 		sg->sg_ospeed = (speed == -1) ? MAX_SPEED : speed;
 		if (tp->t_ispeed == 0)
@@ -131,8 +129,8 @@ ttcompat(struct tty *tp, u_long com, void *data, int flag, struct lwp *l)
 			speed = ttspeedtab(tp->t_ispeed, compatspeeds);
 			sg->sg_ispeed = (speed == -1) ? MAX_SPEED : speed;
 		}
-		sg->sg_erase = cc[VERASE];
-		sg->sg_kill = cc[VKILL];
+		sg->sg_erase = tty_getctrlchar(tp, VERASE);
+		sg->sg_kill = tty_getctrlchar(tp, VKILL);
 		sg->sg_flags = ttcompatgetflags(tp);
 		mutex_spin_exit(&tty_lock);
 		break;
@@ -165,52 +163,48 @@ ttcompat(struct tty *tp, u_long com, void *data, int flag, struct lwp *l)
 
 	case TIOCGETC: {
 		struct tchars *tc = (struct tchars *)data;
-		u_char *cc = tp->t_cc;
 
-		tc->t_intrc = cc[VINTR];
-		tc->t_quitc = cc[VQUIT];
-		tc->t_startc = cc[VSTART];
-		tc->t_stopc = cc[VSTOP];
-		tc->t_eofc = cc[VEOF];
-		tc->t_brkc = cc[VEOL];
+		tc->t_intrc = tty_getctrlchar(tp, VINTR);
+		tc->t_quitc = tty_getctrlchar(tp, VQUIT);
+		tc->t_startc = tty_getctrlchar(tp, VSTART);
+		tc->t_stopc = tty_getctrlchar(tp, VSTOP);
+		tc->t_eofc = tty_getctrlchar(tp, VEOF);
+		tc->t_brkc = tty_getctrlchar(tp, VEOL);
 		break;
 	}
 	case TIOCSETC: {
 		struct tchars *tc = (struct tchars *)data;
-		u_char *cc = tp->t_cc;
 
-		cc[VINTR] = tc->t_intrc;
-		cc[VQUIT] = tc->t_quitc;
-		cc[VSTART] = tc->t_startc;
-		cc[VSTOP] = tc->t_stopc;
-		cc[VEOF] = tc->t_eofc;
-		cc[VEOL] = tc->t_brkc;
+		tty_setctrlchar(tp, VINTR, tc->t_intrc);
+		tty_setctrlchar(tp, VQUIT, tc->t_quitc);
+		tty_setctrlchar(tp, VSTART, tc->t_startc);
+		tty_setctrlchar(tp, VSTOP, tc->t_stopc);
+		tty_setctrlchar(tp, VEOF, tc->t_eofc);
+		tty_setctrlchar(tp, VEOL, tc->t_brkc);
 		if (tc->t_brkc == (char)-1)
-			cc[VEOL2] = _POSIX_VDISABLE;
+			tty_setctrlchar(tp, VEOL2, _POSIX_VDISABLE);
 		break;
 	}
 	case TIOCSLTC: {
 		struct ltchars *ltc = (struct ltchars *)data;
-		u_char *cc = tp->t_cc;
 
-		cc[VSUSP] = ltc->t_suspc;
-		cc[VDSUSP] = ltc->t_dsuspc;
-		cc[VREPRINT] = ltc->t_rprntc;
-		cc[VDISCARD] = ltc->t_flushc;
-		cc[VWERASE] = ltc->t_werasc;
-		cc[VLNEXT] = ltc->t_lnextc;
+		tty_setctrlchar(tp, VSUSP, ltc->t_suspc);
+		tty_setctrlchar(tp, VDSUSP, ltc->t_dsuspc);
+		tty_setctrlchar(tp, VREPRINT, ltc->t_rprntc);
+		tty_setctrlchar(tp, VDISCARD, ltc->t_flushc);
+		tty_setctrlchar(tp, VWERASE, ltc->t_werasc);
+		tty_setctrlchar(tp, VLNEXT, ltc->t_lnextc);
 		break;
 	}
 	case TIOCGLTC: {
 		struct ltchars *ltc = (struct ltchars *)data;
-		u_char *cc = tp->t_cc;
 
-		ltc->t_suspc = cc[VSUSP];
-		ltc->t_dsuspc = cc[VDSUSP];
-		ltc->t_rprntc = cc[VREPRINT];
-		ltc->t_flushc = cc[VDISCARD];
-		ltc->t_werasc = cc[VWERASE];
-		ltc->t_lnextc = cc[VLNEXT];
+		ltc->t_suspc = tty_getctrlchar(tp, VSUSP);
+		ltc->t_dsuspc = tty_getctrlchar(tp, VDSUSP);
+		ltc->t_rprntc = tty_getctrlchar(tp, VREPRINT);
+		ltc->t_flushc = tty_getctrlchar(tp, VDISCARD);
+		ltc->t_werasc = tty_getctrlchar(tp, VWERASE);
+		ltc->t_lnextc = tty_getctrlchar(tp, VLNEXT);
 		break;
 	}
 	case TIOCLBIS:

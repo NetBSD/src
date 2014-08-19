@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.138.2.2 2013/06/23 06:28:52 tls Exp $	*/
+/*	$NetBSD: route.c,v 1.138.2.3 2014/08/20 00:02:27 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.138.2.2 2013/06/23 06:28:52 tls Exp $");
+__RCSID("$NetBSD: route.c,v 1.138.2.3 2014/08/20 00:02:27 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -538,17 +538,8 @@ routename(const struct sockaddr *sa, struct sockaddr *nm, int flags)
 		memcpy(&sin6, sa, sa->sa_len);
 		sin6.sin6_len = sizeof(struct sockaddr_in6);
 		sin6.sin6_family = AF_INET6;
-#ifdef __KAME__
-		if (sa->sa_len == sizeof(struct sockaddr_in6) &&
-		    (IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr) ||
-		     IN6_IS_ADDR_MC_LINKLOCAL(&sin6.sin6_addr)) &&
-		    sin6.sin6_scope_id == 0) {
-			sin6.sin6_scope_id =
-			    ntohs(*(u_int16_t *)&sin6.sin6_addr.s6_addr[2]);
-			sin6.sin6_addr.s6_addr[2] = 0;
-			sin6.sin6_addr.s6_addr[3] = 0;
-		}
-#endif
+		inet6_getscopeid(&sin6, INET6_IS_ADDR_LINKLOCAL|
+		    INET6_IS_ADDR_MC_LINKLOCAL);
 		nml = netmask_length(nm, AF_INET6);
 		if (IN6_IS_ADDR_UNSPECIFIED(&sin6.sin6_addr)) {
 			if (nml == 0)
@@ -705,17 +696,8 @@ netname(const struct sockaddr *sa, struct sockaddr *nm)
 		memcpy(&sin6, sa, sa->sa_len);
 		sin6.sin6_len = sizeof(struct sockaddr_in6);
 		sin6.sin6_family = AF_INET6;
-#ifdef __KAME__
-		if (sa->sa_len == sizeof(struct sockaddr_in6) &&
-		    (IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr) ||
-		     IN6_IS_ADDR_MC_LINKLOCAL(&sin6.sin6_addr)) &&
-		    sin6.sin6_scope_id == 0) {
-			sin6.sin6_scope_id =
-			    ntohs(*(u_int16_t *)&sin6.sin6_addr.s6_addr[2]);
-			sin6.sin6_addr.s6_addr[2] = 0;
-			sin6.sin6_addr.s6_addr[3] = 0;
-		}
-#endif
+		inet6_getscopeid(&sin6, INET6_IS_ADDR_LINKLOCAL|
+		    INET6_IS_ADDR_MC_LINKLOCAL);
 		nml = netmask_length(nm, AF_INET6);
 		if (IN6_IS_ADDR_UNSPECIFIED(&sin6.sin6_addr)) {
 			if (nml == 0)
@@ -1255,15 +1237,8 @@ getaddr(int which, const char *s, struct hostent **hpp, struct sou *soup)
 		}
 		memcpy(&su->sin6, res->ai_addr, sizeof(su->sin6));
 		freeaddrinfo(res);
-#ifdef __KAME__
-		if ((IN6_IS_ADDR_LINKLOCAL(&su->sin6.sin6_addr) ||
-		     IN6_IS_ADDR_MC_LINKLOCAL(&su->sin6.sin6_addr)) &&
-		    su->sin6.sin6_scope_id) {
-			*(u_int16_t *)&su->sin6.sin6_addr.s6_addr[2] =
-				htons(su->sin6.sin6_scope_id);
-			su->sin6.sin6_scope_id = 0;
-		}
-#endif
+		inet6_putscopeid(&su->sin6, INET6_IS_ADDR_LINKLOCAL|
+		    INET6_IS_ADDR_MC_LINKLOCAL);
 		if (hints.ai_flags == AI_NUMERICHOST) {
 			if (slash)
 				return prefixlen(slash + 1, soup);

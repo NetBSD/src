@@ -1,4 +1,4 @@
-/* $NetBSD: com_jensenio.c,v 1.13 2011/07/01 19:22:35 dyoung Exp $ */
+/* $NetBSD: com_jensenio.c,v 1.13.12.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.13 2011/07/01 19:22:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.13.12.1 2014/08/20 00:02:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ com_jensenio_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting at vector 0x%x\n",
 	    ja->ja_irq[0]);
 
-	sprintf(jsc->sc_vecstr, "0x%x", ja->ja_irq[0]);
+	snprintf(jsc->sc_vecstr, sizeof(jsc->sc_vecstr), "0x%x", ja->ja_irq[0]);
 	evcnt_attach_dynamic(&jsc->sc_ev_intr, EVCNT_TYPE_INTR,
 	    NULL, "vector", jsc->sc_vecstr);
 

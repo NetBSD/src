@@ -1,4 +1,4 @@
-.\"	$NetBSD: wdc.9,v 1.17 2010/04/18 15:19:17 jruoho Exp $
+.\"	$NetBSD: wdc.9,v 1.17.14.1 2014/08/20 00:02:37 tls Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -391,9 +391,6 @@ as well as the values of
 and
 .Va UDMA_mode
 if the modes to be used are not highest ones supported by the drive.
-.Sh SEE ALSO
-.Xr wdc 4 ,
-.Xr bus_space 9
 .Sh CODE REFERENCES
 The wdc core functions are implemented in
 .Pa sys/dev/ic/wdc.c .
@@ -410,3 +407,6 @@ A more complex one, with multiple channels and bus-master DMA support is
 .Pa sys/arch/atari/dev/wdc_mb.c
 makes use of hardware locking, and also provides an example of bus-front
 end for a big-endian system, which needs byte-swapping bus_space functions.
+.Sh SEE ALSO
+.Xr wdc 4 ,
+.Xr bus_space 9

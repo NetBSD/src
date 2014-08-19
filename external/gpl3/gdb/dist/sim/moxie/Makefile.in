@@ -1,5 +1,5 @@
 #    Makefile template for Configure for the moxie sim library.
-#    Copyright (C) 2008, 2010, 2011 Free Software Foundation, Inc.
+#    Copyright (C) 2008-2014 Free Software Foundation, Inc.
 #    Written by Anthony Green
 # 
 # This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
 
 ## COMMON_PRE_CONFIG_FRAG
 
-dtbdir = @datadir@/gdb-`sed q ${srcdir}/../../gdb/version.in`/dtb
+dtbdir = @datadir@/gdb/dtb
 
 SIM_OBJS = interp.o sim-load.o sim-io.o sim-config.o sim-utils.o	\
 sim-options.o sim-module.o sim-core.o sim-endian.o sim-trace.o 	\

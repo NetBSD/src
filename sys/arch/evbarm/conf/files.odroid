@@ -1,0 +1,12 @@
+#	$NetBSD: files.odroid,v 1.1.10.2 2014/08/20 00:02:53 tls Exp $
+#
+# ODROID evaluation board configuration info
+#
+
+file	arch/evbarm/odroid/odroid_machdep.c
+
+# Kernel boot arguments
+defparam opt_machdep.h				BOOT_ARGS
+
+# Pull in Exynos SoC default
+include 	"arch/arm/samsung/files.exynos"

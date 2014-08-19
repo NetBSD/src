@@ -1,7 +1,6 @@
 /* Low level Unix child interface, for GDB when running under Unix.
 
-   Copyright (C) 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,5 +24,10 @@
    local methods.  */
 
 extern struct target_ops *inf_child_target (void);
+
+/* Functions for helping to write a native target.  */
+
+/* This is for native targets which use a unix/POSIX-style waitstatus.  */
+extern void store_waitstatus (struct target_waitstatus *, int);
 
 #endif

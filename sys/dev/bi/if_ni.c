@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.40 2010/11/13 13:51:57 uebayasi Exp $ */
+/*	$NetBSD: if_ni.c,v 1.40.18.1 2014/08/20 00:03:36 tls Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.40 2010/11/13 13:51:57 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.40.18.1 2014/08/20 00:03:36 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -233,7 +233,7 @@ niattach(device_t parent, device_t self, void *aux)
 	struct ni_msg *msg;
 	struct ni_ptdb *ptdb;
 	void *va;
-	int i, j, s, res;
+	int i, j, s;
 	u_short type;
 
 	sc->sc_dev = self;
@@ -346,7 +346,7 @@ niattach(device_t parent, device_t self, void *aux)
 	ni_getpgs(sc, NMSGBUF * 512, &va, 0);
 	for (i = 0; i < NMSGBUF; i++) {
 		msg = (void *)((char *)va + i * 512);
-		res = INSQTI(msg, &fqb->nf_mforw);
+		INSQTI(msg, &fqb->nf_mforw);
 	}
 	WAITREG(NI_PCR, PCR_OWN);
 	NI_WREG(NI_PCR, PCR_FREEQNE|PCR_MFREEQ|PCR_OWN);
@@ -369,7 +369,7 @@ niattach(device_t parent, device_t self, void *aux)
 			bbd[i * NTXFRAGS + j].nb_status = 0;
 			data->bufs[j]._index = i * NTXFRAGS + j;
 		}
-		res = INSQTI(data, &fqb->nf_dforw);
+		INSQTI(data, &fqb->nf_dforw);
 	}
 	WAITREG(NI_PCR, PCR_OWN);
 	NI_WREG(NI_PCR, PCR_FREEQNE|PCR_DFREEQ|PCR_OWN);
@@ -391,7 +391,7 @@ niattach(device_t parent, device_t self, void *aux)
 		if (ni_add_rxbuf(sc, data, idx))
 			panic("niattach: ni_add_rxbuf: out of mbufs");
 
-		res = INSQTI(data, &fqb->nf_rforw);
+		INSQTI(data, &fqb->nf_rforw);
 	}
 	WAITREG(NI_PCR, PCR_OWN);
 	NI_WREG(NI_PCR, PCR_FREEQNE|PCR_RFREEQ|PCR_OWN);
@@ -409,7 +409,7 @@ niattach(device_t parent, device_t self, void *aux)
 	((struct ni_param *)&msg->nm_text[0])->np_flags = NP_PAD;
 
 	endwait = retry = 0;
-	res = INSQTI(msg, &gvp->nc_forw0);
+	INSQTI(msg, &gvp->nc_forw0);
 
 retry:	WAITREG(NI_PCR, PCR_OWN);
 	NI_WREG(NI_PCR, PCR_CMDQNE|PCR_CMDQ0|PCR_OWN);
@@ -432,7 +432,7 @@ retry:	WAITREG(NI_PCR, PCR_OWN);
 	msg->nm_len = sizeof(struct ni_param) + 6;
 	msg->nm_opcode2 = NI_RCCNTR;
 
-	res = INSQTI(msg, &gvp->nc_forw0);
+	INSQTI(msg, &gvp->nc_forw0);
 
 	WAITREG(NI_PCR, PCR_OWN);
 	NI_WREG(NI_PCR, PCR_CMDQNE|PCR_CMDQ0|PCR_OWN);
@@ -450,7 +450,7 @@ retry:	WAITREG(NI_PCR, PCR_OWN);
 	ptdb->np_index = 1;
 	ptdb->np_fque = 1;
 
-	res = INSQTI(msg, &gvp->nc_forw0);
+	INSQTI(msg, &gvp->nc_forw0);
 
 	WAITREG(NI_PCR, PCR_OWN);
 	NI_WREG(NI_PCR, PCR_CMDQNE|PCR_CMDQ0|PCR_OWN);

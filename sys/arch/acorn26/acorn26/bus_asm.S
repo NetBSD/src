@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_asm.S,v 1.5 2006/10/04 20:14:44 bjh21 Exp $	*/
+/*	$NetBSD: bus_asm.S,v 1.5.106.1 2014/08/20 00:02:40 tls Exp $	*/
 
 /*
  * Copyright (c) 2006 Ben Harris
@@ -59,7 +59,7 @@
  */
 
 #include <machine/asm.h>
-RCSID("$NetBSD: bus_asm.S,v 1.5 2006/10/04 20:14:44 bjh21 Exp $")
+RCSID("$NetBSD: bus_asm.S,v 1.5.106.1 2014/08/20 00:02:40 tls Exp $")
 
 /*
  * bus_space I/O functions for podulebus
@@ -109,7 +109,7 @@ ENTRY(iobus_bs_rm_1)
 
 	/* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
-	ldmledb	fp, {fp, sp, pc}
+	ldmdble	fp, {fp, sp, pc}
 
 1:
 	ldrb	r1, [r0]
@@ -128,7 +128,7 @@ ENTRY(iobus_bs_rm_2)
 
 	/* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
-	ldmledb	fp, {fp, sp, pc}
+	ldmdble	fp, {fp, sp, pc}
 
 1:
 	ldr	r1, [r0]
@@ -153,7 +153,7 @@ ENTRY(iobus_bs_wm_1)
 
 	/* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
-	ldmledb	fp, {fp, sp, pc}
+	ldmdble	fp, {fp, sp, pc}
 
 1:
 	ldrb	r1, [r3], #0x0001
@@ -172,7 +172,7 @@ ENTRY(iobus_bs_wm_2)
 
 	/* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
-	ldmledb	fp, {fp, sp, pc}
+	ldmdble	fp, {fp, sp, pc}
 
 1:
 	ldrb	r1, [r3], #0x0001
@@ -200,7 +200,7 @@ ENTRY(iobus_bs_rr_1)
 
 	/* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
-	ldmledb	fp, {fp, sp, pc}
+	ldmdble	fp, {fp, sp, pc}
 
 1:
 	ldrb	r1, [r12], r0
@@ -249,7 +249,7 @@ ENTRY(iobus_bs_rr_2)
 	bgt	1b
 
 2:	teq	r10, #0
-	ldmeqdb	fp, {r4-r10, fp, sp, pc}
+	ldmdbeq	fp, {r4-r10, fp, sp, pc}
 
 	/*
 	 * Fast read_region_2 code.  This is at its best when dealing with
@@ -272,7 +272,7 @@ ENTRY(iobus_bs_rr_2)
 	stmia	r9!, {r0, r2, r4, r6}
 	bgt	2b
 	adds	r7, r10, #7
-	ldmeqdb	fp, {r4-r10, fp, sp, pc}
+	ldmdbeq	fp, {r4-r10, fp, sp, pc}
 	mov	r0, #4
 	mov	r10, #0
 	b	1b
@@ -292,7 +292,7 @@ ENTRY(iobus_bs_wr_1)
 
 	/* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
-	ldmledb	fp, {fp, sp, pc}
+	ldmdble	fp, {fp, sp, pc}
 
 1:
 	ldrb	r1, [r3], #0x0001
@@ -335,7 +335,7 @@ ENTRY(iobus_bs_wr_2)
 	bgt	1b
 
 2:	teq	r10, #0
-	ldmeqdb	fp, {r4-r10, fp, sp, pc}
+	ldmdbeq	fp, {r4-r10, fp, sp, pc}
 
 	/*
 	 * Fast write_region_2 code.  This is at its best when dealing with
@@ -366,7 +366,7 @@ ENTRY(iobus_bs_wr_2)
 	stmia	r8!, {r0-r7}
 	bgt	2b
 	adds	r7, r10, #7
-	ldmeqdb	fp, {r4-r10, fp, sp, pc}
+	ldmdbeq	fp, {r4-r10, fp, sp, pc}
 	mov	r0, #4
 	mov	r10, #0
 	b	1b
@@ -384,7 +384,7 @@ ENTRY(iobus_bs_sm_1)
 
 	/* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
-	ldmledb	fp, {fp, sp, pc}
+	ldmdble	fp, {fp, sp, pc}
 
 1:
 	strb	r3, [r0]
@@ -402,7 +402,7 @@ ENTRY(iobus_bs_sm_2)
 
 	/* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
-	ldmledb	fp, {fp, sp, pc}
+	ldmdble	fp, {fp, sp, pc}
 
 	orr	r3, r3, r3, lsl #16
 1:
@@ -427,7 +427,7 @@ ENTRY(iobus_bs_sr_1)
 
 	/* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
-	ldmledb	fp, {fp, sp, pc}
+	ldmdble	fp, {fp, sp, pc}
 
 1:
 	strb	r3, [r12], r0
@@ -447,7 +447,7 @@ ENTRY(iobus_bs_sr_2)
 
 	/* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
-	ldmledb	fp, {fp, sp, pc}
+	ldmdble	fp, {fp, sp, pc}
 
 	orr	r3, r3, r3, lsl #16
 1:

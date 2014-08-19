@@ -1,0 +1,29 @@
+#
+# kernel config file for memory(RAM) disk
+#
+# 	$NetBSD: RAMDISK,v 1.13.6.2 2014/08/20 00:03:17 tls Exp $
+#
+
+include 	"arch/playstation2/conf/std.playstation2"
+include 	"arch/playstation2/conf/config.playstation2"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+config		netbsd		root on ? type ?
+
+#makeoptions	DEFGP="-G 48"
+
+# disk/mass storage pseudo-devices
+pseudo-device	md		1	# memory disk device (ramdisk)
+
+# Enable the hooks used for initializing the root memory-disk.
+options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
+options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+options 	MEMORY_DISK_ROOT_SIZE=10240	# size of memory disk, in blocks
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
+
+# Reboot from HDD
+options 	KLOADER_KERNEL_PATH="\"/mnt/netbsd\""
+options 	KLOADER

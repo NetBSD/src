@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.h,v 1.18 2011/04/27 00:35:52 rmind Exp $	*/
+/*	$NetBSD: uvm_swap.h,v 1.18.14.1 2014/08/20 00:04:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -39,6 +39,7 @@
 #endif
 
 struct swapent;
+struct lwp;
 
 #if defined(VMSWAP)
 int	uvm_swap_get(struct vm_page *, int, int);
@@ -47,9 +48,12 @@ int	uvm_swap_alloc(int *, bool);
 void	uvm_swap_free(int, int);
 void	uvm_swap_markbad(int, int);
 bool	uvm_swapisfull(void);
+void	uvm_swap_stats(int, struct swapent *, int, register_t *);
 #else /* defined(VMSWAP) */
 #define	uvm_swapisfull()	true
+#define uvm_swap_stats(c, sep, count, retval) { *retval = 0; }
 #endif /* defined(VMSWAP) */
+void	uvm_swap_shutdown(struct lwp *);
 
 #endif /* _KERNEL */
 

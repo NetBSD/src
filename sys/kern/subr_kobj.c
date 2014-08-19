@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.44.12.1 2013/02/25 00:29:53 tls Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.44.12.2 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.44.12.1 2013/02/25 00:29:53 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.44.12.2 2014/08/20 00:04:29 tls Exp $");
 
 #include "opt_modular.h"
 
@@ -80,9 +80,12 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.44.12.1 2013/02/25 00:29:53 tls Exp 
 
 #include <uvm/uvm_extern.h>
 
+#define kobj_error(_kobj, ...) \
+	kobj_out(__func__, __LINE__, _kobj, __VA_ARGS__)
+
 static int	kobj_relocate(kobj_t, bool);
 static int	kobj_checksyms(kobj_t, bool);
-static void	kobj_error(const char *, int, kobj_t, const char *, ...)
+static void	kobj_out(const char *, int, kobj_t, const char *, ...)
     __printflike(4, 5);
 static void	kobj_jettison(kobj_t);
 static void	kobj_free(kobj_t, void *, size_t);
@@ -170,7 +173,6 @@ kobj_load(kobj_t ko)
 	KASSERT(ko->ko_source != NULL);
 
 	shdr = NULL;
-	mapsize = 0;
 	error = 0;
 	hdr = NULL;
 
@@ -179,25 +181,24 @@ kobj_load(kobj_t ko)
 	 */
 	error = ko->ko_read(ko, (void **)&hdr, sizeof(*hdr), 0, true);
 	if (error != 0) {
-		kobj_error(__func__, __LINE__, ko, "read failed %d", error);
+		kobj_error(ko, "read failed %d", error);
 		goto out;
 	}
 	if (memcmp(hdr->e_ident, ELFMAG, SELFMAG) != 0) {
-		kobj_error(__func__, __LINE__, ko, "not an ELF object");
+		kobj_error(ko, "not an ELF object");
 		error = ENOEXEC;
 		goto out;
 	}
 
 	if (hdr->e_ident[EI_VERSION] != EV_CURRENT ||
 	    hdr->e_version != EV_CURRENT) {
-		kobj_error(__func__, __LINE__, ko,
-		    "unsupported file version %d", hdr->e_ident[EI_VERSION]);
+		kobj_error(ko, "unsupported file version %d",
+		    hdr->e_ident[EI_VERSION]);
 		error = ENOEXEC;
 		goto out;
 	}
 	if (hdr->e_type != ET_REL) {
-		kobj_error(__func__, __LINE__, ko, "unsupported file type %d",
-		    hdr->e_type);
+		kobj_error(ko, "unsupported file type %d", hdr->e_type);
 		error = ENOEXEC;
 		goto out;
 	}
@@ -210,8 +211,7 @@ kobj_load(kobj_t ko)
 #error not defined
 #endif
 	default:
-		kobj_error(__func__, __LINE__, ko, "unsupported machine %d",
-		    hdr->e_machine);
+		kobj_error(ko, "unsupported machine %d", hdr->e_machine);
 		error = ENOEXEC;
 		goto out;
 	}
@@ -224,17 +224,17 @@ kobj_load(kobj_t ko)
 	/*
 	 * Allocate and read in the section header.
 	 */
-	ko->ko_shdrsz = hdr->e_shnum * hdr->e_shentsize;
-	if (ko->ko_shdrsz == 0 || hdr->e_shoff == 0 ||
-	    hdr->e_shentsize != sizeof(Elf_Shdr)) {
-		kobj_error(__func__, __LINE__, ko, "bad sizes");
+	if (hdr->e_shnum == 0 || hdr->e_shnum > ELF_MAXSHNUM ||
+	    hdr->e_shoff == 0 || hdr->e_shentsize != sizeof(Elf_Shdr)) {
+		kobj_error(ko, "bad sizes");
 		error = ENOEXEC;
 		goto out;
 	}
+	ko->ko_shdrsz = hdr->e_shnum * sizeof(Elf_Shdr);
 	error = ko->ko_read(ko, (void **)&shdr, ko->ko_shdrsz, hdr->e_shoff,
 	    true);
 	if (error != 0) {
-		kobj_error(__func__, __LINE__, ko, "read failed %d", error);
+		kobj_error(ko, "read failed %d", error);
 		goto out;
 	}
 	ko->ko_shdr = shdr;
@@ -243,8 +243,7 @@ kobj_load(kobj_t ko)
 	 * Scan the section header for information and table sizing.
 	 */
 	nsym = 0;
-	symtabindex = -1;
-	symstrindex = -1;
+	symtabindex = symstrindex = -1;
 	for (i = 0; i < hdr->e_shnum; i++) {
 		switch (shdr[i].sh_type) {
 		case SHT_PROGBITS:
@@ -257,9 +256,13 @@ kobj_load(kobj_t ko)
 			symstrindex = shdr[i].sh_link;
 			break;
 		case SHT_REL:
+			if (shdr[shdr[i].sh_info].sh_type != SHT_PROGBITS)
+				continue;
 			ko->ko_nrel++;
 			break;
 		case SHT_RELA:
+			if (shdr[shdr[i].sh_info].sh_type != SHT_PROGBITS)
+				continue;
 			ko->ko_nrela++;
 			break;
 		case SHT_STRTAB:
@@ -267,21 +270,22 @@ kobj_load(kobj_t ko)
 		}
 	}
 	if (ko->ko_nprogtab == 0) {
-		kobj_error(__func__, __LINE__, ko, "file has no contents");
+		kobj_error(ko, "file has no contents");
 		error = ENOEXEC;
 		goto out;
 	}
 	if (nsym != 1) {
 		/* Only allow one symbol table for now */
-		kobj_error(__func__, __LINE__, ko,
-		    "file has no valid symbol table");
+		kobj_error(ko, "file has no valid symbol table");
 		error = ENOEXEC;
 		goto out;
 	}
-	if (symstrindex < 0 || symstrindex > hdr->e_shnum ||
+	KASSERT(symtabindex != -1);
+	KASSERT(symstrindex != -1);
+
+	if (symstrindex == SHN_UNDEF || symstrindex >= hdr->e_shnum ||
 	    shdr[symstrindex].sh_type != SHT_STRTAB) {
-		kobj_error(__func__, __LINE__, ko,
-		    "file has invalid symbol strings");
+		kobj_error(ko, "file has invalid symbol strings");
 		error = ENOEXEC;
 		goto out;
 	}
@@ -294,7 +298,7 @@ kobj_load(kobj_t ko)
 		    sizeof(*ko->ko_progtab), KM_SLEEP);
 		if (ko->ko_progtab == NULL) {
 			error = ENOMEM;
-			kobj_error(__func__, __LINE__, ko, "out of memory");
+			kobj_error(ko, "out of memory");
 			goto out;
 		}
 	}
@@ -303,7 +307,7 @@ kobj_load(kobj_t ko)
 		    sizeof(*ko->ko_reltab), KM_SLEEP);
 		if (ko->ko_reltab == NULL) {
 			error = ENOMEM;
-			kobj_error(__func__, __LINE__, ko, "out of memory");
+			kobj_error(ko, "out of memory");
 			goto out;
 		}
 	}
@@ -312,13 +316,9 @@ kobj_load(kobj_t ko)
 		    sizeof(*ko->ko_relatab), KM_SLEEP);
 		if (ko->ko_relatab == NULL) {
 			error = ENOMEM;
-			kobj_error(__func__, __LINE__, ko, "out of memory");
+			kobj_error(ko, "out of memory");
 			goto out;
 		}
-	}
-	if (symtabindex == -1) {
-		kobj_error(__func__, __LINE__, ko, "lost symbol table index");
-		goto out;
 	}
 
 	/*
@@ -326,14 +326,15 @@ kobj_load(kobj_t ko)
 	 */
 	ko->ko_symcnt = shdr[symtabindex].sh_size / sizeof(Elf_Sym);
 	if (ko->ko_symcnt == 0) {
-		kobj_error(__func__, __LINE__, ko, "no symbol table");
+		kobj_error(ko, "no symbol table");
+		error = ENOEXEC;
 		goto out;
 	}
 	error = ko->ko_read(ko, (void **)&ko->ko_symtab,
 	    ko->ko_symcnt * sizeof(Elf_Sym),
 	    shdr[symtabindex].sh_offset, true);
 	if (error != 0) {
-		kobj_error(__func__, __LINE__, ko, "read failed %d", error);
+		kobj_error(ko, "read failed %d", error);
 		goto out;
 	}
 
@@ -342,13 +343,14 @@ kobj_load(kobj_t ko)
 	 */
 	ko->ko_strtabsz = shdr[symstrindex].sh_size;
 	if (ko->ko_strtabsz == 0) {
-		kobj_error(__func__, __LINE__, ko, "no symbol strings");
+		kobj_error(ko, "no symbol strings");
+		error = ENOEXEC;
 		goto out;
 	}
 	error = ko->ko_read(ko, (void *)&ko->ko_strtab, ko->ko_strtabsz,
 	    shdr[symstrindex].sh_offset, true);
 	if (error != 0) {
-		kobj_error(__func__, __LINE__, ko, "read failed %d", error);
+		kobj_error(ko, "read failed %d", error);
 		goto out;
 	}
 
@@ -358,24 +360,29 @@ kobj_load(kobj_t ko)
 	error = kobj_renamespace(ko->ko_symtab, ko->ko_symcnt,
 	    &ko->ko_strtab, &ko->ko_strtabsz);
 	if (error != 0) {
-		kobj_error(__func__, __LINE__, ko, "renamespace failed %d",
-		    error);
+		kobj_error(ko, "renamespace failed %d", error);
 		goto out;
 	}
 
 	/*
 	 * Do we have a string table for the section names?
 	 */
-	if (hdr->e_shstrndx != 0 && shdr[hdr->e_shstrndx].sh_size != 0 &&
-	    shdr[hdr->e_shstrndx].sh_type == SHT_STRTAB) {
-		ko->ko_shstrtabsz = shdr[hdr->e_shstrndx].sh_size;
-		error = ko->ko_read(ko, (void **)&ko->ko_shstrtab,
-		    shdr[hdr->e_shstrndx].sh_size,
-		    shdr[hdr->e_shstrndx].sh_offset, true);
-		if (error != 0) {
-			kobj_error(__func__, __LINE__, ko, "read failed %d",
-			    error);
+	if (hdr->e_shstrndx != SHN_UNDEF) {
+		if (hdr->e_shstrndx >= hdr->e_shnum) {
+			kobj_error(ko, "bad shstrndx");
+			error = ENOEXEC;
 			goto out;
+		}
+		if (shdr[hdr->e_shstrndx].sh_size != 0 &&
+		    shdr[hdr->e_shstrndx].sh_type == SHT_STRTAB) {
+			ko->ko_shstrtabsz = shdr[hdr->e_shstrndx].sh_size;
+			error = ko->ko_read(ko, (void **)&ko->ko_shstrtab,
+			    shdr[hdr->e_shstrndx].sh_size,
+			    shdr[hdr->e_shstrndx].sh_offset, true);
+			if (error != 0) {
+				kobj_error(ko, "read failed %d", error);
+				goto out;
+			}
 		}
 	}
 
@@ -384,6 +391,7 @@ kobj_load(kobj_t ko)
 	 */
 	alignmask = 0;
 	mapbase = 0;
+	mapsize = 0;
 	for (i = 0; i < hdr->e_shnum; i++) {
 		switch (shdr[i].sh_type) {
 		case SHT_PROGBITS:
@@ -404,7 +412,8 @@ kobj_load(kobj_t ko)
 	 * can get the bounds and gdb can associate offsets with modules.
 	 */
 	if (mapsize == 0) {
-		kobj_error(__func__, __LINE__, ko, "no text/data/bss");
+		kobj_error(ko, "no text/data/bss");
+		error = ENOEXEC;
 		goto out;
 	}
 	if (ko->ko_type == KT_MEMORY) {
@@ -413,7 +422,7 @@ kobj_load(kobj_t ko)
 		mapbase = uvm_km_alloc(module_map, round_page(mapsize),
 		    0, UVM_KMF_WIRED | UVM_KMF_EXEC);
 		if (mapbase == 0) {
-			kobj_error(__func__, __LINE__, ko, "out of memory");
+			kobj_error(ko, "out of memory");
 			error = ENOMEM;
 			goto out;
 		}
@@ -438,9 +447,9 @@ kobj_load(kobj_t ko)
 				addr = (void *)(shdr[i].sh_offset +
 				    (vaddr_t)ko->ko_source);
 				if (((vaddr_t)addr & alignmask) != 0) {
-					kobj_error(__func__, __LINE__, ko,
-					    "section %d not aligned",
-					    i);
+					kobj_error(ko,
+					    "section %d not aligned", i);
+					error = ENOEXEC;
 					goto out;
 				}
 			} else {
@@ -455,17 +464,15 @@ kobj_load(kobj_t ko)
 				error = ko->ko_read(ko, &addr,
 				    shdr[i].sh_size, shdr[i].sh_offset, false);
 				if (error != 0) {
-					kobj_error(__func__, __LINE__, ko,
-					    "read failed %d", error);
+					kobj_error(ko, "read failed %d", error);
 					goto out;
 				}
 			} else if (ko->ko_type == KT_MEMORY &&
 			    shdr[i].sh_size != 0) {
-			    	kobj_error(__func__, __LINE__, ko,
-				    "non-loadable BSS "
+				kobj_error(ko, "non-loadable BSS "
 				    "section in pre-loaded module");
-				error = EINVAL;
-			    	goto out;
+				error = ENOEXEC;
+				goto out;
 			} else {
 				ko->ko_progtab[pb].name = "<<NOBITS>>";
 				memset(addr, 0, shdr[i].sh_size);
@@ -488,6 +495,8 @@ kobj_load(kobj_t ko)
 			pb++;
 			break;
 		case SHT_REL:
+			if (shdr[shdr[i].sh_info].sh_type != SHT_PROGBITS)
+				break;
 			ko->ko_reltab[rl].size = shdr[i].sh_size;
 			ko->ko_reltab[rl].size -=
 			    shdr[i].sh_size % sizeof(Elf_Rel);
@@ -500,14 +509,16 @@ kobj_load(kobj_t ko)
 				    ko->ko_reltab[rl].size,
 				    shdr[i].sh_offset, true);
 				if (error != 0) {
-					kobj_error(__func__, __LINE__, ko,
-					    "read failed %d", error);
+					kobj_error(ko, "read failed %d",
+					    error);
 					goto out;
 				}
 			}
 			rl++;
 			break;
 		case SHT_RELA:
+			if (shdr[shdr[i].sh_info].sh_type != SHT_PROGBITS)
+				break;
 			ko->ko_relatab[ra].size = shdr[i].sh_size;
 			ko->ko_relatab[ra].size -=
 			    shdr[i].sh_size % sizeof(Elf_Rela);
@@ -520,8 +531,7 @@ kobj_load(kobj_t ko)
 				    shdr[i].sh_size,
 				    shdr[i].sh_offset, true);
 				if (error != 0) {
-					kobj_error(__func__, __LINE__, ko,
-					    "read failed %d", error);
+					kobj_error(ko, "read failed %d", error);
 					goto out;
 				}
 			}
@@ -532,16 +542,21 @@ kobj_load(kobj_t ko)
 		}
 	}
 	if (pb != ko->ko_nprogtab) {
-		panic("lost progbits");
+		panic("%s:%d: %s: lost progbits", __func__, __LINE__,
+		   ko->ko_name);
 	}
 	if (rl != ko->ko_nrel) {
-		panic("lost rel");
+		panic("%s:%d: %s: lost rel", __func__, __LINE__,
+		   ko->ko_name);
 	}
 	if (ra != ko->ko_nrela) {
-		panic("lost rela");
+		panic("%s:%d: %s: lost rela", __func__, __LINE__,
+		   ko->ko_name);
 	}
 	if (ko->ko_type != KT_MEMORY && mapbase != ko->ko_address + mapsize) {
-		panic("mapbase 0x%lx != address %lx + mapsize %ld (0x%lx)\n",
+		panic("%s:%d: %s: "
+		    "mapbase 0x%lx != address %lx + mapsize %ld (0x%lx)\n",
+		    __func__, __LINE__, ko->ko_name,
 		    (long)mapbase, (long)ko->ko_address, (long)mapsize,
 		    (long)ko->ko_address + mapsize);
 	}
@@ -586,8 +601,8 @@ kobj_unload(kobj_t ko)
 		error = kobj_machdep(ko, (void *)ko->ko_address, ko->ko_size,
 		    false);
 		if (error != 0)
-			kobj_error(__func__, __LINE__, ko,
-			    "machine dependent deinit failed %d", error);
+			kobj_error(ko, "machine dependent deinit failed %d",
+			    error);
 	}
 	if (ko->ko_address != 0 && ko->ko_type != KT_MEMORY) {
 		uvm_km_free(module_map, ko->ko_address, round_page(ko->ko_size),
@@ -679,8 +694,8 @@ kobj_affix(kobj_t ko, const char *name)
 		error = kobj_machdep(ko, (void *)ko->ko_address, ko->ko_size,
 		    true);
 		if (error != 0)
-			kobj_error(__func__, __LINE__, ko,
-			    "machine dependent init failed %d", error);
+			kobj_error(ko, "machine dependent init failed %d",
+			    error);
 		ko->ko_loaded = true;
 	}
 
@@ -787,7 +802,7 @@ kobj_sym_lookup(kobj_t ko, uintptr_t symidx)
 	switch (ELF_ST_BIND(sym->st_info)) {
 	case STB_LOCAL:
 		/* Local, but undefined? huh? */
-		kobj_error(__func__, __LINE__, ko, "local symbol undefined");
+		kobj_error(ko, "local symbol undefined");
 		return 0;
 
 	case STB_GLOBAL:
@@ -796,15 +811,14 @@ kobj_sym_lookup(kobj_t ko, uintptr_t symidx)
 
 		/* Force a lookup failure if the symbol name is bogus. */
 		if (*symbol == 0) {
-			kobj_error(__func__, __LINE__, ko, "bad symbol name");
+			kobj_error(ko, "bad symbol name");
 			return 0;
 		}
 
 		return (uintptr_t)sym->st_value;
 
 	case STB_WEAK:
-		kobj_error(__func__, __LINE__, ko,
-		    "weak symbols not supported");
+		kobj_error(ko, "weak symbols not supported");
 		return 0;
 
 	default:
@@ -864,8 +878,8 @@ kobj_checksyms(kobj_t ko, bool undefined)
 		if (ksyms_getval_unlocked(NULL, name, &rval,
 		    KSYMS_EXTERN) != 0) {
 			if (undefined) {
-				kobj_error(__func__, __LINE__, ko,
-				    "symbol `%s' not found", name);
+				kobj_error(ko, "symbol `%s' not found",
+				    name);
 				error = ENOEXEC;
 			}
 			continue;
@@ -893,8 +907,8 @@ kobj_checksyms(kobj_t ko, bool undefined)
 		    strncmp(name, "__stop_link_set_", 16)) {
 		    	continue;
 		}
-		kobj_error(__func__, __LINE__, ko,
-		    "global symbol `%s' redefined", name);
+		kobj_error(ko, "global symbol `%s' redefined",
+		    name);
 		error = ENOEXEC;
 	}
 
@@ -929,7 +943,9 @@ kobj_relocate(kobj_t ko, bool local)
 		rellim = rel + ko->ko_reltab[i].nrel;
 		base = kobj_findbase(ko, ko->ko_reltab[i].sec);
 		if (base == 0) {
-			panic("lost base for e_reltab");
+			panic("%s:%d: %s: lost base for e_reltab[%d] sec %d",
+			   __func__, __LINE__, ko->ko_name, i,
+			   ko->ko_reltab[i].sec);
 		}
 		for (; rel < rellim; rel++) {
 			symidx = ELF_R_SYM(rel->r_info);
@@ -958,7 +974,9 @@ kobj_relocate(kobj_t ko, bool local)
 		relalim = rela + ko->ko_relatab[i].nrela;
 		base = kobj_findbase(ko, ko->ko_relatab[i].sec);
 		if (base == 0) {
-			panic("lost base for e_relatab");
+			panic("%s:%d: %s: lost base for e_relatab[%d] sec %d",
+			   __func__, __LINE__, ko->ko_name, i,
+			   ko->ko_relatab[i].sec);
 		}
 		for (; rela < relalim; rela++) {
 			symidx = ELF_R_SYM(rela->r_info);
@@ -980,12 +998,12 @@ kobj_relocate(kobj_t ko, bool local)
 }
 
 /*
- * kobj_error:
+ * kobj_out:
  *
  *	Utility function: log an error.
  */
 static void
-kobj_error(const char *fname, int lnum, kobj_t ko, const char *fmt, ...)
+kobj_out(const char *fname, int lnum, kobj_t ko, const char *fmt, ...)
 {
 	va_list ap;
 
@@ -1004,15 +1022,15 @@ kobj_read_mem(kobj_t ko, void **basep, size_t size, off_t off,
 	int error;
 
 	if (ko->ko_memsize != -1 && off + size > ko->ko_memsize) {
-		kobj_error(__func__, __LINE__, ko, "preloaded object short");
+		kobj_error(ko, "preloaded object short");
 		error = EINVAL;
 		base = NULL;
 	} else if (allocate) {
 		base = (uint8_t *)ko->ko_source + off;
 		error = 0;
 	} else if ((uint8_t *)base != (uint8_t *)ko->ko_source + off) {
-		kobj_error(__func__, __LINE__, ko, "object not aligned");
-		kobj_error(__func__, __LINE__, ko, "source=%p base=%p off=%d "
+		kobj_error(ko, "object not aligned");
+		kobj_error(ko, "source=%p base=%p off=%d "
 		    "size=%zu", ko->ko_source, base, (int)off, size);
 		error = EINVAL;
 	} else {

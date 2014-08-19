@@ -1,4 +1,4 @@
-#	$NetBSD: majors.ia64,v 1.9 2012/02/25 10:55:28 shattered Exp $
+#	$NetBSD: majors.ia64,v 1.9.2.1 2014/08/20 00:03:07 tls Exp $
 #
 # Device majors for ia64
 #
@@ -91,7 +91,7 @@ device-major	clockctl	char 89			clockctl
 device-major	kttcp		char 91			kttcp
 device-major	dmoverio	char 92			dmoverio
 device-major	cgd		char 93  block 21	cgd
-device-major	verifiedexec	char 94			verifiedexec
+# major 94 free - was verifiedexec which is now MI
 device-major	fwiso		char 95			fwiso
 device-major	dpt		char 96			dpt
 device-major	twe		char 97			twe

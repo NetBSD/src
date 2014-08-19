@@ -122,7 +122,7 @@ discussed the first half of this document. </p>
 <blockquote>
 <pre>
 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-2     <a href="postconf.5.html#smtp_generic_maps">smtp_generic_maps</a> = hash:/etc/postfix/generic
+2     <a href="postconf.5.html#smtp_generic_maps">smtp_generic_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/generic
 3 
 4 /etc/postfix/generic:
 5     his@localdomain.local             hisaccount@hisisp.example
@@ -173,9 +173,9 @@ discussed the first half of this document. </p>
  2     <a href="postconf.5.html#myhostname">myhostname</a> = hostname.localdomain
  3     <a href="postconf.5.html#mydomain">mydomain</a> = localdomain
  4 
- 5     <a href="postconf.5.html#canonical_maps">canonical_maps</a> = hash:/etc/postfix/canonical
+ 5     <a href="postconf.5.html#canonical_maps">canonical_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/canonical
  6 
- 7     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
+ 7     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual
  8 
  9 /etc/postfix/canonical:
 10     your-login-name    your-account@your-isp.com
@@ -251,7 +251,7 @@ second part sets up the username/password information.  </p>
     <a href="postconf.5.html#relayhost">relayhost</a> = [mail.isp.example]
     # Alternative form:
     # <a href="postconf.5.html#relayhost">relayhost</a> = [mail.isp.example]:submission
-    <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> = hash:/etc/postfix/sasl_passwd
+    <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/sasl_passwd
 </pre>
 </blockquote>
 
@@ -357,9 +357,9 @@ resort.  </p>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtp_sender_dependent_authentication">smtp_sender_dependent_authentication</a> = yes
-    <a href="postconf.5.html#sender_dependent_relayhost_maps">sender_dependent_relayhost_maps</a> = hash:/etc/postfix/sender_relay
+    <a href="postconf.5.html#sender_dependent_relayhost_maps">sender_dependent_relayhost_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/sender_relay
     <a href="postconf.5.html#smtp_sasl_auth_enable">smtp_sasl_auth_enable</a> = yes
-    <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> = hash:/etc/postfix/sasl_passwd
+    <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/sasl_passwd
     <a href="postconf.5.html#relayhost">relayhost</a> = [mail.isp.example]
     # Alternative form:
     # <a href="postconf.5.html#relayhost">relayhost</a> = [mail.isp.example]:submission

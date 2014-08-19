@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_bswap.h,v 1.3.2.2 2013/06/23 06:18:39 tls Exp $	*/
+/*	$NetBSD: ulfs_bswap.h,v 1.3.2.3 2014/08/20 00:04:45 tls Exp $	*/
 /*  from NetBSD: ufs_bswap.h,v 1.19 2009/10/19 18:41:17 bouyer Exp  */
 
 /*
@@ -37,13 +37,13 @@
 
 /* Macros to access ULFS flags */
 #ifdef LFS_EI
-#define	ULFS_MPNEEDSWAP(ump)	((ump)->um_flags & ULFS_NEEDSWAP)
+#define	ULFS_MPNEEDSWAP(lfs)	((lfs)->um_flags & ULFS_NEEDSWAP)
 #define ULFS_FSNEEDSWAP(fs)	((fs)->fs_flags & FS_SWAPPED)
-#define	ULFS_IPNEEDSWAP(ip)	ULFS_MPNEEDSWAP((ip)->i_ump)
+#define	ULFS_IPNEEDSWAP(ip)	ULFS_MPNEEDSWAP((ip)->i_lfs)
 #else
-#define	ULFS_MPNEEDSWAP(ump)	(0)
-#define ULFS_FSNEEDSWAP(fs)	(0)
-#define	ULFS_IPNEEDSWAP(ip)	(0)
+#define	ULFS_MPNEEDSWAP(ump)	(__USE(ump), 0)
+#define ULFS_FSNEEDSWAP(fs)	(__USE(fs), 0)
+#define	ULFS_IPNEEDSWAP(ip)	(__USE(ip), 0)
 #endif
 
 #if !defined(_KERNEL) || defined(LFS_EI)
@@ -66,9 +66,9 @@ ulfs_rw64(uint64_t a, int ns)
 	return ((ns) ? bswap64(a) : (a));
 }
 #else
-#define ulfs_rw16(a, ns) ((uint16_t)(a))
-#define ulfs_rw32(a, ns) ((uint32_t)(a))
-#define ulfs_rw64(a, ns) ((uint64_t)(a))
+#define ulfs_rw16(a, ns) (__USE(ns), (uint16_t)(a))
+#define ulfs_rw32(a, ns) (__USE(ns), (uint32_t)(a))
+#define ulfs_rw64(a, ns) (__USE(ns), (uint64_t)(a))
 #endif
 
 #define ulfs_add16(a, b, ns) \

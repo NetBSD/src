@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.74.18.1 2012/11/20 03:02:07 tls Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.74.18.2 2014/08/20 00:03:38 tls Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.74.18.1 2012/11/20 03:02:07 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.74.18.2 2014/08/20 00:03:38 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -120,15 +120,22 @@ dev_type_mmap(esh_fpmmap);
 dev_type_strategy(esh_fpstrategy);
 
 const struct cdevsw esh_cdevsw = {
-	esh_fpopen, esh_fpclose, esh_fpread, esh_fpwrite, nullioctl,
-	nostop, notty, nullpoll,
+	.d_open = esh_fpopen,
+	.d_close = esh_fpclose,
+	.d_read = esh_fpread,
+	.d_write = esh_fpwrite,
+	.d_ioctl = nullioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nullpoll,
 #ifdef MORE_DONE
-	esh_fpmmap,
+	.d_mmap = esh_fpmmap,
 #else
-	nommap,
+	.d_mmap = nommap,
 #endif
-	nullkqfilter,
-	D_OTHER,
+	.d_kqfilter = nullkqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 /* General routines, not externally visable */
@@ -1630,12 +1637,11 @@ eshintr(void *arg)
 				sc->sc_flags &= ~ESH_FL_SNAP_RING_UP;
 				while (sc->sc_snap_recv.ec_consumer
 				       != sc->sc_snap_recv.ec_producer) {
-					struct mbuf *m0;
 					u_int16_t offset = sc->sc_snap_recv.ec_consumer;
 
 					bus_dmamap_unload(sc->sc_dmat,
 							  sc->sc_snap_recv.ec_dma[offset]);
-					MFREE(sc->sc_snap_recv.ec_m[offset], m0);
+					m_free(sc->sc_snap_recv.ec_m[offset]);
 					sc->sc_snap_recv.ec_m[offset] = NULL;
 					sc->sc_snap_recv.ec_consumer =
 						NEXT_RECV(sc->sc_snap_recv.ec_consumer);
@@ -2474,14 +2480,14 @@ esh_fill_snap_ring(struct esh_softc *sc)
 
 	while (NEXT_RECV(recv->ec_producer) != recv->ec_consumer) {
 		int offset = recv->ec_producer;
-		struct mbuf *m, *m0;
+		struct mbuf *m;
 
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (!m)
 			break;
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
-			MFREE(m, m0);
+			m_free(m);
 			break;
 		}
 
@@ -2492,7 +2498,7 @@ esh_fill_snap_ring(struct esh_softc *sc)
 			printf("%s:  esh_fill_recv_ring:  bus_dmamap_load "
 			       "failed\toffset %x, error code %d\n",
 			       device_xname(sc->sc_dev), offset, error);
-			MFREE(m, m0);
+			m_free(m);
 			break;
 		}
 
@@ -3245,12 +3251,11 @@ eshstop(struct esh_softc *sc)
 
 	while (sc->sc_snap_recv.ec_consumer
                != sc->sc_snap_recv.ec_producer) {
-		struct mbuf *m0;
 		u_int16_t offset = sc->sc_snap_recv.ec_consumer;
 
 		bus_dmamap_unload(sc->sc_dmat,
 				  sc->sc_snap_recv.ec_dma[offset]);
-		MFREE(sc->sc_snap_recv.ec_m[offset], m0);
+		m_free(sc->sc_snap_recv.ec_m[offset]);
 		sc->sc_snap_recv.ec_m[offset] = NULL;
 		sc->sc_snap_recv.ec_consumer =
 			NEXT_RECV(sc->sc_snap_recv.ec_consumer);

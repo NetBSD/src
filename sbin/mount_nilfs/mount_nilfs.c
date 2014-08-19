@@ -1,4 +1,4 @@
-/* $NetBSD: mount_nilfs.c,v 1.1 2009/07/18 16:31:42 reinoud Exp $ */
+/* $NetBSD: mount_nilfs.c,v 1.1.12.1 2014/08/20 00:02:26 tls Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_nilfs.c,v 1.1 2009/07/18 16:31:42 reinoud Exp $");
+__RCSID("$NetBSD: mount_nilfs.c,v 1.1.12.1 2014/08/20 00:02:26 tls Exp $");
 #endif /* not lint */
 
 
@@ -110,14 +110,12 @@ mount_nilfs_parseargs(int argc, char **argv,
 	struct tm *tm;
 	time_t	 now;
 	int	 ch, set_gmtoff;
-	uint32_t sector_size;
 	mntoptparse_t mp;
 
 	/* initialise */
 	(void)memset(args, 0, sizeof(*args));
 
 	set_gmtoff = *mntflags = 0;
-	sector_size = 0;
 
 	while ((ch = getopt(argc, argv, "c:o:t:")) != -1) {
 		switch (ch) {

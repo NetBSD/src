@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.7 2008/10/26 00:08:15 mrg Exp $	*/
+/*	$NetBSD: reg.h,v 1.7.38.1 2014/08/20 00:02:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,14 +39,8 @@
 
 #ifdef __x86_64__
 
-#include <machine/fpu.h>
+#include <x86/fpu.h>
 #include <machine/mcontext.h>
-
-/*
- * XXX
- * The #defines aren't used in the kernel, but some user-level code still
- * expects them.
- */
 
 /*
  * Registers accessible to ptrace(2) syscall for debugger use.
@@ -59,19 +53,8 @@ struct reg {
 };
 
 struct fpreg {
-	struct fxsave64 fxstate;
+	struct fxsave fxstate;
 };
-
-#define fp_fcw		fxstate.fx_fcw
-#define fp_fsw		fxstate.fx_fsw
-#define fp_ftw		fxstate.fx_ftw
-#define fp_fop		fxstate.fx_fop
-#define fp_rip		fxstate.fx_rip
-#define fp_rdp		fxstate.fx_rdp
-#define fp_mxcsr	fxstate.fx_mxcsr
-#define fp_mxcsr_mask	fxstate.fx_mxcsr_mask
-#define fp_st		fxstate.fx_st
-#define fp_xmm		fxstate.fx_xmm
 
 #else	/*	__x86_64__	*/
 

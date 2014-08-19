@@ -30,30 +30,15 @@
 #define	_GPT_H_
 
 #include <sys/endian.h>
-#ifdef __FreeBSD__
-#include <sys/gpt.h>
-/*
- * XXX struct gpt_hdr is not a multiple of 8 bytes in size and thus
- * contains padding we must not include in the size.
- */
-#define GPT_SIZE offsetof(struct gpt_hdr, padding)
-#endif
-#ifdef __NetBSD__
 #include <sys/disklabel_gpt.h>
 #define GPT_SIZE GPT_HDR_SIZE
 #define hdr_uuid hdr_guid
 #define ent_uuid ent_guid
-#endif
 
 #include <uuid.h>
 
-#ifdef __NetBSD__
 #define le_uuid_dec uuid_dec_le
 #define le_uuid_enc uuid_enc_le
-#else
-void	le_uuid_dec(void const *, uuid_t *);
-void	le_uuid_enc(void *, uuid_t const *);
-#endif
 int	parse_uuid(const char *, uuid_t *);
 
 struct mbr_part {
@@ -95,6 +80,7 @@ uint8_t *utf16_to_utf8(uint16_t *);
 void	utf8_to_utf16(const uint8_t *, uint16_t *, size_t);
 
 int	cmd_add(int, char *[]);
+int	cmd_backup(int, char *[]);
 int	cmd_biosboot(int, char *[]);
 int	cmd_create(int, char *[]);
 int	cmd_destroy(int, char *[]);
@@ -102,6 +88,10 @@ int	cmd_label(int, char *[]);
 int	cmd_migrate(int, char *[]);
 int	cmd_recover(int, char *[]);
 int	cmd_remove(int, char *[]);
+int	cmd_resize(int, char *[]);
+int	cmd_restore(int, char *[]);
+int	cmd_set(int, char *[]);
 int	cmd_show(int, char *[]);
+int	cmd_unset(int, char *[]);
 
 #endif /* _GPT_H_ */

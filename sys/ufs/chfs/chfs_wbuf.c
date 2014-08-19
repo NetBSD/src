@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_wbuf.c,v 1.4.8.1 2012/11/20 03:02:52 tls Exp $	*/
+/*	$NetBSD: chfs_wbuf.c,v 1.4.8.2 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -181,7 +181,7 @@ chfs_write_wbuf(struct chfs_mount* chmp, const struct iovec *invecs, long count,
 	/* adjust alignment offset */
 	if (chmp->chm_wbuf_len != PAGE_MOD(to)) {
 		chmp->chm_wbuf_len = PAGE_MOD(to);
-		/* take care of alignement to next page */
+		/* take care of alignment to next page */
 		if (!chmp->chm_wbuf_len) {
 			chmp->chm_wbuf_len += chmp->chm_wbuf_pagesize;
 			ret = chfs_flush_wbuf(chmp, WBUF_NOPAD);

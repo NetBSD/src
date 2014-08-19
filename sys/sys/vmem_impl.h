@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem_impl.h,v 1.2.4.2 2013/02/25 00:30:13 tls Exp $	*/
+/*	$NetBSD: vmem_impl.h,v 1.2.4.3 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -62,7 +62,7 @@
 
 typedef struct vmem_btag bt_t;
 
-CIRCLEQ_HEAD(vmem_seglist, vmem_btag);
+TAILQ_HEAD(vmem_seglist, vmem_btag);
 LIST_HEAD(vmem_freelist, vmem_btag);
 LIST_HEAD(vmem_hashlist, vmem_btag);
 
@@ -116,7 +116,7 @@ struct vmem {
 
 /* boundary tag */
 struct vmem_btag {
-	CIRCLEQ_ENTRY(vmem_btag) bt_seglist;
+	TAILQ_ENTRY(vmem_btag) bt_seglist;
 	union {
 		LIST_ENTRY(vmem_btag) u_freelist; /* BT_TYPE_FREE */
 		LIST_ENTRY(vmem_btag) u_hashlist; /* BT_TYPE_BUSY */

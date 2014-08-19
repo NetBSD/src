@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: n8_daemon_sks.c,v 1.1 2008/10/30 12:02:14 darran Exp $";
+static char const n8_id[] = "$Id: n8_daemon_sks.c,v 1.1.42.1 2014/08/20 00:03:48 tls Exp $";
 /*****************************************************************************/
 /** @file n8_daemon_sks.c
  *  @brief This file implements the user side of the daemon's SKS
@@ -233,8 +233,7 @@ N8_Status_t n8_daemon_sks_write(N8_SKSKeyHandle_t *sks_key_p,
      * we don't terminate it with '/'.  This is because on BSDi
      * you can't create a directory whose name appended with '/'
      */
-    sprintf(sub_dir, "%s%i", 
-            SKS_KEY_NODE_PATH,
+    snprintf(sub_dir, sizeof(sub_dir), "%s%i", SKS_KEY_NODE_PATH,
             sks_key_p->unitID);
 
     if ((dir_p = opendir(sub_dir)) == NULL)
@@ -258,7 +257,7 @@ N8_Status_t n8_daemon_sks_write(N8_SKSKeyHandle_t *sks_key_p,
     }
     
     /* build full path name for key handle file */
-    sprintf(key_entry, "%s%i/%s", 
+    snprintf(key_entry, sizeof(key_entry), "%s%i/%s", 
             SKS_KEY_NODE_PATH,
             sks_key_p->unitID,
             key_entry_name);
@@ -438,8 +437,8 @@ N8_Status_t n8_daemon_sks_init(N8_Unit_t targetSKS,
         /* Open the SKS entry directory.  Read all the key files and 
          * allocate descriptor space for them.
          */
-        sprintf(sks_entry_name, "%s%i/", SKS_KEY_NODE_PATH, 
-                targetSKS);
+        snprintf(sks_entry_name, sizeof(sks_entry_name), "%s%i/",
+	    SKS_KEY_NODE_PATH, targetSKS);
 
         DBG(("Target sks dev node is '%s'.\n\n", sks_entry_name));
 
@@ -461,7 +460,7 @@ N8_Status_t n8_daemon_sks_init(N8_Unit_t targetSKS,
             if ((strcmp(dirent_p->d_name, ".") != 0) &&
                 (strcmp(dirent_p->d_name, "..") != 0))
             {
-                sprintf(sks_entry, "%s%s", sks_entry_name,
+                snprintf(sks_entry, sizeof(sks_entry), "%s%s", sks_entry_name,
                         dirent_p->d_name);
 
                 ret = n8_daemon_sks_read(&keyHandle,
@@ -521,7 +520,8 @@ N8_Status_t n8_daemon_sks_reset(N8_Unit_t targetSKS)
     N8_Status_t ret = N8_STATUS_OK;
 
     DBG(("Reset :\n"));
-    sprintf(key_entry, "%s%i/", SKS_KEY_NODE_PATH, targetSKS);
+    snprintf(key_entry, sizeof(key_entry), "%s%i/",
+	SKS_KEY_NODE_PATH, targetSKS);
 
     /* Find out which, if any, key entries exist. Then blast 'em. */
     DBG(("Resetting SKS %i.\n", targetSKS));
@@ -557,7 +557,7 @@ N8_Status_t n8_daemon_sks_reset(N8_Unit_t targetSKS)
             }
             DBG(("%s : \n", dirent_p->d_name));
 
-            sprintf(key_entry_path, "%s%i/%s", 
+            snprintf(key_entry_path, sizeof(key_entry_path), "%s%i/%s", 
                     SKS_KEY_NODE_PATH,
                     targetSKS,
                     dirent_p->d_name);

@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.78.2.1 2012/11/20 03:01:35 tls Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.78.2.2 2014/08/20 00:03:15 tls Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,10 +40,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.78.2.1 2012/11/20 03:01:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.78.2.2 2014/08/20 00:03:15 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
+
+#define	_ARM32_BUS_DMA_PRIVATE
+
+#include "isa.h"
+#include "isadma.h"
+#include "igsfb.h"
+#include "pckbc.h"
+#include "com.h"
+#include "ksyms.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -55,10 +64,31 @@ __KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.78.2.1 2012/11/20 03:01:35 t
 #include <sys/reboot.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
+
+#if NISA > 0
+#include <dev/isa/isareg.h>
+#include <dev/isa/isavar.h>
+#endif
+
+#if NIGSFB > 0
+#include <dev/pci/pcivar.h>
+#include <dev/pci/igsfb_pcivar.h>
+#endif
+
+#if NPCKBC > 0
+#include <dev/ic/i8042reg.h>
+#include <dev/ic/pckbcvar.h>
+#endif
+
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
@@ -67,41 +97,13 @@ __KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.78.2.1 2012/11/20 03:01:35 t
 #include <arm/arm32/machdep.h>
 
 #include <machine/bootconfig.h>
-#define	_ARM32_BUS_DMA_PRIVATE
-#include <sys/bus.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
-#include <machine/intr.h>
+#include <arm/locore.h>
 #include <arm/undefined.h>
 
 #include <machine/netwinder_boot.h>
 #include <arm/footbridge/dc21285mem.h>
 #include <arm/footbridge/dc21285reg.h>
 
-#include "isa.h"
-#include "isadma.h"
-#if NISA > 0
-#include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
-#endif
-
-#include "igsfb.h"
-#if NIGSFB > 0
-#include <dev/pci/pcivar.h>
-#include <dev/pci/igsfb_pcivar.h>
-#endif
-
-#include "pckbc.h"
-#if NPCKBC > 0
-#include <dev/ic/i8042reg.h>
-#include <dev/ic/pckbcvar.h>
-#endif
-
-#include "com.h"
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
-
-#include "ksyms.h"
 
 static bus_space_handle_t isa_base = (bus_space_handle_t) DC21285_PCI_IO_VBASE;
 

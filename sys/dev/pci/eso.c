@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.61.2.1 2012/11/20 03:02:14 tls Exp $	*/
+/*	$NetBSD: eso.c,v 1.61.2.2 2014/08/20 00:03:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.61.2.1 2012/11/20 03:02:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.61.2.2 2014/08/20 00:03:42 tls Exp $");
 
 #include "mpu.h"
 
@@ -96,10 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.61.2.1 2012/11/20 03:02:14 tls Exp $");
  * XXX engine by allocating through the ISA DMA tag.
  */
 #if defined(amd64) || defined(i386)
-#include "isa.h"
-#if NISA > 0
 #include <dev/isa/isavar.h>
-#endif
 #endif
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
@@ -262,6 +259,7 @@ eso_attach(device_t parent, device_t self, void *aux)
 	const char *intrstring;
 	int idx, error;
 	uint8_t a2mode, mvctl;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -393,7 +391,7 @@ eso_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	intrstring = pci_intr_string(pa->pa_pc, ih);
+	intrstring = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih  = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, eso_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
@@ -1184,10 +1182,8 @@ static int
 eso_get_port(void *hdl, mixer_ctrl_t *cp)
 {
 	struct eso_softc *sc;
-	int error;
 
 	sc = hdl;
-	error = 0;
 
 	mutex_spin_enter(&sc->sc_intr_lock);
 
@@ -1227,7 +1223,6 @@ eso_get_port(void *hdl, mixer_ctrl_t *cp)
 			    sc->sc_gain[cp->dev][ESO_RIGHT];
 			break;
 		default:
-			error = EINVAL;
 			break;
 		}
 		break;
@@ -1237,7 +1232,6 @@ eso_get_port(void *hdl, mixer_ctrl_t *cp)
 	case ESO_MONO_REC_VOL:
 	case ESO_SPATIALIZER:
 		if (cp->un.value.num_channels != 1) {
-			error = EINVAL;
 			break;
 		}
 		cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
@@ -1276,7 +1270,6 @@ eso_get_port(void *hdl, mixer_ctrl_t *cp)
 		break;
 
 	default:
-		error = EINVAL;
 		break;
 	}
 

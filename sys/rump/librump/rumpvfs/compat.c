@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.9 2011/01/17 16:20:20 pooka Exp $	*/
+/*	$NetBSD: compat.c,v 1.9.16.1 2014/08/20 00:04:42 tls Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat.c,v 1.9 2011/01/17 16:20:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat.c,v 1.9.16.1 2014/08/20 00:04:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -39,8 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat.c,v 1.9 2011/01/17 16:20:20 pooka Exp $");
 #include <compat/sys/time.h>
 
 #include <rump/rump.h>
-#include <rump/rump_syscalls_compat.h>
-#include <rump/rumpuser.h>
 
 #include "rump_vfs_private.h"
 

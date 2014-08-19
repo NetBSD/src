@@ -1,20 +1,22 @@
-#	$NetBSD: Makefile,v 1.3 2011/08/09 12:58:55 joerg Exp $
+#	$NetBSD: Makefile,v 1.3.8.1 2014/08/19 23:56:47 tls Exp $
 
 LIBISPRIVATE=	yes
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
+
+GCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 
 LIB=		iberty
 
 .include "${.CURDIR}/defs.mk"
 
-DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
+DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
 
 SRCS=		${G_REQUIRED_OFILES:.o=.c} ${G_EXTRA_OFILES:.o=.c} \
 		${G_LIBOBJS:.o=.c} ${G_ALLOCA:.o=.c}
 
-CPPFLAGS+=	-DHAVE_CONFIG_H -I${.CURDIR}/arch/${MACHINE_ARCH} \
+CPPFLAGS+=	-DHAVE_CONFIG_H -I${.CURDIR}/arch/${GCC_MACHINE_ARCH} \
 		-I${DIST}/include
 
 COPTS.argv.c = -Wno-stack-protector

@@ -44,8 +44,8 @@ mpz_set_d (mpz_ptr r, double d)
   mp_size_t rn;
 
   DOUBLE_NAN_INF_ACTION (d,
-                         __gmp_invalid_operation (),
-                         __gmp_invalid_operation ());
+			 __gmp_invalid_operation (),
+			 __gmp_invalid_operation ());
 
   negative = d < 0;
   d = ABS (d);

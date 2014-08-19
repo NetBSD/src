@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_intr.h,v 1.2 2008/01/08 02:07:51 matt Exp $	*/
+/*	$NetBSD: ixp12x0_intr.h,v 1.2.54.1 2014/08/20 00:02:46 tls Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -45,9 +45,6 @@
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
-#ifdef __HAVE_FAST_SOFTINTS
-void	_setsoftintr(int);
-#endif
 
 #endif /* ! _LOCORE */
 

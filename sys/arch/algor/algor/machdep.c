@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 2012/03/02 16:19:52 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52.2.1 2014/08/20 00:02:41 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2012/03/02 16:19:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52.2.1 2014/08/20 00:02:41 tls Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2012/03/02 16:19:52 matt Exp $");
 #include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/termios.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -208,7 +209,7 @@ mach_init(int argc, char *argv[], char *envp[])
 		struct vtpbc_config *vt = &vtpbc_configuration; 
 		bus_space_handle_t sh;
 
-		strcpy(cpu_model, "Algorithmics P-4032");
+		cpu_setmodel("Algorithmics P-4032");
 
 		vt->vt_addr = MIPS_PHYS_TO_KSEG1(P4032_V962PBC);
 		vt->vt_cfgbase = MIPS_PHYS_TO_KSEG1(P4032_PCICFG);
@@ -255,7 +256,7 @@ mach_init(int argc, char *argv[], char *envp[])
 		struct vtpbc_config *vt = &vtpbc_configuration;
 		bus_space_handle_t sh;
 
-		strcpy(cpu_model, "Algorithmics P-5064");
+		cpu_setmodel("Algorithmics P-5064");
 
 		vt->vt_addr = MIPS_PHYS_TO_KSEG1(P5064_V360EPC);
 		vt->vt_cfgbase = MIPS_PHYS_TO_KSEG1(P5064_PCICFG);
@@ -299,7 +300,7 @@ mach_init(int argc, char *argv[], char *envp[])
 		struct bonito_config *bc = &acp->ac_bonito;
 		bus_space_handle_t sh;
 
-		strcpy(cpu_model, "Algorithmics P-6032");
+		cpu_setmodel("Algorithmics P-6032");
 
 		bc->bc_adbase = 11;
 		
@@ -523,7 +524,7 @@ cpu_startup(void)
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s%s", copyright, version);
-	printf("%s\n", cpu_model);
+	printf("%s\n", cpu_getmodel());
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
 	printf("total memory = %s\n", pbuf);
 

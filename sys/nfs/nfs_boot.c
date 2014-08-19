@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.80 2010/10/04 23:48:22 cyber Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.80.18.1 2014/08/20 00:04:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.80 2010/10/04 23:48:22 cyber Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.80.18.1 2014/08/20 00:04:36 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -112,7 +112,7 @@ nfs_boot_init(struct nfs_diskless *nd, struct lwp *lwp)
 {
 	struct ifnet *ifp;
 	int error = 0;
-	int flags;
+	int flags __unused;
 
 	/* Explicitly necessary or build fails
 	 * due to unused variable, otherwise.

@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.24.14.1 2012/11/20 03:00:55 tls Exp $	*/
+/*	$NetBSD: spl.S,v 1.24.14.2 2014/08/20 00:02:42 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -116,6 +116,7 @@ IDTVEC(softintr)
 	popq	%r15			/* unwind switchframe */
 	addq	$(5 * 8),%rsp
 	jmp	*%r13			/* back to splx/doreti */
+END(Xsoftintr)
 
 /*
  * softintr_ret()
@@ -130,6 +131,7 @@ NENTRY(softintr_ret)
 	movl	$0, L_CTXSWTCH(%rax)	/* %rax from cpu_switchto */
 	cli
 	jmp	*%r13			/* back to splx/doreti */
+END(softintr_ret)
 
 /*
  * void softint_trigger(uintptr_t machdep);
@@ -139,6 +141,7 @@ NENTRY(softintr_ret)
 NENTRY(softint_trigger)
 	orl	%edi,CPUVAR(IPENDING)	/* atomic on local cpu */
 	ret
+END(softint_trigger)
 
 
 /*
@@ -153,6 +156,7 @@ IDTVEC(preemptrecurse)
 	call	_C_LABEL(kpreempt)
 	cli
 	jmp	*%r13
+END(Xpreemptrecurse)
 
 /*
  * Xpreemptresume()
@@ -172,6 +176,7 @@ IDTVEC(preemptresume)
 	call	_C_LABEL(preempt)		# from user
 	cli
 	jmp	*%r13
+END(Xpreemptresume)
 
 /*
  * int splraise(int s);
@@ -182,6 +187,7 @@ ENTRY(splraise)
 	cmoval	%eax,%edi
 	movl	%edi,CPUVAR(ILEVEL)
 	ret
+END(splraise)
 
 /*
  * void spllower(int s);
@@ -206,15 +212,11 @@ ENTRY(spllower)
 2:
 	popf
 	jmp	_C_LABEL(Xspllower)
-	nop
-	nop
+3:
+	.space 16
 	.align	16
-#ifdef GPROF
-	nop
-	.align	16
-#endif
+END(spllower)
 LABEL(spllower_end)
-
 #endif /* !XEN */
 
 /*
@@ -247,10 +249,13 @@ ENTRY(cx8_spllower)
 	ret
 2:
 	movq	%r8,%rbx
+	.type	_C_LABEL(cx8_spllower_patch), @function
 LABEL(cx8_spllower_patch)
 	jmp	_C_LABEL(Xspllower)
 
 	.align	16
+END(cx8_spllower_patch)
+END(cx8_spllower)
 LABEL(cx8_spllower_end)
 
 /*
@@ -295,6 +300,7 @@ IDTVEC(spllower)
 	popq	%r13
 	popq	%rbx
 	ret
+END(Xspllower)
 
 /*
  * Handle return from interrupt after device handler finishes.
@@ -321,8 +327,9 @@ IDTVEC(doreti)
 5:
 	testb   $SEL_RPL,TF_CS(%rsp)
 	jz	6f
-	.globl doreti_checkast
-doreti_checkast:
+
+	.type	_C_LABEL(doreti_checkast), @function
+LABEL(doreti_checkast)
 	movq	CPUVAR(CURLWP),%r14
 	CHECK_ASTPENDING(%r14)
 	je	3f
@@ -344,3 +351,5 @@ doreti_checkast:
 	call	_C_LABEL(do_pmap_load)
 	CLI(si)
 	jmp	doreti_checkast		/* recheck ASTs */
+END(doreti_checkast)
+END(Xdoreti)

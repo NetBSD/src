@@ -1,4 +1,4 @@
-/*	$NetBSD: prtable.c,v 1.9 2005/07/01 16:38:24 jmc Exp $	*/
+/*	$NetBSD: prtable.c,v 1.9.48.1 2014/08/20 00:00:22 tls Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: prtable.c,v 1.9 2005/07/01 16:38:24 jmc Exp $");
+__RCSID("$NetBSD: prtable.c,v 1.9.48.1 2014/08/20 00:00:22 tls Exp $");
 #endif /* not lint */
 
 #include <curses.h>
@@ -106,6 +106,7 @@ prtable(const char *const base[], int num, int d_cols, int width,
 			}
                 }
 		getyx(stdscr, row, col);
+		__USE(col);
 		move(row + 1, 0);
         }
 	refresh();

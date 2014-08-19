@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_sbdio.c,v 1.10 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: zs_sbdio.c,v 1.10.44.1 2014/08/20 00:03:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_sbdio.c,v 1.10 2008/04/28 20:23:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_sbdio.c,v 1.10.44.1 2014/08/20 00:03:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,12 +111,11 @@ zs_sbdio_attach(device_t parent, device_t self, void *aux)
 	struct zschan *zc;
 	struct zs_chanstate *cs;
 	struct zsdevice *zs_addr;
-	int s, zs_unit, channel;
+	int s, channel;
 
 	zsc->zsc_dev = self;
 	aprint_normal("\n");
 
-	zs_unit = device_unit(self);
 	zs_addr = (void *)MIPS_PHYS_TO_KSEG1(sa->sa_addr1);
 	zsc->zsc_flags = sa->sa_flags;
 

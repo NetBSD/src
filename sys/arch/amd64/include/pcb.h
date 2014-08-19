@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.17.18.1 2013/02/25 00:28:20 tls Exp $	*/
+/*	$NetBSD: pcb.h,v 1.17.18.2 2014/08/20 00:02:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,12 +72,7 @@
 
 #ifdef __x86_64__
 
-#include <sys/signal.h>
-
-#include <machine/segments.h>
-#include <machine/tss.h>
-#include <machine/fpu.h>
-#include <machine/sysarch.h>
+#include <x86/cpu_extended_state.h>
 
 #define	NIOPORTS	1024		/* # of ports we allow to be mapped */
 
@@ -91,25 +86,18 @@ struct pcb {
 	uint64_t pcb_cr3;
 	uint64_t pcb_rsp;
 	uint64_t pcb_rbp;
-	uint64_t pcb_usersp;
-	uint32_t pcb_unused;		/* unused */
-	struct	savefpu_i387 pcb_savefpu_i387; /* i387 status on last exception */
-	struct	savefpu pcb_savefpu __aligned(16); /* floating point state */
-	uint32_t pcb_unused_1[4];	/* unused */
 	void     *pcb_onfault;		/* copyin/out fault recovery */
-	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
 	uint64_t  pcb_fs;
 	uint64_t  pcb_gs;
 	int pcb_iopl;
-};
 
-/*    
- * The pcb is augmented with machine-dependent additional data for 
- * core dumps. For the i386, there is nothing to add.
- */     
-struct md_coredump {
-	long	md_pad[8];
-};    
+	uint32_t pcb_unused[11];		/* unused */
+
+	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
+	union savefpu	pcb_savefpu __aligned(64); /* floating point state */
+	/* **** DO NOT ADD ANYTHING HERE **** */
+};
+__CTASSERT(sizeof(struct pcb) - sizeof (union savefpu) ==  128);
 
 #else	/*	__x86_64__	*/
 

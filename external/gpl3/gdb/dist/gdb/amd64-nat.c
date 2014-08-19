@@ -1,7 +1,6 @@
 /* Native-dependent code for AMD64.
 
-   Copyright (C) 2003, 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,7 +22,7 @@
 #include "regcache.h"
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 
 #include "i386-tdep.h"
 #include "amd64-tdep.h"
@@ -60,7 +59,7 @@ amd64_native_gregset_reg_offset (struct gdbarch *gdbarch, int regnum)
 
   gdb_assert (regnum >= 0);
 
-  if (gdbarch_ptr_bit (gdbarch) == 32)
+  if (gdbarch_bfd_arch_info (gdbarch)->bits_per_word == 32)
     {
       reg_offset = amd64_native_gregset32_reg_offset;
       num_regs = amd64_native_gregset32_num_regs;
@@ -97,7 +96,7 @@ amd64_supply_native_gregset (struct regcache *regcache,
   int num_regs = amd64_native_gregset64_num_regs;
   int i;
 
-  if (gdbarch_ptr_bit (gdbarch) == 32)
+  if (gdbarch_bfd_arch_info (gdbarch)->bits_per_word == 32)
     num_regs = amd64_native_gregset32_num_regs;
 
   if (num_regs > gdbarch_num_regs (gdbarch))
@@ -128,7 +127,7 @@ amd64_collect_native_gregset (const struct regcache *regcache,
   int num_regs = amd64_native_gregset64_num_regs;
   int i;
 
-  if (gdbarch_ptr_bit (gdbarch) == 32)
+  if (gdbarch_bfd_arch_info (gdbarch)->bits_per_word == 32)
     {
       num_regs = amd64_native_gregset32_num_regs;
 

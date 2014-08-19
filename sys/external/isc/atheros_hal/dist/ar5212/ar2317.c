@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar2317.c,v 1.3 2009/01/06 06:03:57 mrg Exp $
+ * $Id: ar2317.c,v 1.3.34.1 2014/08/20 00:04:25 tls Exp $
  */
 #include "opt_ah.h"
 
@@ -282,13 +282,12 @@ ar2317FillVpdTable(uint32_t pdGainIdx, int16_t Pmin, int16_t  Pmax,
 		   const int16_t *pwrList, const int16_t *VpdList,
 		   uint16_t numIntercepts, uint16_t retVpdList[][64])
 {
-	uint16_t ii, jj, kk;
+	uint16_t ii, kk;
 	int16_t currPwr = (int16_t)(2*Pmin);
 	/* since Pmin is pwr*2 and pwrList is 4*pwr */
 	uint32_t  idxL = 0, idxR = 0;
 
 	ii = 0;
-	jj = 0;
 
 	if (numIntercepts < 2)
 		return AH_FALSE;
@@ -611,14 +610,12 @@ ar2317GetMaxPower(struct ath_hal *ah, const RAW_DATA_PER_CHANNEL_2317 *data)
 {
 	uint32_t ii;
 	uint16_t Pmax=0,numVpd;
-	uint16_t vpdmax;
 	
 	for (ii=0; ii< MAX_NUM_PDGAINS_PER_CHANNEL; ii++) {
 		/* work forwards cuase lowest pdGain for highest power */
 		numVpd = data->pDataPerPDGain[ii].numVpd;
 		if (numVpd > 0) {
 			Pmax = data->pDataPerPDGain[ii].pwr_t4[numVpd-1];
-			vpdmax = data->pDataPerPDGain[ii].Vpd[numVpd-1];
 			return(Pmax);
 		}
 	}

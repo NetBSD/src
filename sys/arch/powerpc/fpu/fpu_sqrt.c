@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_sqrt.c,v 1.4 2005/12/11 12:18:42 christos Exp $ */
+/*	$NetBSD: fpu_sqrt.c,v 1.4.122.1 2014/08/20 00:03:19 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_sqrt.c,v 1.4 2005/12/11 12:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_sqrt.c,v 1.4.122.1 2014/08/20 00:03:19 tls Exp $");
 
 #include <sys/types.h>
 #if defined(DIAGNOSTIC)||defined(DEBUG)
@@ -381,7 +381,7 @@ fpu_sqrt(struct fpemu *fe)
 	bit = 1 << 31;
 	EVEN_DOUBLE;
 	t3 = bit;
-	FPU_SUBS(d3, x3, t3);
+	FPU_SUBS(d3, x3, t3); __USE(d3);
 	FPU_SUBCS(d2, x2, t2);
 	FPU_SUBCS(d1, x1, t1);
 	FPU_SUBC(d0, x0, t0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.4 2011/07/01 20:52:02 dyoung Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.4.12.1 2014/08/20 00:03:20 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.4 2011/07/01 20:52:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.4.12.1 2014/08/20 00:03:20 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -140,15 +140,14 @@ eisa_intr_map(eisa_chipset_tag_t ec, u_int irq, eisa_intr_handle_t *ihp)
 }
 
 const char *
-eisa_intr_string(eisa_chipset_tag_t ec, eisa_intr_handle_t ih)
+eisa_intr_string(eisa_chipset_tag_t ec, eisa_intr_handle_t ih, char *buf,
+    size_t len)
 {
-	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
-
 	if (ih == 0 || (ih & 0xff) >= I8259_INTR_NUM || ih == 2)
 		panic("eisa_intr_string: bogus handle 0x%x", ih);
 
-	snprintf(irqstr, sizeof(irqstr), "irq %d", ih);
-	return (irqstr);
+	snprintf(buf, len, "irq %d", ih);
+	return buf;
 	
 }
 

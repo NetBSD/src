@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpd.c,v 1.24 2011/08/29 20:38:54 joerg Exp $");
+__RCSID("$NetBSD: bootpd.c,v 1.24.8.1 2014/08/20 00:05:06 tls Exp $");
 #endif
 
 /*
@@ -599,6 +599,7 @@ handle_request(void)
 	int32 dest;
 	char lrealpath[1024];
 	char *clntpath;
+	size_t clntpathmaxlen;
 	char *homedir, *bootfile;
 	int n;
 
@@ -811,9 +812,11 @@ HW addr type is IEEE 802.  convert to %s and check again\n",
 	if (hp->flags.tftpdir) {
 		strlcpy(lrealpath, hp->tftpdir->string, sizeof(lrealpath));
 		clntpath = &lrealpath[strlen(lrealpath)];
+		clntpathmaxlen = sizeof(lrealpath) + lrealpath - clntpath;
 	} else {
 		lrealpath[0] = '\0';
 		clntpath = lrealpath;
+		clntpathmaxlen = sizeof(lrealpath);
 	}
 
 	/*
@@ -883,8 +886,8 @@ HW addr type is IEEE 802.  convert to %s and check again\n",
 	 * First try to find the file with a ".host" suffix
 	 */
 	n = strlen(clntpath);
-	strlcat(clntpath, ".", sizeof(clntpath));
-	strlcat(clntpath, hp->hostname->string, sizeof(clntpath));
+	strlcat(clntpath, ".", clntpathmaxlen);
+	strlcat(clntpath, hp->hostname->string, clntpathmaxlen);
 	if (chk_access(lrealpath, &bootsize) < 0) {
 		clntpath[n] = 0;			/* Try it without the suffix */
 		if (chk_access(lrealpath, &bootsize) < 0) {

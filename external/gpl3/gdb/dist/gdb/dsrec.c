@@ -1,6 +1,5 @@
 /* S-record download support for GDB, the GNU debugger.
-   Copyright (C) 1995, 1996, 1997, 1999, 2000, 2001, 2003, 2004, 2007, 2008,
-   2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,11 +19,11 @@
 #include "defs.h"
 #include "serial.h"
 #include "srec.h"
+#include <sys/time.h>
 #include <time.h>
 #include "gdb_assert.h"
-#include "gdb_string.h"
-
-extern void report_transfer_performance (unsigned long, time_t, time_t);
+#include <string.h>
+#include "gdb_bfd.h"
 
 extern int remote_debug;
 
@@ -54,25 +53,28 @@ load_srec (struct serial *desc, const char *file, bfd_vma load_offset,
   char *srec;
   int i;
   int reclen;
-  time_t start_time, end_time;
+  struct timeval start_time, end_time;
   unsigned long data_count = 0;
+  struct cleanup *cleanup;
 
   srec = (char *) alloca (maxrecsize + 1);
 
-  abfd = bfd_openr (file, 0);
+  abfd = gdb_bfd_open (file, NULL, -1);
   if (!abfd)
     {
       printf_filtered (_("Unable to open file %s\n"), file);
       return;
     }
 
+  cleanup = make_cleanup_bfd_unref (abfd);
   if (bfd_check_format (abfd, bfd_object) == 0)
     {
       printf_filtered (_("File is not an object file\n"));
+      do_cleanups (cleanup);
       return;
     }
 
-  start_time = time (NULL);
+  gettimeofday (&start_time, NULL);
 
   /* Write a type 0 header record. no data for a type 0, and there
      is no data, so len is 0.  */
@@ -100,8 +102,8 @@ load_srec (struct serial *desc, const char *file, bfd_vma load_offset,
            have also been used.  cagney 1999-09-01 */
 	printf_filtered ("%s\t: %s .. %s  ",
 			 section_name,
-			 paddress (target_gdbarch, addr),
-			 paddress (target_gdbarch, addr + size));
+			 paddress (target_gdbarch (), addr),
+			 paddress (target_gdbarch (), addr + size));
 	gdb_flush (gdb_stdout);
 
 	data_count += size;
@@ -147,7 +149,7 @@ load_srec (struct serial *desc, const char *file, bfd_vma load_offset,
   if (hashmark)
     putchar_unfiltered ('\n');
 
-  end_time = time (NULL);
+  gettimeofday (&end_time, NULL);
 
   /* Write a terminator record.  */
 
@@ -169,7 +171,9 @@ load_srec (struct serial *desc, const char *file, bfd_vma load_offset,
 
   serial_flush_input (desc);
 
-  report_transfer_performance (data_count, start_time, end_time);
+  print_transfer_performance (gdb_stdout, data_count, 0,
+			      &start_time, &end_time);
+  do_cleanups (cleanup);
 }
 
 /*
@@ -222,10 +226,10 @@ make_srec (char *srec, CORE_ADDR targ_addr, bfd *abfd, asection *sect,
 {
   unsigned char checksum;
   int tmp;
-  const static char hextab[] = "0123456789ABCDEF";
-  const static char data_code_table[] = "123";
-  const static char term_code_table[] = "987";
-  const static char header_code_table[] = "000";
+  static const char hextab[] = "0123456789ABCDEF";
+  static const char data_code_table[] = "123";
+  static const char term_code_table[] = "987";
+  static const char header_code_table[] = "000";
   char const *code_table;
   int addr_size;
   int payload_size;
@@ -254,7 +258,7 @@ make_srec (char *srec, CORE_ADDR targ_addr, bfd *abfd, asection *sect,
   else
     internal_error (__FILE__, __LINE__,
 		    _("make_srec:  Bad address (%s), or bad flags (0x%x)."),
-		    paddress (target_gdbarch, targ_addr), flags);
+		    paddress (target_gdbarch (), targ_addr), flags);
 
   /* Now that we know the address size, we can figure out how much
      data this record can hold.  */

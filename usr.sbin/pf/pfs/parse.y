@@ -1,4 +1,4 @@
-/* $NetBSD: parse.y,v 1.1 2010/05/07 17:41:58 degroote Exp $ */
+/* $NetBSD: parse.y,v 1.1.12.1 2014/08/20 00:05:11 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: parse.y,v 1.1 2010/05/07 17:41:58 degroote Exp $");
+__RCSID("$NetBSD: parse.y,v 1.1.12.1 2014/08/20 00:05:11 tls Exp $");
 #endif
 
 #include <stdio.h>
@@ -480,7 +480,6 @@ retrieve_seq(const char* str, struct pfsync_state_peer* peer)
 static void
 add_state(void)
 {
-	int idx;
 
 	if (allocated == 0) {
 		allocated = 5;
@@ -500,5 +499,4 @@ add_state(void)
 		states->ps_buf = buf;
 	}
 
-	idx = states->ps_len / sizeof(struct pfsync_state);
 }

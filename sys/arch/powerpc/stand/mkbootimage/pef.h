@@ -1,4 +1,4 @@
-/*	$NetBSD: pef.h,v 1.2 2010/10/16 05:05:09 kiyohara Exp $	*/
+/*	$NetBSD: pef.h,v 1.2.18.1 2014/08/20 00:03:20 tls Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -34,17 +34,17 @@
 
 struct FileHeader
 {
-	unsigned long magic;
-	unsigned long fileTypeID;
-	unsigned long archID;
-	unsigned long versionNumber;
-	unsigned long dateTimeStamp;
-	unsigned long definVersion;
-	unsigned long implVersion;
-	unsigned long currentVersion;
-	unsigned short numSections;
-	unsigned short loadableSections;
-	unsigned long memoryAddress;
+	uint32_t magic;
+	uint32_t fileTypeID;
+	uint32_t archID;
+	uint32_t versionNumber;
+	uint32_t dateTimeStamp;
+	uint32_t definVersion;
+	uint32_t implVersion;
+	uint32_t currentVersion;
+	uint16_t numSections;
+	uint16_t loadableSections;
+	uint32_t memoryAddress;
 };
 
 #define PEF_MAGIC 0x4A6F7921  /* Joy! */
@@ -53,16 +53,16 @@ struct FileHeader
 
 struct SectionHeader
 {
-	unsigned long sectionName;
-	unsigned long sectionAddress;
-	unsigned long execSize;
-	unsigned long initSize;
-	unsigned long rawSize;
-	unsigned long fileOffset;
-	unsigned char regionKind;
-	unsigned char shareKind;
-	unsigned char alignment;
-	unsigned char _reserved;
+	uint32_t sectionName;
+	uint32_t sectionAddress;
+	uint32_t execSize;
+	uint32_t initSize;
+	uint32_t rawSize;
+	uint32_t fileOffset;
+	uint8_t regionKind;
+	uint8_t shareKind;
+	uint8_t alignment;
+	uint8_t _reserved;
 };
 
 #define CodeSection	0
@@ -79,18 +79,18 @@ struct SectionHeader
 
 struct LoaderHeader
 {
-	unsigned long entryPointSection;
-	unsigned long entryPointOffset;
-	unsigned long initPointSection;
-	unsigned long initPointOffset;
-	unsigned long termPointSection;
-	unsigned long termPointOffset;
-	unsigned long numImportFiles;
-	unsigned long numImportSyms;
-	unsigned long numSections;
-	unsigned long relocationsOffset;
-	unsigned long stringsOffset;
-	unsigned long hashSlotTable;
-	unsigned long hashSlotTableSize;
-	unsigned long numExportSyms;
+	uint32_t entryPointSection;
+	uint32_t entryPointOffset;
+	uint32_t initPointSection;
+	uint32_t initPointOffset;
+	uint32_t termPointSection;
+	uint32_t termPointOffset;
+	uint32_t numImportFiles;
+	uint32_t numImportSyms;
+	uint32_t numSections;
+	uint32_t relocationsOffset;
+	uint32_t stringsOffset;
+	uint32_t hashSlotTable;
+	uint32_t hashSlotTableSize;
+	uint32_t numExportSyms;
 };

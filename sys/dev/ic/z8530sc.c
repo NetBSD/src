@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.c,v 1.30 2009/05/22 03:51:30 mrg Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.30.22.1 2014/08/20 00:03:38 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530sc.c,v 1.30 2009/05/22 03:51:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530sc.c,v 1.30.22.1 2014/08/20 00:03:38 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ zs_break(struct zs_chanstate *cs, int set)
 void
 zs_iflush(struct zs_chanstate *cs)
 {
-	uint8_t c, rr0, rr1;
+	uint8_t rr0, rr1;
 	int i;
 
 	/*
@@ -147,7 +147,7 @@ zs_iflush(struct zs_chanstate *cs)
 		 * destroys the status of this char.
 		 */
 		rr1 = zs_read_reg(cs, 1);
-		c = zs_read_data(cs);
+		(void)zs_read_data(cs);
 
 		if (rr1 & (ZSRR1_FE | ZSRR1_DO | ZSRR1_PE)) {
 			/* Clear the receive error. */

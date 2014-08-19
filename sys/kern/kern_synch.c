@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.305 2012/09/02 16:00:00 mlelstv Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.305.2.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.305 2012/09/02 16:00:00 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.305.2.1 2014/08/20 00:04:29 tls Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -95,7 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.305 2012/09/02 16:00:00 mlelstv Exp
 #include <sys/intr.h>
 #include <sys/lwpctl.h>
 #include <sys/atomic.h>
-#include <sys/simplelock.h>
 #include <sys/syslog.h>
 
 #include <uvm/uvm_extern.h>

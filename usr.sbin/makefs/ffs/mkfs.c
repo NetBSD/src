@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.24.2.2 2013/06/23 06:29:05 tls Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.24.2.3 2014/08/20 00:05:09 tls Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -48,7 +48,7 @@
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
 #ifdef __RCSID
-__RCSID("$NetBSD: mkfs.c,v 1.24.2.2 2013/06/23 06:29:05 tls Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.24.2.3 2014/08/20 00:05:09 tls Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -128,7 +128,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 	int32_t cylno, i, csfrags;
 	long long sizepb;
 	void *space;
-	int size, blks;
+	int size;
 	int nprintcols, printcolwidth;
 	ffs_opt_t	*ffs_opts = fsopts->fs_specific;
 
@@ -247,7 +247,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 		sblock.fs_bshift++;
 	for (sblock.fs_fshift = 0, i = sblock.fs_fsize; i > 1; i >>= 1)
 		sblock.fs_fshift++;
-	sblock.fs_frag = numfrags(&sblock, sblock.fs_bsize);
+	sblock.fs_frag = ffs_numfrags(&sblock, sblock.fs_bsize);
 	for (sblock.fs_fragshift = 0, i = sblock.fs_frag; i > 1; i >>= 1)
 		sblock.fs_fragshift++;
 	if (sblock.fs_frag > MAXFRAG) {
@@ -258,7 +258,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 		exit(21);
 	}
 	sblock.fs_fsbtodb = ilog2(sblock.fs_fsize / sectorsize);
-	sblock.fs_size = fssize = dbtofsb(&sblock, fssize);
+	sblock.fs_size = fssize = FFS_DBTOFSB(&sblock, fssize);
 
 	if (Oflag <= 1) {
 		sblock.fs_magic = FS_UFS1_MAGIC;
@@ -321,7 +321,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 	 */
 	origdensity = density;
 	for (;;) {
-		fragsperinode = MAX(numfrags(&sblock, density), 1);
+		fragsperinode = MAX(ffs_numfrags(&sblock, density), 1);
 		minfpg = fragsperinode * FFS_INOPB(&sblock);
 		if (minfpg > sblock.fs_size)
 			minfpg = sblock.fs_size;
@@ -392,7 +392,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 	if (optimalfpg != sblock.fs_fpg)
 		printf("Reduced frags per cylinder group from %d to %d %s\n",
 		   optimalfpg, sblock.fs_fpg, "to enlarge last cyl group");
-	sblock.fs_cgsize = fragroundup(&sblock, CGSIZE(&sblock));
+	sblock.fs_cgsize = ffs_fragroundup(&sblock, CGSIZE(&sblock));
 	sblock.fs_dblkno = sblock.fs_iblkno + sblock.fs_ipg / FFS_INOPF(&sblock);
 	if (Oflag <= 1) {
 		sblock.fs_old_spc = sblock.fs_fpg * sblock.fs_old_nspf;
@@ -406,14 +406,13 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 	 */
 	sblock.fs_csaddr = cgdmin(&sblock, 0);
 	sblock.fs_cssize =
-	    fragroundup(&sblock, sblock.fs_ncg * sizeof(struct csum));
+	    ffs_fragroundup(&sblock, sblock.fs_ncg * sizeof(struct csum));
 
 	/*
 	 * Setup memory for temporary in-core cylgroup summaries.
 	 * Cribbed from ffs_mountfs().
 	 */
 	size = sblock.fs_cssize;
-	blks = howmany(size, sblock.fs_fsize);
 	if (sblock.fs_contigsumsize > 0)
 		size += sblock.fs_ncg * sizeof(int32_t);
 	space = ecalloc(1, size);
@@ -427,7 +426,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 		*lp++ = sblock.fs_contigsumsize;
 	}
 
-	sblock.fs_sbsize = fragroundup(&sblock, sizeof(struct fs));
+	sblock.fs_sbsize = ffs_fragroundup(&sblock, sizeof(struct fs));
 	if (sblock.fs_sbsize > SBLOCKSIZE)
 		sblock.fs_sbsize = SBLOCKSIZE;
 	sblock.fs_minfree = minfree;
@@ -453,12 +452,12 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 	sblock.fs_dsize = sblock.fs_size - sblock.fs_sblkno -
 	    sblock.fs_ncg * (sblock.fs_dblkno - sblock.fs_sblkno);
 	sblock.fs_cstotal.cs_nbfree =
-	    fragstoblks(&sblock, sblock.fs_dsize) -
+	    ffs_fragstoblks(&sblock, sblock.fs_dsize) -
 	    howmany(csfrags, sblock.fs_frag);
 	sblock.fs_cstotal.cs_nffree =
-	    fragnum(&sblock, sblock.fs_size) +
-	    (fragnum(&sblock, csfrags) > 0 ?
-	    sblock.fs_frag - fragnum(&sblock, csfrags) : 0);
+	    ffs_fragnum(&sblock, sblock.fs_size) +
+	    (ffs_fragnum(&sblock, csfrags) > 0 ?
+	    sblock.fs_frag - ffs_fragnum(&sblock, csfrags) : 0);
 	sblock.fs_cstotal.cs_nifree = sblock.fs_ncg * sblock.fs_ipg - UFS_ROOTINO;
 	sblock.fs_cstotal.cs_ndir = 0;
 	sblock.fs_dsize -= csfrags;
@@ -479,7 +478,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 	printf("%s: %.1fMB (%lld sectors) block size %d, "
 	       "fragment size %d\n",
 	    fsys, (float)sblock.fs_size * sblock.fs_fsize * B2MBFACTOR,
-	    (long long)fsbtodb(&sblock, sblock.fs_size),
+	    (long long)FFS_FSBTODB(&sblock, sblock.fs_size),
 	    sblock.fs_bsize, sblock.fs_fsize);
 	printf("\tusing %d cylinder groups of %.2fMB, %d blks, "
 	       "%d inodes.\n",
@@ -493,7 +492,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 	 * subwindows in sysinst.
 	 */
 	printcolwidth = count_digits(
-			fsbtodb(&sblock, cgsblock(&sblock, sblock.fs_ncg -1)));
+			FFS_FSBTODB(&sblock, cgsblock(&sblock, sblock.fs_ncg -1)));
 	nprintcols = 76 / (printcolwidth + 2);
 
 	/*
@@ -520,7 +519,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts)
 		if (cylno % nprintcols == 0)
 			printf("\n");
 		printf(" %*lld,", printcolwidth,
-			(long long)fsbtodb(&sblock, cgsblock(&sblock, cylno)));
+			(long long)FFS_FSBTODB(&sblock, cgsblock(&sblock, cylno)));
 		fflush(stdout);
 	}
 	printf("\n");
@@ -563,7 +562,7 @@ ffs_write_superblock(struct fs *fs, const fsinfo_t *fsopts)
 
 	/* Write out the duplicate super blocks */
 	for (cylno = 0; cylno < fs->fs_ncg; cylno++)
-		ffs_wtfs(fsbtodb(fs, cgsblock(fs, cylno)),
+		ffs_wtfs(FFS_FSBTODB(fs, cgsblock(fs, cylno)),
 		    sbsize, writebuf, fsopts);
 
 	/* Write out the cylinder group summaries */
@@ -580,7 +579,7 @@ ffs_write_superblock(struct fs *fs, const fsinfo_t *fsopts)
 			    (struct csum *)wrbuf, size);
 		else
 			memcpy(wrbuf, space, (u_int)size);
-		ffs_wtfs(fsbtodb(fs, fs->fs_csaddr + i), size, wrbuf, fsopts);
+		ffs_wtfs(FFS_FSBTODB(fs, fs->fs_csaddr + i), size, wrbuf, fsopts);
 		space = (char *)space + size;
 	}
 	free(wrbuf);
@@ -654,7 +653,7 @@ initcg(int cylno, time_t utime, const fsinfo_t *fsopts)
 		acg.cg_clusteroff = acg.cg_clustersumoff +
 		    (sblock.fs_contigsumsize + 1) * sizeof(int32_t);
 		acg.cg_nextfreeoff = acg.cg_clusteroff +
-		    howmany(fragstoblks(&sblock, sblock.fs_fpg), CHAR_BIT);
+		    howmany(ffs_fragstoblks(&sblock, sblock.fs_fpg), CHAR_BIT);
 	}
 	if (acg.cg_nextfreeoff > sblock.fs_cgsize) {
 		printf("Panic: cylinder group too big\n");
@@ -757,7 +756,7 @@ initcg(int cylno, time_t utime, const fsinfo_t *fsopts)
 			dp2++;
 		}
 	}
-	ffs_wtfs(fsbtodb(&sblock, cgsblock(&sblock, cylno)), iobufsize, iobuf,
+	ffs_wtfs(FFS_FSBTODB(&sblock, cgsblock(&sblock, cylno)), iobufsize, iobuf,
 	    fsopts);
 	/*
 	 * For the old file system, we have to initialize all the inodes.
@@ -771,7 +770,7 @@ initcg(int cylno, time_t utime, const fsinfo_t *fsopts)
 				dp1->di_gen = random();
 				dp1++;
 			}
-			ffs_wtfs(fsbtodb(&sblock, cgimin(&sblock, cylno) + i),
+			ffs_wtfs(FFS_FSBTODB(&sblock, cgimin(&sblock, cylno) + i),
 			    sblock.fs_bsize, &iobuf[start], fsopts);
 		}
 	}

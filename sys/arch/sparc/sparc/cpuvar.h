@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.90 2011/08/15 02:19:44 mrg Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.90.12.1 2014/08/20 00:03:24 tls Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -171,9 +171,9 @@ struct cpu_info {
 	 * the pending register to avoid a hardware bug.
 	 */
 #define raise_ipi(cpi,lvl)	do {			\
-	volatile int x;					\
+	int x;						\
 	(cpi)->intreg_4m->pi_set = PINTR_SINTRLEV(lvl);	\
-	x = (cpi)->intreg_4m->pi_pend;			\
+	x = (cpi)->intreg_4m->pi_pend; __USE(x);	\
 } while (0)
 
 	int		sun4_mmu3l;	/* [4]: 3-level MMU present */
@@ -421,7 +421,6 @@ struct cpu_info {
 #define CPUFLG_GOTMSG		0x4000	/* CPU got an lev13 IPI */
 
 
-#define CPU_INFO_ITERATOR		int
 /*
  * Provide two forms of CPU_INFO_FOREACH.  One fast one for non-modular
  * non-SMP kernels, and the other for everyone else.  Both work in the
@@ -430,8 +429,10 @@ struct cpu_info {
  */
 #if defined(MULTIPROCESSOR) || defined(MODULAR) || defined(_MODULE)
 #define	CPU_INFO_FOREACH(cii, cp)	cii = 0; (cp = cpus[cii]) && cp->eintstack && cii < sparc_ncpus; cii++
+#define CPU_INFO_ITERATOR		int
 #else
-#define CPU_INFO_FOREACH(cii, cp)	cii = 0, cp = curcpu(); cp != NULL; cp = NULL
+#define CPU_INFO_FOREACH(cii, cp)	cp = curcpu(); cp != NULL; cp = NULL
+#define CPU_INFO_ITERATOR		int __unused
 #endif
 
 

@@ -1,0 +1,46 @@
+#	$NetBSD: majors.evbcf,v 1.2.8.2 2014/08/20 00:02:57 tls Exp $
+#
+# Device majors for mvme68k
+#
+
+device-major	cons		char 0
+device-major	ctty		char 1
+device-major	mem		char 2
+device-major	swap		char 3   block 3	vmswap
+device-major	pts		char 4			pty
+device-major	ptc		char 5			pty
+device-major	log		char 6
+device-major	ipl		char 7			ipfilter
+device-major	sd		char 8   block 4	sd
+
+device-major	lpt		char 11			lpt
+device-major	zstty		char 12			zstty
+device-major	clmpcc		char 13			clmpcc
+device-major	cftty		char 14			cfuart
+
+device-major	ccd		char 17  block 5	ccd
+device-major	cd		char 18  block 8	cd
+device-major	vnd		char 19  block 6	vnd
+device-major	st		char 20  block 7	st
+device-major	filedesc	char 21
+device-major	bpf		char 22			bpfilter
+device-major	tun		char 23			tun
+
+device-major	ses		char 30			ses
+device-major	ch		char 31			ch
+device-major	md		char 32  block 9	md
+device-major	ss		char 33			ss
+device-major	uk		char 34			uk
+device-major	rnd		char 35			rnd
+device-major	scsibus		char 36			scsibus
+device-major	raid		char 37  block 16	raid
+device-major	svr4_net	char 38			compat_svr4
+device-major	clockctl	char 39			clockctl
+device-major	cgd		char 41  block 17	cgd
+device-major	ksyms		char 42			ksyms
+
+device-major	nsmb		char 98			nsmb
+
+# Majors up to 143 are reserved for machine-dependent drivers.
+# New machine-independent driver majors are assigned in 
+# sys/conf/majors.

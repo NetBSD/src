@@ -1,4 +1,4 @@
-/*      $NetBSD: xpci_xenbus.c,v 1.11.2.1 2013/02/25 00:29:06 tls Exp $      */
+/*      $NetBSD: xpci_xenbus.c,v 1.11.2.2 2014/08/20 00:03:30 tls Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.11.2.1 2013/02/25 00:29:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.11.2.2 2014/08/20 00:03:30 tls Exp $");
 
 #include "opt_xen.h"
 
@@ -148,7 +148,7 @@ xpci_xenbus_attach(device_t parent, device_t self, void *aux)
 	xpci_sc = sc;
 	DPRINTF(("xpci_sc %p\n", xpci_sc));
 
-	config_pending_incr();
+	config_pending_incr(self);
 	aprint_normal(": Xen PCI passthrough Interface\n");
 	sc->sc_dev = self;
 
@@ -284,7 +284,7 @@ xpci_backend_changed(void *arg, XenbusState new_state)
 		sc->sc_backend_status = XPCI_STATE_CONNECTED;
 
 		/* the devices should be working now */
-		config_pending_decr();
+		config_pending_decr(sc->sc_dev);
 		break;
 	default:
 		panic("bad backend state %d", new_state);

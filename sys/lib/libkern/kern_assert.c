@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_assert.c,v 1.2 2011/09/29 20:50:09 christos Exp $	*/
+/*	$NetBSD: kern_assert.c,v 1.2.12.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -38,6 +38,7 @@
 #include <lib/libkern/libkern.h>
 #endif
 
+/* coverity[+kill] */
 void
 kern_assert(const char *fmt, ...)
 {

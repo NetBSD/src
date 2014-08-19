@@ -1,7 +1,6 @@
 /* Handle PA64 shared libraries for GDB, the GNU Debugger.
 
-   Copyright (C) 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,6 +37,7 @@
 #include "target.h"
 #include "inferior.h"
 #include "regcache.h"
+#include "gdb_bfd.h"
 
 #include "hppa-tdep.h"
 #include "solist.h"
@@ -269,50 +269,13 @@ read_dynamic_info (asection *dyninfo_sect, dld_cache_t *dld_cache_p)
   return 1;
 }
 
-/* bfd_lookup_symbol -- lookup the value for a specific symbol
+/* Helper function for gdb_bfd_lookup_symbol_from_symtab.  */
 
-   An expensive way to lookup the value of a single symbol for
-   bfd's that are only temporary anyway.  This is used by the
-   shared library support to find the address of the debugger
-   interface structures in the shared library.
-
-   Note that 0 is specifically allowed as an error return (no
-   such symbol).  */
-
-static CORE_ADDR
-bfd_lookup_symbol (bfd *abfd, char *symname)
+static int
+cmp_name (asymbol *sym, void *data)
 {
-  unsigned int storage_needed;
-  asymbol *sym;
-  asymbol **symbol_table;
-  unsigned int number_of_symbols;
-  unsigned int i;
-  struct cleanup *back_to;
-  CORE_ADDR symaddr = 0;
-
-  storage_needed = bfd_get_symtab_upper_bound (abfd);
-
-  if (storage_needed > 0)
-    {
-      symbol_table = (asymbol **) xmalloc (storage_needed);
-      back_to = make_cleanup (xfree, symbol_table);
-      number_of_symbols = bfd_canonicalize_symtab (abfd, symbol_table);
-
-      for (i = 0; i < number_of_symbols; i++)
-	{
-	  sym = *symbol_table++;
-	  if (strcmp (sym->name, symname) == 0)
-	    {
-	      /* Bfd symbols are section relative.  */
-	      symaddr = sym->value + sym->section->vma;
-	      break;
-	    }
-	}
-      do_cleanups (back_to);
-    }
-  return (symaddr);
+  return (strcmp (sym->name, (const char *) data) == 0);
 }
-
 
 /* This hook gets called just before the first instruction in the
    inferior process is executed.
@@ -335,7 +298,6 @@ pa64_solib_create_inferior_hook (int from_tty)
   struct minimal_symbol *msymbol;
   unsigned int dld_flags, status;
   asection *shlib_info, *interp_sect;
-  char buf[4];
   struct objfile *objfile;
   CORE_ADDR anaddr;
 
@@ -400,7 +362,7 @@ manpage for methods to privately map shared library text."));
 	 to find any magic formula to find it for Solaris (appears to
 	 be trivial on GNU/Linux).  Therefore, we have to try an alternate
 	 mechanism to find the dynamic linker's base address.  */
-      tmp_bfd = bfd_openr (buf, gnutarget);
+      tmp_bfd = gdb_bfd_open (buf, gnutarget, -1);
       if (tmp_bfd == NULL)
 	return;
 
@@ -409,7 +371,7 @@ manpage for methods to privately map shared library text."));
 	{
 	  warning (_("Unable to grok dynamic linker %s as an object file"),
 		   buf);
-	  bfd_close (tmp_bfd);
+	  gdb_bfd_unref (tmp_bfd);
 	  return;
 	}
 
@@ -421,13 +383,14 @@ manpage for methods to privately map shared library text."));
 	 routine.  */
       load_addr = regcache_read_pc (get_current_regcache ())
 		  - tmp_bfd->start_address;
-      sym_addr = bfd_lookup_symbol (tmp_bfd, "__dld_break");
+      sym_addr = gdb_bfd_lookup_symbol_from_symtab (tmp_bfd, cmp_name,
+						    "__dld_break");
       sym_addr = load_addr + sym_addr + 4;
       
       /* Create the shared library breakpoint.  */
       {
 	struct breakpoint *b
-	  = create_solib_event_breakpoint (target_gdbarch, sym_addr);
+	  = create_solib_event_breakpoint (target_gdbarch (), sym_addr);
 
 	/* The breakpoint is actually hard-coded into the dynamic linker,
 	   so we don't need to actually insert a breakpoint instruction
@@ -438,7 +401,7 @@ manpage for methods to privately map shared library text."));
       }
 
       /* We're done with the temporary bfd.  */
-      bfd_close (tmp_bfd);
+      gdb_bfd_unref (tmp_bfd);
     }
 }
 
@@ -524,7 +487,6 @@ static int
 pa64_open_symbol_file_object (void *from_ttyp)
 {
   int from_tty = *(int *)from_ttyp;
-  char buf[4];
   struct load_module_desc dll_desc;
   char *dll_path;
 

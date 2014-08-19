@@ -1,4 +1,4 @@
-/* $NetBSD: namespace.h,v 1.4.8.1 2013/02/25 00:27:58 tls Exp $ */
+/* $NetBSD: namespace.h,v 1.4.8.2 2014/08/20 00:02:18 tls Exp $ */
 
 #define atan2 _atan2
 #define atan2f _atan2f
@@ -45,3 +45,27 @@
 #define scalbln _scalbln
 #define scalblnf _scalblnf
 #define scalblnl _scalblnl
+
+#define sqrtl _sqrtl
+#define cbrtl _cbrtl
+#define ceill _ceill
+#define floorl _floorl
+#define roundl _roundl
+#define fmodl _fmodl
+#define modfl _modfl
+#define truncl _truncl
+
+#define exp2l _exp2l
+#define cosl _cosl
+#define sinl _sinl
+#define tanl _tanl
+#define powl _powl
+#define coshl _coshl
+#define sinhl _sinhl
+#define acosl _acosl
+#define atanl _atanl
+#define asinhl _asinhl
+#define acoshl _acoshl
+#define tanhl _tanhl
+#define atanhl _atanhl
+#define log10l _log10l

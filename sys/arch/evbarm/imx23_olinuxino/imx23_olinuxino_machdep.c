@@ -1,4 +1,4 @@
-/* $Id: imx23_olinuxino_machdep.c,v 1.2.4.2 2013/02/25 00:28:36 tls Exp $ */
+/* $Id: imx23_olinuxino_machdep.c,v 1.2.4.3 2014/08/20 00:02:54 tls Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,32 +32,28 @@
 #include <sys/bus.h>
 #include <sys/cdefs.h>
 #include <sys/device.h>
-#include <sys/lwp.h>
 #include <sys/mount.h>
-#include <sys/mutex.h>
-#include <sys/param.h>
 #include <sys/reboot.h>
-#include <sys/rnd.h>
 #include <sys/systm.h>
 #include <sys/termios.h>
 #include <sys/types.h>
 
-#include <uvm/uvm.h>
 #include <uvm/uvm_prot.h>
-#include <uvm/uvm_pmap.h>
 
-#include <machine/db_machdep.h>
 #include <machine/bootconfig.h>
-#include <machine/frame.h>
-#include <machine/param.h>
-#include <machine/pcb.h>
+#include <machine/db_machdep.h>
 #include <machine/pmap.h>
 
-#include <arm/undefined.h>
-#include <arm/arm32/machdep.h>
+#include <arm/armreg.h>
+#include <arm/cpu.h>
+#include <arm/cpufunc.h>
+#include <arm/locore.h>
 
-#include <arm/imx/imx23_digctlreg.h>
+#include <arm/arm32/machdep.h>
+#include <arm/arm32/pte.h>
+
 #include <arm/imx/imx23_clkctrlreg.h>
+#include <arm/imx/imx23_digctlreg.h>
 #include <arm/imx/imx23_rtcreg.h>
 #include <arm/imx/imx23_uartdbgreg.h>
 #include <arm/imx/imx23var.h>
@@ -70,16 +66,34 @@
 
 #include "opt_evbarm_boardtype.h"
 
-static vaddr_t get_ttb(void);
-static void setup_real_page_tables(void);
-//static void entropy_init(void);
+#define	KERNEL_VM_BASE	(KERNEL_BASE + 0x8000000)
+#define	KERNEL_VM_SIZE	0x20000000
+
+#define L1_PAGE_TABLE (DRAM_BASE + MEMSIZE * 1024 * 1024 - L1_TABLE_SIZE)
+#define BOOTIMX23_ARGS (L1_PAGE_TABLE - MAX_BOOT_STRING - 1)
+
+#define PLCONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
+#define PLCONSPEED 115200
+
+#define REG_RD(reg) *(volatile uint32_t *)(reg)
+#define REG_WR(reg, val)						\
+do {									\
+	*(volatile uint32_t *)((reg)) = val;				\
+} while (0)
+
+#define KERNEL_BASE_PHYS ((paddr_t)&KERNEL_BASE_phys)
+#define KERNEL_BASE_VIRT ((vaddr_t)&KERNEL_BASE_virt)
+#define KERN_VTOPHYS(va) \
+        ((paddr_t)((vaddr_t)(va) - KERNEL_BASE + KERNEL_BASE_PHYS))
+#define KERN_PHYSTOV(pa) \
+        ((vaddr_t)((paddr_t)(pa) + KERNEL_BASE_VIRT + KERNEL_BASE))
 
 /*
  * Static device map for i.MX23 peripheral address space.
  */
 #define _A(a)	((a) & ~L1_S_OFFSET)
 #define _S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
-static const struct pmap_devmap imx23_devmap[] = {
+static const struct pmap_devmap devmap[] = {
 	{
 		_A(APBH_BASE),			/* Virtual address. */
 		_A(APBH_BASE),			/* Physical address. */
@@ -92,446 +106,6 @@ static const struct pmap_devmap imx23_devmap[] = {
 #undef _A
 #undef _S
 
-static vm_offset_t physical_freestart;
-static vm_offset_t physical_freeend;
-static u_int free_pages;
-
-BootConfig bootconfig;
-vm_offset_t physical_start;
-vm_offset_t physical_end;
-static char kernel_boot_args[MAX_BOOT_STRING];
-char *boot_args;
-paddr_t msgbufphys;
-
-extern char KERNEL_BASE_phys;
-extern char KERNEL_BASE_virt;
-extern char _end[];
-extern char __data_start[];
-extern char _edata[];
-extern char __bss_start[];
-extern char __bss_end__[];
-extern pv_addr_t kernelstack;
-
-extern u_int data_abort_handler_address;
-extern u_int prefetch_abort_handler_address;
-
-/* Define various stack sizes in pages. */
-#define FIQ_STACK_SIZE	1
-#define IRQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#define UND_STACK_SIZE	1
-
-/* Macros to translate between physical and virtual addresses. */
-#define KERNEL_BASE_PHYS ((paddr_t)&KERNEL_BASE_phys)
-#define KERNEL_BASE_VIRT ((vaddr_t)&KERNEL_BASE_virt)
-#define KERN_VTOPHYS(va)						\
-	((paddr_t)((vaddr_t)va - KERNEL_BASE_VIRT + KERNEL_BASE_PHYS))
-#define KERN_PHYSTOV(pa)						\
-	((vaddr_t)((paddr_t)pa - KERNEL_BASE_PHYS + KERNEL_BASE_VIRT))
-
-#define KERNEL_PT_SYS		0	/* L2 table for mapping vectors page. */
-#define KERNEL_PT_KERNEL	1	/* L2 table for mapping kernel. */
-#define KERNEL_PT_KERNEL_NUM	4
-
-#define KERNEL_PT_VMDATA	(KERNEL_PT_KERNEL + KERNEL_PT_KERNEL_NUM)
-/* Page tables for mapping kernel VM */
-#define KERNEL_PT_VMDATA_NUM	4 	/* start with 16MB of KVM */
-#define NUM_KERNEL_PTS	(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
-
-pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
-
-#define	KERNEL_VM_BASE	(KERNEL_BASE + 0x01000000)
-#define KERNEL_VM_SIZE 	(0xf0000000 - KERNEL_VM_BASE)
-
-#define L1_PAGE_TABLE (DRAM_BASE + MEMSIZE * 1024 * 1024 - L1_TABLE_SIZE)
-#define BOOTIMX23_ARGS (L1_PAGE_TABLE - MAX_BOOT_STRING - 1)
-
-#define REG_RD(reg) *(volatile uint32_t *)(reg)
-#define REG_WR(reg, val)						\
-do {									\
-	*(volatile uint32_t *)((reg)) = val;				\
-} while (0)
-
-/*
- * Initialize everything and return new svc stack pointer.
- */
-u_int
-initarm(void *arg)
-{
-
-	if (set_cpufuncs())
-		panic("set_cpufuncs failed");
-
-	pmap_devmap_bootstrap(get_ttb(), imx23_devmap);
-
-	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-
-	consinit();
-
-	/* Talk to the user. */
-#define BDSTR(s)	_BDSTR(s)
-#define _BDSTR(s)	#s
-	printf("\nNetBSD/evbarm (" BDSTR(EVBARM_BOARDTYPE) ") booting ...\n");
-#undef BDSTR
-#undef _BDSTR
-
-	/* Copy boot arguments passed from bootimx23. */
-	boot_args = (char *)BOOTIMX23_ARGS;
-	memcpy(kernel_boot_args, boot_args, MAX_BOOT_STRING);
-	boot_args = kernel_boot_args;
-#ifdef VERBOSE_INIT_ARM
-	printf("boot_args: %s\n", boot_args);
-#endif
-	parse_mi_bootargs(boot_args);
-
-#ifdef VERBOSE_INIT_ARM
-	printf("initarm: Configuring system ...\n");
-#endif
-
-	physical_start = DRAM_BASE;
-	physical_end = DRAM_BASE + MEMSIZE * 1024 * 1024;
-	physmem = (physical_end - physical_start) / PAGE_SIZE;
-
-	/* bootconfig is used by cpu_dump() and cousins. */
-	bootconfig.dramblocks = 1;
-	bootconfig.dram[0].address = DRAM_BASE;
-	bootconfig.dram[0].pages = physmem;
-
-	/*
-	 * Our kernel is at the beginning of the DRAM, so set our free space to
-	 * all the memory after the kernel.
-	 */
-	physical_freestart = KERN_VTOPHYS(round_page((vaddr_t) _end));
-	physical_freeend = physical_end;
-	free_pages = (physical_freeend - physical_freestart) / PAGE_SIZE;
-
-#ifdef VERBOSE_INIT_ARM
-	/* Tell the user about the memory. */
-	printf("physmemory: %d pages at 0x%08lx -> 0x%08lx\n", physmem,
-	    physical_start, physical_end - 1);
-#endif
-
-	/*
-	 * Set up first and second level page tables. Pages of memory will be
-	 * allocated and mapped for structures required for system operation.
-	 * kernel_l1pt, kernel_pt_table[], systempage, irqstack, abtstack,
-	 * undstack, kernelstack, msgbufphys will be set to point to the memory
-	 * that was allocated for them.
-	 */
-	setup_real_page_tables();
-
-#ifdef VERBOSE_INIT_ARM
-	printf("freestart = 0x%08lx, free_pages = %d (0x%08x)\n",
-	    physical_freestart, free_pages, free_pages);
-#endif
-
-	uvm_lwp_setuarea(&lwp0, kernelstack.pv_va);
-
-#ifdef VERBOSE_INIT_ARM
-	printf("bootstrap done.\n");
-#endif
-
-	/* Copy vectors from page0 to vectors page. */
-	arm32_vector_init(ARM_VECTORS_HIGH, ARM_VEC_ALL);
-#ifdef VERBOSE_INIT_ARM
-	printf("init subsystems: stacks ");
-#endif
-	set_stackptr(PSR_FIQ32_MODE,
-	    fiqstack.pv_va + FIQ_STACK_SIZE * PAGE_SIZE);
-	set_stackptr(PSR_IRQ32_MODE,
-	    irqstack.pv_va + IRQ_STACK_SIZE * PAGE_SIZE);
-	set_stackptr(PSR_ABT32_MODE,
-	    abtstack.pv_va + ABT_STACK_SIZE * PAGE_SIZE);
-	set_stackptr(PSR_UND32_MODE,
-	    undstack.pv_va + UND_STACK_SIZE * PAGE_SIZE);
-#ifdef VERBOSE_INIT_ARM
-	printf("vectors ");
-#endif
-	data_abort_handler_address = (u_int)data_abort_handler;
-	prefetch_abort_handler_address = (u_int)prefetch_abort_handler;
-	undefined_handler_address = (u_int)undefinedinstruction_bounce;
-#ifdef VERBOSE_INIT_ARM
-	printf("undefined ");
-#endif
-	undefined_init();
-	/* Load memory into UVM. */
-#ifdef VERBOSE_INIT_ARM
-	printf("page ");
-#endif
-	uvm_setpagesize();
-	uvm_page_physload(atop(physical_freestart), atop(physical_freeend),
-	    atop(physical_freestart), atop(physical_freeend),
-	    VM_FREELIST_DEFAULT);
-
-	/* Boot strap pmap telling it where the kernel page table is. */
-#ifdef VERBOSE_INIT_ARM
-	printf("pmap ");
-#endif
-	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
-
-#ifdef VERBOSE_INIT_ARM
-	printf("done.\n");
-#endif
-
-#ifdef __HAVE_MEMORY_DISK__
-	md_root_setconf(memory_disk, sizeof memory_disk);
-#endif
-
-#ifdef BOOTHOWTO
-	boothowto |= BOOTHOWTO;
-#endif
-
-#ifdef KGDB
-	if (boothowto & RB_KDB) {
-		kgdb_debug_init = 1;
-		kgdb_connect(1);
-	}
-#endif
-
-#ifdef DDB
-	db_machine_init();
-	if (boothowto & RB_KDB)
-		Debugger();
-#endif
-	
-	return kernelstack.pv_va + USPACE_SVC_STACK_TOP;
-}
-
-/*
- * Return TTBR (Translation Table Base Register) value from coprocessor.
- */
-static vaddr_t
-get_ttb(void)
-{
-	vaddr_t ttb;
-
-	__asm volatile("mrc p15, 0, %0, c2, c0, 0" : "=r" (ttb));
-
-	return ttb;
-}
-
-/*
- * valloc_pages() is used to allocate free memory to be used for kernel pages.
- * Virtual and physical addresses of the allocated memory are saved for the
- * later use by the structures:
- *
- * - kernel_l1pt which holds the address of the kernel's L1 translaton table.
- * - kernel_pt_table[] holds the addresses of the kernel's L2 page tables.
- *
- * pmap_link_l2pt() is used to create link from L1 table entry to the L2 page
- * table. Link is a reference to coarse page table which has 256 entries,
- * splitting the 1MB that the table describes into 4kB blocks.
- *
- * pmap_map_entry() updates the PTE in L2 PT for an VA to point to single
- * physical page previously allocated.
- *
- * pmap_map_chunk() maps a chunk of memory using the most efficient
- * mapping possible (section, large page, small page) into the provided L1 and
- * L2 tables at the specified virtual address. pmap_map_chunk() excepts linking
- * to be done before it is called for chunks smaller than a section.
- */
-static void
-setup_real_page_tables(void)
-{
-	/*
-	 * Define a macro to simplify memory allocation. As we allocate the
-	 * memory, make sure that we don't walk over our temporary first level
-	 * translation table.
-	 */
-#define valloc_pages(var, np)						\
-	(var).pv_pa = physical_freestart;				\
-	physical_freestart += ((np) * PAGE_SIZE);			\
-	if (physical_freestart > (physical_freeend - L1_TABLE_SIZE))	\
-		panic("%s: out of memory", __func__);			\
-	free_pages -= (np);						\
-	(var).pv_va = KERN_PHYSTOV((var).pv_pa);			\
-	memset((char *)(var).pv_va, 0, ((np) * PAGE_SIZE));
-
-	int loop, pt_index;
-
-	pt_index = 0;
-	kernel_l1pt.pv_pa = 0;
-	kernel_l1pt.pv_va = 0;
-	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
-		/* Are we 16kB aligned for an L1? */
-		if ((physical_freestart & (L1_TABLE_SIZE - 1)) == 0 &&
-		    kernel_l1pt.pv_pa == 0) {
-			valloc_pages(kernel_l1pt, L1_TABLE_SIZE / PAGE_SIZE);
-		} else {
-			valloc_pages(kernel_pt_table[pt_index],
-			    L2_TABLE_SIZE / PAGE_SIZE);
-			++pt_index;
-		}
-	}
- 
-	/* Make sure L1 page table is aligned to 16kB. */
-	if (!kernel_l1pt.pv_pa ||
-	    (kernel_l1pt.pv_pa & (L1_TABLE_SIZE - 1)) != 0)
-		panic("%s: Failed to align the kernel page directory",
-		    __func__);
-
-	/*
-	 * Allocate a page for the system page mapped to ARM_VECTORS_HIGH.
-	 * This page will just contain the system vectors and can be shared by
-	 * all processes.
-	 */
-	valloc_pages(systempage, 1);
-	systempage.pv_va = ARM_VECTORS_HIGH;
-
-	/* Allocate stacks for all modes. */
-	valloc_pages(fiqstack, FIQ_STACK_SIZE);
-	valloc_pages(irqstack, IRQ_STACK_SIZE);
-	valloc_pages(abtstack, ABT_STACK_SIZE);
-	valloc_pages(undstack, UND_STACK_SIZE);
-	valloc_pages(kernelstack, UPAGES);
-
-	/* Allocate the message buffer. */
-	pv_addr_t msgbuf;
-	int msgbuf_pgs = round_page(MSGBUFSIZE) / PAGE_SIZE;
-	valloc_pages(msgbuf, msgbuf_pgs);
-	msgbufphys = msgbuf.pv_pa;
-
-	vaddr_t l1_va = kernel_l1pt.pv_va;
-	vaddr_t l1_pa = kernel_l1pt.pv_pa;
-
-	/* Map the L2 pages tables in the L1 page table. */
-
-	pmap_link_l2pt(l1_va, ARM_VECTORS_HIGH & ~(0x00400000 - 1),
-	    &kernel_pt_table[KERNEL_PT_SYS]);
-
-	for (loop = 0; loop < KERNEL_PT_KERNEL_NUM; loop++)
-		pmap_link_l2pt(l1_va, KERNEL_BASE + loop * 0x00400000,
-		    &kernel_pt_table[KERNEL_PT_KERNEL + loop]);
-
-	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; loop++)
-		pmap_link_l2pt(l1_va, KERNEL_VM_BASE + loop * 0x00400000,
-		    &kernel_pt_table[KERNEL_PT_VMDATA + loop]);
-
-	/* Update the top of the kernel VM. */
-	pmap_curmaxkvaddr =
-	    KERNEL_VM_BASE + (KERNEL_PT_VMDATA_NUM * 0x00400000);
-
-	extern char etext[];
-	size_t textsize = (uintptr_t)etext - KERNEL_BASE;
-	size_t totalsize = (uintptr_t)_end - KERNEL_BASE;
-	u_int logical;
-
-	textsize = (textsize + PGOFSET) & ~PGOFSET;
-	totalsize = (totalsize + PGOFSET) & ~PGOFSET;
-
-	logical = 0x00000000; /* offset of kernel in RAM */
-
-	logical += pmap_map_chunk(l1_va, KERNEL_BASE + logical,
-	    physical_start + logical, textsize,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-
-	logical += pmap_map_chunk(l1_va, KERNEL_BASE + logical,
-	    physical_start + logical, totalsize - textsize,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-
-	/* Map the stack pages. */
-	pmap_map_chunk(l1_va, fiqstack.pv_va, fiqstack.pv_pa,
-	    FIQ_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-
-	pmap_map_chunk(l1_va, irqstack.pv_va, irqstack.pv_pa,
-	    IRQ_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-
-	pmap_map_chunk(l1_va, abtstack.pv_va, abtstack.pv_pa,
-	    ABT_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-
-	pmap_map_chunk(l1_va, undstack.pv_va, undstack.pv_pa,
-	    UND_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-
-	pmap_map_chunk(l1_va, kernelstack.pv_va, kernelstack.pv_pa,
-	    UPAGES * PAGE_SIZE, VM_PROT_READ | VM_PROT_WRITE, PTE_CACHE);
-
-	pmap_map_chunk(l1_va, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
-	    L1_TABLE_SIZE, VM_PROT_READ | VM_PROT_WRITE, PTE_PAGETABLE);
-
-	for (loop = 0; loop < NUM_KERNEL_PTS; ++loop)
-		pmap_map_chunk(l1_va, kernel_pt_table[loop].pv_va,
-		    kernel_pt_table[loop].pv_pa, L2_TABLE_SIZE,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
-
-	/* Map the vector page. */
-	pmap_map_entry(l1_va, ARM_VECTORS_HIGH, systempage.pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-
-	pmap_devmap_bootstrap(l1_va, imx23_devmap);
-
-#ifdef VERBOSE_INIT_ARM
-	/* Tell the user about where all the bits and pieces live. */
-	printf("%22s       Physical              Virtual        Num\n", " ");
-	printf("%22s Starting    Ending    Starting    Ending   Pages\n", " ");
-
-	static const char mem_fmt[] =
-	    "%20s: 0x%08lx 0x%08lx 0x%08lx 0x%08lx %d\n";
-	static const char mem_fmt_nov[] =
-	    "%20s: 0x%08lx 0x%08lx                       %d\n";
-
-	printf(mem_fmt, "SDRAM", physical_start, physical_end-1,
-	    KERN_PHYSTOV(physical_start), KERN_PHYSTOV(physical_end-1),
-	    physmem);
-	printf(mem_fmt, "text section",
-	    KERN_VTOPHYS(KERNEL_BASE), KERN_VTOPHYS(etext-1),
-	    (vaddr_t)KERNEL_BASE, (vaddr_t)etext-1,
-	    (int)(textsize / PAGE_SIZE));
-	printf(mem_fmt, "data section",
-	    KERN_VTOPHYS(__data_start), KERN_VTOPHYS(_edata),
-	    (vaddr_t)__data_start, (vaddr_t)_edata,
-	    (int)((round_page((vaddr_t)_edata)
-	    - trunc_page((vaddr_t)__data_start)) / PAGE_SIZE));
-	printf(mem_fmt, "bss section",
-	    KERN_VTOPHYS(__bss_start), KERN_VTOPHYS(__bss_end__),
-	    (vaddr_t)__bss_start, (vaddr_t)__bss_end__,
-	    (int)((round_page((vaddr_t)__bss_end__)
-	    - trunc_page((vaddr_t)__bss_start)) / PAGE_SIZE));
-	printf(mem_fmt, "L1 page directory",
-	    kernel_l1pt.pv_pa, kernel_l1pt.pv_pa + L1_TABLE_SIZE - 1,
-	    kernel_l1pt.pv_va, kernel_l1pt.pv_va + L1_TABLE_SIZE - 1,
-	    L1_TABLE_SIZE / PAGE_SIZE);
-	printf(mem_fmt, "Exception Vectors",
-	    systempage.pv_pa, systempage.pv_pa + PAGE_SIZE - 1,
-	    (vaddr_t)ARM_VECTORS_HIGH,
-	    (vaddr_t)ARM_VECTORS_HIGH + PAGE_SIZE - 1, 1);
-	printf(mem_fmt, "FIQ stack",
-	    fiqstack.pv_pa, fiqstack.pv_pa + (FIQ_STACK_SIZE * PAGE_SIZE) - 1,
-	    fiqstack.pv_va, fiqstack.pv_va + (FIQ_STACK_SIZE * PAGE_SIZE) - 1,
-	    FIQ_STACK_SIZE);
-	printf(mem_fmt, "IRQ stack",
-	    irqstack.pv_pa, irqstack.pv_pa + (IRQ_STACK_SIZE * PAGE_SIZE) - 1,
-	    irqstack.pv_va, irqstack.pv_va + (IRQ_STACK_SIZE * PAGE_SIZE) - 1,
-	    IRQ_STACK_SIZE);
-	printf(mem_fmt, "ABT stack",
-	    abtstack.pv_pa, abtstack.pv_pa + (ABT_STACK_SIZE * PAGE_SIZE) - 1,
-	    abtstack.pv_va, abtstack.pv_va + (ABT_STACK_SIZE * PAGE_SIZE) - 1,
-	    ABT_STACK_SIZE);
-	printf(mem_fmt, "UND stack",
-	    undstack.pv_pa, undstack.pv_pa + (UND_STACK_SIZE * PAGE_SIZE) - 1,
-	    undstack.pv_va, undstack.pv_va + (UND_STACK_SIZE * PAGE_SIZE) - 1,
-	    UND_STACK_SIZE);
-	printf(mem_fmt, "SVC stack",
-	    kernelstack.pv_pa, kernelstack.pv_pa + (UPAGES * PAGE_SIZE) - 1,
-	    kernelstack.pv_va, kernelstack.pv_va + (UPAGES * PAGE_SIZE) - 1,
-	    UPAGES);
-	printf(mem_fmt_nov, "Message Buffer",
-	    msgbufphys, msgbufphys + msgbuf_pgs * PAGE_SIZE - 1, msgbuf_pgs);
-	printf(mem_fmt, "Free Memory", physical_freestart, physical_freeend-1,
-	    KERN_PHYSTOV(physical_freestart), KERN_PHYSTOV(physical_freeend-1),
-	    free_pages);
-#endif
-
-	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_setttb(l1_pa, FALSE);
-	cpu_tlb_flushID();
-	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
-
-	return;
-}
-
-/*
- * Initialize console.
- */
 static struct plcom_instance imx23_pi = {
 	.pi_type = PLCOM_TYPE_PL011,
 	.pi_iot = &imx23_bus_space,
@@ -539,8 +113,80 @@ static struct plcom_instance imx23_pi = {
 	.pi_iobase = HW_UARTDBG_BASE
 };
 
-#define PLCONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
-#define PLCONSPEED 115200
+extern char KERNEL_BASE_phys;
+extern char KERNEL_BASE_virt;
+BootConfig bootconfig;
+char *boot_args;
+static char kernel_boot_args[MAX_BOOT_STRING];
+
+#define SSP_DIV 2
+#define IO_FRAC 27
+
+static void power_vddio_from_dcdc(int, int);
+static void set_ssp_div(unsigned int);
+static void set_io_frac(unsigned int);
+static void bypass_ssp(void);
+
+/*
+ * Initialize ARM and return new SVC stack pointer.
+ */
+u_int
+initarm(void *arg)
+{
+        psize_t ram_size;
+
+	if (set_cpufuncs())
+		panic("set_cpufuncs failed");
+
+	pmap_devmap_register(devmap);
+	consinit();
+
+#define BDSTR(s)	_BDSTR(s)
+#define _BDSTR(s)	#s
+	printf("\nNetBSD/evbarm (" BDSTR(EVBARM_BOARDTYPE) ") booting ...\n");
+#undef BDSTR
+#undef _BDSTR
+
+	/*
+	 * SSP_CLK setup was postponed here from bootimx23 because SB wasn't
+	 * able to load kernel if clocks were changed.
+	 */
+	power_vddio_from_dcdc(3300, 2925);
+	set_ssp_div(SSP_DIV);
+	set_io_frac(IO_FRAC);
+	bypass_ssp();
+
+	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
+
+	/* Copy boot arguments passed from bootimx23. */
+	boot_args = (char *)KERN_PHYSTOV(BOOTIMX23_ARGS);
+	memcpy(kernel_boot_args, boot_args, MAX_BOOT_STRING);
+	boot_args = kernel_boot_args;
+#ifdef VERBOSE_INIT_ARM
+	printf("boot_args @ %lx: '%s'\n", KERN_PHYSTOV(BOOTIMX23_ARGS),
+	    boot_args);
+#endif
+	parse_mi_bootargs(boot_args);
+
+	ram_size = MEMSIZE * 1024 * 1024;
+
+	bootconfig.dramblocks = 1;
+	bootconfig.dram[0].address = DRAM_BASE;
+	bootconfig.dram[0].pages = ram_size / PAGE_SIZE;
+	bootconfig.dram[0].flags = BOOT_DRAM_CAN_DMA | BOOT_DRAM_PREFER;
+
+        arm32_bootmem_init(bootconfig.dram[0].address, ram_size,
+            ((vsize_t)&KERNEL_BASE_phys));
+
+        arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, devmap,
+	    true);
+
+        return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
+}
+
+/*
+ * Initialize console.
+ */
 void
 consinit(void)
 {
@@ -586,8 +232,11 @@ cpu_reboot(int howto, char *bootstr)
 	 * If rebooting after a crash (i.e., if RB_DUMP is set in howto, but
 	 * RB_HALT is not), save a system crash dump.
 	 */
-	if ((boothowto & RB_DUMP) && !(boothowto & RB_HALT))
+	if ((boothowto & RB_DUMP) && !(boothowto & RB_HALT)) {
 		panic("please implement crash dump!"); // XXX
+		for(;;);
+		/* NOTREACHED */
+	}
 
 	/* Run any shutdown hooks by calling pmf_system_shutdown(9). */
 	pmf_system_shutdown(boothowto);
@@ -601,10 +250,10 @@ cpu_reboot(int howto, char *bootstr)
 		    HW_CLKCTRL_CPU_INTERRUPT_WAIT));
 
 		/* Disable FIQ's and wait for interrupt (which never arrives) */
-		__asm volatile(					\
+		__asm volatile(				\
 		    "mrs r0, cpsr\n\t"			\
 		    "orr r0, #0x40\n\t"			\
-		    "msr cpsr_c, r0\n\t"			\
+		    "msr cpsr_c, r0\n\t"		\
 		    "mov r0, #0\n\t"			\
 		    "mcr p15, 0, r0, c7, c0, 4\n\t"
 		);
@@ -655,3 +304,107 @@ delay(unsigned int us)
 
 	return;
 }
+#include <arm/imx/imx23_powerreg.h>
+#define PWR_VDDIOCTRL   (HW_POWER_BASE + HW_POWER_VDDIOCTRL)
+#define PWR_CTRL        (HW_POWER_BASE + HW_POWER_CTRL)
+#define PWR_CTRL_S      (HW_POWER_BASE + HW_POWER_CTRL_SET)
+#define PWR_CTRL_C      (HW_POWER_BASE + HW_POWER_CTRL_CLR)
+
+static void
+power_vddio_from_dcdc(int target, int brownout)
+{
+        uint32_t tmp_r;
+
+        /* BO_OFFSET must be withing 2700mV - 3475mV */
+        if (brownout > 3475)
+                brownout = 3475;
+        else if (brownout < 2700)
+                brownout = 2700;
+
+
+        /* Set LINREG_OFFSET one step below TRG. */
+        tmp_r = REG_RD(PWR_VDDIOCTRL);
+        tmp_r &= ~HW_POWER_VDDIOCTRL_LINREG_OFFSET;
+        tmp_r |= __SHIFTIN(2, HW_POWER_VDDIOCTRL_LINREG_OFFSET);
+        REG_WR(PWR_VDDIOCTRL, tmp_r);
+        delay(10000);
+
+        /* Enable VDDIO switching converter output. */
+        tmp_r = REG_RD(PWR_VDDIOCTRL);
+        tmp_r &= ~HW_POWER_VDDIOCTRL_DISABLE_FET;
+        REG_WR(PWR_VDDIOCTRL, tmp_r);
+        delay(10000);
+
+        /* Set target voltage and brownout level. */
+        tmp_r = REG_RD(PWR_VDDIOCTRL);
+        tmp_r &= ~(HW_POWER_VDDIOCTRL_BO_OFFSET | HW_POWER_VDDIOCTRL_TRG);
+        tmp_r |= __SHIFTIN(((target - brownout) / 25),
+                HW_POWER_VDDIOCTRL_BO_OFFSET);
+        tmp_r |= __SHIFTIN(((target - 2800) / 25), HW_POWER_VDDIOCTRL_TRG);
+        REG_WR(PWR_VDDIOCTRL, tmp_r);
+        delay(10000);
+
+        /* Enable PWDN_BRNOUT. */
+        REG_WR(PWR_CTRL_C, HW_POWER_CTRL_VDDIO_BO_IRQ);
+        
+        tmp_r = REG_RD(PWR_VDDIOCTRL);
+        tmp_r |= HW_POWER_VDDIOCTRL_PWDN_BRNOUT;
+        REG_WR(PWR_VDDIOCTRL, tmp_r);
+
+        return;
+}
+#include <arm/imx/imx23_clkctrlreg.h>
+#define CLKCTRL_SSP     (HW_CLKCTRL_BASE + HW_CLKCTRL_SSP)
+#define CLKCTRL_FRAC    (HW_CLKCTRL_BASE + HW_CLKCTRL_FRAC)
+#define CLKCTRL_SEQ_C   (HW_CLKCTRL_BASE + HW_CLKCTRL_CLKSEQ_CLR)
+
+static
+void set_ssp_div(unsigned int div)
+{
+        uint32_t tmp_r;
+
+        tmp_r = REG_RD(CLKCTRL_SSP);
+        tmp_r &= ~HW_CLKCTRL_SSP_CLKGATE;
+        REG_WR(CLKCTRL_SSP, tmp_r);
+
+        while (REG_RD(CLKCTRL_SSP) & HW_CLKCTRL_SSP_BUSY)
+                ;
+
+        tmp_r = REG_RD(CLKCTRL_SSP);
+        tmp_r &= ~HW_CLKCTRL_SSP_DIV;
+        tmp_r |= __SHIFTIN(div, HW_CLKCTRL_SSP_DIV);
+        REG_WR(CLKCTRL_SSP, tmp_r);
+
+        while (REG_RD(CLKCTRL_SSP) & HW_CLKCTRL_SSP_BUSY)
+                ;
+
+        return;
+
+}
+static
+void set_io_frac(unsigned int frac)
+{
+        uint8_t *io_frac;
+        uint32_t tmp_r;
+        
+        io_frac = (uint8_t *)(CLKCTRL_FRAC);
+        io_frac++; /* emi */
+        io_frac++; /* pix */
+        io_frac++; /* io */
+        tmp_r = (*io_frac)<<24;
+        tmp_r &= ~(HW_CLKCTRL_FRAC_CLKGATEIO | HW_CLKCTRL_FRAC_IOFRAC);
+        tmp_r |= __SHIFTIN(frac, HW_CLKCTRL_FRAC_IOFRAC);
+
+        *io_frac = (uint8_t)(tmp_r>>24);
+
+        return;
+}
+static
+void bypass_ssp(void)
+{
+        REG_WR(CLKCTRL_SEQ_C, HW_CLKCTRL_CLKSEQ_BYPASS_SSP);
+
+        return;
+}
+
+

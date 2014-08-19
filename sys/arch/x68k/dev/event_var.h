@@ -1,4 +1,4 @@
-/*	$NetBSD: event_var.h,v 1.9 2012/08/15 19:13:58 tsutsui Exp $ */
+/*	$NetBSD: event_var.h,v 1.9.2.1 2014/08/20 00:03:28 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,31 +54,19 @@ struct evvar {
 	volatile u_int ev_put;	/* put (write) index (modified by interrupt) */
 	struct	selinfo ev_sel;	/* process selecting */
 	struct	proc *ev_io;	/* process that opened queue (can get SIGIO) */
-	char	ev_wanted;	/* wake up on input ready */
-	char	ev_async;	/* send SIGIO on input ready */
+	bool	ev_wanted;	/* wake up on input ready */
+	bool	ev_async;	/* send SIGIO on input ready */
 	struct	firm_event *ev_q;/* circular buffer (queue) of events */
+	kmutex_t *ev_lock;	/* lock from the parent device */
+	kcondvar_t ev_cv;	/* condvar(9) to delever signal */
 };
 
-#define	splev()	spltty()
-
-#define	EV_WAKEUP(ev) { \
-	selnotify(&(ev)->ev_sel, 0, 0); \
-	if ((ev)->ev_wanted) { \
-		(ev)->ev_wanted = 0; \
-		wakeup((void *)(ev)); \
-	} \
-	if ((ev)->ev_async) { \
-		mutex_enter(proc_lock); \
-		psignal((ev)->ev_io, SIGIO); \
-		mutex_exit(proc_lock); \
-	} \
-}
-
-void	ev_init(struct evvar *);
+void	ev_init(struct evvar *, const char *, kmutex_t *);
 void	ev_fini(struct evvar *);
 int	ev_read(struct evvar *, struct uio *, int);
 int	ev_select(struct evvar *, int, struct lwp *);
 int	ev_poll(struct evvar *, int, struct lwp *);
+void	ev_wakeup(struct evvar *);
 int	ev_kqfilter(struct evvar *, struct knote *);
 
 /*

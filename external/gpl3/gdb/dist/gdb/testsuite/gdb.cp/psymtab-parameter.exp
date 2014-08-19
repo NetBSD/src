@@ -1,4 +1,4 @@
-# Copyright 2011 Free Software Foundation, Inc.
+# Copyright 2011-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,18 +15,14 @@
 
 if { [skip_cplus_tests] } { continue }
 
+standard_testfile .cc
 
-set testfile psymtab-parameter
-set executable ${testfile}.x
-set srcfile ${testfile}.cc
-set binfile ${objdir}/${subdir}/${executable}
-
-if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" object {debug c++}] != "" } {
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}.x" object {debug c++}] != "" } {
     untested ${testfile}.exp
     return -1
 }
 
-clean_restart $executable
+clean_restart $testfile.x
 
 # As `main' is not present GDB fails to find the proper inferior language.
 gdb_test_no_output "set language c++"

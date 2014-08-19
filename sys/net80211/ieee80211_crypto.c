@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.c,v 1.15 2011/05/23 15:37:36 drochner Exp $	*/
+/*	$NetBSD: ieee80211_crypto.c,v 1.15.14.1 2014/08/20 00:04:35 tls Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.12 2005/08/08 18:46:35 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.15 2011/05/23 15:37:36 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.15.14.1 2014/08/20 00:04:35 tls Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -126,12 +126,6 @@ static __inline void
 cipher_detach(struct ieee80211_key *key)
 {
 	key->wk_cipher->ic_detach(key);
-}
-
-static __inline void *
-cipher_attach(struct ieee80211com *ic, struct ieee80211_key *key)
-{
-	return key->wk_cipher->ic_attach(ic, key);
 }
 
 /* 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtquery.c,v 1.23 2011/08/29 14:35:04 joerg Exp $	*/
+/*	$NetBSD: rtquery.c,v 1.23.8.1 2014/08/20 00:02:27 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -63,7 +63,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
  The Regents of the University of California.  All rights reserved.");
 #ifdef __NetBSD__
-__RCSID("$NetBSD: rtquery.c,v 1.23 2011/08/29 14:35:04 joerg Exp $");
+__RCSID("$NetBSD: rtquery.c,v 1.23.8.1 2014/08/20 00:02:27 tls Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -372,8 +372,9 @@ trace_loop(char *argv[])
 static void
 query_loop(char *argv[], int argc)
 {
-#	define NA0 (OMSG.rip_auths[0])
-#	define NA2 (OMSG.rip_auths[2])
+	struct netauth *na = OMSG.rip_auths;
+#	define NA0 (na[0])
+#	define NA2 (na[2])
 	struct seen {
 		struct seen *next;
 		struct in_addr addr;
@@ -391,14 +392,14 @@ query_loop(char *argv[], int argc)
 	if (ripv2) {
 		OMSG.rip_vers = RIPv2;
 		if (auth_type == RIP_AUTH_PW) {
-			OMSG.rip_nets[1] = OMSG.rip_nets[0];
+			na[1] = na[0];
 			NA0.a_family = RIP_AF_AUTH;
 			NA0.a_type = RIP_AUTH_PW;
 			memcpy(NA0.au.au_pw, passwd, RIP_AUTH_PW_LEN);
 			omsg_len += sizeof(OMSG.rip_nets[0]);
 
 		} else if (auth_type == RIP_AUTH_MD5) {
-			OMSG.rip_nets[1] = OMSG.rip_nets[0];
+			na[1] = na[0];
 			NA0.a_family = RIP_AF_AUTH;
 			NA0.a_type = RIP_AUTH_MD5;
 			NA0.au.a_md5.md5_keyid = (int8_t)keyid;
@@ -551,11 +552,11 @@ static char *
 qstring(u_char *s, int len)
 {
 	static char buf[8*20+1];
-	char *p;
+	size_t bufpos;
 	u_char *s2, c;
 
 
-	for (p = buf; len != 0 && p < &buf[sizeof(buf)-1]; len--) {
+	for (bufpos = 0; len != 0 && bufpos < sizeof(buf) - 1; len--) {
 		c = *s++;
 		if (c == '\0') {
 			for (s2 = s+1; s2 < &s[len]; s2++) {
@@ -567,33 +568,38 @@ qstring(u_char *s, int len)
 		}
 
 		if (c >= ' ' && c < 0x7f && c != '\\') {
-			*p++ = c;
+			buf[bufpos++] = c;
 			continue;
 		}
-		*p++ = '\\';
+		if (bufpos >= sizeof(buf) - 2) {
+			/* too long */
+			break;
+		}
+		buf[bufpos++] = '\\';
 		switch (c) {
 		case '\\':
-			*p++ = '\\';
+			buf[bufpos++] = '\\';
 			break;
 		case '\n':
-			*p++= 'n';
+			buf[bufpos++] = 'n';
 			break;
 		case '\r':
-			*p++= 'r';
+			buf[bufpos++] = 'r';
 			break;
 		case '\t':
-			*p++ = 't';
+			buf[bufpos++] = 't';
 			break;
 		case '\b':
-			*p++ = 'b';
+			buf[bufpos++] = 'b';
 			break;
 		default:
-			p += sprintf(p,"%o",c);
+			bufpos += snprintf(buf + bufpos, sizeof(buf) - bufpos,
+					   "%o", c);
 			break;
 		}
 	}
 exit:
-	*p = '\0';
+	buf[bufpos] = '\0';
 	return buf;
 }
 
@@ -613,7 +619,7 @@ rip_input(struct sockaddr_in *from,
 	MD5_CTX md5_ctx;
 	u_char md5_authed = 0;
 	u_int mask, dmask;
-	char *sp;
+	size_t spos;
 	int i;
 	struct hostent *hp;
 	struct netent *np;
@@ -664,9 +670,11 @@ rip_input(struct sockaddr_in *from,
 			mask = ntohl(n->n_mask);
 			dmask = mask & -mask;
 			if (mask != 0) {
-				sp = &net_buf[strlen(net_buf)];
+				spos = strlen(net_buf);
 				if (IMSG.rip_vers == RIPv1) {
-					(void)sprintf(sp," mask=%#x ? ",mask);
+					(void)snprintf(net_buf + spos,
+						       sizeof(net_buf) - spos,
+						       " mask=%#x ? ", mask);
 					mask = 0;
 				} else if (mask + dmask == 0) {
 					for (i = 0;
@@ -674,9 +682,13 @@ rip_input(struct sockaddr_in *from,
 					      && ((1<<i)&mask) == 0);
 					     i++)
 						continue;
-					(void)sprintf(sp, "/%d",32-i);
+					(void)snprintf(net_buf + spos,
+						      sizeof(net_buf) - spos,
+						      "/%d", 32-i);
 				} else {
-					(void)sprintf(sp," (mask %#x)", mask);
+					(void)snprintf(net_buf + spos,
+						       sizeof(net_buf) - spos,
+						       " (mask %#x)", mask);
 				}
 			}
 
@@ -762,7 +774,8 @@ rip_input(struct sockaddr_in *from,
 			continue;
 
 		} else {
-			(void)sprintf(net_buf, "(af %#x) %d.%d.%d.%d",
+			(void)snprintf(net_buf, sizeof(net_buf),
+				      "(af %#x) %d.%d.%d.%d",
 				      ntohs(n->n_family),
 				      (u_char)(n->n_dst >> 24),
 				      (u_char)(n->n_dst >> 16),

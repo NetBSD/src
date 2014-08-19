@@ -1,6 +1,6 @@
 /* mpz_swap (dest_integer, src_integer) -- Swap U and V.
 
-Copyright 1997, 1998, 2001 Free Software Foundation, Inc.
+Copyright 1997, 1998, 2001, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -21,24 +21,24 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp-impl.h"
 
 void
-mpz_swap (mpz_ptr u, mpz_ptr v)
+mpz_swap (mpz_ptr u, mpz_ptr v) __GMP_NOTHROW
 {
   mp_ptr up, vp;
   mp_size_t usize, vsize;
   mp_size_t ualloc, valloc;
 
-  ualloc = u->_mp_alloc;
-  valloc = v->_mp_alloc;
-  v->_mp_alloc = ualloc;
-  u->_mp_alloc = valloc;
+  ualloc = ALLOC (u);
+  valloc = ALLOC (v);
+  ALLOC (v) = ualloc;
+  ALLOC (u) = valloc;
 
-  usize = u->_mp_size;
-  vsize = v->_mp_size;
-  v->_mp_size = usize;
-  u->_mp_size = vsize;
+  usize = SIZ (u);
+  vsize = SIZ (v);
+  SIZ (v) = usize;
+  SIZ (u) = vsize;
 
-  up = u->_mp_d;
-  vp = v->_mp_d;
-  v->_mp_d = up;
-  u->_mp_d = vp;
+  up = PTR (u);
+  vp = PTR (v);
+  PTR (v) = up;
+  PTR (u) = vp;
 }

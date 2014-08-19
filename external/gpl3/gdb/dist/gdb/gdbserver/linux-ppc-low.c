@@ -1,7 +1,6 @@
 /* GNU/Linux/PowerPC specific low level interface, for the remote server for
    GDB.
-   Copyright (C) 1995, 1996, 1998, 1999, 2000, 2001, 2002, 2005, 2007, 2008,
-   2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,34 +35,63 @@ static unsigned long ppc_hwcap;
 
 /* Defined in auto-generated file powerpc-32l.c.  */
 void init_registers_powerpc_32l (void);
+extern const struct target_desc *tdesc_powerpc_32l;
+
 /* Defined in auto-generated file powerpc-altivec32l.c.  */
 void init_registers_powerpc_altivec32l (void);
+extern const struct target_desc *tdesc_powerpc_altivec32l;
+
 /* Defined in auto-generated file powerpc-cell32l.c.  */
 void init_registers_powerpc_cell32l (void);
+extern const struct target_desc *tdesc_powerpc_cell32l;
+
 /* Defined in auto-generated file powerpc-vsx32l.c.  */
 void init_registers_powerpc_vsx32l (void);
+extern const struct target_desc *tdesc_powerpc_vsx32l;
+
 /* Defined in auto-generated file powerpc-isa205-32l.c.  */
 void init_registers_powerpc_isa205_32l (void);
+extern const struct target_desc *tdesc_powerpc_isa205_32l;
+
 /* Defined in auto-generated file powerpc-isa205-altivec32l.c.  */
 void init_registers_powerpc_isa205_altivec32l (void);
+extern const struct target_desc *tdesc_powerpc_isa205_altivec32l;
+
 /* Defined in auto-generated file powerpc-isa205-vsx32l.c.  */
 void init_registers_powerpc_isa205_vsx32l (void);
+extern const struct target_desc *tdesc_powerpc_isa205_vsx32l;
+
 /* Defined in auto-generated file powerpc-e500l.c.  */
 void init_registers_powerpc_e500l (void);
+extern const struct target_desc *tdesc_powerpc_e500l;
+
 /* Defined in auto-generated file powerpc-64l.c.  */
 void init_registers_powerpc_64l (void);
+extern const struct target_desc *tdesc_powerpc_64l;
+
 /* Defined in auto-generated file powerpc-altivec64l.c.  */
 void init_registers_powerpc_altivec64l (void);
+extern const struct target_desc *tdesc_powerpc_altivec64l;
+
 /* Defined in auto-generated file powerpc-cell64l.c.  */
 void init_registers_powerpc_cell64l (void);
+extern const struct target_desc *tdesc_powerpc_cell64l;
+
 /* Defined in auto-generated file powerpc-vsx64l.c.  */
 void init_registers_powerpc_vsx64l (void);
+extern const struct target_desc *tdesc_powerpc_vsx64l;
+
 /* Defined in auto-generated file powerpc-isa205-64l.c.  */
 void init_registers_powerpc_isa205_64l (void);
+extern const struct target_desc *tdesc_powerpc_isa205_64l;
+
 /* Defined in auto-generated file powerpc-isa205-altivec64l.c.  */
 void init_registers_powerpc_isa205_altivec64l (void);
+extern const struct target_desc *tdesc_powerpc_isa205_altivec64l;
+
 /* Defined in auto-generated file powerpc-isa205-vsx64l.c.  */
 void init_registers_powerpc_isa205_vsx64l (void);
+extern const struct target_desc *tdesc_powerpc_isa205_vsx64l;
 
 #define ppc_num_regs 73
 
@@ -148,15 +176,18 @@ static int ppc_regmap_e500[] =
 static int
 ppc_cannot_store_register (int regno)
 {
+  const struct target_desc *tdesc = current_process ()->tdesc;
+
 #ifndef __powerpc64__
   /* Some kernels do not allow us to store fpscr.  */
-  if (!(ppc_hwcap & PPC_FEATURE_HAS_SPE) && regno == find_regno ("fpscr"))
+  if (!(ppc_hwcap & PPC_FEATURE_HAS_SPE)
+      && regno == find_regno (tdesc, "fpscr"))
     return 2;
 #endif
 
   /* Some kernels do not allow us to store orig_r3 or trap.  */
-  if (regno == find_regno ("orig_r3")
-      || regno == find_regno ("trap"))
+  if (regno == find_regno (tdesc, "orig_r3")
+      || regno == find_regno (tdesc, "trap"))
     return 2;
 
   return 0;
@@ -171,7 +202,7 @@ ppc_cannot_fetch_register (int regno)
 static void
 ppc_collect_ptrace_register (struct regcache *regcache, int regno, char *buf)
 {
-  int size = register_size (regno);
+  int size = register_size (regcache->tdesc, regno);
 
   memset (buf, 0, sizeof (long));
 
@@ -185,7 +216,7 @@ static void
 ppc_supply_ptrace_register (struct regcache *regcache,
 			    int regno, const char *buf)
 {
-  int size = register_size (regno);
+  int size = register_size (regcache->tdesc, regno);
   if (size < sizeof (long))
     supply_register (regcache, regno, buf + sizeof (long) - size);
   else
@@ -206,7 +237,7 @@ parse_spufs_run (struct regcache *regcache, int *fd, CORE_ADDR *addr)
   int curr_insn;
   int curr_r0;
 
-  if (register_size (0) == 4)
+  if (register_size (regcache->tdesc, 0) == 4)
     {
       unsigned int pc, r0, r3, r4;
       collect_register_by_name (regcache, "pc", &pc);
@@ -258,7 +289,7 @@ ppc_get_pc (struct regcache *regcache)
       return ((CORE_ADDR)1 << 63)
 	| ((CORE_ADDR)fd << 32) | (CORE_ADDR) (pc - 4);
     }
-  else if (register_size (0) == 4)
+  else if (register_size (regcache->tdesc, 0) == 4)
     {
       unsigned int pc;
       collect_register_by_name (regcache, "pc", &pc);
@@ -283,7 +314,7 @@ ppc_set_pc (struct regcache *regcache, CORE_ADDR pc)
       unsigned int newpc = pc;
       (*the_target->write_memory) (addr, (unsigned char *) &newpc, 4);
     }
-  else if (register_size (0) == 4)
+  else if (register_size (regcache->tdesc, 0) == 4)
     {
       unsigned int newpc = pc;
       supply_register_by_name (regcache, "pc", &newpc);
@@ -299,7 +330,8 @@ ppc_set_pc (struct regcache *regcache, CORE_ADDR pc)
 static int
 ppc_get_hwcap (unsigned long *valp)
 {
-  int wordsize = register_size (0);
+  const struct target_desc *tdesc = current_process ()->tdesc;
+  int wordsize = register_size (tdesc, 0);
   unsigned char *data = alloca (2 * wordsize);
   int offset = 0;
 
@@ -331,9 +363,16 @@ ppc_get_hwcap (unsigned long *valp)
   return 0;
 }
 
+/* Forward declaration.  */
+static struct usrregs_info ppc_usrregs_info;
+#ifndef __powerpc64__
+static int ppc_regmap_adjusted;
+#endif
+
 static void
 ppc_arch_setup (void)
 {
+  const struct target_desc *tdesc;
 #ifdef __powerpc64__
   long msr;
   struct regcache *regcache;
@@ -341,20 +380,21 @@ ppc_arch_setup (void)
   /* On a 64-bit host, assume 64-bit inferior process with no
      AltiVec registers.  Reset ppc_hwcap to ensure that the
      collect_register call below does not fail.  */
-  init_registers_powerpc_64l ();
+  tdesc = tdesc_powerpc_64l;
+  current_process ()->tdesc = tdesc;
   ppc_hwcap = 0;
 
   /* Only if the high bit of the MSR is set, we actually have
      a 64-bit inferior.  */
-  regcache = new_register_cache ();
-  fetch_inferior_registers (regcache, find_regno ("msr"));
+  regcache = new_register_cache (tdesc);
+  fetch_inferior_registers (regcache, find_regno (tdesc, "msr"));
   collect_register_by_name (regcache, "msr", &msr);
   free_register_cache (regcache);
   if (msr < 0)
     {
       ppc_get_hwcap (&ppc_hwcap);
       if (ppc_hwcap & PPC_FEATURE_CELL)
-	init_registers_powerpc_cell64l ();
+	tdesc = tdesc_powerpc_cell64l;
       else if (ppc_hwcap & PPC_FEATURE_HAS_VSX)
 	{
 	  /* Power ISA 2.05 (implemented by Power 6 and newer processors)
@@ -365,59 +405,67 @@ ppc_arch_setup (void)
 	     Point, we check if that feature is available to decide the size
 	     of the FPSCR.  */
 	  if (ppc_hwcap & PPC_FEATURE_HAS_DFP)
-	    init_registers_powerpc_isa205_vsx64l ();
+	    tdesc = tdesc_powerpc_isa205_vsx64l;
 	  else
-	    init_registers_powerpc_vsx64l ();
+	    tdesc = tdesc_powerpc_vsx64l;
 	}
       else if (ppc_hwcap & PPC_FEATURE_HAS_ALTIVEC)
 	{
 	  if (ppc_hwcap & PPC_FEATURE_HAS_DFP)
-	    init_registers_powerpc_isa205_altivec64l ();
+	    tdesc = tdesc_powerpc_isa205_altivec64l;
 	  else
-	    init_registers_powerpc_altivec64l ();
+	    tdesc = tdesc_powerpc_altivec64l;
 	}
 
+      current_process ()->tdesc = tdesc;
       return;
     }
 #endif
 
   /* OK, we have a 32-bit inferior.  */
-  init_registers_powerpc_32l ();
+  tdesc = tdesc_powerpc_32l;
+  current_process ()->tdesc = tdesc;
 
   ppc_get_hwcap (&ppc_hwcap);
   if (ppc_hwcap & PPC_FEATURE_CELL)
-    init_registers_powerpc_cell32l ();
+    tdesc = tdesc_powerpc_cell32l;
   else if (ppc_hwcap & PPC_FEATURE_HAS_VSX)
     {
       if (ppc_hwcap & PPC_FEATURE_HAS_DFP)
-	init_registers_powerpc_isa205_vsx32l ();
+	tdesc = tdesc_powerpc_isa205_vsx32l;
       else
-	init_registers_powerpc_vsx32l ();
+	tdesc = tdesc_powerpc_vsx32l;
     }
   else if (ppc_hwcap & PPC_FEATURE_HAS_ALTIVEC)
     {
       if (ppc_hwcap & PPC_FEATURE_HAS_DFP)
-	init_registers_powerpc_isa205_altivec32l ();
+	tdesc = tdesc_powerpc_isa205_altivec32l;
       else
-	init_registers_powerpc_altivec32l ();
+	tdesc = tdesc_powerpc_altivec32l;
     }
 
   /* On 32-bit machines, check for SPE registers.
      Set the low target's regmap field as appropriately.  */
 #ifndef __powerpc64__
-  the_low_target.regmap = ppc_regmap;
   if (ppc_hwcap & PPC_FEATURE_HAS_SPE)
-    {
-      init_registers_powerpc_e500l ();
-      the_low_target.regmap = ppc_regmap_e500;
-   }
+    tdesc = tdesc_powerpc_e500l;
 
-  /* If the FPSCR is 64-bit wide, we need to fetch the whole 64-bit
-     slot and not just its second word.  The PT_FPSCR supplied in a
-     32-bit GDB compilation doesn't reflect this.  */
-  if (register_size (70) == 8)
-    ppc_regmap[70] = (48 + 2*32) * sizeof (long);
+  if (!ppc_regmap_adjusted)
+    {
+      if (ppc_hwcap & PPC_FEATURE_HAS_SPE)
+	ppc_usrregs_info.regmap = ppc_regmap_e500;
+
+      /* If the FPSCR is 64-bit wide, we need to fetch the whole
+	 64-bit slot and not just its second word.  The PT_FPSCR
+	 supplied in a 32-bit GDB compilation doesn't reflect
+	 this.  */
+      if (register_size (tdesc, 70) == 8)
+	ppc_regmap[70] = (48 + 2*32) * sizeof (long);
+
+      ppc_regmap_adjusted = 1;
+   }
 #endif
+  current_process ()->tdesc = tdesc;
 }
 
 /* Correct in either endianness.
@@ -485,7 +533,7 @@ ppc_fill_vsxregset (struct regcache *regcache, void *buf)
   if (!(ppc_hwcap & PPC_FEATURE_HAS_VSX))
     return;
 
-  base = find_regno ("vs0h");
+  base = find_regno (regcache->tdesc, "vs0h");
   for (i = 0; i < 32; i++)
     collect_register (regcache, base + i, &regset[i * 8]);
 }
@@ -499,7 +547,7 @@ ppc_store_vsxregset (struct regcache *regcache, const void *buf)
   if (!(ppc_hwcap & PPC_FEATURE_HAS_VSX))
     return;
 
-  base = find_regno ("vs0h");
+  base = find_regno (regcache->tdesc, "vs0h");
   for (i = 0; i < 32; i++)
     supply_register (regcache, base + i, &regset[i * 8]);
 }
@@ -520,7 +568,7 @@ ppc_fill_vrregset (struct regcache *regcache, void *buf)
   if (!(ppc_hwcap & PPC_FEATURE_HAS_ALTIVEC))
     return;
 
-  base = find_regno ("vr0");
+  base = find_regno (regcache->tdesc, "vr0");
   for (i = 0; i < 32; i++)
     collect_register (regcache, base + i, &regset[i * 16]);
 
@@ -537,7 +585,7 @@ ppc_store_vrregset (struct regcache *regcache, const void *buf)
   if (!(ppc_hwcap & PPC_FEATURE_HAS_ALTIVEC))
     return;
 
-  base = find_regno ("vr0");
+  base = find_regno (regcache->tdesc, "vr0");
   for (i = 0; i < 32; i++)
     supply_register (regcache, base + i, &regset[i * 16]);
 
@@ -566,7 +614,7 @@ ppc_fill_evrregset (struct regcache *regcache, void *buf)
   if (!(ppc_hwcap & PPC_FEATURE_HAS_SPE))
     return;
 
-  ev0 = find_regno ("ev0h");
+  ev0 = find_regno (regcache->tdesc, "ev0h");
   for (i = 0; i < 32; i++)
     collect_register (regcache, ev0 + i, &regset->evr[i]);
 
@@ -583,7 +631,7 @@ ppc_store_evrregset (struct regcache *regcache, const void *buf)
   if (!(ppc_hwcap & PPC_FEATURE_HAS_SPE))
     return;
 
-  ev0 = find_regno ("ev0h");
+  ev0 = find_regno (regcache->tdesc, "ev0h");
   for (i = 0; i < 32; i++)
     supply_register (regcache, ev0 + i, &regset->evr[i]);
 
@@ -591,7 +639,7 @@ ppc_store_evrregset (struct regcache *regcache, const void *buf)
   supply_register_by_name (regcache, "spefscr", &regset->spefscr);
 }
 
-struct regset_info target_regsets[] = {
+static struct regset_info ppc_regsets[] = {
   /* List the extra register sets before GENERAL_REGS.  That way we will
      fetch them every time, but still fall back to PTRACE_PEEKUSER for the
      general registers.  Some kernels support these, but not the newer
@@ -606,12 +654,38 @@ struct regset_info target_regsets[] = {
   { 0, 0, 0, -1, -1, NULL, NULL }
 };
 
+static struct usrregs_info ppc_usrregs_info =
+  {
+    ppc_num_regs,
+    ppc_regmap,
+  };
+
+static struct regsets_info ppc_regsets_info =
+  {
+    ppc_regsets, /* regsets */
+    0, /* num_regsets */
+    NULL, /* disabled_regsets */
+  };
+
+static struct regs_info regs_info =
+  {
+    NULL, /* regset_bitmap */
+    &ppc_usrregs_info,
+    &ppc_regsets_info
+  };
+
+static const struct regs_info *
+ppc_regs_info (void)
+{
+  return &regs_info;
+}
+
 struct linux_target_ops the_low_target = {
   ppc_arch_setup,
-  ppc_num_regs,
-  ppc_regmap,
+  ppc_regs_info,
   ppc_cannot_fetch_register,
   ppc_cannot_store_register,
+  NULL, /* fetch_register */
   ppc_get_pc,
   ppc_set_pc,
   (const unsigned char *) &ppc_breakpoint,
@@ -626,3 +700,27 @@ struct linux_target_ops the_low_target = {
   ppc_collect_ptrace_register,
   ppc_supply_ptrace_register,
 };
+
+void
+initialize_low_arch (void)
+{
+  /* Initialize the Linux target descriptions.  */
+
+  init_registers_powerpc_32l ();
+  init_registers_powerpc_altivec32l ();
+  init_registers_powerpc_cell32l ();
+  init_registers_powerpc_vsx32l ();
+  init_registers_powerpc_isa205_32l ();
+  init_registers_powerpc_isa205_altivec32l ();
+  init_registers_powerpc_isa205_vsx32l ();
+  init_registers_powerpc_e500l ();
+  init_registers_powerpc_64l ();
+  init_registers_powerpc_altivec64l ();
+  init_registers_powerpc_cell64l ();
+  init_registers_powerpc_vsx64l ();
+  init_registers_powerpc_isa205_64l ();
+  init_registers_powerpc_isa205_altivec64l ();
+  init_registers_powerpc_isa205_vsx64l ();
+
+  initialize_regsets_info (&ppc_regsets_info);
+}

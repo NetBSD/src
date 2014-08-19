@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
-sinclude(../common/aclocal.m4)
 AC_PREREQ(2.59)dnl
 AC_INIT(Makefile.in)
+sinclude(../common/acinclude.m4)
 
 AC_PROG_INSTALL
 AC_PROG_CC

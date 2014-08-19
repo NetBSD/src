@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.10 2011/04/14 16:23:59 yamt Exp $	*/
+/*	$NetBSD: tprof.c,v 1.10.14.1 2014/08/20 00:03:51 tls Exp $	*/
 
 /*-
  * Copyright (c)2008,2009,2010 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.10 2011/04/14 16:23:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.10.14.1 2014/08/20 00:03:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -652,7 +652,8 @@ const struct cdevsw tprof_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
-	.d_flag = D_OTHER | D_MPSAFE,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 void

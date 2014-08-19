@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,15 +19,11 @@
 # This is a problem related to CANNOT_STEP_HW_WATCHPOINTS macro.
 # It affects Solaris native targets.
 
-if $tracelevel then {
-	strace $tracelevel
-}
 
-
-set testfile "gdb11531"
+standard_testfile
 
 if { [prepare_for_testing $testfile.exp $testfile $testfile.c {debug}] } {
-    return -1;
+    return -1
 }
 
 # Disable hardware watchpoints if necessary.

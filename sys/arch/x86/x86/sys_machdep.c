@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.25.12.1 2012/11/20 03:01:51 tls Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.25.12.2 2014/08/20 00:03:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.25.12.1 2012/11/20 03:01:51 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.25.12.2 2014/08/20 00:03:29 tls Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_perfctrs.h"
 #include "opt_user_ldt.h"
+#include "opt_compat_netbsd.h"
 #ifdef i386
 #include "opt_vm86.h"
 #endif
@@ -694,7 +695,7 @@ x86_set_sdbase(void *arg, char which, lwp_t *l, bool direct)
 			wrmsr(MSR_KERNELGSBASE, pcb->pcb_gs);
 		break;
 	default:
-		panic("x86_get_sdbase");
+		panic("x86_set_sdbase");
 	}
 	kpreempt_enable();
 
@@ -716,7 +717,7 @@ x86_get_sdbase32(void *arg, char which)
 		sd = (void *)&curpcb->pcb_gsd;
 		break;
 	default:
-		panic("x86_get_sdbase");
+		panic("x86_get_sdbase32");
 	}
 
 	base = sd->sd_hibase << 24 | sd->sd_lobase;

@@ -1,3 +1,136 @@
+2013-09-23  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2013-06-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4, configure: Regenerate.
+
+2013-05-13  Nick Clifton  <nickc@redhat.com>
+
+	* v850.igen (LDSR): Accept but ignore a selID parameter.
+
+2013-05-10  Freddie Chopin  <freddie_chopin@op.pl>
+
+	* configure: Rebuild.
+
+2013-01-28  Nick Clifton  <nickc@redhat.com>
+
+	* simops.c (v850_rotl): New function.
+	(v850_bins): New function.
+	* simops.h: Add prototypes fir v850_rotl and v850_bins.
+	* v850-dc: Add entries for V850e3v5.
+	* v850.igen: Add support for v850e3v5.
+	(ld.dw, st.dw, rotl, bins): New patterns.
+
+2013-01-10  Nick Clifton  <nickc@redhat.com>
+
+	* interp.c (sim_open): Add support for bfd_arch_v850_rh850
+	architecture type.  Add support for bfd_mach_v850e2 and
+	bfd_mach_v850e2v3 machine numbers.
+        * v850.igen (dbtrap): Add support for SIM_OPEN_DEBUG.
+        (cmpf.d): Correct order of operands.
+        (cmpf.s): Likewise.
+        (trncf.dul): New pattern.
+        (trncf.duw): New pattern.
+        (trncf.sul): New pattern.
+        (trncf.suw): New pattern.
+        * v850-dc: Correct bitfield selection for TRNCF.SW and CVTF.SW.
+
+2012-09-13  Nick Clifton  <nickc@redhat.com>
+
+	* v850.igen (W,WWWW): Correct computation of register number.
+	(JR32): Remove unnecessary comma.
+	(cmovf.s): Register 0 is an invalid source register.
+	(maddf.s): Remove bogus intermediary rounding.
+	(nmaddf.s): Likewise.
+	(trncf.sl): Remove bogus initial rounding.
+	(trncf.dw): Likewise.
+	(trncf.sl): Likewise.
+	(trncf.sw): Likewise.
+
+2012-06-15  Joel Brobecker  <brobecker@adacore.com>
+
+	* config.in, configure: Regenerate.
+
+2012-03-28  Rathish C  <rathish.c@kpitcummins.com>
+
+	* sim-main.h (struct _v850_regs): Add new fields mpu0_sregs,
+	mpu1_sregs, and fpu_sregs.
+	(MPU0_SR, MPU1_SR, FPU_SR): New macros for accessing new fields
+	in _v850_regs struct.
+	(SP_REGNO): Define.
+	(SP): Redefine using SP_REGNO.
+	(PSW_REGNO, EIIC, FEIC, DBIC, DIR, EIWR, FEWR, DBWR, BSEL, PSW_NPV)
+	(PSW_DMP, PSW_IMP, ECR_EICC, ECR_FECC, FPSR, FPSR_REGNO, FPEPC)
+	(FPST, FPST_REGNO, FPCC, FPCFG, FPCFG_REGNO, FPSR_DEM, FPSR_SEM)
+	(FPSR_RM, FPSR_RN, FPSR_FS, FPSR_PR, FPSR_XC, FPSR_XCE, FPSR_XCV)
+	(FPSR_XCZ, FPSR_XCO, FPSR_XCU, FPSR_XCI, FPSR_XE, FPSR_XEV)
+	(FPSR_XEZ, FPSR_XEO, FPSR_XEU, FPSR_XEI, FPSR_XP, FPSR_XPV)
+	(FPSR_XPZ, FPSR_XPO, FPSR_XPU, FPSR_XPI, FPST_PR, FPST_XCE)
+	(FPST_XCV, FPST_XCZ, FPST_XCO, FPST_XCU, FPST_XCI, FPST_XPV)
+	(FPST_XPZ, FPST_XPO, FPST_XPU, FPST_XPI, FPCFG_RM, FPCFG_XEV)
+	(FPCFG_XEZ, FPCFG_XEO, FPCFG_XEU, FPCFG_XEI, GET_FPCC, CLEAR_FPCC)
+	(SET_FPCC, TEST_FPCC, FPSR_GET_ROUND, MPM, MPC, MPC_REGNO, TID)
+	(PPA, PPM, PPC, DCC, DCV0, DCV1, SPAL, SPAU, IPA0L, IPA0U, IPA1L)
+	(IPA1U, IPA2L, IPA2U, IPA3L, IPA3U, DPA0L, DPA0U, DPA1L, DPA1U)
+	(DPA2L, DPA2U, DPA3L, DPA3U, PPC_PPE, SPAL_SPE, SPAL_SPS, VIP)
+	(VMECR, VMTID, VMADR, VPECR, VPTID, VPADR, VDECR, VDTID, MPM_AUE)
+	(MPM_MPE, VMECR_VMX, VMECR_VMR, VMECR_VMW, VMECR_VMS, VMECR_VMRMW)
+	(VMECR_VMMS, IPA2ADDR, IPA_IPE, IPA_IPX, IPA_IPR, IPE0, IPE1, IPE2)
+	(IPE3, IPX0, IPX1, IPX2, IPX3, IPR0, IPR1, IPR2, IPR3, DPA2ADDR)
+	(DPA_DPE, DPA_DPR, DPA_DPW, DPE0, DPE1, DPE2, DPE3, DPR0, DPR1)
+	(DPR2, DPR3, DPW0, DPW1, DPW2, DPW3, DCC_DCE0, DCC_DCE1, PPA2ADDR)
+	(PPC_PPC, PPC_PPE, PPC_PPM): New macros.
+	(FPU_COMPARE): New enum.
+	(TRACE_FP_INPUT_FPU1, TRACE_FP_INPUT_FPU2, TRACE_FP_INPUT_FPU3)
+	(TRACE_FP_INPUT_BOOL1_FPU2, TRACE_FP_INPUT_WORD2)
+	(TRACE_FP_RESULT_WORD1, TRACE_FP_RESULT_WORD2): New macros.
+	* simops.c (Add32): Update prototype.
+	(update_fpsr): New function.
+	(SignalException): New function.
+	(SignalExceptionFPE): New function.
+	(check_invalid_snan): New function.
+	(v850_float_compare): New function.
+	(v850_div): New function.
+	(v850_divu): New function.
+	(v850_sar): New function.
+	(v850_shl): New function.
+	(v850_shr): New function.
+	(v850_satadd): New function.
+	(v850_satsub): New function.
+	(load_data_mem): New function.
+	(store_data_mem): New function.
+	(mpu_load_mem_test): New function.
+	(mpu_store_mem_test): New function.
+	* simops.h: Add function prototype for above mentioned functions.
+	(check_cvt_fi, check_cvt_if, check_cvt_ff): Define.
+	* v850-dc: Add entry for v850e2 and v850e2v3.
+	* v850.igen: Add support for v850e2 and v850e2v3.
+
+2012-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4, config.in, configure: Regenerate.
+
+2011-12-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4: New file.
+	* configure: Regenerate.
+
+2011-10-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Change include to common/acinclude.m4.
+
+2011-10-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Change AC_PREREQ to 2.64.  Delete AC_CONFIG_HEADER
+	call.  Replace common.m4 include with SIM_AC_COMMON.
+	* configure: Regenerate.
+
+2011-07-05  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_do_command): Delete.
+
 2011-03-21  Kevin Buettner  <kevinb@redhat.com>
 
 	* simops (OP_10007E0): Update errno handling as most traps

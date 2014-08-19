@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_priocscan.c,v 1.17 2012/02/17 08:45:11 yamt Exp $	*/
+/*	$NetBSD: bufq_priocscan.c,v 1.17.2.1 2014/08/20 00:04:28 tls Exp $	*/
 
 /*-
  * Copyright (c)2004,2005,2006,2008,2009,2011,2012 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.17 2012/02/17 08:45:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.17.2.1 2014/08/20 00:04:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ cscan_empty(struct cscan_queue *q)
 static void
 cscan_put(struct cscan_queue *q, struct buf *bp)
 {
-	struct buf *obp;
+	struct buf *obp __diagused;
 
 	obp = rb_tree_insert_node(&q->cq_buffers, bp);
 	KASSERT(obp == bp); /* see cscan_tree_compare_nodes */

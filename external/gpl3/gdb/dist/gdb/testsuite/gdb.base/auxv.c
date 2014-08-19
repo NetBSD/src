@@ -1,5 +1,4 @@
-/* Copyright 1992, 1993, 1994, 1995, 1996, 1999, 2004, 2007, 2008, 2009, 2010,
-   2011 Free Software Foundation, Inc.
+/* Copyright 1992-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,6 +34,13 @@
 #define ABORT {char *invalid = 0; *invalid = 0xFF;}
 #endif
 
+#ifdef USE_RLIMIT
+# include <sys/resource.h>
+# ifndef RLIM_INFINITY
+#  define RLIM_INFINITY -1
+# endif
+#endif /* USE_RLIMIT */
+
 /* Don't make these automatic vars or we will have to walk back up the
    stack to access them. */
 
@@ -52,6 +58,14 @@ func2 (int x)
   int coremaker_local[5];
   int i;
   static int y;
+
+#ifdef USE_RLIMIT
+  {
+    struct rlimit rlim = { RLIM_INFINITY, RLIM_INFINITY };
+
+    setrlimit (RLIMIT_CORE, &rlim);
+  }
+#endif
 
   /* Make sure that coremaker_local doesn't get optimized away. */
   for (i = 0; i < 5; i++)

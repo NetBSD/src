@@ -1,6 +1,6 @@
 /* Test program for byte registers.
 
-   Copyright 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2010-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -63,6 +63,14 @@ main (int argc, char **argv)
        : "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15");
   asm ("nop"); /* second breakpoint here */
 
+  /* amd64-dword.exp writes eax-edi here.
+     Tell gcc they're clobbered so it doesn't try to keep "data" in
+     one of them.  */
+  asm (""
+       : /* no outputs */
+       : /* no inputs */
+       : "eax", "ebx", "ecx", "edx", "esi", "edi");
+
   asm ("mov %%eax, 0(%0)\n\t"
        "mov %%ebx, 4(%0)\n\t"
        "mov %%ecx, 8(%0)\n\t"
@@ -73,6 +81,14 @@ main (int argc, char **argv)
        : "r" (data) 
        : "eax", "ebx", "ecx", "edx", "esi", "edi");
   asm ("nop"); /* third breakpoint here */
+
+  /* amd64-dword.exp writes r8-r15 here.
+     Tell gcc they're clobbered so it doesn't try to keep "data" in
+     one of them.  */
+  asm (""
+       : /* no outputs */
+       : /* no inputs */
+       : "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15");
 
   asm ("mov %%r8d, 24(%0)\n\t"
        "mov %%r9d, 28(%0)\n\t"

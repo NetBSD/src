@@ -1,4 +1,4 @@
-/*	$NetBSD: iostuff.h,v 1.1.1.2 2010/06/17 18:07:14 tron Exp $	*/
+/*	$NetBSD: iostuff.h,v 1.1.1.2.12.1 2014/08/19 23:59:45 tls Exp $	*/
 
 #ifndef _IOSTUFF_H_INCLUDED_
 #define _IOSTUFF_H_INCLUDED_
@@ -18,13 +18,10 @@
 extern int non_blocking(int, int);
 extern int close_on_exec(int, int);
 extern int open_limit(int);
-extern int readable(int);
-extern int writable(int);
+extern int poll_fd(int, int, int, int, int);
 extern off_t get_file_limit(void);
 extern void set_file_limit(off_t);
 extern ssize_t peekfd(int);
-extern int read_wait(int, int);
-extern int write_wait(int, int);
 extern ssize_t write_buf(int, const char *, ssize_t, int);
 extern ssize_t timed_read(int, void *, size_t, int, void *);
 extern ssize_t timed_write(int, void *, size_t, int, void *);
@@ -38,8 +35,17 @@ extern int unix_send_fd(int, int);
 extern ssize_t dummy_read(int, void *, size_t, int, void *);
 extern ssize_t dummy_write(int, void *, size_t, int, void *);
 
+#define readable(fd)		poll_fd((fd), POLL_FD_READ, 0, 1, 0)
+#define writable(fd)		poll_fd((fd), POLL_FD_WRITE, 0, 1, 0)
+
+#define read_wait(fd, timeout) poll_fd((fd), POLL_FD_READ, (timeout), 0, -1)
+#define write_wait(fd, timeout) poll_fd((fd), POLL_FD_WRITE, (timeout), 0, -1)
+
 extern int inet_windowsize;
 extern void set_inet_windowsize(int, int);
+
+#define POLL_FD_READ	0
+#define POLL_FD_WRITE	1
 
 #define BLOCKING	0
 #define NON_BLOCKING	1

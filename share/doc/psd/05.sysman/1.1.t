@@ -1,4 +1,4 @@
-.\"	$NetBSD: 1.1.t,v 1.3 2003/08/07 10:30:48 agc Exp $
+.\"	$NetBSD: 1.1.t,v 1.3.60.1 2014/08/20 00:02:29 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,8 +29,8 @@
 .\"
 .\"	@(#)1.1.t	8.5 (Berkeley) 5/26/94
 .\"
-.Sh 2 "Processes and protection
-.Sh 3 "Host identifiers
+.Sh 2 5 "Processes and protection
+.Sh 3 5 "Host identifiers
 .PP
 Each host has associated with it an integer host ID, and a host
 name of up to MAXHOSTNAMELEN (256) characters (as defined in
@@ -62,7 +62,7 @@ char *name; int len;
 len = gethostname(buf, buflen);
 result int len; result char *buf; int buflen;
 .DE
-.Sh 3 "Process identifiers
+.Sh 3 5 "Process identifiers
 Each host runs a set of \fIprocesses\fP.
 Each process is largely independent of other processes,
 having its own protection domain, address space, timers, and
@@ -90,7 +90,7 @@ routine:
 pid = getppid();
 result pid_t pid;
 .DE
-.Sh 3 "Process creation and termination
+.Sh 3 5 "Process creation and termination
 .LP
 A new process is created by making a logical duplicate of an
 existing process:
@@ -173,7 +173,7 @@ the effective group ID is set to the group of the file.
 Whether changed or not, the effective user ID is then copied to the
 saved user ID, and the effective group ID is copied to the
 saved group ID.
-.Sh 3 "User and group IDs
+.Sh 3 6 "User and group IDs
 .PP
 Each process in the system has associated with it three user IDs:
 a \fIreal user ID\fP, an \fIeffective user ID\fP, and a \fIsaved user ID\fP,
@@ -282,7 +282,7 @@ real or saved group ID:
 setegid(gid);
 gid_t gid;
 .DE
-.Sh 3 "Sessions
+.Sh 3 7 "Sessions
 .PP
 When a user first logs onto the system,
 they are put into a session with a controlling process
@@ -313,7 +313,7 @@ result char *name;
 Unlike historic systems, the value returned by
 .Fn getlogin
 is stored in the kernel and can be trusted.
-.Sh 3 "Process groups
+.Sh 3 7 "Process groups
 .PP
 Each process in the system is also associated with a \fIprocess
 group\fP.  The group of processes in a process group is sometimes

@@ -79,10 +79,10 @@ netif_match(unsigned int tag, uint8_t *macaddr)
 		dv = &vnifdv[n];
 		if ((*dv->match)(tag, macaddr) > 0) {
 			nifmatch[n] = 1;
-			snprintf(bi_rdev.devname, sizeof(bi_rdev.devname), dv->name);
+			snprintf(bi_rdev.devname, sizeof(bi_rdev.devname), "%s", dv->name);
 			bi_rdev.cookie = tag;
 
-			snprintf(bi_net.devname, sizeof(bi_net.devname), dv->name);
+			snprintf(bi_net.devname, sizeof(bi_net.devname), "%s", dv->name);
 			bi_net.cookie = tag;
 			memcpy(bi_net.mac_address, macaddr, sizeof(bi_net.mac_address));
 			break;
@@ -113,10 +113,10 @@ netif_init(unsigned int tag, uint8_t *macaddr)
 	s->io_netif = dv;
 	memcpy(s->myea, enaddr, sizeof(s->myea));
 
-	snprintf(bi_rdev.devname, sizeof(bi_rdev.devname), dv->name);
+	snprintf(bi_rdev.devname, sizeof(bi_rdev.devname), "%s", dv->name);
 	bi_rdev.cookie = tag;
 
-	snprintf(bi_net.devname, sizeof(bi_net.devname), dv->name);
+	snprintf(bi_net.devname, sizeof(bi_net.devname), "%s", dv->name);
 	bi_net.cookie = tag;
 	memcpy(bi_net.mac_address, enaddr, sizeof(bi_net.mac_address));
 	return 1;

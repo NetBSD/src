@@ -1,4 +1,4 @@
-# Copyright 2004, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2004-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,10 +14,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # This file is part of the gdb testsuite.
-
-if $tracelevel {
-    strace $tracelevel
-}
 
 
 # Test handling of nullified instructions for the pa target.
@@ -111,26 +107,8 @@ gdb_test "stepi" "in main.*" "stepi to main"
 
 proc gen_core { test } {
   global gcorefile
-  global gdb_prompt
-  set gcore_works 0
-  set escapedfilename [string_to_regexp $gcorefile]
 
-  # gcore is not yet implemented for HPUX
-  setup_xfail hppa*-*-hpux*
-
-  gdb_test_multiple "gcore $gcorefile" "$test: gcore" {
-    -re "Saved corefile ${escapedfilename}\[\r\n\]+$gdb_prompt $" {
-      pass "$test: gcore"
-      set gcore_works 1
-    }
-    -re "Undefined command.*$gdb_prompt $" {
-      fail "$test: gcore (undefined command)"
-    }
-    -re "Can't create a corefile\[\r\n\]+$gdb_prompt $" {
-      fail "$test: gcore (can't create corefile)"
-    }
-  }
-
+  set gcore_works [gdb_gcore_cmd $gcorefile "$test: gcore"]
   return $gcore_works
 }
 

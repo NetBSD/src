@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.14.2.2 2013/06/23 06:20:25 tls Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.14.2.3 2014/08/20 00:04:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.14.2.2 2013/06/23 06:20:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.14.2.3 2014/08/20 00:04:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.14.2.2 2013/06/23 06:20:25 tls Exp
 #include <net/pfil.h>
 #include <net/if.h>
 
-#include "npf_ncode.h"
 #include "npf_impl.h"
 
 struct npf_ruleset {
@@ -82,9 +81,9 @@ struct npf_rule {
 
 	/* Code to process, if any. */
 	int			r_type;
-	bpfjit_function_t	r_jcode;
+	bpfjit_func_t		r_jcode;
 	void *			r_code;
-	size_t			r_clen;
+	u_int			r_clen;
 
 	/* NAT policy (optional), rule procedure and subset. */
 	npf_natpolicy_t *	r_natp;
@@ -106,17 +105,26 @@ struct npf_rule {
 		npf_rule_t *		r_parent;
 	} /* C11 */;
 
-	/* Rule ID and the original dictionary. */
+	/* Rule ID, name and the optional key. */
 	uint64_t		r_id;
-	prop_dictionary_t	r_dict;
-
-	/* Rule name and all-list entry. */
 	char			r_name[NPF_RULE_MAXNAMELEN];
-	LIST_ENTRY(npf_rule)	r_aentry;
-
-	/* Key (optional). */
 	uint8_t			r_key[NPF_RULE_MAXKEYLEN];
+
+	/* All-list entry and the auxiliary info. */
+	LIST_ENTRY(npf_rule)	r_aentry;
+	prop_data_t		r_info;
 };
+
+#define	SKIPTO_ADJ_FLAG		(1U << 31)
+#define	SKIPTO_MASK		(SKIPTO_ADJ_FLAG - 1)
+
+static int	npf_rule_export(const npf_ruleset_t *,
+    const npf_rule_t *, prop_dictionary_t);
+
+/*
+ * Private attributes - must be in the NPF_RULE_PRIVMASK range.
+ */
+#define	NPF_RULE_KEEPNAT	(0x01000000 & NPF_RULE_PRIVMASK)
 
 #define	NPF_DYNAMIC_GROUP_P(attr) \
     (((attr) & NPF_DYNAMIC_GROUP) == NPF_DYNAMIC_GROUP)
@@ -180,13 +188,16 @@ npf_ruleset_insert(npf_ruleset_t *rlset, npf_rule_t *rl)
 	LIST_INSERT_HEAD(&rlset->rs_all, rl, r_aentry);
 	if (NPF_DYNAMIC_GROUP_P(rl->r_attr)) {
 		LIST_INSERT_HEAD(&rlset->rs_dynamic, rl, r_dentry);
+	} else {
+		KASSERTMSG(rl->r_parent == NULL, "cannot be dynamic rule");
+		rl->r_attr &= ~NPF_RULE_DYNAMIC;
 	}
 
 	rlset->rs_rules[n] = rl;
 	rlset->rs_nitems++;
 
 	if (rl->r_skip_to < ++n) {
-		rl->r_skip_to = n;
+		rl->r_skip_to = SKIPTO_ADJ_FLAG | n;
 	}
 }
 
@@ -271,6 +282,8 @@ npf_ruleset_remove(npf_ruleset_t *rlset, const char *rname, uint64_t id)
 		return ESRCH;
 	}
 	TAILQ_FOREACH(rl, &rg->r_subset, r_entry) {
+		KASSERT(rl->r_parent == rg);
+
 		/* Compare ID.  On match, remove and return. */
 		if (rl->r_id == id) {
 			npf_ruleset_unlink(rlset, rl);
@@ -295,6 +308,8 @@ npf_ruleset_remkey(npf_ruleset_t *rlset, const char *rname,
 
 	/* Find the last in the list. */
 	TAILQ_FOREACH_REVERSE(rl, &rg->r_subset, npf_ruleq, r_entry) {
+		KASSERT(rl->r_parent == rg);
+
 		/* Compare the key.  On match, remove and return. */
 		if (memcmp(rl->r_key, key, len) == 0) {
 			npf_ruleset_unlink(rlset, rl);
@@ -308,35 +323,44 @@ npf_ruleset_remkey(npf_ruleset_t *rlset, const char *rname,
 prop_dictionary_t
 npf_ruleset_list(npf_ruleset_t *rlset, const char *rname)
 {
-	prop_dictionary_t rldict;
+	prop_dictionary_t rgdict;
 	prop_array_t rules;
 	npf_rule_t *rg, *rl;
+
+	KASSERT(npf_config_locked_p());
 
 	if ((rg = npf_ruleset_lookup(rlset, rname)) == NULL) {
 		return NULL;
 	}
-	if ((rldict = prop_dictionary_create()) == NULL) {
+	if ((rgdict = prop_dictionary_create()) == NULL) {
 		return NULL;
 	}
 	if ((rules = prop_array_create()) == NULL) {
-		prop_object_release(rldict);
+		prop_object_release(rgdict);
 		return NULL;
 	}
 
 	TAILQ_FOREACH(rl, &rg->r_subset, r_entry) {
-		if (rl->r_dict && !prop_array_add(rules, rl->r_dict)) {
+		prop_dictionary_t rldict;
+
+		rldict = prop_dictionary_create();
+		KASSERT(rl->r_parent == rg);
+
+		if (npf_rule_export(rlset, rl, rldict)) {
 			prop_object_release(rldict);
 			prop_object_release(rules);
 			return NULL;
 		}
+		prop_array_add(rules, rldict);
+		prop_object_release(rldict);
 	}
 
-	if (!prop_dictionary_set(rldict, "rules", rules)) {
-		prop_object_release(rldict);
-		rldict = NULL;
+	if (!prop_dictionary_set(rgdict, "rules", rules)) {
+		prop_object_release(rgdict);
+		rgdict = NULL;
 	}
 	prop_object_release(rules);
-	return rldict;
+	return rgdict;
 }
 
 int
@@ -348,10 +372,41 @@ npf_ruleset_flush(npf_ruleset_t *rlset, const char *rname)
 		return ESRCH;
 	}
 	while ((rl = TAILQ_FIRST(&rg->r_subset)) != NULL) {
+		KASSERT(rl->r_parent == rg);
 		npf_ruleset_unlink(rlset, rl);
 		LIST_INSERT_HEAD(&rlset->rs_gc, rl, r_aentry);
 	}
 	return 0;
+}
+
+int
+npf_ruleset_export(const npf_ruleset_t *rlset, prop_array_t rules)
+{
+	const u_int nitems = rlset->rs_nitems;
+	int error = 0;
+	u_int n = 0;
+
+	KASSERT(npf_config_locked_p());
+
+	while (n < nitems) {
+		const npf_rule_t *rl = rlset->rs_rules[n];
+		const npf_natpolicy_t *natp = rl->r_natp;
+		prop_dictionary_t rldict;
+
+		rldict = prop_dictionary_create();
+		if ((error = npf_rule_export(rlset, rl, rldict)) != 0) {
+			prop_object_release(rldict);
+			break;
+		}
+		if (natp && (error = npf_nat_policyexport(natp, rldict)) != 0) {
+			prop_object_release(rldict);
+			break;
+		}
+		prop_array_add(rules, rldict);
+		prop_object_release(rldict);
+		n++;
+	}
+	return error;
 }
 
 void
@@ -366,57 +421,102 @@ npf_ruleset_gc(npf_ruleset_t *rlset)
 }
 
 /*
- * npf_ruleset_reload: share the dynamic rules.
- *
- * => Active ruleset should be exclusively locked.
+ * npf_ruleset_cmpnat: find a matching NAT policy in the ruleset.
  */
-void
-npf_ruleset_reload(npf_ruleset_t *rlset, npf_ruleset_t *arlset)
-{
-	npf_rule_t *rg;
-
-	KASSERT(npf_config_locked_p());
-
-	LIST_FOREACH(rg, &rlset->rs_dynamic, r_dentry) {
-		npf_rule_t *arg, *rl;
-
-		if ((arg = npf_ruleset_lookup(arlset, rg->r_name)) == NULL) {
-			continue;
-		}
-
-		/*
-		 * Copy the list-head structure and move the rules from the
-		 * old ruleset to the new by reinserting to a new all-rules
-		 * list and resetting the parent rule.  Note that the rules
-		 * are still active and therefore accessible for inspection
-		 * via the old ruleset.
-		 */
-		memcpy(&rg->r_subset, &arg->r_subset, sizeof(rg->r_subset));
-		TAILQ_FOREACH(rl, &rg->r_subset, r_entry) {
-			LIST_REMOVE(rl, r_aentry);
-			LIST_INSERT_HEAD(&rlset->rs_all, rl, r_aentry);
-			rl->r_parent = rg;
-		}
-	}
-
-	/* Inherit the ID counter. */
-	rlset->rs_idcnt = arlset->rs_idcnt;
-}
-
-/*
- * npf_ruleset_matchnat: find a matching NAT policy in the ruleset.
- */
-npf_rule_t *
-npf_ruleset_matchnat(npf_ruleset_t *rlset, npf_natpolicy_t *mnp)
+static inline npf_rule_t *
+npf_ruleset_cmpnat(npf_ruleset_t *rlset, npf_natpolicy_t *mnp)
 {
 	npf_rule_t *rl;
 
 	/* Find a matching NAT policy in the old ruleset. */
 	LIST_FOREACH(rl, &rlset->rs_all, r_aentry) {
-		if (npf_nat_matchpolicy(rl->r_natp, mnp))
+		if (rl->r_natp && npf_nat_cmppolicy(rl->r_natp, mnp))
 			break;
 	}
 	return rl;
+}
+
+/*
+ * npf_ruleset_reload: prepare the new ruleset by scanning the active
+ * ruleset and 1) sharing the dynamic rules 2) sharing NAT policies.
+ *
+ * => The active (old) ruleset should be exclusively locked.
+ */
+void
+npf_ruleset_reload(npf_ruleset_t *newset, npf_ruleset_t *oldset)
+{
+	npf_rule_t *rg, *rl;
+	uint64_t nid = 0;
+
+	KASSERT(npf_config_locked_p());
+
+	/*
+	 * Scan the dynamic rules and share (migrate) if needed.
+	 */
+	LIST_FOREACH(rg, &newset->rs_dynamic, r_dentry) {
+		npf_rule_t *actrg;
+
+		/* Look for a dynamic ruleset group with such name. */
+		actrg = npf_ruleset_lookup(oldset, rg->r_name);
+		if (actrg == NULL) {
+			continue;
+		}
+
+		/*
+		 * Copy the list-head structure.  This is necessary because
+		 * the rules are still active and therefore accessible for
+		 * inspection via the old ruleset.
+		 */
+		memcpy(&rg->r_subset, &actrg->r_subset, sizeof(rg->r_subset));
+		TAILQ_FOREACH(rl, &rg->r_subset, r_entry) {
+			/*
+			 * We can safely migrate to the new all-rule list
+			 * and re-set the parent rule, though.
+			 */
+			LIST_REMOVE(rl, r_aentry);
+			LIST_INSERT_HEAD(&newset->rs_all, rl, r_aentry);
+			rl->r_parent = rg;
+		}
+	}
+
+	/*
+	 * Scan all rules in the new ruleset and share NAT policies.
+	 * Also, assign a unique ID for each policy here.
+	 */
+	LIST_FOREACH(rl, &newset->rs_all, r_aentry) {
+		npf_natpolicy_t *np;
+		npf_rule_t *actrl;
+
+		/* Does the rule have a NAT policy associated? */
+		if ((np = rl->r_natp) == NULL) {
+			continue;
+		}
+
+		/* Does it match with any policy in the active ruleset? */
+		if ((actrl = npf_ruleset_cmpnat(oldset, np)) == NULL) {
+			npf_nat_setid(np, ++nid);
+			continue;
+		}
+
+		/*
+		 * Inherit the matching NAT policy and check other ones
+		 * in the new ruleset for sharing the portmap.
+		 */
+		rl->r_natp = actrl->r_natp;
+		npf_ruleset_sharepm(newset, rl->r_natp);
+		npf_nat_setid(rl->r_natp, ++nid);
+
+		/*
+		 * Finally, mark the active rule to not destroy its NAT
+		 * policy later as we inherited it (but the rule must be
+		 * kept active for now).  Destroy the new/unused policy.
+		 */
+		actrl->r_attr |= NPF_RULE_KEEPNAT;
+		npf_nat_freepolicy(np);
+	}
+
+	/* Inherit the ID counter. */
+	newset->rs_idcnt = oldset->rs_idcnt;
 }
 
 npf_rule_t *
@@ -441,6 +541,20 @@ npf_ruleset_sharepm(npf_ruleset_t *rlset, npf_natpolicy_t *mnp)
 	return rl;
 }
 
+npf_natpolicy_t *
+npf_ruleset_findnat(npf_ruleset_t *rlset, uint64_t id)
+{
+	npf_rule_t *rl;
+
+	LIST_FOREACH(rl, &rlset->rs_all, r_aentry) {
+		npf_natpolicy_t *np = rl->r_natp;
+		if (np && npf_nat_getid(np) == id) {
+			return np;
+		}
+	}
+	return NULL;
+}
+
 /*
  * npf_ruleset_freealg: inspect the ruleset and disassociate specified
  * ALG from all NAT entries using it.
@@ -459,41 +573,14 @@ npf_ruleset_freealg(npf_ruleset_t *rlset, npf_alg_t *alg)
 }
 
 /*
- * npf_ruleset_natreload: minimum reload of NAT policies by maching
- * two (active and new) NAT rulesets.
- *
- * => Active ruleset should be exclusively locked.
- */
-void
-npf_ruleset_natreload(npf_ruleset_t *nrlset, npf_ruleset_t *arlset)
-{
-	npf_natpolicy_t *np, *anp;
-	npf_rule_t *rl, *arl;
-
-	/* Scan a new NAT ruleset against NAT policies in old ruleset. */
-	LIST_FOREACH(rl, &nrlset->rs_all, r_aentry) {
-		np = rl->r_natp;
-		arl = npf_ruleset_matchnat(arlset, np);
-		if (arl == NULL) {
-			continue;
-		}
-		/* On match - we exchange NAT policies. */
-		anp = arl->r_natp;
-		rl->r_natp = anp;
-		arl->r_natp = np;
-		/* Update other NAT policies to share portmap. */
-		(void)npf_ruleset_sharepm(nrlset, anp);
-	}
-}
-
-/*
- * npf_rule_alloc: allocate a rule and copy n-code from user-space.
+ * npf_rule_alloc: allocate a rule and initialise it.
  */
 npf_rule_t *
 npf_rule_alloc(prop_dictionary_t rldict)
 {
 	npf_rule_t *rl;
 	const char *rname;
+	prop_data_t d;
 
 	/* Allocate a rule structure. */
 	rl = kmem_zalloc(sizeof(npf_rule_t), KM_SLEEP);
@@ -508,9 +595,18 @@ npf_rule_alloc(prop_dictionary_t rldict)
 	}
 
 	/* Attributes, priority and interface ID (optional). */
-	prop_dictionary_get_uint32(rldict, "attributes", &rl->r_attr);
-	prop_dictionary_get_int32(rldict, "priority", &rl->r_priority);
-	prop_dictionary_get_uint32(rldict, "interface", &rl->r_ifid);
+	prop_dictionary_get_uint32(rldict, "attr", &rl->r_attr);
+	prop_dictionary_get_int32(rldict, "prio", &rl->r_priority);
+	rl->r_attr &= ~NPF_RULE_PRIVMASK;
+
+	if (prop_dictionary_get_cstring_nocopy(rldict, "ifname", &rname)) {
+		if ((rl->r_ifid = npf_ifmap_register(rname)) == 0) {
+			kmem_free(rl, sizeof(npf_rule_t));
+			return NULL;
+		}
+	} else {
+		rl->r_ifid = 0;
+	}
 
 	/* Get the skip-to index.  No need to validate it. */
 	prop_dictionary_get_uint32(rldict, "skip-to", &rl->r_skip_to);
@@ -528,11 +624,48 @@ npf_rule_alloc(prop_dictionary_t rldict)
 		memcpy(rl->r_key, key, len);
 	}
 
-	if (NPF_DYNAMIC_RULE_P(rl->r_attr)) {
-		rl->r_dict = prop_dictionary_copy(rldict);
+	if ((d = prop_dictionary_get(rldict, "info")) != NULL) {
+		rl->r_info = prop_data_copy(d);
+	}
+	return rl;
+}
+
+static int
+npf_rule_export(const npf_ruleset_t *rlset, const npf_rule_t *rl,
+    prop_dictionary_t rldict)
+{
+	u_int skip_to = 0;
+	prop_data_t d;
+
+	prop_dictionary_set_uint32(rldict, "attr", rl->r_attr);
+	prop_dictionary_set_int32(rldict, "prio", rl->r_priority);
+	if ((rl->r_skip_to & SKIPTO_ADJ_FLAG) == 0) {
+		skip_to = rl->r_skip_to & SKIPTO_MASK;
+	}
+	prop_dictionary_set_uint32(rldict, "skip-to", skip_to);
+	prop_dictionary_set_int32(rldict, "code-type", rl->r_type);
+	if (rl->r_code) {
+		d = prop_data_create_data(rl->r_code, rl->r_clen);
+		prop_dictionary_set_and_rel(rldict, "code", d);
 	}
 
-	return rl;
+	if (rl->r_ifid) {
+		const char *ifname = npf_ifmap_getname(rl->r_ifid);
+		prop_dictionary_set_cstring(rldict, "ifname", ifname);
+	}
+	prop_dictionary_set_uint64(rldict, "id", rl->r_id);
+
+	if (rl->r_name[0]) {
+		prop_dictionary_set_cstring(rldict, "name", rl->r_name);
+	}
+	if (NPF_DYNAMIC_RULE_P(rl->r_attr)) {
+		d = prop_data_create_data(rl->r_key, NPF_RULE_MAXKEYLEN);
+		prop_dictionary_set_and_rel(rldict, "key", d);
+	}
+	if (rl->r_info) {
+		prop_dictionary_set(rldict, "info", rl->r_info);
+	}
+	return 0;
 }
 
 /*
@@ -544,15 +677,12 @@ npf_rule_alloc(prop_dictionary_t rldict)
 void
 npf_rule_setcode(npf_rule_t *rl, const int type, void *code, size_t size)
 {
-	/* Perform BPF JIT if possible. */
-	if (type == NPF_CODE_BPF && (membar_consumer(),
-	    bpfjit_module_ops.bj_generate_code != NULL)) {
-		KASSERT(rl->r_jcode == NULL);
-		rl->r_jcode = bpfjit_module_ops.bj_generate_code(code, size);
-	}
+	KASSERT(type == NPF_CODE_BPF);
+
 	rl->r_type = type;
 	rl->r_code = code;
 	rl->r_clen = size;
+	rl->r_jcode = npf_bpf_compile(code, size);
 }
 
 /*
@@ -574,7 +704,7 @@ npf_rule_free(npf_rule_t *rl)
 	npf_natpolicy_t *np = rl->r_natp;
 	npf_rproc_t *rp = rl->r_rproc;
 
-	if (np) {
+	if (np && (rl->r_attr & NPF_RULE_KEEPNAT) == 0) {
 		/* Free NAT policy. */
 		npf_nat_freepolicy(np);
 	}
@@ -588,12 +718,10 @@ npf_rule_free(npf_rule_t *rl)
 	}
 	if (rl->r_jcode) {
 		/* Free JIT code. */
-		KASSERT(bpfjit_module_ops.bj_free_code != NULL);
-		bpfjit_module_ops.bj_free_code(rl->r_jcode);
+		bpf_jit_freecode(rl->r_jcode);
 	}
-	if (rl->r_dict) {
-		/* Destroy the dictionary. */
-		prop_object_release(rl->r_dict);
+	if (rl->r_info) {
+		prop_object_release(rl->r_info);
 	}
 	kmem_free(rl, sizeof(npf_rule_t));
 }
@@ -612,7 +740,7 @@ npf_rule_getid(const npf_rule_t *rl)
 }
 
 npf_rproc_t *
-npf_rule_getrproc(npf_rule_t *rl)
+npf_rule_getrproc(const npf_rule_t *rl)
 {
 	npf_rproc_t *rp = rl->r_rproc;
 
@@ -635,24 +763,20 @@ npf_rule_getnat(const npf_rule_t *rl)
 void
 npf_rule_setnat(npf_rule_t *rl, npf_natpolicy_t *np)
 {
-
 	KASSERT(rl->r_natp == NULL);
 	rl->r_natp = np;
 }
 
 /*
  * npf_rule_inspect: match the interface, direction and run the filter code.
- * Returns true if rule matches, false otherise.
+ * Returns true if rule matches and false otherwise.
  */
 static inline bool
-npf_rule_inspect(npf_cache_t *npc, nbuf_t *nbuf, const npf_rule_t *rl,
-    const int di_mask, const int layer)
+npf_rule_inspect(const npf_rule_t *rl, bpf_args_t *bc_args,
+    const int di_mask, const u_int ifid)
 {
-	const ifnet_t *ifp = nbuf->nb_ifp;
-	const void *code;
-
 	/* Match the interface. */
-	if (rl->r_ifid && rl->r_ifid != ifp->if_index) {
+	if (rl->r_ifid && rl->r_ifid != ifid) {
 		return false;
 	}
 
@@ -662,31 +786,13 @@ npf_rule_inspect(npf_cache_t *npc, nbuf_t *nbuf, const npf_rule_t *rl,
 			return false;
 	}
 
-	/* Execute JIT code, if any. */
-	if (__predict_true(rl->r_jcode)) {
-		struct mbuf *m = nbuf_head_mbuf(nbuf);
-		size_t pktlen = m_length(m);
-
-		return rl->r_jcode((unsigned char *)m, pktlen, 0) != 0;
-	}
-
-	/* Execute the byte-code, if any. */
-	if ((code = rl->r_code) == NULL) {
+	/* Any code? */
+	if (!rl->r_code) {
+		KASSERT(rl->r_jcode == NULL);
 		return true;
 	}
-
-	switch (rl->r_type) {
-	case NPF_CODE_NC:
-		return npf_ncode_process(npc, code, nbuf, layer) == 0;
-	case NPF_CODE_BPF: {
-		struct mbuf *m = nbuf_head_mbuf(nbuf);
-		size_t pktlen = m_length(m);
-		return bpf_filter(code, (unsigned char *)m, pktlen, 0) != 0;
-	}
-	default:
-		KASSERT(false);
-	}
-	return false;
+	KASSERT(rl->r_type == NPF_CODE_BPF);
+	return npf_bpf_filter(bc_args, rl->r_code, rl->r_jcode) != 0;
 }
 
 /*
@@ -694,15 +800,15 @@ npf_rule_inspect(npf_cache_t *npc, nbuf_t *nbuf, const npf_rule_t *rl,
  * This is only for the dynamic rules.  Subrules cannot have nested rules.
  */
 static npf_rule_t *
-npf_rule_reinspect(npf_cache_t *npc, nbuf_t *nbuf, const npf_rule_t *drl,
-    const int di_mask, const int layer)
+npf_rule_reinspect(const npf_rule_t *drl, bpf_args_t *bc_args,
+    const int di_mask, const u_int ifid)
 {
 	npf_rule_t *final_rl = NULL, *rl;
 
 	KASSERT(NPF_DYNAMIC_GROUP_P(drl->r_attr));
 
 	TAILQ_FOREACH(rl, &drl->r_subset, r_entry) {
-		if (!npf_rule_inspect(npc, nbuf, rl, di_mask, layer)) {
+		if (!npf_rule_inspect(rl, bc_args, di_mask, ifid)) {
 			continue;
 		}
 		if (rl->r_attr & NPF_RULE_FINAL) {
@@ -716,25 +822,33 @@ npf_rule_reinspect(npf_cache_t *npc, nbuf_t *nbuf, const npf_rule_t *drl,
 /*
  * npf_ruleset_inspect: inspect the packet against the given ruleset.
  *
- * Loop through the rules in the set and run n-code processor of each rule
+ * Loop through the rules in the set and run the byte-code of each rule
  * against the packet (nbuf chain).  If sub-ruleset is found, inspect it.
- *
- * => Caller is responsible for nbuf chain protection.
  */
 npf_rule_t *
-npf_ruleset_inspect(npf_cache_t *npc, nbuf_t *nbuf,
-    const npf_ruleset_t *rlset, const int di, const int layer)
+npf_ruleset_inspect(npf_cache_t *npc, const npf_ruleset_t *rlset,
+    const int di, const int layer)
 {
+	nbuf_t *nbuf = npc->npc_nbuf;
 	const int di_mask = (di & PFIL_IN) ? NPF_RULE_IN : NPF_RULE_OUT;
 	const u_int nitems = rlset->rs_nitems;
+	const u_int ifid = nbuf->nb_ifid;
 	npf_rule_t *final_rl = NULL;
+	bpf_args_t bc_args;
 	u_int n = 0;
 
 	KASSERT(((di & PFIL_IN) != 0) ^ ((di & PFIL_OUT) != 0));
 
+	/*
+	 * Prepare the external memory store and the arguments for
+	 * the BPF programs to be executed.
+	 */
+	uint32_t bc_words[NPF_BPF_NWORDS];
+	npf_bpf_prepare(npc, &bc_args, bc_words);
+
 	while (n < nitems) {
 		npf_rule_t *rl = rlset->rs_rules[n];
-		const u_int skip_to = rl->r_skip_to;
+		const u_int skip_to = rl->r_skip_to & SKIPTO_MASK;
 		const uint32_t attr = rl->r_attr;
 
 		KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
@@ -747,7 +861,7 @@ npf_ruleset_inspect(npf_cache_t *npc, nbuf_t *nbuf,
 		}
 
 		/* Main inspection of the rule. */
-		if (!npf_rule_inspect(npc, nbuf, rl, di_mask, layer)) {
+		if (!npf_rule_inspect(rl, &bc_args, di_mask, ifid)) {
 			n = skip_to;
 			continue;
 		}
@@ -757,7 +871,7 @@ npf_ruleset_inspect(npf_cache_t *npc, nbuf_t *nbuf,
 			 * If this is a dynamic rule, re-inspect the subrules.
 			 * If it has any matching rule, then it is final.
 			 */
-			rl = npf_rule_reinspect(npc, nbuf, rl, di_mask, layer);
+			rl = npf_rule_reinspect(rl, &bc_args, di_mask, ifid);
 			if (rl != NULL) {
 				final_rl = rl;
 				break;
@@ -792,21 +906,3 @@ npf_rule_conclude(const npf_rule_t *rl, int *retfl)
 	*retfl = rl->r_attr;
 	return (rl->r_attr & NPF_RULE_PASS) ? 0 : ENETUNREACH;
 }
-
-#if defined(DDB) || defined(_NPF_TESTING)
-
-void
-npf_rulenc_dump(const npf_rule_t *rl)
-{
-	const uint32_t *op = rl->r_code;
-	size_t n = rl->r_clen;
-
-	while (n) {
-		printf("\t> |0x%02x|\n", (uint32_t)*op);
-		op++;
-		n -= sizeof(*op);
-	}
-	printf("-> %s\n", (rl->r_attr & NPF_RULE_PASS) ? "pass" : "block");
-}
-
-#endif

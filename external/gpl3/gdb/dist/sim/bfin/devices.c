@@ -1,6 +1,6 @@
 /* Blackfin device support.
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -23,6 +23,7 @@
 #include "sim-main.h"
 #include "sim-hw.h"
 #include "hw-device.h"
+#include "devices.h"
 #include "dv-bfin_cec.h"
 #include "dv-bfin_mmu.h"
 

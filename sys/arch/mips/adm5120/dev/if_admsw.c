@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.10.12.1 2012/11/20 03:01:32 tls Exp $ */
+/* $NetBSD: if_admsw.c,v 1.10.12.2 2014/08/20 00:03:12 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.10.12.1 2012/11/20 03:01:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.10.12.2 2014/08/20 00:03:12 tls Exp $");
 
 
 #include <sys/param.h>
@@ -1277,4 +1277,6 @@ admsw_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ifmr->ifm_active |= (status & PHY_ST_100M) ? IFM_100_TX : IFM_10_T;
 	if (status & PHY_ST_FDX)
 		ifmr->ifm_active |= IFM_FDX;
+	else
+		ifmr->ifm_active |= IFM_HDX;
 }

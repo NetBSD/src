@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss_pci.c,v 1.9.22.1 2012/11/20 03:02:14 tls Exp $	*/
+/*	$NetBSD: ciss_pci.c,v 1.9.22.2 2014/08/20 00:03:42 tls Exp $	*/
 /*	$OpenBSD: ciss_pci.c,v 1.9 2005/12/13 15:56:01 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.9.22.1 2012/11/20 03:02:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.9.22.2 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,6 +254,7 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 	int cfg_bar, memtype;
 	pcireg_t reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	int i;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 
@@ -323,7 +324,7 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 			bus_space_unmap(sc->sc_iot, sc->cfg_ioh, cfgsz);
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ciss_intr, sc);
 	if (!sc->sc_ih) {
 		aprint_error_dev(sc->sc_dev, "can't establish interrupt");

@@ -1,4 +1,4 @@
-/* $NetBSD: ispmbox.h,v 1.55 2010/03/26 20:52:00 mjacob Exp $ */
+/* $NetBSD: ispmbox.h,v 1.55.18.1 2014/08/20 00:03:38 tls Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -1450,7 +1450,7 @@ typedef struct {
 	uint16_t	snscb_addr[4];	/* response buffer address */
 	uint16_t	snscb_sblen;	/* subcommand buffer length (words) */
 	uint16_t	snscb_reserved1;
-	uint16_t	snscb_data[1];	/* variable data */
+	uint16_t	snscb_data[];	/* variable data */
 } sns_screq_t;	/* Subcommand Request Structure */
 
 typedef struct {
@@ -1511,7 +1511,7 @@ typedef struct {
 	uint8_t		snscb_port_type;
 	uint8_t		snscb_port_id[3];
 	uint8_t		snscb_portname[8];
-	uint16_t	snscb_data[1];	/* variable data */
+	uint16_t	snscb_data[];	/* variable data */
 } sns_scrsp_t;	/* Subcommand Response Structure */
 
 typedef struct {

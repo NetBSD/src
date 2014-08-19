@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_machdep.c,v 1.15 2008/04/28 20:23:33 martin Exp $	*/
+/*	$NetBSD: ibm_machdep.c,v 1.15.44.1 2014/08/20 00:03:21 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ pci_intr_fixup_ibm_6015(void)
 
 	intr_num = prop_number_create_integer(13);
 	for (j = 0; j < 4; j++) {
-		sprintf(key, "pin-%c", 'A' + j);
+		snprintf(key, sizeof(key), "pin-%c", 'A' + j);
 		prop_dictionary_set(sub, key, intr_num);
 	}
 	prop_object_release(intr_num);
@@ -71,9 +71,9 @@ pci_intr_fixup_ibm_6015(void)
 	for (i = 13; i < 20; i++) {
 		sub = prop_dictionary_create_with_capacity(4);
 		intr_num = prop_number_create_integer(15);
-		sprintf(key, "devfunc-%d", i);
+		snprintf(key, sizeof(key), "devfunc-%d", i);
 		for (j = 0; j < 4; j++) {
-			sprintf(key, "pin-%c", 'A' + j);
+			snprintf(key, sizeof(key), "pin-%c", 'A' + j);
 			prop_dictionary_set(sub, key, intr_num);
 		}
 		prop_dictionary_set(dict, key, sub);

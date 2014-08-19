@@ -1,6 +1,6 @@
 /* Blackfin Two Wire Interface (TWI) model
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -20,9 +20,6 @@
 
 #ifndef DV_BFIN_TWI_H
 #define DV_BFIN_TWI_H
-
-/* XXX: This should be pushed into the model data.  */
-#define BFIN_MMR_TWI_SIZE	0x90
 
 /* TWI_MASTER_STAT Masks */
 #define MPROG		(1 << 0)

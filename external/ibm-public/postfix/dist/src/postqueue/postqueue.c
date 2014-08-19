@@ -1,4 +1,4 @@
-/*	$NetBSD: postqueue.c,v 1.1.1.3.2.1 2013/02/25 00:27:26 tls Exp $	*/
+/*	$NetBSD: postqueue.c,v 1.1.1.3.2.2 2014/08/19 23:59:43 tls Exp $	*/
 
 /*++
 /* NAME
@@ -62,7 +62,7 @@
 /* .RE
 /* .IP "\fB-s \fIsite\fR"
 /*	Schedule immediate delivery of all mail that is queued for the named
-/*	\fIsite\fR. A numerical site must be specified as a valid RFC 2821
+/*	\fIsite\fR. A numerical site must be specified as a valid RFC 5321
 /*	address literal enclosed in [], just like in email addresses.
 /*	The site must be eligible for the "fast flush" service.
 /*	See \fBflush\fR(8) for more information about the "fast flush"

@@ -1,7 +1,7 @@
 /* Main simulator entry points specific to Lattice Mico32.
    Contributed by Jon Beniston <jon@beniston.com>
    
-   Copyright (C) 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -278,13 +278,4 @@ sim_create_inferior (sd, abfd, argv, envp)
 #endif
 
   return SIM_RC_OK;
-}
-
-void
-sim_do_command (sd, cmd)
-     SIM_DESC sd;
-     char *cmd;
-{
-  if (sim_args_command (sd, cmd) != SIM_RC_OK)
-    sim_io_eprintf (sd, "Unknown command `%s'\n", cmd);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.18.12.1 2012/11/20 03:01:04 tls Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.18.12.2 2014/08/20 00:02:46 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.18.12.1 2012/11/20 03:01:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.18.12.2 2014/08/20 00:02:46 tls Exp $");
 
 #include "opt_irqstats.h"
 
@@ -429,7 +429,6 @@ isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 void
 isa_intr_init(void)
 {
-	static void *isa_ih;
  	struct intrq *iq;
  	int i;
  
@@ -441,7 +440,7 @@ isa_intr_init(void)
  		iq = &isa_intrq[i];
  		TAILQ_INIT(&iq->iq_list);
   
- 		sprintf(iq->iq_name, "irq %d", i);
+ 		snprintf(iq->iq_name, sizeof(iq->iq_name), "irq %d", i);
  		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
  		    NULL, "isa", iq->iq_name);
  	}
@@ -452,7 +451,7 @@ isa_intr_init(void)
 #ifndef ISA_FOOTBRIDGE_IRQ 
 #warning Before using isa with footbridge you must define ISA_FOOTBRIDGE_IRQ
 #endif
-	isa_ih = footbridge_intr_claim(ISA_FOOTBRIDGE_IRQ, IPL_BIO, "isabus",
+	footbridge_intr_claim(ISA_FOOTBRIDGE_IRQ, IPL_BIO, "isabus",
 	    isa_irqdispatch, NULL);
 	
 }

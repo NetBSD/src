@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,8 +17,7 @@
 
 if { [skip_cplus_tests] } { continue }
 
-set testfile "ptype-cv-cp"
-set srcfile ${testfile}.cc
+standard_testfile .cc
 
 if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} {debug c++}] } {
     return -1
@@ -37,5 +36,8 @@ gdb_test "whatis v_const_volatile_my_int" "type = const_volatile_my_int"
 gdb_test "ptype v_const_volatile_my_int" "type = const volatile int"
 
 gdb_test "whatis v_volatile_const_my_int" "type = volatile_const_my_int"
-setup_kfail "gcc/45997" *-*-*
+if {[test_compiler_info {gcc-[0-3]-*}]
+    || [test_compiler_info {gcc-4-[0-5]-*}]} {
+    setup_xfail "gcc/45997" "*-*-*"
+}
 gdb_test "ptype v_volatile_const_my_int" "type = const volatile int"

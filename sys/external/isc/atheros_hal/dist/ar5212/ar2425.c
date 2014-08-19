@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar2425.c,v 1.3 2011/02/20 11:21:03 jmcneill Exp $
+ * $Id: ar2425.c,v 1.3.14.1 2014/08/20 00:04:25 tls Exp $
  */
 #include "opt_ah.h"
 
@@ -301,13 +301,12 @@ ar2425FillVpdTable(uint32_t pdGainIdx, int16_t Pmin, int16_t  Pmax,
 		   uint16_t numIntercepts,
 		   uint16_t retVpdList[][64])
 {
-	uint16_t ii, jj, kk;
+	uint16_t ii, kk;
 	int16_t currPwr = (int16_t)(2*Pmin);
 	/* since Pmin is pwr*2 and pwrList is 4*pwr */
 	uint32_t  idxL = 0, idxR = 0;
 
 	ii = 0;
-	jj = 0;
 
 	if (numIntercepts < 2)
 		return AH_FALSE;

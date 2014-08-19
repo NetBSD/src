@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.1.14.1 2014/08/20 00:03:48 tls Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -127,6 +127,8 @@ struct virtio_softc {
 	int			sc_ipl; /* set by child */
 	void			*sc_ih;
 
+	int			sc_flags; /* set by child */
+
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_size_t		sc_iosize;
@@ -146,28 +148,7 @@ struct virtio_softc {
 					 /* set by child */
 };
 
-/* The standard layout for the ring is a continuous chunk of memory which
- * looks like this.  We assume num is a power of 2.
- *
- * struct vring {
- *      // The actual descriptors (16 bytes each)
- *      struct vring_desc desc[num];
- *
- *      // A ring of available descriptor heads with free-running index.
- *      __u16 avail_flags;
- *      __u16 avail_idx;
- *      __u16 available[num];
- *
- *      // Padding to the next align boundary.
- *      char pad[];
- *
- *      // A ring of used descriptor heads with free-running index.
- *      __u16 used_flags;
- *      __u16 used_idx;
- *      struct vring_used_elem used[num];
- * };
- * Note: for virtio PCI, align is 4096.
- */
+#define VIRTIO_F_PCI_INTR_MPSAFE	(1 << 0)
 
 /* public interface */
 uint32_t virtio_negotiate_features(struct virtio_softc*, uint32_t);

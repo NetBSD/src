@@ -1,4 +1,4 @@
-/*	$NetBSD: grammar.y,v 1.10 2009/08/12 04:48:03 dholland Exp $	*/
+/*	$NetBSD: grammar.y,v 1.10.12.1 2014/08/20 00:00:21 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)grammar.y	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: grammar.y,v 1.10 2009/08/12 04:48:03 dholland Exp $");
+__RCSID("$NetBSD: grammar.y,v 1.10.12.1 2014/08/20 00:00:21 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -175,10 +175,10 @@ Bpoint:
 		{
 		if (sp->num_beacons % REALLOC == 0) {
 			if (sp->beacon == NULL)
-				sp->beacon = (BEACON *) malloc((sp->num_beacons
+				sp->beacon = malloc((sp->num_beacons
 					+ REALLOC) * sizeof (BEACON));
 			else
-				sp->beacon = (BEACON *) realloc(sp->beacon,
+				sp->beacon = realloc(sp->beacon,
 					(sp->num_beacons + REALLOC) * 
 					sizeof (BEACON));
 			if (sp->beacon == NULL)
@@ -205,10 +205,10 @@ Epoint:
 
 		if (sp->num_exits % REALLOC == 0) {
 			if (sp->exit == NULL)
-				sp->exit = (EXIT *) malloc((sp->num_exits + 
+				sp->exit = malloc((sp->num_exits + 
 					REALLOC) * sizeof (EXIT));
 			else
-				sp->exit = (EXIT *) realloc(sp->exit,
+				sp->exit = realloc(sp->exit,
 					(sp->num_exits + REALLOC) * 
 					sizeof (EXIT));
 			if (sp->exit == NULL)
@@ -238,10 +238,10 @@ Apoint:
 
 		if (sp->num_airports % REALLOC == 0) {
 			if (sp->airport == NULL)
-				sp->airport=(AIRPORT *)malloc((sp->num_airports
+				sp->airport = malloc((sp->num_airports
 					+ REALLOC) * sizeof(AIRPORT));
 			else
-				sp->airport = (AIRPORT *) realloc(sp->airport,
+				sp->airport = realloc(sp->airport,
 					(sp->num_airports + REALLOC) * 
 					sizeof(AIRPORT));
 			if (sp->airport == NULL)
@@ -268,10 +268,10 @@ Lline:
 		{
 		if (sp->num_lines % REALLOC == 0) {
 			if (sp->line == NULL)
-				sp->line = (LINE *) malloc((sp->num_lines + 
+				sp->line = malloc((sp->num_lines + 
 					REALLOC) * sizeof (LINE));
 			else
-				sp->line = (LINE *) realloc(sp->line,
+				sp->line = realloc(sp->line,
 					(sp->num_lines + REALLOC) *
 					sizeof (LINE));
 			if (sp->line == NULL)

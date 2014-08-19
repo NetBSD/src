@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_ids.c,v 1.6 2012/03/03 05:41:45 nonaka Exp $ */
+/* $NetBSD: hdaudio_ids.c,v 1.6.2.1 2014/08/20 00:03:48 tls Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_ids.c,v 1.6 2012/03/03 05:41:45 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_ids.c,v 1.6.2.1 2014/08/20 00:03:48 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -134,6 +134,7 @@ static const struct hdaudio_id {
 	{ HDA_VENDOR_VIA, 0x4438, "VT2002P" },
 	{ HDA_VENDOR_VIA, 0x0448, "VT1812" },
 	{ HDA_VENDOR_VIA, 0x0440, "VT1818S" },
+	{ HDA_VENDOR_VIA, 0x4760, "VT1705" },
 	{ HDA_VENDOR_VIA, HDA_PRODUCT_ANY, "VIA" },
 	/* Analog Devices */
 	{ HDA_VENDOR_ANALOG_DEVICES, 0x184a, "AD1884A" },
@@ -266,7 +267,7 @@ hdaudio_id2name(uint16_t vendor, uint16_t product, char *buf, size_t len)
 	if (name)
 		snprintf(buf, len - 1, "%s", name);
 	else if (product == HDA_PRODUCT_ANY)
-		snprintf(buf, len - 1, "vendor %04x", vendor);
+		snprintf(buf, len - 1, "vendor 0x%04x", vendor);
 	else
-		snprintf(buf, len - 1, "product %04x", product);
+		snprintf(buf, len - 1, "product 0x%04x", product);
 }

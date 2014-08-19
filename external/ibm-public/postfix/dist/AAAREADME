@@ -164,6 +164,7 @@ Postfix daemons:
 Test programs:
 
     src/fsstone/	Measure file system overhead
+    src/posttls-finger/	Postfix SMTP/LMTP TLS probe utility
     src/smtpstone/	SMTP and QMQP server torture test
 
 Miscellaneous:

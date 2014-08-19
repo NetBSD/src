@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_mod.c,v 1.2 2009/08/16 15:41:51 martin Exp $	*/
+/*	$NetBSD: freebsd_mod.c,v 1.2.22.1 2014/08/20 00:03:31 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_mod.c,v 1.2 2009/08/16 15:41:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_mod.c,v 1.2.22.1 2014/08/20 00:03:31 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -60,34 +60,42 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_mod.c,v 1.2 2009/08/16 15:41:51 martin Exp $
 #define ELF32_AUXSIZE (howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), \
     sizeof(Elf32_Addr)) + MAXPATHLEN + ALIGN(1))
 
-MODULE(MODULE_CLASS_MISC, compat_freebsd, "compat,compat_ossaudio" MD1 MD2);
+MODULE(MODULE_CLASS_EXEC, compat_freebsd, "compat,compat_ossaudio" MD1 MD2);
 
 static struct execsw freebsd_execsw[] = {
 #ifdef EXEC_ELF32
 	/* FreeBSD Elf32 (probe not 64-bit safe) */
-	{ sizeof (Elf32_Ehdr),
-	  exec_elf32_makecmds,
-	  { freebsd_elf32_probe },
-	  &emul_freebsd,
-	  EXECSW_PRIO_ANY,
-	  ELF32_AUXSIZE,
-	  elf32_copyargs,
-	  NULL,
-	  coredump_elf32,
-	  exec_setup_stack },
+	{
+		.es_hdrsz = sizeof (Elf32_Ehdr),
+		.es_makecmds = exec_elf32_makecmds,
+		.u = {
+			.elf_probe_func = freebsd_elf32_probe,
+		},
+		.es_emul = &emul_freebsd,
+		.es_prio = EXECSW_PRIO_ANY,
+		.es_arglen = ELF32_AUXSIZE,
+		.es_copyargs = elf32_copyargs,
+		.es_setregs = NULL,
+		.es_coredump = coredump_elf32,
+		.es_setup_stack = exec_setup_stack,
+	},
 #endif
 #ifdef EXEC_AOUT
 	/* FreeBSD a.out (native word size) */
-	{ FREEBSD_AOUT_HDR_SIZE,
-	  exec_freebsd_aout_makecmds,
-	  { NULL },
-	  &emul_freebsd,
-	  EXECSW_PRIO_ANY,
-	  0,
-	  copyargs,
-	  NULL,
-	  coredump_netbsd,
-	  exec_setup_stack },
+	{
+		.es_hdrsz = FREEBSD_AOUT_HDR_SIZE,
+		.es_makecmds = exec_freebsd_aout_makecmds,
+		.u = {
+			.elf_probe_func = NULL,
+		},
+		.es_emul = &emul_freebsd,
+		.es_prio = EXECSW_PRIO_ANY,
+		.es_arglen = 0,
+		.es_copyargs = copyargs,
+		.es_setregs = NULL,
+		.es_coredump = coredump_netbsd,
+		.es_setup_stack = exec_setup_stack,
+	},
 #endif
 };
 

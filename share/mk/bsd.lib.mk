@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.324.2.3 2013/06/23 06:28:54 tls Exp $
+#	$NetBSD: bsd.lib.mk,v 1.324.2.4 2014/08/20 00:02:38 tls Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -129,7 +129,7 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}
 
 
 # Set PICFLAGS to cc flags for producing position-independent code,
-# if not already set.  Includes -DPIC, if required.
+# if not already set.
 
 # Data-driven table using make variables to control how shared libraries
 # are built for different platforms and object formats.
@@ -143,48 +143,11 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}
 #			with ELF, also set shared-lib version for ld.so.
 # SHLIB_LDSTARTFILE:	support .o file, call C++ file-level constructors
 # SHLIB_LDENDFILE:	support .o file, call C++ file-level destructors
-# FPICFLAGS:		flags for ${FC} to compile .[fF] files to .pico objects.
-# CPPPICFLAGS:		flags for ${CPP} to preprocess .[sS] files for ${AS}
-# CPICFLAGS:		flags for ${CC} to compile .[cC] files to pic objects.
-# CSHLIBFLAGS:		flags for ${CC} to compile .[cC] files to .pico objects.
-#			(usually includes ${CPICFLAGS})
-# CAPICFLAGS:		flags for ${CC} to compiling .[Ss] files
-#		 	(usually just ${CPPPICFLAGS} ${CPICFLAGS})
-# APICFLAGS:		flags for ${AS} to assemble .[sS] to .pico objects.
 
-.if ${MACHINE_ARCH} == "alpha"						# {
-
-FPICFLAGS ?= -fPIC
-CPICFLAGS ?= -fPIC -DPIC
-CPPPICFLAGS?= -DPIC
-CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
-APICFLAGS ?=
-
-.elif (${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64") 	# } {
-
-# If you use -fPIC you need to define BIGPIC to turn on 32-bit
-# relocations in asm code
-FPICFLAGS ?= -fPIC
-CPICFLAGS ?= -fPIC -DPIC
-CPPPICFLAGS?= -DPIC -DBIGPIC
-CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
-APICFLAGS ?= -KPIC
-
-.else									# } {
-
-# Platform-independent flags for NetBSD shared libraries
-SHLIB_SOVERSION=${SHLIB_FULLVERSION}
-SHLIB_SHFLAGS=
-FPICFLAGS ?= -fPIC
-CPICFLAGS?= -fPIC -DPIC
-CPPPICFLAGS?= -DPIC
-CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
-APICFLAGS?= -k
-
-.endif									# }
+PICFLAGS ?= -fPIC
 
 .if ${MKPICLIB} != "no"
-CSHLIBFLAGS+= ${CPICFLAGS}
+CSHLIBFLAGS+= ${PICFLAGS}
 .endif
 
 .if defined(CSHLIBFLAGS) && !empty(CSHLIBFLAGS)
@@ -206,7 +169,13 @@ CFLAGS+=	-g
 # Platform-independent linker flags for ELF shared libraries
 SHLIB_SOVERSION=	${SHLIB_MAJOR}
 SHLIB_SHFLAGS=		-Wl,-soname,${_LIB}.so.${SHLIB_SOVERSION}
+.if !defined(SHLIB_WARNTEXTREL) || ${SHLIB_WARNTEXTREL} != "no"
 SHLIB_SHFLAGS+=		-Wl,--warn-shared-textrel
+.endif
+.if !defined(SHLIB_MKMAP) || ${SHLIB_MKMAP} != "no"
+SHLIB_SHFLAGS+=		-Wl,-Map=${_LIB}.so.${SHLIB_SOVERSION}.map
+.endif
+CLEANFILES+=		${_LIB}.so.${SHLIB_SOVERSION}.map
 SHLIB_LDSTARTFILE?=	${_GCC_CRTI} ${_GCC_CRTBEGINS}
 SHLIB_LDENDFILE?=	${_GCC_CRTENDS} ${_GCC_CRTN}
 
@@ -218,6 +187,9 @@ FFLAGS+=	${FOPTS}
 .if defined(CTFCONVERT)
 .if defined(CFLAGS) && !empty(CFLAGS:M*-g*)
 CTFFLAGS+=	-g
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 48
+#CFLAGS+=	-gdwarf-2
+.endif
 .endif
 .endif
 
@@ -317,7 +289,7 @@ LIBSTRIPSHLIBOBJS=	yes
 
 .f.pico:
 	${_MKTARGET_COMPILE}
-	${COMPILE.f} ${FPICFLAGS} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.f} ${PICFLAGS} ${.IMPSRC} -o ${.TARGET}
 .if defined(LIBSTRIPFOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
@@ -410,14 +382,14 @@ LIBSTRIPSHLIBOBJS=	yes
 
 .s.pico:
 	${_MKTARGET_COMPILE}
-	${COMPILE.s} ${CAPICFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.s} ${PICFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if defined(LIBSTRIPAOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
 .S.pico:
 	${_MKTARGET_COMPILE}
-	${COMPILE.S} ${CAPICFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.S} ${PICFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if defined(LIBSTRIPAOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
@@ -472,7 +444,7 @@ ${_LIB}_combine.o: ${COMBINESRCS}
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} -MD --combine ${.ALLSRC} -o ${.TARGET}
 .if defined(LIBSTRIPOBJS)
-	${OBJCOPY} -x ${.TARGET}
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
 CLEANFILES+=	${_LIB}_combine.d
@@ -551,7 +523,7 @@ _YLSRCS=	${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 
 realall: ${SRCS} ${ALLOBJS:O} ${_LIBS} ${_LIB.so.debug}
 
-MKARZERO?=no
+MKARZERO?= ${MKREPRO:Uno}
 
 .if ${MKARZERO} == "yes"
 _ARFL=crsD
@@ -622,7 +594,7 @@ DPLIBC ?= ${DESTDIR}${LIBC_SO}
 .endif
 .else
 LDLIBC ?= -nodefaultlibs
-.if ${LIB} == "c"
+.if ${HAVE_LIBGCC} == "yes" && ${LIB} == "c"
 LDADD+= -lgcc
 .endif
 .endif
@@ -630,6 +602,11 @@ LDADD+= -lgcc
 
 .if ${LIBISCXX} != "no"
 LIBCC:=	${CXX}
+. if ${MKLIBCXX} == "yes"
+LIBDPLIBS+=     c++	${.CURDIR}/../../../../../external/bsd/libc++/lib
+. else
+LIBDPLIBS+=     stdc++	${.CURDIR}/../../../../../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libstdc++-v3
+. endif
 .else
 LIBCC:=	${CC}
 .endif

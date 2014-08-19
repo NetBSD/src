@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.19 2012/08/16 18:15:10 matt Exp $ */
+/* $NetBSD: start.c,v 1.19.2.1 2014/08/20 00:02:40 tls Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.19 2012/08/16 18:15:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.19.2.1 2014/08/20 00:02:40 tls Exp $");
 
 #include "opt_modular.h"
 
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: start.c,v 1.19 2012/08/16 18:15:10 matt Exp $");
 #include <dev/i2c/i2cvar.h>
 #include <acorn26/ioc/iociicvar.h>
 
-#include <arm/armreg.h>
+#include <arm/locore.h>
 #include <arm/undefined.h>
 #include <machine/boot.h>
 #include <machine/machdep.h>

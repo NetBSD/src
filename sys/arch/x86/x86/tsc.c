@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.30 2011/08/08 17:00:23 jmcneill Exp $	*/
+/*	$NetBSD: tsc.c,v 1.30.12.1 2014/08/20 00:03:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.30 2011/08/08 17:00:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.30.12.1 2014/08/20 00:03:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ u_int	tsc_get_timecount(struct timecounter *);
 uint64_t	tsc_freq; /* exported for sysctl */
 static int64_t	tsc_drift_max = 250;	/* max cycles */
 static int64_t	tsc_drift_observed;
+static bool	tsc_good;
 
 static volatile int64_t	tsc_sync_val;
 static volatile struct cpu_info	*tsc_sync_cpu;
@@ -62,47 +63,50 @@ static struct timecounter tsc_timecounter = {
 	.tc_quality = 3000,
 };
 
-void
-tsc_tc_init(void)
+bool
+tsc_is_invariant(void)
 {
 	struct cpu_info *ci;
 	uint32_t descs[4];
-	bool safe;
+	uint32_t family;
+	bool invariant;
 
-	if (!cpu_hascounter()) {
-		return;
-	}
+	if (!cpu_hascounter())
+		return false;
 
 	ci = curcpu();
-	safe = false;
-	tsc_freq = ci->ci_data.cpu_cc_freq;
+	invariant = false;
 
 	if (cpu_vendor == CPUVENDOR_INTEL) {
 		/*
 		 * From Intel(tm) 64 and IA-32 Architectures Software
 		 * Developer's Manual Volume 3A: System Programming Guide,
-		 * Part 1 Order Number: 253668-026US February 2008, these
-		 * are the processors where the TSC is known safe:
+		 * Part 1, 17.13 TIME_STAMP COUNTER, these are the processors
+		 * where the TSC is known invariant:
 		 *
 		 * Pentium 4, Intel Xeon (family 0f, models 03 and higher)
 		 * Core Solo and Core Duo processors (family 06, model 0e)
 		 * Xeon 5100 series and Core 2 Duo (family 06, model 0f)
+		 * Core 2 and Xeon (family 06, model 17)
+		 * Atom (family 06, model 1c)
 		 *
 		 * We'll also assume that it's safe on the Pentium, and
 		 * that it's safe on P-II and P-III Xeons due to the
 		 * typical configuration of those systems.
+		 *
 		 */
-		switch (CPUID2FAMILY(ci->ci_signature)) {
+		switch (CPUID_TO_BASEFAMILY(ci->ci_signature)) {
 		case 0x05:
-			safe = true;
+			invariant = true;
 			break;
 		case 0x06:
-			safe = CPUID2MODEL(ci->ci_signature) == 0x0e ||
-			    CPUID2MODEL(ci->ci_signature) == 0x0f ||
-			    CPUID2MODEL(ci->ci_signature) == 0x0a;
+			invariant = CPUID_TO_MODEL(ci->ci_signature) == 0x0e ||
+			    CPUID_TO_MODEL(ci->ci_signature) == 0x0f ||
+			    CPUID_TO_MODEL(ci->ci_signature) == 0x17 ||
+			    CPUID_TO_MODEL(ci->ci_signature) == 0x1c;
 			break;
 		case 0x0f:
-			safe = CPUID2MODEL(ci->ci_signature) >= 0x03;
+			invariant = CPUID_TO_MODEL(ci->ci_signature) >= 0x03;
 			break;
 		}
 	} else if (cpu_vendor == CPUVENDOR_AMD) {
@@ -111,36 +115,53 @@ tsc_tc_init(void)
 		 * Nov 2, 2005 Rich Brunner, AMD Fellow
 		 * http://lkml.org/lkml/2005/11/4/173
 		 *
-		 * There are a lot of recommendations in this note.
-		 * We're only going to follow the simple, reliable
-		 * ones.
+		 * See Appendix E.4.7 CPUID Fn8000_0007_EDX Advanced Power
+		 * Management Features, AMD64 Architecture Programmer's
+		 * Manual Volume 3: General-Purpose and System Instructions.
+		 * The check is done below.
 		 */
-		switch (CPUID2FAMILY(ci->ci_signature)) {
-		case 0x06:
-		case 0x07:
-			/*
-			 * TSC is fine, apart from P-state changes.
-			 * The PowerNow code need hooks to disable
-			 * the TSC if the user modifies operating
-			 * parameters.  For now, punt.  XXX
-			 */
-			break;
-		case 0x0f:
-			/* Check for "invariant TSC", bit 8 of %edx. */
+	}
+
+	/*
+	 * The best way to check whether the TSC counter is invariant or not
+	 * is to check CPUID 80000007.
+	 */
+	family = CPUID_TO_BASEFAMILY(ci->ci_signature);
+	if (((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD))
+	    && ((family == 0x06) || (family == 0x0f))) {
+		x86_cpuid(0x80000000, descs);
+		if (descs[0] >= 0x80000007) {
 			x86_cpuid(0x80000007, descs);
-			safe = (descs[3] & CPUID_APM_TSC) != 0;
-			break;
+			invariant = (descs[3] & CPUID_APM_TSC) != 0;
 		}
 	}
 
-	if (!safe) {
-		aprint_debug("TSC not known safe on this CPU\n");
+	return invariant;
+}
+
+void
+tsc_tc_init(void)
+{
+	struct cpu_info *ci;
+	bool invariant;
+
+	if (!cpu_hascounter())
+		return;
+
+	ci = curcpu();
+	tsc_freq = ci->ci_data.cpu_cc_freq;
+	tsc_good = (cpu_feature[0] & CPUID_MSR) != 0 &&
+	    (rdmsr(MSR_TSC) != 0 || rdmsr(MSR_TSC) != 0);
+
+	invariant = tsc_is_invariant();
+	if (!invariant) {
+		aprint_debug("TSC not known invariant on this CPU\n");
 		tsc_timecounter.tc_quality = -100;
 	} else if (tsc_drift_observed > tsc_drift_max) {
 		aprint_error("ERROR: %lld cycle TSC drift observed\n",
 		    (long long)tsc_drift_observed);
 		tsc_timecounter.tc_quality = -100;
-		safe = false;
+		invariant = false;
 	}
 
 	if (tsc_freq != 0) {
@@ -261,7 +282,7 @@ cpu_hascounter(void)
 uint64_t
 cpu_counter_serializing(void)
 {
-	if (cpu_feature[0] & CPUID_MSR)
+	if (tsc_good)
 		return rdmsr(MSR_TSC);
 	else
 		return cpu_counter();

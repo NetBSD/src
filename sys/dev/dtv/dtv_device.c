@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_device.c,v 1.8 2011/08/09 01:42:24 jmcneill Exp $ */
+/* $NetBSD: dtv_device.c,v 1.8.12.1 2014/08/20 00:03:36 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.8 2011/08/09 01:42:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_device.c,v 1.8.12.1 2014/08/20 00:03:36 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -64,7 +64,8 @@ const struct cdevsw dtv_cdevsw = {
 	.d_poll = dtvpoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
-	.d_flag = D_OTHER|D_MPSAFE,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER | D_MPSAFE,
 };
 
 static int	dtv_match(device_t, cfdata_t, void *);
@@ -105,8 +106,8 @@ dtv_attach(device_t parent, device_t self, void *aa)
 	ds->ds_buf = NULL;
 	SIMPLEQ_INIT(&ds->ds_ingress);
 	SIMPLEQ_INIT(&ds->ds_egress);
-	mutex_init(&ds->ds_egress_lock, MUTEX_DEFAULT, IPL_VM);
-	mutex_init(&ds->ds_ingress_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&ds->ds_egress_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&ds->ds_ingress_lock, MUTEX_DEFAULT, IPL_SCHED);
 	cv_init(&ds->ds_sample_cv, "dtv");
 	selinit(&ds->ds_sel);
 	dtv_scatter_buf_init(&ds->ds_data);
@@ -116,7 +117,7 @@ dtv_attach(device_t parent, device_t self, void *aa)
 		return;
 	}
 
-	mutex_init(&sc->sc_demux_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&sc->sc_demux_lock, MUTEX_DEFAULT, IPL_SCHED);
 	TAILQ_INIT(&sc->sc_demux_list);
 	sc->sc_demux_runcnt = 0;
 

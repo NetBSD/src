@@ -1,4 +1,4 @@
-.\" $NetBSD: SET.9,v 1.2 2010/04/13 08:24:31 jruoho Exp $
+.\" $NetBSD: SET.9,v 1.2.14.1 2014/08/20 00:02:37 tls Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 13, 2010
+.Dd March 12, 2014
 .Dt SET 9
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .In sys/types.h
 .Ft void
 .Fn SET "val" "x"
-.Ft void
+.Ft int
 .Fn ISSET "val" "x"
 .Ft void
 .Fn CLR "val" "x"

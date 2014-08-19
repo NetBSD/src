@@ -1,4 +1,4 @@
-/* $NetBSD: altmem.c,v 1.1 2009/03/12 00:15:07 jmcneill Exp $ */
+/* $NetBSD: altmem.c,v 1.1.32.1 2014/08/20 00:03:35 tls Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altmem.c,v 1.1 2009/03/12 00:15:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altmem.c,v 1.1.32.1 2014/08/20 00:03:35 tls Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/device.h>
@@ -60,12 +60,28 @@ static int	altmem_match(device_t, cfdata_t, void *);
 static void	altmem_attach(device_t, device_t, void *);
 
 const struct bdevsw altmem_bdevsw = {
-        altmemopen, altmemclose, altmemstrategy, altmemioctl, nodump,
-	altmemsize, D_DISK
+        .d_open = altmemopen,
+	.d_close = altmemclose,
+	.d_strategy = altmemstrategy,
+	.d_ioctl = altmemioctl,
+	.d_dump = nodump,
+	.d_psize = altmemsize,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 const struct cdevsw altmem_cdevsw = {
-	altmemopen, altmemclose, altmemread, altmemwrite, altmemioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = altmemopen,
+	.d_close = altmemclose,
+	.d_read = altmemread,
+	.d_write = altmemwrite,
+	.d_ioctl = altmemioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 static struct dkdriver altmemdkdriver = { altmemstrategy, minphys };
 extern struct cfdriver altmem_cd;

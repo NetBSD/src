@@ -1,7 +1,6 @@
 /* This test program is part of GDB, the GNU debugger.
 
-   Copyright 1992, 1993, 1994, 1997, 1999, 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright 1992-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,8 +13,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-   */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /*
  *	Test file with lots of different types, for testing the
@@ -248,10 +246,6 @@ enum cars {chevy, ford, porsche} clunker;
 
 int main ()
 {
-#ifdef usestubs
-  set_debug_traps();
-  breakpoint();
-#endif
   /* Some linkers (e.g. on AIX) remove unreferenced variables,
      so make sure to reference them. */
   v_char = 0;

@@ -1,4 +1,4 @@
-#	$NetBSD: CP3100_INSTALL,v 1.1 2006/11/09 00:28:37 scw Exp $
+#	$NetBSD: CP3100_INSTALL,v 1.1.106.1 2014/08/20 00:02:53 tls Exp $
 #
 #	CP3100_INSTALL -- CP3100 kernel with installation-sized ramdisk
 #
@@ -7,3 +7,6 @@ include "arch/evbarm/conf/CP3100"
 include "arch/evbarm/conf/INSTALL"
 
 options BOOTHOWTO=RB_SINGLE
+no config netbsd-wm0
+no config netbsd-wd0
+no config netbsd-sd0

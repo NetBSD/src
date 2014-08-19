@@ -1,4 +1,3 @@
-
 /******************************************************************************
  *
  * Module Name: asutils - common utilities
@@ -6,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,6 +44,40 @@
 #include "acpisrc.h"
 
 
+/*******************************************************************************
+ *
+ * FUNCTION:    AsStrlwr (strlwr)
+ *
+ * PARAMETERS:  SrcString       - The source string to convert
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Convert string to lowercase
+ *
+ * NOTE: This is not a POSIX function, so it appears here so that we don't have
+ * header file issues with the various hosts/compilers/clibs.
+ *
+ ******************************************************************************/
+
+void
+AsStrlwr (
+    char                    *SrcString)
+{
+    char                    *String;
+
+
+    /* Walk entire string, lowercasing the letters */
+
+    if (SrcString)
+    {
+        for (String = SrcString; *String; String++)
+        {
+            *String = (char) ACPI_TOLOWER (*String);
+        }
+    }
+}
+
+
 /******************************************************************************
  *
  * FUNCTION:    AsSkipUntilChar
@@ -63,7 +96,7 @@ AsSkipUntilChar (
     {
         if (!*Buffer)
         {
-            return NULL;
+            return (NULL);
         }
 
         Buffer++;
@@ -92,7 +125,7 @@ AsSkipPastChar (
     {
         if (!*Buffer)
         {
-            return NULL;
+            return (NULL);
         }
 
         Buffer++;
@@ -110,7 +143,7 @@ AsSkipPastChar (
  *
  * DESCRIPTION: This function inserts and removes data from the file buffer.
  *              if more data is inserted than is removed, the data in the buffer
- *              is moved to make room.  If less data is inserted than is removed,
+ *              is moved to make room. If less data is inserted than is removed,
  *              the remaining data is moved to close the hole.
  *
  ******************************************************************************/
@@ -163,7 +196,7 @@ AsReplaceData (
  *
  * DESCRIPTION: This function inserts and removes data from the file buffer.
  *              if more data is inserted than is removed, the data in the buffer
- *              is moved to make room.  If less data is inserted than is removed,
+ *              is moved to make room. If less data is inserted than is removed,
  *              the remaining data is moved to close the hole.
  *
  ******************************************************************************/
@@ -208,7 +241,7 @@ AsInsertData (
  *
  * DESCRIPTION: This function inserts and removes data from the file buffer.
  *              if more data is inserted than is removed, the data in the buffer
- *              is moved to make room.  If less data is inserted than is removed,
+ *              is moved to make room. If less data is inserted than is removed,
  *              the remaining data is moved to close the hole.
  *
  ******************************************************************************/
@@ -231,4 +264,3 @@ AsRemoveData (
 
     return (StartPointer);
 }
-

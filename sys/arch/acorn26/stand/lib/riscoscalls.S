@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.S,v 1.4 2006/07/20 23:35:20 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.S,v 1.4.106.1 2014/08/20 00:02:40 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -92,7 +92,7 @@ ENTRY(xosargs_read)
 	sub	fp, ip, #4
 	mov	r3, r2
 	swi	OS_Args
-	ldmvsdb	fp, {fp, sp, pc}
+	ldmdbvs	fp, {fp, sp, pc}
 	teq	r3, #0
 	strne	r2, [r3]
 	mov	r0, #0
@@ -151,7 +151,7 @@ ENTRY(xosfind_open)
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
 	swi	XOS_Find
-	ldmvsdb	fp, {fp, sp, pc}
+	ldmdbvs	fp, {fp, sp, pc}
 	teq	r3, #0
 	strne	r0, [r3]
 	mov	r0, #0
@@ -226,7 +226,7 @@ ENTRY(xos_swi_number_from_string)
 	mov	r2, r1
 	mov	r1, r0
 	swi	XOS_SWINumberFromString
-	ldmvsdb	fp, {fp, sp, pc}
+	ldmdbvs	fp, {fp, sp, pc}
 	str	r0, [r2]
 	mov	r0, #0
 	ldmdb	fp, {fp, sp, pc}
@@ -311,7 +311,7 @@ ENTRY(xcache_control)
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
 	swi	XCache_Control
-	ldmvsdb	fp, {fp, sp, pc}
+	ldmdbvs	fp, {fp, sp, pc}
 	teq	r2, #0
 	strne	r0, [r2]
 	mov	r0, #0

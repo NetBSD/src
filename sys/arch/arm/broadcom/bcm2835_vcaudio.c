@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_vcaudio.c,v 1.2.4.2 2013/06/23 06:20:00 tls Exp $ */
+/* $NetBSD: bcm2835_vcaudio.c,v 1.2.4.3 2014/08/20 00:02:45 tls Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.2.4.2 2013/06/23 06:20:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.2.4.3 2014/08/20 00:02:45 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -78,7 +78,9 @@ struct vcaudio_softc {
 
 	kmutex_t			sc_lock;
 	kmutex_t			sc_intr_lock;
-	kcondvar_t			sc_cv;
+
+	kmutex_t			sc_msglock;
+	kcondvar_t			sc_msgcv;
 
 	struct audio_format		sc_format;
 	struct audio_encoding_set	*sc_encodings;
@@ -93,6 +95,7 @@ struct vcaudio_softc {
 	void				*sc_pend;
 	int				sc_pblksize;
 
+	bool				sc_msgdone;
 	int				sc_success;
 
 	VCHI_INSTANCE_T			sc_instance;
@@ -180,8 +183,10 @@ vcaudio_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
-	cv_init(&sc->sc_cv, "vcaudiocv");
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_msglock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->sc_msgcv, "vcaudiocv");
+	sc->sc_success = -1;
 	error = workqueue_create(&sc->sc_wq, "vcaudiowq", vcaudio_worker,
 	    sc, PRI_BIO, IPL_SCHED, WQ_MPSAFE);
 	if (error) {
@@ -330,15 +335,17 @@ vcaudio_service_callback(void *priv, const VCHI_CALLBACK_REASON_T reason,
 
 	switch (msg.type) {
 	case VC_AUDIO_MSG_TYPE_RESULT:
-		mutex_enter(&sc->sc_intr_lock);
+		mutex_enter(&sc->sc_msglock);
 		sc->sc_success = msg.u.result.success;
-		cv_broadcast(&sc->sc_cv);
-		mutex_exit(&sc->sc_intr_lock);
+		sc->sc_msgdone = true;
+		cv_broadcast(&sc->sc_msgcv);
+		mutex_exit(&sc->sc_msglock);
 		break;
 	case VC_AUDIO_MSG_TYPE_COMPLETE:
 		intr = msg.u.complete.callback;
 		intrarg = msg.u.complete.cookie;
 		if (intr && intrarg) {
+			mutex_enter(&sc->sc_intr_lock);
 			if (msg.u.complete.count > 0 && msg.u.complete.count <= sc->sc_pblksize) {
 				sc->sc_pbytes += msg.u.complete.count;
 			} else {
@@ -348,11 +355,10 @@ vcaudio_service_callback(void *priv, const VCHI_CALLBACK_REASON_T reason,
 			}
 			if (sc->sc_pbytes >= sc->sc_pblksize) {
 				sc->sc_pbytes -= sc->sc_pblksize;
-				mutex_enter(&sc->sc_intr_lock);
 				intr(intrarg);
-				mutex_exit(&sc->sc_intr_lock);
 				workqueue_enqueue(sc->sc_wq, (struct work *)&sc->sc_work, NULL);
 			}
+			mutex_exit(&sc->sc_intr_lock);
 		}
 		break;
 	default:
@@ -373,10 +379,11 @@ vcaudio_worker(struct work *wk, void *priv)
 	mutex_enter(&sc->sc_intr_lock);
 	intr = sc->sc_pint;
 	intrarg = sc->sc_pintarg;
-	mutex_exit(&sc->sc_intr_lock);
 
-	if (intr == NULL || intrarg == NULL)
+	if (intr == NULL || intrarg == NULL) {
+		mutex_exit(&sc->sc_intr_lock);
 		return;
+	}
 
 	vchi_service_use(sc->sc_service);
 
@@ -423,7 +430,6 @@ vcaudio_worker(struct work *wk, void *priv)
 		    VCHI_FLAGS_BLOCK_UNTIL_QUEUED, NULL);
 		if (error) {
 			printf("%s: failed to write (%d)\n", __func__, error);
-			mutex_exit(&sc->sc_intr_lock);
 			goto done;
 		}
 	} else {
@@ -442,7 +448,6 @@ vcaudio_worker(struct work *wk, void *priv)
 	    VCHI_FLAGS_BLOCK_UNTIL_QUEUED, NULL);
 	if (error) {
 		printf("%s: failed to write (%d)\n", __func__, error);
-		mutex_exit(&sc->sc_intr_lock);
 		goto done;
 	}
 
@@ -467,6 +472,7 @@ vcaudio_worker(struct work *wk, void *priv)
 		sc->sc_ppos = 0;
 
 done:
+	mutex_exit(&sc->sc_intr_lock);
 	vchi_service_release(sc->sc_service);
 }
 
@@ -475,24 +481,27 @@ vcaudio_msg_sync(struct vcaudio_softc *sc, VC_AUDIO_MSG_T *msg, size_t msglen)
 {
 	int error = 0;
 
-	mutex_enter(&sc->sc_intr_lock);
+	mutex_enter(&sc->sc_msglock);
+
 	sc->sc_success = -1;
+	sc->sc_msgdone = false;
+
 	error = vchi_msg_queue(sc->sc_service, msg, msglen,
 	    VCHI_FLAGS_BLOCK_UNTIL_QUEUED, NULL);
 	if (error) {
 		printf("%s: failed to queue message (%d)\n", __func__, error);
 		goto done;
 	}
-	while (sc->sc_success == -1) {
-		error = cv_wait_sig(&sc->sc_cv, &sc->sc_intr_lock);
+
+	while (!sc->sc_msgdone) {
+		error = cv_wait_sig(&sc->sc_msgcv, &sc->sc_msglock);
 		if (error)
 			break;
 	}
-	if (sc->sc_success > 0)
+	if (sc->sc_success != 0)
 		error = EIO;
-
 done:
-	mutex_exit(&sc->sc_intr_lock);
+	mutex_exit(&sc->sc_msglock);
 
 	return error;
 }

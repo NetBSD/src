@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.47 2011/10/04 11:01:13 roy Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.47.8.1 2014/08/20 00:02:17 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -99,6 +99,7 @@ struct __line {
 #endif
 #define	__ISDIRTY	0x01		/* Line is dirty. */
 #define __ISPASTEOL	0x02		/* Cursor is past end of line */
+#define __ISFORCED	0x04		/* Force update, no optimisation */
 	unsigned int flags;
 	unsigned int hash;		/* Hash value for the line. */
 	int *firstchp, *lastchp;	/* First and last chngd columns ptrs */
@@ -129,6 +130,7 @@ struct __window {		/* Window structure. */
 #define	__NOTIMEOUT	0x00020000	/* Wait indefinitely for func keys */
 #define __IDCHAR	0x00040000	/* insert/delete char sequences */
 #define __ISPAD		0x00080000	/* "window" is a pad */
+#define __ISDERWIN	0x00100000	/* "window" is derived from parent */
 	unsigned int flags;
 	int	delay;			/* delay for getch() */
 	attr_t	wattr;			/* Character attributes */
@@ -139,6 +141,9 @@ struct __window {		/* Window structure. */
 	int	pbegy, pbegx,
 		sbegy, sbegx,
 		smaxy, smaxx;		/* Saved prefresh() values */
+	int	dery, derx;		/* derived window coordinates
+					   - top left corner of source 
+					   relative to parent win */
 #ifdef HAVE_WCHAR
 	nschar_t *bnsp;			/* Background non-spacing char list */
 #endif /* HAVE_WCHAR */
@@ -193,6 +198,7 @@ struct __screen {
 	int      lx, ly;        /* loop parameters for refresh */
 	int	 COLS;		/* Columns on the screen. */
 	int	 LINES;		/* Lines on the screen. */
+	int	 TABSIZE;	/* Size of a tab. */
 	int	 COLORS;	/* Maximum colors on the screen */
 	int	 COLOR_PAIRS;	/* Maximum color pairs on the screen */
 	int	 My_term;	/* Use Def_term regardless. */
@@ -289,8 +295,10 @@ int     __cputchar_args(int, void *);
 void     _cursesi_free_keymap(keymap_t *);
 int      _cursesi_gettmode(SCREEN *);
 void     _cursesi_reset_acs(SCREEN *);
-int	_cursesi_addbyte(WINDOW *, __LINE **, int *, int *, int , attr_t);
-int	_cursesi_addwchar(WINDOW *, __LINE **, int *, int *, const cchar_t *);
+int	_cursesi_addbyte(WINDOW *, __LINE **, int *, int *, int , attr_t, int);
+int	_cursesi_addwchar(WINDOW *, __LINE **, int *, int *, const cchar_t *,
+			  int);
+int	_cursesi_waddbytes(WINDOW *, const char *, int, attr_t, int);
 #ifdef HAVE_WCHAR
 void     _cursesi_reset_wacs(SCREEN *);
 #endif /* HAVE_WCHAR */

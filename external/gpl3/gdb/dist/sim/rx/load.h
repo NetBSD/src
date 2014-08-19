@@ -1,6 +1,6 @@
 /* load.h --- interface to loading object files into the RX simulator.
 
-Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+Copyright (C) 2008-2014 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -20,8 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
 #include "bfd.h"
+#include "gdb/callback.h"
 
 extern int default_machine;
 
 void rx_set_mach (int mach);
-void rx_load (bfd *);
+void rx_load (bfd *, host_callback *callback);

@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.21 2012/02/02 02:47:59 pgoyette Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.21.6.1 2014/08/20 00:03:37 tls Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.21 2012/02/02 02:47:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.21.6.1 2014/08/20 00:03:37 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,12 @@ sdtemp_dev_table[] = {
 	"STmicroelectronics STTS424E" }, 
     { STTS_MANUFACTURER_ID,  STTS_424_DEVICE_ID,    STTS_424_MASK,   2,
 	"STmicroelectronics STTS424" }, 
+    { STTS_MANUFACTURER_ID,  STTS_2002_DEVICE_ID,    STTS_2002_MASK,   2,
+	"STmicroelectronics STTS2002" }, 
+    { STTS_MANUFACTURER_ID,  STTS_2004_DEVICE_ID,    STTS_2004_MASK,   2,
+	"STmicroelectronics STTS2002" }, 
+    { STTS_MANUFACTURER_ID,  STTS_3000_DEVICE_ID,    STTS_3000_MASK,   2,
+	"STmicroelectronics STTS3000" }, 
     { CAT_MANUFACTURER_ID,   CAT_34TS02_DEVICE_ID,  CAT_34TS02_MASK, 4,
 	"Catalyst CAT34TS02/CAT6095" },
     { IDT_MANUFACTURER_ID,   IDT_TS3000B3_DEVICE_ID, IDT_TS3000B3_MASK, 4,
@@ -262,6 +268,8 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sensor->flags |= ENVSYS_FMONLIMITS;
 	(void)strlcpy(sc->sc_sensor->desc, device_xname(self),
 	    sizeof(sc->sc_sensor->desc));
+	snprintf(sc->sc_sensor->desc, sizeof(sc->sc_sensor->desc),
+	    "DIMM %d temperature", sc->sc_address - SDTEMP_ADDR);
 
 	/* Now attach the sensor */
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, sc->sc_sensor)) {

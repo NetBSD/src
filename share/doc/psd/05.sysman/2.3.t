@@ -1,4 +1,4 @@
-.\"	$NetBSD: 2.3.t,v 1.4 2010/01/28 14:05:03 mbalmer Exp $
+.\"	$NetBSD: 2.3.t,v 1.4.12.1 2014/08/20 00:02:29 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,9 +29,9 @@
 .\"
 .\"	@(#)2.3.t	8.6 (Berkeley) 6/1/94
 .\"
-.Sh 2 "Interprocess communications
-.Sh 3 "Interprocess communication primitives
-.Sh 4 "Communication domains
+.Sh 2 31 "Interprocess communications
+.Sh 3 31 "Interprocess communication primitives
+.Sh 4 31 "Communication domains
 .PP
 The system provides access to an extensible set of 
 communication \fIdomains\fP.  A communication domain (or protocol family)
@@ -45,7 +45,7 @@ a check-off box on the list of your system capabilities,
 and the ``NS'' domain (PF_NS) for communication
 using the Xerox Network Systems protocols.
 Other domains can be added to the system.
-.Sh 4 "Socket types and protocols
+.Sh 4 31 "Socket types and protocols
 .PP
 Within a domain, communication takes place between communication endpoints
 known as \fIsockets\fP.  Each socket has the potential to exchange
@@ -106,7 +106,7 @@ For example, within the ``Internet'' domain, the SOCK_DGRAM type may be
 implemented by the UDP user datagram protocol, and the SOCK_STREAM
 type may be implemented by the TCP transmission control protocol, while
 no standard protocols to provide SOCK_RDM or SOCK_SEQPACKET sockets exist.
-.Sh 4 "Socket creation, naming and service establishment
+.Sh 4 32 "Socket creation, naming and service establishment
 .PP
 Sockets may be \fIconnected\fP or \fIunconnected\fP.  An unconnected
 socket descriptor is obtained by the
@@ -161,7 +161,7 @@ getpeername(s, name, namelen);
 int s; result struct sockaddr *name; result int *namelen;
 .DE
 Domains may support sockets with several names.
-.Sh 4 "Accepting connections
+.Sh 4 33 "Accepting connections
 .LP
 Once a binding is made to a connection-oriented socket,
 it is possible to
@@ -189,7 +189,7 @@ If no new connections are queued for acceptance,
 the call will wait for a connection unless
 non-blocking I/O has been enabled (see section
 .Xr 1.5.4 ).
-.Sh 4 "Making connections
+.Sh 4 33 "Making connections
 .LP
 An active connection to a named socket is made by the
 .Fn connect
@@ -237,7 +237,7 @@ result int pv[2];
 .DE
 creates a pair of SOCK_STREAM sockets in the PF_LOCAL domain,
 with pv[0] only writable and pv[1] only readable.
-.Sh 4 "Sending and receiving data
+.Sh 4 33 "Sending and receiving data
 .LP
 Messages may be sent from a socket by:
 .DS
@@ -294,7 +294,7 @@ MSG_WAITALL	/* wait for full request or error */
 MSG_DONTWAIT	/* this message should be nonblocking */
 .TE
 .DE
-.Sh 4 "Scatter/gather and exchanging access rights
+.Sh 4 34 "Scatter/gather and exchanging access rights
 .PP
 It is possible to scatter and gather data and to exchange access rights
 with messages.  When either of these operations is involved,
@@ -370,7 +370,7 @@ int s; struct msghdr *msg; int flags;
 msglen = recvmsg(s, msg, flags);
 result int msglen; int s; result struct msghdr *msg; int flags;
 .DE
-.Sh 4 "Using read and write with sockets
+.Sh 4 35 "Using read and write with sockets
 .PP
 The normal
 .Fn read
@@ -384,7 +384,7 @@ calls from or to a single area of memory and discarding any rights
 received.  A process may operate on a virtual circuit socket, a terminal
 or a file with blocking or non-blocking input/output
 operations without distinguishing the descriptor type.
-.Sh 4 "Shutting down halves of full-duplex connections
+.Sh 4 35 "Shutting down halves of full-duplex connections
 .PP
 A process that has a full-duplex socket such as a virtual circuit
 and no longer wishes to read from or write to this socket can
@@ -400,7 +400,7 @@ If the underlying protocol supports unidirectional or bidirectional shutdown,
 this indication will be passed to the peer.
 For example, a shutdown for writing might produce an end-of-file
 condition at the remote end.
-.Sh 4 "Socket and protocol options
+.Sh 4 35 "Socket and protocol options
 .PP
 Sockets, and their underlying communication protocols, may
 support \fIoptions\fP.  These options may be used to manipulate
@@ -429,32 +429,32 @@ by the socket facilities.  Other \fIlevel\fP values indicate
 a particular protocol which is to act on the option request;
 these values are normally interpreted as a ``protocol number''
 within the protocol family.
-.Sh 3 "PF_LOCAL domain
+.Sh 3 36 "PF_LOCAL domain
 .PP
 This section describes briefly the properties of the PF_LOCAL (``UNIX'')
 communications domain.
-.Sh 4 "Types of sockets
+.Sh 4 36 "Types of sockets
 .PP
 In the local domain,
 the SOCK_STREAM abstraction provides pipe-like
 facilities, while SOCK_DGRAM provides (usually)
 reliable message-style communications.
-.Sh 4 "Naming
+.Sh 4 36 "Naming
 .PP
 Socket names are strings and may appear in the filesystem
 name space.
-.Sh 4 "Access rights transmission
+.Sh 4 36 "Access rights transmission
 .PP
 The ability to pass descriptors with messages in this domain
 allows migration of service within the system and allows
 user processes to be used in building system facilities.
-.Sh 3 "INTERNET domain
+.Sh 3 36 "INTERNET domain
 .PP
 This section describes briefly how the Internet domain is
 mapped to the model described in this section.  More
 information will be found in the document describing the
 network implementation in 4.4BSD (SMM:18).
-.Sh 4 "Socket types and protocols
+.Sh 4 36 "Socket types and protocols
 .PP
 SOCK_STREAM is supported by the Internet TCP protocol;
 SOCK_DGRAM by the UDP protocol.
@@ -465,7 +465,7 @@ The SOCK_SEQPACKET
 has no direct Internet family analogue; a protocol
 based on one from the XEROX NS family and layered on
 top of IP could be implemented to fill this gap.
-.Sh 4 "Socket naming
+.Sh 4 36 "Socket naming
 .PP
 Sockets in the Internet domain have names composed of a 32-bit
 Internet address and a 16-bit port number.
@@ -476,10 +476,10 @@ the network part is variable in size and is frequency encoded.
 The host part may optionally be interpreted as a subnet field
 plus the host on the subnet; this is enabled by setting a network address
 mask at boot time.
-.Sh 4 "Access rights transmission
+.Sh 4 36 "Access rights transmission
 .PP
 No access rights transmission facilities are provided in the Internet domain.
-.Sh 4 "Raw access
+.Sh 4 36 "Raw access
 .PP
 The Internet domain allows the super-user access to the raw facilities
 of IP.

@@ -1,6 +1,6 @@
 /* Blackfin NAND Flash Memory Controller (NFC) model
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -20,9 +20,6 @@
 
 #ifndef DV_BFIN_NFC_H
 #define DV_BFIN_NFC_H
-
-/* XXX: This should be pushed into the model data.  */
-#define BFIN_MMR_NFC_SIZE	0x50
 
 /* NFC_STAT masks.  */
 #define NBUSY		(1 << 0)

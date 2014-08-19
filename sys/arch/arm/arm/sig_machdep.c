@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.43.2.2 2013/06/23 06:19:59 tls Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.43.2.3 2014/08/20 00:02:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,9 +44,10 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.43.2.2 2013/06/23 06:19:59 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.43.2.3 2014/08/20 00:02:45 tls Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
+#include <sys/cpu.h>
 #include <sys/proc.h>
 #include <sys/signal.h>
 #include <sys/syscallargs.h>
@@ -54,10 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.43.2.2 2013/06/23 06:19:59 tls Exp
 #include <sys/ras.h>
 #include <sys/ucontext.h>
 
-#include <arm/armreg.h>
+#include <arm/locore.h>
 
-#include <machine/cpu.h>
-#include <machine/frame.h>
 #include <machine/pcb.h>
 #ifndef acorn26
 #include <arm/cpufunc.h>

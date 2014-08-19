@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.11.2.1 2013/06/23 06:20:10 tls Exp $
+# $NetBSD: GENERIC64,v 1.11.2.2 2014/08/20 00:03:18 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.11.2.1 $"
+#ident		"GENERIC-$Revision: 1.11.2.2 $"
 
 maxusers	64
 
@@ -107,7 +107,6 @@ options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
@@ -125,6 +124,10 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	ALTQ_RED	# Random Early Detection
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 # NetBSD backwards compatibility
 #options 	COMPAT_10	# NetBSD 1.0, (needed for X on 386?)

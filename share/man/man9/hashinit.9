@@ -1,4 +1,4 @@
-.\"     $NetBSD: hashinit.9,v 1.8 2011/04/28 17:08:29 wiz Exp $
+.\"     $NetBSD: hashinit.9,v 1.8.10.1 2014/08/20 00:02:37 tls Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -115,13 +115,13 @@ as appropriate.
 returns
 .Dv NULL
 on failure.
+.Sh CODE REFERENCES
+These functions are implemented in
+.Pa sys/kern/subr_hash.c .
 .Sh SEE ALSO
 .Xr queue 3 ,
 .Xr hash 9 ,
 .Xr malloc 9
-.Sh CODE REFERENCES
-These functions are implemented in
-.Pa sys/kern/subr_hash.c .
 .Sh HISTORY
 A
 .Fn hashinit

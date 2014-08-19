@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_norm.c,v 1.26 2011/11/28 08:05:05 tls Exp $	*/
+/*	$NetBSD: pf_norm.c,v 1.26.8.1 2014/08/20 00:03:52 tls Exp $	*/
 /*	$OpenBSD: pf_norm.c,v 1.109 2007/05/28 17:16:39 henning Exp $ */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_norm.c,v 1.26 2011/11/28 08:05:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_norm.c,v 1.26.8.1 2014/08/20 00:03:52 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -867,7 +867,6 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
 	u_int16_t		 fragoff = (ntohs(h->ip_off) & IP_OFFMASK) << 3;
 	u_int16_t		 frmax;
 	int			 ip_len;
-	int			 ip_off;
 
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_SCRUB].active.ptr);
 	while (r != NULL) {
@@ -928,7 +927,6 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
 	}
 
 	ip_len = ntohs(h->ip_len) - hlen;
-	ip_off = (ntohs(h->ip_off) & IP_OFFMASK) << 3;
 
 	/* All fragments are 8 byte aligned */
 	if (mff && (ip_len & 0x7)) {
@@ -1381,7 +1379,7 @@ pf_normalize_tcp(int dir, struct pfi_kif *kif, struct mbuf *m,
 	return (PF_PASS);
 
  tcp_drop:
-	REASON_SET(&reason, PFRES_NORM);
+	REASON_SET_NOPTR(&reason, PFRES_NORM);
 	if (rm != NULL && r->log)
 		PFLOG_PACKET(kif, h, m, AF_INET, dir, reason, r, NULL, NULL, pd);
 	return (PF_DROP);

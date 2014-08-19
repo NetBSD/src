@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.112.6.1 2013/06/23 06:20:12 tls Exp $	*/
+/*	$NetBSD: psycho.c,v 1.112.6.2 2014/08/20 00:03:25 tls Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.112.6.1 2013/06/23 06:20:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.112.6.2 2014/08/20 00:03:25 tls Exp $");
 
 #include "opt_ddb.h"
 
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.112.6.1 2013/06/23 06:20:12 tls Exp $")
 #define PDB_INTR	0x04
 #define PDB_INTMAP	0x08
 #define PDB_CONF	0x10
+#define PDB_STICK	0x20
 int psycho_debug = 0x0;
 #define DPRINTF(l, s)   do { if (psycho_debug & l) printf s; } while (0)
 #else
@@ -108,6 +109,7 @@ static pci_chipset_tag_t psycho_alloc_chipset(struct psycho_pbm *, int,
 static struct extent *psycho_alloc_extent(struct psycho_pbm *, int, int,
 	const char *);
 static void psycho_get_bus_range(int, int *);
+static void psycho_fixup_bus_range(int, int *);
 static void psycho_get_ranges(int, struct psycho_ranges **, int *);
 static void psycho_set_intr(struct psycho_softc *, int, void *, uint64_t *,
 	uint64_t *);
@@ -220,6 +222,8 @@ struct psycho_names {
 	{ NULL, 0 }
 };
 
+struct psycho_softc *psycho0 = NULL;
+
 static	int
 psycho_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -299,7 +303,6 @@ psycho_attach(device_t parent, device_t self, void *aux)
 	int psycho_br[2], n, i;
 	bus_space_handle_t pci_ctl;
 	char *model = prom_getpropstring(ma->ma_node, "model");
-	extern char machine_model[];
 
 	aprint_normal("\n");
 
@@ -307,7 +310,11 @@ psycho_attach(device_t parent, device_t self, void *aux)
 	sc->sc_node = ma->ma_node;
 	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_dmatag = ma->ma_dmatag;
+	sc->sc_last_stick = 0;
 
+	if (psycho0 == NULL)
+		psycho0 = sc;
+	DPRINTF(PDB_STICK, ("init psycho0 %lx\n", (long)sc));
 	/*
 	 * Identify the device.
 	 */
@@ -375,6 +382,7 @@ found:
 				ma->ma_address[0], &sc->sc_bh);
 			sc->sc_regs = (struct psychoreg *)
 				bus_space_vaddr(sc->sc_bustag, sc->sc_bh);
+
 			bus_space_subregion(sc->sc_bustag, sc->sc_bh,
 				offsetof(struct psychoreg,  psy_pcictl),
 				sizeof(struct pci_ctl), &pci_ctl);
@@ -396,7 +404,6 @@ found:
 			panic("psycho_attach: %d not enough registers",
 				ma->ma_nreg);
 	}
-
 
 	csr = bus_space_read_8(sc->sc_bustag, sc->sc_bh,
 		offsetof(struct psychoreg, psy_csr));
@@ -467,6 +474,10 @@ found:
 
 	pba.pba_bus = psycho_br[0];
 	pba.pba_bridgetag = NULL;
+
+	/* Fix up invalid 0x00-0xff bus-range, as found on SPARCle */
+	if (psycho_br[0] == 0 && psycho_br[1] == 0xff)
+		psycho_fixup_bus_range(sc->sc_node, psycho_br);
 
 	aprint_normal("bus range %u to %u", psycho_br[0], psycho_br[1]);
 	aprint_normal("; PCI bus %d", psycho_br[0]);
@@ -856,6 +867,44 @@ psycho_get_bus_range(int node, int *brp)
 		panic("broken psycho bus-range");
 	DPRINTF(PDB_PROM, ("psycho debug: got `bus-range' for node %08x: %u - %u\n",
 			   node, brp[0], brp[1]));
+}
+
+static void
+psycho_fixup_bus_range(int node0, int *brp0)
+{
+	int node;
+	int len, busrange[2], *brp;
+
+	DPRINTF(PDB_PROM,
+	    ("psycho debug: fixing up `bus-range' for node %08x: %u - %u\n",
+	    node0, brp0[0], brp0[1]));
+
+	/*
+	 * Check all nodes under this one and increase the bus range to
+	 * match.  Recurse through PCI-PCI bridges.  Cardbus bridges are
+	 * fixed up in pccbb_attach_hook().  Assumes that "bus-range" for
+	 * PCI-PCI bridges apart from this one is correct.
+	 */
+	brp0[1] = brp0[0];
+	node = prom_firstchild(node0);
+	for (node = ((node)); node; node = prom_nextsibling(node)) {
+		len = 2;
+		brp = busrange;
+		if (prom_getprop(node, "bus-range", sizeof(*brp),
+		    &len, &brp) != 0)
+			break;
+		if (len != 2)
+			break;
+		psycho_fixup_bus_range(node, busrange);
+		if (brp0[0] > busrange[0] && busrange[0] >= 0)
+			brp0[0] = busrange[0];
+		if (brp0[1] < busrange[1] && busrange[1] < 256)
+			brp0[1] = busrange[1];
+	}
+
+	DPRINTF(PDB_PROM,
+	    ("psycho debug: fixed up `bus-range' for node %08x: %u - %u\n",
+	    node0, brp[0], brp[1]));
 }
 
 static void
@@ -1509,4 +1558,76 @@ psycho_sabre_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		    offsetof(struct psychoreg, pci_dma_write_sync));
 	}
 	bus_dmamap_sync(t->_parent, map, offset, len, ops);
+}
+
+/* US-IIe STICK support */
+
+uint64_t
+psycho_getstick(void)
+{
+	uint64_t stick;
+
+	stick = bus_space_read_8(psycho0->sc_bustag, psycho0->sc_bh,
+	    STICK_CNT_LOW) |
+	    (bus_space_read_8(psycho0->sc_bustag, psycho0->sc_bh,
+	    STICK_CNT_HIGH) & 0x7fffffff) << 32;
+	return stick;
+}
+
+uint32_t
+psycho_getstick32(void)
+{
+
+	return bus_space_read_8(psycho0->sc_bustag, psycho0->sc_bh,
+	    STICK_CNT_LOW);
+}
+
+void
+psycho_setstick(long cnt)
+{
+
+	/*
+	 * looks like we can't actually write the STICK counter, so instead we
+	 * prepare sc_last_stick for the coming interrupt setup
+	 */
+#if 0
+	bus_space_write_8(psycho0->sc_bustag, psycho0->sc_bh,
+	    STICK_CNT_HIGH, (cnt >> 32));
+	bus_space_write_8(psycho0->sc_bustag, psycho0->sc_bh,
+	    STICK_CNT_LOW, (uint32_t)(cnt & 0xffffffff));
+#endif
+
+	if (cnt == 0) {
+		bus_space_write_8(psycho0->sc_bustag, psycho0->sc_bh,
+		    STICK_CMP_HIGH, 0);
+		bus_space_write_8(psycho0->sc_bustag, psycho0->sc_bh,
+		    STICK_CMP_LOW, 0);
+		psycho0->sc_last_stick = 0;
+	}
+
+	psycho0->sc_last_stick = psycho_getstick();
+	DPRINTF(PDB_STICK, ("stick: %ld\n", psycho0->sc_last_stick));
+}
+
+void
+psycho_nextstick(long diff)
+{
+	uint64_t cmp, now;
+
+	/*
+	 * there is no way we'll ever overflow
+	 * the counter is 63 bits wide, at 12MHz that's >24000 years
+	 */
+	now = psycho_getstick() + 1000;
+	cmp = psycho0->sc_last_stick;
+	
+	while (cmp < now)
+		cmp += diff;
+	
+	bus_space_write_8(psycho0->sc_bustag, psycho0->sc_bh,
+	    STICK_CMP_HIGH, (cmp >> 32) & 0x7fffffff);
+	bus_space_write_8(psycho0->sc_bustag, psycho0->sc_bh,
+	    STICK_CMP_LOW, (cmp & 0xffffffff));
+	
+	psycho0->sc_last_stick = cmp;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.154.2.2 2013/06/23 06:20:18 tls Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.154.2.3 2014/08/20 00:03:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.154.2.2 2013/06/23 06:20:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.154.2.3 2014/08/20 00:03:42 tls Exp $");
 
 
 
@@ -994,6 +994,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	bus_size_t tx_dmamap_size;
 	int ntxsegs_alloc;
 	cfdata_t cf = device_cfdata(self);
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	callout_init(&sc->sc_tick_ch, 0);
 
@@ -1100,7 +1101,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "unable to map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, sipcom_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");
@@ -1289,7 +1290,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_prev.is_vlan = VLAN_ATTACHED(&(sc)->sc_ethercom);
 	sc->sc_prev.if_capenable = ifp->if_capenable;
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	/*
 	 * The number of bytes that must be available in

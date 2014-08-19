@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.46 2012/03/13 18:40:55 elad Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.46.2.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.46 2012/03/13 18:40:55 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.46.2.1 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -152,11 +152,6 @@ sysctl_vfs_setup(void)
 {
 	extern int vfs_magiclinks;
 
-	sysctl_createv(&vfs_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
 	sysctl_createv(&vfs_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "generic",

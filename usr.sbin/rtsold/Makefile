@@ -1,5 +1,6 @@
-# $NetBSD: Makefile,v 1.14 2009/04/22 15:23:08 lukem Exp $
+# $NetBSD: Makefile,v 1.14.12.1 2014/08/20 00:05:13 tls Exp $
 
+WARNS?=6
 USE_FORT?= yes	# network client (local server)
 
 PROG=	rtsold

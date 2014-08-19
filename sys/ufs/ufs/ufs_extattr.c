@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.40.2.2 2013/06/23 06:18:40 tls Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.40.2.3 2014/08/20 00:04:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.40.2.2 2013/06/23 06:18:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.40.2.3 2014/08/20 00:04:45 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -437,7 +437,7 @@ static int
 ufs_extattr_lookup(struct vnode *start_dvp, int lockparent, const char *dirname,
     struct vnode **vp, struct lwp *l)
 {
-	struct vop_lookup_args vargs;
+	struct vop_lookup_v2_args vargs;
 	struct componentname cnp;
 	struct vnode *target_vp;
 	char *pnbuf;
@@ -479,8 +479,15 @@ ufs_extattr_lookup(struct vnode *start_dvp, int lockparent, const char *dirname,
 		panic("ufs_extattr_lookup: target_vp == start_dvp");
 #endif
 
-	if ((target_vp != start_dvp) && (lockparent == 0))
-		 VOP_UNLOCK(start_dvp);
+	if (target_vp != start_dvp) {
+		error = vn_lock(target_vp, LK_EXCLUSIVE);
+		if (lockparent == 0)
+			VOP_UNLOCK(start_dvp);
+		if (error) {
+			vrele(target_vp);
+			return error;
+		}
+	}
 
 	KASSERT(VOP_ISLOCKED(target_vp) == LK_EXCLUSIVE);
 	*vp = target_vp;

@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.53.2.2 2013/06/23 06:20:04 tls Exp $
+#	$NetBSD: TWINTAIL,v 1.53.2.3 2014/08/20 00:02:53 tls Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -66,11 +66,9 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
@@ -83,6 +81,7 @@ options 	NFS_BOOT_DHCP
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
@@ -125,7 +124,7 @@ options 	SCSIVERBOSE	# Verbose SCSI errors
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
@@ -135,7 +134,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 #options  	DEBUG_KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
 #makeoptions	COPTS="-O2"
-options 	SYMTAB_SPACE=620000
+options 	SYMTAB_SPACE=640000
 #options 	AUDIO_DEBUG=2
 
 config		netbsd		root on ? type ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: omron_disklabel.h,v 1.3.6.2 2013/02/25 00:28:49 tls Exp $	*/
+/*	$NetBSD: omron_disklabel.h,v 1.3.6.3 2014/08/20 00:03:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -74,26 +74,26 @@
 /*    by A.Fujita, JAN-30-1992   */
 
 
-#define DKL_MAGIC	0xDABE 			/* Disk label Magic number */
-#define NLPART		8			/* # of logical partition */
+#define DKL_MAGIC	0xDABE		/* Disk label Magic number */
+#define NLPART		8		/* # of logical partition */
 
 struct scd_dk_label {
-	char	dkl_asciilabel[128];		/* for compatibility */
-	char	dkl_pad[512-(128+8*8+11*2+4)];
-	uint16_t	dkl_badchk;		/* checksum of bad track */
-	uint32_t	dkl_maxblk;		/* # of total logical block */
-	uint16_t	dkl_dtype;		/* disk drive type */
-	uint16_t	dkl_ndisk;		/* # of disk drives */
-	uint16_t	dkl_ncyl;		/* # of data cylinders */
-	uint16_t	dkl_acyl;		/* # of alternate cylinders */
-	uint16_t	dkl_nhead;		/* # of heads in this partition */
-	uint16_t	dkl_nsect;		/* # of 512 byte sectors per track */
-	uint16_t	dkl_bhead;		/* identifies proper label locations */
-	uint16_t	dkl_ppart;		/* physical partition # */
-	struct dk_map {				/* logical partitions */
-		int32_t dkl_blkno;		/* starting block */
-		int32_t dkl_nblk;		/* number of blocks */
+	char	dkl_asciilabel[128];	/* for compatibility */
+	char	dkl_pad[512 - (128 + (8 * 8) + (11 * 2) + 4)];
+	uint16_t dkl_badchk;		/* checksum of bad track */
+	uint32_t dkl_maxblk;		/* # of total logical block */
+	uint16_t dkl_dtype;		/* disk drive type */
+	uint16_t dkl_ndisk;		/* # of disk drives */
+	uint16_t dkl_ncyl;		/* # of data cylinders */
+	uint16_t dkl_acyl;		/* # of alternate cylinders */
+	uint16_t dkl_nhead;		/* # of heads in this partition */
+	uint16_t dkl_nsect;		/* # of 512 byte sectors per track */
+	uint16_t dkl_bhead;		/* identifies proper label locations */
+	uint16_t dkl_ppart;		/* physical partition # */
+	struct dk_map {			/* logical partitions */
+		int32_t dkl_blkno;	/* starting block */
+		int32_t dkl_nblk;	/* number of blocks */
 	} dkl_map[NLPART];
-	uint16_t	dkl_magic;		/* identifies this label format */
-	uint16_t	dkl_cksum;		/* xor checksum of sector */
+	uint16_t dkl_magic;		/* identifies this label format */
+	uint16_t dkl_cksum;		/* xor checksum of sector */
 };

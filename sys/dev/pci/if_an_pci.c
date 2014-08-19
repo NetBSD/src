@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.33.6.1 2012/11/20 03:02:15 tls Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.33.6.2 2014/08/20 00:03:42 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.33.6.1 2012/11/20 03:02:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.33.6.2 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,6 +123,7 @@ an_pci_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	bus_size_t iosize;
 	u_int32_t csr;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	psc->sc_pct = pa->pa_pc;
@@ -147,7 +148,7 @@ an_pci_attach(device_t parent, device_t self, void *aux)
         	aprint_error_dev(self, "unable to map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	psc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET, an_intr, sc);
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt");

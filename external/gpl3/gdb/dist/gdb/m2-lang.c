@@ -1,7 +1,6 @@
 /* Modula 2 language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1998, 2000, 2002, 2003, 2004,
-   2005, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1992-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,6 +23,7 @@
 #include "expression.h"
 #include "parser-defs.h"
 #include "language.h"
+#include "varobj.h"
 #include "m2-lang.h"
 #include "c-lang.h"
 #include "valprint.h"
@@ -146,10 +146,7 @@ m2_printstr (struct ui_file *stream, struct type *type, const gdb_byte *string,
 	{
 	  if (in_quotes)
 	    {
-	      if (options->inspect_it)
-		fputs_filtered ("\\\", ", stream);
-	      else
-		fputs_filtered ("\", ", stream);
+	      fputs_filtered ("\", ", stream);
 	      in_quotes = 0;
 	    }
 	  m2_printchar (string[i], type, stream);
@@ -162,10 +159,7 @@ m2_printstr (struct ui_file *stream, struct type *type, const gdb_byte *string,
 	{
 	  if (!in_quotes)
 	    {
-	      if (options->inspect_it)
-		fputs_filtered ("\\\"", stream);
-	      else
-		fputs_filtered ("\"", stream);
+	      fputs_filtered ("\"", stream);
 	      in_quotes = 1;
 	    }
 	  LA_EMIT_CHAR (string[i], type, stream, '"');
@@ -175,12 +169,7 @@ m2_printstr (struct ui_file *stream, struct type *type, const gdb_byte *string,
 
   /* Terminate the quotes if necessary.  */
   if (in_quotes)
-    {
-      if (options->inspect_it)
-	fputs_filtered ("\\\"", stream);
-      else
-	fputs_filtered ("\"", stream);
-    }
+    fputs_filtered ("\"", stream);
 
   if (force_ellipses || i < length)
     fputs_filtered ("...", stream);
@@ -368,9 +357,9 @@ const struct exp_descriptor exp_descriptor_modula2 =
 const struct language_defn m2_language_defn =
 {
   "modula-2",
+  "Modula-2",
   language_m2,
   range_check_on,
-  type_check_on,
   case_sensitive_on,
   array_row_major,
   macro_expansion_no,
@@ -385,6 +374,7 @@ const struct language_defn m2_language_defn =
   m2_print_typedef,		/* Print a typedef using appropriate syntax */
   m2_val_print,			/* Print a value using appropriate syntax */
   c_value_print,		/* Print a top-level value */
+  default_read_var_value,	/* la_read_var_value */
   NULL,				/* Language specific skip_trampoline */
   NULL,		                /* name_of_this */
   basic_lookup_symbol_nonlocal,	/* lookup_symbol_nonlocal */
@@ -401,6 +391,9 @@ const struct language_defn m2_language_defn =
   default_print_array_index,
   default_pass_by_reference,
   default_get_string,
+  NULL,				/* la_get_symbol_name_cmp */
+  iterate_over_symbols,
+  &default_varobj_ops,
   LANG_MAGIC
 };
 

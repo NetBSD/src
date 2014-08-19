@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.27 2012/07/31 16:38:37 martin Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.27.2.1 2014/08/20 00:03:24 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.27 2012/07/31 16:38:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.27.2.1 2014/08/20 00:03:24 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -148,10 +148,8 @@ timerattach_msiiep(device_t parent, device_t self, void *aux)
 	 */
 	for (timerblurb = 1; ; ++timerblurb) {
 		int t;
-		volatile uint32_t junk;
 
-		/* we need 'junk' to keep the read from getting eliminated */
-		junk = mspcic_read_4(pcic_pclr); /* clear the limit bit */
+		(void)mspcic_read_4(pcic_pclr); /* clear the limit bit */
 		mspcic_write_4(pcic_pclr, 0); /* reset to 1, free run */
 		delay(100);
 		t = mspcic_read_4(pcic_pccr);
@@ -237,9 +235,7 @@ timer_get_timecount(struct timecounter *tc)
 static int
 clockintr_msiiep(void *cap)
 {
-	volatile uint32_t junk;
-
-	junk = mspcic_read_4(pcic_sclr); /* clear the interrupt */
+	(void)mspcic_read_4(pcic_sclr); /* clear the interrupt */
 
 	/*
 	 * XXX this needs to be fixed in a more general way
@@ -268,9 +264,8 @@ statintr_msiiep(void *cap)
 {
 	struct clockframe *frame = cap;
 	u_long newint;
-	volatile uint32_t junk;
 
-	junk = mspcic_read_4(pcic_pclr); /* clear the interrupt */
+	(void)mspcic_read_4(pcic_pclr); /* clear the interrupt */
 
 	statclock(frame);
 

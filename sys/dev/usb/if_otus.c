@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.12.2.3 2013/06/23 06:20:22 tls Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.12.2.4 2014/08/20 00:03:51 tls Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.12.2.3 2013/06/23 06:20:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.12.2.4 2014/08/20 00:03:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -889,14 +889,15 @@ Static void
 otus_get_chanlist(struct otus_softc *sc)
 {
 	struct ieee80211com *ic;
-	uint16_t domain;
 	uint8_t chan;
 	int i;
 
+#ifdef OTUS_DEBUG
 	/* XXX regulatory domain. */
-	domain = le16toh(sc->sc_eeprom.baseEepHeader.regDmn[0]);
+	uint16_t domain = le16toh(sc->sc_eeprom.baseEepHeader.regDmn[0]);
 
 	DPRINTFN(DBG_FN|DBG_INIT, sc, "regdomain=0x%04x\n", domain);
+#endif
 
 	ic = &sc->sc_ic;
 	if (sc->sc_eeprom.baseEepHeader.opCapFlags & AR5416_OPFLAGS_11G) {
@@ -1335,19 +1336,20 @@ otus_newstate_cb(struct otus_softc *sc, void *arg)
 	struct otus_cmd_newstate *cmd;
 	struct ieee80211com *ic;
 	struct ieee80211_node *ni;
-	enum ieee80211_state ostate;
 	enum ieee80211_state nstate;
 	int s;
 
 	cmd = arg;
 	ic = &sc->sc_ic;
 	ni = ic->ic_bss;
-	ostate = ic->ic_state;
 	nstate = cmd->state;
 
+#ifdef OTUS_DEBUG
+	enum ieee80211_state ostate = ostate = ic->ic_state;
 	DPRINTFN(DBG_FN|DBG_STM, sc, "%s(%d)->%s(%d)\n",
 	    ieee80211_state_name[ostate], ostate,
 	    ieee80211_state_name[nstate], nstate);
+#endif
 
 	s = splnet();
 
@@ -2195,7 +2197,6 @@ otus_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct otus_softc *sc;
 	struct ieee80211com *ic;
-	struct ifaddr *ifa;
 	int s, error = 0;
 
 	sc = ifp->if_softc;
@@ -2208,9 +2209,9 @@ otus_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifa = (void *)data;
 		ifp->if_flags |= IFF_UP;
 #ifdef INET
+		struct ifaddr *ifa = data;
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&ic->ic_ac, ifa);
 #endif
@@ -2788,21 +2789,23 @@ otus_get_delta_slope(uint32_t coeff, uint32_t *exponent, uint32_t *mantissa)
 Static int
 otus_set_chan(struct otus_softc *sc, struct ieee80211_channel *c, int assoc)
 {
-	struct ieee80211com *ic;
 	struct ar_cmd_frequency cmd;
 	struct ar_rsp_frequency rsp;
 	const uint32_t *vals;
 	uint32_t coeff, exp, man, tmp;
 	uint8_t code;
-	int error, chan, i;
+	int error, i;
 
 	DPRINTFN(DBG_FN, sc, "\n");
 
-	ic = &sc->sc_ic;
-	chan = ieee80211_chan2ieee(ic, c);
+
+#ifdef OTUS_DEBUG
+	struct ieee80211com *ic = &sc->sc_ic;
+	int chan = ieee80211_chan2ieee(ic, c);
 
 	DPRINTFN(DBG_CHAN, sc, "setting channel %d (%dMHz)\n",
 	    chan, c->ic_freq);
+#endif
 
 	tmp = IEEE80211_IS_CHAN_2GHZ(c) ? 0x105 : 0x104;
 	otus_write(sc, AR_MAC_REG_DYNAMIC_SIFS_ACK, tmp);

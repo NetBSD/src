@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.42.22.1 2012/11/20 03:02:40 tls Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.42.22.2 2014/08/20 00:04:27 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.42.22.1 2012/11/20 03:02:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.42.22.2 2014/08/20 00:04:27 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,11 +72,12 @@ VFS_PROTOS(ptyfs);
 
 static struct sysctllog *ptyfs_sysctl_log;
 
-static int ptyfs__allocvp(struct ptm_pty *, struct lwp *, struct vnode **,
+static int ptyfs__allocvp(struct mount *, struct lwp *, struct vnode **,
     dev_t, char);
-static int ptyfs__makename(struct ptm_pty *, struct lwp *, char *, size_t,
+static int ptyfs__makename(struct mount *, struct lwp *, char *, size_t,
     dev_t, char);
-static void ptyfs__getvattr(struct ptm_pty *, struct lwp *, struct vattr *);
+static void ptyfs__getvattr(struct mount *, struct lwp *, struct vattr *);
+static int ptyfs__getmp(struct lwp *, struct mount **);
 
 /*
  * ptm glue: When we mount, we make ptm point to us.
@@ -84,12 +85,36 @@ static void ptyfs__getvattr(struct ptm_pty *, struct lwp *, struct vattr *);
 struct ptm_pty *ptyfs_save_ptm;
 static int ptyfs_count;
 
+static TAILQ_HEAD(, ptyfsmount) ptyfs_head;
+
 struct ptm_pty ptm_ptyfspty = {
 	ptyfs__allocvp,
 	ptyfs__makename,
 	ptyfs__getvattr,
-	NULL
+	ptyfs__getmp,
 };
+
+static int
+ptyfs__getmp(struct lwp *l, struct mount **mpp)
+{
+ 	struct cwdinfo *cwdi = l->l_proc->p_cwdi;
+ 	struct mount *mp;
+	struct ptyfsmount *pmnt;
+ 
+	TAILQ_FOREACH(pmnt, &ptyfs_head, pmnt_le) {
+		mp = pmnt->pmnt_mp;
+		if (cwdi->cwdi_rdir == NULL)
+			goto ok;
+
+		if (vn_isunder(mp->mnt_vnodecovered, cwdi->cwdi_rdir, l))
+			goto ok;
+	}
+ 	*mpp = NULL;
+ 	return EOPNOTSUPP;
+ok:
+	*mpp = mp;
+	return 0;
+}
 
 static const char *
 ptyfs__getpath(struct lwp *l, const struct mount *mp)
@@ -109,25 +134,27 @@ ptyfs__getpath(struct lwp *l, const struct mount *mp)
 	buf = malloc(MAXBUF, M_TEMP, M_WAITOK);
 	bp = buf + MAXBUF;
 	*--bp = '\0';
-	error = getcwd_common(cwdi->cwdi_rdir, rootvnode, &bp,
+	error = getcwd_common(mp->mnt_vnodecovered, cwdi->cwdi_rdir, &bp,
 	    buf, MAXBUF / 2, 0, l);
-	if (error)	/* XXX */
+	if (error) {	/* Mount point is out of rdir */
+		rv = NULL;
 		goto out;
+	}
 
 	len = strlen(bp);
 	if (len < sizeof(mp->mnt_stat.f_mntonname))	/* XXX */
-		rv += len;
+		rv += strlen(rv) - len;
 out:
 	free(buf, M_TEMP);
 	return rv;
 }
 
 static int
-ptyfs__makename(struct ptm_pty *pt, struct lwp *l, char *tbuf, size_t bufsiz,
+ptyfs__makename(struct mount *mp, struct lwp *l, char *tbuf, size_t bufsiz,
     dev_t dev, char ms)
 {
-	struct mount *mp = pt->arg;
 	size_t len;
+	const char *np;
 
 	switch (ms) {
 	case 'p':
@@ -135,8 +162,23 @@ ptyfs__makename(struct ptm_pty *pt, struct lwp *l, char *tbuf, size_t bufsiz,
 		len = snprintf(tbuf, bufsiz, "/dev/null");
 		break;
 	case 't':
-		len = snprintf(tbuf, bufsiz, "%s/%llu", ptyfs__getpath(l, mp),
-		    (unsigned long long)minor(dev));
+		/*
+		 * We support traditional ptys, so we can get here,
+		 * if pty had been opened before PTYFS was mounted,
+		 * or was opened through /dev/ptyXX devices.
+		 * Return it only outside chroot for more security .
+		 */
+		if (l->l_proc->p_cwdi->cwdi_rdir == NULL
+		    && ptyfs_save_ptm != NULL 
+		    && ptyfs_used_get(PTYFSptc, minor(dev), mp, 0) == NULL)
+			return (*ptyfs_save_ptm->makename)(mp, l,
+			    tbuf, bufsiz, dev, ms);
+
+		np = ptyfs__getpath(l, mp);
+		if (np == NULL)
+			return EOPNOTSUPP;
+		len = snprintf(tbuf, bufsiz, "%s/%llu", np,
+			(unsigned long long)minor(dev));
 		break;
 	default:
 		return EINVAL;
@@ -148,10 +190,9 @@ ptyfs__makename(struct ptm_pty *pt, struct lwp *l, char *tbuf, size_t bufsiz,
 
 static int
 /*ARGSUSED*/
-ptyfs__allocvp(struct ptm_pty *pt, struct lwp *l, struct vnode **vpp,
+ptyfs__allocvp(struct mount *mp, struct lwp *l, struct vnode **vpp,
     dev_t dev, char ms)
 {
-	struct mount *mp = pt->arg;
 	ptyfstype type;
 
 	switch (ms) {
@@ -170,9 +211,8 @@ ptyfs__allocvp(struct ptm_pty *pt, struct lwp *l, struct vnode **vpp,
 
 
 static void
-ptyfs__getvattr(struct ptm_pty *pt, struct lwp *l, struct vattr *vattr)
+ptyfs__getvattr(struct mount *mp, struct lwp *l, struct vattr *vattr)
 {
-	struct mount *mp = pt->arg;
 	struct ptyfsmount *pmnt = VFSTOPTY(mp);
 	vattr_null(vattr);
 	/* get real uid */
@@ -186,6 +226,7 @@ void
 ptyfs_init(void)
 {
 
+	TAILQ_INIT(&ptyfs_head);
 	malloc_type_attach(M_PTYFSMNT);
 	malloc_type_attach(M_PTYFSTMP);
 	ptyfs_hashinit();
@@ -218,6 +259,8 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct ptyfsmount *pmnt;
 	struct ptyfs_args *args = data;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len != sizeof *args && *data_len != OSIZE)
 		return EINVAL;
 
@@ -271,12 +314,12 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		return error;
 	}
 
-	/* Point pty access to us */
-	if (ptyfs_count == 0) {
-		ptm_ptyfspty.arg = mp;
+	pmnt->pmnt_mp = mp;
+	TAILQ_INSERT_TAIL(&ptyfs_head, pmnt, pmnt_le);
+	if (ptyfs_count++ == 0) {
+		/* Point pty access to us */
 		ptyfs_save_ptm = pty_sethandler(&ptm_ptyfspty);
 	}
-	ptyfs_count++;
 	return 0;
 }
 
@@ -293,6 +336,7 @@ ptyfs_unmount(struct mount *mp, int mntflags)
 {
 	int error;
 	int flags = 0;
+	struct ptyfsmount *pmnt;
 
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
@@ -305,8 +349,13 @@ ptyfs_unmount(struct mount *mp, int mntflags)
 		/* Restore where pty access was pointing */
 		(void)pty_sethandler(ptyfs_save_ptm);
 		ptyfs_save_ptm = NULL;
-		ptm_ptyfspty.arg = NULL;
 	}
+	TAILQ_FOREACH(pmnt, &ptyfs_head, pmnt_le) {
+		if (pmnt->pmnt_mp == mp) {
+			TAILQ_REMOVE(&ptyfs_head, pmnt, pmnt_le);
+			break;
+		}
+ 	}
 
 	/*
 	 * Finally, throw away the ptyfsmount structure
@@ -352,31 +401,28 @@ const struct vnodeopv_desc * const ptyfs_vnodeopv_descs[] = {
 };
 
 struct vfsops ptyfs_vfsops = {
-	MOUNT_PTYFS,
-	sizeof (struct ptyfs_args),
-	ptyfs_mount,
-	ptyfs_start,
-	ptyfs_unmount,
-	ptyfs_root,
-	(void *)eopnotsupp,		/* vfs_quotactl */
-	genfs_statvfs,
-	ptyfs_sync,
-	ptyfs_vget,
-	(void *)eopnotsupp,		/* vfs_fhtovp */
-	(void *)eopnotsupp,		/* vfs_vptofp */
-	ptyfs_init,
-	ptyfs_reinit,
-	ptyfs_done,
-	NULL,				/* vfs_mountroot */
-	(void *)eopnotsupp,
-	(void *)eopnotsupp,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	ptyfs_vnodeopv_descs,
-	0,
-	{ NULL, NULL },
+	.vfs_name = MOUNT_PTYFS,
+	.vfs_min_mount_data = sizeof (struct ptyfs_args),
+	.vfs_mount = ptyfs_mount,
+	.vfs_start = ptyfs_start,
+	.vfs_unmount = ptyfs_unmount,
+	.vfs_root = ptyfs_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = genfs_statvfs,
+	.vfs_sync = ptyfs_sync,
+	.vfs_vget = ptyfs_vget,
+	.vfs_fhtovp = (void *)eopnotsupp,
+	.vfs_vptofh = (void *)eopnotsupp,
+	.vfs_init = ptyfs_init,
+	.vfs_reinit = ptyfs_reinit,
+	.vfs_done = ptyfs_done,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = (void *)eopnotsupp,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = ptyfs_vnodeopv_descs
 };
 
 static int
@@ -389,11 +435,6 @@ ptyfs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&ptyfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&ptyfs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&ptyfs_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "ptyfs",

@@ -1,14 +1,11 @@
-#	$NetBSD: RPI_INSTALL,v 1.1.6.2 2013/06/23 06:20:04 tls Exp $
+#	$NetBSD: RPI_INSTALL,v 1.1.6.3 2014/08/20 00:02:53 tls Exp $
 #
 #	RPI_INSTALL -- RPI kernel with installation-sized
 #	ramdisk
 #
 
 include "arch/evbarm/conf/RPI"
+include "arch/evbarm/conf/INSTALL"
 
-options 	MEMORY_DISK_HOOKS
-options 	MEMORY_DISK_IS_ROOT	# Force root on ramdisk
-options 	MEMORY_DISK_ROOT_SIZE=7300
-options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
-
-options BOOTHOWTO=RB_SINGLE
+makeoptions	RAMDISKNAME=sshramdisk
+no makeoptions	DEBUG

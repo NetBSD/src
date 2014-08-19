@@ -1,4 +1,4 @@
-/*	$NetBSD: dict.h,v 1.1.1.2.10.1 2013/02/25 00:27:31 tls Exp $	*/
+/*	$NetBSD: dict.h,v 1.1.1.2.10.2 2014/08/19 23:59:45 tls Exp $	*/
 
 #ifndef _DICT_H_INCLUDED_
 #define _DICT_H_INCLUDED_
@@ -17,6 +17,13 @@
   * System library.
   */
 #include <fcntl.h>
+#include <setjmp.h>
+
+#ifdef NO_SIGSETJMP
+#define DICT_JMP_BUF jmp_buf
+#else
+#define DICT_JMP_BUF sigjmp_buf
+#endif
 
  /*
   * Utility library.
@@ -24,6 +31,7 @@
 #include <vstream.h>
 #include <argv.h>
 #include <vstring.h>
+#include <myflock.h>
 
  /*
   * Provenance information.
@@ -49,13 +57,16 @@ typedef struct DICT {
     int     (*update) (struct DICT *, const char *, const char *);
     int     (*delete) (struct DICT *, const char *);
     int     (*sequence) (struct DICT *, int, const char **, const char **);
+    int     (*lock) (struct DICT *, int);
     void    (*close) (struct DICT *);
-    int     lock_fd;			/* for dict_update() lock */
+    int     lock_type;			/* for read/write lock */
+    int     lock_fd;			/* for read/write lock */
     int     stat_fd;			/* change detection */
     time_t  mtime;			/* mod time at open */
     VSTRING *fold_buf;			/* key folding buffer */
     DICT_OWNER owner;			/* provenance */
     int     error;			/* last operation only */
+    DICT_JMP_BUF *jbuf;			/* exception handling */
 } DICT;
 
 extern DICT *dict_alloc(const char *, const char *, ssize_t);
@@ -65,16 +76,19 @@ extern DICT *dict_debug(DICT *);
 
 #define DICT_DEBUG(d) ((d)->flags & DICT_FLAG_DEBUG ? dict_debug(d) : (d))
 
+ /*
+  * See dict_open.c embedded manpage for flag definitions.
+  */
 #define DICT_FLAG_NONE		(0)
-#define DICT_FLAG_DUP_WARN	(1<<0)	/* if file, warn about dups */
-#define DICT_FLAG_DUP_IGNORE	(1<<1)	/* if file, ignore dups */
+#define DICT_FLAG_DUP_WARN	(1<<0)	/* warn about dups if not supported */
+#define DICT_FLAG_DUP_IGNORE	(1<<1)	/* ignore dups if not supported */
 #define DICT_FLAG_TRY0NULL	(1<<2)	/* do not append 0 to key/value */
 #define DICT_FLAG_TRY1NULL	(1<<3)	/* append 0 to key/value */
 #define DICT_FLAG_FIXED		(1<<4)	/* fixed key map */
 #define DICT_FLAG_PATTERN	(1<<5)	/* keys are patterns */
-#define DICT_FLAG_LOCK		(1<<6)	/* lock before access */
-#define DICT_FLAG_DUP_REPLACE	(1<<7)	/* if file, replace dups */
-#define DICT_FLAG_SYNC_UPDATE	(1<<8)	/* if file, sync updates */
+#define DICT_FLAG_LOCK		(1<<6)	/* use temp lock before access */
+#define DICT_FLAG_DUP_REPLACE	(1<<7)	/* replace dups if supported */
+#define DICT_FLAG_SYNC_UPDATE	(1<<8)	/* sync updates if supported */
 #define DICT_FLAG_DEBUG		(1<<9)	/* log access */
 /*#define DICT_FLAG_FOLD_KEY	(1<<10)	/* lowercase the lookup key */
 #define DICT_FLAG_NO_REGSUB	(1<<11)	/* disallow regexp substitution */
@@ -83,7 +97,9 @@ extern DICT *dict_debug(DICT *);
 #define DICT_FLAG_FOLD_FIX	(1<<14)	/* case-fold key with fixed-case map */
 #define DICT_FLAG_FOLD_MUL	(1<<15)	/* case-fold key with multi-case map */
 #define DICT_FLAG_FOLD_ANY	(DICT_FLAG_FOLD_FIX | DICT_FLAG_FOLD_MUL)
-#define DICT_FLAG_OPEN_LOCK	(1<<16)	/* open file with exclusive lock */
+#define DICT_FLAG_OPEN_LOCK	(1<<16)	/* perm lock if not multi-writer safe */
+#define DICT_FLAG_BULK_UPDATE	(1<<17)	/* optimize for bulk updates */
+#define DICT_FLAG_MULTI_WRITER	(1<<18)	/* multi-writer safe map */
 
  /* IMPORTANT: Update the dict_mask[] table when the above changes */
 
@@ -110,7 +126,8 @@ extern DICT *dict_debug(DICT *);
   */
 #define DICT_FLAG_PARANOID \
 	(DICT_FLAG_NO_REGSUB | DICT_FLAG_NO_PROXY | DICT_FLAG_NO_UNAUTH)
-#define DICT_FLAG_IMPL_MASK	(DICT_FLAG_FIXED | DICT_FLAG_PATTERN)
+#define DICT_FLAG_IMPL_MASK	(DICT_FLAG_FIXED | DICT_FLAG_PATTERN | \
+				DICT_FLAG_MULTI_WRITER)
 #define DICT_FLAG_RQST_MASK	(DICT_FLAG_FOLD_ANY | DICT_FLAG_LOCK | \
 				DICT_FLAG_DUP_REPLACE | DICT_FLAG_DUP_WARN | \
 				DICT_FLAG_DUP_IGNORE | DICT_FLAG_SYNC_UPDATE | \
@@ -125,12 +142,16 @@ extern DICT *dict_debug(DICT *);
 #define DICT_ERR_CONFIG	(-2)		/* configuration error */
 
  /*
-  * FAIL/ERROR are suggested result values, not meant for use in comparisons.
+  * Result values for exposed functions except lookup. FAIL/ERROR are
+  * suggested values, not for use in comparisons for equality.
   */
 #define DICT_STAT_FAIL		1	/* any value > 0: notfound, conflict */
 #define DICT_STAT_SUCCESS	0	/* request satisfied */
 #define DICT_STAT_ERROR		(-1)	/* any value < 0: database error */
 
+ /*
+  * Set an error code and return a result value.
+  */
 #define DICT_ERR_VAL_RETURN(dict, err, val) do { \
 	(dict)->error = (err); \
 	return (val); \
@@ -179,6 +200,7 @@ extern void dict_walk(DICT_WALK_ACTION, char *);
 extern int dict_changed(void);
 extern const char *dict_changed_name(void);
 extern const char *dict_flags_str(int);
+extern int dict_flags_mask(const char *);
 
  /*
   * Driver for interactive or scripted tests.
@@ -196,6 +218,31 @@ extern DICT *dict_surrogate(const char *, const char *, int, int, const char *,.
   * This name is reserved for matchlist error handling.
   */
 #define DICT_TYPE_NOFILE	"non-existent"
+
+ /*
+  * Duplicated from vstream(3). This should probably be abstracted out.
+  * 
+  * Exception handling. We use pointer to jmp_buf to avoid a lot of unused
+  * baggage for streams that don't need this functionality.
+  * 
+  * XXX sigsetjmp()/siglongjmp() save and restore the signal mask which can
+  * avoid surprises in code that manipulates signals, but unfortunately some
+  * systems have bugs in their implementation.
+  */
+#ifdef NO_SIGSETJMP
+#define dict_setjmp(stream)		setjmp((stream)->jbuf[0])
+#define dict_longjmp(stream, val)	longjmp((stream)->jbuf[0], (val))
+#else
+#define dict_setjmp(stream)		sigsetjmp((stream)->jbuf[0], 1)
+#define dict_longjmp(stream, val)	siglongjmp((stream)->jbuf[0], (val))
+#endif
+#define dict_isjmp(stream)		((stream)->jbuf != 0)
+
+ /*
+  * Temporary API. If exception handling proves to be useful,
+  * dict_jmp_alloc() should be integrated into dict_alloc().
+  */
+extern void dict_jmp_alloc(DICT *);
 
 /* LICENSE
 /* .ad

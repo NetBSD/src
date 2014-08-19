@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.5.4.2 2013/06/23 06:20:22 tls Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.5.4.3 2014/08/20 00:03:51 tls Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.5.4.2 2013/06/23 06:20:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.5.4.3 2014/08/20 00:03:51 tls Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -2731,7 +2731,7 @@ athn_usb_stop(struct ifnet *ifp)
 	struct ar_htc_target_vif hvif;
 	struct mbuf *m;
 	uint8_t sta_index;
-	int s, error;
+	int s;
 
 	DPRINTFN(DBG_FN, sc, "\n");
 
@@ -2771,7 +2771,7 @@ athn_usb_stop(struct ifnet *ifp)
 	/* Remove default node. */
 	sta_index = 0;
 	DPRINTFN(DBG_NODES, usc, "removing node %u\n", sta_index);
-	error = athn_usb_remove_hw_node(usc, &sta_index);
+	(void)athn_usb_remove_hw_node(usc, &sta_index);
 
 	(void)athn_usb_wmi_cmd(usc, AR_WMI_CMD_DISABLE_INTR);
 	(void)athn_usb_wmi_cmd(usc, AR_WMI_CMD_DRAIN_TXQ_ALL);

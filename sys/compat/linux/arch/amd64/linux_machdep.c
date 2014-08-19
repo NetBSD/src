@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.40 2012/07/08 20:14:12 dsl Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.40.2.1 2014/08/20 00:03:31 tls Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.40 2012/07/08 20:14:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.40.2.1 2014/08/20 00:03:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -47,11 +47,11 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.40 2012/07/08 20:14:12 dsl Exp $
 
 #include <machine/reg.h>
 #include <machine/pcb.h>
-#include <machine/fpu.h>
 #include <machine/mcontext.h>
 #include <machine/specialreg.h>
 #include <machine/vmparam.h>
 #include <machine/cpufunc.h>
+#include <x86/include/sysarch.h>
 
 /* 
  * To see whether wscons is configured (for virtual console ioctl calls).
@@ -84,15 +84,8 @@ linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
 
-	/* If we were using the FPU, forget about it. */
-	if (pcb->pcb_fpcpu != NULL)
-		fpusave_lwp(l, 0);
-
-	l->l_md.md_flags &= ~MDL_USEDFPU;
+	fpu_save_area_clear(l, __NetBSD_NPXCW__);
 	pcb->pcb_flags = 0;
-	pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
-	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
-	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 
 	l->l_proc->p_flag &= ~PK_32;
 
@@ -117,7 +110,7 @@ linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 	tf->tf_rflags = PSL_USERSET;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_ds = 0;
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = 0;
 	cpu_fsgs_zero(l);
 
@@ -134,7 +127,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	int onstack, error;
 	int sig = ksi->ksi_signo;
 	struct linux_rt_sigframe *sfp, sigframe;
-	struct linux__fpstate *fpsp, fpstate;
+	struct linux__fpstate *fpsp;
 	struct fpreg fpregs;
 	struct trapframe *tf = l->l_md.md_regs;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
@@ -153,15 +146,9 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	else
 		sp = (char *)tf->tf_rsp - 128;
 
-	/* 
-	 * Save FPU state, if any 
-	 */
-	if (l->l_md.md_flags & MDL_USEDFPU) {
-		sp = (char *)
-		    (((long)sp - sizeof(struct linux__fpstate)) & ~0xfUL);
-		fpsp = (struct linux__fpstate *)sp;
-	} else
-		fpsp = NULL;
+	/* Save FPU state */
+	sp = (char *) (((long)sp - sizeof (*fpsp)) & ~0xfUL);
+	fpsp = (struct linux__fpstate *)sp;
 
 	/* 
 	 * Populate the rt_sigframe 
@@ -229,21 +216,10 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Save FPU state, if any 
 	 */
 	if (fpsp != NULL) {
-		(void)process_read_fpregs(l, &fpregs);
-		memset(&fpstate, 0, sizeof(fpstate));
-		fpstate.cwd = fpregs.fp_fcw;
-		fpstate.swd = fpregs.fp_fsw;
-		fpstate.twd = fpregs.fp_ftw;
-		fpstate.fop = fpregs.fp_fop;
-		fpstate.rip = fpregs.fp_rip;
-		fpstate.rdp = fpregs.fp_rdp;
-		fpstate.mxcsr = fpregs.fp_mxcsr;
-		fpstate.mxcsr_mask = fpregs.fp_mxcsr_mask;
-		memcpy(&fpstate.st_space, &fpregs.fp_st, 
-		    sizeof(fpstate.st_space));
-		memcpy(&fpstate.xmm_space, &fpregs.fp_xmm, 
-		    sizeof(fpstate.xmm_space));
-		error = copyout(&fpstate, fpsp, sizeof(fpstate));
+		size_t fp_size = sizeof fpregs;
+		/* The netbsd and linux structures both match the fxsave data */
+		(void)process_read_fpregs(l, &fpregs, &fp_size);
+		error = copyout(&fpregs, fpsp, sizeof(*fpsp));
 	}
 
 	if (error == 0)
@@ -326,11 +302,10 @@ linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
 	struct linux_ucontext *luctx;
 	struct trapframe *tf = l->l_md.md_regs;
 	struct linux_sigcontext *lsigctx;
-	struct linux__fpstate fpstate;
 	struct linux_rt_sigframe frame, *fp;
 	ucontext_t uctx;
 	mcontext_t *mctx;
-	struct fxsave64 *fxarea;
+	struct fxsave *fxarea;
 	int error;
 
 	fp = (struct linux_rt_sigframe *)(tf->tf_rsp - 8);
@@ -344,7 +319,7 @@ linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
 
 	memset(&uctx, 0, sizeof(uctx));
 	mctx = (mcontext_t *)&uctx.uc_mcontext;
-	fxarea = (struct fxsave64 *)&mctx->__fpregs;
+	fxarea = (struct fxsave *)&mctx->__fpregs;
 
 	/* 
 	 * Set the flags. Linux always have CPU, stack and signal state,
@@ -394,25 +369,13 @@ linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
 	 * FPU state 
 	 */
 	if (lsigctx->fpstate != NULL) {
-		error = copyin(lsigctx->fpstate, &fpstate, sizeof(fpstate));
+		/* Both structures match the fxstate data */
+		error = copyin(lsigctx->fpstate, fxarea, sizeof(*fxarea));
 		if (error != 0) {
 			mutex_enter(l->l_proc->p_lock);
 			sigexit(l, SIGILL);
 			return error;
 		}
-
-		fxarea->fx_fcw = fpstate.cwd;
-		fxarea->fx_fsw = fpstate.swd;
-		fxarea->fx_ftw = fpstate.twd;
-		fxarea->fx_fop = fpstate.fop;
-		fxarea->fx_rip = fpstate.rip;
-		fxarea->fx_rdp = fpstate.rdp;
-		fxarea->fx_mxcsr = fpstate.mxcsr;
-		fxarea->fx_mxcsr_mask = fpstate.mxcsr_mask;
-		memcpy(&fxarea->fx_st, &fpstate.st_space, 
-		    sizeof(fxarea->fx_st));
-		memcpy(&fxarea->fx_xmm, &fpstate.xmm_space, 
-		    sizeof(fxarea->fx_xmm));
 	}
 
 	/*

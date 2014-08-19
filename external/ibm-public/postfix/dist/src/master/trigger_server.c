@@ -1,4 +1,4 @@
-/*	$NetBSD: trigger_server.c,v 1.1.1.3.10.1 2013/02/25 00:27:21 tls Exp $	*/
+/*	$NetBSD: trigger_server.c,v 1.1.1.3.10.2 2014/08/19 23:59:43 tls Exp $	*/
 
 /*++
 /* NAME
@@ -378,7 +378,7 @@ static void trigger_server_accept_pass(int unused_event, char *context)
 
     if (trigger_server_pre_accept)
 	trigger_server_pre_accept(trigger_server_name, trigger_server_argv);
-    fd = PASS_ACCEPT(listen_fd);
+    fd = pass_accept(listen_fd);
     if (trigger_server_lock != 0
 	&& myflock(vstream_fileno(trigger_server_lock), INTERNAL_LOCK,
 		   MYFLOCK_OP_NONE) < 0)

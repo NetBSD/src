@@ -1,7 +1,6 @@
 /* TUI Interpreter definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2003, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -52,7 +51,7 @@ static int tui_is_toplevel = 0;
 /* These implement the TUI interpreter.  */
 
 static void *
-tui_init (int top_level)
+tui_init (struct interp *self, int top_level)
 {
   tui_is_toplevel = top_level;
 
@@ -126,88 +125,19 @@ tui_display_prompt_p (void *data)
     return 1;
 }
 
+static struct ui_out *
+tui_ui_out (struct interp *self)
+{
+  if (tui_active)
+    return tui_out;
+  else
+    return tui_old_uiout;
+}
+
 static struct gdb_exception
 tui_exec (void *data, const char *command_str)
 {
   internal_error (__FILE__, __LINE__, _("tui_exec called"));
-}
-
-
-/* Initialize all the necessary variables, start the event loop,
-   register readline, and stdin, start the loop.  */
-
-static void
-tui_command_loop (void *data)
-{
-  /* If we are using readline, set things up and display the first
-     prompt, otherwise just print the prompt.  */
-  if (async_command_editing_p)
-    {
-      int length;
-      char *a_prompt;
-      char *gdb_prompt = get_prompt ();
-
-      /* Tell readline what the prompt to display is and what function
-         it will need to call after a whole line is read. This also
-         displays the first prompt.  */
-      length = strlen (PREFIX (0)) 
-	+ strlen (gdb_prompt) + strlen (SUFFIX (0)) + 1;
-      a_prompt = (char *) alloca (length);
-      strcpy (a_prompt, PREFIX (0));
-      strcat (a_prompt, gdb_prompt);
-      strcat (a_prompt, SUFFIX (0));
-      rl_callback_handler_install (a_prompt, input_handler);
-    }
-  else
-    display_gdb_prompt (0);
-
-  /* Loop until there is nothing to do. This is the entry point to the
-     event loop engine. gdb_do_one_event, called via catch_errors()
-     will process one event for each invocation.  It blocks waits for
-     an event and then processes it.  >0 when an event is processed, 0
-     when catch_errors() caught an error and <0 when there are no
-     longer any event sources registered.  */
-  while (1)
-    {
-      int result = catch_errors (gdb_do_one_event, 0, "", RETURN_MASK_ALL);
-
-      if (result < 0)
-	break;
-
-      /* Update gdb output according to TUI mode.  Since catch_errors
-         preserves the uiout from changing, this must be done at top
-         level of event loop.  */
-      if (tui_active)
-        uiout = tui_out;
-      else
-        uiout = tui_old_uiout;
-      
-      if (result == 0)
-	{
-	  /* If any exception escaped to here, we better enable
-	     stdin.  Otherwise, any command that calls async_disable_stdin,
-	     and then throws, will leave stdin inoperable.  */
-	  async_enable_stdin ();
-	  /* FIXME: this should really be a call to a hook that is
-	     interface specific, because interfaces can display the
-	     prompt in their own way.  */
-	  display_gdb_prompt (0);
-	  /* This call looks bizarre, but it is required.  If the user
-	     entered a command that caused an error,
-	     after_char_processing_hook won't be called from
-	     rl_callback_read_char_wrapper.  Using a cleanup there
-	     won't work, since we want this function to be called
-	     after a new prompt is printed.  */
-	  if (after_char_processing_hook)
-	    (*after_char_processing_hook) ();
-	  /* Maybe better to set a flag to be checked somewhere as to
-	     whether display the prompt or not.  */
-	}
-    }
-
-  /* We are done with the event loop. There are no more event sources
-     to listen to.  So we exit GDB.  */
-  return;
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */
@@ -222,12 +152,15 @@ _initialize_tui_interp (void)
     tui_suspend,
     tui_exec,
     tui_display_prompt_p,
-    tui_command_loop,
+    tui_ui_out,
+    NULL,
+    cli_command_loop
   };
+  struct interp *tui_interp;
 
   /* Create a default uiout builder for the TUI.  */
-  tui_out = tui_out_new (gdb_stdout);
-  interp_add (interp_new (INTERP_TUI, NULL, tui_out, &procs));
+  tui_interp = interp_new (INTERP_TUI, &procs);
+  interp_add (tui_interp);
   if (interpreter_p && strcmp (interpreter_p, INTERP_TUI) == 0)
     tui_start_enabled = 1;
 

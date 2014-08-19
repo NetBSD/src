@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.115 2011/05/24 18:17:24 joerg Exp $ */
+/* $NetBSD: isp_pci.c,v 1.115.14.1 2014/08/20 00:03:43 tls Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.115 2011/05/24 18:17:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.115.14.1 2014/08/20 00:03:43 tls Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -493,6 +493,7 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	int ioh_valid, memh_valid;
 	size_t mamt;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	isp->isp_osinfo.dev = self;
 
@@ -762,7 +763,7 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 		free(isp->isp_osinfo.chan, M_DEVBUF);
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	if (intrstr == NULL)
 		intrstr = "<I dunno>";
 	pcs->pci_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
@@ -1036,14 +1037,13 @@ isp_pci_wr_reg_2400(ispsoftc_t *isp, int regoff, uint32_t val)
 {
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) isp;
 	int block = regoff & _BLK_REG_MASK;
-	volatile int junk;
 
 	switch (block) {
 	case BIU_BLOCK:
 		break;
 	case MBOX_BLOCK:
 		BXW2(pcs, IspVirt2Off(pcs, regoff), val);
-		junk = BXR2(pcs, IspVirt2Off(pcs, regoff));
+		(void)BXR2(pcs, IspVirt2Off(pcs, regoff));
 		return;
 	case SXP_BLOCK:
 		isp_prt(isp, ISP_LOGWARN, "SXP_BLOCK write at 0x%x", regoff);
@@ -1079,7 +1079,7 @@ isp_pci_wr_reg_2400(ispsoftc_t *isp, int regoff, uint32_t val)
 	case BIU2400_GPIOE:
 	case BIU2400_HSEMA:
 		BXW4(pcs, IspVirt2Off(pcs, regoff), val);
-		junk = BXR4(pcs, IspVirt2Off(pcs, regoff));
+		(void)BXR4(pcs, IspVirt2Off(pcs, regoff));
 		break;
 	default:
 		isp_prt(isp, ISP_LOGERR,

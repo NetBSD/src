@@ -1,4 +1,4 @@
-/*	$NetBSD: struct.h,v 1.6 2006/06/07 09:36:39 jnemeth Exp $	*/
+/*	$NetBSD: struct.h,v 1.6.48.1 2014/08/20 00:00:21 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,6 +43,8 @@
  * For more info on this and all of my stuff, mail edjames@berkeley.edu.
  */
 
+#include <stdbool.h>
+
 typedef struct {
 	int	x, y;
 	int	dir;	/* used only sometimes */
@@ -60,25 +62,32 @@ typedef struct {
 	int	width, height;
 	int	update_secs;
 	int	newplane_time;
-	int	num_exits;
-	int	num_lines;
-	int	num_beacons;
-	int	num_airports;
+	unsigned num_exits;
+	unsigned num_lines;
+	unsigned num_beacons;
+	unsigned num_airports;
 	EXIT	*exit;
 	LINE	*line;
 	BEACON	*beacon;
 	AIRPORT	*airport;
 } C_SCREEN;
 
+enum places {
+	T_NODEST = 0,
+	T_BEACON = 1,
+	T_EXIT = 2,
+	T_AIRPORT = 3
+};
+
 typedef struct plane {
 	struct plane	*next, *prev;
 	int		status;
 	int		plane_no;
 	int		plane_type;
-	int		orig_no;
-	int		orig_type;
-	int		dest_no;
-	int		dest_type;
+	unsigned orig_no;
+	enum places orig_type;
+	unsigned dest_no;
+	enum places dest_type;
 	int		altitude;
 	int		new_altitude;
 	int		dir;
@@ -86,8 +95,8 @@ typedef struct plane {
 	int		fuel;
 	int		xpos;
 	int		ypos;
-	int		delayd;
-	int		delayd_no;
+	bool delayd;
+	unsigned delayd_no;
 } PLANE;
 
 typedef struct {

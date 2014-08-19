@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.38.6.1 2012/11/20 03:01:01 tls Exp $	*/
+/*	$NetBSD: necpb.c,v 1.38.6.2 2014/08/20 00:02:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.38.6.1 2012/11/20 03:01:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.38.6.2 2014/08/20 00:02:44 tls Exp $");
 
 #include "opt_pci.h"
 
@@ -112,7 +112,8 @@ static pcireg_t	necpb_conf_read(pci_chipset_tag_t, pcitag_t, int);
 static void	necpb_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 static int	necpb_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
-static const char *necpb_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
+static const char *necpb_intr_string(pci_chipset_tag_t, pci_intr_handle_t,
+		    char *, size_t);
 static void	*necpb_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*func)(void *), void *);
 static void	necpb_intr_disestablish(pci_chipset_tag_t, void *);
@@ -380,14 +381,13 @@ necpb_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 static const char *
-necpb_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+necpb_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
+    size_t len)
 {
-	static char str[8];
-
 	if (ih >= 4)
 		panic("%s: bogus handle %ld", __func__, ih);
-	sprintf(str, "int %c", 'A' + (int)ih);
-	return str;
+	snprintf(buf, len, "int %c", 'A' + (int)ih);
+	return buf;
 }
 
 static void *
@@ -396,6 +396,7 @@ necpb_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 {
 	struct necpb_intrhand *n, *p;
 	uint32_t mask;
+	char buf[PCI_INTRSTR_LEN];
 
 	if (ih >= 4)
 		panic("%s: bogus handle", __func__);
@@ -408,7 +409,8 @@ necpb_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 	n->ih_arg = arg;
 	n->ih_next = NULL;
 	n->ih_intn = ih;
-	strlcpy(n->ih_evname, necpb_intr_string(pc, ih), sizeof(n->ih_evname));
+	strlcpy(n->ih_evname, necpb_intr_string(pc, ih, buf, sizeof(buf)),
+	    sizeof(n->ih_evname));
 	evcnt_attach_dynamic(&n->ih_evcnt, EVCNT_TYPE_INTR, NULL, "necpb",
 	    n->ih_evname);
 

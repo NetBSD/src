@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OVERO,v 1.17.2.3 2013/06/23 06:20:04 tls Exp $
+#	$NetBSD: OVERO,v 1.17.2.4 2014/08/20 00:02:53 tls Exp $
 #
 #	OVERO -- Gumstix. Inc. Overo COMS platforms kernel
 #
@@ -16,7 +16,10 @@ maxusers	32
 
 options 	CPU_CORTEXA8
 options 	OMAP_3530
+options 	FPU_VFP
 options 	PMAPCOUNTERS
+options 	ARM_HAS_VBAR
+options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 makeoptions	CPUFLAGS="-mcpu=cortex-a8 -mfpu=neon"
 
 # Architecture options
@@ -78,7 +81,6 @@ options 	INET6		# IPV6
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
@@ -90,6 +92,7 @@ options 	NFS_BOOT_DHCP
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_11	# NetBSD 1.1 compatibility.
@@ -137,7 +140,7 @@ options 	IRQSTATS	# manage IRQ statistics
 # Development and Debugging options
 
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
@@ -189,7 +192,7 @@ omapiic0	at obio0 addr 0x48070000 size 0x1000 intr 56	# I2C1
 omapiic1	at obio0 addr 0x48060000 size 0x1000 intr 61	# I2C3
 iic*		at omapiic?
 
-# Power Managent and System Companion Device
+# Power Management and System Companion Device
 tps65950pm0	at iic0 addr 0x48
 tps65950pm1	at iic0 addr 0x49
 tps65950pm2	at iic0 addr 0x4a
@@ -206,7 +209,7 @@ omapmputmr0	at obio2 addr 0x49032000 intr 38		# GP Timer 2
 omapmputmr1	at obio2 addr 0x49034000 intr 39		# GP Timer 3
 # Microtime Reference Timer
 omapmputmr2	at obio2 addr 0x49036000 intr 40		# GP Timer 4
-options OMAP_MPU_TIMER_CLOCK_FREQ=12000000
+options OMAP_MPU_TIMER_CLOCK_FREQ=13000000
 
 # Watchdog timers
 omapwdt32k*	at obio1 addr 0x48314000 size 0x1000		# WDT2

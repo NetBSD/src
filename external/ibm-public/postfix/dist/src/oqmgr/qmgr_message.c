@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_message.c,v 1.1.1.3.10.1 2013/02/25 00:27:21 tls Exp $	*/
+/*	$NetBSD: qmgr_message.c,v 1.1.1.3.10.2 2014/08/19 23:59:43 tls Exp $	*/
 
 /*++
 /* NAME
@@ -1177,7 +1177,7 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 		   : strlen(STR(reply.recipient)));
 	    vstring_strncpy(queue_name, STR(reply.recipient), len);
 	    /* Remove the address extension from the recipient localpart. */
-	    if (*var_rcpt_delim && split_addr(STR(queue_name), *var_rcpt_delim))
+	    if (*var_rcpt_delim && split_addr(STR(queue_name), var_rcpt_delim))
 		vstring_truncate(queue_name, strlen(STR(queue_name)));
 	    /* Assume the recipient domain is equivalent to nexthop. */
 	    vstring_sprintf_append(queue_name, "@%s", STR(reply.nexthop));

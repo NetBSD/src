@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.345 2012/08/04 17:18:38 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.345.2.1 2014/08/20 00:03:11 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.345 2012/08/04 17:18:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.345.2.1 2014/08/20 00:03:11 tls Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -116,6 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.345 2012/08/04 17:18:38 martin Exp $")
 #define ELFSIZE 32
 #include <sys/exec_elf.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 
 #include <m68k/cacheops.h>
 
@@ -172,6 +173,7 @@ vaddr_t	SCSIBase;
 extern int numranges;
 extern u_long low[8];
 extern u_long high[8];
+extern int machineid;
 
 /* These are used to map NuBus space: */
 #define	NBMAXRANGES	16
@@ -899,7 +901,7 @@ getenvvars(u_long flag, char *buf)
 	/*
 	 * More misc stuff from booter.
 	 */
-	mac68k_machine.machineid = getenv("MACHINEID");
+	mac68k_machine.machineid = machineid = getenv("MACHINEID");
 	mac68k_machine.mach_processor = getenv("PROCESSOR");
 	mac68k_machine.mach_memsize = getenv("MEMSIZE");
 	mac68k_machine.do_graybars = getenv("GRAYBARS");
@@ -1879,8 +1881,6 @@ struct intvid_info_t {
  * 	...?
  */
 
-char	cpu_model[120];		/* for sysctl() */
-
 int	mach_cputype(void);
 
 int
@@ -1909,11 +1909,11 @@ identifycpu(void)
 		mpu = ("(unknown processor)");
 		break;
 	}
-	sprintf(cpu_model, "Apple Macintosh %s%s %s",
+	cpu_setmodel("Apple Macintosh %s%s %s",
 	    cpu_models[mac68k_machine.cpu_model_index].model_major,
 	    cpu_models[mac68k_machine.cpu_model_index].model_minor,
 	    mpu);
-	printf("%s\n", cpu_model);
+	printf("%s\n", cpu_getmodel());
 	printf("cpu: delay factor %d\n", delay_factor);
 	initfpu();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.126.6.1 2013/06/23 06:20:25 tls Exp $	*/
+/*	$NetBSD: route.c,v 1.126.6.2 2014/08/20 00:04:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.126.6.1 2013/06/23 06:20:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.126.6.2 2014/08/20 00:04:34 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -151,14 +151,10 @@ sysctl_net_rtcache_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *rnode;
 
-	/* XXX do not duplicate */
 	if (sysctl_createv(clog, 0, NULL, &rnode, CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "net", NULL, NULL, 0, NULL, 0, CTL_NET, CTL_EOL) != 0)
-		return;
-	if (sysctl_createv(clog, 0, &rnode, &rnode, CTLFLAG_PERMANENT,
 	    CTLTYPE_NODE,
 	    "rtcache", SYSCTL_DESCR("Route cache related settings"),
-	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL) != 0)
+	    NULL, 0, NULL, 0, CTL_NET, CTL_CREATE, CTL_EOL) != 0)
 		return;
 	if (sysctl_createv(clog, 0, &rnode, &rnode,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
@@ -305,7 +301,7 @@ rtflushall(int family)
 	rtcache_invalidate(&dom->dom_rtcache);
 }
 
-void
+static void
 rtcache(struct route *ro)
 {
 	struct domain *dom;
@@ -345,7 +341,8 @@ rtalloc1(const struct sockaddr *dst, int report)
 				goto miss;
 			}
 			KASSERT(newrt != NULL);
-			if ((rt = newrt) && (rt->rt_flags & RTF_XRESOLVE)) {
+			rt = newrt;
+			if (rt->rt_flags & RTF_XRESOLVE) {
 				msgtype = RTM_RESOLVE;
 				goto miss;
 			}
@@ -379,16 +376,13 @@ rtfree(struct rtentry *rt)
 {
 	struct ifaddr *ifa;
 
-	if (rt == NULL)
-		panic("rtfree");
+	KASSERT(rt != NULL);
+	KASSERT(rt->rt_refcnt > 0);
+
 	rt->rt_refcnt--;
-	if (rt->rt_refcnt <= 0 && (rt->rt_flags & RTF_UP) == 0) {
+	if (rt->rt_refcnt == 0 && (rt->rt_flags & RTF_UP) == 0) {
 		rt_assert_inactive(rt);
 		rttrash--;
-		if (rt->rt_refcnt < 0) {
-			printf("rtfree: %p not freed (neg refs)\n", rt);
-			return;
-		}
 		rt_timer_remove_all(rt, 0);
 		ifa = rt->rt_ifa;
 		rt->rt_ifa = NULL;
@@ -571,15 +565,6 @@ rtflushclone(sa_family_t family, struct rtentry *parent)
 	rt_walktree(family, rtflushclone1, (void *)parent);
 }
 
-/*
- * Routing table ioctl interface.
- */
-int
-rtioctl(u_long req, void *data, struct lwp *l)
-{
-	return EOPNOTSUPP;
-}
-
 struct ifaddr *
 ifa_ifwithroute(int flags, const struct sockaddr *dst,
 	const struct sockaddr *gateway)
@@ -715,7 +700,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		if ((rt = rt_deladdr(rtbl, dst, netmask)) == NULL)
 			senderr(ESRCH);
 		if (rt->rt_gwroute) {
-			RTFREE(rt->rt_gwroute);
+			rtfree(rt->rt_gwroute);
 			rt->rt_gwroute = NULL;
 		}
 		if (rt->rt_parent) {
@@ -807,7 +792,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 				rtdeletemsg(crt);
 				rc = rt_addaddr(rtbl, rt, netmask);
 			}
-			RTFREE(crt);
+			rtfree(crt);
 			RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		}
 		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
@@ -863,7 +848,7 @@ rt_setgate(struct rtentry *rt, const struct sockaddr *gate)
 	RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 
 	if (rt->rt_gwroute) {
-		RTFREE(rt->rt_gwroute);
+		rtfree(rt->rt_gwroute);
 		rt->rt_gwroute = NULL;
 	}
 	KASSERT(rt->_rt_key != NULL);
@@ -1296,7 +1281,7 @@ rtcache_clear(struct route *ro)
 
 	LIST_REMOVE(ro, ro_rtcache_next);
 
-	RTFREE(ro->_ro_rt);
+	rtfree(ro->_ro_rt);
 	ro->_ro_rt = NULL;
 	ro->ro_invalid = false;
 	rtcache_invariants(ro);

@@ -6,7 +6,7 @@
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free
- * Software Foundation; either version 2 of the License, or (at your option)
+ * Software Foundation; either version 3 of the License, or (at your option)
  * any later version.
  * 
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -15,8 +15,7 @@
  * more details.
  * 
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 675
- * Mass Ave, Cambridge, MA 02139, USA.
+ * this program; if not, see <http://www.gnu.org/licenses/>.
  * 
  */
 
@@ -42,10 +41,10 @@ typedef struct {
   char *data;
 } HIST_ENTRY;
 
-extern char *	readline PARAMS ((char *prompt));
-extern void	using_history PARAMS ((void));
-extern void	add_history PARAMS ((char *string));
-extern HIST_ENTRY *remove_history PARAMS ((int which));
+extern char *	readline (char *prompt);
+extern void	using_history (void);
+extern void	add_history (char *string);
+extern HIST_ENTRY *remove_history (int which);
 
 
 

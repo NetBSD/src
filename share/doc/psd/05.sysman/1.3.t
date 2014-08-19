@@ -1,4 +1,4 @@
-.\"	$NetBSD: 1.3.t,v 1.3 2003/08/07 10:30:48 agc Exp $
+.\"	$NetBSD: 1.3.t,v 1.3.60.1 2014/08/20 00:02:29 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,9 +29,9 @@
 .\"
 .\"	@(#)1.3.t	8.6 (Berkeley) 5/29/94
 .\"
-.Sh 2 "Signals
+.Sh 2 11 "Signals
 .PP
-.Sh 3 "Overview
+.Sh 3 11 "Overview
 .PP
 The system defines a set of \fIsignals\fP that may be delivered
 to a process.  Signal delivery resembles the occurrence of a hardware
@@ -62,7 +62,7 @@ Multiple signals may be delivered on a single entry to the system,
 as if signal handlers were interrupted by other signal handlers.
 Mechanisms are provided whereby critical sections
 of code may protect themselves against the occurrence of specified signals.
-.Sh 3 "Signal types
+.Sh 3 11 "Signal types
 .PP
 The signals defined by the system fall into one of
 five classes: hardware conditions,
@@ -111,7 +111,7 @@ a child process changes state, either by stopping or by terminating.
 Exceeding resource limits may cause signals to be generated.
 SIGXCPU occurs when a process nears its CPU time limit and
 SIGXFSZ when a process reaches the limit on file size.
-.Sh 3 "Signal handlers
+.Sh 3 12 "Signal handlers
 .PP
 A process has a handler associated with each signal.
 The handler controls the way the signal is delivered.
@@ -200,7 +200,7 @@ If the signal handler makes a call to
 the signal mask at the time of the corresponding
 .Fn setjmp
 is restored.
-.Sh 3 "Sending signals
+.Sh 3 13 "Sending signals
 .LP
 A process can send a signal to another process or processes group
 with the call:
@@ -222,7 +222,7 @@ it must have the same effective user id as the process receiving the signal.
 Signals also are sent implicitly from a terminal device to the
 process group associated with the terminal when certain input characters
 are typed.
-.Sh 3 "Protecting critical sections
+.Sh 3 13 "Protecting critical sections
 .LP
 The
 .Fn sigprocmask
@@ -256,7 +256,7 @@ are pending delivery using the call:
 sigpending(mask);
 result sigset_t *mask;
 .DE
-.Sh 3 "Signal stacks
+.Sh 3 14 "Signal stacks
 .LP
 Applications that maintain complex or fixed size stacks can use
 the call:

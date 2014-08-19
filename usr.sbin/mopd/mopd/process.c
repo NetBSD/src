@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.18 2011/05/24 13:08:17 joerg Exp $	*/
+/*	$NetBSD: process.c,v 1.18.10.1 2014/08/20 00:05:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: process.c,v 1.18 2011/05/24 13:08:17 joerg Exp $");
+__RCSID("$NetBSD: process.c,v 1.18.10.1 2014/08/20 00:05:10 tls Exp $");
 #endif
 
 #include "os.h"
@@ -63,7 +63,6 @@ mopProcessInfo(const u_char *pkt, int *idx, u_short moplen, struct dllist *dl_rp
 {
         u_short itype,tmps;
 	u_char  ilen ,tmpc,device;
-	u_char  uc1,uc2,uc3;
 	const u_char *ucp;
 	
 	device = 0;
@@ -87,9 +86,9 @@ mopProcessInfo(const u_char *pkt, int *idx, u_short moplen, struct dllist *dl_rp
 			*idx = *idx + tmpc;
 			break;
 		case MOP_K_INFO_VER:
-			uc1 = mopGetChar(pkt,idx);
-			uc2 = mopGetChar(pkt,idx);
-			uc3 = mopGetChar(pkt,idx);
+			(void)mopGetChar(pkt,idx);
+			(void)mopGetChar(pkt,idx);
+			(void)mopGetChar(pkt,idx);
 			break;
 		case MOP_K_INFO_MFCT:
 			tmps = mopGetShort(pkt,idx);
@@ -163,24 +162,24 @@ mopProcessInfo(const u_char *pkt, int *idx, u_short moplen, struct dllist *dl_rp
 		}
 		itype = mopGetShort(pkt,idx); 
         }
+	__USE(ucp);
 }
 
 void
 mopSendASV(const u_char *dst, const u_char *src, struct if_info *ii, int trans)
 {
-        u_char	 pkt[200], *p;
+        u_char	 pkt[200];
 	int	 idx;
 	u_char	 mopcode = MOP_K_CODE_ASV;
-	u_short	 newlen = 0,ptype = MOP_K_PROTO_DL;
+	u_short	 ptype = MOP_K_PROTO_DL;
 
 	idx = 0;
 	mopPutHeader(pkt, &idx, dst, src, ptype, trans);
 
-	p = &pkt[idx];
 	mopPutChar(pkt,&idx,mopcode);
 	
 	mopPutLength(pkt, trans, idx);
-	newlen = mopGetLength(pkt, trans);
+	(void)mopGetLength(pkt, trans);
 
 	if (DebugFlag == DEBUG_ONELINE) {
 		mopPrintOneline(stdout, pkt, trans);
@@ -210,10 +209,10 @@ mopStartLoad(const u_char *dst, const u_char *src, struct dllist *dl_rpr,
 {
 	int	 len;
 	int	 i, slot;
-	u_char	 pkt[BUFSIZE], *p;
+	u_char	 pkt[BUFSIZE];
 	int	 idx;
 	u_char	 mopcode = MOP_K_CODE_MLD;
-	u_short	 newlen,ptype = MOP_K_PROTO_DL;
+	u_short	 ptype = MOP_K_PROTO_DL;
 	struct dllist *dle;
 
 	slot = -1;
@@ -273,7 +272,6 @@ mopStartLoad(const u_char *dst, const u_char *src, struct dllist *dl_rpr,
 
 	idx = 0;
 	mopPutHeader(pkt, &idx, dst, src, ptype, trans);
-	p = &pkt[idx];
 	mopPutChar (pkt, &idx, mopcode);
 
 	mopPutChar (pkt, &idx, dle->count);
@@ -285,7 +283,7 @@ mopStartLoad(const u_char *dst, const u_char *src, struct dllist *dl_rpr,
 	idx = idx + len;
 
 	mopPutLength(pkt, trans, idx);
-	newlen = mopGetLength(pkt, trans);
+	(void)mopGetLength(pkt, trans);
 
 	if (DebugFlag == DEBUG_ONELINE) {
 		mopPrintOneline(stdout, pkt, trans);
@@ -314,10 +312,10 @@ mopNextLoad(const u_char *dst, const u_char *src, u_char new_count, int trans)
 {
 	int	 len;
 	int	 i, slot;
-	u_char	 pkt[BUFSIZE], *p;
+	u_char	 pkt[BUFSIZE];
 	int	 idx, pindex;
 	char	 line[100];
-	u_short  newlen = 0,ptype = MOP_K_PROTO_DL;
+	u_short  ptype = MOP_K_PROTO_DL;
 	u_char	 mopcode;
 	struct dllist *dle;
 
@@ -362,7 +360,6 @@ mopNextLoad(const u_char *dst, const u_char *src, u_char new_count, int trans)
 	
 	idx = 0;
 	mopPutHeader(pkt, &idx, dst, src, ptype, trans);
-	p = &pkt[idx];
 	mopcode = MOP_K_CODE_MLD;
 	pindex = idx;
 	mopPutChar (pkt,&idx, mopcode);
@@ -377,7 +374,7 @@ mopNextLoad(const u_char *dst, const u_char *src, u_char new_count, int trans)
 		idx = idx + len;
 
 		mopPutLength(pkt, trans, idx);
-		newlen = mopGetLength(pkt, trans);
+		(void)mopGetLength(pkt, trans);
 		
 	} else {
 		if (len == 0) {
@@ -397,7 +394,7 @@ mopNextLoad(const u_char *dst, const u_char *src, u_char new_count, int trans)
 			mopPutLong (pkt, &idx, dle->xferaddr);
 
 			mopPutLength(pkt, trans, idx);
-			newlen = mopGetLength(pkt, trans);
+			(void)mopGetLength(pkt, trans);
 		
 			dle->status = DL_STATUS_SENT_PLT;
 		} else {
@@ -435,9 +432,9 @@ mopProcessDL(FILE *fd, struct if_info *ii, const u_char *pkt, int *idx,
 	u_char  pfile[129], mopcode;
 	char    filename[FILENAME_MAX];
 	char    line[100];
-	int     i,nfd,iindex;
-	struct dllist dl,*dl_rpr;
-	u_char  rpr_pgty,load;
+	int     i, nfd;
+	struct dllist dl, *dl_rpr;
+	u_char  load;
 
 	if (DebugFlag == DEBUG_ONELINE) {
 		mopPrintOneline(stdout, pkt, trans);
@@ -478,7 +475,7 @@ mopProcessDL(FILE *fd, struct if_info *ii, const u_char *pkt, int *idx,
 			(void)fprintf(stderr,"\n");
 		}
 		
-		rpr_pgty = mopGetChar(pkt,idx);	/* Program Type */
+		(void)mopGetChar(pkt,idx);	/* Program Type */
 		
 		tmpc = mopGetChar(pkt,idx);		/* Software ID Len */
 		if (tmpc > sizeof(pfile) - 1)
@@ -503,7 +500,6 @@ mopProcessDL(FILE *fd, struct if_info *ii, const u_char *pkt, int *idx,
 		
 		tmpc = mopGetChar(pkt,idx);		/* Processor */
 	
-		iindex = *idx;
 		dl_rpr = &dl;
 		memset(dl_rpr, 0, sizeof(*dl_rpr));
 		dl_rpr->ii = ii;
@@ -569,7 +565,7 @@ mopProcessRC(FILE *fd, struct if_info *ii, const u_char *pkt, int *idx,
 	     const u_char *dst, const u_char *src, int trans, u_short len)
 {
 	u_char	 tmpc;
-	u_short	 tmps, moplen = 0;
+	u_short	 moplen = 0;
 	u_char   mopcode;
 	struct dllist dl,*dl_rpr;
 
@@ -602,7 +598,7 @@ mopProcessRC(FILE *fd, struct if_info *ii, const u_char *pkt, int *idx,
 			(void)fprintf(stderr, "Reserved     :   %02x\n",tmpc);
 		}
 		
-		tmps = mopGetShort(pkt,idx);		/* Receipt # */
+		(void)mopGetShort(pkt,idx);		/* Receipt # */
 		if ((DebugFlag >= DEBUG_INFO)) {
 			(void)fprintf(stderr, "Receipt Nbr  : %04x\n",tmpc);
 		}

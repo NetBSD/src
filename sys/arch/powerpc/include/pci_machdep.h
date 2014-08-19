@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.12 2011/08/17 18:52:00 matt Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.12.12.1 2014/08/20 00:03:19 tls Exp $ */
 
 /*-
  * Copyright (c) 2002,2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,8 @@ void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t,
 		    int *, int *, int *);
 
-const char *	pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
+const char *	pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t,
+		    char *, size_t);
 const struct evcnt *
 		pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 void *		pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
@@ -131,7 +132,8 @@ struct genppc_pci_chipset {
 	void		*pc_intr_v;
 	int		(*pc_intr_map)(const struct pci_attach_args *, 
 			    pci_intr_handle_t *);
-	const char	*(*pc_intr_string)(void *, pci_intr_handle_t);
+	const char	*(*pc_intr_string)(void *, pci_intr_handle_t, char *,
+			    size_t);
 	const struct evcnt *(*pc_intr_evcnt)(void *, pci_intr_handle_t);
 	void		*(*pc_intr_establish)(void *, pci_intr_handle_t,
 			    int, int (*)(void *), void *);
@@ -225,9 +227,10 @@ pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 __pci_inline const char	*
-pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char * buf,
+    size_t len)
 {
-	return (*pc->pc_intr_string)(pc->pc_intr_v, ih);
+	return (*pc->pc_intr_string)(pc->pc_intr_v, ih, buf, len);
 }
 
 __pci_inline const struct evcnt *
@@ -347,7 +350,7 @@ int genppc_pci_bus_maxdevs(void *, int);
 
 int genppc_pci_intr_map(const struct pci_attach_args *,
     pci_intr_handle_t *);
-const char *genppc_pci_intr_string(void *, pci_intr_handle_t);
+const char *genppc_pci_intr_string(void *, pci_intr_handle_t, char *, size_t);
 const struct evcnt *genppc_pci_intr_evcnt(void *, pci_intr_handle_t);
 void *genppc_pci_intr_establish(void *, pci_intr_handle_t, int, int (*)(void *),
     void *);

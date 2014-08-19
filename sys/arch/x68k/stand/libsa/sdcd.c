@@ -1,4 +1,4 @@
-/*	$NetBSD: sdcd.c,v 1.13.2.1 2013/02/25 00:29:04 tls Exp $	*/
+/*	$NetBSD: sdcd.c,v 1.13.2.2 2014/08/20 00:03:28 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -67,9 +67,9 @@ check_unit(int id)
 	}
 
 	{
-		struct iocs_inquiry *inqdata= buffer;
+		struct iocs_inquiry *inqdata = buffer;
 
-		error = IOCS_S_INQUIRY(100, id, inqdata);
+		error = IOCS_S_INQUIRY(sizeof(*inqdata), id, inqdata);
 		if (error < 0) {		/* WHY??? */
 			error = ENXIO;
 			goto out;

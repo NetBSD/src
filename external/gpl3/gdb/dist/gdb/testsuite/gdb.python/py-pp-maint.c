@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2010-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,6 +16,16 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <string.h>
+
+enum flag_enum
+  {
+    FLAG_1 = 1,
+    FLAG_2 = 2,
+    FLAG_3 = 4,
+    ALL = FLAG_1 | FLAG_2 | FLAG_3
+  };
+
+enum flag_enum fval;
 
 struct function_lookup_test
 {

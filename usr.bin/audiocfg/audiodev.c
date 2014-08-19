@@ -1,4 +1,4 @@
-/* $NetBSD: audiodev.c,v 1.4 2010/09/03 19:20:37 jmcneill Exp $ */
+/* $NetBSD: audiodev.c,v 1.4.12.1 2014/08/20 00:04:56 tls Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -269,15 +269,19 @@ audiodev_test(struct audiodev *adev, unsigned int chanmask)
 
 	off = 0;
 	while (buflen > 0) {
-		size_t wlen = info.play.buffer_size;
+		size_t wlen; 
+		ssize_t ret;
+
+		wlen = info.play.buffer_size;
 		if (wlen > buflen)
 			wlen = buflen;
-		wlen = write(adev->fd, (char *)buf + off, wlen);
-		if (wlen == -1) {
+		ret = write(adev->fd, (char *)buf + off, wlen);
+		if (ret == -1) {
 			perror("write");
 			rv = -1;
 			goto done;
 		}
+		wlen = ret;
 		off += wlen;
 		buflen -= wlen;
 	}

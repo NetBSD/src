@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22.2.2 2013/06/23 06:29:03 tls Exp $
+#	$NetBSD: Makefile,v 1.22.2.3 2014/08/20 00:05:07 tls Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -9,13 +9,15 @@ CWARNFLAGS.clang+=	-Wno-format
 LDADD+=	-lutil -lkvm -ledit -lterminfo
 DPADD+=	${LIBUTIL} ${LIBKVM} ${LIBEDIT} ${LIBTERMINFO}
 
+.include <bsd.own.mk>
+
 # some ddb kernel components need limited modifications.  for now,
 # punt if not noted as implemented here.
 .if    ${MACHINE} == "amd64" \
-    || ${MACHINE} == "hp700" \
+    || ${MACHINE} == "hppa" \
     || ${MACHINE} == "i386" \
     || ${MACHINE} == "sparc64" \
-    || (${MACHINE_ARCH} == "arm" && ${MACHINE} != "acorn26") \
+    || (${MACHINE_CPU} == "arm" && ${MACHINE} != "acorn26") \
     || ${MACHINE_ARCH} == "m68k"
 SRCS+=	db_trace.c
 .if ${MACHINE_ARCH} != "m68k"
@@ -50,17 +52,14 @@ CPPFLAGS+=	-I${S}/arch
 . if    ${MACHINE} == "amd64" \
      || ${MACHINE} == "i386"
 MACHINE_FAMILY = x86
-. elif  ${MACHINE_ARCH} == "m68k" \
-     || ${MACHINE_ARCH} == "arm"
-MACHINE_FAMILY = ${MACHINE_ARCH}
 . elif    ${MACHINE} == "sparc64" \
      || ${MACHINE} == "sparc64"
 MACHINE_FAMILY = sparc
 . else
-MACHINE_FAMILY = ${MACHINE}
+MACHINE_FAMILY = ${MACHINE_CPU}
 . endif
 
-.if ${MACHINE_ARCH} == "arm"
+.if ${MACHINE_CPU} == "arm"
 .PATH:	${S}/arch/arm/arm32
 SRCS+=disassem.c cpufunc_asm.S
 .endif

@@ -1,5 +1,5 @@
-/*	$NetBSD: ubsecreg.h,v 1.2 2005/12/11 12:22:51 christos Exp $	*/
-/*	$OpenBSD: ubsecreg.h,v 1.28 2003/06/04 16:02:41 jason Exp $	*/
+/*	$NetBSD: ubsecreg.h,v 1.2.120.1 2014/08/20 00:03:48 tls Exp $	*/
+/*	$OpenBSD: ubsecreg.h,v 1.29 2009/03/25 12:17:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -60,6 +60,10 @@
 #define	BS_STAT		0x08	/* DMA Status */
 #define	BS_ERR		0x0c	/* DMA Error Address */
 #define	BS_MCR2		0x10	/* DMA Master Command Record 2 */
+#define	BS_MCR3		0x0014	/* 5827+, DMA Master Command Record 3 */
+#define	BS_MCR4		0x001c	/* 5827+, DMA Master Command Record 4 */
+#define	BS_CFG		0x0700	/* 5827+, Configuration Register */
+#define	BS_INT		0x0f00	/* 5827+, Interrupt Register */
 
 /* BS_CTRL - DMA Control */
 #define	BS_CTRL_RESET		0x80000000	/* hardware reset, 5805/5820 */
@@ -75,6 +79,9 @@
 #define	BS_CTRL_RNG_8		0x01000000	/* 1bit rn/eight slow clocks */
 #define	BS_CTRL_RNG_16		0x01800000	/* 1bit rn/16 slow clocks */
 #define	BS_CTRL_SWNORM		0x00400000	/* 582[01], sw normalization */
+#define	BS_CTRL_MCR3INT		0x00400000	/* 5827+, intr for MCR3 */
+#define	BS_CTRL_MCR4INT		0x00200000	/* 5827+, intr for MCR4 */
+#define	BS_CTRL_BSIZE240	0x000f0000	/* 5827+, burst size 240 */
 #define	BS_CTRL_FRAG_M		0x0000ffff	/* output fragment size mask */
 #define	BS_CTRL_LITTLE_ENDIAN	(BS_CTRL_BE32 | BS_CTRL_BE64)
 
@@ -87,11 +94,24 @@
 #define	BS_STAT_MCR2_DONE	0x04000000	/* MCR2 is done */
 #define	BS_STAT_MCR1_ALLEMPTY	0x02000000	/* 5821, MCR1 is empty */
 #define	BS_STAT_MCR2_ALLEMPTY	0x01000000	/* 5821, MCR2 is empty */
+#define	BS_STAT_MCR3_ALLEMPTY	0x00800000	/* 5827+, MCR3 is empty */
+#define	BS_STAT_MCR4_ALLEMPTY	0x00400000	/* 5827+, MCR4 is empty */
+#define	BS_STAT_MCR3_FULL	0x00080000	/* 5827+, MCR3 is full */
+#define	BS_STAT_MCR3_DONE	0x00040000	/* 5827+, MCR3 is done */
+#define	BS_STAT_MCR4_FULL	0x00020000	/* 5827+, MCR4 is full */
+#define	BS_STAT_MCR4_DONE	0x00010000	/* 5827+, MCR4 is done */
 
 /* BS_ERR - DMA Error Address */
 #define	BS_ERR_ADDR		0xfffffffc	/* error address mask */
 #define	BS_ERR_READ		0x00000002	/* fault was on read */
 
+/* BS_CFG */
+#define	BS_CFG_RNG		0x00000001	/* 5827+, enable RNG */
+
+/* BS_INT */
+#define	BS_INT_DMAINT		0x80000000	/* 5827+, enable DMA intr */
+
+/* DES/3DES */
 struct ubsec_pktctx {
 	u_int32_t	pc_deskey[6];		/* 3DES key */
 	u_int32_t	pc_hminner[5];		/* hmac inner state */
@@ -108,17 +128,56 @@ struct ubsec_pktctx {
 #define	UBS_PKTCTX_AUTH_MD5	0x1000		/* use hmac-md5 */
 #define	UBS_PKTCTX_AUTH_SHA1	0x2000		/* use hmac-sha1 */
 
-struct ubsec_pktctx_long {
-	volatile u_int16_t	pc_len;		/* length of ctx struct */
-	volatile u_int16_t	pc_type;	/* context type, 0 */
-	volatile u_int16_t	pc_flags;	/* flags, same as above */
-	volatile u_int16_t	pc_offset;	/* crypto/auth offset */
+/* "Long" cryptographic operations on newer chipsets */
+#define	UBS_PKTCTX_TYPE_IPSEC_3DES	0x0000
+#define	UBS_PKTCTX_TYPE_IPSEC_AES	0x0040
+
+struct ubsec_pktctx_hdr {
+	volatile u_int16_t	ph_len;		/* length of ctx struct */
+	volatile u_int16_t	ph_type;	/* context type, 0 */
+	volatile u_int16_t	ph_flags;	/* flags, same as above */
+	volatile u_int16_t	ph_offset;	/* crypto/auth offset */
+};
+
+/* Long version of DES/3DES */
+struct ubsec_pktctx_3des {
+	struct ubsec_pktctx_hdr	pc_hdr;		/* Common header */
 	volatile u_int32_t	pc_deskey[6];	/* 3DES key */
 	volatile u_int32_t	pc_iv[2];	/* [3]DES iv */
 	volatile u_int32_t	pc_hminner[5];	/* hmac inner state */
 	volatile u_int32_t	pc_hmouter[5];	/* hmac outer state */
 };
-#define	UBS_PKTCTX_TYPE_IPSEC	0x0000
+
+/* AES uses different structures for each supported key size */
+struct ubsec_pktctx_aes128 {
+	struct ubsec_pktctx_hdr	pc_hdr;		/* Common header */
+	volatile u_int32_t	pc_aeskey[4];	/* AES128 key */
+	volatile u_int32_t	pc_iv[4];	/* AES iv/ucv */
+	volatile u_int32_t	pc_hminner[5];	/* hmac inner state */
+	volatile u_int32_t	pc_hmouter[5];	/* hmac outer state */
+};
+
+struct ubsec_pktctx_aes192 {
+	struct ubsec_pktctx_hdr	pc_hdr;		/* Common header */
+	volatile u_int32_t	pc_aeskey[6];	/* AES192 key */
+	volatile u_int32_t	pc_iv[4];	/* AES iv/icv */
+	volatile u_int32_t	pc_hminner[5];	/* hmac inner state */
+	volatile u_int32_t	pc_hmouter[5];	/* hmac outer state */
+};
+
+struct ubsec_pktctx_aes256 {
+	struct ubsec_pktctx_hdr	pc_hdr;		/* Common header */
+	volatile u_int32_t	pc_aeskey[8];	/* AES256 key */
+	volatile u_int32_t	pc_iv[4];	/* AES iv/icv */
+	volatile u_int32_t	pc_hminner[5];	/* hmac inner state */
+	volatile u_int32_t	pc_hmouter[5];	/* hmac outer state */
+};
+#define UBS_PKTCTX_ENC_AES	0x8000		/* use aes */
+#define UBS_PKTCTX_MODE_CBC	0x0000		/* Cipher Block Chaining mode */
+#define UBS_PKTCTX_MODE_CTR	0x0400		/* Counter mode */
+#define UBS_PKTCTX_KEYSIZE_128	0x0000		/* AES128 */
+#define UBS_PKTCTX_KEYSIZE_192	0x0100		/* AES192 */
+#define UBS_PKTCTX_KEYSIZE_256	0x0200		/* AES256 */
 
 struct ubsec_pktbuf {
 	volatile u_int32_t	pb_addr;	/* address of buffer start */

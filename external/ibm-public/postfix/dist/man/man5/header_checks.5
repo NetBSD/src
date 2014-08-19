@@ -1,4 +1,4 @@
-.\"	$NetBSD: header_checks.5,v 1.1.1.3 2011/03/02 19:31:50 tron Exp $
+.\"	$NetBSD: header_checks.5,v 1.1.1.3.10.1 2014/08/19 23:59:41 tls Exp $
 .\"
 .TH HEADER_CHECKS 5 
 .ad
@@ -119,8 +119,9 @@ insensitive.
 This document assumes that header and body_checks rules are specified
 in the form of Postfix regular expression lookup tables. Usually the
 best performance is obtained with \fBpcre\fR (Perl Compatible Regular
-Expression) tables, but the slower \fBregexp\fR (POSIX regular
-expressions) support is more widely available.
+Expression) tables. The \fBregexp\fR (POSIX regular
+expressions) tables are usually slower, but more widely
+available.
 Use the command "\fBpostconf -m\fR" to find out what lookup table
 types your Postfix system supports.
 
@@ -371,7 +372,7 @@ are excluded from inspection. Examples of such message headers
 are \fBFrom:\fR, \fBTo:\fR, \fBMessage-ID:\fR, \fBDate:\fR.
 
 Message headers deleted by the \fBcleanup\fR(8) daemon will
-be examined before they are deleted. Examples are: \fBBcc:\fr,
+be examined before they are deleted. Examples are: \fBBcc:\fR,
 \fBContent-Length:\fR, \fBReturn-Path:\fR.
 .SH "CONFIGURATION PARAMETERS"
 .na

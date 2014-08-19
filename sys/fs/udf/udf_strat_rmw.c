@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_rmw.c,v 1.22 2009/07/08 19:04:08 reinoud Exp $ */
+/* $NetBSD: udf_strat_rmw.c,v 1.22.22.1 2014/08/20 00:04:28 tls Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.22 2009/07/08 19:04:08 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.22.22.1 2014/08/20 00:04:28 tls Exp $");
 #endif /* not lint */
 
 
@@ -345,7 +345,7 @@ udf_pop_eccline(struct strat_private *priv, int queued_on)
 static void
 udf_unqueue_eccline(struct strat_private *priv, struct udf_eccline *eccline)
 {
-	struct buf *ret;
+	struct buf *ret __diagused;
 
 	UDF_LOCK_ECCLINE(eccline);
 	if (eccline->queued_on == 0) {
@@ -372,7 +372,7 @@ udf_geteccline(struct udf_mount *ump, uint32_t sector, int flags)
 	uint32_t start_sector, lb_size, blobsize;
 	uint8_t *eccline_blob;
 	int line, line_offset;
-	int num_busy, ret;
+	int num_busy;
 
 	mutex_enter(&priv->discstrat_mutex);
 
@@ -406,7 +406,7 @@ retry:
 	DPRINTF(ECCLINE, ("\tallocating new eccline\n"));
 	num_busy = (priv->num_queued[UDF_SHED_SEQWRITING] + priv->num_floating);
 	if ((flags & ECC_SEQWRITING) && (num_busy > UDF_ECCLINE_MAXBUSY)) {
-		ret = cv_timedwait(&priv->discstrat_cv,
+		cv_timedwait(&priv->discstrat_cv,
 			&priv->discstrat_mutex, hz/8);
 		goto retry;
 	}
@@ -1466,7 +1466,6 @@ udf_discstrat_finish_rmw(struct udf_strat_args *args)
 {
 	struct udf_mount *ump = args->ump;
 	struct strat_private *priv = PRIV(ump);
-	int error;
 
 	if (ump == NULL)
 		return;
@@ -1476,8 +1475,7 @@ udf_discstrat_finish_rmw(struct udf_strat_args *args)
 	priv->run_thread = 0;
 	wakeup(priv->queue_lwp);
 	while (!priv->thread_finished) {
-		error = tsleep(&priv->run_thread, PRIBIO+1,
-			"udfshedfin", hz);
+		tsleep(&priv->run_thread, PRIBIO + 1, "udfshedfin", hz);
 	}
 	/* kthread should be finished now */
 

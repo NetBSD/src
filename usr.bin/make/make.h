@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.89.2.1 2013/06/23 06:29:00 tls Exp $	*/
+/*	$NetBSD: make.h,v 1.89.2.2 2014/08/20 00:05:00 tls Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -273,6 +273,7 @@ typedef struct GNode {
 #define OP_NOMETA	0x00080000  /* .NOMETA do not create a .meta file */
 #define OP_META		0x00100000  /* .META we _do_ want a .meta file */
 #define OP_NOMETA_CMP	0x00200000  /* Do not compare commands in .meta file */
+#define OP_SUBMAKE	0x00400000  /* Possibly a submake node */
 /* Attributes applied by PMake */
 #define OP_TRANSFORM	0x80000000  /* The node is a transformation rule */
 #define OP_MEMBER 	0x40000000  /* Target is a member of an archive */
@@ -388,6 +389,10 @@ extern Boolean	varNoExportEnv;	/* TRUE if we should not export variables
 
 extern GNode    *DEFAULT;    	/* .DEFAULT rule */
 
+extern GNode	*VAR_INTERNAL;	/* Variables defined internally by make
+				 * which should not override those set by
+				 * makefiles.
+				 */
 extern GNode    *VAR_GLOBAL;   	/* Variables defined in a global context, e.g
 				 * in the Makefile itself */
 extern GNode    *VAR_CMD;    	/* Variables defined on the command line */

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.5.4.2 2013/02/25 00:30:45 tls Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.5.4.3 2014/08/20 00:05:09 tls Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.5.4.2 2013/02/25 00:30:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.5.4.3 2014/08/20 00:05:09 tls Exp $");
 
 #include <sys/param.h>
 
@@ -319,7 +319,7 @@ int
 deextend(struct denode *dep, u_long length, struct kauth_cred *cred)
 {
 	struct msdosfsmount *pmp = dep->de_pmp;
-	u_long count, osize;
+	u_long count;
 	int error;
 
 	/*
@@ -357,7 +357,6 @@ deextend(struct denode *dep, u_long length, struct kauth_cred *cred)
 	 * memset(); we set the write size so ubc won't read in file data that
 	 * is zero'd later.
 	 */
-	osize = dep->de_FileSize;
 	dep->de_FileSize = length;
 	dep->de_flag |= DE_UPDATE|DE_MODIFIED;
 	return 0;

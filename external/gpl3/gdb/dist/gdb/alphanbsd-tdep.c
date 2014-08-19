@@ -1,7 +1,6 @@
 /* Target-dependent code for NetBSD/alpha.
 
-   Copyright (C) 2002, 2003, 2004, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -29,7 +28,7 @@
 #include "value.h"
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 
 #include "alpha-tdep.h"
 #include "alphabsd-tdep.h"
@@ -272,6 +271,60 @@ alphanbsd_sigtramp_cache_init (const struct tramp_frame *self,
   /* Construct the frame ID using the function start.  */
   trad_frame_set_id (this_cache, frame_id_build (sp, func));
 }
+
+#ifdef notyet
+#define RETCODE_NWORDS          4
+#define RETCODE_SIZE            (RETCODE_NWORDS * 4)
+
+static LONGEST
+alphanbsd_sigtramp_offset (struct gdbarch *gdbarch, CORE_ADDR pc)
+{
+  gdb_byte ret[RETCODE_SIZE], w[4];
+  LONGEST off;
+  int i;
+
+  if (target_read_memory (pc, w, 4) != 0)
+    return -1;
+
+  for (i = 0; i < RETCODE_NWORDS; i++)
+    {
+      if (memcmp (w, sigtramp_retcode + (i * 4), 4) == 0)
+	break;
+    }
+  if (i == RETCODE_NWORDS)
+    return (-1);
+
+  off = i * 4;
+  pc -= off;
+
+  if (target_read_memory (pc, ret, sizeof (ret)) != 0)
+    return -1;
+
+  if (memcmp (ret, sigtramp_retcode, RETCODE_SIZE) == 0)
+    return off;
+
+  return -1;
+}
+
+static int
+alphanbsd_pc_in_sigtramp (struct gdbarch *gdbarch,
+		 	  CORE_ADDR pc, const char *func_name)
+{
+  return (nbsd_pc_in_sigtramp (pc, func_name)
+	  || alphanbsd_sigtramp_offset (gdbarch, pc) >= 0);
+}
+
+static CORE_ADDR
+alphanbsd_sigcontext_addr (struct frame_info *frame)
+{
+  /* FIXME: This is not correct for all versions of NetBSD/alpha.
+     We will probably need to disassemble the trampoline to figure
+     out which trampoline frame type we have.  */
+  if (!get_next_frame (frame))
+    return 0;
+  return get_frame_base (get_next_frame (frame));
+}
+#endif
 
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.43 2011/07/17 20:54:47 joerg Exp $ */
+/*	$NetBSD: promlib.c,v 1.43.12.1 2014/08/20 00:03:24 tls Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.43 2011/07/17 20:54:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.43.12.1 2014/08/20 00:03:24 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -149,8 +149,9 @@ notimplemented(void)
 	char str[64];
 	int n;
 
-	n = sprintf(str, "Operation not implemented on ROM version %d\r\n",
-		    promops.po_version);
+	n = snprintf(str, sizeof(str),
+	    "Operation not implemented on ROM version %d\r\n",
+	    promops.po_version);
 
 	/*
 	 * Use PROM vector directly, in case we're called before prom_init().

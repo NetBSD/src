@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.7 2011/10/11 13:07:06 tsutsui Exp $
+#	$NetBSD: Makefile.booters,v 1.7.12.1 2014/08/20 00:03:28 tls Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -13,6 +13,7 @@ CPPFLAGS+=	-D__daddr_t=int32_t
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=

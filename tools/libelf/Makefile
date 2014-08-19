@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.10.1 2013/02/25 00:30:30 tls Exp $
+#	$NetBSD: Makefile,v 1.5.10.2 2014/08/20 00:04:54 tls Exp $
 
 HOSTLIB=	elf
 
@@ -31,11 +31,14 @@ SRCS=		elf_begin.c						\
 		gelf_rel.c gelf_rela.c					\
 		gelf_shdr.c gelf_sym.c gelf_syminfo.c gelf_symshndx.c	\
 		gelf_xlate.c						\
-		libelf.c						\
+		elf.c							\
 		libelf_align.c libelf_allocate.c libelf_ar.c		\
+		libelf_ar_util.c					\
 		libelf_checksum.c					\
 		libelf_data.c						\
 		libelf_ehdr.c libelf_extended.c				\
+		libelf_memory.c						\
+		libelf_open.c						\
 		libelf_phdr.c						\
 		libelf_shdr.c						\
 		libelf_xlate.c						\
@@ -43,10 +46,10 @@ SRCS=		elf_begin.c						\
 
 LIBELF_GENSRCS=	libelf_fsize.c libelf_msize.c libelf_convert.c
 
-LIBELF_DIR=	${.CURDIR}/../../external/bsd/libelf/dist
+LIBELF_DIR=	${.CURDIR}/../../external/bsd/elftoolchain/dist/libelf
 
 CLEANFILES+=	${LIBELF_GENSRCS}
-CPPFLAGS+=	-I${.CURDIR}/../compat -I${LIBELF_DIR}
+CPPFLAGS+=	-I${.CURDIR}/../compat -I${LIBELF_DIR} -I${LIBELF_DIR}/../common
 CPPFLAGS+=	-I${TOOLDIR}/include/nbinclude
 
 CPPFLAGS+=	-DLIBELF_TEST_HOOKS

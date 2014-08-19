@@ -1,7 +1,5 @@
 /* ELF support for BFD.
-   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright 1991-2013 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
    in "UNIX System V Release 4, Programmers Guide: ANSI C and
@@ -62,8 +60,8 @@
 #define ELFOSABI_NONE	      0	/* UNIX System V ABI */
 #define ELFOSABI_HPUX	      1	/* HP-UX operating system */
 #define ELFOSABI_NETBSD	      2	/* NetBSD */
-#define ELFOSABI_LINUX	      3	/* GNU/Linux */
-#define ELFOSABI_HURD	      4	/* GNU/Hurd */
+#define ELFOSABI_GNU	      3	/* GNU */
+#define ELFOSABI_LINUX	      3	/* Alias for ELFOSABI_GNU */
 #define ELFOSABI_SOLARIS      6	/* Solaris */
 #define ELFOSABI_AIX	      7	/* AIX */
 #define ELFOSABI_IRIX	      8	/* IRIX */
@@ -159,7 +157,7 @@
 #define EM_MMA		 54	/* Fujitsu Multimedia Accelerator */
 #define EM_PCP		 55	/* Siemens PCP */
 #define EM_NCPU		 56	/* Sony nCPU embedded RISC processor */
-#define EM_NDR1		 57	/* Denso NDR1 microprocesspr */
+#define EM_NDR1		 57	/* Denso NDR1 microprocessor */
 #define EM_STARCORE	 58	/* Motorola Star*Core processor */
 #define EM_ME16		 59	/* Toyota ME16 processor */
 #define EM_ST100	 60	/* STMicroelectronics ST100 processor */
@@ -278,23 +276,31 @@
 #define EM_MANIK	171	/* M2000 Reconfigurable RISC Microprocessor */
 #define EM_CRAYNV2	172	/* Cray Inc. NV2 vector architecture */
 #define EM_RX		173	/* Renesas RX family */
-#define EM_METAG	174	/* Imagination Technologies META processor architecture */
+#define EM_METAG	174	/* Imagination Technologies Meta processor architecture */
 #define EM_MCST_ELBRUS	175	/* MCST Elbrus general purpose hardware architecture */
 #define EM_ECOG16	176	/* Cyan Technology eCOG16 family */
 #define EM_CR16		177	/* National Semiconductor CompactRISC 16-bit processor */
 #define EM_ETPU		178	/* Freescale Extended Time Processing Unit */
 #define EM_SLE9X	179	/* Infineon Technologies SLE9X core */
 #define EM_L1OM		180	/* Intel L1OM */
-#define EM_INTEL181	181	/* Reserved by Intel */
+#define EM_K1OM		181	/* Intel K1OM */
 #define EM_INTEL182	182	/* Reserved by Intel */
-#define EM_res183	183	/* Reserved by ARM */
-#define EM_res184	184	/* Reserved by ARM */
+#define EM_AARCH64	183	/* ARM 64-bit architecture */
+#define EM_ARM184	184	/* Reserved by ARM */
 #define EM_AVR32	185	/* Atmel Corporation 32-bit microprocessor family */
 #define EM_STM8	186	/* STMicroeletronics STM8 8-bit microcontroller */
 #define EM_TILE64	187	/* Tilera TILE64 multicore architecture family */
 #define EM_TILEPRO	188	/* Tilera TILEPro multicore architecture family */
 #define EM_MICROBLAZE	189	/* Xilinx MicroBlaze 32-bit RISC soft processor core */
 #define EM_CUDA		190	/* NVIDIA CUDA architecture */
+#define EM_TILEGX	191	/* Tilera TILE-Gx multicore architecture family */
+#define EM_RL78		197	/* Renesas RL78 family.  */
+#define EM_78K0R	199	/* Renesas 78K0R.  */
+#define EM_INTEL205	205	/* Reserved by Intel */
+#define EM_INTEL206	206	/* Reserved by Intel */
+#define EM_INTEL207	207	/* Reserved by Intel */
+#define EM_INTEL208	208	/* Reserved by Intel */
+#define EM_INTEL209	209	/* Reserved by Intel */
 
 /* If it is necessary to assign new unofficial EM_* values, please pick large
    random numbers (0x8523, 0xa7f2, etc.) to minimize the chances of collision
@@ -399,6 +405,8 @@
 #define EM_SCORE_OLD            95
 
 #define EM_MICROBLAZE_OLD	0xbaab	/* Old MicroBlaze */
+
+#define EM_ADAPTEVA_EPIPHANY   0x1223  /* Adapteva's Epiphany architecture.  */
 
 /* See the above comment before you add a new EM_* value here.  */
 
@@ -524,6 +532,10 @@
 					/*   note name must be "LINUX".  */
 #define NT_PPC_VSX	0x102		/* PowerPC VSX registers */
 					/*   note name must be "LINUX".  */
+#define NT_386_TLS	0x200		/* x86 TLS information */
+					/*   note name must be "LINUX".  */
+#define NT_386_IOPERM	0x201		/* x86 io permissions */
+					/*   note name must be "LINUX".  */
 #define NT_X86_XSTATE	0x202		/* x86 XSAVE extended state */
 					/*   note name must be "LINUX".  */
 #define NT_S390_HIGH_GPRS 0x300		/* S/390 upper halves of GPRs  */
@@ -538,6 +550,23 @@
 					/*   note name must be "LINUX".  */
 #define NT_S390_PREFIX	0x305		/* S390 prefix register */
 					/*   note name must be "LINUX".  */
+#define NT_S390_LAST_BREAK      0x306   /* S390 breaking event address */
+					/*   note name must be "LINUX".  */
+#define NT_S390_SYSTEM_CALL     0x307   /* S390 system call restart data */
+					/*   note name must be "LINUX".  */
+#define NT_S390_TDB	0x308		/* S390 transaction diagnostic block */
+					/*   note name must be "LINUX".  */
+#define NT_ARM_VFP	0x400		/* ARM VFP registers */
+/* The following definitions should really use NT_AARCH_..., but defined
+   this way for compatibility with Linux.  */
+#define NT_ARM_TLS	0x401		/* AArch TLS registers */
+					/*   note name must be "LINUX".  */
+#define NT_ARM_HW_BREAK	0x402		/* AArch hardware breakpoint registers */
+					/*   note name must be "LINUX".  */
+#define NT_ARM_HW_WATCH	0x403		/* AArch hardware watchpoint registers */
+					/*   note name must be "LINUX".  */
+#define NT_SIGINFO	0x53494749	/* Fields of siginfo_t.  */
+#define NT_FILE		0x46494c45	/* Description of mapped files.  */
 
 /* Note segments for core files on dir-style procfs systems.  */
 
@@ -548,6 +577,8 @@
 #define NT_LWPSINFO	17		/* Has a struct lwpsinfo_t */
 #define NT_WIN32PSTATUS	18		/* Has a struct win32_pstatus */
 
+/* Note segment for SystemTap probes.  */
+#define NT_STAPSDT	3
 
 /* Note segments for core files on NetBSD systems.  Note name
    must start with "NetBSD-CORE".  */
@@ -807,7 +838,19 @@
 #define DF_1_INTERPOSE	0x00000400
 #define DF_1_NODEFLIB	0x00000800
 #define DF_1_NODUMP	0x00001000
-#define DF_1_CONLFAT	0x00002000
+#define DF_1_CONFALT	0x00002000
+#define DF_1_ENDFILTEE	0x00004000
+#define	DF_1_DISPRELDNE	0x00008000
+#define	DF_1_DISPRELPND	0x00010000
+#define	DF_1_NODIRECT	0x00020000
+#define	DF_1_IGNMULDEF	0x00040000
+#define	DF_1_NOKSYMS	0x00080000
+#define	DF_1_NOHDR	0x00100000
+#define	DF_1_EDITED	0x00200000
+#define	DF_1_NORELOC	0x00400000
+#define	DF_1_SYMINTPOSE	0x00800000
+#define	DF_1_GLOBAUDIT	0x01000000
+#define	DF_1_SINGLETON	0x02000000
 
 /* Flag values for the DT_FLAGS entry.	*/
 #define DF_ORIGIN	(1 << 0)
@@ -921,6 +964,18 @@
    nice things.  */
 #define AT_SYSINFO	32
 #define AT_SYSINFO_EHDR	33 /* Pointer to ELF header of system-supplied DSO.  */
+
+/* More complete cache descriptions than AT_[DIU]CACHEBSIZE.  If the
+   value is -1, then the cache doesn't exist.  Otherwise:
+
+   bit 0-3:  Cache set-associativity; 0 means fully associative.
+   bit 4-7:  Log2 of cacheline size.
+   bit 8-31:  Size of the entire cache >> 8.  */
+
+#define AT_L1I_CACHESHAPE 34
+#define AT_L1D_CACHESHAPE 35
+#define AT_L2_CACHESHAPE  36
+#define AT_L3_CACHESHAPE  37
 
 #define AT_SUN_UID      2000    /* Effective user ID.  */
 #define AT_SUN_RUID     2001    /* Real user ID.  */

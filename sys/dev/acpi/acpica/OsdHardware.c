@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdHardware.c,v 1.8 2011/02/17 10:23:43 jruoho Exp $	*/
+/*	$NetBSD: OsdHardware.c,v 1.8.14.1 2014/08/20 00:03:35 tls Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.8 2011/02/17 10:23:43 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.8.14.1 2014/08/20 00:03:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -125,7 +125,7 @@ AcpiOsWritePort(ACPI_IO_ADDRESS Address, UINT32 Value, UINT32 Width)
  *	Read a value from a memory location.
  */
 ACPI_STATUS
-AcpiOsReadMemory(ACPI_PHYSICAL_ADDRESS Address, UINT32 *Value, UINT32 Width)
+AcpiOsReadMemory(ACPI_PHYSICAL_ADDRESS Address, UINT64 *Value, UINT32 Width)
 {
 	void *LogicalAddress;
 	ACPI_STATUS rv = AE_OK;
@@ -147,6 +147,10 @@ AcpiOsReadMemory(ACPI_PHYSICAL_ADDRESS Address, UINT32 *Value, UINT32 Width)
 		*Value = *(volatile uint32_t *) LogicalAddress;
 		break;
 
+	case 64:
+		*Value = *(volatile uint64_t *) LogicalAddress;
+		break;
+
 	default:
 		rv = AE_BAD_PARAMETER;
 	}
@@ -162,7 +166,7 @@ AcpiOsReadMemory(ACPI_PHYSICAL_ADDRESS Address, UINT32 *Value, UINT32 Width)
  *	Write a value to a memory location.
  */
 ACPI_STATUS
-AcpiOsWriteMemory(ACPI_PHYSICAL_ADDRESS Address, UINT32 Value, UINT32 Width)
+AcpiOsWriteMemory(ACPI_PHYSICAL_ADDRESS Address, UINT64 Value, UINT32 Width)
 {
 	void *LogicalAddress;
 	ACPI_STATUS rv = AE_OK;
@@ -182,6 +186,10 @@ AcpiOsWriteMemory(ACPI_PHYSICAL_ADDRESS Address, UINT32 Value, UINT32 Width)
 
 	case 32:
 		*(volatile uint32_t *) LogicalAddress = Value;
+		break;
+
+	case 64:
+		*(volatile uint64_t *) LogicalAddress = Value;
 		break;
 
 	default:

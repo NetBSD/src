@@ -1,4 +1,4 @@
-/*	$NetBSD: master_listen.c,v 1.1.1.1 2009/06/23 10:08:49 tron Exp $	*/
+/*	$NetBSD: master_listen.c,v 1.1.1.1.16.1 2014/08/19 23:59:43 tls Exp $	*/
 
 /*++
 /* NAME
@@ -138,7 +138,7 @@ void    master_listen_init(MASTER_SERV *serv)
     case MASTER_SERV_TYPE_PASS:
 	set_eugid(var_owner_uid, var_owner_gid);
 	serv->listen_fd[0] =
-	    PASS_LISTEN(serv->name, serv->max_proc > var_proc_limit ?
+	    LOCAL_LISTEN(serv->name, serv->max_proc > var_proc_limit ?
 			serv->max_proc : var_proc_limit, NON_BLOCKING);
 	close_on_exec(serv->listen_fd[0], CLOSE_ON_EXEC);
 	set_ugid(getuid(), getgid());

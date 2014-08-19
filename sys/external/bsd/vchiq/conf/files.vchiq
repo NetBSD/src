@@ -1,4 +1,4 @@
-#	$NetBSD: files.vchiq,v 1.1.6.2 2013/06/23 06:20:22 tls Exp $
+#	$NetBSD: files.vchiq,v 1.1.6.3 2014/08/20 00:04:25 tls Exp $
 #
 # Broadcom VideoCore IV
 #
@@ -17,4 +17,4 @@ file	external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_util.c	vchiq
 file	external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_kern_lib.c	vchiq
 file	external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_kmod_netbsd.c	vchiq
 
-makeoptions	vchiq	CPPFLAGS+="-I$S/external/bsd/vchiq/dist -DVCOS_VERIFY_BKPTS=1 -DUSE_VCHIQ_ARM -D__VCCOREVER__=0x04000000 -DVCHIQ_ENABLE_DEBUG=1 -DVCHIQ_LOG_DEFAULT=5"
+makeoptions	vchiq	CPPFLAGS+="-I$S/external/bsd/vchiq/dist -I$S/external/bsd/common/include -DVCOS_VERIFY_BKPTS=1 -DUSE_VCHIQ_ARM -D__VCCOREVER__=0x04000000 -DVCHIQ_ENABLE_DEBUG=1 -DVCHIQ_LOG_DEFAULT=5"

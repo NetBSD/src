@@ -1,7 +1,6 @@
 /* Dynamic architecture support for GDB, the GNU debugger.
 
-   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-   2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +23,7 @@
 #include "buildsym.h"
 #include "gdbcmd.h"
 #include "inferior.h"		/* enum CALL_DUMMY_LOCATION et al.  */
-#include "gdb_string.h"
+#include <string.h>
 #include "regcache.h"
 #include "gdb_assert.h"
 #include "sim-regno.h"
@@ -32,6 +31,7 @@
 #include "osabi.h"
 #include "target-descriptions.h"
 #include "objfiles.h"
+#include "language.h"
 
 #include "version.h"
 
@@ -121,7 +121,7 @@ generic_skip_solib_resolver (struct gdbarch *gdbarch, CORE_ADDR pc)
 
 int
 generic_in_solib_return_trampoline (struct gdbarch *gdbarch,
-				    CORE_ADDR pc, char *name)
+				    CORE_ADDR pc, const char *name)
 {
   return 0;
 }
@@ -252,7 +252,7 @@ static int target_byte_order_user = BFD_ENDIAN_UNKNOWN;
 static const char endian_big[] = "big";
 static const char endian_little[] = "little";
 static const char endian_auto[] = "auto";
-static const char *endian_enum[] =
+static const char *const endian_enum[] =
 {
   endian_big,
   endian_little,
@@ -477,7 +477,7 @@ set_architecture (char *ignore_args, int from_tty, struct cmd_list_element *c)
 }
 
 /* Try to select a global architecture that matches "info".  Return
-   non-zero if the attempt succeds.  */
+   non-zero if the attempt succeeds.  */
 int
 gdbarch_update_p (struct gdbarch_info info)
 {
@@ -506,7 +506,7 @@ gdbarch_update_p (struct gdbarch_info info)
 
   /* If it is the same old architecture, accept the request (but don't
      swap anything).  */
-  if (new_gdbarch == target_gdbarch)
+  if (new_gdbarch == target_gdbarch ())
     {
       if (gdbarch_debug)
 	fprintf_unfiltered (gdb_stdlog, "gdbarch_update_p: "
@@ -522,7 +522,7 @@ gdbarch_update_p (struct gdbarch_info info)
 			"New architecture %s (%s) selected\n",
 			host_address_to_string (new_gdbarch),
 			gdbarch_bfd_arch_info (new_gdbarch)->printable_name);
-  deprecated_target_gdbarch_select_hack (new_gdbarch);
+  set_target_gdbarch (new_gdbarch);
 
   return 1;
 }
@@ -556,7 +556,7 @@ set_gdbarch_from_file (bfd *abfd)
 
   if (gdbarch == NULL)
     error (_("Architecture of file not recognized."));
-  deprecated_target_gdbarch_select_hack (gdbarch);
+  set_target_gdbarch (gdbarch);
 }
 
 /* Initialize the current architecture.  Update the ``set
@@ -757,7 +757,7 @@ get_current_arch (void)
   if (has_stack_frames ())
     return get_frame_arch (get_selected_frame (NULL));
   else
-    return target_gdbarch;
+    return target_gdbarch ();
 }
 
 int
@@ -784,6 +784,24 @@ default_remote_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr,
 				   int *kindptr)
 {
   gdbarch_breakpoint_from_pc (gdbarch, pcptr, kindptr);
+}
+
+void
+default_gen_return_address (struct gdbarch *gdbarch,
+			    struct agent_expr *ax, struct axs_value *value,
+			    CORE_ADDR scope)
+{
+  error (_("This architecture has no method to collect a return address."));
+}
+
+int
+default_return_in_first_hidden_param_p (struct gdbarch *gdbarch,
+					struct type *type)
+{
+  /* Usually, the return value's address is stored the in the "first hidden"
+     parameter if the return value should be passed by reference, as
+     specified in ABI.  */
+  return language_pass_by_reference (type);
 }
 
 /* */

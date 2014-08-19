@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_machdep.c,v 1.2.2.1 2012/11/20 03:01:12 tls Exp $	*/
+/*	$NetBSD: bcm53xx_machdep.c,v 1.2.2.2 2014/08/20 00:02:52 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define IDM_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.2.2.1 2012/11/20 03:01:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.2.2.2 2014/08/20 00:02:52 tls Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_broadcom.h"
@@ -200,7 +200,7 @@ initarm(void *arg)
 #ifdef MULTIPROCESSOR
 	uint32_t scu_cfg = bus_space_read_4(bcm53xx_armcore_bst, bcm53xx_armcore_bsh,
 	    ARMCORE_SCU_BASE + SCU_CFG);
-	arm_cpu_max = scu_cfg & SCU_CFG_CPUMAX;
+	arm_cpu_max = 1 + (scu_cfg & SCU_CFG_CPUMAX);
 	membar_producer();
 #endif
 	/*
@@ -238,8 +238,8 @@ initarm(void *arg)
 	    arm_cpu_max + 1, arm_cpu_max + 1 ? "s" : "",
 	    arm_cpu_hatched);
 #endif
-	printf(", CLIDR=%010o CTR=%#x",
-	    armreg_clidr_read(), armreg_ctr_read());
+	printf(", CLIDR=%010o CTR=%#x PMUSERSR=%#x",
+	    armreg_clidr_read(), armreg_ctr_read(), armreg_pmuserenr_read());
 	printf("\n");
 #endif
 

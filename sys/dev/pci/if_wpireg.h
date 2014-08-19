@@ -1,7 +1,8 @@
-/*  $NetBSD: if_wpireg.h,v 1.9 2007/12/25 18:33:41 perry Exp $    */
+/*	$NetBSD: if_wpireg.h,v 1.9.54.1 2014/08/20 00:03:43 tls Exp $	*/
+/*	$OpenBSD: if_wpireg.h,v 1.19 2007/09/10 20:53:22 damien Exp $	*/
 
 /*-
- * Copyright (c) 2006
+ * Copyright (c) 2006, 2007
  *	Damien Bergamini <damien.bergamini@free.fr>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -21,10 +22,10 @@
 #define WPI_CMD_RING_COUNT	256
 #define WPI_RX_RING_COUNT	64
 
-#define WPI_BUF_ALIGN       4096
+#define WPI_BUF_ALIGN		4096
 
 /*
- * Rings must be aligned on a four 4K-pages boundary.
+ * Rings must be aligned on a 16K boundary.
  * I had a hard time figuring this out.
  */
 #define WPI_RING_DMA_ALIGN	0x4000
@@ -51,10 +52,10 @@
 #define WPI_TEMPERATURE		0x060
 #define WPI_CHICKEN		0x100
 #define WPI_PLL_CTL		0x20c
-#define WPI_WRITE_MEM_ADDR  	0x444
-#define WPI_READ_MEM_ADDR   	0x448
-#define WPI_WRITE_MEM_DATA  	0x44c
-#define WPI_READ_MEM_DATA   	0x450
+#define WPI_WRITE_MEM_ADDR	0x444
+#define WPI_READ_MEM_ADDR	0x448
+#define WPI_WRITE_MEM_DATA	0x44c
+#define WPI_READ_MEM_DATA	0x450
 #define WPI_TX_WIDX		0x460
 #define WPI_TX_CTL(qid)		(0x940 + (qid) * 8)
 #define WPI_TX_BASE(qid)	(0x944 + (qid) * 8)
@@ -94,11 +95,11 @@
 #define WPI_MEM_UCODE_SIZE	0x340c
 #define WPI_MEM_UCODE_BASE	0x3800
 
- 
 #define WPI_MEM_TEXT_BASE	0x3490
 #define WPI_MEM_TEXT_SIZE	0x3494
 #define WPI_MEM_DATA_BASE	0x3498
 #define WPI_MEM_DATA_SIZE	0x349c
+
 
 /* possible flags for register WPI_HWCONFIG */
 #define WPI_HW_ALM_MB	(1 << 8)
@@ -145,7 +146,7 @@
 
 /* possible flags for register WPI_UC_CTL */
 #define WPI_UC_ENABLE	(1 << 30)
-#define WPI_UC_RUN		(1 << 31)
+#define WPI_UC_RUN	(1 << 31)
 
 /* possible flags for register WPI_INTR_CSR */
 #define WPI_ALIVE_INTR	(1 << 0)
@@ -201,6 +202,7 @@ struct wpi_rx_desc {
 	uint32_t	len;
 	uint8_t		type;
 #define WPI_UC_READY		  1
+#define WPI_ADD_NODE_DONE	 24
 #define WPI_RX_DONE		 27
 #define WPI_TX_DONE		 28
 #define WPI_START_SCAN		130
@@ -248,7 +250,7 @@ struct wpi_tx_cmd {
 	uint8_t	code;
 #define WPI_CMD_CONFIGURE	 16
 #define WPI_CMD_ASSOCIATE	 17
-#define WPI_CMD_SET_WME          19
+#define WPI_CMD_SET_WME		 19
 #define WPI_CMD_TSF		 20
 #define WPI_CMD_ADD_NODE	 24
 #define WPI_CMD_TX_DATA		 28
@@ -283,7 +285,6 @@ struct wpi_config {
 	uint8_t		ofdm_mask;
 	uint8_t		cck_mask;
 	uint16_t	associd;
-
 	uint32_t	flags;
 #define WPI_CONFIG_24GHZ	(1 << 0)
 #define WPI_CONFIG_CCK		(1 << 1)
@@ -341,7 +342,7 @@ struct wpi_cmd_tsf {
 /* structure for WPI_CMD_ADD_NODE */
 struct wpi_node_info {
 	uint8_t		control;
-#define WPI_NODE_UPDATE	(1 << 0)
+#define WPI_NODE_UPDATE		(1 << 0)
 
 	uint8_t		reserved1[3];
 	uint8_t		bssid[IEEE80211_ADDR_LEN];
@@ -351,15 +352,17 @@ struct wpi_node_info {
 #define WPI_ID_BROADCAST	24
 
 	uint8_t		flags;
+#define WPI_FLAG_SET_KEY	(1 << 0)
+
 	uint16_t	reserved3;
-	uint16_t	key_flags;
+	uint16_t	security;
 	uint8_t		tkip;
 	uint8_t		reserved4;
 	uint16_t	ttak[5];
 	uint16_t	reserved5;
 	uint8_t		key[IEEE80211_KEYBUF_SIZE];
 	uint32_t	action;
-#define WPI_ACTION_SET_RATE	4
+#define WPI_ACTION_SET_RATE	(1 << 2)
 
 	uint32_t	mask;
 	uint16_t	tid;
@@ -380,6 +383,7 @@ struct wpi_cmd_data {
 	uint16_t	lnext;
 	uint32_t	flags;
 #define WPI_TX_NEED_RTS		(1 <<  1)
+#define WPI_TX_NEED_CTS		(1 <<  2)
 #define WPI_TX_NEED_ACK		(1 <<  3)
 #define WPI_TX_FULL_TXOP	(1 <<  7)
 #define WPI_TX_BT_DISABLE	(1 << 12)	/* bluetooth coexistence */
@@ -390,6 +394,11 @@ struct wpi_cmd_data {
 	uint8_t		id;
 	uint8_t		tid;
 	uint8_t		security;
+#define WPI_CIPHER_WEP40	1
+#define WPI_CIPHER_CCMP		2
+#define WPI_CIPHER_TKIP		3
+#define WPI_CIPHER_WEP104	9
+
 	uint8_t		key[IEEE80211_KEYBUF_SIZE];
 	uint8_t		tkip[IEEE80211_WEP_MICLEN];
 	uint32_t	fnext;
@@ -464,8 +473,7 @@ struct wpi_power {
 	uint32_t	sleep[5];
 } __packed;
 
-/* structure for command WPI_CMD_SCAN */
-
+/* structures for command WPI_CMD_SCAN */
 struct wpi_scan_essid {
 	uint8_t	id;
 	uint8_t	len;
@@ -485,25 +493,10 @@ struct wpi_scan_hdr {
 	uint32_t	flags;
 	uint32_t	filter;
 
-	/* wpi_cmd_data structure */
-	uint16_t	paylen;
-	uint16_t	lnext;
-	uint32_t	txflags;
-	uint8_t		rate;
-	uint8_t		id;
-	uint8_t		tid;
-	uint8_t		security;
-	uint8_t		key[IEEE80211_KEYBUF_SIZE];
-	uint8_t		tkip[IEEE80211_WEP_MICLEN];
-	uint32_t	fnext;
-	uint32_t	lifetime;
-	uint8_t		ofdm_mask;
-	uint8_t		cck_mask;
-	uint8_t		rts_ntries;
-	uint8_t		data_ntries;
-	uint16_t	timeout;
-	uint16_t	txop;
+	/* followed by a struct wpi_cmd_data */
+	struct		wpi_cmd_data cmd;
 
+	/* followed by an array of 4x struct wpi_scan_essid */
 	struct		wpi_scan_essid essid[4];
 
 	/* followed by probe request body */
@@ -512,10 +505,10 @@ struct wpi_scan_hdr {
 
 struct wpi_scan_chan {
 	uint8_t		flags;
-	uint8_t		chan;
 #define WPI_CHAN_ACTIVE	(1 << 0)
 #define WPI_CHAN_DIRECT	(1 << 1)
 
+	uint8_t		chan;
 	uint8_t		rf_gain;
 	uint8_t		dsp_gain;
 	uint16_t	active;		/* msecs */
@@ -535,7 +528,7 @@ struct wpi_cmd_txpower {
 		uint8_t	rf_gain;
 		uint8_t	dsp_gain;
 		uint8_t	reserved;
-	} __packed rates[WPI_CCK11 + 1];
+	} __packed	rates[WPI_CCK11 + 1];
 } __packed;
 
 /* structure for WPI_CMD_BLUETOOTH */
@@ -581,32 +574,33 @@ struct wpi_stop_scan {
 	uint64_t	tsf;
 } __packed;
 
+
 /* firmware image header */
 struct wpi_firmware_hdr {
 	uint32_t	version;
 	uint32_t	main_textsz;
 	uint32_t	main_datasz;
-	uint32_t 	init_textsz;
+	uint32_t	init_textsz;
 	uint32_t	init_datasz;
 	uint32_t	boot_textsz;
 } __packed;
 
 #define WPI_FW_MAIN_TEXT_MAXSZ	(80 * 1024)
 #define WPI_FW_MAIN_DATA_MAXSZ	(32 * 1024)
-#define WPI_FW_INIT_TEXT_MAXSZ  (80 * 1024)
-#define WPI_FW_INIT_DATA_MAXSZ  (32 * 1024)
-#define WPI_FW_BOOT_TEXT_MAXSZ	(80 * 1024)
+#define WPI_FW_INIT_TEXT_MAXSZ	(80 * 1024)
+#define WPI_FW_INIT_DATA_MAXSZ	(32 * 1024)
+#define WPI_FW_BOOT_TEXT_MAXSZ	1024
 
-#define WPI_FW_UPDATED  (1 << 31)
+#define WPI_FW_UPDATED	(1 << 31)
+
 /*
-+ * Offsets into EEPROM.
-+ */
-
+ * Offsets into EEPROM.
+ */
 #define WPI_EEPROM_MAC		0x015
 #define WPI_EEPROM_REVISION	0x035
 #define WPI_EEPROM_CAPABILITIES	0x045
 #define WPI_EEPROM_TYPE		0x04a
-#define WPI_EEPROM_DOMAIN       0x060
+#define WPI_EEPROM_DOMAIN	0x060
 #define WPI_EEPROM_BAND1	0x063
 #define WPI_EEPROM_BAND2	0x072
 #define WPI_EEPROM_BAND3	0x080
@@ -732,4 +726,4 @@ static const uint8_t wpi_dsp_gain_5ghz[WPI_MAX_PWR_INDEX + 1] = {
 
 #define WPI_WRITE_REGION_4(sc, offset, datap, count)			\
 	bus_space_write_region_4((sc)->sc_st, (sc)->sc_sh, (offset),	\
-		(datap), (count))
+	    (datap), (count))

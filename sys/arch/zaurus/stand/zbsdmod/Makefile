@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.6.1 2013/06/23 06:20:15 tls Exp $
+#	$NetBSD: Makefile,v 1.6.6.2 2014/08/20 00:03:30 tls Exp $
 
 WARNS?=	4
 
@@ -21,7 +21,7 @@ CPUFLAGS=
 COPTS=		-Os
 CFLAGS+=	-fno-strict-aliasing
 CFLAGS+=	-DMACHINE=\"${MACHINE}\" -DUTS_RELEASE=\"2.4.20\"
-CPPFLAGS+=	-mabi=apcs-gnu -mfloat-abi=soft -mcpu=xscale
+CPPFLAGS+=	${ARM_APCS_FLAGS} -mcpu=xscale
 CPPFLAGS+=      -nostdinc -D_STANDALONE
 CPPFLAGS+=	-I${.OBJDIR} -I${S}
 

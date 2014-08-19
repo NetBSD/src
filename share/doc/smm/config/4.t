@@ -1,4 +1,4 @@
-.\" $NetBSD: 4.t,v 1.1 2007/12/18 03:35:52 garbled Exp $
+.\" $NetBSD: 4.t,v 1.1.34.1 2014/08/20 00:02:29 tls Exp $
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -38,7 +38,8 @@
 CONFIGURATION FILE SYNTAX
 .PP
 In this section we consider the specific rules used in writing
-a configuration file.  A complete grammar for the input language
+a configuration file.
+A complete grammar for the input language
 can be found in Appendix A and may be of use if you should have
 problems with syntax errors.
 .PP
@@ -59,8 +60,10 @@ cpu types, options, timezone, system identifier, and maximum users.
 Each is specified with a separate line in the configuration file.
 .IP "\fBmachine\fP \fItype\fP"
 .br
-The system is to run on the machine type specified.  No more than
-one machine type can appear in the configuration file.  Legal values
+The system is to run on the machine type specified.
+No more than
+one machine type can appear in the configuration file.
+Legal values
 are
 .B vax
 and
@@ -112,16 +115,20 @@ The values must be enclosed in double quotes if they include numerals
 or begin with a dash.
 .IP "\fBtimezone\fP \fInumber\fP [ \fBdst\fP [ \fInumber\fP ] ]"
 .br
-Specifies the timezone used by the system.  This is measured in the
+Specifies the timezone used by the system.
+This is measured in the
 number of hours your timezone is west of GMT.  
-EST is 5 hours west of GMT, PST is 8.  Negative numbers
-indicate hours east of GMT. If you specify
+EST is 5 hours west of GMT, PST is 8.
+Negative numbers
+indicate hours east of GMT.
+If you specify
 \fBdst\fP, the system will operate under daylight savings time.
 An optional integer or floating point number may be included
 to specify a particular daylight saving time correction algorithm;
 the default value is 1, indicating the United States.
 Other values are: 2 (Australian style), 3 (Western European),
-4 (Middle European), and 5 (Eastern European).  See
+4 (Middle European), and 5 (Eastern European).
+See
 \fIgettimeofday\fP\|(2) and \fIctime\fP\|(3) for more information.
 .IP "\fBident\fP \fIname\fP"
 .br
@@ -141,9 +148,11 @@ This number is used to size several system data structures.
 System image parameters
 .PP
 Multiple bootable images may be specified in a single configuration
-file.  The systems will have the same global configuration parameters
+file.
+The systems will have the same global configuration parameters
 and devices, but the location of the root file system and other
-system specific devices may be different.  A system image is specified
+system specific devices may be different.
+A system image is specified
 with a ``config'' line:
 .IP
 \fBconfig\fP\ \fIsysname\fP\ \fIconfig-clauses\fP
@@ -151,7 +160,8 @@ with a ``config'' line:
 The
 .I sysname
 field is the name given to the loaded system image; almost everyone
-names their standard system image ``kernel''.  The configuration clauses
+names their standard system image ``netbsd''.
+The configuration clauses
 are one or more specifications indicating where the root file system
 is located and the number and location of paging devices.
 The device used by the system to process argument lists during
@@ -170,7 +180,8 @@ A configuration clause is one of the following
 \fBdumps\fP [ \fBon\fP ] \fIdump-device\fP
 \fBargs\fP [ \fBon\fP ] \fIarg-device\fP
 .LP
-(the ``on'' is optional.)  Multiple configuration clauses
+(the ``on'' is optional.)
+Multiple configuration clauses
 are separated by white space; 
 .I config
 allows specifications to be continued across multiple lines
@@ -188,18 +199,21 @@ as a device, unit, and file system partition; or underspecified
 in which case
 .I config
 will use builtin rules to select default unit numbers and file
-system partitions.  The defaulting rules are a bit complicated
+system partitions.
+The defaulting rules are a bit complicated
 as they are dependent on the overall system configuration.
 For example, the swap area need not be specified at all if 
 the root device is specified; in this case the swap area is
 placed in the ``b'' partition of the same disk where the root
-file system is located.  Appendix B contains a complete list
+file system is located.
+Appendix B contains a complete list
 of the defaulting rules used in selecting system configuration
 devices.
 .PP
 The device names are translated to the
 appropriate major and minor device
-numbers on a per-machine basis.  A file,
+numbers on a per-machine basis.
+A file,
 ``/sys/conf/devices.machine'' (where ``machine''
 is the machine type specified in the configuration file),
 is used to map a device name to its major block device number.
@@ -216,25 +230,30 @@ This is done by substituting
 .IP
 \fBmajor\fP \fIx\fP \fBminor\fP \fIy\fP
 .LP
-where the device name would normally be found.  For example,
+where the device name would normally be found.
+For example,
 .IP
 .nf
 \fBconfig\fP kernel \fBroot\fP \fBon\fP \fBmajor\fP 99 \fBminor\fP 1
 .fi
 .PP
 Normally, the areas configured for swap space are sized by the system
-at boot time.  If a non-standard size is to be used for one
+at boot time.
+If a non-standard size is to be used for one
 or more swap areas (less than the full partition),
-this can also be specified.  To do this, the
+this can also be specified.
+To do this, the
 device name specified for a swap area should have a ``size''
-specification appended.  For example,
+specification appended.
+For example,
 .IP
 .nf
 \fBconfig\fP kernel \fBroot\fP \fBon\fP hp0 \fBswap\fP \fBon\fP hp0b \fBsize\fP 1200
 .fi
 .LP
 would force swapping to be done in partition ``b'' of ``hp0'' and
-the swap partition size would be set to 1200 sectors.  A swap area
+the swap partition size would be set to 1200 sectors.
+A swap area
 sized larger than the associated disk partition is trimmed to the
 partition size.
 .PP
@@ -247,14 +266,17 @@ Each device attached to a machine must be specified
 to
 .I config
 so that the system generated will know to probe for it during
-the autoconfiguration process carried out at boot time.  Hardware
+the autoconfiguration process carried out at boot time.
+Hardware
 specified in the configuration need not actually be present on
-the machine where the generated system is to be run.  Only the
+the machine where the generated system is to be run.
+Only the
 hardware actually found at boot time will be used by the system.
 .PP
 The specification of hardware devices in the configuration file
 parallels the interconnection hierarchy of the machine to be
-configured.  On the VAX, this means that a configuration file must
+configured.
+On the VAX, this means that a configuration file must
 indicate what MASSBUS and UNIBUS adapters are present, and to
 which \fInexi\fP they might be connected.* 
 .FS
@@ -265,14 +287,18 @@ to simplify device configuration.
 .FE
 Similarly, devices
 and controllers must be indicated as possibly being connected
-to one or more adapters.  A device description may provide a
+to one or more adapters.
+A device description may provide a
 complete definition of the possible configuration parameters
 or it may leave certain parameters undefined and make the system
-probe for all the possible values.  The latter allows a single
+probe for all the possible values.
+The latter allows a single
 device configuration list to match many possible physical
-configurations.  For example, a disk may be indicated as present
+configurations.
+For example, a disk may be indicated as present
 at UNIBUS adapter 0, or at any UNIBUS adapter which the system
-locates at boot time.  The latter scheme, termed 
+locates at boot time.
+The latter scheme, termed 
 .IR wildcarding ,
 allows more flexibility in the physical configuration of a system;
 if a disk must be moved around for some reason, the system will
@@ -290,9 +316,11 @@ A device specification takes one of the following forms:
 .LP
 A ``master'' is a MASSBUS tape controller; a ``controller'' is a
 disk controller, a UNIBUS tape controller, a MASSBUS adapter, or
-a UNIBUS adapter.  A ``device'' is an autonomous device which
+a UNIBUS adapter.
+A ``device'' is an autonomous device which
 connects directly to a UNIBUS adapter (as opposed to something
-like a disk which connects through a disk controller).  ``Disk''
+like a disk which connects through a disk controller).
+``Disk''
 and ``tape'' identify disk drives and tape drives connected to
 a ``controller'' or ``master.''
 .PP
@@ -310,14 +338,16 @@ unit number indicated on the front of something
 like a disk; the
 .I logical
 unit number is used to refer to the UNIX device, not
-the physical unit number).  For example, ``hp0'' is logical
+the physical unit number).
+For example, ``hp0'' is logical
 unit 0 of a MASSBUS storage device, even though it might
 be physical unit 3 on MASSBUS adapter 1.
 .PP
 The
 .I device-info
 clause specifies how the hardware is
-connected in the interconnection hierarchy.  On the VAX,
+connected in the interconnection hierarchy.
+On the VAX,
 UNIBUS and MASSBUS adapters are connected to the internal
 system bus through
 a \fInexus\fP.
@@ -394,22 +424,27 @@ Certain device drivers require extra information passed to them
 at boot time to tailor their operation to the actual hardware present.
 The line printer driver, for example, needs to know how many columns
 are present on each non-standard line printer (i.e. a line printer
-with other than 80 columns).  The drivers for the terminal multiplexors
+with other than 80 columns).
+The drivers for the terminal multiplexors
 need to know which lines are attached to modem lines so that no one will
-be allowed to use them unless a connection is present.  For this reason,
+be allowed to use them unless a connection is present.
+For this reason,
 one last parameter may be specified to a
 .IR device ,
 a 
 .I flags
-field.  It has the syntax
+field.
+It has the syntax
 .IP
 \fBflags\fP \fInumber\fP
 .LP
 and is usually placed after the
 .I csr
-specification.  The
+specification.
+The
 .I number
-is passed directly to the associated driver.  The manual pages
+is passed directly to the associated driver.
+The manual pages
 in section 4 should be consulted to determine how each driver
 uses this value (if at all).
 Communications interface drivers commonly use the flags
@@ -423,7 +458,8 @@ Pseudo-devices
 A number of drivers and software subsystems
 are treated like device drivers without any associated hardware.
 To include any of these pieces, a ``pseudo-device'' specification
-must be used.  A specification for a pseudo device takes the form
+must be used.
+A specification for a pseudo device takes the form
 .IP
 .DT
 .nf

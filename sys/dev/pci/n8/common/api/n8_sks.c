@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: n8_sks.c,v 1.2 2011/08/01 12:28:54 mbalmer Exp $";
+static char const n8_id[] = "$Id: n8_sks.c,v 1.2.12.1 2014/08/20 00:03:48 tls Exp $";
 /*****************************************************************************/
 /** @file SKS_Management_Interface
  *  @brief Implementation for the SKS Management Interface.
@@ -379,7 +379,7 @@ void n8_printSKSKeyHandle(const N8_SKSKeyHandle_t *keyHandle_p)
  *    The given key handle pointer is valid.
  *****************************************************************************/
 N8_Status_t N8_SKSDisplay(N8_SKSKeyHandle_t *keyHandle_p,
-                          char              *display_string_p) 
+                          char              *display_string_p, size_t len) 
 {
    if (keyHandle_p == NULL)
    {
@@ -391,7 +391,7 @@ N8_Status_t N8_SKSDisplay(N8_SKSKeyHandle_t *keyHandle_p,
       return N8_INVALID_PARAMETER;
    }
 
-   sprintf(display_string_p,
+   snprintf(display_string_p, len,
            "Key Handle:\n"
            "\tKey Type   %08x\n"
            "\tKey Length %08x\n"

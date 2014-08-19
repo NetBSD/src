@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2004, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2004-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,10 +18,6 @@
 # Test "return", "finish", and "call" of functions that a scalar (int,
 # float, enum) and/or take a single scalar parameter.
 
-if $tracelevel then {
-	strace $tracelevel
-}
-
 
 # Some targets can't call functions, so don't even bother with this
 # test.
@@ -32,15 +28,13 @@ if [target_info exists gdb,cannot_call_functions] {
     continue
 }
 
-set testfile "call-sc"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .c
 
 # Create and source the file that provides information about the
 # compiler used to compile the test case.
 
-if [get_compiler_info ${binfile}] {
-    return -1;
+if [get_compiler_info] {
+    return -1
 }
 
 # Compile a variant of scalars.c using TYPE to specify the type of the
@@ -51,7 +45,6 @@ proc start_scalars_test { type } {
     global testfile
     global srcfile
     global binfile
-    global objdir
     global subdir
     global srcdir
     global gdb_prompt
@@ -61,7 +54,7 @@ proc start_scalars_test { type } {
     set flags "debug additional_flags=-DT=${type}"
     set testfile "call-sc-${type}"
 
-    set binfile ${objdir}/${subdir}/${testfile}
+    set binfile [standard_output_file ${testfile}]
     if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable "${flags}"] != "" } {
 	# built the second test case since we can't use prototypes
 	warning "Prototypes not supported, rebuilding with -DNO_PROTOTYPES"
@@ -84,7 +77,7 @@ proc start_scalars_test { type } {
 
     # Advance to main
     if { ![runto_main] } then {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
 
     # Get the debug format
@@ -93,13 +86,13 @@ proc start_scalars_test { type } {
     # check that type matches what was passed in
     set test "ptype; ${testfile}"
     set foo_t "xxx"
-    gdb_test_multiple "ptype ${type}" "${test}" {
+    gdb_test_multiple "ptype/r ${type}" "${test}" {
 	-re "type = (\[^\r\n\]*)\r\n$gdb_prompt $" {
 	    set foo_t "$expect_out(1,string)"
 	    pass "$test (${foo_t})"
 	}
     }
-    gdb_test "ptype foo" "type = ${foo_t}" "ptype foo; ${testfile} $expect_out(1,string)"
+    gdb_test "ptype/r foo" "type = ${foo_t}" "ptype foo; ${testfile} $expect_out(1,string)"
 }
 
 
@@ -189,7 +182,7 @@ proc test_scalar_returns { } {
 
     # The relevant code looks like "L{n} = fun{n}()".  The test forces
     # "fun{n}" to "return" with an explicit value.  Since that code
-    # snippet will store the the returned value in "L{n}" the return
+    # snippet will store the returned value in "L{n}" the return
     # is tested by examining "L{n}".  This assumes that the
     # compiler implemented this as fun{n}(&L{n}) and hence that when
     # the value isn't stored "L{n}" remains unchanged.  Also check for

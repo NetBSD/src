@@ -1,12 +1,12 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.8 $
+ *       $Revision: 1.8.12.1 $
  *
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -116,12 +116,6 @@
 #define ACPI_DEBUGGER
 #endif /* DDB */
 #endif /* ACPI_DEBUG */
-
-static __inline int
-isprint(int ch)
-{
-        return(isspace(ch) || isascii(ch));
-}
 
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
 

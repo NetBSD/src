@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.43 2008/08/05 20:57:45 pooka Exp $	*/
+/*	$NetBSD: umount.c,v 1.43.24.1 2014/08/20 00:02:28 tls Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.43 2008/08/05 20:57:45 pooka Exp $");
+__RCSID("$NetBSD: umount.c,v 1.43.24.1 2014/08/20 00:02:28 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: umount.c,v 1.43 2008/08/05 20:57:45 pooka Exp $");
 #include <rpc/pmap_clnt.h>
 #include <rpc/pmap_prot.h>
 #include <nfs/rpcv2.h>
+#include <nfs/nfsmount.h>
 #endif /* !SMALL */
 
 #include <err.h>
@@ -76,6 +77,7 @@ static struct addrinfo *nfshost_ai = NULL;
 static int	 namematch(const struct addrinfo *);
 static int	 sacmp(const struct sockaddr *, const struct sockaddr *);
 static int	 xdr_dir(XDR *, char *);
+static const char *getmntproto(const char *);
 #endif /* !SMALL */
 
 static int	 fflag;
@@ -181,6 +183,7 @@ umountfs(const char *name, const char **typelist, int raw)
 	CLIENT *clp;
 	char *hostp = NULL;
 	struct addrinfo *ai = NULL, hints;
+	const char *proto = NULL;
 #endif /* !SMALL */
 	const char *mntpt;
 	char *type, rname[MAXPATHLEN];
@@ -241,6 +244,7 @@ umountfs(const char *name, const char **typelist, int raw)
 		if (!strncmp(type, MOUNT_NFS,
 		    sizeof(((struct statvfs *)NULL)->f_fstypename))) {
 			char *delimp;
+			proto = getmntproto(mntpt);
 			/* look for host:mountpoint */
 			if ((delimp = strrchr(name, ':')) != NULL) {
 				int len = delimp - name;
@@ -273,7 +277,7 @@ umountfs(const char *name, const char **typelist, int raw)
 
 #ifndef SMALL
 	if (ai != NULL && !(fflag & MNT_FORCE)) {
-		clp = clnt_create(hostp, RPCPROG_MNT, RPCMNT_VER1, "udp");
+		clp = clnt_create(hostp, RPCPROG_MNT, RPCMNT_VER1, proto);
 		if (clp  == NULL) {
 			clnt_pcreateerror("Cannot MNT PRC");
 			return 1;
@@ -380,6 +384,19 @@ static int
 xdr_dir(XDR *xdrsp, char *dirp)
 {
 	return xdr_string(xdrsp, &dirp, RPCMNT_PATHLEN);
+}
+
+static const char *
+getmntproto(const char *name)
+{
+	struct nfs_args nfsargs;
+	struct sockaddr_storage ss;
+
+	nfsargs.sotype = SOCK_DGRAM;
+	nfsargs.addr = (struct sockaddr *)&ss; 
+	nfsargs.addrlen = sizeof(ss);
+	(void)mount("nfs", name, MNT_GETARGS, &nfsargs, sizeof(nfsargs));
+	return nfsargs.sotype == SOCK_STREAM ? "tcp" : "udp";
 }
 #endif /* !SMALL */
 

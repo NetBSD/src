@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.52 2011/04/24 16:26:58 rmind Exp $	*/
+/*	$NetBSD: gencons.c,v 1.52.14.1 2014/08/20 00:03:27 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -36,7 +36,7 @@
  /* All bugs are subject to removal without further notice */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.52 2011/04/24 16:26:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.52.14.1 2014/08/20 00:03:27 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -87,8 +87,18 @@ dev_type_tty(gencntty);
 dev_type_poll(gencnpoll);
 
 const struct cdevsw gen_cdevsw = {
-	gencnopen, gencnclose, gencnread, gencnwrite, gencnioctl,
-	nostop, gencntty, gencnpoll, nommap, ttykqfilter, D_TTY
+	.d_open = gencnopen,
+	.d_close = gencnclose,
+	.d_read = gencnread,
+	.d_write = gencnwrite,
+	.d_ioctl = gencnioctl,
+	.d_stop = nostop,
+	.d_tty = gencntty,
+	.d_poll = gencnpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 int

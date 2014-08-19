@@ -1,7 +1,6 @@
 /* Target-dependent code for the Motorola 88000 series.
 
-   Copyright (C) 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -33,7 +32,7 @@
 #include "value.h"
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 
 #include "m88k-tdep.h"
 
@@ -384,7 +383,7 @@ m88k_dummy_id (struct gdbarch *arch, struct frame_info *this_frame)
    from WRITEBUF into REGCACHE.  */
 
 static enum return_value_convention
-m88k_return_value (struct gdbarch *gdbarch, struct type *func_type,
+m88k_return_value (struct gdbarch *gdbarch, struct value *function,
 		   struct type *type, struct regcache *regcache,
 		   gdb_byte *readbuf, const gdb_byte *writebuf)
 {

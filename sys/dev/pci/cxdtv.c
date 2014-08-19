@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtv.c,v 1.11.6.1 2012/11/20 03:02:14 tls Exp $ */
+/* $NetBSD: cxdtv.c,v 1.11.6.2 2014/08/20 00:03:42 tls Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.11.6.1 2012/11/20 03:02:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.11.6.2 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -187,6 +187,7 @@ cxdtv_attach(device_t parent, device_t self, void *aux)
 	pcireg_t reg;
 	const char *intrstr;
 	struct i2cbus_attach_args iba;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 
@@ -215,7 +216,7 @@ cxdtv_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_VM, cxdtv_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
@@ -313,9 +314,6 @@ cxdtv_childdet(device_t self, device_t child)
 static bool
 cxdtv_resume(device_t dv, const pmf_qual_t *qual)
 {
-	struct cxdtv_softc *sc;
-	sc = device_private(dv);
-
 	/* XXX revisit */
 
 	aprint_debug_dev(dv, "%s\n", __func__);
@@ -353,11 +351,10 @@ static void
 cxdtv_i2cbb_set_bits(void *cookie, uint32_t bits)
 {
 	struct cxdtv_softc *sc = cookie;
-	uint32_t value;
 
 	bus_space_write_4(sc->sc_memt, sc->sc_memh,
 	    CXDTV_I2C_C_DATACONTROL, bits);
-	value = bus_space_read_4(sc->sc_memt, sc->sc_memh,
+	(void)bus_space_read_4(sc->sc_memt, sc->sc_memh,
 	    CXDTV_I2C_C_DATACONTROL);
 
 	return;
@@ -687,12 +684,10 @@ cxdtv_dtv_stop_transfer(void *priv)
 int
 cxdtv_mpeg_reset(struct cxdtv_softc *sc)
 {
-	struct cxdtv_sram_ch *ch;
 	uint32_t v;
 
 	CX_DPRINTF(("cxdtv_mpeg_reset\n"));
 
-	ch = &cxdtv_sram_chs[CXDTV_SRAM_CH_MPEG];
 	v = (uint32_t)-1; 
 
 	/* shutdown */

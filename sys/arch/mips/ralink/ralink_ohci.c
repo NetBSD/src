@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_ohci.c,v 1.2 2011/07/28 15:38:49 matt Exp $	*/
+/*	$NetBSD: ralink_ohci.c,v 1.2.12.1 2014/08/20 00:03:13 tls Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #include "ehci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_ohci.c,v 1.2 2011/07/28 15:38:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_ohci.c,v 1.2.12.1 2014/08/20 00:03:13 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,9 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: ralink_ohci.c,v 1.2 2011/07/28 15:38:49 matt Exp $")
 
 #define OREAD4(sc, a) bus_space_read_4((sc)->iot, (sc)->ioh, (a))
 #define OWRITE4(sc, a, x) bus_space_write_4((sc)->iot, (sc)->ioh, (a), (x))
-
-#define RT3XXX_OHCI_BASE 	0x101c1000
-#define RT3XXX_BLOCK_SIZE	0x1000
 
 struct ralink_ohci_softc {
 	struct ohci_softc sc_ohci;
@@ -86,7 +83,7 @@ static void
 ralink_ohci_attach(device_t parent, device_t self, void *aux)
 {
 	struct ralink_ohci_softc * const sc = device_private(self);
-	const struct mainbus_attach_args *ma = aux;
+	const struct mainbus_attach_args * const ma = aux;
 	usbd_status status;
 	int error;
 #ifdef RALINK_OHCI_DEBUG
@@ -102,14 +99,14 @@ ralink_ohci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ohci.sc_bus.dmatag = ma->ma_dmat;
 
 	/* Map I/O registers */
-	if ((error = bus_space_map(sc->sc_ohci.iot, RT3XXX_OHCI_BASE,
-	    RT3XXX_BLOCK_SIZE, 0, &sc->sc_ohci.ioh)) != 0) {
+	if ((error = bus_space_map(sc->sc_ohci.iot, RA_USB_OHCI_BASE,
+	    RA_USB_BLOCK_SIZE, 0, &sc->sc_ohci.ioh)) != 0) {
 		aprint_error_dev(self, "can't map OHCI registers, "
 			"error=%d\n", error);
 		return;
 	}
 	
-	sc->sc_ohci.sc_size = RT3XXX_BLOCK_SIZE;
+	sc->sc_ohci.sc_size = RA_USB_BLOCK_SIZE;
 
 #ifdef RALINK_OHCI_DEBUG
 	printf("%s sc: %p ma: %p\n", devname, sc, ma);

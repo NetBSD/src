@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.35 2012/07/27 07:42:26 abs Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.35.2.1 2014/08/20 00:02:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.35 2012/07/27 07:42:26 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.35.2.1 2014/08/20 00:02:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,13 +64,29 @@ dev_type_ioctl(gdromioctl);
 dev_type_strategy(gdromstrategy);
 
 const struct bdevsw gdrom_bdevsw = {
-	gdromopen, gdromclose, gdromstrategy, gdromioctl, nodump,
-	nosize, D_DISK
+	.d_open = gdromopen,
+	.d_close = gdromclose,
+	.d_strategy = gdromstrategy,
+	.d_ioctl = gdromioctl,
+	.d_dump = nodump,
+	.d_psize = nosize,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw gdrom_cdevsw = {
-	gdromopen, gdromclose, gdromread, gdromwrite, gdromioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = gdromopen,
+	.d_close = gdromclose,
+	.d_read = gdromread,
+	.d_write = gdromwrite,
+	.d_ioctl = gdromioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 struct gdrom_softc {
@@ -395,7 +411,7 @@ void
 gdromattach(device_t parent, device_t self, void *aux)
 {
 	struct gdrom_softc *sc;
-	uint32_t p, x;
+	uint32_t p;
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -413,7 +429,7 @@ gdromattach(device_t parent, device_t self, void *aux)
 	 */
 	*((volatile uint32_t *)0xa05f74e4) = 0x1fffff;
 	for (p = 0; p < 0x200000 / 4; p++)
-		x = ((volatile uint32_t *)0xa0000000)[p];
+		(void)((volatile uint32_t *)0xa0000000)[p];
 
 	printf(": %s\n", sysasic_intr_string(SYSASIC_IRL9));
 	sysasic_intr_establish(SYSASIC_EVENT_GDROM, IPL_BIO, SYSASIC_IRL9,

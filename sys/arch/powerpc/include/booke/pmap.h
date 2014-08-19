@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10.2.1 2012/11/20 03:01:38 tls Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10.2.2 2014/08/20 00:03:19 tls Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -53,7 +53,6 @@
 #include <uvm/uvm_page.h>
 #ifdef __PMAP_PRIVATE
 #include <powerpc/booke/cpuvar.h>
-#include <powerpc/cpuset.h>
 #endif
 
 #define	PMAP_NEED_PROCWR
@@ -71,7 +70,9 @@
 #define	KERNEL_PID	0
 
 #define	PMAP_TLB_NUM_PIDS		256
+#define	PMAP_TLB_MAX			1
 #define	PMAP_INVALID_SEGTAB_ADDRESS	((pmap_segtab_t *)0xfeeddead)
+#define	PMAP_TLB_FLUSH_ASID_ON_RESET	false
 
 #define	pmap_phys_address(x)		(x)
 
@@ -96,7 +97,7 @@ vaddr_t	pmap_kvptefill(vaddr_t, vaddr_t, pt_entry_t);
 #endif
 #endif
 
-void	pmap_md_page_syncicache(struct vm_page *, __cpuset_t);
+void	pmap_md_page_syncicache(struct vm_page *, const kcpuset_t *);
 vaddr_t	pmap_bootstrap(vaddr_t, vaddr_t, phys_ram_seg_t *, size_t);
 bool	pmap_extract(struct pmap *, vaddr_t, paddr_t *);
 

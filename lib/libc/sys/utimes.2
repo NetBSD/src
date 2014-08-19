@@ -1,4 +1,4 @@
-.\"	$NetBSD: utimes.2,v 1.30.8.3 2013/06/23 06:21:06 tls Exp $
+.\"	$NetBSD: utimes.2,v 1.30.8.4 2014/08/20 00:02:16 tls Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)utimes.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 8, 2013
+.Dd September 14, 2013
 .Dt UTIMES 2
 .Os
 .Sh NAME
@@ -51,12 +51,14 @@
 .Fn lutimes "const char *path" "const struct timeval times[2]"
 .Ft int
 .Fn futimes "int fd" "const struct timeval times[2]"
+.In sys/stat.h
 .Ft int
 .Fn utimens "const char *path" "const struct timespec times[2]"
 .Ft int
 .Fn lutimens "const char *path" "const struct timespec times[2]"
 .Ft int
 .Fn futimens "int fd" "const struct timespec times[2]"
+.In sys/stat.h
 .In fcntl.h
 .Ft int
 .Fn utimensat "int fd" "const char *path" "const struct timespec times[2]" \
@@ -167,10 +169,7 @@ to set the current time, or to
 to let the time unchanged (this allows changing access time but not
 modification time, and vice-versa).
 .Sh RETURN VALUES
-Upon successful completion, a value of 0 is returned.
-Otherwise, a value of \-1 is returned and
-.Va errno
-is set to indicate the error.
+.Rv -std utimes lutimes futimes utimens lutimens futimens utimensat
 .Sh ERRORS
 .Fn utimes ,
 .Fn lutimes ,
@@ -217,6 +216,24 @@ and the calling process's effective user ID
 does not match the owner of the file and is not the super-user.
 .It Bq Er EROFS
 The file system containing the file is mounted read-only.
+.El
+.Pp
+In addition,
+.Fn utimensat
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+.Fa path
+does not specify an absolute path and
+.Fa fd
+is neither
+.Dv AT_FDCWD
+nor a valid file descriptor open for reading or searching.
+.It Bq Er ENOTDIR
+.Fa path
+is not an absolute path and
+.Fa fd
+is a file descriptor associated with a non-directory file.
 .El
 .Pp
 .Fn futimes
@@ -285,5 +302,5 @@ Birthtime setting support was added in
 .Fn futimens
 and
 .Fn utimensat
-functions calls appreared in
+functions calls appeared in
 .Nx 6.0 .

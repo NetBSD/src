@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.32 2012/01/09 15:37:34 dholland Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.32.6.1 2014/08/20 00:02:23 tls Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr). Public domain.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rquotad.c,v 1.32 2012/01/09 15:37:34 dholland Exp $");
+__RCSID("$NetBSD: rquotad.c,v 1.32.6.1 2014/08/20 00:02:23 tls Exp $");
 #endif
 
 #include <sys/param.h>
@@ -62,13 +62,8 @@ main(int argc, char *argv[])
 		from_inetd = 0;
 
 	if (!from_inetd) {
-		daemon(0, 0);
-
 		(void) rpcb_unset(RQUOTAPROG, RQUOTAVERS, NULL);
 		(void) rpcb_unset(RQUOTAPROG, EXT_RQUOTAVERS, NULL);
-		(void) signal(SIGINT, cleanup);
-		(void) signal(SIGTERM, cleanup);
-		(void) signal(SIGHUP, cleanup);
 	}
 
 	openlog("rpc.rquotad", LOG_PID, LOG_DAEMON);
@@ -106,6 +101,12 @@ main(int argc, char *argv[])
 		}
 	}
 
+	if (!from_inetd) {
+		daemon(0, 0);
+		(void) signal(SIGINT, cleanup);
+		(void) signal(SIGTERM, cleanup);
+		(void) signal(SIGHUP, cleanup);
+	}
 	svc_run();
 	syslog(LOG_ERR, "svc_run returned");
 	exit(1);

@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.52 2012/07/29 18:05:39 mlelstv Exp $ */
+/* $NetBSD: autoconf.c,v 1.52.2.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,9 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.52 2012/07/29 18:05:39 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.52.2.1 2014/08/20 00:02:41 tls Exp $");
+
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.52 2012/07/29 18:05:39 mlelstv Exp $"
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <dev/cons.h>
+
+#include <dev/pci/pcivar.h>
 
 #include <machine/autoconf.h>
 #include <machine/alpha.h>
@@ -172,6 +176,13 @@ atoi(const char *s)
 void
 device_register(device_t dev, void *aux)
 {
+#if NPCI > 0
+	device_t parent = device_parent(dev);
+
+	if (parent != NULL && device_is_a(parent, "pci"))
+		device_pci_register(dev, aux);
+#endif
+
 	if (bootdev_data == NULL) {
 		/*
 		 * There is no hope.

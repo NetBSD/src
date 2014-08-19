@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_compat.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: ip_fil_compat.c,v 1.3.2.1 2014/08/20 00:04:24 tls Exp $	*/
 
 /*
  * Copyright (C) 2002-2012 by Darren Reed.
@@ -3526,10 +3526,8 @@ friostat_current_to_4_1_33(void *current, friostat_4_1_33_t *old, int rev)
 	old->f_running = fiop->f_running;
 	old->f_logging = fiop->f_logging;
 	old->f_features = fiop->f_features;
-	sprintf(old->f_version, "IP Filter: v%d.%d.%d",
-		(rev / 1000000) % 100,
-		(rev / 10000) % 100,
-		(rev / 100) % 100);
+	snprintf(old->f_version, sizeof(old->f_version), "IP Filter: v%d.%d.%d",
+		(rev / 1000000) % 100, (rev / 10000) % 100, (rev / 100) % 100);
 }
 
 
@@ -3589,10 +3587,8 @@ friostat_current_to_4_1_0(void *current, friostat_4_1_0_t *old, int rev)
 	old->f_running = fiop->f_running;
 	old->f_logging = fiop->f_logging;
 	old->f_features = fiop->f_features;
-	sprintf(old->f_version, "IP Filter: v%d.%d.%d",
-		(rev / 1000000) % 100,
-		(rev / 10000) % 100,
-		(rev / 100) % 100);
+	snprintf(old->f_version, sizeof(old->f_version), "IP Filter: v%d.%d.%d",
+		(rev / 1000000) % 100, (rev / 10000) % 100, (rev / 100) % 100);
 }
 
 

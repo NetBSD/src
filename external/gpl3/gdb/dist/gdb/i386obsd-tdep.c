@@ -1,8 +1,6 @@
 /* Target-dependent code for OpenBSD/i386.
 
-   Copyright (C) 1988, 1989, 1991, 1992, 1994, 1996, 2000, 2001, 2002, 2003,
-   2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1988-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -33,7 +31,7 @@
 #include "trad-frame.h"
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 
 #include "i386-tdep.h"
 #include "i387-tdep.h"
@@ -82,7 +80,7 @@ i386obsd_sigtramp_p (struct frame_info *this_frame)
   size_t buflen = sizeof sigreturn;
   const int *offset;
   gdb_byte *buf;
-  char *name;
+  const char *name;
 
   /* If the function has a valid symbol name, it isn't a
      trampoline.  */
@@ -349,7 +347,7 @@ i386obsd_trapframe_cache (struct frame_info *this_frame, void **this_cache)
   struct trad_frame_cache *cache;
   CORE_ADDR func, sp, addr;
   ULONGEST cs;
-  char *name;
+  const char *name;
   int i;
 
   if (*this_cache)
@@ -414,7 +412,7 @@ i386obsd_trapframe_sniffer (const struct frame_unwind *self,
 			    void **this_prologue_cache)
 {
   ULONGEST cs;
-  char *name;
+  const char *name;
 
   /* Check Current Privilege Level and bail out if we're not executing
      in kernel space.  */

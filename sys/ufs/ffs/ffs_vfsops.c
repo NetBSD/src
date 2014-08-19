@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.278.2.5 2013/06/23 06:18:39 tls Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.278.2.6 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.278.2.5 2013/06/23 06:18:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.278.2.6 2014/08/20 00:04:44 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -132,31 +132,30 @@ const struct vnodeopv_desc * const ffs_vnodeopv_descs[] = {
 };
 
 struct vfsops ffs_vfsops = {
-	MOUNT_FFS,
-	sizeof (struct ufs_args),
-	ffs_mount,
-	ufs_start,
-	ffs_unmount,
-	ufs_root,
-	ufs_quotactl,
-	ffs_statvfs,
-	ffs_sync,
-	ffs_vget,
-	ffs_fhtovp,
-	ffs_vptofh,
-	ffs_init,
-	ffs_reinit,
-	ffs_done,
-	ffs_mountroot,
-	ffs_snapshot,
-	ffs_extattrctl,
-	ffs_suspendctl,
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	ffs_vfs_fsync,
-	ffs_vnodeopv_descs,
-	0,
-	{ NULL, NULL },
+	.vfs_name = MOUNT_FFS,
+	.vfs_min_mount_data = sizeof (struct ufs_args),
+	.vfs_mount = ffs_mount,
+	.vfs_start = ufs_start,
+	.vfs_unmount = ffs_unmount,
+	.vfs_root = ufs_root,
+	.vfs_quotactl = ufs_quotactl,
+	.vfs_statvfs = ffs_statvfs,
+	.vfs_sync = ffs_sync,
+	.vfs_vget = ufs_vget,
+	.vfs_loadvnode = ffs_loadvnode,
+	.vfs_fhtovp = ffs_fhtovp,
+	.vfs_vptofh = ffs_vptofh,
+	.vfs_init = ffs_init,
+	.vfs_reinit = ffs_reinit,
+	.vfs_done = ffs_done,
+	.vfs_mountroot = ffs_mountroot,
+	.vfs_snapshot = ffs_snapshot,
+	.vfs_extattrctl = ffs_extattrctl,
+	.vfs_suspendctl = ffs_suspendctl,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = ffs_vfs_fsync,
+	.vfs_opv_descs = ffs_vnodeopv_descs
 };
 
 static const struct genfs_ops ffs_genfsops = {
@@ -173,7 +172,6 @@ static const struct ufs_ops ffs_ufsops = {
 	.uo_valloc = ffs_valloc,
 	.uo_vfree = ffs_vfree,
 	.uo_balloc = ffs_balloc,
-	.uo_unmark_vnode = (void (*)(vnode_t *))nullop,
 	.uo_snapgone = ffs_snapgone,
 };
 
@@ -212,11 +210,6 @@ ffs_modcmd(modcmd_t cmd, void *arg)
 		if (error != 0)
 			break;
 
-		sysctl_createv(&ffs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&ffs_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "ffs",
@@ -326,9 +319,7 @@ ffs_mountroot(void)
 		return (error);
 	}
 	mp->mnt_flag &= ~MNT_FORCE;
-	mutex_enter(&mountlist_lock);
-	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mutex_exit(&mountlist_lock);
+	mountlist_append(mp);
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
 	memset(fs->fs_fsmnt, 0, sizeof(fs->fs_fsmnt));
@@ -355,6 +346,8 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	int error = 0, flags, update;
 	mode_t accessmode;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
@@ -644,7 +637,7 @@ fail:
 int
 ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 {
-	struct vnode *vp, *mvp, *devvp;
+	struct vnode *vp, *devvp;
 	struct inode *ip;
 	void *space;
 	struct buf *bp;
@@ -654,6 +647,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	int32_t *lp;
 	struct ufsmount *ump;
 	daddr_t sblockloc;
+	struct vnode_iterator *marker;
 
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		return (EINVAL);
@@ -789,7 +783,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		bsize = fs->fs_bsize;
 		if (i + fs->fs_frag > blks)
 			bsize = (blks - i) * fs->fs_fsize;
-		error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + i), bsize,
+		error = bread(devvp, FFS_FSBTODB(fs, fs->fs_csaddr + i), bsize,
 			      NOCRED, 0, &bp);
 		if (error) {
 			return (error);
@@ -804,8 +798,6 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		space = (char *)space + bsize;
 		brelse(bp, 0);
 	}
-	if (fs->fs_snapinum[0] != 0)
-		ffs_snapshot_mount(mp);
 	/*
 	 * We no longer know anything about clusters per cylinder group.
 	 */
@@ -815,34 +807,19 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 			*lp++ = fs->fs_contigsumsize;
 	}
 
-	/* Allocate a marker vnode. */
-	mvp = vnalloc(mp);
-	/*
-	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
-	 * and vclean() can be called indirectly
-	 */
-	mutex_enter(&mntvnode_lock);
- loop:
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
-		vmark(mvp, vp);
-		if (vp->v_mount != mp || vismarker(vp))
-			continue;
+	vfs_vnode_iterator_init(mp, &marker);
+	while ((vp = vfs_vnode_iterator_next(marker, NULL, NULL))) {
 		/*
 		 * Step 4: invalidate all inactive vnodes.
 		 */
-		if (vrecycle(vp, &mntvnode_lock, l)) {
-			mutex_enter(&mntvnode_lock);
-			(void)vunmark(mvp);
-			goto loop;
-		}
+		if (vrecycle(vp))
+			continue;
 		/*
 		 * Step 5: invalidate all cached file data.
 		 */
-		mutex_enter(vp->v_interlock);
-		mutex_exit(&mntvnode_lock);
-		if (vget(vp, LK_EXCLUSIVE)) {
-			(void)vunmark(mvp);
-			goto loop;
+		if (vn_lock(vp, LK_EXCLUSIVE)) {
+			vrele(vp);
+			continue;
 		}
 		if (vinvalbuf(vp, 0, cred, l, 0, 0))
 			panic("ffs_reload: dirty2");
@@ -850,20 +827,17 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		 * Step 6: re-read inode data for all active vnodes.
 		 */
 		ip = VTOI(vp);
-		error = bread(devvp, fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
+		error = bread(devvp, FFS_FSBTODB(fs, ino_to_fsba(fs, ip->i_number)),
 			      (int)fs->fs_bsize, NOCRED, 0, &bp);
 		if (error) {
 			vput(vp);
-			(void)vunmark(mvp);
 			break;
 		}
 		ffs_load_inode(bp, ip, fs, ip->i_number);
 		brelse(bp, 0);
 		vput(vp);
-		mutex_enter(&mntvnode_lock);
 	}
-	mutex_exit(&mntvnode_lock);
-	vnfree(mvp);
+	vfs_vnode_iterator_destroy(marker);
 	return (error);
 }
 
@@ -1155,14 +1129,14 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	 */
 
 	if (!ronly) {
-		error = bread(devvp, fsbtodb(fs, fs->fs_size - 1), fs->fs_fsize,
-		    cred, 0, &bp);
-		if (bp->b_bcount != fs->fs_fsize)
-			error = EINVAL;
+		error = bread(devvp, FFS_FSBTODB(fs, fs->fs_size - 1),
+		    fs->fs_fsize, cred, 0, &bp);
 		if (error) {
 			bset = BC_INVAL;
 			goto out;
 		}
+		if (bp->b_bcount != fs->fs_fsize)
+			error = EINVAL;
 		brelse(bp, BC_INVAL);
 		bp = NULL;
 	}
@@ -1186,7 +1160,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		bsize = fs->fs_bsize;
 		if (i + fs->fs_frag > blks)
 			bsize = (blks - i) * fs->fs_fsize;
-		error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + i), bsize,
+		error = bread(devvp, FFS_FSBTODB(fs, fs->fs_csaddr + i), bsize,
 			      cred, 0, &bp);
 		if (error) {
 			kmem_free(fs->fs_csp, allocsbsize);
@@ -1259,7 +1233,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	ump->um_seqinc = fs->fs_frag;
 	for (i = 0; i < MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
-	devvp->v_specmountpoint = mp;
+	spec_node_setmountedfs(devvp, mp);
 
 	/* Before we start WAPBL or touch any snapshots, adjust maxphys */
 	ufs_update_maxphys(mp);
@@ -1329,7 +1303,7 @@ out:
 	fstrans_unmount(mp);
 	if (fs)
 		kmem_free(fs, fs->fs_sbsize);
-	devvp->v_specmountpoint = NULL;
+	spec_node_setmountedfs(devvp, NULL);
 	if (bp)
 		brelse(bp, bset);
 	if (ump) {
@@ -1508,7 +1482,7 @@ ffs_unmount(struct mount *mp, int mntflags)
 #endif /* WAPBL */
 
 	if (ump->um_devvp->v_type != VBAD)
-		ump->um_devvp->v_specmountpoint = NULL;
+		spec_node_setmountedfs(ump->um_devvp, NULL);
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(ump->um_devvp, fs->fs_ronly ? FREAD : FREAD | FWRITE,
 		NOCRED);
@@ -1608,8 +1582,8 @@ ffs_statvfs(struct mount *mp, struct statvfs *sbp)
 	sbp->f_frsize = fs->fs_fsize;
 	sbp->f_iosize = fs->fs_bsize;
 	sbp->f_blocks = fs->fs_dsize;
-	sbp->f_bfree = blkstofrags(fs, fs->fs_cstotal.cs_nbfree) +
-	    fs->fs_cstotal.cs_nffree + dbtofsb(fs, fs->fs_pendingblocks);
+	sbp->f_bfree = ffs_blkstofrags(fs, fs->fs_cstotal.cs_nbfree) +
+	    fs->fs_cstotal.cs_nffree + FFS_DBTOFSB(fs, fs->fs_pendingblocks);
 	sbp->f_bresvd = ((u_int64_t) fs->fs_dsize * (u_int64_t)
 	    fs->fs_minfree) / (u_int64_t) 100;
 	if (sbp->f_bfree > sbp->f_bresvd)
@@ -1626,6 +1600,51 @@ ffs_statvfs(struct mount *mp, struct statvfs *sbp)
 	return (0);
 }
 
+struct ffs_sync_ctx {
+	int waitfor;
+	bool is_suspending;
+};
+
+static bool
+ffs_sync_selector(void *cl, struct vnode *vp)
+{
+	struct ffs_sync_ctx *c = cl;
+	struct inode *ip;
+
+	ip = VTOI(vp);
+	/*
+	 * Skip the vnode/inode if inaccessible.
+	 */
+	if (ip == NULL || vp->v_type == VNON)
+		return false;
+
+	/*
+	 * We deliberately update inode times here.  This will
+	 * prevent a massive queue of updates accumulating, only
+	 * to be handled by a call to unmount.
+	 *
+	 * XXX It would be better to have the syncer trickle these
+	 * out.  Adjustment needed to allow registering vnodes for
+	 * sync when the vnode is clean, but the inode dirty.  Or
+	 * have ufs itself trickle out inode updates.
+	 *
+	 * If doing a lazy sync, we don't care about metadata or
+	 * data updates, because they are handled by each vnode's
+	 * synclist entry.  In this case we are only interested in
+	 * writing back modified inodes.
+	 */
+	if ((ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE |
+	    IN_MODIFY | IN_MODIFIED | IN_ACCESSED)) == 0 &&
+	    (c->waitfor == MNT_LAZY || (LIST_EMPTY(&vp->v_dirtyblkhd) &&
+	    UVM_OBJ_IS_CLEAN(&vp->v_uobj))))
+		return false;
+
+	if (vp->v_type == VBLK && c->is_suspending)
+		return false;
+
+	return true;
+}
+
 /*
  * Go through the disk queues to initiate sandbagged IO;
  * go through the inodes to write those that have been modified;
@@ -1636,12 +1655,13 @@ ffs_statvfs(struct mount *mp, struct statvfs *sbp)
 int
 ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
-	struct vnode *vp, *mvp, *nvp;
-	struct inode *ip;
+	struct vnode *vp;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *fs;
+	struct vnode_iterator *marker;
 	int error, allerror = 0;
 	bool is_suspending;
+	struct ffs_sync_ctx ctx;
 
 	fs = ump->um_fs;
 	if (fs->fs_fmod != 0 && fs->fs_ronly != 0) {		/* XXX */
@@ -1649,80 +1669,20 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 		panic("update: rofs mod");
 	}
 
-	/* Allocate a marker vnode. */
-	mvp = vnalloc(mp);
-
 	fstrans_start(mp, FSTRANS_SHARED);
 	is_suspending = (fstrans_getstate(mp) == FSTRANS_SUSPENDING);
 	/*
 	 * Write back each (modified) inode.
 	 */
-	mutex_enter(&mntvnode_lock);
-loop:
-	/*
-	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
-	 * and vclean() can be called indirectly
-	 */
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
-		nvp = TAILQ_NEXT(vp, v_mntvnodes);
-		/*
-		 * If the vnode that we are about to sync is no longer
-		 * associated with this mount point, start over.
-		 */
-		if (vp->v_mount != mp)
-			goto loop;
-		/*
-		 * Don't interfere with concurrent scans of this FS.
-		 */
-		if (vismarker(vp))
-			continue;
-		mutex_enter(vp->v_interlock);
-		ip = VTOI(vp);
+	vfs_vnode_iterator_init(mp, &marker);
 
-		/*
-		 * Skip the vnode/inode if inaccessible.
-		 */
-		if (ip == NULL || (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0 ||
-		    vp->v_type == VNON) {
-			mutex_exit(vp->v_interlock);
-			continue;
-		}
-
-		/*
-		 * We deliberately update inode times here.  This will
-		 * prevent a massive queue of updates accumulating, only
-		 * to be handled by a call to unmount.
-		 *
-		 * XXX It would be better to have the syncer trickle these
-		 * out.  Adjustment needed to allow registering vnodes for
-		 * sync when the vnode is clean, but the inode dirty.  Or
-		 * have ufs itself trickle out inode updates.
-		 *
-		 * If doing a lazy sync, we don't care about metadata or
-		 * data updates, because they are handled by each vnode's
-		 * synclist entry.  In this case we are only interested in
-		 * writing back modified inodes.
-		 */
-		if ((ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE |
-		    IN_MODIFY | IN_MODIFIED | IN_ACCESSED)) == 0 &&
-		    (waitfor == MNT_LAZY || (LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		    UVM_OBJ_IS_CLEAN(&vp->v_uobj)))) {
-			mutex_exit(vp->v_interlock);
-			continue;
-		}
-		if (vp->v_type == VBLK && is_suspending) {
-			mutex_exit(vp->v_interlock);
-			continue;
-		}
-		vmark(mvp, vp);
-		mutex_exit(&mntvnode_lock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
+	ctx.waitfor = waitfor;
+	ctx.is_suspending = is_suspending;
+	while ((vp = vfs_vnode_iterator_next(marker, ffs_sync_selector, &ctx)))
+	{
+		error = vn_lock(vp, LK_EXCLUSIVE);
 		if (error) {
-			mutex_enter(&mntvnode_lock);
-			nvp = vunmark(mvp);
-			if (error == ENOENT) {
-				goto loop;
-			}
+			vrele(vp);
 			continue;
 		}
 		if (waitfor == MNT_LAZY) {
@@ -1739,10 +1699,9 @@ loop:
 		if (error)
 			allerror = error;
 		vput(vp);
-		mutex_enter(&mntvnode_lock);
-		nvp = vunmark(mvp);
 	}
-	mutex_exit(&mntvnode_lock);
+	vfs_vnode_iterator_destroy(marker);
+
 	/*
 	 * Force stale file system control information to be flushed.
 	 */
@@ -1754,10 +1713,6 @@ loop:
 		    0, 0)) != 0)
 			allerror = error;
 		VOP_UNLOCK(ump->um_devvp);
-		if (allerror == 0 && waitfor == MNT_WAIT && !mp->mnt_wapbl) {
-			mutex_enter(&mntvnode_lock);
-			goto loop;
-		}
 	}
 #if defined(QUOTA) || defined(QUOTA2)
 	qsync(mp);
@@ -1787,104 +1742,56 @@ loop:
 #endif
 
 	fstrans_done(mp);
-	vnfree(mvp);
 	return (allerror);
 }
 
 /*
- * Look up a FFS dinode number to find its incore vnode, otherwise read it
- * in from disk.  If it is in core, wait for the lock bit to clear, then
- * return the inode locked.  Detection and handling of mount points must be
- * done by the calling routine.
+ * Read an inode from disk and initialize this vnode / inode pair.
+ * Caller assures no other thread will try to load this inode.
  */
 int
-ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+ffs_loadvnode(struct mount *mp, struct vnode *vp,
+    const void *key, size_t key_len, const void **new_key)
 {
+	ino_t ino;
 	struct fs *fs;
 	struct inode *ip;
 	struct ufsmount *ump;
 	struct buf *bp;
-	struct vnode *vp;
 	dev_t dev;
 	int error;
 
+	KASSERT(key_len == sizeof(ino));
+	memcpy(&ino, key, key_len);
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
+	fs = ump->um_fs;
 
- retry:
-	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
-		return (0);
+	/* Read in the disk contents for the inode. */
+	error = bread(ump->um_devvp, FFS_FSBTODB(fs, ino_to_fsba(fs, ino)),
+		      (int)fs->fs_bsize, NOCRED, 0, &bp);
+	if (error)
+		return error;
 
-	/* Allocate a new vnode/inode. */
-	error = getnewvnode(VT_UFS, mp, ffs_vnodeop_p, NULL, &vp);
-	if (error) {
-		*vpp = NULL;
-		return (error);
-	}
+	/* Allocate and initialize inode. */
 	ip = pool_cache_get(ffs_inode_cache, PR_WAITOK);
-
-	/*
-	 * If someone beat us to it, put back the freshly allocated
-	 * vnode/inode pair and retry.
-	 */
-	mutex_enter(&ufs_hashlock);
-	if (ufs_ihashget(dev, ino, 0) != NULL) {
-		mutex_exit(&ufs_hashlock);
-		ungetnewvnode(vp);
-		pool_cache_put(ffs_inode_cache, ip);
-		goto retry;
-	}
-
-	vp->v_vflag |= VV_LOCKSWORK;
-
-	/*
-	 * XXX MFS ends up here, too, to allocate an inode.  Should we
-	 * XXX create another pool for MFS inodes?
-	 */
-
 	memset(ip, 0, sizeof(struct inode));
+	vp->v_tag = VT_UFS;
+	vp->v_op = ffs_vnodeop_p;
+	vp->v_vflag |= VV_LOCKSWORK;
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_ump = ump;
-	ip->i_fs = fs = ump->um_fs;
+	ip->i_fs = fs;
 	ip->i_dev = dev;
 	ip->i_number = ino;
 #if defined(QUOTA) || defined(QUOTA2)
 	ufsquota_init(ip);
 #endif
 
-	/*
-	 * Initialize genfs node, we might proceed to destroy it in
-	 * error branches.
-	 */
+	/* Initialize genfs node. */
 	genfs_node_init(vp, &ffs_genfsops);
 
-	/*
-	 * Put it onto its hash chain and lock it so that other requests for
-	 * this inode will block if they arrive while we are sleeping waiting
-	 * for old data structures to be purged or for the contents of the
-	 * disk portion of this inode to be read.
-	 */
-
-	ufs_ihashins(ip);
-	mutex_exit(&ufs_hashlock);
-
-	/* Read in the disk contents for the inode, copy into the inode. */
-	error = bread(ump->um_devvp, fsbtodb(fs, ino_to_fsba(fs, ino)),
-		      (int)fs->fs_bsize, NOCRED, 0, &bp);
-	if (error) {
-
-		/*
-		 * The inode does not contain anything useful, so it would
-		 * be misleading to leave it on its hash chain. With mode
-		 * still zero, it will be unlinked and returned to the free
-		 * list by vput().
-		 */
-
-		vput(vp);
-		*vpp = NULL;
-		return (error);
-	}
 	if (ip->i_ump->um_fstype == UFS1)
 		ip->i_din.ffs1_din = pool_cache_get(ffs_dinode1_cache,
 		    PR_WAITOK);
@@ -1894,17 +1801,10 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	ffs_load_inode(bp, ip, fs, ino);
 	brelse(bp, 0);
 
-	/*
-	 * Initialize the vnode from the inode, check for aliases.
-	 * Note that the underlying vnode may have changed.
-	 */
-
+	/* Initialize the vnode from the inode. */
 	ufs_vinit(mp, ffs_specop_p, ffs_fifoop_p, &vp);
 
-	/*
-	 * Finish inode initialization now that aliasing has been resolved.
-	 */
-
+	/* Finish inode initialization.  */
 	ip->i_devvp = ump->um_devvp;
 	vref(ip->i_devvp);
 
@@ -1918,8 +1818,8 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		ip->i_gid = ip->i_ffs1_ogid;			/* XXX */
 	}							/* XXX */
 	uvm_vnp_setsize(vp, ip->i_size);
-	*vpp = vp;
-	return (0);
+	*new_key = &ip->i_number;
+	return 0;
 }
 
 /*
@@ -2058,7 +1958,7 @@ ffs_cgupdate(struct ufsmount *mp, int waitfor)
 		size = fs->fs_bsize;
 		if (i + fs->fs_frag > blks)
 			size = (blks - i) * fs->fs_fsize;
-		error = ffs_getblk(mp->um_devvp, fsbtodb(fs, fs->fs_csaddr + i),
+		error = ffs_getblk(mp->um_devvp, FFS_FSBTODB(fs, fs->fs_csaddr + i),
 		    FFS_NOBLK, size, false, &bp);
 		if (error)
 			break;
@@ -2138,7 +2038,7 @@ ffs_vfs_fsync(vnode_t *vp, int flags)
 #endif
 
 	KASSERT(vp->v_type == VBLK);
-	KASSERT(vp->v_specmountpoint != NULL);
+	KASSERT(spec_node_getmountedfs(vp) != NULL);
 
 	/*
 	 * Flush all dirty data associated with the vnode.
@@ -2152,7 +2052,7 @@ ffs_vfs_fsync(vnode_t *vp, int flags)
 		return error;
 
 #ifdef WAPBL
-	mp = vp->v_specmountpoint;
+	mp = spec_node_getmountedfs(vp);
 	if (mp && mp->mnt_wapbl) {
 		/*
 		 * Don't bother writing out metadata if the syncer is

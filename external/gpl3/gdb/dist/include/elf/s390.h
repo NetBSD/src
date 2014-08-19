@@ -57,8 +57,12 @@ START_RELOC_NUMBERS (elf_s390_reloc_type)
     RELOC_NUMBER (R_390_GOTPC, 14)	/* 32 bit PC relative offset to GOT.  */
     RELOC_NUMBER (R_390_GOT16, 15)	/* 16 bit GOT offset.  */
     RELOC_NUMBER (R_390_PC16, 16)	/* PC relative 16 bit.  */
+    RELOC_NUMBER (R_390_PC12DBL, 62)	/* PC relative 12 bit shifted by 1.  */
+    RELOC_NUMBER (R_390_PLT12DBL, 63)	/* 12 bit PC rel. PLT shifted by 1.  */
     RELOC_NUMBER (R_390_PC16DBL, 17)	/* PC relative 16 bit shifted by 1.  */
     RELOC_NUMBER (R_390_PLT16DBL, 18)	/* 16 bit PC rel. PLT shifted by 1.  */
+    RELOC_NUMBER (R_390_PC24DBL, 64)	/* PC relative 24 bit shifted by 1.  */
+    RELOC_NUMBER (R_390_PLT24DBL, 65)	/* 24 bit PC rel. PLT shifted by 1.  */
     RELOC_NUMBER (R_390_PC32DBL, 19)	/* PC relative 32 bit shifted by 1.  */
     RELOC_NUMBER (R_390_PLT32DBL, 20)	/* 32 bit PC rel. PLT shifted by 1.  */
     RELOC_NUMBER (R_390_GOTPCDBL, 21)	/* 32 bit PC rel. GOT shifted by 1.  */
@@ -119,6 +123,7 @@ START_RELOC_NUMBERS (elf_s390_reloc_type)
     RELOC_NUMBER (R_390_GOTPLT20, 59)	/* 20 bit offset to jump slot.  */
     RELOC_NUMBER (R_390_TLS_GOTIE20, 60)/* 20 bit GOT offset for statis TLS
 					   block offset.  */
+    RELOC_NUMBER (R_390_IRELATIVE, 61)  /* IFUNC relocation.  */
     /* These are GNU extensions to enable C++ vtable garbage collection.  */
     RELOC_NUMBER (R_390_GNU_VTINHERIT, 250)
     RELOC_NUMBER (R_390_GNU_VTENTRY, 251)

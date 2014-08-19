@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.5.2.2 2013/06/23 06:20:00 tls Exp $
+#	$NetBSD: files.bcm2835,v 1.5.2.3 2014/08/20 00:02:45 tls Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -12,7 +12,6 @@ file	arch/arm/broadcom/bcm2835_dma.c
 file	arch/arm/broadcom/bcm2835_mbox_subr.c
 
 # OBIO just an attach point
-#, [mult=1], [intrbase=-1], [nobyteacc=0]
 device	obio { [addr=-1], [size=0], [intr=-1]
 	     } : bus_space_generic, pic, pic_splfuncs
 attach	obio at mainbus
@@ -56,8 +55,8 @@ attach	sdhc at obio with bcmemmc
 file	arch/arm/broadcom/bcm2835_emmc.c	bcmemmc
 
 # USB (BCM2835_USB_BASE)
-attach dotg at obio with dotg_amba
-file	arch/arm/broadcom/bcm2835_dotg.c	dotg	needs-flag
+attach dwctwo at obio with bcmdwctwo
+file	arch/arm/broadcom/bcm2835_dwctwo.c	bcmdwctwo	needs-flag
 
 # GPIO misc. functions
 define	bcm2835_gpio_subr
@@ -81,6 +80,11 @@ file	arch/arm/broadcom/bcm2835_genfb.c	bcmgenfb	needs-flag
 include "external/bsd/vchiq/conf/files.vchiq"
 
 # VC audio
-device	vcaudio: audiobus, auconv, mulaw
+device	vcaudio: audiobus, auconv, mulaw, aurateconv
 attach	vcaudio at vchiqbus
 file	arch/arm/broadcom/bcm2835_vcaudio.c	vcaudio
+
+# GPIO
+device	bcmgpio: gpiobus
+attach	bcmgpio at obio
+file	arch/arm/broadcom/bcm2835_gpio.c

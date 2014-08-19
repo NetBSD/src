@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_mod.c,v 1.1 2008/11/19 18:36:05 ad Exp $	*/
+/*	$NetBSD: svr4_mod.c,v 1.1.34.1 2014/08/20 00:03:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_mod.c,v 1.1 2008/11/19 18:36:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_mod.c,v 1.1.34.1 2014/08/20 00:03:33 tls Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE ARCH_ELFSIZE
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_mod.c,v 1.1 2008/11/19 18:36:05 ad Exp $");
 # define	MD2	""
 #endif
 
-MODULE(MODULE_CLASS_MISC, compat_svr4, "compat" MD1 MD2);
+MODULE(MODULE_CLASS_EXEC, compat_svr4, "compat" MD1 MD2);
 
 #define ELF32_AUXSIZE (howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), \
     sizeof(Elf32_Addr)) + MAXPATHLEN + ALIGN(1))
@@ -64,27 +64,35 @@ MODULE(MODULE_CLASS_MISC, compat_svr4, "compat" MD1 MD2);
 
 static struct execsw svr4_execsw[] = {
 #if defined(EXEC_ELF32) && ELFSIZE == 32
-	{ sizeof (Elf32_Ehdr),
-	  exec_elf32_makecmds,
-	  { svr4_elf32_probe },
-	  &emul_svr4,
-	  EXECSW_PRIO_LAST,	/* probe always succeeds */
-	  ELF32_AUXSIZE,
-	  elf32_copyargs,
-	  NULL,
-	  coredump_elf32,
-	  exec_setup_stack },
+	{
+		.es_hdrsz = sizeof (Elf32_Ehdr),
+		.es_makecmds = exec_elf32_makecmds,
+		.u = {
+			.elf_probe_func = svr4_elf32_probe,
+		},
+		.es_emul = &emul_svr4,
+		.es_prio = EXECSW_PRIO_LAST,
+		.es_arglen = ELF32_AUXSIZE,
+		.es_copyargs = elf32_copyargs,
+		.es_setregs = NULL,
+		.es_coredump = coredump_elf32,
+		.es_setup_stack = exec_setup_stack,
+	},
 #elif defined(EXEC_ELF64)
-	{ sizeof (Elf64_Ehdr),
-	  exec_elf64_makecmds,
-	  { svr4_elf64_probe },
-	  &emul_svr4,
-	  EXECSW_PRIO_LAST,	/* probe always succeeds */
-	  ELF64_AUXSIZE,
-	  elf64_copyargs,
-	  NULL,
-	  coredump_elf64,
-	  exec_setup_stack },
+	{
+		.es_hdrsz = sizeof (Elf64_Ehdr),
+		.es_makecmds = exec_elf64_makecmds,
+		.u = {
+			.elf_probe_func = svr4_elf64_probe,
+		},
+		.es_emul = &emul_svr4,
+		.es_prio = EXECSW_PRIO_LAST,
+		.es_arglen = ELF64_AUXSIZE,
+		.es_copyargs = elf64_copyargs,
+		.es_setregs = NULL,
+		.es_coredump = coredump_elf64,
+		.es_setup_stack = exec_setup_stack,
+	},
 #endif
 };
 

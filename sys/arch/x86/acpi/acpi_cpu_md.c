@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.71.6.1 2013/02/25 00:29:04 tls Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.71.6.2 2014/08/20 00:03:29 tls Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.71.6.1 2013/02/25 00:29:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.71.6.2 2014/08/20 00:03:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.71.6.1 2013/02/25 00:29:04 tls Exp
 #include <x86/cpuvar.h>
 #include <x86/cpu_msr.h>
 #include <x86/machdep.h>
+#include <x86/x86/tsc.h>
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpi_cpu.h>
@@ -162,6 +163,16 @@ acpicpu_md_flags(void)
 	 */
 	val |= ACPICPU_FLAG_C_APIC | ACPICPU_FLAG_C_TSC;
 
+	/*
+	 * Detect whether TSC is invariant. If it is not, we keep the flag to
+	 * note that TSC will not run at constant rate. Depending on the CPU,
+	 * this may affect P- and T-state changes, but especially relevant
+	 * are C-states; with variant TSC, states larger than C1 may
+	 * completely stop the counter.
+	 */
+	if (tsc_is_invariant())
+		val &= ~ACPICPU_FLAG_C_TSC;
+
 	switch (cpu_vendor) {
 
 	case CPUVENDOR_IDT:
@@ -214,24 +225,6 @@ acpicpu_md_flags(void)
 				val &= ~ACPICPU_FLAG_C_APIC;
 		}
 
-		/*
-		 * Detect whether TSC is invariant. If it is not,
-		 * we keep the flag to note that TSC will not run
-		 * at constant rate. Depending on the CPU, this may
-		 * affect P- and T-state changes, but especially
-		 * relevant are C-states; with variant TSC, states
-		 * larger than C1 may completely stop the counter.
-		 */
-		x86_cpuid(0x80000000, regs);
-
-		if (regs[0] >= 0x80000007) {
-
-			x86_cpuid(0x80000007, regs);
-
-			if ((regs[3] & __BIT(8)) != 0)
-				val &= ~ACPICPU_FLAG_C_TSC;
-		}
-
 		break;
 
 	case CPUVENDOR_AMD:
@@ -243,10 +236,7 @@ acpicpu_md_flags(void)
 
 		x86_cpuid(0x80000007, regs);
 
-		family = CPUID2FAMILY(ci->ci_signature);
-
-		if (family == 0xf)
-			family += CPUID2EXTFAMILY(ci->ci_signature);
+		family = CPUID_TO_FAMILY(ci->ci_signature);
 
     		switch (family) {
 
@@ -287,13 +277,10 @@ acpicpu_md_flags(void)
 		case 0x15: /* AMD Bulldozer */
 
 			/*
-			 * Like with Intel, detect invariant TSC,
-			 * MSR-based P-states, and AMD's "turbo"
-			 * (Core Performance Boost), respectively.
+			 * Like with Intel, detect MSR-based P-states,
+			 * and AMD's "turbo" (Core Performance Boost),
+			 * respectively.
 			 */
-			if ((regs[3] & CPUID_APM_TSC) != 0)
-				val &= ~ACPICPU_FLAG_C_TSC;
-
 			if ((regs[3] & CPUID_APM_HWP) != 0)
 				val |= ACPICPU_FLAG_P_FFH;
 
@@ -547,10 +534,7 @@ acpicpu_md_pstate_init(struct acpicpu_softc *sc)
 		if ((sc->sc_flags & ACPICPU_FLAG_P_FIDVID) != 0)
 			msr.ps_flags |= ACPICPU_FLAG_P_FIDVID;
 
-		family = CPUID2FAMILY(ci->ci_signature);
-
-		if (family == 0xf)
-			family += CPUID2EXTFAMILY(ci->ci_signature);
+		family = CPUID_TO_FAMILY(ci->ci_signature);
 
 		switch (family) {
 
@@ -992,7 +976,7 @@ acpicpu_md_tstate_set(struct acpicpu_tstate *ts)
 	uint8_t i;
 
 	val = ts->ts_control;
-	val = val & __BITS(1, 4);
+	val = val & __BITS(0, 4);
 
 	wrmsr(MSR_THERM_CONTROL, val);
 
@@ -1166,6 +1150,8 @@ acpicpu_md_pstate_sysctl_all(SYSCTLFN_ARGS)
 		if (sc->sc_pstate[i].ps_freq == 0)
 			continue;
 
+		if (len >= sizeof(buf))
+			break;
 		len += snprintf(buf + len, sizeof(buf) - len, "%u%s",
 		    sc->sc_pstate[i].ps_freq,
 		    i < (sc->sc_pstate_count - 1) ? " " : "");

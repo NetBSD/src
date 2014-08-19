@@ -1,9 +1,9 @@
-/*	$NetBSD: sbrk.S,v 1.11 2011/01/16 02:43:10 matt Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.11.12.1 2014/08/20 00:02:11 tls Exp $	*/
 
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sbrk.S,v 1.11 2011/01/16 02:43:10 matt Exp $")
+__RCSID("$NetBSD: sbrk.S,v 1.11.12.1 2014/08/20 00:02:11 tls Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 	.globl	_C_LABEL(__curbrk)
@@ -19,7 +19,7 @@ _C_LABEL(__curbrk):
 	.text
 
 ENTRY(_sbrk)
-#ifdef PIC
+#ifdef __PIC__
 	mflr	%r10
 	PIC_GOTSETUP(%r5)
 	mtlr	%r10

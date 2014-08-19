@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_space.c,v 1.10 2011/07/01 20:32:51 dyoung Exp $ */
+/*	$NetBSD: pxa2x0_space.c,v 1.10.12.1 2014/08/20 00:02:48 tls Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_space.c,v 1.10 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_space.c,v 1.10.12.1 2014/08/20 00:02:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,6 @@ pxa2x0_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 {
 	u_long startpa, endpa, pa;
 	vaddr_t va;
-	pt_entry_t *pte;
 	const struct pmap_devmap	*pd;
 
 	if ((pd = pmap_devmap_find_pa(bpa, size)) != NULL) {
@@ -195,16 +194,13 @@ pxa2x0_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 
 	*bshp = (bus_space_handle_t)(va + (bpa - startpa));
 
+	const int pmapflags =
+	    (flag & (BUS_SPACE_MAP_CACHEABLE|BUS_SPACE_MAP_PREFETCHABLE))
+		? 0
+		: PMAP_NOCACHE;
+
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
-		if ((flag & BUS_SPACE_MAP_CACHEABLE) == 0) {
-			pte = vtopte(va);
-			*pte &= ~L2_S_CACHE_MASK;
-			PTE_SYNC(pte);
-			/* XXX: pmap_kenter_pa() also does PTE_SYNC(). a bit of
-			 *      waste.
-			 */
-		}
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, pmapflags);
 	}
 	pmap_update(pmap_kernel());
 

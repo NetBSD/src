@@ -96,9 +96,8 @@ static void *
 drm_netbsd_ioremap(struct drm_device *dev, drm_local_map_t *map, int wc)
 {
 	bus_space_handle_t h;
-	int i, reg, reason;
+	int i, reason;
 	for(i = 0; i<DRM_MAX_PCI_RESOURCE; i++) {
-		reg = PCI_MAPREG_START + i*4;
 
 		/* Does the requested mapping lie within this resource? */
 		if ((dev->pci_map_data[i].maptype == PCI_MAPREG_TYPE_MEM ||
@@ -147,7 +146,8 @@ drm_netbsd_ioremap(struct drm_device *dev, drm_local_map_t *map, int wc)
 			{
 				dev->pci_map_data[i].mapped--;
 #if NAGP_I810 > 0 /* XXX horrible kludge: agp might have mapped it */
-				if (agp_i810_borrow(map->offset, &map->bsh))
+				if (agp_i810_borrow(map->offset, map->size,
+					&map->bsh))
 					return bus_space_vaddr(map->bst, map->bsh);
 #endif
 #if NGENFB > 0

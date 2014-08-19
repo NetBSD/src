@@ -1,4 +1,4 @@
-/*	$NetBSD: max6900reg.h,v 1.2 2005/12/11 12:21:23 christos Exp $	*/
+/*	$NetBSD: max6900reg.h,v 1.2.120.1 2014/08/20 00:03:37 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
  *
  *	101 0000
  */
-#define	MAX6900_ADDRMASK		0x7f
+#define	MAX6900_ADDRMASK		0x3ff
 #define	MAX6900_ADDR			0x50
 
 /*

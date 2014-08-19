@@ -1,4 +1,4 @@
-/*	$NetBSD: skipjack.c,v 1.3 2005/12/11 12:20:53 christos Exp $ */
+/*	$NetBSD: skipjack.c,v 1.3.120.1 2014/08/20 00:03:34 tls Exp $ */
 /*	$OpenBSD: skipjack.c,v 1.3 2001/05/05 00:31:34 angelos Exp $	*/
 
 /*
@@ -15,11 +15,14 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: skipjack.c,v 1.3 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: skipjack.c,v 1.3.120.1 2014/08/20 00:03:34 tls Exp $");
 
-#include <sys/param.h>
-#include <crypto/skipjack/skipjack.h>
+#include <sys/errno.h>
 #include <sys/malloc.h>
+#include <sys/module.h>
+#include <sys/param.h>
+
+#include <crypto/skipjack/skipjack.h>
 #include <opencrypto/cryptodev.h>
 
 static const u_int8_t ftable[0x100] =
@@ -259,4 +262,20 @@ skipjack_backwards (u_int8_t *cipher, u_int8_t *plain, u_int8_t **key_tables)
 	plain [2] = wh2;  plain [3] = wl2;
 	plain [4] = wh3;  plain [5] = wl3;
 	plain [6] = wh4;  plain [7] = wl4;
+}
+
+MODULE(MODULE_CLASS_MISC, skipjack, NULL);
+
+static int
+skipjack_modcmd(modcmd_t cmd, void *opaque)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return 0;
+	case MODULE_CMD_FINI:
+		return 0;
+	default:
+		return ENOTTY;
+	}
 }

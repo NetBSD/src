@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.342 2012/09/12 02:00:53 manu Exp $ */
+/* $NetBSD: machdep.c,v 1.342.2.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.342 2012/09/12 02:00:53 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.342.2.1 2014/08/20 00:02:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,6 @@ uint32_t no_optimize;
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[128];
 
 /* Number of machine cycles per microsecond */
 uint64_t	cycles_per_usec;
@@ -391,7 +390,7 @@ nobootinfo:
 		/* NOTREACHED */
 	}
 	(*c->init)();
-	strcpy(cpu_model, platform.model);
+	cpu_setmodel("%s", platform.model);
 
 	/*
 	 * Initialize the real console, so that the bootstrap console is
@@ -928,7 +927,7 @@ alpha_unknown_sysname(void)
 {
 	static char s[128];		/* safe size */
 
-	sprintf(s, "%s family, unknown model variation 0x%lx",
+	snprintf(s, sizeof(s), "%s family, unknown model variation 0x%lx",
 	    platform.family, hwrpb->rpb_variation & SV_ST_MASK);
 	return ((const char *)s);
 }
@@ -936,14 +935,14 @@ alpha_unknown_sysname(void)
 void
 identifycpu(void)
 {
-	char *s;
+	const char *s;
 	int i;
 
 	/*
 	 * print out CPU identification information.
 	 */
-	printf("%s", cpu_model);
-	for(s = cpu_model; *s; ++s)
+	printf("%s", cpu_getmodel());
+	for(s = cpu_getmodel(); *s; ++s)
 		if(strncasecmp(s, "MHz", 3) == 0)
 			goto skipMHz;
 	printf(", %ldMHz", hwrpb->rpb_cc_freq / 1000000);
@@ -1615,12 +1614,10 @@ setregs(register struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tfp->tf_regs[FRAME_A3] = l->l_proc->p_psstrp;	/* a3 = ps_strings */
 	tfp->tf_regs[FRAME_T12] = tfp->tf_regs[FRAME_PC];	/* a.k.a. PV */
 
-	l->l_md.md_flags &= ~MDLWP_FPUSED;
 	if (__predict_true((l->l_md.md_flags & IEEE_INHERIT) == 0)) {
 		l->l_md.md_flags &= ~MDLWP_FP_C;
 		pcb->pcb_fp.fpr_cr = FPCR_DYN(FP_RN);
 	}
-	fpu_discard();
 }
 
 /*
@@ -1796,7 +1793,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	*flags |= _UC_CPU | _UC_TLSBASE;
 
 	/* Save floating point register context, if any, and copy it. */
-	if (fpu_used_p(l)) {
+	if (fpu_valid_p(l)) {
 		fpu_save();
 		(void)memcpy(&mcp->__fpregs, &pcb->pcb_fp,
 		    sizeof (mcp->__fpregs));
@@ -1845,11 +1842,10 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	/* Restore floating point register context, if any. */
 	if (flags & _UC_FPU) {
 		/* If we have an FP register context, get rid of it. */
-		fpu_discard();
+		fpu_discard(true);
 		(void)memcpy(&pcb->pcb_fp, &mcp->__fpregs,
 		    sizeof (pcb->pcb_fp));
 		l->l_md.md_flags = mcp->__fpregs.__fp_fpcr & MDLWP_FP_C;
-		fpu_mark_used(l);
 	}
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_nvidia.c,v 1.1 2008/08/20 15:00:34 tacha Exp $	*/
+/*	$NetBSD: ata_raid_nvidia.c,v 1.1.46.1 2014/08/20 00:03:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 - 2008 Søren Schmidt <sos@FreeBSD.org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_nvidia.c,v 1.1 2008/08/20 15:00:34 tacha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_nvidia.c,v 1.1.46.1 2014/08/20 00:03:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -76,7 +76,7 @@ ata_raid_nvidia_type(int type)
 	case NV_T_RAID5:    return "RAID5";
 	case NV_T_RAID01:   return "RAID0+1";
 	default:
-		sprintf(buffer, "UNKNOWN 0x%02x", type);
+		snprintf(buffer, sizeof(buffer), "UNKNOWN 0x%02x", type);
 		return buffer;
     }
 }

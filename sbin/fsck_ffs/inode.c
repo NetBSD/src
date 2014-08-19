@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.64.10.2 2013/06/23 06:28:51 tls Exp $	*/
+/*	$NetBSD: inode.c,v 1.64.10.3 2014/08/20 00:02:24 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.64.10.2 2013/06/23 06:28:51 tls Exp $");
+__RCSID("$NetBSD: inode.c,v 1.64.10.3 2014/08/20 00:02:24 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ ckinode(union dinode *dp, struct inodesc *idesc)
 		if (--ndb == 0 &&
 		    (offset = ffs_blkoff(sblock, iswap64(DIP(&dino, size)))) != 0)
 			idesc->id_numfrags =
-				numfrags(sblock, fragroundup(sblock, offset));
+				ffs_numfrags(sblock, ffs_fragroundup(sblock, offset));
 		else
 			idesc->id_numfrags = sblock->fs_frag;
 		if (DIP(&dino, db[i]) == 0) {
@@ -281,10 +281,10 @@ chkrange(daddr_t blk, int cnt)
 	    cnt - 1 > maxfsblock - blk)
 		return (1);
 	if (cnt > sblock->fs_frag ||
-	    fragnum(sblock, blk) + cnt > sblock->fs_frag) {
+	    ffs_fragnum(sblock, blk) + cnt > sblock->fs_frag) {
 		if (debug)
 			printf("bad size: blk %lld, offset %d, size %d\n",
-			    (long long)blk, (int)fragnum(sblock, blk), cnt);
+			    (long long)blk, (int)ffs_fragnum(sblock, blk), cnt);
 	}
 	c = dtog(sblock, blk);
 	if (blk < cgdmin(sblock, c)) {
@@ -358,8 +358,10 @@ swap_dinode1(union dinode *dp, int n)
 		    doinglevel2 ||
 		    (maxsymlinklen < 0) ||
 		    (iswap64(dp1->di_size) > (uint64_t)maxsymlinklen)) {
-			for (j = 0; j < (UFS_NDADDR + UFS_NIADDR); j++)
+			for (j = 0; j < UFS_NDADDR; j++)
 			    dp1->di_db[j] = bswap32(dp1->di_db[j]);
+			for (j = 0; j < UFS_NIADDR; j++)
+			    dp1->di_ib[j] = bswap32(dp1->di_ib[j]);
 		}
 	}
 }
@@ -374,8 +376,12 @@ swap_dinode2(union dinode *dp, int n)
 	for (i = 0; i < n; i++, dp2++) {
 		ffs_dinode2_swap(dp2, dp2);
 		if ((iswap16(dp2->di_mode) & IFMT) != IFLNK) {
-			for (j = 0; j < (UFS_NDADDR + UFS_NIADDR + UFS_NXADDR); j++)
+			for (j = 0; j < UFS_NXADDR; j++)
 				dp2->di_extb[j] = bswap64(dp2->di_extb[j]);
+			for (j = 0; j < UFS_NDADDR; j++)
+				dp2->di_db[j] = bswap64(dp2->di_db[j]);
+			for (j = 0; j < UFS_NIADDR; j++)
+				dp2->di_ib[j] = bswap64(dp2->di_ib[j]);
 		}
 	}
 }
@@ -402,7 +408,7 @@ getnextinode(ino_t inumber)
 
 	if (inumber >= lastinum) {
 		readcnt++;
-		dblk = fsbtodb(sblock, ino_to_fsba(sblock, lastinum));
+		dblk = FFS_FSBTODB(sblock, ino_to_fsba(sblock, lastinum));
 		if (readcnt % readpercg == 0) {
 			size = partialsize;
 			lastinum += partialcnt;
@@ -441,7 +447,7 @@ setinodebuf(ino_t inum)
 	readcnt = 0;
 	if (inodebuf != NULL)
 		return;
-	inobufsize = blkroundup(sblock, INOBUFSIZE);
+	inobufsize = ffs_blkroundup(sblock, INOBUFSIZE);
 	fullcnt = inobufsize / (is_ufs2 ? DINODE2_SIZE : DINODE1_SIZE);
 	readpercg = sblock->fs_ipg / fullcnt;
 	partialcnt = sblock->fs_ipg % fullcnt;
@@ -786,8 +792,8 @@ allocino(ino_t request, int type)
 		(void)time(&t);
 		dp2->di_atime = iswap64(t);
 		dp2->di_mtime = dp2->di_ctime = dp2->di_atime;
-		dp2->di_size = iswap64(lfragtosize(sblock, nfrags));
-		dp2->di_blocks = iswap64(btodb(lfragtosize(sblock, nfrags)));
+		dp2->di_size = iswap64(ffs_lfragtosize(sblock, nfrags));
+		dp2->di_blocks = iswap64(btodb(ffs_lfragtosize(sblock, nfrags)));
 	} else {
 		dp1 = &dp->dp1;
 		dp1->di_db[0] = iswap32(allocblk(nfrags));
@@ -800,8 +806,8 @@ allocino(ino_t request, int type)
 		(void)time(&t);
 		dp1->di_atime = iswap32(t);
 		dp1->di_mtime = dp1->di_ctime = dp1->di_atime;
-		dp1->di_size = iswap64(lfragtosize(sblock, nfrags));
-		dp1->di_blocks = iswap32(btodb(lfragtosize(sblock, nfrags)));
+		dp1->di_size = iswap64(ffs_lfragtosize(sblock, nfrags));
+		dp1->di_blocks = iswap32(btodb(ffs_lfragtosize(sblock, nfrags)));
 	}
 	n_files++;
 	inodirty();
@@ -863,7 +869,7 @@ freeino(ino_t ino)
 ssize_t
 readblk(union dinode *dp, off_t offset, struct bufarea **bp)
 {
-	daddr_t blkno = lblkno(sblock, offset);
+	daddr_t blkno = ffs_lblkno(sblock, offset);
 	daddr_t iblkno;
 	int type = IFMT & iswap16(DIP(dp, mode));
 	ssize_t filesize = iswap64(DIP(dp, size));
@@ -952,7 +958,7 @@ expandfile(union dinode *dp)
 	di_blocks = is_ufs2 ? iswap64(dp->dp2.di_blocks) :
 	    iswap32(dp->dp1.di_blocks);
 	/* compute location of new block */
-	blkno = lblkno(sblock, filesize);
+	blkno = ffs_lblkno(sblock, filesize);
 
 	if (blkno < UFS_NDADDR) {
 		/* easy way: allocate a direct block */
@@ -993,7 +999,7 @@ expandfile(union dinode *dp)
 			dp->dp1.di_ib[ilevel - 1] = iswap32(newblk);
 	} else {
 		ibp = getdatablk(is_ufs2 ? iswap64(dp->dp2.di_ib[ilevel - 1]) :
-		    iswap32(dp->dp2.di_ib[ilevel - 1]), sblock->fs_bsize);
+		    iswap32(dp->dp1.di_ib[ilevel - 1]), sblock->fs_bsize);
 	}
 	/* walk indirect blocks up to the data block */
 	for (; ilevel >0 ; ilevel--) {

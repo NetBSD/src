@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_message.c,v 1.1.1.2.10.1 2013/02/25 00:27:16 tls Exp $	*/
+/*	$NetBSD: cleanup_message.c,v 1.1.1.2.10.2 2014/08/19 23:59:42 tls Exp $	*/
 
 /*++
 /* NAME
@@ -501,7 +501,8 @@ static void cleanup_header_callback(void *context, int header_class,
 		myfree((char *) result);
 	    }
 	} else if (checks->error) {
-	    msg_warn("%s: %s map lookup problem -- deferring delivery",
+	    msg_warn("%s: %s map lookup problem -- "
+		     "message not accepted, try again later",
 		     state->queue_id, checks->title);
 	    state->errs |= CLEANUP_STAT_WRITE;
 	}
@@ -791,7 +792,8 @@ static void cleanup_body_callback(void *context, int type,
 		return;
 	    }
 	} else if (cleanup_body_checks->error) {
-	    msg_warn("%s: %s map lookup problem -- deferring delivery",
+	    msg_warn("%s: %s map lookup problem -- "
+		     "message not accepted, try again later",
 		     state->queue_id, cleanup_body_checks->title);
 	    state->errs |= CLEANUP_STAT_WRITE;
 	}

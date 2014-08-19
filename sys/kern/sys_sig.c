@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.38.2.2 2013/06/23 06:18:58 tls Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.38.2.3 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.38.2.2 2013/06/23 06:18:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.38.2.3 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -389,16 +389,18 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 	 * Trampoline ABI version 0 is reserved for the legacy kernel
 	 * provided on-stack trampoline.  Conversely, if we are using a
 	 * non-0 ABI version, we must have a trampoline.  Only validate the
-	 * vers if a new sigaction was supplied. Emulations use legacy
-	 * kernel trampolines with version 0, alternatively check for that
-	 * too.
+	 * vers if a new sigaction was supplied and there was an actual
+	 * handler specified (not SIG_IGN or SIG_DFL), which don't require
+	 * a trampoline. Emulations use legacy kernel trampolines with
+	 * version 0, alternatively check for that too.
 	 *
 	 * If version < 2, we try to autoload the compat module.  Note
 	 * that we interlock with the unload check in compat_modcmd()
 	 * using kernconfig_lock.  If the autoload fails, we don't try it
 	 * again for this process.
 	 */
-	if (nsa != NULL) {
+	if (nsa != NULL && nsa->sa_handler != SIG_IGN
+	    && nsa->sa_handler != SIG_DFL) {
 		if (__predict_false(vers < 2)) {
 			if (p->p_flag & PK_32)
 				v0v1valid = true;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.77 2011/10/28 20:13:32 dyoung Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.77.12.1 2014/08/20 00:04:34 tls Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,9 +75,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.77 2011/10/28 20:13:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.77.12.1 2014/08/20 00:04:34 tls Exp $");
 
 #include "opt_inet.h"
+#ifndef INET6
+	#error "pseudo-device stf requires options INET6"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,11 +152,18 @@ static int ip_gif_ttl = 40;	/*XXX*/
 #endif
 
 extern struct domain inetdomain;
+
 static const struct protosw in_stf_protosw =
-{ SOCK_RAW,	&inetdomain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
-  in_stf_input, rip_output,	0,		rip_ctloutput,
-  rip_usrreq,
-  0,            0,              0,              0
+{
+	.pr_type	= SOCK_RAW,
+	.pr_domain	= &inetdomain,
+	.pr_protocol	= IPPROTO_IPV6,
+	.pr_flags	= PR_ATOMIC|PR_ADDR,
+	.pr_input	= in_stf_input,
+	.pr_output	= rip_output,
+	.pr_ctlinput	= NULL,
+	.pr_ctloutput	= rip_ctloutput,
+	.pr_usrreqs	= &rip_usrreqs,
 };
 
 void	stfattach(int);
@@ -548,14 +558,13 @@ stf_checkaddr6(struct stf_softc *sc, const struct in6_addr *in6,
 void
 in_stf_input(struct mbuf *m, ...)
 {
-	int off, proto;
+	int s, off, proto;
 	struct stf_softc *sc;
 	struct ip *ip;
 	struct ip6_hdr *ip6;
 	uint8_t otos, itos;
-	int s, isr;
-	struct ifqueue *ifq = NULL;
 	struct ifnet *ifp;
+	size_t pktlen;
 	va_list ap;
 
 	va_start(ap, m);
@@ -617,6 +626,7 @@ in_stf_input(struct mbuf *m, ...)
 	ip6->ip6_flow &= ~htonl(0xff << 20);
 	ip6->ip6_flow |= htonl((uint32_t)itos << 20);
 
+	pktlen = m->m_pkthdr.len;
 	m->m_pkthdr.rcvif = ifp;
 
 	bpf_mtap_af(ifp, AF_INET6, m);
@@ -627,20 +637,14 @@ in_stf_input(struct mbuf *m, ...)
 	 * See net/if_gif.c for possible issues with packet processing
 	 * reorder due to extra queueing.
 	 */
-	ifq = &ip6intrq;
-	isr = NETISR_IPV6;
 
 	s = splnet();
-	if (IF_QFULL(ifq)) {
-		IF_DROP(ifq);	/* update statistics */
+	if (__predict_true(pktq_enqueue(ip6_pktq, m, 0))) {
+		ifp->if_ipackets++;
+		ifp->if_ibytes += pktlen;
+	} else {
 		m_freem(m);
-		splx(s);
-		return;
 	}
-	IF_ENQUEUE(ifq, m);
-	schednetisr(isr);
-	ifp->if_ipackets++;
-	ifp->if_ibytes += m->m_pkthdr.len;
 	splx(s);
 }
 

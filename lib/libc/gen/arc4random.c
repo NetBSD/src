@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.20 2012/08/20 21:38:09 dsl Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.20.2.1 2014/08/20 00:02:14 tls Exp $	*/
 /*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/
 
 /*
@@ -27,12 +27,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: arc4random.c,v 1.20 2012/08/20 21:38:09 dsl Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.20.2.1 2014/08/20 00:02:14 tls Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include "reentrant.h"
 #include <fcntl.h>
+#include <pthread.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -48,26 +50,26 @@ __weak_alias(arc4random_stir,_arc4random_stir)
 __weak_alias(arc4random_uniform,_arc4random_uniform)
 #endif
 
+#define REKEY_BYTES	1600000
+
 struct arc4_stream {
-	uint8_t stirred;
-	uint8_t pad;
+	bool inited;
 	uint8_t i;
 	uint8_t j;
 	uint8_t s[(uint8_t)~0u + 1u];	/* 256 to you and me */
+	size_t count;
 	mutex_t mtx;
 };
 
 #ifdef _REENTRANT
-#define LOCK(rs) { \
-		int isthreaded = __isthreaded; \
-		if (isthreaded)        \
-			mutex_lock(&(rs)->mtx);
-#define UNLOCK(rs) \
-		if (isthreaded)        \
-			mutex_unlock(&(rs)->mtx);      \
-	}
+#define LOCK(rs)	do { \
+				if (__isthreaded) mutex_lock(&(rs)->mtx); \
+			} while (/*CONSTCOND*/ 0)
+#define UNLOCK(rs)	do { \
+				if (__isthreaded) mutex_unlock(&(rs)->mtx); \
+			} while (/*CONSTCOND*/ 0)
 #else
-#define LOCK(rs) 
+#define LOCK(rs)
 #define UNLOCK(rs)
 #endif
 
@@ -77,8 +79,9 @@ struct arc4_stream {
 #define S64(n) S16(n), S16(n + 16), S16(n + 32), S16(n + 48)
 #define S256 S64(0), S64(64), S64(128), S64(192)
 
-static struct arc4_stream rs = { .i = 0xff, .j = 0, .s = { S256 },
-		.stirred = 0, .mtx = MUTEX_INITIALIZER };
+static struct arc4_stream rs = { .inited = false,
+		.i = 0xff, .j = 0, .s = { S256 },
+		.count = 0, .mtx = MUTEX_INITIALIZER };
 
 #undef S
 #undef S4
@@ -91,14 +94,49 @@ static __noinline void arc4_stir(struct arc4_stream *);
 static inline uint8_t arc4_getbyte(struct arc4_stream *);
 static inline uint32_t arc4_getword(struct arc4_stream *);
 
-static inline int
+#ifdef _REENTRANT
+static void
+arc4_fork_prepare(void)
+{
+
+	LOCK(&rs);
+}
+
+static void
+arc4_fork_parent(void)
+{
+
+	UNLOCK(&rs);
+}
+#else
+#define arc4_fork_prepare	NULL
+#define arc4_fork_parent	NULL
+#endif
+
+static void
+arc4_fork_child(void)
+{
+
+	/* Reset the counter to a force new stir after forking */
+	rs.count = 0;
+	UNLOCK(&rs);
+}
+
+static inline void
 arc4_check_init(struct arc4_stream *as)
 {
-	if (__predict_true(rs.stirred))
-		return 0;
+	/*
+	 * pthread_atfork(3) only allows async-signal-safe functions in
+	 * the child handler.
+	 * NetBSD's mutex_unlock is async-signal safe, other implementations
+	 * may not be.
+	 */
 
-	arc4_stir(as);
-	return 1;
+	if (__predict_false(!as->inited)) {
+		as->inited = true;
+		pthread_atfork(arc4_fork_prepare,
+		    arc4_fork_parent, arc4_fork_child);
+	}
 }
 
 static inline void
@@ -124,6 +162,8 @@ arc4_stir(struct arc4_stream *as)
 	size_t len;
 	size_t i, j;
 
+	arc4_check_init(as);
+
 	/*
 	 * This code once opened and read /dev/urandom on each
 	 * call.  That causes repeated rekeying of the kernel stream
@@ -146,13 +186,24 @@ arc4_stir(struct arc4_stream *as)
 	 * paper "Weaknesses in the Key Scheduling Algorithm of RC4"
 	 * by Fluher, Mantin, and Shamir.  (N = 256 in our case.)
 	 */
-	for (j = 0; j < __arraycount(as->s) * 4; j++)
+	for (j = 0; j < __arraycount(as->s) * sizeof(uint32_t); j++)
 		arc4_getbyte(as);
 
-	as->stirred = 1;
+	/* Stir again after REKEY_BYTES bytes, or if the pid changes */
+	as->count = REKEY_BYTES;
 }
 
-static __always_inline uint8_t
+static inline void
+arc4_stir_if_needed(struct arc4_stream *as, size_t len)
+{
+
+	if (__predict_false(as->count <= len))
+		arc4_stir(as);
+	else
+		as->count -= len;
+}
+
+static __inline uint8_t
 arc4_getbyte_ij(struct arc4_stream *as, uint8_t *i, uint8_t *j)
 {
 	uint8_t si, sj;
@@ -169,6 +220,7 @@ arc4_getbyte_ij(struct arc4_stream *as, uint8_t *i, uint8_t *j)
 static inline uint8_t
 arc4_getbyte(struct arc4_stream *as)
 {
+
 	return arc4_getbyte_ij(as, &as->i, &as->j);
 }
 
@@ -176,6 +228,7 @@ static inline uint32_t
 arc4_getword(struct arc4_stream *as)
 {
 	uint32_t val;
+
 	val = arc4_getbyte(as) << 24;
 	val |= arc4_getbyte(as) << 16;
 	val |= arc4_getbyte(as) << 8;
@@ -186,6 +239,7 @@ arc4_getword(struct arc4_stream *as)
 void
 arc4random_stir(void)
 {
+
 	LOCK(&rs);
 	arc4_stir(&rs);
 	UNLOCK(&rs);
@@ -194,8 +248,9 @@ arc4random_stir(void)
 void
 arc4random_addrandom(u_char *dat, int datlen)
 {
+
 	LOCK(&rs);
-	arc4_check_init(&rs);
+	arc4_stir_if_needed(&rs, datlen);
 	arc4_addrandom(&rs, dat, datlen);
 	UNLOCK(&rs);
 }
@@ -206,7 +261,7 @@ arc4random(void)
 	uint32_t v;
 
 	LOCK(&rs);
-	arc4_check_init(&rs);
+	arc4_stir_if_needed(&rs, sizeof(v));
 	v = arc4_getword(&rs);
 	UNLOCK(&rs);
 	return v;
@@ -220,7 +275,7 @@ arc4random_buf(void *buf, size_t len)
 	uint8_t i, j;
 
 	LOCK(&rs);
-	arc4_check_init(&rs);
+	arc4_stir_if_needed(&rs, len);
 
 	/* cache i and j - compiler can't know 'buf' doesn't alias them */
 	i = rs.i;
@@ -263,7 +318,7 @@ arc4random_uniform(uint32_t upper_bound)
 	min = (0xFFFFFFFFU - upper_bound + 1) % upper_bound;
 
 	LOCK(&rs);
-	arc4_check_init(&rs);
+	arc4_stir_if_needed(&rs, sizeof(r));
 
 	/*
 	 * This could theoretically loop forever but each retry has

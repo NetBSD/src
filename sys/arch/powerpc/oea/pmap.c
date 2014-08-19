@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.86.2.2 2013/06/23 06:20:10 tls Exp $	*/
+/*	$NetBSD: pmap.c,v 1.86.2.3 2014/08/20 00:03:20 tls Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.86.2.2 2013/06/23 06:20:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.86.2.3 2014/08/20 00:03:20 tls Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -504,7 +504,7 @@ extern struct evcnt pmap_evcnt_idlezeroed_pages;
 #define	MFSRIN(va)	mfsrin(va)
 #define	MFTB()		mfrtcltbl()
 
-#if defined (PMAP_OEA) || defined (PMAP_OEA64_BRIDGE)
+#if defined(DDB) && !defined(PMAP_OEA64)
 static inline register_t
 mfsrin(vaddr_t va)
 {
@@ -512,7 +512,7 @@ mfsrin(vaddr_t va)
 	__asm volatile ("mfsrin %0,%1" : "=r"(sr) : "r"(va));
 	return sr;
 }
-#endif	/* PMAP_OEA*/
+#endif	/* DDB && !PMAP_OEA64 */
 
 #if defined (PMAP_OEA64_BRIDGE)
 extern void mfmsr64 (register64_t *result);
@@ -1896,7 +1896,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	struct pool *pl;
 	register_t pte_lo;
 	int error;
-	u_int pvo_flags;
 	u_int was_exec = 0;
 
 	PMAP_LOCK();
@@ -1904,13 +1903,11 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (__predict_false(!pmap_initialized)) {
 		pvo_head = &pmap_pvo_kunmanaged;
 		pl = &pmap_upvo_pool;
-		pvo_flags = 0;
 		pg = NULL;
 		was_exec = PTE_EXEC;
 	} else {
 		pvo_head = pa_to_pvoh(pa, &pg);
 		pl = &pmap_mpvo_pool;
-		pvo_flags = PVO_MANAGED;
 	}
 
 	DPRINTFN(ENTER,
@@ -2647,7 +2644,9 @@ void
 pmap_print_mmuregs(void)
 {
 	int i;
+#if defined (PMAP_OEA) || defined (PMAP_OEA_BRIDGE)
 	u_int cpuvers;
+#endif
 #ifndef PMAP_OEA64
 	vaddr_t addr;
 	register_t soft_sr[16];
@@ -2658,7 +2657,9 @@ pmap_print_mmuregs(void)
 #endif
 	paddr_t sdr1;
 	
+#if defined (PMAP_OEA) || defined (PMAP_OEA_BRIDGE)
 	cpuvers = MFPVR() >> 16;
+#endif
 	__asm volatile ("mfsdr1 %0" : "=r"(sdr1));
 #ifndef PMAP_OEA64
 	addr = 0;
@@ -3093,7 +3094,7 @@ pmap_setup_segment0_map(int use_large_pages, ...)
     vaddr_t va, va_end;
 
     register_t pte_lo = 0x0;
-    int ptegidx = 0, i = 0;
+    int ptegidx = 0;
     struct pte pte;
     va_list ap;
 
@@ -3107,7 +3108,7 @@ pmap_setup_segment0_map(int use_large_pages, ...)
     for (va = 0x0; va < SEGMENT_LENGTH; va += 0x1000) {
         ptegidx = va_to_pteg(pmap_kernel(), va);
         pmap_pte_create(&pte, pmap_kernel(), va, va | pte_lo);
-        i = pmap_pte_insert(ptegidx, &pte);
+        (void)pmap_pte_insert(ptegidx, &pte);
     }
 
     va_start(ap, use_large_pages);
@@ -3129,7 +3130,7 @@ pmap_setup_segment0_map(int use_large_pages, ...)
 #endif
             ptegidx = va_to_pteg(pmap_kernel(), va);
             pmap_pte_create(&pte, pmap_kernel(), va, pa | pte_lo);
-            i = pmap_pte_insert(ptegidx, &pte);
+            (void)pmap_pte_insert(ptegidx, &pte);
         }
     }
 
@@ -3402,6 +3403,11 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 /* PMAP_OEA64_BRIDGE does support these instructions */
 #if defined (PMAP_OEA) || defined (PMAP_OEA64_BRIDGE)
 	for (i = 0; i < 16; i++) {
+#if defined(PPC_OEA601)
+	    /* XXX wedges for segment register 0xf , so set later */
+	    if ((iosrtable[i] & SR601_T) && ((MFPVR() >> 16) == MPC601))
+		    continue;
+#endif
  		pmap_kernel()->pm_sr[i] = KERNELN_SEGMENT(i)|SR_PRKEY;
 		__asm volatile ("mtsrin %0,%1"
  			      :: "r"(KERNELN_SEGMENT(i)|SR_PRKEY), "r"(i << ADDR_SR_SHFT));
@@ -3528,5 +3534,10 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 		__asm volatile ("mtsrin %0,%1"
  			      :: "r"(sr), "r"(kernelstart));
 	}
+#endif
+
+#if defined(PMAPDEBUG)
+	if ( pmapdebug )
+	    pmap_print_mmuregs();
 #endif
 }

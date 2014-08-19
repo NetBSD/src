@@ -1,4 +1,4 @@
-/* $NetBSD: spdmemvar.h,v 1.2 2011/08/01 03:49:52 pgoyette Exp $ */
+/* $NetBSD: spdmemvar.h,v 1.2.12.1 2014/08/20 00:03:38 tls Exp $ */
 
 /*
  * Copyright (c) 2007 Paul Goyette
@@ -478,6 +478,11 @@ struct spdmem_ddr3 {				/* Dual Data Rate 3 SDRAM */
 	uint8_t	ddr3_mfg_week;
 	uint8_t	ddr3_serial[4];
 	uint16_t ddr3_crc;
+	uint8_t ddr3_part[18];
+	uint8_t ddr3_rev[2];
+	uint8_t	ddr3_dram_mfgID_lsb;
+	uint8_t	ddr3_dram_mfgID_msb;
+	uint8_t ddr3_vendor[26];
 } __packed;
 
 struct spdmem {
@@ -494,7 +499,6 @@ struct spdmem {
 		struct spdmem_rom	u1_rom;
 		struct spdmem_ddr3	u1_ddr3;
 	} sm_u1;
-	uint8_t	sm_extension[128];
 } __packed;
 #define	sm_fbd		sm_u1.u1_fbd
 #define	sm_fpm		sm_u1.u1_fpm

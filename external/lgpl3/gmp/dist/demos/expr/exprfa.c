@@ -35,7 +35,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
 
 static size_t
-e_mpf_number (mpf_ptr res, __gmp_const char *e, size_t elen, int base)
+e_mpf_number (mpf_ptr res, const char *e, size_t elen, int base)
 {
   char    *edup;
   size_t  i, ret, extra=0;
@@ -151,9 +151,9 @@ e_mpf_set_or_swap (mpf_ptr w, mpf_ptr x)
 
 
 int
-mpf_expr_a (__gmp_const struct mpexpr_operator_t *table,
+mpf_expr_a (const struct mpexpr_operator_t *table,
             mpf_ptr res, int base, unsigned long prec,
-            __gmp_const char *e, size_t elen,
+            const char *e, size_t elen,
             mpf_srcptr var[26])
 {
   struct mpexpr_parse_t  p;

@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.12 2011/06/28 09:09:43 jruoho Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.12.12.1 2014/08/20 00:03:35 tls Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.12 2011/06/28 09:09:43 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.12.12.1 2014/08/20 00:03:35 tls Exp $");
 
 #include "opt_acpi.h"
 #include "opt_ddb.h"
@@ -165,6 +165,30 @@ AcpiOsPredefinedOverride(const ACPI_PREDEFINED_NAMES *InitVal,
 	return AE_OK;
 }
 
+
+/*
+ * AcpiOsPhysicalTableOverride:
+ *
+ * ExistingTable       - Header of current table (probably firmware)
+ * NewAddress          - Where new table address is returned
+ *                       (Physical address)
+ * NewTableLength      - Where new table length is returned
+ *
+ * RETURN:      Status, address/length of new table. Null pointer returned
+ *              if no table is available to override.
+ *
+ * DESCRIPTION: Returns AE_SUPPORT, function not used in user space.
+ */
+ACPI_STATUS
+AcpiOsPhysicalTableOverride (
+    ACPI_TABLE_HEADER       *ExistingTable,
+    ACPI_PHYSICAL_ADDRESS   *NewAddress,
+    UINT32                  *NewTableLength)
+{
+
+	return AE_SUPPORT;
+}
+
 /*
  * acpi_osd_debugger:
  *
@@ -173,7 +197,7 @@ AcpiOsPredefinedOverride(const ACPI_PREDEFINED_NAMES *InitVal,
 void
 acpi_osd_debugger(void)
 {
-#ifdef ACPI_DEBUGGER
+#ifdef ACPI_DEBUG
 	static int beenhere;
 	ACPI_PARSE_OBJECT obj;
 	label_t	acpi_jmpbuf;

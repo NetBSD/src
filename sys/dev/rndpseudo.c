@@ -1,11 +1,12 @@
-/*	$NetBSD: rndpseudo.c,v 1.10.2.2 2013/06/23 06:20:16 tls Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.10.2.3 2014/08/20 00:03:35 tls Exp $	*/
 
 /*-
- * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Michael Graff <explorer@flame.org> and Thor Lancelot Simon.
+ * by Michael Graff <explorer@flame.org>, Thor Lancelot Simon, and
+ * Taylor R. Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.10.2.2 2013/06/23 06:20:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.10.2.3 2014/08/20 00:03:35 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -56,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.10.2.2 2013/06/23 06:20:16 tls Exp $
 #include <sys/cprng.h>
 #include <sys/cpu.h>
 #include <sys/stat.h>
+#include <sys/percpu.h>
 
 #include <sys/rnd.h>
 #ifdef COMPAT_50
@@ -64,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.10.2.2 2013/06/23 06:20:16 tls Exp $
 
 #include <dev/rnd_private.h>
 
-#if defined(__HAVE_CPU_COUNTER) && !defined(_RUMPKERNEL) /* XXX: bad pooka */
+#if defined(__HAVE_CPU_COUNTER)
 #include <machine/cpu_counter.h>
 #endif
 
@@ -88,18 +90,26 @@ extern int rnd_debug;
 #endif
 
 /*
- * The size of a temporary buffer, kmem_alloc()ed when needed, and used for
- * reading and writing data.
+ * The size of a temporary buffer for reading and writing entropy.
  */
 #define	RND_TEMP_BUFFER_SIZE	512
 
-static pool_cache_t rp_pc;
-static pool_cache_t rp_cpc;
+static pool_cache_t rnd_temp_buffer_cache;
+
+/*
+ * Per-open state -- a lazily initialized CPRNG.
+ */
+struct rnd_ctx {
+	struct cprng_strong	*rc_cprng;
+	bool			rc_hard;
+};
+
+static pool_cache_t rnd_ctx_cache;
 
 /*
  * The per-CPU RNGs used for short requests
  */
-cprng_strong_t **rp_cpurngs;
+static percpu_t *percpu_urandom_cprng;
 
 /*
  * Our random pool.  This is defined here rather than using the general
@@ -117,8 +127,18 @@ void	rndattach(int);
 dev_type_open(rndopen);
 
 const struct cdevsw rnd_cdevsw = {
-	rndopen, noclose, noread, nowrite, noioctl, nostop,
-	notty, nopoll, nommap, nokqfilter, D_OTHER|D_MPSAFE
+	.d_open = rndopen,
+	.d_close = noclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 static int rnd_read(struct file *, off_t *, struct uio *, kauth_cred_t, int);
@@ -155,7 +175,7 @@ rndpseudo_counter(void)
 {
 	struct timeval tv;
 
-#if defined(__HAVE_CPU_COUNTER) && !defined(_RUMPKERNEL) /* XXX: bad pooka */
+#if defined(__HAVE_CPU_COUNTER)
 	if (cpu_hascounter())
 		return (cpu_counter32());
 #endif
@@ -164,190 +184,253 @@ rndpseudo_counter(void)
 }
 
 /*
- * "Attach" the random device. This is an (almost) empty stub, since
- * pseudo-devices don't get attached until after config, after the
- * entropy sources will attach. We just use the timing of this event
- * as another potential source of initial entropy.
+ * `Attach' the random device.  We use the timing of this event as
+ * another potential source of initial entropy.
  */
 void
 rndattach(int num)
 {
-	u_int32_t c;
+	uint32_t c;
 
-	/* Trap unwary players who don't call rnd_init() early */
+	/* Trap unwary players who don't call rnd_init() early.  */
 	KASSERT(rnd_ready);
 
-	rp_pc = pool_cache_init(RND_TEMP_BUFFER_SIZE, 0, 0, 0,
-				"rndtemp", NULL, IPL_NONE,
-				NULL, NULL, NULL);
-	rp_cpc = pool_cache_init(sizeof(rp_ctx_t), 0, 0, 0,
-				 "rndctx", NULL, IPL_NONE,
-				 NULL, NULL, NULL);
+	rnd_temp_buffer_cache = pool_cache_init(RND_TEMP_BUFFER_SIZE, 0, 0, 0,
+	    "rndtemp", NULL, IPL_NONE, NULL, NULL, NULL);
+	rnd_ctx_cache = pool_cache_init(sizeof(struct rnd_ctx), 0, 0, 0,
+	    "rndctx", NULL, IPL_NONE, NULL, NULL, NULL);
+	percpu_urandom_cprng = percpu_alloc(sizeof(struct cprng_strong *));
 
-	/* mix in another counter */
+	/* Mix in another counter.  */
 	c = rndpseudo_counter();
 	mutex_spin_enter(&rndpool_mtx);
-	rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 1);
+	rndpool_add_data(&rnd_pool, &c, sizeof(c), 1);
 	mutex_spin_exit(&rndpool_mtx);
-
-	rp_cpurngs = kmem_zalloc(maxcpus * sizeof(cprng_strong_t *),
-				 KM_SLEEP);
 }
 
 int
-rndopen(dev_t dev, int flag, int ifmt,
-    struct lwp *l)
+rndopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
-	rp_ctx_t *ctx;
-	file_t *fp;
-	int fd, hard, error = 0;
+	bool hard;
+	struct file *fp;
+	int fd;
+	int error;
 
 	switch (minor(dev)) {
-	    case RND_DEV_URANDOM:
-		hard = 0;
+	case RND_DEV_URANDOM:
+		hard = false;
 		break;
-	    case RND_DEV_RANDOM:
-		hard = 1;
+
+	case RND_DEV_RANDOM:
+		hard = true;
 		break;
-	    default:
+
+	default:
 		return ENXIO;
 	}
-	ctx = pool_cache_get(rp_cpc, PR_WAITOK);	
-	if ((error = fd_allocfile(&fp, &fd)) != 0) {
-	    pool_cache_put(rp_cpc, ctx);
-	    return error;
-	}
-	ctx->cprng = NULL;
-	ctx->hard = hard;
-	ctx->bytesonkey = 0;
-	mutex_init(&ctx->interlock, MUTEX_DEFAULT, IPL_NONE);
 
-	return fd_clone(fp, fd, flag, &rnd_fileops, ctx);
+	error = fd_allocfile(&fp, &fd);
+	if (error)
+		return error;
+
+	/*
+	 * Allocate a context, but don't create a CPRNG yet -- do that
+	 * lazily because it consumes entropy from the system entropy
+	 * pool, which (currently) has the effect of depleting it and
+	 * causing readers from /dev/random to block.  If this is
+	 * /dev/urandom and the process is about to send only short
+	 * reads to it, then we will be using a per-CPU CPRNG anyway.
+	 */
+	struct rnd_ctx *const ctx = pool_cache_get(rnd_ctx_cache, PR_WAITOK);
+	ctx->rc_cprng = NULL;
+	ctx->rc_hard = hard;
+
+	error = fd_clone(fp, fd, flags, &rnd_fileops, ctx);
+	KASSERT(error == EMOVEFD);
+
+	return error;
 }
 
-static void
-rnd_alloc_cprng(rp_ctx_t *ctx)
+/*
+ * Fetch a /dev/u?random context's CPRNG, or create and save one if
+ * necessary.
+ */
+static struct cprng_strong *
+rnd_ctx_cprng(struct rnd_ctx *ctx)
 {
-	char personalization_buf[64];
-	struct lwp *l = curlwp;
-	int cflags = ctx->hard ? CPRNG_USE_CV :
-				 CPRNG_INIT_ANY|CPRNG_REKEY_ANY;
+	struct cprng_strong *cprng, *tmp = NULL;
 
-	mutex_enter(&ctx->interlock);
-	if (__predict_true(ctx->cprng == NULL)) {
-		snprintf(personalization_buf,
-			 sizeof(personalization_buf),
-	 		 "%d%llud%d", l->l_proc->p_pid,
-	 		 (unsigned long long int)l->l_ncsw, l->l_cpticks);
-		ctx->cprng = cprng_strong_create(personalization_buf,
-						 IPL_NONE, cflags);
+	/* Fast path: if someone has already allocated a CPRNG, use it.  */
+	cprng = ctx->rc_cprng;
+	if (__predict_true(cprng != NULL)) {
+		/* Make sure the CPU hasn't prefetched cprng's guts.  */
+		membar_consumer();
+		goto out;
 	}
-	membar_sync();
-	mutex_exit(&ctx->interlock);
+
+	/* Slow path: create a CPRNG.  Allocate before taking locks.  */
+	char name[64];
+	struct lwp *const l = curlwp;
+	(void)snprintf(name, sizeof(name), "%d %"PRIu64" %u",
+	    (int)l->l_proc->p_pid, l->l_ncsw, l->l_cpticks);
+	const int flags = (ctx->rc_hard? (CPRNG_USE_CV | CPRNG_HARD) :
+	    (CPRNG_INIT_ANY | CPRNG_REKEY_ANY));
+	tmp = cprng_strong_create(name, IPL_NONE, flags);
+
+	/* Publish cprng's guts before the pointer to them.  */
+	membar_producer();
+
+	/* Attempt to publish tmp, unless someone beat us.  */
+	cprng = atomic_cas_ptr(&ctx->rc_cprng, NULL, tmp);
+	if (__predict_false(cprng != NULL)) {
+		/* Make sure the CPU hasn't prefetched cprng's guts.  */
+		membar_consumer();
+		goto out;
+	}
+
+	/* Published.  Commit tmp.  */
+	cprng = tmp;
+	tmp = NULL;
+
+out:	if (tmp != NULL)
+		cprng_strong_destroy(tmp);
+	KASSERT(cprng != NULL);
+	return cprng;
+}
+
+/*
+ * Fetch a per-CPU CPRNG, or create and save one if necessary.
+ */
+static struct cprng_strong *
+rnd_percpu_cprng(void)
+{
+	struct cprng_strong **cprngp, *cprng, *tmp = NULL;
+
+	/* Fast path: if there already is a CPRNG for this CPU, use it.  */
+	cprngp = percpu_getref(percpu_urandom_cprng);
+	cprng = *cprngp;
+	if (__predict_true(cprng != NULL))
+		goto out;
+	percpu_putref(percpu_urandom_cprng);
+
+	/*
+	 * Slow path: create a CPRNG named by this CPU.
+	 *
+	 * XXX The CPU of the name may be different from the CPU to
+	 * which it is assigned, because we need to choose a name and
+	 * allocate a cprng while preemption is enabled.  This could be
+	 * fixed by changing the cprng_strong API (e.g., by adding a
+	 * cprng_strong_setname or by separating allocation from
+	 * initialization), but it's not clear that's worth the
+	 * trouble.
+	 */
+	char name[32];
+	(void)snprintf(name, sizeof(name), "urandom%u", cpu_index(curcpu()));
+	tmp = cprng_strong_create(name, IPL_NONE,
+	    (CPRNG_INIT_ANY | CPRNG_REKEY_ANY));
+
+	/* Try again, but we may have been preempted and lost a race.  */
+	cprngp = percpu_getref(percpu_urandom_cprng);
+	cprng = *cprngp;
+	if (__predict_false(cprng != NULL))
+		goto out;
+
+	/* Commit the CPRNG we just created.  */
+	cprng = tmp;
+	tmp = NULL;
+	*cprngp = cprng;
+
+out:	percpu_putref(percpu_urandom_cprng);
+	if (tmp != NULL)
+		cprng_strong_destroy(tmp);
+	KASSERT(cprng != NULL);
+	return cprng;
 }
 
 static int
-rnd_read(struct file * fp, off_t *offp, struct uio *uio,
-	  kauth_cred_t cred, int flags)
+rnd_read(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
+    int flags)
 {
-	rp_ctx_t *ctx = fp->f_data;
-	cprng_strong_t *cprng;
-	u_int8_t *bf;
-	int strength, ret;
-	struct cpu_info *ci = curcpu();
+	int error = 0;
 
 	DPRINTF(RND_DEBUG_READ,
-	    ("Random:  Read of %zu requested, flags 0x%08x\n",
-	    uio->uio_resid, flags));
+	    ("Random: Read of %zu requested, flags 0x%08x\n",
+		uio->uio_resid, flags));
 
 	if (uio->uio_resid == 0)
-		return (0);
+		return 0;
 
-	if (ctx->hard || uio->uio_resid > NIST_BLOCK_KEYLEN_BYTES) {
-		if (ctx->cprng == NULL) {
-			rnd_alloc_cprng(ctx);
-		}
-		cprng = ctx->cprng;
-	} else {
-		int index = cpu_index(ci);
+	struct rnd_ctx *const ctx = fp->f_data;
+	uint8_t *const buf = pool_cache_get(rnd_temp_buffer_cache, PR_WAITOK);
 
-		if (__predict_false(rp_cpurngs[index] == NULL)) {
-			char rngname[32];
+	/*
+	 * Choose a CPRNG to use -- either the per-open CPRNG, if this
+	 * is /dev/random or a long read, or the per-CPU one otherwise.
+	 *
+	 * XXX NIST_BLOCK_KEYLEN_BYTES is a detail of the cprng(9)
+	 * implementation and as such should not be mentioned here.
+	 */
+	struct cprng_strong *const cprng =
+	    ((ctx->rc_hard || (uio->uio_resid > NIST_BLOCK_KEYLEN_BYTES))?
+		rnd_ctx_cprng(ctx) : rnd_percpu_cprng());
 
-			snprintf(rngname, sizeof(rngname),
-				 "%s-short", cpu_name(ci));
-			rp_cpurngs[index] =
-			    cprng_strong_create(rngname, IPL_NONE,
-						CPRNG_INIT_ANY |
-						CPRNG_REKEY_ANY);
-		}
-		cprng = rp_cpurngs[index];
-	}
-
-	if (__predict_false(cprng == NULL)) {
-		printf("NULL rng!\n");
-		return EIO;
-        }
-
-	strength = cprng_strong_strength(cprng);
-	ret = 0;
-	bf = pool_cache_get(rp_pc, PR_WAITOK);
+	/*
+	 * Generate the data in RND_TEMP_BUFFER_SIZE chunks.
+	 */
 	while (uio->uio_resid > 0) {
-		int n, nread, want;
+		const size_t n_req = MIN(uio->uio_resid, RND_TEMP_BUFFER_SIZE);
 
-		want = MIN(RND_TEMP_BUFFER_SIZE, uio->uio_resid);
+		CTASSERT(RND_TEMP_BUFFER_SIZE <= CPRNG_MAX_LEN);
+		const size_t n_read = cprng_strong(cprng, buf, n_req,
+		    ((ctx->rc_hard && ISSET(fp->f_flag, FNONBLOCK))?
+			FNONBLOCK : 0));
 
-		/* XXX is this _really_ what's wanted? */
-		if (ctx->hard) {
-#ifdef RND_VERBOSE
-			printf("rnd: hard, want = %d, strength = %d, "
-			       "bytesonkey = %d\n", (int)want, (int)strength,
-			       (int)ctx->bytesonkey);
-#endif
-			n = MIN(want, strength - ctx->bytesonkey);
-			if (n < 1) {
-#ifdef RND_VERBOSE
-			    printf("rnd: BAD BAD BAD: n = %d, want = %d, "
-				   "strength = %d, bytesonkey = %d\n", n,
-				   (int)want, (int)strength,
-				   (int)ctx->bytesonkey);
-#endif
-			}
-		} else {
-			n = want;
-		}
+		/*
+		 * Equality will hold unless this is /dev/random, in
+		 * which case we get only as many bytes as are left
+		 * from the CPRNG's `information-theoretic strength'
+		 * since the last rekey.
+		 */
+		KASSERT(n_read <= n_req);
+		KASSERT(ctx->rc_hard || (n_read == n_req));
 
-		nread = cprng_strong(cprng, bf, n,
-				     (fp->f_flag & FNONBLOCK) ? FNONBLOCK : 0);
-
-		if (ctx->hard && nread > 0) {
-			if (atomic_add_int_nv(&ctx->bytesonkey, nread) >=
-			    strength) {
-				cprng_strong_deplete(cprng);
-				ctx->bytesonkey = 0;
-				membar_producer();
-			}
-#ifdef RND_VERBOSE
-			printf("rnd: new bytesonkey %d\n", ctx->bytesonkey);
-#endif
-		}
-		if (nread < 1) {
-			if (fp->f_flag & FNONBLOCK) {
-				ret = EWOULDBLOCK;
-			} else {
-				ret = EINTR;
-			}
+		error = uiomove(buf, n_read, uio);
+		if (error)
 			goto out;
-		}
 
-		ret = uiomove((void *)bf, nread, uio);
-		if (ret != 0 || n < want) {
+		/*
+		 * For /dev/urandom:  Reads always succeed in full, no
+		 * matter how many iterations that takes.  (XXX But
+		 * this means the computation can't be interrupted,
+		 * wihch seems suboptimal.)
+		 *
+		 * For /dev/random, nonblocking:  Reads succeed with as
+		 * many bytes as a single request can return without
+		 * blocking, or fail with EAGAIN if a request would
+		 * block.  (There is no sense in trying multiple
+		 * requests because if the first one didn't fill the
+		 * buffer, the second one would almost certainly
+		 * block.)
+		 *
+		 * For /dev/random, blocking:  Reads succeed with as
+		 * many bytes as a single request -- which may block --
+		 * can return if uninterrupted, or fail with EINTR if
+		 * the request is interrupted.
+		 */
+		KASSERT((0 < n_read) || ctx->rc_hard);
+		if (ctx->rc_hard) {
+			if (0 < n_read)
+				error = 0;
+			else if (ISSET(fp->f_flag, FNONBLOCK))
+				error = EAGAIN;
+			else
+				error = EINTR;
 			goto out;
 		}
 	}
-out:
-	pool_cache_put(rp_pc, bf);
-	return (ret);
+
+out:	pool_cache_put(rnd_temp_buffer_cache, buf);
+	return error;
 }
 
 static int
@@ -371,7 +454,7 @@ rnd_write(struct file *fp, off_t *offp, struct uio *uio,
 	if (uio->uio_resid == 0)
 		return (0);
 	ret = 0;
-	bf = pool_cache_get(rp_pc, PR_WAITOK);
+	bf = pool_cache_get(rnd_temp_buffer_cache, PR_WAITOK);
 	while (uio->uio_resid > 0) {
 		/*
 		 * Don't flood the pool.
@@ -418,7 +501,7 @@ rnd_write(struct file *fp, off_t *offp, struct uio *uio,
 		added += n;
 		DPRINTF(RND_DEBUG_WRITE, ("Random: Copied in %d bytes\n", n));
 	}
-	pool_cache_put(rp_pc, bf);
+	pool_cache_put(rnd_temp_buffer_cache, bf);
 	return (ret);
 }
 
@@ -432,12 +515,25 @@ krndsource_to_rndsource(krndsource_t *kr, rndsource_t *r)
         r->flags = kr->flags;
 }
 
+static void
+krndsource_to_rndsource_est(krndsource_t *kr, rndsource_est_t *re)
+{
+	memset(re, 0, sizeof(*re));
+	krndsource_to_rndsource(kr, &re->rt);
+	re->dt_samples = kr->time_delta.insamples;
+	re->dt_total = kr->time_delta.outbits;
+	re->dv_samples = kr->value_delta.insamples;
+	re->dv_total = kr->value_delta.outbits;
+}
+
 int
 rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 {
 	krndsource_t *kr;
 	rndstat_t *rst;
 	rndstat_name_t *rstnm;
+	rndstat_est_t *rset;
+	rndstat_est_name_t *rsetnm;
 	rndctl_t *rctl;
 	rnddata_t *rnddata;
 	u_int32_t count, start;
@@ -453,6 +549,8 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 	case RNDGETPOOLSTAT:
 	case RNDGETSRCNUM:
 	case RNDGETSRCNAME:
+	case RNDGETESTNUM:
+	case RNDGETESTNAME:
 		ret = kauth_authorize_device(curlwp->l_cred,
 		    KAUTH_DEVICE_RND_GETPRIV, NULL, NULL, NULL, NULL);
 		if (ret)
@@ -541,6 +639,41 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 		mutex_spin_exit(&rndpool_mtx);
 		break;
 
+	case RNDGETESTNUM:
+		rset = (rndstat_est_t *)addr;
+
+		if (rset->count == 0)
+			break;
+
+		if (rset->count > RND_MAXSTATCOUNT)
+			return (EINVAL);
+
+		mutex_spin_enter(&rndpool_mtx);
+		/*
+		 * Find the starting source by running through the
+		 * list of sources.
+		 */
+		kr = rnd_sources.lh_first;
+		start = rset->start;
+		while (kr != NULL && start > 1) {
+			kr = kr->list.le_next;
+			start--;
+		}
+
+		/* Return up to as many structures as the user asked
+		 * for.  If we run out of sources, a count of zero
+		 * will be returned, without an error.
+		 */
+		for (count = 0; count < rset->count && kr != NULL; count++) {
+			krndsource_to_rndsource_est(kr, &rset->source[count]);
+			kr = kr->list.le_next;
+		}
+
+		rset->count = count;
+
+		mutex_spin_exit(&rndpool_mtx);
+		break;
+
 	case RNDGETSRCNAME:
 		/*
 		 * Scan through the list, trying to find the name.
@@ -551,7 +684,7 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 		while (kr != NULL) {
 			if (strncmp(kr->name, rstnm->name,
 				    MIN(sizeof(kr->name),
-					sizeof(*rstnm))) == 0) {
+					sizeof(rstnm->name))) == 0) {
 				krndsource_to_rndsource(kr, &rstnm->source);
 				mutex_spin_exit(&rndpool_mtx);
 				return (0);
@@ -561,6 +694,30 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 		mutex_spin_exit(&rndpool_mtx);
 
 		ret = ENOENT;		/* name not found */
+
+		break;
+
+	case RNDGETESTNAME:
+		/*
+		 * Scan through the list, trying to find the name.
+		 */
+		mutex_spin_enter(&rndpool_mtx);
+		rsetnm = (rndstat_est_name_t *)addr;
+		kr = rnd_sources.lh_first;
+		while (kr != NULL) {
+			if (strncmp(kr->name, rsetnm->name,
+				    MIN(sizeof(kr->name),
+					sizeof(rsetnm->name))) == 0) {
+				krndsource_to_rndsource_est(kr,
+							    &rsetnm->source);
+				mutex_spin_exit(&rndpool_mtx);
+				return (0);
+			}
+			kr = kr->list.le_next;
+		}
+		mutex_spin_exit(&rndpool_mtx);
+
+		ret = ENOENT;           /* name not found */
 
 		break;
 
@@ -580,9 +737,11 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 			while (kr != NULL) {
 				if (kr->type == rctl->type) {
 					kr->flags &= ~rctl->mask;
+
 					kr->flags |=
 					    (rctl->flags & rctl->mask);
 				}
+
 				kr = kr->list.le_next;
 			}
 			mutex_spin_exit(&rndpool_mtx);
@@ -598,7 +757,7 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
                                         sizeof(rctl->name))) == 0) {
 				kr->flags &= ~rctl->mask;
 				kr->flags |= (rctl->flags & rctl->mask);
-				
+
 				mutex_spin_exit(&rndpool_mtx);
 				return (0);
 			}
@@ -658,8 +817,8 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 static int
 rnd_poll(struct file *fp, int events)
 {
+	struct rnd_ctx *const ctx = fp->f_data;
 	int revents;
-	rp_ctx_t *ctx = fp->f_data;
 
 	/*
 	 * We are always writable.
@@ -670,36 +829,29 @@ rnd_poll(struct file *fp, int events)
 	 * Save some work if not checking for reads.
 	 */
 	if ((events & (POLLIN | POLLRDNORM)) == 0)
-		return (revents);
+		return revents;
 
-	if (ctx->cprng == NULL) {
-		rnd_alloc_cprng(ctx);
-		if (__predict_false(ctx->cprng == NULL)) {
-			return EIO;
-		}       
-	}
+	/*
+	 * For /dev/random, ask the CPRNG, which may require creating
+	 * one.  For /dev/urandom, we're always readable.
+	 */
+	if (ctx->rc_hard)
+		revents |= cprng_strong_poll(rnd_ctx_cprng(ctx), events);
+	else
+		revents |= (events & (POLLIN | POLLRDNORM));
 
-	if (cprng_strong_ready(ctx->cprng)) {
-		revents |= events & (POLLIN | POLLRDNORM);
-	} else {
-		mutex_enter(&ctx->cprng->mtx);
-		selrecord(curlwp, &ctx->cprng->selq);
-		mutex_exit(&ctx->cprng->mtx);
-	}
-
-	return (revents);
+	return revents;
 }
 
 static int
 rnd_stat(struct file *fp, struct stat *st)
 {
-	rp_ctx_t *ctx = fp->f_data;
+	struct rnd_ctx *const ctx = fp->f_data;
 
 	/* XXX lock, if cprng allocated?  why? */
 	memset(st, 0, sizeof(*st));
 	st->st_dev = makedev(cdevsw_lookup_major(&rnd_cdevsw),
-						 ctx->hard ? RND_DEV_RANDOM :
-						 RND_DEV_URANDOM);
+	    (ctx->rc_hard? RND_DEV_RANDOM : RND_DEV_URANDOM));
 	/* XXX leave atimespect, mtimespec, ctimespec = 0? */
 
 	st->st_uid = kauth_cred_geteuid(fp->f_cred);
@@ -711,80 +863,20 @@ rnd_stat(struct file *fp, struct stat *st)
 static int
 rnd_close(struct file *fp)
 {
-	rp_ctx_t *ctx = fp->f_data;
+	struct rnd_ctx *const ctx = fp->f_data;
 
-	if (ctx->cprng) {
-		cprng_strong_destroy(ctx->cprng);
-	}
+	if (ctx->rc_cprng != NULL)
+		cprng_strong_destroy(ctx->rc_cprng);
 	fp->f_data = NULL;
-	mutex_destroy(&ctx->interlock);
-	pool_cache_put(rp_cpc, ctx);
+	pool_cache_put(rnd_ctx_cache, ctx);
 
 	return 0;
 }
-
-static void
-filt_rnddetach(struct knote *kn)
-{
-	cprng_strong_t *c = kn->kn_hook;
-
-	mutex_enter(&c->mtx);
-	SLIST_REMOVE(&c->selq.sel_klist, kn, knote, kn_selnext);
-	mutex_exit(&c->mtx);
-}
-
-static int
-filt_rndread(struct knote *kn, long hint)
-{
-	cprng_strong_t *c = kn->kn_hook;
-
-	if (cprng_strong_ready(c)) {
-		kn->kn_data = RND_TEMP_BUFFER_SIZE;
-		return 1;
-	}
-	return 0;
-}
-
-static const struct filterops rnd_seltrue_filtops =
-	{ 1, NULL, filt_rnddetach, filt_seltrue };
-
-static const struct filterops rndread_filtops =
-	{ 1, NULL, filt_rnddetach, filt_rndread };
 
 static int
 rnd_kqfilter(struct file *fp, struct knote *kn)
 {
-	rp_ctx_t *ctx = fp->f_data;
-	struct klist *klist;
+	struct rnd_ctx *const ctx = fp->f_data;
 
-	if (ctx->cprng == NULL) {
-		rnd_alloc_cprng(ctx);
-		if (__predict_false(ctx->cprng == NULL)) {
-			return EIO;
-		}
-	}
-
-	mutex_enter(&ctx->cprng->mtx);
-	switch (kn->kn_filter) {
-	case EVFILT_READ:
-		klist = &ctx->cprng->selq.sel_klist;
-		kn->kn_fop = &rndread_filtops;
-		break;
-
-	case EVFILT_WRITE:
-		klist = &ctx->cprng->selq.sel_klist;
-		kn->kn_fop = &rnd_seltrue_filtops;
-		break;
-
-	default:
-		mutex_exit(&ctx->cprng->mtx);
-		return EINVAL;
-	}
-
-	kn->kn_hook = ctx->cprng;
-
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
-
-	mutex_exit(&ctx->cprng->mtx);
-	return (0);
+	return cprng_strong_kqfilter(rnd_ctx_cprng(ctx), kn);
 }

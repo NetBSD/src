@@ -1,7 +1,6 @@
 # This test code is part of GDB, the GNU debugger.
 
-# Copyright 2003, 2004, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 2003-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,9 +45,10 @@ proc cp_check_errata { expected_string actual_string errata_table } {
 # each line, matching it to the class description given in the
 # parameters.
 #
-# IN_COMMAND and IN_TESTNAME are the command and testname for
+# IN_EXP is the expression to use; the appropriate "ptype" invocation
+# is prepended to it.  IN_TESTNAME is the testname for
 # gdb_test_multiple.  If IN_TESTNAME is the empty string, then it
-# defaults to IN_COMMAND.
+# defaults to "ptype IN_EXP".
 #
 # IN_KEY is "class" or "struct".  For now, I ignore it, and allow either
 # "class" or "struct" in the output, as long as the access specifiers all
@@ -82,6 +82,11 @@ proc cp_check_errata { expected_string actual_string errata_table } {
 #      the class has a member function with the given access type
 #      and the given declaration.
 #
+#   { typedef "access" "declaration" }
+#
+#      the class has a typedef with the given access type and the
+#      given declaration.
+#
 # If you test the same class declaration more than once, you can specify
 # IN_CLASS_TABLE as "ibid".  "ibid" means: look for a previous class
 # table that had the same IN_KEY and IN_TAG, and re-use that table.
@@ -95,6 +100,8 @@ proc cp_check_errata { expected_string actual_string errata_table } {
 # demangler syntax adjustment, so you have to make a bigger table
 # with lines for each output variation.
 # 
+# IN_PTYPE_ARG are arguments to pass to ptype.  The default is "/r".
+#
 # gdb can vary the output of ptype in several ways:
 #
 # . CLASS/STRUCT
@@ -173,13 +180,16 @@ proc cp_check_errata { expected_string actual_string errata_table } {
 #
 # -- chastain 2004-08-07
 
-proc cp_test_ptype_class { in_command in_testname in_key in_tag in_class_table { in_tail "" } { in_errata_table { } } } {
+proc cp_test_ptype_class { in_exp in_testname in_key in_tag in_class_table { in_tail "" } { in_errata_table { } } { in_ptype_arg /r } } {
     global gdb_prompt
     set wsopt "\[\r\n\t \]*"
 
-    # The test name defaults to the command.
+    # The test name defaults to the command, but without the
+    # arguments, for historical reasons.
 
-    if { "$in_testname" == "" } then { set in_testname "$in_command" }
+    if { "$in_testname" == "" } then { set in_testname "ptype $in_exp" }
+
+    set in_command "ptype${in_ptype_arg} $in_exp"
 
     # Save class tables in a history array for reuse.
 
@@ -200,6 +210,7 @@ proc cp_test_ptype_class { in_command in_testname in_key in_tag in_class_table {
     set list_vbases  { }
     set list_fields  { }
     set list_methods { }
+    set list_typedefs { }
 
     foreach class_line $in_class_table {
 	switch [lindex $class_line 0] {
@@ -207,6 +218,7 @@ proc cp_test_ptype_class { in_command in_testname in_key in_tag in_class_table {
 	    "vbase"  { lappend list_vbases  [lindex $class_line 1] }
 	    "field"  { lappend list_fields  [lrange $class_line 1 2] }
 	    "method" { lappend list_methods [lrange $class_line 1 2] }
+	    "typedef" { lappend list_typedefs [lrange $class_line 1 2] }
 	    default  { fail "$in_testname // bad line in class table: $class_line"; return; }
 	}
     }
@@ -223,13 +235,13 @@ proc cp_test_ptype_class { in_command in_testname in_key in_tag in_class_table {
 
     set parse_okay 0
     gdb_test_multiple "$in_command" "$in_testname // parse failed" {
-	-re "type = (struct|class)${wsopt}(\[A-Za-z0-9_\]*)${wsopt}((:\[^\{\]*)?)${wsopt}\{(.*)\}${wsopt}(\[^\r\n\]*)\[\r\n\]+$gdb_prompt $" {
+	-re "type = (struct|class)${wsopt}(\[^ \t\]*)${wsopt}(\\\[with .*\\\]${wsopt})?((:\[^\{\]*)?)${wsopt}\{(.*)\}${wsopt}(\[^\r\n\]*)\[\r\n\]+$gdb_prompt $" {
 	    set parse_okay          1
 	    set actual_key          $expect_out(1,string)
 	    set actual_tag          $expect_out(2,string)
-	    set actual_base_string  $expect_out(3,string)
-	    set actual_body         $expect_out(5,string)
-	    set actual_tail         $expect_out(6,string)
+	    set actual_base_string  $expect_out(4,string)
+	    set actual_body         $expect_out(6,string)
+	    set actual_tail         $expect_out(7,string)
 	}
     }
     if { ! $parse_okay } then { return }
@@ -382,6 +394,22 @@ proc cp_test_ptype_class { in_command in_testname in_key in_tag in_class_table {
 	    }
 	}
 
+	# Typedef
+
+	if {[llength $list_typedefs] > 0} {
+	    set typedef_access [lindex [lindex $list_typedefs 0] 0]
+	    set typedef_decl [lindex [lindex $list_typedefs 0] 1]
+	    if {[string equal $actual_line $typedef_decl]} {
+		if {![string equal $access $typedef_access]} {
+		    cp_check_errata $typedef_access $access $in_errata_table
+		    fail "$in_testname // wrong access specifier for typedef: $access"
+		    return
+		}
+		set list_typedefs [lreplace $list_typedefs 0 0]
+		continue
+	    }
+	}
+
 	# Synthetic operators.  These are optional and can be mixed in
 	# with the methods in any order, but duplicates are wrong.
 	#
@@ -450,6 +478,11 @@ proc cp_test_ptype_class { in_command in_testname in_key in_tag in_class_table {
 
     if { [llength $list_methods] > 0 } then {
 	fail "$in_testname // missing methods"
+	return
+    }
+
+    if {[llength $list_typedefs] > 0} {
+	fail "$in_testname // missing typedefs"
 	return
     }
 

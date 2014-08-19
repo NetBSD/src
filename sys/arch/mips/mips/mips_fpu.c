@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fpu.c,v 1.8.2.1 2013/02/25 00:28:51 tls Exp $	*/
+/*	$NetBSD: mips_fpu.c,v 1.8.2.2 2014/08/20 00:03:12 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.8.2.1 2013/02/25 00:28:51 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.8.2.2 2014/08/20 00:03:12 tls Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -46,9 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.8.2.1 2013/02/25 00:28:51 tls Exp $")
 #include <mips/regnum.h>
 #include <mips/pcb.h>
 
-static void mips_fpu_state_save(lwp_t *, u_int);
+static void mips_fpu_state_save(lwp_t *);
 static void mips_fpu_state_load(lwp_t *, u_int);
-static void mips_fpu_state_release(lwp_t *, u_int);
+static void mips_fpu_state_release(lwp_t *);
 
 const pcu_ops_t mips_fpu_ops = {
 	.pcu_id = PCU_FPU,
@@ -60,7 +60,7 @@ const pcu_ops_t mips_fpu_ops = {
 void
 fpu_discard(void)
 {
-	pcu_discard(&mips_fpu_ops);
+	pcu_discard(&mips_fpu_ops, false);
 }
 
 void
@@ -78,11 +78,11 @@ fpu_save(void)
 bool
 fpu_used_p(void)
 {
-	return pcu_used_p(&mips_fpu_ops);
+	return pcu_valid_p(&mips_fpu_ops);
 }
 
 void
-mips_fpu_state_save(lwp_t *l, u_int flags)
+mips_fpu_state_save(lwp_t *l)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
 	struct pcb * const pcb = lwp_getpcb(l);
@@ -218,7 +218,7 @@ mips_fpu_state_load(lwp_t *l, u_int flags)
 	/*
 	 * If this is the first time the state is being loaded, zero it first.
 	 */
-	if (__predict_false((flags & PCU_LOADED) == 0)) {
+	if (__predict_false((flags & PCU_VALID) == 0)) {
 		memset(&pcb->pcb_fpregs, 0, sizeof(pcb->pcb_fpregs));
 	}
 
@@ -343,8 +343,7 @@ mips_fpu_state_load(lwp_t *l, u_int flags)
 }
 
 void
-mips_fpu_state_release(lwp_t *l, u_int flags)
+mips_fpu_state_release(lwp_t *l)
 {
-
 	l->l_md.md_utf->tf_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
 }

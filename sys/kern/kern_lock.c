@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.153.2.1 2013/06/23 06:18:57 tls Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.153.2.2 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.153.2.1 2013/06/23 06:18:57 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.153.2.2 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -127,11 +127,11 @@ void
 kernel_lock_init(void)
 {
 
-	CTASSERT(CACHE_LINE_SIZE >= sizeof(__cpu_simple_lock_t));
 	__cpu_simple_lock_init(kernel_lock);
 	kernel_lock_dodebug = LOCKDEBUG_ALLOC(kernel_lock, &_kernel_lock_ops,
 	    RETURN_ADDRESS);
 }
+CTASSERT(CACHE_LINE_SIZE >= sizeof(__cpu_simple_lock_t));
 
 /*
  * Print debugging information about the kernel lock.

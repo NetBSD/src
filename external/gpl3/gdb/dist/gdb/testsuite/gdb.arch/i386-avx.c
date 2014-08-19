@@ -1,6 +1,6 @@
 /* Test program for AVX registers.
 
-   Copyright 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2010-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -53,7 +53,7 @@ have_avx (void)
 {
   unsigned int eax, ebx, ecx, edx;
 
-  if (!__get_cpuid (1, &eax, &ebx, &ecx, &edx))
+  if (!i386_cpuid (1, &eax, &ebx, &ecx, &edx))
     return 0;
 
   if ((ecx & (bit_AVX | bit_OSXSAVE)) == (bit_AVX | bit_OSXSAVE))

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.94.2.1 2012/11/20 03:01:48 tls Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.94.2.2 2014/08/20 00:03:27 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.94.2.1 2012/11/20 03:01:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.94.2.2 2014/08/20 00:03:27 tls Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cputype.h"
@@ -217,7 +217,7 @@ static int booted_sd(device_t, void *);
 #if NRL > 0
 static int booted_rl(device_t, void *);
 #endif
-#if NRA
+#if NRA > 0 || NRACD > 0
 static int booted_ra(device_t, void *);
 #endif
 #if NHP
@@ -411,7 +411,7 @@ booted_rl(device_t dev, void *aux)
 }
 #endif
 
-#if NRA
+#if NRA > 0 || NRACD > 0
 #include <dev/mscp/mscp.h>
 #include <dev/mscp/mscpreg.h>
 #include <dev/mscp/mscpvar.h>
@@ -422,7 +422,7 @@ booted_ra(device_t dev, void *aux)
 	struct mscp_softc *pdev = device_private(device_parent(dev));
 	paddr_t ioaddr;
 
-	if (jmfr("ra", dev, BDEV_UDA))
+	if (jmfr("ra", dev, BDEV_UDA) && jmfr("racd", dev, BDEV_UDA))
 		return 0;
 
 	if (da->da_mp->mscp_unit != rpb.unit)
@@ -435,6 +435,7 @@ booted_ra(device_t dev, void *aux)
 	return 0;
 }
 #endif
+
 #if NHP
 #include <vax/mba/mbavar.h>
 int

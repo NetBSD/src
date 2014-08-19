@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75reg.h,v 1.3 2006/05/17 00:10:54 kiyohara Exp $	*/
+/*	$NetBSD: lm75reg.h,v 1.3.108.1 2014/08/20 00:03:37 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -43,9 +43,9 @@
  *
  *	100 1xxx
  */
-#define	LM75_ADDRMASK		0x78
+#define	LM75_ADDRMASK		0x3f8
 #define	LM75_ADDR		0x48
-#define	LM77_ADDRMASK		0x7c
+#define	LM77_ADDRMASK		0x3fc
 #define	LM77_ADDR		0x48
 
 /*

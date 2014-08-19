@@ -1,6 +1,6 @@
 /* Python pretty-printing
 
-   Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -69,6 +69,7 @@ search_pp_list (PyObject *list, PyObject *value)
 	  if (!attr)
 	    return NULL;
 	  cmp = PyObject_IsTrue (attr);
+	  Py_DECREF (attr);
 	  if (cmp == -1)
 	    return NULL;
 
@@ -121,7 +122,7 @@ find_pretty_printer_from_objfiles (PyObject *value)
 
     if (function != Py_None)
       return function;
-    
+
     Py_DECREF (function);
   }
 
@@ -162,9 +163,10 @@ find_pretty_printer_from_gdb (PyObject *value)
   PyObject *function;
 
   /* Fetch the global pretty printer list.  */
-  if (! PyObject_HasAttrString (gdb_module, "pretty_printers"))
+  if (gdb_python_module == NULL
+      || ! PyObject_HasAttrString (gdb_python_module, "pretty_printers"))
     Py_RETURN_NONE;
-  pp_list = PyObject_GetAttrString (gdb_module, "pretty_printers");
+  pp_list = PyObject_GetAttrString (gdb_python_module, "pretty_printers");
   if (pp_list == NULL || ! PyList_Check (pp_list))
     {
       Py_XDECREF (pp_list);
@@ -223,7 +225,7 @@ pretty_print_one_value (PyObject *printer, struct value **out_value)
       result = PyObject_CallMethodObjArgs (printer, gdbpy_to_string_cst, NULL);
       if (result)
 	{
-	  if (! gdbpy_is_string (result) && ! gdbpy_is_lazy_string (result)  
+	  if (! gdbpy_is_string (result) && ! gdbpy_is_lazy_string (result)
 	      && result != Py_None)
 	    {
 	      *out_value = convert_value_from_python (result);
@@ -342,18 +344,23 @@ print_string_repr (PyObject *printer, const char *hint,
 	  string = python_string_to_target_python_string (py_str);
 	  if (string)
 	    {
-	      gdb_byte *output;
+	      char *output;
 	      long length;
 	      struct type *type;
 
 	      make_cleanup_py_decref (string);
+#ifdef IS_PY3K
+	      output = PyBytes_AS_STRING (string);
+	      length = PyBytes_GET_SIZE (string);
+#else
 	      output = PyString_AsString (string);
 	      length = PyString_Size (string);
+#endif
 	      type = builtin_type (gdbarch)->builtin_char;
 
 	      if (hint && !strcmp (hint, "string"))
-		LA_PRINT_STRING (stream, type, output, length, NULL,
-				 0, options);
+		LA_PRINT_STRING (stream, type, (gdb_byte *) output,
+				 length, NULL, 0, options);
 	      else
 		fputs_filtered (output, stream);
 	    }
@@ -382,6 +389,7 @@ print_string_repr (PyObject *printer, const char *hint,
   return result;
 }
 
+#ifndef IS_PY3K
 static void
 py_restore_tstate (void *p)
 {
@@ -457,6 +465,7 @@ push_dummy_python_frame (void)
   make_cleanup (py_restore_tstate, frame->f_back);
   return (PyObject *) frame;
 }
+#endif
 
 /* Helper for apply_val_pretty_printer that formats children of the
    printer, if any exist.  If is_py_none is true, then nothing has
@@ -470,7 +479,10 @@ print_children (PyObject *printer, const char *hint,
 {
   int is_map, is_array, done_flag, pretty;
   unsigned int i;
-  PyObject *children, *iter, *frame;
+  PyObject *children, *iter;
+#ifndef IS_PY3K
+  PyObject *frame;
+#endif
   struct cleanup *cleanups;
 
   if (! PyObject_HasAttr (printer, gdbpy_children_cst))
@@ -499,21 +511,22 @@ print_children (PyObject *printer, const char *hint,
     }
   make_cleanup_py_decref (iter);
 
-  /* Use the prettyprint_arrays option if we are printing an array,
+  /* Use the prettyformat_arrays option if we are printing an array,
      and the pretty option otherwise.  */
   if (is_array)
-    pretty = options->prettyprint_arrays;
+    pretty = options->prettyformat_arrays;
   else
     {
-      if (options->pretty == Val_prettyprint)
+      if (options->prettyformat == Val_prettyformat)
 	pretty = 1;
       else
-	pretty = options->prettyprint_structs;
+	pretty = options->prettyformat_structs;
     }
 
   /* Manufacture a dummy Python frame to work around Python 2.4 bug,
      where it insists on having a non-NULL tstate->frame when
      a generator is called.  */
+#ifndef IS_PY3K
   frame = push_dummy_python_frame ();
   if (!frame)
     {
@@ -521,12 +534,13 @@ print_children (PyObject *printer, const char *hint,
       goto done;
     }
   make_cleanup_py_decref (frame);
+#endif
 
   done_flag = 0;
   for (i = 0; i < options->print_max; ++i)
     {
       PyObject *py_v, *item = PyIter_Next (iter);
-      char *name;
+      const char *name;
       struct cleanup *inner_cleanup;
 
       if (! item)
@@ -535,7 +549,7 @@ print_children (PyObject *printer, const char *hint,
 	    print_stack_unless_memory_error (stream);
 	  /* Set a flag so we can know whether we printed all the
 	     available elements.  */
-	  else	  
+	  else	
 	    done_flag = 1;
 	  break;
 	}
@@ -616,12 +630,10 @@ print_children (PyObject *printer, const char *hint,
 	  local_opts.addressprint = 0;
 	  val_print_string (type, encoding, addr, (int) length, stream,
 			    &local_opts);
-
-	  do_cleanups (inner_cleanup);
 	}
       else if (gdbpy_is_string (py_v))
 	{
-	  gdb_byte *output;
+	  char *output;
 
 	  output = python_string_to_host_string (py_v);
 	  if (!output)
@@ -695,6 +707,9 @@ apply_val_pretty_printer (struct type *type, const gdb_byte *valaddr,
   if (!value_bytes_available (val, embedded_offset, TYPE_LENGTH (type)))
     return 0;
 
+  if (!gdb_python_initialized)
+    return 0;
+
   cleanups = ensure_python_env (gdbarch, language);
 
   /* Instantiate the printer.  */
@@ -714,12 +729,16 @@ apply_val_pretty_printer (struct type *type, const gdb_byte *valaddr,
   val_obj = value_to_value_object (value);
   if (! val_obj)
     goto done;
-  
+
   /* Find the constructor.  */
   printer = find_pretty_printer (val_obj);
   Py_DECREF (val_obj);
+
+  if (printer == NULL)
+    goto done;
+
   make_cleanup_py_decref (printer);
-  if (! printer || printer == Py_None)
+  if (printer == Py_None)
     goto done;
 
   /* If we are printing a map, we want some special formatting.  */
@@ -771,7 +790,7 @@ apply_varobj_pretty_printer (PyObject *printer_obj,
 
 /* Find a pretty-printer object for the varobj module.  Returns a new
    reference to the object if successful; returns NULL if not.  VALUE
-   is the value for which a printer tests to determine if it 
+   is the value for which a printer tests to determine if it
    can pretty-print the value.  */
 PyObject *
 gdbpy_get_varobj_pretty_printer (struct value *value)
@@ -785,7 +804,7 @@ gdbpy_get_varobj_pretty_printer (struct value *value)
       value = value_copy (value);
     }
   GDB_PY_HANDLE_EXCEPTION (except);
-  
+
   val_obj = value_to_value_object (value);
   if (! val_obj)
     return NULL;
@@ -811,7 +830,7 @@ gdbpy_default_visualizer (PyObject *self, PyObject *args)
   value = value_object_to_value (val_obj);
   if (! value)
     {
-      PyErr_SetString (PyExc_TypeError, 
+      PyErr_SetString (PyExc_TypeError,
 		       _("Argument must be a gdb.Value."));
       return NULL;
     }

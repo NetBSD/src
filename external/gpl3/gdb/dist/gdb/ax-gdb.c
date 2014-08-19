@@ -1,7 +1,6 @@
 /* GDB-specific functions for operating on agent expressions.
 
-   Copyright (C) 1998, 1999, 2000, 2001, 2003, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,15 +30,22 @@
 #include "target.h"
 #include "ax.h"
 #include "ax-gdb.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "block.h"
 #include "regcache.h"
 #include "user-regs.h"
-#include "language.h"
 #include "dictionary.h"
 #include "breakpoint.h"
 #include "tracepoint.h"
 #include "cp-support.h"
+#include "arch-utils.h"
+#include "cli/cli-utils.h"
+#include "linespec.h"
+
+#include "valprint.h"
+#include "c-lang.h"
+
+#include "format.h"
 
 /* To make sense of this file, you should read doc/agentexpr.texi.
    Then look at the types and enums in ax-gdb.h.  For the code itself,
@@ -91,8 +97,6 @@ static void gen_int_literal (struct agent_expr *ax,
 			     struct axs_value *value,
 			     LONGEST k, struct type *type);
 
-
-static void require_rvalue (struct agent_expr *ax, struct axs_value *value);
 static void gen_usual_unary (struct expression *exp, struct agent_expr *ax,
 			     struct axs_value *value);
 static int type_wider_than (struct type *type1, struct type *type2);
@@ -153,8 +157,6 @@ static void gen_repeat (struct expression *exp, union exp_element **pc,
 static void gen_sizeof (struct expression *exp, union exp_element **pc,
 			struct agent_expr *ax, struct axs_value *value,
 			struct type *size_type);
-static void gen_expr (struct expression *exp, union exp_element **pc,
-		      struct agent_expr *ax, struct axs_value *value);
 static void gen_expr_binop_rest (struct expression *exp,
 				 enum exp_opcode op, union exp_element **pc,
 				 struct agent_expr *ax,
@@ -309,31 +311,6 @@ maybe_const_expr (union exp_element **pc)
    sizes), and this is simpler.)  */
 
 
-/* Generating bytecode from GDB expressions: the `trace' kludge  */
-
-/* The compiler in this file is a general-purpose mechanism for
-   translating GDB expressions into bytecode.  One ought to be able to
-   find a million and one uses for it.
-
-   However, at the moment it is HOPELESSLY BRAIN-DAMAGED for the sake
-   of expediency.  Let he who is without sin cast the first stone.
-
-   For the data tracing facility, we need to insert `trace' bytecodes
-   before each data fetch; this records all the memory that the
-   expression touches in the course of evaluation, so that memory will
-   be available when the user later tries to evaluate the expression
-   in GDB.
-
-   This should be done (I think) in a post-processing pass, that walks
-   an arbitrary agent expression and inserts `trace' operations at the
-   appropriate points.  But it's much faster to just hack them
-   directly into the code.  And since we're in a crunch, that's what
-   I've done.
-
-   Setting the flag trace_kludge to non-zero enables the code that
-   emits the trace bytecodes at the appropriate points.  */
-int trace_kludge;
-
 /* Scan for all static fields in the given class, including any base
    classes, and generate tracing bytecodes for each.  */
 
@@ -358,9 +335,9 @@ gen_trace_static_fields (struct gdbarch *gdbarch,
 	    {
 	    case axs_lvalue_memory:
 	      {
-		int length = TYPE_LENGTH (check_typedef (value.type));
-
-		ax_const_l (ax, length);
+	        /* Initialize the TYPE_LENGTH if it is a typedef.  */
+	        check_typedef (value.type);
+		ax_const_l (ax, TYPE_LENGTH (value.type));
 		ax_simple (ax, aop_trace);
 	      }
 	      break;
@@ -392,26 +369,50 @@ static void
 gen_traced_pop (struct gdbarch *gdbarch,
 		struct agent_expr *ax, struct axs_value *value)
 {
-  if (trace_kludge)
+  int string_trace = 0;
+  if (ax->trace_string
+      && TYPE_CODE (value->type) == TYPE_CODE_PTR
+      && c_textual_element_type (check_typedef (TYPE_TARGET_TYPE (value->type)),
+				 's'))
+    string_trace = 1;
+
+  if (ax->tracing)
     switch (value->kind)
       {
       case axs_rvalue:
-	/* We don't trace rvalues, just the lvalues necessary to
-	   produce them.  So just dispose of this value.  */
-	ax_simple (ax, aop_pop);
+	if (string_trace)
+	  {
+	    ax_const_l (ax, ax->trace_string);
+	    ax_simple (ax, aop_tracenz);
+	  }
+	else
+	  /* We don't trace rvalues, just the lvalues necessary to
+	     produce them.  So just dispose of this value.  */
+	  ax_simple (ax, aop_pop);
 	break;
 
       case axs_lvalue_memory:
 	{
-	  int length = TYPE_LENGTH (check_typedef (value->type));
+	  if (string_trace)
+	    ax_simple (ax, aop_dup);
+
+	  /* Initialize the TYPE_LENGTH if it is a typedef.  */
+	  check_typedef (value->type);
 
 	  /* There's no point in trying to use a trace_quick bytecode
 	     here, since "trace_quick SIZE pop" is three bytes, whereas
 	     "const8 SIZE trace" is also three bytes, does the same
 	     thing, and the simplest code which generates that will also
 	     work correctly for objects with large sizes.  */
-	  ax_const_l (ax, length);
+	  ax_const_l (ax, TYPE_LENGTH (value->type));
 	  ax_simple (ax, aop_trace);
+
+	  if (string_trace)
+	    {
+	      ax_simple (ax, aop_ref32);
+	      ax_const_l (ax, ax->trace_string);
+	      ax_simple (ax, aop_tracenz);
+	    }
 	}
 	break;
 
@@ -421,6 +422,15 @@ gen_traced_pop (struct gdbarch *gdbarch,
 	   larger than will fit in a stack, so just mark it for
 	   collection and be done with it.  */
 	ax_reg_mask (ax, value->u.reg);
+       
+	/* But if the register points to a string, assume the value
+	   will fit on the stack and push it anyway.  */
+	if (string_trace)
+	  {
+	    ax_reg (ax, value->u.reg);
+	    ax_const_l (ax, ax->trace_string);
+	    ax_simple (ax, aop_tracenz);
+	  }
 	break;
       }
   else
@@ -428,7 +438,7 @@ gen_traced_pop (struct gdbarch *gdbarch,
     ax_simple (ax, aop_pop);
 
   /* To trace C++ classes with static fields stored elsewhere.  */
-  if (trace_kludge
+  if (ax->tracing
       && (TYPE_CODE (value->type) == TYPE_CODE_STRUCT
 	  || TYPE_CODE (value->type) == TYPE_CODE_UNION))
     gen_trace_static_fields (gdbarch, ax, value->type);
@@ -468,11 +478,14 @@ gen_extend (struct agent_expr *ax, struct type *type)
 static void
 gen_fetch (struct agent_expr *ax, struct type *type)
 {
-  if (trace_kludge)
+  if (ax->tracing)
     {
       /* Record the area of memory we're about to fetch.  */
       ax_trace_quick (ax, TYPE_LENGTH (type));
     }
+
+  if (TYPE_CODE (type) == TYPE_CODE_RANGE)
+    type = TYPE_TARGET_TYPE (type);
 
   switch (TYPE_CODE (type))
     {
@@ -512,12 +525,11 @@ gen_fetch (struct agent_expr *ax, struct type *type)
       break;
 
     default:
-      /* Either our caller shouldn't have asked us to dereference that
-         pointer (other code's fault), or we're not implementing
-         something we should be (this code's fault).  In any case,
-         it's a bug the user shouldn't see.  */
-      internal_error (__FILE__, __LINE__,
-		      _("gen_fetch: bad type code"));
+      /* Our caller requested us to dereference a pointer from an unsupported
+	 type.  Error out and give callers a chance to handle the failure
+	 gracefully.  */
+      error (_("gen_fetch: Unsupported type code `%s'."),
+	     TYPE_NAME (type));
     }
 }
 
@@ -619,6 +631,12 @@ gen_var_ref (struct gdbarch *gdbarch, struct agent_expr *ax,
   value->type = check_typedef (SYMBOL_TYPE (var));
   value->optimized_out = 0;
 
+  if (SYMBOL_COMPUTED_OPS (var) != NULL)
+    {
+      SYMBOL_COMPUTED_OPS (var)->tracepoint_var_ref (var, gdbarch, ax, value);
+      return;
+    }
+
   /* I'm imitating the code in read_var_value.  */
   switch (SYMBOL_CLASS (var))
     {
@@ -707,13 +725,7 @@ gen_var_ref (struct gdbarch *gdbarch, struct agent_expr *ax,
       break;
 
     case LOC_COMPUTED:
-      /* FIXME: cagney/2004-01-26: It should be possible to
-	 unconditionally call the SYMBOL_COMPUTED_OPS method when available.
-	 Unfortunately DWARF 2 stores the frame-base (instead of the
-	 function) location in a function's symbol.  Oops!  For the
-	 moment enable this when/where applicable.  */
-      SYMBOL_COMPUTED_OPS (var)->tracepoint_var_ref (var, gdbarch, ax, value);
-      break;
+      gdb_assert_not_reached (_("LOC_COMPUTED variable missing a method"));
 
     case LOC_OPTIMIZED_OUT:
       /* Flag this, but don't say anything; leave it up to callers to
@@ -748,7 +760,7 @@ gen_int_literal (struct agent_expr *ax, struct axs_value *value, LONGEST k,
 /* Take what's on the top of the stack (as described by VALUE), and
    try to make an rvalue out of it.  Signal an error if we can't do
    that.  */
-static void
+void
 require_rvalue (struct agent_expr *ax, struct axs_value *value)
 {
   /* Only deal with scalars, structs and such may be too large
@@ -837,12 +849,6 @@ gen_usual_unary (struct expression *exp, struct agent_expr *ax,
     case TYPE_CODE_STRUCT:
     case TYPE_CODE_UNION:
       return;
-
-      /* If the value is an enum or a bool, call it an integer.  */
-    case TYPE_CODE_ENUM:
-    case TYPE_CODE_BOOL:
-      value->type = builtin_type (exp->gdbarch)->builtin_int;
-      break;
     }
 
   /* If the value is an lvalue, dereference it.  */
@@ -1324,7 +1330,7 @@ gen_bitfield_ref (struct expression *exp, struct agent_expr *ax,
 	  /* Add the offset.  */
 	  gen_offset (ax, offset / TARGET_CHAR_BIT);
 
-	  if (trace_kludge)
+	  if (ax->tracing)
 	    {
 	      /* Record the area of memory we're about to fetch.  */
 	      ax_trace_quick (ax, op_size / TARGET_CHAR_BIT);
@@ -1436,7 +1442,7 @@ gen_struct_ref_recursive (struct expression *exp, struct agent_expr *ax,
 
   for (i = TYPE_NFIELDS (type) - 1; i >= nbases; i--)
     {
-      char *this_name = TYPE_FIELD_NAME (type, i);
+      const char *this_name = TYPE_FIELD_NAME (type, i);
 
       if (this_name)
 	{
@@ -1549,7 +1555,7 @@ gen_static_field (struct gdbarch *gdbarch,
     }
   else
     {
-      char *phys_name = TYPE_FIELD_STATIC_PHYSNAME (type, fieldno);
+      const char *phys_name = TYPE_FIELD_STATIC_PHYSNAME (type, fieldno);
       struct symbol *sym = lookup_symbol (phys_name, 0, VAR_DOMAIN, 0);
 
       if (sym)
@@ -1584,7 +1590,7 @@ gen_struct_elt_for_reference (struct expression *exp,
 
   for (i = TYPE_NFIELDS (t) - 1; i >= TYPE_N_BASECLASSES (t); i--)
     {
-      char *t_field_name = TYPE_FIELD_NAME (t, i);
+      const char *t_field_name = TYPE_FIELD_NAME (t, i);
 
       if (t_field_name && strcmp (t_field_name, fieldname) == 0)
 	{
@@ -1766,7 +1772,7 @@ gen_sizeof (struct expression *exp, union exp_element **pc,
 /* XXX: i18n */
 /* A gen_expr function written by a Gen-X'er guy.
    Append code for the subexpression of EXPR starting at *POS_P to AX.  */
-static void
+void
 gen_expr (struct expression *exp, union exp_element **pc,
 	  struct agent_expr *ax, struct axs_value *value)
 {
@@ -1893,7 +1899,7 @@ gen_expr (struct expression *exp, union exp_element **pc,
 	  if (tsv)
 	    {
 	      ax_tsv (ax, aop_setv, tsv->number);
-	      if (trace_kludge)
+	      if (ax->tracing)
 		ax_tsv (ax, aop_tracev, tsv->number);
 	    }
 	  else
@@ -1920,7 +1926,7 @@ gen_expr (struct expression *exp, union exp_element **pc,
 	    {
 	      /* The tsv will be the left half of the binary operation.  */
 	      ax_tsv (ax, aop_getv, tsv->number);
-	      if (trace_kludge)
+	      if (ax->tracing)
 		ax_tsv (ax, aop_tracev, tsv->number);
 	      /* Trace state variables are always 64-bit integers.  */
 	      value1.kind = axs_rvalue;
@@ -1929,7 +1935,7 @@ gen_expr (struct expression *exp, union exp_element **pc,
 	      gen_expr_binop_rest (exp, op2, pc, ax, value, &value1, &value2);
 	      /* We have a result of the binary op, set the tsv.  */
 	      ax_tsv (ax, aop_setv, tsv->number);
-	      if (trace_kludge)
+	      if (ax->tracing)
 		ax_tsv (ax, aop_tracev, tsv->number);
 	    }
 	  else
@@ -2001,7 +2007,8 @@ gen_expr (struct expression *exp, union exp_element **pc,
 
     case OP_INTERNALVAR:
       {
-	const char *name = internalvar_name ((*pc)[1].internalvar);
+	struct internalvar *var = (*pc)[1].internalvar;
+	const char *name = internalvar_name (var);
 	struct trace_state_variable *tsv;
 
 	(*pc) += 3;
@@ -2009,13 +2016,13 @@ gen_expr (struct expression *exp, union exp_element **pc,
 	if (tsv)
 	  {
 	    ax_tsv (ax, aop_getv, tsv->number);
-	    if (trace_kludge)
+	    if (ax->tracing)
 	      ax_tsv (ax, aop_tracev, tsv->number);
 	    /* Trace state variables are always 64-bit integers.  */
 	    value->kind = axs_rvalue;
 	    value->type = builtin_type (exp->gdbarch)->builtin_long_long;
 	  }
-	else
+	else if (! compile_internalvar_to_ax (var, ax, value))
 	  error (_("$%s is not a trace state variable; GDB agent "
 		   "expressions cannot use convenience variables."), name);
       }
@@ -2038,11 +2045,53 @@ gen_expr (struct expression *exp, union exp_element **pc,
       }
       break;
 
+    case UNOP_CAST_TYPE:
+      {
+	int offset;
+	struct value *val;
+	struct type *type;
+
+	++*pc;
+	offset = *pc - exp->elts;
+	val = evaluate_subexp (NULL, exp, &offset, EVAL_AVOID_SIDE_EFFECTS);
+	type = value_type (val);
+	*pc = &exp->elts[offset];
+
+	gen_expr (exp, pc, ax, value);
+	gen_cast (ax, value, type);
+      }
+      break;
+
     case UNOP_MEMVAL:
       {
 	struct type *type = check_typedef ((*pc)[1].type);
 
 	(*pc) += 3;
+	gen_expr (exp, pc, ax, value);
+
+	/* If we have an axs_rvalue or an axs_lvalue_memory, then we
+	   already have the right value on the stack.  For
+	   axs_lvalue_register, we must convert.  */
+	if (value->kind == axs_lvalue_register)
+	  require_rvalue (ax, value);
+
+	value->type = type;
+	value->kind = axs_lvalue_memory;
+      }
+      break;
+
+    case UNOP_MEMVAL_TYPE:
+      {
+	int offset;
+	struct value *val;
+	struct type *type;
+
+	++*pc;
+	offset = *pc - exp->elts;
+	val = evaluate_subexp (NULL, exp, &offset, EVAL_AVOID_SIDE_EFFECTS);
+	type = value_type (val);
+	*pc = &exp->elts[offset];
+
 	gen_expr (exp, pc, ax, value);
 
 	/* If we have an axs_rvalue or an axs_lvalue_memory, then we
@@ -2137,19 +2186,17 @@ gen_expr (struct expression *exp, union exp_element **pc,
 
     case OP_THIS:
       {
-	char *this_name;
-	struct symbol *func, *sym;
+	struct symbol *sym, *func;
 	struct block *b;
+	const struct language_defn *lang;
 
-	func = block_linkage_function (block_for_pc (ax->scope));
-	this_name = language_def (SYMBOL_LANGUAGE (func))->la_name_of_this;
-	b = SYMBOL_BLOCK_VALUE (func);
+	b = block_for_pc (ax->scope);
+	func = block_linkage_function (b);
+	lang = language_def (SYMBOL_LANGUAGE (func));
 
-	/* Calling lookup_block_symbol is necessary to get the LOC_REGISTER
-	   symbol instead of the LOC_ARG one (if both exist).  */
-	sym = lookup_block_symbol (b, this_name, VAR_DOMAIN);
+	sym = lookup_language_this (lang, b);
 	if (!sym)
-	  error (_("no `%s' found"), this_name);
+	  error (_("no `%s' found"), lang->la_name_of_this);
 
 	gen_var_ref (exp->gdbarch, ax, value, sym);
 
@@ -2177,11 +2224,13 @@ gen_expr (struct expression *exp, union exp_element **pc,
       break;
 
     case OP_TYPE:
+    case OP_TYPEOF:
+    case OP_DECLTYPE:
       error (_("Attempt to use a type name as an expression."));
 
     default:
       error (_("Unsupported operator %s (%d) in expression."),
-	     op_string (op), op);
+	     op_name (exp, op), op);
     }
 }
 
@@ -2344,7 +2393,7 @@ gen_expr_binop_rest (struct expression *exp,
 
 struct agent_expr *
 gen_trace_for_var (CORE_ADDR scope, struct gdbarch *gdbarch,
-		   struct symbol *var)
+		   struct symbol *var, int trace_string)
 {
   struct cleanup *old_chain = 0;
   struct agent_expr *ax = new_agent_expr (gdbarch, scope);
@@ -2352,7 +2401,8 @@ gen_trace_for_var (CORE_ADDR scope, struct gdbarch *gdbarch,
 
   old_chain = make_cleanup_free_agent_expr (ax);
 
-  trace_kludge = 1;
+  ax->tracing = 1;
+  ax->trace_string = trace_string;
   gen_var_ref (gdbarch, ax, &value, var);
 
   /* If there is no actual variable to trace, flag it by returning
@@ -2384,7 +2434,8 @@ gen_trace_for_var (CORE_ADDR scope, struct gdbarch *gdbarch,
    caller can then use the ax_reqs function to discover which
    registers it relies upon.  */
 struct agent_expr *
-gen_trace_for_expr (CORE_ADDR scope, struct expression *expr)
+gen_trace_for_expr (CORE_ADDR scope, struct expression *expr,
+		    int trace_string)
 {
   struct cleanup *old_chain = 0;
   struct agent_expr *ax = new_agent_expr (expr->gdbarch, scope);
@@ -2394,7 +2445,8 @@ gen_trace_for_expr (CORE_ADDR scope, struct expression *expr)
   old_chain = make_cleanup_free_agent_expr (ax);
 
   pc = expr->elts;
-  trace_kludge = 1;
+  ax->tracing = 1;
+  ax->trace_string = trace_string;
   value.optimized_out = 0;
   gen_expr (expr, &pc, ax, &value);
 
@@ -2429,7 +2481,7 @@ gen_eval_for_expr (CORE_ADDR scope, struct expression *expr)
   old_chain = make_cleanup_free_agent_expr (ax);
 
   pc = expr->elts;
-  trace_kludge = 0;
+  ax->tracing = 0;
   value.optimized_out = 0;
   gen_expr (expr, &pc, ax, &value);
 
@@ -2445,28 +2497,122 @@ gen_eval_for_expr (CORE_ADDR scope, struct expression *expr)
   return ax;
 }
 
+struct agent_expr *
+gen_trace_for_return_address (CORE_ADDR scope, struct gdbarch *gdbarch,
+			      int trace_string)
+{
+  struct cleanup *old_chain = 0;
+  struct agent_expr *ax = new_agent_expr (gdbarch, scope);
+  struct axs_value value;
+
+  old_chain = make_cleanup_free_agent_expr (ax);
+
+  ax->tracing = 1;
+  ax->trace_string = trace_string;
+
+  gdbarch_gen_return_address (gdbarch, ax, &value, scope);
+
+  /* Make sure we record the final object, and get rid of it.  */
+  gen_traced_pop (gdbarch, ax, &value);
+
+  /* Oh, and terminate.  */
+  ax_simple (ax, aop_end);
+
+  /* We have successfully built the agent expr, so cancel the cleanup
+     request.  If we add more cleanups that we always want done, this
+     will have to get more complicated.  */
+  discard_cleanups (old_chain);
+  return ax;
+}
+
+/* Given a collection of printf-style arguments, generate code to
+   evaluate the arguments and pass everything to a special
+   bytecode.  */
+
+struct agent_expr *
+gen_printf (CORE_ADDR scope, struct gdbarch *gdbarch,
+	    CORE_ADDR function, LONGEST channel,
+	    const char *format, int fmtlen,
+	    struct format_piece *frags,
+	    int nargs, struct expression **exprs)
+{
+  struct cleanup *old_chain = 0;
+  struct agent_expr *ax = new_agent_expr (gdbarch, scope);
+  union exp_element *pc;
+  struct axs_value value;
+  int tem;
+
+  old_chain = make_cleanup_free_agent_expr (ax);
+
+  /* We're computing values, not doing side effects.  */
+  ax->tracing = 0;
+
+  /* Evaluate and push the args on the stack in reverse order,
+     for simplicity of collecting them on the target side.  */
+  for (tem = nargs - 1; tem >= 0; --tem)
+    {
+      pc = exprs[tem]->elts;
+      value.optimized_out = 0;
+      gen_expr (exprs[tem], &pc, ax, &value);
+      require_rvalue (ax, &value);
+    }
+
+  /* Push function and channel.  */
+  ax_const_l (ax, channel);
+  ax_const_l (ax, function);
+
+  /* Issue the printf bytecode proper.  */
+  ax_simple (ax, aop_printf);
+  ax_simple (ax, nargs);
+  ax_string (ax, format, fmtlen);
+
+  /* And terminate.  */
+  ax_simple (ax, aop_end);
+
+  /* We have successfully built the agent expr, so cancel the cleanup
+     request.  If we add more cleanups that we always want done, this
+     will have to get more complicated.  */
+  discard_cleanups (old_chain);
+
+  return ax;
+}
+
 static void
-agent_command (char *exp, int from_tty)
+agent_eval_command_one (const char *exp, int eval, CORE_ADDR pc)
 {
   struct cleanup *old_chain = 0;
   struct expression *expr;
   struct agent_expr *agent;
-  struct frame_info *fi = get_current_frame ();	/* need current scope */
+  const char *arg;
+  int trace_string = 0;
 
-  /* We don't deal with overlay debugging at the moment.  We need to
-     think more carefully about this.  If you copy this code into
-     another command, change the error message; the user shouldn't
-     have to know anything about agent expressions.  */
-  if (overlay_debugging)
-    error (_("GDB can't do agent expression translation with overlays."));
+  if (!eval)
+    {
+      if (*exp == '/')
+        exp = decode_agent_options (exp, &trace_string);
+    }
 
-  if (exp == 0)
-    error_no_arg (_("expression to translate"));
+  arg = exp;
+  if (!eval && strcmp (arg, "$_ret") == 0)
+    {
+      agent = gen_trace_for_return_address (pc, get_current_arch (),
+					    trace_string);
+      old_chain = make_cleanup_free_agent_expr (agent);
+    }
+  else
+    {
+      expr = parse_exp_1 (&arg, pc, block_for_pc (pc), 0);
+      old_chain = make_cleanup (free_current_contents, &expr);
+      if (eval)
+	{
+	  gdb_assert (trace_string == 0);
+	  agent = gen_eval_for_expr (pc, expr);
+	}
+      else
+	agent = gen_trace_for_expr (pc, expr, trace_string);
+      make_cleanup_free_agent_expr (agent);
+    }
 
-  expr = parse_expression (exp);
-  old_chain = make_cleanup (free_current_contents, &expr);
-  agent = gen_trace_for_expr (get_frame_pc (fi), expr);
-  make_cleanup_free_agent_expr (agent);
   ax_reqs (agent);
   ax_print (gdb_stdout, agent);
 
@@ -2477,6 +2623,59 @@ agent_command (char *exp, int from_tty)
   dont_repeat ();
 }
 
+static void
+agent_command_1 (char *exp, int eval)
+{
+  /* We don't deal with overlay debugging at the moment.  We need to
+     think more carefully about this.  If you copy this code into
+     another command, change the error message; the user shouldn't
+     have to know anything about agent expressions.  */
+  if (overlay_debugging)
+    error (_("GDB can't do agent expression translation with overlays."));
+
+  if (exp == 0)
+    error_no_arg (_("expression to translate"));
+
+  if (check_for_argument (&exp, "-at", sizeof ("-at") - 1))
+    {
+      struct linespec_result canonical;
+      int ix;
+      struct linespec_sals *iter;
+      struct cleanup *old_chain;
+
+      exp = skip_spaces (exp);
+      init_linespec_result (&canonical);
+      decode_line_full (&exp, DECODE_LINE_FUNFIRSTLINE,
+			(struct symtab *) NULL, 0, &canonical,
+			NULL, NULL);
+      old_chain = make_cleanup_destroy_linespec_result (&canonical);
+      exp = skip_spaces (exp);
+      if (exp[0] == ',')
+        {
+	  exp++;
+	  exp = skip_spaces (exp);
+	}
+      for (ix = 0; VEC_iterate (linespec_sals, canonical.sals, ix, iter); ++ix)
+        {
+	  int i;
+
+	  for (i = 0; i < iter->sals.nelts; i++)
+	    agent_eval_command_one (exp, eval, iter->sals.sals[i].pc);
+        }
+      do_cleanups (old_chain);
+    }
+  else
+    agent_eval_command_one (exp, eval, get_frame_pc (get_current_frame ()));
+
+  dont_repeat ();
+}
+
+static void
+agent_command (char *exp, int from_tty)
+{
+  agent_command_1 (exp, 0);
+}
+
 /* Parse the given expression, compile it into an agent expression
    that does direct evaluation, and display the resulting
    expression.  */
@@ -2484,10 +2683,24 @@ agent_command (char *exp, int from_tty)
 static void
 agent_eval_command (char *exp, int from_tty)
 {
+  agent_command_1 (exp, 1);
+}
+
+/* Parse the given expression, compile it into an agent expression
+   that does a printf, and display the resulting expression.  */
+
+static void
+maint_agent_printf_command (char *exp, int from_tty)
+{
   struct cleanup *old_chain = 0;
   struct expression *expr;
+  struct expression *argvec[100];
   struct agent_expr *agent;
   struct frame_info *fi = get_current_frame ();	/* need current scope */
+  const char *cmdrest;
+  const char *format_start, *format_end;
+  struct format_piece *fpieces;
+  int nargs;
 
   /* We don't deal with overlay debugging at the moment.  We need to
      think more carefully about this.  If you copy this code into
@@ -2499,9 +2712,52 @@ agent_eval_command (char *exp, int from_tty)
   if (exp == 0)
     error_no_arg (_("expression to translate"));
 
-  expr = parse_expression (exp);
-  old_chain = make_cleanup (free_current_contents, &expr);
-  agent = gen_eval_for_expr (get_frame_pc (fi), expr);
+  cmdrest = exp;
+
+  cmdrest = skip_spaces_const (cmdrest);
+
+  if (*cmdrest++ != '"')
+    error (_("Must start with a format string."));
+
+  format_start = cmdrest;
+
+  fpieces = parse_format_string (&cmdrest);
+
+  old_chain = make_cleanup (free_format_pieces_cleanup, &fpieces);
+
+  format_end = cmdrest;
+
+  if (*cmdrest++ != '"')
+    error (_("Bad format string, non-terminated '\"'."));
+  
+  cmdrest = skip_spaces_const (cmdrest);
+
+  if (*cmdrest != ',' && *cmdrest != 0)
+    error (_("Invalid argument syntax"));
+
+  if (*cmdrest == ',')
+    cmdrest++;
+  cmdrest = skip_spaces_const (cmdrest);
+
+  nargs = 0;
+  while (*cmdrest != '\0')
+    {
+      const char *cmd1;
+
+      cmd1 = cmdrest;
+      expr = parse_exp_1 (&cmd1, 0, (struct block *) 0, 1);
+      argvec[nargs] = expr;
+      ++nargs;
+      cmdrest = cmd1;
+      if (*cmdrest == ',')
+	++cmdrest;
+      /* else complain? */
+    }
+
+
+  agent = gen_printf (get_frame_pc (fi), get_current_arch (), 0, 0,
+		      format_start, format_end - format_start,
+		      fpieces, nargs, argvec);
   make_cleanup_free_agent_expr (agent);
   ax_reqs (agent);
   ax_print (gdb_stdout, agent);
@@ -2521,12 +2777,23 @@ void
 _initialize_ax_gdb (void)
 {
   add_cmd ("agent", class_maintenance, agent_command,
-	   _("Translate an expression into "
-	     "remote agent bytecode for tracing."),
+	   _("\
+Translate an expression into remote agent bytecode for tracing.\n\
+Usage: maint agent [-at location,] EXPRESSION\n\
+If -at is given, generate remote agent bytecode for this location.\n\
+If not, generate remote agent bytecode for current frame pc address."),
 	   &maintenancelist);
 
   add_cmd ("agent-eval", class_maintenance, agent_eval_command,
+	   _("\
+Translate an expression into remote agent bytecode for evaluation.\n\
+Usage: maint agent-eval [-at location,] EXPRESSION\n\
+If -at is given, generate remote agent bytecode for this location.\n\
+If not, generate remote agent bytecode for current frame pc address."),
+	   &maintenancelist);
+
+  add_cmd ("agent-printf", class_maintenance, maint_agent_printf_command,
 	   _("Translate an expression into remote "
-	     "agent bytecode for evaluation."),
+	     "agent bytecode for evaluation and display the bytecodes."),
 	   &maintenancelist);
 }

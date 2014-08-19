@@ -1,7 +1,7 @@
 /* Test file for mpfr_add and mpfr_sub.
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -20,7 +20,7 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#define NUM 30000
+#define N 30000
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -674,7 +674,7 @@ check_1111 (void)
 
   mpfr_init2 (one, MPFR_PREC_MIN);
   mpfr_set_ui (one, 1, MPFR_RNDN);
-  for (n = 0; n < NUM; n++)
+  for (n = 0; n < N; n++)
     {
       mpfr_prec_t prec_a, prec_b, prec_c;
       mpfr_exp_t tb=0, tc, diff;

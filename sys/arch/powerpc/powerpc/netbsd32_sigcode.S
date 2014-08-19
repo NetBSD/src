@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sigcode.S,v 1.1 2003/01/19 00:00:11 matt Exp $	*/
+/*	$NetBSD: netbsd32_sigcode.S,v 1.1.152.1 2014/08/20 00:03:20 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,13 +31,11 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/syscall.h>
 #include <compat/netbsd32/netbsd32_syscall.h>
 
-#define SIGCODE_NAME		netbsd32_sigcode
-#define ESIGCODE_NAME		netbsd32_esigcode
-#define SIGRETURN_NAME		netbsd32_SYS_netbsd32___sigreturn14
-#define EXIT_NAME		netbsd32_SYS_netbsd32_exit
-#define	SIGCALLFRAMESIZE	16
+#define SIGCODE_NAME	netbsd32_sigcode
+#define ESIGCODE_NAME	netbsd32_esigcode
+#define SIGRETURN_NAME	NETBSD32_SYS_compat_16_netbsd32___sigreturn14
+#define EXIT_NAME	NETBSD32_SYS_netbsd32_exit
 
-#include "sigcode.S"
+#include <powerpc/powerpc/sigcode.S>

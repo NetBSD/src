@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_wfq.c,v 1.19 2008/09/11 17:58:59 joerg Exp $	*/
+/*	$NetBSD: altq_wfq.c,v 1.19.38.1 2014/08/20 00:02:39 tls Exp $	*/
 /*	$KAME: altq_wfq.c,v 1.14 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.19 2008/09/11 17:58:59 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.19.38.1 2014/08/20 00:02:39 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -658,7 +658,8 @@ wfqclose(dev_t dev, int flag, int fmt,
 	s = splnet();
 	while ((wfqp = wfq_list) != NULL) {
 		ifp = wfqp->ifq->altq_ifp;
-		sprintf(iface.wfq_ifacename, "%s", ifp->if_xname);
+		snprintf(iface.wfq_ifacename, sizeof(iface.wfq_ifacename),
+		    "%s", ifp->if_xname);
 		wfq_ifdetach(&iface);
 	}
 	splx(s);

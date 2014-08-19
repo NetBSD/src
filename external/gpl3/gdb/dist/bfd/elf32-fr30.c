@@ -1,5 +1,6 @@
 /* FR30-specific support for 32-bit ELF.
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008
+   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
+   2010, 2012
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -26,23 +27,12 @@
 #include "elf/fr30.h"
 
 /* Forward declarations.  */
-static bfd_reloc_status_type fr30_elf_i20_reloc
-  PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
-static bfd_reloc_status_type fr30_elf_i32_reloc
-  PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
-static reloc_howto_type * fr30_reloc_type_lookup
-  PARAMS ((bfd *abfd, bfd_reloc_code_real_type code));
-static void fr30_info_to_howto_rela
-  PARAMS ((bfd *, arelent *, Elf_Internal_Rela *));
-static bfd_boolean fr30_elf_relocate_section
-  PARAMS ((bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
-	   Elf_Internal_Rela *, Elf_Internal_Sym *, asection **));
-static bfd_reloc_status_type fr30_final_link_relocate
-  PARAMS ((reloc_howto_type *, bfd *, asection *, bfd_byte *,
-	   Elf_Internal_Rela *, bfd_vma));
-static bfd_boolean fr30_elf_check_relocs
-  PARAMS ((bfd *, struct bfd_link_info *, asection *,
-	   const Elf_Internal_Rela *));
+static bfd_reloc_status_type
+fr30_elf_i20_reloc (bfd *, arelent *, asymbol *, void * data,
+		    asection *, bfd *, char **error_message);
+static bfd_reloc_status_type
+fr30_elf_i32_reloc (bfd *, arelent *, asymbol *, void *,
+		    asection *, bfd *, char **);
 
 static reloc_howto_type fr30_elf_howto_table [] =
 {
@@ -244,15 +234,13 @@ static reloc_howto_type fr30_elf_howto_table [] =
 /* Utility to actually perform an R_FR30_20 reloc.  */
 
 static bfd_reloc_status_type
-fr30_elf_i20_reloc (abfd, reloc_entry, symbol, data,
-		    input_section, output_bfd, error_message)
-     bfd *abfd;
-     arelent *reloc_entry;
-     asymbol *symbol;
-     PTR data;
-     asection *input_section;
-     bfd *output_bfd;
-     char **error_message ATTRIBUTE_UNUSED;
+fr30_elf_i20_reloc (bfd *abfd,
+		    arelent *reloc_entry,
+		    asymbol *symbol,
+		    void * data,
+		    asection *input_section,
+		    bfd *output_bfd,
+		    char **error_message ATTRIBUTE_UNUSED)
 {
   bfd_vma relocation;
   unsigned long x;
@@ -290,15 +278,13 @@ fr30_elf_i20_reloc (abfd, reloc_entry, symbol, data,
 /* Utility to actually perform a R_FR30_48 reloc.  */
 
 static bfd_reloc_status_type
-fr30_elf_i32_reloc (abfd, reloc_entry, symbol, data,
-		    input_section, output_bfd, error_message)
-     bfd *abfd;
-     arelent *reloc_entry;
-     asymbol *symbol;
-     PTR data;
-     asection *input_section;
-     bfd *output_bfd;
-     char **error_message ATTRIBUTE_UNUSED;
+fr30_elf_i32_reloc (bfd *abfd,
+		    arelent *reloc_entry,
+		    asymbol *symbol,
+		    void * data,
+		    asection *input_section,
+		    bfd *output_bfd,
+		    char **error_message ATTRIBUTE_UNUSED)
 {
   bfd_vma relocation;
 
@@ -353,9 +339,8 @@ static const struct fr30_reloc_map fr30_reloc_map [] =
 };
 
 static reloc_howto_type *
-fr30_reloc_type_lookup (abfd, code)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     bfd_reloc_code_real_type code;
+fr30_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
+			bfd_reloc_code_real_type code)
 {
   unsigned int i;
 
@@ -385,10 +370,9 @@ fr30_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED, const char *r_name)
 /* Set the howto pointer for an FR30 ELF reloc.  */
 
 static void
-fr30_info_to_howto_rela (abfd, cache_ptr, dst)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     arelent *cache_ptr;
-     Elf_Internal_Rela *dst;
+fr30_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
+			 arelent *cache_ptr,
+			 Elf_Internal_Rela *dst)
 {
   unsigned int r_type;
 
@@ -401,14 +385,12 @@ fr30_info_to_howto_rela (abfd, cache_ptr, dst)
    routines, but a few relocs, we have to do them ourselves.  */
 
 static bfd_reloc_status_type
-fr30_final_link_relocate (howto, input_bfd, input_section, contents, rel,
-			  relocation)
-     reloc_howto_type *howto;
-     bfd *input_bfd;
-     asection *input_section;
-     bfd_byte *contents;
-     Elf_Internal_Rela *rel;
-     bfd_vma relocation;
+fr30_final_link_relocate (reloc_howto_type *howto,
+			  bfd *input_bfd,
+			  asection *input_section,
+			  bfd_byte *contents,
+			  Elf_Internal_Rela *rel,
+			  bfd_vma relocation)
 {
   bfd_reloc_status_type r = bfd_reloc_ok;
   bfd_vma x;
@@ -510,16 +492,14 @@ fr30_final_link_relocate (howto, input_bfd, input_section, contents, rel,
    accordingly.  */
 
 static bfd_boolean
-fr30_elf_relocate_section (output_bfd, info, input_bfd, input_section,
-			   contents, relocs, local_syms, local_sections)
-     bfd *output_bfd;
-     struct bfd_link_info *info;
-     bfd *input_bfd;
-     asection *input_section;
-     bfd_byte *contents;
-     Elf_Internal_Rela *relocs;
-     Elf_Internal_Sym *local_syms;
-     asection **local_sections;
+fr30_elf_relocate_section (bfd *output_bfd,
+			   struct bfd_link_info *info,
+			   bfd *input_bfd,
+			   asection *input_section,
+			   bfd_byte *contents,
+			   Elf_Internal_Rela *relocs,
+			   Elf_Internal_Sym *local_syms,
+			   asection **local_sections)
 {
   Elf_Internal_Shdr *symtab_hdr;
   struct elf_link_hash_entry **sym_hashes;
@@ -567,19 +547,19 @@ fr30_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	}
       else
 	{
-	  bfd_boolean unresolved_reloc, warned;
+	  bfd_boolean unresolved_reloc, warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned);
+				   unresolved_reloc, warned, ignored);
 
 	  name = h->root.root.string;
 	}
 
-      if (sec != NULL && elf_discarded_section (sec))
+      if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, relend, howto, contents);
+					 rel, 1, relend, howto, 0, contents);
 
       if (info->relocatable)
 	continue;
@@ -660,11 +640,10 @@ fr30_elf_gc_mark_hook (asection *sec,
    virtual table relocs for gc.  */
 
 static bfd_boolean
-fr30_elf_check_relocs (abfd, info, sec, relocs)
-     bfd *abfd;
-     struct bfd_link_info *info;
-     asection *sec;
-     const Elf_Internal_Rela *relocs;
+fr30_elf_check_relocs (bfd *abfd,
+		       struct bfd_link_info *info,
+		       asection *sec,
+		       const Elf_Internal_Rela *relocs)
 {
   Elf_Internal_Shdr *symtab_hdr;
   struct elf_link_hash_entry **sym_hashes;
@@ -692,6 +671,10 @@ fr30_elf_check_relocs (abfd, info, sec, relocs)
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.non_ir_ref = 1;
 	}
 
       switch (ELF32_R_TYPE (rel->r_info))

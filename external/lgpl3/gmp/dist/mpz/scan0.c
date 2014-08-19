@@ -1,6 +1,6 @@
 /* mpz_scan0 -- search for a 0 bit.
 
-Copyright 2000, 2001, 2002, 2004 Free Software Foundation, Inc.
+Copyright 2000, 2001, 2002, 2004, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -28,7 +28,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
    reasonable to inline that code.  */
 
 mp_bitcnt_t
-mpz_scan0 (mpz_srcptr u, mp_bitcnt_t starting_bit)
+mpz_scan0 (mpz_srcptr u, mp_bitcnt_t starting_bit) __GMP_NOTHROW
 {
   mp_srcptr      u_ptr = PTR(u);
   mp_size_t      size = SIZ(u);
@@ -42,7 +42,7 @@ mpz_scan0 (mpz_srcptr u, mp_bitcnt_t starting_bit)
   /* When past end, there's an immediate 0 bit for u>=0, or no 0 bits for
      u<0.  Notice this test picks up all cases of u==0 too. */
   if (starting_limb >= abs_size)
-    return (size >= 0 ? starting_bit : ULONG_MAX);
+    return (size >= 0 ? starting_bit : ~(mp_bitcnt_t) 0);
 
   limb = *p;
 
@@ -52,14 +52,14 @@ mpz_scan0 (mpz_srcptr u, mp_bitcnt_t starting_bit)
       limb |= (CNST_LIMB(1) << (starting_bit % GMP_NUMB_BITS)) - 1;
 
       /* Search for a limb which isn't all ones.  If the end is reached then
-         the zero bit immediately past the end is returned.  */
+	 the zero bit immediately past the end is returned.  */
       while (limb == GMP_NUMB_MAX)
-        {
-          p++;
-          if (p == u_end)
-            return (mp_bitcnt_t) abs_size * GMP_NUMB_BITS;
-          limb = *p;
-        }
+	{
+	  p++;
+	  if (p == u_end)
+	    return (mp_bitcnt_t) abs_size * GMP_NUMB_BITS;
+	  limb = *p;
+	}
 
       /* Now seek low 1 bit. */
       limb = ~limb;
@@ -69,21 +69,21 @@ mpz_scan0 (mpz_srcptr u, mp_bitcnt_t starting_bit)
       mp_srcptr  q;
 
       /* If there's a non-zero limb before ours then we're in the ones
-         complement region.  Search from *(p-1) downwards since that might
-         give better cache locality, and since a non-zero in the middle of a
-         number is perhaps a touch more likely than at the end.  */
+	 complement region.  Search from *(p-1) downwards since that might
+	 give better cache locality, and since a non-zero in the middle of a
+	 number is perhaps a touch more likely than at the end.  */
       q = p;
       while (q != u_ptr)
-        {
-          q--;
-          if (*q != 0)
-            goto inverted;
-        }
+	{
+	  q--;
+	  if (*q != 0)
+	    goto inverted;
+	}
 
       /* Adjust so ~limb implied by searching for 1 bit below becomes -limb.
-         If limb==0 here then this isn't the beginning of twos complement
-         inversion, but that doesn't matter because limb==0 is a zero bit
-         immediately (-1 is all ones for below).  */
+	 If limb==0 here then this isn't the beginning of twos complement
+	 inversion, but that doesn't matter because limb==0 is a zero bit
+	 immediately (-1 is all ones for below).  */
       limb--;
 
     inverted:
@@ -93,24 +93,24 @@ mpz_scan0 (mpz_srcptr u, mp_bitcnt_t starting_bit)
       limb &= (MP_LIMB_T_MAX << (starting_bit % GMP_NUMB_BITS));
 
       if (limb == 0)
-        {
-          /* If the high limb is zero after masking, then no 1 bits past
-             starting_bit.  */
-          p++;
-          if (p == u_end)
-            return ULONG_MAX;
+	{
+	  /* If the high limb is zero after masking, then no 1 bits past
+	     starting_bit.  */
+	  p++;
+	  if (p == u_end)
+	    return ~(mp_bitcnt_t) 0;
 
-          /* Search further for a non-zero limb.  The high limb is non-zero,
-             if nothing else.  */
-          for (;;)
-            {
-              limb = *p;
-              if (limb != 0)
-                break;
-              p++;
-              ASSERT (p < u_end);
-            }
-        }
+	  /* Search further for a non-zero limb.  The high limb is non-zero,
+	     if nothing else.  */
+	  for (;;)
+	    {
+	      limb = *p;
+	      if (limb != 0)
+		break;
+	      p++;
+	      ASSERT (p < u_end);
+	    }
+	}
     }
 
   ASSERT (limb != 0);

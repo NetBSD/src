@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdv.c,v 1.7 2011/02/07 01:37:12 dholland Exp $	*/
+/*	$NetBSD: fwdv.c,v 1.7.10.1 2014/08/20 00:05:07 tls Exp $	*/
 /*
  * Copyright (C) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -265,7 +265,7 @@ dvsend(int d, const char *filename, char ich, int count)
 	struct dvdbc *dv;
 	struct fw_pkt *pkt;
 	int len, tlen, header, fd, frames, packets, vec, offset, nhdr, i;
-	int lsystem=-1, pad_acc, cycle_acc, cycle, f_cycle, f_frac;
+	int lsystem=-1, pad_acc, cycle_acc, cycle, f_frac;
 	struct iovec wbuf[TNBUF*2 + NEMPTY];
 	char *pbuf;
 	uint32_t iso_data, iso_empty, hdr[TNBUF + NEMPTY][3];
@@ -368,10 +368,11 @@ next:
 			if (frames % frame_rate[lsystem] == 0)
 				fprintf(stderr, "\n");
 			fflush(stderr);
-			f_cycle = (cycle_acc / frame_cycle[lsystem].d) & 0xf;
 			f_frac = (cycle_acc % frame_cycle[lsystem].d
 					* CYCLE_FRAC) / frame_cycle[lsystem].d;
 #if 0
+			int f_cycle = (cycle_acc / frame_cycle[lsystem].d)
+			    & 0xf;
 			ciph->fdf.dv.cyc = htons(f_cycle << 12 | f_frac);
 #else
 			ciph->fdf.dv.cyc = htons(cycle << 12 | f_frac);

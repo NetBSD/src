@@ -1,4 +1,4 @@
-.\" $NetBSD: newfs_msdos.8,v 1.17 2009/03/26 09:56:17 wiz Exp $
+.\" $NetBSD: newfs_msdos.8,v 1.17.12.1 2014/08/20 00:02:27 tls Exp $
 .\"
 .\" Copyright (c) 1998 Robert Nordier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\"
 .\" From: $FreeBSD: src/sbin/newfs_msdos/newfs_msdos.8,v 1.13 2001/08/14 10:01:48 ru Exp $
 .\"
-.Dd March 26, 2009
+.Dd April 24, 2014
 .Dt NEWFS_MSDOS 8
 .Os
 .Sh NAME
@@ -101,7 +101,7 @@ Volume label (up to 11 characters).
 The label should consist of only those characters permitted
 in regular DOS (8+3) filenames.
 The default is
-.Qq Li "NO_NAME" .
+.Qq Li "NO NAME" .
 .It Fl O Ar OEM
 OEM string (up to 8 characters).
 The default is
@@ -238,4 +238,4 @@ The
 command first appeared in
 .Nx 1.3 .
 .Sh AUTHORS
-.An Robert Nordier Aq rnordier@FreeBSD.org .
+.An Robert Nordier Aq Mt rnordier@FreeBSD.org .

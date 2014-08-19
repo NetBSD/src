@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.6.2.1 2013/06/23 06:20:02 tls Exp $
+# $NetBSD: GENERIC,v 1.6.2.2 2014/08/20 00:02:51 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/emips/conf/std.emips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.6.2.1 $"
+#ident		"GENERIC-$Revision: 1.6.2.2 $"
 
 maxusers	64
 
@@ -107,7 +107,6 @@ options 	INET6		# IPV6
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default

@@ -1,6 +1,6 @@
 /* Blackfin External Bus Interface Unit (EBIU) SDRAM Controller (SDC) Model.
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -20,8 +20,6 @@
 
 #ifndef DV_BFIN_EBIU_SDC_H
 #define DV_BFIN_EBIU_SDC_H
-
-#define BFIN_MMR_EBIU_SDC_SIZE	(4 * 4)
 
 /* EBIU_SDBCTL Masks */
 #define EBE		0x0001	/* Enable SDRAM External Bank */

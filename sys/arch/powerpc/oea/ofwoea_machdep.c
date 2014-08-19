@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.30.2.2 2013/06/23 06:20:10 tls Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.30.2.3 2014/08/20 00:03:20 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.30.2.2 2013/06/23 06:20:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.30.2.3 2014/08/20 00:03:20 tls Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.30.2.2 2013/06/23 06:20:10 tls 
 #include <powerpc/oea/bat.h>
 #include <powerpc/oea/ofw_rasconsvar.h>
 #include <powerpc/oea/cpufeat.h>
+#include <powerpc/include/oea/spr.h>
 #include <powerpc/ofw_cons.h>
 #include <powerpc/spr.h>
 #include <powerpc/pic/picvar.h>
@@ -120,6 +121,11 @@ char model_name[64];
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 void *startsym, *endsym;
 #endif
+
+#if PPC_OEA601
+#define TIMEBASE_FREQ (1000000000)  /* RTC register */
+#endif
+
 #ifdef TIMEBASE_FREQ
 u_int timebase_freq = TIMEBASE_FREQ;
 #else
@@ -185,7 +191,7 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 
 #if defined(MULTIPROCESSOR) && defined(ofppc)
 	for (i=1; i < CPU_MAXNUM; i++) {
-		sprintf(cpupath, "/cpus/@%x", i);
+		snprintf(cpupath, sizeof(cpupath), "/cpus/@%x", i);
 		node = OF_finddevice(cpupath);
 		if (node <= 0)
 			continue;
@@ -199,13 +205,6 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 			__asm volatile ("sync");
 		}
 	}
-#endif
-
-#if defined (PPC_OEA64_BRIDGE) && defined (PPC_OEA)
-	if (oeacpufeat & OEACPU_64_BRIDGE)
-		pmap_setup64bridge();
-	else
-		pmap_setup32();
 #endif
 
 	oea_init(pic_ext_intr);
@@ -295,7 +294,7 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	restore_ofmap(ofmap, ofmaplen);
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-	ksyms_addsyms_elf((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+	ksyms_addsyms_elf((int)((uintptr_t)endsym - (uintptr_t)startsym), startsym, endsym);
 #endif
 
 	/* CPU clock stuff */
@@ -341,7 +340,14 @@ found:
 	ns_per_tick = 1000000000 / ticks_per_sec;
 	ticks_per_intr = ticks_per_sec / hz;
 	cpu_timebase = ticks_per_sec;
+
+#ifdef PPC_OEA601
+	if ((mfpvr() >> 16) == MPC601)
+	    curcpu()->ci_lasttb = rtc_nanosecs();
+	else
+#endif
 	curcpu()->ci_lasttb = mftbl();
+
 	mtspr(SPR_DEC, ticks_per_intr);
 	mtmsr(msr);
 }
@@ -377,11 +383,13 @@ restore_ofmap(struct ofw_translations *map, int len)
 
 	pmap_pinit(&ofw_pmap);
 
+#ifndef _LP64
 	ofw_pmap.pm_sr[0] = KERNELN_SEGMENT(0)|SR_PRKEY;
 	ofw_pmap.pm_sr[KERNEL_SR] = KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY;
 
 #ifdef KERNEL2_SR
 	ofw_pmap.pm_sr[KERNEL2_SR] = KERNEL2_SEGMENT|SR_SUKEY|SR_PRKEY;
+#endif
 #endif
 
 	for (i = 0; i < n; i++) {
@@ -412,7 +420,7 @@ restore_ofmap(struct ofw_translations *map, int len)
 /*
  * Scan the device tree for ranges, and return them as bitmap 0..15
  */
-#ifndef macppc
+#if !defined(macppc) && defined(PPC_OEA)
 static u_int16_t
 ranges_bitmap(int node, u_int16_t bitmap)
 {
@@ -453,7 +461,7 @@ noranges:
 	}
 	return bitmap;
 }
-#endif /* !macppc */
+#endif /* !macppc && PPC_OEA */
 
 void
 ofwoea_batinit(void)
@@ -463,6 +471,24 @@ ofwoea_batinit(void)
 #ifdef macppc
 	/*
 	 * cover PCI and register space but not the firmware ROM
+	 */
+#ifdef PPC_OEA601
+
+        /*
+	 * use segment registers for the 601
+	 */
+	if ((mfpvr() >> 16 ) == MPC601)
+	    oea_batinit(
+		0x80000000, BAT_BL_256M,
+		0x90000000, BAT_BL_256M,
+		0xa0000000, BAT_BL_256M,
+		0xb0000000, BAT_BL_256M,
+		0xf0000000, BAT_BL_256M,
+		0);
+	else
+#endif
+	/*
+	 * map to bats
 	 */
 	oea_batinit(0x80000000, BAT_BL_1G,
 		    0xf0000000, BAT_BL_128M,
@@ -630,7 +656,6 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 {
 	int i, cur, range, nrofholes, error;
 	static int exmap=0;
-	u_int32_t addr;
 	rangemap_t region, holes[32], list[32];
 
 	memset(list, 0, sizeof(list));
@@ -704,7 +729,6 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 		DPRINTF("addr=0x%x size=0x%x type=%d\n", list[i].addr,
 		    list[i].size, list[i].type);
 
-	addr=0;
 	range = find_lowest_range(list, cur, iomem);
 	i = 0;
 	nrofholes = 0;

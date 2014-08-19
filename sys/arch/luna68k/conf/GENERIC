@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.100.2.2 2013/06/23 06:20:07 tls Exp $
+# $NetBSD: GENERIC,v 1.100.2.3 2014/08/20 00:03:10 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,9 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.100.2.2 $"
+#ident 		"GENERIC-$Revision: 1.100.2.3 $"
+
+makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
 maxusers	8
 
@@ -38,6 +40,9 @@ options 	KTRACE
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
+
+options 	MODULAR			# new style module(7) framework
+
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -79,7 +84,7 @@ file-system 	FFS		# ufs file system
 #file-system	LFS		# log-structured file system
 file-system 	NFS		# nfs client support
 file-system	MFS
-#file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 #file-system	MSDOSFS		# MS-DOS FAT file system
 file-system 	KERNFS		# /kern
 file-system 	PROCFS		# /proc
@@ -102,7 +107,7 @@ options 	WAPBL		# File system journaling support
 
 # Networking options
 options 	INET		# IP protocol stack support
-#options 	INET6		# IPV6
+options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
@@ -112,7 +117,6 @@ options 	INET		# IP protocol stack support
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
@@ -135,6 +139,7 @@ options 	NFS_BOOT_DHCP	# superset of BOOTP
 # WS console uses SUN or VT100 terminal emulation
 options 	WSEMUL_VT100
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD
 options 	FONT_OMRON12x20
 
 config		netbsd root on ? type ?
@@ -157,8 +162,8 @@ fb0	at mainbus0		# 16 or 256 pseudo color
 
 # Workstation Console attachments
 wsdisplay*	at fb?
-wskbd*		at ws? console ?
-wsmouse*	at ws?
+wskbd*		at ws? console ? mux 1
+wsmouse*	at ws? mux 0
 
 # SCSI bus support
 scsibus* at spc?
@@ -173,8 +178,8 @@ cd* at scsibus? target ? lun ?		# SCSI CD-ROMs
 
 #
 # accept filters
-pseudo-device   accf_data		# "dataready" accept filter
-pseudo-device   accf_http		# "httpready" accept filter
+#pseudo-device   accf_data		# "dataready" accept filter
+#pseudo-device   accf_http		# "httpready" accept filter
 
 pseudo-device	bpfilter		# Berkeley Packet Filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
@@ -202,6 +207,8 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+
+pseudo-device	wsmux			# mouse & keyboard multiplexsor
 
 # Veriexec
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.36 2011/07/26 20:51:24 dyoung Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.36.12.1 2014/08/20 00:03:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pci.c,v 1.36 2011/07/26 20:51:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pci.c,v 1.36.12.1 2014/08/20 00:03:42 tls Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -198,6 +198,7 @@ ne_pci_attach(device_t parent, device_t self, void *aux)
 	const struct ne_pci_product *npp;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	npp = ne_pci_lookup(pa);
 	if (npp == NULL) {
@@ -260,7 +261,7 @@ ne_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(dsc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, dp8390_intr, dsc);
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(dsc->sc_dev, "couldn't establish interrupt");

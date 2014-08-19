@@ -1,6 +1,5 @@
 /* YACC parser for Ada expressions, for GDB.
-   Copyright (C) 1986, 1989, 1990, 1991, 1993, 1994, 1997, 2000, 2003, 2004,
-   2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,7 +36,7 @@
 %{
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include <ctype.h>
 #include "expression.h"
 #include "value.h"
@@ -94,6 +93,12 @@
 #define yytoks	ada_toks		/* With YYDEBUG defined */
 #define yyname	ada_name		/* With YYDEBUG defined */
 #define yyrule	ada_rule		/* With YYDEBUG defined */
+#define yyss	ada_yyss
+#define yysslim	ada_yysslim
+#define yyssp	ada_yyssp
+#define yystacksize ada_yystacksize
+#define yyvs	ada_yyvs
+#define yyvsp	ada_yyvsp
 
 #ifndef YYDEBUG
 #define	YYDEBUG	1		/* Default to yydebug support */
@@ -120,24 +125,22 @@ static int yylex (void);
 
 void yyerror (char *);
 
-static struct stoken string_to_operator (struct stoken);
-
 static void write_int (LONGEST, struct type *);
 
-static void write_object_renaming (struct block *, const char *, int,
+static void write_object_renaming (const struct block *, const char *, int,
 				   const char *, int);
 
-static struct type* write_var_or_type (struct block *, struct stoken);
+static struct type* write_var_or_type (const struct block *, struct stoken);
 
 static void write_name_assoc (struct stoken);
 
 static void write_exp_op_with_string (enum exp_opcode, struct stoken);
 
-static struct block *block_lookup (struct block *, char *);
+static struct block *block_lookup (struct block *, const char *);
 
 static LONGEST convert_char_literal (struct type *, LONGEST);
 
-static void write_ambiguous_var (struct block *, char *, int);
+static void write_ambiguous_var (const struct block *, char *, int);
 
 static struct type *type_int (void);
 
@@ -781,39 +784,11 @@ yyerror (char *msg)
   error (_("Error in expression, near `%s'."), lexptr);
 }
 
-/* The operator name corresponding to operator symbol STRING (adds
-   quotes and maps to lower-case).  Destroys the previous contents of
-   the array pointed to by STRING.ptr.  Error if STRING does not match
-   a valid Ada operator.  Assumes that STRING.ptr points to a
-   null-terminated string and that, if STRING is a valid operator
-   symbol, the array pointed to by STRING.ptr contains at least
-   STRING.length+3 characters.  */
-
-static struct stoken
-string_to_operator (struct stoken string)
-{
-  int i;
-
-  for (i = 0; ada_opname_table[i].encoded != NULL; i += 1)
-    {
-      if (string.length == strlen (ada_opname_table[i].decoded)-2
-	  && strncasecmp (string.ptr, ada_opname_table[i].decoded+1,
-			  string.length) == 0)
-	{
-	  strncpy (string.ptr, ada_opname_table[i].decoded,
-		   string.length+2);
-	  string.length += 2;
-	  return string;
-	}
-    }
-  error (_("Invalid operator symbol `%s'"), string.ptr);
-}
-
 /* Emit expression to access an instance of SYM, in block BLOCK (if
  * non-NULL), and with :: qualification ORIG_LEFT_CONTEXT.  */
 static void
-write_var_from_sym (struct block *orig_left_context,
-		    struct block *block,
+write_var_from_sym (const struct block *orig_left_context,
+		    const struct block *block,
 		    struct symbol *sym)
 {
   if (orig_left_context == NULL && symbol_read_needs_frame (sym))
@@ -861,14 +836,13 @@ write_exp_op_with_string (enum exp_opcode opcode, struct stoken token)
  * new encoding entirely (FIXME pnh 7/20/2007).  */
 
 static void
-write_object_renaming (struct block *orig_left_context,
+write_object_renaming (const struct block *orig_left_context,
 		       const char *renamed_entity, int renamed_entity_len,
 		       const char *renaming_expr, int max_depth)
 {
   char *name;
   enum { SIMPLE_INDEX, LOWER_BOUND, UPPER_BOUND } slice_state;
-  struct symbol *sym;
-  struct block *block;
+  struct ada_symbol_info sym_info;
 
   if (max_depth <= 0)
     error (_("Could not find renamed symbol"));
@@ -876,30 +850,29 @@ write_object_renaming (struct block *orig_left_context,
   if (orig_left_context == NULL)
     orig_left_context = get_selected_block (NULL);
 
-  name = obsavestring (renamed_entity, renamed_entity_len, &temp_parse_space);
-  sym = ada_lookup_encoded_symbol (name, orig_left_context, VAR_DOMAIN, 
-				   &block);
-  if (sym == NULL)
+  name = obstack_copy0 (&temp_parse_space, renamed_entity, renamed_entity_len);
+  ada_lookup_encoded_symbol (name, orig_left_context, VAR_DOMAIN, &sym_info);
+  if (sym_info.sym == NULL)
     error (_("Could not find renamed variable: %s"), ada_decode (name));
-  else if (SYMBOL_CLASS (sym) == LOC_TYPEDEF)
+  else if (SYMBOL_CLASS (sym_info.sym) == LOC_TYPEDEF)
     /* We have a renaming of an old-style renaming symbol.  Don't
        trust the block information.  */
-    block = orig_left_context;
+    sym_info.block = orig_left_context;
 
   {
     const char *inner_renamed_entity;
     int inner_renamed_entity_len;
     const char *inner_renaming_expr;
 
-    switch (ada_parse_renaming (sym, &inner_renamed_entity, 
+    switch (ada_parse_renaming (sym_info.sym, &inner_renamed_entity,
 				&inner_renamed_entity_len,
 				&inner_renaming_expr))
       {
       case ADA_NOT_RENAMING:
-	write_var_from_sym (orig_left_context, block, sym);
+	write_var_from_sym (orig_left_context, sym_info.block, sym_info.sym);
 	break;
       case ADA_OBJECT_RENAMING:
-	write_object_renaming (block,
+	write_object_renaming (sym_info.block,
 			       inner_renamed_entity, inner_renamed_entity_len,
 			       inner_renaming_expr, max_depth - 1);
 	break;
@@ -939,25 +912,26 @@ write_object_renaming (struct block *orig_left_context,
 	  {
 	    const char *end;
 	    char *index_name;
-	    struct symbol *index_sym;
+	    struct ada_symbol_info index_sym_info;
 
 	    end = strchr (renaming_expr, 'X');
 	    if (end == NULL)
 	      end = renaming_expr + strlen (renaming_expr);
 
 	    index_name =
-	      obsavestring (renaming_expr, end - renaming_expr,
-			    &temp_parse_space);
+	      obstack_copy0 (&temp_parse_space, renaming_expr,
+			     end - renaming_expr);
 	    renaming_expr = end;
 
-	    index_sym = ada_lookup_encoded_symbol (index_name, NULL,
-						   VAR_DOMAIN, &block);
-	    if (index_sym == NULL)
+	    ada_lookup_encoded_symbol (index_name, NULL, VAR_DOMAIN,
+				       &index_sym_info);
+	    if (index_sym_info.sym == NULL)
 	      error (_("Could not find %s"), index_name);
-	    else if (SYMBOL_CLASS (index_sym) == LOC_TYPEDEF)
+	    else if (SYMBOL_CLASS (index_sym_info.sym) == LOC_TYPEDEF)
 	      /* Index is an old-style renaming symbol.  */
-	      block = orig_left_context;
-	    write_var_from_sym (NULL, block, index_sym);
+	      index_sym_info.block = orig_left_context;
+	    write_var_from_sym (NULL, index_sym_info.block,
+				index_sym_info.sym);
 	  }
 	if (slice_state == SIMPLE_INDEX)
 	  {
@@ -978,6 +952,8 @@ write_object_renaming (struct block *orig_left_context,
 	{
 	  struct stoken field_name;
 	  const char *end;
+	  char *buf;
+
 	  renaming_expr += 1;
 
 	  if (slice_state != SIMPLE_INDEX)
@@ -986,9 +962,10 @@ write_object_renaming (struct block *orig_left_context,
 	  if (end == NULL)
 	    end = renaming_expr + strlen (renaming_expr);
 	  field_name.length = end - renaming_expr;
-	  field_name.ptr = malloc (end - renaming_expr + 1);
-	  strncpy (field_name.ptr, renaming_expr, end - renaming_expr);
-	  field_name.ptr[end - renaming_expr] = '\000';
+	  buf = malloc (end - renaming_expr + 1);
+	  field_name.ptr = buf;
+	  strncpy (buf, renaming_expr, end - renaming_expr);
+	  buf[end - renaming_expr] = '\000';
 	  renaming_expr = end;
 	  write_exp_op_with_string (STRUCTOP_STRUCT, field_name);
 	  break;
@@ -1006,9 +983,9 @@ write_object_renaming (struct block *orig_left_context,
 }
 
 static struct block*
-block_lookup (struct block *context, char *raw_name)
+block_lookup (struct block *context, const char *raw_name)
 {
-  char *name;
+  const char *name;
   struct ada_symbol_info *syms;
   int nsyms;
   struct symtab *symtab;
@@ -1156,13 +1133,13 @@ write_selectors (char *sels)
    a temporary symbol that is valid until the next call to ada_parse.
    */
 static void
-write_ambiguous_var (struct block *block, char *name, int len)
+write_ambiguous_var (const struct block *block, char *name, int len)
 {
   struct symbol *sym =
     obstack_alloc (&temp_parse_space, sizeof (struct symbol));
   memset (sym, 0, sizeof (struct symbol));
   SYMBOL_DOMAIN (sym) = UNDEF_DOMAIN;
-  SYMBOL_LINKAGE_NAME (sym) = obsavestring (name, len, &temp_parse_space);
+  SYMBOL_LINKAGE_NAME (sym) = obstack_copy0 (&temp_parse_space, name, len);
   SYMBOL_LANGUAGE (sym) = language_ada;
 
   write_exp_elt_opcode (OP_VAR_VALUE);
@@ -1248,7 +1225,7 @@ get_symbol_field_type (struct symbol *sym, char *encoded_field_name)
    identifier).  */
 
 static struct type*
-write_var_or_type (struct block *block, struct stoken name0)
+write_var_or_type (const struct block *block, struct stoken name0)
 {
   int depth;
   char *encoded_name;
@@ -1259,7 +1236,7 @@ write_var_or_type (struct block *block, struct stoken name0)
 
   encoded_name = ada_encode (name0.ptr);
   name_len = strlen (encoded_name);
-  encoded_name = obsavestring (encoded_name, name_len, &temp_parse_space);
+  encoded_name = obstack_copy0 (&temp_parse_space, encoded_name, name_len);
   for (depth = 0; depth < MAX_RENAMING_CHAIN_LENGTH; depth += 1)
     {
       int tail_index;
@@ -1287,12 +1264,11 @@ write_var_or_type (struct block *block, struct stoken name0)
 	     FIXME pnh 7/20/2007. */
 	  if (nsyms == 1)
 	    {
-	      struct symbol *renaming =
-		ada_find_renaming_symbol (SYMBOL_LINKAGE_NAME (syms[0].sym), 
-					  syms[0].block);
+	      struct symbol *ren_sym =
+		ada_find_renaming_symbol (syms[0].sym, syms[0].block);
 
-	      if (renaming != NULL)
-		syms[0].sym = renaming;
+	      if (ren_sym != NULL)
+		syms[0].sym = ren_sym;
 	    }
 
 	  type_sym = select_possible_type_sym (syms, nsyms);
@@ -1366,9 +1342,9 @@ write_var_or_type (struct block *block, struct stoken name0)
 	    }
 	  else if (nsyms == 0) 
 	    {
-	      struct minimal_symbol *msym 
+	      struct bound_minimal_symbol msym
 		= ada_lookup_simple_minsym (encoded_name);
-	      if (msym != NULL)
+	      if (msym.minsym != NULL)
 		{
 		  write_exp_msymbol (msym);
 		  /* Maybe cause error here rather than later? FIXME? */
@@ -1449,13 +1425,17 @@ convert_char_literal (struct type *type, LONGEST val)
   char name[7];
   int f;
 
-  if (type == NULL || TYPE_CODE (type) != TYPE_CODE_ENUM)
+  if (type == NULL)
     return val;
+  type = check_typedef (type);
+  if (TYPE_CODE (type) != TYPE_CODE_ENUM)
+    return val;
+
   xsnprintf (name, sizeof (name), "QU%02x", (int) val);
   for (f = 0; f < TYPE_NFIELDS (type); f += 1)
     {
       if (strcmp (name, TYPE_FIELD_NAME (type, f)) == 0)
-	return TYPE_FIELD_BITPOS (type, f);
+	return TYPE_FIELD_ENUMVAL (type, f);
     }
   return val;
 }
@@ -1526,12 +1506,3 @@ _initialize_ada_exp (void)
 {
   obstack_init (&temp_parse_space);
 }
-
-/* FIXME: hilfingr/2004-10-05: Hack to remove warning.  The function
-   string_to_operator is supposed to be used for cases where one
-   calls an operator function with prefix notation, as in 
-   "+" (a, b), but at some point, this code seems to have gone
-   missing. */
-
-struct stoken (*dummy_string_to_ada_operator) (struct stoken) 
-     = string_to_operator;

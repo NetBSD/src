@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.126 2012/07/28 23:08:56 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.126.2.1 2014/08/20 00:02:44 tls Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.126 2012/07/28 23:08:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.126.2.1 2014/08/20 00:02:44 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.126 2012/07/28 23:08:56 matt Exp $");
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
 #include <sys/ksyms.h>
+#include <sys/cpu.h>
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
 #include <machine/bootinfo.h>
@@ -172,7 +173,10 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 {
 	const char *cp;
 	int i;
-	paddr_t kernstartpfn, kernendpfn, first, last;
+#if 0
+	paddr_t kernstartpfn;
+#endif
+	paddr_t first, last, kernendpfn;
 	char *kernend;
 #if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
 	char *ssym = NULL;
@@ -344,7 +348,7 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 		curcpu()->ci_divisor_delay /= 2;
 		curcpu()->ci_cctr_freq /= 2;
 	}
-	sprintf(cpu_model, "%s %s%s",
+	cpu_setmodel("%s %s%s",
 	    platform->vendor, platform->model, platform->variant);
 
 	/*
@@ -367,10 +371,10 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 	/*
 	 * Load the rest of the pages into the VM system.
 	 */
-	kernstartpfn = atop(trunc_page(
-	    MIPS_KSEG0_TO_PHYS((kernel_text) - UPAGES * PAGE_SIZE)));
 	kernendpfn = atop(round_page(MIPS_KSEG0_TO_PHYS(kernend)));
 #if 0
+	kernstartpfn = atop(trunc_page(
+	    MIPS_KSEG0_TO_PHYS((kernel_text) - UPAGES * PAGE_SIZE)));
 	/* give all free memory to VM */
 	/* XXX - currently doesn't work, due to "panic: pmap_enter: pmap" */
 	for (i = 0; i < mem_cluster_cnt; i++) {
@@ -504,7 +508,7 @@ cpu_startup(void)
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s%s", copyright, version);
-	printf("%s\n", cpu_model);
+	printf("%s\n", cpu_getmodel());
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 

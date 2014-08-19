@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscaudio.c,v 1.12 2012/03/02 11:41:36 nonaka Exp $	*/
+/*	$NetBSD: gcscaudio.c,v 1.12.2.1 2014/08/20 00:03:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.12 2012/03/02 11:41:36 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.12.2.1 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,6 +263,7 @@ gcscaudio_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	pci_intr_handle_t ih;
 	int rc, i;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 
@@ -291,7 +292,7 @@ gcscaudio_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		goto attach_failure_unmap;
 	}
-	intrstr = pci_intr_string(sc->sc_pc, ih);
+	intrstr = pci_intr_string(sc->sc_pc, ih, intrbuf, sizeof(intrbuf));
 
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_AUDIO,
 	    gcscaudio_intr, sc);
@@ -530,9 +531,9 @@ gcscaudio_set_params_ch(struct gcscaudio_softc *sc,
 
 	if (mode == AUMODE_PLAY) {
 		if (!AC97_IS_FIXED_RATE(sc->codec_if)) {
-			/* setup rate of DAC/ADC */
+			/* setup rate of DAC */
 			if ((error = sc->codec_if->vtbl->set_rate(sc->codec_if,
-			    AC97_REG_PCM_LR_ADC_RATE, &p->sample_rate)) != 0)
+			    AC97_REG_PCM_FRONT_DAC_RATE, &p->sample_rate)) != 0)
 				return error;
 
 			/* additional rate of DAC for Surround */
@@ -551,9 +552,9 @@ gcscaudio_set_params_ch(struct gcscaudio_softc *sc,
 
 	if (mode == AUMODE_RECORD) {
 		if (!AC97_IS_FIXED_RATE(sc->codec_if)) {
-			/* setup rate of DAC/ADC */
+			/* setup rate of ADC */
 			if ((error = sc->codec_if->vtbl->set_rate(sc->codec_if,
-			    AC97_REG_PCM_FRONT_DAC_RATE, &p->sample_rate)) != 0)
+			    AC97_REG_PCM_LR_ADC_RATE, &p->sample_rate)) != 0)
 				return error;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.15 2005/12/24 23:24:02 perry Exp $ */
+/*	$NetBSD: profile.h,v 1.15.122.1 2014/08/20 00:03:24 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@
 #define	_MCOUNT_ENTRY "mcount"
 #endif
 
-#ifdef PIC
+#ifdef __PIC__
 /* Inline expansion of PICCY_SET() (see <machine/asm.h>). */
 #ifdef __arch64__
 #define MCOUNT \

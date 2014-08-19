@@ -1,4 +1,4 @@
-;	$NetBSD: syscalls.master,v 1.21 2010/03/02 21:07:22 pooka Exp $
+;	$NetBSD: syscalls.master,v 1.21.20.1 2014/08/20 00:03:33 tls Exp $
 
 ;	from :NetBSD: syscalls.master,v 1.57 2000/12/09 07:10:36 mycroft Exp
 
@@ -101,7 +101,7 @@
 39	UNIMPL		sunos_setpgrp
 40	STD		{ int|sunos32_sys||lstat(const netbsd32_charp path, \
 			    netbsd32_stat43p_t ub); }
-41	NOARGS		{ int|netbsd32||dup(u_int fd); }
+41	NOARGS		{ int|netbsd32||dup(int fd); }
 42	NOARGS		{ int|sys||pipe(void); }
 43	UNIMPL		sunos_times
 44	NOARGS		{ int|netbsd32||profil(netbsd32_caddr_t samples, u_int size, \
@@ -158,7 +158,7 @@
 87	NOARGS		{ int|compat_43_netbsd32||ogethostname(netbsd32_charp hostname, u_int len); }
 88	NOARGS		{ int|compat_43_netbsd32||osethostname(netbsd32_charp hostname, u_int len); }
 89	NOARGS		{ int|compat_43_sys||getdtablesize(void); } ogetdtablesize
-90	NOARGS		{ int|netbsd32||dup2(u_int from, u_int to); }
+90	NOARGS		{ int|netbsd32||dup2(int from, int to); }
 91	UNIMPL		getdopt
 92	STD		{ int|sunos32_sys||fcntl(int fd, int cmd, netbsd32_voidp arg); }
 93	NOARGS		{ int|compat_50_netbsd32||select(u_int nd, netbsd32_fd_setp_t in, netbsd32_fd_setp_t ou, \

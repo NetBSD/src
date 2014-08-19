@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.32 2012/08/26 01:04:03 jakllsch Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.32.2.1 2014/08/20 00:03:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.32 2012/08/26 01:04:03 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.32.2.1 2014/08/20 00:03:29 tls Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.32 2012/08/26 01:04:03 jakllsch Ex
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.32 2012/08/26 01:04:03 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.32.2.1 2014/08/20 00:03:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,15 +97,11 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.32 2012/08/26 01:04:03 jakllsch Ex
 #define ACPI_MACHDEP_PRIVATE
 #include <machine/acpi_machdep.h>
 #include <machine/cpu.h>
-#ifdef __i386__
-#  include <machine/npx.h>
-#else
-#  include <machine/fpu.h>
-#endif
 #include <machine/mtrr.h>
 
 #include <x86/cpuvar.h>
 #include <x86/x86/tsc.h>
+#include <x86/fpu.h>
 
 #include "opt_vga.h"
 
@@ -268,12 +264,10 @@ acpi_cpu_sleep(struct cpu_info *ci)
 		return;
 
 	/* Execute Wakeup */
-#ifdef __i386__
-	npxinit(ci);
-#else
+#ifndef __i386__
 	cpu_init_msrs(ci, false);
-	fpuinit(ci);
 #endif
+	fpuinit(ci);
 #if NLAPIC > 0
 	lapic_enable();
 	lapic_set_lvt();
@@ -309,11 +303,7 @@ acpi_md_sleep(int state)
 	AcpiSetFirmwareWakingVector(acpi_wakeup_paddr);
 
 	s = splhigh();
-#ifdef __i386__
-	npxsave_cpu(true);
-#else
 	fpusave_cpu(true);
-#endif
 	x86_disable_intr();
 
 #ifdef MULTIPROCESSOR
@@ -329,12 +319,10 @@ acpi_md_sleep(int state)
 		goto out;
 
 	/* Execute Wakeup */
-#ifdef __i386__
-	npxinit(&cpu_info_primary);
-#else
+#ifndef __i386__
 	cpu_init_msrs(&cpu_info_primary, false);
-	fpuinit(&cpu_info_primary);
 #endif
+	fpuinit(&cpu_info_primary);
 	i8259_reinit();
 #if NLAPIC > 0
 	lapic_enable();
@@ -420,15 +408,8 @@ SYSCTL_SETUP(sysctl_md_acpi_setup, "ACPI x86 sysctl setup")
 	int err;
 
 	err = sysctl_createv(clog, 0, NULL, &rnode,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",
-	    NULL, NULL, 0, NULL, 0, CTL_HW, CTL_EOL);
-
-	if (err != 0)
-		return;
-
-	err = sysctl_createv(clog, 0, &rnode, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "acpi", NULL,
-	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
 
 	if (err != 0)
 		return;

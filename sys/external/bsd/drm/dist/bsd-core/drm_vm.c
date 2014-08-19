@@ -44,7 +44,6 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 	int error;
 #elif   defined(__NetBSD__)
 	paddr_t phys;
-	unsigned long map_offs;
 	int flags = 0;
 #endif
 
@@ -126,9 +125,6 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 		return -1;
 	}
 	type = map->type;
-#if	defined(__NetBSD__)
-	map_offs = map->offset;
-#endif
 	DRM_UNLOCK();
 
 	switch (type) {

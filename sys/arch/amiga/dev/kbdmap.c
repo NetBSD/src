@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdmap.c,v 1.12 2002/01/28 09:57:00 aymeric Exp $ */
+/*	$NetBSD: kbdmap.c,v 1.12.166.1 2014/08/20 00:02:43 tls Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbdmap.c,v 1.12 2002/01/28 09:57:00 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbdmap.c,v 1.12.166.1 2014/08/20 00:02:43 tls Exp $");
 
 #include <amiga/dev/kbdmap.h>
 
@@ -254,46 +254,46 @@ struct kbdmap ascii_kbdmap = {
 	/* alt map */
 	{
 	   {	0, '`'	},	/* 0x00 */
-	   {	0, '¹'	},
-	   {	0, '²'	},
-	   {	0, '³'	},
-	   {	0, '¢'	},
-	   {	0, '¼'	},
-	   {	0, '½'	},
-	   {	0, '¾'	},
-	   {	0, '·'	},	/* 0x08 */
-	   {	0, '«'	},
-	   {	0, '»'	},
+	   {	0, '\xb9'	},
+	   {	0, '\xb2'	},
+	   {	0, '\xb3'	},
+	   {	0, '\xa2'	},
+	   {	0, '\xbc'	},
+	   {	0, '\xbd'	},
+	   {	0, '\xbe'	},
+	   {	0, '\xb7'	},	/* 0x08 */
+	   {	0, '\xab'	},
+	   {	0, '\xbb'	},
 	   {	0, '-'	},
 	   {	0, '='	},
 	   {	0, '\\'	},
 	   {	0, 0	},
 	   {	K, '0'	},
-	   {	C, 'å'	},	/* 0x10 */
-	   {	0, '°'	},
-	   {	0, '©'	},
-	   {	0, '®'	},
-	   {	C, 'þ'	},
-	   {	0, '¤'	},
-	   {	0, 'µ'	},
-	   {	0, '¡'	},
-	   {	C, 'ø'	},	/* 0x18 */
-	   {	0, '¶'	},
+	   {	C, '\xe5'	},	/* 0x10 */
+	   {	0, '\xb0'	},
+	   {	0, '\xa9'	},
+	   {	0, '\xae'	},
+	   {	C, '\xfe'	},
+	   {	0, '\xa4'	},
+	   {	0, '\xb5'	},
+	   {	0, '\xa1'	},
+	   {	C, '\xf8'	},	/* 0x18 */
+	   {	0, '\xb6'	},
 	   {	0, '['	},
 	   {	0, ']'	},
 	   {	0, 0	},
 	   {	K, '1'	},
 	   {	K, '2'	},
 	   {	K, '3'	},
-	   {	C, 'æ'	},	/* 0x20 */
-	   {	0, 'ß'	},
-	   {	C, 'ð'	},
-	   {	DA, '´'	},
+	   {	C, '\xe6'	},	/* 0x20 */
+	   {	0, '\xdf'	},
+	   {	C, '\xf0'	},
+	   {	DA, '\xb4'	},
 	   {	DG, '`'	},
 	   {	DC, '^'	},
 	   {	DT, '~'	},
-	   {	DD, '¨'	},
-	   {	0, '£'	},	/* 0x28 */
+	   {	DD, '\xa8'	},
+	   {	0, '\xa3'	},	/* 0x28 */
 	   {	0, ';'	},
 	   {	0, '\''	},
 	   {	0, 0	},
@@ -302,13 +302,13 @@ struct kbdmap ascii_kbdmap = {
 	   {	K, '5'	},
 	   {	K, '6'	},
 	   {	0, 0	},	/* 0x30 */
-	   {	0, '±'	},
-	   {	0, '×'	},
-	   {	C, 'ç'	},
-	   {	0, 'ª'	},
-	   {	0, 'º'	},
-	   {	0, '­'	},
-	   {	0, '¸'	},
+	   {	0, '\xb1'	},
+	   {	0, '\xd7'	},
+	   {	C, '\xe7'	},
+	   {	0, '\xaa'	},
+	   {	0, '\xba'	},
+	   {	0, '\xad'	},
+	   {	0, '\xb8'	},
 	   {	0, ','	},	/* 0x38 */
 	   {	0, '.'	},
 	   {	0, '/'	},
@@ -369,31 +369,31 @@ struct kbdmap ascii_kbdmap = {
 	   {	0, '|'	},
 	   {	0, 0	},
 	   {	K, '0'	},
-	   {	C, 'Å'	},	/* 0x10 */
-	   {	0, '°'	},
-	   {	0, '©'	},
-	   {	0, '®'	},
-	   {	C, 'Þ'	},
-	   {	0, '¥'	},
-	   {	0, 'µ'	},
-	   {	0, '¦'	},
-	   {	C, 'Ø'	},	/* 0x18 */
-	   {	0, '¶'	},
+	   {	C, '\xc5'	},	/* 0x10 */
+	   {	0, '\xb0'	},
+	   {	0, '\xa9'	},
+	   {	0, '\xae'	},
+	   {	C, '\xde'	},
+	   {	0, '\xa5'	},
+	   {	0, '\xb5'	},
+	   {	0, '\xa6'	},
+	   {	C, '\xd8'	},	/* 0x18 */
+	   {	0, '\xb6'	},
 	   {	0, '['	},
 	   {	0, ']'	},
 	   {	0, 0	},
 	   {	K, '1'	},
 	   {	K, '2'	},
 	   {	K, '3'	},
-	   {	C, 'Æ'	},	/* 0x20 */
-	   {	0, '§'	},
-	   {	C, 'Ð'	},
-	   {	DA, '´'	},
+	   {	C, '\xc6'	},	/* 0x20 */
+	   {	0, '\xa7'	},
+	   {	C, '\xd0'	},
+	   {	DA, '\xb4'	},
 	   {	DG, '`'	},
 	   {	DC, '^'	},
 	   {	DT, '~'	},
-	   {	DD, '¨'	},
-	   {	0, '£'	},	/* 0x28 */
+	   {	DD, '\xa8'	},
+	   {	0, '\xa3'	},	/* 0x28 */
 	   {	0, ';'	},
 	   {	0, '\''	},
 	   {	0, 0	},
@@ -402,13 +402,13 @@ struct kbdmap ascii_kbdmap = {
 	   {	K, '5'	},
 	   {	K, '6'	},
 	   {	0, 0	},	/* 0x30 */
-	   {	0, '±'	},
-	   {	0, '×'	},
-	   {	C, 'ç'	},
-	   {	0, 'ª'	},
-	   {	0, 'º'	},
-	   {	0, '­'	},
-	   {	0, '¸'	},
+	   {	0, '\xb1'	},
+	   {	0, '\xd7'	},
+	   {	C, '\xe7'	},
+	   {	0, '\xaa'	},
+	   {	0, '\xba'	},
+	   {	0, '\xad'	},
+	   {	0, '\xb8'	},
 	   {	0, ','	},	/* 0x38 */
 	   {	0, '.'	},
 	   {	0, '/'	},
@@ -495,19 +495,19 @@ struct kbdmap ascii_kbdmap = {
 };
 
 unsigned char acctable[KBD_NUM_ACC][64] = {
-  {	"@ÀBCDÈFGHÌJKLMNÒPQRSTÙVWXYZ[\\]^_"
-	"`àbcdèfghìjklmnòpqrstùvwxyz{|}~\177"},	/* KBD_ACC_GRAVE */
+  {	"@\xc0""BCD\xc8""FGH\xccJKLMN\xd2PQRST\xd9VWXYZ[\\]^_"
+	"`\xe0""bcd\xe8""fgh\xecjklmn\xf2pqrst\xf9vwxyz{|}~\177"},	/* KBD_ACC_GRAVE */
 
-  {	"@ÁBCDÉFGHÍJKLMNÓPQRSTÚVWXYZ[\\]^_"
-	"`ábcdéfghíjklmnópqrstúvwxyz{|}~\177"},	/* KBD_ACC_ACUTE */
+  {	"@\xc1""BCD\xc9""FGH\xcdJKLMN\xd3PQRST\xdaVWXYZ[\\]^_"
+	"`\xe1""bcd\xe9""fgh\xedjklmn\xf3pqrst\xfavwxyz{|}~\177"},	/* KBD_ACC_ACUTE */
 
-  {	"@ÂBCDÊFGHÎJKLMNÔPQRSTÛVWXYZ[\\]^_"
-	"`âbcdêfghîjklmnôpqrstûvwxyz{|}~\177"},	/* KBD_ACC_CIRC */
+  {	"@\xc2""BCD\xca""FGH\xceJKLMN\xd4PQRST\xdbVWXYZ[\\]^_"
+	"`\xe2""bcd\xea""fgh\xeejklmn\xf4pqrst\xfbvwxyz{|}~\177"},	/* KBD_ACC_CIRC */
 
-  {	"@ÃBCDEFGHIJKLMÑÕPQRSTUVWXYZ[\\]^_"
-	"`ãbcdefghijklmñÕpqrstuvwxyz{|}~\177"},	/* KBD_ACC_TILDE */
+  {	"@\xc3""BCDEFGHIJKLM\xd1\xd5PQRSTUVWXYZ[\\]^_"
+	"`\xe3""bcdefghijklm\xf1\xd5pqrstuvwxyz{|}~\177"},	/* KBD_ACC_TILDE */
 
-  {	"@ÄBCDËFGHÏJKLMNÖPQRSTÜVWXYZ[\\]^_"
-	"`äbcdëfghïjklmnöpqrstüvwxyz{|}~\177"},	/* KBD_ACC_DIER */
+  {	"@\xc4""BCD\xcb""FGH\xcfJKLMN\xd6PQRST\xdcVWXYZ[\\]^_"
+	"`\xe4""bcd\xeb""fgh\xefjklmn\xf6pqrst\xfcvwxyz{|}~\177"},	/* KBD_ACC_DIER */
 };
 

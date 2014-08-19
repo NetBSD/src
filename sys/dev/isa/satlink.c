@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.42.22.1 2012/11/20 03:02:10 tls Exp $	*/
+/*	$NetBSD: satlink.c,v 1.42.22.2 2014/08/20 00:03:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.42.22.1 2012/11/20 03:02:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.42.22.2 2014/08/20 00:03:39 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,8 +109,18 @@ dev_type_poll(satlinkpoll);
 dev_type_kqfilter(satlinkkqfilter);
 
 const struct cdevsw satlink_cdevsw = {
-	satlinkopen, satlinkclose, satlinkread, nowrite, satlinkioctl,
-	nostop, notty, satlinkpoll, nommap, satlinkkqfilter, D_OTHER,
+	.d_open = satlinkopen,
+	.d_close = satlinkclose,
+	.d_read = satlinkread,
+	.d_write = nowrite,
+	.d_ioctl = satlinkioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = satlinkpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = satlinkkqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 int

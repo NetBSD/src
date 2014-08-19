@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.57 2012/04/30 22:51:27 rmind Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.57.2.1 2014/08/20 00:04:31 tls Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.57 2012/04/30 22:51:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.57.2.1 2014/08/20 00:04:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,6 +114,8 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	printf("ov_mount(mp = %p)\n", mp);
 #endif
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
@@ -161,36 +163,30 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	nmp->ovm_size = sizeof (struct overlay_node);
 	nmp->ovm_tag = VT_OVERLAY;
 	nmp->ovm_bypass = layer_bypass;
-	nmp->ovm_alloc = layer_node_alloc;	/* the default alloc is fine */
 	nmp->ovm_vnodeop_p = overlay_vnodeop_p;
-	mutex_init(&nmp->ovm_hashlock, MUTEX_DEFAULT, IPL_NONE);
-	nmp->ovm_node_hashtbl = hashinit(NOVERLAYNODECACHE, HASH_LIST, true,
-	     &nmp->ovm_node_hash);
 
 	/*
 	 * Fix up overlay node for root vnode
 	 */
+	VOP_UNLOCK(lowerrootvp);
 	error = layer_node_create(mp, lowerrootvp, &vp);
 	/*
 	 * Make sure the fixup worked
 	 */
 	if (error) {
-		vput(lowerrootvp);
-		hashdone(nmp->ovm_node_hashtbl, HASH_LIST, nmp->ovm_node_hash);
+		vrele(lowerrootvp);
 		kmem_free(nmp, sizeof(struct overlay_mount));
 		return error;
 	}
-	/*
-	 * Unlock the node
-	 */
-	VOP_UNLOCK(vp);
 
 	/*
 	 * Keep a held reference to the root vnode.
 	 * It is vrele'd in ov_unmount.
 	 */
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	vp->v_vflag |= VV_ROOT;
 	nmp->ovm_rootvp = vp;
+	VOP_UNLOCK(vp);
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->la.target,
 	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
@@ -235,8 +231,6 @@ ov_unmount(struct mount *mp, int mntflags)
 	 * Finally, throw away the overlay_mount structure
 	 */
 	omp = mp->mnt_data;
-	mutex_destroy(&omp->ovm_hashlock);
-	hashdone(omp->ovm_node_hashtbl, HASH_LIST, omp->ovm_node_hash);
 	kmem_free(omp, sizeof(struct overlay_mount));
 	mp->mnt_data = NULL;
 	return 0;
@@ -250,31 +244,28 @@ const struct vnodeopv_desc * const ov_vnodeopv_descs[] = {
 };
 
 struct vfsops overlay_vfsops = {
-	MOUNT_OVERLAY,
-	sizeof (struct overlay_args),
-	ov_mount,
-	layerfs_start,
-	ov_unmount,
-	layerfs_root,
-	layerfs_quotactl,
-	layerfs_statvfs,
-	layerfs_sync,
-	layerfs_vget,
-	layerfs_fhtovp,
-	layerfs_vptofh,
-	layerfs_init,
-	NULL,
-	layerfs_done,
-	NULL,				/* vfs_mountroot */
-	layerfs_snapshot,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	layerfs_renamelock_enter,
-	layerfs_renamelock_exit,
-	(void *)eopnotsupp,
-	ov_vnodeopv_descs,
-	0,
-	{ NULL, NULL },
+	.vfs_name = MOUNT_OVERLAY,
+	.vfs_min_mount_data = sizeof (struct overlay_args),
+	.vfs_mount = ov_mount,
+	.vfs_start = layerfs_start,
+	.vfs_unmount = ov_unmount,
+	.vfs_root = layerfs_root,
+	.vfs_quotactl = layerfs_quotactl,
+	.vfs_statvfs = layerfs_statvfs,
+	.vfs_sync = layerfs_sync,
+	.vfs_loadvnode = layerfs_loadvnode,
+	.vfs_vget = layerfs_vget,
+	.vfs_fhtovp = layerfs_fhtovp,
+	.vfs_vptofh = layerfs_vptofh,
+	.vfs_init = layerfs_init,
+	.vfs_done = layerfs_done,
+	.vfs_snapshot = layerfs_snapshot,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = layerfs_renamelock_enter,
+	.vfs_renamelock_exit = layerfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = ov_vnodeopv_descs
 };
 
 static int
@@ -287,10 +278,6 @@ overlay_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&overlay_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&overlay_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT, CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&overlay_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT, CTLTYPE_NODE, "overlay",
 			       SYSCTL_DESCR("Overlay file system"),

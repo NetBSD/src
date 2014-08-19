@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.25.12.1 2012/11/20 03:01:23 tls Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.25.12.2 2014/08/20 00:03:03 tls Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi. All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.25.12.1 2012/11/20 03:01:23 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.25.12.2 2014/08/20 00:03:03 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ plumpcmcia_attach(device_t parent, device_t self, void *aux)
 	struct plum_attach_args *pa = aux;
 	struct plumpcmcia_softc *sc = device_private(self);
 	struct plumpcmcia_handle *ph;
-	int error;
+	int error __diagused;
 
 	sc->sc_dev = self;
 	sc->sc_pc	= pa->pa_pc;
@@ -844,7 +844,6 @@ plum_csc_intr_setup(struct plumpcmcia_softc *sc, struct plumpcmcia_handle *ph,
 	bus_space_tag_t regt = ph->ph_regt;
 	bus_space_handle_t regh = ph->ph_regh;
 	plumreg_t reg;
-	void *ih;
 	
 	/* enable CARD DETECT ENABLE only */
 	plum_conf_write(regt, regh, PLUM_PCMCIA_CSCINT,
@@ -856,7 +855,7 @@ plum_csc_intr_setup(struct plumpcmcia_softc *sc, struct plumpcmcia_handle *ph,
 	plum_conf_write(regt, regh, PLUM_PCMCIA_GLOBALCTRL, reg);
 	
 	/* install interrupt handler (don't fail) */
-	ih = plum_intr_establish(sc->sc_pc, irq, IST_EDGE, IPL_TTY,
+	plum_intr_establish(sc->sc_pc, irq, IST_EDGE, IPL_TTY,
 	    plum_csc_intr, ph);
 	KASSERT(ih != 0);
 }

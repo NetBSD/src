@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.7 2009/11/03 05:07:25 snj Exp $	*/
+/*	$NetBSD: SYS.h,v 1.7.12.1 2014/08/20 00:02:09 tls Exp $	*/
 
 /*	$OpenBSD: SYS.h,v 1.9 2001/09/20 20:52:09 millert Exp $	*/
 
@@ -40,11 +40,11 @@
 #define	SYSCALL(x)				!\
 	stw	%rp, HPPA_FRAME_ERP(%sr0,%sp)	!\
 	ldil	L%SYSCALLGATE, %r1		!\
-	ble	4(%sr7, %r1)			!\
+	ble	4(%sr2, %r1)			!\
 	ldi	__CONCAT(SYS_,x), %t1		!\
 	.import __cerror, code			!\
 	comb,<>	%r0, %t1, __cerror		!\
-	ldw	HPPA_FRAME_ERP(%sr0,%sp), %rp	
+	ldw	HPPA_FRAME_ERP(%sr0,%sp), %rp
 
 #define	PSEUDO(x,y)				!\
 SYSENTRY(x)					!\
@@ -57,7 +57,7 @@ SYSEXIT(x)
 SYSENTRY(x)					!\
 	stw	%rp, HPPA_FRAME_ERP(%sr0,%sp)	!\
 	ldil	L%SYSCALLGATE, %r1		!\
-	ble	4(%sr7, %r1)			!\
+	ble	4(%sr2, %r1)			!\
 	ldi	__CONCAT(SYS_,y), %t1		!\
 	ldw	HPPA_FRAME_ERP(%sr0,%sp), %rp	!\
 	bv	%r0(%rp)			!\
@@ -65,7 +65,7 @@ SYSENTRY(x)					!\
 SYSEXIT(x)
 
 #define RSYSCALL(x)		PSEUDO(x,x)
-#define	RSYSCALL_NOERROR(x)	PSEUDO_NOERROR(x,x)	
+#define	RSYSCALL_NOERROR(x)	PSEUDO_NOERROR(x,x)
 
 #ifdef WEAK_ALIAS
 #define WSYSCALL(weak,strong)		!\

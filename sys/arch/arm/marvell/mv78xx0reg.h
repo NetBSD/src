@@ -1,4 +1,4 @@
-/*	$NetBSD: mv78xx0reg.h,v 1.1 2010/10/03 05:49:24 kiyohara Exp $	*/
+/*	$NetBSD: mv78xx0reg.h,v 1.1.24.1 2014/08/20 00:02:47 tls Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -39,13 +39,14 @@
 
 #define MV78XX0_UNITID_DDR		MVSOC_UNITID_DDR
 #define MV78XX0_UNITID_DEVBUS		MVSOC_UNITID_DEVBUS
-#define MV78XX0_UNITID_LMB		MVSOC_UNITID_LMB
+#define MV78XX0_UNITID_LMB		MVSOC_UNITID_MLMB
 #define MV78XX0_UNITID_GBE23		0x3	/* Gigabit Ethernet registers */
 #define MV78XX0_UNITID_PEX		MVSOC_UNITID_PEX
 #define MV78XX0_UNITID_USB		0x5	/* USB registers */
 #define MV78XX0_UNITID_IDMA		0x6	/* IDMA registers */
 #define MV78XX0_UNITID_XOR		0x6	/* XOR registers */
 #define MV78XX0_UNITID_GBE01		0x7	/* Gigabit Ethernet registers */
+#define MV78XX0_UNITID_PEX1		0x8
 #define MV78XX0_UNITID_CRYPT		0x9	/* Cryptographic Engine reg */
 #define MV78XX0_UNITID_SA		0x9	/* Security Accelelerator reg */
 #define MV78XX0_UNITID_SATA		0xa	/* SATA registers */
@@ -54,13 +55,9 @@
 #define MV78XX0_ATTR_DEVICE_CS0		0x3e
 #define MV78XX0_ATTR_DEVICE_CS1		0x3d
 #define MV78XX0_ATTR_DEVICE_CS2		0x3b
-#define MV78XX0_ATTR_DEVICE_CS2		0x37
+#define MV78XX0_ATTR_DEVICE_CS3		0x37
 #define MV78XX0_ATTR_BOOT_CS		0x2f
 #define MV78XX0_ATTR_SPI		0x1f
-#define MV78XX0_ATTR_PEX_IO		0xe0	/* PCIe x4 Port 0.0 */
-#define MV78XX0_ATTR_PEX_MEM		0xe8
-#define MV78XX0_ATTR_PEX1_IO		0xe0	/* PCIe x1 Port 1 */
-#define MV78XX0_ATTR_PEX1_MEM		0xe8
 #define MV78XX0_ATTR_PEX_0_IO		0xe0	/* PCIe x1 Port 0.0 */
 #define MV78XX0_ATTR_PEX_0_MEM		0xe8
 #define MV78XX0_ATTR_PEX_1_IO		0xd0	/* PCIe x1 Port 0.1 */
@@ -69,6 +66,7 @@
 #define MV78XX0_ATTR_PEX_2_MEM		0xb8
 #define MV78XX0_ATTR_PEX_3_IO		0x70	/* PCIe x1 Port 0.3 */
 #define MV78XX0_ATTR_PEX_3_MEM		0x78
+#define MV78XX0_ATTR_CRYPT		0x00/* 0:Bswap,1:No,2:B&Wswap,3:Wswap */
 
 #define MV78XX0_IRQ_ERRSUM		0	/* Sum of Main Intr Err Cause */
 #define MV78XX0_IRQ_SPI			1	/* SPI */
@@ -130,14 +128,18 @@
  * Physical address of integrated peripherals
  */
 
-#undef UNITID2PHYS
-#define UNITID2PHYS(uid)	((MV78XX0_UNITID_ ## uid) << 16)
+#define MV78XX0_UNITID2PHYS(uid)	((MV78XX0_UNITID_ ## uid) << 16)
 
 /*
  * General Purpose Port Registers
  */
 #define MV78XX0_GPP_BASE		(MVSOC_DEVBUS_BASE + 0x0100)
 #define MV78XX0_GPP_SIZE		  0x100
+
+/*
+ * Two-Wire Serial Interface Registers
+ */
+#define MV78XX0_TWSI1_BASE		(MVSOC_DEVBUS_BASE + 0x1100)
 
 /*
  * UART Interface Registers
@@ -147,60 +149,84 @@
 #define MV78XX0_COM3_BASE		(MVSOC_DEVBUS_BASE + 0x2300)
 
 /*
+ * Reset Registers
+ */
+#define MV78XX0_SAMPLE_AT_RESET_LOW	(MVSOC_DEVBUS_BASE + 0x0030)
+#define MV78XX0_SAMPLE_AT_RESET_HIGH	(MVSOC_DEVBUS_BASE + 0x0034)
+
+
+/*
  * Mbus-L to Mbus Bridge Registers
  */
 /* CPU Address Map Registers */
 #define MV78XX0_MLMB_NWINDOW		14
 #define MV78XX0_MLMB_NREMAP		8
 
-/* Main Interrupt Controller Registers */
-#define MV78XX0_MLMB_MICLR		  0x200	/*Main Interrupt Cause Low reg*/
-#define MV78XX0_MLMB_MIRQIMLR		  0x204	/* Main IRQ Interrupt Mask */
-#define MV78XX0_MLMB_MFIQIMLR		  0x208	/* Main FIQ Interrupt Mask */
-#define MV78XX0_MLMB_EIMLR		  0x20c	/* Endpoint Interrupt Mask */
-#define MV78XX0_MLMB_MICHR		  0x210	/* Main Intr Cause High reg */
-#define MV78XX0_MLMB_MIRQIMHR		  0x214 /*Main IRQ Interrupt High Mask*/
-#define MV78XX0_MLMB_MFIQIMHR		  0x218 /*Main FIQ Interrupt High Mask*/
-#define MV78XX0_MLMB_EIMHR		  0x21c	/*Endpoint Interrupt High Mask*/
+#define MV78XX0_ICI_BASE(cpu)		((cpu)->ci_cpuid << 14)
+
+/* Interrupt Controller Interface Registers */
+#define MV78XX0_ICI_MIECR		  0x200	/* Main Interrupt Error Cause */
+#define MV78XX0_ICI_MICLR		  0x204	/* Main Interrupt Cause Low */
+#define MV78XX0_ICI_MICHR		  0x208	/* Main Interrupt Cause High */
+#define MV78XX0_ICI_IRQIMER		  0x20c	/* IRQ Interrupt Mask Error */
+#define MV78XX0_ICI_IRQIMLR		  0x210	/* IRQ Interrupt Mask Low */
+#define MV78XX0_ICI_IRQIMHR		  0x214 /* IRQ Interrupt Mask High */
+#define MV78XX0_ICI_IRQSCR		  0x218 /* IRQ Select Cause */
+#define MV78XX0_ICI_FIQIMER		  0x21c	/* FIQ Interrupt Mask Error */
+#define MV78XX0_ICI_FIQIMLR		  0x220	/* FIQ Interrupt Mask Low */
+#define MV78XX0_ICI_FIQIMHR		  0x224	/* FIQ Interrupt Mask High */
+#define MV78XX0_ICI_FIQSCR		  0x228	/* FIQ Select Cause */
+#define MV78XX0_ICI_EIMER		  0x22c	/* Endpoint Intr Mask Error */
+#define MV78XX0_ICI_EIMLR		  0x230	/* Endpoint Intr Mask Low */
+#define MV78XX0_ICI_EIMHR		  0x234	/* Endpoint Intr Mask High */
+#define MV78XX0_ICI_ESCR		  0x238	/* Endpoint Select Cause */
 
 /* CPU Timers Registers */
-/*   see oriontmrreg.h */
+
+#define IRQ_IS_TIMER(n, irq)		((irq) == MV78XX0_IRQ_TIMER ## n)
+#define MLMBI_TIMER(n)			MVSOC_MLMB_MLMBI_CPUTIMER ## n ## INTREQ
+#define TIMER_IRQ2MLMBIMR(irq)				\
+	IRQ_IS_TIMER(0, irq) ? MLMBI_TIMER(0) :		\
+	    (IRQ_IS_TIMER(1, irq) ? MLMBI_TIMER(1) :	\
+	    (IRQ_IS_TIMER(2, irq) ? MLMBI_TIMER(2) : MLMBI_TIMER(3)))
 
 
 /*
  * PCI Express Interface Registers
  */
-#define MV78XX0_PEX_BASE	(UNITID2PHYS(PEX))	/* 0x40000 */
+#define MV78XX0_PEX1_BASE	(MV78XX0_UNITID2PHYS(PEX1))	/* 0x80000 */
 
 /*
  * USB 2.0 Interface Registers
  */
-#define MV78XX0_USB_BASE	(UNITID2PHYS(USB))	/* 0x50000 */
+#define MV78XX0_USB_BASE	(MV78XX0_UNITID2PHYS(USB))	/* 0x50000 */
 
 /*
  * IDMA Controller and XOR Engine Registers
  */
-#define MV78XX0_IDMAC_BASE	(UNITID2PHYS(IDMA))	/* 0x60000 */
+#define MV78XX0_IDMAC_BASE	(MV78XX0_UNITID2PHYS(IDMA))	/* 0x60000 */
 
 /*
  * Gigabit Ethernet Registers
  */
-#define MV78XX0_GBE01_BASE	(UNITID2PHYS(GBE01))	/* 0x70000 */
-#define MV78XX0_GBE23_BASE	(UNITID2PHYS(GBE23))	/* 0x30000 */
+#define MV78XX0_GBE0_BASE	(MV78XX0_UNITID2PHYS(GBE01))	/* 0x70000 */
+#define MV78XX0_GBE1_BASE	(MV78XX0_UNITID2PHYS(GBE01) + MVGBE_SIZE)
+#define MV78XX0_GBE2_BASE	(MV78XX0_UNITID2PHYS(GBE23))	/* 0x30000 */
+#define MV78XX0_GBE3_BASE	(MV78XX0_UNITID2PHYS(GBE23) + MVGBE_SIZE)
 
 /*
  * Cryptographic Engine and Security Accelerator Registers
  */
-#define MV78XX0_CESA_BASE	(UNITID2PHYS(CRYPT))	/* 0x90000 */
+#define MV78XX0_CESA_BASE	(MV78XX0_UNITID2PHYS(CRYPT) + 0xd000)/*0x9d000*/
 
 /*
  * Serial-ATA Host Controller (SATAHC) Registers
  */
-#define MV78XX0_SATAHC_BASE	(UNITID2PHYS(SATA))	/* 0xa0000 */
+#define MV78XX0_SATAHC_BASE	(MV78XX0_UNITID2PHYS(SATA))	/* 0xa0000 */
 
 /*
  * Time Division Multiplexing (TDM) Unit Registers
  */
-#define MV78XX0_TDM_BASE	(UNITID2PHYS(TDM))	/* 0xb0000 */
+#define MV78XX0_TDM_BASE	(MV78XX0_UNITID2PHYS(TDM))	/* 0xb0000 */
 
 #endif	/* _MV78XX0REG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.86 2011/09/27 01:22:12 christos Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.86.12.1 2014/08/20 00:04:30 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.86 2011/09/27 01:22:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.86.12.1 2014/08/20 00:04:30 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -78,7 +78,7 @@ int
 fdesc_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
-	int error = 0;
+	int error = 0, ix;
 	struct vnode *rvp;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
@@ -91,12 +91,11 @@ fdesc_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if (mp->mnt_flag & MNT_UPDATE)
 		return (EOPNOTSUPP);
 
-	error = fdesc_allocvp(Froot, FD_ROOT, mp, &rvp);
+	ix = FD_ROOT;
+	error = vcache_get(mp, &ix, sizeof(ix), &rvp);
 	if (error)
-		return (error);
+		return error;
 
-	rvp->v_type = VDIR;
-	rvp->v_vflag |= VV_ROOT;
 	mp->mnt_stat.f_namemax = FDESC_MAXNAMLEN;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = rvp;
@@ -104,7 +103,6 @@ fdesc_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	error = set_statvfs_info(path, UIO_USERSPACE, "fdesc", UIO_SYSSPACE,
 	    mp->mnt_op->vfs_name, mp, l);
-	VOP_UNLOCK(rvp);
 	return error;
 }
 
@@ -174,6 +172,66 @@ fdesc_vget(struct mount *mp, ino_t ino,
 	return (EOPNOTSUPP);
 }
 
+int
+fdesc_loadvnode(struct mount *mp, struct vnode *vp,
+    const void *key, size_t key_len, const void **new_key)
+{
+	int ix;
+	struct fdescnode *fd;
+
+	KASSERT(key_len == sizeof(ix));
+	memcpy(&ix, key, key_len);
+
+	fd = kmem_alloc(sizeof(struct fdescnode), KM_SLEEP);
+	fd->fd_fd = -1;
+	fd->fd_link = NULL;
+	fd->fd_ix = ix;
+	fd->fd_vnode = vp;
+	vp->v_tag = VT_FDESC;
+	vp->v_op = fdesc_vnodeop_p;
+	vp->v_data = fd;
+	switch (ix) {
+	case FD_ROOT:
+		fd->fd_type = Froot;
+		vp->v_type = VDIR;
+		vp->v_vflag |= VV_ROOT;
+		break;
+	case FD_DEVFD:
+		fd->fd_type = Fdevfd;
+		vp->v_type = VDIR;
+		break;
+	case FD_CTTY:
+		fd->fd_type = Fctty;
+		vp->v_type = VNON;
+		break;
+	case FD_STDIN:
+		fd->fd_type = Flink;
+		fd->fd_link = "fd/0";
+		vp->v_type = VLNK;
+		break;
+	case FD_STDOUT:
+		fd->fd_type = Flink;
+		fd->fd_link = "fd/1";
+		vp->v_type = VLNK;
+		break;
+	case FD_STDERR:
+		fd->fd_type = Flink;
+		fd->fd_link = "fd/2";
+		vp->v_type = VLNK;
+		break;
+	default:
+		KASSERT(ix >= FD_DESC);
+		fd->fd_type = Fdesc;
+		fd->fd_fd = ix - FD_DESC;
+		vp->v_type = VNON;
+		break;
+	}
+	uvm_vnp_setsize(vp, 0);
+	*new_key = &fd->fd_ix;
+
+	return 0;
+}
+
 extern const struct vnodeopv_desc fdesc_vnodeop_opv_desc;
 
 const struct vnodeopv_desc * const fdesc_vnodeopv_descs[] = {
@@ -182,31 +240,28 @@ const struct vnodeopv_desc * const fdesc_vnodeopv_descs[] = {
 };
 
 struct vfsops fdesc_vfsops = {
-	MOUNT_FDESC,
-	0,
-	fdesc_mount,
-	fdesc_start,
-	fdesc_unmount,
-	fdesc_root,
-	(void *)eopnotsupp,		/* vfs_quotactl */
-	genfs_statvfs,
-	fdesc_sync,
-	fdesc_vget,
-	(void *)eopnotsupp,		/* vfs_fhtovp */
-	(void *)eopnotsupp,		/* vfs_vptofh */
-	fdesc_init,
-	NULL,
-	fdesc_done,
-	NULL,				/* vfs_mountroot */
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	fdesc_vnodeopv_descs,
-	0,
-	{ NULL, NULL},
+	.vfs_name = MOUNT_FDESC,
+	.vfs_min_mount_data = 0,
+	.vfs_mount = fdesc_mount,
+	.vfs_start = fdesc_start,
+	.vfs_unmount = fdesc_unmount,
+	.vfs_root = fdesc_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = genfs_statvfs,
+	.vfs_sync = fdesc_sync,
+	.vfs_vget = fdesc_vget,
+	.vfs_loadvnode = fdesc_loadvnode,
+	.vfs_fhtovp = (void *)eopnotsupp,
+	.vfs_vptofh = (void *)eopnotsupp,
+	.vfs_init = fdesc_init,
+	.vfs_done = fdesc_done,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = fdesc_vnodeopv_descs
 };
 
 static int
@@ -219,11 +274,6 @@ fdesc_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&fdesc_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&fdesc_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&fdesc_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "fdesc",

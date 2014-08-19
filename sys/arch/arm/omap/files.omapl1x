@@ -1,0 +1,57 @@
+# $NetBSD: files.omapl1x,v 1.1.10.2 2014/08/20 00:02:47 tls Exp $
+#
+# Configuration info for Texas Instruments OMAP-L1x CPU support
+# Based on files.omap2 and files.omap
+#
+
+include "arch/arm/pic/files.pic"
+
+file	arch/arm/arm32/irq_dispatch.S
+
+# Memory size in megabytes
+defparam opt_omapl1x.h				MEMSIZE
+
+device tipb { [addr=-1], [size=0], [intr=-1], [mult=1] } : bus_space_generic
+attach tipb at mainbus
+file	arch/arm/omap/omapl1x_tipb.c		tipb
+
+# TIPB common files
+file	arch/arm/omap/omap_space.c		tipb
+file	arch/arm/omap/omap_a2x_space.c		tipb
+file	arch/arm/arm/bus_space_a2x.S		tipb
+file	arch/arm/omap/omap_a4x_space.c		tipb
+file	arch/arm/arm/bus_space_a4x.S		tipb
+file	arch/arm/omap/omapl1x_bus_dma.c
+
+#OMAPL1x Interrupt Controller 
+device omapl1xaintc: pic, pic_splfuncs          #ARM Interrupt Controller
+attach omapl1xaintc at tipb
+file   arch/arm/omap/omapl1x_aintc.c		omapl1xaintc
+
+# NS16550 compatible serial ports
+attach com at tipb with omapl1xcom
+file	arch/arm/omap/omapl1x_com.c		omapl1xcom
+defparam opt_com.h				OMAPL1X_COM_FREQ
+defparam opt_com.h				CONSADDR CONSPEED CONMODE
+
+#OMAPL1x Timer
+device omapl1xtimer
+attach omapl1xtimer at tipb
+defparam opt_timer.h				OMAPL1X_TIMER0_FREQ
+defparam opt_timer.h				OMAPL1X_TIMER1_FREQ
+defparam opt_timer.h				OMAPL1X_TIMER2_FREQ
+defparam opt_timer.h				OMAPL1X_TIMER3_FREQ
+file arch/arm/omap/omapl1x_timer.c
+
+#PSC controller
+device omapl1xpsc
+attach omapl1xpsc at tipb
+file arch/arm/omap/omapl1x_psc.c
+
+# OHCI USB controller
+attach	ohci at tipb with omapl1xohci
+file	arch/arm/omap/omapl1x_ohci.c		omapl1xohci
+
+device emac: ether, ifnet, arp, mii, mii_phy
+attach emac at tipb
+file arch/arm/omap/omapl1x_emac.c		emac

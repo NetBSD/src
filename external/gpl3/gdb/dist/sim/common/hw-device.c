@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2002-2014 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -45,9 +45,9 @@ hw_ioctl (struct hw *me,
 {
   int status;
   va_list ap;
-  va_start(ap, request);
+  va_start (ap, request);
   status = me->to_ioctl (me, request, ap);
-  va_end(ap);
+  va_end (ap);
   return status;
 }
 

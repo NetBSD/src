@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.11 2008/08/06 15:01:24 plunky Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.11.38.1 2014/08/20 00:04:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.11 2008/08/06 15:01:24 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.11.38.1 2014/08/20 00:04:35 tls Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -78,56 +78,321 @@ static const struct btproto sco_proto = {
 int sco_sendspace = 4096;
 int sco_recvspace = 4096;
 
+static int
+sco_attach(struct socket *so, int proto)
+{
+	int error;
+
+	KASSERT(so->so_pcb == NULL);
+
+	if (so->so_lock == NULL) {
+		mutex_obj_hold(bt_lock);
+		so->so_lock = bt_lock;
+		solock(so);
+	}
+	KASSERT(solocked(so));
+
+	error = soreserve(so, sco_sendspace, sco_recvspace);
+	if (error) {
+		return error;
+	}
+	return sco_attach_pcb((struct sco_pcb **)&so->so_pcb, &sco_proto, so);
+}
+
+static void
+sco_detach(struct socket *so)
+{
+	KASSERT(so->so_pcb != NULL);
+	sco_detach_pcb((struct sco_pcb **)&so->so_pcb);
+	KASSERT(so->so_pcb == NULL);
+}
+
+static int
+sco_accept(struct socket *so, struct mbuf *nam)
+{
+	struct sco_pcb *pcb = so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(nam != NULL);
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	nam->m_len = sizeof(struct sockaddr_bt);
+	return sco_peeraddr_pcb(pcb, sa);
+}
+
+static int
+sco_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+{
+	struct sco_pcb *pcb = so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(nam != NULL);
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	if (sa->bt_len != sizeof(struct sockaddr_bt))
+		return EINVAL;
+
+	if (sa->bt_family != AF_BLUETOOTH)
+		return EAFNOSUPPORT;
+
+	return sco_bind_pcb(pcb, sa);
+}
+
+static int
+sco_listen(struct socket *so, struct lwp *l)
+{
+	struct sco_pcb *pcb = so->so_pcb;
+
+	KASSERT(solocked(so));
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	return sco_listen_pcb(pcb);
+}
+
+static int
+sco_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+{
+	struct sco_pcb *pcb = so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(nam != NULL);
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	if (sa->bt_len != sizeof(struct sockaddr_bt))
+		return EINVAL;
+
+	if (sa->bt_family != AF_BLUETOOTH)
+		return EAFNOSUPPORT;
+
+	soisconnecting(so);
+	return sco_connect_pcb(pcb, sa);
+}
+
+static int
+sco_connect2(struct socket *so, struct socket *so2)
+{
+	struct sco_pcb *pcb = so->so_pcb;
+
+	KASSERT(solocked(so));
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	return EOPNOTSUPP;
+}
+
+static int
+sco_disconnect(struct socket *so)
+{
+	struct sco_pcb *pcb = so->so_pcb;
+
+	KASSERT(solocked(so));
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	soisdisconnecting(so);
+	return sco_disconnect_pcb(pcb, so->so_linger);
+}
+
+static int
+sco_shutdown(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	socantsendmore(so);
+	return 0;
+}
+
+static int
+sco_abort(struct socket *so)
+{
+	struct sco_pcb *pcb = so->so_pcb;
+
+	KASSERT(solocked(so));
+
+	if (pcb == NULL)
+		return EINVAL;
+
+	sco_disconnect_pcb(pcb, 0);
+	soisdisconnected(so);
+	sco_detach(so);
+	return 0;
+}
+
+static int
+sco_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
+{
+	return EOPNOTSUPP;
+}
+
+static int
+sco_stat(struct socket *so, struct stat *ub)
+{
+	KASSERT(solocked(so));
+
+	return 0;
+}
+
+static int
+sco_peeraddr(struct socket *so, struct mbuf *nam)
+{
+	struct sco_pcb *pcb = (struct sco_pcb *)so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(pcb != NULL);
+	KASSERT(nam != NULL);
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	nam->m_len = sizeof(struct sockaddr_bt);
+	return sco_peeraddr_pcb(pcb, sa);
+}
+
+static int
+sco_sockaddr(struct socket *so, struct mbuf *nam)
+{
+	struct sco_pcb *pcb = (struct sco_pcb *)so->so_pcb;
+	struct sockaddr_bt *sa;
+
+	KASSERT(solocked(so));
+	KASSERT(pcb != NULL);
+	KASSERT(nam != NULL);
+
+	sa = mtod(nam, struct sockaddr_bt *);
+	nam->m_len = sizeof(struct sockaddr_bt);
+	return sco_sockaddr_pcb(pcb, sa);
+}
+
+static int
+sco_rcvd(struct socket *so, int flags, struct lwp *l)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+sco_recvoob(struct socket *so, struct mbuf *m, int flags)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+sco_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
+{
+	struct sco_pcb *pcb = so->so_pcb;
+	int err = 0;
+	struct mbuf *m0;
+
+	KASSERT(solocked(so));
+	KASSERT(m != NULL);
+
+	if (control) /* no use for that */
+		m_freem(control);
+
+	if (pcb == NULL) {
+		err = EINVAL;
+		goto release;
+	}
+
+	if (m->m_pkthdr.len == 0)
+		goto release;
+
+	if (m->m_pkthdr.len > pcb->sp_mtu) {
+		err = EMSGSIZE;
+		goto release;
+	}
+
+	m0 = m_copypacket(m, M_DONTWAIT);
+	if (m0 == NULL) {
+		err = ENOMEM;
+		goto release;
+	}
+
+	sbappendrecord(&so->so_snd, m);
+	return sco_send_pcb(pcb, m0);
+
+release:
+	m_freem(m);
+	return err;
+}
+
+static int
+sco_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
+{
+	KASSERT(solocked(so));
+
+	if (m)
+		m_freem(m);
+	if (control)
+		m_freem(control);
+
+	return EOPNOTSUPP;
+}
+
+static int
+sco_purgeif(struct socket *so, struct ifnet *ifp)
+{
+
+	return EOPNOTSUPP;
+}
+
 /*
  * User Request.
  * up is socket
- * m is either
- *	optional mbuf chain containing message
- *	ioctl command (PRU_CONTROL)
- * nam is either
- *	optional mbuf chain containing an address
- *	ioctl data (PRU_CONTROL)
- *      optionally, protocol number (PRU_ATTACH)
+ * m is optional mbuf chain containing message
+ * nam is optional mbuf chain containing an address
  * ctl is optional mbuf chain containing socket options
  * l is pointer to process requesting action (if any)
  *
  * we are responsible for disposing of m and ctl if
  * they are mbuf chains
  */
-int
+static int
 sco_usrreq(struct socket *up, int req, struct mbuf *m,
     struct mbuf *nam, struct mbuf *ctl, struct lwp *l)
 {
-	struct sco_pcb *pcb = (struct sco_pcb *)up->so_pcb;
-	struct sockaddr_bt *sa;
-	struct mbuf *m0;
+	struct sco_pcb *pcb = up->so_pcb;
 	int err = 0;
 
 	DPRINTFN(2, "%s\n", prurequests[req]);
-
-	switch(req) {
-	case PRU_CONTROL:
-		return EOPNOTSUPP;
-
-	case PRU_PURGEIF:
-		return EOPNOTSUPP;
-
-	case PRU_ATTACH:
-		if (up->so_lock == NULL) {
-			mutex_obj_hold(bt_lock);
-			up->so_lock = bt_lock;
-			solock(up);
-		}
-		KASSERT(solocked(up));
-		if (pcb)
-			return EINVAL;
-		err = soreserve(up, sco_sendspace, sco_recvspace);
-		if (err)
-			return err;
-
-		return sco_attach((struct sco_pcb **)&up->so_pcb,
-					&sco_proto, up);
-	}
+	KASSERT(req != PRU_ATTACH);
+	KASSERT(req != PRU_DETACH);
+	KASSERT(req != PRU_ACCEPT);
+	KASSERT(req != PRU_BIND);
+	KASSERT(req != PRU_LISTEN);
+	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_CONNECT2);
+	KASSERT(req != PRU_DISCONNECT);
+	KASSERT(req != PRU_SHUTDOWN);
+	KASSERT(req != PRU_ABORT);
+	KASSERT(req != PRU_CONTROL);
+	KASSERT(req != PRU_SENSE);
+	KASSERT(req != PRU_PEERADDR);
+	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVD);
+	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SEND);
+	KASSERT(req != PRU_SENDOOB);
+	KASSERT(req != PRU_PURGEIF);
 
 	/* anything after here *requires* a pcb */
 	if (pcb == NULL) {
@@ -136,98 +401,6 @@ sco_usrreq(struct socket *up, int req, struct mbuf *m,
 	}
 
 	switch(req) {
-	case PRU_DISCONNECT:
-		soisdisconnecting(up);
-		return sco_disconnect(pcb, up->so_linger);
-
-	case PRU_ABORT:
-		sco_disconnect(pcb, 0);
-		soisdisconnected(up);
-		/* fall through to */
-	case PRU_DETACH:
-		return sco_detach((struct sco_pcb **)&up->so_pcb);
-
-	case PRU_BIND:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-
-		if (sa->bt_len != sizeof(struct sockaddr_bt))
-			return EINVAL;
-
-		if (sa->bt_family != AF_BLUETOOTH)
-			return EAFNOSUPPORT;
-
-		return sco_bind(pcb, sa);
-
-	case PRU_CONNECT:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-
-		if (sa->bt_len != sizeof(struct sockaddr_bt))
-			return EINVAL;
-
-		if (sa->bt_family != AF_BLUETOOTH)
-			return EAFNOSUPPORT;
-
-		soisconnecting(up);
-		return sco_connect(pcb, sa);
-
-	case PRU_PEERADDR:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-		nam->m_len = sizeof(struct sockaddr_bt);
-		return sco_peeraddr(pcb, sa);
-
-	case PRU_SOCKADDR:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-		nam->m_len = sizeof(struct sockaddr_bt);
-		return sco_sockaddr(pcb, sa);
-
-	case PRU_SHUTDOWN:
-		socantsendmore(up);
-		break;
-
-	case PRU_SEND:
-		KASSERT(m != NULL);
-		if (m->m_pkthdr.len == 0)
-			break;
-
-		if (m->m_pkthdr.len > pcb->sp_mtu) {
-			err = EMSGSIZE;
-			break;
-		}
-
-		m0 = m_copypacket(m, M_DONTWAIT);
-		if (m0 == NULL) {
-			err = ENOMEM;
-			break;
-		}
-
-		if (ctl) /* no use for that */
-			m_freem(ctl);
-
-		sbappendrecord(&up->so_snd, m);
-		return sco_send(pcb, m0);
-
-	case PRU_SENSE:
-		return 0;		/* (no sense - Doh!) */
-
-	case PRU_RCVD:
-	case PRU_RCVOOB:
-		return EOPNOTSUPP;	/* (no release) */
-
-	case PRU_LISTEN:
-		return sco_listen(pcb);
-
-	case PRU_ACCEPT:
-		KASSERT(nam != NULL);
-		sa = mtod(nam, struct sockaddr_bt *);
-		nam->m_len = sizeof(struct sockaddr_bt);
-		return sco_peeraddr(pcb, sa);
-
-	case PRU_CONNECT2:
-	case PRU_SENDOOB:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
 	case PRU_PROTORCV:
@@ -322,7 +495,7 @@ sco_newconn(void *arg, struct sockaddr_bt *laddr,
 	struct socket *so = arg;
 
 	DPRINTF("New Connection\n");
-	so = sonewconn(so, 0);
+	so = sonewconn(so, false);
 	if (so == NULL)
 		return NULL;
 
@@ -365,3 +538,49 @@ sco_input(void *arg, struct mbuf *m)
 	sbappendrecord(&so->so_rcv, m);
 	sorwakeup(so);
 }
+
+PR_WRAP_USRREQS(sco)
+
+#define	sco_attach		sco_attach_wrapper
+#define	sco_detach		sco_detach_wrapper
+#define	sco_accept		sco_accept_wrapper
+#define	sco_bind		sco_bind_wrapper
+#define	sco_listen		sco_listen_wrapper
+#define	sco_connect		sco_connect_wrapper
+#define	sco_connect2		sco_connect2_wrapper
+#define	sco_disconnect		sco_disconnect_wrapper
+#define	sco_shutdown		sco_shutdown_wrapper
+#define	sco_abort		sco_abort_wrapper
+#define	sco_ioctl		sco_ioctl_wrapper
+#define	sco_stat		sco_stat_wrapper
+#define	sco_peeraddr		sco_peeraddr_wrapper
+#define	sco_sockaddr		sco_sockaddr_wrapper
+#define	sco_rcvd		sco_rcvd_wrapper
+#define	sco_recvoob		sco_recvoob_wrapper
+#define	sco_send		sco_send_wrapper
+#define	sco_sendoob		sco_sendoob_wrapper
+#define	sco_purgeif		sco_purgeif_wrapper
+#define	sco_usrreq		sco_usrreq_wrapper
+
+const struct pr_usrreqs sco_usrreqs = {
+	.pr_attach	= sco_attach,
+	.pr_detach	= sco_detach,
+	.pr_accept	= sco_accept,
+	.pr_bind	= sco_bind,
+	.pr_listen	= sco_listen,
+	.pr_connect	= sco_connect,
+	.pr_connect2	= sco_connect2,
+	.pr_disconnect	= sco_disconnect,
+	.pr_shutdown	= sco_shutdown,
+	.pr_abort	= sco_abort,
+	.pr_ioctl	= sco_ioctl,
+	.pr_stat	= sco_stat,
+	.pr_peeraddr	= sco_peeraddr,
+	.pr_sockaddr	= sco_sockaddr,
+	.pr_rcvd	= sco_rcvd,
+	.pr_recvoob	= sco_recvoob,
+	.pr_send	= sco_send,
+	.pr_sendoob	= sco_sendoob,
+	.pr_purgeif	= sco_purgeif,
+	.pr_generic	= sco_usrreq,
+};

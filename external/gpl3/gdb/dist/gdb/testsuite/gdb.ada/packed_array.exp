@@ -1,4 +1,4 @@
-# Copyright 2005, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2005-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,20 +13,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 load_lib "ada.exp"
 
 if { [skip_ada_tests] } { return -1 }
 
-set testdir "packed_array"
-set testfile "${testdir}/pa"
-set srcfile ${srcdir}/${subdir}/${testfile}.adb
-set binfile ${objdir}/${subdir}/${testfile}
+standard_ada_testfile pa
 
-file mkdir ${objdir}/${subdir}/${testdir}
 if {[gdb_compile_ada "${srcfile}" "${binfile}" executable {debug}] != ""} {
     return -1
 }
@@ -48,7 +40,7 @@ gdb_test "ptype &var" \
          "ptype &var"
 
 gdb_test "print &var" \
-         "= \\(access array \\(\\.\\.\\.\\) of boolean\\) \\(4 => true, false, true, false, true\\)" \
+         "= \\(access pa.packed_array\\) 0x.*" \
          "print &var"
 
 # Print the value of U_Var, an unconstrainted packed array.

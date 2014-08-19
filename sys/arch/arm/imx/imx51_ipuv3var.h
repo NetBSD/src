@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_ipuv3var.h,v 1.1 2012/04/17 10:19:57 bsh Exp $	*/
+/*	$NetBSD: imx51_ipuv3var.h,v 1.1.6.1 2014/08/20 00:02:46 tls Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011, 2012  Genetec Corporation.  All rights reserved.
@@ -51,6 +51,9 @@ struct imx51_ipuv3_screen {
 	/* DMA frame descriptor */
 	struct	ipuv3_dma_descriptor *dma_desc;
 	paddr_t	dma_desc_pa;
+
+	/* rasterop */
+	struct rasops_info rinfo;
 };
 
 struct lcd_panel_geometry {
@@ -116,7 +119,9 @@ struct imx51_ipuv3_softc;
 
 void	imx51_ipuv3_attach_sub(struct imx51_ipuv3_softc *,
 	    struct axi_attach_args *, const struct lcd_panel_geometry *);
-int	imx51_ipuv3_cnattach(const struct lcd_panel_geometry *);
+int	imx51_ipuv3_cnattach(bool, struct imx51_wsscreen_descr *,
+	    struct wsdisplay_accessops *,
+	    const struct lcd_panel_geometry *);
 void	imx51_ipuv3_start_dma(struct imx51_ipuv3_softc *,
 	    struct imx51_ipuv3_screen *);
 
@@ -125,12 +130,13 @@ void	imx51_ipuv3_geometry(struct imx51_ipuv3_softc *,
 int	imx51_ipuv3_new_screen(struct imx51_ipuv3_softc *, int,
 	    struct imx51_ipuv3_screen **);
 
+int	imx51_ipuv3_alloc_screen(void *, const struct wsscreen_descr *,
+	    void **, int *, int *, long *);
+void	imx51_ipuv3_free_screen(void *, void *);
 int	imx51_ipuv3_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 paddr_t	imx51_ipuv3_mmap(void *, void *, off_t, int);
-
-void	imx51_ipuv3_power(int, void *);
-void	imx51_ipuv3_suspend(struct imx51_ipuv3_softc *);
-void	imx51_ipuv3_resume(struct imx51_ipuv3_softc *);
+int	imx51_ipuv3_show_screen(void *, void *, int, void (*)(void *, int, int),
+	    void *);
 
 extern const struct wsdisplay_emulops imx51_ipuv3_emulops;
 

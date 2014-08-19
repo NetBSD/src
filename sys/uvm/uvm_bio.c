@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.79 2011/09/27 01:02:39 jym Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.79.12.1 2014/08/20 00:04:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.79 2011/09/27 01:02:39 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.79.12.1 2014/08/20 00:04:45 tls Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -210,6 +210,12 @@ ubc_init(void)
 				UVM_ADV_RANDOM, UVM_FLAG_NOMERGE)) != 0) {
 		panic("ubc_init: failed to map ubc_object");
 	}
+}
+
+void
+ubchist_init(void)
+{
+
 	UVMHIST_INIT(ubchist, 300);
 }
 
@@ -646,7 +652,7 @@ ubc_release(void *va, int flags)
 		mutex_enter(&uvm_pageqlock);
 		for (u_int i = 0; i < npages; i++) {
 			paddr_t pa;
-			bool rv;
+			bool rv __diagused;
 
 			rv = pmap_extract(pmap_kernel(),
 			    umapva + slot_offset + (i << PAGE_SHIFT), &pa);

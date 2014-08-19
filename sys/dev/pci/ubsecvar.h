@@ -1,5 +1,5 @@
-/*	$NetBSD: ubsecvar.h,v 1.3.86.2 2013/06/23 06:20:21 tls Exp $	*/
-/*	$OpenBSD: ubsecvar.h,v 1.36 2003/06/04 16:02:41 jason Exp $	*/
+/*	$NetBSD: ubsecvar.h,v 1.3.86.3 2014/08/20 00:03:48 tls Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.38 2009/03/27 13:31:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -40,7 +40,11 @@
 #define	UBS_MAX_SCATTER		64	/* Maximum scatter/gather depth */
 
 #ifndef UBS_MAX_AGGR
-#define	UBS_MAX_AGGR		5	/* Maximum aggregation count */
+#define	UBS_MAX_AGGR		17	/* Maximum aggregation count */
+#endif
+
+#ifndef UBS_MIN_AGGR
+#define	UBS_MIN_AGGR		5	/* < 5827, Maximum aggregation count */
 #endif
 
 #define	UBSEC_CARD(sid)		(((sid) & 0xf0000000) >> 28)
@@ -112,7 +116,10 @@ struct ubsec_dmachunk {
 	struct ubsec_pktbuf	d_dbuf[UBS_MAX_SCATTER-1];
 	u_int32_t		d_macbuf[5];
 	union {
-		struct ubsec_pktctx_long	ctxl;
+		struct ubsec_pktctx_aes256	ctx_aes256;
+		struct ubsec_pktctx_aes192	ctx_aes192;
+		struct ubsec_pktctx_aes128	ctx_aes128;
+		struct ubsec_pktctx_3des	ctx_3des;
 		struct ubsec_pktctx		ctx;
 	} d_ctx;
 };
@@ -128,6 +135,9 @@ struct ubsec_dma {
 #define	UBS_FLAGS_BIGKEY	0x04		/* 2048bit keys */
 #define	UBS_FLAGS_HWNORM	0x08		/* hardware normalization */
 #define	UBS_FLAGS_RNG		0x10		/* hardware rng */
+#define UBS_FLAGS_AES		0x20		/* supports AES */
+#define UBS_FLAGS_MULTIMCR	0x40		/* 5827+ with 4 MCRs */
+#define UBS_FLAGS_RNG4		0x80		/* 5827+ RNG on MCR4 */
 
 struct ubsec_q {
 	SIMPLEQ_ENTRY(ubsec_q)		q_next;
@@ -139,17 +149,19 @@ struct ubsec_q {
 	struct mbuf			*q_src_m, *q_dst_m;
 	struct uio			*q_src_io, *q_dst_io;
 
-	bus_dmamap_t			q_src_map;
-	bus_dmamap_t			q_dst_map;
-
 	int				q_sesn;
 	int				q_flags;
+
+	bus_dmamap_t			q_dst_map;
+	bus_dmamap_t			q_src_map;	  /* cached src_map */
+	bus_dmamap_t			q_cached_dst_map; /* cached dst_map */
 };
 
 struct ubsec_softc {
 	device_t		sc_dev;		/* generic device */
 	void			*sc_ih;		/* interrupt handler cookie */
 	kmutex_t		sc_mtx;
+	pci_chipset_tag_t	sc_pct;		/* pci chipset tag */
 	bus_space_handle_t	sc_sh;		/* memory handle */
 	bus_space_tag_t		sc_st;		/* memory tag */
 	bus_dma_tag_t		sc_dmat;	/* dma tag */
@@ -158,6 +170,7 @@ struct ubsec_softc {
 	int			sc_needwakeup;	/* notify crypto layer */
 	u_int32_t		sc_statmask;	/* interrupt status mask */
 	int32_t			sc_cid;		/* crypto tag */
+	int			sc_maxaggr;	/* max pkt aggregation */
 	SIMPLEQ_HEAD(,ubsec_q)	sc_queue;	/* packet queue, mcr1 */
 	int			sc_nqueue;	/* count enqueued, mcr1 */
 	SIMPLEQ_HEAD(,ubsec_q)	sc_qchip;	/* on chip, mcr1 */
@@ -166,6 +179,9 @@ struct ubsec_softc {
 	SIMPLEQ_HEAD(,ubsec_q2)	sc_queue2;	/* packet queue, mcr2 */
 	int			sc_nqueue2;	/* count enqueued, mcr2 */
 	SIMPLEQ_HEAD(,ubsec_q2)	sc_qchip2;	/* on chip, mcr2 */
+	SIMPLEQ_HEAD(,ubsec_q2)	sc_queue4;	/* packet queue, mcr4 */
+	int			sc_nqueue4;	/* count enqueued, mcr4 */
+	SIMPLEQ_HEAD(,ubsec_q2)	sc_qchip4;	/* on chip, mcr4 */
 	int			sc_nsessions;	/* # of sessions */
 	struct ubsec_session	*sc_sessions;	/* sessions */
 	struct callout		sc_rngto;	/* rng timeout */
@@ -176,16 +192,17 @@ struct ubsec_softc {
 	struct ubsec_dma	sc_dmaa[UBS_MAX_NQUEUE];
 	struct ubsec_q		*sc_queuea[UBS_MAX_NQUEUE];
 	SIMPLEQ_HEAD(,ubsec_q2)	sc_q2free;	/* free list */
+	bus_size_t		sc_memsize;	/* size mapped by sc_sh */
 };
 
 #define	UBSEC_QFLAGS_COPYOUTIV		0x1
 
 struct ubsec_session {
 	u_int32_t	ses_used;
-	u_int32_t	ses_deskey[6];		/* 3DES key */
+	u_int32_t	ses_key[8];		/* 3DES/AES key */
 	u_int32_t	ses_hminner[5];		/* hmac inner state */
 	u_int32_t	ses_hmouter[5];		/* hmac outer state */
-	u_int32_t	ses_iv[2];		/* [3]DES iv */
+	u_int32_t	ses_iv[4];		/* [3]DES iv or AES iv/icv */
 };
 
 struct ubsec_stats {

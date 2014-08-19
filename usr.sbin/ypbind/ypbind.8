@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypbind.8,v 1.18 2008/04/30 13:11:03 martin Exp $
+.\"	$NetBSD: ypbind.8,v 1.18.26.1 2014/08/20 00:05:18 tls Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 26, 2005
+.Dd June 14, 2014
 .Dt YPBIND 8
 .Os
 .Sh NAME
@@ -94,9 +94,9 @@ it is bound.
 If the binding is somehow lost, e.g by server reboot,
 .Nm
 marks the domain as unbound and attempts to re-establish the binding.
-When the binding is once again successful,
+If a binding cannot be re-established within 60 seconds,
 .Nm
-marks the domain as bound and resumes its periodic check.
+backs off exponentially to trying only once per hour.
 .Pp
 The options are as follows:
 .Bl -tag -width "-broadcast"
@@ -114,7 +114,7 @@ or
 servers.
 .It Fl ypset
 .Xr ypset 8
-may be used to change the server to which a domain is bound.
+may be used from anywhere to change the server to which a domain is bound.
 .It Fl ypsetme
 .Xr ypset 8
 may be used only from this machine to change the server
@@ -122,11 +122,22 @@ to which a domain is bound.
 .El
 .Pp
 The
-.Fl broadcast
+.Fl broadcast ,
 .Fl ypset ,
 and
-.Fl ypsetme ,
+.Fl ypsetme
 options are inherently insecure and should be avoided.
+.Sh SIGNALS
+.Nm
+responds to the following signals:
+.Bl -tag -width TERM -compact
+.It Dv HUP
+causes
+.Nm
+to immediately retry any unbound domains that are currently in
+exponential backoff.
+Use this to resume immediately after a long network outage is
+resolved.
 .Sh FILES
 .Pa /var/yp/binding/\*[Lt]domain\*[Gt].version
 - binding file for \*[Lt]domain\*[Gt].
@@ -147,7 +158,10 @@ facility.
 .Xr yppoll 8 ,
 .Xr ypset 8
 .Sh AUTHORS
+.An -nosplit
 This version of
 .Nm
-was originally implemented by Theo de Raadt.
-The ypservers support was implemented by Luke Mewburn.
+was originally implemented by
+.An Theo de Raadt .
+The ypservers support was implemented by
+.An Luke Mewburn .

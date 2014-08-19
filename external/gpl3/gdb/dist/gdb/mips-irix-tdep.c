@@ -1,8 +1,7 @@
 /* Target-dependent code for the MIPS architecture running on IRIX,
    for GDB, the GNU Debugger.
 
-   Copyright (C) 2002, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +20,7 @@
 
 #include "defs.h"
 #include "osabi.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "solib.h"
 #include "solib-irix.h"
 #include "elf-bfd.h"

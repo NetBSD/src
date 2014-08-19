@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_scache.c,v 1.1.1.1 2009/06/23 10:08:57 tron Exp $	*/
+/*	$NetBSD: tls_scache.c,v 1.1.1.1.16.1 2014/08/19 23:59:45 tls Exp $	*/
 
 /*++
 /* NAME
@@ -38,6 +38,14 @@
 /*	int	tls_scache_delete(cache, cache_id)
 /*	TLS_SCACHE *cache;
 /*	const char *cache_id;
+/*
+/*	TLS_TICKET_KEY *tls_scache_key(keyname, now, timeout)
+/*	unsigned char *keyname;
+/*	time_t	now;
+/*	int	timeout;
+/*
+/*	TLS_TICKET_KEY *tls_scache_key_rotate(newkey)
+/*	TLS_TICKET_KEY *newkey;
 /* DESCRIPTION
 /*	This module maintains Postfix TLS session cache files.
 /*	each session is stored under a lookup key (hostname or
@@ -69,6 +77,13 @@
 /*	tls_scache_delete() removes the specified cache entry from
 /*	the specified TLS session cache.
 /*
+/*	tls_scache_key() locates a TLS session ticket key in a 2-element
+/*	in-memory cache.  A null result is returned if no unexpired matching
+/*	key is found.
+/*
+/*	tls_scache_key_rotate() saves a TLS session tickets key in the
+/*	in-memory cache.
+/*
 /*	Arguments:
 /* .IP dbname
 /*	The base name of the session cache file.
@@ -97,6 +112,18 @@
 /*
 /*	Specify TLS_SCACHE_DONT_NEED_SESSION to avoid
 /*	saving the session information in the cache entry.
+/* .IP keyname
+/*	Is null when requesting the current encryption keys.  Otherwise,
+/*	keyname is a pointer to an array of TLS_TICKET_NAMELEN unsigned
+/*	chars (not NUL terminated) that is an identifier for a key
+/*	previously used to encrypt a session ticket.
+/* .IP now
+/*	Current epoch time passed by caller.
+/* .IP timeout
+/*	TLS session ticket encryption lifetime.
+/* .IP newkey
+/*	TLS session ticket key obtained from tlsmgr(8) to be added to
+ *	internal cache.
 /* DIAGNOSTICS
 /*	These routines terminate with a fatal run-time error
 /*	for unrecoverable database errors. This allows the
@@ -135,6 +162,7 @@
 #include <hex_code.h>
 #include <myflock.h>
 #include <vstring.h>
+#include <timecmp.h>
 
 /* Global library. */
 
@@ -151,6 +179,8 @@ typedef struct {
     time_t  timestamp;			/* time when saved */
     char    session[1];			/* actually a bunch of bytes */
 } TLS_SCACHE_ENTRY;
+
+static TLS_TICKET_KEY *keys[2];
 
  /*
   * SLMs.
@@ -378,6 +408,10 @@ int     tls_scache_sequence(TLS_SCACHE *cp, int first_next,
      * Delete behind. This is a no-op if an expired cache entry was updated
      * in the mean time. Use the saved lookup criteria so that the "delete
      * behind" operation works as promised.
+     * 
+     * The delete-behind strategy assumes that all updates are made by a single
+     * process. Otherwise, delete-behind may remove an entry that was updated
+     * after it was scheduled for deletion.
      */
     if (cp->flags & TLS_SCACHE_FLAG_DEL_SAVED_CURSOR) {
 	cp->flags &= ~TLS_SCACHE_FLAG_DEL_SAVED_CURSOR;
@@ -449,7 +483,7 @@ TLS_SCACHE *tls_scache_open(const char *dbname, const char *cache_label,
      * opening a damaged file after some process terminated abnormally.
      */
 #ifdef SINGLE_UPDATER
-#define DICT_FLAGS (DICT_FLAG_DUP_REPLACE)
+#define DICT_FLAGS (DICT_FLAG_DUP_REPLACE | DICT_FLAG_OPEN_LOCK)
 #else
 #define DICT_FLAGS \
 	(DICT_FLAG_DUP_REPLACE | DICT_FLAG_LOCK | DICT_FLAG_SYNC_UPDATE)
@@ -460,13 +494,6 @@ TLS_SCACHE *tls_scache_open(const char *dbname, const char *cache_label,
     /*
      * Sanity checks.
      */
-    if (dict->lock_fd < 0)
-	msg_fatal("dictionary %s is not a regular file", dbname);
-#ifdef SINGLE_UPDATER
-    if (myflock(dict->lock_fd, INTERNAL_LOCK,
-		MYFLOCK_OP_EXCLUSIVE | MYFLOCK_OP_NOWAIT) < 0)
-	msg_fatal("cannot lock dictionary %s for exclusive use: %m", dbname);
-#endif
     if (dict->update == 0)
 	msg_fatal("dictionary %s does not support update operations", dbname);
     if (dict->delete == 0)
@@ -507,6 +534,62 @@ void    tls_scache_close(TLS_SCACHE *cp)
     if (cp->saved_cursor)
 	myfree(cp->saved_cursor);
     myfree((char *) cp);
+}
+
+/* tls_scache_key - find session ticket key for given key name */
+
+TLS_TICKET_KEY *tls_scache_key(unsigned char *keyname, time_t now, int timeout)
+{
+    int     i;
+
+    /*
+     * The keys array contains 2 elements, the current signing key and the
+     * previous key.
+     * 
+     * When name == 0 we are issuing a ticket, otherwise decrypting an existing
+     * ticket with the given key name.  For new tickets we always use the
+     * current key if unexpired.  For existing tickets, we use either the
+     * current or previous key with a validation expiration that is timeout
+     * longer than the signing expiration.
+     */
+    if (keyname) {
+	for (i = 0; i < 2 && keys[i]; ++i) {
+	    if (memcmp(keyname, keys[i]->name, TLS_TICKET_NAMELEN) == 0) {
+		if (timecmp(keys[i]->tout + timeout, now) > 0)
+		    return (keys[i]);
+		break;
+	    }
+	}
+    } else if (keys[0]) {
+	if (timecmp(keys[0]->tout, now) > 0)
+	    return (keys[0]);
+    }
+    return (0);
+}
+
+/* tls_scache_key_rotate - rotate session ticket keys */
+
+TLS_TICKET_KEY *tls_scache_key_rotate(TLS_TICKET_KEY *newkey)
+{
+
+    /*
+     * Allocate or re-use storage of retired key, then overwrite it, since
+     * caller's key data is ephemeral.
+     */
+    if (keys[1] == 0)
+	keys[1] = (TLS_TICKET_KEY *) mymalloc(sizeof(*newkey));
+    *keys[1] = *newkey;
+    newkey = keys[1];
+
+    /*
+     * Rotate if required, ensuring that the keys are sorted by expiration
+     * time with keys[0] expiring last.
+     */
+    if (keys[0] == 0 || keys[0]->tout < keys[1]->tout) {
+	keys[1] = keys[0];
+	keys[0] = newkey;
+    }
+    return (newkey);
 }
 
 #endif

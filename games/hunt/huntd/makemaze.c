@@ -1,4 +1,4 @@
-/*	$NetBSD: makemaze.c,v 1.8 2011/05/23 22:58:44 joerg Exp $	*/
+/*	$NetBSD: makemaze.c,v 1.8.10.1 2014/08/20 00:00:23 tls Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: makemaze.c,v 1.8 2011/05/23 22:58:44 joerg Exp $");
+__RCSID("$NetBSD: makemaze.c,v 1.8.10.1 2014/08/20 00:00:23 tls Exp $");
 #endif /* not lint */
 
 #include "hunt.h"
@@ -41,36 +41,11 @@ __RCSID("$NetBSD: makemaze.c,v 1.8 2011/05/23 22:58:44 joerg Exp $");
 #define ODD(n)		((n) & 01)
 
 #if 0
-static int candig(int, int);
-static void dig(int, int);
-#endif
-static void dig_maze(int, int);
-static void remap(void);
-
-void
-makemaze(void)
-{
-	char *sp;
-	int y, x;
-
-	/*
-	 * fill maze with walls
-	 */
-	sp = &Maze[0][0];
-	while (sp < &Maze[HEIGHT - 1][WIDTH])
-		*sp++ = DOOR;
-
-	x = rand_num(WIDTH / 2) * 2 + 1;
-	y = rand_num(HEIGHT / 2) * 2 + 1;
-	dig_maze(x, y);
-	remap();
-}
 
 #define NPERM	24
 #define NDIR	4
 
-#if 0
-static int dirs[NPERM][NDIR] = {
+static const int dirs[NPERM][NDIR] = {
 	{0,1,2,3},	{3,0,1,2},	{0,2,3,1},	{0,3,2,1},
 	{1,0,2,3},	{2,3,0,1},	{0,2,1,3},	{2,3,1,0},
 	{1,0,3,2},	{1,2,0,3},	{3,1,2,0},	{2,0,3,1},
@@ -79,18 +54,52 @@ static int dirs[NPERM][NDIR] = {
 	{2,1,3,0},	{3,0,2,1},	{3,2,0,1},	{3,2,1,0}
 };
 
-static int incr[NDIR][2] = {
+static const int incr[NDIR][2] = {
 	{0, 1}, {1, 0}, {0, -1}, {-1, 0}
 };
 
 
+/*
+ * candig:
+ *	Is it legal to clear this spot?
+ */
+static bool
+candig(int y, int x)
+{
+	int i;
+
+	if (ODD(x) && ODD(y))
+		return false;		/* can't touch ODD spots */
+
+	if (y < UBOUND || y >= DBOUND)
+		return false;		/* Beyond vertical bounds, NO */
+	if (x < LBOUND || x >= RBOUND)
+		return false;		/* Beyond horizontal bounds, NO */
+
+	if (ISCLEAR(y, x))
+		return false;		/* Already clear, NO */
+
+	i = ISCLEAR(y, x + 1);
+	i += ISCLEAR(y, x - 1);
+	if (i > 1)
+		return false;		/* Introduces cycle, NO */
+	i += ISCLEAR(y + 1, x);
+	if (i > 1)
+		return false;		/* Introduces cycle, NO */
+	i += ISCLEAR(y - 1, x);
+	if (i > 1)
+		return false;		/* Introduces cycle, NO */
+
+	return true;			/* OK */
+}
+
 static void
 dig(int y, int x)
 {
-	int *dp;
-	int *ip;
+	const int *dp;
+	const int *ip;
 	int ny, nx;
-	int *endp;
+	const int *endp;
 
 	Maze[y][x] = SPACE;			/* Clear this spot */
 	dp = dirs[rand_num(NPERM)];
@@ -103,43 +112,9 @@ dig(int y, int x)
 			dig(ny, nx);
 	}
 }
-
-/*
- * candig:
- *	Is it legal to clear this spot?
- */
-static int
-candig(int y, int x)
-{
-	int i;
-
-	if (ODD(x) && ODD(y))
-		return FALSE;		/* can't touch ODD spots */
-
-	if (y < UBOUND || y >= DBOUND)
-		return FALSE;		/* Beyond vertical bounds, NO */
-	if (x < LBOUND || x >= RBOUND)
-		return FALSE;		/* Beyond horizontal bounds, NO */
-
-	if (ISCLEAR(y, x))
-		return FALSE;		/* Already clear, NO */
-
-	i = ISCLEAR(y, x + 1);
-	i += ISCLEAR(y, x - 1);
-	if (i > 1)
-		return FALSE;		/* Introduces cycle, NO */
-	i += ISCLEAR(y + 1, x);
-	if (i > 1)
-		return FALSE;		/* Introduces cycle, NO */
-	i += ISCLEAR(y - 1, x);
-	if (i > 1)
-		return FALSE;		/* Introduces cycle, NO */
-
-	return TRUE;			/* OK */
-}
 #endif
 
-void
+static void
 dig_maze(int x, int y)
 {
 	int tx, ty;
@@ -186,7 +161,7 @@ dig_maze(int x, int y)
 	}
 }
 
-void
+static void
 remap(void)
 {
 	int y, x;
@@ -232,4 +207,23 @@ remap(void)
 			}
 		}
 	memcpy(Orig_maze, Maze, sizeof Maze);
+}
+
+void
+makemaze(void)
+{
+	char *sp;
+	int y, x;
+
+	/*
+	 * fill maze with walls
+	 */
+	sp = &Maze[0][0];
+	while (sp < &Maze[HEIGHT - 1][WIDTH])
+		*sp++ = DOOR;
+
+	x = rand_num(WIDTH / 2) * 2 + 1;
+	y = rand_num(HEIGHT / 2) * 2 + 1;
+	dig_maze(x, y);
+	remap();
 }

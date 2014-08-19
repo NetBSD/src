@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.93 2011/09/03 14:09:03 christos Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.93.12.1 2014/08/20 00:04:28 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.93 2011/09/03 14:09:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.93.12.1 2014/08/20 00:04:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,6 +224,8 @@ acct_stop(void)
 		if (error != 0)
 			printf("acct_stop: failed to close, errno = %d\n",
 			    error);
+#else
+		__USE(error);
 #endif
 		acct_vp = NULLVP;
 	}
@@ -259,6 +261,8 @@ acctwatch(void *arg)
 		if (error != 0)
 			printf("acctwatch: failed to statvfs, error = %d\n",
 			    error);
+#else
+		__USE(error);
 #endif
 		rw_exit(&acct_lock);
 		error = kpause("actwat", false, acctchkfreq * hz, NULL);

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.82.2.2 2013/06/23 06:20:01 tls Exp $
+#	$NetBSD: INSTALL,v 1.82.2.3 2014/08/20 00:02:50 tls Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -62,7 +62,6 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
@@ -98,7 +97,7 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 # Device options
 
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-options 	MEMORY_DISK_ROOT_SIZE=4200	# Size in blocks
+options 	MEMORY_DISK_ROOT_SIZE=4600	# Size in blocks
 options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
@@ -133,7 +132,7 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 
 #options 	ARM700BUGTRACK	# track the ARM700 swi bug
 #options 	PORTMASTER	# Enable PortMaster only options
-#options 	DIAGNOSTIC	# internally consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB

@@ -1,5 +1,4 @@
-# Copyright 1999, 2000, 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 1999-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +30,9 @@ global mi_inferior_tty_name
 set MIFLAGS "-i=mi"
 
 set thread_selected_re "=thread-selected,id=\"\[0-9\]+\"\r\n"
-set library_loaded_re "=library-loaded\[^\n\]+\"\r\n"
+set gdbindex_warning_re "&\"warning: Skipping \[^\r\n\]+ \.gdb_index section in \[^\r\n\]+\"\r\n(?:&\"\\\\n\"\r\n)?"
+set library_loaded_re "=library-loaded\[^\n\]+\"\r\n(?:$gdbindex_warning_re)?"
+set breakpoint_re "=(?:breakpoint-created|breakpoint-deleted)\[^\n\]+\"\r\n"
 
 #
 # mi_gdb_exit -- exit the GDB, killing the target program if necessary
@@ -44,41 +45,41 @@ proc mi_uncatched_gdb_exit {} {
     global GDB
     global INTERNAL_GDBFLAGS GDBFLAGS
     global verbose
-    global gdb_spawn_id;
+    global gdb_spawn_id
     global gdb_prompt
     global mi_gdb_prompt
     global MIFLAGS
 
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 
     if { [info procs sid_exit] != "" } {
 	sid_exit
     }
 
     if ![info exists gdb_spawn_id] {
-	return;
+	return
     }
 
     verbose "Quitting $GDB $INTERNAL_GDBFLAGS $GDBFLAGS $MIFLAGS"
 
     if { [is_remote host] && [board_info host exists fileid] } {
-	send_gdb "999-gdb-exit\n";
+	send_gdb "999-gdb-exit\n"
 	gdb_expect 10 {
 	    -re "y or n" {
-		send_gdb "y\n";
-		exp_continue;
+		send_gdb "y\n"
+		exp_continue
 	    }
-            -re "Undefined command.*$gdb_prompt $" {
-                send_gdb "quit\n"
-		exp_continue;
-            }
+	    -re "Undefined command.*$gdb_prompt $" {
+		send_gdb "quit\n"
+		exp_continue
+	    }
 	    -re "DOSEXIT code" { }
 	    default { }
 	}
     }
 
     if ![is_remote host] {
-	remote_close host;
+	remote_close host
     }
     unset gdb_spawn_id
 }
@@ -95,17 +96,20 @@ proc mi_uncatched_gdb_exit {} {
 # get really slow.  Give gdb at least 3 minutes to start up.
 #
 proc default_mi_gdb_start { args } {
-    global verbose
+    global verbose use_gdb_stub
     global GDB
     global INTERNAL_GDBFLAGS GDBFLAGS
     global gdb_prompt
     global mi_gdb_prompt
     global timeout
-    global gdb_spawn_id;
+    global gdb_spawn_id
     global MIFLAGS
 
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
     set inferior_pty no-tty
+
+    # Set the default value, it may be overriden later by specific testfile.
+    set use_gdb_stub [target_info exists use_gdb_stub]
 
     if { [llength $args] == 1} {
 	set inferior_pty [lindex $args 0]
@@ -122,7 +126,7 @@ proc default_mi_gdb_start { args } {
     verbose "Spawning $GDB $INTERNAL_GDBFLAGS $GDBFLAGS $MIFLAGS"
 
     if [info exists gdb_spawn_id] {
-	return 0;
+	return 0
     }
 
     if ![is_remote host] {
@@ -141,10 +145,10 @@ proc default_mi_gdb_start { args } {
 	set mi_inferior_tty_name $spawn_out(slave,name)
     }
 
-    set res [remote_spawn host "$GDB $INTERNAL_GDBFLAGS $GDBFLAGS $MIFLAGS [host_info gdb_opts]"];
+    set res [remote_spawn host "$GDB $INTERNAL_GDBFLAGS $GDBFLAGS $MIFLAGS [host_info gdb_opts]"]
     if { $res < 0 || $res == "" } {
 	perror "Spawning $GDB failed."
-	return 1;
+	return 1
     }
     gdb_expect {
 	-re "~\"GNU.*\r\n~\".*$mi_gdb_prompt$" {
@@ -152,9 +156,9 @@ proc default_mi_gdb_start { args } {
 	    # running mi1, then this is an error as we should be
 	    # using the old-style prompt.
 	    if { $MIFLAGS == "-i=mi1" } {
-	        perror "(mi startup) Got unexpected new mi prompt."
-	        remote_close host;
-	        return -1;
+		perror "(mi startup) Got unexpected new mi prompt."
+		remote_close host
+		return -1
 	    }
 	    verbose "GDB initialized."
 	}
@@ -163,35 +167,35 @@ proc default_mi_gdb_start { args } {
 	    # not running mi1, then this is an error as we should be
 	    # using the new-style prompt.
 	    if { $MIFLAGS != "-i=mi1" } {
-	        perror "(mi startup) Got unexpected old mi prompt."
-	        remote_close host;
-	        return -1;
+		perror "(mi startup) Got unexpected old mi prompt."
+		remote_close host
+		return -1
 	    }
 	    verbose "GDB initialized."
 	}
 	-re ".*unrecognized option.*for a complete list of options." {
 	    untested "Skip mi tests (not compiled with mi support)."
-	    remote_close host;
-	    return -1;
+	    remote_close host
+	    return -1
 	}
 	-re ".*Interpreter `mi' unrecognized." {
 	    untested "Skip mi tests (not compiled with mi support)."
-	    remote_close host;
-	    return -1;
+	    remote_close host
+	    return -1
 	}
 	timeout {
 	    perror "(timeout) GDB never initialized after 10 seconds."
-	    remote_close host;
+	    remote_close host
 	    return -1
 	}
     }
-    set gdb_spawn_id -1;
+    set gdb_spawn_id -1
 
     # FIXME: mi output does not go through pagers, so these can be removed.
     # force the height to "unlimited", so no pagers get used
     send_gdb "100-gdb-set height 0\n"
     gdb_expect 10 {
-	-re ".*100-gdb-set height 0\r\n100\\\^done\r\n$mi_gdb_prompt$" { 
+	-re ".*100-gdb-set height 0\r\n100\\\^done\r\n$mi_gdb_prompt$" {
 	    verbose "Setting height to 0." 2
 	}
 	timeout {
@@ -217,20 +221,20 @@ proc default_mi_gdb_start { args } {
 		verbose "redirect inferior output to new terminal device."
 	    }
 	    timeout {
-	    	warning "Couldn't redirect inferior output." 2
+		warning "Couldn't redirect inferior output." 2
 	    }
-    	}
+	}
     }
 
-    detect_async
+    mi_detect_async
 
-    return 0;
+    return 0
 }
 
 #
 # Overridable function. You can override this function in your
 # baseboard file.
-# 
+#
 proc mi_gdb_start { args } {
   return [default_mi_gdb_start $args]
 }
@@ -248,11 +252,11 @@ proc mi_delete_breakpoints {} {
     send_gdb "102-break-delete\n"
     gdb_expect 30 {
 	 -re "Delete all breakpoints.*y or n.*$" {
-	    send_gdb "y\n";
+	    send_gdb "y\n"
 	    exp_continue
-         }
+	 }
 	 -re "102-break-delete\r\n102\\\^done\r\n$mi_gdb_prompt$" {
-            # This happens if there were no breakpoints
+	     # This happens if there were no breakpoints
 	 }
 	 timeout { perror "Delete all breakpoints in mi_delete_breakpoints (timeout)" ; return }
     }
@@ -266,8 +270,8 @@ proc mi_delete_breakpoints {} {
 	 -re "103-break-list\r\n103\\\^doneNo breakpoints or watchpoints.\r\n\r\n$mi_gdb_prompt$" {warning "Unexpected console text received"}
 	 -re "$mi_gdb_prompt$" { perror "Breakpoints not deleted" ; return }
 	 -re "Delete all breakpoints.*or n.*$" {
-	    warning "Unexpected prompt for breakpoints deletion";
-	    send_gdb "y\n";
+	    warning "Unexpected prompt for breakpoints deletion"
+	    send_gdb "y\n"
 	    exp_continue
 	}
 	 timeout { perror "-break-list (timeout)" ; return }
@@ -284,29 +288,29 @@ proc mi_gdb_reinitialize_dir { subdir } {
     }
 
     if [is_remote host] {
-	return "";
+	return ""
     }
 
     if { $MIFLAGS == "-i=mi1" } {
       send_gdb "104-environment-directory\n"
       gdb_expect 60 {
 	-re ".*Reinitialize source path to empty.*y or n. " {
-            warning "Got confirmation prompt for dir reinitialization."
+	    warning "Got confirmation prompt for dir reinitialization."
 	    send_gdb "y\n"
 	    gdb_expect 60 {
 		-re "$mi_gdb_prompt$" {}
-                timeout {error "Dir reinitialization failed (timeout)"}
+		timeout {error "Dir reinitialization failed (timeout)"}
 	    }
 	}
 	-re "$mi_gdb_prompt$" {}
-        timeout {error "Dir reinitialization failed (timeout)"}
+	  timeout {error "Dir reinitialization failed (timeout)"}
       }
     } else {
-      send_gdb "104-environment-directory -r\n"
-      gdb_expect 60 {
-	-re "104\\\^done,source-path=.*\r\n$mi_gdb_prompt$" {}
-	-re "$mi_gdb_prompt$" {}
-        timeout {error "Dir reinitialization failed (timeout)"}
+	send_gdb "104-environment-directory -r\n"
+	gdb_expect 60 {
+	    -re "104\\\^done,source-path=.*\r\n$mi_gdb_prompt$" {}
+	    -re "$mi_gdb_prompt$" {}
+	    timeout {error "Dir reinitialization failed (timeout)"}
       }
     }
 
@@ -316,7 +320,7 @@ proc mi_gdb_reinitialize_dir { subdir } {
 	    verbose "Dir set to $subdir"
 	}
 	-re "105\\\^done.*\r\n$mi_gdb_prompt$" {
-            # FIXME: We return just the prompt for now.
+	    # FIXME: We return just the prompt for now.
 	    verbose "Dir set to $subdir"
 	    # perror "Dir \"$subdir\" failed."
 	}
@@ -334,30 +338,30 @@ proc mi_gdb_target_cmd { targetname serialport } {
 	send_gdb "47-target-select $targetname $serialport\n"
 	gdb_expect 60 {
 	    -re "47\\^connected.*$mi_gdb_prompt" {
-		verbose "Set target to $targetname";
-		return 0;
+		verbose "Set target to $targetname"
+		return 0
 	    }
 	    -re "unknown host.*$mi_gdb_prompt" {
-	        verbose "Couldn't look up $serialport"
+		verbose "Couldn't look up $serialport"
 	    }
 	    -re "Couldn't establish connection to remote.*$mi_gdb_prompt$" {
-		verbose "Connection failed";
+		verbose "Connection failed"
 	    }
 	    -re "Remote MIPS debugging.*$mi_gdb_prompt$" {
-		verbose "Set target to $targetname";
-		return 0;
+		verbose "Set target to $targetname"
+		return 0
 	    }
 	    -re "Remote debugging using .*$serialport_re.*$mi_gdb_prompt$" {
-		verbose "Set target to $targetname";
-		return 0;
+		verbose "Set target to $targetname"
+		return 0
 	    }
 	    -re "Remote target $targetname connected to.*$mi_gdb_prompt$" {
-		verbose "Set target to $targetname";
-		return 0;
+		verbose "Set target to $targetname"
+		return 0
 	    }
-	    -re "Connected to.*$mi_gdb_prompt$" { 
-		verbose "Set target to $targetname";
-		return 0;
+	    -re "Connected to.*$mi_gdb_prompt$" {
+		verbose "Set target to $targetname"
+		return 0
 	    }
 	    -re "Ending remote.*$mi_gdb_prompt$" { }
 	    -re "Connection refused.*$mi_gdb_prompt$" {
@@ -370,10 +374,10 @@ proc mi_gdb_target_cmd { targetname serialport } {
 		return 1
 	    }
 	    -re "Timeout reading from remote system.*$mi_gdb_prompt$" {
-		verbose "Got timeout error from gdb.";
+		verbose "Got timeout error from gdb."
 	    }
 	    timeout {
-		send_gdb "";
+		send_gdb ""
 		break
 	    }
 	}
@@ -397,10 +401,10 @@ proc mi_gdb_file_cmd { arg } {
     set last_loaded_file $arg
 
     if [is_remote host] {
-	set arg [remote_download host $arg];
+	set arg [remote_download host $arg]
 	if { $arg == "" } {
 	    error "download failed"
-	    return -1;
+	    return -1
 	}
     }
 
@@ -408,47 +412,47 @@ proc mi_gdb_file_cmd { arg } {
 # output.  Queries are an error for mi.
     send_gdb "105-file-exec-and-symbols $arg\n"
     gdb_expect 120 {
-        -re "Reading symbols from.*done.*$mi_gdb_prompt$" {
-            verbose "\t\tLoaded $arg into the $GDB"
-            return 0
-        }
-        -re "has no symbol-table.*$mi_gdb_prompt$" {
-            perror "$arg wasn't compiled with \"-g\""
-            return -1
-        }
-        -re "Load new symbol table from \".*\".*y or n. $" {
-            send_gdb "y\n"
-            gdb_expect 120 {
-                -re "Reading symbols from.*done.*$mi_gdb_prompt$" {
-                    verbose "\t\tLoaded $arg with new symbol table into $GDB"
-                    # All OK
-                }
-                timeout {
-                    perror "(timeout) Couldn't load $arg, other program already loaded."
-                    return -1
-                }
-            }
+	-re "Reading symbols from.*done.*$mi_gdb_prompt$" {
+	    verbose "\t\tLoaded $arg into the $GDB"
+	    return 0
 	}
-        -re "No such file or directory.*$mi_gdb_prompt$" {
-            perror "($arg) No such file or directory\n"
-            return -1
-        }
-        -re "105-file-exec-and-symbols .*\r\n105\\\^done\r\n$mi_gdb_prompt$" {
-            # We (MI) are just giving the prompt back for now, instead of giving
+	-re "has no symbol-table.*$mi_gdb_prompt$" {
+	    perror "$arg wasn't compiled with \"-g\""
+	    return -1
+	}
+	-re "Load new symbol table from \".*\".*y or n. $" {
+	    send_gdb "y\n"
+	    gdb_expect 120 {
+		-re "Reading symbols from.*done.*$mi_gdb_prompt$" {
+		    verbose "\t\tLoaded $arg with new symbol table into $GDB"
+		    # All OK
+		}
+		timeout {
+		    perror "(timeout) Couldn't load $arg, other program already loaded."
+		    return -1
+		}
+	    }
+	}
+	-re "No such file or directory.*$mi_gdb_prompt$" {
+	    perror "($arg) No such file or directory\n"
+	    return -1
+	}
+	-re "105-file-exec-and-symbols .*\r\n105\\\^done\r\n$mi_gdb_prompt$" {
+	    # We (MI) are just giving the prompt back for now, instead of giving
 	    # some acknowledgement.
 	    return 0
 	}
-        timeout {
-            perror "couldn't load $arg into $GDB (timed out)."
-            return -1
-        }
+	timeout {
+	    perror "couldn't load $arg into $GDB (timed out)."
+	    return -1
+	}
 	eof {
-            # This is an attempt to detect a core dump, but seems not to
-            # work.  Perhaps we need to match .* followed by eof, in which
-            # gdb_expect does not seem to have a way to do that.
-            perror "couldn't load $arg into $GDB (end of file)."
-            return -1
-        }
+	    # This is an attempt to detect a core dump, but seems not to
+	    # work.  Perhaps we need to match .* followed by eof, in which
+	    # gdb_expect does not seem to have a way to do that.
+	    perror "couldn't load $arg into $GDB (end of file)."
+	    return -1
+	}
     }
 }
 
@@ -559,23 +563,23 @@ proc mi_gdb_load { arg } {
 #   this is the null string no command is sent.
 # PATTERN is the pattern to match for a PASS, and must NOT include
 #   the \r\n sequence immediately before the gdb prompt.
-# MESSAGE is the message to be printed.  (If this is the empty string, 
-#   then sometimes we don't call pass or fail at all; I don't 
+# MESSAGE is the message to be printed.  (If this is the empty string,
+#   then sometimes we don't call pass or fail at all; I don't
 #   understand this at all.)
 # IPATTERN is the pattern to match for the inferior's output.  This parameter
-#   is optional.  If present, it will produce a PASS if the match is 
+#   is optional.  If present, it will produce a PASS if the match is
 #   successful, and a FAIL if unsuccessful.
 #
 # Returns:
 #    1 if the test failed,
 #    0 if the test passes,
 #   -1 if there was an internal error.
-#  
+#
 proc mi_gdb_test { args } {
     global verbose
     global mi_gdb_prompt
     global GDB expect_out
-    global inferior_exited_re
+    global inferior_exited_re async
     upvar timeout timeout
 
     set command [lindex $args 0]
@@ -587,8 +591,8 @@ proc mi_gdb_test { args } {
     }
 
     if [llength $args]==5 {
-	set question_string [lindex $args 3];
-	set response_string [lindex $args 4];
+	set question_string [lindex $args 3]
+	set response_string [lindex $args 4]
     } else {
 	set question_string "^FOOBAR$"
     }
@@ -600,64 +604,69 @@ proc mi_gdb_test { args } {
     }
 
     set result -1
-    set string "${command}\n";
+    set string "${command}\n"
     set string_regex [string_to_regexp $command]
 
     if { $command != "" } {
 	while { "$string" != "" } {
-	    set foo [string first "\n" "$string"];
-	    set len [string length "$string"];
+	    set foo [string first "\n" "$string"]
+	    set len [string length "$string"]
 	    if { $foo < [expr $len - 1] } {
-		set str [string range "$string" 0 $foo];
+		set str [string range "$string" 0 $foo]
 		if { [send_gdb "$str"] != "" } {
-		    global suppress_flag;
+		    global suppress_flag
 
 		    if { ! $suppress_flag } {
-			perror "Couldn't send $command to GDB.";
+			perror "Couldn't send $command to GDB."
 		    }
-		    fail "$message";
-		    return $result;
+		    fail "$message"
+		    return $result
 		}
 		gdb_expect 2 {
 		    -re "\[\r\n\]" { }
 		    timeout { }
 		}
-		set string [string range "$string" [expr $foo + 1] end];
+		set string [string range "$string" [expr $foo + 1] end]
 	    } else {
-		break;
+		break
 	    }
 	}
 	if { "$string" != "" } {
 	    if { [send_gdb "$string"] != "" } {
-		global suppress_flag;
+		global suppress_flag
 
 		if { ! $suppress_flag } {
-		    perror "Couldn't send $command to GDB.";
+		    perror "Couldn't send $command to GDB."
 		}
-		fail "$message";
-		return $result;
+		fail "$message"
+		return $result
 	    }
 	}
     }
 
     if [info exists timeout] {
-	set tmt $timeout;
+	set tmt $timeout
     } else {
-	global timeout;
+	global timeout
 	if [info exists timeout] {
-	    set tmt $timeout;
+	    set tmt $timeout
 	} else {
-	    set tmt 60;
+	    set tmt 60
 	}
+    }
+    if {$async} {
+	# With $prompt_re "" there may come arbitrary asynchronous response
+	# from the previous command, before or after $string_regex.
+	set string_regex ".*"
     }
     verbose -log "Expecting: ^($string_regex\[\r\n\]+)?($pattern\[\r\n\]+$mi_gdb_prompt\[ \]*)"
     gdb_expect $tmt {
 	 -re "\\*\\*\\* DOSEXIT code.*" {
 	     if { $message != "" } {
-		 fail "$message";
+		 fail "$message"
 	     }
-	     gdb_suppress_entire_file "GDB died";
-	     return -1;
+	     gdb_suppress_entire_file "GDB died"
+	     return -1
 	 }
 	 -re "Ending remote debugging.*$mi_gdb_prompt\[ \]*$" {
 	    if ![isnative] then {
@@ -686,17 +695,17 @@ proc mi_gdb_test { args } {
 	    set result 0
 	}
 	 -re "(${question_string})$" {
-	    send_gdb "$response_string\n";
-	    exp_continue;
+	    send_gdb "$response_string\n"
+	    exp_continue
 	}
 	 -re "Undefined.* command:.*$mi_gdb_prompt\[ \]*$" {
 	    perror "Undefined command \"$command\"."
-            fail "$message"
+	     fail "$message"
 	    set result 1
 	}
 	 -re "Ambiguous command.*$mi_gdb_prompt\[ \]*$" {
 	    perror "\"$command\" is not a unique command name."
-            fail "$message"
+	     fail "$message"
 	    set result 1
 	}
 	 -re "$inferior_exited_re with code \[0-9\]+.*$mi_gdb_prompt\[ \]*$" {
@@ -726,12 +735,12 @@ proc mi_gdb_test { args } {
 	 "<return>" {
 	    send_gdb "\n"
 	    perror "Window too small."
-            fail "$message"
+	     fail "$message"
 	}
 	 -re "\\(y or n\\) " {
 	    send_gdb "n\n"
 	    perror "Got interactive prompt."
-            fail "$message"
+	     fail "$message"
 	}
 	 eof {
 	     perror "Process no longer exists"
@@ -742,7 +751,7 @@ proc mi_gdb_test { args } {
 	}
 	 full_buffer {
 	    perror "internal buffer is full."
-            fail "$message"
+	     fail "$message"
 	}
 	timeout	{
 	    if ![string match "" $message] then {
@@ -756,20 +765,35 @@ proc mi_gdb_test { args } {
     if { $result == 0 } {
 	if [ info exists ipattern ] {
 	    if { ![target_info exists gdb,noinferiorio] } {
-		global mi_inferior_spawn_id
-		expect {
-		    -i $mi_inferior_spawn_id -re "$ipattern" {
-			pass "$message inferior output"
+		if { [target_info gdb_protocol] == "remote"
+		    || [target_info gdb_protocol] == "extended-remote"
+		    || [target_info protocol] == "sim"} {
+
+		    gdb_expect {
+			-re "$ipattern" {
+			    pass "$message inferior output"
+			}
+			timeout {
+			    fail "$message inferior output (timeout)"
+			    set result 1
+			}
 		    }
-		    timeout {
-			fail "$message inferior output (timeout)"
-			set result 1
+		} else {
+		    global mi_inferior_spawn_id
+		    expect {
+			-i $mi_inferior_spawn_id -re "$ipattern" {
+			    pass "$message inferior output"
+			}
+			timeout {
+			    fail "$message inferior output (timeout)"
+			    set result 1
+			}
 		    }
 		}
 	    } else {
 		unsupported "$message inferior output"
 	    }
-        }
+	}
     }
 
     return $result
@@ -782,22 +806,30 @@ proc mi_gdb_test { args } {
 # In patterns, the newline sequence ``\r\n'' is matched explicitly as
 # ``.*$'' could swallow up output that we attempt to match elsewhere.
 
-proc mi_run_cmd {args} {
+proc mi_run_cmd_full {use_mi_command args} {
     global suppress_flag
     if { $suppress_flag } {
 	return -1
     }
-    global mi_gdb_prompt
+    global mi_gdb_prompt use_gdb_stub
     global thread_selected_re
     global library_loaded_re
 
+    if {$use_mi_command} {
+	set run_prefix "220-exec-"
+	set run_match "220"
+    } else {
+	set run_prefix ""
+	set run_match ""
+    }
+
     if [target_info exists gdb_init_command] {
-	send_gdb "[target_info gdb_init_command]\n";
+	send_gdb "[target_info gdb_init_command]\n"
 	gdb_expect 30 {
 	    -re "$mi_gdb_prompt$" { }
 	    default {
-		perror "gdb_init_command for target failed";
-		return -1;
+		perror "gdb_init_command for target failed"
+		return -1
 	    }
 	}
     }
@@ -806,20 +838,20 @@ proc mi_run_cmd {args} {
 	return -1
     }
 
-    if [target_info exists use_gdb_stub] {
+    if $use_gdb_stub {
 	if [target_info exists gdb,do_reload_on_run] {
-	    send_gdb "220-exec-continue\n";
+	    send_gdb "${run_prefix}continue\n"
 	    gdb_expect 60 {
-		-re "220\\^running\[\r\n\]+\\*running,thread-id=\"\[^\"\]+\"\r\n$mi_gdb_prompt" {}
+		-re "${run_match}\\^running\[\r\n\]+\\*running,thread-id=\"\[^\"\]+\"\r\n$mi_gdb_prompt" {}
 		default {}
 	    }
-	    return 0;
+	    return 0
 	}
 
 	if [target_info exists gdb,start_symbol] {
-	    set start [target_info gdb,start_symbol];
+	    set start [target_info gdb,start_symbol]
 	} else {
-	    set start "start";
+	    set start "start"
 	}
 
 	# HACK: Should either use 000-jump or fix the target code
@@ -829,9 +861,9 @@ proc mi_run_cmd {args} {
 	return 0
     }
 
-    send_gdb "220-exec-run $args\n"
+    send_gdb "${run_prefix}run $args\n"
     gdb_expect {
-	-re "220\\^running\r\n(\\*running,thread-id=\"\[^\"\]+\"\r\n|=thread-created,id=\"1\",group-id=\"\[0-9\]+\"\r\n)*(${library_loaded_re})*(${thread_selected_re})?${mi_gdb_prompt}" {
+	-re "${run_match}\\^running\r\n(\\*running,thread-id=\"\[^\"\]+\"\r\n|=thread-created,id=\"1\",group-id=\"\[0-9\]+\"\r\n)*(${library_loaded_re})*(${thread_selected_re})?${mi_gdb_prompt}" {
 	}
 	-re "\\^error,msg=\"The target does not support running in non-stop mode.\"" {
 	    unsupported "Non-stop mode not supported"
@@ -845,6 +877,20 @@ proc mi_run_cmd {args} {
     # NOTE: Shortly after this there will be a ``000*stopped,...(gdb)''
 
     return 0
+}
+
+# A wrapper for mi_run_cmd_full which uses -exec-run and
+# -exec-continue, as appropriate.  ARGS are passed verbatim to
+# mi_run_cmd_full.
+proc mi_run_cmd {args} {
+    return [eval mi_run_cmd_full 1 $args]
+}
+
+# A wrapper for mi_run_cmd_full which uses the CLI commands 'run' and
+# 'continue', as appropriate.  ARGS are passed verbatim to
+# mi_run_cmd_full.
+proc mi_run_with_cli {args} {
+    return [eval mi_run_cmd_full 0 $args]
 }
 
 #
@@ -891,7 +937,7 @@ proc mi_runto_helper {func run_or_continue} {
 
   set test "mi runto $func"
   mi_gdb_test "200-break-insert -t $func" \
-    "200\\^done,bkpt=\{number=\"\[0-9\]+\",type=\"breakpoint\",disp=\"del\",enabled=\"y\",addr=\"$hex\",func=\"$func\(\\\(.*\\\)\)?\",file=\".*\",line=\"\[0-9\]*\",times=\"0\",original-location=\".*\"\}" \
+    "200\\^done,bkpt=\{number=\"\[0-9\]+\",type=\"breakpoint\",disp=\"del\",enabled=\"y\",addr=\"$hex\",func=\"$func\(\\\(.*\\\)\)?\",file=\".*\",line=\"\[0-9\]*\",thread-groups=\\\[\"i1\"\\\],times=\"0\",original-location=\".*\"\}" \
     "breakpoint at $func"
 
   if {![regexp {number="[0-9]+"} $expect_out(buffer) str]
@@ -931,41 +977,43 @@ proc mi_step { test } {
 
 set async "unknown"
 
-proc detect_async {} {
+proc mi_detect_async {} {
     global async
     global mi_gdb_prompt
 
     send_gdb "show target-async\n"
-        
+
     gdb_expect {
-        -re ".*Controlling the inferior in asynchronous mode is on...*$mi_gdb_prompt$" {
-            set async 1
-        }
-        -re ".*$mi_gdb_prompt$" {
-            set async 0
-        }
-        timeout {
-            set async 0
-        }
+	-re ".*Controlling the inferior in asynchronous mode is on...*$mi_gdb_prompt$" {
+	    set async 1
+	}
+	-re ".*$mi_gdb_prompt$" {
+	    set async 0
+	}
+	timeout {
+	    set async 0
+	}
     }
     return $async
 }
 
 # Wait for MI *stopped notification to appear.
 # The REASON, FUNC, ARGS, FILE and LINE are regular expressions
-# to match against whatever is output in *stopped.  ARGS should
-# not include [] the list of argument is enclosed in, and other
-# regular expressions should not include quotes.
+# to match against whatever is output in *stopped.  FILE may also match
+# filename of a file without debug info.  ARGS should not include [] the
+# list of argument is enclosed in, and other regular expressions should
+# not include quotes.
 # If EXTRA is a list of one element, it's the regular expression
 # for output expected right after *stopped, and before GDB prompt.
 # If EXTRA is a list of two elements, the first element is for
 # output right after *stopped, and the second element is output
 # right after reason field.  The regex after reason should not include
 # the comma separating it from the following fields.
-# 
-# When we fail to match output at all, -1 is returned.  Otherwise,
-# the line at which we stop is returned.  This is useful when exact
-# line is not possible to specify for some reason -- one can pass
+#
+# When we fail to match output at all, -1 is returned.  If FILE does
+# match and the target system has no debug info for FILE return 0.
+# Otherwise, the line at which we stop is returned.  This is useful when
+# exact line is not possible to specify for some reason -- one can pass
 # the .* or "\[0-9\]*" regexps for line, and then check the line
 # programmatically.
 #
@@ -978,59 +1026,62 @@ proc mi_expect_stop { reason func args file line extra test } {
     global fullname_syntax
     global async
     global thread_selected_re
+    global breakpoint_re
 
     set after_stopped ""
     set after_reason ""
     if { [llength $extra] == 2 } {
-        set after_stopped [lindex $extra 0]
-        set after_reason [lindex $extra 1]
-        set after_reason "${after_reason},"
+	set after_stopped [lindex $extra 0]
+	set after_reason [lindex $extra 1]
+	set after_reason "${after_reason},"
     } elseif { [llength $extra] == 1 } {
-        set after_stopped [lindex $extra 0]
+	set after_stopped [lindex $extra 0]
     }
 
     if {$async} {
-        set prompt_re ""
+	set prompt_re ""
     } else {
-        set prompt_re "$mi_gdb_prompt$"
+	set prompt_re "$mi_gdb_prompt$"
     }
 
     if { $reason == "really-no-reason" } {
-        gdb_expect {
-          -re "\\*stopped\r\n$prompt_re" {
-            pass "$test"
-          }
-          timeout {
-              fail "$test (unknown output after running)"
-          }
-        }
-        return
+	gdb_expect {
+	    -re "\\*stopped\r\n$prompt_re" {
+		pass "$test"
+	    }
+	    timeout {
+		fail "$test (unknown output after running)"
+	    }
+	}
+	return
     }
-    
+
     if { $reason == "exited-normally" } {
 
-        gdb_expect {
-          -re "\\*stopped,reason=\"exited-normally\"\r\n$prompt_re" {
-            pass "$test"
-          }
-          -re ".*$mi_gdb_prompt$" {fail "continue to end (2)"}
-          timeout {
-              fail "$test (unknown output after running)"
-          }
-        }
-        return
+	gdb_expect {
+	    -re "\\*stopped,reason=\"exited-normally\"\r\n$prompt_re" {
+		pass "$test"
+	    }
+	    -re ".*$mi_gdb_prompt$" {fail "continue to end (2)"}
+	    timeout {
+		fail "$test (unknown output after running)"
+	    }
+	}
+	return
     }
 
     set args "\\\[$args\\\]"
 
     set bn ""
     if { $reason == "breakpoint-hit" } {
-        set bn {bkptno="[0-9]+",}
+	set bn {bkptno="[0-9]+",}
+    } elseif { $reason == "solib-event" } {
+	set bn ".*"
     }
 
     set r ""
     if { $reason != "" } {
-        set r "reason=\"$reason\","
+	set r "reason=\"$reason\","
     }
 
 
@@ -1038,19 +1089,23 @@ proc mi_expect_stop { reason func args file line extra test } {
 
     set any "\[^\n\]*"
 
-    verbose -log "mi_expect_stop: expecting: \\*stopped,${r}${a}${bn}frame=\{addr=\"$hex\",func=\"$func\",args=$args,file=\"$any$file\",fullname=\"${fullname_syntax}$file\",line=\"$line\"\}$after_stopped,thread-id=\"$decimal\",stopped-threads=$any\r\n($thread_selected_re)?$prompt_re"
+    verbose -log "mi_expect_stop: expecting: \\*stopped,${r}${a}${bn}frame=\{addr=\"$hex\",func=\"$func\",args=$args,(?:file=\"$any$file\",fullname=\"${fullname_syntax}$file\",line=\"$line\"|from=\"$file\")\}$after_stopped,thread-id=\"$decimal\",stopped-threads=$any\r\n($thread_selected_re|$breakpoint_re)*$prompt_re"
     gdb_expect {
-	-re "\\*stopped,${r}${a}${bn}frame=\{addr=\"$hex\",func=\"$func\",args=$args,file=\"$any$file\",fullname=\"${fullname_syntax}$file\",line=\"($line)\"\}$after_stopped,thread-id=\"$decimal\",stopped-threads=$any\r\n($thread_selected_re)?$prompt_re" {
+	-re "\\*stopped,${r}${a}${bn}frame=\{addr=\"$hex\",func=\"$func\",args=$args,(?:file=\"$any$file\",fullname=\"${fullname_syntax}$file\",line=\"($line)\"|from=\"$file\")\}$after_stopped,thread-id=\"$decimal\",stopped-threads=$any\r\n($thread_selected_re|$breakpoint_re)*$prompt_re" {
 	    pass "$test"
-            return $expect_out(2,string)
+	    if {[array names expect_out "2,string"] != ""} {
+		return $expect_out(2,string)
+	    }
+	    # No debug info available but $file does match.
+	    return 0
 	}
-	-re "\\*stopped,${r}${a}${bn}frame=\{addr=\"$hex\",func=\"$any\",args=\[\\\[\{\]$any\[\\\]\}\],file=\"$any\",fullname=\"${fullname_syntax}$any\",line=\"\[0-9\]*\"\}$after_stopped,thread-id=\"$decimal\",stopped-threads=$any\r\n$prompt_re" {
-            verbose -log "got $expect_out(buffer)"
+	-re "\\*stopped,${r}${a}${bn}frame=\{addr=\"$hex\",func=\"$any\",args=\[\\\[\{\]$any\[\\\]\}\],file=\"$any\",fullname=\"${fullname_syntax}$any\",line=\"\[0-9\]*\"\}$after_stopped,thread-id=\"$decimal\",stopped-threads=$any\r\n($thread_selected_re|$breakpoint_re)*$prompt_re" {
+	    verbose -log "got $expect_out(buffer)"
 	    fail "$test (stopped at wrong place)"
 	    return -1
 	}
 	-re ".*\r\n$mi_gdb_prompt$" {
-            verbose -log "got $expect_out(buffer)"
+	    verbose -log "got $expect_out(buffer)"
 	    fail "$test (unknown output after running)"
 	    return -1
 	}
@@ -1058,7 +1113,7 @@ proc mi_expect_stop { reason func args file line extra test } {
 	    fail "$test (timeout)"
 	    return -1
 	}
-    }    
+    }
 }
 
 # Wait for MI *stopped notification related to an interrupt request to
@@ -1083,7 +1138,7 @@ proc mi_expect_interrupt { test } {
     gdb_expect {
 	-re "\\*stopped,${r}$any\r\n$prompt_re" {
 	    pass "$test"
-	    return 0;
+	    return 0
 	}
 	-re ".*\r\n$mi_gdb_prompt$" {
 	    verbose -log "got $expect_out(buffer)"
@@ -1164,10 +1219,10 @@ proc mi0_continue_to { bkptno func args file line test } {
 
 # Creates a breakpoint and checks the reported fields are as expected
 proc mi_create_breakpoint { location number disp func file line address test } {
-    verbose -log "Expecting: 222\\^done,bkpt=\{number=\"$number\",type=\"breakpoint\",disp=\"$disp\",enabled=\"y\",addr=\"$address\",func=\"$func\",file=\"$file\",fullname=\".*\",line=\"$line\",times=\"0\",original-location=\".*\"\}"
+    verbose -log "Expecting: 222\\^done,bkpt=\{number=\"$number\",type=\"breakpoint\",disp=\"$disp\",enabled=\"y\",addr=\"$address\",func=\"$func\",file=\"$file\",fullname=\".*\",line=\"$line\",thread-groups=\\\[\".*\"\\\],times=\"0\",original-location=\".*\"\}"
     mi_gdb_test "222-break-insert $location" \
-        "222\\^done,bkpt=\{number=\"$number\",type=\"breakpoint\",disp=\"$disp\",enabled=\"y\",addr=\"$address\",func=\"$func\",file=\"$file\",fullname=\".*\",line=\"$line\",times=\"0\",original-location=\".*\"\}" \
-        $test
+	"222\\^done,bkpt=\{number=\"$number\",type=\"breakpoint\",disp=\"$disp\",enabled=\"y\",addr=\"$address\",func=\"$func\",file=\"$file\",fullname=\".*\",line=\"$line\",thread-groups=\\\[\".*\"\\\],times=\"0\",original-location=\".*\"\}" \
+	$test
 }
 
 proc mi_list_breakpoints { expected test } {
@@ -1177,38 +1232,38 @@ proc mi_list_breakpoints { expected test } {
     set first 1
 
     foreach item $expected {
-        if {$first == 0} {
-            set body "$body,"
-            set first 0
-        }
-        set number [lindex $item 0]
-        set disp [lindex $item 1]
-        set func [lindex $item 2]
-        set file [lindex $item 3]
-        set line [lindex $item 4]
-        set address [lindex $item 5]
-        set body "${body}bkpt=\{number=\"$number\",type=\"breakpoint\",disp=\"$disp\",enabled=\"y\",addr=\"$address\",func=\"$func\",file=\".*$file\",${fullname},line=\"$line\",times=\"0\",original-location=\".*\"\}"
-        set first 0
+	if {$first == 0} {
+	    set body "$body,"
+	    set first 0
+	}
+	set number [lindex $item 0]
+	set disp [lindex $item 1]
+	set func [lindex $item 2]
+	set file [lindex $item 3]
+	set line [lindex $item 4]
+	set address [lindex $item 5]
+	set body "${body}bkpt=\{number=\"$number\",type=\"breakpoint\",disp=\"$disp\",enabled=\"y\",addr=\"$address\",func=\"$func\",file=\".*$file\",${fullname},line=\"$line\",thread-groups=\\\[\"i1\"\\\],times=\"0\",original-location=\".*\"\}"
+	set first 0
     }
 
     verbose -log "Expecting: 666\\\^done,BreakpointTable=\{nr_rows=\".\",nr_cols=\".\",hdr=\\\[\{width=\".*\",alignment=\".*\",col_name=\"number\",colhdr=\"Num\"\}.*colhdr=\"Type\".*colhdr=\"Disp\".*colhdr=\"Enb\".*colhdr=\"Address\".*colhdr=\"What\".*\\\],body=\\\[$body\\\]\}"
     mi_gdb_test "666-break-list" \
-        "666\\\^done,BreakpointTable=\{nr_rows=\".\",nr_cols=\".\",hdr=\\\[\{width=\".*\",alignment=\".*\",col_name=\"number\",colhdr=\"Num\"\}.*colhdr=\"Type\".*colhdr=\"Disp\".*colhdr=\"Enb\".*colhdr=\"Address\".*colhdr=\"What\".*\\\],body=\\\[$body\\\]\}" \
-        $test
+	"666\\\^done,BreakpointTable=\{nr_rows=\".\",nr_cols=\".\",hdr=\\\[\{width=\".*\",alignment=\".*\",col_name=\"number\",colhdr=\"Num\"\}.*colhdr=\"Type\".*colhdr=\"Disp\".*colhdr=\"Enb\".*colhdr=\"Address\".*colhdr=\"What\".*\\\],body=\\\[$body\\\]\}" \
+	$test
 }
 
 # Creates varobj named NAME for EXPRESSION.
 # Name cannot be "-".
 proc mi_create_varobj { name expression testname } {
     mi_gdb_test "-var-create $name * $expression" \
-        "\\^done,name=\"$name\",numchild=\"\[0-9\]+\",value=\".*\",type=.*,has_more=\"0\"" \
-        $testname
+	"\\^done,name=\"$name\",numchild=\"\[0-9\]+\",value=\".*\",type=.*,has_more=\"0\"" \
+	$testname
 }
 
 proc mi_create_floating_varobj { name expression testname } {
     mi_gdb_test "-var-create $name @ $expression" \
-        "\\^done,name=\"$name\",numchild=\"\(-1\|\[0-9\]+\)\",value=\".*\",type=.*" \
-        $testname
+	"\\^done,name=\"$name\",numchild=\"\(-1\|\[0-9\]+\)\",value=\".*\",type=.*" \
+	$testname
 }
 
 
@@ -1216,23 +1271,24 @@ proc mi_create_floating_varobj { name expression testname } {
 # of the varobj.
 proc mi_create_varobj_checked { name expression type testname } {
     mi_gdb_test "-var-create $name * $expression" \
-        "\\^done,name=\"$name\",numchild=\"\[0-9\]+\",value=\".*\",type=\"$type\".*" \
-        $testname
+	"\\^done,name=\"$name\",numchild=\"\[0-9\]+\",value=\".*\",type=\"$type\".*" \
+	$testname
 }
 
 # Same as mi_create_floating_varobj, but assumes the test is creating
 # a dynamic varobj that has children, so the value must be "{...}".
-proc mi_create_dynamic_varobj {name expression testname} {
+# The "has_more" attribute is checked.
+proc mi_create_dynamic_varobj {name expression has_more testname} {
     mi_gdb_test "-var-create $name @ $expression" \
-        "\\^done,name=\"$name\",numchild=\"\(-1\|\[0-9\]+\)\",value=\"{\\.\\.\\.}\",type=.*" \
-        $testname
+	"\\^done,name=\"$name\",numchild=\"0\",value=\"{\\.\\.\\.}\",type=.*,has_more=\"${has_more}\"" \
+	$testname
 }
 
-# Deletes the specified NAME. 
+# Deletes the specified NAME.
 proc mi_delete_varobj { name testname } {
     mi_gdb_test "-var-delete $name" \
-        "\\^done,ndeleted=.*" \
-        $testname
+	"\\^done,ndeleted=.*" \
+	$testname
 }
 
 # Updates varobj named NAME and checks that all varobjs in EXPECTED
@@ -1243,13 +1299,13 @@ proc mi_varobj_update { name expected testname } {
     set er "\\^done,changelist=\\\["
     set first 1
     foreach item $expected {
-        set v "{name=\"$item\",in_scope=\"true\",type_changed=\"false\",has_more=\".\"}"
-        if {$first == 1} {
-            set er "$er$v"
-            set first 0
-        } else {
-            set er "$er,$v"
-        }
+	set v "{name=\"$item\",in_scope=\"true\",type_changed=\"false\",has_more=\".\"}"
+	if {$first == 1} {
+	    set er "$er$v"
+	    set first 0
+	} else {
+	    set er "$er,$v"
+	}
     }
     set er "$er\\\]"
 
@@ -1257,11 +1313,15 @@ proc mi_varobj_update { name expected testname } {
     mi_gdb_test "-var-update $name" $er $testname
 }
 
-proc mi_varobj_update_with_type_change { name new_type new_children testname } {
-    set v "{name=\"$name\",in_scope=\"true\",type_changed=\"true\",new_type=\"$new_type\",new_num_children=\"$new_children\",has_more=\".\"}"
+proc mi_varobj_update_with_child_type_change { name child_name new_type new_children testname } {
+    set v "{name=\"$child_name\",in_scope=\"true\",type_changed=\"true\",new_type=\"$new_type\",new_num_children=\"$new_children\",has_more=\".\"}"
     set er "\\^done,changelist=\\\[$v\\\]"
     verbose -log "Expecting: $er"
     mi_gdb_test "-var-update $name" $er $testname
+}
+
+proc mi_varobj_update_with_type_change { name new_type new_children testname } {
+    mi_varobj_update_with_child_type_change $name $name $new_type $new_children $testname
 }
 
 # A helper that turns a key/value list into a regular expression
@@ -1338,7 +1398,6 @@ proc mi_check_varobj_value { name value testname } {
 # mi_list_varobj_children and mi_varobj_update_dynamic.
 proc mi_child_regexp {children add_child} {
     set children_exp {}
-    set whatever "\"\[^\"\]+\""
 
     if {$add_child} {
 	set pre "child="
@@ -1348,24 +1407,24 @@ proc mi_child_regexp {children add_child} {
 
     foreach item $children {
 
-        set name [lindex $item 0]
-        set exp [lindex $item  1]
-        set numchild [lindex $item 2]
-        if {[llength $item] == 5} {
-            set type [lindex $item 3]
-            set value [lindex $item 4]
+	set name [lindex $item 0]
+	set exp [lindex $item  1]
+	set numchild [lindex $item 2]
+	if {[llength $item] == 5} {
+	    set type [lindex $item 3]
+	    set value [lindex $item 4]
 
-            lappend children_exp\
-                "$pre{name=\"$name\",exp=\"$exp\",numchild=\"$numchild\",value=\"$value\",type=\"$type\"\(,thread-id=\"\[0-9\]+\")?}"
-        } elseif {[llength $item] == 4} {
-            set type [lindex $item 3]
+	    lappend children_exp\
+		"$pre{name=\"$name\",exp=\"$exp\",numchild=\"$numchild\",value=\"$value\",type=\"$type\"(,thread-id=\"\[0-9\]+\")?}"
+	} elseif {[llength $item] == 4} {
+	    set type [lindex $item 3]
 
-            lappend children_exp\
-                "$pre{name=\"$name\",exp=\"$exp\",numchild=\"$numchild\",type=\"$type\"\(,thread-id=\"\[0-9\]+\")?}"
-        } else {
-            lappend children_exp\
-                "$pre{name=\"$name\",exp=\"$exp\",numchild=\"$numchild\"(,thread-id=\"\[0-9\]+\")?}"
-        }
+	    lappend children_exp\
+		"$pre{name=\"$name\",exp=\"$exp\",numchild=\"$numchild\",type=\"$type\"(,thread-id=\"\[0-9\]+\")?}"
+	} else {
+	    lappend children_exp\
+		"$pre{name=\"$name\",exp=\"$exp\",numchild=\"$numchild\"(,thread-id=\"\[0-9\]+\")?}"
+	}
     }
     return [join $children_exp ","]
 }
@@ -1400,25 +1459,23 @@ proc mi_list_varobj_children { varname children testname } {
 proc mi_list_varobj_children_range {varname from to numchildren children testname} {
     set options ""
     if {[llength $varname] == 2} {
-        set options [lindex $varname 1]
-        set varname [lindex $varname 0]
+	set options [lindex $varname 1]
+	set varname [lindex $varname 0]
     }
-
-    set whatever "\"\[^\"\]+\""
 
     set children_exp_j [mi_child_regexp $children 1]
     if {$numchildren} {
-        set expected "\\^done,numchild=\".*\",children=\\\[$children_exp_j.*\\\]"
+	set expected "\\^done,numchild=\".*\",children=\\\[$children_exp_j.*\\\]"
     } {
-        set expected "\\^done,numchild=\"0\""
+	set expected "\\^done,numchild=\"0\""
     }
 
     if {"$to" == ""} {
-        append expected ",has_more=\"0\""
+	append expected ",has_more=\"0\""
     } elseif {$to >= 0 && $numchildren > $to} {
-        append expected ",has_more=\"1\""
+	append expected ",has_more=\"1\""
     } else {
-        append expected ",has_more=\"0\""
+	append expected ",has_more=\"0\""
     }
 
     verbose -log "Expecting: $expected"
@@ -1430,9 +1487,18 @@ proc mi_list_varobj_children_range {varname from to numchildren children testnam
 # Verifies that variable object VARNAME has NUMBER children,
 # where each one is named $VARNAME.<index-of-child> and has type TYPE.
 proc mi_list_array_varobj_children { varname number type testname } {
+    mi_list_array_varobj_children_with_index $varname $number 0 $type $testname
+}
+
+# Same as mi_list_array_varobj_children, but allowing to pass a start index
+# for an array.
+proc mi_list_array_varobj_children_with_index { varname number start_index \
+  type testname } {
     set t {}
+    set index $start_index
     for {set i 0} {$i < $number} {incr i} {
-        lappend t [list $varname.$i $i 0 $type]
+	lappend t [list $varname.$index $index 0 $type]
+	incr index
     }
     mi_list_varobj_children $varname $t $testname
 }
@@ -1461,7 +1527,7 @@ proc mi_prepare_inline_tests { filename } {
     set mi_autotest_data {}
 
     set mi_autotest_source $filename
-    
+
     if { ! [regexp "^/" "$filename"] } then {
 	set filename "$srcdir/$subdir/$filename"
     }
@@ -1470,31 +1536,31 @@ proc mi_prepare_inline_tests { filename } {
     set content [read $chan]
     set line_number 1
     while {1} {
-        set start [string first "/*:" $content]
-        if {$start != -1} {
-            set end [string first ":*/" $content]
-            if {$end == -1} {
-                error "Unterminated special comment in $filename"
-            }
-            
-            set prefix [string range $content 0 $start]
-            set prefix_newlines [count_newlines $prefix]
-            
-            set line_number [expr $line_number+$prefix_newlines]
-            set comment_line $line_number
+	set start [string first "/*:" $content]
+	if {$start != -1} {
+	    set end [string first ":*/" $content]
+	    if {$end == -1} {
+		error "Unterminated special comment in $filename"
+	    }
 
-            set comment [string range $content [expr $start+3] [expr $end-1]]
+	    set prefix [string range $content 0 $start]
+	    set prefix_newlines [count_newlines $prefix]
 
-            set comment_newlines [count_newlines $comment]
-            set line_number [expr $line_number+$comment_newlines]
-            
-            set comment [string trim $comment]
-            set content [string range $content [expr $end+3] \
-                             [string length $content]]
-            lappend mi_autotest_data [list $comment $comment_line]
-        } else {        
-           break
-        }        
+	    set line_number [expr $line_number+$prefix_newlines]
+	    set comment_line $line_number
+
+	    set comment [string range $content [expr $start+3] [expr $end-1]]
+
+	    set comment_newlines [count_newlines $comment]
+	    set line_number [expr $line_number+$comment_newlines]
+
+	    set comment [string trim $comment]
+	    set content [string range $content [expr $end+3] \
+			     [string length $content]]
+	    lappend mi_autotest_data [list $comment $comment_line]
+	} else {
+	    break
+	}
     }
     close $chan
 }
@@ -1515,24 +1581,24 @@ proc mi_get_inline_test {testcase} {
     set seen_end 0
     foreach l $mi_autotest_data {
 
-        set comment [lindex $l 0]
+	set comment [lindex $l 0]
 
-        if {$comment == "BEGIN: $testcase"} {
-            set seen_begin 1
-        } elseif {$comment == "END: $testcase"} {
-            set seen_end 1
-            break
-        } elseif {$seen_begin==1} {
-            lappend result $l
-        }
+	if {$comment == "BEGIN: $testcase"} {
+	    set seen_begin 1
+	} elseif {$comment == "END: $testcase"} {
+	    set seen_end 1
+	    break
+	} elseif {$seen_begin==1} {
+	    lappend result $l
+	}
     }
 
     if {$seen_begin == 0} {
-        error "Autotest $testcase not found" 
+	error "Autotest $testcase not found"
     }
 
     if {$seen_begin == 1 && $seen_end == 0} {
-        error "Missing end marker for test $testcase"
+	error "Missing end marker for test $testcase"
     }
 
     return $result
@@ -1544,12 +1610,12 @@ proc mi_tbreak {location} {
     global mi_gdb_prompt
 
     mi_gdb_test "-break-insert -t $location" \
-        {\^done,bkpt=.*} \
-        "run to $location (set breakpoint)"    
+	{\^done,bkpt=.*} \
+	"run to $location (set breakpoint)"
 }
 
 # Send COMMAND that must be a command that resumes
-# the inferiour (run/continue/next/etc) and consumes
+# the inferior (run/continue/next/etc) and consumes
 # the "^running" output from it.
 proc mi_send_resuming_command_raw {command test} {
 
@@ -1559,34 +1625,34 @@ proc mi_send_resuming_command_raw {command test} {
 
     send_gdb "$command\n"
     gdb_expect {
-        -re "\\^running\r\n\\*running,thread-id=\"\[^\"\]+\"\r\n($library_loaded_re)*($thread_selected_re)?${mi_gdb_prompt}" {
-            # Note that lack of 'pass' call here -- this works around limitation
-            # in DejaGNU xfail mechanism. mi-until.exp has this:
-            #
-            #     setup_kfail gdb/2104 "*-*-*"
-            #     mi_execute_to ...
-            # 
-            # and mi_execute_to uses mi_send_resuming_command.  If we use 'pass' here,
-            # it will reset kfail, so when the actual test fails, it will be flagged
-            # as real failure.
+	-re "\\^running\r\n\\*running,thread-id=\"\[^\"\]+\"\r\n($library_loaded_re)*($thread_selected_re)?${mi_gdb_prompt}" {
+	    # Note that lack of 'pass' call here -- this works around limitation
+	    # in DejaGNU xfail mechanism. mi-until.exp has this:
+	    #
+	    #     setup_kfail gdb/2104 "*-*-*"
+	    #     mi_execute_to ...
+	    #
+	    # and mi_execute_to uses mi_send_resuming_command.  If we use 'pass' here,
+	    # it will reset kfail, so when the actual test fails, it will be flagged
+	    # as real failure.
 	    return 0
-        }
-        -re "\\^error,msg=\"Displaced stepping is only supported in ARM mode\".*" {
-            unsupported "$test (Thumb mode)"
-            return -1
-        }
-        -re "\\^error,msg=.*" {
-            fail "$test (MI error)"
-            return -1
-        }
-        -re ".*${mi_gdb_prompt}" {
-            fail "$test (failed to resume)"
+	}
+	-re "\\^error,msg=\"Displaced stepping is only supported in ARM mode\".*" {
+	    unsupported "$test (Thumb mode)"
 	    return -1
-        }
-        timeout {
+	}
+	-re "\\^error,msg=.*" {
+	    fail "$test (MI error)"
+	    return -1
+	}
+	-re ".*${mi_gdb_prompt}" {
+	    fail "$test (failed to resume)"
+	    return -1
+	}
+	timeout {
 	    fail "$test"
 	    return -1
-        }
+	}
     }
 }
 
@@ -1603,7 +1669,7 @@ proc mi_send_resuming_command {command test} {
 # The caller can check itself if required.
 proc mi_continue_to_line {location test} {
 
-    mi_tbreak $location   
+    mi_tbreak $location
     mi_send_resuming_command "exec-continue" "run to $location (exec-continue)"
     return [mi_get_stop_line $test]
 }
@@ -1622,13 +1688,13 @@ proc mi_get_stop_line {test} {
 
   gdb_expect {
       -re ".*line=\"(\[0-9\]*)\".*\r\n$prompt_re" {
-          return $expect_out(1,string)
+	  return $expect_out(1,string)
       }
       -re ".*$mi_gdb_prompt" {
-          fail "wait for stop ($test)"
+	  fail "wait for stop ($test)"
       }
       timeout {
-          fail "wait for stop ($test)"
+	  fail "wait for stop ($test)"
       }
   }
 }
@@ -1678,46 +1744,46 @@ proc mi_run_inline_test { testcase } {
     set line_now 1
 
     foreach c $commands {
-        set statements [lindex $c 0]
-        set line [lindex $c 1]
-        set line [expr $line-1]
+	set statements [lindex $c 0]
+	set line [lindex $c 1]
+	set line [expr $line-1]
 
-        # We want gdb to be stopped at the expression immediately
-        # before the comment.  If this is the first comment, the
-        # program is either not started yet or is in some random place,
-        # so we run it.  For further comments, we might be already
-        # standing at the right line. If not continue till the
-        # right line.
+	# We want gdb to be stopped at the expression immediately
+	# before the comment.  If this is the first comment, the
+	# program is either not started yet or is in some random place,
+	# so we run it.  For further comments, we might be already
+	# standing at the right line. If not continue till the
+	# right line.
 
-        if {$first==1} {
-            # Start the program afresh.
-            mi_tbreak "$mi_autotest_source:$line"
-            mi_run_cmd
-            set line_now [mi_get_stop_line "$testcase: step to $line"]
-            set first 0
-        } elseif {$line_now!=$line} {
-            set line_now [mi_continue_to_line "$mi_autotest_source:$line" "continue to $line"]
-        }
+	if {$first==1} {
+	    # Start the program afresh.
+	    mi_tbreak "$mi_autotest_source:$line"
+	    mi_run_cmd
+	    set line_now [mi_get_stop_line "$testcase: step to $line"]
+	    set first 0
+	} elseif {$line_now!=$line} {
+	    set line_now [mi_continue_to_line "$mi_autotest_source:$line" "continue to $line"]
+	}
 
-        if {$line_now!=$line} {
-            fail "$testcase: go to line $line"
-        }
+	if {$line_now!=$line} {
+	    fail "$testcase: go to line $line"
+	}
 
-        # We're not at the statement right above the comment.
-        # Execute that statement so that the comment can test
-        # the state after the statement is executed.
+	# We're not at the statement right above the comment.
+	# Execute that statement so that the comment can test
+	# the state after the statement is executed.
 
-        # Single-step past the line.
-        if { [mi_send_resuming_command "exec-next" "$testcase: step over $line"] != 0 } {
+	# Single-step past the line.
+	if { [mi_send_resuming_command "exec-next" "$testcase: step over $line"] != 0 } {
 	    return -1
 	}
 	set line_now [mi_get_stop_line "$testcase: step over $line"]
 
-        # We probably want to use 'uplevel' so that statements
-        # have direct access to global variables that the
-        # main 'exp' file has set up.  But it's not yet clear,
-        # will need more experience to be sure.
-        eval $statements
+	# We probably want to use 'uplevel' so that statements
+	# have direct access to global variables that the
+	# main 'exp' file has set up.  But it's not yet clear,
+	# will need more experience to be sure.
+	eval $statements
     }
 }
 
@@ -1914,4 +1980,362 @@ proc mi_get_features {} {
 	    return ""
 	}
     }
+}
+
+# Variable Object Trees
+#
+# Yet another way to check varobjs. Pass mi_walk_varobj_tree a "list" of
+# variables (not unlike the actual source code definition), and it will
+# automagically test the children for you (by default).
+#
+# Example:
+#
+# source code:
+# struct bar {
+#   union {
+#     int integer;
+#     void *ptr;
+#   };
+#   const int *iPtr;
+# };
+#
+# class foo {
+# public:
+#   int a;
+#   struct {
+#     int b;
+#     struct bar *c;
+#   };
+# };
+#
+# foo *f = new foo (); <-- break here
+#
+# We want to check all the children of "f".
+#
+# Translate the above structures into the following tree:
+#
+# set tree {
+#   foo f {
+#     {} public {
+#       int a {}
+#       anonymous struct {
+#         {} public {
+#           int b {}
+#           {bar *} c {
+#             {} public {
+#               anonymous union {
+#                 {} public {
+#                   int integer {}
+#                   {void *} ptr {}
+#                 }
+#               }
+#               {const int *} iPtr {
+#                 {const int} {*iPtr} {}
+#               }
+#             }
+#           }
+#         }
+#       }
+#     }
+#   }
+# }
+#
+# mi_walk_varobj_tree c++ $tree
+#
+# If you'd prefer to walk the tree using your own callback,
+# simply pass the name of the callback to mi_walk_varobj_tree.
+#
+# This callback should take one argument, the name of the variable
+# to process.  This name is the name of a global array holding the
+# variable's properties (object name, type, etc).
+#
+# An example callback:
+#
+# proc my_callback {var} {
+#   upvar #0 $var varobj
+#
+#   puts "my_callback: called on varobj $varobj(obj_name)"
+# }
+#
+# The arrays created for each variable object contain the following
+# members:
+#
+# obj_name     - the object name for accessing this variable via MI
+# display_name - the display name for this variable (exp="display_name" in
+#                the output of -var-list-children)
+# type         - the type of this variable (type="type" in the output
+#                of -var-list-children, or the special tag "anonymous"
+# path_expr    - the "-var-info-path-expression" for this variable
+#                NOTE: This member cannot be used reliably with typedefs.
+#                Use with caution!
+#                See notes inside get_path_expr for more.
+# parent       - the variable name of the parent varobj
+# children     - a list of children variable names (which are the
+#                names Tcl arrays, not object names)
+#
+# For each variable object, an array containing the above fields will
+# be created under the root node (conveniently called, "root").  For example,
+# a variable object with handle "OBJ.public.0_anonymous.a" will have
+# a corresponding global Tcl variable named "root.OBJ.public.0_anonymous.a".
+#
+# Note that right now, this mechanism cannot be used for recursive data
+# structures like linked lists.
+
+namespace eval ::varobj_tree {
+  # An index which is appended to root varobjs to ensure uniqueness.
+  variable _root_idx 0
+
+  # A procedure to help with debuggging varobj trees.
+  # VARIABLE_NAME is the name of the variable to dump.
+  # CMD, if present, is the name of the callback to output the contstructed
+  #   strings. By default, it uses expect's "send_log" command.
+  # TERM, if present, is a terminating character. By default it is the newline.
+  #
+  # To output to the terminal (not the expect log), use
+  # mi_varobj_tree_dump_variable my_variable puts ""
+
+  proc mi_varobj_tree_dump_variable {variable_name {cmd send_log} {term "\n"}} {
+    upvar #0 $variable_name varobj
+
+    eval "$cmd \"VAR = $variable_name$term\""
+
+    # Explicitly encode the array indices, since outputting them
+    # in some logical order is better than what "array names" might
+    # return.
+    foreach idx {obj_name parent display_name type path_expr} {
+      eval "$cmd \"\t$idx = $varobj($idx)$term\""
+    }
+
+    # Output children
+    set num [llength $varobj(children)]
+    eval "$cmd \"\tnum_children = $num$term\""
+    if {$num > 0} {
+      eval "$cmd \"\tchildren = $varobj(children)$term\""
+    }
+  }
+
+  # The default callback used by mi_walk_varobj_tree.  This callback
+  # simply checks all of VAR's children.  It specifically does not test
+  # path expressions, since that is very problematic.
+  #
+  # This procedure may be used in custom callbacks.
+  proc test_children_callback {variable_name} {
+    upvar #0 $variable_name varobj
+
+    if {[llength $varobj(children)] > 0} {
+      # Construct the list of children the way mi_list_varobj_children
+      # expects to get it:
+      # { {obj_name display_name num_children type} ... }
+      set children_list {}
+      foreach child $varobj(children) {
+	upvar #0 $child c
+	set clist [list [string_to_regexp $c(obj_name)] \
+		       [string_to_regexp $c(display_name)] \
+		       [llength $c(children)]]
+	if {[string length $c(type)] > 0} {
+	  lappend clist [string_to_regexp $c(type)]
+	}
+	lappend children_list $clist
+      }
+
+      mi_list_varobj_children $varobj(obj_name) $children_list \
+	  "VT: list children of $varobj(obj_name)"
+    }
+  }
+
+  # Set the properties of the varobj represented by
+  # PARENT_VARIABLE - the name of the parent's variable
+  # OBJNAME         - the MI object name of this variable
+  # DISP_NAME       - the display name of this variable
+  # TYPE            - the type of this variable
+  # PATH            - the path expression for this variable
+  # CHILDREN        - a list of the variable's children
+  proc create_varobj {parent_variable objname disp_name \
+			  type path children} {
+    upvar #0 $parent_variable parent
+
+    set var_name "root.$objname"
+    global $var_name
+    array set $var_name [list obj_name $objname]
+    array set $var_name [list display_name $disp_name]
+    array set $var_name [list type $type]
+    array set $var_name [list path_expr $path]
+    array set $var_name [list parent "$parent_variable"]
+    array set $var_name [list children \
+			     [get_tree_children $var_name $children]]
+    return $var_name
+  }
+
+  # Should VARIABLE be used in path expressions?  The CPLUS_FAKE_CHILD
+  # varobjs and anonymous structs/unions are not used for path expressions.
+  proc is_path_expr_parent {variable} {
+    upvar #0 $variable varobj
+
+    # If the varobj's type is "", it is a CPLUS_FAKE_CHILD.
+    # If the tail of the varobj's object name is "%d_anonymous",
+    # then it represents an anonymous struct or union.
+    if {[string length $varobj(type)] == 0 \
+	    || [regexp {[0-9]+_anonymous$} $varobj(obj_name)]} {
+      return false
+    }
+
+    return true
+  }
+
+  # Return the path expression for the variable named NAME in
+  # parent varobj whose variable name is given by PARENT_VARIABLE.
+  proc get_path_expr {parent_variable name type} {
+    upvar #0 $parent_variable parent
+    upvar #0 $parent_variable path_parent
+
+    # If TYPE is "", this is one of the CPLUS_FAKE_CHILD varobjs,
+    # which has no path expression.  Likewsise for anonymous structs
+    # and unions.
+    if {[string length $type] == 0 \
+	    || [string compare $type "anonymous"] == 0} {
+      return ""
+    }
+
+    # Find the path parent variable.
+    while {![is_path_expr_parent $parent_variable]} {
+      set parent_variable $path_parent(parent)
+      upvar #0 $parent_variable path_parent
+    }
+
+    # This is where things get difficult.  We do not actually know
+    # the real type for variables defined via typedefs, so we don't actually
+    # know whether the parent is a structure/union or not.
+    #
+    # So we assume everything that isn't a simple type is a compound type.
+    set stars ""
+    regexp {\*+} $parent(type) stars
+    set is_compound 1
+    if {[string index $name 0] == "*"} {
+      set is_compound 0
+    }
+
+    if {[string index $parent(type) end] == "\]"} {
+      # Parent is an array.
+      return "($path_parent(path_expr))\[$name\]"
+    } elseif {$is_compound} {
+      # Parent is a structure or union or a pointer to one.
+      if {[string length $stars]} {
+	set join "->"
+      } else {
+	set join "."
+      }
+
+      global root
+
+      # To make matters even more hideous, varobj.c has slightly different
+      # path expressions for C and C++.
+      set path_expr "($path_parent(path_expr))$join$name"
+      if {[string compare -nocase $root(language) "c"] == 0} {
+	return $path_expr
+      } else {
+	return "($path_expr)"
+      }
+    } else {
+      # Parent is a pointer.
+      return "*($path_parent(path_expr))"
+    }
+  }
+
+  # Process the CHILDREN (a list of varobj_tree elements) of the variable
+  # given by PARENT_VARIABLE.  Returns a list of children variables.
+  proc get_tree_children {parent_variable children} {
+    upvar #0 $parent_variable parent
+
+    set field_idx 0
+    set children_list {}
+    foreach {type name children} $children {
+      if {[string compare $parent_variable "root"] == 0} {
+	# Root variable
+	variable _root_idx
+	incr _root_idx
+	set objname "$name$_root_idx"
+	set disp_name "$name"
+	set path_expr "$name"
+      } elseif {[string compare $type "anonymous"] == 0} {
+	# Special case: anonymous types.  In this case, NAME will either be
+	# "struct" or "union".
+	set objname "$parent(obj_name).${field_idx}_anonymous"
+	set disp_name "<anonymous $name>"
+	set path_expr ""
+	set type "$name {...}"
+      } else {
+	set objname "$parent(obj_name).$name"
+	set disp_name $name
+	set path_expr [get_path_expr $parent_variable $name $type]
+      }
+
+      lappend children_list [create_varobj $parent_variable $objname \
+				 $disp_name $type $path_expr $children]
+      incr field_idx
+    }
+
+    return $children_list
+  }
+
+  # The main procedure to call the given CALLBACK on the elements of the
+  # given varobj TREE.  See detailed explanation above.
+  proc walk_tree {language tree callback} {
+    global root
+    variable _root_idx
+
+    if {[llength $tree] < 3} {
+      error "tree does not contain enough elements"
+    }
+
+    set _root_idx 0
+
+    # Create root node and process the tree.
+    array set root [list language $language]
+    array set root [list obj_name "root"]
+    array set root [list display_name "root"]
+    array set root [list type "root"]
+    array set root [list path_expr "root"]
+    array set root [list parent "root"]
+    array set root [list children [get_tree_children root $tree]]
+
+    # Walk the tree
+    set all_nodes $root(children); # a stack of nodes
+    while {[llength $all_nodes] > 0} {
+      # "Pop" the name of the global variable containing this varobj's
+      # information from the stack of nodes.
+      set var_name [lindex $all_nodes 0]
+      set all_nodes [lreplace $all_nodes 0 0]
+
+      # Bring the global named in VAR_NAME into scope as the local variable
+      # VAROBJ.
+      upvar #0 $var_name varobj
+
+      # Append any children of VAROBJ to the list of nodes to walk.
+      if {[llength $varobj(children)] > 0} {
+	set all_nodes [concat $all_nodes $varobj(children)]
+      }
+
+      # If this is a root variable, create the variable object for it.
+      if {[string compare $varobj(parent) "root"] == 0} {
+	mi_create_varobj $varobj(obj_name) $varobj(display_name) \
+	    "VT: create root varobj for $varobj(display_name)"
+      }
+
+      # Now call the callback for VAROBJ.
+      uplevel #0 $callback $var_name
+    }
+  }
+}
+
+# The default varobj tree callback, which simply tests -var-list-children.
+proc mi_varobj_tree_test_children_callback {variable} {
+  ::varobj_tree::test_children_callback $variable
+}
+
+# Walk the variable object tree given by TREE, calling the specified
+# CALLBACK.  By default this uses mi_varobj_tree_test_children_callback.
+proc mi_walk_varobj_tree {language tree \
+			      {callback \
+				   mi_varobj_tree_test_children_callback}} {
+  ::varobj_tree::walk_tree $language $tree $callback
 }

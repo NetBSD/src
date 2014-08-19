@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.17.12.1 2012/11/20 03:00:54 tls Exp $	*/
+/*	$NetBSD: csc.c,v 1.17.12.2 2014/08/20 00:02:40 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: csc.c,v 1.17.12.1 2012/11/20 03:00:54 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: csc.c,v 1.17.12.2 2014/08/20 00:02:40 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,9 +289,6 @@ void
 csc_led(void *v, int mode)
 {
 	struct sfas_softc *sc = v;
-	csc_regmap_p		rp;
-
-	rp = (csc_regmap_p)sc->sc_fas;
 
 	if (mode) {
 		sc->sc_led_status++;

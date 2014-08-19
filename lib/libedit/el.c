@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.71.2.1 2013/02/25 00:27:56 tls Exp $	*/
+/*	$NetBSD: el.c,v 1.71.2.2 2014/08/20 00:02:17 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.71.2.1 2013/02/25 00:27:56 tls Exp $");
+__RCSID("$NetBSD: el.c,v 1.71.2.2 2014/08/20 00:02:17 tls Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -191,6 +191,13 @@ FUN(el,set)(EditLine *el, int op, ...)
 		el_zfunc_t p = va_arg(ap, el_zfunc_t);
 		void *arg = va_arg(ap, void *);
 		rv = ch_resizefun(el, p, arg);
+		break;
+	}
+
+	case EL_ALIAS_TEXT: {
+		el_afunc_t p = va_arg(ap, el_afunc_t);
+		void *arg = va_arg(ap, void *);
+		rv = ch_aliasfun(el, p, arg);
 		break;
 	}
 

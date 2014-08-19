@@ -1,4 +1,4 @@
-/*	$NetBSD: sbt.c,v 1.2.28.1 2012/11/20 03:02:33 tls Exp $	*/
+/*	$NetBSD: sbt.c,v 1.2.28.2 2014/08/20 00:03:50 tls Exp $	*/
 /*	$OpenBSD: sbt.c,v 1.9 2007/06/19 07:59:57 uwe Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Type-A/B SDIO Bluetooth cards */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbt.c,v 1.2.28.1 2012/11/20 03:02:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbt.c,v 1.2.28.2 2014/08/20 00:03:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -202,7 +202,7 @@ sbt_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Attach Bluetooth unit (machine-independent HCI).
 	 */
-	sc->sc_unit = hci_attach(&sbt_hci, self, 0);
+	sc->sc_unit = hci_attach_pcb(&sbt_hci, self, 0);
 }
 
 static int
@@ -213,7 +213,7 @@ sbt_detach(device_t self, int flags)
 	sc->sc_dying = 1;
 
 	if (sc->sc_unit) {
-		hci_detach(sc->sc_unit);
+		hci_detach_pcb(sc->sc_unit);
 		sc->sc_unit = NULL;
 	}
 

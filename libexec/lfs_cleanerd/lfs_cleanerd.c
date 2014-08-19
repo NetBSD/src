@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.31.2.2 2013/06/23 06:28:50 tls Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.31.2.3 2014/08/20 00:02:23 tls Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -1353,7 +1353,9 @@ lfs_cleaner_main(int argc, char **argv)
 {
 	int i, opt, error, r, loopcount, nodetach;
 	struct timeval tv;
+#ifdef LFS_CLEANER_AS_LIB
 	sem_t *semaddr = NULL;
+#endif
 	CLEANERINFO ci;
 #ifndef USE_CLIENT_SERVER
 	char *cp, *pidname;
@@ -1414,13 +1416,11 @@ lfs_cleaner_main(int argc, char **argv)
 		    case 's':	/* Small writes */
 			    do_small = 1;
 			    break;
+#ifdef LFS_CLEANER_AS_LIB
 		    case 'S':	/* semaphore */
-#ifndef LFS_CLEANER_AS_LIB
-			    usage();
-			    /*NOTREACHED*/
-#endif
 			    semaddr = (void*)(uintptr_t)strtoull(optarg,NULL,0);
 			    break;
+#endif
 		    case 't':	/* timeout */
 			    segwait_timeout = atoi(optarg);
 			    break;

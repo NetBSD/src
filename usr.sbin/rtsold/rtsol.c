@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsol.c,v 1.15 2009/04/11 07:51:59 lukem Exp $	*/
+/*	$NetBSD: rtsol.c,v 1.15.12.1 2014/08/20 00:05:13 tls Exp $	*/
 /*	$KAME: rtsol.c,v 1.15 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -76,7 +76,8 @@ int
 sockopen(void)
 {
 	static u_char *rcvcmsgbuf = NULL, *sndcmsgbuf = NULL;
-	int rcvcmsglen, sndcmsglen, on;
+	size_t rcvcmsglen, sndcmsglen;
+	int on;
 	static u_char answer[1500];
 	struct icmp6_filter filt;
 
@@ -85,12 +86,12 @@ sockopen(void)
 	if (rcvcmsgbuf == NULL && (rcvcmsgbuf = malloc(rcvcmsglen)) == NULL) {
 		warnmsg(LOG_ERR, __func__,
 		    "malloc for receive msghdr failed");
-		return(-1);
+		return -1;
 	}
 	if (sndcmsgbuf == NULL && (sndcmsgbuf = malloc(sndcmsglen)) == NULL) {
 		warnmsg(LOG_ERR, __func__,
 		    "malloc for send msghdr failed");
-		return(-1);
+		return -1;
 	}
 	memset(&sin6_allrouters, 0, sizeof(struct sockaddr_in6));
 	sin6_allrouters.sin6_family = AF_INET6;
@@ -99,12 +100,12 @@ sockopen(void)
 	    &sin6_allrouters.sin6_addr.s6_addr) != 1) {
 		warnmsg(LOG_ERR, __func__, "inet_pton failed for %s",
 		    ALLROUTER);
-		return(-1);
+		return -1;
 	}
 
 	if ((rssock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0) {
 		warnmsg(LOG_ERR, __func__, "socket: %s", strerror(errno));
-		return(-1);
+		return -1;
 	}
 
 	/* specify to tell receiving interface */
@@ -150,27 +151,27 @@ sockopen(void)
 	    sizeof(filt)) == -1) {
 		warnmsg(LOG_ERR, __func__, "setsockopt(ICMP6_FILTER): %s",
 		    strerror(errno));
-		return(-1);
+		return -1;
 	}
 
 	/* initialize msghdr for receiving packets */
-	rcviov[0].iov_base = (caddr_t)answer;
+	rcviov[0].iov_base = answer;
 	rcviov[0].iov_len = sizeof(answer);
-	rcvmhdr.msg_name = (caddr_t)&from;
+	rcvmhdr.msg_name = &from;
 	rcvmhdr.msg_namelen = sizeof(from);
 	rcvmhdr.msg_iov = rcviov;
 	rcvmhdr.msg_iovlen = 1;
-	rcvmhdr.msg_control = (caddr_t) rcvcmsgbuf;
-	rcvmhdr.msg_controllen = rcvcmsglen;
+	rcvmhdr.msg_control = rcvcmsgbuf;
+	rcvmhdr.msg_controllen = (socklen_t)rcvcmsglen;
 
 	/* initialize msghdr for sending packets */
 	sndmhdr.msg_namelen = sizeof(struct sockaddr_in6);
 	sndmhdr.msg_iov = sndiov;
 	sndmhdr.msg_iovlen = 1;
-	sndmhdr.msg_control = (caddr_t)sndcmsgbuf;
-	sndmhdr.msg_controllen = sndcmsglen;
+	sndmhdr.msg_control = sndcmsgbuf;
+	sndmhdr.msg_controllen = (socklen_t)sndcmsglen;
 
-	return(rssock);
+	return rssock;
 }
 
 void
@@ -185,8 +186,8 @@ sendpacket(struct ifinfo *ifinfo)
 	dst = sin6_allrouters;
 	dst.sin6_scope_id = ifinfo->linkid;
 
-	sndmhdr.msg_name = (caddr_t)&dst;
-	sndmhdr.msg_iov[0].iov_base = (caddr_t)ifinfo->rs_data;
+	sndmhdr.msg_name = &dst;
+	sndmhdr.msg_iov[0].iov_base = ifinfo->rs_data;
 	sndmhdr.msg_iov[0].iov_len = ifinfo->rs_datalen;
 
 	cm = CMSG_FIRSTHDR(&sndmhdr);
@@ -229,8 +230,9 @@ void
 rtsol_input(int s)
 {
 	char ntopbuf[INET6_ADDRSTRLEN], ifnamebuf[IFNAMSIZ];
-	int ifindex = 0, *hlimp = NULL;
+	int *hlimp = NULL;
 	ssize_t i;
+	size_t ifindex = 0;
 	struct in6_pktinfo *pi = NULL;
 	struct ifinfo *ifi = NULL;
 	struct icmp6_hdr *icp;

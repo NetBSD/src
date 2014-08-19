@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_exec.c,v 1.8 2012/04/22 14:10:36 pgoyette Exp $	*/
+/*	$NetBSD: i2c_exec.c,v 1.8.2.1 2014/08/20 00:03:37 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.8 2012/04/22 14:10:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.8.2.1 2014/08/20 00:03:37 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,8 +90,9 @@ iic_exec(i2c_tag_t tag, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
 		case 2:
 			break;
 		default:
-			memcpy(data, vbuf, sizeof(vbuf));
-			data[sizeof(vbuf)] = iic_smbus_pec(2, b, data);
+			KASSERT(buflen+1 < sizeof(data));
+			memcpy(data, vbuf, buflen);
+			data[buflen] = iic_smbus_pec(2, b, data);
 			buflen++;
 			break;
 		}

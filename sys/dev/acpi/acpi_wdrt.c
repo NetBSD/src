@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wdrt.c,v 1.2 2011/01/17 17:32:11 jmcneill Exp $ */
+/* $NetBSD: acpi_wdrt.c,v 1.2.20.1 2014/08/20 00:03:35 tls Exp $ */
 
 /*
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 /* #define ACPIWDRT_DEBUG */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wdrt.c,v 1.2 2011/01/17 17:32:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wdrt.c,v 1.2.20.1 2014/08/20 00:03:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -100,8 +100,8 @@ static bool	acpi_wdrt_suspend(device_t, const pmf_qual_t *);
 static int	acpi_wdrt_setmode(struct sysmon_wdog *);
 static int	acpi_wdrt_tickle(struct sysmon_wdog *);
 
-static ACPI_STATUS acpi_wdrt_read_control(struct acpi_wdrt_softc *, uint32_t *);
-static ACPI_STATUS acpi_wdrt_write_control(struct acpi_wdrt_softc *, uint32_t);
+static ACPI_STATUS acpi_wdrt_read_control(struct acpi_wdrt_softc *, uint64_t *);
+static ACPI_STATUS acpi_wdrt_write_control(struct acpi_wdrt_softc *, uint64_t);
 #if 0
 static ACPI_STATUS acpi_wdrt_read_count(struct acpi_wdrt_softc *, uint32_t *);
 #endif
@@ -121,7 +121,7 @@ acpi_wdrt_match(device_t parent, cfdata_t match, void *opaque)
 {
 	ACPI_TABLE_WDRT *wdrt;
 	ACPI_STATUS rv;
-	uint32_t val;
+	uint64_t val;
 
 	rv = AcpiGetTable(ACPI_SIG_WDRT, 1, (ACPI_TABLE_HEADER **)&wdrt);
 	if (ACPI_FAILURE(rv))
@@ -266,7 +266,7 @@ static int
 acpi_wdrt_setmode(struct sysmon_wdog *smw)
 {
 	struct acpi_wdrt_softc *sc = smw->smw_cookie;
-	uint32_t val;
+	uint64_t val;
 
 	DPRINTF(("%s: %s mode 0x%x period %u\n", device_xname(sc->sc_dev),
 	    __func__, smw->smw_mode, smw->smw_period));
@@ -314,7 +314,7 @@ static int
 acpi_wdrt_tickle(struct sysmon_wdog *smw)
 {
 	struct acpi_wdrt_softc *sc = smw->smw_cookie;
-	uint32_t val;
+	uint64_t val;
 	
 	DPRINTF(("%s: %s mode 0x%x period %u\n", device_xname(sc->sc_dev),
 	    __func__, smw->smw_mode, smw->smw_period));
@@ -335,7 +335,7 @@ acpi_wdrt_tickle(struct sysmon_wdog *smw)
 }
 
 static ACPI_STATUS
-acpi_wdrt_read_control(struct acpi_wdrt_softc *sc, uint32_t *val)
+acpi_wdrt_read_control(struct acpi_wdrt_softc *sc, uint64_t *val)
 {
 	ACPI_STATUS rv;
 
@@ -353,7 +353,7 @@ acpi_wdrt_read_control(struct acpi_wdrt_softc *sc, uint32_t *val)
 }
 
 static ACPI_STATUS
-acpi_wdrt_write_control(struct acpi_wdrt_softc *sc, uint32_t val)
+acpi_wdrt_write_control(struct acpi_wdrt_softc *sc, uint64_t val)
 {
 	ACPI_STATUS rv;
 

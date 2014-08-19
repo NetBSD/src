@@ -1,5 +1,5 @@
 /* Native definitions for alpha running OSF/1-3.x and higher, using procfs.
-   Copyright 1995, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,10 +16,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-/* Number of traps that happen between exec'ing the shell
-   to run an inferior, and when we finally get to
-   the inferior code.  This is 2 on most implementations.  */
-#define START_INFERIOR_TRAPS_EXPECTED 3
+/* Number of traps that happen between exec'ing the shell to run an
+   inferior, and when we finally get to the inferior code, not
+   counting the exec for the shell.  This is 1 on most
+   implementations.  */
+#define START_INFERIOR_TRAPS_EXPECTED 2
 
 /* Don't trace faults under OSF/1, rely on the posting of the appropriate
    signal if fault tracing is disabled.

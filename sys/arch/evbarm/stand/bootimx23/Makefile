@@ -1,22 +1,29 @@
-# $Id: Makefile,v 1.5.4.2 2013/02/25 00:28:38 tls Exp $
+# $Id: Makefile,v 1.5.4.3 2014/08/20 00:02:56 tls Exp $
 
 S=		${.CURDIR}/../../../../
 PROG=		bootimx23
-SRCS=		args_prep.c boot_prep.c clock_prep.c common.c emi_prep.c \
-		pinctrl_prep.c power_prep.c
+SRCS=		bootimx23.c power_prep.c clock_prep.c emi_prep.c pinctrl_prep.c common.c args_prep.c
 
 .include <bsd.own.mk>
 
 CLEANFILES+=	${PROG}
-CFLAGS+=	-Wall -Wno-main -ffreestanding -march=armv5te -mtune=arm926ej-s
+CFLAGS+=	-Wall -Wno-main -ffreestanding -fno-unwind-tables
+CPUFLAGS=	-march=armv5te -mtune=arm926ej-s
 CPPFLAGS+=	-D_STANDALONE -DMEMSIZE=64
 CPPFLAGS+=	-DKERNEL_BOOT_ARGS=\"root=ld0a\"
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -I${.OBJDIR} -I${S} -I${S}/arch
-CPPFLAGS+=	-mabi=apcs-gnu -mfloat-abi=soft
+CPPFLAGS+=	${ARM_APCS_FLAGS}
+.if ${HAVE_LLVM:Uno} != "no" || ${HAVE_GCC:U0} >= 48
+CPPFLAGS+=	-marm
+.else
+CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
+.endif
 #CPPFLAGS+=	-DDEBUG
-#DBG=		-g
+#CPPFLAGS+=	-DDIAGNOSTIC
+DBG=		-g
 
 LIBCRT0=	# nothing
+LIBCRTI=	# nothing
 LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing

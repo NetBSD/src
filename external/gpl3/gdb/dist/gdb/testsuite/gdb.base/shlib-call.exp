@@ -1,5 +1,4 @@
-#   Copyright 1997, 1998, 1999, 2000, 2004, 2007, 2008, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright 1997-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,29 +28,22 @@
 #prop lib shr1.sl
 #prop lib shr2.sl
 
-if $tracelevel then {
-        strace $tracelevel
-}
-
 
 if {[skip_shlib_tests]} {
     return 0
 }
 
-set testfile "shmain"
-set libfile1 "shr1"
-set libfile2 "shr2"
-set srcfile  ${srcdir}/${subdir}/${testfile}.c
-set lib1src  ${srcdir}/${subdir}/${libfile1}.c
-set lib2src  ${srcdir}/${subdir}/${libfile2}.c
-set lib1     ${objdir}/${subdir}/${libfile1}.sl
-set lib2     ${objdir}/${subdir}/${libfile2}.sl
-set binfile  ${objdir}/${subdir}/${testfile}
+standard_testfile shmain.c shr1.c shr2.c
+set srcfile  ${srcdir}/${subdir}/${srcfile}
+set lib1src  ${srcdir}/${subdir}/${srcfile2}
+set lib2src  ${srcdir}/${subdir}/${srcfile3}
+set lib1     [standard_output_file shr1.sl]
+set lib2     [standard_output_file shr2.sl]
 
 set lib_opts "debug"
 set exec_opts [list debug shlib=${lib1} shlib=${lib2}]
 
-if [get_compiler_info ${binfile}] {
+if [get_compiler_info] {
     return -1
 }
 
@@ -64,10 +56,7 @@ if { [gdb_compile_shlib ${lib1src} ${lib1} $lib_opts] != ""
 
 # Start with a fresh gdb.
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart ${binfile}
 gdb_load_shlibs $lib1 $lib2
 
 gdb_test_no_output "set print sevenbit-strings"

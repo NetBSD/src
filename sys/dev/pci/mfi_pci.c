@@ -1,4 +1,4 @@
-/* $NetBSD: mfi_pci.c,v 1.17 2012/08/31 05:22:17 jnemeth Exp $ */
+/* $NetBSD: mfi_pci.c,v 1.17.2.1 2014/08/20 00:03:43 tls Exp $ */
 /* $OpenBSD: mfi_pci.c,v 1.11 2006/08/06 04:40:08 brad Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.17 2012/08/31 05:22:17 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.17.2.1 2014/08/20 00:03:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,6 +199,7 @@ mfi_pci_attach(device_t parent, device_t self, void *aux)
 	int			regbar;
 	const char 		*subtype = NULL;
 	uint32_t		subsysid;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	psc->psc_pc = pa->pa_pc;
@@ -237,7 +238,7 @@ mfi_pci_attach(device_t parent, device_t self, void *aux)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_size);
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	if (mpd->mpd_iop == MFI_IOP_TBOLT) {
 		sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
 		    mfi_tbolt_intrh, sc);

@@ -1,4 +1,4 @@
-/* $NetBSD: stand.ldscript,v 1.4 2010/05/04 15:00:39 tsutsui Exp $ */
+/* $NetBSD: stand.ldscript,v 1.4.18.1 2014/08/20 00:03:12 tls Exp $ */
 
 /*  ldscript for NetBSD/mips stand-alone programs */
 OUTPUT_ARCH(mips)
@@ -38,4 +38,10 @@ SECTIONS
   }
   _end = . ;
   PROVIDE (end = .);
+  /DISCARD/ : {
+    *(.eh_frame_hdr)
+    *(.eh_frame)
+    *(.rel.eh_frame)
+    *(.rela.eh_frame)
+  }
 }

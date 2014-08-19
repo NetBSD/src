@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_nodeops.c,v 1.2.2.1 2012/11/20 03:02:52 tls Exp $	*/
+/*	$NetBSD: chfs_nodeops.c,v 1.2.2.2 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -51,7 +51,7 @@ chfs_update_eb_dirty(struct chfs_mount *chmp,
 		return 0;
 
 	if (size > cheb->free_size) {
-		chfs_err("free_size (%d) is less then dirty space (%d) "
+		chfs_err("free_size (%d) is less than dirty space (%d) "
 		    "on block (%d)\n", cheb->free_size, size, cheb->lnr);
 		return 1;
 	}

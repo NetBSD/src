@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.21 2011/09/06 22:41:53 jmcneill Exp $	*/
+/*	$NetBSD: audio.c,v 1.21.8.1 2014/08/20 00:04:56 tls Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: audio.c,v 1.21 2011/09/06 22:41:53 jmcneill Exp $");
+__RCSID("$NetBSD: audio.c,v 1.21.8.1 2014/08/20 00:04:56 tls Exp $");
 #endif
 
 
@@ -40,7 +40,9 @@ __RCSID("$NetBSD: audio.c,v 1.21 2011/09/06 22:41:53 jmcneill Exp $");
 #include <sys/audioio.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+#include <sys/uio.h>
 
+#include <unistd.h>
 #include <ctype.h>
 #include <err.h>
 #include <stdio.h>
@@ -48,6 +50,7 @@ __RCSID("$NetBSD: audio.c,v 1.21 2011/09/06 22:41:53 jmcneill Exp $");
 #include <string.h>
 
 #include "libaudio.h"
+#include "auconv.h"
 
 /* what format am i? */
 
@@ -65,6 +68,8 @@ static const struct {
 	{ "none",		AUDIO_FORMAT_NONE },
 	{ NULL, -1 }
 };
+
+char	audio_default_info[8] = { '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0' };
 
 int
 audio_format_from_str(char *str)
@@ -232,4 +237,71 @@ audio_errstring(int errval)
 	if (errval < 1 || errval > AUDIO_MAXERRNO)
 		return "Invalid error";
 	return audio_errlist[errval];
+}
+
+void
+write_header(struct write_info *wi)
+{
+	struct iovec iv[3];
+	int veclen, left, tlen;
+	void *hdr;
+	size_t hdrlen;
+
+	switch (wi->format) {
+	case AUDIO_FORMAT_DEFAULT:
+	case AUDIO_FORMAT_SUN:
+		if (sun_prepare_header(wi, &hdr, &hdrlen, &left) != 0)
+			return;
+		break;
+	case AUDIO_FORMAT_WAV:
+		if (wav_prepare_header(wi, &hdr, &hdrlen, &left) != 0)
+			return;
+		break;
+	case AUDIO_FORMAT_NONE:
+		return;
+	default:
+		errx(1, "unknown audio format");
+	}
+
+	veclen = 0;
+	tlen = 0;
+		
+	if (hdrlen != 0) {
+		iv[veclen].iov_base = hdr;
+		iv[veclen].iov_len = hdrlen;
+		tlen += iv[veclen++].iov_len;
+	}
+	if (wi->header_info) {
+		iv[veclen].iov_base = wi->header_info;
+		iv[veclen].iov_len = (int)strlen(wi->header_info) + 1;
+		tlen += iv[veclen++].iov_len;
+	}
+	if (left) {
+		iv[veclen].iov_base = audio_default_info;
+		iv[veclen].iov_len = left;
+		tlen += iv[veclen++].iov_len;
+	}
+
+	if (tlen == 0)
+		return;
+
+	if (writev(wi->outfd, iv, veclen) != tlen)
+		err(1, "could not write audio header");
+}
+
+write_conv_func
+write_get_conv_func(struct write_info *wi)
+{
+
+	switch (wi->format) {
+	case AUDIO_FORMAT_DEFAULT:
+	case AUDIO_FORMAT_SUN:
+		return sun_write_get_conv_func(wi);
+	case AUDIO_FORMAT_WAV:
+		return wav_write_get_conv_func(wi);
+	case AUDIO_FORMAT_NONE:
+		return NULL;
+	default:
+		errx(1, "unknown audio format");
+	}
 }

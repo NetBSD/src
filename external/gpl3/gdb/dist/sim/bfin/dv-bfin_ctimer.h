@@ -1,6 +1,6 @@
 /* Blackfin Core Timer model.
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -20,9 +20,6 @@
 
 #ifndef DV_BFIN_CTIMER_H
 #define DV_BFIN_CTIMER_H
-
-#define BFIN_COREMMR_CTIMER_BASE	0xFFE03000
-#define BFIN_COREMMR_CTIMER_SIZE	(4 * 4)
 
 /* TCNTL Masks */
 #define TMPWR		(1 << 0)

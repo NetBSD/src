@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.223.2.3 2013/02/25 00:29:52 tls Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.223.2.4 2014/08/20 00:04:29 tls Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.223.2.3 2013/02/25 00:29:52 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.223.2.4 2014/08/20 00:04:29 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -110,11 +110,18 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.223.2.3 2013/02/25 00:29:52 tls 
 
 #include <sys/disk.h>
 
+#include <sys/rnd.h>
+
 #include <machine/limits.h>
 
 /*
  * Autoconfiguration subroutines.
  */
+
+/*
+ * Device autoconfiguration timings are mixed into the entropy pool.
+ */
+extern krndsource_t rnd_autoconf_source;
 
 /*
  * ioconf.c exports exactly two names: cfdata and cfroots.  All system
@@ -241,7 +248,7 @@ frob_cfdrivervec(struct cfdriver * const *cfdriverv,
 {
 	void (*pr)(const char *, ...) __printflike(1, 2) =
 	    dopanic ? panic : printf;
-	int i = 0, error = 0, e2;
+	int i, error = 0, e2 __diagused;
 
 	for (i = 0; cfdriverv[i] != NULL; i++) {
 		if ((error = drv_do(cfdriverv[i])) != 0) {
@@ -273,7 +280,7 @@ frob_cfattachvec(const struct cfattachinit *cfattachv,
 	const struct cfattachinit *cfai = NULL;
 	void (*pr)(const char *, ...) __printflike(1, 2) =
 	    dopanic ? panic : printf;
-	int j = 0, error = 0, e2;
+	int j = 0, error = 0, e2 __diagused;
 
 	for (cfai = &cfattachv[0]; cfai->cfai_name != NULL; cfai++) {
 		for (j = 0; cfai->cfai_list[j] != NULL; j++) {
@@ -436,8 +443,8 @@ config_interrupts_thread(void *cookie)
 	while ((dc = TAILQ_FIRST(&interrupt_config_queue)) != NULL) {
 		TAILQ_REMOVE(&interrupt_config_queue, dc, dc_queue);
 		(*dc->dc_func)(dc->dc_dev);
+		config_pending_decr(dc->dc_dev);
 		kmem_free(dc, sizeof(*dc));
-		config_pending_decr();
 	}
 	kthread_exit(0);
 }
@@ -1051,6 +1058,14 @@ config_found_sm_loc(device_t parent,
 		aprint_normal("%s", msgs[(*print)(aux, device_xname(parent))]);
 	}
 
+	/*
+	 * This has the effect of mixing in a single timestamp to the
+	 * entropy pool.  Experiments indicate the estimator will almost
+	 * always attribute one bit of entropy to this sample; analysis
+	 * of device attach/detach timestamps on FreeBSD indicates 4
+	 * bits of entropy/sample so this seems appropriately conservative.
+	 */
+	rnd_add_uint32(&rnd_autoconf_source, 0);
 	return NULL;
 }
 
@@ -1910,7 +1925,7 @@ config_defer(device_t dev, void (*func)(device_t))
 	dc->dc_dev = dev;
 	dc->dc_func = func;
 	TAILQ_INSERT_TAIL(&deferred_config_queue, dc, dc_queue);
-	config_pending_incr();
+	config_pending_incr(dev);
 }
 
 /*
@@ -1944,7 +1959,7 @@ config_interrupts(device_t dev, void (*func)(device_t))
 	dc->dc_dev = dev;
 	dc->dc_func = func;
 	TAILQ_INSERT_TAIL(&interrupt_config_queue, dc, dc_queue);
-	config_pending_incr();
+	config_pending_incr(dev);
 }
 
 /*
@@ -1994,8 +2009,8 @@ config_process_deferred(struct deferred_config_head *queue,
 		if (parent == NULL || dc->dc_dev->dv_parent == parent) {
 			TAILQ_REMOVE(queue, dc, dc_queue);
 			(*dc->dc_func)(dc->dc_dev);
+			config_pending_decr(dc->dc_dev);
 			kmem_free(dc, sizeof(*dc));
-			config_pending_decr();
 		}
 	}
 }
@@ -2004,16 +2019,19 @@ config_process_deferred(struct deferred_config_head *queue,
  * Manipulate the config_pending semaphore.
  */
 void
-config_pending_incr(void)
+config_pending_incr(device_t dev)
 {
 
 	mutex_enter(&config_misc_lock);
 	config_pending++;
+#ifdef DEBUG_AUTOCONF
+	printf("%s: %s %d\n", __func__, device_xname(dev), config_pending);
+#endif
 	mutex_exit(&config_misc_lock);
 }
 
 void
-config_pending_decr(void)
+config_pending_decr(device_t dev)
 {
 
 #ifdef DIAGNOSTIC
@@ -2022,6 +2040,9 @@ config_pending_decr(void)
 #endif
 	mutex_enter(&config_misc_lock);
 	config_pending--;
+#ifdef DEBUG_AUTOCONF
+	printf("%s: %s %d\n", __func__, device_xname(dev), config_pending);
+#endif
 	if (config_pending == 0)
 		cv_broadcast(&config_misc_cv);
 	mutex_exit(&config_misc_lock);
@@ -2874,21 +2895,11 @@ null_childdetached(device_t self, device_t child)
 static void
 sysctl_detach_setup(struct sysctllog **clog)
 {
-	const struct sysctlnode *node = NULL;
 
-	sysctl_createv(clog, 0, NULL, &node,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
-
-	if (node == NULL)
-		return;
-
-	sysctl_createv(clog, 0, &node, NULL,
+	sysctl_createv(clog, 0, NULL, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		CTLTYPE_BOOL, "detachall",
 		SYSCTL_DESCR("Detach all devices at shutdown"),
 		NULL, 0, &detachall, 0,
-		CTL_CREATE, CTL_EOL);
+		CTL_KERN, CTL_CREATE, CTL_EOL);
 }

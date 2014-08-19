@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2006/04/03 09:08:03 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.14.110.1 2014/08/20 00:03:14 tls Exp $
 #
 # NOTE: This program is *not* standalone, but a userlevel program -- this
 #       program was run from within boot-only, NetBSD-as-bootloader as a
@@ -18,14 +18,7 @@ CFLAGS+=	-ffreestanding
 CPPFLAGS+=	-I${.CURDIR}/../../../.. -I${.OBJDIR}
 LDSTATIC=	-static
 
-CLEANFILES+=	machine
-
-realdepend realall: machine
-
-machine::
-	-rm -f $@
-	ln -s ${.CURDIR}/../../../../arch/${MACHINE}/include $@
-
-${PROG}: ${OBJS} machine
+${PROG}: ${OBJS}
 
 .include <bsd.prog.mk>
+.include <bsd.klinks.mk>

@@ -1,4 +1,4 @@
-.\" $NetBSD: tsc.9,v 1.4 2011/10/25 05:41:35 jruoho Exp $
+.\" $NetBSD: tsc.9,v 1.4.8.1 2014/08/20 00:02:38 tls Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 25, 2011
+.Dd November 20, 2013
 .Dt TSC 9 x86
 .Os
 .Sh NAME
@@ -59,32 +59,25 @@ register has been present since the original Pentium.
 .Pp
 Already because of the access method,
 .Tn TSC
-has traditionally provided a low-overhead and high-resolution
+provides a low-overhead and high-resolution
 way to obtain
 .Tn CPU
 timing information.
-Recently, however, this reliability has been undermined by
-such factors as system sleep states,
+This traditional premise was violated when such factors as
+system sleep states,
 .Tn CPU
 .Dq hotplugging ,
 .Dq hibernation ,
 and
 .Tn CPU
-frequency scaling.
-.Pp
-These potential new sources of unreliability are easily understandable
-when one recalls that the counter measures cycles and not
-.Dq time .
-Comparing the cycle counts only makes sense when the clock frequency
-is stable; to convert the cycle counts to time units, a general equation
-would be:
-.Dq seconds = cycles / frequency in Hz .
-The use of
-.Tn TSC
-as a source of high-resolution timing can be thus discouraged.
-But the basic premise is still guaranteed:
-.Tn TSC
-is a monotonically increasing counter.
+frequency scaling
+were introduced to the x86 lineage.
+This was however mainly a short abruption:
+in many new x86
+.Tn CPUs
+the time stamp counter is again invariant with
+respect to the stability of the clock frequency.
+Care should be however taken in implementations that rely on this assumption.
 .Sh FUNCTIONS
 .Bl -tag -width abcd
 .It Fn rdtsc ""

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.23.22.1 2012/11/20 03:01:02 tls Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.23.22.2 2014/08/20 00:02:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.23.22.1 2012/11/20 03:01:02 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.23.22.2 2014/08/20 00:02:45 tls Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -78,19 +78,19 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.23.22.1 2012/11/20 03:01:02 tls 
 #include <sys/signalvar.h>
 #include <sys/systm.h>
 #include <sys/syscallvar.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
-#include <machine/frame.h>
-#include <machine/pcb.h>
 #include <arm/swi.h>
+#include <arm/locore.h>
 
 #include <compat/linux/common/linux_errno.h>
 #include <compat/linux/linux_syscall.h>
 
 /* ARMLinux has some system calls of its very own. */
 #define LINUX_ARM_NR_BASE	0x9f0000
+#define LINUX_EARM_NR_BASE	0x0f0000
 #define LINUX_SYS_ARMBASE	0x000180 /* Must agree with syscalls.master */
 
 void linux_syscall_intern(struct proc *);
@@ -116,9 +116,15 @@ linux_syscall_plain(trapframe_t *frame, struct lwp *l, uint32_t insn)
 	register_t *args, rval[2];
 
 	code = insn & 0x00ffffff;
-	/* Remap ARM-specific syscalls onto the end of the standard range. */
-	if (code > LINUX_ARM_NR_BASE)
-		code = code - LINUX_ARM_NR_BASE + LINUX_SYS_ARMBASE;
+	if (code == 0) {	/* EABI */
+		code = frame->tf_r7;
+		if (code > LINUX_EARM_NR_BASE)
+			code = code - LINUX_EARM_NR_BASE + LINUX_SYS_ARMBASE;
+	} else {
+		/* Remap ARM-specific syscalls onto the end of the standard range. */
+		if (code > LINUX_ARM_NR_BASE)
+			code = code - LINUX_ARM_NR_BASE + LINUX_SYS_ARMBASE;
+	}
 	code &= LINUX_SYS_NSYSENT - 1;
 
 	/* Linux passes all arguments in order in registers, which is nice. */
@@ -161,9 +167,15 @@ linux_syscall_fancy(trapframe_t *frame, struct lwp *l, uint32_t insn)
 	register_t *args, rval[2];
 
 	code = insn & 0x00ffffff;
-	/* Remap ARM-specific syscalls onto the end of the standard range. */
-	if (code > LINUX_ARM_NR_BASE)
-		code = code - LINUX_ARM_NR_BASE + LINUX_SYS_ARMBASE;
+	if (code == 0) {	/* EABI */
+		code = frame->tf_r7;
+		if (code > LINUX_EARM_NR_BASE)
+			code = code - LINUX_EARM_NR_BASE + LINUX_SYS_ARMBASE;
+	} else {
+		/* Remap ARM-specific syscalls onto the end of the standard range. */
+		if (code > LINUX_ARM_NR_BASE)
+			code = code - LINUX_ARM_NR_BASE + LINUX_SYS_ARMBASE;
+	}
 	code &= LINUX_SYS_NSYSENT - 1;
 
 	/* Linux passes all arguments in order in registers, which is nice. */

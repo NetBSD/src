@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.31.2.1 2012/11/20 03:01:15 tls Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.31.2.2 2014/08/20 00:02:54 tls Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.31.2.1 2012/11/20 03:01:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.31.2.2 2014/08/20 00:02:54 tls Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -337,7 +337,7 @@ iq80310_intr_init(void)
 		iq = &intrq[i];
 		TAILQ_INIT(&iq->iq_list);
 
-		sprintf(iq->iq_name, "irq %d", i);
+		snprintf(iq->iq_name, sizeof(iq->iq_name), "irq %d", i);
 	}
 
 	iq80310_intr_calculate_masks();
@@ -419,10 +419,13 @@ iq80310_intr_dispatch(struct trapframe *frame)
 {
 	struct intrq *iq;
 	struct intrhand *ih;
-	int oldirqstate, pcpl, irq, ibit, hwpend, rv, stray;
+	int oldirqstate, pcpl, irq, ibit, hwpend, rv;
 	struct cpu_info * const ci = curcpu();
+#if 0
+	int stray;
 
 	stray = 1;
+#endif
 
 	/* First, disable external IRQs. */
 	i80200_intr_disable(INTCTL_IM | INTCTL_PM);
@@ -433,7 +436,9 @@ iq80310_intr_dispatch(struct trapframe *frame)
 		irq = ffs(hwpend) - 1;
 		ibit = (1U << irq);
 
+#if 0
 		stray = 0;
+#endif
 
 		hwpend &= ~ibit;
 

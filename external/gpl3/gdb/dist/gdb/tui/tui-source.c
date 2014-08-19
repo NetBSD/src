@@ -1,7 +1,6 @@
 /* TUI display source window.
 
-   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2007, 2008, 2009,
-   2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -36,7 +35,7 @@
 #include "tui/tui-winsource.h"
 #include "tui/tui-source.h"
 
-#include "gdb_string.h"
+#include <string.h>
 #include "gdb_curses.h"
 
 /* Function to display source in the source window.  */
@@ -47,7 +46,7 @@ tui_set_source_content (struct symtab *s,
 {
   enum tui_status ret = TUI_FAILURE;
 
-  if (s != (struct symtab *) NULL && s->filename != (char *) NULL)
+  if (s != (struct symtab *) NULL)
     {
       FILE *stream;
       int i, desc, c, line_width, nlines;
@@ -64,9 +63,10 @@ tui_set_source_content (struct symtab *s,
 	    {
 	      if (!noerror)
 		{
-		  char *name = alloca (strlen (s->filename) + 100);
+		  const char *filename = symtab_to_filename_for_display (s);
+		  char *name = alloca (strlen (filename) + 100);
 
-		  sprintf (name, "%s:%d", s->filename, line_no);
+		  sprintf (name, "%s:%d", filename, line_no);
 		  print_sys_errmsg (name, errno);
 		}
 	      ret = TUI_FAILURE;
@@ -79,14 +79,16 @@ tui_set_source_content (struct symtab *s,
 	      if (line_no < 1 || line_no > s->nlines)
 		{
 		  close (desc);
-		  printf_unfiltered (
-			  "Line number %d out of range; %s has %d lines.\n",
-				      line_no, s->filename, s->nlines);
+		  printf_unfiltered ("Line number %d out of range; "
+				     "%s has %d lines.\n",
+				     line_no,
+				     symtab_to_filename_for_display (s),
+				     s->nlines);
 		}
 	      else if (lseek (desc, s->line_charpos[line_no - 1], 0) < 0)
 		{
 		  close (desc);
-		  perror_with_name (s->filename);
+		  perror_with_name (symtab_to_filename_for_display (s));
 		}
 	      else
 		{
@@ -95,14 +97,14 @@ tui_set_source_content (struct symtab *s,
 		    = tui_locator_win_info_ptr ();
                   struct tui_source_info *src
 		    = &TUI_SRC_WIN->detail.source_info;
+		  const char *s_filename = symtab_to_filename_for_display (s);
 
                   if (TUI_SRC_WIN->generic.title)
                     xfree (TUI_SRC_WIN->generic.title);
-                  TUI_SRC_WIN->generic.title = xstrdup (s->filename);
+                  TUI_SRC_WIN->generic.title = xstrdup (s_filename);
 
-                  if (src->filename)
-                    xfree (src->filename);
-                  src->filename = xstrdup (s->filename);
+		  xfree (src->fullname);
+		  src->fullname = xstrdup (symtab_to_fullname (s));
 
 		  /* Determine the threshold for the length of the
                      line and the offset to start the display.  */
@@ -151,8 +153,8 @@ tui_set_source_content (struct symtab *s,
 			cur_line_no;
 		      element->which_element.source.is_exec_point =
 			(filename_cmp (((struct tui_win_element *)
-				       locator->content[0])->which_element.locator.file_name,
-				       s->filename) == 0
+				       locator->content[0])->which_element.locator.full_name,
+				       symtab_to_fullname (s)) == 0
 			 && cur_line_no == ((struct tui_win_element *)
 					    locator->content[0])->which_element.locator.line_no);
 		      if (c != EOF)
@@ -333,13 +335,14 @@ tui_show_symtab_source (struct gdbarch *gdbarch, struct symtab *s,
 /* Answer whether the source is currently displayed in the source
    window.  */
 int
-tui_source_is_displayed (char *fname)
+tui_source_is_displayed (const char *fullname)
 {
-  return (TUI_SRC_WIN->generic.content_in_use 
+  return (TUI_SRC_WIN != NULL
+	  && TUI_SRC_WIN->generic.content_in_use 
 	  && (filename_cmp (((struct tui_win_element *)
 			     (tui_locator_win_info_ptr ())->
-			     content[0])->which_element.locator.file_name,
-			    fname) == 0));
+			     content[0])->which_element.locator.full_name,
+			    fullname) == 0));
 }
 
 

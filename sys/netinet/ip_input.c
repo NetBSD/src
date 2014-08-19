@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.302.2.2 2013/06/23 06:20:25 tls Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.302.2.3 2014/08/20 00:04:35 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,12 +91,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.302.2.2 2013/06/23 06:20:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.302.2.3 2014/08/20 00:04:35 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
 #include "opt_gateway.h"
-#include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
 #include "opt_mbuftrace.h"
@@ -104,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.302.2.2 2013/06/23 06:20:25 tls Exp $
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
@@ -119,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.302.2.2 2013/06/23 06:20:25 tls Exp $
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/route.h>
+#include <net/pktqueue.h>
 #include <net/pfil.h>
 
 #include <netinet/in.h>
@@ -211,30 +212,18 @@ int	ip_do_randomid = 0;
  * to the loopback interface instead of the interface where the
  * packets for those addresses are received.
  */
-int	ip_checkinterface = 0;
-
+static int		ip_checkinterface	__read_mostly = 0;
 
 struct rttimer_queue *ip_mtudisc_timeout_q = NULL;
 
-u_long	in_ifaddrhash;				/* size of hash table - 1 */
-int	in_ifaddrentries;			/* total number of addrs */
-struct in_ifaddrhead in_ifaddrhead;
-struct	in_ifaddrhashhead *in_ifaddrhashtbl;
-u_long	in_multihash;				/* size of hash table - 1 */
-int	in_multientries;			/* total number of addrs */
-struct	in_multihashhead *in_multihashtbl;
-struct	ifqueue ipintrq;
+pktqueue_t *		ip_pktq			__read_mostly;
+pfil_head_t *		inet_pfil_hook		__read_mostly;
+ipid_state_t *		ip_ids			__read_mostly;
+percpu_t *		ipstat_percpu		__read_mostly;
 
-ipid_state_t *		ip_ids;
+static struct route	ipforward_rt		__cacheline_aligned;
+
 uint16_t ip_id;
-
-percpu_t *ipstat_percpu;
-
-#ifdef PFIL_HOOKS
-struct pfil_head inet_pfil_hook;
-#endif
-
-struct pool inmulti_pool;
 
 #ifdef INET_CSUM_COUNTERS
 #include <sys/device.h>
@@ -265,7 +254,9 @@ EVCNT_ATTACH_STATIC(ip_swcsum);
  * maintenance when the remote end is on a network that is not known
  * to us.
  */
-int	ip_nhops = 0;
+
+static int	ip_nhops = 0;
+
 static	struct ip_srcrt {
 	struct	in_addr dst;			/* final destination */
 	char	nop;				/* one NOP to align */
@@ -275,6 +266,11 @@ static	struct ip_srcrt {
 
 static int ip_drainwanted;
 
+struct	sockaddr_in ipaddr = {
+	.sin_len = sizeof(ipaddr),
+	.sin_family = AF_INET,
+};
+
 static void save_rte(u_char *, struct in_addr);
 
 #ifdef MBUFTRACE
@@ -282,7 +278,16 @@ struct mowner ip_rx_mowner = MOWNER_INIT("internet", "rx");
 struct mowner ip_tx_mowner = MOWNER_INIT("internet", "tx");
 #endif
 
-static void sysctl_net_inet_ip_setup(struct sysctllog **);
+static void		ipintr(void *);
+static void		ip_input(struct mbuf *);
+static void		ip_forward(struct mbuf *, int);
+static bool		ip_dooptions(struct mbuf *);
+static struct in_ifaddr *ip_rtaddr(struct in_addr);
+static void		sysctl_net_inet_ip_setup(struct sysctllog **);
+
+/* XXX: Not yet enabled. */
+#define	SOFTNET_LOCK()		KASSERT(mutex_owned(softnet_lock))
+#define	SOFTNET_UNLOCK()	KASSERT(mutex_owned(softnet_lock))
 
 /*
  * IP initialization: fill in IP protocol switch table.
@@ -292,18 +297,19 @@ void
 ip_init(void)
 {
 	const struct protosw *pr;
-	int i;
 
+	in_init();
 	sysctl_net_inet_ip_setup(NULL);
 
-	pool_init(&inmulti_pool, sizeof(struct in_multi), 0, 0, 0, "inmltpl",
-	    NULL, IPL_SOFTNET);
-
 	pr = pffindproto(PF_INET, IPPROTO_RAW, SOCK_RAW);
-	if (pr == 0)
-		panic("ip_init");
-	for (i = 0; i < IPPROTO_MAX; i++)
+	KASSERT(pr != NULL);
+
+	ip_pktq = pktq_create(IFQ_MAXLEN, ipintr, NULL);
+	KASSERT(ip_pktq != NULL);
+
+	for (u_int i = 0; i < IPPROTO_MAX; i++) {
 		ip_protox[i] = pr - inetsw;
+	}
 	for (pr = inetdomain.dom_protosw;
 	    pr < inetdomain.dom_protoswNPROTOSW; pr++)
 		if (pr->pr_domain->dom_family == PF_INET &&
@@ -315,27 +321,14 @@ ip_init(void)
 	ip_ids = ip_id_init();
 	ip_id = time_second & 0xfffff;
 
-	ipintrq.ifq_maxlen = IFQ_MAXLEN;
-
-	TAILQ_INIT(&in_ifaddrhead);
-	in_ifaddrhashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, true,
-	    &in_ifaddrhash);
-	in_multihashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, true,
-	    &in_multihash);
 	ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout);
 #ifdef GATEWAY
-	ipflow_init(ip_hashsize);
+	ipflow_init();
 #endif
 
-#ifdef PFIL_HOOKS
 	/* Register our Packet Filter hook. */
-	inet_pfil_hook.ph_type = PFIL_TYPE_AF;
-	inet_pfil_hook.ph_af   = AF_INET;
-	i = pfil_head_register(&inet_pfil_hook);
-	if (i != 0)
-		printf("ip_init: WARNING: unable to register pfil hook, "
-		    "error %d\n", i);
-#endif /* PFIL_HOOKS */
+	inet_pfil_hook = pfil_head_create(PFIL_TYPE_AF, (void *)AF_INET);
+	KASSERT(inet_pfil_hook != NULL);
 
 #ifdef MBUFTRACE
 	MOWNER_ATTACH(&ip_tx_mowner);
@@ -345,56 +338,28 @@ ip_init(void)
 	ipstat_percpu = percpu_alloc(sizeof(uint64_t) * IP_NSTATS);
 }
 
-struct	sockaddr_in ipaddr = {
-	.sin_len = sizeof(ipaddr),
-	.sin_family = AF_INET,
-};
-struct	route ipforward_rt;
-
 /*
- * IP software interrupt routine
+ * IP software interrupt routine.
  */
-void
-ipintr(void)
+static void
+ipintr(void *arg __unused)
 {
-	int s;
 	struct mbuf *m;
-	struct ifqueue lcl_intrq;
 
-	memset(&lcl_intrq, 0, sizeof(lcl_intrq));
+	KASSERT(cpu_softintr_p());
 
 	mutex_enter(softnet_lock);
-	KERNEL_LOCK(1, NULL);
-	if (!IF_IS_EMPTY(&ipintrq)) {
-		s = splnet();
-
-		/* Take existing queue onto stack */
-		lcl_intrq = ipintrq;
-
-		/* Zero out global queue, preserving maxlen and drops */
-		ipintrq.ifq_head = NULL;
-		ipintrq.ifq_tail = NULL;
-		ipintrq.ifq_len = 0;
-		ipintrq.ifq_maxlen = lcl_intrq.ifq_maxlen;
-		ipintrq.ifq_drops = lcl_intrq.ifq_drops;
-
-		splx(s);
-	}
-	KERNEL_UNLOCK_ONE(NULL);
-	while (!IF_IS_EMPTY(&lcl_intrq)) {
-		IF_DEQUEUE(&lcl_intrq, m);
-		if (m == NULL)
-			break;
+	while ((m = pktq_dequeue(ip_pktq)) != NULL) {
 		ip_input(m);
 	}
 	mutex_exit(softnet_lock);
 }
 
 /*
- * Ip input routine.  Checksum and byte swap header.  If fragmented
+ * IP input routine.  Checksum and byte swap header.  If fragmented
  * try to reassemble.  Process options.  Pass to next level.
  */
-void
+static void
 ip_input(struct mbuf *m)
 {
 	struct ip *ip = NULL;
@@ -404,17 +369,25 @@ ip_input(struct mbuf *m)
 	int downmatch;
 	int checkif;
 	int srcrt = 0;
+	ifnet_t *ifp;
+
+	KASSERTMSG(cpu_softintr_p(), "ip_input: not in the software "
+	    "interrupt handler; synchronization assumptions violated");
 
 	MCLAIM(m, &ip_rx_mowner);
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
+	ifp = m->m_pkthdr.rcvif;
 
 	/*
 	 * If no IP addresses have been set yet but the interfaces
 	 * are receiving, can't do anything with incoming packets yet.
+	 * Note: we pre-check without locks held.
 	 */
-	if (TAILQ_FIRST(&in_ifaddrhead) == 0)
+	if (!TAILQ_FIRST(&in_ifaddrhead)) {
 		goto bad;
+	}
 	IP_STATINC(IP_STAT_TOTAL);
+
 	/*
 	 * If the IP header is not aligned, slurp it up into a new
 	 * mbuf with space for link headers, in the event we forward
@@ -464,14 +437,14 @@ ip_input(struct mbuf *m)
 	/* 127/8 must not appear on wire - RFC1122 */
 	if ((ntohl(ip->ip_dst.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET ||
 	    (ntohl(ip->ip_src.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET) {
-		if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0) {
+		if ((ifp->if_flags & IFF_LOOPBACK) == 0) {
 			IP_STATINC(IP_STAT_BADADDR);
 			goto bad;
 		}
 	}
 
 	switch (m->m_pkthdr.csum_flags &
-		((m->m_pkthdr.rcvif->if_csum_flags_rx & M_CSUM_IPv4) |
+		((ifp->if_csum_flags_rx & M_CSUM_IPv4) |
 		 M_CSUM_IPv4_BAD)) {
 	case M_CSUM_IPv4|M_CSUM_IPv4_BAD:
 		INET_CSUM_COUNTER_INCR(&ip_hwcsum_bad);
@@ -487,8 +460,8 @@ ip_input(struct mbuf *m)
 		 * Must compute it ourselves.  Maybe skip checksum on
 		 * loopback interfaces.
 		 */
-		if (__predict_true(!(m->m_pkthdr.rcvif->if_flags &
-				     IFF_LOOPBACK) || ip_do_loopback_cksum)) {
+		if (__predict_true(!(ifp->if_flags & IFF_LOOPBACK) ||
+		    ip_do_loopback_cksum)) {
 			INET_CSUM_COUNTER_INCR(&ip_swcsum);
 			if (in_cksum(m, hlen) != 0)
 				goto badcsum;
@@ -531,7 +504,6 @@ ip_input(struct mbuf *m)
 	 */
 	m->m_flags |= M_CANFASTFWD;
 
-#ifdef PFIL_HOOKS
 	/*
 	 * Run through list of hooks for input packets.  If there are any
 	 * filters which require that additional packets in the flow are
@@ -539,26 +511,24 @@ ip_input(struct mbuf *m)
 	 * Note that filters must _never_ set this flag, as another filter
 	 * in the list may have previously cleared it.
 	 */
-	/*
-	 * let ipfilter look at packet on the wire,
-	 * not the decapsulated packet.
-	 */
 #if defined(IPSEC)
-	if (!ipsec_indone(m))
+	if (!ipsec_used || !ipsec_indone(m))
 #else
 	if (1)
 #endif
 	{
-		struct in_addr odst;
+		struct in_addr odst = ip->ip_dst;
+		bool freed;
 
-		odst = ip->ip_dst;
-		if (pfil_run_hooks(&inet_pfil_hook, &m, m->m_pkthdr.rcvif,
-		    PFIL_IN) != 0)
+		SOFTNET_LOCK();
+		freed = pfil_run_hooks(inet_pfil_hook, &m, ifp, PFIL_IN) != 0;
+		SOFTNET_UNLOCK();
+		if (freed || m == NULL) {
 			return;
-		if (m == NULL)
-			return;
+		}
 		ip = mtod(m, struct ip *);
 		hlen = ip->ip_hl << 2;
+
 		/*
 		 * XXX The setting of "srcrt" here is to prevent ip_forward()
 		 * from generating ICMP redirects for packets that have
@@ -575,13 +545,17 @@ ip_input(struct mbuf *m)
 		 */
 		srcrt = (odst.s_addr != ip->ip_dst.s_addr);
 	}
-#endif /* PFIL_HOOKS */
 
 #ifdef ALTQ
 	/* XXX Temporary until ALTQ is changed to use a pfil hook */
-	if (altq_input != NULL && (*altq_input)(m, AF_INET) == 0) {
-		/* packet dropped by traffic conditioner */
-		return;
+	if (altq_input) {
+		SOFTNET_LOCK();
+		if ((*altq_input)(m, AF_INET) == 0) {
+			/* Packet dropped by traffic conditioner. */
+			SOFTNET_UNLOCK();
+			return;
+		}
+		SOFTNET_UNLOCK();
 	}
 #endif
 
@@ -612,8 +586,7 @@ ip_input(struct mbuf *m)
 	 * we get finer grain control.
 	 */
 	checkif = ip_checkinterface && (ipforwarding == 0) &&
-	    (m->m_pkthdr.rcvif != NULL) &&
-	    ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0);
+	    (ifp->if_flags & IFF_LOOPBACK) == 0;
 
 	/*
 	 * Check our list of addresses, to see if the packet is for us.
@@ -625,7 +598,7 @@ ip_input(struct mbuf *m)
 	downmatch = 0;
 	LIST_FOREACH(ia, &IN_IFADDR_HASH(ip->ip_dst.s_addr), ia_hash) {
 		if (in_hosteq(ia->ia_addr.sin_addr, ip->ip_dst)) {
-			if (checkif && ia->ia_ifp != m->m_pkthdr.rcvif)
+			if (checkif && ia->ia_ifp != ifp)
 				continue;
 			if ((ia->ia_ifp->if_flags & IFF_UP) != 0)
 				break;
@@ -635,8 +608,8 @@ ip_input(struct mbuf *m)
 	}
 	if (ia != NULL)
 		goto ours;
-	if (m->m_pkthdr.rcvif && m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST) {
-		IFADDR_FOREACH(ifa, m->m_pkthdr.rcvif) {
+	if (ifp->if_flags & IFF_BROADCAST) {
+		IFADDR_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 			ia = ifatoia(ifa);
@@ -658,7 +631,6 @@ ip_input(struct mbuf *m)
 		}
 	}
 	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
-		struct in_multi *inm;
 #ifdef MROUTING
 		extern struct socket *ip_mrouter;
 
@@ -675,19 +647,23 @@ ip_input(struct mbuf *m)
 			 * as expected when ip_mforward() is called from
 			 * ip_output().)
 			 */
-			if (ip_mforward(m, m->m_pkthdr.rcvif) != 0) {
+			SOFTNET_LOCK();
+			if (ip_mforward(m, ifp) != 0) {
+				SOFTNET_UNLOCK();
 				IP_STATINC(IP_STAT_CANTFORWARD);
 				m_freem(m);
 				return;
 			}
+			SOFTNET_UNLOCK();
 
 			/*
 			 * The process-level routing demon needs to receive
 			 * all multicast IGMP packets, whether or not this
 			 * host belongs to their destination groups.
 			 */
-			if (ip->ip_p == IPPROTO_IGMP)
+			if (ip->ip_p == IPPROTO_IGMP) {
 				goto ours;
+			}
 			IP_STATINC(IP_STAT_CANTFORWARD);
 		}
 #endif
@@ -695,8 +671,7 @@ ip_input(struct mbuf *m)
 		 * See if we belong to the destination multicast group on the
 		 * arrival interface.
 		 */
-		IN_LOOKUP_MULTI(ip->ip_dst, m->m_pkthdr.rcvif, inm);
-		if (inm == NULL) {
+		if (!in_multi_group(ip->ip_dst, ifp, 0)) {
 			IP_STATINC(IP_STAT_CANTFORWARD);
 			m_freem(m);
 			return;
@@ -727,9 +702,14 @@ ip_input(struct mbuf *m)
 		}
 #ifdef IPSEC
 		/* Perform IPsec, if any. */
-		if (ipsec4_input(m, IP_FORWARDING | (ip_directedbcast ?
-		    IP_ALLOWBROADCAST : 0)) != 0) {
-			goto bad;
+		if (ipsec_used) {
+			SOFTNET_LOCK();
+			if (ipsec4_input(m, IP_FORWARDING |
+			    (ip_directedbcast ? IP_ALLOWBROADCAST : 0)) != 0) {
+				SOFTNET_UNLOCK();
+				goto bad;
+			}
+			SOFTNET_UNLOCK();
 		}
 #endif
 		ip_forward(m, srcrt);
@@ -766,10 +746,14 @@ ours:
 	 * Note that we do not visit this with protocols with PCB layer
 	 * code - like UDP/TCP/raw IP.
 	 */
-	if ((inetsw[ip_protox[ip->ip_p]].pr_flags & PR_LASTHDR) != 0) {
+	if (ipsec_used &&
+	    (inetsw[ip_protox[ip->ip_p]].pr_flags & PR_LASTHDR) != 0) {
+		SOFTNET_LOCK();
 		if (ipsec4_input(m, 0) != 0) {
+			SOFTNET_UNLOCK();
 			goto bad;
 		}
+		SOFTNET_UNLOCK();
 	}
 #endif
 
@@ -781,12 +765,13 @@ ours:
 		ia->ia_ifa.ifa_data.ifad_inbytes += ntohs(ip->ip_len);
 #endif
 	IP_STATINC(IP_STAT_DELIVERED);
-    {
-	int off = hlen, nh = ip->ip_p;
 
+	const int off = hlen, nh = ip->ip_p;
+
+	SOFTNET_LOCK();
 	(*inetsw[ip_protox[nh]].pr_input)(m, off, nh);
+	SOFTNET_UNLOCK();
 	return;
-    }
 bad:
 	m_freem(m);
 	return;
@@ -825,13 +810,13 @@ ip_drain(void)
 }
 
 /*
- * Do option processing on a datagram,
- * possibly discarding it if bad options are encountered,
- * or forwarding it if source-routed.
- * Returns 1 if packet has been forwarded/freed,
- * 0 if the packet should be processed further.
+ * ip_dooptions: perform option processing on a datagram, possibly discarding
+ * it if bad options are encountered, or forwarding it if source-routed.
+ *
+ * => Returns true if packet has been forwarded/freed.
+ * => Returns false if the packet should be processed further.
  */
-int
+static bool
 ip_dooptions(struct mbuf *m)
 {
 	struct ip *ip = mtod(m, struct ip *);
@@ -1047,20 +1032,20 @@ ip_dooptions(struct mbuf *m)
 			goto bad;
 		}
 		ip_forward(m, 1);
-		return (1);
+		return true;
 	}
-	return (0);
+	return false;
 bad:
 	icmp_error(m, type, code, 0, 0);
 	IP_STATINC(IP_STAT_BADOPTIONS);
-	return (1);
+	return true;
 }
 
 /*
- * Given address of next destination (final or next hop),
+ * ip_rtaddr: given address of next destination (final or next hop),
  * return internet address info of interface to be used to get there.
  */
-struct in_ifaddr *
+static struct in_ifaddr *
 ip_rtaddr(struct in_addr dst)
 {
 	struct rtentry *rt;
@@ -1071,26 +1056,25 @@ ip_rtaddr(struct in_addr dst)
 
 	sockaddr_in_init(&u.dst4, &dst, 0);
 
-	if ((rt = rtcache_lookup(&ipforward_rt, &u.dst)) == NULL)
+	SOFTNET_LOCK();
+	rt = rtcache_lookup(&ipforward_rt, &u.dst);
+	SOFTNET_UNLOCK();
+	if (rt == NULL)
 		return NULL;
 
 	return ifatoia(rt->rt_ifa);
 }
 
 /*
- * Save incoming source route for use in replies,
- * to be picked up later by ip_srcroute if the receiver is interested.
+ * save_rte: save incoming source route for use in replies, to be picked
+ * up later by ip_srcroute if the receiver is interested.
  */
-void
+static void
 save_rte(u_char *option, struct in_addr dst)
 {
 	unsigned olen;
 
 	olen = option[IPOPT_OLEN];
-#ifdef DIAGNOSTIC
-	if (ipprintfs)
-		printf("save_rte: olen %d\n", olen);
-#endif /* 0 */
 	if (olen > sizeof(ip_srcrt) - (1 + sizeof(dst)))
 		return;
 	memcpy((void *)ip_srcrt.srcopt, (void *)option, olen);
@@ -1121,20 +1105,12 @@ ip_srcroute(void)
 	/* length is (nhops+1)*sizeof(addr) + sizeof(nop + srcrt header) */
 	m->m_len = ip_nhops * sizeof(struct in_addr) + sizeof(struct in_addr) +
 	    OPTSIZ;
-#ifdef DIAGNOSTIC
-	if (ipprintfs)
-		printf("ip_srcroute: nhops %d mlen %d", ip_nhops, m->m_len);
-#endif
 
 	/*
 	 * First save first hop for return route
 	 */
 	p = &ip_srcrt.route[ip_nhops - 1];
 	*(mtod(m, struct in_addr *)) = *p--;
-#ifdef DIAGNOSTIC
-	if (ipprintfs)
-		printf(" hops %x", ntohl(mtod(m, struct in_addr *)->s_addr));
-#endif
 
 	/*
 	 * Copy option fields and padding (nop) to mbuf.
@@ -1151,20 +1127,12 @@ ip_srcroute(void)
 	 * reversing the path (pointers are now aligned).
 	 */
 	while (p >= ip_srcrt.route) {
-#ifdef DIAGNOSTIC
-		if (ipprintfs)
-			printf(" %x", ntohl(q->s_addr));
-#endif
 		*q++ = *p--;
 	}
 	/*
 	 * Last hop goes to final destination.
 	 */
 	*q = ip_srcrt.dst;
-#ifdef DIAGNOSTIC
-	if (ipprintfs)
-		printf(" %x\n", ntohl(q->s_addr));
-#endif
 	return (m);
 }
 
@@ -1209,7 +1177,7 @@ ip_drainstub(void)
  * The srcrt parameter indicates whether the packet is being forwarded
  * via a source route.
  */
-void
+static void
 ip_forward(struct mbuf *m, int srcrt)
 {
 	struct ip *ip = mtod(m, struct ip *);
@@ -1222,6 +1190,9 @@ ip_forward(struct mbuf *m, int srcrt)
 		struct sockaddr_in	dst4;
 	} u;
 
+	KASSERTMSG(cpu_softintr_p(), "ip_forward: not in the software "
+	    "interrupt handler; synchronization assumptions violated");
+
 	/*
 	 * We are now in the output path.
 	 */
@@ -1233,25 +1204,25 @@ ip_forward(struct mbuf *m, int srcrt)
 	m->m_pkthdr.csum_flags = 0;
 
 	dest = 0;
-#ifdef DIAGNOSTIC
-	if (ipprintfs) {
-		printf("forward: src %s ", inet_ntoa(ip->ip_src));
-		printf("dst %s ttl %x\n", inet_ntoa(ip->ip_dst), ip->ip_ttl);
-	}
-#endif
 	if (m->m_flags & (M_BCAST|M_MCAST) || in_canforward(ip->ip_dst) == 0) {
 		IP_STATINC(IP_STAT_CANTFORWARD);
 		m_freem(m);
 		return;
 	}
+
+	SOFTNET_LOCK();
+
 	if (ip->ip_ttl <= IPTTLDEC) {
 		icmp_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS, dest, 0);
+		SOFTNET_UNLOCK();
 		return;
 	}
 
 	sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
+
 	if ((rt = rtcache_lookup(&ipforward_rt, &u.dst)) == NULL) {
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_NET, dest, 0);
+		SOFTNET_UNLOCK();
 		return;
 	}
 
@@ -1291,11 +1262,6 @@ ip_forward(struct mbuf *m, int srcrt)
 			 */
 			type = ICMP_REDIRECT;
 			code = ICMP_REDIRECT_HOST;
-#ifdef DIAGNOSTIC
-			if (ipprintfs)
-				printf("redirect (%d) to %x\n", code,
-				    (u_int32_t)dest);
-#endif
 		}
 	}
 
@@ -1320,11 +1286,14 @@ ip_forward(struct mbuf *m, int srcrt)
 #endif
 				m_freem(mcopy);
 			}
+			SOFTNET_UNLOCK();
 			return;
 		}
 	}
-	if (mcopy == NULL)
+	if (mcopy == NULL) {
+		SOFTNET_UNLOCK();
 		return;
+	}
 
 	switch (error) {
 
@@ -1348,46 +1317,46 @@ ip_forward(struct mbuf *m, int srcrt)
 		if ((rt = rtcache_validate(&ipforward_rt)) != NULL)
 			destmtu = rt->rt_ifp->if_mtu;
 #ifdef IPSEC
-		(void)ipsec4_forward(mcopy, &destmtu);
+		if (ipsec_used)
+			(void)ipsec4_forward(mcopy, &destmtu);
 #endif
 		IP_STATINC(IP_STAT_CANTFRAG);
 		break;
 
 	case ENOBUFS:
-#if 1
 		/*
-		 * a router should not generate ICMP_SOURCEQUENCH as
-		 * required in RFC1812 Requirements for IP Version 4 Routers.
-		 * source quench could be a big problem under DoS attacks,
-		 * or if the underlying interface is rate-limited.
+		 * Do not generate ICMP_SOURCEQUENCH as required in RFC 1812,
+		 * Requirements for IP Version 4 Routers.  Source quench can
+		 * big problem under DoS attacks or if the underlying
+		 * interface is rate-limited.
 		 */
 		if (mcopy)
 			m_freem(mcopy);
+		SOFTNET_UNLOCK();
 		return;
-#else
-		type = ICMP_SOURCEQUENCH;
-		code = 0;
-		break;
-#endif
 	}
 	icmp_error(mcopy, type, code, dest, destmtu);
+	SOFTNET_UNLOCK();
 }
 
 void
 ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
     struct mbuf *m)
 {
+	struct socket *so = inp->inp_socket;
+	ifnet_t *ifp = m->m_pkthdr.rcvif;
+	int inpflags = inp->inp_flags;
 
-	if (inp->inp_socket->so_options & SO_TIMESTAMP
+	if (so->so_options & SO_TIMESTAMP
 #ifdef SO_OTIMESTAMP
-	    || inp->inp_socket->so_options & SO_OTIMESTAMP
+	    || so->so_options & SO_OTIMESTAMP
 #endif
 	    ) {
 		struct timeval tv;
 
 		microtime(&tv);
 #ifdef SO_OTIMESTAMP
-		if (inp->inp_socket->so_options & SO_OTIMESTAMP) {
+		if (so->so_options & SO_OTIMESTAMP) {
 			struct timeval50 tv50;
 			timeval_to_timeval50(&tv, &tv50);
 			*mp = sbcreatecontrol((void *) &tv50, sizeof(tv50),
@@ -1399,47 +1368,40 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
-	if (inp->inp_flags & INP_RECVDSTADDR) {
+	if (inpflags & INP_RECVDSTADDR) {
 		*mp = sbcreatecontrol((void *) &ip->ip_dst,
 		    sizeof(struct in_addr), IP_RECVDSTADDR, IPPROTO_IP);
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
-#ifdef notyet
-	/*
-	 * XXX
-	 * Moving these out of udp_input() made them even more broken
-	 * than they already were.
-	 *	- fenner@parc.xerox.com
-	 */
-	/* options were tossed already */
-	if (inp->inp_flags & INP_RECVOPTS) {
-		*mp = sbcreatecontrol((void *) opts_deleted_above,
-		    sizeof(struct in_addr), IP_RECVOPTS, IPPROTO_IP);
+	if (inpflags & INP_RECVPKTINFO) {
+		struct in_pktinfo ipi;
+		ipi.ipi_addr = ip->ip_src;
+		ipi.ipi_ifindex = ifp->if_index;
+		*mp = sbcreatecontrol((void *) &ipi,
+		    sizeof(ipi), IP_RECVPKTINFO, IPPROTO_IP);
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
-	/* ip_srcroute doesn't do what we want here, need to fix */
-	if (inp->inp_flags & INP_RECVRETOPTS) {
-		*mp = sbcreatecontrol((void *) ip_srcroute(),
-		    sizeof(struct in_addr), IP_RECVRETOPTS, IPPROTO_IP);
+	if (inpflags & INP_PKTINFO) {
+		struct in_pktinfo ipi;
+		ipi.ipi_addr = ip->ip_dst;
+		ipi.ipi_ifindex = ifp->if_index;
+		*mp = sbcreatecontrol((void *) &ipi,
+		    sizeof(ipi), IP_PKTINFO, IPPROTO_IP);
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
-#endif
-	if (inp->inp_flags & INP_RECVIF) {
+	if (inpflags & INP_RECVIF) {
 		struct sockaddr_dl sdl;
 
-		sockaddr_dl_init(&sdl, sizeof(sdl),
-		    (m->m_pkthdr.rcvif != NULL)
-		        ?  m->m_pkthdr.rcvif->if_index
-			: 0,
-			0, NULL, 0, NULL, 0);
+		sockaddr_dl_init(&sdl, sizeof(sdl), ifp ?
+		    ifp->if_index : 0, 0, NULL, 0, NULL, 0);
 		*mp = sbcreatecontrol(&sdl, sdl.sdl_len, IP_RECVIF, IPPROTO_IP);
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
-	if (inp->inp_flags & INP_RECVTTL) {
+	if (inpflags & INP_RECVTTL) {
 		*mp = sbcreatecontrol((void *) &ip->ip_ttl,
 		    sizeof(uint8_t), IP_RECVTTL, IPPROTO_IP);
 		if (*mp)
@@ -1502,66 +1464,6 @@ sysctl_net_inet_ip_pmtudto(SYSCTLFN_ARGS)
 	return (0);
 }
 
-#ifdef GATEWAY
-/*
- * sysctl helper routine for net.inet.ip.maxflows.
- */
-static int
-sysctl_net_inet_ip_maxflows(SYSCTLFN_ARGS)
-{
-	int error;
-
-	error = sysctl_lookup(SYSCTLFN_CALL(rnode));
-	if (error || newp == NULL)
-		return (error);
-
-	mutex_enter(softnet_lock);
-	KERNEL_LOCK(1, NULL);
-
-	ipflow_prune();
-
-	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
-
-	return (0);
-}
-
-static int
-sysctl_net_inet_ip_hashsize(SYSCTLFN_ARGS)
-{
-	int error, tmp;
-	struct sysctlnode node;
-
-	node = *rnode;
-	tmp = ip_hashsize;
-	node.sysctl_data = &tmp;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return (error);
-
-	if ((tmp & (tmp - 1)) == 0 && tmp != 0) {
-		/*
-		 * Can only fail due to malloc()
-		 */
-		mutex_enter(softnet_lock);
-		KERNEL_LOCK(1, NULL);
-
-		error = ipflow_invalidate_all(tmp);
-
-		KERNEL_UNLOCK_ONE(NULL);
-		mutex_exit(softnet_lock);
-
-	} else {
-		/*
-		 * EINVAL if not a power of 2
-	         */
-		error = EINVAL;
-	}
-
-	return error;
-}
-#endif /* GATEWAY */
-
 static int
 sysctl_net_inet_ip_stats(SYSCTLFN_ARGS)
 {
@@ -1572,13 +1474,6 @@ sysctl_net_inet_ip_stats(SYSCTLFN_ARGS)
 static void
 sysctl_net_inet_ip_setup(struct sysctllog **clog)
 {
-	extern int subnetsarelocal, hostzeroisbroadcast;
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet",
@@ -1644,14 +1539,7 @@ sysctl_net_inet_ip_setup(struct sysctllog **clog)
 		       NULL, 0, &ip_allowsrcrt, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_ALLOWSRCRT, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "subnetsarelocal",
-		       SYSCTL_DESCR("Whether logical subnets are considered "
-				    "local"),
-		       NULL, 0, &subnetsarelocal, 0,
-		       CTL_NET, PF_INET, IPPROTO_IP,
-		       IPCTL_SUBNETSARELOCAL, CTL_EOL);
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "mtudisc",
@@ -1680,29 +1568,6 @@ sysctl_net_inet_ip_setup(struct sysctllog **clog)
 		       sysctl_net_inet_ip_pmtudto, 0, (void *)&ip_mtudisc_timeout, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_MTUDISCTIMEOUT, CTL_EOL);
-#ifdef GATEWAY
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "maxflows",
-		       SYSCTL_DESCR("Number of flows for fast forwarding"),
-		       sysctl_net_inet_ip_maxflows, 0, &ip_maxflows, 0,
-		       CTL_NET, PF_INET, IPPROTO_IP,
-		       IPCTL_MAXFLOWS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_INT, "hashsize",
-			SYSCTL_DESCR("Size of hash table for fast forwarding (IPv4)"),
-			sysctl_net_inet_ip_hashsize, 0, &ip_hashsize, 0,
-			CTL_NET, PF_INET, IPPROTO_IP,
-			CTL_CREATE, CTL_EOL);
-#endif /* GATEWAY */
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "hostzerobroadcast",
-		       SYSCTL_DESCR("All zeroes address is broadcast address"),
-		       NULL, 0, &hostzeroisbroadcast, 0,
-		       CTL_NET, PF_INET, IPPROTO_IP,
-		       IPCTL_HOSTZEROBROADCAST, CTL_EOL);
 #if NGIF > 0
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,

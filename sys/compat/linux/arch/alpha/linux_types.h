@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.6 2009/01/11 02:45:48 christos Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.6.24.1 2014/08/20 00:03:31 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,6 +65,32 @@ struct linux_stat {
 	int			lst_blocks;
 	unsigned int		lst_flags;	/* unused */
 	unsigned int		lst_gen;	/* unused */
+};
+
+/* The stat64 structure increases the size of dev_t, blkcnt_t, adds
+   nanosecond resolution times, and padding for expansion.  */
+#define	LINUX_STAT64_HAS_NSEC	1
+struct linux_stat64 {
+	unsigned long		lst_dev;
+	unsigned long		lst_ino;
+	unsigned long		lst_rdev;
+	long			lst_size;
+	unsigned long		lst_blocks;
+
+	unsigned int		lst_mode;
+	unsigned int		lst_uid;
+	unsigned int		lst_gid;
+	unsigned int		lst_blksize;
+	unsigned int		lst_nlink;
+	unsigned int		__pad0;
+
+	unsigned long		lst_atime;
+	unsigned long		lst_atime_nsec; 
+	unsigned long		lst_mtime;
+	unsigned long		lst_mtime_nsec;
+	unsigned long		lst_ctime;
+	unsigned long		lst_ctime_nsec;
+	long			__pad1[3];
 };
 
 #endif /* !_ALPHA_LINUX_TYPES_H */

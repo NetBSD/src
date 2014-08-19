@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64 2012/08/08 16:29:50 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64.2.1 2014/08/20 00:02:50 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2012/08/08 16:29:50 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64.2.1 2014/08/20 00:02:50 tls Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2012/08/08 16:29:50 drochner Exp $"
 #include <sys/vnode.h>
 #include <sys/ksyms.h>
 #include <sys/module.h>
+#include <sys/cpu.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -247,6 +248,7 @@ cpu_startup(void)
 	pmapdebug = 0;
 #endif
 
+	cpu_setmodel("FIC8234");
 	if (fputype != FPU_NONE)
 		m68k_make_fpu_idle_frame();
 
@@ -274,12 +276,11 @@ cpu_startup(void)
 /*
  * Info for CTL_HW
  */
-char	cpu_model[] = "FIC8234";
 
 void
 identifycpu(void)
 {
-	printf("%s\n", cpu_model);
+	printf("%s\n", cpu_getmodel());
 	printf("delay constant: %d\n", delay_divisor);
 }
 
@@ -510,6 +511,7 @@ badaddr(void *addr)
 		return (1);
 	}
 	i = *(volatile short *)addr;
+	__USE(i);
 	nofault = (int *) 0;
 	return (0);
 }
@@ -526,6 +528,7 @@ badbaddr(void *addr)
 		return (1);
 	}
 	i = *(volatile char *)addr;
+	__USE(i);
 	nofault = (int *) 0;
 	return (0);
 }

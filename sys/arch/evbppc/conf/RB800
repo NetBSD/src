@@ -1,4 +1,4 @@
-#	$NetBSD: RB800,v 1.20.2.2 2013/06/23 06:20:05 tls Exp $
+#	$NetBSD: RB800,v 1.20.2.3 2014/08/20 00:02:59 tls Exp $
 #
 #	RB800 -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"RB800-$Revision: 1.20.2.2 $"
+ident 		"RB800-$Revision: 1.20.2.3 $"
 
 maxusers	32
 
@@ -118,7 +118,6 @@ options 	UDP_CSUM_COUNTERS
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG

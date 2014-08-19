@@ -1,4 +1,4 @@
-/* $Id: common.c,v 1.3.4.2 2013/02/25 00:28:38 tls Exp $ */
+/* $Id: common.c,v 1.3.4.3 2014/08/20 00:02:56 tls Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,6 +33,8 @@
 #include <sys/types.h>
 #include <sys/cdefs.h>
 
+#include <lib/libsa/stand.h>
+
 #include <arm/imx/imx23_digctlreg.h>
 #include <arm/imx/imx23_uartdbgreg.h>
 
@@ -44,48 +46,38 @@
 void
 delay(unsigned int us)
 {
-	uint32_t start;
-	uint32_t now;
-	uint32_t elapsed;
-	uint32_t total;
-	uint32_t last;
+        volatile uint32_t *us_r;
 
-	total = 0;
-	last = 0;
-	start = REG_RD(HW_DIGCTL_BASE + HW_DIGCTL_MICROSECONDS);
+	us_r = (uint32_t *)(HW_DIGCTL_BASE + HW_DIGCTL_MICROSECONDS);
 
-	do {
-		now = REG_RD(HW_DIGCTL_BASE + HW_DIGCTL_MICROSECONDS);
+        *us_r = 0;
+        while (*us_r < us)
+                ;
 
-		if (start <= now)
-			elapsed = now - start;
-		else	/* Take care of overflow. */
-			elapsed = (UINT32_MAX - start) + 1 + now;
-
-		total += elapsed - last;
-		last = elapsed;
-
-	} while (total < us);
-
-	return;
+        return;
 }
 
 /*
- * Write character to debug UART.
+ * Write character c to debug UART.
  */
 void
-putchar(int ch)
+putchar(int c)
 {
+	volatile uint8_t *fr_r, *dr_r;
 
-	/* Wait until transmit FIFO has space for the new character. */
-	while (REG_RD_HW(HW_UARTDBG_BASE + HW_UARTDBGFR) & HW_UARTDBGFR_TXFF);
+	fr_r = (uint8_t *)(HW_UARTDBG_BASE + HW_UARTDBGFR);
+	dr_r = (uint8_t *)(HW_UARTDBG_BASE + HW_UARTDBGDR);
 
-	REG_WR_BYTE(HW_UARTDBG_BASE + HW_UARTDBGDR,
-	    __SHIFTIN(ch, HW_UARTDBGDR_DATA));
-#ifdef DEBUG
+        /* Wait until transmit FIFO has space for the new character. */
+        while (*fr_r & HW_UARTDBGFR_TXFF)
+                ;
+
+	*dr_r = c;
+#ifdef DIAGNOSTIC
+
 	/* Flush: Wait until transmit FIFO contents are written to UART. */
-	while (!(REG_RD_HW(HW_UARTDBG_BASE + HW_UARTDBGFR) &
-	    HW_UARTDBGFR_TXFE));
+	while (!(*fr_r & HW_UARTDBGFR_TXFE))
+		;
 #endif
 
 	return;
@@ -97,10 +89,23 @@ putchar(int ch)
 int
 getchar(void)
 {
+	volatile uint8_t *fr_r, *dr_r;
+
+	fr_r = (uint8_t *)(HW_UARTDBG_BASE + HW_UARTDBGFR);
+	dr_r = (uint8_t *)(HW_UARTDBG_BASE + HW_UARTDBGDR);
 
 	/* Wait until receive FIFO has character(s) */
+	while (*fr_r & HW_UARTDBGFR_RXFE)
+		;
 
-	while (REG_RD_HW(HW_UARTDBG_BASE + HW_UARTDBGFR) & HW_UARTDBGFR_RXFE);
+	return *dr_r;
+}
 
-	return REG_RD_HW(HW_UARTDBG_BASE + HW_UARTDBGDR) & 0xFF;
+void
+vpanic(const char *fmt, va_list ap)
+{
+	printf(fmt, ap);
+	for(;;);
+
+	/* NOTREACHED */
 }

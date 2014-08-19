@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_leds.c,v 1.8.44.1 2012/11/20 03:01:16 tls Exp $	*/
+/*	$NetBSD: nslu2_leds.c,v 1.8.44.2 2014/08/20 00:02:55 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_leds.c,v 1.8.44.1 2012/11/20 03:01:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_leds.c,v 1.8.44.2 2014/08/20 00:02:55 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,8 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: nslu2_leds.c,v 1.8.44.1 2012/11/20 03:01:16 tls Exp 
 #include <sys/device.h>
 #include <sys/callout.h>
 #include <sys/proc.h>
-
-#include <machine/intr.h>
+#include <sys/intr.h>
+#include <sys/cpu.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbcdc.h>
@@ -144,11 +144,11 @@ slugled_intr2(void *arg)
 static int
 slugled_tmr(void *arg)
 {
-	struct clockframe *frame = arg;
+	struct clockframe *cf = arg;
 	uint32_t reg, bit;
 	int is;
 
-	if (CLKF_INTR(frame) || sched_curcpu_runnable_p() ||
+	if (CLKF_INTR(cf) || sched_curcpu_runnable_p() ||
 	    (curlwp != NULL && curlwp != curcpu()->ci_data.cpu_idlelwp))
 		bit = LEDBITS_STATUS;
 	else

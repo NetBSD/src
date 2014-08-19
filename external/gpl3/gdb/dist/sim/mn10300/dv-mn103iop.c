@@ -1,7 +1,6 @@
 /*  This file is part of the program GDB, the GNU debugger.
     
-    Copyright (C) 1998, 2007, 2008, 2009, 2010, 2011
-    Free Software Foundation, Inc.
+    Copyright (C) 1998-2014 Free Software Foundation, Inc.
     Contributed by Cygnus Solutions.
     
     This program is free software; you can redistribute it and/or modify
@@ -463,7 +462,7 @@ write_dedicated_control_reg (struct hw *me,
       /* select on io_port_reg: */
       if ( io_port_reg == P2SS )
 	{
-	  if ( (buf && 0xfc)  != 0 )
+	  if ( (buf & 0xfc)  != 0 )
 	    {
 	      hw_abort(me, "Cannot write to read-only bits in p2ss.");
 	    }
@@ -474,7 +473,7 @@ write_dedicated_control_reg (struct hw *me,
 	}
       else
 	{
-	  if ( (buf && 0xf0) != 0 )
+	  if ( (buf & 0xf0) != 0 )
 	    {
 	      hw_abort(me, "Cannot write to read-only bits in p4ss.");
 	    }

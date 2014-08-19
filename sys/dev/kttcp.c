@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.30 2011/12/22 02:00:19 jakllsch Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.30.6.1 2014/08/20 00:03:35 tls Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.30 2011/12/22 02:00:19 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.30.6.1 2014/08/20 00:03:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -75,8 +75,18 @@ void	kttcpattach(int);
 dev_type_ioctl(kttcpioctl);
 
 const struct cdevsw kttcp_cdevsw = {
-	nullopen, nullclose, noread, nowrite, kttcpioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = nullopen,
+	.d_close = nullclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = kttcpioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 void
@@ -226,10 +236,10 @@ kttcp_sosend(struct socket *so, unsigned long long slen,
 		}
 		if ((so->so_state & SS_ISCONNECTED) == 0) {
 			if (so->so_proto->pr_flags & PR_CONNREQUIRED) {
-				if ((so->so_state & SS_ISCONFIRMING) == 0)
-					snderr(ENOTCONN);
-			} else
+				snderr(ENOTCONN);
+			} else {
 				snderr(EDESTADDRREQ);
+			}
 		}
 		space = sbspace(&so->so_snd);
 		if (flags & MSG_OOB)
@@ -310,9 +320,12 @@ nopages:
 				so->so_options |= SO_DONTROUTE;
 			if (resid > 0)
 				so->so_state |= SS_MORETOCOME;
-			error = (*so->so_proto->pr_usrreq)(so,
-			    (flags & MSG_OOB) ? PRU_SENDOOB : PRU_SEND,
-			    top, NULL, NULL, l);
+			if (flags & MSG_OOB)
+				error = (*so->so_proto->pr_usrreqs->pr_sendoob)(so,
+				    top, NULL);
+			else
+				error = (*so->so_proto->pr_usrreqs->pr_send)(so,
+				    top, NULL, NULL, l);
 			if (dontroute)
 				so->so_options &= ~SO_DONTROUTE;
 			if (resid > 0)
@@ -358,8 +371,7 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 	if (flags & MSG_OOB) {
 		m = m_get(M_WAIT, MT_DATA);
 		solock(so);
-		error = (*pr->pr_usrreq)(so, PRU_RCVOOB, m,
-		    (struct mbuf *)(long)(flags & MSG_PEEK), NULL, NULL);
+		error = (*pr->pr_usrreqs->pr_recvoob)(so, m, flags & MSG_PEEK);
 		sounlock(so);
 		if (error)
 			goto bad;
@@ -375,8 +387,6 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 	if (mp)
 		*mp = NULL;
 	solock(so);
-	if (so->so_state & SS_ISCONFIRMING && resid)
-		(*pr->pr_usrreq)(so, PRU_RCVD, NULL, NULL, NULL, NULL);
  restart:
 	if ((error = sblock(&so->so_rcv, SBLOCKWAIT(flags))) != 0)
 		return (error);
@@ -624,9 +634,9 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 			 * protocol in case it needs to do something to
 			 * get it filled again.
 			 */
-			if ((pr->pr_flags & PR_WANTRCVD) && so->so_pcb)
-				(*pr->pr_usrreq)(so, PRU_RCVD, NULL,
-				    (struct mbuf *)(long)flags, NULL, NULL);
+			if ((pr->pr_flags & PR_WANTRCVD) && so->so_pcb) {
+				(*pr->pr_usrreqs->pr_rcvd)(so, flags, l);
+			}
 			SBLASTRECORDCHK(&so->so_rcv,
 			    "kttcp_soreceive sbwait 2");
 			SBLASTMBUFCHK(&so->so_rcv,
@@ -663,9 +673,9 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 		}
 		SBLASTRECORDCHK(&so->so_rcv, "kttcp_soreceive 4");
 		SBLASTMBUFCHK(&so->so_rcv, "kttcp_soreceive 4");
-		if (pr->pr_flags & PR_WANTRCVD && so->so_pcb)
-			(*pr->pr_usrreq)(so, PRU_RCVD, NULL,
-			    (struct mbuf *)(long)flags, NULL, NULL);
+		if (pr->pr_flags & PR_WANTRCVD && so->so_pcb) {
+			(*pr->pr_usrreqs->pr_rcvd)(so, flags, l);
+		}
 	}
 	if (orig_resid == resid && orig_resid &&
 	    (flags & MSG_EOR) == 0 && (so->so_state & SS_CANTRCVMORE) == 0) {

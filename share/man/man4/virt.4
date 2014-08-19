@@ -1,4 +1,4 @@
-.\"	$NetBSD: virt.4,v 1.2 2010/11/17 18:03:49 wiz Exp $
+.\"	$NetBSD: virt.4,v 1.2.12.1 2014/08/20 00:02:35 tls Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee
 .\" All rights reserved.
@@ -23,22 +23,16 @@
 .\" INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 15, 2010
+.Dd July 3, 2013
 .Dt VIRT 4
 .Os
 .Sh NAME
 .Nm virt
-.Nd rump virtual network interface
-.Sh SYNOPSIS
-.In rump/rump.h
-.Ft int
-.Fo rump_pub_virtif_create
-.Fa "int num"
-.Fc
+.Nd rump kernel virtual network interface
 .Sh DESCRIPTION
 The
 .Nm
-interface acts as a link between a rump virtual kernel and a host
+interface acts as a link between a rump kernel and a host
 .Xr tap 4
 interface.
 Interface number <n> always corresponds with the host tap interface tap<n>.
@@ -48,28 +42,12 @@ is written into
 .Pa /dev/tap<n>
 and all data read from
 .Pa /dev/tap<n>
-is passed as Ethernet input to the rump virtual kernel.
+is passed as Ethernet input to the rump kernel.
 .Pp
 A
 .Nm
-interface can be created in two ways:
-.Bl -bullet
-.It
-Programmatically by calling
-.Fn rump_pub_virtif_create .
-.It
-Dynamically at runtime with
-.Xr ifconfig 8
-or equivalent using the
-.Em create
-command.
-.El
-.Pp
-Destroying a
-.Nm
-interface is possible only through
-.Xr ifconfig 8
-.Em destroy .
+interface can be created and destroyed in the normal fashion with
+.Xr ifconfig 8 .
 .Pp
 The host's
 .Xr tap 4

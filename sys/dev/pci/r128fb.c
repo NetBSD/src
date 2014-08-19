@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.35.2.1 2012/11/20 03:02:29 tls Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.35.2.2 2014/08/20 00:03:48 tls Exp $	*/
 
 /*
  * Copyright (c) 2007, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.35.2.1 2012/11/20 03:02:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.35.2.2 2014/08/20 00:03:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,7 +311,8 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 			/* do some minimal setup to avoid weirdnesses later */
 			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
 			    &defattr);
-		}
+		} else
+			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
 				(0x800000 / sc->sc_stride) - sc->sc_height - 5,
 				sc->sc_width,
@@ -452,9 +453,15 @@ r128fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			return 0;
 		}
 		return EPASSTHROUGH;
+	
 	case WSDISPLAYIO_GET_EDID: {
 		struct wsdisplayio_edid_info *d = data;
 		return wsdisplayio_get_edid(sc->sc_dev, d);
+	}
+
+	case WSDISPLAYIO_GET_FBINFO: {
+		struct wsdisplayio_fbinfo *fbi = data;
+		return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
 	}
 	}
 	return EPASSTHROUGH;

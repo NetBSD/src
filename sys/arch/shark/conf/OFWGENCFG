@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.38.8.2 2013/06/23 06:20:11 tls Exp $
+#	$NetBSD: OFWGENCFG,v 1.38.8.3 2014/08/20 00:03:23 tls Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -62,7 +62,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# IP + ICMP + TCP + UDP
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks (Required
 				# if you enable the pseudo-device ipl).
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -103,7 +102,7 @@ options 	USERCONF	# userconf(4) support
 
 #options 	ARM700BUGTRACK	# track the ARM700 swi bug
 #options 	PORTMASTER	# Enable PortMaster only options
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 options 	DDB		# in-kernel debugger
 #makeoptions	DEBUG="-g"	# compile full symbol table
 

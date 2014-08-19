@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.70.22.1 2012/11/20 03:02:10 tls Exp $	*/
+/*	$NetBSD: seagate.c,v 1.70.22.2 2014/08/20 00:03:39 tls Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.70.22.1 2012/11/20 03:02:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.70.22.2 2014/08/20 00:03:39 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -557,7 +557,7 @@ void
 sea_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 {
 	struct scsipi_xfer *xs;
-	struct scsipi_periph *periph;
+	struct scsipi_periph *periph __diagused;
 	struct sea_softc *sea = device_private(chan->chan_adapter->adapt_dev);
 	struct sea_scb *scb;
 	int flags;

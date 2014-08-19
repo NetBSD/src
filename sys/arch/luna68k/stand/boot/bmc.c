@@ -1,4 +1,4 @@
-/*	$NetBSD: bmc.c,v 1.4.6.2 2013/02/25 00:28:48 tls Exp $	*/
+/*	$NetBSD: bmc.c,v 1.4.6.3 2014/08/20 00:03:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -88,6 +88,7 @@
 void
 bmccnprobe(struct consdev *cp)
 {
+
 	if ((dipsw1 & PS_BMC_CONS) == 0) {
 		cp->cn_pri = CN_DEAD;
 		return;
@@ -106,6 +107,7 @@ bmccnprobe(struct consdev *cp)
 void
 bmccninit(struct consdev *cp)
 {
+
 	sioinit();
 	bmdinit();
 }
@@ -121,14 +123,16 @@ bmccngetc(dev_t dev)
 
 	POP_RBUF(unit, c);
 
-	return(c);
-/*
-	return(siocngetc(dev));
- */
+#if 1
+	return c ;
+#else
+	return siocngetc(dev);
+#endif
 }
 
 void
 bmccnputc(dev_t dev, int c)
 {
+
 	bmdputc(c);
 }

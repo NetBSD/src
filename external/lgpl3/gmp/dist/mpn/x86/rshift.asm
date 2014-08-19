@@ -22,12 +22,12 @@ include(`../config.m4')
 
 
 C     cycles/limb
-C P54:   7.5
-C P55:   7.0
-C P6:    2.5
-C K6:    4.5
-C K7:    5.0
-C P4:   16.5
+C P54	 7.5
+C P55	 7.0
+C P6	 2.5
+C K6	 4.5
+C K7	 5.0
+C P4	16.5
 
 
 C mp_limb_t mpn_rshift (mp_ptr dst, mp_srcptr src, mp_size_t size,

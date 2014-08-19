@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2010/02/16 20:42:47 pooka Exp $
+#	$NetBSD: Makefile,v 1.2.22.1 2014/08/20 00:04:42 tls Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../net80211
 
 LIB=	rumpnet_net80211
 
-SRCS=   ieee80211.c ieee80211_acl.c ieee80211_amrr.c ieee80211_crypto.c	\
+SRCS=   ieee80211.c ieee80211_amrr.c ieee80211_crypto.c			\
 	ieee80211_crypto_ccmp.c ieee80211_crypto_none.c			\
 	ieee80211_crypto_tkip.c ieee80211_crypto_wep.c ieee80211_input.c\
 	ieee80211_ioctl.c ieee80211_netbsd.c ieee80211_node.c		\

@@ -1,7 +1,6 @@
 /* Target-dependent code for the i387.
 
-   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,6 +34,13 @@ struct ui_file;
 #define I387_MM0_REGNUM(tdep) ((tdep)->mm0_regnum)
 #define I387_NUM_YMM_REGS(tdep) ((tdep)->num_ymm_regs)
 #define I387_YMM0H_REGNUM(tdep) ((tdep)->ymm0h_regnum)
+#define I387_BND0R_REGNUM(tdep) ((tdep)->bnd0r_regnum)
+#define I387_BNDCFGU_REGNUM(tdep) ((tdep)->bndcfgu_regnum)
+
+/* Set of constants used for 32 and 64-bit.  */
+#define I387_NUM_MPX_REGS 6
+#define I387_NUM_BND_REGS 4
+#define I387_NUM_MPX_CTRL_REGS 2
 
 #define I387_FCTRL_REGNUM(tdep) (I387_ST0_REGNUM (tdep) + 8)
 #define I387_FSTAT_REGNUM(tdep) (I387_FCTRL_REGNUM (tdep) + 1)
@@ -49,6 +55,8 @@ struct ui_file;
   (I387_XMM0_REGNUM (tdep) + I387_NUM_XMM_REGS (tdep))
 #define I387_YMMENDH_REGNUM(tdep) \
   (I387_YMM0H_REGNUM (tdep) + I387_NUM_YMM_REGS (tdep))
+#define I387_MPXEND_REGNUM(tdep) \
+  (I387_BND0R_REGNUM (tdep) + I387_NUM_MPX_REGS)
 
 /* Print out the i387 floating point state.  */
 

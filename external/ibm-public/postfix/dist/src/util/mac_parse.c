@@ -1,4 +1,4 @@
-/*	$NetBSD: mac_parse.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: mac_parse.c,v 1.1.1.1.16.1 2014/08/19 23:59:45 tls Exp $	*/
 
 /*++
 /* NAME
@@ -96,8 +96,10 @@ int     mac_parse(const char *value, MAC_PARSE_FN action, char *context)
     int     level;
     int     status = 0;
 
-#define SKIP(start, var, cond) \
-        for (var = start; *var && (cond); var++);
+#define SKIP(start, var, cond) do { \
+        for (var = start; *var && (cond); var++) \
+	    /* void */; \
+    } while (0)
 
     if (msg_verbose > 1)
 	msg_info("%s: %s", myname, value);

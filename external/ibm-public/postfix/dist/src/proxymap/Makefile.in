@@ -69,6 +69,7 @@ proxymap.o: ../../include/mail_proto.h
 proxymap.o: ../../include/mail_server.h
 proxymap.o: ../../include/mail_version.h
 proxymap.o: ../../include/msg.h
+proxymap.o: ../../include/myflock.h
 proxymap.o: ../../include/mymalloc.h
 proxymap.o: ../../include/stringops.h
 proxymap.o: ../../include/sys_defs.h

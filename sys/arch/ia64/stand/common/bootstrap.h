@@ -1,4 +1,4 @@
-/*	$NetBSD: bootstrap.h,v 1.7.12.1 2013/02/25 00:28:45 tls Exp $	*/
+/*	$NetBSD: bootstrap.h,v 1.7.12.2 2014/08/20 00:03:08 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -50,10 +50,10 @@ struct devdesc
 #define	DEVT_CD		3
 };
 
-/* Commands and return values; nonzero return sets command_errmsg != NULL */
 typedef int	(bootblk_cmd_t)(int argc, char *argv[]);
-extern char	*command_errmsg;	
-extern char	command_errbuf[];	/* XXX blah, length */
+int command_seterr(const char *fmt, ...) __printflike(1, 2);
+const char *command_geterr(void);
+
 #define CMD_OK		0
 #define CMD_ERROR	1
 

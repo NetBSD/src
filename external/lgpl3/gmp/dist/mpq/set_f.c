@@ -34,9 +34,9 @@ mpq_set_f (mpq_ptr q, mpf_srcptr f)
   if (fsize == 0)
     {
       /* set q=0 */
-      q->_mp_num._mp_size = 0;
-      q->_mp_den._mp_size = 1;
-      q->_mp_den._mp_d[0] = 1;
+      SIZ(NUM(q)) = 0;
+      SIZ(DEN(q)) = 1;
+      PTR(DEN(q))[0] = 1;
       return;
     }
 
@@ -49,14 +49,13 @@ mpq_set_f (mpq_ptr q, mpf_srcptr f)
       /* radix point is to the right of the limbs, no denominator */
       mp_ptr  num_ptr;
 
-      MPZ_REALLOC (mpq_numref (q), fexp);
-      num_ptr = q->_mp_num._mp_d;
+      num_ptr = MPZ_NEWALLOC (mpq_numref (q), fexp);
       MPN_ZERO (num_ptr, fexp - abs_fsize);
       MPN_COPY (num_ptr + fexp - abs_fsize, fptr, abs_fsize);
 
-      q->_mp_num._mp_size = fsize >= 0 ? fexp : -fexp;
-      q->_mp_den._mp_size = 1;
-      q->_mp_den._mp_d[0] = 1;
+      SIZ(NUM(q)) = fsize >= 0 ? fexp : -fexp;
+      SIZ(DEN(q)) = 1;
+      PTR(DEN(q))[0] = 1;
     }
   else
     {
@@ -65,10 +64,8 @@ mpq_set_f (mpq_ptr q, mpf_srcptr f)
       mp_size_t  den_size;
 
       den_size = abs_fsize - fexp;
-      MPZ_REALLOC (mpq_numref (q), abs_fsize);
-      MPZ_REALLOC (mpq_denref (q), den_size+1);
-      num_ptr = q->_mp_num._mp_d;
-      den_ptr = q->_mp_den._mp_d;
+      num_ptr = MPZ_NEWALLOC (mpq_numref (q), abs_fsize);
+      den_ptr = MPZ_NEWALLOC (mpq_denref (q), den_size+1);
 
       if (flow & 1)
         {
@@ -93,7 +90,7 @@ mpq_set_f (mpq_ptr q, mpf_srcptr f)
           den_ptr[den_size] = GMP_LIMB_HIGHBIT >> (shift-1);
         }
 
-      q->_mp_num._mp_size = fsize >= 0 ? abs_fsize : -abs_fsize;
-      q->_mp_den._mp_size = den_size + 1;
+      SIZ(NUM(q)) = fsize >= 0 ? abs_fsize : -abs_fsize;
+      SIZ(DEN(q)) = den_size + 1;
     }
 }

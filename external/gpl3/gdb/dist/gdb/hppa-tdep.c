@@ -1,8 +1,6 @@
 /* Target-dependent code for the HP PA-RISC architecture.
 
-   Copyright (C) 1986, 1987, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
-   1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2010,
-   2011 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah (pa-gdb-bugs@cs.utah.edu).
@@ -329,7 +327,7 @@ read_unwind_info (struct objfile *objfile)
   struct hppa_unwind_info *ui;
   struct hppa_objfile_private *obj_private;
 
-  text_offset = ANOFFSET (objfile->section_offsets, 0);
+  text_offset = ANOFFSET (objfile->section_offsets, SECT_OFF_TEXT (objfile));
   ui = (struct hppa_unwind_info *) obstack_alloc (&objfile->objfile_obstack,
 					   sizeof (struct hppa_unwind_info));
 
@@ -543,8 +541,7 @@ hppa_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   unsigned long status;
   unsigned int inst;
-  char buf[4];
-  int off;
+  gdb_byte buf[4];
 
   status = target_read_memory (pc, buf, 4);
   if (status != 0)
@@ -728,7 +725,7 @@ hppa32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	  struct type *type = check_typedef (value_type (arg));
 	  /* The corresponding parameter that is pushed onto the
 	     stack, and [possibly] passed in a register.  */
-	  char param_val[8];
+	  gdb_byte param_val[8];
 	  int param_len;
 	  memset (param_val, 0, sizeof param_val);
 	  if (TYPE_LENGTH (type) > 8)
@@ -931,7 +928,7 @@ hppa64_convert_code_addr_to_fptr (struct gdbarch *gdbarch, CORE_ADDR code)
 	   addr += 2 * 8)
 	{
 	  ULONGEST opdaddr;
-	  char tmp[8];
+	  gdb_byte tmp[8];
 
 	  if (target_read_memory (addr, tmp, sizeof (tmp)))
 	      break;
@@ -1115,7 +1112,7 @@ hppa64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 /* Handle 32/64-bit struct return conventions.  */
 
 static enum return_value_convention
-hppa32_return_value (struct gdbarch *gdbarch, struct type *func_type,
+hppa32_return_value (struct gdbarch *gdbarch, struct value *function,
 		     struct type *type, struct regcache *regcache,
 		     gdb_byte *readbuf, const gdb_byte *writebuf)
 {
@@ -1155,7 +1152,7 @@ hppa32_return_value (struct gdbarch *gdbarch, struct type *func_type,
 }
 
 static enum return_value_convention
-hppa64_return_value (struct gdbarch *gdbarch, struct type *func_type,
+hppa64_return_value (struct gdbarch *gdbarch, struct value *function,
 		     struct type *type, struct regcache *regcache,
 		     gdb_byte *readbuf, const gdb_byte *writebuf)
 {
@@ -1449,7 +1446,7 @@ skip_prologue_hard_way (struct gdbarch *gdbarch, CORE_ADDR pc,
 			int stop_before_branch)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  char buf[4];
+  gdb_byte buf[4];
   CORE_ADDR orig_pc = pc;
   unsigned long inst, stack_remaining, save_gr, save_fr, save_rp, save_sp;
   unsigned long args_stored, status, i, restart_gr, restart_fr;
@@ -1699,7 +1696,6 @@ after_prologue (CORE_ADDR pc)
 {
   struct symtab_and_line sal;
   CORE_ADDR func_addr, func_end;
-  struct symbol *f;
 
   /* If we can not find the symbol in the partial symbol table, then
      there is no hope we can determine the function's start address
@@ -1739,10 +1735,7 @@ after_prologue (CORE_ADDR pc)
 static CORE_ADDR
 hppa_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
-  unsigned long inst;
-  int offset;
   CORE_ADDR post_prologue_pc;
-  char buf[4];
 
   /* See if we can determine the end of the prologue via the symbol table.
      If so, then return either PC, or the PC after the prologue, whichever
@@ -1794,7 +1787,6 @@ hppa_frame_cache (struct frame_info *this_frame, void **this_cache)
   struct hppa_frame_cache *cache;
   long saved_gr_mask;
   long saved_fr_mask;
-  CORE_ADDR this_sp;
   long frame_size;
   struct unwind_table_entry *u;
   CORE_ADDR prologue_end;
@@ -1905,7 +1897,7 @@ hppa_frame_cache (struct frame_info *this_frame, void **this_cache)
 	 pc += 4)
       {
 	int reg;
-	char buf4[4];
+	gdb_byte buf4[4];
 	long inst;
 
 	if (!safe_frame_unwind_memory (this_frame, pc, buf4, sizeof buf4)) 
@@ -2425,7 +2417,7 @@ hppa_stub_unwind_sniffer (const struct frame_unwind *self,
 
   if (pc == 0
       || (tdep->in_solib_call_trampoline != NULL
-	  && tdep->in_solib_call_trampoline (gdbarch, pc, NULL))
+	  && tdep->in_solib_call_trampoline (gdbarch, pc))
       || gdbarch_in_solib_return_trampoline (gdbarch, pc, NULL))
     return 1;
   return 0;
@@ -2647,7 +2639,7 @@ hppa64_cannot_fetch_register (struct gdbarch *gdbarch, int regnum)
 }
 
 static CORE_ADDR
-hppa_smash_text_address (struct gdbarch *gdbarch, CORE_ADDR addr)
+hppa_addr_bits_remove (struct gdbarch *gdbarch, CORE_ADDR addr)
 {
   /* The low two bits of the PC on the PA contain the privilege level.
      Some genius implementing a (non-GCC) compiler apparently decided
@@ -2863,13 +2855,12 @@ hppa_in_dyncall (CORE_ADDR pc)
 }
 
 int
-hppa_in_solib_call_trampoline (struct gdbarch *gdbarch,
-			       CORE_ADDR pc, char *name)
+hppa_in_solib_call_trampoline (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   unsigned int insn[HPPA_MAX_INSN_PATTERN_LEN];
   struct unwind_table_entry *u;
 
-  if (in_plt_section (pc, name) || hppa_in_dyncall (pc))
+  if (in_plt_section (pc) || hppa_in_dyncall (pc))
     return 1;
 
   /* The GNU toolchain produces linker stubs without unwind
@@ -2926,13 +2917,13 @@ hppa_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
       /* fallthrough */
     }
 
-  if (in_plt_section (pc, NULL))
+  if (in_plt_section (pc))
     {
       pc = read_memory_typed_address (pc, func_ptr_type);
 
       /* If the PLT slot has not yet been resolved, the target will be
          the PLT stub.  */
-      if (in_plt_section (pc, NULL))
+      if (in_plt_section (pc))
 	{
 	  /* Sanity check: are we pointing to the PLT stub?  */
   	  if (!hppa_match_insns (gdbarch, pc, hppa_plt_stub, insn))
@@ -3065,8 +3056,7 @@ hppa_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_inner_than (gdbarch, core_addr_greaterthan);
   set_gdbarch_sp_regnum (gdbarch, HPPA_SP_REGNUM);
   set_gdbarch_fp0_regnum (gdbarch, HPPA_FP0_REGNUM);
-  set_gdbarch_addr_bits_remove (gdbarch, hppa_smash_text_address);
-  set_gdbarch_smash_text_address (gdbarch, hppa_smash_text_address);
+  set_gdbarch_addr_bits_remove (gdbarch, hppa_addr_bits_remove);
   set_gdbarch_believe_pcc_promotion (gdbarch, 1);
   set_gdbarch_read_pc (gdbarch, hppa_read_pc);
   set_gdbarch_write_pc (gdbarch, hppa_write_pc);

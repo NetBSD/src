@@ -1,4 +1,4 @@
-.\"	$NetBSD: readlink.2,v 1.26.12.2 2013/02/25 00:27:54 tls Exp $
+.\"	$NetBSD: readlink.2,v 1.26.12.3 2014/08/20 00:02:16 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)readlink.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd November 18, 2012
+.Dd July 28, 2013
 .Dt READLINK 2
 .Os
 .Sh NAME
@@ -107,6 +107,8 @@ buf[len] = '\e0';
 .Ed
 .Sh ERRORS
 .Fn readlink
+and
+.Fn readlinkat
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EACCES
@@ -130,6 +132,24 @@ characters.
 The named file does not exist.
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
+.El
+.Pp
+In addition,
+.Fn readlinkat
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+.Fa path
+does not specify an absolute path and
+.Fa fd
+is neither
+.Dv AT_FDCWD
+nor a valid file descriptor open for reading or searching.
+.It Bq Er ENOTDIR
+.Fa path
+is not an absolute path and
+.Fa fd
+is a file descriptor associated with a non-directory file.
 .El
 .Sh SEE ALSO
 .Xr lstat 2 ,

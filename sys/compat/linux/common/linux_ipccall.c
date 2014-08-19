@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.c,v 1.32 2009/08/18 11:22:09 drochner Exp $	*/
+/*	$NetBSD: linux_ipccall.c,v 1.32.22.1 2014/08/20 00:03:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipccall.c,v 1.32 2009/08/18 11:22:09 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipccall.c,v 1.32.22.1 2014/08/20 00:03:32 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -91,11 +91,11 @@ linux_sys_ipc(struct lwp *l, const struct linux_sys_ipc_args *uap, register_t *r
 
 	switch (SCARG(uap, what)) {
 #ifdef SYSVSEM
-	case LINUX_SYS_semop:
+	case LINUX_SYS_SEMOP:
 		return linux_semop(l, uap, retval);
-	case LINUX_SYS_semget:
+	case LINUX_SYS_SEMGET:
 		return linux_semget(l, uap, retval);
-	case LINUX_SYS_semctl: {
+	case LINUX_SYS_SEMCTL: {
 		struct linux_sys_semctl_args bsa;
 		union linux_semun arg;
 		int error;
@@ -112,13 +112,13 @@ linux_sys_ipc(struct lwp *l, const struct linux_sys_ipc_args *uap, register_t *r
 	    }
 #endif
 #ifdef SYSVMSG
-	case LINUX_SYS_msgsnd:
+	case LINUX_SYS_MSGSND:
 		return linux_msgsnd(l, uap, retval);
-	case LINUX_SYS_msgrcv:
+	case LINUX_SYS_MSGRCV:
 		return linux_msgrcv(l, uap, retval);
-	case LINUX_SYS_msgget:
+	case LINUX_SYS_MSGGET:
 		return linux_msgget(l, uap, retval);
-	case LINUX_SYS_msgctl: {
+	case LINUX_SYS_MSGCTL: {
 		struct linux_sys_msgctl_args bsa;
 
 		SCARG(&bsa, msqid) = SCARG(uap, a1);
@@ -129,7 +129,7 @@ linux_sys_ipc(struct lwp *l, const struct linux_sys_ipc_args *uap, register_t *r
 	    }
 #endif
 #ifdef SYSVSHM
-	case LINUX_SYS_shmat: {
+	case LINUX_SYS_SHMAT: {
 		struct linux_sys_shmat_args bsa;
 
 		SCARG(&bsa, shmid) = SCARG(uap, a1);
@@ -140,11 +140,11 @@ linux_sys_ipc(struct lwp *l, const struct linux_sys_ipc_args *uap, register_t *r
 
 		return linux_sys_shmat(l, &bsa, retval);
 	    }
-	case LINUX_SYS_shmdt:
+	case LINUX_SYS_SHMDT:
 		return linux_shmdt(l, uap, retval);
-	case LINUX_SYS_shmget:
+	case LINUX_SYS_SHMGET:
 		return linux_shmget(l, uap, retval);
-	case LINUX_SYS_shmctl: {
+	case LINUX_SYS_SHMCTL: {
 		struct linux_sys_shmctl_args bsa;
 
 		SCARG(&bsa, shmid) = SCARG(uap, a1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fileload.c,v 1.2.22.1 2013/02/25 00:28:45 tls Exp $	*/
+/*	$NetBSD: fileload.c,v 1.2.22.2 2014/08/20 00:03:08 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -61,14 +61,14 @@ int
 command_load(int argc, char *argv[])
 {
     char	*typestr;
-    int		dofile, dokld, ch, error;
+    int		dofile, dokld, ch;
     
     dokld = dofile = 0;
     optind = 1;
     optreset = 1;
     typestr = NULL;
     if (argc == 1) {
-	command_errmsg = "no filename specified";
+	command_seterr("no filename specified");
 	return(CMD_ERROR);
     }
     while ((ch = getopt(argc, argv, "k:")) != -1) {
@@ -89,11 +89,12 @@ command_load(int argc, char *argv[])
      * Do we have explicit KLD load ?
      */
     if (dokld || file_havepath(argv[1])) {
-	error = file_loadkernel(argv[1], argc - 2, argv + 2);
+	int error = file_loadkernel(argv[1], argc - 2, argv + 2);
 	if (error == EEXIST)
-	    sprintf(command_errbuf, "warning: KLD '%s' already loaded", argv[1]);
+	    command_seterr("warning: KLD '%s' already loaded", argv[1]);
+	return error == 0 ? CMD_OK : CMD_ERROR;
     }
-    return (error == 0 ? CMD_OK : CMD_ERROR);
+    return CMD_OK;
 }
 
 
@@ -126,7 +127,7 @@ command_lskern(int argc, char *argv[])
 
     pager_open();
     for (fp = preloaded_files; fp; fp = fp->f_next) {
-	sprintf(lbuf, " %p: %s (%s, 0x%lx)\n", 
+	snprintf(lbuf, sizeof(lbuf), " %p: %s (%s, 0x%lx)\n", 
 		(void *) fp->f_addr, fp->f_name, fp->f_type, (long) fp->f_size);
 	pager_output(lbuf);
 	if (fp->f_args != NULL) {
@@ -160,7 +161,7 @@ file_load(char *filename, vaddr_t dest, struct preloaded_file **result)
 	if (error == EFTYPE)
 	    continue;		/* Unknown to this handler? */
 	if (error) {
-	    sprintf(command_errbuf, "can't load file '%s': %s",
+	    command_seterr("can't load file '%s': %s",
 		filename, strerror(error));
 	    break;
 	}
@@ -183,7 +184,7 @@ file_loadkernel(char *filename, int argc, char *argv[])
      */
     fp = file_findfile(filename, NULL);
     if (fp) {
-	sprintf(command_errbuf, "warning: KLD '%s' already loaded", filename);
+	command_seterr("warning: KLD '%s' already loaded", filename);
 	free(filename);
 	return (0);
     }
@@ -201,7 +202,7 @@ file_loadkernel(char *filename, int argc, char *argv[])
 	file_insert_tail(fp);		/* Add to the list of loaded files */
     } while(0);
     if (err == EFTYPE)
-	sprintf(command_errbuf, "don't know how to load module '%s'", filename);
+	command_seterr("don't know how to load module '%s'", filename);
     if (err && fp)
 	file_discard(fp);
     free(filename);

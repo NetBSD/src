@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp_start.S,v 1.2.2.2 2013/06/23 06:20:03 tls Exp $	*/
+/*	$NetBSD: armadaxp_start.S,v 1.2.2.3 2014/08/20 00:02:52 tls Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -40,17 +40,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <machine/asm.h>
 #include <arm/armreg.h>
-#include <arm/arm32/pmap.h>
+#include <evbarm/marvell/marvellreg.h>
+#include <evbarm/marvell/marvellvar.h>
+#include "assym.h"
 
-RCSID("$NetBSD: armadaxp_start.S,v 1.2.2.2 2013/06/23 06:20:03 tls Exp $")
+RCSID("$NetBSD: armadaxp_start.S,v 1.2.2.3 2014/08/20 00:02:52 tls Exp $")
 
-#define	CPWAIT_BRANCH							 \
-	sub	pc, pc, #4
-
-#define	CPWAIT(tmp)							 \
-	mrc	p15, 0, tmp, c2, c0, 0	/* arbitrary read of CP15 */	;\
-	mov	tmp, tmp		/* wait for it to complete */	;\
-	CPWAIT_BRANCH			/* branch to next insn */
+#ifdef KERNEL_BASES_EQUAL
+#error KERNEL_BASE_VIRT should not equal KERNEL_BASE_PHYS
+#endif
 
 /*
  * We don't want to hard-code some basic things like RAM start etc.
@@ -63,40 +61,30 @@ RCSID("$NetBSD: armadaxp_start.S,v 1.2.2.2 2013/06/23 06:20:03 tls Exp $")
 #error MEMSTART not defined. Please define it in std.armadaxp
 #endif
 
-	.text
+	.section .start,"ax",%progbits
 
 	.global	_C_LABEL(armadaxp_start)
 _C_LABEL(armadaxp_start):
 	/* Move into supervisor mode and disable IRQs/FIQs. */
-	mrs	r0, cpsr
-	bic	r0, r0, #PSR_MODE
-	orr	r0, r0, #(I32_bit | F32_bit)
-	msr	cpsr_c, r0
+	cpsid	if, #PSR_SVC32_MODE
 
-	adr	r7, Lunmapped
-	bic	r7, r7, #0xf0000000
-	orr	r7, r7, #MEMSTART
-disable_mmu:
 	/* Disable MMU for a while */
 	mrc     p15, 0, r2, c1, c0, 0
-	bic	r2, r2, #(CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_DC_ENABLE |\
-	    CPU_CONTROL_WBUF_ENABLE)
-	bic	r2, r2, #(CPU_CONTROL_IC_ENABLE)
-	bic	r2, r2, #(CPU_CONTROL_BPRD_ENABLE)
+	movw	r1, #(CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_DC_ENABLE |\
+	    CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_IC_ENABLE |\
+	    CPU_CONTROL_BPRD_ENABLE)
+	bic	r2, r2, r1
 	mcr	p15, 0, r2, c1, c0, 0
+	dsb
+	isb
 
-	nop
-	nop
-	nop
-	mov	pc, r7
-Lunmapped:
 	/* build page table from scratch */
-	ldr	r0, Lstartup_pagetable
+	movw	r0, #:lower16:STARTUP_PAGETABLE_ADDR
+	movt	r0, #:upper16:STARTUP_PAGETABLE_ADDR
 	adr	r4, mmu_init_table
 	b	3f
 
-2:
-	str	r3, [r0, r2]
+2:	str	r3, [r0, r2]
 	add	r2, r2, #4
 	add	r3, r3, #(L1_S_SIZE)
 	adds	r1, r1, #-1
@@ -104,40 +92,46 @@ Lunmapped:
 3:
 	ldmia	r4!, {r1,r2,r3}   /* # of sections, VA, PA|attr */
 	cmp	r1, #0
-	adrne	r5, 2b
-	bicne	r5, r5, #0xf0000000
-	orrne	r5, r5, #MEMSTART
-	movne	pc, r5
+	bne	2b
 
-	mcr	p15, 0, r0, c2, c0, 0	/* Set TTB */
-	mcr	p15, 0, r0, c8, c7, 0	/* Flush TLB */
+	mcr	p15, 0, r0, c2, c0, 0	// Set TTBR0
+#ifdef ARM_MMU_EXTENDED
+	mcr	p15, 0, r0, c2, c0, 1	// Set TTBR1
+	mov	r0, #TTBCR_S_N_1
+#else
+	mov	r0, #0
+#endif
+	mcr	p15, 0, r0, c2, c0, 2	// TTBCR write 
 
 	mov	r0, #0
-	mcr	p15, 0, r0, c13, c0, 1	/* Set ASID to 0 */
+	mcr	p15, 0, r0, c8, c7, 0	/* Flush TLB */
+
+	mcr	p15, 0, r0, c13, c0, 1	// CONTEXTIDR write: Set ASID to 0
 
 	/* Set the Domain Access register.  Very important! */
 	mov	r0, #((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT)
-	mcr	p15, 0, r0, c3, c0, 0
+	mcr	p15, 0, r0, c3, c0, 0	// DACR write
+
+#define CPU_CONTROL_SET (CPU_CONTROL_XP_ENABLE | CPU_CONTROL_IC_ENABLE \
+	    | CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_DC_ENABLE)
 
 	/* Enable MMU */
 	mrc	p15, 0, r0, c1, c0, 0
-	orr	r0, r0, #CPU_CONTROL_XP_ENABLE
-	orr	r0, r0, #(CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_DC_ENABLE)
+	movw	r1, #:lower16:CPU_CONTROL_SET
+#if (CPU_CONTROL_SET & 0xffff) != 0
+	movt	r1, #:upper16:CPU_CONTROL_SET
+#endif
+	orr	r0, r0, r1
 	mcr	p15, 0, r0, c1, c0, 0
-	nop
-	nop
-	nop
-	CPWAIT(r0)
+	isb
+	dsb
 
 	/* Jump to kernel code in TRUE VA */
-	adr	r0, Lstart
-	ldr	pc, [r0]
-Lstart:
-	.word	start
-	
+	movw	ip, #:lower16:start
+	movt	ip, #:upper16:start
+	bx	ip
+
 	/* NOTREACHED */
-Lstartup_pagetable:
-	.word	STARTUP_PAGETABLE_ADDR
 
 #define MMU_INIT(va,pa,n_sec,attr) \
 	.word	n_sec					; \
@@ -147,13 +141,19 @@ Lstartup_pagetable:
 mmu_init_table:
 	/* fill all table VA==PA */
 	/* map SDRAM VA==PA, WT cacheable */
-	MMU_INIT(0, 0, 64, L1_TYPE_S|L1_S_C|L1_S_AP(AP_KRW))
-	/* map VA 0xc0000000..0xc3ffffff to PA */
-	MMU_INIT(0xc0000000, 0, 64, L1_TYPE_S|L1_S_C|L1_S_AP(AP_KRW))
+	MMU_INIT(MEMSTART, MEMSTART, 64, L1_TYPE_S|L1_S_C|L1_S_AP_KRW)
+
+	/* map VA 0x80000000..0x83ffffff to PA */
+	MMU_INIT(KERNEL_BASE_EXT, MEMSTART, 64, L1_TYPE_S|L1_S_C|L1_S_AP_KRW)
+
 	/* 
 	 * In case of early start debugging it might be useful to map
 	 * SoC registers (for UART access).
 	 */
-	MMU_INIT(0xd0000000, 0xd0000000, 1, L1_TYPE_S|L1_S_PROTO|L1_S_AP(AP_KRW))
+	MMU_INIT(MARVELL_INTERREGS_PBASE, MARVELL_INTERREGS_PBASE, 1,
+	    L1_TYPE_S|L1_S_PROTO|L1_S_AP_KRW)
+	MMU_INIT(MARVELL_INTERREGS_VBASE, MARVELL_INTERREGS_PBASE, 1,
+	    L1_TYPE_S|L1_S_PROTO|L1_S_AP_KRW)
+
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)

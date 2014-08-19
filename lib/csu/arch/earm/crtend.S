@@ -1,4 +1,4 @@
-/*	$NetBSD: crtend.S,v 1.1 2012/08/13 02:49:04 matt Exp $	*/
+/*	$NetBSD: crtend.S,v 1.1.2.1 2014/08/20 00:02:06 tls Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,9 +30,8 @@
 
 #include <arm/asm.h>
 
-RCSID("$NetBSD: crtend.S,v 1.1 2012/08/13 02:49:04 matt Exp $")
+RCSID("$NetBSD: crtend.S,v 1.1.2.1 2014/08/20 00:02:06 tls Exp $")
 
-	.fpu softvfp
 	.eabi_attribute 18, 4		/* sizeof(wchar_t) */
 	.eabi_attribute 23, 0		/* doesn't use floating point */
 	.eabi_attribute 24, 1		/* 8 byte alignment permitted */

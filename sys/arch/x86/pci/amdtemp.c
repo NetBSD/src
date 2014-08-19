@@ -1,4 +1,4 @@
-/*      $NetBSD: amdtemp.c,v 1.16 2012/07/16 01:52:37 pgoyette Exp $ */
+/*      $NetBSD: amdtemp.c,v 1.16.2.1 2014/08/20 00:03:29 tls Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.16 2012/07/16 01:52:37 pgoyette Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.16.2.1 2014/08/20 00:03:29 tls Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -199,16 +199,14 @@ amdtemp_match(device_t parent, cfdata_t match, void *aux)
 	if (cpu_signature == 0x0)
 		return 0;
 
-	family = CPUID2FAMILY(cpu_signature);
-	if (family == 0xf)
-		family += CPUID2EXTFAMILY(cpu_signature);
+	family = CPUID_TO_FAMILY(cpu_signature);
 
 	/* Errata #319: This has been fixed in Revision C2. */
 	if (family == 0x10) {
-		if (CPUID2MODEL(cpu_signature) < 4)
+		if (CPUID_TO_BASEMODEL(cpu_signature) < 4)
 			return 0;
-		if (CPUID2MODEL(cpu_signature) == 4
-		    && CPUID2STEPPING(cpu_signature) < 2)
+		if (CPUID_TO_BASEMODEL(cpu_signature) == 4
+		    && CPUID_TO_STEPPING(cpu_signature) < 2)
 			return 0;
 	}
 
@@ -238,8 +236,7 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 	/* If we hit this, then match routine is wrong. */
 	KASSERT(cpu_signature != 0x0);
 
-	sc->sc_family = CPUID2FAMILY(cpu_signature);
-	sc->sc_family += CPUID2EXTFAMILY(cpu_signature);
+	sc->sc_family = CPUID_TO_FAMILY(cpu_signature);
 
 	KASSERT(sc->sc_family >= 0xf);
 
@@ -378,7 +375,7 @@ amdtemp_k8_init(struct amdtemp_softc *sc, pcireg_t cpu_signature)
 			sc->sc_rev = amdtemp_core[i].rev[3];
 			aprint_normal(": core rev %.4s%.1x",
 				amdtemp_core[i].rev,
-				CPUID2STEPPING(cpu_signature));
+				CPUID_TO_STEPPING(cpu_signature));
 
 			switch (amdtemp_core[i].cpu[j].socket) {
 			case K8_SOCKET_AM2:

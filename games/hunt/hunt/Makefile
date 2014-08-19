@@ -1,14 +1,12 @@
-#	$NetBSD: Makefile,v 1.7 2010/02/06 23:45:25 he Exp $
+#	$NetBSD: Makefile,v 1.7.12.1 2014/08/20 00:00:23 tls Exp $
 
 PROG=	hunt
-SRCS=	connect.c hunt.c otto.c playit.c pathname.c
+SRCS=	connect.c hunt.c otto.c playit.c server.c
 MAN=	hunt.6
 LDADD=	-lcurses -lterminfo
 DPADD=	${LIBCURSES} ${LIBTERMINFO}
 HIDEGAME=hidegame
 
-CPPFLAGS+=-I${.CURDIR}/../huntd
-
-.PATH: ${.CURDIR}/../huntd
+CPPFLAGS+=-I${.CURDIR}/../include
 
 .include <bsd.prog.mk>

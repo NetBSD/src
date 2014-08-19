@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_rinit.c,v 1.6 2005/12/11 12:24:12 christos Exp $ */
+/* $NetBSD: wscons_rinit.c,v 1.6.120.1 2014/08/20 00:03:52 tls Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wscons_rinit.c,v 1.6 2005/12/11 12:24:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wscons_rinit.c,v 1.6.120.1 2014/08/20 00:03:52 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,9 @@ void	rcons_initfont(struct rcons *, struct raster_font *);
 void
 rcons_initfont(struct rcons *rc, struct raster_font *fp)
 {
+#if !defined(MSBYTE_FIRST) && !defined(MSBIT_FIRST) /* XXX other cases */
 	static int initfontdone;
+#endif
 
 	rc->rc_font = fp;
 
@@ -87,9 +89,9 @@ rcons_initfont(struct rcons *rc, struct raster_font *fp)
 			}
 		}
 	}
-#endif
 
 	initfontdone = 1;
+#endif
 }
 
 void

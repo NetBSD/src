@@ -2,8 +2,7 @@
 
 @c This file is part of the GDB manual.
 @c
-@c Copyright (C) 2003, 2004, 2005, 2006, 2008, 2009, 2010, 2011
-@c Free Software Foundation, Inc.
+@c Copyright (C) 2003-2014 Free Software Foundation, Inc.
 @c
 @c See the file gdbint.texinfo for copying conditions.
 @c
@@ -114,6 +113,13 @@ at the entry-point instruction.  For @samp{attach} and @samp{core},
 inferior, and before any information on the inferior has been printed.
 @end deftypefun
 
+@deftypefun void record_changed (struct inferior *@var{inferior}, int @var{started})
+The status of process record for inferior @var{inferior} in
+@value{GDBN} has changed.  The process record is started if
+@var{started} is true, and the process record is stopped if
+@var{started} is false.
+@end deftypefun
+
 @deftypefun void solib_loaded (struct so_list *@var{solib})
 The shared library specified by @var{solib} has been loaded.  Note that
 when @value{GDBN} calls this observer, the library's symbols probably
@@ -130,6 +136,10 @@ symbols have not been unloaded yet, and thus are still available.
 The symbol file specified by @var{objfile} has been loaded.
 Called with @var{objfile} equal to @code{NULL} to indicate
 previously loaded symbol table data has now been invalidated.
+@end deftypefun
+
+@deftypefun void free_objfile (struct objfile *@var{objfile})
+The object file specified by @var{objfile} is about to be freed.
 @end deftypefun
 
 @deftypefun void new_thread (struct thread_info *@var{t})
@@ -159,34 +169,25 @@ thread was resume, and may be RESUME_ALL if all threads are resumed.
 The target is about to be proceeded.
 @end deftypefun
 
-@deftypefun void breakpoint_created (int @var{bpnum})
-A new breakpoint has been created.  The argument @var{bpnum} is the
-number of the newly-created breakpoint.
+@deftypefun void breakpoint_created (struct breakpoint *@var{b})
+A new breakpoint @var{b} has been created.
 @end deftypefun
 
-@deftypefun void breakpoint_deleted (int @var{bpnum})
-A breakpoint has been destroyed.  The argument @var{bpnum} is the
-number of the newly-destroyed breakpoint.
+@deftypefun void breakpoint_deleted (struct breakpoint *@var{b})
+A breakpoint has been destroyed.  The argument @var{b} is the
+pointer to the destroyed breakpoint.
 @end deftypefun
 
-@deftypefun void breakpoint_modified (int @var{bpnum})
-A breakpoint has been modified in some way.  The argument @var{bpnum}
-is the number of the modified breakpoint.
+@deftypefun void breakpoint_modified (struct breakpoint *@var{b})
+A breakpoint has been modified in some way.  The argument @var{b}
+is the modified breakpoint.
 @end deftypefun
 
-@deftypefun void tracepoint_created (int @var{tpnum})
-A new tracepoint has been created.  The argument @var{tpnum} is the
-number of the newly-created tracepoint.
-@end deftypefun
-
-@deftypefun void tracepoint_deleted (int @var{tpnum})
-A tracepoint has been destroyed.  The argument @var{tpnum} is the
-number of the newly-destroyed tracepoint.
-@end deftypefun
-
-@deftypefun void tracepoint_modified (int @var{tpnum})
-A tracepoint has been modified in some way.  The argument @var{tpnum}
-is the number of the modified tracepoint.
+@deftypefun void traceframe_changed (int @var{tfnum}, int @var{tpnum})
+The trace frame is changed to @var{tfnum} (e.g., by using the
+@code{tfind} command).  If @var{tfnum} is negative, it means
+@value{GDBN} resumes live debugging.  The number of the tracepoint
+associated with this traceframe is @var{tpnum}.
 @end deftypefun
 
 @deftypefun void architecture_changed (struct gdbarch *@var{newarch})
@@ -218,9 +219,38 @@ The inferior @var{inf} has been removed from the list of inferiors.
 This method is called immediately before freeing @var{inf}.
 @end deftypefun
 
-@deftypefun void memory_changed (CORE_ADDR @var{addr}, int @var{len}, const bfd_byte *@var{data})
+@deftypefun void memory_changed (struct inferior *@var{inferior}, CORE_ADDR @var{addr}, ssize_t @var{len}, const bfd_byte *@var{data})
 Bytes from @var{data} to @var{data} + @var{len} have been written
-to the current inferior at @var{addr}.
+to the @var{inferior} at @var{addr}.
+@end deftypefun
+
+@deftypefun void before_prompt (const char *@var{current_prompt})
+Called before a top-level prompt is displayed.  @var{current_prompt} is
+the current top-level prompt.
+@end deftypefun
+
+@deftypefun void gdb_datadir_changed (void)
+Variable gdb_datadir has been set.  The value may not necessarily change.
+@end deftypefun
+
+@deftypefun void command_param_changed (const char *@var{param}, const char *@var{value})
+The parameter of some @code{set} commands in console are changed.  This
+method is called after a command @code{set @var{param} @var{value}}.
+@var{param} is the parameter of @code{set} command, and @var{value}
+is the value of changed parameter.
+@end deftypefun
+
+@deftypefun void tsv_created (const struct trace_state_variable *@var{tsv})
+The new trace state variable @var{tsv} is created.
+@end deftypefun
+
+@deftypefun void tsv_deleted (const struct trace_state_variable *@var{tsv})
+The trace state variable @var{tsv} is deleted.  If @var{tsv} is
+@code{NULL}, all trace state variables are deleted.
+@end deftypefun
+
+@deftypefun void tsv_modified (const struct trace_state_variable *@var{tsv})
+The trace state value @var{tsv} is modified.
 @end deftypefun
 
 @deftypefun void test_notification (int @var{somearg})

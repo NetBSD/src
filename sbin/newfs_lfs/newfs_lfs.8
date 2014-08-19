@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_lfs.8,v 1.22 2009/04/08 13:13:42 joerg Exp $
+.\"	$NetBSD: newfs_lfs.8,v 1.22.12.1 2014/08/20 00:02:27 tls Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -96,7 +96,7 @@ Create a log-structured file system (LFS).
 This is the default, and this
 option is provided for compatibility only.
 .It Fl M Ar nsegs
-Specify 
+Specify
 .Em lfs_minfreeseg ,
 the number of segments left out of the amount allocated to user data.
 A higher number increases cleaner performance, while a lower number
@@ -123,7 +123,8 @@ but if
 is too close to
 .Em lfs_minfreeseg ,
 the cleaner will run without ceasing when the filesystem becomes close to
-full.  The default is the larger of 15 or the quantity
+full.
+The default is the larger of 15 or the quantity
 .Em lfs_minfreeseg
 / 2 + 1 .
 .It Fl r Ar ident

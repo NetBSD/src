@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_seq.h,v 1.16 2005/12/10 23:36:23 elad Exp $	*/
+/*	$NetBSD: tcp_seq.h,v 1.16.120.1 2014/08/20 00:04:35 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1995
@@ -58,7 +58,7 @@
 
 #define	tcp_sendseqinit(tp) \
 	(tp)->snd_una = (tp)->snd_nxt = (tp)->snd_max = (tp)->snd_up = \
-	    (tp)->snd_recover = (tp)->snd_high = (tp)->iss
+	    (tp)->snd_recover = (tp)->snd_high = (tp)->snd_fack = (tp)->iss
 
 #define TCP_ISS_RANDOM_MASK 0x00ffffff /* bits of randomness in a TCP ISS */
 #define TCP_ISSINCR         0x01000000 /* increment per time and per conn */

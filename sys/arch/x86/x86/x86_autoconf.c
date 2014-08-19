@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.65.2.2 2013/06/23 06:20:14 tls Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.65.2.3 2014/08/20 00:03:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.65.2.2 2013/06/23 06:20:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.65.2.3 2014/08/20 00:03:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,20 @@ __KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.65.2.2 2013/06/23 06:20:14 tls Ex
 
 struct disklist *x86_alldisks;
 int x86_ndisks;
+
+#ifdef DEBUG_GEOM
+#define DPRINTF(a) printf a
+#else
+#define DPRINTF(a)
+#endif
+
+static void
+dmatch(const char *func, device_t dv)
+{
+
+	printf("WARNING: %s: double match for boot device (%s, %s)\n",
+	    func, device_xname(booted_device), device_xname(dv));
+}
 
 static int
 is_valid_disk(device_t dv)
@@ -95,6 +109,8 @@ matchbiosdisks(void)
 	int dklist_size;
 	int numbig;
 
+	if (x86_ndisks)
+		return;
 	big = lookup_bootinfo(BTINFO_BIOSGEOM);
 
 	numbig = big ? big->num : 0;
@@ -124,71 +140,60 @@ matchbiosdisks(void)
 		x86_alldisks->dl_biosdisks[i].bi_cyl = big->disk[i].cyl;
 		x86_alldisks->dl_biosdisks[i].bi_lbasecs = big->disk[i].totsec;
 		x86_alldisks->dl_biosdisks[i].bi_flags = big->disk[i].flags;
-#ifdef GEOM_DEBUG
-#ifdef notyet
-		printf("disk %x: flags %x, interface %x, device %llx\n",
-		       big->disk[i].dev, big->disk[i].flags,
-		       big->disk[i].interface_path, big->disk[i].device_path);
+		DPRINTF(("%s: disk %x: flags %x",
+		    __func__, big->disk[i].dev, big->disk[i].flags));
+#ifdef BIOSDISK_EXTINFO_V3
+		DPRINTF((", interface %x, device %llx",
+		    big->disk[i].interface_path, big->disk[i].device_path));
 #endif
-#endif
+		DPRINTF(("\n"));
 	}
 
 	/* XXX Code duplication from findroot(). */
 	n = -1;
 	for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST); dv != NULL;
 	     dv = deviter_next(&di)) {
-		if (device_class(dv) != DV_DISK)
+		if (!is_valid_disk(dv))
 			continue;
-#ifdef GEOM_DEBUG
-		printf("matchbiosdisks: trying to match (%s) %s\n",
-		    device_xname(dv), device_cfdata(dv)->cf_name);
-#endif
-		if (is_valid_disk(dv)) {
-			n++;
-			snprintf(x86_alldisks->dl_nativedisks[n].ni_devname,
-			    sizeof(x86_alldisks->dl_nativedisks[n].ni_devname),
-			    "%s", device_xname(dv));
+		DPRINTF(("%s: trying to match (%s) %s: ", __func__,
+		    device_xname(dv), device_cfdata(dv)->cf_name));
+		n++;
+		snprintf(x86_alldisks->dl_nativedisks[n].ni_devname,
+		    sizeof(x86_alldisks->dl_nativedisks[n].ni_devname),
+		    "%s", device_xname(dv));
 
-			if ((tv = opendisk(dv)) == NULL)
-				continue;
-
-			error = vn_rdwr(UIO_READ, tv, mbr, DEV_BSIZE, 0,
-			    UIO_SYSSPACE, 0, NOCRED, NULL, NULL);
-			VOP_CLOSE(tv, FREAD, NOCRED);
-			vput(tv);
-			if (error) {
-#ifdef GEOM_DEBUG
-				printf("matchbiosdisks: %s: MBR read failure\n",
-				    device_xname(dv));
-#endif
-				continue;
-			}
-
-			for (ck = i = 0; i < DEV_BSIZE; i++)
-				ck += mbr[i];
-			for (m = i = 0; i < numbig; i++) {
-				be = &big->disk[i];
-#ifdef GEOM_DEBUG
-				printf("match %s with %d "
-				    "dev ck %x bios ck %x\n", device_xname(dv), i,
-				    ck, be->cksum);
-#endif
-				if (be->flags & BI_GEOM_INVALID)
-					continue;
-				if (be->cksum == ck &&
-				    memcmp(&mbr[MBR_PART_OFFSET], be->mbrparts,
-				        MBR_PART_COUNT *
-					  sizeof(struct mbr_partition)) == 0) {
-#ifdef GEOM_DEBUG
-					printf("matched BIOS disk %x with %s\n",
-					    be->dev, device_xname(dv));
-#endif
-					x86_alldisks->dl_nativedisks[n].
-					    ni_biosmatches[m++] = i;
-				}
-			}
-			x86_alldisks->dl_nativedisks[n].ni_nmatches = m;
+		if ((tv = opendisk(dv)) == NULL) {
+			DPRINTF(("cannot open\n"));
+			continue;
 		}
+
+		error = vn_rdwr(UIO_READ, tv, mbr, DEV_BSIZE, 0, UIO_SYSSPACE,
+		    0, NOCRED, NULL, NULL);
+		VOP_CLOSE(tv, FREAD, NOCRED);
+		vput(tv);
+		if (error) {
+			DPRINTF(("MBR read failure %d\n", error));
+			continue;
+		}
+
+		for (ck = i = 0; i < DEV_BSIZE; i++)
+			ck += mbr[i];
+		for (m = i = 0; i < numbig; i++) {
+			be = &big->disk[i];
+			if (be->flags & BI_GEOM_INVALID)
+				continue;
+			DPRINTF(("matched with %d dev ck %x bios ck %x\n",
+			    i, ck, be->cksum));
+			if (be->cksum == ck && memcmp(&mbr[MBR_PART_OFFSET],
+			    be->mbrparts, MBR_PART_COUNT
+			    * sizeof(struct mbr_partition)) == 0) {
+				DPRINTF(("%s: matched BIOS disk %x with %s\n",
+				    __func__, be->dev, device_xname(dv)));
+				x86_alldisks->dl_nativedisks[n].
+				    ni_biosmatches[m++] = i;
+			}
+		}
+		x86_alldisks->dl_nativedisks[n].ni_nmatches = m;
 	}
 	deviter_release(&di);
 }
@@ -212,11 +217,16 @@ match_bootwedge(device_t dv, struct btinfo_bootwedge *biw)
 	/*
 	 * If the boot loader didn't specify the sector, abort.
 	 */
-	if (biw->matchblk == -1)
-		return (0);
-
-	if ((tmpvn = opendisk(dv)) == NULL)
+	if (biw->matchblk == -1) {
+		DPRINTF(("%s: no sector specified for %s\n", __func__,
+			device_xname(dv)));
 		return 0;
+	}
+
+	if ((tmpvn = opendisk(dv)) == NULL) {
+		DPRINTF(("%s: can't open %s\n", __func__, device_xname(dv)));
+		return 0;
+	}
 
 	MD5Init(&ctx);
 	for (blk = biw->matchblk, nblks = biw->matchnblks;
@@ -225,8 +235,9 @@ match_bootwedge(device_t dv, struct btinfo_bootwedge *biw)
 		    sizeof(bf), blk * DEV_BSIZE, UIO_SYSSPACE,
 		    0, NOCRED, NULL, NULL);
 		if (error) {
-			printf("findroot: unable to read block %" PRId64 " "
-			    "of dev %s (%d)\n", blk, device_xname(dv), error);
+			printf("%s: unable to read block %" PRId64 " "
+			    "of dev %s (%d)\n", __func__,
+			    blk, device_xname(dv), error);
 			goto closeout;
 		}
 		MD5Update(&ctx, bf, sizeof(bf));
@@ -235,11 +246,12 @@ match_bootwedge(device_t dv, struct btinfo_bootwedge *biw)
 
 	/* Compare with the provided hash. */
 	found = memcmp(biw->matchhash, hash, sizeof(hash)) == 0;
+	DPRINTF(("%s: %s found=%d\n", __func__, device_xname(dv), found));
 
  closeout:
 	VOP_CLOSE(tmpvn, FREAD, NOCRED);
 	vput(tmpvn);
-	return (found);
+	return found;
 }
 
 /*
@@ -254,19 +266,25 @@ match_bootdisk(device_t dv, struct btinfo_bootdisk *bid)
 	struct disklabel label;
 	int found = 0;
 
-	if (device_is_a(dv, "dk"))
+	if (device_is_a(dv, "dk")) {
+		DPRINTF(("%s: dk %s\n", __func__, device_xname(dv)));
 		return 0;
+	}
 
 	/*
 	 * A disklabel is required here.  The boot loader doesn't refuse
 	 * to boot from a disk without a label, but this is normally not
 	 * wanted.
 	 */
-	if (bid->labelsector == -1)
-		return (0);
-	
-	if ((tmpvn = opendisk(dv)) == NULL)
+	if (bid->labelsector == -1) {
+		DPRINTF(("%s: no label %s\n", __func__, device_xname(dv)));
 		return 0;
+	}
+	
+	if ((tmpvn = opendisk(dv)) == NULL) {
+		DPRINTF(("%s: can't open %s\n", __func__, device_xname(dv)));
+		return 0;
+	}
 
 	error = VOP_IOCTL(tmpvn, DIOCGDINFO, &label, FREAD, NOCRED);
 	if (error) {
@@ -274,7 +292,7 @@ match_bootdisk(device_t dv, struct btinfo_bootdisk *bid)
 		 * XXX Can't happen -- open() would have errored out
 		 * or faked one up.
 		 */
-		printf("findroot: can't get label for dev %s (%d)\n",
+		printf("%s: can't get label for dev %s (%d)\n", __func__,
 		    device_xname(dv), error);
 		goto closeout;
 	}
@@ -285,6 +303,7 @@ match_bootdisk(device_t dv, struct btinfo_bootdisk *bid)
 	    strncmp(label.d_packname, bid->label.packname, 16) == 0)
 		found = 1;
 
+	DPRINTF(("%s: %s found=%d\n", __func__, device_xname(dv), found));
  closeout:
 	VOP_CLOSE(tmpvn, FREAD, NOCRED);
 	vput(tmpvn);
@@ -316,7 +335,7 @@ findroot(void)
 		 * information cannot be present at the same time, so give
 		 * up.
 		 */
-		printf("findroot: netboot interface not found.\n");
+		printf("%s: netboot interface not found.\n", __func__);
 		return;
 	}
 
@@ -341,6 +360,8 @@ findroot(void)
 				break;
 			}
 		}
+		DPRINTF(("%s: BTINFO_ROOTDEVICE %s\n", __func__,
+		    booted_device ? device_xname(booted_device) : "not found"));
 		deviter_release(&di);
 		if (dv != NULL)
 			return;
@@ -360,9 +381,6 @@ findroot(void)
 		for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
 		     dv != NULL;
 		     dv = deviter_next(&di)) {
-			if (device_class(dv) != DV_DISK)
-				continue;
-
 			if (is_valid_disk(dv)) {
 				/*
 				 * Don't trust BIOS device numbers, try
@@ -378,10 +396,7 @@ findroot(void)
 			continue;
  bootwedge_found:
 			if (booted_device) {
-				printf("WARNING: double match for boot "
-				    "device (%s, %s)\n",
-				    device_xname(booted_device),
-				    device_xname(dv));
+				dmatch(__func__, dv);
 				continue;
 			}
 			booted_device = dv;
@@ -391,6 +406,8 @@ findroot(void)
 		}
 		deviter_release(&di);
 
+		DPRINTF(("%s: BTINFO_BOOTWEDGE %s\n", __func__,
+		    booted_device ? device_xname(booted_device) : "not found"));
 		if (booted_nblks)
 			return;
 	}
@@ -406,10 +423,10 @@ findroot(void)
 		for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
 		     dv != NULL;
 		     dv = deviter_next(&di)) {
-			if (device_class(dv) != DV_DISK)
 				continue;
 
-			if (device_is_a(dv, "fd")) {
+			if (device_is_a(dv, "fd") &&
+			    device_class(dv) == DV_DISK) {
 				/*
 				 * Assume the configured unit number matches
 				 * the BIOS device number.  (This is the old
@@ -438,10 +455,7 @@ findroot(void)
 			continue;
  bootdisk_found:
 			if (booted_device) {
-				printf("WARNING: double match for boot "
-				    "device (%s, %s)\n",
-				    device_xname(booted_device),
-				    device_xname(dv));
+				dmatch(__func__, dv);
 				continue;
 			}
 			booted_device = dv;
@@ -450,6 +464,8 @@ findroot(void)
 		}
 		deviter_release(&di);
 
+		DPRINTF(("%s: BTINFO_BOOTDISK %s\n", __func__,
+		    booted_device ? device_xname(booted_device) : "not found"));
 		if (booted_device)
 			return;
 
@@ -489,16 +505,24 @@ findroot(void)
 				}
 			}
 			deviter_release(&di);
+			DPRINTF(("%s: BTINFO_BIOSGEOM %s\n", __func__,
+			    booted_device ? device_xname(booted_device) :
+			    "not found"));
 		}
 	}
 }
 
 void
-cpu_rootconf(void)
+cpu_bootconf(void)
 {
-
 	findroot();
 	matchbiosdisks();
+}
+
+void
+cpu_rootconf(void)
+{
+	cpu_bootconf();
 
 	aprint_normal("boot device: %s\n",
 	    booted_device ? device_xname(booted_device) : "<unknown>");
@@ -518,8 +542,7 @@ device_register(device_t dev, void *aux)
 
 	if (booted_device != NULL) {
 		/* XXX should be a panic() */
-		printf("WARNING: double match for boot device (%s, %s)\n",
-		    device_xname(booted_device), device_xname(dev));
+		dmatch(__func__, dev);
 	} else
 		booted_device = (isaboot != NULL) ? isaboot : pciboot;
 }

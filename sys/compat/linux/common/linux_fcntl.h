@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fcntl.h,v 1.14 2008/04/28 20:23:43 martin Exp $	*/
+/*	$NetBSD: linux_fcntl.h,v 1.14.44.1 2014/08/20 00:03:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,16 @@
 #define LINUX_O_WRONLY		0x0001
 #define LINUX_O_RDWR		0x0002
 #define LINUX_O_ACCMODE		0x0003
+
+#define LINUX_AT_FDCWD			-100
+#define LINUX_AT_SYMLINK_NOFOLLOW	0x0100
+#define LINUX_AT_REMOVEDIR		0x0200
+#define LINUX_AT_SYMLINK_FOLLOW		0x0400
+#define LINUX_AT_NO_AUTOMOUNT		0x0800
+#define LINUX_AT_EMPTY_PATH		0x1000
+
+int linux_to_bsd_ioflags(int);
+int linux_to_bsd_atflags(int);
 
 struct linux_flock {
 	short       l_type;

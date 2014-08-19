@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.23 2008/06/08 22:02:08 uwe Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.23.42.1 2014/08/20 00:03:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.23 2008/06/08 22:02:08 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.23.42.1 2014/08/20 00:03:23 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,17 +82,73 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	struct trapframe *tf;
 	db_addr_t callpc, frame, lastframe;
 	uint32_t vbr;
+	bool lwpid = false;
+	bool lwpaddr = false;
+	const char *cp;
+	char c;
 
 	__asm volatile("stc vbr, %0" : "=r"(vbr));
 
-	tf = &ddb_regs;
+	cp = modif;
+	while ((c = *cp++) != 0) {
+		if (c == 'a')
+			lwpaddr = true;
+		else if (c == 't')
+			lwpid = true;
+	}
 
-	frame = tf->tf_r14;
-	callpc = tf->tf_spc;
+	if (lwpaddr && lwpid) {
+		db_printf("only one of /a or /t can be specified\n");
+		return;
+	}
+	if ((lwpaddr || lwpid) && !have_addr) {
+		db_printf("%s required\n", lwpaddr ? "address" : "pid");
+		return;
+	}
 
-	if (callpc == 0) {
-		(*print)("calling through null pointer?\n");
-		callpc = tf->tf_pr;
+
+	if (!have_addr) {
+		tf = &ddb_regs;
+		frame = tf->tf_r14;
+		callpc = tf->tf_spc;
+		if (callpc == 0) {
+			(*print)("calling through null pointer?\n");
+			callpc = tf->tf_pr;
+		}
+	}
+	else if (lwpaddr || lwpid) {
+		struct proc *p;
+		struct lwp *l;
+		struct pcb *pcb;
+
+		if (lwpaddr) {
+			l = (struct lwp *)addr;
+			p = l->l_proc;
+			(*print)("trace: lwp addr %p pid %d ",
+				 (void *)addr, p->p_pid);
+		}
+		else {
+			pid_t pid = (pid_t)addr;
+			(*print)("trace: pid %d ", pid);
+			p = proc_find_raw(pid);
+			if (p == NULL) {
+				(*print)("not found\n");
+				return;
+			}
+			l = LIST_FIRST(&p->p_lwps);
+		}
+		KASSERT(l != NULL);
+		(*print)("lid %d ", l->l_lid);
+		pcb = lwp_getpcb(l);
+		tf = (struct trapframe *)pcb->pcb_sf.sf_r6_bank;
+		frame = pcb->pcb_sf.sf_r14;
+		callpc = pcb->pcb_sf.sf_pr;
+		(*print)("at %p\n", frame);
+	}
+	else {
+		/* XXX */
+		db_printf("trace by frame address is not supported\n");
+		return;
 	}
 
 	lastframe = 0;

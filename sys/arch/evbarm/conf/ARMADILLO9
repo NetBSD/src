@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.37.2.2 2013/06/23 06:20:03 tls Exp $
+#	$NetBSD: ARMADILLO9,v 1.37.2.3 2014/08/20 00:02:53 tls Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -61,7 +61,6 @@ options 	INET6		# IPV6
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options	IPFILTER_DEFAULT_BLOCK	# block all packets by default
@@ -72,6 +71,7 @@ options 	NFS_BOOT_DHCP
 #options 	NFS_BOOT_BOOTPARAM
 
 # Compatibility options
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
@@ -115,7 +115,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 # Development and Debugging options
 
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages

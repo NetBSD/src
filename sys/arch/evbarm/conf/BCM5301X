@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BCM5301X,v 1.4.2.3 2013/06/23 06:20:03 tls Exp $
+#	$NetBSD: BCM5301X,v 1.4.2.4 2014/08/20 00:02:53 tls Exp $
 #
 #	BCM5301X -- Broadcom BCM5301X Eval Board Kernel
 #
@@ -25,9 +25,10 @@ options 	BCMETH_COUNTERS
 #options 	MULTIPROCESSOR
 options 	CPU_CORTEXA9
 #options 	MEMSIZE=256
-options 	BCM5301
+options 	BCM5301X
 options 	PMAPCOUNTERS
 options 	BUSDMA_COUNTERS
+makeoptions	KERNEL_BASE_PHYS="0x80100000"
 
 # Architecture options
 
@@ -69,7 +70,6 @@ options 	INET6		# IPV6
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
@@ -88,6 +88,7 @@ options		NFS_BOOT_RWSIZE=1024
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
@@ -123,6 +124,7 @@ options 	DKWEDGE_AUTODISCOVER
 options 	DKWEDGE_METHOD_GPT
 
 # Miscellaneous kernel options
+options 	MODULAR		# support dynamically loaded kernel modules
 options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	KMEMSTATS	# kernel memory statistics
 options 	PCIVERBOSE	# Verbose PCI autoconfiguration messages
@@ -138,12 +140,12 @@ options 	RNDVERBOSE	# Verbose rnd messages
 # Development and Debugging options
 
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	LOCKDEBUG	# Enable lock debugging
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
-#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
@@ -151,7 +153,7 @@ options 	DDB_COMMANDONENTER="show event"
 options 	DB_MAX_LINE=INT_MAX
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=575000
+options 	SYMTAB_SPACE=600000
 
 ## USB Debugging options
 options USB_DEBUG
@@ -189,6 +191,7 @@ a9wdt0		at armperiph? flags 1	# A9 Watchdog Timer
 # ChipCommonA Peripherals
 bcmcca0		at mainbus?		# ChipCommonA
 #options 	CONADDR=0x18000300, CONSPEED=115200
+options 	CONSPEED=9600
 com0		at bcmcca? channel 0
 com*		at bcmcca? channel 1
 
@@ -237,6 +240,11 @@ bcmrng0		at bcmccb0
 # I2C Controller
 bcmi2c0 	at bcmccb0
 iic*		at bcmi2c?
+
+# NAND Controller
+bcmnand0	at bcmccb0
+nand*		at nandbus?
+flash*		at nand?
 
 # Watchdog timers
 #bcmwdt*	at bcmccb0

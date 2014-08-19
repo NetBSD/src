@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.129.2.1 2013/06/23 06:20:25 tls Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.129.2.2 2014/08/20 00:04:35 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,16 +94,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.129.2.1 2013/06/23 06:20:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.129.2.2 2014/08/20 00:04:35 tls Exp $");
 
 #include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
+#include <sys/kmem.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
@@ -204,10 +204,7 @@ icmp_mtudisc_callback_register(void (*func)(struct in_addr))
 			return;
 	}
 
-	mc = malloc(sizeof(*mc), M_PCB, M_NOWAIT);
-	if (mc == NULL)
-		panic("icmp_mtudisc_callback_register");
-
+	mc = kmem_alloc(sizeof(*mc), KM_SLEEP);
 	mc->mc_func = func;
 	LIST_INSERT_HEAD(&icmp_mtudisc_callbacks, mc, mc_list);
 }
@@ -641,7 +638,8 @@ reflect:
 
 		pfctlinput(PRC_REDIRECT_HOST, sintosa(&icmpsrc));
 #if defined(IPSEC)
-		key_sa_routechange((struct sockaddr *)&icmpsrc);
+		if (ipsec_used)
+			key_sa_routechange((struct sockaddr *)&icmpsrc);
 #endif
 		break;
 
@@ -995,11 +993,6 @@ static void
 sysctl_netinet_icmp_setup(struct sysctllog **clog)
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet", NULL,

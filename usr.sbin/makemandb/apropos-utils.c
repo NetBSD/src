@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.6.2.3 2013/06/23 06:29:05 tls Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.6.2.4 2014/08/20 00:05:09 tls Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.6.2.3 2013/06/23 06:29:05 tls Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.6.2.4 2014/08/20 00:05:09 tls Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -704,9 +704,9 @@ callback_html(void *data, const char *section, const char *name,
 			break;
 		}
 	}
-	qsnippet[++i] = 0;
+	qsnippet[i] = 0;
 	(*callback)(orig_data->data, section, name, name_desc,
-		(const char *)qsnippet,	qsnippet_length);
+		(const char *)qsnippet,	strlen(qsnippet));
 	free(qsnippet);
 	return 0;
 }

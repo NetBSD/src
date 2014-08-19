@@ -1,0 +1,179 @@
+.\"	$NetBSD: gpio.3lua,v 1.4.8.2 2014/08/20 00:02:34 tls Exp $
+.\"
+.\" Copyright (c) 2013, 2014 Marc Balmer <mbalmer@NetBSD.org>.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"
+.Dd Januar 7, 2014
+.Dt GPIO 3lua
+.Os
+.Sh NAME
+.Nm gpio
+.Nd access
+.Xr gpio 4
+pins from Lua
+.Sh SYNOPSIS
+.Cd "local gpio = require 'gpio'"
+.Pp
+.Bl -tag -width XXXX -compact
+.It Dv gpiodev = gpio.open(path)
+.It Dv pins = gpio.info(gpiodev)
+.It Dv gpio.close(gpiodev)
+.It Dv gpio.set(gpiodev, pin, flags)
+.It Dv gpio.unset(gpiodev, pin)
+.It Dv state = gpio.read(gpiodev, pin)
+.It Dv oldstate = gpio.write(gpiodev, pin, state)
+.It Dv gpio.toggle(gpiodev, pin)
+.It Dv gpio.attach(gpiodev, driver, offset, mask [, flags])
+.El
+.Sh DESCRIPTION
+The
+.Nm
+Lua binding provides access to a
+.Xr gpio 4
+device using the
+.Xr ioctl 2
+interface.
+.Pp
+.Bl -tag -width XXXX -compact
+.Pp
+.It Dv gpiodev = gpio.open(path)
+Open the gpio device and return an object to access its pins.
+.Pp
+.It Dv pins = gpio.info(gpiodev)
+Returns the number of pins.
+As with all remaining functions, this can also be called using the :
+notation, i.e. as
+.Em gpiodev:info() .
+.Pp
+.It Dv gpio.close(gpiodev)
+Close the gpio device.
+.Pp
+.It Dv gpio.set(gpiodev, pin, flags)
+Set gpio pin flags.
+Note that the pin number in this and all remaining functions is zero based and
+not one based, this to avoid confusion with tools like
+.Xr gpioctl 8
+which also number pins starting at zero.
+The following flags are defined:
+.Pp
+.Bl -tag -width XXXX -compact
+.It Dv gpio.PIN_INPUT
+Pin is an input.
+.Pp
+.It Dv gpio.PIN_OUTPUT
+Pin is an output.
+.Pp
+.It Dv gpio.PIN_INOUT
+Pin is birectional.
+.Pp
+.It Dv gpio.PIN_OPENDRAIN
+Pin is an open-drain output.
+.Pp
+.It Dv gpio.PIN_PUSHPULL
+Pin is a push-pull output.
+.Pp
+.It Dv gpio.PIN_TRISTATE
+Pin is tri-state (output disabled).
+.Pp
+.It Dv gpio.PIN_PULLUP
+Pin has an internal pull-up enabled.
+.Pp
+.It Dv gpio.PIN_PULLDOWN
+Pin has an internal pull-down enabled.
+.Pp
+.It Dv gpio.PIN_INVIN
+Invert input.
+.Pp
+.It Dv gpio.PIN_INVOUT
+Invert output.
+.Pp
+.It Dv gpio.PIN_USER
+Pin accessible by users.
+.Pp
+.It Dv gpio.PIN_PULSATE
+Pulsate pin at a hardware set frequency.
+.Pp
+.It Dv gpio.PIN_SET
+Pin is set.
+.El
+.Pp
+.It Dv gpio.unset(gpiodev, pin)
+Unset gpio pin.
+.Pp
+.It Dv stat = gpio.read(gpiodev, pin)
+Read the current pin state.
+.Pp
+.It Dv oldstate = gpio.write(gpiodev, pin, state)
+Write the pin state returning the old state.
+The following states are defined:
+.Pp
+.Bl -tag -width XXXX -compact
+.It Dv gpio.PIN_LOW
+Pin is in the low state.
+.Pp
+.It Dv gpio.PIN_HIGH
+Pin is in the high state.
+.El
+.Pp
+.It Dv gpio.toggle(gpiodev, pin)
+Toggle pin state.
+.Pp
+.It Dv gpio.attach(gpiodev, driver, offset, mask [, flags])
+Attach a device driver with offset, mask, and optional flags at a pin.
+.El
+.Sh EXAMPLES
+The following example code opens
+.Pa /dev/gpio0
+and prints all pin values:
+.Bd -literal
+local gpio = require 'gpio'
+
+gpiodev = gpio.open('/dev/gpio0')
+
+local npins = gpiodev:info()
+
+for n = 1, npins do
+	print('pin ' .. n .. ': ' .. gpiodev:read(n - 1))
+end
+.Ed
+.Sh SEE ALSO
+.Xr lua 1 ,
+.Xr luac 1 ,
+.Xr intro 3lua ,
+.Xr gpio 4
+.Sh HISTORY
+A
+.Nm
+manual appeared in
+.Nx 7.0 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+Lua binding was written by
+.An Marc Balmer Aq Mt mbalmer@NetBSD.org .

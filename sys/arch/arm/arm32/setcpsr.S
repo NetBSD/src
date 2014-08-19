@@ -1,4 +1,4 @@
-/*	$NetBSD: setcpsr.S,v 1.2 2002/08/15 01:37:02 briggs Exp $	*/
+/*	$NetBSD: setcpsr.S,v 1.2.160.1 2014/08/20 00:02:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -63,7 +63,8 @@ ENTRY_NP(SetCPSR)
 
         mov	r0, r3			/* Return the old CPSR */
 
-	mov	pc, lr
+	RET
+END(SetCPSR)
 
 
 /* Gets the CPSR register
@@ -73,6 +74,5 @@ ENTRY_NP(SetCPSR)
 
 ENTRY_NP(GetCPSR)
         mrs     r0, cpsr		/* Get the CPSR */
-
-	mov	pc, lr
-
+	RET
+END(GetCPSR)

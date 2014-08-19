@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.h,v 1.9.2.2 2013/06/23 06:18:39 tls Exp $	*/
+/*	$NetBSD: ulfs_inode.h,v 1.9.2.3 2014/08/20 00:04:45 tls Exp $	*/
 /*  from NetBSD: inode.h,v 1.64 2012/11/19 00:36:21 jakllsch Exp  */
 
 /*
@@ -44,6 +44,22 @@
 #include <ufs/lfs/lfs_inode.h>
 #include <ufs/lfs/ulfs_dinode.h>
 #include <ufs/lfs/ulfs_quotacommon.h>
+
+/*
+ * These macros are used to bracket ULFS directory ops, so that we can
+ * identify all the pages touched during directory ops which need to
+ * be ordered and flushed atomically, so that they may be recovered.
+ *
+ * Because we have to mark nodes VU_DIROP in order to prevent
+ * the cache from reclaiming them while a dirop is in progress, we must
+ * also manage the number of nodes so marked (otherwise we can run out).
+ * We do this by setting lfs_dirvcount to the number of marked vnodes; it
+ * is decremented during segment write, when VU_DIROP is taken off.
+ */
+#define	MARK_VNODE(vp)			lfs_mark_vnode(vp)
+#define	UNMARK_VNODE(vp)		lfs_unmark_vnode(vp)
+int lfs_set_dirop(struct vnode *, struct vnode *);
+void lfs_unset_dirop(struct lfs *, struct vnode *, const char *);
 
 /* Misc. definitions */
 #define BW_CLEAN	1		/* Flag for lfs_bwrite_ext() */

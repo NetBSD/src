@@ -1,5 +1,5 @@
 /* System includes and definitions used by the Xilinx MicroBlaze simulator.
-   Copyright (C) 1999, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This file is part of GDB, the GNU debugger.
@@ -15,8 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
-59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #ifndef __SYSDEP_H
 #define __SYSDEP_H

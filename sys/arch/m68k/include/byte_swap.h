@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.9 2008/04/28 20:23:26 martin Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.9.44.1 2014/08/20 00:03:10 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,8 +42,14 @@ static __inline uint16_t __byte_swap_u16_variable(uint16_t);
 static __inline uint16_t
 __byte_swap_u16_variable(uint16_t var)
 {
+#if defined(__mcfisac__)
+	__asm volatile ("swap %0; byterev %0" : "=d"(var) : "0" (var));
+#elif defined(__mcoldfire__)
+	return (var >> 8) || (var << 8);
+#else
 	__asm volatile ("rorw #8, %0" : "=d" (var) : "0" (var));
 	return (var);
+#endif
 }
 
 #define	__BYTE_SWAP_U32_VARIABLE __byte_swap_u32_variable
@@ -51,8 +57,15 @@ static __inline uint32_t __byte_swap_u32_variable(uint32_t);
 static __inline uint32_t
 __byte_swap_u32_variable(uint32_t var)
 {
+#if defined(__mcfisac__)
+	__asm volatile ("byterev %0" : "=d"(var) : "0" (var));
+#elif defined(__mcoldfire__)
+	return (var >> 24) | (var << 24) | ((var & 0x00ff0000) >> 8)
+	    | ((var << 8) & 0x00ff0000);
+#else
 	__asm volatile (
 		"rorw #8, %0; swap %0; rorw #8, %0" : "=d" (var) : "0" (var));
+#endif
 	return (var);
 }
 

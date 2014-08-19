@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.4 2010/05/27 06:58:14 dholland Exp $
+# $NetBSD: Makefile.bootprogs,v 1.4.18.1 2014/08/20 00:03:09 tls Exp $
 
 S=		${.CURDIR}/../../../../..
 
@@ -11,10 +11,12 @@ PRIMARY_LOAD_ADDRESS?=0x8c201000
 SECONDARY_LOAD_ADDRESS?=0x8ff00000
 
 .include <bsd.own.mk>
+.include <bsd.klinks.mk>
 
 STRIPFLAG=	# override
 
 LIBCRT0=	# nothing
+LIBCRTI=	# nothing
 LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing
@@ -28,18 +30,6 @@ CFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes
 CPPFLAGS+=	-nostdinc -D_STANDALONE
 CPPFLAGS+=	-DSH4
 CPPFLAGS+=	-I${.OBJDIR} -I${.CURDIR}/.. -I${.CURDIR}/../../boot -I${S}
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	-rm -f machine && \
-	    ln -s ${S}/arch/${MACHINE}/include machine
-	-rm -f ${MACHINE_CPU} && \
-	    ln -s ${S}/arch/${MACHINE_CPU}/include ${MACHINE_CPU}
-.ifdef LIBOBJ
-	-rm -f lib && ln -s ${LIBOBJ}/lib lib
-	mkdir -p ${LIBOBJ}/lib
-.endif
-.endif
 
 ### find out what to use for libsa
 SA_AS= library

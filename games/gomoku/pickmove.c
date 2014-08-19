@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.20.12.1 2012/11/20 02:58:48 tls Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.20.12.2 2014/08/20 00:00:23 tls Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.20.12.1 2012/11/20 02:58:48 tls Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.20.12.2 2014/08/20 00:00:23 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -1083,7 +1083,7 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 	    int s, struct overlap_info *vertices)
 {
 	struct combostr *tcbp, *lcbp;
-	int i, n, mask, flags, verts, loop, myindex, fcnt;
+	int i, n, mask, flags, verts, myindex, fcnt;
 	union comboval cb;
 	u_char *str;
 	short *ip;
@@ -1094,7 +1094,6 @@ checkframes(struct combostr *cbp, struct combostr *fcbp, struct spotstr *osp,
 	cb.s = s;
 	fcnt = cb.c.a - 2;
 	verts = 0;
-	loop = 0;
 	myindex = cbp->c_nframes;
 	n = (fcbp - frames) * FAREA;
 	str = &overlap[n];

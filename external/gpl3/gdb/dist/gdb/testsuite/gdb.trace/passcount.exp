@@ -1,5 +1,4 @@
-#   Copyright 1998, 2007, 2008, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright 1998-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,18 +15,12 @@
 
 # This file was written by Michael Snyder (msnyder@cygnus.com)
 
-load_lib "trace-support.exp";
-
-if $tracelevel then {
-    strace $tracelevel
-}
+load_lib "trace-support.exp"
 
 
 gdb_exit
 gdb_start
-set testfile "actions"
-set srcfile ${testfile}.c
-set binfile $objdir/$subdir/passcount
+standard_testfile actions.c
 if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
 	  executable {debug nowarnings}] != "" } {
     untested passcount.exp
@@ -42,10 +35,10 @@ gdb_file_cmd $binfile
 
 # define relative source line numbers:
 # all subsequent line numbers are relative to this first one (baseline)
-set baseline  [gdb_find_recursion_test_baseline $srcfile];
+set baseline  [gdb_find_recursion_test_baseline $srcfile]
 if { $baseline == -1 } then {
     fail "Could not find gdb_recursion_test function"
-    return;
+    return
 }
 
 set testline1  [expr $baseline + 3]
@@ -55,12 +48,12 @@ set testline1  [expr $baseline + 3]
 #
 
 gdb_delete_tracepoints
-set trcpt1 [gdb_gettpnum gdb_c_test];
-set trcpt2 [gdb_gettpnum gdb_asm_test];
-set trcpt3 [gdb_gettpnum $testline1];
+set trcpt1 [gdb_gettpnum gdb_c_test]
+set trcpt2 [gdb_gettpnum gdb_asm_test]
+set trcpt3 [gdb_gettpnum $testline1]
 if { $trcpt1 <= 0 || $trcpt2 <= 0 || $trcpt3 <= 0 } then {
     fail "setting tracepoints"
-    return;
+    return
 }
 
 # 4.1 passcount of specified tracepoint
@@ -68,8 +61,11 @@ if { $trcpt1 <= 0 || $trcpt2 <= 0 || $trcpt3 <= 0 } then {
 gdb_test "info tracepoints" \
     "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
 \[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_c_test at .*$srcfile:\[0-9\]+.
+\[\t \]+not installed on target.
 \[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_asm_test at .*$srcfile:\[0-9\]+.
-\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_recursion_test at .*$srcfile:\[0-9\]+" \
+\[\t \]+not installed on target.
+\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_recursion_test at .*$srcfile:\[0-9\]+.
+\[\t \]+not installed on target." \
 			"4.1a: set three tracepoints, passcounts all zero"
 
 gdb_test "passcount 2 $trcpt1" \
@@ -79,9 +75,12 @@ gdb_test "passcount 2 $trcpt1" \
 gdb_test "info tracepoints" \
     "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
 \[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_c_test at .*$srcfile:\[0-9\]+.
-\[\t \]+pass count 2 .*
+\[\t \]+pass count 2 .
+\[\t \]+not installed on target.
 \[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_asm_test at .*$srcfile:\[0-9\]+.
-\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_recursion_test at .*$srcfile:\[0-9\]+" \
+\[\t \]+not installed on target.
+\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_recursion_test at .*$srcfile:\[0-9\]+.
+\[\t \]+not installed on target." \
 	"4.1c: verify 1st tracepoint's passcount set to two"
 
 gdb_test "passcount 4 $trcpt2" \
@@ -91,10 +90,13 @@ gdb_test "passcount 4 $trcpt2" \
 gdb_test "info tracepoints" \
     "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
 \[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_c_test at .*$srcfile:\[0-9\]+.
-\[\t \]+pass count 2 .*
+\[\t \]+pass count 2 .
+\[\t \]+not installed on target.
 \[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_asm_test at .*$srcfile:\[0-9\]+.
-\[\t \]+pass count 4 .*
-\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_recursion_test at .*$srcfile:\[0-9\]+" \
+\[\t \]+pass count 4 .
+\[\t \]+not installed on target.
+\[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_recursion_test at .*$srcfile:\[0-9\]+.
+\[\t \]+not installed on target." \
 	"4.1c: verify 2nd tracepoint's passcount set to four"
 
 # 4.2 passcount of last (default) tracepoint
@@ -188,10 +190,13 @@ gdb_test "passcount 0 $trcpt1" \
 gdb_test "info tracepoints" \
     "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
 \[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_c_test at .*$srcfile:\[0-9\]+.
+\[\t \]+not installed on target.
 \[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_asm_test at .*$srcfile:\[0-9\]+.
-\[\t \]+pass count 4 .*
+\[\t \]+pass count 4 .
+\[\t \]+not installed on target.
 \[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_recursion_test at .*$srcfile:\[0-9\]+.
-\[\t \]+pass count 4 .*"  \
+\[\t \]+pass count 4 .
+\[\t \]+not installed on target."  \
 	"4.6: set passcount to zero"
 
 # 4.7 (test a very large passcount)

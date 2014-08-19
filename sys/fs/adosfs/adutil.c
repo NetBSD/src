@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.15 2011/06/12 03:35:52 rmind Exp $	*/
+/*	$NetBSD: adutil.c,v 1.15.12.1 2014/08/20 00:04:26 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.15 2011/06/12 03:35:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.15.12.1 2014/08/20 00:04:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -47,58 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.15 2011/06/12 03:35:52 rmind Exp $");
 /*
  * look for anode in the mount's hash table, return locked.
  */
-#define AHASH(an) ((an) & (ANODEHASHSZ - 1))
 static int CapitalChar(int, int);
-
-extern kmutex_t adosfs_hashlock;
-
-struct vnode *
-adosfs_ahashget(struct mount *mp, ino_t an)
-{
-	struct anodechain *hp;
-	struct anode *ap;
-	struct vnode *vp;
-
-	hp = &VFSTOADOSFS(mp)->anodetab[AHASH(an)];
-
-start_over:
-	mutex_enter(&adosfs_hashlock);
-	for (ap = hp->lh_first; ap != NULL; ap = ap->link.le_next) {
-		if (ap->block == an) {
-			vp = ATOV(ap);
-			mutex_enter(vp->v_interlock);
-			mutex_exit(&adosfs_hashlock);
-			if (vget(vp, LK_EXCLUSIVE))
-				goto start_over;
-			return (ATOV(ap));
-		}
-	}
-	mutex_exit(&adosfs_hashlock);
-	return (NULL);
-}
-
-/*
- * insert in hash table and lock
- *
- * ap->vp must have been initialized before this call.
- */
-void
-adosfs_ainshash(struct adosfsmount *amp, struct anode *ap)
-{
-	VOP_LOCK(ATOV(ap), LK_EXCLUSIVE);
-
-	mutex_enter(&adosfs_hashlock);
-	LIST_INSERT_HEAD(&amp->anodetab[AHASH(ap->block)], ap, link);
-	mutex_exit(&adosfs_hashlock);
-}
-
-void
-adosfs_aremhash(struct anode *ap)
-{
-	mutex_enter(&adosfs_hashlock);
-	LIST_REMOVE(ap, link);
-	mutex_exit(&adosfs_hashlock);
-}
 
 int
 adosfs_getblktype(struct adosfsmount *amp, struct buf *bp)

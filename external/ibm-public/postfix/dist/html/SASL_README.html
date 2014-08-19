@@ -87,7 +87,7 @@ what envelope sender addresses the client may use. </p> </li>
 
 <p> Successful authentication in the Postfix SMTP server requires
 a functional SASL framework. Configuring SASL should therefore
-always be the first step. </p>
+always be the first step, before configuring Postfix. </p>
 
 <p> You can read more about the following topics: </p>
 
@@ -185,85 +185,36 @@ to configure and operate the Dovecot authentication server.  </p>
 <h4><a name="server_dovecot_comm">Postfix to Dovecot SASL communication</a></h4>
 
 <p> Communication between the Postfix SMTP server and Dovecot SASL
-happens over a UNIX-domain socket or over a TCP socket.  Dovecot 1
-supports UNIX-domain socket communication only. </p>
+happens over a UNIX-domain socket or over a TCP socket. We will
+be using a UNIX-domain socket for better privacy. </p>
 
-<h5>UNIX-domain socket communication</h5>
-
-<p> The socket
-pathname and the list of mechanisms offered to Postfix need to be
-specified on the Dovecot server side in <code>dovecot.conf</code>.
-</p>
-
-<p> The following example assumes that the Postfix queue is under
-<code>/var/spool/postfix/</code>. </p>
+<p> The following fragment for Dovecot version 2 assumes that the
+Postfix queue is under <code>/var/spool/postfix/</code>. </p>
 
 <blockquote>
 <pre>
- 1 /etc/dovecot.conf:
- 2     auth default {
- 3       mechanisms = plain login
- 4         passdb pam {
- 5         }
- 6         userdb passwd {
- 7         }
- 8         socket listen {
- 9         client {
-10           path = /var/spool/postfix/private/auth
-11           mode = 0660
-12           user = postfix
-13           group = postfix
-14         }
-15       }
-16     }
+ 1 conf.d/10-master.conf:
+ 2     service auth {
+ 3       ...
+ 4       unix_listener /var/spool/postfix/private/auth {
+ 5         mode = 0660
+ 6         # Assuming the default Postfix user and group
+ 7         user = postfix
+ 8         group = postfix        
+ 9       }
+10       ...
+11     }
+12 
+13 conf.d/10-auth.conf
+14     auth_mechanisms = plain login
 </pre>
 </blockquote>
 
-<p> Line 3 provides <code>plain</code> and <code>login</code> as
-mechanisms for the Postfix SMTP server, line 10 places the Dovecot
-SASL socket in <code>/var/spool/postfix/private/auth</code>, and
-lines 11-13 limit read+write permissions to user and group
-<code>postfix</code> only. </p>
-
-<p> Proceed with the section "<a href="#server_sasl_enable">Enabling
-SASL authentication and authorization in the Postfix SMTP server</a>"
-to turn on and use SASL in the Postfix SMTP server.  </p>
-
-<h5>TCP socket communication</h5>
-
-<p> The TCP port and the list of mechanisms offered to Postfix need
-to be specified on the Dovecot server side in <code>10-auth.conf</code>
-and <code>10-master.conf</code>. </p>
-
-<p> The following examples assume that Postfix should communicate
-with Dovecot on TCP port 12345. </p>
-
-<blockquote>
-<pre>
-1 /etc/dovecot/conf.d/10-auth.conf:
-2     auth_mechanisms = plain login
-</pre>
-</blockquote>
-
-<p> Line 2 provides plain and login as mechanisms for the Postfix
-SMTP server. </p>
-
-<blockquote>
-<pre>
-1 /etc/dovecot/conf.d/10-master.conf:
-2     service auth {
-3       unix_listener auth-userdb {
-4       }
-5       inet_listener {
-6         port = 12345
-7       }
-8     }
-</pre>
-</blockquote>
-
-<p> Line 5 creates a new TCP socket and line 6 specifies port 12345
-where Dovecot SASL should wait for Postfix authentication requests.
-</p>
+<p> Line 4 places the Dovecot SASL socket in
+<code>/var/spool/postfix/private/auth</code>, lines 5-8 limit
+read+write permissions to user and group <code>postfix</code> only,
+and line 14 provides <code>plain</code> and <code>login</code> as
+mechanisms for the Postfix SMTP server. </p>
 
 <p> Proceed with the section "<a href="#server_sasl_enable">Enabling
 SASL authentication and authorization in the Postfix SMTP server</a>"
@@ -784,7 +735,7 @@ and connects it to a PostgreSQL server: </p>
     sql_user: username
     sql_passwd: secret
     sql_database: dbname
-    sql_select: SELECT password FROM users WHERE user = '%u'@'%r'
+    sql_select: SELECT password FROM users WHERE user = '%u@%r'
 </pre>
 </blockquote>
 
@@ -942,8 +893,9 @@ stored as plaintext. </p>
 <p> If you must store encrypted passwords, you cannot use the ldapdb
 auxprop plugin. Instead, you can use "<code>saslauthd -a ldap</code>"
 to query the LDAP database directly, with appropriate configuration
-in <code>saslauthd.conf</code>. This may be documented in a later
-version of this document.  You will not be able to use any of the
+in <code>saslauthd.conf</code>, <a
+href="http://git.cyrusimap.org/cyrus-sasl/tree/saslauthd/LDAP_SASLAUTHD">as
+described here</a>.  You will not be able to use any of the
 methods that require access to plaintext passwords, such as the
 shared-secret methods CRAM-MD5 and DIGEST-MD5.  </p>
 
@@ -1367,20 +1319,33 @@ for. Examples of possible SMTP clients authorizations are: </p>
 
 <h4><a name="server_sasl_authz_relay">Mail relay authorization</a></h4>
 
-<p> The <code><a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a></code> restriction allows
+<p> With <code><a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a></code> the Postfix SMTP
+server can allow
 SASL-authenticated SMTP clients to send mail to remote destinations.
-Add it to the list of <code><a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a></code> as
-follows: </p>
+Examples:
+</p>
 
 <blockquote>
 <pre>
+# With Postfix 2.10 and later, the mail relay policy is
+# preferably specified under <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>.
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> =
+        <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>
+        <strong><a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a></strong>
+        <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
+</pre>
+
+<pre>
+# Older configurations combine relay control and spam control under
+# <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a>. To use this example with Postfix &ge;
+# 2.10 specify "<a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>=".
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> =
-    ...
-    <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>
-    <strong><a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a></strong>
-    <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
-    ...
+        <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>
+        <strong><a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a></strong>
+        <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
+        ...other rules...
 </pre>
 </blockquote>
 
@@ -1401,14 +1366,12 @@ use a particular envelope sender address: </p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <strong><a href="postconf.5.html#smtpd_sender_login_maps">smtpd_sender_login_maps</a> = hash:/etc/postfix/controlled_envelope_senders</strong>
+    <strong><a href="postconf.5.html#smtpd_sender_login_maps">smtpd_sender_login_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/controlled_envelope_senders</strong>
 
     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> =
         ...
         <strong><a href="postconf.5.html#reject_sender_login_mismatch">reject_sender_login_mismatch</a></strong>
         <a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a>
-        <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>
-        <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
         ...
 </pre>
 </blockquote>
@@ -1433,7 +1396,8 @@ restriction above will reject the sender address in the MAIL FROM
 command if <code><a href="postconf.5.html#smtpd_sender_login_maps">smtpd_sender_login_maps</a></code> does not specify
 the SMTP client's login name as an owner of that address. </p>
 
-<p> See also <code><a href="postconf.5.html#reject_authenticated_sender_login_mismatch">reject_authenticated_sender_login_mismatch</a></code> and
+<p> See also <code><a href="postconf.5.html#reject_authenticated_sender_login_mismatch">reject_authenticated_sender_login_mismatch</a></code>,
+<code><a href="postconf.5.html#reject_known_sender_login_mismatch">reject_known_sender_login_mismatch</a></code>, and
 <code><a href="postconf.5.html#reject_unauthenticated_sender_login_mismatch">reject_unauthenticated_sender_login_mismatch</a></code> for additional
 control over the SASL login name and the envelope sender. </p>
 
@@ -1442,6 +1406,30 @@ control over the SASL login name and the envelope sender. </p>
 <p> Postfix provides a wide range of SASL authentication configuration
 options.  The next section lists a few that are discussed frequently.
 See <a href="postconf.5.html">postconf(5)</a> for a complete list. </p>
+
+<h4><a name="sasl_access">Per-account access control</a></h4>
+
+<p> Postfix can implement policies that depend on the SASL login
+name (Postfix 2.11 and later).  Typically this is used to HOLD or
+REJECT mail from accounts whose credentials have been compromised.
+</p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = 
+        <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a> 
+        <a href="postconf.5.html#check_sasl_access">check_sasl_access</a> <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/sasl_access
+        <a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a>
+        ...
+
+/etc/postfix/sasl_access:
+     # Use this when <a href="postconf.5.html#smtpd_sasl_local_domain">smtpd_sasl_local_domain</a> is empty.
+     username   HOLD
+     # Use this when <a href="postconf.5.html#smtpd_sasl_local_domain">smtpd_sasl_local_domain</a>=example.com.
+     username@example.com HOLD
+</pre>
+</blockquote>
 
 <h4><a name="id397172">Default  authentication domain</a></h4>
 
@@ -1674,7 +1662,7 @@ second part sets up the username/password information.  </p>
     <a href="postconf.5.html#relayhost">relayhost</a> = [mail.isp.example]
     # Alternative form:
     # <a href="postconf.5.html#relayhost">relayhost</a> = [mail.isp.example]:submission
-    <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> = hash:/etc/postfix/sasl_passwd
+    <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/sasl_passwd
 </pre>
 </blockquote>
 
@@ -1780,9 +1768,9 @@ resort.  </p>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtp_sender_dependent_authentication">smtp_sender_dependent_authentication</a> = yes
-    <a href="postconf.5.html#sender_dependent_relayhost_maps">sender_dependent_relayhost_maps</a> = hash:/etc/postfix/sender_relay
+    <a href="postconf.5.html#sender_dependent_relayhost_maps">sender_dependent_relayhost_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/sender_relay
     <a href="postconf.5.html#smtp_sasl_auth_enable">smtp_sasl_auth_enable</a> = yes
-    <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> = hash:/etc/postfix/sasl_passwd
+    <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/sasl_passwd
     <a href="postconf.5.html#relayhost">relayhost</a> = [mail.isp.example]
     # Alternative form:
     # <a href="postconf.5.html#relayhost">relayhost</a> = [mail.isp.example]:submission
@@ -1926,7 +1914,7 @@ font.  </p>
 </blockquote>
 
 <p> Instead of port 25 (smtp), specify port 587 (submission) where
-appriopriate. </p>
+appropriate. </p>
 
 <h4>Encrypted SMTP session (TLS)</h4>
 

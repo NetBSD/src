@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.40.8.1 2012/11/20 03:02:14 tls Exp $	*/
+/*	$NetBSD: fms.c,v 1.40.8.2 2014/08/20 00:03:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.40.8.1 2012/11/20 03:02:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.40.8.2 2014/08/20 00:03:42 tls Exp $");
 
 #include "mpu.h"
 
@@ -232,6 +232,7 @@ fms_attach(device_t parent, device_t self, void *aux)
 	pcitag_t pt;
 	pci_intr_handle_t ih;
 	uint16_t k1;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	pa = aux;
 	sc = device_private(self);
@@ -258,7 +259,7 @@ fms_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);

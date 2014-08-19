@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphyreg.h,v 1.5.18.1 2013/06/23 06:20:18 tls Exp $	*/
+/*	$NetBSD: brgphyreg.h,v 1.5.18.2 2014/08/20 00:03:41 tls Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -52,7 +52,7 @@
 #define BRGPHY_MII_PHY_EXTCTL	0x10	/* PHY extended control */
 #define BRGPHY_PHY_EXTCTL_MAC_PHY	0x8000	/* 10BIT/GMI-interface */
 #define BRGPHY_PHY_EXTCTL_DIS_CROSS	0x4000	/* Disable MDI crossover */
-#define BRGPHY_PHY_EXTCTL_TX_DIS	0x2000	/* Tx output disable d*/
+#define BRGPHY_PHY_EXTCTL_TX_DIS	0x2000	/* Tx output disabled */
 #define BRGPHY_PHY_EXTCTL_INT_DIS	0x1000	/* Interrupts disabled */
 #define BRGPHY_PHY_EXTCTL_F_INT		0x0800	/* Force interrupt */
 #define BRGPHY_PHY_EXTCTL_BY_45		0x0400	/* Bypass 4B5B-Decoder */
@@ -85,7 +85,7 @@
 
 #define BRGPHY_MII_RXERRCNT	0x12	/* RX error counter */
 
-#define BRGPHY_MII_FCERRCNT	0x13	/* false carrier sense counter */
+#define BRGPHY_MII_FCERRCNT	0x13	/* False carrier sense counter */
 #define BGRPHY_FCERRCNT		0x00FF	/* False carrier counter */
 
 #define BRGPHY_MII_RXNOCNT	0x14	/* RX not OK counter */
@@ -140,14 +140,14 @@
 #define BRGPHY_AUXCTL_DIAG_MODE	0x0004	/* Diagnostic mode */
 
 #define BRGPHY_MII_AUXSTS	0x19	/* AUX status */
-#define BRGPHY_AUXSTS_ACOMP	0x8000	/* autoneg complete */
-#define BRGPHY_AUXSTS_AN_ACK	0x4000	/* autoneg complete ack */
-#define BRGPHY_AUXSTS_AN_ACK_D	0x2000	/* autoneg complete ack detect */
-#define BRGPHY_AUXSTS_AN_NPW	0x1000	/* autoneg next page wait */
-#define BRGPHY_AUXSTS_AN_RES	0x0700	/* AN HDC */
+#define BRGPHY_AUXSTS_ACOMP	0x8000	/* Autoneg complete */
+#define BRGPHY_AUXSTS_AN_ACK	0x4000	/* Autoneg complete ack */
+#define BRGPHY_AUXSTS_AN_ACK_D	0x2000	/* Autoneg complete ack detect */
+#define BRGPHY_AUXSTS_AN_NPW	0x1000	/* Autoneg next page wait */
+#define BRGPHY_AUXSTS_AN_RES	0x0700	/* Autoneg HCD */
 #define BRGPHY_AUXSTS_PDF	0x0080	/* Parallel detect. fault */
-#define BRGPHY_AUXSTS_RF	0x0040	/* remote fault */
-#define BRGPHY_AUXSTS_ANP_R	0x0020	/* AN page received */
+#define BRGPHY_AUXSTS_RF	0x0040	/* Remote fault */
+#define BRGPHY_AUXSTS_ANP_R	0x0020	/* Autoneg page received */
 #define BRGPHY_AUXSTS_LP_ANAB	0x0010	/* LP AN ability */
 #define BRGPHY_AUXSTS_LP_NPAB	0x0008	/* LP Next page ability */
 #define BRGPHY_AUXSTS_LINK	0x0004	/* Link status */
@@ -162,11 +162,11 @@
 #define BRGPHY_RES_10FD		0x0200	/* 10baseT full duplex */
 #define BRGPHY_RES_10HD		0x0100	/* 10baseT half duplex */
 
-#define BRGPHY_MII_ISR		0x1A	/* interrupt status */
+#define BRGPHY_MII_ISR		0x1A	/* Interrupt status */
 #define BRGPHY_ISR_PSERR	0x4000	/* Pair swap error */
 #define BRGPHY_ISR_MDXI_SC	0x2000	/* MDIX Status Change */
-#define BRGPHY_ISR_HCT		0x1000	/* counter above 32K */
-#define BRGPHY_ISR_LCT		0x0800	/* all counter below 128 */
+#define BRGPHY_ISR_HCT		0x1000	/* Counter above 32K */
+#define BRGPHY_ISR_LCT		0x0800	/* All counter below 128 */
 #define BRGPHY_ISR_AN_PR	0x0400	/* Autoneg page received */
 #define BRGPHY_ISR_NO_HDCL	0x0200	/* No HCD Link */
 #define BRGPHY_ISR_NO_HDC	0x0100	/* No HCD */
@@ -177,13 +177,13 @@
 #define BRGPHY_ISR_DUP_CHG	0x0008	/* Duplex mode change */
 #define BRGPHY_ISR_LSP_CHG	0x0004	/* Link speed changed */
 #define BRGPHY_ISR_LNK_CHG	0x0002	/* Link status change */
-#define BRGPHY_ISR_CRCERR	0x0001	/* CEC error */
+#define BRGPHY_ISR_CRCERR	0x0001	/* CRC error */
 
-#define BRGPHY_MII_IMR		0x1B	/* interrupt mask */
+#define BRGPHY_MII_IMR		0x1B	/* Interrupt mask */
 #define BRGPHY_IMR_PSERR	0x4000	/* Pair swap error */
 #define BRGPHY_IMR_MDXI_SC	0x2000	/* MDIX Status Change */
-#define BRGPHY_IMR_HCT		0x1000	/* counter above 32K */
-#define BRGPHY_IMR_LCT		0x0800	/* all counter below 128 */
+#define BRGPHY_IMR_HCT		0x1000	/* Counter above 32K */
+#define BRGPHY_IMR_LCT		0x0800	/* All counter below 128 */
 #define BRGPHY_IMR_AN_PR	0x0400	/* Autoneg page received */
 #define BRGPHY_IMR_NO_HDCL	0x0200	/* No HCD Link */
 #define BRGPHY_IMR_NO_HDC	0x0100	/* No HCD */
@@ -194,26 +194,7 @@
 #define BRGPHY_IMR_DUP_CHG	0x0008	/* Duplex mode change */
 #define BRGPHY_IMR_LSP_CHG	0x0004	/* Link speed changed */
 #define BRGPHY_IMR_LNK_CHG	0x0002	/* Link status change */
-#define BRGPHY_IMR_CRCERR	0x0001	/* CEC error */
-
-/*******************************************************/
-/* Begin: Shared SerDes PHY register definitions       */
-/*******************************************************/
-
-/* SerDes autoneg is different from copper */
-#define BRGPHY_SERDES_ANAR_NO_PAUSE	(0x0 << 7)
-#define BRGPHY_SERDES_ANAR_SYM_PAUSE	(0x1 << 7)
-#define BRGPHY_SERDES_ANAR_ASYM_PAUSE	(0x2 << 7)
-#define BRGPHY_SERDES_ANAR_BOTH_PAUSE	(0x3 << 7)
-
-#define BRGPHY_SERDES_ANLPAR_NO_PAUSE	(0x0 << 7)
-#define BRGPHY_SERDES_ANLPAR_SYM_PAUSE	(0x1 << 7)
-#define BRGPHY_SERDES_ANLPAR_ASYM_PAUSE	(0x2 << 7)
-#define BRGPHY_SERDES_ANLPAR_BOTH_PAUSE	(0x3 << 7)
-
-/*******************************************************/
-/* End: Shared SerDes PHY register definitions         */
-/*******************************************************/
+#define BRGPHY_IMR_CRCERR	0x0001	/* CRC error */
 
 /*******************************************************/
 /* Begin: PHY register values for the 5706 PHY         */
@@ -263,6 +244,9 @@
 #define BRGPHY_5708S_PG0_1000X_CTL1_FIBER_MODE	0x0001
 #define BRGPHY_5708S_PG0_1000X_CTL1_AUTODET_EN	0x0010
 
+#define BRGPHY_5708S_PG0_1000X_CTL2		0x11
+#define BRGPHY_5708S_PG0_1000X_CTL2_PAR_DET_EN	0x0001
+
 #define BRGPHY_5708S_PG0_1000X_STAT1		0x14
 #define BRGPHY_5708S_PG0_1000X_STAT1_SGMII	0x0001
 #define BRGPHY_5708S_PG0_1000X_STAT1_LINK	0x0002
@@ -272,9 +256,8 @@
 #define BRGPHY_5708S_PG0_1000X_STAT1_SPEED_100	(0x1 << 3)
 #define BRGPHY_5708S_PG0_1000X_STAT1_SPEED_1G	(0x2 << 3)
 #define BRGPHY_5708S_PG0_1000X_STAT1_SPEED_25G	(0x3 << 3)
-
-#define BRGPHY_5708S_PG0_1000X_CTL2		0x11
-#define BRGPHY_5708S_PG0_1000X_CTL2_PAR_DET_EN	0x0001
+#define BRGPHY_5708S_PG0_1000X_STAT1_TX_PAUSE	0x0020
+#define BRGPHY_5708S_PG0_1000X_STAT1_RX_PAUSE	0x0040
 
 /* 5708S SerDes "Digital 3" Registers (page 2) */
 #define BRGPHY_5708S_PG2_DIGCTL_3_0		0x10
@@ -323,7 +306,7 @@
 #define BRGPHY_BLOCK_ADDR_MRBE			0x8350
 #define BRGPHY_MRBE_MSG_PG5_NP			0x10
 #define BRGPHY_MRBE_MSG_PG5_NP_MBRE		0x0001
-#define BRGPHY_MRBE_MSG_PG5_NP_T2		0x0001
+#define BRGPHY_MRBE_MSG_PG5_NP_T2		0x0002
 
 /* 5709S SerDes "IEEE Clause 73 User B0" Registers */
 #define BRGPHY_BLOCK_ADDR_CL73_USER_B0		0x8370

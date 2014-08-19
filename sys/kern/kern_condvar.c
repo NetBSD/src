@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.30.12.1 2013/06/23 06:18:57 tls Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.30.12.2 2014/08/20 00:04:28 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.30.12.1 2013/06/23 06:18:57 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.30.12.2 2014/08/20 00:04:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -85,7 +85,9 @@ lockops_t cv_lockops = {
 };
 
 static const char deadcv[] = "deadcv";
+#ifdef LOCKDEBUG
 static const char nodebug[] = "nodebug";
+#endif
 
 /*
  * cv_init:
@@ -188,7 +190,7 @@ cv_exit(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l, const int error)
 static void
 cv_unsleep(lwp_t *l, bool cleanup)
 {
-	kcondvar_t *cv;
+	kcondvar_t *cv __diagused;
 
 	cv = (kcondvar_t *)(uintptr_t)l->l_wchan;
 

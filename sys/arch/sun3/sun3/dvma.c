@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.38 2012/01/29 16:24:01 para Exp $	*/
+/*	$NetBSD: dvma.c,v 1.38.6.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.38 2012/01/29 16:24:01 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.38.6.1 2014/08/20 00:03:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ vsize_t dvma_segmap_size = 6 * NBSG;
 /* Using phys_map to manage DVMA scratch-memory pages. */
 /* Note: Could use separate pagemap for obio if needed. */
 
-void 
+void
 dvma_init(void)
 {
 	vaddr_t segmap_addr;
@@ -131,7 +131,7 @@ dvma_malloc(size_t bytes)
 /*
  * Free pages from dvma_malloc()
  */
-void 
+void
 dvma_free(void *addr, size_t size)
 {
 	vsize_t sz = m68k_round_page(size);
@@ -144,7 +144,7 @@ dvma_free(void *addr, size_t size)
  * would be used by some OTHER bus-master besides the CPU.
  * (Examples: on-board ie/le, VME xy board).
  */
-u_long 
+u_long
 dvma_kvtopa(void *kva, int bustype)
 {
 	u_long addr, mask;
@@ -233,13 +233,13 @@ dvma_mapin(void *kva, int len, int canwait /* ignored */)
  * This IS safe to call at interrupt time.
  * (Typically called at SPLBIO)
  */
-void 
+void
 dvma_mapout(void *dma, int len)
 {
 	vaddr_t seg_dma;
 	vsize_t seg_len, seg_off;
 	vaddr_t v, x;
-	int sme;
+	int sme __diagused;
 	int s;
 
 	/* Get seg-aligned address and length. */
@@ -276,7 +276,7 @@ dvma_mapout(void *dma, int len)
 	splx(s);
 }
 
-int 
+int
 _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
     int nsegs, bus_size_t size, int flags)
 {
@@ -292,7 +292,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	vsize_t off, sgsize;
 	paddr_t pa;
 	pmap_t pmap;
-	int error, rv, s;
+	int error, rv __diagused, s;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -350,13 +350,13 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	return 0;
 }
 
-void 
+void
 _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	bus_dma_segment_t *segs;
 	vaddr_t dva;
 	vsize_t sgsize;
-	int error, s;
+	int error __diagused, s;
 
 #ifdef DIAGNOSTIC
 	if (map->dm_nsegs != 1)

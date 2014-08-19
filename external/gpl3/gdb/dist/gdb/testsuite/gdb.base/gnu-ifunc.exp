@@ -1,4 +1,4 @@
-# Copyright (C) 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,18 +17,16 @@ if {[skip_shlib_tests]} {
     return 0
 }
 
-set testfile "gnu-ifunc"
+standard_testfile .c
 set executable ${testfile}
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${executable}
 set staticexecutable ${executable}-static
-set staticbinfile ${objdir}/${subdir}/${staticexecutable}
+set staticbinfile [standard_output_file ${staticexecutable}]
 
 set libfile "${testfile}-lib"
 set libsrc ${libfile}.c
-set lib_so ${objdir}/${subdir}/${libfile}.so
+set lib_so [standard_output_file ${libfile}.so]
 # $lib_o must not have {debug}, it would override the STT_GNU_IFUNC ELF markers.
-set lib_o ${objdir}/${subdir}/${libfile}.o
+set lib_o [standard_output_file ${libfile}.o]
 
 # We need DWARF for the "final" function as we "step" into the function and GDB
 # would step-over the "final" function if there would be no line number debug
@@ -48,7 +46,7 @@ set lib_o ${objdir}/${subdir}/${libfile}.o
 set lib_opts {}
 set exec_opts [list debug shlib=$lib_so]
 
-if [get_compiler_info ${binfile}] {
+if [get_compiler_info] {
     return -1
 }
 
@@ -65,7 +63,7 @@ gdb_load_shlibs ${lib_so}
 
 if ![runto_main] then {
     fail "Can't run to main"
-    return 1;
+    return 1
 }
 
 # The "if" condition is artifical to test regression of a former patch.
@@ -127,20 +125,17 @@ gdb_test "info sym $expect_out(1,string)" "gnu_ifunc in section .*" "info sym <g
 # Test statically linked ifunc resolving during inferior start.
 # https://bugzilla.redhat.com/show_bug.cgi?id=624967
 
-if ![target_info exists gdb_stub] {
+# Compile $staticbinfile separately as it may exit on error (ld/12595).
 
-    # Compile $staticbinfile separately as it may exit on error (ld/12595).
-
-    if { [gdb_compile ${srcdir}/${subdir}/$libsrc $lib_o object {}] != ""
-	 || [gdb_compile "${srcdir}/${subdir}/$srcfile $lib_o" $staticbinfile executable {debug}] != "" } {
-	untested "Could not compile static executable $staticbinfile."
-	return -1
-    }
-
-    clean_restart $staticexecutable
-
-    gdb_breakpoint "gnu_ifunc"
-    gdb_breakpoint "main"
-    gdb_run_cmd
-    gdb_test "" "Breakpoint \[0-9\]*, main .*" "static gnu_ifunc"
+if { [gdb_compile ${srcdir}/${subdir}/$libsrc $lib_o object {}] != ""
+     || [gdb_compile "${srcdir}/${subdir}/$srcfile $lib_o" $staticbinfile executable {debug}] != "" } {
+    untested "Could not compile static executable $staticbinfile."
+    return -1
 }
+
+clean_restart $staticexecutable
+
+gdb_breakpoint "gnu_ifunc"
+gdb_breakpoint "main"
+gdb_run_cmd
+gdb_test "" "Breakpoint \[0-9\]*, main .*" "static gnu_ifunc"

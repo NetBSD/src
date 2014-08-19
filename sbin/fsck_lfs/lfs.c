@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.35.8.2 2013/06/23 06:28:51 tls Exp $ */
+/* $NetBSD: lfs.c,v 1.35.8.3 2014/08/20 00:02:25 tls Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -451,7 +451,6 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 	struct ubuf *bp;
 	int tryalt;
 	struct lfs *fs, *altfs;
-	int error;
 
 	vfs_init();
 
@@ -480,7 +479,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 
 		dev_bsize = DEV_BSIZE;
 
-		error = bread(devvp, sblkno, LFS_SBPAD, NOCRED, 0, &bp);
+		(void)bread(devvp, sblkno, LFS_SBPAD, NOCRED, 0, &bp);
 		fs = ecalloc(1, sizeof(*fs));
 		fs->lfs_dlfs = *((struct dlfs *) bp->b_data);
 		fs->lfs_devvp = devvp;
@@ -490,7 +489,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 		dev_bsize = fs->lfs_fsize >> fs->lfs_fsbtodb;
 	
 		if (tryalt) {
-			error = bread(devvp, LFS_FSBTODB(fs, fs->lfs_sboffs[1]),
+			(void)bread(devvp, LFS_FSBTODB(fs, fs->lfs_sboffs[1]),
 		    	LFS_SBPAD, NOCRED, 0, &bp);
 			altfs = ecalloc(1, sizeof(*altfs));
 			altfs->lfs_dlfs = *((struct dlfs *) bp->b_data);
@@ -744,16 +743,12 @@ check_summary(struct lfs *fs, SEGSUM *sp, ulfs_daddr_t pseg_addr, int debug,
 	FINFO *fp;
 	int bc;			/* Bytes in partial segment */
 	int nblocks;
-	ulfs_daddr_t seg_addr, daddr;
+	ulfs_daddr_t daddr;
 	ulfs_daddr_t *dp, *idp;
 	struct ubuf *bp;
 	int i, j, k, datac, len;
-	long sn;
 	u_int32_t *datap;
 	u_int32_t ccksum;
-
-	sn = lfs_dtosn(fs, pseg_addr);
-	seg_addr = lfs_sntod(fs, sn);
 
 	/* We've already checked the sumsum, just do the data bounds and sum */
 
@@ -864,7 +859,6 @@ lfs_valloc(struct lfs *fs, ino_t ino)
 	struct ifile *ifp;
 	ino_t new_ino;
 	int error;
-	int new_gen;
 	CLEANERINFO *cip;
 
 	/* Get the head of the freelist. */
@@ -879,7 +873,6 @@ lfs_valloc(struct lfs *fs, ino_t ino)
 		panic("lfs_valloc: inuse inode %d on the free list", new_ino);
 	LFS_PUT_HEADFREE(fs, cip, cbp, ifp->if_nextfree);
 
-	new_gen = ifp->if_version; /* version was updated by vfree */
 	brelse(bp, 0);
 
 	/* Extend IFILE so that the next lfs_valloc will succeed. */
@@ -1195,7 +1188,6 @@ lfs_fragextend(struct uvnode *vp, int osize, int nsize, daddr_t lbn,
 	struct lfs *fs;
 	int frags;
 	int error;
-	size_t obufsize;
 
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
@@ -1218,7 +1210,6 @@ lfs_fragextend(struct uvnode *vp, int osize, int nsize, daddr_t lbn,
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 
 	if (bpp) {
-		obufsize = (*bpp)->b_bufsize;
 		(*bpp)->b_data = erealloc((*bpp)->b_data, nsize);
 		(void)memset((*bpp)->b_data + osize, 0, nsize - osize);
 	}

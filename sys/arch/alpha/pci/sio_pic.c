@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.42 2012/02/06 02:14:15 matt Exp $ */
+/* $NetBSD: sio_pic.c,v 1.42.6.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.42 2012/02/06 02:14:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.42.6.1 2014/08/20 00:02:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,7 +345,8 @@ sio_intr_setup(pci_chipset_tag_t pc, bus_space_tag_t iot)
 	shutdownhook_establish(sio_intr_shutdown, 0);
 #endif
 
-	sio_intr = alpha_shared_intr_alloc(ICU_LEN, 8);
+#define PCI_SIO_IRQ_STR	8
+	sio_intr = alpha_shared_intr_alloc(ICU_LEN, PCI_SIO_IRQ_STR);
 
 	/*
 	 * set up initial values for interrupt enables.
@@ -354,7 +355,7 @@ sio_intr_setup(pci_chipset_tag_t pc, bus_space_tag_t iot)
 		alpha_shared_intr_set_maxstrays(sio_intr, i, STRAY_MAX);
 
 		cp = alpha_shared_intr_string(sio_intr, i);
-		sprintf(cp, "irq %d", i);
+		snprintf(cp, PCI_SIO_IRQ_STR, "irq %d", i);
 		evcnt_attach_dynamic(alpha_shared_intr_evcnt(sio_intr, i),
 		    EVCNT_TYPE_INTR, NULL, "isa", cp);
 
@@ -412,15 +413,13 @@ sio_intr_shutdown(void *arg)
 #endif
 
 const char *
-sio_intr_string(void *v, int irq)
+sio_intr_string(void *v, int irq, char *buf, size_t len)
 {
-	static char irqstr[12];		/* 8 + 2 + NULL + sanity */
-
 	if (irq == 0 || irq >= ICU_LEN || irq == 2)
-		panic("sio_intr_string: bogus isa irq 0x%x", irq);
+		panic("%s: bogus isa irq 0x%x", __func__, irq);
 
-	sprintf(irqstr, "isa irq %d", irq);
-	return (irqstr);
+	snprintf(buf, len, "isa irq %d", irq);
+	return buf;
 }
 
 const struct evcnt *
@@ -428,7 +427,7 @@ sio_intr_evcnt(void *v, int irq)
 {
 
 	if (irq == 0 || irq >= ICU_LEN || irq == 2)
-		panic("sio_intr_evcnt: bogus isa irq 0x%x", irq);
+		panic("%s: bogus isa irq 0x%x", __func__, irq);
 
 	return (alpha_shared_intr_evcnt(sio_intr, irq));
 }

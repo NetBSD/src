@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.46.14.1 2012/11/20 03:02:31 tls Exp $	*/
+/*	$NetBSD: dl.c,v 1.46.14.2 2014/08/20 00:03:49 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.46.14.1 2012/11/20 03:02:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.46.14.2 2014/08/20 00:03:49 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,8 +158,18 @@ dev_type_tty(dltty);
 dev_type_poll(dlpoll);
 
 const struct cdevsw dl_cdevsw = {
-	dlopen, dlclose, dlread, dlwrite, dlioctl,
-	dlstop, dltty, dlpoll, nommap, ttykqfilter, D_TTY
+	.d_open = dlopen,
+	.d_close = dlclose,
+	.d_read = dlread,
+	.d_write = dlwrite,
+	.d_ioctl = dlioctl,
+	.d_stop = dlstop,
+	.d_tty = dltty,
+	.d_poll = dlpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 #define	DL_READ_WORD(reg) \

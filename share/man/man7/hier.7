@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.101.2.1 2013/06/23 06:28:54 tls Exp $
+.\"	$NetBSD: hier.7,v 1.101.2.2 2014/08/20 00:02:36 tls Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)hier.7	8.5 (Berkeley) 6/1/94
 .\"
-.Dd February 5, 2013
+.Dd December 23, 2013
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -208,13 +208,13 @@ see
 .Xr ctime 3
 .It Sy mail/
 configuration files for
-.Xr sendmail 8
+.Xr sendmail 1
 .Pp
 .Bl -tag -width "sendmail.*" -compact
 .It Sy aliases*
 name alias files
 .It Sy sendmail.*
-.Xr sendmail 8
+.Xr sendmail 1
 configuration information
 .El
 .It Sy mail.rc
@@ -348,6 +348,12 @@ and
 that cannot rely upon
 .Pa /usr/lib/
 being available.
+.It Sy /libdata/
+non-executable files
+.Pq such as device firmware
+required at boot time, when
+.Pa /usr/libdata
+may not be available.
 .It Sy /libexec/
 system utilities (such as the dynamic linker) required by programs
 and libraries that cannot rely upon
@@ -723,7 +729,7 @@ kernel source files
 .It Sy arch/
 architecture-specific support
 .Pp
-.Bl -tag -width "ews4800mips/" -compact
+.Bl -tag -width "playstation2/" -compact
 .It Sy acorn26/
 Acorn Archimedes, A-series and R-series systems
 .It Sy acorn32/
@@ -768,8 +774,8 @@ SH3/SH4 based evaluation boards
 NEC's MIPS based EWS4800 workstations
 .It Sy hp300/
 Hewlett-Packard 9000/300 and 400 680x0-based workstations
-.It Sy hp700/
-Hewlett-Packard 9000/700 HPPA based workstations
+.It Sy hppa/
+Hewlett-Packard 9000/700 and 9000/800 HPPA based workstations
 .It Sy hpcarm/
 StrongARM based WinCE PDA machines
 .It Sy hpcmips/
@@ -812,6 +818,8 @@ Sony's MIPS-based NEWS workstations
 NeXT 68k "black" hardware
 .It Sy ofppc/
 Open Firmware PowerPC workstations
+.It Sy playstation2/
+SONY PlayStation 2
 .It Sy pmax/
 Digital MIPS-based DECstations and DECsystems
 .It Sy powerpc/
@@ -1117,7 +1125,7 @@ system last time logged in log; see
 printer daemon error logs; see
 .Xr lpd 8
 .It Sy maillog.*
-.Xr sendmail 8
+.Xr sendmail 1
 log files
 .It Sy messages.*
 general system information log
@@ -1128,7 +1136,7 @@ script
 .It Sy secure
 sensitive security information log
 .It Sy sendmail.st
-.Xr sendmail 8
+.Xr sendmail 1
 statistics
 .It Sy timed.*
 .Xr timed 8
@@ -1174,7 +1182,7 @@ and
 .It Sy spool/
 miscellaneous printer and mail system spooling directories
 .Pp
-.Bl -tag -width "uucppublic/" -compact
+.Bl -tag -width "postfix/" -compact
 .It Sy ftp/
 commonly
 .Dq ~ftp ,
@@ -1183,7 +1191,7 @@ the anonymous ftp root directory; see
 .It Sy mqueue/
 sendmail mail queue;
 see
-.Xr sendmail 8
+.Xr sendmail 1
 .It Sy news/
 Network news archival and spooling directories
 .It Sy output/
@@ -1192,13 +1200,6 @@ printer spooling directories
 postfix mail queue;
 see
 .Xr postfix 1
-.It Sy uucp/
-uucp spool directory
-.It Sy uucppublic/
-commonly
-.Dq ~uucp ,
-the uucp public temporary directory; see
-.Xr uucp 1
 .El
 .Pp
 .It Sy tmp/

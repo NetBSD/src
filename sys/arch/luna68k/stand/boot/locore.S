@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.9.6.2 2013/02/25 00:28:49 tls Exp $	*/
+/*	$NetBSD: locore.S,v 1.9.6.3 2014/08/20 00:03:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -154,13 +154,13 @@ ASGLOBAL(Reset)
 	VECTOR(illinst)		/* 45: TRAP instruction vector */
 	VECTOR(illinst)		/* 45: TRAP instruction vector */
 	VECTOR(illinst)		/* 47: TRAP instruction vector */
- 	VECTOR(fptrap)		/* 48: FPCP branch/set on unordered cond */
- 	VECTOR(fptrap)		/* 49: FPCP inexact result */
- 	VECTOR(fptrap)		/* 50: FPCP divide by zero */
- 	VECTOR(fptrap)		/* 51: FPCP underflow */
- 	VECTOR(fptrap)		/* 52: FPCP operand error */
- 	VECTOR(fptrap)		/* 53: FPCP overflow */
- 	VECTOR(fptrap)		/* 54: FPCP signalling NAN */
+	VECTOR(fptrap)		/* 48: FPCP branch/set on unordered cond */
+	VECTOR(fptrap)		/* 49: FPCP inexact result */
+	VECTOR(fptrap)		/* 50: FPCP divide by zero */
+	VECTOR(fptrap)		/* 51: FPCP underflow */
+	VECTOR(fptrap)		/* 52: FPCP operand error */
+	VECTOR(fptrap)		/* 53: FPCP overflow */
+	VECTOR(fptrap)		/* 54: FPCP signalling NAN */
 
 	VECTOR(badtrap)		/* 55: unassigned, reserved */
 	VECTOR(badtrap)		/* 56: unassigned, reserved */
@@ -222,7 +222,7 @@ Lbssclr:
 	movl	%d0,%a0@		|
 	movl	#_ASM_LABEL(Reset),%a0	| BP vbr to %a0
 	movl	#_C_LABEL(exit),%a0@(NMIVEC)	| save address
-	
+
 
 /* switch vector tabel */
 	movec	%vbr,%a0
@@ -496,14 +496,14 @@ ENTRY_NOPROFILE(badtrap)
  * All device interrupts are auto-vectored.  Most can be configured
  * to interrupt in the range IPL2 to IPL6.  Here are our assignments:
  *
- *	Level 0:	
- *	Level 1:	
+ *	Level 0:
+ *	Level 1:
  *	Level 2:	SCSI SPC
- *	Level 3:	
- *	Level 4:	
+ *	Level 3:	LANCE Ethernet
+ *	Level 4:
  *	Level 5:	System Clock
  *	Level 6:	Internal SIO used uPD7201A
- *	Level 7:	Non-maskable: Abort Key (Dispatched vector to ROM monitor)
+ *	Level 7:	NMI: Abort Key (Dispatched vector to ROM monitor)
  */
 
 ENTRY_NOPROFILE(lev2intr)
@@ -762,7 +762,7 @@ ENTRY(spl7)
 	.data
 
 /*
- * Memory Infomation Field for secondary booter memory allocator
+ * Memory Information Field for secondary booter memory allocator
  */
 
 GLOBAL(prgcore)

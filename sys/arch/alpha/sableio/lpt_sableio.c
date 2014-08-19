@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_sableio.c,v 1.8 2011/07/01 19:19:50 dyoung Exp $ */
+/* $NetBSD: lpt_sableio.c,v 1.8.12.1 2014/08/20 00:02:42 tls Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lpt_sableio.c,v 1.8 2011/07/01 19:19:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_sableio.c,v 1.8.12.1 2014/08/20 00:02:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +90,7 @@ lpt_sableio_attach(device_t parent, device_t self, void *aux)
 	struct lpt_softc *sc = &ssc->sc_lpt;
 	struct sableio_attach_args *sa = aux;
 	const char *intrstr;
+	char buf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_iot = sa->sa_iot;
@@ -105,7 +106,8 @@ lpt_sableio_attach(device_t parent, device_t self, void *aux)
 
 	lpt_attach_subr(sc);
 
-	intrstr = pci_intr_string(sa->sa_pc, sa->sa_sableirq[0]);
+	intrstr = pci_intr_string(sa->sa_pc, sa->sa_sableirq[0],
+	    buf, sizeof(buf));
 	ssc->sc_ih = pci_intr_establish(sa->sa_pc, sa->sa_sableirq[0],
 	    IPL_TTY, lptintr, sc);
 	if (ssc->sc_ih == NULL) {

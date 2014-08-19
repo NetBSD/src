@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_intr.h,v 1.8 2012/09/01 14:48:29 matt Exp $ */
+/*	$NetBSD: omap_intr.h,v 1.8.2.1 2014/08/20 00:02:47 tls Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,8 @@
 #define	ARM_IRQ_HANDLER	_C_LABEL(omap_irq_handler)
 
 #ifndef _LOCORE
+
+#include <sys/device_if.h>
 
 #include <arm/cpu.h>
 #include <arm/armreg.h>
@@ -166,9 +168,6 @@ omap_spllower(int ipl)
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
-#ifdef __HAVE_FAST_SOFTINTS
-void	_setsoftintr(int);
-#endif
 
 #if !defined(EVBARM_SPL_NOINLINE)
 #define splx(new)		omap_splx(new)

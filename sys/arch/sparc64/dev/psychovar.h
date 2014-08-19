@@ -1,4 +1,4 @@
-/*	$NetBSD: psychovar.h,v 1.18 2011/06/02 00:24:23 christos Exp $	*/
+/*	$NetBSD: psychovar.h,v 1.18.12.1 2014/08/20 00:03:25 tls Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -124,6 +124,7 @@ struct psycho_softc {
 
 	struct sysmon_pswitch		*sc_smcontext;	/* power switch definition */
 	int				sc_powerpressed;/* already signaled */
+	uint64_t			sc_last_stick;
 };
 
 /* get a PCI offset address from bus_space_handle_t */
@@ -136,5 +137,10 @@ bus_space_tag_t psycho_alloc_bus_tag(struct psycho_pbm *, int);
 #define psycho_alloc_config_tag(pp) psycho_alloc_bus_tag((pp), PCI_CONFIG_BUS_SPACE)
 #define psycho_alloc_mem_tag(pp) psycho_alloc_bus_tag((pp), PCI_MEMORY_BUS_SPACE)
 #define psycho_alloc_io_tag(pp) psycho_alloc_bus_tag((pp), PCI_IO_BUS_SPACE)
+
+uint64_t psycho_getstick(void);
+uint32_t psycho_getstick32(void);
+void psycho_setstick(long);
+void psycho_nextstick(long);
 
 #endif /* _SPARC64_DEV_PSYCHOVAR_H_ */

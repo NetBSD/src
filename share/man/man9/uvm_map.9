@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm_map.9,v 1.2 2011/06/03 18:43:38 rmind Exp $
+.\"	$NetBSD: uvm_map.9,v 1.2.8.1 2014/08/20 00:02:37 tls Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 3, 2011
+.Dd May 20, 2014
 .Dt UVM_MAP 9
 .Os
 .Sh NAME
@@ -81,11 +81,14 @@ The new mapping has size
 .Fa size ,
 which must be a multiple of
 .Dv PAGE_SIZE .
+.Pp
 The
 .Fa uobj
 and
 .Fa uoffset
-arguments can have four meanings.
+arguments can have four meanings:
+.Bl -bullet -offset abcd -compact
+.It
 When
 .Fa uobj
 is
@@ -98,10 +101,16 @@ is
 does not use the machine-dependent
 .Dv PMAP_PREFER
 function.
-If
+.It
+When
+.Fa uobj
+is
+.Dv NULL
+and
 .Fa uoffset
 is any other value, it is used as the hint to
 .Dv PMAP_PREFER .
+.It
 When
 .Fa uobj
 is not
@@ -113,11 +122,22 @@ is
 .Fn uvm_map
 finds the offset based upon the virtual address, passed as
 .Fa startp .
-If
+.It
+When
+.Fa uobj
+is not
+.Dv NULL
+and
 .Fa uoffset
 is any other value, then a regular mapping is performed at this offset.
 The start address of the map will be returned in
 .Fa startp .
+.El
+Note that
+.Fn uvm_map
+does not add a reference to
+.Fa uobj ;
+it is the caller's responsibility to do so.
 .Pp
 .Fa align
 specifies alignment of mapping unless
@@ -134,12 +154,13 @@ are typically created using the
 .Fn UVM_MAPFLAG "vm_prot_t prot" "vm_prot_t maxprot" "vm_inherit_t inh" \
 "int advice" "int flags"
 macro, which uses the following values.
-The
+.Pp
+The values that
 .Fa prot
 and
 .Fa maxprot
 can take are:
-.Bl -tag -width UVM_ADV_SEQUENTIAL
+.Bl -tag -offset abcd -compact -width UVM_ADV_SEQUENTIAL
 .It UVM_PROT_NONE
 No protection bits.
 .It UVM_PROT_R
@@ -151,7 +172,6 @@ Exec.
 .It UVM_PROT_MASK
 Mask to extraction the protection bits.
 .El
-.Pp
 Additionally, the following constants for ORed values are available:
 .Dv UVM_PROT_RW ,
 .Dv UVM_PROT_RX ,
@@ -162,7 +182,7 @@ and
 The values that
 .Fa inh
 can take are:
-.Bl -tag -width UVM_ADV_SEQUENTIAL
+.Bl -tag -offset abcd -compact -width UVM_ADV_SEQUENTIAL
 .It UVM_INH_SHARE
 Share the map.
 .It UVM_INH_COPY
@@ -176,13 +196,13 @@ Mark to extract inherit flags.
 The values that
 .Fa advice
 can take are:
-.Bl -tag -width UVM_ADV_SEQUENTIAL
+.Bl -tag -offset abcd -compact -width UVM_ADV_SEQUENTIAL
 .It UVM_ADV_NORMAL
 "Normal" use.
 .It UVM_ADV_RANDOM
-"Random" access likelyhood.
+"Random" access likelihood.
 .It UVM_ADV_SEQUENTIAL
-"Sequential" access likelyhood.
+"Sequential" access likelihood.
 .It UVM_ADV_MASK
 Mask to extract the advice flags.
 .El
@@ -190,7 +210,7 @@ Mask to extract the advice flags.
 The values that
 .Fa flags
 can take are:
-.Bl -tag -width UVM_ADV_SEQUENTIAL
+.Bl -tag -offset abcd -compact -width UVM_ADV_SEQUENTIAL
 .It UVM_FLAG_FIXED
 Attempt to map on the address specified by
 .Fa startp .
@@ -202,7 +222,7 @@ Do not merge map entries, if such merge is possible.
 .It UVM_FLAG_COPYONW
 Use copy-on-write i.e. do not fault in the pages immediately.
 .It UVM_FLAG_AMAPPAD
-User for BSS: alocate larger amap, if extending is likely.
+Used for BSS: allocate larger amap, if extending is likely.
 .It UVM_FLAG_TRYLOCK
 Fail if cannot acquire the lock immediately.
 .It UVM_FLAG_NOWAIT
@@ -231,8 +251,8 @@ The
 .Dv UVM_MAXPROTECTION
 and
 .Dv UVM_ADVICE
-macros return the protection, inheritance, maximum protection and advice,
-respectively.
+macros return the protection, inheritance, maximum protection, and
+advice, respectively.
 .Fn uvm_map
 returns zero on success or error number otherwise.
 .Pp
@@ -348,7 +368,7 @@ frees a u-area allocated with
 .Fn uvm_uarea_system_alloc
 and
 .Fn uvm_uarea_system_free
-are optimised routines, which are used for kernel threads.
+are optimized routines, which are used for kernel threads.
 .Sh SEE ALSO
 .Xr pmap 9 ,
 .Xr uvm 9 ,

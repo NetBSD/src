@@ -1,4 +1,4 @@
-#	$NetBSD: majors.alpha,v 1.27 2011/06/30 20:09:18 wiz Exp $
+#	$NetBSD: majors.alpha,v 1.27.12.1 2014/08/20 00:02:41 tls Exp $
 #
 # Device majors for alpha
 #
@@ -76,6 +76,7 @@ device-major	wsfont		char 76			wsfont
 device-major	nsmb		char 77			nsmb
 device-major	joy		char 78			joy
 device-major	twe		char 79			twe
+device-major	sysmon		char 80			sysmon_envsys | sysmon_wdog | sysmon_power
 
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 

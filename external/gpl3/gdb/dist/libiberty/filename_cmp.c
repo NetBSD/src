@@ -50,19 +50,27 @@ and backward slashes are equal.
 int
 filename_cmp (const char *s1, const char *s2)
 {
-#ifndef HAVE_DOS_BASED_FILE_SYSTEM
+#if !defined(HAVE_DOS_BASED_FILE_SYSTEM) \
+    && !defined(HAVE_CASE_INSENSITIVE_FILE_SYSTEM)
   return strcmp(s1, s2);
 #else
   for (;;)
     {
-      int c1 = TOLOWER (*s1);
-      int c2 = TOLOWER (*s2);
+      int c1 = *s1;
+      int c2 = *s2;
 
+#if defined (HAVE_CASE_INSENSITIVE_FILE_SYSTEM)
+      c1 = TOLOWER (c1);
+      c2 = TOLOWER (c2);
+#endif
+
+#if defined (HAVE_DOS_BASED_FILE_SYSTEM)
       /* On DOS-based file systems, the '/' and the '\' are equivalent.  */
       if (c1 == '/')
         c1 = '\\';
       if (c2 == '/')
         c2 = '\\';
+#endif
 
       if (c1 != c2)
         return (c1 - c2);
@@ -100,21 +108,29 @@ and backward slashes are equal.
 int
 filename_ncmp (const char *s1, const char *s2, size_t n)
 {
-#ifndef HAVE_DOS_BASED_FILE_SYSTEM
+#if !defined(HAVE_DOS_BASED_FILE_SYSTEM) \
+    && !defined(HAVE_CASE_INSENSITIVE_FILE_SYSTEM)
   return strncmp(s1, s2, n);
 #else
   if (!n)
     return 0;
   for (; n > 0; --n)
   {
-      int c1 = TOLOWER (*s1);
-      int c2 = TOLOWER (*s2);
+      int c1 = *s1;
+      int c2 = *s2;
 
+#if defined (HAVE_CASE_INSENSITIVE_FILE_SYSTEM)
+      c1 = TOLOWER (c1);
+      c2 = TOLOWER (c2);
+#endif
+
+#if defined (HAVE_DOS_BASED_FILE_SYSTEM)
       /* On DOS-based file systems, the '/' and the '\' are equivalent.  */
       if (c1 == '/')
         c1 = '\\';
       if (c2 == '/')
         c2 = '\\';
+#endif
 
       if (c1 == '\0' || c1 != c2)
         return (c1 - c2);
@@ -124,4 +140,53 @@ filename_ncmp (const char *s1, const char *s2, size_t n)
   }
   return 0;
 #endif
+}
+
+/*
+
+@deftypefn Extension hashval_t filename_hash (const void *@var{s})
+
+Return the hash value for file name @var{s} that will be compared
+using filename_cmp.
+This function is for use with hashtab.c hash tables.
+
+@end deftypefn
+
+*/
+
+hashval_t
+filename_hash (const void *s)
+{
+  /* The cast is for -Wc++-compat.  */
+  const unsigned char *str = (const unsigned char *) s;
+  hashval_t r = 0;
+  unsigned char c;
+
+  while ((c = *str++) != 0)
+    {
+      if (c == '\\')
+	c = '/';
+      c = TOLOWER (c);
+      r = r * 67 + c - 113;
+    }
+
+  return r;
+}
+
+/*
+
+@deftypefn Extension int filename_eq (const void *@var{s1}, const void *@var{s2})
+
+Return non-zero if file names @var{s1} and @var{s2} are equivalent.
+This function is for use with hashtab.c hash tables.
+
+@end deftypefn
+
+*/
+
+int
+filename_eq (const void *s1, const void *s2)
+{
+  /* The casts are for -Wc++-compat.  */
+  return filename_cmp ((const char *) s1, (const char *) s2) == 0;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: MINI2440,v 1.7.2.1 2013/06/23 06:20:04 tls Exp $
+#	$NetBSD: MINI2440,v 1.7.2.2 2014/08/20 00:02:53 tls Exp $
 #
 #	MINI2440 -- Friendly ARM evaluation board based on Samsung S3C2440
 #
@@ -88,7 +88,6 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
@@ -104,6 +103,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	COMPAT_30	# NetBSD 3.0 compatibility.

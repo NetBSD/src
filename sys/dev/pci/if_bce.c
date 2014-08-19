@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.37 2012/07/22 14:33:01 matt Exp $	 */
+/* $NetBSD: if_bce.c,v 1.37.2.1 2014/08/20 00:03:42 tls Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.37 2012/07/22 14:33:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.37.2.1 2014/08/20 00:03:42 tls Exp $");
 
 #include "vlan.h"
 
@@ -251,6 +251,7 @@ bce_attach(device_t parent, device_t self, void *aux)
 	bus_dma_segment_t seg;
 	int             error, i, pmreg, rseg;
 	struct ifnet   *ifp;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->bce_dev = self;
 
@@ -317,7 +318,7 @@ bce_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 
 	sc->bce_intrhand = pci_intr_establish(pc, ih, IPL_NET, bce_intr, sc);
 
@@ -460,7 +461,7 @@ bce_attach(device_t parent, device_t self, void *aux)
 	    ether_sprintf(sc->enaddr));
 	ether_ifattach(ifp, sc->enaddr);
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 	callout_init(&sc->bce_timeout, 0);
 
 	if (pmf_device_register(self, NULL, bce_resume))

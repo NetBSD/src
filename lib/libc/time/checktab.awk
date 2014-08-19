@@ -1,4 +1,4 @@
-#	$NetBSD: checktab.awk,v 1.5 2012/08/09 12:38:25 christos Exp $
+#	$NetBSD: checktab.awk,v 1.5.2.1 2014/08/20 00:02:16 tls Exp $
 
 # Check tz tables for consistency.
 
@@ -10,6 +10,9 @@ BEGIN {
 	if (!iso_table) iso_table = "iso3166.tab"
 	if (!zone_table) zone_table = "zone.tab"
 	if (!want_warnings) want_warnings = -1
+
+	# A special (and we hope temporary) case.
+	tztab["America/Montreal"] = 1
 
 	while (getline <iso_table) {
 		iso_NR++
@@ -71,13 +74,10 @@ BEGIN {
 			status = 1
 		}
 		cc0 = cc
-		if (tz2cc[tz]) {
-			printf "%s:%d: %s: duplicate TZ column\n", \
-				zone_table, zone_NR, tz >>"/dev/stderr"
-			status = 1
-		}
-		tz2cc[tz] = cc
-		tz2comments[tz] = comments
+		cctz = cc tz
+		cctztab[cctz] = 1
+		tztab[tz] = 1
+		tz2comments[cctz] = comments
 		tz2NR[tz] = zone_NR
 		if (cc2name[cc]) {
 			cc_used[cc]++
@@ -94,16 +94,19 @@ BEGIN {
 		}
 	}
 
-	for (tz in tz2cc) {
-		if (cc_used[tz2cc[tz]] == 1) {
-			if (tz2comments[tz]) {
+	for (cctz in cctztab) {
+		cc = substr (cctz, 1, 2)
+		tz = substr (cctz, 3)
+		if (cc_used[cc] == 1) {
+			if (tz2comments[cctz]) {
 				printf "%s:%d: unnecessary comment `%s'\n", \
-					zone_table, tz2NR[tz], tz2comments[tz] \
+					zone_table, tz2NR[tz], \
+					tz2comments[cctz] \
 					>>"/dev/stderr"
 				status = 1
 			}
 		} else {
-			if (!tz2comments[tz]) {
+			if (!tz2comments[cctz]) {
 				printf "%s:%d: missing comment\n", \
 					zone_table, tz2NR[tz] >>"/dev/stderr"
 				status = 1
@@ -114,10 +117,14 @@ BEGIN {
 	FS = " "
 }
 
+$1 ~ /^#/ { next }
+
 {
-	tz = ""
-	if ($1 == "Zone") tz = $2
-	if ($1 == "Link") {
+	tz = rules = ""
+	if ($1 == "Zone") {
+		tz = $2
+		ruleUsed[$4] = 1
+	} else if ($1 == "Link") {
 		# Ignore Link commands if source and destination basenames
 		# are identical, e.g. Europe/Istanbul versus Asia/Istanbul.
 		src = $2
@@ -125,9 +132,13 @@ BEGIN {
 		while ((i = index(src, "/"))) src = substr(src, i+1)
 		while ((i = index(dst, "/"))) dst = substr(dst, i+1)
 		if (src != dst) tz = $3
+	} else if ($1 == "Rule") {
+		ruleDefined[$2] = 1
+	} else {
+		ruleUsed[$2] = 1
 	}
 	if (tz && tz ~ /\//) {
-		if (!tz2cc[tz]) {
+		if (!tztab[tz]) {
 			printf "%s: no data for `%s'\n", zone_table, tz \
 				>>"/dev/stderr"
 			status = 1
@@ -137,6 +148,12 @@ BEGIN {
 }
 
 END {
+	for (tz in ruleDefined) {
+		if (!ruleUsed[tz]) {
+			printf "%s: Rule never used\n", tz
+			status = 1
+		}
+	}
 	for (tz in tz2cc) {
 		if (!zoneSeen[tz]) {
 			printf "%s:%d: no Zone table for `%s'\n", \

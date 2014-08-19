@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.24 2010/07/07 01:14:52 chs Exp $	*/
+/*	$NetBSD: gdt.c,v 1.24.18.1 2014/08/20 00:02:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.24 2010/07/07 01:14:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.24.18.1 2014/08/20 00:02:42 tls Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -300,9 +300,6 @@ tss_alloc(struct x86_64_tss *tss)
 {
 #ifndef XEN
 	int slot;
-	struct sys_segment_descriptor *gdt;
-
-	gdt = (struct sys_segment_descriptor *)&gdtstore[DYNSEL_START];
 
 	mutex_enter(&cpu_lock);
 	slot = gdt_get_slot();

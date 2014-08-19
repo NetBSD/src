@@ -1,7 +1,6 @@
 /* Native-dependent code for NetBSD/sparc.
 
-   Copyright (C) 2002, 2003, 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -52,7 +51,7 @@ supply_gregset (struct regcache *regcache, const gregset_t *gregs)
 void
 supply_fpregset (struct regcache *regcache, const fpregset_t *fpregs)
 {
-  sparc_supply_fpregset (regcache, -1, fpregs);
+  sparc_supply_fpregset (sparc_fpregset, regcache, -1, fpregs);
 }
 
 void
@@ -64,7 +63,7 @@ fill_gregset (const struct regcache *regcache, gregset_t *gregs, int regnum)
 void
 fill_fpregset (const struct regcache *regcache, fpregset_t *fpregs, int regnum)
 {
-  sparc_collect_fpregset (regcache, regnum, fpregs);
+  sparc_collect_fpregset (sparc_fpregset, regcache, regnum, fpregs);
 }
 
 static int
@@ -100,6 +99,7 @@ _initialize_sparcnbsd_nat (void)
 {
   struct target_ops *t;
   sparc_gregset = &sparc32nbsd_gregset;
+  sparc_fpregset = &sparc32_bsd_fpregset;
 
   /* Add some extra features to the generic SPARC target.  */
   t = sparc_target ();

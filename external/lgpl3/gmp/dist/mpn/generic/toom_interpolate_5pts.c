@@ -126,8 +126,8 @@ mpn_toom_interpolate_5pts (mp_ptr c, mp_ptr v2, mp_ptr vm1,
      result is v2 >= 0 */
   saved = vinf[0];       /* Remember v1's highest byte (will be overwritten). */
   vinf[0] = vinf0;       /* Set the right value for vinf0                     */
-#ifdef HAVE_NATIVE_mpn_sublsh1_n
-  cy = mpn_sublsh1_n (v2, v2, vinf, twor);
+#ifdef HAVE_NATIVE_mpn_sublsh1_n_ip1
+  cy = mpn_sublsh1_n_ip1 (v2, vinf, twor);
 #else
   /* Overwrite unused vm1 */
   cy = mpn_lshift (vm1, vinf, twor, 1);

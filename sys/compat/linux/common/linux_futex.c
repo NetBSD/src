@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.28.10.1 2013/06/23 06:20:16 tls Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.28.10.2 2014/08/20 00:03:32 tls Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.28.10.1 2013/06/23 06:20:16 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.28.10.2 2014/08/20 00:03:32 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -195,6 +195,8 @@ linux_do_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_t
 		/*FALLTHROUGH*/
 	case LINUX_FUTEX_WAIT_BITSET:
 		if ((error = ts2timo(clk, 0, ts, &tout, NULL)) != 0) {
+			if (error != ETIMEDOUT)
+				return error;
 			/*
 			 * If the user process requests a non null timeout,
 			 * make sure we do not turn it into an infinite
@@ -203,7 +205,7 @@ linux_do_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_t
 			 * We use a minimal timeout of 1/hz. Maybe it would make
 			 * sense to just return ETIMEDOUT without sleeping.
 			 */
-			if (error == ETIMEDOUT && SCARG(uap, timeout) != NULL)
+			if (SCARG(uap, timeout) != NULL)
 				tout = 1;
 			else
 				tout = 0;
@@ -608,7 +610,7 @@ futex_atomic_op(lwp_t *l, int encoded_op, void *uaddr)
 		}
 
 		error = ucas_int(uaddr, cval, nval, &oldval);
-		if (oldval == cval || error) {
+		if (error || oldval == cval) {
 			break;
 		}
 		cval = oldval;
@@ -739,10 +741,8 @@ static int
 fetch_robust_entry(struct lwp *l, struct linux_robust_list **entry,
     struct linux_robust_list **head, int *pi)
 {
-	struct linux_emuldata *led;
 	unsigned long uentry;
 
-	led = l->l_emuldata;
 #ifdef __arch64__
 	if (l->l_proc->p_flag & PK_32) {
 		uint32_t u32;

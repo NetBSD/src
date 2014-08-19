@@ -1,4 +1,4 @@
-/* $NetBSD: notifications.c,v 1.2 2010/12/09 00:10:59 christos Exp $ */
+/* $NetBSD: notifications.c,v 1.2.12.1 2014/08/20 00:05:09 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ build_notification(uint32_t msg, uint32_t n)
 }
 
 int 
-send_notification(struct ldp_peer * p, uint32_t msg, uint32_t code)
+send_notification(const struct ldp_peer * p, uint32_t msg, uint32_t code)
 {
 	struct notification_tlv *nt;
 	int             rv;

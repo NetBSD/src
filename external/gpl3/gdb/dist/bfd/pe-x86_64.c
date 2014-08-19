@@ -17,7 +17,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.
-   
+
    Written by Kai Tietz, OneVision Software GmbH&CoKg.  */
 
 #include "sysdep.h"
@@ -51,6 +51,8 @@
 { COFF_SECTION_NAME_EXACT_MATCH (".pdata"), \
   COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 2 }, \
 { COFF_SECTION_NAME_PARTIAL_MATCH (".debug"), \
+  COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 0 }, \
+{ COFF_SECTION_NAME_PARTIAL_MATCH (".zdebug"), \
   COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 0 }, \
 { COFF_SECTION_NAME_PARTIAL_MATCH (".gnu.linkonce.wi."), \
   COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 0 }

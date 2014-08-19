@@ -7,7 +7,7 @@
    SAFE TO REACH IT THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
    GUARANTEED THAT IT WILL CHANGE OR DISAPPEAR IN A FUTURE GNU MP RELEASE.
 
-Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+Copyright 2006, 2007, 2008, 2009, 2010, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -41,7 +41,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
   vinf=          a2 ^2 # A(inf)^2
 */
 
-#if TUNE_PROGRAM_BUILD
+#if TUNE_PROGRAM_BUILD || WANT_FAT_BINARY
 #define MAYBE_sqr_basecase 1
 #define MAYBE_sqr_toom3   1
 #else
@@ -68,6 +68,7 @@ mpn_toom3_sqr (mp_ptr pp,
 	       mp_srcptr ap, mp_size_t an,
 	       mp_ptr scratch)
 {
+  const int __gmpn_cpuvec_initialized = 1;
   mp_size_t n, s;
   mp_limb_t cy, vinf0;
   mp_ptr gp;

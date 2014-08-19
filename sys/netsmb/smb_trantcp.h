@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.h,v 1.6 2008/06/24 10:37:19 gmcgarry Exp $	*/
+/*	$NetBSD: smb_trantcp.h,v 1.6.40.1 2014/08/20 00:04:36 tls Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -82,10 +82,10 @@ struct nbpcb {
 #define	NB_RCVQ		(64 * 1024)
 
 /*
- * Timeouts used for send/receive. XXX Sysctl this?
+ * Timeouts (s) used for send/receive. XXX Sysctl this?
  */
-#define NB_SNDTIMEO	(5 * hz)
-#define NB_RCVTIMEO	(5 * hz)
+#define NB_SNDTIMEO	(5)
+#define NB_RCVTIMEO	(5)
 
 /*
  * TCP slowstart presents a problem in conjunction with large

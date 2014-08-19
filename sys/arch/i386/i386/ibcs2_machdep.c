@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.40 2010/02/14 11:09:54 drochner Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.40.20.1 2014/08/20 00:03:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.40 2010/02/14 11:09:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.40.20.1 2014/08/20 00:03:06 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.40 2010/02/14 11:09:54 drochner 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/psl.h>
-#include <machine/npx.h>
+#include <x86/fpu.h>
 #include <machine/reg.h>
 #include <machine/vmparam.h>
 #include <machine/ibcs2_machdep.h>
@@ -64,14 +64,11 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.40 2010/02/14 11:09:54 drochner 
 void
 ibcs2_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
-	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
 
 	setregs(l, epp, stack);
-	if (i386_use_fxsave)
-		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __iBCS2_NPXCW__;
-	else
-		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __iBCS2_NPXCW__;
+	fpu_set_default_cw(l, __iBCS2_NPXCW__);
+
 	tf = l->l_md.md_regs;
 	tf->tf_eax = 0x2000000;		/* XXX base of heap */
 	tf->tf_cs = GSEL(GUCODEBIG_SEL, SEL_UPL);

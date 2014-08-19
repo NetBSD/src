@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.58.2.2 2013/06/23 06:20:23 tls Exp $	*/
+/*	$NetBSD: ufs.c,v 1.58.2.3 2014/08/20 00:04:30 tls Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -138,13 +138,16 @@ struct fs {
 typedef uint32_t	ino32_t;
 
 #ifndef FSBTODB
-#define FSBTODB(fs, indp) fsbtodb(fs, indp)
+#define FSBTODB(fs, indp) FFS_FSBTODB(fs, indp)
 #endif
 #ifndef UFS_NINDIR
 #define UFS_NINDIR FFS_NINDIR
 #endif
 #ifndef ufs_blkoff
 #define ufs_blkoff ffs_blkoff
+#endif
+#ifndef ufs_lblkno
+#define ufs_lblkno ffs_lblkno
 #endif
 
 /*
@@ -186,36 +189,6 @@ static void ffs_oldfscompat(struct fs *);
 static int ffs_find_superblock(struct open_file *, struct fs *);
 #endif
 
-#if defined(LIBSA_ENABLE_LS_OP)
-
-#define NELEM(x) (sizeof (x) / sizeof(*x))
-
-typedef struct entry_t entry_t;
-struct entry_t {
-	entry_t	*e_next;
-	ino32_t	e_ino;
-	uint8_t	e_type;
-	char	e_name[1];
-};
-
-static const char    *const typestr[] = {
-	"unknown",
-	"FIFO",
-	"CHR",
-	0,
-	"DIR",
-	0,
-	"BLK",
-	0,
-	"REG",
-	0,
-	"LNK",
-	0,
-	"SOCK",
-	0,
-	"WHT"
-};
-#endif /* LIBSA_ENABLE_LS_OP */
 
 #ifdef LIBSA_LFS
 /*
@@ -264,7 +237,7 @@ read_inode(ino32_t inumber, struct open_file *f)
 	char *buf;
 	size_t rsize;
 	int rc;
-	daddr_t inode_sector;
+	daddr_t inode_sector = 0; /* XXX: gcc */
 #ifdef LIBSA_LFS
 	struct ufs_dinode *dip;
 	int cnt;
@@ -425,12 +398,11 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 	struct fs *fs = fp->f_fs;
 	long off;
 	indp_t file_block;
-	indp_t disk_block;
 	size_t block_size;
 	int rc;
 
 	off = ufs_blkoff(fs, fp->f_seekp);
-	file_block = lblkno(fs, fp->f_seekp);
+	file_block = ufs_lblkno(fs, fp->f_seekp);
 #ifdef LIBSA_LFS
 	block_size = dblksize(fs, &fp->f_di, file_block);
 #else
@@ -438,6 +410,7 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 #endif
 
 	if (file_block != fp->f_buf_blkno) {
+		indp_t disk_block = 0; /* XXX: gcc */
 		rc = block_map(f, file_block, &disk_block);
 		if (rc)
 			return rc;
@@ -887,13 +860,34 @@ ufs_stat(struct open_file *f, struct stat *sb)
 }
 
 #if defined(LIBSA_ENABLE_LS_OP)
+
+#include "ls.h"
+
+static const char    *const typestr[] = {
+	"unknown",
+	"FIFO",
+	"CHR",
+	0,
+	"DIR",
+	0,
+	"BLK",
+	0,
+	"REG",
+	0,
+	"LNK",
+	0,
+	"SOCK",
+	0,
+	"WHT"
+};
+
 __compactcall void
 ufs_ls(struct open_file *f, const char *pattern)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	char *buf;
 	size_t buf_size;
-	entry_t	*names = 0, *n, **np;
+	lsentry_t *names = NULL;
 
 	fp->f_seekp = 0;
 	while (fp->f_seekp < (off_t)fp->f_di.di_size) {
@@ -928,46 +922,13 @@ ufs_ls(struct open_file *f, const char *pattern)
 				printf("bad dir entry\n");
 				goto out;
 			}
-			if (pattern && !fnmatch(dp->d_name, pattern))
-				continue;
-			n = alloc(sizeof *n + strlen(dp->d_name));
-			if (!n) {
-				printf("%d: %s (%s)\n",
-					dp->d_ino, dp->d_name, t);
-				continue;
-			}
-			n->e_ino = dp->d_ino;
-			n->e_type = dp->d_type;
-			strcpy(n->e_name, dp->d_name);
-			for (np = &names; *np; np = &(*np)->e_next) {
-				if (strcmp(n->e_name, (*np)->e_name) < 0)
-					break;
-			}
-			n->e_next = *np;
-			*np = n;
+			lsadd(&names, pattern, dp->d_name, strlen(dp->d_name),
+			    dp->d_ino, t);
 		}
 		fp->f_seekp += buf_size;
 	}
-
-	if (names) {
-		entry_t *p_names = names;
-		do {
-			n = p_names;
-			printf("%d: %s (%s)\n",
-				n->e_ino, n->e_name, typestr[n->e_type]);
-			p_names = n->e_next;
-		} while (p_names);
-	} else {
-		printf("not found\n");
-	}
-out:
-	if (names) {
-		do {
-			n = names;
-			names = n->e_next;
-			dealloc(n, 0);
-		} while (names);
-	}
+	lsprint(names);
+out:	lsfree(names);
 }
 #endif /* LIBSA_ENABLE_LS_OP */
 

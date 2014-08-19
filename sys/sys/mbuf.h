@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.149.2.1 2013/02/25 00:30:12 tls Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.149.2.2 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -171,12 +171,12 @@ struct m_hdr {
  * packets during reassembly.
  */
 struct	pkthdr {
-	struct	ifnet *rcvif;		/* rcv interface */
-	SLIST_HEAD(packet_tags, m_tag) tags; /* list of packet tags */
-	int	len;			/* total packet length */
-	int	csum_flags;		/* checksum flags */
-	uint32_t csum_data;		/* checksum data */
-	u_int	segsz;			/* segment size */
+	struct ifnet	*rcvif;			/* rcv interface */
+	SLIST_HEAD(packet_tags, m_tag) tags;	/* list of packet tags */
+	int		len;			/* total packet length */
+	int		csum_flags;		/* checksum flags */
+	uint32_t	csum_data;		/* checksum data */
+	u_int		segsz;			/* segment size */
 };
 
 /*
@@ -686,7 +686,7 @@ do {									\
 } while (/* CONSTCOND */ 0)
 
 /* length to m_copy to copy all */
-#define	M_COPYALL	1000000000
+#define	M_COPYALL	-1
 
 /* compatibility with 4.3 */
 #define  m_copy(m, o, l)	m_copym((m), (o), (l), M_DONTWAIT)
@@ -818,7 +818,6 @@ extern struct mowner revoked_mowner;
 
 MALLOC_DECLARE(M_MBUF);
 MALLOC_DECLARE(M_SONAME);
-MALLOC_DECLARE(M_SOOPTS);
 
 struct	mbuf *m_copym(struct mbuf *, int, int, int);
 struct	mbuf *m_copypacket(struct mbuf *, int);
@@ -852,9 +851,12 @@ void	m_reclaim(void *, int);
 void	mbinit(void);
 void	m_ext_free(struct mbuf *);
 char *	m_mapin(struct mbuf *);
-void	m_move_pkthdr(struct mbuf *to, struct mbuf *from);
+void	m_move_pkthdr(struct mbuf *, struct mbuf *);
 
 bool	m_ensure_contig(struct mbuf **, int);
+struct mbuf *m_add(struct mbuf *, struct mbuf *);
+void	m_align(struct mbuf *, int);
+int	m_append(struct mbuf *, int, const void *);
 
 /* Inline routines. */
 static __inline u_int m_length(const struct mbuf *) __unused;

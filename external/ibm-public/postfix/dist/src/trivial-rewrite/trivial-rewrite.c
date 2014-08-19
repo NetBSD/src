@@ -1,4 +1,4 @@
-/*	$NetBSD: trivial-rewrite.c,v 1.1.1.2 2010/06/17 18:07:10 tron Exp $	*/
+/*	$NetBSD: trivial-rewrite.c,v 1.1.1.2.12.1 2014/08/19 23:59:45 tls Exp $	*/
 
 /*++
 /* NAME
@@ -85,10 +85,14 @@
 /* .IP "\fBresolve_dequoted_address (yes)\fR"
 /*	Resolve a recipient address safely instead of correctly, by
 /*	looking inside quotes.
+/* .PP
+/*	Available with Postfix version 2.1 and later:
 /* .IP "\fBresolve_null_domain (no)\fR"
 /*	Resolve an address that ends in the "@" null domain as if the
 /*	local hostname were specified, instead of rejecting the address as
 /*	invalid.
+/* .PP
+/*	Available with Postfix version 2.3 and later:
 /* .IP "\fBresolve_numeric_domain (no)\fR"
 /*	Resolve "user@ipaddress" as "user@[ipaddress]", instead of
 /*	rejecting the address as invalid.
@@ -112,7 +116,9 @@
 /*	With locally submitted mail, append the string ".$mydomain" to
 /*	addresses that have no ".domain" information.
 /* .IP "\fBrecipient_delimiter (empty)\fR"
-/*	The separator between user names and address extensions (user+foo).
+/*	The set of characters that can separate a user name from its
+/*	extension (example: user+foo), or a .forward file name from its
+/*	extension (example: .forward+foo).
 /* .IP "\fBswap_bangpath (yes)\fR"
 /*	Enable the rewriting of "site!user" into "user@site".
 /* .PP

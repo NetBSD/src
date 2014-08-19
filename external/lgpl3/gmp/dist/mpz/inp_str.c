@@ -5,8 +5,8 @@
    REST ARE INTERNALS AND ARE ALMOST CERTAIN TO BE SUBJECT TO INCOMPATIBLE
    CHANGES OR DISAPPEAR COMPLETELY IN FUTURE GNU MP RELEASES.
 
-Copyright 1991, 1993, 1994, 1996, 1998, 2000, 2001, 2002, 2003 Free Software
-Foundation, Inc.
+Copyright 1991, 1993, 1994, 1996, 1998, 2000, 2001, 2002, 2003, 2011, 2012
+Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -27,8 +27,8 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include <ctype.h>
 #include "gmp.h"
 #include "gmp-impl.h"
+#include "longlong.h"
 
-extern const unsigned char __gmp_digit_value_tab[];
 #define digit_value_tab __gmp_digit_value_tab
 
 size_t
@@ -147,17 +147,16 @@ mpz_inp_str_nowhite (mpz_ptr x, FILE *stream, int base, int c, size_t nread)
   /* Make sure the string is not empty, mpn_set_str would fail.  */
   if (str_size == 0)
     {
-      x->_mp_size = 0;
+      SIZ (x) = 0;
     }
   else
     {
-      xsize = 2 + (mp_size_t)
-	(str_size / (GMP_NUMB_BITS * mp_bases[base].chars_per_bit_exactly));
+      LIMBS_PER_DIGIT_IN_BASE (xsize, str_size, base);
       MPZ_REALLOC (x, xsize);
 
       /* Convert the byte array in base BASE to our bignum format.  */
-      xsize = mpn_set_str (x->_mp_d, (unsigned char *) str, str_size, base);
-      x->_mp_size = negative ? -xsize : xsize;
+      xsize = mpn_set_str (PTR (x), (unsigned char *) str, str_size, base);
+      SIZ (x) = negative ? -xsize : xsize;
     }
   (*__gmp_free_func) (str, alloc_size);
   return nread;

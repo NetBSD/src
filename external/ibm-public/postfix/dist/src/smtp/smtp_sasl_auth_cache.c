@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_sasl_auth_cache.c,v 1.1.1.1.16.1 2013/02/25 00:27:28 tls Exp $	*/
+/*	$NetBSD: smtp_sasl_auth_cache.c,v 1.1.1.1.16.2 2014/08/19 23:59:44 tls Exp $	*/
 
 /*++
 /* NAME
@@ -232,11 +232,12 @@ static int smtp_sasl_auth_cache_valid_value(SMTP_SASL_AUTH_CACHE *auth_cache,
 int     smtp_sasl_auth_cache_find(SMTP_SASL_AUTH_CACHE *auth_cache,
 				          const SMTP_SESSION *session)
 {
+    SMTP_ITERATOR *iter = session->iterator;
     char   *key;
     const char *entry;
     int     valid = 0;
 
-    key = smtp_sasl_auth_cache_make_key(session->host, session->sasl_username);
+    key = smtp_sasl_auth_cache_make_key(STR(iter->host), session->sasl_username);
     if ((entry = dict_get(auth_cache->dict, key)) != 0)
 	if ((valid = smtp_sasl_auth_cache_valid_value(auth_cache, entry,
 						session->sasl_passwd)) == 0)
@@ -257,10 +258,11 @@ void    smtp_sasl_auth_cache_store(SMTP_SASL_AUTH_CACHE *auth_cache,
 				           const SMTP_SESSION *session,
 				           const SMTP_RESP *resp)
 {
+    SMTP_ITERATOR *iter = session->iterator;
     char   *key;
     char   *value;
 
-    key = smtp_sasl_auth_cache_make_key(session->host, session->sasl_username);
+    key = smtp_sasl_auth_cache_make_key(STR(iter->host), session->sasl_username);
     value = smtp_sasl_auth_cache_make_value(session->sasl_passwd,
 					    resp->dsn, resp->str);
     dict_put(auth_cache->dict, key, value);

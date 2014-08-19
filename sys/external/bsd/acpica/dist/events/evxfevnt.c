@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,6 +43,7 @@
 
 
 #define __EVXFEVNT_C__
+#define EXPORT_ACPI_INTERFACES
 
 #include "acpi.h"
 #include "accommon.h"
@@ -52,6 +53,7 @@
         ACPI_MODULE_NAME    ("evxfevnt")
 
 
+#if (!ACPI_REDUCED_HARDWARE) /* Entire module */
 /*******************************************************************************
  *
  * FUNCTION:    AcpiEnable
@@ -79,6 +81,13 @@ AcpiEnable (
     if (!AcpiTbTablesLoaded ())
     {
         return_ACPI_STATUS (AE_NO_ACPI_TABLES);
+    }
+
+    /* If the Hardware Reduced flag is set, machine is always in acpi mode */
+
+    if (AcpiGbl_ReducedHardware)
+    {
+        return_ACPI_STATUS (AE_OK);
     }
 
     /* Check current mode */
@@ -129,6 +138,13 @@ AcpiDisable (
 
     ACPI_FUNCTION_TRACE (AcpiDisable);
 
+
+    /* If the Hardware Reduced flag is set, machine is always in acpi mode */
+
+    if (AcpiGbl_ReducedHardware)
+    {
+        return_ACPI_STATUS (AE_OK);
+    }
 
     if (AcpiHwGetMode() == ACPI_SYS_MODE_LEGACY)
     {
@@ -377,4 +393,4 @@ AcpiGetEventStatus (
 
 ACPI_EXPORT_SYMBOL (AcpiGetEventStatus)
 
-
+#endif /* !ACPI_REDUCED_HARDWARE */

@@ -1,3 +1,486 @@
+2013-12-13  Kuan-Lin Chen  <kuanlinchentw@gmail.com>
+	    Wei-Cheng Wang  <cole945@gmail.com>
+
+	* nds32.h: New file for Andes NDS32.
+
+2013-12-07  Mike Frysinger  <vapier@gentoo.org>
+
+	* epiphany.h: Remove +x file mode.
+
+2013-11-17  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* x86-64.h: Add R_X86_64_PC32_BND and R_X86_64_PLT32_BND.
+
+2013-11-13  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* aarch64.h: Define R_AARCH64_TLS_DTPMOD64,
+	R_AARCH64_TLS_DTPREL64 and R_AARCH64_TLS_TPREL64; guard
+	R_AARCH64_TLS_DTPMOD, R_AARCH64_TLS_DTPREL and
+	R_AARCH64_TLS_TPREL with RELOC_MACROS_GEN_FUNC.
+
+2013-10-30  Alan Modra  <amodra@gmail.com>
+
+	* ppc.h (DT_PPC_TLSOPT): Delete.
+	(DT_PPC_OPT, PPC_OPT_TLS): Define.
+	* ppc64.h (DT_PPC64_TLSOPT): Delete.
+	(DT_PPC64_OPT, PPC64_OPT_TLS, PPC64_OPT_MULTI_TOC): Define.
+
+2013-10-30  Alan Modra  <amodra@gmail.com>
+
+	* ppc64.h (STO_PPC64_LOCAL_BIT, STO_PPC64_LOCAL_MASK): Define.
+	(ppc64_decode_local_entry, ppc64_encode_local_entry): New functions.
+	(PPC64_LOCAL_ENTRY_OFFSET, PPC64_SET_LOCAL_ENTRY_OFFSET): Define.
+
+2013-10-30  Alan Modra  <amodra@gmail.com>
+
+	* ppc64.h (EF_PPC64_ABI): Define.
+
+2013-10-30  Alan Modra  <amodra@gmail.com>
+
+	* ppc64.h (R_PPC64_ADDR16_HIGH, R_PPC64_ADDR16_HIGHA,
+	R_PPC64_TPREL16_HIGH, R_PPC64_TPREL16_HIGHA,
+	R_PPC64_DTPREL16_HIGH, R_PPC64_DTPREL16_HIGHA): New.
+	(IS_PPC64_TLS_RELOC): Match new tls relocs.
+
+2013-10-14  Chao-ying Fu  <Chao-ying.Fu@imgtec.com>
+
+	* mips.h (enum): Add Tag_GNU_MIPS_ABI_MSA.
+	(enum): Add Val_GNU_MIPS_ABI_MSA_ANY and Val_GNU_MIPS_ABI_MSA_128.
+
+2013-09-17  Doug Gilmore  <Doug.Gilmore@imgtec.com>
+
+	* mips.h (EF_MIPS_FP64): New e_flags bit.
+
+2013-08-09  Nick Clifton  <nickc@redhat.com>
+
+	* rl78.c (E_FLAG_RL78_G10): Define.
+
+2013-07-15  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips.h (Tag_GNU_MIPS_ABI_FP): Remove comment.
+	(Val_GNU_MIPS_ABI_FP_ANY, Val_GNU_MIPS_ABI_FP_DOUBLE,
+	Val_GNU_MIPS_ABI_FP_SINGLE, Val_GNU_MIPS_ABI_FP_SOFT,
+	Val_GNU_MIPS_ABI_FP_64): New enum.
+
+2013-07-12  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips.h (EF_MIPS_NAN2008): New macro.
+
+2013-07-08  Tristan Gingold  <gingold@adacore.com>
+
+	* ia64.h (STB_VMS_WEAK, STB_VMS_SYSTEM): Add.
+
+2013-07-05  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* s390.h: Add new relocs R_390_PC12DBL, R_390_PLT12DBL,
+	R_390_PC24DBL, and R_390_PLT24DBL.
+
+2013-06-26  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* aarch64.h: Add ELF32 reloc codes and remove fake ELF64 ones.
+
+2013-06-24  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips.h (ELF_ST_IS_MIPS_PLT): Respect STO_MIPS16 setting.
+	(ELF_ST_SET_MIPS_PLT): Likewise.
+
+2013-06-19  Will Newton  <will.newton@linaro.org>
+
+	* aarch64.h: Remove R_AARCH64_IRELATIVE.
+
+2013-06-07  Will Newton  <will.newton@linaro.org>
+
+	* aarch64.h: Add R_AARCH64_IRELATIVE reloc.
+
+2013-06-06  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips.h (ELF_ST_SET_MIPS_PIC): Clear any STO_MIPS16 setting.
+
+2013-05-30  Paul Brook  <paul@codesourcery.com>
+
+	* mips.h (R_MIPS_EH): New.
+
+2013-05-28  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* aarch64.h (R_AARCH64_TLSDESC_LD64_PREL19): Rename to ...
+	(R_AARCH64_TLSDESC_LD_PREL19): ... this.
+	(R_AARCH64_TLSDESC_ADR_PAGE): Rename to ...
+	(R_AARCH64_TLSDESC_ADR_PAGE21): ... this.
+
+2013-05-22  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* common.h (EM_INTEL205): New.
+	(EM_INTEL206): Likewise.
+	(EM_INTEL207): Likewise.
+	(EM_INTEL208): Likewise.
+	(EM_INTEL209): Likewise.
+
+2013-05-02  Nick Clifton  <nickc@redhat.com>
+
+	* msp430.h: Add MSP430X relocs.
+	Add some more MSP430 machine numbers.
+	Add values used by .MSP430.attributes section.
+
+2013-03-21  Michael Schewe  <michael.schewe@gmx.net>
+
+	* h8.h: Add new reloc R_H8_DISP32A16 for relaxation of
+	mov @(disp:32,ERx) to mov @(disp:16,ERx).
+
+2013-03-08  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* common.h (NT_S390_TDB): Define.
+
+2013-02-06  Sandra Loosemore  <sandra@codesourcery.com>
+            Andrew Jenner <andrew@codesourcery.com>
+
+	Based on patches from Altera Corporation.
+
+	* nios2.h: New file.
+
+2013-01-24  Nick Clifton  <nickc@redhat.com>
+
+	* v850.h: Add support for e3v5 architecture.
+	Reorganize processor selection macros.
+
+2013-01-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386.h (R_386_SIZE32): Fill it.
+	* x86-64.h (R_X86_64_SIZE32): Likewise.
+	(R_X86_64_SIZE64): Likewise.
+
+2013-01-10  Will Newton <will.newton@imgtec.com>
+
+	* common.h: Fix case of "Meta".
+	* metag.h: New file.
+
+2013-01-08  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* common.h (NT_ARM_TLS, NT_ARM_HW_BREAK, NT_ARM_HW_WATCH): New macro
+	definitions.
+
+2013-01-04  Juergen Urban <JuergenUrban@gmx.de>
+
+	* mips.h: Add MIPS machine variant number for r5900 which is
+	compatible with old Playstation 2 software.
+
+2012-11-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* common.h (DF_1_CONLFAT): Renamed to ...
+	(DF_1_CONFALT): This.
+	(DF_1_ENDFILTEE): New.
+	(DF_1_DISPRELDNE): Likewise.
+	(DF_1_DISPRELPND): Likewise.
+	(DF_1_NODIRECT): Likewise.
+	(DF_1_IGNMULDEF): Likewise.
+	(DF_1_NOKSYMS): Likewise.
+	(DF_1_NOHDR): Likewise.
+	(DF_1_EDITED): Likewise.
+	(DF_1_NORELOC): Likewise.
+	(DF_1_SYMINTPOSE): Likewise.
+	(DF_1_GLOBAUDIT): Likewise.
+	(DF_1_SINGLETON): Likewise.
+
+2012-11-09  Nick Clifton  <nickc@redhat.com>
+
+	* rx.h (EF_RX_CPU_RX): Add comment.
+	(E_FLAG_RX_ABI): Define.
+
+	* v850.h: Add RH850 ABI values.
+
+2012-11-08  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips.h (EF_MIPS_32BITMODE): Move next to lower-order bits.
+
+2012-11-01  Tom Tromey  <tromey@redhat.com>
+
+	* common.h (NT_386_TLS, NT_386_IOPERM): New defines.
+
+2012-10-30  Steve McIntyre  <steve.mcintyre@linaro.org>
+
+	* elf/arm.h (EF_ARM_ABI_FLOAT_SOFT): New define.
+	(EF_ARM_ABI_FLOAT_HARD): Likewise.
+
+2012-10-23  Tom Tromey  <tromey@redhat.com>
+
+	* common.h (NT_SIGINFO, NT_FILE): New defines.
+
+2012-08-27  Walter Lee  <walt@tilera.com>
+
+	* tilegx.h (R_TILEGX_IMM16_X0_HW0_PLT_PCREL): New relocation.
+	(R_TILEGX_IMM16_X1_HW0_PLT_PCREL): Ditto.
+	(R_TILEGX_IMM16_X0_HW1_PLT_PCREL): Ditto.
+	(R_TILEGX_IMM16_X1_HW1_PLT_PCREL): Ditto.
+	(R_TILEGX_IMM16_X0_HW2_PLT_PCREL): Ditto.
+	(R_TILEGX_IMM16_X1_HW2_PLT_PCREL): Ditto.
+	(R_TILEGX_IMM16_X0_HW3_PLT_PCREL): Ditto.
+	(R_TILEGX_IMM16_X1_HW3_PLT_PCREL): Ditto.
+	(R_TILEGX_IMM16_X0_HW0_LAST_PLT_PCREL): Ditto.
+	(R_TILEGX_IMM16_X1_HW0_LAST_PLT_PCREL): Ditto.
+	(R_TILEGX_IMM16_X0_HW1_LAST_PLT_PCREL): Ditto.
+	(R_TILEGX_IMM16_X1_HW1_LAST_PLT_PCREL): Ditto.
+	(R_TILEGX_IMM16_X0_HW2_LAST_PLT_PCREL	): Ditto.
+	(R_TILEGX_IMM16_X1_HW2_LAST_PLT_PCREL): Ditto.
+
+2012-08-13  Ian Bolton  <ian.bolton@arm.com>
+            Laurent Desnogues  <laurent.desnogues@arm.com>
+            Jim MacArthur  <jim.macarthur@arm.com>
+            Marcus Shawcroft  <marcus.shawcroft@arm.com>
+            Nigel Stephens  <nigel.stephens@arm.com>
+            Ramana Radhakrishnan  <ramana.radhakrishnan@arm.com>
+            Richard Earnshaw  <rearnsha@arm.com>
+            Sofiane Naci  <sofiane.naci@arm.com>
+            Tejas Belagod  <tejas.belagod@arm.com>
+            Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* aarch64.h: New file.
+	* common.h (EM_res183): Rename to EM_AARCH64.
+	(EM_res184): Rename to EM_ARM184.
+
+2012-06-28  Iain Sandoe  <iain@codesourcery.com>
+
+	* common.h (AT_L1I_CACHESHAPE, AT_L1D_CACHESHAPE,
+	AT_L2_CACHESHAPE, AT_L3_CACHESHAPE): New defines.
+
+2012-05-16  Georg-Johann Lay  <avr@gjlay.de>
+
+	PR target/13503
+	* avr.h (RELOC_NUMBERS): Rename R_AVR_8_HHI8 to R_AVR_8_HLO8.
+
+2012-05-15  James Murray <jsm@jsm-net.demon.co.uk>
+
+	* m68hc11.h (R_M68HC12_16B, R_M68HC12_PCREL_9, R_M68HC12_PCREL_10)
+	R_M68HC12_HI8XG, R_M68HC12_LO8XG): New relocations.
+	(E_M68HC11_XGATE_RAMOFFSET): Define.
+
+2012-05-14  James Lemke  <jwlemke@codesourcery.com>
+	* ppc.h (SEC_PPC_VLE): Remove.
+
+2012-05-14  Catherine Moore  <clm@codesourcery.com>
+	    James Lemke  <jwlemke@codesourcery.com>
+
+	* ppc.h (R_PPC_VLE_REL8): New reloction.
+	(R_PPC_VLE_REL15): Likewise.
+	(R_PPC_VLE_REL24): Likewise.
+	(R_PPC_VLE_LO16A): Likewise.
+	(R_PPC_VLE_LO16D): Likewise.
+	(R_PPC_VLE_HI16A): Likewise.
+	(R_PPC_VLE_HI16D): Likewise.
+	(R_PPC_VLE_HA16A): Likewise.
+	(R_PPC_VLE_HA16D): Likewise.
+	(R_PPC_VLE_SDA21): Likewise.
+	(R_PPC_VLE_SDA21_LO): Likewise.
+	(R_PPC_VLE_SDAREL_LO16A): Likewise.
+	(R_PPC_VLE_SDAREL_LO16D): Likewise.
+	(R_PPC_VLE_SDAREL_HI16A): Likewise.
+	(R_PPC_VLE_SDAREL_HI16D): Likewise.
+	(R_PPC_VLE_SDAREL_HA16A): Likewise.
+	(R_PPC_VLE_SDAREL_HA16D): Likewise.
+	(SEC_PPC_VLE): Remove.
+	(PF_PPC_VLE): New program header flag.
+	(SHF_PPC_VLE): New section header flag.
+	(vle_opcodes, vle_num_opcodes): New.
+	(VLE_OP): New macro.
+	(VLE_OP_TO_SEG): New macro.
+
+2012-05-11  Georg-Johann Lay  <avr@gjlay.de
+
+	PR target/13503
+	* elf/avr.h (RELOC_NUMBERS): Add values for R_AVR_8_LO8,
+	R_AVR_8_HI8, R_AVR_8_HHI8.
+
+2012-05-03  Sean Keys  <skeys@ipdatasys.com>
+
+	* xgate.h: Mininal file to support XGATE relocations.
+
+2012-04-27  David S. Miller  <davem@davemloft.net>
+
+	* sparc.h: Add new ELF_SPARC_HWCAP_* defines for crypto,
+	pause, and compare-and-branch instructions.
+
+2012-03-07  Nick Clifton  <nickc@redhat.com>
+
+	* mn10300.h (elf_mn10300_reloc_type): Add R_MN10300_TLS_GD,
+	R_MN10300_TLS_LD, R_MN10300_TLS_LDO, R_MN10300_TLS_GOTIE,
+	R_MN10300_TLS_IE, R_MN10300_TLS_LE, R_MN10300_TLS_DPTMOD,
+	R_MN10300_TLS_DTPOFF and R_MN10300_TLS_TPOFF.
+
+2012-02-25  Walter Lee  <walt@tilera.com>
+
+	* tilegx.h (R_TILEGX_IMM16_X0_HW1_GOT): Delete.
+	(R_TILEGX_IMM16_X1_HW1_GOT): Ditto.
+	(R_TILEGX_IMM16_X0_HW2_GOT): Ditto.
+	(R_TILEGX_IMM16_X1_HW2_GOT): Ditto.
+	(R_TILEGX_IMM16_X0_HW3_GOT): Ditto.
+	(R_TILEGX_IMM16_X1_HW3_GOT): Ditto.
+	(R_TILEGX_IMM16_X0_HW2_LAST_GOT): Ditto.
+	(R_TILEGX_IMM16_X1_HW2_LAST_GOT): Ditto.
+	(R_TILEGX_IMM16_X0_HW1_TLS_GD): Ditto.
+	(R_TILEGX_IMM16_X1_HW1_TLS_GD): Ditto.
+	(R_TILEGX_IMM16_X0_HW2_TLS_GD): Ditto.
+	(R_TILEGX_IMM16_X1_HW2_TLS_GD): Ditto.
+	(R_TILEGX_IMM16_X0_HW3_TLS_GD): Ditto.
+	(R_TILEGX_IMM16_X1_HW3_TLS_GD): Ditto.
+	(R_TILEGX_IMM16_X0_HW2_LAST_TLS_GD): Ditto.
+	(R_TILEGX_IMM16_X1_HW2_LAST_TLS_GD): Ditto.
+	(R_TILEGX_IMM16_X0_HW1_TLS_IE): Ditto.
+	(R_TILEGX_IMM16_X1_HW1_TLS_IE): Ditto.
+	(R_TILEGX_IMM16_X0_HW2_TLS_IE): Ditto.
+	(R_TILEGX_IMM16_X1_HW2_TLS_IE): Ditto.
+	(R_TILEGX_IMM16_X0_HW3_TLS_IE): Ditto.
+	(R_TILEGX_IMM16_X1_HW3_TLS_IE): Ditto.
+	(R_TILEGX_IMM16_X0_HW2_LAST_TLS_IE): Ditto.
+	(R_TILEGX_IMM16_X1_HW2_LAST_TLS_IE): Ditto.
+	(R_TILEGX_IMM16_X0_HW0_TLS_LE): New relocation.
+	(R_TILEGX_IMM16_X1_HW0_TLS_LE): Ditto.
+	(R_TILEGX_IMM16_X0_HW0_LAST_TLS_LE): Ditto.
+	(R_TILEGX_IMM16_X1_HW0_LAST_TLS_LE): Ditto.
+	(R_TILEGX_IMM16_X0_HW1_LAST_TLS_LE): Ditto.
+	(R_TILEGX_IMM16_X1_HW1_LAST_TLS_LE): Ditto.
+	(R_TILEGX_TLS_GD_CALL): Ditto.
+	(R_TILEGX_IMM8_X0_TLS_GD_ADD): Ditto.
+	(R_TILEGX_IMM8_X1_TLS_GD_ADD): Ditto.
+	(R_TILEGX_IMM8_Y0_TLS_GD_ADD): Ditto.
+	(R_TILEGX_IMM8_Y1_TLS_GD_ADD): Ditto.
+	(R_TILEGX_TLS_IE_LOAD): Ditto.
+	(R_TILEGX_IMM8_X0_TLS_ADD): Ditto.
+	(R_TILEGX_IMM8_X1_TLS_ADD): Ditto.
+	(R_TILEGX_IMM8_Y0_TLS_ADD): Ditto.
+	(R_TILEGX_IMM8_Y1_TLS_ADD): Ditto.
+	* tilepro.h (R_TILEPRO_TLS_GD_CALL): New relocation.
+	(R_TILEPRO_IMM8_X0_TLS_GD_ADD): Ditto.
+	(R_TILEPRO_IMM8_X1_TLS_GD_ADD): Ditto.
+	(R_TILEPRO_IMM8_Y0_TLS_GD_ADD): Ditto.
+	(R_TILEPRO_IMM8_Y1_TLS_GD_ADD): Ditto.
+	(R_TILEPRO_TLS_IE_LOAD): Ditto.
+	(R_TILEPRO_IMM16_X0_TLS_LE): Ditto.
+	(R_TILEPRO_IMM16_X1_TLS_LE): Ditto.
+	(R_TILEPRO_IMM16_X0_TLS_LE_LO): Ditto.
+	(R_TILEPRO_IMM16_X1_TLS_LE_LO): Ditto.
+	(R_TILEPRO_IMM16_X0_TLS_LE_HI): Ditto.
+	(R_TILEPRO_IMM16_X1_TLS_LE_HI): Ditto.
+	(R_TILEPRO_IMM16_X0_TLS_LE_HA): Ditto.
+	(R_TILEPRO_IMM16_X1_TLS_LE_HA): Ditto.
+
+2011-12-22  DJ Delorie  <dj@redhat.com>
+
+	* rl78.h (R_RL78_RH_RELAX, R_RL78_RH_SFR, R_RL78_RH_SADDR): New.
+	(RL78_RELAXA_BRA, RL78_RELAXA_ADDR16: New.
+
+2011-12-19  Chung-Lin Tang  <cltang@codesourcery.com>
+
+	* mips.h (elf_mips_reloc_type): Add R_MIPS16_TLS_* entries.
+
+2011-12-06  Ulrich Weigand  <uweigand@de.ibm.com>
+
+	* common.h (NT_S390_LAST_BREAK): Define.
+	(NT_S390_SYSTEM_CALL): Likewise.
+
+2011-11-01  DJ Delorie  <dj@redhat.com>
+
+	* common.h (EM_RL78, EM_78K0R): New.
+	* rl78.h: New.
+
+2011-10-25  Joern Rennecke  <joern.rennecke@embecosm.com>
+
+	* epiphany.h: New file.
+	* common.h (EM_ADAPTEVA_EPIPHANY): Define.
+
+2011-10-10  Alan Modra  <amodra@gmail.com>
+
+	* ppc64.h (R_PPC64_TOCSAVE): Add.
+
+2011-10-05  DJ Delorie  <dj@redhat.com>
+
+	* rx.h (E_FLAG_RX_PID): New.
+
+2011-09-21  David S. Miller  <davem@davemloft.net>
+
+	* sparc.h (Tag_GNU_Sparc_HWCAPS): New object attribute.
+	(ELF_SPARC_HWCAP_*): New HWCAPS bitmask values.
+
+2011-08-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/13082
+	* x86-64.h (R_X86_64_RELATIVE64): New.
+
+2011-07-24  Chao-ying Fu  <fu@mips.com>
+            Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips.h (R_MICROMIPS_min): New relocations.
+	(R_MICROMIPS_26_S1): Likewise.
+	(R_MICROMIPS_HI16, R_MICROMIPS_LO16): Likewise.
+	(R_MICROMIPS_GPREL16, R_MICROMIPS_LITERAL): Likewise.
+	(R_MICROMIPS_GOT16, R_MICROMIPS_PC7_S1): Likewise.
+	(R_MICROMIPS_PC10_S1, R_MICROMIPS_PC16_S1): Likewise.
+	(R_MICROMIPS_CALL16, R_MICROMIPS_GOT_DISP): Likewise.
+	(R_MICROMIPS_GOT_PAGE, R_MICROMIPS_GOT_OFST): Likewise.
+	(R_MICROMIPS_GOT_HI16, R_MICROMIPS_GOT_LO16): Likewise.
+	(R_MICROMIPS_SUB, R_MICROMIPS_HIGHER): Likewise.
+	(R_MICROMIPS_HIGHEST, R_MICROMIPS_CALL_HI16): Likewise.
+	(R_MICROMIPS_CALL_LO16, R_MICROMIPS_SCN_DISP): Likewise.
+	(R_MICROMIPS_JALR, R_MICROMIPS_HI0_LO16): Likewise.
+	(R_MICROMIPS_TLS_GD, R_MICROMIPS_TLS_LDM): Likewise.
+	(R_MICROMIPS_TLS_DTPREL_HI, R_MICROMIPS_TLS_DTPREL_LO): Likewise.
+	(R_MICROMIPS_TLS_GOTTPREL): Likewise.
+	(R_MICROMIPS_TLS_TPREL_HI16): Likewise.
+	(R_MICROMIPS_TLS_TPREL_LO16): Likewise.
+	(R_MICROMIPS_GPREL7_S2, R_MICROMIPS_PC23_S2): Likewise.
+	(R_MICROMIPS_max): Likewise.
+	(EF_MIPS_ARCH_ASE_MICROMIPS): New macro.
+	(STO_MIPS_ISA, STO_MIPS_FLAGS): Likewise.
+	(ELF_ST_IS_MIPS_PLT, ELF_ST_SET_MIPS_PLT): Likewise.
+	(STO_MICROMIPS): Likewise.
+	(ELF_ST_IS_MICROMIPS, ELF_ST_SET_MICROMIPS): Likewise.
+	(ELF_ST_IS_COMPRESSED): Likewise.
+	(STO_MIPS_PLT, STO_MIPS_PIC): Rework.
+	(ELF_ST_IS_MIPS_PIC, ELF_ST_SET_MIPS_PIC): Likewise.
+	(STO_MIPS16, ELF_ST_IS_MIPS16, ELF_ST_SET_MIPS16): Likewise.
+
+2011-07-22  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* common.h (EM_K1OM): New.
+
+2011-07-03  Samuel Thibault  <samuel.thibault@gnu.org>
+	    Thomas Schwinge  <thomas@schwinge.name>
+
+	PR binutils/12913
+	* common.h (ELFOSABI_GNU): Define, replaces...
+	(ELFOSABI_LINUX): ... this, kept as an alias.
+	(ELFOSABI_HURD): Remove.
+
+2011-06-15  Ulrich Weigand  <ulrich.weigand@linaro.org>
+
+	* common.h (NT_ARM_VFP): Define.
+
+2011-06-13  Walter Lee  <walt@tilera.com>
+
+	* common.h: Add EM_TILEGX.
+	* tilegx.h: New file.
+	* tilepro.h: New file.
+
+2011-06-09  Tristan Gingold  <gingold@adacore.com>
+
+	* ia64.h (Elf64_External_VMS_ORIG_DYN_Note): New struct.
+
+2011-06-02  Nick Clifton  <nickc@redhat.com>
+
+	* common.h: Fix spelling mistake in comment.
+	* reloc-macros.h: Likewise.
+
+2011-05-31  Paul Brook  <paul@codesourcery.com>
+
+	* arm.h (arm_st_branch_type): Add ST_BRANCH_UNKNOWN.
+
+2011-05-09  Paul Brook  <paul@codesourcery.com>
+
+	* tic6x.h (ELF_STRING_C6000_unwind,
+	ELF_STRING_C6000_unwind_info, ELF_STRING_C6000_unwind_once,
+	ELF_STRING_C6000_unwind_info_once): Define.
+
+2011-04-15  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* common.h (NT_STAPSDT): New define.
+
 2011-03-31  Bernd Schmidt  <bernds@codesourcery.com>
 
 	* tic6x.h (R_C6000_JUMP_SPLOT, R_C6000_EHTYPE,
@@ -38,6 +521,11 @@
 	* arm.h (R_ARM_TLS_DESC, R_ARM_TLS_GOTDESC, R_ARM_TLS_CALL,
 	R_ARM_TLS_DESCSEQ, T_ARM_THM_TLS_CALL, R_ARM_THM_TLS_DESCSEQ): New
 	relocations.
+
+2010-11-16  Jie Zhang  <jie.zhang@analog.com>
+
+	* bfin.h (EF_BFIN_CODE_IN_L1): Define.
+	(EF_BFIN_DATA_IN_L1): Define.
 
 2010-11-11  Mingming Sun  <mingm.sun@gmail.com>
 
@@ -272,6 +760,11 @@
 	* ppc.h (R_PPC_RELAX32, R_PPC_RELAX32PC, R_PPC_RELAX32_PLT,
 	R_PPC_RELAX32PC_PLT): Delete.
 	(R_PPC_RELAX, R_PPC_RELAX_PLT, R_PPC_RELAX_PLTREL24): Define.
+
+2009-12-03  David Daney  <ddaney@caviumnetworks.com>
+	    Adam Nemet  <adambnemet@gmail.com>
+
+	* mips.h (E_MIPS_MACH_OCTEON2): New machine flag.
 
 2009-11-28  Joseph Myers  <joseph@codesourcery.com>
 
@@ -1429,6 +1922,12 @@
 
 For older changes see ChangeLog-9103
 
+Copyright (C) 2004-2012 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

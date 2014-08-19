@@ -1,7 +1,11 @@
-#	$NetBSD: files.netwalker,v 1.3 2012/04/17 10:19:57 bsh Exp $
+#	$NetBSD: files.netwalker,v 1.3.2.1 2014/08/20 00:02:53 tls Exp $
 #
-# Sharp Netwalker
+# Sharp Netwalker configuration info
 #
+
+file   arch/arm/arm32/arm32_boot.c
+file   arch/arm/arm32/arm32_kvminit.c
+file   arch/arm/arm32/arm32_reboot.c
 
 file	arch/evbarm/netwalker/netwalker_machdep.c
 
@@ -19,3 +23,37 @@ file   arch/evbarm/netwalker/netwalker_usb.c	imxusbc_axi
 attach	ipu at axi with lcd_netwalker
 file	arch/evbarm/netwalker/netwalker_lcd.c	lcd_netwalker
 defflag	opt_netwalker_lcd.h			LCD_DEBUG
+
+# CSPI & eCSPI Controller
+attach	imxspi at axi with spi_netwalker
+file	arch/evbarm/netwalker/netwalker_spi.c	spi_netwalker
+
+# Mouse button
+device	mousebtn: wsmousedev
+attach	mousebtn at gpio with netwalker_btn
+file	arch/evbarm/netwalker/netwalker_btn.c	netwalker_btn
+defflag	opt_mousebtn.h				MOUSEBTN_POLLING
+
+# Power button
+device	pwrbtn: sysmon_envsys
+attach	pwrbtn at gpio with netwalker_pwr
+file	arch/evbarm/netwalker/netwalker_pwr.c	netwalker_pwr
+
+# Lid close switch
+device	lidsw: sysmon_envsys
+attach	lidsw at gpio with netwalker_lid
+file	arch/evbarm/netwalker/netwalker_lid.c	netwalker_lid
+
+# LCD BackLight
+attach	imxpwm at axi with netwalker_backlight
+file	arch/evbarm/netwalker/netwalker_backlight.c	netwalker_backlight needs-flag
+
+# OJ6SH-T25 Optical Joystick
+device  oj6sh: wsmousedev
+attach  oj6sh at spi
+file    dev/spi/oj6sh.c				oj6sh
+defflag	opt_oj6sh.h				OJ6SH_UP_Y_RIGHT_X
+						OJ6SH_DOWN_Y_LEFT_X
+						OJ6SH_UP_X_LEFT_Y
+						OJ6SH_DOWN_X_RIGHT_Y
+

@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_dirhash.c,v 1.10 2009/02/06 23:56:26 enami Exp $ */
+/* $NetBSD: vfs_dirhash.c,v 1.10.26.1 2014/08/20 00:04:29 tls Exp $ */
 
 /*
  * Copyright (c) 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.10 2009/02/06 23:56:26 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.10.26.1 2014/08/20 00:04:29 tls Exp $");
 
 /* CLEAN UP! */
 #include <sys/param.h>
@@ -165,6 +165,7 @@ dirhash_purge_entries(struct dirhash *dirh)
 
 	dirh->flags &= ~DIRH_COMPLETE;
 	dirh->flags |=  DIRH_PURGED;
+	dirh->num_files = 0;
 
 	dirhashsize -= dirh->size;
 	dirh->size = 0;
@@ -309,6 +310,7 @@ dirhash_enter(struct dirhash *dirh,
 	dirh_e->entry_size  = entry_size;
 
 	dirh->size  += sizeof(struct dirhash_entry);
+	dirh->num_files++;
 	dirhashsize += sizeof(struct dirhash_entry);
 	LIST_INSERT_HEAD(&dirh->entries[hashline], dirh_e, next);
 }
@@ -378,6 +380,8 @@ dirhash_remove(struct dirhash *dirh, struct dirent *dirent,
 		KASSERT(dirh_e->entry_size == entry_size);
 		LIST_REMOVE(dirh_e, next);
 		dirh->size -= sizeof(struct dirhash_entry);
+		KASSERT(dirh->num_files > 0);
+		dirh->num_files--;
 		dirhashsize -= sizeof(struct dirhash_entry);
 
 		dirhash_enter_freed(dirh, offset, entry_size);
@@ -469,3 +473,33 @@ dirhash_lookup_freed(struct dirhash *dirh, uint32_t min_entrysize,
 	*result = NULL;
 	return 0;
 }
+
+
+bool
+dirhash_dir_isempty(struct dirhash *dirh)
+{
+#ifdef DEBUG
+	struct dirhash_entry *dirh_e;
+	int hashline, num;
+
+	num = 0;
+	for (hashline = 0; hashline < DIRHASH_HASHSIZE; hashline++) {
+		LIST_FOREACH(dirh_e, &dirh->entries[hashline], next) {
+			num++;
+		}
+	}
+
+	if (dirh->num_files != num) {
+		printf("dirhash_dir_isempy: dirhash_counter failed: "
+			"dirh->num_files = %d, counted %d\n",
+			dirh->num_files, num);
+		assert(dirh->num_files == num);
+	}
+#endif
+	/* assert the directory hash info is valid */
+	KASSERT(dirh->flags & DIRH_COMPLETE);
+
+	/* the directory is empty when only '..' lifes in it or is absent */
+	return (dirh->num_files <= 1);
+}
+

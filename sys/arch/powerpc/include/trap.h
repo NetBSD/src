@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.12 2012/07/18 16:44:52 matt Exp $	*/
+/*	$NetBSD: trap.h,v 1.12.2.1 2014/08/20 00:03:19 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -47,7 +47,8 @@
 #define	EXC_TRC		0x0d00		/* Trace */
 #define	EXC_FPA		0x0e00		/* Floating-point Assist */
 
-/* The following is only available on the 601: */
+/* The following are only available on the 601: */
+#define EXC_IOC         0x0a00          /* I/O Controller Interface Exception */
 #define	EXC_RUNMODETRC	0x2000		/* Run Mode/Trace Exception */
 
 /* The following are only available on 7400(G4): */
@@ -112,12 +113,78 @@
  */
 
 #define EXC_ALI_OPCODE_INDICATOR(dsisr) ((dsisr >> 10) & 0x7f)
+
+#define EXC_ALI_LWARX_LWZ  0x00
+#define EXC_ALI_LDARX      0x01
+#define EXC_ALI_STW        0x02
+#define EXC_ALI_LHZ        0x04
+#define EXC_ALI_LHA        0x05
+#define EXC_ALI_STH        0x06
+#define EXC_ALI_LMW        0x07
+#define EXC_ALI_LFS        0x08
 #define EXC_ALI_LFD	0x09
+#define EXC_ALI_STFS       0x0a
 #define EXC_ALI_STFD	0x0b
+#define EXC_ALI_LD_LDU_LWA 0x0d
+#define EXC_ALI_STD_STDU   0x0f
+#define EXC_ALI_LWZU       0x10
+#define EXC_ALI_STWU       0x12
+#define EXC_ALI_LHZU       0x14
+#define EXC_ALI_LHAU       0x15
+#define EXC_ALI_STHU       0x16
+#define EXC_ALI_STMW       0x17
+#define EXC_ALI_LFSU       0x18
+#define EXC_ALI_LFDU       0x19
+#define EXC_ALI_STFSU      0x1a
+#define EXC_ALI_STFDU      0x1b
+#define EXC_ALI_LDX        0x20
+#define EXC_ALI_STDX       0x22
+#define EXC_ALI_LWAX       0x25
+#define EXC_ALI_LSWX       0x28
+#define EXC_ALI_LSWI       0x29
+#define EXC_ALI_STSWX      0x2a
+#define EXC_ALI_STSWI      0x2b
+#define EXC_ALI_LDUX       0x30
+#define EXC_ALI_STDUX      0x32
+#define EXC_ALI_LWAUX      0x35
+#define EXC_ALI_STWCX      0x42  /* stwcx. */
+#define EXC_ALI_STDCX      0x43  /* stdcx. */
+#define EXC_ALI_LWBRX      0x48
+#define EXC_ALI_STWBRX     0x4a
+#define EXC_ALI_LHBRX      0x4c
+#define EXC_ALI_STHBRX     0x4e
+#define EXC_ALI_ECIWX      0x54
+#define EXC_ALI_ECOWX      0x56
 #define EXC_ALI_DCBZ	0x5f
+#define EXC_ALI_LWZX       0x60
+#define EXC_ALI_STWX       0x62
+#define EXC_ALI_LHZX       0x64
+#define EXC_ALI_LHAX       0x65
+#define EXC_ALI_STHX       0x66
+#define EXC_ALI_LSFX       0x68
+#define EXC_ALI_LDFX       0x69
+#define EXC_ALI_STFSX      0x6a
+#define EXC_ALI_STFDX      0x6b
+#define EXC_ALI_STFIWX     0x6f
+#define EXC_ALI_LWZUX      0x70
+#define EXC_ALI_STWUX      0x72
+#define EXC_ALI_LHZUX      0x74
+#define EXC_ALI_LHAUX      0x75
+#define EXC_ALI_STHUX      0x76
+#define EXC_ALI_LFSUX      0x78
+#define EXC_ALI_LFDUX      0x79
+#define EXC_ALI_STFSUX     0x7a
+#define EXC_ALI_STFDUX     0x7b
 
 /* Macros to extract register information */
 #define EXC_ALI_RST(dsisr) ((dsisr >> 5) & 0x1f)   /* source or target */
 #define EXC_ALI_RA(dsisr) (dsisr & 0x1f)
+
+/* Helper defines to classify EXC_ALI_ */
+#define DSI_OP_ZERO      0x0001
+#define DSI_OP_UPDATE    0x0002
+#define DSI_OP_INDEXED   0x0004
+#define DSI_OP_ALGEBRAIC 0x0008
+#define DSI_OP_REVERSED  0x0010
 
 #endif	/* _POWERPC_TRAP_H_ */

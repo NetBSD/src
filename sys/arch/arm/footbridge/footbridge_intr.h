@@ -1,4 +1,4 @@
-/* 	$NetBSD: footbridge_intr.h,v 1.15 2012/06/10 13:15:24 skrll Exp $	*/
+/* 	$NetBSD: footbridge_intr.h,v 1.15.2.1 2014/08/20 00:02:45 tls Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -141,14 +141,12 @@ footbridge_spllower(int ipl)
 #define splx(newspl)		footbridge_splx(newspl)
 #define	_spllower(ipl)		footbridge_spllower(ipl)
 #define	_splraise(ipl)		footbridge_splraise(ipl)
-void	_setsoftintr(int);
 
 #else
 
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
-void	_setsoftintr(int);
 
 #endif /* ! ARM_SPL_NOINLINE */
 

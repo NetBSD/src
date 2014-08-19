@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.59.2.2 2013/06/23 06:28:57 tls Exp $
+#	$NetBSD: Makefile,v 1.59.2.3 2014/08/20 00:04:53 tls Exp $
 
 HOSTLIB=	nbcompat
 
@@ -16,10 +16,13 @@ SRCS=		atoll.c basename.c cdbr.c cdbw.c dirname.c \
 		raise_default_signal.c rmd160.c rmd160hl.c \
 		setenv.c setgroupent.c \
 		setpassent.c setprogname.c sha1.c sha1hl.c sha2.c \
-		sha256hl.c sha384hl.c sha512hl.c snprintf.c stat_flags.c \
-		strlcat.c strlcpy.c strmode.c strndup.c strsep.c strsuftoll.c \
-		strtoll.c unvis.c vis.c err.c errx.c verr.c verrx.c \
-		vwarn.c vwarnx.c warn.c warnx.c fts.c glob.c efun.c
+		sha256hl.c sha384hl.c sha512hl.c snprintb.c snprintf.c \
+		stat_flags.c strlcat.c strlcpy.c strmode.c \
+		strndup.c strnlen.c \
+		strsep.c strsuftoll.c strtoll.c \
+		unvis.c vis.c err.c errx.c errc.c verr.c verrx.c verrc.c \
+		vwarn.c vwarnx.c vwarnc.c warn.c warnx.c warnc.c \
+		fts.c glob.c efun.c
 
 BUILD_OSTYPE!=  uname -s
 
@@ -47,12 +50,14 @@ CPPFLAGS+=	-I. -I./include -I${.CURDIR} -I${.CURDIR}/sys \
 		${.CURDIR}/../../lib/libc/stdlib \
 		${.CURDIR}/../../lib/libc/string \
 		${.CURDIR}/../../lib/libutil \
+		${.CURDIR}/../../common/lib/libc/cdb \
 		${.CURDIR}/../../common/lib/libc/string \
 		${.CURDIR}/../../common/lib/libc/hash/rmd160 \
 		${.CURDIR}/../../common/lib/libc/hash/sha1 \
 		${.CURDIR}/../../common/lib/libc/hash/sha2 \
 		${.CURDIR}/../../common/lib/libc/md \
 		${.CURDIR}/../../common/lib/libc/stdlib \
+		${.CURDIR}/../../common/lib/libutil \
 		${.CURDIR}/../../external/bsd/flex/dist
 
 DPSRCS+=	defs.mk

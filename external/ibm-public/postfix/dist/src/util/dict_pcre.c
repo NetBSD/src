@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_pcre.c,v 1.1.1.1.16.1 2013/02/25 00:27:31 tls Exp $	*/
+/*	$NetBSD: dict_pcre.c,v 1.1.1.1.16.2 2014/08/19 23:59:45 tls Exp $	*/
 
 /*++
 /* NAME
@@ -62,6 +62,15 @@
 #include "mac_parse.h"
 #include "pcre.h"
 #include "warn_stat.h"
+
+ /*
+  * Backwards compatibility.
+  */
+#ifdef PCRE_STUDY_JIT_COMPILE
+#define DICT_PCRE_FREE_STUDY(x)	pcre_free_study(x)
+#else
+#define DICT_PCRE_FREE_STUDY(x)	pcre_free((char *) (x))
+#endif
 
  /*
   * Support for IF/ENDIF based on an idea by Bert Driehuis.
@@ -391,7 +400,7 @@ static void dict_pcre_close(DICT *dict)
 	    if (match_rule->pattern)
 		myfree((char *) match_rule->pattern);
 	    if (match_rule->hints)
-		myfree((char *) match_rule->hints);
+		DICT_PCRE_FREE_STUDY(match_rule->hints);
 	    if (match_rule->replacement)
 		myfree((char *) match_rule->replacement);
 	    break;
@@ -400,7 +409,7 @@ static void dict_pcre_close(DICT *dict)
 	    if (if_rule->pattern)
 		myfree((char *) if_rule->pattern);
 	    if (if_rule->hints)
-		myfree((char *) if_rule->hints);
+		DICT_PCRE_FREE_STUDY(if_rule->hints);
 	    break;
 	case DICT_PCRE_OP_ENDIF:
 	    break;
@@ -681,7 +690,7 @@ static DICT_PCRE_RULE *dict_pcre_parse_rule(const char *mapname, int lineno,
 	    if (engine.pattern)
 		myfree((char *) engine.pattern);
 	    if (engine.hints)
-		myfree((char *) engine.hints);
+		DICT_PCRE_FREE_STUDY(engine.hints);
 	    CREATE_MATCHOP_ERROR_RETURN(0);
 	}
 #endif
@@ -800,9 +809,9 @@ static DICT_PCRE_RULE *dict_pcre_parse_rule(const char *mapname, int lineno,
 DICT   *dict_pcre_open(const char *mapname, int open_flags, int dict_flags)
 {
     DICT_PCRE *dict_pcre;
-    VSTREAM *map_fp;
+    VSTREAM *map_fp = 0;
     struct stat st;
-    VSTRING *line_buffer;
+    VSTRING *line_buffer = 0;
     DICT_PCRE_RULE *last_rule = 0;
     DICT_PCRE_RULE *rule;
     int     lineno = 0;
@@ -810,19 +819,33 @@ DICT   *dict_pcre_open(const char *mapname, int open_flags, int dict_flags)
     char   *p;
 
     /*
+     * Let the optimizer worry about eliminating redundant code.
+     */
+#define DICT_PCRE_OPEN_RETURN(d) { \
+	DICT *__d = (d); \
+	if (map_fp != 0) \
+	    vstream_fclose(map_fp); \
+	if (line_buffer != 0) \
+	    vstring_free(line_buffer); \
+	return (__d); \
+    } while (0)
+
+    /*
      * Sanity checks.
      */
     if (open_flags != O_RDONLY)
-	return (dict_surrogate(DICT_TYPE_PCRE, mapname, open_flags, dict_flags,
-			       "%s:%s map requires O_RDONLY access mode",
-			       DICT_TYPE_PCRE, mapname));
+	DICT_PCRE_OPEN_RETURN(dict_surrogate(DICT_TYPE_PCRE, mapname,
+					     open_flags, dict_flags,
+				  "%s:%s map requires O_RDONLY access mode",
+					     DICT_TYPE_PCRE, mapname));
 
     /*
      * Open the configuration file.
      */
     if ((map_fp = vstream_fopen(mapname, O_RDONLY, 0)) == 0)
-	return (dict_surrogate(DICT_TYPE_PCRE, mapname, open_flags, dict_flags,
-			       "open %s: %m", mapname));
+	DICT_PCRE_OPEN_RETURN(dict_surrogate(DICT_TYPE_PCRE, mapname,
+					     open_flags, dict_flags,
+					     "open %s: %m", mapname));
     if (fstat(vstream_fileno(map_fp), &st) < 0)
 	msg_fatal("fstat %s: %m", mapname);
 
@@ -873,10 +896,7 @@ DICT   *dict_pcre_open(const char *mapname, int open_flags, int dict_flags)
 	msg_warn("pcre map %s, line %d: more IFs than ENDIFs",
 		 mapname, lineno);
 
-    vstring_free(line_buffer);
-    vstream_fclose(map_fp);
-
-    return (DICT_DEBUG (&dict_pcre->dict));
+    DICT_PCRE_OPEN_RETURN(DICT_DEBUG (&dict_pcre->dict));
 }
 
 #endif					/* HAS_PCRE */

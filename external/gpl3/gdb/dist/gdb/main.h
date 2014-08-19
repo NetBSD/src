@@ -1,7 +1,6 @@
 /* Main interface for GDB, the GNU debugger.
 
-   Copyright (C) 2002, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,5 +35,17 @@ extern int return_child_result;
 extern int return_child_result_value;
 extern int batch_silent;
 extern int batch_flag;
+
+/* From mingw-hdep.c, used by main.c.  */
+
+/* Return argv[0] in absolute form, if possible, or ARGV0 if not.  The
+   return value is in malloc'ed storage.  */
+extern char *windows_get_absolute_argv0 (const char *argv0);
+
+/* Return read only pointer to the name of gdb as it was invoked.  This
+   might have been expanded to an absolute path if required by the
+   platform.  Could return NULL if called before gdb has had a chance to
+   parse the argv array.  */
+extern const char *get_gdb_program_name (void);
 
 #endif

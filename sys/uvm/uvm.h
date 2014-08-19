@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.63 2012/02/02 19:43:08 tls Exp $	*/
+/*	$NetBSD: uvm.h,v 1.63.6.1 2014/08/20 00:04:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -83,9 +83,6 @@ struct uvm_cpu {
 	int pages[PGFL_NQUEUES];	/* total of pages in page_free */
 	u_int emap_gen;			/* emap generation number */
 
-	uintptr_t last_fltaddr;		/* last faulted address */
-	uintptr_t last_delta;		/* difference of last two flt addrs */
-	uintptr_t last_delta2;		/* difference of differences */
 	krndsource_t rs;		/* entropy source */
 };
 

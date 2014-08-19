@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.29.6.1 2012/11/20 03:00:57 tls Exp $ */
+/*	$NetBSD: grf_et.c,v 1.29.6.2 2014/08/20 00:02:43 tls Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -37,7 +37,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.29.6.1 2012/11/20 03:00:57 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.29.6.2 2014/08/20 00:02:43 tls Exp $");
 
 #include "grfet.h"
 #include "ite.h"
@@ -273,10 +273,7 @@ grfetattach(device_t parent, device_t self, void *aux)
 	static struct grf_softc congrf;
 	static char attachflag = 0;
 	struct device temp;
-	struct zbus_args *zap;
 	struct grf_softc *gp;
-
-	zap = aux;
 
 	printf("\n");
 
@@ -744,7 +741,7 @@ int
 et_setmousepos(struct grf_softc *gp, struct grf_position *data)
 {
 	volatile char *ba = gp->g_regkva;
-	short rx, ry, prx, pry;
+	short rx, ry;
 
 	/* no movement */
 	if (et_cursprite.pos.x == data->x && et_cursprite.pos.y == data->y)
@@ -753,8 +750,6 @@ et_setmousepos(struct grf_softc *gp, struct grf_position *data)
 	/* current and previous real coordinates */
 	rx = data->x - et_cursprite.hot.x;
 	ry = data->y - et_cursprite.hot.y;
-	prx = et_cursprite.pos.x - et_cursprite.hot.x;
-	pry = et_cursprite.pos.y - et_cursprite.hot.y;
 
 	/* if we are/were on an edge, create (un)shifted bitmap --
 	 * ripped out optimization (not extremely worthwhile,

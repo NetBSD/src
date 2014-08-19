@@ -1,6 +1,6 @@
 /* Target-dependent code for the IA-64 for GDB, the GNU debugger.
 
-   Copyright (C) 2010 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -265,7 +265,7 @@ ia64_hpux_push_dummy_code (struct gdbarch *gdbarch, CORE_ADDR sp,
 {
   ULONGEST cfm;
   int sof, sol, sor, soo;
-  char buf[16];
+  gdb_byte buf[16];
 
   regcache_cooked_read_unsigned (regcache, IA64_CFM_REGNUM, &cfm);
   sof = cfm & 0x7f;

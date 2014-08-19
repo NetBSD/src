@@ -1,4 +1,4 @@
-/* $NetBSD: pi1ppc.c,v 1.11 2011/07/01 18:53:47 dyoung Exp $ */
+/* $NetBSD: pi1ppc.c,v 1.11.12.1 2014/08/20 00:03:22 tls Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.11 2011/07/01 18:53:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.11.12.1 2014/08/20 00:03:22 tls Exp $");
 
 #include "opt_pi1ppc.h"
 
@@ -1217,7 +1217,7 @@ pi1ppc_nibble_read(struct pi1ppc_softc *pi1ppc)
 			ctr &= ~HOSTBUSY;
 			pi1ppc_w_ctr(pi1ppc, ctr);
 
-			/* Event 11 - wait ack from peripherial */
+			/* Event 11 - wait ack from peripheral */
 			if (pi1ppc->sc_use & PI1PPC_USE_INTR)
 				pi1ppc->sc_inerr = pi1ppc_wait_interrupt(pi1ppc,
 				    &pi1ppc->sc_in_cv, PI1PPC_IRQ_nACK);

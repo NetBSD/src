@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_ccb.c,v 1.1.2.1 2012/11/20 03:01:03 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_ccb.c,v 1.1.2.2 2014/08/20 00:02:45 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -81,13 +81,13 @@ bcmccb_print(void *aux, const char *pnp)
 	return QUIET;
 }
 
-static inline uint32_t
+__unused static inline uint32_t
 bcmccb_read_4(struct bcmccb_softc *sc, bus_size_t o)
 {
 	return bus_space_read_4(sc->sc_bst, sc->sc_bsh, o);
 }
 
-static inline void
+__unused static inline void
 bcmccb_write_4(struct bcmccb_softc *sc, bus_size_t o, uint32_t v)
 {
 	return bus_space_write_4(sc->sc_bst, sc->sc_bsh, o, v);
@@ -99,20 +99,39 @@ static const struct bcm_locators bcmccb_locators[] = {
 	{ "bcmrng", RNG_BASE, 0x1000, BCMCCBCF_PORT_DEFAULT, 1, { IRQ_RNG } },
 	{ "bcmtmr", TIMER0_BASE, 0x1000, BCMCCBCF_PORT_DEFAULT, 2, { IRQ_TIMER0_1, IRQ_TIMER0_2 } },
 	{ "bcmtmr", TIMER1_BASE, 0x1000, BCMCCBCF_PORT_DEFAULT, 2, { IRQ_TIMER1_1, IRQ_TIMER1_2 } },
+#ifdef SRAB_BASE
 	{ "bcmsw", SRAB_BASE, 0x1000, BCMCCBCF_PORT_DEFAULT, },
+#endif
 	{ "bcmcom", UART2_BASE, 0x1000, BCMCCBCF_PORT_DEFAULT, 1, { IRQ_UART2 } },
-	{ "bcmi2c", SMBUS_BASE, 0x1000, BCMCCBCF_PORT_DEFAULT, 1, { IRQ_SMBUS } },
+#ifdef BCM5301X
+	{ "bcmi2c", SMBUS1_BASE, 0x1000, BCMCCBCF_PORT_DEFAULT, 1, { IRQ_SMBUS1 } },
+#endif
+#ifdef BCM536XX
+	{ "bcmi2c", SMBUS1_BASE, 0x1000, 1, 1, { IRQ_SMBUS1 } },
+	{ "bcmi2c", SMBUS2_BASE, 0x1000, 2, 1, { IRQ_SMBUS2 } },
+#endif
 	{ "bcmcru", CRU_BASE, 0x1000, BCMCCBCF_PORT_DEFAULT },
 	{ "bcmdmu", DMU_BASE, 0x1000, BCMCCBCF_PORT_DEFAULT },
 	{ "bcmddr", DDR_BASE, 0x1000, BCMCCBCF_PORT_DEFAULT, 1, { IRQ_DDR_CONTROLLER } },
 	{ "bcmeth", GMAC0_BASE, 0x1000, 0, 1, { IRQ_GMAC0 }, },
 	{ "bcmeth", GMAC1_BASE, 0x1000, 1, 1, { IRQ_GMAC1 }, },
+#ifdef GMAC2_BASE
 	{ "bcmeth", GMAC2_BASE, 0x1000, 2, 1, { IRQ_GMAC2 }, },
+#endif
 	// { "bcmeth", GMAC3_BASE, 0x1000, 3, 1, { IRQ_GMAC3 }, },
 	{ "bcmpax", PCIE0_BASE, 0x1000, 0, 6, { IRQ_PCIE_INT0 }, },
 	{ "bcmpax", PCIE1_BASE, 0x1000, 1, 6, { IRQ_PCIE_INT1 }, },
+#ifdef PCIE2_BASE
 	{ "bcmpax", PCIE2_BASE, 0x1000, 2, 6, { IRQ_PCIE_INT2 }, },
+#endif
+#ifdef SDIO_BASE
 	{ "sdhc", SDIO_BASE, 0x1000, BCMCCBCF_PORT_DEFAULT, 1, { IRQ_SDIO } },
+#endif
+	{ "bcmnand", NAND_BASE, 0x1000, BCMCCBCF_PORT_DEFAULT, 8,
+	  { IRQ_NAND_RD_MISS, IRQ_NAND_BLK_ERASE_COMP,
+	    IRQ_NAND_COPY_BACK_COMP, IRQ_NAND_PGM_PAGE_COMP,
+	    IRQ_NAND_RO_CTLR_READY, IRQ_NAND_RB_B,
+	    IRQ_NAND_ECC_MIPS_UNCORR, IRQ_NAND_ECC_MIPS_CORR } },
 	{ "bcmusb", EHCI_BASE, 0x2000, BCMCCBCF_PORT_DEFAULT, 1, { IRQ_USB2 } },
 };
 
@@ -159,22 +178,27 @@ bcmccb_mainbus_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	bcm53xx_srab_init();	// need this for ethernet.
-
 	for (size_t i = 0; i < __arraycount(bcmccb_locators); i++) {
+		const struct bcm_locators *loc = &bcmccb_locators[i];
+
+#ifdef BCM5301X
+		if (strcmp(loc->loc_name, "bcmsw") == 0) {
+			bcm53xx_srab_init();	// need this for ethernet.
+		}
+#endif
+
 		struct bcmccb_attach_args ccbaa = {
 			.ccbaa_ccb_bst = sc->sc_bst,
 			.ccbaa_ccb_bsh = sc->sc_bsh,
 			.ccbaa_dmat = &bcm53xx_dma_tag,
-			.ccbaa_loc = bcmccb_locators[i],
+			.ccbaa_loc = *loc,
 		};
 
 		/*
 		 * If the device might be in reset, let's try to take it
 		 * out of it.  If it fails or is unavailable, skip it.
 		 */
-		if (!bcm53xx_idm_device_init(&bcmccb_locators[i],
-			sc->sc_bst, sc->sc_bsh))
+		if (!bcm53xx_idm_device_init(loc, sc->sc_bst, sc->sc_bsh))
 			continue;
 
 		cfdata_t cf = config_search_ia(bcmccb_find, self, "bcmccb",

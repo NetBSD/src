@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.56.2.2 2013/06/23 06:20:01 tls Exp $
+# $NetBSD: GENERIC,v 1.56.2.3 2014/08/20 00:02:50 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -21,6 +21,8 @@
 include 	"arch/cesfic/conf/std.cesfic"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
 # Need to set locally
 maxusers	32
@@ -87,7 +89,6 @@ options 	INET		# Internet protocols
 #options 	GATEWAY		# IP forwarding
 #options 	MROUTING	# Multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options 	PFIL_HOOKS	# packet filter hooks
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues

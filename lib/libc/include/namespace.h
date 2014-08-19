@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.156.2.1 2013/06/23 06:21:05 tls Exp $	*/
+/*	$NetBSD: namespace.h,v 1.156.2.2 2014/08/20 00:02:14 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -37,10 +37,12 @@
 #define catclose	_catclose
 #define catgets		_catgets
 #define catopen		_catopen
+#define catopen_l	_catopen_l
 #define daylight	_daylight
 #define difftime	_difftime
 #define devname_r	_devname_r
 #define err		_err
+#define errc		_errc
 #define errx		_errx
 #ifdef _REENTRANT
 #define fileno		_fileno
@@ -56,6 +58,7 @@
 #define inet_pton	_inet_pton
 #define pipe		_pipe
 #define sbrk		_sbrk
+#define strerror_l	_strerror_l
 #define strerror_r	_strerror_r
 #define strlcat		_strlcat
 #define strlcpy		_strlcpy
@@ -78,10 +81,13 @@
 #define	sys_nsig	_sys_nsig
 #define sysconf		__sysconf
 #define verr		_verr
+#define verrc		_verrc
 #define verrx		_verrx
 #define vwarn		_vwarn
+#define vwarnc		_vwarnc
 #define vwarnx		_vwarnx
 #define warn		_warn
+#define warnc		_warnc
 #define warnx		_warnx
 
 #ifdef __weak_alias
@@ -169,6 +175,8 @@
 #define asctime_r		_asctime_r
 #define asprintf		_asprintf
 #define asprintf_l		_asprintf_l
+#define asysctl			_asysctl
+#define asysctlbyname		_asysctlbyname
 #define atoll			_atoll
 #define authnone_create		_authnone_create
 #define authunix_create		_authunix_create
@@ -184,6 +192,7 @@
 #define cdbr_find		_cdbr_find
 #define cdbr_get		_cdbr_get
 #define cdbr_open		_cdbr_open
+#define cdbr_open_mem		_cdbr_open_mem
 #define cdbw_close		_cdbw_close
 #define cdbw_open		_cdbw_open
 #define cdbw_put		_cdbw_put
@@ -231,6 +240,7 @@
 #define closelog		_closelog
 #define closelog_r		_closelog_r
 #define confstr			_confstr
+#define consttime_memequal	_consttime_memequal
 #define csetexpandtc		_csetexpandtc
 #define ctermid			_ctermid
 #define ctime_r			_ctime_r
@@ -270,6 +280,7 @@
 #define execlp			_execlp
 #define execv			_execv
 #define execvp			_execvp
+#define explicit_memset		_explicit_memset
 #define fdopen			_fdopen
 #define fgetln			_fgetln
 #define fgetwln			_fgetwln
@@ -486,6 +497,7 @@
 #if 0
 #define nlist			_nlist
 #endif
+#define nl_langinfo_l		_nl_langinfo_l
 #define nrand48			_nrand48
 #define ntp_adjtime		_ntp_adjtime
 #define nsdispatch		_nsdispatch
@@ -741,6 +753,7 @@
 #define wcscasecmp		_wcscasecmp
 #define wcscasecmp_l		_wcscasecmp_l
 #define wcsdup			_wcsdup
+#define wcsftime_l		_wcsftime_l
 #define wcsncasecmp		_wcsncasecmp
 #define wcsncasecmp_l		_wcsncasecmp_l
 #define wcstof			_wcstof

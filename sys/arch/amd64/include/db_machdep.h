@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.11 2011/05/26 15:34:12 joerg Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.11.14.1 2014/08/20 00:02:42 tls Exp $	*/
 
 /* 
  * Mach Operating System
@@ -87,8 +87,8 @@ extern db_regs_t *ddb_regp;
 #define	inst_call(ins)		(((ins)&0xff) == I_CALL || \
 				 (((ins)&0xff) == I_CALLI && \
 				  ((ins)&0x3800) == 0x1000))
-#define inst_load(ins)		0
-#define inst_store(ins)		0
+#define inst_load(ins)		(__USE(ins), 0)
+#define inst_store(ins)		(__USE(ins), 0)
 
 /* access capability and access macros */
 

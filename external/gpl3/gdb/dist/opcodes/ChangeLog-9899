@@ -1661,6 +1661,12 @@ Mon Jan 12 14:43:54 1998  Doug Evans  <devans@seba.cygnus.com>
 
 For older changes see ChangeLog-9297
 
+Copyright (C) 1998-1999 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

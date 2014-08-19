@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.235 2011/08/15 18:24:34 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.235.12.1 2014/08/20 00:03:38 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.235 2011/08/15 18:24:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.235.12.1 2014/08/20 00:03:38 tls Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -289,14 +289,9 @@ SYSCTL_SETUP(sysctl_wi, "sysctl wi(4) subtree setup")
 #endif /* WI_DEBUG */
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &rnode,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
-		goto err;
-
-	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "wi",
 	    "Lucent/Prism/Symbol 802.11 controls",
-	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 #ifdef WI_DEBUG
@@ -3112,7 +3107,7 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	u_int16_t val;
 	struct wi_ssid ssid;
 	struct wi_macaddr bssid, old_bssid;
-	enum ieee80211_state ostate;
+	enum ieee80211_state ostate __unused;
 #ifdef WI_DEBUG
 	static const char *stname[] =
 	    { "INIT", "SCAN", "AUTH", "ASSOC", "RUN" };

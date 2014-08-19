@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.6 2008/01/08 02:07:55 matt Exp $	*/
+/*	$NetBSD: spl.S,v 1.6.54.1 2014/08/20 00:03:03 tls Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -52,7 +52,7 @@ Lcurrent_spl_level:
 ENTRY(raisespl)
 	stmfd	sp!, {r4}
 	/* Disable interrupts */
-	mrs	r4, cpsr_all
+	mrs	r4, cpsr
 	orr	r1, r4,  #(I32_bit)
 	msr	cpsr_all, r1
 
@@ -75,7 +75,7 @@ raisespl_exit:
 ENTRY(lowerspl)
 	stmfd	sp!, {r4}
 	/* Disable interrupts */
-	mrs	r4, cpsr_all
+	mrs	r4, cpsr
 	orr	r1, r4,  #(I32_bit)
 	msr	cpsr_all, r1
 
@@ -104,7 +104,7 @@ lowerspl_exit:
 ENTRY(splx)
 	stmfd	sp!, {r4}
 	/* Disable interrupts */
-	mrs	r4, cpsr_all
+	mrs	r4, cpsr
 	orr	r1, r4,  #(I32_bit)
 	msr	cpsr_all, r1
 

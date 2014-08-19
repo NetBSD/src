@@ -1,4 +1,4 @@
-# Copyright 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2007-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,30 +16,18 @@
 # Test that breakpoints on C++ constructors work, despite the
 # fact that gcc generates several versions of constructor function.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 if { [skip_cplus_tests] } { continue }
 
 
-set testfile "mb-ctor"
-set srcfile ${testfile}.cc
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .cc
 
-if [get_compiler_info ${binfile} "c++"] {
+if [get_compiler_info "c++"] {
     return -1
 }
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
-     untested mb-ctor.exp
-     return -1
+if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
+    return -1
 }
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 
 if ![runto_main] then {
     perror "couldn't run to breakpoint"
@@ -50,13 +38,13 @@ if ![runto_main] then {
 # and a condition.
 
 gdb_test "break 'Derived::Derived(int)'" \
-    "Breakpoint.*at.* file .*$srcfile, line.*\\(2 locations\\).*" \
+    "Breakpoint.*at.*: Derived::Derived.int.. \\(2 locations\\).*" \
     "set-breakpoint at ctor"
 
 gdb_breakpoint [gdb_get_line_number "set breakpoint here"]
 
 gdb_test "break 'Derived::~Derived()'" \
-    "Breakpoint.*at.* file .*$srcfile, line.*\\(2 locations\\).*" \
+    "Breakpoint.*at.*: Derived::~Derived... \\(2 locations\\).*" \
     "set-breakpoint at dtor"
 
 gdb_test "continue" \

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.55 2011/10/06 06:55:34 mrg Exp $	*/
+/*	$NetBSD: pmap.h,v 1.55.12.1 2014/08/20 00:03:25 tls Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -89,6 +89,11 @@
 #define STMASK		(STSZ-1)
 
 #ifndef _LOCORE
+
+#ifdef _LP64
+int	sparc64_mmap_range_test(vaddr_t, vaddr_t);
+#define	MD_MMAP_RANGE_TEST(MINVA, MAXVA)	sparc64_mmap_range_test(MINVA, MAXVA)
+#endif
 
 /*
  * Support for big page sizes.  This maps the page size to the
@@ -187,8 +192,27 @@ int pmap_count_wired(struct pmap *);
 void pmap_activate_pmap(struct pmap *);
 void pmap_update(struct pmap *);
 void pmap_bootstrap(u_long, u_long);
+
 /* make sure all page mappings are modulo 16K to prevent d$ aliasing */
-#define	PMAP_PREFER(pa, va, sz, td)	(*(va)+=(((*(va))^(pa))&(1<<(PGSHIFT))))
+#define	PMAP_PREFER(fo, va, sz, td)	pmap_prefer((fo), (va), (td))
+static inline void
+pmap_prefer(vaddr_t fo, vaddr_t *va, int td)
+{
+	vaddr_t newva;
+	vaddr_t m;
+
+	m = 2 * PAGE_SIZE;
+	newva = (*va & ~(m - 1)) | (fo & (m - 1));
+
+	if (td) {
+		if (newva > *va)
+			newva -= m;
+	} else {
+		if (newva < *va)
+			newva += m;
+	}
+	*va = newva;
+}
 
 #define	PMAP_GROWKERNEL         /* turn on pmap_growkernel interface */
 #define PMAP_NEED_PROCWR
@@ -206,6 +230,12 @@ void		pmap_kprotect(vaddr_t, vm_prot_t);
 /* SPARC64 specific */
 void		pmap_copy_page_phys(paddr_t, paddr_t);
 void		pmap_zero_page_phys(paddr_t);
+
+#ifdef SUN4V
+/* sun4v specific */
+void		pmap_setup_intstack_sun4v(paddr_t);
+void		pmap_setup_tsb_sun4v(void);
+#endif
 
 /* Installed physical memory, as discovered during bootstrap. */
 extern int phys_installed_size;

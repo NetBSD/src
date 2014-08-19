@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2011/11/04 17:52:19 christos Exp $
+#	$NetBSD: Makefile,v 1.5.6.1 2014/08/19 23:58:34 tls Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
 
-GDBARCHDIR=${.CURDIR}/../../lib/libgdb/arch/${MACHINE_ARCH}
+GDBARCHDIR=${.CURDIR}/../../lib/libgdb/arch/${GDB_MACHINE_ARCH}
 .include "${GDBARCHDIR}/defs.mk"
 
 PROG=		gdb
@@ -12,15 +12,17 @@ SRCS=		gdb.c
 CPPFLAGS+=	-I${.CURDIR} \
 		-I${GDBARCHDIR} \
 		-I${DIST}/gdb \
+		-I${DIST}/gdb/common \
 		-I${DIST}/gdb/config \
+		-I${DIST}/gdb/gnulib/import \
 		-I${DIST}/include/opcode \
 		-I${DIST} \
-		-I${.CURDIR}/../../lib/libbfd/arch/${MACHINE_ARCH} \
+		-I${.CURDIR}/../../lib/libbfd/arch/${GDB_MACHINE_ARCH} \
 		-I${DIST}/bfd \
 		-I${DIST}/include \
 		${GCPPFLAGS:M-D*}
 
-TEXINFO=	gdb.texinfo gdbint.texinfo stabs.texinfo
+TEXINFO=	gdb.texinfo stabs.texinfo
 INFOFLAGS=	-I${DIST}/gdb/doc -I${DIST}/gdb/mi \
 		-I${DIST}/readline/doc -I${.CURDIR}/.. -DGDBN=${GDBN}
 
@@ -31,7 +33,7 @@ gdb-cfg.texi: ${DIST}/gdb/doc/all-cfg.texi
 	${TOOL_CAT} ${.ALLSRC} > ${.TARGET}
 
 CLEANFILES+= GDBvn.texi gdb-cfg.texi
-gdbint.info stabs.info gdb.info: gdb-cfg.texi GDBvn.texi
+stabs.info gdb.info: gdb-cfg.texi GDBvn.texi
 
 .include "../../Makefile.inc"
 .include <bsd.info.mk>
@@ -55,8 +57,8 @@ LDADD+= -L${LIBGDBDIR} -lgdb
 DPADD+= ${LIBGDBDIR}/libgdb.a
 
 # Simulator support
-.if ${MACHINE_ARCH} == powerpc || ${MACHINE_ARCH} == powerpcle || \
-    ${MACHINE_ARCH} == powerpc64
+.if ${GDB_MACHINE_ARCH} == powerpc || ${GDB_MACHINE_ARCH} == powerpcle || \
+    ${GDB_MACHINE_ARCH} == powerpc64
 SIMOBJ!=	cd ${.CURDIR}/../../lib/libsim && ${PRINTOBJDIR}
 LDADD+=		-L${SIMOBJ} -lsim
 DPADD+=		${SIMOBJ}/libsim.a
@@ -80,12 +82,12 @@ DPADD+=	${LIBOPCODESDIR}/libopcodes.a \
 	${LIBTERMINFO} \
 	${LIBIBERTYDIR}/libiberty.a
 
-LDADD+=		-lz -lcurses -lintl -lm -lkvm
-DPADD+=		${LIBZ} ${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM}
+LDADD+=		-lexpat -llzma -lz -lcurses -lintl -lm -lkvm
+DPADD+=		${LIBEXPAT} ${LIBLZMA} ${LIBZ} ${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM}
 
 LDADD+=                -lpthread_dbg
 
 .include <bsd.prog.mk>
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
-    ${DIST}/gdb/signals ${DIST}/gdb/doc ${.CURDIR}/../arch/${MACHINE_ARCH}
+    ${DIST}/gdb/signals ${DIST}/gdb/doc ${.CURDIR}/../arch/${GDB_MACHINE_ARCH}

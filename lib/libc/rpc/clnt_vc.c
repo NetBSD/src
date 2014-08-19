@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_vc.c,v 1.18.2.1 2013/06/23 06:21:05 tls Exp $	*/
+/*	$NetBSD: clnt_vc.c,v 1.18.2.2 2014/08/20 00:02:15 tls Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -38,7 +38,7 @@ static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 static char sccsid[] = "@(#)clnt_vc.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_vc.c,v 1.18.2.1 2013/06/23 06:21:05 tls Exp $");
+__RCSID("$NetBSD: clnt_vc.c,v 1.18.2.2 2014/08/20 00:02:15 tls Exp $");
 #endif
 #endif
  
@@ -144,6 +144,33 @@ static cond_t   *vc_cv;
 #define __rpc_lock_value 0
 #endif
 
+static __inline void
+htonlp(void *dst, const void *src, uint32_t incr)
+{
+#if 0
+	uint32_t tmp;
+	memcpy(&tmp, src, sizeof(tmp));
+	tmp = htonl(tmp + incr);
+	memcpy(dst, &tmp, sizeof(tmp));
+#else
+	/* We are aligned, so we think */
+	*(uint32_t *)dst = htonl(*(const uint32_t *)src + incr);
+#endif
+}
+
+static __inline void
+ntohlp(void *dst, const void *src)
+{
+#if 0
+	uint32_t tmp;
+	memcpy(&tmp, src, sizeof(tmp));
+	tmp = ntohl(tmp);
+	memcpy(dst, &tmp, sizeof(tmp));
+#else
+	/* We are aligned, so we think */
+	*(uint32_t *)dst = htonl(*(const uint32_t *)src);
+#endif
+}
 
 /*
  * Create a client handle for a connection.
@@ -578,14 +605,12 @@ clnt_vc_control(
 		 * first element in the call structure
 		 * This will get the xid of the PREVIOUS call
 		 */
-		*(u_int32_t *)(void *)info =
-		    ntohl(*(u_int32_t *)(void *)&ct->ct_u.ct_mcalli);
+		ntohlp(info, &ct->ct_u.ct_mcalli);
 		break;
 	case CLSET_XID:
 		/* This will set the xid of the NEXT call */
-		*(u_int32_t *)(void *)&ct->ct_u.ct_mcalli =
-		    htonl(*((u_int32_t *)(void *)info) + 1);
 		/* increment by 1 as clnt_vc_call() decrements once */
+		htonlp(&ct->ct_u.ct_mcalli, info, 1);
 		break;
 	case CLGET_VERS:
 		/*
@@ -594,15 +619,11 @@ clnt_vc_control(
 		 * begining of the RPC header. MUST be changed if the
 		 * call_struct is changed
 		 */
-		*(u_int32_t *)(void *)info =
-		    ntohl(*(u_int32_t *)(void *)(ct->ct_u.ct_mcallc +
-		    4 * BYTES_PER_XDR_UNIT));
+		ntohlp(info, ct->ct_u.ct_mcallc + 4 * BYTES_PER_XDR_UNIT);
 		break;
 
 	case CLSET_VERS:
-		*(u_int32_t *)(void *)(ct->ct_u.ct_mcallc +
-		    4 * BYTES_PER_XDR_UNIT) =
-		    htonl(*(u_int32_t *)(void *)info);
+		htonlp(ct->ct_u.ct_mcallc + 4 * BYTES_PER_XDR_UNIT, info, 0);
 		break;
 
 	case CLGET_PROG:
@@ -612,15 +633,11 @@ clnt_vc_control(
 		 * begining of the RPC header. MUST be changed if the
 		 * call_struct is changed
 		 */
-		*(u_int32_t *)(void *)info =
-		    ntohl(*(u_int32_t *)(void *)(ct->ct_u.ct_mcallc +
-		    3 * BYTES_PER_XDR_UNIT));
+		ntohlp(info, ct->ct_u.ct_mcallc + 3 * BYTES_PER_XDR_UNIT);
 		break;
 
 	case CLSET_PROG:
-		*(u_int32_t *)(void *)(ct->ct_u.ct_mcallc +
-		    3 * BYTES_PER_XDR_UNIT) =
-		    htonl(*(u_int32_t *)(void *)info);
+		htonlp(ct->ct_u.ct_mcallc + 3 * BYTES_PER_XDR_UNIT, info, 0);
 		break;
 
 	default:

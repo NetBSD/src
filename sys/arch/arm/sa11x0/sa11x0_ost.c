@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.30 2012/08/12 17:21:29 nonaka Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.30.2.1 2014/08/20 00:02:47 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.30 2012/08/12 17:21:29 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.30.2.1 2014/08/20 00:02:47 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -308,7 +308,7 @@ delay(u_int usecs)
 	    + (TIMER_FREQUENCY / 100) * usec / 10000;
 
 	if (saost_sc == NULL) {
-		volatile int k;
+		volatile int k = 0;
 		int j;
 		/* clock isn't initialized yet */
 		for (; usecs > 0; usecs--)

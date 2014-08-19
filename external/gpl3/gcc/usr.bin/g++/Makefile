@@ -1,20 +1,27 @@
-#	$NetBSD: Makefile,v 1.2 2011/06/29 02:00:09 mrg Exp $
+#	$NetBSD: Makefile,v 1.2.8.1 2014/08/19 23:56:57 tls Exp $
 
 PROG=		gplusplus
 PROGNAME=	g++
-SRCS=		g++spec.c
+SRCS=		${G_GXX_OBJS:.o=.c}
 
-NOMAN=		# defined
-
+NOMAN=		# Linked to gcc.1
 .include <bsd.own.mk>
 
 CPPFLAGS+=	-I${BACKENDOBJ}
+# XXX
+CPPFLAGS+=	-DCONFIGURE_SPECS="\"\"" \
+		-DDEFAULT_TARGET_VERSION=\"${G_version}\" \
+		-DDEFAULT_TARGET_MACHINE=\"${MACHINE_GNU_PLATFORM}\"
 
 LINKS+=		${BINDIR}/g++ ${BINDIR}/c++
 
-.include "../Makefile.frontend"
-
-.PATH: ${DIST}/gcc ${DIST}/gcc/cp
-
 LDADD+=		-lintl
 DPADD+=		${LIBINTL}
+
+.include "../Makefile.frontend"
+
+${SRCS}: ${GCCARCH}/defs.mk
+
+COPTS.gcc.c=	-Wno-stack-protector
+
+.PATH: ${DIST}/gcc/cp ${DIST}/gcc ${DIST}/gcc/cp

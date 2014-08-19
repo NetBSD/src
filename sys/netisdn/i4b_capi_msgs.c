@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_capi_msgs.c,v 1.7 2005/12/11 12:25:06 christos Exp $	*/
+/*	$NetBSD: i4b_capi_msgs.c,v 1.7.120.1 2014/08/20 00:04:36 tls Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_capi_msgs.c,v 1.7 2005/12/11 12:25:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_capi_msgs.c,v 1.7.120.1 2014/08/20 00:04:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -726,7 +726,8 @@ void capi_data_b3_req(capi_softc_t *sc, int chan, struct mbuf *m_b3)
     msg = capimsg_setu16(msg, msgid);
 
     msg = capimsg_setu32(msg, sc->sc_bchan[chan].ncci);
-    msg = capimsg_setu32(msg, (u_int32_t) m_b3->m_data); /* Pointer */
+    /* XXX: 32bit Pointer */
+    msg = capimsg_setu32(msg, (u_int32_t)(intptr_t)m_b3->m_data);
     msg = capimsg_setu16(msg, m_b3->m_len);
     msg = capimsg_setu16(msg, chan);
     msg = capimsg_setu16(msg, 0); /* Flags */

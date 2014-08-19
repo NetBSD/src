@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.92 2012/08/24 13:14:19 martin Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.92.2.1 2014/08/20 00:03:51 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.92 2012/08/24 13:14:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.92.2.1 2014/08/20 00:03:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,8 +130,18 @@ dev_type_read(ulptread);
 dev_type_ioctl(ulptioctl);
 
 const struct cdevsw ulpt_cdevsw = {
-	ulptopen, ulptclose, ulptread, ulptwrite, ulptioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	.d_open = ulptopen,
+	.d_close = ulptclose,
+	.d_read = ulptread,
+	.d_write = ulptwrite,
+	.d_ioctl = ulptioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 void ulpt_disco(void *);
@@ -869,7 +879,7 @@ void
 ulpt_tick(void *xsc)
 {
 	struct ulpt_softc *sc = xsc;
-	usbd_status err;
+	usbd_status err __unused;
 
 	if (sc == NULL || sc->sc_dying)
 		return;
@@ -885,9 +895,11 @@ int
 ulptioctl(dev_t dev, u_long cmd, void *data,
     int flag, struct lwp *l)
 {
+#if 0
 	struct ulpt_softc *sc;
 
 	sc = device_lookup_private(&ulpt_cd, ULPTUNIT(dev));
+#endif
 
 	switch (cmd) {
 	case FIONBIO:

@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_unit.c,v 1.13 2011/09/17 08:23:37 plunky Exp $	*/
+/*	$NetBSD: hci_unit.c,v 1.13.12.1 2014/08/20 00:04:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_unit.c,v 1.13 2011/09/17 08:23:37 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_unit.c,v 1.13.12.1 2014/08/20 00:04:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -81,7 +81,7 @@ static const uint8_t hci_cmds_v10[HCI_COMMANDS_SIZE] = {
 static void hci_intr (void *);
 
 struct hci_unit *
-hci_attach(const struct hci_if *hci_if, device_t dev, uint16_t flags)
+hci_attach_pcb(const struct hci_if *hci_if, device_t dev, uint16_t flags)
 {
 	struct hci_unit *unit;
 
@@ -120,7 +120,7 @@ hci_attach(const struct hci_if *hci_if, device_t dev, uint16_t flags)
 }
 
 void
-hci_detach(struct hci_unit *unit)
+hci_detach_pcb(struct hci_unit *unit)
 {
 
 	mutex_enter(bt_lock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.38.6.1 2013/02/25 00:30:48 tls Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.38.6.2 2014/08/20 00:05:13 tls Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -58,6 +58,7 @@
 #include <util.h>
 #endif
 #include <poll.h>
+#include <pwd.h>
 
 #include "rtadvd.h"
 #include "rrenum.h"
@@ -177,6 +178,7 @@ main(int argc, char *argv[])
 	struct timeval *timeout;
 	int i, ch;
 	int fflag = 0, logopt;
+	struct passwd *pw;
 
 	/* get command line options and arguments */
 #define OPTIONS "c:dDfM:Rs"
@@ -229,6 +231,17 @@ main(int argc, char *argv[])
 	if (dflag == 1)
 		(void)setlogmask(LOG_UPTO(LOG_INFO));
 
+	errno = 0; /* Ensure errno is 0 so we know if getpwnam errors or not */
+	if ((pw = getpwnam(RTADVD_USER)) == NULL) {
+		if (errno == 0)
+			syslog(LOG_ERR,
+			    "user %s does not exist, aborting",
+			    RTADVD_USER);
+		else
+			syslog(LOG_ERR, "getpwnam: %s: %m", RTADVD_USER);
+		exit(1);
+	}
+
 	/* timer initialization */
 	rtadvd_timer_init();
 
@@ -259,6 +272,23 @@ main(int argc, char *argv[])
 		set[1].events = POLLIN;
 	} else
 		set[1].fd = -1;
+
+	syslog(LOG_INFO, "dropping privileges to %s", RTADVD_USER);
+	if (chroot(pw->pw_dir) == -1) {
+		syslog(LOG_ERR, "chroot: %s: %m", pw->pw_dir);
+		exit(1);
+	}
+	if (chdir("/") == -1) {
+		syslog(LOG_ERR, "chdir: /: %m");
+		exit(1);
+	}
+	if (setgroups(1, &pw->pw_gid) == -1 ||
+	    setgid(pw->pw_gid) == -1 || 
+	    setuid(pw->pw_uid) == -1)
+	{
+		syslog(LOG_ERR, "failed to drop privileges: %m");
+		exit(1);
+	}
 
 	signal(SIGINT, set_die);
 	signal(SIGTERM, set_die);
@@ -358,6 +388,12 @@ die(void)
 		syslog(LOG_NOTICE, "<%s> gracefully terminated", __func__);
 		free(rcvcmsgbuf);
 		free(sndcmsgbuf);
+		exit(0);
+		/* NOT REACHED */
+	}
+
+	if (TAILQ_FIRST(&ralist) == NULL) {
+		syslog(LOG_NOTICE, "<%s> gracefully terminated", __func__);
 		exit(0);
 		/* NOT REACHED */
 	}
@@ -1044,7 +1080,7 @@ ra_input(int len, struct nd_router_advert *ra,
 	}
 	if (rai->leaving) {
 		syslog(LOG_DEBUG,
-		       "<%s> recieved RA on re-configuring interface (%s)",
+		       "<%s> received RA on re-configuring interface (%s)",
 			__func__, rai->ifname);
 		goto done;
 	}
@@ -1213,7 +1249,7 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 		preferred_time += now.tv_sec;
 
 		if (!pp->timer && rai->clockskew &&
-		    abs(preferred_time - pp->pltimeexpire) > rai->clockskew) {
+		    llabs((long long)preferred_time - pp->pltimeexpire) > rai->clockskew) {
 			syslog(LOG_INFO,
 			       "<%s> preferred lifetime for %s/%d"
 			       " (decr. in real time) inconsistent on %s:"
@@ -1249,7 +1285,7 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 		valid_time += now.tv_sec;
 
 		if (!pp->timer && rai->clockskew &&
-		    abs(valid_time - pp->vltimeexpire) > rai->clockskew) {
+		    llabs((long long)valid_time - pp->vltimeexpire) > rai->clockskew) {
 			syslog(LOG_INFO,
 			       "<%s> valid lifetime for %s/%d"
 			       " (decr. in real time) inconsistent on %s:"
@@ -1379,7 +1415,13 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 		if ((hdr->nd_opt_type == ND_OPT_MTU &&
 		    (optlen != sizeof(struct nd_opt_mtu))) ||
 		    ((hdr->nd_opt_type == ND_OPT_PREFIX_INFORMATION &&
-		    optlen != sizeof(struct nd_opt_prefix_info)))) {
+		    optlen != sizeof(struct nd_opt_prefix_info))) ||
+		    (hdr->nd_opt_type == ND_OPT_RDNSS &&
+		    ((optlen < (int)sizeof(struct nd_opt_rdnss) ||
+		    (optlen - sizeof(struct nd_opt_rdnss)) % 16 != 0))) ||
+		    (hdr->nd_opt_type == ND_OPT_DNSSL &&
+		    optlen < (int)sizeof(struct nd_opt_dnssl)))
+		{
 			syslog(LOG_INFO, "<%s> invalid option length",
 			    __func__);
 			continue;
@@ -1388,6 +1430,8 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 		switch (hdr->nd_opt_type) {
 		case ND_OPT_TARGET_LINKADDR:
 		case ND_OPT_REDIRECTED_HEADER:
+		case ND_OPT_RDNSS:
+		case ND_OPT_DNSSL:
 			break;	/* we don't care about these options */
 		case ND_OPT_SOURCE_LINKADDR:
 		case ND_OPT_MTU:

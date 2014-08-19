@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.206 2012/07/28 19:08:25 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.206.2.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.206 2012/07/28 19:08:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.206.2.1 2014/08/20 00:03:26 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -107,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.206 2012/07/28 19:08:25 matt Exp $");
 #include <sys/syscallargs.h>
 #include <sys/ksyms.h>
 #include <sys/module.h>
+#include <sys/cpu.h>
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
@@ -147,7 +148,7 @@ extern char etext[];
 const vaddr_t kernbase = KERNBASE3;
 const vaddr_t kern_end = KERN_END3;
 
-/* Our exported CPU info; we can have only one. */  
+/* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
 struct vm_map *phys_map = NULL;
@@ -170,7 +171,7 @@ static void initcpu(void);
  * to use the console for output immediately (via PROM)
  * but can not use it for input until after this point.
  */
-void 
+void
 consinit(void)
 {
 
@@ -213,7 +214,7 @@ consinit(void)
  * kernel memory allocator is ready for use, but before
  * the creation of processes 1,2, and mountroot, etc.
  */
-void 
+void
 cpu_startup(void)
 {
 	char *v;
@@ -284,7 +285,6 @@ cpu_startup(void)
  */
 char	machine[16] = MACHINE;		/* from <machine/param.h> */
 char	kernel_arch[16] = "sun3";	/* XXX needs a sysctl node */
-char	cpu_model[120];
 
 /*
  * Determine which Sun3 model we are running on.
@@ -293,16 +293,16 @@ char	cpu_model[120];
  * the video memory on the Sun3/50.  Therefore, this
  * function just prints out what we already know.
  */
-void 
+void
 identifycpu(void)
 {
 	extern char *cpu_string;	/* XXX */
 
 	/* Other stuff? (VAC, mc6888x version, etc.) */
 	/* Note: miniroot cares about the kernel_arch part. */
-	sprintf(cpu_model, "%s %s", kernel_arch, cpu_string);
+	cpu_setmodel("%s %s", kernel_arch, cpu_string);
 
-	printf("Model: %s\n", cpu_model);
+	printf("Model: %s\n", cpu_getmodel());
 }
 
 /*
@@ -381,7 +381,7 @@ reboot_sync(void)
 /*
  * Common part of the BSD and SunOS reboot system calls.
  */
-__dead void 
+__dead void
 cpu_reboot(int howto, char *user_boot_string)
 {
 	char *bs, *p;
@@ -461,10 +461,10 @@ cpu_reboot(int howto, char *user_boot_string)
  * These variables are needed by /sbin/savecore
  */
 uint32_t dumpmag = 0x8fca0101;	/* magic number */
-int 	dumpsize = 0;		/* pages */
-long	dumplo = 0; 		/* blocks */
+int	dumpsize = 0;		/* pages */
+long	dumplo = 0;		/* blocks */
 
-#define	DUMP_EXTRA 	3	/* CPU-dependent extra pages */
+#define	DUMP_EXTRA	3	/* CPU-dependent extra pages */
 
 /*
  * This is called by main to set dumplo, dumpsize.
@@ -473,7 +473,7 @@ long	dumplo = 0; 		/* blocks */
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
  */
-void 
+void
 cpu_dumpconf(void)
 {
 	int devblks;	/* size of dump device in blocks */
@@ -517,7 +517,7 @@ extern paddr_t avail_start;
  *   pagemap (2*PAGE_SIZE)
  *   physical memory...
  */
-void 
+void
 dumpsys(void)
 {
 	const struct bdevsw *dsw;
@@ -655,7 +655,7 @@ fail:
 	printf(" dump error=%d\n", error);
 }
 
-static void 
+static void
 initcpu(void)
 {
 	/* XXX: Enable RAM parity/ECC checking? */
@@ -681,7 +681,7 @@ initcpu(void)
  * Determine if the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
  */
-int 
+int
 cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	return ENOEXEC;
@@ -701,7 +701,7 @@ bool
 mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
 {
 
-	if (paddr >= avail_start) 
+	if (paddr >= avail_start)
 		return false;
 	*vaddr = KERNBASE3 + paddr;
 	return true;

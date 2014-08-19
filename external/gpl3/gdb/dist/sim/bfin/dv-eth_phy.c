@@ -1,6 +1,6 @@
 /* Ethernet Physical Receiver model.
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -23,11 +23,10 @@
 #include "sim-main.h"
 #include "devices.h"
 
-#ifdef HAVE_LINUX_MII_H
+#if defined (HAVE_LINUX_MII_H) && defined (HAVE_LINUX_TYPES_H)
 
 /* Workaround old/broken linux headers.  */
-#define _LINUX_TYPES_H
-#define __u16 unsigned short
+#include <linux/types.h>
 #include <linux/mii.h>
 
 #define REG_PHY_SIZE 0x20

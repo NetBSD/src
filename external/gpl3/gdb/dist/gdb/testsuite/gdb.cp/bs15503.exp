@@ -1,5 +1,4 @@
-# Copyright 1992, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 1992-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,10 +17,6 @@
 # This file was written by Sue Kimura (sue_kimura@hp.com)
 # Rewritten by Michael Chastain (mec.gnu@mindspring.com)
 
-if $tracelevel {
-    strace $tracelevel
-}
-
 if { [skip_stl_tests] } { continue }
 
 # On SPU this test fails because the executable exceeds local storage size.
@@ -29,23 +24,15 @@ if { [istarget "spu*-*-*"] } {
         return 0
 }
 
-set testfile "bs15503"
-set srcfile ${testfile}.cc
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .cc
 
-if [get_compiler_info ${binfile}] {
+if [get_compiler_info] {
     return -1
 }
 
-if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable "debug c++"] != "" } {
-    untested bs15503.exp
+if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
     return -1
 }
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 
 if ![runto_main] then {
     perror "couldn't run to breakpoint"

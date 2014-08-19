@@ -1,4 +1,4 @@
-/*	$NetBSD: cfscores.c,v 1.21 2010/01/03 17:08:45 dholland Exp $	*/
+/*	$NetBSD: cfscores.c,v 1.21.12.1 2014/08/20 00:00:22 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)cfscores.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cfscores.c,v 1.21 2010/01/03 17:08:45 dholland Exp $");
+__RCSID("$NetBSD: cfscores.c,v 1.21.12.1 2014/08/20 00:00:22 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,7 @@ printuser(const struct passwd *pw, int printfail)
 {
 	struct betinfo total;
 	off_t pos;
-	int i;
+	ssize_t i;
 
 	pos = pw->pw_uid * (off_t)sizeof(struct betinfo);
 	/* test pos, not pw_uid; uid_t can be unsigned, which makes gcc warn */
@@ -114,9 +114,9 @@ printuser(const struct passwd *pw, int printfail)
 		warnx("Bad uid %d", (int)pw->pw_uid);
 		return;
 	}
-	i = lseek(dbfd, pos, SEEK_SET);
-	if (i < 0)
-		warn("lseek %s", _PATH_SCORE);
+	if (lseek(dbfd, pos, SEEK_SET) < 0) {
+		warn("%s: lseek", _PATH_SCORE);
+	}
 	i = read(dbfd, &total, sizeof(total));
 	if (i < 0)
 		warn("read %s", _PATH_SCORE);

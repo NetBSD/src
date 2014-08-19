@@ -1,0 +1,177 @@
+# $NetBSD: HAWK,v 1.4.2.2 2014/08/20 00:02:53 tls Exp $
+#
+#	HAWK -- TI OMAPL138 based Board Kernel
+#
+
+include	"arch/evbarm/conf/std.hawk"
+
+# estimated number of users
+
+maxusers	32
+
+# Standard system options
+
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+
+# CPU options
+
+options 	CPU_ARM9E
+
+# Architecture options
+
+# File systems
+
+file-system	FFS		# UFS
+file-system	MFS		# memory file system
+file-system	NFS		# Network file system
+#file-system 	EXT2FS		# second extended file system (linux)
+file-system	MSDOSFS		# MS-DOS file system
+#file-system	FDESC		# /dev/fd
+#file-system	KERNFS		# /kern
+#file-system	NULLFS		# loopback file system
+#file-system	PROCFS		# /proc
+file-system	PTYFS		# /dev/pts/N support
+
+# File system options
+#options 	NFSSERVER
+options 	SOFTDEP
+options 	WAPBL		# File system journaling support - Experimental
+
+# Networking options
+
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+#options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
+#options 	NETATALK	# AppleTalk networking
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+options 	NFS_BOOT_BOOTP
+options 	NFS_BOOT_DHCP
+#options 	NFS_BOOT_BOOTSTATIC
+#options 	NFS_BOOTSTATIC_MYIP="\"192.168.1.5\""
+#options 	NFS_BOOTSTATIC_GWIP="\"192.168.1.7\""
+#options 	NFS_BOOTSTATIC_MASK="\"255.255.255.0\""
+#options 	NFS_BOOTSTATIC_SERVADDR="\"192.168.1.7\""
+#options 	NFS_BOOTSTATIC_SERVER="\"192.168.1.7:/export/client/root/\""
+
+options 	NFS_BOOT_RWSIZE=1024
+
+# Compatibility options
+
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
+#options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
+
+# Shared memory options
+
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
+
+# Device options
+
+#options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
+#options 	MEMORY_DISK_ROOT_SIZE=34816	# Size in blocks
+#options 	MEMORY_DISK_DYNAMIC
+#options 	MINIROOTSIZE=1000	# Size in blocks
+#options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
+
+# Miscellaneous kernel options
+options 	KTRACE		# system call tracing, a la ktrace(1)
+
+# Development and Debugging options
+
+options 	DIAGNOSTIC	# internal consistency checks
+#options 	DEBUG
+#options 	PGALLOC_VERBOSE
+#options 	DEBUG_DMA
+options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+options 	DDB		# in-kernel debugger
+options 	DDB_ONPANIC=1
+options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+#options 	KGDB
+#makeoptions	DEBUG="-g"	# compile full symbol table
+#options 	SYMTAB_SPACE=200000
+
+## USB Debugging options
+options USB_DEBUG
+options OHCI_DEBUG 
+options UHUB_DEBUG 
+
+
+# Valid options for BOOT_ARGS:
+
+options 	BOOT_ARGS="\"\""
+
+config		netbsd		root on ? type ?
+config		netbsd-usb	root on sd0e type ffs
+config		netbsd-emac	root on emac0 type nfs
+
+# The main bus device
+mainbus0	at root
+
+# The boot cpu
+cpu0		at mainbus?
+
+# Specify the memory size in megabytes.
+options 	MEMSIZE=128
+
+# Texas Instruments Peripheral Bus
+tipb0		at mainbus?
+
+# 16550 UART(s)
+com0 at tipb? addr 0x01d0d000 size 0x1000 intr 61 mult 4 # UART2
+options CONSADDR=0x01d0d000, CONSPEED=115200
+options OMAPL1X_COM_FREQ=150000000
+
+# ARM Interrupt Controller
+omapl1xaintc0 at tipb? addr 0xfffee000 size 0x2000 intr 0 
+
+# Timer - Use timer 0, 2, 3 ; timer 1 is left unused
+omapl1xtimer0 at tipb? addr 0x01c20000 size 0x1000 intr 21
+options OMAPL1X_TIMER0_FREQ=24000000
+omapl1xtimer1 at tipb? addr 0x01f0c000 size 0x1000 intr 68
+options OMAPL1X_TIMER2_FREQ=120000000
+omapl1xtimer2 at tipb? addr 0x01f0d000 size 0x1000 intr 96
+options OMAPL1X_TIMER3_FREQ=120000000
+
+#PSC
+omapl1xpsc0 at tipb? addr 0x01e27000 size 0x1000
+
+emac0 at tipb? addr 0x01e22000 size 0x3000 intr 33
+ukphy*		at mii? phy ?
+
+# OHCI
+ohci0	at tipb? addr 0x01e25000 size 0x1000 intr 59
+
+usb* at ohci?
+uhub* at usb?
+uhub* at uhub? port ?
+umass*	at uhub? port ? configuration ? interface ?
+scsibus* at umass?
+
+# SCSI devices
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+
+# Pseudo-Devices
+
+# disk/mass storage pseudo-devices
+pseudo-device	md		1	# memory disk device (ramdisk)
+#pseudo-device	vnd			# disk-like interface to files
+#pseudo-device	fss		4	# file system snapshot device
+
+# network pseudo-devices
+pseudo-device	bpfilter		# Berkeley packet filter
+pseudo-device	loop			# network loopback
+#pseudo-device	kttcp			# network loopback
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals

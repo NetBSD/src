@@ -1,7 +1,6 @@
-/*	$NetBSD: cdefs.h,v 1.100.2.3 2013/06/23 06:20:29 tls Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.100.2.4 2014/08/20 00:04:44 tls Exp $	*/
 
-/*
- * Copyright (c) 1991, 1993
+/* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -146,10 +145,12 @@
 #ifdef __COUNTER__
 #define	__CTASSERT(x)		__CTASSERT0(x, __ctassert, __COUNTER__)
 #else
-#define	__CTASSERT(x)		__CTASSERT0(x, __ctassert, __LINE__)
+#define	__CTASSERT(x)		__CTASSERT99(x, __INCLUDE_LEVEL__, __LINE__)
+#define	__CTASSERT99(x, a, b)	__CTASSERT0(x, __CONCAT(__ctassert,a), \
+					       __CONCAT(_,b))
 #endif
-#define	__CTASSERT0(x, y, z)	__CTASSERT1(x, y, z)
-#define	__CTASSERT1(x, y, z)	typedef char y ## z[/*CONSTCOND*/(x) ? 1 : -1]
+#define	__CTASSERT0(x, y, z)	__CTASSERT1(x, y, z) 
+#define	__CTASSERT1(x, y, z)	typedef char y ## z[/*CONSTCOND*/(x) ? 1 : -1] __unused
 
 /*
  * The following macro is used to remove const cast-away warnings
@@ -250,22 +251,55 @@
 #define	__noclone	/* nothing */
 #endif
 
+/*
+ * __unused: Note that item or function might be unused.
+ */
 #if __GNUC_PREREQ__(2, 7)
 #define	__unused	__attribute__((__unused__))
 #else
 #define	__unused	/* delete */
 #endif
 
+/*
+ * __used: Note that item is needed, even if it appears to be unused.
+ */
 #if __GNUC_PREREQ__(3, 1)
 #define	__used		__attribute__((__used__))
 #else
 #define	__used		__unused
 #endif
 
+/*
+ * __diagused: Note that item is used in diagnostic code, but may be
+ * unused in non-diagnostic code.
+ */
+#if (defined(_KERNEL) && defined(DIAGNOSTIC)) \
+ || (!defined(_KERNEL) && !defined(NDEBUG))
+#define	__diagused	/* empty */
+#else
+#define	__diagused	__unused
+#endif
+
+/*
+ * __debugused: Note that item is used in debug code, but may be
+ * unused in non-debug code.
+ */
+#if defined(DEBUG)
+#define	__debugused	/* empty */
+#else
+#define	__debugused	__unused
+#endif
+
 #if __GNUC_PREREQ__(3, 1)
 #define	__noprofile	__attribute__((__no_instrument_function__))
 #else
 #define	__noprofile	/* nothing */
+#endif
+
+#if __GNUC_PREREQ__(4, 6) || defined(__clang__)
+#define	__unreachable()	__builtin_unreachable()
+#else
+#define	__unreachable()	do {} while (0)
 #endif
 
 #if defined(__cplusplus)
@@ -325,14 +359,10 @@
 #define	__packed	__packed
 #define	__aligned(x)	/* delete */
 #define	__section(x)	/* delete */
-#elif __GNUC_PREREQ__(2, 7)
+#elif __GNUC_PREREQ__(2, 7) || defined(__PCC__)
 #define	__packed	__attribute__((__packed__))
 #define	__aligned(x)	__attribute__((__aligned__(x)))
 #define	__section(x)	__attribute__((__section__(x)))
-#elif defined(__PCC__)
-#define	__packed	_Pragma("packed 1")
-#define	__aligned(x)   	_Pragma("aligned " __STRING(x))
-#define	__section(x)   	_Pragma("section " ## x)
 #elif defined(_MSC_VER)
 #define	__packed	/* ignore */
 #else
@@ -520,7 +550,7 @@
 #ifndef __ASSEMBLER__
 /* __BIT(n): nth bit, where __BIT(0) == 0x1. */
 #define	__BIT(__n)	\
-    (((uintmax_t)(__n) >= NBBY * sizeof(uintmax_t)) ? 0 : ((uintmax_t)1 << (uintmax_t)(__n)))
+    (((uintmax_t)(__n) >= NBBY * sizeof(uintmax_t)) ? 0 : ((uintmax_t)1 << (uintmax_t)((__n) & (NBBY * sizeof(uintmax_t) - 1))))
 
 /* __BITS(m, n): bits m through n, m < n. */
 #define	__BITS(__m, __n)	\
@@ -550,16 +580,20 @@
 #define __CAST(__dt, __st)	((__dt)(__st))
 #endif
 
+#define __USE(a) ((void)(a))
+
 #define __type_mask(t) (/*LINTED*/sizeof(t) < sizeof(intmax_t) ? \
     (~((1ULL << (sizeof(t) * NBBY)) - 1)) : 0ULL)
 
 #ifndef __ASSEMBLER__
 static __inline long long __zeroll(void) { return 0; }
-static __inline int __negative_p(double x) { return x < 0; }
+static __inline unsigned long long __zeroull(void) { return 0; }
 #else
 #define __zeroll() (0LL)
-#define __negative_p(x) ((x) < 0)
+#define __zeroull() (0ULL)
 #endif
+
+#define __negative_p(x) (!((x) > 0) && ((x) != 0))
 
 #define __type_min_s(t) ((t)((1ULL << (sizeof(t) * NBBY - 1))))
 #define __type_max_s(t) ((t)~((1ULL << (sizeof(t) * NBBY - 1))))
@@ -570,12 +604,13 @@ static __inline int __negative_p(double x) { return x < 0; }
 #define __type_max(t) (__type_is_signed(t) ? __type_max_s(t) : __type_max_u(t))
 
 
-#define __type_fit_u(t, a) (/*LINTED*/sizeof(t) < sizeof(intmax_t) ? \
-    (((a) & __type_mask(t)) == 0) : !__negative_p(a))
+#define __type_fit_u(t, a) (/*LINTED*/!__negative_p(a) && \
+    (uintmax_t)((a) + __zeroull()) <= (uintmax_t)__type_max_u(t))
 
 #define __type_fit_s(t, a) (/*LINTED*/__negative_p(a) ? \
     ((intmax_t)((a) + __zeroll()) >= (intmax_t)__type_min_s(t)) : \
-    ((intmax_t)((a) + __zeroll()) <= (intmax_t)__type_max_s(t)))
+    ((intmax_t)((a) + __zeroll()) >= (intmax_t)0 && \
+     (intmax_t)((a) + __zeroll()) <= (intmax_t)__type_max_s(t)))
 
 /*
  * return true if value 'a' fits in type 't'

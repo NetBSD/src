@@ -1,4 +1,4 @@
-#	$NetBSD: vchain,v 1.6 2009/11/18 18:04:26 eeh Exp $
+#	$NetBSD: vchain,v 1.6.22.1 2014/08/20 00:04:28 tls Exp $
 
 #	@(#)vchain	8.1 (Berkeley) 6/10/93
 #
@@ -35,11 +35,11 @@ print the vnode chain for a given mount point
 end
 
 define vall
-	set $mp=mountlist.cqh_first
+	set $mp=mountlist.tqh_first
 	while ($mp)
 		printf "\tmount point at 0x%x\n", $mp
 		mp_vchain $mp
-		set $mp=$mp->mnt_list.cqe_next
+		set $mp=$mp->mnt_list.tqe_next
 
 		# "break"
 		if ((const void *)$mp == (const void *)&mountlist)
@@ -52,12 +52,12 @@ print vnode chains for all mount points
 end
 
 define mountdump
-	set $mp=mountlist.cqh_first
+	set $mp=mountlist.tqh_first
 	while ($mp)
 		printf "%s on %s type %s, (mp 0x%x, privdata 0x%x)\n", \
 		    $mp->mnt_stat->f_mntfromname, $mp->mnt_stat->f_mntonname, \
 		    $mp->mnt_op->vfs_name, $mp, $mp->mnt_data
-		set $mp=$mp->mnt_list.cqe_next
+		set $mp=$mp->mnt_list.tqe_next
 		if ((const void *)$mp == (const void *)&mountlist)
 			set $mp = 0
 		end

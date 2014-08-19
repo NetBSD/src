@@ -1,5 +1,4 @@
-# Copyright 1992, 1994, 1995, 1996, 1997, 1998, 1999, 2002, 2003, 2007, 2008,
-# 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 1992-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,62 +15,50 @@
 
 # This file was written by Fred Fish. (fnf@cygnus.com)
 
-if $tracelevel then {
-	strace $tracelevel
-}
 
-
-set testfile "list"
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile list0.c list1.c
 
 # Need to download the header to the host.
-remote_download host ${srcdir}/${subdir}/list0.h list0.h
+gdb_remote_download host ${srcdir}/${subdir}/list0.h
 
-
-if  { [gdb_compile "${srcdir}/${subdir}/list0.c" "${binfile}0.o" object {debug}] != "" } {
-     untested list.exp
-     return -1
+if {[prepare_for_testing $testfile.exp $testfile [list $srcfile $srcfile2] \
+	 {debug}]} {
+    return -1
 }
-
-if  { [gdb_compile "${srcdir}/${subdir}/list1.c" "${binfile}1.o" object {debug}] != "" } {
-     untested list.exp
-     return -1
-}
-
-if  { [gdb_compile "${binfile}0.o ${binfile}1.o" ${binfile} executable {debug}] != "" } {
-     untested list.exp
-     return -1
-}
-
-
 
 # Create and source the file that provides information about the compiler
 # used to compile the test case.
-if [get_compiler_info ${binfile}] {
-    return -1;
+if [get_compiler_info] {
+    return -1
 }
+
+# The last line in the file.
+set last_line [gdb_get_line_number "last line" "list0.c"]
+
+# Regex matching the last line in the file.
+set last_line_re "${last_line}\[ \t\]+} /\\* last line \\*/"
 
 #
 # Local utility proc just to set and verify listsize
 # Return 1 if success, 0 if fail.
 #
 
-set set_listsize_count 0;
+set set_listsize_count 0
 
 proc set_listsize { arg } {
     global gdb_prompt
-    global set_listsize_count;
+    global set_listsize_count
 
-    incr set_listsize_count;
-    if [gdb_test "set listsize $arg" ".*" "setting listsize to $arg #$set_listsize_count"] {
-	return 0;
+    incr set_listsize_count
+    if [gdb_test_no_output "set listsize $arg" "setting listsize to $arg #$set_listsize_count"] {
+	return 0
     }
-    if { $arg <= 0 } {
-	set arg "unlimited";
+    if { $arg == 0 } {
+	set arg "unlimited"
     }
 
     if [gdb_test "show listsize" "Number of source lines.* is ${arg}.*" "show listsize $arg #$set_listsize_count"] {
-	return 0;
+	return 0
     }
     return 1
 }
@@ -84,22 +71,15 @@ proc test_listsize {} {
     global gdb_prompt
     global hp_cc_compiler
     global hp_aCC_compiler
+    global last_line_re
 
     # Show default size
 
     gdb_test "show listsize" "Number of source lines gdb will list by default is 10.*" "show default list size"
     
     # Show the default lines
-    # Note that remote targets that have debugging info for _start available will
-    # list the lines there instead of main, so we skip this test for remote targets.
-    # The second case is for optimized code, it is still correct.
-    
-    if [target_info exists use_gdb_stub] {
-	runto_main;
-	unsupported "list default lines around main";
-    } else {
-	gdb_test "list" "(1\[ \t\]+#include \"list0.h\".*10\[ \t\]+x = 0;|2.*11\[ \t\]+foo .x\[+)\]+;)" "list default lines around main"
-    }
+
+    gdb_test "list" "(1\[ \t\]+#include \"list0.h\".*7\[ \t\]+x = 0;\r\n.*10\[ \t\]+foo .x\[+)\]+;)" "list default lines around main"
 
     # Ensure we can limit printouts to one line
 
@@ -137,21 +117,15 @@ proc test_listsize {} {
     # Try a size larger than the entire file.
 
     if [ set_listsize 100 ] then {
-	gdb_test "list 1" "1\[ \t\]+#include \"list0.h\".*\r\n4\[23\]\[ \t\]+\}" "list line 1 with listsize 100"
+	gdb_test "list 1" "1\[ \t\]+#include \"list0.h\".*\r\n${last_line_re}" "list line 1 with listsize 100"
 	
-	gdb_test "list 10" "1\[ \t\]+#include \"list0.h\".*\r\n4\[23\]\[ \t\]+\}" "list line 10 with listsize 100"
+	gdb_test "list 10" "1\[ \t\]+#include \"list0.h\".*\r\n${last_line_re}" "list line 10 with listsize 100"
     }
 
-    # Try listsize of 0 which suppresses printing.
+    # Try listsize of 0 which is special, and means unlimited.
 
     set_listsize 0
-    gdb_test "list 1" "" "listsize of 0 suppresses output"
-
-    # Try listsize of -1 which is special, and means unlimited.
-
-    set_listsize -1
-    setup_xfail "*-*-*"
-    gdb_test "list 1" "1\[ \t\]+#include .*\r\n39\[ \t\]+\}" "list line 1 with unlimited listsize"
+    gdb_test "list 1" "1\[ \t\]+#include .*\r\n${last_line_re}" "list line 1 with unlimited listsize"
 }
 
 #
@@ -179,7 +153,7 @@ proc test_list_filename_and_number {} {
 
     send_gdb "list list0.c:1\n"
     gdb_expect {
-	-re "1\[ \t\]+#include \"list0.h\".*10\[ \t]+x = 0;\r\n$gdb_prompt $" {
+	-re "1\[ \t\]+#include \"list0.h\".*10\[ \t\]+foo .x\[+)\]+;\r\n$gdb_prompt $" {
 	    incr testcnt 
 	}
 	-re ".*$gdb_prompt $" { fail "list list0.c:1" ; gdb_suppress_tests }
@@ -210,7 +184,7 @@ proc test_list_filename_and_number {} {
 	timeout { fail "list list1.c:12 (timeout)" ; gdb_suppress_tests }
     }
     pass "list filename:number ($testcnt tests)"
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 #
@@ -223,7 +197,7 @@ proc test_list_function {} {
     # gcc appears to generate incorrect debugging information for code
     # in include files, which breaks this test.
     # SunPRO cc is the second case below, it's also correct.
-    gdb_test "list main" "(5\[ \t\]+int x;.*14\[ \t\]+foo \[(\]+.*\[)\]+;|1\[ \t\]+#include .*10\[ \t\]+x = 0;)" "list function in source file 1"
+    gdb_test "list main" "(5\[ \t\]+int x;.*8\[ \t\]+foo \[(\]+.*\[)\]+;|1\[ \t\]+#include .*7\[ \t\]+x = 0;)" "list function in source file 1"
 
     # Ultrix gdb takes the second case below; it's also correct.
     # SunPRO cc is the third case.
@@ -237,6 +211,7 @@ proc test_list_function {} {
 
 proc test_list_forward {} {
     global gdb_prompt
+    global last_line_re
 
     set testcnt 0
 
@@ -263,13 +238,13 @@ proc test_list_forward {} {
 
     send_gdb "list\n"
     gdb_expect {
-	-re "35\[ \t\]+foo \\(.*\\);.*42\[ \t\]+.*\}\r\n$gdb_prompt $" { incr testcnt }
+	-re "35\[ \t\]+foo \\(.*\\);.*${last_line_re}\r\n$gdb_prompt $" { incr testcnt }
 	-re ".*$gdb_prompt $" { fail "list 35-42" ; gdb_suppress_tests }
 	timeout { fail "list 35-42 (timeout)" ; gdb_suppress_tests }
     }
 
     pass "successive list commands to page forward ($testcnt tests)"
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 # Test that repeating the list linenum command doesn't print the same
@@ -279,6 +254,7 @@ proc test_list_forward {} {
 
 proc test_repeat_list_command {} {
     global gdb_prompt
+    global last_line_re
 
     set testcnt 0
 
@@ -305,13 +281,13 @@ proc test_repeat_list_command {} {
 
     send_gdb "\n"
     gdb_expect {
-	-re "35\[ \t\]+foo \\(.*\\);.*42\[ \t\]+.*\}\r\n$gdb_prompt $" { incr testcnt }
+	-re "35\[ \t\]+foo \\(.*\\);.*${last_line_re}\r\n$gdb_prompt $" { incr testcnt }
 	-re ".*$gdb_prompt $" { fail "list 35-42" ; gdb_suppress_tests }
 	timeout { fail "list 35-42 (timeout)" ; gdb_suppress_tests }
     }
 
     pass "repeat list commands to page forward using 'return' ($testcnt tests)"
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 proc test_list_backwards {} {
@@ -335,20 +311,20 @@ proc test_list_backwards {} {
 
     send_gdb "list -\n"
     gdb_expect {
-	-re "8\[ \t\]+breakpoint\[(\]\[)\];.*17\[ \t\]+foo \[(\]+.*\[)\]+;\r\n$gdb_prompt $" { incr testcnt }
+	-re "8\[ \t\]+foo \[(\]+.*\[)\]+;.*17\[ \t\]+foo \[(\]+.*\[)\]+;\r\n$gdb_prompt $" { incr testcnt }
 	-re ".*$gdb_prompt $" { fail "list 8-17" ; gdb_suppress_tests }
 	timeout { fail "list 8-17 (timeout)" ; gdb_suppress_tests }
     }
 
     send_gdb "list -\n"
     gdb_expect {
-	-re "1\[ \t\]+#include .*7\[ \t\]+set_debug_traps\[(\]\[)\]+;\r\n$gdb_prompt $" { incr testcnt }
+	-re "1\[ \t\]+#include .*7\[ \t\]+x = 0;\r\n$gdb_prompt $" { incr testcnt }
 	-re ".*$gdb_prompt $" { fail "list 1-7" ; gdb_suppress_tests }
 	timeout { fail "list 1-7 (timeout)" ; gdb_suppress_tests }
     }
 
     pass "$testcnt successive \"list -\" commands to page backwards"
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 #
@@ -357,6 +333,8 @@ proc test_list_backwards {} {
 
 proc test_list_range {} {
     global gdb_prompt
+    global last_line_re
+    global last_line
 
     gdb_test "list list0.c:2,list0.c:5" "2\[ \t\]+\r\n3\[ \t\]+int main \[)(\]+.*5\[ \t\]+int x;" "list range; filename:line1,filename:line2"
 
@@ -366,9 +344,12 @@ proc test_list_range {} {
 
 #    gdb_test     "list -100,-40" 	"Line number -60 out of range; .*list0.c has 39 lines." "list range; both bounds negative"
 
-    gdb_test "list 30,45" "30\[ \t\]+foo \(.*\);.*43\[ \t\]+\}" "list range; upper bound past EOF"
+    set past_end [expr ${last_line} + 10]
+    set much_past_end [expr ${past_end} + 10]
 
-    gdb_test "list 45,100" "Line number 45 out of range; .*list0.c has 43 lines." "list range; both bounds past EOF"
+    gdb_test "list 30,${past_end}" "30\[ \t\]+foo \(.*\);.*${last_line_re}" "list range; upper bound past EOF"
+
+    gdb_test "list ${past_end},${much_past_end}" "Line number ${past_end} out of range; .*list0.c has ${last_line} lines." "list range; both bounds past EOF"
 
     gdb_test "list list0.c:2,list1.c:17" "Specified start and end are in different files." "list range, must be same files"
 }
@@ -379,6 +360,7 @@ proc test_list_range {} {
 
 proc test_list_filename_and_function {} {
     global gdb_prompt
+    global last_line_re
 
     set testcnt 0
 
@@ -387,7 +369,7 @@ proc test_list_filename_and_function {} {
     # SunPRO cc is the second case below, it's also correct.
     send_gdb "list list0.c:main\n"
     gdb_expect {
-	-re "1\[ \t\]+#include .*10\[ \t\]+x = 0;\r\n$gdb_prompt $" {
+	-re "1\[ \t\]+#include .*10\[ \t\]+foo \[(\]+.*\[)\]+;\r\n$gdb_prompt $" {
 	    incr testcnt
 	}
 	-re "5\[ \t\]+int x;.*14\[ \t\]+foo \[(\]+.*\[)\]+;\r\n$gdb_prompt $" {
@@ -402,7 +384,7 @@ proc test_list_filename_and_function {} {
     setup_xfail "rs6000-*-aix*"
     send_gdb "list list0.c:unused\n"
     gdb_expect {
-	-re "40\[ \t\]+unused.*43\[ \t\]+\}\r\n$gdb_prompt $" {
+	-re "40\[ \t\]+unused.*${last_line_re}\r\n$gdb_prompt $" {
 	    incr testcnt
 	}
 	-re "37.*42\[ \t\]+\}\r\n$gdb_prompt $" {
@@ -489,7 +471,7 @@ proc test_list_filename_and_function {} {
 
     gdb_test "list foobar.c:main" "No source file named foobar.c.|Location not found" "list filename:function; nonexistant file"
 
-    gdb_test "list list0.h:foobar" "Function \"foobar\" not defined.|Location not found" "list filename:function; nonexistant function"
+    gdb_test "list list0.h:foobar" "Function \"foobar\" not defined in \"list0.h\"." "list filename:function; nonexistant function"
 
 }
 
@@ -517,16 +499,18 @@ proc test_forward_search {} {
 	verbose "Timeout is now $timeout seconds" 2
 }
 
+proc test_only_end {} {
+    gdb_test_no_output "set listsize 2"
+    gdb_test "list 1" "list 1\r\n1\[ \t\]\[^\r\n\]*\r\n2\[ \t\]\[^\r\n\]*"
+    gdb_test "list ,5" "list ,5\r\n4\[ \t\]\[^\r\n\]*\r\n5\[ \t\]\[^\r\n\]*"
+}
+
 # Start with a fresh gdb.
 
 gdb_exit
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
-
-if [target_info exists gdb_stub] {
-    gdb_step_for_stub;
-}
+gdb_file_cmd ${binfile}
 
 gdb_test_no_output "set width 0"
 
@@ -542,6 +526,7 @@ if [ set_listsize 10 ] then {
     test_list_range
     test_list_filename_and_function
     test_forward_search
+    test_only_end
 }
 
 remote_exec build "rm -f list0.h"

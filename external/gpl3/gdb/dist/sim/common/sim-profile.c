@@ -1,6 +1,5 @@
 /* Default profiling support.
-   Copyright (C) 1996, 1997, 1998, 2000, 2001, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -740,7 +739,7 @@ profile_print_pc (sim_cpu *cpu, int verbose)
 	  }
 	if (ok == 0)
 	  sim_io_eprintf (sd, "Failed to write to \"gmon.out\" profile file\n");
-	fclose(pf);
+	fclose (pf);
       }
   }
 
@@ -1132,7 +1131,7 @@ profile_info (SIM_DESC sd, int verbose)
   /* FIXME: If the number of processors can be selected on the command line,
      then MAX_NR_PROCESSORS will need to take an argument of `sd'.  */
 
-  for (c = 0; c < MAX_NR_PROCESSORS; ++c)
+  for (c = 0; c < MAX_NR_PROCESSORS && !print_title_p; ++c)
     {
       sim_cpu *cpu = STATE_CPU (sd, c);
       PROFILE_DATA *data = CPU_PROFILE_DATA (cpu);
@@ -1142,6 +1141,7 @@ profile_info (SIM_DESC sd, int verbose)
 	  {
 	    profile_printf (sd, cpu, "Summary profiling results:\n\n");
 	    print_title_p = 1;
+	    break;
 	  }
     }
 

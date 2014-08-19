@@ -1,4 +1,4 @@
-.\" $NetBSD: mcp980x.4,v 1.1.2.2 2013/06/23 06:28:53 tls Exp $
+.\" $NetBSD: mcp980x.4,v 1.1.2.3 2014/08/20 00:02:35 tls Exp $
 .\"
 .\" Copyright (c) 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 8, 2013
+.Dd October 15, 2013
 .Dt MCP980X 4
 .Os
 .Sh NAME
@@ -38,10 +38,25 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides minimal support for the MCP980x series of temperature sensors.
+driver provides support for the MCP980x series of temperature sensors.
 It allows reporting ambient temperature through the
 .Xr envsys 4
 API.
+.Sh SYSCTL VARIABLES
+The following
+.Xr sysctl 3
+variable are provided:
+.Bl -tag -width machdep.mcp980x0.hysteresis
+.It Va machdep.mcp980x0.res
+ADC resolution (integer).
+Valid values are 0-3, where 0 is 9-bit (0.5 Celsius degree) and 3 is 12-bit
+(0.0625 Celsius degree) resolution.
+.It Va machdep.mcp980x0.templimit
+If the ambient temperature exceeds this limit, the chip asserts an alert line
+(integer).
+.It Va machdep.mcp980x0.hysteresis
+Hysteresis for temperature limit (integer).
+.El
 .Sh SEE ALSO
 .Xr envsys 4
 .Sh HISTORY
@@ -54,8 +69,13 @@ device first appeared in
 The
 .Nm
 driver was written by
-.An Radoslaw Kujawa Aq radoslaw.kujawa@gmail.com .
+.An Radoslaw Kujawa Aq Mt radoslaw.kujawa@gmail.com .
 .Sh CAVEATS
 MCP9805 chip is different and is supported by the
 .Xr sdtemp 4
 driver.
+.Pp
+The MCP980x chip supports hysteresis and temperature limit values with a
+resolution of 0.5 Celsius degree, however the
+.Nm
+driver supports setting only integer values.

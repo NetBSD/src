@@ -276,10 +276,10 @@
 .ds doc-volume-as-evbppc       evbppc
 .ds doc-volume-as-evbsh3       evbsh3
 .ds doc-volume-as-hp300        hp300
-.ds doc-volume-as-hp700        hp700
 .ds doc-volume-as-hpcarm       hpcarm
 .ds doc-volume-as-hpcmips      hpcmips
 .ds doc-volume-as-hpcsh        hpcsh
+.ds doc-volume-as-hppa         hppa
 .ds doc-volume-as-i386         i386
 .ds doc-volume-as-luna68k      luna68k
 .ds doc-volume-as-m68k         m68k

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.363.2.3 2013/06/23 06:19:59 tls Exp $
+# $NetBSD: GENERIC,v 1.363.2.4 2014/08/20 00:02:42 tls Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.363.2.3 $"
+#ident 		"GENERIC-$Revision: 1.363.2.4 $"
 
 maxusers	64		# estimated number of users
 
@@ -86,7 +86,7 @@ vmt0		at cpu0		# VMware Tools
 options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# expensive kernel consistency checks
+options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 				# XXX to be commented out on release branch
 #options 	DEBUG		# expensive debugging checks/support
 #options 	LOCKDEBUG	# expensive locking checks/support
@@ -99,7 +99,7 @@ options 	DIAGNOSTIC	# expensive kernel consistency checks
 makeoptions	COPTS="-O2 -fno-omit-frame-pointer"
 options 	DDB		# in-kernel debugger
 #options	DDB_COMMANDONENTER="bt"	# execute command when ddb is entered
-#options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
+#options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
@@ -176,7 +176,7 @@ options 	NFSSERVER	# Network File System server
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
-#options 	IPSEC		# IP security
+options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MPLS		# MultiProtocol Label Switching (needs ifmpls)
 #options 	MROUTING	# IP multicast routing
@@ -185,7 +185,6 @@ options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
@@ -712,6 +711,7 @@ gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 iwn*	at pci? dev ? function ?	# Intel PRO/Wireless 4965AGN
+ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 ethernet
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
@@ -740,6 +740,7 @@ tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 txp*	at pci? dev ? function ?	# 3com 3cr990
 vge*	at pci? dev ? function ?	# VIATech VT612X Gigabit Ethernet
+vmx*	at pci? dev ? function ?	# VMware VMXNET3
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
 wm*	at pci? dev ? function ?	# Intel 82543/82544 gigabit
@@ -752,6 +753,7 @@ awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
 cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer
 cs*	at pcmcia? function ?		# CS89xx Ethernet
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
+malo*	at pcmcia? function ?		# Marvell Libertas
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
@@ -816,6 +818,8 @@ urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 # USB Controller and Devices
 
 # PCI USB controllers
+# xhci*	at pci?	dev ? function ?	# eXtensible Host Controller
+					# xhci is at best experimental
 ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
 ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
@@ -832,6 +836,7 @@ uhci*	at cardbus? function ?		# Universal Host Controller (Intel)
 slhci*	at pcmcia? function ?		# ScanLogic SL811HS
 
 # USB bus support
+# usb*	at xhci?
 usb*	at ehci?
 usb*	at ohci?
 usb*	at uhci?
@@ -914,6 +919,7 @@ cir*	at irmce?
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 axe*	at uhub? port ?		# ASIX AX88172 based adapters
+axen*	at uhub? port ?		# ASIX AX88178a/AX88179 based adapters
 cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
@@ -1144,8 +1150,10 @@ btsco* at bthub?
 
 # SD/MMC controller
 sdhc*	at pci?		# SD Host Controller
+rtsx*	at pci?		# Realtek RTS5209/RTS5229 Card Reader
 sdhc*	at cardbus?	# SD Host Controller
 sdmmc*	at sdhc?	# SD/MMC bus
+sdmmc*	at rtsx?	# SD/MMC bus
 
 ld*	at sdmmc?
 
@@ -1192,7 +1200,7 @@ options 	MEMORY_DISK_HOOKS	# enable root ramdisk
 options 	MEMORY_DISK_DYNAMIC	# loaded via kernel module(7)
 
 pseudo-device	vnd			# disk-like interface to files
-#options 	VND_COMPRESSION		# compressed vnd(4)
+options 	VND_COMPRESSION		# compressed vnd(4)
 
 
 # network pseudo-devices

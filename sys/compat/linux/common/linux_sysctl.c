@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.40 2010/07/07 01:30:35 chs Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.40.18.1 2014/08/20 00:03:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.40 2010/07/07 01:30:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.40.18.1 2014/08/20 00:03:32 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,15 +57,15 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.40 2010/07/07 01:30:35 chs Exp $"
 #include <compat/linux/common/linux_machdep.h>
 
 char linux_sysname[128] = "Linux";
-char linux_release[128] = "2.6.18";
-char linux_version[128] = "#0 Wed Mar 3 03:03:03 PST 2010";
+char linux_release[128] = "3.11.6";
+char linux_version[128] = "#1 SMP PREEMPT Thu Oct 24 16:23:02 UTC 2013";
 
 struct sysctlnode linux_sysctl_root = {
 	.sysctl_flags = SYSCTL_VERSION|
 	    CTLFLAG_ROOT|CTLTYPE_NODE|CTLFLAG_READWRITE,
 	.sysctl_num = 0,
 	.sysctl_name = "(linux_root)",
-	sysc_init_field(_sysctl_size, sizeof(struct sysctlnode)),
+	.sysctl_size = sizeof(struct sysctlnode),
 };
 
 static struct sysctllog *linux_clog1;
@@ -106,11 +106,6 @@ linux_sysctl_init(void)
 		       NULL, 0, linux_version, sizeof(linux_version),
 		       LINUX_KERN_VERSION, CTL_EOL);
 
-	sysctl_createv(&linux_clog2, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "emul", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_EMUL, CTL_EOL);
 	sysctl_createv(&linux_clog2, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "linux",

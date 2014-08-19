@@ -1,4 +1,4 @@
-.\" $NetBSD: 0.t,v 1.1 2007/12/18 03:35:51 garbled Exp $
+.\" $NetBSD: 0.t,v 1.1.34.1 2014/08/20 00:02:29 tls Exp $
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -50,14 +50,16 @@
 \fB\\$1\fP\\$2
 ..
 .TL
-Building 4.4BSD Kernels with Config
+Building NetBSD Kernels with Config
 .AU
 Samuel J. Leffler and Michael J. Karels
+.\" (uncomment this once there are substantive changes)
+.\" Updated for NetBSD by David A. Holland
 .AI
-Computer Systems Research Group
-Department of Electrical Engineering and Computer Science
-University of California, Berkeley
-Berkeley, California  94720
+.\" Computer Systems Research Group
+.\" Department of Electrical Engineering and Computer Science
+.\" University of California, Berkeley
+.\" Berkeley, California  94720
 .de IR
 \fI\\$1\fP\\$2
 ..
@@ -67,23 +69,26 @@ Berkeley, California  94720
 .AB
 .PP
 This document describes the use of
-\fIconfig\fP\|(8) to configure and create bootable
-4.4BSD system images.
+\fIconfig\fP\|(1) to configure and create bootable
+NetBSD system images.
 It discusses the structure of system
 configuration files and how to configure
 systems with non-standard hardware configurations.
 Sections describing the preferred way to
 add new code to the system and how the system's autoconfiguration
-process operates are included.  An appendix
+process operates are included.
+An appendix
 contains a summary of the rules used by the system
 in calculating the size of system data structures,
 and also indicates some of the standard system size
-limitations (and how to change them).
+limitations and how to change them.
 Other configuration options are also listed.
 .sp
 .LP
 Revised July 5, 1993
+.LP
+Revised for NetBSD beginning July 5, 2014
 .AE
 .LP
-.OH 'Building 4.4BSD Kernels with Config''SMM:2-%'
-.EH 'SMM:2-%''Building 4.4BSD Kernels with Config'
+.OH 'Building NetBSD Kernels with Config''Command Reference Documents'
+.EH 'Command Reference Documents''Building NetBSD Kernels with Config'

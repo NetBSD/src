@@ -1,4 +1,4 @@
-/*	$NetBSD: via8231.c,v 1.4 2011/07/01 17:37:27 dyoung Exp $	*/
+/*	$NetBSD: via8231.c,v 1.4.12.1 2014/08/20 00:03:06 tls Exp $	*/
 /*	OpenBSD: via8231.c,v 1.6 2005/10/27 16:41:06 mickey Exp 	*/
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via8231.c,v 1.4 2011/07/01 17:37:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via8231.c,v 1.4.12.1 2014/08/20 00:03:06 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,7 +258,7 @@ int
 via8231_set_trigger(pciintr_icu_handle_t v, int irq, int trigger)
 {
 	struct via8231_handle *ph = v;
-	int reg, clink, m, pciirq;
+	int reg, clink, pciirq;
 
 	if (VIA8231_PIRQ_LEGAL(irq) == 0 || VIA8231_TRIG_LEGAL(trigger) == 0)
 		return (1);
@@ -268,7 +268,6 @@ via8231_set_trigger(pciintr_icu_handle_t v, int irq, int trigger)
 	via8231_pir_dump("via8231_set_trig: ", ph);
 #endif
 
-	m = ph->flags & VT8237? VIA8237_LINK_MAX : VIA8231_LINK_MAX;
 	for (clink = 0; clink <= VIA8231_LINK_MAX; clink++) {
 		via8231_get_intr(v, clink, &pciirq);
 		if (pciirq == irq) {

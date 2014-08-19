@@ -1,5 +1,5 @@
 /* Morpho Technologies MT specific support for 32-bit ELF
-   Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008
+   Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2011, 2012
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -26,7 +26,7 @@
 #include "elf/mt.h"
 
 /* Prototypes.  */
-static reloc_howto_type * mt_reloc_type_lookup 
+static reloc_howto_type * mt_reloc_type_lookup
   (bfd *, bfd_reloc_code_real_type);
 
 static void mt_info_to_howto_rela
@@ -36,11 +36,11 @@ static bfd_reloc_status_type mt_elf_relocate_hi16
   (bfd *, Elf_Internal_Rela *, bfd_byte *, bfd_vma);
 
 static bfd_reloc_status_type mt_final_link_relocate
-  (reloc_howto_type *, bfd *, asection *, bfd_byte *, 
+  (reloc_howto_type *, bfd *, asection *, bfd_byte *,
    Elf_Internal_Rela *, bfd_vma);
 
 static bfd_boolean mt_elf_relocate_section
-  (bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *, 
+  (bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
    Elf_Internal_Rela *, Elf_Internal_Sym *, asection **);
 
 /* Relocation tables.  */
@@ -48,77 +48,77 @@ static reloc_howto_type mt_elf_howto_table [] =
 {
   /* This reloc does nothing.  */
   HOWTO (R_MT_NONE,           /* type */
-          0,                      /* rightshift */ 
-          2,                      /* size (0 = byte, 1 = short, 2 = long) */ 
+          0,                      /* rightshift */
+          2,                      /* size (0 = byte, 1 = short, 2 = long) */
           32,                     /* bitsize */
-          FALSE,                  /* pc_relative */ 
-          0,                      /* bitpos */ 
-          complain_overflow_dont, /* complain_on_overflow */ 
-          bfd_elf_generic_reloc,  /* special_function */ 
-          "R_MT_NONE",          /* name */ 
-          FALSE,                  /* partial_inplace */ 
-          0 ,                     /* src_mask */ 
-          0,                      /* dst_mask */ 
+          FALSE,                  /* pc_relative */
+          0,                      /* bitpos */
+          complain_overflow_dont, /* complain_on_overflow */
+          bfd_elf_generic_reloc,  /* special_function */
+          "R_MT_NONE",          /* name */
+          FALSE,                  /* partial_inplace */
+          0 ,                     /* src_mask */
+          0,                      /* dst_mask */
           FALSE),                 /* pcrel_offset */
 
   /* A 16 bit absolute relocation.  */
   HOWTO (R_MT_16,             /* type */
-          0,                      /* rightshift */ 
-          2,                      /* size (0 = byte, 1 = short, 2 = long) */ 
+          0,                      /* rightshift */
+          2,                      /* size (0 = byte, 1 = short, 2 = long) */
           16,                     /* bitsize */
-          FALSE,                  /* pc_relative */ 
-          0,                      /* bitpos */ 
-          complain_overflow_dont, /* complain_on_overflow */ 
-          bfd_elf_generic_reloc,  /* special_function */ 
-          "R_MT_16",            /* name */ 
-          FALSE,                  /* partial_inplace */ 
-          0 ,                     /* src_mask */ 
-          0xffff,                 /* dst_mask */ 
+          FALSE,                  /* pc_relative */
+          0,                      /* bitpos */
+          complain_overflow_dont, /* complain_on_overflow */
+          bfd_elf_generic_reloc,  /* special_function */
+          "R_MT_16",            /* name */
+          FALSE,                  /* partial_inplace */
+          0 ,                     /* src_mask */
+          0xffff,                 /* dst_mask */
           FALSE),                 /* pcrel_offset */
 
   /* A 32 bit absolute relocation.  */
   HOWTO (R_MT_32,             /* type */
-          0,                      /* rightshift */ 
-          2,                      /* size (0 = byte, 1 = short, 2 = long) */ 
+          0,                      /* rightshift */
+          2,                      /* size (0 = byte, 1 = short, 2 = long) */
           32,                     /* bitsize */
-          FALSE,                  /* pc_relative */ 
-          0,                      /* bitpos */ 
-          complain_overflow_dont, /* complain_on_overflow */ 
-          bfd_elf_generic_reloc,  /* special_function */ 
-          "R_MT_32",            /* name */ 
-          FALSE,                  /* partial_inplace */ 
-          0 ,                     /* src_mask */ 
-          0xffffffff,             /* dst_mask */ 
+          FALSE,                  /* pc_relative */
+          0,                      /* bitpos */
+          complain_overflow_dont, /* complain_on_overflow */
+          bfd_elf_generic_reloc,  /* special_function */
+          "R_MT_32",            /* name */
+          FALSE,                  /* partial_inplace */
+          0 ,                     /* src_mask */
+          0xffffffff,             /* dst_mask */
           FALSE),                 /* pcrel_offset */
 
   /* A 32 bit pc-relative relocation.  */
   HOWTO (R_MT_32_PCREL,       /* type */
-          0,                      /* rightshift */ 
-          2,                      /* size (0 = byte, 1 = short, 2 = long) */ 
+          0,                      /* rightshift */
+          2,                      /* size (0 = byte, 1 = short, 2 = long) */
           32,                     /* bitsize */
-          TRUE,                   /* pc_relative */ 
-          0,                      /* bitpos */ 
-          complain_overflow_dont, /* complain_on_overflow */ 
-          bfd_elf_generic_reloc,  /* special_function */ 
-          "R_MT_32_PCREL",    /* name */ 
-          FALSE,                  /* partial_inplace */ 
-          0 ,                     /* src_mask */ 
-          0xffffffff,             /* dst_mask */ 
+          TRUE,                   /* pc_relative */
+          0,                      /* bitpos */
+          complain_overflow_dont, /* complain_on_overflow */
+          bfd_elf_generic_reloc,  /* special_function */
+          "R_MT_32_PCREL",    /* name */
+          FALSE,                  /* partial_inplace */
+          0 ,                     /* src_mask */
+          0xffffffff,             /* dst_mask */
           TRUE),                  /* pcrel_offset */
 
   /* A 16 bit pc-relative relocation.  */
   HOWTO (R_MT_PC16,           /* type */
-          0,                      /* rightshift */ 
-          2,                      /* size (0 = byte, 1 = short, 2 = long) */ 
+          0,                      /* rightshift */
+          2,                      /* size (0 = byte, 1 = short, 2 = long) */
           16,                     /* bitsize */
-          TRUE,                   /* pc_relative */ 
-          0,                      /* bitpos */ 
-          complain_overflow_signed, /* complain_on_overflow */ 
-          bfd_elf_generic_reloc,  /* special_function */ 
-          "R_MT_PC16",          /* name */ 
-          FALSE,                  /* partial_inplace */ 
-          0,                      /* src_mask */ 
-          0xffff,                 /* dst_mask */ 
+          TRUE,                   /* pc_relative */
+          0,                      /* bitpos */
+          complain_overflow_signed, /* complain_on_overflow */
+          bfd_elf_generic_reloc,  /* special_function */
+          "R_MT_PC16",          /* name */
+          FALSE,                  /* partial_inplace */
+          0,                      /* src_mask */
+          0xffff,                 /* dst_mask */
           TRUE),                  /* pcrel_offset */
 
   /* high 16 bits of symbol value.  */
@@ -321,7 +321,7 @@ mt_elf_relocate_section
       bfd_reloc_status_type        r;
       const char *                 name = NULL;
       int                          r_type;
-      
+
       r_type = ELF32_R_TYPE (rel->r_info);
 
       r_symndx = ELF32_R_SYM (rel->r_info);
@@ -330,13 +330,13 @@ mt_elf_relocate_section
       h      = NULL;
       sym    = NULL;
       sec    = NULL;
-      
+
       if (r_symndx < symtab_hdr->sh_info)
 	{
 	  sym = local_syms + r_symndx;
 	  sec = local_sections [r_symndx];
 	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, &sec, rel);
-	  
+
 	  name = bfd_elf_string_from_elf_section
 	    (input_bfd, symtab_hdr->sh_link, sym->st_name);
 	  name = (name == NULL) ? bfd_section_name (input_bfd, sec) : name;
@@ -344,19 +344,19 @@ mt_elf_relocate_section
       else
 	{
 	  bfd_boolean unresolved_reloc;
-	  bfd_boolean warned;
+	  bfd_boolean warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned);
+				   unresolved_reloc, warned, ignored);
 
 	  name = h->root.root.string;
 	}
 
-      if (sec != NULL && elf_discarded_section (sec))
+      if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, relend, howto, contents);
+					 rel, 1, relend, howto, 0, contents);
 
       if (info->relocatable)
 	continue;
@@ -385,12 +385,12 @@ mt_elf_relocate_section
 		(info, (h ? &h->root : NULL), name, howto->name, (bfd_vma) 0,
 		 input_bfd, input_section, rel->r_offset);
 	      break;
-	      
+
 	    case bfd_reloc_undefined:
 	      r = info->callbacks->undefined_symbol
 		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
 	      break;
-	      
+
 	    case bfd_reloc_outofrange:
 	      msg = _("internal error: out of range error");
 	      break;
@@ -419,7 +419,7 @@ mt_elf_relocate_section
 /* Look through the relocs for a section during the first phase.
    Since we don't do .gots or .plts, we just need to consider the
    virtual table relocs for gc.  */
- 
+
 static bfd_boolean
 mt_elf_check_relocs
     (bfd *                     abfd,
@@ -431,19 +431,19 @@ mt_elf_check_relocs
   struct elf_link_hash_entry ** sym_hashes;
   const Elf_Internal_Rela *     rel;
   const Elf_Internal_Rela *     rel_end;
-  
+
   if (info->relocatable)
     return TRUE;
-  
+
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (abfd);
-  
+
   rel_end = relocs + sec->reloc_count;
   for (rel = relocs; rel < rel_end; rel++)
     {
       struct elf_link_hash_entry *h;
       unsigned long r_symndx;
-      
+
       r_symndx = ELF32_R_SYM (rel->r_info);
       if (r_symndx < symtab_hdr->sh_info)
         h = NULL;
@@ -453,6 +453,10 @@ mt_elf_check_relocs
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.non_ir_ref = 1;
 	}
     }
 
@@ -493,25 +497,6 @@ mt_elf_set_private_flags (bfd *    abfd,
   return TRUE;
 }
 
-static bfd_boolean
-mt_elf_copy_private_bfd_data (bfd * ibfd, bfd * obfd)
-{
-  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
-    return TRUE;
-  
-  BFD_ASSERT (!elf_flags_init (obfd)
-	      || elf_elfheader (obfd)->e_flags == elf_elfheader (ibfd)->e_flags);
-
-  elf_elfheader (obfd)->e_flags = elf_elfheader (ibfd)->e_flags;
-  elf_flags_init (obfd) = TRUE;
-
-  /* Copy object attributes.  */
-  _bfd_elf_copy_obj_attributes (ibfd, obfd);
-
-  return TRUE;
-}
-
 /* Merge backend specific data from an object file to the output
    object file when linking.  */
 
@@ -521,7 +506,7 @@ mt_elf_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
   flagword     old_flags, new_flags;
   bfd_boolean  ok = TRUE;
 
-  /* Check if we have the same endianess.  */
+  /* Check if we have the same endianness.  */
   if (_bfd_generic_verify_endian_match (ibfd, obfd) == FALSE)
     return FALSE;
 
@@ -551,7 +536,7 @@ mt_elf_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
 	 MS2 are not subsets of each other.   */
       ok = FALSE;
     }
-  
+
   if (ok)
     {
       obfd->arch_info = ibfd->arch_info;
@@ -568,7 +553,7 @@ mt_elf_print_private_bfd_data (bfd * abfd, void * ptr)
   flagword flags;
 
   BFD_ASSERT (abfd != NULL && ptr != NULL);
-  
+
   /* Print normal ELF private data.  */
   _bfd_elf_print_private_bfd_data (abfd, ptr);
 
@@ -611,7 +596,6 @@ mt_elf_print_private_bfd_data (bfd * abfd, void * ptr)
 #define elf_backend_can_gc_sections		1
 
 #define bfd_elf32_bfd_set_private_flags		mt_elf_set_private_flags
-#define bfd_elf32_bfd_copy_private_bfd_data	mt_elf_copy_private_bfd_data
 #define bfd_elf32_bfd_merge_private_bfd_data	mt_elf_merge_private_bfd_data
 #define bfd_elf32_bfd_print_private_bfd_data	mt_elf_print_private_bfd_data
 

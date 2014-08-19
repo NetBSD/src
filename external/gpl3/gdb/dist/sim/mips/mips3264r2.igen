@@ -1,7 +1,7 @@
 // -*- C -*-
 
 // Simulator definition for the MIPS 32/64 revision 2 instructions.
-// Copyright (C) 2004, 2010 Free Software Foundation, Inc.
+// Copyright (C) 2004-2014 Free Software Foundation, Inc.
 // Contributed by David Ung, of MIPS Technologies.
 //
 // This file is part of GDB, the GNU debugger.
@@ -238,6 +238,17 @@
 *mips64r2:
 {
   // sync i-cache - nothing to do currently
+}
+
+
+011111,00000,5.RT,5.RD,00000,111011::32::RDHWR
+"rdhwr r<RT>, r<RD>"
+*mips32r2:
+*mips64r2:
+{
+  // Return 0 for all hardware registers currently
+  GPR[RT] = EXTEND32 (0);
+  TRACE_ALU_RESULT1 (GPR[RT]);
 }
 
 

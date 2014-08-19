@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.65.2.1 2013/06/23 06:28:49 tls Exp $	*/
+/*	$NetBSD: netdb.h,v 1.65.2.2 2014/08/20 00:02:05 tls Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -320,7 +320,7 @@ void		endservent(void);
 void		freehostent(struct hostent *);
 #endif
 #endif
-struct hostent	*gethostbyaddr(const char *, socklen_t, int);
+struct hostent	*gethostbyaddr(const void *, socklen_t, int);
 struct hostent	*gethostbyname(const char *);
 #if defined(_NETBSD_SOURCE)
 struct hostent	*gethostbyname2(const char *, int);

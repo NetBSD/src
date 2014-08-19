@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.6.10.1 2013/02/25 00:29:38 tls Exp $	*/
+/*	$NetBSD: udl.c,v 1.6.10.2 2014/08/20 00:03:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.6.10.1 2013/02/25 00:29:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.6.10.2 2014/08/20 00:03:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -151,8 +151,10 @@ static inline void	udl_copy_line(struct udl_softc *, int, int, int);
 static inline void	udl_fill_line(struct udl_softc *, uint16_t, int, int);
 static inline void	udl_draw_line(struct udl_softc *, uint16_t *, int,
 			    int);
+#ifdef notyet
 static inline void	udl_draw_line_comp(struct udl_softc *, uint16_t *, int,
 			    int);
+#endif
 
 static int		udl_cmd_send(struct udl_softc *);
 static void		udl_cmd_send_async(struct udl_softc *);
@@ -617,7 +619,7 @@ udl_mmap(void *v, void *vs, off_t off, int prot)
 	struct udl_softc *sc = v;
 	vaddr_t vaddr;
 	paddr_t paddr;
-	bool rv;
+	bool rv __diagused;
 
 	if (off < 0 || off > roundup2(UDL_FBMEM_SIZE(sc), PAGE_SIZE))
 		return -1;
@@ -1300,6 +1302,7 @@ udl_draw_line(struct udl_softc *sc, uint16_t *buf, int off, int width)
 	udl_cmd_add_buf(sc, buf, width);
 }
 
+#ifdef notyet
 static inline int
 udl_cmd_add_buf_comp(struct udl_softc *sc, uint16_t *buf, int width)
 {
@@ -1409,6 +1412,7 @@ udl_draw_line_comp(struct udl_softc *sc, uint16_t *buf, int off, int width)
 		width -= width_cur;
 	}
 }
+#endif
 
 static int
 udl_cmd_send(struct udl_softc *sc)
@@ -1530,7 +1534,7 @@ udl_cmd_send_async_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	TAILQ_REMOVE(&sc->sc_xfercmd, cmdq, cq_chain);
 	udl_cmdq_put(sc, cmdq);
 
-	/* wakeup xfer op that sleeps for a free xfer buffer */
+	/* signal xfer op that sleeps for a free xfer buffer */
 	cv_signal(&sc->sc_cv);
 	mutex_exit(&sc->sc_mtx);
 }

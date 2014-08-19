@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.20 2011/02/12 05:15:39 tsutsui Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.20.14.1 2014/08/20 00:03:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.20 2011/02/12 05:15:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.20.14.1 2014/08/20 00:03:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,7 +199,7 @@ hp300_bus_space_probe(bus_space_tag_t t, bus_space_handle_t bsh,
 		panic("%s: unupported data size %d", __func__, sz);
 		/* NOTREACHED */
 	}
-
+	__USE(i);
 	nofault = NULL;
 	return 1;
 }

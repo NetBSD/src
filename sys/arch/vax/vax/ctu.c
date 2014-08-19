@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.31 2010/12/14 23:44:49 matt Exp $ */
+/*	$NetBSD: ctu.c,v 1.31.18.1 2014/08/20 00:03:27 tls Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.31 2010/12/14 23:44:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.31.18.1 2014/08/20 00:03:27 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,13 +99,30 @@ dev_type_write(ctuwrite);
 dev_type_strategy(ctustrategy);
 
 const struct bdevsw ctu_bdevsw = {
-	ctuopen, ctuclose, ctustrategy, noioctl, nodump, nosize, D_TAPE
+	.d_open = ctuopen,
+	.d_close = ctuclose,
+	.d_strategy = ctustrategy,
+	.d_ioctl = noioctl,
+	.d_dump = nodump,
+	.d_psize = nosize,
+	.d_discard = nodiscard,
+	.d_flag = D_TAPE
 };
 
 #if 0 /* not yet */
 const struct cdevsw ctu_cdevsw = {
-	ctuopen, ctuclose, cturead, ctuwrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
+	.d_open = ctuopen,
+	.d_close = ctuclose,
+	.d_read = cturead,
+	.d_write = ctuwrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TAPE
 };
 #endif
 

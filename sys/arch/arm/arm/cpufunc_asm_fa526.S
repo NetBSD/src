@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_fa526.S,v 1.4.44.1 2012/11/20 03:01:02 tls Exp $	*/
+/*	$NetBSD: cpufunc_asm_fa526.S,v 1.4.44.2 2014/08/20 00:02:44 tls Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,8 +28,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/cpu.h>
+#include "assym.h"
 #include <machine/asm.h>
+#include <arm/locore.h>
 
 #define	CACHELINE_SIZE	16
 
@@ -51,30 +52,43 @@ ENTRY(fa526_setttb)
 	mov	r0, r0
 	mov	r0, r0
 	mov	pc, lr
+END(fa526_setttb)
 
 /*
  * TLB functions
  */
 ENTRY(fa526_tlb_flushID_SE)
 	mcr	p15, 0, r0, c8, c7, 1	/* flush Utlb single entry */
+#if PAGE_SIZE == 2 * L2_S_SIZE
+	add	r0, r0, #L2_S_SIZE
+	mcr	p15, 0, r0, c8, c7, 1	/* flush Utlb single entry */
+#endif
 	mov	pc, lr
+END(fa526_tlb_flushID_SE)
 
 /*
  * TLB functions
  */
 ENTRY(fa526_tlb_flushI_SE)
 	mcr	p15, 0, r0, c8, c5, 1	/* flush Itlb single entry */
+#if PAGE_SIZE == 2 * L2_S_SIZE
+	add	r0, r0, #L2_S_SIZE
+	mcr	p15, 0, r0, c8, c5, 1	/* flush Itlb single entry */
+#endif
 	mov	pc, lr
+END(fa526_tlb_flushI_SE)
 
 ENTRY(fa526_cpu_sleep)
 	mov	r0, #0
 	mcr	p15, 0, r0, c7, c5, 5	/* Enter sleep mode */
 	mov	pc, lr
+END(fa526_cpu_sleep)
 
 ENTRY(fa526_flush_prefetchbuf)
 	mov	r0, #0
 	mcr	p15, 0, r0, c7, c5, 4	/* Pre-fetch flush */
 	mov	pc, lr
+END(fa526_flush_prefetchbuf)
 
 /*
  * Cache functions
@@ -85,17 +99,20 @@ ENTRY(fa526_idcache_wbinv_all)
 	mcr	p15, 0, r0, c7, c5, 0	/* invalidate I$ */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
+END(fa526_idcache_wbinv_all)
 
 ENTRY(fa526_icache_sync_all)
 	mov	r0, #0
 	mcr	p15, 0, r0, c7, c5, 0	/* invalidate I$ */
 	mov	pc, lr
+END(fa526_icache_sync_all)
 
 ENTRY(fa526_dcache_wbinv_all)
 	mov	r0, #0
 	mcr	p15, 0, r0, c7, c14, 0	/* clean and invalidate D$ */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
+END(fa526_dcache_wbinv_all)
 
 /*
  * Soft functions
@@ -115,6 +132,7 @@ ENTRY(fa526_dcache_wbinv_range)
 
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
+END(fa526_dcache_wbinv_range)
 
 ENTRY(fa526_dcache_wb_range)
 	cmp	r1, #0x4000
@@ -135,6 +153,7 @@ ENTRY(fa526_dcache_wb_range)
 
 3:	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
+END(fa526_dcache_wb_range)
 
 ENTRY(fa526_dcache_inv_range)
 	and	r2, r0, #(CACHELINE_SIZE-1)
@@ -147,6 +166,7 @@ ENTRY(fa526_dcache_inv_range)
 	bhi	1b
 
 	mov	pc, lr
+END(fa526_dcache_inv_range)
 
 ENTRY(fa526_idcache_wbinv_range)
 	cmp	r1, #0x4000
@@ -164,6 +184,7 @@ ENTRY(fa526_idcache_wbinv_range)
 
 2:	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
+END(fa526_idcache_wbinv_range)
 
 ENTRY(fa526_icache_sync_range)
 	cmp	r1, #0x4000
@@ -181,11 +202,13 @@ ENTRY(fa526_icache_sync_range)
 
 2:	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
+END(fa526_icache_sync_range)
 
 ENTRY(fa526_flush_brnchtgt_E)
 	mov	r0, #0
 	mcr	p15, 0, r0, c7, c5, 6	/* invalidate BTB cache */
 	mov	pc, lr
+END(fa526_flush_brnchtgt_E)
 
 ENTRY(fa526_context_switch)
 	/*
@@ -205,4 +228,4 @@ ENTRY(fa526_context_switch)
 	mov	r0, r0
 	mov	r0, r0
 	mov	pc, lr
-
+END(fa526_context_switch)

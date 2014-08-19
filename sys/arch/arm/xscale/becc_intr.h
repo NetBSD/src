@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_intr.h,v 1.4 2008/04/27 18:58:45 matt Exp $	*/
+/*	$NetBSD: becc_intr.h,v 1.4.44.1 2014/08/20 00:02:48 tls Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -103,20 +103,7 @@ becc_spllower(int ipl)
 	becc_splx(becc_imask[ipl]);
 	return (old);
 }
-
-#ifdef __HAVE_FAST_SOFTINTS
-static inline void __attribute__((__unused__))
-becc_setsoftintr(int si)
-{
-	extern volatile uint32_t	becc_sipending;
-
-	becc_sipending |= (1 << si);
-	BECC_CSR_WRITE(BECC_ICSR, (1U << ICU_SOFT));
-}
 #endif /* __PROG32 */
-
-int	becc_softint(void *arg);
-#endif
 
 #if !defined(EVBARM_SPL_NOINLINE)
 

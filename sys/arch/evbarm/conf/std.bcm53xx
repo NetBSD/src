@@ -1,4 +1,4 @@
-#	$NetBSD: std.bcm53xx,v 1.2.2.2 2013/02/25 00:28:35 tls Exp $
+#	$NetBSD: std.bcm53xx,v 1.2.2.3 2014/08/20 00:02:53 tls Exp $
 #
 # standard NetBSD/evbarm for BCM5301X options
 
@@ -19,15 +19,15 @@ options 	__HAVE_MM_MD_CACHE_ALIASING
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 options 	__HAVE_CPU_COUNTER
-options 	__HAVE_ATOMIC64_OPS
 options 	__HAVE_PCI_CONF_HOOK
 options 	TPIDRPRW_IS_CURCPU
 options 	KERNEL_BASE_EXT=0x80000000
 options 	EVBARM_BOARDTYPE="bcm53xx"
 
-makeoptions	LOADADDRESS="0x80100000"
+makeoptions	BOARDTYPE="bcm53xx"
+makeoptions	KERNEL_BASE_VIRT="0x80100000"
+makeoptions	LOADADDRESS="0x00100000"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.bcm53xx"
-makeoptions	CPPFLAGS+="-I$S/../../../include"
 
 options 	ARM_INTR_IMPL="<arch/arm/broadcom/bcm53xx_intr.h>"
 options		ARM_GENERIC_TODR

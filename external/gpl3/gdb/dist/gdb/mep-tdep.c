@@ -1,7 +1,6 @@
 /* Target-dependent code for the Toshiba MeP for GDB, the GNU debugger.
 
-   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
-   2011 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
 
    Contributed by Red Hat, Inc.
 
@@ -28,7 +27,7 @@
 #include "gdbtypes.h"
 #include "gdbcmd.h"
 #include "gdbcore.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "value.h"
 #include "inferior.h"
 #include "dis-asm.h"
@@ -264,7 +263,7 @@ me_module_register_set (CONFIG_ATTR me_module,
        mask contains any of the me_module's coprocessor ISAs,
        specifically excluding the generic coprocessor register sets.  */
 
-  CGEN_CPU_DESC desc = gdbarch_tdep (target_gdbarch)->cpu_desc;
+  CGEN_CPU_DESC desc = gdbarch_tdep (target_gdbarch ())->cpu_desc;
   const CGEN_HW_ENTRY *hw;
 
   if (me_module == CONFIG_NONE)
@@ -855,7 +854,7 @@ current_me_module (void)
       return regval;
     }
   else
-    return gdbarch_tdep (target_gdbarch)->me_module;
+    return gdbarch_tdep (target_gdbarch ())->me_module;
 }
 
 
@@ -1126,13 +1125,6 @@ mep_read_pc (struct regcache *regcache)
   return pc;
 }
 
-static void
-mep_write_pc (struct regcache *regcache, CORE_ADDR pc)
-{
-  regcache_cooked_write_unsigned (regcache, MEP_PC_REGNUM, pc);
-}
-
-
 static enum register_status
 mep_pseudo_cr32_read (struct gdbarch *gdbarch,
                       struct regcache *regcache,
@@ -1144,7 +1136,7 @@ mep_pseudo_cr32_read (struct gdbarch *gdbarch,
   /* Read the raw register into a 64-bit buffer, and then return the
      appropriate end of that buffer.  */
   int rawnum = mep_pseudo_to_raw[cookednum];
-  char buf64[8];
+  gdb_byte buf64[8];
 
   gdb_assert (TYPE_LENGTH (register_type (gdbarch, rawnum)) == sizeof (buf64));
   gdb_assert (TYPE_LENGTH (register_type (gdbarch, cookednum)) == 4);
@@ -1230,7 +1222,7 @@ mep_pseudo_cr32_write (struct gdbarch *gdbarch,
   /* Expand the 32-bit value into a 64-bit value, and write that to
      the pseudoregister.  */
   int rawnum = mep_pseudo_to_raw[cookednum];
-  char buf64[8];
+  gdb_byte buf64[8];
   
   gdb_assert (TYPE_LENGTH (register_type (gdbarch, rawnum)) == sizeof (buf64));
   gdb_assert (TYPE_LENGTH (register_type (gdbarch, cookednum)) == 4);
@@ -1425,13 +1417,13 @@ mep_pc_in_vliw_section (CORE_ADDR pc)
    anyway.  */
 
 static CORE_ADDR 
-mep_get_insn (struct gdbarch *gdbarch, CORE_ADDR pc, long *insn)
+mep_get_insn (struct gdbarch *gdbarch, CORE_ADDR pc, unsigned long *insn)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int pc_in_vliw_section;
   int vliw_mode;
   int insn_len;
-  char buf[2];
+  gdb_byte buf[2];
 
   *insn = 0;
 
@@ -1912,7 +1904,7 @@ mep_analyze_prologue (struct gdbarch *gdbarch,
 static CORE_ADDR
 mep_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
-  char *name;
+  const char *name;
   CORE_ADDR func_addr, func_end;
   struct mep_prologue p;
 
@@ -2195,7 +2187,7 @@ Try using the 'return' command with no argument."));
 }
 
 static enum return_value_convention
-mep_return_value (struct gdbarch *gdbarch, struct type *func_type,
+mep_return_value (struct gdbarch *gdbarch, struct value *function,
 		  struct type *type, struct regcache *regcache,
 		  gdb_byte *readbuf, const gdb_byte *writebuf)
 {
@@ -2338,11 +2330,10 @@ mep_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
   for (i = 0; i < argc; i++)
     {
-      unsigned arg_size = TYPE_LENGTH (value_type (argv[i]));
       ULONGEST value;
 
       /* Arguments that fit in a GPR get expanded to fill the GPR.  */
-      if (arg_size <= MEP_GPR_SIZE)
+      if (TYPE_LENGTH (value_type (argv[i])) <= MEP_GPR_SIZE)
         value = extract_unsigned_integer (value_contents (argv[i]),
                                           TYPE_LENGTH (value_type (argv[i])),
 					  byte_order);
@@ -2360,7 +2351,7 @@ mep_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
         }
       else
         {
-          char buf[MEP_GPR_SIZE];
+          gdb_byte buf[MEP_GPR_SIZE];
           store_unsigned_integer (buf, MEP_GPR_SIZE, byte_order, value);
           write_memory (arg_stack, buf, MEP_GPR_SIZE);
           arg_stack += MEP_GPR_SIZE;
@@ -2472,8 +2463,8 @@ mep_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* Register set.  */
   set_gdbarch_read_pc (gdbarch, mep_read_pc);
-  set_gdbarch_write_pc (gdbarch, mep_write_pc);
   set_gdbarch_num_regs (gdbarch, MEP_NUM_RAW_REGS);
+  set_gdbarch_pc_regnum (gdbarch, MEP_PC_REGNUM);
   set_gdbarch_sp_regnum (gdbarch, MEP_SP_REGNUM);
   set_gdbarch_register_name (gdbarch, mep_register_name);
   set_gdbarch_register_type (gdbarch, mep_register_type);

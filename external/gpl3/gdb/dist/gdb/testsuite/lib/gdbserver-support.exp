@@ -1,5 +1,4 @@
-# Copyright 2000, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 2000-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,6 +21,8 @@
 #
 #   set_board_info gdb_protocol "remote"
 #	Unles you have a gdbserver that uses a different protocol...
+#	After GDB starts you should check global $gdbserver_protocol instead as
+#	the testfile may force a specific different target protocol itself.
 #
 #   set_board_info gdb_server_prog
 #	This will be the path to the gdbserver program you want to test.
@@ -35,6 +36,8 @@
 #   set_board_info gdb,socketport
 #	Port id to use for socket connection.  If not set explicitly,
 #	it will start at "2345" and increment for each use.
+#	After GDB starts you should check global $gdbserver_gdbport for the
+#	real port used.  It is not useful if $gdbserver_reconnect_p was not set.
 #
 
 #
@@ -63,6 +66,10 @@ proc gdb_target_cmd { targetname serialport } {
 		return 0
 	    }
 	    -re "Remote debugging using .*$serialport_re.*$gdb_prompt $" {
+		verbose "Set target to $targetname"
+		return 0
+	    }
+	    -re "Remote debugging using stdio.*$gdb_prompt $" {
 		verbose "Set target to $targetname"
 		return 0
 	    }
@@ -179,6 +186,12 @@ proc gdbserver_download_current_prog { } {
     return $gdbserver_server_exec
 }
 
+# Default routine to compute the argument to "target remote".
+
+proc gdbserver_default_get_remote_address { host port } {
+    return "$host$port"
+}
+
 # Start a gdbserver process with initial OPTIONS and trailing ARGUMENTS.
 # The port will be filled in between them automatically.
 #
@@ -202,6 +215,15 @@ proc gdbserver_start { options arguments } {
 	set debughost "localhost:"
     }
 
+    # Some boards use a different value for the port that is passed to
+    # gdbserver and the port that is passed to the "target remote" command.
+    # One example is the stdio gdbserver support.
+    if [target_info exists gdb,get_remote_address] {
+	set get_remote_address [target_info gdb,get_remote_address]
+    } else {
+	set get_remote_address gdbserver_default_get_remote_address
+    }
+
     # Extract the protocol
     if [target_info exists gdb_protocol] {
 	set protocol [target_info gdb_protocol]
@@ -213,15 +235,24 @@ proc gdbserver_start { options arguments } {
 
     # Loop till we find a free port.
     while 1 {
-	# Export the host:port pair.
-	set gdbport $debughost$portnum
-
 	# Fire off the debug agent.
 	set gdbserver_command "$gdbserver"
+
+	# If gdbserver_reconnect will be called $gdbserver_reconnect_p must be
+	# set to true already during gdbserver_start.
+	global gdbserver_reconnect_p
+	if {![info exists gdbserver_reconnect_p] || !$gdbserver_reconnect_p} {
+	    # GDB client could accidentally connect to a stale server.
+	    # append gdbserver_command " --debug --once"
+	    append gdbserver_command " --once"
+	}
+
 	if { $options != "" } {
 	    append gdbserver_command " $options"
 	}
-	append gdbserver_command " :$portnum"
+	if { $portnum != "" } {
+	    append gdbserver_command " :$portnum"
+	}
 	if { $arguments != "" } {
 	    append gdbserver_command " $arguments"
 	}
@@ -259,7 +290,7 @@ proc gdbserver_start { options arguments } {
 	}
     }
 
-    return [list $protocol $gdbport]
+    return [list $protocol [$get_remote_address $debughost $portnum]]
 }
 
 # Start a gdbserver process running SERVER_EXEC, and connect GDB
@@ -315,14 +346,63 @@ proc gdbserver_reconnect { } {
     global gdbserver_protocol
     global gdbserver_gdbport
 
+    global gdbserver_reconnect_p
+    if {![info exists gdbserver_reconnect_p] || !$gdbserver_reconnect_p} {
+	error "gdbserver_reconnect_p is not set before gdbserver_reconnect"
+	return 0
+    }
+
     return [gdb_target_cmd $gdbserver_protocol $gdbserver_gdbport]
 }
 
-# Start and connect to a gdbserver in extended mode.
+# Start and connect to a gdbserver in extended mode.  Note this frobs
+# $gdbserver_protocol, so should be used only from a board that
+# usually connects in target remote mode.
 proc gdbserver_start_extended { } {
+    global gdbserver_protocol
+    global gdbserver_gdbport
+    global use_gdb_stub
+
     set res [gdbserver_start "--multi" ""]
-    set gdbserver_protocol "extended-[lindex $res 0]"
+    set gdbserver_protocol [lindex $res 0]
+    if { [string first "extended-" $gdbserver_protocol] != 0} {
+	set gdbserver_protocol "extended-$gdbserver_protocol"
+    }
+    set gdbserver_gdbport [lindex $res 1]
+
+    # Even if the board file is testing with target remote, our caller
+    # wants to test against gdbserver in extended-remote mode.  Make sure to
+    # disable stub-like techniques.
+    set use_gdb_stub 0
+
+    return [gdb_target_cmd $gdbserver_protocol $gdbserver_gdbport]
+}
+
+# Start and connect to a gdbserver in extended/multi mode.  Unlike
+# gdbserver_start_extended, this does not frob $gdbserver_protocol.
+
+proc gdbserver_start_multi { } {
+    global gdbserver_protocol
+    global gdbserver_gdbport
+
+    set res [gdbserver_start "--multi" ""]
+    set gdbserver_protocol [lindex $res 0]
     set gdbserver_gdbport [lindex $res 1]
 
     return [gdb_target_cmd $gdbserver_protocol $gdbserver_gdbport]
+}
+
+# Start a gdbserver process in multi/extended mode, and have GDB
+# connect to it (MI version).  Return 0 on success, or non-zero on
+# failure.
+
+proc mi_gdbserver_start_multi { } {
+    global gdbserver_protocol
+    global gdbserver_gdbport
+
+    set res [gdbserver_start "--multi" ""]
+    set gdbserver_protocol [lindex $res 0]
+    set gdbserver_gdbport [lindex $res 1]
+
+    return [mi_gdb_target_cmd $gdbserver_protocol $gdbserver_gdbport]
 }

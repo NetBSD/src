@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.59 2012/02/12 16:34:07 matt Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.59.6.1 2014/08/20 00:02:48 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.59 2012/02/12 16:34:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.59.6.1 2014/08/20 00:02:48 tls Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -325,10 +325,8 @@ scsi_tt_idisable(void)
 static inline void
 scsi_tt_clr_ipend(void)
 {
-	int tmp;
-
 	SCSI_DMA->s_dma_ctrl = 0;
-	tmp = GET_TT_REG(NCR5380_IRCV);
+	GET_TT_REG(NCR5380_IRCV);
 	if (machineid & ATARI_TT)
 		MFP2->mf_iprb = (uint8_t)~IB_SCDM;
 	MFP2->mf_ipra = (uint8_t)~IA_SCSI;
@@ -733,9 +731,8 @@ scsi_falcon_idisable(void)
 static inline void
 scsi_falcon_clr_ipend(void)
 {
-	int tmp;
 
-	tmp = get_falcon_5380_reg(NCR5380_IRCV);
+	(void)get_falcon_5380_reg(NCR5380_IRCV);
 	rem_sicallback((si_farg)ncr_ctrl_intr);
 }
 

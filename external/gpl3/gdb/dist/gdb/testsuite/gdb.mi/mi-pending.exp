@@ -1,4 +1,4 @@
-# Copyright 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2007-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,10 +16,6 @@
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 #
 # test running programs
 #
@@ -28,21 +24,17 @@ if {[skip_shlib_tests]} {
     return 0
 }
 
-set testfile "mi-pending"
-set libfile "mi-pendshr"
-set srcfile $testfile.c
-set libsrc  $srcdir/$subdir/$libfile.c
-set binfile $objdir/$subdir/$testfile
-set lib_sl  $objdir/$subdir/$libfile.sl
+standard_testfile mi-pending.c mi-pendshr.c
+set lib_sl [standard_output_file mi-pendshr.sl]
 
 set lib_opts  debug
 set exec_opts [list debug shlib=$lib_sl]
 
-if [get_compiler_info ${binfile}] {
+if [get_compiler_info] {
     return -1
 }
 
-if { [gdb_compile_shlib $libsrc $lib_sl $lib_opts] != ""
+if { [gdb_compile_shlib $srcdir/$subdir/$srcfile2 $lib_sl $lib_opts] != ""
      || [gdb_compile $srcdir/$subdir/$srcfile $binfile executable $exec_opts] != ""} {
     untested "Could not compile either $libsrc or $srcdir/$subdir/$srcfile."
     return -1
@@ -56,16 +48,29 @@ mi_gdb_reinitialize_dir $srcdir/$subdir
 mi_gdb_load ${binfile}
 mi_load_shlibs $lib_sl
 
-if [target_info exists gdb_stub] {
-    gdb_step_for_stub;
-}
-
-# Set pending breakpoint via MI
+# Set pending breakpoint via MI.
 mi_gdb_test "-break-insert -f pendfunc1" \
     ".*\\^done,bkpt=\{number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"<PENDING>\",pending=\"pendfunc1\",times=\"0\",original-location=\"pendfunc1\"\}"\
     "MI pending breakpoint on pendfunc1"
+
+# Set pending breakpoint with a condition via MI.
+mi_gdb_test "-break-insert -f -c x==4 ${srcfile2}:pendfunc2" \
+    ".*\\^done,bkpt=\{number=\"2\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"<PENDING>\",pending=\"${srcfile2}:pendfunc2\",cond=\"x==4\",times=\"0\",original-location=\"${srcfile2}:pendfunc2\"\}"\
+    "MI pending breakpoint on ${srcfile2}:pendfunc2 if x==4"
 
 mi_run_cmd
 mi_expect_stop "breakpoint-hit" "pendfunc1" ".*" ".*" ".*" \
     { "" "disp=\"keep\"" } \
     "Run till MI pending breakpoint on pendfunc1"
+
+mi_send_resuming_command "exec-continue" "continuing execution to skip conditional bp"
+# We should not stop on the conditional breakpoint yet, but we stop on the original bp. 
+mi_expect_stop "breakpoint-hit" "pendfunc1" ".*" ".*" ".*" \
+    { "" "disp=\"keep\"" } \
+    "Run till MI pending breakpoint on pendfunc1 a second time"
+
+mi_send_resuming_command "exec-continue" "continuing execution to conditional bp"
+# Now we should stop on the conditional breakpoint.
+mi_expect_stop "breakpoint-hit" "pendfunc2" "\{name=\"x\",value=\"4\"\}" ".*" ".*" \
+    { "" "disp=\"keep\"" } \
+    "Run till MI pending breakpoint on pendfunc2 with x==4"

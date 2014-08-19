@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.90 2010/03/02 23:19:09 pooka Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.90.20.1 2014/08/20 00:04:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,7 +80,6 @@ void nfs_kqinit(void);
 void nfs_kqfini(void);
 
 /* nfs_node.c */
-void nfs_rbtinit(struct nfsmount *);
 void nfs_node_init(void);
 void nfs_node_done(void);
 
@@ -349,4 +348,5 @@ void netexport_rdlock(void);
 void netexport_rdunlock(void);
 void netexport_init(void);
 void netexport_fini(void);
+bool netexport_hasexports(void);
 #endif /* _KERNEL */

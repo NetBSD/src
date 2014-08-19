@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.4.160.1 2013/06/23 06:19:59 tls Exp $	*/
+/*	$NetBSD: vectors.S,v 1.4.160.2 2014/08/20 00:02:45 tls Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -66,12 +66,16 @@ _C_LABEL(page0rel):
 	b	irq_entry
 #ifdef __ARM_FIQ_INDIRECT
 	b	_C_LABEL(fiqvector)
-#elif !defined(ARM_HAS_VBAR)
-	b	.Lfiqvector
+#else
+_C_LABEL(fiqbranch):
+	subs	pc, lr, #4
 #endif
+END(page0rel)
+
 #endif /* CPU_ARMV7 || CPU_ARM11 || ARM_HAS_VBAR */
 
-#ifndef ARM_HAS_VBAR
+#if !defined(ARM_HAS_VBAR)
+
 	.global	_C_LABEL(page0), _C_LABEL(page0_data), _C_LABEL(page0_end)
 	.align	0
 _C_LABEL(page0):
@@ -84,20 +88,14 @@ _C_LABEL(page0):
 	ldr	pc, .Lirq_target
 #ifdef __ARM_FIQ_INDIRECT
 	ldr	pc, .Lfiq_target
-#endif
-#endif /* !ARM_HAS_VBAR */
-#ifndef __ARM_FIQ_INDIRECT
-.Lfiqvector:
-#ifdef ARM_HAS_VBAR
-	.set	_C_LABEL(fiqvector), . - _C_LABEL(page0rel)
 #else
+.Lfiqvector:
 	.set	_C_LABEL(fiqvector), . - _C_LABEL(page0)
-#endif
 	subs	pc, lr, #4
 	.org	.Lfiqvector + 0x100
+END(page0)
 #endif
 
-#ifndef ARM_HAS_VBAR
 _C_LABEL(page0_data):
 .Lreset_target:
 	.word	reset_entry

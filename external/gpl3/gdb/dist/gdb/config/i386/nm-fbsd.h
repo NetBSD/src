@@ -1,7 +1,6 @@
 /* Native-dependent definitions for FreeBSD/i386.
 
-   Copyright 1986, 1987, 1989, 1992, 1994, 1996, 1997, 2000, 2001, 2004, 2005,
-   2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,9 +19,5 @@
 
 #ifndef NM_FBSD_H
 #define NM_FBSD_H
-
-#ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
-#endif
 
 #endif /* nm-fbsd.h */

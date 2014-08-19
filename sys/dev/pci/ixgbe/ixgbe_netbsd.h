@@ -1,4 +1,4 @@
-/*$NetBSD: ixgbe_netbsd.h,v 1.1 2011/08/12 21:55:29 dyoung Exp $*/
+/*$NetBSD: ixgbe_netbsd.h,v 1.1.12.1 2014/08/20 00:03:48 tls Exp $*/
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,6 @@
 
 #define	ETHERCAP_VLAN_HWFILTER	0
 #define	ETHERCAP_VLAN_HWCSUM	0
-#define	IFCAP_LRO		0
 #define	MJUM9BYTES	(9 * 1024)
 #define	MJUM16BYTES	(16 * 1024)
 #define	MJUMPAGESIZE	PAGE_SIZE

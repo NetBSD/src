@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.7 2012/07/11 17:13:31 rkujawa Exp $ */
+/*	$NetBSD: pci_machdep.h,v 1.7.2.1 2014/08/20 00:02:43 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ struct amiga_pci_chipset {
 	int		(*pc_intr_map)(const struct pci_attach_args *, 
 			    pci_intr_handle_t *);
 	const char	*(*pc_intr_string)(pci_chipset_tag_t, 
-			    pci_intr_handle_t);
+			    pci_intr_handle_t, char *, size_t);
 	void		*(*pc_intr_establish)(pci_chipset_tag_t, 
 			    pci_intr_handle_t, int, int (*) (void *), void *);
 	void		(*pc_intr_disestablish)(pci_chipset_tag_t, void *);
@@ -110,8 +110,8 @@ struct amiga_pci_chipset {
 	(*(c)->pc_conf_write)((c)->pc_conf_v, (t), (r), (v))
 #define	pci_intr_map(pa, ihp)						\
 	(*(pa)->pa_pc->pc_intr_map)((pa), (ihp))
-#define	pci_intr_string(c, ih)						\
-	(*(c)->pc_intr_string)((c)->pc_intr_v, (ih))
+#define	pci_intr_string(c, ih, buf, len)				\
+	(*(c)->pc_intr_string)((c)->pc_intr_v, (ih), (buf), (len))
 #define	pci_intr_evcnt(c, ih)						\
 	(*(c)->pc_intr_evcnt)((c)->pc_intr_v, (ih))
 #define	pci_intr_establish(c, ih, l, h, a)				\
@@ -133,7 +133,7 @@ void *		amiga_pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t
 		    ih, int level, int (*ih_fun)(void *), void *ih_arg);
 void		amiga_pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie);
 const char *	amiga_pci_intr_string(pci_chipset_tag_t pc,
-		    pci_intr_handle_t ih);
+		    pci_intr_handle_t ih, char *, size_t);
 int		amiga_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev,
 		    int func, pcireg_t id);
 void		amiga_pci_conf_interrupt(pci_chipset_tag_t pc, int bus, 

@@ -1,4 +1,4 @@
-#	$NetBSD: MDINSTALL,v 1.30 2011/11/22 21:24:57 tls Exp $
+#	$NetBSD: MDINSTALL,v 1.30.8.1 2014/08/20 00:02:43 tls Exp $
 
 #
 # INSTALL kernel for ramdisk installation
@@ -78,12 +78,6 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #
 #options 	LIMITMEM=24	# Do not use more than LIMITMEM MB of the
 				# first bank of RAM. (default: unlimited)
-#options 	NKPTADD=4	# set this for 4 additional KPT pages
-#options 	NKPTADDSHIFT=24	# set this for 1 additional KPT page
-				# per 16 MB (1<<24 bytes) of RAM
-				# define and decrease this, or define and
-				# increase NKPTADD if you get "out of PT pages"
-				# panics.
 
 # ATTENTION: There is NO WARRANTY AT ALL that the sync will be complete
 # before the 10 secondinterval ends, or that KBDRESET does work at all.

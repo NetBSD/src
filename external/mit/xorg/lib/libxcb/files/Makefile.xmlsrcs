@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xmlsrcs,v 1.1.12.1 2013/06/23 06:28:45 tls Exp $
+#	$NetBSD: Makefile.xmlsrcs,v 1.1.12.2 2014/08/20 00:00:12 tls Exp $
 
 # list of the libxcb xml-generated .c files.
 
@@ -8,7 +8,9 @@ XMLSRCS= \
 	damage.c \
 	dpms.c \
 	dri2.c \
+	dri3.c \
 	glx.c \
+	present.c \
 	randr.c \
 	record.c \
 	render.c \

@@ -1,6 +1,5 @@
 /* Darwin support for GDB, the GNU debugger.
-   Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
 
    Contributed by Apple Computer, Inc.
 
@@ -36,7 +35,6 @@
 #include "gdbcmd.h"
 #include "inferior.h"
 
-#include <sys/param.h>
 #include <sys/sysctl.h>
 
 #include "darwin-nat.h"
@@ -302,7 +300,7 @@ info_mach_ports_command (char *args, int from_tty)
 }
 
 
-void
+static void
 darwin_debug_port_info (task_t task, mach_port_t port)
 {
   kern_return_t kret;
@@ -574,8 +572,8 @@ darwin_debug_regions (task_t task, mach_vm_address_t address, int max)
       if (print)
         {
           printf_filtered (_("%s-%s %s/%s  %s %s %s"),
-                           paddress (target_gdbarch, prev_address),
-                           paddress (target_gdbarch, prev_address + prev_size),
+                           paddress (target_gdbarch (), prev_address),
+                           paddress (target_gdbarch (), prev_address + prev_size),
                            unparse_protection (prev_info.protection),
                            unparse_protection (prev_info.max_protection),
                            unparse_inheritance (prev_info.inheritance),
@@ -620,10 +618,11 @@ darwin_debug_regions_recurse (task_t task)
   kern_return_t kret;
   int ret;
   struct cleanup *table_chain;
+  struct ui_out *uiout = current_uiout;
 
   table_chain = make_cleanup_ui_out_table_begin_end (uiout, 9, -1, "regions");
 
-  if (gdbarch_addr_bit (target_gdbarch) <= 32)
+  if (gdbarch_addr_bit (target_gdbarch ()) <= 32)
     {
       ui_out_table_header (uiout, 10, ui_left, "start", "Start");
       ui_out_table_header (uiout, 10, ui_left, "end", "End");
@@ -659,8 +658,8 @@ darwin_debug_regions_recurse (task_t task)
 	break;
       row_chain = make_cleanup_ui_out_tuple_begin_end (uiout, "regions-row");
 
-      ui_out_field_core_addr (uiout, "start", target_gdbarch, r_start);
-      ui_out_field_core_addr (uiout, "end", target_gdbarch, r_start + r_size);
+      ui_out_field_core_addr (uiout, "start", target_gdbarch (), r_start);
+      ui_out_field_core_addr (uiout, "end", target_gdbarch (), r_start + r_size);
       ui_out_field_string (uiout, "min-prot", 
 			   unparse_protection (r_info.protection));
       ui_out_field_string (uiout, "max-prot", 
@@ -842,6 +841,9 @@ info_mach_exceptions_command (char *args, int from_tty)
       disp_exception (&info);
     }
 }
+
+/* -Wmissing-prototypes */
+extern initialize_file_ftype _initialize_darwin_info_commands;
 
 void
 _initialize_darwin_info_commands (void)

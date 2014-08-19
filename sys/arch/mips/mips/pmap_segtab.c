@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.5 2012/07/05 17:21:02 matt Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.5.2.1 2014/08/20 00:03:12 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.5 2012/07/05 17:21:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.5.2.1 2014/08/20 00:03:12 tls Exp $");
 
 /*
  *	Manages physical address maps.
@@ -217,18 +217,7 @@ pmap_segtab_release(union segtab *stp, u_int level)
 		}
 #endif
 
-#ifdef MIPS3_PLUS	/* XXX mmu XXX */
-		/*
-		 * The pica pmap.c flushed the segmap pages here.  I'm
-		 * not sure why, but I suspect it's because the page(s)
-		 * were being accessed by KSEG0 (cached) addresses and
-		 * may cause cache coherency problems when the page
-		 * is reused with KSEG2 (mapped) addresses.  This may
-		 * cause problems on machines without VCED/VCEI.
-		 */
-		if (MIPS_CACHE_VIRTUAL_ALIAS)
-			mips_dcache_inv_range((vaddr_t)pte, PAGE_SIZE);
-#endif	/* MIPS3_PLUS */
+		/* No need to flush page here as unmap poolpage does it */
 #ifdef _LP64
 		KASSERT(MIPS_XKPHYS_P(pte));
 #endif
@@ -305,9 +294,9 @@ pmap_segtab_alloc(void)
 	}
 
 #ifdef PARANOIADIAG
-	for (i = 0; i < PMAP_SEGTABSIZE; i++) {
+	for (size_t i = 0; i < PMAP_SEGTABSIZE; i++) {
 		if (stp->seg_tab[i] != 0)
-			panic("pmap_create: pm_segtab.seg_tab[%zu] != 0");
+			panic("%s: pm_segtab.seg_tab[%zu] != 0", __func__, i);
 	}
 #endif
 	return stp;
@@ -455,6 +444,7 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 		 * free the page we just allocated.
 		 */
 		if (__predict_false(opte != NULL)) {
+			mips_pmap_unmap_poolpage(pa);
 			uvm_pagefree(pg);
 			pte = opte;
 		}
@@ -463,13 +453,13 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 #endif
 		KASSERT(pte == stp->seg_tab[(va >> SEGSHIFT) & (PMAP_SEGTABSIZE - 1)]);
 
-		pte += (va >> PGSHIFT) & (NPTEPG - 1);
 #ifdef PARANOIADIAG
 		for (size_t i = 0; i < NPTEPG; i++) {
 			if ((pte+i)->pt_entry)
 				panic("pmap_enter: new segmap not empty");
 		}
 #endif
+		pte += (va >> PGSHIFT) & (NPTEPG - 1);
 	}
 
 	return pte;

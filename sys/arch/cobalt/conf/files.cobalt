@@ -1,4 +1,4 @@
-#	$NetBSD: files.cobalt,v 1.35.14.1 2012/11/20 03:01:11 tls Exp $
+#	$NetBSD: files.cobalt,v 1.35.14.2 2014/08/20 00:02:50 tls Exp $
 
 maxpartitions 16
 
@@ -46,12 +46,17 @@ file arch/cobalt/cobalt/disksubr.c
 file arch/cobalt/cobalt/interrupt.c
 file arch/cobalt/cobalt/machdep.c
 
+file arch/mips/mips/bus_dma.c
+
 file dev/bus_dma/bus_dmamem_common.c
 
 file dev/md_root.c			memory_disk_hooks
 
 file dev/cons.c
 file dev/cninit.c
+
+# Stack-less Just-In-Time compiler
+include	"external/bsd/sljit/conf/files.sljit"
 
 include "dev/i2o/files.i2o"
 

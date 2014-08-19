@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 2011/05/29 10:19:09 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.18.14.1 2014/08/20 00:03:26 tls Exp $
 
 # Must have S=/usr/src/sys (or equivalent)
 # But note: this is w.r.t. a subdirectory
@@ -14,12 +14,22 @@ LIBSA!=cd ${.CURDIR}/../libsa && ${PRINTOBJDIR}
 
 MDEC_DIR?=/usr/mdec
 
+.if ${MACHINE} == "sun3"
+RELOC?= 280000
+.else
 RELOC?= 240000
+.endif
 DEFS?= -Dsun3 -D_STANDALONE -D__daddr_t=int32_t
 INCL?= -I. -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
 
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 48
+# gcc 4.8 convers -mc68000 to -mcpu=68000 and that breaks gas
+# which works for -march=68010 but breaks for -mcpu=68010
+CPUFLAGS= -march=68010
+.else
 CPUFLAGS= -mc68000 -Wa,-mc68010
-COPTS= -Os -fno-defer-pop -ffreestanding
+.endif
+COPTS= -Os -fno-defer-pop -ffreestanding -fno-unwind-tables
 CFLAGS= -msoft-float
 CPPFLAGS= ${DEFS} ${DEBUG} ${INCL}
 
@@ -34,7 +44,7 @@ ${SA_PROG}.bin : ${SA_PROG}
 
 ${SA_PROG} : ${OBJS} ${DPADD} ${SRTLIB}
 	${LD} -N -Ttext ${RELOC} -e start ${SA_LDFLAGS} -o $@ \
-	  ${SRTOBJ} ${OBJS} ${LDADD} ${SRTLIB}
+	    ${SRTOBJ} ${OBJS} ${LDADD} ${SRTLIB}
 	@${SIZE} $@
 
 .if !target(proginstall)
@@ -50,6 +60,7 @@ proginstall: ${SA_PROG}.bin
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=

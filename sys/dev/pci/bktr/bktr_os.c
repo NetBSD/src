@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.60.12.1 2012/11/20 03:02:30 tls Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.60.12.2 2014/08/20 00:03:48 tls Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.60.12.1 2012/11/20 03:02:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.60.12.2 2014/08/20 00:03:48 tls Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -165,7 +165,7 @@ SYSCTL_INT(_hw_bt848, OID_AUTO, slow_msp_audio, CTLFLAG_RW, &bt848_slow_msp_audi
 #define BKTR_DEBUG
 #ifdef BKTR_DEBUG
 int bktr_debug = 0;
-#define DPR(x)	if (bktr_debug) printf x
+#define DPR(x)	(bktr_debug ? printf x : (void)0)
 #else
 #define DPR(x)
 #endif
@@ -180,8 +180,18 @@ dev_type_ioctl(bktr_ioctl);
 dev_type_mmap(bktr_mmap);
 
 const struct cdevsw bktr_cdevsw = {
-	bktr_open, bktr_close, bktr_read, bktr_write, bktr_ioctl,
-	nostop, notty, nopoll, bktr_mmap, nokqfilter, D_OTHER
+	.d_open = bktr_open,
+	.d_close = bktr_close,
+	.d_read = bktr_read,
+	.d_write = bktr_write,
+	.d_ioctl = bktr_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = bktr_mmap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 #endif /* __NetBSD __ */
 
@@ -1394,6 +1404,7 @@ bktr_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	int retval;
 	int unit;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	bktr = (bktr_ptr_t)self;
 	unit = bktr->bktr_dev.dv_unit;
@@ -1425,7 +1436,7 @@ bktr_attach(device_t parent, device_t self, void *aux)
 		printf(": couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 
 	bktr->ih = pci_intr_establish(pa->pa_pc, ih, IPL_VIDEO,
 				      bktr_intr, bktr, device_xname(bktr->bktr_dev));
@@ -1448,6 +1459,7 @@ bktr_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	int retval;
 	int unit;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	bktr = device_private(self);
 	bktr->bktr_dev = self;
@@ -1492,7 +1504,7 @@ bktr_attach(device_t parent, device_t self, void *aux)
 		       bktr_name(bktr));
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	bktr->ih = pci_intr_establish(pa->pa_pc, ih, IPL_VIDEO,
 				      bktr_intr, bktr);
 	if (bktr->ih == NULL) {

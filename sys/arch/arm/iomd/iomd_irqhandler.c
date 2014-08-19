@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.18 2010/12/20 00:25:28 matt Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.18.18.1 2014/08/20 00:02:46 tls Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.18 2010/12/20 00:25:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.18.18.1 2014/08/20 00:02:46 tls Exp $");
 
 #include "opt_irqstats.h"
 
@@ -178,14 +178,11 @@ irq_claim(int irq, irqhandler_t *handler)
 
 #ifdef IRQSTATS
 	/* Get the interrupt name from the head of the list */
+	char *iptr = _intrnames + (irq * 14);
 	if (handler->ih_name) {
-		char *ptr = _intrnames + (irq * 14);
-		strcpy(ptr, "             ");
-		strncpy(ptr, handler->ih_name,
-		    min(strlen(handler->ih_name), 13));
+		strlcpy(iptr, handler->ih_name, 14);
 	} else {
-		char *ptr = _intrnames + (irq * 14);
-		sprintf(ptr, "irq %2d     ", irq);
+		snprintf(iptr, 14, "irq %2d     ", irq);
 	}
 #endif	/* IRQSTATS */
 
@@ -255,9 +252,6 @@ irq_release(int irq, irqhandler_t *handler)
 	int level;
 	irqhandler_t *irqhand;
 	irqhandler_t **prehand;
-#ifdef IRQSTATS
-	extern char *_intrnames;
-#endif
 
 	/*
 	 * IRQ_INSTRUCT indicates that we should get the irq number
@@ -294,14 +288,11 @@ irq_release(int irq, irqhandler_t *handler)
 
 #ifdef IRQSTATS
 	/* Get the interrupt name from the head of the list */
+	char *iptr = _intrnames + (irq * 14);
 	if (irqhandlers[irq] && irqhandlers[irq]->ih_name) {
-		char *ptr = _intrnames + (irq * 14);
-		strcpy(ptr, "             ");
-		strncpy(ptr, irqhandlers[irq]->ih_name,
-		    min(strlen(irqhandlers[irq]->ih_name), 13));
+		strlcpy(iptr, irqhandlers[irq]->ih_name, 14);
 	} else {
-		char *ptr = _intrnames + (irq * 14);
-		sprintf(ptr, "irq %2d     ", irq);
+		snprintf(iptr, 14, "irq %2d     ", irq);
 	}
 #endif	/* IRQSTATS */
 

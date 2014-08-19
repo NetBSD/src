@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.77.2.1 2012/11/20 03:00:48 tls Exp $
+.\"	$NetBSD: fdisk.8,v 1.77.2.2 2014/08/20 00:02:24 tls Exp $
 .\"
-.Dd April 6, 2012
+.Dd April 3, 2014
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -11,7 +11,7 @@
 .Op Fl aBFfIiSuv
 .Oo
 .Fl 0 | 1 | 2 | 3 | E Ar number
-.Op Fl s Ar id/start/size Ns Bq Ar /bootmenu
+.Op Fl s Oo Ar id Oc Ns Oo / Ns Oo Ar start Oc Ns Oo / Ns Oo Ar size Oc Ns Oo / Ns Oo Ar bootmenu Oc Oc Oc Oc
 .Oc
 .Op Fl r Ar file | Fl w Ar file
 .Op Fl A Ar ptn_alignment Ns Bq Ar /ptn_0_offset
@@ -36,7 +36,7 @@ The following
 .Nx
 ports use this style of disk partitioning:
 amd64, arc, bebox, cobalt, hpcarm, hpcmips, hpcsh, i386, macppc,
-mvmeppc, netwinder, ofppc, and prep.
+mvmeppc, netwinder, ofppc, playstation2, and prep.
 .Pp
 The MBR contains bootable code, a partition table,
 an indication of which partition is
@@ -190,6 +190,12 @@ amd64) or by solving the simultaenous equations from the existing partition
 information.
 If that fails then either the geometry from the disklabel or 63 sectors and
 16 heads is used.
+For modern disks larger than about 8GB, and where the BIOS is configured
+to use LBA-Assisted translation, a setting of
+.Fl b Ar 1023/255/63
+is likely to work.
+.\" see http://web.inter.nl.net/hcc/J.Steunebrink/bioslim.htm#LBA
+.\" for a table of C/H/S values used in LBA-Assisted translation mode
 .It Fl c Ar bootcode
 Specify the filename that
 .Nm
@@ -286,13 +292,15 @@ When used with no other flags print a series of
 .Pa /bin/sh
 commands for setting variables to the partition information.
 This could be used by installation scripts.
-.It Fl s Ar id/start/size Ns Bq Ar /bootmenu
+.It Fl s Oo Ar id Oc Ns Oo / Ns Oo Ar start Oc Ns Oo / Ns Oo Ar size Oc Ns Oo / Ns Oo Ar bootmenu Oc Oc Oc Oc
 Specify the partition
 .Ar id ,
 .Ar start ,
 .Ar size ,
-and optionally
+and
 .Ar bootmenu .
+If the optional arguments are not provided, they stay as before or
+use the same defaults as the interactive mode, if new.
 This flag requires the use of a partition selection flag
 .Pq Fl 0 , 1 , 2 , 3 , No or Fl E Ar number .
 .It Fl T Ar disktype

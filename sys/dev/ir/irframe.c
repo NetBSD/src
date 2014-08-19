@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.44 2009/12/06 22:40:56 dyoung Exp $	*/
+/*	$NetBSD: irframe.c,v 1.44.22.1 2014/08/20 00:03:38 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.44 2009/12/06 22:40:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.44.22.1 2014/08/20 00:03:38 tls Exp $");
 
 #include "irframe.h"
 
@@ -67,8 +67,18 @@ dev_type_poll(irframepoll);
 dev_type_kqfilter(irframekqfilter);
 
 const struct cdevsw irframe_cdevsw = {
-	irframeopen, irframeclose, irframeread, irframewrite, irframeioctl,
-	nostop, notty, irframepoll, nommap, irframekqfilter, D_OTHER,
+	.d_open = irframeopen,
+	.d_close = irframeclose,
+	.d_read = irframeread,
+	.d_write = irframewrite,
+	.d_ioctl = irframeioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = irframepoll,
+	.d_mmap = nommap,
+	.d_kqfilter = irframekqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 int irframe_match(device_t parent, cfdata_t match, void *aux);

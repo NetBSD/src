@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.28 2011/07/10 08:51:24 mrg Exp $
+# 	$NetBSD: INSTALL,v 1.28.12.1 2014/08/20 00:03:25 tls Exp $
 #
 #	NOTE: this file only needs *additional* things for the install
 #	kernel, that are not already included in GENERIC!
@@ -6,9 +6,9 @@
 
 include "arch/sparc64/conf/GENERIC"
 
-#ident 		"INSTALL-$Revision: 1.28 $"
+#ident 		"INSTALL-$Revision: 1.28.12.1 $"
 
-makeoptions	COPTS="-Os"
+makeoptions	COPTS="-Os -Wno-uninitialized"
 
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 

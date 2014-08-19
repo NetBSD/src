@@ -1,4 +1,4 @@
-.\"	$NetBSD: terminfo.5.in,v 1.17.2.1 2013/02/25 00:28:01 tls Exp $
+.\"	$NetBSD: terminfo.5.in,v 1.17.2.2 2014/08/20 00:02:21 tls Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011, 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -260,4 +260,4 @@ standard.
 Extensions to the standard are noted in
 .Xr tic 1 .
 .Sh AUTHORS
-.An Roy Marples Aq roy@NetBSD.org
+.An Roy Marples Aq Mt roy@NetBSD.org

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.27.12.2 2013/06/23 06:20:06 tls Exp $
+#	$NetBSD: Makefile,v 1.27.12.3 2014/08/20 00:03:03 tls Exp $
 
 INCSDIR=	/usr/include/hpcarm
-INCS=
+INCS=		sljit_machdep.h
 
 .include "../../arm/include/Makefile.common"

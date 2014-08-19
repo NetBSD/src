@@ -1,6 +1,6 @@
 /* Blackfin Direct Memory Access (DMA) Channel model.
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -345,7 +345,7 @@ bfin_dma_io_write_buffer (struct hw *me, const void *source, int space,
 	  if (nr_bytes == 4)
 	    *value32p = value;
 	  else
-	   *value16p = value;
+	    *value16p = value;
 	}
       else
 	HW_TRACE ((me, "discarding write while dma running"));

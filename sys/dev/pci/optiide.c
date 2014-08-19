@@ -1,4 +1,4 @@
-/*	$NetBSD: optiide.c,v 1.24.2.1 2012/10/09 13:36:05 bouyer Exp $	*/
+/*	$NetBSD: optiide.c,v 1.24.2.2 2014/08/20 00:03:43 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: optiide.c,v 1.24.2.1 2012/10/09 13:36:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: optiide.c,v 1.24.2.2 2014/08/20 00:03:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ static int  optiide_match(device_t, cfdata_t, void *);
 static void optiide_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(optiide, sizeof(struct pciide_softc),
-    optiide_match, optiide_attach, NULL, NULL);
+    optiide_match, optiide_attach, pciide_detach, NULL);
 
 static const struct pciide_product_desc pciide_opti_products[] =  {
 	{ PCI_PRODUCT_OPTI_82C621,

@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,18 +21,16 @@ if { [skip_cplus_tests] } { continue }
 
 load_lib "cp-support.exp"
 
-set testfile "pr10728"
-set srcfile ${testfile}-x.cc
-set tfx ${testfile}-x
-set tfy ${testfile}-y
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile pr10728-x.cc pr10728-y.cc
+set tfx [standard_output_file pr10728-x.o]
+set tfy [standard_output_file pr10728-y.o]
 
-if  { [gdb_compile "${srcdir}/${subdir}/${tfy}.cc" "${tfy}.o" object {c++}] != "" } {
+if  { [gdb_compile "${srcdir}/${subdir}/$srcfile2" "${tfy}.o" object {c++}] != "" } {
      untested pr10728.exp
      return -1
 }
 
-if  { [gdb_compile "${srcdir}/${subdir}/${tfx}.cc" "${tfx}.o" object {debug c++}] != "" } {
+if  { [gdb_compile "${srcdir}/${subdir}/$srcfile" "${tfx}.o" object {debug c++}] != "" } {
      untested pr10728.exp
      return -1
 }
@@ -42,11 +40,7 @@ if  { [gdb_compile "${tfx}.o ${tfy}.o" ${binfile} executable {debug c++}] != "" 
      return -1
 }
 
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart $binfile
 
 if ![runto_main] then {
     perror "couldn't run to breakpoint"

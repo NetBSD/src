@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.4 2006/08/07 14:19:57 manu Exp $ */
+/*	$NetBSD: linux_exec.h,v 1.4.104.1 2014/08/20 00:03:31 tls Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -47,7 +47,7 @@
 #define LINUX_USRSTACK32	0xc0000000
 
 /* Counted from linux_exec_machdep.c */
-#define LINUX_ELF_AUX_ENTRIES 16
+#define LINUX_ELF_AUX_ENTRIES 17
 
 /* Hardware platform identifier string */
 #define LINUX_PLATFORM "x86_64"
@@ -55,6 +55,7 @@
 /* The extra data (ELF auxiliary table and platform name) on stack */
 struct linux_extra_stack_data64 {
 	Aux64Info ai[LINUX_ELF_AUX_ENTRIES];
+	uint32_t randbytes[4];
 	char pad[1]; /*sizeof(long) - (sizeof(LINUX_PLATFORM) % sizeof(long))*/
 	char hw_platform[sizeof(LINUX_PLATFORM)];
 };

@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.29.2.1 2013/06/23 06:18:39 tls Exp $
+#	$NetBSD: files.ufs,v 1.29.2.2 2014/08/20 00:04:44 tls Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -65,6 +65,8 @@ file	ufs/lfs/lfs_cksum.c		lfs
 file	ufs/lfs/lfs_debug.c		lfs
 file	ufs/lfs/lfs_inode.c		lfs
 file	ufs/lfs/lfs_itimes.c		lfs
+file	ufs/lfs/lfs_pages.c		lfs
+file	ufs/lfs/lfs_rename.c		lfs
 file	ufs/lfs/lfs_rfw.c		lfs & lfs_kernel_rfw
 file	ufs/lfs/lfs_segment.c		lfs
 file	ufs/lfs/lfs_subr.c		lfs
@@ -82,7 +84,6 @@ file	ufs/lfs/ulfs_quota1.c		lfs & lfs_quota
 file	ufs/lfs/ulfs_quota2.c		lfs & lfs_quota2
 file	ufs/lfs/ulfs_quota1_subr.c	lfs
 file	ufs/lfs/ulfs_quota2_subr.c	lfs & lfs_quota2
-file	ufs/lfs/ulfs_rename.c		lfs
 file	ufs/lfs/ulfs_snapshot.c		lfs
 file	ufs/lfs/ulfs_vfsops.c		lfs
 file	ufs/lfs/ulfs_vnops.c		lfs
@@ -94,7 +95,6 @@ file	ufs/mfs/mfs_miniroot.c
 file	ufs/ufs/ufs_bmap.c		ffs | mfs | ext2fs | chfs
 file	ufs/ufs/ufs_dirhash.c		(ffs | mfs | ext2fs | chfs) & ufs_dirhash
 file	ufs/ufs/ufs_extattr.c		(ffs | mfs) & ufs_extattr
-file	ufs/ufs/ufs_ihash.c		ffs | mfs | ext2fs
 file	ufs/ufs/ufs_inode.c		ffs | mfs | ext2fs
 file	ufs/ufs/ufs_lookup.c		ffs | mfs | ext2fs | chfs
 file	ufs/ufs/ufs_quota.c		(quota | quota2) & (ffs | mfs | ext2fs | chfs)

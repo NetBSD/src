@@ -1,7 +1,5 @@
 /* Build symbol tables in GDB's internal format.
-   Copyright (C) 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1995, 1996,
-   1997, 1998, 1999, 2000, 2002, 2003, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,6 +36,7 @@ struct addrmap;
    this technique.  */
 
 struct block;
+struct pending_block;
 
 #ifndef EXTERN
 #define	EXTERN extern
@@ -45,12 +44,6 @@ struct block;
 
 #define HASHSIZE 127		/* Size of things hashed via
 				   hashname().  */
-
-/* Name of source file whose symbol data we are now processing.  This
-   comes from a symbol of type N_SO for stabs.  For Dwarf it comes
-   from the DW_AT_name attribute of a DW_TAG_compile_unit DIE.  */
-
-EXTERN char *last_source_file;
 
 /* Core address of start of text of current source file.  This too
    comes from the N_SO symbol.  For Dwarf it typically comes from the
@@ -70,8 +63,8 @@ struct subfile
     struct linetable *line_vector;
     int line_vector_length;
     enum language language;
-    char *producer;
-    char *debugformat;
+    const char *producer;
+    const char *debugformat;
     struct symtab *symtab;
   };
 
@@ -121,10 +114,6 @@ EXTERN struct pending *global_symbols;
 
 EXTERN struct pending *local_symbols;
 
-/* func params local to lexical  context */
-
-EXTERN struct pending *param_symbols;
-
 /* "using" directives local to lexical context.  */
 
 EXTERN struct using_direct *using_directives;
@@ -137,10 +126,6 @@ struct context_stack
     /* Outer locals at the time we entered */
 
     struct pending *locals;
-
-    /* Pending func params at the time we entered */
-
-    struct pending *params;
 
     /* Pending using directives at the time we entered.  */
 
@@ -186,55 +171,13 @@ EXTERN int context_stack_size;
 
 EXTERN int within_function;
 
-/* List of blocks already made (lexical contexts already closed).
-   This is used at the end to make the blockvector.  */
-
-struct pending_block
-  {
-    struct pending_block *next;
-    struct block *block;
-  };
-
-/* Pointer to the head of a linked list of symbol blocks which have
-   already been finalized (lexical contexts already closed) and which
-   are just waiting to be built into a blockvector when finalizing the
-   associated symtab.  */
-
-EXTERN struct pending_block *pending_blocks;
 
-
-struct subfile_stack
-  {
-    struct subfile_stack *next;
-    char *name;
-  };
-
-EXTERN struct subfile_stack *subfile_stack;
 
 #define next_symbol_text(objfile) (*next_symbol_text_func)(objfile)
 
 /* Function to invoke get the next symbol.  Return the symbol name.  */
 
 EXTERN char *(*next_symbol_text_func) (struct objfile *);
-
-/* Vector of types defined so far, indexed by their type numbers.
-   Used for both stabs and coff.  (In newer sun systems, dbx uses a
-   pair of numbers in parens, as in "(SUBFILENUM,NUMWITHINSUBFILE)".
-   Then these numbers must be translated through the type_translations
-   hash table to get the index into the type vector.)  */
-
-EXTERN struct type **type_vector;
-
-/* Number of elements allocated for type_vector currently.  */
-
-EXTERN int type_vector_length;
-
-/* Initial size of type vector.  Is realloc'd larger if needed, and
-   realloc'd down to the size actually used, when completed.  */
-
-#define	INITIAL_TYPE_VECTOR_LENGTH	160
-
-extern void add_free_pendings (struct pending *list);
 
 extern void add_symbol_to_list (struct symbol *symbol,
 				struct pending **listhead);
@@ -261,8 +204,25 @@ extern void push_subfile (void);
 
 extern char *pop_subfile (void);
 
+extern struct block *end_symtab_get_static_block (CORE_ADDR end_addr,
+						  struct objfile *objfile,
+						  int expandable,
+						  int required);
+
+extern struct symtab *end_symtab_from_static_block (struct block *static_block,
+						    struct objfile *objfile,
+						    int section,
+						    int expandable);
+
 extern struct symtab *end_symtab (CORE_ADDR end_addr,
 				  struct objfile *objfile, int section);
+
+extern struct symtab *end_expandable_symtab (CORE_ADDR end_addr,
+					     struct objfile *objfile,
+					     int section);
+
+extern void augment_type_symtab (struct objfile *objfile,
+				 struct symtab *primary_symtab);
 
 /* Defined in stabsread.c.  */
 
@@ -278,31 +238,43 @@ extern struct context_stack *pop_context (void);
 
 extern void record_line (struct subfile *subfile, int line, CORE_ADDR pc);
 
-extern void start_symtab (char *name, char *dirname, CORE_ADDR start_addr);
+extern void start_symtab (const char *name, const char *dirname,
+			  CORE_ADDR start_addr);
 
-extern int hashname (char *name);
+extern void restart_symtab (CORE_ADDR start_addr);
+
+extern int hashname (const char *name);
 
 extern void free_pending_blocks (void);
 
-/* FIXME: Note that this is used only in buildsym.c and dstread.c,
-   which should be fixed to not need direct access to
-   record_pending_block.  */
+/* Record the name of the debug format in the current pending symbol
+   table.  FORMAT must be a string with a lifetime at least as long as
+   the symtab's objfile.  */
 
-extern void record_pending_block (struct objfile *objfile,
-				  struct block *block,
-				  struct pending_block *opblock);
+extern void record_debugformat (const char *format);
 
-extern void record_debugformat (char *format);
+/* Record the name of the debuginfo producer (usually the compiler) in
+   the current pending symbol table.  PRODUCER must be a string with a
+   lifetime at least as long as the symtab's objfile.  */
 
 extern void record_producer (const char *producer);
 
 extern void merge_symbol_lists (struct pending **srclist,
 				struct pending **targetlist);
 
-/* The macro table for the compilation unit whose symbols we're
-   currently reading.  All the symtabs for this CU will point to
-   this.  */
-EXTERN struct macro_table *pending_macros;
+/* Set the name of the last source file.  NAME is copied by this
+   function.  */
+
+extern void set_last_source_file (const char *name);
+
+/* Fetch the name of the last source file.  */
+
+extern const char *get_last_source_file (void);
+
+/* Return the macro table.  */
+
+extern struct macro_table *get_macro_table (struct objfile *objfile,
+					    const char *comp_dir);
 
 #undef EXTERN
 

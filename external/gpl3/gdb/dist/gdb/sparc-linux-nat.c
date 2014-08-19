@@ -1,6 +1,5 @@
 /* Native-dependent code for GNU/Linux SPARC.
-   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,7 +37,7 @@ supply_gregset (struct regcache *regcache, const prgregset_t *gregs)
 void
 supply_fpregset (struct regcache *regcache, const prfpregset_t *fpregs)
 {
-  sparc32_supply_fpregset (regcache, -1, fpregs);
+  sparc32_supply_fpregset (sparc_fpregset, regcache, -1, fpregs);
 }
 
 void
@@ -51,10 +50,10 @@ void
 fill_fpregset (const struct regcache *regcache,
 	       prfpregset_t *fpregs, int regnum)
 {
-  sparc32_collect_fpregset (regcache, regnum, fpregs);
+  sparc32_collect_fpregset (sparc_fpregset, regcache, regnum, fpregs);
 }
 
-void _initialialize_sparc_linux_nat (void);
+void _initialize_sparc_linux_nat (void);
 
 void
 _initialize_sparc_linux_nat (void)
@@ -63,6 +62,8 @@ _initialize_sparc_linux_nat (void)
 
   /* Fill in the generic GNU/Linux methods.  */
   t = linux_target ();
+
+  sparc_fpregset = &sparc32_bsd_fpregset;
 
   /* Add our register access methods.  */
   t->to_fetch_registers = sparc_fetch_inferior_registers;

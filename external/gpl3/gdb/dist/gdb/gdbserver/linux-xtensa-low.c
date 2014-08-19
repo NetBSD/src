@@ -1,5 +1,5 @@
 /* GNU/Linux/Xtensa specific low level interface, for the remote server for GDB.
-   Copyright 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2007-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,8 +22,9 @@
 
 /* Defined in auto-generated file reg-xtensa.c.  */
 void init_registers_xtensa (void);
+extern const struct target_desc *tdesc_xtensa;
 
-#include <sys/ptrace.h>
+#include <asm/ptrace.h>
 #include <xtensa-config.h>
 
 #include "xtensa-xtregs.c"
@@ -40,19 +41,20 @@ static void
 xtensa_fill_gregset (struct regcache *regcache, void *buf)
 {
   elf_greg_t* rset = (elf_greg_t*)buf;
+  const struct target_desc *tdesc = regcache->tdesc;
   int ar0_regnum;
   char *ptr;
   int i;
 
   /* Take care of AR registers.  */
 
-  ar0_regnum = find_regno ("ar0");
+  ar0_regnum = find_regno (tdesc, "ar0");
   ptr = (char*)&rset[R_A0];
 
   for (i = ar0_regnum; i < ar0_regnum + XCHAL_NUM_AREGS; i++)
     {
       collect_register (regcache, i, ptr);
-      ptr += register_size(i);
+      ptr += register_size (tdesc, i);
     }
 
   /* Loop registers, if hardware has it.  */
@@ -74,19 +76,20 @@ static void
 xtensa_store_gregset (struct regcache *regcache, const void *buf)
 {
   const elf_greg_t* rset = (const elf_greg_t*)buf;
+  const struct target_desc *tdesc = regcache->tdesc;
   int ar0_regnum;
   char *ptr;
   int i;
 
   /* Take care of AR registers.  */
 
-  ar0_regnum = find_regno ("ar0");
+  ar0_regnum = find_regno (tdesc, "ar0");
   ptr = (char *)&rset[R_A0];
 
   for (i = ar0_regnum; i < ar0_regnum + XCHAL_NUM_AREGS; i++)
     {
       supply_register (regcache, i, ptr);
-      ptr += register_size(i);
+      ptr += register_size (tdesc, i);
     }
 
   /* Loop registers, if hardware has it.  */
@@ -130,7 +133,7 @@ xtensa_store_xtregset (struct regcache *regcache, const void *buf)
     }
 }
 
-struct regset_info target_regsets[] = {
+static struct regset_info xtensa_regsets[] = {
   { PTRACE_GETREGS, PTRACE_SETREGS, 0, sizeof (elf_gregset_t),
     GENERAL_REGS,
     xtensa_fill_gregset, xtensa_store_gregset },
@@ -176,12 +179,44 @@ xtensa_breakpoint_at (CORE_ADDR where)
 		  xtensa_breakpoint, xtensa_breakpoint_len) == 0;
 }
 
+static struct regsets_info xtensa_regsets_info =
+  {
+    xtensa_regsets, /* regsets */
+    0, /* num_regsets */
+    NULL, /* disabled_regsets */
+  };
+
+static struct usrregs_info xtensa_usrregs_info =
+  {
+    xtensa_num_regs,
+    xtensa_regmap,
+  };
+
+static struct regs_info regs_info =
+  {
+    NULL, /* regset_bitmap */
+    &xtensa_usrregs_info,
+    &xtensa_regsets_info
+  };
+
+static void
+xtensa_arch_setup (void)
+{
+  current_process ()->tdesc = tdesc_xtensa;
+}
+
+static const struct regs_info *
+xtensa_regs_info (void)
+{
+  return &regs_info;
+}
+
 struct linux_target_ops the_low_target = {
-  init_registers_xtensa,
+  xtensa_arch_setup,
+  xtensa_regs_info,
   0,
   0,
-  0,
-  0,
+  NULL, /* fetch_register */
   xtensa_get_pc,
   xtensa_set_pc,
   xtensa_breakpoint,
@@ -190,3 +225,13 @@ struct linux_target_ops the_low_target = {
   0,
   xtensa_breakpoint_at,
 };
+
+
+void
+initialize_low_arch (void)
+{
+  /* Initialize the Linux target descriptions.  */
+  init_registers_xtensa ();
+
+  initialize_regsets_info (&xtensa_regsets_info);
+}

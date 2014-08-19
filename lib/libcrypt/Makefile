@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2012/08/10 04:30:47 joerg Exp $
+#	$NetBSD: Makefile,v 1.24.2.1 2014/08/20 00:02:17 tls Exp $
 
 USE_SHLIBDIR=	yes
 
@@ -24,5 +24,3 @@ LDSTATIC?= -static
 .else
 .include <bsd.lib.mk>
 .endif
-
-COPTS.crypt-sha1.c+=	-Wno-pointer-sign

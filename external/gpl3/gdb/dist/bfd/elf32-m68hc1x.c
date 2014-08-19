@@ -1,6 +1,6 @@
 /* Motorola 68HC11/HC12-specific support for 32-bit ELF
    Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-   2009, 2010  Free Software Foundation, Inc.
+   2009, 2010, 2011, 2012 Free Software Foundation, Inc.
    Contributed by Stephane Carrez (stcarrez@nerim.fr)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -20,8 +20,8 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-#include "alloca-conf.h"
 #include "sysdep.h"
+#include "alloca-conf.h"
 #include "bfd.h"
 #include "bfdlink.h"
 #include "libbfd.h"
@@ -50,7 +50,7 @@ static void m68hc11_elf_set_symbol (bfd* abfd, struct bfd_link_info *info,
 static bfd_boolean m68hc11_elf_export_one_stub
   (struct bfd_hash_entry *gen_entry, void *in_arg);
 
-static void scan_sections_for_abi (bfd*, asection*, PTR);
+static void scan_sections_for_abi (bfd*, asection*, void *);
 
 struct m68hc11_scan_param
 {
@@ -67,11 +67,10 @@ m68hc11_elf_hash_table_create (bfd *abfd)
   struct m68hc11_elf_link_hash_table *ret;
   bfd_size_type amt = sizeof (struct m68hc11_elf_link_hash_table);
 
-  ret = (struct m68hc11_elf_link_hash_table *) bfd_malloc (amt);
+  ret = (struct m68hc11_elf_link_hash_table *) bfd_zmalloc (amt);
   if (ret == (struct m68hc11_elf_link_hash_table *) NULL)
     return NULL;
 
-  memset (ret, 0, amt);
   if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
 				      _bfd_elf_link_hash_newfunc,
 				      sizeof (struct elf_link_hash_entry),
@@ -93,11 +92,6 @@ m68hc11_elf_hash_table_create (bfd *abfd)
 			    sizeof (struct elf32_m68hc11_stub_hash_entry)))
     return NULL;
 
-  ret->stub_bfd = NULL;
-  ret->stub_section = 0;
-  ret->add_stub_section = NULL;
-  ret->sym_cache.abfd = NULL;
-
   return ret;
 }
 
@@ -111,7 +105,7 @@ m68hc11_elf_bfd_link_hash_table_free (struct bfd_link_hash_table *hash)
 
   bfd_hash_table_free (ret->stub_hash_table);
   free (ret->stub_hash_table);
-  _bfd_generic_link_hash_table_free (hash);
+  _bfd_elf_link_hash_table_free (hash);
 }
 
 /* Assorted hash table functions.  */
@@ -212,6 +206,20 @@ elf32_m68hc11_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
 
     }
   return TRUE;
+}
+
+/* Merge non-visibility st_other attributes, STO_M68HC12_FAR and
+   STO_M68HC12_INTERRUPT.  */
+
+void
+elf32_m68hc11_merge_symbol_attribute (struct elf_link_hash_entry *h,
+				      const Elf_Internal_Sym *isym,
+				      bfd_boolean definition,
+				      bfd_boolean dynamic ATTRIBUTE_UNUSED)
+{
+  if (definition)
+    h->other = ((isym->st_other & ~ELF_ST_VISIBILITY (-1))
+		| ELF_ST_VISIBILITY (h->other));
 }
 
 /* External entry points for sizing and building linker stubs.  */
@@ -653,7 +661,7 @@ elf32_m68hc11_build_stubs (bfd *abfd, struct bfd_link_info *info)
   /* Build the stubs as directed by the stub hash table.  */
   table = htab->stub_hash_table;
   bfd_hash_traverse (table, m68hc11_elf_export_one_stub, info);
-  
+
   /* Scan the output sections to see if we use the memory banks.
      If so, export the symbols that define how the memory banks
      are mapped.  This is used by gdb and the simulator to obtain
@@ -863,6 +871,10 @@ elf32_m68hc11_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.non_ir_ref = 1;
 	}
 
       switch (ELF32_R_TYPE (rel->r_info))
@@ -904,9 +916,11 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
   struct m68hc11_page_info *pinfo;
   const struct elf_backend_data * const ebd = get_elf_backend_data (input_bfd);
   struct m68hc11_elf_link_hash_table *htab;
+  unsigned long e_flags;
 
   symtab_hdr = &elf_tdata (input_bfd)->symtab_hdr;
   sym_hashes = elf_sym_hashes (input_bfd);
+  e_flags = elf_elfheader (input_bfd)->e_flags;
 
   htab = m68hc11_elf_hash_table (info);
   if (htab == NULL)
@@ -934,13 +948,16 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
       bfd_vma insn_addr;
       bfd_vma insn_page;
       bfd_boolean is_far = FALSE;
+      bfd_boolean is_xgate_symbol = FALSE;
+      bfd_boolean is_section_symbol = FALSE;
       struct elf_link_hash_entry *h;
+      bfd_vma val;
 
       r_symndx = ELF32_R_SYM (rel->r_info);
       r_type = ELF32_R_TYPE (rel->r_info);
 
       if (r_type == R_M68HC11_GNU_VTENTRY
-          || r_type == R_M68HC11_GNU_VTINHERIT )
+          || r_type == R_M68HC11_GNU_VTINHERIT)
         continue;
 
       (*ebd->elf_info_to_howto_rel) (input_bfd, &arel, rel);
@@ -957,22 +974,25 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 			+ sec->output_offset
 			+ sym->st_value);
 	  is_far = (sym && (sym->st_other & STO_M68HC12_FAR));
+	  is_xgate_symbol = (sym && (sym->st_target_internal));
+	  is_section_symbol = ELF_ST_TYPE (sym->st_info) & STT_SECTION;
 	}
       else
 	{
-	  bfd_boolean unresolved_reloc, warned;
+	  bfd_boolean unresolved_reloc, warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation, unresolved_reloc,
-				   warned);
+				   warned, ignored);
 
 	  is_far = (h && (h->other & STO_M68HC12_FAR));
+	  is_xgate_symbol = (h && (h->target_internal));
 	}
 
-      if (sec != NULL && elf_discarded_section (sec))
+      if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, relend, howto, contents);
+					 rel, 1, relend, howto, 0, contents);
 
       if (info->relocatable)
 	{
@@ -1015,6 +1035,50 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
       phys_page = m68hc11_phys_page (pinfo, relocation + rel->r_addend);
       switch (r_type)
         {
+        case R_M68HC12_LO8XG:
+          /* This relocation is specific to XGATE IMM16 calls and will precede
+	     a HI8. tc-m68hc11 only generates them in pairs.
+	     Leave the relocation to the HI8XG step.  */
+          r = bfd_reloc_ok;
+          r_type = R_M68HC11_NONE;
+          break;
+
+        case R_M68HC12_HI8XG:
+          /* This relocation is specific to XGATE IMM16 calls and must follow
+             a LO8XG. Does not actually check that it was a LO8XG.
+	     Adjusts high and low bytes.  */
+          relocation = phys_addr;
+          if ((e_flags & E_M68HC11_XGATE_RAMOFFSET)
+	      && (relocation >= 0x2000))
+	    relocation += 0xc000; /* HARDCODED RAM offset for XGATE.  */
+
+          /* Fetch 16 bit value including low byte in previous insn.  */
+          val = (bfd_get_8 (input_bfd, (bfd_byte*) contents + rel->r_offset) << 8)
+	    | bfd_get_8 (input_bfd, (bfd_byte*) contents + rel->r_offset - 2);
+
+          /* Add on value to preserve carry, then write zero to high byte.  */
+          relocation += val;
+
+          /* Write out top byte.  */
+          bfd_put_8 (input_bfd, (relocation >> 8) & 0xff,
+		     (bfd_byte*) contents + rel->r_offset);
+
+          /* Write out low byte to previous instruction.  */
+          bfd_put_8 (input_bfd, relocation & 0xff,
+		     (bfd_byte*) contents + rel->r_offset - 2);
+
+          /* Mark as relocation completed.  */
+          r = bfd_reloc_ok;
+          r_type = R_M68HC11_NONE;
+          break;
+
+        /* The HI8 and LO8 relocs are generated by %hi(expr) %lo(expr)
+           assembler directives. %hi does not support carry.  */
+        case R_M68HC11_HI8:
+        case R_M68HC11_LO8:
+          relocation = phys_addr;
+          break;
+
         case R_M68HC11_24:
           /* Reloc used by 68HC12 call instruction.  */
           bfd_put_16 (input_bfd, phys_addr,
@@ -1051,7 +1115,7 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
                       "relocation may result in incorrect execution");
               buf = alloca (strlen (msg) + strlen (name) + 10);
               sprintf (buf, msg, name);
-              
+
               (* info->callbacks->warning)
                 (info, buf, name, input_bfd, NULL, rel->r_offset);
             }
@@ -1063,12 +1127,45 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 
           insn_page = m68hc11_phys_page (pinfo, insn_addr);
 
+         /* If we are linking an S12 instruction against an XGATE symbol, we
+            need to change the offset of the symbol value so that it's correct
+	    from the S12's perspective.  */
+          if (is_xgate_symbol)
+	    {
+	      /* The ram in the global space is mapped to 0x2000 in the 16-bit
+		 address space for S12 and 0xE000 in the 16-bit address space
+		 for XGATE.  */
+	      if (relocation >= 0xE000)
+		{
+		  /* We offset the address by the difference
+		     between these two mappings.  */
+		  relocation -= 0xC000;
+		  break;
+		}
+	      else
+		{
+		  const char * msg;
+		  char * buf;
+
+		  msg = _("XGATE address (%lx) is not within shared RAM"
+			  "(0xE000-0xFFFF), therefore you must manually offset "
+			  "the address, and possibly manage the page, in your "
+			  "code.");
+		  buf = alloca (strlen (msg) + 128);
+		  sprintf (buf, msg, phys_addr);
+		  if (!((*info->callbacks->warning) (info, buf, name, input_bfd,
+						     input_section, insn_addr)))
+		    return FALSE;
+		  break;
+		}
+	    }
+
           if (m68hc11_addr_is_banked (pinfo, relocation + rel->r_addend)
               && m68hc11_addr_is_banked (pinfo, insn_addr)
-              && phys_page != insn_page)
+              && phys_page != insn_page && !(e_flags & E_M68HC11_NO_BANK_WARNING))
             {
-              const char* msg;
-              char* buf;
+              const char * msg;
+              char * buf;
 
               msg = _("banked address [%lx:%04lx] (%lx) is not in the same bank "
                       "as current banked address [%lx:%04lx] (%lx)");
@@ -1084,10 +1181,11 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
                 return FALSE;
               break;
             }
+
           if (phys_page != 0 && insn_page == 0)
             {
-              const char* msg;
-              char* buf;
+              const char * msg;
+              char * buf;
 
               msg = _("reference to a banked address [%lx:%04lx] in the "
                       "normal address space at %04lx");
@@ -1109,10 +1207,57 @@ elf32_m68hc11_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
             relocation = phys_addr;
           break;
         }
+
+      /* If we are linking an XGATE instruction against an S12 symbol, we
+         need to change the offset of the symbol value so that it's correct
+	 from the XGATE's perspective.  */
+      if (!strcmp (howto->name, "R_XGATE_IMM8_LO")
+          || !strcmp (howto->name, "R_XGATE_IMM8_HI"))
+        {
+          /* We can only offset S12 addresses that lie within the non-paged
+             area of RAM.  */
+          if (!is_xgate_symbol && !is_section_symbol)
+            {
+              /* The ram in the global space is mapped to 0x2000 and stops at
+                 0x4000 in the 16-bit address space for S12 and 0xE000 in the
+                 16-bit address space for XGATE.  */
+              if (relocation >= 0x2000 && relocation < 0x4000)
+                 /* We offset the address by the difference
+                   between these two mappings.  */
+                relocation += 0xC000;
+              else
+                {
+                  const char * msg;
+                  char * buf;
+
+                  /* Get virtual address of instruction having the relocation.  */
+                  insn_addr = input_section->output_section->vma
+                      + input_section->output_offset + rel->r_offset;
+
+                  msg = _("S12 address (%lx) is not within shared RAM"
+                      "(0x2000-0x4000), therefore you must manually "
+                      "offset the address in your code");
+                  buf = alloca (strlen (msg) + 128);
+                  sprintf (buf, msg, phys_addr);
+                  if (!((*info->callbacks->warning) (info, buf, name, input_bfd,
+						     input_section, insn_addr)))
+                    return FALSE;
+                  break;
+                }
+            }
+        }
+
       if (r_type != R_M68HC11_NONE)
-        r = _bfd_final_link_relocate (howto, input_bfd, input_section,
+        {
+          if ((r_type == R_M68HC12_PCREL_9) || (r_type == R_M68HC12_PCREL_10))
+            r = _bfd_final_link_relocate (howto, input_bfd, input_section,
                                       contents, rel->r_offset,
-                                      relocation, rel->r_addend);
+                                      relocation - 2, rel->r_addend);
+          else
+            r = _bfd_final_link_relocate (howto, input_bfd, input_section,
+                                          contents, rel->r_offset,
+                                          relocation, rel->r_addend);
+        }
 
       if (r != bfd_reloc_ok)
 	{
@@ -1188,7 +1333,7 @@ _bfd_m68hc11_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
   flagword new_flags;
   bfd_boolean ok = TRUE;
 
-  /* Check if we have the same endianess */
+  /* Check if we have the same endianness */
   if (!_bfd_generic_verify_endian_match (ibfd, obfd))
     return FALSE;
 
@@ -1296,12 +1441,15 @@ _bfd_m68hc11_elf_print_private_bfd_data (bfd *abfd, void *ptr)
   else if (elf_elfheader (abfd)->e_flags & EF_M68HCS12_MACH)
     fprintf (file, _("cpu=HCS12]"));
   else
-    fprintf (file, _("cpu=HC12]"));    
+    fprintf (file, _("cpu=HC12]"));
 
   if (elf_elfheader (abfd)->e_flags & E_M68HC12_BANKS)
     fprintf (file, _(" [memory=bank-model]"));
   else
     fprintf (file, _(" [memory=flat]"));
+
+  if (elf_elfheader (abfd)->e_flags & E_M68HC11_XGATE_RAMOFFSET)
+    fprintf (file, _(" [XGATE RAM offsetting]"));
 
   fputc ('\n', file);
 
@@ -1316,7 +1464,7 @@ static void scan_sections_for_abi (bfd *abfd ATTRIBUTE_UNUSED,
   if (asect->vma >= p->pinfo->bank_virtual)
     p->use_memory_banks = TRUE;
 }
-  
+
 /* Tweak the OSABI field of the elf header.  */
 
 void

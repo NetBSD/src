@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8583reg.h,v 1.2 2005/12/11 12:21:23 christos Exp $	*/
+/*	$NetBSD: pcf8583reg.h,v 1.2.120.1 2014/08/20 00:03:37 tls Exp $	*/
 
 /*
  * Ben Harris, 2000
@@ -20,7 +20,7 @@
  *
  *	101 0000
  */
-#define PCF8583_ADDRMASK	0x7f
+#define PCF8583_ADDRMASK	0x3ff
 #define PCF8583_ADDR		0x50
 
 #define PCF8583_REG_CSR		0x00

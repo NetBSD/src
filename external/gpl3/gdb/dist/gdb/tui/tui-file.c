@@ -1,6 +1,5 @@
 /* UI_FILE - a generic STDIO like output stream.
-   Copyright (C) 1999, 2000, 2001, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +23,7 @@
 
 #include "tui.h"
 
-#include "gdb_string.h"
+#include <string.h>
 
 /* A ``struct ui_file'' that is compatible with all the legacy
    code.  */

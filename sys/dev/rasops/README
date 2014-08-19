@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.5 2008/01/07 00:25:19 bjs Exp $
+$NetBSD: README,v 1.5.54.1 2014/08/20 00:03:50 tls Exp $
 
 This directory contains `rasops', a set of raster operations intended to
 replace the dev/rcons/raster stuff for both wscons and rcons. It yields
@@ -8,7 +8,6 @@ Issues/TODO:
 
 - There is no generic `putchar' function for 2bpp
 - Color handling for 2bpp is broken
-- copycols() from rasops_bitops.h is broken in right->left case
 - 64-bit types are not used on machines that are 64-bit
 - We should never be doing reads/writes of less than 32-bits
 - Flags in attribute values are hardcoded

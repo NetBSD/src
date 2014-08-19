@@ -1,4 +1,4 @@
-# Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2009-2014 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -36,8 +36,8 @@ if [is_remote target] {
     return 0
 }
 
-if [get_compiler_info binfile-unused] {
-    return -1;
+if [get_compiler_info] {
+    return -1
 }
 
 # Library file.
@@ -52,21 +52,18 @@ set srcfile ${srcdir}/${subdir}/${testfile}.c
 # false PASS.
 # Prelink first lib1 at 0x40000000 and lib2 at 0x41000000.
 # During second pass try lib1 at 0x50000000 and lib2 at 0x51000000.
-foreach prelink_lib1 {0x40000000 0x50000000} {
+foreach prelink_lib1 {0x40000000 0x50000000} { with_test_prefix "$prelink_lib1" {
     set prelink_lib2 [format "0x%x" [expr $prelink_lib1 + 0x01000000]]
 
-    set old_prefix $pf_prefix
-    lappend pf_prefix "$prelink_lib1:"
-
     # Library file.
-    set binfile_lib1 ${objdir}/${subdir}/${libname}1-${prelink_lib1}.so
+    set binfile_lib1 [standard_output_file ${libname}1-${prelink_lib1}.so]
     set binfile_lib1_test_msg OBJDIR/${subdir}/${libname}1-${prelink_lib1}.so
-    set binfile_lib2 ${objdir}/${subdir}/${libname}2-${prelink_lib1}.so
+    set binfile_lib2 [standard_output_file ${libname}2-${prelink_lib1}.so]
     set binfile_lib2_test_msg OBJDIR/${subdir}/${libname}2-${prelink_lib1}.so
     set lib_flags {debug}
     # Binary file.
     set binfile_base ${testfile}-${prelink_lib1}
-    set binfile ${objdir}/${subdir}/${binfile_base}
+    set binfile [standard_output_file ${binfile_base}]
     set binfile_test_msg OBJDIR/${subdir}/${binfile_base}
     set bin_flags [list debug shlib=${binfile_lib1} shlib=${binfile_lib2}]
     set escapedbinfile  [string_to_regexp ${binfile}]
@@ -137,6 +134,4 @@ foreach prelink_lib1 {0x40000000 0x50000000} {
     sleep 5
 
     remote_exec build "kill -9 ${testpid}"
-
-    set pf_prefix $old_prefix
-}
+}}

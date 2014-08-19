@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uid16.c,v 1.3 2008/05/20 15:48:24 njoly Exp $	*/
+/*	$NetBSD: linux_uid16.c,v 1.3.42.1 2014/08/20 00:03:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uid16.c,v 1.3 2008/05/20 15:48:24 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uid16.c,v 1.3.42.1 2014/08/20 00:03:32 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -241,7 +241,7 @@ linux_sys_getgroups16(struct lwp *l, const struct linux_sys_getgroups16_args *ua
 	*retval = ngrps;
 	if (SCARG(uap, gidsetsize) == 0)
 		return 0;
-	if (SCARG(uap, gidsetsize) < ngrps)
+	if (SCARG(uap, gidsetsize) < (int)ngrps)
 		return EINVAL;
 
 	gidset = SCARG(uap, gidset);

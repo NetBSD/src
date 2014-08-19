@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_hz.c,v 1.2.26.1 2013/06/23 06:21:04 tls Exp $ */
+/* $NetBSD: citrus_hz.c,v 1.2.26.2 2014/08/20 00:02:13 tls Exp $ */
 
 /*-
  * Copyright (c)2004, 2006 Citrus Project,
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_hz.c,v 1.2.26.1 2013/06/23 06:21:04 tls Exp $");
+__RCSID("$NetBSD: citrus_hz.c,v 1.2.26.2 2014/08/20 00:02:13 tls Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/queue.h>
@@ -559,7 +559,7 @@ _citrus_HZ_encoding_module_uninit(_HZEncodingInfo *ei)
 }
 
 static int
-_citrus_HZ_parse_char(void **context, const char *name, const char *s)
+_citrus_HZ_parse_char(void *context, const char *name, const char *s)
 {
 	void **p;
 	escape_t *escape;
@@ -568,7 +568,7 @@ _citrus_HZ_parse_char(void **context, const char *name, const char *s)
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(s != NULL);
 
-	p = (void **)*context;
+	p = (void **)context;
 	escape = (escape_t *)p[0];
 	if (escape->ch != '\0')
 		return EINVAL;
@@ -580,7 +580,7 @@ _citrus_HZ_parse_char(void **context, const char *name, const char *s)
 }
 
 static int
-_citrus_HZ_parse_graphic(void **context, const char *name, const char *s)
+_citrus_HZ_parse_graphic(void *context, const char *name, const char *s)
 {
 	void **p;
 	_HZEncodingInfo *ei;
@@ -591,7 +591,7 @@ _citrus_HZ_parse_graphic(void **context, const char *name, const char *s)
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(s != NULL);
 
-	p = (void **)*context;
+	p = (void **)context;
 	escape = (escape_t *)p[0];
 	ei = (_HZEncodingInfo *)p[1];
 	graphic = malloc(sizeof(*graphic));
@@ -654,7 +654,7 @@ _CITRUS_PROP_HINT_END
 };
 
 static int
-_citrus_HZ_parse_escape(void **context, const char *name, const char *s)
+_citrus_HZ_parse_escape(void *context, const char *name, const char *s)
 {
 	_HZEncodingInfo *ei;
 	escape_t *escape;
@@ -664,7 +664,7 @@ _citrus_HZ_parse_escape(void **context, const char *name, const char *s)
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(s != NULL);
 
-	ei = (_HZEncodingInfo *)*context;
+	ei = (_HZEncodingInfo *)context;
 	escape = malloc(sizeof(*escape));
 	if (escape == NULL)
 		return EINVAL;

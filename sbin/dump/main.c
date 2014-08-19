@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.69.2.1 2013/06/23 06:28:50 tls Exp $	*/
+/*	$NetBSD: main.c,v 1.69.2.2 2014/08/20 00:02:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.69.2.1 2013/06/23 06:28:50 tls Exp $");
+__RCSID("$NetBSD: main.c,v 1.69.2.2 2014/08/20 00:02:24 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -280,22 +280,20 @@ main(int argc, char *argv[])
 	dirc = 0;
 	for (i = 0; i < argc; i++) {
 		struct stat sb;
+		int error;
 
-		if (lstat(argv[i], &sb) == -1)
-			quit("Cannot stat %s: %s\n", argv[i], strerror(errno));
-		if (Fflag || S_ISCHR(sb.st_mode) || S_ISBLK(sb.st_mode)) {
+		error = lstat(argv[i], &sb);
+		if (Fflag || (!error && (S_ISCHR(sb.st_mode) || S_ISBLK(sb.st_mode)))) {
+			if (error)
+				quit("Cannot stat %s: %s\n", argv[i], strerror(errno));
 			disk = argv[i];
  multicheck:
 			if (dirc != 0)
-				quit(
-	"Can't dump a disk or image at the same time as a file list\n");
+				quit("Can't dump a disk or image at the same time as a file list\n");
 			break;
 		}
 		if ((dt = fstabsearch(argv[i])) != NULL) {
-			if (getfsspecname(buf, sizeof(buf), dt->fs_spec)
-			    == NULL)
-				quit("%s (%s)", buf, strerror(errno));
-			disk = buf;
+			disk = argv[i];
 			mountpoint = xstrdup(dt->fs_file);
 			goto multicheck;
 		}
@@ -416,6 +414,7 @@ main(int argc, char *argv[])
 		    == NULL)
 			quit("Can't get disk raw name for `%s' (%s)",
 			    mntinfo->f_mntfromname, strerror(errno));
+		disk = rbuf;
 		mountpoint = mntinfo->f_mntonname;
 		msg("Found %s on %s in mount table\n", disk, mountpoint);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: blockio.S,v 1.5 2002/08/15 01:38:16 briggs Exp $	*/
+/*	$NetBSD: blockio.S,v 1.5.160.1 2014/08/20 00:02:44 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -48,7 +48,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: blockio.S,v 1.5 2002/08/15 01:38:16 briggs Exp $")
+RCSID("$NetBSD: blockio.S,v 1.5.160.1 2014/08/20 00:02:44 tls Exp $")
 
 /*
  * Read bytes from an I/O address into a block of memory
@@ -61,46 +61,47 @@ RCSID("$NetBSD: blockio.S,v 1.5 2002/08/15 01:38:16 briggs Exp $")
 /* This code will look very familiar if you've read _memcpy(). */
 ENTRY(read_multi_1)
 	mov	ip, sp
-	stmfd	sp!, {fp, ip, lr, pc}
+	push	{fp, ip, lr, pc}
 	sub	fp, ip, #4
 	subs	r2, r2, #4		/* r2 = length - 4 */
 	blt	.Lrm1_l4			/* less than 4 bytes */
-	ands	r12, r1, #3
+	ands	ip, r1, #3
 	beq	.Lrm1_main		/* aligned destination */
-	rsb	r12, r12, #4
-	cmp	r12, #2
+	rsb	ip, ip, #4
+	cmp	ip, #2
 	ldrb	r3, [r0]
 	strb	r3, [r1], #1
-	ldrgeb	r3, [r0]
-	strgeb	r3, [r1], #1
-	ldrgtb	r3, [r0]
-	strgtb	r3, [r1], #1
-	subs	r2, r2, r12
+	ldrbge	r3, [r0]
+	strbge	r3, [r1], #1
+	ldrbgt	r3, [r0]
+	strbgt	r3, [r1], #1
+	subs	r2, r2, ip
 	blt	.Lrm1_l4
 .Lrm1_main:
 .Lrm1loop:
 	ldrb	r3, [r0]
-	ldrb	r12, [r0]
-	orr	r3, r3, r12, lsl #8
-	ldrb	r12, [r0]
-	orr	r3, r3, r12, lsl #16
-	ldrb	r12, [r0]
-	orr	r3, r3, r12, lsl #24
+	ldrb	ip, [r0]
+	orr	r3, r3, ip, lsl #8
+	ldrb	ip, [r0]
+	orr	r3, r3, ip, lsl #16
+	ldrb	ip, [r0]
+	orr	r3, r3, ip, lsl #24
 	str	r3, [r1], #4
 	subs	r2, r2, #4
 	bge	.Lrm1loop
 .Lrm1_l4:
 	adds	r2, r2, #4			/* r2 = length again */
-	ldmeqdb	fp, {fp, sp, pc}
-	moveq	pc, r14
+	ldmdbeq	fp, {fp, sp, pc}
+	RETc(eq)				/* ??? not needed */
 	cmp	r2, #2
 	ldrb	r3, [r0]
 	strb	r3, [r1], #1
-	ldrgeb	r3, [r0]
-	strgeb	r3, [r1], #1
-	ldrgtb	r3, [r0]
-	strgtb	r3, [r1], #1
+	ldrbge	r3, [r0]
+	strbge	r3, [r1], #1
+	ldrbgt	r3, [r0]
+	strbgt	r3, [r1], #1
 	ldmdb	fp, {fp, sp, pc}
+END(read_multi_1)
 
 /*
  * Write bytes to an I/O address from a block of memory
@@ -113,21 +114,21 @@ ENTRY(read_multi_1)
 /* This code will look very familiar if you've read _memcpy(). */
 ENTRY(write_multi_1)
 	mov	ip, sp
-	stmfd	sp!, {fp, ip, lr, pc}
+	push	{fp, ip, lr, pc}
 	sub	fp, ip, #4
 	subs	r2, r2, #4		/* r2 = length - 4 */
 	blt	.Lwm1_l4		/* less than 4 bytes */
-	ands	r12, r1, #3
+	ands	ip, r1, #3
 	beq	.Lwm1_main		/* aligned source */
-	rsb	r12, r12, #4
-	cmp	r12, #2
+	rsb	ip, ip, #4
+	cmp	ip, #2
 	ldrb	r3, [r1], #1
 	strb	r3, [r0]
-	ldrgeb	r3, [r1], #1
-	strgeb	r3, [r0]
-	ldrgtb	r3, [r1], #1
-	strgtb	r3, [r0]
-	subs	r2, r2, r12
+	ldrbge	r3, [r1], #1
+	strbge	r3, [r0]
+	ldrbgt	r3, [r1], #1
+	strbgt	r3, [r0]
+	subs	r2, r2, ip
 	blt	.Lwm1_l4
 .Lwm1_main:
 .Lwm1loop:
@@ -143,15 +144,16 @@ ENTRY(write_multi_1)
 	bge	.Lwm1loop
 .Lwm1_l4:
 	adds	r2, r2, #4			/* r2 = length again */
-	ldmeqdb	fp, {fp, sp, pc}
+	ldmdbeq	fp, {fp, sp, pc}
 	cmp	r2, #2
 	ldrb	r3, [r1], #1
 	strb	r3, [r0]
-	ldrgeb	r3, [r1], #1
-	strgeb	r3, [r0]
-	ldrgtb	r3, [r1], #1
-	strgtb	r3, [r0]
+	ldrbge	r3, [r1], #1
+	strbge	r3, [r0]
+	ldrbgt	r3, [r1], #1
+	strbgt	r3, [r0]
 	ldmdb	fp, {fp, sp, pc}
+END(write_multi_1)
 
 /*
  * Reads short ints (16 bits) from an I/O address into a block of memory
@@ -164,7 +166,7 @@ ENTRY(write_multi_1)
 ENTRY(insw)
 /* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
-	movle	pc, lr
+	RETc(le)
 
 /* If the destination address and the size is word aligned, do it fast */
 
@@ -182,7 +184,7 @@ ENTRY(insw)
 	strb	r3, [r1], #0x0001
 	bgt	.Linswloop
 
-	mov	pc, lr
+	RET
 
 /* Word aligned insw */
 
@@ -198,7 +200,8 @@ ENTRY(insw)
 	subs	r2, r2, #0x00000002	/* Next */
 	bgt	.Lfastinswloop
 
-	mov	pc, lr
+	RET
+END(insw)
 
 
 /*
@@ -212,7 +215,7 @@ ENTRY(insw)
 ENTRY(outsw)
 /* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
-	movle	pc, lr
+	RETc(le)
 
 /* If the destination address and the size is word aligned, do it fast */
 
@@ -231,7 +234,7 @@ ENTRY(outsw)
 	str	r3, [r0]
 	bgt	.Loutswloop
 
-	mov	pc, lr
+	RET
 
 /* Word aligned outsw */
 
@@ -259,7 +262,8 @@ ENTRY(outsw)
 
 	bgt	.Lfastoutswloop
 
-	mov	pc, lr
+	RET
+END(outsw)
 
 /*
  * reads short ints (16 bits) from an I/O address into a block of memory
@@ -274,7 +278,7 @@ ENTRY(outsw)
 ENTRY(insw16)
 /* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
-	movle	pc, lr
+	RETc(le)
 
 /* If the destination address is word aligned and the size suitably
    aligned, do it fast */
@@ -286,7 +290,7 @@ ENTRY(insw16)
 
 /* Word aligned insw */
 
-	stmfd	sp!, {r4,r5,lr}
+	push	{r4,r5,lr}
 
 .Linsw16loop:
 	ldr	r3, [r0, #0x0002]	/* take advantage of nonaligned
@@ -317,7 +321,8 @@ ENTRY(insw16)
 	subs	r2, r2, #0x00000008	/* Next */
 	bgt	.Linsw16loop
 
-	ldmfd	sp!, {r4,r5,pc}		/* Restore regs and go home */
+	pop	{r4,r5,pc}		/* Restore regs and go home */
+END(insw16)
 
 
 /*
@@ -331,7 +336,7 @@ ENTRY(insw16)
 ENTRY(outsw16)
 /* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
-	movle	pc, lr
+	RETc(le)
 
 /* If the destination address is word aligned and the size suitably
    aligned, do it fast */
@@ -343,7 +348,7 @@ ENTRY(outsw16)
 
 /* Word aligned outsw */
 
-	stmfd	sp!, {r4,r5,lr}
+	push	{r4,r5,lr}
 
 .Loutsw16loop:
 	ldmia	r1!, {r4,r5,ip,lr}
@@ -384,7 +389,8 @@ ENTRY(outsw16)
 	subs	r2, r2, #0x00000008
 	bgt	.Loutsw16loop
 
-	ldmfd	sp!, {r4,r5,pc}		/* and go home */
+	pop	{r4,r5,pc}		/* and go home */
+END(outsw16)
 
 /*
  * reads short ints (16 bits) from an I/O address into a block of memory
@@ -400,7 +406,7 @@ ENTRY(outsw16)
 ENTRY(inswm8)
 /* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
-	movle	pc, lr
+	RETc(le)
 
 /* If the destination address is word aligned and the size suitably
    aligned, do it fast */
@@ -411,7 +417,7 @@ ENTRY(inswm8)
 
 /* Word aligned insw */
 
-	stmfd	sp!, {r4-r9,lr}
+	push	{r4-r9,lr}
 
 	mov	lr, #0xff000000
 	orr	lr, lr, #0x00ff0000
@@ -480,7 +486,8 @@ ENTRY(inswm8)
 
 
 .Linswm8_l1:
-	ldmfd	sp!, {r4-r9,pc}		/* And go home */
+	pop	{r4-r9,pc}		/* And go home */
+END(inswm8)
 
 /*
  * write short ints (16 bits) to an I/O address from a block of memory
@@ -496,7 +503,7 @@ ENTRY(inswm8)
 ENTRY(outswm8)
 /* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
-	movle	pc, lr
+	RETc(le)
 
 /* If the destination address is word aligned and the size suitably
    aligned, do it fast */
@@ -507,7 +514,7 @@ ENTRY(outswm8)
 
 /* Word aligned outsw */
 
-	stmfd	sp!, {r4-r8,lr}
+	push	{r4-r8,lr}
 
 .Loutswm8_loop8:
 	cmp	r2, #8
@@ -584,4 +591,5 @@ ENTRY(outswm8)
 	str	r3, [r0]
 
 .Loutswm8_l1:
-	ldmfd	sp!, {r4-r8,pc}		/* And go home */
+	pop	{r4-r8,pc}		/* And go home */
+END(outswm8)

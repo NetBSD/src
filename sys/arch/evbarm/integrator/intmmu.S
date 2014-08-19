@@ -1,4 +1,4 @@
-/*	$NetBSD: intmmu.S,v 1.11 2011/01/31 06:28:03 matt Exp $ */
+/*	$NetBSD: intmmu.S,v 1.11.14.1 2014/08/20 00:02:54 tls Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -182,7 +182,7 @@ Lstart:	.long	start
 Lmsg:
 	ldrb	r2, [r0], #1
 	cmp	r2, #0
-	strneb	r2, [r6]
+	strbne	r2, [r6]
 Lwait:
 	ldrb	r3, [r6, #0x18]
 	tst	r3, #0x80

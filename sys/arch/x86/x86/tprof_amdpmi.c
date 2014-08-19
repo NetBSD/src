@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_amdpmi.c,v 1.3 2011/02/05 14:04:40 yamt Exp $	*/
+/*	$NetBSD: tprof_amdpmi.c,v 1.3.14.1 2014/08/20 00:03:29 tls Exp $	*/
 
 /*-
  * Copyright (c)2008,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.3 2011/02/05 14:04:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.3.14.1 2014/08/20 00:03:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,8 +178,7 @@ tprof_amdpmi_start(tprof_backend_cookie_t *cookie)
 	uint64_t xc;
 
 	if (!(cpu_vendor == CPUVENDOR_AMD) ||
-	    CPUID2FAMILY(ci->ci_signature) +
-	    CPUID2EXTFAMILY(ci->ci_signature) != 0xf) { /* XXX */
+	    CPUID_TO_FAMILY(ci->ci_signature) != 0xf) { /* XXX */
 		return ENOTSUP;
 	}
 

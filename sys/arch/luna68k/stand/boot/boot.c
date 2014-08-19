@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2.6.3 2013/06/23 06:20:07 tls Exp $	*/
+/*	$NetBSD: boot.c,v 1.2.6.4 2014/08/20 00:03:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -76,135 +76,75 @@
  */
 
 #include <sys/param.h>
+#include <sys/boot_flag.h>
 #include <sys/reboot.h>
 #include <sys/exec.h>
 #include <luna68k/stand/boot/samachdep.h>
-#include <luna68k/stand/boot/stinger.h>
 #include <luna68k/stand/boot/status.h>
 #include <lib/libsa/loadfile.h>
-
-int howto;
-
-static int get_boot_device(const char *, int *, int *, int *);
-
-struct exec header;
-
-char *how_to_info[] = {
-	"RB_ASKNAME	ask for file name to reboot from",
-	"RB_SINGLE	reboot to single user only",
-	"RB_NOSYNC	dont sync before reboot",
-	"RB_HALT	don't reboot, just halt",
-	"RB_INITNAME	name given for /etc/init (unused)",
-	"RB_DFLTROOT	use compiled-in rootdev",
-	"RB_KDB		give control to kernel debugger",
-	"RB_RDONLY	mount root fs read-only"
-};
-
-int
-how_to_boot(int argc, char *argv[])
-{
-	int i, h = howto;
-
-	if (argc < 2) {
-		printf("howto: 0x%s\n\n", hexstr(howto, 2));
-
-		if (h == 0) {
-			printf("\t%s\n", "RB_AUTOBOOT	flags for system auto-booting itself");
-		} else {
-			for (i = 0; i < 8; i++, h >>= 1) {
-				if (h & 0x01) {
-					printf("\t%s\n", how_to_info[i]);
-				}
-			}
-		}
-
-		printf("\n");
-	}
-	return ST_NORMAL;
-}
-
-int
-get_boot_device(const char *s, int *devp, int *unitp, int *partp)
-{
-	const char *p = s;
-	int unit, part;
-
-	while (*p != '(') {
-		if (*p == '\0')
-			goto error;
-		p++;
-	}
-
-	while (*++p != ',') {
-		if (*p == '\0')
-			goto error;
-		if (*p >= '0' && *p <= '9')
-			unit = (unit * 10) + (*p - '0');
-	}
-
-	while (*++p != ')') {
-		if (*p == '\0')
-			goto error;
-		if (*p >= '0' && *p <= '9')
-			part = (part * 10) + (*p - '0');
-	}
-
-	*devp  = 0;	/* XXX not yet */
-	*unitp = unit;	/* XXX should pass SCSI ID, not logical unit number */
-	*partp = part;
-
-	return 0;
-
-error:
-	return -1;
-}
 
 int
 boot(int argc, char *argv[])
 {
-	char *line;
+	char *line, *opts;
+	int i, howto;
+	char c;
 
-	if (argc < 2)
+	line = NULL;
+	howto = 0;
+	for (i = 1; i < argc; i++) {
+		if (argv[i][0] == '-') {
+			opts = argv[i];
+			while ((c = *++opts) && c != '\0')
+				BOOT_FLAG(c, howto);
+		} else if (line == NULL)
+			line = argv[i];
+	}
+	if (line == NULL)
 		line = default_file;
-	else
-		line = argv[1];
 
-	printf("Booting %s\n", line);
+	printf("Booting %s", line);
+	if (howto != 0)
+		printf(" (howto 0x%x)", howto);
+	printf("\n");
 
-	return bootnetbsd(line);
+	return bootnetbsd(line, howto);
 }
 
 int
-bootnetbsd(char *line)
+bootnetbsd(char *line, int howto)
 {
 	int io;
-	int dev, unit, part;
 	u_long marks[MARK_MAX];
-	void (*entry)(void);
-
-	if (get_boot_device(line, &dev, &unit, &part) != 0) {
-		printf("Bad file name %s\n", line);
-		return ST_ERROR;
-	}
 
 	/* Note marks[MARK_START] is passed as an load address offset */
 	memset(marks, 0, sizeof(marks));
 
 	io = loadfile(line, marks, LOAD_KERNEL);
 	if (io >= 0) {
+		int dev = 0, unit = 0, part = 0;
+		uint adpt, ctlr, id;
+		uint32_t bootdev;
+
+		make_device(line, &dev, &unit, &part, NULL);
+		adpt = dev2adpt[dev];
+		ctlr = CTLR(unit);
+		id   = TARGET(unit);
+		bootdev = MAKEBOOTDEV(0, adpt, ctlr, id, part);
 #ifdef DEBUG
 		printf("entry = 0x%lx\n", marks[MARK_ENTRY]);
 		printf("ssym  = 0x%lx\n", marks[MARK_SYM]);
 		printf("esym  = 0x%lx\n", marks[MARK_END]);
 #endif
-
-		/*
-		 * XXX TODO: fill bootinfo about symbols, boot device etc.
-		 */
-
-		entry = (void *)marks[MARK_ENTRY];
-
-		(*entry)();
+		__asm volatile (
+			"movl	%0,%%d7;"
+			"movl	%1,%%d6;"
+			"movl	%2,%%a0;"
+			"jbsr	%%a0@"
+			:
+			: "g" (howto), "g" (bootdev),
+			  "g" ((void *)marks[MARK_ENTRY])
+			: "d6", "d7", "a0");
 	}
 	printf("Booting kernel failed. (%s)\n", strerror(errno));
 

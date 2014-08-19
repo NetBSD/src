@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74.2.1 2013/02/25 00:28:19 tls Exp $	*/
+/*	$NetBSD: trap.c,v 1.74.2.2 2014/08/20 00:02:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.74.2.1 2013/02/25 00:28:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.74.2.2 2014/08/20 00:02:42 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.74.2.1 2013/02/25 00:28:19 tls Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpufunc.h>
-#include <machine/fpu.h>
+#include <x86/fpu.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
@@ -210,6 +210,10 @@ trap_print(const struct trapframe *frame, const lwp_t *l)
  * that prepare a suitable stack frame, and restore this frame after the
  * exception has been processed. Note that the effect is as if the arguments
  * were passed call by reference.
+ *
+ * Note that the fpu traps (07 T_DNA, 10 T_ARITHTRAP and 13 T_XMM)
+ * jump directly into the code in x86/fpu.c so they get processed
+ * without interrupts being enabled.
  */
 void
 trap(struct trapframe *frame)
@@ -445,9 +449,6 @@ kernelfault:
 		}
 		goto trapsignal;
 
-	case T_ARITHTRAP|T_USER:
-	case T_XMM|T_USER:
-		/* Already handled by fputrap(), fall through. */
 	case T_ASTFLT|T_USER:
 		/* Allow process switch. */
 		//curcpu()->ci_data.cpu_nast++;
@@ -460,18 +461,6 @@ kernelfault:
 			preempt();
 		}
 		goto out;
-
-#if 0 /* handled by fpudna() */
-	case T_DNA|T_USER: {
-		printf("pid %d.%d killed due to lack of floating point\n",
-		    p->p_pid, l->l_lid);
-		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGKILL;
-		ksi.ksi_trap = type & ~T_USER;
-		ksi.ksi_addr = (void *)frame->tf_rip;
-		goto trapsignal;
-	}
-#endif
 
 	case T_BOUND|T_USER:
 	case T_OFLOW|T_USER:
@@ -716,7 +705,7 @@ startlwp(void *arg)
 {
 	ucontext_t *uc = arg;
 	lwp_t *l = curlwp;
-	int error;
+	int error __diagused;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);

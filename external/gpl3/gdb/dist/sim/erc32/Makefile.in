@@ -1,6 +1,5 @@
 #    Makefile template for Configure for the erc32sim library.
-#    Copyright (C) 1993, 1996, 1997, 2007, 2008, 2009, 2010, 2011
-#    Free Software Foundation, Inc.
+#    Copyright (C) 1993-2014 Free Software Foundation, Inc.
 #    Written by Cygnus Support
 #    Modified by J.Gaisler ESA/ESTEC
 # 
@@ -46,7 +45,7 @@ sis: sis.o $(SIS_OFILES) $(COMMON_OBJS) $(LIBDEPS)
 # There is AC_C_BIGENDIAN but it doesn't handle float endianness.
 # [Are int/float endians every different on a sparc?]
 end: $(srcdir)/end.c
-	$(CC_FOR_BUILD) $(srcdir)/end.c -o end
+	$(CC_FOR_BUILD) -I. $(srcdir)/end.c -o end
 end.h: end
 	./end > end.h
 

@@ -24,6 +24,7 @@
 #include "bfd.h"
 #include "libbfd.h"
 #include "libiberty.h"
+#include "mach-o/x86-64.h"
 
 #define bfd_mach_o_object_p bfd_mach_o_x86_64_object_p
 #define bfd_mach_o_core_p bfd_mach_o_x86_64_core_p
@@ -51,11 +52,11 @@ bfd_mach_o_x86_64_mkobject (bfd *abfd)
     return FALSE;
 
   mdata = bfd_mach_o_get_data (abfd);
-  mdata->header.magic = BFD_MACH_O_MH_MAGIC;
+  mdata->header.magic = BFD_MACH_O_MH_MAGIC_64;
   mdata->header.cputype = BFD_MACH_O_CPU_TYPE_X86_64;
   mdata->header.cpusubtype = BFD_MACH_O_CPU_SUBTYPE_X86_ALL;
   mdata->header.byteorder = BFD_ENDIAN_LITTLE;
-  mdata->header.version = 1;
+  mdata->header.version = 2;
 
   return TRUE;
 }
@@ -220,26 +221,76 @@ static bfd_boolean
 bfd_mach_o_x86_64_swap_reloc_out (arelent *rel, bfd_mach_o_reloc_info *rinfo)
 {
   rinfo->r_address = rel->address;
+  rinfo->r_scattered = 0;
   switch (rel->howto->type)
     {
-    case BFD_RELOC_64:
-      rinfo->r_scattered = 0;
+    case BFD_RELOC_32:
       rinfo->r_type = BFD_MACH_O_X86_64_RELOC_UNSIGNED;
       rinfo->r_pcrel = 0;
-      rinfo->r_length = rel->howto->size; /* Correct in practice.  */
-      if ((*rel->sym_ptr_ptr)->flags & BSF_SECTION_SYM)
-        {
-          rinfo->r_extern = 0;
-          rinfo->r_value = (*rel->sym_ptr_ptr)->section->target_index;
-        }
-      else
-        {
-          rinfo->r_extern = 1;
-          rinfo->r_value = (*rel->sym_ptr_ptr)->udata.i;
-        }
+      rinfo->r_length = 2;
+      break;
+    case BFD_RELOC_64:
+      rinfo->r_type = BFD_MACH_O_X86_64_RELOC_UNSIGNED;
+      rinfo->r_pcrel = 0;
+      rinfo->r_length = 3;
+      break;
+    case BFD_RELOC_32_PCREL:
+      rinfo->r_type = BFD_MACH_O_X86_64_RELOC_SIGNED;
+      rinfo->r_pcrel = 1;
+      rinfo->r_length = 2;
+      break;
+    case BFD_RELOC_MACH_O_X86_64_PCREL32_1:
+      rinfo->r_type = BFD_MACH_O_X86_64_RELOC_SIGNED_1;
+      rinfo->r_pcrel = 1;
+      rinfo->r_length = 2;
+      break;
+    case BFD_RELOC_MACH_O_X86_64_PCREL32_2:
+      rinfo->r_type = BFD_MACH_O_X86_64_RELOC_SIGNED_2;
+      rinfo->r_pcrel = 1;
+      rinfo->r_length = 2;
+      break;
+    case BFD_RELOC_MACH_O_X86_64_PCREL32_4:
+      rinfo->r_type = BFD_MACH_O_X86_64_RELOC_SIGNED_4;
+      rinfo->r_pcrel = 1;
+      rinfo->r_length = 2;
+      break;
+    case BFD_RELOC_MACH_O_X86_64_BRANCH32:
+      rinfo->r_type = BFD_MACH_O_X86_64_RELOC_BRANCH;
+      rinfo->r_pcrel = 1;
+      rinfo->r_length = 2;
+      break;
+    case BFD_RELOC_MACH_O_X86_64_SUBTRACTOR32:
+      rinfo->r_type = BFD_MACH_O_X86_64_RELOC_SUBTRACTOR;
+      rinfo->r_pcrel = 0;
+      rinfo->r_length = 2;
+      break;
+    case BFD_RELOC_MACH_O_X86_64_SUBTRACTOR64:
+      rinfo->r_type = BFD_MACH_O_X86_64_RELOC_SUBTRACTOR;
+      rinfo->r_pcrel = 0;
+      rinfo->r_length = 3;
+      break;
+    case BFD_RELOC_MACH_O_X86_64_GOT:
+      rinfo->r_type = BFD_MACH_O_X86_64_RELOC_GOT;
+      rinfo->r_pcrel = 1;
+      rinfo->r_length = 2;
+      break;
+    case BFD_RELOC_MACH_O_X86_64_GOT_LOAD:
+      rinfo->r_type = BFD_MACH_O_X86_64_RELOC_GOT_LOAD;
+      rinfo->r_pcrel = 1;
+      rinfo->r_length = 2;
       break;
     default:
       return FALSE;
+    }
+  if ((*rel->sym_ptr_ptr)->flags & BSF_SECTION_SYM)
+    {
+      rinfo->r_extern = 0;
+      rinfo->r_value = (*rel->sym_ptr_ptr)->section->target_index;
+    }
+  else
+    {
+      rinfo->r_extern = 1;
+      rinfo->r_value = (*rel->sym_ptr_ptr)->udata.i;
     }
   return TRUE;
 }
@@ -265,16 +316,46 @@ bfd_mach_o_x86_64_bfd_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
   return NULL;
 }
 
+static bfd_boolean
+bfd_mach_o_section_type_valid_for_x86_64 (unsigned long val)
+{
+  if (val == BFD_MACH_O_S_NON_LAZY_SYMBOL_POINTERS
+      || val == BFD_MACH_O_S_LAZY_SYMBOL_POINTERS
+      || val == BFD_MACH_O_S_SYMBOL_STUBS)
+    return FALSE;
+  return TRUE;
+}
+
+/* We want to bump the alignment of some sections.  */
+static const mach_o_section_name_xlat text_section_names_xlat[] =
+  {
+    {	".eh_frame",				"__eh_frame",
+	SEC_READONLY | SEC_DATA | SEC_LOAD,	BFD_MACH_O_S_COALESCED,
+	BFD_MACH_O_S_ATTR_LIVE_SUPPORT
+	| BFD_MACH_O_S_ATTR_STRIP_STATIC_SYMS
+	| BFD_MACH_O_S_ATTR_NO_TOC,		3},
+    { NULL, NULL, 0, 0, 0, 0}
+  };
+
+const mach_o_segment_name_xlat mach_o_x86_64_segsec_names_xlat[] =
+  {
+    { "__TEXT", text_section_names_xlat },
+    { NULL, NULL }
+  };
+
 #define bfd_mach_o_swap_reloc_in bfd_mach_o_x86_64_swap_reloc_in
 #define bfd_mach_o_swap_reloc_out bfd_mach_o_x86_64_swap_reloc_out
 
 #define bfd_mach_o_bfd_reloc_type_lookup bfd_mach_o_x86_64_bfd_reloc_type_lookup
 #define bfd_mach_o_bfd_reloc_name_lookup bfd_mach_o_x86_64_bfd_reloc_name_lookup
 #define bfd_mach_o_print_thread NULL
+#define bfd_mach_o_tgt_seg_table mach_o_x86_64_segsec_names_xlat
+#define bfd_mach_o_section_type_valid_for_tgt bfd_mach_o_section_type_valid_for_x86_64
 
 #define TARGET_NAME 		mach_o_x86_64_vec
 #define TARGET_STRING 		"mach-o-x86-64"
 #define TARGET_ARCHITECTURE	bfd_arch_i386
 #define TARGET_BIG_ENDIAN 	0
 #define TARGET_ARCHIVE 		0
+#define TARGET_PRIORITY		0
 #include "mach-o-target.c"

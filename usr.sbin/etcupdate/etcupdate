@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.51 2012/08/15 16:26:41 apb Exp $
+# $NetBSD: etcupdate,v 1.51.2.1 2014/08/20 00:05:07 tls Exp $
 #
 # Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -46,6 +46,8 @@ PATH="/sbin:/usr/sbin:/bin:/usr/bin:${PATH}"
 
 # Default settings
 PROG="${0##*/}"
+DESTDIR=""		# must not have a trailing slash
+DESTDIR_BRE=""		# basic regex to match ${DESTDIR}
 TEMPROOT="${TEMPROOT:=/tmp/temproot}"
 PAGER="${PAGER:=/usr/bin/more}"
 SWIDTH="$(stty size | awk '{w=$2}END{if(w==0){w=80}print w}')"
@@ -60,7 +62,7 @@ BINARYDIRMODE=false	# true for "-s extracted_dir"
 BINARYDIR=		# directory name for BINARYDIRMODE
 BINARYTGZMODE=false	# true for "-s etc.tgz"
 TGZLIST=		# quoted list list of files for BINARYTGZMODE
-SRC_ARGLIST=		# quoted list of one or more "-s" args
+SRC_ARGLIST=		# quoted list of "-s" args
 N_SRC_ARGS=0		# number of "-s" args
 AUTOMATIC=false
 LOCALSKIP=false
@@ -70,6 +72,7 @@ MACHINE_ARCH="${MACHINE_ARCH:="$(uname -p)"}"
 export MACHINE_ARCH
 
 # Settings for post-installation procedures
+NEED_ANYTHING=false
 NEED_MAKEDEV=false
 NEED_MTREE=false
 NEED_NEWALIASES=false
@@ -94,6 +97,7 @@ Options:
                * A temporary directory in which one or both of "etc.tgz"
                  and "xetc.tgz" have been extracted.
   -t temproot  Where to store temporary files  (default: /tmp/temproot)
+  -d destdir   Destination directory to check. (default: /)
   -w width     Screen width                    (default: 80)
   -a           Automatically update unmodified files
   -l           Automatically skip files with strictly local changes
@@ -134,38 +138,76 @@ yesno() {
 #    eval "set -- $quotedlist"
 # or like this:
 #    eval "\$command $quotedlist \$filename"
+#
 shell_quote()
-{
+{(
 	local result=''
-	local arg
+	local arg qarg
+	LC_COLLATE=C ; export LC_COLLATE # so [a-zA-Z0-9] works in ASCII
 	for arg in "$@" ; do
-		# Append a space if necessary
-		result="${result}${result:+ }"
-		# Convert each embedded ' to '\'',
-		# then insert ' at the beginning of the first line,
-		# and append ' at the end of the last line.
-		result="${result}$(printf "%s\n" "$arg" | \
-			sed -e "s/'/'\\\\''/g" -e "1s/^/'/" -e "\$s/\$/'/")"
+		case "${arg}" in
+		'')
+			qarg="''"
+			;;
+		*[!-./a-zA-Z0-9]*)
+			# Convert each embedded ' to '\'',
+			# then insert ' at the beginning of the first line,
+			# and append ' at the end of the last line.
+			# Finally, elide unnecessary '' pairs at the
+			# beginning and end of the result and as part of
+			# '\'''\'' sequences that result from multiple
+			# adjacent quotes in he input.
+			qarg="$(printf "%s\n" "$arg" | \
+			    ${SED:-sed} -e "s/'/'\\\\''/g" \
+				-e "1s/^/'/" -e "\$s/\$/'/" \
+				-e "1s/^''//" -e "\$s/''\$//" \
+				-e "s/'''/'/g"
+				)"
+			;;
+		*)
+			# Arg is not the empty string, and does not contain
+			# any unsafe characters.  Leave it unchanged for
+			# readability.
+			qarg="${arg}"
+			;;
+		esac
+		result="${result}${result:+ }${qarg}"
 	done
 	printf "%s\n" "$result"
+)}
+
+# Convert arg $1 to a basic regular expression (as in sed)
+# that will match the arg.  This works by inserting backslashes
+# before characters that are special in basic regular expressions.
+# It also inserts backslashes before the extra characters specified
+# in $2 (which defaults to "/,").
+# XXX: Does not handle embedded newlines.
+# Usage: regex="$(bre_quote "${string}")"
+bre_quote()
+{
+	local arg="$1"
+	local extra="${2-/,}"
+	printf "%s\n" "${arg}" | sed -e 's/[][^$.*\\'"${extra}"']/\\&/g'
 }
 
 install_dir() {
-	# $1 = target directory
+	# $1 = target directory (relative to ${DESTDIR})
 
-	if yesno "Create ${1}"; then
-		verbose "Creating ${1}"
-		mkdir -p "${1}" || exit 1
+	NEED_ANYTHING=true
+	if yesno "Create ${DESTDIR}${1}"; then
+		verbose "Creating ${DESTDIR}${1}"
+		mkdir -p "${DESTDIR}${1}" || exit 1
 		NEED_MTREE=true
 	fi
 }
 
 install_file() {
-	# $1 = target file
+	# $1 = target file (relative to ${DESTDIR})
 
+	NEED_ANYTHING=true
 	# Install the new file
-	verbose "Installing ${1}"
-	cp -p "${TEMPROOT}${1}" "${1}" && rm -f "${TEMPROOT}${1}"
+	verbose "Installing ${DESTDIR}${1}"
+	cp -p "${TEMPROOT}${1}" "${DESTDIR}${1}" && rm -f "${TEMPROOT}${1}"
 
 	# Check if this was a special file
 	case "${1}" in
@@ -188,14 +230,20 @@ install_file() {
 }
 
 install_checksum() {
-	# $1 = target file
+	# $1 = target file (relative to ${DESTDIR})
 
 	${AUTOMATIC} || return
 
+	NEED_ANYTHING=true
 	D="$(dirname "${1}")"
-	mkdir -p "/var/etcupdate/${D}"
-	verbose "Saving MD5 checksum for ${1} to /var/etcupdate/${1}"
-	md5 "${1}" > "/var/etcupdate/${1}"
+	mkdir -p "${DESTDIR}/var/etcupdate/${D}"
+	verbose "Saving MD5 checksum for ${DESTDIR}${1} to" \
+	    "${DESTDIR}/var/etcupdate/${1}"
+	# The sed part of the following pipeline changes things like
+	# "MD5 (/path/to/dest/dir/etc/filename) = abc123" to
+	# "MD5 (/etc/filename) = abc123".
+	md5 "${DESTDIR}${1}" | sed -e "s,(${DESTDIR_BRE},(," \
+	    > "${DESTDIR}/var/etcupdate/${1}"
 }
 
 # Initialise the DIFF_EXTRA_OPTIONS variable.
@@ -226,18 +274,18 @@ init_diff_extra_options() {
 }
 
 diff_and_merge_file() {
-	# $1 = target file
+	# $1 = target file (relative to ${DESTDIR})
 
-	if cmp -s "${TEMPROOT}${1}" "${1}"; then
+	if cmp -s "${TEMPROOT}${1}" "${DESTDIR}${1}"; then
 		verbose "===> ${1} (ok)"
 		rm -f "${TEMPROOT}${1}"
-		install_checksum "${1}"
+		install_checksum "${DESTDIR}${1}"
 		return
 	fi
 
-	if ${AUTOMATIC} && [ -f "/var/etcupdate/${1}" ]; then
+	if ${AUTOMATIC} && [ -f "${DESTDIR}/var/etcupdate/${1}" ]; then
 		SUM1="$(md5 "${1}")"
-		SUM2="$(cat "/var/etcupdate/${1}")"
+		SUM2="$(cat "${DESTDIR}/var/etcupdate/${1}")"
 		if [ "${SUM1}" = "${SUM2}" ]; then
 			install_file "${1}"
 			install_checksum "${1}"
@@ -248,7 +296,7 @@ diff_and_merge_file() {
 	if ${LOCALSKIP}; then
 		ID1="$(ident -q "${TEMPROOT}${1}" | sed -n 2p)"
 		ID1="${ID1:-0}"
-		ID2="$(ident -q "${1}" | sed -n 2p)"
+		ID2="$(ident -q "${DESTDIR}${1}" | sed -n 2p)"
 		ID2="${ID2:-1}"
 		if [ "${ID1}" = "${ID2}" ]; then
 			verbose "===> ${1} (ok:RCS)"
@@ -258,14 +306,14 @@ diff_and_merge_file() {
 	fi
 
 	clear
-	if [ ! -f "${1}" ]; then
-		verbose "===> ${1} (missing)"
+	if [ ! -f "${DESTDIR}${1}" ]; then
+		verbose "===> ${DESTDIR}${1} (missing)"
 		DOES_EXIST=false
 	else
-		verbose "===> ${1} (modified)"
+		verbose "===> ${DESTDIR}${1} (modified)"
 		verbose ""
 		DOES_EXIST=true
-		diff -u "${1}" "${TEMPROOT}${1}" | ${PAGER}
+		diff -u "${DESTDIR}${1}" "${TEMPROOT}${1}" | ${PAGER}
 	fi
 
 	STAY_HERE=true
@@ -282,8 +330,8 @@ diff_and_merge_file() {
 		# Ask the user if (s)he wants to install the new
 		# version or perform a more complicated manual work.
 		echo ""
-		echo -n "File: ${1}"
-		if [ ! -f "${1}" ]; then
+		echo -n "File: ${DESTDIR}${1}"
+		if [ ! -f "${DESTDIR}${1}" ]; then
 			echo -n " (missing)"
 		else
 			echo -n " (modified)"
@@ -344,7 +392,7 @@ EOF
 			sdiff -o "${TEMPROOT}${1}.merged"	\
 				--width=${WIDTH}		\
 				--suppress-common-lines --text	\
-				"${1}" "${TEMPROOT}${1}"
+				"${DESTDIR}${1}" "${TEMPROOT}${1}"
 			mv -f "${TEMPROOT}${1}.merged" "${TEMPROOT}${1}"
 			ALREADY_MERGED=true
 			;;
@@ -358,7 +406,8 @@ EOF
 			[sS]w)	DIFF_COMMAND="wdiff -n -l" ;;
 			[sS]*)	DIFF_COMMAND="${ANSWER#?}" ;;
 			esac
-			${DIFF_COMMAND} "${1}" "${TEMPROOT}${1}" | ${PAGER}
+			${DIFF_COMMAND} "${DESTDIR}${1}" "${TEMPROOT}${1}" \
+				| ${PAGER}
 			;;
 		[uU])
 			if [ -f "${B}" ]; then
@@ -378,7 +427,7 @@ EOF
 			;;
 		esac
 	done
-	rm -f "._etcupdate_${TEMPROOT}${1}"
+	rm -f "$B"
 }
 
 # Set the environment for make.
@@ -412,11 +461,14 @@ USERRC="${HOME}/.{PROG}rc"
 [ -r ${USERRC} ] && . ${USERRC}
 
 # Read command line arguments
-while getopts ahlp:s:t:vw: i
+while getopts ad:hlp:s:t:vw: i
 do
 	case "${i}" in
 	a)
 		AUTOMATIC=true
+		;;
+	d)
+		DESTDIR="${OPTARG}"
 		;;
 	h)
 		usage
@@ -447,7 +499,7 @@ do
 			# arg refers to a source directory
 			SOURCEMODE=true
 			SRCDIR="${arg}"
-		elif [ -d "${arg}" ] && [ -d "${ARG}/etc" ] \
+		elif [ -d "${arg}" ] && [ -d "${arg}/etc" ] \
 			&& ! [ -f "${arg}/etc/Makefile" ]
 		then
 			# arg refers to a directory where the
@@ -456,7 +508,8 @@ do
 			BINARYDIRMODE=true
 			BINARYDIR="${arg}"
 		else
-			echo "*** Nonexistent file or directory for -s ${arg}"
+			echo "*** Nonexistent or invalid file or directory" \
+			     "for -s ${arg}"
 			usage
 		fi
 		;;
@@ -482,10 +535,19 @@ if [ "$(id -u)" -ne 0 ]; then
 	echo "*** ERROR: You MUST be root"
 	exit 1
 fi
+DESTDIR="${DESTDIR%/}" # remove trailing slash, if any.  result might be "".
+DESTDIR_BRE="$(bre_quote "${DESTDIR}")"
 if [ "${N_SRC_ARGS}" -gt 1 ] && ( ${SOURCEMODE} || ${BINARYDIRMODE} ); then
 	echo "*** ERROR: Multiple -s args are allowed only with tgz files"
 	usage
 fi
+case "${TEMPROOT}" in
+/*) : OK ;;
+*)  new="${PWD:-$(pwd)}/${TEMPROOT}"
+    echo "*** NOTE: Using TEMPROOT \"${new}\" instead of \"${TEMPROOT}\""
+    TEMPROOT="${new}"
+    ;;
+esac
 if ${BINARYDIRMODE}; then
 	SRCDIR="${TEMPROOT}"
 fi
@@ -540,10 +602,24 @@ if ! ${CONTINUE}; then
 			[ $? -ne 0 ] && exit 1
 		done
 	elif ${BINARYDIRMODE}; then
-		# Populate ${TEMPROOT} from ${SRCDIR} by copying
+		# Populate ${TEMPROOT} from ${SRCDIR} by copying.
+		# Copy only the files that belong to the etc and xetc sets.
 		echo "*** Populating ${TEMPROOT} from ${BINARYDIR} (copying)"
-		cp -RPp "${BINARYDIR}"/* "${TEMPROOT}"/
-		[ $? -ne 0 ] && exit 1
+		for setname in etc xetc; do
+			mtreefile="${BINARYDIR}/etc/mtree/set.${setname}"
+			if ${VERBOSE}; then vflag="-v"; else vflag=""; fi
+			if [ -f "${mtreefile}" ]; then
+				echo "*** Copying files belonging to" \
+				     "${setname} set"
+				(cd "${BINARYDIR}" \
+				 && pax -rwdM ${vflag} "${TEMPROOT%/}/."
+				) <"${mtreefile}"
+				[ $? -ne 0 ] && exit 1
+			else
+				echo "*** Not copying files belonging to" \
+				     "${setname} set: ${mtreefile} not found"
+			fi
+		done
 	elif ${SOURCEMODE}; then
 		# Populate ${TEMPROOT} from ${SRCDIR} by running make
 		if [ ! -f "${SRCDIR}/etc/Makefile" ]; then
@@ -615,6 +691,10 @@ if [ ! -z "${REMAINING}" ]; then
 	echo ""
 	echo "${REMAINING}" | sed -e 's/^/  /'
 	echo ""
+elif ! ${NEED_ANYTHING}; then
+	echo ""
+	echo "*** No changes were needed"
+	echo ""
 fi
 if yesno "Remove ${TEMPROOT}"; then
 	echo "*** Removing ${TEMPROOT}"
@@ -637,38 +717,46 @@ fi
 
 # Do some post-installation tasks
 if ${NEED_PWD_MKDB}; then
+	pwd_mkdb_cmd="$(shell_quote \
+	    pwd_mkdb ${DESTDIR:+-d "${DESTDIR}"} \
+	    -p "${DESTDIR}/etc/master.passwd")"
 	if yesno "Do you want to rebuild the password databases from the" \
-	         "new master.passwd"
+	         "new ${DESTDIR}/etc/master.passwd"
 	then
 		verbose "Running pwd_mkdb"
-		pwd_mkdb -p "/etc/master.passwd"
+		eval "${pwd_mkdb_cmd}"
 	else
 		echo ""
 		echo "*** You MUST rebuild the password databases to make" \
 		     "the changes visible"
-		echo "*** This is done by running \"pwd_mkdb -p" \
-		     "/etc/master.passwd\" as root"
+		echo "*** This is done by running \"${pwd_mkdb_cmd}\" as root"
 		echo ""
 	fi
 fi
 
 if ! ${NEED_SERVICES_MKDB}; then
-	if test -e /var/db/services.db -a ! -e /var/db/services.cdb; then
+	if test -e "${DESTDIR}/var/db/services.db" \
+	   -a ! -e "${DESTDIR}/var/db/services.cdb"
+	then
 		NEED_SERVICES_MKDB=true
 	fi
 fi
 
 if ${NEED_SERVICES_MKDB}; then
+	services_mkdb_cmd="$(shell_quote services_mkdb -V cdb \
+	    -o "${DESTDIR}/var/db/services.cdb" \
+	    "${DESTDIR}/etc/services")"
 	if yesno "Do you want to rebuild the services databases from the" \
-	         "new /etc/services"
+	         "new ${DESTDIR}/etc/services"
 	then
 		verbose "Running services_mkdb"
-		services_mkdb
+		eval "${services_mkdb_cmd}"
 	else
 		echo ""
 		echo "*** You SHOULD rebuild the services databases to make" \
 		     "the changes visible"
-		echo "*** This is done by running \"services_mkdb\" as root"
+		echo "*** This is done by running \"${services_mkdb_cmd}\"" \
+		     "as root"
 		echo ""
 	fi
 fi
@@ -676,35 +764,57 @@ if ${NEED_MTREE}; then
 	if yesno "You have created new directories. Run mtree to set" \
 	         "permissions"
 	then
-		(cd / && mtree -Udef /etc/mtree/NetBSD.dist)
+		(cd "${DESTDIR:-/}" && \
+		    mtree -Udef "${DESTDIR}/etc/mtree/NetBSD.dist")
 	fi
 fi
 if ${NEED_MAKEDEV}; then
-	if yesno "Do you want to rebuild the device nodes in /dev"; then
+	makedev_cmd="($(shell_quote cd "${DESTDIR}/dev") && ./MAKEDEV all)"
+	if yesno "Do you want to rebuild the device nodes in ${DESTDIR}/dev"
+	then
 		verbose "Running MAKEDEV in /dev"
-		(cd "/dev" && ./MAKEDEV all)
+		eval "${makedev_cmd}"
 	else
 		echo ""
-		echo "*** You SHOULD rebuild the device nodes in /dev"
-		echo "*** This is done by running \"(cd /dev &&" \
-		     "./MAKEDEV all)\" as root".
+		echo "*** You SHOULD rebuild the device nodes in" \
+		     "${DESTDIR}/dev"
+		echo "*** This is done by running \"${makedev_cmd}\" as root."
 		echo ""
 	fi
 fi
 if ${NEED_NEWALIASES}; then
-	if yesno "Do you want to rebuild the mail alias database"; then
+	newaliases_cmd="newaliases"
+	# XXX newaliases doesn't work with DESTDIR.
+	# We could check whether the system configuration is
+	# sufficiently standard, and then run postalias(1) with the
+	# right args to make it work, but changes to /etc/mail/aliases
+	# are so rare that it doesn't seem worth the effort of checking
+	# that the system's mail configuration is standard.
+	if [ -z "${DESTDIR}" ] && \
+	    yesno "Do you want to rebuild the mail alias database"
+	then
 		verbose "Running newaliases"
-		newaliases
+		eval "${newaliases_cmd}"
 	else
 		echo ""
 		echo "*** You MUST rebuild the mail alias database to make" \
 		     "the changes visible"
-		echo "*** This is done by running \"newaliases\" as root"
+		echo "*** This is done by running \"${newaliases_cmd}\" as root"
+		if [ -n "${DESTDIR}" ]; then
+		    postalias_cmd="$(shell_quote \
+			postalias "hash:${DESTDIR}/etc/mail/aliases")"
+		    echo "*** but it won't work with DESTDIR=${DESTDIR}."
+		    echo "*** If you use postfix(1) with the default" \
+			 "configuration, then you can try"
+		    echo "*** running \"${postalias_cmd}\" as root."
+		fi
 		echo ""
 	fi
 fi
-if [ -x /usr/sbin/postinstall ]; then
-	echo "*** Running /usr/sbin/postinstall"
-	eval "/usr/sbin/postinstall ${SRC_ARGLIST} check"
+if [ -x "${DESTDIR}/usr/sbin/postinstall" ]; then
+	postinstall_cmd="$(shell_quote "${DESTDIR}/usr/sbin/postinstall" \
+	    ${DESTDIR:+-d "${DESTDIR}"}) ${SRC_ARGLIST} check"
+	echo "*** Running ${DESTDIR}/usr/sbin/postinstall"
+	eval "${postinstall_cmd}"
 fi
 echo "*** All done"

@@ -1,6 +1,5 @@
-#	$NetBSD: shlib_version,v 1.5.8.1 2013/06/23 06:28:43 tls Exp $
+#	$NetBSD: shlib_version,v 1.5.8.2 2014/08/20 00:00:11 tls Exp $
 #
-# XXX XXX XXX netbsd xsrc xfree 4.5 freetype used "major=9"!
-#
-major=7
-minor=4
+major=17
+minor=2
+teeny=11

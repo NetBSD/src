@@ -1,9 +1,15 @@
-#	$NetBSD: files.hpcmips,v 1.106.12.1 2012/11/20 03:01:22 tls Exp $
+#	$NetBSD: files.hpcmips,v 1.106.12.2 2014/08/20 00:03:03 tls Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
 
 maxusers 2 8 64
+
+#
+# Stack-less Just-In-Time compiler
+#
+
+include	"external/bsd/sljit/conf/files.sljit"
 
 #
 # Machine-independent I2O drivers.

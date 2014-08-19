@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffwr.c,v 1.33 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_dagffwr.c,v 1.33.98.1 2014/08/20 00:03:49 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.33 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.33.98.1 2014/08/20 00:03:49 tls Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -167,7 +167,10 @@ rf_CommonCreateLargeWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			     int allowBufferRecycle)
 {
 	RF_DagNode_t *wndNodes, *rodNodes, *xorNode, *wnpNode, *tmpNode;
-	RF_DagNode_t *wnqNode, *blockNode, *commitNode, *termNode;
+	RF_DagNode_t *blockNode, *commitNode, *termNode;
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
+	RF_DagNode_t *wnqNode;
+#endif
 	int     nWndNodes, nRodNodes, i, nodeNum, asmNum;
 	RF_AccessStripeMapHeader_t *new_asm_h[2];
 	RF_StripeNum_t parityStripeID;
@@ -226,9 +229,7 @@ rf_CommonCreateLargeWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	if (nfaults == 2) {
 		wnqNode = rf_AllocDAGNode();
 	} else {
-#endif
 		wnqNode = NULL;
-#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	}
 #endif
 	rf_MapUnaccessedPortionOfStripe(raidPtr, layoutPtr, asmap, dag_h,
@@ -524,23 +525,24 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			     const RF_RedFuncs_t *pfuncs,
 			     const RF_RedFuncs_t *qfuncs)
 {
-	RF_DagNode_t *readDataNodes, *readParityNodes, *readQNodes, *termNode;
+	RF_DagNode_t *readDataNodes, *readParityNodes, *termNode;
 	RF_DagNode_t *tmpNode, *tmpreadDataNode, *tmpreadParityNode;
-	RF_DagNode_t *xorNodes, *qNodes, *blockNode, *commitNode;
-	RF_DagNode_t *writeDataNodes, *writeParityNodes, *writeQNodes;
-	RF_DagNode_t *tmpxorNode, *tmpqNode, *tmpwriteDataNode, *tmpreadQNode;
+	RF_DagNode_t *xorNodes, *blockNode, *commitNode;
+	RF_DagNode_t *writeDataNodes, *writeParityNodes;
+	RF_DagNode_t *tmpxorNode, *tmpwriteDataNode;
 	RF_DagNode_t *tmpwriteParityNode;
 #if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
-	RF_DagNode_t *tmpwriteQNode;
+	RF_DagNode_t *tmpwriteQNode, *tmpreadQNode, *tmpqNode, *readQNodes,
+	     *writeQNodes, *qNodes;
 #endif
-	int     i, j, nNodes, totalNumNodes;
+	int     i, j, nNodes;
 	RF_ReconUnitNum_t which_ru;
 	int     (*func) (RF_DagNode_t *), (*undoFunc) (RF_DagNode_t *);
-	int     (*qfunc) (RF_DagNode_t *);
+	int     (*qfunc) (RF_DagNode_t *) __unused;
 	int     numDataNodes, numParityNodes;
 	RF_StripeNum_t parityStripeID;
 	RF_PhysDiskAddr_t *pda;
-	const char *name, *qname;
+	const char *name, *qname __unused;
 	long    nfaults;
 
 	nfaults = qfuncs ? 2 : 1;
@@ -579,9 +581,11 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	 * redundancy computation node for each parity node (nfaults *
 	 * nparity) a read and write for each parity unit a block and
 	 * commit node (2) a terminate node if atomic RMW an unlock
-	 * node for each data unit, redundancy unit */
-	totalNumNodes = (2 * numDataNodes) + (nfaults * numParityNodes)
-	    + (nfaults * 2 * numParityNodes) + 3;
+	 * node for each data unit, redundancy unit
+	 * totalNumNodes = (2 * numDataNodes) + (nfaults * numParityNodes)
+	 *   + (nfaults * 2 * numParityNodes) + 3;
+	 */
+
 	/*
          * Step 2. create the nodes
          */
@@ -656,9 +660,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		}
 		qNodes = dag_h->nodes;
 	} else {
-#endif
 		readQNodes = writeQNodes = qNodes = NULL;
-#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	}
 #endif
 
@@ -818,8 +820,10 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		tmpreadDataNode = readDataNodes;
 		tmpreadParityNode = readParityNodes;
 		tmpwriteDataNode = writeDataNodes;
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 		tmpqNode = qNodes;
 		tmpreadQNode = readQNodes;
+#endif
 		for (i = 0; i < numParityNodes; i++) {
 			/* note: no wakeup func for xor */
 			rf_InitNode(tmpxorNode, rf_wait, RF_FALSE, func,

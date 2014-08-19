@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.15 2008/11/06 13:42:55 nakayama Exp $	*/
+/*	$NetBSD: brk.S,v 1.15.16.1 2014/08/20 00:02:12 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)brk.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: brk.S,v 1.15 2008/11/06 13:42:55 nakayama Exp $")
+	RCSID("$NetBSD: brk.S,v 1.15.16.1 2014/08/20 00:02:12 tls Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
@@ -60,7 +60,7 @@ _C_LABEL(__minbrk):
 	.text
 
 ENTRY(_brk)
-#ifdef PIC
+#ifdef __PIC__
 	PIC_PROLOGUE(%o5,%o4)
 	set	_C_LABEL(__minbrk), %o4
 	ld	[%o5 + %o4], %o4

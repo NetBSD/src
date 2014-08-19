@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2011/01/19 01:52:44 jakllsch Exp $
+#	$NetBSD: Makefile,v 1.2.12.1 2014/08/20 00:00:12 tls Exp $
 
 .include <bsd.own.mk>
 
 LIB=	I810XvMC
-.PATH:	${X11SRCDIR.xf86-video-intel}/src/xvmc
+.PATH:	${X11SRCDIR.xf86-video-intel}/src/legacy/i810/xvmc
 
 SRCS=	I810XvMC.c
 

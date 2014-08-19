@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.47.2.3 2013/06/23 06:21:08 tls Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.47.2.4 2014/08/20 00:02:21 tls Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.47.2.3 2013/06/23 06:21:08 tls Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.47.2.4 2014/08/20 00:02:21 tls Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -90,7 +90,7 @@ static char banner[MAXBANNER];
 
 
 /* how to use atomic ops on Linux? */
-#if defined(__linux__) || defined(__CYGWIN__)
+#if defined(__linux__) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__OpenBSD__)
 static pthread_mutex_t discomtx = PTHREAD_MUTEX_INITIALIZER;
 
 static void
@@ -648,7 +648,16 @@ serv_handleconn(int fd, connecthook_fn connhook, int busy)
 			break;
 	}
 
-	assert(i < MAXCLI);
+	/*
+	 * Although not finding a slot is impossible (cf. how this routine
+	 * is called), the compiler can still think that i == MAXCLI
+	 * if this code is either compiled with NDEBUG or the platform
+	 * does not use __dead for assert().  Therefore, add an explicit
+	 * check to avoid an array-bounds error.
+	 */
+	/* assert(i < MAXCLI); */
+	if (i == MAXCLI)
+		abort();
 
 	pfdlist[i].fd = newfd;
 	spclist[i].spc_fd = newfd;
@@ -948,6 +957,7 @@ schedulework(struct spclient *spc, enum sbatype sba_type)
 struct spservarg {
 	int sps_sock;
 	connecthook_fn sps_connhook;
+	struct lwp *sps_l;
 };
 
 static void
@@ -974,7 +984,7 @@ handlereq(struct spclient *spc)
 			comm[commlen] = '\0';
 
 			if ((error = lwproc_rfork(spc,
-			    RUMP_RFCFDG, comm)) != 0) {
+			    RUMP_RFFDG, comm)) != 0) {
 				shutdown(spc->spc_fd, SHUT_RDWR);
 			}
 
@@ -1012,7 +1022,7 @@ handlereq(struct spclient *spc)
 					break;
 				}
 			}
-			pthread_mutex_lock(&pfmtx);
+			pthread_mutex_unlock(&pfmtx);
 			spcfreebuf(spc);
 
 			if (!pf) {
@@ -1184,6 +1194,8 @@ spserver(void *arg)
 	int rv;
 	unsigned int nfds, maxidx;
 
+	lwproc_switch(sarg->sps_l);
+
 	for (idx = 0; idx < MAXCLI; idx++) {
 		pfdlist[idx].fd = -1;
 		pfdlist[idx].events = POLLIN;
@@ -1308,8 +1320,9 @@ rumpuser_sp_init(const char *url,
 	pthread_t pt;
 	struct spservarg *sarg;
 	struct sockaddr *sap;
+	struct lwp *calllwp;
 	char *p;
-	unsigned idx;
+	unsigned idx = 0; /* XXXgcc */
 	int error, s;
 
 	p = strdup(url);
@@ -1352,13 +1365,28 @@ rumpuser_sp_init(const char *url,
 		fprintf(stderr, "rump_sp: server bind failed\n");
 		goto out;
 	}
-
 	if (listen(s, MAXCLI) == -1) {
 		error = errno;
 		fprintf(stderr, "rump_sp: server listen failed\n");
 		goto out;
 	}
 
+	/*
+	 * Create a context that the client threads run off of.
+	 * We fork a dedicated context so as to ensure that all
+	 * client threads get the same set of fd's.  We fork off
+	 * of whatever context the caller is running in (most likely
+	 * an implicit thread, i.e. proc 1) and do not
+	 * close fd's.  The assumption is that people who
+	 * write servers (i.e. "kernels") know what they're doing.
+	 */
+	calllwp = lwproc_curlwp();
+	if ((error = lwproc_rfork(NULL, RUMP_RFFDG, "spserver")) != 0) {
+		fprintf(stderr, "rump_sp: rfork failed");
+		goto out;
+	}
+	sarg->sps_l = lwproc_curlwp();
+	lwproc_switch(calllwp);
 	if ((error = pthread_create(&pt, NULL, spserver, sarg)) != 0) {
 		fprintf(stderr, "rump_sp: cannot create wrkr thread\n");
 		goto out;
@@ -1380,8 +1408,8 @@ rumpuser_sp_fini(void *arg)
 	}
 
 	/*
-	 * stuff response into the socket, since this process is just
-	 * about to exit
+	 * stuff response into the socket, since the rump kernel container
+	 * is just about to exit
 	 */
 	if (spc && spc->spc_syscallreq)
 		send_syscall_resp(spc, spc->spc_syscallreq, 0, retval);
@@ -1390,4 +1418,9 @@ rumpuser_sp_fini(void *arg)
 		shutdown(spclist[0].spc_fd, SHUT_RDWR);
 		spfini = 1;
 	}
+
+	/*
+	 * could release thread, but don't bother, since the container
+	 * will be stone dead in a moment.
+	 */
 }

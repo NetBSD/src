@@ -43,7 +43,7 @@ do {					\
 } while (0)
 #else
 /* The following is not a general substitute for addlsh2.
-   It is correct if d == b, but it is not if d == a.	*/
+   It is correct if d == b, but it is not if d == a.  */
 #define DO_addlsh2(d, a, b, n, cy)	\
 do {					\
   (cy) <<= 2;				\

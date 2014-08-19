@@ -1,4 +1,4 @@
-/*	$NetBSD: af_atalk.c,v 1.18 2011/08/14 12:15:15 christos Exp $	*/
+/*	$NetBSD: af_atalk.c,v 1.18.8.1 2014/08/20 00:02:25 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_atalk.c,v 1.18 2011/08/14 12:15:15 christos Exp $");
+__RCSID("$NetBSD: af_atalk.c,v 1.18.8.1 2014/08/20 00:02:25 tls Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -183,9 +183,8 @@ static void
 sat_print1(const char *prefix, const struct sockaddr *sa)
 {
 	char buf[40];
-	int rc;
 
-	rc = getnameinfo(sa, sa->sa_len, buf, sizeof(buf), NULL, 0, 0);
+	(void)getnameinfo(sa, sa->sa_len, buf, sizeof(buf), NULL, 0, 0);
 	
 	printf("%s%s", prefix, buf);
 }

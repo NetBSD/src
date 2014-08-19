@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsdio.c,v 1.4 2011/02/13 06:43:51 nonaka Exp $	*/
+/*	$NetBSD: mvsdio.c,v 1.4.16.1 2014/08/20 00:03:39 tls Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsdio.c,v 1.4 2011/02/13 06:43:51 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsdio.c,v 1.4.16.1 2014/08/20 00:03:39 tls Exp $");
 
 #include "opt_mvsdio.h"
 
@@ -92,7 +92,7 @@ static void mvsdio_exec_command(sdmmc_chipset_handle_t, struct sdmmc_command *);
 static void mvsdio_card_enable_intr(sdmmc_chipset_handle_t, int);
 static void mvsdio_card_intr_ack(sdmmc_chipset_handle_t);
 
-static void mvsdio_wininit(struct mvsdio_softc *);
+static void mvsdio_wininit(struct mvsdio_softc *, enum marvell_tags *);
 
 static struct sdmmc_chip_functions mvsdio_chip_functions = {
 	/* host controller reset */
@@ -178,7 +178,7 @@ mvsdio_attach(device_t parent, device_t self, void *aux)
 
 	marvell_intr_establish(mva->mva_irq, IPL_SDMMC, mvsdio_intr, sc);
 
-	mvsdio_wininit(sc);
+	mvsdio_wininit(sc, mva->mva_tags);
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVSDIO_HC, HC_BIGENDIAN);
@@ -683,19 +683,11 @@ mvsdio_card_intr_ack(sdmmc_chipset_handle_t sch)
 
 
 static void
-mvsdio_wininit(struct mvsdio_softc *sc)
+mvsdio_wininit(struct mvsdio_softc *sc, enum marvell_tags *tags)
 {
 	uint64_t base;
 	uint32_t size;
 	int window, target, attr, rv, i;
-	static int tags[] = {
-		MARVELL_TAG_SDRAM_CS0,
-		MARVELL_TAG_SDRAM_CS1,
-		MARVELL_TAG_SDRAM_CS2,
-		MARVELL_TAG_SDRAM_CS3,
-
-		MARVELL_TAG_UNDEFINED,
-	};
 
 	for (window = 0, i = 0;
 	    tags[i] != MARVELL_TAG_UNDEFINED && window < MVSDIO_NWINDOW; i++) {

@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.128 2012/02/19 21:05:59 rmind Exp $ */
+/* $NetBSD: trap.c,v 1.128.2.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.128 2012/02/19 21:05:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.128.2.1 2014/08/20 00:02:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ printtrap(const u_long a0, const u_long a1, const u_long a2,
 		entryname = "system call";
 		break;
 	default:
-		sprintf(ubuf, "type %lx", entry);
+		snprintf(ubuf, sizeof(ubuf), "type %lx", entry);
 		entryname = (const char *) ubuf;
 		break;
 	}
@@ -323,7 +323,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			if (framep->tf_regs[FRAME_A0] == -2) { /* weird! */
 				KSI_INIT_TRAP(&ksi);
 				ksi.ksi_signo = SIGFPE;
-				ksi.ksi_code =  alpha_ucode_to_ksiginfo(ucode);
+				ksi.ksi_code = FPE_INTDIV;
 				ksi.ksi_addr =
 					(void *)l->l_md.md_tf->tf_regs[FRAME_PC];
 				ksi.ksi_trap =  a0;	/* exception summary */
@@ -1127,7 +1127,7 @@ startlwp(void *arg)
 {
 	ucontext_t *uc = arg;
 	lwp_t *l = curlwp;
-	int error;
+	int error __diagused;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);

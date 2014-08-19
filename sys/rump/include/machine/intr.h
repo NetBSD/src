@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.18.14.1 2013/02/25 00:30:07 tls Exp $	*/
+/*	$NetBSD: intr.h,v 1.18.14.2 2014/08/20 00:04:39 tls Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -56,13 +56,18 @@ makeiplcookie(ipl_t ipl)
 #define splx(x) ((void)x)
 #define spl0() ((void)0)
 
+/*
+ * IPL_* does not mean anything to a run-to-completition rump kernel,
+ * but we sometimes assert a "not higher than" condition, so we assign
+ * different values (following spl(9)).
+ */
 #define IPL_NONE 0
-#define	IPL_SOFTBIO 1
 #define	IPL_SOFTCLOCK 1
-#define IPL_SOFTSERIAL 1
-#define	IPL_SOFTNET 1
-#define IPL_SCHED 2
-#define IPL_VM 2
-#define IPL_HIGH 2
+#define	IPL_SOFTBIO 2
+#define	IPL_SOFTNET 3
+#define IPL_SOFTSERIAL 4
+#define IPL_VM 5
+#define IPL_SCHED 6
+#define IPL_HIGH 7
 
 #endif /* _SYS_RUMP_INTR_H_ */

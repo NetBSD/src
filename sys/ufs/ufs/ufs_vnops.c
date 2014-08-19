@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.210.2.2 2013/06/23 06:18:40 tls Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.210.2.3 2014/08/20 00:04:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.210.2.2 2013/06/23 06:18:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.210.2.3 2014/08/20 00:04:45 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -134,7 +134,7 @@ static const struct dirtemplate mastertemplate = {
 int
 ufs_create(void *v)
 {
-	struct vop_create_args /* {
+	struct vop_create_v3_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		**a_vpp;
 		struct componentname	*a_cnp;
@@ -163,6 +163,7 @@ ufs_create(void *v)
 	UFS_WAPBL_END1(dvp->v_mount, dvp);
 	fstrans_done(dvp->v_mount);
 	VN_KNOTE(dvp, NOTE_WRITE);
+	VOP_UNLOCK(*ap->a_vpp);
 	return (0);
 }
 
@@ -173,7 +174,7 @@ ufs_create(void *v)
 int
 ufs_mknod(void *v)
 {
-	struct vop_mknod_args /* {
+	struct vop_mknod_v3_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		**a_vpp;
 		struct componentname	*a_cnp;
@@ -224,14 +225,14 @@ ufs_mknod(void *v)
 	UFS_WAPBL_UPDATE(*vpp, NULL, NULL, 0);
 	UFS_WAPBL_END1(ap->a_dvp->v_mount, ap->a_dvp);
 	/*
-	 * Remove inode so that it will be reloaded by VFS_VGET and
+	 * Remove inode so that it will be reloaded by vcache_get and
 	 * checked to see if it is an alias of an existing entry in
 	 * the inode cache.
 	 */
 	(*vpp)->v_type = VNON;
 	VOP_UNLOCK(*vpp);
 	vgone(*vpp);
-	error = VFS_VGET(mp, ino, vpp);
+	error = vcache_get(mp, &ino, sizeof(ino), vpp);
 out:
 	fstrans_done(ap->a_dvp->v_mount);
 	if (error != 0) {
@@ -280,10 +281,8 @@ ufs_close(void *v)
 		kauth_cred_t	a_cred;
 	} */ *ap = v;
 	struct vnode	*vp;
-	struct inode	*ip;
 
 	vp = ap->a_vp;
-	ip = VTOI(vp);
 	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	if (vp->v_usecount > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
@@ -971,7 +970,7 @@ ufs_whiteout(void *v)
 int
 ufs_mkdir(void *v)
 {
-	struct vop_mkdir_args /* {
+	struct vop_mkdir_v3_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		**a_vpp;
 		struct componentname	*a_cnp;
@@ -1028,7 +1027,6 @@ ufs_mkdir(void *v)
 		UFS_WAPBL_END(dvp->v_mount);
 		fstrans_done(dvp->v_mount);
 		vput(tvp);
-		vput(dvp);
 		return (error);
 	}
 #endif
@@ -1104,6 +1102,7 @@ ufs_mkdir(void *v)
  bad:
 	if (error == 0) {
 		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
+		VOP_UNLOCK(tvp);
 		UFS_WAPBL_END(dvp->v_mount);
 	} else {
 		dp->i_nlink--;
@@ -1117,15 +1116,12 @@ ufs_mkdir(void *v)
 		ip->i_nlink = 0;
 		DIP_ASSIGN(ip, nlink, 0);
 		ip->i_flag |= IN_CHANGE;
-		/* If IN_ADIROP, account for it */
-		UFS_UNMARK_VNODE(tvp);
 		UFS_WAPBL_UPDATE(tvp, NULL, NULL, UPDATE_DIROP);
 		UFS_WAPBL_END(dvp->v_mount);
 		vput(tvp);
 	}
  out:
 	fstrans_done(dvp->v_mount);
-	vput(dvp);
 	return (error);
 }
 
@@ -1236,7 +1232,7 @@ ufs_rmdir(void *v)
 int
 ufs_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v3_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		**a_vpp;
 		struct componentname	*a_cnp;
@@ -1288,8 +1284,9 @@ ufs_symlink(void *v)
 		    UIO_SYSSPACE, IO_NODELOCKED | IO_JOURNALLOCKED,
 		    ap->a_cnp->cn_cred, NULL, NULL);
 	UFS_WAPBL_END1(ap->a_dvp->v_mount, ap->a_dvp);
+	VOP_UNLOCK(vp);
 	if (error)
-		vput(vp);
+		vrele(vp);
 out:
 	fstrans_done(ap->a_dvp->v_mount);
 	return (error);
@@ -1626,10 +1623,8 @@ ufsspec_close(void *v)
 		kauth_cred_t	a_cred;
 	} */ *ap = v;
 	struct vnode	*vp;
-	struct inode	*ip;
 
 	vp = ap->a_vp;
-	ip = VTOI(vp);
 	if (vp->v_usecount > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
 	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_close), ap));
@@ -1689,10 +1684,8 @@ ufsfifo_close(void *v)
 		kauth_cred_t	a_cred;
 	} */ *ap = v;
 	struct vnode	*vp;
-	struct inode	*ip;
 
 	vp = ap->a_vp;
-	ip = VTOI(vp);
 	if (ap->a_vp->v_usecount > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
 	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_close), ap));
@@ -1837,7 +1830,6 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
 		mode |= IFREG;
 
 	if ((error = UFS_VALLOC(dvp, mode, cnp->cn_cred, vpp)) != 0) {
-		vput(dvp);
 		return (error);
 	}
 	tvp = *vpp;
@@ -1854,7 +1846,6 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
 		 * the vnode dangling from the journal.
 		 */
 		vput(tvp);
-		vput(dvp);
 		return (error);
 	}
 #if defined(QUOTA) || defined(QUOTA2)
@@ -1862,7 +1853,6 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
 		UFS_VFREE(tvp, ip->i_number, mode);
 		UFS_WAPBL_END1(dvp->v_mount, dvp);
 		vput(tvp);
-		vput(dvp);
 		return (error);
 	}
 #endif
@@ -1900,7 +1890,6 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	pool_cache_put(ufs_direct_cache, newdir);
 	if (error)
 		goto bad;
-	vput(dvp);
 	*vpp = tvp;
 	return (0);
 
@@ -1912,13 +1901,10 @@ ufs_makeinode(int mode, struct vnode *dvp, const struct ufs_lookup_results *ulr,
 	ip->i_nlink = 0;
 	DIP_ASSIGN(ip, nlink, 0);
 	ip->i_flag |= IN_CHANGE;
-	/* If IN_ADIROP, account for it */
-	UFS_UNMARK_VNODE(tvp);
 	UFS_WAPBL_UPDATE(tvp, NULL, NULL, 0);
 	tvp->v_type = VNON;		/* explodes later if VBLK */
 	UFS_WAPBL_END1(dvp->v_mount, dvp);
 	vput(tvp);
-	vput(dvp);
 	return (error);
 }
 

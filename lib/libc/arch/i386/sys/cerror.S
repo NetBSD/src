@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.16 2012/02/27 12:26:21 joerg Exp $	*/
+/*	$NetBSD: cerror.S,v 1.16.2.1 2014/08/20 00:02:10 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: cerror.S,v 1.16 2012/02/27 12:26:21 joerg Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.16.2.1 2014/08/20 00:02:10 tls Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -46,14 +46,15 @@
 
 _ENTRY(CERROR)
 	pushl	%eax
-#ifdef PIC
+#ifdef __PIC__
 	PIC_PROLOGUE
 	call	PIC_PLT(_C_LABEL(__errno))
 	PIC_EPILOGUE
 #else
 	call	_C_LABEL(__errno)
-#endif /* PIC */
+#endif /* __PIC__ */
 	popl	(%eax)
 	movl	$-1,%eax
 	movl	$-1,%edx
 	ret
+END(CERROR)

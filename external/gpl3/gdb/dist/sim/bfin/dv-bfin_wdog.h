@@ -1,6 +1,6 @@
 /* Blackfin Watchdog (WDOG) model.
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -20,8 +20,6 @@
 
 #ifndef DV_BFIN_WDOG_H
 #define DV_BFIN_WDOG_H
-
-#define BFIN_MMR_WDOG_SIZE	(4 * 3)
 
 /* WDOG_CTL */
 #define WDEV            0x0006  /* event generated on roll over */

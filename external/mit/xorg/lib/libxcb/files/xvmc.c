@@ -268,11 +268,13 @@ xcb_xvmc_list_surface_types_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_xvmc_list_surface_types_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* surfaces */
     xcb_block_len += _aux->num * sizeof(xcb_xvmc_surface_info_t);
     xcb_tmp += xcb_block_len;
@@ -443,11 +445,13 @@ xcb_xvmc_create_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_xvmc_create_context_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* priv_data */
     xcb_block_len += _aux->length * sizeof(uint32_t);
     xcb_tmp += xcb_block_len;
@@ -722,11 +726,13 @@ xcb_xvmc_create_surface_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_xvmc_create_surface_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* priv_data */
     xcb_block_len += _aux->length * sizeof(uint32_t);
     xcb_tmp += xcb_block_len;
@@ -977,11 +983,13 @@ xcb_xvmc_create_subpicture_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_xvmc_create_subpicture_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* priv_data */
     xcb_block_len += _aux->length * sizeof(uint32_t);
     xcb_tmp += xcb_block_len;
@@ -1250,11 +1258,13 @@ xcb_xvmc_list_subpicture_types_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_xvmc_list_subpicture_types_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* types */
     xcb_block_len += _aux->num * sizeof(xcb_xv_image_format_info_t);
     xcb_tmp += xcb_block_len;

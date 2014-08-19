@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.13.2.2 2013/06/23 06:20:23 tls Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.13.2.3 2014/08/20 00:04:30 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -115,7 +115,7 @@
 #endif
 typedef uint32_t	ino32_t;
 #ifndef FSBTODB
-#define FSBTODB(fs, indp) fsbtodb(fs, indp)
+#define FSBTODB(fs, indp) EXT2_FSBTODB(fs, indp)
 #endif
 
 /*
@@ -146,30 +146,6 @@ struct file {
 	daddr_t		f_buf_blkno;	/* block number of data block */
 };
 
-#if defined(LIBSA_ENABLE_LS_OP)
-
-#define NELEM(x) (sizeof (x) / sizeof(*x))
-
-typedef struct entry_t entry_t;
-struct entry_t {
-	entry_t	*e_next;
-	ino32_t	e_ino;
-	uint8_t	e_type;
-	char	e_name[1];
-};
-
-static const char    *const typestr[] = {
-	"unknown",
-	"REG",
-	"DIR",
-	"CHR",
-	"BLK",
-	"FIFO",
-	"SOCK",
-	"LNK"
-};
-
-#endif /* LIBSA_ENABLE_LS_OP */
 
 static int read_inode(ino32_t, struct open_file *);
 static int block_map(struct open_file *, indp_t, indp_t *);
@@ -341,12 +317,12 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 	struct m_ext2fs *fs = fp->f_fs;
 	long off;
 	indp_t file_block;
-	indp_t disk_block;
+	indp_t disk_block = 0;	/* XXX: gcc */
 	size_t block_size;
 	int rc;
 
 	off = ext2_blkoff(fs, fp->f_seekp);
-	file_block = lblkno(fs, fp->f_seekp);
+	file_block = ext2_lblkno(fs, fp->f_seekp);
 	block_size = fs->e2fs_bsize;	/* no fragment */
 
 	if (file_block != fp->f_buf_blkno) {
@@ -828,6 +804,20 @@ ext2fs_stat(struct open_file *f, struct stat *sb)
 }
 
 #if defined(LIBSA_ENABLE_LS_OP)
+
+#include "ls.h"
+
+static const char    *const typestr[] = {
+	"unknown",
+	"REG",
+	"DIR",
+	"CHR",
+	"BLK",
+	"FIFO",
+	"SOCK",
+	"LNK"
+};
+
 __compactcall void
 ext2fs_ls(struct open_file *f, const char *pattern)
 {
@@ -835,7 +825,7 @@ ext2fs_ls(struct open_file *f, const char *pattern)
 	size_t block_size = fp->f_fs->e2fs_bsize;
 	char *buf;
 	size_t buf_size;
-	entry_t	*names = 0, *n, **np;
+	lsentry_t *names = NULL;
 
 	fp->f_seekp = 0;
 	while (fp->f_seekp < (off_t)fp->f_di.e2di_size) {
@@ -874,47 +864,14 @@ ext2fs_ls(struct open_file *f, const char *pattern)
 				printf("bad dir entry\n");
 				goto out;
 			}
-			if (pattern && !fnmatch(dp->e2d_name, pattern))
-				continue;
-			n = alloc(sizeof *n + strlen(dp->e2d_name));
-			if (!n) {
-				printf("%d: %s (%s)\n",
-					fs2h32(dp->e2d_ino), dp->e2d_name, t);
-				continue;
-			}
-			n->e_ino = fs2h32(dp->e2d_ino);
-			n->e_type = dp->e2d_type;
-			strcpy(n->e_name, dp->e2d_name);
-			for (np = &names; *np; np = &(*np)->e_next) {
-				if (strcmp(n->e_name, (*np)->e_name) < 0)
-					break;
-			}
-			n->e_next = *np;
-			*np = n;
+			lsadd(&names, pattern, dp->e2d_name,
+			    strlen(dp->e2d_name), fs2h32(dp->e2d_ino), t);
 		}
 		fp->f_seekp += buf_size;
 	}
 
-	if (names) {
-		entry_t *p_names = names;
-		do {
-			n = p_names;
-			printf("%d: %s (%s)\n",
-				n->e_ino, n->e_name, typestr[n->e_type]);
-			p_names = n->e_next;
-		} while (p_names);
-	} else {
-		printf("not found\n");
-	}
-out:
-	if (names) {
-		do {
-			n = names;
-			names = n->e_next;
-			dealloc(n, 0);
-		} while (names);
-	}
-	return;
+	lsprint(names);
+out:	lsfree(names);
 }
 #endif
 

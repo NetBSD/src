@@ -1,4 +1,4 @@
-/*	$NetBSD: imxgpio.c,v 1.2.12.1 2012/11/20 03:01:05 tls Exp $ */
+/*	$NetBSD: imxgpio.c,v 1.2.12.2 2014/08/20 00:02:46 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -29,12 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxgpio.c,v 1.2.12.1 2012/11/20 03:01:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxgpio.c,v 1.2.12.2 2014/08/20 00:02:46 tls Exp $");
 
 #define	_INTR_PRIVATE
 
 #include "locators.h"
 #include "gpio.h"
+#include "opt_imxgpio.h"
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -82,7 +83,12 @@ const struct pic_ops gpio_pic_ops = {
 struct gpio_softc {
 	device_t gpio_dev;
 	struct pic_softc gpio_pic;
+#if defined(IMX_GPIO_INTR_SPLIT)
+	struct intrsource *gpio_is_0_15;
+	struct intrsource *gpio_is_16_31;
+#else
 	struct intrsource *gpio_is;
+#endif
 	bus_space_tag_t gpio_memt;
 	bus_space_handle_t gpio_memh;
 	uint32_t gpio_enable_mask;
@@ -174,6 +180,25 @@ gpio_pic_find_pending_irqs(struct pic_softc *pic)
 		KASSERT(pending != 0);
 		irq = 31 - __builtin_clz(pending);
 		pending &= ~__BIT(irq);
+
+		const struct intrsource *is = pic->pic_sources[irq];
+		if (is->is_type == IST_EDGE_BOTH) {
+			/*
+			 * for both edge
+			 */
+			uint32_t icr_reg = GPIO_ICR1 + ((is->is_irq & 0x10) >> 2);
+			v = GPIO_READ(gpio, icr_reg);
+			uint32_t icr_shift = (is->is_irq & 0x0f) << 1;
+			uint32_t mask = (3 << icr_shift);
+			int gtype = __SHIFTOUT(v, mask);
+			if (gtype == GPIO_ICR_EDGE_RISING)
+				gtype = GPIO_ICR_EDGE_FALLING;
+			else if (gtype == GPIO_ICR_EDGE_FALLING)
+				gtype = GPIO_ICR_EDGE_RISING;
+			v &= ~mask;
+			v |= __SHIFTIN(gtype, mask);
+			GPIO_WRITE(gpio, icr_reg, v);
+		}
 		pic_mark_pending(&gpio->gpio_pic, irq);
 	} while (pending != 0);
 
@@ -184,7 +209,8 @@ gpio_pic_find_pending_irqs(struct pic_softc *pic)
 	((GPIO_ICR_LEVEL_LOW << (2*IST_LEVEL_LOW)) | \
 	 (GPIO_ICR_LEVEL_HIGH << (2*IST_LEVEL_HIGH)) | \
 	 (GPIO_ICR_EDGE_RISING << (2*IST_EDGE_RISING)) | \
-	 (GPIO_ICR_EDGE_FALLING << (2*IST_EDGE_FALLING)))
+	 (GPIO_ICR_EDGE_FALLING << (2*IST_EDGE_FALLING)) | \
+	 (GPIO_ICR_EDGE_RISING << (2*IST_EDGE_BOTH)))
 
 void
 gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
@@ -341,9 +367,18 @@ imxgpio_attach_common(device_t self, bus_space_tag_t iot,
 		aprint_normal(": interrupts %d..%d",
 		    irqbase, irqbase + GPIO_NPINS - 1);
 
+#if defined(IMX_GPIO_INTR_SPLIT)
+		gpio->gpio_is_0_15 = intr_establish(intr,
+		    IPL_NET, IST_LEVEL, pic_handle_intr, &gpio->gpio_pic);
+		KASSERT( gpio->gpio_is_0_15 != NULL );
+		gpio->gpio_is_16_31 = intr_establish(intr + 1,
+		    IPL_NET, IST_LEVEL, pic_handle_intr, &gpio->gpio_pic);
+		KASSERT( gpio->gpio_is_16_31 != NULL );
+#else
 		gpio->gpio_is = intr_establish(intr,
 		    IPL_NET, IST_LEVEL, pic_handle_intr, &gpio->gpio_pic);
 		KASSERT( gpio->gpio_is != NULL );
+#endif
 	}
 	aprint_normal("\n");
 		      

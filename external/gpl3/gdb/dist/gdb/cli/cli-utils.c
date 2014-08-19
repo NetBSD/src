@@ -1,6 +1,6 @@
 /* CLI utilities.
 
-   Copyright (c) 2011 Free Software Foundation, Inc.
+   Copyright (C) 2011-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,7 @@
 
 #include "defs.h"
 #include "cli/cli-utils.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "value.h"
 #include "gdb_assert.h"
 
@@ -223,10 +223,22 @@ skip_spaces (char *chp)
   return chp;
 }
 
+/* A const-correct version of the above.  */
+
+const char *
+skip_spaces_const (const char *chp)
+{
+  if (chp == NULL)
+    return NULL;
+  while (*chp && isspace (*chp))
+    chp++;
+  return chp;
+}
+
 /* See documentation in cli-utils.h.  */
 
-char *
-skip_to_space (char *chp)
+const char *
+skip_to_space_const (const char *chp)
 {
   if (chp == NULL)
     return NULL;
@@ -244,4 +256,56 @@ remove_trailing_whitespace (const char *start, char *s)
     --s;
 
   return s;
+}
+
+/* See documentation in cli-utils.h.  */
+
+char *
+extract_arg_const (const char **arg)
+{
+  const char *result;
+
+  if (!*arg)
+    return NULL;
+
+  /* Find the start of the argument.  */
+  *arg = skip_spaces_const (*arg);
+  if (!**arg)
+    return NULL;
+  result = *arg;
+
+  /* Find the end of the argument.  */
+  *arg = skip_to_space_const (*arg + 1);
+
+  if (result == *arg)
+    return NULL;
+
+  return savestring (result, *arg - result);
+}
+
+/* See documentation in cli-utils.h.  */
+
+char *
+extract_arg (char **arg)
+{
+  const char *arg_const = *arg;
+  char *result;
+
+  result = extract_arg_const (&arg_const);
+  *arg += arg_const - *arg;
+  return result;
+}
+
+/* See documentation in cli-utils.h.  */
+
+int
+check_for_argument (char **str, char *arg, int arg_len)
+{
+  if (strncmp (*str, arg, arg_len) == 0
+      && ((*str)[arg_len] == '\0' || isspace ((*str)[arg_len])))
+    {
+      *str += arg_len;
+      return 1;
+    }
+  return 0;
 }

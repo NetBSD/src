@@ -1,4 +1,4 @@
-.\"	$NetBSD: cidr_table.5,v 1.1.1.1 2009/06/23 10:08:33 tron Exp $
+.\"	$NetBSD: cidr_table.5,v 1.1.1.1.16.1 2014/08/19 23:59:41 tls Exp $
 .\"
 .TH CIDR_TABLE 5 
 .ad
@@ -12,7 +12,7 @@ format of Postfix CIDR tables
 .nf
 \fBpostmap -q "\fIstring\fB" cidr:/etc/postfix/\fIfilename\fR
 
-\fBpostmap -q - cidr:/etc/postfix/\fIfilename\fR <\fIinputfile\fR
+\fBpostmap -q - cidr:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
 .SH DESCRIPTION
 .ad
 .fi
@@ -44,6 +44,9 @@ every IPv6 address.
 An IPv4 network address is a sequence of four decimal octets
 separated by ".", and an IPv6 network address is a sequence
 of three to eight hexadecimal octet pairs separated by ":".
+
+The \fInetwork_mask\fR is the number of high-order bits in
+the \fInetwork_address\fR that the search string must match.
 
 Before comparisons are made, lookup keys and table entries
 are converted from string to binary. Therefore table entries

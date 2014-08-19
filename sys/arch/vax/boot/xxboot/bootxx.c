@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.36 2009/09/18 21:40:09 mhitch Exp $ */
+/* $NetBSD: bootxx.c,v 1.36.22.1 2014/08/20 00:03:27 tls Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -186,7 +186,8 @@ die:
  */
 struct fs_ops file_system[] = {
 #ifdef NEED_UFS
-	{ ufs_open, 0, ufs_read, 0, 0, ufs_stat },
+	{ ffsv1_open, 0, ffsv1_read, 0, 0, ffsv1_stat },
+	//{ ffsv2_open, 0, ffsv2_read, 0, 0, ffsv2_stat },
 #endif
 #ifdef NEED_CD9660
 	{ cd9660_open, 0, cd9660_read, 0, 0, cd9660_stat },
@@ -196,7 +197,7 @@ struct fs_ops file_system[] = {
 #endif
 };
 
-int nfsys = (sizeof(file_system) / sizeof(struct fs_ops));
+int nfsys = __arraycount(file_system);
 
 #if 0
 int tar_open(char *path, struct open_file *f);

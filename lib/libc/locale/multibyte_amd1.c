@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte_amd1.c,v 1.9.12.1 2013/06/23 06:21:05 tls Exp $	*/
+/*	$NetBSD: multibyte_amd1.c,v 1.9.12.2 2014/08/20 00:02:15 tls Exp $	*/
 
 /*-
  * Copyright (c)2002, 2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: multibyte_amd1.c,v 1.9.12.1 2013/06/23 06:21:05 tls Exp $");
+__RCSID("$NetBSD: multibyte_amd1.c,v 1.9.12.2 2014/08/20 00:02:15 tls Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -47,12 +47,6 @@ __RCSID("$NetBSD: multibyte_amd1.c,v 1.9.12.1 2013/06/23 06:21:05 tls Exp $");
 #include "runetype_local.h"
 #include "multibyte.h"
 
-#define _RUNE_LOCALE(loc) \
-    ((_RuneLocale *)((loc)->part_impl[(size_t)LC_CTYPE]))
-
-#define _CITRUS_CTYPE(loc) \
-    (_RUNE_LOCALE(loc)->rl_citrus_ctype)
-
 size_t
 mbrlen_l(const char *s, size_t n, mbstate_t *ps, locale_t loc)
 {
@@ -61,7 +55,7 @@ mbrlen_l(const char *s, size_t n, mbstate_t *ps, locale_t loc)
 
 	_fixup_ps(_RUNE_LOCALE(loc), ps, s == NULL);
 
-	err0 = _citrus_ctype_mbrlen(_ps_to_ctype(ps), s, n,
+	err0 = _citrus_ctype_mbrlen(_ps_to_ctype(ps, loc), s, n,
 				     _ps_to_private(ps), &ret);
 	if (err0)
 		errno = err0;
@@ -113,7 +107,7 @@ mbrtowc_l(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps, locale_t loc)
 
 	_fixup_ps(_RUNE_LOCALE(loc), ps, s == NULL);
 
-	err0 = _citrus_ctype_mbrtowc(_ps_to_ctype(ps), pwc, s, n,
+	err0 = _citrus_ctype_mbrtowc(_ps_to_ctype(ps, loc), pwc, s, n,
 				      _ps_to_private(ps), &ret);
 	if (err0)
 		errno = err0;
@@ -136,7 +130,7 @@ mbsrtowcs_l(wchar_t *pwcs, const char **s, size_t n, mbstate_t *ps,
 
 	_fixup_ps(_RUNE_LOCALE(loc), ps, s == NULL);
 
-	err0 = _citrus_ctype_mbsrtowcs(_ps_to_ctype(ps), pwcs, s, n,
+	err0 = _citrus_ctype_mbsrtowcs(_ps_to_ctype(ps, loc), pwcs, s, n,
 					_ps_to_private(ps), &ret);
 	if (err0)
 		errno = err0;
@@ -159,7 +153,7 @@ mbsnrtowcs_l(wchar_t *pwcs, const char **s, size_t in, size_t n, mbstate_t *ps,
 
 	_fixup_ps(_RUNE_LOCALE(loc), ps, s == NULL);
 
-	err0 = _citrus_ctype_mbsnrtowcs(_ps_to_ctype(ps), pwcs, s, in, n,
+	err0 = _citrus_ctype_mbsnrtowcs(_ps_to_ctype(ps, loc), pwcs, s, in, n,
 					_ps_to_private(ps), &ret);
 	if (err0)
 		errno = err0;
@@ -181,7 +175,7 @@ wcrtomb_l(char *s, wchar_t wc, mbstate_t *ps, locale_t loc)
 
 	_fixup_ps(_RUNE_LOCALE(loc), ps, s == NULL);
 
-	err0 = _citrus_ctype_wcrtomb(_ps_to_ctype(ps), s, wc,
+	err0 = _citrus_ctype_wcrtomb(_ps_to_ctype(ps, loc), s, wc,
 				       _ps_to_private(ps), &ret);
 	if (err0)
 		errno = err0;
@@ -204,7 +198,7 @@ wcsrtombs_l(char *s, const wchar_t **ppwcs, size_t n, mbstate_t *ps,
 
 	_fixup_ps(_RUNE_LOCALE(loc), ps, s == NULL);
 
-	err0 = _citrus_ctype_wcsrtombs(_ps_to_ctype(ps), s, ppwcs, n,
+	err0 = _citrus_ctype_wcsrtombs(_ps_to_ctype(ps, loc), s, ppwcs, n,
 					_ps_to_private(ps), &ret);
 	if (err0)
 		errno = err0;

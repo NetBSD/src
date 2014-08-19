@@ -1,4 +1,4 @@
-/* $NetBSD: lubbock_lcd.c,v 1.12.12.1 2012/11/20 03:01:16 tls Exp $ */
+/* $NetBSD: lubbock_lcd.c,v 1.12.12.2 2014/08/20 00:02:55 tls Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  *   LCD panel geometry
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.12.12.1 2012/11/20 03:01:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.12.12.2 2014/08/20 00:02:55 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,8 +136,18 @@ dev_type_close(lcdclose);
 dev_type_ioctl(lcdioctl);
 dev_type_mmap(lcdmmap);
 const struct cdevsw lcd_cdevsw = {
-	lcdopen, lcdclose, noread, nowrite,
-	lcdioctl, nostop, notty, nopoll, lcdmmap, D_TTY
+	.d_open = lcdopen,
+	.d_close = lcdclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = lcdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = lcdmmap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 #endif

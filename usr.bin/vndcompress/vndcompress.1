@@ -1,4 +1,4 @@
-.\"	$NetBSD: vndcompress.1,v 1.7.2.1 2013/06/23 06:29:02 tls Exp $
+.\"	$NetBSD: vndcompress.1,v 1.7.2.2 2014/08/20 00:05:05 tls Exp $
 .\"
 .\" Copyright (c) 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 27, 2013
+.Dd January 21, 2014
 .Dt VNDCOMPRESS 1
 .Os
 .Sh NAME
@@ -38,15 +38,17 @@
 .Nm
 .Op Fl c
 .Op Fl rR
+.Op Fl b Ar blocksize
 .Op Fl k Ar checkpoint-blocks
 .Op Fl l Ar length
 .Op Fl p Ar partial-offset
-.Op Fl s Ar blocksize
+.Op Fl w Ar winsize
 .Ar image
 .Ar compressed-image
 .Op Ar blocksize
 .Nm vnduncompress
 .Op Fl d
+.Op Fl w Ar winsize
 .Ar compressed-image
 .Ar image
 .Sh DESCRIPTION
@@ -71,6 +73,18 @@ options can control whether either utility compresses or decompresses.
 .Pp
 The following options are available for the compression operation:
 .Bl -tag -width indent
+.It Fl b Ar blocksize
+Set the compression block size to
+.Ar blocksize ,
+which must be a multiple of 512 and must be no more than 4294966784, or
+0xfffffe00.
+(On 32-bit systems, the limit may be smaller, limited by the available
+virtual address space.)
+.Pp
+For compatibility with the old version of
+.Nm ,
+the compression block size may instead be specified at the end of the
+command line.
 .It Fl k Ar checkpoint-blocks
 Write a checkpoint after every
 .Ar checkpoint-blocks
@@ -113,18 +127,41 @@ Restarting may fail for various reasons: if there have been no
 checkpoints, or if the output file has been corrupted in some easily
 recognizable ways, or if the input file's size has changed, or if the
 block size does not match, and so on.
-.It Fl s Ar blocksize
-Set the compression block size to
-.Ar blocksize ,
-which must be a multiple of 512 and must be no more than 4294966784, or
-0xfffffe00.
-(On 32-bit systems, the limit may be smaller, limited by the available
-virtual address space.)
+.El
 .Pp
-For compatibility with the old version of
-.Nm ,
-the compression block size may instead be specified at the end of the
-command line.
+The following option is available for both compression and
+decompression:
+.Bl -tag -width indent
+.It Fl w Ar winsize
+Use an in-memory window of
+.Ar winsize
+entries into the table of compressed block offsets.
+If
+.Ar winsize
+is zero,
+.Nm
+will use memory proportional to the number of blocks in the
+uncompressed image, namely 64 bits or 8 bytes per block.
+If
+.Ar winsize
+is nonzero,
+.Nm
+will use memory proportional to
+.Ar winsize ,
+and independent of the size of the uncompressed image.
+.Pp
+A nonzero
+.Ar winsize
+requires the compressed image to be a seekable file, which compression
+requires anyway, in order to record the offsets of compressed blocks
+once they are compressed and written, but which is a limitation for
+decompression.
+Thus, decompressing from a pipe is incompatible with a nonzero
+.Ar winsize .
+.Pp
+By default,
+.Nm
+uses a fixed window size, unless decompressing with nonseekable input.
 .El
 .Sh EXIT STATUS
 .Ex -std
@@ -215,14 +252,6 @@ The
 .Nm
 command first appeared in
 .Nx 3.0 .
-It was rewritten to be more robust and to support restarting partial
-transfers in
+It was rewritten to be more robust, to support restarting partial
+transfers, and to support bounded memory usage in
 .Nx 7.0 .
-.Sh BUGS
-The amount of memory consumed by
-.Nm
-and
-.Nm vnduncompress
-is proportional to the number of compression blocks they process,
-because they store the whole offset table in memory at once.
-Instead, they should use a limited-size window into the offset table.

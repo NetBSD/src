@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.1.2.2 2013/02/25 00:28:25 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.1.2.3 2014/08/20 00:02:45 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -58,6 +58,8 @@ __KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.1.2.2 2013/02/25 00:28:25 tls Exp 
 #include <net/bpf.h>
 
 #include <dev/mii/miivar.h>
+
+#include <arm/locore.h>
 
 #include <arm/broadcom/bcm53xx_reg.h>
 #include <arm/broadcom/bcm53xx_var.h>
@@ -903,7 +905,7 @@ bcmeth_rx_buf_alloc(
 	}
 	KASSERT(map->dm_mapsize == MCLBYTES);
 #ifdef BCMETH_RCVMAGIC
-	*mtod(m, uint32_t *) = BCMETH_RCVMAGIC;
+	*mtod(m, uint32_t *) = htole32(BCMETH_RCVMAGIC);
 	bus_dmamap_sync(sc->sc_dmat, map, 0, sizeof(uint32_t),
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	bus_dmamap_sync(sc->sc_dmat, map, sizeof(uint32_t),
@@ -955,9 +957,9 @@ bcmeth_rxq_produce(
 		bus_dmamap_t map = M_GETCTX(m, bus_dmamap_t);
 		KASSERT(map);
 
-		producer->rxdb_buflen = MCLBYTES;
-		producer->rxdb_addrlo = map->dm_segs[0].ds_addr;
-		producer->rxdb_flags &= RXDB_FLAG_ET;
+		producer->rxdb_buflen = htole32(MCLBYTES);
+		producer->rxdb_addrlo = htole32(map->dm_segs[0].ds_addr);
+		producer->rxdb_flags &= htole32(RXDB_FLAG_ET);
 		*rxq->rxq_mtail = m;
 		rxq->rxq_mtail = &m->m_next;
 		m->m_len = MCLBYTES;
@@ -1063,6 +1065,7 @@ bcmeth_rxq_consume(
 		bus_dmamap_sync(sc->sc_dmat, map, 0, arm_dcache_align,
 		    BUS_DMASYNC_POSTREAD);
 		memcpy(&rxsts, rxq->rxq_mhead->m_data, 4);
+		rxsts = le32toh(rxsts);
 #if 0
 		KASSERTMSG(rxsts != BCMETH_RCVMAGIC, "currdscr=%u consumer=%zd",
 		    currdscr, consumer - rxq->rxq_first);
@@ -1138,7 +1141,7 @@ bcmeth_rxq_consume(
 			 * Wrap at the last entry!
 			 */
 			if (++consumer == rxq->rxq_last) {
-				KASSERT(consumer[-1].rxdb_flags & RXDB_FLAG_ET);
+				KASSERT(consumer[-1].rxdb_flags & htole32(RXDB_FLAG_ET));
 				rxq->rxq_consumer = rxq->rxq_first;
 			} else {
 				rxq->rxq_consumer = consumer;
@@ -1166,7 +1169,7 @@ bcmeth_rxq_consume(
 		 * Wrap at the last entry!
 		 */
 		if (++consumer == rxq->rxq_last) {
-			KASSERT(consumer[-1].rxdb_flags & RXDB_FLAG_ET);
+			KASSERT(consumer[-1].rxdb_flags & htole32(RXDB_FLAG_ET));
 			consumer = rxq->rxq_first;
 		}
 	}
@@ -1227,13 +1230,13 @@ bcmeth_rxq_reset(
 	 */
 	struct gmac_rxdb *rxdb;
 	for (rxdb = rxq->rxq_first; rxdb < rxq->rxq_last - 1; rxdb++) {
-		rxdb->rxdb_flags = RXDB_FLAG_IC;
+		rxdb->rxdb_flags = htole32(RXDB_FLAG_IC);
 	}
 
 	/*
 	 * Last descriptor has the wrap flag.
 	 */
-	rxdb->rxdb_flags = RXDB_FLAG_ET|RXDB_FLAG_IC;
+	rxdb->rxdb_flags = htole32(RXDB_FLAG_ET|RXDB_FLAG_IC);
 
 	/*
 	 * Reset the producer consumer indexes.
@@ -1415,14 +1418,16 @@ bcmeth_txq_produce(
 
 	struct gmac_txdb *start = producer;
 	size_t count = map->dm_nsegs;
-	producer->txdb_flags |= first_flags;
-	producer->txdb_addrlo = map->dm_segs[0].ds_addr;
-	producer->txdb_buflen = map->dm_segs[0].ds_len;
+	producer->txdb_flags |= htole32(first_flags);
+	producer->txdb_addrlo = htole32(map->dm_segs[0].ds_addr);
+	producer->txdb_buflen = htole32(map->dm_segs[0].ds_len);
 	for (u_int i = 1; i < map->dm_nsegs; i++) {
 #if 0
 		printf("[%zu]: %#x/%#x/%#x/%#x\n", producer - txq->txq_first,
-		     producer->txdb_flags, producer->txdb_buflen,
-		     producer->txdb_addrlo, producer->txdb_addrhi);
+		    le32toh(producer->txdb_flags),
+		    le32toh(producer->txdb_buflen),
+		    le32toh(producer->txdb_addrlo),
+		    le32toh(producer->txdb_addrhi));
 #endif
 		if (__predict_false(++producer == txq->txq_last)) {
 			bcmeth_txq_desc_presync(sc, txq, start,
@@ -1431,14 +1436,14 @@ bcmeth_txq_produce(
 			producer = txq->txq_first;
 			start = txq->txq_first;
 		}
-		producer->txdb_addrlo = map->dm_segs[i].ds_addr;
-		producer->txdb_buflen = map->dm_segs[i].ds_len;
+		producer->txdb_addrlo = htole32(map->dm_segs[i].ds_addr);
+		producer->txdb_buflen = htole32(map->dm_segs[i].ds_len);
 	}
-	producer->txdb_flags |= last_flags;
+	producer->txdb_flags |= htole32(last_flags);
 #if 0
 	printf("[%zu]: %#x/%#x/%#x/%#x\n", producer - txq->txq_first,
-	     producer->txdb_flags, producer->txdb_buflen,
-	     producer->txdb_addrlo, producer->txdb_addrhi);
+	    le32toh(producer->txdb_flags), le32toh(producer->txdb_buflen),
+	    le32toh(producer->txdb_addrlo), le32toh(producer->txdb_addrhi));
 #endif
 	if (count)
 		bcmeth_txq_desc_presync(sc, txq, start, count);
@@ -1448,8 +1453,8 @@ bcmeth_txq_produce(
 	 */
 	txq->txq_free -= map->dm_nsegs;
 	KASSERT(map->dm_nsegs == 1 || txq->txq_producer != producer);
-	KASSERT(map->dm_nsegs == 1 || (txq->txq_producer->txdb_flags & TXDB_FLAG_EF) == 0);
-	KASSERT(producer->txdb_flags & TXDB_FLAG_EF);
+	KASSERT(map->dm_nsegs == 1 || (txq->txq_producer->txdb_flags & htole32(TXDB_FLAG_EF)) == 0);
+	KASSERT(producer->txdb_flags & htole32(TXDB_FLAG_EF));
 
 #if 0
 	printf("%s: mbuf %p: produced a %u byte packet in %u segments (%zd..%zd)\n",
@@ -1622,7 +1627,7 @@ bcmeth_txq_consume(
 		 * If this is the last descriptor in the chain, get the
 		 * mbuf, free its dmamap, and free the mbuf chain itself.
 		 */
-		const uint32_t txdb_flags = consumer->txdb_flags;
+		const uint32_t txdb_flags = le32toh(consumer->txdb_flags);
 		if (txdb_flags & TXDB_FLAG_EF) {
 			struct mbuf *m;
 
@@ -1650,7 +1655,7 @@ bcmeth_txq_consume(
 		 * Wrap at the last entry!
 		 */
 		if (txdb_flags & TXDB_FLAG_ET) {
-			consumer->txdb_flags = TXDB_FLAG_ET;
+			consumer->txdb_flags = htole32(TXDB_FLAG_ET);
 			KASSERT(consumer + 1 == txq->txq_last);
 			consumer = txq->txq_first;
 		} else {
@@ -1705,7 +1710,7 @@ bcmeth_txq_reset(
 	/*
 	 * Last descriptor has the wrap flag.
 	 */
-	txdb->txdb_flags = TXDB_FLAG_ET;
+	txdb->txdb_flags = htole32(TXDB_FLAG_ET);
 
 	/*
 	 * Reset the producer consumer indexes.

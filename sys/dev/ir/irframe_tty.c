@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.58 2009/05/12 14:29:42 cegger Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.58.22.1 2014/08/20 00:03:38 tls Exp $	*/
 
 /*
  * TODO
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.58 2009/05/12 14:29:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.58.22.1 2014/08/20 00:03:38 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -914,7 +914,7 @@ void
 irt_ioctl(struct tty *tp, u_long cmd, void *arg)
 {
 	const struct cdevsw *cdev;
-	int error;
+	int error __diagused;
 	dev_t dev;
 
 	dev = tp->t_dev;

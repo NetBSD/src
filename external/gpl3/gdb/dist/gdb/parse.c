@@ -1,8 +1,6 @@
 /* Parse expressions for GDB.
 
-   Copyright (C) 1986, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997,
-   1998, 1999, 2000, 2001, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    Modified from expread.y by the Department of Computer Science at the
    State University of New York at Buffalo, 1991.
@@ -23,7 +21,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Parse an expression from text in a string,
-   and return the result as a  struct expression  pointer.
+   and return the result as a struct expression pointer.
    That structure contains arithmetic operations in reverse polish,
    with constants represented by operations that are followed by special data.
    See expression.h for the details of the format.
@@ -34,7 +32,7 @@
 #include "defs.h"
 #include <ctype.h>
 #include "arch-utils.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "frame.h"
@@ -72,37 +70,32 @@ const struct exp_descriptor exp_descriptor_standard =
 struct expression *expout;
 int expout_size;
 int expout_ptr;
-struct block *expression_context_block;
+const struct block *expression_context_block;
 CORE_ADDR expression_context_pc;
-struct block *innermost_block;
+const struct block *innermost_block;
 int arglist_len;
-union type_stack_elt *type_stack;
-int type_stack_depth, type_stack_size;
-char *lexptr;
-char *prev_lexptr;
+static struct type_stack type_stack;
+const char *lexptr;
+const char *prev_lexptr;
 int paren_depth;
 int comma_terminates;
 
-/* True if parsing an expression to find a field reference.  This is
-   only used by completion.  */
-int in_parse_field;
+/* True if parsing an expression to attempt completion.  */
+int parse_completion;
 
 /* The index of the last struct expression directly before a '.' or
    '->'.  This is set when parsing and is only used when completing a
    field name.  It is -1 if no dereference operation was found.  */
 static int expout_last_struct = -1;
 
-/* A temporary buffer for identifiers, so we can null-terminate them.
+/* If we are completing a tagged type name, this will be nonzero.  */
+static enum type_code expout_tag_completion_type = TYPE_CODE_UNDEF;
 
-   We allocate this with xrealloc.  parse_exp_1 used to allocate with
-   alloca, using the size of the whole expression as a conservative
-   estimate of the space needed.  However, macro expansion can
-   introduce names longer than the original expression; there's no
-   practical way to know beforehand how large that might be.  */
-char *namecopy;
-size_t namecopy_size;
+/* The token for tagged type name completion.  */
+static char *expout_completion_name;
+
 
-static int expressiondebug = 0;
+static unsigned int expressiondebug = 0;
 static void
 show_expressiondebug (struct ui_file *file, int from_tty,
 		      struct cmd_list_element *c, const char *value)
@@ -124,13 +117,15 @@ show_parserdebug (struct ui_file *file, int from_tty,
 
 static void free_funcalls (void *ignore);
 
-static int prefixify_expression (struct expression *);
-
 static int prefixify_subexp (struct expression *, struct expression *, int,
 			     int);
 
-static struct expression *parse_exp_in_context (char **, struct block *, int, 
+static struct expression *parse_exp_in_context (const char **, CORE_ADDR,
+						const struct block *, int, 
 						int, int *);
+static struct expression *parse_exp_in_context_1 (const char **, CORE_ADDR,
+						  const struct block *, int,
+						  int, int *);
 
 void _initialize_parse (void);
 
@@ -190,16 +185,45 @@ free_funcalls (void *ignore)
     }
 }
 
-/* This page contains the functions for adding data to the  struct expression
+/* This page contains the functions for adding data to the struct expression
    being constructed.  */
+
+/* See definition in parser-defs.h.  */
+
+void
+initialize_expout (int initial_size, const struct language_defn *lang,
+		   struct gdbarch *gdbarch)
+{
+  expout_size = initial_size;
+  expout_ptr = 0;
+  expout = xmalloc (sizeof (struct expression)
+		    + EXP_ELEM_TO_BYTES (expout_size));
+  expout->language_defn = lang;
+  expout->gdbarch = gdbarch;
+}
+
+/* See definition in parser-defs.h.  */
+
+void
+reallocate_expout (void)
+{
+  /* Record the actual number of expression elements, and then
+     reallocate the expression memory so that we free up any
+     excess elements.  */
+
+  expout->nelts = expout_ptr;
+  expout = xrealloc ((char *) expout,
+		     sizeof (struct expression)
+		     + EXP_ELEM_TO_BYTES (expout_ptr));
+}
 
 /* Add one element to the end of the expression.  */
 
 /* To avoid a bug in the Sun 4 compiler, we pass things that can fit into
    a register through here.  */
 
-void
-write_exp_elt (union exp_element expelt)
+static void
+write_exp_elt (const union exp_element *expelt)
 {
   if (expout_ptr >= expout_size)
     {
@@ -208,7 +232,7 @@ write_exp_elt (union exp_element expelt)
 	xrealloc ((char *) expout, sizeof (struct expression)
 		  + EXP_ELEM_TO_BYTES (expout_size));
     }
-  expout->elts[expout_ptr++] = expelt;
+  expout->elts[expout_ptr++] = *expelt;
 }
 
 void
@@ -218,7 +242,7 @@ write_exp_elt_opcode (enum exp_opcode expelt)
 
   memset (&tmp, 0, sizeof (union exp_element));
   tmp.opcode = expelt;
-  write_exp_elt (tmp);
+  write_exp_elt (&tmp);
 }
 
 void
@@ -228,17 +252,17 @@ write_exp_elt_sym (struct symbol *expelt)
 
   memset (&tmp, 0, sizeof (union exp_element));
   tmp.symbol = expelt;
-  write_exp_elt (tmp);
+  write_exp_elt (&tmp);
 }
 
 void
-write_exp_elt_block (struct block *b)
+write_exp_elt_block (const struct block *b)
 {
   union exp_element tmp;
 
   memset (&tmp, 0, sizeof (union exp_element));
   tmp.block = b;
-  write_exp_elt (tmp);
+  write_exp_elt (&tmp);
 }
 
 void
@@ -248,7 +272,7 @@ write_exp_elt_objfile (struct objfile *objfile)
 
   memset (&tmp, 0, sizeof (union exp_element));
   tmp.objfile = objfile;
-  write_exp_elt (tmp);
+  write_exp_elt (&tmp);
 }
 
 void
@@ -258,7 +282,7 @@ write_exp_elt_longcst (LONGEST expelt)
 
   memset (&tmp, 0, sizeof (union exp_element));
   tmp.longconst = expelt;
-  write_exp_elt (tmp);
+  write_exp_elt (&tmp);
 }
 
 void
@@ -268,7 +292,7 @@ write_exp_elt_dblcst (DOUBLEST expelt)
 
   memset (&tmp, 0, sizeof (union exp_element));
   tmp.doubleconst = expelt;
-  write_exp_elt (tmp);
+  write_exp_elt (&tmp);
 }
 
 void
@@ -280,7 +304,7 @@ write_exp_elt_decfloatcst (gdb_byte expelt[16])
   for (index = 0; index < 16; index++)
     tmp.decfloatconst[index] = expelt[index];
 
-  write_exp_elt (tmp);
+  write_exp_elt (&tmp);
 }
 
 void
@@ -290,7 +314,7 @@ write_exp_elt_type (struct type *expelt)
 
   memset (&tmp, 0, sizeof (union exp_element));
   tmp.type = expelt;
-  write_exp_elt (tmp);
+  write_exp_elt (&tmp);
 }
 
 void
@@ -300,7 +324,7 @@ write_exp_elt_intern (struct internalvar *expelt)
 
   memset (&tmp, 0, sizeof (union exp_element));
   tmp.internalvar = expelt;
-  write_exp_elt (tmp);
+  write_exp_elt (&tmp);
 }
 
 /* Add a string constant to the end of the expression.
@@ -472,13 +496,14 @@ write_exp_bitstring (struct stoken str)
    the expression.  */
 
 void
-write_exp_msymbol (struct minimal_symbol *msymbol)
+write_exp_msymbol (struct bound_minimal_symbol bound_msym)
 {
-  struct objfile *objfile = msymbol_objfile (msymbol);
+  struct minimal_symbol *msymbol = bound_msym.minsym;
+  struct objfile *objfile = bound_msym.objfile;
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
 
   CORE_ADDR addr = SYMBOL_VALUE_ADDRESS (msymbol);
-  struct obj_section *section = SYMBOL_OBJ_SECTION (msymbol);
+  struct obj_section *section = SYMBOL_OBJ_SECTION (objfile, msymbol);
   enum minimal_symbol_type type = MSYMBOL_TYPE (msymbol);
   CORE_ADDR pc;
 
@@ -487,13 +512,14 @@ write_exp_msymbol (struct minimal_symbol *msymbol)
   pc = gdbarch_convert_from_func_ptr_addr (gdbarch, addr, &current_target);
   if (pc != addr)
     {
-      struct minimal_symbol *ifunc_msym = lookup_minimal_symbol_by_pc (pc);
+      struct bound_minimal_symbol ifunc_msym = lookup_minimal_symbol_by_pc (pc);
 
       /* In this case, assume we have a code symbol instead of
 	 a data symbol.  */
 
-      if (ifunc_msym != NULL && MSYMBOL_TYPE (ifunc_msym) == mst_text_gnu_ifunc
-	  && SYMBOL_VALUE_ADDRESS (ifunc_msym) == pc)
+      if (ifunc_msym.minsym != NULL
+	  && MSYMBOL_TYPE (ifunc_msym.minsym) == mst_text_gnu_ifunc
+	  && SYMBOL_VALUE_ADDRESS (ifunc_msym.minsym) == pc)
 	{
 	  /* A function descriptor has been resolved but PC is still in the
 	     STT_GNU_IFUNC resolver body (such as because inferior does not
@@ -563,7 +589,30 @@ write_exp_msymbol (struct minimal_symbol *msymbol)
 void
 mark_struct_expression (void)
 {
+  gdb_assert (parse_completion
+	      && expout_tag_completion_type == TYPE_CODE_UNDEF);
   expout_last_struct = expout_ptr;
+}
+
+/* Indicate that the current parser invocation is completing a tag.
+   TAG is the type code of the tag, and PTR and LENGTH represent the
+   start of the tag name.  */
+
+void
+mark_completion_tag (enum type_code tag, const char *ptr, int length)
+{
+  gdb_assert (parse_completion
+	      && expout_tag_completion_type == TYPE_CODE_UNDEF
+	      && expout_completion_name == NULL
+	      && expout_last_struct == -1);
+  gdb_assert (tag == TYPE_CODE_UNION
+	      || tag == TYPE_CODE_STRUCT
+	      || tag == TYPE_CODE_CLASS
+	      || tag == TYPE_CODE_ENUM);
+  expout_tag_completion_type = tag;
+  expout_completion_name = xmalloc (length + 1);
+  memcpy (expout_completion_name, ptr, length);
+  expout_completion_name[length] = '\0';
 }
 
 
@@ -592,7 +641,7 @@ void
 write_dollar_variable (struct stoken str)
 {
   struct symbol *sym = NULL;
-  struct minimal_symbol *msym = NULL;
+  struct bound_minimal_symbol msym;
   struct internalvar *isym = NULL;
 
   /* Handle the tokens $digits; also $ (short for $0) and $$ (short for $$1)
@@ -647,7 +696,7 @@ write_dollar_variable (struct stoken str)
      have names beginning with $ or $$.  Check for those, first.  */
 
   sym = lookup_symbol (copy_name (str), (struct block *) NULL,
-		       VAR_DOMAIN, (int *) NULL);
+		       VAR_DOMAIN, NULL);
   if (sym)
     {
       write_exp_elt_opcode (OP_VAR_VALUE);
@@ -656,8 +705,8 @@ write_dollar_variable (struct stoken str)
       write_exp_elt_opcode (OP_VAR_VALUE);
       return;
     }
-  msym = lookup_minimal_symbol (copy_name (str), NULL, NULL);
-  if (msym)
+  msym = lookup_bound_minimal_symbol (copy_name (str));
+  if (msym.minsym)
     {
       write_exp_msymbol (msym);
       return;
@@ -684,8 +733,8 @@ handle_register:
 }
 
 
-char *
-find_template_name_end (char *p)
+const char *
+find_template_name_end (const char *p)
 {
   int depth = 1;
   int just_seen_right = 0;
@@ -745,13 +794,28 @@ find_template_name_end (char *p)
 }
 
 
+/* Return a null-terminated temporary copy of the name of a string token.
 
-/* Return a null-terminated temporary copy of the name
-   of a string token.  */
+   Tokens that refer to names do so with explicit pointer and length,
+   so they can share the storage that lexptr is parsing.
+   When it is necessary to pass a name to a function that expects
+   a null-terminated string, the substring is copied out
+   into a separate block of storage.
+
+   N.B. A single buffer is reused on each call.  */
 
 char *
 copy_name (struct stoken token)
 {
+  /* A temporary buffer for identifiers, so we can null-terminate them.
+     We allocate this with xrealloc.  parse_exp_1 used to allocate with
+     alloca, using the size of the whole expression as a conservative
+     estimate of the space needed.  However, macro expansion can
+     introduce names longer than the original expression; there's no
+     practical way to know beforehand how large that might be.  */
+  static char *namecopy;
+  static size_t namecopy_size;
+
   /* Make sure there's enough space for the token.  */
   if (namecopy_size < token.length + 1)
     {
@@ -765,14 +829,10 @@ copy_name (struct stoken token)
   return namecopy;
 }
 
-/* Reverse an expression from suffix form (in which it is constructed)
-   to prefix form (in which we can conveniently print or execute it).
-   Ordinarily this always returns -1.  However, if EXPOUT_LAST_STRUCT
-   is not -1 (i.e., we are trying to complete a field name), it will
-   return the index of the subexpression which is the left-hand-side
-   of the struct operation at EXPOUT_LAST_STRUCT.  */
 
-static int
+/* See comments on parser-defs.h.  */
+
+int
 prefixify_expression (struct expression *expr)
 {
   int len = sizeof (struct expression) + EXP_ELEM_TO_BYTES (expr->nelts);
@@ -853,6 +913,7 @@ operator_length_standard (const struct expression *expr, int endpos,
     case OP_BOOL:
     case OP_LAST:
     case OP_INTERNALVAR:
+    case OP_VAR_ENTRY_VALUE:
       oplen = 3;
       break;
 
@@ -882,10 +943,16 @@ operator_length_standard (const struct expression *expr, int endpos,
       oplen = 3;
       break;
 
-    case BINOP_VAL:
-    case UNOP_CAST:
+    case UNOP_CAST_TYPE:
     case UNOP_DYNAMIC_CAST:
     case UNOP_REINTERPRET_CAST:
+    case UNOP_MEMVAL_TYPE:
+      oplen = 1;
+      args = 2;
+      break;
+
+    case BINOP_VAL:
+    case UNOP_CAST:
     case UNOP_MEMVAL:
       oplen = 3;
       args = 1;
@@ -904,6 +971,9 @@ operator_length_standard (const struct expression *expr, int endpos,
     case UNOP_ODD:
     case UNOP_ORD:
     case UNOP_TRUNC:
+    case OP_TYPEOF:
+    case OP_DECLTYPE:
+    case OP_TYPEID:
       oplen = 1;
       args = 1;
       break;
@@ -915,7 +985,6 @@ operator_length_standard (const struct expression *expr, int endpos,
       oplen++;
       break;
 
-    case OP_LABELED:
     case STRUCTOP_STRUCT:
     case STRUCTOP_PTR:
       args = 1;
@@ -931,12 +1000,6 @@ operator_length_standard (const struct expression *expr, int endpos,
       oplen = 4 + BYTES_TO_EXP_ELEM (oplen + 1);
       break;
 
-    case OP_BITSTRING:
-      oplen = longest_to_int (expr->elts[endpos - 2].longconst);
-      oplen = (oplen + HOST_CHAR_BIT - 1) / HOST_CHAR_BIT;
-      oplen = 4 + BYTES_TO_EXP_ELEM (oplen);
-      break;
-
     case OP_ARRAY:
       oplen = 4;
       args = longest_to_int (expr->elts[endpos - 2].longconst);
@@ -946,7 +1009,6 @@ operator_length_standard (const struct expression *expr, int endpos,
 
     case TERNOP_COND:
     case TERNOP_SLICE:
-    case TERNOP_SLICE_COUNT:
       args = 3;
       break;
 
@@ -963,7 +1025,6 @@ operator_length_standard (const struct expression *expr, int endpos,
 
       /* C++ */
     case OP_THIS:
-    case OP_OBJC_SELF:
       oplen = 2;
       break;
 
@@ -1060,7 +1121,7 @@ prefixify_subexp (struct expression *inexpr,
 }
 
 /* Read an expression from the string *STRINGPTR points to,
-   parse it, and return a pointer to a  struct expression  that we malloc.
+   parse it, and return a pointer to a struct expression that we malloc.
    Use block BLOCK as the lexical context for variable names;
    if BLOCK is zero, use the block of the selected stack frame.
    Meanwhile, advance *STRINGPTR to point after the expression,
@@ -1070,9 +1131,19 @@ prefixify_subexp (struct expression *inexpr,
    If COMMA is nonzero, stop if a comma is reached.  */
 
 struct expression *
-parse_exp_1 (char **stringptr, struct block *block, int comma)
+parse_exp_1 (const char **stringptr, CORE_ADDR pc, const struct block *block,
+	     int comma)
 {
-  return parse_exp_in_context (stringptr, block, comma, 0, NULL);
+  return parse_exp_in_context (stringptr, pc, block, comma, 0, NULL);
+}
+
+static struct expression *
+parse_exp_in_context (const char **stringptr, CORE_ADDR pc,
+		      const struct block *block,
+		      int comma, int void_context_p, int *out_subexp)
+{
+  return parse_exp_in_context_1 (stringptr, pc, block, comma,
+				 void_context_p, out_subexp);
 }
 
 /* As for parse_exp_1, except that if VOID_CONTEXT_P, then
@@ -1083,11 +1154,12 @@ parse_exp_1 (char **stringptr, struct block *block, int comma)
    is left untouched.  */
 
 static struct expression *
-parse_exp_in_context (char **stringptr, struct block *block, int comma, 
-		      int void_context_p, int *out_subexp)
+parse_exp_in_context_1 (const char **stringptr, CORE_ADDR pc,
+			const struct block *block,
+			int comma, int void_context_p, int *out_subexp)
 {
   volatile struct gdb_exception except;
-  struct cleanup *old_chain;
+  struct cleanup *old_chain, *inner_chain;
   const struct language_defn *lang = NULL;
   int subexp;
 
@@ -1095,8 +1167,11 @@ parse_exp_in_context (char **stringptr, struct block *block, int comma,
   prev_lexptr = NULL;
 
   paren_depth = 0;
-  type_stack_depth = 0;
+  type_stack.depth = 0;
   expout_last_struct = -1;
+  expout_tag_completion_type = TYPE_CODE_UNDEF;
+  xfree (expout_completion_name);
+  expout_completion_name = NULL;
 
   comma_terminates = comma;
 
@@ -1111,8 +1186,10 @@ parse_exp_in_context (char **stringptr, struct block *block, int comma,
   /* If no context specified, try using the current frame, if any.  */
   if (!expression_context_block)
     expression_context_block = get_selected_block (&expression_context_pc);
-  else
+  else if (pc == 0)
     expression_context_pc = BLOCK_START (expression_context_block);
+  else
+    expression_context_pc = pc;
 
   /* Fall back to using the current source static context, if any.  */
 
@@ -1152,12 +1229,13 @@ parse_exp_in_context (char **stringptr, struct block *block, int comma,
   else
     lang = current_language;
 
-  expout_size = 10;
-  expout_ptr = 0;
-  expout = (struct expression *)
-    xmalloc (sizeof (struct expression) + EXP_ELEM_TO_BYTES (expout_size));
-  expout->language_defn = lang;
-  expout->gdbarch = get_current_arch ();
+  /* get_current_arch may reset CURRENT_LANGUAGE via select_frame.
+     While we need CURRENT_LANGUAGE to be set to LANG (for lookup_symbol
+     and others called from *.y) ensure CURRENT_LANGUAGE gets restored
+     to the value matching SELECTED_FRAME as set by get_current_arch.  */
+  initialize_expout (10, lang, get_current_arch ());
+  inner_chain = make_cleanup_restore_current_language ();
+  set_language (lang->la_language);
 
   TRY_CATCH (except, RETURN_MASK_ALL)
     {
@@ -1166,23 +1244,14 @@ parse_exp_in_context (char **stringptr, struct block *block, int comma,
     }
   if (except.reason < 0)
     {
-      if (! in_parse_field)
+      if (! parse_completion)
 	{
 	  xfree (expout);
 	  throw_exception (except);
 	}
     }
 
-  discard_cleanups (old_chain);
-
-  /* Record the actual number of expression elements, and then
-     reallocate the expression memory so that we free up any
-     excess elements.  */
-
-  expout->nelts = expout_ptr;
-  expout = (struct expression *)
-    xrealloc ((char *) expout,
-	      sizeof (struct expression) + EXP_ELEM_TO_BYTES (expout_ptr));
+  reallocate_expout ();
 
   /* Convert expression from postfix form as generated by yacc
      parser, to a prefix form.  */
@@ -1200,6 +1269,9 @@ parse_exp_in_context (char **stringptr, struct block *block, int comma,
   if (expressiondebug)
     dump_prefix_expression (expout, gdb_stdlog);
 
+  do_cleanups (inner_chain);
+  discard_cleanups (old_chain);
+
   *stringptr = lexptr;
   return expout;
 }
@@ -1208,11 +1280,11 @@ parse_exp_in_context (char **stringptr, struct block *block, int comma,
    to use up all of the contents of STRING.  */
 
 struct expression *
-parse_expression (char *string)
+parse_expression (const char *string)
 {
   struct expression *exp;
 
-  exp = parse_exp_1 (&string, 0, 0);
+  exp = parse_exp_1 (&string, 0, 0, 0);
   if (*string)
     error (_("Junk after end of expression."));
   return exp;
@@ -1227,7 +1299,8 @@ parse_expression (char *string)
    *NAME must be freed by the caller.  */
 
 struct type *
-parse_field_expression (char *string, char **name)
+parse_expression_for_completion (const char *string, char **name,
+				 enum type_code *code)
 {
   struct expression *exp = NULL;
   struct value *val;
@@ -1236,12 +1309,21 @@ parse_field_expression (char *string, char **name)
 
   TRY_CATCH (except, RETURN_MASK_ERROR)
     {
-      in_parse_field = 1;
-      exp = parse_exp_in_context (&string, 0, 0, 0, &subexp);
+      parse_completion = 1;
+      exp = parse_exp_in_context (&string, 0, 0, 0, 0, &subexp);
     }
-  in_parse_field = 0;
+  parse_completion = 0;
   if (except.reason < 0 || ! exp)
     return NULL;
+
+  if (expout_tag_completion_type != TYPE_CODE_UNDEF)
+    {
+      *code = expout_tag_completion_type;
+      *name = expout_completion_name;
+      expout_completion_name = NULL;
+      return NULL;
+    }
+
   if (expout_last_struct == -1)
     {
       xfree (exp);
@@ -1283,7 +1365,6 @@ int
 parse_float (const char *p, int len, DOUBLEST *d, const char **suffix)
 {
   char *copy;
-  char *s;
   int n, num;
 
   copy = xmalloc (len + 1);
@@ -1342,52 +1423,212 @@ parse_c_float (struct gdbarch *gdbarch, const char *p, int len,
 /* Stuff for maintaining a stack of types.  Currently just used by C, but
    probably useful for any language which declares its types "backwards".  */
 
+/* Ensure that there are HOWMUCH open slots on the type stack STACK.  */
+
+static void
+type_stack_reserve (struct type_stack *stack, int howmuch)
+{
+  if (stack->depth + howmuch >= stack->size)
+    {
+      stack->size *= 2;
+      if (stack->size < howmuch)
+	stack->size = howmuch;
+      stack->elements = xrealloc (stack->elements,
+				  stack->size * sizeof (union type_stack_elt));
+    }
+}
+
+/* Ensure that there is a single open slot in the global type stack.  */
+
 static void
 check_type_stack_depth (void)
 {
-  if (type_stack_depth == type_stack_size)
-    {
-      type_stack_size *= 2;
-      type_stack = (union type_stack_elt *)
-	xrealloc ((char *) type_stack, type_stack_size * sizeof (*type_stack));
-    }
+  type_stack_reserve (&type_stack, 1);
+}
+
+/* A helper function for insert_type and insert_type_address_space.
+   This does work of expanding the type stack and inserting the new
+   element, ELEMENT, into the stack at location SLOT.  */
+
+static void
+insert_into_type_stack (int slot, union type_stack_elt element)
+{
+  check_type_stack_depth ();
+
+  if (slot < type_stack.depth)
+    memmove (&type_stack.elements[slot + 1], &type_stack.elements[slot],
+	     (type_stack.depth - slot) * sizeof (union type_stack_elt));
+  type_stack.elements[slot] = element;
+  ++type_stack.depth;
+}
+
+/* Insert a new type, TP, at the bottom of the type stack.  If TP is
+   tp_pointer or tp_reference, it is inserted at the bottom.  If TP is
+   a qualifier, it is inserted at slot 1 (just above a previous
+   tp_pointer) if there is anything on the stack, or simply pushed if
+   the stack is empty.  Other values for TP are invalid.  */
+
+void
+insert_type (enum type_pieces tp)
+{
+  union type_stack_elt element;
+  int slot;
+
+  gdb_assert (tp == tp_pointer || tp == tp_reference
+	      || tp == tp_const || tp == tp_volatile);
+
+  /* If there is anything on the stack (we know it will be a
+     tp_pointer), insert the qualifier above it.  Otherwise, simply
+     push this on the top of the stack.  */
+  if (type_stack.depth && (tp == tp_const || tp == tp_volatile))
+    slot = 1;
+  else
+    slot = 0;
+
+  element.piece = tp;
+  insert_into_type_stack (slot, element);
 }
 
 void
 push_type (enum type_pieces tp)
 {
   check_type_stack_depth ();
-  type_stack[type_stack_depth++].piece = tp;
+  type_stack.elements[type_stack.depth++].piece = tp;
 }
 
 void
 push_type_int (int n)
 {
   check_type_stack_depth ();
-  type_stack[type_stack_depth++].int_val = n;
+  type_stack.elements[type_stack.depth++].int_val = n;
 }
 
+/* Insert a tp_space_identifier and the corresponding address space
+   value into the stack.  STRING is the name of an address space, as
+   recognized by address_space_name_to_int.  If the stack is empty,
+   the new elements are simply pushed.  If the stack is not empty,
+   this function assumes that the first item on the stack is a
+   tp_pointer, and the new values are inserted above the first
+   item.  */
+
 void
-push_type_address_space (char *string)
+insert_type_address_space (char *string)
 {
-  push_type_int (address_space_name_to_int (parse_gdbarch, string));
+  union type_stack_elt element;
+  int slot;
+
+  /* If there is anything on the stack (we know it will be a
+     tp_pointer), insert the address space qualifier above it.
+     Otherwise, simply push this on the top of the stack.  */
+  if (type_stack.depth)
+    slot = 1;
+  else
+    slot = 0;
+
+  element.piece = tp_space_identifier;
+  insert_into_type_stack (slot, element);
+  element.int_val = address_space_name_to_int (parse_gdbarch, string);
+  insert_into_type_stack (slot, element);
 }
 
 enum type_pieces
 pop_type (void)
 {
-  if (type_stack_depth)
-    return type_stack[--type_stack_depth].piece;
+  if (type_stack.depth)
+    return type_stack.elements[--type_stack.depth].piece;
   return tp_end;
 }
 
 int
 pop_type_int (void)
 {
-  if (type_stack_depth)
-    return type_stack[--type_stack_depth].int_val;
+  if (type_stack.depth)
+    return type_stack.elements[--type_stack.depth].int_val;
   /* "Can't happen".  */
   return 0;
+}
+
+/* Pop a type list element from the global type stack.  */
+
+static VEC (type_ptr) *
+pop_typelist (void)
+{
+  gdb_assert (type_stack.depth);
+  return type_stack.elements[--type_stack.depth].typelist_val;
+}
+
+/* Pop a type_stack element from the global type stack.  */
+
+static struct type_stack *
+pop_type_stack (void)
+{
+  gdb_assert (type_stack.depth);
+  return type_stack.elements[--type_stack.depth].stack_val;
+}
+
+/* Append the elements of the type stack FROM to the type stack TO.
+   Always returns TO.  */
+
+struct type_stack *
+append_type_stack (struct type_stack *to, struct type_stack *from)
+{
+  type_stack_reserve (to, from->depth);
+
+  memcpy (&to->elements[to->depth], &from->elements[0],
+	  from->depth * sizeof (union type_stack_elt));
+  to->depth += from->depth;
+
+  return to;
+}
+
+/* Push the type stack STACK as an element on the global type stack.  */
+
+void
+push_type_stack (struct type_stack *stack)
+{
+  check_type_stack_depth ();
+  type_stack.elements[type_stack.depth++].stack_val = stack;
+  push_type (tp_type_stack);
+}
+
+/* Copy the global type stack into a newly allocated type stack and
+   return it.  The global stack is cleared.  The returned type stack
+   must be freed with type_stack_cleanup.  */
+
+struct type_stack *
+get_type_stack (void)
+{
+  struct type_stack *result = XNEW (struct type_stack);
+
+  *result = type_stack;
+  type_stack.depth = 0;
+  type_stack.size = 0;
+  type_stack.elements = NULL;
+
+  return result;
+}
+
+/* A cleanup function that destroys a single type stack.  */
+
+void
+type_stack_cleanup (void *arg)
+{
+  struct type_stack *stack = arg;
+
+  xfree (stack->elements);
+  xfree (stack);
+}
+
+/* Push a function type with arguments onto the global type stack.
+   LIST holds the argument types.  If the final item in LIST is NULL,
+   then the function will be varargs.  */
+
+void
+push_typelist (VEC (type_ptr) *list)
+{
+  check_type_stack_depth ();
+  type_stack.elements[type_stack.depth++].typelist_val = list;
+  push_type (tp_function_with_arguments);
 }
 
 /* Pop the type stack and return the type which corresponds to FOLLOW_TYPE
@@ -1476,6 +1717,36 @@ follow_types (struct type *follow_type)
 	   done with it.  */
 	follow_type = lookup_function_type (follow_type);
 	break;
+
+      case tp_function_with_arguments:
+	{
+	  VEC (type_ptr) *args = pop_typelist ();
+
+	  follow_type
+	    = lookup_function_type_with_arguments (follow_type,
+						   VEC_length (type_ptr, args),
+						   VEC_address (type_ptr,
+								args));
+	  VEC_free (type_ptr, args);
+	}
+	break;
+
+      case tp_type_stack:
+	{
+	  struct type_stack *stack = pop_type_stack ();
+	  /* Sort of ugly, but not really much worse than the
+	     alternatives.  */
+	  struct type_stack save = type_stack;
+
+	  type_stack = *stack;
+	  follow_type = follow_types (follow_type);
+	  gdb_assert (type_stack.depth == 0);
+
+	  type_stack = save;
+	}
+	break;
+      default:
+	gdb_assert_not_reached ("unrecognized tp_ value in follow_types");
       }
   return follow_type;
 }
@@ -1526,8 +1797,6 @@ operator_check_standard (struct expression *exp, int pos,
     case OP_SCOPE:
     case OP_TYPE:
     case UNOP_CAST:
-    case UNOP_DYNAMIC_CAST:
-    case UNOP_REINTERPRET_CAST:
     case UNOP_MAX:
     case UNOP_MEMVAL:
     case UNOP_MIN:
@@ -1643,20 +1912,19 @@ exp_uses_objfile (struct expression *exp, struct objfile *objfile)
 void
 _initialize_parse (void)
 {
-  type_stack_size = 80;
-  type_stack_depth = 0;
-  type_stack = (union type_stack_elt *)
-    xmalloc (type_stack_size * sizeof (*type_stack));
+  type_stack.size = 0;
+  type_stack.depth = 0;
+  type_stack.elements = NULL;
 
-  add_setshow_zinteger_cmd ("expression", class_maintenance,
-			    &expressiondebug,
-			    _("Set expression debugging."),
-			    _("Show expression debugging."),
-			    _("When non-zero, the internal representation "
-			      "of expressions will be printed."),
-			    NULL,
-			    show_expressiondebug,
-			    &setdebuglist, &showdebuglist);
+  add_setshow_zuinteger_cmd ("expression", class_maintenance,
+			     &expressiondebug,
+			     _("Set expression debugging."),
+			     _("Show expression debugging."),
+			     _("When non-zero, the internal representation "
+			       "of expressions will be printed."),
+			     NULL,
+			     show_expressiondebug,
+			     &setdebuglist, &showdebuglist);
   add_setshow_boolean_cmd ("parser", class_maintenance,
 			    &parser_debug,
 			   _("Set parser debugging."),

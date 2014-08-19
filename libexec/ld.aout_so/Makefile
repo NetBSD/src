@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.47.12.1 2013/02/25 00:28:02 tls Exp $
+#	$NetBSD: Makefile,v 1.47.12.2 2014/08/20 00:02:22 tls Exp $
 
 .include <bsd.own.mk>			# for MKPIC definition
 .include <bsd.endian.mk>		# for TARGET_ENDIANNESS
 
 .if ${MKPIC} != "no"
-.if ${TARGET_ENDIANNESS} == "1234" && ${MACHINE_CPU} == "arm"
+.if (${TARGET_ENDIANNESS} == "1234" && ${MACHINE_CPU} == "arm") \
+    || ${MACHINE_CPU} == "m68k"
 UUDECODE_FILES=	ld.so.${MACHINE_CPU}
 .else
 UUDECODE_FILES=	ld.so.${MACHINE_ARCH}

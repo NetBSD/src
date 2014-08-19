@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.39 2009/09/17 16:28:12 tsutsui Exp $ */
+/*	$NetBSD: bpp.c,v 1.39.22.1 2014/08/20 00:03:50 tls Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.39 2009/09/17 16:28:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.39.22.1 2014/08/20 00:03:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -126,8 +126,18 @@ dev_type_poll(bpppoll);
 dev_type_kqfilter(bppkqfilter);
 
 const struct cdevsw bpp_cdevsw = {
-	bppopen, bppclose, noread, bppwrite, bppioctl,
-	nostop, notty, bpppoll, nommap, bppkqfilter, D_TTY
+	.d_open = bppopen,
+	.d_close = bppclose,
+	.d_read = noread,
+	.d_write = bppwrite,
+	.d_ioctl = bppioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = bpppoll,
+	.d_mmap = nommap,
+	.d_kqfilter = bppkqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 #define BPPUNIT(dev)	(minor(dev))

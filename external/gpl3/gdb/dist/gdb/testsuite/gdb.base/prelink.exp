@@ -1,4 +1,4 @@
-# Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2006-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,16 +18,12 @@
 
 # This file was written by Alexandre Oliva <aoliva@redhat.com>
 
-if $tracelevel then {
-	strace $tracelevel
-	}
-
 
 if { ![isnative] || [is_remote host] || [skip_shlib_tests]} {
     return
 }
 
-if [get_compiler_info "ignored"] {
+if [get_compiler_info] {
     return -1
 }
 
@@ -40,7 +36,7 @@ load_lib prelink-support.exp
 set testfile "prelink"
 
 set libsrcfile ${testfile}-lib.c
-set libfile ${objdir}/${subdir}/${testfile}.so
+set libfile [standard_output_file ${testfile}.so]
 
 # Use -soname so that the new library gets copied by build_executable_own_libs.
 
@@ -51,7 +47,7 @@ if { [gdb_compile_shlib "${srcdir}/${subdir}/${libsrcfile}" "${libfile}" [list d
 
 set srcfile ${testfile}.c
 set executable ${testfile}t
-set binfile ${objdir}/${subdir}/${executable}
+set binfile [standard_output_file ${executable}]
 set prelink_args [build_executable_own_libs ${testfile}.exp $executable $srcfile [list debug "ldflags=-Wl,${libfile},-rpath,[file dirname ${libfile}]"]]
 if {$prelink_args == ""} {
     return -1
@@ -70,13 +66,13 @@ if ![prelink_yes $prelink_args] {
 }
 
 set found 0
-set coredir "${objdir}/${subdir}/coredir.[getpid]"
+set coredir "[standard_output_file coredir.[getpid]]"
 file mkdir $coredir
 catch "system \"(cd ${coredir}; ulimit -c unlimited; ${binfile}; true) >/dev/null 2>&1\""
 
 foreach i "${coredir}/core ${coredir}/core.coremaker.c ${binfile}.core" {
     if [remote_file build exists $i] {
-	remote_exec build "mv $i ${objdir}/${subdir}/prelink.core"
+	remote_exec build "mv $i [standard_output_file prelink.core]"
 	set found 1
     }
 }
@@ -85,7 +81,7 @@ if { $found == 0 } {
     set names [glob -nocomplain -directory $coredir core.*]
     if {[llength $names] == 1} {
         set corefile [file join $coredir [lindex $names 0]]
-        remote_exec build "mv $corefile ${objdir}/${subdir}/prelink.core"
+        remote_exec build "mv $corefile [standard_output_file prelink.core]"
         set found 1
     }
 }
@@ -111,6 +107,6 @@ clean_restart $executable
 # Print the "adjusting expectations" message.
 gdb_test_no_output "set verbose on"
 
-gdb_test "core-file $objdir/$subdir/prelink.core" "Using PIC \\(Position Independent Code\\) prelink displacement 0x\[^0\]\[0-9a-f\]* for \[^\r\n\]*[file tail ${libfile}].*" "seen displacement message"
+gdb_test "core-file [standard_output_file prelink.core]" "Using PIC \\(Position Independent Code\\) prelink displacement 0x\[^0\]\[0-9a-f\]* for \[^\r\n\]*[file tail ${libfile}].*" "seen displacement message"
 
 gdb_test "p &bssvar == bssvarp" " = 1" ".dynbss vs. .bss address shift"

@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.46.2.1 2012/11/20 03:02:06 tls Exp $ */
+/* $NetBSD: mfi.c,v 1.46.2.2 2014/08/20 00:03:38 tls Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.46.2.1 2012/11/20 03:02:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.46.2.2 2014/08/20 00:03:38 tls Exp $");
 
 #include "bio.h"
 
@@ -184,8 +184,18 @@ static dev_type_open(mfifopen);
 static dev_type_close(mfifclose);
 static dev_type_ioctl(mfifioctl);
 const struct cdevsw mfi_cdevsw = {
-	mfifopen, mfifclose, noread, nowrite, mfifioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = mfifopen,
+	.d_close = mfifclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = mfifioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 extern struct cfdriver mfi_cd;
@@ -370,15 +380,15 @@ mfi_init_ccb(struct mfi_softc *sc)
 
 	sc->sc_ccb = malloc(sizeof(struct mfi_ccb) * sc->sc_max_cmds,
 	    M_DEVBUF, M_WAITOK|M_ZERO);
+	io_req_base = (uint8_t *)MFIMEM_KVA(sc->sc_tbolt_reqmsgpool);
+	io_req_base_phys = MFIMEM_DVA(sc->sc_tbolt_reqmsgpool);
 	if (sc->sc_ioptype == MFI_IOP_TBOLT) {
 		/*
 		 * The first 256 bytes (SMID 0) is not used.
 		 * Don't add to the cmd list.
 		 */
-		io_req_base = (uint8_t *)MFIMEM_KVA(sc->sc_tbolt_reqmsgpool) +
-			MEGASAS_THUNDERBOLT_NEW_MSG_SIZE;
-		io_req_base_phys = MFIMEM_DVA(sc->sc_tbolt_reqmsgpool) +
-			MEGASAS_THUNDERBOLT_NEW_MSG_SIZE;
+		io_req_base += MEGASAS_THUNDERBOLT_NEW_MSG_SIZE;
+		io_req_base_phys += MEGASAS_THUNDERBOLT_NEW_MSG_SIZE;
 	}
 
 	for (i = 0; i < sc->sc_max_cmds; i++) {
@@ -2340,7 +2350,6 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 	struct mfi_pd_list	*pd;
 	int			i, found, rv = EINVAL;
 	uint8_t			mbox[MFI_MBOX_SIZE];
-	uint32_t		cmd;
 
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_ioctl_setstate %x\n", DEVNAME(sc),
 	    bs->bs_status);
@@ -2368,21 +2377,17 @@ mfi_ioctl_setstate(struct mfi_softc *sc, struct bioc_setstate *bs)
 	switch (bs->bs_status) {
 	case BIOC_SSONLINE:
 		mbox[2] = MFI_PD_ONLINE;
-		cmd = MD_DCMD_PD_SET_STATE;
 		break;
 
 	case BIOC_SSOFFLINE:
 		mbox[2] = MFI_PD_OFFLINE;
-		cmd = MD_DCMD_PD_SET_STATE;
 		break;
 
 	case BIOC_SSHOTSPARE:
 		mbox[2] = MFI_PD_HOTSPARE;
-		cmd = MD_DCMD_PD_SET_STATE;
 		break;
 /*
 	case BIOC_SSREBUILD:
-		cmd = MD_DCMD_PD_REBUILD;
 		break;
 */
 	default:
@@ -2945,7 +2950,7 @@ mfi_tbolt_init_desc_pool(struct mfi_softc *sc)
 	uint32_t     offset = 0;
 	uint8_t      *addr = MFIMEM_KVA(sc->sc_tbolt_reqmsgpool);
 
-	/* Request Decriptors alignement restrictions */
+	/* Request Decriptors alignment restrictions */
 	KASSERT(((uintptr_t)addr & 0xFF) == 0);
 
 	/* Skip request message pool */
@@ -3501,9 +3506,6 @@ mfifopen(dev_t dev, int flag, int mode, struct lwp *l)
 static int
 mfifclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct mfi_softc *sc;
-
-	sc = device_lookup_private(&mfi_cd, minor(dev));
 	return (0);
 }
 

@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile.mbr,v 1.2 2009/04/13 12:54:45 nonaka Exp $
+#	$NetBSD: Makefile.mbr,v 1.2.22.1 2014/08/20 00:03:09 tls Exp $
 
 S=	${.CURDIR}/../../../../..
 
 NOMAN=		# defined
 
 LIBCRT0=	# nothing
+LIBCRTI=	# nothing
 LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing

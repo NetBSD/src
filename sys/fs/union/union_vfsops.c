@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.68 2012/04/30 22:51:27 rmind Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.68.2.1 2014/08/20 00:04:28 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.68 2012/04/30 22:51:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.68.2.1 2014/08/20 00:04:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,6 +119,8 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	int len;
 	size_t size;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
@@ -386,19 +388,21 @@ union_root(struct mount *mp, struct vnode **vpp)
 	 * Return locked reference to root.
 	 */
 	vref(um->um_uppervp);
-	vn_lock(um->um_uppervp, LK_EXCLUSIVE | LK_RETRY);
 	if (um->um_lowervp)
 		vref(um->um_lowervp);
 	error = union_allocvp(vpp, mp, NULL, NULL, NULL,
 			      um->um_uppervp, um->um_lowervp, 1);
 
 	if (error) {
-		vput(um->um_uppervp);
+		vrele(um->um_uppervp);
 		if (um->um_lowervp)
 			vrele(um->um_lowervp);
+		return error;
 	}
 
-	return (error);
+	vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
+
+	return 0;
 }
 
 int
@@ -504,31 +508,28 @@ const struct vnodeopv_desc * const union_vnodeopv_descs[] = {
 };
 
 struct vfsops union_vfsops = {
-	MOUNT_UNION,
-	sizeof (struct union_args),
-	union_mount,
-	union_start,
-	union_unmount,
-	union_root,
-	(void *)eopnotsupp,		/* vfs_quotactl */
-	union_statvfs,
-	union_sync,
-	union_vget,
-	(void *)eopnotsupp,		/* vfs_fhtovp */
-	(void *)eopnotsupp,		/* vfs_vptofh */
-	union_init,
-	union_reinit,
-	union_done,
-	NULL,				/* vfs_mountroot */
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	union_renamelock_enter,
-	union_renamelock_exit,
-	(void *)eopnotsupp,
-	union_vnodeopv_descs,
-	0,				/* vfs_refcount */
-	{ NULL, NULL },
+	.vfs_name = MOUNT_UNION,
+	.vfs_min_mount_data = sizeof (struct union_args),
+	.vfs_mount = union_mount,
+	.vfs_start = union_start,
+	.vfs_unmount = union_unmount,
+	.vfs_root = union_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = union_statvfs,
+	.vfs_sync = union_sync,
+	.vfs_vget = union_vget,
+	.vfs_fhtovp = (void *)eopnotsupp,
+	.vfs_vptofh = (void *)eopnotsupp,
+	.vfs_init = union_init,
+	.vfs_reinit = union_reinit,
+	.vfs_done = union_done,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = union_renamelock_enter,
+	.vfs_renamelock_exit = union_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = union_vnodeopv_descs
 };
 
 static int
@@ -541,11 +542,6 @@ union_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&union_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&union_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&union_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "union",

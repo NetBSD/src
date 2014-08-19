@@ -1,4 +1,4 @@
-/*	$NetBSD: attr_print_plain.c,v 1.1.1.1 2009/06/23 10:08:58 tron Exp $	*/
+/*	$NetBSD: attr_print_plain.c,v 1.1.1.1.16.1 2014/08/19 23:59:45 tls Exp $	*/
 
 /*++
 /* NAME
@@ -219,14 +219,14 @@ int     main(int unused_argc, char **argv)
     htable_enter(table, "bar-name", mystrdup("bar-value"));
     attr_print_plain(VSTREAM_OUT, ATTR_FLAG_NONE,
 		     ATTR_TYPE_INT, ATTR_NAME_INT, 4711,
-		     ATTR_TYPE_LONG, ATTR_NAME_LONG, 1234,
+		     ATTR_TYPE_LONG, ATTR_NAME_LONG, 1234L,
 		     ATTR_TYPE_STR, ATTR_NAME_STR, "whoopee",
 	       ATTR_TYPE_DATA, ATTR_NAME_DATA, strlen("whoopee"), "whoopee",
 		     ATTR_TYPE_HASH, table,
 		     ATTR_TYPE_END);
     attr_print_plain(VSTREAM_OUT, ATTR_FLAG_NONE,
 		     ATTR_TYPE_INT, ATTR_NAME_INT, 4711,
-		     ATTR_TYPE_LONG, ATTR_NAME_LONG, 1234,
+		     ATTR_TYPE_LONG, ATTR_NAME_LONG, 1234L,
 		     ATTR_TYPE_STR, ATTR_NAME_STR, "whoopee",
 	       ATTR_TYPE_DATA, ATTR_NAME_DATA, strlen("whoopee"), "whoopee",
 		     ATTR_TYPE_END);

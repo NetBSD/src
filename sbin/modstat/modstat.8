@@ -1,4 +1,4 @@
-.\" $NetBSD: modstat.8,v 1.11 2012/08/12 17:20:19 wiz Exp $
+.\" $NetBSD: modstat.8,v 1.11.2.1 2014/08/20 00:02:26 tls Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd August 6, 2012
+.Dd October 24, 2013
 .Dt MODSTAT 8
 .Os
 .Sh NAME
@@ -92,6 +92,9 @@ Size of the module in bytes.
 .It Li REFS
 Number of references held on the module.
 Disabled builtin modules will show a count of \-1 here.
+.It Li ADDRESS
+The kernel address at which the module is loaded.
+Builtin modules will show 0 here.
 .It Li REQUIRES
 Additional modules that must be present.
 .El

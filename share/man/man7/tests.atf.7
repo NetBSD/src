@@ -1,4 +1,4 @@
-.\"	$NetBSD: tests.atf.7,v 1.1.4.2 2013/06/23 06:28:54 tls Exp $
+.\"	$NetBSD: tests.atf.7,v 1.1.4.3 2014/08/20 00:02:36 tls Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 5, 2011
+.Dd July 13, 2014
 .Dt TESTS 7
 .Os
 .Sh NAME
@@ -37,8 +37,8 @@ The
 test suite provides a collection of automated tests for two major purposes.
 On the one hand, the test suite aids
 .Em developers
-in catching bugs and regressions in the code when they performing modifications
-to the source tree.
+in catching bugs and regressions in the code when they are performing
+modifications to the source tree.
 On the other hand, the test suite allows
 .Em end users
 (and, in particular, system administrators) to verify that fresh installations
@@ -143,6 +143,21 @@ see
 .Xr atf-test-program 1
 for more details, but be aware that you should only be doing this if you are
 debugging failing tests.
+.Ss Test environment considerations
+Tests can be invoked as an unprivileged user, in which case tests that
+require privileges will be skipped.
+If run as root, an unprivileged user will be used for tests that
+require privileges.
+For maximal coverage, the standard approach is to invoke tests as root.
+.Pp
+Ideally, tests are self-contained and do not either depend on or
+perturb the host environment, aside from skipping tests when optional
+facilities are not available.
+In reality, tests load and unload modules, and do other things that
+might cause problems.
+While it is not entirely safe to run tests on a multi-user system,
+permanent problems or crashes from doing so are viewed as bugs and
+should be reported.
 .Ss Configuring the tests
 Some test cases in the
 .Nx
@@ -218,4 +233,4 @@ and the collection of test programs in
 .Pa /usr/tests
 has been growing since then.
 .Sh AUTHORS
-.An Julio Merino Aq jmmv@NetBSD.org
+.An Julio Merino Aq Mt jmmv@NetBSD.org

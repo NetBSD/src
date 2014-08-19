@@ -1,4 +1,4 @@
-/* $NetBSD: tvpll.c,v 1.4 2011/10/02 19:03:56 jmcneill Exp $ */
+/* $NetBSD: tvpll.c,v 1.4.12.1 2014/08/20 00:03:37 tls Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tvpll.c,v 1.4 2011/10/02 19:03:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tvpll.c,v 1.4.12.1 2014/08/20 00:03:37 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,6 @@ struct tvpll *
 tvpll_open(device_t parent, i2c_tag_t t, i2c_addr_t a, struct tvpll_data *p)
 {
 	struct tvpll *tvpll;
-	int rv;
 
 	tvpll = kmem_alloc(sizeof(struct tvpll), KM_SLEEP);
         if (tvpll == NULL)
@@ -68,7 +67,7 @@ tvpll_open(device_t parent, i2c_tag_t t, i2c_addr_t a, struct tvpll_data *p)
 
 	if (tvpll->pll->initdata) {
 		iic_acquire_bus(tvpll->tag, I2C_F_POLL);
-		rv = iic_exec(tvpll->tag, I2C_OP_WRITE_WITH_STOP, tvpll->addr,
+		(void)iic_exec(tvpll->tag, I2C_OP_WRITE_WITH_STOP, tvpll->addr,
 		    &tvpll->pll->initdata[1], tvpll->pll->initdata[0],
 		    NULL, 0, I2C_F_POLL);
 		iic_release_bus(tvpll->tag, I2C_F_POLL);

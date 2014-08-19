@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.13 2008/04/28 20:23:38 martin Exp $	*/
+/*	$NetBSD: leds.c,v 1.13.44.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.13 2008/04/28 20:23:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.13.44.1 2014/08/20 00:03:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ static struct led_patterns ledpat = {
  * This is called early during startup to find the
  * diag register (LEDs) and turn on the light(s).
  */
-void 
+void
 leds_init(void)
 {
 #ifdef	_SUN3X_
@@ -105,7 +105,7 @@ leds_init(void)
 /*
  * This is called by the clock interrupt.
  */
-void 
+void
 leds_intr(void)
 {
 	u_char i;

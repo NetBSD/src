@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.17 2011/10/28 22:08:14 dyoung Exp $ */
+/* $NetBSD: if_srt.c,v 1.17.12.1 2014/08/20 00:04:34 tls Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.17 2011/10/28 22:08:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.17.12.1 2014/08/20 00:04:34 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -482,15 +482,16 @@ srt_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 }
 
 const struct cdevsw srt_cdevsw = {
-	&srt_open,
-	&srt_close,
-	nullread,
-	nullwrite,
-	&srt_ioctl,
-	nullstop,
-	notty,
-	nullpoll,
-	nommap,
-	nullkqfilter,
-	D_OTHER
+	.d_open = srt_open,
+	.d_close = srt_close,
+	.d_read = nullread,
+	.d_write = nullwrite,
+	.d_ioctl = srt_ioctl,
+	.d_stop = nullstop,
+	.d_tty = notty,
+	.d_poll = nullpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nullkqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };

@@ -149,7 +149,7 @@ mpn_matrix22_mul_strassen (mp_ptr r0, mp_ptr r1, mp_ptr r2, mp_ptr r3, mp_size_t
     {
       s0[rn] = r1[rn] - mpn_sub_n (s0, r1, r0, rn);
       s0s = 1;				/* s4 = -r0 + r1 - r2 + r3 */
-      					/* Reverse sign! */
+					/* Reverse sign! */
     }
   else
     {

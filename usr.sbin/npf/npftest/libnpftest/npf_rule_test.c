@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rule_test.c,v 1.2.2.1 2013/02/25 00:30:47 tls Exp $	*/
+/*	$NetBSD: npf_rule_test.c,v 1.2.2.2 2014/08/20 00:05:11 tls Exp $	*/
 
 /*
  * NPF ruleset test.
@@ -10,9 +10,6 @@
 
 #include "npf_impl.h"
 #include "npf_test.h"
-
-#define	IFNAME_EXT	"npftest0"
-#define	IFNAME_INT	"npftest1"
 
 #define	RESULT_PASS	0
 #define	RESULT_BLOCK	ENETUNREACH
@@ -83,15 +80,13 @@ npf_rule_raw_test(bool verbose, struct mbuf *m, ifnet_t *ifp, int di)
 	int retfl, error;
 
 	nbuf_init(&nbuf, m, ifp);
-	npf_cache_all(&npc, &nbuf);
+	npc.npc_nbuf = &nbuf;
+	npf_cache_all(&npc);
 
 	int slock = npf_config_read_enter();
-	rl = npf_ruleset_inspect(&npc, &nbuf, npf_config_ruleset(),
+	rl = npf_ruleset_inspect(&npc, npf_config_ruleset(),
 	    di, NPF_LAYER_3);
 	if (rl) {
-		if (verbose) {
-			npf_rulenc_dump(rl);
-		}
 		error = npf_rule_conclude(rl, &retfl);
 	} else {
 		error = ENOENT;
@@ -101,9 +96,9 @@ npf_rule_raw_test(bool verbose, struct mbuf *m, ifnet_t *ifp, int di)
 }
 
 static int
-npf_test_first(bool verbose)
+npf_test_case(u_int i, bool verbose)
 {
-	const struct test_case *t = &test_cases[0];
+	const struct test_case *t = &test_cases[i];
 	ifnet_t *ifp = ifunit(t->ifname);
 	int error;
 
@@ -119,7 +114,7 @@ npf_blockall_rule(void)
 	prop_dictionary_t rldict;
 
 	rldict = prop_dictionary_create();
-	prop_dictionary_set_uint32(rldict, "attributes",
+	prop_dictionary_set_uint32(rldict, "attr",
 	    NPF_RULE_IN | NPF_RULE_OUT | NPF_RULE_DYNAMIC);
 	return npf_rule_alloc(rldict);
 }
@@ -159,7 +154,11 @@ npf_rule_test(bool verbose)
 		fail |= (serror != t->stateful_ret || error != t->ret);
 	}
 
-	error = npf_test_first(verbose);
+	/*
+	 * Test dynamic NPF rules.
+	 */
+
+	error = npf_test_case(0, verbose);
 	assert(error == RESULT_PASS);
 
 	npf_config_enter();
@@ -169,7 +168,7 @@ npf_rule_test(bool verbose)
 	error = npf_ruleset_add(rlset, "test-rules", rl);
 	fail |= error != 0;
 
-	error = npf_test_first(verbose);
+	error = npf_test_case(0, verbose);
 	fail |= (error != RESULT_BLOCK);
 
 	id = npf_rule_getid(rl);
@@ -178,7 +177,7 @@ npf_rule_test(bool verbose)
 
 	npf_config_exit();
 
-	error = npf_test_first(verbose);
+	error = npf_test_case(0, verbose);
 	fail |= (error != RESULT_PASS);
 
 	return !fail;

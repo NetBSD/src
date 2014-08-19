@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.h,v 1.20 2007/02/17 22:34:10 dyoung Exp $	*/
+/*	$NetBSD: raw_cb.h,v 1.20.88.1 2014/08/20 00:04:34 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,6 +34,8 @@
 #ifndef _NET_RAW_CB_H_
 #define _NET_RAW_CB_H_
 
+#ifdef _KERNEL
+
 /*
  * Raw protocol interface control block.  Used
  * to tie a socket to the generic raw interface.
@@ -44,6 +46,7 @@ struct rawcb {
 	struct	sockaddr *rcb_faddr;	/* destination address */
 	struct	sockaddr *rcb_laddr;	/* socket's address */
 	struct	sockproto rcb_proto;	/* protocol family, protocol */
+	size_t	rcb_len;
 };
 
 #define	sotorawcb(so)		((struct rawcb *)(so)->so_pcb)
@@ -54,13 +57,12 @@ struct rawcb {
 #define	RAWSNDQ		8192
 #define	RAWRCVQ		8192
 
-#ifdef _KERNEL
 LIST_HEAD(rawcbhead, rawcb);
 extern	struct	rawcbhead rawcb;		/* head of list */
 
 int	raw_attach(struct socket *, int);
 void	*raw_ctlinput(int, const struct sockaddr *, void *);
-void	raw_detach(struct rawcb *);
+void	raw_detach(struct socket *);
 void	raw_disconnect(struct rawcb *);
 void	raw_init(void);
 void	raw_input(struct mbuf *, ...);
@@ -68,6 +70,8 @@ int	raw_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 void	raw_setsockaddr(struct rawcb *, struct mbuf *);
 void	raw_setpeeraddr(struct rawcb *, struct mbuf *);
+int	raw_send(struct socket *,
+	    struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.33 2012/02/06 02:14:13 matt Exp $ */
+/* $NetBSD: asm.h,v 1.33.6.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -642,14 +642,13 @@ label:	ASCIZ msg;						\
 /*
  * Kernel RCS ID tag and copyright macros
  */
+#define	__SECTIONSTRING(_sec, _str)				\
+	.pushsection _sec ; .asciz _str ; .popsection
 
 #ifdef _KERNEL
 
-#define	__KERNEL_SECTIONSTRING(_sec, _str)				\
-	.pushsection _sec ; .asciz _str ; .popsection
-
-#define	__KERNEL_RCSID(_n, _s)		__KERNEL_SECTIONSTRING(.ident, _s)
-#define	__KERNEL_COPYRIGHT(_n, _s)	__KERNEL_SECTIONSTRING(.copyright, _s)
+#define	__KERNEL_RCSID(_n, _s)		__SECTIONSTRING(.ident, _s)
+#define	__KERNEL_COPYRIGHT(_n, _s)	__SECTIONSTRING(.copyright, _s)
 
 #ifdef NO_KERNEL_RCSIDS
 #undef __KERNEL_RCSID
@@ -697,6 +696,8 @@ IMPORT(cpu_info_primary, CPU_INFO_SIZEOF)
 #define	GET_IDLE_PCB(reg)						\
 	lda	reg, cpu_info_primary				;	\
 	ldq	reg, CPU_INFO_IDLE_PCB_PADDR(reg)
-#endif
+#endif /* MULTIPROCESSOR */
+#else
+#define	RCSID(_s)		__SECTIONSTRING(.ident, _s)
 
 #endif /* _KERNEL */

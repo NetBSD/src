@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.24 2011/07/26 08:56:26 mrg Exp $        */
+/*      $NetBSD: opms.c,v 1.24.12.1 2014/08/20 00:03:24 tls Exp $        */
 
 /*
  * Copyright 1997
@@ -91,7 +91,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.24 2011/07/26 08:56:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.24.12.1 2014/08/20 00:03:24 tls Exp $");
 
 #include "opms.h"
 #if NOPMS > 1
@@ -203,8 +203,18 @@ dev_type_poll(opmspoll);
 dev_type_kqfilter(opmskqfilter);
 
 const struct cdevsw opms_cdevsw = {
-	opmsopen, opmsclose, opmsread, nowrite, opmsioctl,
-	nostop, notty, opmspoll, nommap, opmskqfilter,
+	.d_open = opmsopen,
+	.d_close = opmsclose,
+	.d_read = opmsread,
+	.d_write = nowrite,
+	.d_ioctl = opmsioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = opmspoll,
+	.d_mmap = nommap,
+	.d_kqfilter = opmskqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 /* variable to control which debugs printed if kernel compiled with 

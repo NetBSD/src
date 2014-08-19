@@ -1,6 +1,5 @@
 /* Address ranges.
-   Copyright (C) 1998, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This file is part of the GNU Simulators.
@@ -194,9 +193,9 @@ frob_range (ADDR_RANGE *ar, address_word start, address_word end, int delete_p)
 
  out:
   if (new_asr)
-    free(new_asr);
+    free (new_asr);
   if (new_asr2)
-    free(new_asr2);
+    free (new_asr2);
 }
 
 /* Free T and all subtrees.  */

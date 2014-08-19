@@ -1,8 +1,7 @@
-#	$NetBSD: mk.gemini,v 1.3 2011/01/31 06:09:32 matt Exp $
+#	$NetBSD: mk.gemini,v 1.3.14.1 2014/08/20 00:02:53 tls Exp $
 
 
-CPUFLAGS+=-march=armv4
-CPUFLAGS+=-mlittle-endian
+CPPFLAGS+=-march=armv4
 
 SYSTEM_FIRST_OBJ=	gemini_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/gemini/gemini_start.S

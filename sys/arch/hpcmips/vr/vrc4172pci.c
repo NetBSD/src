@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pci.c,v 1.15.12.1 2012/11/20 03:01:24 tls Exp $	*/
+/*	$NetBSD: vrc4172pci.c,v 1.15.12.2 2014/08/20 00:03:03 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4172pci.c,v 1.15.12.1 2012/11/20 03:01:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4172pci.c,v 1.15.12.2 2014/08/20 00:03:03 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,8 @@ static void	vrc4172pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
 		    pcireg_t);
 static int	vrc4172pci_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
-static const char *vrc4172pci_intr_string(pci_chipset_tag_t,pci_intr_handle_t);
+static const char *vrc4172pci_intr_string(pci_chipset_tag_t,pci_intr_handle_t,
+		    char *, size_t);
 static const struct evcnt *vrc4172pci_intr_evcnt(pci_chipset_tag_t,
 		    pci_intr_handle_t);
 static void	*vrc4172pci_intr_establish(pci_chipset_tag_t,
@@ -324,16 +325,15 @@ vrc4172pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 const char *
-vrc4172pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+vrc4172pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
+    size_t len)
 {
-	static char irqstr[sizeof("pciintr") + 16];
-
-	snprintf(irqstr, sizeof(irqstr), "pciintr %d:%d:%d",
+	snprintf(buf, len, "pciintr %d:%d:%d",
 	    CONFIG_HOOK_PCIINTR_BUS((int)ih),
 	    CONFIG_HOOK_PCIINTR_DEVICE((int)ih),
 	    CONFIG_HOOK_PCIINTR_FUNCTION((int)ih));
 
-	return (irqstr);
+	return buf;
 }
 
 const struct evcnt *

@@ -1,7 +1,6 @@
 /* Machine independent support for SVR4 /proc (process file system) for GDB.
 
-   Copyright (C) 1999, 2000, 2001, 2003, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
    Written by Michael Snyder at Cygnus Solutions.
    Based on work by Fred Fish, Stu Grossman, Geoff Noer, and others.
@@ -161,7 +160,7 @@ static struct trans ioctl_table[] = {
   { PIOCLDT,       "PIOCLDT",      "get LDT" },
   { PIOCNLDT,      "PIOCNLDT",     "get number of LDT entries" },
 #endif
-#ifdef PIOCLSTATUS			/* solaris and unixware */
+#ifdef PIOCLSTATUS			/* solaris */
   { PIOCLSTATUS,   "PIOCLSTATUS",  "get status of all lwps" },
   { PIOCLUSAGE,    "PIOCLUSAGE",   "get resource usage of all lwps" },
   { PIOCOPENLWP,   "PIOCOPENLWP",  "get lwp file descriptor" },
@@ -409,9 +408,6 @@ static struct trans rw_table[] = {
 #ifdef PCREAD			/* solaris */
   { PCREAD,   "PCREAD",   "read from the address space" },
   { PCWRITE,  "PCWRITE",  "write to the address space" },
-#endif
-#ifdef PCRESET			/* unixware */
-  { PCRESET,  "PCRESET",  "unset modes" },
 #endif
   { PCRUN,    "PCRUN",    "make process/lwp runnable" },
 #ifdef PCSASRS			/* solaris 2.7 only */
@@ -774,6 +770,9 @@ proc_prettyfprint_status (long flags, int why, int what, int thread)
     }
 }
 
+
+/* Provide a prototype to silence -Wmissing-prototypes.  */
+extern void _initialize_proc_api (void);
 
 void
 _initialize_proc_api (void)

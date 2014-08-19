@@ -1,4 +1,4 @@
-/*	$NetBSD: ath_netbsd.c,v 1.21 2011/07/17 20:54:51 joerg Exp $ */
+/*	$NetBSD: ath_netbsd.c,v 1.21.12.1 2014/08/20 00:03:37 tls Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.21 2011/07/17 20:54:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.21.12.1 2014/08/20 00:03:37 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -387,14 +387,9 @@ ath_sysctl_instance(const char *dvname, struct sysctllog **log)
 	const struct sysctlnode *rnode;
 
 	if ((rc = sysctl_createv(log, 0, NULL, &rnode,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
-		goto err;
-
-	if ((rc = sysctl_createv(log, 0, &rnode, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, dvname,
 	    SYSCTL_DESCR("ath information and options"),
-	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 	return rnode;
@@ -410,14 +405,9 @@ ath_sysctl_treetop(struct sysctllog **log)
 	const struct sysctlnode *rnode;
 
 	if ((rc = sysctl_createv(log, 0, NULL, &rnode,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
-		goto err;
-
-	if ((rc = sysctl_createv(log, 0, &rnode, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "ath",
 	    SYSCTL_DESCR("ath information and options"),
-	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 	return rnode;

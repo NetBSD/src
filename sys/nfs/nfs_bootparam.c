@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.37 2010/03/21 00:10:40 chs Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.37.18.1 2014/08/20 00:04:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.37 2010/03/21 00:10:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.37.18.1 2014/08/20 00:04:36 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs_boot.h"
@@ -101,7 +101,7 @@ static int bp_getfile (struct sockaddr_in *bpsin, const char *key,
  * Use the old broadcast address for the WHOAMI
  * call because we do not yet know our netmask.
  * The server address returned by the WHOAMI call
- * is used for all subsequent booptaram RPCs.
+ * is used for all subsequent bootparam RPCs.
  */
 int
 nfs_bootparam(struct nfs_diskless *nd, struct lwp *lwp, int *flags)

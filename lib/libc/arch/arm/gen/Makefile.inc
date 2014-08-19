@@ -1,7 +1,9 @@
-# $NetBSD: Makefile.inc,v 1.18.2.3 2013/06/23 06:21:04 tls Exp $
+# $NetBSD: Makefile.inc,v 1.18.2.4 2014/08/20 00:02:09 tls Exp $
 
-SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S bswap64.c divide.S divsi3.S \
-	fabs.c flt_rounds.c udivsi3.S
+SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S bswap64.c \
+	fabs_ieee754.c flt_rounds.c
+
+CPUFLAGS.divide.S+=		-marm
 
 # Common ieee754 constants and functions
 SRCS+=	infinityf_ieee754.c infinity_ieee754.c infinityl_dbl_ieee754.c
@@ -14,9 +16,10 @@ SRCS+=	signbitf_ieee754.c signbitd_ieee754.c
 .if !empty(LIBC_MACHINE_ARCH:Mearm*)
 SRCS+=	__aeabi_fcmpun.c __aeabi_dcmpun.c
 SRCS+=	__aeabi_idiv0.c __aeabi_ldiv0.c
-.else
-SRCS+=	modsi3.S umodsi3.S
 .endif
+
+AFLAGS._setjmp.S=	-mfpu=vfp
+AFLAGS.setjmp.S=	-mfpu=vfp
 
 SRCS+=	nanf.c
 

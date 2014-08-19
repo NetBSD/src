@@ -1,5 +1,5 @@
 /* Test program for multi-register variable.
-   Copyright 2003, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2003-2014 Free Software Foundation, Inc.
 
    This file is part of the gdb testsuite.
 
@@ -36,7 +36,7 @@ void foo ()
   register struct s_2_by_4 s24;
   s24.field_0 = 1170;
   s24.field_1 = 64701;
-  marker (s24);
+  marker (s24); /* break-here */
   return;
 }
 

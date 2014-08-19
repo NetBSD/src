@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4.c,v 1.6 2005/12/11 12:20:48 christos Exp $	*/
+/*	$NetBSD: arc4.c,v 1.6.120.1 2014/08/20 00:03:34 tls Exp $	*/
 
 /*
  * ARC4 implementation
@@ -30,18 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arc4.c,v 1.6 2005/12/11 12:20:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arc4.c,v 1.6.120.1 2014/08/20 00:03:34 tls Exp $");
 
 #include <sys/types.h>
 
 #include <crypto/arc4/arc4.h>
-
-struct arc4_ctx {
-	unsigned int	x;
-	unsigned int	y;
-	unsigned int	state[256];
-	/* was unsigned char, changed to int for performance -- onoe */
-};
 
 int
 arc4_ctxlen(void)
@@ -97,8 +90,31 @@ arc4_encrypt(void *ctxp, u_char *dst, const u_char *src, int len)
 }
 
 void
+arc4_stream(void *ctxp, u_char *dst, int len)
+{
+	struct arc4_ctx *ctx = ctxp;
+	unsigned int x, y, sx, sy;
+	unsigned int *state;
+	const unsigned char *enddst;
+
+	state = ctx->state;
+	x = ctx->x;
+	y = ctx->y;
+
+	for (enddst = dst + len; dst != enddst; dst++) {
+		x = (x + 1) & 0xff;
+		sx = state[x];
+		y = (sx + y) & 0xff;
+		state[x] = sy = state[y];
+		state[y]= sx;
+		*dst = state[(sx + sy) & 0xff];
+	}
+	ctx->x = x;
+	ctx->y = y;
+}
+
+void
 arc4_decrypt(void *ctxp, u_char *dst, const u_char *src, int len)
 {
-
 	arc4_encrypt(ctxp, dst, src, len);
 }

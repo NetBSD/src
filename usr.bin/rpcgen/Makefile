@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2009/04/14 22:15:25 lukem Exp $
-
-WARNS?=	2	# XXX -Wcast-qual issues
+#	$NetBSD: Makefile,v 1.12.12.1 2014/08/20 00:05:03 tls Exp $
 
 PROG=	rpcgen
 SRCS=	rpc_clntout.c rpc_cout.c rpc_hout.c rpc_main.c rpc_parse.c rpc_scan.c \

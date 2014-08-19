@@ -1,7 +1,6 @@
 /* Output generating routines for GDB CLI.
 
-   Copyright (C) 1999, 2000, 2002, 2003, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions.
    Written by Fernando Nasser for Cygnus.
@@ -24,7 +23,7 @@
 #include "defs.h"
 #include "ui-out.h"
 #include "cli-out.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdb_assert.h"
 #include "vec.h"
 
@@ -139,7 +138,7 @@ cli_field_int (struct ui_out *uiout, int fldno, int width,
 
   if (data->suppress_output)
     return;
-  sprintf (buffer, "%d", value);
+  xsnprintf (buffer, sizeof (buffer), "%d", value);
 
   /* Always go through the function pointer (virtual function call).
      We may have been extended.  */
@@ -342,7 +341,7 @@ out_field_fmt (struct ui_out *uiout, int fldno,
 static void
 field_separator (void)
 {
-  cli_out_data *data = ui_out_data (uiout);
+  cli_out_data *data = ui_out_data (current_uiout);
   struct ui_file *stream = VEC_last (ui_filep, data->streams);
 
   fputc_filtered (' ', stream);
@@ -371,6 +370,7 @@ struct ui_out_impl cli_ui_out_impl =
   cli_wrap_hint,
   cli_flush,
   cli_redirect,
+  0,
   0, /* Does not need MI hacks (i.e. needs CLI hacks).  */
 };
 

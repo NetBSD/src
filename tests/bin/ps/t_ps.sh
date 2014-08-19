@@ -1,4 +1,4 @@
-# $NetBSD: t_ps.sh,v 1.1 2012/03/17 16:33:11 jruoho Exp $
+# $NetBSD: t_ps.sh,v 1.1.4.1 2014/08/20 00:04:45 tls Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -94,7 +94,7 @@ setup_keywords()
 	default_keywords='pid tty stat time command'
 	j_keywords='user pid ppid pgid sess jobc state tt time command'
 	l_keywords='uid pid ppid cpu pri nice vsz rss wchan state tt time command'
-	s_keywords='uid pid ppid cpu lid nlwp pri nice vsz rss wchan lstate tt time command'
+	s_keywords='uid pid ppid cpu lid nlwp pri nice vsz rss wchan lstate tt ltime command'
 	u_keywords='user pid %cpu %mem vsz rss tt state start time command'
 	v_keywords='pid state time sl re pagein vsz rss lim tsiz %cpu %mem command'
 }

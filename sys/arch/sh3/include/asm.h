@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.27 2010/12/20 21:11:25 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.27.18.1 2014/08/20 00:03:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -138,7 +138,7 @@
  * 	CALL_DATUM(function, 2b)
  */
 
-#ifdef PIC
+#ifdef __PIC__
 
 #define	PIC_PLT(x)	x@PLT
 #define	PIC_GOT(x)	x@GOT
@@ -180,7 +180,7 @@
 #define CALL_DATUM_LOCAL(function, lpcs) \
 		.long	function - ((lpcs) + 4)
 
-#else  /* !PIC */
+#else  /* !__PIC__ */
 
 #define	PIC_PROLOGUE(label)
 #define	PIC_PROLOGUE_NOSAVE(label)
@@ -197,7 +197,7 @@
 #define CALL_DATUM_LOCAL(function, lpcs) \
 		.long	function
 
-#endif /* !PIC */
+#endif /* !__PIC__ */
 
 
 #define	ASMSTR		.asciz

@@ -1,4 +1,4 @@
-/*	$NetBSD: postalias.c,v 1.1.1.1.16.1 2013/02/25 00:27:21 tls Exp $	*/
+/*	$NetBSD: postalias.c,v 1.1.1.1.16.2 2014/08/19 23:59:43 tls Exp $	*/
 
 /*++
 /* NAME
@@ -261,7 +261,7 @@
 static void postalias(char *map_type, char *path_name, int postalias_flags,
 		              int open_flags, int dict_flags)
 {
-    VSTREAM *source_fp;
+    VSTREAM *NOCLOBBER source_fp;
     VSTRING *line_buffer;
     MKMAP  *mkmap;
     int     lineno;
@@ -281,12 +281,16 @@ static void postalias(char *map_type, char *path_name, int postalias_flags,
     key_buffer = vstring_alloc(100);
     value_buffer = vstring_alloc(100);
     if ((open_flags & O_TRUNC) == 0) {
+	/* Incremental mode. */
 	source_fp = VSTREAM_IN;
 	vstream_control(source_fp, VSTREAM_CTL_PATH, "stdin", VSTREAM_CTL_END);
-    } else if (strcmp(map_type, DICT_TYPE_PROXY) == 0) {
-	msg_fatal("can't create maps via the proxy service");
-    } else if ((source_fp = vstream_fopen(path_name, O_RDONLY, 0)) == 0) {
-	msg_fatal("open %s: %m", path_name);
+    } else {
+	/* Create database. */
+	if (strcmp(map_type, DICT_TYPE_PROXY) == 0)
+	    msg_fatal("can't create maps via the proxy service");
+	dict_flags |= DICT_FLAG_BULK_UPDATE;
+	if ((source_fp = vstream_fopen(path_name, O_RDONLY, 0)) == 0)
+	    msg_fatal("open %s: %m", path_name);
     }
     if (fstat(vstream_fileno(source_fp), &st) < 0)
 	msg_fatal("fstat %s: %m", path_name);
@@ -320,72 +324,85 @@ static void postalias(char *map_type, char *path_name, int postalias_flags,
 	umask(saved_mask);
 
     /*
-     * Add records to the database.
+     * Trap "exceptions" so that we can restart a bulk-mode update after a
+     * recoverable error.
      */
-    lineno = 0;
-    while (readlline(line_buffer, source_fp, &lineno)) {
+    for (;;) {
+	if (dict_isjmp(mkmap->dict) != 0
+	    && dict_setjmp(mkmap->dict) != 0
+	    && vstream_fseek(source_fp, SEEK_SET, 0) < 0)
+	    msg_fatal("seek %s: %m", VSTREAM_PATH(source_fp));
 
 	/*
-	 * Tokenize the input, so that we do the right thing when a quoted
-	 * localpart contains special characters such as "@", ":" and so on.
+	 * Add records to the database.
 	 */
-	if ((tok_list = tok822_scan(STR(line_buffer), (TOK822 **) 0)) == 0)
-	    continue;
+	lineno = 0;
+	while (readlline(line_buffer, source_fp, &lineno)) {
 
-	/*
-	 * Enforce the key:value format. Disallow missing keys, multi-address
-	 * keys, or missing values. In order to specify an empty string or
-	 * value, enclose it in double quotes.
-	 */
-	if ((colon = tok822_find_type(tok_list, ':')) == 0
-	    || colon->prev == 0 || colon->next == 0
-	    || tok822_rfind_type(colon, ',')) {
-	    msg_warn("%s, line %d: need name:value pair",
-		     VSTREAM_PATH(source_fp), lineno);
-	    tok822_free_tree(tok_list);
-	    continue;
+	    /*
+	     * Tokenize the input, so that we do the right thing when a
+	     * quoted localpart contains special characters such as "@", ":"
+	     * and so on.
+	     */
+	    if ((tok_list = tok822_scan(STR(line_buffer), (TOK822 **) 0)) == 0)
+		continue;
+
+	    /*
+	     * Enforce the key:value format. Disallow missing keys,
+	     * multi-address keys, or missing values. In order to specify an
+	     * empty string or value, enclose it in double quotes.
+	     */
+	    if ((colon = tok822_find_type(tok_list, ':')) == 0
+		|| colon->prev == 0 || colon->next == 0
+		|| tok822_rfind_type(colon, ',')) {
+		msg_warn("%s, line %d: need name:value pair",
+			 VSTREAM_PATH(source_fp), lineno);
+		tok822_free_tree(tok_list);
+		continue;
+	    }
+
+	    /*
+	     * Key must be local. XXX We should use the Postfix rewriting and
+	     * resolving services to handle all address forms correctly.
+	     * However, we can't count on the mail system being up when the
+	     * alias database is being built, so we're guessing a bit.
+	     */
+	    if (tok822_rfind_type(colon, '@') || tok822_rfind_type(colon, '%')) {
+		msg_warn("%s, line %d: name must be local",
+			 VSTREAM_PATH(source_fp), lineno);
+		tok822_free_tree(tok_list);
+		continue;
+	    }
+
+	    /*
+	     * Split the input into key and value parts, and convert from
+	     * token representation back to string representation. Convert
+	     * the key to internal (unquoted) form, because the resolver
+	     * produces addresses in internal form. Convert the value to
+	     * external (quoted) form, because it will have to be re-parsed
+	     * upon lookup. Discard the token representation when done.
+	     */
+	    key_list = tok_list;
+	    tok_list = 0;
+	    value_list = tok822_cut_after(colon);
+	    tok822_unlink(colon);
+	    tok822_free(colon);
+
+	    tok822_internalize(key_buffer, key_list, TOK822_STR_DEFL);
+	    tok822_free_tree(key_list);
+
+	    tok822_externalize(value_buffer, value_list, TOK822_STR_DEFL);
+	    tok822_free_tree(value_list);
+
+	    /*
+	     * Store the value under a case-insensitive key.
+	     */
+	    mkmap_append(mkmap, STR(key_buffer), STR(value_buffer));
+	    if (mkmap->dict->error)
+		msg_fatal("table %s:%s: write error: %m",
+			  mkmap->dict->type, mkmap->dict->name);
 	}
-
-	/*
-	 * Key must be local. XXX We should use the Postfix rewriting and
-	 * resolving services to handle all address forms correctly. However,
-	 * we can't count on the mail system being up when the alias database
-	 * is being built, so we're guessing a bit.
-	 */
-	if (tok822_rfind_type(colon, '@') || tok822_rfind_type(colon, '%')) {
-	    msg_warn("%s, line %d: name must be local",
-		     VSTREAM_PATH(source_fp), lineno);
-	    tok822_free_tree(tok_list);
-	    continue;
-	}
-
-	/*
-	 * Split the input into key and value parts, and convert from token
-	 * representation back to string representation. Convert the key to
-	 * internal (unquoted) form, because the resolver produces addresses
-	 * in internal form. Convert the value to external (quoted) form,
-	 * because it will have to be re-parsed upon lookup. Discard the
-	 * token representation when done.
-	 */
-	key_list = tok_list;
-	tok_list = 0;
-	value_list = tok822_cut_after(colon);
-	tok822_unlink(colon);
-	tok822_free(colon);
-
-	tok822_internalize(key_buffer, key_list, TOK822_STR_DEFL);
-	tok822_free_tree(key_list);
-
-	tok822_externalize(value_buffer, value_list, TOK822_STR_DEFL);
-	tok822_free_tree(value_list);
-
-	/*
-	 * Store the value under a case-insensitive key.
-	 */
-	mkmap_append(mkmap, STR(key_buffer), STR(value_buffer));
-	if (mkmap->dict->error)
-	    msg_fatal("table %s:%s: write error: %m",
-		      mkmap->dict->type, mkmap->dict->name);
+	break;
     }
 
     /*

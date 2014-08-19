@@ -1,9 +1,8 @@
-# $NetBSD: Makefile.bootxx,v 1.43 2012/08/10 12:18:15 joerg Exp $
+# $NetBSD: Makefile.bootxx,v 1.43.2.1 2014/08/20 00:03:07 tls Exp $
 
 S=	${.CURDIR}/../../../../..
 
 AFLAGS.bootxx.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
-AFLAGS.label.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 AFLAGS.pbr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 PIE_CFLAGS=
@@ -29,6 +28,7 @@ SRCS= pbr.S label.S bootxx.S boot1.c
 STRIPFLAG=	# nothing
 
 LIBCRT0=	# nothing
+LIBCRTI=	# nothing
 LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing
@@ -93,18 +93,6 @@ CPPFLAGS+= -DLIBSA_SINGLE_FILESYSTEM=xxfs \
 
 I386_STAND_DIR?= $S/arch/i386/stand
 
-CLEANFILES+= machine x86
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	-rm -f machine && ln -s $S/arch/i386/include machine
-	-rm -f x86 && ln -s $S/arch/x86/include x86
-.ifdef LIBOBJ
-	-rm -f lib && ln -s ${LIBOBJ}/lib lib
-	mkdir -p ${LIBOBJ}/lib
-.endif
-.endif
-
 ### find out what to use for libi386
 I386DIR= ${I386_STAND_DIR}/lib
 .include "${I386DIR}/Makefile.inc"
@@ -121,6 +109,7 @@ KERN_AS=        library
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN=        ${KERNLIB}
 
+LDSCRIPT ?= $S/arch/i386/conf/stand.ldscript
 
 cleandir distclean: .WAIT cleanlibdir
 
@@ -134,7 +123,7 @@ CLEANFILES+= ${PROG}.sym ${PROG}.map
 ${PROG}: ${OBJS} ${LIBLIST}
 	${_MKTARGET_LINK}
 	${CC} -o ${PROG}.sym ${LDFLAGS} -Wl,-Ttext,${PRIMARY_LOAD_ADDRESS} \
-		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} ${LIBLIST}
+		-T ${LDSCRIPT} -Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} ${LIBLIST}
 	${OBJCOPY} -O binary ${PROG}.sym ${PROG}
 	@ sz=$$(${TOOL_STAT} -f '%z' ${PROG}); \
 	if [ "$$sz" -gt "${BOOTXX_MAXSIZE}" ]; then \
@@ -150,3 +139,5 @@ ${PROG}: ${OBJS} ${LIBLIST}
 	fi
 
 .include <bsd.prog.mk>
+KLINK_MACHINE=	i386
+.include <bsd.klinks.mk>

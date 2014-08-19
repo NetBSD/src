@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.53.6.1 2012/11/20 03:02:16 tls Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.53.6.2 2014/08/20 00:03:42 tls Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.53.6.1 2012/11/20 03:02:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.53.6.2 2014/08/20 00:03:42 tls Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -185,6 +185,7 @@ ipw_attach(device_t parent, device_t self, void *aux)
 	uint32_t data;
 	uint16_t val;
 	int i, error;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_pct = pa->pa_pc;
@@ -218,7 +219,7 @@ ipw_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	intrstr = pci_intr_string(sc->sc_pct, ih);
+	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, ipw_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "could not establish interrupt");
@@ -886,16 +887,17 @@ ipw_read_prom_word(struct ipw_softc *sc, uint8_t addr)
 static void
 ipw_command_intr(struct ipw_softc *sc, struct ipw_soft_buf *sbuf)
 {
-	struct ipw_cmd *cmd;
 
 	bus_dmamap_sync(sc->sc_dmat, sbuf->map, 0, sizeof (struct ipw_cmd),
 	    BUS_DMASYNC_POSTREAD);
 
-	cmd = mtod(sbuf->m, struct ipw_cmd *);
+#ifdef IPW_DEBUG
+	struct ipw_cmd *cmd = mtod(sbuf->m, struct ipw_cmd *);
 
 	DPRINTFN(2, ("cmd ack'ed (%u, %u, %u, %u, %u)\n", le32toh(cmd->type),
 	    le32toh(cmd->subtype), le32toh(cmd->seq), le32toh(cmd->len),
 	    le32toh(cmd->status)));
+#endif
 
 	wakeup(&sc->cmd);
 }
@@ -1152,7 +1154,6 @@ ipw_rx_intr(struct ipw_softc *sc)
 static void
 ipw_release_sbd(struct ipw_softc *sc, struct ipw_soft_bd *sbd)
 {
-	struct ieee80211com *ic;
 	struct ipw_soft_hdr *shdr;
 	struct ipw_soft_buf *sbuf;
 
@@ -1171,7 +1172,6 @@ ipw_release_sbd(struct ipw_softc *sc, struct ipw_soft_bd *sbd)
 		break;
 
 	case IPW_SBD_TYPE_DATA:
-		ic = &sc->sc_ic;
 		sbuf = sbd->priv;
 
 		bus_dmamap_sync(sc->sc_dmat, sbuf->map,
@@ -2261,19 +2261,11 @@ SYSCTL_SETUP(sysctl_hw_ipw_accept_eula_setup, "sysctl hw.ipw.accept_eula")
 
 	sysctl_createv(NULL, 0, NULL, &rnode,
 		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "hw",
-		NULL,
-		NULL, 0,
-		NULL, 0,
-		CTL_HW, CTL_EOL);
-
-	sysctl_createv(NULL, 0, &rnode, &rnode,
-		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "ipw",
 		NULL,
 		NULL, 0,
 		NULL, 0,
-		CTL_CREATE, CTL_EOL);
+		CTL_HW, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(NULL, 0, &rnode, &cnode,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,

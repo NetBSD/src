@@ -126,11 +126,13 @@ xcb_selinux_set_device_create_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_selinux_set_device_create_context_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* context */
     xcb_block_len += _aux->context_len * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -243,11 +245,13 @@ xcb_selinux_get_device_create_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_selinux_get_device_create_context_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* context */
     xcb_block_len += _aux->context_len * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -412,11 +416,13 @@ xcb_selinux_set_device_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_selinux_set_device_context_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* context */
     xcb_block_len += _aux->context_len * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -535,11 +541,13 @@ xcb_selinux_get_device_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_selinux_get_device_context_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* context */
     xcb_block_len += _aux->context_len * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -710,11 +718,13 @@ xcb_selinux_set_window_create_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_selinux_set_window_create_context_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* context */
     xcb_block_len += _aux->context_len * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -827,11 +837,13 @@ xcb_selinux_get_window_create_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_selinux_get_window_create_context_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* context */
     xcb_block_len += _aux->context_len * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -996,11 +1008,13 @@ xcb_selinux_get_window_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_selinux_get_window_context_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* context */
     xcb_block_len += _aux->context_len * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -1171,11 +1185,13 @@ xcb_selinux_list_item_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_selinux_list_item_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* object_context */
     xcb_block_len += _aux->object_context_len * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -1361,11 +1377,13 @@ xcb_selinux_set_property_create_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_selinux_set_property_create_context_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* context */
     xcb_block_len += _aux->context_len * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -1478,11 +1496,13 @@ xcb_selinux_get_property_create_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_selinux_get_property_create_context_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* context */
     xcb_block_len += _aux->context_len * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -1647,11 +1667,13 @@ xcb_selinux_set_property_use_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_selinux_set_property_use_context_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* context */
     xcb_block_len += _aux->context_len * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -1764,11 +1786,13 @@ xcb_selinux_get_property_use_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_selinux_get_property_use_context_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* context */
     xcb_block_len += _aux->context_len * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -1933,11 +1957,13 @@ xcb_selinux_get_property_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_selinux_get_property_context_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* context */
     xcb_block_len += _aux->context_len * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -2114,11 +2140,13 @@ xcb_selinux_get_property_data_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_selinux_get_property_data_context_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* context */
     xcb_block_len += _aux->context_len * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -2295,13 +2323,15 @@ xcb_selinux_list_properties_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
     unsigned int i;
     unsigned int xcb_tmp_len;
 
     xcb_block_len += sizeof(xcb_selinux_list_properties_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* properties */
     for(i=0; i<_aux->properties_len; i++) {
         xcb_tmp_len = xcb_selinux_list_item_sizeof(xcb_tmp);
@@ -2459,11 +2489,13 @@ xcb_selinux_set_selection_create_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_selinux_set_selection_create_context_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* context */
     xcb_block_len += _aux->context_len * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -2576,11 +2608,13 @@ xcb_selinux_get_selection_create_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_selinux_get_selection_create_context_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* context */
     xcb_block_len += _aux->context_len * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -2745,11 +2779,13 @@ xcb_selinux_set_selection_use_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_selinux_set_selection_use_context_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* context */
     xcb_block_len += _aux->context_len * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -2862,11 +2898,13 @@ xcb_selinux_get_selection_use_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_selinux_get_selection_use_context_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* context */
     xcb_block_len += _aux->context_len * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -3031,11 +3069,13 @@ xcb_selinux_get_selection_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_selinux_get_selection_context_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* context */
     xcb_block_len += _aux->context_len * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -3206,11 +3246,13 @@ xcb_selinux_get_selection_data_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_selinux_get_selection_data_context_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* context */
     xcb_block_len += _aux->context_len * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -3381,13 +3423,15 @@ xcb_selinux_list_selections_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
     unsigned int i;
     unsigned int xcb_tmp_len;
 
     xcb_block_len += sizeof(xcb_selinux_list_selections_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* selections */
     for(i=0; i<_aux->selections_len; i++) {
         xcb_tmp_len = xcb_selinux_list_item_sizeof(xcb_tmp);
@@ -3539,11 +3583,13 @@ xcb_selinux_get_client_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_selinux_get_client_context_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* context */
     xcb_block_len += _aux->context_len * sizeof(char);
     xcb_tmp += xcb_block_len;

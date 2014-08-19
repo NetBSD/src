@@ -1,6 +1,5 @@
 /* Interface for functions using gregset and fpregset types.
-   Copyright (C) 2000, 2002, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +18,10 @@
 
 #ifndef GREGSET_H
 #define GREGSET_H
+
+#ifdef HAVE_SYS_PROCFS_H
+#include <sys/procfs.h>
+#endif
 
 #ifndef GDB_GREGSET_T
 #define GDB_GREGSET_T gregset_t

@@ -1,5 +1,4 @@
-# Copyright 1999, 2001, 2004, 2006, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 1999-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,16 +13,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# Test Machine interface (MI) operations
 #
-# Test essential Machine interface (MI) operations
+# Test MI breakpoint commands.
 #
-# Verify that, using the MI, we can run a simple program and perform basic
-# debugging activities like: insert breakpoints, run the program,
-# step, next, continue until it ends and, last but not least, quit.
-#
-# The goal is not to test gdb functionality, which is done by other tests,
-# but to verify the correct output response to MI operations.
-#
+# The goal is not to test gdb functionality, which is done by other
+# tests, but to verify the correct output response to MI operations.
 
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
@@ -33,10 +28,9 @@ if [mi_gdb_start] {
     continue
 }
 
-set testfile "basics"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/mi-break
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-DFAKEARGV}] != "" } {
+standard_testfile basics.c
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
      untested mi-break.exp
      return -1
 }
@@ -95,7 +89,7 @@ proc test_tbreak_creation_and_listing {} {
              "insert temp breakpoint at \"<fullfilename>\":\$line_callee4_head"
 
     mi_gdb_test "666-break-list" \
-     	    "666\\\^done,BreakpointTable=\{nr_rows=\".\",nr_cols=\".\",hdr=\\\[\{width=\".*\",alignment=\".*\",col_name=\"number\",colhdr=\"Num\"\}.*colhdr=\"Type\".*colhdr=\"Disp\".*colhdr=\"Enb\".*colhdr=\"Address\".*colhdr=\"What\".*\\\],body=\\\[bkpt=\{number=\"1\",type=\"breakpoint\",disp=\"del\",enabled=\"y\",addr=\"$hex\",func=\"main\",file=\".*basics.c\",${fullname},line=\"$line_main_body\",times=\"0\",original-location=\".*\"\}.*\\\]\}" \
+     	    "666\\\^done,BreakpointTable=\{nr_rows=\".\",nr_cols=\".\",hdr=\\\[\{width=\".*\",alignment=\".*\",col_name=\"number\",colhdr=\"Num\"\}.*colhdr=\"Type\".*colhdr=\"Disp\".*colhdr=\"Enb\".*colhdr=\"Address\".*colhdr=\"What\".*\\\],body=\\\[bkpt=\{number=\"1\",type=\"breakpoint\",disp=\"del\",enabled=\"y\",addr=\"$hex\",func=\"main\",file=\".*basics.c\",${fullname},line=\"$line_main_body\",thread-groups=\\\[\"i1\"\\\],times=\"0\",original-location=\".*\"\}.*\\\]\}" \
                 "list of breakpoints"
 
     mi_gdb_test "777-break-delete" \
@@ -122,34 +116,52 @@ proc test_rbreak_creation_and_listing {} {
     # -break-insert -r .*llee
     # -break-list
 
-    setup_xfail "*-*-*"
+    setup_kfail "*-*-*" mi/14270
     mi_gdb_test "122-break-insert -r main" \
              "122\\^done,bkpt=\{number=\"5\",addr=\"$hex\",file=\".*basics.c\",line=\"$line_main_body\"\}" \
              "break-insert -r operation"
 
-    setup_xfail "*-*-*"
+    setup_kfail "*-*-*" mi/14270
     mi_gdb_test "133-break-insert -r callee2" \
              "133\\^done,bkpt=\{number=\"6\",addr=\"$hex\",file=\".*basics.c\",line=\"$line_callee2_body\"\}" \
              "insert breakpoint with regexp callee2"
 
-    setup_xfail "*-*-*"
+    setup_kfail "*-*-*" mi/14270
     mi_gdb_test "144-break-insert -r callee" \
 	    "144\\^done,bkpt=\{number=\"7\",addr=\"$hex\",file=\".*basics.c\",line=\"$line_callee1_body\"\},bkpt=\{number=\"8\",addr=\"$hex\",file=\".*basics.c\",line=\"$line_callee2_body\"\},bkpt=\{number=\"9\",addr=\"$hex\",file=\".*basics.c\",line=\"$line_callee3_body\"\},bkpt=\{number=\"10\",addr=\"$hex\",file=\".*basics.c\",line=\"$line_callee4_body\"\}" \
              "insert breakpoint with regexp callee"
 
-    setup_xfail "*-*-*"
+    setup_kfail "*-*-*" mi/14270
     mi_gdb_test "155-break-insert -r \.\*llee" \
 	    "155\\^done,bkpt=\{number=\"11\",addr=\"$hex\",file=\".*basics.c\",line=\"$line_callee1_body\"\},bkpt=\{number=\"12\",addr=\"$hex\",file=\".*basics.c\",line=\"$line_callee2_body\"\},bkpt=\{number=\"13\",addr=\"$hex\",file=\".*basics.c\",line=\"$line_callee3_body\"\},bkpt=\{number=\"14\",addr=\"$hex\",file=\".*basics.c\",line=\"$line_callee4_body\"\}" \
              "insert breakpoint with regexp .*llee"
 
-    setup_xfail "*-*-*"
+    setup_kfail "*-*-*" mi/14270
     mi_gdb_test "166-break-list" \
-	    "1\\\^done,BreakpointTable=\{nr_rows=\".\",nr_cols=\".\",hdr=\\\[\{width=\".*\",alignment=\".*\",col_name=\"number\",colhdr=\"Num\"\}.*colhdr=\"Type\".*colhdr=\"Disp\".*colhdr=\"Enb\".*colhdr=\"Address\".*colhdr=\"What\".*\\\],body=\\\[bkpt=\{number=\"5\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"$hex\",func=\"main\",file=\".*basics.c\",line=\"$line_main_body\",times=\"0\"\},.*\}\\\]\}" \
+	    "1\\\^done,BreakpointTable=\{nr_rows=\".\",nr_cols=\".\",hdr=\\\[\{width=\".*\",alignment=\".*\",col_name=\"number\",colhdr=\"Num\"\}.*colhdr=\"Type\".*colhdr=\"Disp\".*colhdr=\"Enb\".*colhdr=\"Address\".*colhdr=\"What\".*\\\],body=\\\[bkpt=\{number=\"5\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"$hex\",func=\"main\",file=\".*basics.c\",line=\"$line_main_body\",thread-groups=\\\[\"i1\"\\\],times=\"0\"\},.*\}\\\]\}" \
                 "list of breakpoints"
 
     mi_gdb_test "177-break-delete" \
 	    "177\\^done" \
 	    "delete temp breakpoints"
+}
+
+proc test_abreak_creation {} {
+    mi_create_varobj tpnum \$tpnum "create local variable tpnum"
+    # Test that $tpnum is not set before creating a tracepoint.
+    mi_gdb_test "521-var-evaluate-expression tpnum" \
+	"521\\^done,value=\"void\"" "eval tpnum before tracepoint"
+
+    mi_gdb_test "522-break-insert -a main" \
+	"522\\^done,bkpt=\{number=\"10\",type=\"tracepoint\".*\"\}" \
+	"break-insert -a operation"
+
+    mi_gdb_test "523-var-update tpnum" \
+	"523\\^done,changelist=\\\[\{name=\"tpnum\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\\\]" \
+	"update tpnum"
+    # Test that $tpnum is updated after creating a tracepoint.
+    mi_gdb_test "524-var-evaluate-expression tpnum" \
+	"524\\^done,value=\"10\"" "eval tpnum after tracepoint"
 }
 
 proc test_ignore_count {} {
@@ -184,6 +196,18 @@ proc test_error {} {
     mi_gdb_test "-var-update *" \
         "\\^done,changelist=\\\[\\\]" \
         "update varobj for function call"    
+
+    # Try setting breakpoints with garbage after the location.
+
+    # "if" only works in the CLI.  It's not supposed to be accepted by
+    # MI.  The way to specify a condition is with -c.
+    mi_gdb_test "-break-insert \"callme if i < 4\"" \
+        ".*\\^error,msg=\"Garbage 'if i < 4' at end of location\"" \
+        "breakpoint with garbage after location"
+
+    mi_gdb_test "-break-insert -c i==4 \"callme if i < 4\"" \
+        ".*\\^error,msg=\"Garbage 'if i < 4' at end of location\"" \
+        "conditional breakpoint with garbage after location"
 }
 
 proc test_disabled_creation {} {
@@ -192,7 +216,7 @@ proc test_disabled_creation {} {
     global line_callee2_body
 
     mi_gdb_test "-break-insert -d basics.c:callee2" \
-        "\\^done,bkpt=\{number=\"6\",type=\"breakpoint\",disp=\"keep\",enabled=\"n\",addr=\"$hex\",func=\"callee2\",file=\".*basics.c\",fullname=\".*\",line=\"$line_callee2_body\",times=\"0\",original-location=\".*\"\}" \
+        "\\^done,bkpt=\{number=\"6\",type=\"breakpoint\",disp=\"keep\",enabled=\"n\",addr=\"$hex\",func=\"callee2\",file=\".*basics.c\",fullname=\".*\",line=\"$line_callee2_body\",thread-groups=\\\[\"i1\"\\\],times=\"0\",original-location=\".*\"\}" \
         "test disabled creation"
 
     mi_gdb_test "-break-delete" \
@@ -213,7 +237,7 @@ proc test_breakpoint_commands {} {
         "breakpoint commands: set commands"
 
     mi_gdb_test "-break-info 7" \
-    	"\\^done,BreakpointTable=\{nr_rows=\".\",nr_cols=\".\",hdr=\\\[\{width=\".*\",alignment=\".*\",col_name=\"number\",colhdr=\"Num\"\}.*colhdr=\"Type\".*colhdr=\"Disp\".*colhdr=\"Enb\".*colhdr=\"Address\".*colhdr=\"What\".*\\\],body=\\\[bkpt=\{number=\"7\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"$hex\",func=\"callee2\",file=\".*basics.c\",${fullname},line=\"$line_callee2_body\",times=\"0\",script=\{\"print 10\",\"continue\"\},original-location=\".*\"\}.*\\\]\}" \
+    	"\\^done,BreakpointTable=\{nr_rows=\".\",nr_cols=\".\",hdr=\\\[\{width=\".*\",alignment=\".*\",col_name=\"number\",colhdr=\"Num\"\}.*colhdr=\"Type\".*colhdr=\"Disp\".*colhdr=\"Enb\".*colhdr=\"Address\".*colhdr=\"What\".*\\\],body=\\\[bkpt=\{number=\"7\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"$hex\",func=\"callee2\",file=\".*basics.c\",${fullname},line=\"$line_callee2_body\",thread-groups=\\\[\"i1\"\\\],times=\"0\",script=\{\"print 10\",\"continue\"\},original-location=\".*\"\}.*\\\]\}" \
         "breakpoint commands: check that commands are set"
 
     mi_gdb_test "-break-commands 7" \
@@ -232,10 +256,19 @@ proc test_breakpoint_commands {} {
         "\\^done" \
         "breakpoint commands: set commands"
 
-    mi_send_resuming_command "exec-continue" "test hitting breakpoint with commands"
-    mi_gdb_test "" \
-        ".*\\\$1 = 0.*\\\$10 = 9.*\\*running.*\\*stopped,reason=\"exited-normally\".*" \
-        "test hitting breakpoint with commands"
+    mi_send_resuming_command "exec-continue" "breakpoint commands: continue"
+
+    set test "intermediate stop and continue"
+    gdb_expect {
+        -re ".*\\\$1 = 0.*\\\$10 = 9.*\\*running" {
+	    pass $test
+	}
+        timeout {
+	    fail $test
+        }
+    }
+
+    mi_expect_stop "exited-normally" "" "" "" "" "" "test hitting breakpoint with commands"
 }
 
 test_tbreak_creation_and_listing
@@ -248,6 +281,8 @@ test_error
 test_disabled_creation
 
 test_breakpoint_commands
+
+test_abreak_creation
 
 mi_gdb_exit
 return 0

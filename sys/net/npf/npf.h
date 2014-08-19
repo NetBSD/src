@@ -1,7 +1,7 @@
-/*	$NetBSD: npf.h,v 1.20.2.3 2013/06/23 06:20:25 tls Exp $	*/
+/*	$NetBSD: npf.h,v 1.20.2.4 2014/08/20 00:04:35 tls Exp $	*/
 
 /*-
- * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -45,7 +45,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 
-#define	NPF_VERSION		9
+#define	NPF_VERSION		17
 
 /*
  * Public declarations and definitions.
@@ -58,6 +58,18 @@ typedef uint8_t			npf_netmask_t;
 #define	NPF_MAX_NETMASK		(128)
 #define	NPF_NO_NETMASK		((npf_netmask_t)~0)
 
+/* BPF coprocessor. */
+#if defined(NPF_BPFCOP)
+#define	NPF_COP_L3		0
+#define	NPF_COP_TABLE		1
+
+#define	BPF_MW_IPVER		0
+#define	BPF_MW_L4OFF		1
+#define	BPF_MW_L4PROTO		2
+#endif
+/* The number of words used. */
+#define	NPF_BPF_NWORDS		3
+
 #if defined(_KERNEL)
 
 #define	NPF_DECISION_BLOCK	0
@@ -66,9 +78,6 @@ typedef uint8_t			npf_netmask_t;
 #define	NPF_EXT_MODULE(name, req)	\
     MODULE(MODULE_CLASS_MISC, name, (sizeof(req) - 1) ? ("npf," req) : "npf")
 
-/*
- * Packet information cache.
- */
 #include <net/if.h>
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
@@ -76,51 +85,6 @@ typedef uint8_t			npf_netmask_t;
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp6.h>
-
-#define	NPC_IP4		0x01	/* Indicates fetched IPv4 header. */
-#define	NPC_IP6		0x02	/* Indicates IPv6 header. */
-#define	NPC_IPFRAG	0x04	/* IPv4/IPv6 fragment. */
-#define	NPC_LAYER4	0x08	/* Layer 4 has been fetched. */
-
-#define	NPC_TCP		0x10	/* TCP header. */
-#define	NPC_UDP		0x20	/* UDP header. */
-#define	NPC_ICMP	0x40	/* ICMP header. */
-#define	NPC_ICMP_ID	0x80	/* ICMP with query ID. */
-
-#define	NPC_ALG_EXEC	0x100	/* ALG execution. */
-
-#define	NPC_IP46	(NPC_IP4|NPC_IP6)
-
-typedef struct {
-	/* Information flags. */
-	uint32_t		npc_info;
-	/* Pointers to the IP v4/v6 addresses. */
-	npf_addr_t *		npc_srcip;
-	npf_addr_t *		npc_dstip;
-	/* Size (v4 or v6) of IP addresses. */
-	uint8_t			npc_alen;
-	uint8_t			npc_hlen;
-	uint16_t		npc_proto;
-	/* IPv4, IPv6. */
-	union {
-		struct ip *		v4;
-		struct ip6_hdr *	v6;
-	} npc_ip;
-	/* TCP, UDP, ICMP. */
-	union {
-		struct tcphdr *		tcp;
-		struct udphdr *		udp;
-		struct icmp *		icmp;
-		struct icmp6_hdr *	icmp6;
-		void *			hdr;
-	} npc_l4;
-} npf_cache_t;
-
-static inline bool
-npf_iscached(const npf_cache_t *npc, const int inf)
-{
-	return __predict_true((npc->npc_info & inf) != 0);
-}
 
 /*
  * Network buffer interface.
@@ -133,6 +97,7 @@ typedef struct {
 	struct mbuf *	nb_mbuf;
 	void *		nb_nptr;
 	const ifnet_t *	nb_ifp;
+	unsigned	nb_ifid;
 	int		nb_flags;
 } nbuf_t;
 
@@ -155,6 +120,66 @@ int		nbuf_add_tag(nbuf_t *, uint32_t, uint32_t);
 int		nbuf_find_tag(nbuf_t *, uint32_t, void **);
 
 /*
+ * Packet information cache.
+ */
+
+#define	NPC_IP4		0x01	/* Indicates IPv4 header. */
+#define	NPC_IP6		0x02	/* Indicates IPv6 header. */
+#define	NPC_IPFRAG	0x04	/* IPv4/IPv6 fragment. */
+#define	NPC_LAYER4	0x08	/* Layer 4 has been fetched. */
+
+#define	NPC_TCP		0x10	/* TCP header. */
+#define	NPC_UDP		0x20	/* UDP header. */
+#define	NPC_ICMP	0x40	/* ICMP header. */
+#define	NPC_ICMP_ID	0x80	/* ICMP with query ID. */
+
+#define	NPC_ALG_EXEC	0x100	/* ALG execution. */
+
+#define	NPC_IP46	(NPC_IP4|NPC_IP6)
+
+typedef struct {
+	/* Information flags and the nbuf. */
+	uint32_t		npc_info;
+	nbuf_t *		npc_nbuf;
+
+	/*
+	 * Pointers to the IP source and destination addresses,
+	 * and the address length (4 for IPv4 or 16 for IPv6).
+	 */
+	npf_addr_t *		npc_ips[2];
+	uint8_t			npc_alen;
+
+	/* IP header length and L4 protocol. */
+	uint8_t			npc_hlen;
+	uint16_t		npc_proto;
+
+	/* IPv4, IPv6. */
+	union {
+		struct ip *		v4;
+		struct ip6_hdr *	v6;
+	} npc_ip;
+
+	/* TCP, UDP, ICMP. */
+	union {
+		struct tcphdr *		tcp;
+		struct udphdr *		udp;
+		struct icmp *		icmp;
+		struct icmp6_hdr *	icmp6;
+		void *			hdr;
+	} npc_l4;
+} npf_cache_t;
+
+static inline bool
+npf_iscached(const npf_cache_t *npc, const int inf)
+{
+	KASSERT(npc->npc_nbuf != NULL);
+	return __predict_true((npc->npc_info & inf) != 0);
+}
+
+#define	NPF_SRC		0
+#define	NPF_DST		1
+
+/*
  * NPF extensions and rule procedure interface.
  */
 
@@ -168,7 +193,7 @@ typedef struct {
 	void *		ctx;
 	int		(*ctor)(npf_rproc_t *, prop_dictionary_t);
 	void		(*dtor)(npf_rproc_t *, void *);
-	void		(*proc)(npf_cache_t *, nbuf_t *, void *, int *);
+	bool		(*proc)(npf_cache_t *, void *, int *);
 } npf_ext_ops_t;
 
 void *		npf_ext_register(const char *, const npf_ext_ops_t *);
@@ -183,13 +208,14 @@ bool		npf_autounload_p(void);
 #endif	/* _KERNEL */
 
 /* Rule attributes. */
-#define	NPF_RULE_PASS			0x0001
-#define	NPF_RULE_GROUP			0x0002
-#define	NPF_RULE_FINAL			0x0004
-#define	NPF_RULE_STATEFUL		0x0008
-#define	NPF_RULE_RETRST			0x0010
-#define	NPF_RULE_RETICMP		0x0020
-#define	NPF_RULE_DYNAMIC		0x0040
+#define	NPF_RULE_PASS			0x00000001
+#define	NPF_RULE_GROUP			0x00000002
+#define	NPF_RULE_FINAL			0x00000004
+#define	NPF_RULE_STATEFUL		0x00000008
+#define	NPF_RULE_RETRST			0x00000010
+#define	NPF_RULE_RETICMP		0x00000020
+#define	NPF_RULE_DYNAMIC		0x00000040
+#define	NPF_RULE_MULTIENDS		0x00000080
 
 #define	NPF_DYNAMIC_GROUP		(NPF_RULE_GROUP | NPF_RULE_DYNAMIC)
 
@@ -197,6 +223,9 @@ bool		npf_autounload_p(void);
 #define	NPF_RULE_OUT			0x20000000
 #define	NPF_RULE_DIMASK			(NPF_RULE_IN | NPF_RULE_OUT)
 #define	NPF_RULE_FORW			0x40000000
+
+/* Private range of rule attributes (not public and should not be set). */
+#define	NPF_RULE_PRIVMASK		0x0f000000
 
 #define	NPF_RULE_MAXNAMELEN		64
 #define	NPF_RULE_MAXKEYLEN		32
@@ -215,10 +244,16 @@ bool		npf_autounload_p(void);
 
 #define	NPF_NAT_PORTS			0x01
 #define	NPF_NAT_PORTMAP			0x02
+#define	NPF_NAT_STATIC			0x04
+
+#define	NPF_ALGO_NPT66			1
 
 /* Table types. */
 #define	NPF_TABLE_HASH			1
 #define	NPF_TABLE_TREE			2
+#define	NPF_TABLE_CDB			3
+
+#define	NPF_TABLE_MAXNAMELEN		32
 
 /* Layers. */
 #define	NPF_LAYER_2			2
@@ -261,7 +296,7 @@ typedef struct npf_ioctl_buf {
 
 typedef struct npf_ioctl_table {
 	int			nct_cmd;
-	u_int			nct_tid;
+	const char *		nct_name;
 	union {
 		npf_ioctl_ent_t	ent;
 		npf_ioctl_buf_t	buf;
@@ -274,13 +309,11 @@ typedef struct npf_ioctl_table {
 
 #define	IOC_NPF_VERSION		_IOR('N', 100, int)
 #define	IOC_NPF_SWITCH		_IOW('N', 101, int)
-#define	IOC_NPF_RELOAD		_IOWR('N', 102, struct plistref)
+#define	IOC_NPF_LOAD		_IOWR('N', 102, struct plistref)
 #define	IOC_NPF_TABLE		_IOW('N', 103, struct npf_ioctl_table)
 #define	IOC_NPF_STATS		_IOW('N', 104, void *)
-#define	IOC_NPF_SESSIONS_SAVE	_IOR('N', 105, struct plistref)
-#define	IOC_NPF_SESSIONS_LOAD	_IOW('N', 106, struct plistref)
+#define	IOC_NPF_SAVE		_IOR('N', 105, struct plistref)
 #define	IOC_NPF_RULE		_IOWR('N', 107, struct plistref)
-#define	IOC_NPF_GETCONF		_IOR('N', 108, struct plistref)
 
 /*
  * Statistics counters.
@@ -290,13 +323,13 @@ typedef enum {
 	/* Packets passed. */
 	NPF_STAT_PASS_DEFAULT,
 	NPF_STAT_PASS_RULESET,
-	NPF_STAT_PASS_SESSION,
+	NPF_STAT_PASS_CONN,
 	/* Packets blocked. */
 	NPF_STAT_BLOCK_DEFAULT,
 	NPF_STAT_BLOCK_RULESET,
-	/* Session and NAT entries. */
-	NPF_STAT_SESSION_CREATE,
-	NPF_STAT_SESSION_DESTROY,
+	/* Connection and NAT entries. */
+	NPF_STAT_CONN_CREATE,
+	NPF_STAT_CONN_DESTROY,
 	NPF_STAT_NAT_CREATE,
 	NPF_STAT_NAT_DESTROY,
 	/* Invalid state cases. */
@@ -305,7 +338,7 @@ typedef enum {
 	NPF_STAT_INVALID_STATE_TCP2,
 	NPF_STAT_INVALID_STATE_TCP3,
 	/* Raced packets. */
-	NPF_STAT_RACE_SESSION,
+	NPF_STAT_RACE_CONN,
 	NPF_STAT_RACE_NAT,
 	/* Fragments. */
 	NPF_STAT_FRAGMENTS,

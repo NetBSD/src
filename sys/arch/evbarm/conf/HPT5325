@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.7.2.2 2013/06/23 06:20:04 tls Exp $
+#	$NetBSD: HPT5325,v 1.7.2.3 2014/08/20 00:02:53 tls Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -82,7 +82,6 @@ options 	INET6		# IPv6
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_COMPAT	# Compat for IP-Filter
@@ -95,6 +94,7 @@ options 	NFS_BOOT_DHCP
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_11	# NetBSD 1.1 compatibility.
@@ -151,7 +151,7 @@ options 	BUFQ_PRIOCSCAN
 # Development and Debugging options
 
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages

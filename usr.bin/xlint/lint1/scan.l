@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.50.2.1 2013/06/23 06:29:02 tls Exp $ */
+/* $NetBSD: scan.l,v 1.50.2.2 2014/08/20 00:05:06 tls Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.50.2.1 2013/06/23 06:29:02 tls Exp $");
+__RCSID("$NetBSD: scan.l,v 1.50.2.2 2014/08/20 00:05:06 tls Exp $");
 #endif
 
 #include <stdlib.h>
@@ -59,6 +59,9 @@ pos_t	curr_pos = { 1, "", 0 };
  * parsed).
  */
 pos_t	csrc_pos = { 1, "", 0 };
+
+/* Are we parsing a gcc attribute? */
+int attron;
 
 static	void	incline(void);
 static	void	badchar(int);
@@ -193,77 +196,103 @@ static	struct	kwtab {
 	scl_t	kw_scl;		/* storage class if kw_token T_SCLASS */
 	tspec_t	kw_tspec;	/* type spec. if kw_token T_TYPE or T_SOU */
 	tqual_t	kw_tqual;	/* type qual. fi kw_token T_QUAL */
-	u_int	kw_c89;		/* c89 keyword */
-	u_int	kw_c99;		/* c99 keyword */
-	u_int	kw_gcc;		/* GCC keyword */
+	u_int	kw_c89 : 1;	/* c89 keyword */
+	u_int	kw_c99 : 1;	/* c99 keyword */
+	u_int	kw_gcc : 1;	/* GCC keyword */
+	u_int	kw_attr : 1;	/* GCC attribute, keyword */
 } kwtab[] = {
-	{ "__alignof__", T_ALIGNOF,	0,	0,	0,	  0, 0, 0 },
-	{ "__attribute__",T_ATTRIBUTE,	0,	0,	0,	  0, 0, 1 },
-	{ "attribute",	T_ATTRIBUTE,	0,	0,	0,	  0, 0, 1 },
-	{ "__packed__",	T_AT_PACKED,	0,	0,	0,	  0, 0, 1 },
-	{ "packed",	T_AT_PACKED,	0,	0,	0,	  0, 0, 1 },
-	{ "__aligned__",T_AT_ALIGNED,	0,	0,	0,	  0, 0, 1 },
-	{ "aligned",	T_AT_ALIGNED,	0,	0,	0,	  0, 0, 1 },
-	{ "__transparent_union__",T_AT_TUNION,0,0,	0,	  0, 0, 1 },
-	{ "transparent_union",T_AT_TUNION,0,	0,	0,	  0, 0, 1 },
-	{ "__unused__",	T_AT_UNUSED,	0,	0,	0,	  0, 0, 1 },
-	{ "unused",	T_AT_UNUSED,	0,	0,	0,	  0, 0, 1 },
-	{ "__deprecated__",T_AT_DEPRECATED,0,	0,	0,	  0, 0, 1 },
-	{ "deprecated",	T_AT_DEPRECATED,0,	0,	0,	  0, 0, 1 },
-	{ "__may_alias__",T_AT_MAY_ALIAS,0,	0,	0,	  0, 0, 1 },
-	{ "may_alias",	T_AT_MAY_ALIAS,	0,	0,	0,	  0, 0, 1 },
-	{ "asm",	T_ASM,		0,	0,	0,	  0, 0, 1 },
-	{ "__asm",	T_ASM,		0,	0,	0,	  0, 0, 0 },
-	{ "__asm__",	T_ASM,		0,	0,	0,	  0, 0, 0 },
-	{ "auto",	T_SCLASS,	AUTO,	0,	0,	  0, 0, 0 },
-	{ "break",	T_BREAK,	0,	0,	0,	  0, 0, 0 },
-	{ "_Bool",	T_TYPE,		0,	BOOL,	0,	  0, 1, 0 },
-	{ "case",	T_CASE,		0,	0,	0,	  0, 0, 0 },
-	{ "char",	T_TYPE,		0,	CHAR,	0,	  0, 0, 0 },
-	{ "const",	T_QUAL,		0,	0,	CONST,	  1, 0, 0 },
-	{ "_Complex",	T_TYPE,		0,	COMPLEX,0,	  0, 1, 0 },
-	{ "__const__",	T_QUAL,		0,	0,	CONST,	  0, 0, 0 },
-	{ "__const",	T_QUAL,		0,	0,	CONST,	  0, 0, 0 },
-	{ "continue",	T_CONTINUE,	0,	0,	0,	  0, 0, 0 },
-	{ "default",	T_DEFAULT,	0,	0,	0,	  0, 0, 0 },
-	{ "do",		T_DO,		0,	0,	0,	  0, 0, 0 },
-	{ "double",	T_TYPE,		0,	DOUBLE,	0,	  0, 0, 0 },
-	{ "else",	T_ELSE,		0,	0,	0,	  0, 0, 0 },
-	{ "enum",	T_ENUM,		0,	0,	0,	  0, 0, 0 },
-	{ "extern",	T_SCLASS,	EXTERN,	0,	0,	  0, 0, 0 },
-	{ "float",	T_TYPE,		0,	FLOAT,	0,	  0, 0, 0 },
-	{ "for",	T_FOR,		0,	0,	0,	  0, 0, 0 },
-	{ "goto",	T_GOTO,		0,	0,	0,	  0, 0, 0 },
-	{ "if",		T_IF,		0,	0,	0,	  0, 0, 0 },
-	{ "__imag__",	T_IMAG,		0,	0,	0,	  0, 1, 0 },
-	{ "inline",	T_SCLASS,	INLINE,	0,	0,	  0, 1, 0 },
-	{ "__inline__",	T_SCLASS,	INLINE,	0,	0,	  0, 0, 0 },
-	{ "__inline",	T_SCLASS,	INLINE,	0,	0,	  0, 0, 0 },
-	{ "int",	T_TYPE,		0,	INT,	0,	  0, 0, 0 },
-	{ "__symbolrename", T_SYMBOLRENAME, 0,	0,	0,	  0, 0, 0 },
-	{ "long",	T_TYPE,		0,	LONG,	0,	  0, 0, 0 },
-	{ "__real__",	T_REAL,		0,	0,	0,	  0, 1, 0 },
-	{ "register",	T_SCLASS,	REG,	0,	0,	  0, 0, 0 },
-	{ "restrict",	T_QUAL,		0,	0,	RESTRICT, 0, 1, 0 },
-	{ "return",	T_RETURN,	0,	0,	0,	  0, 0, 0 },
-	{ "__packed",	T_PACKED,	0,	0,	0,	  0, 0, 0 },
-	{ "short",	T_TYPE,		0,	SHORT,	0,	  0, 0, 0 },
-	{ "signed",	T_TYPE,		0,	SIGNED,	0,	  1, 0, 0 },
-	{ "__signed__",	T_TYPE,		0,	SIGNED,	0,	  0, 0, 0 },
-	{ "__signed",	T_TYPE,		0,	SIGNED,	0,	  0, 0, 0 },
-	{ "sizeof",	T_SIZEOF,	0,	0,	0,	  0, 0, 0 },
-	{ "static",	T_SCLASS,	STATIC,	0,	0,	  0, 0, 0 },
-	{ "struct",	T_SOU,		0,	STRUCT,	0,	  0, 0, 0 },
-	{ "switch",	T_SWITCH,	0,	0,	0,	  0, 0, 0 },
-	{ "typedef",	T_SCLASS,	TYPEDEF, 0,	0,	  0, 0, 0 },
-	{ "union",	T_SOU,		0,	UNION,	0,	  0, 0, 0 },
-	{ "unsigned",	T_TYPE,		0,	UNSIGN,	0,	  0, 0, 0 },
-	{ "void",	T_TYPE,		0,	VOID,	0,	  0, 0, 0 },
-	{ "volatile",	T_QUAL,		0,	0,	VOLATILE, 1, 0, 0 },
-	{ "__volatile__", T_QUAL,	0,	0,	VOLATILE, 0, 0, 0 },
-	{ "__volatile",	T_QUAL,		0,	0,	VOLATILE, 0, 0, 0 },
-	{ "while",	T_WHILE,	0,	0,	0,	  0, 0, 0 },
-	{ NULL,		0,		0,	0,	0,	  0, 0, 0 }
+	{ "__alignof__", T_ALIGNOF,	0,	0,	0,	  0, 0, 0, 0 },
+	{ "__attribute__",T_ATTRIBUTE,	0,	0,	0,	  0, 0, 1, 0 },
+	{ "__attribute",T_ATTRIBUTE,	0,	0,	0,	  0, 0, 1, 0 },
+	{ "__packed__",	T_AT_PACKED,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "packed",	T_AT_PACKED,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "__aligned__",T_AT_ALIGNED,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "aligned",	T_AT_ALIGNED,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "__transparent_union__",T_AT_TUNION,0,0,	0,	  0, 0, 1, 1 },
+	{ "transparent_union",T_AT_TUNION,0,	0,	0,	  0, 0, 1, 1 },
+	{ "__unused__",	T_AT_UNUSED,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "unused",	T_AT_UNUSED,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "__deprecated__",T_AT_DEPRECATED,0,	0,	0,	  0, 0, 1, 1 },
+	{ "deprecated",	T_AT_DEPRECATED,0,	0,	0,	  0, 0, 1, 1 },
+	{ "__may_alias__",T_AT_MAY_ALIAS,0,	0,	0,	  0, 0, 1, 1 },
+	{ "may_alias",	T_AT_MAY_ALIAS,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "format",	T_AT_FORMAT,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "__format__",	T_AT_FORMAT,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "printf",	T_AT_FORMAT_PRINTF,0,	0,	0,	  0, 0, 1, 1 },
+	{ "__printf__",	T_AT_FORMAT_PRINTF,0,	0,	0,	  0, 0, 1, 1 },
+	{ "scanf",	T_AT_FORMAT_SCANF,0,	0,	0,	  0, 0, 1, 1 },
+	{ "__scanf__",	T_AT_FORMAT_SCANF,0,	0,	0,	  0, 0, 1, 1 },
+	{ "strftime",	T_AT_FORMAT_SCANF,0,	0,	0,	  0, 0, 1, 1 },
+	{ "__strftime__",T_AT_FORMAT_STRFTIME,0,0,	0,	  0, 0, 1, 1 },
+	{ "pure",	T_AT_PURE,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "__pure__",	T_AT_PURE,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "noreturn",	T_AT_NORETURN,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "__noreturn__",T_AT_NORETURN,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "sentinel",	T_AT_SENTINEL,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "__sentinel__",T_AT_SENTINEL,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "format_arg", T_AT_FORMAT_ARG,0,	0,	0,	  0, 0, 1, 1 },
+	{ "__format_arg__", T_AT_FORMAT_ARG,0,	0,	0,	  0, 0, 1, 1 },
+	{ "returns_twice", T_AT_RETURNS_TWICE,0,0,	0,	  0, 0, 1, 1 },
+	{ "__returns_twice__", T_AT_RETURNS_TWICE,0,0,	0,	  0, 0, 1, 1 },
+	{ "cold",	T_AT_COLD,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "__cold__",	T_AT_COLD,	0,	0,	0,	  0, 0, 1, 1 },
+	{ "asm",	T_ASM,		0,	0,	0,	  0, 0, 1, 0 },
+	{ "__asm",	T_ASM,		0,	0,	0,	  0, 0, 0, 0 },
+	{ "__asm__",	T_ASM,		0,	0,	0,	  0, 0, 0, 0 },
+	{ "auto",	T_SCLASS,	AUTO,	0,	0,	  0, 0, 0, 0 },
+	{ "break",	T_BREAK,	0,	0,	0,	  0, 0, 0, 0 },
+	{ "_Bool",	T_TYPE,		0,	BOOL,	0,	  0, 1, 0, 0 },
+	{ "case",	T_CASE,		0,	0,	0,	  0, 0, 0, 0 },
+	{ "char",	T_TYPE,		0,	CHAR,	0,	  0, 0, 0, 0 },
+	{ "const",	T_QUAL,		0,	0,	CONST,	  1, 0, 0, 0 },
+	{ "_Complex",	T_TYPE,		0,	COMPLEX,0,	  0, 1, 0, 0 },
+	{ "__const__",	T_QUAL,		0,	0,	CONST,	  0, 0, 0, 0 },
+	{ "__const",	T_QUAL,		0,	0,	CONST,	  0, 0, 0, 0 },
+	{ "continue",	T_CONTINUE,	0,	0,	0,	  0, 0, 0, 0 },
+	{ "default",	T_DEFAULT,	0,	0,	0,	  0, 0, 0, 0 },
+	{ "do",		T_DO,		0,	0,	0,	  0, 0, 0, 0 },
+	{ "double",	T_TYPE,		0,	DOUBLE,	0,	  0, 0, 0, 0 },
+	{ "else",	T_ELSE,		0,	0,	0,	  0, 0, 0, 0 },
+	{ "enum",	T_ENUM,		0,	0,	0,	  0, 0, 0, 0 },
+	{ "__extension__", T_EXTENSION,	0,	0,	0,	  0, 0, 1, 0 },
+	{ "extern",	T_SCLASS,	EXTERN,	0,	0,	  0, 0, 0, 0 },
+	{ "float",	T_TYPE,		0,	FLOAT,	0,	  0, 0, 0, 0 },
+	{ "for",	T_FOR,		0,	0,	0,	  0, 0, 0, 0 },
+	{ "goto",	T_GOTO,		0,	0,	0,	  0, 0, 0, 0 },
+	{ "if",		T_IF,		0,	0,	0,	  0, 0, 0, 0 },
+	{ "__imag__",	T_IMAG,		0,	0,	0,	  0, 1, 0, 0 },
+	{ "inline",	T_SCLASS,	INLINE,	0,	0,	  0, 1, 0, 0 },
+	{ "__inline__",	T_SCLASS,	INLINE,	0,	0,	  0, 0, 0, 0 },
+	{ "__inline",	T_SCLASS,	INLINE,	0,	0,	  0, 0, 0, 0 },
+	{ "int",	T_TYPE,		0,	INT,	0,	  0, 0, 0, 0 },
+	{ "__symbolrename", T_SYMBOLRENAME, 0,	0,	0,	  0, 0, 0, 0 },
+	{ "long",	T_TYPE,		0,	LONG,	0,	  0, 0, 0, 0 },
+	{ "__real__",	T_REAL,		0,	0,	0,	  0, 1, 0, 0 },
+	{ "register",	T_SCLASS,	REG,	0,	0,	  0, 0, 0, 0 },
+	{ "__restrict__",T_QUAL,	0,	0,	RESTRICT, 0, 1, 0, 0 },
+	{ "restrict",	T_QUAL,		0,	0,	RESTRICT, 0, 1, 0, 0 },
+	{ "return",	T_RETURN,	0,	0,	0,	  0, 0, 0, 0 },
+	{ "__packed",	T_PACKED,	0,	0,	0,	  0, 0, 0, 0 },
+	{ "short",	T_TYPE,		0,	SHORT,	0,	  0, 0, 0, 0 },
+	{ "signed",	T_TYPE,		0,	SIGNED,	0,	  1, 0, 0, 0 },
+	{ "__signed__",	T_TYPE,		0,	SIGNED,	0,	  0, 0, 0, 0 },
+	{ "__signed",	T_TYPE,		0,	SIGNED,	0,	  0, 0, 0, 0 },
+	{ "sizeof",	T_SIZEOF,	0,	0,	0,	  0, 0, 0, 0 },
+	{ "static",	T_SCLASS,	STATIC,	0,	0,	  0, 0, 0, 0 },
+	{ "struct",	T_SOU,		0,	STRUCT,	0,	  0, 0, 0, 0 },
+	{ "switch",	T_SWITCH,	0,	0,	0,	  0, 0, 0, 0 },
+	{ "typedef",	T_SCLASS,	TYPEDEF, 0,	0,	  0, 0, 0, 0 },
+	{ "typeof",	T_TYPEOF,	0,	0,	0,	  0, 0, 1, 0 },
+	{ "__typeof",	T_TYPEOF,	0,	0,	0,	  0, 0, 1, 0 },
+	{ "__typeof__",	T_TYPEOF,	0,	0,	0,	  0, 0, 1, 0 },
+	{ "union",	T_SOU,		0,	UNION,	0,	  0, 0, 0, 0 },
+	{ "unsigned",	T_TYPE,		0,	UNSIGN,	0,	  0, 0, 0, 0 },
+	{ "void",	T_TYPE,		0,	VOID,	0,	  0, 0, 0, 0 },
+	{ "volatile",	T_QUAL,		0,	0,	VOLATILE, 1, 0, 0, 0 },
+	{ "__volatile__", T_QUAL,	0,	0,	VOLATILE, 0, 0, 0, 0 },
+	{ "__volatile",	T_QUAL,		0,	0,	VOLATILE, 0, 0, 0, 0 },
+	{ "while",	T_WHILE,	0,	0,	0,	  0, 0, 0, 0 },
+	{ NULL,		0,		0,	0,	0,	  0, 0, 0, 0 }
 };
 
 /* Symbol table */
@@ -306,7 +335,7 @@ initscan(void)
 			continue;
 		sym = getblk(sizeof (sym_t));
 		sym->s_name = kw->kw_name;
-		sym->s_keyw = 1;
+		sym->s_keyw = kw;
 		sym->s_value.v_quad = kw->kw_token;
 		if (kw->kw_token == T_TYPE || kw->kw_token == T_SOU) {
 			sym->s_tspec = kw->kw_tspec;
@@ -318,7 +347,8 @@ initscan(void)
 		h = hash(sym->s_name);
 		if ((sym->s_link = symtab[h]) != NULL)
 			symtab[h]->s_rlink = &sym->s_link;
-		(symtab[h] = sym)->s_rlink = &symtab[h];
+		sym->s_rlink = &symtab[h];
+		symtab[h] = sym;
 	}
 
 	/* initialize bit-masks for quads */
@@ -342,10 +372,15 @@ allocsb(void)
 
 	if ((sb = sbfrlst) != NULL) {
 		sbfrlst = sb->sb_nxt;
+#ifdef BLKDEBUG
+		(void)memset(sb, 0, sizeof (*sb));
+#else
+		sb->sb_nxt = NULL;
+#endif
 	} else {
 		sb = xmalloc(sizeof (sbuf_t));
+		(void)memset(sb, 0, sizeof (*sb));
 	}
-	(void)memset(sb, 0, sizeof (*sb));
 	return (sb);
 }
 
@@ -356,6 +391,7 @@ static void
 freesb(sbuf_t *sb)
 {
 
+	(void)memset(sb, ZERO, sizeof (*sb));
 	sb->sb_nxt = sbfrlst;
 	sbfrlst = sb;
 }
@@ -447,8 +483,12 @@ search(sbuf_t *sb)
 
 	for (sym = symtab[sb->sb_hash]; sym != NULL; sym = sym->s_link) {
 		if (strcmp(sym->s_name, sb->sb_name) == 0) {
-			if (sym->s_keyw || sym->s_kind == symtyp)
-				return (sym);
+			if (sym->s_keyw) {
+				struct kwtab *kw = sym->s_keyw;
+				if (!kw->kw_attr || attron)
+					return (sym);
+			} else if (sym->s_kind == symtyp)
+				return sym;
 		}
 	}
 
@@ -1356,7 +1396,7 @@ getsym(sbuf_t *sb)
 
 	if (sym != NULL) {
 		if (sym->s_kind != symtyp)
-			LERROR("storesym()");
+			LERROR("storesym(%d, %d)", sym->s_kind, symtyp);
 		symtyp = FVFT;
 		freesb(sb);
 		return (sym);
@@ -1391,7 +1431,8 @@ getsym(sbuf_t *sb)
 
 	if ((sym->s_link = symtab[sb->sb_hash]) != NULL)
 		symtab[sb->sb_hash]->s_rlink = &sym->s_link;
-	(symtab[sb->sb_hash] = sym)->s_rlink = &symtab[sb->sb_hash];
+	sym->s_rlink = &symtab[sb->sb_hash];
+	symtab[sb->sb_hash] = sym;
 
 	*di->d_ldlsym = sym;
 	di->d_ldlsym = &sym->s_dlnxt;
@@ -1425,7 +1466,8 @@ mktempsym(type_t *t)
 
 	if ((sym->s_link = symtab[h]) != NULL)
 		symtab[h]->s_rlink = &sym->s_link;
-	(symtab[h] = sym)->s_rlink = &symtab[h];
+	sym->s_rlink = &symtab[h];
+	symtab[h] = sym;
 
 	*dcs->d_ldlsym = sym;
 	dcs->d_ldlsym = &sym->s_dlnxt;
@@ -1478,7 +1520,8 @@ inssym(int bl, sym_t *sym)
 	h = hash(sym->s_name);
 	if ((sym->s_link = symtab[h]) != NULL)
 		symtab[h]->s_rlink = &sym->s_link;
-	(symtab[h] = sym)->s_rlink = &symtab[h];
+	sym->s_rlink = &symtab[h];
+	symtab[h] = sym;
 	sym->s_blklev = bl;
 	if (sym->s_link != NULL && sym->s_blklev < sym->s_link->s_blklev)
 		LERROR("inssym()");
@@ -1530,7 +1573,8 @@ pushdown(sym_t *sym)
 
 	if ((nsym->s_link = symtab[h]) != NULL)
 		symtab[h]->s_rlink = &nsym->s_link;
-	(symtab[h] = nsym)->s_rlink = &symtab[h];
+	nsym->s_rlink = &symtab[h];
+	symtab[h] = nsym;
 
 	*dcs->d_ldlsym = nsym;
 	dcs->d_ldlsym = &nsym->s_dlnxt;

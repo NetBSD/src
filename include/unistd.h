@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.135.2.2 2013/02/25 00:27:47 tls Exp $	*/
+/*	$NetBSD: unistd.h,v 1.135.2.3 2014/08/20 00:02:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -159,10 +159,21 @@ extern	 int optopt;
 #endif
 
 /*
+ * The Open Group Base Specifications, Issue 5; IEEE Std 1003.1-2001 (POSIX)
+ */
+#if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 500 || \
+    defined(_NETBSD_SOURCE)
+#if __SSP_FORTIFY_LEVEL == 0
+ssize_t	 readlink(const char * __restrict, char * __restrict, size_t);
+#endif
+#endif
+
+/*
  * The Open Group Base Specifications, Issue 6; IEEE Std 1003.1-2001 (POSIX)
  */
 #if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600 || \
     defined(_NETBSD_SOURCE)
+int	 posix_fallocate(int, off_t, off_t);
 int	 setegid(gid_t);
 int	 seteuid(uid_t);
 #endif
@@ -260,9 +271,6 @@ int	 lchown(const char *, uid_t, gid_t) __RENAME(__posix_lchown);
 int	 lchown(const char *, uid_t, gid_t);
 #endif
 int	 lockf(int, int, off_t);
-#if __SSP_FORTIFY_LEVEL == 0
-ssize_t	 readlink(const char * __restrict, char * __restrict, size_t);
-#endif
 void	*sbrk(intptr_t);
 /* XXX prototype wrong! */
 int	 setpgrp(pid_t, pid_t);			/* obsoleted by setpgid() */
@@ -298,11 +306,7 @@ ssize_t	 pwrite(int, const void *, size_t, off_t);
     defined(_INCOMPLETE_XOPEN_C063) || defined(_NETBSD_SOURCE)
 int	linkat(int, const char *, int, const char *, int);
 int	renameat(int, const char *, int, const char *);
-int	mkfifoat(int, const char *, mode_t);
-int	mknodat(int, const char *, mode_t, uint32_t);
-int	mkdirat(int, const char *, mode_t);
 int	faccessat(int, const char *, int, int);
-int	fchmodat(int, const char *, mode_t, int);
 int	fchownat(int, const char *, uid_t, gid_t, int);
 int	readlinkat(int, const char *, char *, size_t);
 int	symlinkat(const char *, int, const char *);
@@ -325,6 +329,7 @@ int	 dup3(int, int, int);
 void	 endusershell(void);
 int	 exect(const char *, char * const *, char * const *);
 int	 fchroot(int);
+int	 fdiscard(int, off_t, off_t);
 int	 fsync_range(int, int, off_t, off_t);
 int	 getdomainname(char *, size_t);
 int	 getgrouplist(const char *, gid_t, gid_t *, int *);
@@ -350,6 +355,7 @@ __aconst char *getusershell(void);
 int	 initgroups(const char *, gid_t);
 int	 iruserok(uint32_t, int, const char *, const char *);
 int      issetugid(void);
+int	 mkstemps(char *, int);
 int	 nfssvc(int, void *);
 int	 pipe2(int *, int);
 int	 profil(char *, size_t, u_long, u_int);

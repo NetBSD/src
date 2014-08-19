@@ -1,4 +1,4 @@
-/* $NetBSD: ahdilabel.c,v 1.8 2009/03/14 21:04:06 dsl Exp $ */
+/* $NetBSD: ahdilabel.c,v 1.8.22.1 2014/08/20 00:02:48 tls Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 int		 main (int, char*[]);
 void		 show_parts (struct ahdi_ptable*, int, int, int);
 int		 get_input (char *, int);
-char		*sec_to_cts (struct ahdi_ptable*, u_int32_t, char *);
+char		*sec_to_cts (struct ahdi_ptable*, u_int32_t, char *, size_t);
 u_int32_t	 read_sector (struct ahdi_ptable*, char *, int, int);
 void		 change_part (struct ahdi_ptable*, int, int);
 
@@ -296,7 +296,7 @@ get_input (char *buf, int len)
 }
 
 char *
-sec_to_cts (struct ahdi_ptable *ptable, u_int32_t sector, char *cts)
+sec_to_cts (struct ahdi_ptable *ptable, u_int32_t sector, char *cts, size_t len)
 {
 	u_int32_t	cylinder, track;
 
@@ -304,7 +304,7 @@ sec_to_cts (struct ahdi_ptable *ptable, u_int32_t sector, char *cts)
 	sector -= cylinder * ptable->secpercyl;
 	track = sector / ptable->nsectors;
 	sector -= track * ptable->nsectors;
-	sprintf (cts, "%u/%u/%u", cylinder, track, sector);
+	snprintf (cts, len, "%u/%u/%u", cylinder, track, sector);
 	return (cts);
 }
 
@@ -388,21 +388,21 @@ change_part (struct ahdi_ptable *ptable, int part, int units)
 	}
 
 	printf ("root [%8u (%s)] ", ptable->parts[part].root,
-	    sec_to_cts (ptable, ptable->parts[part].root, &cts[0]));
+	    sec_to_cts (ptable, ptable->parts[part].root, cts, sizeof(cts)));
 	if (get_input (&buf[0], BUFLEN)) {
 		sector = read_sector (ptable, buf, part, PART_ROOT);
 		ptable->parts[part].root = sector;
 	}
 
 	printf ("start [%8u (%s)] ", ptable->parts[part].start,
-	    sec_to_cts (ptable, ptable->parts[part].start, &cts[0]));
+	    sec_to_cts (ptable, ptable->parts[part].start, cts, sizeof(cts)));
 	if (get_input (&buf[0], BUFLEN)) {
 		sector = read_sector (ptable, buf, part, PART_START);
 		ptable->parts[part].start = sector;
 	}
 
 	printf ("size [%8u (%s) (%4uM)] ", ptable->parts[part].size,
-	    sec_to_cts (ptable, ptable->parts[part].size, &cts[0]),
+	    sec_to_cts (ptable, ptable->parts[part].size, cts, sizeof(cts)),
 	    (ptable->parts[part].size + (BLPM >> 1)) / BLPM);
 	if (get_input (&buf[0], BUFLEN)) {
 		sector = read_sector (ptable, buf, part, PART_END);

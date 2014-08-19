@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.23.2.1 2012/11/20 03:01:33 tls Exp $ */
+/* $Id: if_ae.c,v 1.23.2.2 2014/08/20 00:03:12 tls Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.23.2.1 2012/11/20 03:01:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.23.2.2 2014/08/20 00:03:12 tls Exp $");
 
 
 #include <sys/param.h>
@@ -387,7 +387,7 @@ ae_attach(device_t parent, device_t self, void *aux)
 	ether_set_ifflags_cb(&sc->sc_ethercom, ae_ifflags_cb);
 
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	/*
 	 * Make sure the interface is shutdown during reboot.

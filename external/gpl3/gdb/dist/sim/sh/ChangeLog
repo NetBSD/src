@@ -1,3 +1,45 @@
+2013-09-23  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2013-06-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4, configure: Regenerate.
+
+2012-06-15  Joel Brobecker  <brobecker@adacore.com>
+
+	* config.in, configure: Regenerate.
+
+2012-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4, config.in, configure: Regenerate.
+
+2012-02-16  Kevin Buettner  <kevinb@redhat.com>
+
+	* interp.c (MA): Adjust cast to avoid warning on 64-bit hosts.
+
+	* interp.c (sim_store_register, sim_fetch_register): Return
+	length, not -1.
+
+2011-12-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4: New file.
+	* configure: Regenerate.
+
+2011-10-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Change include to common/acinclude.m4.
+
+2011-10-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Change AC_PREREQ to 2.64.  Delete AC_CONFIG_HEADER
+	call.  Replace common.m4 include with SIM_AC_COMMON.
+	* configure: Regenerate.
+
+2011-04-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_complete_command): New stub function.
+
 2010-04-14  Mike Frysinger  <vapier@gentoo.org>
 
 	* interp.c (sim_write): Add const to buffer arg.

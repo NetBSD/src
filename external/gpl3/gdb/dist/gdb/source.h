@@ -1,6 +1,5 @@
 /* List lines of source files for GDB, the GNU debugger.
-   Copyright (C) 1999, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,11 +21,40 @@
 
 struct symtab;
 
+/* This function is capable of finding the absolute path to a
+   source file, and opening it, provided you give it a FILENAME.  Both the
+   DIRNAME and FULLNAME are only added suggestions on where to find the file.
+
+   FILENAME should be the filename to open.
+   DIRNAME is the compilation directory of a particular source file.
+	   Only some debug formats provide this info.
+   FULLNAME can be the last known absolute path to the file in question.
+     Space for the path must have been malloc'd.  If a path substitution
+     is applied we free the old value and set a new one.
+
+   On Success
+     A valid file descriptor is returned (the return value is positive).
+     FULLNAME is set to the absolute path to the file just opened.
+     The caller is responsible for freeing FULLNAME.
+
+   On Failure
+     An invalid file descriptor is returned (the return value is negative).
+     FULLNAME is set to NULL.  */
+extern int find_and_open_source (const char *filename,
+				 const char *dirname,
+				 char **fullname);
+
 /* Open a source file given a symtab S.  Returns a file descriptor or
    negative number for error.  */
 extern int open_source_file (struct symtab *s);
 
-extern char* symtab_to_fullname (struct symtab *s);
+extern char *rewrite_source_path (const char *path);
+
+extern const char *symtab_to_fullname (struct symtab *s);
+
+/* Returns filename without the compile directory part, basename or absolute
+   filename.  It depends on 'set filename-display' value.  */
+extern const char *symtab_to_filename_for_display (struct symtab *symtab);
 
 /* Create and initialize the table S->line_charpos that records the
    positions of the lines in the source file, which is assumed to be

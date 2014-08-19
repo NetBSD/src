@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.18.22.1 2012/11/20 03:02:00 tls Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.18.22.2 2014/08/20 00:03:37 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.18.22.1 2012/11/20 03:02:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.18.22.2 2014/08/20 00:03:37 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcapm.h"
@@ -294,17 +294,11 @@ hpcapm_hook(void *ctx, int type, long id, void *msg)
 static void
 hpcapm_disconnect(void *scx)
 {
-	struct apmhpc_softc *sc;
-
-	sc = scx;
 }
 
 static void
 hpcapm_enable(void *scx, int onoff)
 {
-	struct apmhpc_softc *sc;
-
-	sc = scx;
 }
 
 static int
@@ -432,26 +426,16 @@ hpcapm_get_event(void *scx, u_int *event_type, u_int *event_info)
 static void
 hpcapm_cpu_busy(void *scx)
 {
-	struct apmhpc_softc *sc;
-
-	sc = scx;
 }
 
 static void
 hpcapm_cpu_idle(void *scx)
 {
-	struct apmhpc_softc *sc;
-
-	sc = scx;
 }
 
 static void
 hpcapm_get_capabilities(void *scx, u_int *numbatts, u_int *capflags)
 {
-	struct apmhpc_softc *sc;
-
 	*numbatts = 0;
 	*capflags = APM_GLOBAL_STANDBY | APM_GLOBAL_SUSPEND;
-
-	sc = scx;
 }

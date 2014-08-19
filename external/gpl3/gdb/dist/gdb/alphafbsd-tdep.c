@@ -1,7 +1,6 @@
 /* Target-dependent code for FreeBSD/alpha.
 
-   Copyright (C) 2001, 2002, 2003, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -66,7 +65,7 @@ CORE_ADDR alphafbsd_sigtramp_end = 0x11ffffe0;
 
 static int
 alphafbsd_pc_in_sigtramp (struct gdbarch *gdbarch,
-			  CORE_ADDR pc, char *func_name)
+			  CORE_ADDR pc, const char *func_name)
 {
   return (pc >= alphafbsd_sigtramp_start && pc < alphafbsd_sigtramp_end);
 }

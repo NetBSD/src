@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs.h,v 1.7 2012/05/08 14:28:55 tsutsui Exp $	*/
+/*	$NetBSD: bfs.h,v 1.7.2.1 2014/08/20 00:04:28 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ int bfs_file_read(const struct bfs *, const char *, void *, size_t, size_t *);
 int bfs_file_write(struct bfs *, const char *, void *, size_t);
 int bfs_file_create(struct bfs *, const char *, void *,  size_t,
     const struct bfs_fileattr *);
-int bfs_file_delete(struct bfs *, const char *);
+int bfs_file_delete(struct bfs *, const char *, bool);
 int bfs_file_rename(struct bfs *, const char *, const char *);
 bool bfs_file_lookup(const struct bfs *, const char *, int *, int *,
     size_t *);
@@ -162,6 +162,7 @@ bool bfs_dump(const struct bfs *);
 int sysvbfs_bfs_init(struct bfs **, struct vnode *);
 void sysvbfs_bfs_fini(struct bfs *);
 bool bfs_inode_lookup(const struct bfs *, ino_t, struct bfs_inode **);
+int bfs_inode_delete(struct bfs *, ino_t);
 bool bfs_dirent_lookup_by_name(const struct bfs *, const char *,
     struct bfs_dirent **);
 bool bfs_dirent_lookup_by_inode(const struct bfs *, int,

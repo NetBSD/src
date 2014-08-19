@@ -1,6 +1,6 @@
 /* mpf_ceil, mpf_floor -- round an mpf to an integer.
 
-Copyright 2001, 2004 Free Software Foundation, Inc.
+Copyright 2001, 2004, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -26,7 +26,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
    Notice the use of prec+1 ensures mpf_ceil and mpf_floor are equivalent to
    mpf_set if u is already an integer.  */
 
-static void __gmpf_ceil_or_floor __GMP_PROTO ((REGPARM_2_1 (mpf_ptr, mpf_srcptr, int))) REGPARM_ATTR (1);
+static void __gmpf_ceil_or_floor (REGPARM_2_1 (mpf_ptr, mpf_srcptr, int)) REGPARM_ATTR (1);
 #define mpf_ceil_or_floor(r,u,dir)  __gmpf_ceil_or_floor (REGPARM_2_1 (r, u, dir))
 
 REGPARM_ATTR (1) static void

@@ -1,4 +1,4 @@
-.\"	$NetBSD: do_setresuid.9,v 1.4 2008/04/30 13:10:58 martin Exp $
+.\"	$NetBSD: do_setresuid.9,v 1.4.28.1 2014/08/20 00:02:37 tls Exp $
 .\"
 .\"-
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -78,14 +78,14 @@ The
 function sets the group IDs but otherwise behaves in the same manner as
 .Nm .
 The processes group list is neither examined nor effected.
+.Sh CODE REFERENCES
+These functions are implemented in:
+.Pa sys/kern/kern_prot.c .
 .Sh SEE ALSO
 .Xr setregid 2 ,
 .Xr setreuid 2 ,
 .Xr setuid 2 ,
 .Xr suser 9
-.Sh CODE REFERENCES
-These functions are implemented in:
-.Pa sys/kern/kern_prot.c .
 .Sh HISTORY
 Implemented for
 .Nx 2.0

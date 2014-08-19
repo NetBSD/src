@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_syscalls_compat.h,v 1.8.2.1 2013/02/25 00:30:08 tls Exp $	*/
+/*	$NetBSD: rump_syscalls_compat.h,v 1.8.2.2 2014/08/20 00:04:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -25,8 +25,21 @@
  * SUCH DAMAGE.
  */
 
+#ifdef _KERNEL
+#error rump_syscalls_compat is not for kernel consumers
+#endif
+
 #ifndef _RUMP_RUMP_SYSCALLS_COMPAT_H_
 #define _RUMP_RUMP_SYSCALLS_COMPAT_H_
+
+/* should have a smaller hammer here */
+#ifndef RUMP_HOST_NOT_POSIX
+#include <sys/types.h> /* typedefs */
+#include <sys/select.h> /* typedefs */
+#include <sys/socket.h> /* typedefs */
+
+#include <signal.h> /* typedefs */
+#endif
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>

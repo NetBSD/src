@@ -1,4 +1,4 @@
-/*	$NetBSD: dcmreg.h,v 1.9 2011/02/08 20:20:13 rmind Exp $	*/
+/*	$NetBSD: dcmreg.h,v 1.9.14.1 2014/08/20 00:03:00 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -131,7 +131,7 @@ struct	dcmpreg {
 	u_char		pad3[7];	/* +12 */
 	vu_char	t_tail;			/* +19 */
 };
-#define	dcm_preg(d, p)	((struct dcmpreg *)((u_int)(d)+0x8e00+(p)*2))
+#define	dcm_preg(d, p)	((struct dcmpreg *)((uintptr_t)(d)+0x8e00+(p)*2))
 
 /* interface reset/id */
 #define DCMCON          0x80	/* REMOTE/LOCAL switch, read */

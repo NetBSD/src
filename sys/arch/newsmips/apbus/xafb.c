@@ -1,4 +1,4 @@
-/*	$NetBSD: xafb.c,v 1.16 2010/05/15 10:01:44 tsutsui Exp $	*/
+/*	$NetBSD: xafb.c,v 1.16.18.1 2014/08/20 00:03:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -29,7 +29,7 @@
 /* "xa" frame buffer driver.  Currently supports 1280x1024x8 only. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.16 2010/05/15 10:01:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.16.18.1 2014/08/20 00:03:16 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -268,6 +268,10 @@ xafb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		wdf->cmsize = 256;
 		return 0;
 
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = dc->dc_ri.ri_stride;
+		return 0;
+		
 	case WSDISPLAYIO_GETCMAP:
 		return xafb_getcmap(sc, (struct wsdisplay_cmap *)data);
 

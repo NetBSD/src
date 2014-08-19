@@ -1,4 +1,4 @@
-/* Copyright 2010, 2011 Free Software Foundation, Inc.
+/* Copyright 2010-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,7 @@
 	.syntax unified
 	.text
 	.type main,%function
-#if defined (__thumb__) || defined (__thumb2__)
+#if defined (__thumb__)
 	.code   16
 	.thumb_func
 #endif
@@ -44,10 +44,36 @@ test_ret_end:
 	bl test_ldr_pc
 
 	/* Test ldm/stm only in ARM mode */
-#if !defined (__thumb__) && !defined (__thumb2__)
+#if !defined (__thumb__)
 	bl test_ldm_stm_pc
 #endif
 
+	/* Test ldrX literal in ARM and Thumb-2 */
+#if !defined (__thumb__) || defined(__thumb2__)
+	bl test_ldr_literal
+#endif
+
+	/* Test ldr literal in Thumb */
+#if defined(__thumb__)
+	bl test_ldr_literal_16
+#endif
+
+	/* Test cbnz/cbz in Thumb-2 */
+#if defined(__thumb2__)
+	bl test_cbz_cbnz
+#endif
+
+	/* Test adr in Thumb and Thumb-2 */
+#if defined(__thumb__)
+	bl test_adr
+#endif
+	/* Test 32-bit adr in ARM and Thumb-2 */
+#if defined(__thumb2__) || !defined(__thumb__)
+	bl test_adr_32bit
+#endif
+
+	bl test_pop_pc
+	
 	/* Test str in ARM mode and Thumb-2 */
 #if !defined(__thumb__)
 	bl test_str_pc
@@ -60,7 +86,7 @@ test_ret_end:
 	.size main, .-main
 	
 	.global test_call_subr
-#if defined (__thumb__) || defined (__thumb2__)
+#if defined (__thumb__)
 	.code   16
 	.thumb_func
 #endif
@@ -77,20 +103,20 @@ test_ret:
 
 	
 	.global test_branch
-#if defined (__thumb__) || defined (__thumb2__)
+#if defined (__thumb__)
 	.code   16
 	.thumb_func
 #endif
 	.type test_branch, %function
 test_branch:
 	b	L_branch
-	.global
+	.global L_branch
 L_branch:
 	bx lr
 	.size test_branch, .-test_branch
 
 	.global test_ldr_pc
-#if defined (__thumb__) || defined (__thumb2__)
+#if defined (__thumb__)
 	.code   16
 	.thumb_func
 #endif
@@ -98,12 +124,12 @@ L_branch:
 test_ldr_pc:
 	ldr	r1, [pc, #0]
 
-	.global
+	.global test_ldr_pc_ret
 test_ldr_pc_ret:
 	bx lr
 	.size test_ldr_pc, .-test_ldr_pc
 
-#if !defined (__thumb__) && !defined (__thumb2__)
+#if !defined (__thumb__)
 	.global test_ldm_stm_pc
 	.type test_ldm_stm_pc, %function
 test_ldm_stm_pc:
@@ -111,10 +137,10 @@ test_ldm_stm_pc:
 	ldmia	sp!, {r0, r1}
 	ldr	r0, .L1
 	stmdb	sp!, {r0}
-	.global
+	.global test_ldm_pc
 test_ldm_pc:
 	ldmia	sp!, {pc}
-	.global
+	.global test_ldm_stm_pc_ret
 test_ldm_stm_pc_ret:
 	bx lr
 	.align	2
@@ -122,6 +148,197 @@ test_ldm_stm_pc_ret:
 	.word	test_ldm_stm_pc_ret
 	.size test_ldm_stm_pc, .-test_ldm_stm_pc
 #endif
+	
+#if !defined (__thumb__) || defined(__thumb2__)
+	.global test_ldr_literal
+	.type test_ldr_literal, %function
+test_ldr_literal:
+	ldrh    r0, [pc]
+	.global test_ldrsb_literal
+test_ldrsb_literal:
+	ldrsb   r0, [pc]
+	.global test_ldrsh_literal
+test_ldrsh_literal:
+	ldrsh   r0, [pc]
+	.global test_ldr_literal_end
+test_ldr_literal_end:
+	bx lr
+	.size test_ldr_literal, .-test_ldr_literal
+#endif
+
+#if defined(__thumb__)
+	.global test_ldr_literal_16
+	.code   16
+	.thumb_func
+test_ldr_literal_16:
+	ldr	r0, .L2
+	.global test_ldr_literal_16_end
+test_ldr_literal_16_end:
+	bx lr
+	.align	2
+.L2:
+	.word	test_ldr_literal_16
+	.size test_ldr_literal_16, .-test_ldr_literal_16
+#endif
+
+#if defined(__thumb2__)
+	.global test_cbz_cbnz
+	.code   16
+	.thumb_func
+test_cbz_cbnz:
+	movs 	r0, #0
+	.global test_zero_cbnz
+test_zero_cbnz:
+	cbnz	r0, .L3
+	.global test_zero_cbz
+test_zero_cbz:
+	cbz	r0, .L3
+.L3:
+	movs	r0, #1
+	.global test_non_zero_cbz
+test_non_zero_cbz:
+	cbz	r0, .L4
+	.global test_non_zero_cbnz
+test_non_zero_cbnz:
+	cbnz	r0, .L4
+	nop
+.L4:
+	.global test_cbz_cbnz_end
+test_cbz_cbnz_end:
+	bx lr
+	.size test_cbz_cbnz, .-test_cbz_cbnz
+#endif
+
+#if defined(__thumb__)
+	.global test_adr
+	.code   16
+	.thumb_func
+test_adr:
+	adr	r0, .L8
+	nop
+	nop
+	nop
+.L8:
+	.global test_adr_end
+test_adr_end:
+	bx lr
+	.size test_adr, .-test_adr
+#endif
+
+#if defined(__thumb2__) || !defined(__thumb__)
+	.global test_adr_32bit
+#if defined(__thumb2__)
+	.code   16
+	.thumb_func
+#endif
+test_adr_32bit:
+	adr     r0, .L6
+	nop
+.L6:
+	nop
+	.global test_adr_32bit_after
+test_adr_32bit_after:
+	adr     r0, .L6
+
+	.global test_adr_32bit_end
+test_adr_32bit_end:
+	bx lr
+	.size test_adr_32bit, .-test_adr_32bit
+#endif
+
+	.global test_pop_pc
+	.type test_pop_pc, %function
+#if defined(__thumb__)
+	.code   16
+	.thumb_func
+#endif
+
+test_pop_pc:
+	ldr     r1, .L1_right
+	ldr	r2, .L1_wrong
+#if defined(__thumb__)
+	movs    r0, #1
+	orrs    r1, r0
+	orrs	r2, r0
+#endif
+	push    {r1}
+	push    {r2}
+	.global test_pop_pc_1
+test_pop_pc_1:
+	pop     {r1, pc}
+
+test_pop_pc_2_start:
+	ldr r1, .L2_right
+#if defined(__thumb__)
+	movs    r0, #1
+	orrs    r1, r0
+#endif
+	push	{r1}
+	.global test_pop_pc_2
+test_pop_pc_2:
+	pop	{pc}
+
+	/* Test pop instruction with full register list.  */
+test_pop_pc_3_start:
+	ldr     r1, .L3_right
+	ldr	r2, .L3_wrong
+#if defined(__thumb__)
+	movs    r0, #1
+	orrs    r1, r0
+	orrs	r2, r0
+#endif
+	push 	{r7}
+	push    {r1} /* Push the right address so that PC will get it.  */
+	/* Push the wrong address so r0-r7 will get the wrong a	ddress.  If PC
+	is set from any of them, we can get a FAIL.  */
+	push	{r2} 
+	push	{r2}
+	push	{r2}
+	push	{r2}
+	push	{r2}
+	push	{r2}
+	push	{r2}
+	push	{r2}
+test_pop_pc_3:
+	pop	{r0,r1,r2,r3,r4,r5,r6,r7,pc}
+	.global test_pop_pc_ret
+test_pop_pc_ret:
+	pop	{r7}
+	bx lr
+
+	.global test_pop_pc_1_right
+test_pop_pc_1_right:
+	b	test_pop_pc_2_start /* right */
+	.global test_pop_pc_1_wrong
+test_pop_pc_1_wrong:
+	b	test_pop_pc_2_start /* wrong */
+	.global test_pop_pc_2_right
+test_pop_pc_2_right:
+	b	test_pop_pc_3_start /* right */
+	.global test_pop_pc_2_wrong
+test_pop_pc_2_wrong:
+	b	test_pop_pc_3_start /* wrong */
+	.global test_pop_pc_3_right
+test_pop_pc_3_right:
+	b	test_pop_pc_ret /* right */
+	.global test_pop_pc_3_wrong
+test_pop_pc_3_wrong:
+	b	test_pop_pc_ret /* wrong */
+	
+	.align  2
+.L1_right:
+	.word   test_pop_pc_1_right
+.L1_wrong:
+	.word	test_pop_pc_1_wrong
+.L2_right:
+	.word   test_pop_pc_2_right
+.L2_wrong:
+	.word	test_pop_pc_2_wrong
+.L3_right:
+	.word   test_pop_pc_3_right
+.L3_wrong:
+	.word	test_pop_pc_3_wrong
+	.size test_pop_pc, .-test_pop_pc
 
 #if !defined(__thumb__)
 #if defined (__thumb2__)

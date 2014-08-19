@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.50 2011/08/24 16:01:53 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.50.12.1 2014/08/20 00:03:12 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,9 +74,6 @@
  */
 #define	USRSTACK	(VM_MAXUSER_ADDRESS-0x8000) /* Start of user stack */
 #define	USRSTACK32	((uint32_t)VM_MAXUSER32_ADDRESS-0x8000)
-
-/* alignment requirement for u-area space in bytes */
-#define	USPACE_ALIGN	USPACE
 
 /*
  * Virtual memory related constants, all in bytes
@@ -181,10 +178,16 @@
  * The address to which unspecified mapping requests default
  */
 #define __USE_TOPDOWN_VM
-#define VM_DEFAULT_ADDRESS(da, sz) \
-	trunc_page(USRSTACK - MAXSSIZ - (sz))
-#define VM_DEFAULT_ADDRESS32(da, sz) \
-	trunc_page(USRSTACK32 - MAXSSIZ32 - (sz))
+
+#define VM_DEFAULT_ADDRESS_TOPDOWN(da, sz) \
+    trunc_page(USRSTACK - MAXSSIZ - (sz))
+#define VM_DEFAULT_ADDRESS_BOTTOMUP(da, sz) \
+    round_page((vaddr_t)(da) + (vsize_t)maxdmap)
+
+#define VM_DEFAULT_ADDRESS32_TOPDOWN(da, sz) \
+    trunc_page(USRSTACK32 - MAXSSIZ32 - (sz))
+#define VM_DEFAULT_ADDRESS32_BOTTOMUP(da, sz) \
+    round_page((vaddr_t)(da) + (vsize_t)MAXDSIZ32)
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)

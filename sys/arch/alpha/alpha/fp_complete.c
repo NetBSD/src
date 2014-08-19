@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.14.6.1 2013/02/25 00:28:18 tls Exp $ */
+/* $NetBSD: fp_complete.c,v 1.14.6.2 2014/08/20 00:02:41 tls Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.14.6.1 2013/02/25 00:28:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.14.6.2 2014/08/20 00:02:41 tls Exp $");
 
 #include "opt_compat_osf1.h"
 
@@ -408,10 +408,13 @@ alpha_write_fp_c(struct lwp *l, uint64_t fp_c)
 	if ((md_flags & MDLWP_FP_C) == fp_c)
 		return;
 	l->l_md.md_flags = (md_flags & ~MDLWP_FP_C) | fp_c;
-	fpu_load();
-	alpha_pal_wrfen(1);
-	fp_c_to_fpcr(l);
-	alpha_pal_wrfen(0);
+	kpreempt_disable();
+	if (md_flags & MDLWP_FPACTIVE) {
+		alpha_pal_wrfen(1);
+		fp_c_to_fpcr(l);
+		alpha_pal_wrfen(0);
+	}
+	kpreempt_enable();
 }
 
 uint64_t
@@ -585,7 +588,10 @@ alpha_fp_complete_at(alpha_instruction *trigger_pc, struct lwp *l,
 		this_cannot_happen(6, -1);
 		return SIGSEGV;
 	}
-	fpu_load();
+	kpreempt_disable();
+	if ((curlwp->l_md.md_flags & MDLWP_FPACTIVE) == 0) {
+		fpu_load();
+	}
 	alpha_pal_wrfen(1);
 	/*
 	 * If necessary, lie about the dynamic rounding mode so emulation
@@ -611,6 +617,7 @@ alpha_fp_complete_at(alpha_instruction *trigger_pc, struct lwp *l,
 	alpha_write_fpcr(fp_c_to_fpcr_1(orig_fpcr, md_flags));
 	needsig = changed_flags & FP_C_TO_NETBSD_MASK(md_flags);
 	alpha_pal_wrfen(0);
+	kpreempt_enable();
 	if (__predict_false(needsig)) {
 		*ucode = needsig;
 		return SIGFPE;
@@ -722,6 +729,22 @@ void
 fpu_state_load(struct lwp *l, u_int flags)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
+	KASSERT(l == curlwp);
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * If the LWP got switched to another CPU, pcu_switchpoint would have
+	 * called state_release to clear MDLWP_FPACTIVE.  Now that we are back
+	 * on the CPU that has our FP context, set MDLWP_FPACTIVE again.
+	 */
+	if (flags & PCU_REENABLE) {
+		KASSERT(flags & PCU_VALID);
+		l->l_md.md_flags |= MDLWP_FPACTIVE;
+		return;
+	}
+#else
+	KASSERT((flags & PCU_REENABLE) == 0);
+#endif
 
 	/*
 	 * Instrument FP usage -- if a process had not previously
@@ -731,11 +754,11 @@ fpu_state_load(struct lwp *l, u_int flags)
 	 * If a process has used FP, count a "used FP, and took
 	 * a trap to use it again" event.
 	 */
-	if (!fpu_used_p(l)) {
+	if ((flags & PCU_VALID) == 0) {
 		atomic_inc_ulong(&fpevent_use.ev_count);
-		fpu_mark_used(l);
-	} else
+	} else {
 		atomic_inc_ulong(&fpevent_reuse.ev_count);
+	}
 
 	alpha_pal_wrfen(1);
 	restorefpstate(&pcb->pcb_fp);
@@ -749,7 +772,7 @@ fpu_state_load(struct lwp *l, u_int flags)
  */
 
 void
-fpu_state_save(struct lwp *l, u_int flags)
+fpu_state_save(struct lwp *l)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
@@ -762,7 +785,7 @@ fpu_state_save(struct lwp *l, u_int flags)
  * Release the FPU.
  */
 void
-fpu_state_release(struct lwp *l, u_int flags)
+fpu_state_release(struct lwp *l)
 {
 	l->l_md.md_flags &= ~MDLWP_FPACTIVE;
 }

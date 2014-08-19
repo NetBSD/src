@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_compat.c,v 1.2 2008/10/08 08:27:07 ad Exp $	*/
+/*	$NetBSD: pthread_compat.c,v 1.2.26.1 2014/08/20 00:02:20 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_compat.c,v 1.2 2008/10/08 08:27:07 ad Exp $");
+__RCSID("$NetBSD: pthread_compat.c,v 1.2.26.1 2014/08/20 00:02:20 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/syscall.h>
@@ -85,10 +85,11 @@ _lwp_detach(lwpid_t a)
 }
 
 int
-_lwp_park(const struct timespec *a, lwpid_t b, const void *c, const void *d)
+_lwp_park(clockid_t a, int b, const struct timespec *c, lwpid_t d,
+    const void *e, const void *f)
 {
 
-	return syscall(SYS__lwp_park, a, b, c, d);
+	return syscall(SYS____lwp_park60, a, b, c, d, e, f);
 }
 
 int

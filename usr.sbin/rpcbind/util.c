@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.16 2009/01/18 10:17:38 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.16.14.1 2014/08/20 00:05:13 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -55,9 +55,6 @@ static struct sockaddr_in6 *local_in6;
 #endif
 
 static int bitmaskcmp(void *, void *, void *, int);
-#ifdef INET6
-static void in6_fillscopeid(struct sockaddr_in6 *);
-#endif
 
 /*
  * For all bits set in "mask", compare the corresponding bits in
@@ -82,21 +79,6 @@ bitmaskcmp(void *dst, void *src, void *mask, int bytelen)
 
 	return 0;
 }
-
-/*
- * Taken from ifconfig.c
- */
-#ifdef INET6
-static void
-in6_fillscopeid(struct sockaddr_in6 *sin6)
-{
-        if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
-                sin6->sin6_scope_id =
-                        ntohs(*(u_int16_t *)&sin6->sin6_addr.s6_addr[2]);
-                sin6->sin6_addr.s6_addr[2] = sin6->sin6_addr.s6_addr[3] = 0;
-        }
-}
-#endif
 
 char *
 addrmerge(struct netbuf *caller, char *serv_uaddr, char *clnt_uaddr,
@@ -218,7 +200,7 @@ addrmerge(struct netbuf *caller, char *serv_uaddr, char *clnt_uaddr,
 			 */
 			realsin6 = (struct sockaddr_in6 *)clnt;
 			ifsin6 = (struct sockaddr_in6 *)ifap->ifa_addr;
-			in6_fillscopeid(ifsin6);
+			inet6_getscopeid(ifsin6, 1);
 			clntsin6 = (struct sockaddr_in6 *)clnt_sa;
 			servsin6 = (struct sockaddr_in6 *)serv_sa;
 			sin6mask = (struct sockaddr_in6 *)ifap->ifa_netmask;

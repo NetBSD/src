@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_pci.c,v 1.23 2008/03/26 17:50:32 matt Exp $	*/
+/*	$NetBSD: cy_pci.c,v 1.23.48.1 2014/08/20 00:03:42 tls Exp $	*/
 
 /*
  * cy_pci.c
@@ -10,7 +10,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy_pci.c,v 1.23 2008/03/26 17:50:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy_pci.c,v 1.23.48.1 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,7 @@ cy_pci_attach(device_t parent, device_t self, void *aux)
 	const struct cy_pci_product *cp;
 	const char *intrstr;
 	int plx_ver;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 
@@ -134,7 +135,7 @@ cy_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "unable to map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_TTY, cy_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");

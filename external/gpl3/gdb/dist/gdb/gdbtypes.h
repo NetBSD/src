@@ -1,8 +1,6 @@
 /* Internal type definitions for GDB.
 
-   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
-   2002, 2003, 2004, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1992-2014 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
@@ -32,6 +30,21 @@ struct block;
 struct value_print_options;
 struct language_defn;
 
+/* These declarations are DWARF-specific as some of the gdbtypes.h data types
+   are already DWARF-specific.  */
+
+/* Offset relative to the start of its containing CU (compilation unit).  */
+typedef struct
+{
+  unsigned int cu_off;
+} cu_offset;
+
+/* Offset relative to the start of its .debug_info or .debug_types section.  */
+typedef struct
+{
+  unsigned int sect_off;
+} sect_offset;
+
 /* Some macros for char-based bitfields.  */
 
 #define B_SET(a,x)	((a)[(x)>>3] |= (1 << ((x)&7)))
@@ -45,7 +58,8 @@ struct language_defn;
 
 enum type_code
   {
-    TYPE_CODE_UNDEF,		/* Not used; catches errors */
+    TYPE_CODE_BITSTRING = -1,	/* Deprecated  */
+    TYPE_CODE_UNDEF = 0,	/* Not used; catches errors */
     TYPE_CODE_PTR,		/* Pointer type */
 
     /* Array type with lower & upper bounds.
@@ -95,10 +109,6 @@ enum type_code
        anyway) do; if we want to deal with such strings, we should use
        a new type code.  */
     TYPE_CODE_STRING,
-
-    /* String of bits; like TYPE_CODE_SET but prints differently (at
-       least for (the deleted) CHILL).  */
-    TYPE_CODE_BITSTRING,
 
     /* Unknown type.  The length field is valid if we were able to
        deduce that much about the type, or 0 if we don't even know that.  */
@@ -159,18 +169,18 @@ enum type_code
 
 enum type_flag_value
 {
-  TYPE_FLAG_UNSIGNED = (1 << 7),
-  TYPE_FLAG_NOSIGN = (1 << 8),
-  TYPE_FLAG_STUB = (1 << 9),
-  TYPE_FLAG_TARGET_STUB = (1 << 10),
-  TYPE_FLAG_STATIC = (1 << 11),
-  TYPE_FLAG_PROTOTYPED = (1 << 12),
-  TYPE_FLAG_INCOMPLETE = (1 << 13),
-  TYPE_FLAG_VARARGS = (1 << 14),
-  TYPE_FLAG_VECTOR = (1 << 15),
-  TYPE_FLAG_FIXED_INSTANCE = (1 << 16),
-  TYPE_FLAG_STUB_SUPPORTED = (1 << 17),
-  TYPE_FLAG_GNU_IFUNC = (1 << 18),
+  TYPE_FLAG_UNSIGNED = (1 << 8),
+  TYPE_FLAG_NOSIGN = (1 << 9),
+  TYPE_FLAG_STUB = (1 << 10),
+  TYPE_FLAG_TARGET_STUB = (1 << 11),
+  TYPE_FLAG_STATIC = (1 << 12),
+  TYPE_FLAG_PROTOTYPED = (1 << 13),
+  TYPE_FLAG_INCOMPLETE = (1 << 14),
+  TYPE_FLAG_VARARGS = (1 << 15),
+  TYPE_FLAG_VECTOR = (1 << 16),
+  TYPE_FLAG_FIXED_INSTANCE = (1 << 17),
+  TYPE_FLAG_STUB_SUPPORTED = (1 << 18),
+  TYPE_FLAG_GNU_IFUNC = (1 << 19),
 
   /* Used for error-checking.  */
   TYPE_FLAG_MIN = TYPE_FLAG_UNSIGNED
@@ -188,6 +198,7 @@ enum type_instance_flag_value
   TYPE_INSTANCE_FLAG_ADDRESS_CLASS_1 = (1 << 4),
   TYPE_INSTANCE_FLAG_ADDRESS_CLASS_2 = (1 << 5),
   TYPE_INSTANCE_FLAG_NOTTEXT = (1 << 6),
+  TYPE_INSTANCE_FLAG_RESTRICT = (1 << 7)
 };
 
 /* Unsigned integer type.  If this is not set for a TYPE_CODE_INT, the
@@ -292,6 +303,12 @@ enum type_instance_flag_value
 
 #define TYPE_DECLARED_CLASS(t) (TYPE_MAIN_TYPE (t)->flag_declared_class)
 
+/* True if this type is a "flag" enum.  A flag enum is one where all
+   the values are pairwise disjoint when "and"ed together.  This
+   affects how enum values are printed.  */
+
+#define TYPE_FLAG_ENUM(t) (TYPE_MAIN_TYPE (t)->flag_flag_enum)
+
 /* Constant type.  If this is set, the corresponding type has a
    const modifier.  */
 
@@ -302,6 +319,12 @@ enum type_instance_flag_value
 
 #define TYPE_VOLATILE(t) \
   (TYPE_INSTANCE_FLAGS (t) & TYPE_INSTANCE_FLAG_VOLATILE)
+
+/* Restrict type.  If this is set, the corresponding type has a
+   restrict modifier.  */
+
+#define TYPE_RESTRICT(t) \
+  (TYPE_INSTANCE_FLAGS (t) & TYPE_INSTANCE_FLAG_RESTRICT)
 
 /* Instruction-space delimited type.  This is for Harvard architectures
    which have separate instruction and data address spaces (and perhaps
@@ -347,8 +370,10 @@ enum type_instance_flag_value
 enum field_loc_kind
   {
     FIELD_LOC_KIND_BITPOS,	/* bitpos */
+    FIELD_LOC_KIND_ENUMVAL,	/* enumval */
     FIELD_LOC_KIND_PHYSADDR,	/* physaddr */
-    FIELD_LOC_KIND_PHYSNAME	/* physname */
+    FIELD_LOC_KIND_PHYSNAME,	/* physname */
+    FIELD_LOC_KIND_DWARF_BLOCK	/* dwarf_block */
   };
 
 /* A discriminant to determine which field in the main_type.type_specific
@@ -368,7 +393,7 @@ enum type_specific_kind
   TYPE_SPECIFIC_CPLUS_STUFF,
   TYPE_SPECIFIC_GNAT_STUFF,
   TYPE_SPECIFIC_FLOATFORMAT,
-  TYPE_SPECIFIC_CALLING_CONVENTION
+  TYPE_SPECIFIC_FUNC
 };
 
 /* This structure is space-critical.
@@ -401,6 +426,11 @@ struct main_type
      "struct".  */
   unsigned int flag_declared_class : 1;
 
+  /* True if this is an enum type with disjoint values.  This affects
+     how the enum is printed.  */
+
+  unsigned int flag_flag_enum : 1;
+
   /* A discriminant telling us which field of the type_specific union
      is being used for this type, if any.  */
   ENUM_BITFIELD(type_specific_kind) type_specific_field : 3;
@@ -426,9 +456,11 @@ struct main_type
   /* Name of this type, or NULL if none.
 
      This is used for printing only, except by poorly designed C++ code.
-     For looking up a name, look for a symbol in the VAR_DOMAIN.  */
+     For looking up a name, look for a symbol in the VAR_DOMAIN.
+     This is generally allocated in the objfile's obstack.
+     However coffread.c uses malloc.  */
 
-  char *name;
+  const char *name;
 
   /* Tag name for this type, or NULL if none.  This means that the
      name of the type consists of a keyword followed by the tag name.
@@ -441,7 +473,7 @@ struct main_type
      One more legitimate use is that if TYPE_FLAG_STUB is set, this is
      the name to use to look for definitions in other files.  */
 
-  char *tag_name;
+  const char *tag_name;
 
   /* Every type is now associated with a particular objfile, and the
      type is allocated on the objfile_obstack for that objfile.  One problem
@@ -499,17 +531,25 @@ struct main_type
 	   containing structure.  For gdbarch_bits_big_endian=1
 	   targets, it is the bit offset to the MSB.  For
 	   gdbarch_bits_big_endian=0 targets, it is the bit offset to
-	   the LSB.  For a range bound or enum value, this is the
-	   value itself.  */
+	   the LSB.  */
 
 	int bitpos;
+
+	/* Enum value.  */
+	LONGEST enumval;
 
 	/* For a static field, if TYPE_FIELD_STATIC_HAS_ADDR then physaddr
 	   is the location (in the target) of the static field.
 	   Otherwise, physname is the mangled label of the static field.  */
 
 	CORE_ADDR physaddr;
-	char *physname;
+	const char *physname;
+
+	/* The field location can be computed by evaluating the following DWARF
+	   block.  Its DATA is allocated on objfile_obstack - no CU load is
+	   needed to access it.  */
+
+	struct dwarf2_locexpr_baton *dwarf_block;
       }
       loc;
 
@@ -520,7 +560,7 @@ struct main_type
       unsigned int artificial : 1;
 
       /* Discriminant for union field_location.  */
-      ENUM_BITFIELD(field_loc_kind) loc_kind : 2;
+      ENUM_BITFIELD(field_loc_kind) loc_kind : 3;
 
       /* Size of this field, in bits, or zero if not packed.
 	 If non-zero in an array type, indicates the element size in
@@ -528,7 +568,7 @@ struct main_type
 	 For an unpacked field, the field's type's length
 	 says how many bytes the field occupies.  */
 
-      unsigned int bitsize : 29;
+      unsigned int bitsize : 28;
 
       /* In a struct or union type, type of this field.
 	 In a function or member type, type of this argument.
@@ -540,7 +580,7 @@ struct main_type
 	 NULL for range bounds, array domains, and member function
 	 arguments.  */
 
-      char *name;
+      const char *name;
     } *fields;
 
     /* Union member used for range types.  */
@@ -601,10 +641,8 @@ struct main_type
 
     const struct floatformat **floatformat;
 
-    /* For TYPE_CODE_FUNC types, the calling convention for targets
-       supporting multiple ABIs.  Right now this is only fetched from
-       the Dwarf-2 DW_AT_calling_convention attribute.  */
-    unsigned calling_convention;
+    /* For TYPE_CODE_FUNC types,  */
+    struct func_type *func_stuff;
   } type_specific;
 };
 
@@ -690,11 +728,6 @@ struct cplus_struct_type
 
     short nfn_fields;
 
-    /* Number of methods described for this type, not including the
-       methods that it derives from.  */
-
-    short nfn_fields_total;
-
     /* Number of template arguments.  */
     unsigned short n_template_arguments;
 
@@ -704,6 +737,9 @@ struct cplus_struct_type
        member functions or virtual base classes.  Minus one if not
        dynamic.  Zero if not yet computed.  */
     int is_dynamic : 2;
+
+    /* Non-zero if this type came from a Java CU.  */
+    unsigned int is_java : 1;
 
     /* For derived classes, the number of base classes is given by
        n_baseclasses and virtual_field_bits is a bit vector containing
@@ -749,9 +785,11 @@ struct cplus_struct_type
     struct fn_fieldlist
       {
 
-	/* The overloaded name.  */
+	/* The overloaded name.
+	   This is generally allocated in the objfile's obstack.
+	   However stabsread.c sometimes uses malloc.  */
 
-	char *name;
+	const char *name;
 
 	/* The number of methods with this name.  */
 
@@ -773,7 +811,7 @@ struct cplus_struct_type
 	       arguments.  See gdb_mangle_name for the conversion from this
 	       format to the one used if is_stub is clear.  */
 
-	    char *physname;
+	    const char *physname;
 
 	    /* The function type for the method.
 	       (This comment used to say "The return value of the method",
@@ -806,8 +844,12 @@ struct cplus_struct_type
 	       to reconstruct the rest of the fields).  */
 	    unsigned int is_stub:1;
 
+	    /* True if this function is a constructor, false
+	       otherwise.  */
+	    unsigned int is_constructor : 1;
+
 	    /* Unused.  */
-	    unsigned int dummy:4;
+	    unsigned int dummy:3;
 
 	    /* Index into that baseclass's virtual function table,
 	       minus 2; else if static: VOFFSET_STATIC; else: 0.  */
@@ -821,15 +863,6 @@ struct cplus_struct_type
 
       }
      *fn_fieldlists;
-
-    /* Pointer to information about enclosing scope, if this is a
-       local type.  If it is not a local type, this is NULL. */
-    struct local_type_info
-      {
-	char *file;
-	int line;
-      }
-     *localtype_ptr;
 
     /* typedefs defined inside this class.  TYPEDEF_FIELD points to an array of
        TYPEDEF_FIELD_COUNT elements.  */
@@ -848,13 +881,6 @@ struct cplus_struct_type
        N_TEMPLATE_ARGUMENTS elements.  This is NULL for non-template
        classes.  */
     struct symbol **template_arguments;
-  };
-
-/* Struct used in computing virtual base list.  */
-struct vbase
-  {
-    struct type *vbasetype;	/* pointer to virtual base */
-    struct vbase *next;		/* next in chain */
   };
 
 /* Struct used to store conversion rankings.  */
@@ -887,6 +913,101 @@ struct gnat_aux_type
     struct type* descriptive_type;
   };
 
+/* For TYPE_CODE_FUNC types,  */
+struct func_type
+  {
+    /* The calling convention for targets supporting multiple ABIs.  Right now
+       this is only fetched from the Dwarf-2 DW_AT_calling_convention
+       attribute.  */
+    unsigned calling_convention;
+
+    /* Only those DW_TAG_GNU_call_site's in this function that have
+       DW_AT_GNU_tail_call set are linked in this list.  Function without its
+       tail call list complete (DW_AT_GNU_all_tail_call_sites or its superset
+       DW_AT_GNU_all_call_sites) has TAIL_CALL_LIST NULL, even if some
+       DW_TAG_GNU_call_site's exist in such function. */
+    struct call_site *tail_call_list;
+  };
+
+/* struct call_site_parameter can be referenced in callees by several ways.  */
+
+enum call_site_parameter_kind
+{
+  /* Use field call_site_parameter.u.dwarf_reg.  */
+  CALL_SITE_PARAMETER_DWARF_REG,
+
+  /* Use field call_site_parameter.u.fb_offset.  */
+  CALL_SITE_PARAMETER_FB_OFFSET,
+
+  /* Use field call_site_parameter.u.param_offset.  */
+  CALL_SITE_PARAMETER_PARAM_OFFSET
+};
+
+/* A place where a function gets called from, represented by
+   DW_TAG_GNU_call_site.  It can be looked up from symtab->call_site_htab.  */
+
+struct call_site
+  {
+    /* Address of the first instruction after this call.  It must be the first
+       field as we overload core_addr_hash and core_addr_eq for it.  */
+    CORE_ADDR pc;
+
+    /* List successor with head in FUNC_TYPE.TAIL_CALL_LIST.  */
+    struct call_site *tail_call_next;
+
+    /* Describe DW_AT_GNU_call_site_target.  Missing attribute uses
+       FIELD_LOC_KIND_DWARF_BLOCK with FIELD_DWARF_BLOCK == NULL.  */
+    struct
+      {
+	union field_location loc;
+
+	/* Discriminant for union field_location.  */
+	ENUM_BITFIELD(field_loc_kind) loc_kind : 3;
+      }
+    target;
+
+    /* Size of the PARAMETER array.  */
+    unsigned parameter_count;
+
+    /* CU of the function where the call is located.  It gets used for DWARF
+       blocks execution in the parameter array below.  */
+    struct dwarf2_per_cu_data *per_cu;
+
+    /* Describe DW_TAG_GNU_call_site's DW_TAG_formal_parameter.  */
+    struct call_site_parameter
+      {
+	ENUM_BITFIELD (call_site_parameter_kind) kind : 2;
+
+	union call_site_parameter_u
+	  {
+	    /* DW_TAG_formal_parameter's DW_AT_location's DW_OP_regX as DWARF
+	       register number, for register passed parameters.  */
+	    int dwarf_reg;
+
+	    /* Offset from the callee's frame base, for stack passed parameters.
+	       This equals offset from the caller's stack pointer.  */
+	    CORE_ADDR fb_offset;
+
+	    /* Offset relative to the start of this PER_CU to
+	       DW_TAG_formal_parameter which is referenced by both caller and
+	       the callee.  */
+	    cu_offset param_offset;
+	  }
+	u;
+
+	/* DW_TAG_formal_parameter's DW_AT_GNU_call_site_value.  It is never
+	   NULL.  */
+	const gdb_byte *value;
+	size_t value_size;
+
+	/* DW_TAG_formal_parameter's DW_AT_GNU_call_site_data_value.  It may be
+	   NULL if not provided by DWARF.  */
+	const gdb_byte *data_value;
+	size_t data_value_size;
+      }
+    parameter[1];
+  };
+
 /* The default value of TYPE_CPLUS_SPECIFIC(T) points to the
    this shared static structure.  */
 
@@ -917,6 +1038,12 @@ extern void allocate_gnat_aux_type (struct type *);
    read as "gnat-stuff".  */
 #define HAVE_GNAT_AUX_INFO(type) \
   (TYPE_SPECIFIC_FIELD (type) == TYPE_SPECIFIC_GNAT_STUFF)
+
+#define INIT_FUNC_SPECIFIC(type)					       \
+  (TYPE_SPECIFIC_FIELD (type) = TYPE_SPECIFIC_FUNC,			       \
+   TYPE_MAIN_TYPE (type)->type_specific.func_stuff			       \
+     = TYPE_ZALLOC (type,						       \
+		    sizeof (*TYPE_MAIN_TYPE (type)->type_specific.func_stuff)))
 
 #define TYPE_INSTANCE_FLAGS(thistype) (thistype)->instance_flags
 #define TYPE_MAIN_TYPE(thistype) (thistype)->main_type
@@ -966,7 +1093,6 @@ extern void allocate_gnat_aux_type (struct type *);
 #define TYPE_VPTR_FIELDNO(thistype) TYPE_MAIN_TYPE(thistype)->vptr_fieldno
 #define TYPE_FN_FIELDS(thistype) TYPE_CPLUS_SPECIFIC(thistype)->fn_fields
 #define TYPE_NFN_FIELDS(thistype) TYPE_CPLUS_SPECIFIC(thistype)->nfn_fields
-#define TYPE_NFN_FIELDS_TOTAL(thistype) TYPE_CPLUS_SPECIFIC(thistype)->nfn_fields_total
 #define TYPE_SPECIFIC_FIELD(thistype) \
   TYPE_MAIN_TYPE(thistype)->type_specific_field
 #define	TYPE_TYPE_SPECIFIC(thistype) TYPE_MAIN_TYPE(thistype)->type_specific
@@ -983,7 +1109,8 @@ extern void allocate_gnat_aux_type (struct type *);
 #define TYPE_FLOATFORMAT(thistype) TYPE_MAIN_TYPE(thistype)->type_specific.floatformat
 #define TYPE_GNAT_SPECIFIC(thistype) TYPE_MAIN_TYPE(thistype)->type_specific.gnat_stuff
 #define TYPE_DESCRIPTIVE_TYPE(thistype) TYPE_GNAT_SPECIFIC(thistype)->descriptive_type
-#define TYPE_CALLING_CONVENTION(thistype) TYPE_MAIN_TYPE(thistype)->type_specific.calling_convention
+#define TYPE_CALLING_CONVENTION(thistype) TYPE_MAIN_TYPE(thistype)->type_specific.func_stuff->calling_convention
+#define TYPE_TAIL_CALL_LIST(thistype) TYPE_MAIN_TYPE(thistype)->type_specific.func_stuff->tail_call_list
 #define TYPE_BASECLASS(thistype,index) TYPE_FIELD_TYPE(thistype, index)
 #define TYPE_N_BASECLASSES(thistype) TYPE_CPLUS_SPECIFIC(thistype)->n_baseclasses
 #define TYPE_BASECLASS_NAME(thistype,index) TYPE_FIELD_NAME(thistype, index)
@@ -991,6 +1118,7 @@ extern void allocate_gnat_aux_type (struct type *);
 #define BASETYPE_VIA_PUBLIC(thistype, index) \
   ((!TYPE_FIELD_PRIVATE(thistype, index)) && (!TYPE_FIELD_PROTECTED(thistype, index)))
 #define TYPE_CPLUS_DYNAMIC(thistype) TYPE_CPLUS_SPECIFIC (thistype)->is_dynamic
+#define TYPE_CPLUS_REALLY_JAVA(thistype) TYPE_CPLUS_SPECIFIC (thistype)->is_java
 
 #define BASETYPE_VIA_VIRTUAL(thistype, index) \
   (TYPE_CPLUS_SPECIFIC(thistype)->virtual_field_bits == NULL ? 0 \
@@ -999,18 +1127,28 @@ extern void allocate_gnat_aux_type (struct type *);
 #define FIELD_TYPE(thisfld) ((thisfld).type)
 #define FIELD_NAME(thisfld) ((thisfld).name)
 #define FIELD_LOC_KIND(thisfld) ((thisfld).loc_kind)
-#define FIELD_BITPOS(thisfld) ((thisfld).loc.bitpos)
+#define FIELD_BITPOS_LVAL(thisfld) ((thisfld).loc.bitpos)
+#define FIELD_BITPOS(thisfld) (FIELD_BITPOS_LVAL (thisfld) + 0)
+#define FIELD_ENUMVAL_LVAL(thisfld) ((thisfld).loc.enumval)
+#define FIELD_ENUMVAL(thisfld) (FIELD_ENUMVAL_LVAL (thisfld) + 0)
 #define FIELD_STATIC_PHYSNAME(thisfld) ((thisfld).loc.physname)
 #define FIELD_STATIC_PHYSADDR(thisfld) ((thisfld).loc.physaddr)
+#define FIELD_DWARF_BLOCK(thisfld) ((thisfld).loc.dwarf_block)
 #define SET_FIELD_BITPOS(thisfld, bitpos)			\
   (FIELD_LOC_KIND (thisfld) = FIELD_LOC_KIND_BITPOS,		\
-   FIELD_BITPOS (thisfld) = (bitpos))
+   FIELD_BITPOS_LVAL (thisfld) = (bitpos))
+#define SET_FIELD_ENUMVAL(thisfld, enumval)			\
+  (FIELD_LOC_KIND (thisfld) = FIELD_LOC_KIND_ENUMVAL,		\
+   FIELD_ENUMVAL_LVAL (thisfld) = (enumval))
 #define SET_FIELD_PHYSNAME(thisfld, name)			\
   (FIELD_LOC_KIND (thisfld) = FIELD_LOC_KIND_PHYSNAME,		\
    FIELD_STATIC_PHYSNAME (thisfld) = (name))
 #define SET_FIELD_PHYSADDR(thisfld, addr)			\
   (FIELD_LOC_KIND (thisfld) = FIELD_LOC_KIND_PHYSADDR,		\
    FIELD_STATIC_PHYSADDR (thisfld) = (addr))
+#define SET_FIELD_DWARF_BLOCK(thisfld, addr)			\
+  (FIELD_LOC_KIND (thisfld) = FIELD_LOC_KIND_DWARF_BLOCK,	\
+   FIELD_DWARF_BLOCK (thisfld) = (addr))
 #define FIELD_ARTIFICIAL(thisfld) ((thisfld).artificial)
 #define FIELD_BITSIZE(thisfld) ((thisfld).bitsize)
 
@@ -1019,8 +1157,10 @@ extern void allocate_gnat_aux_type (struct type *);
 #define TYPE_FIELD_NAME(thistype, n) FIELD_NAME(TYPE_FIELD(thistype, n))
 #define TYPE_FIELD_LOC_KIND(thistype, n) FIELD_LOC_KIND (TYPE_FIELD (thistype, n))
 #define TYPE_FIELD_BITPOS(thistype, n) FIELD_BITPOS (TYPE_FIELD (thistype, n))
+#define TYPE_FIELD_ENUMVAL(thistype, n) FIELD_ENUMVAL (TYPE_FIELD (thistype, n))
 #define TYPE_FIELD_STATIC_PHYSNAME(thistype, n) FIELD_STATIC_PHYSNAME (TYPE_FIELD (thistype, n))
 #define TYPE_FIELD_STATIC_PHYSADDR(thistype, n) FIELD_STATIC_PHYSADDR (TYPE_FIELD (thistype, n))
+#define TYPE_FIELD_DWARF_BLOCK(thistype, n) FIELD_DWARF_BLOCK (TYPE_FIELD (thistype, n))
 #define TYPE_FIELD_ARTIFICIAL(thistype, n) FIELD_ARTIFICIAL(TYPE_FIELD(thistype,n))
 #define TYPE_FIELD_BITSIZE(thistype, n) FIELD_BITSIZE(TYPE_FIELD(thistype,n))
 #define TYPE_FIELD_PACKED(thistype, n) (FIELD_BITSIZE(TYPE_FIELD(thistype,n))!=0)
@@ -1083,14 +1223,11 @@ extern void allocate_gnat_aux_type (struct type *);
 #define TYPE_FN_FIELD_ARTIFICIAL(thisfn, n) ((thisfn)[n].is_artificial)
 #define TYPE_FN_FIELD_ABSTRACT(thisfn, n) ((thisfn)[n].is_abstract)
 #define TYPE_FN_FIELD_STUB(thisfn, n) ((thisfn)[n].is_stub)
+#define TYPE_FN_FIELD_CONSTRUCTOR(thisfn, n) ((thisfn)[n].is_constructor)
 #define TYPE_FN_FIELD_FCONTEXT(thisfn, n) ((thisfn)[n].fcontext)
 #define TYPE_FN_FIELD_VOFFSET(thisfn, n) ((thisfn)[n].voffset-2)
 #define TYPE_FN_FIELD_VIRTUAL_P(thisfn, n) ((thisfn)[n].voffset > 1)
 #define TYPE_FN_FIELD_STATIC_P(thisfn, n) ((thisfn)[n].voffset == VOFFSET_STATIC)
-
-#define TYPE_LOCALTYPE_PTR(thistype) (TYPE_CPLUS_SPECIFIC(thistype)->localtype_ptr)
-#define TYPE_LOCALTYPE_FILE(thistype) (TYPE_CPLUS_SPECIFIC(thistype)->localtype_ptr->file)
-#define TYPE_LOCALTYPE_LINE(thistype) (TYPE_CPLUS_SPECIFIC(thistype)->localtype_ptr->line)
 
 #define TYPE_TYPEDEF_FIELD_ARRAY(thistype) \
   TYPE_CPLUS_SPECIFIC (thistype)->typedef_field
@@ -1110,6 +1247,11 @@ extern void allocate_gnat_aux_type (struct type *);
    && (!HAVE_CPLUS_STRUCT (thistype) \
        || TYPE_NFN_FIELDS (thistype) == 0) \
    && (TYPE_STUB (thistype) || !TYPE_STUB_SUPPORTED (thistype)))
+
+/* A helper macro that returns the name of a type or "unnamed type" if the type
+   has no name.  */
+#define TYPE_SAFE_NAME(type) \
+  (TYPE_NAME (type) ? TYPE_NAME (type) : _("<unnamed type>"))
 
 /* A helper macro that returns the name of an error type.  If the type
    has a name, it is used; otherwise, a default is used.  */
@@ -1289,8 +1431,12 @@ extern struct type *alloc_type_copy (const struct type *);
    objfile's architecture is returned.  */
 extern struct gdbarch *get_type_arch (const struct type *);
 
+/* This returns the target type (or NULL) of TYPE, also skipping
+   past typedefs.  */
+extern struct type *get_target_type (struct type *type);
+
 /* Helper function to construct objfile-owned types.  */
-extern struct type *init_type (enum type_code, int, int, char *,
+extern struct type *init_type (enum type_code, int, int, const char *,
 			       struct objfile *);
 
 /* Helper functions to construct architecture-owned types.  */
@@ -1336,6 +1482,8 @@ extern struct type *make_reference_type (struct type *, struct type **);
 
 extern struct type *make_cv_type (int, int, struct type *, struct type **);
 
+extern struct type *make_restrict_type (struct type *);
+
 extern void replace_type (struct type *, struct type *);
 
 extern int address_space_name_to_int (struct gdbarch *, char *);
@@ -1360,9 +1508,11 @@ extern void smash_to_methodptr_type (struct type *, struct type *);
 
 extern struct type *allocate_stub_method (struct type *);
 
-extern char *type_name_no_tag (const struct type *);
+extern const char *type_name_no_tag (const struct type *);
 
-extern struct type *lookup_struct_elt_type (struct type *, char *, int);
+extern const char *type_name_no_tag_or_error (struct type *type);
+
+extern struct type *lookup_struct_elt_type (struct type *, const char *, int);
 
 extern struct type *make_pointer_type (struct type *, struct type **);
 
@@ -1372,24 +1522,28 @@ extern struct type *make_function_type (struct type *, struct type **);
 
 extern struct type *lookup_function_type (struct type *);
 
+extern struct type *lookup_function_type_with_arguments (struct type *,
+							 int,
+							 struct type **);
+
 extern struct type *create_range_type (struct type *, struct type *, LONGEST,
 				       LONGEST);
 
 extern struct type *create_array_type (struct type *, struct type *,
 				       struct type *);
-extern struct type *lookup_array_range_type (struct type *, int, int);
+extern struct type *lookup_array_range_type (struct type *, LONGEST, LONGEST);
 
 extern struct type *create_string_type (struct type *, struct type *,
 					struct type *);
-extern struct type *lookup_string_range_type (struct type *, int, int);
+extern struct type *lookup_string_range_type (struct type *, LONGEST, LONGEST);
 
 extern struct type *create_set_type (struct type *, struct type *);
 
 extern struct type *lookup_unsigned_typename (const struct language_defn *,
-					      struct gdbarch *,char *);
+					      struct gdbarch *, const char *);
 
 extern struct type *lookup_signed_typename (const struct language_defn *,
-					    struct gdbarch *,char *);
+					    struct gdbarch *, const char *);
 
 extern struct type *check_typedef (struct type *);
 
@@ -1403,11 +1557,11 @@ extern void check_stub_method_group (struct type *, int);
 extern char *gdb_mangle_name (struct type *, int, int);
 
 extern struct type *lookup_typename (const struct language_defn *,
-				     struct gdbarch *, char *,
+				     struct gdbarch *, const char *,
 				     const struct block *, int);
 
 extern struct type *lookup_template_type (char *, struct type *,
-					  struct block *);
+					  const struct block *);
 
 extern int get_vptr_fieldno (struct type *, struct type **);
 
@@ -1454,17 +1608,22 @@ extern const struct rank FLOAT_CONVERSION_BADNESS;
 extern const struct rank INT_FLOAT_CONVERSION_BADNESS;
 /* Badness of conversion of pointer to void pointer.  */
 extern const struct rank VOID_PTR_CONVERSION_BADNESS;
-/* Badness of conversion of pointer to boolean.  */
-extern const struct rank BOOL_PTR_CONVERSION_BADNESS;
+/* Badness of conversion to boolean.  */
+extern const struct rank BOOL_CONVERSION_BADNESS;
 /* Badness of converting derived to base class.  */
 extern const struct rank BASE_CONVERSION_BADNESS;
 /* Badness of converting from non-reference to reference.  */
 extern const struct rank REFERENCE_CONVERSION_BADNESS;
+/* Badness of converting integer 0 to NULL pointer.  */
+extern const struct rank NULL_POINTER_CONVERSION;
 
 /* Non-standard conversions allowed by the debugger */
 /* Converting a pointer to an int is usually OK.  */
 extern const struct rank NS_POINTER_CONVERSION_BADNESS;
 
+/* Badness of converting a (non-zero) integer constant
+   to a pointer.  */
+extern const struct rank NS_INTEGER_POINTER_CONVERSION_BADNESS;
 
 extern struct rank sum_ranks (struct rank a, struct rank b);
 extern int compare_ranks (struct rank a, struct rank b);
@@ -1472,9 +1631,10 @@ extern int compare_ranks (struct rank a, struct rank b);
 extern int compare_badness (struct badness_vector *, struct badness_vector *);
 
 extern struct badness_vector *rank_function (struct type **, int,
-					     struct type **, int);
+					     struct value **, int);
 
-extern struct rank rank_one_type (struct type *, struct type *);
+extern struct rank rank_one_type (struct type *, struct type *,
+				  struct value *);
 
 extern void recursive_dump_type (struct type *, int);
 
@@ -1501,5 +1661,9 @@ extern struct type *copy_type_recursive (struct objfile *objfile,
 					 htab_t copied_types);
 
 extern struct type *copy_type (const struct type *type);
+
+extern int types_equal (struct type *, struct type *);
+
+extern int types_deeply_equal (struct type *, struct type *);
 
 #endif /* GDBTYPES_H */

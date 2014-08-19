@@ -1,5 +1,5 @@
 /* Simulation code for the CR16 processor.
-   Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
    Contributed by M Ranga Swami Reddy <MR.Swami.Reddy@nsc.com>
 
    This file is part of GDB, the GNU debugger.
@@ -25,9 +25,9 @@
 #include "ansidecl.h"
 #include "opcode/cr16.h"
 
-static void write_header PARAMS ((void));
-static void write_opcodes PARAMS ((void));
-static void write_template PARAMS ((void));
+static void write_header (void);
+static void write_opcodes (void);
+static void write_template (void);
 
 int
 main (int argc, char *argv[])
@@ -53,7 +53,7 @@ write_header ()
   /* Loop over instruction table until a full match is found.  */
   for ( ; i < NUMOPCODES; i++)
   {
-   printf("void OP_%X_%X PARAMS ((void));\t\t/* %s */\n",cr16_instruction[i].match, (32 - cr16_instruction[i].match_bits), cr16_instruction[i].mnemonic);
+   printf("void OP_%X_%X (void);\t\t/* %s */\n",cr16_instruction[i].match, (32 - cr16_instruction[i].match_bits), cr16_instruction[i].mnemonic);
   }
 }
 

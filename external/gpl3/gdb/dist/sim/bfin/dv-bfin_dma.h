@@ -1,6 +1,6 @@
 /* Blackfin Direct Memory Access (DMA) Channel model.
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -20,8 +20,6 @@
 
 #ifndef DV_BFIN_DMA_H
 #define DV_BFIN_DMA_H
-
-#define BFIN_MMR_DMA_SIZE	(4 * 16)
 
 /* DMA_CONFIG Masks */
 #define DMAEN		0x0001	/* DMA Channel Enable */

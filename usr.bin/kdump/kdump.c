@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.115.8.1 2013/02/25 00:30:36 tls Exp $	*/
+/*	$NetBSD: kdump.c,v 1.115.8.2 2014/08/20 00:04:59 tls Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.115.8.1 2013/02/25 00:30:36 tls Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.115.8.2 2014/08/20 00:04:59 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -652,14 +652,13 @@ rprint(register_t ret)
 {
 
 	if (!plain) {
-		(void)printf("%ld", (long)ret);
-		if (!small(ret))
-			(void)printf("/%#lx", (long)ret);
+		output_long(ret, 0);
+		if (!small(ret)) {
+			putchar('/');
+			output_long(ret, 1);
+		}
 	} else {
-		if (decimal || small(ret))
-			(void)printf("%ld", (long)ret);
-		else
-			(void)printf("%#lx", (long)ret);
+		output_long(ret, !(decimal || small(ret)));
 	}
 }
 
@@ -1055,7 +1054,7 @@ ktruser_misc(const char *name, const void *buf, size_t len)
 
 	printf("%.*s: %zu, ", KTR_USER_MAXIDLEN, name, len);
 	for (i = 0; i < len; i++)
-		printf("%02x", (unsigned int) dta[i]);
+		printf("%02x", (unsigned char)dta[i]);
 	printf("\n");
 }
 

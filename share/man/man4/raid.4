@@ -1,4 +1,4 @@
-.\"     $NetBSD: raid.4,v 1.36 2009/05/04 20:37:07 wiz Exp $
+.\"     $NetBSD: raid.4,v 1.36.14.1 2014/08/20 00:02:35 tls Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,7 +79,7 @@
 .Cd options RF_INCLUDE_PARITYLOGGING=n
 .Cd options RF_INCLUDE_RAID5_RS=n
 .Pp
-.Cd "pseudo-device raid" Op Ar count
+.Cd pseudo-device raid
 .Sh DESCRIPTION
 The
 .Nm
@@ -240,15 +240,11 @@ The first step to using the
 driver is to ensure that it is suitably configured in the kernel.
 This is done by adding a line similar to:
 .Bd -unfilled -offset indent
-pseudo-device   raid   4       # RAIDframe disk device
+pseudo-device   raid         # RAIDframe disk device
 .Ed
 .Pp
 to the kernel configuration file.
-The
-.Sq count
-argument
-.Sq ( 4 ,
-in this case), specifies the number of RAIDframe drivers to configure.
+The RAIDframe drivers are configured dynamically as needed.
 To turn on component auto-detection and autoconfiguration of RAID
 sets, simply add:
 .Bd -unfilled -offset indent

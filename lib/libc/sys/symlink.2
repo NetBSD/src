@@ -1,4 +1,4 @@
-.\"	$NetBSD: symlink.2,v 1.20.12.2 2013/02/25 00:27:54 tls Exp $
+.\"	$NetBSD: symlink.2,v 1.20.12.3 2014/08/20 00:02:16 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)symlink.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd November 18, 2012
+.Dd July 29, 2013
 .Dt SYMLINK 2
 .Os
 .Sh NAME
@@ -84,12 +84,12 @@ can be set to
 .Dv AT_FDCWD
 in order to specify the current directory.
 .Sh RETURN VALUES
-Upon successful completion, a zero value is returned.
-If an error occurs, the error code is stored in
-.Va errno
-and a \-1 value is returned.
+.Rv -std symlink symlinkat
 .Sh ERRORS
-The symbolic link succeeds unless:
+.Fn symlink
+and
+.Fn symlinkat
+will fail and no link will be created if:
 .Bl -tag -width Er
 .It Bq Er EACCES
 A component of the
@@ -150,6 +150,24 @@ prefix is not a directory.
 The file
 .Fa name2
 would reside on a read-only file system.
+.El
+.Pp
+In addition,
+.Fn symlinkat
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+.Fa name2
+does not specify an absolute path and
+.Fa fd
+is neither
+.Dv AT_FDCWD
+nor a valid file descriptor open for reading or searching.
+.It Bq Er ENOTDIR
+.Fa name2
+is not an absolute path and
+.Fa fd
+is a file descriptor associated with a non-directory file.
 .El
 .Sh SEE ALSO
 .Xr ln 1 ,

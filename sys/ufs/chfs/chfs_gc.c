@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_gc.c,v 1.3.2.1 2012/11/20 03:02:52 tls Exp $	*/
+/*	$NetBSD: chfs_gc.c,v 1.3.2.2 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -985,8 +985,6 @@ chfs_gcollect_deletion_dirent(struct chfs_mount *chmp,
 
 	int ret;
 
-	struct vnode *vnode = NULL;
-
 	dbg_gc("gcollect_deletion_dirent\n");
 
 	/* Check node. */
@@ -995,7 +993,7 @@ chfs_gcollect_deletion_dirent(struct chfs_mount *chmp,
 
 	nref_len = chfs_nref_len(chmp, cheb, fd->nref);
 
-	vnode = chfs_vnode_lookup(chmp, fd->vno);
+	(void)chfs_vnode_lookup(chmp, fd->vno);
 
 	/* Find it in parent dirents. */
 	for (nref = parent->chvc->dirents;

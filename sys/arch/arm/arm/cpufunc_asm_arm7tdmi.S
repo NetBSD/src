@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm7tdmi.S,v 1.4.22.1 2012/11/20 03:01:02 tls Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm7tdmi.S,v 1.4.22.2 2014/08/20 00:02:44 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 John Fremlin
@@ -34,14 +34,22 @@
  * ARM7TDMI assembly functions for CPU / MMU / TLB specific operations
  */
  
-#include <machine/cpu.h>
+#include "assym.h"
 #include <machine/asm.h>
+#include <arm/locore.h>
 
 /*
  * Functions to set the MMU Translation Table Base register
  *
  * We need to clean and flush the cache as it uses virtual
  * addresses that are about to change.
+ */
+
+/*
+ * Context switch.
+ *
+ * These are the CPU-specific parts of the context switcher cpu_switch()
+ * These functions actually perform the TTB reload.
  */
 ENTRY(arm7tdmi_setttb)
 	mov	r3, lr		/* ditto with lr */
@@ -64,6 +72,8 @@ ENTRY(arm7tdmi_setttb)
 	bl	_C_LABEL(arm7tdmi_cache_flushID)
 
 	mov	pc, r3
+END(arm7tdmi_setttb)
+STRONG_ALIAS(arm7tdmi_context_switch, arm7tdmi_setttb)
 
 /*
  * TLB functions
@@ -72,10 +82,16 @@ ENTRY(arm7tdmi_tlb_flushID)
 	mov	r0, #0
 	mcr	p15, 0, r0, c8, c7, 0
 	mov	pc, lr
+END(arm7tdmi_tlb_flushID)
 
 ENTRY(arm7tdmi_tlb_flushID_SE)
 	mcr	p15, 0, r0, c8, c7, 1
+#if PAGE_SIZE == 2 * L2_S_SIZE
+	add	r0, r0, #L2_S_SIZE
+	mcr	p15, 0, r0, c8, c7, 1
+#endif
 	mov	pc, lr
+END(arm7tdmi_tlb_flushID_SE)
 
 /*
  * Cache functions
@@ -90,12 +106,4 @@ ENTRY(arm7tdmi_cache_flushID)
 	mov	r0, r0
 
 	mov	pc, lr
-
-/*
- * Context switch.
- *
- * These are the CPU-specific parts of the context switcher cpu_switch()
- * These functions actually perform the TTB reload.
- */
-ENTRY(arm7tdmi_context_switch)
-	b	_C_LABEL(arm7tdmi_setttb)
+END(arm7tdmi_cache_flushID)

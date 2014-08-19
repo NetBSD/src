@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.c,v 1.29 2008/06/28 12:13:38 tsutsui Exp $	*/
+/*	$NetBSD: intreg.c,v 1.29.40.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intreg.c,v 1.29 2008/06/28 12:13:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intreg.c,v 1.29.40.1 2014/08/20 00:03:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ volatile uint8_t *interrupt_reg;
 static int intreg_attached;
 
 /* called early (by internal_configure) */
-void 
+void
 intreg_init(void)
 {
 	vaddr_t va;
@@ -84,7 +84,7 @@ intreg_init(void)
 }
 
 
-static int 
+static int
 intreg_match(device_t parent, cfdata_t cf, void *args)
 {
 	struct confargs *ca = args;
@@ -101,7 +101,7 @@ intreg_match(device_t parent, cfdata_t cf, void *args)
 }
 
 
-static void 
+static void
 intreg_attach(device_t parent, device_t self, void *args)
 {
 	struct intreg_softc *sc = device_private(self);
@@ -116,7 +116,7 @@ intreg_attach(device_t parent, device_t self, void *args)
 
 
 #if 0
-void 
+void
 isr_soft_request(int level)
 {
 	uint8_t bit;
@@ -128,7 +128,7 @@ isr_soft_request(int level)
 	single_inst_bset_b(*interrupt_reg, bit);
 }
 
-void 
+void
 isr_soft_clear(int level)
 {
 	uint8_t bit;

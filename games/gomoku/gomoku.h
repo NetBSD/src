@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.19 2010/03/29 04:28:47 dholland Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.19.12.1 2014/08/20 00:00:23 tls Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -264,6 +264,9 @@ extern	short	intersect[FAREA * FAREA];	/* frame [a][b] intersection */
 extern	int	movelog[BSZ * BSZ];		/* history of moves */
 extern	int	movenum;
 extern	int	debug;
+
+extern int interactive;
+extern const char *plyr[];
 
 #define ASSERT(x)
 

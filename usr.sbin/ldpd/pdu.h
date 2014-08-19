@@ -1,4 +1,4 @@
-/* $NetBSD: pdu.h,v 1.1.12.1 2013/02/25 00:30:43 tls Exp $ */
+/* $NetBSD: pdu.h,v 1.1.12.2 2014/08/20 00:05:09 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -52,8 +52,8 @@ struct ldp_pdu {
 }               __packed;
 
 
-uint	get_pdu(unsigned char *, struct ldp_pdu *);
-int	check_recv_pdu(struct ldp_peer *, struct ldp_pdu *, int);
+uint	get_pdu(const unsigned char *, struct ldp_pdu *);
+int	check_recv_pdu(const struct ldp_peer *, const struct ldp_pdu *, int);
 
 
 #endif	/* !_PDU_H_ */

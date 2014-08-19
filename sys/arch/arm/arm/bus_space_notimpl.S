@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_notimpl.S,v 1.4 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: bus_space_notimpl.S,v 1.4.124.1 2014/08/20 00:02:44 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -43,7 +43,7 @@
 #define __C(x,y)	__CONCAT(x,y)
 #define __S(s)		__STRING(s)
 #define NAME(func)	__C(BUS_SPACE,__C(_bs_,func))
-#define LNAME(func)	__C(L,NAME(func))
+#define LNAME(func)	__C(.L,NAME(func))
 
 #define	__L(x)		_C_LABEL(x)
 #define GLOBAL(func)	.global	__L(NAME(func))
@@ -56,22 +56,23 @@
 #define NOT_IMPL(func)							\
 	GLOBAL(func)						;	\
 LABEL(func)							;	\
-	stmfd	sp!, {r0-r3}					;	\
+	push	{r0-r3}						;	\
 	adr	r1, LNAME(__C(func,_funcname))			;	\
 	mov	r2, sp						;	\
-	b	bs_notimpl_panic				;	\
+	b	.Lbs_notimpl_panic				;	\
 								;	\
 LLABEL(__C(func,_funcname))					;	\
 	.asciz	__S(func)					;	\
 	.align	0						;	\
+	END(NAME(func))
 
-bs_notimpl_message:
+.Lbs_notimpl_message:
 	.ascii	__S(BUS_SPACE)
 	.asciz	"_%s: args at %p"
 
 	.align	0
-bs_notimpl_panic:
-	adr	r0, bs_notimpl_message
+.Lbs_notimpl_panic:
+	adr	r0, .Lbs_notimpl_message
 	b	_C_LABEL(panic)
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.44.2.1 2013/02/25 00:29:36 tls Exp $	*/
+/*	$NetBSD: if_url.c,v 1.44.2.2 2014/08/20 00:03:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.44.2.1 2013/02/25 00:29:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.44.2.2 2014/08/20 00:03:51 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -315,7 +315,7 @@ url_attach(device_t parent, device_t self, void *aux)
 	ether_ifattach(ifp, eaddr);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	callout_init(&sc->sc_stat_ch, 0);
 	sc->sc_attached = 1;

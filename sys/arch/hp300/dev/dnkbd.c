@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbd.c,v 1.5 2011/02/18 19:15:43 tsutsui Exp $	*/
+/*	$NetBSD: dnkbd.c,v 1.5.18.1 2014/08/20 00:03:00 tls Exp $	*/
 /*	$OpenBSD: dnkbd.c,v 1.17 2009/07/23 21:05:56 blambert Exp $	*/
 
 /*
@@ -29,6 +29,42 @@
 
 /*
  * Driver for the Apollo Domain keyboard and mouse.
+ *
+ * Random notes on the Apollo keyboard :
+ *
+ * - Powers up in 'cooked' mode, where the alpha keys generate ascii rather
+ *   than make/break codes.  Other keys seem to behave OK though.
+ *
+ * - Alt L/R keys generate two-byte sequence :
+ *             make     break
+ *       L    0xfe,2   0xfe,3
+ *       R    0xfe,0   0xfe,1
+ *
+ * - Mouse activity shows up inline in 4-byte packets introduced with 0xdf.
+ *   Byte 1 is   1MRL0000    where M, R, L are the mouse buttons, and 0 is
+ *                           down, 1 is up.
+ *   Byte 2 is 2's complement X movement, +ve to the right.
+ *   Byte 3 is 2's complement Y movement, +ve is up.
+ *
+ * - Keyboard recognises commands sent to it, all preceded by 0xff.  Commands
+ *   are echoed once sent completely.
+ *
+ *   0x00	go to cooked mode.
+ *   0x01	go to 'raw' (scancode) mode.
+ *   0x12,0x21	status report as <id1>\r<id2>\r<model>\r followed by 0xff 
+ *		and then the cooked/raw status.
+ *   0x21,0x81	beep on
+ *   0x21,0x82	beep off
+ *
+ * Some version examples :
+ *
+ * <3-@> <1-0> <SD-03687-MS>	Apollo p/n 007121 REV 00 ('old-style' US layout)
+ * <3-@> <2-0> <SD-03683-MS>	Apollo p/n 007121 REV 01 ('old-style' US layout)
+ * <3-@> <2-0> <SD-03980-MS>	Apollo 3500? keyboard.
+ * <3-@> <X-X> <RX-60857-HW>	HP p/n A1630-82001 R2
+ *				    ('new-style' off 425t, US layout),
+ *				also Apollo p/n 014555-002
+ *				    ('new-style' off DN5500, US layout).
  */
 
 #include "opt_wsdisplay_compat.h"
@@ -210,6 +246,8 @@ static struct wskbd_mapdata dnkbd_keymapdata = {
 
 typedef enum { EVENT_NONE, EVENT_KEYBOARD, EVENT_MOUSE } dnevent;
 
+#define APCIBRD(x)	(500000 / (x))
+
 static void	dnevent_kbd(struct dnkbd_softc *, int);
 static void	dnevent_kbd_internal(struct dnkbd_softc *, int);
 static void	dnevent_mouse(struct dnkbd_softc *, uint8_t *);
@@ -225,8 +263,6 @@ static int	dnkbd_probe(struct dnkbd_softc *);
 static void	dnkbd_rawrepeat(void *);
 #endif
 static int	dnkbd_send(struct dnkbd_softc *, const uint8_t *, size_t);
-static int	dnsubmatch_kbd(device_t, cfdata_t, const int *, void *);
-static int	dnsubmatch_mouse(device_t, cfdata_t, const int *, void *);
 
 int
 dnkbd_match(device_t parent, cfdata_t cf, void *aux)
@@ -287,13 +323,15 @@ dnkbd_init(struct dnkbd_softc *sc, uint16_t rate, uint16_t lctl)
 {
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
+	u_int divisor;
 
 	bst = sc->sc_bst;
 	bsh = sc->sc_bsh;
 
+	divisor = APCIBRD(rate);
 	bus_space_write_1(bst, bsh, com_lctl, LCR_DLAB);
-	bus_space_write_1(bst, bsh, com_dlbl, rate & 0xff);
-	bus_space_write_1(bst, bsh, com_dlbh, (rate >> 8) & 0xff);
+	bus_space_write_1(bst, bsh, com_dlbl, divisor & 0xff);
+	bus_space_write_1(bst, bsh, com_dlbh, (divisor >> 8) & 0xff);
 	bus_space_write_1(bst, bsh, com_lctl, lctl);
 	bus_space_write_1(bst, bsh, com_ier, IER_ERXRDY | IER_ETXRDY);
 	bus_space_write_1(bst, bsh, com_fifo,
@@ -301,6 +339,7 @@ dnkbd_init(struct dnkbd_softc *sc, uint16_t rate, uint16_t lctl)
 	bus_space_write_1(bst, bsh, com_mcr, MCR_DTR | MCR_RTS);
 
 	delay(100);
+	(void)bus_space_read_1(bst, bsh, com_iir);
 }
 
 void
@@ -347,41 +386,19 @@ dnkbd_attach_subdevices(struct dnkbd_softc *sc)
 		sc->sc_flags = SF_PLUGGED;
 	}
 
-	sc->sc_wskbddev = config_found_sm_loc(sc->sc_dev, "dnkbd", NULL, &ka,
-	    wskbddevprint, dnsubmatch_kbd);
+	sc->sc_wskbddev =
+	    config_found_ia(sc->sc_dev, "wskbddev", &ka, wskbddevprint);
 
 #if NWSMOUSE > 0
 	ma.accessops = &dnmouse_accessops;
 	ma.accesscookie = sc;
 
-	sc->sc_wsmousedev = config_found_sm_loc(sc->sc_dev, "dnkbd", NULL, &ma,
-	    wsmousedevprint, dnsubmatch_mouse);
+	sc->sc_wsmousedev =
+	    config_found_ia(sc->sc_dev, "wsmousedev", &ma, wsmousedevprint);
 #endif
 
 	SET(sc->sc_flags, SF_ATTACHED);
 }
-
-int
-dnsubmatch_kbd(device_t parent, cfdata_t cf, const int *locs, void *aux)
-{
-
-	if (strcmp(cf->cf_name, wskbd_cd.cd_name) != 0)
-		return 0;
-
-	return config_match(parent, cf, aux);
-}
-
-#if NWSMOUSE > 0
-int
-dnsubmatch_mouse(device_t parent, cfdata_t cf, const int *locs, void *aux)
-{
-
-	if (strcmp(cf->cf_name, wsmouse_cd.cd_name) != 0)
-		return 0;
-
-	return config_match(parent, cf, aux);
-}
-#endif
 
 int
 dnkbd_probe(struct dnkbd_softc *sc)

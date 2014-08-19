@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_mcall.c,v 1.14 2008/04/28 20:23:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_mcall.c,v 1.14.44.1 2014/08/20 00:03:49 tls Exp $");
 
 #include "opt_isicpcmcia.h"
 #ifdef ISICPCMCIA_ELSA_MCALL
@@ -181,8 +181,6 @@ int
 isic_attach_elsamcall(struct pcmcia_isic_softc *psc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa)
 {
 	struct isic_softc *sc = &psc->sc_isic;
-	bus_space_tag_t t;
-	bus_space_handle_t h;
 
 	/* Validate config info */
 	if (cfe->num_memspace != 0)
@@ -214,9 +212,6 @@ isic_attach_elsamcall(struct pcmcia_isic_softc *psc, struct pcmcia_config_entry 
 	sc->sc_maps[0].h = psc->sc_pcioh.ioh;
 	sc->sc_maps[0].offset = 0;
 	sc->sc_maps[0].size = 0;	/* not our mapping */
-
-	t = sc->sc_maps[0].t;
-	h = sc->sc_maps[0].h;
 
 	sc->clearirq = NULL;
 	sc->readreg = elsa_mcall_read_reg;

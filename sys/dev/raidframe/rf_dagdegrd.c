@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.c,v 1.28 2011/08/01 12:28:53 mbalmer Exp $	*/
+/*	$NetBSD: rf_dagdegrd.c,v 1.28.12.1 2014/08/20 00:03:49 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.28 2011/08/01 12:28:53 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.28.12.1 2014/08/20 00:03:49 tls Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -268,7 +268,7 @@ rf_CreateDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	RF_DagNode_t *rudNodes, *rrdNodes, *xorNode, *blockNode;
 	RF_DagNode_t *commitNode, *rpNode, *termNode;
 	RF_DagNode_t *tmpNode, *tmprudNode, *tmprrdNode;
-	int     nNodes, nRrdNodes, nRudNodes, nXorBufs, i;
+	int     nRrdNodes, nRudNodes, nXorBufs, i;
 	int     j, paramNum;
 	RF_SectorCount_t sectorsPerSU;
 	RF_ReconUnitNum_t which_ru;
@@ -314,8 +314,6 @@ rf_CreateDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	nRudNodes = asmap->numStripeUnitsAccessed - 1;
 	nRrdNodes = ((new_asm_h[0]) ? new_asm_h[0]->stripeMap->numStripeUnitsAccessed : 0) +
 	    ((new_asm_h[1]) ? new_asm_h[1]->stripeMap->numStripeUnitsAccessed : 0);
-	nNodes = 5 + nRudNodes + nRrdNodes;	/* lock, unlock, xor, Rp, Rud,
-						 * Rrd */
 
 	blockNode = rf_AllocDAGNode();
 	blockNode->list_next = dag_h->nodes;

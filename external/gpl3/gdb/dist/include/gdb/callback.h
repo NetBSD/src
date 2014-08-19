@@ -1,5 +1,5 @@
 /* Remote target system call callback support.
-   Copyright 1997, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright 1997-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
    This file is part of GDB.
@@ -231,6 +231,11 @@ extern host_callback default_callback;
 #define CB_SYS_truncate	21
 #define CB_SYS_ftruncate 22
 #define CB_SYS_pipe 	23
+
+/* New ARGV support.  */
+#define CB_SYS_argc	24
+#define CB_SYS_argnlen	25
+#define CB_SYS_argn	26
 
 /* Struct use to pass and return information necessary to perform a
    system call.  */
@@ -309,7 +314,7 @@ int cb_target_to_host_open (host_callback *, int);
 int cb_target_to_host_signal (host_callback *, int);
 
 /* Translate host signal number to target.  */
-int cb_host_to_target_signal (host_callback *, int);
+int cb_host_to_gdb_signal (host_callback *, int);
 
 /* Translate host stat struct to target.
    If stat struct ptr is NULL, just compute target stat struct size.
@@ -323,6 +328,9 @@ void cb_store_target_endian (host_callback *, char *, int, long);
 int cb_is_stdin (host_callback *, int);
 int cb_is_stdout (host_callback *, int);
 int cb_is_stderr (host_callback *, int);
+
+/* Read a string out of the target.  */
+int cb_get_string (host_callback *, CB_SYSCALL *, char *, int, unsigned long);
 
 /* Perform a system call.  */
 CB_RC cb_syscall (host_callback *, CB_SYSCALL *);

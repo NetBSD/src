@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.57 2011/12/31 20:41:58 christos Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.57.6.1 2014/08/20 00:04:35 tls Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.57 2011/12/31 20:41:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.57.6.1 2014/08/20 00:04:35 tls Exp $");
 #endif
 
 /*
@@ -1615,7 +1615,7 @@ ieee80211_ioctl_setoptie(struct ieee80211com *ic, struct ieee80211req *ireq)
 		free(ic->ic_opt_ie, M_DEVBUF);
 	ic->ic_opt_ie = ie;
 	ic->ic_opt_ie_len = ireq->i_len;
-	return 0;
+	return error;
 }
 
 static int
@@ -2837,6 +2837,9 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, void *data)
 				if (ic->ic_des_chan != IEEE80211_CHAN_ANYC &&
 				    ic->ic_bss->ni_chan != ic->ic_des_chan)
 					error = ENETRESET;
+			} else if (ic->ic_opmode == IEEE80211_M_MONITOR) {
+				ic->ic_curchan = ic->ic_ibss_chan;
+				error = ENETRESET;
 			} else {
 				if (ic->ic_bss->ni_chan != ic->ic_ibss_chan)
 					error = ENETRESET;

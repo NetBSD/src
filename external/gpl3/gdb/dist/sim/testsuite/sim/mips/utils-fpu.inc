@@ -1,6 +1,5 @@
 # MIPS simulator testsuite FPU utility functions.
-# Copyright (C) 2004, 2007, 2008, 2009, 2010,
-# 2011 Free Software Foundation, Inc.
+# Copyright (C) 2004-2014 Free Software Foundation, Inc.
 # Contributed by Chris Demetriou of Broadcom Corporation.
 #
 # This file is part of the GNU simulators.

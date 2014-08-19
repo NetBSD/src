@@ -1,4 +1,4 @@
-# Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2009-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,15 +21,14 @@ if {![dwarf2_support]} {
     return 0  
 }
 
-set testfile "dw2-empty-namespace"
-set srcfile ${testfile}.S
-set executable ${testfile}.x
+standard_testfile .S
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${objdir}/${subdir}/${executable}" object {nodebug}] != "" } {
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" $binfile \
+	   object {nodebug}] != "" } {
     return -1
 }
 
-clean_restart $executable
+clean_restart $testfile
 
 # `p var' below can work without identified DWARF DIE just based on its ELF symbol.
 # Catch it here as `type = <data variable, no debug info>'.

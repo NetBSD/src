@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,10 +19,8 @@ if {![dwarf2_support]} {
     return 0  
 }
 
-set testfile "dw2-bad-parameter-type"
-set srcfile ${testfile}.S
-set executable ${testfile}.x
-set binfile ${objdir}/${subdir}/${executable}
+standard_testfile .S
+set executable ${testfile}
 
 # First try referencing DW_AT_frame_base which is not defined.
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" object {}] != "" } {

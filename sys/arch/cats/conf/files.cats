@@ -1,10 +1,14 @@
-#	$NetBSD: files.cats,v 1.35 2008/02/20 21:43:33 drochner Exp $
+#	$NetBSD: files.cats,v 1.35.54.1 2014/08/20 00:02:50 tls Exp $
 #
 # CATS-specific configuration info
 #
 
 maxpartitions	8
 maxusers 2 8 64
+
+file   arch/arm/arm32/arm32_boot.c
+file   arch/arm/arm32/arm32_kvminit.c
+file   arch/arm/arm32/arm32_reboot.c
 
 # Maintain Interrupt statistics
 defflag	IRQSTATS

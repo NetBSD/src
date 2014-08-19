@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irqhandler.c,v 1.18.18.1 2012/11/20 03:01:06 tls Exp $	*/
+/*	$NetBSD: ofw_irqhandler.c,v 1.18.18.2 2014/08/20 00:02:47 tls Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_irqhandler.c,v 1.18.18.1 2012/11/20 03:01:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_irqhandler.c,v 1.18.18.2 2014/08/20 00:02:47 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +59,6 @@ u_int current_mask;
 u_int actual_mask;
 u_int disabled_mask;
 u_int irqmasks[NIPL];
-extern u_int intrcnt[];
-
-extern char *_intrnames;
 
 /* Prototypes */
 

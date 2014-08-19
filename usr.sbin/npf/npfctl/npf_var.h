@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_var.h,v 1.3.2.2 2013/02/25 00:30:46 tls Exp $	*/
+/*	$NetBSD: npf_var.h,v 1.3.2.3 2014/08/20 00:05:11 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -48,8 +48,7 @@
 #define	NPFVAR_PROC_PARAM	8
 #define	NPFVAR_TCPFLAG		9
 #define	NPFVAR_ICMP		10
-#define	NPFVAR_ICMP6		11
-#define	NPFVAR_INTERFACE	12
+#define	NPFVAR_INTERFACE	11
 
 #ifdef _NPFVAR_PRIVATE
 static const char *npfvar_types[ ] = {
@@ -64,18 +63,19 @@ static const char *npfvar_types[ ] = {
 	[NPFVAR_PROC_PARAM]	= "procedure-parameter",
 	[NPFVAR_TCPFLAG]	= "tcp-flag",
 	[NPFVAR_ICMP]		= "icmp",
-	[NPFVAR_ICMP6]		= "icmp6",
-	[NPFVAR_INTERFACE]	= "interface"
+	[NPFVAR_INTERFACE]	= "interface-address"
 };
 #endif
 
 struct npfvar;
 typedef struct npfvar npfvar_t;
 
-npfvar_t *	npfvar_create(const char *);
+npfvar_t *	npfvar_create(void);
+npfvar_t *	npfvar_create_element(int, const void *, size_t);
+npfvar_t *	npfvar_create_from_string(int, const char *);
 npfvar_t *	npfvar_lookup(const char *);
 const char *	npfvar_type(size_t);
-void		npfvar_add(npfvar_t *);
+void		npfvar_add(npfvar_t *, const char *);
 npfvar_t *	npfvar_add_element(npfvar_t *, int, const void *, size_t);
 npfvar_t *	npfvar_add_elements(npfvar_t *, npfvar_t *);
 void		npfvar_destroy(npfvar_t *);

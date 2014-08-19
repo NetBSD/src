@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.56 2011/04/24 16:27:00 rmind Exp $	*/
+/*	$NetBSD: dhu.c,v 1.56.14.1 2014/08/20 00:03:49 tls Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.56 2011/04/24 16:27:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.56.14.1 2014/08/20 00:03:49 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,6 +203,7 @@ const struct cdevsw dhu_cdevsw = {
 	.d_poll = dhupoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

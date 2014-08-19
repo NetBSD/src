@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.14 2012/04/20 22:23:24 rmind Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.14.2.1 2014/08/20 00:02:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -114,18 +114,21 @@
 	.global _C_LABEL(mp_pdirpa)
 	.global _C_LABEL(local_apic)
 
-	.globl	gdt64
-
 	.text
 	.align 4,0x0
 	.code16
-_C_LABEL(cpu_spinup_trampoline):
+/* XXX ENTRY() */
+LABEL(cpu_spinup_trampoline)
 	cli
 	xorw    %ax,%ax
 	movw    %ax, %ds
 	movw    %ax, %es
 	movw    %ax, %ss
+#ifdef __clang__
+	lgdt (mptramp_gdt32_desc)   # load flat descriptor table
+#else
 	data32 addr32 lgdt (mptramp_gdt32_desc)   # load flat descriptor table
+#endif
 	movl    %cr0, %eax       # get cr0
 	orl     $0x1, %eax      # enable protected mode
 	movl    %eax, %cr0      # doit
@@ -251,14 +254,16 @@ _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
 	movl    PCB_CR0(%rsi),%eax
 	movq    %rax,%cr0
 	call	_C_LABEL(cpu_hatch)
+END(cpu_spinup_trampoline)
 	
 	.data
-_C_LABEL(mp_pdirpa):
+LABEL(mp_pdirpa)
 	.quad	0
+END(mp_pdirpa)
 #ifdef MPDEBUG
-	.global _C_LABEL(cpu_trace)
-_C_LABEL(cpu_trace):
+LABEL(cpu_trace)
 	.quad  0x40
 	.quad  0xff
 	.quad  0xff		
+END(cpu_trace)
 #endif

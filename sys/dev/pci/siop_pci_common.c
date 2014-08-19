@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.c,v 1.34 2010/11/13 13:52:08 uebayasi Exp $	*/
+/*	$NetBSD: siop_pci_common.c,v 1.34.18.1 2014/08/20 00:03:48 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -27,7 +27,7 @@
 /* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.34 2010/11/13 13:52:08 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.34.18.1 2014/08/20 00:03:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,6 +239,7 @@ siop_pci_attach_common(struct siop_pci_common_softc *pci_sc,
 	int memh_valid, ioh_valid;
 	bus_addr_t ioaddr, memaddr;
 	bool use_pciclock;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	aprint_naive(": SCSI controller\n");
 
@@ -328,7 +329,7 @@ siop_pci_attach_common(struct siop_pci_common_softc *pci_sc,
 		aprint_error_dev(siop_sc->sc_dev, "couldn't map interrupt\n");
 		return 0;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
 	pci_sc->sc_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_BIO,
 	    intr, siop_sc);
 	if (pci_sc->sc_ih != NULL) {

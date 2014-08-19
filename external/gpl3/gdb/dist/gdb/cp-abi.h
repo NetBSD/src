@@ -3,8 +3,7 @@
 
    Contributed by Daniel Berlin <dberlin@redhat.com>
 
-   Copyright (C) 2001, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -174,6 +173,34 @@ struct value *cplus_method_ptr_to_value (struct value **this_p,
 void cplus_make_method_ptr (struct type *type, gdb_byte *CONTENTS,
 			    CORE_ADDR address, int is_virtual);
 
+/* Print the vtable for VALUE, if there is one.  If there is no
+   vtable, print a message, but do not throw.  */
+
+void cplus_print_vtable (struct value *value);
+
+/* Implement 'typeid': find the type info for VALUE, if possible.  If
+   the type info cannot be found, throw an exception.  */
+
+extern struct value *cplus_typeid (struct value *value);
+
+/* Return the type of 'typeid' for the current C++ ABI on the given
+   architecture.  */
+
+extern struct type *cplus_typeid_type (struct gdbarch *gdbarch);
+
+/* Given a value which holds a pointer to a std::type_info, return the
+   type which that type_info represents.  Throw an exception if the
+   type cannot be found.  */
+
+extern struct type *cplus_type_from_type_info (struct value *value);
+
+/* Given a value which holds a pointer to a std::type_info, return the
+   name of the type which that type_info represents.  Throw an
+   exception if the type name cannot be found.  The result is
+   xmalloc'd and must be freed by the caller.  */
+
+extern char *cplus_typename_from_type_info (struct value *value);
+
 /* Determine if we are currently in a C++ thunk.  If so, get the
    address of the routine we are thunking to and continue to there
    instead.  */
@@ -214,6 +241,11 @@ struct cp_abi_ops
 			   CORE_ADDR, int);
   struct value * (*method_ptr_to_value) (struct value **,
 					 struct value *);
+  void (*print_vtable) (struct value *);
+  struct value *(*get_typeid) (struct value *value);
+  struct type *(*get_typeid_type) (struct gdbarch *gdbarch);
+  struct type *(*get_type_from_type_info) (struct value *value);
+  char *(*get_typename_from_type_info) (struct value *value);
   CORE_ADDR (*skip_trampoline) (struct frame_info *, CORE_ADDR);
   int (*pass_by_reference) (struct type *type);
 };

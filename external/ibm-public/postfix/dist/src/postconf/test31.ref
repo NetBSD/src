@@ -1,0 +1,3 @@
+config_directory = .
+smtpd_helo_restrictions = whatever
+smtpd_sender_restrictions = whatever

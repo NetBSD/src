@@ -10035,6 +10035,12 @@ Sat Jan  1 10:18:54 1994  David J. Mackenzie  (djm@thepub.cygnus.com)
 
 For older changes see ChangeLog-9193
 
+Copyright (C) 1994, 1995 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

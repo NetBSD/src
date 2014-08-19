@@ -1,4 +1,4 @@
-/* $NetBSD: ipi.c,v 1.10 2011/06/20 06:23:52 matt Exp $ */
+/* $NetBSD: ipi.c,v 1.10.12.1 2014/08/20 00:03:20 tls Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.10 2011/06/20 06:23:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.10.12.1 2014/08/20 00:03:20 tls Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_pic.h"
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.10 2011/06/20 06:23:52 matt Exp $");
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/xcall.h>
+#include <sys/ipi.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 
@@ -70,6 +71,9 @@ ipi_intr(void *v)
 
 	if (ipi & IPI_XCALL)
 		xc_ipi_handler();
+
+	if (ipi & IPI_GENERIC)
+		ipi_cpu_handler();
 
 	if (ipi & IPI_HALT) {
 		aprint_normal("halting CPU %d\n", cpu_id);

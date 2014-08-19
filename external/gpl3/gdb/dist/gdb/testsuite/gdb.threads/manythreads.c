@@ -1,6 +1,5 @@
 /* Manythreads test program.
-   Copyright 2004, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright 2004-2014 Free Software Foundation, Inc.
 
    Written by Jeff Johnston <jjohnstn@redhat.com> 
    Contributed by Red Hat
@@ -21,7 +20,9 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <pthread.h>
+#ifdef DEBUG
 #include <stdio.h>
+#endif
 #include <limits.h>
 
 void *
@@ -29,7 +30,9 @@ thread_function (void *arg)
 {
   int x = * (int *) arg;
 
+#ifdef DEBUG
   printf ("Thread <%d> executing\n", x);
+#endif /* DEBUG */
 
   return NULL;
 }

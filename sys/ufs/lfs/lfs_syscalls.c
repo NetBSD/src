@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.142.2.2 2013/06/23 06:18:39 tls Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.142.2.3 2014/08/20 00:04:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.142.2.2 2013/06/23 06:18:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.142.2.3 2014/08/20 00:04:45 tls Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.142.2.2 2013/06/23 06:18:39 tls E
 #include <ufs/lfs/ulfs_extern.h>
 
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_kernel.h>
 #include <ufs/lfs/lfs_extern.h>
 
 struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, void *);
@@ -523,7 +524,6 @@ err2:
 	 */
 
 err3:
-	KERNEL_UNLOCK_ONE(NULL);
 	/*
 	 * XXX should do segwrite here anyway?
 	 */
@@ -712,8 +712,13 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			 */
 			if (v_daddr != LFS_UNUSED_DADDR) {
 				lfs_vunref(vp);
-				if (VTOI(vp)->i_lfs_iflags & LFSI_BMAP)
-					vrecycle(vp, NULL, NULL);
+				if (VTOI(vp)->i_lfs_iflags & LFSI_BMAP) {
+					mutex_enter(vp->v_interlock);
+					if (vget(vp, LK_NOWAIT) == 0) {
+						if (! vrecycle(vp))
+							vrele(vp);
+					}
+				}
 				numrefed--;
 			}
 
@@ -738,9 +743,10 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			 */
 			mutex_enter(&ulfs_ihash_lock);
 			vp = ulfs_ihashlookup(ump->um_dev, blkp->bi_inode);
-			if (vp != NULL && !(vp->v_iflag & VI_XLOCK)) {
-				ip = VTOI(vp);
+			if (vp != NULL)
 				mutex_enter(vp->v_interlock);
+			if (vp != NULL && vdead_check(vp, VDEAD_NOWAIT) == 0) {
+				ip = VTOI(vp);
 				mutex_exit(&ulfs_ihash_lock);
 				if (lfs_vref(vp)) {
 					v_daddr = LFS_UNUSED_DADDR;
@@ -748,6 +754,8 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 				}
 				numrefed++;
 			} else {
+				if (vp != NULL)
+					mutex_exit(vp->v_interlock);
 				mutex_exit(&ulfs_ihash_lock);
 				/*
 				 * Don't VFS_VGET if we're being unmounted,
@@ -822,8 +830,13 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	if (v_daddr != LFS_UNUSED_DADDR) {
 		lfs_vunref(vp);
 		/* Recycle as above. */
-		if (ip->i_lfs_iflags & LFSI_BMAP)
-			vrecycle(vp, NULL, NULL);
+		if (ip->i_lfs_iflags & LFSI_BMAP) {
+			mutex_enter(vp->v_interlock);
+			if (vget(vp, LK_NOWAIT) == 0) {
+				if (! vrecycle(vp))
+					vrele(vp);
+			}
+		}
 		numrefed--;
 	}
 
@@ -1040,8 +1053,8 @@ lfs_fasthashget(dev_t dev, ino_t ino, struct vnode **vpp)
 	if ((vp = ulfs_ihashlookup(dev, ino)) != NULL) {
 		mutex_enter(vp->v_interlock);
 		mutex_exit(&ulfs_ihash_lock);
-		if (vp->v_iflag & VI_XLOCK) {
-			DLOG((DLOG_CLEAN, "lfs_fastvget: ino %d VI_XLOCK\n",
+		if (vdead_check(vp, VDEAD_NOWAIT) != 0) {
+			DLOG((DLOG_CLEAN, "lfs_fastvget: ino %d dead\n",
 			      ino));
 			lfs_stats.clean_vnlocked++;
 			mutex_exit(vp->v_interlock);

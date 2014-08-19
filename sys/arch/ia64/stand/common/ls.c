@@ -1,5 +1,5 @@
 /*
- * $NetBSD: ls.c,v 1.3 2009/07/20 04:59:03 kiyohara Exp $
+ * $NetBSD: ls.c,v 1.3.22.1 2014/08/20 00:03:08 tls Exp $
  */
 
 /*-
@@ -104,18 +104,21 @@ command_ls(int argc, char *argv[])
     while ((d = readdirfd(fd)) != NULL) {
 /*	if (strcmp(d->d_name, ".") && strcmp(d->d_name, "..")) { */
 	    if (verbose) {
+		size_t buflen;
 		/* stat the file, if possible */
 		sb.st_size = 0;
-		buf = alloc(strlen(path) + strlen(d->d_name) + 2);
-		sprintf(buf, "%s/%s", path, d->d_name);
+		buflen = strlen(path) + strlen(d->d_name) + 2;
+		buf = alloc(buflen);
+		snprintf(buf, buflen, "%s/%s", path, d->d_name);
 		/* ignore return, could be symlink, etc. */
 		if (stat(buf, &sb))
 		    sb.st_size = 0;
 		free(buf);
-		sprintf(lbuf, " %c %8d %s\n", typestr[d->d_type],
+		snprintf(lbuf, sizeof(lbuf), " %c %8d %s\n", typestr[d->d_type],
 		    (int)sb.st_size, d->d_name);
 	    } else {
-	      sprintf(lbuf, " %c  %s\n", typestr[d->d_type], d->d_name);
+	      snprintf(lbuf, sizeof(lbuf), " %c  %s\n", typestr[d->d_type],
+		  d->d_name);
 	    }
 	    if (pager_output(lbuf))
 		goto out;
@@ -151,7 +154,7 @@ ls_getdir(char **pathp)
 
     /* Make sure the path is respectable to begin with */
     if (archsw.arch_getdev(NULL, path, &cp)) {
-	sprintf(command_errbuf, "bad path '%s'", path);
+	command_seterr("bad path '%s'", path);
 	goto out;
     }
     
@@ -160,15 +163,15 @@ ls_getdir(char **pathp)
 	strcat(path, "/");
     fd = open(path, O_RDONLY);
     if (fd < 0) {
-	sprintf(command_errbuf, "open '%s' failed: %s", path, strerror(errno));
+	command_seterr("open '%s' failed: %s", path, strerror(errno));
 	goto out;
     }
     if (fstat(fd, &sb) < 0) {
-	sprintf(command_errbuf, "stat failed: %s", strerror(errno));
+	command_seterr("stat failed: %s", strerror(errno));
 	goto out;
     }
     if (!S_ISDIR(sb.st_mode)) {
-	sprintf(command_errbuf, "%s: %s", path, strerror(ENOTDIR));
+	command_seterr("%s: %s", path, strerror(ENOTDIR));
 	goto out;
     }
 

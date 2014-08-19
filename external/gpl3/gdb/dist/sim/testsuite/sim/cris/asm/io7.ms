@@ -4,7 +4,7 @@
 # xerror:
 # output: ce11d0c\n
 # output: core: 4 byte write to unmapped address 0x90000004 at 0x16\n
-# output: program stopped with signal 11.\n
+# output: program stopped with signal 11 (*).\n
 
 ; Check that invalid access to the simulator area is recognized.
 ; "PASS" area.

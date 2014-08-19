@@ -209,13 +209,13 @@ href="STANDARD_CONFIGURATION_README.html#null_client">null client</a>:
     # a template file. The build process expands the template into
     # "mtaadmin+root=mta1"
     #
-    root    	mtaadmin+root=mta1
+    root        mtaadmin+root=mta1
 
 /etc/postfix/virtual:
     # Caretaker aliases:
     #
-    root    	mtaadmin
-    postmaster	root
+    root        mtaadmin
+    postmaster  root
 </pre>
 </blockquote>
 
@@ -231,13 +231,13 @@ creates a "generic" database when none exists. </p>
     all: virtual.cdb generic.cdb
 
     generic: Makefile
-	    @echo Creating $@
-	    @rm -f $@.tmp
-	    @printf '%s\t%s+root=%s\n' root $MTAADMIN `uname -n` &gt; $@.tmp
-	    @mv $@.tmp generic
+            @echo Creating $@
+            @rm -f $@.tmp
+            @printf '%s\t%s+root=%s\n' root ${MTAADMIN} `uname -n` &gt; $@.tmp
+            @mv $@.tmp generic
 
     %.<a href="CDB_README.html">cdb</a>: %
-	    postmap <a href="CDB_README.html">cdb</a>:$&lt;
+            postmap <a href="CDB_README.html">cdb</a>:$&lt;
 </pre>
 </blockquote>
 
@@ -374,6 +374,8 @@ post-filter re-injection SMTP service. Typical additions include: </p>
     # With multiple instances, rarely need "-o param=value" overrides
     # in <a href="master.5.html">master.cf</a>, each instance gets its own <a href="postconf.5.html">main.cf</a> file.
     #
+    # Postfix 2.10 and later: specify empty <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>.
+    <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> =
     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>, reject
 
     # Tolerate occasional high latency in the  content filter.
@@ -552,7 +554,7 @@ pre-filter input instance include: </p>
     # Avoid splitting the envelope and scanning messages multiple times.
     # Match the re-injection server's recipient limit.
     #
-	<a href="postconf.5.html#smtp_destination_recipient_limit">smtp_destination_recipient_limit</a> = 1000
+    <a href="postconf.5.html#smtp_destination_recipient_limit">smtp_destination_recipient_limit</a> = 1000
 
     # Tolerate occasional high latency in the content filter.
     #
@@ -1124,9 +1126,9 @@ installation parameters, specify their values on the command-line: </p>
 <blockquote>
 <pre>
 # postmulti [-I postfix-myinst] [-G mygroup] -e create \
-	"<a href="postconf.5.html#config_directory">config_directory</a> = /path/to/config_directory" \
-	"<a href="postconf.5.html#queue_directory">queue_directory</a> = /path/to/queue_directory" \
-	"<a href="postconf.5.html#data_directory">data_directory</a> = /path/to/data_directory"
+        "<a href="postconf.5.html#config_directory">config_directory</a> = /path/to/config_directory" \
+        "<a href="postconf.5.html#queue_directory">queue_directory</a> = /path/to/queue_directory" \
+        "<a href="postconf.5.html#data_directory">data_directory</a> = /path/to/data_directory"
 </pre>
 </blockquote>
 
@@ -1189,7 +1191,7 @@ directory: </p>
 <blockquote>
 <pre>
 # postmulti [-I postfix-myinst] [-G mygroup] -e import \
-	"<a href="postconf.5.html#config_directory">config_directory</a> = /path/of/config_directory"
+        "<a href="postconf.5.html#config_directory">config_directory</a> = /path/of/config_directory"
 </pre>
 </blockquote>
 

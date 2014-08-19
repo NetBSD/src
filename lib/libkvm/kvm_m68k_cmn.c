@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k_cmn.c,v 1.17 2011/09/13 19:11:09 christos Exp $	*/
+/*	$NetBSD: kvm_m68k_cmn.c,v 1.17.8.1 2014/08/20 00:02:17 tls Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_m68k_cmn.c,v 1.17 2011/09/13 19:11:09 christos Exp $");
+__RCSID("$NetBSD: kvm_m68k_cmn.c,v 1.17.8.1 2014/08/20 00:02:17 tls Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -97,6 +97,7 @@ __RCSID("$NetBSD: kvm_m68k_cmn.c,v 1.17 2011/09/13 19:11:09 christos Exp $");
 
 #include <m68k/cpu.h>
 #include <m68k/kcore.h>
+#include <m68k/m68k.h>
 
 #include "kvm_private.h"
 #include "kvm_m68k.h"

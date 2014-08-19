@@ -7,7 +7,7 @@
 
 #include "abi.h"
 
-RCSID("$NetBSD: e_acos.S,v 1.8 2003/07/26 19:24:57 salo Exp $")
+RCSID("$NetBSD: e_acos.S,v 1.8.60.1 2014/08/20 00:02:18 tls Exp $")
 
 /* acos = atan (sqrt(1 - x^2) / x) */
 ENTRY(__ieee754_acos)
@@ -18,6 +18,7 @@ ENTRY(__ieee754_acos)
 	fld1
 	fsubp				/* 1 - x^2 */
 	fsqrt				/* sqrt (1 - x^2) */
+	fabs				/* Change -0.0 to +0.0 */
 	fxch	%st(1)
 	fpatan
 	XMM_DOUBLE_EPILOGUE

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.106.12.2 2013/06/23 06:20:12 tls Exp $ */
+/*	$NetBSD: clock.c,v 1.106.12.3 2014/08/20 00:03:25 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.106.12.2 2013/06/23 06:20:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.106.12.3 2014/08/20 00:03:25 tls Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -90,6 +90,16 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.106.12.2 2013/06/23 06:20:12 tls Exp $")
 #include <sparc64/sparc64/timerreg.h>
 #include <sparc64/dev/iommureg.h>
 
+#include "psycho.h"
+/* just because US-IIe STICK registers live in psycho space */
+#if NPSYCHO > 0
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcireg.h>
+#include <sparc64/dev/iommureg.h>
+#include <sparc64/dev/iommuvar.h>
+#include <sparc64/dev/psychoreg.h>
+#include <sparc64/dev/psychovar.h>
+#endif
 
 /*
  * Clock assignments:
@@ -98,7 +108,11 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.106.12.2 2013/06/23 06:20:12 tls Exp $")
  *  counter-timer	 timer#0	 timer#1	 %tick
  *  counter-timer + SMP	 timer#0/%tick	 -		 timer#1 or %tick
  *  no counter-timer	 %tick		 -		 %tick
+ *  US-IIe		 STICK		 -		 STICK
  *  US-IIIi		 %stick		 -		 %stick
+ *  sun4v		 %stick		 -		 %stick
+ *
+ * US-IIe and US-IIIi could use %tick as statclock
  */
 
 /*
@@ -138,6 +152,9 @@ int timerblurb = 10; /* Guess a value; used before clock is attached */
 
 static u_int tick_get_timecount(struct timecounter *);
 static u_int stick_get_timecount(struct timecounter *);
+#if NPSYCHO > 0
+static u_int stick2e_get_timecount(struct timecounter *);
+#endif
 
 /*
  * define timecounter "tick-counter"
@@ -154,6 +171,8 @@ static struct timecounter tick_timecounter = {
 	NULL			/* next timecounter */
 };
 
+/* US-III %stick */
+
 static struct timecounter stick_timecounter = {
 	stick_get_timecount,	/* get_timecount */
 	0,			/* no poll_pps */
@@ -164,6 +183,20 @@ static struct timecounter stick_timecounter = {
 	0,			/* private reference - UNUSED */
 	NULL			/* next timecounter */
 };
+
+/* US-IIe STICK counter */
+#if NPSYCHO > 0
+static struct timecounter stick2e_timecounter = {
+	stick2e_get_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	~0u,			/* counter_mask */
+	0,                      /* frequency - set at initialisation */
+	"stick-counter",	/* name */
+	200,			/* quality */
+	0,			/* private reference - UNUSED */
+	NULL			/* next timecounter */
+};
+#endif
 
 /*
  * tick_get_timecount provide current tick counter value
@@ -179,6 +212,14 @@ stick_get_timecount(struct timecounter *tc)
 {
 	return getstick();
 }
+
+#if NPSYCHO > 0
+static u_int
+stick2e_get_timecount(struct timecounter *tc)
+{
+	return psycho_getstick32();
+}
+#endif
 
 #ifdef MULTIPROCESSOR
 static u_int counter_get_timecount(struct timecounter *);
@@ -312,10 +353,11 @@ timerattach(device_t parent, device_t self, void *aux)
 void
 stopcounter(struct timer_4u *creg)
 {
+	volatile struct timer_4u *reg = creg;
+
 	/* Stop the clock */
-	volatile int discard;
-	discard = creg->t_limit;
-	creg->t_limit = 0;
+	(void)reg->t_limit;
+	reg->t_limit = 0;
 }
 
 /*
@@ -368,6 +410,29 @@ stickintr_establish(int pil, int (*fun)(void *))
 	intr_restore(s);
 }
 
+#if NPSYCHO > 0
+void
+stick2eintr_establish(int pil, int (*fun)(void *))
+{
+	int s;
+	struct intrhand *ih;
+	struct cpu_info *ci = curcpu();
+
+	ih = sparc_softintr_establish(pil, fun, NULL);
+	ih->ih_number = 1;
+	if (CPU_IS_PRIMARY(ci))
+		intr_establish(pil, true, ih);
+	ci->ci_tick_ih = ih;
+
+	/* set the next interrupt time */
+	ci->ci_tick_increment = ci->ci_system_clockrate[0] / hz;
+
+	s = intr_disable();
+	psycho_nextstick(ci->ci_tick_increment);
+	intr_restore(s);
+}
+#endif
+
 /*
  * Set up the real-time and statistics clocks.  Leave stathz 0 only if
  * no alternative timer is available.
@@ -408,35 +473,64 @@ cpu_initclocks(void)
 	}
 
 	/* Initialize the %tick register */
-	settick(0);
+	if (CPU_ISSUN4U || CPU_ISSUN4US)
+		settick(0);
 
-	if (ci->ci_system_clockrate[0] == 0) {
-		tick_timecounter.tc_frequency = ci->ci_cpu_clockrate[0];
-		tc_init(&tick_timecounter);
-	} else {
-		setstick(0);
-		stick_timecounter.tc_frequency = 
-		    ci->ci_system_clockrate[0];
-		tc_init(&stick_timecounter);
+	/* Register timecounter "tick-counter" */
+	tick_timecounter.tc_frequency = ci->ci_cpu_clockrate[0];
+	tc_init(&tick_timecounter);
+
+	/* Register timecounter "stick-counter" */
+	if (ci->ci_system_clockrate[0] != 0) {
+		if (CPU_ISSUN4U && CPU_IS_HUMMINGBIRD()) {
+#if NPSYCHO > 0
+			psycho_setstick(0);
+			stick2e_timecounter.tc_frequency =
+			    ci->ci_system_clockrate[0];
+			tc_init(&stick2e_timecounter);
+#endif
+		} else {
+			if (CPU_ISSUN4U || CPU_ISSUN4US)
+				setstick(0);
+			stick_timecounter.tc_frequency =
+			    ci->ci_system_clockrate[0];
+			tc_init(&stick_timecounter);
+		}
 	}
 
 	/*
 	 * Now handle machines w/o counter-timers.
+	 * XXX
+	 * If the CPU is an US-IIe and we don't have a psycho we need to fall
+	 * back to %tick. Not that a kernel like that would get very far on any
+	 * supported hardware ( without PCI... ) - I'm not sure if such hardware
+	 * even exists.
 	 */
 
 	if (!timerreg_4u.t_timer || !timerreg_4u.t_clrintr) {
 
 		if (ci->ci_system_clockrate[0] == 0) {
 			aprint_normal("No counter-timer -- using %%tick "
-			    "at %luMHz as system clock.\n",
-			    (unsigned long)ci->ci_cpu_clockrate[1]);
+			    "at %sMHz as system clock.\n",
+			    clockfreq(ci->ci_cpu_clockrate[0]));
 
 			/* We don't have a counter-timer -- use %tick */
 			tickintr_establish(PIL_CLOCK, tickintr);
+		} else if (CPU_ISSUN4U && CPU_IS_HUMMINGBIRD()) {
+#if NPSYCHO > 0
+			aprint_normal("No counter-timer -- using STICK "
+			    "at %sMHz as system clock.\n",
+			    clockfreq(ci->ci_system_clockrate[0]));
+
+			/* We don't have a counter-timer -- use STICK */
+			stick2eintr_establish(PIL_CLOCK, stick2eintr);
+#else
+			panic("trying to use STICK without psycho?!");
+#endif
 		} else {
 			aprint_normal("No counter-timer -- using %%stick "
-			    "at %luMHz as system clock.\n",
-			    (unsigned long)ci->ci_system_clockrate[1]);
+			    "at %sMHz as system clock.\n",
+			    clockfreq(ci->ci_system_clockrate[0]));
 
 			/* We don't have a counter-timer -- use %stick */
 			stickintr_establish(PIL_CLOCK, stickintr);
@@ -466,7 +560,10 @@ cpu_initclocks(void)
 	 * Establish scheduler softint.
 	 */
 	schedint = sparc_softintr_establish(PIL_SCHED, schedintr, NULL);
-	schedhz = 16;	/* 16Hz is best according to kern/kern_clock.c */
+	if (stathz > 60)
+		schedhz = 16;	/* 16Hz is best according to kern/kern_clock.c */
+	else
+		schedhz = stathz / 2 + 1;
 	statscheddiv = stathz / schedhz;
 	if (statscheddiv <= 0)
 		panic("statscheddiv");
@@ -595,6 +692,24 @@ stickintr(void *cap)
 
 	return (1);
 }
+
+#if NPSYCHO > 0
+int
+stick2eintr(void *cap)
+{
+	int s;
+
+	hardclock((struct clockframe *)cap);
+
+	s = intr_disable();
+	/* Reset the interrupt */
+	psycho_nextstick(curcpu()->ci_tick_increment);
+	intr_restore(s);
+	curcpu()->ci_tick_evcnt.ev_count++;
+
+	return (1);
+}
+#endif
 
 #ifndef MULTIPROCESSOR
 /*

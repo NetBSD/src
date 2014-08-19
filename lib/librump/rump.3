@@ -1,4 +1,4 @@
-.\"     $NetBSD: rump.3,v 1.10.10.1 2013/06/23 06:21:08 tls Exp $
+.\"     $NetBSD: rump.3,v 1.10.10.2 2014/08/20 00:02:20 tls Exp $
 .\"
 .\" Copyright (c) 2008-2011 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 2, 2013
+.Dd July 14, 2013
 .Dt RUMP 3
 .Os
 .Sh NAME
@@ -76,16 +76,15 @@ communication medium.
 .Pp
 A rump kernel is bootstrapped by calling
 .Fn rump_init .
-A number of environment variables set before a rump kernel is bootstrapped
-will affect how it works.
-Some examples include:
+On a POSIX Host, environment variables can be used to adjust some
+operating parameters:
 .Bl -tag -width RUMP_MEMLIMITXX
 .It Dv RUMP_NCPU
-If set, indicates the number of virtual CPUs configured into a
+If set, the number indicates the number of virtual CPUs configured into a
 rump kernel.
-The default is the number of host CPUs.
-The number of virtual CPUs controls how many threads can enter
-the rump kernel simultaneously.
+The special value "host" can be used to specify the number of
+of host CPUs available.
+If the value is unset, two CPUs will be configured.
 .It Dv RUMP_VERBOSE
 If set to non-zero, activates bootverbose.
 .It Dv RUMP_THREADS
@@ -188,4 +187,4 @@ Rump kernels appeared as an experimental concept in
 The first stable version was released in
 .Nx 6.0 .
 .Sh AUTHORS
-.An Antti Kantee Aq pooka@iki.fi
+.An Antti Kantee Aq Mt pooka@iki.fi

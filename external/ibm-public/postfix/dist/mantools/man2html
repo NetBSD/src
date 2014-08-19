@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Crude script to convert formatted manual pages to HTML
+# Crude script to convert formatted manpages to HTML. Requires GROFF_NO_SGR.
 
 while :
 do
@@ -18,6 +18,8 @@ echo "<!doctype html public \"-//W3C//DTD HTML 4.01 Transitional//EN\"
 <title> $title </title>
 </head> <body> <pre>"
 
+#ESC=`echo x | tr '[x]' '[\033]'`
+
 sed '
 	s/\([<>&]\)\1/\1/g
 	s/&/\&amp;/g
@@ -29,8 +31,37 @@ sed '
 	s/>/\&gt;/g
 	s;_\([^_]\);<i>\1</i>;g
 	s;.\(.\);<b>\1</b>;g
+
+	# Begin incomplete workarounds for grotty SGR escape sequences.
+	#/'$ESC'\[0m$/{
+	#	/'$ESC'\[1m[^'$ESC']*'$ESC'\[0m$/{
+	#		# Here, ESC[0m means end-of-bold.
+	#		s;0m$;22m;
+	#	}
+	#	/'$ESC'\[4m[^'$ESC']*'$ESC'\[0m$/{
+	#		# Here, ESC[0m means end-of-italic.
+	#		s;0m$;24m;
+	#	}
+	#}
+	#s;'$ESC'\[1m;<b>;g
+	#s;'$ESC'\[22m;</b>;g
+	#s;'$ESC'\[4m;<i>;g
+	#s;'$ESC'\[24m;</i>;g
+	# Undo gratuitous whitespace changes.
+	#s;\(  *\)\(</[bi]>\);\2\1;g
+	# End workarounds for grotty SGR escape sequences.
+
 	s;</i>\( *\)<i>;\1;g
 	s;</b>\( *\)<b>;\1;g
-' "$@" | egrep -v 'postconf (readme|html)_direc|tory</b>" *to *locate *this'
+
+	# Skip the redundant readme/html_directory blurb. The
+	# document names that follow will be hyperlinked.
+	/^<b>README FILES/{
+		h
+		N
+		N
+		g
+	}
+' "$@"
 
 echo '</pre> </body> </html>'

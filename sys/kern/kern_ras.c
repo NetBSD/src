@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.35 2012/02/19 21:06:53 rmind Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.35.2.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.35 2012/02/19 21:06:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.35.2.1 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,6 +176,14 @@ ras_purgeall(void)
 
 #if defined(__HAVE_RAS)
 
+#if __GNUC_PREREQ__(4, 8)
+#define	__WARNING_PUSH_LESS_NULL_PTR	_Pragma("GCC diagnostic push") 	_Pragma("GCC diagnostic ignored \"-Wextra\"")
+#define	__WARNING_POP_LESS_NULL_PTR	_Pragma("GCC diagnostic pop")
+#else
+#define	__WARNING_PUSH_LESS_NULL_PTR
+#define	__WARNING_POP_LESS_NULL_PTR
+#endif
+
 /*
  * Install the new sequence.  If it already exists, return
  * an error.
@@ -191,9 +199,12 @@ ras_install(void *addr, size_t len)
 
 	endaddr = (char *)addr + len;
 
+	/* do not warn about < NULL pointer comparision */
+	__WARNING_PUSH_LESS_NULL_PTR
 	if (addr < (void *)VM_MIN_ADDRESS ||
 	    endaddr > (void *)VM_MAXUSER_ADDRESS)
 		return (EINVAL);
+	__WARNING_POP_LESS_NULL_PTR
 
 	if (len <= 0)
 		return (EINVAL);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: login.conf.5,v 1.26 2012/04/30 11:07:28 njoly Exp $
+.\"	$NetBSD: login.conf.5,v 1.26.2.1 2014/08/20 00:02:36 tls Exp $
 .\"
 .\" Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\" BSDI login.conf.5,v 2.19 1998/02/19 23:39:39 prb Exp
 .\"
-.Dd November 18, 2008
+.Dd June 29, 2013
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -165,6 +165,11 @@ Number of login attempts after which to start random back-off.
 .sp
 .It Sy maxproc Ta number Ta "" Ta
 Maximum number of processes.
+.\"
+.sp
+.It Sy maxthread Ta number Ta "" Ta
+Maximum number of threads.
+The first thread of each process is not counted against this.
 .\"
 .sp
 .It Sy memorylocked Ta size Ta "" Ta

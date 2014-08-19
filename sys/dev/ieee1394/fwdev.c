@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.27 2012/04/29 18:31:40 dsl Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.27.2.1 2014/08/20 00:03:38 tls Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.27 2012/04/29 18:31:40 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.27.2.1 2014/08/20 00:03:38 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -72,12 +72,29 @@ dev_type_mmap(fw_mmap);
 dev_type_strategy(fw_strategy);
 
 const struct bdevsw fw_bdevsw = {
-	fw_open, fw_close, fw_strategy, fw_ioctl, nodump, nosize, D_OTHER,
+	.d_open = fw_open,
+	.d_close = fw_close,
+	.d_strategy = fw_strategy,
+	.d_ioctl = fw_ioctl,
+	.d_dump = nodump,
+	.d_psize = nosize,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 const struct cdevsw fw_cdevsw = {
-	fw_open, fw_close, fw_read, fw_write, fw_ioctl,
-	nostop, notty, fw_poll, fw_mmap, nokqfilter, D_OTHER,
+	.d_open = fw_open,
+	.d_close = fw_close,
+	.d_read = fw_read,
+	.d_write = fw_write,
+	.d_ioctl = fw_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = fw_poll,
+	.d_mmap = fw_mmap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 struct fw_drv1 {

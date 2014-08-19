@@ -1,4 +1,4 @@
-/* $NetBSD: infocmp.c,v 1.7 2010/02/22 23:05:39 roy Exp $ */
+/* $NetBSD: infocmp.c,v 1.7.12.1 2014/08/20 00:04:59 tls Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: infocmp.c,v 1.7 2010/02/22 23:05:39 roy Exp $");
+__RCSID("$NetBSD: infocmp.c,v 1.7.12.1 2014/08/20 00:04:59 tls Exp $");
 
 #include <sys/ioctl.h>
 
@@ -723,7 +723,7 @@ main(int argc, char **argv)
 				printf("internal database\n");
 			else
 				printf("%s%s\n", _ti_database,
-				    *_ti_database == '/' ? ".db" : "");
+				    *_ti_database == '/' ? ".cdb" : "");
 		}
 		printf("%s", t->name);
 		if (t->_alias != NULL && *t->_alias != '\0')

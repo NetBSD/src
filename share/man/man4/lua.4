@@ -1,0 +1,198 @@
+.\" $NetBSD: lua.4,v 1.5.4.2 2014/08/20 00:02:35 tls Exp $
+.\"
+.\" Copyright (c) 2013 Marc Balmer <marc@msys.ch>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd July 25, 2014
+.Dt LUA 4
+.Os
+.Sh NAME
+.Nm lua
+.Nd control in-kernel Lua states
+.Sh SYNOPSIS
+.Cd "lua*"
+.Pp
+.In sys/types.h
+.In sys/lua.h
+.Sh DESCRIPTION
+The
+.Nm
+device allows to create, control, and delete Lua states in the kernel
+through an
+.Xr ioctl 2
+interface.
+Moreover,
+.Nm
+can be used to load Lua scripts into a Lua state and to assign modules to an
+existing state, i.e. perform the equivalent of the Lua command
+.Em require .
+.Nm
+is also used to retrieve information about currently active Lua states.
+.Sh LUA MODULES
+Lua modules are used to provide functionality to Lua scripts not available
+in the language itself, e.g. to access core kernel functionality like
+printing text on the console.
+Unlike in user space Lua, where Lua modules are files in the filesystem,
+modules must be provided to
+.Nm
+in the form of loadable kernel modules that register their
+functionality with
+.Nm .
+Modules are loaded using the
+.Ic require
+Lua command; whether this command
+is available or not is controlled by a
+.Xr sysctl 8
+variable.
+.Nm
+by default tries to load a kernel module named
+.Em luafoo.kmod
+when it encounters the Lua command
+.Em require 'foo' .
+.Sh SYSCTL VARIABLES
+The operation of
+.Nm
+can be controlled by means of the following
+.Xr sysctl 8
+variables:
+.Bl -tag -width XXXX
+.It Dv kern.lua.autoload
+When set to 1,
+.Nm
+tries to autoload kernel modules.
+.Pp
+The default value is 1.
+.It Dv kern.lua.bytecode
+When set to 1, loading of Lua bytecode is allowed.
+.Pp
+The default value is 0.
+.It Dv kern.lua.maxcount
+When set to a value > 0,
+.Nm
+limits the number of instructions executed
+to this number.
+.Pp
+The default value is 0.
+.It Dv kern.lua.require
+When set to 1, enables the
+.Em require
+command in Lua.
+.Pp
+The default value is 1.
+.It Dv kern.lua.verbose
+When set to a value > 0, verbosity is increased.
+.Pp
+The default value is 0.
+.El
+.Sh IOCTL INTERFACE
+The following structures and constants are defined in the
+.In sys/lua.h
+header file:
+.Pp
+.Bl -tag -width XXXX -compact
+.It Dv LUAINFO(struct lua_info)
+Returns information about the
+.Nm
+states in the
+.Fa lua_info
+structure:
+.Bd -literal
+#define MAX_LUA_NAME		16
+#define MAX_LUA_DESC		64
+
+struct lua_state_info {
+	char	name[MAX_LUA_NAME];
+	char	desc[MAX_LUA_DESC];
+	bool	user;
+};
+
+struct lua_info {
+	int num_states;		/* total number of Lua states */
+	struct lua_state_info *states;
+};
+.Ed
+.Pp
+.It Dv LUACREATE(struct lua_create)
+Create a new named Lua state with name and description in the
+.Fa lua_create
+structure:
+.Bd -literal
+struct lua_create {
+	char	name[MAX_LUA_NAME];
+	char	desc[MAX_LUA_DESC];
+};
+.Ed
+.Pp
+.It Dv LUADESTROY(struct lua_create)
+Destroy a named Lua state.
+.Pp
+.It Dv LUAREQUIRE(struct lua_require)
+Perform the equivalent of the Lua command
+.Em require
+in a named state.
+The name of the state and of the module name is passed in the
+.Fa lua_require
+structure:
+.Bd -literal
+#define LUA_MAX_MODNAME		32
+
+struct lua_require {
+	char	state[MAX_LUA_NAME];
+	char	module[LUA_MAX_MODNAME];
+};
+.Ed
+.Pp
+.It Dv LUALOAD(struct lua_load)
+Load Lua code from the filesystem into a named Lua state.
+The name of the state and the path to the Lua code are passed in the
+.Fa lua_load
+structure:
+.Bd -literal
+struct lua_load {
+	char	state[MAX_LUA_NAME];
+	char	path[MAXPATHLEN];
+};
+.Ed
+.Pp
+The path element of the
+.Fa lua_load
+structure must contain at least one
+.Sq /
+character.
+.Pp
+.El
+.Sh FILES
+.Bl -tag -width "/dev/lua" -compact
+.It /dev/lua
+Lua device file.
+.El
+.Sh SEE ALSO
+.Xr ioctl 2 ,
+.Xr luactl 8
+.Sh HISTORY
+The
+.Nm
+device first appeared in
+.Nx 7.0 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Marc Balmer Aq Mt mbalmer@NetBSD.org .
+.Sh CAVEATS
+The
+.Nm
+device is experimental.
+Incompatible changes might be made in the future.

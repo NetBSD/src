@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.1.2.2 2013/06/23 06:29:02 tls Exp $	*/
+/*	$NetBSD: common.h,v 1.1.2.3 2014/08/20 00:05:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -110,6 +110,16 @@
 	(MIN(UINT32_MAX, (SIZE_MAX / sizeof(uint64_t))) - 1)
 #define	MAX_N_OFFSETS		(MAX_N_BLOCKS + 1)
 
+/*
+ * The window size is at most the number of offsets, so it has the same
+ * maximum bound.  The default window size is chosen so that windows
+ * fit in one 4096-byte page of memory.  We could use 64k bytes, or
+ * st_blksize, to maximize I/O transfer size, but the transfers won't
+ * be aligned without a lot of extra work.
+ */
+#define	MAX_WINDOW_SIZE		MAX_N_OFFSETS
+#define	DEF_WINDOW_SIZE		512
+
 struct cloop2_header {
 	char		cl2h_magic[128];
 	uint32_t	cl2h_blocksize;
@@ -120,18 +130,20 @@ struct cloop2_header {
 
 struct options {
 	int		flags;
-#define	FLAG_c	0x01	/* Compress */
-#define	FLAG_d	0x02	/* Decompress */
-#define	FLAG_p	0x04	/* Partial */
-#define	FLAG_r	0x08	/* Restart */
-#define	FLAG_s	0x10	/* block Size */
-#define	FLAG_R	0x20	/* abort on Restart failure */
-#define	FLAG_k	0x40	/* checKpoint blocks */
-#define	FLAG_l	0x80	/* Length of input */
+#define	FLAG_c	0x0001	/* Compress */
+#define	FLAG_d	0x0002	/* Decompress */
+#define	FLAG_p	0x0004	/* Partial */
+#define	FLAG_r	0x0008	/* Restart */
+#define	FLAG_b	0x0010	/* Block size */
+#define	FLAG_R	0x0020	/* abort on Restart failure */
+#define	FLAG_k	0x0040	/* checKpoint blocks */
+#define	FLAG_l	0x0080	/* Length of input */
+#define	FLAG_w	0x0100	/* Window size */
 	uint32_t	blocksize;
 	uint32_t	end_block;	/* end for partial transfer */
 	uint32_t	checkpoint_blocks;	/* blocks before checkpoint */
 	uint64_t	length;			/* length of image in bytes */
+	uint32_t	window_size;	/* size of window into offset table */
 };
 
 int	vndcompress(int, char **, const struct options *);

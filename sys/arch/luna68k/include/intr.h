@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.14 2011/11/26 04:40:51 tsutsui Exp $ */
+/* $NetBSD: intr.h,v 1.14.8.1 2014/08/20 00:03:10 tls Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,10 +35,11 @@
 #ifdef _KERNEL
 
 /*
- * spl functions; all but spl0 are done in-line
+ * spl functions
  */
 #include <machine/psl.h>
 
+#define spl0()		_spl0()
 #define splnone()	spl0()
 #define splsoftclock()	splraise1()
 #define splsoftbio()	splraise1()
@@ -47,11 +48,6 @@
 #define splvm()		splraise4()
 #define splsched()	splraise5()
 #define splhigh()	spl7()
-
-/* watch out for side effects */
-#define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())
-
-int spl0(void);
 
 #define	IPL_NONE	0
 #define	IPL_SOFTCLOCK	1
@@ -82,6 +78,13 @@ splraiseipl(ipl_cookie_t icookie)
 {
 
 	return _splraise(icookie._psl);
+}
+
+static inline void
+splx(int sr)
+{
+
+	__asm volatile("movew %0,%%sr" : : "di" (sr));
 }
 
 #endif /* _KERNEL */

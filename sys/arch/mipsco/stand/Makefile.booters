@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.booters,v 1.17 2011/01/22 19:19:19 joerg Exp $
+#	$NetBSD: Makefile.booters,v 1.17.14.1 2014/08/20 00:03:13 tls Exp $
 
-.include <bsd.sys.mk>		# for HOST_SH
+NOMAN=		# defined
+
+.include <bsd.own.mk>
 
 S=	${.CURDIR}/../../../..
 MIPS=	${S}/arch/mips
@@ -8,30 +10,16 @@ MIPSCO=	${S}/arch/mipsco
 
 .PATH:	${.CURDIR}/../common
 
-NOMAN=		# defined
 BINMODE?= 444
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
 
-.PHONY:		machine-links
-beforedepend: machine-links
-
-machine-links:	machine mipsco mips
-machine mipsco:
-	-rm -f ${.TARGET}
-	ln -s ${MIPSCO}/include ${.TARGET}
-
-mips:
-	-rm -f ${.TARGET}
-	ln -s ${MIPS}/include ${.TARGET}
-
-CLEANFILES+=	machine mipsco mips
-
-realall: machine-links ${PROG}
+realall: ${PROG}
 
 AFLAGS+=	-D_LOCORE -D_KERNEL -DASSEMBLER -mno-abicalls
 # -I${.CURDIR}/../.. done by Makefile.inc
@@ -124,7 +112,8 @@ vers.c: ${.CURDIR}/version
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
 	    -N ${.CURDIR}/version "mipsco"
 
-${PROG}: machine-links ${LDSCRIPT} ${OBJS} ${LIBS}
+${PROG}: ${LDSCRIPT} ${OBJS} ${LIBS}
+	${_MKTARGET_LINK}
 	${LD} ${OFORMAT} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \
 	    -T ${LDSCRIPT} -e start -o ${PROG} ${OBJS} ${LIBS}
 	@${SIZE} ${PROG}
@@ -146,3 +135,4 @@ cleanlibdir:
 	-rm -rf lib
 
 .include <bsd.prog.mk>
+.include <bsd.klinks.mk>

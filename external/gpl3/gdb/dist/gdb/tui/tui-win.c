@@ -1,7 +1,6 @@
 /* TUI window generic functions.
 
-   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2006, 2007, 2008,
-   2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -47,7 +46,7 @@
 
 #include "gdb_curses.h"
 
-#include "gdb_string.h"
+#include <string.h>
 #include <ctype.h>
 #include "readline/readline.h"
 
@@ -108,7 +107,7 @@ static void parse_scrolling_args (char *,
 #endif
 
 /* Possible values for tui-border-kind variable.  */
-static const char *tui_border_kind_enums[] = {
+static const char *const tui_border_kind_enums[] = {
   "space",
   "ascii",
   "acs",
@@ -116,7 +115,7 @@ static const char *tui_border_kind_enums[] = {
 };
 
 /* Possible values for tui-border-mode and tui-active-border-mode.  */
-static const char *tui_border_mode_enums[] = {
+static const char *const tui_border_mode_enums[] = {
   "normal",
   "standout",
   "reverse",
@@ -467,10 +466,10 @@ tui_update_gdb_sizes (void)
   char cmd[50];
 
   /* Set to TUI command window dimension or use readline values.  */
-  sprintf (cmd, "set width %d",
+  xsnprintf (cmd, sizeof (cmd), "set width %d",
            tui_active ? TUI_CMD_WIN->generic.width : tui_term_width());
   execute_command (cmd, 0);
-  sprintf (cmd, "set height %d",
+  xsnprintf (cmd, sizeof (cmd), "set height %d",
            tui_active ? TUI_CMD_WIN->generic.height : tui_term_height());
   execute_command (cmd, 0);
 }
@@ -691,13 +690,16 @@ tui_resize_all (void)
 	  if (height_diff < 0)
 	    cmd_split_diff--;
 	  else
-	    cmd_split_diff++;
-	}
+           cmd_split_diff++;
+       }
       /* Now adjust each window.  */
-      clear ();
+      /* erase + clearok are used instead of a straightforward clear as
+         AIX 5.3 does not define clear.  */
+      erase ();
+      clearok (curscr, TRUE);
       refresh ();
       switch (cur_layout)
-	{
+       {
 	case SRC_COMMAND:
 	case DISASSEM_COMMAND:
 	  first_win = (struct tui_win_info *) (tui_source_windows ())->list[0];
@@ -1584,13 +1586,16 @@ parse_scrolling_args (char *arg,
 	      ;
 
 	  if (*buf_ptr != (char) 0)
-	    wname = buf_ptr;
+	    {
+	      wname = buf_ptr;
+
+	      /* Validate the window name.  */
+	      for (i = 0; i < strlen (wname); i++)
+		wname[i] = toupper (wname[i]);
+	    }
 	  else
 	    wname = "?";
 	  
-	  /* Validate the window name.  */
-	  for (i = 0; i < strlen (wname); i++)
-	    wname[i] = toupper (wname[i]);
 	  *win_to_scroll = tui_partial_win_by_name (wname);
 
 	  if (*win_to_scroll == (struct tui_win_info *) NULL

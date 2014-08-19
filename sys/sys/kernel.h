@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.28 2009/01/11 02:45:55 christos Exp $	*/
+/*	$NetBSD: kernel.h,v 1.28.24.1 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -61,6 +61,7 @@ extern int stathz;		/* statistics clock's frequency */
 extern int profhz;		/* profiling clock's frequency */
 
 extern int profsrc;		/* profiling source */
+extern int psratio;		/* ratio: prof / stat */
 
 #define PROFSRC_CLOCK	0
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat6.c,v 1.3.2.1 2013/02/25 00:29:45 tls Exp $	*/
+/*	$NetBSD: ip_nat6.c,v 1.3.2.2 2014/08/20 00:04:24 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -109,9 +109,7 @@ extern struct ifnet vpnif;
 #undef	SOCKADDR_IN
 #define	SOCKADDR_IN	struct sockaddr_in
 
-#if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_nat6.c,v 1.1.1.2 2012/07/22 13:45:29 darrenr Exp";
-#endif
+__KERNEL_RCSID(0, "Id: ip_nat6.c,v 1.1.1.2 2012/07/22 13:45:29 darrenr Exp");
 
 #ifdef USE_INET6
 static struct hostmap *ipf_nat6_hostmap(ipf_nat_softc_t *, ipnat_t *,
@@ -1141,9 +1139,6 @@ ipf_nat6_finalise(fr_info_t *fin, nat_t *nat)
 	ipf_nat_softc_t *softn = softc->ipf_nat_soft;
 	u_32_t sum1, sum2, sumd;
 	frentry_t *fr;
-	u_32_t flags;
-
-	flags = nat->nat_flags;
 
 	switch (fin->fin_p)
 	{
@@ -1371,8 +1366,8 @@ ipf_nat6_icmperrorlookup(fr_info_t *fin, int dir)
 {
 	ipf_main_softc_t *softc = fin->fin_main_soft;
 	ipf_nat_softc_t *softn = softc->ipf_nat_soft;
-	struct icmp6_hdr *icmp6, *orgicmp;
-	int flags = 0, type, minlen;
+	struct icmp6_hdr *orgicmp;
+	int flags = 0, minlen;
 	nat_stat_side_t *nside;
 	tcphdr_t *tcp = NULL;
 	u_short data[2];
@@ -1381,8 +1376,6 @@ ipf_nat6_icmperrorlookup(fr_info_t *fin, int dir)
 	u_int p;
 
 	minlen = 40;
-	icmp6 = fin->fin_dp;
-	type = icmp6->icmp6_type;
 	nside = &softn->ipf_nat_stats.ns_side6[fin->fin_out];
 	/*
 	 * Does it at least have the return (basic) IP header ?
@@ -1516,9 +1509,8 @@ ipf_nat6_ip6subtract(i6addr_t *ip1, i6addr_t *ip2)
 	i6addr_t l1, l2, d;
 	u_short *s1, *s2, *ds;
 	u_32_t r;
-	int i, neg;
+	int i;
 
-	neg = 0;
 	l1 = *ip1;
 	l2 = *ip2;
 	s1 = (u_short *)&l1;
@@ -1535,7 +1527,6 @@ ipf_nat6_ip6subtract(i6addr_t *ip1, i6addr_t *ip2)
 	}
 	if (s2[0] > s1[0]) {
 		ds[0] = s2[0] + 0x10000 - s1[0];
-		neg = 1;
 	} else {
 		ds[0] = s2[0] - s1[0];
 	}
@@ -1885,9 +1876,6 @@ ipf_nat6_inlookup(fr_info_t *fin, u_int flags, u_int p, struct in6_addr *src,
 	ipf_main_softc_t *softc = fin->fin_main_soft;
 	ipf_nat_softc_t *softn = softc->ipf_nat_soft;
 	u_short sport, dport;
-	grehdr_t *gre;
-	ipnat_t *ipn;
-	u_int sflags;
 	nat_t *nat;
 	int nflags;
 	i6addr_t dst;
@@ -1897,9 +1885,7 @@ ipf_nat6_inlookup(fr_info_t *fin, u_int flags, u_int p, struct in6_addr *src,
 	ifp = fin->fin_ifp;
 	sport = 0;
 	dport = 0;
-	gre = NULL;
 	dst.in6 = *mapdst;
-	sflags = flags & NAT_TCPUDPICMP;
 
 	switch (p)
 	{
@@ -1978,9 +1964,8 @@ ipf_nat6_inlookup(fr_info_t *fin, u_int flags, u_int p, struct in6_addr *src,
 
 
 		if ((nat->nat_flags & IPN_TCPUDP) != 0) {
-			ipn = nat->nat_ptr;
 #ifdef IPF_V6_PROXIES
-			if ((ipn != NULL) && (nat->nat_aps != NULL))
+			if ((nat->nat_ptr != NULL) && (nat->nat_aps != NULL))
 				if (appr_match(fin, nat) != 0)
 					continue;
 #endif
@@ -2204,14 +2189,11 @@ ipf_nat6_outlookup(fr_info_t *fin, u_int flags, u_int p, struct in6_addr *src,
 	ipf_main_softc_t *softc = fin->fin_main_soft;
 	ipf_nat_softc_t *softn = softc->ipf_nat_soft;
 	u_short sport, dport;
-	u_int sflags;
-	ipnat_t *ipn;
 	nat_t *nat;
 	void *ifp;
 	u_int hv;
 
 	ifp = fin->fin_ifp;
-	sflags = flags & IPN_TCPUDPICMP;
 	sport = 0;
 	dport = 0;
 
@@ -2292,9 +2274,8 @@ ipf_nat6_outlookup(fr_info_t *fin, u_int flags, u_int p, struct in6_addr *src,
 			break;
 		}
 
-		ipn = nat->nat_ptr;
 #ifdef IPF_V6_PROXIES
-		if ((ipn != NULL) && (nat->nat_aps != NULL))
+		if ((nat->nat_ptr != NULL) && (nat->nat_aps != NULL))
 			if (appr_match(fin, nat) != 0)
 				continue;
 #endif
@@ -2580,7 +2561,9 @@ ipf_nat6_checkout(fr_info_t *fin, u_32_t *passp)
 	ipf_nat_softc_t *softn = softc->ipf_nat_soft;
 	struct icmp6_hdr *icmp6 = NULL;
 	struct ifnet *ifp, *sifp;
+#ifdef IPF_V6_PROXIES
 	tcphdr_t *tcp = NULL;
+#endif
 	int rval, natfailed;
 	ipnat_t *np = NULL;
 	u_int nflags = 0;
@@ -2634,8 +2617,10 @@ ipf_nat6_checkout(fr_info_t *fin, u_32_t *passp)
 			break;
 		}
 
+#ifdef IPF_V6_PROXIES
 		if ((nflags & IPN_TCPUDP))
 			tcp = fin->fin_dp;
+#endif
 	}
 
 	ipa = fin->fin_src6;
@@ -2979,7 +2964,9 @@ ipf_nat6_checkin(fr_info_t *fin, u_32_t *passp)
 	int rval, natfailed;
 	struct ifnet *ifp;
 	i6addr_t ipa, iph;
+#ifdef IPF_V6_PROXIES
 	tcphdr_t *tcp;
+#endif
 	u_short dport;
 	ipnat_t *np;
 	nat_t *nat;
@@ -2987,7 +2974,9 @@ ipf_nat6_checkin(fr_info_t *fin, u_32_t *passp)
 	if (softn->ipf_nat_stats.ns_rules == 0 || softn->ipf_nat_lock != 0)
 		return 0;
 
+#ifdef IPF_V6_PROXIES
 	tcp = NULL;
+#endif
 	icmp6 = NULL;
 	dport = 0;
 	natadd = 1;
@@ -3028,7 +3017,9 @@ ipf_nat6_checkin(fr_info_t *fin, u_32_t *passp)
 		}
 
 		if ((nflags & IPN_TCPUDP)) {
+#ifdef IPF_V6_PROXIES
 			tcp = fin->fin_dp;
+#endif
 			dport = fin->fin_data[1];
 		}
 	}

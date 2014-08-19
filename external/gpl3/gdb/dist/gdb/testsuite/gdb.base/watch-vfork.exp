@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2009-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,9 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-global srcfile
-set testfile "watch-vfork"
-if { [build_executable ${testfile}.exp ${testfile} ${testfile}.c {debug}] } {
+# There's no support for vfork events in the remote protocol.
+if { [is_remote target] } {
+    return 0
+}
+
+standard_testfile .c
+
+if { [build_executable ${testfile}.exp ${testfile} $srcfile {debug}] } {
     untested ${testfile}.exp
     return -1
 }

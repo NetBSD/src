@@ -430,7 +430,7 @@ extern int      stbi_gif_info_from_file   (FILE *f,                  int *x, int
 #endif
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stb_image.c,v 1.4.2.1 2013/02/25 00:29:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stb_image.c,v 1.4.2.2 2014/08/20 00:03:50 tls Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -3221,7 +3221,7 @@ static int shiftsigned(int v, int shift, int bits)
 static stbi_uc *bmp_load(stbi *s, int *x, int *y, int *comp, int req_comp)
 {
    uint8 *out;
-   unsigned int mr=0,mg=0,mb=0,ma=0, fake_a=0;
+   unsigned int mr=0,mg=0,mb=0,ma=0;
    stbi_uc pal[256][4];
    int psize=0,i,j,compress=0,width;
    int bpp, flip_vertically, pad, target, offset, hsz;
@@ -3270,7 +3270,6 @@ static stbi_uc *bmp_load(stbi *s, int *x, int *y, int *comp, int req_comp)
                   mg = 0xffu <<  8;
                   mb = 0xffu <<  0;
                   ma = 0xffu << 24;
-                  fake_a = 1; // @TODO: check for cases like alpha value is all 0 and switch it to 255
                } else {
                   mr = 31u << 10;
                   mg = 31u <<  5;

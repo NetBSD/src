@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.40 2011/08/31 13:32:38 joerg Exp $	*/
+/*	$NetBSD: ndp.c,v 1.40.8.1 2014/08/20 00:05:10 tls Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -357,12 +357,7 @@ set(int argc, char **argv)
 		return 1;
 	}
 	mysin->sin6_addr = ((struct sockaddr_in6 *)(void *)res->ai_addr)->sin6_addr;
-#ifdef __KAME__
-	if (IN6_IS_ADDR_LINKLOCAL(&mysin->sin6_addr)) {
-		*(u_int16_t *)(void *)&mysin->sin6_addr.s6_addr[2] =
-		    htons(((struct sockaddr_in6 *)(void *)res->ai_addr)->sin6_scope_id);
-	}
-#endif
+	inet6_putscopeid(mysin, INET6_IS_ADDR_LINKLOCAL);
 	ea = (u_char *)LLADDR(&sdl_m);
 	if (ndp_ether_aton(eaddr, ea) == 0)
 		sdl_m.sdl_alen = 6;
@@ -429,12 +424,7 @@ get(char *host)
 		return;
 	}
 	mysin->sin6_addr = ((struct sockaddr_in6 *)(void *)res->ai_addr)->sin6_addr;
-#ifdef __KAME__
-	if (IN6_IS_ADDR_LINKLOCAL(&mysin->sin6_addr)) {
-		*(u_int16_t *)(void *)&mysin->sin6_addr.s6_addr[2] =
-		    htons(((struct sockaddr_in6 *)(void *)res->ai_addr)->sin6_scope_id);
-	}
-#endif
+	inet6_putscopeid(mysin, INET6_IS_ADDR_LINKLOCAL);
 	dump(&mysin->sin6_addr, 0);
 	if (found_entry == 0) {
 		(void)getnameinfo((struct sockaddr *)(void *)mysin,
@@ -468,12 +458,7 @@ delete(char *host)
 		return 1;
 	}
 	mysin->sin6_addr = ((struct sockaddr_in6 *)(void *)res->ai_addr)->sin6_addr;
-#ifdef __KAME__
-	if (IN6_IS_ADDR_LINKLOCAL(&mysin->sin6_addr)) {
-		*(u_int16_t *)(void *)&mysin->sin6_addr.s6_addr[2] =
-		    htons(((struct sockaddr_in6 *)(void *)res->ai_addr)->sin6_scope_id);
-	}
-#endif
+	inet6_putscopeid(mysin, INET6_IS_ADDR_LINKLOCAL);
 	if (rtmsg(RTM_GET) < 0)
 		errx(1, "RTM_GET(%s) failed", host);
 	mysin = (struct sockaddr_in6 *)(void *)(rtm + 1);
@@ -500,12 +485,8 @@ delete:
 	if (rtmsg(RTM_DELETE) == 0) {
 		struct sockaddr_in6 s6 = *mysin; /* XXX: for safety */
 
-#ifdef __KAME__
-		if (IN6_IS_ADDR_LINKLOCAL(&s6.sin6_addr)) {
-			s6.sin6_scope_id = ntohs(*(u_int16_t *)(void *)&s6.sin6_addr.s6_addr[2]);
-			*(u_int16_t *)(void *)&s6.sin6_addr.s6_addr[2] = 0;
-		}
-#endif
+		mysin->sin6_scope_id = 0;
+		inet6_putscopeid(mysin, INET6_IS_ADDR_LINKLOCAL);
 		(void)getnameinfo((struct sockaddr *)(void *)&s6,
 		    (socklen_t)s6.sin6_len, host_buf,
 		    sizeof(host_buf), NULL, 0,
@@ -598,13 +579,11 @@ again:;
 			continue;
 		if (IN6_IS_ADDR_LINKLOCAL(&mysin->sin6_addr) ||
 		    IN6_IS_ADDR_MC_LINKLOCAL(&mysin->sin6_addr)) {
-			/* XXX: should scope id be filled in the kernel? */
-			if (mysin->sin6_scope_id == 0)
+			uint16_t scopeid = mysin->sin6_scope_id;
+			inet6_getscopeid(mysin, INET6_IS_ADDR_LINKLOCAL|
+			    INET6_IS_ADDR_MC_LINKLOCAL);
+			if (scopeid == 0)
 				mysin->sin6_scope_id = sdl->sdl_index;
-#ifdef __KAME__
-			/* KAME specific hack; removed the embedded id */
-			*(u_int16_t *)(void *)&mysin->sin6_addr.s6_addr[2] = 0;
-#endif
 		}
 		(void)getnameinfo((struct sockaddr *)(void *)mysin,
 		    (socklen_t)mysin->sin6_len,
@@ -939,6 +918,9 @@ ifinfo(char *ifname, int argc, char **argv)
 #ifdef ND6_IFF_OVERRIDE_RTADV
 		SETFLAG("override_rtadv", ND6_IFF_OVERRIDE_RTADV);
 #endif
+#ifdef ND6_IFF_AUTO_LINKLOCAL
+		SETFLAG("auto_linklocal", ND6_IFF_AUTO_LINKLOCAL);
+#endif
 #ifdef ND6_IFF_PREFER_SOURCE
 		SETFLAG("prefer_source", ND6_IFF_PREFER_SOURCE);
 #endif
@@ -1016,6 +998,10 @@ ifinfo(char *ifname, int argc, char **argv)
 #ifdef ND6_IFF_OVERRIDE_RTADV
 		if ((ND.flags & ND6_IFF_OVERRIDE_RTADV))
 			(void)printf("override_rtadv ");
+#endif
+#ifdef ND6_IFF_AUTO_LINKLOCAL
+		if ((ND.flags & ND6_IFF_AUTO_LINKLOCAL))
+			(void)printf("auto_linklocal ");
 #endif
 #ifdef ND6_IFF_PREFER_SOURCE
 		if ((ND.flags & ND6_IFF_PREFER_SOURCE))
@@ -1132,9 +1118,8 @@ plist(void)
 {
 #ifdef ICMPV6CTL_ND6_PRLIST
 	int mib[] = { CTL_NET, PF_INET6, IPPROTO_ICMPV6, ICMPV6CTL_ND6_PRLIST };
-	char *buf;
-	struct in6_prefix *p, *ep, *n;
-	struct sockaddr_in6 *advrtr;
+	char *buf, *p, *ep;
+	struct in6_prefix pfx;
 	size_t l;
 	struct timeval tim;
 	const int niflags = NI_NUMERICHOST;
@@ -1155,17 +1140,17 @@ plist(void)
 		/*NOTREACHED*/
 	}
 
-	ep = (struct in6_prefix *)(void *)(buf + l);
-	for (p = (struct in6_prefix *)(void *)buf; p < ep; p = n) {
-		advrtr = (struct sockaddr_in6 *)(void *)(p + 1);
-		n = (struct in6_prefix *)(void *)&advrtr[p->advrtrs];
+	ep = buf + l;
+	for (p = buf; p < ep; ) {
+		memcpy(&pfx, p, sizeof(pfx));
+		p += sizeof(pfx);
 
-		if (getnameinfo((struct sockaddr *)(void *)&p->prefix,
-		    (socklen_t)p->prefix.sin6_len, namebuf, sizeof(namebuf),
+		if (getnameinfo((struct sockaddr*)&pfx.prefix,
+		    (socklen_t)pfx.prefix.sin6_len, namebuf, sizeof(namebuf),
 		    NULL, 0, niflags) != 0)
 			(void)strlcpy(namebuf, "?", sizeof(namebuf));
-		(void)printf("%s/%d if=%s\n", namebuf, p->prefixlen,
-		    if_indextoname((unsigned int)p->if_index, ifix_buf));
+		(void)printf("%s/%d if=%s\n", namebuf, pfx.prefixlen,
+		    if_indextoname((unsigned int)pfx.if_index, ifix_buf));
 
 		(void)gettimeofday(&tim, 0);
 		/*
@@ -1173,54 +1158,56 @@ plist(void)
 		 * by origin.  notify the difference to the users.
 		 */
 		(void)printf("flags=%s%s%s%s%s",
-		    p->raflags.onlink ? "L" : "",
-		    p->raflags.autonomous ? "A" : "",
-		    (p->flags & NDPRF_ONLINK) != 0 ? "O" : "",
-		    (p->flags & NDPRF_DETACHED) != 0 ? "D" : "",
+		    pfx.raflags.onlink ? "L" : "",
+		    pfx.raflags.autonomous ? "A" : "",
+		    (pfx.flags & NDPRF_ONLINK) != 0 ? "O" : "",
+		    (pfx.flags & NDPRF_DETACHED) != 0 ? "D" : "",
 #ifdef NDPRF_HOME
-		    (p->flags & NDPRF_HOME) != 0 ? "H" : ""
+		    (pfx.flags & NDPRF_HOME) != 0 ? "H" : ""
 #else
 		    ""
 #endif
 		    );
-		if (p->vltime == ND6_INFINITE_LIFETIME)
+		if (pfx.vltime == ND6_INFINITE_LIFETIME)
 			(void)printf(" vltime=infinity");
 		else
-			(void)printf(" vltime=%lu", (unsigned long)p->vltime);
-		if (p->pltime == ND6_INFINITE_LIFETIME)
+			(void)printf(" vltime=%lu", (unsigned long)pfx.vltime);
+		if (pfx.pltime == ND6_INFINITE_LIFETIME)
 			(void)printf(", pltime=infinity");
 		else
-			(void)printf(", pltime=%lu", (unsigned long)p->pltime);
-		if (p->expire == 0)
+			(void)printf(", pltime=%lu", (unsigned long)pfx.pltime);
+		if (pfx.expire == 0)
 			(void)printf(", expire=Never");
-		else if (p->expire >= tim.tv_sec)
+		else if (pfx.expire >= tim.tv_sec)
 			(void)printf(", expire=%s",
-			    sec2str(p->expire - tim.tv_sec));
+			    sec2str(pfx.expire - tim.tv_sec));
 		else
 			(void)printf(", expired");
-		(void)printf(", ref=%d", p->refcnt);
+		(void)printf(", ref=%d", pfx.refcnt);
 		(void)printf("\n");
 		/*
 		 * "advertising router" list is meaningful only if the prefix
 		 * information is from RA.
 		 */
-		if (p->advrtrs) {
+		if (pfx.advrtrs) {
 			int j;
-			struct sockaddr_in6 *sin6;
+			struct sockaddr_in6 sin6;
 
-			sin6 = advrtr;
 			(void)printf("  advertised by\n");
-			for (j = 0; j < p->advrtrs; j++) {
+			for (j = 0; j < pfx.advrtrs && p <= ep; j++) {
 				struct in6_nbrinfo *nbi;
 
-				if (getnameinfo((struct sockaddr *)(void *)sin6,
-				    (socklen_t)sin6->sin6_len, namebuf,
+				memcpy(&sin6, p, sizeof(sin6));
+				p += sizeof(sin6);
+
+				if (getnameinfo((struct sockaddr *)&sin6,
+				    (socklen_t)sin6.sin6_len, namebuf,
 				    sizeof(namebuf), NULL, 0, ninflags) != 0)
 					(void)strlcpy(namebuf, "?", sizeof(namebuf));
 				(void)printf("    %s", namebuf);
 
-				nbi = getnbrinfo(&sin6->sin6_addr,
-				    (unsigned int)p->if_index, 0);
+				nbi = getnbrinfo(&sin6.sin6_addr,
+				    (unsigned int)pfx.if_index, 0);
 				if (nbi) {
 					switch (nbi->state) {
 					case ND6_LLINFO_REACHABLE:
@@ -1234,7 +1221,6 @@ plist(void)
 					}
 				} else
 					(void)printf(" (no neighbor state)\n");
-				sin6++;
 			}
 		} else
 			(void)printf("  No advertising router\n");

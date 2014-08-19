@@ -885,3 +885,17 @@ _bfd_merged_section_offset (bfd *output_bfd ATTRIBUTE_UNUSED, asection **psec,
   *psec = entry->secinfo->sec;
   return entry->u.index + (secinfo->contents + offset - p);
 }
+
+/* Tidy up when done.  */
+
+void
+_bfd_merge_sections_free (void *xsinfo)
+{
+  struct sec_merge_info *sinfo;
+
+  for (sinfo = (struct sec_merge_info *) xsinfo; sinfo; sinfo = sinfo->next)
+    {
+      bfd_hash_table_free (&sinfo->htab->table);
+      free (sinfo->htab);
+    }
+}

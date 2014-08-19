@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.91.2.1 2013/02/25 00:30:42 tls Exp $ */
+/* $NetBSD: envstat.c,v 1.91.2.2 2014/08/20 00:05:07 tls Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.91.2.1 2013/02/25 00:30:42 tls Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.91.2.2 2014/08/20 00:05:07 tls Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -975,6 +975,8 @@ do {									\
 				stype = "Wh";
 			else if (strcmp(sensor->type, "Ampere hour") == 0)
 				stype = "Ah";
+			else if (strcmp(sensor->type, "relative Humidity") == 0)
+				stype = "%rH";
 			else
 				stype = "?";
 

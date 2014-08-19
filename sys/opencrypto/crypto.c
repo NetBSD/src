@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.41 2011/06/09 14:41:24 drochner Exp $ */
+/*	$NetBSD: crypto.c,v 1.41.12.1 2014/08/20 00:04:36 tls Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.41 2011/06/09 14:41:24 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.41.12.1 2014/08/20 00:04:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -65,8 +65,13 @@ __KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.41 2011/06/09 14:41:24 drochner Exp $")
 #include <sys/once.h>
 #include <sys/sysctl.h>
 #include <sys/intr.h>
+#include <sys/errno.h>
+#include <sys/module.h>
 
+#if defined(_KERNEL_OPT)
 #include "opt_ocf.h"
+#endif
+
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/xform.h>			/* XXX for M_XDATA */
 
@@ -179,11 +184,7 @@ int	crypto_devallowsoft = 1;	/* only use hardware crypto */
 
 SYSCTL_SETUP(sysctl_opencrypto_setup, "sysctl opencrypto subtree setup")
 {
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, CTL_EOL);
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "usercrypto",
@@ -244,6 +245,10 @@ static struct cryptostats cryptostats;
 static	int crypto_timing = 0;
 #endif
 
+#ifdef _MODULE
+	static struct sysctllog *sysctl_opencrypto_clog;
+#endif
+
 static int
 crypto_init0(void)
 {
@@ -277,6 +282,9 @@ crypto_init0(void)
 		crypto_destroy();
 	}
 
+#ifdef _MODULE
+	sysctl_opencrypto_setup(&sysctl_opencrypto_clog);
+#endif
 	return 0;
 }
 
@@ -1327,5 +1335,29 @@ cryptoret(void)
 			krp->krp_callback(krp);
 
 		mutex_spin_enter(&crypto_ret_q_mtx);
+	}
+}
+
+/* NetBSD module interface */
+
+MODULE(MODULE_CLASS_MISC, opencrypto, NULL);
+
+static int
+opencrypto_modcmd(modcmd_t cmd, void *opaque)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		crypto_init();
+#endif
+		return 0;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		sysctl_teardown(&sysctl_opencrypto_clog);
+#endif
+		return 0;
+	default:
+		return ENOTTY;
 	}
 }

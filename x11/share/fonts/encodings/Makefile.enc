@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.enc,v 1.8 2009/03/31 21:12:51 perry Exp $
+#	$NetBSD: Makefile.enc,v 1.8.12.1 2014/08/20 00:05:19 tls Exp $
 
 FILESDIR=	${X11FONTDIR}/${ENCDIR}
 .PATH:  	${X11SRCDIR.xc}/fonts/${ENCDIR}
@@ -11,7 +11,8 @@ CLEANFILES+=	${GZFILES:S/.gz$/.gz.tmp/}
 .SUFFIXES: .enc .enc.gz
 .enc.enc.gz:
 	${_MKTARGET_CREATE}
-	gzip -9nfc ${.IMPSRC} > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
+	${TOOL_GZIP_N} -9fc ${.IMPSRC} > ${.TARGET}.tmp \
+	    && mv ${.TARGET}.tmp ${.TARGET}
 
 
 realall: ${FILES}

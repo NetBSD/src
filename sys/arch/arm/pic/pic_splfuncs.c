@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_splfuncs.c,v 1.4 2012/09/01 00:00:42 matt Exp $	*/
+/*	$NetBSD: pic_splfuncs.c,v 1.4.2.1 2014/08/20 00:02:47 tls Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.4 2012/09/01 00:00:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.4.2.1 2014/08/20 00:02:47 tls Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -93,12 +93,9 @@ splx(int savedipl)
 	ci->ci_intr_depth--;
 	KASSERTMSG(ci->ci_cpl == savedipl, "cpl %d savedipl %d",
 	    ci->ci_cpl, savedipl);
-	cpu_dosoftints();
-	KASSERTMSG(ci->ci_cpl == savedipl, "cpl %d savedipl %d",
-	    ci->ci_cpl, savedipl);
 	if ((psw & I32_bit) == 0)
 		cpsie(I32_bit);
-
+	cpu_dosoftints();
 	KASSERTMSG(ci->ci_cpl == savedipl, "cpl %d savedipl %d",
 	    ci->ci_cpl, savedipl);
 }

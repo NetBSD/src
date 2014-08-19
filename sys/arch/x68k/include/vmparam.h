@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.35 2012/01/21 20:19:55 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.35.6.1 2014/08/20 00:03:28 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -107,7 +107,7 @@
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 /* # of kernel PT pages (initial only, can grow dynamically) */
-#define VM_KERNEL_PT_PAGES	((vsize_t)2)		/* XXX: SYSPTSIZE */
+#define VM_KERNEL_PT_PAGES	((vsize_t)4)		/* XXX: SYSPTSIZE */
 
 /*
  * Constants which control the way the VM system deals with memory segments.

@@ -1,7 +1,6 @@
 /* Target-dependent code for the NEC V850 for GDB, the GNU debugger.
 
-   Copyright (C) 1996, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007,
-   2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,16 +25,19 @@
 #include "dwarf2-frame.h"
 #include "gdbtypes.h"
 #include "inferior.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdb_assert.h"
 #include "gdbcore.h"
 #include "arch-utils.h"
 #include "regcache.h"
 #include "dis-asm.h"
 #include "osabi.h"
+#include "elf-bfd.h"
+#include "elf/v850.h"
 
 enum
   {
+    /* General purpose registers.  */
     E_R0_REGNUM,
     E_R1_REGNUM,
     E_R2_REGNUM,
@@ -68,6 +70,8 @@ enum
     E_R29_REGNUM, E_FP_REGNUM = E_R29_REGNUM,
     E_R30_REGNUM, E_EP_REGNUM = E_R30_REGNUM,
     E_R31_REGNUM, E_LP_REGNUM = E_R31_REGNUM,
+
+    /* System registers - main banks.  */
     E_R32_REGNUM, E_SR0_REGNUM = E_R32_REGNUM,
     E_R33_REGNUM,
     E_R34_REGNUM,
@@ -100,9 +104,134 @@ enum
     E_R61_REGNUM,
     E_R62_REGNUM,
     E_R63_REGNUM,
+
+    /* PC.  */
     E_R64_REGNUM, E_PC_REGNUM = E_R64_REGNUM,
     E_R65_REGNUM,
-    E_NUM_REGS
+    E_NUM_OF_V850_REGS,
+    E_NUM_OF_V850E_REGS = E_NUM_OF_V850_REGS,
+
+    /* System registers - MPV (PROT00) bank.  */
+    E_R66_REGNUM = E_NUM_OF_V850_REGS,
+    E_R67_REGNUM,
+    E_R68_REGNUM,
+    E_R69_REGNUM,
+    E_R70_REGNUM,
+    E_R71_REGNUM,
+    E_R72_REGNUM,
+    E_R73_REGNUM,
+    E_R74_REGNUM,
+    E_R75_REGNUM,
+    E_R76_REGNUM,
+    E_R77_REGNUM,
+    E_R78_REGNUM,
+    E_R79_REGNUM,
+    E_R80_REGNUM,
+    E_R81_REGNUM,
+    E_R82_REGNUM,
+    E_R83_REGNUM,
+    E_R84_REGNUM,
+    E_R85_REGNUM,
+    E_R86_REGNUM,
+    E_R87_REGNUM,
+    E_R88_REGNUM,
+    E_R89_REGNUM,
+    E_R90_REGNUM,
+    E_R91_REGNUM,
+    E_R92_REGNUM,
+    E_R93_REGNUM,
+
+    /* System registers - MPU (PROT01) bank.  */
+    E_R94_REGNUM,
+    E_R95_REGNUM,
+    E_R96_REGNUM,
+    E_R97_REGNUM,
+    E_R98_REGNUM,
+    E_R99_REGNUM,
+    E_R100_REGNUM,
+    E_R101_REGNUM,
+    E_R102_REGNUM,
+    E_R103_REGNUM,
+    E_R104_REGNUM,
+    E_R105_REGNUM,
+    E_R106_REGNUM,
+    E_R107_REGNUM,
+    E_R108_REGNUM,
+    E_R109_REGNUM,
+    E_R110_REGNUM,
+    E_R111_REGNUM,
+    E_R112_REGNUM,
+    E_R113_REGNUM,
+    E_R114_REGNUM,
+    E_R115_REGNUM,
+    E_R116_REGNUM,
+    E_R117_REGNUM,
+    E_R118_REGNUM,
+    E_R119_REGNUM,
+    E_R120_REGNUM,
+    E_R121_REGNUM,
+
+    /* FPU system registers.  */
+    E_R122_REGNUM,
+    E_R123_REGNUM,
+    E_R124_REGNUM,
+    E_R125_REGNUM,
+    E_R126_REGNUM,
+    E_R127_REGNUM,
+    E_R128_REGNUM, E_FPSR_REGNUM = E_R128_REGNUM,
+    E_R129_REGNUM, E_FPEPC_REGNUM = E_R129_REGNUM,
+    E_R130_REGNUM, E_FPST_REGNUM = E_R130_REGNUM,
+    E_R131_REGNUM, E_FPCC_REGNUM = E_R131_REGNUM,
+    E_R132_REGNUM, E_FPCFG_REGNUM = E_R132_REGNUM,
+    E_R133_REGNUM,
+    E_R134_REGNUM,
+    E_R135_REGNUM,
+    E_R136_REGNUM,
+    E_R137_REGNUM,
+    E_R138_REGNUM,
+    E_R139_REGNUM,
+    E_R140_REGNUM,
+    E_R141_REGNUM,
+    E_R142_REGNUM,
+    E_R143_REGNUM,
+    E_R144_REGNUM,
+    E_R145_REGNUM,
+    E_R146_REGNUM,
+    E_R147_REGNUM,
+    E_R148_REGNUM,
+    E_R149_REGNUM,
+    E_NUM_OF_V850E2_REGS,
+
+    /* v850e3v5 system registers, selID 1 thru 7.  */
+    E_SELID_1_R0_REGNUM = E_NUM_OF_V850E2_REGS,
+    E_SELID_1_R31_REGNUM = E_SELID_1_R0_REGNUM + 31,
+
+    E_SELID_2_R0_REGNUM,
+    E_SELID_2_R31_REGNUM = E_SELID_2_R0_REGNUM + 31,
+
+    E_SELID_3_R0_REGNUM,
+    E_SELID_3_R31_REGNUM = E_SELID_3_R0_REGNUM + 31,
+
+    E_SELID_4_R0_REGNUM,
+    E_SELID_4_R31_REGNUM = E_SELID_4_R0_REGNUM + 31,
+
+    E_SELID_5_R0_REGNUM,
+    E_SELID_5_R31_REGNUM = E_SELID_5_R0_REGNUM + 31,
+
+    E_SELID_6_R0_REGNUM,
+    E_SELID_6_R31_REGNUM = E_SELID_6_R0_REGNUM + 31,
+
+    E_SELID_7_R0_REGNUM,
+    E_SELID_7_R31_REGNUM = E_SELID_7_R0_REGNUM + 31,
+
+    /* v850e3v5 vector registers.  */
+    E_VR0_REGNUM,
+    E_VR31_REGNUM = E_VR0_REGNUM + 31,
+
+    E_NUM_OF_V850E3V5_REGS,
+
+    /* Total number of possible registers.  */
+    E_NUM_REGS = E_NUM_OF_V850E3V5_REGS
   };
 
 enum
@@ -114,6 +243,38 @@ enum
 enum
 {
   E_MAX_RETTYPE_SIZE_IN_REGS = 2 * v850_reg_size
+};
+
+/* When v850 support was added to GCC in the late nineties, the intention
+   was to follow the Green Hills ABI for v850.  In fact, the authors of
+   that support at the time thought that they were doing so.  As far as
+   I can tell, the calling conventions are correct, but the return value
+   conventions were not quite right.  Over time, the return value code
+   in this file was modified to mostly reflect what GCC was actually
+   doing instead of to actually follow the Green Hills ABI as it did
+   when the code was first written.
+
+   Renesas defined the RH850 ABI which they use in their compiler.  It
+   is similar to the original Green Hills ABI with some minor
+   differences.  */
+
+enum v850_abi
+{
+  V850_ABI_GCC,
+  V850_ABI_RH850
+};
+
+/* Architecture specific data.  */
+
+struct gdbarch_tdep
+{
+  /* Fields from the ELF header.  */
+  int e_flags;
+  int e_machine;
+
+  /* Which ABI are we using?  */
+  enum v850_abi abi;
+  int eight_byte_align;
 };
 
 struct v850_frame_cache
@@ -152,7 +313,7 @@ v850_register_name (struct gdbarch *gdbarch, int regnum)
     "sr24", "sr25", "sr26", "sr27", "sr28", "sr29", "sr30", "sr31",
     "pc", "fp"
   };
-  if (regnum < 0 || regnum >= E_NUM_REGS)
+  if (regnum < 0 || regnum > E_NUM_OF_V850_REGS)
     return NULL;
   return v850_reg_names[regnum];
 }
@@ -172,9 +333,156 @@ v850e_register_name (struct gdbarch *gdbarch, int regnum)
     "sr24", "sr25", "sr26", "sr27", "sr28", "sr29", "sr30", "sr31",
     "pc", "fp"
   };
-  if (regnum < 0 || regnum >= E_NUM_REGS)
+  if (regnum < 0 || regnum > E_NUM_OF_V850E_REGS)
     return NULL;
   return v850e_reg_names[regnum];
+}
+
+static const char *
+v850e2_register_name (struct gdbarch *gdbarch, int regnum)
+{
+  static const char *v850e2_reg_names[] =
+  {
+    /* General purpose registers.  */
+    "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
+    "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
+    "r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",
+    "r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31",
+
+    /* System registers - main banks.  */
+    "eipc", "eipsw", "fepc", "fepsw", "ecr", "psw", "pid", "cfg",
+    "", "", "", "sccfg", "scbp", "eiic", "feic", "dbic",
+    "ctpc", "ctpsw", "dbpc", "dbpsw", "ctbp", "dir", "", "",
+    "", "", "", "", "eiwr", "fewr", "dbwr", "bsel",
+
+
+    /* PC.  */
+    "pc", "",
+
+    /* System registers - MPV (PROT00) bank.  */
+    "vsecr", "vstid", "vsadr", "", "vmecr", "vmtid", "vmadr", "",
+    "vpecr", "vptid", "vpadr", "", "", "", "", "",
+    "", "", "", "", "", "", "", "",
+    "mca", "mcs", "mcc", "mcr",
+
+    /* System registers - MPU (PROT01) bank.  */
+    "mpm", "mpc", "tid", "", "", "", "ipa0l", "ipa0u",
+    "ipa1l", "ipa1u", "ipa2l", "ipa2u", "ipa3l", "ipa3u", "ipa4l", "ipa4u",
+    "dpa0l", "dpa0u", "dpa1l", "dpa1u", "dpa2l", "dpa2u", "dpa3l", "dpa3u",
+    "dpa4l", "dpa4u", "dpa5l", "dpa5u",
+
+    /* FPU system registers.  */
+    "", "", "", "", "", "", "fpsr", "fpepc",
+    "fpst", "fpcc", "fpcfg", "fpec", "", "", "", "",
+    "", "", "", "", "", "", "", "",
+    "", "", "", "fpspc"
+  };
+  if (regnum < 0 || regnum >= E_NUM_OF_V850E2_REGS)
+    return NULL;
+  return v850e2_reg_names[regnum];
+}
+
+/* Implement the "register_name" gdbarch method for v850e3v5.  */
+
+static const char *
+v850e3v5_register_name (struct gdbarch *gdbarch, int regnum)
+{
+  static const char *v850e3v5_reg_names[] =
+  {
+    /* General purpose registers.  */
+    "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
+    "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
+    "r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",
+    "r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31",
+
+    /* selID 0, not including FPU registers.  The FPU registers are
+       listed later on.  */
+    "eipc", "eipsw", "fepc", "fepsw",
+    "", "psw", "" /* fpsr */, "" /* fpepc */,
+    "" /* fpst */, "" /* fpcc */, "" /* fpcfg */, "" /* fpec */,
+    "sesr", "eiic", "feic", "",
+    "ctpc", "ctpsw", "", "", "ctbp", "", "", "",
+    "", "", "", "", "eiwr", "fewr", "", "bsel",
+
+
+    /* PC.  */
+    "pc", "",
+
+    /* v850e2 MPV bank.  */
+    "", "", "", "", "", "", "", "",
+    "", "", "", "", "", "", "", "",
+    "", "", "", "", "", "", "", "",
+    "", "", "", "",
+
+    /* Skip v850e2 MPU bank.  It's tempting to reuse these, but we need
+       32 entries for this bank.  */
+    "", "", "", "", "", "", "", "",
+    "", "", "", "", "", "", "", "",
+    "", "", "", "", "", "", "", "",
+    "", "", "", "",
+
+    /* FPU system registers.  These are actually in selID 0, but
+       are placed here to preserve register numbering compatibility
+       with previous architectures.  */
+    "", "", "", "", "", "", "fpsr", "fpepc",
+    "fpst", "fpcc", "fpcfg", "fpec", "", "", "", "",
+    "", "", "", "", "", "", "", "",
+    "", "", "", "",
+
+    /* selID 1.  */
+    "mcfg0", "mcfg1", "rbase", "ebase", "intbp", "mctl", "pid", "fpipr",
+    "", "", "tcsel", "sccfg", "scbp", "hvccfg", "hvcbp", "vsel",
+    "vmprt0", "vmprt1", "vmprt2", "", "", "", "", "vmscctl",
+    "vmsctbl0", "vmsctbl1", "vmsctbl2", "vmsctbl3", "", "", "", "",
+
+    /* selID 2.  */
+    "htcfg0", "", "", "", "", "htctl", "mea", "asid",
+    "mei", "ispr", "pmr", "icsr", "intcfg", "", "", "",
+    "tlbsch", "", "", "", "", "", "", "htscctl",
+    "htsctbl0", "htsctbl1", "htsctbl2", "htsctbl3",
+    "htsctbl4", "htsctbl5", "htsctbl6", "htsctbl7",
+
+    /* selID 3.  */
+    "", "", "", "", "", "", "", "",
+    "", "", "", "", "", "", "", "",
+    "", "", "", "", "", "", "", "",
+    "", "", "", "", "", "", "", "",
+
+    /* selID 4.  */
+    "tlbidx", "", "", "", "telo0", "telo1", "tehi0", "tehi1",
+    "", "", "tlbcfg", "", "bwerrl", "bwerrh", "brerrl", "brerrh",
+    "ictagl", "ictagh", "icdatl", "icdath",
+    "dctagl", "dctagh", "dcdatl", "dcdath",
+    "icctrl", "dcctrl", "iccfg", "dccfg", "icerr", "dcerr", "", "",
+
+    /* selID 5.  */
+    "mpm", "mprc", "", "", "mpbrgn", "mptrgn", "", "",
+    "mca", "mcs", "mcc", "mcr", "", "", "", "",
+    "", "", "", "", "mpprt0", "mpprt1", "mpprt2", "",
+    "", "", "", "", "", "", "", "",
+
+    /* selID 6.  */
+    "mpla0", "mpua0", "mpat0", "", "mpla1", "mpua1", "mpat1", "",
+    "mpla2", "mpua2", "mpat2", "", "mpla3", "mpua3", "mpat3", "",
+    "mpla4", "mpua4", "mpat4", "", "mpla5", "mpua5", "mpat5", "",
+    "mpla6", "mpua6", "mpat6", "", "mpla7", "mpua7", "mpat7", "",
+
+    /* selID 7.  */
+    "mpla8", "mpua8", "mpat8", "", "mpla9", "mpua9", "mpat9", "",
+    "mpla10", "mpua10", "mpat10", "", "mpla11", "mpua11", "mpat11", "",
+    "mpla12", "mpua12", "mpat12", "", "mpla13", "mpua13", "mpat13", "",
+    "mpla14", "mpua14", "mpat14", "", "mpla15", "mpua15", "mpat15", "",
+
+    /* Vector Registers */
+    "vr0", "vr1", "vr2", "vr3", "vr4", "vr5", "vr6", "vr7",
+    "vr8", "vr9", "vr10", "vr11", "vr12", "vr13", "vr14", "vr15",
+    "vr16", "vr17", "vr18", "vr19", "vr20", "vr21", "vr22", "vr23",
+    "vr24", "vr25", "vr26", "vr27", "vr28", "vr29", "vr30", "vr31",
+  };
+
+  if (regnum < 0 || regnum >= E_NUM_OF_V850E3V5_REGS)
+    return NULL;
+  return v850e3v5_reg_names[regnum];
 }
 
 /* Returns the default type for register N.  */
@@ -184,6 +492,8 @@ v850_register_type (struct gdbarch *gdbarch, int regnum)
 {
   if (regnum == E_PC_REGNUM)
     return builtin_type (gdbarch)->builtin_func_ptr;
+  else if (E_VR0_REGNUM <= regnum && regnum <= E_VR31_REGNUM)
+    return builtin_type (gdbarch)->builtin_uint64;
   return builtin_type (gdbarch)->builtin_int32;
 }
 
@@ -196,12 +506,21 @@ v850_type_is_scalar (struct type *t)
 }
 
 /* Should call_function allocate stack space for a struct return?  */
+
 static int
-v850_use_struct_convention (struct type *type)
+v850_use_struct_convention (struct gdbarch *gdbarch, struct type *type)
 {
   int i;
   struct type *fld_type, *tgt_type;
 
+  if (gdbarch_tdep (gdbarch)->abi == V850_ABI_RH850)
+    {
+      if (v850_type_is_scalar (type) && TYPE_LENGTH(type) <= 8)
+	return 0;
+
+      /* Structs are never returned in registers for this ABI.  */
+      return 1;
+    }
   /* 1. The value is greater than 8 bytes -> returned by copying.  */
   if (TYPE_LENGTH (type) > 8)
     return 1;
@@ -258,7 +577,7 @@ v850_use_struct_convention (struct type *type)
       for (i = 0; i < TYPE_NFIELDS (type); ++i)
         {
 	  fld_type = TYPE_FIELD_TYPE (type, 0);
-	  if (!v850_use_struct_convention (fld_type))
+	  if (!v850_use_struct_convention (gdbarch, fld_type))
 	    return 0;
 	}
     }
@@ -267,6 +586,7 @@ v850_use_struct_convention (struct type *type)
 }
 
 /* Structure for mapping bits in register lists to register numbers.  */
+
 struct reg_list
 {
   long mask;
@@ -401,7 +721,7 @@ v850_handle_pushm (int insn, int insn2, struct v850_frame_cache *pi,
   else
     reg_table = pushmh_reg_table;
 
-  /* Calculate the total size of the saved registers, and add it it to the
+  /* Calculate the total size of the saved registers, and add it to the
      immediate value used to adjust SP.  */
   for (i = 0; reg_table[i].mask != 0; i++)
     if (list12 & reg_table[i].mask)
@@ -462,7 +782,6 @@ v850_analyze_prologue (struct gdbarch *gdbarch,
   CORE_ADDR prologue_end, current_pc;
   struct pifsr pifsrs[E_NUM_REGS + 1];
   struct pifsr *pifsr, *pifsr_tmp;
-  int fp_used;
   int ep_used;
   int reg;
   CORE_ADDR save_pc, save_end;
@@ -650,6 +969,29 @@ v850_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
   return pc;
 }
 
+/* Return 1 if the data structure has any 8-byte fields that'll require
+   the entire data structure to be aligned.  Otherwise, return 0.  */
+
+static int
+v850_eight_byte_align_p (struct type *type)
+{
+  type = check_typedef (type);
+
+  if (v850_type_is_scalar (type))
+    return (TYPE_LENGTH (type) == 8);
+  else
+    {
+      int i;
+
+      for (i = 0; i < TYPE_NFIELDS (type); i++)
+	{
+	  if (v850_eight_byte_align_p (TYPE_FIELD_TYPE (type, i)))
+	    return 1;
+	}
+    }
+  return 0;
+}
+
 static CORE_ADDR
 v850_frame_align (struct gdbarch *ignore, CORE_ADDR sp)
 {
@@ -682,6 +1024,9 @@ v850_push_dummy_call (struct gdbarch *gdbarch,
   int len = 0;
   int stack_offset;
 
+  if (gdbarch_tdep (gdbarch)->abi == V850_ABI_RH850)
+    stack_offset = 0;
+  else
   /* The offset onto the stack at which we will start copying parameters
      (after the registers are used up) begins at 16 rather than at zero.
      That's how the ABI is defined, though there's no indication that these
@@ -709,6 +1054,7 @@ v850_push_dummy_call (struct gdbarch *gdbarch,
       gdb_byte valbuf[v850_reg_size];
 
       if (!v850_type_is_scalar (value_type (*args))
+         && gdbarch_tdep (gdbarch)->abi == V850_ABI_GCC
 	  && TYPE_LENGTH (value_type (*args)) > E_MAX_RETTYPE_SIZE_IN_REGS)
 	{
 	  store_unsigned_integer (valbuf, 4, byte_order,
@@ -720,6 +1066,15 @@ v850_push_dummy_call (struct gdbarch *gdbarch,
 	{
 	  len = TYPE_LENGTH (value_type (*args));
 	  val = (gdb_byte *) value_contents (*args);
+	}
+
+      if (gdbarch_tdep (gdbarch)->eight_byte_align
+          && v850_eight_byte_align_p (value_type (*args)))
+        {
+	  if (argreg <= E_ARGLAST_REGNUM && (argreg & 1))
+	    argreg++;
+	  else if (stack_offset & 0x4)
+	    stack_offset += 4;
 	}
 
       while (len > 0)
@@ -802,11 +1157,11 @@ v850_store_return_value (struct type *type, struct regcache *regcache,
 }
 
 static enum return_value_convention
-v850_return_value (struct gdbarch *gdbarch, struct type *func_type,
+v850_return_value (struct gdbarch *gdbarch, struct value *function,
 		   struct type *type, struct regcache *regcache,
 		   gdb_byte *readbuf, const gdb_byte *writebuf)
 {
-  if (v850_use_struct_convention (type))
+  if (v850_use_struct_convention (gdbarch, type))
     return RETURN_VALUE_STRUCT_CONVENTION;
   if (writebuf)
     v850_store_return_value (type, regcache, writebuf);
@@ -815,10 +1170,26 @@ v850_return_value (struct gdbarch *gdbarch, struct type *func_type,
   return RETURN_VALUE_REGISTER_CONVENTION;
 }
 
-const static unsigned char *
-v850_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr, int *lenptr)
+static const unsigned char *
+v850_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr,
+                         int *lenptr)
 {
   static unsigned char breakpoint[] = { 0x85, 0x05 };
+
+  *lenptr = sizeof (breakpoint);
+  return breakpoint;
+}
+
+/* Implement software breakpoints by using the dbtrap instruction. 
+   Older architectures had no such instruction.  For those, an
+   unconditional branch to self instruction is used.  */
+
+static const unsigned char *
+v850_dbtrap_breakpoint_from_pc (struct gdbarch *gdbarch,
+                                CORE_ADDR *pcptr, int *lenptr)
+{
+  static unsigned char breakpoint[] = { 0x40, 0xf8 };
+
   *lenptr = sizeof (breakpoint);
   return breakpoint;
 }
@@ -827,7 +1198,6 @@ static struct v850_frame_cache *
 v850_alloc_frame_cache (struct frame_info *this_frame)
 {
   struct v850_frame_cache *cache;
-  int i;
 
   cache = FRAME_OBSTACK_ZALLOC (struct v850_frame_cache);
   cache->saved_regs = trad_frame_alloc_saved_regs (this_frame);
@@ -894,7 +1264,7 @@ v850_frame_cache (struct frame_info *this_frame, void **this_cache)
 
   /* Adjust all the saved registers such that they contain addresses
      instead of offsets.  */
-  for (i = 0; i < E_NUM_REGS; i++)
+  for (i = 0; i < gdbarch_num_regs (gdbarch); i++)
     if (trad_frame_addr_p (cache->saved_regs, i))
       cache->saved_regs[i].addr += cache->base;
 
@@ -983,25 +1353,74 @@ static struct gdbarch *
 v850_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
   struct gdbarch *gdbarch;
+  struct gdbarch_tdep *tdep;
+  int e_flags, e_machine;
 
-  /* Change the register names based on the current machine type.  */
-  if (info.bfd_arch_info->arch != bfd_arch_v850)
-    return NULL;
+  /* Extract the elf_flags if available.  */
+  if (info.abfd != NULL
+      && bfd_get_flavour (info.abfd) == bfd_target_elf_flavour)
+    {
+      e_flags = elf_elfheader (info.abfd)->e_flags;
+      e_machine = elf_elfheader (info.abfd)->e_machine;
+    }
+  else
+    {
+      e_flags = 0;
+      e_machine = 0;
+    }
 
-  gdbarch = gdbarch_alloc (&info, NULL);
+
+  /* Try to find the architecture in the list of already defined
+     architectures.  */
+  for (arches = gdbarch_list_lookup_by_info (arches, &info);
+       arches != NULL;
+       arches = gdbarch_list_lookup_by_info (arches->next, &info))
+    {
+      if (gdbarch_tdep (arches->gdbarch)->e_flags != e_flags
+          || gdbarch_tdep (arches->gdbarch)->e_machine != e_machine)
+	continue;
+
+      return arches->gdbarch;
+    }
+  tdep = (struct gdbarch_tdep *) xmalloc (sizeof (struct gdbarch_tdep));
+  tdep->e_flags = e_flags;
+  tdep->e_machine = e_machine;
+
+  switch (tdep->e_machine)
+    {
+    case EM_V800:
+      tdep->abi = V850_ABI_RH850;
+      break;
+    default:
+      tdep->abi = V850_ABI_GCC;
+      break;
+    }
+
+  tdep->eight_byte_align = (tdep->e_flags & EF_RH850_DATA_ALIGN8) ? 1 : 0;
+  gdbarch = gdbarch_alloc (&info, tdep);
 
   switch (info.bfd_arch_info->mach)
     {
     case bfd_mach_v850:
       set_gdbarch_register_name (gdbarch, v850_register_name);
+      set_gdbarch_num_regs (gdbarch, E_NUM_OF_V850_REGS);
       break;
     case bfd_mach_v850e:
     case bfd_mach_v850e1:
       set_gdbarch_register_name (gdbarch, v850e_register_name);
+      set_gdbarch_num_regs (gdbarch, E_NUM_OF_V850E_REGS);
+      break;
+    case bfd_mach_v850e2:
+    case bfd_mach_v850e2v3:
+      set_gdbarch_register_name (gdbarch, v850e2_register_name);
+      set_gdbarch_num_regs (gdbarch, E_NUM_REGS);
+      break;
+    case bfd_mach_v850e3v5:
+      set_gdbarch_register_name (gdbarch, v850e3v5_register_name);
+      set_gdbarch_num_regs (gdbarch, E_NUM_OF_V850E3V5_REGS);
       break;
     }
 
-  set_gdbarch_num_regs (gdbarch, E_NUM_REGS);
   set_gdbarch_num_pseudo_regs (gdbarch, 0);
   set_gdbarch_sp_regnum (gdbarch, E_SP_REGNUM);
   set_gdbarch_pc_regnum (gdbarch, E_PC_REGNUM);
@@ -1023,7 +1442,17 @@ v850_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_addr_bit (gdbarch, 4 * TARGET_CHAR_BIT);
 
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
-  set_gdbarch_breakpoint_from_pc (gdbarch, v850_breakpoint_from_pc);
+  switch (info.bfd_arch_info->mach)
+    {
+    case bfd_mach_v850e2:
+    case bfd_mach_v850e2v3:
+    case bfd_mach_v850e3v5:
+      set_gdbarch_breakpoint_from_pc (gdbarch, v850_dbtrap_breakpoint_from_pc);
+      break;
+    default:
+      set_gdbarch_breakpoint_from_pc (gdbarch, v850_breakpoint_from_pc);
+      break;
+    }
 
   set_gdbarch_return_value (gdbarch, v850_return_value);
   set_gdbarch_push_dummy_call (gdbarch, v850_push_dummy_call);
@@ -1052,4 +1481,5 @@ void
 _initialize_v850_tdep (void)
 {
   register_gdbarch_init (bfd_arch_v850, v850_gdbarch_init);
+  register_gdbarch_init (bfd_arch_v850_rh850, v850_gdbarch_init);
 }

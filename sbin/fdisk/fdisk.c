@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.142.2.2 2013/06/23 06:28:50 tls Exp $ */
+/*	$NetBSD: fdisk.c,v 1.142.2.3 2014/08/20 00:02:24 tls Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.142.2.2 2013/06/23 06:28:50 tls Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.142.2.3 2014/08/20 00:02:24 tls Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -321,6 +321,66 @@ initvar_disk(const char **diskp)
 #endif /* HAVE_NBTOOL_CONFIG_H */
 }
 
+static int
+getnum(const char *str, int *num)
+{
+	char *e;
+	long l;
+
+	errno = 0;
+	l = strtol(str, &e, 0);
+	if (str[0] == '\0' || *e != '\0')
+		return -1;
+	if (errno == ERANGE && (l == LONG_MAX || l == LONG_MIN))
+		return -1;
+	/* XXX: truncation */
+	*num = (int)l;
+	return 0;
+}
+
+/* [<sysid>][/[<start>][/[<size>][/[<bootmenu>]]]] */
+static int
+parse_s(char *arg, int *csysid, unsigned *cstart, unsigned *csize,
+    char **cbootmenu)
+{
+	char *ptr;
+	int num;
+
+	if ((ptr = strchr(arg, '/')) != NULL)
+		*ptr++ = '\0';
+
+	if (*arg) {
+		if (getnum(arg, &num) == -1)
+			return -1;
+		*csysid = num;
+	}
+	if (ptr == NULL)
+		return 0;
+
+	arg = ptr;
+	if ((ptr = strchr(arg, '/')) != NULL)
+		*ptr++ = '\0';
+	if (*arg) {
+		if (getnum(arg, &num) == -1)
+			return -1;
+		*cstart = num;
+	}
+	if (ptr == NULL)
+		return 0;
+
+	arg = ptr;
+	if ((ptr = strchr(arg, '/')) != NULL)
+		*ptr++ = '\0';
+	if (*arg) {
+		if (getnum(arg, &num) == -1)
+			return -1;
+		*csize = num;
+	}
+	if (ptr != NULL && *ptr)
+		*cbootmenu = ptr;
+	return 0;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -331,8 +391,8 @@ main(int argc, char *argv[])
 	int n;
 #ifdef BOOTSEL
 	daddr_t default_ptn;		/* start sector of default ptn */
-	char *cbootmenu = 0;
 #endif
+	char *cbootmenu = 0;
 
 	int csysid;	/* For the s_flag. */
 	unsigned int cstart, csize;
@@ -340,7 +400,8 @@ main(int argc, char *argv[])
 	i_flag = B_flag = 0;
 	v_flag = 0;
 	E_flag = 0;
-	csysid = cstart = csize = 0;
+	csysid = -1;
+	cstart = csize = ~0;
 	while ((ch = getopt(argc, argv, OPTIONS)) != -1) {
 		switch (ch) {
 		case '0':
@@ -397,18 +458,10 @@ main(int argc, char *argv[])
 			break;
 		case 's':	/* Partition details */
 			s_flag = 1;
-			if (sscanf(optarg, "%d/%u/%u%n", &csysid, &cstart,
-			    &csize, &n) == 3) {
-				if (optarg[n] == 0)
-					break;
-#ifdef BOOTSEL
-				if (optarg[n] == '/') {
-					cbootmenu = optarg + n + 1;
-					break;
-				}
-#endif
-			}
-			errx(1, "Bad argument to the -s flag.");
+
+			if (parse_s(optarg, &csysid, &cstart, &csize,
+			    &cbootmenu) == -1)
+				errx(1, "Bad argument to the -s flag.");
 			break;
 		case 'b':	/* BIOS geometry */
 			b_flag = 1;
@@ -621,7 +674,7 @@ usage(void)
 		"[-A ptn_alignment[/ptn_0_offset]] \\\n"
 		"%*s[-b cylinders/heads/sectors] \\\n"
 		"%*s[-0123 | -E num "
-		"[-s id/start/size[/bootmenu]]] \\\n"
+		"[-s [id][/[start][/[size][/bootmenu]]]] \\\n"
 		"%*s[-t disktab] [-T disktype] \\\n"
 		"%*s[-c bootcode] "
 		"[-r|-w file] [device]\n"
@@ -705,7 +758,7 @@ print_s0(int which)
 			else
 				printf("First active partition: %d\n", active);
 		}
-		if (!sh_flag && mboot.mbr_dsn != 0)
+		if (!sh_flag)
 			printf("Drive serial number: %"PRIu32" (0x%08x)\n",
 			    le32toh(mboot.mbr_dsn),
 			    le32toh(mboot.mbr_dsn));
@@ -1817,7 +1870,7 @@ check_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 			/* This is just a convention, not a requirement */
 			return "Track zero is reserved for the BIOS";
 #endif
-		if (start + size > disksectors) 
+		if (start + size > disksectors)
 			return "Partition exceeds size of disk";
 		for (p = 0; p < MBR_PART_COUNT; p++) {
 			if (p == part || mboot.mbr_parts[p].mbrp_type == 0)
@@ -2027,11 +2080,26 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 			tmp_bootmenu[0] = 0;
 #endif
 
-	if (!s_flag && partp != NULL) {
-		/* values not specified, default to current ones */
-		sysid = partp->mbrp_type;
-		start = offset + le32toh(partp->mbrp_start);
-		size = le32toh(partp->mbrp_size);
+	if (partp != NULL) {
+		if (!s_flag) {
+			/* values not specified, default to current ones */
+			sysid = partp->mbrp_type;
+			start = offset + le32toh(partp->mbrp_start);
+			size = le32toh(partp->mbrp_size);
+		} else {
+			if (sysid == -1)
+				sysid = partp->mbrp_type;
+			if (start == (daddr_t)0xffffffff) {
+				start = offset + le32toh(partp->mbrp_start);
+				if (start == 0)
+					start = offset = ptn_0_offset;
+			}
+			if (size == (daddr_t)0xffffffff) {
+				size = le32toh(partp->mbrp_size);
+				if (size == 0) 
+					size = disksectors - start;
+			}
+		}
 	}
 
 	/* creating a new partition, default to free space */

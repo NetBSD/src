@@ -1,8 +1,7 @@
 /* Target-dependent code for the IQ2000 architecture, for GDB, the GNU
    Debugger.
 
-   Copyright (C) 2000, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -29,7 +28,7 @@
 #include "gdbtypes.h"
 #include "value.h"
 #include "dis-asm.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "arch-utils.h"
 #include "regcache.h"
 #include "osabi.h"
@@ -509,7 +508,7 @@ iq2000_store_return_value (struct type *type, struct regcache *regcache,
 
   while (len > 0)
     {
-      char buf[4];
+      gdb_byte buf[4];
       int size = len % 4 ?: 4;
 
       memset (buf, 0, 4);
@@ -583,7 +582,7 @@ iq2000_extract_return_value (struct type *type, struct regcache *regcache,
 }
 
 static enum return_value_convention
-iq2000_return_value (struct gdbarch *gdbarch, struct type *func_type,
+iq2000_return_value (struct gdbarch *gdbarch, struct value *function,
 		     struct type *type, struct regcache *regcache,
 		     gdb_byte *readbuf, const gdb_byte *writebuf)
 {

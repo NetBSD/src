@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.42.12.1 2013/06/23 06:28:49 tls Exp $	 */
+/*	$NetBSD: load.c,v 1.42.12.2 2014/08/20 00:02:22 tls Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: load.c,v 1.42.12.1 2013/06/23 06:28:49 tls Exp $");
+__RCSID("$NetBSD: load.c,v 1.42.12.2 2014/08/20 00:02:22 tls Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -145,6 +145,14 @@ _rtld_load_object(const char *filepath, int flags)
 			}
 		}
 	}
+
+#ifdef RTLD_LOADER
+	if (pathlen == _rtld_objself.pathlen &&
+	    strcmp(_rtld_objself.path, filepath) == 0) {
+		close(fd);
+		return &_rtld_objself;
+	}
+#endif
 
 	if (obj == NULL) { /* First use of this object, so we must map it in */
 		obj = _rtld_map_object(filepath, fd, &sb);

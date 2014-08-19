@@ -1,4 +1,4 @@
-/*	$NetBSD: apmlabel.c,v 1.2 2011/08/27 16:10:51 joerg Exp $	*/
+/*	$NetBSD: apmlabel.c,v 1.2.8.1 2014/08/20 00:02:24 tls Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: apmlabel.c,v 1.2 2011/08/27 16:10:51 joerg Exp $");
+__RCSID("$NetBSD: apmlabel.c,v 1.2.8.1 2014/08/20 00:02:24 tls Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -104,7 +104,7 @@ getparts(int sd, int verbose)
 	struct apple_drvr_map	*drvr;
 	struct apple_part_map_entry *part;
 	struct partition	npe;
-	uint16_t		blksize, blkcnt, partcnt;
+	uint16_t		blksize, partcnt;
 	int			i, j, unused, changed;
 	uint64_t		temp;
 
@@ -123,7 +123,6 @@ getparts(int sd, int verbose)
 	if (drvr->sbSig != APPLE_DRVR_MAP_MAGIC)
 		return (changed);
 	blksize = drvr->sbBlockSize;
-	blkcnt = drvr->sbBlkCount;
 
 	partcnt = 1;
 	

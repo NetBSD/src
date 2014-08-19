@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.30.6.1 2013/02/25 00:28:18 tls Exp $ */
+/* $NetBSD: alpha.h,v 1.30.6.2 2014/08/20 00:02:41 tls Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -110,8 +110,15 @@ char *	dot_conv(unsigned long);
 extern const pcu_ops_t fpu_ops;
 
 void    fpu_state_load(struct lwp *, u_int);
-void    fpu_state_save(struct lwp *, u_int);
-void    fpu_state_release(struct lwp *, u_int);
+void    fpu_state_save(struct lwp *);
+void    fpu_state_release(struct lwp *);
+
+static inline bool
+fpu_valid_p(struct lwp *l)
+{
+	KASSERT(l == curlwp);
+	return pcu_valid_p(&fpu_ops);
+}
 
 static inline void
 fpu_load(void)
@@ -126,9 +133,9 @@ fpu_save(void)
 }
 
 static inline void
-fpu_discard(void)
+fpu_discard(bool valid_p)
 {
-	pcu_discard(&fpu_ops);
+	pcu_discard(&fpu_ops, valid_p);
 }
 
 void	alpha_patch(bool);

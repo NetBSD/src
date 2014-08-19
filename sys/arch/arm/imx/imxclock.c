@@ -1,4 +1,4 @@
-/*	$NetBSD: imxclock.c,v 1.6 2012/05/20 14:08:18 matt Exp $ */
+/*	$NetBSD: imxclock.c,v 1.6.2.1 2014/08/20 00:02:46 tls Exp $ */
 /*
  * Copyright (c) 2009, 2010  Genetec corp.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec corp.
@@ -28,6 +28,11 @@
 /*
  * common part for i.MX31 and i.MX51
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: imxclock.c,v 1.6.2.1 2014/08/20 00:02:46 tls Exp $");
+
+#include "opt_imx.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +70,7 @@ static struct timecounter imx_epit_timecounter = {
 };
 
 static volatile uint32_t imxclock_base;
+struct imxclock_softc *imxclock = NULL;
 
 void
 cpu_initclocks(void)
@@ -72,47 +78,42 @@ cpu_initclocks(void)
 	uint32_t reg;
 	u_int freq;
 
-	if (!epit1_sc) {
+	if (epit1_sc != NULL)
+		imxclock = epit1_sc;
+	else if (epit2_sc != NULL)
+		imxclock = epit2_sc;
+	else
 		panic("%s: driver has not been initialized!", __FUNCTION__);
-	}
 
-	freq = imxclock_get_timerfreq(epit1_sc);
+	freq = imxclock_get_timerfreq(imxclock);
 	imx_epit_timecounter.tc_frequency = freq;
 	tc_init(&imx_epit_timecounter);
 
-	aprint_verbose_dev(epit1_sc->sc_dev,
-			   "timer clock frequency %d\n", freq);
+	aprint_verbose_dev(imxclock->sc_dev,
+	    "timer clock frequency %d\n", freq);
 
-	epit1_sc->sc_reload_value = freq / hz - 1;
+	imxclock->sc_reload_value = freq / hz - 1;
 
-	/* stop all timers */
-	bus_space_write_4(epit1_sc->sc_iot, epit1_sc->sc_ioh, EPIT_EPITCR, 0);
-	bus_space_write_4(epit2_sc->sc_iot, epit2_sc->sc_ioh, EPIT_EPITCR, 0);
+	/* stop timers */
+	bus_space_write_4(imxclock->sc_iot, imxclock->sc_ioh, EPIT_EPITCR, 0);
 
 	aprint_normal("clock: hz=%d stathz = %d\n", hz, stathz);
 
-	bus_space_write_4(epit1_sc->sc_iot, epit1_sc->sc_ioh, EPIT_EPITLR, 
-			  epit1_sc->sc_reload_value);
-	bus_space_write_4(epit1_sc->sc_iot, epit1_sc->sc_ioh, EPIT_EPITCMPR, 0);
+	bus_space_write_4(imxclock->sc_iot, imxclock->sc_ioh, EPIT_EPITLR,
+			  imxclock->sc_reload_value);
+	bus_space_write_4(imxclock->sc_iot, imxclock->sc_ioh, EPIT_EPITCMPR, 0);
 
-	reg = EPITCR_ENMOD | EPITCR_IOVW | EPITCR_RLD | epit1_sc->sc_clksrc;
-	bus_space_write_4(epit1_sc->sc_iot, epit1_sc->sc_ioh,
+	reg = EPITCR_ENMOD | EPITCR_IOVW | EPITCR_RLD | imxclock->sc_clksrc;
+	bus_space_write_4(imxclock->sc_iot, imxclock->sc_ioh,
 	    EPIT_EPITCR, reg);
 	reg |= EPITCR_EN | EPITCR_OCIEN | EPITCR_WAITEN | EPITCR_DOZEN |
 		EPITCR_STOPEN;
-	bus_space_write_4(epit1_sc->sc_iot, epit1_sc->sc_ioh,
+	bus_space_write_4(imxclock->sc_iot, imxclock->sc_ioh,
 	    EPIT_EPITCR, reg);
 
-	epit1_sc->sc_ih = intr_establish(epit1_sc->sc_intr, IPL_CLOCK,
+	epit1_sc->sc_ih = intr_establish(imxclock->sc_intr, IPL_CLOCK,
 	    IST_LEVEL, imxclock_intr, NULL);
 }
-
-#if 0
-void
-microtime(struct timeval *tvp)
-{
-}
-#endif
 
 void
 setstatclockrate(int schz)
@@ -122,7 +123,7 @@ setstatclockrate(int schz)
 static int
 imxclock_intr(void *arg)
 {
-	struct imxclock_softc *sc = epit1_sc;
+	struct imxclock_softc *sc = imxclock;
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EPIT_EPITSR, 1);
 	atomic_add_32(&imxclock_base, sc->sc_reload_value);
@@ -140,7 +141,7 @@ imx_epit_get_timecount(struct timecounter *tc)
 	u_int oldirqstate;
 
 	oldirqstate = disable_interrupts(I32_bit);
-	counter = bus_space_read_4(epit1_sc->sc_iot, epit1_sc->sc_ioh, EPIT_EPITCNT);
+	counter = bus_space_read_4(imxclock->sc_iot, imxclock->sc_ioh, EPIT_EPITCNT);
 	base = imxclock_base;
 	restore_interrupts(oldirqstate);
 

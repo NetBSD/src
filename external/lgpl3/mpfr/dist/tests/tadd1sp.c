@@ -1,7 +1,7 @@
 /* Test file for mpfr_add1sp.
 
-Copyright 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -73,29 +73,33 @@ main (void)
   return 0;
 }
 
-#define STD_ERROR \
-  {\
-    printf("ERROR: for %s and p=%lu and i=%d:\nB=",\
-           mpfr_print_rnd_mode ((mpfr_rnd_t) r), p, i);\
-    mpfr_print_binary(b);\
-    printf("\nC="); mpfr_print_binary(c);\
-    printf("\nadd1  : "); mpfr_print_binary(a1);\
-    printf("\nadd1sp: "); mpfr_print_binary(a2);\
-    putchar('\n');\
-    exit(1);\
-  }
+#define STD_ERROR                                                       \
+  do                                                                    \
+    {                                                                   \
+      printf("ERROR: for %s and p=%lu and i=%d:\nB=",                   \
+             mpfr_print_rnd_mode ((mpfr_rnd_t) r), (unsigned long) p, i); \
+      mpfr_print_binary(b);                                             \
+      printf("\nC="); mpfr_print_binary(c);                             \
+      printf("\nadd1  : "); mpfr_print_binary(a1);                      \
+      printf("\nadd1sp: "); mpfr_print_binary(a2);                      \
+      putchar('\n');                                                    \
+      exit(1);                                                          \
+    }                                                                   \
+  while (0)
 
-#define STD_ERROR2 \
-  {\
-    printf("ERROR: Wrong inexact flag for %s and p=%lu and i=%d:\nB=",\
-           mpfr_print_rnd_mode ((mpfr_rnd_t) r), p, i);\
-    mpfr_print_binary(b);\
-    printf("\nC="); mpfr_print_binary(c);\
-    printf("\nA="); mpfr_print_binary(a1);\
-    printf("\nAdd1: %d. Add1sp: %d\n", \
-           inexact1, inexact2); \
-    exit(1);\
-  }
+#define STD_ERROR2                                                      \
+  do                                                                    \
+    {                                                                   \
+      printf("ERROR: Wrong inexact flag for %s and p=%lu and i=%d:\nB=", \
+             mpfr_print_rnd_mode ((mpfr_rnd_t) r), (unsigned long) p, i); \
+      mpfr_print_binary(b);                                             \
+      printf("\nC="); mpfr_print_binary(c);                             \
+      printf("\nA="); mpfr_print_binary(a1);                            \
+      printf("\nAdd1: %d. Add1sp: %d\n",                                \
+             inexact1, inexact2);                                       \
+      exit(1);                                                          \
+    }                                                                   \
+ while (0)
 
 #define SET_PREC(_p) \
   { \

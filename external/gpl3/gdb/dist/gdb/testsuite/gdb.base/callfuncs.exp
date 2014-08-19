@@ -1,5 +1,4 @@
-# Copyright 1992, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-# 2004, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 1992-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,15 +16,14 @@
 # This file was written by Fred Fish. (fnf@cygnus.com)
 # and modified by Bob Manson. (manson@cygnus.com)
 
-if $tracelevel then {
-	strace $tracelevel
+standard_testfile
+
+set compile_flags {debug}
+if [support_complex_tests] {
+    lappend compile_flags "additional_flags=-DTEST_COMPLEX"
 }
 
-set testfile "callfuncs"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
-
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable $compile_flags] != "" } {
      untested callfuncs.exp
      return -1
 }
@@ -33,8 +31,8 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
 # Create and source the file that provides information about the compiler
 # used to compile the test case.
 
-if [get_compiler_info ${binfile}] {
-    return -1;
+if [get_compiler_info] {
+    return -1
 }
 
 if {$hp_aCC_compiler} {
@@ -63,7 +61,11 @@ proc do_function_calls {} {
     global gdb_prompt
 
     # We need to up this because this can be really slow on some boards.
-    set timeout 60;
+    set timeout 60
+
+    # If any of these calls segv we don't want to affect subsequent tests.
+    # E.g., we want to ensure register values are restored.
+    gdb_test_no_output "set unwindonsignal on"
 
     gdb_test "p t_char_values(0,0)" " = 0"
     gdb_test "p t_char_values('a','b')" " = 1"
@@ -144,6 +146,25 @@ proc do_function_calls {} {
 	gdb_test "p t_int_double(99, 99.0)" " = 1"
     }
 
+    if [support_complex_tests] {
+	gdb_test "p t_float_complex_values(fc1, fc2)" " = 1"
+	gdb_test "p t_float_complex_values(fc3, fc4)" " = 0"
+
+	gdb_test "p t_float_complex_many_args(fc1, fc2, fc3, fc4, fc1, fc2, fc3, fc4, fc1, fc2, fc3, fc4, fc1, fc2, fc3, fc4)" " = 1"
+	gdb_test "p t_float_complex_many_args(fc1, fc1, fc1, fc1, fc1, fc1, fc1, fc1, fc1, fc1, fc1, fc1, fc1, fc1, fc1, fc1)" " = 0"
+
+	gdb_test "p t_double_complex_values(dc1, dc2)" " = 1"
+	gdb_test "p t_double_complex_values(dc3, dc4)" " = 0"
+
+	gdb_test "p t_double_complex_many_args(dc1, dc2, dc3, dc4, dc1, dc2, dc3, dc4, dc1, dc2, dc3, dc4, dc1, dc2, dc3, dc4)" " = 1"
+	gdb_test "p t_double_complex_many_args(dc1, dc1, dc1, dc1, dc1, dc1, dc1, dc1, dc1, dc1, dc1, dc1, dc1, dc1, dc1, dc1)" " = 0"
+
+	gdb_test "p t_long_double_complex_values(ldc1, ldc2)" " = 1"
+	gdb_test "p t_long_double_complex_values(ldc3, ldc4)" " = 0"
+	gdb_test "p t_long_double_complex_many_args(ldc1, ldc2, ldc3, ldc4, ldc1, ldc2, ldc3, ldc4, ldc1, ldc2, ldc3, ldc4, ldc1, ldc2, ldc3, ldc4)" " = 1"
+	gdb_test "p t_long_double_complex_many_args(ldc1, ldc1, ldc1, ldc1, ldc1, ldc1, ldc1,ldc1, ldc1, ldc1, ldc1, ldc1, ldc1, ldc1, ldc1, ldc1)" " = 0"
+    }
+
     gdb_test "p t_string_values(string_val2,string_val1)" " = 0"
     gdb_test "p t_string_values(string_val1,string_val2)" " = 1"
     gdb_test "p t_string_values(\"string 1\",\"string 2\")" " = 1"
@@ -217,8 +238,23 @@ proc do_function_calls {} {
 	    "call inferior func with struct - returns double"
     }
 
-    gdb_test "p t_structs_a(struct_val1)" "= (.unsigned char .. )?\"foo\"" \
+    if [support_complex_tests] {
+
+	gdb_test "p t_structs_fc(struct_val1)" ".*= 3 \\+ 3 \\* I" \
+	    "call inferior func with struct - returns float _Complex"
+
+	gdb_test "p t_structs_dc(struct_val1)" ".*= 4 \\+ 4 \\* I" \
+	    "call inferior func with struct - returns double _Complex"
+
+	gdb_test "p t_structs_ldc(struct_val1)" "= 5 \\+ 5 \\* I" \
+	    "call inferior func with struct - returns long double _Complex"
+    }
+
+    gdb_test "p t_structs_a(struct_val1)" "= (.unsigned char .. )?<buf.*> \"foo\"" \
     	"call inferior func with struct - returns char *"
+
+    # Restore default value.
+    gdb_test_no_output "set unwindonsignal off"
 }
 
 # Procedure to get current content of all registers.
@@ -240,6 +276,15 @@ proc fetch_all_registers {test} {
 	-re "^bspstore\[ \t\]+\[^\r\n\]+\r\n" {
 	    if [istarget "ia64-*-*"] {
 		# Filter out bspstore which is specially tied to bsp,
+		# giving spurious differences.
+	    } else {
+		lappend all_registers_lines $expect_out(0,string)
+	    }
+	    exp_continue
+	}
+	-re "^last_break\[ \t\]+\[^\r\n\]+\r\n" {
+	    if [istarget "s390*-*-*"] {
+		# Filter out last_break which is read-only,
 		# giving spurious differences.
 	    } else {
 		lappend all_registers_lines $expect_out(0,string)
@@ -273,6 +318,39 @@ proc fetch_all_registers {test} {
     return $all_registers_lines
 }
 
+proc rerun_and_prepare {} {
+    global hp_aCC_compiler
+
+    if { $hp_aCC_compiler } {
+	# Do not set language explicitly to 'C'.  This will cause aCC
+	# tests to fail because promotion rules are different.  Just let
+	# the language be set to the default.
+
+	if { ![runto_main] } {
+	    gdb_suppress_tests
+	}
+
+	# However, turn off overload-resolution for aCC.  Having it on causes
+	# a lot of failures.
+
+	gdb_test_no_output "set overload-resolution 0"
+    } else {
+	if { ![runto_main] } {
+	    gdb_suppress_tests
+	}
+	gdb_test_no_output "set language c"
+    }
+
+    get_debug_format
+
+    # Make sure that malloc gets called and that the floating point unit
+    # is initialized via a call to t_double_values.
+    gdb_test "next" "t_double_values\\(double_val1, double_val2\\);.*" \
+	"next to t_double_values"
+    gdb_test "next" "t_structs_c\\(struct_val1\\);.*" \
+	"next to t_structs_c"
+}
+
 
 # Start with a fresh gdb.
 
@@ -285,34 +363,7 @@ gdb_test_no_output "set print sevenbit-strings"
 gdb_test_no_output "set print address off"
 gdb_test_no_output "set width 0"
 
-if { $hp_aCC_compiler } {
-    # Do not set language explicitly to 'C'.  This will cause aCC
-    # tests to fail because promotion rules are different.  Just let
-    # the language be set to the default.
-
-    if { ![runto_main] } {
-	gdb_suppress_tests;
-    }
-
-    # However, turn off overload-resolution for aCC.  Having it on causes
-    # a lot of failures.
-
-    gdb_test_no_output "set overload-resolution 0"
-} else {
-    gdb_test_no_output "set language c"
-    if { ![runto_main] } {
-	gdb_suppress_tests;
-    }
-}
-
-get_debug_format
-
-# Make sure that malloc gets called and that the floating point unit
-# is initialized via a call to t_double_values.
-gdb_test "next" "t_double_values\\(double_val1, double_val2\\);.*" \
-  "next to t_double_values"
-gdb_test "next" "t_structs_c\\(struct_val1\\);.*" \
-  "next to t_structs_c"
+rerun_and_prepare
 
 # Save all register contents.
 set old_reg_content [fetch_all_registers "retrieve original register contents"]
@@ -329,6 +380,10 @@ if {$old_reg_content == $new_reg_content} then {
     set old_reg_content $new_reg_content
     fail "gdb function calls preserve register contents"
 }
+
+rerun_and_prepare
+# Save all register contents.
+set old_reg_content [fetch_all_registers "retrieve original register contents"]
 
 # Set breakpoint at a function we will call from gdb.
 gdb_breakpoint add
@@ -351,6 +406,12 @@ if ![gdb_test "bt 2" \
     }
 }
 
+rerun_and_prepare
+# Set breakpoint at a function we will call from gdb.
+gdb_breakpoint add
+# Save all register contents.
+set old_reg_content [fetch_all_registers "retrieve original register contents"]
+
 # Call function (causing a breakpoint hit in the call dummy) and do a finish,
 # make sure we are back at main and still have the same register contents.
 gdb_test "print add(4,5)" "The program being debugged stopped while.*" \
@@ -370,6 +431,12 @@ if ![gdb_test "bt 2" \
     }
 }
 
+rerun_and_prepare
+# Set breakpoint at a function we will call from gdb.
+gdb_breakpoint add
+# Save all register contents.
+set old_reg_content [fetch_all_registers "retrieve original register contents"]
+
 # Call function (causing a breakpoint hit in the call dummy) and do a return
 # with a value, make sure we are back at main with the same register contents.
 gdb_test "print add(4,5)" "The program being debugged stopped while.*" \
@@ -387,6 +454,11 @@ if ![gdb_test "return 7" \
 	fail "return after stop in call dummy preserves register contents"
     }
 }
+
+rerun_and_prepare
+# Set breakpoint at a function we will call from gdb.
+gdb_breakpoint add
+set old_reg_content [fetch_all_registers "retrieve original register contents"]
 
 # Call function (causing a breakpoint hit in the call dummy), and
 # call another function from the call dummy frame (thereby setting up
@@ -458,3 +530,11 @@ if {![target_info exists gdb,nosignals] && ![istarget "*-*-uclinux*"]} {
 
     gdb_test {set $sp = $old_sp}
 }
+
+# Test function descriptor resolution - the separate debug info .opd section
+# handling vs. local labels `.L'... as `Lcallfunc' starts with `L'.
+
+gdb_test "print callfunc (Lcallfunc, 5)" " = 12"
+
+# Regression test for function pointer cast.
+gdb_test "print *((int *(*) (void)) voidfunc)()" " = 23"

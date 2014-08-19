@@ -1,5 +1,5 @@
-/*	$NetBSD: athn.c,v 1.5.4.2 2013/06/23 06:20:17 tls Exp $	*/
-/*	$OpenBSD: athn.c,v 1.75 2013/01/14 09:50:31 jsing Exp $	*/
+/*	$NetBSD: athn.c,v 1.5.4.3 2014/08/20 00:03:37 tls Exp $	*/
+/*	$OpenBSD: athn.c,v 1.83 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.5.4.2 2013/06/23 06:20:17 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.5.4.3 2014/08/20 00:03:37 tls Exp $");
 
 #ifndef _MODULE
 #include "athn_usb.h"		/* for NATHN_USB */
@@ -234,15 +234,16 @@ athn_attach(struct athn_softc *sc)
 	    ((sc->sc_rxchainmask >> 0) & 1);
 
 	if (AR_SINGLE_CHIP(sc)) {
-		aprint_normal(": Atheros %s\n", athn_get_mac_name(sc));
+		aprint_normal_dev(sc->sc_dev,
+		    "Atheros %s\n", athn_get_mac_name(sc));
 		aprint_verbose_dev(sc->sc_dev,
 		    "rev %d (%dT%dR), ROM rev %d, address %s\n",
 		    sc->sc_mac_rev,
 		    sc->sc_ntxchains, sc->sc_nrxchains, sc->sc_eep_rev,
 		    ether_sprintf(ic->ic_myaddr));
-	}
-	else {
-		aprint_normal(": Atheros %s, RF %s\n", athn_get_mac_name(sc),
+	} else {
+		aprint_normal_dev(sc->sc_dev,
+		    "Atheros %s, RF %s\n", athn_get_mac_name(sc),
 		    athn_get_rf_name(sc));
 		aprint_verbose_dev(sc->sc_dev,
 		    "rev %d (%dT%dR), ROM rev %d, address %s\n",
@@ -1259,7 +1260,7 @@ athn_calib_to(void *arg)
 	/* Do periodic (every 4 minutes) PA calibration. */
 	if (AR_SREV_9285_11_OR_LATER(sc) &&
 	    !AR_SREV_9380_10_OR_LATER(sc) &&
-	    ticks >= sc->sc_pa_calib_ticks + 240 * hz) {
+	    (ticks - (sc->sc_pa_calib_ticks + 240 * hz)) >= 0) {
 		sc->sc_pa_calib_ticks = ticks;
 		if (AR_SREV_9271(sc))
 			ar9271_pa_calib(sc);
@@ -1941,7 +1942,7 @@ athn_set_sta_timers(struct athn_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint32_t tsfhi, tsflo, tsftu, reg;
 	uint32_t intval, next_tbtt, next_dtim;
-	int dtim_period, dtim_count, rem_dtim_count;
+	int dtim_period, rem_dtim_count;
 
 	tsfhi = AR_READ(sc, AR_TSF_U32);
 	tsflo = AR_READ(sc, AR_TSF_L32);
@@ -1958,10 +1959,10 @@ athn_set_sta_timers(struct athn_softc *sc)
 		dtim_period = 1;	/* Assume all TIMs are DTIMs. */
 
 #ifdef notyet
-	dtim_count = ic->ic_dtim_count;
+	int dtim_count = ic->ic_dtim_count;
 	if (dtim_count >= dtim_period)	/* Should not happen. */
-#endif
 		dtim_count = 0;	/* Assume last TIM was a DTIM. */
+#endif
 
 	/* Compute number of remaining TIMs until next DTIM. */
 	rem_dtim_count = 0;	/* XXX */
@@ -2675,7 +2676,8 @@ athn_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			aprint_error_dev(sc->sc_dev, "device timeout\n");
-			athn_stop(ifp, 1);
+			/* see athn_init, no need to call athn_stop here */
+			/* athn_stop(ifp, 0); */
 			(void)athn_init(ifp);
 			ifp->if_oerrors++;
 			return;
@@ -2816,15 +2818,15 @@ athn_init(struct ifnet *ifp)
 	KASSERT(!cpu_intr_p());
 
 	if (device_is_active(sc->sc_dev)) {
-		athn_stop(ifp, 0);	/* XXX: necessary? */
+		athn_stop(ifp, 0);	/* see athn_watchdog() */
 	} else {
 		short flags = ifp->if_flags;
 		ifp->if_flags &= ~IFF_UP;
 		/* avoid recursion in athn_resume */
 		if (!pmf_device_subtree_resume(sc->sc_dev, &sc->sc_qual) ||
 		    !device_is_active(sc->sc_dev)) {
-			printf("%s: failed to power up device\n",
-			    device_xname(sc->sc_dev));
+			aprint_error_dev(sc->sc_dev,
+			    "failed to power up device\n");
 			return 0;
 		}
 		ifp->if_flags = flags;

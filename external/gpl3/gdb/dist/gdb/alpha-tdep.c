@@ -1,8 +1,6 @@
 /* Target-dependent code for the ALPHA architecture, for GDB, the GNU Debugger.
 
-   Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1993-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -33,7 +31,7 @@
 #include "dis-asm.h"
 #include "symfile.h"
 #include "objfiles.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "linespec.h"
 #include "regcache.h"
 #include "reggroups.h"
@@ -65,6 +63,7 @@ static const int stq_opcode = 0x2d;
 /* Branch instruction format */
 #define BR_RA(insn) MEM_RA(insn)
 
+static const int br_opcode = 0x30;
 static const int bne_opcode = 0x3d;
 
 /* Operate instruction format */
@@ -476,14 +475,13 @@ alpha_extract_return_value (struct type *valtype, struct regcache *regcache,
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  int length = TYPE_LENGTH (valtype);
   gdb_byte raw_buffer[ALPHA_REGISTER_SIZE];
   ULONGEST l;
 
   switch (TYPE_CODE (valtype))
     {
     case TYPE_CODE_FLT:
-      switch (length)
+      switch (TYPE_LENGTH (valtype))
 	{
 	case 4:
 	  regcache_cooked_read (regcache, ALPHA_FP0_REGNUM, raw_buffer);
@@ -506,7 +504,7 @@ alpha_extract_return_value (struct type *valtype, struct regcache *regcache,
       break;
 
     case TYPE_CODE_COMPLEX:
-      switch (length)
+      switch (TYPE_LENGTH (valtype))
 	{
 	case 8:
 	  /* ??? This isn't correct wrt the ABI, but it's what GCC does.  */
@@ -519,7 +517,7 @@ alpha_extract_return_value (struct type *valtype, struct regcache *regcache,
 	  break;
 
 	case 32:
-	  regcache_cooked_read_signed (regcache, ALPHA_V0_REGNUM, &l);
+	  regcache_cooked_read_unsigned (regcache, ALPHA_V0_REGNUM, &l);
 	  read_memory (l, valbuf, 32);
 	  break;
 
@@ -532,7 +530,7 @@ alpha_extract_return_value (struct type *valtype, struct regcache *regcache,
     default:
       /* Assume everything else degenerates to an integer.  */
       regcache_cooked_read_unsigned (regcache, ALPHA_V0_REGNUM, &l);
-      store_unsigned_integer (valbuf, length, byte_order, l);
+      store_unsigned_integer (valbuf, TYPE_LENGTH (valtype), byte_order, l);
       break;
     }
 }
@@ -545,14 +543,13 @@ alpha_store_return_value (struct type *valtype, struct regcache *regcache,
 			  const gdb_byte *valbuf)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  int length = TYPE_LENGTH (valtype);
   gdb_byte raw_buffer[ALPHA_REGISTER_SIZE];
   ULONGEST l;
 
   switch (TYPE_CODE (valtype))
     {
     case TYPE_CODE_FLT:
-      switch (length)
+      switch (TYPE_LENGTH (valtype))
 	{
 	case 4:
 	  alpha_lds (gdbarch, raw_buffer, valbuf);
@@ -576,7 +573,7 @@ alpha_store_return_value (struct type *valtype, struct regcache *regcache,
       break;
 
     case TYPE_CODE_COMPLEX:
-      switch (length)
+      switch (TYPE_LENGTH (valtype))
 	{
 	case 8:
 	  /* ??? This isn't correct wrt the ABI, but it's what GCC does.  */
@@ -604,7 +601,7 @@ alpha_store_return_value (struct type *valtype, struct regcache *regcache,
       /* Assume everything else degenerates to an integer.  */
       /* 32-bit values must be sign-extended to 64 bits
 	 even if the base data type is unsigned.  */
-      if (length == 4)
+      if (TYPE_LENGTH (valtype) == 4)
 	valtype = builtin_type (gdbarch)->builtin_int32;
       l = unpack_long (valtype, valbuf);
       regcache_cooked_write_unsigned (regcache, ALPHA_V0_REGNUM, l);
@@ -613,7 +610,7 @@ alpha_store_return_value (struct type *valtype, struct regcache *regcache,
 }
 
 static enum return_value_convention
-alpha_return_value (struct gdbarch *gdbarch, struct type *func_type,
+alpha_return_value (struct gdbarch *gdbarch, struct value *function,
 		    struct type *type, struct regcache *regcache,
 		    gdb_byte *readbuf, const gdb_byte *writebuf)
 {
@@ -759,6 +756,94 @@ alpha_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
       break;
     }
   return pc + offset;
+}
+
+
+static const int ldl_l_opcode = 0x2a;
+static const int ldq_l_opcode = 0x2b;
+static const int stl_c_opcode = 0x2e;
+static const int stq_c_opcode = 0x2f;
+
+/* Checks for an atomic sequence of instructions beginning with a LDL_L/LDQ_L
+   instruction and ending with a STL_C/STQ_C instruction.  If such a sequence
+   is found, attempt to step through it.  A breakpoint is placed at the end of 
+   the sequence.  */
+
+static int 
+alpha_deal_with_atomic_sequence (struct frame_info *frame)
+{
+  struct gdbarch *gdbarch = get_frame_arch (frame);
+  struct address_space *aspace = get_frame_address_space (frame);
+  CORE_ADDR pc = get_frame_pc (frame);
+  CORE_ADDR breaks[2] = {-1, -1};
+  CORE_ADDR loc = pc;
+  CORE_ADDR closing_insn; /* Instruction that closes the atomic sequence.  */
+  unsigned int insn = alpha_read_insn (gdbarch, loc);
+  int insn_count;
+  int index;
+  int last_breakpoint = 0; /* Defaults to 0 (no breakpoints placed).  */  
+  const int atomic_sequence_length = 16; /* Instruction sequence length.  */
+  int bc_insn_count = 0; /* Conditional branch instruction count.  */
+
+  /* Assume all atomic sequences start with a LDL_L/LDQ_L instruction.  */
+  if (INSN_OPCODE (insn) != ldl_l_opcode
+      && INSN_OPCODE (insn) != ldq_l_opcode)
+    return 0;
+
+  /* Assume that no atomic sequence is longer than "atomic_sequence_length" 
+     instructions.  */
+  for (insn_count = 0; insn_count < atomic_sequence_length; ++insn_count)
+    {
+      loc += ALPHA_INSN_SIZE;
+      insn = alpha_read_insn (gdbarch, loc);
+
+      /* Assume that there is at most one branch in the atomic
+	 sequence.  If a branch is found, put a breakpoint in 
+	 its destination address.  */
+      if (INSN_OPCODE (insn) >= br_opcode)
+	{
+	  int immediate = (insn & 0x001fffff) << 2;
+
+	  immediate = (immediate ^ 0x400000) - 0x400000;
+
+	  if (bc_insn_count >= 1)
+	    return 0; /* More than one branch found, fallback 
+			 to the standard single-step code.  */
+
+	  breaks[1] = loc + ALPHA_INSN_SIZE + immediate;
+
+	  bc_insn_count++;
+	  last_breakpoint++;
+	}
+
+      if (INSN_OPCODE (insn) == stl_c_opcode
+	  || INSN_OPCODE (insn) == stq_c_opcode)
+	break;
+    }
+
+  /* Assume that the atomic sequence ends with a STL_C/STQ_C instruction.  */
+  if (INSN_OPCODE (insn) != stl_c_opcode
+      && INSN_OPCODE (insn) != stq_c_opcode)
+    return 0;
+
+  closing_insn = loc;
+  loc += ALPHA_INSN_SIZE;
+
+  /* Insert a breakpoint right after the end of the atomic sequence.  */
+  breaks[0] = loc;
+
+  /* Check for duplicated breakpoints.  Check also for a breakpoint
+     placed (branch instruction's destination) anywhere in sequence.  */ 
+  if (last_breakpoint
+      && (breaks[1] == breaks[0]
+	  || (breaks[1] >= pc && breaks[1] <= closing_insn)))
+    last_breakpoint = 0;
+
+  /* Effectively inserts the breakpoints.  */
+  for (index = 0; index <= last_breakpoint; index++)
+    insert_single_step_breakpoint (gdbarch, aspace, breaks[index]);
+
+  return 1;
 }
 
 
@@ -912,7 +997,7 @@ alpha_sigtramp_frame_sniffer (const struct frame_unwind *self,
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   CORE_ADDR pc = get_frame_pc (this_frame);
-  char *name;
+  const char *name;
 
   /* NOTE: cagney/2004-04-30: Do not copy/clone this code.  Instead
      look at tramp-frame.h and other simplier per-architecture
@@ -947,7 +1032,7 @@ static const struct frame_unwind alpha_sigtramp_frame_unwind = {
 /* Heuristic_proc_start may hunt through the text section for a long
    time across a 2400 baud serial line.  Allows the user to limit this
    search.  */
-static unsigned int heuristic_fence_post = 0;
+static int heuristic_fence_post = 0;
 
 /* Attempt to locate the start of the function containing PC.  We assume that
    the previous function ends with an about_to_return insn.  Not foolproof by
@@ -974,7 +1059,7 @@ alpha_heuristic_proc_start (struct gdbarch *gdbarch, CORE_ADDR pc)
   if (func)
     return func;
 
-  if (heuristic_fence_post == UINT_MAX
+  if (heuristic_fence_post == -1
       || fence < tdep->vm_min_address)
     fence = tdep->vm_min_address;
 
@@ -1243,7 +1328,7 @@ alpha_heuristic_frame_unwind_cache (struct frame_info *this_frame,
 		 So we recognize only a few registers (t7, t9, ra) within
 		 the procedure prologue as valid return address registers.
 		 If we encounter a return instruction, we extract the
-		 the return address register from it.
+		 return address register from it.
 
 		 FIXME: Rewriting GDB to access the procedure descriptors,
 		 e.g. via the minimal symbol table, might obviate this
@@ -1748,6 +1833,9 @@ alpha_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_breakpoint_from_pc (gdbarch, alpha_breakpoint_from_pc);
   set_gdbarch_decr_pc_after_break (gdbarch, ALPHA_INSN_SIZE);
   set_gdbarch_cannot_step_breakpoint (gdbarch, 1);
+
+  /* Handles single stepping of atomic sequences.  */
+  set_gdbarch_software_single_step (gdbarch, alpha_deal_with_atomic_sequence);
 
   /* Hook in ABI-specific overrides, if they have been registered.  */
   gdbarch_init_osabi (info, gdbarch);

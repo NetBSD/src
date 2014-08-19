@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.10.2.1 2013/06/23 06:20:00 tls Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.10.2.2 2014/08/20 00:02:46 tls Exp $	*/
 
 #ifndef _ARM_ELF_MACHDEP_H_
 #define _ARM_ELF_MACHDEP_H_
@@ -27,6 +27,7 @@
 #define EF_ARM_NEW_ABI		0x00000080
 #define EF_ARM_OLD_ABI		0x00000100
 #define EF_ARM_SOFT_FLOAT	0x00000200
+#define EF_ARM_BE8		0x00800000
 #define EF_ARM_EABIMASK		0xff000000
 #define	EF_ARM_EABI_VER1	0x01000000
 #define	EF_ARM_EABI_VER2	0x02000000
@@ -76,13 +77,29 @@
 #define R_ARM_GOTPC		25
 #define R_ARM_GOT32		26
 #define R_ARM_PLT32		27
-
+#define R_ARM_CALL		28
+#define R_ARM_JUMP24		29
+#define R_ARM_THM_JUMP24	30
+#define R_ARM_BASE_ABS		31
 #define R_ARM_ALU_PCREL_7_0	32
 #define R_ARM_ALU_PCREL_15_8	33
 #define R_ARM_ALU_PCREL_23_15	34
 #define R_ARM_ALU_SBREL_11_0	35
 #define R_ARM_ALU_SBREL_19_12	36
-#define R_ARM_ALU_SBREL_27_20	37
+#define R_ARM_ALU_SBREL_27_20	37	// depcreated
+#define R_ARM_TARGET1		38
+#define R_ARM_SBREL31		39	// deprecated
+#define R_ARM_V4BX		40
+#define R_ARM_TARGET2		41
+#define R_ARM_PREL31		42
+#define R_ARM_MOVW_ABS_NC	43
+#define R_ARM_MOVT_ABS		44
+#define R_ARM_MOVW_PREL_NC	45
+#define R_ARM_MOVT_PREL		46
+#define R_ARM_THM_MOVW_ABS_NC	47
+#define R_ARM_THM_MOVT_ABS	48
+#define R_ARM_THM_MOVW_PREL_NC	49
+#define R_ARM_THM_MOVT_PREL	50
 
 /* 96-111 are reserved to G++. */
 #define R_ARM_GNU_VTENTRY	100
@@ -130,12 +147,14 @@
 #ifdef _KERNEL
 #ifdef ELFSIZE
 #define	ELF_MD_PROBE_FUNC	ELFNAME2(arm_netbsd,probe)
+#define	ELF_MD_COREDUMP_SETUP	ELFNAME2(arm_netbsd,coredump_setup)
 #endif
 
 struct exec_package;
 
 int arm_netbsd_elf32_probe(struct lwp *, struct exec_package *, void *, char *,
 	vaddr_t *);
+void arm_netbsd_elf32_coredump_setup(struct lwp *, void *);
 #endif
 
 #endif /* _ARM_ELF_MACHDEP_H_ */

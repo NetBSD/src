@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_pci.c,v 1.20.18.1 2012/11/20 03:02:15 tls Exp $	*/
+/*	$NetBSD: icp_pci.c,v 1.20.18.2 2014/08/20 00:03:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.20.18.1 2012/11/20 03:02:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.20.18.2 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,6 +250,7 @@ icp_pci_attach(device_t parent, device_t self, void *aux)
 	u_int8_t protocol;
 	pci_intr_handle_t ih;
 	const char *intrstr;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	pa = aux;
 	status = 0;
@@ -547,7 +548,7 @@ icp_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error("couldn't map interrupt\n");
 		goto bail_out;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	icp->icp_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, icp_intr, icp);
 	if (icp->icp_ih == NULL) {
 		aprint_error("couldn't establish interrupt");

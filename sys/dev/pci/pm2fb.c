@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.16.2.1 2012/11/20 03:02:28 tls Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.16.2.2 2014/08/20 00:03:48 tls Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.16.2.1 2012/11/20 03:02:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.16.2.2 2014/08/20 00:03:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -405,7 +405,8 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 			/* do some minimal setup to avoid weirdnesses later */
 			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1, 
 			   &defattr);
-		}
+		} else
+			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
 			   min(2047, (sc->sc_fbsize / sc->sc_stride))
 			    - sc->sc_height - 5,
@@ -502,9 +503,16 @@ pm2fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		if (new_mode != sc->sc_mode) {
 			sc->sc_mode = new_mode;
 			if(new_mode == WSDISPLAYIO_MODE_EMUL) {
+				/* first set the video mode */
+				if (sc->sc_videomode != NULL) {
+					pm2fb_set_mode(sc, sc->sc_videomode);
+				}
+				/* then initialize the drawing engine */
 				pm2fb_init(sc);
 				pm2fb_restore_palette(sc);
+				/* clean out the glyph cache */
 				glyphcache_wipe(&sc->sc_gc);
+				/* and redraw everything */
 				vcons_redraw_screen(ms);
 			} else
 				pm2fb_flush_engine(sc);
@@ -517,6 +525,11 @@ pm2fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		if (d->buffer_size < 128)
 			return EAGAIN;
 		return copyout(sc->sc_edid_data, d->edid_data, 128);
+	}
+
+	case WSDISPLAYIO_GET_FBINFO: {
+		struct wsdisplayio_fbinfo *fbi = data;
+		return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
 	}
 	}
 	return EPASSTHROUGH;
@@ -851,7 +864,7 @@ pm2fb_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 {
 	struct pm2fb_softc *sc = cookie;
 	uint32_t dir = 0;
-	int rxs, rxd, rwi, rxdelta;
+	int rxd, rwi, rxdelta;
 
 	if (yd <= ys) {
 		dir |= PM2RE_INC_Y;
@@ -883,7 +896,6 @@ pm2fb_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 			    PM2RECFG_WRITE_EN | PM2RECFG_PACKED |
 			    PM2RECFG_ROP_EN | (rop << 6));
 		}
-		rxs = xs >> 2;
 		rxd = xd >> 2;
 		rwi = (wi + 7) >> 2;
 		rxdelta = (xs & 0xffc) - (xd & 0xffc);
@@ -907,7 +919,6 @@ pm2fb_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 			    PM2RECFG_WRITE_EN | PM2RECFG_PACKED |
 			    PM2RECFG_ROP_EN | (rop << 6));
 		}
-		rxs = xs;
 		rxd = xd;
 		rwi = wi;
 		rxdelta = xs - xd;
@@ -1342,19 +1353,17 @@ pm2_setup_i2c(struct pm2fb_softc *sc)
 		 * best one we can support
 		 */
 		if (sc->sc_videomode == NULL) {
-			int n;
 			struct videomode *m = sc->sc_ei.edid_modes;
 
 			sort_modes(sc->sc_ei.edid_modes,
-			 	    &sc->sc_ei.edid_preferred_mode,
-				    sc->sc_ei.edid_nmodes);
-			while ((sc->sc_videomode == NULL) &&
-			       (n < sc->sc_ei.edid_nmodes)) {
-				if (MODE_IS_VALID(&m[n])) {
-					sc->sc_videomode = &m[n];
-				}
-				n++;
-			}
+			    &sc->sc_ei.edid_preferred_mode,
+			    sc->sc_ei.edid_nmodes);
+			if (sc->sc_videomode == NULL)
+				for (int n = 0; n < sc->sc_ei.edid_nmodes; n++)
+					if (MODE_IS_VALID(&m[n])) {
+						sc->sc_videomode = &m[n];
+						break;
+					}
 		}
 	}
 	if (sc->sc_videomode == NULL) {
@@ -1444,7 +1453,8 @@ pm2fb_i2c_write_byte(void *cookie, uint8_t val, int flags)
 static int
 pm2fb_set_pll(struct pm2fb_softc *sc, int freq)
 {
-	int m, n, p, diff, out_freq, bm, bn, bp, bdiff = 1000000, bfreq;
+	int m, n, p, diff, out_freq, bm = 1, bn = 3, bp = 0,
+	    bdiff = 1000000 /* , bfreq */;
 	int fi;
 	uint8_t temp;
 
@@ -1459,7 +1469,7 @@ pm2fb_set_pll(struct pm2fb_softc *sc, int freq)
 				diff = abs(out_freq - freq);
 				if (diff < bdiff) {
 					bdiff = diff;
-					bfreq = out_freq;
+					/* bfreq = out_freq; */
 					bm = m;
 					bn = n;
 					bp = p;

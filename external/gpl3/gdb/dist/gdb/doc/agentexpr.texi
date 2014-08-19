@@ -7,8 +7,7 @@
 
 @c This file is part of the GDB manual.
 @c
-@c Copyright (C) 2003, 2004, 2005, 2006, 2009, 2010, 2011
-@c Free Software Foundation, Inc.
+@c Copyright (C) 2003-2014 Free Software Foundation, Inc.
 @c
 @c See the file gdb.texinfo for copying conditions.
 
@@ -488,6 +487,28 @@ named @code{trace_quick16}, for consistency.
 @item @code{tracev} (0x2e) @var{n}: @result{} @var{a}
 Record the value of trace state variable number @var{n} in the trace
 buffer.  The handling of @var{n} is as described for @code{getv}.
+
+@item @code{tracenz} (0x2f)  @var{addr} @var{size} @result{}
+Record the bytes at @var{addr} in a trace buffer, for later retrieval
+by GDB.  Stop at either the first zero byte, or when @var{size} bytes
+have been recorded, whichever occurs first.
+
+@item @code{printf} (0x34)  @var{numargs} @var{string} @result{}
+Do a formatted print, in the style of the C function @code{printf}).
+The value of @var{numargs} is the number of arguments to expect on the
+stack, while @var{string} is the format string, prefixed with a
+two-byte length.  The last byte of the string must be zero, and is
+included in the length.  The format string includes escaped sequences
+just as it appears in C source, so for instance the format string
+@code{"\t%d\n"} is six characters long, and the output will consist of
+a tab character, a decimal number, and a newline.  At the top of the
+stack, above the values to be printed, this bytecode will pop a
+``function'' and ``channel''.  If the function is nonzero, then the
+target may treat it as a function and call it, passing the channel as
+a first argument, as with the C function @code{fprintf}.  If the
+function is zero, then the target may simply call a standard formatted
+print function of its choice.  In all, this bytecode pops 2 +
+@var{numargs} stack elements, and pushes nothing.
 
 @item @code{end} (0x27): @result{}
 Stop executing bytecode; the result should be the top element of the

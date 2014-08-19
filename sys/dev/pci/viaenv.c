@@ -1,4 +1,4 @@
-/*	$NetBSD: viaenv.c,v 1.31 2011/06/20 17:29:06 pgoyette Exp $	*/
+/*	$NetBSD: viaenv.c,v 1.31.12.1 2014/08/20 00:03:48 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.31 2011/06/20 17:29:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.31.12.1 2014/08/20 00:03:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,8 +343,10 @@ viaenv_attach(device_t parent, device_t self, void *aux)
 
 #undef COPYDESCR
 
-	for (i = 0; i < 10; i++)
+	for (i = 0; i < 10; i++) {
 		sc->sc_sensor[i].state = ENVSYS_SINVALID;
+		sc->sc_sensor[i].flags |= ENVSYS_FHAS_ENTROPY;
+	}
 
 	sc->sc_sme = sysmon_envsys_create();
 

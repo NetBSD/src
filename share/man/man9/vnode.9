@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.56 2012/02/08 09:32:47 wiz Exp $
+.\"     $NetBSD: vnode.9,v 1.56.6.1 2014/08/20 00:02:37 tls Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 8, 2012
+.Dd March 24, 2014
 .Dt VNODE 9
 .Os
 .Sh NAME
@@ -44,6 +44,7 @@
 .Nm vrecycle ,
 .Nm vgone ,
 .Nm vgonel ,
+.Nm vdead_check ,
 .Nm vflush ,
 .Nm vaccess ,
 .Nm bdevvp ,
@@ -79,11 +80,13 @@
 .Ft void
 .Fn ungetnewvnode "struct vnode *vp"
 .Ft int
-.Fn vrecycle "struct vnode *vp" "struct simplelock *inter_lkp" "struct lwp *l"
+.Fn vrecycle "struct vnode *vp"
 .Ft void
 .Fn vgone "struct vnode *vp"
 .Ft void
 .Fn vgonel "struct vnode *vp" "struct lwp *l"
+.Ft int
+.Fn vdead_check "struct vnode *vp" "int flags"
 .Ft int
 .Fn vflush "struct mount *mp" "struct vnode *skipvp" "int flags"
 .Ft int
@@ -183,58 +186,64 @@ C-preprocessor directives are used to alias the members of
 .Em v_uobj .
 .Pp
 Vnode flags are recorded by
-.Em v_flag .
+.Em v_iflag ,
+.Em v_vflag
+and
+.Em v_uflag .
 Valid flags are:
 .Pp
-.Bl -tag -offset indent -width VONWORKLST -compact
-.It VROOT
+.Bl -tag -offset indent -width ".Dv VI_WRMAPDIRTY" -compact
+.It Dv VV_ROOT
 This vnode is the root of its file system.
-.It VTEXT
-This vnode is a pure text prototype.
-.It VSYSTEM
+.It Dv VV_SYSTEM
 This vnode is being used by the kernel; only used to skip quota files in
 .Fn vflush .
-.It VISTTY
+.It Dv VV_ISTTY
 This vnode represents a tty; used when reading dead vnodes.
-.It VEXECMAP
-This vnode has executable mappings.
-.It VWRITEMAP
-This vnode might have PROT_WRITE user mappings.
-.It VWRITEMAPDIRTY
-This vnode might have dirty pages due to VWRITEMAP
-.It VLOCKSWORK
+.It Dv VV_MAPPED
+This vnode might have user mappings.
+.It Dv VV_MPSAFE
+This file system is MP safe.
+.It Dv VV_LOCKSWORK
 This vnode's file system supports locking.
-.It VXLOCK
+.It Dv VI_TEXT
+This vnode is a pure text prototype.
+.It Dv VI_EXECMAP
+This vnode has executable mappings.
+.It Dv VI_WRMAP
+This vnode might have PROT_WRITE user mappings.
+.It Dv VI_WRMAPDIRTY
+This vnode might have dirty pages due to
+.Dv VWRITEMAP .
+.It Dv VI_XLOCK
 This vnode is currently locked to change underlying type.
-.It VXWANT
-A process is waiting for this vnode.
-.It VBWAIT
-Waiting for output associated with this vnode to complete.
-.It VALIASED
-This vnode has an alias.
-.It VDIROP
+.It Dv VI_ONWORKLST
+This vnode is on syncer work-list.
+.It Dv VI_MARKER
+A dummy marker vnode.
+.It Dv VI_LAYER
+This vnode is on a layered file system.
+.It Dv VI_LOCKSHARE
+This vnode shares its
+.Em v_interlock
+with other vnodes.
+.It Dv VI_CLEAN
+This vnode has been reclaimed and is no longer attached to a file system.
+.It Dv VU_DIROP
 This vnode is involved in a directory operation.
 This flag is used exclusively by LFS.
-.It VLAYER
-This vnode is on a layered file system.
-.It VONWORKLST
-This vnode is on syncer work-list.
-.It VFREEING
-This vnode is being freed.
-.It VMAPPED
-This vnode might have user mappings.
 .El
 .Pp
-The VXLOCK flag is used to prevent multiple processes from entering
+The
+.Dv VI_XLOCK
+flag is used to prevent multiple processes from entering
 the vnode reclamation code.
 It is also used as a flag to indicate that reclamation is in progress.
-The VXWANT flag is set by threads that wish to be awakened when
-reclamation is finished.
 Before
-.Em v_flag
+.Em v_iflag
 can be modified, the
 .Em v_interlock
-simplelock must be acquired.
+mutex must be acquired.
 See
 .Xr lock 9
 for details on the kernel locking API.
@@ -272,8 +281,7 @@ and
 reach zero, the vnode is recycled to the freelist and may be reused
 for another file.
 The transition to and from the freelist is handled by
-.Fn getnewvnode ,
-.Fn ungetnewvnode
+a kernel thread
 and
 .Fn vrecycle .
 Access to
@@ -283,7 +291,7 @@ and
 .Em v_holdcnt
 is also protected by the
 .Em v_interlock
-simplelock.
+mutex.
 .Pp
 The number of pending synchronous and asynchronous writes on the
 vnode are recorded in
@@ -334,8 +342,7 @@ must call
 to increment the reference count and retrieve it from the freelist.
 When a user wants a new vnode for another file,
 .Fn getnewvnode
-is invoked to remove a vnode from the freelist and initialize it for
-the new file.
+is invoked to allocate a vnode and initialize it for the new file.
 .Pp
 The type of object the vnode represents is recorded by
 .Em v_type .
@@ -344,23 +351,23 @@ performed on valid file system objects.
 Valid types are:
 .Pp
 .Bl -tag -offset indent -width VFIFO -compact
-.It VNON
+.It Dv VNON
 The vnode has no type.
-.It VREG
+.It Dv VREG
 The vnode represents a regular file.
-.It VDIR
+.It Dv VDIR
 The vnode represents a directory.
-.It VBLK
+.It Dv VBLK
 The vnode represents a block special device.
-.It VCHR
+.It Dv VCHR
 The vnode represents a character special device.
-.It VLNK
+.It Dv VLNK
 The vnode represents a symbolic link.
-.It VSOCK
+.It Dv VSOCK
 The vnode represents a socket.
-.It VFIFO
+.It Dv VFIFO
 The vnode represents a pipe.
-.It VBAD
+.It Dv VBAD
 The vnode represents a bad file (not currently used).
 .El
 .Pp
@@ -377,59 +384,59 @@ member is read-only.
 Valid tag types are:
 .Pp
 .Bl -tag -offset indent -width "VT_FILECORE " -compact
-.It VT_NON
+.It Dv VT_NON
 non file system
-.It VT_UFS
+.It Dv VT_UFS
 universal file system
-.It VT_NFS
+.It Dv VT_NFS
 network file system
-.It VT_MFS
+.It Dv VT_MFS
 memory file system
-.It VT_MSDOSFS
+.It Dv VT_MSDOSFS
 FAT file system
-.It VT_LFS
+.It Dv VT_LFS
 log-structured file system
-.It VT_LOFS
+.It Dv VT_LOFS
 loopback file system
-.It VT_FDESC
+.It Dv VT_FDESC
 file descriptor file system
-.It VT_NULL
+.It Dv VT_NULL
 null file system layer
-.It VT_UMAP
+.It Dv VT_UMAP
 uid/gid remapping file system layer
-.It VT_KERNFS
+.It Dv VT_KERNFS
 kernel interface file system
-.It VT_PROCFS
+.It Dv VT_PROCFS
 process interface file system
-.It VT_AFS
+.It Dv VT_AFS
 AFS file system
-.It VT_ISOFS
+.It Dv VT_ISOFS
 ISO 9660 file system(s)
-.It VT_UNION
+.It Dv VT_UNION
 union file system
-.It VT_ADOSFS
+.It Dv VT_ADOSFS
 Amiga file system
-.It VT_EXT2FS
+.It Dv VT_EXT2FS
 Linux's ext2 file system
-.It VT_CODA
+.It Dv VT_CODA
 Coda file system
-.It VT_FILECORE
+.It Dv VT_FILECORE
 filecore file system
-.It VT_NTFS
+.It Dv VT_NTFS
 Microsoft NT's file system
-.It VT_VFS
+.It Dv VT_VFS
 virtual file system
-.It VT_OVERLAY
+.It Dv VT_OVERLAY
 overlay file system
-.It VT_SMBFS
+.It Dv VT_SMBFS
 SMB file system
-.It VT_PTYFS
+.It Dv VT_PTYFS
 pseudo-terminal device file system
-.It VT_TMPFS
+.It Dv VT_TMPFS
 efficient memory file system
-.It VT_UDF
+.It Dv VT_UDF
 universal disk format file system
-.It VT_SYSVBFS
+.It Dv VT_SYSVBFS
 systemV boot file system
 .El
 .Pp
@@ -529,7 +536,9 @@ The argument
 specifies the
 .Xr rwlock 9
 flags used to lock the vnode.
-If the VXLOCK is set in
+If the
+.Dv VI_XLOCK
+flag is set in
 .Fa vp Ns 's
 .Em v_flag ,
 vnode
@@ -538,7 +547,7 @@ is being recycled in
 .Fn vgone
 and the calling thread sleeps until the transition is complete.
 When it is awakened, an error is returned to indicate that the vnode is
-no longer usable (possibly having been recycled to a new file system type).
+no longer usable.
 .It Fn vput "vp"
 Unlock vnode
 .Fa vp
@@ -568,14 +577,7 @@ and moving the vnode from the holdlist to the freelist.
 .It Fn getnewvnode "tag" "mp" "vops" "slock" "vpp"
 Retrieve the next vnode from the freelist.
 .Fn getnewvnode
-must choose whether to allocate a new vnode or recycle an existing
-one.
-The criterion for allocating a new one is that the total number of
-vnodes is less than the number desired or there are no vnodes on either
-free list.
-Generally only vnodes that have no buffers associated with them are
-recycled and the next vnode from the freelist is retrieved.
-If the freelist is empty, vnodes on the holdlist are considered.
+allocates a new vnode.
 The new vnode is returned in the address specified by
 .Fa vpp .
 .Pp
@@ -617,12 +619,12 @@ This function is needed for
 .Xr VFS_VGET 9
 which may need to push back a vnode in case of a locking race
 condition.
-.It Fn vrecycle "vp" "inter_lkp" "l"
-Recycle the unused vnode
+.It Fn vrecycle "vp"
+Recycle the referenced vnode
 .Fa vp
-to the front of the freelist.
+if this is the last reference.
 .Fn vrecycle
-is a null operation if the reference count is greater than zero.
+is a null operation if the reference count is greater than one.
 .It Fn vgone "vp"
 Eliminate all activity associated with the unlocked vnode
 .Fa vp
@@ -631,6 +633,25 @@ in preparation for recycling.
 Eliminate all activity associated with the locked vnode
 .Fa vp
 in preparation for recycling.
+.It Fn vdead_check "vp" "flags"
+Check the vnode
+.Fa vp
+for being or becoming dead.
+Returns
+.Er ENOENT
+for a dead vnode and zero otherwise.
+If
+.Fa flags
+is
+.Dv VDEAD_NOWAIT
+it will return
+.Er EBUSY
+if the vnode is becoming dead and the function will not sleep.
+.Pp
+Whenever this function returns a non-zero value all future calls
+for this
+.Fa vp
+will also return a non-zero value.
 .It Fn vflush "mp" "skipvp" "flags"
 Remove any vnodes in the vnode table belonging to mount point
 .Fa mp .
@@ -643,14 +664,21 @@ The argument
 .Fa flags
 is a set of flags modifying the operation of
 .Fn vflush .
-If FORCECLOSE is not specified, there should not be any active vnodes and
+If
+.Dv FORCECLOSE
+is not specified, there should not be any active vnodes and
 the error
 .Er EBUSY
 is returned if any are found (this is a user error, not a system error).
-If FORCECLOSE is specified, active vnodes that are found are detached.
-If WRITECLOSE is set, only flush out regular file vnodes open for
-writing.
-SKIPSYSTEM causes any vnodes marked V_SYSTEM to be skipped.
+If
+.Dv FORCECLOSE
+is specified, active vnodes that are found are detached.
+If
+.Dv WRITECLOSE
+is set, only flush out regular file vnodes open for writing.
+SKIPSYSTEM causes any vnodes marked
+.Dv V_SYSTEM
+to be skipped.
 .It Fn vaccess "type" "file_mode" "uid" "gid" "acc_mode" "cred"
 Do access checking by comparing the file's permissions to the caller's
 desired access type
@@ -684,7 +712,9 @@ for the vnode
 .Em bp-\*[Gt]b_vp
 and do a wakeup if requested and
 .Em vp-\*[Gt]vflag
-has VBWAIT set.
+has
+.Dv VBWAIT
+set.
 .It Fn vflushbuf "vp" "sync"
 Flush all dirty buffers to disk for the file with the locked vnode
 .Fa vp .

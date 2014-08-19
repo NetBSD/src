@@ -1,8 +1,8 @@
 /* mpz_mul_ui/si (product, multiplier, small_multiplicand) -- Set PRODUCT to
    MULTIPLICATOR times SMALL_MULTIPLICAND.
 
-Copyright 1991, 1993, 1994, 1996, 2000, 2001, 2002, 2005, 2008 Free Software
-Foundation, Inc.
+Copyright 1991, 1993, 1994, 1996, 2000, 2001, 2002, 2005, 2008, 2012
+Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -26,7 +26,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #ifdef OPERATION_mul_si
 #define FUNCTION               mpz_mul_si
 #define MULTIPLICAND_UNSIGNED
-#define MULTIPLICAND_ABS(x)    ((unsigned long) ABS(x))
+#define MULTIPLICAND_ABS(x)    ABS_CAST(unsigned long, (x))
 #endif
 
 #ifdef OPERATION_mul_ui
@@ -44,27 +44,27 @@ void
 FUNCTION (mpz_ptr prod, mpz_srcptr mult,
           MULTIPLICAND_UNSIGNED long int small_mult)
 {
-  mp_size_t size = SIZ(mult);
-  mp_size_t sign_product = size;
+  mp_size_t size;
+  mp_size_t sign_product;
   mp_limb_t sml;
   mp_limb_t cy;
   mp_ptr pp;
 
-  if (size == 0 || small_mult == 0)
+  sign_product = SIZ(mult);
+  if (sign_product == 0 || small_mult == 0)
     {
       SIZ(prod) = 0;
       return;
     }
 
-  size = ABS (size);
+  size = ABS (sign_product);
 
   sml = MULTIPLICAND_ABS (small_mult);
 
   if (sml <= GMP_NUMB_MAX)
     {
-      MPZ_REALLOC (prod, size + 1);
-      pp = PTR(prod);
-      cy = mpn_mul_1 (pp, PTR(mult), size, sml & GMP_NUMB_MASK);
+      pp = MPZ_REALLOC (prod, size + 1);
+      cy = mpn_mul_1 (pp, PTR(mult), size, sml);
       pp[size] = cy;
       size += cy != 0;
     }
@@ -79,14 +79,14 @@ FUNCTION (mpz_ptr prod, mpz_srcptr mult,
 
       tp = TMP_ALLOC_LIMBS (size + 2);
 
+      /* Use, maybe, mpn_mul_2? */
       cy = mpn_mul_1 (tp, PTR(mult), size, sml & GMP_NUMB_MASK);
       tp[size] = cy;
       cy = mpn_addmul_1 (tp + 1, PTR(mult), size, sml >> GMP_NUMB_BITS);
       tp[size + 1] = cy;
       size += 2;
       MPN_NORMALIZE_NOT_ZERO (tp, size); /* too general, need to trim one or two limb */
-      MPZ_REALLOC (prod, size);
-      pp = PTR(prod);
+      pp = MPZ_REALLOC (prod, size);
       MPN_COPY (pp, tp, size);
       TMP_FREE;
     }

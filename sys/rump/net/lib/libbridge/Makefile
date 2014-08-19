@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/12/08 18:06:43 pooka Exp $
+#	$NetBSD: Makefile,v 1.1.20.1 2014/08/20 00:04:42 tls Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../net
@@ -7,7 +7,7 @@ LIB=	rumpnet_bridge
 
 SRCS=	if_bridge.c bridgestp.c
 
-SRCS+=	component.c
+SRCS+=	bridge_component.c
 
 CPPFLAGS+=	-I${.CURDIR}/../libnet/opt
 

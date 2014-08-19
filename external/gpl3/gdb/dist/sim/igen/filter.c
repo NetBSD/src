@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2002-2014 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -216,29 +216,6 @@ is_filtered_out (filter *filters, const char *flags)
 }
 
 
-#if 0
-int
-it_is (const char *flag, const char *flags)
-{
-  int flag_len = strlen (flag);
-  while (*flags != '\0')
-    {
-      if (!strncmp (flags, flag, flag_len)
-	  && (flags[flag_len] == ',' || flags[flag_len] == '\0'))
-	return 1;
-      while (*flags != ',')
-	{
-	  if (*flags == '\0')
-	    return 0;
-	  flags++;
-	}
-      flags++;
-    }
-  return 0;
-}
-#endif
-
-
 char *
 filter_next (filter *set, char *member)
 {
@@ -294,12 +271,7 @@ main (int argc, char **argv)
 
   /* dump various info */
   l = lf_open ("-", "stdout", lf_omit_references, lf_is_text, "tmp-filter");
-#if 0
-  if (is_filtered_out (argv[1], superset))
-    lf_printf (l, "excluded\n");
-  else
-    lf_printf (l, "included\n");
-#endif
+
   /* subset */
   {
     dump_filter (l, "{", subset, " }");

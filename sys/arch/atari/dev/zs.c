@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.74 2011/06/30 20:09:21 wiz Exp $	*/
+/*	$NetBSD: zs.c,v 1.74.12.1 2014/08/20 00:02:48 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.74 2011/06/30 20:09:21 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.74.12.1 2014/08/20 00:02:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,8 +238,18 @@ dev_type_tty(zstty);
 dev_type_poll(zspoll);
 
 const struct cdevsw zs_cdevsw = {
-	zsopen, zsclose, zsread, zswrite, zsioctl,
-	zsstop, zstty, zspoll, nommap, ttykqfilter, D_TTY
+	.d_open = zsopen,
+	.d_close = zsclose,
+	.d_read = zsread,
+	.d_write = zswrite,
+	.d_ioctl = zsioctl,
+	.d_stop = zsstop,
+	.d_tty = zstty,
+	.d_poll = zspoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 /* Interrupt handlers. */
@@ -1325,5 +1335,6 @@ zs_loadchannelregs(struct zschan *zc, uint8_t *reg)
 	ZS_WRITE(zc, 15, reg[15]);
 	ZS_WRITE(zc,  3, reg[3]);
 	ZS_WRITE(zc,  5, reg[5]);
+	__USE(i);
 }
 #endif /* NZS > 1 */

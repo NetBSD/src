@@ -1,7 +1,6 @@
 /* GNU/Linux/BFIN specific low level interface, for the remote server for GDB.
 
-   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
 
    Contributed by Analog Devices, Inc.
 
@@ -27,6 +26,7 @@
 
 /* Defined in auto-generated file reg-bfin.c.  */
 void init_registers_bfin (void);
+extern const struct target_desc *tdesc_bfin;
 
 static int bfin_regmap[] =
 {
@@ -91,17 +91,48 @@ bfin_breakpoint_at (CORE_ADDR where)
   return 0;
 }
 
+static void
+bfin_arch_setup (void)
+{
+  current_process ()->tdesc = tdesc_bfin;
+}
+
+static struct usrregs_info bfin_usrregs_info =
+  {
+    bfin_num_regs,
+    bfin_regmap,
+  };
+
+static struct regs_info regs_info =
+  {
+    NULL, /* regset_bitmap */
+    &bfin_usrregs_info,
+  };
+
+static const struct regs_info *
+bfin_regs_info (void)
+{
+  return &regs_info;
+}
+
 struct linux_target_ops the_low_target = {
-  init_registers_bfin,
-  bfin_num_regs,
-  bfin_regmap,
+  bfin_arch_setup,
+  bfin_regs_info,
   bfin_cannot_fetch_register,
   bfin_cannot_store_register,
+  NULL, /* fetch_register */
   bfin_get_pc,
   bfin_set_pc,
   bfin_breakpoint,
   bfin_breakpoint_len,
-  0,
+  NULL, /* breakpoint_reinsert_addr */
   2,
   bfin_breakpoint_at,
 };
+
+
+void
+initialize_low_arch (void)
+{
+  init_registers_bfin ();
+}

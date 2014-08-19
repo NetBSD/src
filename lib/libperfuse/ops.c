@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.59.2.1 2012/11/20 03:00:44 tls Exp $ */
+/*  $NetBSD: ops.c,v 1.59.2.2 2014/08/20 00:02:19 tls Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -644,13 +644,23 @@ fuse_to_dirent(struct puffs_usermount *pu, puffs_cookie_t opc,
 		 */
 		if (fd->ino == PERFUSE_UNKNOWN_INO) {
 			struct puffs_node *pn;
+			struct perfuse_node_data *pnd = PERFUSE_NODE_DATA(opc);
 
-			if (node_lookup_common(pu, opc, NULL, fd->name,
-					       NULL, &pn) != 0) {
-				DWARNX("node_lookup_common failed");
+			/* 
+			 * Avoid breaking out of fs 
+			 * by lookup to .. on root
+			 */
+			if ((strcmp(fd->name, "..") == 0) && 
+			    (pnd->pnd_nodeid == FUSE_ROOT_ID)) {
+				fd->ino = FUSE_ROOT_ID;
 			} else {
-				fd->ino = pn->pn_va.va_fileid;
-				(void)perfuse_node_reclaim(pu, pn);
+				if (node_lookup_common(pu, opc, NULL, fd->name,
+						       NULL, &pn) != 0) {
+					DWARNX("node_lookup_common failed");
+				} else {
+					fd->ino = pn->pn_va.va_fileid;
+					(void)perfuse_node_reclaim(pu, pn);
+				}
 			}
 		}
 
@@ -1369,10 +1379,33 @@ perfuse_node_open(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
 	 * Do not open twice, and do not reopen for reading
 	 * if we already have write handle.
 	 */
-	if (((mode & FREAD) && (pnd->pnd_flags & PND_RFH)) ||
-	    ((mode & FREAD) && (pnd->pnd_flags & PND_WFH)) ||
-	    ((mode & FWRITE) && (pnd->pnd_flags & PND_WFH)))
+	switch (mode & (FREAD|FWRITE)) {
+	case FREAD:
+		if (pnd->pnd_flags & (PND_RFH|PND_WFH))
+			goto out;
+		break;
+	case FWRITE:
+		if (pnd->pnd_flags & PND_WFH)
+			goto out;
+		break;
+	case FREAD|FWRITE:
+		if (pnd->pnd_flags & PND_WFH)
+			goto out;
+
+		/*
+		 * Corner case: if already open for reading (PND_RFH)
+		 * and re-opening FREAD|FWRITE, we need to reopen, 
+		 * but only for writing. Note the change on mode 
+		 * will only affect perfuse_new_fh()
+		 */
+		if (pnd->pnd_flags & PND_RFH)
+			mode &= ~FREAD;
+		break;
+	default:
+		DWARNX("open without either FREAD nor FWRITE");
+		error = EPERM;
 		goto out;
+	}
 	
 	/*
 	 * Queue open on a node so that we do not open
@@ -1521,7 +1554,7 @@ perfuse_node_getattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct fuse_attr_out *fao;
 	int error = 0;
 	
-	if (pnd->pnd_flags & PND_REMOVED)
+	if ((pnd->pnd_flags & PND_REMOVED) && !(pnd->pnd_flags & PND_OPEN))
 		return ENOENT;
 
 	node_ref(opc);
@@ -2723,8 +2756,8 @@ perfuse_node_reclaim(struct puffs_usermount *pu, puffs_cookie_t opc)
 #ifdef PERFUSE_DEBUG
 	if ((pnd->pnd_flags & PND_OPEN) ||
 	       !TAILQ_EMPTY(&pnd->pnd_pcq))
-		DERRX(EX_SOFTWARE, "%s: opc = %p: still open",
-		      __func__, opc);
+		DERRX(EX_SOFTWARE, "%s: opc = %p \"%s\": still open",
+		      __func__, opc, pnd->pnd_name);
 
 	if ((pnd->pnd_flags & PND_BUSY) ||
 	       !TAILQ_EMPTY(&pnd->pnd_pcq))
@@ -3290,6 +3323,10 @@ perfuse_node_getextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	char *np;
 	int error;
 
+	/* system namespace attrs are not accessible to non root users */
+	if (attrns == EXTATTR_NAMESPACE_SYSTEM && !puffs_cred_isjuggernaut(pcr))
+		return EPERM;
+
 	node_ref(opc);
 	ps = puffs_getspecific(pu);
 	attrname = perfuse_native_ns(attrns, attrname, fuse_attrname);
@@ -3326,9 +3363,18 @@ perfuse_node_getextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	 */
 	foh = GET_OUTHDR(ps, pm);
 	np = (char *)(void *)(foh + 1);
+	len = foh->len - sizeof(*foh);
+
+	if (attrsize != NULL)
+		*attrsize = len;
 
 	if (resid != NULL) {
-		len = MAX(foh->len - sizeof(*foh), *resid);
+		if (*resid < len) {
+			error = ERANGE;
+			ps->ps_destroy_msg(pm);
+			goto out;
+		}
+
 		(void)memcpy(attr, np, len);
 		*resid -= len;
 	}
@@ -3355,6 +3401,10 @@ perfuse_node_setextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	char *np;
 	int error;
 	
+	/* system namespace attrs are not accessible to non root users */
+	if (attrns == EXTATTR_NAMESPACE_SYSTEM && !puffs_cred_isjuggernaut(pcr))
+		return EPERM;
+
 	node_ref(opc);
 	ps = puffs_getspecific(pu);
 	attrname = perfuse_native_ns(attrns, attrname, fuse_attrname);
@@ -3395,9 +3445,13 @@ perfuse_node_listextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct fuse_getxattr_out *fgo;
 	struct fuse_out_header *foh;
 	char *np;
-	size_t len, puffs_len;
+	size_t len, puffs_len, i, attrlen, outlen;
 	int error;
 	
+	/* system namespace attrs are not accessible to non root users */
+	if (attrns == EXTATTR_NAMESPACE_SYSTEM && !puffs_cred_isjuggernaut(pcr))
+		return EPERM;
+
 	node_ref(opc);
 
 	ps = puffs_getspecific(pu);
@@ -3437,28 +3491,44 @@ perfuse_node_listextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	np = (char *)(void *)(foh + 1);
 	puffs_len = foh->len - sizeof(*foh);
 
-	if (attrs != NULL) {
-#ifdef PUFFS_EXTATTR_LIST_LENPREFIX
-		/* 
-		 * Convert the FUSE reply to length prefixed strings
-		 * if this is what the kernel wants.
-		 */
-		if (flag & PUFFS_EXTATTR_LIST_LENPREFIX) {
-			size_t i, attrlen;
-
-			for (i = 0; i < puffs_len; i += attrlen + 1) {
-				attrlen = strlen(np + i);
-				(void)memmove(np + i + 1, np + i, attrlen);
-				*(np + i) = (uint8_t)attrlen;
-			}	
-		}
-#endif /* PUFFS_EXTATTR_LIST_LENPREFIX */
-		(void)memcpy(attrs, np, puffs_len);
-		*resid -= puffs_len;
-	}
-
-	if (attrsize != NULL) 
+	if (attrsize != NULL)
 		*attrsize = puffs_len;
+
+	if (attrs != NULL) {
+		if (*resid < puffs_len) {
+			error = ERANGE;
+			ps->ps_destroy_msg(pm);
+			goto out;
+		}
+
+		outlen = 0;
+	
+		for (i = 0; i < puffs_len; i += attrlen + 1) {
+			attrlen = strlen(np + i);
+
+			/*
+			 * Filter attributes per namespace
+			 */
+			if (!perfuse_ns_match(attrns, np + i))
+				continue;
+
+#ifdef PUFFS_EXTATTR_LIST_LENPREFIX
+			/* 
+			 * Convert the FUSE reply to length prefixed strings
+			 * if this is what the kernel wants.
+			 */
+			if (flag & PUFFS_EXTATTR_LIST_LENPREFIX) {
+				(void)memcpy(attrs + outlen + 1,
+					     np + i, attrlen);
+				*(attrs + outlen) = (uint8_t)attrlen;
+			} else 
+#endif /* PUFFS_EXTATTR_LIST_LENPREFIX */
+			(void)memcpy(attrs + outlen, np + i, attrlen + 1);
+			outlen += attrlen + 1;
+		}	
+
+		*resid -= outlen;
+	}
 
 	ps->ps_destroy_msg(pm);
 	error = 0;
@@ -3479,6 +3549,10 @@ perfuse_node_deleteextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	char *np;
 	int error;
 	
+	/* system namespace attrs are not accessible to non root users */
+	if (attrns == EXTATTR_NAMESPACE_SYSTEM && !puffs_cred_isjuggernaut(pcr))
+		return EPERM;
+
 	node_ref(opc);
 
 	ps = puffs_getspecific(pu);

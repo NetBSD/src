@@ -1,4 +1,4 @@
-/*	$NetBSD: htable.c,v 1.1.1.2 2010/06/17 18:07:14 tron Exp $	*/
+/*	$NetBSD: htable.c,v 1.1.1.2.12.1 2014/08/19 23:59:45 tls Exp $	*/
 
 /*++
 /* NAME
@@ -96,7 +96,7 @@
 /*	on the value of the "how" argument.  Specify HTABLE_SEQ_FIRST
 /*	to start a new sequence, HTABLE_SEQ_NEXT to continue, and
 /*	HTABLE_SEQ_STOP to terminate a sequence early.  The caller
-/*	must not delete the current element.
+/*	must not delete an element before it is visited.
 /* RESTRICTIONS
 /*	A callback function should not modify the hash table that is
 /*	specified to its caller.
@@ -140,7 +140,7 @@ static unsigned htable_hash(const char *s, unsigned size)
      */
 
     while (*s) {
-	h = (h << 4U) + *s++;
+	h = (h << 4U) + *(unsigned const char *) s++;
 	if ((g = (h & 0xf0000000)) != 0) {
 	    h ^= (g >> 24U);
 	    h ^= g;
@@ -184,7 +184,7 @@ HTABLE *htable_create(int size)
 
     table = (HTABLE *) mymalloc(sizeof(HTABLE));
     htable_size(table, size < 13 ? 13 : size);
-    table->seq_element = 0;
+    table->seq_bucket = table->seq_element = 0;
     return (table);
 }
 
@@ -215,7 +215,7 @@ HTABLE_INFO *htable_enter(HTABLE *table, const char *key, char *value)
 {
     HTABLE_INFO *ht;
 
-    if (table->used >= table->size && table->seq_element == 0)
+    if (table->used >= table->size)
 	htable_grow(table);
     ht = (HTABLE_INFO *) mymalloc(sizeof(HTABLE_INFO));
     ht->key = mystrdup(key);
@@ -305,6 +305,9 @@ void    htable_free(HTABLE *table, void (*free_fn) (char *))
 	}
 	myfree((char *) table->data);
 	table->data = 0;
+	if (table->seq_bucket)
+	    myfree((char *) table->seq_bucket);
+	table->seq_bucket = 0;
 	myfree((char *) table);
     }
 }
@@ -354,23 +357,22 @@ HTABLE_INFO *htable_sequence(HTABLE *table, int how)
 
     switch (how) {
     case HTABLE_SEQ_FIRST:			/* start new sequence */
-	table->seq_bucket = table->data;
-	table->seq_element = table->seq_bucket[0];
-	break;
+	if (table->seq_bucket)
+	    myfree((char *) table->seq_bucket);
+	table->seq_bucket = htable_list(table);
+	table->seq_element = table->seq_bucket;
+	return (*(table->seq_element)++);
     case HTABLE_SEQ_NEXT:			/* next element */
-	if (table->seq_element) {
-	    table->seq_element = table->seq_element->next;
-	    break;
-	}
+	if (table->seq_element && *table->seq_element)
+	    return (*(table->seq_element)++);
 	/* FALLTHROUGH */
     default:					/* terminate sequence */
-	return (table->seq_element = 0);
+	if (table->seq_bucket) {
+	    myfree((char *) table->seq_bucket);
+	    table->seq_bucket = table->seq_element = 0;
+	}
+	return (0);
     }
-
-    while (table->seq_element == 0
-	   && ++(table->seq_bucket) < table->data + table->size)
-	table->seq_element = table->seq_bucket[0];
-    return (table->seq_element);
 }
 
 #ifdef TEST

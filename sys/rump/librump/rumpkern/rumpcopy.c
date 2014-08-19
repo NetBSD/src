@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcopy.c,v 1.17 2011/01/18 22:21:23 haad Exp $	*/
+/*	$NetBSD: rumpcopy.c,v 1.17.16.1 2014/08/20 00:04:41 tls Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.17 2011/01/18 22:21:23 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.17.16.1 2014/08/20 00:04:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -115,6 +115,10 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 	if (len == 0)
 		return 0;
 
+	if (__predict_false(uaddr == NULL)) {
+		return EFAULT;
+	}
+
 	if (RUMP_LOCALPROC_P(curproc))
 		return copystr(uaddr, kaddr, len, done);
 
@@ -143,6 +147,10 @@ copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 {
 	size_t slen;
 	int error;
+
+	if (__predict_false(uaddr == NULL && len)) {
+		return EFAULT;
+	}
 
 	if (RUMP_LOCALPROC_P(curproc))
 		return copystr(kaddr, uaddr, len, done);

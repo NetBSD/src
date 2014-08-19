@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.24 2010/11/13 13:52:02 uebayasi Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.24.18.1 2014/08/20 00:03:38 tls Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.24 2010/11/13 13:52:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.24.18.1 2014/08/20 00:03:38 tls Exp $");
 
 #include "opt_ddb.h"
 
@@ -1240,6 +1240,7 @@ wd33c93_xfin(struct wd33c93_softc *sc, int len, void *bp)
 			} else {
 				u_char foo;
 				GET_SBIC_data (sc, foo);
+				__USE(foo);
 			}
 			wait = wd33c93_data_wait;
 		}
@@ -1377,7 +1378,6 @@ int
 wd33c93_intr(struct wd33c93_softc *sc)
 {
 	u_char	asr, csr;
-	int	i;
 
 	/*
 	 * pending interrupt?
@@ -1391,7 +1391,7 @@ wd33c93_intr(struct wd33c93_softc *sc)
 	do {
 		SBIC_DEBUG(INTS, ("intr[csr=0x%x]", csr));
 
-		i = wd33c93_nextstate(sc, sc->sc_nexus, csr, asr);
+		(void)wd33c93_nextstate(sc, sc->sc_nexus, csr, asr);
 		WAIT_CIP(sc);		/* XXX */
 		if (sc->sc_state == SBIC_CONNECTED) {
 			GET_SBIC_asr(sc, asr);
@@ -1421,7 +1421,7 @@ int
 wd33c93_poll(struct wd33c93_softc *sc, struct wd33c93_acb *acb)
 {
 	u_char			asr, csr=0;
-	int			i, count;
+	int			count;
 	struct scsipi_xfer	*xs = acb->xs;
 
 	SBIC_WAIT(sc, SBIC_ASR_INT, wd33c93_cmd_wait);
@@ -1433,7 +1433,7 @@ wd33c93_poll(struct wd33c93_softc *sc, struct wd33c93_acb *acb)
 		if (asr & SBIC_ASR_INT) {
 			GET_SBIC_csr(sc, csr);
 			sc->sc_flags |= SBICF_NODMA;
-			i = wd33c93_nextstate(sc, sc->sc_nexus, csr, asr);
+			(void)wd33c93_nextstate(sc, sc->sc_nexus, csr, asr);
 			WAIT_CIP(sc);		/* XXX */
 		} else {
 			DELAY(1000);
@@ -1475,6 +1475,7 @@ wd33c93_msgin_phase(struct wd33c93_softc *sc, int reselect)
 	u_char asr, csr, *msg;
 
 	GET_SBIC_asr(sc, asr);
+	__USE(asr);
 
 	SBIC_DEBUG(MSGS, ("wd33c93msgin asr=%02x\n", asr));
 

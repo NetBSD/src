@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.17 2008/06/28 12:13:38 tsutsui Exp $	*/
+/*	$NetBSD: iommu.c,v 1.17.40.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.17 2008/06/28 12:13:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.17.40.1 2014/08/20 00:03:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ CFATTACH_DECL_NEW(iommu, 0,
 
 static iommu_pde_t *iommu_va;
 
-static int 
+static int
 iommu_match(device_t parent, cfdata_t cf, void *args)
 {
 	/* This driver only supports one instance. */
@@ -69,7 +69,7 @@ iommu_match(device_t parent, cfdata_t cf, void *args)
 	return 1;
 }
 
-static void 
+static void
 iommu_attach(device_t parent, device_t self, void *args)
 {
 	struct confargs *ca = args;
@@ -80,7 +80,7 @@ iommu_attach(device_t parent, device_t self, void *args)
 	aprint_normal("\n");
 }
 
-void 
+void
 iommu_enter(uint32_t sa, uint32_t pa)
 {
 	int pn;
@@ -100,7 +100,7 @@ iommu_enter(uint32_t sa, uint32_t pa)
 	iommu_va[pn].addr.raw = pa;
 }
 
-void 
+void
 iommu_remove(uint32_t sa, uint32_t len)
 {
 	int pn;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axereg.h,v 1.14.6.1 2013/02/25 00:29:34 tls Exp $	*/
+/*	$NetBSD: if_axereg.h,v 1.14.6.2 2014/08/20 00:03:51 tls Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -122,6 +122,43 @@
 #define AXE_178_MEDIA_SBP			0x0800
 #define AXE_178_MEDIA_SUPERMAC			0x1000
 
+#define AXE_PHY_SEL_PRI		1
+#define AXE_PHY_SEL_SEC		0
+#define AXE_PHY_TYPE_MASK	0xE0
+#define AXE_PHY_TYPE_SHIFT	5
+#define AXE_PHY_TYPE(x)		\
+	(((x) & AXE_PHY_TYPE_MASK) >> AXE_PHY_TYPE_SHIFT)
+
+#define PHY_TYPE_100_HOME	0	/* 10/100 or 1M HOME PHY */
+#define PHY_TYPE_GIG		1	/* Gigabit PHY */
+#define PHY_TYPE_SPECIAL	4	/* Special case */
+#define PHY_TYPE_RSVD		5	/* Reserved */
+#define PHY_TYPE_NON_SUP	7	/* Non-supported PHY */
+
+#define AXE_PHY_NO_MASK		0x1F
+#define AXE_PHY_NO(x)		((x) & AXE_PHY_NO_MASK)
+
+#define AXE_772_PHY_NO_EPHY	0x10	/* Embedded 10/100 PHY of AX88772 */
+
+#define	AXE_GPIO0_EN		0x01
+#define	AXE_GPIO0		0x02
+#define	AXE_GPIO1_EN		0x04
+#define	AXE_GPIO1		0x08
+#define	AXE_GPIO2_EN		0x10
+#define	AXE_GPIO2		0x20
+#define	AXE_GPIO_RELOAD_EEPROM	0x80
+
+#define	AXE_PHY_MODE_MARVELL		0x00
+#define	AXE_PHY_MODE_CICADA		0x01
+#define	AXE_PHY_MODE_AGERE		0x02
+#define	AXE_PHY_MODE_CICADA_V2		0x05
+#define	AXE_PHY_MODE_AGERE_GMII		0x06
+#define	AXE_PHY_MODE_CICADA_V2_ASIX	0x09
+#define	AXE_PHY_MODE_REALTEK_8211CL	0x0C
+#define	AXE_PHY_MODE_REALTEK_8211BN	0x0D
+#define	AXE_PHY_MODE_REALTEK_8251CL	0x0E
+#define	AXE_PHY_MODE_ATTANSIC		0x40
+
 #define AXE_RXCMD_PROMISC			0x0001
 #define AXE_RXCMD_ALLMULTI			0x0002
 #define AXE_172_RXCMD_UNICAST			0x0004
@@ -232,6 +269,7 @@ struct axe_softc {
 
 	uint8_t			axe_ipgs[3];
 	uint8_t 		axe_phyaddrs[2];
+	int			axe_phyno;
 	struct timeval		axe_rx_notice;
 	int			axe_bufsz;
 

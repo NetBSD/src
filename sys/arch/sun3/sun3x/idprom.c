@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.15 2008/04/28 20:23:38 martin Exp $	*/
+/*	$NetBSD: idprom.c,v 1.15.44.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idprom.c,v 1.15 2008/04/28 20:23:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idprom.c,v 1.15.44.1 2014/08/20 00:03:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ static int idprom_hostid(void);
  * verify the checksum,
  * set the hostid...
  */
-void 
+void
 idprom_init(void)
 {
 
@@ -94,7 +94,7 @@ idprom_cksum(u_char *p)
 	return (x);
 }
 
-static int 
+static int
 idprom_hostid(void)
 {
 	struct idprom *idp;

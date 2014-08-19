@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.184 2012/09/01 00:26:37 matt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.184.2.1 2014/08/20 00:04:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -232,7 +232,6 @@ struct vm_anon;
 struct vmspace;
 struct pmap;
 struct vnode;
-struct simplelock;
 struct vm_map_entry;
 struct vm_map;
 struct vm_page;
@@ -540,11 +539,13 @@ void		vunmapbuf(struct buf *, vsize_t);
 
 /* uvm_aobj.c */
 struct uvm_object	*uao_create(vsize_t, int);
+void			uao_set_pgfl(struct uvm_object *, int);
 void			uao_detach(struct uvm_object *);
 void			uao_reference(struct uvm_object *);
 
 /* uvm_bio.c */
 void			ubc_init(void);
+void			ubchist_init(void);
 void *			ubc_alloc(struct uvm_object *, voff_t, vsize_t *, int,
 			    int);
 void			ubc_release(void *, int);
@@ -591,9 +592,8 @@ void			uvm_proc_fork(struct proc *, struct proc *, bool);
 void			uvm_lwp_fork(struct lwp *, struct lwp *,
 			    void *, size_t, void (*)(void *), void *);
 int			uvm_coredump_walkmap(struct proc *,
-			    void *,
-			    int (*)(struct proc *, void *,
-				    struct uvm_coredump_state *), void *);
+			    int (*)(struct uvm_coredump_state *), void *);
+int			uvm_coredump_count_segs(struct proc *);
 void			uvm_proc_exit(struct proc *);
 void			uvm_lwp_exit(struct lwp *);
 void			uvm_init_limits(struct proc *);
@@ -643,11 +643,11 @@ bool			uvm_map_checkprot(struct vm_map *, vaddr_t,
 			    vaddr_t, vm_prot_t);
 int			uvm_map_protect(struct vm_map *, vaddr_t,
 			    vaddr_t, vm_prot_t, bool);
-struct vmspace		*uvmspace_alloc(vaddr_t, vaddr_t);
+struct vmspace		*uvmspace_alloc(vaddr_t, vaddr_t, bool);
 void			uvmspace_init(struct vmspace *, struct pmap *,
-			    vaddr_t, vaddr_t);
-void			uvmspace_exec(struct lwp *, vaddr_t, vaddr_t);
-void			uvmspace_spawn(struct lwp *, vaddr_t, vaddr_t);
+			    vaddr_t, vaddr_t, bool);
+void			uvmspace_exec(struct lwp *, vaddr_t, vaddr_t, bool);
+void			uvmspace_spawn(struct lwp *, vaddr_t, vaddr_t, bool);
 struct vmspace		*uvmspace_fork(struct vmspace *);
 void			uvmspace_addref(struct vmspace *);
 void			uvmspace_free(struct vmspace *);

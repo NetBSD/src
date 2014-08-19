@@ -1,4 +1,4 @@
-/* $NetBSD: gpiopwm.c,v 1.3 2012/06/02 21:36:43 dsl Exp $ */
+/* $NetBSD: gpiopwm.c,v 1.3.2.1 2014/08/20 00:03:37 tls Exp $ */
 
 /*
  * Copyright (c) 2011 Marc Balmer <marc@msys.ch>
@@ -109,11 +109,6 @@ gpiopwm_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_pulse, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_pulse, gpiopwm_pulse, sc);
 
-	sysctl_createv(NULL, 0, NULL, NULL,
-            CTLFLAG_PERMANENT,
-            CTLTYPE_NODE, "hw", NULL,
-            NULL, 0, NULL, 0,
-            CTL_HW, CTL_EOL);
         sysctl_createv(&sc->sc_log, 0, NULL, &node,
             0,
             CTLTYPE_NODE, device_xname(sc->sc_dev),

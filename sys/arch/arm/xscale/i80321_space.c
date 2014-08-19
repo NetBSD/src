@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_space.c,v 1.13 2011/07/01 20:32:51 dyoung Exp $	*/
+/*	$NetBSD: i80321_space.c,v 1.13.12.1 2014/08/20 00:02:48 tls Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_space.c,v 1.13 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_space.c,v 1.13.12.1 2014/08/20 00:02:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,7 +291,10 @@ i80321_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
 	paddr_t pa, endpa, physbase;
 
 #ifdef I80321_USE_DIRECT_WIN
-	if (bpa >= (VERDE_OUT_DIRECT_WIN_BASE) &&
+	if (
+#if VERDE_OUT_DIRECT_WIN_BASE != 0
+	    bpa >= (VERDE_OUT_DIRECT_WIN_BASE) &&
+#endif
 	    bpa < (VERDE_OUT_DIRECT_WIN_BASE + VERDE_OUT_DIRECT_WIN_SIZE)) {
 		busbase = VERDE_OUT_DIRECT_WIN_BASE;
 		physbase = VERDE_OUT_DIRECT_WIN_BASE;

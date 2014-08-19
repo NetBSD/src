@@ -1,8 +1,10 @@
 /* tsprintf.c -- test file for mpfr_sprintf, mpfr_vsprintf, mpfr_snprintf,
    and mpfr_vsnprintf
 
-Copyright 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
+
+This file is part of the GNU MPFR Library.
 
 The GNU MPFR Library is free software; you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
@@ -390,6 +392,40 @@ decimal (void)
   check_sprintf ("1", "%.0RUf", x);
   check_sprintf ("1", "%.0RYf", x);
 
+  /* multiple of 10 with 'g' style */
+  mpfr_set_str (x, "10", 10, MPFR_RNDN);
+  check_sprintf ("10", "%Rg", x);
+  check_sprintf ("1e+01", "%.0Rg", x);
+  check_sprintf ("1e+01", "%.1Rg", x);
+  check_sprintf ("10", "%.2Rg", x);
+
+  mpfr_ui_div (x, 1, x, MPFR_RNDN);
+  check_sprintf ("0.1", "%Rg", x);
+  check_sprintf ("0.1", "%.0Rg", x);
+  check_sprintf ("0.1", "%.1Rg", x);
+
+  mpfr_set_str (x, "1000", 10, MPFR_RNDN);
+  check_sprintf ("1000", "%Rg", x);
+  check_sprintf ("1e+03", "%.0Rg", x);
+  check_sprintf ("1e+03", "%.3Rg", x);
+  check_sprintf ("1000", "%.4Rg", x);
+
+  mpfr_ui_div (x, 1, x, MPFR_RNDN);
+  check_sprintf ("0.001", "%Rg", x);
+  check_sprintf ("0.001", "%.0Rg", x);
+  check_sprintf ("0.001", "%.1Rg", x);
+
+  mpfr_set_str (x, "100000", 10, MPFR_RNDN);
+  check_sprintf ("100000", "%Rg", x);
+  check_sprintf ("1e+05", "%.0Rg", x);
+  check_sprintf ("1e+05", "%.5Rg", x);
+  check_sprintf ("100000", "%.6Rg", x);
+
+  mpfr_ui_div (x, 1, x, MPFR_RNDN);
+  check_sprintf ("1e-05", "%Rg", x);
+  check_sprintf ("1e-05", "%.0Rg", x);
+  check_sprintf ("1e-05", "%.1Rg", x);
+
   /* check rounding mode */
   mpfr_set_str (x, "0.0076", 10, MPFR_RNDN);
   check_sprintf ("0.007", "%.3RDF", x);
@@ -439,6 +475,18 @@ decimal (void)
   check_sprintf ("-1.", "%- #0.1RG", x);
 
   /* precision zero */
+  mpfr_set_d (x, 9.5, MPFR_RNDN);
+  check_sprintf ("9",    "%.0RDf", x);
+  check_sprintf ("10",    "%.0RUf", x);
+
+  mpfr_set_d (x, 19.5, MPFR_RNDN);
+  check_sprintf ("19",    "%.0RDf", x);
+  check_sprintf ("20",    "%.0RUf", x);
+
+  mpfr_set_d (x, 99.5, MPFR_RNDN);
+  check_sprintf ("99",    "%.0RDf", x);
+  check_sprintf ("100",   "%.0RUf", x);
+
   mpfr_set_d (x, -9.5, MPFR_RNDN);
   check_sprintf ("-10",    "%.0RDf", x);
   check_sprintf ("-10",    "%.0RYf", x);
@@ -733,7 +781,9 @@ mixed (void)
   int n1;
   int n2;
   int i = 121;
+#ifndef NPRINTF_L
   long double d = 1. / 31.;
+#endif
   mpf_t mpf;
   mpq_t mpq;
   mpz_t mpz;
@@ -1040,6 +1090,23 @@ bug20081214 (void)
   mpfr_clear (x);
 }
 
+static void
+bug20111102 (void)
+{
+  mpfr_t t;
+  char s[100];
+
+  mpfr_init2 (t, 84);
+  mpfr_set_str (t, "999.99999999999999999999", 10, MPFR_RNDN);
+  mpfr_sprintf (s, "%.20RNg", t);
+  if (strcmp (s, "1000") != 0)
+    {
+      printf ("Error in bug20111102, expected 1000, got %s\n", s);
+      exit (1);
+    }
+  mpfr_clear (t);
+}
+
 /* In particular, the following test makes sure that the rounding
  * for %Ra and %Rb is not done on the MPFR number itself (as it
  * would overflow). Note: it has been reported on comp.std.c that
@@ -1069,7 +1136,11 @@ check_emax_aux (mpfr_exp_t e)
 
   if (strcmp (s1, s2) != 0)
     {
-      printf ("Error in check_emax_aux for emax = %ld\n", e);
+      printf ("Error in check_emax_aux for emax = ");
+      if (e > LONG_MAX)
+        printf ("(>LONG_MAX)\n");
+      else
+        printf ("%ld\n", (long) e);
       printf ("Expected %s\n", s2);
       printf ("Got      %s\n", s1);
       exit (1);
@@ -1084,7 +1155,11 @@ check_emax_aux (mpfr_exp_t e)
 
   if (strcmp (s1, s2) != 0)
     {
-      printf ("Error in check_emax_aux for emax = %ld\n", e);
+      printf ("Error in check_emax_aux for emax = ");
+      if (e > LONG_MAX)
+        printf ("(>LONG_MAX)\n");
+      else
+        printf ("%ld\n", (long) e);
       printf ("Expected %s\n", s2);
       printf ("Got      %s\n", s1);
       exit (1);
@@ -1115,6 +1190,7 @@ main (int argc, char **argv)
   locale = setlocale (LC_ALL, "C");
 #endif
 
+  bug20111102 ();
   native_types ();
   hexadecimal ();
   binary ();
@@ -1157,7 +1233,7 @@ int
 main (void)
 {
   /* We have nothing to test. */
-  return 0;
+  return 77;
 }
 
 #endif  /* HAVE_STDARG */

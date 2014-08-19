@@ -1,6 +1,5 @@
 /* m6811_cpu.c -- 68HC11&68HC12 CPU Emulation
-   Copyright 1999, 2000, 2001, 2002, 2003, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright 1999-2014 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
 
 This file is part of GDB, GAS, and the GNU binutils.

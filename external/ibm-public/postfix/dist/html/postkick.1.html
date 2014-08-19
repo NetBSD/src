@@ -13,39 +13,33 @@ POSTKICK(1)                                                        POSTKICK(1)
        <b>postkick</b> [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] [<b>-v</b>] <i>class service request</i>
 
 <b>DESCRIPTION</b>
-       The  <a href="postkick.1.html"><b>postkick</b>(1)</a>  command  sends  <i>request</i> to the specified
-       <i>service</i> over a  local  transport  channel.   This  command
-       makes Postfix private IPC accessible for use in, for exam-
-       ple, shell scripts.
+       The  <a href="postkick.1.html"><b>postkick</b>(1)</a>  command sends <i>request</i> to the specified <i>service</i> over a
+       local transport channel.  This command makes Postfix private IPC acces-
+       sible for use in, for example, shell scripts.
 
        Options:
 
        <b>-c</b> <i>config</i><b>_</b><i>dir</i>
-              Read the <a href="postconf.5.html"><b>main.cf</b></a> configuration file  in  the  named
-              directory  instead  of  the  default  configuration
-              directory.
+              Read  the  <a href="postconf.5.html"><b>main.cf</b></a>  configuration  file  in  the named directory
+              instead of the default configuration directory.
 
-       <b>-v</b>     Enable verbose logging for debugging purposes. Mul-
-              tiple  <b>-v</b>  options  make  the software increasingly
-              verbose.
+       <b>-v</b>     Enable verbose  logging  for  debugging  purposes.  Multiple  <b>-v</b>
+              options make the software increasingly verbose.
 
        Arguments:
 
-       <i>class</i>  Name of a class of  local  transport  channel  end-
-              points,  either  <b>public</b>  (accessible  by  any local
-              user) or <b>private</b> (administrative access only).
+       <i>class</i>  Name  of  a  class  of local transport channel endpoints, either
+              <b>public</b> (accessible by any local user) or <b>private</b> (administrative
+              access only).
 
        <i>service</i>
-              The name of a local transport endpoint  within  the
-              named class.
+              The name of a local transport endpoint within the named class.
 
        <i>request</i>
-              A  string.  The  list of valid requests is service-
-              specific.
+              A string. The list of valid requests is service-specific.
 
 <b>DIAGNOSTICS</b>
-       Problems and transactions are logged to the standard error
-       stream.
+       Problems and transactions are logged to the standard error stream.
 
 <b>ENVIRONMENT</b>
        <b>MAIL_CONFIG</b>
@@ -55,23 +49,20 @@ POSTKICK(1)                                                        POSTKICK(1)
               Enable verbose logging for debugging purposes.
 
 <b>CONFIGURATION PARAMETERS</b>
-       The  following  <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant
-       to this program.  The text below provides only a parameter
-       summary.  See <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including exam-
-       ples.
+       The  following  <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant to this pro-
+       gram.  The text below provides only  a  parameter  summary.  See  <a href="postconf.5.html"><b>post-</b></a>
+       <a href="postconf.5.html"><b>conf</b>(5)</a> for more details including examples.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
-              <a href="master.5.html">master.cf</a> configuration files.
+              The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
+              figuration files.
 
        <b><a href="postconf.5.html#application_event_drain_time">application_event_drain_time</a> (100s)</b>
-              How  long  the  <a href="postkick.1.html"><b>postkick</b>(1)</a>  command  waits  for  a
-              request to enter the Postfix daemon  process  input
-              buffer before giving up.
+              How long the <a href="postkick.1.html"><b>postkick</b>(1)</a> command waits for a  request  to  enter
+              the Postfix daemon process input buffer before giving up.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The  location of the Postfix top-level queue direc-
-              tory.
+              The location of the Postfix top-level queue directory.
 
 <b>FILES</b>
        /var/spool/postfix/private, private class endpoints
@@ -83,8 +74,7 @@ POSTKICK(1)                                                        POSTKICK(1)
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
-       software.
+       The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>
        Wietse Venema

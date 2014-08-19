@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe.c,v 1.51 2011/04/25 23:34:21 jfv Exp $*/
-/*$NetBSD: ixgbe.c,v 1.5 2012/06/18 06:21:11 dsl Exp $*/
+/*$NetBSD: ixgbe.c,v 1.5.2.1 2014/08/20 00:03:48 tls Exp $*/
 
 #include "opt_inet.h"
 
@@ -107,6 +107,7 @@ static ixgbe_vendor_info_t ixgbe_vendor_info_array[] =
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_COMBO_BACKPLANE, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_BACKPLANE_FCOE, 0, 0, 0},
 	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_SFP_FCOE, 0, 0, 0},
+	{IXGBE_INTEL_VENDOR_ID, IXGBE_DEV_ID_82599_SFP_DELL, 0, 0, 0},
 	/* required last entry */
 	{0, 0, 0, 0, 0}
 };
@@ -804,7 +805,6 @@ ixgbe_detach(device_t dev, int flags)
 	evcnt_detach(&stats->roc);
 	evcnt_detach(&stats->rjc);
 	evcnt_detach(&stats->mngprc);
-	evcnt_detach(&stats->mngptc);
 	evcnt_detach(&stats->xec);
 
 	/* Packet Transmission Stats */
@@ -1377,7 +1377,7 @@ static inline void
 ixgbe_enable_queue(struct adapter *adapter, u32 vector)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
-	u64	queue = (u64)(1 << vector);
+	u64	queue = (u64)(1ULL << vector);
 	u32	mask;
 
 	if (hw->mac.type == ixgbe_mac_82598EB) {
@@ -1393,11 +1393,11 @@ ixgbe_enable_queue(struct adapter *adapter, u32 vector)
 	}
 }
 
-static inline void
+__unused static inline void
 ixgbe_disable_queue(struct adapter *adapter, u32 vector)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
-	u64	queue = (u64)(1 << vector);
+	u64	queue = (u64)(1ULL << vector);
 	u32	mask;
 
 	if (hw->mac.type == ixgbe_mac_82598EB) {
@@ -1764,7 +1764,7 @@ ixgbe_xmit(struct tx_ring *txr, struct mbuf *m_head)
 	int             i, j, error;
 	int		first, last = 0;
 	bus_dmamap_t	map;
-	struct ixgbe_tx_buf *txbuf, *txbuf_mapped;
+	struct ixgbe_tx_buf *txbuf;
 	union ixgbe_adv_tx_desc *txd = NULL;
 
 	/* Basic descriptor defines */
@@ -1781,7 +1781,6 @@ ixgbe_xmit(struct tx_ring *txr, struct mbuf *m_head)
          */
         first = txr->next_avail_desc;
 	txbuf = &txr->tx_buffers[first];
-	txbuf_mapped = txbuf;
 	map = txbuf->map;
 
 	/*
@@ -2261,11 +2260,14 @@ ixgbe_allocate_legacy(struct adapter *adapter, const struct pci_attach_args *pa)
 {
 	device_t dev = adapter->dev;
 	struct		ix_queue *que = adapter->queues;
+	char intrbuf[PCI_INTRSTR_LEN];
+#if 0
 	int rid = 0;
 
 	/* MSI RID at 1 */
 	if (adapter->msix == 1)
 		rid = 1;
+#endif
  
 	/* We allocate a single interrupt resource */
  	if (pci_intr_map(pa, &adapter->osdep.ih) != 0) {
@@ -2273,7 +2275,8 @@ ixgbe_allocate_legacy(struct adapter *adapter, const struct pci_attach_args *pa)
 		return ENXIO;
 	} else {
 		aprint_normal_dev(dev, "interrupting at %s\n",
-		    pci_intr_string(adapter->osdep.pc, adapter->osdep.ih));
+		    pci_intr_string(adapter->osdep.pc, adapter->osdep.ih,
+			intrbuf, sizeof(intrbuf)));
 	}
 
 	/*
@@ -2547,18 +2550,17 @@ ixgbe_free_pci_resources(struct adapter * adapter)
 {
 #if defined(NETBSD_MSI_OR_MSIX)
 	struct 		ix_queue *que = adapter->queues;
-#endif
 	device_t	dev = adapter->dev;
-	int		rid, memrid;
+#endif
+	int		rid;
 
-	printf("%s: enter %s\n", device_xname(dev), __func__);
-
+#if defined(NETBSD_MSI_OR_MSIX)
+	int		 memrid;
 	if (adapter->hw.mac.type == ixgbe_mac_82598EB)
 		memrid = PCI_BAR(MSIX_82598_BAR);
 	else
 		memrid = PCI_BAR(MSIX_82599_BAR);
 
-#if defined(NETBSD_MSI_OR_MSIX)
 	/*
 	** There is a slight possibility of a failure mode
 	** in attach that will result in entering this function
@@ -2590,7 +2592,6 @@ ixgbe_free_pci_resources(struct adapter * adapter)
 	else
 		(adapter->msix != 0) ? (rid = 1):(rid = 0);
 
-	printf("%s: disestablishing interrupt handler\n", device_xname(dev));
 	pci_intr_disestablish(adapter->osdep.pc, adapter->osdep.intr);
 	adapter->osdep.intr = NULL;
 
@@ -2723,6 +2724,8 @@ ixgbe_config_link(struct adapter *adapter)
 		if ((!autoneg) && (hw->mac.ops.get_link_capabilities))
                 	err  = hw->mac.ops.get_link_capabilities(hw,
 			    &autoneg, &negotiate);
+		else
+			negotiate = 0;
 		if (err)
 			goto out;
 		if (hw->mac.ops.setup_link)
@@ -3255,7 +3258,7 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp)
 	struct ip6_hdr ip6;
 	int  ehdrlen, ip_hlen = 0;
 	u16	etype;
-	u8	ipproto = 0;
+	u8	ipproto __diagused = 0;
 	bool	offload;
 	int ctxd = txr->next_avail_desc;
 	u16 vtag = 0;
@@ -3911,7 +3914,6 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 {
 	struct	adapter 	*adapter;
 	struct ifnet		*ifp;
-	device_t		dev;
 	struct ixgbe_rx_buf	*rxbuf;
 #ifdef LRO
 	struct lro_ctrl		*lro = &rxr->lro;
@@ -3920,7 +3922,6 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 
 	adapter = rxr->adapter;
 	ifp = adapter->ifp;
-	dev = adapter->dev;
 
 	/* Clear the ring contents */
 	IXGBE_RX_LOCK(rxr);
@@ -4019,6 +4020,7 @@ skip_head:
 		ixgbe_setup_hw_rsc(rxr);
 #ifdef LRO
 	else if (ifp->if_capenable & IFCAP_LRO) {
+		device_t dev = adapter->dev;
 		int err = tcp_lro_init(lro);
 		if (err) {
 			device_printf(dev, "LRO Initialization failed!\n");
@@ -4114,8 +4116,6 @@ ixgbe_initialize_receive_units(struct adapter *adapter)
 
 	for (i = 0; i < adapter->num_queues; i++, rxr++) {
 		u64 rdba = rxr->rxdma.dma_paddr;
-
-		printf("%s: queue %d rdba %" PRIx64 "\n", __func__, i, rdba);
 
 		/* Setup the Base and Length of the Rx Descriptor Ring */
 		IXGBE_WRITE_REG(hw, IXGBE_RDBAL(i),
@@ -4293,13 +4293,12 @@ ixgbe_free_receive_buffers(struct rx_ring *rxr)
 static __inline void
 ixgbe_rx_input(struct rx_ring *rxr, struct ifnet *ifp, struct mbuf *m, u32 ptype)
 {
-	struct ethercom *ec;
-	struct adapter	*adapter = ifp->if_softc;
 	int s;
 
-	ec = &adapter->osdep.ec;
-
 #ifdef LRO
+	struct adapter	*adapter = ifp->if_softc;
+	struct ethercom *ec = &adapter->osdep.ec;
+
         /*
          * ATM LRO is only for IPv4/TCP packets and TCP checksum of the packet
          * should be computed by hardware. Also it should not have VLAN tag in
@@ -4341,8 +4340,6 @@ ixgbe_rx_discard(struct rx_ring *rxr, int i)
 	struct ixgbe_rx_buf	*rbuf;
 
 	rbuf = &rxr->rx_buffers[i];
-
-	printf("%s: enter\n", __func__);
 
         if (rbuf->fmp != NULL) {/* Partial chain ? */
 		rbuf->fmp->m_flags |= M_PKTHDR;
@@ -4653,7 +4650,7 @@ next_desc:
 	** Schedule another interrupt if so.
 	*/
 	if ((staterr & IXGBE_RXD_STAT_DD) != 0) {
-		ixgbe_rearm_queues(adapter, (u64)(1 << que->msix));
+		ixgbe_rearm_queues(adapter, (u64)(1ULL << que->msix));
 		return true;
 	}
 
@@ -4674,11 +4671,13 @@ ixgbe_rx_checksum(u32 staterr, struct mbuf * mp, u32 ptype,
 {
 	u16	status = (u16) staterr;
 	u8	errors = (u8) (staterr >> 24);
+#if 0
 	bool	sctp = FALSE;
 
 	if ((ptype & IXGBE_RXDADV_PKTTYPE_ETQF) == 0 &&
 	    (ptype & IXGBE_RXDADV_PKTTYPE_SCTP) != 0)
 		sctp = TRUE;
+#endif
 
 	if (status & IXGBE_RXD_STAT_IPCS) {
 		stats->ipcs.ev_count++;
@@ -4767,8 +4766,6 @@ ixgbe_setup_vlan_hw_support(struct adapter *adapter)
 	struct ixgbe_hw *hw = &adapter->hw;
 	u32		ctrl;
 
-	printf("%s: %s enter\n", device_xname(adapter->dev), __func__);
-
 	/*
 	** We get here thru init_locked, meaning
 	** a soft reset, this has already cleared
@@ -4776,7 +4773,6 @@ ixgbe_setup_vlan_hw_support(struct adapter *adapter)
 	** have been no vlan's registered do nothing.
 	*/
 	if (!VLAN_ATTACHED(&adapter->osdep.ec)) {
-		printf("%s: no VLANs attached\n", device_xname(adapter->dev));
 		return;
 	}
 
@@ -4794,8 +4790,6 @@ ixgbe_setup_vlan_hw_support(struct adapter *adapter)
 	if (ec->ec_capenable & ETHERCAP_VLAN_HWFILTER) {
 		ctrl &= ~IXGBE_VLNCTRL_CFIEN;
 		ctrl |= IXGBE_VLNCTRL_VFE;
-		printf("%s: enabled h/w VLAN filter\n",
-		    device_xname(adapter->dev));
 	}
 	if (hw->mac.type == ixgbe_mac_82598EB)
 		ctrl |= IXGBE_VLNCTRL_VME;
@@ -4807,8 +4801,6 @@ ixgbe_setup_vlan_hw_support(struct adapter *adapter)
 			ctrl = IXGBE_READ_REG(hw, IXGBE_RXDCTL(i));
 				ctrl |= IXGBE_RXDCTL_VME;
 			IXGBE_WRITE_REG(hw, IXGBE_RXDCTL(i), ctrl);
-			printf("%s: enabled VLAN queue %d\n",
-			    device_xname(adapter->dev), i);
 		}
 }
 
@@ -5029,9 +5021,9 @@ ixgbe_handle_link(void *context)
 {
 	struct adapter  *adapter = context;
 
-	ixgbe_check_link(&adapter->hw,
-	    &adapter->link_speed, &adapter->link_up, 0);
-       	ixgbe_update_link_status(adapter);
+	if (ixgbe_check_link(&adapter->hw,
+	    &adapter->link_speed, &adapter->link_up, 0) == 0)
+	    ixgbe_update_link_status(adapter);
 }
 
 /*
@@ -5076,6 +5068,8 @@ ixgbe_handle_msf(void *context)
 	autoneg = hw->phy.autoneg_advertised;
 	if ((!autoneg) && (hw->mac.ops.get_link_capabilities))
 		hw->mac.ops.get_link_capabilities(hw, &autoneg, &negotiate);
+	else
+		negotiate = 0;
 	if (hw->mac.ops.setup_link)
 		hw->mac.ops.setup_link(hw, autoneg, negotiate, TRUE);
 	return;
@@ -5360,14 +5354,9 @@ ixgbe_sysctl_instance(struct adapter *adapter)
 	dvname = device_xname(adapter->dev);
 
 	if ((rc = sysctl_createv(log, 0, NULL, &rnode,
-	    0, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
-		goto err;
-
-	if ((rc = sysctl_createv(log, 0, &rnode, &rnode,
 	    0, CTLTYPE_NODE, dvname,
 	    SYSCTL_DESCR("ixgbe information and settings"),
-	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 	return rnode;
@@ -5644,8 +5633,6 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	    stats->namebuf, "Received Jabber");
 	evcnt_attach_dynamic(&stats->mngprc, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "Management Packets Received");
-	evcnt_attach_dynamic(&stats->mngptc, EVCNT_TYPE_MISC, NULL,
-	    stats->namebuf, "Management Packets Dropped");
 	evcnt_attach_dynamic(&stats->xec, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "Checksum Errors");
 

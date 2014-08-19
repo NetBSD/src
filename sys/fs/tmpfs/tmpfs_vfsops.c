@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.52 2011/09/27 01:10:43 christos Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.52.12.1 2014/08/20 00:04:28 tls Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.52 2011/09/27 01:10:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.52.12.1 2014/08/20 00:04:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -103,6 +103,9 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	ino_t nodes;
 	int error;
 
+	if (args == NULL)
+		return EINVAL;
+
 	/* Validate the version. */
 	if (*data_len < sizeof(*args) ||
 	    args->ta_version != TMPFS_ARGS_VERSION)
@@ -127,13 +130,17 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		return 0;
 	}
 
-	if (mp->mnt_flag & MNT_UPDATE) {
-		/* TODO */
-		return EOPNOTSUPP;
-	}
 
 	/* Prohibit mounts if there is not enough memory. */
-	if (tmpfs_mem_info(true) < TMPFS_PAGES_RESERVED)
+	if (tmpfs_mem_info(true) < uvmexp.freetarg)
+		return EINVAL;
+
+	/* Check for invalid uid and gid arguments */
+	if (args->ta_root_uid == VNOVAL || args->ta_root_gid == VNOVAL)
+		return EINVAL;
+
+	/* This can never happen? */
+	if ((args->ta_root_mode & ALLPERMS) == VNOVAL)
 		return EINVAL;
 
 	/* Get the memory usage limit for this file-system. */
@@ -151,6 +158,20 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	}
 	nodes = MIN(nodes, INT_MAX);
 	KASSERT(nodes >= 3);
+
+	if (mp->mnt_flag & MNT_UPDATE) {
+		tmp = VFS_TO_TMPFS(mp);
+		if (nodes < tmp->tm_nodes_cnt)
+			return EBUSY;
+		if ((error = tmpfs_mntmem_set(tmp, memlimit)) != 0)
+			return error;
+		tmp->tm_nodes_max = nodes;
+		root = tmp->tm_root;
+		root->tn_uid = args->ta_root_uid;
+		root->tn_gid = args->ta_root_gid;
+		root->tn_mode = args->ta_root_mode;
+		return 0;
+	}
 
 	/* Allocate the tmpfs mount structure and fill it. */
 	tmp = kmem_zalloc(sizeof(tmpfs_mount_t), KM_SLEEP);
@@ -205,8 +226,8 @@ tmpfs_start(struct mount *mp, int flags)
 static int
 tmpfs_unmount(struct mount *mp, int mntflags)
 {
-	tmpfs_mount_t *tmp;
-	tmpfs_node_t *node;
+	tmpfs_mount_t *tmp = VFS_TO_TMPFS(mp);
+	tmpfs_node_t *node, *cnode;
 	int error, flags = 0;
 
 	/* Handle forced unmounts. */
@@ -218,25 +239,35 @@ tmpfs_unmount(struct mount *mp, int mntflags)
 	if (error != 0)
 		return error;
 
-	tmp = VFS_TO_TMPFS(mp);
+	/*
+	 * First round, detach and destroy all directory entries.
+	 * Also, clear the pointers to the vnodes - they are gone.
+	 */
+	LIST_FOREACH(node, &tmp->tm_nodes, tn_entries) {
+		tmpfs_dirent_t *de;
 
-	/* Destroy any existing inodes. */
-	while ((node = LIST_FIRST(&tmp->tm_nodes)) != NULL) {
-		if (node->tn_type == VDIR) {
-			tmpfs_dirent_t *de;
-
-			/* Destroy any directory entries. */
-			de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir);
-			while (de != NULL) {
-				tmpfs_dirent_t *nde;
-
-				nde = TAILQ_NEXT(de, td_entries);
-				tmpfs_free_dirent(tmp, de);
-				node->tn_size -= sizeof(tmpfs_dirent_t);
-				de = nde;
-			}
+		node->tn_vnode = NULL;
+		if (node->tn_type != VDIR) {
+			continue;
 		}
-		/* Removes inode from the list. */
+		while ((de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir)) != NULL) {
+			cnode = de->td_node;
+			if (cnode && cnode != TMPFS_NODE_WHITEOUT) {
+				cnode->tn_vnode = NULL;
+			}
+			tmpfs_dir_detach(node, de);
+			tmpfs_free_dirent(tmp, de);
+		}
+		/* Extra virtual entry (itself for the root). */
+		node->tn_links--;
+	}
+
+	/* Release the reference on root (diagnostic). */
+	node = tmp->tm_root;
+	node->tn_links--;
+
+	/* Second round, destroy all inodes. */
+	while ((node = LIST_FIRST(&tmp->tm_nodes)) != NULL) {
 		tmpfs_free_node(tmp, node);
 	}
 
@@ -262,7 +293,6 @@ static int
 tmpfs_vget(struct mount *mp, ino_t ino, vnode_t **vpp)
 {
 
-	printf("tmpfs_vget called; need for it unknown yet\n");
 	return EOPNOTSUPP;
 }
 
@@ -272,6 +302,7 @@ tmpfs_fhtovp(struct mount *mp, struct fid *fhp, vnode_t **vpp)
 	tmpfs_mount_t *tmp = VFS_TO_TMPFS(mp);
 	tmpfs_node_t *node;
 	tmpfs_fid_t tfh;
+	int error;
 
 	if (fhp->fid_len != sizeof(tmpfs_fid_t)) {
 		return EINVAL;
@@ -280,19 +311,25 @@ tmpfs_fhtovp(struct mount *mp, struct fid *fhp, vnode_t **vpp)
 
 	mutex_enter(&tmp->tm_lock);
 	LIST_FOREACH(node, &tmp->tm_nodes, tn_entries) {
-		if (node->tn_id != tfh.tf_id) {
-			continue;
+		if (node->tn_id == tfh.tf_id) {
+			mutex_enter(&node->tn_vlock);
+			break;
 		}
-		if (TMPFS_NODE_GEN(node) != tfh.tf_gen) {
-			continue;
-		}
-		mutex_enter(&node->tn_vlock);
-		break;
 	}
 	mutex_exit(&tmp->tm_lock);
 
+	if (node == NULL)
+		return ESTALE;
 	/* Will release the tn_vlock. */
-	return node ? tmpfs_vnode_get(mp, node, vpp) : ESTALE;
+	if ((error = tmpfs_vnode_get(mp, node, vpp)) != 0)
+		return error;
+	if (TMPFS_NODE_GEN(node) != tfh.tf_gen) {
+		vput(*vpp);
+		*vpp = NULL;
+		return ESTALE;
+	}
+
+	return 0;
 }
 
 static int
@@ -377,31 +414,27 @@ const struct vnodeopv_desc * const tmpfs_vnodeopv_descs[] = {
 };
 
 struct vfsops tmpfs_vfsops = {
-	MOUNT_TMPFS,			/* vfs_name */
-	sizeof (struct tmpfs_args),
-	tmpfs_mount,			/* vfs_mount */
-	tmpfs_start,			/* vfs_start */
-	tmpfs_unmount,			/* vfs_unmount */
-	tmpfs_root,			/* vfs_root */
-	(void *)eopnotsupp,		/* vfs_quotactl */
-	tmpfs_statvfs,			/* vfs_statvfs */
-	tmpfs_sync,			/* vfs_sync */
-	tmpfs_vget,			/* vfs_vget */
-	tmpfs_fhtovp,			/* vfs_fhtovp */
-	tmpfs_vptofh,			/* vfs_vptofh */
-	tmpfs_init,			/* vfs_init */
-	NULL,				/* vfs_reinit */
-	tmpfs_done,			/* vfs_done */
-	NULL,				/* vfs_mountroot */
-	tmpfs_snapshot,			/* vfs_snapshot */
-	vfs_stdextattrctl,		/* vfs_extattrctl */
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	tmpfs_vnodeopv_descs,
-	0,				/* vfs_refcount */
-	{ NULL, NULL },
+	.vfs_name = MOUNT_TMPFS,
+	.vfs_min_mount_data = sizeof (struct tmpfs_args),
+	.vfs_mount = tmpfs_mount,
+	.vfs_start = tmpfs_start,
+	.vfs_unmount = tmpfs_unmount,
+	.vfs_root = tmpfs_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = tmpfs_statvfs,
+	.vfs_sync = tmpfs_sync,
+	.vfs_vget = tmpfs_vget,
+	.vfs_fhtovp = tmpfs_fhtovp,
+	.vfs_vptofh = tmpfs_vptofh,
+	.vfs_init = tmpfs_init,
+	.vfs_done = tmpfs_done,
+	.vfs_snapshot = tmpfs_snapshot,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = tmpfs_vnodeopv_descs
 };
 
 static int

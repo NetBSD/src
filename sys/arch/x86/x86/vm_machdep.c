@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.16 2012/07/15 15:17:56 dsl Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.16.2.1 2014/08/20 00:03:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.16 2012/07/15 15:17:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.16.2.1 2014/08/20 00:03:29 tls Exp $");
 
 #include "opt_mtrr.h"
 
@@ -99,20 +99,12 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.16 2012/07/15 15:17:56 dsl Exp $");
 #include <machine/gdt.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
+
 #ifdef MTRR
 #include <machine/mtrr.h>
 #endif
 
-#ifdef __x86_64__
-#include <machine/fpu.h>
-#else
-#include "npx.h"
-#if NNPX > 0
-#define fpusave_lwp(x, y)	npxsave_lwp(x, y)
-#else
-#define fpusave_lwp(x, y)
-#endif
-#endif
+#include <x86/fpu.h>
 
 void
 cpu_proc_fork(struct proc *p1, struct proc *p2)
@@ -148,9 +140,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * If parent LWP was using FPU, then we have to save the FPU h/w
 	 * state to PCB so that we can copy it.
 	 */
-	if (pcb1->pcb_fpcpu != NULL) {
-		fpusave_lwp(l1, true);
-	}
+	fpusave_lwp(l1, true);
 
 	/*
 	 * Sync the PCB before we copy it.
@@ -164,6 +154,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 	/* Copy the PCB from parent. */
 	memcpy(pcb2, pcb1, sizeof(struct pcb));
+	/* Copy any additional fpu state */
+	fpu_save_area_fork(pcb2, pcb1);
 
 #if defined(XEN)
 	pcb2->pcb_iopl = SEL_KPL;
@@ -182,10 +174,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	uv = uvm_lwp_getuarea(l2);
 
 #ifdef __x86_64__
-	pcb2->pcb_rsp0 = (uv + KSTACK_SIZE - 16) & ~0xf;
+	pcb2->pcb_rsp0 = (uv + USPACE - 16) & ~0xf;
 	tf = (struct trapframe *)pcb2->pcb_rsp0 - 1;
 #else
-	pcb2->pcb_esp0 = (uv + KSTACK_SIZE - 16);
+	pcb2->pcb_esp0 = (uv + USPACE - 16);
 	tf = (struct trapframe *)pcb2->pcb_esp0 - 1;
 
 	pcb2->pcb_iomap = NULL;
@@ -228,6 +220,11 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb2->pcb_rsp = (uint64_t)sf;
 	pcb2->pcb_rbp = (uint64_t)l2;
 #else
+	/*
+	 * XXX Is there a reason sf->sf_edi isn't initialized here?
+	 * Could this leak potentially sensitive information to new
+	 * userspace processes?
+	 */
 	sf->sf_esi = (int)func;
 	sf->sf_ebx = (int)arg;
 	sf->sf_eip = (int)lwp_trampoline;
@@ -244,12 +241,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
-	struct pcb *pcb = lwp_getpcb(l);
 
 	/* If we were using the FPU, forget about it. */
-	if (pcb->pcb_fpcpu != NULL) {
-		fpusave_lwp(l, false);
-	}
+	fpusave_lwp(l, false);
 
 #ifdef MTRR
 	if (proc && l->l_proc->p_md.md_flags & MDP_USEDMTRR)
@@ -276,7 +270,7 @@ paddr_t
 kvtop(void *addr)
 {
 	paddr_t pa;
-	bool ret;
+	bool ret __diagused;
 
 	ret = pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa);
 	KASSERT(ret == true);

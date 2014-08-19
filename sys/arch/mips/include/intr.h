@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.7 2012/03/11 00:02:05 mrg Exp $ */
+/* $NetBSD: intr.h,v 1.7.2.1 2014/08/20 00:03:12 tls Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -72,7 +72,8 @@
 #define	IPI_SUSPEND	5		/* DDB suspend signaling */
 #define	IPI_HALT	6		/* halt cpu */
 #define	IPI_XCALL	7		/* xcall */
-#define	NIPIS		8
+#define	IPI_GENERIC	8		/* generic IPI */
+#define	NIPIS		9
 
 #ifdef __INTR_PRIVATE
 struct splsw {

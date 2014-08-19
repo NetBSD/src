@@ -1,4 +1,4 @@
-/*	$NetBSD: local.c,v 1.1.1.2.10.1 2013/02/25 00:27:20 tls Exp $	*/
+/*	$NetBSD: local.c,v 1.1.1.2.10.2 2014/08/19 23:59:43 tls Exp $	*/
 
 /*++
 /* NAME
@@ -533,7 +533,9 @@
 /* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
 /*	The location of the Postfix top-level queue directory.
 /* .IP "\fBrecipient_delimiter (empty)\fR"
-/*	The separator between user names and address extensions (user+foo).
+/*	The set of characters that can separate a user name from its
+/*	extension (example: user+foo), or a .forward file name from its
+/*	extension (example: .forward+foo).
 /* .IP "\fBrequire_home_directory (no)\fR"
 /*	Require that a \fBlocal\fR(8) recipient's home directory exists
 /*	before mail delivery is attempted.

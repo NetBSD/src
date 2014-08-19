@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.16 2011/02/17 10:35:50 jmcneill Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.16.14.1 2014/08/20 00:03:35 tls Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.16 2011/02/17 10:35:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.16.14.1 2014/08/20 00:03:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -183,4 +183,17 @@ AcpiOsGetTimer(void)
 	t += (UINT64)10000000 * tv.tv_sec;
 
 	return t;
+}
+
+/*
+ *
+ * AcpiOsWaitEventsComplete:
+ *
+ * 	Wait for all asynchronous events to complete. This implementation
+ *	does nothing.
+ */
+void
+AcpiOsWaitEventsComplete(void)
+{
+	return;
 }

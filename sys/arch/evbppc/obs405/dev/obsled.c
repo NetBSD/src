@@ -1,4 +1,4 @@
-/*	$NetBSD: obsled.c,v 1.9 2012/06/02 21:36:41 dsl Exp $	*/
+/*	$NetBSD: obsled.c,v 1.9.2.1 2014/08/20 00:02:59 tls Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obsled.c,v 1.9 2012/06/02 21:36:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obsled.c,v 1.9.2.1 2014/08/20 00:02:59 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -98,15 +98,6 @@ obsled_attach(device_t parent, device_t self, void *aux)
 	obs266_led_set(OBS266_LED_OFF);
 
 	/* add sysctl interface */
-	err = sysctl_createv(NULL, 0,
-			NULL, NULL,
-			0, CTLTYPE_NODE,
-			"hw",
-			NULL,
-			NULL, 0, NULL, 0,
-			CTL_HW, CTL_EOL);
-	if (err != 0)
-		return;
 	err = sysctl_createv(NULL, 0,
 			NULL, (const struct sysctlnode **)&node,
 			0, CTLTYPE_NODE,

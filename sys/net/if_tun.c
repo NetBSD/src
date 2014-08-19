@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.115 2012/01/28 01:02:27 rmind Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.115.6.1 2014/08/20 00:04:34 tls Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.115 2012/01/28 01:02:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.115.6.1 2014/08/20 00:04:34 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -35,7 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.115 2012/01/28 01:02:27 rmind Exp $");
 #include <sys/signalvar.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
-#include <sys/simplelock.h>
 #include <sys/mutex.h>
 #include <sys/cpu.h>
 
@@ -67,7 +66,7 @@ void	tunattach(int);
 
 static LIST_HEAD(, tun_softc) tun_softc_list;
 static LIST_HEAD(, tun_softc) tunz_softc_list;
-static struct simplelock tun_softc_lock;
+static kmutex_t tun_softc_lock;
 
 static int	tun_ioctl(struct ifnet *, u_long, void *);
 static int	tun_output(struct ifnet *, struct mbuf *,
@@ -97,15 +96,25 @@ static dev_type_poll(tunpoll);
 static dev_type_kqfilter(tunkqfilter);
 
 const struct cdevsw tun_cdevsw = {
-	tunopen, tunclose, tunread, tunwrite, tunioctl,
-	nostop, notty, tunpoll, nommap, tunkqfilter, D_OTHER,
+	.d_open = tunopen,
+	.d_close = tunclose,
+	.d_read = tunread,
+	.d_write = tunwrite,
+	.d_ioctl = tunioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = tunpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = tunkqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 void
 tunattach(int unused)
 {
 
-	simple_lock_init(&tun_softc_lock);
+	mutex_init(&tun_softc_lock, MUTEX_DEFAULT, IPL_NET);
 	LIST_INIT(&tun_softc_list);
 	LIST_INIT(&tunz_softc_list);
 	if_clone_attach(&tun_cloner);
@@ -113,7 +122,6 @@ tunattach(int unused)
 
 /*
  * Find driver instance from dev_t.
- * Call at splnet().
  * Returns with tp locked (if found).
  */
 static struct tun_softc *
@@ -122,20 +130,19 @@ tun_find_unit(dev_t dev)
 	struct tun_softc *tp;
 	int unit = minor(dev);
 
-	simple_lock(&tun_softc_lock);
+	mutex_enter(&tun_softc_lock);
 	LIST_FOREACH(tp, &tun_softc_list, tun_list)
 		if (unit == tp->tun_unit)
 			break;
 	if (tp)
 		mutex_enter(&tp->tun_lock);
-	simple_unlock(&tun_softc_lock);
+	mutex_exit(&tun_softc_lock);
 
 	return (tp);
 }
 
 /*
  * Find zombie driver instance by unit number.
- * Call at splnet().
  * Remove tp from list and return it unlocked (if found).
  */
 static struct tun_softc *
@@ -143,13 +150,13 @@ tun_find_zunit(int unit)
 {
 	struct tun_softc *tp;
 
-	simple_lock(&tun_softc_lock);
+	mutex_enter(&tun_softc_lock);
 	LIST_FOREACH(tp, &tunz_softc_list, tun_list)
 		if (unit == tp->tun_unit)
 			break;
 	if (tp)
 		LIST_REMOVE(tp, tun_list);
-	simple_unlock(&tun_softc_lock);
+	mutex_exit(&tun_softc_lock);
 #ifdef DIAGNOSTIC
 	if (tp != NULL && (tp->tun_flags & (TUN_INITED|TUN_OPEN)) != TUN_OPEN)
 		printf("tun%d: inconsistent flags: %x\n", unit, tp->tun_flags);
@@ -182,9 +189,9 @@ tun_clone_create(struct if_clone *ifc, int unit)
 	tp->tun_osih = softint_establish(SOFTINT_CLOCK, tun_o_softintr, tp);
 	tp->tun_isih = softint_establish(SOFTINT_CLOCK, tun_i_softintr, tp);
 
-	simple_lock(&tun_softc_lock);
+	mutex_enter(&tun_softc_lock);
 	LIST_INSERT_HEAD(&tun_softc_list, tp, tun_list);
-	simple_unlock(&tun_softc_lock);
+	mutex_exit(&tun_softc_lock);
 
 	return (0);
 }
@@ -223,13 +230,12 @@ static int
 tun_clone_destroy(struct ifnet *ifp)
 {
 	struct tun_softc *tp = (void *)ifp;
-	int s, zombie = 0;
+	int zombie = 0;
 
 	IF_PURGE(&ifp->if_snd);
 	ifp->if_flags &= ~IFF_RUNNING;
 
-	s = splnet();
-	simple_lock(&tun_softc_lock);
+	mutex_enter(&tun_softc_lock);
 	mutex_enter(&tp->tun_lock);
 	LIST_REMOVE(tp, tun_list);
 	if (tp->tun_flags & TUN_OPEN) {
@@ -238,7 +244,7 @@ tun_clone_destroy(struct ifnet *ifp)
 		tp->tun_flags &= ~TUN_INITED;
 		LIST_INSERT_HEAD(&tunz_softc_list, tp, tun_list);
 	}
-	simple_unlock(&tun_softc_lock);
+	mutex_exit(&tun_softc_lock);
 
 	if (tp->tun_flags & TUN_RWAIT) {
 		tp->tun_flags &= ~TUN_RWAIT;
@@ -247,7 +253,6 @@ tun_clone_destroy(struct ifnet *ifp)
 	selnotify(&tp->tun_rsel, 0, 0);
 
 	mutex_exit(&tp->tun_lock);
-	splx(s);
 
 	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
 		fownsignal(tp->tun_pgid, SIGIO, POLL_HUP, 0, NULL);
@@ -276,14 +281,13 @@ tunopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct ifnet	*ifp;
 	struct tun_softc *tp;
-	int	s, error;
+	int	error;
 
 	error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE_TUN,
 	    KAUTH_REQ_NETWORK_INTERFACE_TUN_ADD, NULL, NULL, NULL);
 	if (error)
 		return (error);
 
-	s = splnet();
 	tp = tun_find_unit(dev);
 
 	if (tp == NULL) {
@@ -306,7 +310,6 @@ tunopen(dev_t dev, int flag, int mode, struct lwp *l)
 out:
 	mutex_exit(&tp->tun_lock);
 out_nolock:
-	splx(s);
 	return (error);
 }
 
@@ -318,11 +321,9 @@ int
 tunclose(dev_t dev, int flag, int mode,
     struct lwp *l)
 {
-	int	s;
 	struct tun_softc *tp;
 	struct ifnet	*ifp;
 
-	s = splnet();
 	if ((tp = tun_find_zunit(minor(dev))) != NULL) {
 		/* interface was "destroyed" before the close */
 		seldestroy(&tp->tun_rsel);
@@ -371,7 +372,6 @@ tunclose(dev_t dev, int flag, int mode,
 		}
 	}
 out_nolock:
-	splx(s);
 	return (0);
 }
 
@@ -823,9 +823,9 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	struct tun_softc *tp;
 	struct ifnet	*ifp;
 	struct mbuf	*top, **mp, *m;
-	struct ifqueue	*ifq;
+	pktqueue_t	*pktq;
 	struct sockaddr	dst;
-	int		isr, error = 0, s, tlen, mlen;
+	int		error = 0, s, tlen, mlen;
 	uint32_t	family;
 
 	s = splnet();
@@ -883,14 +883,12 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	switch (dst.sa_family) {
 #ifdef INET
 	case AF_INET:
-		ifq = &ipintrq;
-		isr = NETISR_IP;
+		pktq = ip_pktq;
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
-		ifq = &ip6intrq;
-		isr = NETISR_IPV6;
+		pktq = ip6_pktq;
 		break;
 #endif
 	default:
@@ -943,19 +941,15 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 		error = ENXIO;
 		goto out;
 	}
-	if (IF_QFULL(ifq)) {
-		IF_DROP(ifq);
+	if (__predict_false(!pktq_enqueue(pktq, top, 0))) {
 		ifp->if_collisions++;
 		mutex_exit(&tp->tun_lock);
-		m_freem(top);
 		error = ENOBUFS;
+		m_freem(top);
 		goto out_nolock;
 	}
-
-	IF_ENQUEUE(ifq, top);
 	ifp->if_ipackets++;
 	ifp->if_ibytes += tlen;
-	schednetisr(isr);
 out:
 	mutex_exit(&tp->tun_lock);
 out_nolock:

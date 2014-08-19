@@ -1,7 +1,6 @@
 /* Machine-independent support for SVR4 /proc (process file system)
 
-   Copyright (C) 1999, 2000, 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
    Written by Michael Snyder at Cygnus Solutions.
    Based on work by Fred Fish, Stu Grossman, Geoff Noer, and others.
@@ -45,6 +44,8 @@
 #include <sys/fault.h>
 #endif
 
+#include "proc-utils.h"
+
 /* Much of the information used in the /proc interface, particularly
    for printing status information, is kept as tables of structures of
    the following form.  These tables can be used to map numeric values
@@ -61,51 +62,12 @@ struct trans
 
 /* Pretty print syscalls.  */
 
-/* Ugh -- UnixWare and Solaris spell these differently!  */
-
-#ifdef  SYS_lwpcreate
-#define SYS_lwp_create	SYS_lwpcreate
-#endif
-
-#ifdef  SYS_lwpexit
-#define SYS_lwp_exit SYS_lwpexit
-#endif
-
-#ifdef  SYS_lwpwait
-#define SYS_lwp_wait SYS_lwpwait
-#endif
-
-#ifdef  SYS_lwpself
-#define SYS_lwp_self SYS_lwpself
-#endif
-
-#ifdef  SYS_lwpinfo
-#define SYS_lwp_info SYS_lwpinfo
-#endif
-
-#ifdef  SYS_lwpprivate
-#define SYS_lwp_private SYS_lwpprivate
-#endif
-
-#ifdef  SYS_lwpkill
-#define SYS_lwp_kill SYS_lwpkill
-#endif
-
-#ifdef  SYS_lwpsuspend
-#define SYS_lwp_suspend SYS_lwpsuspend
-#endif
-
-#ifdef  SYS_lwpcontinue
-#define SYS_lwp_continue SYS_lwpcontinue
-#endif
-
-
 /* Syscall translation table.  */
 
 #define MAX_SYSCALLS 262	/* Pretty arbitrary.  */
 static char *syscall_table[MAX_SYSCALLS];
 
-void
+static void
 init_syscall_table (void)
 {
 #ifdef SYS_BSD_getime

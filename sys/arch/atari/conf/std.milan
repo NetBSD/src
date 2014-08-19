@@ -1,12 +1,10 @@
-#	$NetBSD: std.milan,v 1.7 2011/12/15 13:27:06 tsutsui Exp $
+#	$NetBSD: std.milan,v 1.7.6.1 2014/08/20 00:02:48 tls Exp $
 #
 # standard atari information
 #
 machine		atari m68k
 include		"conf/std"			# MI standard options
 include		"arch/m68k/conf/std.m68k"	# m68k standard options
-
-makeoptions	COPTS="-Os"		# XXX for wasteful gcc 4.5
 
 options 	_MILANHW_
 

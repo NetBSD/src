@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2011/02/20 08:02:46 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.1.20.1 2014/08/20 00:03:35 tls Exp $
 
 GENASSYM_CONF=	${S}/dev/arcbios/genassym.cf
 
@@ -7,7 +7,7 @@ assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRA}
 	${_MKTARGET_CREATE}
 	cat ${GENASSYM_CONF} ${GENASSYM_EXTRA} | \
 	    ${TOOL_GENASSYM} -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    > assym.h.tmp && \
+	    ${GENASSYM_CPPFLAGS} > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 ${SRCS:C/\.[Ss]/.o/} ${SRCS:C/\.[Ss]/.d/}: assym.h
 .endif

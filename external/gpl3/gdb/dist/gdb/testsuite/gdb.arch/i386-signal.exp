@@ -1,4 +1,4 @@
-# Copyright 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2007-2014 Free Software Foundation, Inc.
 
 # This file is part of the GDB testsuite.
 
@@ -20,13 +20,11 @@ if { ![istarget "i?86-*-*"] && ![istarget "x86_64-*-*"] } then {
     return
 }
 
-set testfile "i386-signal"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile
 
 if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
 	  executable { debug }] != "" } {
-    untested i386-sigframe.exp
+    untested ${testfile}.exp
     return -1
 }
 

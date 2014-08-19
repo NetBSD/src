@@ -281,6 +281,10 @@ specified with the <b>user</b> attribute. </p>
 "-", to avoid "connection refused" and other problems when you
 increase the smtpd process limit. </p>
 
+<li> <p> Line 8: <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a> is not needed here if
+the mail relay policy is specified with <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>
+(available with Postfix 2.10 and later). </p>
+
 <li> <p> Lines 8, 9: always specify "<a href="postconf.5.html#check_policy_service">check_policy_service</a>" AFTER
 "<a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>" or else your system could become an
 open relay. </p>
@@ -299,8 +303,8 @@ of a <a href="master.5.html">master.cf</a> service name (in the above example, "
 built-in suffix (in the above example: "_time_limit").  </p>
 </blockquote>
 
-<li> <p> Solaris UNIX-domain sockets do not work reliably. Use
-TCP sockets instead: </p>
+<li> <p> With Solaris &lt; 9, or Postfix &lt; 2.10 on any Solaris
+version, use TCP sockets instead of UNIX-domain sockets: </p>
 
 </ul>
 
@@ -436,6 +440,10 @@ SMTP server process that talks to it.
 See the <a href="spawn.8.html">spawn(8)</a> manpage for more information about the
 <a href="postconf.5.html#transport_time_limit"><i>transport</i>_time_limit</a> parameter.  </p>
 
+<li> <p> Line 9: <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a> is not needed here if
+the mail relay policy is specified with <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>
+(available with Postfix 2.10 and later). </p>
+
 <blockquote> <p> Note: the "<a href="postconf.5.html#transport_time_limit">greylist_time_limit</a>" parameter will not
 show up in "postconf" command output before Postfix version 2.9.
 This limitation applies to many parameters whose name is a combination
@@ -445,7 +453,8 @@ a built-in suffix (in the above example: "_time_limit").  </p>
 
 </ul>
 
-<p> On Solaris you must use inet: style sockets instead of unix:
+<p> With Solaris &lt; 9, or Postfix &lt; 2.10 on any Solaris
+version, use inet: style sockets instead of unix:
 style, as detailed in the "<a href="#client_config">Policy
 client/server configuration</a>" section above.  </p>
 
@@ -480,7 +489,7 @@ forged MAIL FROM domains could be found at
  3         <a href="postconf.5.html#reject_unlisted_recipient">reject_unlisted_recipient</a>
  4         ...
  5         <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a> 
- 6         <a href="postconf.5.html#check_sender_access">check_sender_access</a> hash:/etc/postfix/sender_access
+ 6         <a href="postconf.5.html#check_sender_access">check_sender_access</a> <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/sender_access
  7         ...
  8     <a href="postconf.5.html#smtpd_restriction_classes">smtpd_restriction_classes</a> = greylist
  9     greylist = <a href="postconf.5.html#check_policy_service">check_policy_service</a> unix:private/greylist
@@ -497,9 +506,14 @@ forged MAIL FROM domains could be found at
 
 <ul>
 
-<li> <p> Line 9: On Solaris you must use inet: style sockets
+<li> <p> Line 9: On Solaris &lt; 9, or Postfix &lt; 2.10 on any
+Solaris version, use inet: style sockets
 instead of unix: style, as detailed in the "<a href="#greylist">Example:
 greylist policy server</a>" section above.  </p>
+
+<li> <p> Line 5: <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a> is not needed here if
+the mail relay policy is specified with <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>
+(available with Postfix 2.10 and later). </p>
 
 <li> <p> Line 6: Be sure to specify "<a href="postconf.5.html#check_sender_access">check_sender_access</a>" AFTER
 "<a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>" or else your system could become an
@@ -533,7 +547,7 @@ most of the delays and most of the database pollution problem. </p>
  3         <a href="postconf.5.html#reject_unlisted_recipient">reject_unlisted_recipient</a>
  4         ...
  5         <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a> 
- 6         <a href="postconf.5.html#check_sender_access">check_sender_access</a> hash:/etc/postfix/sender_access
+ 6         <a href="postconf.5.html#check_sender_access">check_sender_access</a> <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/sender_access
  7         <a href="postconf.5.html#check_policy_service">check_policy_service</a> unix:private/policy
  8         ...
  9 
@@ -547,9 +561,14 @@ most of the delays and most of the database pollution problem. </p>
 
 <ul>
 
-<li> <p> Line 7: On Solaris you must use inet: style sockets
+<li> <p> Line 7: On Solaris &lt; 9, or Postfix &lt; 2.10 on any
+Solaris version, use inet: style sockets
 instead of unix: style, as detailed in the "<a href="#greylist">Example:
 greylist policy server</a>" section above.  </p>
+
+<li> <p> Line 5: <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a> is not needed here if
+the mail relay policy is specified with <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>
+(available with Postfix 2.10 and later). </p>
 
 <li> <p> Lines 6-7: Be sure to specify <a href="postconf.5.html#check_sender_access">check_sender_access</a> and
 <a href="postconf.5.html#check_policy_service">check_policy_service</a> AFTER <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a> or else your

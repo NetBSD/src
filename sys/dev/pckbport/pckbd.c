@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.29.20.1 2012/11/20 03:02:30 tls Exp $ */
+/* $NetBSD: pckbd.c,v 1.29.20.2 2014/08/20 00:03:49 tls Exp $ */
 
 /*-
  * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.29.20.1 2012/11/20 03:02:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.29.20.2 2014/08/20 00:03:49 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1081,7 +1081,7 @@ pckbd_cnattach(pckbport_tag_t kbctag, int kbcslot)
 
 	wskbd_cnattach(&pckbd_consops, &pckbd_consdata, &pckbd_keymapdata);
 
-	return 0;
+	return res;
 }
 
 /* ARGSUSED */

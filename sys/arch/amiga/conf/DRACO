@@ -1,9 +1,9 @@
-# $NetBSD: DRACO,v 1.158.2.3 2013/06/23 06:19:59 tls Exp $
+# $NetBSD: DRACO,v 1.158.2.4 2014/08/20 00:02:43 tls Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.110 2013/01/29 21:04:55 rkujawa Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.125 2014/07/05 09:59:06 tsutsui Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,8 +29,9 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.158.2.3 $"
+#ident 		"GENERIC-$Revision: 1.158.2.4 $"
 
+makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -63,7 +64,6 @@ options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
@@ -187,12 +187,6 @@ options 	DDB		# Kernel debugger
 #
 #options 	LIMITMEM=24	# Do not use more than LIMITMEM MB of the
 				# first bank of RAM. (default: unlimited)
-#options 	NKPTADD=4	# set this for 4 additional KPT pages
-#options 	NKPTADDSHIFT=24	# set this for 1 additional KPT page
-				# per 16 MB (1<<24 bytes) of RAM
-				# uncomment and decrease this, or uncomment and
-				# increase NKPTADD if you get "out of PT pages"
-				# panics.
 
 # ATTENTION: There is NO WARRANTY AT ALL that the sync will be complete
 # before the 10 secondinterval ends, or that KBDRESET does work at all.
@@ -299,11 +293,6 @@ ed*		at zbus0		# Hydra, ASDG LanRover
 es*		at zbus0		# CEI A4066 EthernetPLUS
 qn*		at zbus0		# Quicknet
 
-xsurf*		at zbus0		# X-Surf
-ne*		at xsurfbus?		# NE2000 chip on X-Surf
-gencp*		at xsurfbus?		# clockports on X-Surf
-wdc*		at xsurfbus?		# IDE on X-Surf
-clockport*	at gencp?
 
 # Arcnet
 bah*		at zbus0		# C=/Ameristar A2060 / 560

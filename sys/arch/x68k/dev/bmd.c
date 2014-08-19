@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.18 2011/10/16 03:10:17 isaki Exp $	*/
+/*	$NetBSD: bmd.c,v 1.18.12.1 2014/08/20 00:03:28 tls Exp $	*/
 
 /*
  * Copyright (c) 2002 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.18 2011/10/16 03:10:17 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.18.12.1 2014/08/20 00:03:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,12 +106,29 @@ dev_type_dump(bmddump);
 dev_type_size(bmdsize);
 
 const struct bdevsw bmd_bdevsw = {
-	bmdopen, bmdclose, bmdstrategy, bmdioctl, bmddump, bmdsize, D_DISK
+	.d_open = bmdopen,
+	.d_close = bmdclose,
+	.d_strategy = bmdstrategy,
+	.d_ioctl = bmdioctl,
+	.d_dump = bmddump,
+	.d_psize = bmdsize,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw bmd_cdevsw = {
-	bmdopen, bmdclose, bmdread, bmdwrite, bmdioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = bmdopen,
+	.d_close = bmdclose,
+	.d_read = bmdread,
+	.d_write = bmdwrite,
+	.d_ioctl = bmdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 struct dkdriver bmddkdriver = { bmdstrategy };

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.3.2.3 2013/06/23 06:19:59 tls Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.3.2.4 2014/08/20 00:02:45 tls Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.3.2.3 2013/06/23 06:19:59 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.3.2.4 2014/08/20 00:02:45 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -134,6 +134,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.3.2.3 2013/06/23 06:19:59 tls Ex
 
 #include <uvm/uvm_extern.h>
 
+#include <arm/locore.h>
 #include <arm/db_machdep.h>
 #include <arm/undefined.h>
 #include <arm/bootconfig.h>
@@ -143,6 +144,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.3.2.3 2013/06/23 06:19:59 tls Ex
 
 struct bootmem_info bootmem_info;
 
+extern void *msgbufaddr;
 paddr_t msgbufphys;
 paddr_t physical_start;
 paddr_t physical_end;
@@ -159,10 +161,22 @@ extern char _end[];
  * Macros to translate between physical and virtual for a subset of the
  * kernel address space.  *Not* for general use.
  */
+#if defined(KERNEL_BASE_VOFFSET)
+#define KERN_VTOPHYS(bmi, va) \
+	((paddr_t)((vaddr_t)(va) - KERNEL_BASE_VOFFSET))
+#define KERN_PHYSTOV(bmi, pa) \
+	((vaddr_t)((paddr_t)(pa) + KERNEL_BASE_VOFFSET))
+#elif defined(ARM_MMU_EXTENDED) && defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS)
+#define KERN_VTOPHYS(bmi, va) \
+	((paddr_t)((vaddr_t)(va) - pmap_directbase + (bmi)->bmi_start))
+#define KERN_PHYSTOV(bmi, pa) \
+	((vaddr_t)((paddr_t)(pa) - (bmi)->bmi_start + pmap_directbase))
+#else
 #define KERN_VTOPHYS(bmi, va) \
 	((paddr_t)((vaddr_t)(va) - KERNEL_BASE + (bmi)->bmi_start))
 #define KERN_PHYSTOV(bmi, pa) \
 	((vaddr_t)((paddr_t)(pa) - (bmi)->bmi_start + KERNEL_BASE))
+#endif
 
 void
 arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
@@ -208,7 +222,11 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 	 */
 	if (bmi->bmi_start < bmi->bmi_kernelstart) {
 		pv->pv_pa = bmi->bmi_start;
+#if defined(ARM_MMU_EXTENDED) && defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS)
+		pv->pv_va = pmap_directbase;
+#else
 		pv->pv_va = KERNEL_BASE;
+#endif
 		pv->pv_size = bmi->bmi_kernelstart - bmi->bmi_start;
 		bmi->bmi_freepages += pv->pv_size / PAGE_SIZE;
 #ifdef VERBOSE_INIT_ARM
@@ -302,6 +320,8 @@ valloc_pages(struct bootmem_info *bmi, pv_addr_t *pv, size_t npages,
 	size_t free_idx = 0;
 	static bool l1pt_found;
 
+	KASSERT(npages > 0);
+
 	/*
 	 * If we haven't allocated the kernel L1 page table and we are aligned
 	 * at a L1 table boundary, alloc the memory for it.
@@ -368,22 +388,43 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 {
 	struct bootmem_info * const bmi = &bootmem_info;
 #ifdef MULTIPROCESSOR
-	const size_t cpu_num = arm_cpu_max + 1;
+	const size_t cpu_num = arm_cpu_max;
 #else
 	const size_t cpu_num = 1;
 #endif
 #ifdef ARM_HAS_VBAR
 	const bool map_vectors_p = false;
 #elif defined(CPU_ARMV7) || defined(CPU_ARM11)
-	const bool map_vectors_p = vectors == ARM_VECTORS_LOW
-	    && !(armreg_pfr1_read() & ARM_PFR1_SEC_MASK);
+	const bool map_vectors_p = vectors == ARM_VECTORS_HIGH
+	    || (armreg_pfr1_read() & ARM_PFR1_SEC_MASK) == 0;
 #else
 	const bool map_vectors_p = true;
 #endif
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	KASSERT(mapallmem_p);
-#endif
+#ifdef ARM_MMU_EXTENDED
+	/*
+	 * We can only use address beneath kernel_vm_base to map physical
+	 * memory.
+	 */
+	const psize_t physical_size =
+	    roundup(physical_end - physical_start, L1_SS_SIZE);
+	KASSERT(kernel_vm_base >= physical_size);
+	/*
+	 * If we don't have enough memory via TTBR1, we have use addresses
+	 * from TTBR0 to map some of the physical memory.  But try to use as
+	 * much high memory space as possible.
+	 */
+	if (kernel_vm_base - KERNEL_BASE < physical_size) {
+		pmap_directbase = kernel_vm_base - physical_size;
+		printf("%s: changing pmap_directbase to %#lx\n", __func__,
+		    pmap_directbase);
+	}
+#else
+	KASSERT(kernel_vm_base - KERNEL_BASE >= physical_end - physical_start);
+#endif /* ARM_MMU_EXTENDED */
+#endif /* __HAVE_MM_MD_DIRECT_MAPPED_PHYS */
 
 	/*
 	 * Calculate the number of L2 pages needed for mapping the
@@ -392,21 +433,31 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	 */
 	size_t kernel_size = bmi->bmi_kernelend;
 	kernel_size -= (bmi->bmi_kernelstart & -L2_S_SEGSIZE);
-	kernel_size += L1_TABLE_SIZE;
-	kernel_size += L2_TABLE_SIZE * (2 + 1 + KERNEL_L2PT_VMDATA_NUM + 1);
+	kernel_size += L1_TABLE_SIZE_REAL;
+	kernel_size += PAGE_SIZE * KERNEL_L2PT_VMDATA_NUM;
+	if (map_vectors_p) {
+		kernel_size += PAGE_SIZE;	/* L2PT for VECTORS */
+	}
+	if (iovbase) {
+		kernel_size += PAGE_SIZE;	/* L2PT for IO */
+	}
 	kernel_size +=
 	    cpu_num * (ABT_STACK_SIZE + FIQ_STACK_SIZE + IRQ_STACK_SIZE
 	    + UND_STACK_SIZE + UPAGES) * PAGE_SIZE;
 	kernel_size += round_page(MSGBUFSIZE);
 	kernel_size += 0x10000;	/* slop */
-	kernel_size += PAGE_SIZE * (kernel_size + L2_S_SEGSIZE - 1) / L2_S_SEGSIZE;
+	if (!mapallmem_p) {
+		kernel_size += PAGE_SIZE
+		    * ((kernel_size + L2_S_SEGSIZE - 1) / L2_S_SEGSIZE);
+	}
 	kernel_size = round_page(kernel_size);
 
 	/*
-	 * Now we know how many L2 pages it will take.
+	 * Now we know how many L2 pages it will take.  If we've mapped
+	 * all of memory, then it won't take any.
 	 */
-	const size_t KERNEL_L2PT_KERNEL_NUM =
-	    (kernel_size + L2_S_SEGSIZE - 1) / L2_S_SEGSIZE;
+	const size_t KERNEL_L2PT_KERNEL_NUM = mapallmem_p
+	    ? 0 : round_page(kernel_size + L2_S_SEGSIZE - 1) / L2_S_SEGSIZE;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("%s: %zu L2 pages are needed to map %#zx kernel bytes\n",
@@ -463,9 +514,8 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 #ifdef VERBOSE_INIT_ARM
 		printf(" vector");
 #endif
-		valloc_pages(bmi, &bmi->bmi_vector_l2pt,
-		    L2_TABLE_SIZE / PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE,
-		    PTE_PAGETABLE, true);
+		valloc_pages(bmi, &bmi->bmi_vector_l2pt, 1,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE, true);
 		add_pages(bmi, &bmi->bmi_vector_l2pt);
 	}
 
@@ -475,8 +525,10 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 #ifdef VERBOSE_INIT_ARM
 	printf(" kernel");
 #endif
+	KASSERT(mapallmem_p || KERNEL_L2PT_KERNEL_NUM > 0);
+	KASSERT(!mapallmem_p || KERNEL_L2PT_KERNEL_NUM == 0);
 	for (size_t idx = 0; idx < KERNEL_L2PT_KERNEL_NUM; ++idx) {
-		valloc_pages(bmi, &kernel_l2pt[idx], L2_TABLE_SIZE / PAGE_SIZE,
+		valloc_pages(bmi, &kernel_l2pt[idx], 1,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE, true);
 		add_pages(bmi, &kernel_l2pt[idx]);
 	}
@@ -488,7 +540,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	printf(" vm");
 #endif
 	for (size_t idx = 0; idx < KERNEL_L2PT_VMDATA_NUM; ++idx) {
-		valloc_pages(bmi, &vmdata_l2pt[idx], L2_TABLE_SIZE / PAGE_SIZE,
+		valloc_pages(bmi, &vmdata_l2pt[idx], 1,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE, true);
 		add_pages(bmi, &vmdata_l2pt[idx]);
 	}
@@ -496,16 +548,16 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	/*
 	 * If someone wanted a L2 page for I/O, allocate it now.
 	 */
-	if (iovbase != 0) {
+	if (iovbase) {
 #ifdef VERBOSE_INIT_ARM
 		printf(" io");
 #endif
-		valloc_pages(bmi, &bmi->bmi_io_l2pt, L2_TABLE_SIZE / PAGE_SIZE,
+		valloc_pages(bmi, &bmi->bmi_io_l2pt, 1,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE, true);
 		add_pages(bmi, &bmi->bmi_io_l2pt);
 	}
 
-#ifdef VERBOSE_ARM_INIT
+#ifdef VERBOSE_INIT_ARM
 	printf("%s: allocating stacks\n", __func__);
 #endif
 
@@ -535,6 +587,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE, false);
 	add_pages(bmi, &msgbuf);
 	msgbufphys = msgbuf.pv_pa;
+	msgbufaddr = (void *)msgbuf.pv_va;
 
 	if (map_vectors_p) {
 		/*
@@ -555,7 +608,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 #if (ARM_NMMUS > 1)
 	if (xscale_use_minidata)
 #endif          
-		valloc_pages(bmi, extrapv, nextrapages,
+		valloc_pages(bmi, &minidataclean, 1,
 		    VM_PROT_READ|VM_PROT_WRITE, 0, true);
 #endif
 
@@ -600,8 +653,8 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		    &kernel_l2pt[idx]);
 #ifdef VERBOSE_INIT_ARM
 		printf("%s: adding L2 pt (VA %#lx, PA %#lx) for VA %#lx (kernel)\n",
-		    __func__, kernel_l2pt[idx].pv_va, kernel_l2pt[idx].pv_pa,
-		    kernel_base + idx * L2_S_SEGSIZE);
+		    __func__, kernel_l2pt[idx].pv_va,
+		    kernel_l2pt[idx].pv_pa, kernel_base + idx * L2_S_SEGSIZE);
 #endif
 	}
 
@@ -667,14 +720,13 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Listing Chunks\n");
-	{
-		pv_addr_t *pv;
-		SLIST_FOREACH(pv, &bmi->bmi_chunks, pv_list) {
-			printf("%s: pv %p: chunk VA %#lx..%#lx "
-			    "(PA %#lx, prot %d, cache %d)\n",
-			    __func__, pv, pv->pv_va, pv->pv_va + pv->pv_size - 1,
-			    pv->pv_pa, pv->pv_prot, pv->pv_cache);
-		}
+
+	pv_addr_t *lpv;
+	SLIST_FOREACH(lpv, &bmi->bmi_chunks, pv_list) {
+		printf("%s: pv %p: chunk VA %#lx..%#lx "
+		    "(PA %#lx, prot %d, cache %d)\n",
+		    __func__, lpv, lpv->pv_va, lpv->pv_va + lpv->pv_size - 1,
+		    lpv->pv_pa, lpv->pv_prot, lpv->pv_cache);
 	}
 	printf("\nMapping Chunks\n");
 #endif
@@ -685,7 +737,11 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		cur_pv = *pv;
 		pv = SLIST_NEXT(pv, pv_list);
 	} else {
+#if defined(ARM_MMU_EXTENDED) && defined(__HAVE_MM_MD_DIRECT_MAPPED_PHYS)
+		cur_pv.pv_va = pmap_directbase;
+#else
 		cur_pv.pv_va = KERNEL_BASE;
+#endif
 		cur_pv.pv_pa = bmi->bmi_start;
 		cur_pv.pv_size = pv->pv_pa - bmi->bmi_start;
 		cur_pv.pv_prot = VM_PROT_READ | VM_PROT_WRITE;
@@ -799,7 +855,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 #if (ARM_NMMUS > 1)
 	if (xscale_use_minidata)
 #endif          
-		xscale_setup_minidata(l1_va, minidataclean.pv_va,
+		xscale_setup_minidata(l1pt_va, minidataclean.pv_va,
 		    minidataclean.pv_pa);      
 #endif
 
@@ -889,11 +945,12 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	 * tables.
 	 */
 
-#if defined(VERBOSE_INIT_ARM) && 0
+#if defined(VERBOSE_INIT_ARM)
 	printf("TTBR0=%#x", armreg_ttbr_read());
 #ifdef _ARM_ARCH_6
-	printf(" TTBR1=%#x TTBCR=%#x",
-	    armreg_ttbr1_read(), armreg_ttbcr_read());
+	printf(" TTBR1=%#x TTBCR=%#x CONTEXTIDR=%#x",
+	    armreg_ttbr1_read(), armreg_ttbcr_read(),
+	    armreg_contextidr_read());
 #endif
 	printf("\n");
 #endif
@@ -903,17 +960,55 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	printf("switching to new L1 page table @%#lx...", l1pt_pa);
 #endif
 
-	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	cpu_idcache_wbinv_all();
 #ifdef ARM_MMU_EXTENDED
+	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2))
+	    | (DOMAIN_CLIENT << (PMAP_DOMAIN_USER*2)));
+#else
+	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
+#endif
+	cpu_idcache_wbinv_all();
+#ifdef VERBOSE_INIT_ARM
+	printf(" ttb");
+#endif
+#ifdef ARM_MMU_EXTENDED
+	/*
+	 * TTBCR should have been initialized by the MD start code.
+	 */
+	KASSERT((armreg_contextidr_read() & 0xff) == 0);
+	KASSERT(armreg_ttbcr_read() == __SHIFTIN(1, TTBCR_S_N));
+	/*
+	 * Disable lookups via TTBR0 until there is an activated pmap.
+	 */
+	armreg_ttbcr_write(armreg_ttbcr_read() | TTBCR_S_PD0);
 	cpu_setttb(l1pt_pa, KERNEL_PID);
+	arm_isb();
 #else
 	cpu_setttb(l1pt_pa, true);
+	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 #endif
 	cpu_tlb_flushID();
-	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
 #ifdef VERBOSE_INIT_ARM
-	printf("TTBR0=%#x OK\n", armreg_ttbr_read());
+#ifdef ARM_MMU_EXTENDED
+	printf(" (TTBCR=%#x TTBR0=%#x TTBR1=%#x)",
+	    armreg_ttbcr_read(), armreg_ttbr_read(), armreg_ttbr1_read());
+#else
+	printf(" (TTBR0=%#x)", armreg_ttbr_read());
+#endif
+#endif
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * Kick the secondaries to load the TTB.  After which they'll go
+	 * back to sleep to wait for the final kick so they will hatch.
+	 */
+#ifdef VERBOSE_INIT_ARM
+	printf(" hatchlings");
+#endif
+	cpu_boot_secondary_processors();
+#endif
+
+#ifdef VERBOSE_INIT_ARM
+	printf(" OK\n");
 #endif
 }

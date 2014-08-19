@@ -1,4 +1,4 @@
-/*	$NetBSD: bluetooth.h,v 1.11 2011/04/27 00:36:48 rmind Exp $	*/
+/*	$NetBSD: bluetooth.h,v 1.11.14.1 2014/08/20 00:04:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -103,6 +103,8 @@ struct sockaddr_bt {
 
 #ifdef _KERNEL
 
+#include <sys/protosw.h>
+
 #include <sys/mallocvar.h>
 MALLOC_DECLARE(M_BLUETOOTH);
 
@@ -119,6 +121,13 @@ struct btproto {
 	void (*linkmode)(void *, int);
 	void (*input)(void *, struct mbuf *);
 };
+
+extern const struct pr_usrreqs hci_usrreqs;
+extern const struct pr_usrreqs sco_usrreqs;
+extern const struct pr_usrreqs l2cap_usrreqs;
+extern const struct pr_usrreqs rfcomm_usrreqs;
+
+extern kmutex_t *bt_lock;
 
 /*
  * Debugging stuff
@@ -146,8 +155,6 @@ extern int bluetooth_debug;
 # define DPRINTFN(...) ((void)0)
 # define UNKNOWN(x) ((void)0)
 #endif	/* BLUETOOTH_DEBUG */
-
-extern kmutex_t *bt_lock;
 
 #endif	/* _KERNEL */
 

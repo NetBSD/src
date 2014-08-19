@@ -14,13 +14,13 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5210reg.h,v 1.2 2011/05/30 13:58:23 joerg Exp $
+ * $Id: ar5210reg.h,v 1.2.14.1 2014/08/20 00:04:25 tls Exp $
  */
 #ifndef _DEV_ATH_AR5210REG_H
 #define _DEV_ATH_AR5210REG_H
 
 /*
- * Register defintions for the Atheros AR5210/5110 MAC/Basedband
+ * Register definitions for the Atheros AR5210/5110 MAC/Basedband
  * Processor for IEEE 802.11a 5-GHz Wireless LANs.
  */
 

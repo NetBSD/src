@@ -1,4 +1,4 @@
-/* $NetBSD: com_arbus.c,v 1.10 2011/07/07 05:06:44 matt Exp $ */
+/* $NetBSD: com_arbus.c,v 1.10.12.1 2014/08/20 00:03:12 tls Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.10 2011/07/07 05:06:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.10.12.1 2014/08/20 00:03:12 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,10 +223,15 @@ com_arbus_attach(device_t parent, device_t self, void *aux)
 void
 com_arbus_initmap(struct com_regs *regsp)
 {
+#if _BYTE_ORDER == _BIG_ENDIAN
+	int off = 3;
+#else
+	int off = 0;
+#endif
 
 	/* rewrite the map to shift for alignment */
 	for (size_t i = 0; i < __arraycount(regsp->cr_map); i++) {
-		regsp->cr_map[i] = (com_std_map[i] * 4) + 3;
+		regsp->cr_map[i] = (com_std_map[i] * 4) + off;
 	}
 }
 

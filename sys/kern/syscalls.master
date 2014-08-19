@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.260.2.2 2013/06/23 06:18:58 tls Exp $
+	$NetBSD: syscalls.master,v 1.260.2.3 2014/08/20 00:04:29 tls Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -130,7 +130,7 @@
 43	NOERR 	RUMP	{ gid_t|sys||getegid(void); }
 44	STD 		{ int|sys||profil(char *samples, size_t size, \
 			    u_long offset, u_int scale); }
-45	STD 		{ int|sys||ktrace(const char *fname, int ops, \
+45	STD 	RUMP	{ int|sys||ktrace(const char *fname, int ops, \
 			    int facs, pid_t pid); }
 46	COMPAT_13 MODULAR { int|sys||sigaction(int signum, \
 			    const struct sigaction13 *nsa, \
@@ -390,7 +390,7 @@
 			    off_t length); }
 201	STD 	 RUMP	{ int|sys||ftruncate(int fd, int PAD, off_t length); }
 202	STD	 RUMP 	{ int|sys||__sysctl(const int *name, u_int namelen, \
-			    void *old, size_t *oldlenp, const void *new, \
+			    void *oldv, size_t *oldlenp, const void *newv, \
 			    size_t newlen); }
 203	STD 		{ int|sys||mlock(const void *addr, size_t len); }
 204	STD 		{ int|sys||munlock(const void *addr, size_t len); }
@@ -462,15 +462,15 @@
 			    const struct timespec50 *tp); }
 234	COMPAT_50 MODULAR { int|sys||clock_getres(clockid_t clock_id, \
 			    struct timespec50 *tp); }
-235	STD		{ int|sys||timer_create(clockid_t clock_id, \
+235	STD  RUMP	{ int|sys||timer_create(clockid_t clock_id, \
 			    struct sigevent *evp, timer_t *timerid); }
-236	STD		{ int|sys||timer_delete(timer_t timerid); }
+236	STD  RUMP	{ int|sys||timer_delete(timer_t timerid); }
 237	COMPAT_50 MODULAR { int|sys||timer_settime(timer_t timerid, int flags, \
 			    const struct itimerspec50 *value, \
 			    struct itimerspec50 *ovalue); }
 238	COMPAT_50 MODULAR { int|sys||timer_gettime(timer_t timerid, struct \
 			    itimerspec50 *value); }
-239	STD		{ int|sys||timer_getoverrun(timer_t timerid); }
+239	STD  RUMP	{ int|sys||timer_getoverrun(timer_t timerid); }
 ;
 ; Syscalls 240-269 are reserved for other IEEE Std1003.1b syscalls
 ;
@@ -550,7 +550,7 @@
 			    gid_t gid); }
 286	STD 	RUMP	{ pid_t|sys||getsid(pid_t pid); }
 287	STD 		{ pid_t|sys||__clone(int flags, void *stack); }
-288	STD 		{ int|sys||fktrace(int fd, int ops, \
+288	STD 	RUMP	{ int|sys||fktrace(int fd, int ops, \
 			    int facs, pid_t pid); }
 289	STD 	RUMP	{ ssize_t|sys||preadv(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
@@ -594,7 +594,7 @@
 #endif
 304	STD 	 RUMP	{ int|sys||lchflags(const char *path, u_long flags); }
 305	NOERR 	RUMP	{ int|sys||issetugid(void); }
-306	STD 		{ int|sys||utrace(const char *label, void *addr, \
+306	STD	RUMP	{ int|sys||utrace(const char *label, void *addr, \
 				size_t len); }
 307	STD 		{ int|sys||getcontext(struct __ucontext *ucp); }
 308	STD 		{ int|sys||setcontext(const struct __ucontext *ucp); }
@@ -629,7 +629,7 @@
 328	UNIMPL
 329	UNIMPL
 ; SA system calls.
-330	COMPAT_60 	{ int|sys||sa_register(void *new, void **old, \
+330	COMPAT_60 	{ int|sys||sa_register(void *newv, void **oldv, \
 				int flags, ssize_t stackinfo_offset); }
 331	COMPAT_60 	{ int|sys||sa_stacks(int num, stack_t *stacks); }
 332	COMPAT_60 	{ int|sys||sa_enable(void); }
@@ -765,16 +765,16 @@
 			    size_t fh_size, struct stat30 *sb); }
 
 ; Asynchronous I/O system calls
-399	STD MODULAR 	{ int|sys||aio_cancel(int fildes, struct aiocb *aiocbp); }
-400	STD MODULAR 	{ int|sys||aio_error(const struct aiocb *aiocbp); }
-401	STD MODULAR 	{ int|sys||aio_fsync(int op, struct aiocb *aiocbp); }
-402	STD MODULAR 	{ int|sys||aio_read(struct aiocb *aiocbp); }
-403	STD MODULAR 	{ int|sys||aio_return(struct aiocb *aiocbp); }
+399	STD MODULAR RUMP	{ int|sys||aio_cancel(int fildes, struct aiocb *aiocbp); }
+400	STD MODULAR RUMP	{ int|sys||aio_error(const struct aiocb *aiocbp); }
+401	STD MODULAR RUMP	{ int|sys||aio_fsync(int op, struct aiocb *aiocbp); }
+402	STD MODULAR RUMP	{ int|sys||aio_read(struct aiocb *aiocbp); }
+403	STD MODULAR RUMP	{ int|sys||aio_return(struct aiocb *aiocbp); }
 404	COMPAT_50 MODULAR { int|sys||aio_suspend(const struct aiocb *const *list, \
 			    int nent, const struct timespec50 *timeout); }
-405	STD MODULAR 	{ int|sys||aio_write(struct aiocb *aiocbp); }
-406	STD MODULAR 	{ int|sys||lio_listio(int mode, struct aiocb *const *list, \
-			    int nent, struct sigevent *sig); }
+405	STD MODULAR RUMP	{ int|sys||aio_write(struct aiocb *aiocbp); }
+406	STD MODULAR RUMP	{ int|sys||lio_listio(int mode, struct aiocb *const *list, \
+				    int nent, struct sigevent *sig); }
 
 407	UNIMPL
 408	UNIMPL
@@ -797,13 +797,13 @@
 			    off_t offset, off_t len, int advice); }
 417	STD  RUMP	{ int|sys|50|select(int nd, fd_set *in, fd_set *ou, \
 			    fd_set *ex, struct timeval *tv); }
-418	STD 		{ int|sys|50|gettimeofday(struct timeval *tp, \
+418	STD  RUMP	{ int|sys|50|gettimeofday(struct timeval *tp, \
 			    void *tzp); }
-419	STD 		{ int|sys|50|settimeofday(const struct timeval *tv, \
+419	STD  RUMP	{ int|sys|50|settimeofday(const struct timeval *tv, \
 			    const void *tzp); }
 420	STD  RUMP	{ int|sys|50|utimes(const char *path, \
 			    const struct timeval *tptr); }
-421	STD		{ int|sys|50|adjtime(const struct timeval *delta, \
+421	STD  RUMP	{ int|sys|50|adjtime(const struct timeval *delta, \
 			    struct timeval *olddelta); }
 422	STD  MODULAR	{ int|sys|50|lfs_segwait(fsid_t *fsidp, \
 			    struct timeval *tv); }
@@ -811,18 +811,18 @@
 			    const struct timeval *tptr); }
 424	STD  RUMP 	{ int|sys|50|lutimes(const char *path, \
 			    const struct timeval *tptr); }
-425	STD		{ int|sys|50|setitimer(int which, \
+425	STD  RUMP	{ int|sys|50|setitimer(int which, \
 			    const struct itimerval *itv, \
 			    struct itimerval *oitv); }
-426	STD		{ int|sys|50|getitimer(int which, \
+426	STD  RUMP	{ int|sys|50|getitimer(int which, \
 			    struct itimerval *itv); }
-427	STD 		{ int|sys|50|clock_gettime(clockid_t clock_id, \
+427	STD  RUMP	{ int|sys|50|clock_gettime(clockid_t clock_id, \
 			    struct timespec *tp); }
-428	STD 		{ int|sys|50|clock_settime(clockid_t clock_id, \
+428	STD  RUMP	{ int|sys|50|clock_settime(clockid_t clock_id, \
 			    const struct timespec *tp); }
-429	STD 		{ int|sys|50|clock_getres(clockid_t clock_id, \
+429	STD  RUMP	{ int|sys|50|clock_getres(clockid_t clock_id, \
 			    struct timespec *tp); }
-430	STD 		{ int|sys|50|nanosleep(const struct timespec *rqtp, \
+430	STD  RUMP	{ int|sys|50|nanosleep(const struct timespec *rqtp, \
 			    struct timespec *rmtp); }
 431	STD 		{ int|sys|50|__sigtimedwait(const sigset_t *set, \
 			    siginfo_t *info, \
@@ -846,7 +846,7 @@
 			    const sigset_t *mask); }
 437	STD 	RUMP	{ int|sys|50|pollts(struct pollfd *fds, u_int nfds, \
 			    const struct timespec *ts, const sigset_t *mask); }
-438	STD MODULAR	{ int|sys|50|aio_suspend( \
+438	STD MODULAR RUMP { int|sys|50|aio_suspend( \
 			    const struct aiocb *const *list, \
 			    int nent, const struct timespec *timeout); }
 439	STD  RUMP	{ int|sys|50|stat(const char *path, struct stat *ub); }
@@ -871,10 +871,10 @@
 444	EXCL 		____msgctl50
 #endif
 445	STD 		{ int|sys|50|getrusage(int who, struct rusage *rusage); }
-446	STD		{ int|sys|50|timer_settime(timer_t timerid, \
+446	STD  RUMP	{ int|sys|50|timer_settime(timer_t timerid, \
 			    int flags, const struct itimerspec *value, \
 			    struct itimerspec *ovalue); }
-447	STD		{ int|sys|50|timer_gettime(timer_t timerid, struct \
+447	STD  RUMP	{ int|sys|50|timer_gettime(timer_t timerid, struct \
 			    itimerspec *value); }
 #if defined(NTP) || !defined(_KERNEL_OPT)
 448	STD		{ int|sys|50|ntp_gettime(struct ntptimeval *ntvp); }
@@ -902,7 +902,7 @@
 459	STD  RUMP	{ int|sys||mkfifoat(int fd, const char *path, \
 			    mode_t mode); }
 460	STD  RUMP	{ int|sys||mknodat(int fd, const char *path, \
-			    mode_t mode, uint32_t dev); }
+			    mode_t mode, int PAD, dev_t dev); }
 461	STD  RUMP	{ int|sys||mkdirat(int fd, const char *path, \
 			    mode_t mode); }
 462	STD  RUMP	{ int|sys||faccessat(int fd, const char *path, \
@@ -911,7 +911,7 @@
 			    mode_t mode, int flag); }
 464	STD  RUMP	{ int|sys||fchownat(int fd, const char *path, \
 			    uid_t owner, gid_t group, int flag); }
-465	STD  RUMP	{ int|sys||fexecve(int fd, \
+465	STD  		{ int|sys||fexecve(int fd, \
 			    char * const *argp, char * const *envp); }
 466	STD  RUMP	{ int|sys||fstatat(int fd, const char *path, \
 			    struct stat *buf, int flag); }
@@ -933,14 +933,18 @@
 			    const struct posix_spawn_file_actions *file_actions, \
 			    const struct posix_spawnattr *attrp, \
 			    char *const *argv, char *const *envp); }
-475	STD		{ int|sys||recvmmsg(int s, struct mmsghdr *mmsg, \
+475	STD  RUMP	{ int|sys||recvmmsg(int s, struct mmsghdr *mmsg, \
 			    unsigned int vlen, unsigned int flags, \
 			    struct timespec *timeout); }
-476	STD		{ int|sys||sendmmsg(int s, struct mmsghdr *mmsg, \
+476	STD  RUMP	{ int|sys||sendmmsg(int s, struct mmsghdr *mmsg, \
 			    unsigned int vlen, unsigned int flags); }
-477	STD 		{ int|sys||clock_nanosleep(clockid_t clock_id, \
+477	STD  RUMP	{ int|sys||clock_nanosleep(clockid_t clock_id, \
 			    int flags, const struct timespec *rqtp, \
 			    struct timespec *rmtp); }
 478	STD 		{ int|sys|60|_lwp_park(clockid_t clock_id, int flags, \
 			    const struct timespec *ts, lwpid_t unpark, \
 			    const void *hint, const void *unparkhint); }
+479	STD  RUMP	{ int|sys||posix_fallocate(int fd, int PAD, off_t pos, \
+			    off_t len); }
+480	STD  RUMP	{ int|sys||fdiscard(int fd, int PAD, off_t pos, \
+			    off_t len); }

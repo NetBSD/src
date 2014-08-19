@@ -1,4 +1,4 @@
-/*	$NetBSD: bad144.c,v 1.29 2011/11/25 13:13:33 joerg Exp $	*/
+/*	$NetBSD: bad144.c,v 1.29.6.1 2014/08/20 00:05:06 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)bad144.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: bad144.c,v 1.29 2011/11/25 13:13:33 joerg Exp $");
+__RCSID("$NetBSD: bad144.c,v 1.29.6.1 2014/08/20 00:05:06 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,10 @@ int
 main(int argc, char *argv[])
 {
 	struct bt_bad *bt;
-	daddr_t	sn, bn[NBT_BAD];
+	daddr_t	sn;
+#ifdef __vax__
+	daddr_t bn[NBT_BAD];
+#endif
 	int i, f, nbad, new, bad, errs, ch;
 
 	while ((ch = getopt(argc, argv, OPTSTRING)) != -1) {
@@ -250,7 +253,9 @@ main(int argc, char *argv[])
 			errs++;
 			continue;
 		}
+#ifdef __vax__
 		bn[i] = sn;
+#endif
 		curbad.bt_bad[i].bt_cyl = sn / (dp->d_nsectors*dp->d_ntracks);
 		sn %= (dp->d_nsectors*dp->d_ntracks);
 		curbad.bt_bad[i].bt_trksec =

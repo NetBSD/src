@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.7.2.2 2013/06/23 06:20:07 tls Exp $
+# $NetBSD: INSTALL,v 1.7.2.3 2014/08/20 00:03:10 tls Exp $
 #
 # config for installation ramdisk kernel
 # 
@@ -15,7 +15,7 @@ options 	FPSP	# on m68040 to emulate some missing FP instructions
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT		# Force root on ram-disk
 options 	MEMORY_DISK_SERVER=0		# no userspace md(4) support
-options 	MEMORY_DISK_ROOT_SIZE=3200	# 1.60 Megabytes
+options 	MEMORY_DISK_ROOT_SIZE=3600	# 1.80 Megabytes
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # Standard system options
@@ -98,7 +98,6 @@ options 	INET		# IP protocol stack support
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default

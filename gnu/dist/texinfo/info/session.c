@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.5 2008/09/02 08:41:51 christos Exp $	*/
+/*	$NetBSD: session.c,v 1.5.24.1 2014/08/20 00:01:54 tls Exp $	*/
 
 /* session.c -- user windowing interface to Info.
    Id: session.c,v 1.16 2004/12/14 00:15:36 karl Exp
@@ -2020,7 +2020,7 @@ nearest_xref (REFERENCE **xref_list, long int pos)
       /* See how far POS is from this xref.  Take into account the
          `*Note' that begins the xref, since as far as the user is
          concerned, that's where it starts.  */
-      delta = MIN (labs (pos - (xref->start - strlen (INFO_XREF_LABEL))),
+      delta = MIN (labs (pos - (xref->start - (long)strlen (INFO_XREF_LABEL))),
                    labs (pos - xref->end));
       
       /* It's the <= instead of < that makes us choose the forward xref
@@ -2247,7 +2247,7 @@ info_menu_or_ref_item (WINDOW *window, int count,
                 {
                   /* ref->end is more accurate estimate of position
                      for menus than ref->start.  Go figure.  */
-                  int dist = abs (window->point - ref->end);
+                  int dist = labs (window->point - ref->end);
 
                   if (dist < min_dist)
                     {

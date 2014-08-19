@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.98.2.1 2013/06/23 06:18:39 tls Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.98.2.2 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -166,6 +166,9 @@ int lfs_truncate(struct vnode *, off_t, int, kauth_cred_t);
 struct ulfs1_dinode *lfs_ifind(struct lfs *, ino_t, struct buf *);
 void lfs_finalize_ino_seguse(struct lfs *, struct inode *);
 void lfs_finalize_fs_seguse(struct lfs *);
+
+/* lfs_rename.c */
+int lfs_rename(void *);
 
 /* lfs_rfw.c */
 int lfs_rf_valloc(struct lfs *, ino_t, int, struct lwp *, struct vnode **);

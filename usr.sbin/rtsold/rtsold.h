@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.h,v 1.10 2011/10/17 16:31:14 mbalmer Exp $	*/
+/*	$NetBSD: rtsold.h,v 1.10.8.1 2014/08/20 00:05:13 tls Exp $	*/
 /*	$KAME: rtsold.h,v 1.14 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -64,35 +64,37 @@ struct ifinfo {
 extern struct timeval tm_max;
 extern int dflag;
 extern int aflag;
-extern int ifconfig __P((char *));
-extern void iflist_init __P((void));
-struct ifinfo *find_ifinfo __P((int));
-void rtsol_timer_update __P((struct ifinfo *));
-extern void warnmsg __P((int, const char *, const char *, ...))
-     __attribute__((__format__(__printf__, 3, 4)));
-extern char **autoifprobe __P((void));
+extern struct ifinfo *iflist;
+extern int rssock;
+
+int ifconfig(char *);
+void iflist_init(void);
+struct ifinfo *find_ifinfo(size_t);
+void rtsol_timer_update(struct ifinfo *);
+void warnmsg(int, const char *, const char *, ...) __printflike(3, 4);
+char **autoifprobe(void);
 
 /* if.c */
-extern int ifinit __P((void));
-extern int interface_up __P((char *));
-extern int interface_status __P((struct ifinfo *));
-extern int lladdropt_length __P((struct sockaddr_dl *));
-extern void lladdropt_fill __P((struct sockaddr_dl *, struct nd_opt_hdr *));
-extern struct sockaddr_dl *if_nametosdl __P((char *));
-extern int getinet6sysctl __P((int));
+int ifinit(void);
+int interface_up(char *);
+int interface_status(struct ifinfo *);
+size_t lladdropt_length(struct sockaddr_dl *);
+void lladdropt_fill(struct sockaddr_dl *, struct nd_opt_hdr *);
+struct sockaddr_dl *if_nametosdl(char *);
+int getinet6sysctl(int);
 
 /* rtsol.c */
-extern int sockopen __P((void));
-extern void sendpacket __P((struct ifinfo *));
-extern void rtsol_input __P((int));
+int sockopen(void);
+void sendpacket(struct ifinfo *);
+void rtsol_input(int);
 
 /* probe.c */
-extern int probe_init __P((void));
-extern void defrouter_probe __P((struct ifinfo *));
+int probe_init(void);
+void defrouter_probe(struct ifinfo *);
 
 /* dump.c */
-extern void rtsold_dump_file __P((const char *));
+void rtsold_dump_file(const char *);
 
 /* rtsock.c */
-extern int rtsock_open __P((void));
-extern int rtsock_input __P((int));
+int rtsock_open(void);
+int rtsock_input(int);

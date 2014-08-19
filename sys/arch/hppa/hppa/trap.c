@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.101 2012/04/23 11:25:03 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.101.2.1 2014/08/20 00:03:04 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.101 2012/04/23 11:25:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.101.2.1 2014/08/20 00:03:04 tls Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -983,27 +983,6 @@ child_return(void *arg)
 void
 cpu_spawn_return(struct lwp *l)
 {
-	struct proc *p = l->l_proc;
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
-	pa_space_t space = pmap->pm_space;
-	struct trapframe *tf = l->l_md.md_regs;
-
-	/* Load all of the user's space registers. */
-	tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr3 = tf->tf_sr2 =
-	tf->tf_sr4 = tf->tf_sr5 = tf->tf_sr6 = space;
-	tf->tf_iisq_head = tf->tf_iisq_tail = space;
-
-	/* Load the protection registers */
-	tf->tf_pidr1 = tf->tf_pidr2 = pmap->pm_pid;
-
-	/*
-	 * theoretically these could be inherited from the father,
-	 * but just in case.
-	 */
-	tf->tf_sr7 = HPPA_SID_KERNEL;
-	mfctl(CR_EIEM, tf->tf_eiem);
-	tf->tf_ipsw = PSW_C | PSW_Q | PSW_P | PSW_D | PSW_I /* | PSW_L */ |
-	    (curcpu()->ci_psw & PSW_O);
 
 	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 #ifdef DEBUG
@@ -1237,17 +1216,8 @@ syscall(struct trapframe *frame, int *args)
 	}
 #endif
 
-	error = 0;
-	if (__predict_false(p->p_trace_enabled)) {
-		error = trace_enter(code, args, callp->sy_narg);
-		if (error)
-			goto out;
-	}
+	error = sy_invoke(callp, l, args, rval, code);
 
-	rval[0] = 0;
-	rval[1] = 0;
-	error = sy_call(callp, l, args, rval);
-out:
 	switch (error) {
 	case 0:
 		l = curlwp;			/* changes on exec() */
@@ -1266,7 +1236,7 @@ out:
 		 * run reads as:
 		 *
 		 *	ldil	L%SYSCALLGATE, r1
-		 *	ble	4(sr7, r1)
+		 *	ble	4(srX, r1)
 		 *	ldi	__CONCAT(SYS_,x), t1
 		 *	comb,<>	%r0, %t1, __cerror
 		 *
@@ -1285,9 +1255,6 @@ out:
 		frame->tf_t1 = error;
 		break;
 	}
-
-	if (__predict_false(p->p_trace_enabled))
-		trace_exit(code, rval, error);
 
 	userret(l, frame->tf_iioq_head, 0);
 
@@ -1313,7 +1280,7 @@ startlwp(void *arg)
 {
 	ucontext_t *uc = arg;
 	lwp_t *l = curlwp;
-	int error;
+	int error __diagused;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);

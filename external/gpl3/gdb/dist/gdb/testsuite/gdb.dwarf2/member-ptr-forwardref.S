@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2010-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -31,24 +31,24 @@
      } c;  */
 
 	.file	"member-ptr-forwardref.cc"
-	.section	.debug_abbrev,"",@progbits
+	.section	.debug_abbrev,"",%progbits
 .Ldebug_abbrev0:
-	.section	.debug_info,"",@progbits
+	.section	.debug_info,"",%progbits
 .Ldebug_info0:
-	.section	.debug_line,"",@progbits
+	.section	.debug_line,"",%progbits
 .Ldebug_line0:
 	.text
 .Ltext0:
 .globl fp
 	.data
 	.align 4
-	.type	fp, @object
+	.type	fp, %object
 	.size	fp, 8
 fp:
 	.zero	8
 .globl c
 	.align 4
-	.type	c, @object
+	.type	c, %object
 	.size	c, 8
 c:
 	.zero	8
@@ -56,46 +56,46 @@ c:
 .Letext0:
 	.file 1 "gdb.dwarf2/member-ptr-forwardref.cc"
 	.section	.debug_info
-	.long	0xa9	/* Length of Compilation Unit Info */
+	.4byte	0xa9	/* Length of Compilation Unit Info */
 	.2byte	0x3	/* DWARF version number */
-	.long	.Ldebug_abbrev0	/* Offset Into Abbrev. Section */
+	.4byte	.Ldebug_abbrev0	/* Offset Into Abbrev. Section */
 	.byte	0x4	/* Pointer Size (in bytes) */
 	.uleb128 0x1	/* (DIE (0xb) DW_TAG_compile_unit) */
-	.long	.LASF2	/* DW_AT_producer: "GNU C++ 4.4.2 20091222 (Red Hat 4.4.2-20)" */
+	.4byte	.LASF2	/* DW_AT_producer: "GNU C++ 4.4.2 20091222 (Red Hat 4.4.2-20)" */
 	.byte	0x4	/* DW_AT_language */
-	.long	.LASF3	/* DW_AT_name: "gdb.dwarf2/member-ptr-forwardref.cc" */
-	.long	.LASF4	/* DW_AT_comp_dir: "gdb/testsuite" */
-	.long	.Ltext0	/* DW_AT_low_pc */
-	.long	.Letext0	/* DW_AT_high_pc */
-	.long	.Ldebug_line0	/* DW_AT_stmt_list */
+	.4byte	.LASF3	/* DW_AT_name: "gdb.dwarf2/member-ptr-forwardref.cc" */
+	.4byte	.LASF4	/* DW_AT_comp_dir: "gdb/testsuite" */
+	.4byte	.Ltext0	/* DW_AT_low_pc */
+	.4byte	.Letext0	/* DW_AT_high_pc */
+	.4byte	.Ldebug_line0	/* DW_AT_stmt_list */
 	.uleb128 0x2	/* (DIE (0x25) DW_TAG_typedef) */
-	.long	.LASF5	/* DW_AT_name: "fp_t" */
+	.4byte	.LASF5	/* DW_AT_name: "fp_t" */
 	.byte	0x1	/* DW_AT_decl_file (gdb.dwarf2/member-ptr-forwardref.cc) */
 	.byte	0x13	/* DW_AT_decl_line */
-	.long	0x30	/* DW_AT_type */
+	.4byte	0x30	/* DW_AT_type */
 	.uleb128 0x3	/* (DIE (0x30) DW_TAG_structure_type) */
 	.byte	0x8	/* DW_AT_byte_size */
 	.byte	0x1	/* DW_AT_decl_file (gdb.dwarf2/member-ptr-forwardref.cc) */
 	.byte	0x13	/* DW_AT_decl_line */
-	.long	0x51	/* DW_AT_sibling */
+	.4byte	0x51	/* DW_AT_sibling */
 	.uleb128 0x4	/* (DIE (0x38) DW_TAG_member) */
-	.long	.LASF0	/* DW_AT_name: "__pfn" */
+	.4byte	.LASF0	/* DW_AT_name: "__pfn" */
 	.byte	0x1	/* DW_AT_decl_file (gdb.dwarf2/member-ptr-forwardref.cc) */
 	.byte	0x13	/* DW_AT_decl_line */
-	.long	0x85	/* DW_AT_type */
+	.4byte	0x85	/* DW_AT_type */
 	.sleb128 0	/* DW_AT_data_member_location */
 	.uleb128 0x4	/* (DIE (0x44) DW_TAG_member) */
-	.long	.LASF1	/* DW_AT_name: "__delta" */
+	.4byte	.LASF1	/* DW_AT_name: "__delta" */
 	.byte	0x1	/* DW_AT_decl_file (gdb.dwarf2/member-ptr-forwardref.cc) */
 	.byte	0x13	/* DW_AT_decl_line */
-	.long	0x61	/* DW_AT_type */
+	.4byte	0x61	/* DW_AT_type */
 	.sleb128 4	/* DW_AT_data_member_location */
 	.byte	0x0	/* end of children of DIE 0x30 */
 	.uleb128 0x5	/* (DIE (0x51) DW_TAG_subroutine_type) */
-	.long	0x61	/* DW_AT_type */
-	.long	0x61	/* DW_AT_sibling */
+	.4byte	0x61	/* DW_AT_type */
+	.4byte	0x61	/* DW_AT_sibling */
 	.uleb128 0x6	/* (DIE (0x5a) DW_TAG_formal_parameter) */
-	.long	0x68	/* DW_AT_type */
+	.4byte	0x68	/* DW_AT_type */
 	.byte	0x1	/* DW_AT_artificial */
 	.byte	0x0	/* end of children of DIE 0x51 */
 	.uleb128 0x7	/* (DIE (0x61) DW_TAG_base_type) */
@@ -104,42 +104,42 @@ c:
 	.ascii "int\0"	/* DW_AT_name */
 	.uleb128 0x8	/* (DIE (0x68) DW_TAG_pointer_type) */
 	.byte	0x4	/* DW_AT_byte_size */
-	.long	0x6e	/* DW_AT_type */
+	.4byte	0x6e	/* DW_AT_type */
 	.uleb128 0x9	/* (DIE (0x6e) DW_TAG_structure_type) */
 	.ascii "C\0"	/* DW_AT_name */
 	.byte	0x8	/* DW_AT_byte_size */
 	.byte	0x1	/* DW_AT_decl_file (gdb.dwarf2/member-ptr-forwardref.cc) */
 	.byte	0x16	/* DW_AT_decl_line */
-	.long	0x85	/* DW_AT_sibling */
+	.4byte	0x85	/* DW_AT_sibling */
 	.uleb128 0xa	/* (DIE (0x78) DW_TAG_member) */
 	.ascii "fp\0"	/* DW_AT_name */
 	.byte	0x1	/* DW_AT_decl_file (gdb.dwarf2/member-ptr-forwardref.cc) */
 	.byte	0x17	/* DW_AT_decl_line */
-	.long	0x30	/* DW_AT_type */
+	.4byte	0x30	/* DW_AT_type */
 	.sleb128 0	/* DW_AT_data_member_location */
 	.byte	0x3	/* DW_AT_accessibility */
 	.byte	0x0	/* end of children of DIE 0x6e */
 	.uleb128 0x8	/* (DIE (0x85) DW_TAG_pointer_type) */
 	.byte	0x4	/* DW_AT_byte_size */
-	.long	0x51	/* DW_AT_type */
+	.4byte	0x51	/* DW_AT_type */
 	.uleb128 0xb	/* (DIE (0x8b) DW_TAG_variable) */
 	.ascii "fp\0"	/* DW_AT_name */
 	.byte	0x1	/* DW_AT_decl_file (gdb.dwarf2/member-ptr-forwardref.cc) */
 	.byte	0x14	/* DW_AT_decl_line */
-	.long	0x25	/* DW_AT_type */
+	.4byte	0x25	/* DW_AT_type */
 	.byte	0x1	/* DW_AT_external */
 	.byte	0x5	/* DW_AT_location */
 	.byte	0x3	/* DW_OP_addr */
-	.long	fp
+	.4byte	fp
 	.uleb128 0xb	/* (DIE (0x9c) DW_TAG_variable) */
 	.ascii "c\0"	/* DW_AT_name */
 	.byte	0x1	/* DW_AT_decl_file (gdb.dwarf2/member-ptr-forwardref.cc) */
 	.byte	0x18	/* DW_AT_decl_line */
-	.long	0x6e	/* DW_AT_type */
+	.4byte	0x6e	/* DW_AT_type */
 	.byte	0x1	/* DW_AT_external */
 	.byte	0x5	/* DW_AT_location */
 	.byte	0x3	/* DW_OP_addr */
-	.long	c
+	.4byte	c
 	.byte	0x0	/* end of children of DIE 0xb */
 	.section	.debug_abbrev
 	.uleb128 0x1	/* (abbrev code) */
@@ -290,27 +290,27 @@ c:
 	.byte	0x0
 	.byte	0x0
 	.byte	0x0
-	.section	.debug_pubnames,"",@progbits
-	.long	0x1b	/* Length of Public Names Info */
+	.section	.debug_pubnames,"",%progbits
+	.4byte	0x1b	/* Length of Public Names Info */
 	.2byte	0x2	/* DWARF Version */
-	.long	.Ldebug_info0	/* Offset of Compilation Unit Info */
-	.long	0xad	/* Compilation Unit Length */
-	.long	0x8b	/* DIE offset */
+	.4byte	.Ldebug_info0	/* Offset of Compilation Unit Info */
+	.4byte	0xad	/* Compilation Unit Length */
+	.4byte	0x8b	/* DIE offset */
 	.ascii "fp\0"	/* external name */
-	.long	0x9c	/* DIE offset */
+	.4byte	0x9c	/* DIE offset */
 	.ascii "c\0"	/* external name */
-	.long	0x0
-	.section	.debug_pubtypes,"",@progbits
-	.long	0x1d	/* Length of Public Type Names Info */
+	.4byte	0x0
+	.section	.debug_pubtypes,"",%progbits
+	.4byte	0x1d	/* Length of Public Type Names Info */
 	.2byte	0x2	/* DWARF Version */
-	.long	.Ldebug_info0	/* Offset of Compilation Unit Info */
-	.long	0xad	/* Compilation Unit Length */
-	.long	0x25	/* DIE offset */
+	.4byte	.Ldebug_info0	/* Offset of Compilation Unit Info */
+	.4byte	0xad	/* Compilation Unit Length */
+	.4byte	0x25	/* DIE offset */
 	.ascii "fp_t\0"	/* external name */
-	.long	0x6e	/* DIE offset */
+	.4byte	0x6e	/* DIE offset */
 	.ascii "C\0"	/* external name */
-	.long	0x0
-	.section	.debug_str,"MS",@progbits,1
+	.4byte	0x0
+	.section	.debug_str,"MS",%progbits,1
 .LASF5:
 	.string	"fp_t"
 .LASF2:
@@ -324,4 +324,4 @@ c:
 .LASF1:
 	.string	"__delta"
 	.ident	"GCC: (GNU) 4.4.2 20091222 (Red Hat 4.4.2-20)"
-	.section	.note.GNU-stack,"",@progbits
+	.section	.note.GNU-stack,"",%progbits

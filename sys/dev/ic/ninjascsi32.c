@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjascsi32.c,v 1.22 2012/03/10 20:54:21 mrg Exp $	*/
+/*	$NetBSD: ninjascsi32.c,v 1.22.2.1 2014/08/20 00:03:38 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.22 2012/03/10 20:54:21 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.22.2.1 2014/08/20 00:03:38 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,26 +191,6 @@ njsc32_ireg_read_1(struct njsc32_softc *sc, int no)
 	return bus_space_read_1(sc->sc_regt, sc->sc_regh, NJSC32_REG_DATA_LOW);
 }
 
-static inline unsigned
-njsc32_ireg_read_2(struct njsc32_softc *sc, int no)
-{
-
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, NJSC32_REG_INDEX, no);
-	return bus_space_read_2(sc->sc_regt, sc->sc_regh, NJSC32_REG_DATA_LOW);
-}
-
-static inline u_int32_t
-njsc32_ireg_read_4(struct njsc32_softc *sc, int no)
-{
-	u_int32_t val;
-
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, NJSC32_REG_INDEX, no);
-	val = (u_int16_t)bus_space_read_2(sc->sc_regt, sc->sc_regh,
-	    NJSC32_REG_DATA_LOW);
-	return val | (bus_space_read_2(sc->sc_regt, sc->sc_regh,
-	    NJSC32_REG_DATA_HIGH) << 16);
-}
-
 static inline void
 njsc32_ireg_write_1(struct njsc32_softc *sc, int no, int val)
 {
@@ -225,16 +205,6 @@ njsc32_ireg_write_2(struct njsc32_softc *sc, int no, int val)
 
 	bus_space_write_1(sc->sc_regt, sc->sc_regh, NJSC32_REG_INDEX, no);
 	bus_space_write_2(sc->sc_regt, sc->sc_regh, NJSC32_REG_DATA_LOW, val);
-}
-
-static inline void
-njsc32_ireg_write_4(struct njsc32_softc *sc, int no, u_int32_t val)
-{
-
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, NJSC32_REG_INDEX, no);
-	bus_space_write_2(sc->sc_regt, sc->sc_regh, NJSC32_REG_DATA_LOW, val);
-	bus_space_write_2(sc->sc_regt, sc->sc_regh, NJSC32_REG_DATA_HIGH,
-	    val >> 16);
 }
 
 #define NS(ns)	((ns) / 4)	/* nanosecond (>= 50) -> sync value */
@@ -744,7 +714,7 @@ njsc32_detach(struct njsc32_softc *sc, int flags)
 		    sc->sc_cmdpg_nsegs);
 	}
 
-	return 0;
+	return rv;
 }
 
 static inline void

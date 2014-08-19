@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.86 2012/03/10 19:38:16 wiz Exp $
+.\"	$NetBSD: installboot.8,v 1.86.2.1 2014/08/20 00:05:08 tls Exp $
 .\"
 .\" Copyright (c) 2002-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -206,7 +206,7 @@ The following machines are currently supported by
 .Sy amiga ,
 .Sy ews4800mips ,
 .Sy hp300 ,
-.Sy hp700 ,
+.Sy hppa ,
 .Sy i386 ,
 .Sy landisk ,
 .Sy macppc ,
@@ -530,12 +530,12 @@ is not found.
 .
 .El
 .
-.Ss Nx Ns Tn /hp700 files
+.Ss Nx Ns Tn /hppa files
 .
 .Bl -tag -width /usr/mdec/bootxx_ustarfs
 .
 .It Pa /usr/mdec/xxboot
-.Nx Ns Tn /hp700
+.Nx Ns Tn /hppa
 primary bootstrap for
 .Sy FFSv1 ,
 .Sy FFSv2 ,
@@ -543,7 +543,7 @@ primary bootstrap for
 and
 .Sy LFSv2 .
 .It Pa /usr/mdec/cdboot
-.Nx Ns Tn /hp700
+.Nx Ns Tn /hppa
 primary bootstrap for ISO 9660 file system.
 .It Pa /usr/mdec/sdboot
 Synonym for

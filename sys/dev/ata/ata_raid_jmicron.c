@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_jmicron.c,v 1.4 2009/05/11 17:14:31 cegger Exp $	*/
+/*	$NetBSD: ata_raid_jmicron.c,v 1.4.22.1 2014/08/20 00:03:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000-2008 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_jmicron.c,v 1.4 2009/05/11 17:14:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_jmicron.c,v 1.4.22.1 2014/08/20 00:03:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -82,7 +82,7 @@ ata_raid_jmicron_type(int type)
 	case JM_T_JBOD:
 		return "JBOD";
 	default:
-		sprintf(buffer, "UNKNOWN 0x%02x", type);
+		snprintf(buffer, sizeof(buffer), "UNKNOWN 0x%02x", type);
 		return buffer;
 	}
 }

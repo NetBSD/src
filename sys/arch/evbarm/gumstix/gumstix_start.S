@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_start.S,v 1.10.2.1 2013/02/25 00:28:36 tls Exp $ */
+/*	$NetBSD: gumstix_start.S,v 1.10.2.2 2014/08/20 00:02:54 tls Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -66,7 +66,7 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: gumstix_start.S,v 1.10.2.1 2013/02/25 00:28:36 tls Exp $")
+RCSID("$NetBSD: gumstix_start.S,v 1.10.2.2 2014/08/20 00:02:54 tls Exp $")
 
 /*
  * CPWAIT -- Canonical method to wait for CP15 update.
@@ -182,6 +182,14 @@ _C_LABEL(gumstix_start):
 	mcr	p15, 0, r0, c2, c0, 0	/* Set TTB */
 	mcr	p15, 0, r0, c8, c7, 0	/* Flush TLB */
 
+#if defined(CPU_CORTEXA8)
+	mcr	p15, 0, r0, c2, c0, 1	/* Set TTB1 */
+	mov	r0, #TTBCR_S_N_1
+	mcr	p15, 0, r0, c2, c0, 2	/* Set TTBCR */
+	mov	r0, #0
+	mcr	p15, 0, r0, c8, c7, 0	/* Flush TLB */
+#endif
+
 	/*
 	 * Set the Domain Access register.  Very important!
 	 * startup_pagetable puts to domain 0 now.
@@ -266,7 +274,7 @@ mmu_init_table:
 #define SDRAM_START	0x80000000
 
 	/* Map VA to PA, write-back cacheable (first 64M only) */
-	MMU_INIT(KERNEL_BASE, SDRAM_START,
+	MMU_INIT(KERNEL_BASE & 0xffffffff, SDRAM_START,
 	    64, L1_S_PROTO | L1_S_B | L1_S_C | L1_S_APv7_KRW)
 #endif
 

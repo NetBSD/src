@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.38.18.1 2012/11/20 03:02:18 tls Exp $ */
+/* $NetBSD: if_txp.c,v 1.38.18.2 2014/08/20 00:03:42 tls Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.38.18.1 2012/11/20 03:02:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.38.18.2 2014/08/20 00:03:42 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -197,6 +197,7 @@ txp_attach(device_t parent, device_t self, void *aux)
 	u_int16_t subsys;
 	int i, flags;
 	char devinfo[256];
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_cold = 1;
@@ -247,7 +248,7 @@ txp_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, txp_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt");
@@ -1837,13 +1838,13 @@ txp_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 		if (anlpar & ANLPAR_TX_FD)
 			ifmr->ifm_active |= IFM_100_TX|IFM_FDX;
 		else if (anlpar & ANLPAR_T4)
-			ifmr->ifm_active |= IFM_100_T4;
+			ifmr->ifm_active |= IFM_100_T4|IFM_HDX;
 		else if (anlpar & ANLPAR_TX)
-			ifmr->ifm_active |= IFM_100_TX;
+			ifmr->ifm_active |= IFM_100_TX|IFM_HDX;
 		else if (anlpar & ANLPAR_10_FD)
 			ifmr->ifm_active |= IFM_10_T|IFM_FDX;
 		else if (anlpar & ANLPAR_10)
-			ifmr->ifm_active |= IFM_10_T;
+			ifmr->ifm_active |= IFM_10_T|IFM_HDX;
 		else
 			ifmr->ifm_active |= IFM_NONE;
 	} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.82.2.2 2013/06/23 06:20:17 tls Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.82.2.3 2014/08/20 00:03:38 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.82.2.2 2013/06/23 06:20:17 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.82.2.3 2014/08/20 00:03:38 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -146,7 +146,7 @@ const char *smc91cxx_idstrs[] = {
 };
 
 /* Supported media types. */
-const int smc91cxx_media[] = {
+static const int smc91cxx_media[] = {
 	IFM_ETHER|IFM_10_T,
 	IFM_ETHER|IFM_10_5,
 };
@@ -158,7 +158,7 @@ const int smc91cxx_media[] = {
 u_int32_t smc91cxx_mii_bitbang_read(device_t);
 void smc91cxx_mii_bitbang_write(device_t, u_int32_t);
 
-const struct mii_bitbang_ops smc91cxx_mii_bitbang_ops = {
+static const struct mii_bitbang_ops smc91cxx_mii_bitbang_ops = {
 	smc91cxx_mii_bitbang_read,
 	smc91cxx_mii_bitbang_write,
 	{
@@ -208,11 +208,7 @@ smc91cxx_intr_mask_write(bus_space_tag_t bst, bus_space_handle_t bsh,
 {
 	KDASSERT((mask & IM_ERCV_INT) == 0);
 #ifdef SMC91CXX_NO_BYTE_WRITE
-#if BYTE_ORDER == LITTLE_ENDIAN
 	bus_space_write_2(bst, bsh, INTR_STAT_REG_B, mask << 8);
-#else
-	bus_space_write_2(bst, bsh, INTR_STAT_REG_B, mask);
-#endif
 #else
 	bus_space_write_1(bst, bsh, INTR_MASK_REG_B, mask);
 #endif
@@ -221,18 +217,12 @@ smc91cxx_intr_mask_write(bus_space_tag_t bst, bus_space_handle_t bsh,
 
 static inline void
 smc91cxx_intr_ack_write(bus_space_tag_t bst, bus_space_handle_t bsh,
-	uint8_t mask)
+	uint8_t ack, uint8_t mask)
 {
 #ifdef SMC91CXX_NO_BYTE_WRITE
-#if BYTE_ORDER == LITTLE_ENDIAN
-	bus_space_write_2(bst, bsh, INTR_ACK_REG_B,
-	    mask | (bus_space_read_2(bst, bsh, INTR_ACK_REG_B) & 0xff00));
+	bus_space_write_2(bst, bsh, INTR_ACK_REG_B, ack | (mask << 8));
 #else
-	bus_space_write_2(bst, bsh, INTR_ACK_REG_B,
-	    (mask << 8) | (bus_space_read_2(bst, bsh, INTR_ACK_REG_B) & 0xff));
-#endif
-#else
-	bus_space_write_1(bst, bsh, INTR_ACK_REG_B, mask);
+	bus_space_write_1(bst, bsh, INTR_ACK_REG_B, ack);
 #endif
 	KDASSERT(!(bus_space_read_1(bst, bsh, INTR_MASK_REG_B) & IM_ERCV_INT));
 }
@@ -254,7 +244,8 @@ smc91cxx_attach(struct smc91cxx_softc *sc, u_int8_t *myea)
 	tmp = bus_space_read_2(bst, bsh, BANK_SELECT_REG_W);
 	/* check magic number */
 	if ((tmp & BSR_DETECT_MASK) != BSR_DETECT_VALUE) {
-		aprint_error_dev(sc->sc_dev, "failed to detect chip, bsr=%04x\n", tmp);
+		aprint_error_dev(sc->sc_dev,
+		     "failed to detect chip, bsr=%04x\n", tmp);
 		return;
 	}
 
@@ -285,7 +276,8 @@ smc91cxx_attach(struct smc91cxx_softc *sc, u_int8_t *myea)
 		scale = MIR_SCALE_91C111;
 	}
 	memsize = bus_space_read_2(bst, bsh, MEM_INFO_REG_W) & MIR_TOTAL_MASK;
-	if (memsize == 255) memsize++;
+	if (memsize == 255)
+		memsize++;
 	memsize *= scale * mult;
 
 	format_bytes(pbuf, sizeof(pbuf), memsize);
@@ -339,12 +331,14 @@ smc91cxx_attach(struct smc91cxx_softc *sc, u_int8_t *myea)
 		 * even if the PHY does.
 		 */
 		miicapabilities &= ~(BMSR_100TXFDX | BMSR_10TFDX);
+		/*FALLTHROUGH*/
 	case CHIP_91100FD:
 	case CHIP_91C111:
 		if (tmp & CR_MII_SELECT) {
 			aprint_normal("default media MII");
 			if (sc->sc_chipid == CHIP_91C111) {
-				aprint_normal(" (%s PHY)\n", (tmp & CR_AUI_SELECT) ?
+				aprint_normal(" (%s PHY)\n",
+				    (tmp & CR_AUI_SELECT) ?
 				    "external" : "internal");
 				sc->sc_internal_phy = !(tmp & CR_AUI_SELECT);
 			} else
@@ -373,7 +367,8 @@ smc91cxx_attach(struct smc91cxx_softc *sc, u_int8_t *myea)
 		}
 		/*FALLTHROUGH*/
 	default:
-		aprint_normal("default media %s\n", (aui = (tmp & CR_AUI_SELECT)) ?
+		aprint_normal("default media %s\n",
+		    (aui = (tmp & CR_AUI_SELECT)) ?
 		    "AUI" : "UTP");
 		for (i = 0; i < NSMC91CxxMEDIA; i++)
 			ifmedia_add(ifm, smc91cxx_media[i], 0, NULL);
@@ -382,7 +377,7 @@ smc91cxx_attach(struct smc91cxx_softc *sc, u_int8_t *myea)
 	}
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_NET, 0);
+			  RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	callout_init(&sc->sc_mii_callout, 0);
 
@@ -494,16 +489,14 @@ smc91cxx_init(struct smc91cxx_softc *sc)
 
 	/*
 	 * This resets the registers mostly to defaults, but doesn't
-	 * affect the EEPROM.  After the reset cycle, we pause briefly
-	 * for the chip to recover.
-	 *
-	 * XXX how long are we really supposed to delay?  --thorpej
+	 * affect the EEPROM.  The longest reset recovery time of those devices
+	 * supported is the 91C111. Section 7.8 of its datasheet asks for 50ms.
 	 */
 	SMC_SELECT_BANK(sc, 0);
 	bus_space_write_2(bst, bsh, RECV_CONTROL_REG_W, RCR_SOFTRESET);
-	delay(100);
+	delay(5);
 	bus_space_write_2(bst, bsh, RECV_CONTROL_REG_W, 0);
-	delay(200);
+	delay(50000);
 
 	bus_space_write_2(bst, bsh, TXMIT_CONTROL_REG_W, 0);
 
@@ -654,20 +647,21 @@ smc91cxx_start(struct ifnet *ifp)
 	 */
 	for (len = 0; m != NULL; m = m->m_next)
 		len += m->m_len;
-	pad = (len & 1);
 
 	/*
 	 * We drop packets that are too large.  Perhaps we should
 	 * truncate them instead?
 	 */
-	if ((len + pad) > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
-		printf("%s: large packet discarded\n", device_xname(sc->sc_dev));
+	if (len > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
+		printf("%s: large packet discarded\n",
+		    device_xname(sc->sc_dev));
 		ifp->if_oerrors++;
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		m_freem(m);
 		goto readcheck;
 	}
 
+	pad = 0;
 #ifdef SMC91CXX_SW_PAD
 	/*
 	 * Not using hardware padding; pad to ETHER_MIN_LEN.
@@ -709,7 +703,7 @@ smc91cxx_start(struct ifnet *ifp)
 	if (packetno & ARR_FAILED || timo == 0) {
 		/*
 		 * No transmit memory is available.  Record the number
-		 * of requestd pages and enable the allocation completion
+		 * of requested pages and enable the allocation completion
 		 * interrupt.  Set up the watchdog timer in case we miss
 		 * the interrupt.  Mark the interface as active so that
 		 * no one else attempts to transmit while we're allocating
@@ -726,7 +720,7 @@ smc91cxx_start(struct ifnet *ifp)
 	/*
 	 * We have a packet number - set the data window.
 	 */
-	bus_space_write_1(bst, bsh, PACKET_NUM_REG_B, packetno);
+	bus_space_write_2(bst, bsh, PACKET_NUM_REG_B, packetno);
 
 	/*
 	 * Point to the beginning of the packet.
@@ -747,24 +741,17 @@ smc91cxx_start(struct ifnet *ifp)
 	IFQ_DEQUEUE(&ifp->if_snd, m);
 
 	/*
-	 * Push the packet out to the card.
+	 * Push the packet out to the card.  The copying function only does
+	 * whole words and returns the straggling byte (if any).
 	 */
 	oddbyte = smc91cxx_copy_tx_frame(sc, m);
 
 #ifdef SMC91CXX_SW_PAD
-#ifdef SMC91CXX_NO_BYTE_WRITE
-#if BYTE_ORDER == LITTLE_ENDIAN
 	if (pad > 1 && (pad & 1)) {
-		bus_space_write_2(bst, bsh, DATA_REG_W, oddbyte << 0);
+		bus_space_write_2(bst, bsh, DATA_REG_W, oddbyte);
 		oddbyte = 0;
+		pad -= 1;
 	}
-#else
-	if (pad > 1 && (pad & 1)) {
-		bus_space_write_2(bst, bsh, DATA_REG_W, oddbyte << 8);
-		oddbyte = 0;
-	}
-#endif
-#endif
 
 	/*
 	 * Push out padding.
@@ -775,23 +762,13 @@ smc91cxx_start(struct ifnet *ifp)
 	}
 #endif
 
-#ifdef SMC91CXX_NO_BYTE_WRITE
 	/*
 	 * Push out control byte and unused packet byte.  The control byte
-	 * is 0, meaning the packet is even lengthed and no special
-	 * CRC handling is necessary.
+	 * denotes whether this is an odd or even length packet, and that
+	 * no special CRC handling is necessary.
 	 */
-#if BYTE_ORDER == LITTLE_ENDIAN
 	bus_space_write_2(bst, bsh, DATA_REG_W,
-	    oddbyte | (pad ? (CTLB_ODD << 8) : 0));
-#else
-	bus_space_write_2(bst, bsh, DATA_REG_W,
-	    (oddbyte << 8) | (pad ? CTLB_ODD : 0));
-#endif
-#else
-	if (pad)
-		bus_space_write_1(bst, bsh, DATA_REG_B, 0);
-#endif
+	    oddbyte | ((length & 1) ? (CTLB_ODD << 8) : 0));
 
 	/*
 	 * Enable transmit interrupts and let the chip go.  Set a watchdog
@@ -812,7 +789,7 @@ smc91cxx_start(struct ifnet *ifp)
 
  readcheck:
 	/*
-	 * Check for incoming pcakets.  We don't want to overflow the small
+	 * Check for incoming packets.  We don't want to overflow the small
 	 * RX FIFO.  If nothing has arrived, attempt to queue another
 	 * transmit packet.
 	 */
@@ -894,10 +871,7 @@ smc91cxx_copy_tx_frame(struct smc91cxx_softc *sc, struct mbuf *m0)
 			panic("smc91cxx_copy_tx_frame: p != lim");
 #endif
 	}
-#ifndef SMC91CXX_NO_BYTE_WRITE
-	if (leftover)
-		bus_space_write_1(bst, bsh, DATA_REG_B, dbuf);
-#endif
+
 	return dbuf;
 }
 
@@ -913,9 +887,7 @@ smc91cxx_intr(void *arg)
 	bus_space_handle_t bsh = sc->sc_bsh;
 	u_int8_t mask, interrupts, status;
 	u_int16_t packetno, tx_status, card_stats;
-#ifdef SMC91CXX_NO_BYTE_WRITE
 	u_int16_t v;
-#endif
 
 	if ((sc->sc_flags & SMC_FLAGS_ENABLED) == 0 ||
 	    !device_is_active(sc->sc_dev))
@@ -926,30 +898,15 @@ smc91cxx_intr(void *arg)
 	/*
 	 * Obtain the current interrupt status and mask.
 	 */
-#ifdef SMC91CXX_NO_BYTE_WRITE
 	v = bus_space_read_2(bst, bsh, INTR_STAT_REG_B);
 
 	/*
 	 * Get the set of interrupt which occurred and eliminate any
 	 * which are not enabled.
 	 */
-#if BYTE_ORDER == LITTLE_ENDIAN
 	mask = v >> 8;
 	interrupts = v & 0xff;
-#else
-	interrupts = v >> 8;
-	mask = v & 0xff;
-#endif
 	KDASSERT(mask == sc->sc_intmask);
-#else
-	mask = bus_space_read_1(bst, bsh, INTR_MASK_REG_B);
-
-	/*
-	 * Get the set of interrupt which occurred and eliminate any
-	 * which are not enabled.
-	 */
-	interrupts = bus_space_read_1(bst, bsh, INTR_STAT_REG_B);
-#endif
 	status = interrupts & mask;
 
 	/* Ours? */
@@ -965,7 +922,7 @@ smc91cxx_intr(void *arg)
 	 * Receive overrun interrupts.
 	 */
 	if (status & IM_RX_OVRN_INT) {
-		smc91cxx_intr_ack_write(bst, bsh, IM_RX_OVRN_INT);
+		smc91cxx_intr_ack_write(bst, bsh, IM_RX_OVRN_INT, 0);
 		ifp->if_ierrors++;
 	}
 
@@ -973,13 +930,6 @@ smc91cxx_intr(void *arg)
 	 * Receive interrupts.
 	 */
 	if (status & IM_RCV_INT) {
-#if 1 /* DIAGNOSTIC */
-		packetno = bus_space_read_2(bst, bsh, FIFO_PORTS_REG_W);
-		if (packetno & FIFO_REMPTY) {
-			aprint_error_dev(sc->sc_dev, "receive interrupt on empty fifo\n");
-			goto out;
-		} else
-#endif
 		smc91cxx_read(sc);
 	}
 
@@ -1011,7 +961,7 @@ smc91cxx_intr(void *arg)
 	 * mode.
 	 */
 	if (status & IM_TX_INT) {
-		smc91cxx_intr_ack_write(bst, bsh, IM_TX_INT);
+		smc91cxx_intr_ack_write(bst, bsh, IM_TX_INT, 0);
 
 		packetno = bus_space_read_2(bst, bsh, FIFO_PORTS_REG_W) &
 		    FIFO_TX_MASK;
@@ -1019,13 +969,15 @@ smc91cxx_intr(void *arg)
 		/*
 		 * Select this as the packet to read from.
 		 */
-		bus_space_write_1(bst, bsh, PACKET_NUM_REG_B, packetno);
+		bus_space_write_2(bst, bsh, PACKET_NUM_REG_B, packetno);
 
 		/*
-		 * Position the pointer to the beginning of the packet.
+		 * Position the pointer to the beginning of the packet, wait
+		 * for preload.
 		 */
 		bus_space_write_2(bst, bsh, POINTER_REG_W,
 		    PTR_AUTOINC | PTR_READ /* | 0x0000 */);
+		delay(1);
 
 		/*
 		 * Fetch the TX status word.  This will be a copy of
@@ -1077,7 +1029,7 @@ smc91cxx_intr(void *arg)
 	 * update transmit statistics from the card.
 	 */
 	if (status & IM_TX_EMPTY_INT) {
-		smc91cxx_intr_ack_write(bst, bsh, IM_TX_EMPTY_INT);
+		smc91cxx_intr_ack_write(bst, bsh, IM_TX_EMPTY_INT, 0);
 
 		/* Disable this interrupt. */
 		mask &= ~IM_TX_EMPTY_INT;
@@ -1097,11 +1049,16 @@ smc91cxx_intr(void *arg)
 		ifp->if_timer = 0;
 	}
 
+	/*
+	 * Internal PHY status change
+	 */
 	if (sc->sc_chipid == CHIP_91C111 && sc->sc_internal_phy &&
 	    (status & IM_MD_INT)) {
+
 		/*
 		 * Internal PHY status change
 		 */
+		smc91cxx_intr_ack_write(bst, bsh, IM_MD_INT, 0);
 		mii_pollstat(&sc->sc_mii);
 	}
 
@@ -1118,7 +1075,6 @@ smc91cxx_intr(void *arg)
 	 */
 	smc91cxx_start(ifp);
 
-out:
 	/*
 	 * Reenable the interrupts we wish to receive now that processing
 	 * is complete.
@@ -1147,6 +1103,7 @@ smc91cxx_read(struct smc91cxx_softc *sc)
 	u_int16_t status, packetno, packetlen;
 	u_int8_t *data;
 	u_int32_t dr;
+	bool first = true;
 
  again:
 	/*
@@ -1155,28 +1112,25 @@ smc91cxx_read(struct smc91cxx_softc *sc)
 	 * in FIFO_PORTS_REG_W, FIFO_RX_MASK.
 	 */
 	packetno = bus_space_read_2(bst, bsh, FIFO_PORTS_REG_W);
-	if (packetno & FIFO_REMPTY)
+	if (packetno & FIFO_REMPTY) {
+		if (first) {
+			aprint_error_dev(sc->sc_dev,
+			    "receive interrupt on empty fifo\n");
+		}
 		return;
+	}
+	first = false;
 
 	bus_space_write_2(bst, bsh, POINTER_REG_W,
 	    PTR_READ | PTR_RCV | PTR_AUTOINC /* | 0x0000 */);
+	delay(1);
 
 	/*
 	 * First two words are status and packet length.
 	 */
-	if ((sc->sc_flags & SMC_FLAGS_32BIT_READ) == 0) {
-		status = bus_space_read_2(bst, bsh, DATA_REG_W);
-		packetlen = bus_space_read_2(bst, bsh, DATA_REG_W);
-	} else {
-		dr = bus_space_read_4(bst, bsh, DATA_REG_W);
-#if BYTE_ORDER == LITTLE_ENDIAN
-		status = (u_int16_t)dr;
-		packetlen = (u_int16_t)(dr >> 16);
-#else
-		packetlen = (u_int16_t)dr;
-		status = (u_int16_t)(dr >> 16);
-#endif
-	}
+	dr = bus_space_read_4(bst, bsh, DATA_REG_W);
+	status = (u_int16_t)dr;
+	packetlen = (u_int16_t)(dr >> 16);
 
 	packetlen &= RLEN_MASK;
 	if (packetlen < ETHER_MIN_LEN - ETHER_CRC_LEN + 6 || packetlen > 1534) {
@@ -1221,7 +1175,8 @@ smc91cxx_read(struct smc91cxx_softc *sc)
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);
 		ifp->if_ierrors++;
-		aprint_error_dev(sc->sc_dev, "can't allocate cluster for incoming packet\n");
+		aprint_error_dev(sc->sc_dev,
+		     "can't allocate cluster for incoming packet\n");
 		goto out;
 	}
 
@@ -1235,7 +1190,8 @@ smc91cxx_read(struct smc91cxx_softc *sc)
 
 		eh = mtod(m, struct ether_header *);
 		data = mtod(m, u_int8_t *);
-		KASSERT(trunc_page((uintptr_t)data) == trunc_page((uintptr_t)data + packetlen - 1));
+		KASSERT(trunc_page((uintptr_t)data) ==
+			trunc_page((uintptr_t)data + packetlen - 1));
 		if (packetlen > 1)
 			bus_space_read_multi_stream_2(bst, bsh, DATA_REG_W,
 			    (u_int16_t *)data, packetlen >> 1);
@@ -1244,12 +1200,11 @@ smc91cxx_read(struct smc91cxx_softc *sc)
 			*data = bus_space_read_1(bst, bsh, DATA_REG_B);
 		}
 	} else {
-		u_int8_t *dp;
-
 		m->m_data = (void *) ALIGN(mtod(m, void *));
 		eh = mtod(m, struct ether_header *);
-		dp = data = mtod(m, u_int8_t *);
-		KASSERT(trunc_page((uintptr_t)data) == trunc_page((uintptr_t)data + packetlen - 1));
+		data = mtod(m, u_int8_t *);
+		KASSERT(trunc_page((uintptr_t)data) ==
+			trunc_page((uintptr_t)data + packetlen - 1));
 		if (packetlen > 3)
 			bus_space_read_multi_stream_4(bst, bsh, DATA_REG_W,
 			    (u_int32_t *)data, packetlen >> 2);
@@ -1298,9 +1253,6 @@ smc91cxx_read(struct smc91cxx_softc *sc)
 	/*
 	 * Check for another packet.
 	 */
-	packetno = bus_space_read_2(bst, bsh, FIFO_PORTS_REG_W);
-	if (packetno & FIFO_REMPTY)
-		return;
 	goto again;
 }
 
@@ -1512,7 +1464,6 @@ smc91cxx_detach(device_t self, int flags)
 	if ((sc->sc_flags & SMC_FLAGS_ATTACHED) == 0)
 		return (0);
 
-
 	/* smc91cxx_disable() checks SMC_FLAGS_ENABLED */
 	smc91cxx_disable(sc);
 
@@ -1615,4 +1566,3 @@ smc91cxx_tick(void *arg)
 
 	callout_reset(&sc->sc_mii_callout, hz, smc91cxx_tick, sc);
 }
-

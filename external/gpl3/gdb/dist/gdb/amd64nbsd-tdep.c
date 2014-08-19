@@ -1,7 +1,6 @@
 /* Target-dependent code for NetBSD/amd64.
 
-   Copyright (C) 2003, 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,7 +25,6 @@
 #include "symtab.h"
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
 
 #include "amd64-tdep.h"
 #include "nbsd-tdep.h"
@@ -43,7 +41,7 @@ static int
 amd64nbsd_sigtramp_p (struct frame_info *this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
-  char *name;
+  const char *name;
 
   find_pc_partial_function (pc, &name, NULL, NULL);
   return nbsd_pc_in_sigtramp (pc, name);
@@ -134,9 +132,10 @@ amd64nbsd_trapframe_cache(struct frame_info *this_frame, void **this_cache)
   struct trad_frame_cache *cache;
   CORE_ADDR func, sp, addr;
   ULONGEST cs = 0, rip = 0;
-  char *name;
+  const char *name;
   int i;
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch);
+  struct gdbarch *gdbarch = get_frame_arch (this_frame);
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
 
   if (*this_cache)
     return *this_cache;
@@ -157,19 +156,14 @@ amd64nbsd_trapframe_cache(struct frame_info *this_frame, void **this_cache)
     addr = sp;
 
   for (i = 0; i < ARRAY_SIZE (amd64nbsd_tf_reg_offset); i++)
-    {
-      if (amd64nbsd_tf_reg_offset[i] != -1)
-        trad_frame_set_reg_addr (cache, i, addr + amd64nbsd_tf_reg_offset[i]);
+    if (amd64nbsd_tf_reg_offset[i] != -1)
+      trad_frame_set_reg_addr (cache, i, addr + amd64nbsd_tf_reg_offset[i]);
 
-      /* Read %cs and %rip when we have the addresses to hand */
-      if (i == AMD64_CS_REGNUM)
-        cs = read_memory_unsigned_integer (addr + amd64nbsd_tf_reg_offset[i], 8,
-	  byte_order);
-      if (i == AMD64_RIP_REGNUM)
-        rip = read_memory_unsigned_integer (addr + amd64nbsd_tf_reg_offset[i],
-	  8, byte_order);
-    }
-
+  /* Read %cs and %rip when we have the addresses to hand */
+  cs = read_memory_unsigned_integer (addr
+    + amd64nbsd_tf_reg_offset[AMD64_CS_REGNUM], 8, byte_order);
+  rip = read_memory_unsigned_integer (addr
+    + amd64nbsd_tf_reg_offset[AMD64_RIP_REGNUM], 8, byte_order);
   if (cs == 0 || rip == 0)
      abort();
 
@@ -233,12 +227,16 @@ amd64nbsd_trapframe_sniffer (const struct frame_unwind *self,
 			     struct frame_info *this_frame,
 			     void **this_prologue_cache)
 {
-  ULONGEST cs;
-  char *name;
+  ULONGEST cs = 0;
+  const char *name;
+  volatile struct gdb_exception ex;
 
-  /* Check Current Privilege Level and bail out if we're not executing
-     in kernel space.  */
-  cs = get_frame_register_unsigned (this_frame, AMD64_CS_REGNUM);
+  TRY_CATCH (ex, RETURN_MASK_ERROR)
+    {
+      cs = get_frame_register_unsigned (this_frame, AMD64_CS_REGNUM);
+    }
+  if (ex.reason < 0 && ex.error != NOT_AVAILABLE_ERROR)
+    throw_exception (ex);
   if ((cs & I386_SEL_RPL) == I386_SEL_UPL)
     return 0;
 

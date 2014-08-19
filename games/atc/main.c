@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20.12.1 2012/11/20 02:58:45 tls Exp $	*/
+/*	$NetBSD: main.c,v 1.20.12.2 2014/08/20 00:00:21 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.20.12.1 2012/11/20 02:58:45 tls Exp $");
+__RCSID("$NetBSD: main.c,v 1.20.12.2 2014/08/20 00:00:21 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,7 +144,7 @@ main(int argc, char *argv[])
 	init_gr();
 	setup_screen(sp);
 
-	(void)addplane();
+	addplane();
 
 	(void)signal(SIGINT, quit);
 	(void)signal(SIGQUIT, quit);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.72.18.1 2012/11/20 03:02:07 tls Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.72.18.2 2014/08/20 00:03:38 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.72.18.1 2012/11/20 03:02:07 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.72.18.2 2014/08/20 00:03:38 tls Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -149,12 +149,14 @@ ne2000_attach(struct ne2000_softc *nsc, uint8_t *myea)
 	case NE2000_TYPE_NE2000:
 	case NE2000_TYPE_AX88190:		/* XXX really? */
 	case NE2000_TYPE_AX88790:
+	case NE2000_TYPE_AX88796:
 #if NRTL80X9 > 0
 	case NE2000_TYPE_RTL8019:
 #endif
 		memstart = 16384;
 		memsize = 16384;
 		useword = 1;
+
 		if (
 #ifdef NE2000_DETECT_8BIT
 		    ne2000_detect_8bit(nict, nich, asict, asich) ||
@@ -287,7 +289,8 @@ ne2000_attach(struct ne2000_softc *nsc, uint8_t *myea)
 	if (myea == NULL) {
 		/* Read the station address. */
 		if (nsc->sc_type == NE2000_TYPE_AX88190 ||
-		    nsc->sc_type == NE2000_TYPE_AX88790) {
+		    nsc->sc_type == NE2000_TYPE_AX88790 ||
+		    nsc->sc_type == NE2000_TYPE_AX88796) {
 			/* Select page 0 registers. */
 			NIC_BARRIER(nict, nich);
 			bus_space_write_1(nict, nich, ED_P0_CR,
@@ -689,7 +692,7 @@ ne2000_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 	}
 	NIC_BARRIER(nict, nich);
 
-	/* AX88796 doesn't seem to have remote DMA complete */
+	/* some AX88796 doesn't seem to have remote DMA complete */
 	if (sc->sc_flags & DP8390_NO_REMOTE_DMA_COMPLETE)
 		return savelen;
 
@@ -917,6 +920,7 @@ ne2000_ipkdb_attach(struct ipkdb_if *kip)
 	case NE2000_TYPE_NE2000:
 	case NE2000_TYPE_AX88190:
 	case NE2000_TYPE_AX88790:
+	case NE2000_TYPE_AX88796:
 #if NRTL80X9 > 0
 	case NE2000_TYPE_RTL8019:
 #endif
@@ -985,7 +989,8 @@ ne2000_ipkdb_attach(struct ipkdb_if *kip)
 
 		/* Read the station address. */
 		if (np->sc_type == NE2000_TYPE_AX88190 ||
-		    np->sc_type == NE2000_TYPE_AX88790) {
+		    np->sc_type == NE2000_TYPE_AX88790 ||
+		    np->sc_type == NE2000_TYPE_AX88796) {
 			/* Select page 0 registers. */
 			NIC_BARRIER(nict, nich);
 			bus_space_write_1(nict, nich, ED_P0_CR,

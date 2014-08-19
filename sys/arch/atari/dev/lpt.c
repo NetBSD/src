@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.34.18.1 2012/11/20 03:01:09 tls Exp $ */
+/*	$NetBSD: lpt.c,v 1.34.18.2 2014/08/20 00:02:48 tls Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.34.18.1 2012/11/20 03:01:09 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.34.18.2 2014/08/20 00:02:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,8 +136,18 @@ CFATTACH_DECL_NEW(lp, sizeof(struct lpt_softc),
     lpmatch, lpattach, NULL, NULL);
 
 const struct cdevsw lp_cdevsw = {
-	lpopen, lpclose, noread, lpwrite, lpioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	.d_open = lpopen,
+	.d_close = lpclose,
+	.d_read = noread,
+	.d_write = lpwrite,
+	.d_ioctl = lpioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 /*ARGSUSED*/

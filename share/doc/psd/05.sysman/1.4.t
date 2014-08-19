@@ -1,4 +1,4 @@
-.\"	$NetBSD: 1.4.t,v 1.3 2003/08/07 10:30:48 agc Exp $
+.\"	$NetBSD: 1.4.t,v 1.3.60.1 2014/08/20 00:02:29 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,8 +29,8 @@
 .\"
 .\"	@(#)1.4.t	8.5 (Berkeley) 5/29/94
 .\"
-.Sh 2 "Timers
-.Sh 3 "Real time
+.Sh 2 14 "Timers
+.Sh 3 14 "Real time
 .PP
 The system's notion of the current time is in Coordinated Universal Time
 (UTC, previously GMT) and the current time
@@ -88,7 +88,7 @@ by skewing the rate at which time advances:
 adjtime(delta, olddelta);
 struct timeval *delta; result struct timeval *olddelta;
 .DE
-.Sh 3 "Interval time
+.Sh 3 15 "Interval time
 .LP
 The system provides each process with three interval timers,
 defined in \fI<sys/time.h>\fP:

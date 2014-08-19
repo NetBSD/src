@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.64 2011/09/11 22:28:21 jakllsch Exp $ */
+/* $NetBSD: wsmouse.c,v 1.64.12.1 2014/08/20 00:03:52 tls Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.64 2011/09/11 22:28:21 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.64.12.1 2014/08/20 00:03:52 tls Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -203,8 +203,18 @@ dev_type_poll(wsmousepoll);
 dev_type_kqfilter(wsmousekqfilter);
 
 const struct cdevsw wsmouse_cdevsw = {
-	wsmouseopen, wsmouseclose, wsmouseread, nowrite, wsmouseioctl,
-	nostop, notty, wsmousepoll, nommap, wsmousekqfilter, D_OTHER
+	.d_open = wsmouseopen,
+	.d_close = wsmouseclose,
+	.d_read = wsmouseread,
+	.d_write = nowrite,
+	.d_ioctl = wsmouseioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = wsmousepoll,
+	.d_mmap = nommap,
+	.d_kqfilter = wsmousekqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 #if NWSMUX > 0

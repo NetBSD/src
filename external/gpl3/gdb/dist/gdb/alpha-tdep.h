@@ -1,6 +1,5 @@
 /* Common target dependent code for GDB on Alpha systems.
-   Copyright (C) 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2002, 2003, 2007,
-   2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1993-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -86,7 +85,8 @@ struct gdbarch_tdep
   /* NOTE: cagney/2004-04-30: Do not copy/clone this code.  Instead
      look at tramp-frame.h and other simplier per-architecture
      sigtramp unwinders.  */
-  int (*pc_in_sigtramp) (struct gdbarch *gdbarch, CORE_ADDR pc, char *name);
+  int (*pc_in_sigtramp) (struct gdbarch *gdbarch, CORE_ADDR pc,
+			 const char *name);
 
   /* If TYPE will be returned in memory, return true.  */
   int (*return_in_memory) (struct type *type);

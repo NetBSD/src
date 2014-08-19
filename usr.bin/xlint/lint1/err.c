@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.45.2.1 2013/06/23 06:29:02 tls Exp $	*/
+/*	$NetBSD: err.c,v 1.45.2.2 2014/08/20 00:05:06 tls Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.45.2.1 2013/06/23 06:29:02 tls Exp $");
+__RCSID("$NetBSD: err.c,v 1.45.2.2 2014/08/20 00:05:06 tls Exp $");
 #endif
 
 #include <sys/types.h>
@@ -208,7 +208,7 @@ const	char *msgs[] = {
 	"cannot take size/alignment of void",			      /* 146 */
 	"invalid cast expression",				      /* 147 */
 	"improper cast of void expression",			      /* 148 */
-	"illegal function",					      /* 149 */
+	"illegal function (type %s)",				      /* 149 */
 	"argument mismatch: %d arg%s passed, %d expected",	      /* 150 */
 	"void expressions may not be arguments, arg #%d",	      /* 151 */
 	"argument cannot have unknown size, arg #%d",		      /* 152 */

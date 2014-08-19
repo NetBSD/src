@@ -1,4 +1,4 @@
-/*	$NetBSD: ra.c,v 1.18 2009/03/18 16:00:15 cegger Exp $ */
+/*	$NetBSD: ra.c,v 1.18.22.1 2014/08/20 00:03:27 tls Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -242,6 +242,7 @@ igen:	uda.uda_cmd.mscp_opcode = cmd;
 	printf("sending cmd %x...", cmd);
 #endif
 	hej = *ra_ip;
+	__USE(hej);
 	to = 10000000;
 	while (uda.uda_ca.ca_rspdsc < 0) {
 //		if (uda.uda_ca.ca_cmdint)

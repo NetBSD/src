@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9.2.1 2013/06/23 06:28:55 tls Exp $
+#	$NetBSD: Makefile,v 1.9.2.2 2014/08/20 00:04:47 tls Exp $
 #
 
 .include <bsd.own.mk>
@@ -6,7 +6,7 @@
 LIB=	vfstest
 SRCS=	fstest_ext2fs.c fstest_ffs.c fstest_lfs.c fstest_msdosfs.c	\
 	fstest_nfs.c fstest_puffs.c fstest_rumpfs.c fstest_sysvbfs.c	\
-	fstest_tmpfs.c fstest_v7fs.c
+	fstest_tmpfs.c fstest_udf.c fstest_v7fs.c
 
 .if (${MKZFS} != "no")
 SRCS+=	fstest_zfs.c
@@ -38,5 +38,7 @@ CPPFLAGS+=	-DMOUNT_NOMAIN -DMOUNTNFS_RETRYRPC=1
 
 .include "../../../libexec/lfs_cleanerd/Makefile.inc"
 CPPFLAGS+=	-DUSE_RUMP -DLFS_CLEANER_AS_LIB
+
+CWARNFLAGS.clang+=	-Wno-error=absolute-value
 
 .include <bsd.lib.mk>

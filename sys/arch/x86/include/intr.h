@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.43 2011/08/01 10:42:23 drochner Exp $	*/
+/*	$NetBSD: intr.h,v 1.43.12.1 2014/08/20 00:03:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@ void x86_nmi(void);
 void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *, bool);
 void intr_disestablish(struct intrhand *);
 void intr_add_pcibus(struct pcibus_attach_args *);
-const char *intr_string(int);
+const char *intr_string(int, char *, size_t);
 void cpu_intr_init(struct cpu_info *);
 int intr_find_mpmapping(int, int, int *);
 struct pic *intr_findpic(int);
@@ -186,7 +186,7 @@ int x86_send_ipi(struct cpu_info *, int);
 void x86_broadcast_ipi(int);
 void x86_ipi_handler(void);
 
-extern void (*ipifunc[X86_NIPI])(struct cpu_info *);
+extern void (* const ipifunc[X86_NIPI])(struct cpu_info *);
 
 #endif /* _KERNEL */
 

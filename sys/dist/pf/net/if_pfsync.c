@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pfsync.c,v 1.9 2012/03/22 20:34:38 drochner Exp $	*/
+/*	$NetBSD: if_pfsync.c,v 1.9.2.1 2014/08/20 00:03:52 tls Exp $	*/
 /*	$OpenBSD: if_pfsync.c,v 1.83 2007/06/26 14:44:12 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.9 2012/03/22 20:34:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.9.2.1 2014/08/20 00:03:52 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1313,7 +1313,6 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int flags)
 int
 pfsync_request_update(struct pfsync_state_upd *up, struct in_addr *src)
 {
-	struct ifnet *ifp = NULL;
 	struct pfsync_header *h;
 	struct pfsync_softc *sc = pfsyncif;
 	struct pfsync_state_upd_req *rup;
@@ -1322,7 +1321,6 @@ pfsync_request_update(struct pfsync_state_upd *up, struct in_addr *src)
 	if (sc == NULL)
 		return (0);
 
-	ifp = &sc->sc_if;
 	if (sc->sc_mbuf == NULL) {
 		if ((sc->sc_mbuf = pfsync_get_mbuf(sc, PFSYNC_ACT_UREQ,
 		    (void *)&sc->sc_statep.s)) == NULL)
@@ -1359,7 +1357,6 @@ pfsync_request_update(struct pfsync_state_upd *up, struct in_addr *src)
 int
 pfsync_clear_states(u_int32_t creatorid, char *ifname)
 {
-	struct ifnet *ifp = NULL;
 	struct pfsync_softc *sc = pfsyncif;
 	struct pfsync_state_clr *cp;
 	int s, ret;
@@ -1367,7 +1364,6 @@ pfsync_clear_states(u_int32_t creatorid, char *ifname)
 	if (sc == NULL)
 		return (0);
 
-	ifp = &sc->sc_if;
 	s = splnet();
 	if (sc->sc_mbuf != NULL)
 		pfsync_sendout(sc);

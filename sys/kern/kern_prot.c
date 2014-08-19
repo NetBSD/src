@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.116 2012/06/09 02:55:32 christos Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.116.2.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.116 2012/06/09 02:55:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.116.2.1 2014/08/20 00:04:29 tls Exp $");
 
 #include "opt_compat_43.h"
 
@@ -343,12 +343,15 @@ do_setresuid(struct lwp *l, uid_t r, uid_t e, uid_t sv, u_int flags)
 	kauth_cred_clone(cred, ncred);
 
 	if (r != -1 && r != kauth_cred_getuid(ncred)) {
-		/* Update count of processes for this user */
+		u_long nlwps;
+
+		/* Update count of processes for this user. */
 		(void)chgproccnt(kauth_cred_getuid(ncred), -1);
 		(void)chgproccnt(r, 1);
 
-		/* The first lwp of a process is not counted */
-		int nlwps = p->p_nlwps - 1;
+		/* The first LWP of a process is excluded. */
+		KASSERT(mutex_owned(p->p_lock));
+		nlwps = p->p_nlwps - 1;
 		(void)chglwpcnt(kauth_cred_getuid(ncred), -nlwps);
 		(void)chglwpcnt(r, nlwps);
 

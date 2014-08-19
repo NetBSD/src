@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.129 2012/03/13 18:40:52 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.129.2.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.129 2012/03/13 18:40:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.129.2.1 2014/08/20 00:04:29 tls Exp $");
 
 #include "opt_veriexec.h"
 
@@ -199,16 +199,10 @@ SYSCTL_SETUP(sysctl_kern_veriexec_setup, "sysctl kern.veriexec setup")
 
 	sysctl_createv(clog, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, CTL_EOL);
-
-	sysctl_createv(clog, 0, &rnode, &rnode,
-		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "veriexec",
 		       SYSCTL_DESCR("Veriexec"),
 		       NULL, 0, NULL, 0,
-		       CTL_CREATE, CTL_EOL);
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
@@ -586,9 +580,6 @@ static void
 veriexec_file_report(struct veriexec_file_entry *vfe, const u_char *msg,
     const u_char *filename, struct lwp *l, int f)
 {
-	if (msg == NULL)
-		return;
-
 	if (vfe != NULL && vfe->filename != NULL)
 		filename = vfe->filename;
 
@@ -1309,18 +1300,6 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	vfe->npages = 0;
 	vfe->last_page_size = 0;
 
-	vte = veriexec_table_lookup(vp->v_mount);
-	if (vte == NULL)
-		vte = veriexec_table_add(l, vp->v_mount);
-
-	/* XXX if we bail below this, we might want to gc newly created vtes. */
-
-	error = fileassoc_add(vp, veriexec_hook, vfe);
-	if (error)
-		goto unlock_out;
-
-	vte->vte_count++;
-
 	if (prop_bool_true(prop_dictionary_get(dict, "eval-on-load")) ||
 	    (vfe->type & VERIEXEC_UNTRUSTED)) {
 		u_char *digest;
@@ -1341,6 +1320,18 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 
 		kmem_free(digest, vfe->ops->hash_len);
 	}
+
+	vte = veriexec_table_lookup(vp->v_mount);
+	if (vte == NULL)
+		vte = veriexec_table_add(l, vp->v_mount);
+
+	/* XXX if we bail below this, we might want to gc newly created vtes. */
+
+	error = fileassoc_add(vp, veriexec_hook, vfe);
+	if (error)
+		goto unlock_out;
+
+	vte->vte_count++;
 
 	veriexec_file_report(NULL, "New entry.", file, NULL, REPORT_DEBUG);
 	veriexec_bypass = 0;
@@ -1552,8 +1543,7 @@ veriexec_dump(struct lwp *l, prop_array_t rarray)
 	struct mount *mp, *nmp;
 
 	mutex_enter(&mountlist_lock);
-	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
-	    mp = nmp) {
+	for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
 		/* If it fails, the file-system is [being] unmounted. */
 		if (vfs_busy(mp, &nmp) != 0)
 			continue;
@@ -1575,8 +1565,7 @@ veriexec_flush(struct lwp *l)
 	int error = 0;
 
 	mutex_enter(&mountlist_lock);
-	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
-	    mp = nmp) {
+	for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
 		int lerror;
 
 		/* If it fails, the file-system is [being] unmounted. */

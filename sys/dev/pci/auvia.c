@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.75 2011/11/24 03:35:58 mrg Exp $	*/
+/*	$NetBSD: auvia.c,v 1.75.8.1 2014/08/20 00:03:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.75 2011/11/24 03:35:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.75.8.1 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,6 +345,7 @@ auvia_attach(device_t parent, device_t self, void *aux)
 	pcireg_t pr;
 	int r;
 	const char *revnum;	/* VT823xx revision number */
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	pa = aux;
 	sc = device_private(self);
@@ -423,7 +424,7 @@ auvia_attach(device_t parent, device_t self, void *aux)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
@@ -1076,11 +1077,9 @@ auvia_build_dma_ops(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 	struct auvia_dma *p, void *start, void *end, int blksize)
 {
 	struct auvia_dma_op *op;
-	struct auvia_dma *dp;
 	bus_addr_t s;
 	size_t l;
 
-	dp = ch->sc_dma_ops_dma;
 	op = ch->sc_dma_ops;
 	s = p->map->dm_segs[0].ds_addr;
 	l = ((char *)end - (char *)start);

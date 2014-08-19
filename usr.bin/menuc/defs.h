@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.9 2012/03/06 16:55:18 mbalmer Exp $	 */
+/*	$NetBSD: defs.h,v 1.9.2.1 2014/08/20 00:05:01 tls Exp $	 */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,10 +50,12 @@
 #define INIT(x)
 #endif
 
-/* some constants */
-#define TRUE 1
-#define FALSE 0
-
+#ifndef TRUE
+#define TRUE	1
+#endif
+#ifndef FALSE
+#define FALSE	0
+#endif
 /* Global variables .. to be defined in main.c, extern elsewhere. */
 
 EXTERN char *prog_name;

@@ -1,3 +1,44 @@
+2013-09-23  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2013-06-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4, configure: Regenerate.
+
+2012-06-15  Joel Brobecker  <brobecker@adacore.com>
+
+	* config.in, configure: Regenerate.
+
+2012-05-18  Nick Clifton  <nickc@redhat.com>
+
+	PR 14072
+	* compile.c: Include config.h before system header files.
+	* sim-main.h: Likewise.
+
+2012-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4, config.in, configure: Regenerate.
+
+2011-12-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4: New file.
+	* configure: Regenerate.
+
+2011-10-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Change include to common/acinclude.m4.
+
+2011-10-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Change AC_PREREQ to 2.64.  Delete AC_CONFIG_HEADER
+	call.  Replace common.m4 include with SIM_AC_COMMON.
+	* configure: Regenerate.
+
+2011-07-05  Mike Frysinger  <vapier@gentoo.org>
+
+	* compile.c (sim_do_command): Delete.
+
 2011-01-11  Andrew Burgess  <aburgess@broadcom.com>
 
 	* compile.c (sim_store_register): Update return value to

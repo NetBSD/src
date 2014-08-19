@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.31 2009/04/13 04:35:36 lukem Exp $	*/
+/*	$NetBSD: server.c,v 1.31.12.1 2014/08/20 00:05:03 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: server.c,v 1.31 2009/04/13 04:35:36 lukem Exp $");
+__RCSID("$NetBSD: server.c,v 1.31.12.1 2014/08/20 00:05:03 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -748,7 +748,7 @@ static void
 recvf(char *cmd, int type)
 {
 	char *cp = cmd;
-	int f = -1, opts = 0, wrerr, olderrno;
+	int f = -1, opts = 0, wrerr;
 	mode_t mode;
 	off_t i, size;
 	time_t mtime;
@@ -924,7 +924,6 @@ recvf(char *cmd, int type)
 		if (i + amt > size)
 			amt = size - i;
 		if (wrerr == 0 && write(f, buf, amt) != amt) {
-			olderrno = errno;
 			wrerr++;
 		}
 	}

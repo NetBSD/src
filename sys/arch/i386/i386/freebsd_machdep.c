@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.55 2009/12/10 14:13:50 matt Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.55.22.1 2014/08/20 00:03:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.55 2009/12/10 14:13:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.55.22.1 2014/08/20 00:03:06 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.55 2009/12/10 14:13:50 matt Ex
 #include <compat/sys/signal.h>
 
 #include <machine/cpufunc.h>
-#include <machine/npx.h>
+#include <x86/fpu.h>
 #include <machine/reg.h>
 #include <machine/vm86.h>
 #include <machine/vmparam.h>
@@ -56,18 +56,13 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.55 2009/12/10 14:13:50 matt Ex
 #include <compat/freebsd/freebsd_syscallargs.h>
 #include <compat/freebsd/freebsd_exec.h>
 #include <compat/freebsd/freebsd_signal.h>
-#include <compat/freebsd/freebsd_ptrace.h>
 
 void
 freebsd_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
-	struct pcb *pcb = lwp_getpcb(l);
 
 	setregs(l, epp, stack);
-	if (i386_use_fxsave)
-		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __FreeBSD_NPXCW__;
-	else
-		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __FreeBSD_NPXCW__;
+	fpu_set_default_cw(l, __FreeBSD_NPXCW__);
 }
 
 /*
@@ -255,154 +250,3 @@ freebsd_sys_sigreturn(struct lwp *l, const struct freebsd_sys_sigreturn_args *ua
 	return (EJUSTRETURN);
 }
 
-
-/*
- * freebsd_ptrace(2) support
- */
-
-void
-netbsd_to_freebsd_ptrace_regs(struct reg *nregs, struct fpreg *nfpregs, struct freebsd_ptrace_reg *fregs)
-{
-	struct save87 *nframe = (struct save87 *)nfpregs;
-
-	fregs->freebsd_ptrace_regs.tf_es = nregs->r_es;
-	fregs->freebsd_ptrace_regs.tf_ds = nregs->r_ds;
-	fregs->freebsd_ptrace_regs.tf_edi = nregs->r_edi;
-	fregs->freebsd_ptrace_regs.tf_esi = nregs->r_esi;
-	fregs->freebsd_ptrace_regs.tf_ebp = nregs->r_ebp;
-	fregs->freebsd_ptrace_regs.tf_isp = 0;
-	fregs->freebsd_ptrace_regs.tf_ebx = nregs->r_ebx;
-	fregs->freebsd_ptrace_regs.tf_edx = nregs->r_edx;
-	fregs->freebsd_ptrace_regs.tf_ecx = nregs->r_ecx;
-	fregs->freebsd_ptrace_regs.tf_eax = nregs->r_eax;
-	fregs->freebsd_ptrace_regs.tf_trapno = 0;
-
-	fregs->freebsd_ptrace_regs.tf_err = 0;
-	fregs->freebsd_ptrace_regs.tf_eip = nregs->r_eip;
-	fregs->freebsd_ptrace_regs.tf_cs = nregs->r_cs;
-	fregs->freebsd_ptrace_regs.tf_eflags = nregs->r_eflags;
-
-	fregs->freebsd_ptrace_regs.tf_esp = nregs->r_esp;
-	fregs->freebsd_ptrace_regs.tf_ss = nregs->r_ss;
-
-	fregs->freebsd_ptrace_fpregs.sv_env =
-		*(struct freebsd_env87 *)&nframe->sv_env;
-	memcpy(fregs->freebsd_ptrace_fpregs.sv_ac, nframe->sv_ac,
-	      sizeof(fregs->freebsd_ptrace_fpregs.sv_ac));
-	fregs->freebsd_ptrace_fpregs.sv_ex_sw = 
-		nframe->sv_ex_sw;
-	/*
-	 * fortunately, sizeof(freebsd_save87) >= sizeof(save87)
-	 */
-#ifdef DIAGNOSTIC
-	if (sizeof(fregs->freebsd_ptrace_fpregs.sv_pad) <
-	    sizeof(nframe->sv_ex_tw) + sizeof(nframe->sv_pad)) {
-		panic("netbsd_to_freebsd_ptrace_regs: %s",
-		      "sizeof(freebsd_save87) >= sizeof(save87)");
-	}
-#endif
-	memcpy(fregs->freebsd_ptrace_fpregs.sv_pad, &nframe->sv_ex_tw,
-	      sizeof(nframe->sv_ex_tw));
-	memcpy((char *)fregs->freebsd_ptrace_fpregs.sv_pad +
-	      sizeof(nframe->sv_ex_tw),
-	      nframe->sv_pad,
-	      sizeof(nframe->sv_pad));
-	memset((char *)fregs->freebsd_ptrace_fpregs.sv_pad +
-	      sizeof(nframe->sv_ex_tw) + sizeof(nframe->sv_pad),
-	      0,
-	      sizeof(fregs->freebsd_ptrace_fpregs.sv_pad) -
-	      sizeof(nframe->sv_ex_tw) - sizeof(nframe->sv_pad));
-}
-
-void
-freebsd_to_netbsd_ptrace_regs(struct freebsd_ptrace_reg *fregs, struct reg *nregs, struct fpreg *nfpregs)
-{
-	struct save87 *nframe = (struct save87 *)nfpregs;
-
-	nregs->r_es = fregs->freebsd_ptrace_regs.tf_es;
-	nregs->r_ds = fregs->freebsd_ptrace_regs.tf_ds;
-	nregs->r_edi = fregs->freebsd_ptrace_regs.tf_edi;
-	nregs->r_esi = fregs->freebsd_ptrace_regs.tf_esi;
-	nregs->r_ebp = fregs->freebsd_ptrace_regs.tf_ebp;
-	nregs->r_ebx = fregs->freebsd_ptrace_regs.tf_ebx;
-	nregs->r_edx = fregs->freebsd_ptrace_regs.tf_edx;
-	nregs->r_ecx = fregs->freebsd_ptrace_regs.tf_ecx;
-	nregs->r_eax = fregs->freebsd_ptrace_regs.tf_eax;
-
-	nregs->r_eip = fregs->freebsd_ptrace_regs.tf_eip;
-	nregs->r_cs = fregs->freebsd_ptrace_regs.tf_cs;
-	nregs->r_eflags = fregs->freebsd_ptrace_regs.tf_eflags;
-
-	nregs->r_esp = fregs->freebsd_ptrace_regs.tf_esp;
-	nregs->r_ss = fregs->freebsd_ptrace_regs.tf_ss;
-
-	nframe->sv_env =
-		*(struct env87 *)&fregs->freebsd_ptrace_fpregs.sv_env;
-	memcpy(nframe->sv_ac, fregs->freebsd_ptrace_fpregs.sv_ac,
-	      sizeof(nframe->sv_ac));
-	nframe->sv_ex_sw =
-		fregs->freebsd_ptrace_fpregs.sv_ex_sw;
-	/*
-	 * fortunately, sizeof(freebsd_save87) >= sizeof(save87)
-	 */
-	memcpy(&nframe->sv_ex_tw, fregs->freebsd_ptrace_fpregs.sv_pad,
-	      sizeof(nframe->sv_ex_tw));
-	memcpy(nframe->sv_pad,
-	      (char *)fregs->freebsd_ptrace_fpregs.sv_pad +
-	      sizeof(nframe->sv_ex_tw),
-	      sizeof(nframe->sv_pad));
-}
-
-/* random value, except FREEBSD_U_AR0_OFFSET..., FREEBSD_U_SAVEFP_OFFSET... */
-#define	FREEBSD_REGS_OFFSET 0x2000
-
-int
-freebsd_ptrace_getregs(struct freebsd_ptrace_reg *fregs, void *addr, register_t *datap)
-{
-	vaddr_t offset = (vaddr_t)addr;
-
-	if (offset == FREEBSD_U_AR0_OFFSET) {
-		*datap = FREEBSD_REGS_OFFSET + FREEBSD_USRSTACK;
-		return 0;
-	} else if (offset >= FREEBSD_REGS_OFFSET &&
-		   offset <= FREEBSD_REGS_OFFSET + 
-		      sizeof(fregs->freebsd_ptrace_regs)-sizeof(register_t)) {
-		*datap = *(register_t *)&((char *)&fregs->freebsd_ptrace_regs)
-			[(vaddr_t) addr - FREEBSD_REGS_OFFSET];
-		return 0;
-	} else if (offset >= FREEBSD_U_SAVEFP_OFFSET &&
-		   offset <= FREEBSD_U_SAVEFP_OFFSET + 
-		      sizeof(fregs->freebsd_ptrace_fpregs)-sizeof(register_t)){
-		*datap= *(register_t *)&((char *)&fregs->freebsd_ptrace_fpregs)
-			[offset - FREEBSD_U_SAVEFP_OFFSET];
-		return 0;
-	}
-#ifdef DIAGNOSTIC
-	printf("freebsd_ptrace_getregs: *(0x%08lx)\n", offset);
-#endif
-	return EFAULT;
-}
-
-int
-freebsd_ptrace_setregs(struct freebsd_ptrace_reg *fregs, void *addr, int data)
-{
-	vaddr_t offset = (vaddr_t)addr;
-
-	if (offset >= FREEBSD_REGS_OFFSET &&
-	    offset <= FREEBSD_REGS_OFFSET +
-			sizeof(fregs->freebsd_ptrace_regs) - sizeof(int)) {
-		*(int *)&((char *)&fregs->freebsd_ptrace_regs)
-			[offset - FREEBSD_REGS_OFFSET] = data;
-		return 0;
-	} else if (offset >= FREEBSD_U_SAVEFP_OFFSET &&
-		   offset <= FREEBSD_U_SAVEFP_OFFSET + 
-			sizeof(fregs->freebsd_ptrace_fpregs) - sizeof(int)) {
-		*(int *)&((char *)&fregs->freebsd_ptrace_fpregs)
-			[offset - FREEBSD_U_SAVEFP_OFFSET] = data;
-		return 0;
-	}
-#ifdef DIAGNOSTIC
-	printf("freebsd_ptrace_setregs: *(0x%08lx) = 0x%08x\n", offset, data);
-#endif
-	return EFAULT;
-}

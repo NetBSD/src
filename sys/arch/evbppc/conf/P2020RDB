@@ -1,4 +1,4 @@
-#	$NetBSD: P2020RDB,v 1.16.2.2 2013/06/23 06:20:05 tls Exp $
+#	$NetBSD: P2020RDB,v 1.16.2.3 2014/08/20 00:02:59 tls Exp $
 #
 #	P2020RBD -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020RBD-$Revision: 1.16.2.2 $"
+ident 		"P2020RBD-$Revision: 1.16.2.3 $"
 
 maxusers	32
 
@@ -37,7 +37,7 @@ options 	USERCONF	# userconf(4) support
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
-options 	DEBUG		# expensive debugging checks/support
+#options 	DEBUG		# expensive debugging checks/support
 #options 	SYSCALL_DEBUG	# syscall debugging
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
@@ -82,7 +82,7 @@ file-system 	TMPFS		# efficient memory file system
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
-#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
@@ -116,7 +116,6 @@ options 	UDP_CSUM_COUNTERS
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
@@ -189,6 +188,7 @@ pci*		at ppb?
 ahcisata*	at pci? dev ? function ?
 atabus*		at ahcisata? channel ?
 wd*		at atabus? drive ?
+atapibus*	at atabus?
 
 sdhc*		at pci? dev ? function ?
 
@@ -228,3 +228,5 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	kttcp			# kernel ttcp
 pseudo-device	vlan			# 802.1Q VLANs
+pseudo-device	vnd			# disk-like interface to files
+pseudo-device	putter			# for puffs and pud

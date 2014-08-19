@@ -1,11 +1,12 @@
-#	$NetBSD: mk.beagle,v 1.8.2.2 2013/06/23 06:20:04 tls Exp $
+#	$NetBSD: mk.beagle,v 1.8.2.3 2014/08/20 00:02:53 tls Exp $
 .if ${KERNEL_BUILD:T:MPANDA*} != ""
-CPPFLAGS+=		-mcpu=cortex-a9 -mfpu=neon
-#.elif ${KERNEL_BUILD:T:MOMAP5*} != ""
-#CPPFLAGS+=		-mcpu=cortex-a15 -mfpu=neon
+CPPFLAGS+=		-mcpu=cortex-a9
+.elif ${KERNEL_BUILD:T:MOMAP5*} != ""
+CPPFLAGS+=		-mcpu=cortex-a15
 .else
-CPPFLAGS+=		-mcpu=cortex-a8 -mfpu=neon
+CPPFLAGS+=		-mcpu=cortex-a8
 .endif
+CPPFLAGS+=		-mfpu=neon
 
 SYSTEM_FIRST_OBJ=	beagle_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/beagle/beagle_start.S

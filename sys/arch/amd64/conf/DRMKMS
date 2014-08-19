@@ -1,0 +1,20 @@
+include "arch/amd64/conf/NO_DRM"
+
+i915drmkms* 	at pci? dev ? function ?
+intelfb*	at intelfbbus?
+
+radeon*		at pci? dev ? function ?
+radeondrmkmsfb* at radeonfbbus?
+
+#nouveau*	at pci? dev ? function ?
+#nouveaufb*	at nouveaufbbus
+
+no options 	DIAGNOSTIC
+options 	DIAGNOSTIC	# inexpensive kernel consistency checks
+options 	DEBUG		# expensive debugging checks/support
+options 	LOCKDEBUG	# debug locks
+makeoptions 	DEBUG="-g"	# compile full symbol table
+
+#options 	ACPIVERBOSE	# verbose ACPI device autoconfig messages
+options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+options 	USBVERBOSE	# verbose USB device autoconfig messages

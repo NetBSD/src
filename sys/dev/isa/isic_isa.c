@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.35.22.1 2012/11/20 03:02:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.35.22.2 2014/08/20 00:03:39 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -780,23 +780,11 @@ isic_isa_attach(device_t parent, device_t self, void *aux)
 	struct isic_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 	int flags = device_cfdata(self)->cf_flags;
-	int ret = 0, iobase, iosize, maddr, msize;
+	int ret = 0, iobase, maddr;
 	struct isic_attach_args args;
 
-	if (ia->ia_nio > 0) {
-		iobase = ia->ia_io[0].ir_addr;
-		iosize = ia->ia_io[0].ir_size;
-	} else {
-		iobase = ISA_UNKNOWN_PORT;
-		iosize = 0;
-	}
-	if (ia->ia_niomem > 0) {
-		maddr = ia->ia_iomem[0].ir_addr;
-		msize = ia->ia_iomem[0].ir_size;
-	} else {
-		maddr = ISA_UNKNOWN_IOMEM;
-		msize = 0;
-	}
+	iobase = ia->ia_nio > 0 ? ia->ia_io[0].ir_addr : ISA_UNKNOWN_PORT;
+	maddr = ia->ia_niomem > 0 ? ia->ia_iomem[0].ir_addr : ISA_UNKNOWN_IOMEM;
 
 	/* Setup parameters */
 	sc->sc_dev = self;

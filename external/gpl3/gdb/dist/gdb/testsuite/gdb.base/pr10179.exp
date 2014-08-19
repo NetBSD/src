@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,10 +29,10 @@ if ![runto_main] {
 
 gdb_test "rbreak foo.*" "Breakpoint \[0-9\]+\[^\\n\]*\\nint foo\[12\]\[^\\n\]*\\nBreakpoint \[0-9\]+\[^\\n\]*\\nint foo\[12\].*"
 
-gdb_test "delete breakpoints" ".*" "" "Delete all breakpoints.*" "y"
+delete_breakpoints
 
 gdb_test "rbreak pr10179-a.c:foo.*" "Breakpoint \[0-9\]+\[^\\n\]*\\nint foo.*"
 
-gdb_test "delete breakpoints" ".*" "" "Delete all breakpoints.*" "y"
+delete_breakpoints
 
 gdb_test "rbreak pr10179-a.c : .*" "Breakpoint \[0-9\]+\[^\\n\]*\\nint bar1\[^\\n\]*\\nBreakpoint \[0-9\]+\[^\\n\]*\\nint foo1\[^\\n\]*\\nBreakpoint \[0-9\]+\[^\\n\]*\\nint main\[^\\n\]*.*"

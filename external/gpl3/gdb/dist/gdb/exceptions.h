@@ -1,8 +1,6 @@
 /* Exception (throw catch) mechanism, for GDB, the GNU debugger.
 
-   Copyright (C) 1986, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
-   1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-   2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -40,10 +38,13 @@ enum return_reason
   };
 
 #define RETURN_MASK(reason)	(1 << (int)(-reason))
-#define RETURN_MASK_QUIT	RETURN_MASK (RETURN_QUIT)
-#define RETURN_MASK_ERROR	RETURN_MASK (RETURN_ERROR)
-#define RETURN_MASK_ALL		(RETURN_MASK_QUIT | RETURN_MASK_ERROR)
-typedef int return_mask;
+
+typedef enum
+{
+  RETURN_MASK_QUIT = RETURN_MASK (RETURN_QUIT),
+  RETURN_MASK_ERROR = RETURN_MASK (RETURN_ERROR),
+  RETURN_MASK_ALL = (RETURN_MASK_QUIT | RETURN_MASK_ERROR)
+} return_mask;
 
 /* Describe all exceptions.  */
 
@@ -78,12 +79,23 @@ enum errors {
   /* Error accessing memory.  */
   MEMORY_ERROR,
 
-  /* Feature is not supported in this copy of GDB.  */
-  UNSUPPORTED_ERROR,
-
   /* Value not available.  E.g., a register was not collected in a
      traceframe.  */
   NOT_AVAILABLE_ERROR,
+
+  /* Value was optimized out.  Note: if the value was a register, this
+     means the register was not saved in the frame.  */
+  OPTIMIZED_OUT_ERROR,
+
+  /* DW_OP_GNU_entry_value resolving failed.  */
+  NO_ENTRY_VALUE_ERROR,
+
+  /* Target throwing an error has been closed.  Current command should be
+     aborted as the inferior state is no longer valid.  */
+  TARGET_CLOSE_ERROR,
+
+  /* An undefined command was executed.  */
+  UNDEFINED_COMMAND_ERROR,
 
   /* Add more errors here.  */
   NR_ERRORS
@@ -114,8 +126,7 @@ extern const struct gdb_exception exception_none;
 
 /* Functions to drive the exceptions state m/c (internal to
    exceptions).  */
-EXCEPTIONS_SIGJMP_BUF *exceptions_state_mc_init (struct ui_out *func_uiout,
-						 volatile struct
+EXCEPTIONS_SIGJMP_BUF *exceptions_state_mc_init (volatile struct
 						 gdb_exception *exception,
 						 return_mask mask);
 int exceptions_state_mc_action_iter (void);
@@ -146,7 +157,7 @@ int exceptions_state_mc_action_iter_1 (void);
 #define TRY_CATCH(EXCEPTION,MASK) \
      { \
        EXCEPTIONS_SIGJMP_BUF *buf = \
-	 exceptions_state_mc_init (uiout, &(EXCEPTION), (MASK)); \
+	 exceptions_state_mc_init (&(EXCEPTION), (MASK)); \
        EXCEPTIONS_SIGSETJMP (*buf); \
      } \
      while (exceptions_state_mc_action_iter ()) \
@@ -181,11 +192,6 @@ extern void throw_vfatal (const char *fmt, va_list ap)
      ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (1, 0);
 extern void throw_error (enum errors error, const char *fmt, ...)
      ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (2, 3);
-
-/* Instead of deprecated_throw_reason, code should use catch_exception
-   and throw_exception.  */
-extern void deprecated_throw_reason (enum return_reason reason)
-     ATTRIBUTE_NORETURN;
 
 /* Call FUNC(UIOUT, FUNC_ARGS) but wrapped within an exception
    handler.  If an exception (enum return_reason) is thrown using
@@ -234,14 +240,6 @@ extern int catch_exceptions_with_msg (struct ui_out *uiout,
 			     	      char **gdberrmsg,
 				      return_mask mask);
 
-/* This function, in addition, suppresses the printing of the captured
-   error message.  It's up to the client to print it.  */
-
-extern struct gdb_exception catch_exception (struct ui_out *uiout,
-					     catch_exception_ftype *func,
-					     void *func_args,
-					     return_mask mask);
-
 /* If CATCH_ERRORS_FTYPE throws an error, catch_errors() returns zero
    otherwize the result from CATCH_ERRORS_FTYPE is returned.  It is
    probably useful for CATCH_ERRORS_FTYPE to always return a non-zero
@@ -259,6 +257,12 @@ extern int catch_errors (catch_errors_ftype *, void *, char *, return_mask);
 
 typedef void (catch_command_errors_ftype) (char *, int);
 extern int catch_command_errors (catch_command_errors_ftype *func,
-				 char *command, int from_tty, return_mask);
+				 char *arg, int from_tty, return_mask);
+
+/* Like catch_command_errors, but works with const command and args.  */
+
+typedef void (catch_command_errors_const_ftype) (const char *, int);
+extern int catch_command_errors_const (catch_command_errors_const_ftype *func,
+				       const char *arg, int from_tty, return_mask);
 
 #endif

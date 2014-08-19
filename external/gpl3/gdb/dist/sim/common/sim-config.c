@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2002-2014 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -151,7 +151,7 @@ sim_config (SIM_DESC sd)
 	  && !bfd_big_endian (STATE_PROG_BFD (sd))))
     prefered_target_byte_order = 0;
   else
-    prefered_target_byte_order = (bfd_little_endian(STATE_PROG_BFD (sd))
+    prefered_target_byte_order = (bfd_little_endian (STATE_PROG_BFD (sd))
 				  ? LITTLE_ENDIAN
 				  : BIG_ENDIAN);
 
@@ -241,15 +241,15 @@ sim_config (SIM_DESC sd)
   if (STATE_ENVIRONMENT (sd) == ALL_ENVIRONMENT)
     {
       const char *env =
-	tree_find_string_property(root, "/openprom/options/env");
-      STATE_ENVIRONMENT (sd) = ((strcmp(env, "user") == 0
-				 || strcmp(env, "uea") == 0)
+	tree_find_string_property (root, "/openprom/options/env");
+      STATE_ENVIRONMENT (sd) = ((strcmp (env, "user") == 0
+				 || strcmp (env, "uea") == 0)
 				? USER_ENVIRONMENT
-				: (strcmp(env, "virtual") == 0
-				   || strcmp(env, "vea") == 0)
+				: (strcmp (env, "virtual") == 0
+				   || strcmp (env, "vea") == 0)
 				? VIRTUAL_ENVIRONMENT
-				: (strcmp(env, "operating") == 0
-				   || strcmp(env, "oea") == 0)
+				: (strcmp (env, "operating") == 0
+				   || strcmp (env, "oea") == 0)
 				? OPERATING_ENVIRONMENT
 				: ALL_ENVIRONMENT);
     }
@@ -262,7 +262,7 @@ sim_config (SIM_DESC sd)
 #if (WITH_TREE_PROPERTIES)
   if (current_alignment == 0)
     current_alignment =
-      (tree_find_boolean_property(root, "/openprom/options/strict-alignment?")
+      (tree_find_boolean_property (root, "/openprom/options/strict-alignment?")
        ? STRICT_ALIGNMENT
        : NONSTRICT_ALIGNMENT);
 #endif

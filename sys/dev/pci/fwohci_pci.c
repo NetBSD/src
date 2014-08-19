@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.41 2012/08/04 03:55:44 riastradh Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.41.2.1 2014/08/20 00:03:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.41 2012/08/04 03:55:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.41.2.1 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -99,6 +99,7 @@ fwohci_pci_attach(device_t parent, device_t self, void *aux)
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	uint32_t csr;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	pci_aprint_devinfo(pa, "IEEE 1394 Controller");
 
@@ -139,7 +140,7 @@ fwohci_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		goto fail;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	psc->psc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, fwohci_intr,
 	    &psc->psc_sc);
 	if (psc->psc_ih == NULL) {

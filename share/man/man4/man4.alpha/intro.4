@@ -1,4 +1,4 @@
-.\"     $NetBSD: intro.4,v 1.12 2008/04/30 13:10:55 martin Exp $
+.\"     $NetBSD: intro.4,v 1.12.28.1 2014/08/20 00:02:35 tls Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 19, 2001
+.Dd November 16, 2013
 .Dt INTRO 4 alpha
 .Os
 .Sh NAME
@@ -91,7 +91,6 @@ A list of the supported devices is given below.
 .\" http://www.support.compaq.com/alpha-tools/info/system-codes.html
 .\" http://members.tripod.com/kmi9000/kmi_proc.htm
 .\" http://www.phys.ufl.edu/~prescott/linux/alpha/dec3000-sysinfo.html
-.Pp
 .Tn DEC
 and
 .Tn Compaq
@@ -131,7 +130,6 @@ process used to make the chips.
 stands for Low Cost Alpha, and
 .Qq PCA
 stands for PC-architecture Alpha.
-.Pp
 .Bl -hang -width 9n
 .It 21064
 .Sy EV4
@@ -330,7 +328,6 @@ Universal Desktop Box AXPpci233MT
 .Tn MHz ,
 0.50 micron
 .Pc
-.Pp
 .Bl -hang -width 4n
 .It Alcor family
 .br
@@ -382,7 +379,6 @@ AlphaServer 8200 and 8400
 .Tn MHz ,
 0.35 micron, BWX
 .Pc
-.Pp
 .Bl -hang -width 4n
 .It Alcor family
 .br
@@ -516,6 +512,8 @@ AlphaServer GS140
 .Tn MHz ,
 0.18 micron
 .Pc
+.Pp
+AlphaServer DS20L
 .El
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of the system.
@@ -553,6 +551,8 @@ TURBOchannel host bus support
 AlphaServer 8x00 TurboLaser System bus
 .It tsc
 DECchip 21272 Core Logic chipset
+.It tsciic
+DECchip 21272 Core Logic chipset I2C controller
 .It tsp
 DECchip 21272 Core Logic chipset PCI controller
 .It ttwoga
@@ -579,6 +579,10 @@ bus and associated device drivers.
 .Pp
 PCMCIA devices are supported through the
 .Xr pcmcia 4
+bus and associated device drivers.
+.Pp
+I2C devices are supported through the
+.Xr iic 4
 bus and associated device drivers.
 .Pp
 Console devices using ISA, EISA, or PCI video adaptors and standard AT

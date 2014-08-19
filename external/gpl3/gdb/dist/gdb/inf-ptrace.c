@@ -1,8 +1,6 @@
 /* Low-level child interface to ptrace.
 
-   Copyright (C) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998,
-   1999, 2000, 2001, 2002, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1988-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,7 +26,7 @@
 #include "regcache.h"
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdb_ptrace.h"
 #include "gdb_wait.h"
 #include <signal.h>
@@ -42,7 +40,8 @@
 #ifdef PT_GET_PROCESS_STATE
 
 static int
-inf_ptrace_follow_fork (struct target_ops *ops, int follow_child)
+inf_ptrace_follow_fork (struct target_ops *ops, int follow_child,
+			int detach_fork)
 {
   pid_t pid, fpid;
   ptrace_state_t pe;
@@ -124,24 +123,20 @@ inf_ptrace_create_inferior (struct target_ops *ops,
   /* Do not change either targets above or the same target if already present.
      The reason is the target stack is shared across multiple inferiors.  */
   int ops_already_pushed = target_is_pushed (ops);
-  struct cleanup *back_to = NULL;
+  struct cleanup *back_to = make_cleanup (null_cleanup, NULL);
 
   if (! ops_already_pushed)
     {
       /* Clear possible core file with its process_stratum.  */
       push_target (ops);
-      back_to = make_cleanup_unpush_target (ops);
+      make_cleanup_unpush_target (ops);
     }
 
   pid = fork_inferior (exec_file, allargs, env, inf_ptrace_me, NULL,
-		       NULL, NULL);
+		       NULL, NULL, NULL);
 
-  if (! ops_already_pushed)
-    discard_cleanups (back_to);
+  discard_cleanups (back_to);
 
-  /* START_INFERIOR_TRAPS_EXPECTED is defined in inferior.h, and will
-     be 1 or 2 depending on whether we're starting without or with a
-     shell.  */
   startup_inferior (START_INFERIOR_TRAPS_EXPECTED);
 
   /* On some targets, there must be some explicit actions taken after
@@ -198,7 +193,7 @@ inf_ptrace_attach (struct target_ops *ops, char *args, int from_tty)
   /* Do not change either targets above or the same target if already present.
      The reason is the target stack is shared across multiple inferiors.  */
   int ops_already_pushed = target_is_pushed (ops);
-  struct cleanup *back_to = NULL;
+  struct cleanup *back_to = make_cleanup (null_cleanup, NULL);
 
   pid = parse_pid_to_attach (args);
 
@@ -210,7 +205,7 @@ inf_ptrace_attach (struct target_ops *ops, char *args, int from_tty)
       /* target_pid_to_str already uses the target.  Also clear possible core
 	 file with its process_stratum.  */
       push_target (ops);
-      back_to = make_cleanup_unpush_target (ops);
+      make_cleanup_unpush_target (ops);
     }
 
   if (from_tty)
@@ -245,13 +240,12 @@ inf_ptrace_attach (struct target_ops *ops, char *args, int from_tty)
      target, it should decorate the ptid later with more info.  */
   add_thread_silent (inferior_ptid);
 
-  if (! ops_already_pushed)
-    discard_cleanups (back_to);
+  discard_cleanups (back_to);
 }
 
 #ifdef PT_GET_PROCESS_STATE
 
-void
+static void
 inf_ptrace_post_attach (int pid)
 {
   ptrace_event_t pe;
@@ -270,7 +264,7 @@ inf_ptrace_post_attach (int pid)
    specified by ARGS.  If FROM_TTY is non-zero, be chatty about it.  */
 
 static void
-inf_ptrace_detach (struct target_ops *ops, char *args, int from_tty)
+inf_ptrace_detach (struct target_ops *ops, const char *args, int from_tty)
 {
   pid_t pid = ptid_get_pid (inferior_ptid);
   int sig = 0;
@@ -343,7 +337,7 @@ inf_ptrace_stop (ptid_t ptid)
 
 static void
 inf_ptrace_resume (struct target_ops *ops,
-		   ptid_t ptid, int step, enum target_signal signal)
+		   ptid_t ptid, int step, enum gdb_signal signal)
 {
   pid_t pid = ptid_get_pid (ptid);
   int request, sig;
@@ -367,12 +361,16 @@ inf_ptrace_resume (struct target_ops *ops,
          worry about that here.  */
       request = PT_STEP;
 #ifdef __NetBSD__
+      /*
+       * On NetBSD the data field of PT_STEP contains the thread
+       * to be stepped; all other threads are continued if this value is > 0
+       */
       sig = ptid_get_lwp(ptid);
 #else
       sig = 0;
 #endif
     } else
-      sig = target_signal_to_host (signal);
+      sig = gdb_signal_to_host (signal);
 
   /* An address of (PTRACE_TYPE_ARG3)1 tells ptrace to continue from
      where it was.  If GDB wanted it to start some other way, we have
@@ -415,7 +413,7 @@ inf_ptrace_wait (struct target_ops *ops,
 
 	  /* Claim it exited with unknown signal.  */
 	  ourstatus->kind = TARGET_WAITKIND_SIGNALLED;
-	  ourstatus->value.sig = TARGET_SIGNAL_UNKNOWN;
+	  ourstatus->value.sig = GDB_SIGNAL_UNKNOWN;
 	  return inferior_ptid;
 	}
 
@@ -588,6 +586,26 @@ inf_ptrace_xfer_partial (struct target_ops *ops, enum target_object object,
       return -1;
 
     case TARGET_OBJECT_AUXV:
+#if defined (PT_IO) && defined (PIOD_READ_AUXV)
+      /* OpenBSD 4.5 has a new PIOD_READ_AUXV operation for the PT_IO
+	 request that allows us to read the auxilliary vector.  Other
+	 BSD's may follow if they feel the need to support PIE.  */
+      {
+	struct ptrace_io_desc piod;
+
+	if (writebuf)
+	  return -1;
+	piod.piod_op = PIOD_READ_AUXV;
+	piod.piod_addr = readbuf;
+	piod.piod_offs = (void *) (long) offset;
+	piod.piod_len = len;
+
+	errno = 0;
+	if (ptrace (PT_IO, pid, (caddr_t)&piod, 0) == 0)
+	  /* Return the actual number of bytes read or written.  */
+	  return piod.piod_len;
+      }
+#endif
       return -1;
 
     case TARGET_OBJECT_WCOOKIE:
@@ -625,6 +643,41 @@ inf_ptrace_pid_to_str (struct target_ops *ops, ptid_t ptid)
   return normal_pid_to_str (ptid);
 }
 
+#if defined (PT_IO) && defined (PIOD_READ_AUXV)
+
+/* Read one auxv entry from *READPTR, not reading locations >= ENDPTR.
+   Return 0 if *READPTR is already at the end of the buffer.
+   Return -1 if there is insufficient buffer for a whole entry.
+   Return 1 if an entry was read into *TYPEP and *VALP.  */
+
+static int
+inf_ptrace_auxv_parse (struct target_ops *ops, gdb_byte **readptr,
+		       gdb_byte *endptr, CORE_ADDR *typep, CORE_ADDR *valp)
+{
+  struct type *int_type = builtin_type (target_gdbarch ())->builtin_int;
+  struct type *ptr_type = builtin_type (target_gdbarch ())->builtin_data_ptr;
+  const int sizeof_auxv_type = TYPE_LENGTH (int_type);
+  const int sizeof_auxv_val = TYPE_LENGTH (ptr_type);
+  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
+  gdb_byte *ptr = *readptr;
+
+  if (endptr == ptr)
+    return 0;
+
+  if (endptr - ptr < 2 * sizeof_auxv_val)
+    return -1;
+
+  *typep = extract_unsigned_integer (ptr, sizeof_auxv_type, byte_order);
+  ptr += sizeof_auxv_val;	/* Alignment.  */
+  *valp = extract_unsigned_integer (ptr, sizeof_auxv_val, byte_order);
+  ptr += sizeof_auxv_val;
+
+  *readptr = ptr;
+  return 1;
+}
+
+#endif
+
 /* Create a prototype ptrace target.  The client can override it with
    local methods.  */
 
@@ -650,6 +703,9 @@ inf_ptrace_target (void)
   t->to_pid_to_str = inf_ptrace_pid_to_str;
   t->to_stop = inf_ptrace_stop;
   t->to_xfer_partial = inf_ptrace_xfer_partial;
+#if defined (PT_IO) && defined (PIOD_READ_AUXV)
+  t->to_auxv_parse = inf_ptrace_auxv_parse;
+#endif
 
   return t;
 }

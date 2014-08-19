@@ -1,4 +1,4 @@
-/*	$NetBSD: interp.c,v 1.4.22.1 2013/02/25 00:28:45 tls Exp $	*/
+/*	$NetBSD: interp.c,v 1.4.22.2 2014/08/20 00:03:08 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -73,8 +73,7 @@ perform(int argc, char *argv[])
 	return(CMD_OK);
 
     /* set return defaults; a successful command will override these */
-    command_errmsg = command_errbuf;
-    strcpy(command_errbuf, "no error message");
+    command_seterr("no error message");
     cmd = NULL;
     result = CMD_ERROR;
 
@@ -86,7 +85,7 @@ perform(int argc, char *argv[])
     if (cmd != NULL) {
 	result = (cmd)(argc, argv);
     } else {
-	command_errmsg = "unknown command";
+	command_seterr("unknown command");
     }
     RETURN(result);
 }
@@ -140,7 +139,7 @@ interact(void)
 #else
 	if (!parse(&argc, &argv, input)) {
 	    if (perform(argc, argv))
-		printf("%s: %s\n", argv[0], command_errmsg);
+		printf("%s: %s\n", argv[0], command_geterr());
 	    free(argv);
 	} else {
 	    printf("parse error\n");
@@ -210,7 +209,7 @@ include(const char *filename)
 #endif
 
     if (((fd = open(filename, O_RDONLY)) == -1)) {
-	sprintf(command_errbuf,"can't open '%s': %s\n", filename, strerror(errno));
+	command_seterr("can't open '%s': %s\n", filename, strerror(errno));
 	return(CMD_ERROR);
     }
 
@@ -275,7 +274,8 @@ include(const char *filename)
 #ifdef BOOT_FORTH
 	res = bf_run(sp->text);
 	if (res != VM_OUTOFTEXT) {
-		sprintf(command_errbuf, "Error while including %s, in the line:\n%s", filename, sp->text);
+		command_seterr("Error while including %s, in the line:\n%s",
+		    filename, sp->text);
 		res = CMD_ERROR;
 		break;
 	} else
@@ -291,7 +291,7 @@ include(const char *filename)
 	if (!parse(&argc, &argv, sp->text)) {
 	    if ((argc > 0) && (perform(argc, argv) != 0)) {
 		/* normal command */
-		printf("%s: %s\n", argv[0], command_errmsg);
+		printf("%s: %s\n", argv[0], command_geterr());
 		if (!(sp->flags & SL_IGNOREERR)) {
 		    res=CMD_ERROR;
 		    break;

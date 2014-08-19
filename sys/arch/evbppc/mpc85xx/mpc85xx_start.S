@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc85xx_start.S,v 1.6 2012/07/29 21:36:27 matt Exp $	*/
+/*	$NetBSD: mpc85xx_start.S,v 1.6.2.1 2014/08/20 00:02:59 tls Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 #include <powerpc/asm.h>
 
-RCSID("$NetBSD: mpc85xx_start.S,v 1.6 2012/07/29 21:36:27 matt Exp $")
+RCSID("$NetBSD: mpc85xx_start.S,v 1.6.2.1 2014/08/20 00:02:59 tls Exp $")
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -64,7 +64,6 @@ RCSID("$NetBSD: mpc85xx_start.S,v 1.6 2012/07/29 21:36:27 matt Exp $")
 
 #define	INTSTK	0
 
-	.machine e500
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
  * mark the start of kernel text.
@@ -86,8 +85,8 @@ __start:
 	/*
 	 * Set all the registers we don't care about to a known junk value.
 	 */
-	lis	%r2,0xdeadbeef@ha
-	addi	%r2,%r2,0xdeadbeef@l
+	lis	%r2,0xdeadbeef@h
+	ori	%r2,%r2,0xdeadbeef@l
 	mr	%r9,%r2
 	mr	%r10,%r9
 	mr	%r11,%r9

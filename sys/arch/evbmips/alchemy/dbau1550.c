@@ -1,4 +1,4 @@
-/* $NetBSD: dbau1550.c,v 1.12 2011/07/10 00:03:52 matt Exp $ */
+/* $NetBSD: dbau1550.c,v 1.12.12.1 2014/08/20 00:02:58 tls Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbau1550.c,v 1.12 2011/07/10 00:03:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbau1550.c,v 1.12.12.1 2014/08/20 00:02:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -320,17 +320,7 @@ dbau1550_slot_enable(int slot)
 void
 dbau1550_slot_disable(int slot)
 {
-	int		shift;
 	uint16_t	status;
-
-	switch (slot) {
-	case 0:
-		shift = DBAU1550_PCMCIA_PC0_SHIFT;
-		break;
-	case 1:
-		shift = DBAU1550_PCMCIA_PC1_SHIFT;
-		break;
-	}
 
 	status = GET16(DBAU1550_PCMCIA);
 	status &= ~(DBAU1550_PCMCIA_MASK);

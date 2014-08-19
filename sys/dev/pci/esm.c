@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.56 2012/01/30 19:41:19 drochner Exp $      */
+/*      $NetBSD: esm.c,v 1.56.6.1 2014/08/20 00:03:42 tls Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.56 2012/01/30 19:41:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.56.6.1 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,9 +132,7 @@ static inline void	wp_settimer(struct esm_softc *, u_int);
 static inline void	wp_starttimer(struct esm_softc *);
 static inline void	wp_stoptimer(struct esm_softc *);
 
-static inline uint16_t	wc_rdreg(struct esm_softc *, uint16_t);
 static inline void	wc_wrreg(struct esm_softc *, uint16_t, uint16_t);
-static inline uint16_t	wc_rdchctl(struct esm_softc *, int);
 static inline void	wc_wrchctl(struct esm_softc *, int, uint16_t);
 
 static inline u_int	calc_timer_freq(struct esm_chinfo*);
@@ -508,27 +506,12 @@ wp_stoptimer(struct esm_softc *ess)
 
 /* WaveCache */
 
-static inline uint16_t
-wc_rdreg(struct esm_softc *ess, uint16_t reg)
-{
-
-	bus_space_write_2(ess->st, ess->sh, PORT_WAVCACHE_INDEX, reg);
-	return bus_space_read_2(ess->st, ess->sh, PORT_WAVCACHE_DATA);
-}
-
 static inline void
 wc_wrreg(struct esm_softc *ess, uint16_t reg, uint16_t data)
 {
 
 	bus_space_write_2(ess->st, ess->sh, PORT_WAVCACHE_INDEX, reg);
 	bus_space_write_2(ess->st, ess->sh, PORT_WAVCACHE_DATA, data);
-}
-
-static inline uint16_t
-wc_rdchctl(struct esm_softc *ess, int ch)
-{
-
-	return wc_rdreg(ess, ch << 3);
 }
 
 static inline void
@@ -1598,6 +1581,7 @@ esm_attach(device_t parent, device_t self, void *aux)
 	uint16_t codec_data;
 	uint16_t pcmbar;
 	int error;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	ess = device_private(self);
 	ess->sc_dev = self;
@@ -1644,7 +1628,7 @@ esm_attach(device_t parent, device_t self, void *aux)
 		mutex_destroy(&ess->sc_intr_lock);
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	ess->ih = pci_intr_establish(pc, ih, IPL_AUDIO, esm_intr, self);
 	if (ess->ih == NULL) {
 		aprint_error_dev(ess->sc_dev, "can't establish interrupt");

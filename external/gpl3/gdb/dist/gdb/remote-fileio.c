@@ -1,7 +1,6 @@
 /* Remote File-I/O communications
 
-   Copyright (C) 2003, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,31 +20,23 @@
 /* See the GDB User Guide for details of the GDB remote protocol.  */
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdbcmd.h"
 #include "remote.h"
 #include "gdb/fileio.h"
 #include "gdb_wait.h"
-#include "gdb_stat.h"
+#include <sys/stat.h>
 #include "exceptions.h"
 #include "remote-fileio.h"
 #include "event-loop.h"
 #include "target.h"
 #include "filenames.h"
+#include "filestuff.h"
 
 #include <fcntl.h>
 #include <sys/time.h>
 #ifdef __CYGWIN__
-#include <sys/cygwin.h>		/* For cygwin_conv_to_full_posix_path.  */
-#include <cygwin/version.h>
-#if CYGWIN_VERSION_DLL_MAKE_COMBINED(CYGWIN_VERSION_API_MAJOR,CYGWIN_VERSION_API_MINOR) < 181
-# define CCP_POSIX_TO_WIN_A 0
-# define CCP_WIN_A_TO_POSIX 2
-# define cygwin_conv_path(op, from, to, size)  \
-         (op == CCP_WIN_A_TO_POSIX) ? \
-         cygwin_conv_to_full_posix_path (from, to) : \
-         cygwin_conv_to_win32_path (from, to)
-#endif
+#include <sys/cygwin.h>		/* For cygwin_conv_path.  */
 #endif
 #include <signal.h>
 
@@ -522,7 +513,7 @@ remote_fileio_sig_exit (void)
 static void
 async_remote_fileio_interrupt (gdb_client_data arg)
 {
-  deprecated_throw_reason (RETURN_QUIT);
+  quit ();
 }
 
 static void
@@ -649,7 +640,7 @@ remote_fileio_func_open (char *buf)
     }
 
   remote_fio_no_longjmp = 1;
-  fd = open (pathname, flags, mode);
+  fd = gdb_open_cloexec (pathname, flags, mode);
   if (fd < 0)
     {
       remote_fileio_return_errno (-1);
@@ -692,7 +683,7 @@ remote_fileio_func_read (char *buf)
   long target_fd, num;
   LONGEST lnum;
   CORE_ADDR ptrval;
-  int fd, ret, retlength;
+  int fd, ret;
   gdb_byte *buffer;
   size_t length;
   off_t old_offset, new_offset;
@@ -1143,7 +1134,7 @@ static void
 remote_fileio_func_fstat (char *buf)
 {
   CORE_ADDR ptrval;
-  int fd, ret, retlength;
+  int fd, ret;
   long target_fd;
   LONGEST lnum;
   struct stat st;
@@ -1222,7 +1213,7 @@ remote_fileio_func_gettimeofday (char *buf)
 {
   LONGEST lnum;
   CORE_ADDR ptrval;
-  int ret, retlength;
+  int ret;
   struct timeval tv;
   struct fio_timeval ftv;
 
@@ -1291,7 +1282,7 @@ static void
 remote_fileio_func_system (char *buf)
 {
   CORE_ADDR ptrval;
-  int ret, length, retlength;
+  int ret, length;
   char *cmdline = NULL;
 
   /* Parameter: Ptr to commandline / length incl. trailing zero */
@@ -1425,7 +1416,8 @@ remote_fileio_request (char *buf, int ctrlc_pending_p)
       remote_fio_ctrl_c_flag = 0;
       remote_fio_no_longjmp = 0;
 
-      ex = catch_exceptions (uiout, do_remote_fileio_request, (void *)buf,
+      ex = catch_exceptions (current_uiout,
+			     do_remote_fileio_request, (void *)buf,
 			     RETURN_MASK_ALL);
       switch (ex)
 	{

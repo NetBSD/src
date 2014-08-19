@@ -1,7 +1,7 @@
 /* Simulator for Analog Devices Blackfin processors.
 
-   Copyright (C) 2005-2011 Free Software Foundation, Inc.
-   Contributed by Analog Devices, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
+   Contributed by Analog Devices, Inc. and Mike Frysinger.
 
    This file is part of simulators.
 
@@ -27,32 +27,7 @@
 #include "sim-hw.h"
 #include "devices.h"
 #include "dv-bfin_cec.h"
-#include "dv-bfin_ctimer.h"
-#include "dv-bfin_dma.h"
 #include "dv-bfin_dmac.h"
-#include "dv-bfin_ebiu_amc.h"
-#include "dv-bfin_ebiu_ddrc.h"
-#include "dv-bfin_ebiu_sdc.h"
-#include "dv-bfin_emac.h"
-#include "dv-bfin_eppi.h"
-#include "dv-bfin_evt.h"
-#include "dv-bfin_gpio.h"
-#include "dv-bfin_gptimer.h"
-#include "dv-bfin_jtag.h"
-#include "dv-bfin_mmu.h"
-#include "dv-bfin_nfc.h"
-#include "dv-bfin_otp.h"
-#include "dv-bfin_pll.h"
-#include "dv-bfin_ppi.h"
-#include "dv-bfin_rtc.h"
-#include "dv-bfin_sic.h"
-#include "dv-bfin_spi.h"
-#include "dv-bfin_trace.h"
-#include "dv-bfin_twi.h"
-#include "dv-bfin_uart.h"
-#include "dv-bfin_uart2.h"
-#include "dv-bfin_wdog.h"
-#include "dv-bfin_wp.h"
 
 static const MACH bfin_mach;
 
@@ -69,6 +44,12 @@ struct bfin_dmac_layout {
   address_word base;
   unsigned int dma_count;
 };
+struct bfin_port_layout {
+  /* Which device this routes to (name/port).  */
+  const char *dst, *dst_port;
+  /* Which device this routes from (name/port).  */
+  const char *src, *src_port;
+};
 struct bfin_model_data {
   bu32 chipid;
   int model_num;
@@ -78,11 +59,21 @@ struct bfin_model_data {
   size_t dev_count;
   const struct bfin_dmac_layout *dmac;
   size_t dmac_count;
+  const struct bfin_port_layout *port;
+  size_t port_count;
 };
 
 #define LAYOUT(_addr, _len, _mask) { .addr = _addr, .len = _len, .mask = access_##_mask, }
 #define _DEVICE(_base, _len, _dev, _dmac) { .base = _base, .len = _len, .dev = _dev, .dmac = _dmac, }
 #define DEVICE(_base, _len, _dev) _DEVICE(_base, _len, _dev, 0)
+#define PORT(_dst, _dst_port, _src, _src_port) \
+  { \
+    .dst = _dst, \
+    .dst_port = _dst_port, \
+    .src = _src, \
+    .src_port = _src_port, \
+  }
+#define SIC(_s, _ip, _d, _op) PORT("bfin_sic", "int"#_ip"@"#_s, _d, _op)
 
 /* [1] Common sim code can't model exec-only memory.
    http://sourceware.org/ml/gdb/2010-02/msg00047.html */
@@ -91,6 +82,7 @@ struct bfin_model_data {
 static const struct bfin_memory_layout bf000_mem[] = {};
 static const struct bfin_dev_layout bf000_dev[] = {};
 static const struct bfin_dmac_layout bf000_dmac[] = {};
+static const struct bfin_port_layout bf000_port[] = {};
 
 #define bf50x_chipid 0x2800
 #define bf504_chipid bf50x_chipid
@@ -139,6 +131,69 @@ static const struct bfin_dmac_layout bf50x_dmac[] =
 };
 #define bf504_dmac bf50x_dmac
 #define bf506_dmac bf50x_dmac
+static const struct bfin_port_layout bf50x_port[] =
+{
+  SIC (0,  0, "bfin_pll",          "pll"),
+/*SIC (0,  1, "bfin_dmac@0",       "stat"),*/
+  SIC (0,  2, "bfin_ppi@0",        "stat"),
+  SIC (0,  3, "bfin_sport@0",      "stat"),
+  SIC (0,  4, "bfin_sport@1",      "stat"),
+  SIC (0,  5, "bfin_uart2@0",      "stat"),
+  SIC (0,  6, "bfin_uart2@1",      "stat"),
+  SIC (0,  7, "bfin_spi@0",        "stat"),
+  SIC (0,  8, "bfin_spi@1",        "stat"),
+  SIC (0,  9, "bfin_can@0",        "stat"),
+  SIC (0, 10, "bfin_rsi@0",        "int0"),
+/*SIC (0, 11, reserved),*/
+  SIC (0, 12, "bfin_counter@0",    "stat"),
+  SIC (0, 13, "bfin_counter@1",    "stat"),
+  SIC (0, 14, "bfin_dma@0",        "di"),
+  SIC (0, 15, "bfin_dma@1",        "di"),
+  SIC (0, 16, "bfin_dma@2",        "di"),
+  SIC (0, 17, "bfin_dma@3",        "di"),
+  SIC (0, 18, "bfin_dma@4",        "di"),
+  SIC (0, 19, "bfin_dma@5",        "di"),
+  SIC (0, 20, "bfin_dma@6",        "di"),
+  SIC (0, 21, "bfin_dma@7",        "di"),
+  SIC (0, 22, "bfin_dma@8",        "di"),
+  SIC (0, 23, "bfin_dma@9",        "di"),
+  SIC (0, 24, "bfin_dma@10",       "di"),
+  SIC (0, 25, "bfin_dma@11",       "di"),
+  SIC (0, 26, "bfin_can@0",        "rx"),
+  SIC (0, 27, "bfin_can@0",        "tx"),
+  SIC (0, 28, "bfin_twi@0",        "stat"),
+  SIC (0, 29, "bfin_gpio@5",       "mask_a"),
+  SIC (0, 30, "bfin_gpio@5",       "mask_b"),
+/*SIC (0, 31, reserved),*/
+  SIC (1,  0, "bfin_gptimer@0",    "stat"),
+  SIC (1,  1, "bfin_gptimer@1",    "stat"),
+  SIC (1,  2, "bfin_gptimer@2",    "stat"),
+  SIC (1,  3, "bfin_gptimer@3",    "stat"),
+  SIC (1,  4, "bfin_gptimer@4",    "stat"),
+  SIC (1,  5, "bfin_gptimer@5",    "stat"),
+  SIC (1,  6, "bfin_gptimer@6",    "stat"),
+  SIC (1,  7, "bfin_gptimer@7",    "stat"),
+  SIC (1,  8, "bfin_gpio@6",       "mask_a"),
+  SIC (1,  9, "bfin_gpio@6",       "mask_b"),
+  SIC (1, 10, "bfin_dma@256",      "di"),	/* mdma0 */
+  SIC (1, 10, "bfin_dma@257",      "di"),	/* mdma0 */
+  SIC (1, 11, "bfin_dma@258",      "di"),	/* mdma1 */
+  SIC (1, 11, "bfin_dma@259",      "di"),	/* mdma1 */
+  SIC (1, 12, "bfin_wdog@0",       "gpi"),
+  SIC (1, 13, "bfin_gpio@7",       "mask_a"),
+  SIC (1, 14, "bfin_gpio@7",       "mask_b"),
+  SIC (1, 15, "bfin_acm@0",        "stat"),
+  SIC (1, 16, "bfin_acm@1",        "int"),
+/*SIC (1, 17, reserved),*/
+/*SIC (1, 18, reserved),*/
+  SIC (1, 19, "bfin_pwm@0",        "trip"),
+  SIC (1, 20, "bfin_pwm@0",        "sync"),
+  SIC (1, 21, "bfin_pwm@1",        "trip"),
+  SIC (1, 22, "bfin_pwm@1",        "sync"),
+  SIC (1, 23, "bfin_rsi@0",        "int1"),
+};
+#define bf504_port bf50x_port
+#define bf506_port bf50x_port
 
 #define bf51x_chipid 0x27e8
 #define bf512_chipid bf51x_chipid
@@ -222,6 +277,71 @@ static const struct bfin_dev_layout bf516_dev[] =
 #define bf514_dmac bf50x_dmac
 #define bf516_dmac bf50x_dmac
 #define bf518_dmac bf50x_dmac
+static const struct bfin_port_layout bf51x_port[] =
+{
+  SIC (0,  0, "bfin_pll",          "pll"),
+/*SIC (0,  1, "bfin_dmac@0",       "stat"),*/
+  SIC (0,  2, "bfin_dmar@0",       "block"),
+  SIC (0,  3, "bfin_dmar@1",       "block"),
+  SIC (0,  4, "bfin_dmar@0",       "overflow"),
+  SIC (0,  5, "bfin_dmar@1",       "overflow"),
+  SIC (0,  6, "bfin_ppi@0",        "stat"),
+  SIC (0,  7, "bfin_emac",         "stat"),
+  SIC (0,  8, "bfin_sport@0",      "stat"),
+  SIC (0,  9, "bfin_sport@1",      "stat"),
+  SIC (0, 10, "bfin_ptp",          "stat"),
+/*SIC (0, 11, reserved),*/
+  SIC (0, 12, "bfin_uart@0",       "stat"),
+  SIC (0, 13, "bfin_uart@1",       "stat"),
+  SIC (0, 14, "bfin_rtc",          "rtc"),
+  SIC (0, 15, "bfin_dma@0",        "di"),
+  SIC (0, 16, "bfin_dma@3",        "di"),
+  SIC (0, 17, "bfin_dma@4",        "di"),
+  SIC (0, 18, "bfin_dma@5",        "di"),
+  SIC (0, 19, "bfin_dma@6",        "di"),
+  SIC (0, 20, "bfin_twi@0",        "stat"),
+  SIC (0, 21, "bfin_dma@7",        "di"),
+  SIC (0, 22, "bfin_dma@8",        "di"),
+  SIC (0, 23, "bfin_dma@9",        "di"),
+  SIC (0, 24, "bfin_dma@10",       "di"),
+  SIC (0, 25, "bfin_dma@11",       "di"),
+  SIC (0, 26, "bfin_otp",          "stat"),
+  SIC (0, 27, "bfin_counter@0",    "stat"),
+  SIC (0, 28, "bfin_dma@1",        "di"),
+  SIC (0, 29, "bfin_gpio@7",       "mask_a"),
+  SIC (0, 30, "bfin_dma@2",        "di"),
+  SIC (0, 31, "bfin_gpio@7",       "mask_b"),
+  SIC (1,  0, "bfin_gptimer@0",    "stat"),
+  SIC (1,  1, "bfin_gptimer@1",    "stat"),
+  SIC (1,  2, "bfin_gptimer@2",    "stat"),
+  SIC (1,  3, "bfin_gptimer@3",    "stat"),
+  SIC (1,  4, "bfin_gptimer@4",    "stat"),
+  SIC (1,  5, "bfin_gptimer@5",    "stat"),
+  SIC (1,  6, "bfin_gptimer@6",    "stat"),
+  SIC (1,  7, "bfin_gptimer@7",    "stat"),
+  SIC (1,  8, "bfin_gpio@6",       "mask_a"),
+  SIC (1,  9, "bfin_gpio@6",       "mask_b"),
+  SIC (1, 10, "bfin_dma@256",      "di"),	/* mdma0 */
+  SIC (1, 10, "bfin_dma@257",      "di"),	/* mdma0 */
+  SIC (1, 11, "bfin_dma@258",      "di"),	/* mdma1 */
+  SIC (1, 11, "bfin_dma@259",      "di"),	/* mdma1 */
+  SIC (1, 12, "bfin_wdog@0",       "gpi"),
+  SIC (1, 13, "bfin_gpio@5",       "mask_a"),
+  SIC (1, 14, "bfin_gpio@5",       "mask_b"),
+  SIC (1, 15, "bfin_spi@0",        "stat"),
+  SIC (1, 16, "bfin_spi@1",        "stat"),
+/*SIC (1, 17, reserved),*/
+/*SIC (1, 18, reserved),*/
+  SIC (1, 19, "bfin_rsi@0",        "int0"),
+  SIC (1, 20, "bfin_rsi@0",        "int1"),
+  SIC (1, 21, "bfin_pwm@0",        "trip"),
+  SIC (1, 22, "bfin_pwm@0",        "sync"),
+  SIC (1, 23, "bfin_ptp",          "stat"),
+};
+#define bf512_port bf51x_port
+#define bf514_port bf51x_port
+#define bf516_port bf51x_port
+#define bf518_port bf51x_port
 
 #define bf522_chipid 0x27e4
 #define bf523_chipid 0x27e0
@@ -312,6 +432,71 @@ static const struct bfin_dev_layout bf526_dev[] =
 #define bf525_dmac bf50x_dmac
 #define bf526_dmac bf50x_dmac
 #define bf527_dmac bf50x_dmac
+static const struct bfin_port_layout bf52x_port[] =
+{
+  SIC (0,  0, "bfin_pll",          "pll"),
+/*SIC (0,  1, "bfin_dmac@0",       "stat"),*/
+  SIC (0,  2, "bfin_dmar@0",       "block"),
+  SIC (0,  3, "bfin_dmar@1",       "block"),
+  SIC (0,  4, "bfin_dmar@0",       "overflow"),
+  SIC (0,  5, "bfin_dmar@1",       "overflow"),
+  SIC (0,  6, "bfin_ppi@0",        "stat"),
+  SIC (0,  7, "bfin_emac",         "stat"),
+  SIC (0,  8, "bfin_sport@0",      "stat"),
+  SIC (0,  9, "bfin_sport@1",      "stat"),
+/*SIC (0, 10, reserved),*/
+/*SIC (0, 11, reserved),*/
+  SIC (0, 12, "bfin_uart@0",       "stat"),
+  SIC (0, 13, "bfin_uart@1",       "stat"),
+  SIC (0, 14, "bfin_rtc",          "rtc"),
+  SIC (0, 15, "bfin_dma@0",        "di"),
+  SIC (0, 16, "bfin_dma@3",        "di"),
+  SIC (0, 17, "bfin_dma@4",        "di"),
+  SIC (0, 18, "bfin_dma@5",        "di"),
+  SIC (0, 19, "bfin_dma@6",        "di"),
+  SIC (0, 20, "bfin_twi@0",        "stat"),
+  SIC (0, 21, "bfin_dma@7",        "di"),
+  SIC (0, 22, "bfin_dma@8",        "di"),
+  SIC (0, 23, "bfin_dma@9",        "di"),
+  SIC (0, 24, "bfin_dma@10",       "di"),
+  SIC (0, 25, "bfin_dma@11",       "di"),
+  SIC (0, 26, "bfin_otp",          "stat"),
+  SIC (0, 27, "bfin_counter@0",    "stat"),
+  SIC (0, 28, "bfin_dma@1",        "di"),
+  SIC (0, 29, "bfin_gpio@7",       "mask_a"),
+  SIC (0, 30, "bfin_dma@2",        "di"),
+  SIC (0, 31, "bfin_gpio@7",       "mask_b"),
+  SIC (1,  0, "bfin_gptimer@0",    "stat"),
+  SIC (1,  1, "bfin_gptimer@1",    "stat"),
+  SIC (1,  2, "bfin_gptimer@2",    "stat"),
+  SIC (1,  3, "bfin_gptimer@3",    "stat"),
+  SIC (1,  4, "bfin_gptimer@4",    "stat"),
+  SIC (1,  5, "bfin_gptimer@5",    "stat"),
+  SIC (1,  6, "bfin_gptimer@6",    "stat"),
+  SIC (1,  7, "bfin_gptimer@7",    "stat"),
+  SIC (1,  8, "bfin_gpio@6",       "mask_a"),
+  SIC (1,  9, "bfin_gpio@6",       "mask_b"),
+  SIC (1, 10, "bfin_dma@256",      "di"),	/* mdma0 */
+  SIC (1, 10, "bfin_dma@257",      "di"),	/* mdma0 */
+  SIC (1, 11, "bfin_dma@258",      "di"),	/* mdma1 */
+  SIC (1, 11, "bfin_dma@259",      "di"),	/* mdma1 */
+  SIC (1, 12, "bfin_wdog@0",       "gpi"),
+  SIC (1, 13, "bfin_gpio@5",       "mask_a"),
+  SIC (1, 14, "bfin_gpio@5",       "mask_b"),
+  SIC (1, 15, "bfin_spi@0",        "stat"),
+  SIC (1, 16, "bfin_nfc",          "stat"),
+  SIC (1, 17, "bfin_hostdp",       "stat"),
+  SIC (1, 18, "bfin_hostdp",       "done"),
+  SIC (1, 20, "bfin_usb",          "int0"),
+  SIC (1, 21, "bfin_usb",          "int1"),
+  SIC (1, 22, "bfin_usb",          "int2"),
+};
+#define bf522_port bf51x_port
+#define bf523_port bf51x_port
+#define bf524_port bf51x_port
+#define bf525_port bf51x_port
+#define bf526_port bf51x_port
+#define bf527_port bf51x_port
 
 #define bf531_chipid 0x27a5
 #define bf532_chipid bf531_chipid
@@ -372,6 +557,37 @@ static const struct bfin_dmac_layout bf533_dmac[] =
 };
 #define bf531_dmac bf533_dmac
 #define bf532_dmac bf533_dmac
+static const struct bfin_port_layout bf533_port[] =
+{
+  SIC (0,  0, "bfin_pll",          "pll"),
+/*SIC (0,  1, "bfin_dmac@0",       "stat"),*/
+  SIC (0,  2, "bfin_ppi@0",        "stat"),
+  SIC (0,  3, "bfin_sport@0",      "stat"),
+  SIC (0,  4, "bfin_sport@1",      "stat"),
+  SIC (0,  5, "bfin_spi@0",        "stat"),
+  SIC (0,  6, "bfin_uart@0",       "stat"),
+  SIC (0,  7, "bfin_rtc",          "rtc"),
+  SIC (0,  8, "bfin_dma@0",        "di"),
+  SIC (0,  9, "bfin_dma@1",        "di"),
+  SIC (0, 10, "bfin_dma@2",        "di"),
+  SIC (0, 11, "bfin_dma@3",        "di"),
+  SIC (0, 12, "bfin_dma@4",        "di"),
+  SIC (0, 13, "bfin_dma@5",        "di"),
+  SIC (0, 14, "bfin_dma@6",        "di"),
+  SIC (0, 15, "bfin_dma@7",        "di"),
+  SIC (0, 16, "bfin_gptimer@0",    "stat"),
+  SIC (0, 17, "bfin_gptimer@1",    "stat"),
+  SIC (0, 18, "bfin_gptimer@2",    "stat"),
+  SIC (0, 19, "bfin_gpio@5",       "mask_a"),
+  SIC (0, 20, "bfin_gpio@5",       "mask_b"),
+  SIC (0, 21, "bfin_dma@256",      "di"),	/* mdma0 */
+  SIC (0, 21, "bfin_dma@257",      "di"),	/* mdma0 */
+  SIC (0, 22, "bfin_dma@258",      "di"),	/* mdma */
+  SIC (0, 22, "bfin_dma@259",      "di"),	/* mdma1 */
+  SIC (0, 23, "bfin_wdog@0",       "gpi"),
+};
+#define bf531_port bf533_port
+#define bf532_port bf533_port
 
 #define bf534_chipid 0x27c6
 #define bf536_chipid 0x27c8
@@ -438,6 +654,18 @@ static const struct bfin_dev_layout bf534_dev[] =
   DEVICE (0xFFC01500, BFIN_MMR_GPIO_SIZE,      "bfin_gpio@6"),
   DEVICE (0xFFC01700, BFIN_MMR_GPIO_SIZE,      "bfin_gpio@7"),
   DEVICE (0xFFC02000, BFIN_MMR_UART_SIZE,      "bfin_uart@1"),
+  DEVICE (0, 0, "glue-or@1"),
+  DEVICE (0, 0, "glue-or@1/interrupt-ranges 0 5"),
+  DEVICE (0, 0, "glue-or@2"),
+  DEVICE (0, 0, "glue-or@2/interrupt-ranges 0 8"),
+  DEVICE (0, 0, "glue-or@17"),
+  DEVICE (0, 0, "glue-or@17/interrupt-ranges 0 2"),
+  DEVICE (0, 0, "glue-or@18"),
+  DEVICE (0, 0, "glue-or@18/interrupt-ranges 0 2"),
+  DEVICE (0, 0, "glue-or@27"),
+  DEVICE (0, 0, "glue-or@27/interrupt-ranges 0 2"),
+  DEVICE (0, 0, "glue-or@31"),
+  DEVICE (0, 0, "glue-or@31/interrupt-ranges 0 2"),
 };
 static const struct bfin_dev_layout bf537_dev[] =
 {
@@ -463,11 +691,83 @@ static const struct bfin_dev_layout bf537_dev[] =
   DEVICE (0xFFC02000, BFIN_MMR_UART_SIZE,      "bfin_uart@1"),
   DEVICE (0xFFC03000, BFIN_MMR_EMAC_SIZE,      "bfin_emac"),
   DEVICE (0, 0x20, "bfin_emac/eth_phy"),
+  DEVICE (0, 0, "glue-or@1"),
+  DEVICE (0, 0, "glue-or@1/interrupt-ranges 0 5"),
+  DEVICE (0, 0, "glue-or@2"),
+  DEVICE (0, 0, "glue-or@2/interrupt-ranges 0 8"),
+  DEVICE (0, 0, "glue-or@17"),
+  DEVICE (0, 0, "glue-or@17/interrupt-ranges 0 2"),
+  DEVICE (0, 0, "glue-or@18"),
+  DEVICE (0, 0, "glue-or@18/interrupt-ranges 0 2"),
+  DEVICE (0, 0, "glue-or@27"),
+  DEVICE (0, 0, "glue-or@27/interrupt-ranges 0 2"),
+  DEVICE (0, 0, "glue-or@31"),
+  DEVICE (0, 0, "glue-or@31/interrupt-ranges 0 2"),
 };
 #define bf536_dev bf537_dev
 #define bf534_dmac bf50x_dmac
 #define bf536_dmac bf50x_dmac
 #define bf537_dmac bf50x_dmac
+static const struct bfin_port_layout bf537_port[] =
+{
+  SIC (0,  0, "bfin_pll",          "pll"),
+  SIC (0,  1, "glue-or@1",         "int"),
+/*PORT ("glue-or@1", "int", "bfin_dmac@0",   "stat"),*/
+  PORT ("glue-or@1", "int", "bfin_dmar@0",   "block"),
+  PORT ("glue-or@1", "int", "bfin_dmar@1",   "block"),
+  PORT ("glue-or@1", "int", "bfin_dmar@0",   "overflow"),
+  PORT ("glue-or@1", "int", "bfin_dmar@1",   "overflow"),
+  SIC (0,  2, "glue-or@2",         "int"),
+  PORT ("glue-or@2", "int", "bfin_can@0",    "stat"),
+  PORT ("glue-or@2", "int", "bfin_emac",     "stat"),
+  PORT ("glue-or@2", "int", "bfin_sport@0",  "stat"),
+  PORT ("glue-or@2", "int", "bfin_sport@1",  "stat"),
+  PORT ("glue-or@2", "int", "bfin_ppi@0",    "stat"),
+  PORT ("glue-or@2", "int", "bfin_spi@0",    "stat"),
+  PORT ("glue-or@2", "int", "bfin_uart@0",   "stat"),
+  PORT ("glue-or@2", "int", "bfin_uart@1",   "stat"),
+  SIC (0,  3, "bfin_rtc",          "rtc"),
+  SIC (0,  4, "bfin_dma@0",        "di"),
+  SIC (0,  5, "bfin_dma@3",        "di"),
+  SIC (0,  6, "bfin_dma@4",        "di"),
+  SIC (0,  7, "bfin_dma@5",        "di"),
+  SIC (0,  8, "bfin_dma@6",        "di"),
+  SIC (0,  9, "bfin_twi@0",        "stat"),
+  SIC (0, 10, "bfin_dma@7",        "di"),
+  SIC (0, 11, "bfin_dma@8",        "di"),
+  SIC (0, 12, "bfin_dma@9",        "di"),
+  SIC (0, 13, "bfin_dma@10",       "di"),
+  SIC (0, 14, "bfin_dma@11",       "di"),
+  SIC (0, 15, "bfin_can@0",        "rx"),
+  SIC (0, 16, "bfin_can@0",        "tx"),
+  SIC (0, 17, "glue-or@17",        "int"),
+  PORT ("glue-or@17", "int", "bfin_dma@1",   "di"),
+  PORT ("glue-or@17", "int", "bfin_gpio@7",  "mask_a"),
+  SIC (0, 18, "glue-or@18",        "int"),
+  PORT ("glue-or@18", "int", "bfin_dma@2",   "di"),
+  PORT ("glue-or@18", "int", "bfin_gpio@7",  "mask_b"),
+  SIC (0, 19, "bfin_gptimer@0",    "stat"),
+  SIC (0, 20, "bfin_gptimer@1",    "stat"),
+  SIC (0, 21, "bfin_gptimer@2",    "stat"),
+  SIC (0, 22, "bfin_gptimer@3",    "stat"),
+  SIC (0, 23, "bfin_gptimer@4",    "stat"),
+  SIC (0, 24, "bfin_gptimer@5",    "stat"),
+  SIC (0, 25, "bfin_gptimer@6",    "stat"),
+  SIC (0, 26, "bfin_gptimer@7",    "stat"),
+  SIC (0, 27, "glue-or@27",        "int"),
+  PORT ("glue-or@27", "int", "bfin_gpio@5",   "mask_a"),
+  PORT ("glue-or@27", "int", "bfin_gpio@6",   "mask_a"),
+  SIC (0, 28, "bfin_gpio@6",       "mask_b"),
+  SIC (0, 29, "bfin_dma@256",      "di"),	/* mdma0 */
+  SIC (0, 29, "bfin_dma@257",      "di"),	/* mdma0 */
+  SIC (0, 30, "bfin_dma@258",      "di"),	/* mdma1 */
+  SIC (0, 30, "bfin_dma@259",      "di"),	/* mdma1 */
+  SIC (0, 31, "glue-or@31",        "int"),
+  PORT ("glue-or@31", "int", "bfin_wdog@0",   "gpi"),
+  PORT ("glue-or@31", "int", "bfin_gpio@5",   "mask_b"),
+};
+#define bf534_port bf537_port
+#define bf536_port bf537_port
 
 #define bf538_chipid 0x27c4
 #define bf539_chipid bf538_chipid
@@ -515,6 +815,65 @@ static const struct bfin_dmac_layout bf538_dmac[] =
   { BFIN_MMR_DMAC1_BASE, 12, },
 };
 #define bf539_dmac bf538_dmac
+static const struct bfin_port_layout bf538_port[] =
+{
+  SIC (0,  0, "bfin_pll",          "pll"),
+  SIC (0,  1, "bfin_dmac@0",       "stat"),
+  SIC (0,  2, "bfin_ppi@0",        "stat"),
+  SIC (0,  3, "bfin_sport@0",      "stat"),
+  SIC (0,  4, "bfin_sport@1",      "stat"),
+  SIC (0,  5, "bfin_spi@0",        "stat"),
+  SIC (0,  6, "bfin_uart@0",       "stat"),
+  SIC (0,  7, "bfin_rtc",          "rtc"),
+  SIC (0,  8, "bfin_dma@0",        "di"),
+  SIC (0,  9, "bfin_dma@1",        "di"),
+  SIC (0, 10, "bfin_dma@2",        "di"),
+  SIC (0, 11, "bfin_dma@3",        "di"),
+  SIC (0, 12, "bfin_dma@4",        "di"),
+  SIC (0, 13, "bfin_dma@5",        "di"),
+  SIC (0, 14, "bfin_dma@6",        "di"),
+  SIC (0, 15, "bfin_dma@7",        "di"),
+  SIC (0, 16, "bfin_gptimer@0",    "stat"),
+  SIC (0, 17, "bfin_gptimer@1",    "stat"),
+  SIC (0, 18, "bfin_gptimer@2",    "stat"),
+  SIC (0, 19, "bfin_gpio@5",       "mask_a"),
+  SIC (0, 20, "bfin_gpio@5",       "mask_b"),
+  SIC (0, 21, "bfin_dma@256",      "di"),	/* mdma0 */
+  SIC (0, 21, "bfin_dma@257",      "di"),	/* mdma0 */
+  SIC (0, 22, "bfin_dma@258",      "di"),	/* mdma1 */
+  SIC (0, 22, "bfin_dma@259",      "di"),	/* mdma1 */
+  SIC (0, 23, "bfin_wdog@0",       "gpi"),
+  SIC (0, 24, "bfin_dmac@1",       "stat"),
+  SIC (0, 25, "bfin_sport@2",      "stat"),
+  SIC (0, 26, "bfin_sport@3",      "stat"),
+/*SIC (0, 27, reserved),*/
+  SIC (0, 28, "bfin_spi@1",        "stat"),
+  SIC (0, 29, "bfin_spi@2",        "stat"),
+  SIC (0, 30, "bfin_uart@1",       "stat"),
+  SIC (0, 31, "bfin_uart@2",       "stat"),
+  SIC (1,  0, "bfin_can@0",        "stat"),
+  SIC (1,  1, "bfin_dma@8",        "di"),
+  SIC (1,  2, "bfin_dma@9",        "di"),
+  SIC (1,  3, "bfin_dma@10",       "di"),
+  SIC (1,  4, "bfin_dma@11",       "di"),
+  SIC (1,  5, "bfin_dma@12",       "di"),
+  SIC (1,  6, "bfin_dma@13",       "di"),
+  SIC (1,  7, "bfin_dma@14",       "di"),
+  SIC (1,  8, "bfin_dma@15",       "di"),
+  SIC (1,  9, "bfin_dma@16",       "di"),
+  SIC (1, 10, "bfin_dma@17",       "di"),
+  SIC (1, 11, "bfin_dma@18",       "di"),
+  SIC (1, 12, "bfin_dma@19",       "di"),
+  SIC (1, 13, "bfin_twi@0",        "stat"),
+  SIC (1, 14, "bfin_twi@1",        "stat"),
+  SIC (1, 15, "bfin_can@0",        "rx"),
+  SIC (1, 16, "bfin_can@0",        "tx"),
+  SIC (1, 17, "bfin_dma@260",      "di"),	/* mdma2 */
+  SIC (1, 17, "bfin_dma@261",      "di"),	/* mdma2 */
+  SIC (1, 18, "bfin_dma@262",      "di"),	/* mdma3 */
+  SIC (1, 18, "bfin_dma@263",      "di"),	/* mdma3 */
+};
+#define bf539_port bf538_port
 
 #define bf54x_chipid 0x27de
 #define bf542_chipid bf54x_chipid
@@ -526,7 +885,6 @@ static const struct bfin_memory_layout bf54x_mem[] =
 {
   LAYOUT (0xFFC00800, 0x60, read_write),	/* SPORT0 stub XXX: not on BF542/4 */
   LAYOUT (0xFFC00900, 0x60, read_write),	/* SPORT1 stub */
-  LAYOUT (0xFFC01400, 0x200, read_write),	/* PORT/GPIO stub */
   LAYOUT (0xFFC02500, 0x60, read_write),	/* SPORT2 stub */
   LAYOUT (0xFFC02600, 0x60, read_write),	/* SPORT3 stub */
   LAYOUT (0xFFC03800, 0x70, read_write),	/* ATAPI stub */
@@ -556,6 +914,20 @@ static const struct bfin_dev_layout bf542_dev[] =
   DEVICE (0xFFC00A00, BF54X_MMR_EBIU_AMC_SIZE, "bfin_ebiu_amc"),
   DEVICE (0xFFC00A20, BFIN_MMR_EBIU_DDRC_SIZE, "bfin_ebiu_ddrc"),
  _DEVICE (0xFFC01300, BFIN_MMR_EPPI_SIZE,      "bfin_eppi@1", 1),
+  DEVICE (0xFFC01400, BFIN_MMR_PINT_SIZE,      "bfin_pint@0"),
+  DEVICE (0xFFC01430, BFIN_MMR_PINT_SIZE,      "bfin_pint@1"),
+ _DEVICE (0xFFC01460, BFIN_MMR_PINT_SIZE,      "bfin_pint@2", 2),
+ _DEVICE (0xFFC01490, BFIN_MMR_PINT_SIZE,      "bfin_pint@3", 2),
+  DEVICE (0xFFC014C0, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@0"),
+  DEVICE (0xFFC014E0, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@1"),
+  DEVICE (0xFFC01500, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@2"),
+  DEVICE (0xFFC01520, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@3"),
+  DEVICE (0xFFC01540, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@4"),
+  DEVICE (0xFFC01560, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@5"),
+  DEVICE (0xFFC01580, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@6"),
+  DEVICE (0xFFC015A0, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@7"),
+  DEVICE (0xFFC015C0, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@8"),
+  DEVICE (0xFFC015E0, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@9"),
   DEVICE (0xFFC01600, BFIN_MMR_GPTIMER_SIZE,   "bfin_gptimer@0"),
   DEVICE (0xFFC01610, BFIN_MMR_GPTIMER_SIZE,   "bfin_gptimer@1"),
   DEVICE (0xFFC01620, BFIN_MMR_GPTIMER_SIZE,   "bfin_gptimer@2"),
@@ -586,6 +958,20 @@ static const struct bfin_dev_layout bf544_dev[] =
   DEVICE (0xFFC00A20, BFIN_MMR_EBIU_DDRC_SIZE, "bfin_ebiu_ddrc"),
  _DEVICE (0xFFC01000, BFIN_MMR_EPPI_SIZE,      "bfin_eppi@0", 1),
  _DEVICE (0xFFC01300, BFIN_MMR_EPPI_SIZE,      "bfin_eppi@1", 1),
+  DEVICE (0xFFC01400, BFIN_MMR_PINT_SIZE,      "bfin_pint@0"),
+  DEVICE (0xFFC01430, BFIN_MMR_PINT_SIZE,      "bfin_pint@1"),
+ _DEVICE (0xFFC01460, BFIN_MMR_PINT_SIZE,      "bfin_pint@2", 2),
+ _DEVICE (0xFFC01490, BFIN_MMR_PINT_SIZE,      "bfin_pint@3", 2),
+  DEVICE (0xFFC014C0, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@0"),
+  DEVICE (0xFFC014E0, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@1"),
+  DEVICE (0xFFC01500, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@2"),
+  DEVICE (0xFFC01520, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@3"),
+  DEVICE (0xFFC01540, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@4"),
+  DEVICE (0xFFC01560, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@5"),
+  DEVICE (0xFFC01580, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@6"),
+  DEVICE (0xFFC015A0, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@7"),
+  DEVICE (0xFFC015C0, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@8"),
+  DEVICE (0xFFC015E0, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@9"),
   DEVICE (0xFFC01600, BFIN_MMR_GPTIMER_SIZE,   "bfin_gptimer@0"),
   DEVICE (0xFFC01610, BFIN_MMR_GPTIMER_SIZE,   "bfin_gptimer@1"),
   DEVICE (0xFFC01620, BFIN_MMR_GPTIMER_SIZE,   "bfin_gptimer@2"),
@@ -617,6 +1003,20 @@ static const struct bfin_dev_layout bf547_dev[] =
   DEVICE (0xFFC00A20, BFIN_MMR_EBIU_DDRC_SIZE, "bfin_ebiu_ddrc"),
  _DEVICE (0xFFC01000, BFIN_MMR_EPPI_SIZE,      "bfin_eppi@0", 1),
  _DEVICE (0xFFC01300, BFIN_MMR_EPPI_SIZE,      "bfin_eppi@1", 1),
+  DEVICE (0xFFC01400, BFIN_MMR_PINT_SIZE,      "bfin_pint@0"),
+  DEVICE (0xFFC01430, BFIN_MMR_PINT_SIZE,      "bfin_pint@1"),
+ _DEVICE (0xFFC01460, BFIN_MMR_PINT_SIZE,      "bfin_pint@2", 2),
+ _DEVICE (0xFFC01490, BFIN_MMR_PINT_SIZE,      "bfin_pint@3", 2),
+  DEVICE (0xFFC014C0, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@0"),
+  DEVICE (0xFFC014E0, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@1"),
+  DEVICE (0xFFC01500, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@2"),
+  DEVICE (0xFFC01520, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@3"),
+  DEVICE (0xFFC01540, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@4"),
+  DEVICE (0xFFC01560, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@5"),
+  DEVICE (0xFFC01580, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@6"),
+  DEVICE (0xFFC015A0, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@7"),
+  DEVICE (0xFFC015C0, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@8"),
+  DEVICE (0xFFC015E0, BFIN_MMR_GPIO2_SIZE,     "bfin_gpio2@9"),
   DEVICE (0xFFC01600, BFIN_MMR_GPTIMER_SIZE,   "bfin_gptimer@0"),
   DEVICE (0xFFC01610, BFIN_MMR_GPTIMER_SIZE,   "bfin_gptimer@1"),
   DEVICE (0xFFC01620, BFIN_MMR_GPTIMER_SIZE,   "bfin_gptimer@2"),
@@ -646,6 +1046,154 @@ static const struct bfin_dmac_layout bf54x_dmac[] =
 #define bf547_dmac bf54x_dmac
 #define bf548_dmac bf54x_dmac
 #define bf549_dmac bf54x_dmac
+#define PINT_PIQS(p, b, g) \
+  PORT (p, "piq0@"#b,  g, "p0"), \
+  PORT (p, "piq1@"#b,  g, "p1"), \
+  PORT (p, "piq2@"#b,  g, "p2"), \
+  PORT (p, "piq3@"#b,  g, "p3"), \
+  PORT (p, "piq4@"#b,  g, "p4"), \
+  PORT (p, "piq5@"#b,  g, "p5"), \
+  PORT (p, "piq6@"#b,  g, "p6"), \
+  PORT (p, "piq7@"#b,  g, "p7"), \
+  PORT (p, "piq8@"#b,  g, "p8"), \
+  PORT (p, "piq9@"#b,  g, "p9"), \
+  PORT (p, "piq10@"#b, g, "p10"), \
+  PORT (p, "piq11@"#b, g, "p11"), \
+  PORT (p, "piq12@"#b, g, "p12"), \
+  PORT (p, "piq13@"#b, g, "p13"), \
+  PORT (p, "piq14@"#b, g, "p14"), \
+  PORT (p, "piq15@"#b, g, "p15")
+static const struct bfin_port_layout bf54x_port[] =
+{
+  SIC (0,  0, "bfin_pll",          "pll"),
+  SIC (0,  1, "bfin_dmac@0",       "stat"),
+  SIC (0,  2, "bfin_eppi@0",       "stat"),
+  SIC (0,  3, "bfin_sport@0",      "stat"),
+  SIC (0,  4, "bfin_sport@1",      "stat"),
+  SIC (0,  5, "bfin_spi@0",        "stat"),
+  SIC (0,  6, "bfin_uart2@0",      "stat"),
+  SIC (0,  7, "bfin_rtc",          "rtc"),
+  SIC (0,  8, "bfin_dma@12",       "di"),
+  SIC (0,  9, "bfin_dma@0",        "di"),
+  SIC (0, 10, "bfin_dma@1",        "di"),
+  SIC (0, 11, "bfin_dma@2",        "di"),
+  SIC (0, 12, "bfin_dma@3",        "di"),
+  SIC (0, 13, "bfin_dma@4",        "di"),
+  SIC (0, 14, "bfin_dma@6",        "di"),
+  SIC (0, 15, "bfin_dma@7",        "di"),
+  SIC (0, 16, "bfin_gptimer@8",    "stat"),
+  SIC (0, 17, "bfin_gptimer@9",    "stat"),
+  SIC (0, 18, "bfin_gptimer@10",   "stat"),
+  SIC (0, 19, "bfin_pint@0",       "stat"),
+  PINT_PIQS ("bfin_pint@0", 0, "bfin_gpio2@0"),
+  PINT_PIQS ("bfin_pint@0", 1, "bfin_gpio2@1"),
+  SIC (0, 20, "bfin_pint@1",       "stat"),
+  PINT_PIQS ("bfin_pint@1", 0, "bfin_gpio2@0"),
+  PINT_PIQS ("bfin_pint@1", 1, "bfin_gpio2@1"),
+  SIC (0, 21, "bfin_dma@256",      "di"),	/* mdma0 */
+  SIC (0, 21, "bfin_dma@257",      "di"),	/* mdma0 */
+  SIC (0, 22, "bfin_dma@258",      "di"),	/* mdma1 */
+  SIC (0, 22, "bfin_dma@259",      "di"),	/* mdma1 */
+  SIC (0, 23, "bfin_wdog@0",       "gpi"),
+  SIC (0, 24, "bfin_dmac@1",       "stat"),
+  SIC (0, 25, "bfin_sport@2",      "stat"),
+  SIC (0, 26, "bfin_sport@3",      "stat"),
+  SIC (0, 27, "bfin_mxvr",         "data"),
+  SIC (0, 28, "bfin_spi@1",        "stat"),
+  SIC (0, 29, "bfin_spi@2",        "stat"),
+  SIC (0, 30, "bfin_uart2@1",      "stat"),
+  SIC (0, 31, "bfin_uart2@2",      "stat"),
+  SIC (1,  0, "bfin_can@0",        "stat"),
+  SIC (1,  1, "bfin_dma@18",       "di"),
+  SIC (1,  2, "bfin_dma@19",       "di"),
+  SIC (1,  3, "bfin_dma@20",       "di"),
+  SIC (1,  4, "bfin_dma@21",       "di"),
+  SIC (1,  5, "bfin_dma@13",       "di"),
+  SIC (1,  6, "bfin_dma@14",       "di"),
+  SIC (1,  7, "bfin_dma@5",        "di"),
+  SIC (1,  8, "bfin_dma@23",       "di"),
+  SIC (1,  9, "bfin_dma@8",        "di"),
+  SIC (1, 10, "bfin_dma@9",        "di"),
+  SIC (1, 11, "bfin_dma@10",       "di"),
+  SIC (1, 12, "bfin_dma@11",       "di"),
+  SIC (1, 13, "bfin_twi@0",        "stat"),
+  SIC (1, 14, "bfin_twi@1",        "stat"),
+  SIC (1, 15, "bfin_can@0",        "rx"),
+  SIC (1, 16, "bfin_can@0",        "tx"),
+  SIC (1, 17, "bfin_dma@260",      "di"),	/* mdma2 */
+  SIC (1, 17, "bfin_dma@261",      "di"),	/* mdma2 */
+  SIC (1, 18, "bfin_dma@262",      "di"),	/* mdma3 */
+  SIC (1, 18, "bfin_dma@263",      "di"),	/* mdma3 */
+  SIC (1, 19, "bfin_mxvr",         "stat"),
+  SIC (1, 20, "bfin_mxvr",         "message"),
+  SIC (1, 21, "bfin_mxvr",         "packet"),
+  SIC (1, 22, "bfin_eppi@1",       "stat"),
+  SIC (1, 23, "bfin_eppi@2",       "stat"),
+  SIC (1, 24, "bfin_uart2@3",      "stat"),
+  SIC (1, 25, "bfin_hostdp",       "stat"),
+/*SIC (1, 26, reserved),*/
+  SIC (1, 27, "bfin_pixc",         "stat"),
+  SIC (1, 28, "bfin_nfc",          "stat"),
+  SIC (1, 29, "bfin_atapi",        "stat"),
+  SIC (1, 30, "bfin_can@1",        "stat"),
+  SIC (1, 31, "bfin_dmar@0",       "block"),
+  SIC (1, 31, "bfin_dmar@1",       "block"),
+  SIC (1, 31, "bfin_dmar@0",       "overflow"),
+  SIC (1, 31, "bfin_dmar@1",       "overflow"),
+  SIC (2,  0, "bfin_dma@15",       "di"),
+  SIC (2,  1, "bfin_dma@16",       "di"),
+  SIC (2,  2, "bfin_dma@17",       "di"),
+  SIC (2,  3, "bfin_dma@22",       "di"),
+  SIC (2,  4, "bfin_counter@0",    "stat"),
+  SIC (2,  5, "bfin_kpad@0",       "stat"),
+  SIC (2,  6, "bfin_can@1",        "rx"),
+  SIC (2,  7, "bfin_can@1",        "tx"),
+  SIC (2,  8, "bfin_sdh",          "mask0"),
+  SIC (2,  9, "bfin_sdh",          "mask1"),
+/*SIC (2, 10, reserved),*/
+  SIC (2, 11, "bfin_usb",          "int0"),
+  SIC (2, 12, "bfin_usb",          "int1"),
+  SIC (2, 13, "bfin_usb",          "int2"),
+  SIC (2, 14, "bfin_usb",          "dma"),
+  SIC (2, 15, "bfin_otp",          "stat"),
+/*SIC (2, 16, reserved),*/
+/*SIC (2, 17, reserved),*/
+/*SIC (2, 18, reserved),*/
+/*SIC (2, 19, reserved),*/
+/*SIC (2, 20, reserved),*/
+/*SIC (2, 21, reserved),*/
+  SIC (2, 22, "bfin_gptimer@0",    "stat"),
+  SIC (2, 23, "bfin_gptimer@1",    "stat"),
+  SIC (2, 24, "bfin_gptimer@2",    "stat"),
+  SIC (2, 25, "bfin_gptimer@3",    "stat"),
+  SIC (2, 26, "bfin_gptimer@4",    "stat"),
+  SIC (2, 27, "bfin_gptimer@5",    "stat"),
+  SIC (2, 28, "bfin_gptimer@6",    "stat"),
+  SIC (2, 29, "bfin_gptimer@7",    "stat"),
+  SIC (2, 30, "bfin_pint@2",       "stat"),
+  PINT_PIQS ("bfin_pint@2", 0, "bfin_gpio2@2"),
+  PINT_PIQS ("bfin_pint@2", 1, "bfin_gpio2@3"),
+  PINT_PIQS ("bfin_pint@2", 2, "bfin_gpio2@4"),
+  PINT_PIQS ("bfin_pint@2", 3, "bfin_gpio2@5"),
+  PINT_PIQS ("bfin_pint@2", 4, "bfin_gpio2@6"),
+  PINT_PIQS ("bfin_pint@2", 5, "bfin_gpio2@7"),
+  PINT_PIQS ("bfin_pint@2", 6, "bfin_gpio2@8"),
+  PINT_PIQS ("bfin_pint@2", 7, "bfin_gpio2@9"),
+  SIC (2, 31, "bfin_pint@3",       "stat"),
+  PINT_PIQS ("bfin_pint@3", 0, "bfin_gpio2@2"),
+  PINT_PIQS ("bfin_pint@3", 1, "bfin_gpio2@3"),
+  PINT_PIQS ("bfin_pint@3", 2, "bfin_gpio2@4"),
+  PINT_PIQS ("bfin_pint@3", 3, "bfin_gpio2@5"),
+  PINT_PIQS ("bfin_pint@3", 4, "bfin_gpio2@6"),
+  PINT_PIQS ("bfin_pint@3", 5, "bfin_gpio2@7"),
+  PINT_PIQS ("bfin_pint@3", 6, "bfin_gpio2@8"),
+  PINT_PIQS ("bfin_pint@3", 7, "bfin_gpio2@9"),
+};
+#define bf542_port bf54x_port
+#define bf544_port bf54x_port
+#define bf547_port bf54x_port
+#define bf548_port bf54x_port
+#define bf549_port bf54x_port
 
 /* This is only Core A of course ...  */
 #define bf561_chipid 0x27bb
@@ -693,6 +1241,79 @@ static const struct bfin_dmac_layout bf561_dmac[] =
   { BFIN_MMR_DMAC1_BASE, 12, },
   /* XXX: IMDMA: { 0xFFC01800, 4, }, */
 };
+static const struct bfin_port_layout bf561_port[] =
+{
+  /* SIC0 */
+  SIC (0,  0, "bfin_pll",          "pll"),
+/*SIC (0,  1, "bfin_dmac@0",       "stat"),*/
+/*SIC (0,  2, "bfin_dmac@1",       "stat"),*/
+/*SIC (0,  3, "bfin_imdmac",       "stat"),*/
+  SIC (0,  4, "bfin_ppi@0",        "stat"),
+  SIC (0,  5, "bfin_ppi@1",        "stat"),
+  SIC (0,  6, "bfin_sport@0",      "stat"),
+  SIC (0,  7, "bfin_sport@1",      "stat"),
+  SIC (0,  8, "bfin_spi@0",        "stat"),
+  SIC (0,  9, "bfin_uart@0",       "stat"),
+/*SIC (0, 10, reserved),*/
+  SIC (0, 11, "bfin_dma@12",       "di"),
+  SIC (0, 12, "bfin_dma@13",       "di"),
+  SIC (0, 13, "bfin_dma@14",       "di"),
+  SIC (0, 14, "bfin_dma@15",       "di"),
+  SIC (0, 15, "bfin_dma@16",       "di"),
+  SIC (0, 16, "bfin_dma@17",       "di"),
+  SIC (0, 17, "bfin_dma@18",       "di"),
+  SIC (0, 18, "bfin_dma@19",       "di"),
+  SIC (0, 19, "bfin_dma@20",       "di"),
+  SIC (0, 20, "bfin_dma@21",       "di"),
+  SIC (0, 21, "bfin_dma@22",       "di"),
+  SIC (0, 22, "bfin_dma@23",       "di"),
+  SIC (0, 23, "bfin_dma@0",        "di"),
+  SIC (0, 24, "bfin_dma@1",        "di"),
+  SIC (0, 25, "bfin_dma@2",        "di"),
+  SIC (0, 26, "bfin_dma@3",        "di"),
+  SIC (0, 27, "bfin_dma@4",        "di"),
+  SIC (0, 28, "bfin_dma@5",        "di"),
+  SIC (0, 29, "bfin_dma@6",        "di"),
+  SIC (0, 30, "bfin_dma@7",        "di"),
+  SIC (0, 31, "bfin_dma@8",        "di"),
+  SIC (1,  0, "bfin_dma@9",        "di"),
+  SIC (1,  1, "bfin_dma@10",       "di"),
+  SIC (1,  2, "bfin_dma@11",       "di"),
+  SIC (1,  3, "bfin_gptimer@0",    "stat"),
+  SIC (1,  4, "bfin_gptimer@1",    "stat"),
+  SIC (1,  5, "bfin_gptimer@2",    "stat"),
+  SIC (1,  6, "bfin_gptimer@3",    "stat"),
+  SIC (1,  7, "bfin_gptimer@4",    "stat"),
+  SIC (1,  8, "bfin_gptimer@5",    "stat"),
+  SIC (1,  9, "bfin_gptimer@6",    "stat"),
+  SIC (1, 10, "bfin_gptimer@7",    "stat"),
+  SIC (1, 11, "bfin_gptimer@8",    "stat"),
+  SIC (1, 12, "bfin_gptimer@9",    "stat"),
+  SIC (1, 13, "bfin_gptimer@10",   "stat"),
+  SIC (1, 14, "bfin_gptimer@11",   "stat"),
+  SIC (1, 15, "bfin_gpio@5",       "mask_a"),
+  SIC (1, 16, "bfin_gpio@5",       "mask_b"),
+  SIC (1, 17, "bfin_gpio@6",       "mask_a"),
+  SIC (1, 18, "bfin_gpio@6",       "mask_b"),
+  SIC (1, 19, "bfin_gpio@7",       "mask_a"),
+  SIC (1, 20, "bfin_gpio@7",       "mask_b"),
+  SIC (1, 21, "bfin_dma@256",      "di"),	/* mdma0 */
+  SIC (1, 21, "bfin_dma@257",      "di"),	/* mdma0 */
+  SIC (1, 22, "bfin_dma@258",      "di"),	/* mdma1 */
+  SIC (1, 22, "bfin_dma@259",      "di"),	/* mdma1 */
+  SIC (1, 23, "bfin_dma@260",      "di"),	/* mdma2 */
+  SIC (1, 23, "bfin_dma@261",      "di"),	/* mdma2 */
+  SIC (1, 24, "bfin_dma@262",      "di"),	/* mdma3 */
+  SIC (1, 24, "bfin_dma@263",      "di"),	/* mdma3 */
+  SIC (1, 25, "bfin_imdma@0",      "di"),
+  SIC (1, 26, "bfin_imdma@1",      "di"),
+  SIC (1, 27, "bfin_wdog@0",       "gpi"),
+  SIC (1, 27, "bfin_wdog@1",       "gpi"),
+/*SIC (1, 28, reserved),*/
+/*SIC (1, 29, reserved),*/
+  SIC (1, 30, "bfin_sic",          "sup_irq@0"),
+  SIC (1, 31, "bfin_sic",          "sup_irq@1"),
+};
 
 #define bf592_chipid 0x20cb
 static const struct bfin_memory_layout bf592_mem[] =
@@ -723,6 +1344,48 @@ static const struct bfin_dmac_layout bf592_dmac[] =
           start right after the dma channels ... */
   { BFIN_MMR_DMAC0_BASE, 12, },
 };
+static const struct bfin_port_layout bf592_port[] =
+{
+  SIC (0,  0, "bfin_pll",          "pll"),
+/*SIC (0,  1, "bfin_dmac@0",       "stat"),*/
+  SIC (0,  2, "bfin_ppi@0",        "stat"),
+  SIC (0,  3, "bfin_sport@0",      "stat"),
+  SIC (0,  4, "bfin_sport@1",      "stat"),
+  SIC (0,  5, "bfin_spi@0",        "stat"),
+  SIC (0,  6, "bfin_spi@1",        "stat"),
+  SIC (0,  7, "bfin_uart@0",       "stat"),
+  SIC (0,  8, "bfin_dma@0",        "di"),
+  SIC (0,  9, "bfin_dma@1",        "di"),
+  SIC (0, 10, "bfin_dma@2",        "di"),
+  SIC (0, 11, "bfin_dma@3",        "di"),
+  SIC (0, 12, "bfin_dma@4",        "di"),
+  SIC (0, 13, "bfin_dma@5",        "di"),
+  SIC (0, 14, "bfin_dma@6",        "di"),
+  SIC (0, 15, "bfin_dma@7",        "di"),
+  SIC (0, 16, "bfin_dma@8",        "di"),
+  SIC (0, 17, "bfin_gpio@5",       "mask_a"),
+  SIC (0, 18, "bfin_gpio@5",       "mask_b"),
+  SIC (0, 19, "bfin_gptimer@0",    "stat"),
+  SIC (0, 20, "bfin_gptimer@1",    "stat"),
+  SIC (0, 21, "bfin_gptimer@2",    "stat"),
+  SIC (0, 22, "bfin_gpio@6",       "mask_a"),
+  SIC (0, 23, "bfin_gpio@6",       "mask_b"),
+  SIC (0, 24, "bfin_twi@0",        "stat"),
+/* XXX: 25 - 28 are supposed to be reserved; see comment in machs.c:bf592_dmac[]  */
+  SIC (0, 25, "bfin_dma@9",        "di"),
+  SIC (0, 26, "bfin_dma@10",       "di"),
+  SIC (0, 27, "bfin_dma@11",       "di"),
+  SIC (0, 28, "bfin_dma@12",       "di"),
+/*SIC (0, 25, reserved),*/
+/*SIC (0, 26, reserved),*/
+/*SIC (0, 27, reserved),*/
+/*SIC (0, 28, reserved),*/
+  SIC (0, 29, "bfin_dma@256",      "di"),	/* mdma0 */
+  SIC (0, 29, "bfin_dma@257",      "di"),	/* mdma0 */
+  SIC (0, 30, "bfin_dma@258",      "di"),	/* mdma1 */
+  SIC (0, 30, "bfin_dma@259",      "di"),	/* mdma1 */
+  SIC (0, 31, "bfin_wdog",         "gpi"),
+};
 
 static const struct bfin_model_data bfin_model_data[] =
 {
@@ -732,6 +1395,7 @@ static const struct bfin_model_data bfin_model_data[] =
     bf##n##_mem , ARRAY_SIZE (bf##n##_mem ), \
     bf##n##_dev , ARRAY_SIZE (bf##n##_dev ), \
     bf##n##_dmac, ARRAY_SIZE (bf##n##_dmac), \
+    bf##n##_port, ARRAY_SIZE (bf##n##_port), \
   },
 #include "proc_list.def"
 #undef P
@@ -746,9 +1410,34 @@ static const struct bfin_dev_layout bfin_core_dev[] =
   CORE_DEVICE (evt, EVT),
   CORE_DEVICE (jtag, JTAG),
   CORE_DEVICE (mmu, MMU),
+  CORE_DEVICE (pfmon, PFMON),
   CORE_DEVICE (trace, TRACE),
   CORE_DEVICE (wp, WP),
 };
+
+static void
+dv_bfin_hw_port_parse (SIM_DESC sd, const struct bfin_model_data *mdata,
+		       const char *dev)
+{
+  size_t i;
+  const char *sdev;
+
+  sdev = strchr (dev, '/');
+  if (sdev)
+    ++sdev;
+  else
+    sdev = dev;
+
+  for (i = 0; i < mdata->port_count; ++i)
+    {
+      const struct bfin_port_layout *port = &mdata->port[i];
+
+      /* There might be more than one mapping.  */
+      if (!strcmp (sdev, port->src))
+	sim_hw_parse (sd, "/core/%s > %s %s /core/%s", dev,
+		      port->src_port, port->dst_port, port->dst);
+    }
+}
 
 #define dv_bfin_hw_parse(sd, dv, DV) \
   do { \
@@ -756,6 +1445,7 @@ static const struct bfin_dev_layout bfin_core_dev[] =
     bu32 size = BFIN_MMR_##DV##_SIZE; \
     sim_hw_parse (sd, "/core/bfin_"#dv"/reg %#x %i", base, size); \
     sim_hw_parse (sd, "/core/bfin_"#dv"/type %i",  mdata->model_num); \
+    dv_bfin_hw_port_parse (sd, mdata, "bfin_"#dv); \
   } while (0)
 
 static void
@@ -780,12 +1470,10 @@ bfin_model_hw_tree_init (SIM_DESC sd, SIM_CPU *cpu)
 
   /* Map the system devices.  */
   dv_bfin_hw_parse (sd, sic, SIC);
-  sim_hw_parse (sd, "/core/bfin_sic/type %i", mdata->model_num);
   for (i = 7; i < 16; ++i)
     sim_hw_parse (sd, "/core/bfin_sic > ivg%i ivg%i /core/bfin_cec", i, i);
 
   dv_bfin_hw_parse (sd, pll, PLL);
-  sim_hw_parse (sd, "/core/bfin_pll > pll pll /core/bfin_sic");
 
   dma_chan = 0;
   for (i = 0; i < mdata->dmac_count; ++i)
@@ -797,14 +1485,12 @@ bfin_model_hw_tree_init (SIM_DESC sd, SIM_CPU *cpu)
       /* Hook up the non-mdma channels.  */
       for (j = 0; j < dmac->dma_count; ++j)
 	{
-	  sim_hw_parse (sd, "/core/bfin_dmac@%u/bfin_dma@%u/reg %#x %i", i,
-			dma_chan, dmac->base + j * BFIN_MMR_DMA_SIZE,
-			BFIN_MMR_DMA_SIZE);
+	  char dev[64];
 
-	  /* Could route these into the bfin_dmac and let that
-	     forward it to the SIC, but not much value.  */
-	  sim_hw_parse (sd, "/core/bfin_dmac@%u/bfin_dma@%u > di dma@%u /core/bfin_sic",
-			i, dma_chan, dma_chan);
+	  sprintf (dev, "bfin_dmac@%u/bfin_dma@%u", i, dma_chan);
+	  sim_hw_parse (sd, "/core/%s/reg %#x %i", dev,
+			dmac->base + j * BFIN_MMR_DMA_SIZE, BFIN_MMR_DMA_SIZE);
+	  dv_bfin_hw_port_parse (sd, mdata, dev);
 
 	  ++dma_chan;
 	}
@@ -812,22 +1498,34 @@ bfin_model_hw_tree_init (SIM_DESC sd, SIM_CPU *cpu)
       /* Hook up the mdma channels -- assume every DMAC has 4.  */
       for (j = 0; j < 4; ++j)
 	{
-	  sim_hw_parse (sd, "/core/bfin_dmac@%u/bfin_dma@%u/reg %#x %i",
-			i, j + BFIN_DMAC_MDMA_BASE,
+	  char dev[64];
+
+	  sprintf (dev, "bfin_dmac@%u/bfin_dma@%u", i, j + BFIN_DMAC_MDMA_BASE);
+	  sim_hw_parse (sd, "/core/%s/reg %#x %i", dev,
 			dmac->base + (j + dmac->dma_count) * BFIN_MMR_DMA_SIZE,
 			BFIN_MMR_DMA_SIZE);
-	  sim_hw_parse (sd, "/core/bfin_dmac@%u/bfin_dma@%u > di mdma@%u /core/bfin_sic",
-			i, j + BFIN_DMAC_MDMA_BASE, (2 * i) + (j / 2));
+	  dv_bfin_hw_port_parse (sd, mdata, dev);
 	}
     }
 
   for (i = 0; i < mdata->dev_count; ++i)
     {
       const struct bfin_dev_layout *dev = &mdata->dev[i];
-      sim_hw_parse (sd, "/core/%s/reg %#x %i", dev->dev, dev->base, dev->len);
-      sim_hw_parse (sd, "/core/%s/type %i", dev->dev, mdata->model_num);
+
+      if (dev->len)
+	{
+	  sim_hw_parse (sd, "/core/%s/reg %#x %i", dev->dev, dev->base, dev->len);
+	  sim_hw_parse (sd, "/core/%s/type %i", dev->dev, mdata->model_num);
+	}
+      else
+	{
+	  sim_hw_parse (sd, "/core/%s", dev->dev);
+	}
+
+      dv_bfin_hw_port_parse (sd, mdata, dev->dev);
       if (strchr (dev->dev, '/'))
 	continue;
+
       if (!strncmp (dev->dev, "bfin_uart", 9)
 	  || !strncmp (dev->dev, "bfin_emac", 9)
 	  || !strncmp (dev->dev, "bfin_sport", 10))
@@ -835,34 +1533,11 @@ bfin_model_hw_tree_init (SIM_DESC sd, SIM_CPU *cpu)
 	  const char *sint = dev->dev + 5;
 	  sim_hw_parse (sd, "/core/%s > tx   %s_tx   /core/bfin_dmac@%u", dev->dev, sint, dev->dmac);
 	  sim_hw_parse (sd, "/core/%s > rx   %s_rx   /core/bfin_dmac@%u", dev->dev, sint, dev->dmac);
-	  sim_hw_parse (sd, "/core/%s > stat %s_stat /core/bfin_sic", dev->dev, sint);
-	}
-      else if (!strncmp (dev->dev, "bfin_gptimer", 12)
-	       || !strncmp (dev->dev, "bfin_ppi", 8)
-	       || !strncmp (dev->dev, "bfin_spi", 8)
-	       || !strncmp (dev->dev, "bfin_twi", 8))
-	{
-	  const char *sint = dev->dev + 5;
-	  sim_hw_parse (sd, "/core/%s > stat %s /core/bfin_sic", dev->dev, sint);
-	}
-      else if (!strncmp (dev->dev, "bfin_rtc", 8))
-	{
-	  const char *sint = dev->dev + 5;
-	  sim_hw_parse (sd, "/core/%s > %s %s /core/bfin_sic", dev->dev, sint, sint);
 	}
       else if (!strncmp (dev->dev, "bfin_wdog", 9))
 	{
 	  sim_hw_parse (sd, "/core/%s > reset rst  /core/bfin_cec", dev->dev);
 	  sim_hw_parse (sd, "/core/%s > nmi   nmi  /core/bfin_cec", dev->dev);
-	  sim_hw_parse (sd, "/core/%s > gpi   wdog /core/bfin_sic", dev->dev);
-	}
-      else if (!strncmp (dev->dev, "bfin_gpio", 9))
-	{
-	  char port = 'a' + strtol(&dev->dev[10], NULL, 0);
-	  sim_hw_parse (sd, "/core/%s > mask_a port%c_irq_a /core/bfin_sic",
-			dev->dev, port);
-	  sim_hw_parse (sd, "/core/%s > mask_b port%c_irq_b /core/bfin_sic",
-			dev->dev, port);
 	}
     }
 
@@ -902,6 +1577,7 @@ static const struct bfrom bf51x_roms[] =
 };
 static const struct bfrom bf526_roms[] =
 {
+  BFROM (526, 2, 0x1000000),
   BFROM (526, 1, 0x1000000),
   BFROM (526, 0, 0x1000000),
   BFROM_STUB,
@@ -943,25 +1619,27 @@ static const struct bfrom bf538_roms[] =
 };
 static const struct bfrom bf54x_roms[] =
 {
-  BFROM (54x, 2, 0),
-  BFROM (54x, 1, 0),
-  BFROM (54x, 0, 0),
-  BFROMA (0xffa14000, 54x_l1, 2, 0),
-  BFROMA (0xffa14000, 54x_l1, 1, 0),
-  BFROMA (0xffa14000, 54x_l1, 0, 0),
+  BFROM (54x, 4, 0x1000),
+  BFROM (54x, 2, 0x1000),
+  BFROM (54x, 1, 0x1000),
+  BFROM (54x, 0, 0x1000),
+  BFROMA (0xffa14000, 54x_l1, 4, 0x10000),
+  BFROMA (0xffa14000, 54x_l1, 2, 0x10000),
+  BFROMA (0xffa14000, 54x_l1, 1, 0x10000),
+  BFROMA (0xffa14000, 54x_l1, 0, 0x10000),
   BFROM_STUB,
 };
 static const struct bfrom bf561_roms[] =
 {
   /* XXX: No idea what the actual wrap limit is here.  */
-  BFROM (561, 5, 0),
+  BFROM (561, 5, 0x1000),
   BFROM_STUB,
 };
 static const struct bfrom bf59x_roms[] =
 {
   BFROM (59x, 1, 0x1000000),
   BFROM (59x, 0, 0x1000000),
-  BFROMA (0xffa10000, 59x_l1, 1, 0),
+  BFROMA (0xffa10000, 59x_l1, 1, 0x10000),
   BFROM_STUB,
 };
 
@@ -983,7 +1661,7 @@ bfin_model_map_bfrom (SIM_DESC sd, SIM_CPU *cpu)
   else if (mnum >= 531 && mnum <= 533)
     bfrom = bf533_roms;
   else if (mnum == 535)
-    /* Stub.  */;
+    return; /* Stub.  */
   else if (mnum >= 534 && mnum <= 537)
     bfrom = bf537_roms;
   else if (mnum >= 538 && mnum <= 539)
@@ -1181,7 +1859,7 @@ bfin_reg_fetch (SIM_CPU *cpu, int rn, unsigned char *buf, int len)
   else if (rn == SIM_BFIN_CC_REGNUM)
     value = CCREG;
   else
-    return 0; // will be an error in gdb
+    return -1;
 
   /* Handle our KSP/USP shadowing in SP.  While in supervisor mode, we
      have the normal SP/USP behavior.  User mode is tricky though.  */
@@ -1196,7 +1874,7 @@ bfin_reg_fetch (SIM_CPU *cpu, int rn, unsigned char *buf, int len)
 
   bfin_store_unsigned_integer (buf, 4, value);
 
-  return -1; // disables size checking in gdb
+  return 4;
 }
 
 static int
@@ -1215,9 +1893,9 @@ bfin_reg_store (SIM_CPU *cpu, int rn, unsigned char *buf, int len)
   else if (rn == SIM_BFIN_CC_REGNUM)
     SET_CCREG (value);
   else
-    return 0; // will be an error in gdb
+    return -1;
 
-  return -1; // disables size checking in gdb
+  return 4;
 }
 
 static sim_cia

@@ -1,6 +1,5 @@
 /* Register support routines for the remote server for GDB.
-   Copyright (C) 2001, 2002, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,16 +18,11 @@
 
 #include "server.h"
 #include "regdef.h"
+#include "gdbthread.h"
+#include "tdesc.h"
 
 #include <stdlib.h>
 #include <string.h>
-
-static int register_bytes;
-
-static struct reg *reg_defs;
-static int num_registers;
-
-const char **gdbserver_expedite_regs;
 
 #ifndef IN_PROCESS_AGENT
 
@@ -39,8 +33,23 @@ get_thread_regcache (struct thread_info *thread, int fetch)
 
   regcache = (struct regcache *) inferior_regcache_data (thread);
 
+  /* Threads' regcaches are created lazily, because biarch targets add
+     the main thread/lwp before seeing it stop for the first time, and
+     it is only after the target sees the thread stop for the first
+     time that the target has a chance of determining the process's
+     architecture.  IOW, when we first add the process's main thread
+     we don't know which architecture/tdesc its regcache should
+     have.  */
   if (regcache == NULL)
-    fatal ("no register cache");
+    {
+      struct process_info *proc = get_thread_process (thread);
+
+      if (proc->tdesc == NULL)
+	fatal ("no target description");
+
+      regcache = new_register_cache (proc->tdesc);
+      set_inferior_regcache_data (thread, regcache);
+    }
 
   if (fetch && regcache->registers_valid == 0)
     {
@@ -56,9 +65,8 @@ get_thread_regcache (struct thread_info *thread, int fetch)
 }
 
 void
-regcache_invalidate_one (struct inferior_list_entry *entry)
+regcache_invalidate_thread (struct thread_info *thread)
 {
-  struct thread_info *thread = (struct thread_info *) entry;
   struct regcache *regcache;
 
   regcache = (struct regcache *) inferior_regcache_data (thread);
@@ -78,16 +86,35 @@ regcache_invalidate_one (struct inferior_list_entry *entry)
   regcache->registers_valid = 0;
 }
 
+static int
+regcache_invalidate_one (struct inferior_list_entry *entry,
+			 void *pid_p)
+{
+  struct thread_info *thread = (struct thread_info *) entry;
+  int pid = *(int *) pid_p;
+
+  /* Only invalidate the regcaches of threads of this process.  */
+  if (ptid_get_pid (entry->id) == pid)
+    regcache_invalidate_thread (thread);
+
+  return 0;
+}
+
 void
 regcache_invalidate (void)
 {
-  for_each_inferior (&all_threads, regcache_invalidate_one);
+  /* Only update the threads of the current process.  */
+  int pid = ptid_get_pid (current_inferior->entry.id);
+
+  find_inferior (&all_threads, regcache_invalidate_one, &pid);
 }
 
 #endif
 
 struct regcache *
-init_register_cache (struct regcache *regcache, unsigned char *regbuf)
+init_register_cache (struct regcache *regcache,
+		     const struct target_desc *tdesc,
+		     unsigned char *regbuf)
 {
 #ifndef IN_PROCESS_AGENT
   if (regbuf == NULL)
@@ -96,9 +123,10 @@ init_register_cache (struct regcache *regcache, unsigned char *regbuf)
 	 created, in case there are registers the target never
 	 fetches.  This way they'll read as zero instead of
 	 garbage.  */
-      regcache->registers = xcalloc (1, register_bytes);
+      regcache->tdesc = tdesc;
+      regcache->registers = xcalloc (1, tdesc->registers_size);
       regcache->registers_owned = 1;
-      regcache->register_status = xcalloc (1, num_registers);
+      regcache->register_status = xcalloc (1, tdesc->num_registers);
       gdb_assert (REG_UNAVAILABLE == 0);
     }
   else
@@ -108,6 +136,7 @@ init_register_cache (struct regcache *regcache, unsigned char *regbuf)
   else
 #endif
     {
+      regcache->tdesc = tdesc;
       regcache->registers = regbuf;
       regcache->registers_owned = 0;
 #ifndef IN_PROCESS_AGENT
@@ -123,15 +152,14 @@ init_register_cache (struct regcache *regcache, unsigned char *regbuf)
 #ifndef IN_PROCESS_AGENT
 
 struct regcache *
-new_register_cache (void)
+new_register_cache (const struct target_desc *tdesc)
 {
   struct regcache *regcache;
 
-  if (register_bytes == 0)
-    return NULL; /* The architecture hasn't been initialized yet.  */
+  gdb_assert (tdesc->registers_size != 0);
 
   regcache = xmalloc (sizeof (*regcache));
-  return init_register_cache (regcache, NULL);
+  return init_register_cache (regcache, tdesc, NULL);
 }
 
 void
@@ -151,67 +179,19 @@ free_register_cache (struct regcache *regcache)
 void
 regcache_cpy (struct regcache *dst, struct regcache *src)
 {
-  memcpy (dst->registers, src->registers, register_bytes);
+  gdb_assert (src != NULL && dst != NULL);
+  gdb_assert (src->tdesc == dst->tdesc);
+  gdb_assert (src != dst);
+
+  memcpy (dst->registers, src->registers, src->tdesc->registers_size);
 #ifndef IN_PROCESS_AGENT
   if (dst->register_status != NULL && src->register_status != NULL)
-    memcpy (dst->register_status, src->register_status, num_registers);
+    memcpy (dst->register_status, src->register_status,
+	    src->tdesc->num_registers);
 #endif
   dst->registers_valid = src->registers_valid;
 }
 
-#ifndef IN_PROCESS_AGENT
-static void
-realloc_register_cache (struct inferior_list_entry *thread_p)
-{
-  struct thread_info *thread = (struct thread_info *) thread_p;
-  struct regcache *regcache
-    = (struct regcache *) inferior_regcache_data (thread);
-
-  if (regcache != NULL)
-    regcache_invalidate_one (thread_p);
-  free_register_cache (regcache);
-  set_inferior_regcache_data (thread, new_register_cache ());
-}
-#endif
-
-void
-set_register_cache (struct reg *regs, int n)
-{
-  int offset, i;
-
-#ifndef IN_PROCESS_AGENT
-  /* Before changing the register cache internal layout, flush the
-     contents of valid caches back to the threads.  */
-  regcache_invalidate ();
-#endif
-
-  reg_defs = regs;
-  num_registers = n;
-
-  offset = 0;
-  for (i = 0; i < n; i++)
-    {
-      regs[i].offset = offset;
-      offset += regs[i].size;
-    }
-
-  register_bytes = offset / 8;
-
-  /* Make sure PBUFSIZ is large enough to hold a full register packet.  */
-  if (2 * register_bytes + 32 > PBUFSIZ)
-    fatal ("Register packet size exceeds PBUFSIZ.");
-
-#ifndef IN_PROCESS_AGENT
-  /* Re-allocate all pre-existing register caches.  */
-  for_each_inferior (&all_threads, realloc_register_cache);
-#endif
-}
-
-int
-register_cache_size (void)
-{
-  return register_bytes;
-}
 
 #ifndef IN_PROCESS_AGENT
 
@@ -219,21 +199,23 @@ void
 registers_to_string (struct regcache *regcache, char *buf)
 {
   unsigned char *registers = regcache->registers;
+  const struct target_desc *tdesc = regcache->tdesc;
   int i;
 
-  for (i = 0; i < num_registers; i++)
+  for (i = 0; i < tdesc->num_registers; i++)
     {
       if (regcache->register_status[i] == REG_VALID)
 	{
-	  convert_int_to_ascii (registers, buf, register_size (i));
-	  buf += register_size (i) * 2;
+	  convert_int_to_ascii (registers, buf,
+				register_size (tdesc, i));
+	  buf += register_size (tdesc, i) * 2;
 	}
       else
 	{
-	  memset (buf, 'x', register_size (i) * 2);
-	  buf += register_size (i) * 2;
+	  memset (buf, 'x', register_size (tdesc, i) * 2);
+	  buf += register_size (tdesc, i) * 2;
 	}
-      registers += register_size (i);
+      registers += register_size (tdesc, i);
     }
   *buf = '\0';
 }
@@ -243,59 +225,97 @@ registers_from_string (struct regcache *regcache, char *buf)
 {
   int len = strlen (buf);
   unsigned char *registers = regcache->registers;
+  const struct target_desc *tdesc = regcache->tdesc;
 
-  if (len != register_bytes * 2)
+  if (len != tdesc->registers_size * 2)
     {
       warning ("Wrong sized register packet (expected %d bytes, got %d)",
-	       2*register_bytes, len);
-      if (len > register_bytes * 2)
-	len = register_bytes * 2;
+	       2 * tdesc->registers_size, len);
+      if (len > tdesc->registers_size * 2)
+	len = tdesc->registers_size * 2;
     }
   convert_ascii_to_int (buf, registers, len / 2);
 }
 
 struct reg *
-find_register_by_name (const char *name)
+find_register_by_name (const struct target_desc *tdesc, const char *name)
 {
   int i;
 
-  for (i = 0; i < num_registers; i++)
-    if (!strcmp (name, reg_defs[i].name))
-      return &reg_defs[i];
+  for (i = 0; i < tdesc->num_registers; i++)
+    if (strcmp (name, tdesc->reg_defs[i].name) == 0)
+      return &tdesc->reg_defs[i];
   fatal ("Unknown register %s requested", name);
   return 0;
 }
 
 int
-find_regno (const char *name)
+find_regno (const struct target_desc *tdesc, const char *name)
 {
   int i;
 
-  for (i = 0; i < num_registers; i++)
-    if (!strcmp (name, reg_defs[i].name))
+  for (i = 0; i < tdesc->num_registers; i++)
+    if (strcmp (name, tdesc->reg_defs[i].name) == 0)
       return i;
   fatal ("Unknown register %s requested", name);
   return -1;
 }
 
 struct reg *
-find_register_by_number (int n)
+find_register_by_number (const struct target_desc *tdesc, int n)
 {
-  return &reg_defs[n];
+  return &tdesc->reg_defs[n];
 }
 
 #endif
 
-int
-register_size (int n)
+#ifndef IN_PROCESS_AGENT
+static void
+free_register_cache_thread (struct thread_info *thread)
 {
-  return reg_defs[n].size / 8;
+  struct regcache *regcache
+    = (struct regcache *) inferior_regcache_data (thread);
+
+  if (regcache != NULL)
+    {
+      regcache_invalidate_thread (thread);
+      free_register_cache (regcache);
+      set_inferior_regcache_data (thread, NULL);
+    }
+}
+
+static void
+free_register_cache_thread_one (struct inferior_list_entry *entry)
+{
+  struct thread_info *thread = (struct thread_info *) entry;
+
+  free_register_cache_thread (thread);
+}
+
+void
+regcache_release (void)
+{
+  /* Flush and release all pre-existing register caches.  */
+  for_each_inferior (&all_threads, free_register_cache_thread_one);
+}
+#endif
+
+int
+register_cache_size (const struct target_desc *tdesc)
+{
+  return tdesc->registers_size;
+}
+
+int
+register_size (const struct target_desc *tdesc, int n)
+{
+  return tdesc->reg_defs[n].size / 8;
 }
 
 static unsigned char *
 register_data (struct regcache *regcache, int n, int fetch)
 {
-  return regcache->registers + (reg_defs[n].offset / 8);
+  return regcache->registers + regcache->tdesc->reg_defs[n].offset / 8;
 }
 
 /* Supply register N, whose contents are stored in BUF, to REGCACHE.
@@ -307,7 +327,8 @@ supply_register (struct regcache *regcache, int n, const void *buf)
 {
   if (buf)
     {
-      memcpy (register_data (regcache, n, 0), buf, register_size (n));
+      memcpy (register_data (regcache, n, 0), buf,
+	      register_size (regcache->tdesc, n));
 #ifndef IN_PROCESS_AGENT
       if (regcache->register_status != NULL)
 	regcache->register_status[n] = REG_VALID;
@@ -315,7 +336,8 @@ supply_register (struct regcache *regcache, int n, const void *buf)
     }
   else
     {
-      memset (register_data (regcache, n, 0), 0, register_size (n));
+      memset (register_data (regcache, n, 0), 0,
+	      register_size (regcache->tdesc, n));
 #ifndef IN_PROCESS_AGENT
       if (regcache->register_status != NULL)
 	regcache->register_status[n] = REG_UNAVAILABLE;
@@ -328,7 +350,8 @@ supply_register (struct regcache *regcache, int n, const void *buf)
 void
 supply_register_zeroed (struct regcache *regcache, int n)
 {
-  memset (register_data (regcache, n, 0), 0, register_size (n));
+  memset (register_data (regcache, n, 0), 0,
+	  register_size (regcache->tdesc, n));
 #ifndef IN_PROCESS_AGENT
   if (regcache->register_status != NULL)
     regcache->register_status[n] = REG_VALID;
@@ -344,24 +367,28 @@ supply_regblock (struct regcache *regcache, const void *buf)
 {
   if (buf)
     {
-      memcpy (regcache->registers, buf, register_bytes);
+      const struct target_desc *tdesc = regcache->tdesc;
+
+      memcpy (regcache->registers, buf, tdesc->registers_size);
 #ifndef IN_PROCESS_AGENT
       {
 	int i;
 
-	for (i = 0; i < num_registers; i++)
+	for (i = 0; i < tdesc->num_registers; i++)
 	  regcache->register_status[i] = REG_VALID;
       }
 #endif
     }
   else
     {
-      memset (regcache->registers, 0, register_bytes);
+      const struct target_desc *tdesc = regcache->tdesc;
+
+      memset (regcache->registers, 0, tdesc->registers_size);
 #ifndef IN_PROCESS_AGENT
       {
 	int i;
 
-	for (i = 0; i < num_registers; i++)
+	for (i = 0; i < tdesc->num_registers; i++)
 	  regcache->register_status[i] = REG_UNAVAILABLE;
       }
 #endif
@@ -374,7 +401,7 @@ void
 supply_register_by_name (struct regcache *regcache,
 			 const char *name, const void *buf)
 {
-  supply_register (regcache, find_regno (name), buf);
+  supply_register (regcache, find_regno (regcache->tdesc, name), buf);
 }
 
 #endif
@@ -382,7 +409,8 @@ supply_register_by_name (struct regcache *regcache,
 void
 collect_register (struct regcache *regcache, int n, void *buf)
 {
-  memcpy (buf, register_data (regcache, n, 1), register_size (n));
+  memcpy (buf, register_data (regcache, n, 1),
+	  register_size (regcache->tdesc, n));
 }
 
 #ifndef IN_PROCESS_AGENT
@@ -390,15 +418,15 @@ collect_register (struct regcache *regcache, int n, void *buf)
 void
 collect_register_as_string (struct regcache *regcache, int n, char *buf)
 {
-  convert_int_to_ascii (register_data (regcache, n, 1),
-			buf, register_size (n));
+  convert_int_to_ascii (register_data (regcache, n, 1), buf,
+			register_size (regcache->tdesc, n));
 }
 
 void
 collect_register_by_name (struct regcache *regcache,
 			  const char *name, void *buf)
 {
-  collect_register (regcache, find_regno (name), buf);
+  collect_register (regcache, find_regno (regcache->tdesc, name), buf);
 }
 
 /* Special handling for register PC.  */

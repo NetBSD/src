@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/03/02 22:24:55 tron Exp $
+#	$NetBSD: Makefile,v 1.2.10.1 2014/08/19 23:59:45 tls Exp $
 
 LIBISPRIVATE=	yes
 
@@ -13,6 +13,7 @@ SRCS=	tls_prng_dev.c tls_prng_egd.c tls_prng_file.c \
 	tls_prng_exch.c tls_stream.c tls_bio_ops.c tls_misc.c tls_dh.c \
 	tls_rsa.c tls_verify.c tls_certkey.c tls_session.c \
 	tls_client.c tls_server.c tls_scache.c tls_mgr.c tls_seed.c \
-	tls_level.c tls_proxy_clnt.c tls_proxy_print.c
+	tls_level.c tls_proxy_clnt.c tls_proxy_print.c tls_dane.c \
+	tls_fprint.c
 
 .include <bsd.lib.mk>

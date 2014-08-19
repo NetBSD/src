@@ -1,4 +1,4 @@
-/*	$NetBSD: mlcd.c,v 1.14 2010/10/17 14:17:49 tsutsui Exp $	*/
+/*	$NetBSD: mlcd.c,v 1.14.18.1 2014/08/20 00:02:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.14 2010/10/17 14:17:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.14.18.1 2014/08/20 00:02:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -169,8 +169,18 @@ dev_type_write(mlcdwrite);
 dev_type_ioctl(mlcdioctl);
 
 const struct cdevsw mlcd_cdevsw = {
-	mlcdopen, mlcdclose, noread, mlcdwrite, mlcdioctl,
-	nostop, notty, nopoll, nommap, nokqfilter
+	.d_open = mlcdopen,
+	.d_close = mlcdclose,
+	.d_read = noread,
+	.d_write = mlcdwrite,
+	.d_ioctl = mlcdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 CFATTACH_DECL_NEW(mlcd, sizeof(struct mlcd_softc),
@@ -266,7 +276,8 @@ mlcdattach(device_t parent, device_t self, void *aux)
 	    M_WAITOK|M_ZERO);
 
 	for (i = 0; i < sc->sc_npt; i++) {
-		sprintf(sc->sc_pt[i].pt_name, "%s.%d", device_xname(self), i);
+		snprintf(sc->sc_pt[i].pt_name, sizeof(sc->sc_pt[i].pt_name),
+		    "%s.%d", device_xname(self), i);
 	}
 
 	maple_set_callback(parent, sc->sc_unit, MAPLE_FN_LCD,
@@ -526,10 +537,8 @@ static void
 mlcdstart_bp(struct mlcd_softc *sc)
 {
 	struct mlcd_buf *bp;
-	struct mlcd_pt *pt;
 
 	bp = sc->sc_bp;
-	pt = &sc->sc_pt[bp->lb_partno];
 
 	/* handle retry */
 	if (sc->sc_retry++ > MLCD_MAXRETRY) {
@@ -720,14 +729,11 @@ mlcdwrite(dev_t dev, struct uio *uio, int flags)
 int
 mlcdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	int unit, part;
+	int unit;
 	struct mlcd_softc *sc;
-	struct mlcd_pt *pt;
 
 	unit = MLCD_UNIT(dev);
-	part = MLCD_PART(dev);
 	sc = device_lookup_private(&mlcd_cd, unit);
-	pt = &sc->sc_pt[part];
 
 	switch (cmd) {
 

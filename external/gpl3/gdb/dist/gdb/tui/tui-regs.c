@@ -1,7 +1,6 @@
 /* TUI display registers in window.
 
-   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2007, 2008, 2009,
-   2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -31,7 +30,7 @@
 #include "regcache.h"
 #include "inferior.h"
 #include "target.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "tui/tui-layout.h"
 #include "tui/tui-win.h"
 #include "tui/tui-windata.h"
@@ -58,9 +57,6 @@ static enum tui_status tui_show_register_group (struct reggroup *group,
 static enum tui_status tui_get_register (struct frame_info *frame,
 					 struct tui_data_element *data,
 					 int regnum, int *changedp);
-
-static void tui_register_format (struct frame_info *,
-				 struct tui_data_element*, int);
 
 static void tui_scroll_regs_forward_command (char *, int);
 static void tui_scroll_regs_backward_command (char *, int);
@@ -132,19 +128,6 @@ tui_first_reg_element_no_inline (int line_no)
 }
 
 
-/* Answer the index of the last element in line_no.  If line_no is
-   past the register area (-1) is returned.  */
-int
-tui_last_reg_element_no_in_line (int line_no)
-{
-  if ((line_no * TUI_DATA_WIN->detail.data_display_info.regs_column_count) <=
-      TUI_DATA_WIN->detail.data_display_info.regs_content_count)
-    return ((line_no + 1) *
-	    TUI_DATA_WIN->detail.data_display_info.regs_column_count) - 1;
-  else
-    return (-1);
-}
-
 /* Show the registers of the given group in the data window
    and refresh the window.  */
 void
@@ -171,7 +154,7 @@ tui_show_registers (struct reggroup *group)
 
   if (target_has_registers && target_has_stack && target_has_memory)
     {
-      ret = tui_show_register_group (group, get_current_frame (),
+      ret = tui_show_register_group (group, get_selected_frame (NULL),
                                      group == display_info->current_group);
     }
   if (ret == TUI_FAILURE)
@@ -675,8 +658,6 @@ _initialize_tui_regs (void)
 ** STATIC LOCAL FUNCTIONS                 **
 ******************************************/
 
-extern int pagination_enabled;
-
 static void
 tui_restore_gdbout (void *ui)
 {
@@ -685,23 +666,18 @@ tui_restore_gdbout (void *ui)
   pagination_enabled = 1;
 }
 
-/* Get the register from the frame and make a printable representation
-   of it in the data element.  */
-static void
-tui_register_format (struct frame_info *frame,
-                     struct tui_data_element *data_element, 
-		     int regnum)
+/* Get the register from the frame and return a printable
+   representation of it.  */
+
+static char *
+tui_register_format (struct frame_info *frame, int regnum)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
   struct ui_file *stream;
   struct ui_file *old_stdout;
-  const char *name;
   struct cleanup *cleanups;
   char *p, *s;
-
-  name = gdbarch_register_name (gdbarch, regnum);
-  if (name == 0 || *name == '\0')
-    return;
+  char *ret;
 
   pagination_enabled = 0;
   old_stdout = gdb_stdout;
@@ -718,9 +694,10 @@ tui_register_format (struct frame_info *frame,
   if (s && s[1] == 0)
     *s = 0;
 
-  xfree (data_element->content);
-  data_element->content = xstrdup (p);
+  ret = xstrdup (p);
   do_cleanups (cleanups);
+
+  return ret;
 }
 
 /* Get the register value from the given frame and format it for the
@@ -737,26 +714,15 @@ tui_get_register (struct frame_info *frame,
     *changedp = FALSE;
   if (target_has_registers)
     {
-      struct value *old_val = data->value;
+      char *prev_content = data->content;
 
-      data->value = get_frame_register_value (frame, regnum);
-      release_value (data->value);
-      if (changedp)
-	{
-	  struct gdbarch *gdbarch = get_frame_arch (frame);
-	  int size = register_size (gdbarch, regnum);
+      data->content = tui_register_format (frame, regnum);
 
-	  if (value_optimized_out (data->value) != value_optimized_out (old_val)
-	      || !value_available_contents_eq (data->value, 0,
-					       old_val, 0, size))
-	    *changedp = TRUE;
-	}
+      if (changedp != NULL
+	  && strcmp (prev_content, data->content) != 0)
+	*changedp = 1;
 
-      value_free (old_val);
-
-      /* Reformat the data content if the value changed.  */
-      if (changedp == 0 || *changedp == TRUE)
-	tui_register_format (frame, data, regnum);
+      xfree (prev_content);
 
       ret = TUI_SUCCESS;
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_sync_icache.c,v 1.1 2002/03/30 06:24:34 thorpej Exp $	*/
+/*	$NetBSD: arm_sync_icache.c,v 1.1.62.1 2014/08/20 00:02:08 tls Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -38,9 +38,7 @@
 #include <machine/sysarch.h>
 
 int
-arm_sync_icache(addr, len)
-	u_int addr;
-	int len;
+arm_sync_icache(uintptr_t addr, size_t len)
 {
 	struct arm_sync_icache_args p;
 

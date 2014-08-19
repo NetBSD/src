@@ -1,4 +1,4 @@
-.\"	$NetBSD: nl.1,v 1.12.2.1 2013/06/23 06:29:01 tls Exp $
+.\"	$NetBSD: nl.1,v 1.12.2.2 2014/08/20 00:05:01 tls Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,12 +51,16 @@
 The
 .Nm
 utility reads lines from the named
+.Ar file ,
+applies a configurable line numbering filter operation,
+and writes the result to the standard output.
+If
 .Ar file
-or the standard input if the
-.Ar file
-argument is omitted,
-applies a configurable line numbering filter operation and writes the result
-to the standard output.
+is a single dash
+.Pq Sq \&-
+or absent,
+.Nm
+reads from the standard input.
 .Pp
 The
 .Nm
@@ -70,14 +74,12 @@ body and footer sections.
 .Pp
 The starts of logical page sections are signaled by input lines containing
 nothing but one of the following sequences of delimiter characters:
-.Bd -unfilled -offset indent
-.Bl -column "\e:\e:\e: " "header "
-.It Em "Line"	"Start of"
+.Bl -column "\e:\e:\e: " "header " -offset indent
+.It Em "Line" Ta Em "Start of"
 .It \e:\e:\e:	header
 .It \e:\e:	body
 .It \e:	footer
 .El
-.Ed
 .Pp
 If the input does not contain any logical page section signaling directives,
 the text being read is assumed to consist of a single logical page body.
@@ -155,7 +157,8 @@ Specify the line numbering output format.
 Recognized
 .Ar format
 arguments are:
-.Bl -tag -width lnXX -compact
+.Pp
+.Bl -tag -width lnXX -compact -offset indent
 .It ln
 Left justified.
 .It rn
@@ -185,7 +188,7 @@ The default
 value is 1.
 .It Fl w Ar width
 Specify the number of characters to be occupied by the line number;
-in case the
+if the
 .Ar width
 is insufficient to hold the line number, it will be truncated to its
 .Ar width
@@ -201,12 +204,9 @@ is 6.
 .Sh STANDARDS
 The
 .Nm
-utility conforms to
+utility is compliant with the
 .St -xpg4.2
-with the exception of not supporting the intermingling of the
-.Ar file
-operand with the options, which the standard considers an obsolescent feature
-to be removed from a further issue.
+specification.
 .Sh HISTORY
 The
 .Nm

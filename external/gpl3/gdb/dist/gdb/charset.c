@@ -1,7 +1,6 @@
 /* Character set conversion support for GDB.
 
-   Copyright (C) 2001, 2003, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,9 +27,10 @@
 #include "vec.h"
 #include "environ.h"
 #include "arch-utils.h"
+#include "gdb_vecs.h"
 
 #include <stddef.h>
-#include "gdb_string.h"
+#include <string.h>
 #include <ctype.h>
 
 #ifdef USE_WIN32API
@@ -108,7 +108,7 @@
 #define EILSEQ ENOENT
 #endif
 
-iconv_t
+static iconv_t
 phony_iconv_open (const char *to, const char *from)
 {
   /* We allow conversions from UTF-32BE, wchar_t, and the host charset.
@@ -124,13 +124,13 @@ phony_iconv_open (const char *to, const char *from)
   return !strcmp (from, "UTF-32BE");
 }
 
-int
+static int
 phony_iconv_close (iconv_t arg)
 {
   return 0;
 }
 
-size_t
+static size_t
 phony_iconv (iconv_t utf_flag, const char **inbuf, size_t *inbytesleft,
 	     char **outbuf, size_t *outbytesleft)
 {
@@ -474,7 +474,7 @@ convert_between_encodings (const char *from, const char *to,
   iconv_t desc;
   struct cleanup *cleanups;
   size_t inleft;
-  char *inp;
+  ICONV_CONST char *inp;
   unsigned int space_request;
 
   /* Often, the host and target charsets will be the same.  */
@@ -490,7 +490,7 @@ convert_between_encodings (const char *from, const char *to,
   cleanups = make_cleanup (cleanup_iconv, &desc);
 
   inleft = num_bytes;
-  inp = (char *) bytes;
+  inp = (ICONV_CONST char *) bytes;
 
   space_request = num_bytes;
 
@@ -506,7 +506,7 @@ convert_between_encodings (const char *from, const char *to,
       outp = obstack_base (output) + old_size;
       outleft = space_request;
 
-      r = iconv (desc, (ICONV_CONST char **) &inp, &inleft, &outp, &outleft);
+      r = iconv (desc, &inp, &inleft, &outp, &outleft);
 
       /* Now make sure that the object on the obstack only includes
 	 bytes we have converted.  */
@@ -531,7 +531,7 @@ convert_between_encodings (const char *from, const char *to,
 		  {
 		    char octal[5];
 
-		    sprintf (octal, "\\%.3o", *inp & 0xff);
+		    xsnprintf (octal, sizeof (octal), "\\%.3o", *inp & 0xff);
 		    obstack_grow_str (output, octal);
 
 		    ++inp;
@@ -571,7 +571,7 @@ struct wchar_iterator
   iconv_t desc;
 
   /* The input string.  This is updated as convert characters.  */
-  char *input;
+  const gdb_byte *input;
   /* The number of bytes remaining in the input.  */
   size_t bytes;
 
@@ -597,7 +597,7 @@ make_wchar_iterator (const gdb_byte *input, size_t bytes,
 
   result = XNEW (struct wchar_iterator);
   result->desc = desc;
-  result->input = (char *) input;
+  result->input = input;
   result->bytes = bytes;
   result->width = width;
 
@@ -640,14 +640,15 @@ wchar_iterate (struct wchar_iterator *iter,
   out_request = 1;
   while (iter->bytes > 0)
     {
+      ICONV_CONST char *inptr = (ICONV_CONST char *) iter->input;
       char *outptr = (char *) &iter->out[0];
-      char *orig_inptr = iter->input;
+      const gdb_byte *orig_inptr = iter->input;
       size_t orig_in = iter->bytes;
       size_t out_avail = out_request * sizeof (gdb_wchar_t);
       size_t num;
-      size_t r = iconv (iter->desc,
-			(ICONV_CONST char **) &iter->input, 
-			&iter->bytes, &outptr, &out_avail);
+      size_t r = iconv (iter->desc, &inptr, &iter->bytes, &outptr, &out_avail);
+
+      iter->input = (gdb_byte *) inptr;
 
       if (r == (size_t) -1)
 	{
@@ -717,8 +718,6 @@ wchar_iterate (struct wchar_iterator *iter,
 /* The charset.c module initialization function.  */
 
 extern initialize_file_ftype _initialize_charset; /* -Wmissing-prototype */
-
-DEF_VEC_P (char_ptr);
 
 static VEC (char_ptr) *charsets;
 
@@ -799,7 +798,9 @@ find_charset_names (void)
   char *args[3];
   int err, status;
   int fail = 1;
+  int flags;
   struct gdb_environ *iconv_env;
+  char *iconv_program;
 
   /* Older iconvs, e.g. 2.2.2, don't omit the intro text if stdout is
      not a tty.  We need to recognize it and ignore it.  This text is
@@ -811,12 +812,26 @@ find_charset_names (void)
 
   child = pex_init (PEX_USE_PIPES, "iconv", NULL);
 
-  args[0] = "iconv";
+#ifdef ICONV_BIN
+  {
+    char *iconv_dir = relocate_gdb_directory (ICONV_BIN,
+					      ICONV_BIN_RELOCATABLE);
+    iconv_program = concat (iconv_dir, SLASH_STRING, "iconv", NULL);
+    xfree (iconv_dir);
+  }
+#else
+  iconv_program = xstrdup ("iconv");
+#endif
+  args[0] = iconv_program;
   args[1] = "-l";
   args[2] = NULL;
+  flags = PEX_STDERR_TO_STDOUT;
+#ifndef ICONV_BIN
+  flags |= PEX_SEARCH;
+#endif
   /* Note that we simply ignore errors here.  */
-  if (!pex_run_in_environment (child, PEX_SEARCH | PEX_STDERR_TO_STDOUT,
-			       "iconv", args, environ_vector (iconv_env),
+  if (!pex_run_in_environment (child, flags,
+			       args[0], args, environ_vector (iconv_env),
 			       NULL, NULL, &err))
     {
       FILE *in = pex_read_output (child, 0);
@@ -825,7 +840,7 @@ find_charset_names (void)
 	 parse the glibc and libiconv formats; feel free to add others
 	 as needed.  */
 
-      while (!feof (in))
+      while (in != NULL && !feof (in))
 	{
 	  /* The size of buf is chosen arbitrarily.  */
 	  char buf[1024];
@@ -888,17 +903,15 @@ find_charset_names (void)
 
     }
 
+  xfree (iconv_program);
   pex_free (child);
   free_environ (iconv_env);
 
   if (fail)
     {
       /* Some error occurred, so drop the vector.  */
-      int ix;
-      char *elt;
-      for (ix = 0; VEC_iterate (char_ptr, charsets, ix, elt); ++ix)
-	xfree (elt);
-      VEC_truncate (char_ptr, charsets, 0);
+      free_char_ptr_vec (charsets);
+      charsets = NULL;
     }
   else
     VEC_safe_push (char_ptr, charsets, NULL);
@@ -953,7 +966,6 @@ intermediate_encoding (void)
   iconv_t desc;
   static const char *stored_result = NULL;
   char *result;
-  int i;
 
   if (stored_result)
     return stored_result;

@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.41 2011/01/30 07:04:48 rmind Exp $
+.\"     $NetBSD: vnsubr.9,v 1.41.10.1 2014/08/20 00:02:37 tls Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 30, 2010
+.Dd February 27, 2014
 .Dt VNSUBR 9
 .Os
 .Sh NAME
@@ -138,14 +138,11 @@ exclusive lock
 .It LK_NOWAIT
 do not sleep to await lock
 .It LK_RETRY
-retry lock operation until locked
+allow lock operation on dead vnode
 .El
 .Pp
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
-The vnode interlock
-.Em v_interlock
-is released on return.
 .Pp
 .Fn vn_lock
 must not be called when the vnode's reference count is zero.

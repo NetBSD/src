@@ -1,4 +1,4 @@
-# $NetBSD: dri.mk,v 1.12 2012/03/10 20:52:30 tron Exp $
+# $NetBSD: dri.mk,v 1.12.2.1 2014/08/20 00:00:10 tls Exp $
 
 # XXX DRI_LIB_DEPS
 
@@ -8,15 +8,15 @@ LIBISMODULE=	yes
 
 SHLIB_MAJOR=	0
 
-CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/src/mesa/main \
-		-I${X11SRCDIR.MesaLib}/src/mesa/glapi \
-		-I${X11SRCDIR.MesaLib}/src/mesa/shader \
-		-I${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/common \
-		-I${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/${MODULE}/server \
-		-I${X11SRCDIR.MesaLib}/src/mesa \
-		-I${X11SRCDIR.MesaLib}/include \
-		-I${DESTDIR}${X11INCDIR}/libdrm \
-		-I${DESTDIR}${X11INCDIR}/X11
+CPPFLAGS+= \
+	-I${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/common \
+	-I${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/${MODULE}/server \
+	-I${X11SRCDIR.MesaLib}/include \
+	-I${X11SRCDIR.MesaLib}/src/mapi \
+	-I${X11SRCDIR.MesaLib}/src/mesa \
+	-I${X11SRCDIR.MesaLib}/src/egl/main \
+	-I${X11SRCDIR.MesaLib}/src/egl/drivers/dri \
+	-I${DESTDIR}${X11INCDIR}/libdrm
 
 CPPFLAGS+=	-D_NETBSD_SOURCE -DPTHREADS -DUSE_EXTERNAL_DXTN_LIB=1 \
 		-DIN_DRI_DRIVER -DGLX_DIRECT_RENDERING \
@@ -30,10 +30,9 @@ CPPFLAGS+=	-Wno-stack-protector
 .PATH:	${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/common \
 	${X11SRCDIR.MesaLib}/src/mesa/drivers/common
 .if (${MODULE} == "swrast")
-SRCS+=	driverfuncs.c utils.c
+SRCS+=	drisw_util.c driverfuncs.c utils.c
 .else
 SRCS+=	dri_util.c drirenderbuffer.c driverfuncs.c texmem.c
-SRCS+=	dri_metaops.c
 SRCS+=	utils.c vblank.c xmlconfig.c
 .endif
 

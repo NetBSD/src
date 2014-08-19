@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.90.18.1 2012/11/20 03:02:18 tls Exp $ */
+/* $NetBSD: if_ti.c,v 1.90.18.2 2014/08/20 00:03:42 tls Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.90.18.1 2012/11/20 03:02:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.90.18.2 2014/08/20 00:03:42 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -483,9 +483,6 @@ static void
 ti_handle_events(struct ti_softc *sc)
 {
 	struct ti_event_desc	*e;
-
-	if (sc->ti_rdata->ti_event_ring == NULL)
-		return;
 
 	while (sc->ti_ev_saved_considx != sc->ti_ev_prodidx.ti_idx) {
 		e = &sc->ti_rdata->ti_event_ring[sc->ti_ev_saved_considx];
@@ -1009,9 +1006,6 @@ ti_free_tx_ring(struct ti_softc *sc)
 {
 	int		i;
 	struct txdmamap_pool_entry *dma;
-
-	if (sc->ti_rdata->ti_tx_ring == NULL)
-		return;
 
 	for (i = 0; i < TI_TX_RING_CNT; i++) {
 		if (sc->ti_cdata.ti_tx_chain[i] != NULL) {
@@ -1622,6 +1616,7 @@ ti_attach(device_t parent, device_t self, void *aux)
 	bus_dma_segment_t dmaseg;
 	int error, dmanseg, nolinear;
 	const struct ti_type		*t;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	t = ti_type_match(pa);
 	if (t == NULL) {
@@ -1664,7 +1659,7 @@ ti_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ti_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");

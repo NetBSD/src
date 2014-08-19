@@ -1,4 +1,4 @@
-/*	$NetBSD: mknetid.c,v 1.18 2011/08/30 21:10:28 joerg Exp $	*/
+/*	$NetBSD: mknetid.c,v 1.18.8.1 2014/08/20 00:05:19 tls Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mknetid.c,v 1.18 2011/08/30 21:10:28 joerg Exp $");
+__RCSID("$NetBSD: mknetid.c,v 1.18.8.1 2014/08/20 00:05:19 tls Exp $");
 #endif
 
 /*
@@ -384,7 +384,7 @@ print_hosts(const char *fname, const char *domain)
 {
 	FILE	*hfile;
 	size_t	 len;
-	char	*line, *p, *k, *u;
+	char	*line, *p, *u;
 
 	if ((hfile = fopen(fname, "r")) == NULL)
 		err(1, "%s", fname);
@@ -397,7 +397,7 @@ print_hosts(const char *fname, const char *domain)
 
 		p = line;
 		/* Find the key, replace trailing whitespace will <NUL> */
-		for (k = p; *p && isspace((unsigned char)*p) == 0; p++)
+		for (; *p && isspace((unsigned char)*p) == 0; p++)
 			;
 		while (*p && isspace((unsigned char)*p))
 			*p++ = '\0';

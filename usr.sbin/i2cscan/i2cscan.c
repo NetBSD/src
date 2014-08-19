@@ -1,7 +1,7 @@
-/* $NetBSD: i2cscan.c,v 1.3 2011/11/01 22:30:32 pgoyette Exp $ */
+/* $NetBSD: i2cscan.c,v 1.3.8.1 2014/08/20 00:05:08 tls Exp $ */
 
 /*-
- * Copyright (c) 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011, 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: i2cscan.c,v 1.3 2011/11/01 22:30:32 pgoyette Exp $");
+__RCSID("$NetBSD: i2cscan.c,v 1.3.8.1 2014/08/20 00:05:08 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -44,10 +44,13 @@ __RCSID("$NetBSD: i2cscan.c,v 1.3 2011/11/01 22:30:32 pgoyette Exp $");
 
 #include <dev/i2c/i2c_io.h>
 
+#define MODE_DEFAULT 0
+#define MODE_READ 1
+
 __dead static void
-usage(const char *pn)
+usage(void)
 {
-	fprintf(stderr, "usage: %s <i2cdev>\n", pn);
+	fprintf(stderr, "usage: %s [-r] <i2cdev>\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 
@@ -87,7 +90,7 @@ iic_smbus_receive_byte(int fd, i2c_addr_t addr, uint8_t *valp, int flags)
 }
 
 static void
-do_i2c_scan(const char *dname, int fd)
+do_i2c_scan(const char *dname, int fd, int mode)
 {
 	int error;
 	int found = 0;
@@ -133,7 +136,8 @@ do_i2c_scan(const char *dname, int fd)
 		printf("\r%s: scanning 0x%02x", dname, addr);
 		fflush(stdout);
 		if ((addr & 0xf8) == 0x30 ||
-		    (addr & 0xf0) == 0x50)
+		    (addr & 0xf0) == 0x50 ||
+		    mode == MODE_READ)
 			error = iic_smbus_receive_byte(fd, addr, &val, 0);
 		else
 			error = iic_smbus_quick_write(fd, addr, 0);
@@ -153,15 +157,37 @@ int
 main(int argc, char *argv[])
 {
 	int fd;
+	int ch, rflag;
+	int mode;
 
-	if (argc != 2)
-		usage(argv[0]);
+	setprogname(*argv);
 
-	fd = open(argv[1], O_RDWR);
+	rflag = 0;
+
+	while ((ch = getopt(argc, argv, "r")) != -1)
+		switch (ch) {
+		case 'r':
+			rflag = 1;
+			break;
+		default:
+			break;
+		}
+	argv += optind;
+	argc -= optind;
+
+	if (rflag)
+		mode = MODE_READ;
+	else
+		mode = MODE_DEFAULT;
+
+	if (*argv == NULL)
+		usage();
+
+	fd = open(*argv, O_RDWR);
 	if (fd == -1)
-		err(EXIT_FAILURE, "couldn't open %s", argv[1]);
+		err(EXIT_FAILURE, "couldn't open %s", *argv);
 
-	do_i2c_scan(argv[1], fd);
+	do_i2c_scan(*argv, fd, mode);
 
 	close(fd);
 

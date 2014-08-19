@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_dnsbl.c,v 1.1.1.2.10.1 2013/02/25 00:27:26 tls Exp $	*/
+/*	$NetBSD: postscreen_dnsbl.c,v 1.1.1.2.10.2 2014/08/19 23:59:44 tls Exp $	*/
 
 /*++
 /* NAME
@@ -141,7 +141,8 @@ typedef struct {
 } PSC_CALL_BACK_ENTRY;
 
 typedef struct {
-    const char *dnsbl;			/* one contributing DNSBL */
+    const char *dnsbl_name;		/* DNSBL with largest contribution */
+    int     dnsbl_weight;		/* weight of largest contribution */
     int     total;			/* combined blocklist score */
     int     refcount;			/* score reference count */
     int     pending_lookups;		/* nr of DNS requests in flight */
@@ -330,7 +331,7 @@ int     psc_dnsbl_retrieve(const char *client_addr, const char **dnsbl_name,
      * Reads are destructive.
      */
     result_score = score->total;
-    *dnsbl_name = score->dnsbl;
+    *dnsbl_name = score->dnsbl_name;
     score->refcount -= 1;
     if (score->refcount < 1) {
 	if (msg_verbose > 1)
@@ -400,8 +401,11 @@ static void psc_dnsbl_receive(int event, char *context)
 		if (site->byte_codes == 0
 		    || psc_dnsbl_match(site->byte_codes, reply_argv ? reply_argv :
 			 (reply_argv = argv_split(STR(reply_addr), " ")))) {
-		    if (score->dnsbl == 0)
-			score->dnsbl = head->safe_dnsbl;
+		    if (score->dnsbl_name == 0
+			|| score->dnsbl_weight < site->weight) {
+			score->dnsbl_name = head->safe_dnsbl;
+			score->dnsbl_weight = site->weight;
+		    }
 		    score->total += site->weight;
 		    if (msg_verbose > 1)
 			msg_info("%s: filter=\"%s\" weight=%d score=%d",
@@ -421,6 +425,9 @@ static void psc_dnsbl_receive(int event, char *context)
 	score->pending_lookups -= 1;
 	if (score->pending_lookups == 0)
 	    PSC_CALL_BACK_NOTIFY(score, PSC_NULL_EVENT);
+    } else if (event == EVENT_TIME) {
+	msg_warn("dnsblog reply timeout %ds for %s",
+		 DNSBLOG_TIMEOUT, (char *) vstream_context(stream));
     }
     /* Here, score may be a null pointer. */
     vstream_fclose(stream);
@@ -479,7 +486,8 @@ int     psc_dnsbl_request(const char *client_addr,
 	msg_info("%s: create blocklist score for %s", myname, client_addr);
     score = (PSC_DNSBL_SCORE *) mymalloc(sizeof(*score));
     score->request_id = request_count++;
-    score->dnsbl = 0;
+    score->dnsbl_name = 0;
+    score->dnsbl_weight = 0;
     score->total = 0;
     score->refcount = 1;
     score->pending_lookups = 0;
@@ -500,6 +508,9 @@ int     psc_dnsbl_request(const char *client_addr,
 	    continue;
 	}
 	stream = vstream_fdopen(fd, O_RDWR);
+	vstream_control(stream,
+			VSTREAM_CTL_CONTEXT, ht[0]->key,
+			VSTREAM_CTL_END);
 	attr_print(stream, ATTR_FLAG_NONE,
 		   ATTR_TYPE_STR, MAIL_ATTR_RBL_DOMAIN, ht[0]->key,
 		   ATTR_TYPE_STR, MAIL_ATTR_ACT_CLIENT_ADDR, client_addr,

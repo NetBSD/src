@@ -64,7 +64,8 @@ case $# in
 	    { # some versions of indent return garbage exit status -- gack!
 	    (indent $FLAGS <$i 2>.ind.$$ >$TMPF || test ! -s .ind.$$) >$TMPF &&
 	    # try a device full check
-	    echo >>$TMPF && (
+	    # echo >>$TMPF && 
+	    (
 		# ignore interrupts while we overwrite the original file
 		trap '' 1 2 3 15; cp $TMPF $i 
 	    ) && echo replaced; } || { echo replacement FAILED; exit 1; }

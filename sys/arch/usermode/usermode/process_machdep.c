@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.2 2009/10/21 16:07:00 snj Exp $ */
+/* $NetBSD: process_machdep.c,v 1.2.22.1 2014/08/20 00:03:27 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.2 2009/10/21 16:07:00 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.2.22.1 2014/08/20 00:03:27 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,7 +40,7 @@ process_read_regs(struct lwp *l, struct reg *regs)
 }
 
 int
-process_read_fpregs(struct lwp *l, struct fpreg *regs)
+process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 {
 	return 0;
 }
@@ -52,7 +52,7 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 }
 
 int
-process_write_fpregs(struct lwp *l, const struct fpreg *regs)
+process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 {
 	return 0;
 }

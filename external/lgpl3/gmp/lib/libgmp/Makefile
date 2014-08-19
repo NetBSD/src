@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.13.2.1 2013/02/25 00:27:34 tls Exp $
+#	$NetBSD: Makefile,v 1.13.2.2 2014/08/19 23:59:59 tls Exp $
 
 .include <bsd.init.mk>
 
 # We don't install gmp, just provide it for GCC.
 LIBISPRIVATE?=	yes
+
+GMP_MACHINE_ARCH?=	${MACHINE_ARCH:S/earmv4/arm/:C/armv[5-7]/arm/}
 
 .if ${LIBISPRIVATE} != "yes"
 INCS=         gmp.h
@@ -120,7 +122,7 @@ SCANF_SRCS =						\
 SRCS+= 									\
 	assert.c compat.c errno.c extract-dbl.c invalid.c memory.c	\
 	mp_bpl.c mp_clz_tab.c mp_dv_tab.c mp_minv_tab.c mp_get_fns.c	\
-	mp_set_fns.c rand.c randclr.c randdef.c randiset.c randlc2s.c 	\
+	mp_set_fns.c randclr.c randdef.c randiset.c randlc2s.c 	\
 	randlc2x.c randmt.c randmts.c rands.c randsd.c randsdui.c 	\
 	randbui.c randmui.c version.c nextprime.c
 
@@ -145,15 +147,19 @@ CLEANFILES+=	${_dir}_${_srcfile}
 
 .endfor
 
-CPPFLAGS+=	-I. -I${DIST} -I${.CURDIR}/arch/${MACHINE_ARCH} -D__GMP_WITHIN_GMP -DHAVE_CONFIG_H
+CPPFLAGS+=	-I. -I${DIST} -I${.CURDIR}/arch/${GMP_MACHINE_ARCH} \
+		-D__GMP_WITHIN_GMP -DHAVE_CONFIG_H
 
 WITHOUT_MAN=	yes
 
-DPSRCS= fac_ui.h fib_table.h fib_table.c mp_bases.h mp_bases.c perfsqr.h
+DPSRCS= fac_table.h fib_table.h fib_table.c jacobitab.h mp_bases.h \
+	mp_bases.c perfsqr.h trialdivtab.h
 
-fac_ui.h: gen-fac_ui.c
-	${HOST_CC} -o ${.OBJDIR}/gen-fac_ui ${.ALLSRC}
-	${.OBJDIR}/gen-fac_ui ${GMP_LIMB_BITS} 0 > ${.OBJDIR}/fac_ui.h
+gen-fac: gen-fac.c
+	${HOST_CC} -o ${.OBJDIR}/gen-fac ${.ALLSRC}
+
+fac_table.h: gen-fac
+	${.OBJDIR}/gen-fac ${GMP_LIMB_BITS} 0 > ${.OBJDIR}/fac_table.h
 
 gen-fib: gen-fib.c
 	${HOST_CC} -o ${.OBJDIR}/gen-fib ${.ALLSRC}
@@ -173,29 +179,51 @@ mp_bases.h: gen-bases
 mp_bases.c: gen-bases
 	${.OBJDIR}/gen-bases table ${GMP_LIMB_BITS} 0 > ${.OBJDIR}/mp_bases.c
 
+gen-jacobitab: gen-jacobitab.c
+	${HOST_CC} -o ${.OBJDIR}/gen-jacobitab ${.ALLSRC} -lm
+
+jacobitab.h: gen-jacobitab
+	${.OBJDIR}/gen-jacobitab > ${.OBJDIR}/jacobitab.h
+
 perfsqr.h: gen-psqr.c
 	${HOST_CC} -o ${.OBJDIR}/gen-psqr ${.ALLSRC}
 	${.OBJDIR}/gen-psqr ${GMP_LIMB_BITS} 0 > ${.OBJDIR}/perfsqr.h
 
-CLEANFILES+=	${DPSRCS} gen-fac_ui gen-fib gen-bases gen-psqr gen-trialdivtab
+gen-trialdivtab: gen-trialdivtab.c
+	${HOST_CC} -o ${.OBJDIR}/gen-trialdivtab ${.ALLSRC} -lm
 
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc"
+trialdiv.c: trialdivtab.h
+trialdivtab.h: gen-trialdivtab Makefile
+	${.OBJDIR}/gen-trialdivtab $(GMP_LIMB_BITS) 8000 > ${.OBJDIR}/trialdivtab.h
+
+CLEANFILES+=	${DPSRCS} gen-fac gen-fib gen-bases gen-jacobitab \
+		gen-psqr gen-trialdivtab
+
+.include "${.CURDIR}/arch/${GMP_MACHINE_ARCH}/Makefile.inc"
+
+# Makefile.inc must define GMP_LIMB_BITS.
+.if !defined(GMP_LIMB_BITS)
+.BEGIN:
+	@echo "GMP_LIMB_BITS not defined!"
+	false
+.endif
 
 # XXX stuff looks for "../config.m4"
 dummy:
 	mkdir dummy
-${.OBJDIR}/config.m4: ${.CURDIR}/arch/${MACHINE_ARCH}/config.m4
-	cp ${.CURDIR}/arch/${MACHINE_ARCH}/config.m4 ${.OBJDIR}/config.m4
+${.OBJDIR}/config.m4: ${.CURDIR}/arch/${GMP_MACHINE_ARCH}/config.m4
+	rm -f ${.OBJDIR}/config.m4 && cp ${.CURDIR}/arch/${GMP_MACHINE_ARCH}/config.m4 ${.OBJDIR}/config.m4
 
 CLEANFILES+=	config.m4
 clean: cleandummy
 cleandummy: .PHONY
 	-rmdir dummy
 
-BUILD_S_INCS=	-I${.CURDIR} -I${.OBJDIR}/dummy -I${DIST}/ -I${DIST}/mpn
+BUILD_S_INCS=	-I${.CURDIR} -I${.OBJDIR}/dummy -I${DIST}/ -I${DIST}/mpn \
+		-I${.OBJDIR}
 
 .for _build _src in ${ASM_SRCS_LIST}
-${_build:R}.s: Makefile dummy ${.OBJDIR}/config.m4
+${_build:R}.s: Makefile dummy ${.OBJDIR}/config.m4 ${DIST}/${_src}
 	${TOOL_M4} -DCONFIG_TOP_SRCDIR=${DIST} ${BUILD_S_INCS} \
 		${M4FLAGS} ${M4FLAGS.${.TARGET:R}} \
 		-DOPERATION_${.TARGET:R} ${DIST}/${_src} > ${.TARGET}
@@ -217,13 +245,17 @@ CLEANFILES+=	mpn_${_build}
 .include <bsd.lib.mk>
 
 .PATH:	${DIST} \
+	${DIST}/rand \
 	${DIST}/mpn/generic \
-	${.CURDIR}/arch/${MACHINE_ARCH} \
+	${.CURDIR}/arch/${GMP_MACHINE_ARCH} \
 	${DIST}/mpf \
 	${DIST}/mpz
 
 # Don't warn about functions which cannot be stack smash protected as
 # there are a lot of them.
 COPTS += -Wno-stack-protector
+.if !empty(GMP_MACHINE_ARCH:M*arm*)
+COPTS += -marm
+.endif
 
-CWARNFLAGS.clang+=	-Wno-unused-value -Wno-tautological-compare
+CWARNFLAGS.clang+=	-Wno-unused-value -Wno-tautological-compare -Wno-parentheses

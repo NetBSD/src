@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atw_pci.c,v 1.25 2011/07/26 20:51:24 dyoung Exp $	*/
+/*	$NetBSD: if_atw_pci.c,v 1.25.12.1 2014/08/20 00:03:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.25 2011/07/26 20:51:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.25.12.1 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,6 +175,7 @@ atw_pci_attach(device_t parent, device_t self, void *aux)
 	int ioh_valid, memh_valid;
 	const struct atw_pci_product *app;
 	int error;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 
@@ -254,7 +255,7 @@ atw_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "unable to map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, psc->psc_ih);
+	intrstr = pci_intr_string(pc, psc->psc_ih, intrbuf, sizeof(intrbuf));
 	psc->psc_intrcookie = pci_intr_establish(pc, psc->psc_ih, IPL_NET,
 	    atw_intr, sc);
 	if (psc->psc_intrcookie == NULL) {

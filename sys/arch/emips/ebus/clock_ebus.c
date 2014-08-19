@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_ebus.c,v 1.6 2011/06/12 04:44:27 tsutsui Exp $	*/
+/*	$NetBSD: clock_ebus.c,v 1.6.12.1 2014/08/20 00:02:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: clock_ebus.c,v 1.6 2011/06/12 04:44:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_ebus.c,v 1.6.12.1 2014/08/20 00:02:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -117,8 +117,6 @@ __eclock_init(device_t dev)
  * NB: At 10MHz, our 64bits FreeRunning is worth 58,426 years.
  */
 
-extern u_quad_t __qdivrem(u_quad_t uq, u_quad_t vq, u_quad_t *arq);
-
 
 static int
 eclock_gettime(struct todr_chip_handle *todr, struct timeval *tv)
@@ -140,14 +138,14 @@ eclock_gettime(struct todr_chip_handle *todr, struct timeval *tv)
 	/*
 	 * Big fight with the compiler here, it gets very confused by 64bits.
 	 */
-#if 0
+#if 1
 	/*
 	 * This is in C: 
 	 */
 	{
 		uint64_t freeS, freeU;
-		freeS = free / (10 * 1000 * 1000);
-		freeU = free % (10 * 1000 * 1000);
+		freeS = free / 10000000UL;
+		freeU = free % 10000000UL;
 		tv->tv_sec  = freeS;
 		tv->tv_usec = freeU / 10;
 #if 0
@@ -260,7 +258,7 @@ eclock_ebus_intr(void *cookie, void *f)
 	struct eclock_softc *sc = cookie;
 	struct _Tc *tc = sc->sc_dp;
 	struct clockframe *cf = f;
-	volatile uint32_t x;
+	volatile uint32_t x __unused;
 
 	x = tc->Control;
 	tc->DownCounterHigh = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.55.14.1 2012/11/20 03:02:14 tls Exp $	*/
+/*	$NetBSD: cz.c,v 1.55.14.2 2014/08/20 00:03:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.55.14.1 2012/11/20 03:02:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.55.14.2 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,6 +291,7 @@ cz_attach(device_t parent, device_t self, void *aux)
 	struct cztty_softc *sc;
 	struct tty *tp;
 	int i;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	aprint_naive(": Multi-port serial controller\n");
 	aprint_normal(": Cyclades-Z multiport serial\n");
@@ -342,7 +343,7 @@ cz_attach(device_t parent, device_t self, void *aux)
 		cz->cz_ih = NULL;
 		goto polling_mode;
 	} else {
-		intrstr = pci_intr_string(pa->pa_pc, ih);
+		intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 		cz->cz_ih = pci_intr_establish(pa->pa_pc, ih, IPL_TTY,
 		    cz_intr, cz);
 	}
@@ -685,7 +686,7 @@ static int
 cz_intr(void *arg)
 {
 	int	rval = 0;
-	u_int	command, channel, param;
+	u_int	command, channel;
 	struct	cz_softc *cz = arg;
 	struct	cztty_softc *sc;
 	struct	tty *tp;
@@ -693,7 +694,8 @@ cz_intr(void *arg)
 	while ((command = (CZ_PLX_READ(cz, PLX_LOCAL_PCI_DOORBELL) & 0xff))) {
 		rval = 1;
 		channel = CZ_FWCTL_READ(cz, BRDCTL_FWCMD_CHANNEL);
-		param = CZ_FWCTL_READ(cz, BRDCTL_FWCMD_PARAM);
+		/* XXX - is this needed? */
+		(void)CZ_FWCTL_READ(cz, BRDCTL_FWCMD_PARAM);
 
 		/* now clear this interrupt, posslibly enabling another */
 		CZ_PLX_WRITE(cz, PLX_LOCAL_PCI_DOORBELL, command);
@@ -1534,8 +1536,18 @@ cztty_diag(void *arg)
 }
 
 const struct cdevsw cz_cdevsw = {
-	czttyopen, czttyclose, czttyread, czttywrite, czttyioctl,
-	    czttystop, czttytty, czttypoll, nommap, ttykqfilter, D_TTY
+	.d_open = czttyopen,
+	.d_close = czttyclose,
+	.d_read = czttyread,
+	.d_write = czttywrite,
+	.d_ioctl = czttyioctl,
+	.d_stop = czttystop,
+	.d_tty = czttytty,
+	.d_poll = czttypoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 /*

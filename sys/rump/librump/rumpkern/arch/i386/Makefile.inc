@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.6 2010/06/16 11:45:21 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.6.18.1 2014/08/20 00:04:41 tls Exp $
 #
 
-SRCS+=	rumpcpu.c rumpspl.c cpu_counter.c spinlock.c pmap_x86.c
+.include "${RUMPTOP}/librump/rumpkern/arch/x86/Makefile.inc"
 
 .PATH:	${RUMPTOP}/../arch/i386/i386
 SRCS+=	kobj_machdep.c

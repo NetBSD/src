@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33.2.1 2012/11/20 03:01:52 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33.2.2 2014/08/20 00:03:30 tls Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33.2.1 2012/11/20 03:01:52 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33.2.2 2014/08/20 00:03:30 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -132,13 +132,16 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33.2.1 2012/11/20 03:01:52 tls Exp $")
 #include <sys/reboot.h>
 #include <sys/termios.h>
 #include <sys/boot_flag.h>
+#include <sys/cpu.h>
+#include <sys/conf.h>
+#include <sys/queue.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
-#include <sys/conf.h>
-#include <sys/queue.h>
-#include <sys/bus.h>
+
+#include <dev/ic/comreg.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
@@ -149,12 +152,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33.2.1 2012/11/20 03:01:52 tls Exp $")
 
 #include <machine/bootconfig.h>
 #include <machine/bootinfo.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
 #ifdef KLOADER
 #include <machine/kloader.h>
 #endif
 
+#include <arm/locore.h>
 #include <arm/undefined.h>
 #include <arm/arm32/machdep.h>
 
@@ -171,8 +173,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33.2.1 2012/11/20 03:01:52 tls Exp $")
 #include <zaurus/dev/scoopreg.h>
 #include <zaurus/dev/zlcdvar.h>
 #include <zaurus/dev/w100lcdvar.h>
-
-#include <dev/ic/comreg.h>
 
 #if 0	/* XXX */
 #include "apm.h"

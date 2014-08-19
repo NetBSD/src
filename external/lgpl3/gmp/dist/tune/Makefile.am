@@ -1,6 +1,7 @@
 ## Process this file with automake to generate Makefile.in
 
-# Copyright 2000, 2001, 2002, 2003, 2005 Free Software Foundation, Inc.
+# Copyright 2000, 2001, 2002, 2003, 2005, 2006, 2007, 2008, 2009,
+# 2010, 2011 Free Software Foundation, Inc.
 #
 # This file is part of the GNU MP Library.
 #
@@ -43,8 +44,9 @@ libspeed_la_SOURCES =							\
   common.c divrem1div.c divrem1inv.c divrem2div.c divrem2inv.c		\
   freq.c								\
   gcdext_single.c gcdext_double.c gcdextod.c gcdextos.c			\
-  jacbase1.c jacbase2.c jacbase3.c					\
-  mod_1_div.c mod_1_inv.c modlinv.c					\
+  hgcd_lehmer.c hgcd_appr_lehmer.c hgcd_reduce_1.c hgcd_reduce_2.c	\
+  jacbase1.c jacbase2.c jacbase3.c jacbase4.c				\
+  mod_1_div.c mod_1_inv.c mod_1_1-1.c mod_1_1-2.c modlinv.c		\
   noop.c powm_mod.c powm_redc.c pre_divrem_1.c				\
   set_strb.c set_strs.c set_strp.c time.c
 
@@ -68,10 +70,10 @@ $(top_builddir)/tests/libtests.la:
 # program.  This can always be forced with "make speed_LDFLAGS=-all-static
 # ..." if desired, see tune/README.
 
-EXTRA_PROGRAMS = speed speed-dynamic speed-ext tuneup
+EXTRA_PROGRAMS = speed speed-dynamic speed-ext tuneup tune-gcd-p
 
 DEPENDENCIES = libspeed.la
-LDADD = $(DEPENDENCIES)
+LDADD = $(DEPENDENCIES) $(TUNE_LIBS)
 
 speed_SOURCES = speed.c
 speed_LDFLAGS = $(STATIC)
@@ -82,10 +84,14 @@ speed_ext_SOURCES = speed-ext.c
 speed_ext_LDFLAGS = $(STATIC)
 
 tuneup_SOURCES = tuneup.c
-nodist_tuneup_SOURCES = sqr_basecase.c $(TUNE_MPN_SRCS)
+nodist_tuneup_SOURCES = sqr_basecase.c fac_ui.c $(TUNE_MPN_SRCS)
 tuneup_DEPENDENCIES = $(TUNE_SQR_OBJ) libspeed.la
-tuneup_LDADD = $(tuneup_DEPENDENCIES)
+tuneup_LDADD = $(tuneup_DEPENDENCIES) $(TUNE_LIBS)
 tuneup_LDFLAGS = $(STATIC)
+
+tune_gcd_p_SOURCES = tune-gcd-p.c
+tune_gcd_p_DEPENDENCIES = ../mpn/gcd.c
+tune_gcd_p_LDFLAGS = $(STATIC)
 
 
 tune:
@@ -96,7 +102,7 @@ allprogs: $(EXTRA_PROGRAMS)
 
 # $(MANY_CLEAN) and $(MANY_DISTCLEAN) are hooks for many.pl
 CLEANFILES = $(EXTRA_PROGRAMS) $(EXTRA_LTLIBRARIES) \
-	$(TUNE_MPN_SRCS) sqr_asm.asm \
+	$(TUNE_MPN_SRCS) fac_ui.c sqr_asm.asm \
 	stg.gnuplot stg.data \
 	mtg.gnuplot mtg.data \
 	fibg.gnuplot fibg.data \
@@ -122,11 +128,14 @@ DISTCLEANFILES = sqr_basecase.c  $(MANY_DISTCLEAN)
 # recompiled object will be rebuilt if that file changes.
 
 TUNE_MPN_SRCS = $(TUNE_MPN_SRCS_BASIC) divrem_1.c mod_1.c
-TUNE_MPN_SRCS_BASIC = bdiv_q.c bdiv_qr.c				\
+TUNE_MPN_SRCS_BASIC = div_qr_2.c bdiv_q.c bdiv_qr.c			\
   dcpi1_div_qr.c dcpi1_divappr_q.c dcpi1_bdiv_qr.c dcpi1_bdiv_q.c	\
   invertappr.c invert.c binvert.c divrem_2.c gcd.c gcdext.c		\
-  get_str.c set_str.c matrix22_mul.c hgcd.c mul_n.c sqr.c		\
+  get_str.c set_str.c matrix22_mul.c					\
+  hgcd.c hgcd_appr.c hgcd_reduce.c					\
+  mul_n.c sqr.c powm_sec.c						\
   mullo_n.c mul_fft.c mul.c tdiv_qr.c mulmod_bnm1.c sqrmod_bnm1.c	\
+  mulmid.c mulmid_n.c toom42_mulmid.c					\
   nussbaumer_mul.c toom6h_mul.c toom8h_mul.c toom6_sqr.c toom8_sqr.c	\
   toom22_mul.c toom2_sqr.c toom33_mul.c toom3_sqr.c toom44_mul.c toom4_sqr.c
 
@@ -150,5 +159,12 @@ sqr_asm.asm: $(top_builddir)/mpn/sqr_basecase.asm
 	echo 'define(SQR_TOOM2_THRESHOLD_OVERRIDE,SQR_TOOM2_THRESHOLD_MAX)' >sqr_asm.asm
 	echo 'include(../mpn/sqr_basecase.asm)' >>sqr_asm.asm
 
+# FIXME: Should it depend on $(top_builddir)/fac_ui.h too?
+fac_ui.c: $(top_builddir)/mpz/fac_ui.c
+	echo "#define TUNE_PROGRAM_BUILD 1"          >fac_ui.c
+	echo "#define __gmpz_fac_ui mpz_fac_ui_tune" >>fac_ui.c
+	echo "#define __gmpz_oddfac_1 mpz_oddfac_1_tune" >>fac_ui.c
+	echo "#include \"mpz/oddfac_1.c\""           >>fac_ui.c
+	echo "#include \"mpz/fac_ui.c\""             >>fac_ui.c
 
 include ../mpn/Makeasm.am

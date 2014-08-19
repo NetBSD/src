@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_lcd.c,v 1.14 2011/07/01 20:38:17 dyoung Exp $ */
+/* $NetBSD: g42xxeb_lcd.c,v 1.14.12.1 2014/08/20 00:02:54 tls Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002, 2005 Genetec corp.
@@ -126,8 +126,18 @@ dev_type_close(lcdclose);
 dev_type_ioctl(lcdioctl);
 dev_type_mmap(lcdmmap);
 const struct cdevsw lcd_cdevsw = {
-	lcdopen, lcdclose, noread, nowrite,
-	lcdioctl, nostop, notty, nopoll, lcdmmap, nokqfilter, D_TTY
+	.d_open = lcdopen,
+	.d_close = lcdclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = lcdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = lcdmmap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 #endif

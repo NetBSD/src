@@ -6,7 +6,7 @@
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free
- * Software Foundation; either version 2 of the License, or (at your option)
+ * Software Foundation; either version 3 of the License, or (at your option)
  * any later version.
  * 
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -15,13 +15,13 @@
  * more details.
  * 
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 675
- * Mass Ave, Cambridge, MA 02139, USA.
+ * this program; if not, see <http://www.gnu.org/licenses/>.
  * 
  */
 
 /* The control space devices */
 
+#include "config.h"
 #include <sys/types.h>
 #include <stdio.h>
 #include <string.h>
@@ -256,52 +256,52 @@ int erareg;
 
 /* Forward declarations */
 
-static void	decode_ersr PARAMS ((void));
+static void	decode_ersr (void);
 #ifdef ERRINJ
-static void	iucomperr PARAMS ((void));
+static void	iucomperr (void);
 #endif
-static void	mecparerror PARAMS ((void));
-static void	decode_memcfg PARAMS ((void));
-static void	decode_wcr PARAMS ((void));
-static void	decode_mcr PARAMS ((void));
-static void	close_port PARAMS ((void));
-static void	mec_reset PARAMS ((void));
-static void	mec_intack PARAMS ((int32 level));
-static void	chk_irq PARAMS ((void));
-static void	mec_irq PARAMS ((int32 level));
-static void	set_sfsr PARAMS ((uint32 fault, uint32 addr,
-				  uint32 asi, uint32 read));
-static int32	mec_read PARAMS ((uint32 addr, uint32 asi, uint32 *data));
-static int	mec_write PARAMS ((uint32 addr, uint32 data));
-static void	port_init PARAMS ((void));
-static uint32	read_uart PARAMS ((uint32 addr));
-static void	write_uart PARAMS ((uint32 addr, uint32 data));
-static void	flush_uart PARAMS ((void));
-static void	uarta_tx PARAMS ((void));
-static void	uartb_tx PARAMS ((void));
-static void	uart_rx PARAMS ((caddr_t arg));
-static void	uart_intr PARAMS ((caddr_t arg));
-static void	uart_irq_start PARAMS ((void));
-static void	wdog_intr PARAMS ((caddr_t arg));
-static void	wdog_start PARAMS ((void));
-static void	rtc_intr PARAMS ((caddr_t arg));
-static void	rtc_start PARAMS ((void));
-static uint32	rtc_counter_read PARAMS ((void));
-static void	rtc_scaler_set PARAMS ((uint32 val));
-static void	rtc_reload_set PARAMS ((uint32 val));
-static void	gpt_intr PARAMS ((caddr_t arg));
-static void	gpt_start PARAMS ((void));
-static uint32	gpt_counter_read PARAMS ((void));
-static void	gpt_scaler_set PARAMS ((uint32 val));
-static void	gpt_reload_set PARAMS ((uint32 val));
-static void	timer_ctrl PARAMS ((uint32 val));
+static void	mecparerror (void);
+static void	decode_memcfg (void);
+static void	decode_wcr (void);
+static void	decode_mcr (void);
+static void	close_port (void);
+static void	mec_reset (void);
+static void	mec_intack (int32 level);
+static void	chk_irq (void);
+static void	mec_irq (int32 level);
+static void	set_sfsr (uint32 fault, uint32 addr,
+			  uint32 asi, uint32 read);
+static int32	mec_read (uint32 addr, uint32 asi, uint32 *data);
+static int	mec_write (uint32 addr, uint32 data);
+static void	port_init (void);
+static uint32	read_uart (uint32 addr);
+static void	write_uart (uint32 addr, uint32 data);
+static void	flush_uart (void);
+static void	uarta_tx (void);
+static void	uartb_tx (void);
+static void	uart_rx (caddr_t arg);
+static void	uart_intr (caddr_t arg);
+static void	uart_irq_start (void);
+static void	wdog_intr (caddr_t arg);
+static void	wdog_start (void);
+static void	rtc_intr (caddr_t arg);
+static void	rtc_start (void);
+static uint32	rtc_counter_read (void);
+static void	rtc_scaler_set (uint32 val);
+static void	rtc_reload_set (uint32 val);
+static void	gpt_intr (caddr_t arg);
+static void	gpt_start (void);
+static uint32	gpt_counter_read (void);
+static void	gpt_scaler_set (uint32 val);
+static void	gpt_reload_set (uint32 val);
+static void	timer_ctrl (uint32 val);
 static unsigned char *
-		get_mem_ptr PARAMS ((uint32 addr, uint32 size));
+		get_mem_ptr (uint32 addr, uint32 size);
 
-static void	fetch_bytes PARAMS ((int asi, unsigned char *mem,
-				     uint32 *data, int sz));
+static void	fetch_bytes (int asi, unsigned char *mem,
+			     uint32 *data, int sz);
 
-static void	store_bytes PARAMS ((unsigned char *mem, uint32 *data, int sz));
+static void	store_bytes (unsigned char *mem, uint32 *data, int sz);
 
 extern int	ext_irl;
 

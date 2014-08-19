@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.39 2011/08/29 20:41:07 joerg Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.39.8.1 2014/08/20 00:02:23 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.39 2011/08/29 20:41:07 joerg Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.39.8.1 2014/08/20 00:02:23 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,7 @@ usage(void)
 {
 
 	syslog(LOG_ERR,
-    "Usage: %s [-dln] [-g group] [-p pathsep] [-s directory] [-u user] [directory ...]",
+    "Usage: %s [-cdln] [-g group] [-p pathsep] [-s directory] [-u user] [directory ...]",
 		    getprogname());
 	exit(1);
 }
@@ -174,7 +174,7 @@ main(int argc, char *argv[])
 
 	while ((ch = getopt(argc, argv, "cdg:lnp:s:u:")) != -1)
 		switch (ch) {
-		case 'w':
+		case 'c':
 			unrestricted_writes = 1;
 			break;
 
@@ -419,8 +419,8 @@ main(int argc, char *argv[])
 }
 
 static int
-blk_handler(struct tftphdr *tp, char *opt, char *val, char *ack,
-	    int *ackl, int *ec)
+blk_handler(struct tftphdr *tp, const char *val, char *ack, size_t asize,
+    size_t *ackl, int *ecode)
 {
 	unsigned long bsize;
 	char *endp;
@@ -438,7 +438,8 @@ blk_handler(struct tftphdr *tp, char *opt, char *val, char *ack,
 			verifyhost((struct sockaddr *)&from),
 			tp->th_opcode == WRQ ? "write" : "read",
 			tp->th_stuff, val);
-		return 0;
+		*ecode = EBADOP;
+		return -1;
 	}
 	if (bsize < 8 || bsize > 65464) {
 		syslog(LOG_NOTICE, "%s: %s request for %s: "
@@ -446,21 +447,25 @@ blk_handler(struct tftphdr *tp, char *opt, char *val, char *ack,
 			verifyhost((struct sockaddr *)&from),
 			tp->th_opcode == WRQ ? "write" : "read",
 			tp->th_stuff, val);
-		return 0;
+		*ecode = EBADOP;
+		return -1;
 	}
 
 	tftp_blksize = bsize;
-	strcpy(ack + *ackl, "blksize");
-	*ackl += 8;
-	l = sprintf(ack + *ackl, "%lu", bsize);
-	*ackl += l + 1;
+	if (asize > *ackl && (l = snprintf(ack + *ackl, asize - *ackl,
+	    "blksize%c%lu%c", 0, bsize, 0)) > 0) {
+		*ackl += l;
+	} else {
+		*ecode = EBADOP;
+		return -1;
+	}
 
 	return 0;
 }
 
 static int
-timeout_handler(struct tftphdr *tp, char *opt, char *val, char *ack,
-		int *ackl, int *ec)
+timeout_handler(struct tftphdr *tp, const char *val, char *ack, size_t asize,
+		size_t *ackl, int *ecode)
 {
 	unsigned long tout;
 	char *endp;
@@ -474,7 +479,8 @@ timeout_handler(struct tftphdr *tp, char *opt, char *val, char *ack,
 			verifyhost((struct sockaddr *)&from),
 			tp->th_opcode == WRQ ? "write" : "read",
 			tp->th_stuff, val);
-		return 0;
+		*ecode = EBADOP;
+		return -1;
 	}
 	if (tout < 1 || tout > 255) {
 		syslog(LOG_NOTICE, "%s: %s request for %s: "
@@ -486,11 +492,11 @@ timeout_handler(struct tftphdr *tp, char *opt, char *val, char *ack,
 	}
 
 	rexmtval = tout;
-	strcpy(ack + *ackl, "timeout");
-	*ackl += 8;
-	l = sprintf(ack + *ackl, "%lu", tout);
-	*ackl += l + 1;
-
+	if (asize > *ackl && (l = snprintf(ack + *ackl, asize - *ackl,
+	    "timeout%c%lu%c", 0, tout, 0)) > 0)
+		*ackl += l;
+	else
+		return -1;
 	/*
 	 * Arbitrarily pick a maximum timeout on a request to 3
 	 * retransmissions if the interval timeout is more than
@@ -507,8 +513,8 @@ timeout_handler(struct tftphdr *tp, char *opt, char *val, char *ack,
 }
 
 static int
-tsize_handler(struct tftphdr *tp, char *opt, char *val, char *ack,
-	      int *ackl, int *ec)
+tsize_handler(struct tftphdr *tp, const char *val, char *ack, size_t asize,
+    size_t *ackl, int *ecode)
 {
 	unsigned long fsize;
 	char *endp;
@@ -527,7 +533,8 @@ tsize_handler(struct tftphdr *tp, char *opt, char *val, char *ack,
 			verifyhost((struct sockaddr *)&from),
 			tp->th_opcode == WRQ ? "write" : "read",
 			tp->th_stuff, val);
-		return 0;
+		*ecode = EBADOP;
+		return -1;
 	}
 	if (fsize > (unsigned long) 65535 * 65464) {
 		syslog(LOG_NOTICE, "%s: %s request for %s: "
@@ -535,7 +542,8 @@ tsize_handler(struct tftphdr *tp, char *opt, char *val, char *ack,
 			verifyhost((struct sockaddr *)&from),
 			tp->th_opcode == WRQ ? "write" : "read",
 			tp->th_stuff, val);
-		return 0;
+		*ecode = EBADOP;
+		return -1;
 	}
 
 	tftp_opt_tsize = 1;
@@ -550,8 +558,8 @@ tsize_handler(struct tftphdr *tp, char *opt, char *val, char *ack,
 
 static const struct tftp_options {
 	const char *o_name;
-	int (*o_handler)(struct tftphdr *, char *, char *, char *,
-			 int *, int *);
+	int (*o_handler)(struct tftphdr *, const char *, char *, size_t,
+			 size_t *, int *);
 } options[] = {
 	{ "blksize", blk_handler },
 	{ "timeout", timeout_handler },
@@ -564,12 +572,12 @@ static const struct tftp_options {
  * recognize in oackbuf.
  */
 static int
-get_options(struct tftphdr *tp, char *cp, int size, char *ackb,
-    int *alen, int *err)
+get_options(struct tftphdr *tp, char *cp, int size, char *ackb, size_t asize,
+    size_t *alen, int *ecode)
 {
 	const struct tftp_options *op;
 	char *option, *value, *endp;
-	int r, rv=0, ec=0;
+	int r, rv=0;
 
 	endp = cp + size;
 	while (cp < endp) {
@@ -597,7 +605,7 @@ get_options(struct tftphdr *tp, char *cp, int size, char *ackb,
 				break;
 		}
 		if (op->o_name) {
-			r = op->o_handler(tp, option, value, ackb, alen, &ec);
+			r = op->o_handler(tp, value, ackb, asize, alen, ecode);
 			if (r < 0) {
 				rv = -1;
 				break;
@@ -605,9 +613,6 @@ get_options(struct tftphdr *tp, char *cp, int size, char *ackb,
 			rv++;
 		} /* else ignore unknown options */
 	}
-	
-	if (rv < 0)
-		*err = ec;
 
 	return rv;
 }
@@ -621,7 +626,8 @@ tftp(struct tftphdr *tp, int size)
 	struct formats *pf;
 	char	*cp;
 	char	*filename, *mode;
-	int	 first, ecode, alen, etftp = 0, r;
+	int	 first, ecode, etftp = 0, r;
+	size_t alen;
 
 	ecode = 0;	/* XXX gcc */
 	first = 1;
@@ -666,7 +672,8 @@ again:
 	size -= (++cp - (char *) tp);
 	if (size > 0 && *cp) {
 		alen = 2; /* Skip over opcode */
-		r = get_options(tp, cp, size, oackbuf, &alen, &ecode);
+		r = get_options(tp, cp, size, oackbuf, sizeof(oackbuf),
+		    &alen, &ecode);
 		if (r > 0) {
 			etftp = 1;
 		} else if (r < 0) {
@@ -708,10 +715,11 @@ again:
 		if (tftp_opt_tsize) {
 			int l;
 
-			strcpy(oackbuf + alen, "tsize");
-			alen += 6;
-			l = sprintf(oackbuf + alen, "%u", tftp_tsize);
-			alen += l + 1;
+			if (sizeof(oackbuf) > alen &&
+			    (l = snprintf(oackbuf + alen,
+			    sizeof(oackbuf) - alen, "tsize%c%u%c", 0,
+			    tftp_tsize, 0)) > 0)
+				alen += l;
 		}
 		oack_h = (struct tftphdr *) oackbuf;
 		oack_h->th_opcode = htons(OACK);

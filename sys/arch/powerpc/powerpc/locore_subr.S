@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.49 2012/08/01 20:35:52 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.49.2.1 2014/08/20 00:03:20 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -304,7 +304,7 @@ ENTRY_NOPROFILE(emptyidlespin)
 	twnei	%r4,IPL_NONE
 	mfmsr	%r5
 	andi.	%r5,%r5,PSL_EE@l
-	tweqi	%r5,PSL_EE@l
+	tweqi	%r5,0
 #endif
 	blr				/* CPUINIT needs a raw blr */
 
@@ -344,9 +344,9 @@ _ENTRY(softint_fast_dispatch)
 	 */
 	mflr	%r0
 	streg	%r0, CFRAME_LR(%r1)
-	stptru	%sp, -CALLFRAMELEN(%sp)
+	stptru	%r1, -CALLFRAMELEN(%r1)
 	mfmsr	%r0
-	streg	%r0, CFRAME_R31(%sp)
+	streg	%r0, CFRAME_R31(%r1)
 
 	/*
 	 * We need a 2nd callframe from which cpu_switchto will consume
@@ -355,16 +355,12 @@ _ENTRY(softint_fast_dispatch)
 	lis	%r8, _C_LABEL(softint_cleanup)@ha
 	addi	%r8, %r8, _C_LABEL(softint_cleanup)@l
 	streg	%r8, CFRAME_LR(%r1)
-	stptru	%sp, -CALLFRAMELEN(%sp)
-	streg	%r30, CFRAME_R30(%sp)
-	streg	%r31, CFRAME_R31(%sp)
+	stptru	%r1, -CALLFRAMELEN(%r1)
+	streg	%r30, CFRAME_R30(%r1)
+	streg	%r31, CFRAME_R31(%r1)
 
 	GET_CPUINFO(%r7)
-#ifdef PPC_BOOKE
-	mfsprg2	%r30
-#else
-	ldptr	%r30, CI_CURLWP(%r7)
-#endif /* PPC_BOOKE */
+	mr	%r30, %r13		/* curlwp is now in r13 */
 
 #if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	mfsr	%r10,USER_SR		/* save USER_SR for copyin/copyout */
@@ -512,8 +508,8 @@ _ENTRY(cpu_lwp_bootstrap)
 	blrl				/* jump indirect to r31 */
 	lwz	%r31, FRAME_SRR1(%r1)	/* trapexit wants srr1 in r31 */
 #ifdef PPC_BOOKE
-	lis	%r30, 0xbeeffeed@ha
-	addi	%r30, %r30, 0xbeeffeed@l
+	lis	%r30, 0xbeeffeed@h
+	ori	%r30, %r30, 0xbeeffeed@l
 	andis.	%r0,%r31,PSL_CE@h
 	tweqi	%r0,0
 	andi.	%r0,%r31,PSL_DE@l

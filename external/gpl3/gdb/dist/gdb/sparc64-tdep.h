@@ -1,7 +1,6 @@
 /* Target-dependent code for UltraSPARC.
 
-   Copyright (C) 2003, 2004, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -104,15 +103,18 @@ extern void sparc64_supply_gregset (const struct sparc_gregset *gregset,
 extern void sparc64_collect_gregset (const struct sparc_gregset *gregset,
 				     const struct regcache *regcache,
 				     int regnum, void *gregs);
-extern void sparc64_supply_fpregset (struct regcache *regcache,
+extern void sparc64_supply_fpregset (const struct sparc_fpregset *fpregset,
+				     struct regcache *regcache,
 				     int regnum, const void *fpregs);
-extern void sparc64_collect_fpregset (const struct regcache *regcache,
+extern void sparc64_collect_fpregset (const struct sparc_fpregset *fpregset,
+				      const struct regcache *regcache,
 				      int regnum, void *fpregs);
 
 /* Functions and variables exported from sparc64-sol2-tdep.c.  */
 
 /* Register offsets for Solaris 2.  */
 extern const struct sparc_gregset sparc64_sol2_gregset;
+extern const struct sparc_fpregset sparc64_sol2_fpregset;
 
 extern void sparc64_sol2_init_abi (struct gdbarch_info info,
 				   struct gdbarch *gdbarch);
@@ -130,5 +132,7 @@ extern const struct sparc_gregset sparc64nbsd_gregset;
 extern struct trad_frame_saved_reg *
   sparc64nbsd_sigcontext_saved_regs (CORE_ADDR sigcontext_addr,
 				     struct frame_info *next_frame);
+
+extern const struct sparc_fpregset sparc64_bsd_fpregset;
 
 #endif /* sparc64-tdep.h */

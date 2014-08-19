@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.h,v 1.15 2009/08/18 11:22:09 drochner Exp $	*/
+/*	$NetBSD: linux_ipccall.h,v 1.15.22.1 2014/08/20 00:03:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -45,17 +45,17 @@
  * linux_ipc() call, and based on which the actual system calls
  * are made.
  */
-#define LINUX_SYS_semop		1
-#define LINUX_SYS_semget	2
-#define LINUX_SYS_semctl	3
-#define LINUX_SYS_msgsnd	11
-#define LINUX_SYS_msgrcv	12
-#define LINUX_SYS_msgget	13
-#define LINUX_SYS_msgctl	14
-#define LINUX_SYS_shmat		21
-#define LINUX_SYS_shmdt		22
-#define LINUX_SYS_shmget	23
-#define LINUX_SYS_shmctl	24
+#define LINUX_SYS_SEMOP		1
+#define LINUX_SYS_SEMGET	2
+#define LINUX_SYS_SEMCTL	3
+#define LINUX_SYS_MSGSND	11
+#define LINUX_SYS_MSGRCV	12
+#define LINUX_SYS_MSGGET	13
+#define LINUX_SYS_MSGCTL	14
+#define LINUX_SYS_SHMAT		21
+#define LINUX_SYS_SHMDT		22
+#define LINUX_SYS_SHMGET	23
+#define LINUX_SYS_SHMCTL	24
 
 
 #  ifdef SYSVSEM

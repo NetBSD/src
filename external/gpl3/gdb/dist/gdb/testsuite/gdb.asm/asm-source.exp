@@ -1,5 +1,4 @@
-# Copyright 1998, 2000, 2001, 2002, 2003, 2004, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 1998-2014 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,10 +15,6 @@
 #
 # This file was written by Kendra.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 #
 # Test debugging assembly level programs.
 # This file uses asmsrc[12].s for input.
@@ -32,16 +27,21 @@ set asm-flags ""
 set link-flags "-e _start"
 set debug-flags ""
 
+set obj_include -I[standard_output_file {}]
+
 switch -glob -- [istarget] {
     "alpha*-*-*" {
         set asm-arch alpha
 	# ??? Won't work with ecoff systems like Tru64, but then we also
 	# don't have any other -g flag that creates mdebug output.
-        set asm-flags "-no-mdebug -I${srcdir}/${subdir} -I${objdir}/${subdir}"
+        set asm-flags "-no-mdebug -I${srcdir}/${subdir} $obj_include"
 	set debug-flags "-gdwarf-2"
     }
     "arm*-*-*" {
         set asm-arch arm
+    }
+    "bfin-*-*" {
+        set asm-arch bfin
     }
     "frv-*-*" {
 	set asm-arch frv
@@ -74,7 +74,7 @@ switch -glob -- [istarget] {
     }
     "m6811-*-*" {
         set asm-arch m68hc11
-        set asm-flags "-mshort-double -m68hc11 --no-warn -I${srcdir}/${subdir} -I${objdir}/${subdir}"
+        set asm-flags "-mshort-double -m68hc11 --no-warn -I${srcdir}/${subdir} $obj_include"
 	set debug-flags "-gdwarf-2"
 	# This asm test is specific and uses the linker directly.
 	# We must not use the target board linker script defined for other
@@ -85,7 +85,7 @@ switch -glob -- [istarget] {
     }
     "m6812-*-*" {
         set asm-arch m68hc11
-        set asm-flags "-mshort-double -m68hc12 --no-warn -I${srcdir}/${subdir} -I${objdir}/${subdir}"
+        set asm-flags "-mshort-double -m68hc12 --no-warn -I${srcdir}/${subdir} $obj_include"
 	set debug-flags "-gdwarf-2"
 	# This asm test is specific and uses the linker directly.
 	# We must not use the target board linker script defined for other
@@ -100,11 +100,11 @@ switch -glob -- [istarget] {
     "powerpc*-*" {
         if { [is_lp64_target] } {
             set asm-arch powerpc64
-            set asm-flags "-a64 -I${srcdir}/${subdir} -I${objdir}/${subdir}"
+            set asm-flags "-a64 -I${srcdir}/${subdir} $obj_include"
             append link-flags " -m elf64ppc"
         } else {
             set asm-arch powerpc
-            set asm-flags "-a32 -I${srcdir}/${subdir} -I${objdir}/${subdir}"
+            set asm-flags "-a32 -I${srcdir}/${subdir} $obj_include"
             append link-flags " -m elf32ppc"
         }
     }
@@ -117,12 +117,12 @@ switch -glob -- [istarget] {
     }
     "sparc64-*-*" {
         set asm-arch sparc64
-        set asm-flags "-xarch=v9 -I${srcdir}/${subdir} -I${objdir}/${subdir}"
+        set asm-flags "-xarch=v9 -I${srcdir}/${subdir} $obj_include"
 	set debug-flags "-gdwarf-2"
     }
     "spu*-*-*" {
        set asm-arch spu
-       set asm-flags "-I${srcdir}/${subdir} -I${objdir}/${subdir} --no-warn"
+       set asm-flags "-I${srcdir}/${subdir} $obj_include --no-warn"
        set debug-flags "-gdwarf-2"
     }
     "xstormy16-*-*" {
@@ -194,22 +194,22 @@ if [board_info $dest exists multilib_flags] {
 	if { "${multilib_flags}" != "" } {
 	   untested asm-source.exp
 	   return -1
-	   return;
+	   return
 	 }
 }
 
-set testfile "asm-source"
-set binfile ${objdir}/${subdir}/${testfile}
-set srcfile1 asmsrc1.s
-set srcfile2 asmsrc2.s
+standard_testfile asmsrc1.s asmsrc2.s
 
-remote_exec build "rm -f ${subdir}/arch.inc"
-remote_download host ${srcdir}/${subdir}/${asm-arch}.inc ${subdir}/arch.inc
-remote_exec build "rm -f ${subdir}/note.inc"
-remote_download host ${srcdir}/${subdir}/${asm-note}.inc ${subdir}/note.inc
+set arch_inc [standard_output_file arch.inc]
+set note_inc [standard_output_file note.inc]
+
+remote_exec build "rm -f $arch_inc"
+remote_download host ${srcdir}/${subdir}/${asm-arch}.inc $arch_inc
+remote_exec build "rm -f $note_inc"
+remote_download host ${srcdir}/${subdir}/${asm-note}.inc $note_inc
 
 if { [string equal ${asm-flags} ""] } {
-    set asm-flags "-I${srcdir}/${subdir} -I${objdir}/${subdir}"
+    set asm-flags "-I${srcdir}/${subdir} $obj_include"
 }
 
 if { [string equal ${debug-flags} ""] } {
@@ -241,11 +241,14 @@ regsub "--" "-gstabs\[+\]" "${debug-flags}" "-gstabs" debug-flags
 # The GNU assembler does not support level options like "-g2" or "-g3".
 regsub "--" "-g\[0-9\]" "${debug-flags}" "" debug-flags
 
-if {[target_assemble ${srcdir}/${subdir}/${srcfile1} asmsrc1.o "${asm-flags} ${debug-flags}"] != ""} then {
+set asm1obj [standard_output_file asmrc1.o]
+set asm2obj [standard_output_file asmrc2.o]
+
+if {[target_assemble ${srcdir}/${subdir}/${srcfile} $asm1obj "${asm-flags} ${debug-flags}"] != ""} then {
      untested asm-source.exp
      return -1
 }
-if {[target_assemble ${srcdir}/${subdir}/${srcfile2} asmsrc2.o "${asm-flags} ${debug-flags}"] != ""} then {
+if {[target_assemble ${srcdir}/${subdir}/${srcfile2} $asm2obj "${asm-flags} ${debug-flags}"] != ""} then {
      untested asm-source.exp
      return -1
 }
@@ -256,7 +259,7 @@ if {[target_assemble ${srcdir}/${subdir}/${srcfile2} asmsrc2.o "${asm-flags} ${d
 # code here that provides its own startup code.  Using target_link
 # also avoids a lot of problems on many systems, most notably on
 # *-*-*bsd* and *-*-solaris2*.
-if {[target_link "asmsrc1.o asmsrc2.o" "${binfile}" ${link-flags}] != "" } then {
+if {[target_link [list $asm1obj $asm2obj] "${binfile}" ${link-flags}] != "" } then {
      untested asm-source.exp
      return -1
 }
@@ -265,8 +268,6 @@ if {[target_link "asmsrc1.o asmsrc2.o" "${binfile}" ${link-flags}] != "" } then 
 if { [istarget "m6811-*-*"] || [istarget "m6812-*-*"] } {
     set_board_info ldscript $old_ldscript
 }
-
-remote_exec build "mv asmsrc1.o asmsrc2.o ${objdir}/${subdir}"
 
 # Collect some line numbers.
 set line_main       [expr [gdb_get_line_number "main start" "asmsrc1.s"] + 1]
@@ -469,5 +470,5 @@ test_dis "disassem &staticvar, &staticvar+1" "staticvar"
 gdb_test "disassem foostatic" ".*<\\+0>:.*End of assembler dump." \
 	"look at static function"
 
-remote_exec build "rm -f ${subdir}/arch.inc"
-remote_exec build "rm -f ${subdir}/note.inc"
+remote_exec build "rm -f $arch_inc"
+remote_exec build "rm -f $note_inc"

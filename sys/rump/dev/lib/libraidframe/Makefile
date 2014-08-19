@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/11/23 12:23:20 pooka Exp $
+#	$NetBSD: Makefile,v 1.3.22.1 2014/08/20 00:04:38 tls Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/raidframe
@@ -21,7 +21,7 @@ SRCS=   rf_acctrace.c rf_alloclist.c rf_aselect.c rf_callback.c		\
 	rf_shutdown.c rf_sstf.c rf_states.c rf_stripelocks.c		\
 	rf_strutils.c rf_utils.c rf_compat50.c rf_paritymap.c
 
-SRCS+=	component.c
+SRCS+=	raidframe_component.c
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
 

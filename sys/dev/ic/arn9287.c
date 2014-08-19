@@ -1,4 +1,4 @@
-/*	$NetBSD: arn9287.c,v 1.2.4.2 2013/06/23 06:20:17 tls Exp $	*/
+/*	$NetBSD: arn9287.c,v 1.2.4.3 2014/08/20 00:03:37 tls Exp $	*/
 /*	$OpenBSD: ar9287.c,v 1.17 2012/06/10 21:23:36 kettenis Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn9287.c,v 1.2.4.2 2013/06/23 06:20:17 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn9287.c,v 1.2.4.3 2014/08/20 00:03:37 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -433,21 +433,25 @@ ar9287_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
     struct ieee80211_channel *extc)
 {
 	const struct ar9287_eeprom *eep = sc->sc_eep;
+#ifdef notyet
 	const struct ar9287_modal_eep_header *modal = &eep->modalHeader;
+#endif
 	uint8_t tpow_cck[4], tpow_ofdm[4];
 #ifndef IEEE80211_NO_HT
 	uint8_t tpow_cck_ext[4], tpow_ofdm_ext[4];
 	uint8_t tpow_ht20[8], tpow_ht40[8];
 	uint8_t ht40inc;
 #endif
-	int16_t pwr = 0, max_ant_gain, power[ATHN_POWER_COUNT];
+	int16_t pwr = 0, power[ATHN_POWER_COUNT];
 	int i;
 
 	ar9287_set_power_calib(sc, c);
 
+#ifdef notyet
 	/* Compute transmit power reduction due to antenna gain. */
-	max_ant_gain = MAX(modal->antennaGainCh[0], modal->antennaGainCh[1]);
+	uint16_t max_ant_gain = MAX(modal->antennaGainCh[0], modal->antennaGainCh[1]);
 	/* XXX */
+#endif
 
 	/*
 	 * Reduce scaled power by number of active chains to get per-chain

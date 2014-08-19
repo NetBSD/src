@@ -1,4 +1,4 @@
-.\"	$NetBSD: postfix.1,v 1.1.1.2.10.1 2013/02/25 00:27:11 tls Exp $
+.\"	$NetBSD: postfix.1,v 1.1.1.2.10.2 2014/08/19 23:59:41 tls Exp $
 .\"
 .TH POSTFIX 1 
 .ad
@@ -256,12 +256,14 @@ virtual(5), Postfix virtual aliasing
 Table lookup mechanisms:
 cidr_table(5), Associate CIDR pattern with value
 ldap_table(5), Postfix LDAP client
+lmdb_table(5), Postfix LMDB database driver
 memcache_table(5), Postfix memcache client
 mysql_table(5), Postfix MYSQL client
 nisplus_table(5), Postfix NIS+ client
 pcre_table(5), Associate PCRE pattern with value
 pgsql_table(5), Postfix PostgreSQL client
 regexp_table(5), Associate POSIX regexp pattern with value
+socketmap_table(5), Postfix socketmap client
 sqlite_table(5), Postfix SQLite database driver
 tcp_table(5), Postfix client-server table lookup
 

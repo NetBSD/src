@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_space.c,v 1.3 2011/07/01 19:32:28 dyoung Exp $	*/
+/*	$NetBSD: gemini_space.c,v 1.3.12.1 2014/08/20 00:02:46 tls Exp $	*/
 
 /* adapted from:
  *	NetBSD: pxa2x0_space.c,v 1.8 2005/11/24 13:08:32 yamt Exp
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_space.c,v 1.3 2011/07/01 19:32:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_space.c,v 1.3.12.1 2014/08/20 00:02:46 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,10 +175,7 @@ int
 gemini_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 	      int flag, bus_space_handle_t *bshp)
 {
-	u_long startpa, endpa, pa;
-	vaddr_t va;
-	pt_entry_t *pte;
-	const struct pmap_devmap	*pd;
+	const struct pmap_devmap *pd;
 
 	if ((pd = pmap_devmap_find_pa(bpa, size)) != NULL) {
 		/* Device was statically mapped. */
@@ -186,28 +183,24 @@ gemini_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 		return 0;
 	}
 
-	startpa = trunc_page(bpa);
-	endpa = round_page(bpa + size);
+	paddr_t startpa = trunc_page(bpa);
+	paddr_t endpa = round_page(bpa + size);
 
 	/* XXX use extent manager to check duplicate mapping */
 
-	va = uvm_km_alloc(kernel_map, endpa - startpa, 0,
+	vaddr_t va = uvm_km_alloc(kernel_map, endpa - startpa, 0,
 	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 	if (! va)
 		return(ENOMEM);
 
 	*bshp = (bus_space_handle_t)(va + (bpa - startpa));
 
-	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
-		if ((flag & BUS_SPACE_MAP_CACHEABLE) == 0) {
-			pte = vtopte(va);
-			*pte &= ~L2_S_CACHE_MASK;
-			PTE_SYNC(pte);
-			/* XXX: pmap_kenter_pa() also does PTE_SYNC(). a bit of
-			 *      waste.
-			 */
-		}
+	const int pmapflags =
+	    (flag & (BUS_SPACE_MAP_CACHEABLE|BUS_SPACE_MAP_PREFETCHABLE))
+		? 0
+		: PMAP_NOCACHE;
+	for (paddr_t pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, pmapflags);
 	}
 	pmap_update(pmap_kernel());
 

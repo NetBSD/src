@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.17 2011/09/24 21:24:52 jym Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.17.12.1 2014/08/20 00:03:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.17 2011/09/24 21:24:52 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.17.12.1 2014/08/20 00:03:06 tls Exp $");
 
 #include "opt_xen.h"
 
@@ -160,6 +160,24 @@ ENTRY(rdmsr_safe)
 	movl	%eax, PCB_ONFAULT(%ecx)
 
 	ret
+END(rdmsr_safe)
+
+/* uint64_t rdxcr(uint32_t) */
+ENTRY(rdxcr)
+	movl	4(%esp), %ecx	/* extended control reg number */
+	xgetbv			/* Read to %edx:%eax */
+	ret
+END(rdxcr)
+
+/* void wrxcr(uint32_t, uint64_t) */
+ENTRY(wrxcr)
+	movl	4(%esp), %ecx	/* extended control reg number */
+	movl	8(%esp), %eax	/* feature mask bits */
+	movl	12(%esp), %edx
+	xsetbv
+	ret
+END(wrxcr)
+	
 
 /*
  * MSR operations fault handler
@@ -332,6 +350,11 @@ ENTRY(fnstcw)
 	ret
 END(fnstcw)
 
+ENTRY(fngetsw)
+	fnstsw	%ax
+	ret
+END(fngetsw)
+
 ENTRY(fnstsw)
 	movl	4(%esp), %eax
 	fnstsw	(%eax)
@@ -384,10 +407,45 @@ ENTRY(fxrstor)
 	ret
 END(fxrstor)
 
-ENTRY(fldummy)
+ENTRY(xsave)
+	movl	4(%esp), %ecx
+	movl	8(%esp), %eax	/* feature mask bits */
+	movl	12(%esp), %edx
+	xsave	(%ecx)
+	ret
+END(xsave)
+
+ENTRY(xsaveopt)
+	movl	4(%esp), %ecx
+	movl	8(%esp), %eax	/* feature mask bits */
+	movl	12(%esp), %edx
+	xsaveopt	(%ecx)
+	ret
+END(xsaveopt)
+
+ENTRY(xrstor)
+	movl	4(%esp), %ecx
+	movl	8(%esp), %eax	/* feature mask bits */
+	movl	12(%esp), %edx
+	xrstor	(%ecx)
+	ret
+END(xrstor)
+
+ENTRY(x86_stmxcsr)
 	movl	4(%esp), %eax
+	stmxcsr	(%eax)
+	ret
+END(x86_stmxcsr)
+
+ENTRY(x86_ldmxcsr)
+	movl	4(%esp), %eax
+	ldmxcsr	(%eax)
+	ret
+END(x86_ldmxcsr)
+
+ENTRY(fldummy)
 	ffree	%st(7)
-	flds	(%eax)
+	fldz
 	ret
 END(fldummy)
 

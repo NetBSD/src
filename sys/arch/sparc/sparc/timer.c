@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.30 2012/07/29 00:04:05 matt Exp $ */
+/*	$NetBSD: timer.c,v 1.30.2.1 2014/08/20 00:03:24 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.30 2012/07/29 00:04:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.30.2.1 2014/08/20 00:03:24 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -87,7 +87,7 @@ void *sched_cookie;
 static struct counter {
 	volatile u_int *cntreg;	/* counter register */
 	u_int limit;		/* limit we count up to */
-	u_int offset;		/* accumulated offet due to wraps */
+	u_int offset;		/* accumulated offset due to wraps */
 	u_int shift;		/* scaling for valid bits */
 	u_int mask;		/* valid bit mask */
 } cntr;
@@ -117,12 +117,11 @@ timer_get_timecount(struct timecounter *tc)
 	u_int c, res, r;
 	int s;
 
-
 	s = splhigh();
 
 	res = c = *ctr->cntreg;
 
-	res  &= ~TMR_LIMIT;
+	res &= ~TMR_LIMIT;
 
 	if (c != res) {
 		r = ctr->limit;
@@ -155,7 +154,6 @@ void
 timerattach(volatile int *cntreg, volatile int *limreg)
 {
 	u_int prec = 0, t0;
-	void    (*sched_intr_fn)(void *);
 
 	/*
 	 * Calibrate delay() by tweaking the magic constant
@@ -163,11 +161,12 @@ timerattach(volatile int *cntreg, volatile int *limreg)
 	 * Note: sun4m clocks tick with 500ns periods.
 	 */
 	for (timerblurb = 1; ; timerblurb++) {
-		volatile int discard;
+		int discard;
 		u_int t1;
 
 		/* Reset counter register by writing some large limit value */
 		discard = *limreg;
+		__USE(discard);
 		*limreg = tmr_ustolim(TMR_MASK-1);
 
 		t0 = *cntreg;
@@ -197,11 +196,11 @@ timerattach(volatile int *cntreg, volatile int *limreg)
 	
 	printf(": delay constant %d, frequency = %" PRIu64 " Hz\n",
 	       timerblurb, counter_timecounter.tc_frequency);
+printf("timer: limit %u shift %u mask %x\n", cntr.limit, cntr.shift, cntr.mask);
 
 #if defined(SUN4) || defined(SUN4C)
 	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		timer_init = timer_init_4;
-		sched_intr_fn = schedintr;
 		level10.ih_fun = clockintr_4;
 		level14.ih_fun = statintr_4;
 		cntr.limit = tmr_ustolim(tick);
@@ -210,12 +209,6 @@ timerattach(volatile int *cntreg, volatile int *limreg)
 #if defined(SUN4M)
 	if (CPU_ISSUN4M) {
 		timer_init = timer_init_4m;
-#if defined(MULTIPROCESSOR)
-		if (sparc_ncpus > 1)
-			sched_intr_fn = schedintr_4m;
-		else
-#endif
-			sched_intr_fn = schedintr;
 		level10.ih_fun = clockintr_4m;
 		level14.ih_fun = statintr_4m;
 		cntr.limit = tmr_ustolim4m(tick);
@@ -226,7 +219,7 @@ timerattach(volatile int *cntreg, volatile int *limreg)
 	intr_establish(14, 0, &level14, NULL, true);
 
 	/* Establish a soft interrupt at a lower level for schedclock */
-	sched_cookie = sparc_softintr_establish(IPL_SCHED, sched_intr_fn, NULL);
+	sched_cookie = sparc_softintr_establish(IPL_SCHED, schedintr, NULL);
 	if (sched_cookie == NULL)
 		panic("timerattach: cannot establish schedintr");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.29 2011/04/24 18:46:22 rmind Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.29.14.1 2014/08/20 00:04:28 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.29 2011/04/24 18:46:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.29.14.1 2014/08/20 00:04:28 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -55,19 +55,21 @@ __KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.29 2011/04/24 18:46:22 rmind Exp $"
 #define	DEP	NULL
 #endif
 
-MODULE(MODULE_CLASS_MISC, exec_ecoff, DEP)
+MODULE(MODULE_CLASS_EXEC, exec_ecoff, DEP)
 
 static struct execsw exec_ecoff_execsw = {
-	ECOFF_HDR_SIZE,
-	exec_ecoff_makecmds,
-	{ .ecoff_probe_func = cpu_exec_ecoff_probe },
-	&emul_netbsd,
-	EXECSW_PRIO_ANY,
-	0,
-	copyargs,
-	cpu_exec_ecoff_setregs,
-	coredump_netbsd,
-	exec_setup_stack
+	.es_hdrsz = ECOFF_HDR_SIZE,
+	.es_makecmds = exec_ecoff_makecmds,
+	.u = {
+		.ecoff_probe_func = cpu_exec_ecoff_probe,
+	},
+	.es_emul = &emul_netbsd,
+	.es_prio = EXECSW_PRIO_ANY,
+	.es_arglen = 0,
+	.es_copyargs = copyargs,
+	.es_setregs = cpu_exec_ecoff_setregs,
+	.es_coredump = coredump_netbsd,
+	.es_setup_stack = exec_setup_stack,
 };
 
 static int

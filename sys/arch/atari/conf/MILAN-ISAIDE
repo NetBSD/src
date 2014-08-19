@@ -1,14 +1,15 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.77.2.2 2013/06/23 06:20:01 tls Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.77.2.3 2014/08/20 00:02:48 tls Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: MILAN.in,v 1.25 2010/04/10 01:59:40 tsutsui Exp $
-#		NetBSD: GENERIC.in,v 1.92 2010/12/12 09:56:15 tsutsui Exp $
+#		NetBSD: MILAN.in,v 1.27 2014/07/05 09:24:23 tsutsui Exp $
+#		NetBSD: GENERIC.in,v 1.106 2014/07/05 09:28:48 tsutsui Exp $
 include "arch/atari/conf/std.milan"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
+makeoptions COPTS="-O2 -fno-reorder-blocks" # see share/mk/sys.mk
 maxusers 16
 options HZ=64 # Set the clock-rate (48/64/96)
 options INSECURE # disable kernel security levels
@@ -21,7 +22,6 @@ options INET6 # IPV6
 options PPP_BSDCOMP # BSD-Compress compression support for PPP
 options PPP_DEFLATE # Deflate compression support for PPP
 options PPP_FILTER # Active filter support for PPP (requires bpf)
-options PFIL_HOOKS # pfil(9) packet filter hooks
 options IPFILTER_LOG # ipmon(8) log support
 options IPFILTER_LOOKUP # ippool(8) support
 options IPFILTER_COMPAT # Compat for IP-Filter
@@ -107,7 +107,7 @@ audio* at eso?
 options WSEMUL_VT100 # VT100 / VT220 emulation
 options WS_KERNEL_FG=WSCOL_WHITE
 options WS_KERNEL_BG=WSCOL_BLACK
-options WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
+options WSDISPLAY_COMPAT_USL # wsconscfg VT handling
 options WSDISPLAY_DEFAULTSCREENS=4
 options PCDISPLAY_SOFTCURSOR
 isab0 at mainbus0 # ISA-bus

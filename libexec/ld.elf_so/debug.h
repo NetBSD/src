@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.5.60.1 2013/06/23 06:28:49 tls Exp $	*/
+/*	$NetBSD: debug.h,v 1.5.60.2 2014/08/20 00:02:22 tls Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -53,6 +53,12 @@ extern int debug;
 # define rdbg(a)	debug_printf a
 #else
 # define rdbg(a)	((void) 0)
+#endif
+
+#if ELFSIZE == 64               
+#define	PRImemsz	PRIu64
+#else
+#define	PRImemsz	PRIu32
 #endif
 
 #endif

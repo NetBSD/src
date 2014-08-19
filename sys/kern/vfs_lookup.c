@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.192.12.1 2012/11/20 03:02:44 tls Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.192.12.2 2014/08/20 00:04:29 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.192.12.1 2012/11/20 03:02:44 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.192.12.2 2014/08/20 00:04:29 tls Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -1054,9 +1054,20 @@ unionlookup:
 	}
 
 	/*
-	 * "foundobj" and "searchdir" are both locked and held,
-	 * and may be the same vnode.
+	 * "searchdir" is locked and held, "foundobj" is held,
+	 * they may be the same vnode.
 	 */
+	if (searchdir != foundobj) {
+		if (cnp->cn_flags & ISDOTDOT)
+			VOP_UNLOCK(searchdir);
+		error = vn_lock(foundobj, LK_EXCLUSIVE);
+		if (cnp->cn_flags & ISDOTDOT)
+			vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);
+		if (error != 0) {
+			vrele(foundobj);
+			goto done;
+		}
+	}
 
 	/*
 	 * Check to see if the vnode has been mounted on;
@@ -1751,9 +1762,19 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp, int d
 	if (rdonly && cnp->cn_nameiop != LOOKUP) {
 		error = EROFS;
 		if (*vpp) {
-			vput(*vpp);
+			vrele(*vpp);
 		}
 		goto bad;
+	}
+	/*
+	 * Lock result.
+	 */
+	if (*vpp && *vpp != dvp) {
+		error = vn_lock(*vpp, LK_EXCLUSIVE);
+		if (error != 0) {
+			vrele(*vpp);
+			goto bad;
+		}
 	}
 	return (0);
 

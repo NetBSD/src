@@ -209,6 +209,10 @@
 # define VMS_STL_STD	   2	  /* Standard linkage with return value.  */
 # define VMS_STL_LNK	   3	  /* Explicit represented in .vms_linkages.  */
 
+/* OpenVMS specific symbol binding values.  */
+#define STB_VMS_WEAK	11	/* VMS weak symbol.  */
+#define STB_VMS_SYSTEM	12	/* System symbol.  */
+
 /* OpenVMS specific fixup and relocation structures.  */
 
 typedef struct
@@ -255,6 +259,18 @@ typedef struct {
 #define NT_VMS_GSTNAM    106 /* Global Symbol Table Name.  */
 #define NT_VMS_ORIG_DYN  107 /* Original setting of dynamic data.  */
 #define NT_VMS_PATCHTIME 108 /* Date/time of last patch.  */
+
+/* Corresponding data for NT_VMS_ORIG_DYM.  */
+
+typedef struct  {
+  unsigned char major_id[4];		/* Should be 1.  */
+  unsigned char minor_id[4];		/* Should be 3.  */
+  unsigned char manipulation_date[8];	/* Original NT_VMS_LNKTIME.  */
+  unsigned char link_flags[8];		/* Original NT_VMS_LNKFLAGS.  */
+  unsigned char elf_flags[4];		/* Original ehdr flags.  */
+  unsigned char _pad[4];
+  unsigned char imgid[1];		/* Original NT_VMS_IMGID.  */
+} Elf64_External_VMS_ORIG_DYN_Note;
 
 /* IA64-specific relocation types: */
 

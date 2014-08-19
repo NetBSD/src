@@ -1,6 +1,5 @@
 /* Interface for common GDB/MI data
-   Copyright (C) 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,6 +36,12 @@ enum async_reply_reason
   EXEC_ASYNC_EXITED,
   EXEC_ASYNC_EXITED_NORMALLY,
   EXEC_ASYNC_SIGNAL_RECEIVED,
+  EXEC_ASYNC_SOLIB_EVENT,
+  EXEC_ASYNC_FORK,
+  EXEC_ASYNC_VFORK,
+  EXEC_ASYNC_SYSCALL_ENTRY,
+  EXEC_ASYNC_SYSCALL_RETURN,
+  EXEC_ASYNC_EXEC,
   /* This is here only to represent the number of enums.  */
   EXEC_ASYNC_LAST
 };
@@ -51,6 +56,9 @@ struct mi_interp
   struct ui_file *log;
   struct ui_file *targ;
   struct ui_file *event_channel;
+
+  /* MI's builder.  */
+  struct ui_out *uiout;
 
   /* This is the interpreter for the mi... */
   struct interp *mi2_interp;

@@ -1,4 +1,4 @@
-#	$NetBSD: GEMINI_INSTALL,v 1.1 2008/10/30 15:37:24 cliff Exp $
+#	$NetBSD: GEMINI_INSTALL,v 1.1.44.1 2014/08/20 00:02:53 tls Exp $
 #
 #	GEMINI_INSTALL -- GEMINI kernel with installation-sized
 #	ramdisk
@@ -6,3 +6,4 @@
 
 include "arch/evbarm/conf/GEMINI"
 include "arch/evbarm/conf/INSTALL"
+no makeoptions	DEBUG

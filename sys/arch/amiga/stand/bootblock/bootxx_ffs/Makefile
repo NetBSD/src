@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2011/10/02 18:30:50 christos Exp $
+#	$NetBSD: Makefile,v 1.18.12.1 2014/08/20 00:02:43 tls Exp $
 
 ### what we need:
 
@@ -39,11 +39,12 @@ DEFS = -D_STANDALONE -DSA_EXEC_ANYOWNER -D_PRIMARY_BOOT
 
 ### main target: ###
 
-realall: machine m68k ${FILES}
+realall: ${FILES}
 
-CLEANFILES += bootxx_ffs bootxx_fd x.out f.out xxstart.o fdstart.o libboot.a vers.c machine m68k
+CLEANFILES += bootxx_ffs bootxx_fd x.out f.out xxstart.o fdstart.o libboot.a vers.c
 
 .include <bsd.prog.mk>
+.include <bsd.klinks.mk>
 
 ### special  rules for bootblocks ###
 
@@ -52,9 +53,10 @@ INCPATH += -I${.CURDIR}/../boot -I${.CURDIR}/../../..
 INCPATH += -I${.CURDIR}/../elf2bb -I${.OBJDIR}
 
 AFLAGS += -m68030 -l
-CAFLAGS += -Wa,-l -Wa,-m68030 ${INCPATH} -D_PRIMARY_BOOT
+CAFLAGS += -Wa,-l -Wa,-march=68030 -Wa,-mcpu=68030 ${INCPATH} -D_PRIMARY_BOOT
 
-COPTIM= -Os -fomit-frame-pointer -fcse-follow-jumps -fcse-skip-blocks  -Wa,-l -m68060 -Wa,-m68030
+COPTIM= -Os -fomit-frame-pointer -fcse-follow-jumps -fcse-skip-blocks
+COPTIM+= -Wa,-l -m68060 -Wa,-mcpu=68030 -fno-unwind-tables
 CFLAGS= -ffreestanding ${COPTIM} ${INCPATH} ${DEFS} -Wall #-Wstrict-prototypes
 
 NETBSD_VERS!=	${HOST_SH} ${.CURDIR}/../../../../../conf/osrelease.sh
@@ -64,57 +66,57 @@ DEFS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 DEFS+=	-D__daddr_t=int32_t
 
 .c.o:
+	${_MKTARGET_COMPILE}
 	${CC} ${CFLAGS} -S $< -o $*.s
 	${TXLT} < $*.s | ${AS} ${AFLAGS} -o $*.o
 	rm $*.s
 
-.s.o: ; ${CC} ${CAFLAGS} ${COPTS} -x assembler-with-cpp -o $@ -c $<
+.s.o:
+	${_MKTARGET_COMPILE}
+	${CC} ${CAFLAGS} ${COPTS} -x assembler-with-cpp -o $@ -c $<
 
-.S.o: ; ${CC} ${CAFLAGS} ${COPTS} -x assembler-with-cpp -o $@ -c $<
+.S.o:
+	${_MKTARGET_COMPILE}
+	${CC} ${CAFLAGS} ${COPTS} -x assembler-with-cpp -o $@ -c $<
 
 bootxx_ffs: x.out
+	${_MKTARGET_CREATE}
 	${RELOC2BB} x.out $@ || (${NM} -u x.out && false)
 
 bootxx_fd: f.out
+	${_MKTARGET_CREATE}
 	${RELOC2BB} -F f.out $@ || (${NM} -u f.out && false)
 
 x.out: xxstart.o libboot.a
-	${LD} ${LDFLAGS} -r -dc -e _start -o $@ $>
+	${_MKTARGET_LINK}
+	${LD} ${LDFLAGS} -r -dc -e start -o $@ $>
 	${SIZE} $@
 	${NM} -u $@
 
 f.out: fdstart.o libboot.a
-	${LD} ${LDFLAGS} -r -dc -e _start -o $@ $>
+	${_MKTARGET_LINK}
+	${LD} ${LDFLAGS} -r -dc -e start -o $@ $>
 	${SIZE} $@
 	${NM} -u $@
 
 xxstart.o: ${.CURDIR}/../boot/bbstart.s
+	${_MKTARGET_COMPILE}
 	${CC} ${CAFLAGS} ${COPTS} -x assembler-with-cpp \
 		-o $@ -c $>
 
 fdstart.o: ${.CURDIR}/../boot//bbstart.s
+	${_MKTARGET_COMPILE}
 	${CC} -DAUTOLOAD=8192 ${CAFLAGS} ${COPTS} -x assembler-with-cpp \
 		-o $@ -c $>
 
 libboot.a: ${OBJS}
-	${AR} r $@ $> && ${RANLIB} $@
+	${_MKTARGET_BUILD}
+	${AR} crs $@ $> && ${RANLIB} $@
 
 vers.c:	${.CURDIR}/../boot/version
+	${_MKTARGET_CREATE}
 	${HOST_SH} ${DIR_TOP}/conf/newvers_stand.sh -N \
 	    ${.CURDIR}/../boot/version "amiga"
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.NOPATH: machine m68k
-.BEGIN: machine m68k
-
-machine:
-	-rm -f $@
-	ln -s ${DIR_TOP}/arch/amiga/include $@
-
-m68k:
-	-rm -f $@
-	ln -s ${DIR_TOP}/arch/m68k/include $@
-.endif
 
 # make sure these are built:
 

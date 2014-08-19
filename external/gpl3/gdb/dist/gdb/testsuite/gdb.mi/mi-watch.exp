@@ -1,5 +1,4 @@
-# Copyright 1999, 2000, 2001, 2002, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 1999-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,16 +13,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# Test Machine interface (MI) operations
 #
-# Test essential Machine interface (MI) operations
+# Test MI watchpoint commands.
 #
-# Verify that, using the MI, we can run a simple program and perform basic
-# debugging activities like: insert breakpoints, run the program,
-# step, next, continue until it ends and, last but not least, quit.
-#
-# The goal is not to test gdb functionality, which is done by other tests,
-# but to verify the correct output response to MI operations.
-#
+# The goal is not to test gdb functionality, which is done by other
+# tests, but to verify the correct output response to MI operations.
 
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
@@ -33,10 +28,9 @@ if [mi_gdb_start] {
     continue
 }
 
-set testfile "basics"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/mi-watch
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-DFAKEARGV}] != "" } {
+standard_testfile basics.c
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
      untested mi-watch.exp
      return -1
 }
@@ -59,7 +53,7 @@ proc test_watchpoint_creation_and_listing {type} {
              "break-watch operation"
 
     mi_gdb_test "222-break-list" \
-	    "222\\\^done,BreakpointTable=\{nr_rows=\".\",nr_cols=\".\",hdr=\\\[\{width=\".*\",alignment=\".*\",col_name=\"number\",colhdr=\"Num\"\}.*colhdr=\"Type\".*colhdr=\"Disp\".*colhdr=\"Enb\".*colhdr=\"Address\".*colhdr=\"What\".*\\\],body=\\\[bkpt=\{number=\"2\",type=\".*watchpoint\",disp=\"keep\",enabled=\"y\",addr=\"\",what=\"C\",times=\"0\",original-location=\"C\"\}\\\]\}" \
+	    "222\\\^done,BreakpointTable=\{nr_rows=\".\",nr_cols=\".\",hdr=\\\[\{width=\".*\",alignment=\".*\",col_name=\"number\",colhdr=\"Num\"\}.*colhdr=\"Type\".*colhdr=\"Disp\".*colhdr=\"Enb\".*colhdr=\"Address\".*colhdr=\"What\".*\\\],body=\\\[bkpt=\{number=\"2\",type=\".*watchpoint\",disp=\"keep\",enabled=\"y\",what=\"C\",thread-groups=\\\[\"i1\"\\\],times=\"0\",original-location=\"C\"\}\\\]\}" \
                 "list of watchpoints"
 
 }
@@ -83,7 +77,7 @@ proc test_awatch_creation_and_listing {type} {
              "break-watch -a operation"
 
     mi_gdb_test "444-break-list" \
-	    "444\\^done,BreakpointTable=\{.*,hdr=\\\[.*\\\],body=\\\[bkpt=\{number=\"3\",type=\"watchpoint\",disp=\"del\",enabled=\"y\",addr=\"$hex\",func=\"main\",file=\".*basics.c\",line=\"$line_main_body\",times=\"0\"\},.*\}\\\]\}" \
+	    "444\\^done,BreakpointTable=\{.*,hdr=\\\[.*\\\],body=\\\[bkpt=\{number=\"3\",type=\"watchpoint\",disp=\"del\",enabled=\"y\",addr=\"$hex\",func=\"main\",file=\".*basics.c\",line=\"$line_main_body\",thread-groups=\\\[\"i1\"\\\],times=\"0\"\},.*\}\\\]\}" \
                 "list of watchpoints awatch"
 
     mi_gdb_test "777-break-delete 3" \
@@ -102,15 +96,15 @@ proc test_rwatch_creation_and_listing {type} {
 
     # Insert a read watchpoint and list it.
     # Tests:
-    # -break-insert -r B
+    # -break-watch -r B
     # -break-list
 
     mi_gdb_test "200-break-watch -r C" \
              "200\\^done,bkpt=\{number=\"5\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"$hex\",func=\"callee4\",file=\".*basics.c\",line=\"$line_main_body\",times=\"0\"\}" \
-             "break-insert -r operation"
+             "break-watch -r operation"
 
     mi_gdb_test "300-break-list" \
-	    "300\\^done,BreakpointTable=\{.*,hdr=\\\[.*\\\],body=\\\[bkpt=\{number=\"5\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"$hex\",func=\"main\",file=\".*basics.c\",line=\"$line_main_body\",times=\"0\"\},.*\}\\\}\}" \
+	    "300\\^done,BreakpointTable=\{.*,hdr=\\\[.*\\\],body=\\\[bkpt=\{number=\"5\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"$hex\",func=\"main\",file=\".*basics.c\",line=\"$line_main_body\",thread-groups=\\\[\"i1\"\\\],times=\"0\"\},.*\}\\\}\}" \
                 "list of breakpoints"
 
     mi_gdb_test "177-break-delete 4" \
@@ -148,25 +142,21 @@ proc test_watchpoint_triggering {type} {
 }
 
 proc test_watchpoint_all {type} {
-    global pf_prefix
-    upvar srcdir srcdir
-    upvar subdir subdir
-    upvar binfile binfile
+    with_test_prefix "$type" {
+	upvar srcdir srcdir
+	upvar subdir subdir
+	upvar binfile binfile
 
-    set old_prefix $pf_prefix
-    lappend pf_prefix "$type:"
+	mi_delete_breakpoints
+	mi_gdb_reinitialize_dir $srcdir/$subdir
+	mi_gdb_load ${binfile}
 
-    mi_delete_breakpoints
-    mi_gdb_reinitialize_dir $srcdir/$subdir
-    mi_gdb_load ${binfile}
-
-    mi_runto callee4
-    test_watchpoint_creation_and_listing $type
-    #test_rwatch_creation_and_listing $type
-    #test_awatch_creation_and_listing $type
-    test_watchpoint_triggering $type
-
-    set pf_prefix $old_prefix
+	mi_runto callee4
+	test_watchpoint_creation_and_listing $type
+	#test_rwatch_creation_and_listing $type
+	#test_awatch_creation_and_listing $type
+	test_watchpoint_triggering $type
+    }
 }
 
 # Run the tests twice, once using software watchpoints...

@@ -1,7 +1,6 @@
 /* Java language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1997, 1998, 1999, 2000, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,6 +21,7 @@
 #define JV_LANG_H
 
 struct value;
+struct type_print_options;
 
 extern int java_parse (void);		/* Defined in jv-exp.y */
 
@@ -42,13 +42,13 @@ struct builtin_java_type
 
 extern const struct builtin_java_type *builtin_java_type (struct gdbarch *);
 
-extern int java_val_print (struct type *, const gdb_byte *, int, CORE_ADDR,
-			   struct ui_file *, int,
-			   const struct value *,
-			   const struct value_print_options *);
+extern void java_val_print (struct type *, const gdb_byte *, int, CORE_ADDR,
+			    struct ui_file *, int,
+			    const struct value *,
+			    const struct value_print_options *);
 
-extern int java_value_print (struct value *, struct ui_file *,
-			     const struct value_print_options *);
+extern void java_value_print (struct value *, struct ui_file *,
+			      const struct value_print_options *);
 
 extern struct value *java_class_from_object (struct value *);
 
@@ -57,7 +57,7 @@ extern struct type *type_from_class (struct gdbarch *, struct value *);
 extern struct type *java_primitive_type (struct gdbarch *, int signature);
 
 extern struct type *java_primitive_type_from_name (struct gdbarch *,
-						   char *, int);
+						   const char *, int);
 
 extern struct type *java_array_type (struct type *, int);
 
@@ -70,8 +70,9 @@ extern int is_object_type (struct type *);
 
 /* Defined in jv-typeprint.c */
 extern void java_print_type (struct type *, const char *,
-			     struct ui_file *, int, int);
+			     struct ui_file *, int, int,
+			     const struct type_print_options *);
 
-extern char *java_demangle_type_signature (char *);
+extern char *java_demangle_type_signature (const char *);
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.137.2.1 2012/11/20 03:01:41 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.137.2.2 2014/08/20 00:03:23 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.137.2.1 2012/11/20 03:01:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.137.2.2 2014/08/20 00:03:23 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.137.2.1 2012/11/20 03:01:41 tls Exp $"
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -246,7 +247,6 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 	const char *cpufreq, *osload;
 	char *bootpath = NULL;
 	vaddr_t kernend;
-	int kernstartpfn, kernendpfn;
 	u_int i;
 	int rv;
 #if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
@@ -286,7 +286,7 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 #endif
 	}
 
-	strcpy(cpu_model, arcbios_system_identifier);
+	cpu_setmodel("%s", arcbios_system_identifier);
 
 	uvm_setpagesize();
 
@@ -323,12 +323,6 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 	{
 		kernend = mips_round_page(end);
 	}
-
-	/* Leave 1 page before kernel untouched as that's where our initial
-	 * kernel stack is */
-	/* XXX We could free it in cpu_startup() though XXX */
-	kernstartpfn = atop(MIPS_KSEG0_TO_PHYS((vaddr_t) kernel_text)) - 1;
-	kernendpfn = atop(MIPS_KSEG0_TO_PHYS(kernend));
 
 	cpufreq = arcbios_GetEnvironmentVariable("cpufreq");
 
@@ -630,6 +624,9 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 	if (mem_cluster_cnt == 0)
 		panic("no free memory descriptors found");
 
+	/* Leave 1 page before kernel untouched as that's where our initial
+	 * kernel stack is */
+	/* XXX We could free it in cpu_startup() though XXX */
 	mips_page_physload((vaddr_t)kernel_text - PAGE_SIZE, (vaddr_t)kernend,
 	    mem_clusters, mem_cluster_cnt, NULL, 0);
 

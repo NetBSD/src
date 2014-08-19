@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.37 2012/02/19 21:06:54 rmind Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.37.2.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.37 2012/02/19 21:06:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.37.2.1 2014/08/20 00:04:29 tls Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -89,7 +89,7 @@ bool default_bus_space_handle_is_equal(bus_space_tag_t, bus_space_handle_t,
  * error in case process won't see signal immediately (blocked or ignored).
  */
 #ifndef PTRACE
-__weak_alias(sys_ptrace,sys_nosys);
+__strong_alias(sys_ptrace,sys_nosys);
 #endif	/* PTRACE */
 
 /*
@@ -97,29 +97,29 @@ __weak_alias(sys_ptrace,sys_nosys);
  * but not kill the process: utrace() is a debugging feature.
  */
 #ifndef KTRACE
-__weak_alias(ktr_csw,nullop);		/* Probes */
-__weak_alias(ktr_emul,nullop);
-__weak_alias(ktr_geniov,nullop);
-__weak_alias(ktr_genio,nullop);
-__weak_alias(ktr_mibio,nullop);
-__weak_alias(ktr_namei,nullop);
-__weak_alias(ktr_namei2,nullop);
-__weak_alias(ktr_psig,nullop);
-__weak_alias(ktr_syscall,nullop);
-__weak_alias(ktr_sysret,nullop);
-__weak_alias(ktr_kuser,nullop);
-__weak_alias(ktr_mib,nullop);
-__weak_alias(ktr_execarg,nullop);
-__weak_alias(ktr_execenv,nullop);
-__weak_alias(ktr_execfd,nullop);
+__strong_alias(ktr_csw,nullop);		/* Probes */
+__strong_alias(ktr_emul,nullop);
+__strong_alias(ktr_geniov,nullop);
+__strong_alias(ktr_genio,nullop);
+__strong_alias(ktr_mibio,nullop);
+__strong_alias(ktr_namei,nullop);
+__strong_alias(ktr_namei2,nullop);
+__strong_alias(ktr_psig,nullop);
+__strong_alias(ktr_syscall,nullop);
+__strong_alias(ktr_sysret,nullop);
+__strong_alias(ktr_kuser,nullop);
+__strong_alias(ktr_mib,nullop);
+__strong_alias(ktr_execarg,nullop);
+__strong_alias(ktr_execenv,nullop);
+__strong_alias(ktr_execfd,nullop);
 
-__weak_alias(sys_fktrace,sys_nosys);	/* Syscalls */
-__weak_alias(sys_ktrace,sys_nosys);
-__weak_alias(sys_utrace,sys_nosys);
+__strong_alias(sys_fktrace,sys_nosys);	/* Syscalls */
+__strong_alias(sys_ktrace,sys_nosys);
+__strong_alias(sys_utrace,sys_nosys);
 
 int	ktrace_on;			/* Misc */
-__weak_alias(ktruser,enosys);
-__weak_alias(ktr_point,nullop);
+__strong_alias(ktruser,enosys);
+__strong_alias(ktr_point,nullop);
 #endif	/* KTRACE */
 
 __weak_alias(device_register, voidop);

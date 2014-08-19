@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm11x6.S,v 1.1.4.1 2012/11/20 03:01:02 tls Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm11x6.S,v 1.1.4.2 2014/08/20 00:02:44 tls Exp $	*/
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -60,10 +60,10 @@
 
 
 #include "assym.h"
-#include <machine/cpu.h>
 #include <machine/asm.h>
+#include <arm/locore.h>
 
-RCSID("$NetBSD: cpufunc_asm_arm11x6.S,v 1.1.4.1 2012/11/20 03:01:02 tls Exp $")
+RCSID("$NetBSD: cpufunc_asm_arm11x6.S,v 1.1.4.2 2014/08/20 00:02:44 tls Exp $")
 
 #if 0
 #define Invalidate_I_cache(Rtmp1, Rtmp2) \
@@ -74,7 +74,7 @@ RCSID("$NetBSD: cpufunc_asm_arm11x6.S,v 1.1.4.1 2012/11/20 03:01:02 tls Exp $")
  *
  *    Erratum 411920 in ARM1136 (fixed in r1p4)
  *    Erratum 415045 in ARM1176 (fixed in r0p5?)
- * 
+ *
  *	- value of arg 'reg' Should Be Zero
  */
 #define Invalidate_I_cache(Rtmp1, Rtmp2) \
@@ -108,99 +108,91 @@ RCSID("$NetBSD: cpufunc_asm_arm11x6.S,v 1.1.4.1 2012/11/20 03:01:02 tls Exp $")
 #define Flush_D_cache(reg) \
 1:	mov	reg, #0;		/* SBZ */					\
 	mcr	p15, 0, reg, c7, c14, 0;/* Clean and Invalidate Entire Data Cache */	\
-	mrc	p15, 0, reg, C7, C10, 6;/* Read Cache Dirty Status Register */		\
+	mrc	p15, 0, reg, c7, c10, 6;/* Read Cache Dirty Status Register */		\
 	ands	reg, reg, #01;		/* Check if it is clean */			\
 	bne	1b;			/* loop if not */				\
 	mcr	p15, 0, reg, c7, c10, 4;/* Data Synchronization Barrier */
 #endif
 
-ENTRY(arm11x6_setttb)
-#ifdef PMAP_CACHE_VIVT
-	Flush_D_cache(r2)
-	Invalidate_I_cache(r2, r3)
-#else
-	mov	r2, #0
-#endif
-	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
-
-	cmp	r1, #0
-	mcrne	p15, 0, r2, c8, c7, 0	/* invalidate I+D TLBs */
-	mcrne	p15, 0, r2, c7, c10, 4	/* drain write buffer */
-	RET
-
 ENTRY_NP(arm11x6_idcache_wbinv_all)
 	Flush_D_cache(r0)
 	Invalidate_I_cache(r0, r1)
 	RET
+END(arm11x6_idcache_wbinv_all)
 
 ENTRY_NP(arm11x6_dcache_wbinv_all)
 	Flush_D_cache(r0)
 	RET
+END(arm11x6_dcache_wbinv_all)
 
 ENTRY_NP(arm11x6_icache_sync_all)
 	Flush_D_cache(r0)
 	Invalidate_I_cache(r0, r1)
 	RET
+END(arm11x6_icache_sync_all)
 
 ENTRY_NP(arm11x6_flush_prefetchbuf)
 	mcr	p15, 0, r0, c7, c5, 4	/* Flush Prefetch Buffer */
 	RET
+END(arm11x6_flush_prefetchbuf)
 
 ENTRY_NP(arm11x6_icache_sync_range)
 	add	r1, r1, r0
 	sub	r1, r1, #1
 	/* Erratum ARM1136 371025, workaround #2 */
-	/* Erratum ARM1176 371367 */
+	/* Erratum ARM1176 371367, workaround #2 */
 	mrs	r2, cpsr		/* save the CPSR */
 	cpsid	ifa			/* disable interrupts (irq,fiq,abort) */
-	mov	r3, #0 
+	mov	r3, #0
 	mcr	p15, 0, r3, c13, c0, 0	/* write FCSE (uTLB invalidate) */
 	mcr	p15, 0, r3, c7, c5, 4	/* flush prefetch buffer */
-	add	r3, pc, #0x24 
+	add	r3, pc, #0x24
 	mcr	p15, 0, r3, c7, c13, 1	/* prefetch I-cache line */
 	mcrr	p15, 0, r1, r0, c5	/* invalidate I-cache range */
 	msr	cpsr_cx, r2		/* local_irq_restore */
-	nop 
-	nop 
-	nop 
-	nop 
-	nop 
-	nop 
-	nop 
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
 
-	mcrr	p15, 0, r1, r0, c12	/* clean and invalidate D cache range */ /* XXXNH */
+	mcrr	p15, 0, r1, r0, c12	/* clean D cache range */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
+END(arm11x6_icache_sync_range)
 
 ENTRY_NP(arm11x6_idcache_wbinv_range)
 	add	r1, r1, r0
 	sub	r1, r1, #1
 	/* Erratum ARM1136 371025, workaround #2 */
-	/* Erratum ARM1176 371367 */
+	/* Erratum ARM1176 371367, workaround #2 */
 	mrs	r2, cpsr		/* save the CPSR */
 	cpsid	ifa			/* disable interrupts (irq,fiq,abort) */
-	mov	r3, #0 
+	mov	r3, #0
 	mcr	p15, 0, r3, c13, c0, 0	/* write FCSE (uTLB invalidate) */
 	mcr	p15, 0, r3, c7, c5, 4	/* flush prefetch buffer */
-	add	r3, pc, #0x24 
+	add	r3, pc, #0x24
 	mcr	p15, 0, r3, c7, c13, 1	/* prefetch I-cache line */
 	mcrr	p15, 0, r1, r0, c5	/* invalidate I-cache range */
 	msr	cpsr_cx, r2		/* local_irq_restore */
-	nop 
-	nop 
-	nop 
-	nop 
-	nop 
-	nop 
-	nop 
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
 
 	mcrr	p15, 0, r1, r0, c14	/* clean and invalidate D cache range */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
+END(arm11x6_idcache_wbinv_range)
 
 /*
  * Preload the cache before issuing the WFI by conditionally disabling the
- * mcr intstructions the first time around the loop. Ensure the function is 
+ * mcr intstructions the first time around the loop. Ensure the function is
  * cacheline aligned.
  */
 	.arch	armv6
@@ -219,3 +211,4 @@ ENTRY_NP(arm11x6_sleep)
 	nop
 	bne	1b
 	RET
+END(arm11x6_sleep)

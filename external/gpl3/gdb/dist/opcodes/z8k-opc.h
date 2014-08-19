@@ -3580,77 +3580,69 @@ const opcode_entry_type z8k_table[] = {
 "testl",OPC_testl,0,{CLASS_REG_LONG+(ARG_RD),},
 	{CLASS_BIT+9,CLASS_BIT+0xc,CLASS_REG+(ARG_RD),CLASS_BIT+8,0,0,0,0,0,},1,2,190},
 
-/* 1011 1000 ddN0 1000 0000 aaaa ssN0 0000 *** trdb @rd,@rs,rba */
+/* 1011 1000 ddN0 1000 0000 rrrr ssN0 0000 *** trdb @rd,@rs,rr */
 {
 #ifdef NICENAMES
-"trdb @rd,@rs,rba",8,25,0x1c,
+"trdb @rd,@rs,rr",8,25,0x04,
 #endif
-"trdb",OPC_trdb,0,{CLASS_IR+(ARG_RD),CLASS_IR+(ARG_RS),CLASS_REG_BYTE+(ARG_RA),},
-	{CLASS_BIT+0xb,CLASS_BIT+8,CLASS_REGN0+(ARG_RD),CLASS_BIT+8,CLASS_BIT+0,CLASS_REG+(ARG_RA),CLASS_REGN0+(ARG_RS),CLASS_BIT+0,0,},3,4,191},
+"trdb",OPC_trdb,0,{CLASS_IR+(ARG_RD),CLASS_IR+(ARG_RS),CLASS_REG_WORD+(ARG_RR),},
+	{CLASS_BIT+0xb,CLASS_BIT+8,CLASS_REGN0+(ARG_RD),CLASS_BIT+8,CLASS_BIT+0,CLASS_REG+(ARG_RR),CLASS_REGN0+(ARG_RS),CLASS_BIT+0,0,},3,4,191},
 
-/* 1011 1000 ddN0 1100 0000 aaaa ssN0 0000 *** trdrb @rd,@rs,rba */
+/* 1011 1000 ddN0 1100 0000 rrrr ssN0 0000 *** trdrb @rd,@rs,rr */
 {
 #ifdef NICENAMES
-"trdrb @rd,@rs,rba",8,25,0x1c,
+"trdrb @rd,@rs,rr",8,25,0x04,
 #endif
-"trdrb",OPC_trdrb,0,{CLASS_IR+(ARG_RD),CLASS_IR+(ARG_RS),CLASS_REG_BYTE+(ARG_RA),},
-	{CLASS_BIT+0xb,CLASS_BIT+8,CLASS_REGN0+(ARG_RD),CLASS_BIT+0xc,CLASS_BIT+0,CLASS_REG+(ARG_RA),CLASS_REGN0+(ARG_RS),CLASS_BIT+0,0,},3,4,192},
+"trdrb",OPC_trdrb,0,{CLASS_IR+(ARG_RD),CLASS_IR+(ARG_RS),CLASS_REG_WORD+(ARG_RR),},
+	{CLASS_BIT+0xb,CLASS_BIT+8,CLASS_REGN0+(ARG_RD),CLASS_BIT+0xc,CLASS_BIT+0,CLASS_REG+(ARG_RR),CLASS_REGN0+(ARG_RS),CLASS_BIT+0,0,},3,4,192},
 
-/* 1011 1000 ddN0 0000 0000 rrrr ssN0 0000 *** trib @rd,@rs,rbr */
+/* 1011 1000 ddN0 0000 0000 rrrr ssN0 0000 *** trib @rd,@rs,rr */
 {
 #ifdef NICENAMES
-"trib @rd,@rs,rbr",8,25,0x1c,
+"trib @rd,@rs,rr",8,25,0x04,
 #endif
-"trib",OPC_trib,0,{CLASS_IR+(ARG_RD),CLASS_IR+(ARG_RS),CLASS_REG_BYTE+(ARG_RR),},
+"trib",OPC_trib,0,{CLASS_IR+(ARG_RD),CLASS_IR+(ARG_RS),CLASS_REG_WORD+(ARG_RR),},
 	{CLASS_BIT+0xb,CLASS_BIT+8,CLASS_REGN0+(ARG_RD),CLASS_BIT+0,CLASS_BIT+0,CLASS_REG+(ARG_RR),CLASS_REGN0+(ARG_RS),CLASS_BIT+0,0,},3,4,193},
 
-/* 1011 1000 ddN0 0100 0000 rrrr ssN0 0000 *** trirb @rd,@rs,rbr */
+/* 1011 1000 ddN0 0100 0000 rrrr ssN0 0000 *** trirb @rd,@rs,rr */
 {
 #ifdef NICENAMES
-"trirb @rd,@rs,rbr",8,25,0x1c,
+"trirb @rd,@rs,rr",8,25,0x04,
 #endif
-"trirb",OPC_trirb,0,{CLASS_IR+(ARG_RD),CLASS_IR+(ARG_RS),CLASS_REG_BYTE+(ARG_RR),},
+"trirb",OPC_trirb,0,{CLASS_IR+(ARG_RD),CLASS_IR+(ARG_RS),CLASS_REG_WORD+(ARG_RR),},
 	{CLASS_BIT+0xb,CLASS_BIT+8,CLASS_REGN0+(ARG_RD),CLASS_BIT+4,CLASS_BIT+0,CLASS_REG+(ARG_RR),CLASS_REGN0+(ARG_RS),CLASS_BIT+0,0,},3,4,194},
 
-/* 1011 1000 aaN0 1010 0000 rrrr bbN0 0000 *** trtdb @ra,@rb,rbr */
+/* 1011 1000 aaN0 1010 0000 rrrr bbN0 0000 *** trtdb @ra,@rb,rr */
 {
 #ifdef NICENAMES
-"trtdb @ra,@rb,rbr",8,25,0x1c,
+"trtdb @ra,@rb,rr",8,25,0x14,
 #endif
-"trtdb",OPC_trtdb,0,{CLASS_IR+(ARG_RA),CLASS_IR+(ARG_RB),CLASS_REG_BYTE+(ARG_RR),},
+"trtdb",OPC_trtdb,0,{CLASS_IR+(ARG_RA),CLASS_IR+(ARG_RB),CLASS_REG_WORD+(ARG_RR),},
 	{CLASS_BIT+0xb,CLASS_BIT+8,CLASS_REGN0+(ARG_RA),CLASS_BIT+0xa,CLASS_BIT+0,CLASS_REG+(ARG_RR),CLASS_REGN0+(ARG_RB),CLASS_BIT+0,0,},3,4,195},
 
-/* 1011 1000 aaN0 1110 0000 rrrr bbN0 1110 *** trtdrb @ra,@rb,rbr */
+/* 1011 1000 aaN0 1110 0000 rrrr bbN0 1110 *** trtdrb @ra,@rb,rr */
 {
 #ifdef NICENAMES
-"trtdrb @ra,@rb,rbr",8,25,0x1c,
+"trtdrb @ra,@rb,rr",8,25,0x14,
 #endif
-"trtdrb",OPC_trtdrb,0,{CLASS_IR+(ARG_RA),CLASS_IR+(ARG_RB),CLASS_REG_BYTE+(ARG_RR),},
+"trtdrb",OPC_trtdrb,0,{CLASS_IR+(ARG_RA),CLASS_IR+(ARG_RB),CLASS_REG_WORD+(ARG_RR),},
 	{CLASS_BIT+0xb,CLASS_BIT+8,CLASS_REGN0+(ARG_RA),CLASS_BIT+0xe,CLASS_BIT+0,CLASS_REG+(ARG_RR),CLASS_REGN0+(ARG_RB),CLASS_BIT+0xe,0,},3,4,196},
 
-/* 1011 1000 aaN0 0010 0000 rrrr bbN0 0000 *** trtib @ra,@rb,rbr */
+/* 1011 1000 aaN0 0010 0000 rrrr bbN0 0000 *** trtib @ra,@rb,rr */
 {
 #ifdef NICENAMES
-"trtib @ra,@rb,rbr",8,25,0x1c,
+"trtib @ra,@rb,rr",8,25,0x14,
 #endif
-"trtib",OPC_trtib,0,{CLASS_IR+(ARG_RA),CLASS_IR+(ARG_RB),CLASS_REG_BYTE+(ARG_RR),},
+"trtib",OPC_trtib,0,{CLASS_IR+(ARG_RA),CLASS_IR+(ARG_RB),CLASS_REG_WORD+(ARG_RR),},
 	{CLASS_BIT+0xb,CLASS_BIT+8,CLASS_REGN0+(ARG_RA),CLASS_BIT+2,CLASS_BIT+0,CLASS_REG+(ARG_RR),CLASS_REGN0+(ARG_RB),CLASS_BIT+0,0,},3,4,197},
 
-/* 1011 1000 aaN0 0110 0000 rrrr bbN0 1110 *** trtirb @ra,@rb,rbr */
+/* 1011 1000 aaN0 0110 0000 rrrr bbN0 1110 *** trtirb @ra,@rb,rr */
 {
 #ifdef NICENAMES
-"trtirb @ra,@rb,rbr",8,25,0x1c,
+"trtirb @ra,@rb,rr",8,25,0x14,
 #endif
-"trtirb",OPC_trtirb,0,{CLASS_IR+(ARG_RA),CLASS_IR+(ARG_RB),CLASS_REG_BYTE+(ARG_RR),},
+"trtirb",OPC_trtirb,0,{CLASS_IR+(ARG_RA),CLASS_IR+(ARG_RB),CLASS_REG_WORD+(ARG_RR),},
 	{CLASS_BIT+0xb,CLASS_BIT+8,CLASS_REGN0+(ARG_RA),CLASS_BIT+6,CLASS_BIT+0,CLASS_REG+(ARG_RR),CLASS_REGN0+(ARG_RB),CLASS_BIT+0xe,0,},3,4,198},
-
-/* 1011 1000 aaN0 1010 0000 rrrr bbN0 0000 *** trtrb @ra,@rb,rbr */
-{
-#ifdef NICENAMES
-"trtrb @ra,@rb,rbr",8,25,0x1c,
-#endif
-"trtrb",OPC_trtrb,0,{CLASS_IR+(ARG_RA),CLASS_IR+(ARG_RB),CLASS_REG_BYTE+(ARG_RR),},
-	{CLASS_BIT+0xb,CLASS_BIT+8,CLASS_REGN0+(ARG_RA),CLASS_BIT+0xa,CLASS_BIT+0,CLASS_REG+(ARG_RR),CLASS_REGN0+(ARG_RB),CLASS_BIT+0,0,},3,4,199},
 
 /* 0000 1101 ddN0 0110 *** tset @rd */
 {
@@ -3658,7 +3650,7 @@ const opcode_entry_type z8k_table[] = {
 "tset @rd",16,11,0x08,
 #endif
 "tset",OPC_tset,0,{CLASS_IR+(ARG_RD),},
-	{CLASS_BIT+0,CLASS_BIT+0xd,CLASS_REGN0+(ARG_RD),CLASS_BIT+6,0,0,0,0,0,},1,2,200},
+	{CLASS_BIT+0,CLASS_BIT+0xd,CLASS_REGN0+(ARG_RD),CLASS_BIT+6,0,0,0,0,0,},1,2,199},
 
 /* 0100 1101 0000 0110 address_dst *** tset address_dst */
 {
@@ -3666,7 +3658,7 @@ const opcode_entry_type z8k_table[] = {
 "tset address_dst",16,14,0x08,
 #endif
 "tset",OPC_tset,0,{CLASS_DA+(ARG_DST),},
-	{CLASS_BIT+4,CLASS_BIT+0xd,CLASS_BIT+0,CLASS_BIT+6,CLASS_ADDRESS+(ARG_DST),0,0,0,0,},1,4,200},
+	{CLASS_BIT+4,CLASS_BIT+0xd,CLASS_BIT+0,CLASS_BIT+6,CLASS_ADDRESS+(ARG_DST),0,0,0,0,},1,4,199},
 
 /* 0100 1101 ddN0 0110 address_dst *** tset address_dst(rd) */
 {
@@ -3674,7 +3666,7 @@ const opcode_entry_type z8k_table[] = {
 "tset address_dst(rd)",16,15,0x08,
 #endif
 "tset",OPC_tset,0,{CLASS_X+(ARG_RD),},
-	{CLASS_BIT+4,CLASS_BIT+0xd,CLASS_REGN0+(ARG_RD),CLASS_BIT+6,CLASS_ADDRESS+(ARG_DST),0,0,0,0,},1,4,200},
+	{CLASS_BIT+4,CLASS_BIT+0xd,CLASS_REGN0+(ARG_RD),CLASS_BIT+6,CLASS_ADDRESS+(ARG_DST),0,0,0,0,},1,4,199},
 
 /* 1000 1101 dddd 0110 *** tset rd */
 {
@@ -3682,7 +3674,7 @@ const opcode_entry_type z8k_table[] = {
 "tset rd",16,7,0x08,
 #endif
 "tset",OPC_tset,0,{CLASS_REG_WORD+(ARG_RD),},
-	{CLASS_BIT+8,CLASS_BIT+0xd,CLASS_REG+(ARG_RD),CLASS_BIT+6,0,0,0,0,0,},1,2,200},
+	{CLASS_BIT+8,CLASS_BIT+0xd,CLASS_REG+(ARG_RD),CLASS_BIT+6,0,0,0,0,0,},1,2,199},
 
 /* 0000 1100 ddN0 0110 *** tsetb @rd */
 {
@@ -3690,7 +3682,7 @@ const opcode_entry_type z8k_table[] = {
 "tsetb @rd",8,11,0x08,
 #endif
 "tsetb",OPC_tsetb,0,{CLASS_IR+(ARG_RD),},
-	{CLASS_BIT+0,CLASS_BIT+0xc,CLASS_REGN0+(ARG_RD),CLASS_BIT+6,0,0,0,0,0,},1,2,201},
+	{CLASS_BIT+0,CLASS_BIT+0xc,CLASS_REGN0+(ARG_RD),CLASS_BIT+6,0,0,0,0,0,},1,2,200},
 
 /* 0100 1100 0000 0110 address_dst *** tsetb address_dst */
 {
@@ -3698,7 +3690,7 @@ const opcode_entry_type z8k_table[] = {
 "tsetb address_dst",8,14,0x08,
 #endif
 "tsetb",OPC_tsetb,0,{CLASS_DA+(ARG_DST),},
-	{CLASS_BIT+4,CLASS_BIT+0xc,CLASS_BIT+0,CLASS_BIT+6,CLASS_ADDRESS+(ARG_DST),0,0,0,0,},1,4,201},
+	{CLASS_BIT+4,CLASS_BIT+0xc,CLASS_BIT+0,CLASS_BIT+6,CLASS_ADDRESS+(ARG_DST),0,0,0,0,},1,4,200},
 
 /* 0100 1100 ddN0 0110 address_dst *** tsetb address_dst(rd) */
 {
@@ -3706,7 +3698,7 @@ const opcode_entry_type z8k_table[] = {
 "tsetb address_dst(rd)",8,15,0x08,
 #endif
 "tsetb",OPC_tsetb,0,{CLASS_X+(ARG_RD),},
-	{CLASS_BIT+4,CLASS_BIT+0xc,CLASS_REGN0+(ARG_RD),CLASS_BIT+6,CLASS_ADDRESS+(ARG_DST),0,0,0,0,},1,4,201},
+	{CLASS_BIT+4,CLASS_BIT+0xc,CLASS_REGN0+(ARG_RD),CLASS_BIT+6,CLASS_ADDRESS+(ARG_DST),0,0,0,0,},1,4,200},
 
 /* 1000 1100 dddd 0110 *** tsetb rbd */
 {
@@ -3714,7 +3706,7 @@ const opcode_entry_type z8k_table[] = {
 "tsetb rbd",8,7,0x08,
 #endif
 "tsetb",OPC_tsetb,0,{CLASS_REG_BYTE+(ARG_RD),},
-	{CLASS_BIT+8,CLASS_BIT+0xc,CLASS_REG+(ARG_RD),CLASS_BIT+6,0,0,0,0,0,},1,2,201},
+	{CLASS_BIT+8,CLASS_BIT+0xc,CLASS_REG+(ARG_RD),CLASS_BIT+6,0,0,0,0,0,},1,2,200},
 
 /* 0000 1001 ssN0 dddd *** xor rd,@rs */
 {
@@ -3722,7 +3714,7 @@ const opcode_entry_type z8k_table[] = {
 "xor rd,@rs",16,7,0x18,
 #endif
 "xor",OPC_xor,0,{CLASS_REG_WORD+(ARG_RD),CLASS_IR+(ARG_RS),},
-	{CLASS_BIT+0,CLASS_BIT+9,CLASS_REGN0+(ARG_RS),CLASS_REG+(ARG_RD),0,0,0,0,0,},2,2,202},
+	{CLASS_BIT+0,CLASS_BIT+9,CLASS_REGN0+(ARG_RS),CLASS_REG+(ARG_RD),0,0,0,0,0,},2,2,201},
 
 /* 0100 1001 0000 dddd address_src *** xor rd,address_src */
 {
@@ -3730,7 +3722,7 @@ const opcode_entry_type z8k_table[] = {
 "xor rd,address_src",16,9,0x18,
 #endif
 "xor",OPC_xor,0,{CLASS_REG_WORD+(ARG_RD),CLASS_DA+(ARG_SRC),},
-	{CLASS_BIT+4,CLASS_BIT+9,CLASS_BIT+0,CLASS_REG+(ARG_RD),CLASS_ADDRESS+(ARG_SRC),0,0,0,0,},2,4,202},
+	{CLASS_BIT+4,CLASS_BIT+9,CLASS_BIT+0,CLASS_REG+(ARG_RD),CLASS_ADDRESS+(ARG_SRC),0,0,0,0,},2,4,201},
 
 /* 0100 1001 ssN0 dddd address_src *** xor rd,address_src(rs) */
 {
@@ -3738,7 +3730,7 @@ const opcode_entry_type z8k_table[] = {
 "xor rd,address_src(rs)",16,10,0x18,
 #endif
 "xor",OPC_xor,0,{CLASS_REG_WORD+(ARG_RD),CLASS_X+(ARG_RS),},
-	{CLASS_BIT+4,CLASS_BIT+9,CLASS_REGN0+(ARG_RS),CLASS_REG+(ARG_RD),CLASS_ADDRESS+(ARG_SRC),0,0,0,0,},2,4,202},
+	{CLASS_BIT+4,CLASS_BIT+9,CLASS_REGN0+(ARG_RS),CLASS_REG+(ARG_RD),CLASS_ADDRESS+(ARG_SRC),0,0,0,0,},2,4,201},
 
 /* 0000 1001 0000 dddd imm16 *** xor rd,imm16 */
 {
@@ -3746,7 +3738,7 @@ const opcode_entry_type z8k_table[] = {
 "xor rd,imm16",16,7,0x18,
 #endif
 "xor",OPC_xor,0,{CLASS_REG_WORD+(ARG_RD),CLASS_IMM+(ARG_IMM16),},
-	{CLASS_BIT+0,CLASS_BIT+9,CLASS_BIT+0,CLASS_REG+(ARG_RD),CLASS_IMM+(ARG_IMM16),0,0,0,0,},2,4,202},
+	{CLASS_BIT+0,CLASS_BIT+9,CLASS_BIT+0,CLASS_REG+(ARG_RD),CLASS_IMM+(ARG_IMM16),0,0,0,0,},2,4,201},
 
 /* 1000 1001 ssss dddd *** xor rd,rs */
 {
@@ -3754,7 +3746,7 @@ const opcode_entry_type z8k_table[] = {
 "xor rd,rs",16,4,0x18,
 #endif
 "xor",OPC_xor,0,{CLASS_REG_WORD+(ARG_RD),CLASS_REG_WORD+(ARG_RS),},
-	{CLASS_BIT+8,CLASS_BIT+9,CLASS_REG+(ARG_RS),CLASS_REG+(ARG_RD),0,0,0,0,0,},2,2,202},
+	{CLASS_BIT+8,CLASS_BIT+9,CLASS_REG+(ARG_RS),CLASS_REG+(ARG_RD),0,0,0,0,0,},2,2,201},
 
 /* 0000 1000 ssN0 dddd *** xorb rbd,@rs */
 {
@@ -3762,7 +3754,7 @@ const opcode_entry_type z8k_table[] = {
 "xorb rbd,@rs",8,7,0x1c,
 #endif
 "xorb",OPC_xorb,0,{CLASS_REG_BYTE+(ARG_RD),CLASS_IR+(ARG_RS),},
-	{CLASS_BIT+0,CLASS_BIT+8,CLASS_REGN0+(ARG_RS),CLASS_REG+(ARG_RD),0,0,0,0,0,},2,2,203},
+	{CLASS_BIT+0,CLASS_BIT+8,CLASS_REGN0+(ARG_RS),CLASS_REG+(ARG_RD),0,0,0,0,0,},2,2,202},
 
 /* 0100 1000 0000 dddd address_src *** xorb rbd,address_src */
 {
@@ -3770,7 +3762,7 @@ const opcode_entry_type z8k_table[] = {
 "xorb rbd,address_src",8,9,0x1c,
 #endif
 "xorb",OPC_xorb,0,{CLASS_REG_BYTE+(ARG_RD),CLASS_DA+(ARG_SRC),},
-	{CLASS_BIT+4,CLASS_BIT+8,CLASS_BIT+0,CLASS_REG+(ARG_RD),CLASS_ADDRESS+(ARG_SRC),0,0,0,0,},2,4,203},
+	{CLASS_BIT+4,CLASS_BIT+8,CLASS_BIT+0,CLASS_REG+(ARG_RD),CLASS_ADDRESS+(ARG_SRC),0,0,0,0,},2,4,202},
 
 /* 0100 1000 ssN0 dddd address_src *** xorb rbd,address_src(rs) */
 {
@@ -3778,7 +3770,7 @@ const opcode_entry_type z8k_table[] = {
 "xorb rbd,address_src(rs)",8,10,0x1c,
 #endif
 "xorb",OPC_xorb,0,{CLASS_REG_BYTE+(ARG_RD),CLASS_X+(ARG_RS),},
-	{CLASS_BIT+4,CLASS_BIT+8,CLASS_REGN0+(ARG_RS),CLASS_REG+(ARG_RD),CLASS_ADDRESS+(ARG_SRC),0,0,0,0,},2,4,203},
+	{CLASS_BIT+4,CLASS_BIT+8,CLASS_REGN0+(ARG_RS),CLASS_REG+(ARG_RD),CLASS_ADDRESS+(ARG_SRC),0,0,0,0,},2,4,202},
 
 /* 0000 1000 0000 dddd imm8 imm8 *** xorb rbd,imm8 */
 {
@@ -3786,7 +3778,7 @@ const opcode_entry_type z8k_table[] = {
 "xorb rbd,imm8",8,7,0x1c,
 #endif
 "xorb",OPC_xorb,0,{CLASS_REG_BYTE+(ARG_RD),CLASS_IMM+(ARG_IMM8),},
-	{CLASS_BIT+0,CLASS_BIT+8,CLASS_BIT+0,CLASS_REG+(ARG_RD),CLASS_IMM+(ARG_IMM8),CLASS_IMM+(ARG_IMM8),0,0,0,},2,4,203},
+	{CLASS_BIT+0,CLASS_BIT+8,CLASS_BIT+0,CLASS_REG+(ARG_RD),CLASS_IMM+(ARG_IMM8),CLASS_IMM+(ARG_IMM8),0,0,0,},2,4,202},
 
 /* 1000 1000 ssss dddd *** xorb rbd,rbs */
 {
@@ -3794,7 +3786,7 @@ const opcode_entry_type z8k_table[] = {
 "xorb rbd,rbs",8,4,0x1c,
 #endif
 "xorb",OPC_xorb,0,{CLASS_REG_BYTE+(ARG_RD),CLASS_REG_BYTE+(ARG_RS),},
-	{CLASS_BIT+8,CLASS_BIT+8,CLASS_REG+(ARG_RS),CLASS_REG+(ARG_RD),0,0,0,0,0,},2,2,203},
+	{CLASS_BIT+8,CLASS_BIT+8,CLASS_REG+(ARG_RS),CLASS_REG+(ARG_RD),0,0,0,0,0,},2,2,202},
 
 /* end marker */
 {

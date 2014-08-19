@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LCARD,v 1.14 2011/11/22 21:25:17 tls Exp $
+# 	$NetBSD: LCARD,v 1.14.8.1 2014/08/20 00:03:03 tls Exp $
 #
 include		"arch/hpcmips/conf/std.lcard"
 
@@ -37,6 +37,10 @@ options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 options 	INET		# IP + ICMP + TCP + UDP
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 # compile options
 #makeoptions	DEFGP="-G 18"

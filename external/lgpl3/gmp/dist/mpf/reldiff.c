@@ -22,8 +22,8 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
 
 /* The precision we use for d = x-y is based on what mpf_div will want from
-   the dividend.  It calls mpn_tdiv_qr to produce a quotient of rprec+1
-   limbs.  So rprec+1 == dsize - xsize + 1, hence dprec = rprec+xsize.  */
+   the dividend.  It calls mpn_div_q to produce a quotient of rprec+1 limbs.
+   So rprec+1 == dsize - xsize + 1, hence dprec = rprec+xsize.  */
 
 void
 mpf_reldiff (mpf_t rdiff, mpf_srcptr x, mpf_srcptr y)

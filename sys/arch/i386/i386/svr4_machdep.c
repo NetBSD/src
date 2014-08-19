@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.96 2010/02/14 11:09:54 drochner Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.96.20.1 2014/08/20 00:03:06 tls Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.96 2010/02/14 11:09:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.96.20.1 2014/08/20 00:03:06 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -68,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.96 2010/02/14 11:09:54 drochner E
 #include <machine/vm86.h>
 #include <machine/vmparam.h>
 #include <machine/svr4_machdep.h>
+
+#include <x86/fpu.h>
 
 static void svr4_getsiginfo(union svr4_siginfo *, int, u_long, void *);
 extern void (*svr4_fasttrap_vec)(void);
@@ -111,14 +113,11 @@ svr4_printmcontext(const char *fun, svr4_mcontext_t *mc)
 void
 svr4_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
-	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf = l->l_md.md_regs;
 
 	setregs(l, epp, stack);
-	if (i386_use_fxsave)
-		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __SVR4_NPXCW__;
-	else
-		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __SVR4_NPXCW__;
+	fpu_set_default_cw(l, __SVR4_NPXCW__);
+
 	tf->tf_cs = GSEL(GUCODEBIG_SEL, SEL_UPL);
 }
 

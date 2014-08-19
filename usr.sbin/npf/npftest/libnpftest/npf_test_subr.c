@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_test_subr.c,v 1.4 2012/08/15 19:47:38 rmind Exp $	*/
+/*	$NetBSD: npf_test_subr.c,v 1.4.2.1 2014/08/20 00:05:11 tls Exp $	*/
 
 /*
  * NPF initialisation and handler routines.
@@ -7,6 +7,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/cprng.h>
 #include <net/if.h>
 #include <net/if_types.h>
 
@@ -18,45 +19,61 @@ static npf_state_t	cstream_state;
 static void *		cstream_ptr;
 static bool		cstream_retval;
 
+static long		(*_random_func)(void);
+static int		(*_pton_func)(int, const char *, void *);
+static const char *	(*_ntop_func)(int, const void *, char *, socklen_t);
+
 static void		npf_state_sample(npf_state_t *, bool);
 
 void
-npf_test_init(void)
+npf_test_init(int (*pton_func)(int, const char *, void *),
+    const char *(*ntop_func)(int, const void *, char *, socklen_t),
+    long (*rndfunc)(void))
 {
 	npf_state_setsampler(npf_state_sample);
+	_pton_func = pton_func;
+	_ntop_func = ntop_func;
+	_random_func = rndfunc;
 }
 
 int
 npf_test_load(const void *xml)
 {
 	prop_dictionary_t npf_dict = prop_dictionary_internalize(xml);
-	return npfctl_reload(0, npf_dict);
+	return npfctl_load(0, npf_dict);
 }
 
-unsigned
-npf_test_addif(const char *ifname, unsigned if_idx, bool verbose)
+ifnet_t *
+npf_test_addif(const char *ifname, bool reg, bool verbose)
 {
 	ifnet_t *ifp = if_alloc(IFT_OTHER);
 
 	/*
 	 * This is a "fake" interface with explicitly set index.
+	 * Note: test modules may not setup pfil(9) hooks and if_attach()
+	 * may not trigger npf_ifmap_attach(), so we call it manually.
 	 */
 	strlcpy(ifp->if_xname, ifname, sizeof(ifp->if_xname));
-	if (verbose) {
-		printf("+ Interface %s\n", ifp->if_xname);
-	}
 	ifp->if_dlt = DLT_NULL;
+	ifp->if_index = 0;
 	if_attach(ifp);
-	ifp->if_index = if_idx;
 	if_alloc_sadl(ifp);
-	return if_idx;
+
+	npf_ifmap_attach(ifp);
+	if (reg) {
+		npf_ifmap_register(ifname);
+	}
+
+	if (verbose) {
+		printf("+ Interface %s\n", ifname);
+	}
+	return ifp;
 }
 
-unsigned
+ifnet_t *
 npf_test_getif(const char *ifname)
 {
-	ifnet_t *ifp = ifunit(ifname);
-	return ifp ? ifp->if_index : 0;
+	return ifunit(ifname);
 }
 
 /*
@@ -72,15 +89,14 @@ npf_state_sample(npf_state_t *nst, bool retval)
 }
 
 int
-npf_test_handlepkt(const void *data, size_t len, unsigned idx,
+npf_test_statetrack(const void *data, size_t len, ifnet_t *ifp,
     bool forw, int64_t *result)
 {
-	ifnet_t ifp = { .if_index = idx };
 	struct mbuf *m;
 	int i = 0, error;
 
 	m = mbuf_getwithdata(data, len);
-	error = npf_packet_handler(NULL, &m, &ifp, forw ? PFIL_OUT : PFIL_IN);
+	error = npf_packet_handler(NULL, &m, ifp, forw ? PFIL_OUT : PFIL_IN);
 	if (error) {
 		assert(m == NULL);
 		return error;
@@ -107,4 +123,25 @@ npf_test_handlepkt(const void *data, size_t len, unsigned idx,
 	result[i++] = tstate->nst_wscale;
 
 	return 0;
+}
+
+int
+npf_inet_pton(int af, const char *src, void *dst)
+{
+	return _pton_func(af, src, dst);
+}
+
+const char *
+npf_inet_ntop(int af, const void *src, char *dst, socklen_t size)
+{
+	return _ntop_func(af, src, dst, size);
+}
+
+/*
+ * Need to override cprng_fast32() -- we need deterministic PRNG.
+ */
+uint32_t
+cprng_fast32(void)
+{
+	return (uint32_t)(_random_func ? _random_func() : random());
 }

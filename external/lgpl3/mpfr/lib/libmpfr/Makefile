@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2012/08/10 16:10:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 2014/08/20 00:00:07 tls Exp $
 
 .include <bsd.init.mk>
 
@@ -94,6 +94,7 @@ SRCS=	\
 	fms.c \
 	frac.c \
 	free_cache.c \
+	frexp.c \
 	gamma.c \
 	gammaonethird.c \
 	get_d.c \
@@ -111,6 +112,7 @@ SRCS=	\
 	get_z.c \
 	get_z_exp.c \
 	gmp_op.c \
+	grandom.c \
 	hypot.c \
 	init.c \
 	init2.c \
@@ -476,7 +478,9 @@ CPPFLAGS+=	-I. \
 		-DHAVE_ATTRIBUTE_MODE=1
 
 # Find <gmp.h>
-CPPFLAGS+=	-I${NETBSDSRCDIR}/external/lgpl3/gmp/lib/libgmp/arch/${MACHINE_ARCH}
+GMP_MACHINE_ARCH=${MACHINE_ARCH:S/earmv4/arm/:C/armv[5-7]/arm/}
+CPPFLAGS+=	-I${NETBSDSRCDIR}/external/lgpl3/gmp/lib/libgmp/arch/${GMP_MACHINE_ARCH}
+CPPFLAGS+=	-I${.CURDIR}/../../dist/src
 
 # XXX
 # XXX XXX check mips*
@@ -507,13 +511,16 @@ WITHOUT_MAN=	yes
 .include <bsd.lib.mk>
 
 mparam.h: mparam_h.in
-	cp ${.ALLSRC} ${.TARGET}
+	rm -f ${.TARGET} && cp ${.ALLSRC} ${.TARGET}
 
 ${SRCS}: mparam.h
 CLEANFILES+= mparam.h
 
-.PATH: ${.CURDIR}/../../dist
+.PATH: ${.CURDIR}/../../dist/src
 
+.if !empty(MACHINE_ARCH:M*arm*)
+COPTS += -marm
+.endif
 .if ${MACHINE_ARCH} == "vax"
 COPTS.set_ld.c+=	-Wno-error
 .endif

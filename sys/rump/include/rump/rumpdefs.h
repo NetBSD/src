@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdefs.h,v 1.11.2.3 2013/06/23 06:20:27 tls Exp $	*/
+/*	$NetBSD: rumpdefs.h,v 1.11.2.4 2014/08/20 00:04:39 tls Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -9,7 +9,7 @@
 
 #include <rump/rump_namei.h>
 
-/*	NetBSD: fcntl.h,v 1.45 2013/01/13 08:15:03 dholland Exp 	*/
+/*	NetBSD: fcntl.h,v 1.46 2013/09/15 10:41:20 njoly Exp 	*/
 #define	RUMP_O_RDONLY	0x00000000	/* open for reading only */
 #define	RUMP_O_WRONLY	0x00000001	/* open for writing only */
 #define	RUMP_O_RDWR		0x00000002	/* open for reading and writing */
@@ -33,7 +33,7 @@
 #define	RUMP_O_SEARCH	0x00800000	/* skip search permission checks */
 #define	RUMP_O_NOSIGPIPE	0x01000000	/* don't deliver sigpipe */
 
-/*	NetBSD: vnode.h,v 1.237 2012/11/18 18:39:24 pooka Exp 	*/
+/*	NetBSD: vnode.h,v 1.243 2013/12/01 17:29:40 christos Exp 	*/
 enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VLNK, RUMP_VSOCK, RUMP_VFIFO, RUMP_VBAD };
 #define	RUMP_LK_SHARED	0x00000001	
 #define	RUMP_LK_EXCLUSIVE	0x00000002	
@@ -295,7 +295,7 @@ enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VL
 #define RUMP_MSG_IOVUSRSPACE	0x4000000	
 #define RUMP_MSG_LENUSRSPACE	0x8000000	
 
-/*	NetBSD: in.h,v 1.88 2013/04/27 21:35:24 joerg Exp 	*/
+/*	NetBSD: in.h,v 1.89 2013/06/27 19:38:16 christos Exp 	*/
 #define	RUMP_IP_OPTIONS		1    
 #define	RUMP_IP_HDRINCL		2    
 #define	RUMP_IP_TOS			3    
@@ -316,6 +316,8 @@ enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VL
 #define	RUMP_IP_IPSEC_POLICY		22 
 #define	RUMP_IP_RECVTTL		23   
 #define	RUMP_IP_MINTTL		24   
+#define	RUMP_IP_PKTINFO		25   
+#define	RUMP_IP_RECVPKTINFO		26   
 #define	RUMP_IP_DEFAULT_MULTICAST_TTL  1	
 #define	RUMP_IP_DEFAULT_MULTICAST_LOOP 1	
 #define	RUMP_IP_MAX_MEMBERSHIPS	20	
@@ -377,7 +379,7 @@ enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VL
 #define	RUMP_TCP_MD5SIG	0x10	
 #define	RUMP_TCP_CONGCTL	0x20	
 
-/*	NetBSD: mount.h,v 1.209 2013/04/26 22:27:16 mlelstv Exp 	*/
+/*	NetBSD: mount.h,v 1.210 2013/11/23 13:35:36 christos Exp 	*/
 #define	RUMP_MOUNT_FFS	"ffs"		
 #define	RUMP_MOUNT_UFS	RUMP_MOUNT_FFS	
 #define	RUMP_MOUNT_NFS	"nfs"		
@@ -449,7 +451,72 @@ enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VL
 #define	RUMP_MNT_NOWAIT	2	
 #define	RUMP_MNT_LAZY 	3	
 
-/*	NetBSD: module.h,v 1.32 2012/10/17 17:48:48 dyoung Exp 	*/
+/*	NetBSD: ioccom.h,v 1.11 2011/10/19 10:53:12 yamt Exp 	*/
+#define	RUMP_IOCPARM_MASK	0x1fff		
+#define	RUMP_IOCPARM_SHIFT	16
+#define	RUMP_IOCGROUP_SHIFT	8
+#define	RUMP_IOCPARM_LEN(x)	(((x) >> RUMP_IOCPARM_SHIFT) & RUMP_IOCPARM_MASK)
+#define	RUMP_IOCBASECMD(x)	((x) & ~(RUMP_IOCPARM_MASK << RUMP_IOCPARM_SHIFT))
+#define	RUMP_IOCGROUP(x)	(((x) >> RUMP_IOCGROUP_SHIFT) & 0xff)
+#define	RUMP_IOCPARM_MAX	NBPG	
+#define	RUMP_IOC_VOID	(unsigned long)0x20000000
+#define	RUMP_IOC_OUT		(unsigned long)0x40000000
+#define	RUMP_IOC_IN		(unsigned long)0x80000000
+#define	RUMP_IOC_INOUT	(RUMP_IOC_IN|RUMP_IOC_OUT)
+#define	RUMP_IOC_DIRMASK	(unsigned long)0xe0000000
+#define	_RUMP_IOC(inout, group, num, len) \
+    ((inout) | (((len) & RUMP_IOCPARM_MASK) << RUMP_IOCPARM_SHIFT) | \
+    ((group) << RUMP_IOCGROUP_SHIFT) | (num))
+#define	_RUMP_IO(g,n)	_RUMP_IOC(RUMP_IOC_VOID,	(g), (n), 0)
+#define	_RUMP_IOR(g,n,t)	_RUMP_IOC(RUMP_IOC_OUT,	(g), (n), sizeof(t))
+#define	_RUMP_IOW(g,n,t)	_RUMP_IOC(RUMP_IOC_IN,	(g), (n), sizeof(t))
+#define	_RUMP_IOWR(g,n,t)	_RUMP_IOC(RUMP_IOC_INOUT,	(g), (n), sizeof(t))
+
+/*	NetBSD: ktrace.h,v 1.61 2013/12/09 17:43:58 pooka Exp 	*/
+#define RUMP_KTROP_SET		0	
+#define RUMP_KTROP_CLEAR		1	
+#define RUMP_KTROP_CLEARFILE		2	
+#define	RUMP_KTROP_MASK		0x3
+#define	RUMP_KTR_SHIMLEN	offsetof(struct ktr_header, ktr_pid)
+#define RUMP_KTR_SYSCALL	1
+#define RUMP_KTR_SYSRET	2
+#define RUMP_KTR_NAMEI	3
+#define RUMP_KTR_GENIO	4
+#define	RUMP_KTR_PSIG	5
+#define RUMP_KTR_CSW		6
+#define RUMP_KTR_EMUL	7
+#define	RUMP_KTR_USER	8
+#define RUMP_KTR_USER_MAXIDLEN	20
+#define RUMP_KTR_USER_MAXLEN		2048	
+#define RUMP_KTR_EXEC_ARG		10
+#define RUMP_KTR_EXEC_ENV		11
+#define	RUMP_KTR_SAUPCALL	13
+#define RUMP_KTR_MIB		14
+#define RUMP_KTR_EXEC_FD		15
+#define RUMP_KTRFAC_MASK	0x00ffffff
+#define RUMP_KTRFAC_SYSCALL	(1<<RUMP_KTR_SYSCALL)
+#define RUMP_KTRFAC_SYSRET	(1<<RUMP_KTR_SYSRET)
+#define RUMP_KTRFAC_NAMEI	(1<<RUMP_KTR_NAMEI)
+#define RUMP_KTRFAC_GENIO	(1<<RUMP_KTR_GENIO)
+#define	RUMP_KTRFAC_PSIG	(1<<RUMP_KTR_PSIG)
+#define RUMP_KTRFAC_CSW	(1<<RUMP_KTR_CSW)
+#define RUMP_KTRFAC_EMUL	(1<<RUMP_KTR_EMUL)
+#define	RUMP_KTRFAC_USER	(1<<RUMP_KTR_USER)
+#define RUMP_KTRFAC_EXEC_ARG	(1<<RUMP_KTR_EXEC_ARG)
+#define RUMP_KTRFAC_EXEC_ENV	(1<<RUMP_KTR_EXEC_ENV)
+#define	RUMP_KTRFAC_MIB	(1<<RUMP_KTR_MIB)
+#define	RUMP_KTRFAC_EXEC_FD	(1<<RUMP_KTR_EXEC_FD)
+#define RUMP_KTRFAC_PERSISTENT	0x80000000	
+#define RUMP_KTRFAC_INHERIT	0x40000000	
+#define RUMP_KTRFAC_TRC_EMUL	0x10000000	
+#define	RUMP_KTRFAC_VER_MASK	0x0f000000	
+#define	RUMP_KTRFAC_VER_SHIFT	24	
+#define	RUMP_KTRFAC_VERSION(tf)	(((tf) & RUMP_KTRFAC_VER_MASK) >> RUMP_KTRFAC_VER_SHIFT)
+#define	RUMP_KTRFACv0	(0 << RUMP_KTRFAC_VER_SHIFT)
+#define	RUMP_KTRFACv1	(1 << RUMP_KTRFAC_VER_SHIFT)
+#define	RUMP_KTRFACv2	(2 << RUMP_KTRFAC_VER_SHIFT)
+
+/*	NetBSD: module.h,v 1.34 2013/10/23 18:57:40 mbalmer Exp 	*/
 struct rump_modctl_load {
 	const char *ml_filename;
 
@@ -458,8 +525,14 @@ struct rump_modctl_load {
 	const char *ml_props;
 	size_t ml_propslen;
 };
+enum rump_modctl {
+	RUMP_MODCTL_LOAD,		/* modctl_load_t *ml */
+	RUMP_MODCTL_UNLOAD,		/* char *name */
+	RUMP_MODCTL_STAT,		/* struct iovec *buffer */
+	RUMP_MODCTL_EXISTS		/* enum: 0: load, 1: autoload */
+};
 
-/*	NetBSD: ufsmount.h,v 1.39 2012/10/19 17:09:08 drochner Exp 	*/
+/*	NetBSD: ufsmount.h,v 1.41 2013/08/11 04:36:17 dholland Exp 	*/
 struct rump_ufs_args {
 	char	*fspec;			/* block special device to mount */
 };
@@ -467,6 +540,15 @@ struct rump_ufs_args {
 /*	NetBSD: sysvbfs_args.h,v 1.1 2008/09/04 12:07:30 pooka Exp 	*/
 struct rump_sysvbfs_args {
 	char	*fspec;		/* blocks special holding the fs to mount */
+};
+
+/*	NetBSD: dirent.h,v 1.28 2011/09/27 01:40:32 christos Exp 	*/
+struct rump_dirent {
+	uint64_t d_fileno;			/* file number of entry */
+	uint16_t d_reclen;		/* length of this record */
+	uint16_t d_namlen;		/* length of string in d_name */
+	uint8_t  d_type; 		/* file type, see below */
+	char	d_name[511 + 1];	/* name must be no longer than this */
 };
 
 #endif /* _RUMP_RUMPDEFS_H_ */

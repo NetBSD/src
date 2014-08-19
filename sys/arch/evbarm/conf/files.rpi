@@ -1,6 +1,6 @@
-#	$NetBSD: files.rpi,v 1.2.2.1 2013/02/25 00:28:35 tls Exp $
+#	$NetBSD: files.rpi,v 1.2.2.2 2014/08/20 00:02:53 tls Exp $
 #
-# Raspberry Pi 
+# Raspberry Pi
 #
 
 file   arch/arm/arm32/arm32_boot.c
@@ -19,3 +19,6 @@ include "arch/arm/broadcom/files.bcm2835"
 device	vcmbox: sysmon_envsys
 attach	vcmbox at bcmmboxbus
 file	arch/evbarm/rpi/rpi_vcmbox.c		vcmbox
+
+# Maximum command-line length
+defparam opt_vcprop.h				VCPROP_MAXCMDLINE

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.8.1 2013/06/23 06:28:44 tls Exp $
+#	$NetBSD: Makefile,v 1.8.8.2 2014/08/20 00:00:12 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -65,6 +65,7 @@ SRCS+=	XAllowDv.c \
 	XExtInt.c
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
+CPPFLAGS+=	-DHAVE__XEATDATAWORDS
 
 LIBDPLIBS=\
 	Xext	${.CURDIR}/../libXext \
@@ -79,10 +80,6 @@ PKGDIST=	${LIB}
 
 COPTS.XExtInt.c+=	-Wno-error	# XXX
 COPTS.XSndExEv.c+=	-Wno-error	# XXX
-
-.if ${HAVE_GCC} < 45
-COPTS.XGetFCtl.c+=	-Wno-error	# XXX
-.endif
 
 CWARNFLAGS.clang+=	-Wno-pointer-sign
 

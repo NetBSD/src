@@ -1,7 +1,6 @@
 /* Low level interface to i386 running the GNU Hurd.
 
-   Copyright (C) 1992, 1995, 1996, 1998, 2000, 2001, 2004, 2007, 2008, 2009,
-   2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1992-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,7 +25,7 @@
 #include "gdb_assert.h"
 #include <errno.h>
 #include <stdio.h>
-#include "gdb_string.h"
+#include <string.h>
 
 #include <mach.h>
 #include <mach_error.h>
@@ -56,8 +55,21 @@ static int reg_offset[] =
   REG_OFFSET (ds), REG_OFFSET (es), REG_OFFSET (fs), REG_OFFSET (gs)
 };
 
+/* Offset to the greg_t location where REG is stored.  */
+#define CREG_OFFSET(reg) (REG_##reg * 4)
+
+/* At CREG_OFFSET[N] is the offset to the greg_t location where
+   the GDB register N is stored.  */
+static int creg_offset[] =
+{
+  CREG_OFFSET (EAX), CREG_OFFSET (ECX), CREG_OFFSET (EDX), CREG_OFFSET (EBX),
+  CREG_OFFSET (UESP), CREG_OFFSET (EBP), CREG_OFFSET (ESI), CREG_OFFSET (EDI),
+  CREG_OFFSET (EIP), CREG_OFFSET (EFL), CREG_OFFSET (CS), CREG_OFFSET (SS),
+  CREG_OFFSET (DS), CREG_OFFSET (ES), CREG_OFFSET (FS), CREG_OFFSET (GS)
+};
+
 #define REG_ADDR(state, regnum) ((char *)(state) + reg_offset[regnum])
-#define CREG_ADDR(state, regnum) ((const char *)(state) + reg_offset[regnum])
+#define CREG_ADDR(state, regnum) ((const char *)(state) + creg_offset[regnum])
 
 
 /* Get the whole floating-point state of THREAD and record the values
@@ -120,7 +132,7 @@ gnu_fetch_registers (struct target_ops *ops,
   inf_update_procs (gnu_current_inf);
 
   thread = inf_tid_to_thread (gnu_current_inf,
-			      ptid_get_tid (inferior_ptid));
+			      ptid_get_lwp (inferior_ptid));
   if (!thread)
     error (_("Can't fetch registers from thread %s: No such thread"),
 	   target_pid_to_str (inferior_ptid));
@@ -213,7 +225,7 @@ gnu_store_registers (struct target_ops *ops,
   inf_update_procs (gnu_current_inf);
 
   thread = inf_tid_to_thread (gnu_current_inf,
-			      ptid_get_tid (inferior_ptid));
+			      ptid_get_lwp (inferior_ptid));
   if (!thread)
     error (_("Couldn't store registers into thread %s: No such thread"),
 	   target_pid_to_str (inferior_ptid));

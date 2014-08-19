@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.12.42.1 2013/02/25 00:29:13 tls Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.12.42.2 2014/08/20 00:03:37 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.12.42.1 2013/02/25 00:29:13 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.12.42.2 2014/08/20 00:03:37 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.12.42.1 2013/02/25 00:29:13 tls Exp $"
  * larger than 512kb).  Be sure to check the datasheet of your EEPROM
  * because there's much variation between models.
  */
-#define	AT24CXX_ADDRMASK	0x78
+#define	AT24CXX_ADDRMASK	0x3f8
 #define	AT24CXX_ADDR		0x50
 
 #define	AT24CXX_WRITE_CYCLE_MS	10
@@ -94,14 +94,25 @@ dev_type_read(seeprom_read);
 dev_type_write(seeprom_write);
 
 const struct cdevsw seeprom_cdevsw = {
-	seeprom_open, seeprom_close, seeprom_read, seeprom_write, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = seeprom_open,
+	.d_close = seeprom_close,
+	.d_read = seeprom_read,
+	.d_write = seeprom_write,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 static int seeprom_wait_idle(struct seeprom_softc *);
 
 static const char * seeprom_compats[] = {
 	"i2c-at24c64",
+	"i2c-at34c02",
 	NULL
 };
 
@@ -136,7 +147,7 @@ seeprom_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(": %s", ia->ia_name);
 	} else {
 		aprint_naive(": EEPROM");
-		aprint_normal(": AT24Cxx EEPROM");
+		aprint_normal(": AT24Cxx or compatible EEPROM");
 	}
 
 	/*
@@ -153,7 +164,10 @@ seeprom_attach(device_t parent, device_t self, void *aux)
 	 * switching to select the proper super-page.  This isn't
 	 * supported by this driver.
 	 */
-	sc->sc_size = ia->ia_size;
+	if (device_cfdata(self)->cf_flags)
+		sc->sc_size = (device_cfdata(self)->cf_flags << 7);
+	else
+		sc->sc_size = ia->ia_size;
 	switch (sc->sc_size) {
 	case 128:		/* 1Kbit */
 	case 256:		/* 2Kbit */

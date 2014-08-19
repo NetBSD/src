@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetprec.S,v 1.1 2011/03/26 19:51:41 christos Exp $	*/
+/*	$NetBSD: fpsetprec.S,v 1.1.10.1 2014/08/20 00:02:10 tls Exp $	*/
 
 /*
  * Written by Charles M. Hannum, Apr 9, 1995
@@ -32,3 +32,8 @@ ENTRY(fpsetprec)
 
 	addl $4,%esp
 	ret
+#ifdef WEAK_ALIAS
+END(_fpsetprec)
+#else
+END(fpsetprec)
+#endif

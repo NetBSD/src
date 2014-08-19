@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.48 2012/01/24 15:24:55 hauke Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.48.6.1 2014/08/20 00:03:12 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.48 2012/01/24 15:24:55 hauke Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.48.6.1 2014/08/20 00:03:12 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,7 +262,6 @@ setpartition(struct part_map_entry *part, struct partition *pp, int fstype)
 static int
 getNamedType(struct part_map_entry *part, int num_parts, struct disklabel *lp, int type, int alt, int *maxslot)
 {
-	struct blockzeroblock *bzb;
 	int i = 0, clust;
 	u_int8_t realtype;
 
@@ -271,14 +270,10 @@ getNamedType(struct part_map_entry *part, int num_parts, struct disklabel *lp, i
 			continue;
 
 		if (type == ROOT_PART) {
-			bzb = (struct blockzeroblock *)
-			    (&(part + i)->pmBootArgs);
 			if (alt >= 0 && alt != clust)
 				continue;
 			setpartition(part + i, &lp->d_partitions[0], realtype);
 		} else if (type == UFS_PART) {
-			bzb = (struct blockzeroblock *)
-			    (&(part + i)->pmBootArgs);
 			if (alt >= 0 && alt != clust)
 				continue;
 			setpartition(part + i, &lp->d_partitions[6], realtype);

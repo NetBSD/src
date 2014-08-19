@@ -6,6 +6,10 @@ gdb/MAINTAINERS for general information about maintaining these files.
 If you are considering contributing a patch, please see the file
 gdb/CONTRIBUTE.  Patches to these files should be posted to:
 gdb-patches@sources.redhat.com 
+
+        Global Maintainers
+
+Mike Frysinger			vapier@gentoo.org
 	
 	Maintainers for particular sims:
 
@@ -15,11 +19,11 @@ cr16	        M R Swami Reddy <MR.Swami.Reddy@nsc.com>
 frv		Dave Brolley <brolley@redhat.com>
 igen		(igen simulators)
 lm32		Jon Beniston <jon@beniston.com>
+rl78		DJ Delorie <dj@redhat.com>
 m32c		DJ Delorie <dj@redhat.com>
 m32r		Doug Evans <dje@sebabeach.org>
-m68hc11		Stephane Carrez <stcarrez@nerim.fr>
+m68hc11		Stephane Carrez <Stephane.Carrez@gmail.com>
 microblaze	Michael Eager <eager@eagercon.com>
-mips		Thiemo Seufer <ths@networkno.de>
 moxie		Anthony Green <green@moxielogic.com>
 rx		DJ Delorie <dj@redhat.com>
 sh		(global maintainers)

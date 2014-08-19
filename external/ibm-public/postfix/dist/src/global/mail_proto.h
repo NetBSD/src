@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_proto.h,v 1.1.1.2.10.1 2013/02/25 00:27:18 tls Exp $	*/
+/*	$NetBSD: mail_proto.h,v 1.1.1.2.10.2 2014/08/19 23:59:42 tls Exp $	*/
 
 #ifndef _MAIL_PROTO_H_INCLUDED_
 #define _MAIL_PROTO_H_INCLUDED_
@@ -146,7 +146,7 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_FUNC		"function"
 #define MAIL_ATTR_CCERT_SUBJECT	"ccert_subject"
 #define MAIL_ATTR_CCERT_ISSUER	"ccert_issuer"
-#define MAIL_ATTR_CCERT_FINGERPRINT "ccert_fingerprint"
+#define MAIL_ATTR_CCERT_CERT_FPRINT "ccert_fingerprint"
 #define MAIL_ATTR_CCERT_PKEY_FPRINT "ccert_pubkey_fingerprint"
 #define MAIL_ATTR_CRYPTO_PROTOCOL "encryption_protocol"
 #define MAIL_ATTR_CRYPTO_CIPHER	"encryption_cipher"
@@ -194,6 +194,9 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_ACT_PROTO_NAME "protocol_name"	/* SMTP/ESMTP/QMQP */
 #define MAIL_ATTR_ACT_REVERSE_CLIENT_NAME "reverse_client_name"
 #define MAIL_ATTR_ACT_FORWARD_CLIENT_NAME "forward_client_name"
+
+#define MAIL_ATTR_ACT_SERVER_ADDR "server_address"	/* server address */
+#define MAIL_ATTR_ACT_SERVER_PORT "server_port"	/* server TCP port */
 
 #define MAIL_ATTR_PROTO_STATE	"protocol_state"	/* MAIL/RCPT/... */
 #define MAIL_ATTR_ORG_NONE	"unknown"	/* origin unknown */
@@ -254,7 +257,7 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_TIMEOUT	"timeout"
 #define MAIL_ATTR_PEER_CN	"peer_CN"
 #define MAIL_ATTR_ISSUER_CN	"issuer_CN"
-#define MAIL_ATTR_PEER_FPT	"peer_fingerprint"
+#define MAIL_ATTR_PEER_CERT_FPT	"peer_fingerprint"
 #define MAIL_ATTR_PEER_PKEY_FPT	"peer_pubkey_fingerprint"
 #define MAIL_ATTR_PEER_STATUS	"peer_status"
 #define MAIL_ATTR_CIPHER_PROTOCOL "cipher_protocol"

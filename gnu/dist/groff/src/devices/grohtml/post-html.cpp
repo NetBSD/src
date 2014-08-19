@@ -1,4 +1,4 @@
-/*	$NetBSD: post-html.cpp,v 1.1.1.3 2006/02/06 18:14:50 wiz Exp $	*/
+/*	$NetBSD: post-html.cpp,v 1.1.1.3.48.1 2014/08/20 00:01:54 tls Exp $	*/
 
 // -*- C++ -*-
 /* Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005
@@ -1589,7 +1589,7 @@ void header_desc::write_headings (FILE *f, int force)
 
 	  buffer += as_string(h);
 	  buffer += '\0';
-	  fprintf(f, buffer.contents());
+	  fprintf(f, "%s", buffer.contents());
 	} else
 	  fputs(g->text_string, f);
 	h++;

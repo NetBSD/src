@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_verbose.c,v 1.16 2011/01/03 08:50:23 jruoho Exp $ */
+/*	$NetBSD: acpi_verbose.c,v 1.16.18.1 2014/08/20 00:03:35 tls Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2010 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.16 2011/01/03 08:50:23 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.16.18.1 2014/08/20 00:03:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -172,7 +172,6 @@ acpi_print_dev_real(const char *pnpstr)
 static void
 acpi_print_madt(struct acpi_softc *sc)
 {
-	ACPI_TABLE_MADT *madt;
 	ACPI_STATUS rv;
 
 	rv = acpi_madt_map();
@@ -183,7 +182,6 @@ acpi_print_madt(struct acpi_softc *sc)
 	if (madt_header == NULL)
 		return;
 
-	madt = (ACPI_TABLE_MADT *)madt_header;
 	acpi_madt_walk(acpi_print_madt_callback, sc);
 }
 

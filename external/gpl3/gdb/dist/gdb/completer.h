@@ -1,6 +1,5 @@
 /* Header for GDB line completion.
-   Copyright (C) 2000, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,27 +17,32 @@
 #if !defined (COMPLETER_H)
 #define COMPLETER_H 1
 
-extern char **complete_line (const char *text,
-			     char *line_buffer,
-			     int point);
+#include "gdb_vecs.h"
+
+extern VEC (char_ptr) *complete_line (const char *text,
+				      char *line_buffer,
+				      int point);
 
 extern char *readline_line_completion_function (const char *text,
 						int matches);
 
-extern char **noop_completer (struct cmd_list_element *,
-			      char *, char *);
+extern VEC (char_ptr) *noop_completer (struct cmd_list_element *,
+				       const char *, const char *);
 
-extern char **filename_completer (struct cmd_list_element *,
-				  char *, char *);
+extern VEC (char_ptr) *filename_completer (struct cmd_list_element *,
+					   const char *, const char *);
 
-extern char **expression_completer (struct cmd_list_element *,
-				    char *, char *);
+extern VEC (char_ptr) *expression_completer (struct cmd_list_element *,
+					     const char *, const char *);
 
-extern char **location_completer (struct cmd_list_element *,
-				  char *, char *);
+extern VEC (char_ptr) *location_completer (struct cmd_list_element *,
+					   const char *, const char *);
 
-extern char **command_completer (struct cmd_list_element *,
-				 char *, char *);
+extern VEC (char_ptr) *command_completer (struct cmd_list_element *,
+					  const char *, const char *);
+
+extern VEC (char_ptr) *signal_completer (struct cmd_list_element *,
+					 const char *, const char *);
 
 extern char *get_gdb_completer_quote_characters (void);
 
@@ -46,8 +50,9 @@ extern char *gdb_completion_word_break_characters (void);
 
 /* Exported to linespec.c */
 
-extern char *skip_quoted_chars (char *, char *, char *);
+extern const char *skip_quoted_chars (const char *, const char *,
+				      const char *);
 
-extern char *skip_quoted (char *);
+extern const char *skip_quoted (const char *);
 
 #endif /* defined (COMPLETER_H) */

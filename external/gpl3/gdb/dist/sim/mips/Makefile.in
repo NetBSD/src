@@ -198,6 +198,8 @@ m32_support.o: sim-main.h m32_support.c $(SIM_EXTRA_DEPS)
 m32_idecode.o: sim-main.h m32_idecode.c $(SIM_EXTRA_DEPS)
 m32_icache.o: sim-main.h m32_icache.c $(SIM_EXTRA_DEPS)
 
+$(SIM_MULTI_OBJ): sim-main.h $(SIM_EXTRA_DEPS)
+
 BUILT_SRC_FROM_M16 = \
 	m16_icache.h \
 	m16_icache.c \
@@ -352,7 +354,7 @@ tmp-mach-multi: $(IGEN_INSN) $(IGEN_DC) ../igen/igen $(IGEN_INCLUDE)
 		-n $${p}_support.c   -f  tmp-support.c \
 		-n $${p}_engine.h    -he tmp-engine.h \
 		-n $${p}_engine.c    -e  tmp-engine.c \
-		; \
+	  || exit; \
 	  $(SHELL) $(srcdir)/../../move-if-change tmp-icache.h $${p}_icache.h ; \
 	  $(SHELL) $(srcdir)/../../move-if-change tmp-icache.c $${p}_icache.c ; \
 	  $(SHELL) $(srcdir)/../../move-if-change tmp-idecode.h $${p}_idecode.h ; \

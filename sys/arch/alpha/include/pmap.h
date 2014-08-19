@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.77 2012/02/06 02:14:13 matt Exp $ */
+/* $NetBSD: pmap.h,v 1.77.6.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -141,17 +141,15 @@ struct pmap {
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	unsigned long		pm_cpus;	/* mask of CPUs using pmap */
 	unsigned long		pm_needisync;	/* mask of CPUs needing isync */
-	struct pmap_asn_info	pm_asni[1];	/* ASN information */
+	struct pmap_asn_info	pm_asni[];	/* ASN information */
 			/*	variable length		*/
 };
 
 /*
- * Compute the sizeof of a pmap structure.  Subtract one because one
- * ASN info structure is already included in the pmap structure itself.
+ * Compute the sizeof of a pmap structure.
  */
 #define	PMAP_SIZEOF(x)							\
-	(ALIGN(sizeof(struct pmap) +					\
-	       (sizeof(struct pmap_asn_info) * ((x) - 1))))
+	(ALIGN(offsetof(struct pmap, pm_asni[(x)])))
 
 #define	PMAP_ASN_RESERVED	0	/* reserved for Lev1map users */
 

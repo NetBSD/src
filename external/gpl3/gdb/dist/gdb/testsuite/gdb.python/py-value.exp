@@ -1,4 +1,4 @@
-# Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,36 +16,54 @@
 # This file is part of the GDB testsuite.  It tests the mechanism
 # exposing values to Python.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 load_lib gdb-python.exp
 
-set testfile "py-value"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
-if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
-    untested "Couldn't compile ${srcfile}"
-    return -1
+standard_testfile
+
+# Build inferior to language specification.
+# LANG is one of "c" or "c++".
+proc build_inferior {exefile lang} {
+  global srcdir subdir srcfile testfile hex
+
+  # Use different names for .o files based on the language.
+  # For Fission, the debug info goes in foo.dwo and we don't want,
+  # for example, a C++ compile to clobber the dwo of a C compile.
+  # ref: http://gcc.gnu.org/wiki/DebugFission
+  switch ${lang} {
+      "c" { set filename ${testfile}.o }
+      "c++" { set filename ${testfile}-cxx.o }
+  }
+  set objfile [standard_output_file $filename]
+
+  if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${objfile}" object "debug $lang"] != ""
+       || [gdb_compile "${objfile}" "${exefile}" executable "debug $lang"] != "" } {
+      untested "Couldn't compile ${srcfile} in $lang mode"
+      return -1
+  }
+  return 0
 }
 
 proc test_value_creation {} {
   global gdb_prompt
+  global gdb_py_is_py3k
 
   gdb_py_test_silent_cmd "python i = gdb.Value (True)" "create boolean value" 1
   gdb_py_test_silent_cmd "python i = gdb.Value (5)" "create integer value" 1
-  gdb_py_test_silent_cmd "python i = gdb.Value (5L)" "create long value" 1
+  if { $gdb_py_is_py3k == 0 } {
+    gdb_py_test_silent_cmd "python i = gdb.Value (5L)" "create long value" 1
+  }
   gdb_py_test_silent_cmd "python f = gdb.Value (1.25)" "create double value" 1
   gdb_py_test_silent_cmd "python a = gdb.Value ('string test')" "create 8-bit string value" 1
-  gdb_test "python print a" "\"string test\"" "print 8-bit string"
-  gdb_test "python print a.__class__" "<type 'gdb.Value'>" "verify type of 8-bit string"
-  gdb_py_test_silent_cmd "python a = gdb.Value (u'unicode test')" "create unicode value" 1
-  gdb_test "python print a" "\"unicode test\"" "print Unicode string"
-  gdb_test "python print a.__class__" "<type 'gdb.Value'>" "verify type of unicode string"
+  gdb_test "python print (a)" "\"string test\"" "print 8-bit string"
+  gdb_test "python print (a.__class__)" "<(type|class) 'gdb.Value'>" "verify type of 8-bit string"
+  if { $gdb_py_is_py3k == 0 } {
+    gdb_py_test_silent_cmd "python a = gdb.Value (u'unicode test')" "create unicode value" 1
+    gdb_test "python print (a)" "\"unicode test\"" "print Unicode string"
+    gdb_test "python print (a.__class__)" "<(type|class) 'gdb.Value'>" "verify type of unicode string"
+  }
 
   # Test address attribute is None in a non-addressable value
-  gdb_test "python print 'result =', i.address" "= None" "Test address attribute in non-addressable value"
+  gdb_test "python print ('result = %s' % i.address)" "= None" "Test address attribute in non-addressable value"
 }
 
 proc test_value_numeric_ops {} {
@@ -55,42 +73,42 @@ proc test_value_numeric_ops {} {
   gdb_py_test_silent_cmd "python j = gdb.Value (2)" "create second integer value" 0
   gdb_py_test_silent_cmd "python f = gdb.Value (1.25)" "create first double value" 0
   gdb_py_test_silent_cmd "python g = gdb.Value (2.5)" "create second double value" 0
-  gdb_test "python print 'result = ' + str(i+j)" " = 7" "add two integer values"
-  gdb_test "python print (i+j).__class__" "<type 'gdb.Value'>" "verify type of integer add result"
+  gdb_test "python print ('result = ' + str(i+j))" " = 7" "add two integer values"
+  gdb_test "python print ((i+j).__class__)" "<(type|class) 'gdb.Value'>" "verify type of integer add result"
 
-  gdb_test "python print 'result = ' + str(f+g)" " = 3.75" "add two double values"
-  gdb_test "python print 'result = ' + str(i-j)" " = 3" "subtract two integer values"
-  gdb_test "python print 'result = ' + str(f-g)" " = -1.25" "subtract two double values"
-  gdb_test "python print 'result = ' + str(i*j)" " = 10" "multiply two integer values"
-  gdb_test "python print 'result = ' + str(f*g)" " = 3.125" "multiply two double values"
-  gdb_test "python print 'result = ' + str(i/j)" " = 2" "divide two integer values"
-  gdb_test "python print 'result = ' + str(f/g)" " = 0.5" "divide two double values"
-  gdb_test "python print 'result = ' + str(i%j)" " = 1" "take remainder of two integer values"
+  gdb_test "python print ('result = ' + str(f+g))" " = 3.75" "add two double values"
+  gdb_test "python print ('result = ' + str(i-j))" " = 3" "subtract two integer values"
+  gdb_test "python print ('result = ' + str(f-g))" " = -1.25" "subtract two double values"
+  gdb_test "python print ('result = ' + str(i*j))" " = 10" "multiply two integer values"
+  gdb_test "python print ('result = ' + str(f*g))" " = 3.125" "multiply two double values"
+  gdb_test "python print ('result = ' + str(i/j))" " = 2" "divide two integer values"
+  gdb_test "python print ('result = ' + str(f/g))" " = 0.5" "divide two double values"
+  gdb_test "python print ('result = ' + str(i%j))" " = 1" "take remainder of two integer values"
   # Remainder of float is implemented in Python but not in GDB's value system.
 
-  gdb_test "python print 'result = ' + str(i**j)" " = 25" "integer value raised to the power of another integer value"
-  gdb_test "python print 'result = ' + str(g**j)" " = 6.25" "double value raised to the power of integer value"
+  gdb_test "python print ('result = ' + str(i**j))" " = 25" "integer value raised to the power of another integer value"
+  gdb_test "python print ('result = ' + str(g**j))" " = 6.25" "double value raised to the power of integer value"
 
-  gdb_test "python print 'result = ' + str(-i)" " = -5" "negated integer value"
-  gdb_test "python print 'result = ' + str(+i)" " = 5" "positive integer value"
-  gdb_test "python print 'result = ' + str(-f)" " = -1.25" "negated double value"
-  gdb_test "python print 'result = ' + str(+f)" " = 1.25" "positive double value"
-  gdb_test "python print 'result = ' + str(abs(j-i))" " = 3" "absolute of integer value"
-  gdb_test "python print 'result = ' + str(abs(f-g))" " = 1.25" "absolute of double value"
+  gdb_test "python print ('result = ' + str(-i))" " = -5" "negated integer value"
+  gdb_test "python print ('result = ' + str(+i))" " = 5" "positive integer value"
+  gdb_test "python print ('result = ' + str(-f))" " = -1.25" "negated double value"
+  gdb_test "python print ('result = ' + str(+f))" " = 1.25" "positive double value"
+  gdb_test "python print ('result = ' + str(abs(j-i)))" " = 3" "absolute of integer value"
+  gdb_test "python print ('result = ' + str(abs(f-g)))" " = 1.25" "absolute of double value"
 
   # Test gdb.Value mixed with Python types.
 
-  gdb_test "python print 'result = ' + str(i-1)" " = 4" "subtract integer value from python integer"
-  gdb_test "python print (i-1).__class__" "<type 'gdb.Value'>" "verify type of mixed integer subtraction result"
-  gdb_test "python print 'result = ' + str(f+1.5)" " = 2.75" "add double value with python float"
+  gdb_test "python print ('result = ' + str(i-1))" " = 4" "subtract integer value from python integer"
+  gdb_test "python print ((i-1).__class__)" "<(type|class) 'gdb.Value'>" "verify type of mixed integer subtraction result"
+  gdb_test "python print ('result = ' + str(f+1.5))" " = 2.75" "add double value with python float"
 
-  gdb_test "python print 'result = ' + str(1-i)" " = -4" "subtract python integer from integer value"
-  gdb_test "python print 'result = ' + str(1.5+f)" " = 2.75" "add python float with double value"
+  gdb_test "python print ('result = ' + str(1-i))" " = -4" "subtract python integer from integer value"
+  gdb_test "python print ('result = ' + str(1.5+f))" " = 2.75" "add python float with double value"
 
   # Conversion test.
   gdb_test "print evalue" " = TWO"
   gdb_test_no_output "python evalue = gdb.history (0)"
-  gdb_test "python print int (evalue)" "2"
+  gdb_test "python print (int (evalue))" "2"
 
   # Test pointer arithmethic
 
@@ -100,19 +118,19 @@ proc test_value_numeric_ops {} {
   gdb_test "print (void *) 5" ".*" ""
   gdb_test_no_output "python b = gdb.history (0)" ""
 
-  gdb_test "python print 'result = ' + str(a+5)" " = 0x7" "add pointer value with python integer"
-  gdb_test "python print 'result = ' + str(b-2)" " = 0x3" "subtract python integer from pointer value"
-  gdb_test "python print 'result = ' + str(b-a)" " = 3" "subtract two pointer values"
+  gdb_test "python print ('result = ' + str(a+5))" " = 0x7( <.*>)?" "add pointer value with python integer"
+  gdb_test "python print ('result = ' + str(b-2))" " = 0x3( <.*>)?" "subtract python integer from pointer value"
+  gdb_test "python print ('result = ' + str(b-a))" " = 3" "subtract two pointer values"
 
   # Test some invalid operations.
 
-  gdb_test_multiple "python print 'result = ' + str(i+'foo')" "catch error in python type conversion" {
+  gdb_test_multiple "python print ('result = ' + str(i+'foo'))" "catch error in python type conversion" {
       -re "Argument to arithmetic operation not a number or boolean.*$gdb_prompt $"   {pass "catch error in python type conversion"}
       -re "result = .*$gdb_prompt $"		      {fail "catch error in python type conversion"}
       -re "$gdb_prompt $"			      {fail "catch error in python type conversion"}
   }
 
-  gdb_test_multiple "python print 'result = ' + str(i+gdb.Value('foo'))" "catch throw of GDB error" {
+  gdb_test_multiple "python print ('result = ' + str(i+gdb.Value('foo')))" "catch throw of GDB error" {
       -re "Traceback.*$gdb_prompt $"  {pass "catch throw of GDB error"}
       -re "result = .*$gdb_prompt $"  {fail "catch throw of GDB error"}
       -re "$gdb_prompt $"	      {fail "catch throw of GDB error"}
@@ -125,9 +143,9 @@ proc test_value_boolean {} {
     "python" "" \
     "def test_bool (val):" "" \
     "  if val:" "" \
-    "    print 'yay'" "" \
+    "    print ('yay')" "" \
     "  else:" "" \
-    "    print 'nay'" "" \
+    "    print ('nay')" "" \
     "end" ""
 
   gdb_test "py test_bool (gdb.Value (True))" "yay" "check evaluation of true boolean value in expression"
@@ -144,40 +162,41 @@ proc test_value_boolean {} {
 }
 
 proc test_value_compare {} {
-  gdb_test "py print gdb.Value (1) < gdb.Value (1)" "False" "less than, equal"
-  gdb_test "py print gdb.Value (1) < gdb.Value (2)" "True" "less than, less"
-  gdb_test "py print gdb.Value (2) < gdb.Value (1)" "False" "less than, greater"
-  gdb_test "py print gdb.Value (2) < None" "False" "less than, None"
+  gdb_test "py print (gdb.Value (1) < gdb.Value (1))" "False" "less than, equal"
+  gdb_test "py print (gdb.Value (1) < gdb.Value (2))" "True" "less than, less"
+  gdb_test "py print (gdb.Value (2) < gdb.Value (1))" "False" "less than, greater"
+  gdb_test "py print (gdb.Value (2) < None)" "False" "less than, None"
 
-  gdb_test "py print gdb.Value (1) <= gdb.Value (1)" "True" "less or equal, equal"
-  gdb_test "py print gdb.Value (1) <= gdb.Value (2)" "True" "less or equal, less"
-  gdb_test "py print gdb.Value (2) <= gdb.Value (1)" "False" "less or equal, greater"
-  gdb_test "py print gdb.Value (2) <= None" "False" "less or equal, None"
+  gdb_test "py print (gdb.Value (1) <= gdb.Value (1))" "True" "less or equal, equal"
+  gdb_test "py print (gdb.Value (1) <= gdb.Value (2))" "True" "less or equal, less"
+  gdb_test "py print (gdb.Value (2) <= gdb.Value (1))" "False" "less or equal, greater"
+  gdb_test "py print (gdb.Value (2) <= None)" "False" "less or equal, None"
 
-  gdb_test "py print gdb.Value (1) == gdb.Value (1)" "True" "equality of gdb.Values"
-  gdb_test "py print gdb.Value (1) == gdb.Value (2)" "False" "inequality of gdb.Values"
-  gdb_test "py print gdb.Value (1) == 1.0" "True" "equality of gdb.Value with Python value"
-  gdb_test "py print gdb.Value (1) == 2" "False" "inequality of gdb.Value with Python value"
-  gdb_test "py print gdb.Value (1) == None" "False" "inequality of gdb.Value with None"
+  gdb_test "py print (gdb.Value (1) == gdb.Value (1))" "True" "equality of gdb.Values"
+  gdb_test "py print (gdb.Value (1) == gdb.Value (2))" "False" "inequality of gdb.Values"
+  gdb_test "py print (gdb.Value (1) == 1.0)" "True" "equality of gdb.Value with Python value"
+  gdb_test "py print (gdb.Value (1) == 2)" "False" "inequality of gdb.Value with Python value"
+  gdb_test "py print (gdb.Value (1) == None)" "False" "inequality of gdb.Value with None"
 
-  gdb_test "py print gdb.Value (1) != gdb.Value (1)" "False" "inequality, false"
-  gdb_test "py print gdb.Value (1) != gdb.Value (2)" "True" "inequality, true"
-  gdb_test "py print gdb.Value (1) != None" "True" "inequality, None"
+  gdb_test "py print (gdb.Value (1) != gdb.Value (1))" "False" "inequality, false"
+  gdb_test "py print (gdb.Value (1) != gdb.Value (2))" "True" "inequality, true"
+  gdb_test "py print (gdb.Value (1) != None)" "True" "inequality, None"
 
-  gdb_test "py print gdb.Value (1) > gdb.Value (1)" "False" "greater than, equal"
-  gdb_test "py print gdb.Value (1) > gdb.Value (2)" "False" "greater than, less"
-  gdb_test "py print gdb.Value (2) > gdb.Value (1)" "True" "greater than, greater"
-  gdb_test "py print gdb.Value (2) > None" "True" "greater than, None"
+  gdb_test "py print (gdb.Value (1) > gdb.Value (1))" "False" "greater than, equal"
+  gdb_test "py print (gdb.Value (1) > gdb.Value (2))" "False" "greater than, less"
+  gdb_test "py print (gdb.Value (2) > gdb.Value (1))" "True" "greater than, greater"
+  gdb_test "py print (gdb.Value (2) > None)" "True" "greater than, None"
 
-  gdb_test "py print gdb.Value (1) >= gdb.Value (1)" "True" "greater or equal, equal"
-  gdb_test "py print gdb.Value (1) >= gdb.Value (2)" "False" "greater or equal, less"
-  gdb_test "py print gdb.Value (2) >= gdb.Value (1)" "True" "greater or equal, greater"
-  gdb_test "py print gdb.Value (2) >= None" "True" "greater or equal, None"
+  gdb_test "py print (gdb.Value (1) >= gdb.Value (1))" "True" "greater or equal, equal"
+  gdb_test "py print (gdb.Value (1) >= gdb.Value (2))" "False" "greater or equal, less"
+  gdb_test "py print (gdb.Value (2) >= gdb.Value (1))" "True" "greater or equal, greater"
+  gdb_test "py print (gdb.Value (2) >= None)" "True" "greater or equal, None"
 }
 
 proc test_value_in_inferior {} {
   global gdb_prompt
   global testfile
+  global gdb_py_is_py3k
 
   gdb_breakpoint [gdb_get_line_number "break to inspect struct and union"]
 
@@ -188,8 +207,10 @@ proc test_value_in_inferior {} {
 
   gdb_py_test_silent_cmd "python s = gdb.history (0)" "get value from history" 1
 
-  gdb_test "python print 'result = ' + str(s\['a'\])" " = 3" "access element inside struct using 8-bit string name"
-  gdb_test "python print 'result = ' + str(s\[u'a'\])" " = 3" "access element inside struct using unicode name"
+  gdb_test "python print ('result = ' + str(s\['a'\]))" " = 3" "access element inside struct using 8-bit string name"
+  if { $gdb_py_is_py3k == 0 } {
+    gdb_test "python print ('result = ' + str(s\[u'a'\]))" " = 3" "access element inside struct using unicode name"
+  }
 
   # Test dereferencing the argv pointer
 
@@ -201,36 +222,81 @@ proc test_value_in_inferior {} {
 
   # Check that the dereferenced value is sane
   if { ! [target_info exists noargs] } {
-    gdb_test "python print arg0" "0x.*$testfile\"" "verify dereferenced value"
+    gdb_test "python print (arg0)" "0x.*$testfile\"" "verify dereferenced value"
   }
 
   # Smoke-test is_optimized_out attribute
-  gdb_test "python print 'result =', arg0.is_optimized_out" "= False" "Test is_optimized_out attribute"
+  gdb_test "python print ('result = %s' % arg0.is_optimized_out)" "= False" "Test is_optimized_out attribute"
 
   # Test address attribute
-  gdb_test "python print 'result =', arg0.address" "= 0x\[\[:xdigit:\]\]+" "Test address attribute"
+  gdb_test "python print ('result = %s' % arg0.address)" "= 0x\[\[:xdigit:\]\]+" "Test address attribute"
+
+  # Test displaying a variable that is temporarily at a bad address.
+  # But if we can examine what's at memory address 0, then we'll also be
+  # able to display it without error.  Don't run the test in that case.
+  set can_read_0 0
+  gdb_test_multiple "x 0" "memory at address 0" {
+      -re "0x0:\[ \t\]*Cannot access memory at address 0x0\r\n$gdb_prompt $" { }
+      -re "0x0:\[ \t\]*Error accessing memory address 0x0\r\n$gdb_prompt $" { }
+      -re "\r\n$gdb_prompt $" {
+	  set can_read_0 1
+      }
+  }
 
   # Test memory error.
-  gdb_test "python print gdb.parse_and_eval('*(int*)0')" "gdb.MemoryError: Cannot access memory at address 0x0.*"
+  set test "parse_and_eval with memory error"
+  if {$can_read_0} {
+    untested $test
+  } else {
+    gdb_test "python print (gdb.parse_and_eval('*(int*)0'))" "gdb.MemoryError: Cannot access memory at address 0x0.*" $test
+  }
+
+  # Test Python lazy value handling
+  set test "memory error and lazy values"
+  if {$can_read_0} {
+    untested $test
+  } else {
+    gdb_test "python inval = gdb.parse_and_eval('*(int*)0')"
+    gdb_test "python print (inval.is_lazy)" "True"
+    gdb_test "python inval2 = inval+1" "gdb.MemoryError: Cannot access memory at address 0x0.*" $test
+    gdb_test "python inval.fetch_lazy ()" "gdb.MemoryError: Cannot access memory at address 0x0.*" $test
+  }
+  gdb_test "python argc_lazy = gdb.parse_and_eval('argc')"
+  gdb_test "python argc_notlazy = gdb.parse_and_eval('argc')"
+  gdb_test "python argc_notlazy.fetch_lazy()"
+  gdb_test "python print (argc_lazy.is_lazy)" "True"
+  gdb_test "python print (argc_notlazy.is_lazy)" "False"
+  gdb_test "print argc" " = 1" "sanity check argc"
+  gdb_test "python print (argc_lazy.is_lazy)" "\r\nTrue"
+  gdb_test_no_output "set argc=2"
+  gdb_test "python print (argc_notlazy)" "\r\n1"
+  gdb_test "python print (argc_lazy)" "\r\n2"
+  gdb_test "python print (argc_lazy.is_lazy)" "False"
 
   # Test string fetches,  both partial and whole.
   gdb_test "print st" "\"divide et impera\""
   gdb_py_test_silent_cmd "python st = gdb.history (0)" "get value from history" 1
-  gdb_test "python print st.string ()"  "divide et impera"  "Test string with no length"
-  gdb_test "python print st.string (length = -1)" "divide et impera" "Test string (length = -1) is all of the string"
-  gdb_test "python print st.string (length = 6)" "divide"
-  gdb_test "python print \"---\"+st.string (length = 0)+\"---\"" "------" "Test string (length = 0) is empty"
-  gdb_test "python print len(st.string (length = 0))" "0" "Test length is 0"
+  gdb_test "python print (st.string ())"  "divide et impera"  "Test string with no length"
+  gdb_test "python print (st.string (length = -1))" "divide et impera" "Test string (length = -1) is all of the string"
+  gdb_test "python print (st.string (length = 6))" "divide"
+  gdb_test "python print (\"---\"+st.string (length = 0)+\"---\")" "------" "Test string (length = 0) is empty"
+  gdb_test "python print (len(st.string (length = 0)))" "0" "Test length is 0"
 
 
   # Fetch a string that has embedded nulls.
   gdb_test "print nullst" "\"divide\\\\000et\\\\000impera\".*"
   gdb_py_test_silent_cmd "python nullst = gdb.history (0)" "get value from history" 1
-  gdb_test "python print nullst.string ()" "divide" "Test string to first null"
+  gdb_test "python print (nullst.string ())" "divide" "Test string to first null"
   # Python cannot print strings that contain the null (\0) character.
   # For the purposes of this test, use repr()
   gdb_py_test_silent_cmd "python nullst = nullst.string (length = 9)" "get string beyond null" 1
-  gdb_test "python print repr(nullst)" "u'divide\\\\x00et'"
+  gdb_test "python print (repr(nullst))" "u?'divide\\\\x00et'"
+
+  # Test fetching a string longer than its declared (in C) size.
+  # PR 16286
+  gdb_py_test_silent_cmd "python xstr = gdb.parse_and_eval('xstr')" "get xstr" 1
+  gdb_test "python print xstr\['text'\].string (length = xstr\['length'\])" "x{100}" \
+    "read string beyond declared size"
 }
 
 proc test_lazy_strings {} {
@@ -241,14 +307,14 @@ proc test_lazy_strings {} {
   gdb_py_test_silent_cmd "python sptr = gdb.history (0)" "Get value from history" 1
 
   gdb_py_test_silent_cmd "python lstr = sptr.lazy_string()" "Aquire lazy string" 1
-  gdb_test "python print lstr.type" "const char \*." "Test type name equality"
-  gdb_test "python print sptr.type" "const char \*." "Test type name equality"
+  gdb_test "python print (lstr.type)" "const char \*." "Test lazy-string type name equality"
+  gdb_test "python print (sptr.type)" "const char \*." "Test string type name equality"
   gdb_test "print sn" "0x0"
   gdb_py_test_silent_cmd "python snptr = gdb.history (0)" "Get value from history" 1
   gdb_test "python snstr = snptr.lazy_string(length=5)" ".*Cannot create a lazy string with address.*" "Test lazy string"
   gdb_py_test_silent_cmd "python snstr = snptr.lazy_string(length=0)" "Succesfully create a lazy string" 1
-  gdb_test "python print snstr.length" "0" "Test lazy string length"
-  gdb_test "python print snstr.address" "0" "Test lazy string address"
+  gdb_test "python print (snstr.length)" "0" "Test lazy string length"
+  gdb_test "python print (snstr.address)" "0" "Test lazy string address"
 }
 
 
@@ -260,14 +326,14 @@ proc test_inferior_function_call {} {
     gdb_py_test_silent_cmd "python fp1 = gdb.history (0)" "get value from history" 1
     gdb_test "python fp1 = fp1.dereference()" ""
     gdb_test "python result = fp1()" ""
-    gdb_test "python print result" "void"
+    gdb_test "python print (result)" "void"
 
     # Correct inferior call with arguments.
     gdb_test "p/x fp2" " = $hex.*"
     gdb_py_test_silent_cmd "python fp2 = gdb.history (0)" "get value from history" 1
     gdb_test "python fp2 = fp2.dereference()" ""
     gdb_test "python result2 = fp2(10,20)" ""
-    gdb_test "python print result2" "30"
+    gdb_test "python print (result2)" "30"
 
     # Incorrect to call an int value.
     gdb_test "p i" " = $decimal.*"
@@ -283,9 +349,10 @@ proc test_inferior_function_call {} {
 
 # A few objfile tests.
 proc test_objfiles {} {
-    gdb_test "python\nok=False\nfor file in gdb.objfiles():\n  if 'py-value' in file.filename:\n    ok=True\nprint ok\nend" "True"
+    gdb_test "python\nok=False\nfor file in gdb.objfiles():\n  if 'py-value' in file.filename:\n    ok=True\nprint (ok)\nend" "True" \
+	     "py-value in file.filename"
 
-    gdb_test "python print gdb.objfiles()\[0\].pretty_printers" "\\\[\\\]"
+    gdb_test "python print (gdb.objfiles()\[0\].pretty_printers)" "\\\[\\\]"
 
     gdb_test "python gdb.objfiles()\[0\].pretty_printers = 0" \
       "pretty_printers attribute must be a list.*Error while executing Python code."
@@ -314,7 +381,7 @@ proc test_value_after_death {} {
     "delete PTR type" 1
 
   # Now see if the value's type is still valid.
-  gdb_test "python print castval.type" "PTR ." \
+  gdb_test "python print (castval.type)" "PTR ." \
     "print value's type"
 }
 
@@ -322,19 +389,9 @@ proc test_value_after_death {} {
 # the type of the value was not being checked before allowing a
 # subscript operation to proceed.
 
-proc test_subscript_regression {lang} {
-
- global srcdir subdir srcfile binfile testfile hex
- if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable "debug $lang"] != "" } {
-     untested "Couldn't compile ${srcfile} in $lang mode"
-     return -1
- }
-
+proc test_subscript_regression {exefile lang} {
  # Start with a fresh gdb.
- gdb_exit
- gdb_start
- gdb_reinitialize_dir $srcdir/$subdir
- gdb_load ${binfile}
+ clean_restart ${exefile}
 
  if ![runto_main ] then {
      perror "couldn't run to breakpoint"
@@ -349,18 +406,18 @@ proc test_subscript_regression {lang} {
 	 "Obtain address" 1
      gdb_py_test_silent_cmd "python rptr = gdb.history(0)" \
 	 "Obtains value from GDB" 1
-     gdb_test "python print rptr\[0\]" "2" "Check pointer passed as reference"
+     gdb_test "python print (rptr\[0\])" "2" "Check pointer passed as reference"
 
      # Just the most basic test of dynamic_cast -- it is checked in
      # the C++ tests.
-     gdb_test "python print bool(gdb.parse_and_eval('base').dynamic_cast(gdb.lookup_type('Derived').pointer()))" \
+     gdb_test "python print (bool(gdb.parse_and_eval('base').dynamic_cast(gdb.lookup_type('Derived').pointer())))" \
 	 True
 
      # Likewise.
-     gdb_test "python print gdb.parse_and_eval('base').dynamic_type" \
+     gdb_test "python print (gdb.parse_and_eval('base').dynamic_type)" \
 	 "Derived \[*\]"
      # A static type case.
-     gdb_test "python print gdb.parse_and_eval('5').dynamic_type" \
+     gdb_test "python print (gdb.parse_and_eval('5').dynamic_type)" \
 	 "int"
  }
 
@@ -373,40 +430,40 @@ proc test_subscript_regression {lang} {
      "Create a value for subscript test" 1
 
  # Try to access an int with a subscript.  This should fail.
- gdb_test "python print intv" "1" "Baseline print of a Python value"
- gdb_test "python print intv\[0\]" "gdb.error: Cannot subscript requested type.*" \
+ gdb_test "python print (intv)" "1" "Baseline print of an int Python value"
+ gdb_test "python print (intv\[0\])" "gdb.error: Cannot subscript requested type.*" \
      "Attempt to access an integer with a subscript"
 
  # Try to access a string with a subscript.  This should pass.
- gdb_test "python print stringv" "foo." "Baseline print of a Python value"
- gdb_test "python print stringv\[0\]" "f." "Attempt to access a string with a subscript"
+ gdb_test "python print (stringv)" "foo." "Baseline print of a string Python value"
+ gdb_test "python print (stringv\[0\])" "f." "Attempt to access a string with a subscript"
 
  # Try to access an int array via a pointer with a subscript.  This should pass.
  gdb_py_test_silent_cmd "print p" "Build pointer to array" 1
  gdb_py_test_silent_cmd "python pointer = gdb.history(0)" "" 1
- gdb_test "python print pointer\[0\]" "1" "Access array via pointer with int subscript"
- gdb_test "python print pointer\[intv\]" "2" "Access array via pointer with value subscript"
+ gdb_test "python print (pointer\[0\])" "1" "Access array via pointer with int subscript"
+ gdb_test "python print (pointer\[intv\])" "2" "Access array via pointer with value subscript"
 
  # Try to access a single dimension array with a subscript to the
  # result.  This should fail.
- gdb_test "python print pointer\[intv\]\[0\]" "gdb.error: Cannot subscript requested type.*" \
+ gdb_test "python print (pointer\[intv\]\[0\])" "gdb.error: Cannot subscript requested type.*" \
      "Attempt to access an integer with a subscript"
 
  # Lastly, test subscript access to an array with multiple
  # dimensions.  This should pass.
  gdb_py_test_silent_cmd "print {\"fu \",\"foo\",\"bar\"}" "Build array" 1
  gdb_py_test_silent_cmd "python marray = gdb.history(0)" "" 1
- gdb_test "python print marray\[1\]\[2\]" "o." "Test multiple subscript"
+ gdb_test "python print (marray\[1\]\[2\])" "o." "Test multiple subscript"
 }
 
 # A few tests of gdb.parse_and_eval.
 proc test_parse_and_eval {} {
-  gdb_test "python print gdb.parse_and_eval ('23')" "23" \
+  gdb_test "python print (gdb.parse_and_eval ('23'))" "23" \
     "parse_and_eval constant test"
-  gdb_test "python print gdb.parse_and_eval ('5 + 7')" "12" \
+  gdb_test "python print (gdb.parse_and_eval ('5 + 7'))" "12" \
     "parse_and_eval simple expression test"
-  gdb_test "python print type(gdb.parse_and_eval ('5 + 7'))" \
-    ".type 'gdb.Value'."\
+  gdb_test "python print (type(gdb.parse_and_eval ('5 + 7')))" \
+    ".(type|class) 'gdb.Value'."\
     "parse_and_eval type test"
 }
 
@@ -419,19 +476,19 @@ proc test_value_hash {} {
     "three = gdb.Value(3)" "" \
     "vdict = {one:\"one str\",two:\"two str\",three:\"three str\"}" "" \
     "end"
-    gdb_test "python print vdict\[one\]" "one str" "Test dictionary hash"
-    gdb_test "python print vdict\[two\]" "two str" "Test dictionary hash"
-    gdb_test "python print vdict\[three\]" "three str" "Test dictionary hash"
-    gdb_test "python print one.__hash__() == hash(one)" "True" "Test inbuilt hash"
+    gdb_test "python print (vdict\[one\])" "one str" "Test dictionary hash"
+    gdb_test "python print (vdict\[two\])" "two str" "Test dictionary hash"
+    gdb_test "python print (vdict\[three\])" "three str" "Test dictionary hash"
+    gdb_test "python print (one.__hash__() == hash(one))" "True" "Test inbuilt hash"
 }
 
+# Build C version of executable.  C++ is built later.
+if { [build_inferior "${binfile}" "c"] < 0 } {
+    return -1
+}
 
 # Start with a fresh gdb.
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart ${binfile}
 
 # Skip all tests if Python scripting is not enabled.
 if { [skip_python_tests] } { continue }
@@ -456,7 +513,15 @@ test_inferior_function_call
 test_lazy_strings
 test_value_after_death
 
-# The following test recompiles the binary to test either C or C++
-# values. 
-test_subscript_regression "c++"
-test_subscript_regression "c"
+# Test either C or C++ values. 
+
+test_subscript_regression "${binfile}" "c"
+
+if ![skip_cplus_tests] {
+    if { [build_inferior "${binfile}-cxx" "c++"] < 0 } {
+	return -1
+    }
+    with_test_prefix "c++" {
+	test_subscript_regression "${binfile}-cxx" "c++"
+    }
+}

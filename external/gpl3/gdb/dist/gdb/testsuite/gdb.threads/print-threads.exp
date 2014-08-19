@@ -1,5 +1,4 @@
-# Copyright (C) 1996, 1997, 2002, 2003, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,31 +19,20 @@
 # It tests miscellaneous actions with multiple threads, including
 # handling for thread exit.
 
-if $tracelevel then {
-	strace $tracelevel
-}
 
-
-set testfile "print-threads"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile
 
 # regexp for "horizontal" text (i.e. doesn't include newline or
 # carriage return)
 set horiz "\[^\n\r\]*"
 
-if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list debug "incdir=${objdir}"]] != "" } {
+if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable debug] != "" } {
     return -1
 }
 
 # Now we can proceed with the real testing.
 
-# Start with a fresh gdb.
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart ${binfile}
 
 gdb_test_no_output "set print sevenbit-strings"
 #gdb_test_no_output "set print address off"
@@ -98,6 +86,9 @@ proc test_all_threads { name kill } {
     }
 }
 
+# Record the old timeout, we need to extend it for slower tests.
+set oldtimeout $timeout
+
 runto_main
 gdb_test "break thread_function" "Breakpoint \[0-9\]+ at 0x\[0-9a-f\]+: file .*print-threads.c, line \[0-9\]*\\."
 gdb_test_no_output "set var slow = 0"
@@ -106,12 +97,18 @@ test_all_threads "fast" 0
 runto_main
 gdb_test "break thread_function" "Breakpoint \[0-9\]+ at 0x\[0-9a-f\]+: file .*print-threads.c, line \[0-9\]*\\." "break thread_function (2)"
 gdb_test_no_output "set var slow = 1"
+# Extend the timeout for slower tests.
+set timeout [expr $oldtimeout + 120]
 test_all_threads "slow" 0
+set timeout $oldtimeout
 
 runto_main
 gdb_test "break thread_function" "Breakpoint \[0-9\]+ at 0x\[0-9a-f\]+: file .*print-threads.c, line \[0-9\]*\\." "break thread_function (3)"
 gdb_test_no_output "set var slow = 1" "set var slow = 1 (2)"
 gdb_breakpoint "kill"
+# Extend the timeout for slower tests.
+set timeout [expr $oldtimeout + 120]
 test_all_threads "slow with kill breakpoint" 1
+set timeout $oldtimeout
 
 return 0

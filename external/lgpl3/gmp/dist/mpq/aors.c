@@ -22,19 +22,19 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp-impl.h"
 
 
-static void __gmpq_aors __GMP_PROTO ((REGPARM_3_1 (mpq_ptr, mpq_srcptr, mpq_srcptr, void (*) __GMP_PROTO ((mpz_ptr, mpz_srcptr, mpz_srcptr))))) REGPARM_ATTR (1);
+static void __gmpq_aors (REGPARM_3_1 (mpq_ptr, mpq_srcptr, mpq_srcptr, void (*) (mpz_ptr, mpz_srcptr, mpz_srcptr))) REGPARM_ATTR (1);
 #define mpq_aors(w,x,y,fun)  __gmpq_aors (REGPARM_3_1 (w, x, y, fun))
 
 REGPARM_ATTR (1) static void
 mpq_aors (mpq_ptr rop, mpq_srcptr op1, mpq_srcptr op2,
-          void (*fun) __GMP_PROTO ((mpz_ptr, mpz_srcptr, mpz_srcptr)))
+          void (*fun) (mpz_ptr, mpz_srcptr, mpz_srcptr))
 {
   mpz_t gcd;
   mpz_t tmp1, tmp2;
-  mp_size_t op1_num_size = ABS (op1->_mp_num._mp_size);
-  mp_size_t op1_den_size =      op1->_mp_den._mp_size;
-  mp_size_t op2_num_size = ABS (op2->_mp_num._mp_size);
-  mp_size_t op2_den_size =      op2->_mp_den._mp_size;
+  mp_size_t op1_num_size = ABSIZ(NUM(op1));
+  mp_size_t op1_den_size =   SIZ(DEN(op1));
+  mp_size_t op2_num_size = ABSIZ(NUM(op2));
+  mp_size_t op2_den_size =   SIZ(DEN(op2));
   TMP_DECL;
 
   TMP_MARK;
@@ -47,43 +47,43 @@ mpq_aors (mpq_ptr rop, mpq_srcptr op1, mpq_srcptr op2,
      dare to overwrite the numerator of ROP when we are finished
      with the numerators of OP1 and OP2.  */
 
-  mpz_gcd (gcd, &(op1->_mp_den), &(op2->_mp_den));
+  mpz_gcd (gcd, DEN(op1), DEN(op2));
   if (! MPZ_EQUAL_1_P (gcd))
     {
       mpz_t t;
 
-      mpz_divexact_gcd (tmp1, &(op2->_mp_den), gcd);
-      mpz_mul (tmp1, &(op1->_mp_num), tmp1);
+      MPZ_TMP_INIT (t, MAX (op1_num_size + op2_den_size,
+	     op2_num_size + op1_den_size) + 2 - SIZ(gcd));
 
-      mpz_divexact_gcd (tmp2, &(op1->_mp_den), gcd);
-      mpz_mul (tmp2, &(op2->_mp_num), tmp2);
+      mpz_divexact_gcd (t, DEN(op2), gcd);
+      mpz_divexact_gcd (tmp2, DEN(op1), gcd);
 
-      MPZ_TMP_INIT (t, MAX (ABS (tmp1->_mp_size), ABS (tmp2->_mp_size)) + 1);
+      mpz_mul (tmp1, NUM(op1), t);
+      mpz_mul (t, NUM(op2), tmp2);
 
-      (*fun) (t, tmp1, tmp2);
-      mpz_divexact_gcd (tmp2, &(op1->_mp_den), gcd);
+      (*fun) (t, tmp1, t);
 
       mpz_gcd (gcd, t, gcd);
       if (MPZ_EQUAL_1_P (gcd))
         {
-          mpz_set (&(rop->_mp_num), t);
-          mpz_mul (&(rop->_mp_den), &(op2->_mp_den), tmp2);
+          mpz_set (NUM(rop), t);
+          mpz_mul (DEN(rop), DEN(op2), tmp2);
         }
       else
         {
-          mpz_divexact_gcd (&(rop->_mp_num), t, gcd);
-          mpz_divexact_gcd (tmp1, &(op2->_mp_den), gcd);
-          mpz_mul (&(rop->_mp_den), tmp1, tmp2);
+          mpz_divexact_gcd (NUM(rop), t, gcd);
+          mpz_divexact_gcd (tmp1, DEN(op2), gcd);
+          mpz_mul (DEN(rop), tmp1, tmp2);
         }
     }
   else
     {
       /* The common divisor is 1.  This is the case (for random input) with
 	 probability 6/(pi**2), which is about 60.8%.  */
-      mpz_mul (tmp1, &(op1->_mp_num), &(op2->_mp_den));
-      mpz_mul (tmp2, &(op2->_mp_num), &(op1->_mp_den));
-      (*fun) (&(rop->_mp_num), tmp1, tmp2);
-      mpz_mul (&(rop->_mp_den), &(op1->_mp_den), &(op2->_mp_den));
+      mpz_mul (tmp1, NUM(op1), DEN(op2));
+      mpz_mul (tmp2, NUM(op2), DEN(op1));
+      (*fun) (NUM(rop), tmp1, tmp2);
+      mpz_mul (DEN(rop), DEN(op1), DEN(op2));
     }
   TMP_FREE;
 }

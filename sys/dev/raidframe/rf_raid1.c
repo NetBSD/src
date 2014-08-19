@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.34 2011/05/02 07:29:18 mrg Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.34.14.1 2014/08/20 00:03:49 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.34 2011/05/02 07:29:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.34.14.1 2014/08/20 00:03:49 tls Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -171,11 +171,11 @@ void
 rf_RAID1DagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 		  RF_AccessStripeMap_t *asmap, RF_VoidFuncPtr *createFunc)
 {
-	RF_RowCol_t fcol, oc;
+	RF_RowCol_t fcol, oc __unused;
 	RF_PhysDiskAddr_t *failedPDA;
 	int     prior_recon;
 	RF_RowStatus_t rstat;
-	RF_SectorNum_t oo;
+	RF_SectorNum_t oo __unused;
 
 
 	RF_ASSERT(RF_IO_IS_R_OR_W(type));

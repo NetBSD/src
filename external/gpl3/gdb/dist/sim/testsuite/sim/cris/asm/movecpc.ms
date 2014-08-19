@@ -1,6 +1,6 @@
 # mach: crisv3 crisv8 crisv10
 # xerror:
-# output: General register * PC is not implemented.\nprogram stopped with signal 5.\n
+# output: General register * PC is not implemented.\nprogram stopped with signal 5 (*).\n
 
 # We deliberately match both "read from" and "write to" above.
 

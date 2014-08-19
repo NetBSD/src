@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.71.2.1 2013/06/23 06:20:12 tls Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.71.2.2 2014/08/20 00:03:25 tls Exp $
 
 #=========================================================================
 #
@@ -59,10 +59,12 @@ CPPFLAGS+=	-D_LP64 -Wa,-Av9a
 AFLAGS+=	-Wa,-Av9a
 .if defined(PROF)
 # Profiling is only supported in the medium low memory model.
-CFLAGS+=	-mcmodel=medlow
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -mcmodel=medlow :}
+CFLAGS+=	${${ACTIVE_CC} == "clang":? -mcmodel=small :}
 .else
 # Since the kernel resides in the lower 32 bits, use medium low for now anyway.
-CFLAGS+=	-mcmodel=medlow
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -mcmodel=medlow :}
+CFLAGS+=	${${ACTIVE_CC} == "clang":? -mcmodel=small :}
 .endif
 .else
 # 32-bit kernels

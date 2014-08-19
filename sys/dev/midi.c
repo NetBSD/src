@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.78 2012/04/09 10:18:16 plunky Exp $	*/
+/*	$NetBSD: midi.c,v 1.78.2.1 2014/08/20 00:03:35 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.78 2012/04/09 10:18:16 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.78.2.1 2014/08/20 00:03:35 tls Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -109,8 +109,18 @@ static dev_type_poll(midipoll);
 static dev_type_kqfilter(midikqfilter);
 
 const struct cdevsw midi_cdevsw = {
-	midiopen, midiclose, midiread, midiwrite, midiioctl,
-	nostop, notty, midipoll, nommap, midikqfilter, D_OTHER | D_MPSAFE
+	.d_open = midiopen,
+	.d_close = midiclose,
+	.d_read = midiread,
+	.d_write = midiwrite,
+	.d_ioctl = midiioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = midipoll,
+	.d_mmap = nommap,
+	.d_kqfilter = midikqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 CFATTACH_DECL_NEW(midi, sizeof(struct midi_softc),
@@ -1401,6 +1411,7 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 	size_t xfrcount;
 	int pollout = 0;
 
+	(void)buf_end; (void)idx_end;
 	sc = device_lookup_private(&midi_cd, MIDIUNIT(dev));
 
 	DPRINTFN(6,("midiwrite: %p, unit=%d, count=%lu\n", sc, (int)minor(dev),
@@ -1536,6 +1547,7 @@ midiioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	int error;
 	MIDI_BUF_DECLARE(buf);
 
+	(void)buf_end;
 	sc = device_lookup_private(&midi_cd, MIDIUNIT(dev));;
 	if (sc->dying)
 		return EIO;
@@ -1620,6 +1632,7 @@ midipoll(dev_t dev, int events, struct lwp *l)
 	MIDI_BUF_DECLARE(idx);
 	MIDI_BUF_DECLARE(buf);
 
+	(void)buf_end; (void)idx_end;
 	sc = device_lookup_private(&midi_cd, MIDIUNIT(dev));
 	revents = 0;
 
@@ -1666,6 +1679,7 @@ filt_midiread(struct knote *kn, long hint)
 	struct midi_softc *sc = kn->kn_hook;
 	MIDI_BUF_DECLARE(buf);
 
+	(void)buf_end;
 	if (hint != NOTE_SUBMIT)
 		mutex_enter(sc->lock);
 	MIDI_BUF_CONSUMER_INIT(&sc->inbuf,buf);
@@ -1695,6 +1709,7 @@ filt_midiwrite(struct knote *kn, long hint)
 	MIDI_BUF_DECLARE(idx);
 	MIDI_BUF_DECLARE(buf);
 
+	(void)idx_end; (void)buf_end;
 	if (hint != NOTE_SUBMIT)
 		mutex_enter(sc->lock);
 	MIDI_BUF_PRODUCER_INIT(&sc->outbuf,idx);

@@ -1,5 +1,4 @@
-# Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2007, 2008, 2009, 2010,
-# 2011 Free Software Foundation, Inc.
+# Copyright 1998-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,29 +20,17 @@
 
 # Tests for overloaded member functions.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 set ws "\[\r\n\t \]+"
 set nl "\[\r\n\]+"
 
 
 if { [skip_cplus_tests] } { continue }
 
-set testfile "overload"
-set srcfile ${testfile}.cc
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .cc
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
-     untested overload.exp
-     return -1
+if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
+    return -1
 }
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 
 # Set it up at a breakpoint so we can play with the variable values.
 
@@ -151,6 +138,9 @@ gdb_test "print foo_instance3" "\\$\[0-9\]+ = \{ifoo = 222, ccpfoo = $hex \"A\"\
 
 gdb_test "print foo_instance1.overloadargs(1)" "\\$\[0-9\]+ = 1" \
     "print call overloaded func 1 arg"
+
+# Regression test for overloading with function pointer type.
+gdb_test "print foo_instance1.overloadfnarg(23, intintfunc)" " = 23"
 
 # If GDB fails to restore the selected frame properly after the
 # inferior function call above (see GDB PR 1155 for an explanation of
@@ -315,13 +305,10 @@ gdb_test "list '${srcfile}:intToChar(char)'" "int intToChar.*"
 gdb_test "list '${srcfile}':intToChar(char)" "int intToChar.*"
 gdb_test "list '${srcfile}':'intToChar(char)'" "int intToChar.*"
 
-# And with filename and namespace... which does not work.
+# And with filename and namespace.
 
-setup_kfail gdb/11289 *-*-*
-gdb_test "list ${srcfile}:foo::overloadfnarg(int)" "int foo::overloadfnarg"
-
-setup_kfail gdb/11289 *-*-*
-gdb_test "list ${srcfile}:'foo::overloadfnarg(int)'" "int foo::overloadfnarg"
+gdb_test "list ${srcfile}:foo::overloadfnarg(int)" "int foo::overloadfnarg.*}"
+gdb_test "list ${srcfile}:'foo::overloadfnarg(int)'" "int foo::overloadfnarg.*}"
 
 # Now some tests to see how overloading and namespaces interact.
 

@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphyio.c,v 1.17 2009/10/19 23:19:39 rmind Exp $ */
+/* $NetBSD: rtwphyio.c,v 1.17.22.1 2014/08/20 00:03:38 tls Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.17 2009/10/19 23:19:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.17.22.1 2014/08/20 00:03:38 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,6 +224,7 @@ rtw_grf5101_mac_crypt(u_int addr, uint32_t val)
 #undef EXTRACT_NIBBLE
 }
 
+#ifdef RTW_DEBUG
 static inline const char *
 rtw_rfchipid_string(enum rtw_rfchipid rfchipid)
 {
@@ -242,6 +243,7 @@ rtw_rfchipid_string(enum rtw_rfchipid rfchipid)
 		return "unknown";
 	}
 }
+#endif
 
 /* Bang bits over the 3-wire interface. */
 int

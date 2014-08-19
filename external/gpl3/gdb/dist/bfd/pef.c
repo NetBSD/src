@@ -1,6 +1,5 @@
 /* PEF support for BFD.
-   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-   2009, 2011  Free Software Foundation, Inc.
+   Copyright 1999-2014 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -18,6 +17,10 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
+
+/* PEF (Preferred Executable Format) is the binary file format for late
+   classic Mac OS versions (before Darwin).  It is supported by both m68k
+   and PowerPc.  It is also called CFM (Code Fragment Manager).  */
 
 #include "sysdep.h"
 #include "safe-ctype.h"
@@ -48,6 +51,7 @@
 #define bfd_pef_bfd_get_relocated_section_contents  bfd_generic_get_relocated_section_contents
 #define bfd_pef_bfd_relax_section                   bfd_generic_relax_section
 #define bfd_pef_bfd_gc_sections                     bfd_generic_gc_sections
+#define bfd_pef_bfd_lookup_section_flags            bfd_generic_lookup_section_flags
 #define bfd_pef_bfd_merge_sections                  bfd_generic_merge_sections
 #define bfd_pef_bfd_is_group_section		    bfd_generic_is_group_section
 #define bfd_pef_bfd_discard_group                   bfd_generic_discard_group
@@ -502,10 +506,9 @@ bfd_pef_scan_start_address (bfd *abfd)
 }
 
 int
-bfd_pef_scan (abfd, header, mdata)
-     bfd *abfd;
-     bfd_pef_header *header;
-     bfd_pef_data_struct *mdata;
+bfd_pef_scan (bfd *abfd,
+	      bfd_pef_header *header,
+	      bfd_pef_data_struct *mdata)
 {
   unsigned int i;
   enum bfd_architecture cputype;
@@ -579,34 +582,28 @@ bfd_pef_read_header (bfd *abfd, bfd_pef_header *header)
 static const bfd_target *
 bfd_pef_object_p (bfd *abfd)
 {
-  struct bfd_preserve preserve;
   bfd_pef_header header;
+  bfd_pef_data_struct *mdata;
 
-  preserve.marker = NULL;
   if (bfd_pef_read_header (abfd, &header) != 0)
     goto wrong;
 
   if (header.tag1 != BFD_PEF_TAG1 || header.tag2 != BFD_PEF_TAG2)
     goto wrong;
 
-  preserve.marker = bfd_zalloc (abfd, sizeof (bfd_pef_data_struct));
-  if (preserve.marker == NULL
-      || !bfd_preserve_save (abfd, &preserve))
+  mdata = (bfd_pef_data_struct *) bfd_zalloc (abfd, sizeof (*mdata));
+  if (mdata == NULL)
     goto fail;
 
-  if (bfd_pef_scan (abfd, &header,
-		    (bfd_pef_data_struct *) preserve.marker) != 0)
+  if (bfd_pef_scan (abfd, &header, mdata))
     goto wrong;
 
-  bfd_preserve_finish (abfd, &preserve);
   return abfd->xvec;
 
  wrong:
   bfd_set_error (bfd_error_wrong_format);
 
  fail:
-  if (preserve.marker != NULL)
-    bfd_preserve_restore (abfd, &preserve);
   return NULL;
 }
 
@@ -1015,6 +1012,7 @@ const bfd_target pef_vec =
   0,				/* Symbol_leading_char.  */
   ' ',				/* AR_pad_char.  */
   16,				/* AR_max_namelen.  */
+  0,				/* match priority.  */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* Data.  */
@@ -1066,11 +1064,11 @@ const bfd_target pef_vec =
 static int
 bfd_pef_xlib_read_header (bfd *abfd, bfd_pef_xlib_header *header)
 {
-  unsigned char buf[76];
+  unsigned char buf[80];
 
   bfd_seek (abfd, 0, SEEK_SET);
 
-  if (bfd_bread ((void *) buf, 76, abfd) != 76)
+  if (bfd_bread ((void *) buf, sizeof buf, abfd) != sizeof buf)
     return -1;
 
   header->tag1 = bfd_getb32 (buf);
@@ -1119,7 +1117,6 @@ bfd_pef_xlib_scan (bfd *abfd, bfd_pef_xlib_header *header)
 static const bfd_target *
 bfd_pef_xlib_object_p (bfd *abfd)
 {
-  struct bfd_preserve preserve;
   bfd_pef_xlib_header header;
 
   if (bfd_pef_xlib_read_header (abfd, &header) != 0)
@@ -1136,20 +1133,12 @@ bfd_pef_xlib_object_p (bfd *abfd)
       return NULL;
     }
 
-  if (! bfd_preserve_save (abfd, &preserve))
-    {
-      bfd_set_error (bfd_error_wrong_format);
-      return NULL;
-    }
-
   if (bfd_pef_xlib_scan (abfd, &header) != 0)
     {
-      bfd_preserve_restore (abfd, &preserve);
       bfd_set_error (bfd_error_wrong_format);
       return NULL;
     }
 
-  bfd_preserve_finish (abfd, &preserve);
   return abfd->xvec;
 }
 
@@ -1167,6 +1156,7 @@ const bfd_target pef_xlib_vec =
   0,				/* Symbol_leading_char.  */
   ' ',				/* AR_pad_char.  */
   16,				/* AR_max_namelen.  */
+  0,				/* match priority.  */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* Data.  */

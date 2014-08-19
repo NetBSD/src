@@ -1,4 +1,4 @@
-.\" $NetBSD: newfs_udf.8,v 1.8 2011/04/28 17:17:51 wiz Exp $
+.\" $NetBSD: newfs_udf.8,v 1.8.10.1 2014/08/20 00:02:27 tls Exp $
 .\"
 .\" Copyright (c) 2008 Reinoud Zandijk
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd December 23, 2009
+.Dd August 2, 2013
 .Dt NEWFS_UDF 8
 .Os
 .Sh NAME
@@ -35,10 +35,11 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl cFM
+.Op Fl B Ar blockingsize
 .Op Fl L Ar loglabel
 .Op Fl P Ar discid
 .Op Fl p Ar percentage
-.Op Fl S Ar setlabel
+.Op Fl S Ar sectorsize
 .Op Fl s Ar size
 .Op Fl t Ar gmtoff
 .Op Fl V Ar max_udf
@@ -53,11 +54,16 @@ suitable for the media currently inserted.
 .Pp
 The options are as follow:
 .Bl -tag -width indent
+.It Fl B Ar blockingsize
+When creating image files, specify the blocking size or packetsize of the media
+to
+.Ar blockingsize .
 .It Fl c
 Perform a crude surface check first to weed out disc faults on rewritable
 media.
 .It Fl F
-Force file system construction on non-empty recordable media.
+Force file system construction on non-empty recordable media or create an
+image file.
 .It Fl L Ar loglabel
 Set the disc logical label to the specified
 .Ar loglabel .
@@ -69,17 +75,22 @@ its causing problems.
 .It Fl P Ar discid
 Set the physical disc label to the specified
 .Ar discid .
-For strict conformance and interchange, don't set this manually.
+.Pp
+Prepend
+.Ar discid
+with volsetname separated with a ':' if wanted.
+For strict conformance and interchange, don't set this manually unless it has
+a unique hex number in the first 8 character positions.
 .It Fl p Ar percentage
 Percentage of partition to be initially reserved for metadata on the Metadata
 partition.
 It defaults to 20 %.
-.It Fl S Ar setlabel
-Set the disc set label to the specified
-.Ar setlabel .
+.It Fl S Ar sectorsize
+Set the sectorsize for image files.
 For strict conformance and interchange, don't set this manually.
 .It Fl s Ar size
-Ignored for now.
+For image files, set the file size to the humanized size
+.Ar size .
 .It Fl t Ar gmtoff
 Use the specified
 .Ar gmtoff
@@ -119,31 +130,41 @@ This can be done using
 .Pp
 The default UDF version is version 2.01.
 .Sh EXAMPLES
-.Bd -literal -offset indent
-newfs_udf -S "Encyclopedia" -L "volume 2" -P "copy-nr-1" /dev/rcd0d
-.Ed
-.Pp
 Create a file system, using the specified names on the device
 .Pa /dev/rcd0d
-with the default UDF version.
+with the default UDF version :
+.Bd -literal -offset indent
+newfs_udf -P "Encyclopedia:copy-nr-1" -L "volume 2" /dev/rcd0d
+.Ed
 .Pp
+Create a 4.8 GiB sparse file and configure it using
+.Xr vnconfig 8
+to be a 2048 sector size disc and create a new UDF file system on
+.Pa /dev/rvnd0d
+:
 .Bd -literal -offset indent
 dd if=/dev/zero of=bigdisk.2048.udf seek=9999999 count=1
 vnconfig -c vnd0 bigdisk.2048.udf 2048/1/1/1
 newfs_udf -L bigdisk /dev/rvnd0d
 .Ed
 .Pp
-Create a 4.8 GiB sparse file and configure it using
-.Xr vnconfig 8
-to be a 2048 sector size disc and create a new UDF file system on
-.Pa /dev/rvnd0d .
+Create a 2 GiB file and create a new UDF file system on it using the default
+512 byte sector size :
 .Bd -literal -offset indent
-newfs_udf -L "My USB stick" /dev/rsd0d
+newfs_udf -L bigdisk2 -F -s 2G bigdisk2.iso
+.Ed
+.Pp
+Create a 200 MiB file and create a new UDF file system on it using a sector size
+of 2048 :
+.Bd -literal -offset indent
+newfs_udf -L bigdisk2 -F -s 200M -S 2048 bigdisk3.iso
 .Ed
 .Pp
 Create a new UDF file system on the inserted USB stick using its
-.Dq native
-sectorsize of 512.
+native sectorsize of 512 :
+.Bd -literal -offset indent
+newfs_udf -L "My USB stick" /dev/rsd0d
+.Ed
 .Sh SEE ALSO
 .Xr disktab 5 ,
 .Xr disklabel 8 ,
@@ -155,4 +176,16 @@ The
 command first appeared in
 .Nx 5.0 .
 .Sh AUTHORS
-.An Reinoud Zandijk Aq reinoud@NetBSD.org
+.An Reinoud Zandijk Aq Mt reinoud@NetBSD.org
+.Sh BUGS
+The
+.Ar P
+and the
+.Ar S
+arguments have changed meaning.
+The meaning of
+.Ar S
+has been merged into
+.Ar P
+since
+.Nx 6.1 .

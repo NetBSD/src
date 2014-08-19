@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2.2.2 2013/06/23 06:20:02 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2.2.3 2014/08/20 00:02:52 tls Exp $	*/
 /*
  * Copyright (c) 2012, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2.2.2 2013/06/23 06:20:02 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2.2.3 2014/08/20 00:02:52 tls Exp $");
 
 #include "clpscom.h"
 #include "clpslcd.h"
@@ -50,10 +50,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2.2.2 2013/06/23 06:20:02 tls Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#include <dev/cons.h>
+#include <dev/md.h>
+
+#include <arm/locore.h>
+#include <arm/undefined.h>
 #include <arm/arm32/machdep.h>
 #include <arm/arm32/pmap.h>
-#include <arm/cpufunc.h>
-#include <arm/undefined.h>
 
 #include <machine/bootconfig.h>
 #include <machine/bootinfo.h>
@@ -63,9 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2.2.2 2013/06/23 06:20:02 tls Exp $");
 #include <epoc32/windermere/windermerevar.h>
 #include <epoc32/windermere/windermerereg.h>
 #include <epoc32/dev/epockbdvar.h>
-
-#include <dev/cons.h>
-#include <dev/md.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>

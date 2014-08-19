@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.3 2012/08/11 07:18:53 matt Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.3.2.1 2014/08/20 00:02:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.3 2012/08/11 07:18:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.3.2.1 2014/08/20 00:02:44 tls Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
@@ -48,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.3 2012/08/11 07:18:53 matt Exp $");
 #ifdef COMPAT_NETBSD32
 #include <compat/netbsd32/netbsd32_exec.h>
 #endif
+
+#include <arm/locore.h>
 
 #if EXEC_ELF32
 int
@@ -68,9 +70,20 @@ arm_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 #else
 	const bool aapcs_p = false;
 #endif
+#ifdef __ARMEB__
+	const bool be8_p = (eh->e_flags & EF_ARM_BE8) != 0;
 
 	/*
-	 * This is subtle.  If are netbsd32, then we don't want to match the
+	 * If the BE-8 model is supported, CPSR[7] will be clear.
+	 * If the BE-32 model is supported, CPSR[7] will be set.
+	 */
+	register_t ctl = armreg_sctrl_read();
+	if (((ctl & CPU_CONTROL_BEND_ENABLE) != 0) == be8_p)
+		return ENOEXEC;
+#endif /* __ARMEB__ */
+
+	/*
+	 * This is subtle.  If we are netbsd32, then we don't want to match the
 	 * same ABI as the kernel.  If we aren't (netbsd32 == false), then we
 	 * don't want to be different from the kernel's ABI.
 	 *    true   true   true  ENOEXEC
@@ -90,6 +103,24 @@ arm_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 
 	if (itp_suffix != NULL)
 		(void)compat_elf_check_interp(epp, itp, itp_suffix);
+
+	/*
+	 * Copy (if any) the machine_arch of the executable to the proc.
+	 */
+	if (epp->ep_machine_arch[0] != 0) {
+		strlcpy(l->l_proc->p_md.md_march, epp->ep_machine_arch,
+		    sizeof(l->l_proc->p_md.md_march));
+	}
+
+	/*
+	 * If we are AAPCS (EABI) and armv6/armv7, we want alignment faults
+	 * to be off.
+	 */
+	if (aapcs_p && (CPU_IS_ARMV7_P() || CPU_IS_ARMV6_P())) {
+		l->l_md.md_flags |= MDLWP_NOALIGNFLT;
+	} else {
+		l->l_md.md_flags &= ~MDLWP_NOALIGNFLT;
+	}
 	return 0;
 }
 #endif

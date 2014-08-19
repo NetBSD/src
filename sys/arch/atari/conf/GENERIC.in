@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.98.2.2 2013/06/23 06:20:01 tls Exp $
+#	$NetBSD: GENERIC.in,v 1.98.2.3 2014/08/20 00:02:48 tls Exp $
 #
 # Generic atari
 #
@@ -17,6 +17,12 @@ include "arch/atari/conf/std.milan"
 
 #if !defined(SMALL030_KERNEL)
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+#endif /* !SMALL030_KERNEL */
+
+#if !defined(SMALL030_KERNEL)
+makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
+#else
+makeoptions	COPTS="-Os"			# optimize for space
 #endif /* !SMALL030_KERNEL */
 
 #if defined(SMALL030_KERNEL) || \
@@ -78,7 +84,6 @@ options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter

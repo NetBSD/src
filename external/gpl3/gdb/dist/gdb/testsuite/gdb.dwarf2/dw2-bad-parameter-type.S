@@ -1,4 +1,4 @@
-/* Copyright 2010, 2011 Free Software Foundation, Inc.
+/* Copyright 2010-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,10 +15,10 @@
 
 	.section	.debug_info
 debug_start:
-	.long	debug_end - 1f	/* Length of Compilation Unit Info */
+	.4byte	debug_end - 1f	/* Length of Compilation Unit Info */
 1:
 	.2byte	0x3	/* DWARF version number */
-	.long	.Ldebug_abbrev0	/* Offset Into Abbrev. Section */
+	.4byte	.Ldebug_abbrev0	/* Offset Into Abbrev. Section */
 	.byte	0x4	/* Pointer Size (in bytes) */
 	.uleb128 0x1	/* (DIE (0xb) DW_TAG_compile_unit) */
 	.ascii "GNU C 4.4.3\0"	/* DW_AT_producer */
@@ -27,12 +27,12 @@ debug_start:
 	.uleb128 0x4	/* (DIE (0x3c) DW_TAG_subprogram) */
 	.ascii "f\0"	/* DW_AT_name */
 /* Value 0 would require has_section_at_zero != 0 (which is true, though).  */
-	.long	1	/* DW_AT_low_pc */
-	.long	2	/* DW_AT_high_pc */
+	.4byte	1	/* DW_AT_low_pc */
+	.4byte	2	/* DW_AT_high_pc */
 	.byte	0x1	/* DW_AT_prototyped */
 	.uleb128 0x5	/* (DIE (0x42) DW_TAG_formal_parameter) */
 /* Invalid value.  */
-	.long	0x0	/* DW_AT_type */
+	.4byte	0x0	/* DW_AT_type */
 	.byte	0x0	/* end of children of DIE 0x3c */
 	.byte	0x0	/* end of children of DIE 0xb */
 debug_end:

@@ -1,4 +1,4 @@
-/*	$NetBSD: vcprop.h,v 1.2.4.4 2013/06/23 06:20:04 tls Exp $	*/
+/*	$NetBSD: vcprop.h,v 1.2.4.5 2014/08/20 00:02:56 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
 
 #ifndef	_EVBARM_RPI_VCPROP_H_
 #define	_EVBARM_RPI_VCPROP_H_
+
+#include "opt_vcprop.h"
 
 struct vcprop_tag {
 	uint32_t vpt_tag;
@@ -154,7 +156,9 @@ struct vcprop_tag_clock {
 	struct vcprop_clock clk[VCPROP_MAXCLOCKS];
 };
 
-#define	VCPROP_MAXCMDLINE 256
+#ifndef	VCPROP_MAXCMDLINE
+#define	VCPROP_MAXCMDLINE 1024
+#endif
 struct vcprop_tag_cmdline {
 	struct vcprop_tag tag;
 	uint8_t cmdline[VCPROP_MAXCMDLINE];

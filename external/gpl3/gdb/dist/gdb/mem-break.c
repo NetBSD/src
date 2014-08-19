@@ -1,7 +1,6 @@
 /* Simulate breakpoints by patching locations in the target system, for GDB.
 
-   Copyright (C) 1990, 1991, 1992, 1993, 1995, 1997, 1998, 1999, 2000, 2002,
-   2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1990-2014 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.  Written by John Gilmore.
 
@@ -21,14 +20,11 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-
-/* This file is only useful if BREAKPOINT_FROM_PC is set.  If not, we
-   punt.  */
-
 #include "symtab.h"
 #include "breakpoint.h"
 #include "inferior.h"
 #include "target.h"
+#include <string.h>
 
 
 /* Insert a breakpoint on targets that don't have any better
@@ -46,6 +42,7 @@ default_memory_insert_breakpoint (struct gdbarch *gdbarch,
 {
   int val;
   const unsigned char *bp;
+  gdb_byte *readbuf;
 
   /* Determine appropriate breakpoint contents and size for this address.  */
   bp = gdbarch_breakpoint_from_pc
@@ -53,15 +50,18 @@ default_memory_insert_breakpoint (struct gdbarch *gdbarch,
   if (bp == NULL)
     error (_("Software breakpoints not implemented for this target."));
 
-  /* Save the memory contents.  */
+  /* Save the memory contents in the shadow_contents buffer and then
+     write the breakpoint instruction.  */
   bp_tgt->shadow_len = bp_tgt->placed_size;
-  val = target_read_memory (bp_tgt->placed_address, bp_tgt->shadow_contents,
+  readbuf = alloca (bp_tgt->placed_size);
+  val = target_read_memory (bp_tgt->placed_address, readbuf,
 			    bp_tgt->placed_size);
-
-  /* Write the breakpoint.  */
   if (val == 0)
-    val = target_write_memory (bp_tgt->placed_address, bp,
-			       bp_tgt->placed_size);
+    {
+      memcpy (bp_tgt->shadow_contents, readbuf, bp_tgt->placed_size);
+      val = target_write_raw_memory (bp_tgt->placed_address, bp,
+				     bp_tgt->placed_size);
+    }
 
   return val;
 }
@@ -71,8 +71,8 @@ int
 default_memory_remove_breakpoint (struct gdbarch *gdbarch,
 				  struct bp_target_info *bp_tgt)
 {
-  return target_write_memory (bp_tgt->placed_address, bp_tgt->shadow_contents,
-			      bp_tgt->placed_size);
+  return target_write_raw_memory (bp_tgt->placed_address, bp_tgt->shadow_contents,
+				  bp_tgt->placed_size);
 }
 
 

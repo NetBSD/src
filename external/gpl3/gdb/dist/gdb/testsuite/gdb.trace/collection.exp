@@ -1,5 +1,4 @@
-# Copyright 1998, 2005, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 1998-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,19 +15,11 @@
 
 load_lib "trace-support.exp"
 
-if $tracelevel then {
-	strace $tracelevel
-}
 
-
-set testfile "collection"
-set srcfile ${testfile}.c
+standard_testfile
 set executable $testfile
-set binfile $objdir/$subdir/$executable
 
-if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
-	executable {debug nowarnings}] != "" } {
-    untested collection.exp
+if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug nowarnings}]} {
     return -1
 }
 
@@ -45,11 +36,11 @@ if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
 set ws "\[\r\n\t \]+"
 set cr "\[\r\n\]+"
 
-if [istarget "x86_64-*"] then {
+if [is_amd64_regs_target] {
     set fpreg "rbp"
     set spreg "rsp"
     set pcreg "rip"
-} elseif [istarget "i?86-*"] then {
+} elseif [is_x86_like_target] {
     set fpreg "ebp"
     set spreg "esp"
     set pcreg "eip"
@@ -136,6 +127,22 @@ proc gdb_collect_args_test { myargs msg } {
 
     # Begin the test.
     run_trace_experiment $msg args_test_func
+
+    # Frame arguments and their entry values are displayed correctly with
+    # various values of "print entry-values" when a trace frame is
+    # selected.
+
+    gdb_test "tfind -1" ".*" ""
+    gdb_test_no_output "set print entry-values only" ""
+    gdb_test "tfind 0" \
+	" \\(argc@entry=\[^,\]*, argi@entry=\[^,\]*, argf@entry=\[^,\]*, argd@entry=\[^,\]*, argstruct@entry=\[^,\]*, argarray@entry=\[^,\]*\\) .*" \
+	"collect $msg: tfind 0 with entry-values only"
+
+    gdb_test "tfind -1" ".*" ""
+    gdb_test_no_output "set print entry-values both" ""
+    gdb_test "tfind 0" \
+	" \\(argc=\[^,\]*, argc@entry=\[^,\]*, argi=\[^,\]*, argi@entry=\[^,\]*, argf=\[^,\]*, argf@entry=\[^,\]*, argd=\[^,\]*, argd@entry=\[^,\]*, argstruct=\[^,\]*, argstruct@entry=\[^,\]*, argarray=\[^,\]*, argarray@entry=\[^,\]*\\) .*" \
+	"collect $msg: tfind 0 with entry-values both"
 
     gdb_test "print argc" \
 	    "\\$\[0-9\]+ = 1 '.001'$cr" \
@@ -588,6 +595,81 @@ proc gdb_collect_global_in_pieces_test { } {
 	"collect global in pieces: cease trace debugging"
 }
 
+proc gdb_collect_return_test { } {
+    global gdb_prompt
+
+    prepare_for_trace_test
+
+    # We'll simply re-use the args_test_function for this test
+    gdb_test "trace args_test_func" \
+	    "Tracepoint \[0-9\]+ at .*" \
+	    "collect \$_ret: set tracepoint"
+    gdb_trace_setactions "collect \$_ret: define actions" \
+	    "" \
+	    "collect \$_ret" "^$"
+
+    # Begin the test.
+    run_trace_experiment \$_ret args_test_func
+
+    # Since we can't guarantee that $_ret will give us the caller,
+    # pass either way, but giving different messages.
+    gdb_test_multiple "backtrace" "" {
+	-re ".*#1 .* in main .*\r\n$gdb_prompt $" {
+	    pass "collect \$_ret: backtrace lists main"
+	}
+	-re ".*#1 .* in ?? .*\r\n$gdb_prompt $" {
+	    pass "collect \$_ret: backtrace not listing main"
+	}
+    }
+
+    gdb_test "tfind none" \
+	    "#0  end .*" \
+	    "collect \$_ret: cease trace debugging"
+}
+
+proc gdb_collect_strings_test { func mystr myrslt mylim msg } {
+    global hex
+    global cr
+    global gdb_prompt
+
+    prepare_for_trace_test
+
+    # Find the comment-identified line for setting this tracepoint.
+    set testline 0
+    gdb_test_multiple "list $func, +30" "collect $msg: find tracepoint line" {
+	-re "\[\r\n\](\[0-9\]+)\[^\r\n\]+ Set_Tracepoint_Here .*$gdb_prompt" {
+	    set testline $expect_out(1,string)
+	    pass "collect $msg: find tracepoint line"
+	}
+	-re ".*$gdb_prompt " {
+	    fail "collect $msg: find tracepoint line (skipping strings test)"
+	    return
+	}
+	timeout {
+	    fail "collect $msg: find tracepoint line (skipping strings test)"
+	    return
+	}
+    }
+
+    gdb_test "trace $testline" \
+	    "Tracepoint \[0-9\]+ at .*" \
+	    "collect $msg: set tracepoint"
+    gdb_trace_setactions "collect $msg: define actions" \
+	    "" \
+	    "collect/s$mylim $mystr" "^$"
+
+    # Begin the test.
+    run_trace_experiment $msg $func
+
+    gdb_test "print $mystr" \
+	"\\$\[0-9\]+ = $hex \"$myrslt\".*$cr" \
+	    "collect $msg: collected local string"
+
+    gdb_test "tfind none" \
+	    "#0  end .*" \
+	    "collect $msg: cease trace debugging"
+}
+
 proc gdb_trace_collection_test {} {
     global fpreg
     global spreg
@@ -696,16 +778,21 @@ proc gdb_trace_collection_test {} {
     gdb_collect_expression_test globals_test_func \
 	    "globalarr\[\(l6, l7\)\]" "7"    "a\[\(b, c\)\]"
 
+    gdb_collect_return_test
+
+    gdb_collect_strings_test strings_test_func "locstr" "abcdef" "" \
+	    "local string"
+
+    gdb_collect_strings_test strings_test_func "longloc" "how now brown c" 15 \
+	    "long local string"
+
 }
 
-clean_restart $executable
 runto_main
 
-# We generously give ourselves one "pass" if we successfully
-# detect that this test cannot be run on this target!
 if { ![gdb_target_supports_trace] } then {
-    pass "Current target does not support trace"
-    return 1;
+    unsupported "Current target does not support trace"
+    return 1
 }
 
 # Body of test encased in a proc so we can return prematurely.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ndp.8,v 1.25 2009/11/06 20:51:43 dyoung Exp $
+.\"	$NetBSD: ndp.8,v 1.25.12.1 2014/08/20 00:05:10 tls Exp $
 .\"	$KAME: ndp.8,v 1.33 2005/10/19 14:57:42 suz Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 6, 2009
+.Dd June 5, 2014
 .Dt NDP 8
 .Os
 .\"
@@ -189,6 +189,12 @@ variable is non-0, or the flag
 .Ic override_rtadv
 is on.
 This flag is set to 1 by default.
+.It Ic auto_linklocal
+Specify whether or not to perform automatic link-local address configuration on
+.Ar interface .
+This flag is set by
+.Li net.inet6.ip6.auto_linklocal
+sysctl variable.
 .It Ic override_rtadv
 Specify whether or not to override the
 .Li net.inet6.ip6.accept_rtadv
@@ -210,7 +216,10 @@ file supplied with the KAME kit.
 .It Ic disabled
 Disable IPv6 operation on the interface.
 When disabled, the interface discards any IPv6 packets
-received on or being sent to the interface.
+received on or being sent to the interface and any IPv6 addresses
+on the interface are marked as
+.Dq tentative .
+When the disabled flag is cleared, DAD will be performed.
 In the sending case, an error of ENETDOWN will be returned to the
 application.
 This flag is typically set automatically in the kernel as a result of

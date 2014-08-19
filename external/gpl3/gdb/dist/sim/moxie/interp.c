@@ -1,5 +1,5 @@
 /* Simulator for the moxie processor
-   Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
    Contributed by Anthony Green
 
 This file is part of GDB, the GNU debugger.
@@ -17,6 +17,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include "config.h"
+#include <fcntl.h>
 #include <signal.h>
 #include <stdlib.h>
 #include "sysdep.h"
@@ -288,69 +290,69 @@ sim_resume (sd, step, siggnal)
 		  {
 		    TRACE("beq");
 		    if (cpu.asregs.cc & CC_EQ)
-		      pc += INST2OFFSET(inst) - 2;
+		      pc += INST2OFFSET(inst);
 		  }
 		  break;
 		case 0x01: /* bne */
 		  {
 		    TRACE("bne");
 		    if (! (cpu.asregs.cc & CC_EQ))
-		      pc += INST2OFFSET(inst) - 2;
+		      pc += INST2OFFSET(inst);
 		  }
 		  break;
 		case 0x02: /* blt */
 		  {
 		    TRACE("blt");
 		    if (cpu.asregs.cc & CC_LT)
-		      pc += INST2OFFSET(inst) - 2;
+		      pc += INST2OFFSET(inst);
 		  }		  break;
 		case 0x03: /* bgt */
 		  {
 		    TRACE("bgt");
 		    if (cpu.asregs.cc & CC_GT)
-		      pc += INST2OFFSET(inst) - 2;
+		      pc += INST2OFFSET(inst);
 		  }
 		  break;
 		case 0x04: /* bltu */
 		  {
 		    TRACE("bltu");
 		    if (cpu.asregs.cc & CC_LTU)
-		      pc += INST2OFFSET(inst) - 2;
+		      pc += INST2OFFSET(inst);
 		  }
 		  break;
 		case 0x05: /* bgtu */
 		  {
 		    TRACE("bgtu");
 		    if (cpu.asregs.cc & CC_GTU)
-		      pc += INST2OFFSET(inst) - 2;
+		      pc += INST2OFFSET(inst);
 		  }
 		  break;
 		case 0x06: /* bge */
 		  {
 		    TRACE("bge");
 		    if (cpu.asregs.cc & (CC_GT | CC_EQ))
-		      pc += INST2OFFSET(inst) - 2;
+		      pc += INST2OFFSET(inst);
 		  }
 		  break;
 		case 0x07: /* ble */
 		  {
 		    TRACE("ble");
 		    if (cpu.asregs.cc & (CC_LT | CC_EQ))
-		      pc += INST2OFFSET(inst) - 2;
+		      pc += INST2OFFSET(inst);
 		  }
 		  break;
 		case 0x08: /* bgeu */
 		  {
 		    TRACE("bgeu");
 		    if (cpu.asregs.cc & (CC_GTU | CC_EQ))
-		      pc += INST2OFFSET(inst) - 2;
+		      pc += INST2OFFSET(inst);
 		  }
 		  break;
 		case 0x09: /* bleu */
 		  {
 		    TRACE("bleu");
 		    if (cpu.asregs.cc & (CC_LTU | CC_EQ))
-		      pc += INST2OFFSET(inst) - 2;
+		      pc += INST2OFFSET(inst);
 		  }
 		  break;
 		default:
@@ -1163,7 +1165,6 @@ sim_open (kind, cb, abfd, argv)
      char ** argv;
 {
   SIM_DESC sd = sim_state_alloc (kind, cb);
-  printf ("0x%x 0x%x\n", sd, STATE_MAGIC(sd));
   SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
 
   if (sim_pre_argv_init (sd, argv[0]) != SIM_RC_OK)

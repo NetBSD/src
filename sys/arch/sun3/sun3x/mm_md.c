@@ -1,4 +1,4 @@
-/*	$NetBSD: mm_md.c,v 1.2 2011/06/12 03:35:48 rmind Exp $	*/
+/*	$NetBSD: mm_md.c,v 1.2.14.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm_md.c,v 1.2 2011/06/12 03:35:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm_md.c,v 1.2.14.1 2014/08/20 00:03:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -107,7 +107,7 @@ mm_md_readwrite(dev_t dev, struct uio *uio)
 	}
 }
 
-paddr_t 
+paddr_t
 mm_md_mmap(dev_t dev, off_t off, int prot)
 {
 

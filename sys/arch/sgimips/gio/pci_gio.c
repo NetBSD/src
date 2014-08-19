@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_gio.c,v 1.10.6.1 2012/11/20 03:01:40 tls Exp $	*/
+/*	$NetBSD: pci_gio.c,v 1.10.6.2 2014/08/20 00:03:22 tls Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.10.6.1 2012/11/20 03:01:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.10.6.2 2014/08/20 00:03:22 tls Exp $");
 
 /*
  * Glue for PCI devices that are connected to the GIO bus by various little
@@ -82,7 +82,8 @@ static int	giopci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
 static int	giopci_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
 static const char *
-		giopci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
+		giopci_intr_string(pci_chipset_tag_t, pci_intr_handle_t,
+		    char *, size_t);
 static void    *giopci_intr_establish(int, int, int (*)(void *), void *);
 static void	giopci_intr_disestablish(void *);
 
@@ -300,14 +301,12 @@ giopci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 static const char *
-giopci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+giopci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char * buf,
+    size_t len)
 {
-	static char str[10];
-
-	snprintf(str, sizeof(str), "slot %s",
-	    (ih == GIO_SLOT_EXP0) ? "EXP0" :
+	snprintf(buf, len, "slot %s", (ih == GIO_SLOT_EXP0) ? "EXP0" :
 	    (ih == GIO_SLOT_EXP1) ? "EXP1" : "GFX");
-	return (str);
+	return buf;
 }
 
 static void *

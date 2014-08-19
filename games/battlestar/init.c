@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.15 2005/07/01 06:04:54 jmc Exp $	*/
+/*	$NetBSD: init.c,v 1.15.48.1 2014/08/20 00:00:22 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.4 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.15 2005/07/01 06:04:54 jmc Exp $");
+__RCSID("$NetBSD: init.c,v 1.15.48.1 2014/08/20 00:00:22 tls Exp $");
 #endif
 #endif				/* not lint */
 
@@ -54,7 +54,7 @@ initialize(const char *filename)
 	puts("First Adventure game written by His Lordship, the honorable");
 	puts("Admiral D.W. Riggle\n");
 	location = dayfile;
-	srand(getpid());
+	srandom(time(NULL));
 	username = getutmp();
 	wordinit();
 	if (filename == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: spic.c,v 1.18 2010/04/21 21:49:53 dyoung Exp $	*/
+/*	$NetBSD: spic.c,v 1.18.18.1 2014/08/20 00:03:38 tls Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.18 2010/04/21 21:49:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.18.18.1 2014/08/20 00:03:38 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,11 +113,11 @@ static const struct wsmouse_accessops spic_accessops = {
 static u_int8_t
 spic_call1(struct spic_softc *sc, u_int8_t dev)
 {
-	u_int8_t v1, v2;
+	u_int8_t v2;
 
 	SPIC_COMMAND(0, INB(sc, SPIC_PORT2) & 2);
 	OUTB(sc, dev, SPIC_PORT2);
-	v1 = INB(sc, SPIC_PORT2);
+	(void)INB(sc, SPIC_PORT2);
 	v2 = INB(sc, SPIC_PORT1);
 	return v2;
 }

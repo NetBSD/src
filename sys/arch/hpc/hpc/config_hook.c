@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.c,v 1.8 2009/03/18 10:22:28 cegger Exp $	*/
+/*	$NetBSD: config_hook.c,v 1.8.22.1 2014/08/20 00:03:02 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: config_hook.c,v 1.8 2009/03/18 10:22:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: config_hook.c,v 1.8.22.1 2014/08/20 00:03:02 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: config_hook.c,v 1.8 2009/03/18 10:22:28 cegger Exp $
 #include <machine/config_hook.h>
 
 struct hook_rec {
-	CIRCLEQ_ENTRY(hook_rec) hr_link;
+	TAILQ_ENTRY(hook_rec) hr_link;
 	void *hr_ctx;
 	int hr_type;
 	long hr_id;
@@ -54,7 +54,7 @@ struct hook_rec {
 	int (*hr_func)(void *, int, long, void *);
 };
 
-CIRCLEQ_HEAD(hook_list, hook_rec);
+TAILQ_HEAD(hook_list, hook_rec);
 struct hook_list hook_lists[CONFIG_HOOK_NTYPES];
 struct hook_list call_list;
 
@@ -64,9 +64,9 @@ config_hook_init(void)
 	int i;
 
 	for (i = 0; i < CONFIG_HOOK_NTYPES; i++) {
-		CIRCLEQ_INIT(&hook_lists[i]);
+		TAILQ_INIT(&hook_lists[i]);
 	}
-	CIRCLEQ_INIT(&call_list);
+	TAILQ_INIT(&call_list);
 }
 
 config_hook_tag
@@ -83,7 +83,7 @@ config_hook(int type, long id, enum config_hook_mode mode,
 
 	/* check mode compatibility */
 	prev_hr = NULL;
-	CIRCLEQ_FOREACH(hr, &hook_lists[type], hr_link) {
+	TAILQ_FOREACH(hr, &hook_lists[type], hr_link) {
 		if (hr->hr_id == id) {
 			if (hr->hr_mode != mode) {
 				panic("config_hook: incompatible mode on "
@@ -102,8 +102,8 @@ config_hook(int type, long id, enum config_hook_mode mode,
 			printf("config_hook: type=%d/id=%ld is replaced",
 			    type, id);
 			s = splhigh();
-			CIRCLEQ_REMOVE(&hook_lists[type], prev_hr, hr_link);
-			prev_hr->hr_link.cqe_next = NULL;
+			TAILQ_REMOVE(&hook_lists[type], prev_hr, hr_link);
+			TAILQ_NEXT(prev_hr, hr_link) = NULL;
 			splx(s);
 		}
 		break;
@@ -129,10 +129,10 @@ config_hook(int type, long id, enum config_hook_mode mode,
 	hr->hr_mode = mode;
 
 	s = splhigh();
-	CIRCLEQ_INSERT_HEAD(&hook_lists[type], hr, hr_link);
+	TAILQ_INSERT_HEAD(&hook_lists[type], hr, hr_link);
 
 	/* update call list */
-	CIRCLEQ_FOREACH(cr, &call_list, hr_link) {
+	TAILQ_FOREACH(cr, &call_list, hr_link) {
 		if (cr->hr_type == type && cr->hr_id == id) {
 			if (cr->hr_func != NULL &&
 			    cr->hr_mode != mode) {
@@ -156,12 +156,12 @@ config_unhook(config_hook_tag hrx)
 	int s;
 	struct hook_rec *hr = (struct hook_rec*)hrx, *cr;
 
-	if (hr->hr_link.cqe_next != NULL) {
+	if (TAILQ_NEXT(hr, hr_link) != NULL) {
 		s = splhigh();
-		CIRCLEQ_REMOVE(&hook_lists[hr->hr_type], hr, hr_link);
-		hr->hr_link.cqe_next = NULL;
+		TAILQ_REMOVE(&hook_lists[hr->hr_type], hr, hr_link);
+		TAILQ_NEXT(hr, hr_link) = NULL;
 		/* update call list */
-		CIRCLEQ_FOREACH(cr, &call_list, hr_link) {
+		TAILQ_FOREACH(cr, &call_list, hr_link) {
 			if (cr->hr_type == hr->hr_type &&
 			    cr->hr_id == hr->hr_id)
 				cr->hr_func = NULL;
@@ -184,12 +184,13 @@ __config_hook_call(int type, long id, void *msg, int reverse)
 
 	res = -1;
 	if (reverse) {
-		CIRCLEQ_FOREACH_REVERSE(hr, &hook_lists[type], hr_link) {
+		TAILQ_FOREACH_REVERSE(hr, &hook_lists[type], hook_list,
+		    hr_link) {
 			if (hr->hr_id == id)
 				res = (*hr->hr_func)(hr->hr_ctx, type, id,msg);
 		}
 	} else {
-		CIRCLEQ_FOREACH(hr, &hook_lists[type], hr_link) {
+		TAILQ_FOREACH(hr, &hook_lists[type], hr_link) {
 			if (hr->hr_id == id)
 				res = (*hr->hr_func)(hr->hr_ctx, type, id,msg);
 		}
@@ -220,10 +221,10 @@ config_connect(int type, long id)
 
 	s = splhigh();
 	/* insert the record into the call list */
-	CIRCLEQ_INSERT_HEAD(&call_list, cr, hr_link);
+	TAILQ_INSERT_HEAD(&call_list, cr, hr_link);
 
 	/* scan hook list */
-	CIRCLEQ_FOREACH(hr, &hook_lists[type], hr_link) {
+	TAILQ_FOREACH(hr, &hook_lists[type], hr_link) {
 		if (hr->hr_id == id) {
 			if (hr->hr_mode == CONFIG_HOOK_SHARE)
 				panic("config_connect: can't connect with "
@@ -245,7 +246,7 @@ config_disconnect(config_call_tag crx)
 	struct hook_rec *cr = (struct hook_rec*)crx;
 
 	s = splhigh();
-	CIRCLEQ_REMOVE(&call_list, cr, hr_link);
+	TAILQ_REMOVE(&call_list, cr, hr_link);
 	splx(s);
 
 	free(cr, M_DEVBUF);

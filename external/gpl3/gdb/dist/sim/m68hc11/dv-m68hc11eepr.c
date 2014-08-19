@@ -1,6 +1,5 @@
 /*  dv-m68hc11eepr.c -- Simulation of the 68HC11 Internal EEPROM.
-    Copyright (C) 1999, 2000, 2001, 2002, 2007, 2008, 2009, 2010, 2011
-    Free Software Foundation, Inc.
+    Copyright (C) 1999-2014 Free Software Foundation, Inc.
     Written by Stephane Carrez (stcarrez@nerim.fr)
     (From a driver model Contributed by Cygnus Solutions.)
     

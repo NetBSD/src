@@ -1,6 +1,6 @@
 /* Target-dependent, architecture-independent code for DICOS, for GDB.
 
-   Copyright (C) 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,7 @@
 
 #include "defs.h"
 #include "osabi.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "solib.h"
 #include "solib-target.h"
 #include "inferior.h"
@@ -43,8 +43,8 @@ dicos_init_abi (struct gdbarch *gdbarch)
 
   /* There's no (standard definition of) entry point or a guaranteed
      text location with a symbol where to place the call dummy, so we
-     put it on the stack.  */
-  set_gdbarch_call_dummy_location (gdbarch, ON_STACK);
+     need it on the stack.  Rely on i386_gdbarch_init used also for
+     amd64 to set up ON_STACK inferior calls.  */
 
   /* DICOS rewinds the PC itself.  */
   set_gdbarch_decr_pc_after_break (gdbarch, 0);

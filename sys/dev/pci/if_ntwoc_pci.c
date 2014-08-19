@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pci.c,v 1.27.12.1 2012/11/20 03:02:17 tls Exp $	*/
+/*	$NetBSD: if_ntwoc_pci.c,v 1.27.12.2 2014/08/20 00:03:42 tls Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.27.12.1 2012/11/20 03:02:17 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.27.12.2 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,6 +200,7 @@ ntwoc_pci_attach(device_t parent, device_t self, void *aux)
 	u_int16_t db0, db1;
 	u_int32_t flags;
 	u_int numports;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	printf(": N2 Serial Interface\n");
 	flags = device_cfdata(self)->cf_flags;
@@ -234,7 +235,7 @@ ntwoc_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET, ntwoc_pci_intr,
 	    sc);
 	if (sc->sc_ih == NULL) {

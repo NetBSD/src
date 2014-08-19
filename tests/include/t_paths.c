@@ -1,4 +1,4 @@
-/*	$NetBSD: t_paths.c,v 1.12 2012/06/03 21:42:47 joerg Exp $ */
+/*	$NetBSD: t_paths.c,v 1.12.2.1 2014/08/20 00:04:48 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_paths.c,v 1.12 2012/06/03 21:42:47 joerg Exp $");
+__RCSID("$NetBSD: t_paths.c,v 1.12.2.1 2014/08/20 00:04:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -121,17 +121,15 @@ ATF_TC_HEAD(paths, tc)
 
 ATF_TC_BODY(paths, tc)
 {
-	const char *arch;
 	struct stat st;
 	uid_t uid;
 	mode_t m;
 	size_t i;
 	int fd;
 
-	arch = atf_config_get("atf_arch");
-
-	if (strcmp(arch, "sparc") == 0)
-		atf_tc_skip("PR port-sparc/45580");
+#if defined(__sparc__)
+	atf_tc_skip("PR port-sparc/45580");
+#endif
 
 	uid = getuid();
 

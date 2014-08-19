@@ -1,6 +1,6 @@
--- $NetBSD: gpio.lua,v 1.2 2012/02/25 09:13:38 mbalmer Exp $
+-- $NetBSD: gpio.lua,v 1.2.2.1 2014/08/20 00:02:30 tls Exp $
 
-require 'gpio'
+local gpio = require 'gpio'
 
 print(gpio._VERSION .. ' - ' .. gpio._DESCRIPTION)
 print(gpio._COPYRIGHT)

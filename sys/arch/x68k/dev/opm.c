@@ -1,4 +1,4 @@
-/*	$NetBSD: opm.c,v 1.19 2008/06/25 08:14:59 isaki Exp $	*/
+/*	$NetBSD: opm.c,v 1.19.40.1 2014/08/20 00:03:28 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.19 2008/06/25 08:14:59 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.19.40.1 2014/08/20 00:03:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ opm_attach(device_t parent, device_t self, void *aux)
 {
 	struct opm_softc *sc = device_private(self);
 	struct intio_attach_args *ia = aux;
-	int r;
+	int r __diagused;
 
 	aprint_normal("\n");
 	ia->ia_size = 0x2000;

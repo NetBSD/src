@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.47 2011/07/18 00:05:35 mrg Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.47.12.1 2014/08/20 00:03:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgeight.c,v 1.47 2011/07/18 00:05:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgeight.c,v 1.47.12.1 2014/08/20 00:03:24 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,8 +154,18 @@ dev_type_ioctl(cgeightioctl);
 dev_type_mmap(cgeightmmap);
 
 const struct cdevsw cgeight_cdevsw = {
-	cgeightopen, nullclose, noread, nowrite, cgeightioctl,
-	nostop, notty, nopoll, cgeightmmap, nokqfilter
+	.d_open = cgeightopen,
+	.d_close = nullclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = cgeightioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = cgeightmmap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 #if defined(SUN4)

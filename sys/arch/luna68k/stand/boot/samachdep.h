@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.9.6.3 2013/06/23 06:20:07 tls Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.9.6.4 2014/08/20 00:03:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -36,16 +36,12 @@
 #include <lib/libsa/stand.h>
 
 #define	NSCSI		2
-#define NSD		8
-#define DK_NDRIVE	8
 
 #define MHZ_8		1
 #define MHZ_16		2
 #define MHZ_25		3
 #define MHZ_33		4
 #define MHZ_50		6
-
-#define MAXDEVNAME	16
 
 struct consdev;
 struct frame;
@@ -54,8 +50,8 @@ typedef struct label_t {
 } label_t;
 
 /* autoconf.c */
-void configure(void);
 void find_devs(void);
+extern const int dev2adpt[];
 
 /* awaitkey.c */
 char awaitkey(const char *, int, bool);
@@ -73,13 +69,8 @@ void bmdadjust(short, short);
 void bmdclear(void);
 
 /* boot.c */
-extern int howto;
-int how_to_boot(int, char **);
 int boot(int, char **);
-int bootnetbsd(char *);
-
-/* clock.c */
-/* not yet */
+int bootnetbsd(char *, int);
 
 /* cons.c */
 void cninit(void);
@@ -87,28 +78,24 @@ int cngetc(void);
 void cnputc(int);
 
 /* devopen.c */
-extern	u_int opendev;
-int atoi(char *);
+int make_device(const char *, int *, int *, int *, char **);
 
 /* disklabel.c */
 extern u_char lbl_buff[];
 int disklabel(int, char **);
 
-/* exec.c */
-void exec_hp300(char *, u_long, int);
-
 /* font.c */
-extern u_short bmdfont[][20];
+extern const uint16_t bmdfont[][20];
 
 /* fsdump.c */
 int fsdump(int, char **);
 int fsrestore(int, char **);
 
 /* getline.c */
-int getline(char *, char *);
+int getline(const char *, char *);
 
 /* if_le.c */
-int leinit(void *);
+int leinit(int, void *);
 
 /* init_main.c */
 extern int cpuspeed;
@@ -116,6 +103,8 @@ extern int hz;
 extern int nplane;
 extern int machtype;
 extern char default_file[];
+extern const char *default_bootdev;
+extern int default_unit;
 
 /* kbd.c */
 int kbd_decode(u_char);
@@ -131,7 +120,6 @@ bool lance_end(void *);
 int lance_intr(void);
 
 /* locore.S */
-extern	u_int bootdev;
 extern int dipsw1, dipsw2;
 extern int cputype;
 extern volatile uint32_t tick;
@@ -173,8 +161,11 @@ int  romcngetc(dev_t);
 void romcnputc(dev_t, int);
 
 /* sc.c */
-struct scsi_fmt_cdb;
-int scsi_immed_command(int, int, int, struct scsi_fmt_cdb *, u_char *,
+int scinit(int, void *);
+struct scsi_inquiry;
+bool scident(uint, uint, uint, struct scsi_inquiry *, uint32_t *);
+struct scsi_generic_cdb;
+int scsi_immed_command(int, int, int, struct scsi_generic_cdb *, u_char *,
     unsigned int);
 int scsi_request_sense(int, int, int, u_char *, unsigned int);
 int scsi_test_unit_rdy(int, int, int);
@@ -215,6 +206,11 @@ void trap(int, unsigned int, unsigned int, struct frame);
 /* ufs_disklabel.c */
 char *readdisklabel(int, int, struct disklabel *);
 
+
+/* use following device unit number strategy to make parser easier */
+#define	UNIT(ctlr, target)	((ctlr) * 10 + (target))
+#define	CTLR(unit)		((unit) / 10)
+#define	TARGET(unit)		((unit) % 10)
 
 #define DELAY(n)							\
 do {									\

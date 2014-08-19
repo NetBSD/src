@@ -1,4 +1,4 @@
-.\"	$NetBSD: 2.1.t,v 1.3 2003/08/07 10:30:49 agc Exp $
+.\"	$NetBSD: 2.1.t,v 1.3.60.1 2014/08/20 00:02:29 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)2.1.t	8.4 (Berkeley) 5/26/94
 .\"
-.Sh 2 "Generic operations
+.Sh 2 22 "Generic operations
 .PP
 Many system abstractions support the
 .Fn read ,
@@ -41,7 +41,7 @@ We describe the basics of these common primitives here.
 Similarly, the mechanisms whereby normally synchronous operations
 may occur in a non-blocking or asynchronous fashion are
 common to all system-defined abstractions and are described here.
-.Sh 3 "Read and write
+.Sh 3 22 "Read and write
 .PP
 The
 .Fn read
@@ -112,7 +112,7 @@ cc = writev(fd, iov, iovlen);
 result ssize_t cc; int fd; struct iovec *iov; int iovlen;
 .DE
 Here \fIiovlen\fP is the count of elements in the \fIiov\fP array.
-.Sh 3 "Input/output control
+.Sh 3 23 "Input/output control
 .LP
 Control operations on an object are performed by the
 .Fn ioctl
@@ -137,7 +137,7 @@ disks cause formatting operations to occur; operations on tapes
 control tape positioning.
 The names for basic control operations are defined by \fI<sys/ioctl.h>\fP,
 or more specifically by files it includes.
-.Sh 3 "Non-blocking and asynchronous operations
+.Sh 3 23 "Non-blocking and asynchronous operations
 .PP
 A process that wishes to do non-blocking operations on one of
 its descriptors sets the descriptor in non-blocking mode as

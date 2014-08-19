@@ -1,4 +1,4 @@
-.\"	$NetBSD: tunefs.8,v 1.41.2.1 2013/02/25 00:28:12 tls Exp $
+.\"	$NetBSD: tunefs.8,v 1.41.2.2 2014/08/20 00:02:28 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)tunefs.8	8.3 (Berkeley) 5/3/95
 .\"
-.Dd December 3, 2012
+.Dd August 9, 2014
 .Dt TUNEFS 8
 .Os
 .Sh NAME
@@ -45,6 +45,7 @@
 .Op Fl m Ar minfree
 .Op Fl o Ar optimize_preference
 .Op Fl q Ar quota
+.Op Fl S Ar sectorsize
 .Ar special | Ar filesys
 .Sh DESCRIPTION
 .Nm
@@ -152,6 +153,22 @@ can be used to enable/disable all types at once.
 After enabling a quota,
 .Xr fsck_ffs 8
 has to be run to compute the correct quota values.
+.It Fl S Ar sectorsize
+changes the fsbtodb value in the superblock to reflect a particular
+physical sector size.
+This value is ignored by the
+.Nx
+kernel but needed by tools like
+.Xr fsck_ffs  8
+to access disk blocks correctly.
+The minimum value is
+.Dv DEV_BSIZE
+(512).
+.Pp
+Changing the fsbtodb value becomes necessary when a filesystem image
+is created for one sector size and then transferred to a device with
+a different sector size and should be applied also to the alternate
+superblocks.
 .El
 .Sh SEE ALSO
 .Xr wapbl 4 ,

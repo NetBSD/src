@@ -1,21 +1,21 @@
 /* Test mpf_eq.
 
-Copyright 2009 Free Software Foundation, Inc.
+Copyright 2009, 2012 Free Software Foundation, Inc.
 
-This file is part of the GNU MP Library.
+This file is part of the GNU MP Library test suite.
 
-The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+The GNU MP Library test suite is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 3 of the License,
+or (at your option) any later version.
 
-The GNU MP Library is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+The GNU MP Library test suite is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received a copy of the GNU General Public License along with
+the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,12 +30,79 @@ void insert_random_low_zero_limbs (mpf_t, gmp_randstate_ptr);
 void dump_abort (mpf_t, mpf_t, int, int, int, int, int, long);
 void hexdump (mpf_t);
 
-int
-main (int argc, char **argv)
+void
+check_data (void)
 {
-  unsigned long test, reps = 10000;
+  static const struct
+  {
+    struct {
+      int        exp, size;
+      mp_limb_t  d[10];
+    } x, y;
+    mp_bitcnt_t bits;
+    int want;
+
+  } data[] = {
+    { { 0, 0, { 0 } },             { 0, 0, { 0 } },    0, 1 },
+
+    { { 0, 1, { 7 } },             { 0, 1, { 7 } },    0, 1 },
+    { { 0, 1, { 7 } },             { 0, 1, { 7 } },   17, 1 },
+    { { 0, 1, { 7 } },             { 0, 1, { 7 } }, 4711, 1 },
+
+    { { 0, 1, { 7 } },             { 0, 1, { 6 } },    0, 1 },
+    { { 0, 1, { 7 } },             { 0, 1, { 6 } },    2, 1 },
+    { { 0, 1, { 7 } },             { 0, 1, { 6 } },    3, 0 },
+
+    { { 0, 0, { 0 } },             { 0, 1, { 1 } },    0, 0 },
+    { { 0, 1, { 1 } },             { 0,-1 ,{ 1 } },    0, 0 },
+    { { 1, 1, { 1 } },             { 0, 1, { 1 } },    0, 0 },
+
+    { { 0, 1, { 8 } },             { 0, 1, { 4 } },    0, 0 },
+
+    { { 0, 2, { 0, 3 } },          { 0, 1, { 3 } }, 1000, 1 },
+  };
+
+  mpf_t  x, y;
+  int got, got_swapped;
+  int i;
+  mp_trace_base = 16;
+
+  for (i = 0; i < numberof (data); i++)
+    {
+      PTR(x) = (mp_ptr) data[i].x.d;
+      SIZ(x) = data[i].x.size;
+      EXP(x) = data[i].x.exp;
+      PREC(x) = numberof (data[i].x.d);
+      MPF_CHECK_FORMAT (x);
+
+      PTR(y) = (mp_ptr) data[i].y.d;
+      SIZ(y) = data[i].y.size;
+      EXP(y) = data[i].y.exp;
+      PREC(y) = numberof (data[i].y.d);
+      MPF_CHECK_FORMAT (y);
+
+      got         = mpf_eq (x, y, data[i].bits);
+      got_swapped = mpf_eq (y, x, data[i].bits);
+
+      if (got != got_swapped || got != data[i].want)
+	{
+	  printf ("check_data() wrong reault at data[%d]\n", i);
+	  mpf_trace ("x   ", x);
+	  mpf_trace ("y   ", y);
+	  printf ("got         %d\n", got);
+	  printf ("got_swapped %d\n", got_swapped);
+	  printf ("want        %d\n", data[i].want);
+	  abort ();
+        }
+    }
+}
+
+void
+check_random (long reps)
+{
+  unsigned long test;
+  gmp_randstate_ptr rands = RANDS;
   mpf_t a, b, x;
-  gmp_randstate_ptr rands;
   mpz_t ds;
   int hibits, lshift1, lshift2;
   int xtra;
@@ -43,13 +110,6 @@ main (int argc, char **argv)
 #define HIBITS 10
 #define LSHIFT1 10
 #define LSHIFT2 10
-
-  if (argc > 1)
-    reps = strtol (argv[1], 0, 0);
-
-  tests_start ();
-
-  rands = RANDS;
 
   mpf_set_default_prec ((1 << HIBITS) + (1 << LSHIFT1) + (1 << LSHIFT2));
 
@@ -83,12 +143,14 @@ main (int argc, char **argv)
       insert_random_low_zero_limbs (a, rands);
       insert_random_low_zero_limbs (b, rands);
 
-      if (mpf_eq (a, b, lshift1 + hibits) == 0)
+      if (mpf_eq (a, b, lshift1 + hibits) == 0 ||
+	  mpf_eq (b, a, lshift1 + hibits) == 0)
 	{
 	  dump_abort (a, b, lshift1 + hibits, lshift1, lshift2, hibits, 1, test);
 	}
       for (xtra = 1; xtra < 100; xtra++)
-	if (mpf_eq (a, b, lshift1 + hibits + xtra) != 0)
+	if (mpf_eq (a, b, lshift1 + hibits + xtra) != 0 ||
+	    mpf_eq (b, a, lshift1 + hibits + xtra) != 0)
 	  {
 	    dump_abort (a, b, lshift1 + hibits + xtra, lshift1, lshift2, hibits, 0, test);
 	  }
@@ -96,8 +158,6 @@ main (int argc, char **argv)
 
   mpf_clears (a, b, x, NULL);
   mpz_clear (ds);
-  tests_end ();
-  exit (0);
 }
 
 void
@@ -138,4 +198,21 @@ hexdump (mpf_t x)
       if (i != 0)
 	printf (" ");
     }
+}
+
+int
+main (int argc, char *argv[])
+{
+  long reps = 10000;
+
+  if (argc == 2)
+    reps = strtol (argv[1], 0, 0);
+
+  tests_start ();
+
+  check_data ();
+  check_random (reps);
+
+  tests_end ();
+  exit (0);
 }

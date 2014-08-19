@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.204 2012/01/30 19:41:22 drochner Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.204.6.1 2014/08/20 00:03:43 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.204 2012/01/30 19:41:22 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.204.6.1 2014/08/20 00:03:43 tls Exp $");
 
 /*
 #define CBB_DEBUG
@@ -380,7 +380,7 @@ pccbbattach(device_t parent, device_t self, void *aux)
 	struct pccbb_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	pcireg_t busreg, reg, sock_base;
+	pcireg_t reg, sock_base;
 	bus_addr_t sockbase;
 	int flags;
 
@@ -454,8 +454,6 @@ pccbbattach(device_t parent, device_t self, void *aux)
 
 	sc->sc_mem_start = 0;	       /* XXX */
 	sc->sc_mem_end = 0xffffffff;   /* XXX */
-
-	busreg = pci_conf_read(pc, pa->pa_tag, PCI_BUSNUM);
 
 	/* pccbb_machdep.c end */
 
@@ -548,9 +546,6 @@ pccbbdetach(device_t self, int flags)
 	case CBB_MEMHMAPPED|CBB_SPECMAPPED:
 #if rbus
 	{
-		pcireg_t sockbase;
-
-		sockbase = pci_conf_read(pc, sc->sc_tag, PCI_SOCKBASE);
 		rbus_space_free(sc->sc_rbus_memt, bmh, 0x1000,
 		    NULL);
 	}
@@ -921,13 +916,14 @@ pccbb_intrinit(struct pccbb_softc *sc)
 	pci_chipset_tag_t pc = sc->sc_pc;
 	bus_space_tag_t bmt = sc->sc_base_memt;
 	bus_space_handle_t bmh = sc->sc_base_memh;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(&sc->sc_pa, &ih)) {
 		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 
 	/*
 	 * XXX pccbbintr should be called under the priority lower
@@ -967,9 +963,6 @@ STATIC void
 pccbb_pcmcia_attach_setup(struct pccbb_softc *sc,
     struct pcmciabus_attach_args *paa)
 {
-#if rbus
-	rbus_tag_t rb;
-#endif
 	/*
 	 * We need to do a few things here:
 	 * 1) Disable routing of CSC and functional interrupts to ISA IRQs by
@@ -993,10 +986,6 @@ pccbb_pcmcia_attach_setup(struct pccbb_softc *sc,
 	paa->paa_busname = "pcmcia";
 	paa->pct = &pccbb_pcmcia_funcs;
 	paa->pch = sc;
-#if rbus
-	rb = sc->sc_rbus_iot;
-#endif
-
 	return;
 }
 
@@ -1148,7 +1137,12 @@ pci113x_insert(void *arg)
 	    CB_SOCKET_STAT);
 
 	if (0 == (sockstate & CB_SOCKET_STAT_CD)) {	/* card exist */
+#ifdef CBB_DEBUG
 		DPRINTF(("%s: 0x%08x", device_xname(sc->sc_dev), sockevent));
+#else
+		__USE(sockevent);
+#endif
+
 		DPRINTF((" card inserted, 0x%08x\n", sockstate));
 		sc->sc_flags |= CBB_CARDEXIST;
 		/* call pccard interrupt handler here */

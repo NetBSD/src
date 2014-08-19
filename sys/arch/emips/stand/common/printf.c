@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.3 2011/07/21 11:04:24 joerg Exp $	*/
+/*	$NetBSD: printf.c,v 1.3.12.1 2014/08/20 00:02:52 tls Exp $	*/
 /*-
  * Copyright (c) 1998 Robert Nordier
  * All rights reserved.
@@ -19,6 +19,7 @@
  */
 
 #include <lib/libsa/stand.h>
+#include "common.h"
 
 void
 xputchar(int ch)

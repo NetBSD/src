@@ -1,4 +1,4 @@
-/*	$NetBSD: rcorder.c,v 1.16 2008/08/03 07:49:46 lukem Exp $	*/
+/*	$NetBSD: rcorder.c,v 1.16.24.1 2014/08/20 00:02:27 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Matthew R. Green
@@ -668,7 +668,7 @@ keep_ok(filenode *fnode)
 void
 do_file(filenode *fnode)
 {
-	f_reqnode *r, *r_tmp;
+	f_reqnode *r;
 	f_provnode *p, *p_tmp;
 	provnode *pnode;
 	int was_set;	
@@ -695,7 +695,9 @@ do_file(filenode *fnode)
 	 */
 	r = fnode->req_list;
 	while (r != NULL) {
-		r_tmp = r;
+#if 0
+		f_reqnode *r_tmp = r;
+#endif
 		satisfy_req(r, fnode->filename);
 		r = r->next;
 #if 0

@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_usbtllreg.h,v 1.1.6.2 2013/02/25 00:28:31 tls Exp $ */
+/* $NetBSD: omap3_usbtllreg.h,v 1.1.6.3 2014/08/20 00:02:47 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,6 +32,9 @@
 #define	USBTLL_REVISION		0x00
 #define	 USBTLL_REVISION_MAJOR(x)	(((x) >> 4) & 0xf)
 #define	 USBTLL_REVISION_MINOR(x)	((x) & 0xf)
+
+#define USBTLL_HWINFO		0x04
+#define  USBTLL_HWINFO_SAR_CNTX_SIZE	__BITS(7,0)
 
 #define	USBTLL_SYSCONFIG	0x10
 #define	 USBTLL_SYSCONFIG_CLOCKACTIVITY	0x00000100
@@ -80,6 +83,8 @@
 #define	 USBTLL_CHANNEL_CONF_UTMIISADEV		0x00000008
 #define	 USBTLL_CHANNEL_CONF_CHANMODE		0x00000006
 #define	 USBTLL_CHANNEL_CONF_CHANEN		0x00000001
+
+#define USBTLL_SAR_CNTX(i)	(0x400 + (0x04 * (i)))
 
 /* 8-bit */
 #define	ULPI_VENDOR_ID_LO(i)	(0x100 * (i) + 0)

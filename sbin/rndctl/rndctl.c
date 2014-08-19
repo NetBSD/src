@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.25 2012/08/14 14:41:07 jruoho Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.25.2.1 2014/08/20 00:02:27 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -33,7 +33,7 @@
 #include <sha1.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rndctl.c,v 1.25 2012/08/14 14:41:07 jruoho Exp $");
+__RCSID("$NetBSD: rndctl.c,v 1.25.2.1 2014/08/20 00:02:27 tls Exp $");
 #endif
 
 
@@ -78,13 +78,15 @@ static char * strflags(u_int32_t);
 static void do_list(int, u_int32_t, char *);
 static void do_stats(void);
 
+static int vflag;
+
 static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s -CEce [-d devname | -t devtype]\n",
+	fprintf(stderr, "usage: %s [-CEce] [-d devname | -t devtype]\n",
 	    getprogname());
-	fprintf(stderr, "       %s -ls [-d devname | -t devtype]\n",
+	fprintf(stderr, "       %s [-lsv] [-d devname | -t devtype]\n",
 	    getprogname());
 	fprintf(stderr, "	%s -[L|S] save-file\n", getprogname());
 	exit(1);
@@ -203,9 +205,8 @@ do_load(const char *const filename)
 	}
 
 	memset(&rszero, 0, sizeof(rszero));
-	if (write(fd, &rszero, sizeof(rszero) != sizeof(rszero))) {
+	if (pwrite(fd, &rszero, sizeof(rszero), (off_t)0) != sizeof(rszero))
 		err(1, "overwrite");
-	}
 	fsync_range(fd, FDATASYNC|FDISKSYNC, (off_t)0, (off_t)0);
 	close(fd);
 
@@ -255,19 +256,28 @@ strflags(u_int32_t fl)
 {
 	static char str[512];
 
-	str[0] = 0;
+	str[0] = '\0';
 	if (fl & RND_FLAG_NO_ESTIMATE)
 		;
 	else
-		strlcat(str, "estimate", sizeof(str));
+		strlcat(str, "estimate, ", sizeof(str));
 
 	if (fl & RND_FLAG_NO_COLLECT)
 		;
-	else {
-		if (str[0])
-			strlcat(str, ", ", sizeof(str));
-		strlcat(str, "collect", sizeof(str));
-	}
+	else
+		strlcat(str, "collect, ", sizeof(str));
+
+	if (fl & RND_FLAG_COLLECT_VALUE)
+		strlcat(str, "v, ", sizeof(str));
+	if (fl & RND_FLAG_COLLECT_TIME)
+		strlcat(str, "t, ", sizeof(str));
+	if (fl & RND_FLAG_ESTIMATE_VALUE)
+		strlcat(str, "dv, ", sizeof(str));
+	if (fl & RND_FLAG_ESTIMATE_TIME)
+		strlcat(str, "dt, ", sizeof(str));
+
+	if (str[strlen(str) - 2] == ',')
+		str[strlen(str) - 2] = '\0';
 
 	return (str);
 }
@@ -277,8 +287,8 @@ strflags(u_int32_t fl)
 static void
 do_list(int all, u_int32_t type, char *name)
 {
-	rndstat_t rstat;
-	rndstat_name_t rstat_name;
+	rndstat_est_t rstat;
+	rndstat_est_name_t rstat_name;
 	int fd;
 	int res;
 	uint32_t i;
@@ -290,15 +300,25 @@ do_list(int all, u_int32_t type, char *name)
 
 	if (all == 0 && type == 0xff) {
 		strncpy(rstat_name.name, name, sizeof(rstat_name.name));
-		res = ioctl(fd, RNDGETSRCNAME, &rstat_name);
+		res = ioctl(fd, RNDGETESTNAME, &rstat_name);
 		if (res < 0)
-			err(1, "ioctl(RNDGETSRCNAME)");
+			err(1, "ioctl(RNDGETESTNAME)");
 		printf(HEADER);
 		printf("%-16s %10u %-4s %s\n",
-		    rstat_name.source.name,
-		    rstat_name.source.total,
-		    find_name(rstat_name.source.type),
-		    strflags(rstat_name.source.flags));
+		    rstat_name.source.rt.name,
+		    rstat_name.source.rt.total,
+		    find_name(rstat_name.source.rt.type),
+		    strflags(rstat_name.source.rt.flags));
+		if (vflag) {
+			printf("\tDt samples = %d\n",
+			       rstat_name.source.dt_samples);
+			printf("\tDt bits = %d\n",
+			       rstat_name.source.dt_total);
+			printf("\tDv samples = %d\n",
+				rstat_name.source.dv_samples);
+			printf("\tDv bits = %d\n",
+			       rstat_name.source.dv_total);
+		}
 		close(fd);
 		return;
 	}
@@ -312,22 +332,32 @@ do_list(int all, u_int32_t type, char *name)
 	for (;;) {
 		rstat.count = RND_MAXSTATCOUNT;
 		rstat.start = start;
-		res = ioctl(fd, RNDGETSRCNUM, &rstat);
+		res = ioctl(fd, RNDGETESTNUM, &rstat);
 		if (res < 0)
-			err(1, "ioctl(RNDGETSRCNUM)");
+			err(1, "ioctl(RNDGETESTNUM)");
 
 		if (rstat.count == 0)
 			break;
 
 		for (i = 0; i < rstat.count; i++) {
 			if (all != 0 ||
-			    type == rstat.source[i].type)
+			    type == rstat.source[i].rt.type)
 				printf("%-16s %10u %-4s %s\n",
-				    rstat.source[i].name,
-				    rstat.source[i].total,
-				    find_name(rstat.source[i].type),
-				    strflags(rstat.source[i].flags));
-		}
+				    rstat.source[i].rt.name,
+				    rstat.source[i].rt.total,
+				    find_name(rstat.source[i].rt.type),
+				    strflags(rstat.source[i].rt.flags));
+			if (vflag) {
+				printf("\tDt samples = %d\n",
+				       rstat.source[i].dt_samples);
+				printf("\tDt bits = %d\n",
+				       rstat.source[i].dt_total);
+				printf("\tDv samples = %d\n",
+				       rstat.source[i].dv_samples);
+				printf("\tDv bits = %d\n",
+				       rstat.source[i].dv_total);
+			}
+                }
 		start += rstat.count;
 	}
 
@@ -376,7 +406,7 @@ main(int argc, char **argv)
 	sflag = 0;
 	type = 0xff;
 
-	while ((ch = getopt(argc, argv, "CES:L:celt:d:s")) != -1) {
+	while ((ch = getopt(argc, argv, "CES:L:celt:d:sv")) != -1) {
 		switch (ch) {
 		case 'C':
 			rctl.flags |= RND_FLAG_NO_COLLECT;
@@ -430,6 +460,9 @@ main(int argc, char **argv)
 			break;
 		case 's':
 			sflag++;
+			break;
+		case 'v':
+			vflag++;
 			break;
 		case '?':
 		default:

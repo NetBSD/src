@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.190.2.3 2013/06/23 06:18:57 tls Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.190.2.4 2014/08/20 00:04:28 tls Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,14 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.190.2.3 2013/06/23 06:18:57 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.190.2.4 2014/08/20 00:04:28 tls Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
 #include "opt_modular.h"
 #include "pty.h"
-
-#define SYSCTL_PRIVATE
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -77,45 +75,6 @@ uid_t security_setidcore_owner = 0;
 gid_t security_setidcore_group = 0;
 mode_t security_setidcore_mode = (S_IRUSR|S_IWUSR);
 
-static const u_int sysctl_flagmap[] = {
-	PK_ADVLOCK, P_ADVLOCK,
-	PK_EXEC, P_EXEC,
-	PK_NOCLDWAIT, P_NOCLDWAIT,
-	PK_32, P_32,
-	PK_CLDSIGIGN, P_CLDSIGIGN,
-	PK_SUGID, P_SUGID,
-	0
-};
-
-static const u_int sysctl_sflagmap[] = {
-	PS_NOCLDSTOP, P_NOCLDSTOP,
-	PS_WEXIT, P_WEXIT,
-	PS_STOPFORK, P_STOPFORK,
-	PS_STOPEXEC, P_STOPEXEC,
-	PS_STOPEXIT, P_STOPEXIT,
-	0
-};
-
-static const u_int sysctl_slflagmap[] = {
-	PSL_TRACED, P_TRACED,
-	PSL_FSTRACE, P_FSTRACE,
-	PSL_CHTRACED, P_CHTRACED,
-	PSL_SYSCALL, P_SYSCALL,
-	0
-};
-
-static const u_int sysctl_lflagmap[] = {
-	PL_CONTROLT, P_CONTROLT,
-	PL_PPWAIT, P_PPWAIT,
-	0
-};
-
-static const u_int sysctl_stflagmap[] = {
-	PST_PROFIL, P_PROFIL,
-	0
-
-};
-
 static const u_int sysctl_lwpprflagmap[] = {
 	LPR_DETACHED, L_DETACHED,
 	0
@@ -146,7 +105,6 @@ static int sysctl_kern_maxvnodes(SYSCTLFN_PROTO);
 static int sysctl_kern_rtc_offset(SYSCTLFN_PROTO);
 static int sysctl_kern_maxproc(SYSCTLFN_PROTO);
 static int sysctl_kern_hostid(SYSCTLFN_PROTO);
-static int sysctl_setlen(SYSCTLFN_PROTO);
 static int sysctl_kern_clockrate(SYSCTLFN_PROTO);
 static int sysctl_msgbuf(SYSCTLFN_PROTO);
 static int sysctl_kern_defcorename(SYSCTLFN_PROTO);
@@ -154,8 +112,6 @@ static int sysctl_kern_cptime(SYSCTLFN_PROTO);
 #if NPTY > 0
 static int sysctl_kern_maxptys(SYSCTLFN_PROTO);
 #endif /* NPTY > 0 */
-static int sysctl_kern_urnd(SYSCTLFN_PROTO);
-static int sysctl_kern_arnd(SYSCTLFN_PROTO);
 static int sysctl_kern_lwp(SYSCTLFN_PROTO);
 static int sysctl_kern_forkfsleep(SYSCTLFN_PROTO);
 static int sysctl_kern_root_partition(SYSCTLFN_PROTO);
@@ -188,36 +144,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 	const struct sysctlnode *rnode;
 
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, CTL_EOL);
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRING, "ostype",
-		       SYSCTL_DESCR("Operating system type"),
-		       NULL, 0, __UNCONST(&ostype), 0,
-		       CTL_KERN, KERN_OSTYPE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRING, "osrelease",
-		       SYSCTL_DESCR("Operating system release"),
-		       NULL, 0, __UNCONST(&osrelease), 0,
-		       CTL_KERN, KERN_OSRELEASE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-		       CTLTYPE_INT, "osrevision",
-		       SYSCTL_DESCR("Operating system revision"),
-		       NULL, __NetBSD_Version__, NULL, 0,
-		       CTL_KERN, KERN_OSREV, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRING, "version",
-		       SYSCTL_DESCR("Kernel version"),
-		       NULL, 0, __UNCONST(&version), 0,
-		       CTL_KERN, KERN_VERSION, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxvnodes",
 		       SYSCTL_DESCR("Maximum number of vnodes"),
@@ -242,12 +168,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 				    "execve(2)"),
 		       NULL, ARG_MAX, NULL, 0,
 		       CTL_KERN, KERN_ARGMAX, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRING, "hostname",
-		       SYSCTL_DESCR("System hostname"),
-		       sysctl_setlen, 0, hostname, MAXHOSTNAMELEN,
-		       CTL_KERN, KERN_HOSTNAME, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_HEX,
 		       CTLTYPE_INT, "hostid",
@@ -325,24 +245,12 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       NULL, 0, &boottime, sizeof(boottime),
 		       CTL_KERN, KERN_BOOTTIME, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRING, "domainname",
-		       SYSCTL_DESCR("YP domain name"),
-		       sysctl_setlen, 0, domainname, MAXHOSTNAMELEN,
-		       CTL_KERN, KERN_DOMAINNAME, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "maxpartitions",
 		       SYSCTL_DESCR("Maximum number of partitions allowed per "
 				    "disk"),
 		       NULL, MAXPARTITIONS, NULL, 0,
 		       CTL_KERN, KERN_MAXPARTITIONS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-		       CTLTYPE_INT, "rawpartition",
-		       SYSCTL_DESCR("Raw partition of a disk"),
-		       NULL, RAW_PART, NULL, 0,
-		       CTL_KERN, KERN_RAWPARTITION, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "timex", NULL,
@@ -530,18 +438,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       NULL, _POSIX_MONOTONIC_CLOCK, NULL, 0,
 		       CTL_KERN, KERN_MONOTONIC_CLOCK, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "urandom",
-		       SYSCTL_DESCR("Random integer value"),
-		       sysctl_kern_urnd, 0, NULL, 0,
-		       CTL_KERN, KERN_URND, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "arandom",
-		       SYSCTL_DESCR("n bytes of random data"),
-		       sysctl_kern_arnd, 0, NULL, 0,
-		       CTL_KERN, KERN_ARND, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "labelsector",
 		       SYSCTL_DESCR("Sector number containing the disklabel"),
@@ -714,6 +610,19 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       "it doesn't"),
 		       NULL, 1, NULL, 0,
 		       CTL_KERN, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_STRING, "configname",
+			SYSCTL_DESCR("Name of config file"),
+			NULL, 0, __UNCONST(kernel_ident), 0,
+			CTL_KERN, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_STRING, "buildinfo",
+			SYSCTL_DESCR("Information from build environment"),
+			NULL, 0, __UNCONST(buildinfo), 0,
+			CTL_KERN, CTL_CREATE, CTL_EOL);
+
 	/* kern.posix. */
 	sysctl_createv(clog, 0, NULL, &rnode,
 			CTLFLAG_PERMANENT,
@@ -727,24 +636,13 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 			SYSCTL_DESCR("Maximal number of semaphores"),
 			NULL, 0, &ksem_max, 0,
 			CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT,
-			CTLTYPE_STRING, "configname",
-			SYSCTL_DESCR("Name of config file"),
-			NULL, 0, __UNCONST(kernel_ident), 0,
-			CTL_KERN, CTL_CREATE, CTL_EOL);
 }
 
 SYSCTL_SETUP(sysctl_hw_setup, "sysctl hw subtree setup")
 {
 	u_int u;
 	u_quad_t q;
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "hw", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_HW, CTL_EOL);
+	const char *model = cpu_getmodel();
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -756,7 +654,7 @@ SYSCTL_SETUP(sysctl_hw_setup, "sysctl hw subtree setup")
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "model",
 		       SYSCTL_DESCR("Machine model"),
-		       NULL, 0, cpu_model, 0,
+		       NULL, 0, __UNCONST(model), 0,
 		       CTL_HW, HW_MODEL, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -872,12 +770,6 @@ SYSCTL_SETUP(sysctl_debug_setup, "sysctl debug subtree setup")
 
 	 */
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "debug", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_DEBUG, CTL_EOL);
-
 	for (i = 0; i < CTL_DEBUG_MAXID; i++) {
 		cdp = debugvars[i];
 		if (cdp->debugname == NULL || cdp->debugvar == NULL)
@@ -969,12 +861,10 @@ sysctl_kern_maxvnodes(SYSCTLFN_ARGS)
 
 	old_vnodes = desiredvnodes;
 	desiredvnodes = new_vnodes;
-	if (new_vnodes < old_vnodes) {
-		error = vfs_drainvnodes(new_vnodes);
-		if (error) {
-			desiredvnodes = old_vnodes;
-			return (error);
-		}
+	error = vfs_drainvnodes(new_vnodes);
+	if (error) {
+		desiredvnodes = old_vnodes;
+		return (error);
 	}
 	vfs_reinit();
 	nchreinit();
@@ -1061,32 +951,6 @@ sysctl_kern_hostid(SYSCTLFN_ARGS)
 		return (error);
 
 	hostid = (unsigned)inthostid;
-
-	return (0);
-}
-
-/*
- * sysctl helper function for kern.hostname and kern.domainnname.
- * resets the relevant recorded length when the underlying name is
- * changed.
- */
-static int
-sysctl_setlen(SYSCTLFN_ARGS)
-{
-	int error;
-
-	error = sysctl_lookup(SYSCTLFN_CALL(rnode));
-	if (error || newp == NULL)
-		return (error);
-
-	switch (rnode->sysctl_num) {
-	case KERN_HOSTNAME:
-		hostnamelen = strlen((const char*)rnode->sysctl_data);
-		break;
-	case KERN_DOMAINNAME:
-		domainnamelen = strlen((const char*)rnode->sysctl_data);
-		break;
-	}
 
 	return (0);
 }
@@ -1336,64 +1200,6 @@ sysctl_kern_maxptys(SYSCTLFN_ARGS)
 }
 #endif /* NPTY > 0 */
 
-/*
- * sysctl helper routine for kern.urandom node. Picks a random number
- * for you.
- */
-static int
-sysctl_kern_urnd(SYSCTLFN_ARGS)
-{
-	int v, rv;
-
-	rv = cprng_strong(sysctl_prng, &v, sizeof(v), 0);
-	if (rv == sizeof(v)) {
-		struct sysctlnode node = *rnode;
-		node.sysctl_data = &v;
-		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
-	}
-	else
-		return (EIO);	/*XXX*/
-}
-
-/*
- * sysctl helper routine for kern.arandom node. Picks a random number
- * for you.
- */
-static int
-sysctl_kern_arnd(SYSCTLFN_ARGS)
-{
-	int error;
-	void *v;
-	struct sysctlnode node = *rnode;
-
-	if (*oldlenp == 0)
-		return 0;
-	/*
-	 * This code used to allow sucking 8192 bytes at a time out
-	 * of the kernel arc4random generator.  Evidently there is some
-	 * very old OpenBSD application code that may try to do this.
-	 *
-	 * Note that this node is documented as type "INT" -- 4 or 8
-	 * bytes, not 8192.
-	 *
-	 * We continue to support this abuse of the "len" pointer here
-	 * but only 256 bytes at a time, as, anecdotally, the actual
-	 * application use here was to generate RC4 keys in userspace.
-	 *
-	 * Support for such large requests will probably be removed
-	 * entirely in the future.
-	 */
-	if (*oldlenp > 256)
-		return E2BIG;
-
-	v = kmem_alloc(*oldlenp, KM_SLEEP);
-	cprng_fast(v, *oldlenp);
-	node.sysctl_data = v;
-	node.sysctl_size = *oldlenp;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	kmem_free(v, *oldlenp);
-	return error;
-}
 /*
  * sysctl helper routine to do kern.lwp.* work.
  */

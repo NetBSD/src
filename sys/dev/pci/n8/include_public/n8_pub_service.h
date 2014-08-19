@@ -134,7 +134,7 @@ typedef enum
 /*****************************************************************************
  * Function prototypes
  *****************************************************************************/
-N8_Status_t N8_GetSystemParameter(N8_Parameter_t parameter, void *value_p);
+N8_Status_t N8_GetSystemParameter(N8_Parameter_t parameter, void *value_p, size_t value_l);
 N8_Status_t N8_InitializeAPI(N8_ConfigAPI_t *parameters_p);
 N8_Status_t N8_EventCheck(N8_Event_t *events_p, const int count, int *ready_p);
 N8_Status_t N8_EventWait (N8_Event_t *events_p, const int count, int *ready_p);

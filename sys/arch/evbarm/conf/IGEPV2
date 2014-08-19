@@ -1,5 +1,5 @@
 #
-#	$NetBSD: IGEPV2,v 1.13.2.2 2013/06/23 06:20:04 tls Exp $
+#	$NetBSD: IGEPV2,v 1.13.2.3 2014/08/20 00:02:53 tls Exp $
 #
 #	IGEPv2 -- TI OMAP 3530 Eval Board Kernel
 #
@@ -62,7 +62,6 @@ options 	INET6		# IPV6
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
@@ -81,6 +80,7 @@ options		NFS_BOOT_RWSIZE=1024
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
@@ -123,7 +123,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 # Development and Debugging options
 
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
@@ -212,14 +212,10 @@ omapgpio5	at obio2 addr 0x49058000 size 0x0400 intrbase 256 intr 34
 
 gpio*		at omapgpio?
 
-# # I2C Controller
-# omapi2c0	at tipb? addr 0xfffb3800 intr 36 mult 4
-# iic*		at omapi2c?
-# # omap's own i2c address
-# options		OMAP_I2C_ADDRESS=0xe
-# # i2c bus clock low and high times in ns
-# options		I2C_LOW_TIME_nSEC=1500
-# options		I2C_HIGH_TIME_nSEC=1000
+# I2C Controller
+omapiic0	at obio0 addr 0x48070000 size 0x1000 intr 56	# I2C1
+omapiic1	at obio0 addr 0x48060000 size 0x1000 intr 61	# I2C3
+iic*		at omapiic?
 
 # On-board 16550 UARTs
 #com0		at obio0 addr 0x4806a000 intr 72 mult 4 # UART1
@@ -239,6 +235,9 @@ options OMAP_MPU_TIMER_CLOCK_FREQ=12000000
 omapwdt32k*	at obio2 addr 0x49030000 size 2048	# WDT3
 #omapwdt32k*	at obio1 addr 0x4830c000 size 2048	# WDT1
 #omapwdt32k*	at obio1 addr 0x48314000 size 2048	# WDT2
+
+# onboard DMA
+omapdma0	at obio0 addr 0x48056000 size 0x1000
 
 # Power, Reset and Clock Management
 prcm*		at obio1 addr 0x48306000 size 0x2000	# PRM Module

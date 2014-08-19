@@ -1,10 +1,11 @@
-# $Id: files.imx23,v 1.1.6.2 2013/02/25 00:28:27 tls Exp $
+# $Id: files.imx23,v 1.1.6.3 2014/08/20 00:02:46 tls Exp $
 #
 # Freescale i.MX23 applications processor configuration info.
 #
 
-file	arch/arm/imx/imx23_space.c	apbh|apbx
-file	arch/arm/imx/imx23_dma.c	apbh|apbx
+file	arch/arm/arm32/irq_dispatch.S	icoll
+file	arch/arm/imx/imx23_space.c	ahb|apbh|apbx
+file	arch/arm/imx/imx23_dma.c	ahb|apbh|apbx
 
 # APBH bus interface
 device	apbh {addr=0, size=0, irq=-1} : bus_space_generic
@@ -16,17 +17,26 @@ device	apbx {addr=0, size=0, irq=-1} : bus_space_generic
 attach	apbx at mainbus
 file	arch/arm/imx/imx23_apbx.c	apbx
 
+# AHB bus interface
+device  ahb {addr=0, size=0, irq=-1} : bus_space_generic
+attach  ahb at mainbus
+file    arch/arm/imx/imx23_ahb.c	ahb
+
 # Interrupt controller
 include "arch/arm/pic/files.pic"
 device	icoll: pic, pic_splfuncs
 attach	icoll at apbh
 file	arch/arm/imx/imx23_icoll.c	icoll
-file	arch/arm/arm32/irq_dispatch.S
 
-# Synchronous serial port (for SD/MMC)
+# Synchronous Serial Port (for SD/MMC)
 device	ssp: sdmmcbus
 attach	ssp at apbh
 file	arch/arm/imx/imx23_ssp.c	ssp
+
+# Power control
+#device	power
+#attach	power at apbx
+#file	arch/arm/imx/imx23_power.c	power
 
 # PL011 Debug console
 attach	plcom at apbx with imx23plcom
@@ -41,3 +51,32 @@ file	arch/arm/imx/imx23_timrot.c	timrot
 device	apbdma
 attach	apbdma at apbh, apbx
 file	arch/arm/imx/imx23_apbdma.c	apbdma
+
+# USB PHY
+device	usbphy
+attach	usbphy at apbx
+file	arch/arm/imx/imx23_usbphy.c	usbphy
+
+# Digital Control
+device	digctl
+attach	digctl at apbh
+file	arch/arm/imx/imx23_digctl.c	digctl
+
+# PIN Control
+device	pinctrl: gpiobus
+attach	pinctrl at apbh
+file	arch/arm/imx/imx23_pinctrl.c	pinctrl
+
+# Clock Control
+device	clkctrl
+attach	clkctrl at apbx
+file	arch/arm/imx/imx23_clkctrl.c	clkctrl
+
+# USB host controller
+device	imxusbc {unit, irq} : bus_space_generic
+attach	imxusbc at ahb
+file	arch/arm/imx/imx23_usb.c	imxusbc
+
+# EHCI
+attach	ehci at imxusbc with imxehci
+file	arch/arm/imx/imxusb.c		imxehci

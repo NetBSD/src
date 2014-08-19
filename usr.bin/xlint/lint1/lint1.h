@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.25.8.2 2013/06/23 06:29:02 tls Exp $ */
+/* $NetBSD: lint1.h,v 1.25.8.3 2014/08/20 00:05:06 tls Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -118,7 +118,7 @@ typedef struct {
  * Structures of type str_t uniqely identify structures. This can't
  * be done in structures of type type_t, because these are copied
  * if they must be modified. So it would not be possible to check
- * if to structures are identical by comparing the pointers to
+ * if two structures are identical by comparing the pointers to
  * the type structures.
  *
  * The typename is used if the structure is unnamed to identify
@@ -226,7 +226,7 @@ typedef	struct sym {
 	pos_t	s_spos;		/* position of first initialisation */
 	pos_t	s_upos;		/* position of first use */
 	symt_t	s_kind;		/* type of symbol */
-	u_int	s_keyw : 1;	/* keyword */
+	void   *s_keyw;		/* keyword */
 	u_int	s_field : 1;	/* bit-field */
 	u_int	s_set : 1;	/* variable set, label defined */
 	u_int	s_used : 1;	/* variable/label used */
@@ -435,5 +435,11 @@ typedef	struct err_set {
 #define	ERR_ZERO(p)	(void)memset((p), 0, sizeof(*(p)))
 
 #define LERROR(fmt, args...)	lerror(__FILE__, __LINE__, fmt, ##args)
+
+#ifdef BLKDEBUG
+#define ZERO	0xa5
+#else
+#define	ZERO	0
+#endif
 
 extern err_set	msgset;

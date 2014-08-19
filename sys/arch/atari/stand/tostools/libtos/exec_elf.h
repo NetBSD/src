@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.6 2010/08/28 21:30:02 joerg Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.6.18.1 2014/08/20 00:02:49 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -76,8 +76,6 @@ typedef	__uint64_t	Elf64_Addr;
 #define	ELF64_FSZ_ADDR	8
 typedef	__uint64_t	Elf64_Off;
 #define	ELF64_FSZ_OFF	8
-typedef	__int32_t	Elf64_Shalf;
-#define	ELF64_FSZ_SHALF	4
 
 #ifdef __alpha__
 typedef	__int64_t	Elf64_Sword;
@@ -635,29 +633,5 @@ typedef struct {
 #define	ELF_ST_INFO	ELF32_ST_INFO
 
 #define	AuxInfo		Aux32Info
-
-#ifdef _KERNEL
-
-#define ELF_AUX_ENTRIES	8		/* Size of aux array passed to loader */
-#define ELF32_NO_ADDR	(~(Elf32_Addr)0) /* Indicates addr. not yet filled in */
-#define ELF64_NO_ADDR	(~(Elf64_Addr)0) /* Indicates addr. not yet filled in */
-
-#if defined(ELFSIZE) && (ELFSIZE == 64)
-#define ELF_NO_ADDR	ELF64_NO_ADDR
-#elif defined(ELFSIZE) && (ELFSIZE == 32)
-#define ELF_NO_ADDR	ELF32_NO_ADDR
-#endif
-
-#if defined(ELFSIZE)
-struct elf_args {
-        Elf_Addr  arg_entry;      /* program entry point */
-        Elf_Addr  arg_interp;     /* Interpreter load address */
-        Elf_Addr  arg_phaddr;     /* program header address */
-        Elf_Addr  arg_phentsize;  /* Size of program header */
-        Elf_Addr  arg_phnum;      /* Number of program headers */
-};
-#endif
-
-#endif /* _KERNEL */
 
 #endif /* !_LIBTOS_EXEC_ELF_H_ */

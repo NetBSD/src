@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.33.2.1 2012/10/09 13:36:06 bouyer Exp $	*/
+/*	$NetBSD: siside.c,v 1.33.2.2 2014/08/20 00:03:48 tls Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.33.2.1 2012/10/09 13:36:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.33.2.2 2014/08/20 00:03:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ static int  siside_match(device_t, cfdata_t, void *);
 static void siside_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(siside, sizeof(struct pciide_softc),
-    siside_match, siside_attach, NULL, NULL);
+    siside_match, siside_attach, pciide_detach, NULL);
 
 static const struct pciide_product_desc pciide_sis_products[] =  {
 	{ PCI_PRODUCT_SIS_5597_IDE,
@@ -160,7 +160,7 @@ static struct sis_hostbr_type {
 	{PCI_PRODUCT_SIS_740,   0x00, 5, "740", SIS_TYPE_SOUTH},
 	{PCI_PRODUCT_SIS_741,   0x00, 5, "741", SIS_TYPE_SOUTH},
 	{PCI_PRODUCT_SIS_745,   0x00, 5, "745", SIS_TYPE_100NEW},
-	{PCI_PRODUCT_SIS_746,   0x00, 6, "746", SIS_TYPE_SOUTH},
+	{PCI_PRODUCT_SIS_746,   0x00, 6, "746", SIS_TYPE_100NEW},
 	{PCI_PRODUCT_SIS_748,   0x00, 6, "748", SIS_TYPE_SOUTH},
 	{PCI_PRODUCT_SIS_750,   0x00, 6, "750", SIS_TYPE_SOUTH},
 	{PCI_PRODUCT_SIS_751,   0x00, 6, "751", SIS_TYPE_SOUTH},
@@ -243,7 +243,7 @@ sis_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 			    SIS_REG_57) & 0x7f);
 			if (PCI_PRODUCT(pci_conf_read(sc->sc_pc, sc->sc_tag,
 			    PCI_ID_REG)) == SIS_PRODUCT_5518) {
-				aprint_normal("96X UDMA%d",
+				aprint_normal("96X UDMA%d ",
 				    sis_hostbr_type_match->udma_mode);
 				sc->sis_type = SIS_TYPE_133NEW;
 				sc->sc_wdcdev.sc_atac.atac_udma_cap =

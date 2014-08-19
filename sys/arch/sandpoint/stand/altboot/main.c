@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.21.2.1 2013/02/25 00:28:55 tls Exp $ */
+/* $NetBSD: main.c,v 1.21.2.2 2014/08/20 00:03:22 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -88,8 +88,8 @@ char module_base[80];
 uint32_t kmodloadp;
 int modules_enabled = 0;
 
-void module_add(char *);
-void module_load(char *);
+void module_add(const char *);
+void module_load(const char *);
 int module_open(struct boot_module *);
 
 void main(int, char **, char *, char *);
@@ -287,16 +287,17 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 	 * which have valid disklabels.
 	 */
 	if (n >= argc) {
+		static const size_t blen = sizeof("wdN:");
 		n = 0;
 		argc = 0;
-		argv = alloc(MAX_UNITS * (sizeof(char *) + sizeof("wdN:")));
+		argv = alloc(MAX_UNITS * (sizeof(char *) + blen));
 		bname = (char *)(argv + MAX_UNITS);
 		for (i = 0; i < MAX_UNITS; i++) {
 			if (!dlabel_valid(i))
 				continue;
-			sprintf(bname, "wd%d:", i);
+			snprintf(bname, blen, "wd%d:", i);
 			argv[argc++] = bname;
-			bname += sizeof("wdN:");
+			bname += blen;
 		}
 		/* use default drive if no valid disklabel is found */
 		if (argc == 0) {
@@ -421,7 +422,7 @@ bi_add(void *new, int type, int size)
 }
 
 void
-module_add(char *name)
+module_add(const char *name)
 {
 	struct boot_module *bm, *bmp;
 
@@ -430,8 +431,8 @@ module_add(char *name)
 
 	bm = alloc(sizeof(struct boot_module) + strlen(name) + 1);
 	if (bm == NULL) {
-		printf("couldn't allocate module %s\n", name); 
-		return; 
+		printf("couldn't allocate module %s\n", name);
+		return;
 	}
 
 	bm->bm_kmod = (char *)(bm + 1);
@@ -451,12 +452,12 @@ module_add(char *name)
 #define alignpg(x)	(((x)+PAGE_SIZE-1) & ~(PAGE_SIZE-1))
 
 void
-module_load(char *kernel_path) 
+module_load(const char *kernel_path)
 {
 	struct boot_module *bm;
 	struct bi_modulelist_entry *bi;
 	struct stat st;
-	char *p; 
+	char *p;
 	int size, fd;
 
 	strcpy(module_base, kernel_path);
@@ -496,7 +497,7 @@ module_load(char *kernel_path)
 		}
 		bm->bm_len = (int)st.st_size;
 		close(fd);
-		size += sizeof(struct bi_modulelist_entry); 
+		size += sizeof(struct bi_modulelist_entry);
 	}
 	if (size == 0)
 		return;
@@ -524,7 +525,7 @@ module_load(char *kernel_path)
 		if (size < bm->bm_len)
 			printf("WARNING: couldn't load");
 		else {
-			snprintf(bi->kmod, sizeof(bi->kmod), bm->bm_kmod);
+			snprintf(bi->kmod, sizeof(bi->kmod), "%s", bm->bm_kmod);
 			bi->type = BI_MODULE_ELF;
 			bi->len = size;
 			bi->base = kmodloadp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.71.2.1 2013/06/23 06:29:02 tls Exp $	*/
+/*	$NetBSD: tree.c,v 1.71.2.2 2014/08/20 00:05:06 tls Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.71.2.1 2013/06/23 06:29:02 tls Exp $");
+__RCSID("$NetBSD: tree.c,v 1.71.2.2 2014/08/20 00:05:06 tls Exp $");
 #endif
 
 #include <stdlib.h>
@@ -88,6 +88,45 @@ static	void	chkcomp(op_t, tnode_t *, tnode_t *);
 static	void	precconf(tnode_t *);
 
 extern sig_atomic_t fpe;
+
+#if 0
+static char *
+dumpnode(char *buf, size_t len, tnode_t *tn) {
+	const char *n = getopname(tn->tn_op);
+	const char *s;
+	char tbuf[256];
+
+	switch (tn->tn_op) {
+	case NAME:
+		s = tn->tn_sym->s_name;
+		break;
+	case CON:
+	case STRING:
+		s = "*";	/* todo */
+		break;
+	default:
+		s = NULL;
+		break;
+	}
+	char lb[1024];
+	char rb[1024];
+
+	if (s == NULL && tn->tn_left != NULL)
+		dumpnode(lb, sizeof(lb), tn->tn_left);
+	else
+		strcpy(lb, "(null)");
+
+	if (s == NULL && tn->tn_right != NULL)
+		dumpnode(rb, sizeof(rb), tn->tn_right);
+	else
+		strcpy(rb, "(null)");
+
+
+	snprintf(buf, len, "%s: (%s) = %s [%s, %s]", n,
+	    tyname(tbuf, sizeof(tbuf), tn->tn_type), s, lb, rb);
+	return buf;
+}
+#endif
 
 /*
  * Increase degree of reference.
@@ -204,7 +243,7 @@ getnnode(sym_t *sym, int ntok)
 	}
 
 	if (sym->s_kind != FVFT && sym->s_kind != FMOS)
-		LERROR("getnnode()");
+		LERROR("getnnode(%d)", sym->s_kind);
 
 	n = getnode();
 	n->tn_type = sym->s_type;
@@ -1616,9 +1655,6 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 	tnode_t	*ntn;
 	tspec_t	nt, ot, ost = NOTSPEC;
 
-	if (tn->tn_lvalue)
-		LERROR("convert()");
-
 	nt = tp->t_tspec;
 	if ((ot = tn->tn_type->t_tspec) == PTR)
 		ost = tn->tn_type->t_subt->t_tspec;
@@ -1640,6 +1676,7 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 	ntn->tn_op = CVT;
 	ntn->tn_type = tp;
 	ntn->tn_cast = op == CVT;
+	ntn->tn_right = NULL;
 	if (tn->tn_op != CON || nt == VOID) {
 		ntn->tn_left = tn;
 	} else {
@@ -2332,6 +2369,7 @@ bldri(op_t op, tnode_t *ln)
 		return NULL;
 	}
 	ntn = mktnode(op, cn->tn_type, ln, cn);
+	ntn->tn_lvalue = 1;
 
 	return (ntn);
 }
@@ -3170,8 +3208,9 @@ funccall(tnode_t *func, tnode_t *args)
 
 	if (func->tn_type->t_tspec != PTR ||
 	    func->tn_type->t_subt->t_tspec != FUNC) {
+		char buf[256];
 		/* illegal function */
-		error(149);
+		error(149, tyname(buf, sizeof(buf), func->tn_type));
 		return (NULL);
 	}
 
@@ -3567,7 +3606,9 @@ chkmisc(tnode_t *tn, int vctx, int tctx, int eqwarn, int fcall, int rvdisc,
 		break;
 	case CALL:
 		if (ln->tn_op != AMPER || ln->tn_left->tn_op != NAME)
-			LERROR("chkmisc()");
+			LERROR("chkmisc(op=%s != %s || %s != %s)",
+			    getopname(ln->tn_op), getopname(AMPER),
+			    getopname(ln->tn_left->tn_op), getopname(NAME));
 		if (!szof)
 			outcall(tn, vctx || tctx, rvdisc);
 		break;

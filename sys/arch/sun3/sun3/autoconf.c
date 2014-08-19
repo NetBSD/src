@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.77.2.1 2012/11/20 03:01:47 tls Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.77.2.2 2014/08/20 00:03:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.77.2.1 2012/11/20 03:01:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.77.2.2 2014/08/20 00:03:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.77.2.1 2012/11/20 03:01:47 tls Exp $"
  * then choose root device (etc.)
  * Called by sys/kern/subr_autoconf.c: configure()
  */
-void 
+void
 cpu_configure(void)
 {
 
@@ -97,7 +97,7 @@ cpu_configure(void)
  * used config_found, then we would not have an opportunity to
  * setup the confargs for each child match and attach call.
  */
-int 
+int
 bus_scan(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct confargs *ca = aux;
@@ -133,7 +133,7 @@ bus_scan(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
  * The parent name is non-NULL when there was no match
  * found by config_found().
  */
-int 
+int
 bus_print(void *args, const char *name)
 {
 	struct confargs *ca = args;
@@ -180,7 +180,7 @@ static struct prom_n2f prom_dev_table[] = {
 /*
  * Choose root and swap devices.
  */
-void 
+void
 cpu_rootconf(void)
 {
 	struct bootparam *bp;
@@ -296,7 +296,7 @@ xx_find(char *name, int ctlr, int unit)
  *	Try the access using peek_*
  *	Clean up temp. mapping
  */
-int 
+int
 bus_peek(int bustype, int pa, int sz)
 {
 	void *va;
@@ -323,7 +323,7 @@ bus_peek(int bustype, int pa, int sz)
 }
 
 /* from hp300: badbaddr() */
-int 
+int
 peek_byte(void *addr)
 {
 	label_t faultbuf;
@@ -339,7 +339,7 @@ peek_byte(void *addr)
 	return x;
 }
 
-int 
+int
 peek_word(void *addr)
 {
 	label_t faultbuf;
@@ -355,7 +355,7 @@ peek_word(void *addr)
 	return x;
 }
 
-int 
+int
 peek_long(void *addr)
 {
 	label_t faultbuf;

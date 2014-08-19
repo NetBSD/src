@@ -195,7 +195,7 @@ int
 sdmmc_open(struct open_file *of, ...)
 {
 	va_list ap;
-	int unit, part;
+	int unit __unused, part;
 
 	va_start(ap, of);
 	unit = va_arg(ap, u_int); /* Not used for now */

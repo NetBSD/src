@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.41.2.1 2012/11/20 03:00:56 tls Exp $	*/
+/*	$NetBSD: vector.S,v 1.41.2.2 2014/08/20 00:02:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -85,337 +85,11 @@
 #include "lapic.h"
 #include "assym.h"
 
-/*****************************************************************************/
-
-/*
- * Trap and fault vector routines
- *
- * On exit from the kernel to user mode, we always need to check for ASTs.  In
- * addition, we need to do this atomically; otherwise an interrupt may occur
- * which causes an AST, but it won't get processed until the next kernel entry
- * (possibly the next clock tick).  Thus, we disable interrupt before checking,
- * and only enable them again on the final `iret' or before calling the AST
- * handler.
- */ 
+#include "amd64_trap.S"
 
 /*****************************************************************************/
-
-#ifdef	XEN
-#define	PRE_TRAP	movq (%rsp),%rcx ; movq 8(%rsp),%r11 ; addq $0x10,%rsp 
-#else
-#define	PRE_TRAP
-#endif
-
-#define	TRAP_NJ(a)	PRE_TRAP ; pushq $(a)
-#define	ZTRAP_NJ(a)	PRE_TRAP ; pushq $0 ; pushq $(a)
-#define	TRAP(a)		TRAP_NJ(a) ; jmp _C_LABEL(alltraps)
-#define	ZTRAP(a)	ZTRAP_NJ(a) ; jmp _C_LABEL(alltraps)
-
-	.text
-
-IDTVEC(trap00)
-	ZTRAP(T_DIVIDE)
-
-IDTVEC(trap01)
-	ZTRAP(T_TRCTRAP)
-
-IDTVEC(trap02)
-#if defined(XEN)
-	ZTRAP(T_NMI)
-#else /* defined(XEN) */
-	pushq $0
-	pushq $T_NMI
-	subq	$TF_REGSIZE,%rsp
-	INTR_SAVE_GPRS
-	movl	$MSR_GSBASE,%ecx
-	rdmsr
-	cmpl	$VM_MIN_KERNEL_ADDRESS_HIGH32,%edx
-	jae	1f
-	swapgs
-	movw	%gs,TF_GS(%rsp)
-	movw	%fs,TF_FS(%rsp)
-	movw	%es,TF_ES(%rsp)
-	movw	%ds,TF_DS(%rsp)
-	movq	%rsp,%rdi
-	incq	CPUVAR(NTRAP)
-	call	_C_LABEL(trap)
-	movw	TF_ES(%rsp),%es
-	movw	TF_DS(%rsp),%ds
-	swapgs
-	jmp	2f
-1:
-	movq	%rsp,%rdi
-	incq	CPUVAR(NTRAP)
-	call	_C_LABEL(trap)
-2:
-	INTR_RESTORE_GPRS
-	addq	$TF_REGSIZE+16,%rsp
-	iretq
-#endif /* defined(XEN) */
-
-IDTVEC(trap03)
-#ifndef KDTRACE_HOOKS
-	ZTRAP(T_BPTFLT)
-#else
-	ZTRAP_NJ(T_BPTFLT)
-	INTRENTRY
-  	STI(si)
-	/*
-	 * DTrace Function Boundary Trace (fbt) probes are triggered
-	 * by int3 (0xcc).
-	 */
-	/* Check if there is no DTrace hook registered. */
-	cmpq	$0,dtrace_invop_jump_addr
-	je	calltrap
-
-	/*
-	 * Set our jump address for the jump back in the event that
-	 * the exception wasn't caused by DTrace at all.
-	 */
-	/* XXX: This doesn't look right for SMP - unless it is a
-	 * constant - so why set it everytime. (dsl) */
-	movq	$calltrap, dtrace_invop_calltrap_addr(%rip)
-
-	/* Jump to the code hooked in by DTrace. */
-	movq	dtrace_invop_jump_addr, %rax
-	jmpq	*dtrace_invop_jump_addr
-
-	.bss
-	.globl	dtrace_invop_jump_addr
-	.align	8
-	.type	dtrace_invop_jump_addr, @object
-	.size	dtrace_invop_jump_addr, 8
-dtrace_invop_jump_addr:
-	.zero	8
-	.globl	dtrace_invop_calltrap_addr
-	.align	8
-	.type	dtrace_invop_calltrap_addr, @object
-	.size	dtrace_invop_calltrap_addr, 8
-dtrace_invop_calltrap_addr:
-	.zero	8
-	.text
-#endif
-
-IDTVEC(trap04)
-	ZTRAP(T_OFLOW)
-
-IDTVEC(trap05)
-	ZTRAP(T_BOUND)
-
-IDTVEC(trap06)
-	ZTRAP(T_PRIVINFLT)
-
-IDTVEC(trap07)
-	ZTRAP_NJ(T_ASTFLT)
-	INTRENTRY
-#ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
-#endif /* DIAGNOSTIC */
-	movq	CPUVAR(SELF),%rdi
-	call	_C_LABEL(fpudna)
-	jmp	.Lalltraps_checkusr
-
-IDTVEC(trap08)
-	TRAP(T_DOUBLEFLT)
-
-IDTVEC(trap09)
-	ZTRAP(T_FPOPFLT)
-
-IDTVEC(trap0a)
-	TRAP(T_TSSFLT)
-
-#ifdef XEN
-/*
- * I don't believe XEN generates in-kernel traps for the
- * equivalent of iret, if it does this code would be needed
- * in order to copy the user segment registers into the fault frame.
- */
-#define check_swapgs alltraps
-#endif
-
-IDTVEC(trap0b)		/* #NP() Segment not present */
-	TRAP_NJ(T_SEGNPFLT)
-	jmp	check_swapgs
-
-IDTVEC(trap0c)		/* #SS() Stack exception */
-	TRAP_NJ(T_STKFLT)
-	jmp	check_swapgs
-
-IDTVEC(trap0d)		/* #GP() General protection */
-	TRAP_NJ(T_PROTFLT)
-#ifdef check_swapgs
-	jmp	check_swapgs
-#else
-/* We need to worry about traps while the kernel %gs_base isn't loaded.
- * These are either loads to %gs (only 32bit) or faults on iret during
- * return to user. */
-check_swapgs:
-	INTRENTRY_L(3f,1:)
-2:	sti
-	jmp	calltrap
-3:
-	/* Trap in kernel mode. */
-	/* If faulting instruction is 'iret' we may need to do a 'swapgs'. */
-	movq	TF_RIP(%rsp),%rax
-	cmpw	$0xcf48,(%rax)		/* Faulting instruction is iretq ? */
-	jne	5f			/* Jump if not */
-	movq	TF_RSP(%rsp),%rax	/* Must read %rsp, may be a pad word */
-	testb	$SEL_UPL,8(%rax)	/* Check %cs of outer iret frame */
-	je	2b			/* jump if iret was to kernel  */
-	jmp	1b			/* to user - must restore %gs */
-5:
-	/* Not 'iret', all moves to %gs also need a swapgs */
-	movw	(%rax),%ax
-	andb	$070,%ah		/* mask mod/rm from mod/reg/rm */
-	cmpw	$0x8e+050*256,%ax	/* Any move to %gs (reg 5) */
-	jne	2b			/* No - normal kernel fault */
-	jmp	1b			/* Yes - restore %gs */
-#endif
-
-IDTVEC(trap0e)
-	TRAP(T_PAGEFLT)
-
-IDTVEC(intrspurious)
-IDTVEC(trap0f)
-	ZTRAP_NJ(T_ASTFLT)
-	INTRENTRY
-#ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
-#endif /* DIAGNOSTIC */
-	jmp	.Lalltraps_checkusr
-
-IDTVEC(trap10)
-	ZTRAP_NJ(T_ARITHTRAP)
-.Ldo_fputrap:
-	INTRENTRY
-#ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
-#endif /* DIAGNOSTIC */
-	testb	$SEL_RPL,TF_CS(%rsp)
-	jz	1f
-	movq	%rsp,%rdi
-	call	_C_LABEL(fputrap)
-	jmp	.Lalltraps_checkusr
-1:
-  	STI(si)
-	jmp	calltrap
-
-IDTVEC(trap11)
-	TRAP(T_ALIGNFLT)
-
-IDTVEC(trap12)
-	ZTRAP(T_MCA)
-
-IDTVEC(trap13)
-	ZTRAP_NJ(T_XMM)
-	jmp	.Ldo_fputrap
-
-IDTVEC(trap14)
-IDTVEC(trap15)
-IDTVEC(trap16)
-IDTVEC(trap17)
-IDTVEC(trap18)
-IDTVEC(trap19)
-IDTVEC(trap1a)
-IDTVEC(trap1b)
-IDTVEC(trap1c)
-IDTVEC(trap1d)
-IDTVEC(trap1e)
-IDTVEC(trap1f)
-	/* 20 - 31 reserved for future exp */
-	ZTRAP(T_RESERVED)
-
-IDTVEC(exceptions)
-	.quad	_C_LABEL(Xtrap00), _C_LABEL(Xtrap01)
-	.quad	_C_LABEL(Xtrap02), _C_LABEL(Xtrap03)
-	.quad	_C_LABEL(Xtrap04), _C_LABEL(Xtrap05)
-	.quad	_C_LABEL(Xtrap06), _C_LABEL(Xtrap07)
-	.quad	_C_LABEL(Xtrap08), _C_LABEL(Xtrap09)
-	.quad	_C_LABEL(Xtrap0a), _C_LABEL(Xtrap0b)
-	.quad	_C_LABEL(Xtrap0c), _C_LABEL(Xtrap0d)
-	.quad	_C_LABEL(Xtrap0e), _C_LABEL(Xtrap0f)
-	.quad	_C_LABEL(Xtrap10), _C_LABEL(Xtrap11)
-	.quad	_C_LABEL(Xtrap12), _C_LABEL(Xtrap13)
-	.quad	_C_LABEL(Xtrap14), _C_LABEL(Xtrap15)
-	.quad	_C_LABEL(Xtrap16), _C_LABEL(Xtrap17)
-	.quad	_C_LABEL(Xtrap18), _C_LABEL(Xtrap19)
-	.quad	_C_LABEL(Xtrap1a), _C_LABEL(Xtrap1b)
-	.quad	_C_LABEL(Xtrap1c), _C_LABEL(Xtrap1d)
-	.quad	_C_LABEL(Xtrap1e), _C_LABEL(Xtrap1f)
-
-/*
- * trap() calls here when it detects a fault in INTRFASTEXIT (loading the
- * segment registers or during the iret itself).
- * The address of the (possibly reconstructed) user trap frame is
- * passed as an argument.
- * Typically the code will have raised a SIGSEGV which will be actioned
- * by the code below.
- */
-_C_LABEL(trap_return_fault_return):	.globl	trap_return_fault_return
-	mov	%rdi,%rsp		/* frame for user return */
-#ifdef DIAGNOSTIC
-	/* We can't recover the saved %rbx, so suppress warning */
-	movl	CPUVAR(ILEVEL),%ebx
-#endif /* DIAGNOSTIC */
-	jmp	.Lalltraps_checkusr
-
-/*
- * All traps go through here. Call the generic trap handler, and
- * check for ASTs afterwards.
- */
-NENTRY(alltraps)
-	INTRENTRY
-  	STI(si)
-
-calltrap:
-#ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
-#endif /* DIAGNOSTIC */
-	movq	%rsp,%rdi
-	incq	CPUVAR(NTRAP)
-	call	_C_LABEL(trap)
-.Lalltraps_checkusr:
-	testb	$SEL_RPL,TF_CS(%rsp)
-	jz	6f
-.Lalltraps_checkast:
-	movq	CPUVAR(CURLWP),%r14
-	/* Check for ASTs on exit to user mode. */
-  	CLI(si)
-	CHECK_ASTPENDING(%r14)
-	je	3f
-	CLEAR_ASTPENDING(%r14)
-  	STI(si)
-	movl	$T_ASTFLT,TF_TRAPNO(%rsp)
-	movq	%rsp,%rdi
-	incq	CPUVAR(NTRAP)
-	call	_C_LABEL(trap)
-	jmp	.Lalltraps_checkast	/* re-check ASTs */
-3:	CHECK_DEFERRED_SWITCH
-	jnz	9f
-#ifndef DIAGNOSTIC
-6:	INTRFASTEXIT
-#else /* DIAGNOSTIC */
-6:	cmpl	CPUVAR(ILEVEL),%ebx
-	jne	3f
-	INTRFASTEXIT
-3:  	STI(si)
-	movabsq	$4f,%rdi
-	movl	CPUVAR(ILEVEL),%esi
-	movl	%ebx,%edx
-	xorq	%rax,%rax
-	call	_C_LABEL(printf)
-	movl	%ebx,%edi
-	call	_C_LABEL(spllower)
-	jmp	.Lalltraps_checkast
-4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT %x %x\n"
-#endif /* DIAGNOSTIC */
-9:	STI(si)
-	call	_C_LABEL(do_pmap_load)
-	jmp	.Lalltraps_checkast	/* re-check ASTs */
-
 
 #define __HAVE_GENERIC_SOFT_INTERRUPTS	/* XXX */
-
 
 /*
  * Macros for interrupt entry, call to handler, and exit.
@@ -451,6 +125,7 @@ IDTVEC(recurse_lapic_ipi)
 	pushq	$T_ASTFLT
 	INTRENTRY		
 	jmp	1f
+IDTVEC_END(recurse_lapic_ipi)
 
 IDTVEC(intr_lapic_ipi)
 	pushq	$0		
@@ -471,6 +146,8 @@ IDTVEC(resume_lapic_ipi)
 2:
 	orl	$(1 << LIR_IPI),CPUVAR(IPENDING)
 	INTRFASTEXIT
+IDTVEC_END(resume_lapic_ipi)
+IDTVEC_END(intr_lapic_ipi)
 
 #if defined(DDB)
 IDTVEC(intrddb)
@@ -486,6 +163,7 @@ IDTVEC(intrddb)
 	xorl	%eax,%eax
 	movq	%rax,%cr8
 	INTRFASTEXIT
+IDTVEC_END(intrddb)
 #endif /* DDB */
 #endif /* MULTIPROCESSOR */
 	
@@ -498,6 +176,7 @@ IDTVEC(recurse_lapic_ltimer)
 	pushq	$T_ASTFLT
 	INTRENTRY		
 	jmp	1f
+IDTVEC_END(recurse_lapic_ltimer)
 
 IDTVEC(intr_lapic_ltimer)
 	pushq	$0		
@@ -520,6 +199,8 @@ IDTVEC(resume_lapic_ltimer)
 2:
 	orl	$(1 << LIR_TIMER),CPUVAR(IPENDING)
 	INTRFASTEXIT
+IDTVEC_END(resume_lapic_ltimer)
+IDTVEC_END(intr_lapic_ltimer)
 #endif /* NLAPIC > 0 */
 
 #ifndef XEN
@@ -533,6 +214,7 @@ IDTVEC(intr_lapic_tlb)
 	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
 	callq	_C_LABEL(pmap_tlb_intr)
 	INTRFASTEXIT
+IDTVEC_END(intr_lapic_tlb)
 
 #endif /* !XEN */
 
@@ -721,8 +403,8 @@ INTRSTUB(ioapic_level,31,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
 
 #endif
 
-.globl _C_LABEL(i8259_stubs)
-_C_LABEL(i8259_stubs):
+	.type _C_LABEL(i8259_stubs), @object
+LABEL(i8259_stubs)
 	.quad _C_LABEL(Xintr_legacy0), _C_LABEL(Xrecurse_legacy0)
 	.quad _C_LABEL(Xresume_legacy0)
 	.quad _C_LABEL(Xintr_legacy1), _C_LABEL(Xrecurse_legacy1)
@@ -755,10 +437,11 @@ _C_LABEL(i8259_stubs):
 	.quad _C_LABEL(Xresume_legacy14)
 	.quad _C_LABEL(Xintr_legacy15), _C_LABEL(Xrecurse_legacy15)
 	.quad _C_LABEL(Xresume_legacy15)
+END(i8259_stubs)
 
 #if NIOAPIC > 0
-.globl _C_LABEL(ioapic_edge_stubs)
-_C_LABEL(ioapic_edge_stubs):
+	.type _C_LABEL(ioapic_edge_stubs), @object
+LABEL(ioapic_edge_stubs)
 	.quad _C_LABEL(Xintr_ioapic_edge0), _C_LABEL(Xrecurse_ioapic_edge0)
 	.quad _C_LABEL(Xresume_ioapic_edge0)
 	.quad _C_LABEL(Xintr_ioapic_edge1), _C_LABEL(Xrecurse_ioapic_edge1)
@@ -823,9 +506,10 @@ _C_LABEL(ioapic_edge_stubs):
 	.quad _C_LABEL(Xresume_ioapic_edge30)
 	.quad _C_LABEL(Xintr_ioapic_edge31), _C_LABEL(Xrecurse_ioapic_edge31)
 	.quad _C_LABEL(Xresume_ioapic_edge31)
+END(ioapic_edge_stubs)
 
-.globl _C_LABEL(ioapic_level_stubs)
-_C_LABEL(ioapic_level_stubs):
+	.type _C_LABEL(ioapic_level_stubs), @object
+LABEL(ioapic_level_stubs)
 	.quad _C_LABEL(Xintr_ioapic_level0), _C_LABEL(Xrecurse_ioapic_level0)
 	.quad _C_LABEL(Xresume_ioapic_level0)
 	.quad _C_LABEL(Xintr_ioapic_level1), _C_LABEL(Xrecurse_ioapic_level1)
@@ -890,6 +574,7 @@ _C_LABEL(ioapic_level_stubs):
 	.quad _C_LABEL(Xresume_ioapic_level30)
 	.quad _C_LABEL(Xintr_ioapic_level31), _C_LABEL(Xrecurse_ioapic_level31)
 	.quad _C_LABEL(Xresume_ioapic_level31)
+END(ioapic_level_stubs)
 #endif
 
 #else	/* !XEN */
@@ -962,8 +647,7 @@ XENINTRSTUB(xenev,29,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
 XENINTRSTUB(xenev,30,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
 XENINTRSTUB(xenev,31,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
   
-.globl _C_LABEL(xenev_stubs)
-_C_LABEL(xenev_stubs):
+LABEL(xenev_stubs)
   	.quad _C_LABEL(Xrecurse_xenev0), _C_LABEL(Xresume_xenev0)
   	.quad _C_LABEL(Xrecurse_xenev1) ,_C_LABEL(Xresume_xenev1)
   	.quad _C_LABEL(Xrecurse_xenev2) ,_C_LABEL(Xresume_xenev2)
@@ -996,6 +680,7 @@ _C_LABEL(xenev_stubs):
   	.quad _C_LABEL(Xrecurse_xenev29), _C_LABEL(Xresume_xenev29)
   	.quad _C_LABEL(Xrecurse_xenev30), _C_LABEL(Xresume_xenev30)
   	.quad _C_LABEL(Xrecurse_xenev31), _C_LABEL(Xresume_xenev31)
+END(xenev_stubs)
 
 # Xen callbacks
 
@@ -1015,6 +700,7 @@ NENTRY(hypervisor_callback)
 	jnz	doreti_checkast
 1:
 	INTRFASTEXIT
+END(hypervisor_callback)
 
 # Panic?
 NENTRY(failsafe_callback)
@@ -1029,5 +715,6 @@ NENTRY(failsafe_callback)
 	call xen_failsafe_handler
 	INTRFASTEXIT
 #	jmp	HYPERVISOR_iret
+END(failsafe_callback)
 
 #endif	/* !XEN */

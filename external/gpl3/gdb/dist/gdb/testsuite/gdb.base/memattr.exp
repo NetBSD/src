@@ -1,5 +1,4 @@
-# Copyright 2011
-# Free Software Foundation, Inc.
+# Copyright 2011-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,12 +17,7 @@
 
 # Test the memory attribute commands.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
-set testfile "memattr"
-set srcfile  ${testfile}.c
+standard_testfile .c
 
 if { [prepare_for_testing $testfile.exp $testfile $srcfile] } {
     return -1
@@ -453,3 +447,95 @@ gdb_test_multiple "info mem" "mem 2-4 were deleted" {
 
 gdb_test "delete mem 8" "No memory region number 8." \
     "delete non-existant region"
+
+#
+# Test overlapping checking
+#
+
+proc delete_memory {} {
+    global gdb_prompt
+
+    gdb_test_multiple "delete mem" "delete mem" {
+       -re "Delete all memory regions.*y or n.*$" {
+           send_gdb "y\n"
+           exp_continue
+       }
+       -re "$gdb_prompt $" { }
+    }
+}
+
+# Create a region that doesn't overlap (a PASS in the table).
+
+proc region_pass { region } {
+    gdb_test_no_output "mem $region ro" "$region: no-overlap"
+}
+
+# Try to create a region that overlaps (a FAIL in the table).
+
+proc region_fail { region } {
+    gdb_test "mem $region ro" "overlapping memory region" "$region: overlap"
+}
+
+# Test normal case (upper != 0)
+#
+#        lo'       hi'
+#         |--------|
+#  10 20 30 40 50 60 70 80 90
+#      |-----|                FAIL
+#         |--|                FAIL
+#            |--|             FAIL
+#               |--|          FAIL
+#               |-----|       FAIL
+#         |--------|          FAIL
+#      |--------------|       FAIL
+#      |--------------------- FAIL
+#         |------------------ FAIL
+#            |--------------- FAIL
+#      |--|                   PASS
+#                  |--|       PASS
+#                        |--- PASS
+
+delete_memory
+gdb_test_no_output "mem 0x30 0x60 ro"
+with_test_prefix "0x30 0x60" {
+    region_fail "0x20 0x40"
+    region_fail "0x30 0x40"
+    region_fail "0x40 0x50"
+    region_fail "0x50 0x60"
+    region_fail "0x50 0x70"
+    region_fail "0x30 0x60"
+    region_fail "0x20 0x70"
+    region_fail "0x20 0x0"
+    region_fail "0x30 0x0"
+    region_fail "0x40 0x0"
+    region_pass "0x20 0x30"
+    region_pass "0x60 0x70"
+    region_pass "0x80 0x0"
+}
+
+# Test special case (upper == 0)
+#
+#           lo'             hi'
+#            |---------------
+#  00 10 20 30 40 50 60 70 80
+#         |--------|          FAIL
+#            |-----|          FAIL
+#               |--|          FAIL
+#         |------------------ FAIL
+#            |--------------- FAIL
+#               |------------ FAIL
+#         |--|                PASS
+#   |--|                      PASS
+
+delete_memory
+gdb_test_no_output "mem 0x30 0x0 ro"
+with_test_prefix "0x30 0x0" {
+    region_fail "0x20 0x50"
+    region_fail "0x30 0x50"
+    region_fail "0x40 0x50"
+    region_fail "0x20 0x0"
+    region_fail "0x30 0x0"
+    region_fail "0x40 0x0"
+    region_pass "0x20 0x30"
+    region_pass "0x00 0x10"
+}

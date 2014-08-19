@@ -1,4 +1,4 @@
-/*	$NetBSD: rtas.c,v 1.13 2011/07/17 20:54:46 joerg Exp $ */
+/*	$NetBSD: rtas.c,v 1.13.12.1 2014/08/20 00:03:20 tls Exp $ */
 
 /*
  * CHRP RTAS support routines
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.13 2011/07/17 20:54:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.13.12.1 2014/08/20 00:03:20 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ rtas_attach(device_t parent, device_t self, void *aux)
 	int ph = ca->ca_node;
 	int ih;
 	int rtas_size;
-	int rtas_entry;
+	uintptr_t rtas_entry;
 	struct pglist pglist;
 	char buf[4];
 	int i;
@@ -157,8 +157,8 @@ rtas_attach(device_t parent, device_t self, void *aux)
 
 	rtas0_softc = sc;
 
-	printf(": version %d, entry @pa 0x%x\n", sc->ra_version,
-		(unsigned) rtas_entry);
+	printf(": version %d, entry @pa 0x%"PRIxPTR"\n", sc->ra_version,
+		rtas_entry);
 
 	/*
 	 * Initialise TODR support

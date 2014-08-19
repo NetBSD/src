@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.36 2012/01/27 19:48:40 para Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.36.6.1 2014/08/20 00:04:28 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.36 2012/01/27 19:48:40 para Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.36.6.1 2014/08/20 00:04:28 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -66,58 +66,76 @@ __KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.36 2012/01/27 19:48:40 para Exp $")
 
 #ifdef COREDUMP
 
-struct countsegs_state {
-	int	npsections;
-};
-
-static int	ELFNAMEEND(coredump_countsegs)(struct proc *, void *,
-		    struct uvm_coredump_state *);
-
 struct writesegs_state {
 	Elf_Phdr *psections;
-	off_t	secoff;
+	proc_t   *p;
+	off_t	 secoff;
+	size_t   npsections;
 };
 
-static int	ELFNAMEEND(coredump_writeseghdrs)(struct proc *, void *,
-		    struct uvm_coredump_state *);
+/*
+ * We need to know how big the 'notes' are before we write the main header.
+ * To avoid problems with double-processing we save the data.
+ */
+struct note_buf {
+	struct note_buf  *nb_next;
+	unsigned char    nb_data[4096 - sizeof (void *)];
+};
 
-static int	ELFNAMEEND(coredump_notes)(struct proc *, struct lwp *, void *,
-		    size_t *);
-static int	ELFNAMEEND(coredump_note)(struct proc *, struct lwp *, void *,
-		    size_t *);
+struct note_state {
+	struct note_buf  *ns_first;
+	struct note_buf  *ns_last;
+	unsigned int     ns_count;       /* Of full buffers */
+	unsigned int     ns_offset;      /* Write point in last buffer */
+};
 
+static int	ELFNAMEEND(coredump_getseghdrs)(struct uvm_coredump_state *);
+
+static int	ELFNAMEEND(coredump_notes)(struct lwp *, struct note_state *);
+static int	ELFNAMEEND(coredump_note)(struct lwp *, struct note_state *);
+
+/* The 'note' section names and data are always 4-byte aligned. */
 #define	ELFROUNDSIZE	4	/* XXX Should it be sizeof(Elf_Word)? */
-#define	elfround(x)	roundup((x), ELFROUNDSIZE)
 
 #define elf_process_read_regs	CONCAT(process_read_regs, ELFSIZE)
-#ifdef __HAVE_PROCESS_XFPREGS
-#define elf_process_read_xfpregs CONCAT(process_read_xfpregs, ELFSIZE)
-#else
 #define elf_process_read_fpregs	CONCAT(process_read_fpregs, ELFSIZE)
-#endif
 #define elf_reg			CONCAT(process_reg, ELFSIZE)
 #define elf_fpreg		CONCAT(process_fpreg, ELFSIZE)
 
 int
-ELFNAMEEND(coredump)(struct lwp *l, void *cookie)
+ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 {
-	struct proc *p;
 	Elf_Ehdr ehdr;
-	Elf_Phdr phdr, *psections;
+	Elf_Shdr shdr;
+	Elf_Phdr *psections;
 	size_t psectionssize;
-	struct countsegs_state cs;
+	int npsections;
 	struct writesegs_state ws;
-	off_t notestart, secstart, offset;
+	off_t notestart;
 	size_t notesize;
 	int error, i;
 
+	struct note_state ns;
+	struct note_buf *nb;
+
 	psections = NULL;
-	p = l->l_proc;
+
+	/* Get all of the notes (mostly all the registers). */
+	ns.ns_first = kmem_alloc(sizeof *ns.ns_first, KM_SLEEP);
+	ns.ns_last = ns.ns_first;
+	ns.ns_count = 0;
+	ns.ns_offset = 0;
+	error = ELFNAMEEND(coredump_notes)(l, &ns);
+	ns.ns_last->nb_next = NULL;
+	if (error)
+		goto out;
+	notesize = ns.ns_count * sizeof nb->nb_data + ns.ns_offset;
+
 	/*
 	 * We have to make a total of 3 passes across the map:
 	 *
 	 *	1. Count the number of map entries (the number of
-	 *	   PT_LOAD sections).
+	 *	   PT_LOAD sections in the dump).
 	 *
 	 *	2. Write the P-section headers.
 	 *
@@ -125,20 +143,11 @@ ELFNAMEEND(coredump)(struct lwp *l, void *cookie)
 	 */
 
 	/* Pass 1: count the entries. */
-	cs.npsections = 0;
-	error = uvm_coredump_walkmap(p, NULL,
-	    ELFNAMEEND(coredump_countsegs), &cs);
-	if (error)
-		goto out;
+	npsections = uvm_coredump_count_segs(l->l_proc);
+	/* Allow for the PT_NOTE section. */
+	npsections++;
 
-	/* Count the PT_NOTE section. */
-	cs.npsections++;
-
-	/* Get the size of the notes. */
-	error = ELFNAMEEND(coredump_notes)(p, l, NULL, &notesize);
-	if (error)
-		goto out;
-
+	/* Build the main elf header */
 	memset(&ehdr.e_ident[EI_PAD], 0, sizeof(ehdr.e_ident) - EI_PAD);
 	memcpy(ehdr.e_ident, ELFMAG, SELFMAG);
 #if ELFSIZE == 32
@@ -157,14 +166,22 @@ ELFNAMEEND(coredump)(struct lwp *l, void *cookie)
 	ehdr.e_machine = ELFDEFNNAME(MACHDEP_ID);
 	ehdr.e_version = EV_CURRENT;
 	ehdr.e_entry = 0;
-	ehdr.e_phoff = sizeof(ehdr);
-	ehdr.e_shoff = 0;
 	ehdr.e_flags = 0;
 	ehdr.e_ehsize = sizeof(ehdr);
 	ehdr.e_phentsize = sizeof(Elf_Phdr);
-	ehdr.e_phnum = cs.npsections;
-	ehdr.e_shentsize = 0;
-	ehdr.e_shnum = 0;
+	if (npsections < PN_XNUM) {
+		ehdr.e_phnum = npsections;
+		ehdr.e_shentsize = 0;
+		ehdr.e_shnum = 0;
+		ehdr.e_shoff = 0;
+		ehdr.e_phoff = sizeof(ehdr);
+	} else {
+		ehdr.e_phnum = PN_XNUM;
+		ehdr.e_shentsize = sizeof(Elf_Shdr);
+		ehdr.e_shnum = 1;
+		ehdr.e_shoff = sizeof(ehdr);
+		ehdr.e_phoff = sizeof(ehdr) + sizeof(shdr);
+	}
 	ehdr.e_shstrndx = 0;
 
 #ifdef ELF_MD_COREDUMP_SETUP
@@ -176,23 +193,38 @@ ELFNAMEEND(coredump)(struct lwp *l, void *cookie)
 	if (error)
 		goto out;
 
-	offset = sizeof(ehdr);
+	/* Write out sections, if needed */
+	if (npsections >= PN_XNUM) {
+		memset(&shdr, 0, sizeof(shdr));
+		shdr.sh_type = SHT_NULL;
+		shdr.sh_info = npsections;
+		error = coredump_write(cookie, UIO_SYSSPACE, &shdr,
+		    sizeof(shdr));
+		if (error)
+			goto out;
+	}
 
-	notestart = offset + sizeof(phdr) * cs.npsections;
-	secstart = notestart + notesize;
+	psectionssize = npsections * sizeof(*psections);
+	notestart = ehdr.e_phoff + psectionssize;
 
-	psectionssize = cs.npsections * sizeof(Elf_Phdr);
 	psections = kmem_zalloc(psectionssize, KM_SLEEP);
 
-	/* Pass 2: now write the P-section headers. */
-	ws.secoff = secstart;
+	/* Pass 2: now find the P-section headers. */
+	ws.secoff = notestart + notesize;
 	ws.psections = psections;
-	error = uvm_coredump_walkmap(p, cookie,
-	    ELFNAMEEND(coredump_writeseghdrs), &ws);
+	ws.npsections = npsections - 1;
+	ws.p = l->l_proc;
+	error = uvm_coredump_walkmap(l->l_proc, ELFNAMEEND(coredump_getseghdrs),
+	    &ws);
 	if (error)
 		goto out;
+	if (ws.npsections != 0) {
+		/* A section went away */
+		error = ENOMEM;
+		goto out;
+	}
 
-	/* Write out the PT_NOTE header. */
+	/* Add the PT_NOTE header after the P-section headers. */
 	ws.psections->p_type = PT_NOTE;
 	ws.psections->p_offset = notestart;
 	ws.psections->p_vaddr = 0;
@@ -202,39 +234,35 @@ ELFNAMEEND(coredump)(struct lwp *l, void *cookie)
 	ws.psections->p_flags = PF_R;
 	ws.psections->p_align = ELFROUNDSIZE;
 
-	error = coredump_write(cookie, UIO_SYSSPACE, psections,
-	    cs.npsections * sizeof(Elf_Phdr));
+	/* Write the P-section headers followed by the PT_NOTE header */
+	error = coredump_write(cookie, UIO_SYSSPACE, psections, psectionssize);
 	if (error)
 		goto out;
 
 #ifdef DIAGNOSTIC
-	offset += cs.npsections * sizeof(Elf_Phdr);
-	if (offset != notestart)
+	if (coredump_offset(cookie) != notestart)
 		panic("coredump: offset %lld != notestart %lld",
-		    (long long) offset, (long long) notestart);
+		    (long long) coredump_offset(cookie),
+		    (long long) notestart);
 #endif
 
 	/* Write out the notes. */
-	error = ELFNAMEEND(coredump_notes)(p, l, cookie, &notesize);
-	if (error)
-		goto out;
+	for (nb = ns.ns_first; nb != NULL; nb = nb->nb_next) {
+		error = coredump_write(cookie, UIO_SYSSPACE, nb->nb_data,
+		    nb->nb_next == NULL ? ns.ns_offset : sizeof nb->nb_data);
+		if (error)
+			goto out;
+	}
 
-#ifdef DIAGNOSTIC
-	offset += notesize;
-	if (offset != secstart)
-		panic("coredump: offset %lld != secstart %lld",
-		    (long long) offset, (long long) secstart);
-#endif
-
-	/* Pass 3: finally, write the sections themselves. */
-	for (i = 0; i < cs.npsections - 1; i++) {
+	/* Finally, write the sections themselves. */
+	for (i = 0; i < npsections - 1; i++) {
 		if (psections[i].p_filesz == 0)
 			continue;
 
 #ifdef DIAGNOSTIC
-		if (offset != psections[i].p_offset)
+		if (coredump_offset(cookie) != psections[i].p_offset)
 			panic("coredump: offset %lld != p_offset[%d] %lld",
-			    (long long) offset, i,
+			    (long long) coredump_offset(cookie), i,
 			    (long long) psections[i].p_filesz);
 #endif
 
@@ -243,31 +271,20 @@ ELFNAMEEND(coredump)(struct lwp *l, void *cookie)
 		    psections[i].p_filesz);
 		if (error)
 			goto out;
-
-#ifdef DIAGNOSTIC
-		offset += psections[i].p_filesz;
-#endif
 	}
 
   out:
 	if (psections)
 		kmem_free(psections, psectionssize);
+	while ((nb = ns.ns_first) != NULL) {
+		ns.ns_first = nb->nb_next;
+		kmem_free(nb, sizeof *nb);
+	}
 	return (error);
 }
 
 static int
-ELFNAMEEND(coredump_countsegs)(struct proc *p, void *iocookie,
-    struct uvm_coredump_state *us)
-{
-	struct countsegs_state *cs = us->cookie;
-
-	cs->npsections++;
-	return (0);
-}
-
-static int
-ELFNAMEEND(coredump_writeseghdrs)(struct proc *p, void *iocookie,
-    struct uvm_coredump_state *us)
+ELFNAMEEND(coredump_getseghdrs)(struct uvm_coredump_state *us)
 {
 	struct writesegs_state *ws = us->cookie;
 	Elf_Phdr phdr;
@@ -275,10 +292,16 @@ ELFNAMEEND(coredump_writeseghdrs)(struct proc *p, void *iocookie,
 	vaddr_t end;
 	int error;
 
+	/* Don't overrun if there are more sections */
+	if (ws->npsections == 0)
+		return ENOMEM;
+	ws->npsections--;
+
 	size = us->end - us->start;
 	realsize = us->realend - us->start;
 	end = us->realend;
 
+	/* Don't bother writing out trailing zeros */
 	while (realsize > 0) {
 		long buf[1024 / sizeof(long)];
 		size_t slen = realsize > sizeof(buf) ? sizeof(buf) : realsize;
@@ -286,7 +309,7 @@ ELFNAMEEND(coredump_writeseghdrs)(struct proc *p, void *iocookie,
 		int i;
 
 		end -= slen;
-		if ((error = copyin_proc(p, (void *)end, buf, slen)) != 0)
+		if ((error = copyin_proc(ws->p, (void *)end, buf, slen)) != 0)
 			return error;
 
 		ep = (const long *) &buf[slen / sizeof(buf[0])];
@@ -321,74 +344,60 @@ ELFNAMEEND(coredump_writeseghdrs)(struct proc *p, void *iocookie,
 }
 
 static int
-ELFNAMEEND(coredump_notes)(struct proc *p, struct lwp *l,
-    void *iocookie, size_t *sizep)
+ELFNAMEEND(coredump_notes)(struct lwp *l, struct note_state *ns)
 {
+	struct proc *p;
 	struct netbsd_elfcore_procinfo cpi;
-	Elf_Nhdr nhdr;
-	size_t size, notesize;
 	int error;
 	struct lwp *l0;
 	sigset_t ss1, ss2;
 
-	size = 0;
+	p = l->l_proc;
 
 	/* First, write an elfcore_procinfo. */
-	notesize = sizeof(nhdr) + elfround(sizeof(ELF_NOTE_NETBSD_CORE_NAME)) +
-	    elfround(sizeof(cpi));
-	if (iocookie) {
-		cpi.cpi_version = NETBSD_ELFCORE_PROCINFO_VERSION;
-		cpi.cpi_cpisize = sizeof(cpi);
-		cpi.cpi_signo = p->p_sigctx.ps_signo;
-		cpi.cpi_sigcode = p->p_sigctx.ps_code;
-		cpi.cpi_siglwp = p->p_sigctx.ps_lwp;
+	cpi.cpi_version = NETBSD_ELFCORE_PROCINFO_VERSION;
+	cpi.cpi_cpisize = sizeof(cpi);
+	cpi.cpi_signo = p->p_sigctx.ps_signo;
+	cpi.cpi_sigcode = p->p_sigctx.ps_code;
+	cpi.cpi_siglwp = p->p_sigctx.ps_lwp;
 
-		/*
-		 * XXX This should be per-LWP.
-		 */
-		ss1 = p->p_sigpend.sp_set;
-		sigemptyset(&ss2);
-		LIST_FOREACH(l0, &p->p_lwps, l_sibling) {
-			sigplusset(&l0->l_sigpend.sp_set, &ss1);
-			sigplusset(&l0->l_sigmask, &ss2);
-		}
-		memcpy(&cpi.cpi_sigpend, &ss1, sizeof(cpi.cpi_sigpend));
-		memcpy(&cpi.cpi_sigmask, &ss2, sizeof(cpi.cpi_sigmask));
-		memcpy(&cpi.cpi_sigignore, &p->p_sigctx.ps_sigignore,
-		    sizeof(cpi.cpi_sigignore));
-		memcpy(&cpi.cpi_sigcatch, &p->p_sigctx.ps_sigcatch,
-		    sizeof(cpi.cpi_sigcatch));
-
-		cpi.cpi_pid = p->p_pid;
-		mutex_enter(proc_lock);
-		cpi.cpi_ppid = p->p_pptr->p_pid;
-		cpi.cpi_pgrp = p->p_pgid;
-		cpi.cpi_sid = p->p_session->s_sid;
-		mutex_exit(proc_lock);
-
-		cpi.cpi_ruid = kauth_cred_getuid(l->l_cred);
-		cpi.cpi_euid = kauth_cred_geteuid(l->l_cred);
-		cpi.cpi_svuid = kauth_cred_getsvuid(l->l_cred);
-
-		cpi.cpi_rgid = kauth_cred_getgid(l->l_cred);
-		cpi.cpi_egid = kauth_cred_getegid(l->l_cred);
-		cpi.cpi_svgid = kauth_cred_getsvgid(l->l_cred);
-
-		cpi.cpi_nlwps = p->p_nlwps;
-		(void)strncpy(cpi.cpi_name, p->p_comm, sizeof(cpi.cpi_name));
-		cpi.cpi_name[sizeof(cpi.cpi_name) - 1] = '\0';
-
-		nhdr.n_namesz = sizeof(ELF_NOTE_NETBSD_CORE_NAME);
-		nhdr.n_descsz = sizeof(cpi);
-		nhdr.n_type = ELF_NOTE_NETBSD_CORE_PROCINFO;
-
-		error = ELFNAMEEND(coredump_writenote)(p, iocookie, &nhdr,
-		    ELF_NOTE_NETBSD_CORE_NAME "\0\0\0", &cpi);
-		if (error)
-			return (error);
+	/*
+	 * XXX This should be per-LWP.
+	 */
+	ss1 = p->p_sigpend.sp_set;
+	sigemptyset(&ss2);
+	LIST_FOREACH(l0, &p->p_lwps, l_sibling) {
+		sigplusset(&l0->l_sigpend.sp_set, &ss1);
+		sigplusset(&l0->l_sigmask, &ss2);
 	}
+	memcpy(&cpi.cpi_sigpend, &ss1, sizeof(cpi.cpi_sigpend));
+	memcpy(&cpi.cpi_sigmask, &ss2, sizeof(cpi.cpi_sigmask));
+	memcpy(&cpi.cpi_sigignore, &p->p_sigctx.ps_sigignore,
+	    sizeof(cpi.cpi_sigignore));
+	memcpy(&cpi.cpi_sigcatch, &p->p_sigctx.ps_sigcatch,
+	    sizeof(cpi.cpi_sigcatch));
 
-	size += notesize;
+	cpi.cpi_pid = p->p_pid;
+	mutex_enter(proc_lock);
+	cpi.cpi_ppid = p->p_pptr->p_pid;
+	cpi.cpi_pgrp = p->p_pgid;
+	cpi.cpi_sid = p->p_session->s_sid;
+	mutex_exit(proc_lock);
+
+	cpi.cpi_ruid = kauth_cred_getuid(l->l_cred);
+	cpi.cpi_euid = kauth_cred_geteuid(l->l_cred);
+	cpi.cpi_svuid = kauth_cred_getsvuid(l->l_cred);
+
+	cpi.cpi_rgid = kauth_cred_getgid(l->l_cred);
+	cpi.cpi_egid = kauth_cred_getegid(l->l_cred);
+	cpi.cpi_svgid = kauth_cred_getsvgid(l->l_cred);
+
+	cpi.cpi_nlwps = p->p_nlwps;
+	(void)strncpy(cpi.cpi_name, p->p_comm, sizeof(cpi.cpi_name));
+	cpi.cpi_name[sizeof(cpi.cpi_name) - 1] = '\0';
+
+	ELFNAMEEND(coredump_savenote)(ns, ELF_NOTE_NETBSD_CORE_PROCINFO,
+	    ELF_NOTE_NETBSD_CORE_NAME, &cpi, sizeof(cpi));
 
 	/* XXX Add hook for machdep per-proc notes. */
 
@@ -396,111 +405,106 @@ ELFNAMEEND(coredump_notes)(struct proc *p, struct lwp *l,
 	 * Now write the register info for the thread that caused the
 	 * coredump.
 	 */
-	error = ELFNAMEEND(coredump_note)(p, l, iocookie, &notesize);
+	error = ELFNAMEEND(coredump_note)(l, ns);
 	if (error)
 		return (error);
-	size += notesize;
 
 	/*
 	 * Now, for each LWP, write the register info and any other
-	 * per-LWP notes.  Since we're dumping core, we don't bother
-	 * locking.
+	 * per-LWP notes.
+	 * Lock in case this is a gcore requested dump.
 	 */
+	mutex_enter(p->p_lock);
 	LIST_FOREACH(l0, &p->p_lwps, l_sibling) {
 		if (l0 == l)		/* we've taken care of this thread */
 			continue;
-		error = ELFNAMEEND(coredump_note)(p, l0, iocookie, &notesize);
+		error = ELFNAMEEND(coredump_note)(l0, ns);
 		if (error)
-			return (error);
-		size += notesize;
+			break;
 	}
+	mutex_exit(p->p_lock);
 
-	*sizep = size;
-	return (0);
+	return error;
 }
 
 static int
-ELFNAMEEND(coredump_note)(struct proc *p, struct lwp *l, void *iocookie,
-    size_t *sizep)
+ELFNAMEEND(coredump_note)(struct lwp *l, struct note_state *ns)
 {
-	Elf_Nhdr nhdr;
-	int size, notesize, error;
-	int namesize;
-	char name[64+ELFROUNDSIZE];
+	int error;
+	char name[64];
 	elf_reg intreg;
 #ifdef PT_GETFPREGS
 	elf_fpreg freg;
+	size_t freglen;
 #endif
 
-	size = 0;
-
-	snprintf(name, sizeof(name)-ELFROUNDSIZE, "%s@%d",
+	snprintf(name, sizeof(name), "%s@%d",
 	    ELF_NOTE_NETBSD_CORE_NAME, l->l_lid);
-	namesize = strlen(name) + 1;
-	memset(name + namesize, 0, elfround(namesize) - namesize);
 
-	notesize = sizeof(nhdr) + elfround(namesize) + elfround(sizeof(intreg));
-	if (iocookie) {
-		error = elf_process_read_regs(l, &intreg);
-		if (error)
-			return (error);
+	error = elf_process_read_regs(l, &intreg);
+	if (error)
+		return (error);
 
-		nhdr.n_namesz = namesize;
-		nhdr.n_descsz = sizeof(intreg);
-		nhdr.n_type = PT_GETREGS;
-
-		error = ELFNAMEEND(coredump_writenote)(p, iocookie, &nhdr,
-		    name, &intreg);
-		if (error)
-			return (error);
-
-	}
-	size += notesize;
+	ELFNAMEEND(coredump_savenote)(ns, PT_GETREGS, name, &intreg,
+	    sizeof(intreg));
 
 #ifdef PT_GETFPREGS
-	notesize = sizeof(nhdr) + elfround(namesize) + elfround(sizeof(freg));
-	if (iocookie) {
-		size_t freglen = sizeof(freg);
-#ifdef __HAVE_PROCESS_XFPREGS
-		error = elf_process_read_xfpregs(l, &freg, &freglen);
-#else
-		error = elf_process_read_fpregs(l, &freg);
-#endif
-		if (error)
-			return (error);
+	freglen = sizeof(freg);
+	error = elf_process_read_fpregs(l, &freg, &freglen);
+	if (error)
+		return (error);
 
-		nhdr.n_namesz = namesize;
-		nhdr.n_descsz = freglen;
-		nhdr.n_type = PT_GETFPREGS;
-
-		error = ELFNAMEEND(coredump_writenote)(p, iocookie, &nhdr,
-		    name, &freg);
-		if (error)
-			return (error);
-	}
-	size += notesize;
+	ELFNAMEEND(coredump_savenote)(ns, PT_GETFPREGS, name, &freg, freglen);
 #endif
-	*sizep = size;
 	/* XXX Add hook for machdep per-LWP notes. */
 	return (0);
 }
 
-int
-ELFNAMEEND(coredump_writenote)(struct proc *p, void *cookie, Elf_Nhdr *nhdr,
-    const char *name, void *data)
+static void
+save_note_bytes(struct note_state *ns, const void *data, size_t len)
 {
-	int error;
+	struct note_buf *nb = ns->ns_last;
+	size_t copylen;
+	unsigned char *wp;
 
-	error = coredump_write(cookie, UIO_SYSSPACE, nhdr, sizeof(*nhdr));
-	if (error)
-		return error;
+	/*
+	 * Just copy the data into a buffer list.
+	 * All but the last buffer is full.
+	 */
+	for (;;) {
+		copylen = min(len, sizeof nb->nb_data - ns->ns_offset);
+		wp = nb->nb_data + ns->ns_offset;
+		memcpy(wp, data, copylen);
+		if (copylen == len)
+			break;
+		nb->nb_next = kmem_alloc(sizeof *nb->nb_next, KM_SLEEP);
+		nb = nb->nb_next;
+		ns->ns_last = nb;
+		ns->ns_count++;
+		ns->ns_offset = 0;
+		len -= copylen;
+		data = (const unsigned char *)data + copylen;
+	}
 
-	error = coredump_write(cookie, UIO_SYSSPACE, name,
-	    elfround(nhdr->n_namesz));
-	if (error)
-		return error;
+	while (copylen & (ELFROUNDSIZE - 1))
+	    wp[copylen++] = 0;
 
-	return coredump_write(cookie, UIO_SYSSPACE, data, nhdr->n_descsz);
+	ns->ns_offset += copylen;
+}
+
+void
+ELFNAMEEND(coredump_savenote)(struct note_state *ns, unsigned int type,
+    const char *name, void *data, size_t data_len)
+{
+	Elf_Nhdr nhdr;
+
+	nhdr.n_namesz = strlen(name) + 1;
+	nhdr.n_descsz = data_len;
+	nhdr.n_type = type;
+
+	save_note_bytes(ns, &nhdr, sizeof (nhdr));
+	save_note_bytes(ns, name, nhdr.n_namesz);
+	save_note_bytes(ns, data, data_len);
 }
 
 #else	/* COREDUMP */

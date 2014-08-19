@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.70 2011/08/08 06:30:43 enami Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.70.12.1 2014/08/20 00:04:28 tls Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.70 2011/08/08 06:30:43 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.70.12.1 2014/08/20 00:04:28 tls Exp $");
 
 #include "opt_pax.h"
 
@@ -83,7 +83,7 @@ new_vmcmd(struct exec_vmcmd_set *evsp,
     vsize_t len, vaddr_t addr, struct vnode *vp, u_long offset,
     u_int prot, int flags)
 {
-	struct exec_vmcmd    *vcp;
+	struct exec_vmcmd *vcp;
 
 	VMCMD_EVCNT_INCR(calls);
 	KASSERT(proc != vmcmd_map_pagedvn || (vp->v_iflag & VI_TEXT));
@@ -173,14 +173,14 @@ vmcmd_map_pagedvn(struct lwp *l, struct exec_vmcmd *cmd)
 	 * map the vnode in using uvm_map.
 	 */
 
-        if (cmd->ev_len == 0)
-                return(0);
-        if (cmd->ev_offset & PAGE_MASK)
-                return(EINVAL);
+	if (cmd->ev_len == 0)
+		return 0;
+	if (cmd->ev_offset & PAGE_MASK)
+		return EINVAL;
 	if (cmd->ev_addr & PAGE_MASK)
-		return(EINVAL);
+		return EINVAL;
 	if (cmd->ev_len & PAGE_MASK)
-		return(EINVAL);
+		return EINVAL;
 
 	prot = cmd->ev_prot;
 	maxprot = UVM_PROT_ALL;
@@ -291,7 +291,7 @@ vmcmd_readvn(struct lwp *l, struct exec_vmcmd *cmd)
 				round_page(cmd->ev_addr + cmd->ev_len),
 				maxprot, true);
 		if (error)
-			return (error);
+			return error;
 	}
 
 	if (prot != maxprot) {
@@ -300,7 +300,7 @@ vmcmd_readvn(struct lwp *l, struct exec_vmcmd *cmd)
 				round_page(cmd->ev_addr + cmd->ev_len),
 				prot, false);
 		if (error)
-			return (error);
+			return error;
 	}
 
 	return 0;
@@ -416,7 +416,7 @@ exec_setup_stack(struct lwp *l, struct exec_package *epp)
 	epp->ep_maxsaddr = (vaddr_t)STACK_GROW(epp->ep_minsaddr,
 		max_stack_size);
 
-	DPRINTF(("ep_ssize=%llx ep_maxsaddr=%llx\n", 
+	DPRINTF(("ep_ssize=%llx ep_maxsaddr=%llx\n",
 	    (unsigned long long)epp->ep_ssize,
 	    (unsigned long long)epp->ep_maxsaddr));
 

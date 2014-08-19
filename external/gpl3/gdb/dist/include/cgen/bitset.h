@@ -1,5 +1,5 @@
 /* Header file the type CGEN_BITSET.
-   Copyright 2002, 2005, 2009 Free Software Foundation, Inc.
+   Copyright 2002, 2005, 2009, 2013 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -38,16 +38,16 @@ typedef struct cgen_bitset
   char *bits;
 } CGEN_BITSET;
 
-extern CGEN_BITSET *cgen_bitset_create PARAMS ((unsigned));
-extern void cgen_bitset_init PARAMS ((CGEN_BITSET *, unsigned));
-extern void cgen_bitset_clear PARAMS ((CGEN_BITSET *));
-extern void cgen_bitset_add PARAMS ((CGEN_BITSET *, unsigned));
-extern void cgen_bitset_set PARAMS ((CGEN_BITSET *, unsigned));
-extern int cgen_bitset_compare PARAMS ((CGEN_BITSET *, CGEN_BITSET *));
-extern void cgen_bitset_union PARAMS ((CGEN_BITSET *, CGEN_BITSET *, CGEN_BITSET *));
-extern int cgen_bitset_intersect_p PARAMS ((CGEN_BITSET *, CGEN_BITSET *));
-extern int cgen_bitset_contains PARAMS ((CGEN_BITSET *, unsigned));
-extern CGEN_BITSET *cgen_bitset_copy PARAMS ((CGEN_BITSET *));
+extern CGEN_BITSET *cgen_bitset_create (unsigned);
+extern void cgen_bitset_init (CGEN_BITSET *, unsigned);
+extern void cgen_bitset_clear (CGEN_BITSET *);
+extern void cgen_bitset_add (CGEN_BITSET *, unsigned);
+extern void cgen_bitset_set (CGEN_BITSET *, unsigned);
+extern int cgen_bitset_compare (CGEN_BITSET *, CGEN_BITSET *);
+extern void cgen_bitset_union (CGEN_BITSET *, CGEN_BITSET *, CGEN_BITSET *);
+extern int cgen_bitset_intersect_p (CGEN_BITSET *, CGEN_BITSET *);
+extern int cgen_bitset_contains (CGEN_BITSET *, unsigned);
+extern CGEN_BITSET *cgen_bitset_copy (CGEN_BITSET *);
 
 #ifdef __cplusplus
 } // extern "C"

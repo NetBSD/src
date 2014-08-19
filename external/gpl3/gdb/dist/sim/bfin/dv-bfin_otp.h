@@ -1,6 +1,6 @@
 /* Blackfin One-Time Programmable Memory (OTP) model
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -20,12 +20,6 @@
 
 #ifndef DV_BFIN_OTP_H
 #define DV_BFIN_OTP_H
-
-/* XXX: This should be pushed into the model data.  */
-/* XXX: Not exactly true; it's two sets of 4 regs near each other:
-          0xFFC03600 0x10 - Control
-          0xFFC03680 0x10 - Data  */
-#define BFIN_MMR_OTP_SIZE	0xa0
 
 /* OTP Defined Pages.  */
 #define FPS00		0x004

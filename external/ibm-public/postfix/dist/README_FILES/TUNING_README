@@ -77,8 +77,8 @@ When Postfix responds slowly to SMTP clients:
 
   * If the number of smtpd(8) processes has reached the process limit as
     specified in master.cf, new SMTP clients must wait until a process becomes
-    available. Increase the number of processes if memory permits. See the
-    instructions given under "Tuning the number of Postfix processes".
+    available. See the STRESS_README and POSTSCREEN_README documents for
+    measures that help to prevent SMTP server overload.
 
 DDooiinngg mmoorree wwoorrkk wwiitthh yyoouurr SSMMTTPP sseerrvveerr pprroocceesssseess
 
@@ -268,12 +268,12 @@ should never be the default. They should be used only for transports that
 deliver mail to a small number of high volume domains.
 
 A common situation where high concurrency is called for is on gateways relaying
-a high volume of mail from between the Internet and an intranet mail
-environment. Approximately half the mail (assuming equal volumes inbound and
-outbound) will be destined for the internal mail hubs. Since the internal mail
-hubs will be receiving all external mail exclusively from the gateway, it is
-reasonable to configure the gateway to make greater demands on the capacity of
-the internal SMTP servers.
+a high volume of mail between the Internet and an intranet mail environment.
+Approximately half the mail (assuming equal volumes inbound and outbound) will
+be destined for the internal mail hubs. Since the internal mail hubs will be
+receiving all external mail exclusively from the gateway, it is reasonable to
+configure the gateway to make greater demands on the capacity of the internal
+SMTP servers.
 
 The tuning of the inbound concurrency limits need not be trial and error. A
 high volume capable mailhub should be able to easily handle 50 or 100 (rather
@@ -312,8 +312,8 @@ Postfix queue manager breaks up the list of recipients into smaller lists.
 Postfix will attempt to send multiple copies of the message in parallel.
 
 IMPORTANT: Be careful when increasing the recipient limit per message delivery;
-some smtpd(8) servers abort the connection when they run out of memory or when
-a hard recipient limit is reached, so that the message will never be delivered.
+some SMTP servers abort the connection when they run out of memory or when a
+hard recipient limit is reached, so that the message will never be delivered.
 
 The smtpd_recipient_limit parameter (default: 1000) controls how many
 recipients the Postfix smtpd(8) server will take per delivery. The default
@@ -400,14 +400,14 @@ client processes, 10 SMTP server processes, and so on:
     /etc/postfix/main.cf:
         default_process_limit = 10
 
-You need to execute "postfix reload" to make the change effective. The limits
-are enforced by the Postfix master(8) daemon which does not automatically read
+You need to execute "postfix reload" to make the change effective. This limit
+is enforced by the Postfix master(8) daemon which does not automatically read
 main.cf when it changes.
 
 You can override the process limit for specific Postfix daemons by editing the
 master.cf file. For example, if you do not wish to receive 100 SMTP messages at
-the same time, but do not want to change the process limits for local mail
-deliveries, you could specify:
+the same time, but do not want to change the process limits for other Postfix
+daemons, you could specify:
 
     /etc/postfix/master.cf:
         # ====================================================================

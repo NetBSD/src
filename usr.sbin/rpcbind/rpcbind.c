@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.18 2011/08/31 16:25:00 plunky Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.18.8.1 2014/08/20 00:05:13 tls Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -459,6 +459,8 @@ init_transport(struct netconfig *nconf)
 				nconf->nc_netid);
 		}
 	}
+#else
+	__USE(status);
 #endif
 	/*
 	 * rmtcall only supported on CLTS transports for now.

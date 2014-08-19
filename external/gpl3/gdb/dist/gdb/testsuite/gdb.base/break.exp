@@ -1,6 +1,4 @@
-#   Copyright 1988, 1990, 1991, 1992, 1994, 1995, 1996, 1997, 1998, 1999,
-#   2000, 2002, 2003, 2007, 2008, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright 1988-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -116,17 +114,9 @@ gdb_test "break multi_line_while_conditional" \
     "Breakpoint.*at.* file .*$srcfile, line $bp_location4\\." \
     "breakpoint at start of multi line while conditional"
 
-set bp_location5 [gdb_get_line_number "set breakpoint 5 here"]
 set bp_location6 [gdb_get_line_number "set breakpoint 6 here"]
 
-#
-# check to see what breakpoints are set
-#
-if [target_info exists gdb_stub] {
-    set main_line $bp_location5
-} else {
-    set main_line $bp_location6
-}
+set main_line $bp_location6
 
 if {$hp_aCC_compiler} {
     set proto "\\(int\\)"
@@ -345,7 +335,7 @@ gdb_test "enable" "" ""
 gdb_test "disable 10" "No breakpoint number 10." \
     "disable non-existent breakpoint 10"
 
-gdb_test "set \$baz 1.234"
+gdb_test_no_output "set \$baz = 1.234"
 gdb_test "disable \$baz" \
     "Convenience variable must have integer value.*" \
     "disable with non-integer convenience var"
@@ -363,9 +353,6 @@ gdb_test "disable \$1foo" \
 # handle arguments.
 # Huh? There doesn't *appear* to be anything that passes arguments
 # below.
-if [istarget "mips-idt-*"] then {
-    return
-}
 
 #
 # run until the breakpoint at main is hit. For non-stubs-using targets.
@@ -382,6 +369,13 @@ gdb_expect {
 	fail "run until function breakpoint (timeout)"
     }
 }
+
+# Test the 'list' commands sets current file for the 'break LINENO' command.
+set bp_marker1 [gdb_get_line_number "set breakpoint 16 here" ${srcfile1}]
+gdb_test "list marker1" ".*"
+gdb_test "break $bp_marker1" "Breakpoint \[0-9\]+ at 0x\[0-9a-f\]+: file .*${srcfile1}, line ${bp_marker1}\\." \
+         "break lineno"
+gdb_test_no_output {delete $bpnum}
 
 #
 # run until the breakpoint at a line number
@@ -540,8 +534,9 @@ gdb_test_multiple "catch exec" "$name" {
 # Verify that GDB responds gracefully when asked to set a breakpoint
 # on a nonexistent source line.
 #
+gdb_test_no_output "set breakpoint pending off"
 gdb_test "break 999" \
-    "No line 999 in file .*" \
+    "No line 999 in the current file." \
     "break on non-existent source line"
 
 # Run to the desired default location. If not positioned here, the
@@ -582,14 +577,7 @@ gdb_test_multiple "break $bp_location1" \
 	}
     }
 
-send_gdb "commands $expect_out(1,string)\n"
-send_gdb "silent\n"
-send_gdb "end\n"
-gdb_expect {
-  -re ".*$gdb_prompt $"\
-          {pass "set silent break bp_location1"}
-  timeout {fail "(timeout) set silent break bp_location1"}
-}
+gdb_test "commands $expect_out(1,string)\nsilent\nend" ">end" "set silent break bp_location1"
 
 gdb_test "info break $expect_out(1,string)" \
     "\[0-9\]*\[ \t\]*breakpoint.*:$bp_location1\r\n\[ \t\]*silent.*" \
@@ -618,7 +606,7 @@ gdb_test "break $bp_location12 thread foo" \
 # trailing garbage.
 #
 gdb_test "break $bp_location12 foo" \
-    "Junk at end of arguments.*" \
+    "malformed linespec error: unexpected string, \"foo\".*" \
     "breakpoint with trailing garbage disallowed"
 
 # Verify that GDB responds gracefully to a "clear" command that has
@@ -788,8 +776,8 @@ proc test_next_with_recursion {} {
     gdb_expect {
 	-re "Break.* factorial .value=6. .*$gdb_prompt $" {}
 	-re ".*$gdb_prompt $" {
-	    fail "run to factorial(6)";
-	    gdb_suppress_tests;
+	    fail "run to factorial(6)"
+	    gdb_suppress_tests
 	}
 	timeout { fail "run to factorial(6) (timeout)" ; gdb_suppress_tests }
     }
@@ -850,7 +838,7 @@ proc test_next_with_recursion {} {
 
     if [target_info exists gdb,noresults] { gdb_suppress_tests }
   gdb_continue_to_end "recursive next test"
-   gdb_stop_suppressing_tests;
+   gdb_stop_suppressing_tests
 }
 
 test_next_with_recursion
@@ -916,13 +904,13 @@ set bp_location14 [gdb_get_line_number "set breakpoint 14 here" $srcfile1]
 
 gdb_test_multiple "continue" \
     "run until breakpoint set at small function, optimized file" {
-	-re "Breakpoint $decimal, marker4 \\(d=177601976\\) at .*$srcfile1:$bp_location13\[\r\n\]+$bp_location13\[\t \]+void marker4.*" {
+	-re "Breakpoint $decimal, marker4 \\(d=(d@entry=)?177601976\\) at .*$srcfile1:$bp_location13\[\r\n\]+$bp_location13\[\t \]+void marker4.*" {
 	    pass "run until breakpoint set at small function, optimized file"
 	}
-	-re "Breakpoint $decimal, $hex in marker4 \\(d=177601976\\) at .*$srcfile1:$bp_location13\[\r\n\]+$bp_location13\[\t \]+void marker4.*" {
+	-re "Breakpoint $decimal, $hex in marker4 \\(d=(d@entry=)?177601976\\) at .*$srcfile1:$bp_location13\[\r\n\]+$bp_location13\[\t \]+void marker4.*" {
 	    pass "run until breakpoint set at small function, optimized file"
 	}
-	-re "Breakpoint $decimal, marker4 \\(d=177601976\\) at .*$srcfile1:$bp_location14\[\r\n\]+$bp_location14\[\t \]+void marker4.*" {
+	-re "Breakpoint $decimal, marker4 \\(d=(d@entry=)?177601976\\) at .*$srcfile1:$bp_location14\[\r\n\]+$bp_location14\[\t \]+void marker4.*" {
 	    # marker4() is defined at line 46 when compiled with -DPROTOTYPES
 	    pass "run until breakpoint set at small function, optimized file (line bp_location14)"
 	}
@@ -969,6 +957,18 @@ gdb_expect {
     }
 }
 
+#
+# Test break via convenience variable with file name
+#
+set line [gdb_get_line_number "set breakpoint 1 here"]
+gdb_test_no_output "set \$l = $line"
+gdb_breakpoint ${srcfile}:\$l
+
+gdb_test_no_output "set \$foo=81.5" \
+    "set convenience variable \$foo to 81.5"
+gdb_test "break $srcfile:\$foo" \
+    "Convenience variables used in line specs must have integer values.*" \
+    "set breakpoint via non-integer convenience variable disallowed"
 
 # Reset the default arguments for VxWorks
 if [istarget "*-*-vxworks*"] {

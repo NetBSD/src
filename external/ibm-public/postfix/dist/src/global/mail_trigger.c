@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_trigger.c,v 1.1.1.1.16.1 2013/02/25 00:27:18 tls Exp $	*/
+/*	$NetBSD: mail_trigger.c,v 1.1.1.1.16.2 2014/08/19 23:59:42 tls Exp $	*/
 
 /*++
 /* NAME
@@ -15,7 +15,9 @@
 /*	ssize_t	length;
 /* DESCRIPTION
 /*	mail_trigger() wakes up the specified mail subsystem, by
-/*	sending it the specified request.
+/*	sending it the specified request. In the case of non-FIFO
+/*	server endpoints, a short-running program should invoke
+/*	event_drain() to ensure proper request delivery.
 /*
 /*	Arguments:
 /* .IP class

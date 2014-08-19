@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.10 2005/12/11 12:18:29 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.10.122.1 2014/08/20 00:03:17 tls Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -143,10 +143,10 @@ main(char *boot_arg)
 		strcpy (p, devsw[dev].dv_name);
 		MON(char *, MG_boot_dev) = p;
 		p += strlen (p) + 1;
-		sprintf (p, "(%d,%d,%d)", count, lun, part);
+		snprintf (p, 1024, "(%d,%d,%d)", count, lun, part); /* XXX */
 		MON(char *, MG_boot_info) = p;
 		p += strlen (p) + 1;
-		sprintf (p, "%s", file);
+		snprintf (p, 1024, "%s", file); /* XXX */
 		MON(char *, MG_boot_file) = p;
 #ifdef PROCESS_ARGS
 		p += strlen (p) + 1;

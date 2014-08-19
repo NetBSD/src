@@ -655,9 +655,9 @@ Example:
         smtp_generic_maps = hash:/etc/postfix/generic
 
     /etc/postfix/generic:
-        his@localdomain.local		hisaccount@hisisp.example
-        her@localdomain.local		heraccount@herisp.example
-        @localdomain.local			hisaccount+local@hisisp.example
+        his@localdomain.local               hisaccount@hisisp.example
+        her@localdomain.local               heraccount@herisp.example
+        @localdomain.local                  hisaccount+local@hisisp.example
 
 When mail is sent to a remote host via SMTP, this replaces
 his@localdomain.local by his ISP mail address, replaces her@localdomain.local

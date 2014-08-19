@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.9 2009/04/11 07:51:59 lukem Exp $	*/
+/*	$NetBSD: dump.c,v 1.9.12.1 2014/08/20 00:05:13 tls Exp $	*/
 /*	$KAME: dump.c,v 1.10 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -48,11 +48,11 @@
 
 static FILE *fp;
 
-extern struct ifinfo *iflist;
-
-static void dump_interface_status __P((void));
-static const char *sec2str __P((time_t));
-const char *ifstatstr[] = {"IDLE", "DELAY", "PROBE", "DOWN", "TENTATIVE"};
+static void dump_interface_status(void);
+static const char *sec2str(time_t);
+static const char *ifstatstr[] = {
+	"IDLE", "DELAY", "PROBE", "DOWN", "TENTATIVE"
+};
 
 static void
 dump_interface_status(void)
@@ -115,32 +115,32 @@ sec2str(time_t total)
 	char *ep = &result[sizeof(result)];
 	int n;
 
-	days = total / 3600 / 24;
-	hours = (total / 3600) % 24;
-	mins = (total / 60) % 60;
-	secs = total % 60;
+	days = (int)(total / 3600 / 24);
+	hours = (int)((total / 3600) % 24);
+	mins = (int)((total / 60) % 60);
+	secs = (int)(total % 60);
 
 	if (days) {
 		first = 0;
-		n = snprintf(p, ep - p, "%dd", days);
+		n = snprintf(p, (size_t)(ep - p), "%dd", days);
 		if (n < 0 || n >= ep - p)
 			return "?";
 		p += n;
 	}
 	if (!first || hours) {
 		first = 0;
-		n = snprintf(p, ep - p, "%dh", hours);
+		n = snprintf(p, (size_t)(ep - p), "%dh", hours);
 		if (n < 0 || n >= ep - p)
 			return "?";
 		p += n;
 	}
 	if (!first || mins) {
 		first = 0;
-		n = snprintf(p, ep - p, "%dm", mins);
+		n = snprintf(p, (size_t)(ep - p), "%dm", mins);
 		if (n < 0 || n >= ep - p)
 			return "?";
 		p += n;
 	}
-	snprintf(p, ep - p, "%ds", secs);
-	return(result);
+	snprintf(p, (size_t)(ep - p), "%ds", secs);
+	return result;
 }

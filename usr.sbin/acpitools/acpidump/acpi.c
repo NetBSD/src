@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.8 2011/02/17 10:18:05 jmcneill Exp $ */
+/* $NetBSD: acpi.c,v 1.8.10.1 2014/08/20 00:05:06 tls Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.8 2011/02/17 10:18:05 jmcneill Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.8.10.1 2014/08/20 00:05:06 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -1949,9 +1949,8 @@ acpi_print_rsdt(ACPI_TABLE_HEADER *rsdp)
 			addr = le64toh(xsdt->TableOffsetEntry[i]);
 			break;
 		default:
-			addr = 0;
+			assert((addr = 0));
 		}
-		assert(addr != 0);
 		printf("0x%08lx", addr);
 	}
 	printf(" }\n");

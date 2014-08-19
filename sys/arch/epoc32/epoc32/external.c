@@ -1,6 +1,6 @@
-/*	$NetBSD: external.c,v 1.1.4.2 2013/06/23 06:20:02 tls Exp $	*/
+/*	$NetBSD: external.c,v 1.1.4.3 2014/08/20 00:02:52 tls Exp $	*/
 /*
- * Copyright (c) 2012 KIYOHARA Takashi
+ * Copyright (c) 2012, 2013 KIYOHARA Takashi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: external.c,v 1.1.4.2 2013/06/23 06:20:02 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: external.c,v 1.1.4.3 2014/08/20 00:02:52 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -35,24 +35,18 @@ __KERNEL_RCSID(0, "$NetBSD: external.c,v 1.1.4.2 2013/06/23 06:20:02 tls Exp $")
 
 #include <machine/epoc32.h>
 
+#include "locators.h"
+
 extern struct bus_space external_bs_tag;
 
 static int external_match(device_t, cfdata_t, void *);
 static void external_attach(device_t parent, device_t self, void *aux);
 
+static int external_search(device_t, cfdata_t, const int *, void *);
 static int external_print(void *, const char *);
 
 CFATTACH_DECL_NEW(external, 0, external_match, external_attach, NULL, NULL);
 
-static const struct {
-	const char *name;
-	bus_addr_t addr;
-	bus_addr_t addr2;
-	int irq;
-} knowndevs[] = {
-	{ "etna",	0x20000000, 0x40000000, 5 },	/* 5mx */
-	{ "etna",	0x50000000, 0x30000000, 5 },	/* 5mx pro */
-};
 
 /* ARGSUSED */
 static int
@@ -66,21 +60,28 @@ external_match(device_t parent, cfdata_t match, void *aux)
 static void
 external_attach(device_t parent, device_t self, void *aux)
 {
-	struct external_attach_args aa;
-	int i;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	for (i = 0; i < __arraycount(knowndevs); i++) {
-		aa.name = knowndevs[i].name;
-		aa.iot = &external_bs_tag;
-		aa.addr = knowndevs[i].addr;
-		aa.addr2 = knowndevs[i].addr2;
-		aa.irq = knowndevs[i].irq;
-		config_found_sm_loc(self, "external", NULL, &aa,
-		    external_print, NULL);
-	}
+	config_search_ia(external_search, self, "external", NULL);
+}
+
+/* ARGSUSED */
+static int
+external_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
+{
+	struct external_attach_args aa;
+
+	aa.name = cf->cf_name;
+	aa.iot = &external_bs_tag;
+	aa.addr = cf->cf_loc[EXTERNALCF_ADDR];
+	aa.addr2 = cf->cf_loc[EXTERNALCF_ADDR2];
+	aa.irq = cf->cf_loc[EXTERNALCF_IRQ];
+	if (config_match(parent, cf, &aa))
+		config_attach(parent, cf, &aa, external_print);
+
+	return 0;
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: getpass.c,v 1.27 2012/05/26 19:34:16 christos Exp $	*/
+/*	$NetBSD: getpass.c,v 1.27.2.1 2014/08/20 00:02:14 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getpass.c,v 1.27 2012/05/26 19:34:16 christos Exp $");
+__RCSID("$NetBSD: getpass.c,v 1.27.2.1 2014/08/20 00:02:14 tls Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -245,7 +245,7 @@ getpassfd(const char *prompt, char *buf, size_t len, int *fd, int flags,
 		}
 
 		/* End of line */
-		if (c == C(VEOL, CTRL('j')) || c == C(VEOL2, CTRL('l')))
+		if (c == C(VEOL, CTRL('j')) || c == C(VEOL2, CTRL('m')))
 			c = '\0';
 add:
 		if (l >= len) {

@@ -1,5 +1,4 @@
-# Copyright 1999, 2000, 2001, 2002, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 1999-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,10 +27,9 @@ if [mi_gdb_start] {
     continue
 }
 
-set testfile "var-cmd"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/mi-var-cmd
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-DFAKEARGV}] != "" } {
+standard_testfile var-cmd.c
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
     untested mi-var-cmd.exp
     return -1
 }
@@ -84,9 +82,9 @@ mi_create_varobj_checked lcharacter lcharacter\[0\] char "create local variable 
 
 mi_create_varobj_checked lpcharacter lpcharacter {char \*} "create local variable lpcharacter"
 
-mi_create_varobj_checked llong llong "long int" "create local variable llong"
+mi_create_varobj_checked llong llong "long" "create local variable llong"
 
-mi_create_varobj_checked lplong lplong {long int \*} "create local variable lplong"
+mi_create_varobj_checked lplong lplong {long \*} "create local variable lplong"
 
 mi_create_varobj_checked lfloat lfloat float "create local variable lfloat"
 
@@ -377,11 +375,11 @@ mi_gdb_test "-var-update *" \
 	"assign same value to func (update)"
 
 mi_gdb_test "-var-create array_ptr * array_ptr" \
-	"\\^done,name=\"array_ptr\",numchild=\"1\",value=\"$hex\",type=\"int \\*\",has_more=\"0\"" \
+	"\\^done,name=\"array_ptr\",numchild=\"1\",value=\"$hex <array>\",type=\"int \\*\",has_more=\"0\"" \
 	"create global variable array_ptr"
 
 mi_gdb_test "-var-assign array_ptr array2" \
-	"\\^done,value=\"$hex\"" \
+	"\\^done,value=\"$hex <array2>\"" \
 	"assign array to pointer"
 
 mi_gdb_test "-var-update *" \
@@ -389,7 +387,7 @@ mi_gdb_test "-var-update *" \
 	"assign array to pointer (update)"
 
 mi_gdb_test "-var-assign array_ptr array2" \
-	"\\^done,value=\"$hex\"" \
+	"\\^done,value=\"$hex <array2>\"" \
 	"assign same array to pointer"
 
 mi_gdb_test "-var-update *" \
@@ -409,7 +407,7 @@ mi_continue_to subroutine1
 # Desc: create variable for locals i,l in subroutine1
 mi_create_varobj_checked i i int "create i"
 
-mi_create_varobj_checked l l {long int \*} "create l"
+mi_create_varobj_checked l l {long \*} "create l"
 
 # Test: c_variable-2.11
 # Desc: create do_locals_tests local in subroutine1
@@ -560,7 +558,13 @@ mi_gdb_test "-var-update selected_a" \
 	"\\^done,changelist=\\\[\{name=\"selected_a\",in_scope=\"true\",type_changed=\"true\",new_type=\"int\",new_num_children=\"0\",has_more=\"0\"\}\\\]" \
 	"update selected_a in do_special_tests"
 
-mi_gdb_test "-file-exec-and-symbols ${binfile}" "\\^done" \
+if [is_remote host] {
+    set filename ${testfile}
+} else {
+    set filename ${binfile}
+}
+
+mi_gdb_test "-file-exec-and-symbols ${filename}" "\\^done" \
     "floating varobj invalidation"
 
 mi_delete_varobj selected_a "delete selected_a"
@@ -623,17 +627,17 @@ mi_gdb_test "kill" \
     "kill program before endvar"
 
 mi_gdb_test "-var-create endvar * _end" \
-    {(\^done,name="endvar",numchild="0",value=".*",type=".*"|&".*unable to.*".*\^error,msg=".*")} \
+    {(\^done,name="endvar",numchild="0",value=".*",type=".*"|\^error,msg=".*")} \
     "create endvar"
 
 # Allow this to succeed whether the value is readable, unreadable, or
 # missing.  Most important is that GDB does not crash.
 mi_gdb_test "-var-update endvar" \
-    {(\^done,changelist=\[.*\]|^".*".*\^error,msg=".*not found")} \
+    {(\^done,changelist=\[.*\]|\^error,msg=".*not found")} \
     "update endvar"
 
 mi_gdb_test "-var-delete endvar" \
-    "\\^done,ndeleted=\"1\"" \
+    {(\^done,ndeleted="1"|\^error,msg=".*not found")} \
     "delete endvar"
 
 mi_delete_breakpoints

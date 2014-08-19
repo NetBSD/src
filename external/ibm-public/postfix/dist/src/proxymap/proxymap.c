@@ -1,4 +1,4 @@
-/*	$NetBSD: proxymap.c,v 1.1.1.2.12.1 2013/02/25 00:27:26 tls Exp $	*/
+/*	$NetBSD: proxymap.c,v 1.1.1.2.12.2 2014/08/19 23:59:44 tls Exp $	*/
 
 /*++
 /* NAME
@@ -109,7 +109,7 @@
 /*	usability, because it can open only chrooted tables.
 /*
 /*	The \fBproxymap\fR(8) server is not a trusted daemon process, and must
-/*	not be used to look up sensitive information such as user or
+/*	not be used to look up sensitive information such as UNIX user or
 /*	group IDs, mailbox file/directory names or external commands.
 /*
 /*	In Postfix version 2.2 and later, the proxymap client recognizes
@@ -258,6 +258,7 @@ char   *var_rcpt_canon_maps;
 char   *var_relocated_maps;
 char   *var_transport_maps;
 char   *var_verify_map;
+char   *var_smtpd_snd_auth_maps;
 char   *var_psc_cache_map;
 char   *var_proxy_read_maps;
 char   *var_proxy_write_maps;
@@ -307,6 +308,7 @@ static DICT *proxy_map_find(const char *map_type_name, int request_flags,
 
     while (strncmp(map_type_name, PROXY_COLON, PROXY_COLON_LEN) == 0)
 	map_type_name += PROXY_COLON_LEN;
+    /* XXX The following breaks with maps that have ':' in their name. */
     if (strchr(map_type_name, ':') == 0)
 	PROXY_MAP_FIND_ERROR_RETURN(PROXY_STAT_BAD);
     if (htable_locate(proxy_auth_maps, map_type_name) == 0) {
@@ -732,6 +734,7 @@ int     main(int argc, char **argv)
 	VAR_RELOCATED_MAPS, DEF_RELOCATED_MAPS, &var_relocated_maps, 0, 0,
 	VAR_TRANSPORT_MAPS, DEF_TRANSPORT_MAPS, &var_transport_maps, 0, 0,
 	VAR_VERIFY_MAP, DEF_VERIFY_MAP, &var_verify_map, 0, 0,
+	VAR_SMTPD_SND_AUTH_MAPS, DEF_SMTPD_SND_AUTH_MAPS, &var_smtpd_snd_auth_maps, 0, 0,
 	VAR_PSC_CACHE_MAP, DEF_PSC_CACHE_MAP, &var_psc_cache_map, 0, 0,
 	/* The following two must be last for $mapname to work as expected. */
 	VAR_PROXY_READ_MAPS, DEF_PROXY_READ_MAPS, &var_proxy_read_maps, 0, 0,

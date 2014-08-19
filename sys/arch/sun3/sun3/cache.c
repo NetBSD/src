@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.21 2009/11/21 04:16:52 rmind Exp $	*/
+/*	$NetBSD: cache.c,v 1.21.22.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.21 2009/11/21 04:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.21.22.1 2014/08/20 00:03:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.21 2009/11/21 04:16:52 rmind Exp $");
 
 static void cache_clear_tags(void);
 
-void 
+void
 cache_flush_page(vaddr_t pgva)
 {
 	char *va, *endva;
@@ -90,7 +90,7 @@ cache_flush_page(vaddr_t pgva)
 	__asm volatile ("movc %0, %%dfc" : : "d" (old_dfc));
 }
 
-void 
+void
 cache_flush_segment(vaddr_t sgva)
 {
 	char *va, *endva;
@@ -119,7 +119,7 @@ cache_flush_segment(vaddr_t sgva)
 	__asm volatile ("movc %0, %%dfc" : : "d" (old_dfc));
 }
 
-void 
+void
 cache_flush_context(void)
 {
 	char *va, *endva;
@@ -145,7 +145,7 @@ cache_flush_context(void)
 	__asm volatile ("movc %0, %%dfc" : : "d" (old_dfc));
 }
 
-static void 
+static void
 cache_clear_tags(void)
 {
 	char *va, *endva;
@@ -171,7 +171,7 @@ cache_clear_tags(void)
 	__asm volatile ("movc %0, %%dfc" : : "d" (old_dfc));
 }
 
-void 
+void
 cache_enable(void)
 {
 	int enab_reg;

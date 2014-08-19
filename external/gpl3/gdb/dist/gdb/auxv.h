@@ -1,7 +1,6 @@
 /* Auxiliary vector support for GDB, the GNU debugger.
 
-   Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -43,13 +42,7 @@ extern int target_auxv_search (struct target_ops *ops,
 /* Print the contents of the target's AUXV on the specified file.  */
 extern int fprint_target_auxv (struct ui_file *file, struct target_ops *ops);
 
-extern LONGEST memory_xfer_auxv (struct target_ops *ops,
-				 enum target_object object,
-				 const char *annex,
-				 gdb_byte *readbuf,
-				 const gdb_byte *writebuf,
-				 ULONGEST offset,
-				 LONGEST len);
+extern target_xfer_partial_ftype memory_xfer_auxv;
 
 
 #endif

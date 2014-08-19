@@ -124,7 +124,7 @@
 
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.9 2012/04/13 15:37:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.9.2.1 2014/08/20 00:04:35 tls Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 
@@ -1901,7 +1901,9 @@ vtw_control(int af, uint32_t msl)
 int
 vtw_add(int af, struct tcpcb *tp)
 {
+#ifdef VTW_DEBUG
 	int		enable;
+#endif
 	vtw_ctl_t	*ctl;
 	vtw_t		*vtw;
 
@@ -1911,7 +1913,9 @@ vtw_add(int af, struct tcpcb *tp)
 	if (!ctl)
 		return 0;
 
+#ifdef VTW_DEBUG
 	enable = (af == AF_INET) ? tcp4_vtw_enable : tcp6_vtw_enable;
+#endif
 
 	vtw = vtw_alloc(ctl);
 

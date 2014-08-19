@@ -1,4 +1,4 @@
-/*	$NetBSD: minixfs3.h,v 1.1.10.1 2013/06/23 06:20:23 tls Exp $ */
+/*	$NetBSD: minixfs3.h,v 1.1.10.2 2014/08/20 00:04:30 tls Exp $ */
 
 /*-
  * Copyright (c) 2012
@@ -117,7 +117,7 @@ struct mfs_sblock {
 #define NO_BLOCK		((block_t) 0)	/* absence of a block number */
 
 /* Turn file system block numbers into disk block addresses */
-#define fsbtodb(fs, b)	((b) << (fs)->mfs_fsbtodb)
+#define MFS_FSBTODB(fs, b)	((b) << (fs)->mfs_fsbtodb)
 
 #define	ino_to_fsba(fs, x)						\
 	(((x) - 1) / (fs)->mfs_inodes_per_block +			\
@@ -151,7 +151,7 @@ void minixfs3_i_bswap(struct mfs_dinode *, struct mfs_dinode *);
  */
 #define mfs_blkoff(fs, loc)	/* calculates (loc % fs->mfs_bsize) */ \
 	((loc) & (fs)->mfs_qbmask)
-#define lblkno(fs, loc)		/* calculates (loc / fs->mfs_bsize) */ \
+#define mfs_lblkno(fs, loc)	/* calculates (loc / fs->mfs_bsize) */ \
 	((loc) >> (fs)->mfs_bshift)
 
 /* Flag bits for i_mode in the inode. */

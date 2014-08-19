@@ -101,7 +101,7 @@ mpn_toom43_mul (mp_ptr pp,
 #define b1d   bsm1
 
   /* Compute as2 and asm2.  */
-  flags = toom6_vm2_neg & mpn_toom_eval_dgr3_pm2 (as2, asm2, ap, n, s, a1a3);
+  flags = (enum toom6_flags) (toom6_vm2_neg & mpn_toom_eval_dgr3_pm2 (as2, asm2, ap, n, s, a1a3));
 
   /* Compute bs2 and bsm2.  */
   b1d[n] = mpn_lshift (b1d, b1, n, 1);			/*       2b1      */
@@ -115,7 +115,7 @@ mpn_toom43_mul (mp_ptr pp,
   if (mpn_cmp (b0b2, b1d, n+1) < 0)
     {
       mpn_add_n_sub_n (bs2, bsm2, b1d, b0b2, n+1);
-      flags ^= toom6_vm2_neg;
+      flags = (enum toom6_flags) (flags ^ toom6_vm2_neg);
     }
   else
     {
@@ -126,7 +126,7 @@ mpn_toom43_mul (mp_ptr pp,
   if (mpn_cmp (b0b2, b1d, n+1) < 0)
     {
       mpn_sub_n (bsm2, b1d, b0b2, n+1);
-      flags ^= toom6_vm2_neg;
+      flags = (enum toom6_flags) (flags ^ toom6_vm2_neg);
     }
   else
     {
@@ -135,7 +135,7 @@ mpn_toom43_mul (mp_ptr pp,
 #endif
 
   /* Compute as1 and asm1.  */
-  flags ^= toom6_vm1_neg & mpn_toom_eval_dgr3_pm1 (as1, asm1, ap, n, s, a0a2);
+  flags = (enum toom6_flags) (flags ^ toom6_vm1_neg & mpn_toom_eval_dgr3_pm1 (as1, asm1, ap, n, s, a0a2));
 
   /* Compute bs1 and bsm1.  */
   bsm1[n] = mpn_add (bsm1, b0, n, b2, t);
@@ -144,7 +144,7 @@ mpn_toom43_mul (mp_ptr pp,
     {
       cy = mpn_add_n_sub_n (bs1, bsm1, b1, bsm1, n);
       bs1[n] = cy >> 1;
-      flags ^= toom6_vm1_neg;
+      flags = (enum toom6_flags) (flags ^ toom6_vm1_neg);
     }
   else
     {
@@ -157,7 +157,7 @@ mpn_toom43_mul (mp_ptr pp,
   if (bsm1[n] == 0 && mpn_cmp (bsm1, b1, n) < 0)
     {
       mpn_sub_n (bsm1, b1, bsm1, n);
-      flags ^= toom6_vm1_neg;
+      flags = (enum toom6_flags) (flags ^ toom6_vm1_neg);
     }
   else
     {

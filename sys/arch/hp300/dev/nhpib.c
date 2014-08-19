@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.40 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.40.44.1 2014/08/20 00:03:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.40 2008/04/28 20:23:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.40.44.1 2014/08/20 00:03:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -508,14 +508,11 @@ nhpibintr(void *arg)
 	int stat0;
 	int stat1;
 
-#ifdef lint
-	if (stat1 = unit)
-		return 1;
-#endif
 	if ((hd->hpib_ids & IDS_IR) == 0)
 		return 0;
 	stat0 = hd->hpib_mis;
 	stat1 = hd->hpib_lis;
+	__USE(stat1);
 
 	hq = TAILQ_FIRST(&hs->sc_queue);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.101.6.1 2013/06/23 06:29:01 tls Exp $	*/
+/*	$NetBSD: inet.c,v 1.101.6.2 2014/08/20 00:05:01 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.101.6.1 2013/06/23 06:29:01 tls Exp $");
+__RCSID("$NetBSD: inet.c,v 1.101.6.2 2014/08/20 00:05:01 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -265,7 +265,7 @@ getpcblist_sysctl(const char *name, size_t *len) {
 static struct kinfo_pcb *
 getpcblist_kmem(u_long off, const char *name, size_t *len) {
 	struct inpcbtable table;
-	struct inpcb *head, *next, *prev;
+	struct inpcb_hdr *next, *prev;
 	struct inpcb inpcb;
 	struct tcpcb tcpcb;
 	struct socket sockb;
@@ -273,6 +273,7 @@ getpcblist_kmem(u_long off, const char *name, size_t *len) {
 	struct kinfo_pcb *pcblist;
 	size_t size = 100, i;
 	struct sockaddr_in sin; 
+	struct inpcbqueue *head;
 
 	if (off == 0) {
 		*len = 0;
@@ -280,22 +281,18 @@ getpcblist_kmem(u_long off, const char *name, size_t *len) {
 	}
 
 	kread(off, (char *)&table, sizeof table);
-	prev = head =
-	    (struct inpcb *)&((struct inpcbtable *)off)->inpt_queue.cqh_first;
-	next = (struct inpcb *)table.inpt_queue.cqh_first;
+	head = &table.inpt_queue;
+	next = TAILQ_FIRST(head);
+	prev = TAILQ_END(head);
 
 	if ((pcblist = malloc(size)) == NULL)
 		err(1, "malloc");
 
 	i = 0;
-	while (next != head) {
+	while (next != TAILQ_END(head)) {
 		kread((u_long)next, (char *)&inpcb, sizeof inpcb);
-		if ((struct inpcb *)inpcb.inp_queue.cqe_prev != prev) {
-			warnx("bad pcb");
-			break;
-		}
 		prev = next;
-		next = (struct inpcb *)inpcb.inp_queue.cqe_next;
+		next = TAILQ_NEXT(&inpcb, inp_queue);
 
 		if (inpcb.inp_af != AF_INET)
 			continue;
@@ -305,7 +302,7 @@ getpcblist_kmem(u_long off, const char *name, size_t *len) {
 			kread((u_long)inpcb.inp_ppcb,
 			    (char *)&tcpcb, sizeof (tcpcb));
 		}
-		pcblist[i].ki_ppcbaddr = 
+		pcblist[i].ki_ppcbaddr =
 		    istcp ? (uintptr_t) inpcb.inp_ppcb : (uintptr_t) prev;
 		pcblist[i].ki_rcvq = (uint64_t)sockb.so_rcv.sb_cc;
 		pcblist[i].ki_sndq = (uint64_t)sockb.so_snd.sb_cc;

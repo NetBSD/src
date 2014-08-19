@@ -1,6 +1,6 @@
-.\"    $NetBSD: npf.conf.5,v 1.15.2.3 2013/06/23 06:29:05 tls Exp $
+.\"    $NetBSD: npf.conf.5,v 1.15.2.4 2014/08/20 00:05:11 tls Exp $
 .\"
-.\" Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This material is based upon work partially supported by The
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 10, 2013
+.Dd August 2, 2014
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -78,15 +78,14 @@ $var2 = { 10.0.0.1, 10.0.0.2 }
 Common variable definitions are for IP addresses, networks, ports,
 and interfaces.
 .Ss Tables
-Tables are specified using a number between angle brackets
+Tables are specified using a name between angle brackets
 \*[Lt] and \*[Gt].
-The number used to specify a table should be between 0 and 15.
 The following is an example of table definition:
 .Bd -literal
-table <1> type hash dynamic
+table <black> type hash dynamic
 .Pp
 .Ed
-Currently, tables support two storage types: "hash" or "tree".
+Currently, tables support three storage types: "hash", "tree", or "cdb".
 They can also be "dynamic" or static i.e. loaded from the specified file.
 .Pp
 The file should contain a list of IP addresses and/or networks in the form of:
@@ -95,12 +94,13 @@ The file should contain a list of IP addresses and/or networks in the form of:
 10.1.1.1
 .Ed
 .Pp
-Tables of type "hash" can only contain IP addresses.
+Tables of type "hash" and "cdb" can only contain IP addresses.
+Also, the latter can only be static.
 .Ss Interfaces
 Interfaces can be specified as the values of the variables:
 .Pp
 .Bd -literal
-$pub_if_list = { ifnet(wm0), ifnet(wm1) }
+$pub_if_list = { inet4(wm0), inet4(wm1) }
 .Ed
 .Pp
 In the context of filtering, an interface provides a list of its
@@ -108,14 +108,14 @@ all IP addresses, including IPv4 and IPv6.
 Specific interface addresses can be selected by the family, e.g.:
 .Bd -literal
 $pub_if4 = inet4(wm0)
-$pub_if6 = { inet6(wm0) }
+$pub_if46 = { inet4(wm0), inet6(wm0) }
 .Ed
 .Ss Groups
 Groups may have the following options: name, interface, and direction.
 They are defined in the following form:
 .Pp
 .Bd -literal
-group (name "my_group", interface wm0, in) {
+group "my-name" in on wm0 {
 	# List of rules
 }
 .Ed
@@ -134,7 +134,7 @@ to apply a procedure to the packet (e.g. "log") in either case.
 .Pp
 A "fully-featured" rule would for example be:
 .Bd -literal
-pass stateful in final family inet proto tcp flags S/SA \\
+pass stateful in final family inet4 proto tcp flags S/SA \\
 	from $source port $sport to $dest port $dport apply "someproc"
 .Ed
 .Pp
@@ -146,11 +146,37 @@ specification at present is limited to protocol TCP understanding flags,
 TCP and UDP understanding source and destination ports, and ICMP and
 IPv6-ICMP understanding icmp-type.
 .Pp
+Alternatively, NPF supports
+.Xr pcap-filter 7
+syntax, for example:
+.Bd -literal
+block out final pcap-filter "tcp and dst 10.1.1.252"
+.Ed
+.Pp
 Fragments are not selectable since NPF always reassembles packets
 before further processing.
+.Ss Stateful
+Stateful packet inspection is enabled using
+.Cd stateful
+or
+.Cd stateful-ends
+keywords.
+The former creates a state which is uniquely identified by a 5-tuple (source
+and destination IP addresses, port numbers and an interface identifier).
+The latter excludes the interface identifier and must be used with
+precaution.
+In both cases, a full TCP state tracking is performed for TCP connections
+and a limited tracking for message-based protocols (UDP and ICMP).
+.Pp
+By default, a stateful rule implies SYN-only flag check ("flags S/SAFR")
+for the TCP packets.
+It is not advisable to change this behavior; however,
+it can be overridden with the
+.Cd flags
+keyword.
 .Ss Map
 Network Address Translation (NAT) is expressed in a form of segment mapping.
-At present, only dynamic translation is supported.
+The translation may be dynamic (stateful) or static (stateless).
 The following mapping types are available:
 .Pp
 .Bl -tag -width <-> -compact
@@ -216,13 +242,14 @@ var-def		= var "=" ( var-value | "{" value *[ "," value ] "}" )
 
 ; Table definition.  Table ID shall be numeric.  Path is in the double quotes.
 
-table-id	= \*[Lt]tid\*[Gt]
-table-def	= "table" table-id "type" ( "hash" | "tree" )
+table-id	= \*[Lt]table-name\*[Gt]
+table-def	= "table" table-id "type" ( "hash" | "tree" | "cdb" )
 		  ( "dynamic" | "file" path )
 
 ; Mapping for address translation.
 
-map		= "map" interface ( "static" | "dynamic" )
+map		= "map" interface
+		  ( "static" [ "algo" algorithm ] | "dynamic" )
 		  net-seg ( "->" | "<-" | "<->" ) net-seg
 		  [ "pass" filt-opts ]
 
@@ -236,19 +263,25 @@ proc		= "procedure" proc-name "{" *( proc-call [ new-line ] ) "}"
 proc-opts	= key " " val [ "," proc-opts ]
 proc-call	= call-name ":" proc-opts new-line
 
-; Group definition and the ruleset.
+; Group definition and the rule list.
 
-group		= "group" "(" ( "default" | group-opts ) ")" "{" ruleset "}"
-group-opts	= [ "name" string ] [ "interface" interface ] [ "in" | "out" ]
-ruleset		= [ rule new-line ] [ ruleset ]
+group		= "group" ( "default" | group-opts ) "{" rule-list "}"
+group-opts	= name-string [ "in" | "out" ] [ "on" interface ]
+rule-list	= [ rule new-line ] rule-list
 
-rule		= ( "block" [ block-opts ] | "pass" ) [ "stateful" ]
-		  [ "in" | out" ] [ "final" ] [ "on" iface ]
-		  [ "family" fam-opt ] [ "proto" protocol [ proto-opts ] ]
-		  ( "all" | filt-opts ) [ "apply" proc-name ]
+npf-filter	= [ "family" family-opt ] [ "proto" protocol [ proto-opts ] ]
+		  ( "all" | filt-opts )
+static-rule	= ( "block" [ block-opts ] | "pass" )
+		  [ "stateful" | "stateful-ends" ]
+		  [ "in" | out" ] [ "final" ] [ "on" interface ]
+		  ( npf-filter | "pcap-filter" pcap-filter-expr )
+		  [ "apply" proc-name ]
+
+dynamic-ruleset	= "ruleset" group-opts
+rule		= static-rule | dynamic-ruleset
 
 block-opts	= "return-rst" | "return-icmp" | "return"
-fam-opt		= "inet" | "inet6"
+family-opt	= "inet4" | "inet6"
 proto-opts	= "flags" tcp-flags [ "/" tcp-flag-mask ] |
 		  "icmp-type" type [ "code" icmp-code ]
 
@@ -270,11 +303,11 @@ directory containing further examples
 .\" -----
 .Sh EXAMPLES
 .Bd -literal
-$ext_if = ifnet(wm0)
-$int_if = ifnet(wm1)
+$ext_if = { inet4(wm0), inet6(wm0) }
+$int_if = { inet4(wm1), inet6(wm1) }
 
-table <1> type hash file "/etc/npf_blacklist"
-table <2> type tree dynamic
+table <blacklist> type hash file "/etc/npf_blacklist"
+table <limited> type tree dynamic
 
 $services_tcp = { http, https, smtp, domain, 6000, 9022 }
 $services_udp = { domain, ntp, 6000 }
@@ -291,32 +324,37 @@ procedure "log" {
 	log: npflog0
 }
 
-group (name "external", interface $ext_if) {
+group "external" on $ext_if {
 	pass stateful out final all
 
-	block in final from \*[Lt]1\*[Gt]
-	pass stateful in final family inet proto tcp to $ext_if port ssh apply "log"
+	block in final from \*[Lt]blacklist\*[Gt]
+	pass stateful in final family inet4 proto tcp to $ext_if port ssh apply "log"
 	pass stateful in final proto tcp to $ext_if port $services_tcp
 	pass stateful in final proto udp to $ext_if port $services_udp
 	pass stateful in final proto tcp to $ext_if port 49151-65535	# Passive FTP
 	pass stateful in final proto udp to $ext_if port 33434-33600	# Traceroute
 }
 
-group (name "internal", interface $int_if) {
+group "internal" on $int_if {
 	block in all
-	pass in final from \*[Lt]2\*[Gt]
+	block in final from \*[Lt]limited\*[Gt]
+
+	# Ingress filtering as per BCP 38 / RFC 2827.
+	pass in final from $localnet
 	pass out final all
 }
 
-group (default) {
+group default {
 	pass final on lo0 all
 	block all
 }
 .Ed
 .\" -----
 .Sh SEE ALSO
-.Xr npfctl 8 ,
-.Xr npf_ncode 9
+.Xr bpf 4 ,
+.Xr npf 7 ,
+.Xr pcap-filter 7 ,
+.Xr npfctl 8
 .Sh HISTORY
 NPF first appeared in
 .Nx 6.0 .

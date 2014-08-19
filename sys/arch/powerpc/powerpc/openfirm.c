@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.21.12.1 2013/06/23 06:20:10 tls Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.21.12.2 2014/08/20 00:03:20 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.21.12.1 2013/06/23 06:20:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.21.12.2 2014/08/20 00:03:20 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -616,7 +616,7 @@ OF_boot(const char *bootspec)
 	ofbcopy(bootspec, OF_buf, l + 1);
 	args.bootspec = OF_buf;
 	openfirmware(&args);
-	while (1);			/* just in case */
+	panic("OF_boot didn't");
 }
 
 void
@@ -699,13 +699,13 @@ OF_interpret(const char *cmd, int nargs, int nreturns, ...)
 		return -1;
 	ofbcopy(cmd, OF_buf, len + 1);
 	i = 0;
-	args.slots[i] = (uint32_t)OF_buf;
+	args.slots[i] = (uintptr_t)OF_buf;
 	args.nargs = nargs + 1;
 	args.nreturns = nreturns + 1;
 	va_start(ap, nreturns);
 	i++;
 	while (i < args.nargs) {
-		args.slots[i] = (uint32_t)va_arg(ap, uint32_t *);
+		args.slots[i] = (uintptr_t)va_arg(ap, uint32_t *);
 		i++;
 	}
 

@@ -1,7 +1,6 @@
 /* Target-dependent code for Solaris x86.
 
-   Copyright (C) 2002, 2003, 2004, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,7 +21,7 @@
 #include "value.h"
 #include "osabi.h"
 
-#include "gdb_string.h"
+#include <string.h>
 
 #include "sol2-tdep.h"
 #include "i386-tdep.h"
@@ -56,7 +55,7 @@ static int
 i386_sol2_sigtramp_p (struct frame_info *this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
-  char *name;
+  const char *name;
 
   find_pc_partial_function (pc, &name, NULL, NULL);
   return (name && (strcmp ("sigacthandler", name) == 0
@@ -80,8 +79,8 @@ i386_sol2_mcontext_addr (struct frame_info *this_frame)
 /* SunPRO encodes the static variables.  This is not related to C++
    mangling, it is done for C too.  */
 
-static char *
-i386_sol2_static_transform_name (char *name)
+static const char *
+i386_sol2_static_transform_name (const char *name)
 {
   char *p;
   if (name[0] == '.')

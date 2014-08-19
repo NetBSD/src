@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.105.2.3 2013/06/23 06:21:06 tls Exp $	*/
+/*	$NetBSD: readline.c,v 1.105.2.4 2014/08/20 00:02:17 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.105.2.3 2013/06/23 06:21:06 tls Exp $");
+__RCSID("$NetBSD: readline.c,v 1.105.2.4 2014/08/20 00:02:17 tls Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -236,13 +236,20 @@ static const char *
 _default_history_file(void)
 {
 	struct passwd *p;
-	static char path[PATH_MAX];
+	static char *path;
+	size_t len;
 
-	if (*path)
+	if (path)
 		return path;
+
 	if ((p = getpwuid(getuid())) == NULL)
 		return NULL;
-	(void)snprintf(path, sizeof(path), "%s/.history", p->pw_dir);
+
+	len = strlen(p->pw_dir) + sizeof("/.history");
+	if ((path = malloc(len)) == NULL)
+		return NULL;
+
+	(void)snprintf(path, len, "%s/.history", p->pw_dir);
 	return path;
 }
 
@@ -1475,6 +1482,9 @@ clear_history(void)
 {
 	HistEvent ev;
 
+	if (h == NULL || e == NULL)
+		rl_initialize();
+
 	(void)history(h, &ev, H_CLEAR);
 	history_length = 0;
 }
@@ -1960,7 +1970,7 @@ rl_callback_read_char(void)
 		} else
 			wbuf = NULL;
 		(*(void (*)(const char *))rl_linefunc)(wbuf);
-		//el_set(e, EL_UNBUFFERED, 1);
+		el_set(e, EL_UNBUFFERED, 1);
 	}
 }
 

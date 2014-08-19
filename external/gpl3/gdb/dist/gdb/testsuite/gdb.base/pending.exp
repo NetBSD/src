@@ -1,5 +1,4 @@
-#   Copyright 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright 2003-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,10 +15,6 @@
 
 # This file was created by Jeff Johnston. (jjohnstn@redhat.com)
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 #
 # test running programs
 #
@@ -28,17 +23,15 @@ if {[skip_shlib_tests]} {
     return 0
 }
 
-set testfile "pending"
+standard_testfile .c
 set libfile "pendshr"
-set srcfile $testfile.c
 set libsrc  $srcdir/$subdir/$libfile.c
-set binfile $objdir/$subdir/$testfile
-set lib_sl  $objdir/$subdir/$libfile.sl
+set lib_sl  [standard_output_file $libfile.sl]
 
 set lib_opts  debug
 set exec_opts [list debug shlib=$lib_sl]
 
-if [get_compiler_info ${binfile}] {
+if [get_compiler_info] {
     return -1
 }
 
@@ -59,6 +52,9 @@ gdb_test_multiple "break pendfunc1" "set pending breakpoint" {
 	    gdb_test "y" "Breakpoint.*pendfunc1.*pending." "set pending breakpoint (without symbols)"
      }
 }
+
+# Complete the condition (PR 15413).
+gdb_test "complete condition " "condition 1"
 
 gdb_test "info break" \
     "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
@@ -85,9 +81,6 @@ gdb_reinitialize_dir $srcdir/$subdir
 gdb_load ${binfile}
 gdb_load_shlibs $lib_sl
 
-if [target_info exists gdb_stub] {
-    gdb_step_for_stub;
-}
 #
 # Test setting, querying, and modifying pending breakpoints
 #

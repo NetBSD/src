@@ -1,4 +1,4 @@
-.\"	$NetBSD: iee.4,v 1.5 2009/05/27 19:23:59 snj Exp $
+.\"	$NetBSD: iee.4,v 1.5.14.1 2014/08/20 00:02:35 tls Exp $
 .\" Copyright (c) 2002 Jochen Kunz.
 .\" All rights reserved.
 .\"
@@ -39,7 +39,7 @@ interface
 .Sh SYNOPSIS
 .Ss ews4800mips
 .Cd iee* at sbdio?
-.Ss hp700
+.Ss hppa
 .Cd iee* at gsc?
 .Sh DESCRIPTION
 The
@@ -70,7 +70,7 @@ interface supports
 .Tn Intel
 .Tn i82596CA
 based on-board Ethernet on EWS4800/350.
-.Ss hp700
+.Ss hppa
 The
 .Nm
 interface supports
@@ -80,7 +80,7 @@ on ASP/ASP2 based machines and the
 .Tn i82596CA
 macrocell in LASI based machines.
 GSC expansion cards may work, but are not tested.
-Media selection on hp700 is done either manually via hardware
+Media selection on hppa is done either manually via hardware
 jumper or automatically depending on machine model.
 .Sh DIAGNOSTICS
 .Bl -diag
@@ -95,7 +95,7 @@ Many frames where received under high load and the receive ring buffer
 was to small to store them all.
 Frame reception was restarted from scratch.
 Most likely there where frames lost.
-.It "iee%d: iee_intr: scb_status=0x%x scb_cmd=0x%x faild command %d: cb_status[%d]=0x%.4x cb_cmd[%d]=0x%.4x"
+.It "iee%d: iee_intr: scb_status=0x%x scb_cmd=0x%x failed command %d: cb_status[%d]=0x%.4x cb_cmd[%d]=0x%.4x"
 A transmit or setup command was not executed successfully.
 .It "iee%d: iee_intr: crc_err=%d"
 Number of frames with a CRC error received.
@@ -108,7 +108,7 @@ Number of frames lost because the system bus was not available for DMA.
 .It "iee%d: iee_intr: rcvcdt_err=%d"
 Number of collisions detected during frame reception.
 .It "iee%d: iee_intr: short_fr_err=%d"
-Number of frames received that where shorter then the minimum frame length.
+Number of frames received that where shorter than the minimum frame length.
 .It "iee%d: iee_start: failed to load DMA map"
 A
 .Xr mbuf 9
@@ -141,7 +141,7 @@ The hardware didn't respond to a transmit or setup command within five seconds.
 The interface will be reset and restarted.
 .It "iee%d: iee_gsc_cmd: timeout n=%d"
 Timeout at sending a channel attention command to the chip.
-.It "iee%d: iee_gsc_reset timeout bussy=0x%x"
+.It "iee%d: iee_gsc_reset timeout busy=0x%x"
 Timeout at resetting the chip.
 Possible errors during
 .Xr autoconf 4 .

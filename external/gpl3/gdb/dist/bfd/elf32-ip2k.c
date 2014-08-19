@@ -1,5 +1,5 @@
 /* Ubicom IP2xxx specific support for 32-bit ELF
-   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010
+   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010, 2012
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -348,7 +348,7 @@ ip2k_is_switch_table_128 (bfd *abfd ATTRIBUTE_UNUSED,
 {
   bfd_byte code[4];
   int table_index = 0;
-  
+
   /* Check current page-jmp.  */
   if (addr + 4 > sec->size)
     return -1;
@@ -358,7 +358,7 @@ ip2k_is_switch_table_128 (bfd *abfd ATTRIBUTE_UNUSED,
   if ((! IS_PAGE_OPCODE (code + 0))
       || (! IS_JMP_OPCODE (code + 2)))
     return -1;
-  
+
   /* Search back.  */
   while (1)
     {
@@ -428,7 +428,7 @@ ip2k_is_switch_table_256 (bfd *abfd ATTRIBUTE_UNUSED,
 {
   bfd_byte code[16];
   int table_index = 0;
-  
+
   /* Check current page-jmp.  */
   if (addr + 4 > sec->size)
     return -1;
@@ -437,7 +437,7 @@ ip2k_is_switch_table_256 (bfd *abfd ATTRIBUTE_UNUSED,
   if ((! IS_PAGE_OPCODE (code + 0))
       || (! IS_JMP_OPCODE (code + 2)))
     return -1;
-  
+
   /* Search back.  */
   while (1)
     {
@@ -464,7 +464,7 @@ ip2k_is_switch_table_256 (bfd *abfd ATTRIBUTE_UNUSED,
 	  && (IS_INC_1SP_OPCODE (code + 12))
 	  && (IS_JMP_OPCODE (code + 14)))
 	return table_index;
-      
+
       if ((! IS_PAGE_OPCODE (code + 0))
 	  || (! IS_JMP_OPCODE (code + 2)))
 	return -1;
@@ -658,11 +658,11 @@ adjust_all_relocations (bfd *abfd,
 	      if (ELF32_R_SYM (irel->r_info) < symtab_hdr->sh_info)
 		{
 		  asection *sym_sec;
-		  
+
 		  /* A local symbol.  */
 		  isym = isymbuf + ELF32_R_SYM (irel->r_info);
 		  sym_sec = bfd_section_from_elf_index (abfd, isym->st_shndx);
-		  
+
 		  if (sym_sec == sec)
 		    {
 		      const char *name;
@@ -671,20 +671,20 @@ adjust_all_relocations (bfd *abfd,
 		      bfd_vma baseaddr = BASEADDR (sec);
 		      bfd_vma symval = BASEADDR (sym_sec) + isym->st_value
 			+ irel->r_addend;
-		      
+
 		      if ((baseaddr + addr) <= symval
 			  && symval <= (baseaddr + endaddr))
 			irel->r_addend += count;
 
 		      /* Go hunt up a function and fix its line info if needed.  */
-		      stabp = stabcontents + irel->r_offset - 8; 
+		      stabp = stabcontents + irel->r_offset - 8;
 
 		      /* Go pullout the stab entry.  */
 		      type  = bfd_h_get_8 (abfd, stabp + TYPEOFF);
 		      value = bfd_h_get_32 (abfd, stabp + VALOFF);
-		      
+
 		      name = bfd_get_stab_name (type);
-		      
+
 		      if (strcmp (name, "FUN") == 0)
 			{
 			  int function_adjusted = 0;
@@ -710,7 +710,7 @@ adjust_all_relocations (bfd *abfd,
 				    {
 				      /* Adjust the value.  */
 				      value += count;
-				  
+
 				      /* We need to put it back.  */
 				      bfd_h_put_32 (abfd, value,stabp + VALOFF);
 				    }
@@ -819,10 +819,10 @@ ip2k_delete_page_insn (bfd *abfd ATTRIBUTE_UNUSED,
   /* Delete the PAGE insn.  */
   if (!ip2k_elf_relax_delete_bytes (abfd, sec, irel->r_offset, 2))
     return FALSE;
-	
+
   /* Modified => will need to iterate relaxation again.  */
   *again = TRUE;
-  
+
   return TRUE;
 }
 
@@ -837,7 +837,7 @@ ip2k_relax_switch_table_128 (bfd *abfd ATTRIBUTE_UNUSED,
   Elf_Internal_Rela *ireltest = irel;
   bfd_byte code[4];
   bfd_vma addr;
-  
+
   /* Test all page instructions.  */
   addr = irel->r_offset;
   while (1)
@@ -908,7 +908,7 @@ ip2k_relax_switch_table_256 (bfd *abfd ATTRIBUTE_UNUSED,
   Elf_Internal_Rela *ireltest = irel;
   bfd_byte code[12];
   bfd_vma addr;
-  
+
   /* Test all page instructions.  */
   addr = irel->r_offset;
 
@@ -995,7 +995,7 @@ ip2k_elf_relax_section_page (bfd *abfd,
   Elf_Internal_Rela *irel;
   int switch_table_128;
   int switch_table_256;
-  
+
   /* Walk thru the section looking for relaxation opportunities.  */
   for (irel = misc->irelbase; irel < irelend; irel++)
     {
@@ -1425,20 +1425,20 @@ ip2k_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	}
       else
 	{
-	  bfd_boolean warned;
+	  bfd_boolean warned, ignored;
 	  bfd_boolean unresolved_reloc;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned);
+				   unresolved_reloc, warned, ignored);
 
 	  name = h->root.root.string;
 	}
 
-      if (sec != NULL && elf_discarded_section (sec))
+      if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, relend, howto, contents);
+					 rel, 1, relend, howto, 0, contents);
 
       if (info->relocatable)
 	continue;

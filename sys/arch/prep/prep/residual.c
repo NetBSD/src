@@ -1,4 +1,4 @@
-/*      $NetBSD: residual.c,v 1.16 2008/04/28 20:23:33 martin Exp $     */
+/*      $NetBSD: residual.c,v 1.16.44.1 2014/08/20 00:03:21 tls Exp $     */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.16 2008/04/28 20:23:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.16.44.1 2014/08/20 00:03:21 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -913,7 +913,7 @@ static void
 large_vendor_pcibridge_subr(struct _L4_PPCPack *p, void *v, int size)
 {
 	int i, numslots;
-	char tmpstr[30], *t;
+	char tmpstr[30];
 	PCIInfoPack *pi = v;
 	static const unsigned char *intrtype[] =
 	    { "8259", "MPIC", "RS6k BUID %d" };
@@ -934,7 +934,7 @@ large_vendor_pcibridge_subr(struct _L4_PPCPack *p, void *v, int size)
 
 	printf("    PCI Bridge Slot Data\n");
 	for (i = 0; i < numslots; i++) {
-		int j, first;
+		int j, first, l;
 
 		if (pi->map[i].slotnum)
 			printf("      PCI Slot %d", pi->map[i].slotnum);
@@ -954,19 +954,19 @@ large_vendor_pcibridge_subr(struct _L4_PPCPack *p, void *v, int size)
 		if (first)
 			continue; /* there were no valid intrs */
 		printf("        interrupt line(s) %s routed to", tmpstr);
-		sprintf(tmpstr, intrtype[pi->map[i].intrctrltype - 1],
+		snprintf(tmpstr, sizeof(tmpstr),
+		    intrtype[pi->map[i].intrctrltype - 1],
 		    pi->map[i].intrctrlnum);
 		printf(" %s line(s) ", tmpstr);
-		for (j = 0, first = 1, t = tmpstr; j < MAX_PCI_INTRS; j++) {
+		for (j = 0, first = 1, l = 0; j < MAX_PCI_INTRS; j++) {
 			int line = bswap16(pi->map[i].intr[j]);
 
 			if (pi->map[i].intr[j] != 0xFFFF) {
-				if (first)
-					first = 0;
-				else
-					*t++ = '/';
-				t += sprintf(t, "%d(%c)", line & 0x7fff,
-				    line & 0x8000 ? 'E' : 'L');
+				l += snprintf(tmpstr + l, sizeof(tmpstr) - l, 
+				    "%s%d(%c)", l == 0 ? "/" : "",
+				    line & 0x7fff, line & 0x8000 ? 'E' : 'L');
+				if (l > sizeof(tmpstr))
+					break;
 			}
 		}
 		printf("%s\n", tmpstr);
@@ -1059,7 +1059,8 @@ large_vendor_isaintr_subr(struct _L4_PPCPack *p, void *v, int size)
 	static const unsigned char *inttype[] =
 	    { "8259", "MPIC", "RS6k BUID %d" };
 
-	sprintf(tmpstr, inttype[p->PPCData[0] - 1], p->PPCData[1]);
+	snprintf(tmpstr, sizeof(tmpstr), inttype[p->PPCData[0] - 1],
+	    p->PPCData[1]);
 	printf("      ISA interrupts routed to %s lines\n\t", tmpstr);
 
 	for (i = 0; i < 16; i++) {

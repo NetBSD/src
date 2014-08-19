@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.50.6.1 2012/11/20 03:01:37 tls Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.50.6.2 2014/08/20 00:03:16 tls Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.50.6.1 2012/11/20 03:01:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.50.6.2 2014/08/20 00:03:16 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -138,7 +138,7 @@ mb8795_config(struct mb8795_softc *sc, int *media, int nmedia, int defmedia)
     panic("mb8795_config: can't establish shutdownhook");
 
   rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-                    RND_TYPE_NET, 0);
+                    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	DPRINTF(("%s: leaving mb8795_config()\n",device_xname(sc->sc_dev)));
 }
@@ -254,6 +254,7 @@ mb8795_rint(struct mb8795_softc *sc)
 
 	rxstat = MB_READ_REG(sc, MB8795_RXSTAT);
 	rxmask = MB_READ_REG(sc, MB8795_RXMASK);
+	__USE(rxmask);
 
 	MB_WRITE_REG(sc, MB8795_RXSTAT, MB8795_RXSTAT_CLEAR);
 
@@ -376,6 +377,7 @@ mb8795_tint(struct mb8795_softc *sc)
 	panic ("tint");
 	txstat = MB_READ_REG(sc, MB8795_TXSTAT);
 	txmask = MB_READ_REG(sc, MB8795_TXMASK);
+	__USE(txmask);
 
 	if ((txstat & MB8795_TXSTAT_READY) ||
 	    (txstat & MB8795_TXSTAT_TXRECV)) {
@@ -764,6 +766,7 @@ mb8795_start_dma(struct mb8795_softc *sc)
 
 	MB_WRITE_REG(sc, MB8795_TXSTAT, MB8795_TXSTAT_CLEAR);
 	txmask = MB_READ_REG(sc, MB8795_TXMASK);
+	__USE(txmask);
 	/* MB_WRITE_REG(sc, MB8795_TXMASK, txmask | MB8795_TXMASK_READYIE); */
 	/* MB_WRITE_REG(sc, MB8795_TXMASK, txmask | MB8795_TXMASK_TXRXIE); */
 

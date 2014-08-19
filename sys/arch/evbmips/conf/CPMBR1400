@@ -1,13 +1,17 @@
+#	$NetBSD: CPMBR1400,v 1.9.2.3 2014/08/20 00:02:58 tls Exp $
+
 include		"arch/evbmips/conf/std.rasoc"
 
 options 	SYMTAB_SPACE=450000		# size for embedded symbol table
 
-#options 	RA_CONSOLE_EARLY
+#options 	RALINK_CONSOLE_EARLY
 options 	RT3883
 #options 	SLICKROCK
 options 	RALINK_ETH_NUM_SW_PARTITIONS=5
 options 	CONSPEED=57600
 #options 	SYSCALL_DEBUG
+no makeoptions	NEED_UBOOTIMAGE
+makeoptions	NEED_UBOOTIMAGE="bsentry"
 
 maxusers	8
 
@@ -43,7 +47,7 @@ options 	DIAGNOSTIC	# expensive kernel consistency checks
 options 	DEBUG		# expensive debugging checks/support
 options 	KMEMSTATS		# kernel memory statistics (vmstat -m)
 options 	DDB			# in-kernel debugger
-options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
+options 	DDB_ONPANIC=1		# see also sysctl(7): `ddb.onpanic'
 #options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	DDB_COMMANDONENTER="w/b 0x90000128 0 ; bt"	# disable watchdog & drop history on enter
 #options 	KGDB		# remote debugger
@@ -117,7 +121,6 @@ options 	MROUTING	# IP multicast routing
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
@@ -135,6 +138,10 @@ options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	ALTQ_RED	# Random Early Detection
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!

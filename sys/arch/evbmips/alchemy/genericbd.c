@@ -1,4 +1,4 @@
-/* $NetBSD: genericbd.c,v 1.4 2011/07/10 00:03:52 matt Exp $ */
+/* $NetBSD: genericbd.c,v 1.4.12.1 2014/08/20 00:02:58 tls Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genericbd.c,v 1.4 2011/07/10 00:03:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genericbd.c,v 1.4.12.1 2014/08/20 00:02:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,7 +60,7 @@ static struct alchemy_board genericbd_info = {
 
 /*
  * XXX: A cleaner way would be to get this from the cpu table in the MIPS
- * CPU handler code (or even better, have *that* code fill in cpu_model.)
+ * CPU handler code (or even better, have *that* code fill in cpu model.)
  */
 static struct {
 	int		id;

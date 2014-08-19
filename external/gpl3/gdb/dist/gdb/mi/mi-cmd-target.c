@@ -1,5 +1,5 @@
 /* MI Command Set - target commands.
-   Copyright (C) 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2007-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,21 +26,21 @@
 void
 mi_cmd_target_file_get (char *command, char **argv, int argc)
 {
-  int optind = 0;
-  char *optarg;
+  int oind = 0;
+  char *oarg;
   const char *remote_file, *local_file;
-  static struct mi_opt opts[] =
-  {
-    { 0, 0, 0 }
-  };
-  static const char *prefix = "-target-file-get";
+  static const struct mi_opt opts[] =
+    {
+      { 0, 0, 0 }
+    };
+  static const char prefix[] = "-target-file-get";
 
-  if (mi_getopt (prefix, argc, argv, opts, &optind, &optarg) != -1
-      || optind != argc - 2)
+  if (mi_getopt (prefix, argc, argv, opts, &oind, &oarg) != -1
+      || oind != argc - 2)
     error (_("-target-file-get: Usage: REMOTE_FILE LOCAL_FILE"));
 
-  remote_file = argv[optind];
-  local_file = argv[optind + 1];
+  remote_file = argv[oind];
+  local_file = argv[oind + 1];
 
   remote_file_get (remote_file, local_file, 0);
 }
@@ -50,21 +50,21 @@ mi_cmd_target_file_get (char *command, char **argv, int argc)
 void
 mi_cmd_target_file_put (char *command, char **argv, int argc)
 {
-  int optind = 0;
-  char *optarg;
+  int oind = 0;
+  char *oarg;
   const char *remote_file, *local_file;
-  static struct mi_opt opts[] =
-  {
-    { 0, 0, 0 }
-  };
-  static const char *prefix = "-target-file-put";
+  static const struct mi_opt opts[] =
+    {
+      { 0, 0, 0 }
+    };
+  static const char prefix[] = "-target-file-put";
 
-  if (mi_getopt (prefix, argc, argv, opts, &optind, &optarg) != -1
-      || optind != argc - 2)
+  if (mi_getopt (prefix, argc, argv, opts, &oind, &oarg) != -1
+      || oind != argc - 2)
     error (_("-target-file-put: Usage: LOCAL_FILE REMOTE_FILE"));
 
-  local_file = argv[optind];
-  remote_file = argv[optind + 1];
+  local_file = argv[oind];
+  remote_file = argv[oind + 1];
 
   remote_file_put (local_file, remote_file, 0);
 }
@@ -74,20 +74,20 @@ mi_cmd_target_file_put (char *command, char **argv, int argc)
 void
 mi_cmd_target_file_delete (char *command, char **argv, int argc)
 {
-  int optind = 0;
-  char *optarg;
+  int oind = 0;
+  char *oarg;
   const char *remote_file;
-  static struct mi_opt opts[] =
-  {
-    { 0, 0, 0 }
-  };
-  static const char *prefix = "-target-file-delete";
+  static const struct mi_opt opts[] =
+    {
+      { 0, 0, 0 }
+    };
+  static const char prefix[] = "-target-file-delete";
 
-  if (mi_getopt (prefix, argc, argv, opts, &optind, &optarg) != -1
-      || optind != argc - 1)
+  if (mi_getopt (prefix, argc, argv, opts, &oind, &oarg) != -1
+      || oind != argc - 1)
     error (_("-target-file-delete: Usage: REMOTE_FILE"));
 
-  remote_file = argv[optind];
+  remote_file = argv[oind];
 
   remote_file_delete (remote_file, 0);
 }

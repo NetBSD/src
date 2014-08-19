@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_in_cksum.S,v 1.1 2008/01/25 21:12:10 joerg Exp $ */
+/* $NetBSD: cpu_in_cksum.S,v 1.1.60.1 2014/08/20 00:02:42 tls Exp $ */
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -289,7 +289,10 @@ ENTRY(cpu_in_cksum)
 	movl	$0, %eax
 	call	_C_LABEL(printf)
 	jmp	.Mreturn
+END(cpu_in_cksum)
 
 	.section	.rodata
+	.type		.Mout_of_mbufs_msg, @object
 .Mout_of_mbufs_msg:
 	.string		"in_cksum: out of data\n"
+END(.Mout_of_mbufs_msg)

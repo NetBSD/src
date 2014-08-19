@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.15 2011/06/20 19:56:12 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.15.12.1 2014/08/20 00:03:15 tls Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ __start:
 /* enable internal i/d-cache */
 	mfpvr	%r9
 	rlwinm	%r9,%r9,16,16,31
-	cmpi	%cr0,%r9,1
+	cmpwi	%cr0,%r9,1
 	beq	3f			/* not needed for 601 */
 	mfspr	%r11,SPR_HID0
 	andi.	%r0,%r11,HID0_DCE
@@ -147,9 +147,9 @@ __start:
 	mtspr	SPR_HID0,%r11		/* enable caches */
 	sync
 	isync
-	cmpi	%cr0,%r9,4		/* check for 604 */
-	cmpi	%cr1,%r9,9		/* or 604e */
-	cmpi	%cr2,%r9,10		/* or mach5 */
+	cmpwi	%cr0,%r9,4		/* check for 604 */
+	cmpwi	%cr1,%r9,9		/* or 604e */
+	cmpwi	%cr2,%r9,10		/* or mach5 */
 	cror	2,2,6
 	cror	2,2,10
 	bne	3f

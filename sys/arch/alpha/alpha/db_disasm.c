@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.15 2012/02/06 02:14:10 matt Exp $ */
+/* $NetBSD: db_disasm.c,v 1.15.6.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*
  * Mach Operating System
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.15 2012/02/06 02:14:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.15.6.1 2014/08/20 00:02:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,7 +199,7 @@ pal_opname(int op)
 			return (pal_op_tbl[i].name);
 	}
 
-	sprintf(unk, "0x%x", op);
+	snprintf(unk, sizeof(unk), "0x%x", op);
 	return (unk);
 }
 
@@ -253,7 +253,7 @@ arit_name(int op)
 	if (name != NULL)
 		return (name);
 
-	sprintf(unk, "?arit 0x%x?", op);
+	snprintf(unk, sizeof(unk), "?arit 0x%x?", op);
 	return (unk);
 }
 
@@ -301,7 +301,7 @@ logical_name(int op)
 	if (name != NULL)
 		return (name);
 
-	sprintf(unk, "?logical 0x%x?", op);
+	snprintf(unk, sizeof(unk), "?logical 0x%x?", op);
 	return (unk);
 }
 
@@ -344,7 +344,7 @@ bitop_name(int op)
 	if (name != NULL)
 		return (name);
 
-	sprintf(unk, "?bit 0x%x?", op);
+	snprintf(unk, sizeof(unk), "?bit 0x%x?", op);
 	return (unk);
 }
 
@@ -366,7 +366,7 @@ mul_name(int op)
 	if (name != NULL)
 		return (name);
 
-	sprintf(unk, "?mul 0x%x?", op);
+	snprintf(unk, sizeof(unk), "?mul 0x%x?", op);
 	return (unk);
 }
 
@@ -398,7 +398,7 @@ special_name(int op)
 	if (name != NULL)
 		return (name);
 
-	sprintf(unk, "?special 0x%x?", op);
+	snprintf(unk, sizeof(unk), "?special 0x%x?", op);
 	return (unk);
 }
 
@@ -435,7 +435,7 @@ intmisc_name(int op)
 	case op_ftois: return ("ftois");
 	}
 
-	sprintf(unk, "?intmisc 0x%x?", op);
+	snprintf(unk, sizeof(unk), "?intmisc 0x%x?", op);
 	return (unk);
 }
 
@@ -450,7 +450,7 @@ float_name(const struct tbl *tbl, int op, const char *type)
 			return (tbl[i].name);
 	}
 
-	sprintf(unk, "?%s 0x%x?", type, op);
+	snprintf(unk, sizeof(unk), "?%s 0x%x?", type, op);
 	return (unk);
 }
 

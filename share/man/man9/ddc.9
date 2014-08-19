@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddc.9,v 1.4 2006/12/23 09:05:20 wiz Exp $
+.\"	$NetBSD: ddc.9,v 1.4.42.1 2014/08/20 00:02:37 tls Exp $
 .\"
 .\" Copyright 2006 Itronix Inc.
 .\" All rights reserved.
@@ -47,9 +47,9 @@
 The
 .Fn ddc_read_edid
 reads a VESA Extended Display Identification Data block (EDID) via
-VESA Display Data Channel (DDCv2).  DDCv2 is a protocol for data exchange
-between display devices (such as monitors and flat panels) and host
-machines using an I2C bus.
+VESA Display Data Channel (DDCv2).
+DDCv2 is a protocol for data exchange between display devices (such
+as monitors and flat panels) and host machines using an I2C bus.
 .Pp
 The
 .Fa tag
@@ -60,9 +60,10 @@ The
 argument is a pointer to a buffer where the EDID data will be stored.
 The
 .Fa len
-argument is the amount of data to read into the buffer.  (The buffer must be
-large enough.)  Typically, this value will be 128, which is the size of a
-normal EDID data block.
+argument is the amount of data to read into the buffer.
+(The buffer must be large enough.)
+Typically, this value will be 128, which is the size of a normal
+EDID data block.
 .Pp
 Normally the EDID data block will be post-processed with the
 .Fn edid_parse
@@ -90,7 +91,7 @@ to retrieve and print information about a monitor:
 	...
 	/* initialize i2c tag... */
 	...
-	if ((ddc_read_edid(tag, buffer, 128) == 0) \*[Am]\*[Am] 
+	if ((ddc_read_edid(tag, buffer, 128) == 0) \*[Am]\*[Am]
 	    (edid_parse(buffer, \*[Am]info) == 0))
 		edid_print(info);
 	...
@@ -106,4 +107,4 @@ autoconfiguration.
 DDCv2 support was added in
 .Nx 4.0 .
 .Sh AUTHORS
-.An Garrett D'Amore Aq gdamore@NetBSD.org
+.An Garrett D'Amore Aq Mt gdamore@NetBSD.org

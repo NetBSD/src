@@ -1,8 +1,6 @@
 /* Support for printing C values for GDB, the GNU debugger.
 
-   Copyright (C) 1986, 1988, 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997,
-   1998, 1999, 2000, 2001, 2003, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "expression.h"
@@ -31,31 +29,6 @@
 #include "cp-abi.h"
 #include "target.h"
 
-
-/* Print function pointer with inferior address ADDRESS onto stdio
-   stream STREAM.  */
-
-static void
-print_function_pointer_address (struct gdbarch *gdbarch,
-				CORE_ADDR address,
-				struct ui_file *stream,
-				int addressprint)
-{
-  CORE_ADDR func_addr
-    = gdbarch_convert_from_func_ptr_addr (gdbarch, address,
-					  &current_target);
-
-  /* If the function pointer is represented by a description, print
-     the address of the description.  */
-  if (addressprint && func_addr != address)
-    {
-      fputs_filtered ("@", stream);
-      fputs_filtered (paddress (gdbarch, address), stream);
-      fputs_filtered (": ", stream);
-    }
-  print_address_demangle (gdbarch, func_addr, stream, demangle);
-}
-
 
 /* A helper for c_textual_element_type.  This checks the name of the
    typedef.  This is bogus but it isn't apparent that the compiler
@@ -142,11 +115,22 @@ c_textual_element_type (struct type *type, char format)
   return 0;
 }
 
-/* See val_print for a description of the various parameters of this
-   function; they are identical.  The semantics of the return value is
-   also identical to val_print.  */
+/* Decorations for C.  */
 
-int
+static const struct generic_val_print_decorations c_decorations =
+{
+  "",
+  " + ",
+  " * I",
+  "true",
+  "false",
+  "void"
+};
+
+/* See val_print for a description of the various parameters of this
+   function; they are identical.  */
+
+void
 c_val_print (struct type *type, const gdb_byte *valaddr,
 	     int embedded_offset, CORE_ADDR address,
 	     struct ui_file *stream, int recurse,
@@ -160,7 +144,6 @@ c_val_print (struct type *type, const gdb_byte *valaddr,
   struct type *elttype, *unresolved_elttype;
   struct type *unresolved_type = type;
   unsigned eltlen;
-  LONGEST val;
   CORE_ADDR addr;
 
   CHECK_TYPEDEF (type);
@@ -178,7 +161,7 @@ c_val_print (struct type *type, const gdb_byte *valaddr,
 
 	  eltlen = TYPE_LENGTH (elttype);
 	  len = high_bound - low_bound + 1;
-	  if (options->prettyprint_arrays)
+	  if (options->prettyformat_arrays)
 	    {
 	      print_spaces_filtered (2 + 2 * recurse, stream);
 	    }
@@ -193,6 +176,8 @@ c_val_print (struct type *type, const gdb_byte *valaddr,
 				   TARGET_CHAR_BIT * embedded_offset,
 				   TARGET_CHAR_BIT * TYPE_LENGTH (type)))
 	    {
+	      int force_ellipses = 0;
+
 	      /* If requested, look for the first null char and only
 	         print elements up to it.  */
 	      if (options->stop_print_at_null)
@@ -207,12 +192,26 @@ c_val_print (struct type *type, const gdb_byte *valaddr,
 						     eltlen, byte_order) != 0);
 		       ++temp_len)
 		    ;
+
+		  /* Force LA_PRINT_STRING to print ellipses if
+		     we've printed the maximum characters and
+		     the next character is not \000.  */
+		  if (temp_len == options->print_max && temp_len < len)
+		    {
+		      ULONGEST val
+			= extract_unsigned_integer (valaddr + embedded_offset
+						    + temp_len * eltlen,
+						    eltlen, byte_order);
+		      if (val != 0)
+			force_ellipses = 1;
+		    }
+
 		  len = temp_len;
 		}
 
 	      LA_PRINT_STRING (stream, unresolved_elttype,
 			       valaddr + embedded_offset, len,
-			       NULL, 0, options);
+			       NULL, force_ellipses, options);
 	      i = len;
 	    }
 	  else
@@ -243,16 +242,6 @@ c_val_print (struct type *type, const gdb_byte *valaddr,
       addr = address + embedded_offset;
       goto print_unpacked_pointer;
 
-    case TYPE_CODE_MEMBERPTR:
-      if (options->format)
-	{
-	  val_print_scalar_formatted (type, valaddr, embedded_offset,
-				      original_value, options, 0, stream);
-	  break;
-	}
-      cp_print_class_member (valaddr + embedded_offset, type, stream, "&");
-      break;
-
     case TYPE_CODE_METHODPTR:
       cplus_print_method_ptr (valaddr + embedded_offset, type, stream);
       break;
@@ -273,28 +262,34 @@ c_val_print (struct type *type, const gdb_byte *valaddr,
 	  CORE_ADDR addr
 	    = extract_typed_address (valaddr + embedded_offset, type);
 
-	  print_function_pointer_address (gdbarch, addr, stream,
-					  options->addressprint);
+	  print_function_pointer_address (options, gdbarch, addr, stream);
 	  break;
 	}
       unresolved_elttype = TYPE_TARGET_TYPE (type);
       elttype = check_typedef (unresolved_elttype);
 	{
+	  int want_space;
+
 	  addr = unpack_pointer (type, valaddr + embedded_offset);
 	print_unpacked_pointer:
+
+	  want_space = 0;
 
 	  if (TYPE_CODE (elttype) == TYPE_CODE_FUNC)
 	    {
 	      /* Try to print what function it points to.  */
-	      print_function_pointer_address (gdbarch, addr, stream,
-					      options->addressprint);
-	      /* Return value is irrelevant except for string
-		 pointers.  */
-	      return (0);
+	      print_function_pointer_address (options, gdbarch, addr, stream);
+	      return;
 	    }
 
-	  if (options->addressprint)
-	    fputs_filtered (paddress (gdbarch, addr), stream);
+	  if (options->symbol_print)
+	    want_space = print_address_demangle (options, gdbarch, addr,
+						 stream, demangle);
+	  else if (options->addressprint)
+	    {
+	      fputs_filtered (paddress (gdbarch, addr), stream);
+	      want_space = 1;
+	    }
 
 	  /* For a pointer to a textual type, also print the string
 	     pointed to, unless pointer is null.  */
@@ -303,6 +298,8 @@ c_val_print (struct type *type, const gdb_byte *valaddr,
 				      options->format)
 	      && addr != 0)
 	    {
+	      if (want_space)
+		fputs_filtered (" ", stream);
 	      i = val_print_string (unresolved_elttype, NULL,
 				    addr, -1,
 				    stream, options);
@@ -313,26 +310,35 @@ c_val_print (struct type *type, const gdb_byte *valaddr,
 	      CORE_ADDR vt_address = unpack_pointer (type,
 						     valaddr
 						     + embedded_offset);
+	      struct bound_minimal_symbol msymbol =
+		lookup_minimal_symbol_by_pc (vt_address);
 
-	      struct minimal_symbol *msymbol =
-	      lookup_minimal_symbol_by_pc (vt_address);
-	      if ((msymbol != NULL)
-		  && (vt_address == SYMBOL_VALUE_ADDRESS (msymbol)))
+	      /* If 'symbol_print' is set, we did the work above.  */
+	      if (!options->symbol_print
+		  && (msymbol.minsym != NULL)
+		  && (vt_address == SYMBOL_VALUE_ADDRESS (msymbol.minsym)))
 		{
+		  if (want_space)
+		    fputs_filtered (" ", stream);
 		  fputs_filtered (" <", stream);
-		  fputs_filtered (SYMBOL_PRINT_NAME (msymbol), stream);
+		  fputs_filtered (SYMBOL_PRINT_NAME (msymbol.minsym), stream);
 		  fputs_filtered (">", stream);
+		  want_space = 1;
 		}
+
 	      if (vt_address && options->vtblprint)
 		{
 		  struct value *vt_val;
 		  struct symbol *wsym = (struct symbol *) NULL;
 		  struct type *wtype;
 		  struct block *block = (struct block *) NULL;
-		  int is_this_fld;
+		  struct field_of_this_result is_this_fld;
 
-		  if (msymbol != NULL)
-		    wsym = lookup_symbol (SYMBOL_LINKAGE_NAME (msymbol),
+		  if (want_space)
+		    fputs_filtered (" ", stream);
+
+		  if (msymbol.minsym != NULL)
+		    wsym = lookup_symbol (SYMBOL_LINKAGE_NAME (msymbol.minsym),
 					  block, VAR_DOMAIN,
 					  &is_this_fld);
 
@@ -347,49 +353,14 @@ c_val_print (struct type *type, const gdb_byte *valaddr,
 		  vt_val = value_at (wtype, vt_address);
 		  common_val_print (vt_val, stream, recurse + 1,
 				    options, current_language);
-		  if (options->pretty)
+		  if (options->prettyformat)
 		    {
 		      fprintf_filtered (stream, "\n");
 		      print_spaces_filtered (2 + 2 * recurse, stream);
 		    }
 		}
 	    }
-
-	  /* Return number of characters printed, including the
-	     terminating '\0' if we reached the end.  val_print_string
-	     takes care including the terminating '\0' if
-	     necessary.  */
-	  return i;
-	}
-      break;
-
-    case TYPE_CODE_REF:
-      elttype = check_typedef (TYPE_TARGET_TYPE (type));
-      if (options->addressprint)
-	{
-	  CORE_ADDR addr
-	    = extract_typed_address (valaddr + embedded_offset, type);
-
-	  fprintf_filtered (stream, "@");
-	  fputs_filtered (paddress (gdbarch, addr), stream);
-	  if (options->deref_ref)
-	    fputs_filtered (": ", stream);
-	}
-      /* De-reference the reference.  */
-      if (options->deref_ref)
-	{
-	  if (TYPE_CODE (elttype) != TYPE_CODE_UNDEF)
-	    {
-	      struct value *deref_val =
-		value_at
-		(TYPE_TARGET_TYPE (type),
-		 unpack_pointer (type, valaddr + embedded_offset));
-
-	      common_val_print (deref_val, stream, recurse, options,
-				current_language);
-	    }
-	  else
-	    fputs_filtered ("???", stream);
+	  return;
 	}
       break;
 
@@ -416,8 +387,7 @@ c_val_print (struct type *type, const gdb_byte *valaddr,
 	  CORE_ADDR addr
 	    = extract_typed_address (valaddr + offset, field_type);
 
-	  print_function_pointer_address (gdbarch, addr, stream,
-					  options->addressprint);
+	  print_function_pointer_address (options, gdbarch, addr, stream);
 	}
       else
 	cp_print_value_fields_rtti (type, valaddr,
@@ -426,91 +396,6 @@ c_val_print (struct type *type, const gdb_byte *valaddr,
 				    original_value, options,
 				    NULL, 0);
       break;
-
-    case TYPE_CODE_ENUM:
-      if (options->format)
-	{
-	  val_print_scalar_formatted (type, valaddr, embedded_offset,
-				      original_value, options, 0, stream);
-	  break;
-	}
-      len = TYPE_NFIELDS (type);
-      val = unpack_long (type, valaddr + embedded_offset);
-      for (i = 0; i < len; i++)
-	{
-	  QUIT;
-	  if (val == TYPE_FIELD_BITPOS (type, i))
-	    {
-	      break;
-	    }
-	}
-      if (i < len)
-	{
-	  fputs_filtered (TYPE_FIELD_NAME (type, i), stream);
-	}
-      else
-	{
-	  print_longest (stream, 'd', 0, val);
-	}
-      break;
-
-    case TYPE_CODE_FLAGS:
-      if (options->format)
-	val_print_scalar_formatted (type, valaddr, embedded_offset,
-				    original_value, options, 0, stream);
-      else
-	val_print_type_code_flags (type, valaddr + embedded_offset,
-				   stream);
-      break;
-
-    case TYPE_CODE_FUNC:
-    case TYPE_CODE_METHOD:
-      if (options->format)
-	{
-	  val_print_scalar_formatted (type, valaddr, embedded_offset,
-				      original_value, options, 0, stream);
-	  break;
-	}
-      /* FIXME, we should consider, at least for ANSI C language,
-         eliminating the distinction made between FUNCs and POINTERs
-         to FUNCs.  */
-      fprintf_filtered (stream, "{");
-      type_print (type, "", stream, -1);
-      fprintf_filtered (stream, "} ");
-      /* Try to print what function it points to, and its address.  */
-      print_address_demangle (gdbarch, address, stream, demangle);
-      break;
-
-    case TYPE_CODE_BOOL:
-      if (options->format || options->output_format)
-	{
-	  struct value_print_options opts = *options;
-	  opts.format = (options->format ? options->format
-			 : options->output_format);
-	  val_print_scalar_formatted (type, valaddr, embedded_offset,
-				      original_value, &opts, 0, stream);
-	}
-      else
-	{
-	  val = unpack_long (type, valaddr + embedded_offset);
-	  if (val == 0)
-	    fputs_filtered ("false", stream);
-	  else if (val == 1)
-	    fputs_filtered ("true", stream);
-	  else
-	    print_longest (stream, 'd', 0, val);
-	}
-      break;
-
-    case TYPE_CODE_RANGE:
-      /* FIXME: create_range_type does not set the unsigned bit in a
-         range type (I think it probably should copy it from the
-         target type), so we won't print values which are too large to
-         fit in a signed integer correctly.  */
-      /* FIXME: Doesn't handle ranges of enums correctly.  (Can't just
-         print with the target type, though, because the size of our
-         type and the target type might differ).  */
-      /* FALLTHROUGH */
 
     case TYPE_CODE_INT:
       if (options->format || options->output_format)
@@ -539,98 +424,38 @@ c_val_print (struct type *type, const gdb_byte *valaddr,
 	}
       break;
 
-    case TYPE_CODE_CHAR:
-      if (options->format || options->output_format)
+    case TYPE_CODE_MEMBERPTR:
+      if (!options->format)
 	{
-	  struct value_print_options opts = *options;
-	  opts.format = (options->format ? options->format
-			 : options->output_format);
-	  val_print_scalar_formatted (type, valaddr, embedded_offset,
-				      original_value, &opts, 0, stream);
+	  cp_print_class_member (valaddr + embedded_offset, type, stream, "&");
+	  break;
 	}
-      else
-	{
-	  val = unpack_long (type, valaddr + embedded_offset);
-	  if (TYPE_UNSIGNED (type))
-	    fprintf_filtered (stream, "%u", (unsigned int) val);
-	  else
-	    fprintf_filtered (stream, "%d", (int) val);
-	  fputs_filtered (" ", stream);
-	  LA_PRINT_CHAR (val, unresolved_type, stream);
-	}
-      break;
+      /* FALLTHROUGH */
 
+    case TYPE_CODE_REF:
+    case TYPE_CODE_ENUM:
+    case TYPE_CODE_FLAGS:
+    case TYPE_CODE_FUNC:
+    case TYPE_CODE_METHOD:
+    case TYPE_CODE_BOOL:
+    case TYPE_CODE_RANGE:
     case TYPE_CODE_FLT:
-      if (options->format)
-	{
-	  val_print_scalar_formatted (type, valaddr, embedded_offset,
-				      original_value, options, 0, stream);
-	}
-      else
-	{
-	  print_floating (valaddr + embedded_offset, type, stream);
-	}
-      break;
-
     case TYPE_CODE_DECFLOAT:
-      if (options->format)
-	val_print_scalar_formatted (type, valaddr, embedded_offset,
-				    original_value, options, 0, stream);
-      else
-	print_decimal_floating (valaddr + embedded_offset,
-				type, stream);
-      break;
-
     case TYPE_CODE_VOID:
-      fprintf_filtered (stream, "void");
-      break;
-
     case TYPE_CODE_ERROR:
-      fprintf_filtered (stream, "%s", TYPE_ERROR_NAME (type));
-      break;
-
     case TYPE_CODE_UNDEF:
-      /* This happens (without TYPE_FLAG_STUB set) on systems which
-         don't use dbx xrefs (NO_DBX_XREFS in gcc) if a file has a
-         "struct foo *bar" and no complete type for struct foo in that
-         file.  */
-      fprintf_filtered (stream, _("<incomplete type>"));
-      break;
-
     case TYPE_CODE_COMPLEX:
-      if (options->format)
-	val_print_scalar_formatted (TYPE_TARGET_TYPE (type),
-				    valaddr, embedded_offset,
-				    original_value, options, 0, stream);
-      else
-	print_floating (valaddr + embedded_offset,
-			TYPE_TARGET_TYPE (type),
-			stream);
-      fprintf_filtered (stream, " + ");
-      if (options->format)
-	val_print_scalar_formatted (TYPE_TARGET_TYPE (type),
-				    valaddr,
-				    embedded_offset
-				    + TYPE_LENGTH (TYPE_TARGET_TYPE (type)),
-				    original_value,
-				    options, 0, stream);
-      else
-	print_floating (valaddr + embedded_offset
-			+ TYPE_LENGTH (TYPE_TARGET_TYPE (type)),
-			TYPE_TARGET_TYPE (type),
-			stream);
-      fprintf_filtered (stream, " * I");
-      break;
-
+    case TYPE_CODE_CHAR:
     default:
-      error (_("Invalid C/C++ type code %d in symbol table."),
-	     TYPE_CODE (type));
+      generic_val_print (type, valaddr, embedded_offset, address,
+			 stream, recurse, original_value, options,
+			 &c_decorations);
+      break;
     }
   gdb_flush (stream);
-  return (0);
 }
 
-int
+void
 c_value_print (struct value *val, struct ui_file *stream, 
 	       const struct value_print_options *options)
 {
@@ -672,41 +497,32 @@ c_value_print (struct value *val, struct ui_file *stream,
       else if (options->objectprint
 	       && (TYPE_CODE (TYPE_TARGET_TYPE (type)) == TYPE_CODE_CLASS))
 	{
+	  int is_ref = TYPE_CODE (type) == TYPE_CODE_REF;
 
-	  if (TYPE_CODE(type) == TYPE_CODE_REF)
-	    {
-	      /* Copy value, change to pointer, so we don't get an
-	         error about a non-pointer type in
-	         value_rtti_target_type.  */
-	      struct value *temparg;
-	      temparg=value_copy(val);
-	      deprecated_set_value_type
-		(temparg, lookup_pointer_type (TYPE_TARGET_TYPE (type)));
-	      val = temparg;
-	    }
+	  if (is_ref)
+	    val = value_addr (val);
+
 	  /* Pointer to class, check real type of object.  */
 	  fprintf_filtered (stream, "(");
 
 	  if (value_entirely_available (val))
  	    {
-	      real_type = value_rtti_target_type (val, &full, &top, &using_enc);
+	      real_type = value_rtti_indirect_type (val, &full, &top,
+						    &using_enc);
 	      if (real_type)
 		{
 		  /* RTTI entry found.  */
-		  if (TYPE_CODE (type) == TYPE_CODE_PTR)
-		    {
-		      /* Create a pointer type pointing to the real
-			 type.  */
-		      type = lookup_pointer_type (real_type);
-		    }
-		  else
-		    {
-		      /* Create a reference type referencing the real
-			 type.  */
-		      type = lookup_reference_type (real_type);
-		    }
+		  type = real_type;
+
 		  /* Need to adjust pointer value.  */
-		  val = value_from_pointer (type, value_as_address (val) - top);
+		  val = value_from_pointer (real_type,
+					    value_as_address (val) - top);
+
+		  if (is_ref)
+		    {
+		      val = value_ref (value_ind (val));
+		      type = value_type (val);
+		    }
 
 		  /* Note: When we look up RTTI entries, we don't get
 		     any information on const or volatile
@@ -743,10 +559,11 @@ c_value_print (struct value *val, struct ui_file *stream,
 			    full ? "" : _(" [incomplete object]"));
 	  /* Print out object: enclosing type is same as real_type if
 	     full.  */
-	  return val_print (value_enclosing_type (val),
-			    value_contents_for_printing (val), 0,
-			    value_address (val), stream, 0,
-			    val, &opts, current_language);
+	  val_print (value_enclosing_type (val),
+		     value_contents_for_printing (val), 0,
+		     value_address (val), stream, 0,
+		     val, &opts, current_language);
+	  return;
           /* Note: When we look up RTTI entries, we don't get any
              information on const or volatile attributes.  */
 	}
@@ -755,17 +572,18 @@ c_value_print (struct value *val, struct ui_file *stream,
 	  /* No RTTI information, so let's do our best.  */
 	  fprintf_filtered (stream, "(%s ?) ",
 			    TYPE_NAME (value_enclosing_type (val)));
-	  return val_print (value_enclosing_type (val),
-			    value_contents_for_printing (val), 0,
-			    value_address (val), stream, 0,
-			    val, &opts, current_language);
+	  val_print (value_enclosing_type (val),
+		     value_contents_for_printing (val), 0,
+		     value_address (val), stream, 0,
+		     val, &opts, current_language);
+	  return;
 	}
       /* Otherwise, we end up at the return outside this "if".  */
     }
 
-  return val_print (val_type, value_contents_for_printing (val),
-		    value_embedded_offset (val),
-		    value_address (val),
-		    stream, 0,
-		    val, &opts, current_language);
+  val_print (val_type, value_contents_for_printing (val),
+	     value_embedded_offset (val),
+	     value_address (val),
+	     stream, 0,
+	     val, &opts, current_language);
 }

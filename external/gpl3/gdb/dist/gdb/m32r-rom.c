@@ -1,8 +1,7 @@
 /* Remote debugging interface to m32r and mon2000 ROM monitors for GDB, 
    the GNU debugger.
 
-   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2004, 2005, 2007, 2008,
-   2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
    Adapted by Michael Snyder of Cygnus Support.
 
@@ -35,11 +34,13 @@
 #include "symfile.h"		/* for generic load */
 #include <sys/time.h>
 #include <time.h>		/* for time_t */
-#include "gdb_string.h"
+#include <string.h>
 #include "objfiles.h"		/* for ALL_OBJFILES etc.  */
 #include "inferior.h"
 #include <ctype.h>
 #include "regcache.h"
+#include "gdb_bfd.h"
+#include "cli/cli-utils.h"
 
 /*
  * All this stuff just to get my host computer's IP address!
@@ -78,7 +79,7 @@ m32r_load_section (bfd *abfd, asection *s, void *obj)
   unsigned int *data_count = obj;
   if (s->flags & SEC_LOAD)
     {
-      int addr_size = gdbarch_addr_bit (target_gdbarch) / 8;
+      int addr_size = gdbarch_addr_bit (target_gdbarch ()) / 8;
       bfd_size_type section_size = bfd_section_size (abfd, s);
       bfd_vma section_base = bfd_section_lma (abfd, s);
       unsigned int buffer, i;
@@ -88,7 +89,7 @@ m32r_load_section (bfd *abfd, asection *s, void *obj)
       printf_filtered ("Loading section %s, size 0x%lx lma ",
 		       bfd_section_name (abfd, s),
 		       (unsigned long) section_size);
-      fputs_filtered (paddress (target_gdbarch, section_base), gdb_stdout);
+      fputs_filtered (paddress (target_gdbarch (), section_base), gdb_stdout);
       printf_filtered ("\n");
       gdb_flush (gdb_stdout);
       monitor_printf ("%s mw\r", phex_nz (section_base, addr_size));
@@ -122,16 +123,17 @@ static void
 m32r_load (char *filename, int from_tty)
 {
   bfd *abfd;
-  asection *s;
-  unsigned int i, data_count = 0;
+  unsigned int data_count = 0;
   struct timeval start_time, end_time;
+  struct cleanup *cleanup;
 
   if (filename == NULL || filename[0] == 0)
     filename = get_exec_file (1);
 
-  abfd = bfd_openr (filename, 0);
+  abfd = gdb_bfd_open (filename, NULL, -1);
   if (!abfd)
     error (_("Unable to open file %s."), filename);
+  cleanup = make_cleanup_bfd_unref (abfd);
   if (bfd_check_format (abfd, bfd_object) == 0)
     error (_("File is not an object file."));
   gettimeofday (&start_time, NULL);
@@ -147,7 +149,7 @@ m32r_load (char *filename, int from_tty)
 
 	printf_filtered ("Loading section %s, size 0x%lx vma ",
 			 bfd_section_name (abfd, s), section_size);
-	fputs_filtered (paddress (target_gdbarch, section_base), gdb_stdout);
+	fputs_filtered (paddress (target_gdbarch (), section_base), gdb_stdout);
 	printf_filtered ("\n");
 	gdb_flush (gdb_stdout);
 	monitor_printf ("%x mw\r", section_base);
@@ -165,6 +167,7 @@ m32r_load (char *filename, int from_tty)
   if (!(catch_errors (m32r_load_1, abfd, "Load aborted!\n", RETURN_MASK_ALL)))
     {
       monitor_printf ("q\n");
+      do_cleanups (cleanup);
       return;
     }
 #endif
@@ -189,6 +192,7 @@ m32r_load (char *filename, int from_tty)
      confused...  */
 
   clear_symtab_users (0);
+  do_cleanups (cleanup);
 }
 
 static void
@@ -238,8 +242,12 @@ m32r_supply_register (struct regcache *regcache, char *regname,
       monitor_supply_register (regcache, regno, val);
       if (regno == PSW_REGNUM)
 	{
+#if (defined SM_REGNUM || defined BSM_REGNUM || defined IE_REGNUM \
+     || defined BIE_REGNUM || defined COND_REGNUM  || defined CBR_REGNUM \
+     || defined BPC_REGNUM || defined BCARRY_REGNUM)
 	  unsigned long psw = strtoul (val, NULL, 16);
 	  char *zero = "00000000", *one = "00000001";
+#endif
 
 #ifdef SM_REGNUM
 	  /* Stack mode bit */
@@ -342,7 +350,6 @@ init_m32r_cmds (void)
   					/* register_pattern */
   m32r_cmds.register_pattern = "\\(\\w+\\) += \\([0-9a-fA-F]+\\b\\)";
   m32r_cmds.supply_register = m32r_supply_register;
-  m32r_cmds.load_routine = NULL;	/* load_routine (defaults to SRECs) */
   m32r_cmds.load = NULL;	/* download command */
   m32r_cmds.loadresp = NULL;	/* load response */
   m32r_cmds.prompt = "ok ";	/* monitor command prompt */
@@ -403,7 +410,6 @@ init_mon2000_cmds (void)
 						/* register_pattern */
   mon2000_cmds.register_pattern = "\\(\\w+\\) += \\([0-9a-fA-F]+\\b\\)";
   mon2000_cmds.supply_register = m32r_supply_register;
-  mon2000_cmds.load_routine = NULL;	/* load_routine (defaults to SRECs) */
   mon2000_cmds.load = NULL;	/* download command */
   mon2000_cmds.loadresp = NULL;	/* load response */
   mon2000_cmds.prompt = "Mon2000>";	/* monitor command prompt */
@@ -431,6 +437,7 @@ m32r_upload_command (char *args, int from_tty)
   char buf[1024];
   struct hostent *hostent;
   struct in_addr inet_addr;
+  struct cleanup *cleanup;
 
   /* First check to see if there's an ethernet port!  */
   monitor_printf ("ust\r");
@@ -443,8 +450,7 @@ m32r_upload_command (char *args, int from_tty)
       /* Scan second colon in the output from the "ust" command.  */
       char *myIPaddress = strchr (strchr (buf, ':') + 1, ':') + 1;
 
-      while (isspace (*myIPaddress))
-	myIPaddress++;
+      myIPaddress = skip_spaces (myIPaddress);
 
       if (!strncmp (myIPaddress, "0.0.", 4))	/* empty */
 	error (_("Please use 'set board-address' to "
@@ -521,7 +527,8 @@ m32r_upload_command (char *args, int from_tty)
     printf_filtered (" -- Ethernet load complete.\n");
 
   gettimeofday (&end_time, NULL);
-  abfd = bfd_openr (args, 0);
+  abfd = gdb_bfd_open (args, NULL, -1);
+  cleanup = make_cleanup_bfd_unref (abfd);
   if (abfd != NULL)
     {		/* Download is done -- print section statistics.  */
       if (bfd_check_format (abfd, bfd_object) == 0)
@@ -533,14 +540,13 @@ m32r_upload_command (char *args, int from_tty)
 	  {
 	    bfd_size_type section_size = bfd_section_size (abfd, s);
 	    bfd_vma section_base = bfd_section_lma (abfd, s);
-	    unsigned int buffer;
 
 	    data_count += section_size;
 
 	    printf_filtered ("Loading section %s, size 0x%lx lma ",
 			     bfd_section_name (abfd, s),
 			     (unsigned long) section_size);
-	    fputs_filtered (paddress (target_gdbarch, section_base),
+	    fputs_filtered (paddress (target_gdbarch (), section_base),
 			    gdb_stdout);
 	    printf_filtered ("\n");
 	    gdb_flush (gdb_stdout);
@@ -563,6 +569,7 @@ m32r_upload_command (char *args, int from_tty)
      confused...  */
 
   clear_symtab_users (0);
+  do_cleanups (cleanup);
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */

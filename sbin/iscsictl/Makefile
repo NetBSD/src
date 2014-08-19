@@ -11,7 +11,6 @@ CPPFLAGS+= -I${DESTDIR}/usr/include/dev/iscsi
 CPPFLAGS+=	-I${.CURDIR}/../../sys/dev/iscsi
 CPPFLAGS+=	-I${.CURDIR}/../../sys
 CPPFLAGS+=	-I${.CURDIR}/../iscsid
-WARNS=	4
 
 MAN=	iscsictl.8
 

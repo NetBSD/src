@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.38.12.1 2013/02/25 00:29:52 tls Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.38.12.2 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -167,20 +167,15 @@
  *	execution as a normal LWP (kthread) and gains VM context.  Only
  *	when it has completed and is ready to fire again will it
  *	interrupt other threads.
- *
- * Future directions
- *
- *	Provide a cheap way to direct software interrupts to remote
- *	CPUs.  Provide a way to enqueue work items into the handler
- *	record,	removing additional spl calls (see subr_workqueue.c). 
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.38.12.1 2013/02/25 00:29:52 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.38.12.2 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/intr.h>
+#include <sys/ipi.h>
 #include <sys/mutex.h>
 #include <sys/kthread.h>
 #include <sys/evcnt.h>
@@ -211,6 +206,7 @@ typedef struct softhand {
 	void			*sh_arg;
 	softint_t		*sh_isr;
 	u_int			sh_flags;
+	u_int			sh_ipi_id;
 } softhand_t;
 
 typedef struct softcpu {
@@ -338,6 +334,8 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 	softcpu_t *sc;
 	softhand_t *sh;
 	u_int level, index;
+	u_int ipi_id = 0;
+	void *sih;
 
 	level = (flags & SOFTINT_LVLMASK);
 	KASSERT(level < SOFTINT_COUNT);
@@ -357,6 +355,14 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 		    "increase softint_bytes\n");
 		return NULL;
 	}
+	sih = (void *)((uint8_t *)&sc->sc_hand[index] - (uint8_t *)sc);
+
+	if (flags & SOFTINT_RCPU) {
+		if ((ipi_id = ipi_register(softint_schedule, sih)) == 0) {
+			mutex_exit(&softint_lock);
+			return NULL;
+		}
+	}
 
 	/* Set up the handler on each CPU. */
 	if (ncpu < 2) {
@@ -367,6 +373,7 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 		sh->sh_func = func;
 		sh->sh_arg = arg;
 		sh->sh_flags = flags;
+		sh->sh_ipi_id = ipi_id;
 	} else for (CPU_INFO_FOREACH(cii, ci)) {
 		sc = ci->ci_data.cpu_softcpu;
 		sh = &sc->sc_hand[index];
@@ -374,11 +381,11 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 		sh->sh_func = func;
 		sh->sh_arg = arg;
 		sh->sh_flags = flags;
+		sh->sh_ipi_id = ipi_id;
 	}
-
 	mutex_exit(&softint_lock);
 
-	return (void *)((uint8_t *)&sc->sc_hand[index] - (uint8_t *)sc);
+	return sih;
 }
 
 /*
@@ -403,7 +410,18 @@ softint_disestablish(void *arg)
 	u_int flags;
 
 	offset = (uintptr_t)arg;
-	KASSERT(offset != 0 && offset < softint_bytes);
+	KASSERTMSG(offset != 0 && offset < softint_bytes, "%"PRIuPTR" %u",
+	    offset, softint_bytes);
+
+	/*
+	 * Unregister an IPI handler if there is any.  Note: there is
+	 * no need to disable preemption here - ID is stable.
+	 */
+	sc = curcpu()->ci_data.cpu_softcpu;
+	sh = (softhand_t *)((uint8_t *)sc + offset);
+	if (sh->sh_ipi_id) {
+		ipi_unregister(sh->sh_ipi_id);
+	}
 
 	/*
 	 * Run a cross call so we see up to date values of sh_flags from
@@ -462,7 +480,8 @@ softint_schedule(void *arg)
 
 	/* Find the handler record for this CPU. */
 	offset = (uintptr_t)arg;
-	KASSERT(offset != 0 && offset < softint_bytes);
+	KASSERTMSG(offset != 0 && offset < softint_bytes, "%"PRIuPTR" %u",
+	    offset, softint_bytes);
 	sh = (softhand_t *)((uint8_t *)curcpu()->ci_data.cpu_softcpu + offset);
 
 	/* If it's already pending there's nothing to do. */
@@ -485,6 +504,33 @@ softint_schedule(void *arg)
 		}
 	}
 	splx(s);
+}
+
+/*
+ * softint_schedule_cpu:
+ *
+ *	Trigger a software interrupt on a target CPU.  This invokes
+ *	softint_schedule() for the local CPU or send an IPI to invoke
+ *	this routine on the remote CPU.  Preemption must be disabled.
+ */
+void
+softint_schedule_cpu(void *arg, struct cpu_info *ci)
+{
+	KASSERT(kpreempt_disabled());
+
+	if (curcpu() != ci) {
+		const softcpu_t *sc = ci->ci_data.cpu_softcpu;
+		const uintptr_t offset = (uintptr_t)arg;
+		const softhand_t *sh;
+
+		sh = (const softhand_t *)((const uint8_t *)sc + offset);
+		KASSERT((sh->sh_flags & SOFTINT_RCPU) != 0);
+		ipi_trigger(sh->sh_ipi_id, ci);
+		return;
+	}
+
+	/* Just a local CPU. */
+	softint_schedule(arg);
 }
 
 /*
@@ -546,7 +592,7 @@ softint_execute(softint_t *si, lwp_t *l, int s)
 		KASSERTMSG(curcpu()->ci_mtx_count == 0,
 		    "%s: ci_mtx_count (%d) != 0, sh_func %p\n",
 		    __func__, curcpu()->ci_mtx_count, sh->sh_func);
-	
+
 		(void)splhigh();
 		KASSERT((sh->sh_flags & SOFTINT_ACTIVE) != 0);
 		sh->sh_flags ^= SOFTINT_ACTIVE;

@@ -1,4 +1,4 @@
-/*	$Id: nmi.c,v 1.3 2011/10/12 00:07:29 yamt Exp $	*/
+/*	$Id: nmi.c,v 1.3.12.1 2014/08/20 00:03:29 tls Exp $	*/
 
 /*-
  * Copyright (c)2009,2011 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nmi.c,v 1.3 2011/10/12 00:07:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nmi.c,v 1.3.12.1 2014/08/20 00:03:29 tls Exp $");
 
 /*
  * nmi dispatcher.
@@ -153,7 +153,7 @@ nmi_dispatch(const struct trapframe *tf)
 	 *
 	 * we don't bother to call pserialize_read_enter/pserialize_read_exit
 	 * because they are not necessary here as we are sure our IPL is
-	 * higher than IPL_SOFTCLOCK.  better to avoid unnecessary calls as
+	 * higher than IPL_SOFTSERIAL.  better to avoid unnecessary calls as
 	 * we are in a dangerous context. (NMI)
 	 */
 

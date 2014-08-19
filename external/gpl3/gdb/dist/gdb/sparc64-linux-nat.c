@@ -1,7 +1,6 @@
 /* Native-dependent code for GNU/Linux UltraSPARC.
 
-   Copyright (C) 2003, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -54,7 +53,7 @@ supply_gregset (struct regcache *regcache, const prgregset_t *gregs)
 void
 supply_fpregset (struct regcache *regcache, const prfpregset_t *fpregs)
 {
-  sparc64_supply_fpregset (regcache, -1, fpregs);
+  sparc64_supply_fpregset (&sparc64_bsd_fpregset, regcache, -1, fpregs);
 }
 
 void
@@ -67,7 +66,7 @@ void
 fill_fpregset (const struct regcache *regcache,
 	       prfpregset_t *fpregs, int regnum)
 {
-  sparc64_collect_fpregset (regcache, regnum, fpregs);
+  sparc64_collect_fpregset (&sparc64_bsd_fpregset, regcache, regnum, fpregs);
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */

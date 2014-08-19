@@ -23,6 +23,10 @@
 #ifndef BFD_SYSDEP_H
 #define BFD_SYSDEP_H
 
+#ifdef PACKAGE
+#error sysdep.h must be included in lieu of config.h
+#endif
+
 #include "config.h"
 
 #include "ansidecl.h"
@@ -74,6 +78,10 @@ extern char *strrchr ();
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+
+#ifdef HAVE_SYS_RESOURCE_H
+#include <sys/resource.h>
+#endif /* HAVE_SYS_RESOURCE_H */
 
 #ifdef USE_BINARY_FOPEN
 #include "fopen-bin.h"

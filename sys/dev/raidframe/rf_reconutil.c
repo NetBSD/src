@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.34 2011/05/11 18:13:12 mrg Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.34.14.1 2014/08/20 00:03:49 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.34 2011/05/11 18:13:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.34.14.1 2014/08/20 00:03:49 tls Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -248,7 +248,7 @@ void
 rf_FreeReconBuffer(RF_ReconBuffer_t *rbuf)
 {
 	RF_Raid_t *raidPtr = rbuf->raidPtr;
-	u_int   recon_buffer_size;
+	u_int   recon_buffer_size __unused;
 
 	recon_buffer_size = rf_RaidAddressToByte(raidPtr, raidPtr->Layout.SUsPerRU * raidPtr->Layout.sectorsPerStripeUnit);
 

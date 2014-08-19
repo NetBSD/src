@@ -1,4 +1,4 @@
-.\"	$NetBSD: security.conf.5,v 1.39 2012/04/05 09:15:56 wiz Exp $
+.\"	$NetBSD: security.conf.5,v 1.39.2.1 2014/08/20 00:02:36 tls Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -171,6 +171,11 @@ During the
 .Sy check_homes
 phase, allow the checked files to be group-writable if the group name is
 the same as the username.
+.It Sy check_homes_permit_other_owner
+During the
+.Sy check_homes
+phase, allow the home directory and files of the listed users to be owned
+by a different user.
 .It Sy check_devices_ignore_fstypes
 Lists filesystem types to ignore during the
 .Sy check_devices

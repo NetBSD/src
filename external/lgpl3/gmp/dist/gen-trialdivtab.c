@@ -2,7 +2,7 @@
 
    Contributed to the GNU project by Torbjorn Granlund.
 
-Copyright 2009 Free Software Foundation, Inc.
+Copyright 2009, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -17,7 +17,7 @@ or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 License for more details.
 
 You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.	If not, see http://www.gnu.org/licenses/.  */
+along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
 /*
   Generate tables for fast, division-free trial division for GMP.
@@ -36,7 +36,7 @@ along with the GNU MP Library.	If not, see http://www.gnu.org/licenses/.  */
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "dumbmp.c"
+#include "bootstrap.c"
 
 int sumspills (mpz_t, mpz_t *, int);
 void mpn_mod_1s_4p_cps (mpz_t [7], mpz_t);
@@ -203,20 +203,7 @@ main (int argc, char *argv[])
 unsigned long
 mpz_log2 (mpz_t x)
 {
-  mpz_t y;
-  unsigned long cnt;
-
-  mpz_init (y);
-  mpz_set (y, x);
-  cnt = 0;
-  while (mpz_sgn (y) != 0)
-    {
-      mpz_tdiv_q_2exp (y, y, 1);
-      cnt++;
-    }
-  mpz_clear (y);
-
-  return cnt;
+  return mpz_sgn (x) ? mpz_sizeinbase (x, 2) : 0;
 }
 
 void

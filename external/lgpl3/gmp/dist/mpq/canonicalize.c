@@ -28,26 +28,26 @@ mpq_canonicalize (MP_RAT *op)
   mpz_t gcd;
   TMP_DECL;
 
-  if (op->_mp_den._mp_size == 0)
+  if (UNLIKELY (SIZ(DEN(op)) == 0))
     DIVIDE_BY_ZERO;
 
   TMP_MARK;
 
   /* ??? Dunno if the 1+ is needed.  */
-  MPZ_TMP_INIT (gcd, 1 + MAX (ABS (op->_mp_num._mp_size),
-			      ABS (op->_mp_den._mp_size)));
+  MPZ_TMP_INIT (gcd, 1 + MAX (ABSIZ(NUM(op)),
+			      ABSIZ(DEN(op))));
 
-  mpz_gcd (gcd, &(op->_mp_num), &(op->_mp_den));
+  mpz_gcd (gcd, NUM(op), DEN(op));
   if (! MPZ_EQUAL_1_P (gcd))
     {
-      mpz_divexact_gcd (&(op->_mp_num), &(op->_mp_num), gcd);
-      mpz_divexact_gcd (&(op->_mp_den), &(op->_mp_den), gcd);
+      mpz_divexact_gcd (NUM(op), NUM(op), gcd);
+      mpz_divexact_gcd (DEN(op), DEN(op), gcd);
     }
 
-  if (op->_mp_den._mp_size < 0)
+  if (SIZ(DEN(op)) < 0)
     {
-      op->_mp_num._mp_size = -op->_mp_num._mp_size;
-      op->_mp_den._mp_size = -op->_mp_den._mp_size;
+      SIZ(NUM(op)) = -SIZ(NUM(op));
+      SIZ(DEN(op)) = -SIZ(DEN(op));
     }
   TMP_FREE;
 }

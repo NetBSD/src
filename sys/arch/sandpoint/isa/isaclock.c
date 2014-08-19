@@ -1,4 +1,4 @@
-/*	$NetBSD: isaclock.c,v 1.13 2009/03/14 21:04:15 dsl Exp $	*/
+/*	$NetBSD: isaclock.c,v 1.13.22.1 2014/08/20 00:03:21 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isaclock.c,v 1.13 2009/03/14 21:04:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isaclock.c,v 1.13.22.1 2014/08/20 00:03:21 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,9 +140,6 @@ __KERNEL_RCSID(0, "$NetBSD: isaclock.c,v 1.13 2009/03/14 21:04:15 dsl Exp $");
 #include <sandpoint/isa/nvram.h>
 #include <sandpoint/isa/spkrreg.h>
 
-extern void disable_intr(void);	/* In locore.S */
-extern void enable_intr(void);	/* In locore.S */
-
 void	sysbeepstop(void *);
 void	sysbeep(int, int);
 
@@ -151,10 +148,12 @@ static int beeping;
 void
 sysbeepstop(void *arg)
 {
+	int s;
+
 	/* disable counter 2 */
-	disable_intr();
+	s = splhigh();	/* FIXME */
 	isa_outb(PITAUX_PORT, isa_inb(PITAUX_PORT) & ~PIT_SPKR);
-	enable_intr();
+	splx(s);
 	beeping = 0;
 }
 
@@ -164,6 +163,7 @@ sysbeep(int pitch, int period)
 	static callout_t sysbeep_ch;
 	static int last_pitch;
 	static bool again;
+	int s;
 
 	if (!again) {
 		callout_init(&sysbeep_ch, 0);
@@ -178,13 +178,13 @@ sysbeep(int pitch, int period)
 		return;
 	}
 	if (!beeping || last_pitch != pitch) {
-		disable_intr();
+		s = splhigh();	/* FIXME */
 		isa_outb(IO_TIMER1 + TIMER_MODE,
 			 TIMER_SEL2 | TIMER_16BIT | TIMER_SQWAVE);
 		isa_outb(IO_TIMER1 + TIMER_CNTR2, TIMER_DIV(pitch) % 256);
 		isa_outb(IO_TIMER1 + TIMER_CNTR2, TIMER_DIV(pitch) / 256);
 		isa_outb(PITAUX_PORT, isa_inb(PITAUX_PORT) | PIT_SPKR);	/* enable counter 2 */
-		enable_intr();
+		splx(s);
 	}
 	last_pitch = pitch;
 	beeping = 1;

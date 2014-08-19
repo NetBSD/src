@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.45 2011/07/02 13:12:44 mrg Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.45.12.1 2014/08/20 00:03:37 tls Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.45 2011/07/02 13:12:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.45.12.1 2014/08/20 00:03:37 tls Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -1025,9 +1025,10 @@ ahd_handle_seqint(struct ahd_softc *ahd, u_int intstat)
 		{
 			struct	ahd_devinfo devinfo;
 			struct	scb *scb;
+#ifdef notdef
 			struct	ahd_initiator_tinfo *targ_info;
 			struct	ahd_tmode_tstate *tstate;
-			struct	ahd_transinfo *tinfo;
+#endif
 			u_int	scbid;
 
 			/*
@@ -1055,12 +1056,13 @@ ahd_handle_seqint(struct ahd_softc *ahd, u_int intstat)
 					    SCB_GET_LUN(scb),
 					    SCB_GET_CHANNEL(ahd, scb),
 					    ROLE_INITIATOR);
+#ifdef notdef
 			targ_info = ahd_fetch_transinfo(ahd,
 							devinfo.channel,
 							devinfo.our_scsiid,
 							devinfo.target,
 							&tstate);
-			tinfo = &targ_info->curr;
+#endif
 			ahd_set_width(ahd, &devinfo, MSG_EXT_WDTR_BUS_8_BIT,
 				      AHD_TRANS_ACTIVE, /*paused*/TRUE);
 			ahd_set_syncrate(ahd, &devinfo, /*period*/0,
@@ -1747,7 +1749,6 @@ ahd_handle_transmission_error(struct ahd_softc *ahd)
 	struct	scb *scb;
 	u_int	scbid;
 	u_int	lqistat1;
-	u_int	lqistat2;
 	u_int	msg_out;
 	u_int	curphase;
 	u_int	lastphase;
@@ -1758,7 +1759,7 @@ ahd_handle_transmission_error(struct ahd_softc *ahd)
 	scb = NULL;
 	ahd_set_modes(ahd, AHD_MODE_SCSI, AHD_MODE_SCSI);
 	lqistat1 = ahd_inb(ahd, LQISTAT1) & ~(LQIPHASE_LQ|LQIPHASE_NLQ);
-	lqistat2 = ahd_inb(ahd, LQISTAT2);
+	(void)ahd_inb(ahd, LQISTAT2);
 	if ((lqistat1 & (LQICRCI_NLQ|LQICRCI_LQ)) == 0
 	 && (ahd->bugs & AHD_NLQICRC_DELAYED_BUG) != 0) {
 		u_int lqistate;
@@ -2657,10 +2658,8 @@ ahd_dump_sglist(struct scb *scb)
 			sg_list = (struct ahd_dma64_seg*)scb->sg_list;
 			for (i = 0; i < scb->sg_count; i++) {
 				uint64_t addr;
-				uint32_t len;
 
 				addr = ahd_le64toh(sg_list[i].addr);
-				len = ahd_le32toh(sg_list[i].len);
 				printf("sg[%d] - Addr 0x%x%x : Length %d%s\n",
 				       i,
 				       (uint32_t)((addr >> 32) & 0xFFFFFFFF),
@@ -3288,13 +3287,12 @@ ahd_update_pending_scbs(struct ahd_softc *ahd)
 	LIST_FOREACH(pending_scb, &ahd->pending_scbs, pending_links) {
 		struct ahd_devinfo devinfo;
 		struct hardware_scb *pending_hscb;
-		struct ahd_initiator_tinfo *tinfo;
 		struct ahd_tmode_tstate *tstate;
 
 		ahd_scb_devinfo(ahd, &devinfo, pending_scb);
-		tinfo = ahd_fetch_transinfo(ahd, devinfo.channel,
-					    devinfo.our_scsiid,
-					    devinfo.target, &tstate);
+		(void)ahd_fetch_transinfo(ahd, devinfo.channel,
+					  devinfo.our_scsiid,
+					  devinfo.target, &tstate);
 		pending_hscb = pending_scb->hscb;
 		if ((tstate->auto_negotiate & devinfo.target_mask) == 0
 		 && (pending_scb->flags & SCB_AUTO_NEGOTIATE) != 0) {
@@ -5965,26 +5963,23 @@ ahd_controller_info(struct ahd_softc *ahd, char *tbuf, size_t l)
 {
 	const char *speed;
 	const char *type;
-	int len;
-	char *ep;
+	size_t len;
 
-	ep = tbuf + l;
-
-	len = snprintf(tbuf, ep - tbuf, "%s: ",
+	len = snprintf(tbuf, l, "%s: ",
 	    ahd_chip_names[ahd->chip & AHD_CHIPID_MASK]);
-	tbuf += len;
-
+	if (len > l)
+		return;
 	speed = "Ultra320 ";
 	if ((ahd->features & AHD_WIDE) != 0) {
 		type = "Wide ";
 	} else {
 		type = "Single ";
 	}
-	len = snprintf(tbuf, ep - tbuf, "%s%sChannel %c, SCSI Id=%d, ",
+	len += snprintf(tbuf + len, l  - len, "%s%sChannel %c, SCSI Id=%d, ",
 		      speed, type, ahd->channel, ahd->our_id);
-	tbuf += len;
-
-	snprintf(tbuf, ep - tbuf, "%s, %d SCBs", ahd->bus_description,
+	if (len > l)
+		return;
+	snprintf(tbuf + len, l - len, "%s, %d SCBs", ahd->bus_description,
 		ahd->scb_data.maxhscbs);
 }
 
@@ -7127,7 +7122,6 @@ ahd_search_qinfifo(struct ahd_softc *ahd, int target, char channel,
 	int		 found;
 	int		 targets;
 	int		 pending_cmds;
-	int		 qincount;
 
 	/* Must be in CCHAN mode */
 	saved_modes = ahd_save_modes(ahd);
@@ -7155,7 +7149,7 @@ ahd_search_qinfifo(struct ahd_softc *ahd, int target, char channel,
 	LIST_FOREACH(scb, &ahd->pending_scbs, pending_links) {
 		pending_cmds++;
 	}
-	qincount = ahd_qinfifo_count(ahd);
+	(void)ahd_qinfifo_count(ahd);
 
 	if (action == SEARCH_PRINT) {
 		printf("qinstart = 0x%x qinfifonext = 0x%x\n",
@@ -7953,7 +7947,6 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 		struct scsi_request_sense *sc;
 		struct ahd_initiator_tinfo *targ_info;
 		struct ahd_tmode_tstate *tstate;
-		struct ahd_transinfo *tinfo;
 #ifdef AHD_DEBUG
 		if (ahd_debug & AHD_SHOW_SENSE) {
 			ahd_print_path(ahd, scb);
@@ -7975,7 +7968,6 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 						devinfo.our_scsiid,
 						devinfo.target,
 						&tstate);
-		tinfo = &targ_info->curr;
 		sg = scb->sg_list;
 		sc = (struct scsi_request_sense *)hscb->shared_data.idata.cdb;
 		/*
@@ -8602,7 +8594,7 @@ ahd_print_register(ahd_reg_parse_entry_t *table, u_int num_entries,
 		   const char *name, u_int address, u_int value,
 		   u_int *cur_column, u_int wrap_point)
 {
-	int	printed;
+	size_t	printed;
 	u_int	printed_mask;
 	char    line[1024];
 
@@ -8613,9 +8605,11 @@ ahd_print_register(ahd_reg_parse_entry_t *table, u_int num_entries,
 		*cur_column = 0;
 	}
 	printed = snprintf(line, sizeof(line), "%s[0x%x]", name, value);
+		printed = sizeof(line);
 	if (table == NULL) {
-		printed += snprintf(&line[printed], (sizeof line) - printed,
-		    " ");
+		if (printed < sizeof(line))
+		    printed += snprintf(&line[printed],
+			(sizeof line) - printed, " ");
 		printf("%s", line);
 		if (cur_column != NULL)
 			*cur_column += printed;
@@ -8631,10 +8625,11 @@ ahd_print_register(ahd_reg_parse_entry_t *table, u_int num_entries,
 			 || ((printed_mask & table[entry].mask)
 			  == table[entry].mask))
 				continue;
-			printed += snprintf(&line[printed],
-			    (sizeof line) - printed, "%s%s",
-				printed_mask == 0 ? ":(" : "|",
-				table[entry].name);
+			if (printed < sizeof(line))
+			    printed += snprintf(&line[printed],
+				(sizeof line) - printed, "%s%s",
+				    printed_mask == 0 ? ":(" : "|",
+				    table[entry].name);
 			printed_mask |= table[entry].mask;
 
 			break;
@@ -8642,12 +8637,14 @@ ahd_print_register(ahd_reg_parse_entry_t *table, u_int num_entries,
 		if (entry >= num_entries)
 			break;
 	}
-	if (printed_mask != 0)
-		printed += snprintf(&line[printed],
-		    (sizeof line) - printed, ") ");
-	else
-		printed += snprintf(&line[printed],
-		    (sizeof line) - printed, " ");
+	if (printed < sizeof(line)) {
+		if (printed_mask != 0)
+			printed += snprintf(&line[printed],
+			    (sizeof line) - printed, ") ");
+		else
+			printed += snprintf(&line[printed],
+			    (sizeof line) - printed, " ");
+	}
 	if (cur_column != NULL)
 		*cur_column += printed;
 	printf("%s", line);

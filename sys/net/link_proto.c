@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.7 2011/10/07 16:34:31 dyoung Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.7.12.1 2014/08/20 00:04:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.7 2011/10/07 16:34:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.7.12.1 2014/08/20 00:04:34 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -48,6 +48,26 @@ __KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.7 2011/10/07 16:34:31 dyoung Exp $"
 #include <net/route.h>
 
 static int sockaddr_dl_cmp(const struct sockaddr *, const struct sockaddr *);
+static int link_attach(struct socket *, int);
+static void link_detach(struct socket *);
+static int link_accept(struct socket *, struct mbuf *);
+static int link_bind(struct socket *, struct mbuf *, struct lwp *);
+static int link_listen(struct socket *, struct lwp *);
+static int link_connect(struct socket *, struct mbuf *, struct lwp *);
+static int link_connect2(struct socket *, struct socket *);
+static int link_disconnect(struct socket *);
+static int link_shutdown(struct socket *);
+static int link_abort(struct socket *);
+static int link_ioctl(struct socket *, u_long, void *, struct ifnet *);
+static int link_stat(struct socket *, struct stat *);
+static int link_peeraddr(struct socket *, struct mbuf *);
+static int link_sockaddr(struct socket *, struct mbuf *);
+static int link_rcvd(struct socket *, int, struct lwp *);
+static int link_recvoob(struct socket *, struct mbuf *, int);
+static int link_send(struct socket *, struct mbuf *, struct mbuf *,
+    struct mbuf *, struct lwp *);
+static int link_sendoob(struct socket *, struct mbuf *, struct mbuf *);
+static int link_purgeif(struct socket *, struct ifnet *);
 static int link_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
     struct mbuf *, struct lwp *);
 static void link_init(void);
@@ -58,6 +78,29 @@ static void link_init(void);
 
 DOMAIN_DEFINE(linkdomain);	/* forward define and add to link set */
 
+static const struct pr_usrreqs link_usrreqs = {
+	.pr_attach	= link_attach,
+	.pr_detach	= link_detach,
+	.pr_accept	= link_accept,
+	.pr_bind	= link_bind,
+	.pr_listen	= link_listen,
+	.pr_connect	= link_connect,
+	.pr_connect2	= link_connect2,
+	.pr_disconnect	= link_disconnect,
+	.pr_shutdown	= link_shutdown,
+	.pr_abort	= link_abort,
+	.pr_ioctl	= link_ioctl,
+	.pr_stat	= link_stat,
+	.pr_peeraddr	= link_peeraddr,
+	.pr_sockaddr	= link_sockaddr,
+	.pr_rcvd	= link_rcvd,
+	.pr_recvoob	= link_recvoob,
+	.pr_send	= link_send,
+	.pr_sendoob	= link_sendoob,
+	.pr_purgeif	= link_purgeif,
+	.pr_generic	= link_usrreq,
+};
+
 const struct protosw linksw[] = {
 	{	.pr_type = SOCK_DGRAM,
 		.pr_domain = &linkdomain,
@@ -66,7 +109,7 @@ const struct protosw linksw[] = {
 		.pr_input = NULL,
 		.pr_ctlinput = NULL,
 		.pr_ctloutput = NULL,
-		.pr_usrreq = link_usrreq,
+		.pr_usrreqs = &link_usrreqs,
 		.pr_init = link_init,
 	},
 };
@@ -89,7 +132,7 @@ link_init(void)
 
 static int
 link_control(struct socket *so, unsigned long cmd, void *data,
-    struct ifnet *ifp, struct lwp *l)
+    struct ifnet *ifp)
 {
 	int error, s;
 	bool isactive, mkactive;
@@ -197,7 +240,8 @@ link_control(struct socket *so, unsigned long cmd, void *data,
 		splx(s);
 		if (error != ENETRESET)
 			return error;
-		else if ((ifp->if_flags & IFF_RUNNING) != 0)
+		else if ((ifp->if_flags & IFF_RUNNING) != 0 &&
+		         ifp->if_init != NULL)
 			return (*ifp->if_init)(ifp);
 		else
 			return 0;
@@ -207,22 +251,179 @@ link_control(struct socket *so, unsigned long cmd, void *data,
 }
 
 static int
+link_attach(struct socket *so, int proto)
+{
+	sosetlock(so);
+	KASSERT(solocked(so));
+	return 0;
+}
+
+static void
+link_detach(struct socket *so)
+{
+	KASSERT(solocked(so));
+	sofree(so);
+}
+
+static int
+link_accept(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+link_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+link_listen(struct socket *so, struct lwp *l)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+link_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+{
+ 	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+link_connect2(struct socket *so, struct socket *so2)
+{
+ 	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+link_disconnect(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+link_shutdown(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+link_abort(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+link_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
+{
+	return link_control(so, cmd, nam, ifp);
+}
+
+static int
+link_stat(struct socket *so, struct stat *ub)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+link_peeraddr(struct socket *so, struct mbuf *nam)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+link_sockaddr(struct socket *so, struct mbuf *nam)
+{
+ 	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+link_rcvd(struct socket *so, int flags, struct lwp *l)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+link_recvoob(struct socket *so, struct mbuf *m, int flags)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+link_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control, struct lwp *l)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+link_sendoob(struct socket *so, struct mbuf *m, struct mbuf *control)
+{
+	KASSERT(solocked(so));
+
+	return EOPNOTSUPP;
+}
+
+static int
+link_purgeif(struct socket *so, struct ifnet *ifp)
+{
+
+	return EOPNOTSUPP;
+}
+
+static int
 link_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct mbuf *control, struct lwp *l)
 {
-	switch (req) {
-	case PRU_ATTACH:
-		sosetlock(so);
-		return 0;
-	case PRU_DETACH:
-		sofree(so);
-		return 0;
-	case PRU_CONTROL:
-		return link_control(so, (unsigned long)m, nam,
-		    (struct ifnet *)control, l);
-	default:
-		return EOPNOTSUPP;
-	}
+	KASSERT(req != PRU_ATTACH);
+	KASSERT(req != PRU_DETACH);
+	KASSERT(req != PRU_ACCEPT);
+	KASSERT(req != PRU_BIND);
+	KASSERT(req != PRU_LISTEN);
+	KASSERT(req != PRU_CONNECT);
+	KASSERT(req != PRU_CONNECT2);
+	KASSERT(req != PRU_DISCONNECT);
+	KASSERT(req != PRU_SHUTDOWN);
+	KASSERT(req != PRU_ABORT);
+	KASSERT(req != PRU_CONTROL);
+	KASSERT(req != PRU_SENSE);
+	KASSERT(req != PRU_PEERADDR);
+	KASSERT(req != PRU_SOCKADDR);
+	KASSERT(req != PRU_RCVD);
+	KASSERT(req != PRU_RCVOOB);
+	KASSERT(req != PRU_SEND);
+	KASSERT(req != PRU_SENDOOB);
+	KASSERT(req != PRU_PURGEIF);
+
+	return EOPNOTSUPP;
 }
 
 /* Compare the field at byte offsets [fieldstart, fieldend) in
@@ -306,8 +507,8 @@ sockaddr_dl_init(struct sockaddr_dl *sdl, socklen_t socklen, uint16_t ifindex,
 	if (len > socklen) {
 		sdl->sdl_len = socklen;
 #ifdef DIAGNOSTIC
-		printf("%s: too long: %" PRIu8 " > %" PRIu8 "\n", __func__, len,
-		    socklen);
+		printf("%s: too long: %u > %u\n", __func__, (u_int)len,
+		    (u_int)socklen);
 #endif
 		return NULL;
 	}
@@ -386,8 +587,8 @@ sockaddr_dl_setaddr(struct sockaddr_dl *sdl, socklen_t socklen,
 	len = sockaddr_dl_measure(sdl->sdl_nlen, addrlen);
 	if (len > socklen) {
 #ifdef DIAGNOSTIC
-		printf("%s: too long: %" PRIu8 " > %" PRIu8 "\n", __func__, len,
-		    socklen);
+		printf("%s: too long: %u > %u\n", __func__, (u_int)len,
+		    (u_int)socklen);
 #endif
 		return NULL;
 	}

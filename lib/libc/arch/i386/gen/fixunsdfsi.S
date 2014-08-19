@@ -1,4 +1,4 @@
-/*	$NetBSD: fixunsdfsi.S,v 1.12 2011/05/22 20:11:47 joerg Exp $	*/
+/*	$NetBSD: fixunsdfsi.S,v 1.12.10.1 2014/08/20 00:02:10 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,13 +36,13 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: fixunsdfsi.S,v 1.12 2011/05/22 20:11:47 joerg Exp $")
+	RCSID("$NetBSD: fixunsdfsi.S,v 1.12.10.1 2014/08/20 00:02:10 tls Exp $")
 #endif
 
 ENTRY(__fixunsdfsi)
 	fldl	4(%esp)		/* argument double to accum stack */
 	frndint			/* create integer */
-#ifdef PIC
+#ifdef __PIC__
 	PIC_PROLOGUE
 	leal	PIC_GOTOFF(fbiggestsigned),%eax
 	PIC_EPILOGUE
@@ -59,7 +59,7 @@ ENTRY(__fixunsdfsi)
 	ret
 
 2:
-#ifdef PIC
+#ifdef __PIC__
 	PIC_PROLOGUE
 	leal	PIC_GOTOFF(fbiggestsigned),%eax
 	PIC_EPILOGUE
@@ -71,5 +71,6 @@ ENTRY(__fixunsdfsi)
 	movl	4(%esp),%eax
 	orl	$0x80000000,%eax	/* restore bias */
 	ret
+END(__fixunsdfsi)
 
 fbiggestsigned:	.double	2147483648.0

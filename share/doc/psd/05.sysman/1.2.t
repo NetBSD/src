@@ -1,4 +1,4 @@
-.\"	$NetBSD: 1.2.t,v 1.4 2004/02/13 11:36:08 wiz Exp $
+.\"	$NetBSD: 1.2.t,v 1.4.60.1 2014/08/20 00:02:29 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,8 +29,8 @@
 .\"
 .\"	@(#)1.2.t	8.9 (Berkeley) 5/29/94
 .\"
-.Sh 2 "Memory management
-.Sh 3 "Text, data, and stack
+.Sh 2 8 "Memory management
+.Sh 3 8 "Text, data, and stack
 .PP
 Each process begins execution with three logical areas of memory
 called text, data, and stack.  
@@ -63,7 +63,7 @@ and
 .LP
 There is no call for extending the stack,
 as it is automatically extended as needed.
-.Sh 3 "Mapping pages
+.Sh 3 8 "Mapping pages
 .PP
 The system supports sharing of data between processes
 by allowing pages to be mapped into memory.  These mapped
@@ -205,7 +205,7 @@ caddr_t addr; size_t len;
 This call deletes the mappings for the specified address range,
 and causes further references to addresses within the range
 to generate invalid memory references.
-.Sh 3 "Page protection control
+.Sh 3 10 "Page protection control
 .LP
 A process can control the protection of pages using the call:
 .DS
@@ -216,7 +216,7 @@ caddr_t addr; size_t len; int prot;
 This call changes the specified pages to have protection \fIprot\fP\|.
 Not all implementations will guarantee protection on a page basis;
 the granularity of protection changes may be as large as an entire region.
-.Sh 3 "Giving and getting advice
+.Sh 3 10 "Giving and getting advice
 .LP
 A process that has knowledge of its memory behavior may
 use the
@@ -282,7 +282,7 @@ After the
 .Fn munlock
 call, the pages in the specified address range are still accessible
 but may be paged out if memory is needed and they are not accessed.
-.Sh 3 "Synchronization primitives
+.Sh 3 10 "Synchronization primitives
 Primitives are provided for synchronization using semaphores
 in shared memory.\(dd
 .FS

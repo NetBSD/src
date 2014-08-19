@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.8 2011/06/13 21:32:43 matt Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.8.12.1 2014/08/20 00:03:20 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.8 2011/06/13 21:32:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.8.12.1 2014/08/20 00:03:20 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -60,7 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.8 2011/06/13 21:32:43 matt Exp $"
  * Write the machine-dependent part of a core dump.
  */
 int
-cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
+cpu_coredump(struct lwp *l, struct coredump_iostate *iocookie,
+    struct core *chdr)
 {
 	struct coreseg cseg;
 	struct md_coredump md_core;

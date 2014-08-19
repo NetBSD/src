@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_smtpd.c,v 1.1.1.1.12.1 2013/02/25 00:27:26 tls Exp $	*/
+/*	$NetBSD: postscreen_smtpd.c,v 1.1.1.1.12.2 2014/08/19 23:59:44 tls Exp $	*/
 
 /*++
 /* NAME
@@ -225,6 +225,15 @@ static void psc_smtpd_read_event(int, char *);
 #define PSC_SUSPEND_SMTP_CMD_EVENTS(state) \
     PSC_CLEAR_EVENT_REQUEST(vstream_fileno((state)->smtp_client_stream), \
 			   psc_smtpd_time_event, (char *) (state));
+
+ /*
+  * Make control characters and other non-text visible.
+  */
+#define PSC_SMTPD_ESCAPE_TEXT(dest, src, src_len, max_len) do { \
+	ssize_t _s_len = (src_len); \
+	ssize_t _m_len = (max_len); \
+	(void) escape((dest), (src), _s_len < _m_len ? _s_len : _m_len); \
+    } while (0)
 
  /*
   * Command parser support.
@@ -666,7 +675,8 @@ static void psc_smtpd_time_event(int event, char *context)
 		 state->smtp_client_addr, state->smtp_client_port,
 		 psc_print_state_flags(state->flags, myname));
 
-    msg_info("COMMAND TIME LIMIT from [%s]:%s", PSC_CLIENT_ADDR_PORT(state));
+    msg_info("COMMAND TIME LIMIT from [%s]:%s after %s",
+	     PSC_CLIENT_ADDR_PORT(state), state->where);
     PSC_CLEAR_EVENT_DROP_SESSION_STATE(state, psc_smtpd_time_event,
 				       psc_smtpd_timeout_reply);
 }
@@ -717,6 +727,7 @@ static void psc_smtpd_read_event(int event, char *context)
 	int     want;
 	int     next_state;
     };
+    const char *saved_where;
 
 #define PSC_SMTPD_CMD_ST_ANY		0
 #define PSC_SMTPD_CMD_ST_CR		1
@@ -780,8 +791,8 @@ static void psc_smtpd_read_event(int event, char *context)
 	     */
 	    if (state->read_state == PSC_SMTPD_CMD_ST_ANY
 		&& VSTRING_LEN(state->cmd_buffer) >= var_line_limit) {
-		msg_info("COMMAND LENGTH LIMIT from [%s]:%s",
-			 PSC_CLIENT_ADDR_PORT(state));
+		msg_info("COMMAND LENGTH LIMIT from [%s]:%s after %s",
+			 PSC_CLIENT_ADDR_PORT(state), state->where);
 		PSC_CLEAR_EVENT_DROP_SESSION_STATE(state, psc_smtpd_time_event,
 						   psc_smtpd_421_reply);
 		return;
@@ -817,8 +828,10 @@ static void psc_smtpd_read_event(int event, char *context)
 	    if (ch == '\n') {
 		if ((state->flags & PSC_STATE_MASK_BARLF_TODO_SKIP)
 		    == PSC_STATE_FLAG_BARLF_TODO) {
-		    msg_info("BARE NEWLINE from [%s]:%s",
-			     PSC_CLIENT_ADDR_PORT(state));
+		    PSC_SMTPD_ESCAPE_TEXT(psc_temp, STR(state->cmd_buffer),
+				   VSTRING_LEN(state->cmd_buffer) - 1, 100);
+		    msg_info("BARE NEWLINE from [%s]:%s after %s",
+			     PSC_CLIENT_ADDR_PORT(state), STR(psc_temp));
 		    PSC_FAIL_SESSION_STATE(state, PSC_STATE_FLAG_BARLF_FAIL);
 		    PSC_UNPASS_SESSION_STATE(state, PSC_STATE_FLAG_BARLF_PASS);
 		    state->barlf_stamp = PSC_TIME_STAMP_DISABLED;	/* XXX */
@@ -916,9 +929,14 @@ static void psc_smtpd_read_event(int event, char *context)
 	 * 
 	 * Caution: cmdp->name and cmdp->action may be null on loop exit.
 	 */
-	for (cmdp = command_table; cmdp->name != 0; cmdp++)
-	    if (strcasecmp(command, cmdp->name) == 0)
+	saved_where = state->where;
+	state->where = PSC_SMTPD_CMD_UNIMPL;
+	for (cmdp = command_table; cmdp->name != 0; cmdp++) {
+	    if (strcasecmp(command, cmdp->name) == 0) {
+		state->where = cmdp->name;
 		break;
+	    }
+	}
 
 	if ((state->flags & PSC_STATE_FLAG_SMTPD_X21)
 	    && cmdp->action != psc_quit_cmd) {
@@ -934,8 +952,11 @@ static void psc_smtpd_read_event(int event, char *context)
 		|| (*var_psc_forbid_cmds
 		    && string_list_match(psc_forbid_cmds, command)))) {
 	    printable(command, '?');
-	    msg_info("NON-SMTP COMMAND from [%s]:%s %.100s %.100s",
-		     PSC_CLIENT_ADDR_PORT(state), command, cmd_buffer_ptr);
+	    PSC_SMTPD_ESCAPE_TEXT(psc_temp, cmd_buffer_ptr,
+				  strlen(cmd_buffer_ptr), 100);
+	    msg_info("NON-SMTP COMMAND from [%s]:%s after %s: %.100s %s",
+		     PSC_CLIENT_ADDR_PORT(state), saved_where,
+		     command, STR(psc_temp));
 	    PSC_FAIL_SESSION_STATE(state, PSC_STATE_FLAG_NSMTP_FAIL);
 	    PSC_UNPASS_SESSION_STATE(state, PSC_STATE_FLAG_NSMTP_PASS);
 	    state->nsmtp_stamp = PSC_TIME_STAMP_DISABLED;	/* XXX */
@@ -969,9 +990,8 @@ static void psc_smtpd_read_event(int event, char *context)
 	if ((state->flags & PSC_STATE_MASK_PIPEL_TODO_SKIP)
 	    == PSC_STATE_FLAG_PIPEL_TODO && !PSC_SMTPD_BUFFER_EMPTY(state)) {
 	    printable(command, '?');
-	    escape(psc_temp, PSC_SMTPD_PEEK_DATA(state),
-		   PSC_SMTPD_PEEK_LEN(state) < 100 ?
-		   PSC_SMTPD_PEEK_LEN(state) : 100);
+	    PSC_SMTPD_ESCAPE_TEXT(psc_temp, PSC_SMTPD_PEEK_DATA(state),
+				  PSC_SMTPD_PEEK_LEN(state), 100);
 	    msg_info("COMMAND PIPELINING from [%s]:%s after %.100s: %s",
 		     PSC_CLIENT_ADDR_PORT(state), command, STR(psc_temp));
 	    PSC_FAIL_SESSION_STATE(state, PSC_STATE_FLAG_PIPEL_FAIL);
@@ -1035,8 +1055,8 @@ static void psc_smtpd_read_event(int event, char *context)
 	/* Command COUNT limit test. */
 	if (++state->command_count > var_psc_cmd_count
 	    && cmdp->action != psc_quit_cmd) {
-	    msg_info("COMMAND COUNT LIMIT from [%s]:%s",
-		     PSC_CLIENT_ADDR_PORT(state));
+	    msg_info("COMMAND COUNT LIMIT from [%s]:%s after %s",
+		     PSC_CLIENT_ADDR_PORT(state), saved_where);
 	    PSC_CLEAR_EVENT_DROP_SESSION_STATE(state, psc_smtpd_time_event,
 					       psc_smtpd_421_reply);
 	    return;

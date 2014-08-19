@@ -1,7 +1,6 @@
 /* Machine independent GDB support for core files on systems using "regsets".
 
-   Copyright (C) 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2003, 2007, 2008,
-   2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1993-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,7 +35,7 @@
 
 #include <fcntl.h>
 #include <errno.h>
-#include "gdb_string.h"
+#include <string.h>
 #include <time.h>
 #ifdef HAVE_SYS_PROCFS_H
 #include <sys/procfs.h>

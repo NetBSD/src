@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.17.2.1 2013/06/23 06:20:00 tls Exp $	*/
+/*	$NetBSD: param.h,v 1.17.2.2 2014/08/20 00:02:46 tls Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -80,16 +80,64 @@
 # define	MACHINE		"arm"
 # ifndef __ARMEB__
 #  ifdef __ARM_EABI__
-#   define	_MACHINE_ARCH	earm
-#   define	MACHINE_ARCH	"earm"
+#   ifdef __ARM_PCS_VFP
+#    ifdef _ARM_ARCH_7
+#     define	_MACHINE_ARCH	earmv7hf
+#     define	MACHINE_ARCH	"earmv7hf"
+#    elif defined(_ARM_ARCH_6)
+#     define	_MACHINE_ARCH	earmv6hf
+#     define	MACHINE_ARCH	"earmv6hf"
+#    else
+#     define	_MACHINE_ARCH	earmhf
+#     define	MACHINE_ARCH	"earmhf"
+#    endif
+#   else
+#    ifdef _ARM_ARCH_7
+#     define	_MACHINE_ARCH	earmv7
+#     define	MACHINE_ARCH	"earmv7"
+#    elif defined(_ARM_ARCH_6)
+#     define	_MACHINE_ARCH	earmv6
+#     define	MACHINE_ARCH	"earmv6"
+#    elif !defined(_ARM_ARCH_5T)
+#     define	_MACHINE_ARCH	earmv4
+#     define	MACHINE_ARCH	"earmv4"
+#    else
+#     define	_MACHINE_ARCH	earm
+#     define	MACHINE_ARCH	"earm"
+#    endif
+#   endif
 #  else
 #   define	_MACHINE_ARCH	arm
 #   define	MACHINE_ARCH	"arm"
 #  endif
 # else
 #  ifdef __ARM_EABI__
-#   define	_MACHINE_ARCH	earmeb
-#   define	MACHINE_ARCH	"earmeb"
+#   ifdef __ARM_PCS_VFP
+#    ifdef _ARM_ARCH_7
+#     define	_MACHINE_ARCH	earmv7hfeb
+#     define	MACHINE_ARCH	"earmv7hfeb"
+#    elif defined(_ARM_ARCH_6)
+#     define	_MACHINE_ARCH	earmv6hfeb
+#     define	MACHINE_ARCH	"earmv6hfeb"
+#    else
+#     define	_MACHINE_ARCH	earmhfeb
+#     define	MACHINE_ARCH	"earmhfeb"
+#    endif
+#  else
+#    ifdef _ARM_ARCH_7
+#     define	_MACHINE_ARCH	earmv7eb
+#     define	MACHINE_ARCH	"earmv7eb"
+#    elif defined(_ARM_ARCH_6)
+#     define	_MACHINE_ARCH	earmv6eb
+#     define	MACHINE_ARCH	"earmv6eb"
+#    elif !defined(_ARM_ARCH_5T)
+#     define	_MACHINE_ARCH	earmv4eb
+#     define	MACHINE_ARCH	"earmv4eb"
+#    else
+#     define	_MACHINE_ARCH	earmeb
+#     define	MACHINE_ARCH	"earmeb"
+#    endif
+#   endif
 #  else
 #   define	_MACHINE_ARCH	armeb
 #   define	MACHINE_ARCH	"armeb"

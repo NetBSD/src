@@ -1,7 +1,7 @@
-/*	$NetBSD: if_virt.c,v 1.26.8.2 2013/06/23 06:20:29 tls Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.26.8.3 2014/08/20 00:04:43 tls Exp $	*/
 
 /*
- * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2008, 2013 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,42 +26,30 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.26.8.2 2013/06/23 06:20:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.26.8.3 2014/08/20 00:04:43 tls Exp $");
 
 #include <sys/param.h>
-#include <sys/condvar.h>
-#include <sys/fcntl.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
-#include <sys/kthread.h>
-#include <sys/mutex.h>
-#include <sys/poll.h>
-#include <sys/sockio.h>
-#include <sys/socketvar.h>
 #include <sys/cprng.h>
+#include <sys/module.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/if_ether.h>
-#include <net/if_tap.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 
-#include <rump/rump.h>
-
-#include "rump_private.h"
-#include "rump_net_private.h"
-
-#include "rumpcomp_user.h"
+#include "if_virt.h"
+#include "virtif_user.h"
 
 /*
- * Virtual interface for userspace purposes.  Uses tap(4) to
- * interface with the kernel and just simply shovels data
- * to/from /dev/tap.
+ * Virtual interface.  Uses hypercalls to shovel packets back
+ * and forth.  The exact method for shoveling depends on the
+ * hypercall implementation.
  */
-
-#define VIRTIF_BASE "virt"
 
 static int	virtif_init(struct ifnet *);
 static int	virtif_ioctl(struct ifnet *, u_long, void *);
@@ -71,118 +59,108 @@ static void	virtif_stop(struct ifnet *, int);
 struct virtif_sc {
 	struct ethercom sc_ec;
 	struct virtif_user *sc_viu;
-	bool sc_dying;
-	struct lwp *sc_l_snd, *sc_l_rcv;
-	kmutex_t sc_mtx;
-	kcondvar_t sc_cv;
+
+	int sc_num;
+	char *sc_linkstr;
 };
 
-static void virtif_receiver(void *);
-static void virtif_sender(void *);
 static int  virtif_clone(struct if_clone *, int);
 static int  virtif_unclone(struct ifnet *);
 
-struct if_clone virtif_cloner =
-    IF_CLONE_INITIALIZER(VIRTIF_BASE, virtif_clone, virtif_unclone);
+struct if_clone VIF_CLONER =
+    IF_CLONE_INITIALIZER(VIF_NAME, virtif_clone, virtif_unclone);
 
-int
-rump_virtif_create(int num)
+static int
+virtif_create(struct ifnet *ifp)
 {
-	struct virtif_sc *sc;
-	struct virtif_user *viu;
-	struct ifnet *ifp;
 	uint8_t enaddr[ETHER_ADDR_LEN] = { 0xb2, 0x0a, 0x00, 0x0b, 0x0e, 0x01 };
-	int error = 0;
+	char enaddrstr[3*ETHER_ADDR_LEN];
+	struct virtif_sc *sc = ifp->if_softc;
+	int error;
 
-	if (num >= 0x100)
-		return E2BIG;
-
-	if ((error = rumpcomp_virtif_create(num, &viu)) != 0)
-		return error;
+	if (sc->sc_viu)
+		panic("%s: already created", ifp->if_xname);
 
 	enaddr[2] = cprng_fast32() & 0xff;
-	enaddr[5] = num;
+	enaddr[5] = sc->sc_num & 0xff;
+
+	if ((error = VIFHYPER_CREATE(sc->sc_linkstr,
+	    sc, enaddr, &sc->sc_viu)) != 0) {
+		printf("VIFHYPER_CREATE failed: %d\n", error);
+		return error;
+	}
+
+	ether_ifattach(ifp, enaddr);
+	ether_snprintf(enaddrstr, sizeof(enaddrstr), enaddr);
+	aprint_normal_ifnet(ifp, "Ethernet address %s\n", enaddrstr);
+
+	IFQ_SET_READY(&ifp->if_snd);
+
+	return 0;
+}
+
+static int
+virtif_clone(struct if_clone *ifc, int num)
+{
+	struct virtif_sc *sc;
+	struct ifnet *ifp;
+	int error = 0;
 
 	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
-	sc->sc_dying = false;
-	sc->sc_viu = viu;
-
-	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&sc->sc_cv, "virtsnd");
+	sc->sc_num = num;
 	ifp = &sc->sc_ec.ec_if;
-	sprintf(ifp->if_xname, "%s%d", VIRTIF_BASE, num);
+
+	if_initname(ifp, VIF_NAME, num);
 	ifp->if_softc = sc;
-
-	if (rump_threads) {
-		if ((error = kthread_create(PRI_NONE, KTHREAD_MUSTJOIN, NULL,
-		    virtif_receiver, ifp, &sc->sc_l_rcv, "virtifr")) != 0)
-			goto out;
-
-		if ((error = kthread_create(PRI_NONE,
-		    KTHREAD_MUSTJOIN | KTHREAD_MPSAFE, NULL,
-		    virtif_sender, ifp, &sc->sc_l_snd, "virtifs")) != 0)
-			goto out;
-	} else {
-		printf("WARNING: threads not enabled, receive NOT working\n");
-	}
 
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_init = virtif_init;
 	ifp->if_ioctl = virtif_ioctl;
 	ifp->if_start = virtif_start;
 	ifp->if_stop = virtif_stop;
-	IFQ_SET_READY(&ifp->if_snd);
+	ifp->if_mtu = ETHERMTU;
+	ifp->if_dlt = DLT_EN10MB;
 
 	if_attach(ifp);
-	ether_ifattach(ifp, enaddr);
 
- out:
+#ifndef RUMP_VIF_LINKSTR
+	/*
+	 * if the underlying interface does not expect linkstr, we can
+	 * create everything now.  Otherwise, we need to wait for
+	 * SIOCSLINKSTR.
+	 */
+#define LINKSTRNUMLEN 16
+	sc->sc_linkstr = kmem_alloc(LINKSTRNUMLEN, KM_SLEEP);
+	snprintf(sc->sc_linkstr, LINKSTRNUMLEN, "%d", sc->sc_num);
+#undef LINKSTRNUMLEN
+	error = virtif_create(ifp);
 	if (error) {
-		virtif_unclone(ifp);
+		if_detach(ifp);
+		kmem_free(sc, sizeof(*sc));
+		ifp->if_softc = NULL;
 	}
+#endif /* !RUMP_VIF_LINKSTR */
 
 	return error;
-}
-
-static int
-virtif_clone(struct if_clone *ifc, int unit)
-{
-
-	return rump_virtif_create(unit);
 }
 
 static int
 virtif_unclone(struct ifnet *ifp)
 {
 	struct virtif_sc *sc = ifp->if_softc;
+	int rv;
 
-	mutex_enter(&sc->sc_mtx);
-	if (sc->sc_dying) {
-		mutex_exit(&sc->sc_mtx);
-		return EINPROGRESS;
-	}
-	sc->sc_dying = true;
-	cv_broadcast(&sc->sc_cv);
-	mutex_exit(&sc->sc_mtx);
+	if (ifp->if_flags & IFF_UP)
+		return EBUSY;
 
-	rumpcomp_virtif_dying(sc->sc_viu);
+	if ((rv = VIFHYPER_DYING(sc->sc_viu)) != 0)
+		return rv;
 
 	virtif_stop(ifp, 1);
 	if_down(ifp);
 
-	if (sc->sc_l_snd) {
-		kthread_join(sc->sc_l_snd);
-		sc->sc_l_snd = NULL;
-	}
-	if (sc->sc_l_rcv) {
-		kthread_join(sc->sc_l_rcv);
-		sc->sc_l_rcv = NULL;
-	}
+	VIFHYPER_DESTROY(sc->sc_viu);
 
-	rumpcomp_virtif_destroy(sc->sc_viu);
-
-	mutex_destroy(&sc->sc_mtx);
-	cv_destroy(&sc->sc_cv);
 	kmem_free(sc, sizeof(*sc));
 
 	ether_ifdetach(ifp);
@@ -196,192 +174,241 @@ virtif_init(struct ifnet *ifp)
 {
 	struct virtif_sc *sc = ifp->if_softc;
 
-	ifp->if_flags |= IFF_RUNNING;
+	if (sc->sc_viu == NULL)
+		return ENXIO;
 
-	mutex_enter(&sc->sc_mtx);
-	cv_broadcast(&sc->sc_cv);
-	mutex_exit(&sc->sc_mtx);
-	
+	ifp->if_flags |= IFF_RUNNING;
 	return 0;
 }
 
 static int
 virtif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	int s, rv;
+	struct virtif_sc *sc = ifp->if_softc;
+	int rv;
 
-	s = splnet();
-	rv = ether_ioctl(ifp, cmd, data);
-	if (rv == ENETRESET)
-		rv = 0;
-	splx(s);
+	switch (cmd) {
+#ifdef RUMP_VIF_LINKSTR
+	struct ifdrv *ifd;
+	size_t linkstrlen;
+
+#ifndef RUMP_VIF_LINKSTRMAX
+#define RUMP_VIF_LINKSTRMAX 4096
+#endif
+
+	case SIOCGLINKSTR:
+		ifd = data;
+
+		if (!sc->sc_linkstr) {
+			rv = ENOENT;
+			break;
+		}
+		linkstrlen = strlen(sc->sc_linkstr)+1;
+
+		if (ifd->ifd_cmd == IFLINKSTR_QUERYLEN) {
+			ifd->ifd_len = linkstrlen;
+			rv = 0;
+			break;
+		}
+		if (ifd->ifd_cmd != 0) {
+			rv = ENOTTY;
+			break;
+		}
+
+		rv = copyoutstr(sc->sc_linkstr,
+		    ifd->ifd_data, MIN(ifd->ifd_len,linkstrlen), NULL);
+		break;
+	case SIOCSLINKSTR:
+		if (ifp->if_flags & IFF_UP) {
+			rv = EBUSY;
+			break;
+		}
+
+		ifd = data;
+
+		if (ifd->ifd_cmd == IFLINKSTR_UNSET) {
+			panic("unset linkstr not implemented");
+		} else if (ifd->ifd_cmd != 0) {
+			rv = ENOTTY;
+			break;
+		} else if (sc->sc_linkstr) {
+			rv = EBUSY;
+			break;
+		}
+
+		if (ifd->ifd_len > RUMP_VIF_LINKSTRMAX) {
+			rv = E2BIG;
+			break;
+		} else if (ifd->ifd_len < 1) {
+			rv = EINVAL;
+			break;
+		}
+
+
+		sc->sc_linkstr = kmem_alloc(ifd->ifd_len, KM_SLEEP);
+		rv = copyinstr(ifd->ifd_data, sc->sc_linkstr,
+		    ifd->ifd_len, NULL);
+		if (rv) {
+			kmem_free(sc->sc_linkstr, ifd->ifd_len);
+			break;
+		}
+
+		rv = virtif_create(ifp);
+		if (rv) {
+			kmem_free(sc->sc_linkstr, ifd->ifd_len);
+		}
+		break;
+#endif /* RUMP_VIF_LINKSTR */
+	default:
+		if (!sc->sc_linkstr)
+			rv = ENXIO;
+		else
+			rv = ether_ioctl(ifp, cmd, data);
+		if (rv == ENETRESET)
+			rv = 0;
+		break;
+	}
 
 	return rv;
 }
 
+/*
+ * Output packets in-context until outgoing queue is empty.
+ * Leave responsibility of choosing whether or not to drop the
+ * kernel lock to VIPHYPER_SEND().
+ */
+#define LB_SH 32
 static void
 virtif_start(struct ifnet *ifp)
 {
-	struct virtif_sc *sc = ifp->if_softc;
-
-	mutex_enter(&sc->sc_mtx);
-	ifp->if_flags |= IFF_OACTIVE;
-	cv_broadcast(&sc->sc_cv);
-	mutex_exit(&sc->sc_mtx);
-}
-
-static void
-virtif_stop(struct ifnet *ifp, int disable)
-{
-	struct virtif_sc *sc = ifp->if_softc;
-
-	ifp->if_flags &= ~IFF_RUNNING;
-
-	mutex_enter(&sc->sc_mtx);
-	cv_broadcast(&sc->sc_cv);
-	mutex_exit(&sc->sc_mtx);
-}
-
-#define POLLTIMO_MS 1
-static void
-virtif_receiver(void *arg)
-{
-	struct ifnet *ifp = arg;
-	struct virtif_sc *sc = ifp->if_softc;
-	struct mbuf *m;
-	size_t plen = ETHER_MAX_LEN_JUMBO+1;
-	size_t n;
-	int error;
-
-	for (;;) {
-		m = m_gethdr(M_WAIT, MT_DATA);
-		MEXTMALLOC(m, plen, M_WAIT);
-
- again:
-		if (sc->sc_dying) {
-			m_freem(m);
-			break;
-		}
-		
-		error = rumpcomp_virtif_recv(sc->sc_viu,
-		    mtod(m, void *), plen, &n);
-		if (error) {
-			printf("%s: read hypercall failed %d. host if down?\n",
-			    ifp->if_xname, error);
-			mutex_enter(&sc->sc_mtx);
-			/* could check if need go, done soon anyway */
-			cv_timedwait(&sc->sc_cv, &sc->sc_mtx, hz);
-			mutex_exit(&sc->sc_mtx);
-			goto again;
-		}
-
-		/* tap sometimes returns EOF.  don't sweat it and plow on */
-		if (__predict_false(n == 0))
-			goto again;
-
-		/* discard if we're not up */
-		if ((ifp->if_flags & IFF_RUNNING) == 0)
-			goto again;
-
-		m->m_len = m->m_pkthdr.len = n;
-		m->m_pkthdr.rcvif = ifp;
-		bpf_mtap(ifp, m);
-		ether_input(ifp, m);
-	}
-
-	kthread_exit(0);
-}
-
-/* lazy bum stetson-harrison magic value */
-#define LB_SH 32
-static void
-virtif_sender(void *arg)
-{
-	struct ifnet *ifp = arg;
 	struct virtif_sc *sc = ifp->if_softc;
 	struct mbuf *m, *m0;
 	struct iovec io[LB_SH];
 	int i;
 
-	mutex_enter(&sc->sc_mtx);
-	KERNEL_LOCK(1, NULL);
-	while (!sc->sc_dying) {
-		if (!(ifp->if_flags & IFF_RUNNING)) {
-			cv_wait(&sc->sc_cv, &sc->sc_mtx);
-			continue;
-		}
+	ifp->if_flags |= IFF_OACTIVE;
+
+	for (;;) {
 		IF_DEQUEUE(&ifp->if_snd, m0);
 		if (!m0) {
-			ifp->if_flags &= ~IFF_OACTIVE;
-			cv_wait(&sc->sc_cv, &sc->sc_mtx);
-			continue;
+			break;
 		}
-		mutex_exit(&sc->sc_mtx);
 
 		m = m0;
-		for (i = 0; i < LB_SH && m; i++) {
-			io[i].iov_base = mtod(m, void *);
-			io[i].iov_len = m->m_len;
+		for (i = 0; i < LB_SH && m; ) {
+			if (m->m_len) {
+				io[i].iov_base = mtod(m, void *);
+				io[i].iov_len = m->m_len;
+				i++;
+			}
 			m = m->m_next;
 		}
-		if (i == LB_SH)
+		if (i == LB_SH && m)
 			panic("lazy bum");
 		bpf_mtap(ifp, m0);
 
-		rumpcomp_virtif_send(sc->sc_viu, io, i);
+		VIFHYPER_SEND(sc->sc_viu, io, i);
 
 		m_freem(m0);
-		mutex_enter(&sc->sc_mtx);
+		ifp->if_opackets++;
 	}
-	KERNEL_UNLOCK_LAST(curlwp);
 
-	mutex_exit(&sc->sc_mtx);
-
-	kthread_exit(0);
-}
-
-/*
- * dummyif is a nada-interface.
- * As it requires nothing external, it can be used for testing
- * interface configuration.
- */
-static int	dummyif_init(struct ifnet *);
-static void	dummyif_start(struct ifnet *);
-
-void
-rump_dummyif_create()
-{
-	struct ifnet *ifp;
-	struct ethercom *ec;
-	uint8_t enaddr[ETHER_ADDR_LEN] = { 0xb2, 0x0a, 0x00, 0x0b, 0x0e, 0x01 };
-
-	enaddr[2] = cprng_fast32() & 0xff;
-	enaddr[5] = cprng_fast32() & 0xff;
-
-	ec = kmem_zalloc(sizeof(*ec), KM_SLEEP);
-
-	ifp = &ec->ec_if;
-	strlcpy(ifp->if_xname, "dummy0", sizeof(ifp->if_xname));
-	ifp->if_softc = ifp;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_init = dummyif_init;
-	ifp->if_ioctl = virtif_ioctl;
-	ifp->if_start = dummyif_start;
-
-	if_attach(ifp);
-	ether_ifattach(ifp, enaddr);
-}
-
-static int
-dummyif_init(struct ifnet *ifp)
-{
-
-	ifp->if_flags |= IFF_RUNNING;
-	return 0;
+	ifp->if_flags &= ~IFF_OACTIVE;
 }
 
 static void
-dummyif_start(struct ifnet *ifp)
+virtif_stop(struct ifnet *ifp, int disable)
 {
 
+	/* XXX: VIFHYPER_STOP() */
+
+	ifp->if_flags &= ~IFF_RUNNING;
+}
+
+void
+VIF_DELIVERPKT(struct virtif_sc *sc, struct iovec *iov, size_t iovlen)
+{
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ether_header *eth;
+	struct mbuf *m;
+	size_t i;
+	int off, olen;
+	bool passup;
+	const int align
+	    = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
+
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return;
+
+	m = m_gethdr(M_NOWAIT, MT_DATA);
+	if (m == NULL)
+		return; /* drop packet */
+	m->m_len = m->m_pkthdr.len = 0;
+
+	for (i = 0, off = align; i < iovlen; i++) {
+		olen = m->m_pkthdr.len;
+		m_copyback(m, off, iov[i].iov_len, iov[i].iov_base);
+		off += iov[i].iov_len;
+		if (olen + off != m->m_pkthdr.len) {
+			aprint_verbose_ifnet(ifp, "m_copyback failed\n");
+			m_freem(m);
+			return;
+		}
+	}
+	m->m_data += align;
+	m->m_pkthdr.len -= align;
+	m->m_len -= align;
+
+	eth = mtod(m, struct ether_header *);
+	if (memcmp(eth->ether_dhost, CLLADDR(ifp->if_sadl),
+	    ETHER_ADDR_LEN) == 0) {
+		passup = true;
+	} else if (ETHER_IS_MULTICAST(eth->ether_dhost)) {
+		passup = true;
+	} else if (ifp->if_flags & IFF_PROMISC) {
+		m->m_flags |= M_PROMISC;
+		passup = true;
+	} else {
+		passup = false;
+	}
+
+	if (passup) {
+		ifp->if_ipackets++;
+		m->m_pkthdr.rcvif = ifp;
+		KERNEL_LOCK(1, NULL);
+		bpf_mtap(ifp, m);
+		ifp->if_input(ifp, m);
+		KERNEL_UNLOCK_LAST(NULL);
+	} else {
+		m_freem(m);
+	}
+	m = NULL;
+}
+
+MODULE(MODULE_CLASS_DRIVER, if_virt, NULL);
+
+static int
+if_virt_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		if_clone_attach(&VIF_CLONER);
+		break;
+	case MODULE_CMD_FINI:
+		/*
+		 * not sure if interfaces are refcounted
+		 * and properly protected
+		 */
+#if 0
+		if_clone_detach(&VIF_CLONER);
+#else
+		error = ENOTTY;
+#endif
+		break;
+	default:
+		error = ENOTTY;
+	}
+	return error;
 }

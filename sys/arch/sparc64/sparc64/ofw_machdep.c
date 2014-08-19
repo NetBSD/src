@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.38 2011/07/17 20:54:48 joerg Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.38.12.1 2014/08/20 00:03:25 tls Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.38 2011/07/17 20:54:48 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.38.12.1 2014/08/20 00:03:25 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -95,10 +95,10 @@ get_memory_handle(void)
 
 
 /* 
- * Point prom to our trap table.  This stops the prom from mapping us.
+ * Point prom to our sun4u trap table.  This stops the prom from mapping us.
  */
 int
-prom_set_trap_table(vaddr_t tba)
+prom_set_trap_table_sun4u(vaddr_t tba)
 {
 	struct {
 		cell_t name;
@@ -113,6 +113,30 @@ prom_set_trap_table(vaddr_t tba)
 	args.tba = ADR2CELL(tba);
 	return openfirmware(&args);
 }
+
+#ifdef SUN4V
+/* 
+ * Point prom to our sun4v trap table.  This stops the prom from mapping us.
+ */
+int
+prom_set_trap_table_sun4v(vaddr_t tba, paddr_t mmfsa)
+{
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t tba;
+		cell_t mmfsa; 
+	} args;
+
+	args.name = ADR2CELL("SUNW,set-trap-table");
+	args.nargs = 2;
+	args.nreturns = 0;
+	args.tba = ADR2CELL(tba);
+	args.mmfsa = ADR2CELL(mmfsa);
+	return openfirmware(&args);
+}
+#endif
 
 /* 
  * Have the prom convert from virtual to physical addresses.
@@ -476,29 +500,14 @@ prom_get_msgbuf(int len, int align)
 		cell_t phys_lo;
 	} args;
 	paddr_t addr;
-	int rooth;
-	int is_e250 = 1;
-
-	/* E250s and E450s tend to have buggy PROMs that break on test-method */
-	/* XXX - need to find the reason why this breaks someday */
-	if ((rooth = OF_finddevice("/")) != -1) {
-		char name[80];
-
-		if ((OF_getprop(rooth, "name", &name, sizeof(name))) != -1) {
-			if (strcmp(name, "SUNW,Ultra-250")
-			    && strcmp(name, "SUNW,Ultra-4")) 
-				is_e250 = 0;
-		} else prom_printf("prom_get_msgbuf: cannot get \"name\"\r\n");
-	} else prom_printf("prom_get_msgbuf: cannot open root device \r\n");
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
 		prom_printf("prom_get_msgbuf: cannot get memh\r\n");
 		return -1;
 	}
-	if (is_e250) {
-		prom_printf("prom_get_msgbuf: Cannot recover msgbuf on E250\r\n");
-	} else if (OF_test("test-method") == 0) {
-		if (OF_test_method(memh, "SUNW,retain") != 0) {
+	if (OF_test("test-method") == 0) {
+		if (OF_test_method(OF_instance_to_package(memh),
+		    "SUNW,retain") == 0) {
 			args.name = ADR2CELL(&"call-method");
 			args.nargs = 5;
 			args.nreturns = 3;
@@ -668,7 +677,8 @@ find_pci_host_node(int node)
 				 &dev_type, sizeof(dev_type));
 		if (len <= 0)
 			continue;
-		if (!strcmp(dev_type, "pci"))
+		if (!strcmp(dev_type, "pci") ||
+		    !strcmp(dev_type, "pciex"))
 			pch = node;
 	}
 	return pch;
@@ -687,7 +697,7 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 {
 	int i, len;
 	int address_cells, size_cells, interrupt_cells, interrupt_map_len;
-	int static_interrupt_map[100];
+	int static_interrupt_map[256];
 	int interrupt_map_mask[10];
 	int *interrupt_map = &static_interrupt_map[0];
 	int maplen = sizeof static_interrupt_map;
@@ -697,9 +707,23 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 	int phc_node;
 	int rc = -1;
 
-	/* Don't need to map OBP interrupt, it's already */
-	if (*interrupt & 0x20)
+	/* 
+	 * Don't try to map interrupts for onboard devices, or if the
+	 * interrupt is already fully specified.
+	 * XXX This should be done differently (i.e. by matching
+	 * the node name) - but we need access to a machine where
+	 * a change is testable - hence the printf below.
+	 */
+	if (*interrupt & 0x20 || *interrupt & 0x7c0) {
+		char name[40];
+
+		OF_getprop(node, "name", &name, sizeof(name));
+		printf("\nATTENTION: if you see this message, please mail "
+		    "the output of \"dmesg\" and \"ofctl -p\" to "
+		    "port-sparc64@NetBSD.org!\n"
+		    "Not mapping interrupt for node %s (%x)\n", name, node);
 		return validlen;
+	}
 
 	/*
 	 * If there is no interrupt map in the bus node, we 
@@ -722,7 +746,7 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 
 	phc_node = find_pci_host_node(node);
 
-	for (; node; node = OF_parent(node)) {
+	while (node) {
 #ifdef DEBUG
 		char name[40];
 
@@ -740,7 +764,8 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 			/* Swizzle interrupt if this is a PCI bridge. */
 			if (((len = OF_getprop(node, "device_type", &dev_type,
 					      sizeof(dev_type))) > 0) &&
-			    !strcmp(dev_type, "pci") &&
+			    (!strcmp(dev_type, "pci") ||
+			     !strcmp(dev_type, "pciex")) &&
 			    (node != phc_node)) {
 #ifdef DEBUG
 				int ointerrupt = *interrupt;
@@ -755,6 +780,8 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 			/* Get reg for next level compare. */
 			reg[0] = 0;
 			OF_getprop(node, "reg", &reg, sizeof(reg));
+
+			node = OF_parent(node);
 			continue;
 		}
 		if (interrupt_map_len > maplen) {
@@ -813,7 +840,7 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 
 		/* finally we can attempt the compare */
 		i = 0;
-		while (i < interrupt_map_len) {
+		while (i < interrupt_map_len + address_cells + interrupt_cells) {
 			int pintr_cells;
 			int *imap = &interrupt_map[i];
 			int *parent = &imap[address_cells + interrupt_cells];
@@ -850,6 +877,7 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 						free(free_map, M_DEVBUF);
 					return (-1);
 				}
+				node = *parent;
 				parent++;
 #ifdef DEBUG
 				DPRINTF(("Match! using "));
@@ -860,6 +888,8 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 				for (i = 0; i < pintr_cells; i++)
 					interrupt[i] = parent[i];
 				rc = validlen = pintr_cells;
+				if (node == phc_node)
+					return(rc);
 				break;
 			}
 			/* Move on to the next interrupt_map entry. */
@@ -877,14 +907,15 @@ OF_mapintr(int node, int *interrupt, int validlen, int buflen)
 		/* Get reg for the next level search. */
 		if ((len = OF_getprop(node, "reg", &reg, sizeof(reg))) <= 0) {
 			DPRINTF(("OF_mapintr: no reg property?\n"));
-			continue;
+		} else {
+			DPRINTF(("reg len %d\n", len));
 		}
-		DPRINTF(("reg len %d\n", len));
 
 		if (free_map) {
 			free(free_map, M_DEVBUF);
 			free_map = NULL;
 		}
+		node = OF_parent(node);
 	} 
 	return (rc);
 }

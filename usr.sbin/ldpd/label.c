@@ -1,4 +1,4 @@
-/* $NetBSD: label.c,v 1.3.12.1 2013/02/25 00:30:43 tls Exp $ */
+/* $NetBSD: label.c,v 1.3.12.2 2014/08/20 00:05:09 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #include <netmpls/mpls.h>
 
 #include <assert.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -41,21 +42,54 @@
 #include "label.h"
 #include "ldp_errors.h"
 
-int	min_label = MIN_LABEL, max_label = MAX_LABEL;
+static int labels_compare(void*, const void*, const void*);
+
+int min_label = MIN_LABEL, max_label = MAX_LABEL;
+
+static rb_tree_t labels_tree;
+static const rb_tree_ops_t tree_ops = {
+	.rbto_compare_nodes = labels_compare,
+	.rbto_compare_key = labels_compare,
+	.rbto_node_offset = offsetof(struct label, lbtree),
+	.rbto_context = NULL
+};
 
 void 
 label_init()
 {
-	SLIST_INIT(&label_head);
+
+	rb_tree_init(&labels_tree, &tree_ops);
+}
+
+static int
+labels_compare(void *context, const void *node1, const void *node2)
+{
+	const struct label *l1 = node1, *l2 = node2;
+	int ret;
+
+	if (__predict_false(l1->so_dest.sa.sa_family !=
+	    l2->so_dest.sa.sa_family))
+		return l1->so_dest.sa.sa_family > l2->so_dest.sa.sa_family ?
+		    1 : -1;
+
+	assert(l1->so_dest.sa.sa_len == l2->so_dest.sa.sa_len);
+	assert(l1->so_pref.sa.sa_len == l2->so_pref.sa.sa_len);
+
+	if ((ret = memcmp(&l1->so_dest.sa, &l2->so_dest.sa,
+	    l1->so_dest.sa.sa_len)) != 0)
+		return ret;
+	else
+		return memcmp(&l1->so_pref.sa, &l2->so_pref.sa,
+		    l1->so_pref.sa.sa_len);
 }
 
 /*
  * if binding == 0 it receives a free one
  */
 struct label   *
-label_add(union sockunion * so_dest, union sockunion * so_pref,
-	  union sockunion * so_gate, uint32_t binding, struct ldp_peer * p,
-	  uint32_t label)
+label_add(const union sockunion * so_dest, const union sockunion * so_pref,
+	  const union sockunion * so_gate, uint32_t binding,
+	  const struct ldp_peer * p, uint32_t label, bool host)
 {
 	struct label   *l;
 	char	spreftmp[INET_ADDRSTRLEN];
@@ -70,24 +104,27 @@ label_add(union sockunion * so_dest, union sockunion * so_pref,
 	assert(so_dest);
 	assert(so_pref);
 	assert(so_dest->sa.sa_family == so_pref->sa.sa_family);
+	assert(label_get(so_dest, so_pref) == NULL);
 
-	memcpy(&l->so_dest, so_dest, sizeof(union sockunion));
-	memcpy(&l->so_pref, so_pref, sizeof(union sockunion));
+	memcpy(&l->so_dest, so_dest, so_dest->sa.sa_len);
+	memcpy(&l->so_pref, so_pref, so_pref->sa.sa_len);
 
 	if (so_gate)
-		memcpy(&l->so_gate, so_gate, sizeof(union sockunion));
+		memcpy(&l->so_gate, so_gate, so_gate->sa.sa_len);
 	if (binding)
 		l->binding = binding;
 	else
 		l->binding = get_free_local_label();
 	l->p = p;
 	l->label = label;
+	l->host = host;
 
-	SLIST_INSERT_HEAD(&label_head, l, labels);
+	if (rb_tree_insert_node(&labels_tree, l) != l)
+		fatalp("label already in tree");
 
-	strlcpy(spreftmp, union_ntoa(so_pref), INET_ADDRSTRLEN);
+	strlcpy(spreftmp, satos(&so_pref->sa), INET_ADDRSTRLEN);
 	warnp("[label_add] added binding %d for %s/%s\n", l->binding,
-	    union_ntoa(so_dest), spreftmp);
+	    satos(&so_dest->sa), spreftmp);
 
 	send_label_tlv_to_all(&(so_dest->sa),
 	    from_union_to_cidr(so_pref), l->binding);
@@ -99,75 +136,60 @@ void
 label_del(struct label * l)
 {
 	warnp("[label_del] deleted binding %d for %s\n", l->binding,
-	   union_ntoa(&l->so_dest));
-	SLIST_REMOVE(&label_head, l, label, labels);
+	   satos(&l->so_dest.sa));
+	rb_tree_remove_node(&labels_tree, l);
 	free(l);
 }
 
 /*
- * Delete or Reuse the old IPv4 route, delete MPLS route (if any)
+ * Delete or Reuse the old IPv4 route, delete MPLS route
+ * readd = REATT_INET_CHANGE -> delete and recreate the INET route
+ * readd = REATT_INET_DEL -> deletes INET route
+ * readd = REATT_INET_NODEL -> doesn't touch the INET route
  */
 void
 label_reattach_route(struct label *l, int readd)
 {
-	union sockunion *u;
-	union sockunion emptysu;
-	struct rt_msg rg;
-	int oldbinding = l->binding;
 
 	warnp("[label_reattach_route] binding %d deleted\n",
 		l->binding);
 
-	l->p = NULL;
-	l->binding = MPLS_LABEL_IMPLNULL;
-
 	/* No gateway ? */
-	memset(&emptysu, 0, sizeof (union sockunion));
-	if (memcmp(&l->so_gate, &emptysu, sizeof(union sockunion)) == 0)
+	if (l->so_gate.sa.sa_len == 0)
 		return;
 
-	if (l->label != MPLS_LABEL_IMPLNULL && readd == LDP_READD_CHANGE) {
-	/* Delete and re-add IPv4 route */
-		if (get_route(&rg, &l->so_dest, &l->so_pref, 1) == LDP_E_OK) {
-			delete_route(&l->so_dest, &l->so_pref, NO_FREESO);
-			add_route(&l->so_dest, &l->so_pref, &l->so_gate, NULL, NULL,
-			    NO_FREESO, RTM_READD);
-		} else if (from_union_to_cidr(&l->so_pref) == 32 &&
-		    l->so_dest.sa.sa_family == AF_INET &&
-		    get_route(&rg, &l->so_dest, NULL, 1) == LDP_E_OK) {
-			delete_route(&l->so_dest, NULL, NO_FREESO);
-			add_route(&l->so_dest, NULL, &l->so_gate, NULL, NULL,
-			    NO_FREESO, RTM_READD);
-		} else
-			add_route(&l->so_dest, &l->so_pref,
-			    &l->so_gate, NULL, NULL, NO_FREESO, RTM_READD);
-	} else
-		if (readd != LDP_READD_NODEL)
-			delete_route(&l->so_dest, &l->so_pref, NO_FREESO);
+	if (readd == REATT_INET_CHANGE) {
+		/* Delete the tagged route and re-add IPv4 route */
+		delete_route(&l->so_dest,
+		    l->host ? NULL : &l->so_pref, NO_FREESO);
+		add_route(&l->so_dest,
+		    l->host ? NULL : &l->so_pref, &l->so_gate,
+		    NULL, NULL, NO_FREESO, RTM_READD);
+	} else if (readd == REATT_INET_DEL)
+		delete_route(&l->so_dest, l->host ? NULL : &l->so_pref,
+		    NO_FREESO);
 
+	/* Deletes the MPLS route */
+	if (l->binding >= min_label)
+		delete_route(make_mpls_union(l->binding), NULL, FREESO);
+
+	l->binding = MPLS_LABEL_IMPLNULL;
+	l->p = NULL;
 	l->label = 0;
-
-	/* Deletes pure MPLS route */
-	if (oldbinding >= min_label) {
-		u = make_mpls_union(oldbinding);
-		delete_route(u, NULL, FREESO);
-	}
 }
 /*
  * Get a label by dst and pref
  */
 struct label*
-label_get(union sockunion *sodest, union sockunion *sopref)
+label_get(const union sockunion *sodest, const union sockunion *sopref)
 {
-	struct label *l;
+	struct label l;
 
-	SLIST_FOREACH (l, &label_head, labels)
-	    if (sodest->sin.sin_addr.s_addr ==
-		    l->so_dest.sin.sin_addr.s_addr &&
-		sopref->sin.sin_addr.s_addr ==
-		    l->so_pref.sin.sin_addr.s_addr)
-			return l;
-	return NULL;
+	memset(&l, 0, sizeof(l));
+	memcpy(&l.so_dest, sodest, sodest->sa.sa_len);
+	memcpy(&l.so_pref, sopref, sopref->sa.sa_len);
+
+	return rb_tree_find_node(&labels_tree, &l);
 }
 
 /*
@@ -175,11 +197,11 @@ label_get(union sockunion *sodest, union sockunion *sopref)
  * and reattach them to IPv4
  */
 void
-label_reattach_all_peer_labels(struct ldp_peer *p, int readd)
+label_reattach_all_peer_labels(const struct ldp_peer *p, int readd)
 {
 	struct label   *l;
 
-	SLIST_FOREACH(l, &label_head, labels)
+	RB_TREE_FOREACH(l, &labels_tree)
 		if (l->p == p)
 			label_reattach_route(l, readd);
 }
@@ -189,16 +211,21 @@ label_reattach_all_peer_labels(struct ldp_peer *p, int readd)
  * and delete them
  */
 void 
-del_all_peer_labels(struct ldp_peer * p, int readd)
+del_all_peer_labels(const struct ldp_peer * p, int readd)
 {
 	struct label   *l, *lnext;
 
-	SLIST_FOREACH_SAFE(l, &label_head, labels, lnext) {
+	RB_TREE_FOREACH(l, &labels_tree) {
+back_delete:
 		if(l->p != p)
 			continue;
 		label_reattach_route(l, readd);
+		lnext = rb_tree_iterate(&labels_tree, l, RB_DIR_RIGHT);
 		label_del(l);
-		SLIST_REMOVE(&label_head, l, label, labels);
+		if (lnext == NULL)
+			break;
+		l = lnext;
+		goto back_delete;
 	}
 }
 
@@ -210,11 +237,10 @@ label_del_by_binding(uint32_t binding, int readd)
 {
 	struct label   *l;
 
-	SLIST_FOREACH(l, &label_head, labels)
+	RB_TREE_FOREACH(l, &labels_tree)
 		if ((uint32_t)l->binding == binding) {
 			label_reattach_route(l, readd);
 			label_del(l);
-			SLIST_REMOVE(&label_head, l, label, labels);
 			break;
 		}
 }
@@ -225,15 +251,15 @@ label_del_by_binding(uint32_t binding, int readd)
 struct label*
 label_get_by_prefix(const struct sockaddr *a, int prefixlen)
 {
-	union sockunion *so_dest, *so_pref;
+	const union sockunion *so_dest;
+	union sockunion *so_pref;
 	struct label *l;
 
-	so_dest = make_inet_union(satos(a));	// XXX: grobian
+	so_dest = (const union sockunion *)a;
 	so_pref = from_cidr_to_union(prefixlen);
 
 	l = label_get(so_dest, so_pref);
 
-	free(so_dest);
 	free(so_pref);
 
 	return l;
@@ -249,7 +275,7 @@ get_free_local_label()
 	int lbl;
  
 	for (lbl = min_label; lbl <= max_label; lbl++) {
-		SLIST_FOREACH(l, &label_head, labels)
+		RB_TREE_FOREACH(l, &labels_tree)
 			if (l->binding == lbl)
 				break;
 		if (l == NULL)
@@ -259,15 +285,41 @@ get_free_local_label()
 }
 
 /*
- * Change local binding
+ * Announce peers that a label has changed its binding
+ * by withdrawing it and reannouncing it
  */
 void
-change_local_label(struct label *l, uint32_t newbind)
+announce_label_change(struct label *l)
 {
 	send_withdraw_tlv_to_all(&(l->so_dest.sa),
 		from_union_to_cidr(&(l->so_pref)));
-	l->binding = newbind;
 	send_label_tlv_to_all(&(l->so_dest.sa),
 		from_union_to_cidr(&(l->so_pref)),
 		l->binding);
+}
+
+void
+label_check_assoc(struct ldp_peer *p)
+{
+	struct label *l;
+	struct ldp_peer_address *wp;
+
+	RB_TREE_FOREACH(l, &labels_tree)
+		if (l->p == NULL && l->so_gate.sa.sa_family != 0)
+			SLIST_FOREACH(wp, &p->ldp_peer_address_head, addresses)
+				if (sockaddr_cmp(&l->so_gate.sa,
+				    &wp->address.sa) == 0) {
+					l->p = p;
+					l->label = MPLS_LABEL_IMPLNULL;
+					break;
+				}
+}
+
+struct label *
+label_get_right(struct label *l)
+{
+	if (l == NULL)
+		return RB_TREE_MIN(&labels_tree);
+	else
+		return rb_tree_iterate(&labels_tree, l, RB_DIR_RIGHT);
 }

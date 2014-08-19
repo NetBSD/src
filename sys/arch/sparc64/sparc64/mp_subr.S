@@ -1,4 +1,4 @@
-/*	$NetBSD: mp_subr.S,v 1.3.12.2 2013/06/23 06:20:13 tls Exp $	*/
+/*	$NetBSD: mp_subr.S,v 1.3.12.3 2014/08/20 00:03:25 tls Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -78,7 +78,9 @@
 #include <machine/asm.h>
 #include <machine/locore.h>
 #include <sys/syscall.h>
-
+#ifdef SUN4V
+#include <machine/hypervisor.h>
+#endif	
 #include "ksyms.h"
 
 	.register	%g2,#scratch
@@ -190,6 +192,21 @@ ENTRY(sparc64_ipi_flush_pte_usiii)
 	ba,a	ret_from_intr_vector
 	 nop
 
+#ifdef SUN4V
+ENTRY(sparc64_ipi_flush_pte_sun4v)
+	mov	%o0, %g1		! save input
+	mov	%o1, %g2
+	mov	%o2, %g4
+	mov	%g3, %o0		! vaddr
+	mov	%g5, %o1		! ctx
+	mov	MAP_DTLB|MAP_ITLB, %o2	! flags
+	ta	ST_MMU_UNMAP_ADDR
+	mov	%g1, %o0		! restore input
+	mov	%g2, %o1
+	mov	%g4, %o2
+
+	retry
+#endif	
 
 /*
  * Secondary CPU bootstrap code.

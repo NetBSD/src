@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 2012/03/02 16:20:55 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42.2.1 2014/08/20 00:02:58 tls Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2012/03/02 16:20:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42.2.1 2014/08/20 00:02:58 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -125,9 +125,6 @@ int	comcnrate = 38400;	/* XXX should be config option */
 #define REGVAL(x)       *((volatile u_int32_t *)(MIPS_PHYS_TO_KSEG1((x))))
 
 struct malta_config malta_configuration;
-
-/* For sysctl_hw. */
-extern char cpu_model[];
 
 /* Maps for VM objects. */
 struct vm_map *phys_map = NULL;
@@ -227,7 +224,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	mem_clusters[0].size = ctob(physmem);
 	mem_cluster_cnt = 1;
 
-	strcpy(cpu_model, "MIPS Malta Evaluation Board");
+	cpu_setmodel("MIPS Malta Evaluation Board");
 
 	/*
 	 * XXX: check argv[0] - do something if "gdb"???

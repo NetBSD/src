@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.23 2011/06/20 19:56:13 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.23.12.1 2014/08/20 00:03:21 tls Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -128,20 +128,6 @@ __start:
 	bl	_C_LABEL(main)
 
 loop:	b	loop			/* not reached */
-
-	.globl	_C_LABEL(enable_intr)
-_C_LABEL(enable_intr):
-	mfmsr	3
-	ori	3,3,PSL_EE@l
-	mtmsr	3
-	blr
-
-	.globl	_C_LABEL(disable_intr)
-_C_LABEL(disable_intr):
-	mfmsr	3
-	andi.	3,3,~PSL_EE@l
-	mtmsr	3
-	blr
 
 	.globl	_C_LABEL(jump_to_ppc_reset_entry)
 _C_LABEL(jump_to_ppc_reset_entry):

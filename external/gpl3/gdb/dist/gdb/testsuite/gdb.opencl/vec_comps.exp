@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,10 +16,6 @@
 # Contributed by Ken Werner <ken.werner@de.ibm.com>.
 #
 # Tests component access of OpenCL vectors.
-
-if $tracelevel {
-    strace $tracelevel
-}
 
 load_lib opencl.exp
 
@@ -63,7 +59,7 @@ set have_cl_khr_fp16 [get_integer_valueof "have_cl_khr_fp16" 0]
 
 # Sanity checks
 proc check_basic { name type size } {
-  gdb_test "ptype ${name}" "type = ${type} \\\[16\\\]"
+  gdb_test "ptype ${name}" "type = ${type}16"
   gdb_test "p sizeof(${name})" " = [expr ${size} * 16]"
   gdb_test "print/d ${name}" " = \\{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15\\}"
 }
@@ -159,13 +155,13 @@ proc check_type { name type alttype } {
   gdb_test "whatis ${name}.odd.xyzw.s23" "type = ${type}2"
   gdb_test "whatis ${name}.xyzw.hi.odd" "type = ${alttype}|${type}"
 
-  gdb_test "ptype ${name}.lo" "type = ${type} \\\[8\\\]"
-  gdb_test "ptype ${name}.hi" "type = ${type} \\\[8\\\]"
-  gdb_test "ptype ${name}.even" "type = ${type} \\\[8\\\]"
-  gdb_test "ptype ${name}.odd" "type = ${type} \\\[8\\\]"
+  gdb_test "ptype ${name}.lo" "type = ${type}8"
+  gdb_test "ptype ${name}.hi" "type = ${type}8"
+  gdb_test "ptype ${name}.even" "type = ${type}8"
+  gdb_test "ptype ${name}.odd" "type = ${type}8"
 
-  gdb_test "ptype ${name}.hi.even" "type = ${type} \\\[4\\\]"
-  gdb_test "ptype ${name}.odd.odd.lo" "type = ${type} \\\[2\\\]"
+  gdb_test "ptype ${name}.hi.even" "type = ${type}4"
+  gdb_test "ptype ${name}.odd.odd.lo" "type = ${type}2"
   gdb_test "ptype ${name}.even.hi.lo.odd" "type = ${alttype}|${type}"
 
   gdb_test "ptype ${name}.x" "type = ${alttype}|${type}"
@@ -173,20 +169,20 @@ proc check_type { name type alttype } {
   gdb_test "ptype ${name}.z" "type = ${alttype}|${type}"
   gdb_test "ptype ${name}.w" "type = ${alttype}|${type}"
 
-  gdb_test "ptype ${name}.xy" "type = ${type} \\\[2\\\]"
-  gdb_test "ptype ${name}.xx" "type = ${type} \\\[2\\\]"
-  gdb_test "ptype ${name}.wy" "type = ${type} \\\[2\\\]"
+  gdb_test "ptype ${name}.xy" "type = ${type}2"
+  gdb_test "ptype ${name}.xx" "type = ${type}2"
+  gdb_test "ptype ${name}.wy" "type = ${type}2"
 
-  gdb_test "ptype ${name}.xyz" "type = ${type} \\\[3\\\]"
-  gdb_test "ptype ${name}.yxy" "type = ${type} \\\[3\\\]"
-  gdb_test "ptype ${name}.yzx" "type = ${type} \\\[3\\\]"
+  gdb_test "ptype ${name}.xyz" "type = ${type}3"
+  gdb_test "ptype ${name}.yxy" "type = ${type}3"
+  gdb_test "ptype ${name}.yzx" "type = ${type}3"
 
-  gdb_test "ptype ${name}.xywz" "type = ${type} \\\[4\\\]"
-  gdb_test "ptype ${name}.zzyy" "type = ${type} \\\[4\\\]"
-  gdb_test "ptype ${name}.wwww" "type = ${type} \\\[4\\\]"
+  gdb_test "ptype ${name}.xywz" "type = ${type}4"
+  gdb_test "ptype ${name}.zzyy" "type = ${type}4"
+  gdb_test "ptype ${name}.wwww" "type = ${type}4"
 
   gdb_test "ptype ${name}.xy.x" "type = ${alttype}|${type}"
-  gdb_test "ptype ${name}.wzyx.yy" "type = ${type} \\\[2\\\]"
+  gdb_test "ptype ${name}.wzyx.yy" "type = ${type}2"
   gdb_test "ptype ${name}.wzyx.yx.x" "type = ${alttype}|${type}"
   gdb_test "ptype ${name}.xyzw.w" "type = ${alttype}|${type}"
 
@@ -196,39 +192,39 @@ proc check_type { name type alttype } {
   gdb_test "ptype ${name}.sf" "type = ${alttype}|${type}"
   gdb_test "ptype ${name}.sF" "type = ${alttype}|${type}"
 
-  gdb_test "ptype ${name}.s01" "type = ${type} \\\[2\\\]"
-  gdb_test "ptype ${name}.s00" "type = ${type} \\\[2\\\]"
-  gdb_test "ptype ${name}.sF0" "type = ${type} \\\[2\\\]"
-  gdb_test "ptype ${name}.S42" "type = ${type} \\\[2\\\]"
+  gdb_test "ptype ${name}.s01" "type = ${type}2"
+  gdb_test "ptype ${name}.s00" "type = ${type}2"
+  gdb_test "ptype ${name}.sF0" "type = ${type}2"
+  gdb_test "ptype ${name}.S42" "type = ${type}2"
 
-  gdb_test "ptype ${name}.s567" "type = ${type} \\\[3\\\]"
-  gdb_test "ptype ${name}.S333" "type = ${type} \\\[3\\\]"
-  gdb_test "ptype ${name}.Sf0A" "type = ${type} \\\[3\\\]"
-  gdb_test "ptype ${name}.SB1D" "type = ${type} \\\[3\\\]"
+  gdb_test "ptype ${name}.s567" "type = ${type}3"
+  gdb_test "ptype ${name}.S333" "type = ${type}3"
+  gdb_test "ptype ${name}.Sf0A" "type = ${type}3"
+  gdb_test "ptype ${name}.SB1D" "type = ${type}3"
 
-  gdb_test "ptype ${name}.s9876" "type = ${type} \\\[4\\\]"
-  gdb_test "ptype ${name}.sFFFF" "type = ${type} \\\[4\\\]"
-  gdb_test "ptype ${name}.sCafe" "type = ${type} \\\[4\\\]"
-  gdb_test "ptype ${name}.Sf001" "type = ${type} \\\[4\\\]"
+  gdb_test "ptype ${name}.s9876" "type = ${type}4"
+  gdb_test "ptype ${name}.sFFFF" "type = ${type}4"
+  gdb_test "ptype ${name}.sCafe" "type = ${type}4"
+  gdb_test "ptype ${name}.Sf001" "type = ${type}4"
 
-  gdb_test "ptype ${name}.s00000000" "type = ${type} \\\[8\\\]"
-  gdb_test "ptype ${name}.s00224466" "type = ${type} \\\[8\\\]"
-  gdb_test "ptype ${name}.sDEADBEEF" "type = ${type} \\\[8\\\]"
-  gdb_test "ptype ${name}.Sa628c193" "type = ${type} \\\[8\\\]"
+  gdb_test "ptype ${name}.s00000000" "type = ${type}8"
+  gdb_test "ptype ${name}.s00224466" "type = ${type}8"
+  gdb_test "ptype ${name}.sDEADBEEF" "type = ${type}8"
+  gdb_test "ptype ${name}.Sa628c193" "type = ${type}8"
 
-  gdb_test "ptype ${name}.s0123456789aBcDeF" "type = ${type} \\\[16\\\]"
-  gdb_test "ptype ${name}.s0022446688AACCFF" "type = ${type} \\\[16\\\]"
-  gdb_test "ptype ${name}.S0123456776543210" "type = ${type} \\\[16\\\]"
-  gdb_test "ptype ${name}.sFEDCBA9876543210" "type = ${type} \\\[16\\\]"
+  gdb_test "ptype ${name}.s0123456789aBcDeF" "type = ${type}16"
+  gdb_test "ptype ${name}.s0022446688AACCFF" "type = ${type}16"
+  gdb_test "ptype ${name}.S0123456776543210" "type = ${type}16"
+  gdb_test "ptype ${name}.sFEDCBA9876543210" "type = ${type}16"
 
-  gdb_test "ptype ${name}.sfedcba98.S0246" "type = ${type} \\\[4\\\]"
-  gdb_test "ptype ${name}.sfedcba98.S0246.s13" "type = ${type} \\\[2\\\]"
+  gdb_test "ptype ${name}.sfedcba98.S0246" "type = ${type}4"
+  gdb_test "ptype ${name}.sfedcba98.S0246.s13" "type = ${type}2"
   gdb_test "ptype ${name}.sfedcba98.S0246.s13.s0" "type = ${alttype}|${type}"
-  gdb_test "ptype ${name}.s0123456789abcdef.s22" "type = ${type} \\\[2\\\]"
+  gdb_test "ptype ${name}.s0123456789abcdef.s22" "type = ${type}2"
 
-  gdb_test "ptype ${name}.hi.s7654.wx" "type = ${type} \\\[2\\\]"
-  gdb_test "ptype ${name}.s0123456789abcdef.even.lo" "type = ${type} \\\[4\\\]"
-  gdb_test "ptype ${name}.odd.xyzw.s23" "type = ${type} \\\[2\\\]"
+  gdb_test "ptype ${name}.hi.s7654.wx" "type = ${type}2"
+  gdb_test "ptype ${name}.s0123456789abcdef.even.lo" "type = ${type}4"
+  gdb_test "ptype ${name}.odd.xyzw.s23" "type = ${type}2"
   gdb_test "ptype ${name}.xyzw.hi.odd" "type = ${alttype}|${type}"
 }
 
@@ -271,7 +267,7 @@ proc check_sizeof { name size } {
 }
 
 # OpenCL vector component access
-proc check_access { name type } {
+proc check_access { name } {
   gdb_test "print/d ${name}.lo" " = \\{0, 1, 2, 3, 4, 5, 6, 7\\}"
   gdb_test "print/d ${name}.hi" " = \\{8, 9, 10, 11, 12, 13, 14, 15\\}"
   gdb_test "print/d ${name}.even" " = \\{0, 2, 4, 6, 8, 10, 12, 14\\}"
@@ -368,10 +364,10 @@ proc check_access { name type } {
 }
 
 proc do_check { name type alttype size } {
-  check_basic ${name} ${alttype} ${size}
+  check_basic ${name} ${type} ${size}
   check_type  ${name} ${type} ${alttype}
   check_sizeof ${name} ${size}
-  check_access ${name} ${alttype}
+  check_access ${name}
 }
 
 do_check "c16" "char" "char" 1

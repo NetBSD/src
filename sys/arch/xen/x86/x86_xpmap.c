@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.48.2.1 2012/11/20 03:01:52 tls Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.48.2.2 2014/08/20 00:03:30 tls Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.48.2.1 2012/11/20 03:01:52 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.48.2.2 2014/08/20 00:03:30 tls Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -348,16 +348,12 @@ xpq_queue_tlb_flush(void)
 void
 xpq_flush_cache(void)
 {
-	struct mmuext_op op;
-	int s = splvm(), err;
+	int s = splvm();
 
 	xpq_flush_queue();
 
 	XENPRINTK2(("xpq_queue_flush_cache\n"));
-	op.cmd = MMUEXT_FLUSH_CACHE;
-	if ((err = HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF)) < 0) {
-		panic("xpq_flush_cache, err %d", err);
-	}
+	asm("wbinvd":::"memory");
 	splx(s); /* XXX: removeme */
 }
 
@@ -492,6 +488,35 @@ xen_vcpu_bcast_invlpg(vaddr_t sva, vaddr_t eva)
 	}
 
 	return;
+}
+
+/* Copy a page */
+void
+xen_copy_page(paddr_t srcpa, paddr_t dstpa)
+{
+	mmuext_op_t op;
+
+	op.cmd = MMUEXT_COPY_PAGE;
+	op.arg1.mfn = xpmap_ptom(dstpa) >> PAGE_SHIFT;
+	op.arg2.src_mfn = xpmap_ptom(srcpa) >> PAGE_SHIFT;
+
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0) {
+		panic(__func__);
+	}
+}
+
+/* Zero a physical page */
+void
+xen_pagezero(paddr_t pa)
+{
+	mmuext_op_t op;
+
+	op.cmd = MMUEXT_CLEAR_PAGE;
+	op.arg1.mfn = xpmap_ptom(pa) >> PAGE_SHIFT;
+
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0) {
+		panic(__func__);
+	}
 }
 
 int
@@ -701,7 +726,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	int old_count, int new_count, int final)
 {
 	pd_entry_t *pdtpe, *pde, *pte;
-	pd_entry_t *cur_pgd, *bt_pgd;
+	pd_entry_t *bt_pgd;
 	paddr_t addr;
 	vaddr_t page, avail, text_end, map_end;
 	int i;
@@ -761,7 +786,6 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	 * - some PTEs (level 1)
 	 */
 	
-	cur_pgd = (pd_entry_t *) old_pgd;
 	bt_pgd = (pd_entry_t *) new_pgd;
 	memset (bt_pgd, 0, PAGE_SIZE);
 	avail = new_pgd + PAGE_SIZE;
@@ -1045,6 +1069,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 		cpu_info_primary.ci_kpm_pdirpa = ((paddr_t) bt_cpu_pgd - KERNBASE);
 	}
 #endif
+	__USE(pdtpe);
 
 	/* Now we can safely reclaim space taken by old tables */
 	

@@ -1,4 +1,4 @@
-/* $Id: imx23_olinuxino_start.S,v 1.1.6.2 2013/02/25 00:28:37 tls Exp $ */
+/* $Id: imx23_olinuxino_start.S,v 1.1.6.3 2014/08/20 00:02:54 tls Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,13 +33,14 @@
 #include <machine/pmap.h>
 #include <arm/armreg.h>
 #include <arm/imx/imx23var.h>
+#ifdef DEBUG
 #include <arm/imx/imx23_uartdbgreg.h>
+#endif
 
 .section .start,"ax",%progbits
 
 .global	_C_LABEL(olinuxino_start)
 _C_LABEL(olinuxino_start):
-
 	/*
 	 * Set up the first level page table. The page table has 4096 section
 	 * page table entries which each one maps 1MB of virtual memory.
@@ -56,7 +57,7 @@ _C_LABEL(olinuxino_start):
 	tmp	.req r8
 	tmp2	.req r9
 
-	ldr	l1pt_p, Ll1_pt
+	ldr	l1pt_p, .Ll1_pt
 
 	/* Zero the page table. */
 	mov	tmp, #0
@@ -65,9 +66,9 @@ _C_LABEL(olinuxino_start):
 	cmp	l1pt_p, tmp2
 	blt	1b
 
-	ldr	l1pt_p, Ll1_pt
+	ldr	l1pt_p, .Ll1_pt
 
-	/* Map sections. */
+	/* Map sections to the page table. */
 	ldr	mit_p, =mmu_init_table
 	ldmia	mit_p!, {va, pa, n_sec, attr}
 
@@ -125,9 +126,6 @@ _C_LABEL(olinuxino_start):
 	/*
 	 * Enable the MMU.
 	 */
-	mov	r0, #0
-	mcr	p15, 0, r0, c8, c7, 0	/* Invalidate TLB. */
-
 	mrc	p15, 0, r0, c1, c0, 0
 	ldr	r1, =(CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE \
 			| CPU_CONTROL_AFLT_ENABLE | CPU_CONTROL_MMU_ENABLE)
@@ -137,10 +135,15 @@ _C_LABEL(olinuxino_start):
 	nop	/* Fetch flat. */
 
 	/*
+	 * Now MMU is on and instruction fetches are translated.
+	 */
+
+	/*
 	 * Jump to start in locore.S. start sets the sp point to DRAM, zeroes
 	 * the .bss and calls initarm. start never returns.
 	 */
 	ldr	pc, =start
+1:	b	1b
 
 	/* NOTREACHED */ 
 
@@ -151,7 +154,7 @@ _C_LABEL(olinuxino_start):
  * The translation table has 4096 32-bit section entries, each describing 1MB of
  * virtual memory which means 4GB of virtual memory to be addressed.
  */
-Ll1_pt:
+.Ll1_pt:
 	.word (DRAM_BASE + MEMSIZE * 1024 * 1024 - L1_TABLE_SIZE)
 
 #define MMU_INIT(va,pa,n_sec,attr)					\
@@ -177,9 +180,35 @@ mmu_init_table:
 		L1_S_AP(AP_KRW) | L1_S_DOM(PMAP_DOMAIN_KERNEL) | L1_S_C |\
 			L1_S_B | L1_S_PROTO)
 
+	/* VA == PA mapping for instruction fetches just after MMU_ENABLE. */
+	MMU_INIT(KERNEL_BASE_phys, KERNEL_BASE_phys,
+		1,
+		L1_S_AP(AP_KRW) | L1_S_DOM(PMAP_DOMAIN_KERNEL) | L1_S_C |\
+			L1_S_B | L1_S_PROTO)
+
 	/* Peripherals */
 	MMU_INIT(APBH_BASE, APBH_BASE,
 		1,
 		L1_S_AP(AP_KRW) | L1_S_DOM(PMAP_DOMAIN_KERNEL) | L1_S_PROTO)
 
 	MMU_INIT(0, 0, 0, 0)
+
+#ifdef DEBUG
+/*
+ * Write character in r0 register to Debug UART.
+ */
+.global	_C_LABEL(dbputc)
+_C_LABEL(dbputc):
+	stmfd	sp!, {r0, r1, r2, lr}
+
+        /* Wait until transmit FIFO has space for the new character. */
+	ldr	r1, =(HW_UARTDBG_BASE + HW_UARTDBGFR)
+1:	ldr	r2, [r1]
+	ands	r2, r2, #0x20	/* HW_UARTDBGFR_TXFF */
+	bne	1b
+
+	ldr	r1, =(HW_UARTDBG_BASE + HW_UARTDBGDR)
+	strb	r0, [r1]
+
+	ldmfd	sp!, {r0, r1, r2, pc}
+#endif

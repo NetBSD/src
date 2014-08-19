@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.143 2012/06/08 15:01:51 gdt Exp $	*/
+/*	$NetBSD: in.c,v 1.143.2.1 2014/08/20 00:04:35 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,12 +91,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.143 2012/06/08 15:01:51 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.143.2.1 2014/08/20 00:04:35 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
 #include "opt_mrouting.h"
-#include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -114,6 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.143 2012/06/08 15:01:51 gdt Exp $");
 
 #include <net/if.h>
 #include <net/route.h>
+#include <net/pfil.h>
 
 #include <net/if_ether.h>
 
@@ -132,17 +132,14 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.143 2012/06/08 15:01:51 gdt Exp $");
 #include <netinet/in_selsrc.h>
 #endif
 
-#ifdef PFIL_HOOKS
-#include <net/pfil.h>
-#endif
+static u_int	in_mask2len(struct in_addr *);
+static void	in_len2mask(struct in_addr *, u_int);
+static int	in_lifaddr_ioctl(struct socket *, u_long, void *,
+	struct ifnet *);
 
-static u_int in_mask2len(struct in_addr *);
-static void in_len2mask(struct in_addr *, u_int);
-static int in_lifaddr_ioctl(struct socket *, u_long, void *,
-	struct ifnet *, struct lwp *);
-
-static int in_addprefix(struct in_ifaddr *, int);
-static int in_scrubprefix(struct in_ifaddr *);
+static int	in_addprefix(struct in_ifaddr *, int);
+static int	in_scrubprefix(struct in_ifaddr *);
+static void	in_sysctl_init(struct sysctllog **);
 
 #ifndef SUBNETSARELOCAL
 #define	SUBNETSARELOCAL	1
@@ -152,15 +149,50 @@ static int in_scrubprefix(struct in_ifaddr *);
 #define HOSTZEROBROADCAST 1
 #endif
 
-int subnetsarelocal = SUBNETSARELOCAL;
-int hostzeroisbroadcast = HOSTZEROBROADCAST;
+/* Note: 61, 127, 251, 509, 1021, 2039 are good. */
+#ifndef IN_MULTI_HASH_SIZE
+#define IN_MULTI_HASH_SIZE	509
+#endif
+
+static int			subnetsarelocal = SUBNETSARELOCAL;
+static int			hostzeroisbroadcast = HOSTZEROBROADCAST;
 
 /*
  * This list is used to keep track of in_multi chains which belong to
  * deleted interface addresses.  We use in_ifaddr so that a chain head
  * won't be deallocated until all multicast address record are deleted.
  */
-static TAILQ_HEAD(, in_ifaddr) in_mk = TAILQ_HEAD_INITIALIZER(in_mk);
+
+LIST_HEAD(in_multihashhead, in_multi);		/* Type of the hash head */
+
+static struct pool		inmulti_pool;
+static u_int			in_multientries;
+static struct in_multihashhead *in_multihashtbl;
+static u_long			in_multihash;
+static krwlock_t		in_multilock;
+
+#define IN_MULTI_HASH(x, ifp) \
+    (in_multihashtbl[(u_long)((x) ^ (ifp->if_index)) % IN_MULTI_HASH_SIZE])
+
+struct in_ifaddrhashhead *	in_ifaddrhashtbl;
+u_long				in_ifaddrhash;
+struct in_ifaddrhead		in_ifaddrhead;
+
+void
+in_init(void)
+{
+	pool_init(&inmulti_pool, sizeof(struct in_multi), 0, 0, 0, "inmltpl",
+	    NULL, IPL_SOFTNET);
+	TAILQ_INIT(&in_ifaddrhead);
+
+	in_ifaddrhashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, true,
+	    &in_ifaddrhash);
+	in_multihashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, true,
+	    &in_multihash);
+	rw_init(&in_multilock);
+
+	in_sysctl_init(NULL);
+}
 
 /*
  * Return 1 if an internet address is for a ``local'' host
@@ -308,8 +340,7 @@ in_len2mask(struct in_addr *mask, u_int len)
  */
 /* ARGSUSED */
 int
-in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
-    struct lwp *l)
+in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 {
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct in_ifaddr *ia = NULL;
@@ -324,12 +355,12 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	case SIOCGLIFADDR:
 		if (ifp == NULL)
 			return EINVAL;
-		return in_lifaddr_ioctl(so, cmd, data, ifp, l);
+		return in_lifaddr_ioctl(so, cmd, data, ifp);
 	case SIOCGIFADDRPREF:
 	case SIOCSIFADDRPREF:
 		if (ifp == NULL)
 			return EINVAL;
-		return ifaddrpref_ioctl(so, cmd, data, ifp, l);
+		return ifaddrpref_ioctl(so, cmd, data, ifp);
 	}
 
 	/*
@@ -375,9 +406,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		    (cmd == SIOCSIFNETMASK || cmd == SIOCSIFDSTADDR))
 			return (EADDRNOTAVAIL);
 
-		if (l == NULL)
-			return (EPERM);
-		if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE,
+		if (kauth_authorize_network(curlwp->l_cred, KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
 		    NULL) != 0)
 			return (EPERM);
@@ -410,9 +439,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		break;
 
 	case SIOCSIFBRDADDR:
-		if (l == NULL)
-			return (EPERM);
-		if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE,
+		if (kauth_authorize_network(curlwp->l_cred, KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
 		    NULL) != 0)
 			return (EPERM);
@@ -475,11 +502,10 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	case SIOCSIFADDR:
 		error = in_ifinit(ifp, ia, satocsin(ifreq_getaddr(cmd, ifr)),
 		    1);
-#ifdef PFIL_HOOKS
-		if (error == 0)
-			(void)pfil_run_hooks(&if_pfil,
+		if (error == 0) {
+			(void)pfil_run_hooks(if_pfil,
 			    (struct mbuf **)SIOCSIFADDR, ifp, PFIL_IFADDR);
-#endif
+		}
 		break;
 
 	case SIOCSIFNETMASK:
@@ -525,11 +551,9 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		if ((ifp->if_flags & IFF_BROADCAST) &&
 		    (ifra->ifra_broadaddr.sin_family == AF_INET))
 			ia->ia_broadaddr = ifra->ifra_broadaddr;
-#ifdef PFIL_HOOKS
 		if (error == 0)
-			(void)pfil_run_hooks(&if_pfil,
+			(void)pfil_run_hooks(if_pfil,
 			    (struct mbuf **)SIOCAIFADDR, ifp, PFIL_IFADDR);
-#endif
 		break;
 
 	case SIOCGIFALIAS:
@@ -547,10 +571,8 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 
 	case SIOCDIFADDR:
 		in_purgeaddr(&ia->ia_ifa);
-#ifdef PFIL_HOOKS
-		(void)pfil_run_hooks(&if_pfil, (struct mbuf **)SIOCDIFADDR,
+		(void)pfil_run_hooks(if_pfil, (struct mbuf **)SIOCDIFADDR,
 		    ifp, PFIL_IFADDR);
-#endif
 		break;
 
 #ifdef MROUTING
@@ -616,7 +638,7 @@ in_purgeif(struct ifnet *ifp)		/* MUST be called at splsoftnet() */
  */
 static int
 in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
-    struct ifnet *ifp, struct lwp *l)
+    struct ifnet *ifp)
 {
 	struct if_laddrreq *iflr = (struct if_laddrreq *)data;
 	struct ifaddr *ifa;
@@ -685,7 +707,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 		ifra.ifra_mask.sin_len = sizeof(struct sockaddr_in);
 		in_len2mask(&ifra.ifra_mask.sin_addr, iflr->prefixlen);
 
-		return in_control(so, SIOCAIFADDR, (void *)&ifra, ifp, l);
+		return in_control(so, SIOCAIFADDR, &ifra, ifp);
 	    }
 	case SIOCGLIFADDR:
 	case SIOCDLIFADDR:
@@ -771,8 +793,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 			memcpy(&ifra.ifra_dstaddr, &ia->ia_sockmask,
 				ia->ia_sockmask.sin_len);
 
-			return in_control(so, SIOCDIFADDR, (void *)&ifra,
-				ifp, l);
+			return in_control(so, SIOCDIFADDR, &ifra, ifp);
 		}
 	    }
 	}
@@ -1051,64 +1072,106 @@ in_broadcast(struct in_addr in, struct ifnet *ifp)
 }
 
 /*
+ * in_lookup_multi: look up the in_multi record for a given IP
+ * multicast address on a given interface.  If no matching record is
+ * found, return NULL.
+ */
+struct in_multi *
+in_lookup_multi(struct in_addr addr, ifnet_t *ifp)
+{
+	struct in_multi *inm;
+
+	KASSERT(rw_lock_held(&in_multilock));
+
+	LIST_FOREACH(inm, &IN_MULTI_HASH(addr.s_addr, ifp), inm_list) {
+		if (in_hosteq(inm->inm_addr, addr) && inm->inm_ifp == ifp)
+			break;
+	}
+	return inm;
+}
+
+/*
+ * in_multi_group: check whether the address belongs to an IP multicast
+ * group we are joined on this interface.  Returns true or false.
+ */
+bool
+in_multi_group(struct in_addr addr, ifnet_t *ifp, int flags)
+{
+	bool ingroup;
+
+	if (__predict_true(flags & IP_IGMP_MCAST) == 0) {
+		rw_enter(&in_multilock, RW_READER);
+		ingroup = in_lookup_multi(addr, ifp) != NULL;
+		rw_exit(&in_multilock);
+	} else {
+		/* XXX Recursive call from ip_output(). */
+		KASSERT(rw_lock_held(&in_multilock));
+		ingroup = in_lookup_multi(addr, ifp) != NULL;
+	}
+	return ingroup;
+}
+
+/*
  * Add an address to the list of IP multicast addresses for a given interface.
  */
 struct in_multi *
-in_addmulti(struct in_addr *ap, struct ifnet *ifp)
+in_addmulti(struct in_addr *ap, ifnet_t *ifp)
 {
 	struct sockaddr_in sin;
 	struct in_multi *inm;
-	int s = splsoftnet();
 
 	/*
 	 * See if address already in list.
 	 */
-	IN_LOOKUP_MULTI(*ap, ifp, inm);
+	rw_enter(&in_multilock, RW_WRITER);
+	inm = in_lookup_multi(*ap, ifp);
 	if (inm != NULL) {
 		/*
 		 * Found it; just increment the reference count.
 		 */
-		++inm->inm_refcount;
-	} else {
-		/*
-		 * New address; allocate a new multicast record
-		 * and link it into the interface's multicast list.
-		 */
-		inm = pool_get(&inmulti_pool, PR_NOWAIT);
-		if (inm == NULL) {
-			splx(s);
-			return (NULL);
-		}
-		inm->inm_addr = *ap;
-		inm->inm_ifp = ifp;
-		inm->inm_refcount = 1;
-		LIST_INSERT_HEAD(
-		    &IN_MULTI_HASH(inm->inm_addr.s_addr, ifp),
-		    inm, inm_list);
-		/*
-		 * Ask the network driver to update its multicast reception
-		 * filter appropriately for the new address.
-		 */
-		sockaddr_in_init(&sin, ap, 0);
-		if (if_mcast_op(ifp, SIOCADDMULTI, sintosa(&sin)) != 0) {
-			LIST_REMOVE(inm, inm_list);
-			pool_put(&inmulti_pool, inm);
-			splx(s);
-			return (NULL);
-		}
-		/*
-		 * Let IGMP know that we have joined a new IP multicast group.
-		 */
-		if (igmp_joingroup(inm) != 0) {
-			LIST_REMOVE(inm, inm_list);
-			pool_put(&inmulti_pool, inm);
-			splx(s);
-			return (NULL);
-		}
-		in_multientries++;
+		inm->inm_refcount++;
+		rw_exit(&in_multilock);
+		return inm;
 	}
-	splx(s);
-	return (inm);
+
+	/*
+	 * New address; allocate a new multicast record.
+	 */
+	inm = pool_get(&inmulti_pool, PR_NOWAIT);
+	if (inm == NULL) {
+		rw_exit(&in_multilock);
+		return NULL;
+	}
+	inm->inm_addr = *ap;
+	inm->inm_ifp = ifp;
+	inm->inm_refcount = 1;
+
+	/*
+	 * Ask the network driver to update its multicast reception
+	 * filter appropriately for the new address.
+	 */
+	sockaddr_in_init(&sin, ap, 0);
+	if (if_mcast_op(ifp, SIOCADDMULTI, sintosa(&sin)) != 0) {
+		rw_exit(&in_multilock);
+		pool_put(&inmulti_pool, inm);
+		return NULL;
+	}
+
+	/*
+	 * Let IGMP know that we have joined a new IP multicast group.
+	 */
+	if (igmp_joingroup(inm) != 0) {
+		rw_exit(&in_multilock);
+		pool_put(&inmulti_pool, inm);
+		return NULL;
+	}
+	LIST_INSERT_HEAD(
+	    &IN_MULTI_HASH(inm->inm_addr.s_addr, ifp),
+	    inm, inm_list);
+	in_multientries++;
+	rw_exit(&in_multilock);
+
+	return inm;
 }
 
 /*
@@ -1118,26 +1181,196 @@ void
 in_delmulti(struct in_multi *inm)
 {
 	struct sockaddr_in sin;
-	int s = splsoftnet();
 
-	if (--inm->inm_refcount == 0) {
-		/*
-		 * No remaining claims to this record; let IGMP know that
-		 * we are leaving the multicast group.
-		 */
-		igmp_leavegroup(inm);
-		/*
-		 * Unlink from list.
-		 */
-		LIST_REMOVE(inm, inm_list);
-		in_multientries--;
-		/*
-		 * Notify the network driver to update its multicast reception
-		 * filter.
-		 */
-		sockaddr_in_init(&sin, &inm->inm_addr, 0);
-		if_mcast_op(inm->inm_ifp, SIOCDELMULTI, sintosa(&sin));
-		pool_put(&inmulti_pool, inm);
+	rw_enter(&in_multilock, RW_WRITER);
+	if (--inm->inm_refcount > 0) {
+		rw_exit(&in_multilock);
+		return;
 	}
-	splx(s);
+
+	/*
+	 * No remaining claims to this record; let IGMP know that
+	 * we are leaving the multicast group.
+	 */
+	igmp_leavegroup(inm);
+
+	/*
+	 * Notify the network driver to update its multicast reception
+	 * filter.
+	 */
+	sockaddr_in_init(&sin, &inm->inm_addr, 0);
+	if_mcast_op(inm->inm_ifp, SIOCDELMULTI, sintosa(&sin));
+
+	/*
+	 * Unlink from list.
+	 */
+	LIST_REMOVE(inm, inm_list);
+	in_multientries--;
+	rw_exit(&in_multilock);
+
+	pool_put(&inmulti_pool, inm);
+}
+
+/*
+ * in_next_multi: step through all of the in_multi records, one at a time.
+ * The current position is remembered in "step", which the caller must
+ * provide.  in_first_multi(), below, must be called to initialize "step"
+ * and get the first record.  Both macros return a NULL "inm" when there
+ * are no remaining records.
+ */
+struct in_multi *
+in_next_multi(struct in_multistep *step)
+{
+	struct in_multi *inm;
+
+	KASSERT(rw_lock_held(&in_multilock));
+
+	while (step->i_inm == NULL && step->i_n < IN_MULTI_HASH_SIZE) {
+		step->i_inm = LIST_FIRST(&in_multihashtbl[++step->i_n]);
+	}
+	if ((inm = step->i_inm) != NULL) {
+		step->i_inm = LIST_NEXT(inm, inm_list);
+	}
+	return inm;
+}
+
+struct in_multi *
+in_first_multi(struct in_multistep *step)
+{
+	KASSERT(rw_lock_held(&in_multilock));
+
+	step->i_n = 0;
+	step->i_inm = LIST_FIRST(&in_multihashtbl[0]);
+	return in_next_multi(step);
+}
+
+void
+in_multi_lock(int op)
+{
+	rw_enter(&in_multilock, op);
+}
+
+void
+in_multi_unlock(void)
+{
+	rw_exit(&in_multilock);
+}
+
+int
+in_multi_lock_held(void)
+{
+	return rw_lock_held(&in_multilock);
+}
+
+struct sockaddr_in *
+in_selectsrc(struct sockaddr_in *sin, struct route *ro,
+    int soopts, struct ip_moptions *mopts, int *errorp)
+{
+	struct rtentry *rt = NULL;
+	struct in_ifaddr *ia = NULL;
+
+	/*
+         * If route is known or can be allocated now, take the
+         * source address from the interface.  Otherwise, punt.
+	 */
+	if ((soopts & SO_DONTROUTE) != 0)
+		rtcache_free(ro);
+	else {
+		union {
+			struct sockaddr		dst;
+			struct sockaddr_in	dst4;
+		} u;
+
+		sockaddr_in_init(&u.dst4, &sin->sin_addr, 0);
+		rt = rtcache_lookup(ro, &u.dst);
+	}
+	/*
+	 * If we found a route, use the address
+	 * corresponding to the outgoing interface
+	 * unless it is the loopback (in case a route
+	 * to our address on another net goes to loopback).
+	 *
+	 * XXX Is this still true?  Do we care?
+	 */
+	if (rt != NULL && (rt->rt_ifp->if_flags & IFF_LOOPBACK) == 0)
+		ia = ifatoia(rt->rt_ifa);
+	if (ia == NULL) {
+		u_int16_t fport = sin->sin_port;
+
+		sin->sin_port = 0;
+		ia = ifatoia(ifa_ifwithladdr(sintosa(sin)));
+		sin->sin_port = fport;
+		if (ia == NULL) {
+			/* Find 1st non-loopback AF_INET address */
+			TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list) {
+				if (!(ia->ia_ifp->if_flags & IFF_LOOPBACK))
+					break;
+			}
+		}
+		if (ia == NULL) {
+			*errorp = EADDRNOTAVAIL;
+			return NULL;
+		}
+	}
+	/*
+	 * If the destination address is multicast and an outgoing
+	 * interface has been set as a multicast option, use the
+	 * address of that interface as our source address.
+	 */
+	if (IN_MULTICAST(sin->sin_addr.s_addr) && mopts != NULL) {
+		struct ip_moptions *imo;
+		struct ifnet *ifp;
+
+		imo = mopts;
+		if (imo->imo_multicast_ifp != NULL) {
+			ifp = imo->imo_multicast_ifp;
+			IFP_TO_IA(ifp, ia);		/* XXX */
+			if (ia == 0) {
+				*errorp = EADDRNOTAVAIL;
+				return NULL;
+			}
+		}
+	}
+	if (ia->ia_ifa.ifa_getifa != NULL) {
+		ia = ifatoia((*ia->ia_ifa.ifa_getifa)(&ia->ia_ifa,
+		                                      sintosa(sin)));
+	}
+#ifdef GETIFA_DEBUG
+	else
+		printf("%s: missing ifa_getifa\n", __func__);
+#endif
+	return satosin(&ia->ia_addr);
+}
+
+static void
+in_sysctl_init(struct sysctllog **clog)
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "inet",
+		       SYSCTL_DESCR("PF_INET related settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ip",
+		       SYSCTL_DESCR("IPv4 related settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET, IPPROTO_IP, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "subnetsarelocal",
+		       SYSCTL_DESCR("Whether logical subnets are considered "
+				    "local"),
+		       NULL, 0, &subnetsarelocal, 0,
+		       CTL_NET, PF_INET, IPPROTO_IP,
+		       IPCTL_SUBNETSARELOCAL, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "hostzerobroadcast",
+		       SYSCTL_DESCR("All zeroes address is broadcast address"),
+		       NULL, 0, &hostzeroisbroadcast, 0,
+		       CTL_NET, PF_INET, IPPROTO_IP,
+		       IPCTL_HOSTZEROBROADCAST, CTL_EOL);
 }

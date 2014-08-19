@@ -1,4 +1,4 @@
-/*	$NetBSD: mcp980xreg.h,v 1.1.4.2 2013/06/23 06:20:17 tls Exp $ */
+/*	$NetBSD: mcp980xreg.h,v 1.1.4.3 2014/08/20 00:03:37 tls Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -53,5 +53,9 @@
 #define MCP980X_CONFIG_ADC_RES_10BIT		1	
 #define MCP980X_CONFIG_ADC_RES_11BIT		2	
 #define MCP980X_CONFIG_ADC_RES_12BIT		3
+
+#define MCP980X_TEMP_HYSTERESIS		0x2
+#define MCP980X_TEMP_LIMIT		0x3
+#define MCP980X_TEMP_HYSTLIMIT_INT_SHIFT	8
 
 #endif /* _MCP980XREG_H_ */

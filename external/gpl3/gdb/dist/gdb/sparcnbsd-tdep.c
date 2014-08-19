@@ -1,7 +1,6 @@
 /* Target-dependent code for NetBSD/sparc.
 
-   Copyright (C) 2002, 2003, 2004, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
    This file is part of GDB.
@@ -32,7 +31,7 @@
 #include "trad-frame.h"
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 
 #include "sparc-tdep.h"
 #include "nbsd-tdep.h"
@@ -65,7 +64,8 @@ sparc32nbsd_supply_gregset (const struct regset *regset,
      Instead, the general-purpose and floating-point registers are
      lumped together in a single section.  */
   if (len >= 212)
-    sparc32_supply_fpregset (regcache, regnum, (const char *) gregs + 80);
+    sparc32_supply_fpregset (&sparc32_bsd_fpregset, regcache, regnum,
+			     (const char *) gregs + 80);
 }
 
 static void
@@ -73,7 +73,7 @@ sparc32nbsd_supply_fpregset (const struct regset *regset,
 			     struct regcache *regcache,
 			     int regnum, const void *fpregs, size_t len)
 {
-  sparc32_supply_fpregset (regcache, regnum, fpregs);
+  sparc32_supply_fpregset (&sparc32_bsd_fpregset, regcache, regnum, fpregs);
 }
 
 
@@ -88,7 +88,7 @@ static const CORE_ADDR sparc32nbsd_sigtramp_start = 0xeffffef0;
 static const CORE_ADDR sparc32nbsd_sigtramp_end = 0xeffffff0;
 
 static int
-sparc32nbsd_pc_in_sigtramp (CORE_ADDR pc, char *name)
+sparc32nbsd_pc_in_sigtramp (CORE_ADDR pc, const char *name)
 {
   if (pc >= sparc32nbsd_sigtramp_start && pc < sparc32nbsd_sigtramp_end)
     return 1;
@@ -202,7 +202,7 @@ sparc32nbsd_sigcontext_frame_cache (struct frame_info *this_frame,
 
       /* Since we couldn't find the frame's function, the cache was
          initialized under the assumption that we're frameless.  */
-      cache->frameless_p = 0;
+      sparc_record_save_insn (cache);
       addr = get_frame_register_unsigned (this_frame, SPARC_FP_REGNUM);
       cache->base = addr;
     }
@@ -239,7 +239,7 @@ sparc32nbsd_sigcontext_frame_sniffer (const struct frame_unwind *self,
 				      void **this_cache)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
-  char *name;
+  const char *name;
 
   find_pc_partial_function (pc, &name, NULL, NULL);
   if (sparc32nbsd_pc_in_sigtramp (pc, name))

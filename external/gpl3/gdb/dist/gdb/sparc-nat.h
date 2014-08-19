@@ -1,7 +1,6 @@
 /* Native-dependent code for SPARC.
 
-   Copyright (C) 2003, 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,14 +21,18 @@
 #define SPARC_NAT_H 1
 
 struct sparc_gregset;
+struct sparc_fpregset;
 
 extern const struct sparc_gregset *sparc_gregset;
+extern const struct sparc_fpregset *sparc_fpregset;
 extern void (*sparc_supply_gregset) (const struct sparc_gregset *,
 				     struct regcache *, int , const void *);
 extern void (*sparc_collect_gregset) (const struct sparc_gregset *,
 				      const struct regcache *, int, void *);
-extern void (*sparc_supply_fpregset) (struct regcache *, int , const void *);
-extern void (*sparc_collect_fpregset) (const struct regcache *, int , void *);
+extern void (*sparc_supply_fpregset) (const struct sparc_fpregset *,
+				      struct regcache *, int , const void *);
+extern void (*sparc_collect_fpregset) (const struct sparc_fpregset *,
+				       const struct regcache *, int , void *);
 extern int (*sparc_gregset_supplies_p) (struct gdbarch *gdbarch, int);
 extern int (*sparc_fpregset_supplies_p) (struct gdbarch *gdbarch, int);
 

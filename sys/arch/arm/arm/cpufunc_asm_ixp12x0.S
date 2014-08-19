@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_ixp12x0.S,v 1.2 2002/08/17 16:36:31 thorpej Exp $	*/
+/*	$NetBSD: cpufunc_asm_ixp12x0.S,v 1.2.162.1 2014/08/20 00:02:44 tls Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -35,8 +35,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/cpu.h>
-#include <machine/asm.h>
+#include <arm/asm.h>
+#include <arm/locore.h>
 
 /*
  * This function is the same as sa110_context_switch for now, the plan
@@ -60,10 +60,12 @@ ENTRY(ixp12x0_context_switch)
 	mov	r0, r0
 	mov	r0, r0
 	mov	pc, lr
+END(ixp12x0_context_switch)
 
 ENTRY(ixp12x0_drain_readbuf)
 	mcr	p15, 0, r0, c9, c0, 0		/* drain read buffer */
 	mov	pc, lr
+END(ixp12x0_drain_readbuf)
 
 /*
  * Information for the IXP12X0 cache clean/purge functions:

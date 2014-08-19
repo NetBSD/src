@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.31 2012/07/30 23:02:41 yamt Exp $	*/
+/*	$NetBSD: catopen.c,v 1.31.2.1 2014/08/20 00:02:15 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,11 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: catopen.c,v 1.31 2012/07/30 23:02:41 yamt Exp $");
-#endif /* LIBC_SCCS and not lint */
+__RCSID("$NetBSD: catopen.c,v 1.31.2.1 2014/08/20 00:02:15 tls Exp $");
 
 #define _NLS_PRIVATE
+#define __SETLOCALE_SOURCE__
 
 #include "namespace.h"
 #include <sys/param.h>
@@ -55,20 +54,27 @@ __RCSID("$NetBSD: catopen.c,v 1.31 2012/07/30 23:02:41 yamt Exp $");
 #include "citrus_region.h"
 #include "citrus_lookup.h"
 #include "citrus_aliasname_local.h"
+#include "setlocale_local.h"
 
 #define NLS_ALIAS_DB "/usr/share/nls/nls.alias"
 
 #define NLS_DEFAULT_PATH "/usr/share/nls/%L/%N.cat:/usr/share/nls/%N/%L"
 #define NLS_DEFAULT_LANG "C"
 
-#ifdef __weak_alias
 __weak_alias(catopen, _catopen)
-#endif
+__weak_alias(catopen_l, _catopen_l)
 
 static nl_catd load_msgcat(const char *);
 
 nl_catd
-_catopen(const char *name, int oflag)
+catopen(const char *name, int oflag)
+{
+
+	return catopen_l(name, oflag, _current_locale());
+}
+
+nl_catd
+catopen_l(const char *name, int oflag, locale_t loc)
 {
 	char tmppath[PATH_MAX+1];
 	const char *nlspath;
@@ -88,11 +94,11 @@ _catopen(const char *name, int oflag)
 	if (issetugid() || (nlspath = getenv("NLSPATH")) == NULL)
 		nlspath = NLS_DEFAULT_PATH;
 	/*
-	 * histrical note:
+	 * Historical note:
 	 * http://www.hauN.org/ml/b-l-j/a/800/828.html (in japanese)
 	 */
 	if (oflag == NL_CAT_LOCALE) {
-		lang = setlocale(LC_MESSAGES, NULL);
+		lang = loc->part_name[LC_MESSAGES];
 	} else {
 		lang = getenv("LANG");
 	}

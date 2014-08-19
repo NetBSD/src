@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.19.2.1 2013/02/25 00:28:23 tls Exp $	*/
+/*	$NetBSD: disassem.c,v 1.19.2.2 2014/08/20 00:02:44 tls Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,13 +49,15 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.19.2.1 2013/02/25 00:28:23 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.19.2.2 2014/08/20 00:02:44 tls Exp $");
 
 #include <sys/systm.h>
+
 #include <arch/arm/arm/disassem.h>
+#include <arm/armreg.h>
+
 #ifndef _KERNEL
 #include <stdio.h>
-#include <arm/armreg.h>
 #endif
 
 /*
@@ -106,6 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.19.2.1 2013/02/25 00:28:23 tls Exp $"
  * W - writeback flag
  * X - block transfer type
  * Y - block transfer type (r13 base)
+ * Z - 16-bit value (movw,movt)
  * # - co-processor number
  */
 
@@ -119,6 +122,9 @@ struct arm32_insn {
 static const struct arm32_insn arm32_i[] = {
     { 0x0fffffff, 0x0ff00000, "imb",	"c" },		/* Before swi */
     { 0x0fffffff, 0x0ff00001, "imbrange",	"c" },	/* Before swi */
+    { 0x0fffffff, 0x0320f003, "yield",	"" },	/* Before swi */
+    { 0x0fffffff, 0x0320f002, "wfe",	"" },	/* Before swi */
+    { 0x0fffffff, 0x0320f003, "wfi",	"" },	/* Before swi */
     { 0x0f000000, 0x0f000000, "swi",	"c" },
     { 0xfe000000, 0xfa000000, "blx",	"t" },		/* Before b and bl */
     { 0x0f000000, 0x0a000000, "b",	"b" },
@@ -137,10 +143,20 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0c500000, 0x04100000, "ldr",	"daW" },
     { 0x0c500000, 0x04400000, "strb",	"daW" },
     { 0x0c500000, 0x04500000, "ldrb",	"daW" },
+    { 0x0fff0000, 0x092d0000, "push",	"l" },	/* separate out r13 base */
+    { 0x0fff0000, 0x08bd0000, "pop",	"l" },	/* separate out r13 base */
     { 0x0e1f0000, 0x080d0000, "stm",	"YnWl" },/* separate out r13 base */
     { 0x0e1f0000, 0x081d0000, "ldm",	"YnWl" },/* separate out r13 base */    
     { 0x0e100000, 0x08000000, "stm",	"XnWl" },
     { 0x0e100000, 0x08100000, "ldm",	"XnWl" },    
+    { 0x0ff00fff, 0x01900f9f, "ldrex",	"da" },
+    { 0x0ff00fff, 0x01b00f9f, "ldrexd",	"da" },
+    { 0x0ff00fff, 0x01d00f9f, "ldrexb",	"da" },
+    { 0x0ff00fff, 0x01f00f9f, "ldrexh",	"da" },
+    { 0x0ff00ff0, 0x01800f90, "strex",	"dma" },
+    { 0x0ff00ff0, 0x01a00f90, "strexd",	"dma" },
+    { 0x0ff00ff0, 0x01c00f90, "strexb",	"dma" },
+    { 0x0ff00ff0, 0x01e00f90, "strexh",	"dma" },
     { 0x0e1000f0, 0x00100090, "ldrb",	"de" },
     { 0x0e1000f0, 0x00000090, "strb",	"de" },
     { 0x0e1000f0, 0x001000d0, "ldrsb",	"de" },
@@ -153,27 +169,29 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0ff00ff0, 0x01400090, "swpb",	"dmo" },
     { 0x0fbf0fff, 0x010f0000, "mrs",	"dp" },	/* Before data processing */
     { 0x0fb0fff0, 0x0120f000, "msr",	"pFm" },/* Before data processing */
-    { 0x0fb0f000, 0x0320f000, "msr",	"pF2" },/* Before data processing */
+    { 0x0fe0f000, 0x0320f000, "msr",	"pF2" },/* Before data processing */
     { 0x0ffffff0, 0x012fff10, "bx",	"m" },
     { 0x0fff0ff0, 0x016f0f10, "clz",	"dm" },
     { 0x0ffffff0, 0x012fff30, "blx",	"m" },
     { 0xfff000f0, 0xe1200070, "bkpt",	"k" },
-    { 0x0de00000, 0x00000000, "and",	"Sdn2" },
-    { 0x0de00000, 0x00200000, "eor",	"Sdn2" },
-    { 0x0de00000, 0x00400000, "sub",	"Sdn2" },
-    { 0x0de00000, 0x00600000, "rsb",	"Sdn2" },
-    { 0x0de00000, 0x00800000, "add",	"Sdn2" },
-    { 0x0de00000, 0x00a00000, "adc",	"Sdn2" },
-    { 0x0de00000, 0x00c00000, "sbc",	"Sdn2" },
-    { 0x0de00000, 0x00e00000, "rsc",	"Sdn2" },
-    { 0x0df00000, 0x01100000, "tst",	"Dn2" },
-    { 0x0df00000, 0x01300000, "teq",	"Dn2" },
-    { 0x0de00000, 0x01400000, "cmp",	"Dn2" },
-    { 0x0de00000, 0x01600000, "cmn",	"Dn2" },
-    { 0x0de00000, 0x01800000, "orr",	"Sdn2" },
+    { 0x0fe00000, 0x02000000, "and",	"Sdn2" },
+    { 0x0fe00000, 0x02200000, "eor",	"Sdn2" },
+    { 0x0fe00000, 0x02400000, "sub",	"Sdn2" },
+    { 0x0fe00000, 0x02600000, "rsb",	"Sdn2" },
+    { 0x0fe00000, 0x02800000, "add",	"Sdn2" },
+    { 0x0fe00000, 0x02a00000, "adc",	"Sdn2" },
+    { 0x0fe00000, 0x02c00000, "sbc",	"Sdn2" },
+    { 0x0fe00000, 0x02e00000, "rsc",	"Sdn2" },
+    { 0x0ff00000, 0x03000000, "movw", 	"dZ" },
+    { 0x0ff00000, 0x03100000, "tst",	"Dn2" },
+    { 0x0ff00000, 0x03300000, "teq",	"Dn2" },
+    { 0x0ff00000, 0x03400000, "movt", 	"dZ" },
+    { 0x0ff00000, 0x03500000, "cmp",	"Dn2" },
+    { 0x0ff00000, 0x03700000, "cmn",	"Dn2" },
+    { 0x0fe00000, 0x03800000, "orr",	"Sdn2" },
     { 0x0de00000, 0x01a00000, "mov",	"Sd2" },
-    { 0x0de00000, 0x01c00000, "bic",	"Sdn2" },
-    { 0x0de00000, 0x01e00000, "mvn",	"Sd2" },
+    { 0x0fe00000, 0x03c00000, "bic",	"Sdn2" },
+    { 0x0fe00000, 0x03e00000, "mvn",	"Sd2" },
     { 0x0ff08f10, 0x0e000100, "adf",	"PRfgh" },
     { 0x0ff08f10, 0x0e100100, "muf",	"PRfgh" },
     { 0x0ff08f10, 0x0e200100, "suf",	"PRfgh" },
@@ -319,6 +337,9 @@ disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 	fmt = 0;
 	matchp = 0;
 	insn = di->di_readword(loc);
+#if defined(__ARMEB__) && defined(CPU_ARMV7)
+	insn = bswap32(insn);
+#endif
 	char neonfmt = 'd';
 	char neonsign = 'u';
 
@@ -467,6 +488,11 @@ disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 		/* Y - block transfer type (r13 base) */
 		case 'Y':
 			di->di_printf("%s", insn_stkblktrans(insn));
+			break;
+		/* Z - print movw/movt argument */
+		case 'Z':
+			di->di_printf(", #0x%04x",
+			    ((insn & 0xf0000) >> 4) | (insn & 0xfff));
 			break;
 		/* c - comment field bits(0-23) */
 		case 'c':
@@ -654,7 +680,8 @@ disasm_insn_ldrstr(const disasm_interface_t *di, u_int insn, u_int loc)
 		di->di_printaddr(loc + 8);
  	} else {
 		di->di_printf("[r%d", (insn >> 16) & 0x0f);
-		if ((insn & 0x03000fff) != 0x01000000) {
+		if ((insn & 0x03000fff) != 0x01000000
+		    && (insn & 0x0f800ff0) != 0x01800f90) {
 			di->di_printf("%s, ", (insn & (1 << 24)) ? "" : "]");
 			if (!(insn & 0x00800000))
 				di->di_printf("-");

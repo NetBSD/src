@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.39 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.39.44.1 2014/08/20 00:03:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.39 2008/04/28 20:23:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.39.44.1 2014/08/20 00:03:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,6 +409,7 @@ fhpibgo(struct hpibbus_softc *hs, int slave, int sec, void *ptr, int count,
 		hd->hpib_cmd = sc->sc_cmd;
 		hd->hpib_ie = IDS_DMA(hs->sc_dq->dq_chan) |
 			((flags & DMAGO_WORD) ? IDS_WDMA : 0);
+		__USE(i);
 		return;
 	}
 	sc->sc_cmd = CT_REN | CT_8BIT | CT_FIFOSEL;
@@ -436,6 +437,7 @@ fhpibgo(struct hpibbus_softc *hs, int slave, int sec, void *ptr, int count,
 	hd->hpib_cmd = sc->sc_cmd;
 	hd->hpib_ie = IDS_DMA(hs->sc_dq->dq_chan) | IDS_WRITE |
 		((flags & DMAGO_WORD) ? IDS_WDMA : 0);
+	__USE(i);
 }
 
 /*

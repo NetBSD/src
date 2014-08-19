@@ -1,7 +1,6 @@
 /* MI Internal Functions for GDB, the GNU debugger.
 
-   Copyright (C) 2003, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -33,6 +32,19 @@ extern char *current_token;
 
 extern int running_result_record_printed;
 extern int mi_proceeded;
+
+struct mi_suppress_notification
+{
+  /* Breakpoint notification suppressed?  */
+  int breakpoint;
+  /* Command param changed notification suppressed?  */
+  int cmd_param_changed;
+  /* Traceframe changed notification suppressed?  */
+  int traceframe;
+  /* Memory changed notification suppressed?  */
+  int memory;
+};
+extern struct mi_suppress_notification mi_suppress_notification;
 
 #endif
 

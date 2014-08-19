@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.53.2.1 2013/02/25 00:29:37 tls Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.53.2.2 2014/08/20 00:03:51 tls Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -116,6 +116,9 @@ typedef struct ohci_softc {
 #define	OHCI_LITTLE_ENDIAN	0	/* typical (uninitialized default) */
 #define	OHCI_BIG_ENDIAN		1	/* big endian OHCI? never seen it */
 #define	OHCI_HOST_ENDIAN	2	/* if OHCI always matches CPU */
+
+	int sc_flags;
+#define OHCIF_SUPERIO		0x0001
 
 	char sc_softwake;
 	kcondvar_t sc_softwake_cv;

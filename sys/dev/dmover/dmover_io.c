@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.40 2011/05/14 13:52:00 jakllsch Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.40.14.1 2014/08/20 00:03:36 tls Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.40 2011/05/14 13:52:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.40.14.1 2014/08/20 00:03:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -133,9 +133,18 @@ void	dmoverioattach(int);
 dev_type_open(dmoverioopen);
 
 const struct cdevsw dmoverio_cdevsw = {
-	dmoverioopen, noclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
-	D_OTHER
+	.d_open = dmoverioopen,
+	.d_close = noclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 /*
@@ -595,7 +604,7 @@ dmio_stat(struct file *fp, struct stat *st)
 {
 	struct dmio_state *ds = fp->f_data;
 
-	(void)memset(st, 0, sizeof(st));
+	(void)memset(st, 0, sizeof(*st));
 	KERNEL_LOCK(1, NULL);
 	st->st_dev = makedev(cdevsw_lookup_major(&dmoverio_cdevsw), 0);
 	st->st_atimespec = ds->ds_atime;

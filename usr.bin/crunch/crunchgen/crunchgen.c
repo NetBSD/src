@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.80.8.1 2013/06/23 06:29:00 tls Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.80.8.2 2014/08/20 00:04:57 tls Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.80.8.1 2013/06/23 06:29:00 tls Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.80.8.2 2014/08/20 00:04:57 tls Exp $");
 #endif
 
 #include <stdlib.h>
@@ -957,7 +957,7 @@ top_makefile_rules(FILE *outmk)
     fprintf(outmk, "\t@[ -f ${PROG}.unstripped -a ! ${PROG} -nt ${PROG}.unstripped ] || { \\\n");
     fprintf(outmk, "\t\t${_MKSHMSG:Uecho} \"  strip \" ${PROG}; \\\n");
     fprintf(outmk, "\t\tcp ${PROG} ${PROG}.unstripped && \\\n");
-    fprintf(outmk, "\t\t${OBJCOPY} -S -R .eh_frame -R .eh_frame_hdr -R .note -R .ident -R .comment -R .copyright ${PROG} && \\\n");
+    fprintf(outmk, "\t\t${OBJCOPY} -S -R .eh_frame -R .eh_frame_hdr -R .note -R .note.netbsd.mcmodel -R .note.netbsd.pax -R .ident -R .comment -R .copyright ${PROG} && \\\n");
     fprintf(outmk, "\t\ttouch ${PROG}.unstripped; \\\n");
     fprintf(outmk, "\t}\n");
     fprintf(outmk, "objs: $(SUBMAKE_TARGETS)\n");

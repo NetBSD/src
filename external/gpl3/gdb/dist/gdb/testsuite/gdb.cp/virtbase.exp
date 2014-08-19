@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,19 +17,11 @@
 
 if { [skip_cplus_tests] } { continue }
 
-set testfile "virtbase"
-set srcfile ${testfile}.cc
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .cc
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
-     untested virtbase.exp
-     return -1
+if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
+    return -1
 }
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 
 if {![runto_main]} then {
     perror "couldn't run to breakpoint"
@@ -72,11 +64,11 @@ gdb_test "print rtti_data" " = .*, data = 1\}"
 # value history to check the pointer value is not changed.  If it had
 # been changed, then we'd not be able to find the real type anymore.
 gdb_test "print virtual_middle_b" \
-    " = \\(Virtual \\*\\) $hex" \
+    " = \\(Virtual \\*\\) $hex <virtual_o>" \
     "print pointer to virtual base at non-zero offset of larger object"
 gdb_test "print $" \
-    " = \\(Virtual \\*\\) $hex" \
+    " = \\(Virtual \\*\\) $hex <virtual_o>" \
     "print same pointer from history value"
 gdb_test "print *$$" \
-    " = \\(Virtual\\) {<VirtualMiddleA> = {<VirtualBase> = {_vptr.VirtualBase = $hex, x = 0}, _vptr.VirtualMiddleA = $hex, y = \\{0 <repeats 300 times>\\}}, <VirtualMiddleB> = {_vptr.VirtualMiddleB = $hex, y = 0}, _vptr.Virtual = $hex, z = 0}" \
+    " = \\(Virtual\\) {<VirtualMiddleA> = {<VirtualBase> = {_vptr.VirtualBase = ${hex}( <vtable for Virtual.*>)?, x = 0}, _vptr.VirtualMiddleA = ${hex}( <vtable for Virtual.*>)?, y = \\{0 <repeats 300 times>\\}}, <VirtualMiddleB> = {_vptr.VirtualMiddleB = ${hex}( <vtable for Virtual.*>)?, y = 0}, _vptr.Virtual = ${hex}( <vtable for Virtual.*>)?, z = 0}" \
     "print whole pointed-to object, starting from the virtual base pointer"

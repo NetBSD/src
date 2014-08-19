@@ -1,6 +1,6 @@
 /* Blackfin System Interrupt Controller (SIC) model.
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -20,8 +20,5 @@
 
 #ifndef DV_BFIN_SIC_H
 #define DV_BFIN_SIC_H
-
-#define BFIN_MMR_SIC_BASE	0xFFC00100
-#define BFIN_MMR_SIC_SIZE	0x100
 
 #endif

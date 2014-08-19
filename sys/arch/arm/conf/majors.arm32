@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arm32,v 1.33.12.1 2013/02/25 00:28:26 tls Exp $
+#	$NetBSD: majors.arm32,v 1.33.12.2 2014/08/20 00:02:45 tls Exp $
 #
 # Device majors for arm32
 #
@@ -91,6 +91,7 @@ device-major	clockctl	char 94			clockctl
 device-major	irframe		char 95			irframedrv
 device-major	cir		char 96			cir
 device-major	radio		char 97			radio
+device-major	ctcom		char 98			ctcom
 device-major	kttcp		char 99			kttcp
 device-major	ixpcom		char 100		ixpcom
 device-major	sysmon		char 101		sysmon_envsys | sysmon_wdog | sysmon_power

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_ttl.c,v 1.3 2010/07/05 09:54:26 kefren Exp $ */
+/*	$NetBSD: mpls_ttl.c,v 1.3.22.1 2014/08/20 00:04:36 tls Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_ttl.c,v 1.3 2010/07/05 09:54:26 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_ttl.c,v 1.3.22.1 2014/08/20 00:04:36 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_mpls.h"
@@ -165,8 +165,9 @@ static void mpls_icmp_error(struct mbuf *, int, int, n_long, int,
 static bool ip4_check(struct mbuf *);
 
 /*
- * Reference: http://tools.ietf.org/html/rfc4950
+ * References: RFC 4884 and RFC 4950
  * This should be in sync with icmp_error() in sys/netinet/ip_icmp.c
+ * XXX: is called only for ICMP_TIMXCEED_INTRANS but code is too general
  */
 
 static void
@@ -238,7 +239,8 @@ mpls_icmp_error(struct mbuf *n, int type, int code, n_long dest,
 		mblen += m->m_len;
 	icmplen = min(mblen, icmplen);
 
-	packetlen = sizeof(struct ip) + ICMP_EXT_OFFSET + sizeof(mpls_icmp_ext);
+	packetlen = sizeof(struct ip) + offsetof(struct icmp, icmp_ip) +
+	    ICMP_EXT_OFFSET + sizeof(mpls_icmp_ext);
 
 	/*
 	 * As we are not required to return everything we have,
@@ -265,13 +267,12 @@ mpls_icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	m->m_len = packetlen;
 	if ((m->m_flags & M_EXT) == 0)
 		MH_ALIGN(m, m->m_len);
-	else {
-		m->m_data += sizeof(struct ip);
-		m->m_len -= sizeof(struct ip);
-	}
+	m->m_data += sizeof(struct ip);
+	m->m_len -= sizeof(struct ip);
+
 	icp = mtod(m, struct icmp *);
 	if ((u_int)type > ICMP_MAXTYPE)
-		panic("icmp error");
+		panic("icmp error (mpls_ttl)");
 	ICMP_STATINC(ICMP_STAT_OUTHIST + type);
 	icp->icmp_type = type;
 	if (type == ICMP_REDIRECT)
@@ -377,8 +378,8 @@ mpls_ttl_dec(struct mbuf *m)
 	union mpls_shim top_shim, bossh;
 #endif
 
-	if (m->m_len < sizeof(union mpls_shim) &&
-	    (m = m_pullup(m, sizeof(union mpls_shim))) == NULL)
+	if (__predict_false(m->m_len < sizeof(union mpls_shim) &&
+	    (m = m_pullup(m, sizeof(union mpls_shim))) == NULL))
 		return NULL;
 	mshim = mtod(m, union mpls_shim *);
 	mshim->s_addr = ntohl(mshim->s_addr);

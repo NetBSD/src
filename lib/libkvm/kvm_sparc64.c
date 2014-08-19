@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc64.c,v 1.15 2010/09/20 23:23:16 jym Exp $	*/
+/*	$NetBSD: kvm_sparc64.c,v 1.15.12.1 2014/08/20 00:02:17 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sparc64.c,v 1.15 2010/09/20 23:23:16 jym Exp $");
+__RCSID("$NetBSD: kvm_sparc64.c,v 1.15.12.1 2014/08/20 00:02:17 tls Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,7 +49,6 @@ __RCSID("$NetBSD: kvm_sparc64.c,v 1.15 2010/09/20 23:23:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/exec.h>
-#include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/core.h>
@@ -65,6 +64,7 @@ __RCSID("$NetBSD: kvm_sparc64.c,v 1.15 2010/09/20 23:23:16 jym Exp $");
 #include <machine/pmap.h>
 #include <machine/kcore.h>
 #include <machine/vmparam.h>
+#include <machine/param.h>
 
 #include <limits.h>
 #include <db.h>
@@ -211,7 +211,7 @@ _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 	 * XXXX -- We could support multiple page sizes.
 	 */
 	va = va & (kd->nbpg - 1);
-	data &= TLB_PA_MASK;
+	data &= SUN4U_TLB_PA_MASK; /* XXX handle sun4u/sun4v */
 	*pa = data + va;
 
 	/*

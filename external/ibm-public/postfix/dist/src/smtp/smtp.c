@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.c,v 1.5.2.1 2013/02/25 00:27:27 tls Exp $	*/
+/*	$NetBSD: smtp.c,v 1.5.2.2 2014/08/19 23:59:44 tls Exp $	*/
 
 /*++
 /* NAME
@@ -63,7 +63,7 @@
 /*      \fIpathname\fR. If the process runs chrooted, an absolute pathname
 /*      is interpreted relative to the Postfix queue directory.
 /* .IP \fBinet\fR:\fIhostname\fR
-/* .IP \fBinet\fB:\fIhostname\fR:\fIport\fR
+/* .IP \fBinet\fR:\fIhostname\fR:\fIport\fR
 /* .IP \fBinet\fR:[\fIaddress\fR]
 /* .IP \fBinet\fR:[\fIaddress\fR]:\fIport\fR
 /*      Connect to the specified TCP port on the specified local or
@@ -97,6 +97,7 @@
 /*	RFC 3461 (SMTP DSN Extension)
 /*	RFC 3463 (Enhanced Status Codes)
 /*	RFC 4954 (AUTH command)
+/*	RFC 5321 (SMTP protocol)
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /*	Corrupted message files are marked so that the queue manager can
@@ -165,14 +166,12 @@
 /* .IP "\fBsmtp_quote_rfc821_envelope (yes)\fR"
 /*	Quote addresses in Postfix SMTP client MAIL FROM and RCPT TO commands
 /*	as required
-/*	by RFC 2821.
+/*	by RFC 5321.
 /* .IP "\fBsmtp_reply_filter (empty)\fR"
 /*	A mechanism to transform replies from remote SMTP servers one
 /*	line at a time.
 /* .IP "\fBsmtp_skip_5xx_greeting (yes)\fR"
-/*	Skip remote SMTP servers that greet with a 5XX status code (go away,
-/*	do
-/*	not try again later).
+/*	Skip remote SMTP servers that greet with a 5XX status code.
 /* .IP "\fBsmtp_skip_quit_response (yes)\fR"
 /*	Do not wait for the response to the SMTP QUIT command.
 /* .PP
@@ -250,6 +249,10 @@
 /* .IP "\fBsmtp_send_dummy_mail_auth (no)\fR"
 /*	Whether or not to append the "AUTH=<>" option to the MAIL
 /*	FROM command in SASL-authenticated SMTP sessions.
+/* .PP
+/*	Available in Postfix version 2.11 and later:
+/* .IP "\fBsmtp_dns_support_level (empty)\fR"
+/*	Level of DNS support in the Postfix SMTP client.
 /* MIME PROCESSING CONTROLS
 /* .ad
 /* .fi
@@ -377,8 +380,7 @@
 /*	The verification depth for remote SMTP server certificates.
 /* .IP "\fBsmtp_tls_secure_cert_match (nexthop, dot-nexthop)\fR"
 /*	How the Postfix SMTP client verifies the server certificate
-/*	peername for the
-/*	"secure" TLS security level.
+/*	peername for the "secure" TLS security level.
 /* .IP "\fBsmtp_tls_session_cache_database (empty)\fR"
 /*	Name of the file containing the optional Postfix SMTP client
 /*	TLS session cache.
@@ -441,6 +443,18 @@
 /*	Available in Postfix version 2.8 and later:
 /* .IP "\fBtls_disable_workarounds (see 'postconf -d' output)\fR"
 /*	List or bit-mask of OpenSSL bug work-arounds to disable.
+/* .PP
+/*	Available in Postfix version 2.11 and later:
+/* .IP "\fBsmtp_tls_trust_anchor_file (empty)\fR"
+/*	Zero or more PEM-format files with trust-anchor certificates
+/*	and/or public keys.
+/* .IP "\fBsmtp_tls_force_insecure_host_tlsa_lookup (no)\fR"
+/*	Lookup the associated DANE TLSA RRset even when a hostname is
+/*	not an alias and its address records lie in an unsigned zone.
+/* .IP "\fBtls_dane_trust_anchor_digest_enable (yes)\fR"
+/*	RFC 6698 trust-anchor digest support in the Postfix TLS library.
+/* .IP "\fBtlsmgr_service_name (tlsmgr)\fR"
+/*	The name of the \fBtlsmgr\fR(8) service entry in master.cf.
 /* OBSOLETE STARTTLS CONTROLS
 /* .ad
 /* .fi
@@ -546,6 +560,12 @@
 /*	time limit per read or write system call, to a time limit to send
 /*	or receive a complete record (an SMTP command line, SMTP response
 /*	line, SMTP message content line, or TLS protocol message).
+/* .PP
+/*	Available in Postfix version 2.11 and later:
+/* .IP "\fBsmtp_connection_reuse_count_limit (0)\fR"
+/*	When SMTP connection caching is enabled, the number of times
+/*	that an SMTP session may be reused before it is closed, or zero (no
+/*	limit).
 /* TROUBLE SHOOTING CONTROLS
 /* .ad
 /* .fi
@@ -627,8 +647,8 @@
 /* .IP "\fBlmtp_lhlo_name ($myhostname)\fR"
 /*	The hostname to send in the LMTP LHLO command.
 /* .IP "\fBsmtp_host_lookup (dns)\fR"
-/*	What mechanisms the Postfix SMTP client uses to look up a host's IP
-/*	address.
+/*	What mechanisms the Postfix SMTP client uses to look up a host's
+/*	IP address.
 /* .IP "\fBsmtp_randomize_addresses (yes)\fR"
 /*	Randomize the order of equal-preference MX host addresses.
 /* .IP "\fBsyslog_facility (mail)\fR"
@@ -790,6 +810,7 @@ int     var_smtp_mxaddr_limit;
 int     var_smtp_mxsess_limit;
 int     var_smtp_cache_conn;
 int     var_smtp_reuse_time;
+int     var_smtp_reuse_count;
 char   *var_smtp_cache_dest;
 char   *var_scache_service;		/* You can now leave this here. */
 bool    var_smtp_cache_demand;
@@ -825,11 +846,13 @@ int     var_smtp_tls_scert_vd;
 char   *var_smtp_tls_vfy_cmatch;
 char   *var_smtp_tls_fpt_cmatch;
 char   *var_smtp_tls_fpt_dgst;
+char   *var_smtp_tls_tafile;
 char   *var_smtp_tls_proto;
 char   *var_smtp_tls_ciph;
 char   *var_smtp_tls_eccert_file;
 char   *var_smtp_tls_eckey_file;
 bool    var_smtp_tls_blk_early_mail_reply;
+bool    var_smtp_tls_force_tlsa;
 
 #endif
 
@@ -849,6 +872,7 @@ char   *var_smtp_body_chks;
 char   *var_smtp_resp_filter;
 bool    var_lmtp_assume_final;
 char   *var_smtp_dns_res_opt;
+char   *var_smtp_dns_support;
 bool    var_smtp_rec_deadline;
 bool    var_smtp_dummy_mail_auth;
 
@@ -860,7 +884,9 @@ bool    var_smtp_sasl_auth_soft_bounce;
  /*
   * Global variables.
   */
+int     smtp_mode;
 int     smtp_host_lookup_mask;
+int     smtp_dns_support;
 STRING_LIST *smtp_cache_dest;
 SCACHE *smtp_scache;
 MAPS   *smtp_ehlo_dis_maps;
@@ -974,18 +1000,39 @@ static void post_init(char *unused_name, char **unused_argv)
 	SMTP_DNS_RES_OPT_DNSRCH, RES_DNSRCH,
 	0,
     };
+    static const NAME_CODE dns_support[] = {
+	SMTP_DNS_SUPPORT_DISABLED, SMTP_DNS_DISABLED,
+	SMTP_DNS_SUPPORT_ENABLED, SMTP_DNS_ENABLED,
+#if (RES_USE_DNSSEC != 0) && (RES_USE_EDNS0 != 0)
+	SMTP_DNS_SUPPORT_DNSSEC, SMTP_DNS_DNSSEC,
+#endif
+	0, SMTP_DNS_INVALID,
+    };
+
+    if (*var_smtp_dns_support == 0) {
+	/* Backwards compatible empty setting */
+	smtp_dns_support =
+	    var_disable_dns ? SMTP_DNS_DISABLED : SMTP_DNS_ENABLED;
+    } else {
+	smtp_dns_support =
+	    name_code(dns_support, NAME_CODE_FLAG_NONE, var_smtp_dns_support);
+	if (smtp_dns_support == SMTP_DNS_INVALID)
+	    msg_fatal("invalid %s: \"%s\"", SMTP_X(DNS_SUPPORT),
+		      var_smtp_dns_support);
+	var_disable_dns = (smtp_dns_support == SMTP_DNS_DISABLED);
+    }
 
     /*
      * Select hostname lookup mechanisms.
      */
-    if (var_disable_dns)
+    if (smtp_dns_support == SMTP_DNS_DISABLED)
 	smtp_host_lookup_mask = SMTP_HOST_FLAG_NATIVE;
     else
-	smtp_host_lookup_mask = name_mask(VAR_SMTP_HOST_LOOKUP, lookup_masks,
-					  var_smtp_host_lookup);
+	smtp_host_lookup_mask =
+	    name_mask(SMTP_X(HOST_LOOKUP), lookup_masks, var_smtp_host_lookup);
     if (msg_verbose)
 	msg_info("host name lookup methods: %s",
-		 str_name_mask(VAR_SMTP_HOST_LOOKUP, lookup_masks,
+		 str_name_mask(SMTP_X(HOST_LOOKUP), lookup_masks,
 			       smtp_host_lookup_mask));
 
     /*
@@ -1004,7 +1051,7 @@ static void post_init(char *unused_name, char **unused_argv)
     /*
      * Select DNS query flags.
      */
-    smtp_dns_res_opt = name_mask(VAR_SMTP_DNS_RES_OPT, dns_res_opt_masks,
+    smtp_dns_res_opt = name_mask(SMTP_X(DNS_RES_OPT), dns_res_opt_masks,
 				 var_smtp_dns_res_opt);
 }
 
@@ -1033,7 +1080,7 @@ static void pre_init(char *unused_name, char **unused_argv)
 	smtp_sasl_initialize();
 #else
 	msg_warn("%s is true, but SASL support is not compiled in",
-		 VAR_SMTP_SASL_ENABLE);
+		 SMTP_X(SASL_ENABLE));
 #endif
 
     if (*var_smtp_tls_level != 0)
@@ -1041,10 +1088,12 @@ static void pre_init(char *unused_name, char **unused_argv)
 	switch (tls_level_lookup(var_smtp_tls_level)) {
 	case TLS_LEV_SECURE:
 	case TLS_LEV_VERIFY:
+	case TLS_LEV_DANE_ONLY:
 	case TLS_LEV_FPRINT:
 	case TLS_LEV_ENCRYPT:
 	    var_smtp_use_tls = var_smtp_enforce_tls = 1;
 	    break;
+	case TLS_LEV_DANE:
 	case TLS_LEV_MAY:
 	    var_smtp_use_tls = 1;
 	    var_smtp_enforce_tls = 0;
@@ -1066,7 +1115,6 @@ static void pre_init(char *unused_name, char **unused_argv)
     if (use_tls || var_smtp_tls_per_site[0] || var_smtp_tls_policy[0]) {
 #ifdef USE_TLS
 	TLS_CLIENT_INIT_PROPS props;
-	int     using_smtp = (strcmp(var_procname, "smtp") == 0);
 
 	/*
 	 * We get stronger type safety and a cleaner interface by combining
@@ -1077,12 +1125,10 @@ static void pre_init(char *unused_name, char **unused_argv)
 	 */
 	smtp_tls_ctx =
 	    TLS_CLIENT_INIT(&props,
-			    log_param = using_smtp ?
-			    VAR_SMTP_TLS_LOGLEVEL : VAR_LMTP_TLS_LOGLEVEL,
+			    log_param = SMTP_X(TLS_LOGLEVEL),
 			    log_level = var_smtp_tls_loglevel,
 			    verifydepth = var_smtp_tls_scert_vd,
-			    cache_type = using_smtp ?
-			    TLS_MGR_SCACHE_SMTP : TLS_MGR_SCACHE_LMTP,
+			    cache_type = X_SMTP(TLS_MGR_SCACHE),
 			    cert_file = var_smtp_tls_cert_file,
 			    key_file = var_smtp_tls_key_file,
 			    dcert_file = var_smtp_tls_dcert_file,
@@ -1091,7 +1137,7 @@ static void pre_init(char *unused_name, char **unused_argv)
 			    eckey_file = var_smtp_tls_eckey_file,
 			    CAfile = var_smtp_tls_CAfile,
 			    CApath = var_smtp_tls_CApath,
-			    fpt_dgst = var_smtp_tls_fpt_dgst);
+			    mdalg = var_smtp_tls_fpt_dgst);
 	smtp_tls_list_init();
 #else
 	msg_warn("TLS has been selected, but TLS support is not compiled in");
@@ -1113,7 +1159,7 @@ static void pre_init(char *unused_name, char **unused_argv)
      * EHLO keyword filter.
      */
     if (*var_smtp_ehlo_dis_maps)
-	smtp_ehlo_dis_maps = maps_create(VAR_SMTP_EHLO_DIS_MAPS,
+	smtp_ehlo_dis_maps = maps_create(SMTP_X(EHLO_DIS_MAPS),
 					 var_smtp_ehlo_dis_maps,
 					 DICT_FLAG_LOCK);
 
@@ -1121,7 +1167,7 @@ static void pre_init(char *unused_name, char **unused_argv)
      * PIX bug workarounds.
      */
     if (*var_smtp_pix_bug_maps)
-	smtp_pix_bug_maps = maps_create(VAR_SMTP_PIX_BUG_MAPS,
+	smtp_pix_bug_maps = maps_create(SMTP_X(PIX_BUG_MAPS),
 					var_smtp_pix_bug_maps,
 					DICT_FLAG_LOCK);
 
@@ -1133,19 +1179,19 @@ static void pre_init(char *unused_name, char **unused_argv)
 	    ext_prop_mask(VAR_PROP_EXTENSION, var_prop_extension);
     if (*var_smtp_generic_maps)
 	smtp_generic_maps =
-	    maps_create(VAR_SMTP_GENERIC_MAPS, var_smtp_generic_maps,
+	    maps_create(SMTP_X(GENERIC_MAPS), var_smtp_generic_maps,
 			DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX);
 
     /*
      * Header/body checks.
      */
     smtp_header_checks = hbc_header_checks_create(
-				     VAR_SMTP_HEAD_CHKS, var_smtp_head_chks,
-				     VAR_SMTP_MIME_CHKS, var_smtp_mime_chks,
-				     VAR_SMTP_NEST_CHKS, var_smtp_nest_chks,
+				      SMTP_X(HEAD_CHKS), var_smtp_head_chks,
+				      SMTP_X(MIME_CHKS), var_smtp_mime_chks,
+				      SMTP_X(NEST_CHKS), var_smtp_nest_chks,
 						  smtp_hbc_callbacks);
     smtp_body_checks = hbc_body_checks_create(
-				     VAR_SMTP_BODY_CHKS, var_smtp_body_chks,
+				      SMTP_X(BODY_CHKS), var_smtp_body_chks,
 					      smtp_hbc_callbacks);
 
     /*
@@ -1163,7 +1209,7 @@ static void pre_init(char *unused_name, char **unused_argv)
 	smtp_addr_pref = name_code(addr_pref_map, NAME_CODE_FLAG_NONE,
 				   var_smtp_addr_pref);
 	if (smtp_addr_pref < 0)
-	    msg_fatal("bad %s value: %s", VAR_SMTP_ADDR_PREF, var_smtp_addr_pref);
+	    msg_fatal("bad %s value: %s", SMTP_X(ADDR_PREF), var_smtp_addr_pref);
     }
 }
 
@@ -1185,9 +1231,10 @@ MAIL_VERSION_STAMP_DECLARE;
 
 int     main(int argc, char **argv)
 {
+    char   *sane_procname;
+
 #include "smtp_params.c"
 #include "lmtp_params.c"
-    int     smtp_mode;
 
     /*
      * Fingerprint executables and core dumps.
@@ -1196,8 +1243,19 @@ int     main(int argc, char **argv)
 
     /*
      * XXX At this point, var_procname etc. are not initialized.
+     * 
+     * The process name, "smtp" or "lmtp", determines the protocol, the DSN
+     * server reply type, SASL service information lookup, and more. Prepare
+     * for the possibility there may be another personality.
      */
-    smtp_mode = (strcmp(sane_basename((VSTRING *) 0, argv[0]), "smtp") == 0);
+    sane_procname = sane_basename((VSTRING *) 0, argv[0]);
+    if (strcmp(sane_procname, "smtp") == 0)
+	smtp_mode = 1;
+    else if (strcmp(sane_procname, "lmtp") == 0)
+	smtp_mode = 0;
+    else
+	msg_fatal("unexpected process name \"%s\" - "
+		  "specify \"smtp\" or \"lmtp\"", var_procname);
 
     /*
      * Initialize with the LMTP or SMTP parameter name space.

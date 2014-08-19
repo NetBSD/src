@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.16.2.1 2013/02/25 00:29:08 tls Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.16.2.2 2014/08/20 00:03:33 tls Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.16.2.1 2013/02/25 00:29:08 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.16.2.2 2014/08/20 00:03:33 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -398,10 +398,7 @@ linux32_getifname(struct lwp *l, register_t *retval, void *data)
 	if (error)
 		return error;
 
-	if (ifr.ifr_ifru.ifru_ifindex >= if_indexlim)
-		return ENODEV;
-	
-	ifp = ifindex2ifnet[ifr.ifr_ifru.ifru_ifindex];
+	ifp = if_byindex(ifr.ifr_ifru.ifru_ifindex);
 	if (ifp == NULL)
 		return ENODEV;
 

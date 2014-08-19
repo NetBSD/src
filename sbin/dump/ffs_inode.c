@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.18.24.2 2013/06/23 06:28:50 tls Exp $ */
+/*	$NetBSD: ffs_inode.c,v 1.18.24.3 2014/08/20 00:02:24 tls Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: ffs_inode.c,v 1.18.24.2 2013/06/23 06:28:50 tls Exp $");
+__RCSID("$NetBSD: ffs_inode.c,v 1.18.24.3 2014/08/20 00:02:24 tls Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -134,7 +134,7 @@ fs_parametrize(void)
 #endif
 
 	/* Fill out ufsi struct */
-	ufsi.ufs_dsize = fsbtodb(sblock,sblock->fs_size);
+	ufsi.ufs_dsize = FFS_FSBTODB(sblock,sblock->fs_size);
 	ufsi.ufs_bsize = sblock->fs_bsize;
 	ufsi.ufs_bshift = sblock->fs_bshift;
 	ufsi.ufs_fsize = sblock->fs_fsize;
@@ -148,7 +148,7 @@ fs_parametrize(void)
 	ufsi.ufs_qbmask = sblock->fs_qbmask;
 	ufsi.ufs_qfmask = sblock->fs_qfmask;
 
-	dev_bsize = sblock->fs_fsize / fsbtodb(sblock, 1);
+	dev_bsize = sblock->fs_fsize / FFS_FSBTODB(sblock, 1);
 
 	return &ufsi;
 }
@@ -173,7 +173,7 @@ fs_mapinodes(ino_t maxino __unused, u_int64_t *tape_size, int *anydirskipped)
 
 	for (cg = 0; cg < sblock->fs_ncg; cg++) {
 		ino = cg * sblock->fs_ipg;
-		bread(fsbtodb(sblock, cgtod(sblock, cg)), (char *)cgp,
+		bread(FFS_FSBTODB(sblock, cgtod(sblock, cg)), (char *)cgp,
 		    sblock->fs_cgsize);
 		if (needswap)
 			ffs_cg_swap(cgp, cgp, sblock);

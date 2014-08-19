@@ -1,5 +1,4 @@
-# Copyright 1992, 1994, 1995, 1997, 2004, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 1992-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,14 +22,9 @@
 # in bitfields.c, which considers only bit-fields that are <= 9 bits long.
 #
 
-if $tracelevel then {
-	strace $tracelevel
-}
 
+standard_testfile .c
 
-set testfile "bitfields2"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
     untested bitfields2.exp
     return -1
@@ -83,29 +77,29 @@ proc bitfield_uniqueness {} {
     start_test break1
 	
     if [gdb_test "print flags" ".*u1 = 0, u2 = 0, u3 = 0, s1 = 1, s2 = 0, s3 = 0.*" "bitfield uniqueness; flags.s1 = 1"] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
     continue_test break1 "#1"
     if [gdb_test "print flags" ".*u1 = 1, u2 = 0, u3 = 0, s1 = 0, s2 = 0, s3 = 0.*" "bitfield uniqueness; flags.u1 = 1"] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
     continue_test break1 "#2"
     if [gdb_test "print flags" ".*u1 = 0, u2 = 0, u3 = 0, s1 = 0, s2 = 1, s3 = 0.*" "bitfield uniqueness; flags.s2 = 1"] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
     continue_test break1 "#3"
     if [gdb_test "print flags" ".*u1 = 0, u2 = 1, u3 = 0, s1 = 0, s2 = 0, s3 = 0.*" "bitfield uniqueness; flags.u2 = 1"] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
     continue_test break1 "#4"
     if [gdb_test "print flags" ".*u1 = 0, u2 = 0, u3 = 0, s1 = 0, s2 = 0, s3 = 1.*" "bitfield uniqueness; flags.s3 = 1"] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
     continue_test break1 "#5"
     if [gdb_test "print flags" ".*u1 = 0, u2 = 0, u3 = 1, s1 = 0, s2 = 0, s3 = 0.*" "bitfield uniqueness; flags.u3 = 1"] {
 	gdb_suppress_tests
     }
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 
@@ -134,7 +128,7 @@ proc bitfield_containment {} {
     if [gdb_test "print/x flags" "= {u1 = 0x0, u2 = 0x1ffffffff, u3 = 0x0, s1 = 0x(7fff|f*), s2 = 0x0, s3 = 0xf*}" "bitfield containment; flags.u2, flags.s1, flags.s2 to all 1s"] {
 	gdb_suppress_tests
     }
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 # Test unsigned bitfields for unsignedness and range.
@@ -152,7 +146,7 @@ proc bitfield_unsignedness {} {
     if [gdb_test "print flags" ".*u1 = 32767, u2 = 8589934591, u3 = 65535, s1 = 0, s2 = 0, s3 = 0.*" "maximum unsigned bitfield values"] {
 	gdb_suppress_tests
     }
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 #
@@ -215,7 +209,7 @@ proc bitfield_signedness {} {
 	unsupported $test
     }
 
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 
@@ -281,12 +275,10 @@ proc bitfield_set {} {
 	unsupported $test
     }
 
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart ${binfile}
 
 gdb_test_no_output "set print sevenbit-strings"
 runto_main

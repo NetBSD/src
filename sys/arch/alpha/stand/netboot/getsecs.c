@@ -1,4 +1,4 @@
-/*	$NetBSD: getsecs.c,v 1.9.24.1 2013/02/25 00:28:19 tls Exp $	*/
+/*	$NetBSD: getsecs.c,v 1.9.24.2 2014/08/20 00:02:42 tls Exp $	*/
 
 #include <sys/param.h>
 
@@ -16,16 +16,16 @@ satime_t
 getsecs(void)
 {
 	static uint64_t tnsec;
-	static uint64_t lastpcc, wrapsecs;
+	static uint64_t lastpcc;
 	uint64_t curpcc;
 
 	if (tnsec == 0) {
 		tnsec = 1;
 		lastpcc = alpha_rpcc() & 0xffffffff;
-		wrapsecs = (0xffffffff /
-		    ((struct rpb *)HWRPB_ADDR)->rpb_cc_freq) + 1;
 
 #if 0
+		uint64_t wrapsecs = (0xffffffff /
+		    ((struct rpb *)HWRPB_ADDR)->rpb_cc_freq) + 1;
 		printf("getsecs: cc freq = %lu, time to wrap = %lu\n",
 		    ((struct rpb *)HWRPB_ADDR)->rpb_cc_freq, wrapsecs);
 #endif

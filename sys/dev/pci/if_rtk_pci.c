@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.43.6.1 2013/06/23 06:20:18 tls Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.43.6.2 2014/08/20 00:03:42 tls Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.43.6.1 2013/06/23 06:20:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.43.6.2 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,6 +162,7 @@ rtk_pci_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr = NULL;
 	const struct rtk_type *t;
 	bool ioh_valid, memh_valid;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	psc->sc_pc = pa->pa_pc;
@@ -211,7 +212,7 @@ rtk_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, rtk_intr, sc);
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");

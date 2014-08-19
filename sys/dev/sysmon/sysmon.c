@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon.c,v 1.17 2008/03/03 09:38:49 xtraeme Exp $	*/
+/*	$NetBSD: sysmon.c,v 1.17.48.1 2014/08/20 00:03:50 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.17 2008/03/03 09:38:49 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.17.48.1 2014/08/20 00:03:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -61,8 +61,18 @@ dev_type_poll(sysmonpoll);
 dev_type_kqfilter(sysmonkqfilter);
 
 const struct cdevsw sysmon_cdevsw = {
-	sysmonopen, sysmonclose, sysmonread, nowrite, sysmonioctl,
-	nostop, notty, sysmonpoll, nommap, sysmonkqfilter, D_OTHER | D_MPSAFE,
+	.d_open = sysmonopen,
+	.d_close = sysmonclose,
+	.d_read = sysmonread,
+	.d_write = nowrite,
+	.d_ioctl = sysmonioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = sysmonpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = sysmonkqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 /*

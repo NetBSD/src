@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.26 2009/11/22 18:40:26 mbalmer Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.26.22.1 2014/08/20 00:02:39 tls Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.21 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.26 2009/11/22 18:40:26 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.26.22.1 2014/08/20 00:02:39 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -990,7 +990,8 @@ cbqclose(dev_t dev, int flag, int fmt,
 
 	while (cbq_list) {
 		ifp = cbq_list->ifnp.ifq_->altq_ifp;
-		sprintf(iface.cbq_ifacename, "%s", ifp->if_xname);
+		snprintf(iface.cbq_ifacename, sizeof(iface.cbq_ifacename),
+		    "%s", ifp->if_xname);
 		err = cbq_ifdetach(&iface);
 		if (err != 0 && error == 0)
 			error = err;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sxvar.h,v 1.1.4.2 2013/02/25 00:28:57 tls Exp $	*/
+/*	$NetBSD: sxvar.h,v 1.1.4.3 2014/08/20 00:03:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,6 +43,12 @@ static inline void
 sx_write(struct sx_softc *sc, int addr, uint32_t val)
 {
 	bus_space_write_4(sc->sc_tag, sc->sc_regh, addr, val);
+}
+
+static inline uint32_t
+sx_read(struct sx_softc *sc, int addr)
+{
+	return bus_space_read_4(sc->sc_tag, sc->sc_regh, addr);
 }
 
 #endif

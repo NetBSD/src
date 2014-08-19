@@ -1,4 +1,4 @@
-/*	$NetBSD: shmifvar.h,v 1.6 2011/03/21 16:41:09 pooka Exp $	*/
+/*	$NetBSD: shmifvar.h,v 1.6.14.1 2014/08/20 00:04:43 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -63,6 +63,7 @@ struct shmif_pkthdr {
 
 #if 0
 #ifdef _KERNEL
+#include <rump/rumpuser.h>
 #define DPRINTF(x) rumpuser_dprintf x
 #else
 #define DPRINTF(x) printf x

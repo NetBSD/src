@@ -1,4 +1,4 @@
-/*	$NetBSD: kbms_sbdio.c,v 1.9.44.1 2012/11/20 03:01:20 tls Exp $	*/
+/*	$NetBSD: kbms_sbdio.c,v 1.9.44.2 2014/08/20 00:03:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbms_sbdio.c,v 1.9.44.1 2012/11/20 03:01:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbms_sbdio.c,v 1.9.44.2 2014/08/20 00:03:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -503,7 +503,7 @@ mouse_debug_print(u_int buttons, int x, int y)
 	__y = MINMAX(__y + y, 0, FB_HEIGHT);
 	*(uint8_t *)(fb.fb_addr + __x + __y * FB_LINEBYTES) = 0xff;
 
-	sprintf(buf, "%8d %8d", x, y);
+	snprintf(buf, sizeof(buf), "%8d %8d", x, y);
 	for (i = 0; i < 64 && buf[i]; i++)
 		fb_drawchar(480 + i * 12, k, buf[i]);
 

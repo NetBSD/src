@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.60.8.1 2013/02/25 00:28:06 tls Exp $	*/
+/*	$NetBSD: utilities.c,v 1.60.8.2 2014/08/20 00:02:24 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.60.8.1 2013/02/25 00:28:06 tls Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.60.8.2 2014/08/20 00:02:24 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -181,7 +181,7 @@ getdatablk(daddr_t blkno, long size)
 	struct bufarea *bp;
 
 	for (bp = bufhead.b_next; bp != &bufhead; bp = bp->b_next)
-		if (bp->b_bno == fsbtodb(sblock, blkno))
+		if (bp->b_bno == FFS_FSBTODB(sblock, blkno))
 			goto foundit;
 	for (bp = bufhead.b_prev; bp != &bufhead; bp = bp->b_prev)
 		if ((bp->b_flags & B_INUSE) == 0)
@@ -206,7 +206,7 @@ getblk(struct bufarea *bp, daddr_t blk, long size)
 {
 	daddr_t dblk;
 
-	dblk = fsbtodb(sblock, blk);
+	dblk = FFS_FSBTODB(sblock, blk);
 	totalreads++;
 	if (bp->b_bno != dblk) {
 		flush(fswritefd, bp);
@@ -241,7 +241,7 @@ flush(int fd, struct bufarea *bp)
 		if (needswap)
 			ffs_csum_swap(ccsp, ccsp, size);
 		bwrite(fswritefd, (char *)ccsp,
-		    fsbtodb(sblock, sblock->fs_csaddr + j * sblock->fs_frag),
+		    FFS_FSBTODB(sblock, sblock->fs_csaddr + j * sblock->fs_frag),
 		    size);
 		if (needswap)
 			ffs_csum_swap(ccsp, ccsp, size);
@@ -263,7 +263,7 @@ void
 ckfini(int noint)
 {
 	struct bufarea *bp, *nbp;
-	int ofsmodified, cnt = 0;
+	int cnt = 0;
 
 	if (!noint) {
 		if (doinglevel2)
@@ -314,11 +314,7 @@ ckfini(int noint)
 			sblock->fs_pendingblocks = 0;
 			sblock->fs_pendinginodes = 0;
 			sbdirty();
-			ofsmodified = fsmodified;
 			flush(fswritefd, &sblk);
-#if LITE2BORKEN
-			fsmodified = ofsmodified;
-#endif
 			if (!preen)
 				printf(
 				    "\n***** FILE SYSTEM MARKED CLEAN *****\n");
@@ -429,7 +425,7 @@ allocblk(long frags)
 				sblock->fs_cstotal.cs_nbfree--;
 				sblock->fs_cs(fs, cg).cs_nbfree--;
 				ffs_clusteracct(sblock, cgp,
-				    fragstoblks(sblock, baseblk), -1);
+				    ffs_fragstoblks(sblock, baseblk), -1);
 			} else {
 				cgp->cg_cs.cs_nffree -= frags;
 				sblock->fs_cstotal.cs_nffree -= frags;

@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.17 2009/04/13 23:20:27 lukem Exp $	*/
+/*	$NetBSD: disks.c,v 1.17.12.1 2014/08/20 00:05:04 tls Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,11 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)disks.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: disks.c,v 1.17 2009/04/13 23:20:27 lukem Exp $");
+__RCSID("$NetBSD: disks.c,v 1.17.12.1 2014/08/20 00:05:04 tls Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
 #include <string.h>
+#include <fnmatch.h>
 
 #include "systat.h"
 #include "extern.h"
@@ -99,7 +100,7 @@ drvselect(char *args, int truefalse, int selections[])
 		if (cp - args == 0)
 			break;
 		for (i = 0; i < ndrive; i++)
-			if (strcmp(args, dr_name[i]) == 0) {
+			if (fnmatch(args, dr_name[i], 0) == 0) {
 				selections[i] = truefalse;
 				break;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.87.2.1 2013/06/23 06:20:25 tls Exp $	*/
+/*	$NetBSD: in.h,v 1.87.2.2 2014/08/20 00:04:35 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -282,11 +282,20 @@ struct ip_opts {
 #define	IP_PORTRANGE		19   /* int; range to use for ephemeral port */
 #define	IP_RECVIF		20   /* bool; receive reception if w/dgram */
 #define	IP_ERRORMTU		21   /* int; get MTU of last xmit = EMSGSIZE */
-#if 1 /*IPSEC*/
-#define	IP_IPSEC_POLICY		22 /* struct; get/set security policy */
-#endif
+#define	IP_IPSEC_POLICY		22   /* struct; get/set security policy */
 #define	IP_RECVTTL		23   /* bool; receive IP TTL w/dgram */
 #define	IP_MINTTL		24   /* minimum TTL for packet or drop */
+#define	IP_PKTINFO		25   /* int; send interface and src addr */
+#define	IP_RECVPKTINFO		26   /* int; send interface and dst addr */
+
+/*
+ * Information sent in the control message of a datagram socket for
+ * IP_PKTINFO and IP_RECVPKTINFO.
+ */
+struct in_pktinfo {
+	struct in_addr	ipi_addr;	/* src/dst address */
+	unsigned int ipi_ifindex;	/* interface index */
+};
 
 /*
  * Defaults and limits for options
@@ -452,7 +461,7 @@ struct ip_mreq {
 #define	IPCTL_MAXFRAGPACKETS   18	/* max packets reassembly queue */
 #define	IPCTL_GRE_TTL          19	/* default TTL for gre encap packet */
 #define	IPCTL_CHECKINTERFACE   20	/* drop pkts in from 'wrong' iface */
-#define	IPCTL_IFQ	       21	/* ipintrq node */
+#define	IPCTL_IFQ	       21	/* IP packet input queue */
 #define	IPCTL_RANDOMID	       22	/* use random IP ids (if configured) */
 #define	IPCTL_LOOPBACKCKSUM    23	/* do IP checksum on loopback */
 #define	IPCTL_STATS		24	/* IP statistics */
@@ -552,6 +561,12 @@ int	in4_cksum(struct mbuf *, u_int8_t, int, int);
 void	in_delayed_cksum(struct mbuf *);
 int	in_localaddr(struct in_addr);
 void	in_socktrim(struct sockaddr_in *);
+
+struct route;
+struct ip_moptions;
+
+struct sockaddr_in *in_selectsrc(struct sockaddr_in *,
+	struct route *, int, struct ip_moptions *, int *);
 
 #define	in_hosteq(s,t)	((s).s_addr == (t).s_addr)
 #define	in_nullhost(x)	((x).s_addr == INADDR_ANY)

@@ -1,7 +1,7 @@
 /* Blackfin Universal Asynchronous Receiver/Transmitter (UART) model.
    For "new style" UARTs on BF50x/BF54x parts.
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -23,9 +23,6 @@
 #define DV_BFIN_UART2_H
 
 #include "dv-bfin_uart.h"
-
-/* XXX: This should be pushed into the model data.  */
-#define BFIN_MMR_UART2_SIZE	0x30
 
 /* UART_MSR */
 #define SCTS (1 << 0)

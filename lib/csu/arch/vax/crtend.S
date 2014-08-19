@@ -1,4 +1,4 @@
-/*	$NetBSD: crtend.S,v 1.1.2.2 2013/06/23 06:21:03 tls Exp $	*/
+/*	$NetBSD: crtend.S,v 1.1.2.3 2014/08/20 00:02:06 tls Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,21 +30,21 @@
 
 #include <vax/asm.h>
 
-RCSID("$NetBSD: crtend.S,v 1.1.2.2 2013/06/23 06:21:03 tls Exp $")
+RCSID("$NetBSD: crtend.S,v 1.1.2.3 2014/08/20 00:02:06 tls Exp $")
 
 	.section	.ctors, "aw", @progbits
 	.p2align 2
 	.global		__CTOR_LIST_END__
 	.hidden 	__CTOR_LIST_END__
 __CTOR_LIST_END__:
-	.word		0
+	.long		0
 
 	.section	.dtors, "aw", @progbits
 	.p2align 2
 	.global		__DTOR_LIST_END__
 	.hidden 	__DTOR_LIST_END__
 __DTOR_LIST_END__:
-	.word		0
+	.long		0
 
 	.section	.eh_frame, "a", @progbits
 	.p2align 2

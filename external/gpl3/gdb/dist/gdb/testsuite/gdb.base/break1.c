@@ -1,7 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 1992, 1993, 1994, 1995, 1999, 2002, 2003, 2007, 2008, 2009, 2010,
-   2011 Free Software Foundation, Inc.
+   Copyright 1992-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -28,6 +27,23 @@ struct some_struct
 };
 
 struct some_struct values[50];
+
+/* Some definitions for tag completion.  */
+enum some_enum { VALUE };
+
+enum some_enum some_enum_global;
+
+union some_union
+{
+  int f1;
+  double f2;
+};
+
+union some_union some_union_global;
+
+/* A variable with a name "similar" to the above struct, to test that
+   tag completion works ok.  */
+int some_variable;
 
 /* The following functions do nothing useful.  They are included
    simply as places to try setting breakpoints at.  They are

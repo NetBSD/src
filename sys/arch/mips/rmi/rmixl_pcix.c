@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.9.12.1 2012/11/20 03:01:33 tls Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.9.12.2 2014/08/20 00:03:13 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.9.12.1 2012/11/20 03:01:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.9.12.2 2014/08/20 00:03:13 tls Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -242,7 +242,8 @@ static void	rmixl_pcix_conf_write(void *, pcitag_t, int, pcireg_t);
 static int	rmixl_pcix_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
 static const char *
-		rmixl_pcix_intr_string(void *, pci_intr_handle_t);
+		rmixl_pcix_intr_string(void *, pci_intr_handle_t,
+		    char *, size_t);
 static const struct evcnt *
 		rmixl_pcix_intr_evcnt(void *, pci_intr_handle_t);
 static pci_intr_handle_t
@@ -385,11 +386,14 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 	 * check PCI-X interface byteswap setup
 	 * ensure 'Match Byte Lane' is disabled
 	 */
-	uint32_t mble, mba, mbs;
+	uint32_t mble;
 	mble = RMIXL_PCIXREG_READ(RMIXL_PCIX_ECFG_XLR_MBLE);
+#ifdef PCI_DEBUG
+	uint32_t mba, mbs;
 	mba  = RMIXL_PCIXREG_READ(RMIXL_PCIX_ECFG_MATCH_BIT_ADDR);
 	mbs  = RMIXL_PCIXREG_READ(RMIXL_PCIX_ECFG_MATCH_BIT_SIZE);
 	DPRINTF(("%s: MBLE=%#x, MBA=%#x, MBS=%#x\n", __func__, mble, mba, mbs));
+#endif
 	if ((mble & __BIT(40)) != 0)
 		RMIXL_PCIXREG_WRITE(RMIXL_PCIX_ECFG_XLR_MBLE, 0);
 
@@ -784,7 +788,7 @@ rmixl_pcix_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *pih)
 }
 
 const char *
-rmixl_pcix_intr_string(void *v, pci_intr_handle_t pih)
+rmixl_pcix_intr_string(void *v, pci_intr_handle_t pih, char *buf, size_t len)
 {
 	u_int bitno, irq;
 
@@ -794,7 +798,8 @@ rmixl_pcix_intr_string(void *v, pci_intr_handle_t pih)
 		panic("%s: cpu %#x not supported\n",
 			__func__, mips_options.mips_cpu_id);
 
-	return rmixl_intr_string(RMIXL_IRT_VECTOR(irq));
+	strlcpy(buf, rmixl_intr_string(RMIXL_IRT_VECTOR(irq)), len);
+	return buf;
 }
 
 const struct evcnt *

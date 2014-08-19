@@ -1,7 +1,7 @@
 /* Test file for mpfr_rint, mpfr_trunc, mpfr_floor, mpfr_ceil, mpfr_round.
 
-Copyright 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -211,8 +211,8 @@ test_against_libc (void)
 #endif
 
 static void
-err (char *str, mp_size_t s, mpfr_t x, mpfr_t y, mpfr_prec_t p, mpfr_rnd_t r,
-     int trint, int inexact)
+err (const char *str, mp_size_t s, mpfr_t x, mpfr_t y, mpfr_prec_t p,
+     mpfr_rnd_t r, int trint, int inexact)
 {
   printf ("Error: %s\ns = %u, p = %u, r = %s, trint = %d, inexact = %d\nx = ",
           str, (unsigned int) s, (unsigned int) p, mpfr_print_rnd_mode (r),
@@ -222,6 +222,71 @@ err (char *str, mp_size_t s, mpfr_t x, mpfr_t y, mpfr_prec_t p, mpfr_rnd_t r,
   mpfr_print_binary (y);
   printf ("\n");
   exit (1);
+}
+
+static void
+coverage_03032011 (void)
+{
+  mpfr_t in, out, cmp;
+  int status;
+  int precIn;
+  char strData[(GMP_NUMB_BITS * 4)+256];
+
+  precIn = GMP_NUMB_BITS * 4;
+
+  mpfr_init2 (in, precIn);
+  mpfr_init2 (out, GMP_NUMB_BITS);
+  mpfr_init2 (cmp, GMP_NUMB_BITS);
+
+  /* cmp = "0.1EprecIn+2" */
+  /* The buffer size is sufficient, as precIn is small in practice. */
+  sprintf (strData, "0.1E%d", precIn+2);
+  mpfr_set_str_binary (cmp, strData);
+
+  /* in = "0.10...01EprecIn+2" use all (precIn) significand bits */
+  memset ((void *)strData, '0', precIn+2);
+  strData[1] = '.';
+  strData[2] = '1';
+  sprintf (&strData[precIn+1], "1E%d", precIn+2);
+  mpfr_set_str_binary (in, strData);
+
+  status = mpfr_rint (out, in, MPFR_RNDN);
+  if ((mpfr_cmp (out, cmp) != 0) || (status >= 0))
+    {
+      printf("mpfr_rint error :\n status is %d instead of 0\n", status);
+      printf(" out value is ");
+      mpfr_dump(out);
+      printf(" instead of   ");
+      mpfr_dump(cmp);
+      exit (1);
+    }
+
+  mpfr_clear (cmp);
+  mpfr_clear (out);
+
+  mpfr_init2 (out, GMP_NUMB_BITS);
+  mpfr_init2 (cmp, GMP_NUMB_BITS);
+
+  /* cmp = "0.10...01EprecIn+2" use all (GMP_NUMB_BITS) significand bits */
+  strcpy (&strData[GMP_NUMB_BITS+1], &strData[precIn+1]);
+  mpfr_set_str_binary (cmp, strData);
+
+  (MPFR_MANT(in))[2] = MPFR_LIMB_HIGHBIT;
+  status = mpfr_rint (out, in, MPFR_RNDN);
+
+  if ((mpfr_cmp (out, cmp) != 0) || (status <= 0))
+    {
+      printf("mpfr_rint error :\n status is %d instead of 0\n", status);
+      printf(" out value is\n");
+      mpfr_dump(out);
+      printf(" instead of\n");
+      mpfr_dump(cmp);
+      exit (1);
+    }
+
+  mpfr_clear (cmp);
+  mpfr_clear (out);
+  mpfr_clear (in);
 }
 
 int
@@ -333,13 +398,13 @@ main (int argc, char *argv[])
                     if (trint == 2)
                       {
                         /* halfway case for mpfr_rint in MPFR_RNDN rounding
-                           mode: round to an even integer or mantissa. */
+                           mode: round to an even integer or significand. */
                         mpfr_div_2ui (y, y, 1, MPFR_RNDZ);
                         if (!mpfr_integer_p (y))
                           err ("halfway case for mpfr_rint, result isn't an"
                                " even integer", s, x, y, p, (mpfr_rnd_t) r, trint, inexact);
                         /* If floor(x) and ceil(x) aren't both representable
-                           integers, the mantissa must be even. */
+                           integers, the significand must be even. */
                         mpfr_sub (v, v, y, MPFR_RNDN);
                         mpfr_abs (v, v, MPFR_RNDN);
                         if (mpfr_cmp_ui (v, 1) != 0)
@@ -347,7 +412,7 @@ main (int argc, char *argv[])
                             mpfr_div_2si (y, y, MPFR_EXP (y) - MPFR_PREC (y)
                                           + 1, MPFR_RNDN);
                             if (!mpfr_integer_p (y))
-                              err ("halfway case for mpfr_rint, mantissa isn't"
+                              err ("halfway case for mpfr_rint, significand isn't"
                                    " even", s, x, y, p, (mpfr_rnd_t) r, trint, inexact);
                           }
                       }
@@ -371,6 +436,7 @@ main (int argc, char *argv[])
   mpfr_clear (v);
 
   special ();
+  coverage_03032011 ();
 
 #if __MPFR_STDC (199901L)
   if (argc > 1 && strcmp (argv[1], "-s") == 0)

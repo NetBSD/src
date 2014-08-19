@@ -1,14 +1,14 @@
 /*******************************************************************************
- * Revision: 1.2
- * Date: 2001/09/11 06:19:36
- * Author: vyzo
+ * Revision
+ * Date
+ * Author
  *
  * Contents: A streambuf which uses the GNU readline library for line I/O
  * (c) 2001 by Dimitris Vyzovitis [vyzo@media.mit.edu]
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation; either version 2  of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,

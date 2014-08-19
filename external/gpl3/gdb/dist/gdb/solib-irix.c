@@ -1,6 +1,5 @@
 /* Shared library support for IRIX.
-   Copyright (C) 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001, 2002, 2004,
-   2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1993-2014 Free Software Foundation, Inc.
 
    This file was created using portions of irix5-nat.c originally
    contributed to GDB by Ian Lance Taylor.
@@ -142,7 +141,7 @@ extract_mips_address (void *addr, int len, enum bfd_endian byte_order)
 static struct lm_info
 fetch_lm_info (CORE_ADDR addr)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch);
+  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
   struct lm_info li;
   union irix_obj_info buf;
 
@@ -153,13 +152,13 @@ fetch_lm_info (CORE_ADDR addr)
      with one of the other cases.  (We don't want to incur a memory error
      if we were to read a larger region that generates an error due to
      being at the end of a page or the like.)  */
-  read_memory (addr, (char *) &buf, sizeof (buf.ol32));
+  read_memory (addr, (gdb_byte *) &buf, sizeof (buf.ol32));
 
   if (extract_unsigned_integer (buf.magic.b, sizeof (buf.magic), byte_order)
       != 0xffffffff)
     {
       /* Use buf.ol32...  */
-      char obj_buf[432];
+      gdb_byte obj_buf[432];
       CORE_ADDR obj_addr = extract_mips_address (&buf.ol32.data,
 						 sizeof (buf.ol32.data),
 						 byte_order);
@@ -183,7 +182,7 @@ fetch_lm_info (CORE_ADDR addr)
 
       /* Read rest of buffer.  */
       read_memory (addr + sizeof (buf.ol32),
-		   ((char *) &buf) + sizeof (buf.ol32),
+		   ((gdb_byte *) &buf) + sizeof (buf.ol32),
 		   sizeof (buf.oi32) - sizeof (buf.ol32));
 
       /* Fill in fields using buffer contents.  */
@@ -210,7 +209,7 @@ fetch_lm_info (CORE_ADDR addr)
 
       /* Read rest of buffer.  */
       read_memory (addr + sizeof (buf.ol32),
-		   ((char *) &buf) + sizeof (buf.ol32),
+		   ((gdb_byte *) &buf) + sizeof (buf.ol32),
 		   sizeof (buf.oi64) - sizeof (buf.ol32));
 
       /* Fill in fields using buffer contents.  */
@@ -244,17 +243,7 @@ static void *base_breakpoint;
 
 static CORE_ADDR debug_base;	/* Base of dynamic linker structures.  */
 
-/*
-
-   LOCAL FUNCTION
-
-   locate_base -- locate the base address of dynamic linker structs
-
-   SYNOPSIS
-
-   CORE_ADDR locate_base (void)
-
-   DESCRIPTION
+/* Locate the base address of dynamic linker structs.
 
    For both the SunOS and SVR4 shared library implementations, if the
    inferior executable has been linked dynamically, there is a single
@@ -287,9 +276,7 @@ static CORE_ADDR debug_base;	/* Base of dynamic linker structures.  */
    we need to find this address.  We may be stopped on the first instruc-
    tion of the interpreter (C shared library), the first instruction of
    the executable itself, or somewhere else entirely (if we attached
-   to the process for example).
-
- */
+   to the process for example).  */
 
 static CORE_ADDR
 locate_base (void)
@@ -305,22 +292,10 @@ locate_base (void)
   return (address);
 }
 
-/*
-
-   LOCAL FUNCTION
-
-   disable_break -- remove the "mapping changed" breakpoint
-
-   SYNOPSIS
-
-   static int disable_break ()
-
-   DESCRIPTION
+/* Remove the "mapping changed" breakpoint.
 
    Removes the breakpoint that gets hit when the dynamic linker
-   completes a mapping change.
-
- */
+   completes a mapping change.  */
 
 static int
 disable_break (void)
@@ -330,7 +305,7 @@ disable_break (void)
   /* Note that breakpoint address and original contents are in our address
      space, so we just need to write the original contents back.  */
 
-  if (deprecated_remove_raw_breakpoint (target_gdbarch, base_breakpoint) != 0)
+  if (deprecated_remove_raw_breakpoint (target_gdbarch (), base_breakpoint) != 0)
     {
       status = 0;
     }
@@ -346,21 +321,10 @@ disable_break (void)
   return (status);
 }
 
-/*
-
-   LOCAL FUNCTION
-
-   enable_break -- arrange for dynamic linker to hit breakpoint
-
-   SYNOPSIS
-
-   int enable_break (void)
-
-   DESCRIPTION
+/* Arrange for dynamic linker to hit breakpoint.
 
    This functions inserts a breakpoint at the entry point of the
-   main executable, where all shared libraries are mapped in.
- */
+   main executable, where all shared libraries are mapped in.  */
 
 static int
 enable_break (void)
@@ -374,7 +338,7 @@ enable_break (void)
       if (!entry_point_address_query (&entry_point))
 	return 0;
 
-      base_breakpoint = deprecated_insert_raw_breakpoint (target_gdbarch,
+      base_breakpoint = deprecated_insert_raw_breakpoint (target_gdbarch (),
 							  aspace, entry_point);
 
       if (base_breakpoint != NULL)
@@ -384,22 +348,7 @@ enable_break (void)
   return 0;
 }
 
-/*
-
-   LOCAL FUNCTION
-
-   irix_solib_create_inferior_hook -- shared library startup support
-
-   SYNOPSIS
-
-   void solib_create_inferior_hook (int from_tty)
-
-   DESCRIPTION
-
-   When gdb starts up the inferior, it nurses it along (through the
-   shell) until it is ready to execute it's first instruction.  At this
-   point, this function gets called via expansion of the macro
-   SOLIB_CREATE_INFERIOR_HOOK.
+/* Implement the "create_inferior_hook" target_solib_ops method.
 
    For SunOS executables, this first instruction is typically the
    one at "_start", or a similar text label, regardless of whether
@@ -433,8 +382,7 @@ enable_break (void)
    handling will probably have to wait until the implementation is
    changed to use the "breakpoint handler function" method.
 
-   Also, what if child has exit()ed?  Must exit loop somehow.
- */
+   Also, what if child has exit()ed?  Must exit loop somehow.  */
 
 static void
 irix_solib_create_inferior_hook (int from_tty)
@@ -470,14 +418,14 @@ irix_solib_create_inferior_hook (int from_tty)
   clear_proceed_status ();
 
   inf->control.stop_soon = STOP_QUIETLY;
-  tp->suspend.stop_signal = TARGET_SIGNAL_0;
+  tp->suspend.stop_signal = GDB_SIGNAL_0;
 
   do
     {
       target_resume (pid_to_ptid (-1), 0, tp->suspend.stop_signal);
-      wait_for_inferior (0);
+      wait_for_inferior ();
     }
-  while (tp->suspend.stop_signal != TARGET_SIGNAL_TRAP);
+  while (tp->suspend.stop_signal != GDB_SIGNAL_TRAP);
 
   /* We are now either at the "mapping complete" breakpoint (or somewhere
      else, a condition we aren't prepared to deal with anyway), so adjust
@@ -499,32 +447,15 @@ irix_solib_create_inferior_hook (int from_tty)
   inf->control.stop_soon = NO_STOP_QUIETLY;
 }
 
-/* LOCAL FUNCTION
-
-   current_sos -- build a list of currently loaded shared objects
-
-   SYNOPSIS
-
-   struct so_list *current_sos ()
-
-   DESCRIPTION
-
-   Build a list of `struct so_list' objects describing the shared
-   objects currently loaded in the inferior.  This list does not
-   include an entry for the main executable file.
-
-   Note that we only gather information directly available from the
-   inferior --- we don't examine any of the shared library files
-   themselves.  The declaration of `struct so_list' says which fields
-   we provide values for.  */
+/* Implement the "current_sos" target_so_ops method.  */
 
 static struct so_list *
 irix_current_sos (void)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch);
-  int addr_size = gdbarch_addr_bit (target_gdbarch) / TARGET_CHAR_BIT;
+  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
+  int addr_size = gdbarch_addr_bit (target_gdbarch ()) / TARGET_CHAR_BIT;
   CORE_ADDR lma;
-  char addr_buf[8];
+  gdb_byte addr_buf[8];
   struct so_list *head = 0;
   struct so_list **link_ptr = &head;
   int is_first = 1;
@@ -603,35 +534,20 @@ irix_current_sos (void)
   return head;
 }
 
-/*
+/* Implement the "open_symbol_file_object" target_so_ops method.
 
-  LOCAL FUNCTION
-
-  irix_open_symbol_file_object
-
-  SYNOPSIS
-
-  void irix_open_symbol_file_object (void *from_tty)
-
-  DESCRIPTION
-
-  If no open symbol file, attempt to locate and open the main symbol
-  file.  On IRIX, this is the first link map entry.  If its name is
-  here, we can open it.  Useful when attaching to a process without
-  first loading its symbol file.
-
-  If FROM_TTYP dereferences to a non-zero integer, allow messages to
-  be printed.  This parameter is a pointer rather than an int because
-  open_symbol_file_object() is called via catch_errors() and
-  catch_errors() requires a pointer argument.  */
+   If no open symbol file, attempt to locate and open the main symbol
+   file.  On IRIX, this is the first link map entry.  If its name is
+   here, we can open it.  Useful when attaching to a process without
+   first loading its symbol file.  */
 
 static int
 irix_open_symbol_file_object (void *from_ttyp)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch);
-  int addr_size = gdbarch_addr_bit (target_gdbarch) / TARGET_CHAR_BIT;
+  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
+  int addr_size = gdbarch_addr_bit (target_gdbarch ()) / TARGET_CHAR_BIT;
   CORE_ADDR lma;
-  char addr_buf[8];
+  gdb_byte addr_buf[8];
   struct lm_info lm;
   struct cleanup *cleanups;
   int errcode;
@@ -676,31 +592,9 @@ irix_open_symbol_file_object (void *from_ttyp)
   return 1;
 }
 
+/* Implement the "special_symbol_handling" target_so_ops method.
 
-/*
-
-   LOCAL FUNCTION
-
-   irix_special_symbol_handling -- additional shared library symbol handling
-
-   SYNOPSIS
-
-   void irix_special_symbol_handling ()
-
-   DESCRIPTION
-
-   Once the symbols from a shared object have been loaded in the usual
-   way, we are called to do any system specific symbol handling that 
-   is needed.
-
-   For SunOS4, this consisted of grunging around in the dynamic
-   linkers structures to find symbol definitions for "common" symbols
-   and adding them to the minimal symbol table for the runtime common
-   objfile.
-
-   However, for IRIX, there's nothing to do.
-
- */
+   For IRIX, there's nothing to do.  */
 
 static void
 irix_special_symbol_handling (void)

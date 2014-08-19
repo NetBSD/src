@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth_dummy.c,v 1.2.10.2 2013/06/23 06:21:08 tls Exp $	*/
+/*	$NetBSD: rumpuser_pth_dummy.c,v 1.2.10.3 2014/08/20 00:02:21 tls Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -27,9 +27,8 @@
 
 #include "rumpuser_port.h"
 
-#include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.2.10.2 2013/06/23 06:21:08 tls Exp $");
+__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.2.10.3 2014/08/20 00:02:21 tls Exp $");
 #endif /* !lint */
 
 #include <sys/time.h>

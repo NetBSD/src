@@ -1,24 +1,18 @@
-#	$NetBSD: Makefile.evbarm.inc,v 1.22.2.1 2013/06/23 06:20:04 tls Exp $
+#	$NetBSD: Makefile.evbarm.inc,v 1.22.2.2 2014/08/20 00:02:53 tls Exp $
 
 #
 # If this is a install kernel and the ramdisk image exists in the object
 # tree, insert it into the kernel *before* we make the u-boot images.
 #
-.if ${KERNEL_BUILD:T:MRPI_INSTALL} != ""
-RAMDISKDIR!=	cd ${NETBSDSRCDIR}/distrib/${THISARM:T}/instkernel/sshramdisk && ${PRINTOBJDIR}
+RAMDISKNAME?=	ramdisk
+.if ${KERNEL_BUILD:T:M*INSTALL*} != ""
+RAMDISKDIR!=	cd ${NETBSDSRCDIR}/distrib/${THISARM:T}/instkernel/${RAMDISKNAME} && ${PRINTOBJDIR}
 
-.if exists(${RAMDISKDIR}/sshramdisk.fs)
+.if exists(${RAMDISKDIR}/${RAMDISKNAME}.fs)
+SYSTEM_DEP+=	${RAMDISKDIR}/${RAMDISKNAME}.fs
 SYSTEM_LD_TAIL_EXTRA+=; \
-	echo ${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/sshramdisk.fs; \
-	${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/sshramdisk.fs
-.endif
-.elif ${KERNEL_BUILD:T:M*INSTALL} != ""
-RAMDISKDIR!=	cd ${NETBSDSRCDIR}/distrib/${THISARM:T}/instkernel/ramdisk && ${PRINTOBJDIR}
-
-.if exists(${RAMDISKDIR}/ramdisk.fs)
-SYSTEM_LD_TAIL_EXTRA+=; \
-	echo ${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/ramdisk.fs; \
-	${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/ramdisk.fs
+	echo ${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/${RAMDISKNAME}.fs; \
+	${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/${RAMDISKNAME}.fs
 .endif
 .endif
 
@@ -26,13 +20,20 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 .include "${BOARDMKFRAG}"
 .endif
 
+.if defined(KERNEL_BASE_PHYS) && defined(KERNEL_BASE_VIRT)
+. if ${KERNEL_BASE_PHYS} == ${KERNEL_BASE_VIRT}
+CPPFLAGS+=-DKERNEL_BASES_EQUAL -DKERNEL_BASE_VOFFSET=0
+. else
+CPPFLAGS+=-DKERNEL_BASE_VOFFSET="(${KERNEL_BASE_VIRT}-${KERNEL_BASE_PHYS})"
+. endif
+.endif
+
 EXTRA_CLEAN+= ldscript tmp ${KERNELS:=.map}
 
 .if defined(KERNEL_BASE_PHYS)
-
-LINKFLAGS=	-T ldscript
-
-netbsd: ldscript             # XXX
+LINKTEXT=
+KERNLDSCRIPT=	ldscript
+EXTRA_LINKFLAGS+=	-T ldscript
 
 # generate ldscript from common template
 ldscript: ${THISARM}/conf/ldscript.evbarm ${THISARM}/conf/Makefile.evbarm.inc Makefile ${BOARDMKFRAG}
@@ -41,4 +42,6 @@ ldscript: ${THISARM}/conf/ldscript.evbarm ${THISARM}/conf/Makefile.evbarm.inc Ma
 	    -e 's/@KERNEL_BASE_VIRT@/${KERNEL_BASE_VIRT}/' \
 	    ${THISARM}/conf/ldscript.evbarm > tmp && mv tmp $@
 
+.else
+LINKTEXT=	-Ttext ${LOADADDRESS}
 .endif	# KERNEL_BASE_PHYS

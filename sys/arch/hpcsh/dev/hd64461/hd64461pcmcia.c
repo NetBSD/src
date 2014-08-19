@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.49 2011/07/26 22:52:48 dyoung Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.49.12.1 2014/08/20 00:03:03 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.49 2011/07/26 22:52:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.49.12.1 2014/08/20 00:03:03 tls Exp $");
 
 #include "opt_hd64461pcmcia.h"
 
@@ -251,7 +251,7 @@ hd64461pcmcia_attach(device_t parent, device_t self, void *aux)
 {
 	struct hd64461_attach_args *ha = aux;
 	struct hd64461pcmcia_softc *sc;
-	int error;
+	int error __diagused;
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -273,7 +273,7 @@ hd64461pcmcia_attach(device_t parent, device_t self, void *aux)
 			       "%s", device_xname(self));
 	KASSERT(error == 0);
 
-	config_pending_incr();
+	config_pending_incr(self);
 
 	/* XXX: TODO */
 	if (!pmf_device_register(self, NULL, NULL))
@@ -294,7 +294,7 @@ hd64461pcmcia_event_thread(void *arg)
 	hd64461pcmcia_attach_channel(sc, CHANNEL_1);
 	hd64461pcmcia_attach_channel(sc, CHANNEL_0);
 #endif
-	config_pending_decr();
+	config_pending_decr(sc->sc_dev);
 
 	while (!sc->sc_shutdown) {
 		tsleep(sc, PWAIT, "CSC wait", 0);
@@ -893,11 +893,11 @@ hd64461pcmcia_power_on(enum controller_channel channel)
 {
 	uint8_t r;
 	uint16_t r16;
-	bus_addr_t scr, gcr, isr;
+	bus_addr_t gcr, isr;
 
 	isr = HD64461_PCCISR(channel);
 	gcr = HD64461_PCCGCR(channel);
-	scr = HD64461_PCCSCR(channel);
+	(void)HD64461_PCCSCR(channel);
 
 	/*
 	 * XXX to access attribute memory, this is required.

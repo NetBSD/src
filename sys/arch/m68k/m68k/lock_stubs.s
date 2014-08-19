@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.8 2009/11/11 11:25:52 skrll Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.8.22.1 2014/08/20 00:03:11 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -47,14 +47,14 @@
  * see sun68k/sun68k/isr.c
  */
 ENTRY(_atomic_cas_32)
-	movl	%sp@(4),%a0
+	movl	4(%sp),%a0
 
 	.globl _C_LABEL(_atomic_cas_ras_start)
 _C_LABEL(_atomic_cas_ras_start):
-	movl	%a0@,%d0
-	cmpl	%sp@(8),%d0
+	movl	(%a0),%d0
+	cmpl	8(%sp),%d0
 	jne	1f
-	movl	%sp@(12),%a0@
+	movl	12(%sp),(%a0)
 	.globl	_C_LABEL(_atomic_cas_ras_end)
 _C_LABEL(_atomic_cas_ras_end):
 
@@ -90,8 +90,8 @@ ENTRY(mutex_enter)
 #if !defined(__mc68010__)
 	movq	#0,%d0
 	movl	_C_LABEL(curlwp),%d1
-	movl	%sp@(4),%a0
-	casl	%d0,%d1,%a0@
+	movl	4(%sp),%a0
+	casl	%d0,%d1,(%a0)
 	bnes	1f
 	rts
 #endif /* !__mc68010__ */
@@ -104,8 +104,8 @@ ENTRY(mutex_exit)
 #if !defined(__mc68010__)
 	movl	_C_LABEL(curlwp),%d0
 	movq	#0,%d1
-	movl	%sp@(4),%a0
-	casl	%d0,%d1,%a0@
+	movl	4(%sp),%a0
+	casl	%d0,%d1,(%a0)
 	bnes	1f
 	rts
 #endif /* !__mc68010__ */

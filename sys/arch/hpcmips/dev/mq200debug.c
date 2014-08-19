@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200debug.c,v 1.5 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: mq200debug.c,v 1.5.122.1 2014/08/20 00:03:03 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMURA Shin
@@ -31,7 +31,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200debug.c,v 1.5 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200debug.c,v 1.5.122.1 2014/08/20 00:03:03 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -193,11 +193,11 @@ mq200_regname(struct mq200_softc *sc, int offset, char *buf, int bufsize)
 	for (i = 0; i < sizeof(regs)/sizeof(*regs); i++)
 		if (regs[i].base + regs[i].start * 4 <= offset &&
 		    offset <= regs[i].base + regs[i].end * 4) {
-			sprintf(buf, "%s%02XR", regs[i].name,
+			snprintf(buf, bufsize, "%s%02XR", regs[i].name,
 			    (offset - regs[i].base) / 4);
 			return (buf);
 		}
-	sprintf(buf, "OFFSET %02X", offset);
+	snprintf(buf, bufsize, "OFFSET %02X", offset);
 	return (buf);
 }
 

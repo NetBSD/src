@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.8 2011/02/21 04:42:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.8.10.1 2014/08/20 00:00:15 tls Exp $
 
-.include <bsd.sys.mk> # for HOST_SH
+.include <bsd.own.mk>
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"

@@ -1,4 +1,4 @@
-/*	$NetBSD: base64_code.h,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: base64_code.h,v 1.1.1.1.16.1 2014/08/19 23:59:45 tls Exp $	*/
 
 #ifndef _BASE64_CODE_H_INCLUDED_
 #define _BASE64_CODE_H_INCLUDED_
@@ -21,8 +21,16 @@
  /*
   * External interface.
   */
-extern VSTRING *base64_encode(VSTRING *, const char *, ssize_t);
-extern VSTRING *base64_decode(VSTRING *, const char *, ssize_t);
+extern VSTRING *base64_encode_opt(VSTRING *, const char *, ssize_t, int);
+extern VSTRING *base64_decode_opt(VSTRING *, const char *, ssize_t, int);
+
+#define BASE64_FLAG_NONE	0
+#define BASE64_FLAG_APPEND	(1<<0)
+
+#define base64_encode(bp, cp, ln) \
+	base64_encode_opt((bp), (cp), (ln), BASE64_FLAG_NONE)
+#define base64_decode(bp, cp, ln) \
+	base64_decode_opt((bp), (cp), (ln), BASE64_FLAG_NONE)
 
 /* LICENSE
 /* .ad

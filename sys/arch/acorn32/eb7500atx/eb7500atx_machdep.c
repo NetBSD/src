@@ -1,4 +1,4 @@
-/*	$NetBSD: eb7500atx_machdep.c,v 1.24.2.1 2012/11/20 03:00:54 tls Exp $	*/
+/*	$NetBSD: eb7500atx_machdep.c,v 1.24.2.2 2014/08/20 00:02:40 tls Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.24.2.1 2012/11/20 03:00:54 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.24.2.2 2014/08/20 00:02:40 tls Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -66,8 +66,16 @@ __KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.24.2.1 2012/11/20 03:00:54 t
 #include <sys/exec_aout.h>
 #include <sys/ksyms.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/device.h>
 
 #include <dev/cons.h>
+
+#include <dev/ic/pckbcvar.h>
+
+#include <dev/i2c/i2cvar.h>
+#include <dev/i2c/pcf8583var.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
@@ -75,29 +83,20 @@ __KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.24.2.1 2012/11/20 03:00:54 t
 
 #include <uvm/uvm.h>
 
+#include <arm/locore.h>
+#include <arm/undefined.h>
+
 #include <machine/signal.h>
-#include <machine/frame.h>
 #include <machine/bootconfig.h>
-#include <machine/cpu.h>
 #include <machine/io.h>
-#include <machine/intr.h>
-#include <arm/cpuconf.h>
 #include <arm/arm32/katelib.h>
 #include <arm/arm32/machdep.h>
-#include <arm/undefined.h>
 #include <machine/rtc.h>
 
 #include <arm/iomd/vidc.h>
 #include <arm/iomd/iomdreg.h>
 #include <arm/iomd/iomdvar.h>
-
 #include <arm/iomd/vidcvideo.h>
-
-#include <sys/device.h>
-#include <dev/ic/pckbcvar.h>
-
-#include <dev/i2c/i2cvar.h>
-#include <dev/i2c/pcf8583var.h>
 #include <arm/iomd/iomdiicvar.h>
 
 /* static i2c_tag_t acorn32_i2c_tag;*/

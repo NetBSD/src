@@ -1,4 +1,4 @@
-/*	$NetBSD: elf32.c,v 1.9 2011/02/05 13:32:32 yamt Exp $	*/
+/*	$NetBSD: elf32.c,v 1.9.10.1 2014/08/20 00:05:09 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: elf32.c,v 1.9 2011/02/05 13:32:32 yamt Exp $");
+__RCSID("$NetBSD: elf32.c,v 1.9.10.1 2014/08/20 00:05:09 tls Exp $");
 #endif
 
 #ifndef ELFSIZE
@@ -166,9 +166,8 @@ NAME(loadsym)(int fd)
 int
 NAME(findsym)(findsym_t find, char *name, uintptr_t *start, uintptr_t *end)
 {
-	static int lastptr[FIND_MAX];
 	uintptr_t sa, ea;
-	int i, rv, off;
+	int i, off;
 	Elf_Byte st;
 
 	switch (find) {
@@ -184,9 +183,9 @@ NAME(findsym)(findsym_t find, char *name, uintptr_t *start, uintptr_t *end)
 		return -1;
 	}
 
-	rv = -1;
 
 #ifdef dump_core
+	static int lastptr[FIND_MAX];
 	for (i = lastptr[find];;) {
 #else
 	for (i = 0; i < nsyms; i++) {
@@ -239,6 +238,8 @@ NAME(findsym)(findsym_t find, char *name, uintptr_t *start, uintptr_t *end)
 	return -1;
 
  found:
+#ifdef dump_core
  	lastptr[find] = i;
+#endif
  	return 0;
 }

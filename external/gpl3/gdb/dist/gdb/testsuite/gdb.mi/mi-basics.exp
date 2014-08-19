@@ -1,5 +1,4 @@
-# Copyright 1999, 2000, 2001, 2002, 2003, 2005, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 1999-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #
-# test basic Machine interface (MI) operations
+# Test basic Machine interface (MI) operations
 #
 # Verify that, using the MI, we can load a program and do
 # other basic things that are used by all test files through  mi_gdb_exit,
@@ -34,13 +33,15 @@ if [mi_gdb_start separate-inferior-tty] {
     continue
 }
 
-set testfile "basics"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/mi-basics
+standard_testfile basics.c
+# This file was audited to ensure that the explicit references to
+# objdir in it are safe for parallel testing.  Please be sure to
+# maintain this property in any additions.
 set escapedobjdir [string_to_regexp ${objdir}]
-set envirodir [string_to_regexp ${objdir}/${subdir}]
+set testsubdir [standard_output_file ""]
+set envirodir [string_to_regexp $testsubdir]
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-DFAKEARGV}] != "" } {
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
      untested mi-basics.exp
      return -1
 }
@@ -60,43 +61,34 @@ proc test_mi_interpreter_selection {} {
 
     # All this test expects is to get the prompt back
     # with no syntax error message
-    gdb_test_multiple "-gdb-version" "acceptance of MI operations" {
-	-re "GNU gdb .*\r\n$mi_gdb_prompt$" {
-	    pass "acceptance of MI operations"
-	    return 1
-	}
-	-re ".*\r\n$mi_gdb_prompt$" {
-	    fail "acceptance of MI operations"
-	}
-	-re "Undefined command.*$gdb_prompt $" {
-	    fail "acceptance of MI operations"
-	}
-    }
+    if ![mi_gdb_test "-gdb-version" "~\"GNU gdb.*" "acceptance of MI operations"] {
+	return 1
+    } 
+
     note "Skipping all other MI tests."
     return 0
 }
 
 proc test_exec_and_symbol_mi_operatons {} {
     global mi_gdb_prompt
-    global binfile
+    global binfile testfile
+
+    if [is_remote host] {
+	set filename ${testfile}
+	remote_download host ${binfile} ${filename}
+    } else {
+	set filename ${binfile}
+    }
 
     # Load symbols and specify executable on a single operation
     # Tests:
     # -file-exec-and-symbols
 
-    # Can't use mi_gdb_test as if this doesn't work,
-    #  we must give up on the whole test file
-    gdb_test_multiple "-file-exec-and-symbols ${binfile}" \
-	"-file-exec-and-symbols ${binfile}" {
-	    -re "\[\r\n\]*\\\^done\r\n$mi_gdb_prompt$" {
-		pass "file-exec-and-symbols operation"
-	    }
-	    timeout {
-		fail "file-exec-and-symbols operation (timeout)"
-		note "Skipping all other MI tests."
-		return 0
-	    }
-	}
+    if [mi_gdb_test "-file-exec-and-symbols ${filename}" "\\\^done" \
+       "file-exec-and-symbols operation"] {
+	note "Skipping all other MI tests."
+	return 0
+    }
 
     # The following is not used by mi-support.exp, but we test here so
     # we get done with loading a program basics.
@@ -113,15 +105,16 @@ proc test_exec_and_symbol_mi_operatons {} {
 #            "\\\^done" \
 #            "file-clear operation"
 
-    mi_gdb_test "-file-exec-file ${binfile}" \
+    mi_gdb_test "-file-exec-file ${filename}" \
              "\\\^done" \
              "file-exec-file operation"
 
-    mi_gdb_test "-file-symbol-file ${binfile}" \
+    mi_gdb_test "-file-symbol-file ${filename}" \
              "\\\^done" \
              "file-symbol-file operation"
 
-    # FIXME: if we cannot load we have to skip all other tests.
+    # We need to return != 0.
+    return 1
 }
 
 proc test_breakpoints_deletion {} {
@@ -145,9 +138,8 @@ proc test_breakpoints_deletion {} {
 
 proc test_dir_specification {} {
     global mi_gdb_prompt
-    global objdir
-    global subdir
     global envirodir
+    global testsubdir
 
     # Add to the search directories, display, then reset back to default
     # Tests:
@@ -155,7 +147,7 @@ proc test_dir_specification {} {
     # -environment-directory 
     # -environment-directory -r
 
-    mi_gdb_test "202-environment-directory ${objdir}/${subdir}" \
+    mi_gdb_test "202-environment-directory ${testsubdir}" \
              "202\\\^done,source-path=\"${envirodir}.\\\$cdir.\\\$cwd\"" \
              "environment-directory arg operation"
 
@@ -172,7 +164,6 @@ proc test_cwd_specification {} {
     global mi_gdb_prompt
     global objdir
     global escapedobjdir
-    global subdir
 
     # Change the working directory, then print the current working directory
     # Tests:
@@ -196,9 +187,10 @@ proc test_path_specification {} {
     global mi_gdb_prompt
     global orig_path
     global objdir
-    global subdir
     global escapedobjdir
+    global testsubdir
     global envirodir
+    global expect_out
 
     # Add to the path, display, then reset 
     # Tests:
@@ -207,24 +199,16 @@ proc test_path_specification {} {
     # -environment-path -r dir
     # -environment-path -r
 
-    gdb_test_multiple "-environment-path" "-environment-path" {
-	-re "\\\^done,path=\"\(.*\)\"\r\n$mi_gdb_prompt" { 
-	    set orig_path $expect_out(1,string); 
-	}
-	timeout { 
-	    perror "-environment-path (timeout)" ; 
-	    return 
-	}
-    }
+    mi_gdb_test "-environment-path" "\\\^done,path=\"(.*)\"" "environment-path"
+    set orig_path $expect_out(3,string)
 
     set orig_path [string_to_regexp ${orig_path}]
-    set pathdir [string_to_regexp ${objdir}/${subdir}]
 
     mi_gdb_test "207-environment-path" \
              "207\\\^done,path=\"$orig_path\"" \
              "environment-path no-args operation"
 
-    mi_gdb_test "208-environment-path $objdir ${objdir}/${subdir}" \
+    mi_gdb_test "208-environment-path $objdir ${testsubdir}" \
              "208\\\^done,path=\"$escapedobjdir.${envirodir}.$orig_path\"" \
              "environment-path dir1 dir2 operation"
 
@@ -276,8 +260,8 @@ proc test_setshow_inferior_tty {} {
 		"verify tty is correct"
 }
 
-if [test_mi_interpreter_selection] {
-  test_exec_and_symbol_mi_operatons
+if { [test_mi_interpreter_selection]
+      && [test_exec_and_symbol_mi_operatons] } {
   test_breakpoints_deletion
   test_dir_specification
   test_cwd_specification

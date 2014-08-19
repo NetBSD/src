@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_deny.c,v 1.2 2004/12/12 08:18:44 christos Exp $	*/
+/*	$NetBSD: pam_deny.c,v 1.2.54.1 2014/08/20 00:02:19 tls Exp $	*/
 
 /*-
  * Copyright 2001 Mark R V Murray
@@ -30,10 +30,12 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_deny/pam_deny.c,v 1.9 2002/04/12 22:27:19 des Exp $");
 #else
-__RCSID("$NetBSD: pam_deny.c,v 1.2 2004/12/12 08:18:44 christos Exp $");
+__RCSID("$NetBSD: pam_deny.c,v 1.2.54.1 2014/08/20 00:02:19 tls Exp $");
 #endif
 
 #include <stddef.h>
+#include <string.h>
+#include <syslog.h>
 
 #define PAM_SM_AUTH
 #define PAM_SM_ACCOUNT
@@ -61,7 +63,7 @@ pam_sm_setcred(pam_handle_t *pamh __unused, int flags __unused,
     int argc __unused, const char *argv[] __unused)
 {
 
-	return (PAM_AUTH_ERR);
+	return (PAM_CRED_ERR);
 }
 
 PAM_EXTERN int
@@ -73,11 +75,25 @@ pam_sm_acct_mgmt(pam_handle_t *pamh __unused, int flags __unused,
 }
 
 PAM_EXTERN int
-pam_sm_chauthtok(pam_handle_t *pamh __unused, int flags __unused,
-    int argc __unused, const char *argv[] __unused)
+pam_sm_chauthtok(pam_handle_t *pamh __unused, int flags,
+    int argc, const char *argv[])
 {
+	int prelim_ignore = 0;
+	int i;
 
-	return (PAM_AUTH_ERR);
+	for (i = 0; i < argc; i++) {
+		if (strcmp(argv[i], "prelim_ignore") == 0)
+			prelim_ignore = 1;
+		else if (strcmp(argv[i], "debug") == 0)
+			/* nothing */;
+		else
+			syslog(LOG_ERR, "illegal option %s", argv[i]);
+	}
+
+	if (flags & PAM_PRELIM_CHECK && prelim_ignore)
+		return (PAM_IGNORE);
+	else
+		return (PAM_AUTHTOK_ERR);
 }
 
 PAM_EXTERN int
@@ -85,7 +101,7 @@ pam_sm_open_session(pam_handle_t *pamh __unused, int flags __unused,
     int argc __unused, const char *argv[] __unused)
 {
 
-	return (PAM_AUTH_ERR);
+	return (PAM_SESSION_ERR);
 }
 
 PAM_EXTERN int
@@ -93,7 +109,7 @@ pam_sm_close_session(pam_handle_t *pamh __unused, int flags __unused,
     int argc __unused, const char *argv[] __unused)
 {
 
-	return (PAM_AUTH_ERR);
+	return (PAM_SESSION_ERR);
 }
 
 PAM_MODULE_ENTRY("pam_deny");

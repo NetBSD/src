@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.1.12.2 2013/02/25 00:28:29 tls Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.1.12.3 2014/08/20 00:02:46 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -61,8 +61,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARM32_BUS_DEFS_H_
-#define _ARM32_BUS_DEFS_H_
+#ifndef _ARM_BUS_DEFS_H_
+#define _ARM_BUS_DEFS_H_
 
 #if defined(_KERNEL_OPT)
 #include "opt_arm_bus_space.h"
@@ -500,4 +500,4 @@ struct arm32_bus_dma_cookie {
 #endif /* _ARM32_BUS_DMA_PRIVATE */
 #define	_BUS_DMA_MIGHT_NEED_BOUNCE	0x01	/* may need bounce buffers */
 
-#endif /* _ARM32_BUS_DEFS_H_ */
+#endif /* _ARM_BUS_DEFS_H_ */

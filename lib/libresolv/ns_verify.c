@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_verify.c,v 1.2.2.2 2012/11/16 02:16:39 christos Exp $	*/
+/*	$NetBSD: ns_verify.c,v 1.2.2.3 2014/08/20 00:02:20 tls Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,9 +17,8 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef lint
-static const char rcsid[] = "Id: ns_verify.c,v 1.5 2006/03/09 23:57:56 marka Exp ";
-#endif
+#include <sys/cdefs.h>
+__RCSID("Id: ns_verify.c,v 1.5 2006/03/09 23:57:56 marka Exp ");
 
 /* Import. */
 

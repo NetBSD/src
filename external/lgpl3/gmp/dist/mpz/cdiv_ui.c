@@ -3,8 +3,8 @@
    always fit into the return type, the negative of the true remainder is
    returned.
 
-Copyright 1994, 1995, 1996, 2001, 2002, 2004, 2005 Free Software Foundation,
-Inc.
+Copyright 1994, 1995, 1996, 2001, 2002, 2004, 2005, 2012 Free Software
+Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -31,7 +31,7 @@ mpz_cdiv_ui (mpz_srcptr dividend, unsigned long int divisor)
   mp_ptr np;
   mp_limb_t rl;
 
-  if (divisor == 0)
+  if (UNLIKELY (divisor == 0))
     DIVIDE_BY_ZERO;
 
   ns = SIZ(dividend);

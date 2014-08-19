@@ -1,7 +1,6 @@
 /* Target-dependent code for OpenBSD/sparc.
 
-   Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -48,7 +47,7 @@
 static const int sparc32obsd_page_size = 4096;
 
 static int
-sparc32obsd_pc_in_sigtramp (CORE_ADDR pc, char *name)
+sparc32obsd_pc_in_sigtramp (CORE_ADDR pc, const char *name)
 {
   CORE_ADDR start_pc = (pc & ~(sparc32obsd_page_size - 1));
   unsigned long insn;
@@ -91,7 +90,7 @@ sparc32obsd_sigtramp_frame_cache (struct frame_info *this_frame,
 
       /* Since we couldn't find the frame's function, the cache was
          initialized under the assumption that we're frameless.  */
-      cache->frameless_p = 0;
+      sparc_record_save_insn (cache);
       addr = get_frame_register_unsigned (this_frame, SPARC_FP_REGNUM);
       cache->base = addr;
     }
@@ -128,7 +127,7 @@ sparc32obsd_sigtramp_frame_sniffer (const struct frame_unwind *self,
 				    void **this_cache)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
-  char *name;
+  const char *name;
 
   find_pc_partial_function (pc, &name, NULL, NULL);
   if (sparc32obsd_pc_in_sigtramp (pc, name))

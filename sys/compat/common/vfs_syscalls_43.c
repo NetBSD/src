@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.54.18.1 2013/02/25 00:29:07 tls Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.54.18.2 2014/08/20 00:03:31 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.54.18.1 2013/02/25 00:29:07 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.54.18.2 2014/08/20 00:03:31 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.54.18.1 2013/02/25 00:29:07 tl
 
 #include <compat/sys/stat.h>
 #include <compat/sys/mount.h>
+#include <compat/sys/dirent.h>
 
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
@@ -348,112 +349,139 @@ compat_43_sys_getdirentries(struct lwp *l, const struct compat_43_sys_getdirentr
 		syscallarg(u_int) count;
 		syscallarg(long *) basep;
 	} */
+	struct dirent *bdp;
 	struct vnode *vp;
+	char *inp, *tbuf;		/* Current-format */
+	int len, reclen;		/* Current-format */
+	char *outp;			/* Dirent12-format */
+	int resid, old_reclen = 0;	/* Dirent12-format */
 	struct file *fp;
-	struct uio auio, kuio;
-	struct iovec aiov, kiov;
-	struct dirent *dp, *edp;
-	char *dirbuf;
-	size_t count = min(MAXBSIZE, (size_t)SCARG(uap, count));
-
-	int error, eofflag, readcnt;
+	struct uio auio;
+	struct iovec aiov;
+	struct dirent43 idb;
+	off_t off;		/* true file offset */
+	int buflen, error, eofflag, nbytes;
+	struct vattr va;
+	off_t *cookiebuf = NULL, *cookie;
+	int ncookies;
 	long loff;
-
+		 
 	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
+
 	if ((fp->f_flag & FREAD) == 0) {
 		error = EBADF;
-		goto out;
+		goto out1;
 	}
+
 	vp = (struct vnode *)fp->f_data;
-unionread:
 	if (vp->v_type != VDIR) {
-		error = EINVAL;
-		goto out;
+		error = ENOTDIR;
+		goto out1;
 	}
-	aiov.iov_base = SCARG(uap, buf);
-	aiov.iov_len = count;
+
+	vn_lock(vp, LK_SHARED | LK_RETRY);
+	error = VOP_GETATTR(vp, &va, l->l_cred);
+	VOP_UNLOCK(vp);
+	if (error)
+		goto out1;
+
+	loff = fp->f_offset;
+	nbytes = SCARG(uap, count);
+	buflen = min(MAXBSIZE, nbytes);
+	if (buflen < va.va_blocksize)
+		buflen = va.va_blocksize;
+	tbuf = malloc(buflen, M_TEMP, M_WAITOK);
+
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	off = fp->f_offset;
+again:
+	aiov.iov_base = tbuf;
+	aiov.iov_len = buflen;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
-	auio.uio_resid = count;
-	KASSERT(l == curlwp);
-	auio.uio_vmspace = curproc->p_vmspace;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	loff = auio.uio_offset = fp->f_offset;
-#	if (BYTE_ORDER != LITTLE_ENDIAN)
-		if ((vp->v_mount->mnt_iflag & IMNT_DTYPE) == 0) {
-			error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag,
-			    (off_t **)0, (int *)0);
-			fp->f_offset = auio.uio_offset;
-		} else
-#	endif
-	{
-		kuio = auio;
-		kuio.uio_iov = &kiov;
-		kiov.iov_len = count;
-		dirbuf = malloc(count, M_TEMP, M_WAITOK);
-		kiov.iov_base = dirbuf;
-		UIO_SETUP_SYSSPACE(&kuio);
-		error = VOP_READDIR(vp, &kuio, fp->f_cred, &eofflag,
-			    (off_t **)0, (int *)0);
-		fp->f_offset = kuio.uio_offset;
-		if (error == 0) {
-			readcnt = count - kuio.uio_resid;
-			edp = (struct dirent *)&dirbuf[readcnt];
-			for (dp = (struct dirent *)dirbuf; dp < edp; ) {
-#				if (BYTE_ORDER == LITTLE_ENDIAN)
-					/*
-					 * The expected low byte of
-					 * dp->d_namlen is our dp->d_type.
-					 * The high MBZ byte of dp->d_namlen
-					 * is our dp->d_namlen.
-					 */
-					dp->d_type = dp->d_namlen;
-					dp->d_namlen = 0;
-#				else
-					/*
-					 * The dp->d_type is the high byte
-					 * of the expected dp->d_namlen,
-					 * so must be zero'ed.
-					 */
-					dp->d_type = 0;
-#				endif
-				if (dp->d_reclen > 0) {
-					dp = (struct dirent *)
-					    ((char *)dp + dp->d_reclen);
-				} else {
-					error = EIO;
-					break;
-				}
-			}
-			if (dp >= edp)
-				error = uiomove(dirbuf, readcnt, &auio);
-		}
-		free(dirbuf, M_TEMP);
-	}
-	VOP_UNLOCK(vp);
+	auio.uio_resid = buflen;
+	auio.uio_offset = off;
+	UIO_SETUP_SYSSPACE(&auio);
+	/*
+         * First we read into the malloc'ed buffer, then
+         * we massage it into user space, one record at a time.
+         */
+	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, &cookiebuf,
+	    &ncookies);
 	if (error)
 		goto out;
 
-	if ((count == auio.uio_resid) &&
-	    (vp->v_vflag & VV_ROOT) &&
-	    (vp->v_mount->mnt_flag & MNT_UNION)) {
-		struct vnode *tvp = vp;
-		vp = vp->v_mount->mnt_vnodecovered;
-		vref(vp);
-		fp->f_data = (void *) vp;
-		fp->f_offset = 0;
-		vrele(tvp);
-		goto unionread;
+	inp = tbuf;
+	outp = SCARG(uap, buf);
+	resid = nbytes;
+	if ((len = buflen - auio.uio_resid) == 0)
+		goto eof;
+
+	for (cookie = cookiebuf; len > 0; len -= reclen) {
+		bdp = (struct dirent *)inp;
+		reclen = bdp->d_reclen;
+		if (reclen & 3)
+			panic(__func__);
+		if (bdp->d_fileno == 0) {
+			inp += reclen;	/* it is a hole; squish it out */
+			if (cookie)
+				off = *cookie++;
+			else
+				off += reclen;
+			continue;
+		}
+		old_reclen = _DIRENT_RECLEN(&idb, bdp->d_namlen);
+		if (reclen > len || resid < old_reclen) {
+			/* entry too big for buffer, so just stop */
+			outp++;
+			break;
+		}
+		/*
+		 * Massage in place to make a Dirent12-shaped dirent (otherwise
+		 * we have to worry about touching user memory outside of
+		 * the copyout() call).
+		 */
+		idb.d_fileno = (uint32_t)bdp->d_fileno;
+		idb.d_reclen = (uint16_t)old_reclen;
+		idb.d_namlen = (uint16_t)bdp->d_namlen;
+		strcpy(idb.d_name, bdp->d_name);
+		if ((error = copyout(&idb, outp, old_reclen)))
+			goto out;
+		/* advance past this real entry */
+		inp += reclen;
+		if (cookie)
+			off = *cookie++; /* each entry points to itself */
+		else
+			off += reclen;
+		/* advance output past Dirent12-shaped entry */
+		outp += old_reclen;
+		resid -= old_reclen;
 	}
-	error = copyout((void *)&loff, (void *)SCARG(uap, basep),
-	    sizeof(long));
-	*retval = count - auio.uio_resid;
- out:
+
+	/* if we squished out the whole block, try again */
+	if (outp == SCARG(uap, buf)) {
+		if (cookiebuf)
+			free(cookiebuf, M_TEMP);
+		cookiebuf = NULL;
+		goto again;
+	}
+	fp->f_offset = off;	/* update the vnode offset */
+
+eof:
+	*retval = nbytes - resid;
+out:
+	VOP_UNLOCK(vp);
+	if (cookiebuf)
+		free(cookiebuf, M_TEMP);
+	free(tbuf, M_TEMP);
+out1:
 	fd_putfile(SCARG(uap, fd));
-	return (error);
+	if (error)
+		return error;
+	return copyout(&loff, SCARG(uap, basep), sizeof(long));
 }
 
 /*

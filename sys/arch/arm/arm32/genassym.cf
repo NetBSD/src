@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.54.2.3 2013/06/23 06:19:59 tls Exp $
+#	$NetBSD: genassym.cf,v 1.54.2.4 2014/08/20 00:02:45 tls Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -47,16 +47,19 @@ include <uvm/uvm_extern.h>
 
 include <arm/fiq.h>
 include <arm/vfpreg.h>
+include <arm/locore.h>
+include <arm/undefined.h>
 
 include <arm/arm32/pte.h>
 include <machine/pmap.h>
-include <machine/frame.h>
 include <machine/pcb.h>
 include <machine/vmparam.h>
 
+if defined(_KERNEL_OPT)
 include "opt_multiprocessor.h"
 include "opt_compat_netbsd.h"
 include "opt_execfmt.h"
+endif
 
 define	__PROG32		1
 ifdef __ARM_FIQ_INDIRECT
@@ -79,6 +82,14 @@ ifdef __HAVE_UNNESTED_INTRS
 define	__HAVE_UNNESTED_INTRS	1
 endif
 
+ifdef ARM_MMU_EXTENDED
+define  ARM_MMU_EXTENDED	1
+endif
+
+ifdef VERBOSE_INIT_ARM
+define	VERBOSE_INIT_ARM	1
+endif
+
 define	KERNEL_BASE		KERNEL_BASE
 define	VM_MIN_ADDRESS		VM_MIN_ADDRESS
 define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
@@ -88,6 +99,12 @@ define	DCACHE_LINE_SIZE	offsetof(struct arm_cache_info, dcache_line_size)
 define	PV_PA			offsetof(pv_addr_t, pv_pa)
 define	PMAP_DOMAIN_KERNEL	PMAP_DOMAIN_KERNEL
 define	DOMAIN_CLIENT		DOMAIN_CLIENT
+ifdef ARM_MMU_EXTENDED
+define	DOMAIN_DEFAULT		((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | (DOMAIN_CLIENT << (PMAP_DOMAIN_USER*2)))
+else 
+define	DOMAIN_DEFAULT		((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT)
+endif
+
 define	L1_S_PROTO_generic	L1_S_PROTO_generic
 define	L1_S_PROTO_armv7	L1_S_PROTO_armv7
 define	L1_S_PROTO_xscale	L1_S_PROTO_xscale
@@ -97,15 +114,19 @@ endif
 define	L1_S_FRAME		L1_S_FRAME
 define	L1_S_SHIFT		L1_S_SHIFT
 define	L1_S_SIZE		L1_S_SIZE
+define	L1_S_CACHEABLE		L1_S_C|L1_S_B|L1_S_V6_S
 define	L1_S_B			L1_S_B
 define	L1_S_C			L1_S_C
 define	L1_S_V6_S		L1_S_V6_S
+define	L1_S_V6_XN		L1_S_V6_XN
 define	L1_S_AP_KR		L1_S_AP(AP_KR)
 define	L1_S_AP_KRW		L1_S_AP(AP_KRW)
 define	L1_S_APv7_KRW		L1_S_AP(AP7_KRW)
+define	L1_S_DOM_MASK		L1_S_DOM_MASK
 define	L1_TABLE_SIZE		L1_TABLE_SIZE
 define	L1_TYPE_S		L1_TYPE_S
 define	L1_S_DOM_KERNEL		L1_S_DOM(PMAP_DOMAIN_KERNEL)
+define	L2_S_SIZE		L2_S_SIZE
 
 define	L1_C_PROTO_generic	L1_C_PROTO_generic
 
@@ -114,6 +135,8 @@ define	L2_S_SHIFT		L2_S_SHIFT
 define	L2_S_SIZE		L2_S_SIZE
 define	L2_C			L2_C
 define	L2_AP_KRW		L2_AP(AP_KRW)
+
+define	TTBCR_S_N_1		__SHIFTIN(1, TTBCR_S_N)
 
 ifdef PMAP_INCLUDE_PTE_SYNC
 define	PMAP_INCLUDE_PTE_SYNC	1
@@ -164,13 +187,18 @@ define	PR_SCALE		offsetof(struct uprof, pr_scale)
 define	SIGTRAP			SIGTRAP
 define	SIGEMT			SIGEMT
 
+define	TF_SPSR			offsetof(struct trapframe, tf_spsr)
 define	TF_FILL			offsetof(struct trapframe, tf_fill)
 define	TF_R0			offsetof(struct trapframe, tf_r0)
 define	TF_R4			offsetof(struct trapframe, tf_r4)
 define	TF_R6			offsetof(struct trapframe, tf_r6)
+define	TF_R8			offsetof(struct trapframe, tf_r8)
 define	TF_R10			offsetof(struct trapframe, tf_r10)
+define	TF_R12			offsetof(struct trapframe, tf_r12)
 define	TF_USR_SP		offsetof(struct trapframe, tf_usr_sp)
+define	TF_USR_LR		offsetof(struct trapframe, tf_usr_lr)
 define	TF_SVC_SP		offsetof(struct trapframe, tf_svc_sp)
+define	TF_SVC_LR		offsetof(struct trapframe, tf_svc_lr)
 define	TF_PC			offsetof(struct trapframe, tf_pc)
 
 define	PROCSIZE		sizeof(struct proc)
@@ -205,8 +233,11 @@ define	CI_CC_NSOFT		offsetof(struct cpu_info, ci_data.cpu_nsoft)
 ifdef FPU_VFP
 define	CI_VFP_ID		offsetof(struct cpu_info, ci_vfp_id)
 endif
+define	CI_LASTLWP		offsetof(struct cpu_info, ci_lastlwp)
 
 define	VFP_FPEXC_EN		VFP_FPEXC_EN
+
+define	NSACR_VFPCP		NSACR_CPn(VFP_COPROC)|NSACR_CPn(VFP_COPROC2)
 
 # Constants required for in_cksum() and friends.
 define	M_LEN				offsetof(struct mbuf, m_len)

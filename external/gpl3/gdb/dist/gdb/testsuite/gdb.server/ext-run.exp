@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2007, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2007-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,15 +19,13 @@
 
 load_lib gdbserver-support.exp
 
-set testfile "server"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/ext-run
+standard_testfile server.c
 
 if { [skip_gdbserver_tests] } {
     return 0
 }
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+if {[build_executable $testfile.exp $testfile $srcfile debug] == -1} {
     return -1
 }
 
@@ -39,6 +37,10 @@ set do_xml_test [expr ![gdb_skip_xml_test]]
 gdb_start
 gdb_load $binfile
 gdb_reinitialize_dir $srcdir/$subdir
+
+# Make sure we're disconnected, in case we're testing with an
+# extended-remote board, therefore already connected.
+gdb_test "disconnect" ".*"
 
 set target_exec [gdbserver_download_current_prog]
 gdbserver_start_extended
@@ -55,7 +57,7 @@ if { [istarget *-*-linux*] } {
 	# This is done in a way to avoid the timeout that can occur from
 	# applying .* regexp to large output.
 	gdb_test_sequence "info os processes" "get process list" \
-	    { "pid +user +command" "1 +root +\[/a-z\]*init" }
+	    { "pid +user +command" "1 +root +\[/a-z\]*(init|systemd)" }
     }
 }
 

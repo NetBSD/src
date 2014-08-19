@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.63 2012/03/13 18:40:51 elad Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.63.2.1 2014/08/20 00:04:28 tls Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.63 2012/03/13 18:40:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.63.2.1 2014/08/20 00:04:28 tls Exp $");
 #endif /* not lint */
 
 
@@ -101,31 +101,29 @@ const struct vnodeopv_desc * const udf_vnodeopv_descs[] = {
 
 /* vfsops descriptor linked in as anchor point for the filingsystem */
 struct vfsops udf_vfsops = {
-	MOUNT_UDF,			/* vfs_name */
-	sizeof (struct udf_args),
-	udf_mount,
-	udf_start,
-	udf_unmount,
-	udf_root,
-	(void *)eopnotsupp,		/* vfs_quotactl */
-	udf_statvfs,
-	udf_sync,
-	udf_vget,
-	udf_fhtovp,
-	udf_vptofh,
-	udf_init,
-	udf_reinit,
-	udf_done,
-	udf_mountroot,
-	udf_snapshot,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	udf_vnodeopv_descs,
-	0, /* int vfs_refcount   */
-	{ NULL, NULL, }, /* LIST_ENTRY(vfsops) */
+	.vfs_name = MOUNT_UDF,
+	.vfs_min_mount_data = sizeof (struct udf_args),
+	.vfs_mount = udf_mount,
+	.vfs_start = udf_start,
+	.vfs_unmount = udf_unmount,
+	.vfs_root = udf_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = udf_statvfs,
+	.vfs_sync = udf_sync,
+	.vfs_vget = udf_vget,
+	.vfs_fhtovp = udf_fhtovp,
+	.vfs_vptofh = udf_vptofh,
+	.vfs_init = udf_init,
+	.vfs_reinit = udf_reinit,
+	.vfs_done = udf_done,
+	.vfs_mountroot = udf_mountroot,
+	.vfs_snapshot = udf_snapshot,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = udf_vnodeopv_descs
 };
 
 /* --------------------------------------------------------------------- */
@@ -188,11 +186,6 @@ udf_modcmd(modcmd_t cmd, void *arg)
 		 * more instance of the "number to vfs" mapping problem, but
 		 * "24" is the order as taken from sys/mount.h
 		 */
-		sysctl_createv(&udf_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&udf_sysctl_log, 0, NULL, &node,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "udf",
@@ -323,6 +316,8 @@ udf_mount(struct mount *mp, const char *path,
 
 	DPRINTF(CALL, ("udf_mount called\n"));
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
@@ -419,7 +414,7 @@ udf_mount(struct mount *mp, const char *path,
 	}
 
 	/* register our mountpoint being on this device */
-	devvp->v_specmountpoint = mp;
+	spec_node_setmountedfs(devvp, mp);
 
 	/* successfully mounted */
 	DPRINTF(VOLUMES, ("udf_mount() successfull\n"));
@@ -541,7 +536,7 @@ udf_unmount(struct mount *mp, int mntflags)
 	DPRINTF(VOLUMES, ("device close ok\n"));
 
 	/* clear our mount reference and release device node */
-	ump->devvp->v_specmountpoint = NULL;
+	spec_node_setmountedfs(ump->devvp, NULL);
 	vput(ump->devvp);
 
 	/* free our ump */
@@ -728,9 +723,6 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 			"(rootdirs failing)\n");
 		return error;
 	}
-
-	/* do we have to set this? */
-	devvp->v_specmountpoint = mp;
 
 	/* success! */
 	return 0;

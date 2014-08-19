@@ -1,7 +1,5 @@
 /* Generic ECOFF (Extended-COFF) routines.
-   Copyright 1990, 1991, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001,
-   2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright 1990-2013 Free Software Foundation, Inc.
    Original version by Per Bothner.
    Full support added by Ian Lance Taylor, ian@cygnus.com.
 
@@ -234,9 +232,7 @@ _bfd_ecoff_set_arch_mach_hook (bfd *abfd, void * filehdr)
 }
 
 bfd_boolean
-_bfd_ecoff_no_long_sections (abfd, enable)
-     bfd *abfd;
-     int enable;
+_bfd_ecoff_no_long_sections (bfd *abfd, int enable)
 {
   (void) abfd;
   (void) enable;
@@ -1890,7 +1886,7 @@ _bfd_ecoff_sizeof_headers (bfd *abfd,
   ret = (bfd_coff_filhsz (abfd)
 	 + bfd_coff_aoutsz (abfd)
 	 + c * bfd_coff_scnhsz (abfd));
-  return BFD_ALIGN (ret, 16);
+  return (int) BFD_ALIGN (ret, 16);
 }
 
 /* Get the contents of a section.  */
@@ -2906,7 +2902,7 @@ _bfd_ecoff_slurp_armap (bfd *abfd)
   if (mapdata == NULL)
     return FALSE;
   parsed_size = mapdata->parsed_size;
-  bfd_release (abfd, (void *) mapdata);
+  free (mapdata);
 
   raw_armap = (char *) bfd_alloc (abfd, parsed_size);
   if (raw_armap == NULL)
@@ -3230,14 +3226,6 @@ _bfd_ecoff_bfd_link_hash_table_create (bfd *abfd)
 #define ecoff_link_hash_lookup(table, string, create, copy, follow) \
   ((struct ecoff_link_hash_entry *) \
    bfd_link_hash_lookup (&(table)->root, (string), (create), (copy), (follow)))
-
-/* Traverse an ECOFF link hash table.  */
-
-#define ecoff_link_hash_traverse(table, func, info)			\
-  (bfd_link_hash_traverse						\
-   (&(table)->root,							\
-    (bfd_boolean (*) (struct bfd_link_hash_entry *, void *)) (func),	\
-    (info)))
 
 /* Get the ECOFF link hash table from the info structure.  This is
    just a cast.  */
@@ -3573,9 +3561,9 @@ ecoff_link_check_archive_element (bfd *abfd,
   void (* const swap_ext_in) (bfd *, void *, EXTR *)
     = backend->debug_swap.swap_ext_in;
   HDRR *symhdr;
-  bfd_size_type external_ext_size;
+  bfd_size_type external_ext_size = 0;
   void * external_ext = NULL;
-  bfd_size_type esize;
+  bfd_size_type esize = 0;
   char *ssext = NULL;
   char *ext_ptr;
   char *ext_end;
@@ -4259,8 +4247,9 @@ ecoff_reloc_link_order (bfd *output_bfd,
    the hash table.  */
 
 static bfd_boolean
-ecoff_link_write_external (struct ecoff_link_hash_entry *h, void * data)
+ecoff_link_write_external (struct bfd_hash_entry *bh, void * data)
 {
+  struct ecoff_link_hash_entry *h = (struct ecoff_link_hash_entry *) bh;
   struct extsym_info *einfo = (struct extsym_info *) data;
   bfd *output_bfd = einfo->abfd;
   bfd_boolean strip;
@@ -4491,9 +4480,7 @@ _bfd_ecoff_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
   /* Write out the external symbols.  */
   einfo.abfd = abfd;
   einfo.info = info;
-  ecoff_link_hash_traverse (ecoff_hash_table (info),
-			    ecoff_link_write_external,
-			    (void *) &einfo);
+  bfd_hash_traverse (&info->hash->table, ecoff_link_write_external, &einfo);
 
   if (info->relocatable)
     {

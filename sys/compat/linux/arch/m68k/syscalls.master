@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.73.10.2 2013/06/23 06:20:15 tls Exp $
+	$NetBSD: syscalls.master,v 1.73.10.3 2014/08/20 00:03:32 tls Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -59,22 +59,23 @@
 0	NOARGS		{ int|linux_sys||nosys(void); } syscall
 1	STD		{ int|linux_sys||exit(int rval); }
 2	NOARGS		{ int|sys||fork(void); }
-3	NOARGS		{ int|sys||read(int fd, char *buf, u_int nbyte); }
-4	NOARGS		{ int|sys||write(int fd, char *buf, u_int nbyte); }
+3	NOARGS		{ ssize_t|sys||read(int fd, void *buf, size_t nbyte); }
+4	NOARGS		{ ssize_t|sys||write(int fd, const void *buf, \
+			    size_t nbyte); }
 5	STD		{ int|linux_sys||open(const char *path, int flags, \
-			    int mode); }
+			    linux_umode_t mode); }
 6	NOARGS		{ int|sys||close(int fd); }
 7	STD		{ int|linux_sys||waitpid(int pid, int *status, \
 			    int options);}
-8	STD		{ int|linux_sys||creat(const char *path, int mode); }
+8	STD		{ int|linux_sys||creat(const char *path, linux_umode_t mode); }
 9	NOARGS		{ int|sys||link(const char *path, const char *link); }
 10	STD		{ int|linux_sys||unlink(const char *path); }
 11	NOARGS		{ int|sys||execve(const char *path, char **argp, \
 			    char **envp); }
 12	NOARGS		{ int|sys||chdir(const char *path); }
 13	STD		{ int|linux_sys||time(linux_time_t *t); }
-14	STD		{ int|linux_sys||mknod(const char *path, int mode, \
-			    int dev); }
+14	STD		{ int|linux_sys||mknod(const char *path, linux_umode_t mode, \
+			    unsigned dev); }
 15	NOARGS		{ int|sys||chmod(const char *path, int mode); }
 ;16 lchown on i386; chown on m68k.
 16	STD		{ int|linux_sys||chown16(const char *path, \
@@ -109,9 +110,9 @@
 37	STD		{ int|linux_sys||kill(int pid, int signum); }
 38	NOARGS		{ int|sys||__posix_rename(const char *from, \
 			    const char *to); }
-39	NOARGS		{ int|sys||mkdir(const char *path, int mode); }
+39	NOARGS		{ int|sys||mkdir(const char *path, linux_umode_t mode); }
 40	NOARGS		{ int|sys||rmdir(const char *path); }
-41	NOARGS		{ int|sys||dup(u_int fd); }
+41	NOARGS		{ int|sys||dup(int fd); }
 42	STD		{ int|linux_sys||pipe(int *pfds); }
 43	STD		{ int|linux_sys||times(struct times *tms); }
 44	OBSOL		prof
@@ -135,7 +136,7 @@
 60	NOARGS		{ int|sys||umask(int newmask); }
 61	NOARGS		{ int|sys||chroot(char *path); }
 62	UNIMPL		ustat
-63	NOARGS		{ int|sys||dup2(u_int from, u_int to); }
+63	NOARGS		{ int|sys||dup2(int from, int to); }
 64	NOARGS		{ pid_t|sys||getppid(void); }
 65	NOARGS		{ int|sys||getpgrp(void); }
 66	NOARGS		{ int|sys||setsid(void); }
@@ -192,7 +193,7 @@
 89	STD		{ int|linux_sys||readdir(int fd, void *dent, \
 			    unsigned int count); }
 90	STD		{ int|linux_sys||old_mmap(struct linux_oldmmap *lmp); }
-91	NOARGS		{ int|sys||munmap(void *addr, int len); }
+91	NOARGS		{ int|sys||munmap(void *addr, size_t len); }
 92	NOARGS		{ int|compat_43_sys||truncate(const char *path, \
 			    long length); }
 #if !defined(_KERNEL) || defined(COMPAT_43)
@@ -200,7 +201,7 @@
 #else
 93	UNIMPL		compat_43_sys_ftruncate
 #endif
-94	NOARGS		{ int|sys||fchmod(int fd, int mode); }
+94	NOARGS		{ int|sys||fchmod(int fd, linux_umode_t mode); }
 95	STD		{ int|linux_sys||fchown16(int fd, linux_uid16_t uid, \
 			    linux_gid16_t gid); }
 96	STD		{ int|linux_sys||getpriority(int which, int who); }
@@ -272,10 +273,10 @@
 			    struct timeval50 *timeout); }
 143	NOARGS		{ int|sys||flock(int fd, int how); }
 144	NOARGS		{ int|sys|13|msync(void *addr, size_t len, int flags); }
-145	NOARGS		{ int|sys||readv(int fd, struct iovec *iovp, \
-				u_int iovcnt); }
-146	NOARGS		{ int|sys||writev(int fd, struct iovec *iovp, \
-				u_int iovcnt); }
+145	NOARGS		{ ssize_t|sys||readv(int fd, \
+			    const struct iovec *iovp, int iovcnt); }
+146	NOARGS		{ ssize_t|sys||writev(int fd, \
+			    const struct iovec *iovp, int iovcnt); }
 147	NOARGS		{ pid_t|sys||getsid(pid_t pid); }
 148	STD		{ int|linux_sys||fdatasync(int fd); }
 149	STD		{ int|linux_sys||__sysctl(struct linux___sysctl *lsp); }
@@ -334,9 +335,9 @@
 179	STD		{ int|linux_sys||rt_sigsuspend(linux_sigset_t *unewset, \
 			    size_t sigsetsize); }
 180	STD		{ int|linux_sys||pread(int fd, char *buf, \
-			    size_t nbyte, linux_off_t offset); }
+			    size_t nbyte, off_t offset); }
 181	STD		{ int|linux_sys||pwrite(int fd, char *buf, \
-			    size_t nbyte, linux_off_t offset); }
+			    size_t nbyte, off_t offset); }
 ;182 chown on i386; lchown on m68k.
 182	STD		{ int|linux_sys||lchown16(const char *path, \
 			    linux_uid16_t uid, linux_gid16_t gid); }
@@ -374,8 +375,8 @@
 202	NOARGS		{ gid_t|sys||getegid(void); }
 203	NOARGS		{ int|sys||setreuid(uid_t ruid, uid_t euid); }
 204	NOARGS		{ int|sys||setregid(gid_t rgid, gid_t egid); }
-205	NOARGS		{ int|sys||getgroups(u_int gidsetsize, gid_t *gidset); }
-206	NOARGS		{ int|sys||setgroups(u_int gidsetsize, gid_t *gidset); }
+205	NOARGS		{ int|sys||getgroups(int gidsetsize, gid_t *gidset); }
+206	NOARGS		{ int|sys||setgroups(int gidsetsize, gid_t *gidset); }
 207	NOARGS		{ int|sys||__posix_fchown(int fd, uid_t uid, \
 			    gid_t gid); }
 208	STD		{ int|linux_sys||setresuid(uid_t ruid, uid_t euid, \
@@ -424,17 +425,17 @@
 			    const struct linux_timespec *timeout, int *uaddr2, \
 			    int val3); }
 236	UNIMPL		sendfile64
-237	UNIMPL		mincore
-238	UNIMPL		madvise
-239	UNIMPL		fcntl64
+237	NOARGS		{ int|sys||mincore(void *addr, size_t len, char *vec); }
+238	NOARGS		{ int|sys||madvise(void *addr, size_t len, int behav); }
+239	STD		{ int|linux_sys||fcntl64(int fd, int cmd, void *arg); }
 240	UNIMPL		readahead
 241	UNIMPL		io_setup
 242	UNIMPL		io_destroy
 243	UNIMPL		io_getevents
 244	UNIMPL		io_submit
 245	UNIMPL		io_cancel
-246	STD		{ int|linux_sys||fadvise64(int fd, \
-			    linux_off_t offset, size_t len, int advice); }
+246	STD		{ int|linux_sys||fadvise64(int fd, off_t offset, \
+			    size_t len, int advice); }
 247	UNIMPL		exit_group
 248	UNIMPL		lookup_dcookie
 249	UNIMPL		epoll_create
@@ -461,9 +462,10 @@
 264	STD		{ int|linux_sys||fstatfs64(int fd, \
 			    size_t sz, struct linux_statfs64 *sp); }
 265	STD		{ int|linux_sys||tgkill(int tgid, int tid, int sig); }
-266	STD		{ int|linux_sys||utimes(const char *path, struct linux_timeval *times); }
-267	STD		{ int|linux_sys||fadvise64_64(int fd, \
-			    linux_off_t offset, linux_off_t len, int advice); }
+266	NOARGS		{ int|compat_50_sys||utimes(const char *path, \
+			    const struct timeval50 *tptr); }
+267	STD		{ int|linux_sys||fadvise64_64(int fd, off_t offset, \
+			    off_t len, int advice); }
 268	UNIMPL		mbind
 269	UNIMPL		get_mempolicy
 270	UNIMPL		set_mempolicy
@@ -484,19 +486,31 @@
 285	UNIMPL		inotify_add_watch
 286	UNIMPL		inotify_rm_watch
 287	UNIMPL		migrate_pages
-288	UNIMPL		openat
-289	UNIMPL		mkdirat
-290	UNIMPL		mknodat
-291	UNIMPL		fchownat
+288	STD 		{ int|linux_sys||openat(int fd, const char *path, \
+			    int flags, ... linux_umode_t mode); }
+289	NOARGS		{ int|sys||mkdirat(int fd, const char *path, \
+			    linux_umode_t mode); }
+290	STD		{ int|linux_sys||mknodat(int fd, const char *path, \
+			    linux_umode_t mode, unsigned dev); }
+291	STD		{ int|linux_sys||fchownat(int fd, const char *path, \
+			    uid_t owner, gid_t group, int flag); }
 292	UNIMPL		futimesat
-293	UNIMPL		fstatat64
-294	UNIMPL		unlinkat
-295	UNIMPL		renameat
-296	UNIMPL		linkat
-297	UNIMPL		symlinkat
-298	UNIMPL		readlinkat
-299	UNIMPL		fchmodat
-300	UNIMPL		faccessat
+293	STD		{ int|linux_sys||fstatat64(int fd, const char *path, \
+			    struct linux_stat64 *sp, int flag); }
+294	STD		{ int|linux_sys||unlinkat(int fd, const char *path, \
+			    int flag); }
+295	NOARGS		{ int|sys||renameat(int fromfd, const char *from, \
+			    int tofd, const char *to); }
+296	STD		{ int|linux_sys||linkat(int fd1, const char *name1, \
+			    int fd2, const char *name2, int flags); }
+297	NOARGS		{ int|sys||symlinkat(const char *path1, int fd, \
+			    const char *path2); }
+298	NOARGS		{ int|sys||readlinkat(int fd, const char *path, \
+			    char *buf, size_t bufsize); }
+299	STD		{ int|linux_sys||fchmodat(int fd, const char *path, \
+			    linux_umode_t mode); }
+300	STD		{ int|linux_sys||faccessat(int fd, const char *path, \
+			    int amode); }
 301	UNIMPL		pselect6
 302	STD             { int|linux_sys||ppoll(struct pollfd *fds, int nfds, \
 			    struct linux_timespec *timeout, \
@@ -519,7 +533,8 @@
 313	UNIMPL		kexec_load
 314	UNIMPL		getcpu
 315	UNIMPL		epoll_wait
-316	UNIMPL		utimensat
+316	STD		{ int|linux_sys||utimensat(int fd, const char *path, \
+			    struct linux_timespec *times, int flag); }
 317	UNIMPL		signalfd
 318	UNIMPL		timerfd_create
 319	UNIMPL		eventfd

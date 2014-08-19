@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.44 2012/06/27 00:37:10 jym Exp $ */
+/* $NetBSD: privcmd.c,v 1.44.2.1 2014/08/20 00:03:30 tls Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.44 2012/06/27 00:37:10 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.44.2.1 2014/08/20 00:03:30 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,17 +369,15 @@ privcmd_ioctl(void *v)
 	{
 		int i;
 		privcmd_mmapbatch_t* pmb = ap->a_data;
-		vaddr_t va0, va;
+		vaddr_t va0;
 		u_long mfn;
 		paddr_t ma;
 		struct vm_map *vmm;
 		struct vm_map_entry *entry;
 		vm_prot_t prot;
-		pmap_t pmap;
 		vaddr_t trymap;
 
 		vmm = &curlwp->l_proc->p_vmspace->vm_map;
-		pmap = vm_map_pmap(vmm);
 		va0 = pmb->addr & ~PAGE_MASK;
 
 		if (pmb->num == 0)
@@ -409,7 +407,6 @@ privcmd_ioctl(void *v)
 		}
 
 		for(i = 0; i < pmb->num; ++i) {
-			va = va0 + (i * PAGE_SIZE);
 			error = copyin(&pmb->arr[i], &mfn, sizeof(mfn));
 			if (error != 0) {
 				/* XXX: mappings */

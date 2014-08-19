@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.41 2011/05/01 16:19:13 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.41.14.1 2014/08/20 00:03:28 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.41 2011/05/01 16:19:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.41.14.1 2014/08/20 00:03:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,12 +175,12 @@ zs_attach(device_t parent, device_t self, void *aux)
 	struct zsc_attach_args zsc_args;
 	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
-	int r, s, zs_unit, channel;
+	int r __diagused;
+	int s, channel;
 
 	zsc->zsc_dev = self;
 	aprint_normal("\n");
 
-	zs_unit = device_unit(self);
 	zsc->zsc_addr = (void *)ia->ia_addr;
 
 	ia->ia_size = 8;
@@ -325,6 +325,7 @@ zshard(void *arg)
 	/* We are at splzs here, so no need to lock. */
 	if (zsc->zsc_cs[0]->cs_softreq || zsc->zsc_cs[1]->cs_softreq)
 		softint_schedule(zsc->zsc_softintr_cookie);
+	splx(s);
 
 	return (rval);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.31 2011/09/16 16:13:16 plunky Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.31.8.1 2014/08/20 00:02:17 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.31 2011/09/16 16:13:16 plunky Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.31.8.1 2014/08/20 00:02:17 tls Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -490,7 +490,8 @@ fn_complete(EditLine *el,
 		if (what_to_do == '?')
 			goto display_matches;
 
-		if (matches[2] == NULL && strcmp(matches[0], matches[1]) == 0) {
+		if (matches[2] == NULL &&
+		    (matches[1] == NULL || strcmp(matches[0], matches[1]) == 0)) {
 			/*
 			 * We found exact match. Add a space after
 			 * it, unless we do filename completion and the

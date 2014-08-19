@@ -1,5 +1,4 @@
-# Copyright 1997, 1999, 2002, 2003, 2004, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 1997-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,10 +12,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
-
-if $tracelevel then {
-    strace $tracelevel
-}
 
 
 # On HP-UX 11.0, this test is causing a process running the program
@@ -35,12 +30,9 @@ if [is_remote target] then {
     return 0
 }
 
-set testfile "attach"
-set srcfile  ${testfile}.c
-set srcfile2 ${testfile}2.c
-set binfile  ${objdir}/${subdir}/${testfile}
-set binfile2 ${objdir}/${subdir}/${testfile}2
-set escapedbinfile  [string_to_regexp ${objdir}/${subdir}/${testfile}]
+standard_testfile attach.c attach2.c
+set binfile2 ${binfile}2
+set escapedbinfile  [string_to_regexp $binfile]
 
 #execute_anywhere "rm -f ${binfile} ${binfile2}"
 remote_exec build "rm -f ${binfile} ${binfile2}"
@@ -62,7 +54,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile2}" "${binfile2}" executable {d
     return -1
 }
 
-if [get_compiler_info ${binfile}] {
+if [get_compiler_info] {
     return -1
 }
 
@@ -72,7 +64,6 @@ proc do_attach_tests {} {
     global escapedbinfile
     global srcfile
     global testfile
-    global objdir
     global subdir
     global timeout
     
@@ -164,6 +155,10 @@ proc do_attach_tests {} {
 	    # Response expected on Cygwin
 	    pass "$test"
 	}
+	-re "Attaching to.*, process $boguspid.*failed.*$gdb_prompt $" {
+	    # Response expected on the extended-remote target.
+	    pass "$test"
+	}
     }
     
     # Verify that we can attach to the process by first giving its
@@ -228,7 +223,8 @@ proc do_attach_tests {} {
     # Verify that we can attach to the process just by giving the
     # process ID.
    
-    set test "set file, before attach2"
+    set test "attach2, with no file"
+    set found_exec_file 0
     gdb_test_multiple "attach $testpid" "$test" {
 	-re "Attaching to process $testpid.*Load new symbol table from \"$escapedbinfile\.exe\".*y or n. $" {
 	    # On Cygwin, the DLL's symbol tables are loaded prior to the
@@ -237,9 +233,25 @@ proc do_attach_tests {} {
 	    # executable.
 	    gdb_test "y" "Reading symbols from $escapedbinfile\.\.\.*done." \
 		"$test (reset file)"
+
+	    set found_exec_file 1
 	}
 	-re "Attaching to process $testpid.*Reading symbols from $escapedbinfile.*main.*at .*$gdb_prompt $" {
 	    pass "$test"
+	    set found_exec_file 1
+	}
+    }
+
+    if {$found_exec_file == 0} {
+	set test "load file manually, after attach2"
+	gdb_test_multiple "file $binfile" "$test" {
+	    -re "A program is being debugged already..*Are you sure you want to change the file.*y or n. $" {
+		gdb_test "y" "Reading symbols from $escapedbinfile\.\.\.*done." \
+		    "$test (re-read)"
+	    }
+	    -re "Reading symbols from $escapedbinfile\.\.\.*done.*$gdb_prompt $" {
+		pass "$test"
+	    }
 	}
     }
 
@@ -282,7 +294,7 @@ proc do_attach_tests {} {
     # when we're cd'd to some directory that doesn't contain the
     # a.out.  (We use the source path set by the "dir" command.)
     
-    gdb_test "dir ${objdir}/${subdir}" "Source directories searched: .*" \
+    gdb_test "dir [standard_output_file {}]" "Source directories searched: .*" \
 	"set source path"
 
     gdb_test "cd /tmp" "Working directory /tmp." \

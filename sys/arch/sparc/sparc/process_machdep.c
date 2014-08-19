@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.17 2009/11/21 04:16:51 rmind Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.17.22.1 2014/08/20 00:03:24 tls Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.17 2009/11/21 04:16:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.17.22.1 2014/08/20 00:03:24 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ process_set_pc(struct lwp *p, void *addr)
 }
 
 int
-process_read_fpregs(struct lwp *p, struct fpreg *regs)
+process_read_fpregs(struct lwp *p, struct fpreg *regs, size_t *sz)
 {
 	extern struct fpstate	initfpstate;
 	struct fpstate		*statep = &initfpstate;
@@ -159,7 +159,7 @@ process_read_fpregs(struct lwp *p, struct fpreg *regs)
 }
 
 int
-process_write_fpregs(struct lwp *p, const struct fpreg *regs)
+process_write_fpregs(struct lwp *p, const struct fpreg *regs, size_t sz)
 {
 
 	if (p->l_md.md_fpstate == NULL)

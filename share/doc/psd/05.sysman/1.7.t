@@ -1,4 +1,4 @@
-.\"	$NetBSD: 1.7.t,v 1.3 2003/08/07 10:30:49 agc Exp $
+.\"	$NetBSD: 1.7.t,v 1.3.60.1 2014/08/20 00:02:29 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,11 +29,11 @@
 .\"
 .\"	@(#)1.7.t	8.4 (Berkeley) 5/26/94
 .\"
-.Sh 2 "System operation support
+.Sh 2 19 "System operation support
 .LP
 Unless noted otherwise,
 the calls in this section are permitted only to a privileged user.
-.Sh 3 "Monitoring system operation
+.Sh 3 20 "Monitoring system operation
 .PP
 The
 .Fn sysctl
@@ -101,7 +101,7 @@ CTL\_USER	sys/sysctl.h	User-level
 CTL\_VM	vm/vm_param.h	Virtual memory
 .TE
 .DE
-.Sh 3 "Bootstrap operations
+.Sh 3 20 "Bootstrap operations
 .LP
 The call:
 .DS
@@ -137,7 +137,7 @@ swapon(blkdev);
 char *blkdev;
 .DE
 specifies a device to be made available for paging and swapping.
-.Sh 3 "Shutdown operations
+.Sh 3 21 "Shutdown operations
 .LP
 The call:
 .DS
@@ -171,7 +171,7 @@ causes a machine halt or reboot.  The call may request a reboot
 by specifying \fIhow\fP as RB_AUTOBOOT, or that the machine be halted
 with RB_HALT, among other options.
 These constants are defined in \fI<sys/reboot.h>\fP.
-.Sh 3 "Accounting
+.Sh 3 21 "Accounting
 .PP
 The system optionally keeps an accounting record in a file
 for each process that exits on the system.

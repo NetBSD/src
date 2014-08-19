@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.4.2.1 2013/02/25 00:28:34 tls Exp $
+$NetBSD: README.evbarm,v 1.4.2.2 2014/08/20 00:02:53 tls Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -24,6 +24,7 @@ IQ80310		2001/09/05	Intel IQ80310 eval board
 IQ80321		2002/03/27	Intel IQ321 eval board
 IXDP425		2003/04/08	Intel IXDP425/IXCDP1100 development platform
 IXM1200		2002/07/15	Intel IMX1200 eval board
+KOBO		2014/07/25	Kobo touch (eReaders)
 KUROBOX_PRO	2010/10/02	Kuroutoshikou KURO-BOX/PRO
 LUBBOCK		2003/06/18	Intel Lubbock DBPXA250 board
 MARVELL_NAS	2010/10/02	Generic Marvell SoC based NAS
@@ -36,6 +37,7 @@ NAPPI		2002/07/15	Netwise APlication Platform Board
 NETWALKER	2010/11/13	Sharp NetWalker
 NSLU2		2006/02/28	Linksys NSLU2 (a.k.a. "Slug")
 OPENBLOCKS_A6	2012/08/01	Plat'Home. OpenBlockS A6
+OPENBLOCKS_AX3	2013/09/30	Plat'Home. OpenBlockS AX3
 OPENRD		2012/08/10	open-rd.org Marvell Orion board
 OSK5912		2007/01/06	TI OMAP 5912 OSK board
 OVERO		2010/07/10	Gumstix Inc. Overo COMS boards

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.130 2009/09/03 14:40:43 tsutsui Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.130.22.1 2014/08/20 00:03:37 tls Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.130 2009/09/03 14:40:43 tsutsui Exp $
+ * $Id: aic7xxx.c,v 1.130.22.1 2014/08/20 00:03:37 tls Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.130 2009/09/03 14:40:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.130.22.1 2014/08/20 00:03:37 tls Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -4390,19 +4390,17 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 void
 ahc_controller_info(struct ahc_softc *ahc, char *tbuf, size_t l)
 {
-	int len;
-	char *ep;
+	size_t len;
 
-	ep = tbuf + l;
-
-	len = snprintf(tbuf, ep - tbuf, "%s: ",
+	len = snprintf(tbuf, l, "%s: ",
 	    ahc_chip_names[ahc->chip & AHC_CHIPID_MASK]);
-	tbuf += len;
+	if (len > l)
+		return;
 	if ((ahc->features & AHC_TWIN) != 0)
-		len = snprintf(tbuf, ep - tbuf, "Twin Channel, A SCSI Id=%d, "
-			      "B SCSI Id=%d, primary %c, ",
-			      ahc->our_id, ahc->our_id_b,
-			      (ahc->flags & AHC_PRIMARY_CHANNEL) + 'A');
+		len += snprintf(tbuf + len, l - len,
+		    "Twin Channel, A SCSI Id=%d, B SCSI Id=%d, primary %c, ",
+		    ahc->our_id, ahc->our_id_b,
+		    (ahc->flags & AHC_PRIMARY_CHANNEL) + 'A');
 	else {
 		const char *speed;
 		const char *type;
@@ -4420,16 +4418,17 @@ ahc_controller_info(struct ahc_softc *ahc, char *tbuf, size_t l)
 		} else {
 			type = "Single";
 		}
-		len = snprintf(tbuf, ep - tbuf, "%s%s Channel %c, SCSI Id=%d, ",
+		len += snprintf(tbuf + len, l - len, "%s%s Channel %c, SCSI Id=%d, ",
 			      speed, type, ahc->channel, ahc->our_id);
 	}
-	tbuf += len;
+	if (len > l)
+		return;
 
 	if ((ahc->flags & AHC_PAGESCBS) != 0)
-		snprintf(tbuf, ep - tbuf, "%d/%d SCBs",
+		snprintf(tbuf + len, l - len, "%d/%d SCBs",
 			ahc->scb_data->maxhscbs, AHC_MAX_QUEUE);
 	else
-		snprintf(tbuf, ep - tbuf, "%d SCBs", ahc->scb_data->maxhscbs);
+		snprintf(tbuf + len, l - len, "%d SCBs", ahc->scb_data->maxhscbs);
 }
 
 /*
@@ -6545,7 +6544,7 @@ ahc_print_register(ahc_reg_parse_entry_t *table, u_int num_entries,
     const char *name, u_int address, u_int value,
     u_int *cur_column, u_int wrap_point)
 {
-	int	printed;
+	size_t	printed;
 	u_int	printed_mask;
 	char    line[1024];
 
@@ -6556,9 +6555,13 @@ ahc_print_register(ahc_reg_parse_entry_t *table, u_int num_entries,
 		*cur_column = 0;
 	}
 	printed = snprintf(line, sizeof(line), "%s[0x%x]", name, value);
+	if (printed > sizeof(line))
+		printed = sizeof(line);
 	if (table == NULL) {
 		printed += snprintf(&line[printed], (sizeof line) - printed,
 		    " ");
+		if (printed > sizeof(line))
+			printed = sizeof(line);
 		printf("%s", line);
 		if (cur_column != NULL)
 			*cur_column += printed;
@@ -6574,6 +6577,8 @@ ahc_print_register(ahc_reg_parse_entry_t *table, u_int num_entries,
 			 || ((printed_mask & table[entry].mask)
 			  == table[entry].mask))
 				continue;
+			if (printed > sizeof(line))
+				printed = sizeof(line);
 			printed += snprintf(&line[printed],
 			    (sizeof line) - printed, "%s%s",
 				printed_mask == 0 ? ":(" : "|",
@@ -6585,6 +6590,8 @@ ahc_print_register(ahc_reg_parse_entry_t *table, u_int num_entries,
 		if (entry >= num_entries)
 			break;
 	}
+	if (printed > sizeof(line))
+		printed = sizeof(line);
 	if (printed_mask != 0)
 		printed += snprintf(&line[printed],
 		    (sizeof line) - printed, ") ");

@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.66.8.2 2013/02/25 00:28:03 tls Exp $	*/
+/*	$NetBSD: atactl.c,v 1.66.8.3 2014/08/20 00:02:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.66.8.2 2013/02/25 00:28:03 tls Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.66.8.3 2014/08/20 00:02:24 tls Exp $");
 #endif
 
 
@@ -191,9 +191,9 @@ static const struct bitinfo ata_cmd_set1[] = {
 	{ WDC_CMD1_HPA, "Host Protected Area feature set" },
 	{ WDC_CMD1_DVRST, "DEVICE RESET command" },
 	{ WDC_CMD1_SRV, "SERVICE interrupt" },
-	{ WDC_CMD1_RLSE, "release interrupt" },
-	{ WDC_CMD1_AHEAD, "look-ahead" },
-	{ WDC_CMD1_CACHE, "write cache" },
+	{ WDC_CMD1_RLSE, "Release interrupt" },
+	{ WDC_CMD1_AHEAD, "Look-ahead" },
+	{ WDC_CMD1_CACHE, "Write cache" },
 	{ WDC_CMD1_PKT, "PACKET command feature set" },
 	{ WDC_CMD1_PM, "Power Management feature set" },
 	{ WDC_CMD1_REMOV, "Removable Media feature set" },
@@ -273,6 +273,7 @@ static const struct {
 	{  11,		"Calibration retry count", NULL },
 	{  12,		"Device power cycle count", NULL },
 	{  13,		"Soft read error rate", NULL },
+	{ 184,          "End-to-end error", NULL },
 	{ 187,          "Reported uncorrect", NULL },
 	{ 189,          "High Fly Writes", NULL },
 	{ 190,          "Airflow Temperature",		device_smart_temp },
@@ -306,6 +307,8 @@ static const struct {
 	{ 228,		"Power-off retract count", NULL },
 	{ 230,		"GMR head amplitude", NULL },
 	{ 231,		"Temperature",			device_smart_temp },
+	{ 232,		"Available reserved space", NULL },
+	{ 233,		"Media wearout indicator", NULL },
 	{ 240,		"Head flying hours", NULL },
 	{ 250,		"Read error retry rate", NULL },
 	{   0,		"Unknown", NULL },
@@ -518,7 +521,7 @@ print_smart_status(void *vbuf, void *tbuf)
 	}
 
 	printf("id value thresh crit collect reliability description"
-	    "\t\t\traw\n");
+	    "                 raw\n");
 	for (i = 0; i < 256; i++) {
 		int thresh = 0;
 
@@ -546,7 +549,7 @@ print_smart_status(void *vbuf, void *tbuf)
 
 		flags = le16toh(attr->flags);
 
-		printf("%3d %3d  %3d     %-3s %-7s %stive    %-24s\t",
+		printf("%3d %3d  %3d     %-3s %-7s %stive    %-27s ",
 		    i, attr->value, thresh,
 		    flags & WDSM_ATTR_ADVISORY ? "yes" : "no",
 		    flags & WDSM_ATTR_COLLECTIVE ? "online" : "offline",
@@ -574,7 +577,7 @@ static const struct {
 	{ 127, "Abort off-line test" },
 	{ 129, "Short captive" },
 	{ 130, "Extended captive" },
-	{ 256, "Unknown test" }, /* larger then uint8_t */
+	{ 256, "Unknown test" }, /* larger than uint8_t */
 	{ 0, NULL }
 };
 
@@ -944,7 +947,8 @@ device_identify(int argc, char *argv[])
 	 * Mitsumi ATAPI devices
 	 */
 
-	if (!((inqbuf->atap_config & WDC_CFG_ATAPI_MASK) == WDC_CFG_ATAPI &&
+	if (!(inqbuf->atap_config != WDC_CFG_CFA_MAGIC &&
+	      (inqbuf->atap_config & WDC_CFG_ATAPI) &&
 	      ((inqbuf->atap_model[0] == 'N' &&
 		  inqbuf->atap_model[1] == 'E') ||
 	       (inqbuf->atap_model[0] == 'F' &&
@@ -977,9 +981,13 @@ device_identify(int argc, char *argv[])
 		    ((uint64_t)inqbuf->atap_wwn[2] << 16) |
 		    ((uint64_t)inqbuf->atap_wwn[3] <<  0));
 
-	printf("Device type: %s, %s\n", inqbuf->atap_config & WDC_CFG_ATAPI ?
-	       "ATAPI" : "ATA", inqbuf->atap_config & ATA_CFG_FIXED ? "fixed" :
-	       "removable");
+	printf("Device type: %s",
+		inqbuf->atap_config == WDC_CFG_CFA_MAGIC ? "CF-ATA" :
+		 (inqbuf->atap_config & WDC_CFG_ATAPI ? "ATAPI" : "ATA"));
+	if (inqbuf->atap_config != WDC_CFG_CFA_MAGIC)
+		printf(", %s",
+		 inqbuf->atap_config & ATA_CFG_FIXED ? "fixed" : "removable");
+	printf("\n");
 
 	compute_capacity(inqbuf, &capacity, &sectors, &secsize);
 
@@ -1064,7 +1072,7 @@ device_identify(int argc, char *argv[])
 			    inqbuf->atap_sata_features_supp, ata_sata_feat);
 	}
 
-	if ((inqbuf->atap_ata_major & WDC_VER_ATA8) &&
+	if ((inqbuf->atap_ata_major & WDC_VER_ATA7) &&
 	    (inqbuf->support_dsm & ATA_SUPPORT_DSM_TRIM))
 		printf("TRIM supported\n");
 

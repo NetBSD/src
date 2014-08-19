@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.9.8.1 2013/06/23 06:28:43 tls Exp $
+#	$NetBSD: Makefile,v 1.9.8.2 2014/08/20 00:00:11 tls Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	config
 
-.PATH:	${X11SRCDIR.freetype}/include/freetype
+.PATH:	${X11SRCDIR.freetype}/include
 
-INCSDIR=${X11INCDIR}/freetype2/freetype
+INCSDIR=${X11INCDIR}/freetype2
 
 INCS=	freetype.h ftadvanc.h ftbbox.h ftbdf.h ftbitmap.h ftbzip2.h ftcache.h \
 	ftchapters.h ftcid.h fterrdef.h fterrors.h ftgasp.h ftglyph.h \
@@ -30,6 +30,8 @@ CONFIG_SUBST=	${TOOL_SED} \
 		-e 's,%libdir%,${X11USRLIBDIR},g' \
 		-e 's,%includedir%,${X11INCDIR},' \
 		-e 's,%ft_version%,${FT_VERSION},' \
+		-e 's,%LIBS_CONFIG%,-lfreetype -lz -lbz2,' \
+		-e 's,%LIBSSTATIC_CONFIG%,-lfreetype -lz -lbz2,' \
 		-e 's,%build_libtool_libs%,yes,' \
 		-e 's,%FT2_EXTRA_LIBS%,,' \
 		-e 's,%LIBZ%,-lz,' \

@@ -1,7 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright 2005-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -29,8 +28,8 @@ main()
   long i;
   int c = 0;
 
-  in  = fopen ("pi.txt", "r");
-  out = fopen ("copy1.txt", "w");
+  in  = fopen (PI_TXT, "r");
+  out = fopen (COPY1_TXT, "w");
 
   if (!in || !out)
     {
@@ -55,6 +54,6 @@ main()
   fclose (in);
   fclose (out);
   printf ("Deleting copy.\n");	/* breakpoint 3 */
-  unlink ("copy1.txt");
+  unlink (COPY1_TXT);
   exit (0);			/* breakpoint 4 */
 }

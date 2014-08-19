@@ -1,4 +1,4 @@
-.\"     $NetBSD: microtime.9,v 1.18.12.1 2013/06/23 06:28:54 tls Exp $
+.\"     $NetBSD: microtime.9,v 1.18.12.2 2014/08/20 00:02:37 tls Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -152,12 +152,6 @@ As such, all calls to these functions are guaranteed to return a system time
 greater than or equal to the system time returned in any previous calls.
 Comparable functions exist to retrieve the time elapsed since boot; see
 .Xr microuptime 9 .
-.Sh SEE ALSO
-.Xr settimeofday 2 ,
-.Xr bintime_add 9 ,
-.Xr inittodr 9 ,
-.Xr time_second 9 ,
-.Xr tvtohz 9
 .Sh CODE REFERENCES
 The implementation of the
 .Fn microtime
@@ -172,11 +166,17 @@ The implementation of the time counter sources used by the
 is machine dependent,
 hence its location in the source code tree varies from architecture to
 architecture.
+.Sh SEE ALSO
+.Xr settimeofday 2 ,
+.Xr bintime_add 9 ,
+.Xr inittodr 9 ,
+.Xr time_second 9 ,
+.Xr tvtohz 9
 .Sh AUTHORS
 This manual page was written by
 .An Jeremy Cooper
 and
-.An Kelly Yancey Aq kbyanc@posi.net .
+.An Kelly Yancey Aq Mt kbyanc@posi.net .
 .Sh CAVEATS
 Despite the guarantee that the system realtime clock will always be
 monotonically increasing,

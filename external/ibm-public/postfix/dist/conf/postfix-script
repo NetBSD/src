@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: postfix-script,v 1.1.1.2 2010/06/17 18:06:08 tron Exp $
+#	$NetBSD: postfix-script,v 1.1.1.2.12.1 2014/08/19 23:59:41 tls Exp $
 #
 
 #++
@@ -126,7 +126,11 @@ start)
 		$daemon_directory/postfix-script check-warn
 	fi
 	$INFO starting the Postfix mail system
-	$daemon_directory/master &
+	# NOTE: wait in foreground process to get the initialization status.
+	$daemon_directory/master -w || {
+	    $FATAL "mail system startup failed"
+	    exit 1
+	}
 	;;
 
 drain)

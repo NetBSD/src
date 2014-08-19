@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.87.12.1 2013/02/25 00:29:55 tls Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.87.12.2 2014/08/20 00:04:29 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.87.12.1 2013/02/25 00:29:55 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.87.12.2 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -77,6 +77,10 @@ u_int	pffasttimo_now;
 static struct sysctllog *domain_sysctllog;
 static void sysctl_net_setup(void);
 
+/* ensure successful linkage even without any domains in link sets */
+static struct domain domain_dummy;
+__link_set_add_rodata(domains,domain_dummy);
+
 void
 domaininit(bool addroute)
 {
@@ -91,6 +95,8 @@ domaininit(bool addroute)
 	 * domain is added last.
 	 */
 	__link_set_foreach(dpp, domains) {
+		if (*dpp == &domain_dummy)
+			continue;
 		if ((*dpp)->dom_family == PF_ROUTE)
 			rt_domain = *dpp;
 		else
@@ -418,29 +424,29 @@ sysctl_dounpcb(struct kinfo_pcb *pcb, const struct socket *so)
 	pcb->ki_rcvq = so->so_rcv.sb_cc;
 	pcb->ki_sndq = so->so_snd.sb_cc;
 
-	un = (struct sockaddr_un *)&pcb->ki_src;
+	un = (struct sockaddr_un *)pcb->ki_spad;
 	/*
 	 * local domain sockets may bind without having a local
 	 * endpoint.  bleah!
 	 */
 	if (unp->unp_addr != NULL) {
-		un->sun_len = unp->unp_addr->sun_len;
-		un->sun_family = unp->unp_addr->sun_family;
-		strlcpy(un->sun_path, unp->unp_addr->sun_path,
-		    sizeof(pcb->ki_s));
+		/*
+		 * We've added one to sun_len when allocating to
+		 * hold terminating NUL which we want here.  See
+		 * makeun().
+		 */
+		memcpy(un, unp->unp_addr,
+		    min(sizeof(pcb->ki_spad), unp->unp_addr->sun_len + 1));
 	}
 	else {
 		un->sun_len = offsetof(struct sockaddr_un, sun_path);
 		un->sun_family = pcb->ki_family;
 	}
 	if (unp->unp_conn != NULL) {
-		un = (struct sockaddr_un *)&pcb->ki_dst;
+		un = (struct sockaddr_un *)pcb->ki_dpad;
 		if (unp->unp_conn->unp_addr != NULL) {
-			un->sun_len = unp->unp_conn->unp_addr->sun_len;
-			un->sun_family = unp->unp_conn->unp_addr->sun_family;
-			un->sun_family = unp->unp_conn->unp_addr->sun_family;
-			strlcpy(un->sun_path, unp->unp_conn->unp_addr->sun_path,
-				sizeof(pcb->ki_d));
+			memcpy(un, unp->unp_conn->unp_addr,
+			    min(sizeof(pcb->ki_dpad), unp->unp_conn->unp_addr->sun_len + 1));
 		}
 		else {
 			un->sun_len = offsetof(struct sockaddr_un, sun_path);
@@ -458,13 +464,12 @@ sysctl_dounpcb(struct kinfo_pcb *pcb, const struct socket *so)
 static int
 sysctl_unpcblist(SYSCTLFN_ARGS)
 {
-	struct file *fp, *dfp, *np;
+	struct file *fp, *dfp;
 	struct socket *so;
 	struct kinfo_pcb pcb;
 	char *dp;
-	u_int op, arg;
 	size_t len, needed, elem_size, out_size;
-	int error, elem_count, pf, type, pf2;
+	int error, elem_count, pf, type;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
 		return sysctl_query(SYSCTLFN_CALL(rnode));
@@ -485,8 +490,6 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 	}
 	error = 0;
 	dp = oldp;
-	op = name[0];
-	arg = name[1];
 	out_size = elem_size;
 	needed = 0;
 
@@ -495,7 +498,6 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 
 	pf = oname[1];
 	type = oname[2];
-	pf2 = (oldp == NULL) ? 0 : pf;
 
 	/*
 	 * allocate dummy file descriptor to make position in list.
@@ -512,7 +514,6 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 	 */
 	mutex_enter(&filelist_lock);
 	LIST_FOREACH(fp, &filehead, f_list) {
-	    	np = LIST_NEXT(fp, f_list);
 		if (fp->f_count == 0 || fp->f_type != DTYPE_SOCKET ||
 		    fp->f_data == NULL)
 			continue;
@@ -534,7 +535,6 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 			error = copyout(&pcb, dp, out_size);
 			closef(fp);
 			mutex_enter(&filelist_lock);
-			np = LIST_NEXT(dfp, f_list);
 			LIST_REMOVE(dfp, f_list);
 			if (error)
 				break;
@@ -560,11 +560,6 @@ sysctl_net_setup(void)
 {
 
 	KASSERT(domain_sysctllog == NULL);
-	sysctl_createv(&domain_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(&domain_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "local",

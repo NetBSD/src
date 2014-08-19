@@ -1,4 +1,4 @@
-# Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2009-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,6 +13,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+if { ![support_displaced_stepping] } { 
+    unsupported "displaced stepping"
+    return -1
+}
+
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
@@ -24,11 +29,9 @@ if {[mi_gdb_start]} {
 #
 # Start here
 #
-set testfile "non-stop-exit"
-set srcfile "$testfile.c"
-set binfile "$objdir/$subdir/mi-$testfile"
+standard_testfile non-stop-exit.c
 
-set options [list debug incdir=$objdir]
+set options [list debug]
 if {[gdb_compile_pthreads "$srcdir/$subdir/$srcfile" $binfile executable $options] != "" } {
     return -1
 }
@@ -36,20 +39,9 @@ if {[gdb_compile_pthreads "$srcdir/$subdir/$srcfile" $binfile executable $option
 mi_gdb_reinitialize_dir $srcdir/$subdir
 mi_gdb_load $binfile
 
-set supported 0
-gdb_test_multiple "-gdb-show non-stop" "" {
-    -re ".*\\^done,value=\"off\",supported=\"(\[^\"\]+)\"\r\n$mi_gdb_prompt$" {
-        if { $expect_out(1,string) == "1" } {
-            set supported 1
-        }
-    }
-    -re ".*$mi_gdb_prompt$" {
-    }
-}
-
 mi_gdb_test "-gdb-set non-stop 1" ".*"
 mi_gdb_test "-gdb-set target-async 1" ".*"
-detect_async
+mi_detect_async
 
 if { [mi_run_to_main] < 0 } {
     continue

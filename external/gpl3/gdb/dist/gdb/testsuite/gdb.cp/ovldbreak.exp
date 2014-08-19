@@ -1,5 +1,4 @@
-# Copyright (C) 1998, 1999, 2001, 2004, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,38 +24,24 @@
 
 global timeout
 set timeout 15
-if $tracelevel then {
-        strace $tracelevel
-        }
-
 #
 # test running programs
 #
 
 if { [skip_cplus_tests] } { continue }
 
-set testfile "ovldbreak"
-set srcfile ${testfile}.cc
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .cc
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
-     untested ovldbreak.exp
-     return -1
+if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
+    return -1
 }
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 
 # set it up at a breakpoint so we can play with the variable values
 #
-if ![runto_main] then {
+if {![runto_main]} {
     perror "couldn't run to breakpoint"
     continue
 }
-
-
 
 # When I ask gdb to set a breakpoint on an overloaded function,
 # gdb gives me a choice menu.  I might get stuck in that choice menu
@@ -124,68 +109,113 @@ proc set_bp_overloaded {name expectedmenu mychoice bpnumber linenumber} {
     }
 }
 
-# This is the expected menu for overload1arg.
+# Compute the expected menu for overload1arg.
 # Note the arg type variations for void and integer types.
 # This accommodates different versions of g++.
 
-set    menu_overload1arg "\\\[0\\\] cancel\r\n"
-append menu_overload1arg "\\\[1\\\] all\r\n"
-append menu_overload1arg "\\\[2\\\] foo::overload1arg\\(double\\) at.*$srcfile:121\r\n"
-append menu_overload1arg "\\\[3\\\] foo::overload1arg\\(float\\) at.*$srcfile:120\r\n"
-append menu_overload1arg "\\\[4\\\] foo::overload1arg\\((unsigned long|long unsigned)( int)?\\) at.*$srcfile:119\r\n"
-append menu_overload1arg "\\\[5\\\] foo::overload1arg\\(long( int)?\\) at.*$srcfile:118\r\n"
-append menu_overload1arg "\\\[6\\\] foo::overload1arg\\((unsigned int|unsigned)\\) at.*$srcfile:117\r\n"
-append menu_overload1arg "\\\[7\\\] foo::overload1arg\\(int\\) at.*$srcfile:116\r\n"
-append menu_overload1arg "\\\[8\\\] foo::overload1arg\\((unsigned short|short unsigned)( int)?\\) at.*$srcfile:115\r\n"
-append menu_overload1arg "\\\[9\\\] foo::overload1arg\\(short( int)?\\) at.*$srcfile:114\r\n"
-append menu_overload1arg "\\\[10\\\] foo::overload1arg\\(unsigned char\\) at.*$srcfile:113\r\n"
-append menu_overload1arg "\\\[11\\\] foo::overload1arg\\(signed char\\) at.*$srcfile:112\r\n"
-append menu_overload1arg "\\\[12\\\] foo::overload1arg\\(char\\) at.*$srcfile:111\r\n"
-append menu_overload1arg "\\\[13\\\] foo::overload1arg\\((void|)\\) at.*$srcfile:110\r\n"
-append menu_overload1arg "> $"
+# Probe for the real types.  This will do some unnecessary checking
+# for some simple types (like "int"), but it's just easier to loop
+# over all_types instead of calling out just the exceptions.
+# This list /must/ remain in the same order that the methods are
+# called in the source code.  Otherwise the order in which breakpoints
+# are hit (tested below) will be incorrect.
+set all_types [list void char signed_char unsigned_char short_int \
+		   unsigned_short_int int unsigned_int long_int \
+		   unsigned_long_int float double]
+
+# ARGUMENTS is an array that will map from synthetic type to argument
+# expressions in the source code, which is of the form "arg = $decimal".
+# ARGUMENTS stores this decimal number.
+array set arguments {
+    void ""
+    char 2
+    signed_char 3
+    unsigned_char 4
+    short_int 5
+    unsigned_short_int 6
+    int 7
+    unsigned_int 8
+    long_int 9
+    unsigned_long_int 10
+    float 100(.0)?
+    double 200(.0)?
+}
+
+unset -nocomplain line types
+foreach type $all_types {
+    # TYPES is an array that maps the synthetic names in ALL_TYPES
+    # to the real type used in the debugger.  These will be checked
+    # below and changed if the debugger thinks they are different from
+    # their default values.
+    set types($type) [join [split $type "_"] " "]
+
+    # LINE is an array that will map from synthetic type to line number.
+    # in the source code.
+    set line($type) [gdb_get_line_number "fo1 $type"]
+
+    # Probe for the actual type.
+    gdb_test_multiple "print &foo::overload1arg($types($type))" \
+        "probe $types($type)" {
+            -re ".*\<foo::.*\>.*$gdb_prompt $" {
+	        regexp {<.*>} $expect_out(0,string) func
+	        regexp {\(.*\)} $func real_type
+
+	        # Store the real type into TYPES.
+	        set types($type) [string trim $real_type {()}]
+
+	        # Create an inverse mapping of the actual type to
+	        # the synthetic type.
+	        set type_map("$types($type)") $type
+	        pass "detect $type"
+	    }
+    }
+}
+
+# This is a list of the actual overloaded method arguments.
+set overloads {}
+foreach type $all_types {
+    lappend overloads $types($type)
+}
+
+# Sort this list alphabetically.
+set overloads [lsort $overloads]
+
+# Create the menu list.
+set items {"cancel" "all"}
+foreach ovld $overloads {
+    lappend items "$srcfile:foo::overload1arg\\($ovld\\)"
+}
+set menu_items {}
+set idx 0
+foreach item $items {
+    lappend menu_items ".$idx. .*$item"
+    incr idx
+}
+set menu_overload1arg [join $menu_items {[\r\n]*}]
+append menu_overload1arg {[\r\n]*> $}
 
 # Set multiple-symbols to "ask", to allow us to test the use
 # of the multiple-choice menu when breaking on an overloaded method.
 gdb_test_no_output "set multiple-symbols ask"
 
 # Set breakpoints on foo::overload1arg, one by one.
-
-set_bp_overloaded "foo::overload1arg" "$menu_overload1arg" 12    2 111
-set_bp_overloaded "foo::overload1arg" "$menu_overload1arg" 11    3 112
-set_bp_overloaded "foo::overload1arg" "$menu_overload1arg" 10    4 113
-set_bp_overloaded "foo::overload1arg" "$menu_overload1arg"  9    5 114
-set_bp_overloaded "foo::overload1arg" "$menu_overload1arg"  8    6 115
-set_bp_overloaded "foo::overload1arg" "$menu_overload1arg"  7    7 116
-set_bp_overloaded "foo::overload1arg" "$menu_overload1arg"  6    8 117
-set_bp_overloaded "foo::overload1arg" "$menu_overload1arg"  5    9 118
-set_bp_overloaded "foo::overload1arg" "$menu_overload1arg"  4   10 119
-set_bp_overloaded "foo::overload1arg" "$menu_overload1arg"  3   11 120
-set_bp_overloaded "foo::overload1arg" "$menu_overload1arg"  2   12 121
-set_bp_overloaded "foo::overload1arg" "$menu_overload1arg" 13   13 110
-
-
+set bpnum 1
+set method "foo::overload1arg"
+for {set idx 0} {$idx < [llength $overloads]} {incr idx} {
+    set type [lindex $overloads $idx]
+    set_bp_overloaded $method $menu_overload1arg \
+	[expr {$idx + 2}] [incr bpnum] $line($type_map("$type"))
+}
 
 # Verify the breakpoints.
-
-gdb_test "info break" \
-    "Num     Type\[\t \]+Disp Enb Address\[\t \]+What.*
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in main(\\((|void)\\))? at.*$srcfile:49\r
-\[\t \]+breakpoint already hit 1 time\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(char\\) at.*$srcfile:111\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(signed char\\) at.*$srcfile:112\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(unsigned char\\) at.*$srcfile:113\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(short( int)?\\) at.*$srcfile:114\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\((unsigned short|short unsigned)( int)?\\) at.*$srcfile:115\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(int\\) at.*$srcfile:116\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\((unsigned|unsigned int)\\) at.*$srcfile:117\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(long( int)?\\) at.*$srcfile:118\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\((unsigned long|long unsigned)( int)?\\) at.*$srcfile:119\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(float\\) at.*$srcfile:120\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(double\\) at.*$srcfile:121\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\((void|)\\) at.*$srcfile:110" \
-    "breakpoint info (after setting one-by-one)"
-
-
+set bptable "Num     Type\[\t \]+Disp Enb Address\[\t \]+What.*"
+append bptable "\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in main(\\((|void)\\))? at.*$srcfile:49\[\r\n\]+"
+append bptable "\[\t \]+breakpoint already hit 1 time\[\r\n\]+"
+foreach ovld $overloads {
+    append bptable [format "\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(%s\\) at.*$srcfile:%d\[\r\n\]+" $ovld \
+			$line($type_map("$ovld"))]
+}
+gdb_test "info break" $bptable "breakpoint info (after setting one-by-one)"
 
 # Test choice "cancel".
 # This is copy-and-paste from set_bp_overloaded.
@@ -225,25 +255,7 @@ gdb_expect {
     }
 }
 
-gdb_test "info break" \
-    "Num     Type\[\t \]+Disp Enb Address\[\t \]+What.*
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in main(\\((|void)\\))? at.*$srcfile:49\r
-\[\t \]+breakpoint already hit 1 time\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(char\\) at.*$srcfile:111\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(signed char\\) at.*$srcfile:112\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(unsigned char\\) at.*$srcfile:113\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(short( int)?\\) at.*$srcfile:114\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\((unsigned short|short unsigned)( int)?\\) at.*$srcfile:115\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(int\\) at.*$srcfile:116\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\((unsigned|unsigned int)\\) at.*$srcfile:117\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(long( int)?\\) at.*$srcfile:118\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\((unsigned long|long unsigned)( int)?\\) at.*$srcfile:119\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(float\\) at.*$srcfile:120\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(double\\) at.*$srcfile:121\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\((void|)\\) at.*$srcfile:110" \
-    "breakpoint info (after cancel)"
-
-
+gdb_test "info break" $bptable "breakpoint info (after cancel)"
 
 # Delete these breakpoints.
 
@@ -279,7 +291,7 @@ gdb_expect {
         # Choose all.
         send_gdb "1\n"
         gdb_expect {
-            -re "Breakpoint $decimal at $hex: file.*$srcfile, line 121.\r\nBreakpoint $decimal at $hex: file.*$srcfile, line 120.\r\nBreakpoint $decimal at $hex: file.*$srcfile, line 119.\r\nBreakpoint $decimal at $hex: file.*$srcfile, line 118.\r\nBreakpoint $decimal at $hex: file.*$srcfile, line 117.\r\nBreakpoint $decimal at $hex: file.*$srcfile, line 116.\r\nBreakpoint $decimal at $hex: file.*$srcfile, line 115.\r\nBreakpoint $decimal at $hex: file.*$srcfile, line 114.\r\nBreakpoint $decimal at $hex: file.*$srcfile, line 113.\r\nBreakpoint $decimal at $hex: file.*$srcfile, line 112.\r\nBreakpoint $decimal at $hex: file.*$srcfile, line 111.\r\nBreakpoint $decimal at $hex: file.*$srcfile, line 110.\r\nwarning: Multiple breakpoints were set.\r\nUse the .delete. command to delete unwanted breakpoints.\r\n$gdb_prompt $" {
+	    -re "Breakpoint $decimal at $hex: foo::overload1arg. .12 locations.\r\n.*$gdb_prompt $" {
                 pass "set bp on overload1arg all"
             }
             -re ".*$gdb_prompt $" {
@@ -304,66 +316,73 @@ gdb_expect {
     }
 }
 
-gdb_test "info break" \
-    "Num     Type\[\t \]+Disp Enb Address\[\t \]+What.*
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(double\\) at.*$srcfile:121\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(float\\) at.*$srcfile:120\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\((unsigned long|long unsigned)( int)?\\) at.*$srcfile:119\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(long( int)?\\) at.*$srcfile:118\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\((unsigned|unsigned int)\\) at.*$srcfile:117\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(int\\) at.*$srcfile:116\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\((unsigned short|short unsigned)( int)?\\) at.*$srcfile:115\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(short( int)?\\) at.*$srcfile:114\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(unsigned char\\) at.*$srcfile:113\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(signed char\\) at.*$srcfile:112\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(char\\) at.*$srcfile:111\r
-\[0-9\]+\[\t \]+breakpoint     keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\((void|)\\) at.*$srcfile:110" \
-    "breakpoint info (after setting on all)"
+# Create the breakpoint table for "info breakpoint".
+set bptable "Num     Type\[\t \]+Disp Enb Address\[\t \]+What.*\[\r\n]+"
+append bptable "\[0-9\]+\[\t \]+breakpoint\[\t \]+keep\[\t \]y\[\t \]+<MULTIPLE>.*\[\r\n\]+"
+foreach ovld {void char signed_char unsigned_char short_int \
+		  unsigned_short_int int unsigned_int long_int \
+		  unsigned_long_int float double} {
+  append bptable [format "\[0-9\]+.\[0-9\]+\[\t \]+y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(%s\\) at.*$srcfile:%d\[\r\n\]+" \
+		      $types($ovld) $line($ovld)]
+}
 
-
+gdb_test "info break" $bptable "breakpoint info (after setting on all)"
 
 # Run through each breakpoint.
+proc continue_to_bp_overloaded {bpnumber might_fail line argtype argument} {
+    global gdb_prompt hex decimal srcfile
 
-# NOTE: carlton/2003-02-03: I'm seeing failures on some of the tests,
-# with the wrong arg being printed out.  Michael Chastain sees
-# failures at times, too, albeit fewer than I do.
+    if {$argument == ""} {
+        set actuals ""
+    } else {
+        set actuals "arg=$argument"
+        if {[regexp {char} $argtype]} {
+	    append actuals " \\'\\\\00$argument\\'"
+      }
+    }
 
-proc continue_to_bp_overloaded {might_kfail bpnumber argtype actuals} {
-    global gdb_prompt hex decimal srcfile 
+    if {[string match $argtype "void"]} {
+        set body "return $decimal;"
+    } else {
+        set body "arg = 0; return $decimal;"
+    }
 
-    send_gdb "continue\n"
-    gdb_expect {
-	-re "Continuing.\r\n\r\nBreakpoint ${bpnumber}, (${hex} in )?foo::overload1arg(\\(${argtype}\\))? \\(this=${hex}(, )?${actuals}\\) at.*${srcfile}:${decimal}\r\n${decimal}\[\t \]+int foo::overload1arg \\(${argtype}( arg)?\\).*\r\n.*$gdb_prompt $" {
-	    pass "continue to bp overloaded : ${argtype}"
-	}
-	-re "Continuing.\r\n\r\nBreakpoint ${bpnumber}, (${hex} in )?foo::overload1arg(\\(${argtype}\\))? \\(this=${hex}, arg=.*\\) at.*${srcfile}:${decimal}\r\n${decimal}\[\t \]+int foo::overload1arg \\(${argtype}( arg)?\\).*\r\n.*$gdb_prompt $" {
-	    if $might_kfail {
-		kfail "gdb/1025" "continue to bp overloaded : ${argtype}"
-	    } else {
-		fail "continue to bp overloaded : ${argtype}"
-	    }
-	}
-        -re ".*$gdb_prompt $" {
-	    fail "continue to bp overloaded : ${argtype}" 
-	}
-        timeout {
-	    fail "continue to bp overloaded : ${argtype} (timeout)"
-	}
+    gdb_test_multiple "continue" "continue to bp overloaded : $argtype" {
+        -re "Continuing.\r\n\r\nBreakpoint $bpnumber, foo::overload1arg \\(this=${hex}(, )?$actuals\\) at .*$srcfile:$line\r\n$decimal\[\t \]+{ $body }.*$gdb_prompt $" {
+            pass "continue to bp overloaded : $argtype"
+        }
+
+        -re "Continuing.\r\n\r\nBreakpoint $bpnumber, foo::overload1arg \\(this=${hex}, arg=.*\\) at .*$srcfile:$line\r\n$decimal\[\t \]+{ $body }.*$gdb_prompt $" {
+            if $might_kfail {
+                kfail "c++/8130" "continue to bp overloaded : $argtype"
+            } else {
+                fail "continue to bp overloaded : $argtype"
+            }
+        }
     }
 }
 
-continue_to_bp_overloaded 0 25 "(void|)" ""
-continue_to_bp_overloaded 1 24 "char" "arg=2 \\'\\\\002\\'"
-continue_to_bp_overloaded 1 23 "signed char" "arg=3 \\'\\\\003\\'"
-continue_to_bp_overloaded 1 22 "unsigned char" "arg=4 \\'\\\\004\\'"
-continue_to_bp_overloaded 1 21 "short" "arg=5"
-continue_to_bp_overloaded 1 20 "unsigned short" "arg=6"
-continue_to_bp_overloaded 0 19 "int" "arg=7"
-continue_to_bp_overloaded 0 18 "(unsigned|unsigned int)" "arg=8"
-continue_to_bp_overloaded 0 17 "long" "arg=9"
-continue_to_bp_overloaded 0 16 "unsigned long" "arg=10"
-continue_to_bp_overloaded 0 15 "float" "arg=100"
-continue_to_bp_overloaded 1 14 "double" "arg=200"
+# An array which describes which of these methods might be expected
+# to kfail on GCC 2.95. See C++/8210.
+array set might_fail {
+    void 0
+    char 1
+    signed_char 1
+    unsigned_char 1
+    short_int 1
+    unsigned_short_int 1
+    int 0
+    unsigned_int 0
+    long_int 0
+    unsigned_long_int 0
+    float 0
+    double 1
+}
+
+foreach type $all_types {
+    continue_to_bp_overloaded 14 $might_fail($type) $line($type) \
+	$type $arguments($type)
+}
 
 # Test breaking on an overloaded function when multiple-symbols
 # is set to "cancel"
@@ -375,8 +394,9 @@ gdb_test "break foo::foofunc" \
 # is set to "all"
 gdb_test_no_output "set multiple-symbols all"
 gdb_test "break foo::foofunc" \
-         "Breakpoint \[0-9\]+ at ${hex}: file .*ovldbreak\\.cc, line \[0-9\]+\\.\r\nBreakpoint \[0-9\]+ at ${hex}: file .*ovldbreak\\.cc, line \[0-9\]+\\.\r\nwarning: Multiple breakpoints were set\\.\r\nUse the \"delete\" command to delete unwanted breakpoints\\."
+         "Breakpoint \[0-9\]+ at ${hex}: foo::foofunc. .2 locations..*"
 
 # That's all, folks.
 
+unset -nocomplain line types
 gdb_continue_to_end "finish program"

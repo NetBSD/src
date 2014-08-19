@@ -24,7 +24,7 @@
 /* Stop elf32-sh.c from defining any target vectors.  */
 #define SH_TARGET_ALREADY_DEFINED
 #define sh_find_elf_flags           sh_symbian_find_elf_flags
-#define sh_elf_get_flags_from_mach  sh_symbian_elf_get_flags_from_mach 
+#define sh_elf_get_flags_from_mach  sh_symbian_elf_get_flags_from_mach
 #include "elf32-sh.c"
 
 
@@ -129,7 +129,7 @@ sh_symbian_import_as (struct bfd_link_info *info, bfd * abfd,
 	bfd_set_error (bfd_error_invalid_operation);
 	_bfd_error_handler (_("%B: IMPORT AS directive for %s conceals previous IMPORT AS"),
 			    abfd, current_name);
-	return FALSE;	    
+	return FALSE;
       }
 
   if ((node = bfd_malloc (sizeof * node)) == NULL)
@@ -148,7 +148,7 @@ sh_symbian_import_as (struct bfd_link_info *info, bfd * abfd,
     }
   else
     strcpy (node->current_name, current_name);
-  
+
   if ((node->new_name = bfd_malloc (strlen (new_name) + 1)) == NULL)
     {
       if (SYMBIAN_DEBUG)
@@ -378,7 +378,7 @@ sh_symbian_process_embedded_commands (struct bfd_link_info *info, bfd * abfd,
 	  if (SYMBIAN_DEBUG)
 	    fprintf (stderr, "offset into .directive section: %ld\n",
 		     (long) (directive - (char *) contents));
-	  
+
 	  bfd_set_error (bfd_error_invalid_operation);
 	  _bfd_error_handler (_("%B: Unrecognised .directive command: %s"),
 			      abfd, directive);
@@ -409,7 +409,7 @@ sh_symbian_process_directives (bfd *abfd, struct bfd_link_info *info)
 
   if (!contents)
     bfd_set_error (bfd_error_no_memory);
-  else 
+  else
     {
       if (bfd_get_section_contents (abfd, sec, contents, 0, sz))
 	result = sh_symbian_process_embedded_commands (info, abfd, sec, contents);
@@ -444,9 +444,9 @@ sh_symbian_relocate_section (bfd *                  output_bfd,
       symbol_rename *                ptr;
       bfd_size_type                  num_global_syms;
       unsigned long		     num_local_syms;
-      
+
       BFD_ASSERT (! elf_bad_symtab (input_bfd));
- 
+
       symtab_hdr       = & elf_tdata (input_bfd)->symtab_hdr;
       hash_table       = elf_hash_table (info);
       num_local_syms   = symtab_hdr->sh_info;
@@ -469,52 +469,37 @@ sh_symbian_relocate_section (bfd *                  output_bfd,
 		fprintf (stderr, "IMPORT AS: current symbol '%s' does not exist\n", ptr->current_name);
 	      continue;
 	    }
-	  
-	  new_hash = elf_link_hash_lookup (hash_table, ptr->new_name, FALSE, FALSE, TRUE);
 
+	  new_hash = elf_link_hash_lookup (hash_table, ptr->new_name,
+					   FALSE, FALSE, TRUE);
 	  /* If we could not find the symbol then it is a new, undefined symbol.
 	     Symbian want this behaviour - ie they want to be able to rename the
 	     reference in a reloc from one undefined symbol to another, new and
 	     undefined symbol.  So we create that symbol here.  */
 	  if (new_hash == NULL)
 	    {
-	      asection *                     psec = bfd_und_section_ptr;
-	      Elf_Internal_Sym               new_sym;
-	      bfd_vma                        new_value = 0;
-	      bfd_boolean                    skip;
-	      bfd_boolean                    override;
-	      bfd_boolean                    type_change_ok;
-	      bfd_boolean                    size_change_ok;
-
-	      new_sym.st_value = 0;
-	      new_sym.st_size  = 0;
-	      new_sym.st_name  = -1;
-	      new_sym.st_info  = ELF_ST_INFO (STB_GLOBAL, STT_FUNC);
-	      new_sym.st_other = ELF_ST_VISIBILITY (STV_DEFAULT);
-	      new_sym.st_shndx = SHN_UNDEF;
-	      new_sym.st_target_internal = 0;
-
-	      if (! _bfd_elf_merge_symbol (input_bfd, info,
-					   ptr->new_name, & new_sym,
-					   & psec, & new_value, NULL,
-					   & new_hash, & skip,
-					   & override, & type_change_ok,
-					   & size_change_ok))
+	      struct bfd_link_hash_entry *bh = NULL;
+	      bfd_boolean collect = get_elf_backend_data (input_bfd)->collect;
+	      if (_bfd_generic_link_add_one_symbol (info, input_bfd,
+						    ptr->new_name, BSF_GLOBAL,
+						    bfd_und_section_ptr, 0,
+						    NULL, FALSE, collect,
+						    &bh))
 		{
-		  _bfd_error_handler (_("%B: Failed to add renamed symbol %s"),
-				      input_bfd, ptr->new_name);
-		  continue;
+		  new_hash = (struct elf_link_hash_entry *) bh;
+		  new_hash->type = STT_FUNC;
+		  new_hash->non_elf = 0;
+
+		  if (SYMBIAN_DEBUG)
+		    fprintf (stderr, "Created new symbol %s\n", ptr->new_name);
 		}
-	      /* XXX - should we check psec, skip, override etc ?  */
+	    }
 
-	      new_hash->root.type = bfd_link_hash_undefined;
-
-	      /* Allow the symbol to become local if necessary.  */
-	      if (new_hash->dynindx == -1)
-		new_hash->def_regular = 1;
-
-	      if (SYMBIAN_DEBUG)
-		fprintf (stderr, "Created new symbol %s\n", ptr->new_name);
+	  if (new_hash == NULL)
+	    {
+	      _bfd_error_handler (_("%B: Failed to add renamed symbol %s"),
+				  input_bfd, ptr->new_name);
+	      continue;
 	    }
 
 	  /* Convert the new_hash value into a index into the table of symbol hashes.  */
@@ -568,7 +553,7 @@ sh_symbian_relocate_section (bfd *                  output_bfd,
 	  int                          r_type;
 	  unsigned long                r_symndx;
 	  struct elf_link_hash_entry * h;
-      
+
 	  r_symndx = ELF32_R_SYM (rel->r_info);
 	  r_type = ELF32_R_TYPE (rel->r_info);
 
@@ -612,7 +597,7 @@ sh_symbian_relocate_section (bfd *                  output_bfd,
 	      }
 	}
     }
-  
+
   return sh_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 				  contents, relocs, local_syms, local_sections);
 }

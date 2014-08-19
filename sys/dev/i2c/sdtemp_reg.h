@@ -1,4 +1,4 @@
-/*	$NetBSD: sdtemp_reg.h,v 1.5 2010/07/12 03:39:05 pgoyette Exp $	*/
+/*	$NetBSD: sdtemp_reg.h,v 1.5.18.1 2014/08/20 00:03:37 tls Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * Following definitions derived from JEDEC Standard 21-C section 4.7
  * available at http://www.jedec.org/download/search/4_07R15.pdf
  */
-#define	SDTEMP_ADDRMASK			0x78
+#define	SDTEMP_ADDRMASK			0x3f8
 #define	SDTEMP_ADDR			0x18	/* I2C address 001 1xxx */
 
 #define	SDTEMP_REG_CAPABILITY		0x00
@@ -124,6 +124,12 @@
 #define	STTS_424_MASK			0xFFFF
 #define	STTS_424E_DEVICE_ID		0x0000
 #define	STTS_424E_MASK			0xFFFE
+#define	STTS_3000_DEVICE_ID		0x0200
+#define	STTS_3000_MASK			0xFFFF
+#define	STTS_2002_DEVICE_ID		0x0300
+#define	STTS_2002_MASK			0xFFFF
+#define	STTS_2004_DEVICE_ID		0x2201
+#define	STTS_2004_MASK			0xFFFF
 
 /* According to datasheets, both the CAT6095 and CAT34TS02 have the same ID */
 

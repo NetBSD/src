@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi.h,v 1.1 2012/07/26 06:21:57 skrll Exp $	*/
+/*	$NetBSD: rpi.h,v 1.1.4.1 2014/08/20 00:02:56 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -37,11 +37,11 @@
 /*
  * Kernel VM space: KERNEL_VM_BASE to 0xf0000000
  */
-#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
+#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x20000000)
 #define	KERNEL_VM_SIZE		(0xf0000000 - KERNEL_VM_BASE)
 
 /*
- * BCM2835 ARM Peripherals 
+ * BCM2835 ARM Peripherals
  */
 #define	RPI_KERNEL_IO_VBASE		BCM2835_PERIPHERALS_VBASE
 #define	RPI_KERNEL_IO_PBASE		BCM2835_PERIPHERALS_BASE

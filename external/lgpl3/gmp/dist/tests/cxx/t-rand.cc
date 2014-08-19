@@ -2,20 +2,20 @@
 
 Copyright 2002, 2003 Free Software Foundation, Inc.
 
-This file is part of the GNU MP Library.
+This file is part of the GNU MP Library test suite.
 
-The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+The GNU MP Library test suite is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 3 of the License,
+or (at your option) any later version.
 
-The GNU MP Library is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+The GNU MP Library test suite is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received a copy of the GNU General Public License along with
+the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
 
 #include "gmp.h"
 #include "gmpxx.h"
@@ -113,13 +113,24 @@ check_mpf (void)
     r.seed(a);
     mpf_class b;
     b = r.get_f();
+    mpf_class c(r.get_f());
+    ASSERT_ALWAYS (c.get_prec() == mpf_get_default_prec());
+    mpf_class d(r.get_f(),212);
+    ASSERT_ALWAYS (d.get_prec() >= 212);
   }
   {
     gmp_randclass r(gmp_randinit_default);
-    int a = 123, b = 128;
+    int a = 123, b = 198;
     r.seed(a);
     mpf_class c;
     c = r.get_f(b);
+    ASSERT_ALWAYS (c.get_prec() == mpf_get_default_prec());
+    mpf_class d(r.get_f(b));
+    ASSERT_ALWAYS (d.get_prec() >= 198);
+    mpf_class e(r.get_f(b)-r.get_f());
+    ASSERT_ALWAYS (e.get_prec() >= 198);
+    mpf_class f(r.get_f(60),300);
+    ASSERT_ALWAYS (f.get_prec() >= 300);
   }
 }
 

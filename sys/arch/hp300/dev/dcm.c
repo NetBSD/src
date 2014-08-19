@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.83 2011/04/24 16:26:55 rmind Exp $	*/
+/*	$NetBSD: dcm.c,v 1.83.14.1 2014/08/20 00:03:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.83 2011/04/24 16:26:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.83.14.1 2014/08/20 00:03:00 tls Exp $");
 
 #include "opt_kgdb.h"
 
@@ -331,8 +331,18 @@ static dev_type_tty(dcmtty);
 static dev_type_poll(dcmpoll);
 
 const struct cdevsw dcm_cdevsw = {
-	dcmopen, dcmclose, dcmread, dcmwrite, dcmioctl,
-	dcmstop, dcmtty, dcmpoll, nommap, ttykqfilter, D_TTY
+	.d_open = dcmopen,
+	.d_close = dcmclose,
+	.d_read = dcmread,
+	.d_write = dcmwrite,
+	.d_ioctl = dcmioctl,
+	.d_stop = dcmstop,
+	.d_tty = dcmtty,
+	.d_poll = dcmpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 static int
@@ -1385,9 +1395,11 @@ dcmsetischeme(int brd, int flags)
 		for (i = 0; i < NDCMPORT; i++) {
 			tp = sc->sc_tty[i];
 
-			if ((c = tp->t_cc[VSTART]) != _POSIX_VDISABLE)
+			c = tty_getctrlchar(tp, VSTART);
+			if (c != _POSIX_VDISABLE)
 				dcm->dcm_bmap[c].data_data |= (1 << i);
-			if ((c = tp->t_cc[VSTOP]) != _POSIX_VDISABLE)
+			c = tty_getctrlchar(tp, VSTOP);
+			if (c != _POSIX_VDISABLE)
 				dcm->dcm_bmap[c].data_data |= (1 << i);
 		}
 	}
@@ -1585,6 +1597,7 @@ dcmcngetc(dev_t dev)
 	c = fifo->data_char;
 	stat = fifo->data_stat;
 	pp->r_head = (head + 2) & RX_MASK;
+	__USE(stat);
 	splx(s);
 	return c;
 }
@@ -1612,7 +1625,7 @@ dcmcnputc(dev_t dev, int c)
 	}
 	tail = pp->t_tail & TX_MASK;
 	while (tail != (pp->t_head & TX_MASK))
-		;
+		continue;
 	dcm_cn->dcm_tfifos[3-DCMCONSPORT][tail].data_char = c;
 	pp->t_tail = tail = (tail + 1) & TX_MASK;
 	SEM_LOCK(dcm_cn);
@@ -1620,7 +1633,7 @@ dcmcnputc(dev_t dev, int c)
 	dcm_cn->dcm_cr |= (1 << DCMCONSPORT);
 	SEM_UNLOCK(dcm_cn);
 	while (tail != (pp->t_head & TX_MASK))
-		;
+		continue;
 	/*
 	 * If board interrupts are enabled, just let our completion
 	 * interrupt through in case some other port on the board
@@ -1631,5 +1644,6 @@ dcmcnputc(dev_t dev, int c)
 		stat = dcm_cn->dcm_iir;
 		SEM_UNLOCK(dcm_cn);
 	}
+	__USE(stat);
 	splx(s);
 }

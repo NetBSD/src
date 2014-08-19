@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.25 2010/05/15 10:01:44 tsutsui Exp $	*/
+/*	$NetBSD: fb.c,v 1.25.18.1 2014/08/20 00:03:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.25 2010/05/15 10:01:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.25.18.1 2014/08/20 00:03:16 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -253,6 +253,10 @@ fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		wdf->width = dc->dc_ri.ri_width;
 		wdf->depth = dc->dc_ri.ri_depth;
 		wdf->cmsize = 2;
+		return 0;
+
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = dc->dc_ri.ri_stride;
 		return 0;
 
 	case WSDISPLAYIO_SVIDEO:

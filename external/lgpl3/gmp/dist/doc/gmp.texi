@@ -15,7 +15,7 @@ This manual describes how to install and use the GNU multiple precision
 arithmetic library, version @value{VERSION}.
 
 Copyright 1991, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software
+2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software
 Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document under
@@ -137,7 +137,6 @@ How to install and use the GNU multiple precision arithmetic library, version @v
 * Formatted Output::           @code{printf} style output.
 * Formatted Input::            @code{scanf} style input.
 * C++ Class Interface::        Class wrappers around GMP types.
-* BSD Compatible Functions::   All functions found in BSD MP.
 * Custom Allocation::          How to customize the internal allocation.
 * Language Bindings::          Using GMP from other languages.
 * Algorithms::                 What happens behind the scenes.
@@ -714,7 +713,7 @@ the binaries won't run on older members of the family, and might run slower on
 other members, older or newer.  The best idea is always to build GMP for the
 exact machine type you intend to run it on.
 
-The following CPUs have specific support.  See @file{configure.in} for details
+The following CPUs have specific support.  See @file{configure.ac} for details
 of what code and compiler options they select.
 
 @itemize @bullet
@@ -860,11 +859,7 @@ CPUs not listed will use generic C code.
 @item Generic C Build
 @cindex Generic C
 If some of the assembly code causes problems, or if otherwise desired, the
-generic C code can be selected with CPU @samp{none}.  For example,
-
-@example
-./configure --host=none-unknown-freebsd3.5
-@end example
+generic C code can be selected with the configure @option{--disable-assembly}.
 
 Note that this will run quite slowly, but it should be portable and should at
 least make it possible to get something running if all else fails.
@@ -924,8 +919,7 @@ preprocessor should be set in @samp{CPPFLAGS} rather than @samp{CFLAGS}.
 Compiling is done with both @samp{CPPFLAGS} and @samp{CFLAGS}, but
 preprocessing uses just @samp{CPPFLAGS}.  This distinction is because most
 preprocessors won't accept all the flags the compiler does.  Preprocessing is
-done separately in some configure tests, and in the @samp{ansi2knr} support
-for K&R compilers.
+done separately in some configure tests.
 
 @item @option{CC_FOR_BUILD}
 @cindex @code{CC_FOR_BUILD}
@@ -1040,17 +1034,9 @@ debugging memory related problems (@pxref{Debugging}).
 @item FFT Multiplication, @option{--disable-fft}
 @cindex FFT multiplication
 @cindex @code{--disable-fft}
-By default multiplications are done using Karatsuba, 3-way Toom, and
-Fermat FFT@.  The FFT is only used on large to very large operands and can be
-disabled to save code size if desired.
-
-@item Berkeley MP, @option{--enable-mpbsd}
-@cindex Berkeley MP compatible functions
-@cindex BSD MP compatible functions
-@cindex @code{--enable-mpbsd}
-The Berkeley MP compatibility library (@file{libmp}) and header file
-(@file{mp.h}) are built and installed only if @option{--enable-mpbsd} is used.
-@xref{BSD Compatible Functions}.
+By default multiplications are done using Karatsuba, 3-way Toom, higher degree
+Toom, and Fermat FFT@.  The FFT is only used on large to very large operands
+and can be disabled to save code size if desired.
 
 @item Assertion Checking, @option{--enable-assert}
 @cindex Assertion checking
@@ -1299,7 +1285,7 @@ support for n32 or 64 and so only gets a 32-bit limb and the MIPS 2 code.
 @item PowerPC 64 (@samp{powerpc64}, @samp{powerpc620}, @samp{powerpc630}, @samp{powerpc970}, @samp{power4}, @samp{power5})
 @cindex PowerPC
 @table @asis
-@item @samp{ABI=aix64}
+@item @samp{ABI=mode64}
 @cindex AIX
 The AIX 64 ABI uses 64-bit limbs and pointers and is the default on PowerPC 64
 @samp{*-*-aix*} systems.  Applications must be compiled with
@@ -1309,31 +1295,28 @@ gcc  -maix64
 xlc  -q64
 @end example
 
-@item @samp{ABI=mode64}
-The @samp{mode64} ABI uses 64-bit limbs and pointers, and is the default on
-64-bit GNU/Linux, BSD, and Mac OS X/Darwin systems.  Applications must be
-compiled with
+On 64-bit GNU/Linux, BSD, and Mac OS X/Darwin systems, the applications must
+be compiled with
 
 @example
 gcc  -m64
 @end example
 
 @item @samp{ABI=mode32}
-@cindex AIX
 The @samp{mode32} ABI uses a 64-bit @code{long long} limb but with the chip
 still in 32-bit mode and using 32-bit calling conventions.  This is the default
 for systems where the true 64-bit ABI is unavailable.  No special compiler
-options are typically needed for applications.
+options are typically needed for applications.  This ABI is not available under
+AIX.
 
 @item @samp{ABI=32}
 This is the basic 32-bit PowerPC ABI, with a 32-bit limb.  No special compiler
 options are needed for applications.
 @end table
 
-GMP's speed is greatest for @samp{aix64} and @samp{mode64}.  In @samp{ABI=32}
-only the 32-bit ISA is used and this doesn't make full use of a 64-bit chip.
-On a suitable system we could perhaps use more of the ISA, but there are no
-plans to do so.
+GMP's speed is greatest for the @samp{mode64} ABI, the @samp{mode32} ABI is 2nd
+best.  In @samp{ABI=32} only the 32-bit ISA is used and this doesn't make full
+use of a 64-bit chip.
 
 @sp 1
 @need 1000
@@ -1602,11 +1585,11 @@ In GMP, CPU types @samp{power*} and @samp{powerpc*} will each use instructions
 not available on the other, so it's important to choose the right one for the
 CPU that will be used.  Currently GMP has no assembly code support for using
 just the common instruction subset.  To get executables that run on both, the
-current suggestion is to use the generic C code (CPU @samp{none}), possibly
-with appropriate compiler options (like @samp{-mcpu=common} for
+current suggestion is to use the generic C code (@option{--disable-assembly}),
+possibly with appropriate compiler options (like @samp{-mcpu=common} for
 @command{gcc}).  CPU @samp{rs6000} (which is not a CPU but a family of
 workstations) is accepted by @file{config.sub}, but is currently equivalent to
-@samp{none}.
+@option{--disable-assembly}.
 
 @item Sparc CPU Types
 @cindex Sparc
@@ -1624,8 +1607,8 @@ Options, gcc, Using the GNU Compiler Collection (GCC)}).
 This makes that code unsuitable for use with the special V9
 @samp{-mcmodel=embmedany} (which uses @code{g4} as a data segment pointer), and
 for applications wanting to use those registers for special purposes.  In these
-cases the only suggestion currently is to build GMP with CPU @samp{none} to
-avoid the assembly code.
+cases the only suggestion currently is to build GMP with
+@option{--disable-assembly} to avoid the assembly code.
 
 @item SunOS 4
 @cindex SunOS
@@ -1942,7 +1925,7 @@ systems it's an @code{int} for efficiency, and on some systems it will be
 @tindex @code{mp_bitcnt_t}
 Counts of bits of a multi-precision number are represented in the C type
 @code{mp_bitcnt_t}.  Currently this is always an @code{unsigned long}, but on
-some systems it will be an @code{unsigned long long} in the future .
+some systems it will be an @code{unsigned long long} in the future.
 
 @cindex Random state
 @tindex @code{gmp_randstate_t}
@@ -1980,11 +1963,6 @@ Functions})
 Functions for floating-point arithmetic, with names beginning with
 @code{mpf_}.  The associated type is @code{mpf_t}.  There are about 60
 functions is this class.  (@pxref{Floating-point Functions})
-
-@item
-Functions compatible with Berkeley MP, such as @code{itom}, @code{madd}, and
-@code{mult}.  The associated type is @code{MINT}.  (@pxref{BSD Compatible
-Functions})
 
 @item
 Fast low-level functions that operate on natural numbers.  These are used by
@@ -2209,7 +2187,7 @@ For GMP i.j.k, these numbers will be i, j, and k, respectively.
 @findex gmp_version
 The GMP version number, as a null-terminated string, in the form ``i.j.k''.
 This release is @nicode{"@value{VERSION}"}.  Note that the format ``i.j'' was
-used when k was zero was used before version 4.3.0.
+used, before version 4.3.0, when k was zero.
 @end deftypevr
 
 @defmac __GMP_CC
@@ -2225,7 +2203,7 @@ strings.
 @cindex Past GMP versions
 @cindex Upward compatibility
 
-This version of GMP is upwardly binary compatible with all 4.x and 3.x
+This version of GMP is upwardly binary compatible with all 5.x, 4.x, and 3.x
 versions, and upwardly compatible at the source level with all 2.x versions,
 with the following exceptions.
 
@@ -2237,16 +2215,15 @@ with other @code{mpn} functions.
 @item
 @code{mpf_get_prec} counted precision slightly differently in GMP 3.0 and
 3.0.1, but in 3.1 reverted to the 2.x style.
+
+@item
+@code{mpn_bdivmod}, documented as preliminary in GMP 4, has been removed.
 @end itemize
 
 There are a number of compatibility issues between GMP 1 and GMP 2 that of
-course also apply when porting applications from GMP 1 to GMP 4.  Please
+course also apply when porting applications from GMP 1 to GMP 5.  Please
 see the GMP 2 manual for details.
 
-The Berkeley MP compatibility library (@pxref{BSD Compatible Functions}) is
-source and binary compatible with the standard @file{libmp}.
-
-@c @enumerate
 @c @item Integer division functions round the result differently.  The obsolete
 @c functions (@code{mpz_div}, @code{mpz_divmod}, @code{mpz_mdiv},
 @c @code{mpz_mdivmod}, etc) now all use floor rounding (i.e., they round the
@@ -2625,7 +2602,7 @@ Applications using the low-level @code{mpn} functions, however, will benefit
 from @option{--enable-assert} since it adds checks on the parameters of most
 such functions, many of which have subtle restrictions on their usage.  Note
 however that only the generic C code has checks, not the assembly code, so
-CPU @samp{none} should be used for maximum checking.
+@option{--disable-assembly} should be used for maximum checking.
 
 @item Temporary Memory Checking
 The build option @option{--enable-alloca=debug} arranges that each block of
@@ -2643,7 +2620,7 @@ To summarize the above, a GMP build for maximum debuggability would be
 
 @example
 ./configure --disable-shared --enable-assert \
-  --enable-alloca=debug --host=none CFLAGS=-g
+  --enable-alloca=debug --disable-assembly CFLAGS=-g
 @end example
 
 For C++, add @samp{--enable-cxx CXXFLAGS=-g}.
@@ -2660,23 +2637,30 @@ very very slowly.  On GNU/Linux for example,
 
 @cindex @command{checkergcc}
 @example
-./configure --host=none-pc-linux-gnu CC=checkergcc
+./configure --disable-assembly CC=checkergcc
 @end example
 
-@samp{--host=none} must be used, since the GMP assembly code doesn't support
-the checking scheme.  The GMP C++ features cannot be used, since current
-versions of checker (0.9.9.1) don't yet support the standard C++ library.
+@option{--disable-assembly} must be used, since the GMP assembly code doesn't
+support the checking scheme.  The GMP C++ features cannot be used, since
+current versions of checker (0.9.9.1) don't yet support the standard C++
+library.
 
 @item Valgrind
 @cindex Valgrind
-The valgrind program (@uref{http://valgrind.org/}) is a memory
-checker for x86s.  It translates and emulates machine instructions to do
+Valgrind (@uref{http://valgrind.org/}) is a memory checker for x86, ARM, MIPS,
+PowerPC, and S/390.  It translates and emulates machine instructions to do
 strong checks for uninitialized data (at the level of individual bits), memory
 accesses through bad pointers, and memory leaks.
 
-Recent versions of Valgrind are getting support for MMX and SSE/SSE2
-instructions, for past versions GMP will need to be configured not to use
-those, ie.@: for an x86 without them (for instance plain @samp{i486}).
+Valgrind does not always support every possible instruction, in particular
+ones recently added to an ISA.  Valgrind might therefore be incompatible with
+a recent GMP or even a less recent GMP which is compiled using a recent GCC.
+
+GMP's assembly code sometimes promotes a read of the limbs to some larger size,
+for efficiency.  GMP will do this even at the start and end of a multilimb
+operand, using naturally aligned operations on the larger type.  This may lead
+to benign reads outside of allocated areas, triggering complaints from
+Valgrind.  Valgrind's option @samp{--partial-loads-ok=yes} should help.
 
 @item Other Problems
 Any suspected bug in GMP itself should be isolated to make sure it's not an
@@ -2899,7 +2883,10 @@ informative (@samp{where} in @command{gdb}, or @samp{$C} in @command{adb}).
 Please do not send core dumps, executables or @command{strace}s.
 
 @item
-The configuration options you used when building GMP, if any.
+The @samp{configure} options you used when building GMP, if any.
+
+@item
+The output from @samp{configure}, as printed to stdout, with any options used.
 
 @item
 The name of the compiler and its version.  For @command{gcc}, get the version
@@ -3009,10 +2996,13 @@ Initialize @var{x}, with space for @var{n}-bit numbers, and set its value to 0.
 Calling this function instead of @code{mpz_init} or @code{mpz_inits} is never
 necessary; reallocation is handled automatically by GMP when needed.
 
-@var{n} is only the initial space, @var{x} will grow automatically in
-the normal way, if necessary, for subsequent values stored.  @code{mpz_init2}
-makes it possible to avoid such reallocations if a maximum size is known in
-advance.
+While @var{n} defines the initial space, @var{x} will grow automatically in the
+normal way, if necessary, for subsequent values stored.  @code{mpz_init2} makes
+it possible to avoid such reallocations if a maximum size is known in advance.
+
+In preparation for an operation, GMP often allocates one limb more than
+ultimately needed.  To make sure GMP will not perform reallocation for
+@var{x}, you need to add the number of bits in @code{mp_limb_t} to @var{n}.
 @end deftypefun
 
 @deftypefun void mpz_clear (mpz_t @var{x})
@@ -3044,19 +3034,19 @@ to give memory back to the heap.
 These functions assign new values to already initialized integers
 (@pxref{Initializing Integers}).
 
-@deftypefun void mpz_set (mpz_t @var{rop}, mpz_t @var{op})
+@deftypefun void mpz_set (mpz_t @var{rop}, const mpz_t @var{op})
 @deftypefunx void mpz_set_ui (mpz_t @var{rop}, unsigned long int @var{op})
 @deftypefunx void mpz_set_si (mpz_t @var{rop}, signed long int @var{op})
 @deftypefunx void mpz_set_d (mpz_t @var{rop}, double @var{op})
-@deftypefunx void mpz_set_q (mpz_t @var{rop}, mpq_t @var{op})
-@deftypefunx void mpz_set_f (mpz_t @var{rop}, mpf_t @var{op})
+@deftypefunx void mpz_set_q (mpz_t @var{rop}, const mpq_t @var{op})
+@deftypefunx void mpz_set_f (mpz_t @var{rop}, const mpf_t @var{op})
 Set the value of @var{rop} from @var{op}.
 
 @code{mpz_set_d}, @code{mpz_set_q} and @code{mpz_set_f} truncate @var{op} to
 make it an integer.
 @end deftypefun
 
-@deftypefun int mpz_set_str (mpz_t @var{rop}, char *@var{str}, int @var{base})
+@deftypefun int mpz_set_str (mpz_t @var{rop}, const char *@var{str}, int @var{base})
 Set the value of @var{rop} from @var{str}, a null-terminated C string in base
 @var{base}.  White space is allowed in the string, and is simply ignored.
 
@@ -3115,7 +3105,7 @@ functions, it can be used as the source or destination operand for the ordinary
 integer functions.  Don't use an initialize-and-set function on a variable
 already initialized!
 
-@deftypefun void mpz_init_set (mpz_t @var{rop}, mpz_t @var{op})
+@deftypefun void mpz_init_set (mpz_t @var{rop}, const mpz_t @var{op})
 @deftypefunx void mpz_init_set_ui (mpz_t @var{rop}, unsigned long int @var{op})
 @deftypefunx void mpz_init_set_si (mpz_t @var{rop}, signed long int @var{op})
 @deftypefunx void mpz_init_set_d (mpz_t @var{rop}, double @var{op})
@@ -3123,7 +3113,7 @@ Initialize @var{rop} with limb space and set the initial numeric value from
 @var{op}.
 @end deftypefun
 
-@deftypefun int mpz_init_set_str (mpz_t @var{rop}, char *@var{str}, int @var{base})
+@deftypefun int mpz_init_set_str (mpz_t @var{rop}, const char *@var{str}, int @var{base})
 Initialize @var{rop} and set its value like @code{mpz_set_str} (see its
 documentation above for details).
 
@@ -3143,7 +3133,7 @@ This section describes functions for converting GMP integers to standard C
 types.  Functions for converting @emph{to} GMP integers are described in
 @ref{Assigning Integers} and @ref{I/O of Integers}.
 
-@deftypefun {unsigned long int} mpz_get_ui (mpz_t @var{op})
+@deftypefun {unsigned long int} mpz_get_ui (const mpz_t @var{op})
 Return the value of @var{op} as an @code{unsigned long}.
 
 If @var{op} is too big to fit an @code{unsigned long} then just the least
@@ -3151,7 +3141,7 @@ significant bits that do fit are returned.  The sign of @var{op} is ignored,
 only the absolute value is used.
 @end deftypefun
 
-@deftypefun {signed long int} mpz_get_si (mpz_t @var{op})
+@deftypefun {signed long int} mpz_get_si (const mpz_t @var{op})
 If @var{op} fits into a @code{signed long int} return the value of @var{op}.
 Otherwise return the least significant part of @var{op}, with the same sign
 as @var{op}.
@@ -3161,8 +3151,8 @@ result is probably not very useful.  To find out if the value will fit, use
 the function @code{mpz_fits_slong_p}.
 @end deftypefun
 
-@deftypefun double mpz_get_d (mpz_t @var{op})
-Convert @var{op} to a @code{double}, truncating if necessary (ie.@: rounding
+@deftypefun double mpz_get_d (const mpz_t @var{op})
+Convert @var{op} to a @code{double}, truncating if necessary (i.e.@: rounding
 towards zero).
 
 If the exponent from the conversion is too big, the result is system
@@ -3170,8 +3160,8 @@ dependent.  An infinity is returned where available.  A hardware overflow trap
 may or may not occur.
 @end deftypefun
 
-@deftypefun double mpz_get_d_2exp (signed long int *@var{exp}, mpz_t @var{op})
-Convert @var{op} to a @code{double}, truncating if necessary (ie.@: rounding
+@deftypefun double mpz_get_d_2exp (signed long int *@var{exp}, const mpz_t @var{op})
+Convert @var{op} to a @code{double}, truncating if necessary (i.e.@: rounding
 towards zero), and returning the exponent separately.
 
 The return value is in the range @math{0.5@le{}@GMPabs{@var{d}}<1} and the
@@ -3184,7 +3174,7 @@ This is similar to the standard C @code{frexp} function (@pxref{Normalization
 Functions,,, libc, The GNU C Library Reference Manual}).
 @end deftypefun
 
-@deftypefun {char *} mpz_get_str (char *@var{str}, int @var{base}, mpz_t @var{op})
+@deftypefun {char *} mpz_get_str (char *@var{str}, int @var{base}, const mpz_t @var{op})
 Convert @var{op} to a string of digits in base @var{base}.  The base argument
 may vary from 2 to 62 or from @minus{}2 to @minus{}36.
 
@@ -3215,45 +3205,45 @@ or the given @var{str}.
 @cindex Integer arithmetic functions
 @cindex Arithmetic functions
 
-@deftypefun void mpz_add (mpz_t @var{rop}, mpz_t @var{op1}, mpz_t @var{op2})
-@deftypefunx void mpz_add_ui (mpz_t @var{rop}, mpz_t @var{op1}, unsigned long int @var{op2})
+@deftypefun void mpz_add (mpz_t @var{rop}, const mpz_t @var{op1}, const mpz_t @var{op2})
+@deftypefunx void mpz_add_ui (mpz_t @var{rop}, const mpz_t @var{op1}, unsigned long int @var{op2})
 Set @var{rop} to @math{@var{op1} + @var{op2}}.
 @end deftypefun
 
-@deftypefun void mpz_sub (mpz_t @var{rop}, mpz_t @var{op1}, mpz_t @var{op2})
-@deftypefunx void mpz_sub_ui (mpz_t @var{rop}, mpz_t @var{op1}, unsigned long int @var{op2})
-@deftypefunx void mpz_ui_sub (mpz_t @var{rop}, unsigned long int @var{op1}, mpz_t @var{op2})
+@deftypefun void mpz_sub (mpz_t @var{rop}, const mpz_t @var{op1}, const mpz_t @var{op2})
+@deftypefunx void mpz_sub_ui (mpz_t @var{rop}, const mpz_t @var{op1}, unsigned long int @var{op2})
+@deftypefunx void mpz_ui_sub (mpz_t @var{rop}, unsigned long int @var{op1}, const mpz_t @var{op2})
 Set @var{rop} to @var{op1} @minus{} @var{op2}.
 @end deftypefun
 
-@deftypefun void mpz_mul (mpz_t @var{rop}, mpz_t @var{op1}, mpz_t @var{op2})
-@deftypefunx void mpz_mul_si (mpz_t @var{rop}, mpz_t @var{op1}, long int @var{op2})
-@deftypefunx void mpz_mul_ui (mpz_t @var{rop}, mpz_t @var{op1}, unsigned long int @var{op2})
+@deftypefun void mpz_mul (mpz_t @var{rop}, const mpz_t @var{op1}, const mpz_t @var{op2})
+@deftypefunx void mpz_mul_si (mpz_t @var{rop}, const mpz_t @var{op1}, long int @var{op2})
+@deftypefunx void mpz_mul_ui (mpz_t @var{rop}, const mpz_t @var{op1}, unsigned long int @var{op2})
 Set @var{rop} to @math{@var{op1} @GMPtimes{} @var{op2}}.
 @end deftypefun
 
-@deftypefun void mpz_addmul (mpz_t @var{rop}, mpz_t @var{op1}, mpz_t @var{op2})
-@deftypefunx void mpz_addmul_ui (mpz_t @var{rop}, mpz_t @var{op1}, unsigned long int @var{op2})
+@deftypefun void mpz_addmul (mpz_t @var{rop}, const mpz_t @var{op1}, const mpz_t @var{op2})
+@deftypefunx void mpz_addmul_ui (mpz_t @var{rop}, const mpz_t @var{op1}, unsigned long int @var{op2})
 Set @var{rop} to @math{@var{rop} + @var{op1} @GMPtimes{} @var{op2}}.
 @end deftypefun
 
-@deftypefun void mpz_submul (mpz_t @var{rop}, mpz_t @var{op1}, mpz_t @var{op2})
-@deftypefunx void mpz_submul_ui (mpz_t @var{rop}, mpz_t @var{op1}, unsigned long int @var{op2})
+@deftypefun void mpz_submul (mpz_t @var{rop}, const mpz_t @var{op1}, const mpz_t @var{op2})
+@deftypefunx void mpz_submul_ui (mpz_t @var{rop}, const mpz_t @var{op1}, unsigned long int @var{op2})
 Set @var{rop} to @math{@var{rop} - @var{op1} @GMPtimes{} @var{op2}}.
 @end deftypefun
 
-@deftypefun void mpz_mul_2exp (mpz_t @var{rop}, mpz_t @var{op1}, mp_bitcnt_t @var{op2})
+@deftypefun void mpz_mul_2exp (mpz_t @var{rop}, const mpz_t @var{op1}, mp_bitcnt_t @var{op2})
 @cindex Bit shift left
 Set @var{rop} to @m{@var{op1} \times 2^{op2}, @var{op1} times 2 raised to
 @var{op2}}.  This operation can also be defined as a left shift by @var{op2}
 bits.
 @end deftypefun
 
-@deftypefun void mpz_neg (mpz_t @var{rop}, mpz_t @var{op})
+@deftypefun void mpz_neg (mpz_t @var{rop}, const mpz_t @var{op})
 Set @var{rop} to @minus{}@var{op}.
 @end deftypefun
 
-@deftypefun void mpz_abs (mpz_t @var{rop}, mpz_t @var{op})
+@deftypefun void mpz_abs (mpz_t @var{rop}, const mpz_t @var{op})
 Set @var{rop} to the absolute value of @var{op}.
 @end deftypefun
 
@@ -3274,43 +3264,43 @@ same way as for normal C @code{int} arithmetic.
 @c  between each, and seem to let tex do a better job of page breaks than an
 @c  @sp 1 in the middle of one big set.
 
-@deftypefun void mpz_cdiv_q (mpz_t @var{q}, mpz_t @var{n}, mpz_t @var{d})
-@deftypefunx void mpz_cdiv_r (mpz_t @var{r}, mpz_t @var{n}, mpz_t @var{d})
-@deftypefunx void mpz_cdiv_qr (mpz_t @var{q}, mpz_t @var{r}, mpz_t @var{n}, mpz_t @var{d})
+@deftypefun void mpz_cdiv_q (mpz_t @var{q}, const mpz_t @var{n}, const mpz_t @var{d})
+@deftypefunx void mpz_cdiv_r (mpz_t @var{r}, const mpz_t @var{n}, const mpz_t @var{d})
+@deftypefunx void mpz_cdiv_qr (mpz_t @var{q}, mpz_t @var{r}, const mpz_t @var{n}, const mpz_t @var{d})
 @maybepagebreak
-@deftypefunx {unsigned long int} mpz_cdiv_q_ui (mpz_t @var{q}, mpz_t @var{n}, @w{unsigned long int @var{d}})
-@deftypefunx {unsigned long int} mpz_cdiv_r_ui (mpz_t @var{r}, mpz_t @var{n}, @w{unsigned long int @var{d}})
-@deftypefunx {unsigned long int} mpz_cdiv_qr_ui (mpz_t @var{q}, mpz_t @var{r}, @w{mpz_t @var{n}}, @w{unsigned long int @var{d}})
-@deftypefunx {unsigned long int} mpz_cdiv_ui (mpz_t @var{n}, @w{unsigned long int @var{d}})
+@deftypefunx {unsigned long int} mpz_cdiv_q_ui (mpz_t @var{q}, const mpz_t @var{n}, @w{unsigned long int @var{d}})
+@deftypefunx {unsigned long int} mpz_cdiv_r_ui (mpz_t @var{r}, const mpz_t @var{n}, @w{unsigned long int @var{d}})
+@deftypefunx {unsigned long int} mpz_cdiv_qr_ui (mpz_t @var{q}, mpz_t @var{r}, @w{const mpz_t @var{n}}, @w{unsigned long int @var{d}})
+@deftypefunx {unsigned long int} mpz_cdiv_ui (const mpz_t @var{n}, @w{unsigned long int @var{d}})
 @maybepagebreak
-@deftypefunx void mpz_cdiv_q_2exp (mpz_t @var{q}, mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
-@deftypefunx void mpz_cdiv_r_2exp (mpz_t @var{r}, mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
+@deftypefunx void mpz_cdiv_q_2exp (mpz_t @var{q}, const mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
+@deftypefunx void mpz_cdiv_r_2exp (mpz_t @var{r}, const mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
 @end deftypefun
 
-@deftypefun void mpz_fdiv_q (mpz_t @var{q}, mpz_t @var{n}, mpz_t @var{d})
-@deftypefunx void mpz_fdiv_r (mpz_t @var{r}, mpz_t @var{n}, mpz_t @var{d})
-@deftypefunx void mpz_fdiv_qr (mpz_t @var{q}, mpz_t @var{r}, mpz_t @var{n}, mpz_t @var{d})
+@deftypefun void mpz_fdiv_q (mpz_t @var{q}, const mpz_t @var{n}, const mpz_t @var{d})
+@deftypefunx void mpz_fdiv_r (mpz_t @var{r}, const mpz_t @var{n}, const mpz_t @var{d})
+@deftypefunx void mpz_fdiv_qr (mpz_t @var{q}, mpz_t @var{r}, const mpz_t @var{n}, const mpz_t @var{d})
 @maybepagebreak
-@deftypefunx {unsigned long int} mpz_fdiv_q_ui (mpz_t @var{q}, mpz_t @var{n}, @w{unsigned long int @var{d}})
-@deftypefunx {unsigned long int} mpz_fdiv_r_ui (mpz_t @var{r}, mpz_t @var{n}, @w{unsigned long int @var{d}})
-@deftypefunx {unsigned long int} mpz_fdiv_qr_ui (mpz_t @var{q}, mpz_t @var{r}, @w{mpz_t @var{n}}, @w{unsigned long int @var{d}})
-@deftypefunx {unsigned long int} mpz_fdiv_ui (mpz_t @var{n}, @w{unsigned long int @var{d}})
+@deftypefunx {unsigned long int} mpz_fdiv_q_ui (mpz_t @var{q}, const mpz_t @var{n}, @w{unsigned long int @var{d}})
+@deftypefunx {unsigned long int} mpz_fdiv_r_ui (mpz_t @var{r}, const mpz_t @var{n}, @w{unsigned long int @var{d}})
+@deftypefunx {unsigned long int} mpz_fdiv_qr_ui (mpz_t @var{q}, mpz_t @var{r}, @w{const mpz_t @var{n}}, @w{unsigned long int @var{d}})
+@deftypefunx {unsigned long int} mpz_fdiv_ui (const mpz_t @var{n}, @w{unsigned long int @var{d}})
 @maybepagebreak
-@deftypefunx void mpz_fdiv_q_2exp (mpz_t @var{q}, mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
-@deftypefunx void mpz_fdiv_r_2exp (mpz_t @var{r}, mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
+@deftypefunx void mpz_fdiv_q_2exp (mpz_t @var{q}, const mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
+@deftypefunx void mpz_fdiv_r_2exp (mpz_t @var{r}, const mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
 @end deftypefun
 
-@deftypefun void mpz_tdiv_q (mpz_t @var{q}, mpz_t @var{n}, mpz_t @var{d})
-@deftypefunx void mpz_tdiv_r (mpz_t @var{r}, mpz_t @var{n}, mpz_t @var{d})
-@deftypefunx void mpz_tdiv_qr (mpz_t @var{q}, mpz_t @var{r}, mpz_t @var{n}, mpz_t @var{d})
+@deftypefun void mpz_tdiv_q (mpz_t @var{q}, const mpz_t @var{n}, const mpz_t @var{d})
+@deftypefunx void mpz_tdiv_r (mpz_t @var{r}, const mpz_t @var{n}, const mpz_t @var{d})
+@deftypefunx void mpz_tdiv_qr (mpz_t @var{q}, mpz_t @var{r}, const mpz_t @var{n}, const mpz_t @var{d})
 @maybepagebreak
-@deftypefunx {unsigned long int} mpz_tdiv_q_ui (mpz_t @var{q}, mpz_t @var{n}, @w{unsigned long int @var{d}})
-@deftypefunx {unsigned long int} mpz_tdiv_r_ui (mpz_t @var{r}, mpz_t @var{n}, @w{unsigned long int @var{d}})
-@deftypefunx {unsigned long int} mpz_tdiv_qr_ui (mpz_t @var{q}, mpz_t @var{r}, @w{mpz_t @var{n}}, @w{unsigned long int @var{d}})
-@deftypefunx {unsigned long int} mpz_tdiv_ui (mpz_t @var{n}, @w{unsigned long int @var{d}})
+@deftypefunx {unsigned long int} mpz_tdiv_q_ui (mpz_t @var{q}, const mpz_t @var{n}, @w{unsigned long int @var{d}})
+@deftypefunx {unsigned long int} mpz_tdiv_r_ui (mpz_t @var{r}, const mpz_t @var{n}, @w{unsigned long int @var{d}})
+@deftypefunx {unsigned long int} mpz_tdiv_qr_ui (mpz_t @var{q}, mpz_t @var{r}, @w{const mpz_t @var{n}}, @w{unsigned long int @var{d}})
+@deftypefunx {unsigned long int} mpz_tdiv_ui (const mpz_t @var{n}, @w{unsigned long int @var{d}})
 @maybepagebreak
-@deftypefunx void mpz_tdiv_q_2exp (mpz_t @var{q}, mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
-@deftypefunx void mpz_tdiv_r_2exp (mpz_t @var{r}, mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
+@deftypefunx void mpz_tdiv_q_2exp (mpz_t @var{q}, const mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
+@deftypefunx void mpz_tdiv_r_2exp (mpz_t @var{r}, const mpz_t @var{n}, @w{mp_bitcnt_t @var{b}})
 @cindex Bit shift right
 
 @sp 1
@@ -3358,8 +3348,8 @@ the same as the bitwise logical functions do, whereas @code{mpz_tdiv_q_2exp}
 effectively treats @var{n} as sign and magnitude.
 @end deftypefun
 
-@deftypefun void mpz_mod (mpz_t @var{r}, mpz_t @var{n}, mpz_t @var{d})
-@deftypefunx {unsigned long int} mpz_mod_ui (mpz_t @var{r}, mpz_t @var{n}, @w{unsigned long int @var{d}})
+@deftypefun void mpz_mod (mpz_t @var{r}, const mpz_t @var{n}, const mpz_t @var{d})
+@deftypefunx {unsigned long int} mpz_mod_ui (mpz_t @var{r}, const mpz_t @var{n}, @w{unsigned long int @var{d}})
 Set @var{r} to @var{n} @code{mod} @var{d}.  The sign of the divisor is
 ignored; the result is always non-negative.
 
@@ -3368,8 +3358,8 @@ remainder as well as setting @var{r}.  See @code{mpz_fdiv_ui} above if only
 the return value is wanted.
 @end deftypefun
 
-@deftypefun void mpz_divexact (mpz_t @var{q}, mpz_t @var{n}, mpz_t @var{d})
-@deftypefunx void mpz_divexact_ui (mpz_t @var{q}, mpz_t @var{n}, unsigned long @var{d})
+@deftypefun void mpz_divexact (mpz_t @var{q}, const mpz_t @var{n}, const mpz_t @var{d})
+@deftypefunx void mpz_divexact_ui (mpz_t @var{q}, const mpz_t @var{n}, unsigned long @var{d})
 @cindex Exact division functions
 Set @var{q} to @var{n}/@var{d}.  These functions produce correct results only
 when it is known in advance that @var{d} divides @var{n}.
@@ -3379,9 +3369,9 @@ best choice when exact division is known to occur, for example reducing a
 rational to lowest terms.
 @end deftypefun
 
-@deftypefun int mpz_divisible_p (mpz_t @var{n}, mpz_t @var{d})
-@deftypefunx int mpz_divisible_ui_p (mpz_t @var{n}, unsigned long int @var{d})
-@deftypefunx int mpz_divisible_2exp_p (mpz_t @var{n}, mp_bitcnt_t @var{b})
+@deftypefun int mpz_divisible_p (const mpz_t @var{n}, const mpz_t @var{d})
+@deftypefunx int mpz_divisible_ui_p (const mpz_t @var{n}, unsigned long int @var{d})
+@deftypefunx int mpz_divisible_2exp_p (const mpz_t @var{n}, mp_bitcnt_t @var{b})
 @cindex Divisibility functions
 Return non-zero if @var{n} is exactly divisible by @var{d}, or in the case of
 @code{mpz_divisible_2exp_p} by @m{2^b,2^@var{b}}.
@@ -3392,9 +3382,9 @@ functions, @math{@var{d}=0} is accepted and following the rule it can be seen
 that only 0 is considered divisible by 0.
 @end deftypefun
 
-@deftypefun int mpz_congruent_p (mpz_t @var{n}, mpz_t @var{c}, mpz_t @var{d})
-@deftypefunx int mpz_congruent_ui_p (mpz_t @var{n}, unsigned long int @var{c}, unsigned long int @var{d})
-@deftypefunx int mpz_congruent_2exp_p (mpz_t @var{n}, mpz_t @var{c}, mp_bitcnt_t @var{b})
+@deftypefun int mpz_congruent_p (const mpz_t @var{n}, const mpz_t @var{c}, const mpz_t @var{d})
+@deftypefunx int mpz_congruent_ui_p (const mpz_t @var{n}, unsigned long int @var{c}, unsigned long int @var{d})
+@deftypefunx int mpz_congruent_2exp_p (const mpz_t @var{n}, const mpz_t @var{c}, mp_bitcnt_t @var{b})
 @cindex Divisibility functions
 @cindex Congruence functions
 Return non-zero if @var{n} is congruent to @var{c} modulo @var{d}, or in the
@@ -3415,8 +3405,8 @@ only when exactly equal.
 @cindex Exponentiation functions
 @cindex Powering functions
 
-@deftypefun void mpz_powm (mpz_t @var{rop}, mpz_t @var{base}, mpz_t @var{exp}, mpz_t @var{mod})
-@deftypefunx void mpz_powm_ui (mpz_t @var{rop}, mpz_t @var{base}, unsigned long int @var{exp}, mpz_t @var{mod})
+@deftypefun void mpz_powm (mpz_t @var{rop}, const mpz_t @var{base}, const mpz_t @var{exp}, const mpz_t @var{mod})
+@deftypefunx void mpz_powm_ui (mpz_t @var{rop}, const mpz_t @var{base}, unsigned long int @var{exp}, const mpz_t @var{mod})
 Set @var{rop} to @m{base^{exp} \bmod mod, (@var{base} raised to @var{exp})
 modulo @var{mod}}.
 
@@ -3425,7 +3415,7 @@ Negative @var{exp} is supported if an inverse @math{@var{base}^@W{-1} @bmod
 If an inverse doesn't exist then a divide by zero is raised.
 @end deftypefun
 
-@deftypefun void mpz_powm_sec (mpz_t @var{rop}, mpz_t @var{base}, mpz_t @var{exp}, mpz_t @var{mod})
+@deftypefun void mpz_powm_sec (mpz_t @var{rop}, const mpz_t @var{base}, const mpz_t @var{exp}, const mpz_t @var{mod})
 Set @var{rop} to @m{base^{exp} \bmod mod, (@var{base} raised to @var{exp})
 modulo @var{mod}}.
 
@@ -3438,7 +3428,7 @@ function entry.  This function is intended for cryptographic purposes, where
 resilience to side-channel attacks is desired.
 @end deftypefun
 
-@deftypefun void mpz_pow_ui (mpz_t @var{rop}, mpz_t @var{base}, unsigned long int @var{exp})
+@deftypefun void mpz_pow_ui (mpz_t @var{rop}, const mpz_t @var{base}, unsigned long int @var{exp})
 @deftypefunx void mpz_ui_pow_ui (mpz_t @var{rop}, unsigned long int @var{base}, unsigned long int @var{exp})
 Set @var{rop} to @m{base^{exp}, @var{base} raised to @var{exp}}.  The case
 @math{0^0} yields 1.
@@ -3451,25 +3441,25 @@ Set @var{rop} to @m{base^{exp}, @var{base} raised to @var{exp}}.  The case
 @cindex Integer root functions
 @cindex Root extraction functions
 
-@deftypefun int mpz_root (mpz_t @var{rop}, mpz_t @var{op}, unsigned long int @var{n})
+@deftypefun int mpz_root (mpz_t @var{rop}, const mpz_t @var{op}, unsigned long int @var{n})
 Set @var{rop} to @m{\lfloor\root n \of {op}\rfloor@C{},} the truncated integer
 part of the @var{n}th root of @var{op}.  Return non-zero if the computation
 was exact, i.e., if @var{op} is @var{rop} to the @var{n}th power.
 @end deftypefun
 
-@deftypefun void mpz_rootrem (mpz_t @var{root}, mpz_t @var{rem}, mpz_t @var{u}, unsigned long int @var{n})
+@deftypefun void mpz_rootrem (mpz_t @var{root}, mpz_t @var{rem}, const mpz_t @var{u}, unsigned long int @var{n})
 Set @var{root} to @m{\lfloor\root n \of {u}\rfloor@C{},} the truncated
 integer part of the @var{n}th root of @var{u}.  Set @var{rem} to the
 remainder, @m{(@var{u} - @var{root}^n),
 @var{u}@minus{}@var{root}**@var{n}}.
 @end deftypefun
 
-@deftypefun void mpz_sqrt (mpz_t @var{rop}, mpz_t @var{op})
+@deftypefun void mpz_sqrt (mpz_t @var{rop}, const mpz_t @var{op})
 Set @var{rop} to @m{\lfloor\sqrt{@var{op}}\rfloor@C{},} the truncated
 integer part of the square root of @var{op}.
 @end deftypefun
 
-@deftypefun void mpz_sqrtrem (mpz_t @var{rop1}, mpz_t @var{rop2}, mpz_t @var{op})
+@deftypefun void mpz_sqrtrem (mpz_t @var{rop1}, mpz_t @var{rop2}, const mpz_t @var{op})
 Set @var{rop1} to @m{\lfloor\sqrt{@var{op}}\rfloor, the truncated integer part
 of the square root of @var{op}}, like @code{mpz_sqrt}.  Set @var{rop2} to the
 remainder @m{(@var{op} - @var{rop1}^2),
@@ -3480,7 +3470,7 @@ If @var{rop1} and @var{rop2} are the same variable, the results are
 undefined.
 @end deftypefun
 
-@deftypefun int mpz_perfect_power_p (mpz_t @var{op})
+@deftypefun int mpz_perfect_power_p (const mpz_t @var{op})
 @cindex Perfect power functions
 @cindex Root testing functions
 Return non-zero if @var{op} is a perfect power, i.e., if there exist integers
@@ -3492,7 +3482,7 @@ Negative values of @var{op} are accepted, but of course can only be odd
 perfect powers.
 @end deftypefun
 
-@deftypefun int mpz_perfect_square_p (mpz_t @var{op})
+@deftypefun int mpz_perfect_square_p (const mpz_t @var{op})
 @cindex Perfect square functions
 @cindex Root testing functions
 Return non-zero if @var{op} is a perfect square, i.e., if the square root of
@@ -3506,7 +3496,7 @@ be perfect squares.
 @section Number Theoretic Functions
 @cindex Number theoretic functions
 
-@deftypefun int mpz_probab_prime_p (mpz_t @var{n}, int @var{reps})
+@deftypefun int mpz_probab_prime_p (const mpz_t @var{n}, int @var{reps})
 @cindex Prime testing functions
 @cindex Probable prime testing functions
 Determine whether @var{n} is prime.  Return 2 if @var{n} is definitely prime,
@@ -3514,9 +3504,10 @@ return 1 if @var{n} is probably prime (without being certain), or return 0 if
 @var{n} is definitely composite.
 
 This function does some trial divisions, then some Miller-Rabin probabilistic
-primality tests.  @var{reps} controls how many such tests are done, 5 to 10 is
-a reasonable number, more will reduce the chances of a composite being
-returned as ``probably prime''.
+primality tests.  The argument @var{reps} controls how many such tests are
+done; a higher value will reduce the chances of a composite being returned as
+``probably prime''.  25 is a reasonable number; a composite number will then be
+identified as a prime with a probability of less than @m{2^{-50},2^(-50)}.
 
 Miller-Rabin and similar tests can be more properly called compositeness
 tests.  Numbers which fail are known to be composite but those which pass
@@ -3524,7 +3515,7 @@ might be prime or might be composite.  Only a few composites pass, hence those
 which pass are considered probably prime.
 @end deftypefun
 
-@deftypefun void mpz_nextprime (mpz_t @var{rop}, mpz_t @var{op})
+@deftypefun void mpz_nextprime (mpz_t @var{rop}, const mpz_t @var{op})
 @cindex Next prime function
 Set @var{rop} to the next prime greater than @var{op}.
 
@@ -3535,7 +3526,7 @@ extremely small.
 
 @c mpz_prime_p not implemented as of gmp 3.0.
 
-@c @deftypefun int mpz_prime_p (mpz_t @var{n})
+@c @deftypefun int mpz_prime_p (const mpz_t @var{n})
 @c Return non-zero if @var{n} is prime and zero if @var{n} is a non-prime.
 @c This function is far slower than @code{mpz_probab_prime_p}, but then it
 @c never returns non-zero for composite numbers.
@@ -3546,15 +3537,15 @@ extremely small.
 @c prime, if the @var{reps} argument is in the suggested range.)
 @c @end deftypefun
 
-@deftypefun void mpz_gcd (mpz_t @var{rop}, mpz_t @var{op1}, mpz_t @var{op2})
+@deftypefun void mpz_gcd (mpz_t @var{rop}, const mpz_t @var{op1}, const mpz_t @var{op2})
 @cindex Greatest common divisor functions
 @cindex GCD functions
-Set @var{rop} to the greatest common divisor of @var{op1} and @var{op2}.
-The result is always positive even if one or both input operands
-are negative.
+Set @var{rop} to the greatest common divisor of @var{op1} and @var{op2}.  The
+result is always positive even if one or both input operands are negative.
+Except if both inputs are zero; then this function defines @math{gcd(0,0) = 0}.
 @end deftypefun
 
-@deftypefun {unsigned long int} mpz_gcd_ui (mpz_t @var{rop}, mpz_t @var{op1}, unsigned long int @var{op2})
+@deftypefun {unsigned long int} mpz_gcd_ui (mpz_t @var{rop}, const mpz_t @var{op1}, unsigned long int @var{op2})
 Compute the greatest common divisor of @var{op1} and @var{op2}.  If
 @var{rop} is not @code{NULL}, store the result there.
 
@@ -3564,22 +3555,35 @@ to the argument @var{op1}.  Note that the result will always fit if @var{op2}
 is non-zero.
 @end deftypefun
 
-@deftypefun void mpz_gcdext (mpz_t @var{g}, mpz_t @var{s}, mpz_t @var{t}, mpz_t @var{a}, mpz_t @var{b})
+@deftypefun void mpz_gcdext (mpz_t @var{g}, mpz_t @var{s}, mpz_t @var{t}, const mpz_t @var{a}, const mpz_t @var{b})
 @cindex Extended GCD
 @cindex GCD extended
 Set @var{g} to the greatest common divisor of @var{a} and @var{b}, and in
 addition set @var{s} and @var{t} to coefficients satisfying
 @math{@var{a}@GMPmultiply{}@var{s} + @var{b}@GMPmultiply{}@var{t} = @var{g}}.
 The value in @var{g} is always positive, even if one or both of @var{a} and
-@var{b} are negative.  The values in @var{s} and @var{t} are chosen such that
-@math{@GMPabs{@var{s}} @le{} @GMPabs{@var{b}}} and @math{@GMPabs{@var{t}}
-@le{} @GMPabs{@var{a}}}.
+@var{b} are negative (or zero if both inputs are zero).  The values in @var{s}
+and @var{t} are chosen such that normally, @math{@GMPabs{@var{s}} <
+@GMPabs{@var{b}} / (2 @var{g})} and @math{@GMPabs{@var{t}} < @GMPabs{@var{a}}
+/ (2 @var{g})}, and these relations define @var{s} and @var{t} uniquely.  There
+are a few exceptional cases:
+
+If @math{@GMPabs{@var{a}} = @GMPabs{@var{b}}}, then @math{@var{s} = 0},
+@math{@var{t} = sgn(@var{b})}.
+
+Otherwise, @math{@var{s} = sgn(@var{a})} if @math{@var{b} = 0} or
+@math{@GMPabs{@var{b}} = 2 @var{g}}, and @math{@var{t} = sgn(@var{b})} if
+@math{@var{a} = 0} or @math{@GMPabs{@var{a}} = 2 @var{g}}.
+
+In all cases, @math{@var{s} = 0} if and only if @math{@var{g} =
+@GMPabs{@var{b}}}, i.e., if @var{b} divides @var{a} or @math{@var{a} = @var{b}
+= 0}.
 
 If @var{t} is @code{NULL} then that value is not computed.
 @end deftypefun
 
-@deftypefun void mpz_lcm (mpz_t @var{rop}, mpz_t @var{op1}, mpz_t @var{op2})
-@deftypefunx void mpz_lcm_ui (mpz_t @var{rop}, mpz_t @var{op1}, unsigned long @var{op2})
+@deftypefun void mpz_lcm (mpz_t @var{rop}, const mpz_t @var{op1}, const mpz_t @var{op2})
+@deftypefunx void mpz_lcm_ui (mpz_t @var{rop}, const mpz_t @var{op1}, unsigned long @var{op2})
 @cindex Least common multiple functions
 @cindex LCM functions
 Set @var{rop} to the least common multiple of @var{op1} and @var{op2}.
@@ -3587,33 +3591,34 @@ Set @var{rop} to the least common multiple of @var{op1} and @var{op2}.
 @var{op2}.  @var{rop} will be zero if either @var{op1} or @var{op2} is zero.
 @end deftypefun
 
-@deftypefun int mpz_invert (mpz_t @var{rop}, mpz_t @var{op1}, mpz_t @var{op2})
+@deftypefun int mpz_invert (mpz_t @var{rop}, const mpz_t @var{op1}, const mpz_t @var{op2})
 @cindex Modular inverse functions
 @cindex Inverse modulo functions
 Compute the inverse of @var{op1} modulo @var{op2} and put the result in
 @var{rop}.  If the inverse exists, the return value is non-zero and @var{rop}
-will satisfy @math{0 @le{} @var{rop} < @var{op2}}.  If an inverse doesn't exist
-the return value is zero and @var{rop} is undefined.
+will satisfy @math{0 < @var{rop} < @GMPabs{@var{op2}}}.  If an inverse doesn't
+exist the return value is zero and @var{rop} is undefined.  The behaviour of
+this function is undefined when @var{op2} is zero.
 @end deftypefun
 
-@deftypefun int mpz_jacobi (mpz_t @var{a}, mpz_t @var{b})
+@deftypefun int mpz_jacobi (const mpz_t @var{a}, const mpz_t @var{b})
 @cindex Jacobi symbol functions
 Calculate the Jacobi symbol @m{\left(a \over b\right),
 (@var{a}/@var{b})}.  This is defined only for @var{b} odd.
 @end deftypefun
 
-@deftypefun int mpz_legendre (mpz_t @var{a}, mpz_t @var{p})
+@deftypefun int mpz_legendre (const mpz_t @var{a}, const mpz_t @var{p})
 @cindex Legendre symbol functions
 Calculate the Legendre symbol @m{\left(a \over p\right),
 (@var{a}/@var{p})}.  This is defined only for @var{p} an odd positive
 prime, and for such @var{p} it's identical to the Jacobi symbol.
 @end deftypefun
 
-@deftypefun int mpz_kronecker (mpz_t @var{a}, mpz_t @var{b})
-@deftypefunx int mpz_kronecker_si (mpz_t @var{a}, long @var{b})
-@deftypefunx int mpz_kronecker_ui (mpz_t @var{a}, unsigned long @var{b})
-@deftypefunx int mpz_si_kronecker (long @var{a}, mpz_t @var{b})
-@deftypefunx int mpz_ui_kronecker (unsigned long @var{a}, mpz_t @var{b})
+@deftypefun int mpz_kronecker (const mpz_t @var{a}, const mpz_t @var{b})
+@deftypefunx int mpz_kronecker_si (const mpz_t @var{a}, long @var{b})
+@deftypefunx int mpz_kronecker_ui (const mpz_t @var{a}, unsigned long @var{b})
+@deftypefunx int mpz_si_kronecker (long @var{a}, const mpz_t @var{b})
+@deftypefunx int mpz_ui_kronecker (unsigned long @var{a}, const mpz_t @var{b})
 @cindex Kronecker symbol functions
 Calculate the Jacobi symbol @m{\left(a \over b\right),
 (@var{a}/@var{b})} with the Kronecker extension @m{\left(a \over
@@ -3629,7 +3634,7 @@ or any number theory textbook.  See also the example program
 @file{demos/qcn.c} which uses @code{mpz_kronecker_ui}.
 @end deftypefun
 
-@deftypefun {mp_bitcnt_t} mpz_remove (mpz_t @var{rop}, mpz_t @var{op}, mpz_t @var{f})
+@deftypefun {mp_bitcnt_t} mpz_remove (mpz_t @var{rop}, const mpz_t @var{op}, const mpz_t @var{f})
 @cindex Remove factor functions
 @cindex Factor removal functions
 Remove all occurrences of the factor @var{f} from @var{op} and store the
@@ -3637,12 +3642,22 @@ result in @var{rop}.  The return value is how many such occurrences were
 removed.
 @end deftypefun
 
-@deftypefun void mpz_fac_ui (mpz_t @var{rop}, unsigned long int @var{op})
+@deftypefun void mpz_fac_ui (mpz_t @var{rop}, unsigned long int @var{n})
+@deftypefunx void mpz_2fac_ui (mpz_t @var{rop}, unsigned long int @var{n})
+@deftypefunx void mpz_mfac_uiui (mpz_t @var{rop}, unsigned long int @var{n}, unsigned long int @var{m})
 @cindex Factorial functions
-Set @var{rop} to @var{op}!, the factorial of @var{op}.
+Set @var{rop} to the factorial of @var{n}: @code{mpz_fac_ui} computes the plain factorial @var{n}!,
+@code{mpz_2fac_ui} computes the double-factorial @var{n}!!, and @code{mpz_mfac_uiui} the
+@var{m}-multi-factorial @m{n!^{(m)}, @var{n}!^(@var{m})}.
 @end deftypefun
 
-@deftypefun void mpz_bin_ui (mpz_t @var{rop}, mpz_t @var{n}, unsigned long int @var{k})
+@deftypefun void mpz_primorial_ui (mpz_t @var{rop}, unsigned long int @var{n})
+@cindex Primorial functions
+Set @var{rop} to the primorial of @var{n}, i.e. the product of all positive
+prime numbers @math{@le{}@var{n}}.
+@end deftypefun
+
+@deftypefun void mpz_bin_ui (mpz_t @var{rop}, const mpz_t @var{n}, unsigned long int @var{k})
 @deftypefunx void mpz_bin_uiui (mpz_t @var{rop}, unsigned long int @var{n}, @w{unsigned long int @var{k}})
 @cindex Binomial coefficient functions
 Compute the binomial coefficient @m{\left({n}\atop{k}\right), @var{n} over
@@ -3691,10 +3706,10 @@ Algorithm}, the reverse is straightforward too.
 @cindex Integer comparison functions
 @cindex Comparison functions
 
-@deftypefn Function int mpz_cmp (mpz_t @var{op1}, mpz_t @var{op2})
-@deftypefnx Function int mpz_cmp_d (mpz_t @var{op1}, double @var{op2})
-@deftypefnx Macro int mpz_cmp_si (mpz_t @var{op1}, signed long int @var{op2})
-@deftypefnx Macro int mpz_cmp_ui (mpz_t @var{op1}, unsigned long int @var{op2})
+@deftypefn Function int mpz_cmp (const mpz_t @var{op1}, const mpz_t @var{op2})
+@deftypefnx Function int mpz_cmp_d (const mpz_t @var{op1}, double @var{op2})
+@deftypefnx Macro int mpz_cmp_si (const mpz_t @var{op1}, signed long int @var{op2})
+@deftypefnx Macro int mpz_cmp_ui (const mpz_t @var{op1}, unsigned long int @var{op2})
 Compare @var{op1} and @var{op2}.  Return a positive value if @math{@var{op1} >
 @var{op2}}, zero if @math{@var{op1} = @var{op2}}, or a negative value if
 @math{@var{op1} < @var{op2}}.
@@ -3704,9 +3719,9 @@ arguments more than once.  @code{mpz_cmp_d} can be called with an infinity,
 but results are undefined for a NaN.
 @end deftypefn
 
-@deftypefn Function int mpz_cmpabs (mpz_t @var{op1}, mpz_t @var{op2})
-@deftypefnx Function int mpz_cmpabs_d (mpz_t @var{op1}, double @var{op2})
-@deftypefnx Function int mpz_cmpabs_ui (mpz_t @var{op1}, unsigned long int @var{op2})
+@deftypefn Function int mpz_cmpabs (const mpz_t @var{op1}, const mpz_t @var{op2})
+@deftypefnx Function int mpz_cmpabs_d (const mpz_t @var{op1}, double @var{op2})
+@deftypefnx Function int mpz_cmpabs_ui (const mpz_t @var{op1}, unsigned long int @var{op2})
 Compare the absolute values of @var{op1} and @var{op2}.  Return a positive
 value if @math{@GMPabs{@var{op1}} > @GMPabs{@var{op2}}}, zero if
 @math{@GMPabs{@var{op1}} = @GMPabs{@var{op2}}}, or a negative value if
@@ -3716,7 +3731,7 @@ value if @math{@GMPabs{@var{op1}} > @GMPabs{@var{op2}}}, zero if
 for a NaN.
 @end deftypefn
 
-@deftypefn Macro int mpz_sgn (mpz_t @var{op})
+@deftypefn Macro int mpz_sgn (const mpz_t @var{op})
 @cindex Sign tests
 @cindex Integer sign tests
 Return @math{+1} if @math{@var{op} > 0}, 0 if @math{@var{op} = 0}, and
@@ -3739,30 +3754,30 @@ These functions behave as if twos complement arithmetic were used (although
 sign-magnitude is the actual implementation).  The least significant bit is
 number 0.
 
-@deftypefun void mpz_and (mpz_t @var{rop}, mpz_t @var{op1}, mpz_t @var{op2})
+@deftypefun void mpz_and (mpz_t @var{rop}, const mpz_t @var{op1}, const mpz_t @var{op2})
 Set @var{rop} to @var{op1} bitwise-and @var{op2}.
 @end deftypefun
 
-@deftypefun void mpz_ior (mpz_t @var{rop}, mpz_t @var{op1}, mpz_t @var{op2})
+@deftypefun void mpz_ior (mpz_t @var{rop}, const mpz_t @var{op1}, const mpz_t @var{op2})
 Set @var{rop} to @var{op1} bitwise inclusive-or @var{op2}.
 @end deftypefun
 
-@deftypefun void mpz_xor (mpz_t @var{rop}, mpz_t @var{op1}, mpz_t @var{op2})
+@deftypefun void mpz_xor (mpz_t @var{rop}, const mpz_t @var{op1}, const mpz_t @var{op2})
 Set @var{rop} to @var{op1} bitwise exclusive-or @var{op2}.
 @end deftypefun
 
-@deftypefun void mpz_com (mpz_t @var{rop}, mpz_t @var{op})
+@deftypefun void mpz_com (mpz_t @var{rop}, const mpz_t @var{op})
 Set @var{rop} to the one's complement of @var{op}.
 @end deftypefun
 
-@deftypefun {mp_bitcnt_t} mpz_popcount (mpz_t @var{op})
+@deftypefun {mp_bitcnt_t} mpz_popcount (const mpz_t @var{op})
 If @math{@var{op}@ge{}0}, return the population count of @var{op}, which is the
 number of 1 bits in the binary representation.  If @math{@var{op}<0}, the
 number of 1s is infinite, and the return value is the largest possible
 @code{mp_bitcnt_t}.
 @end deftypefun
 
-@deftypefun {mp_bitcnt_t} mpz_hamdist (mpz_t @var{op1}, mpz_t @var{op2})
+@deftypefun {mp_bitcnt_t} mpz_hamdist (const mpz_t @var{op1}, const mpz_t @var{op2})
 If @var{op1} and @var{op2} are both @math{@ge{}0} or both @math{<0}, return the
 hamming distance between the two operands, which is the number of bit positions
 where @var{op1} and @var{op2} have different bit values.  If one operand is
@@ -3770,8 +3785,8 @@ where @var{op1} and @var{op2} have different bit values.  If one operand is
 infinite, and the return value is the largest possible @code{mp_bitcnt_t}.
 @end deftypefun
 
-@deftypefun {mp_bitcnt_t} mpz_scan0 (mpz_t @var{op}, mp_bitcnt_t @var{starting_bit})
-@deftypefunx {mp_bitcnt_t} mpz_scan1 (mpz_t @var{op}, mp_bitcnt_t @var{starting_bit})
+@deftypefun {mp_bitcnt_t} mpz_scan0 (const mpz_t @var{op}, mp_bitcnt_t @var{starting_bit})
+@deftypefunx {mp_bitcnt_t} mpz_scan1 (const mpz_t @var{op}, mp_bitcnt_t @var{starting_bit})
 @cindex Bit scanning functions
 @cindex Scan bit functions
 Scan @var{op}, starting from bit @var{starting_bit}, towards more significant
@@ -3798,7 +3813,7 @@ Clear bit @var{bit_index} in @var{rop}.
 Complement bit @var{bit_index} in @var{rop}.
 @end deftypefun
 
-@deftypefun int mpz_tstbit (mpz_t @var{op}, mp_bitcnt_t @var{bit_index})
+@deftypefun int mpz_tstbit (const mpz_t @var{op}, mp_bitcnt_t @var{bit_index})
 Test bit @var{bit_index} in @var{op} and return 0 or 1 accordingly.
 @end deftypefun
 
@@ -3821,7 +3836,7 @@ for these functions.
 
 See also @ref{Formatted Output} and @ref{Formatted Input}.
 
-@deftypefun size_t mpz_out_str (FILE *@var{stream}, int @var{base}, mpz_t @var{op})
+@deftypefun size_t mpz_out_str (FILE *@var{stream}, int @var{base}, const mpz_t @var{op})
 Output @var{op} on stdio stream @var{stream}, as a string of digits in base
 @var{base}.  The base argument may vary from 2 to 62 or from @minus{}2 to
 @minus{}36.
@@ -3849,7 +3864,7 @@ the same value.  For bases 37 to 62, upper-case letter represent the usual
 Return the number of bytes read, or if an error occurred, return 0.
 @end deftypefun
 
-@deftypefun size_t mpz_out_raw (FILE *@var{stream}, mpz_t @var{op})
+@deftypefun size_t mpz_out_raw (FILE *@var{stream}, const mpz_t @var{op})
 Output @var{op} on stdio stream @var{stream}, in raw binary format.  The
 integer is written in a portable format, with 4 bytes of size information, and
 that many bytes of limbs.  Both the size and the limbs are written in
@@ -3896,7 +3911,7 @@ The variable @var{state} must be initialized by calling one of the
 invoking this function.
 @end deftypefun
 
-@deftypefun void mpz_urandomm (mpz_t @var{rop}, gmp_randstate_t @var{state}, mpz_t @var{n})
+@deftypefun void mpz_urandomm (mpz_t @var{rop}, gmp_randstate_t @var{state}, const mpz_t @var{n})
 Generate a uniform random integer in the range 0 to @math{@var{n}-1},
 inclusive.
 
@@ -3979,7 +3994,7 @@ feature can account for this, by passing for instance
 @code{8*sizeof(int)-INT_BIT}.
 @end deftypefun
 
-@deftypefun {void *} mpz_export (void *@var{rop}, size_t *@var{countp}, int @var{order}, size_t @var{size}, int @var{endian}, size_t @var{nails}, mpz_t @var{op})
+@deftypefun {void *} mpz_export (void *@var{rop}, size_t *@var{countp}, int @var{order}, size_t @var{size}, int @var{endian}, size_t @var{nails}, const mpz_t @var{op})
 @cindex Integer export
 @cindex Export
 Fill @var{rop} with word data from @var{op}.
@@ -4030,24 +4045,24 @@ p = malloc (count * size);
 @cindex Miscellaneous integer functions
 @cindex Integer miscellaneous functions
 
-@deftypefun int mpz_fits_ulong_p (mpz_t @var{op})
-@deftypefunx int mpz_fits_slong_p (mpz_t @var{op})
-@deftypefunx int mpz_fits_uint_p (mpz_t @var{op})
-@deftypefunx int mpz_fits_sint_p (mpz_t @var{op})
-@deftypefunx int mpz_fits_ushort_p (mpz_t @var{op})
-@deftypefunx int mpz_fits_sshort_p (mpz_t @var{op})
+@deftypefun int mpz_fits_ulong_p (const mpz_t @var{op})
+@deftypefunx int mpz_fits_slong_p (const mpz_t @var{op})
+@deftypefunx int mpz_fits_uint_p (const mpz_t @var{op})
+@deftypefunx int mpz_fits_sint_p (const mpz_t @var{op})
+@deftypefunx int mpz_fits_ushort_p (const mpz_t @var{op})
+@deftypefunx int mpz_fits_sshort_p (const mpz_t @var{op})
 Return non-zero iff the value of @var{op} fits in an @code{unsigned long int},
 @code{signed long int}, @code{unsigned int}, @code{signed int}, @code{unsigned
 short int}, or @code{signed short int}, respectively.  Otherwise, return zero.
 @end deftypefun
 
-@deftypefn Macro int mpz_odd_p (mpz_t @var{op})
-@deftypefnx Macro int mpz_even_p (mpz_t @var{op})
+@deftypefn Macro int mpz_odd_p (const mpz_t @var{op})
+@deftypefnx Macro int mpz_even_p (const mpz_t @var{op})
 Determine whether @var{op} is odd or even, respectively.  Return non-zero if
 yes, zero if no.  These macros evaluate their argument more than once.
 @end deftypefn
 
-@deftypefun size_t mpz_sizeinbase (mpz_t @var{op}, int @var{base})
+@deftypefun size_t mpz_sizeinbase (const mpz_t @var{op}, int @var{base})
 @cindex Size in digits
 @cindex Digits in an integer
 Return the size of @var{op} measured in number of digits in the given
@@ -4141,7 +4156,7 @@ this.  @code{mpz_realloc2} and @code{_mpz_realloc} are the same except that
 @code{_mpz_realloc} takes its size in limbs.
 @end deftypefun
 
-@deftypefun mp_limb_t mpz_getlimbn (mpz_t @var{op}, mp_size_t @var{n})
+@deftypefun mp_limb_t mpz_getlimbn (const mpz_t @var{op}, mp_size_t @var{n})
 Return limb number @var{n} from @var{op}.  The sign of @var{op} is ignored,
 just the absolute value is used.  The least significant limb is number 0.
 
@@ -4150,7 +4165,7 @@ just the absolute value is used.  The least significant limb is number 0.
 @code{mpz_size(@var{op})-1}.
 @end deftypefun
 
-@deftypefun size_t mpz_size (mpz_t @var{op})
+@deftypefun size_t mpz_size (const mpz_t @var{op})
 Return the size of @var{op} measured in number of limbs.  If @var{op} is zero,
 the returned value will be zero.
 @c (@xref{Nomenclature}, for an explanation of the concept @dfn{limb}.)
@@ -4219,8 +4234,8 @@ Free the space occupied by @var{x}.  Make sure to call this function for all
 Free the space occupied by a NULL-terminated list of @code{mpq_t} variables.
 @end deftypefun
 
-@deftypefun void mpq_set (mpq_t @var{rop}, mpq_t @var{op})
-@deftypefunx void mpq_set_z (mpq_t @var{rop}, mpz_t @var{op})
+@deftypefun void mpq_set (mpq_t @var{rop}, const mpq_t @var{op})
+@deftypefunx void mpq_set_z (mpq_t @var{rop}, const mpz_t @var{op})
 Assign @var{rop} from @var{op}.
 @end deftypefun
 
@@ -4231,7 +4246,7 @@ Set the value of @var{rop} to @var{op1}/@var{op2}.  Note that if @var{op1} and
 @code{mpq_canonicalize} before any operations are performed on @var{rop}.
 @end deftypefun
 
-@deftypefun int mpq_set_str (mpq_t @var{rop}, char *@var{str}, int @var{base})
+@deftypefun int mpq_set_str (mpq_t @var{rop}, const char *@var{str}, int @var{base})
 Set @var{rop} from a null-terminated string @var{str} in the given @var{base}.
 
 The string can be an integer like ``41'' or a fraction like ``41/152''.  The
@@ -4263,8 +4278,8 @@ Swap the values @var{rop1} and @var{rop2} efficiently.
 @cindex Rational conversion functions
 @cindex Conversion functions
 
-@deftypefun double mpq_get_d (mpq_t @var{op})
-Convert @var{op} to a @code{double}, truncating if necessary (ie.@: rounding
+@deftypefun double mpq_get_d (const mpq_t @var{op})
+Convert @var{op} to a @code{double}, truncating if necessary (i.e.@: rounding
 towards zero).
 
 If the exponent from the conversion is too big or too small to fit a
@@ -4274,12 +4289,12 @@ Hardware overflow, underflow and denorm traps may or may not occur.
 @end deftypefun
 
 @deftypefun void mpq_set_d (mpq_t @var{rop}, double @var{op})
-@deftypefunx void mpq_set_f (mpq_t @var{rop}, mpf_t @var{op})
+@deftypefunx void mpq_set_f (mpq_t @var{rop}, const mpf_t @var{op})
 Set @var{rop} to the value of @var{op}.  There is no rounding, this conversion
 is exact.
 @end deftypefun
 
-@deftypefun {char *} mpq_get_str (char *@var{str}, int @var{base}, mpq_t @var{op})
+@deftypefun {char *} mpq_get_str (char *@var{str}, int @var{base}, const mpq_t @var{op})
 Convert @var{op} to a string of digits in base @var{base}.  The base may vary
 from 2 to 36.  The string will be of the form @samp{num/den}, or if the
 denominator is 1 then just @samp{num}.
@@ -4311,42 +4326,42 @@ or the given @var{str}.
 @cindex Rational arithmetic functions
 @cindex Arithmetic functions
 
-@deftypefun void mpq_add (mpq_t @var{sum}, mpq_t @var{addend1}, mpq_t @var{addend2})
+@deftypefun void mpq_add (mpq_t @var{sum}, const mpq_t @var{addend1}, const mpq_t @var{addend2})
 Set @var{sum} to @var{addend1} + @var{addend2}.
 @end deftypefun
 
-@deftypefun void mpq_sub (mpq_t @var{difference}, mpq_t @var{minuend}, mpq_t @var{subtrahend})
+@deftypefun void mpq_sub (mpq_t @var{difference}, const mpq_t @var{minuend}, const mpq_t @var{subtrahend})
 Set @var{difference} to @var{minuend} @minus{} @var{subtrahend}.
 @end deftypefun
 
-@deftypefun void mpq_mul (mpq_t @var{product}, mpq_t @var{multiplier}, mpq_t @var{multiplicand})
+@deftypefun void mpq_mul (mpq_t @var{product}, const mpq_t @var{multiplier}, const mpq_t @var{multiplicand})
 Set @var{product} to @math{@var{multiplier} @GMPtimes{} @var{multiplicand}}.
 @end deftypefun
 
-@deftypefun void mpq_mul_2exp (mpq_t @var{rop}, mpq_t @var{op1}, mp_bitcnt_t @var{op2})
+@deftypefun void mpq_mul_2exp (mpq_t @var{rop}, const mpq_t @var{op1}, mp_bitcnt_t @var{op2})
 Set @var{rop} to @m{@var{op1} \times 2^{op2}, @var{op1} times 2 raised to
 @var{op2}}.
 @end deftypefun
 
-@deftypefun void mpq_div (mpq_t @var{quotient}, mpq_t @var{dividend}, mpq_t @var{divisor})
+@deftypefun void mpq_div (mpq_t @var{quotient}, const mpq_t @var{dividend}, const mpq_t @var{divisor})
 @cindex Division functions
 Set @var{quotient} to @var{dividend}/@var{divisor}.
 @end deftypefun
 
-@deftypefun void mpq_div_2exp (mpq_t @var{rop}, mpq_t @var{op1}, mp_bitcnt_t @var{op2})
+@deftypefun void mpq_div_2exp (mpq_t @var{rop}, const mpq_t @var{op1}, mp_bitcnt_t @var{op2})
 Set @var{rop} to @m{@var{op1}/2^{op2}, @var{op1} divided by 2 raised to
 @var{op2}}.
 @end deftypefun
 
-@deftypefun void mpq_neg (mpq_t @var{negated_operand}, mpq_t @var{operand})
+@deftypefun void mpq_neg (mpq_t @var{negated_operand}, const mpq_t @var{operand})
 Set @var{negated_operand} to @minus{}@var{operand}.
 @end deftypefun
 
-@deftypefun void mpq_abs (mpq_t @var{rop}, mpq_t @var{op})
+@deftypefun void mpq_abs (mpq_t @var{rop}, const mpq_t @var{op})
 Set @var{rop} to the absolute value of @var{op}.
 @end deftypefun
 
-@deftypefun void mpq_inv (mpq_t @var{inverted_number}, mpq_t @var{number})
+@deftypefun void mpq_inv (mpq_t @var{inverted_number}, const mpq_t @var{number})
 Set @var{inverted_number} to 1/@var{number}.  If the new denominator is
 zero, this routine will divide by zero.
 @end deftypefun
@@ -4357,7 +4372,7 @@ zero, this routine will divide by zero.
 @cindex Rational comparison functions
 @cindex Comparison functions
 
-@deftypefun int mpq_cmp (mpq_t @var{op1}, mpq_t @var{op2})
+@deftypefun int mpq_cmp (const mpq_t @var{op1}, const mpq_t @var{op2})
 Compare @var{op1} and @var{op2}.  Return a positive value if @math{@var{op1} >
 @var{op2}}, zero if @math{@var{op1} = @var{op2}}, and a negative value if
 @math{@var{op1} < @var{op2}}.
@@ -4366,8 +4381,8 @@ To determine if two rationals are equal, @code{mpq_equal} is faster than
 @code{mpq_cmp}.
 @end deftypefun
 
-@deftypefn Macro int mpq_cmp_ui (mpq_t @var{op1}, unsigned long int @var{num2}, unsigned long int @var{den2})
-@deftypefnx Macro int mpq_cmp_si (mpq_t @var{op1}, long int @var{num2}, unsigned long int @var{den2})
+@deftypefn Macro int mpq_cmp_ui (const mpq_t @var{op1}, unsigned long int @var{num2}, unsigned long int @var{den2})
+@deftypefnx Macro int mpq_cmp_si (const mpq_t @var{op1}, long int @var{num2}, unsigned long int @var{den2})
 Compare @var{op1} and @var{num2}/@var{den2}.  Return a positive value if
 @math{@var{op1} > @var{num2}/@var{den2}}, zero if @math{@var{op1} =
 @var{num2}/@var{den2}}, and a negative value if @math{@var{op1} <
@@ -4379,17 +4394,17 @@ These functions are implemented as a macros and evaluate their arguments
 multiple times.
 @end deftypefn
 
-@deftypefn Macro int mpq_sgn (mpq_t @var{op})
+@deftypefn Macro int mpq_sgn (const mpq_t @var{op})
 @cindex Sign tests
 @cindex Rational sign tests
 Return @math{+1} if @math{@var{op} > 0}, 0 if @math{@var{op} = 0}, and
 @math{-1} if @math{@var{op} < 0}.
 
 This function is actually implemented as a macro.  It evaluates its
-arguments multiple times.
+argument multiple times.
 @end deftypefn
 
-@deftypefun int mpq_equal (mpq_t @var{op1}, mpq_t @var{op2})
+@deftypefun int mpq_equal (const mpq_t @var{op1}, const mpq_t @var{op2})
 Return non-zero if @var{op1} and @var{op2} are equal, zero if they are
 non-equal.  Although @code{mpq_cmp} can be used for the same purpose, this
 function is much faster.
@@ -4410,16 +4425,16 @@ Note that if an assignment to the numerator and/or denominator could take an
 (@pxref{Rational Number Functions}) then @code{mpq_canonicalize} must be
 called before any other @code{mpq} functions are applied to that @code{mpq_t}.
 
-@deftypefn Macro mpz_t mpq_numref (mpq_t @var{op})
-@deftypefnx Macro mpz_t mpq_denref (mpq_t @var{op})
+@deftypefn Macro mpz_t mpq_numref (const mpq_t @var{op})
+@deftypefnx Macro mpz_t mpq_denref (const mpq_t @var{op})
 Return a reference to the numerator and denominator of @var{op}, respectively.
 The @code{mpz} functions can be used on the result of these macros.
 @end deftypefn
 
-@deftypefun void mpq_get_num (mpz_t @var{numerator}, mpq_t @var{rational})
-@deftypefunx void mpq_get_den (mpz_t @var{denominator}, mpq_t @var{rational})
-@deftypefunx void mpq_set_num (mpq_t @var{rational}, mpz_t @var{numerator})
-@deftypefunx void mpq_set_den (mpq_t @var{rational}, mpz_t @var{denominator})
+@deftypefun void mpq_get_num (mpz_t @var{numerator}, const mpq_t @var{rational})
+@deftypefunx void mpq_get_den (mpz_t @var{denominator}, const mpq_t @var{rational})
+@deftypefunx void mpq_set_num (mpq_t @var{rational}, const mpz_t @var{numerator})
+@deftypefunx void mpq_set_den (mpq_t @var{rational}, const mpz_t @var{denominator})
 Get or set the numerator or denominator of a rational.  These functions are
 equivalent to calling @code{mpz_set} with an appropriate @code{mpq_numref} or
 @code{mpq_denref}.  Direct use of @code{mpq_numref} or @code{mpq_denref} is
@@ -4447,7 +4462,7 @@ for these functions.
 
 See also @ref{Formatted Output} and @ref{Formatted Input}.
 
-@deftypefun size_t mpq_out_str (FILE *@var{stream}, int @var{base}, mpq_t @var{op})
+@deftypefun size_t mpq_out_str (FILE *@var{stream}, int @var{base}, const mpq_t @var{op})
 Output @var{op} on stdio stream @var{stream}, as a string of digits in base
 @var{base}.  The base may vary from 2 to 36.  Output is in the form
 @samp{num/den} or if the denominator is 1 then just @samp{num}.
@@ -4610,7 +4625,7 @@ calculation.  A typical use would be for adjusting the precision gradually in
 iterative algorithms like Newton-Raphson, making the computation precision
 closely match the actual accurate part of the numbers.
 
-@deftypefun {mp_bitcnt_t} mpf_get_prec (mpf_t @var{op})
+@deftypefun {mp_bitcnt_t} mpf_get_prec (const mpf_t @var{op})
 Return the current precision of @var{op}, in bits.
 @end deftypefun
 
@@ -4659,16 +4674,16 @@ different purposes during a calculation.
 These functions assign new values to already initialized floats
 (@pxref{Initializing Floats}).
 
-@deftypefun void mpf_set (mpf_t @var{rop}, mpf_t @var{op})
+@deftypefun void mpf_set (mpf_t @var{rop}, const mpf_t @var{op})
 @deftypefunx void mpf_set_ui (mpf_t @var{rop}, unsigned long int @var{op})
 @deftypefunx void mpf_set_si (mpf_t @var{rop}, signed long int @var{op})
 @deftypefunx void mpf_set_d (mpf_t @var{rop}, double @var{op})
-@deftypefunx void mpf_set_z (mpf_t @var{rop}, mpz_t @var{op})
-@deftypefunx void mpf_set_q (mpf_t @var{rop}, mpq_t @var{op})
+@deftypefunx void mpf_set_z (mpf_t @var{rop}, const mpz_t @var{op})
+@deftypefunx void mpf_set_q (mpf_t @var{rop}, const mpq_t @var{op})
 Set the value of @var{rop} from @var{op}.
 @end deftypefun
 
-@deftypefun int mpf_set_str (mpf_t @var{rop}, char *@var{str}, int @var{base})
+@deftypefun int mpf_set_str (mpf_t @var{rop}, const char *@var{str}, int @var{base})
 Set the value of @var{rop} from the string in @var{str}.  The string is of the
 form @samp{M@@N} or, if the base is 10 or less, alternatively @samp{MeN}.
 @samp{M} is the mantissa and @samp{N} is the exponent.  The mantissa is always
@@ -4723,7 +4738,7 @@ functions, it can be used as the source or destination operand for the ordinary
 float functions.  Don't use an initialize-and-set function on a variable
 already initialized!
 
-@deftypefun void mpf_init_set (mpf_t @var{rop}, mpf_t @var{op})
+@deftypefun void mpf_init_set (mpf_t @var{rop}, const mpf_t @var{op})
 @deftypefunx void mpf_init_set_ui (mpf_t @var{rop}, unsigned long int @var{op})
 @deftypefunx void mpf_init_set_si (mpf_t @var{rop}, signed long int @var{op})
 @deftypefunx void mpf_init_set_d (mpf_t @var{rop}, double @var{op})
@@ -4733,7 +4748,7 @@ The precision of @var{rop} will be taken from the active default precision, as
 set by @code{mpf_set_default_prec}.
 @end deftypefun
 
-@deftypefun int mpf_init_set_str (mpf_t @var{rop}, char *@var{str}, int @var{base})
+@deftypefun int mpf_init_set_str (mpf_t @var{rop}, const char *@var{str}, int @var{base})
 Initialize @var{rop} and set its value from the string in @var{str}.  See
 @code{mpf_set_str} above for details on the assignment operation.
 
@@ -4751,8 +4766,8 @@ set by @code{mpf_set_default_prec}.
 @cindex Float conversion functions
 @cindex Conversion functions
 
-@deftypefun double mpf_get_d (mpf_t @var{op})
-Convert @var{op} to a @code{double}, truncating if necessary (ie.@: rounding
+@deftypefun double mpf_get_d (const mpf_t @var{op})
+Convert @var{op} to a @code{double}, truncating if necessary (i.e.@: rounding
 towards zero).
 
 If the exponent in @var{op} is too big or too small to fit a @code{double}
@@ -4761,8 +4776,8 @@ available.  For too small @math{0.0} is normally returned.  Hardware overflow,
 underflow and denorm traps may or may not occur.
 @end deftypefun
 
-@deftypefun double mpf_get_d_2exp (signed long int *@var{exp}, mpf_t @var{op})
-Convert @var{op} to a @code{double}, truncating if necessary (ie.@: rounding
+@deftypefun double mpf_get_d_2exp (signed long int *@var{exp}, const mpf_t @var{op})
+Convert @var{op} to a @code{double}, truncating if necessary (i.e.@: rounding
 towards zero), and with an exponent returned separately.
 
 The return value is in the range @math{0.5@le{}@GMPabs{@var{d}}<1} and the
@@ -4775,8 +4790,8 @@ This is similar to the standard C @code{frexp} function (@pxref{Normalization
 Functions,,, libc, The GNU C Library Reference Manual}).
 @end deftypefun
 
-@deftypefun long mpf_get_si (mpf_t @var{op})
-@deftypefunx {unsigned long} mpf_get_ui (mpf_t @var{op})
+@deftypefun long mpf_get_si (const mpf_t @var{op})
+@deftypefunx {unsigned long} mpf_get_ui (const mpf_t @var{op})
 Convert @var{op} to a @code{long} or @code{unsigned long}, truncating any
 fraction part.  If @var{op} is too big for the return type, the result is
 undefined.
@@ -4785,7 +4800,7 @@ See also @code{mpf_fits_slong_p} and @code{mpf_fits_ulong_p}
 (@pxref{Miscellaneous Float Functions}).
 @end deftypefun
 
-@deftypefun {char *} mpf_get_str (char *@var{str}, mp_exp_t *@var{expptr}, int @var{base}, size_t @var{n_digits}, mpf_t @var{op})
+@deftypefun {char *} mpf_get_str (char *@var{str}, mp_exp_t *@var{expptr}, int @var{base}, size_t @var{n_digits}, const mpf_t @var{op})
 Convert @var{op} to a string of digits in base @var{base}.  The base argument
 may vary from 2 to 62 or from @minus{}2 to @minus{}36.  Up to @var{n_digits}
 digits will be generated.  Trailing zeros are not returned.  No more digits
@@ -4827,19 +4842,19 @@ or the given @var{str}.
 @cindex Float arithmetic functions
 @cindex Arithmetic functions
 
-@deftypefun void mpf_add (mpf_t @var{rop}, mpf_t @var{op1}, mpf_t @var{op2})
-@deftypefunx void mpf_add_ui (mpf_t @var{rop}, mpf_t @var{op1}, unsigned long int @var{op2})
+@deftypefun void mpf_add (mpf_t @var{rop}, const mpf_t @var{op1}, const mpf_t @var{op2})
+@deftypefunx void mpf_add_ui (mpf_t @var{rop}, const mpf_t @var{op1}, unsigned long int @var{op2})
 Set @var{rop} to @math{@var{op1} + @var{op2}}.
 @end deftypefun
 
-@deftypefun void mpf_sub (mpf_t @var{rop}, mpf_t @var{op1}, mpf_t @var{op2})
-@deftypefunx void mpf_ui_sub (mpf_t @var{rop}, unsigned long int @var{op1}, mpf_t @var{op2})
-@deftypefunx void mpf_sub_ui (mpf_t @var{rop}, mpf_t @var{op1}, unsigned long int @var{op2})
+@deftypefun void mpf_sub (mpf_t @var{rop}, const mpf_t @var{op1}, const mpf_t @var{op2})
+@deftypefunx void mpf_ui_sub (mpf_t @var{rop}, unsigned long int @var{op1}, const mpf_t @var{op2})
+@deftypefunx void mpf_sub_ui (mpf_t @var{rop}, const mpf_t @var{op1}, unsigned long int @var{op2})
 Set @var{rop} to @var{op1} @minus{} @var{op2}.
 @end deftypefun
 
-@deftypefun void mpf_mul (mpf_t @var{rop}, mpf_t @var{op1}, mpf_t @var{op2})
-@deftypefunx void mpf_mul_ui (mpf_t @var{rop}, mpf_t @var{op1}, unsigned long int @var{op2})
+@deftypefun void mpf_mul (mpf_t @var{rop}, const mpf_t @var{op1}, const mpf_t @var{op2})
+@deftypefunx void mpf_mul_ui (mpf_t @var{rop}, const mpf_t @var{op1}, unsigned long int @var{op2})
 Set @var{rop} to @math{@var{op1} @GMPtimes{} @var{op2}}.
 @end deftypefun
 
@@ -4848,39 +4863,39 @@ divide functions will make these functions intentionally divide by zero.  This
 lets the user handle arithmetic exceptions in these functions in the same
 manner as other arithmetic exceptions.
 
-@deftypefun void mpf_div (mpf_t @var{rop}, mpf_t @var{op1}, mpf_t @var{op2})
-@deftypefunx void mpf_ui_div (mpf_t @var{rop}, unsigned long int @var{op1}, mpf_t @var{op2})
-@deftypefunx void mpf_div_ui (mpf_t @var{rop}, mpf_t @var{op1}, unsigned long int @var{op2})
+@deftypefun void mpf_div (mpf_t @var{rop}, const mpf_t @var{op1}, const mpf_t @var{op2})
+@deftypefunx void mpf_ui_div (mpf_t @var{rop}, unsigned long int @var{op1}, const mpf_t @var{op2})
+@deftypefunx void mpf_div_ui (mpf_t @var{rop}, const mpf_t @var{op1}, unsigned long int @var{op2})
 @cindex Division functions
 Set @var{rop} to @var{op1}/@var{op2}.
 @end deftypefun
 
-@deftypefun void mpf_sqrt (mpf_t @var{rop}, mpf_t @var{op})
+@deftypefun void mpf_sqrt (mpf_t @var{rop}, const mpf_t @var{op})
 @deftypefunx void mpf_sqrt_ui (mpf_t @var{rop}, unsigned long int @var{op})
 @cindex Root extraction functions
 Set @var{rop} to @m{\sqrt{@var{op}}, the square root of @var{op}}.
 @end deftypefun
 
-@deftypefun void mpf_pow_ui (mpf_t @var{rop}, mpf_t @var{op1}, unsigned long int @var{op2})
+@deftypefun void mpf_pow_ui (mpf_t @var{rop}, const mpf_t @var{op1}, unsigned long int @var{op2})
 @cindex Exponentiation functions
 @cindex Powering functions
 Set @var{rop} to @m{@var{op1}^{op2}, @var{op1} raised to the power @var{op2}}.
 @end deftypefun
 
-@deftypefun void mpf_neg (mpf_t @var{rop}, mpf_t @var{op})
+@deftypefun void mpf_neg (mpf_t @var{rop}, const mpf_t @var{op})
 Set @var{rop} to @minus{}@var{op}.
 @end deftypefun
 
-@deftypefun void mpf_abs (mpf_t @var{rop}, mpf_t @var{op})
+@deftypefun void mpf_abs (mpf_t @var{rop}, const mpf_t @var{op})
 Set @var{rop} to the absolute value of @var{op}.
 @end deftypefun
 
-@deftypefun void mpf_mul_2exp (mpf_t @var{rop}, mpf_t @var{op1}, mp_bitcnt_t @var{op2})
+@deftypefun void mpf_mul_2exp (mpf_t @var{rop}, const mpf_t @var{op1}, mp_bitcnt_t @var{op2})
 Set @var{rop} to @m{@var{op1} \times 2^{op2}, @var{op1} times 2 raised to
 @var{op2}}.
 @end deftypefun
 
-@deftypefun void mpf_div_2exp (mpf_t @var{rop}, mpf_t @var{op1}, mp_bitcnt_t @var{op2})
+@deftypefun void mpf_div_2exp (mpf_t @var{rop}, const mpf_t @var{op1}, mp_bitcnt_t @var{op2})
 Set @var{rop} to @m{@var{op1}/2^{op2}, @var{op1} divided by 2 raised to
 @var{op2}}.
 @end deftypefun
@@ -4891,10 +4906,10 @@ Set @var{rop} to @m{@var{op1}/2^{op2}, @var{op1} divided by 2 raised to
 @cindex Float comparison functions
 @cindex Comparison functions
 
-@deftypefun int mpf_cmp (mpf_t @var{op1}, mpf_t @var{op2})
-@deftypefunx int mpf_cmp_d (mpf_t @var{op1}, double @var{op2})
-@deftypefunx int mpf_cmp_ui (mpf_t @var{op1}, unsigned long int @var{op2})
-@deftypefunx int mpf_cmp_si (mpf_t @var{op1}, signed long int @var{op2})
+@deftypefun int mpf_cmp (const mpf_t @var{op1}, const mpf_t @var{op2})
+@deftypefunx int mpf_cmp_d (const mpf_t @var{op1}, double @var{op2})
+@deftypefunx int mpf_cmp_ui (const mpf_t @var{op1}, unsigned long int @var{op2})
+@deftypefunx int mpf_cmp_si (const mpf_t @var{op1}, signed long int @var{op2})
 Compare @var{op1} and @var{op2}.  Return a positive value if @math{@var{op1} >
 @var{op2}}, zero if @math{@var{op1} = @var{op2}}, and a negative value if
 @math{@var{op1} < @var{op2}}.
@@ -4903,7 +4918,7 @@ Compare @var{op1} and @var{op2}.  Return a positive value if @math{@var{op1} >
 a NaN.
 @end deftypefun
 
-@deftypefun int mpf_eq (mpf_t @var{op1}, mpf_t @var{op2}, mp_bitcnt_t op3)
+@deftypefun int mpf_eq (const mpf_t @var{op1}, const mpf_t @var{op2}, mp_bitcnt_t op3)
 Return non-zero if the first @var{op3} bits of @var{op1} and @var{op2} are
 equal, zero otherwise.  I.e., test if @var{op1} and @var{op2} are approximately
 equal.
@@ -4916,18 +4931,18 @@ even if ... is replaced by a semi-infinite number of bits.  Such numbers are
 really just one ulp off, and should be considered equal.
 @end deftypefun
 
-@deftypefun void mpf_reldiff (mpf_t @var{rop}, mpf_t @var{op1}, mpf_t @var{op2})
+@deftypefun void mpf_reldiff (mpf_t @var{rop}, const mpf_t @var{op1}, const mpf_t @var{op2})
 Compute the relative difference between @var{op1} and @var{op2} and store the
 result in @var{rop}.  This is @math{@GMPabs{@var{op1}-@var{op2}}/@var{op1}}.
 @end deftypefun
 
-@deftypefn Macro int mpf_sgn (mpf_t @var{op})
+@deftypefn Macro int mpf_sgn (const mpf_t @var{op})
 @cindex Sign tests
 @cindex Float sign tests
 Return @math{+1} if @math{@var{op} > 0}, 0 if @math{@var{op} = 0}, and
 @math{-1} if @math{@var{op} < 0}.
 
-This function is actually implemented as a macro.  It evaluates its arguments
+This function is actually implemented as a macro.  It evaluates its argument
 multiple times.
 @end deftypefn
 
@@ -4950,7 +4965,7 @@ for these functions.
 
 See also @ref{Formatted Output} and @ref{Formatted Input}.
 
-@deftypefun size_t mpf_out_str (FILE *@var{stream}, int @var{base}, size_t @var{n_digits}, mpf_t @var{op})
+@deftypefun size_t mpf_out_str (FILE *@var{stream}, int @var{base}, size_t @var{n_digits}, const mpf_t @var{op})
 Print @var{op} to @var{stream}, as a string of digits.  Return the number of
 bytes written, or if an error occurred, return 0.
 
@@ -4990,7 +5005,7 @@ numbers like @samp{0.23} are not interpreted as octal.
 Return the number of bytes read, or if an error occurred, return 0.
 @end deftypefun
 
-@c @deftypefun void mpf_out_raw (FILE *@var{stream}, mpf_t @var{float})
+@c @deftypefun void mpf_out_raw (FILE *@var{stream}, const mpf_t @var{float})
 @c Output @var{float} on stdio stream @var{stream}, in raw binary
 @c format.  The float is written in a portable format, with 4 bytes of
 @c size information, and that many bytes of limbs.  Both the size and the
@@ -5009,9 +5024,9 @@ Return the number of bytes read, or if an error occurred, return 0.
 @cindex Miscellaneous float functions
 @cindex Float miscellaneous functions
 
-@deftypefun void mpf_ceil (mpf_t @var{rop}, mpf_t @var{op})
-@deftypefunx void mpf_floor (mpf_t @var{rop}, mpf_t @var{op})
-@deftypefunx void mpf_trunc (mpf_t @var{rop}, mpf_t @var{op})
+@deftypefun void mpf_ceil (mpf_t @var{rop}, const mpf_t @var{op})
+@deftypefunx void mpf_floor (mpf_t @var{rop}, const mpf_t @var{op})
+@deftypefunx void mpf_trunc (mpf_t @var{rop}, const mpf_t @var{op})
 @cindex Rounding functions
 @cindex Float rounding functions
 Set @var{rop} to @var{op} rounded to an integer.  @code{mpf_ceil} rounds to the
@@ -5019,16 +5034,16 @@ next higher integer, @code{mpf_floor} to the next lower, and @code{mpf_trunc}
 to the integer towards zero.
 @end deftypefun
 
-@deftypefun int mpf_integer_p (mpf_t @var{op})
+@deftypefun int mpf_integer_p (const mpf_t @var{op})
 Return non-zero if @var{op} is an integer.
 @end deftypefun
 
-@deftypefun int mpf_fits_ulong_p (mpf_t @var{op})
-@deftypefunx int mpf_fits_slong_p (mpf_t @var{op})
-@deftypefunx int mpf_fits_uint_p (mpf_t @var{op})
-@deftypefunx int mpf_fits_sint_p (mpf_t @var{op})
-@deftypefunx int mpf_fits_ushort_p (mpf_t @var{op})
-@deftypefunx int mpf_fits_sshort_p (mpf_t @var{op})
+@deftypefun int mpf_fits_ulong_p (const mpf_t @var{op})
+@deftypefunx int mpf_fits_slong_p (const mpf_t @var{op})
+@deftypefunx int mpf_fits_uint_p (const mpf_t @var{op})
+@deftypefunx int mpf_fits_sint_p (const mpf_t @var{op})
+@deftypefunx int mpf_fits_ushort_p (const mpf_t @var{op})
+@deftypefunx int mpf_fits_sshort_p (const mpf_t @var{op})
 Return non-zero if @var{op} would fit in the respective C data type, when
 truncated to an integer.
 @end deftypefun
@@ -5054,7 +5069,7 @@ numbers have proven to be more likely to trigger corner-case bugs.  Negative
 random numbers are generated when @var{max_size} is negative.
 @end deftypefun
 
-@c @deftypefun size_t mpf_size (mpf_t @var{op})
+@c @deftypefun size_t mpf_size (const mpf_t @var{op})
 @c Return the size of @var{op} measured in number of limbs.  If @var{op} is
 @c zero, the returned value will be zero.  (@xref{Nomenclature}, for an
 @c explanation of the concept @dfn{limb}.)
@@ -5176,7 +5191,7 @@ This function requires that @var{s1n} is greater than or equal to
 @var{s2n}.
 @end deftypefun
 
-@deftypefun void mpn_neg (mp_limb_t *@var{rp}, const mp_limb_t *@var{sp}, mp_size_t @var{n})
+@deftypefun mp_limb_t mpn_neg (mp_limb_t *@var{rp}, const mp_limb_t *@var{sp}, mp_size_t @var{n})
 Perform the negation of @{@var{sp}, @var{n}@}, and write the result to
 @{@var{rp}, @var{n}@}.  Return carry-out.
 @end deftypefun
@@ -5374,10 +5389,9 @@ Set @{@var{rp}, @var{retval}@} to the greatest common divisor of @{@var{xp},
 the return value is the actual number produced.  Both source operands are
 destroyed.
 
-@{@var{xp}, @var{xn}@} must have at least as many bits as @{@var{yp},
-@var{yn}@}.  @{@var{yp}, @var{yn}@} must be odd.  Both operands must have
-non-zero most significant limbs.  No overlap is permitted between @{@var{xp},
-@var{xn}@} and @{@var{yp}, @var{yn}@}.
+It is required that @math{@var{xn} @ge @var{yn} > 0}, and the most significant
+limb of @{@var{yp}, @var{yn}@} must be non-zero.  No overlap is permitted
+between @{@var{xp}, @var{xn}@} and @{@var{yp}, @var{yn}@}.
 @end deftypefun
 
 @deftypefun mp_limb_t mpn_gcd_1 (const mp_limb_t *@var{xp}, mp_size_t @var{xn}, mp_limb_t @var{ylimb})
@@ -5385,30 +5399,35 @@ Return the greatest common divisor of @{@var{xp}, @var{xn}@} and @var{ylimb}.
 Both operands must be non-zero.
 @end deftypefun
 
-@deftypefun mp_size_t mpn_gcdext (mp_limb_t *@var{gp}, mp_limb_t *@var{sp}, mp_size_t *@var{sn}, mp_limb_t *@var{xp}, mp_size_t @var{xn}, mp_limb_t *@var{yp}, mp_size_t @var{yn})
-Let @m{U,@var{U}} be defined by @{@var{xp}, @var{xn}@} and let @m{V,@var{V}} be
-defined by @{@var{yp}, @var{yn}@}.
+@deftypefun mp_size_t mpn_gcdext (mp_limb_t *@var{gp}, mp_limb_t *@var{sp}, mp_size_t *@var{sn}, mp_limb_t *@var{up}, mp_size_t @var{un}, mp_limb_t *@var{vp}, mp_size_t @var{vn})
+Let @m{U,@var{U}} be defined by @{@var{up}, @var{un}@} and let @m{V,@var{V}} be
+defined by @{@var{vp}, @var{vn}@}.
 
 Compute the greatest common divisor @math{G} of @math{U} and @math{V}.  Compute
 a cofactor @math{S} such that @math{G = US + VT}.  The second cofactor @var{T}
 is not computed but can easily be obtained from @m{(G - US) / V, (@var{G} -
 @var{U}*@var{S}) / @var{V}} (the division will be exact).  It is required that
-@math{U @ge V > 0}.
+@math{@var{un} @ge @var{vn} > 0}, and the most significant
+limb of @{@var{vp}, @var{vn}@} must be non-zero.
 
 @math{S} satisfies @math{S = 1} or @math{@GMPabs{S} < V / (2 G)}. @math{S =
 0} if and only if @math{V} divides @math{U} (i.e., @math{G = V}).
 
 Store @math{G} at @var{gp} and let the return value define its limb count.
 Store @math{S} at @var{sp} and let |*@var{sn}| define its limb count.  @math{S}
-can be negative; when this happens *@var{sn} will be negative.  The areas at
-@var{gp} and @var{sp} should each have room for @math{@var{xn}+1} limbs.
+can be negative; when this happens *@var{sn} will be negative.  The area at
+@var{gp} should have room for @var{vn} limbs and the area at @var{sp} should
+have room for @math{@var{vn}+1} limbs.
 
-The areas @{@var{xp}, @math{@var{xn}+1}@} and @{@var{yp}, @math{@var{yn}+1}@}
-are destroyed (i.e.@: the input operands plus an extra limb past the end of
-each).
+Both source operands are destroyed.
 
-Compatibility note: GMP 4.3.0 and 4.3.1 defined @math{S} less strictly.
+Compatibility notes: GMP 4.3.0 and 4.3.1 defined @math{S} less strictly.
 Earlier as well as later GMP releases define @math{S} as described here.
+GMP releases before GMP 4.3.0 required additional space for both input and output
+areas. More precisely, the areas @{@var{up}, @math{@var{un}+1}@} and
+@{@var{vp}, @math{@var{vn}+1}@} were destroyed (i.e.@: the operands plus an
+extra limb past the end of each), and the areas pointed to by @var{gp} and
+@var{sp} should each have room for @math{@var{un}+1} limbs.
 @end deftypefun
 
 @deftypefun mp_size_t mpn_sqrtrem (mp_limb_t *@var{r1p}, mp_limb_t *@var{r2p}, const mp_limb_t *@var{sp}, mp_size_t @var{n})
@@ -5427,7 +5446,7 @@ case the return value is zero or non-zero according to whether the remainder
 would have been zero or non-zero.
 
 A return value of zero indicates a perfect square.  See also
-@code{mpz_perfect_square_p}.
+@code{mpn_perfect_square_p}.
 @end deftypefun
 
 @deftypefun mp_size_t mpn_get_str (unsigned char *@var{str}, int @var{base}, mp_limb_t *@var{s1p}, mp_size_t @var{s1n})
@@ -5675,7 +5694,7 @@ Initialize @var{state} for a Mersenne Twister algorithm.  This algorithm is
 fast and has good randomness properties.
 @end deftypefun
 
-@deftypefun void gmp_randinit_lc_2exp (gmp_randstate_t @var{state}, mpz_t @var{a}, @w{unsigned long @var{c}}, @w{mp_bitcnt_t @var{m2exp}})
+@deftypefun void gmp_randinit_lc_2exp (gmp_randstate_t @var{state}, const mpz_t @var{a}, @w{unsigned long @var{c}}, @w{mp_bitcnt_t @var{m2exp}})
 @cindex Linear congruential random numbers
 Initialize @var{state} with a linear congruential algorithm @m{X = (@var{a}X +
 @var{c}) @bmod 2^{m2exp}, X = (@var{a}*X + @var{c}) mod 2^@var{m2exp}}.
@@ -5695,7 +5714,7 @@ concatenated.
 Initialize @var{state} for a linear congruential algorithm as per
 @code{gmp_randinit_lc_2exp}.  @var{a}, @var{c} and @var{m2exp} are selected
 from a table, chosen so that @var{size} bits (or more) of each @math{X} will
-be used, ie.@: @math{@var{m2exp}/2 @ge{} @var{size}}.
+be used, i.e.@: @math{@var{m2exp}/2 @ge{} @var{size}}.
 
 If successful the return value is non-zero.  If @var{size} is bigger than the
 table data provides then the return value is zero.  The maximum @var{size}
@@ -5743,7 +5762,7 @@ Free all memory occupied by @var{state}.
 @cindex Random number seeding
 @cindex Seeding random numbers
 
-@deftypefun void gmp_randseed (gmp_randstate_t @var{state}, mpz_t @var{seed})
+@deftypefun void gmp_randseed (gmp_randstate_t @var{state}, const mpz_t @var{seed})
 @deftypefunx void gmp_randseed_ui (gmp_randstate_t @var{state}, @w{unsigned long int @var{seed}})
 Set an initial seed value into @var{state}.
 
@@ -5768,7 +5787,7 @@ random data better suited for use as a seed.
 @section Random State Miscellaneous
 
 @deftypefun {unsigned long} gmp_urandomb_ui (gmp_randstate_t @var{state}, unsigned long @var{n})
-Return a uniformly distributed random number of @var{n} bits, ie.@: in the
+Return a uniformly distributed random number of @var{n} bits, i.e.@: in the
 range 0 to @m{2^n-1,2^@var{n}-1} inclusive.  @var{n} must be less than or
 equal to the number of bits in an @code{unsigned long}.
 @end deftypefun
@@ -5923,7 +5942,7 @@ instance extensions registered with GLIBC @code{register_printf_function}.
 Also currently there's no support for POSIX @samp{$} style numbered arguments
 (perhaps this will be added in the future).
 
-The precision field has it's usual meaning for integer @samp{Z} and float
+The precision field has its usual meaning for integer @samp{Z} and float
 @samp{F} types, but is currently undefined for @samp{Q} and should not be used
 with that.
 
@@ -5934,7 +5953,10 @@ happens even for an @samp{f} conversion of an @code{mpf_t} which is an
 integer, for instance @math{2^@W{1024}} in an @code{mpf_t} of 128 bits
 precision will only produce about 40 digits, then pad with zeros to the
 decimal point.  An empty precision field like @samp{%.Fe} or @samp{%.Ff} can
-be used to specifically request just the significant digits.
+be used to specifically request just the significant digits.  Without any dot
+and thus no precision field, a precision value of 6 will be used.  Note that
+these rules mean that @samp{%Ff}, @samp{%.Ff}, and @samp{%.0Ff} will all be
+different.
 
 The decimal point character (or string) is taken from the current locale
 settings on systems which provide @code{localeconv} (@pxref{Locales,, Locales
@@ -6377,7 +6399,7 @@ results.  For classes with overloading, see @ref{C++ Class Interface}.
 
 
 
-@node C++ Class Interface, BSD Compatible Functions, Formatted Input, Top
+@node C++ Class Interface, Custom Allocation, Formatted Input, Top
 @chapter C++ Class Interface
 @cindex C++ interface
 
@@ -6515,8 +6537,10 @@ anything.
 @deftypefun {} mpz_class::mpz_class (type @var{n})
 Construct an @code{mpz_class}.  All the standard C++ types may be used, except
 @code{long long} and @code{long double}, and all the GMP C++ classes can be
-used.  Any necessary conversion follows the corresponding C function, for
-example @code{double} follows @code{mpz_set_d} (@pxref{Assigning Integers}).
+used, although conversions from @code{mpq_class} and @code{mpf_class} are
+@code{explicit}.  Any necessary conversion follows the corresponding C
+function, for example @code{double} follows @code{mpz_set_d}
+(@pxref{Assigning Integers}).
 @end deftypefun
 
 @deftypefun explicit mpz_class::mpz_class (mpz_t @var{z})
@@ -6532,6 +6556,11 @@ Construct an @code{mpz_class} converted from a string using @code{mpz_set_str}
 
 If the string is not a valid integer, an @code{std::invalid_argument}
 exception is thrown.  The same applies to @code{operator=}.
+@end deftypefun
+
+@deftypefun mpz_class operator"" _mpz (const char *@var{str})
+With C++11 compilers, integers can be constructed with the syntax
+@code{123_mpz} which is equivalent to @code{mpz_class("123")}.
 @end deftypefun
 
 @deftypefun mpz_class operator/ (mpz_class @var{a}, mpz_class @var{d})
@@ -6550,7 +6579,7 @@ mpz_fdiv_q (q.get_mpz_t(), a.get_mpz_t(), d.get_mpz_t());
 @end example
 @end deftypefun
 
-@deftypefun mpz_class abs (mpz_class @var{op1})
+@deftypefun mpz_class abs (mpz_class @var{op})
 @deftypefunx int cmp (mpz_class @var{op1}, type @var{op2})
 @deftypefunx int cmp (type @var{op1}, mpz_class @var{op2})
 @maybepagebreak
@@ -6571,6 +6600,9 @@ mpz_fdiv_q (q.get_mpz_t(), a.get_mpz_t(), d.get_mpz_t());
 @deftypefunx int mpz_class::set_str (const string& @var{str}, int @var{base})
 @deftypefunx int sgn (mpz_class @var{op})
 @deftypefunx mpz_class sqrt (mpz_class @var{op})
+@maybepagebreak
+@deftypefunx void mpz_class::swap (mpz_class& @var{op})
+@deftypefunx void swap (mpz_class& @var{op1}, mpz_class& @var{op2})
 These functions provide a C++ class interface to the corresponding GMP C
 routines.
 
@@ -6599,9 +6631,10 @@ canonical form, or if not then @code{mpq_class::canonicalize} called.
 @deftypefun {} mpq_class::mpq_class (type @var{op})
 @deftypefunx {} mpq_class::mpq_class (integer @var{num}, integer @var{den})
 Construct an @code{mpq_class}.  The initial value can be a single value of any
-type, or a pair of integers (@code{mpz_class} or standard C++ integer types)
-representing a fraction, except that @code{long long} and @code{long double}
-are not supported.  For example,
+type (conversion from @code{mpf_class} is @code{explicit}), or a pair of
+integers (@code{mpz_class} or standard C++ integer types) representing a
+fraction, except that @code{long long} and @code{long double} are not
+supported.  For example,
 
 @example
 mpq_class q (99);
@@ -6625,6 +6658,12 @@ If the string is not a valid rational, an @code{std::invalid_argument}
 exception is thrown.  The same applies to @code{operator=}.
 @end deftypefun
 
+@deftypefun mpq_class operator"" _mpq (const char *@var{str})
+With C++11 compilers, integral rationals can be constructed with the syntax
+@code{123_mpq} which is equivalent to @code{mpq_class(123_mpz)}. Other
+rationals can be built as @code{-1_mpq/2} or @code{0xb_mpq/123456_mpz}.
+@end deftypefun
+
 @deftypefun void mpq_class::canonicalize ()
 Put an @code{mpq_class} into canonical form, as per @ref{Rational Number
 Functions}.  All arithmetic operators require their operands in canonical
@@ -6641,6 +6680,9 @@ form, and will return results in canonical form.
 @deftypefunx int mpq_class::set_str (const char *@var{str}, int @var{base})
 @deftypefunx int mpq_class::set_str (const string& @var{str}, int @var{base})
 @deftypefunx int sgn (mpq_class @var{op})
+@maybepagebreak
+@deftypefunx void mpq_class::swap (mpq_class& @var{op})
+@deftypefunx void swap (mpq_class& @var{op1}, mpq_class& @var{op2})
 These functions provide a C++ class interface to the corresponding GMP C
 routines.
 
@@ -6687,7 +6729,7 @@ as the destination @code{f}.  Explicit constructors can be used if this
 doesn't suit.
 
 @deftypefun {} mpf_class::mpf_class (type @var{op})
-@deftypefunx {} mpf_class::mpf_class (type @var{op}, unsigned long @var{prec})
+@deftypefunx {} mpf_class::mpf_class (type @var{op}, mp_bitcnt_t @var{prec})
 Construct an @code{mpf_class}.  Any standard C++ type can be used, except
 @code{long long} and @code{long double}, and any of the GMP C++ classes can be
 used.
@@ -6711,7 +6753,7 @@ mpf_class f(x+y);        // greater of precisions of x and y
 @end deftypefun
 
 @deftypefun explicit mpf_class::mpf_class (mpf_t @var{f})
-@deftypefunx {} mpf_class::mpf_class (mpf_t @var{f}, unsigned long @var{prec})
+@deftypefunx {} mpf_class::mpf_class (mpf_t @var{f}, mp_bitcnt_t @var{prec})
 Construct an @code{mpf_class} from an @code{mpf_t}.  The value in @var{f} is
 copied into the new @code{mpf_class}, there won't be any permanent association
 between it and @var{f}.
@@ -6721,9 +6763,9 @@ If @var{prec} is given, the initial precision is that value, in bits.  If
 @end deftypefun
 
 @deftypefun explicit mpf_class::mpf_class (const char *@var{s})
-@deftypefunx {} mpf_class::mpf_class (const char *@var{s}, unsigned long @var{prec}, int @var{base} = 0)
+@deftypefunx {} mpf_class::mpf_class (const char *@var{s}, mp_bitcnt_t @var{prec}, int @var{base} = 0)
 @deftypefunx explicit mpf_class::mpf_class (const string& @var{s})
-@deftypefunx {} mpf_class::mpf_class (const string& @var{s}, unsigned long @var{prec}, int @var{base} = 0)
+@deftypefunx {} mpf_class::mpf_class (const string& @var{s}, mp_bitcnt_t @var{prec}, int @var{base} = 0)
 Construct an @code{mpf_class} converted from a string using @code{mpf_set_str}
 (@pxref{Assigning Floats}).  If @var{prec} is given, the initial precision is
 that value, in bits.  If not, the default @code{mpf} precision
@@ -6731,6 +6773,11 @@ that value, in bits.  If not, the default @code{mpf} precision
 
 If the string is not a valid float, an @code{std::invalid_argument} exception
 is thrown.  The same applies to @code{operator=}.
+@end deftypefun
+
+@deftypefun mpf_class operator"" _mpf (const char *@var{str})
+With C++11 compilers, floats can be constructed with the syntax
+@code{1.23e-1_mpf} which is equivalent to @code{mpf_class("1.23e-1")}.
 @end deftypefun
 
 @deftypefun {mpf_class&} mpf_class::operator= (type @var{op})
@@ -6783,6 +6830,9 @@ with the builtin float types.
 @deftypefunx int mpf_class::set_str (const string& @var{str}, int @var{base})
 @deftypefunx int sgn (mpf_class @var{op})
 @deftypefunx mpf_class sqrt (mpf_class @var{op})
+@maybepagebreak
+@deftypefunx void mpf_class::swap (mpf_class& @var{op})
+@deftypefunx void swap (mpf_class& @var{op1}, mpf_class& @var{op2})
 @deftypefunx mpf_class trunc (mpf_class @var{op})
 These functions provide a C++ class interface to the corresponding GMP C
 routines.
@@ -6844,7 +6894,7 @@ Seed a random number generator.  See @pxref{Random Number Functions}, for how
 to choose a good seed.
 @end deftypefun
 
-@deftypefun mpz_class gmp_randclass::get_z_bits (unsigned long @var{bits})
+@deftypefun mpz_class gmp_randclass::get_z_bits (mp_bitcnt_t @var{bits})
 @deftypefunx mpz_class gmp_randclass::get_z_bits (mpz_class @var{bits})
 Generate a random integer with a specified number of bits.
 @end deftypefun
@@ -6854,7 +6904,7 @@ Generate a random integer in the range 0 to @math{@var{n}-1} inclusive.
 @end deftypefun
 
 @deftypefun mpf_class gmp_randclass::get_f ()
-@deftypefunx mpf_class gmp_randclass::get_f (unsigned long @var{prec})
+@deftypefunx mpf_class gmp_randclass::get_f (mp_bitcnt_t @var{prec})
 Generate a random float @var{f} in the range @math{0 <= @var{f} < 1}.  @var{f}
 will be to @var{prec} bits precision, or if @var{prec} is not given then to
 the precision of the destination.  For example,
@@ -6954,131 +7004,7 @@ void fun (T f, T g)
 @end table
 
 
-@node BSD Compatible Functions, Custom Allocation, C++ Class Interface, Top
-@comment  node-name,  next,  previous,  up
-@chapter Berkeley MP Compatible Functions
-@cindex Berkeley MP compatible functions
-@cindex BSD MP compatible functions
-
-These functions are intended to be fully compatible with the Berkeley MP
-library which is available on many BSD derived U*ix systems.  The
-@samp{--enable-mpbsd} option must be used when building GNU MP to make these
-available (@pxref{Installing GMP}).
-
-The original Berkeley MP library has a usage restriction: you cannot use the
-same variable as both source and destination in a single function call.  The
-compatible functions in GNU MP do not share this restriction---inputs and
-outputs may overlap.
-
-It is not recommended that new programs are written using these functions.
-Apart from the incomplete set of functions, the interface for initializing
-@code{MINT} objects is more error prone, and the @code{pow} function collides
-with @code{pow} in @file{libm.a}.
-
-@cindex @code{mp.h}
-@tindex MINT
-Include the header @file{mp.h} to get the definition of the necessary types and
-functions.  If you are on a BSD derived system, make sure to include GNU
-@file{mp.h} if you are going to link the GNU @file{libmp.a} to your program.
-This means that you probably need to give the @samp{-I<dir>} option to the
-compiler, where @samp{<dir>} is the directory where you have GNU @file{mp.h}.
-
-@deftypefun {MINT *} itom (signed short int @var{initial_value})
-Allocate an integer consisting of a @code{MINT} object and dynamic limb space.
-Initialize the integer to @var{initial_value}.  Return a pointer to the
-@code{MINT} object.
-@end deftypefun
-
-@deftypefun {MINT *} xtom (char *@var{initial_value})
-Allocate an integer consisting of a @code{MINT} object and dynamic limb space.
-Initialize the integer from @var{initial_value}, a hexadecimal,
-null-terminated C string.  Return a pointer to the @code{MINT} object.
-@end deftypefun
-
-@deftypefun void move (MINT *@var{src}, MINT *@var{dest})
-Set @var{dest} to @var{src} by copying.  Both variables must be previously
-initialized.
-@end deftypefun
-
-@deftypefun void madd (MINT *@var{src_1}, MINT *@var{src_2}, MINT *@var{destination})
-Add @var{src_1} and @var{src_2} and put the sum in @var{destination}.
-@end deftypefun
-
-@deftypefun void msub (MINT *@var{src_1}, MINT *@var{src_2}, MINT *@var{destination})
-Subtract @var{src_2} from @var{src_1} and put the difference in
-@var{destination}.
-@end deftypefun
-
-@deftypefun void mult (MINT *@var{src_1}, MINT *@var{src_2}, MINT *@var{destination})
-Multiply @var{src_1} and @var{src_2} and put the product in @var{destination}.
-@end deftypefun
-
-@deftypefun void mdiv (MINT *@var{dividend}, MINT *@var{divisor}, MINT *@var{quotient}, MINT *@var{remainder})
-@deftypefunx void sdiv (MINT *@var{dividend}, signed short int @var{divisor}, MINT *@var{quotient}, signed short int *@var{remainder})
-Set @var{quotient} to @var{dividend}/@var{divisor}, and @var{remainder} to
-@var{dividend} mod @var{divisor}.  The quotient is rounded towards zero; the
-remainder has the same sign as the dividend unless it is zero.
-
-Some implementations of these functions work differently---or not at all---for
-negative arguments.
-@end deftypefun
-
-@deftypefun void msqrt (MINT *@var{op}, MINT *@var{root}, MINT *@var{remainder})
-Set @var{root} to @m{\lfloor\sqrt{@var{op}}\rfloor, the truncated integer part
-of the square root of @var{op}}, like @code{mpz_sqrt}.  Set @var{remainder} to
-@m{(@var{op} - @var{root}^2), @var{op}@minus{}@var{root}*@var{root}}, i.e.
-zero if @var{op} is a perfect square.
-
-If @var{root} and @var{remainder} are the same variable, the results are
-undefined.
-@end deftypefun
-
-@deftypefun void pow (MINT *@var{base}, MINT *@var{exp}, MINT *@var{mod}, MINT *@var{dest})
-Set @var{dest} to (@var{base} raised to @var{exp}) modulo @var{mod}.
-
-Note that the name @code{pow} clashes with @code{pow} from the standard C math
-library (@pxref{Exponents and Logarithms,, Exponentiation and Logarithms,
-libc, The GNU C Library Reference Manual}).  An application will only be able
-to use one or the other.
-@end deftypefun
-
-@deftypefun void rpow (MINT *@var{base}, signed short int @var{exp}, MINT *@var{dest})
-Set @var{dest} to @var{base} raised to @var{exp}.
-@end deftypefun
-
-@deftypefun void gcd (MINT *@var{op1}, MINT *@var{op2}, MINT *@var{res})
-Set @var{res} to the greatest common divisor of @var{op1} and @var{op2}.
-@end deftypefun
-
-@deftypefun int mcmp (MINT *@var{op1}, MINT *@var{op2})
-Compare @var{op1} and @var{op2}.  Return a positive value if @var{op1} >
-@var{op2}, zero if @var{op1} = @var{op2}, and a negative value if @var{op1} <
-@var{op2}.
-@end deftypefun
-
-@deftypefun void min (MINT *@var{dest})
-Input a decimal string from @code{stdin}, and put the read integer in
-@var{dest}.  SPC and TAB are allowed in the number string, and are ignored.
-@end deftypefun
-
-@deftypefun void mout (MINT *@var{src})
-Output @var{src} to @code{stdout}, as a decimal string.  Also output a newline.
-@end deftypefun
-
-@deftypefun {char *} mtox (MINT *@var{op})
-Convert @var{op} to a hexadecimal string, and return a pointer to the string.
-The returned string is allocated using the default memory allocation function,
-@code{malloc} by default.  It will be @code{strlen(str)+1} bytes, that being
-exactly enough for the string and null-terminator.
-@end deftypefun
-
-@deftypefun void mfree (MINT *@var{op})
-De-allocate, the space used by @var{op}.  @strong{This function should only be
-passed a value returned by @code{itom} or @code{xtom}.}
-@end deftypefun
-
-
-@node Custom Allocation, Language Bindings, BSD Compatible Functions, Top
+@node Custom Allocation, Language Bindings, C++ Class Interface, Top
 @comment  node-name,  next,  previous,  up
 @chapter Custom Allocation
 @cindex Custom allocation
@@ -7091,9 +7017,6 @@ and terminates the program.
 
 Alternate functions can be specified, to allocate memory in a different way or
 to have a different error action on running out of memory.
-
-This feature is available in the Berkeley compatibility library (@pxref{BSD
-Compatible Functions}) as well as the main GMP library.
 
 @deftypefun void mp_set_memory_functions (@* void *(*@var{alloc_func_ptr}) (size_t), @* void *(*@var{realloc_func_ptr}) (void *, size_t, size_t), @* void (*@var{free_func_ptr}) (void *, size_t))
 Replace the current allocation functions from the arguments.  If an argument
@@ -7137,10 +7060,10 @@ De-allocate the space pointed to by @var{ptr}.
 
 A @dfn{byte} here means the unit used by the @code{sizeof} operator.
 
-The @var{old_size} parameters to @var{reallocate_function} and
-@var{free_function} are passed for convenience, but of course can be ignored
-if not needed.  The default functions using @code{malloc} and friends for
-instance don't use them.
+The @var{reallocate_function} parameter @var{old_size} and the
+@var{free_function} parameter @var{size} are passed for convenience, but of
+course they can be ignored if not needed by an implementation.  The default
+functions using @code{malloc} and friends for instance don't use them.
 
 No error return is allowed from any of these functions, if they return then
 they must have performed the specified operation.  In particular note that
@@ -7213,7 +7136,7 @@ interface, expression templates to eliminate temporaries.
 ALP @spaceuref{http://www-sop.inria.fr/saga/logiciels/ALP/} @* Linear algebra and
 polynomials using templates.
 @item
-Arithmos @spaceuref{http://www.win.ua.ac.be/~cant/arithmos/} @* Rationals
+Arithmos @spaceuref{http://cant.ua.ac.be/old/arithmos/} @* Rationals
 with infinities and square roots.
 @item
 CLN @spaceuref{http://www.ginac.de/CLN/} @* High level classes for arithmetic.
@@ -7393,8 +7316,7 @@ Q @spaceuref{http://q-lang.sourceforge.net/} @* Equational programming system.
 @item
 Regina @spaceuref{http://regina.sourceforge.net/} @* Topological calculator.
 @item
-Yacas @spaceuref{http://www.xs4all.nl/~apinkus/yacas.html} @* Yet another
-computer algebra system.
+Yacas @spaceuref{yacas.sourceforge.net} @* Yet another computer algebra system.
 @end itemize
 
 @end table
@@ -7428,7 +7350,7 @@ documented functions.
 @section Multiplication
 @cindex Multiplication algorithms
 
-N@cross{}N limb multiplications and squares are done using one of five
+N@cross{}N limb multiplications and squares are done using one of seven
 algorithms, as the size N increases.
 
 @quotation
@@ -7438,6 +7360,8 @@ algorithms, as the size N increases.
 @item Karatsuba @tab @code{MUL_TOOM22_THRESHOLD}
 @item Toom-3    @tab @code{MUL_TOOM33_THRESHOLD}
 @item Toom-4    @tab @code{MUL_TOOM44_THRESHOLD}
+@item Toom-6.5  @tab @code{MUL_TOOM6H_THRESHOLD}
+@item Toom-8.5  @tab @code{MUL_TOOM8H_THRESHOLD}
 @item FFT       @tab @code{MUL_FFT_THRESHOLD}
 @end multitable
 @end quotation
@@ -7454,6 +7378,7 @@ Multiplication}).
 * Karatsuba Multiplication::
 * Toom 3-Way Multiplication::
 * Toom 4-Way Multiplication::
+* Higher degree Toom'n'half::
 * FFT Multiplication::
 * Other Multiplication::
 * Unbalanced Multiplication::
@@ -7596,7 +7521,7 @@ equal length (or the most significant part one limb shorter if N is odd).
 @end example
 @end ifnottex
 
-Let @math{b} be the power of 2 where the split occurs, ie.@: if @ms{x,0} is
+Let @math{b} be the power of 2 where the split occurs, i.e.@: if @ms{x,0} is
 @math{k} limbs (@ms{y,0} the same) then
 @m{b=2\GMPraise{$k*$@code{mp\_bits\_per\_limb}}, b=2^(k*mp_bits_per_limb)}.
 With that @m{x=x_1b+x_0,x=x1*b+x0} and @m{y=y_1b+y_0,y=y1*b+y0}, and the
@@ -7775,7 +7700,7 @@ These parts are treated as the coefficients of two polynomials
 @end display
 
 Let @math{b} equal the power of 2 which is the size of the @ms{x,0}, @ms{x,1},
-@ms{y,0} and @ms{y,1} pieces, ie.@: if they're @math{k} limbs each then
+@ms{y,0} and @ms{y,1} pieces, i.e.@: if they're @math{k} limbs each then
 @m{b=2\GMPraise{$k*$@code{mp\_bits\_per\_limb}}, b=2^(k*mp_bits_per_limb)}.
 With this @math{x=X(b)} and @math{y=Y(b)}.
 
@@ -7910,7 +7835,7 @@ the @m{w_i,w[i]}.
 Squaring follows the same procedure as multiplication, but there's only one
 @math{X(t)} and it's evaluated at the 5 points, and those values squared to
 give values of @math{W(t)}.  The interpolation is then identical, and in fact
-the same @code{toom3_interpolate} subroutine is used for both squaring and
+the same @code{toom_interpolate_5pts} subroutine is used for both squaring and
 multiplying.
 
 Toom-3 is asymptotically @math{O(N^@W{1.465})}, the exponent being
@@ -7948,7 +7873,7 @@ and for example with a bit of rearrangement just one division by 6 can be
 done.
 
 
-@node Toom 4-Way Multiplication, FFT Multiplication, Toom 3-Way Multiplication, Multiplication Algorithms
+@node Toom 4-Way Multiplication, Higher degree Toom'n'half, Toom 3-Way Multiplication, Multiplication Algorithms
 @subsection Toom 4-Way Multiplication
 @cindex Toom multiplication
 
@@ -7991,7 +7916,32 @@ Toom-4 is asymptotically @math{O(N^@W{1.404})}, the exponent being
 original size each.
 
 
-@node FFT Multiplication, Other Multiplication, Toom 4-Way Multiplication, Multiplication Algorithms
+@node Higher degree Toom'n'half, FFT Multiplication, Toom 4-Way Multiplication, Multiplication Algorithms
+@subsection Higher degree Toom'n'half
+@cindex Toom multiplication
+
+The Toom algorithms described above (@pxref{Toom 3-Way Multiplication},
+@pxref{Toom 4-Way Multiplication}) generalizes to split into an arbitrary
+number of pieces. In general a split of two equally long operands into
+@math{r} pieces leads to evaluations and pointwise multiplications done at
+@m{2r-1,2*r-1} points. To fully exploit symmetries it would be better to have
+a multiple of 4 points, that's why for higher degree Toom'n'half is used.
+
+Toom'n'half means that the existence of one more piece is considered for a
+single operand. It can be virtual, i.e. zero, or real, when the two operand
+are not exactly balanced. By chosing an even @math{r},
+Toom-@m{r{1\over2},r+1/2} requires @math{2r} points, a multiple of four.
+
+The four-plets of points inlcude 0, @m{\infty,inf}, +1, -1 and
+@m{\pm2^i,+-2^i}, @m{\pm2^{-i},+-2^-i} . Each of them giving shortcuts for the
+evaluation phase and for some steps in the interpolation phase. Further tricks
+are used to reduce the memory footprint of the whole multiplication algorithm
+to a memory buffer equanl in size to the result of the product.
+
+Current GMP uses both Toom-6'n'half and Toom-8'n'half.
+
+
+@node FFT Multiplication, Other Multiplication, Higher degree Toom'n'half, Multiplication Algorithms
 @subsection FFT Multiplication
 @cindex FFT multiplication
 @cindex Fast Fourier Transform
@@ -8118,7 +8068,7 @@ currently used.  The notes here are merely for interest.
 In general a split into @math{r+1} pieces is made, and evaluations and
 pointwise multiplications done at @m{2r+1,2*r+1} points.  A 4-way split does 7
 pointwise multiplies, 5-way does 9, etc.  Asymptotically an @math{(r+1)}-way
-algorithm is @m{O(N^{log(2r+1)/log(r+1)}, O(N^(log(2*r+1)/log(r+1)))}.  Only
+algorithm is @m{O(N^{log(2r+1)/log(r+1)}), O(N^(log(2*r+1)/log(r+1)))}.  Only
 the pointwise multiplications count towards big-@math{O} complexity, but the
 time spent in the evaluate and interpolate stages grows with @math{r} and has
 a significant practical impact, with the asymptotic advantage of each @math{r}
@@ -8404,9 +8354,10 @@ products must be done as a normal division, but there's still some single limb
 divisions saved.  When @math{d} is a single limb some simplifications arise,
 providing good speedups on a number of processors.
 
-@code{mpn_divexact_by3}, @code{mpn_modexact_1_odd} and the @code{mpn_redc_X}
-functions differ subtly in how they return @math{r}, leading to some negations
-in the above formula, but all are essentially the same.
+The functions @code{mpn_divexact_by3}, @code{mpn_modexact_1_odd} and the
+internal @code{mpn_redc_X} functions differ subtly in how they return @math{r},
+leading to some negations in the above formula, but all are essentially the
+same.
 
 @cindex Divisibility algorithm
 @cindex Congruence algorithm
@@ -8670,6 +8621,9 @@ current size of the cofactors.
 @subsection Jacobi Symbol
 @cindex Jacobi symbol algorithm
 
+[This section is obsolete.  The current Jacobi code actually uses a very
+efficient algorithm.]
+
 @code{mpz_jacobi} and @code{mpz_kronecker} are currently implemented with a
 simple binary algorithm similar to that described for the GCDs (@pxref{Binary
 GCD}).  They're not very fast when both inputs are large.  Lehmer's multi-step
@@ -8716,7 +8670,7 @@ exponent.  Larger exponents use larger values of @math{k}, the choice being
 made to minimize the average number of multiplications that must supplement
 the squaring.
 
-The modular multiplies and squares use either a simple division or the REDC
+The modular multiplies and squarings use either a simple division or the REDC
 method by Montgomery (@pxref{References}).  REDC is a little faster,
 essentially saving N single limb divisions in a fashion similar to an exact
 remainder (@pxref{Exact Remainder}).
@@ -8878,7 +8832,7 @@ to save operations, so long as the lookup tables don't become too big.
 
 A square root must still be taken for any value that passes these tests, to
 verify it's really a square and not one of the small fraction of non-squares
-that get through (ie.@: a pseudo-square to all the tested bases).
+that get through (i.e.@: a pseudo-square to all the tested bases).
 
 Clearly more residue tests could be done, @code{mpz_perfect_square_p} only
 uses a compact and efficient set.  Big inputs would probably benefit from more
@@ -8980,7 +8934,7 @@ calculating a bigger radix power.
 
 Another possible improvement for the sub-quadratic part would be to arrange
 for radix powers that balanced the sizes of quotient and remainder produced,
-ie.@: the highest power would be an @m{b^{nk},b^(n*k)} approximately equal to
+i.e.@: the highest power would be an @m{b^{nk},b^(n*k)} approximately equal to
 @m{\sqrt{t},sqrt(t)}, not restricted to a @math{2^i} factor.  That ought to
 smooth out a graph of times against sizes, but may or may not be a net
 speedup.
@@ -9071,41 +9025,74 @@ for an arbitrary @math{n}.
 @subsection Factorial
 @cindex Factorial algorithm
 
-Factorials are calculated by a combination of removal of twos, powering, and
-binary splitting.  The procedure can be best illustrated with an example,
+Factorials are calculated by a combination of two algorithms. An idea is
+shared among them: to compute the odd part of the factorial; a final step
+takes account of the power of @math{2} term, by shifting.
+
+For small @math{n}, the odd factor of @math{n!} is computed with the simple
+observation that it is equal to the product of all positive odd numbers
+smaller than @math{n} times the odd factor of @m{\lfloor n/2\rfloor!, [n/2]!},
+where @m{\lfloor x\rfloor, [x]} is the integer part of @math{x}, and so on
+recursively. The procedure can be best illustrated with an example,
 
 @quotation
-@math{23! = 1.2.3.4.5.6.7.8.9.10.11.12.13.14.15.16.17.18.19.20.21.22.23}
+@math{23! = (23.21.19.17.15.13.11.9.7.5.3)(11.9.7.5.3)(5.3)2^{19}}
 @end quotation
 
-@noindent
-has factors of two removed,
+Current code collects all the factors in a single list, with a loop and no
+recursion, and compute the product, with no special care for repeated chunks.
 
-@quotation
-@math{23! = 2^{19}.1.1.3.1.5.3.7.1.9.5.11.3.13.7.15.1.17.9.19.5.21.11.23}
-@end quotation
+When @math{n} is larger, computation pass trough prime sieving. An helper
+function is used, as suggested by Peter Luschny:
+@tex
+$$\mathop{\rm msf}(n) = {n!\over\lfloor n/2\rfloor!^2\cdot2^k} = \prod_{p=3}^{n}
+p^{\mathop{\rm L}(p,n)} $$
+@end tex
+@ifnottex
 
-@noindent
-and the resulting terms collected up according to their multiplicity,
+@example
+                            n
+                          -----
+               n!          | |   L(p,n)
+msf(n) = -------------- =  | |  p
+          [n/2]!^2.2^k     p=3
+@end example
+@end ifnottex
 
-@quotation
-@math{23! = 2^{19}.(3.5)^3.(7.9.11)^2.(13.15.17.19.21.23)}
-@end quotation
+Where @math{p} ranges on odd prime numbers. The exponent @math{k} is chosen to
+obtain an odd integer number: @math{k} is the number of 1 bits in the binary
+representation of @m{\lfloor n/2\rfloor, [n/2]}. The function L@math{(p,n)}
+can be defined as zero when @math{p} is composite, and, for any prime
+@math{p}, it is computed with:
+@tex
+$$\mathop{\rm L}(p,n) = \sum_{i>0}\left\lfloor{n\over p^i}\right\rfloor\bmod2
+\leq\log_p(n)$$
+@end tex
+@ifnottex
 
-Each sequence such as @math{13.15.17.19.21.23} is evaluated by splitting into
-every second term, as for instance @math{(13.17.21).(15.19.23)}, and the same
-recursively on each half.  This is implemented iteratively using some bit
-twiddling.
+@example
+          ---
+           \    n
+L(p,n) =   /  [---] mod 2   <=  log (n) .
+          ---  p^i                p
+          i>0
+@end example
+@end ifnottex
+
+With this helper function, we are able to compute the odd part of @math{n!}
+using the recursion implied by @m{n!=\lfloor n/2\rfloor!^2\cdot\mathop{\rm
+msf}(n)\cdot2^k , n!=[n/2]!^2*msf(n)*2^k}. The recursion stops using the
+small-@math{n} algorithm on some @m{\lfloor n/2^i\rfloor, [n/2^i]}.
+
+Both the above algorithms use binary splitting to compute the product of many
+small factors. At first as many products as possible are accumulated in a
+single register, generating a list of factors that fit in a machine word. This
+list is then split into halves, and the product is computed recursively.
 
 Such splitting is more efficient than repeated N@cross{}1 multiplies since it
 forms big multiplies, allowing Karatsuba and higher algorithms to be used.
 And even below the Karatsuba threshold a big block of work can be more
 efficient for the basecase algorithm.
-
-Splitting into subsequences of every second term keeps the resulting products
-more nearly equal in size than would the simpler approach of say taking the
-first half and second half of the sequence.  Nearly equal products are more
-efficient for the current multiply implementation.
 
 
 @node Binomial Coefficients Algorithm, Fibonacci Numbers Algorithm, Factorial Algorithm, Other Algorithms
@@ -9286,7 +9273,7 @@ are also very good and this is the default algorithm used by GMP.
 @cindex Linear congruential algorithm
 Linear congruential generators are described in many text books, for instance
 Knuth volume 2 (@pxref{References}).  With a modulus @math{M} and parameters
-@math{A} and @math{C}, a integer state @math{S} is iterated by the formula
+@math{A} and @math{C}, an integer state @math{S} is iterated by the formula
 @math{S @leftarrow{} A@GMPmultiply{}S+C @bmod{} M}.  At each step the new
 state is a linear function of the previous, mod @math{M}, hence the name of
 the generator.
@@ -10392,11 +10379,12 @@ Jason Moxham rewrote @code{mpz_fac_ui}.
 Pedro Gimeno implemented the Mersenne Twister and made other random number
 improvements.
 
-Niels M@"oller wrote the sub-quadratic GCD and extended GCD code, the
+Niels M@"oller wrote the sub-quadratic GCD, extended GCD and jacobi code, the
 quadratic Hensel division code, and (with Torbj@"orn) the new divide and
 conquer division code for GMP 4.3.  Niels also helped implement the new Toom
 multiply code for GMP 4.3 and implemented helper functions to simplify Toom
-evaluations for GMP 5.0.  He wrote the original version of mpn_mulmod_bnm1.
+evaluations for GMP 5.0.  He wrote the original version of mpn_mulmod_bnm1, and
+he is the main author of the mini-gmp package used for gmp bootstrapping.
 
 Alberto Zanoni and Marco Bodrato suggested the unbalanced multiply strategy,
 and found the optimal strategies for evaluation and interpolation in Toom
@@ -10405,13 +10393,25 @@ multiplication.
 Marco Bodrato helped implement the new Toom multiply code for GMP 4.3 and
 implemented most of the new Toom multiply and squaring code for 5.0.
 He is the main author of the current mpn_mulmod_bnm1 and mpn_mullo_n.  Marco
-also wrote the functions mpn_invert and mpn_invertappr.
+also wrote the functions mpn_invert and mpn_invertappr.  He is the author of
+the current combinatorial functions: binomial, factorial, multifactorial,
+primorial.
 
 David Harvey suggested the internal function @code{mpn_bdiv_dbm1}, implementing
 division relevant to Toom multiplication.  He also worked on fast assembly
-sequences, in particular on a fast AMD64 @code{mpn_mul_basecase}.
+sequences, in particular on a fast AMD64 @code{mpn_mul_basecase}. He wrote
+the internal middle product functions @code{mpn_mulmid_basecase},
+@code{mpn_toom42_mulmid}, @code{mpn_mulmid_n} and related helper routines.
 
 Martin Boij wrote @code{mpn_perfect_power_p}.
+
+Marc Glisse improved @file{gmpxx.h}: use fewer temporaries (faster),
+specializations of @code{numeric_limits} and @code{common_type}, C++11
+features (move constructors, explicit bool conversion, UDL), make the
+conversion from @code{mpq_class} to @code{mpz_class} explicit, optimize
+operations where one argument is a small compile-time constant, replace
+some heap allocations by stack allocations.  He also fixed the eofbit
+handling of C++ streams, and removed one division from @file{mpq/aors.c}.
 
 (This list is chronological, not ordered after significance.  If you have
 contributed to GMP but are not listed above, please tell
@@ -10449,7 +10449,7 @@ Analytic Number Theory and Computational Complexity'', Wiley, 1998.
 @item
 Richard Crandall and Carl Pomerance, ``Prime Numbers: A Computational
 Perspective'', 2nd edition, Springer-Verlag, 2005.
-@texlinebreak{} @uref{http://math.dartmouth.edu/~carlp/}
+@texlinebreak{} @uref{http://www.math.dartmouth.edu/~carlp/}
 
 @item
 Henri Cohen, ``A Course in Computational Algebraic Number Theory'', Graduate
@@ -10482,8 +10482,8 @@ Collection'', Free Software Foundation, 2008, available online
 @item
 Yves Bertot, Nicolas Magaud and Paul Zimmermann, ``A Proof of GMP Square
 Root'', Journal of Automated Reasoning, volume 29, 2002, pp.@: 225-252.  Also
-available online as INRIA Research Report 4475, June 2001,
-@uref{http://www.inria.fr/rrrt/rr-4475.html}
+available online as INRIA Research Report 4475, June 2002,
+@uref{http://hal.inria.fr/docs/00/07/21/13/PDF/RR-4475.pdf}
 
 @item
 Christoph Burnikel and Joachim Ziegler, ``Fast Recursive Division'',
@@ -10493,8 +10493,7 @@ Max-Planck-Institut fuer Informatik Research Report MPI-I-98-1-022,
 @item
 Torbj@"orn Granlund and Peter L. Montgomery, ``Division by Invariant Integers
 using Multiplication'', in Proceedings of the SIGPLAN PLDI'94 Conference, June
-1994.  Also available @uref{ftp://ftp.cwi.nl/pub/pmontgom/divcnst.psa4.gz}
-(and .psl.gz).
+1994.  Also available @uref{http://gmplib.org/~tege/divcnst-pldi94.pdf}.
 
 @item
 Niels M@"oller and Torbj@"orn Granlund, ``Improved division by invariant
@@ -10574,7 +10573,7 @@ volume 21, number 1, March 1995, pp.@: 111-122.
 
 @item
 Paul Zimmermann, ``Karatsuba Square Root'', INRIA Research Report 3805,
-November 1999, @uref{http://www.inria.fr/rrrt/rr-3805.html}
+November 1999, @uref{http://hal.inria.fr/inria-00072854/PDF/RR-3805.pdf}
 
 @item
 Paul Zimmermann, ``A Proof of GMP Fast Division and Square Root

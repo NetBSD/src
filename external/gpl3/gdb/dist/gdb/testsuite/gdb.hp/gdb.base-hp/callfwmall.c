@@ -180,10 +180,6 @@ int main()
 main ()
 #endif
 {
-#ifdef usestubs
-  set_debug_traps();
-  breakpoint();
-#endif
   t_structs_c(struct_val1);
   return 0;
   

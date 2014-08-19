@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_sigreturn14.s,v 1.3 2011/02/08 20:20:16 rmind Exp $	*/
+/*	$NetBSD: compat_16_sigreturn14.s,v 1.3.14.1 2014/08/20 00:03:11 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,33 +48,33 @@
  * (possibly much larger) original stack frame.
  */
 ENTRY_NOPROFILE(m68k_compat_16_sigreturn14_stub)
-	lea	%sp@(-84),%sp		| leave enough space for largest frame
-	movl	%sp@(84),%sp@		| move up current 8 byte frame
-	movl	%sp@(88),%sp@(4)
-	movl	#84,%sp@-		| default: adjust by 84 bytes
-	moveml	#0xFFFF,%sp@-		| save user registers
+	lea	-84(%sp),%sp		| leave enough space for largest frame
+	movl	84(%sp),(%sp)		| move up current 8 byte frame
+	movl	88(%sp),4(%sp)
+	movl	#84,-(%sp)		| default: adjust by 84 bytes
+	moveml	#0xFFFF,-(%sp)		| save user registers
 	movl	%usp,%a0		| save the user SP
-	movl	%a0,%sp@(FR_SP)		|   in the savearea
-	movl	#SYS_compat_16___sigreturn14,%sp@- | push syscall number
+	movl	%a0,FR_SP(%sp)		|   in the savearea
+	movl	#SYS_compat_16___sigreturn14,-(%sp) | push syscall number
 	jbsr	_C_LABEL(syscall)	| handle it
 	addql	#4,%sp			| pop syscall#
-	movl	%sp@(FR_SP),%a0		| grab and restore
+	movl	FR_SP(%sp),%a0		| grab and restore
 	movl	%a0,%usp		|   user SP
-	lea	%sp@(FR_HW),%a1		| pointer to HW frame
-	movw	%sp@(FR_ADJ),%d0	| do we need to adjust the stack?
-	jeq	Lsigr1			| no, just continue
+	lea	FR_HW(%sp),%a1		| pointer to HW frame
+	movw	FR_ADJ(%sp),%d0	| do we need to adjust the stack?
+	jeq	.Lsigr1			| no, just continue
 	moveq	#92,%d1			| total size
 	subw	%d0,%d1			|  - hole size = frame size
-	lea	%a1@(92),%a0		| destination
+	lea	92(%a1),%a0		| destination
 	addw	%d1,%a1			| source
 	lsrw	#1,%d1			| convert to word count
 	subqw	#1,%d1			| minus 1 for dbf
-Lsigrlp:
-	movw	%a1@-,%a0@-		| copy a word
-	dbf	%d1,Lsigrlp		| continue
+.Lsigrlp:
+	movw	-(%a1),-(%a0)		| copy a word
+	dbf	%d1,.Lsigrlp		| continue
 	movl	%a0,%a1			| new HW frame base
-Lsigr1:
-	movl	%a1,%sp@(FR_SP)		| new SP value
-	moveml	%sp@+,#0x7FFF		| restore user registers
-	movl	%sp@,%sp		| and our SP
+.Lsigr1:
+	movl	%a1,FR_SP(%sp)		| new SP value
+	moveml	(%sp)+,#0x7FFF		| restore user registers
+	movl	(%sp),%sp		| and our SP
 	jra	_ASM_LABEL(rei)		| all done

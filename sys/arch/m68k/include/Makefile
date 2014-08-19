@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2011/07/17 20:54:43 joerg Exp $
+#	$NetBSD: Makefile,v 1.27.12.1 2014/08/20 00:03:10 tls Exp $
 
 INCSDIR= /usr/include/m68k
 
@@ -7,7 +7,7 @@ INCS=	ansi.h aout_machdep.h asm.h asm_single.h \
 	cacheops.h cacheops_20.h cacheops_30.h cacheops_40.h cacheops_60.h \
 	cdefs.h cpu.h cpuframe.h \
 	elf_machdep.h endian.h endian_machdep.h \
-	float.h frame.h \
+	float.h fpreg.h frame.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	kcore.h \

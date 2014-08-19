@@ -1,17 +1,17 @@
-#	$NetBSD: Makefile,v 1.2 2011/06/23 11:47:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.2.8.1 2014/08/19 23:56:55 tls Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
-.include "${.CURDIR}/../../arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/../../arch/${GCC_MACHINE_ARCH}/defs.mk"
 
 .cc: # disable .cc->NULL transform
-
-DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
 
 INCS=		${G_backward_headers}
 INCSDIR=	/usr/include/g++/backward
 
-.PATH: ${DIST}/libstdc++-v3/include/backward
+.include "${.CURDIR}/../Makefile.includes"
 
 # Get default targets including <bsd.inc.mk>.
 .include <bsd.prog.mk>
+
+.PATH: ${DIST}/libstdc++-v3/include

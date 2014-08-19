@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype_local.h,v 1.12.12.1 2013/06/23 06:21:05 tls Exp $	*/
+/*	$NetBSD: runetype_local.h,v 1.12.12.2 2014/08/20 00:02:15 tls Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -136,8 +136,7 @@ typedef struct _RuneLocale {
 /*
  * global variables
  */
-extern const _RuneLocale _DefaultRuneLocale;
-extern const _RuneLocale *_CurrentRuneLocale;
+extern __dso_hidden const _RuneLocale _DefaultRuneLocale;
 
 __BEGIN_DECLS
 int _rune_load(const char * __restrict, size_t, _RuneLocale ** __restrict);

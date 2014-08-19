@@ -1,5 +1,4 @@
-# Copyright 1999, 2000, 2001, 2002, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 1999-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,14 +13,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Test Machine interface (MI) operations 
-# Verify that, using the MI, we can run a simple program and perform
-# exec-return.  
-
-# The goal is not to
-# test gdb functionality, which is done by other tests, but to verify
-# the correct output response to MI operations.  
+# Test Machine interface (MI) operations
 #
+# Verify that, using the MI, we can run a simple program and perform
+# exec-return.
+#
+# The goal is not to test gdb functionality, which is done by other
+# tests, but to verify the correct output response to MI operations.
 
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
@@ -31,10 +29,9 @@ if [mi_gdb_start] {
     continue
 }
 
-set testfile "basics"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/mi-return
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-DFAKEARGV}] != "" } {
+standard_testfile basics.c
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
      untested mi-return.exp
      return -1
 }
@@ -53,11 +50,7 @@ proc test_return_simple {} {
     set line_callee3_call         [expr $line_callee3_head + 2]
     set line_callee3_close_brace  [expr $line_callee3_head + 3]
 
-    gdb_test_multiple "111-exec-return" "return from callee4 now" {
-	-re "111\\^done,frame=\{level=\"0\",addr=\"$hex\",func=\"callee3\",args=\\\[.*\\\],file=\".*basics.c\",fullname=\"${fullname_syntax}${srcfile}\",line=\"($line_callee3_call|$line_callee3_close_brace)\"\}\r\n$mi_gdb_prompt$" {
-	    pass "return from callee4 now"
-	}
-    }
+    mi_gdb_test "111-exec-return" "111\\^done,frame=\{level=\"0\",addr=\"$hex\",func=\"callee3\",args=\\\[.*\\\],file=\".*basics.c\",fullname=\"${fullname_syntax}${srcfile}\",line=\"($line_callee3_call|$line_callee3_close_brace)\"\}" "return from callee4 now"
 }
 
 mi_runto callee4

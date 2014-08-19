@@ -1,7 +1,7 @@
-/*	$NetBSD: npfctl.c,v 1.19.2.3 2013/06/23 06:29:05 tls Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.19.2.4 2014/08/20 00:05:11 tls Exp $	*/
 
 /*-
- * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.19.2.3 2013/06/23 06:29:05 tls Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.19.2.4 2014/08/20 00:05:11 tls Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -60,8 +60,8 @@ enum {
 	NPFCTL_TABLE,
 	NPFCTL_RULE,
 	NPFCTL_STATS,
-	NPFCTL_SESSIONS_SAVE,
-	NPFCTL_SESSIONS_LOAD,
+	NPFCTL_SAVE,
+	NPFCTL_LOAD,
 };
 
 static const struct operations_s {
@@ -69,41 +69,42 @@ static const struct operations_s {
 	int			action;
 } operations[] = {
 	/* Start, stop, reload */
-	{	"start",		NPFCTL_START		},
-	{	"stop",			NPFCTL_STOP		},
-	{	"reload",		NPFCTL_RELOAD		},
-	{	"show",			NPFCTL_SHOWCONF,	},
-	{	"flush",		NPFCTL_FLUSH		},
-	{	"valid",		NPFCTL_VALIDATE		},
+	{	"start",	NPFCTL_START		},
+	{	"stop",		NPFCTL_STOP		},
+	{	"reload",	NPFCTL_RELOAD		},
+	{	"show",		NPFCTL_SHOWCONF,	},
+	{	"flush",	NPFCTL_FLUSH		},
+	{	"valid",	NPFCTL_VALIDATE		},
 	/* Table */
-	{	"table",		NPFCTL_TABLE		},
+	{	"table",	NPFCTL_TABLE		},
 	/* Rule */
-	{	"rule",			NPFCTL_RULE		},
+	{	"rule",		NPFCTL_RULE		},
 	/* Stats */
-	{	"stats",		NPFCTL_STATS		},
-	/* Sessions */
-	{	"sess-save",		NPFCTL_SESSIONS_SAVE	},
-	{	"sess-load",		NPFCTL_SESSIONS_LOAD	},
+	{	"stats",	NPFCTL_STATS		},
+	/* Full state save/load */
+	{	"save",		NPFCTL_SAVE		},
+	{	"load",		NPFCTL_LOAD		},
 	/* --- */
-	{	NULL,			0			}
+	{	NULL,		0			}
 };
 
-static bool
-join(char *buf, size_t buflen, int count, char **args)
+bool
+join(char *buf, size_t buflen, int count, char **args, const char *sep)
 {
+	const u_int seplen = strlen(sep);
 	char *s = buf, *p = NULL;
 
 	for (int i = 0; i < count; i++) {
 		size_t len;
 
 		p = stpncpy(s, args[i], buflen);
-		len = p - s + 1;
+		len = p - s + seplen;
 		if (len >= buflen) {
 			return false;
 		}
 		buflen -= len;
-		*p = ' ';
-		s = p + 1;
+		strcpy(p, sep);
+		s = p + seplen;
 	}
 	*p = '\0';
 	return true;
@@ -136,7 +137,7 @@ usage(void)
 	    "\t%s table <tid> { list | flush }\n",
 	    progname);
 	fprintf(stderr,
-	    "\t%s sess-load | sess-save\n",
+	    "\t%s save | load\n",
 	    progname);
 	exit(EXIT_FAILURE);
 }
@@ -152,15 +153,15 @@ npfctl_print_stats(int fd)
 		{ -1, "Packets passed"					},
 		{ NPF_STAT_PASS_DEFAULT,	"default pass"		},
 		{ NPF_STAT_PASS_RULESET,	"ruleset pass"		},
-		{ NPF_STAT_PASS_SESSION,	"session pass"		},
+		{ NPF_STAT_PASS_CONN,		"state pass"		},
 
 		{ -1, "Packets blocked"					},
 		{ NPF_STAT_BLOCK_DEFAULT,	"default block"		},
 		{ NPF_STAT_BLOCK_RULESET,	"ruleset block"		},
 
-		{ -1, "Session and NAT entries"				},
-		{ NPF_STAT_SESSION_CREATE,	"session allocations"	},
-		{ NPF_STAT_SESSION_DESTROY,	"session destructions"	},
+		{ -1, "State and NAT entries"				},
+		{ NPF_STAT_CONN_CREATE,		"state allocations"},
+		{ NPF_STAT_CONN_DESTROY,	"state destructions"},
 		{ NPF_STAT_NAT_CREATE,		"NAT entry allocations"	},
 		{ NPF_STAT_NAT_DESTROY,		"NAT entry destructions"},
 
@@ -176,7 +177,7 @@ npfctl_print_stats(int fd)
 
 		{ -1, "Packet race cases"				},
 		{ NPF_STAT_RACE_NAT,		"NAT association race"	},
-		{ NPF_STAT_RACE_SESSION,	"duplicate session race"},
+		{ NPF_STAT_RACE_CONN,		"duplicate state race"	},
 
 		{ -1, "Fragmentation"					},
 		{ NPF_STAT_FRAGMENTS,		"fragments"		},
@@ -210,22 +211,10 @@ npfctl_print_stats(int fd)
 void
 npfctl_print_error(const nl_error_t *ne)
 {
-	static const char *ncode_errors[] = {
-		[-NPF_ERR_OPCODE]	= "invalid instruction",
-		[-NPF_ERR_JUMP]		= "invalid jump",
-		[-NPF_ERR_REG]		= "invalid register",
-		[-NPF_ERR_INVAL]	= "invalid argument value",
-		[-NPF_ERR_RANGE]	= "processing out of range"
-	};
-	const int nc_err = ne->ne_ncode_error;
 	const char *srcfile = ne->ne_source_file;
 
 	if (srcfile) {
 		warnx("source %s line %d", srcfile, ne->ne_source_line);
-	}
-	if (nc_err) {
-		warnx("n-code error (%d): %s at offset 0x%x",
-		    nc_err, ncode_errors[-nc_err], ne->ne_ncode_errat);
 	}
 	if (ne->ne_id) {
 		warnx("object: %d", ne->ne_id);
@@ -233,7 +222,7 @@ npfctl_print_error(const nl_error_t *ne)
 }
 
 char *
-npfctl_print_addrmask(int alen, npf_addr_t *addr, npf_netmask_t mask)
+npfctl_print_addrmask(int alen, const npf_addr_t *addr, npf_netmask_t mask)
 {
 	struct sockaddr_storage ss;
 	char *buf = ecalloc(1, 64);
@@ -261,7 +250,7 @@ npfctl_print_addrmask(int alen, npf_addr_t *addr, npf_netmask_t mask)
 		assert(false);
 	}
 	len = sockaddr_snprintf(buf, 64, "%a", (struct sockaddr *)&ss);
-	if (mask) {
+	if (mask && mask != NPF_NO_NETMASK) {
 		snprintf(&buf[len], 64 - len, "/%u", mask);
 	}
 	return buf;
@@ -285,12 +274,12 @@ npfctl_table(int fd, int argc, char **argv)
 	npf_ioctl_table_t nct;
 	fam_addr_mask_t fam;
 	size_t buflen = 512;
-	char *cmd, *arg = NULL; /* XXX gcc */
+	char *cmd, *arg;
 	int n, alen;
 
 	/* Default action is list. */
 	memset(&nct, 0, sizeof(npf_ioctl_table_t));
-	nct.nct_tid = atoi(argv[0]);
+	nct.nct_name = argv[0];
 	cmd = argv[1];
 
 	for (n = 0; tblops[n].cmd != NULL; n++) {
@@ -307,6 +296,7 @@ npfctl_table(int fd, int argc, char **argv)
 	switch (nct.nct_cmd) {
 	case NPF_CMD_TABLE_LIST:
 	case NPF_CMD_TABLE_FLUSH:
+		arg = NULL;
 		break;
 	default:
 		if (argc < 3) {
@@ -384,7 +374,7 @@ npfctl_parse_rule(int argc, char **argv)
 	nl_rule_t *rl;
 
 	/* Get the rule string and parse it. */
-	if (!join(rule_string, sizeof(rule_string), argc, argv)) {
+	if (!join(rule_string, sizeof(rule_string), argc, argv, " ")) {
 		errx(EXIT_FAILURE, "command too long");
 	}
 	npfctl_parse_string(rule_string);
@@ -490,6 +480,37 @@ npfctl_rule(int fd, int argc, char **argv)
 	exit(EXIT_SUCCESS);
 }
 
+static int
+npfctl_save(int fd)
+{
+	nl_config_t *ncf;
+	bool active, loaded;
+	int error;
+
+	ncf = npf_config_retrieve(fd, &active, &loaded);
+	if (ncf == NULL) {
+		return errno;
+	}
+	error = npf_config_export(ncf, NPF_DB_PATH);
+	npf_config_destroy(ncf);
+	return error;
+}
+
+static int
+npfctl_load(int fd)
+{
+	nl_config_t *ncf;
+	int error;
+
+	ncf = npf_config_import(NPF_DB_PATH);
+	if (ncf == NULL) {
+		return errno;
+	}
+	error = npf_config_submit(ncf, fd);
+	npf_config_destroy(ncf);
+	return error;
+}
+
 static void
 npfctl(int action, int argc, char **argv)
 {
@@ -554,21 +575,17 @@ npfctl(int action, int argc, char **argv)
 		argv += 2;
 		npfctl_rule(fd, argc, argv);
 		break;
+	case NPFCTL_LOAD:
+		ret = npfctl_load(fd);
+		fun = "npfctl_config_load";
+		break;
+	case NPFCTL_SAVE:
+		fd = npfctl_save(fd);
+		fun = "npfctl_config_save";
+		break;
 	case NPFCTL_STATS:
 		ret = npfctl_print_stats(fd);
 		fun = "npfctl_print_stats";
-		break;
-	case NPFCTL_SESSIONS_SAVE:
-		if (npf_sessions_recv(fd, NPF_SESSDB_PATH) != 0) {
-			errx(EXIT_FAILURE, "could not save sessions to '%s'",
-			    NPF_SESSDB_PATH);
-		}
-		break;
-	case NPFCTL_SESSIONS_LOAD:
-		if (npf_sessions_send(fd, NPF_SESSDB_PATH) != 0) {
-			errx(EXIT_FAILURE, "no sessions loaded from '%s'",
-			    NPF_SESSDB_PATH);
-		}
 		break;
 	}
 	if (ret) {

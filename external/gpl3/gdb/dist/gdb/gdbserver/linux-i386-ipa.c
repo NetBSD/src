@@ -1,7 +1,7 @@
 /* GNU/Linux/x86 specific low level interface, for the in-process
    agent library for GDB.
 
-   Copyright (C) 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,9 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "server.h"
+#include <stdint.h>
+#include <sys/mman.h>
+#include "tracepoint.h"
 
 /* GDB register numbers.  */
 
@@ -47,6 +50,7 @@ enum i386_gdb_regnum
 
 /* Defined in auto-generated file i386-linux.c.  */
 void init_registers_i386_linux (void);
+extern const struct target_desc *tdesc_i386_linux;
 
 #define FT_CR_EAX 15
 #define FT_CR_ECX 14
@@ -191,8 +195,63 @@ supply_static_tracepoint_registers (struct regcache *regcache,
    may use it proper at some point.  */
 const char *gdbserver_xmltarget;
 
+/* Attempt to allocate memory for trampolines in the first 64 KiB of
+   memory to enable smaller jump patches.  */
+
+static void
+initialize_fast_tracepoint_trampoline_buffer (void)
+{
+  const CORE_ADDR buffer_end = 64 * 1024;
+  /* Ensure that the buffer will be at least 1 KiB in size, which is
+     enough space for over 200 fast tracepoints.  */
+  const int min_buffer_size = 1024;
+  char buf[IPA_BUFSIZ];
+  CORE_ADDR mmap_min_addr = buffer_end + 1;
+  ULONGEST buffer_size;
+  FILE *f = fopen ("/proc/sys/vm/mmap_min_addr", "r");
+
+  if (!f)
+    {    
+      snprintf (buf, sizeof (buf), "mmap_min_addr open failed: %s",
+		strerror (errno));
+      set_trampoline_buffer_space (0, 0, buf);
+      return;
+    }
+
+  if (fgets (buf, IPA_BUFSIZ, f))
+    sscanf (buf, "%llu", &mmap_min_addr);
+      
+  fclose (f);
+      
+  buffer_size = buffer_end - mmap_min_addr;
+
+  if (buffer_size >= min_buffer_size)
+    {
+      if (mmap ((void *) (uintptr_t) mmap_min_addr, buffer_size,
+		PROT_READ | PROT_EXEC | PROT_WRITE,
+		MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS,
+		-1, 0)
+	  != MAP_FAILED)
+	set_trampoline_buffer_space (mmap_min_addr, buffer_end, NULL);
+      else
+	{
+	  snprintf (buf, IPA_BUFSIZ, "low-64K-buffer mmap() failed: %s",
+		    strerror (errno));
+	  set_trampoline_buffer_space (0, 0, buf);
+	}
+    }
+  else
+    {
+      snprintf (buf, IPA_BUFSIZ, "mmap_min_addr is %d, must be %d or less",
+		(int) mmap_min_addr, (int) buffer_end - min_buffer_size);
+      set_trampoline_buffer_space (0, 0, buf);
+    }
+}
+
 void
 initialize_low_tracepoint (void)
 {
   init_registers_i386_linux ();
+  ipa_tdesc = tdesc_i386_linux;
+  initialize_fast_tracepoint_trampoline_buffer ();
 }

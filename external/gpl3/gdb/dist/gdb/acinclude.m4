@@ -1,15 +1,33 @@
 dnl written by Rob Savoye <rob@cygnus.com> for Cygnus Support
 dnl major rewriting for Tcl 7.5 by Don Libes <libes@nist.gov>
 
+# Keep these includes in sync with the aclocal_m4_deps list in
+# Makefile.in.
+
+sinclude(acx_configure_dir.m4)
+
+# This gets GDB_AC_LIBMCHECK.
+sinclude(libmcheck.m4)
+
 dnl gdb/configure.in uses BFD_NEED_DECLARATION, so get its definition.
 sinclude(../bfd/bfd.m4)
 
-dnl This gets the standard macros
+dnl This gets the standard macros.
 sinclude(../config/acinclude.m4)
 
-dnl This gets autoconf bugfixes
+dnl This gets AC_PLUGINS, needed by ACX_LARGEFILE.
+sinclude(../config/plugins.m4)
+
+dnl For ACX_LARGEFILE.
+sinclude(../config/largefile.m4)
+
+dnl For AM_SET_LEADING_DOT.
+sinclude(../config/lead-dot.m4)
+
+dnl This gets autoconf bugfixes.
 sinclude(../config/override.m4)
 
+dnl For ZW_GNU_GETTEXT_SISTER_DIR.
 sinclude(../config/gettext-sister.m4)
 
 dnl For AC_LIB_HAVE_LINKFLAGS.
@@ -34,37 +52,14 @@ sinclude([../config/codeset.m4])
 
 sinclude([../config/zlib.m4])
 
-#
-# Sometimes the native compiler is a bogus stub for gcc or /usr/ucb/cc. This
-# makes configure think it's cross compiling. If --target wasn't used, then
-# we can't configure, so something is wrong. We don't use the cache
-# here cause if somebody fixes their compiler install, we want this to work.
-AC_DEFUN([CY_AC_C_WORKS],
-[# If we cannot compile and link a trivial program, we can't expect anything to work
-AC_MSG_CHECKING(whether the compiler ($CC) actually works)
-AC_TRY_COMPILE(, [/* don't need anything here */],
-        c_compiles=yes, c_compiles=no)
-
-AC_TRY_LINK(, [/* don't need anything here */],
-        c_links=yes, c_links=no)
-
-if test x"${c_compiles}" = x"no" ; then
-  AC_MSG_ERROR(the native compiler is broken and won't compile.)
-fi
-
-if test x"${c_links}" = x"no" ; then
-  AC_MSG_ERROR(the native compiler is broken and won't link.)
-fi
-AC_MSG_RESULT(yes)
-])
+m4_include([common/common.m4])
 
 ## ----------------------------------------- ##
 ## ANSIfy the C compiler whenever possible.  ##
 ## From Franc,ois Pinard                     ##
 ## ----------------------------------------- ##
 
-# Copyright (C) 1996, 1997, 1999, 2000, 2001, 2008, 2009
-  Free Software Foundation, Inc.
+# Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -77,9 +72,7 @@ AC_MSG_RESULT(yes)
 # GNU General Public License for more details.
 
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor,
-# Boston, MA 02110-1301, USA.
+# along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 # serial 1
 
@@ -446,3 +439,37 @@ AC_DEFUN([GDB_AC_WITH_DIR], [
   AC_SUBST([$1])
   GDB_AC_DEFINE_RELOCATABLE([$1], [$2], ${ac_define_dir})
   ])
+
+dnl GDB_AC_CHECK_BFD([MESSAGE], [CV], [CODE], [HEADER])
+dnl Check whether BFD provides a feature.
+dnl MESSAGE is the "checking" message to display.
+dnl CV is the name of the cache variable where the result is stored.
+dnl The result will be "yes" or "no".
+dnl CODE is some code to compile that checks for the feature.
+dnl A link test is run.
+dnl HEADER is the name of an extra BFD header to include.
+AC_DEFUN([GDB_AC_CHECK_BFD], [
+  OLD_CFLAGS=$CFLAGS
+  OLD_LDFLAGS=$LDFLAGS
+  OLD_LIBS=$LIBS
+  # Put the old CFLAGS/LDFLAGS last, in case the user's (C|LD)FLAGS
+  # points somewhere with bfd, with -I/foo/lib and -L/foo/lib.  We
+  # always want our bfd.
+  CFLAGS="-I${srcdir}/../include -I../bfd -I${srcdir}/../bfd $CFLAGS"
+  LDFLAGS="-L../bfd -L../libiberty $LDFLAGS"
+  intl=`echo $LIBINTL | sed 's,${top_builddir}/,,g'`
+  # -ldl is provided by bfd/Makfile.am (LIBDL) <PLUGINS>.
+  if test "$plugins" = "yes"; then
+    AC_SEARCH_LIBS(dlopen, dl)
+  fi
+  LIBS="-lbfd -liberty $intl $LIBS"
+  AC_CACHE_CHECK([$1], [$2],
+  [AC_TRY_LINK(
+  [#include <stdlib.h>
+  #include "bfd.h"
+  #include "$4"
+  ],
+  [return $3;], [[$2]=yes], [[$2]=no])])
+  CFLAGS=$OLD_CFLAGS
+  LDFLAGS=$OLD_LDFLAGS
+  LIBS=$OLD_LIBS])

@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,10 +21,6 @@
 # Test printing of various values.
 # NOTE: The tests here intentionally do not require an objc compiler.
 
-if $tracelevel {
-    strace $tracelevel
-}
-
 load_lib "objc.exp"
 
 proc test_float_accepted {} {
@@ -36,13 +32,9 @@ proc test_float_accepted {} {
     # Test all the suffixes (including no suffix).
     gdb_test "p 1." " = 1"
     gdb_test "p 1.5" " = 1.5"
-    setup_kfail gdb/11925 "*-*-*"
     gdb_test "p 1.f" " = 1"
-    setup_kfail gdb/11925 "*-*-*"
     gdb_test "p 1.5f" " = 1.5"
-    setup_kfail gdb/11925 "*-*-*"
     gdb_test "p 1.l" " = 1"
-    setup_kfail gdb/11925 "*-*-*"
     gdb_test "p 1.5l" " = 1.5"
 
     # Test hexadecimal floating point.

@@ -1,6 +1,6 @@
-#	$NetBSD
+#	$NetBSD: Makefile,v 1.2.8.1 2014/08/19 23:57:04 tls Exp $
 
-DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
+DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
 
 LIBISPRIVATE=   yes
@@ -10,9 +10,20 @@ LIBISPRIVATE=   yes
 LIB=		decnumber
 
 SRCS=		decNumber.c decContext.c decimal32.c decimal64.c decimal128.c
-CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH} -I${DIST}/libdecnumber
+CPPFLAGS+=	-I${.CURDIR}/arch/${GCC_MACHINE_ARCH} -I${DIST}/libdecnumber
 CPPFLAGS+=	-I${DIST}/libgcc
 
+.if ${MACHINE_ARCH} == "vax"
+COPTS.decNumber.c=-O0
+.endif
+
+HOSTPROG_CXX=	1
+
 .include <bsd.lib.mk>
+
+# Force using C++ for this
+HOST_CC:=	${HOST_CXX}
+CC:=		${CXX}
+CFLAGS:=	${CXXFLAGS}
 
 .PATH: ${DIST}/libdecnumber ${DIST}/libdecnumber/dpd

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.66.2.1 2013/06/23 06:20:06 tls Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.66.2.2 2014/08/20 00:03:06 tls Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -55,11 +55,11 @@ options 	USERCONF	# userconf(4) support
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Diagnostic/debugging support options
-#options 	DIAGNOSTIC	# expensive kernel consistency checks
+#options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
-#options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
+#options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
@@ -105,7 +105,6 @@ options 	INET6		# IPv6
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
@@ -150,8 +149,6 @@ config		netbsd root on ? type ?
 
 mca0	at mainbus0
 isa0	at mainbus0
-
-#npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 # wscons
 pckbc0		at isa?			# PC keyboard controller

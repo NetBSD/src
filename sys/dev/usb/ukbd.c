@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.124.2.2 2013/06/23 06:20:22 tls Exp $        */
+/*      $NetBSD: ukbd.c,v 1.124.2.3 2014/08/20 00:03:51 tls Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.124.2.2 2013/06/23 06:20:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.124.2.3 2014/08/20 00:03:51 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ukbd.h"
@@ -271,6 +271,7 @@ struct ukbd_softc {
 	struct hid_location sc_scroloc;
 	struct hid_location sc_compose;
 	int sc_leds;
+	struct usb_task sc_ledtask;
 	device_t sc_wskbddev;
 
 #if defined(WSDISPLAY_COMPAT_RAWKBD)
@@ -341,6 +342,7 @@ Static void	ukbd_delayed_decode(void *addr);
 
 Static int	ukbd_enable(void *, int);
 Static void	ukbd_set_leds(void *, int);
+Static void	ukbd_set_leds_task(void *);
 
 Static int	ukbd_ioctl(void *, u_long, void *, int, struct lwp *);
 #if  defined(WSDISPLAY_COMPAT_RAWKBD) && defined(UKBD_REPEAT)
@@ -406,6 +408,8 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
 	sc->sc_flags = 0;
+
+	aprint_naive("\n");
 
 	if (!pmf_device_register(self, NULL, NULL)) {
 		aprint_normal("\n");
@@ -473,6 +477,9 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	callout_init(&sc->sc_delay, 0);
+
+	usb_init_task(&sc->sc_ledtask, ukbd_set_leds_task, sc,
+	    USB_TASKQ_MPSAFE);
 
 	/* Flash the leds; no real purpose, just shows we're alive. */
 	ukbd_set_leds(sc, WSKBD_LED_SCROLL | WSKBD_LED_NUM | WSKBD_LED_CAPS
@@ -818,9 +825,11 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 	if (sc->sc_rawkbd) {
 		u_char cbuf[MAXKEYS * 2];
 		int c;
-		int npress;
+#if defined(UKBD_REPEAT)
+		int npress = 0;
+#endif
 
-		for (npress = i = j = 0; i < nkeys; i++) {
+		for (i = j = 0; i < nkeys; i++) {
 			key = ibuf[i];
 			c = ukbd_trtab[key & CODEMASK];
 			if (c == NN)
@@ -880,7 +889,7 @@ void
 ukbd_set_leds(void *v, int leds)
 {
 	struct ukbd_softc *sc = v;
-	u_int8_t res;
+	usbd_device_handle udev = sc->sc_hdev.sc_parent->sc_udev;
 
 	DPRINTF(("ukbd_set_leds: sc=%p leds=%d, sc_leds=%d\n",
 		 sc, leds, sc->sc_leds));
@@ -890,8 +899,18 @@ ukbd_set_leds(void *v, int leds)
 
 	if (sc->sc_leds == leds)
 		return;
+
 	sc->sc_leds = leds;
-	res = 0;
+	usb_add_task(udev, &sc->sc_ledtask, USB_TASKQ_DRIVER);
+}
+
+void
+ukbd_set_leds_task(void *v)
+{
+	struct ukbd_softc *sc = v;
+	int leds = sc->sc_leds;
+	uint8_t res = 0;
+
 	/* XXX not really right */
 	if ((leds & WSKBD_LED_COMPOSE) && sc->sc_compose.size == 1)
 		res |= 1 << sc->sc_compose.pos;
@@ -901,7 +920,8 @@ ukbd_set_leds(void *v, int leds)
 		res |= 1 << sc->sc_numloc.pos;
 	if ((leds & WSKBD_LED_CAPS) && sc->sc_capsloc.size == 1)
 		res |= 1 << sc->sc_capsloc.pos;
-	uhidev_set_report_async(&sc->sc_hdev, UHID_OUTPUT_REPORT, &res, 1);
+
+	uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT, &res, 1);
 }
 
 #if defined(WSDISPLAY_COMPAT_RAWKBD) && defined(UKBD_REPEAT)

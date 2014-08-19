@@ -1,4 +1,4 @@
-# Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,32 +16,24 @@
 
 # This file is part of the gdb testsuite.
 
-if $tracelevel {
-    strace $tracelevel
-}
-
 # Test stepping over permanent breakpoints on i386.
 
-if {(![istarget "x86_64-*-*"] && ![istarget "i?86-*-*"]) || ![is_ilp32_target] } then {
+if { ![is_x86_like_target] } then {
     verbose "Skipping skip over permanent breakpoint on i386 tests."
     return
 }
 
-set testfile "i386-prologue"
-set srcfile ${testfile}.c
+set testfile "i386-bp_permanent"
+set srcfile i386-prologue.c
 set binfile ${objdir}/${subdir}/${testfile}
 
 # some targets have leading underscores on assembly symbols.
-# TODO: detect this automatically
-set additional_flags ""
-if [istarget "i?86-*-cygwin*"] then {
-    set additional_flags "additional_flags=-DSYMBOL_PREFIX=\"_\""
-}
+set additional_flags [gdb_target_symbol_prefix_flags]
 
 # Don't use "debug", so that we don't have line information for the assembly
 # fragments.
 if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list $additional_flags]] != "" } {
-    untested i386-prologue.exp
+    untested ${testfile}.exp
     return -1
 }
 
@@ -63,10 +55,10 @@ set function standard
 
 set retcode [gdb_test_multiple "disassemble $function" "Disassemble function '$function'" {
     -re ".*($hex) <\\+0>.*($hex) <\\+4>.*($hex) <\\+5>.*($hex) <\\+6>.*$gdb_prompt $" {
-      set function_start $expect_out(1,string);
-      set address $expect_out(2,string);
-      set address1 $expect_out(3,string);
-      set address2 $expect_out(4,string);
+      set function_start $expect_out(1,string)
+      set address $expect_out(2,string)
+      set address1 $expect_out(3,string)
+      set address2 $expect_out(4,string)
     }
 }]
 
@@ -89,7 +81,7 @@ gdb_test "continue" "Breakpoint .*, $function_start in $function.*" \
 set start_esp 0
 gdb_test_multiple "print \$esp" "Fetch esp value." {
     -re "\\\$1.*($hex).*$gdb_prompt $" {
-      set start_esp $expect_out(1,string);
+      set start_esp $expect_out(1,string)
     }
 }
 

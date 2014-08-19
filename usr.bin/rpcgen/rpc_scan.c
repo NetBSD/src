@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_scan.c,v 1.11 2009/05/06 14:30:51 ginsbach Exp $	*/
+/*	$NetBSD: rpc_scan.c,v 1.11.12.1 2014/08/20 00:05:03 tls Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_scan.c 1.11 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_scan.c,v 1.11 2009/05/06 14:30:51 ginsbach Exp $");
+__RCSID("$NetBSD: rpc_scan.c,v 1.11.12.1 2014/08/20 00:05:03 tls Exp $");
 #endif
 #endif
 
@@ -57,15 +57,15 @@ __RCSID("$NetBSD: rpc_scan.c,v 1.11 2009/05/06 14:30:51 ginsbach Exp $");
 #define startcomment(where) (where[0] == '/' && where[1] == '*')
 #define endcomment(where) (where[-1] == '*' && where[0] == '/')
 
-static void unget_token __P((token *));
-static void findstrconst __P((char **, char **));
-static void findchrconst __P((char **, char **));
-static void findconst __P((char **, char **));
-static void findkind __P((char **, token *));
-static int cppline __P((char *));
-static int directive __P((char *));
-static void printdirective __P((char *));
-static void docppline __P((char *, int *, char **));
+static void unget_token(token *);
+static void findstrconst(char **, const char **);
+static void findchrconst(char **, const char **);
+static void findconst(char **, const char **);
+static void findkind(char **, token *);
+static int cppline(const char *);
+static int directive(const char *);
+static void printdirective(const char *);
+static void docppline(char *, int *, const char **);
 
 static int pushed = 0;		/* is a token pushed */
 static token lasttok;		/* last token, if pushed */
@@ -74,9 +74,7 @@ static token lasttok;		/* last token, if pushed */
  * scan expecting 1 given token
  */
 void
-scan(expect, tokp)
-	tok_kind expect;
-	token  *tokp;
+scan(tok_kind expect, token *tokp)
 {
 	get_token(tokp);
 	if (tokp->kind != expect) {
@@ -87,10 +85,7 @@ scan(expect, tokp)
  * scan expecting any of the 2 given tokens
  */
 void
-scan2(expect1, expect2, tokp)
-	tok_kind expect1;
-	tok_kind expect2;
-	token  *tokp;
+scan2(tok_kind expect1, tok_kind expect2, token *tokp)
 {
 	get_token(tokp);
 	if (tokp->kind != expect1 && tokp->kind != expect2) {
@@ -101,11 +96,7 @@ scan2(expect1, expect2, tokp)
  * scan expecting any of the 3 given token
  */
 void
-scan3(expect1, expect2, expect3, tokp)
-	tok_kind expect1;
-	tok_kind expect2;
-	tok_kind expect3;
-	token  *tokp;
+scan3(tok_kind expect1, tok_kind expect2, tok_kind expect3, token *tokp)
 {
 	get_token(tokp);
 	if (tokp->kind != expect1 && tokp->kind != expect2
@@ -117,8 +108,7 @@ scan3(expect1, expect2, expect3, tokp)
  * scan expecting a constant, possibly symbolic
  */
 void
-scan_num(tokp)
-	token  *tokp;
+scan_num(token *tokp)
 {
 	get_token(tokp);
 	switch (tokp->kind) {
@@ -132,8 +122,7 @@ scan_num(tokp)
  * Peek at the next token
  */
 void
-peek(tokp)
-	token  *tokp;
+peek(token *tokp)
 {
 	get_token(tokp);
 	unget_token(tokp);
@@ -142,9 +131,7 @@ peek(tokp)
  * Peek at the next token and scan it if it matches what you expect
  */
 int
-peekscan(expect, tokp)
-	tok_kind expect;
-	token  *tokp;
+peekscan(tok_kind expect, token *tokp)
 {
 	peek(tokp);
 	if (tokp->kind == expect) {
@@ -157,8 +144,7 @@ peekscan(expect, tokp)
  * Get the next token, printing out any directive that are encountered.
  */
 void
-get_token(tokp)
-	token  *tokp;
+get_token(token *tokp)
 {
 	int     commenting;
 
@@ -315,20 +301,18 @@ get_token(tokp)
 }
 
 static void
-unget_token(tokp)
-	token  *tokp;
+unget_token(token *tokp)
 {
 	lasttok = *tokp;
 	pushed = 1;
 }
 
 static void
-findstrconst(str, val)
-	char  **str;
-	char  **val;
+findstrconst(char **str, const char **val)
 {
-	char   *p;
+	char *p;
 	int     size;
+	char *tmp;
 
 	p = *str;
 	do {
@@ -339,19 +323,19 @@ findstrconst(str, val)
 	}
 	p++;
 	size = p - *str;
-	*val = alloc(size + 1);
-	(void) strncpy(*val, *str, size);
-	(*val)[size] = 0;
+	tmp = alloc(size + 1);
+	(void) strncpy(tmp, *str, size);
+	tmp[size] = 0;
+	*val = tmp;
 	*str = p;
 }
 
 static void
-findchrconst(str, val)
-	char  **str;
-	char  **val;
+findchrconst(char **str, const char **val)
 {
-	char   *p;
+	char *p;
 	int     size;
+	char *tmp;
 
 	p = *str;
 	do {
@@ -365,19 +349,19 @@ findchrconst(str, val)
 	if (size != 3) {
 		error("empty char string");
 	}
-	*val = alloc(size + 1);
-	(void) strncpy(*val, *str, size);
-	(*val)[size] = 0;
+	tmp = alloc(size + 1);
+	(void) strncpy(tmp, *str, size);
+	tmp[size] = 0;
+	*val = tmp;
 	*str = p;
 }
 
 static void
-findconst(str, val)
-	char  **str;
-	char  **val;
+findconst(char **str, const char **val)
 {
-	char   *p;
+	char *p;
 	int     size;
+	char *tmp;
 
 	p = *str;
 	if (*p == '0' && *(p + 1) == 'x') {
@@ -391,13 +375,14 @@ findconst(str, val)
 		} while (isdigit((unsigned char)*p));
 	}
 	size = p - *str;
-	*val = alloc(size + 1);
-	(void) strncpy(*val, *str, size);
-	(*val)[size] = 0;
+	tmp = alloc(size + 1);
+	(void) strncpy(tmp, *str, size);
+	tmp[size] = 0;
+	*val = tmp;
 	*str = p;
 }
 
-static token symbols[] = {
+static const token symbols[] = {
 	{TOK_CONST, "const"},
 	{TOK_UNION, "union"},
 	{TOK_SWITCH, "switch"},
@@ -425,13 +410,12 @@ static token symbols[] = {
 };
 
 static void
-findkind(mark, tokp)
-	char  **mark;
-	token  *tokp;
+findkind(char **mark, token *tokp)
 {
 	int     len;
-	token  *s;
-	char   *str;
+	const token *s;
+	char *str;
+	char *tmp;
 
 	str = *mark;
 	for (s = symbols; s->kind != TOK_EOF; s++) {
@@ -449,38 +433,33 @@ findkind(mark, tokp)
 	tokp->kind = TOK_IDENT;
 	for (len = 0; isalnum((unsigned char)str[len]) ||
 	    str[len] == '_'; len++);
-	tokp->str = alloc(len + 1);
-	(void) strncpy(tokp->str, str, len);
-	tokp->str[len] = 0;
+	tmp = alloc(len + 1);
+	(void) strncpy(tmp, str, len);
+	tmp[len] = 0;
+	tokp->str = tmp;
 	*mark = str + len;
 }
 
 static int
-cppline(line)
-	char   *line;
+cppline(const char *line)
 {
 	return (line == curline && *line == '#');
 }
 
 static int
-directive(line)
-	char   *line;
+directive(const char *line)
 {
 	return (line == curline && *line == '%');
 }
 
 static void
-printdirective(line)
-	char   *line;
+printdirective(const char *line)
 {
 	f_print(fout, "%s", line + 1);
 }
 
 static void
-docppline(line, lineno, fname)
-	char   *line;
-	int    *lineno;
-	char  **fname;
+docppline(char *line, int *lineno, const char **fname)
 {
 	char   *file;
 	int     num;

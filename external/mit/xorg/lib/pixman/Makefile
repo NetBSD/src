@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14.8.2 2013/06/23 06:28:45 tls Exp $
+#	$NetBSD: Makefile,v 1.14.8.3 2014/08/20 00:00:14 tls Exp $
 
 NOLINT=	1	# defined
 
@@ -45,17 +45,23 @@ SRCS+=					\
 
 # XXX
 
-.if ${MACHINE_ARCH} == "i386"
+# missing: HAVE_GCC_VECTOR_EXTENSIONS
+
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+. if ${MACHINE_ARCH} == "i386"
 SRCS+= pixman-mmx.c
 COPTS.pixman-mmx.c=	-mmmx -fvisibility=hidden
-MKDEPFLAGS+=		-mmmx -msse2 -fvisibility=hidden
-SRCS+=	pixman-sse2.c
+.  if defined(HAVE_LLVM)
+COPTS.pixman-mmx.c+=	-Wno-error=attributes
+.  endif
+CPPFLAGS+=		-DUSE_X86_MMX
+MKDEPFLAGS+=		-mmmx
+. endif
+SRCS+=	pixman-sse2.c pixman-ssse3.c
 COPTS.pixman-sse2.c=	-msse2 -fvisibility=hidden
-CPPFLAGS+=	-DUSE_SSE2 -DUSE_X86_MMX
-.elif ${MACHINE_ARCH} == "x86_64"
-SRCS+=	pixman-sse2.c
-COPTS.pixman-sse2.c=	-msse2 -fvisibility=hidden
-CPPFLAGS+=	-DUSE_SSE2
+COPTS.pixman-ssse3.c=	-msse3 -mssse3 -fvisibility=hidden
+CPPFLAGS+=		-DUSE_SSE2 -DUSE_SSSE3
+MKDEPFLAGS+=		-msse2 -mssse3 -mssse3 -fvisibility=hidden
 .endif
 
 .if ${MACHINE_ARCH} == "powerpc"
@@ -65,7 +71,7 @@ CPPFLAGS+=		-DUSE_VMX
 MKDEPFLAGS+=		-maltivec
 .endif
 
-.if ${MACHINE_ARCH} == "earm" || ${MACHINE_ARCH} == "earmhf"
+.if !empty(MACHINE_ARCH:Mearm*)
 # ARM SIMD
 SRCS+=		pixman-arm-simd.c 		\
 		pixman-arm-simd-asm.S		\
@@ -76,6 +82,8 @@ SRCS+=		pixman-arm-neon.c		\
 		pixman-arm-neon-asm.S		\
 		pixman-arm-neon-asm-bilinear.S
 CPPFLAGS+=	-DUSE_ARM_NEON
+
+AFLAGS+=	${${ACTIVE_CC} == "clang" :? -fno-integrated-as :}
 # ARM iwMMX
 #SRCS+=		pixman-mmx.c
 #COPTS.pixman-mmx.c=	-mcpu=iwmmxt

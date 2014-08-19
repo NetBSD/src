@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_connect.c,v 1.1.1.2.12.1 2013/02/25 00:27:28 tls Exp $	*/
+/*	$NetBSD: smtp_connect.c,v 1.1.1.2.12.2 2014/08/19 23:59:44 tls Exp $	*/
 
 /*++
 /* NAME
@@ -114,19 +114,17 @@
   * Forward declaration.
   */
 static SMTP_SESSION *smtp_connect_sock(int, struct sockaddr *, int,
-				               const char *, const char *,
-				               unsigned,
-				               const char *, DSN_BUF *,
+				               SMTP_ITERATOR *, DSN_BUF *,
 				               int);
 
 /* smtp_connect_unix - connect to UNIX-domain address */
 
-static SMTP_SESSION *smtp_connect_unix(const char *addr,
-				               DSN_BUF *why,
+static SMTP_SESSION *smtp_connect_unix(SMTP_ITERATOR *iter, DSN_BUF *why,
 				               int sess_flags)
 {
     const char *myname = "smtp_connect_unix";
     struct sockaddr_un sock_un;
+    const char *addr = STR(iter->addr);
     int     len = strlen(addr);
     int     sock;
 
@@ -163,22 +161,22 @@ static SMTP_SESSION *smtp_connect_unix(const char *addr,
     if (msg_verbose)
 	msg_info("%s: trying: %s...", myname, addr);
 
-    return (smtp_connect_sock(sock, (struct sockaddr *) & sock_un,
-			      sizeof(sock_un), var_myhostname, addr,
-			      0, addr, why, sess_flags));
+    return (smtp_connect_sock(sock, (struct sockaddr *) &sock_un,
+			      sizeof(sock_un), iter, why, sess_flags));
 }
 
 /* smtp_connect_addr - connect to explicit address */
 
-static SMTP_SESSION *smtp_connect_addr(const char *destination, DNS_RR *addr,
-				               unsigned port, DSN_BUF *why,
+static SMTP_SESSION *smtp_connect_addr(SMTP_ITERATOR *iter, DSN_BUF *why,
 				               int sess_flags)
 {
     const char *myname = "smtp_connect_addr";
     struct sockaddr_storage ss;		/* remote */
-    struct sockaddr *sa = (struct sockaddr *) & ss;
+    struct sockaddr *sa = (struct sockaddr *) &ss;
     SOCKADDR_SIZE salen = sizeof(ss);
     MAI_HOSTADDR_STR hostaddr;
+    DNS_RR *addr = iter->rr;
+    unsigned port = iter->port;
     int     sock;
     char   *bind_addr;
     char   *bind_var;
@@ -211,12 +209,12 @@ static SMTP_SESSION *smtp_connect_addr(const char *destination, DNS_RR *addr,
 #ifdef HAS_IPV6
     if (sa->sa_family == AF_INET6) {
 	bind_addr = var_smtp_bind_addr6;
-	bind_var = VAR_SMTP_BIND_ADDR6;
+	bind_var = SMTP_X(BIND_ADDR6);
     } else
 #endif
     if (sa->sa_family == AF_INET) {
 	bind_addr = var_smtp_bind_addr;
-	bind_var = VAR_SMTP_BIND_ADDR;
+	bind_var = SMTP_X(BIND_ADDR);
     } else
 	bind_var = bind_addr = "";
     if (*bind_addr) {
@@ -269,22 +267,18 @@ static SMTP_SESSION *smtp_connect_addr(const char *destination, DNS_RR *addr,
     /*
      * Connect to the server.
      */
-    SOCKADDR_TO_HOSTADDR(sa, salen, &hostaddr, (MAI_SERVPORT_STR *) 0, 0);
     if (msg_verbose)
 	msg_info("%s: trying: %s[%s] port %d...",
-		 myname, SMTP_HNAME(addr), hostaddr.buf, ntohs(port));
+		 myname, STR(iter->host), STR(iter->addr), ntohs(port));
 
-    return (smtp_connect_sock(sock, sa, salen, SMTP_HNAME(addr), hostaddr.buf,
-			      port, destination, why, sess_flags));
+    return (smtp_connect_sock(sock, sa, salen, iter, why, sess_flags));
 }
 
 /* smtp_connect_sock - connect a socket over some transport */
 
-static SMTP_SESSION *smtp_connect_sock(int sock, struct sockaddr * sa,
-				               int salen, const char *name,
-				               const char *addr,
-				               unsigned port,
-				               const char *destination,
+static SMTP_SESSION *smtp_connect_sock(int sock, struct sockaddr *sa,
+				               int salen,
+				               SMTP_ITERATOR *iter,
 				               DSN_BUF *why,
 				               int sess_flags)
 {
@@ -292,6 +286,9 @@ static SMTP_SESSION *smtp_connect_sock(int sock, struct sockaddr * sa,
     int     saved_errno;
     VSTREAM *stream;
     time_t  start_time;
+    const char *name = STR(iter->host);
+    const char *addr = STR(iter->addr);
+    unsigned port = iter->port;
 
     start_time = time((time_t *) 0);
     if (var_smtp_conn_tmout > 0) {
@@ -327,8 +324,7 @@ static SMTP_SESSION *smtp_connect_sock(int sock, struct sockaddr * sa,
     /*
      * Bundle up what we have into a nice SMTP_SESSION object.
      */
-    return (smtp_session_alloc(stream, destination, name, addr,
-			       port, start_time, sess_flags));
+    return (smtp_session_alloc(stream, iter, start_time, sess_flags));
 }
 
 /* smtp_parse_destination - parse host/port destination */
@@ -410,7 +406,8 @@ static void smtp_cleanup_session(SMTP_STATE *state)
     /* Redundant tests for safety... */
 	&& vstream_ferror(session->stream) == 0
 	&& vstream_feof(session->stream) == 0) {
-	smtp_save_session(state);
+	smtp_save_session(state, SMTP_KEY_MASK_SCACHE_DEST_LABEL,
+			  SMTP_KEY_MASK_SCACHE_ENDP_LABEL);
     } else {
 	smtp_session_free(session);
     }
@@ -458,15 +455,6 @@ static void smtp_cache_policy(SMTP_STATE *state, const char *dest)
 
     state->misc_flags &= ~SMTP_MISC_FLAG_CONN_CACHE_MASK;
 
-    /*
-     * XXX Disable connection caching when sender-dependent authentication is
-     * enabled. We must not send someone elses mail over an authenticated
-     * connection, and we must not send mail that requires authentication
-     * over a connection that wasn't authenticated.
-     */
-    if (var_smtp_sender_auth)
-	return;
-
     if (smtp_cache_dest && string_list_match(smtp_cache_dest, dest)) {
 	state->misc_flags |= SMTP_MISC_FLAG_CONN_CACHE_MASK;
     } else if (var_smtp_cache_demand) {
@@ -482,6 +470,7 @@ static void smtp_cache_policy(SMTP_STATE *state, const char *dest)
 static void smtp_connect_local(SMTP_STATE *state, const char *path)
 {
     const char *myname = "smtp_connect_local";
+    SMTP_ITERATOR *iter = state->iterator;
     SMTP_SESSION *session;
     DSN_BUF *why = state->why;
 
@@ -495,11 +484,15 @@ static void smtp_connect_local(SMTP_STATE *state, const char *path)
     smtp_cache_policy(state, path);
 
     /*
-     * XXX We assume that the session->addr member refers to a copy of the
+     * Here we ensure that the iter->addr member refers to a copy of the
      * UNIX-domain pathname, so that smtp_save_session() will cache the
      * connection using the pathname as the physical endpoint name.
+     * 
+     * We set dest=path for backwards compatibility.
      */
 #define NO_PORT	0
+
+    SMTP_ITER_INIT(iter, path, var_myhostname, path, NO_PORT, state);
 
     /*
      * Opportunistic TLS for unix domain sockets does not make much sense,
@@ -511,18 +504,32 @@ static void smtp_connect_local(SMTP_STATE *state, const char *path)
      * We don't know who is authenticating whom, so if a client cert is
      * available, "encrypt" may be a sensible policy. Otherwise, we also
      * downgrade "encrypt" to "none", this time just to avoid waste.
+     * 
+     * We use smtp_reuse_nexthop() instead of smtp_reuse_addr(), so that we can
+     * reuse a SASL-authenticated connection (however unlikely this scenario
+     * may be). The smtp_reuse_addr() interface currently supports only reuse
+     * of SASL-unauthenticated connections.
      */
+#ifdef USE_TLS
+    if (!smtp_tls_policy_cache_query(why, state->tls, iter)) {
+	msg_warn("TLS policy lookup error for %s/%s: %s",
+		 STR(iter->host), STR(iter->addr), STR(why->reason));
+	return;
+    }
+#endif
     if ((state->misc_flags & SMTP_MISC_FLAG_CONN_LOAD) == 0
-	|| (session = smtp_reuse_addr(state, path, NO_PORT)) == 0)
-	session = smtp_connect_unix(path, why, state->misc_flags);
+	|| (session = smtp_reuse_nexthop(state,
+				     SMTP_KEY_MASK_SCACHE_DEST_LABEL)) == 0)
+	session = smtp_connect_unix(iter, why, state->misc_flags);
     if ((state->session = session) != 0) {
 	session->state = state;
 #ifdef USE_TLS
+	session->tls = state->tls;		/* TEMPORARY */
 	session->tls_nexthop = var_myhostname;	/* for TLS_LEV_SECURE */
-	if (session->tls_level == TLS_LEV_MAY) {
+	if (session->tls->level == TLS_LEV_MAY) {
 	    msg_warn("%s: opportunistic TLS encryption is not appropriate "
 		     "for unix-domain destinations.", myname);
-	    session->tls_level = TLS_LEV_NONE;
+	    session->tls->level = TLS_LEV_NONE;
 	}
 #endif
 	/* All delivery errors bounce or defer. */
@@ -569,7 +576,7 @@ static void smtp_scrub_addr_list(HTABLE *cached_addr, DNS_RR **addr_list)
     for (addr = *addr_list; addr; addr = next) {
 	next = addr->next;
 	if (dns_rr_to_pa(addr, &hostaddr) == 0) {
-	    msg_warn("cannot convert type %s resource record to socket address",
+	    msg_warn("cannot convert type %s record to printable address",
 		     dns_strtype(addr->type));
 	    continue;
 	}
@@ -629,33 +636,52 @@ static void smtp_update_addr_list(DNS_RR **addr_list, const char *server_addr,
 
 /* smtp_reuse_session - try to use existing connection, return session count */
 
-static int smtp_reuse_session(SMTP_STATE *state, int lookup_mx,
-			              const char *domain, unsigned port,
-			           DNS_RR **addr_list, int domain_best_pref)
+static int smtp_reuse_session(SMTP_STATE *state, DNS_RR **addr_list,
+			              int domain_best_pref)
 {
     int     session_count = 0;
     DNS_RR *addr;
     DNS_RR *next;
     MAI_HOSTADDR_STR hostaddr;
     SMTP_SESSION *session;
+    SMTP_ITERATOR *iter = state->iterator;
+    DSN_BUF *why = state->why;
 
     /*
-     * First, search the cache by logical destination. We truncate the server
+     * First, search the cache by request nexthop. We truncate the server
      * address list when all the sessions for this destination are used up,
      * to reduce the number of variables that need to be checked later.
      * 
      * Note: lookup by logical destination restores the "best MX" bit.
+     * 
+     * smtp_reuse_nexthop() clobbers the iterators's "dest" attribute. We save
+     * and restore it here, so that subsequent connections will use the
+     * proper nexthop information.
+     * 
+     * We request a dummy "TLS disabled" policy for connection-cache lookup by
+     * request nexthop only. If we find a saved connection, then we know that
+     * plaintext was permitted, because we never save a connection after
+     * turning on TLS.
      */
+#ifdef USE_TLS
+    smtp_tls_policy_dummy(state->tls);
+#endif
+    SMTP_ITER_SAVE_DEST(state->iterator);
     if (*addr_list && SMTP_RCPT_LEFT(state) > 0
-    && (session = smtp_reuse_domain(state, lookup_mx, domain, port)) != 0) {
+	&& HAVE_NEXTHOP_STATE(state)
+	&& (session = smtp_reuse_nexthop(state, SMTP_KEY_MASK_SCACHE_DEST_LABEL)) != 0) {
 	session_count = 1;
-	smtp_update_addr_list(addr_list, session->addr, session_count);
+	smtp_update_addr_list(addr_list, STR(iter->addr), session_count);
 	if ((state->misc_flags & SMTP_MISC_FLAG_FINAL_NEXTHOP)
 	    && *addr_list == 0)
 	    state->misc_flags |= SMTP_MISC_FLAG_FINAL_SERVER;
+#ifdef USE_TLS
+	session->tls = state->tls;		/* TEMPORARY */
+#endif
 	smtp_xfer(state);
 	smtp_cleanup_session(state);
     }
+    SMTP_ITER_RESTORE_DEST(state->iterator);
 
     /*
      * Second, search the cache by primary MX address. Again, we use address
@@ -663,21 +689,55 @@ static int smtp_reuse_session(SMTP_STATE *state, int lookup_mx,
      * 
      * XXX This loop is safe because smtp_update_addr_list() either truncates
      * the list to zero length, or removes at most one list element.
+     * 
+     * Currently, we use smtp_reuse_addr() only for SASL-unauthenticated
+     * connections. Furthermore, we rely on smtp_reuse_addr() to look up an
+     * existing SASL-unauthenticated connection only when a new connection
+     * would be guaranteed not to require SASL authentication.
+     * 
+     * In addition, we rely on smtp_reuse_addr() to look up an existing
+     * plaintext connection only when a new connection would be guaranteed
+     * not to use TLS.
+     * 
+     * For more precise control over reuse, the iterator should look up SASL and
+     * TLS policy as it evaluates mail exchangers in order, instead of
+     * relying on duplicate lookup request code in smtp_reuse(3) and
+     * smtp_session(3).
      */
     for (addr = *addr_list; SMTP_RCPT_LEFT(state) > 0 && addr; addr = next) {
 	if (addr->pref != domain_best_pref)
 	    break;
 	next = addr->next;
-	if (dns_rr_to_pa(addr, &hostaddr) != 0
-	    && (session = smtp_reuse_addr(state, hostaddr.buf, port)) != 0) {
+	if (dns_rr_to_pa(addr, &hostaddr) == 0) {
+	    msg_warn("cannot convert type %s record to printable address",
+		     dns_strtype(addr->type));
+	    /* XXX Assume there is no code at the end of this loop. */
+	    continue;
+	}
+	vstring_strcpy(iter->addr, hostaddr.buf);
+	vstring_strcpy(iter->host, SMTP_HNAME(addr));
+	iter->rr = addr;
+#ifdef USE_TLS
+	if (!smtp_tls_policy_cache_query(why, state->tls, iter)) {
+	    msg_warn("TLS policy lookup error for %s/%s: %s",
+		     STR(iter->dest), STR(iter->host), STR(why->reason));
+	    continue;
+	    /* XXX Assume there is no code at the end of this loop. */
+	}
+#endif
+	if ((session = smtp_reuse_addr(state,
+				   SMTP_KEY_MASK_SCACHE_ENDP_LABEL)) != 0) {
 	    session->features |= SMTP_FEATURE_BEST_MX;
 	    session_count += 1;
-	    smtp_update_addr_list(addr_list, session->addr, session_count);
+	    smtp_update_addr_list(addr_list, STR(iter->addr), session_count);
 	    if (*addr_list == 0)
 		next = 0;
 	    if ((state->misc_flags & SMTP_MISC_FLAG_FINAL_NEXTHOP)
 		&& next == 0)
 		state->misc_flags |= SMTP_MISC_FLAG_FINAL_SERVER;
+#ifdef USE_TLS
+	    session->tls = state->tls;		/* TEMPORARY */
+#endif
 	    smtp_xfer(state);
 	    smtp_cleanup_session(state);
 	}
@@ -691,6 +751,7 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 			              char *def_service)
 {
     DELIVER_REQUEST *request = state->request;
+    SMTP_ITERATOR *iter = state->iterator;
     ARGV   *sites;
     char   *dest;
     char  **cpp;
@@ -720,7 +781,8 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
     if (sites->argc == 0)
 	msg_panic("null destination: \"%s\"", nexthop);
     non_fallback_sites = sites->argc;
-    if ((state->misc_flags & SMTP_MISC_FLAG_USE_LMTP) == 0)
+    /* When we are lmtp(8) var_fallback_relay is null */
+    if (smtp_mode)
 	argv_split_append(sites, var_fallback_relay, ", \t\r\n");
 
     /*
@@ -771,6 +833,10 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	    msg_info("CLIENT wrappermode (port smtps/465) is unimplemented");
 	    msg_info("instead, send to (port submission/587) with STARTTLS");
 	}
+#define NO_HOST	""				/* safety */
+#define NO_ADDR	""				/* safety */
+
+	SMTP_ITER_INIT(iter, dest, NO_HOST, NO_ADDR, port, state);
 
 	/*
 	 * Resolve an SMTP server. Skip mail exchanger lookups when a quoted
@@ -778,12 +844,12 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	 */
 	if (msg_verbose)
 	    msg_info("connecting to %s port %d", domain, ntohs(port));
-	if ((state->misc_flags & SMTP_MISC_FLAG_USE_LMTP) == 0) {
+	if (smtp_mode) {
 	    if (ntohs(port) == IPPORT_SMTP)
 		state->misc_flags |= SMTP_MISC_FLAG_LOOP_DETECT;
 	    else
 		state->misc_flags &= ~SMTP_MISC_FLAG_LOOP_DETECT;
-	    lookup_mx = (var_disable_dns == 0 && *dest != '[');
+	    lookup_mx = (smtp_dns_support != SMTP_DNS_DISABLED && *dest != '[');
 	} else
 	    lookup_mx = 0;
 	if (!lookup_mx) {
@@ -792,7 +858,7 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	} else {
 	    int     i_am_mx = 0;
 
-	    addr_list = smtp_domain_addr(domain, state->misc_flags,
+	    addr_list = smtp_domain_addr(domain, &iter->mx, state->misc_flags,
 					 why, &i_am_mx);
 	    /* If we're MX host, don't connect to non-MX backups. */
 	    if (i_am_mx)
@@ -818,10 +884,6 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	 * good sessions will be stored under their specific server IP
 	 * address.
 	 * 
-	 * XXX Replace sites->argv by (lookup_mx, domain, port) triples so we
-	 * don't have to make clumsy ad-hoc copies and keep track of who
-	 * free()s the memory.
-	 * 
 	 * XXX smtp_session_cache_destinations specifies domain names without
 	 * :port, because : is already used for maptype:mapname. Because of
 	 * this limitation we use the bare domain without the optional [] or
@@ -830,16 +892,11 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	 * Opportunistic (a.k.a. on-demand) session caching on request by the
 	 * queue manager. This is turned temporarily when a destination has a
 	 * high volume of mail in the active queue.
-	 * 
-	 * XXX Disable connection caching when sender-dependent authentication
-	 * is enabled. We must not send someone elses mail over an
-	 * authenticated connection, and we must not send mail that requires
-	 * authentication over a connection that wasn't authenticated.
 	 */
 	if (addr_list && (state->misc_flags & SMTP_MISC_FLAG_FIRST_NEXTHOP)) {
 	    smtp_cache_policy(state, domain);
 	    if (state->misc_flags & SMTP_MISC_FLAG_CONN_STORE)
-		SET_NEXTHOP_STATE(state, lookup_mx, domain, port);
+		SET_NEXTHOP_STATE(state, dest);
 	}
 
 	/*
@@ -856,8 +913,7 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	    if (state->cache_used->used > 0)
 		smtp_scrub_addr_list(state->cache_used, &addr_list);
 	    sess_count = addr_count =
-		smtp_reuse_session(state, lookup_mx, domain, port,
-				   &addr_list, domain_best_pref);
+		smtp_reuse_session(state, &addr_list, domain_best_pref);
 	} else
 	    sess_count = addr_count = 0;
 
@@ -878,35 +934,59 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	 * Don't query the session cache for primary MX hosts. We already did
 	 * that in smtp_reuse_session(), and if any were found in the cache,
 	 * they were already deleted from the address list.
+	 * 
+	 * Currently, we use smtp_reuse_addr() only for SASL-unauthenticated
+	 * connections. Furthermore, we rely on smtp_reuse_addr() to look up
+	 * an existing SASL-unauthenticated connection only when a new
+	 * connection would be guaranteed not to require SASL authentication.
+	 * 
+	 * In addition, we rely on smtp_reuse_addr() to look up an existing
+	 * plaintext connection only when a new connection would be
+	 * guaranteed not to use TLS.
 	 */
 	for (addr = addr_list; SMTP_RCPT_LEFT(state) > 0 && addr; addr = next) {
 	    next = addr->next;
 	    if (++addr_count == var_smtp_mxaddr_limit)
 		next = 0;
+	    if (dns_rr_to_pa(addr, &hostaddr) == 0) {
+		msg_warn("cannot convert type %s record to printable address",
+			 dns_strtype(addr->type));
+		/* XXX Assume there is no code at the end of this loop. */
+		continue;
+	    }
+	    vstring_strcpy(iter->addr, hostaddr.buf);
+	    vstring_strcpy(iter->host, SMTP_HNAME(addr));
+	    iter->rr = addr;
+#ifdef USE_TLS
+	    if (!smtp_tls_policy_cache_query(why, state->tls, iter)) {
+		msg_warn("TLS policy lookup for %s/%s: %s",
+			 STR(iter->dest), STR(iter->host), STR(why->reason));
+		continue;
+		/* XXX Assume there is no code at the end of this loop. */
+	    }
+	    /* Disable TLS when retrying after a handshake failure */
+	    if (retry_plain) {
+		state->tls->level = TLS_LEV_NONE;
+		retry_plain = 0;
+	    }
+#endif
 	    if ((state->misc_flags & SMTP_MISC_FLAG_CONN_LOAD) == 0
 		|| addr->pref == domain_best_pref
-		|| dns_rr_to_pa(addr, &hostaddr) == 0
-		|| !(session = smtp_reuse_addr(state, hostaddr.buf, port)))
-		session = smtp_connect_addr(dest, addr, port, why,
-					    state->misc_flags);
+		|| !(session = smtp_reuse_addr(state,
+					  SMTP_KEY_MASK_SCACHE_ENDP_LABEL)))
+		session = smtp_connect_addr(iter, why, state->misc_flags);
 	    if ((state->session = session) != 0) {
 		session->state = state;
+#ifdef USE_TLS
+		session->tls = state->tls;	/* TEMPORARY */
+		session->tls_nexthop = domain;	/* for TLS_LEV_SECURE */
+#endif
 		if (addr->pref == domain_best_pref)
 		    session->features |= SMTP_FEATURE_BEST_MX;
 		/* Don't count handshake errors towards the session limit. */
 		if ((state->misc_flags & SMTP_MISC_FLAG_FINAL_NEXTHOP)
 		    && next == 0)
 		    state->misc_flags |= SMTP_MISC_FLAG_FINAL_SERVER;
-#ifdef USE_TLS
-		/* Disable TLS when retrying after a handshake failure */
-		if (retry_plain) {
-		    if (session->tls_level >= TLS_LEV_ENCRYPT)
-			msg_panic("Plain-text retry wrong for mandatory TLS");
-		    session->tls_level = TLS_LEV_NONE;
-		    retry_plain = 0;
-		}
-		session->tls_nexthop = domain;	/* for TLS_LEV_SECURE */
-#endif
 		if ((session->features & SMTP_FEATURE_FROM_CACHE) == 0
 		    && smtp_helo(state) != 0) {
 #ifdef USE_TLS
@@ -944,9 +1024,13 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 		/* The reason already includes the IP address and TCP port. */
 		msg_info("%s", STR(why->reason));
 	    }
-	    /* Insert: test if we must skip the remaining MX hosts. */
+	    /* XXX Code above assumes there is no code at this loop ending. */
 	}
 	dns_rr_free(addr_list);
+	if (iter->mx) {
+	    dns_rr_free(iter->mx);
+	    iter->mx = 0;			/* Just in case */
+	}
 	myfree(dest_buf);
 	if (state->misc_flags & SMTP_MISC_FLAG_FINAL_NEXTHOP)
 	    break;
@@ -974,8 +1058,7 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	 * Pay attention to what could be configuration problems, and pretend
 	 * that these are recoverable rather than bouncing the mail.
 	 */
-	else if (!SMTP_HAS_SOFT_DSN(why)
-		 && (state->misc_flags & SMTP_MISC_FLAG_USE_LMTP) == 0) {
+	else if (!SMTP_HAS_SOFT_DSN(why) && smtp_mode) {
 
 	    /*
 	     * The fall-back destination did not resolve as expected, or it
@@ -1043,7 +1126,7 @@ int     smtp_connect(SMTP_STATE *state)
      * With LMTP we have direct-to-host delivery only. The destination may
      * have multiple IP addresses.
      */
-    if (state->misc_flags & SMTP_MISC_FLAG_USE_LMTP) {
+    if (!smtp_mode) {
 	if (strncmp(destination, "unix:", 5) == 0) {
 	    smtp_connect_local(state, destination + 5);
 	} else {

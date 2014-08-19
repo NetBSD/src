@@ -120,7 +120,7 @@ operator>> (istream &i, mpf_ptr f)
   if (i.good()) // last character read was non-numeric
     i.putback(c);
   else if (i.eof() && ok) // stopped just before eof
-    i.clear();
+    i.clear(ios::eofbit);
 
   if (ok)
     ASSERT_NOCARRY (mpf_set_str(f, s.c_str(), base)); // extract the number

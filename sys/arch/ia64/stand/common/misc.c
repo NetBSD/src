@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.5.22.1 2013/02/25 00:28:45 tls Exp $	*/
+/*	$NetBSD: misc.c,v 1.5.22.2 2014/08/20 00:03:08 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -175,7 +175,7 @@ hexdump(void *region, size_t len)
     void *	line;
     int		x, c;
     char	lbuf[80];
-#define emit(fmt, args...)	{sprintf(lbuf, fmt , ## args); pager_output(lbuf);}
+#define emit(fmt, args...)	{snprintf(lbuf, sizeof(lbuf), fmt , ## args); pager_output(lbuf);}
 
     pager_open();
     for (line = region; line < (region + len); line += 16) {

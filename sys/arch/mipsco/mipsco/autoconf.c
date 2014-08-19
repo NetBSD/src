@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25.2.1 2012/11/20 03:01:34 tls Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25.2.2 2014/08/20 00:03:13 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,7 @@
 
 #define __INTR_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25.2.1 2012/11/20 03:01:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25.2.2 2014/08/20 00:03:13 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,12 +88,11 @@ struct mipsco_intrhand intrtab[MAX_INTR_COOKIES];
 void
 cpu_configure(void)
 {
-  	int s;
 
 	/*
 	 * Kick off autoconfiguration
 	 */
-	s = splhigh();
+	(void) splhigh();
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 	initcpu();

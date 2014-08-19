@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.106.12.1 2013/06/23 06:20:08 tls Exp $	*/
+/*	$NetBSD: cpu.h,v 1.106.12.2 2014/08/20 00:03:12 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -148,9 +148,9 @@ struct cpu_info {
 
 };
 
-#define	CPU_INFO_ITERATOR		int
+#define	CPU_INFO_ITERATOR		int __unused
 #define	CPU_INFO_FOREACH(cii, ci)	\
-    (void)(cii), ci = &cpu_info_store; ci != NULL; ci = ci->ci_next
+    ci = &cpu_info_store; ci != NULL; ci = ci->ci_next
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */

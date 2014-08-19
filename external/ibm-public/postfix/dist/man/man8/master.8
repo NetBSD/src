@@ -1,4 +1,4 @@
-.\"	$NetBSD: master.8,v 1.1.1.1.16.1 2013/02/25 00:27:12 tls Exp $
+.\"	$NetBSD: master.8,v 1.1.1.1.16.2 2014/08/19 23:59:42 tls Exp $
 .\"
 .TH MASTER 8 
 .ad
@@ -10,7 +10,7 @@ Postfix master process
 .SH "SYNOPSIS"
 .na
 .nf
-\fBmaster\fR [\fB-Ddtv\fR] [\fB-c \fIconfig_dir\fR] [\fB-e \fIexit_time\fR]
+\fBmaster\fR [\fB-Ddtvw\fR] [\fB-c \fIconfig_dir\fR] [\fB-e \fIexit_time\fR]
 .SH DESCRIPTION
 .ad
 .fi
@@ -53,6 +53,14 @@ that the \fBmaster\fR(8) daemon is not running.
 Enable verbose logging for debugging purposes. This option
 is passed on to child processes. Multiple \fB-v\fR options
 make the software increasingly verbose.
+.IP \fB-w\fR
+Wait in a dummy foreground process, while the real master
+daemon initializes in a background process.  The dummy
+foreground process returns a zero exit status only if the
+master daemon initialization is successful, and if it
+completes in a reasonable amount of time.
+.sp
+This feature is available in Postfix 2.10 and later.
 .PP
 Signals:
 .IP \fBSIGHUP\fR
@@ -73,7 +81,9 @@ processes to finish what they are doing.
 .SH DIAGNOSTICS
 .ad
 .fi
-Problems are reported to \fBsyslogd\fR(8).
+Problems are reported to \fBsyslogd\fR(8). The exit status
+is non-zero in case of problems, including problems while
+initializing as a master daemon process in the background.
 .SH "ENVIRONMENT"
 .na
 .nf

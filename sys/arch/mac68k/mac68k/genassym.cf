@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.36 2011/01/14 02:06:28 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.36.18.1 2014/08/20 00:03:11 tls Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -168,6 +168,13 @@ define	SYS_compat_13_sigreturn13 SYS_compat_13_sigreturn13
 define	ENOENT			ENOENT
 define	EFAULT			EFAULT
 define	ENAMETOOLONG		ENAMETOOLONG
+
+# machine ids
+define MACH_MACC610		MACH_MACC610
+define MACH_MACQ610		MACH_MACQ610
+define MACH_MACC650		MACH_MACC650
+define MACH_MACQ650		MACH_MACQ650
+define MACH_MACQ800		MACH_MACQ800
 
 # SVR4 binary compatibility
 ifdef COMPAT_SVR4

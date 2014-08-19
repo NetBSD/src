@@ -1,4 +1,4 @@
-/*	$NetBSD: arn5008.c,v 1.3.4.2 2013/06/23 06:20:17 tls Exp $	*/
+/*	$NetBSD: arn5008.c,v 1.3.4.3 2014/08/20 00:03:37 tls Exp $	*/
 /*	$OpenBSD: ar5008.c,v 1.21 2012/08/25 12:14:31 kettenis Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.3.4.2 2013/06/23 06:20:17 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.3.4.3 2014/08/20 00:03:37 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -210,7 +210,7 @@ ar5008_attach(struct athn_softc *sc)
 
 	/* Read entire ROM content in memory. */
 	if ((error = ar5008_read_rom(sc)) != 0) {
-		printf("%s: could not read ROM\n", device_xname(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "could not read ROM\n");
 		return error;
 	}
 
@@ -221,8 +221,8 @@ ar5008_attach(struct athn_softc *sc)
 	eep_ver = (base->version >> 12) & 0xf;
 	sc->sc_eep_rev = (base->version & 0xfff);
 	if (eep_ver != AR_EEP_VER || sc->sc_eep_rev == 0) {
-		printf("%s: unsupported ROM version %d.%d\n",
-		    device_xname(sc->sc_dev), eep_ver, sc->sc_eep_rev);
+		aprint_error_dev(sc->sc_dev, "unsupported ROM version %d.%d\n",
+		    eep_ver, sc->sc_eep_rev);
 		return EINVAL;
 	}
 
@@ -330,8 +330,7 @@ ar5008_read_rom(struct athn_softc *sc)
 		sum ^= *eep;
 	}
 	if (sum != 0xffff) {
-		printf("%s: bad ROM checksum 0x%04x\n",
-		    device_xname(sc->sc_dev), sum);
+		aprint_error_dev(sc->sc_dev, "bad ROM checksum 0x%04x\n", sum);
 		return EIO;
 	}
 	if (need_swap)
@@ -532,8 +531,8 @@ ar5008_tx_alloc(struct athn_softc *sc)
 		    AR5008_MAX_SCATTER, ATHN_TXBUFSZ, 0, BUS_DMA_NOWAIT,
 		    &bf->bf_map);
 		if (error != 0) {
-			printf("%s: could not create Tx buf DMA map\n",
-			    device_xname(sc->sc_dev));
+			aprint_error_dev(sc->sc_dev,
+			    "could not create Tx buf DMA map\n");
 			goto fail;
 		}
 
@@ -620,8 +619,8 @@ ar5008_rx_alloc(struct athn_softc *sc)
 		    ATHN_RXBUFSZ, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &bf->bf_map);
 		if (error != 0) {
-			printf("%s: could not create Rx buf DMA map\n",
-			    device_xname(sc->sc_dev));
+			aprint_error_dev(sc->sc_dev,
+			    " could not create Rx buf DMA map\n");
 			goto fail;
 		}
 		/*
@@ -630,8 +629,8 @@ ar5008_rx_alloc(struct athn_softc *sc)
 		 */
 		bf->bf_m = MCLGETI(NULL, M_DONTWAIT, NULL, ATHN_RXBUFSZ);
 		if (bf->bf_m == NULL) {
-			printf("%s: could not allocate Rx mbuf\n",
-			    device_xname(sc->sc_dev));
+			aprint_error_dev(sc->sc_dev,
+			    "could not allocate Rx mbuf\n");
 			error = ENOBUFS;
 			goto fail;
 		}
@@ -640,8 +639,8 @@ ar5008_rx_alloc(struct athn_softc *sc)
 		    mtod(bf->bf_m, void *), ATHN_RXBUFSZ, NULL,
 		    BUS_DMA_NOWAIT | BUS_DMA_READ);
 		if (error != 0) {
-			printf("%s: could not DMA map Rx buffer\n",
-			    device_xname(sc->sc_dev));
+			aprint_error_dev(sc->sc_dev,
+			    "could not DMA map Rx buffer\n");
 			goto fail;
 		}
 
@@ -802,7 +801,7 @@ ar5008_rx_process(struct athn_softc *sc)
 
 	bf = SIMPLEQ_FIRST(&rxq->head);
 	if (__predict_false(bf == NULL)) {	/* Should not happen. */
-		printf("%s: Rx queue is empty!\n", device_xname(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "Rx queue is empty!\n");
 		return ENOENT;
 	}
 	ds = bf->bf_desc;
@@ -1181,7 +1180,7 @@ ar5008_swba_intr(struct athn_softc *sc)
 Static int
 ar5008_intr(struct athn_softc *sc)
 {
-	uint32_t intr, intr2, intr5, sync;
+	uint32_t intr, intr5, sync;
 
 	/* Get pending interrupts. */
 	intr = AR_READ(sc, AR_INTR_ASYNC_CAUSE);
@@ -1202,12 +1201,14 @@ ar5008_intr(struct athn_softc *sc)
 
 	if (intr != 0) {
 		if (intr & AR_ISR_BCNMISC) {
-			intr2 = AR_READ(sc, AR_ISR_S2);
+			uint32_t intr2 = AR_READ(sc, AR_ISR_S2);
 #if notyet
 			if (intr2 & AR_ISR_S2_TIM)
 				/* TBD */;
 			if (intr2 & AR_ISR_S2_TSFOOR)
 				/* TBD */;
+#else
+			__USE(intr2);
 #endif
 		}
 		intr = AR_READ(sc, AR_ISR_RAC);
@@ -1391,8 +1392,8 @@ ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 	if (__predict_false(error != 0)) {
 		if (error != EFBIG) {
-			printf("%s: can't map mbuf (error %d)\n",
-			    device_xname(sc->sc_dev), error);
+			aprint_error_dev(sc->sc_dev,
+			    "can't map mbuf (error %d)\n", error);
 			m_freem(m);
 			return error;
 		}
@@ -1421,8 +1422,8 @@ ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, bf->bf_map, m,
 		    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 		if (error != 0) {
-			printf("%s: can't map mbuf (error %d)\n",
-			    device_xname(sc->sc_dev), error);
+			aprint_error_dev(sc->sc_dev,
+			    "can't map mbuf (error %d)\n", error);
 			m_freem(m);
 			return error;
 		}
@@ -1659,14 +1660,14 @@ ar5008_set_rf_mode(struct athn_softc *sc, struct ieee80211_channel *c)
 static __inline uint32_t
 ar5008_synth_delay(struct athn_softc *sc)
 {
-	uint32_t delay;
+	uint32_t synth_delay;
 
-	delay = MS(AR_READ(sc, AR_PHY_RX_DELAY), AR_PHY_RX_DELAY_DELAY);
+	synth_delay = MS(AR_READ(sc, AR_PHY_RX_DELAY), AR_PHY_RX_DELAY_DELAY);
 	if (sc->sc_ic.ic_curmode == IEEE80211_MODE_11B)
-		delay = (delay * 4) / 22;
+		synth_delay = (synth_delay * 4) / 22;
 	else
-		delay = delay / 10;	/* in 100ns steps */
-	return delay;
+		synth_delay = synth_delay / 10;	/* in 100ns steps */
+	return synth_delay;
 }
 
 Static int

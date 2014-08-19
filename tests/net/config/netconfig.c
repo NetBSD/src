@@ -1,4 +1,4 @@
-/*	$NetBSD: netconfig.c,v 1.7 2011/02/28 21:21:14 pooka Exp $	*/
+/*	$NetBSD: netconfig.c,v 1.7.10.1 2014/08/20 00:04:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: netconfig.c,v 1.7 2011/02/28 21:21:14 pooka Exp $");
+__RCSID("$NetBSD: netconfig.c,v 1.7.10.1 2014/08/20 00:04:51 tls Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -69,20 +69,6 @@ netcfg_rump_makeshmif(const char *busname, char *ifname)
 			atf_tc_fail("makeshmif: rump_pub_shmif_create %d", rv);
 	}
 	sprintf(ifname, "shmif%d", ifnum);
-}
-
-static void __unused
-netcfg_rump_makevirtif(int ifnum, char *ifname)
-{
-	int rv;
-
-	if ((rv = rump_pub_virtif_create(ifnum)) != 0) {
-		if (noatf)
-			err(1, "makeshmif: rump_pub_virtif_create %d", rv);
-		else
-			atf_tc_fail("makeshmif: rump_pub_virtif_create %d", rv);
-	}
-	sprintf(ifname, "virt%d", ifnum);
 }
 
 static void __unused

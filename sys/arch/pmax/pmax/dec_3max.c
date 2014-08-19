@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.54.12.1 2012/11/20 03:01:38 tls Exp $ */
+/* $NetBSD: dec_3max.c,v 1.54.12.2 2014/08/20 00:03:18 tls Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -70,7 +70,7 @@
 #define	__INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.54.12.1 2012/11/20 03:01:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.54.12.2 2014/08/20 00:03:18 tls Exp $");
 
 #include "dzkbd.h"
 
@@ -155,7 +155,7 @@ dec_3max_init(void)
 	*(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
 	kn02_wbflush();
 
-	strcpy(cpu_model, "DECstation 5000/200 (3MAX)");
+	cpu_setmodel("DECstation 5000/200 (3MAX)");
 }
 
 /*

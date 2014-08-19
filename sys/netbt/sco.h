@@ -1,4 +1,4 @@
-/*	$NetBSD: sco.h,v 1.3 2008/08/06 15:01:24 plunky Exp $	*/
+/*	$NetBSD: sco.h,v 1.3.38.1 2014/08/20 00:04:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -65,20 +65,18 @@ struct sockopt;
 /* sco_socket.c */
 extern int sco_sendspace;
 extern int sco_recvspace;
-int sco_usrreq(struct socket *, int, struct mbuf *,
-		struct mbuf *, struct mbuf *, struct lwp *);
 int sco_ctloutput(int, struct socket *, struct sockopt *);
 
 /* sco_upper.c */
-int sco_attach(struct sco_pcb **, const struct btproto *, void *);
-int sco_bind(struct sco_pcb *, struct sockaddr_bt *);
-int sco_sockaddr(struct sco_pcb *, struct sockaddr_bt *);
-int sco_connect(struct sco_pcb *, struct sockaddr_bt *);
-int sco_peeraddr(struct sco_pcb *, struct sockaddr_bt *);
-int sco_disconnect(struct sco_pcb *, int);
-int sco_detach(struct sco_pcb **);
-int sco_listen(struct sco_pcb *);
-int sco_send(struct sco_pcb *, struct mbuf *);
+int sco_attach_pcb(struct sco_pcb **, const struct btproto *, void *);
+int sco_bind_pcb(struct sco_pcb *, struct sockaddr_bt *);
+int sco_sockaddr_pcb(struct sco_pcb *, struct sockaddr_bt *);
+int sco_connect_pcb(struct sco_pcb *, struct sockaddr_bt *);
+int sco_peeraddr_pcb(struct sco_pcb *, struct sockaddr_bt *);
+int sco_disconnect_pcb(struct sco_pcb *, int);
+void sco_detach_pcb(struct sco_pcb **);
+int sco_listen_pcb(struct sco_pcb *);
+int sco_send_pcb(struct sco_pcb *, struct mbuf *);
 int sco_setopt(struct sco_pcb *, const struct sockopt *);
 int sco_getopt(struct sco_pcb *, struct sockopt *);
 

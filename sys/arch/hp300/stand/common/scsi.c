@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.10 2011/02/08 20:20:14 rmind Exp $	*/
+/*	$NetBSD: scsi.c,v 1.10.14.1 2014/08/20 00:03:01 tls Exp $	*/
 
 /*
  * This is reported to fix some odd failures when disklabeling
@@ -181,10 +181,10 @@ issue_select(volatile struct scsidevice *hd, uint8_t target, uint8_t our_addr)
 
 	hd->scsi_pctl = 0;
 	hd->scsi_temp = (1 << target) | our_addr;
-	/* select timeout is hardcoded to 2ms */
-	hd->scsi_tch = 0;
-	hd->scsi_tcm = 32;
-	hd->scsi_tcl = 4;
+	/* select timeout is hardcoded to 250ms */
+	hd->scsi_tch = 2;
+	hd->scsi_tcm = 113;
+	hd->scsi_tcl = 3;
 
 	hd->scsi_scmd = SCMD_SELECT;
 	return 0;

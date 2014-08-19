@@ -1,6 +1,6 @@
 /* Target-dependent code for Darwin x86.
 
-   Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,6 @@
 #ifndef __I386_DARWIN_TDEP_H__
 #define __I386_DARWIN_TDEP_H__
 
-#include "defs.h"
 #include "frame.h"
 
 /* Mapping between the general-purpose registers in Darwin x86 thread_state

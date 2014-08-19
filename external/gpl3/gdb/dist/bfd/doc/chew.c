@@ -1,6 +1,6 @@
 /* chew
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 2000, 2001,
-   2002, 2003, 2005, 2007, 2009
+   2002, 2003, 2005, 2007, 2009, 2012
    Free Software Foundation, Inc.
    Contributed by steve chamberlain @cygnus
 
@@ -476,8 +476,8 @@ remove_noncomments (src, dst)
 static void
 print_stack_level ()
 {
-  fprintf (stderr, "current string stack depth = %d, ", tos - stack);
-  fprintf (stderr, "current integer stack depth = %d\n", isp - istack);
+  fprintf (stderr, "current string stack depth = %ld, ", tos - stack);
+  fprintf (stderr, "current integer stack depth = %ld\n", isp - istack);
   pc++;
 }
 
@@ -1256,7 +1256,7 @@ perform ()
 		fprintf (stderr, "warning, %s is not recognised\n", next);
 	      skip_past_newline ();
 	    }
-
+	  free (next);
 	}
       else
 	skip_past_newline ();
@@ -1563,7 +1563,7 @@ main (ac, av)
   write_buffer (stack + 0, stdout);
   if (tos != stack)
     {
-      fprintf (stderr, "finishing with current stack level %d\n",
+      fprintf (stderr, "finishing with current stack level %ld\n",
 	       tos - stack);
       return 1;
     }

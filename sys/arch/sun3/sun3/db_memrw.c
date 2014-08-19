@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.27 2008/04/28 20:23:38 martin Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.27.44.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.27 2008/04/28 20:23:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.27.44.1 2014/08/20 00:03:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,10 +73,10 @@ static void db_write_text(char *, size_t size, const char *);
  * This used to check for valid PTEs, but now that
  * traps in DDB work correctly, "Just Do It!"
  */
-void 
+void
 db_read_bytes(db_addr_t addr, size_t size, char *data)
 {
-	 char *src = (char *)addr;
+	char *src = (char *)addr;
 
 	if (size == 4) {
 		*((int *)data) = *((int *)src);
@@ -98,7 +98,7 @@ db_read_bytes(db_addr_t addr, size_t size, char *data)
  * Write bytes somewhere in kernel text.
  * Makes text page writable temporarily.
  */
-static void 
+static void
 db_write_text(char *dst, size_t size, const char *data)
 {
 	int oldpte, tmppte;
@@ -172,7 +172,7 @@ db_write_text(char *dst, size_t size, const char *data)
 /*
  * Write bytes to kernel address space for debugger.
  */
-void 
+void
 db_write_bytes(db_addr_t addr, size_t size, const char *data)
 {
 	char *dst = (char *)addr;

@@ -1,13 +1,9 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_PREREQ(2.59)dnl
+AC_PREREQ(2.64)dnl
 AC_INIT(Makefile.in)
-AC_CONFIG_HEADER(config.h:config.in)
+sinclude(../common/acinclude.m4)
 
-sinclude(../common/aclocal.m4)
-
-# Bugs in autoconf 2.59 break the call to SIM_AC_COMMON, hack around
-# it by inlining the macro's contents.
-sinclude(../common/common.m4)
+SIM_AC_COMMON
 
 dnl Options available in this module
 SIM_AC_OPTION_INLINE()
@@ -23,7 +19,6 @@ case "${target}" in
   m68hc11-*-*|m6811-*-*)
 	hw_enabled=yes
 	hw_extra_devices="m68hc11 m68hc11sio m68hc11eepr m68hc11tim m68hc11spi nvram"
-	m68hc11_extra_objs="dv-sockser.o"
 	SIM_SUBTARGET="$SIM_SUBTARGET -DTARGET_M68HC11=1"
 	;;
   *)
@@ -34,6 +29,7 @@ SIM_AC_OPTION_HARDWARE($hw_enabled,$hw_devices,$hw_extra_devices)
 
 AC_CHECK_HEADERS(string.h strings.h stdlib.h stdlib.h fcntl.h)
 
+m68hc11_extra_objs="$SIM_DV_SOCKSER_O"
 AC_SUBST(m68hc11_extra_objs)
 
 SIM_AC_OUTPUT

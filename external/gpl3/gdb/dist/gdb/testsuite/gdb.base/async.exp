@@ -1,5 +1,4 @@
-#   Copyright 1999, 2007, 2008, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright 1999-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,24 +14,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 #
 # test running programs
 #
 
-set testfile "async"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
-    untested async.exp
+if [get_compiler_info] {
     return -1
 }
 
-if [get_compiler_info ${binfile}] {
+if {[build_executable $testfile.exp $testfile $srcfile debug] == -1} {
+    untested $testfile.exp
     return -1
 }
 
@@ -56,9 +49,6 @@ gdb_exit
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 gdb_load ${binfile}
-if [target_info exists gdb_stub] {
-    gdb_step_for_stub;
-}
 
 #
 # set it up at a breakpoint so we can play with it

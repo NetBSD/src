@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.4 2011/02/08 20:20:16 rmind Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.4.14.1 2014/08/20 00:03:11 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.4 2011/02/08 20:20:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.4.14.1 2014/08/20 00:03:11 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,8 @@ struct md_core {
 };
 
 int
-cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
+cpu_coredump(struct lwp *l, struct coredump_iostate *iocookie,
+    struct core *chdr)
 {
 	struct md_core md_core;
 	struct coreseg cseg;
@@ -90,7 +91,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 
 	if (fputype) {
 		/* Save floating point registers. */
-		error = process_read_fpregs(l, &md_core.freg);
+		error = process_read_fpregs(l, &md_core.freg, NULL);
 		if (error)
 			return error;
 	} else {

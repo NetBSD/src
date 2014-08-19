@@ -13,68 +13,62 @@ DNSBLOG(8)                                                          DNSBLOG(8)
        <b>dnsblog</b> [generic Postfix daemon options]
 
 <b>DESCRIPTION</b>
-       The   <a href="dnsblog.8.html"><b>dnsblog</b>(8)</a>   server   implements   an   ad-hoc   DNS
-       white/blacklist lookup service.  This  may  eventually  be
-       replaced  by an UDP client that is built directly into the
-       <a href="postscreen.8.html"><b>postscreen</b>(8)</a> server.
+       The  <a href="dnsblog.8.html"><b>dnsblog</b>(8)</a>  server implements an ad-hoc DNS white/blacklist lookup
+       service. This may eventually be replaced by an UDP client that is built
+       directly into the <a href="postscreen.8.html"><b>postscreen</b>(8)</a> server.
 
 <b>PROTOCOL</b>
-       With each connection, the <a href="dnsblog.8.html"><b>dnsblog</b>(8)</a> server receives a DNS
-       white/blacklist  domain  name,  IP address, and an ID.  If
-       the address is listed under the DNS  white/blacklist,  the
-       <a href="dnsblog.8.html"><b>dnsblog</b>(8)</a>  server  logs  the  match  and replies with the
-       query arguments plus an address list with the resulting IP
-       addresses  separated  by whitespace.  Otherwise it replies
-       with the query  arguments  plus  an  empty  address  list.
-       Finally, The <a href="dnsblog.8.html"><b>dnsblog</b>(8)</a> server closes the connection.
+       With each connection, the <a href="dnsblog.8.html"><b>dnsblog</b>(8)</a> server receives a DNS white/black-
+       list domain name, IP address, and an ID.   If  the  address  is  listed
+       under the DNS white/blacklist, the <a href="dnsblog.8.html"><b>dnsblog</b>(8)</a> server logs the match and
+       replies with the query arguments plus an address list with the  result-
+       ing  IP  addresses  separated by whitespace.  Otherwise it replies with
+       the query arguments plus an empty  address  list.   Finally,  The  <a href="dnsblog.8.html"><b>dns-</b></a>
+       <a href="dnsblog.8.html"><b>blog</b>(8)</a> server closes the connection.
 
 <b>DIAGNOSTICS</b>
        Problems and transactions are logged to <b>syslogd</b>(8).
 
 <b>CONFIGURATION PARAMETERS</b>
-       Changes  to  <a href="postconf.5.html"><b>main.cf</b></a>  are picked up automatically, as <b>dns-</b>
-       <b>blog</b>(8) processes run for only a limited amount  of  time.
-       Use the command "<b>postfix reload</b>" to speed up a change.
+       Changes to <a href="postconf.5.html"><b>main.cf</b></a> are picked up automatically, as <a href="dnsblog.8.html"><b>dnsblog</b>(8)</a> processes
+       run for only a limited amount of time. Use the command "<b>postfix reload</b>"
+       to speed up a change.
 
-       The  text  below  provides  only  a parameter summary. See
-       <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
+       The  text  below provides only a parameter summary. See <a href="postconf.5.html"><b>postconf</b>(5)</a> for
+       more details including examples.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
-              <a href="master.5.html">master.cf</a> configuration files.
+              The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
+              figuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How  much time a Postfix daemon process may take to
-              handle a request  before  it  is  terminated  by  a
-              built-in watchdog timer.
+              How  much  time  a  Postfix  daemon process may take to handle a
+              request before it is terminated by a built-in watchdog timer.
 
        <b><a href="postconf.5.html#postscreen_dnsbl_sites">postscreen_dnsbl_sites</a> (empty)</b>
-              Optional  list of DNS white/blacklist domains, fil-
-              ters and weight factors.
+              Optional list of DNS white/blacklist domains, filters and weight
+              factors.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
-              The time limit for sending or receiving information
-              over an internal communication channel.
+              The  time  limit  for  sending  or receiving information over an
+              internal communication channel.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The  process  ID  of  a  Postfix  command or daemon
-              process.
+              The process ID of a Postfix command or daemon process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
-              The process name of a  Postfix  command  or  daemon
-              process.
+              The process name of a Postfix command or daemon process.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The  location of the Postfix top-level queue direc-
-              tory.
+              The location of the Postfix top-level queue directory.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The mail system  name  that  is  prepended  to  the
-              process  name  in  syslog  records, so that "smtpd"
-              becomes, for example, "postfix/smtpd".
+              The mail system name that is prepended to the  process  name  in
+              syslog  records,  so  that  "smtpd" becomes, for example, "post-
+              fix/smtpd".
 
 <b>SEE ALSO</b>
        <a href="smtpd.8.html">smtpd(8)</a>, Postfix SMTP server
@@ -82,8 +76,7 @@ DNSBLOG(8)                                                          DNSBLOG(8)
        syslogd(5), system logging
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
-       software.
+       The Secure Mailer license must be distributed with this software.
 
 <b>HISTORY</b>
        This service was introduced with Postfix version 2.8.

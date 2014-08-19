@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.60 2009/09/12 09:18:42 phx Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.60.22.1 2014/08/20 00:02:42 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.60 2009/09/12 09:18:42 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.60.22.1 2014/08/20 00:02:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -536,7 +536,6 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask, stru
 int
 writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, struct cpu_disklabel *clp)
 {
-	struct rdbmap *bmap;
 	struct buf *bp;
 	struct disklabel *dlp;
 	int error = 0;
@@ -576,7 +575,7 @@ done:
 	    (clp->rdblock <= 0 || clp->rdblock >= RDB_MAXBLOCKS))
 		return(EINVAL);
 
-	bmap = getrdbmap(dev, strat, lp, clp);
+	(void)getrdbmap(dev, strat, lp, clp);
 	return(EINVAL);
 }
 

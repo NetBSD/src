@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_space.c,v 1.3 2011/07/01 20:39:34 dyoung Exp $	*/
+/*	$NetBSD: obio_space.c,v 1.3.12.1 2014/08/20 00:02:54 tls Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_space.c,v 1.3 2011/07/01 20:39:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_space.c,v 1.3.12.1 2014/08/20 00:02:54 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,13 +137,12 @@ struct bus_space obio_bs_tag = {
 };
 
 int
-obio_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
+obio_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
     bus_space_handle_t *bshp)
 {
 	const struct pmap_devmap *pd;
 	paddr_t startpa, endpa, pa, offset;
 	vaddr_t va;
-	pt_entry_t *pte;
 
 	if ((pd = pmap_devmap_find_pa(bpa, size)) != NULL) {
 		/* Device was statically mapped. */
@@ -162,11 +161,13 @@ obio_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
 
 	*bshp = va + offset;
 
+	const int pmapflags =
+	    (flag & (BUS_SPACE_MAP_CACHEABLE|BUS_SPACE_MAP_PREFETCHABLE))
+		? 0
+		: PMAP_NOCACHE;
+
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
-		pte = vtopte(va);
-		*pte &= ~L2_S_CACHE_MASK;
-		PTE_SYNC(pte);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, pmapflags);
 	}
 	pmap_update(pmap_kernel());
 

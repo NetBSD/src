@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.76 2011/10/21 02:26:09 christos Exp $	*/
+/*	$NetBSD: w.c,v 1.76.8.1 2014/08/20 00:05:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.76 2011/10/21 02:26:09 christos Exp $");
+__RCSID("$NetBSD: w.c,v 1.76.8.1 2014/08/20 00:05:05 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,6 @@ __RCSID("$NetBSD: w.c,v 1.76 2011/10/21 02:26:09 christos Exp $");
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
@@ -126,17 +125,16 @@ static int	proc_compare_wrapper(const struct kinfo_proc2 *,
 static int	ttystat(const char *, struct stat *);
 static void	process(struct entry *);
 #endif
+static void	fixhost(struct entry *ep);
 __dead static void	usage(int);
 
 int
 main(int argc, char **argv)
 {
 	struct kinfo_proc2 *kp;
-	struct hostent *hp;
-	struct in_addr l;
 	struct entry *ep;
 	int ch, i, nentries, nusers, wcmd, curtain, use_sysctl;
-	char *memf, *nlistf, *p, *x, *usrnp;
+	char *memf, *nlistf, *usrnp;
 	const char *options;
 	time_t then;
 	size_t len;
@@ -147,7 +145,7 @@ main(int argc, char **argv)
 	struct utmpx *utx;
 #endif
 	const char *progname;
-	char buf[MAXHOSTNAMELEN], errbuf[_POSIX2_LINE_MAX];
+	char errbuf[_POSIX2_LINE_MAX];
 
 	setprogname(argv[0]);
 
@@ -239,6 +237,7 @@ main(int argc, char **argv)
 			    sizeof(utx->ut_host));
 			ep->host[sizeof(utx->ut_host)] = '\0';
 		}
+		fixhost(ep);
 		ep->type[0] = 'x';
 		ep->tv = utx->ut_tv;
 		ep->pid = utx->ut_pid;
@@ -276,6 +275,7 @@ main(int argc, char **argv)
 		ep->name[sizeof(ut->ut_name)] = '\0';
 		ep->line[sizeof(ut->ut_line)] = '\0';
 		ep->host[sizeof(ut->ut_host)] = '\0';
+		fixhost(ep);
 		ep->tv.tv_sec = ut->ut_time;
 		*nextp = ep;
 		nextp = &(ep->next);
@@ -378,6 +378,7 @@ main(int argc, char **argv)
 
 	if (!nflag) {
 		int	rv;
+		char	*p;
 
 		rv = gethostname(domain, sizeof(domain));
 		domain[sizeof(domain) - 1] = '\0';
@@ -388,36 +389,6 @@ main(int argc, char **argv)
 	}
 
 	for (ep = ehead; ep != NULL; ep = ep->next) {
-		char host_buf[MAXHOSTNAMELEN + 1];
-
-		strlcpy(host_buf, *ep->host ? ep->host : "-", sizeof(host_buf));
-		p = host_buf;
-
-		for (x = p; x < p + MAXHOSTNAMELEN; x++)
-			if (*x == '\0' || *x == ':')
-				break;
-		if (x == p + MAXHOSTNAMELEN || *x != ':')
-			x = NULL;
-		else
-			*x++ = '\0';
-
-		if (!nflag && inet_aton(p, &l) &&
-		    (hp = gethostbyaddr((char *)&l, sizeof(l), AF_INET))) {
-			if (domain[0] != '\0') {
-				p = hp->h_name;
-				p += strlen(hp->h_name);
-				p -= strlen(domain);
-				if (p > hp->h_name &&
-				    strcasecmp(p, domain) == 0)
-					*p = '\0';
-			}
-			p = hp->h_name;
-		}
-		if (x) {
-			(void)snprintf(buf, sizeof(buf), "%s:%s", p, x);
-			p = buf;
-		}
-
 		if (ep->tp != NULL)
 			kp = ep->tp;
 		else if (ep->pp != NULL)
@@ -434,7 +405,7 @@ main(int argc, char **argv)
 		usrnp = (kp == NULL) ? ep->name : kp->p_login;
 		(void)printf("%-*s %-7.7s %-*.*s ",
 		    maxname, usrnp, ep->line,
-		    maxhost, maxhost, *p ? p : "-");
+		    maxhost, maxhost, ep->host);
 		then = (time_t)ep->tv.tv_sec;
 		pr_attime(&then, &now);
 		pr_idle(ep->idle);
@@ -455,14 +426,10 @@ pr_args(struct kinfo_proc2 *kp)
 	left = argwidth;
 	argv = kvm_getargv2(kd, kp, (argwidth < 0) ? 0 : argwidth);
 	if (argv == 0) {
-		if (kp->p_comm == 0) {
-			goto nothing;
-		} else {
-			fmt_putc('(', &left);
-			fmt_puts((char *)kp->p_comm, &left);
-			fmt_putc(')', &left);
-			return;
-		}
+		fmt_putc('(', &left);
+		fmt_puts((char *)kp->p_comm, &left);
+		fmt_putc(')', &left);
+		return;
 	}
 	while (*argv) {
 		fmt_puts(*argv, &left);
@@ -636,6 +603,49 @@ proc_compare_wrapper(const struct kinfo_proc2 *p1,
 		return 0;
 
 	return proc_compare(p1, l1, p2, l2);
+}
+
+static void
+fixhost(struct entry *ep)
+{
+	char host_buf[sizeof(ep->host)];
+	char *p, *x;
+	struct hostent *hp;
+	struct in_addr l;
+
+	strlcpy(host_buf, *ep->host ? ep->host : "-", sizeof(host_buf));
+	p = host_buf;
+
+	/*
+	 * XXX: Historical behavior, ':' in hostname means X display number,
+	 * IPv6 not handled.
+	 */
+	for (x = p; x < &host_buf[sizeof(host_buf)]; x++)
+		if (*x == '\0' || *x == ':')
+			break;
+	if (x == p + sizeof(host_buf) || *x != ':')
+		x = NULL;
+	else
+		*x++ = '\0';
+
+	if (!nflag && inet_aton(p, &l) &&
+	    (hp = gethostbyaddr((char *)&l, sizeof(l), AF_INET))) {
+		if (domain[0] != '\0') {
+			p = hp->h_name;
+			p += strlen(hp->h_name);
+			p -= strlen(domain);
+			if (p > hp->h_name &&
+			    strcasecmp(p, domain) == 0)
+				*p = '\0';
+		}
+		p = hp->h_name;
+	}
+
+	if (x)
+		(void)snprintf(ep->host, sizeof(ep->host), "%s:%s", p, x);
+	else
+
+		strlcpy(ep->host, p, sizeof(ep->host));
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_krb5.c,v 1.25 2011/04/25 22:22:25 christos Exp $	*/
+/*	$NetBSD: pam_krb5.c,v 1.25.10.1 2014/08/20 00:02:19 tls Exp $	*/
 
 /*-
  * This pam_krb5 module contains code that is:
@@ -53,7 +53,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.22 2005/01/24 16:49:50 rwatson Exp $");
 #else
-__RCSID("$NetBSD: pam_krb5.c,v 1.25 2011/04/25 22:22:25 christos Exp $");
+__RCSID("$NetBSD: pam_krb5.c,v 1.25.10.1 2014/08/20 00:02:19 tls Exp $");
 #endif
 
 #include <sys/types.h>
@@ -861,15 +861,15 @@ log_krb5(krb5_context ctx, krb5_error_code err,
 	else
 		errtxt = NULL;
 	if (errtxt != NULL) {
+		snprintf(b2, sizeof(b2), "%s", errtxt);
 		krb5_free_error_message(ctx, errtxt);
-		snprintf(b2, sizeof(b2), "%s (%s)", b1, errtxt);
 	} else {
-		snprintf(b2, sizeof(b2), "%s (unknown %d)", b1, (int)err);
+		snprintf(b2, sizeof(b2), "unknown %d", (int)err);
 	}
 	if (data)
-		syslog_r(LOG_DEBUG, data, "%s", b2);
+		syslog_r(LOG_DEBUG, data, "%s (%s)", b1, b2);
 	else
-		PAM_LOG(b2);
+		PAM_LOG("%s (%s)", b1, b2);
 }
 
 /*

@@ -1,9 +1,9 @@
-/*	$NetBSD: dir-index-bozo.c,v 1.15 2012/07/19 09:53:06 mrg Exp $	*/
+/*	$NetBSD: dir-index-bozo.c,v 1.15.2.1 2014/08/20 00:02:22 tls Exp $	*/
 
 /*	$eterna: dir-index-bozo.c,v 1.20 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2011 Matthew R. Green
+ * Copyright (c) 1997-2014 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -127,7 +127,7 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirname, int isindex)
 	    j--; de++) {
 		int nostat = 0;
 		char *name = (*de)->d_name;
-		char *urlname;
+		char *urlname, *htmlname;
 
 		if (strcmp(name, ".") == 0 ||
 		    (strcmp(name, "..") != 0 &&
@@ -140,21 +140,26 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirname, int isindex)
 
 		l = 0;
 
-		urlname = escape_rfc3986(httpd, name);
+		urlname = bozo_escape_rfc3986(httpd, name);
+		htmlname = bozo_escape_html(httpd, name);
+		if (htmlname == NULL)
+			htmlname = name;
 		if (strcmp(name, "..") == 0) {
 			bozo_printf(httpd, "<a href=\"../\">");
 			l += bozo_printf(httpd, "Parent Directory");
 		} else if (S_ISDIR(sb.st_mode)) {
 			bozo_printf(httpd, "<a href=\"%s/\">", urlname);
-			l += bozo_printf(httpd, "%s/", name);
+			l += bozo_printf(httpd, "%s/", htmlname);
 		} else if (strchr(name, ':') != NULL) {
 			/* RFC 3986 4.2 */
 			bozo_printf(httpd, "<a href=\"./%s\">", urlname);
-			l += bozo_printf(httpd, "%s", name);
+			l += bozo_printf(httpd, "%s", htmlname);
 		} else {
 			bozo_printf(httpd, "<a href=\"%s\">", urlname);
-			l += bozo_printf(httpd, "%s", name);
+			l += bozo_printf(httpd, "%s", htmlname);
 		}
+		if (htmlname != name)
+			free(htmlname);
 		bozo_printf(httpd, "</a>");
 
 		/* NAMELEN spaces */
@@ -200,8 +205,7 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirname, int isindex)
 	bozo_flush(httpd, stdout);
 
 done:
-	if (file)
-		free(file);
+	free(file);
 	return 1;
 }
 #endif /* NO_DIRINDEX_SUPPORT */

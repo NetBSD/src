@@ -72,7 +72,7 @@ print_dollarhex (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 {
   disassemble_info *info = (disassemble_info *) dis_info;
 
-  info->fprintf_func (info->stream, "$%lx", value);
+  info->fprintf_func (info->stream, "$%lx", value & 0xffffffff);
 
   if (0)
     print_normal (cd, dis_info, value, attrs, pc, length);

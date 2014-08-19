@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp_var.h,v 1.23 2008/04/15 16:02:03 thorpej Exp $	*/
+/*	$NetBSD: igmp_var.h,v 1.23.48.1 2014/08/20 00:04:35 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -103,7 +103,7 @@
  * DELAY * countdown frequency).  We assume that the routine random()
  * is defined somewhere (and that it returns a positive number).
  */
-#define	IGMP_RANDOM_DELAY(X)	(random() % (X) + 1)
+#define	IGMP_RANDOM_DELAY(X)	(cprng_fast32() % (X) + 1)
 
 #ifdef __NO_STRICT_ALIGNMENT
 #define	IGMP_HDR_ALIGNED_P(ig)	1

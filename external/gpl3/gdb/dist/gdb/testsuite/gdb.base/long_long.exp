@@ -1,7 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2007, 2008, 2009,
-# 2010, 2011 Free Software Foundation, Inc.
+# Copyright 1997-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,21 +18,15 @@
 # long_long.exp   Test printing of 64-bit things in 32-bit gdb.
 #                 Also test differnet kinds of formats.
 #
-if $tracelevel then {
-	strace $tracelevel
-}
-
 if [target_info exists no_long_long] {
     return 0
 }
 
-set testfile long_long
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .c
 
 # What compiler are we using?
 #
-if [get_compiler_info ${binfile}] {
+if [get_compiler_info] {
     return -1
 }
 
@@ -51,10 +44,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [con
 # use this to debug:
 #log_user 1
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart ${binfile}
 
 if { ![runto known_types] } then { 
    fail "run to known_types" 
@@ -165,10 +155,8 @@ if { $sizeof_double == 8 || $sizeof_long_double == 8 } {
     # words swapped in big endian format.
     # EABI targets default to natural-endian VFP format.
 
-    if { ([istarget "arm*-*-*"] || \
-	  [istarget "xscale*-*-*"] || \
-	  [istarget "strongarm*-*-*"]) \
-	 && !([istarget "*-*-*eabi"] || \
+    if { ([istarget "arm*-*-*"]) \
+	 && !([istarget "*-*-*eabi*"] || \
 	      [istarget "*-*-mingw32ce*"] || \
 	      [istarget "*-*-openbsd*"] || \
 	      [istarget "*-*-symbianelf"]) } then {

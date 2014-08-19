@@ -1,0 +1,14 @@
+# $NetBSD: files.a64emul,v 1.1.4.2 2014/08/20 00:02:57 tls Exp $
+
+file	arch/evbarm64/a64emul/a64emul_machdep.c
+file	kern/subr_disk_mbr.c
+
+device obio { [addr=-1], [size=-1], [intr=-1] }
+attach obio at mainbus with obio_mainbus
+file	arch/evbarm64/a64emul/obio_mainbus.c	obio_mainbus
+
+attach sm at mainbus with sm_mainbus
+file	arch/evbarm64/a64emul/sm_mainbus.c	sm_mainbus
+
+attach plcom at obio with plcom_obio
+file	arch/evbarm64/a64emul/plcom_obio.c	plcom_obio

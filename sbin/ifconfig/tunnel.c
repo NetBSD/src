@@ -1,4 +1,4 @@
-/*	$NetBSD: tunnel.c,v 1.17 2009/08/07 18:53:37 dyoung Exp $	*/
+/*	$NetBSD: tunnel.c,v 1.17.12.1 2014/08/20 00:02:25 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tunnel.c,v 1.17 2009/08/07 18:53:37 dyoung Exp $");
+__RCSID("$NetBSD: tunnel.c,v 1.17.12.1 2014/08/20 00:02:25 tls Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -125,15 +125,8 @@ settunnel(prop_dictionary_t env, prop_dictionary_t oenv)
 		    IN6_IS_ADDR_MULTICAST(&s6->sin6_addr))
 			errx(EXIT_FAILURE, "tunnel src/dst is multicast");
 		/* embed scopeid */
-		if (s6->sin6_scope_id &&
-		    IN6_IS_ADDR_LINKLOCAL(&s6->sin6_addr)) {
-			*(u_int16_t *)&s6->sin6_addr.s6_addr[2] =
-			    htons(s6->sin6_scope_id);
-		}
-		if (d->sin6_scope_id && IN6_IS_ADDR_LINKLOCAL(&d->sin6_addr)) {
-			*(u_int16_t *)&d->sin6_addr.s6_addr[2] =
-			    htons(d->sin6_scope_id);
-		}
+		inet6_putscopeid(s6, INET6_IS_ADDR_LINKLOCAL);
+		inet6_putscopeid(d, INET6_IS_ADDR_LINKLOCAL);
 	}
 #endif /* INET6 */
 
@@ -169,7 +162,8 @@ tunnel_status(prop_dictionary_t env, prop_dictionary_t oenv)
 	afp = lookup_af_bynum(req.addr.ss_family);
 #ifdef INET6
 	if (req.addr.ss_family == AF_INET6)
-		in6_fillscopeid((struct sockaddr_in6 *)&req.addr);
+		inet6_getscopeid((struct sockaddr_in6 *)&req.addr,
+		    INET6_IS_ADDR_LINKLOCAL);
 #endif /* INET6 */
 	getnameinfo((struct sockaddr *)&req.addr, req.addr.ss_len,
 	    psrcaddr, sizeof(psrcaddr), &srcserv[1], sizeof(srcserv) - 1,
@@ -177,7 +171,8 @@ tunnel_status(prop_dictionary_t env, prop_dictionary_t oenv)
 
 #ifdef INET6
 	if (req.dstaddr.ss_family == AF_INET6)
-		in6_fillscopeid((struct sockaddr_in6 *)&req.dstaddr);
+		inet6_getscopeid((struct sockaddr_in6 *)&req.dstaddr,
+		    INET6_IS_ADDR_LINKLOCAL);
 #endif
 	getnameinfo((struct sockaddr *)&req.dstaddr, req.dstaddr.ss_len,
 	    pdstaddr, sizeof(pdstaddr), &dstserv[1], sizeof(dstserv) - 1,

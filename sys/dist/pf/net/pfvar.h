@@ -1,4 +1,4 @@
-/*	$NetBSD: pfvar.h,v 1.20 2012/01/11 14:37:45 drochner Exp $	*/
+/*	$NetBSD: pfvar.h,v 1.20.6.1 2014/08/20 00:03:52 tls Exp $	*/
 /*	$OpenBSD: pfvar.h,v 1.254 2007/07/13 09:17:48 markus Exp $ */
 
 /*
@@ -1116,7 +1116,7 @@ struct pf_pdesc {
 #define PFRES_NORM	4		/* Dropping by normalizer */
 #define PFRES_MEMORY	5		/* Dropped due to lacking mem */
 #define PFRES_TS	6		/* Bad TCP Timestamp (RFC1323) */
-#define PFRES_CONGEST	7		/* Congestion (of ipintrq) */
+#define PFRES_CONGEST	7		/* Congestion (of IP queue) */
 #define PFRES_IPOPTIONS 8		/* IP option */
 #define PFRES_PROTCKSUM 9		/* Protocol checksum invalid */
 #define PFRES_BADSTATE	10		/* State mismatch */
@@ -1216,6 +1216,12 @@ struct pf_pdesc {
 	do { \
 		if ((a) != NULL) \
 			*(a) = (x); \
+		if (x < PFRES_MAX) \
+			pf_status.counters[x]++; \
+	} while (0)
+#define REASON_SET_NOPTR(a, x) \
+	do { \
+		*(a) = (x); \
 		if (x < PFRES_MAX) \
 			pf_status.counters[x]++; \
 	} while (0)

@@ -1,4 +1,4 @@
-.\" $NetBSD: config.5,v 1.21 2010/03/03 13:53:22 pooka Exp $
+.\" $NetBSD: config.5,v 1.21.12.1 2014/08/20 00:04:57 tls Exp $
 .\"
 .\"  Copyright (c) 2006, 2007 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -24,7 +24,7 @@
 .\"  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\"  POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 3, 2010
+.Dd May 29, 2014
 .Dt CONFIG 5
 .Os
 .Sh NAME
@@ -264,7 +264,7 @@ argument has the latest prefix popped out.
 The
 .Ar path
 argument is either absolute or relative to the current defined prefix, which
-defaults to the top of ther kernel source tree.
+defaults to the top of the kernel source tree.
 .It Ic ifdef Ar attribute
 .It Ic ifndef Ar attribute
 .It Ic elifdef Ar attribute
@@ -587,6 +587,8 @@ prefix
 Defines the indentification string of the kernel.
 This statement is optional, and the name of the main configuration file will be
 used as a default value.
+.It Ic no ident
+Deletes any pre-existing indentification string of the kernel.
 .It Ic maxusers Ar number
 Despite its name, this statement does not limit the maximum number of users on
 the system.

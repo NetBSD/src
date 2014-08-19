@@ -248,7 +248,7 @@ EXPORT_SYMBOL(vchi_bulk_queue_receive);
  * Name: vchi_bulk_queue_transmit
  *
  * Arguments:  VCHI_BULK_HANDLE_T handle,
- *             const void *data_src,
+ *             void *data_src,
  *             uint32_t data_size,
  *             VCHI_FLAGS_T flags,
  *             void *bulk_handle
@@ -543,47 +543,58 @@ static VCHIQ_STATUS_T shim_callback(VCHIQ_REASON_T reason,
 	SHIM_SERVICE_T *service =
 		(SHIM_SERVICE_T *)VCHIQ_GET_SERVICE_USERDATA(handle);
 
+        if (!service->callback)
+		goto release;
+
 	switch (reason) {
 	case VCHIQ_MESSAGE_AVAILABLE:
 		vchiu_queue_push(&service->queue, header);
 
-		if (service->callback)
-			service->callback(service->callback_param,
-				VCHI_CALLBACK_MSG_AVAILABLE, NULL);
+		service->callback(service->callback_param,
+				  VCHI_CALLBACK_MSG_AVAILABLE, NULL);
+
+		goto done;
 		break;
+
 	case VCHIQ_BULK_TRANSMIT_DONE:
-		if (service->callback)
-			service->callback(service->callback_param,
-				VCHI_CALLBACK_BULK_SENT, bulk_user);
+		service->callback(service->callback_param,
+				  VCHI_CALLBACK_BULK_SENT, bulk_user);
 		break;
+
 	case VCHIQ_BULK_RECEIVE_DONE:
-		if (service->callback)
-			service->callback(service->callback_param,
-				VCHI_CALLBACK_BULK_RECEIVED, bulk_user);
+		service->callback(service->callback_param,
+				  VCHI_CALLBACK_BULK_RECEIVED, bulk_user);
 		break;
+
 	case VCHIQ_SERVICE_CLOSED:
-		if (service->callback)
-			service->callback(service->callback_param,
-				VCHI_CALLBACK_SERVICE_CLOSED, NULL);
+		service->callback(service->callback_param,
+				  VCHI_CALLBACK_SERVICE_CLOSED, NULL);
 		break;
+
 	case VCHIQ_SERVICE_OPENED:
 		/* No equivalent VCHI reason */
 		break;
+
 	case VCHIQ_BULK_TRANSMIT_ABORTED:
-		if (service->callback)
-			service->callback(service->callback_param,
-				VCHI_CALLBACK_BULK_TRANSMIT_ABORTED, bulk_user);
+		service->callback(service->callback_param,
+				  VCHI_CALLBACK_BULK_TRANSMIT_ABORTED,
+				  bulk_user);
 		break;
+
 	case VCHIQ_BULK_RECEIVE_ABORTED:
-		if (service->callback)
-			service->callback(service->callback_param,
-				VCHI_CALLBACK_BULK_RECEIVE_ABORTED, bulk_user);
+		service->callback(service->callback_param,
+				  VCHI_CALLBACK_BULK_RECEIVE_ABORTED,
+				  bulk_user);
 		break;
+
 	default:
 		WARN(1, "not supported\n");
 		break;
 	}
 
+release:
+        vchiq_release_message(service->handle, header);
+done:
 	return VCHIQ_SUCCESS;
 }
 
@@ -621,6 +632,9 @@ int32_t vchi_service_open(VCHI_INSTANCE_T instance_handle,
 {
 	VCHIQ_INSTANCE_T instance = (VCHIQ_INSTANCE_T)instance_handle;
 	SHIM_SERVICE_T *service = service_alloc(instance, setup);
+
+	*handle = (VCHI_SERVICE_HANDLE_T)service;
+
 	if (service) {
 		VCHIQ_SERVICE_PARAMS_T params;
 		VCHIQ_STATUS_T status;
@@ -637,10 +651,9 @@ int32_t vchi_service_open(VCHI_INSTANCE_T instance_handle,
 		if (status != VCHIQ_SUCCESS) {
 			service_free(service);
 			service = NULL;
+			*handle = NULL;
 		}
 	}
-
-	*handle = (VCHI_SERVICE_HANDLE_T)service;
 
 	return (service != NULL) ? 0 : -1;
 }
@@ -652,6 +665,9 @@ int32_t vchi_service_create(VCHI_INSTANCE_T instance_handle,
 {
 	VCHIQ_INSTANCE_T instance = (VCHIQ_INSTANCE_T)instance_handle;
 	SHIM_SERVICE_T *service = service_alloc(instance, setup);
+
+	*handle = (VCHI_SERVICE_HANDLE_T)service;
+
 	if (service) {
 		VCHIQ_SERVICE_PARAMS_T params;
 		VCHIQ_STATUS_T status;
@@ -667,10 +683,9 @@ int32_t vchi_service_create(VCHI_INSTANCE_T instance_handle,
 		if (status != VCHIQ_SUCCESS) {
 			service_free(service);
 			service = NULL;
+			*handle = NULL;
 		}
 	}
-
-	*handle = (VCHI_SERVICE_HANDLE_T)service;
 
 	return (service != NULL) ? 0 : -1;
 }
@@ -711,17 +726,6 @@ int32_t vchi_service_destroy(const VCHI_SERVICE_HANDLE_T handle)
 EXPORT_SYMBOL(vchi_service_destroy);
 
 #ifdef notyet
-/* ----------------------------------------------------------------------
- * read a uint32_t from buffer.
- * network format is defined to be little endian
- * -------------------------------------------------------------------- */
-static uint32_t
-vchi_readbuf_uint32(const void *_ptr)
-{
-	const unsigned char *ptr = _ptr;
-	return ptr[0] | (ptr[1] << 8) | (ptr[2] << 16) | (ptr[3] << 24);
-}
-
 int32_t vchi_get_peer_version( const VCHI_SERVICE_HANDLE_T handle, short *peer_version )
 {
    int32_t ret = -1;
@@ -736,10 +740,21 @@ int32_t vchi_get_peer_version( const VCHI_SERVICE_HANDLE_T handle, short *peer_v
 EXPORT_SYMBOL(vchi_get_peer_version);
 
 /* ----------------------------------------------------------------------
+ * read a uint32_t from buffer.
+ * network format is defined to be little endian
+ * -------------------------------------------------------------------- */
+uint32_t
+vchi_readbuf_uint32(const void *_ptr)
+{
+	const unsigned char *ptr = _ptr;
+	return ptr[0] | (ptr[1] << 8) | (ptr[2] << 16) | (ptr[3] << 24);
+}
+
+/* ----------------------------------------------------------------------
  * write a uint32_t to buffer.
  * network format is defined to be little endian
  * -------------------------------------------------------------------- */
-static void
+void
 vchi_writebuf_uint32(void *_ptr, uint32_t value)
 {
 	unsigned char *ptr = _ptr;
@@ -753,7 +768,7 @@ vchi_writebuf_uint32(void *_ptr, uint32_t value)
  * read a uint16_t from buffer.
  * network format is defined to be little endian
  * -------------------------------------------------------------------- */
-static uint16_t
+uint16_t
 vchi_readbuf_uint16(const void *_ptr)
 {
 	const unsigned char *ptr = _ptr;
@@ -764,7 +779,7 @@ vchi_readbuf_uint16(const void *_ptr)
  * write a uint16_t into the buffer.
  * network format is defined to be little endian
  * -------------------------------------------------------------------- */
-static void
+void
 vchi_writebuf_uint16(void *_ptr, uint16_t value)
 {
 	unsigned char *ptr = _ptr;

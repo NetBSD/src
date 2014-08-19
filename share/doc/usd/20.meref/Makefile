@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 1998/01/09 06:56:02 perry Exp $
+#	$NetBSD: Makefile,v 1.2.72.1 2014/08/20 00:02:30 tls Exp $
 #
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
-DIR=	usd/20.meref
+SECTION=reference/ref1/roff
+ARTICLE=meref
 SRCS=	ref.me
 MACROS=	-me
 

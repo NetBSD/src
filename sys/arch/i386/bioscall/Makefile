@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2010/07/06 05:59:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.19.18.1 2014/08/20 00:03:05 tls Exp $
 
 CPPFLAGS=	${APMCPPFLAGS}
 KSRC=${.CURDIR}/../../..
@@ -34,8 +34,8 @@ biostramp.obj: ${OBJS} ${DEPS}
 	${LD} -Bstatic -N -Ttext 0 -e do_bios_call -o $@ $(OBJS)
 
 assym.h: machine x86 genassym.cf
-	${TOOL_GENASSYM} -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    < ${.CURDIR}/genassym.cf > assym.h.tmp && \
+	${TOOL_GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${PROF} \
+	    ${GENASSYM_CPPFLAGS} < ${.CURDIR}/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 
 biostramp.S: assym.h

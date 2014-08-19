@@ -1,6 +1,6 @@
 /* Xtensa GNU/Linux native support.
 
-   Copyright (C) 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2007-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "frame.h"
 #include "inferior.h"
 #include "gdbcore.h"
@@ -29,7 +29,6 @@
 
 #include <stdint.h>
 #include <sys/types.h>
-#include <sys/param.h>
 #include <signal.h>
 #include <sys/user.h>
 #include <sys/ioctl.h>
@@ -37,6 +36,7 @@
 #include <fcntl.h>
 #include <sys/procfs.h>
 #include <sys/ptrace.h>
+#include <asm/ptrace.h>
 
 #include "gregset.h"
 #include "xtensa-tdep.h"
@@ -46,12 +46,12 @@
    hardware-specific overlays.  */
 #include "xtensa-xtregs.c"
 
-int
+static int
 get_thread_id (ptid_t ptid)
 {
-  int tid = TIDGET (ptid);
+  int tid = ptid_get_lwp (ptid);
   if (0 == tid)
-    tid = PIDGET (ptid);
+    tid = ptid_get_pid (ptid);
   return tid;
 }
 #define GET_THREAD_ID(PTID)	get_thread_id (PTID)

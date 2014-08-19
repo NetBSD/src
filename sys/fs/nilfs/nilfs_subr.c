@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_subr.c,v 1.8.12.1 2013/02/25 00:29:48 tls Exp $ */
+/* $NetBSD: nilfs_subr.c,v 1.8.12.2 2014/08/20 00:04:27 tls Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.8.12.1 2013/02/25 00:29:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.8.12.2 2014/08/20 00:04:27 tls Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -725,7 +725,6 @@ static void
 nilfs_register_node(struct nilfs_node *node)
 {
 	struct nilfs_mount *ump;
-	struct nilfs_node *chk;
 	uint32_t hashline;
 
 	ump = node->ump;
@@ -734,13 +733,12 @@ nilfs_register_node(struct nilfs_node *node)
 	/* add to our hash table */
 	hashline = nilfs_calchash(node->ino) & NILFS_INODE_HASHMASK;
 #ifdef DEBUG
+	struct nilfs_node *chk;
 	LIST_FOREACH(chk, &ump->nilfs_nodes[hashline], hashchain) {
 		assert(chk);
 		if (chk->ino == node->ino)
 			panic("Double node entered\n");
 	}
-#else
-	chk = NULL;
 #endif
 	LIST_INSERT_HEAD(&ump->nilfs_nodes[hashline], node, hashchain);
 

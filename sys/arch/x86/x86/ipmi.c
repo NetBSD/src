@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.53.2.1 2013/06/23 06:20:14 tls Exp $ */
+/*	$NetBSD: ipmi.c,v 1.53.2.2 2014/08/20 00:03:29 tls Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.53.2.1 2013/06/23 06:20:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.53.2.2 2014/08/20 00:03:29 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -146,7 +146,11 @@ int	ipmi_enabled = 0;
 
 #define IPMI_ENTITY_PWRSUPPLY		0x0A
 
-#define IPMI_INVALID_SENSOR		(1L << 5)
+#define IPMI_SENSOR_SCANNING_ENABLED	(1L << 6)
+#define IPMI_SENSOR_UNAVAILABLE		(1L << 5)
+#define IPMI_INVALID_SENSOR_P(x) \
+	(((x) & (IPMI_SENSOR_SCANNING_ENABLED|IPMI_SENSOR_UNAVAILABLE)) \
+	!= IPMI_SENSOR_SCANNING_ENABLED)
 
 #define IPMI_SDR_TYPEFULL		1
 #define IPMI_SDR_TYPECOMPACT		2
@@ -784,6 +788,8 @@ kcs_probe(struct ipmi_softc *sc)
 	printf(" C/D: %2x\n", v & KCS_CD);
 	printf(" IBF: %2x\n", v & KCS_IBF);
 	printf(" OBF: %2x\n", v & KCS_OBF);
+#else
+	__USE(v);
 #endif
 	return (0);
 }
@@ -1505,10 +1511,6 @@ ipmi_convert_sensor(uint8_t *reading, struct ipmi_sensor *psensor)
 		val = 0;
 		break;
 	}
-	if (val != psensor->i_prevval) {
-		rnd_add_uint32(&psensor->i_rnd, val);
-		psensor->i_prevval = val;
-	}
 	return val;
 }
 
@@ -1716,7 +1718,7 @@ read_sensor(struct ipmi_softc *sc, struct ipmi_sensor *psensor)
 	    s1->m, s1->m_tolerance, s1->b, s1->b_accuracy, s1->rbexp, s1->linear);
 	dbg_printf(10, "values=%.2x %.2x %.2x %.2x %s\n",
 	    data[0],data[1],data[2],data[3], edata->desc);
-	if (data[1] & IPMI_INVALID_SENSOR) {
+	if (IPMI_INVALID_SENSOR_P(data[1])) {
 		/* Check if sensor is valid */
 		edata->state = ENVSYS_SINVALID;
 	} else {
@@ -1805,7 +1807,7 @@ add_child_sensors(struct ipmi_softc *sc, uint8_t *psdr, int count,
 	char			*e;
 	struct ipmi_sensor	*psensor;
 	struct sdrtype1		*s1 = (struct sdrtype1 *)psdr;
-
+	
 	typ = ipmi_sensor_type(sensor_type, ext_type, entity);
 	if (typ == -1) {
 		dbg_printf(5, "Unknown sensor type:%.2x et:%.2x sn:%.2x "
@@ -1862,22 +1864,6 @@ add_child_sensors(struct ipmi_softc *sc, uint8_t *psdr, int count,
 			         ipmi_is_dupname(psensor->i_envdesc));
 		}
 
-		/*
-		 * Add entropy source.
-		 */
-		switch (psensor->i_envtype) {
-		    case ENVSYS_STEMP:
-		    case ENVSYS_SFANRPM:
-			rnd_attach_source(&psensor->i_rnd,
-					  psensor->i_envdesc,
-					  RND_TYPE_ENV, 0);
-		        break;
-		    default:	/* XXX intrusion sensors? */
-			rnd_attach_source(&psensor->i_rnd,
-					  psensor->i_envdesc,
-					  RND_TYPE_POWER, 0);
-		}
-		    
 		dbg_printf(5, "add sensor:%.4x %.2x:%d ent:%.2x:%.2x %s\n",
 		    s1->sdrhdr.record_id, s1->sensor_type,
 		    typ, s1->entity_id, s1->entity_instance,
@@ -2072,6 +2058,7 @@ ipmi_thread(void *cookie)
 		ipmi_s->i_envnum = -1;
 		sc->sc_sensor[i].units = ipmi_s->i_envtype;
 		sc->sc_sensor[i].state = ENVSYS_SINVALID;
+		sc->sc_sensor[i].flags |= ENVSYS_FHAS_ENTROPY;
 		/*
 		 * Monitor threshold limits in the sensors.
 		 */

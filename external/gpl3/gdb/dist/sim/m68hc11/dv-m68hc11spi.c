@@ -1,6 +1,5 @@
 /*  dv-m68hc11spi.c -- Simulation of the 68HC11 SPI
-    Copyright (C) 2000, 2002, 2003, 2007, 2008, 2009, 2010, 2011
-    Free Software Foundation, Inc.
+    Copyright (C) 2000-2014 Free Software Foundation, Inc.
     Written by Stephane Carrez (stcarrez@nerim.fr)
     (From a driver model Contributed by Cygnus Solutions.)
 

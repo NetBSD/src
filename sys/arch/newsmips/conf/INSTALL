@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.41.2.1 2013/06/23 06:20:09 tls Exp $
+# 	$NetBSD: INSTALL,v 1.41.2.2 2014/08/20 00:03:16 tls Exp $
 #
 #	INSTALL kernel for RISC-NEWS
 
@@ -14,7 +14,7 @@ maxusers	8
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT		# Force root on ram-disk
 options 	MEMORY_DISK_SERVER=0		# no userspace md(4) support
-options 	MEMORY_DISK_ROOT_SIZE=5120	# 2.5 Megabytes
+options 	MEMORY_DISK_ROOT_SIZE=5320	# 2.6 Megabytes
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 options 	news3400

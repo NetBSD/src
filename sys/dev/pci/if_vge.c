@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.53.2.1 2013/06/23 06:20:18 tls Exp $ */
+/* $NetBSD: if_vge.c,v 1.53.2.2 2014/08/20 00:03:42 tls Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.53.2.1 2013/06/23 06:20:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.53.2.2 2014/08/20 00:03:42 tls Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -941,6 +941,7 @@ vge_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	pci_intr_handle_t ih;
 	uint16_t val;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 
@@ -967,7 +968,7 @@ vge_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "unable to map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_intrhand = pci_intr_establish(pc, ih, IPL_NET, vge_intr, sc);
 	if (sc->sc_intrhand == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt");
@@ -2027,11 +2028,9 @@ static int
 vge_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct vge_softc *sc;
-	struct ifreq *ifr;
 	int s, error;
 
 	sc = ifp->if_softc;
-	ifr = (struct ifreq *)data;
 	error = 0;
 
 	s = splnet();

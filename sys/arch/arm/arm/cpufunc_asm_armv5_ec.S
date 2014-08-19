@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv5_ec.S,v 1.2.2.1 2012/11/20 03:01:02 tls Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv5_ec.S,v 1.2.2.2 2014/08/20 00:02:44 tls Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -36,10 +36,9 @@
  * This source was derived from that file.
  */
 
-#include <machine/cpu.h>
-#include <machine/asm.h>
-
 #include "assym.h"
+#include <machine/asm.h>
+#include <arm/locore.h>
 
 /*
  * Functions to set the MMU Translation Table Base register
@@ -63,7 +62,7 @@ ENTRY(armv5_ec_setttb)
 	beq	2f			@   nope, so don't
 
 	mcr	p15, 0, r0, c7, c5, 0	/* Invalidate ICache */
-1:	mrc	p15, 0, r15, c7, c14, 3	/* Test, clean and invalidate DCache */
+1:	mrc	p15, 0, APSR_nzcv, c7, c14, 3	/* Test, clean and invalidate DCache */
 	bne	1b			/* More to do? */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	cmp	r0, #1
@@ -108,7 +107,7 @@ ENTRY_NP(armv5_ec_icache_sync_all)
 
 .Larmv5_ec_dcache_wb:
 1:
-	mrc	p15, 0, r15, c7, c10, 3	/* Test and clean (don't invalidate) */
+	mrc	p15, 0, APSR_nzcv, c7, c10, 3	/* Test and clean (don't invalidate) */
 	bne	1b			/* More to do? */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
@@ -205,7 +204,7 @@ ENTRY_NP(armv5_ec_idcache_wbinv_all)
 
 ENTRY(armv5_ec_dcache_wbinv_all)
 .Larmv5_ec_dcache_wbinv_all:
-1:	mrc	p15, 0, r15, c7, c14, 3	/* Test, clean and invalidate DCache */
+1:	mrc	p15, 0, APSR_nzcv, c7, c14, 3	/* Test, clean and invalidate DCache */
 	bne	1b			/* More to do? */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET

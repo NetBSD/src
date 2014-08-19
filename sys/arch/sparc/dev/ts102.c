@@ -1,5 +1,5 @@
 /*	$OpenBSD: ts102.c,v 1.14 2005/01/27 17:03:23 millert Exp $	*/
-/*	$NetBSD: ts102.c,v 1.16.12.1 2012/11/20 03:01:43 tls Exp $ */
+/*	$NetBSD: ts102.c,v 1.16.12.2 2014/08/20 00:03:24 tls Exp $ */
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  * Copyright (c) 2005, Michael Lorenz.
@@ -866,6 +866,8 @@ tslot_slot_intr(struct tslot_data *td, int intreg)
 #ifdef TSLOT_DEBUG
 	printf("%s: interrupt on socket %d ir %x sts %x\n",
 	    device_xname(sc->sc_dev), td->td_slot, intreg, status);
+#else	
+	__USE(status);
 #endif
 
 	sockstat = td->td_status;

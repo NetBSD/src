@@ -1,6 +1,5 @@
 /* Disassemble support for GDB.
-   Copyright (C) 2002, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +22,8 @@
 #define DISASSEMBLY_SOURCE	(0x1 << 0)
 #define DISASSEMBLY_RAW_INSN	(0x1 << 1)
 #define DISASSEMBLY_OMIT_FNAME	(0x1 << 2)
+#define DISASSEMBLY_FILENAME	(0x1 << 3)
+#define DISASSEMBLY_OMIT_PC	(0x1 << 4)
 
 struct ui_out;
 struct ui_file;

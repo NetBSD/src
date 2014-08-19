@@ -1,4 +1,4 @@
-/*	$NetBSD: devnodes.c,v 1.6.14.2 2013/06/23 06:20:28 tls Exp $	*/
+/*	$NetBSD: devnodes.c,v 1.6.14.3 2014/08/20 00:04:42 tls Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.6.14.2 2013/06/23 06:20:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.6.14.3 2014/08/20 00:04:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,7 +52,7 @@ makeonedevnode(dev_t devtype, const char *devname,
 	if (error == EEXIST) /* XXX: should check it's actually the same */
 		error = 0;
 
-	return 0;
+	return error;
 }
 
 static int
@@ -110,8 +110,8 @@ doesitexist(const char *path, bool isblk, devmajor_t dmaj, devminor_t dmin)
 }
 
 static void
-makeonenode(char *buf, devmajor_t blk, devmajor_t chr, devminor_t dmin,
-	const char *base, int c1, int c2)
+makeonenode(char *buf, size_t len, devmajor_t blk, devmajor_t chr,
+    devminor_t dmin, const char *base, int c1, int c2)
 {
 	char cstr1[2] = {0,0}, cstr2[2] = {0,0};
 	register_t rv;
@@ -129,7 +129,7 @@ makeonenode(char *buf, devmajor_t blk, devmajor_t chr, devminor_t dmin,
 	}
 
 	/* block device */
-	snprintf(buf, MAXPATHLEN, "/dev/%s%s%s", base, cstr1, cstr2);
+	snprintf(buf, len, "/dev/%s%s%s", base, cstr1, cstr2);
 	if (blk != NODEVMAJOR) {
 		switch (doesitexist(buf, true, blk, dmin)) {
 		case DIFFERENT:
@@ -146,7 +146,7 @@ makeonenode(char *buf, devmajor_t blk, devmajor_t chr, devminor_t dmin,
 			/* done */
 			break;
 		}
-		sprintf(buf, "/dev/r%s%s%s", base, cstr1, cstr2);
+		snprintf(buf, len, "/dev/r%s%s%s", base, cstr1, cstr2);
 	}
 
 	switch (doesitexist(buf, true, chr, dmin)) {
@@ -190,20 +190,20 @@ rump_vfs_builddevs(struct devsw_conv *dcvec, size_t dcvecsize)
 			} else {
 				themin = 0;
 			}
-			makeonenode(pnbuf,
+			makeonenode(pnbuf, MAXPATHLEN,
 			    dc->d_bmajor, dc->d_cmajor, themin,
 			    dc->d_name, -1, -1);
 			break;
 		case DEVNODE_VECTOR:
 			for (v1 = 0; v1 < dc->d_vectdim[0]; v1++) {
 				if (dc->d_vectdim[1] == 0) {
-					makeonenode(pnbuf,
+					makeonenode(pnbuf, MAXPATHLEN,
 					    dc->d_bmajor, dc->d_cmajor,
 					    v1, dc->d_name, v1, -1);
 				} else {
 					for (v2 = 0;
 					    v2 < dc->d_vectdim[1]; v2++) {
-						makeonenode(pnbuf,
+						makeonenode(pnbuf, MAXPATHLEN,
 						    dc->d_bmajor, dc->d_cmajor,
 						    v1 * dc->d_vectdim[1] + v2,
 						    dc->d_name, v1, v2);
@@ -217,8 +217,8 @@ rump_vfs_builddevs(struct devsw_conv *dcvec, size_t dcvecsize)
 				 * ok, so we cheat a bit since
 				 * symlink isn't supported on rumpfs ...
 				 */
-				makeonenode(pnbuf, -1, dc->d_cmajor, 0,
-				    dc->d_name, -1, -1);
+				makeonenode(pnbuf, MAXPATHLEN,
+				    -1, dc->d_cmajor, 0, dc->d_name, -1, -1);
 				    
 			}
 			break;

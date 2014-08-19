@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.1 2011/07/01 17:10:00 dyoung Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.1.12.1 2014/08/20 00:03:19 tls Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -107,11 +107,11 @@
 /*
  * Bus access types.
  */
-typedef uint32_t bus_addr_t;
-typedef uint32_t bus_size_t;
+typedef uintptr_t bus_addr_t;
+typedef uintptr_t bus_size_t;
 
 #ifndef __HAVE_LOCAL_BUS_SPACE
-typedef	uint32_t bus_space_handle_t;
+typedef	uintptr_t bus_space_handle_t;
 typedef	const struct powerpc_bus_space *bus_space_tag_t;
 
 struct extent;

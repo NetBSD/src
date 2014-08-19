@@ -1,4 +1,4 @@
-# Copyright (C) 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright (C) 2007-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,10 +17,6 @@
 
 # This file is part of the gdb testsuite.  It contains test for evaluating
 # simple decimal floating point (DFP) expression.
-
-if $tracelevel then {
-	strace $tracelevel
-}
 
 proc test_dfp_literals_accepted {} {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.13.14.2 2013/06/23 06:18:58 tls Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.13.14.3 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 The NetBSD Foundation, Inc.
@@ -69,12 +69,12 @@
  *
  *	A low-overhead mechanism for high priority calls (XC_HIGHPRI) is
  *	also provided.  The function to be executed runs on a software
- *	interrupt context, at SOFTINT_CLOCK level, and is expected to be
- *	very lightweight, e.g. avoid blocking.
+ *	interrupt context, at IPL_SOFTSERIAL level, and is expected to
+ *	be very lightweight, e.g. avoid blocking.
  */
- 
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.13.14.2 2013/06/23 06:18:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.13.14.3 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -137,9 +137,9 @@ xc_init(void)
 	xc_tailp = 0;
 
 	memset(xchi, 0, sizeof(xc_state_t));
-	mutex_init(&xchi->xc_lock, MUTEX_DEFAULT, IPL_SOFTCLOCK);
+	mutex_init(&xchi->xc_lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
 	cv_init(&xchi->xc_busy, "xchicv");
-	xc_sih = softint_establish(SOFTINT_CLOCK | SOFTINT_MPSAFE,
+	xc_sih = softint_establish(SOFTINT_SERIAL | SOFTINT_MPSAFE,
 	    xc__highpri_intr, NULL);
 	KASSERT(xc_sih != NULL);
 
@@ -159,7 +159,7 @@ void
 xc_init_cpu(struct cpu_info *ci)
 {
 	static bool again = false;
-	int error;
+	int error __diagused;
 
 	if (!again) {
 		/* Autoconfiguration will prevent re-entry. */

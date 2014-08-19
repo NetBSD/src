@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.36 2012/08/31 23:59:51 matt Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.36.2.1 2014/08/20 00:02:44 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.36 2012/08/31 23:59:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.36.2.1 2014/08/20 00:02:44 tls Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.36 2012/08/31 23:59:51 matt Exp $"
 #include <sys/exec_aout.h>
 #endif
 
-#include <arm/cpufunc.h>
+#include <arm/locore.h>
 
 #include <machine/vmparam.h>
 
@@ -112,6 +112,9 @@ struct cpu_info cpu_info_store = {
 	.ci_curlwp = &lwp0,
 #ifdef __PROG32
 	.ci_undefsave[2] = (register_t) undefinedinstruction_bounce,
+#if defined(ARM_MMU_EXTENDED) && KERNEL_PID != 0
+	.ci_pmap_asid_cur = KERNEL_PID,
+#endif
 #endif
 };
 
@@ -174,12 +177,21 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_svc_lr = 0x77777777;		/* Something we can see */
 	tf->tf_pc = pack->ep_entry;
 #ifdef __PROG32
+#if defined(__ARMEB__)
+	/*
+	 * If we are running on ARMv7, we need to set the E bit to force
+	 * programs to start as big endian.
+	 */
+	tf->tf_spsr = PSR_USR32_MODE | (CPU_IS_ARMV7_P() ? PSR_E_BIT : 0);
+#else
 	tf->tf_spsr = PSR_USR32_MODE;
+#endif /* __ARMEB__ */ 
+
 #ifdef THUMB_CODE
 	if (pack->ep_entry & 1)
 		tf->tf_spsr |= PSR_T_bit;
 #endif
-#endif
+#endif /* __PROG32 */
 
 	l->l_md.md_flags = 0;
 #ifdef EXEC_AOUT
@@ -187,7 +199,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		l->l_md.md_flags |= MDLWP_NOALIGNFLT;
 #endif
 #ifdef FPU_VFP
-	vfp_discardcontext();
+	vfp_discardcontext(false);
 #endif
 }
 
@@ -201,7 +213,7 @@ startlwp(void *arg)
 {
 	ucontext_t *uc = arg; 
 	lwp_t *l = curlwp;
-	int error;
+	int error __diagused;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);
@@ -250,7 +262,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 #endif
 	if (flags & RESCHED_KPREEMPT) {
 #ifdef __HAVE_PREEMPTION
-		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACITBE);
+		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACTIVE);
 		if (ci == cur_ci) {
 			softint_trigger(SOFTINT_KPREEMPT);
 		} else {

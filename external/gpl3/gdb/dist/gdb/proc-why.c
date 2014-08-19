@@ -1,7 +1,6 @@
 /* Machine-independent support for SVR4 /proc (process file system)
 
-   Copyright (C) 1999, 2000, 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
    Written by Michael Snyder at Cygnus Solutions.
    Based on work by Fred Fish, Stu Grossman, Geoff Noer, and others.
@@ -75,7 +74,7 @@ static struct trans pr_why_table[] =
   { PR_FAULTED, "PR_FAULTED", "Incurred a traced hardware fault" },
 #endif
 #if defined (PR_SUSPENDED)
-  /* Solaris and UnixWare.  */
+  /* Solaris only.  */
   { PR_SUSPENDED, "PR_SUSPENDED", "Process suspended" },
 #endif
 #if defined (PR_CHECKPOINT)

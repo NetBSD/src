@@ -1,7 +1,7 @@
 /* Blackfin Parallel Port Interface (PPI) model
    For "old style" PPIs on BF53x/etc... parts.
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -21,9 +21,6 @@
 
 #ifndef DV_BFIN_PPI_H
 #define DV_BFIN_PPI_H
-
-/* XXX: This should be pushed into the model data.  */
-#define BFIN_MMR_PPI_SIZE	(4 * 5)
 
 /* PPI_CONTROL Masks.  */
 #define PORT_EN		(1 << 0)

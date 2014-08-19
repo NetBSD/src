@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_file.c,v 1.17 2007/07/02 18:07:45 pooka Exp $	*/
+/*	$NetBSD: pt_file.c,v 1.17.42.1 2014/08/20 00:02:26 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_file.c,v 1.17 2007/07/02 18:07:45 pooka Exp $");
+__RCSID("$NetBSD: pt_file.c,v 1.17.42.1 2014/08/20 00:02:26 tls Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -133,10 +133,9 @@ portal_file(struct portal_cred *pcr, char *key, char **v, int *fdp)
 	int     fd;
 	char    pbuf[MAXPATHLEN];
 	int     error;
-	int     origuid, origgid;
+	int     origuid;
 
 	origuid = getuid();
-	origgid = getgid();
 	pbuf[0] = '/';
 	strlcpy(pbuf + 1, key + (v[1] ? strlen(v[1]) : 0), sizeof(pbuf) - 1);
 	DEBUG_SYSLOG(LOG_DEBUG, "path = %s, uid = %d, gid = %d",

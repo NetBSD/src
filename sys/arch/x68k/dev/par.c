@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.38.22.1 2012/11/20 03:01:49 tls Exp $	*/
+/*	$NetBSD: par.c,v 1.38.22.2 2014/08/20 00:03:28 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.38.22.1 2012/11/20 03:01:49 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.38.22.2 2014/08/20 00:03:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -125,8 +125,18 @@ dev_type_write(parwrite);
 dev_type_ioctl(parioctl);
 
 const struct cdevsw par_cdevsw = {
-	paropen, parclose, noread, parwrite, parioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	.d_open = paropen,
+	.d_close = parclose,
+	.d_read = noread,
+	.d_write = parwrite,
+	.d_ioctl = parioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 int
@@ -158,7 +168,7 @@ parattach(device_t parent, device_t self, void *aux)
 {
 	struct par_softc *sc = device_private(self);
 	struct intio_attach_args *ia = aux;
-	int r;
+	int r __diagused;
 	
 	par_attached = 1;
 

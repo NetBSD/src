@@ -1,4 +1,4 @@
-/*	$NetBSD: discard.c,v 1.1.1.1 2009/06/23 10:08:43 tron Exp $	*/
+/*	$NetBSD: discard.c,v 1.1.1.1.16.1 2014/08/19 23:59:42 tls Exp $	*/
 
 /*++
 /* NAME
@@ -11,16 +11,16 @@
 /*	The Postfix \fBdiscard\fR(8) delivery agent processes
 /*	delivery requests from
 /*	the queue manager. Each request specifies a queue file, a sender
-/*	address, a domain or host name that is treated as the reason for
+/*	address, a next-hop destination that is treated as the reason for
 /*	discarding the mail, and recipient information.
 /*	The reason may be prefixed with an RFC 3463-compatible detail code.
 /*	This program expects to be run from the \fBmaster\fR(8) process
 /*	manager.
 /*
 /*	The \fBdiscard\fR(8) delivery agent pretends to deliver all recipients
-/*	in the delivery request, logs the "next-hop" domain or host
-/*	information as the reason for discarding the mail, updates the
-/*	queue file and marks recipients as finished or informs the
+/*	in the delivery request, logs the "next-hop" destination
+/*	as the reason for discarding the mail, updates the
+/*	queue file, and either marks recipients as finished or informs the
 /*	queue manager that delivery should be tried again at a later time.
 /*
 /*      Delivery status reports are sent to the \fBtrace\fR(8)
@@ -31,7 +31,7 @@
 /*	The \fBdiscard\fR(8) mailer is not security-sensitive. It does not talk
 /*	to the network, and can be run chrooted at fixed low privilege.
 /* STANDARDS
-/*	None.
+/*	RFC 3463 (Enhanced Status Codes)
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /*

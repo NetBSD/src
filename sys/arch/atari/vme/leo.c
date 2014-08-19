@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.19 2011/07/01 20:34:06 dyoung Exp $	*/
+/*	$NetBSD: leo.c,v 1.19.12.1 2014/08/20 00:02:49 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.19 2011/07/01 20:34:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.19.12.1 2014/08/20 00:02:49 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,8 +108,18 @@ dev_type_ioctl(leoioctl);
 dev_type_mmap(leommap);
 
 const struct cdevsw leo_cdevsw = {
-	leoopen, leoclose, leomove, leomove, leoioctl,
-	nostop, notty, nopoll, leommap, nokqfilter,
+	.d_open = leoopen,
+	.d_close = leoclose,
+	.d_read = leomove,
+	.d_write = leomove,
+	.d_ioctl = leoioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = leommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 static int

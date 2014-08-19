@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.47.6.1 2012/11/20 03:00:58 tls Exp $ */
+/*	$NetBSD: grf_ul.c,v 1.47.6.2 2014/08/20 00:02:43 tls Exp $ */
 #define UL_DEBUG
 
 /*-
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.47.6.1 2012/11/20 03:00:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.47.6.2 2014/08/20 00:02:43 tls Exp $");
 
 #include "grful.h"
 #include "ite.h"
@@ -360,12 +360,10 @@ ul_load_code(struct grf_softc *gp)
 static int
 ul_load_mon(struct grf_softc *gp, struct grfvideo_mode *md)
 {
-	struct grf_ul_softc *gup;
 	struct grfinfo *gi;
 	volatile struct gspregs *ba;
 	u_int16_t buf[8];
 
-	gup = (struct grf_ul_softc *)gp;
 	gi = &gp->g_display;
 	ba = (volatile struct gspregs *)gp->g_regkva;
 
@@ -607,15 +605,11 @@ ul_getvmode (struct grf_softc *gp, struct grfvideo_mode *vm)
 static int
 ul_setvmode (struct grf_softc *gp, unsigned mode)
 {
-	struct grf_ul_softc *gup;
-	volatile struct gspregs *ba;
 	int error;
 
 	if (!mode || mode > ulowell_mon_max)
 		return EINVAL;
 
-	ba = (volatile struct gspregs *)gp->g_regkva;
-	gup = (struct grf_ul_softc *)gp;
 	current_mon = ul_monitor_defs + mode - 1;
 
 	error = ul_load_mon (gp, current_mon) ? 0 : EINVAL;

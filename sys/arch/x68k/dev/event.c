@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.13 2008/03/01 14:16:50 rmind Exp $ */
+/*	$NetBSD: event.c,v 1.13.48.1 2014/08/20 00:03:28 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,16 +45,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.13 2008/03/01 14:16:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.13.48.1 2014/08/20 00:03:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/select.h>
 #include <sys/poll.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 #include <machine/vuid_event.h>
 #include <x68k/dev/event_var.h>
@@ -63,13 +65,15 @@ __KERNEL_RCSID(0, "$NetBSD: event.c,v 1.13 2008/03/01 14:16:50 rmind Exp $");
  * Initialize a firm_event queue.
  */
 void
-ev_init(struct evvar *ev)
+ev_init(struct evvar *ev, const char *name, kmutex_t *mtx)
 {
 
 	ev->ev_get = ev->ev_put = 0;
-	ev->ev_q = malloc((u_long)EV_QSIZE * sizeof(struct firm_event),
-	    M_DEVBUF, M_WAITOK|M_ZERO);
+	ev->ev_q = kmem_zalloc((size_t)EV_QSIZE * sizeof(struct firm_event),
+	    KM_SLEEP);
 	selinit(&ev->ev_sel);
+	ev->ev_lock = mtx;
+	cv_init(&ev->ev_cv, name);
 }
 
 /*
@@ -79,8 +83,9 @@ void
 ev_fini(struct evvar *ev)
 {
 
+	cv_destroy(&ev->ev_cv);
 	seldestroy(&ev->ev_sel);
-	free(ev->ev_q, M_DEVBUF);
+	kmem_free(ev->ev_q, (size_t)EV_QSIZE * sizeof(struct firm_event));
 }
 
 /*
@@ -90,23 +95,23 @@ ev_fini(struct evvar *ev)
 int
 ev_read(struct evvar *ev, struct uio *uio, int flags)
 {
-	int s, n, cnt, error;
+	int n, cnt, put, error;
 
 	/*
 	 * Make sure we can return at least 1.
 	 */
 	if (uio->uio_resid < sizeof(struct firm_event))
 		return (EMSGSIZE);	/* ??? */
-	s = splev();
+	mutex_enter(ev->ev_lock);
 	while (ev->ev_get == ev->ev_put) {
 		if (flags & IO_NDELAY) {
-			splx(s);
+			mutex_exit(ev->ev_lock);
 			return (EWOULDBLOCK);
 		}
-		ev->ev_wanted = 1;
-		error = tsleep((void *)ev, PEVENT | PCATCH, "firm_event", 0);
-		if (error) {
-			splx(s);
+		ev->ev_wanted = true;
+		error = cv_wait_sig(&ev->ev_cv, ev->ev_lock);
+		if (error != 0) {
+			mutex_exit(ev->ev_lock);
 			return (error);
 		}
 	}
@@ -118,7 +123,8 @@ ev_read(struct evvar *ev, struct uio *uio, int flags)
 		cnt = EV_QSIZE - ev->ev_get;	/* events in [get..QSIZE) */
 	else
 		cnt = ev->ev_put - ev->ev_get;	/* events in [get..put) */
-	splx(s);
+	put = ev->ev_put;
+	mutex_exit(ev->ev_lock);
 	n = howmany(uio->uio_resid, sizeof(struct firm_event));
 	if (cnt > n)
 		cnt = n;
@@ -131,7 +137,7 @@ ev_read(struct evvar *ev, struct uio *uio, int flags)
 	 * is anything there to move.
 	 */
 	if ((ev->ev_get = (ev->ev_get + cnt) % EV_QSIZE) != 0 ||
-	    n == 0 || error || (cnt = ev->ev_put) == 0)
+	    n == 0 || error || (cnt = put) == 0)
 		return (error);
 	if (cnt > n)
 		cnt = n;
@@ -144,9 +150,9 @@ ev_read(struct evvar *ev, struct uio *uio, int flags)
 int
 ev_poll(struct evvar *ev, int events, struct lwp *l)
 {
-	int s, revents = 0;
+	int revents = 0;
 
-	s = splev();
+	mutex_enter(ev->ev_lock);
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (ev->ev_get == ev->ev_put)
 			selrecord(l, &ev->ev_sel);
@@ -154,38 +160,60 @@ ev_poll(struct evvar *ev, int events, struct lwp *l)
 			revents |= events & (POLLIN | POLLRDNORM);
 	}
 	revents |= events & (POLLOUT | POLLWRNORM);
-	splx(s);
+	mutex_exit(ev->ev_lock);
 	return (revents);
+}
+
+void
+ev_wakeup(struct evvar *ev)
+{
+
+	mutex_enter(ev->ev_lock);
+	selnotify(&ev->ev_sel, 0, 0);
+	if (ev->ev_wanted) {
+		ev->ev_wanted = false;
+		cv_signal(&ev->ev_cv);
+	}
+	mutex_exit(ev->ev_lock);
+
+	if (ev->ev_async) {
+		mutex_enter(proc_lock);
+		psignal(ev->ev_io, SIGIO);
+		mutex_exit(proc_lock);
+	}
 }
 
 static void
 filt_evrdetach(struct knote *kn)
 {
 	struct evvar *ev = kn->kn_hook;
-	int s;
 
-	s = splev();
+	mutex_enter(ev->ev_lock);
 	SLIST_REMOVE(&ev->ev_sel.sel_klist, kn, knote, kn_selnext);
-	splx(s);
+	mutex_exit(ev->ev_lock);
 }
 
 static int
 filt_evread(struct knote *kn, long hint)
 {
 	struct evvar *ev = kn->kn_hook;
+	int rv = 1;
 
-	if (ev->ev_get == ev->ev_put)
-		return (0);
+	mutex_enter(ev->ev_lock);
+	if (ev->ev_get == ev->ev_put) {
+		rv = 0;
+	} else {
+		if (ev->ev_get < ev->ev_put)
+			kn->kn_data = ev->ev_put - ev->ev_get;
+		else
+			kn->kn_data = (EV_QSIZE - ev->ev_get) +
+			    ev->ev_put;
 
-	if (ev->ev_get < ev->ev_put)
-		kn->kn_data = ev->ev_put - ev->ev_get;
-	else
-		kn->kn_data = (EV_QSIZE - ev->ev_get) +
-		    ev->ev_put;
+		kn->kn_data *= sizeof(struct firm_event);
+	}
+	mutex_exit(ev->ev_lock);
 
-	kn->kn_data *= sizeof(struct firm_event);
-
-	return (1);
+	return rv;
 }
 
 static const struct filterops ev_filtops =
@@ -195,7 +223,6 @@ int
 ev_kqfilter(struct evvar *ev, struct knote *kn)
 {
 	struct klist *klist;
-	int s;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -209,9 +236,9 @@ ev_kqfilter(struct evvar *ev, struct knote *kn)
 
 	kn->kn_hook = ev;
 
-	s = splev();
+	mutex_enter(ev->ev_lock);
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
-	splx(s);
+	mutex_exit(ev->ev_lock);
 
 	return (0);
 }

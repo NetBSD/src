@@ -1,5 +1,5 @@
 /* Host file transfer support for gdbserver.
-   Copyright (C) 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2007-2014 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -20,6 +20,7 @@
 
 #include "server.h"
 #include "gdb/fileio.h"
+#include "hostio.h"
 
 #include <fcntl.h>
 #include <limits.h>
@@ -50,6 +51,14 @@ safe_fromhex (char a, int *nibble)
   return 0;
 }
 
+/* Filenames are hex encoded, so the maximum we can handle is half the
+   packet buffer size.  Cap to PATH_MAX, if it is shorter.  */
+#if !defined (PATH_MAX) || (PATH_MAX > (PBUFSIZ / 2 + 1))
+#  define HOSTIO_PATH_MAX (PBUFSIZ / 2 + 1)
+#else
+#  define HOSTIO_PATH_MAX PATH_MAX
+#endif
+
 static int
 require_filename (char **pp, char *filename)
 {
@@ -64,7 +73,7 @@ require_filename (char **pp, char *filename)
       int nib1, nib2;
 
       /* Don't allow overflow.  */
-      if (count >= PATH_MAX - 1)
+      if (count >= HOSTIO_PATH_MAX - 1)
 	return -1;
 
       if (safe_fromhex (p[0], &nib1)
@@ -266,7 +275,7 @@ fileio_open_flags_to_host (int fileio_open_flags, int *open_flags_p)
 static void
 handle_open (char *own_buf)
 {
-  char filename[PATH_MAX];
+  char filename[HOSTIO_PATH_MAX];
   char *p;
   int fileio_flags, mode, flags, fd;
   struct fd_list *new_fd;
@@ -328,10 +337,15 @@ handle_pread (char *own_buf, int *new_packet_len)
 #ifdef HAVE_PREAD
   ret = pread (fd, data, len, offset);
 #else
-  ret = lseek (fd, offset, SEEK_SET);
-  if (ret != -1)
-    ret = read (fd, data, len);
+  ret = -1;
 #endif
+  /* If we have no pread or it failed for this file, use lseek/read.  */
+  if (ret == -1)
+    {
+      ret = lseek (fd, offset, SEEK_SET);
+      if (ret != -1)
+	ret = read (fd, data, len);
+    }
 
   if (ret == -1)
     {
@@ -376,10 +390,15 @@ handle_pwrite (char *own_buf, int packet_len)
 #ifdef HAVE_PWRITE
   ret = pwrite (fd, data, len, offset);
 #else
-  ret = lseek (fd, offset, SEEK_SET);
-  if (ret != -1)
-    ret = write (fd, data, len);
+  ret = -1;
 #endif
+  /* If we have no pwrite or it failed for this file, use lseek/write.  */
+  if (ret == -1)
+    {
+      ret = lseek (fd, offset, SEEK_SET);
+      if (ret != -1)
+	ret = write (fd, data, len);
+    }
 
   if (ret == -1)
     {
@@ -432,7 +451,7 @@ handle_close (char *own_buf)
 static void
 handle_unlink (char *own_buf)
 {
-  char filename[PATH_MAX];
+  char filename[HOSTIO_PATH_MAX];
   char *p;
   int ret;
 
@@ -456,6 +475,41 @@ handle_unlink (char *own_buf)
   hostio_reply (own_buf, ret);
 }
 
+static void
+handle_readlink (char *own_buf, int *new_packet_len)
+{
+#if defined (HAVE_READLINK)
+  char filename[HOSTIO_PATH_MAX], linkname[HOSTIO_PATH_MAX];
+  char *p;
+  int ret, bytes_sent;
+
+  p = own_buf + strlen ("vFile:readlink:");
+
+  if (require_filename (&p, filename)
+      || require_end (p))
+    {
+      hostio_packet_error (own_buf);
+      return;
+    }
+
+  ret = readlink (filename, linkname, sizeof (linkname) - 1);
+  if (ret == -1)
+    {
+      hostio_error (own_buf);
+      return;
+    }
+
+  bytes_sent = hostio_reply_with_data (own_buf, linkname, ret, new_packet_len);
+
+  /* If the response does not fit into a single packet, do not attempt
+     to return a partial response, but simply fail.  */
+  if (bytes_sent < ret)
+    sprintf (own_buf, "F-1,%x", FILEIO_ENAMETOOLONG);
+#else /* ! HAVE_READLINK */
+    sprintf (own_buf, "F-1,%x", FILEIO_ENOSYS);
+#endif
+}
+
 /* Handle all the 'F' file transfer packets.  */
 
 int
@@ -471,6 +525,8 @@ handle_vFile (char *own_buf, int packet_len, int *new_packet_len)
     handle_close (own_buf);
   else if (strncmp (own_buf, "vFile:unlink:", 13) == 0)
     handle_unlink (own_buf);
+  else if (strncmp (own_buf, "vFile:readlink:", 15) == 0)
+    handle_readlink (own_buf, new_packet_len);
   else
     return 0;
 

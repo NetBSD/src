@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2009/07/04 07:51:34 dholland Exp $
+#	$NetBSD: Makefile.inc,v 1.11.12.1 2014/08/20 00:00:23 tls Exp $
 #
 #
 #  Hunt
@@ -49,6 +49,11 @@ GAME_PARAM=	-DRANDOM -DREFLECT -DMONITOR -DOOZE -DFLY -DVOLCANO -DBOOTS \
 		-DOTTO
 
 #
+# Perhaps, compile in a specific non-default huntd to run, for debugging:
+#CPPFLAGS+=	-DOVERRIDE_PATH_HUNTD=\"/home/socr/a/conrad/games/src/hunt/huntd.dbg\"
+
+
+#
 # System parameter flags are:
 #	DEBUG		Don't trust everything in the code
 #	INTERNET	Use the Internet domain IPC instead of UNIX domain
@@ -82,6 +87,6 @@ SYSLIBS=
 # Generic definitions
 #
 DEFS=		$(GAME_PARAM) $(DEFS_BSD44)
-CPPFLAGS+=	$(SYSCFLAGS) $(DEFS) -DHUNTD=\"/usr/games/huntd\"
+CPPFLAGS+=	$(SYSCFLAGS) $(DEFS)
 
 .include "../Makefile.inc"

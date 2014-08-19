@@ -1,4 +1,4 @@
-# Copyright 2011 Free Software Foundation, Inc.
+# Copyright 2011-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,16 +13,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if $tracelevel {
-    strace $tracelevel
-}
-
 if {[skip_shlib_tests]} {
     untested jit.exp
     return -1
 }
 
-if {[get_compiler_info not-used]} {
+if {[get_compiler_info]} {
     warning "Could not get compiler info"
     untested jit.exp
     return 1
@@ -32,72 +28,98 @@ if {[get_compiler_info not-used]} {
 # test running programs
 #
 
-set testfile jit-main
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
-    untested jit.exp
-    return -1
-}
+proc compile_jit_test {testname options} {
+    global testfile srcfile binfile srcdir subdir
+    global solib_testfile solib_srcfile solib_binfile solib_binfile_test_msg
+    global solib_binfile_target
 
-set solib_testfile "jit-solib"
-set solib_srcfile "${srcdir}/${subdir}/${solib_testfile}.c"
-set solib_binfile "${objdir}/${subdir}/${solib_testfile}.so"
-set solib_binfile_test_msg "OBJDIR/${subdir}/${solib_testfile}.so"
+    set testfile jit-main
+    set srcfile ${testfile}.c
+    set binfile [standard_output_file $testfile]
+    if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
+	      executable [concat debug $options]] != "" } {
+	untested $testname
+	return -1
+    }
 
-# Note: compiling without debug info: the library goes through symbol
-# renaming by munging on its symbol table, and that wouldn't work for .debug
-# sections.  Also, output for "info function" changes when debug info is resent.
-if { [gdb_compile_shlib ${solib_srcfile} ${solib_binfile} {-fPIC}] != "" } {
-    untested jit.exp
-    return -1
+    set solib_testfile "jit-solib"
+    set solib_srcfile "${srcdir}/${subdir}/${solib_testfile}.c"
+    set solib_binfile [standard_output_file ${solib_testfile}.so]
+    set solib_binfile_test_msg "SHLIBDIR/${solib_testfile}.so"
+
+    # Note: compiling without debug info: the library goes through
+    # symbol renaming by munging on its symbol table, and that
+    # wouldn't work for .debug sections.  Also, output for "info
+    # function" changes when debug info is present.
+    if { [gdb_compile_shlib ${solib_srcfile} ${solib_binfile} {-fPIC}] != "" } {
+	untested $testname
+	return -1
+    }
+
+    if {[is_remote target]} {
+	set solib_binfile_target [gdb_download ${solib_binfile}]
+    } else {
+	set solib_binfile_target $solib_binfile
+    }
+
+    return 0
 }
 
 proc one_jit_test {count match_str} {
-    global verbose testfile solib_binfile solib_binfile_test_msg pf_prefix
+    with_test_prefix "one_jit_test-$count" {
+	global verbose testfile solib_binfile_target solib_binfile_test_msg
 
-    set old_pf_prefix $pf_prefix
-    set pf_prefix "one_jit_test-$count"
+	clean_restart $testfile
 
-    clean_restart $testfile
+	# This is just to help debugging when things fail
+	if {$verbose > 0} {
+	    gdb_test "set debug jit 1"
+	}
 
-    # This is just to help debugging when things fail
-    if {$verbose > 0} {
-	gdb_test "set debug jit 1"
+	if { ![runto_main] } {
+	    fail "Can't run to main"
+	    return
+	}
+
+	gdb_breakpoint [gdb_get_line_number "break here 0"]
+	gdb_continue_to_breakpoint "break here 0"
+
+	# Poke desired values directly into inferior instead of using "set args"
+	# because "set args" does not work under gdbserver.
+	gdb_test_no_output "set var argc = 2"
+	gdb_test_no_output "set var libname = \"$solib_binfile_target\"" "set var libname = \"$solib_binfile_test_msg\""
+	gdb_test_no_output "set var count = $count"
+
+	gdb_breakpoint [gdb_get_line_number "break here 1"]
+	gdb_continue_to_breakpoint "break here 1"
+
+	gdb_test "info function jit_function" "$match_str"
+
+	# This is just to help debugging when things fail
+	if {$verbose > 0} {
+	    gdb_test "maintenance print objfiles"
+	    gdb_test "maintenance info break"
+	}
+
+	gdb_breakpoint [gdb_get_line_number "break here 2"]
+	gdb_continue_to_breakpoint "break here 2"
+	# All jit librares must have been unregistered
+	gdb_test "info function jit_function" \
+	    "All functions matching regular expression \"jit_function\":"
     }
+}
 
-    if { ![runto_main] } {
-	fail "Can't run to main"
+if {[compile_jit_test jit.exp {}] < 0} {
+    return
+}
+one_jit_test 1 "${hex}  jit_function_0000"
+one_jit_test 2 "${hex}  jit_function_0000\[\r\n\]+${hex}  jit_function_0001"
+
+with_test_prefix PIE {
+    if {[compile_jit_test "jit.exp PIE tests" \
+	     {additional_flags=-fPIE ldflags=-pie}] < 0} {
 	return
     }
 
-    gdb_breakpoint [gdb_get_line_number "break here 0"]
-    gdb_continue_to_breakpoint "break here 0"
-
-    # Poke desired values directly into inferior instead of using "set args"
-    # because "set args" does not work under gdbserver.
-    gdb_test_no_output "set var argc = 2"
-    gdb_test_no_output "set var libname = \"$solib_binfile\"" "set var libname = \"$solib_binfile_test_msg\""
-    gdb_test_no_output "set var count = $count"
-
-    gdb_breakpoint [gdb_get_line_number "break here 1"]
-    gdb_continue_to_breakpoint "break here 1"
-
-    gdb_test "info function jit_function" "$match_str"
-
-    # This is just to help debugging when things fail
-    if {$verbose > 0} {
-	gdb_test "maintenance print objfiles"
-	gdb_test "maintenance info break"
-    }
-
-    gdb_breakpoint [gdb_get_line_number "break here 2"]
-    gdb_continue_to_breakpoint "break here 2"
-    # All jit librares must have been unregistered
-    gdb_test "info function jit_function" \
-	"All functions matching regular expression \"jit_function\":" \
-    set pf_prefix $old_pf_prefix
+    one_jit_test 1 "${hex}  jit_function_0000"
 }
-
-one_jit_test 1 "${hex}  jit_function_0000"
-one_jit_test 2 "${hex}  jit_function_0000\[\r\n\]+${hex}  jit_function_0001"

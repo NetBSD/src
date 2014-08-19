@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.21 2011/07/01 18:41:52 dyoung Exp $ */
+/*	$NetBSD: pmu.c,v 1.21.12.1 2014/08/20 00:03:11 tls Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.21 2011/07/01 18:41:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.21.12.1 2014/08/20 00:03:11 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -467,9 +467,8 @@ pmu_send_byte(struct pmu_softc *sc, uint8_t data)
 static inline int
 pmu_read_byte(struct pmu_softc *sc, uint8_t *data)
 {
-	volatile uint8_t scratch;
 	pmu_in(sc);
-	scratch = pmu_read_reg(sc, vSR);
+	(void)pmu_read_reg(sc, vSR);
 	pmu_ack_off(sc);
 	/* wait for intr to come up */
 	do {} while (pmu_intr_state(sc) == 0);
@@ -702,13 +701,26 @@ pmu_todr_get(todr_chip_handle_t tch, struct timeval *tvp)
 {
 	struct pmu_softc *sc = tch->cookie;
 	uint32_t sec;
+	int count = 10;
+	int ok = FALSE;
 	uint8_t resp[16];
 
 	DPRINTF("pmu_todr_get\n");
-	pmu_send(sc, PMU_READ_RTC, 0, NULL, 16, resp);
+	while ((count > 0) && (!ok)) {
+		pmu_send(sc, PMU_READ_RTC, 0, NULL, 16, resp);
 
-	memcpy(&sec, &resp[1], 4);
-	tvp->tv_sec = sec - DIFF19041970;
+		memcpy(&sec, &resp[1], 4);
+		tvp->tv_sec = sec - DIFF19041970;
+		ok = (sec > DIFF19041970) && (sec < 0xf0000000);
+		if (!ok) aprint_error_dev(sc->sc_dev,
+		    "got garbage from rtc (%08x)\n", sec);
+		count--;
+	}
+	if (count == 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to get a sane time value\n");
+		tvp->tv_sec = 0;
+	}
 	DPRINTF("tod: %" PRIo64 "\n", tvp->tv_sec);
 	tvp->tv_usec = 0;
 	return 0;
@@ -814,7 +826,7 @@ static int
 pmu_adb_send(void *cookie, int poll, int command, int len, uint8_t *data)
 {
 	struct pmu_softc *sc = cookie;
-	int i, replen;
+	int i;
 	uint8_t packet[16], resp[16];
 
 	/* construct an ADB command packet and send it */
@@ -823,7 +835,7 @@ pmu_adb_send(void *cookie, int poll, int command, int len, uint8_t *data)
 	packet[2] = len;
 	for (i = 0; i < len; i++)
 		packet[i + 3] = data[i];
-	replen = pmu_send(sc, PMU_ADB_CMD, len + 3, packet, 16, resp);
+	(void)pmu_send(sc, PMU_ADB_CMD, len + 3, packet, 16, resp);
 
 	return 0;
 }

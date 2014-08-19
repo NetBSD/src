@@ -1,6 +1,7 @@
 /* bfdlink.h -- header file for BFD link routines
    Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
+   Free Software Foundation, Inc.
    Written by Steve Chamberlain and Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -90,7 +91,9 @@ struct bfd_link_hash_entry
   struct bfd_hash_entry root;
 
   /* Type of this entry.  */
-  enum bfd_link_hash_type type;
+  ENUM_BITFIELD (bfd_link_hash_type) type : 8;
+
+  unsigned int non_ir_ref : 1;
 
   /* A union of information depending upon the type.  */
   union
@@ -120,7 +123,6 @@ struct bfd_link_hash_entry
 	     undefined symbol list.  */
 	  struct bfd_link_hash_entry *next;
 	  bfd *abfd;		/* BFD symbol was found in.  */
-	  bfd *weak;		/* BFD weak symbol was found in.  */
 	} undef;
       /* bfd_link_hash_defined, bfd_link_hash_defweak.  */
       struct
@@ -222,116 +224,121 @@ enum report_method
   RM_GENERATE_ERROR
 };
 
+typedef enum {with_flags, without_flags} flag_type;
+
+/* A section flag list.  */
+struct flag_info_list
+{
+  flag_type with;
+  const char *name;
+  bfd_boolean valid;
+  struct flag_info_list *next;
+};
+
+/* Section flag info.  */
+struct flag_info
+{
+  flagword only_with_flags;
+  flagword not_with_flags;
+  struct flag_info_list *flag_list;
+  bfd_boolean flags_initialized;
+};
+
 struct bfd_elf_dynamic_list;
+struct bfd_elf_version_tree;
 
 /* This structure holds all the information needed to communicate
    between BFD and the linker when doing a link.  */
 
 struct bfd_link_info
 {
+  /* TRUE if BFD should generate a shared object (or a pie).  */
+  unsigned int shared: 1;
+
+  /* TRUE if generating an executable, position independent or not.  */
+  unsigned int executable : 1;
+
+  /* TRUE if generating a position independent executable.  */
+  unsigned int pie: 1;
+
   /* TRUE if BFD should generate a relocatable object file.  */
   unsigned int relocatable: 1;
 
-  /* TRUE if BFD should generate relocation information in the final
-     executable.  */
-  unsigned int emitrelocations: 1;
-
-  /* TRUE if BFD should generate a "task linked" object file,
-     similar to relocatable but also with globals converted to
-     statics.  */
-  unsigned int task_link: 1;
-
-  /* TRUE if BFD should generate a shared object.  */
-  unsigned int shared: 1;
-
   /* TRUE if BFD should pre-bind symbols in a shared object.  */
   unsigned int symbolic: 1;
-
-  /* TRUE if BFD should export all symbols in the dynamic symbol table
-     of an executable, rather than only those used.  */
-  unsigned int export_dynamic: 1;
-
-  /* TRUE if shared objects should be linked directly, not shared.  */
-  unsigned int static_link: 1;
-
-  /* TRUE if the output file should be in a traditional format.  This
-     is equivalent to the setting of the BFD_TRADITIONAL_FORMAT flag
-     on the output file, but may be checked when reading the input
-     files.  */
-  unsigned int traditional_format: 1;
-
-  /* TRUE if we want to produced optimized output files.  This might
-     need much more time and therefore must be explicitly selected.  */
-  unsigned int optimize: 1;
-
-  /* TRUE if ok to have multiple definition.  */
-  unsigned int allow_multiple_definition: 1;
-
-  /* TRUE if ok to have version with no definition.  */
-  unsigned int allow_undefined_version: 1;
-
-  /* TRUE if a default symbol version should be created and used for
-     exported symbols.  */
-  unsigned int create_default_symver: 1;
-
-  /* TRUE if a default symbol version should be created and used for
-     imported symbols.  */
-  unsigned int default_imported_symver: 1;
-
-  /* TRUE if symbols should be retained in memory, FALSE if they
-     should be freed and reread.  */
-  unsigned int keep_memory: 1;
-
-  /* TRUE if every symbol should be reported back via the notice
-     callback.  */
-  unsigned int notice_all: 1;
 
   /* TRUE if executable should not contain copy relocs.
      Setting this true may result in a non-sharable text segment.  */
   unsigned int nocopyreloc: 1;
 
-  /* TRUE if the new ELF dynamic tags are enabled. */
-  unsigned int new_dtags: 1;
+  /* TRUE if BFD should export all symbols in the dynamic symbol table
+     of an executable, rather than only those used.  */
+  unsigned int export_dynamic: 1;
 
-  /* TRUE if non-PLT relocs should be merged into one reloc section
-     and sorted so that relocs against the same symbol come together.  */
-  unsigned int combreloc: 1;
+  /* TRUE if a default symbol version should be created and used for
+     exported symbols.  */
+  unsigned int create_default_symver: 1;
+
+  /* TRUE if unreferenced sections should be removed.  */
+  unsigned int gc_sections: 1;
+
+  /* TRUE if every symbol should be reported back via the notice
+     callback.  */
+  unsigned int notice_all: 1;
+
+  /* TRUE if we are loading LTO outputs.  */
+  unsigned int loading_lto_outputs: 1;
+
+  /* TRUE if global symbols in discarded sections should be stripped.  */
+  unsigned int strip_discarded: 1;
+
+  /* TRUE if all data symbols should be dynamic.  */
+  unsigned int dynamic_data: 1;
+
+  /* Which symbols to strip.  */
+  ENUM_BITFIELD (bfd_link_strip) strip : 2;
+
+  /* Which local symbols to discard.  */
+  ENUM_BITFIELD (bfd_link_discard) discard : 2;
+
+  /* Criteria for skipping symbols when determining
+     whether to include an object from an archive. */
+  ENUM_BITFIELD (bfd_link_common_skip_ar_symbols) common_skip_ar_symbols : 2;
+
+  /* What to do with unresolved symbols in an object file.
+     When producing executables the default is GENERATE_ERROR.
+     When producing shared libraries the default is IGNORE.  The
+     assumption with shared libraries is that the reference will be
+     resolved at load/execution time.  */
+  ENUM_BITFIELD (report_method) unresolved_syms_in_objects : 2;
+
+  /* What to do with unresolved symbols in a shared library.
+     The same defaults apply.  */
+  ENUM_BITFIELD (report_method) unresolved_syms_in_shared_libs : 2;
+
+  /* TRUE if shared objects should be linked directly, not shared.  */
+  unsigned int static_link: 1;
+
+  /* TRUE if symbols should be retained in memory, FALSE if they
+     should be freed and reread.  */
+  unsigned int keep_memory: 1;
+
+  /* TRUE if BFD should generate relocation information in the final
+     executable.  */
+  unsigned int emitrelocations: 1;
+
+  /* TRUE if PT_GNU_RELRO segment should be created.  */
+  unsigned int relro: 1;
 
   /* TRUE if .eh_frame_hdr section and PT_GNU_EH_FRAME ELF segment
      should be created.  */
   unsigned int eh_frame_hdr: 1;
 
-  /* TRUE if global symbols in discarded sections should be stripped.  */
-  unsigned int strip_discarded: 1;
-
-  /* TRUE if generating a position independent executable.  */
-  unsigned int pie: 1;
-
-  /* TRUE if generating an executable, position independent or not.  */
-  unsigned int executable : 1;
-
-  /* TRUE if PT_GNU_STACK segment should be created with PF_R|PF_W|PF_X
-     flags.  */
-  unsigned int execstack: 1;
-
-  /* TRUE if PT_GNU_STACK segment should be created with PF_R|PF_W
-     flags.  */
-  unsigned int noexecstack: 1;
-
-  /* TRUE if PT_GNU_RELRO segment should be created.  */
-  unsigned int relro: 1;
-
   /* TRUE if we should warn when adding a DT_TEXTREL to a shared object.  */
   unsigned int warn_shared_textrel: 1;
 
-  /* TRUE if we should warn alternate ELF machine code.  */
-  unsigned int warn_alternate_em: 1;
-
-  /* TRUE if unreferenced sections should be removed.  */
-  unsigned int gc_sections: 1;
-
-  /* TRUE if user shoudl be informed of removed unreferenced sections.  */
-  unsigned int print_gc_sections: 1;
+  /* TRUE if we should error when adding a DT_TEXTREL.  */
+  unsigned int error_textrel: 1;
 
   /* TRUE if .hash section should be created.  */
   unsigned int emit_hash: 1;
@@ -344,36 +351,62 @@ struct bfd_link_info
      caching ELF symbol buffer.  */
   unsigned int reduce_memory_overheads: 1;
 
-  /* TRUE if all data symbols should be dynamic.  */
-   unsigned int dynamic_data: 1;
+  /* TRUE if the output file should be in a traditional format.  This
+     is equivalent to the setting of the BFD_TRADITIONAL_FORMAT flag
+     on the output file, but may be checked when reading the input
+     files.  */
+  unsigned int traditional_format: 1;
+
+  /* TRUE if non-PLT relocs should be merged into one reloc section
+     and sorted so that relocs against the same symbol come together.  */
+  unsigned int combreloc: 1;
+
+  /* TRUE if a default symbol version should be created and used for
+     imported symbols.  */
+  unsigned int default_imported_symver: 1;
+
+  /* TRUE if the new ELF dynamic tags are enabled. */
+  unsigned int new_dtags: 1;
+
+  /* FALSE if .eh_frame unwind info should be generated for PLT and other
+     linker created sections, TRUE if it should be omitted.  */
+  unsigned int no_ld_generated_unwind_info: 1;
+
+  /* TRUE if BFD should generate a "task linked" object file,
+     similar to relocatable but also with globals converted to
+     statics.  */
+  unsigned int task_link: 1;
+
+  /* TRUE if ok to have multiple definition.  */
+  unsigned int allow_multiple_definition: 1;
+
+  /* TRUE if ok to have version with no definition.  */
+  unsigned int allow_undefined_version: 1;
 
   /* TRUE if some symbols have to be dynamic, controlled by
      --dynamic-list command line options.  */
   unsigned int dynamic: 1;
 
-  /* Non-NULL if .note.gnu.build-id section should be created.  */
-  char *emit_note_gnu_build_id;
+  /* TRUE if PT_GNU_STACK segment should be created with PF_R|PF_W|PF_X
+     flags.  */
+  unsigned int execstack: 1;
 
-  /* What to do with unresolved symbols in an object file.
-     When producing executables the default is GENERATE_ERROR.
-     When producing shared libraries the default is IGNORE.  The
-     assumption with shared libraries is that the reference will be
-     resolved at load/execution time.  */
-  enum report_method unresolved_syms_in_objects;
+  /* TRUE if PT_GNU_STACK segment should be created with PF_R|PF_W
+     flags.  */
+  unsigned int noexecstack: 1;
 
-  /* What to do with unresolved symbols in a shared library.
-     The same defaults apply.  */
-  enum report_method unresolved_syms_in_shared_libs;
+  /* TRUE if we want to produced optimized output files.  This might
+     need much more time and therefore must be explicitly selected.  */
+  unsigned int optimize: 1;
 
-  /* Which symbols to strip.  */
-  enum bfd_link_strip strip;
+  /* TRUE if user should be informed of removed unreferenced sections.  */
+  unsigned int print_gc_sections: 1;
 
-  /* Which local symbols to discard.  */
-  enum bfd_link_discard discard;
+  /* TRUE if we should warn alternate ELF machine code.  */
+  unsigned int warn_alternate_em: 1;
 
-  /* Criteria for skipping symbols when determining
-     whether to include an object from an archive. */
-  enum bfd_link_common_skip_ar_symbols common_skip_ar_symbols;
+  /* TRUE if the linker script contained an explicit PHDRS command.  */
+  unsigned int user_phdrs: 1;
 
   /* Char that may appear as the first char of a symbol, but should be
      skipped (like symbol_leading_char) when looking up symbols in
@@ -382,6 +415,28 @@ struct bfd_link_info
 
   /* Separator between archive and filename in linker script filespecs.  */
   char path_separator;
+
+  /* Default stack size.  Zero means default (often zero itself), -1
+     means explicitly zero-sized.  */
+  bfd_signed_vma stacksize;
+
+  /* Enable or disable target specific optimizations.
+
+     Not all targets have optimizations to enable.
+
+     Normally these optimizations are disabled by default but some targets
+     prefer to enable them by default.  So this field is a tri-state variable.
+     The values are:
+     
+     zero: Enable the optimizations (either from --relax being specified on
+       the command line or the backend's before_allocation emulation function.
+       
+     positive: The user has requested that these optimizations be disabled.
+       (Via the --no-relax command line option).
+
+     negative: The optimizations are disabled.  (Set when initializing the
+       args_type structure in ldmain.c:main.  */
+  signed int disable_target_specific_optimizations;
 
   /* Function callbacks.  */
   const struct bfd_link_callbacks *callbacks;
@@ -401,6 +456,10 @@ struct bfd_link_info
   /* Hash table of symbols which are being wrapped (the --wrap linker
      option).  If this is NULL, no symbols are being wrapped.  */
   struct bfd_hash_table *wrap_hash;
+
+  /* Hash table of symbols which may be left unresolved during
+     a link.  If this is NULL, no symbols can be left unresolved.  */
+  struct bfd_hash_table *ignore_hash;
 
   /* The output BFD.  */
   bfd *output_bfd;
@@ -467,6 +526,9 @@ struct bfd_link_info
 
   /* List of symbols should be dynamic.  */
   struct bfd_elf_dynamic_list *dynamic_list;
+
+  /* The version information.  */
+  struct bfd_elf_version_tree *version_info;
 };
 
 /* This structures holds a set of callback functions.  These are called
@@ -487,29 +549,20 @@ struct bfd_link_callbacks
   bfd_boolean (*add_archive_element)
     (struct bfd_link_info *, bfd *abfd, const char *name, bfd **subsbfd);
   /* A function which is called when a symbol is found with multiple
-     definitions.  NAME is the symbol which is defined multiple times.
-     OBFD is the old BFD, OSEC is the old section, OVAL is the old
-     value, NBFD is the new BFD, NSEC is the new section, and NVAL is
-     the new value.  OBFD may be NULL.  OSEC and NSEC may be
-     bfd_com_section or bfd_ind_section.  */
+     definitions.  H is the symbol which is defined multiple times.
+     NBFD is the new BFD, NSEC is the new section, and NVAL is the new
+     value.  NSEC may be bfd_com_section or bfd_ind_section.  */
   bfd_boolean (*multiple_definition)
-    (struct bfd_link_info *, const char *name,
-     bfd *obfd, asection *osec, bfd_vma oval,
+    (struct bfd_link_info *, struct bfd_link_hash_entry *h,
      bfd *nbfd, asection *nsec, bfd_vma nval);
   /* A function which is called when a common symbol is defined
-     multiple times.  NAME is the symbol appearing multiple times.
-     OBFD is the BFD of the existing symbol; it may be NULL if this is
-     not known.  OTYPE is the type of the existing symbol, which may
-     be bfd_link_hash_defined, bfd_link_hash_defweak,
-     bfd_link_hash_common, or bfd_link_hash_indirect.  If OTYPE is
-     bfd_link_hash_common, OSIZE is the size of the existing symbol.
+     multiple times.  H is the symbol appearing multiple times.
      NBFD is the BFD of the new symbol.  NTYPE is the type of the new
      symbol, one of bfd_link_hash_defined, bfd_link_hash_common, or
      bfd_link_hash_indirect.  If NTYPE is bfd_link_hash_common, NSIZE
      is the size of the new symbol.  */
   bfd_boolean (*multiple_common)
-    (struct bfd_link_info *, const char *name,
-     bfd *obfd, enum bfd_link_hash_type otype, bfd_vma osize,
+    (struct bfd_link_info *, struct bfd_link_hash_entry *h,
      bfd *nbfd, enum bfd_link_hash_type ntype, bfd_vma nsize);
   /* A function which is called to add a symbol to a set.  ENTRY is
      the link hash table entry for the set itself (e.g.,
@@ -578,12 +631,15 @@ struct bfd_link_callbacks
     (struct bfd_link_info *, const char *name,
      bfd *abfd, asection *section, bfd_vma address);
   /* A function which is called when a symbol in notice_hash is
-     defined or referenced.  NAME is the symbol.  ABFD, SECTION and
-     ADDRESS are the value of the symbol.  If SECTION is
-     bfd_und_section, this is a reference.  */
+     defined or referenced.  H is the symbol.  ABFD, SECTION and
+     ADDRESS are the (new) value of the symbol.  If SECTION is
+     bfd_und_section, this is a reference.  FLAGS are the symbol
+     BSF_* flags.  STRING is the name of the symbol to indirect to if
+     the sym is indirect, or the warning string if a warning sym.  */
   bfd_boolean (*notice)
-    (struct bfd_link_info *, const char *name,
-     bfd *abfd, asection *section, bfd_vma address);
+    (struct bfd_link_info *, struct bfd_link_hash_entry *h,
+     bfd *abfd, asection *section, bfd_vma address, flagword flags,
+     const char *string);
   /* Error or warning link info message.  */
   void (*einfo)
     (const char *fmt, ...);
@@ -644,8 +700,8 @@ struct bfd_link_order
 	} indirect;
       struct
 	{
-	  /* Size of contents, or zero when contents size == size
-	     within output section.
+	  /* Size of contents, or zero when contents should be filled by
+	     the architecture-dependent fill function.
 	     A non-zero value allows filling of the output section
 	     with an arbitrary repeated pattern.  */
 	  unsigned int size;

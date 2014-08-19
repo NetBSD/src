@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1.28.1 2013/06/23 06:28:39 tls Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.28.2 2014/08/20 00:00:08 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -6,8 +6,8 @@ PROG=	fc-match
 
 CPPFLAGS+=	-I${X11SRCDIR.fontconfig} -I.
 
-LDADD+=	-lfontconfig -lfreetype -lexpat
-DPADD+=	${LIBFONTCONFIG} ${LIBFREETYPE} ${LIBEXPAT}
+LDADD+=	-lfontconfig -lfreetype -lexpat -lbz2 -lz
+DPADD+=	${LIBFONTCONFIG} ${LIBFREETYPE} ${LIBEXPAT} ${LIBBZ2} ${LIBZ}
 
 .PATH:	${X11SRCDIR.fontconfig}/${PROG}
 

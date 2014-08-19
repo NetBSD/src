@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.12.1 2013/02/25 00:27:33 tls Exp $
+#	$NetBSD: Makefile,v 1.1.12.2 2014/08/19 23:59:46 tls Exp $
 
 NOMAN=	# defined
 
@@ -12,8 +12,8 @@ DIST=	${NETBSDSRCDIR}/external/ibm-public/postfix/dist/src/${PROG}
 SRCS=	postscreen.c postscreen_dict.c postscreen_dnsbl.c \
 	postscreen_early.c postscreen_expand.c postscreen_misc.c \
 	postscreen_send.c postscreen_smtpd.c postscreen_starttls.c \
-	postscreen_state.c postscreen_tests.c
-
+	postscreen_state.c postscreen_tests.c postscreen_haproxy.c \
+	postscreen_endpt.c
 
 DPADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPUTIL}
 LDADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPUTIL}

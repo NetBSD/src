@@ -1,7 +1,7 @@
 /* Blackfin Enhanced Parallel Port Interface (EPPI) model
    For "new style" PPIs on BF54x/etc... parts.
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -23,8 +23,5 @@
 #define DV_BFIN_EPPI_H
 
 #include "dv-bfin_ppi.h"
-
-/* XXX: This should be pushed into the model data.  */
-#define BFIN_MMR_EPPI_SIZE	0x40
 
 #endif

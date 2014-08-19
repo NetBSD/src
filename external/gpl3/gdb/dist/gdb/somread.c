@@ -1,6 +1,5 @@
 /* Read HP PA/Risc object files for GDB.
-   Copyright (C) 1991, 1992, 1994, 1995, 1996, 1998, 1999, 2000, 2001, 2002,
-   2004, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1991-2014 Free Software Foundation, Inc.
    Written by Fred Fish at Cygnus Support.
 
    This file is part of GDB.
@@ -20,7 +19,7 @@
 
 #include "defs.h"
 #include "bfd.h"
-#include <syms.h>
+#include "som/aout.h"
 #include "symtab.h"
 #include "symfile.h"
 #include "objfiles.h"
@@ -28,7 +27,7 @@
 #include "stabsread.h"
 #include "gdb-stabs.h"
 #include "complaints.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "demangle.h"
 #include "som.h"
 #include "libhppa.h"
@@ -36,42 +35,30 @@
 
 #include "solib-som.h"
 
-/*
-
-   LOCAL FUNCTION
-
-   som_symtab_read -- read the symbol table of a SOM file
-
-   SYNOPSIS
-
-   void som_symtab_read (bfd *abfd, struct objfile *objfile,
-   struct section_offsets *section_offsets)
-
-   DESCRIPTION
+/* Read the symbol table of a SOM file.
 
    Given an open bfd, a base address to relocate symbols to, and a
    flag that specifies whether or not this bfd is for an executable
    or not (may be shared library for example), add all the global
-   function and data symbols to the minimal symbol table.
- */
+   function and data symbols to the minimal symbol table.  */
 
 static void
 som_symtab_read (bfd *abfd, struct objfile *objfile,
 		 struct section_offsets *section_offsets)
 {
+  struct cleanup *cleanup;
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   unsigned int number_of_symbols;
   int val, dynamic;
   char *stringtab;
   asection *shlib_info;
-  struct symbol_dictionary_record *buf, *bufp, *endbufp;
+  struct som_external_symbol_dictionary_record *buf, *bufp, *endbufp;
   char *symname;
-  CONST int symsize = sizeof (struct symbol_dictionary_record);
-  CORE_ADDR text_offset, data_offset;
+  const int symsize = sizeof (struct som_external_symbol_dictionary_record);
 
 
-  text_offset = ANOFFSET (section_offsets, 0);
-  data_offset = ANOFFSET (section_offsets, 1);
+#define text_offset ANOFFSET (section_offsets, SECT_OFF_TEXT (objfile))
+#define data_offset ANOFFSET (section_offsets, SECT_OFF_DATA (objfile))
 
   number_of_symbols = bfd_get_symcount (abfd);
 
@@ -79,7 +66,7 @@ som_symtab_read (bfd *abfd, struct objfile *objfile,
      We avoid using alloca because the memory size could be so large
      that we could hit the stack size limit.  */
   buf = xmalloc (symsize * number_of_symbols);
-  make_cleanup (xfree, buf);
+  cleanup = make_cleanup (xfree, buf);
   bfd_seek (abfd, obj_som_sym_filepos (abfd), SEEK_SET);
   val = bfd_bread (buf, symsize * number_of_symbols, abfd);
   if (val != symsize * number_of_symbols)
@@ -113,14 +100,47 @@ som_symtab_read (bfd *abfd, struct objfile *objfile,
   for (bufp = buf; bufp < endbufp; ++bufp)
     {
       enum minimal_symbol_type ms_type;
+      unsigned int flags = bfd_getb32 (bufp->flags);
+      unsigned int symbol_type
+	= (flags >> SOM_SYMBOL_TYPE_SH) & SOM_SYMBOL_TYPE_MASK;
+      unsigned int symbol_scope
+	= (flags >> SOM_SYMBOL_SCOPE_SH) & SOM_SYMBOL_SCOPE_MASK;
+      CORE_ADDR symbol_value = bfd_getb32 (bufp->symbol_value);
+      asection *section = NULL;
 
       QUIT;
 
-      switch (bufp->symbol_scope)
+      /* Compute the section.  */
+      switch (symbol_scope)
+	{
+	case SS_EXTERNAL:
+	  if (symbol_type != ST_STORAGE)
+	    section = bfd_und_section_ptr;
+	  else
+	    section = bfd_com_section_ptr;
+	  break;
+
+	case SS_UNSAT:
+	  if (symbol_type != ST_STORAGE)
+	    section = bfd_und_section_ptr;
+	  else
+	    section = bfd_com_section_ptr;
+	  break;
+
+	case SS_UNIVERSAL:
+	  section = bfd_section_from_som_symbol (abfd, bufp);
+	  break;
+
+	case SS_LOCAL:
+	  section = bfd_section_from_som_symbol (abfd, bufp);
+	  break;
+	}
+
+      switch (symbol_scope)
 	{
 	case SS_UNIVERSAL:
 	case SS_EXTERNAL:
-	  switch (bufp->symbol_type)
+	  switch (symbol_type)
 	    {
 	    case ST_SYM_EXT:
 	    case ST_ARG_EXT:
@@ -130,15 +150,14 @@ som_symtab_read (bfd *abfd, struct objfile *objfile,
 	    case ST_PRI_PROG:
 	    case ST_SEC_PROG:
 	    case ST_MILLICODE:
-	      symname = bufp->name.n_strx + stringtab;
+	      symname = bfd_getb32 (bufp->name) + stringtab;
 	      ms_type = mst_text;
-	      bufp->symbol_value += text_offset;
-	      bufp->symbol_value = gdbarch_smash_text_address
-				     (gdbarch, bufp->symbol_value);
+	      symbol_value += text_offset;
+	      symbol_value = gdbarch_addr_bits_remove (gdbarch, symbol_value);
 	      break;
 
 	    case ST_ENTRY:
-	      symname = bufp->name.n_strx + stringtab;
+	      symname = bfd_getb32 (bufp->name) + stringtab;
 	      /* For a dynamic executable, ST_ENTRY symbols are
 	         the stubs, while the ST_CODE symbol is the real
 	         function.  */
@@ -146,22 +165,20 @@ som_symtab_read (bfd *abfd, struct objfile *objfile,
 		ms_type = mst_solib_trampoline;
 	      else
 		ms_type = mst_text;
-	      bufp->symbol_value += text_offset;
-	      bufp->symbol_value = gdbarch_smash_text_address
-				     (gdbarch, bufp->symbol_value);
+	      symbol_value += text_offset;
+	      symbol_value = gdbarch_addr_bits_remove (gdbarch, symbol_value);
 	      break;
 
 	    case ST_STUB:
-	      symname = bufp->name.n_strx + stringtab;
+	      symname = bfd_getb32 (bufp->name) + stringtab;
 	      ms_type = mst_solib_trampoline;
-	      bufp->symbol_value += text_offset;
-	      bufp->symbol_value = gdbarch_smash_text_address
-				     (gdbarch, bufp->symbol_value);
+	      symbol_value += text_offset;
+	      symbol_value = gdbarch_addr_bits_remove (gdbarch, symbol_value);
 	      break;
 
 	    case ST_DATA:
-	      symname = bufp->name.n_strx + stringtab;
-	      bufp->symbol_value += data_offset;
+	      symname = bfd_getb32 (bufp->name) + stringtab;
+	      symbol_value += data_offset;
 	      ms_type = mst_data;
 	      break;
 	    default:
@@ -174,18 +191,17 @@ som_symtab_read (bfd *abfd, struct objfile *objfile,
 	case SS_GLOBAL:
 #endif
 	case SS_LOCAL:
-	  switch (bufp->symbol_type)
+	  switch (symbol_type)
 	    {
 	    case ST_SYM_EXT:
 	    case ST_ARG_EXT:
 	      continue;
 
 	    case ST_CODE:
-	      symname = bufp->name.n_strx + stringtab;
+	      symname = bfd_getb32 (bufp->name) + stringtab;
 	      ms_type = mst_file_text;
-	      bufp->symbol_value += text_offset;
-	      bufp->symbol_value = gdbarch_smash_text_address
-				     (gdbarch, bufp->symbol_value);
+	      symbol_value += text_offset;
+	      symbol_value = gdbarch_addr_bits_remove (gdbarch, symbol_value);
 
 	    check_strange_names:
 	      /* Utah GCC 2.5, FSF GCC 2.6 and later generate correct local
@@ -213,37 +229,34 @@ som_symtab_read (bfd *abfd, struct objfile *objfile,
 	    case ST_PRI_PROG:
 	    case ST_SEC_PROG:
 	    case ST_MILLICODE:
-	      symname = bufp->name.n_strx + stringtab;
+	      symname = bfd_getb32 (bufp->name) + stringtab;
 	      ms_type = mst_file_text;
-	      bufp->symbol_value += text_offset;
-	      bufp->symbol_value = gdbarch_smash_text_address
-				     (gdbarch, bufp->symbol_value);
+	      symbol_value += text_offset;
+	      symbol_value = gdbarch_addr_bits_remove (gdbarch, symbol_value);
 	      break;
 
 	    case ST_ENTRY:
-	      symname = bufp->name.n_strx + stringtab;
+	      symname = bfd_getb32 (bufp->name) + stringtab;
 	      /* SS_LOCAL symbols in a shared library do not have
 		 export stubs, so we do not have to worry about
 		 using mst_file_text vs mst_solib_trampoline here like
 		 we do for SS_UNIVERSAL and SS_EXTERNAL symbols above.  */
 	      ms_type = mst_file_text;
-	      bufp->symbol_value += text_offset;
-	      bufp->symbol_value = gdbarch_smash_text_address
-				     (gdbarch, bufp->symbol_value);
+	      symbol_value += text_offset;
+	      symbol_value = gdbarch_addr_bits_remove (gdbarch, symbol_value);
 	      break;
 
 	    case ST_STUB:
-	      symname = bufp->name.n_strx + stringtab;
+	      symname = bfd_getb32 (bufp->name) + stringtab;
 	      ms_type = mst_solib_trampoline;
-	      bufp->symbol_value += text_offset;
-	      bufp->symbol_value = gdbarch_smash_text_address
-				     (gdbarch, bufp->symbol_value);
+	      symbol_value += text_offset;
+	      symbol_value = gdbarch_addr_bits_remove (gdbarch, symbol_value);
 	      break;
 
 
 	    case ST_DATA:
-	      symname = bufp->name.n_strx + stringtab;
-	      bufp->symbol_value += data_offset;
+	      symname = bfd_getb32 (bufp->name) + stringtab;
+	      symbol_value += data_offset;
 	      ms_type = mst_file_data;
 	      goto check_strange_names;
 
@@ -259,12 +272,12 @@ som_symtab_read (bfd *abfd, struct objfile *objfile,
 	     This also happens for weak symbols, but their type is
 	     ST_DATA.  */
 	case SS_UNSAT:
-	  switch (bufp->symbol_type)
+	  switch (symbol_type)
 	    {
 	    case ST_STORAGE:
 	    case ST_DATA:
-	      symname = bufp->name.n_strx + stringtab;
-	      bufp->symbol_value += data_offset;
+	      symname = bfd_getb32 (bufp->name) + stringtab;
+	      symbol_value += data_offset;
 	      ms_type = mst_data;
 	      break;
 
@@ -277,13 +290,35 @@ som_symtab_read (bfd *abfd, struct objfile *objfile,
 	  continue;
 	}
 
-      if (bufp->name.n_strx > obj_som_stringtab_size (abfd))
-	error (_("Invalid symbol data; bad HP string table offset: %d"),
-	       bufp->name.n_strx);
+      if (bfd_getb32 (bufp->name) > obj_som_stringtab_size (abfd))
+	error (_("Invalid symbol data; bad HP string table offset: %s"),
+	       plongest (bfd_getb32 (bufp->name)));
 
-      prim_record_minimal_symbol (symname, bufp->symbol_value, ms_type,
-				  objfile);
+      if (bfd_is_const_section (section))
+	{
+	  struct obj_section *iter;
+
+	  ALL_OBJFILE_OSECTIONS (objfile, iter)
+	    {
+	      if (bfd_is_const_section (iter->the_bfd_section))
+		continue;
+
+	      if (obj_section_addr (iter) <= symbol_value
+		  && symbol_value < obj_section_endaddr (iter))
+		{
+		  section = iter->the_bfd_section;
+		  break;
+		}
+	    }
+	}
+
+      prim_record_minimal_symbol_and_info (symname, symbol_value, ms_type,
+					   gdb_bfd_section_index (objfile->obfd,
+								  section),
+					   objfile);
     }
+
+  do_cleanups (cleanup);
 }
 
 /* Scan and build partial symbols for a symbol file.
@@ -302,7 +337,7 @@ som_symtab_read (bfd *abfd, struct objfile *objfile,
    for real.
 
    We look for sections with specific names, to tell us what debug
-   format to look for:  FIXME!!!
+   format to look for.
 
    somstab_build_psymtabs() handles STABS symbols.
 
@@ -363,10 +398,6 @@ som_new_init (struct objfile *ignore)
 static void
 som_symfile_finish (struct objfile *objfile)
 {
-  if (objfile->deprecated_sym_stab_info != NULL)
-    {
-      xfree (objfile->deprecated_sym_stab_info);
-    }
 }
 
 /* SOM specific initialization routine for reading symbols.  */
@@ -380,31 +411,105 @@ som_symfile_init (struct objfile *objfile)
   objfile->flags |= OBJF_REORDERED;
 }
 
+/* An object of this type is passed to find_section_offset.  */
+
+struct find_section_offset_arg
+{
+  /* The objfile.  */
+
+  struct objfile *objfile;
+
+  /* Flags to invert.  */
+
+  flagword invert;
+
+  /* Flags to look for.  */
+
+  flagword flags;
+
+  /* A text section with non-zero size, if any.  */
+
+  asection *best_section;
+
+  /* An empty text section, if any.  */
+
+  asection *empty_section;
+};
+
+/* A callback for bfd_map_over_sections that tries to find a section
+   with particular flags in an objfile.  */
+
+static void
+find_section_offset (bfd *abfd, asection *sect, void *arg)
+{
+  struct find_section_offset_arg *info = arg;
+  flagword aflag;
+
+  aflag = bfd_get_section_flags (abfd, sect);
+
+  aflag ^= info->invert;
+
+  if ((aflag & info->flags) == info->flags)
+    {
+      if (bfd_section_size (abfd, sect) > 0)
+	{
+	  if (info->best_section == NULL)
+	    info->best_section = sect;
+	}
+      else
+	{
+	  if (info->empty_section == NULL)
+	    info->empty_section = sect;
+	}
+    }
+}
+
+/* Set a section index from a BFD.  */
+
+static void
+set_section_index (struct objfile *objfile, flagword invert, flagword flags,
+		   int *index_ptr)
+{
+  struct find_section_offset_arg info;
+
+  info.objfile = objfile;
+  info.best_section = NULL;
+  info.empty_section = NULL;
+  info.invert = invert;
+  info.flags = flags;
+  bfd_map_over_sections (objfile->obfd, find_section_offset, &info);
+
+  if (info.best_section)
+    *index_ptr = info.best_section->index;
+  else if (info.empty_section)
+    *index_ptr = info.empty_section->index;
+}
+
 /* SOM specific parsing routine for section offsets.
 
    Plain and simple for now.  */
 
 static void
-som_symfile_offsets (struct objfile *objfile, struct section_addr_info *addrs)
+som_symfile_offsets (struct objfile *objfile,
+		     const struct section_addr_info *addrs)
 {
   int i;
   CORE_ADDR text_addr;
+  asection *sect;
 
   objfile->num_sections = bfd_count_sections (objfile->obfd);
   objfile->section_offsets = (struct section_offsets *)
     obstack_alloc (&objfile->objfile_obstack, 
 		   SIZEOF_N_SECTION_OFFSETS (objfile->num_sections));
 
-  /* FIXME: ezannoni 2000-04-20 The section names in SOM are not
-     .text, .data, etc, but $TEXT$, $DATA$,...  We should initialize
-     SET_OFF_* from bfd.  (See default_symfile_offsets()).  But I don't
-     know the correspondence between SOM sections and GDB's idea of
-     section names.  So for now we default to what is was before these
-     changes.  */
-  objfile->sect_index_text = 0;
-  objfile->sect_index_data = 1;
-  objfile->sect_index_bss = 2;
-  objfile->sect_index_rodata = 3;
+  set_section_index (objfile, 0, SEC_ALLOC | SEC_CODE,
+		     &objfile->sect_index_text);
+  set_section_index (objfile, 0, SEC_ALLOC | SEC_DATA,
+		     &objfile->sect_index_data);
+  set_section_index (objfile, SEC_LOAD, SEC_ALLOC | SEC_LOAD,
+		     &objfile->sect_index_bss);
+  set_section_index (objfile, 0, SEC_ALLOC | SEC_READONLY,
+		     &objfile->sect_index_rodata);
 
   /* First see if we're a shared library.  If so, get the section
      offsets from the library, else get them from addrs.  */
@@ -413,7 +518,7 @@ som_symfile_offsets (struct objfile *objfile, struct section_addr_info *addrs)
       /* Note: Here is OK to compare with ".text" because this is the
          name that gdb itself gives to that section, not the SOM
          name.  */
-      for (i = 0; i < addrs->num_sections && addrs->other[i].name; i++)
+      for (i = 0; i < addrs->num_sections; i++)
 	if (strcmp (addrs->other[i].name, ".text") == 0)
 	  break;
       text_addr = addrs->other[i].addr;
@@ -429,7 +534,6 @@ som_symfile_offsets (struct objfile *objfile, struct section_addr_info *addrs)
 
 static const struct sym_fns som_sym_fns =
 {
-  bfd_target_som_flavour,
   som_new_init,			/* init anything gbl to entire symtab */
   som_symfile_init,		/* read initial info, setup for sym_read() */
   som_symfile_read,		/* read a symbol file into symtab */
@@ -439,11 +543,14 @@ static const struct sym_fns som_sym_fns =
   default_symfile_segments,	/* Get segment information from a file.  */
   NULL,
   default_symfile_relocate,	/* Relocate a debug section.  */
+  NULL,				/* sym_get_probes */
   &psym_functions
 };
+
+initialize_file_ftype _initialize_somread;
 
 void
 _initialize_somread (void)
 {
-  add_symtab_fns (&som_sym_fns);
+  add_symtab_fns (bfd_target_som_flavour, &som_sym_fns);
 }

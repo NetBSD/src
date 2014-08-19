@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.3 2012/01/18 23:12:21 nonaka Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.3.6.1 2014/08/20 00:03:30 tls Exp $	*/
 /*	$OpenBSD: pathnames.h,v 1.3 2005/01/14 08:10:16 uwe Exp $	*/
 
 /*
@@ -17,6 +17,5 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define _PATH_BOOTCONF		"boot.cfg"
 #define _PATH_ZBOOT		"/proc/zboot"
 #define _PATH_PARTITIONS	"/proc/partitions"

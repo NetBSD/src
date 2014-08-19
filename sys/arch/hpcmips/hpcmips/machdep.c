@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.116 2012/07/28 23:08:56 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.116.2.1 2014/08/20 00:03:03 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116 2012/07/28 23:08:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116.2.1 2014/08/20 00:03:03 tls Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116 2012/07/28 23:08:56 matt Exp $");
 #include <sys/ksyms.h>
 #include <sys/device.h>
 #include <sys/lwp.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -151,7 +152,7 @@ static int __bicons_enable;
 #endif
 
 /* the following is used externally (sysctl_hw) */
-char	hpcmips_cpuname[40];		/* set CPU depend xx_init() */
+static char	hpcmips_cpuname[40];		/* set CPU depend xx_init() */
 
 int	cpuspeed = 1;			/* approx # instr per usec. */
 
@@ -457,6 +458,19 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	mips_init_lwp0_uarea();
 }
 
+int
+cpuname_printf(const char *fmt, ...)
+{
+	int len;
+	va_list ap;
+
+	va_start(ap, fmt);
+	len = vsnprintf(hpcmips_cpuname, sizeof(hpcmips_cpuname), fmt, ap);
+	va_end(ap);
+
+	return len;
+}
+
 /*
  * Machine-dependent startup code.
  * allocate memory for variable-sized tables, initialize CPU.
@@ -478,8 +492,8 @@ cpu_startup(void)
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s%s", copyright, version);
-	sprintf(cpu_model, "%s (%s)", platid_name(&platid), hpcmips_cpuname);
-	printf("%s\n", cpu_model);
+	cpu_setmodel("%s (%s)", platid_name(&platid), hpcmips_cpuname);
+	printf("%s\n", cpu_getmodel());
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 	if (bootverbose) {

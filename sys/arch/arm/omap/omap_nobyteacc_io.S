@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_nobyteacc_io.S,v 1.2 2012/08/20 12:38:29 matt Exp $ */
+/*	$NetBSD: omap_nobyteacc_io.S,v 1.2.2.1 2014/08/20 00:02:47 tls Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -32,17 +32,31 @@
 
 ENTRY(nobyteacc_bs_w_1)
 	tst	r2, #1			/* even or odd byte offset? */
+#ifndef _ARM_ARCH_7
+	andeq	r3, r3, #0x00ff		/* mask out junk in hi bytes */
+	lslne	r3, r3, #8		/* odd: or data shifted to hi byte */
+#endif
 	bic	r2, r2, #1		/* halfword-align offset */
 	add	r1, r1, r2		/* halfword address */
 	mrs	r2, cpsr		/* r2 = old interrupt state */
+#ifdef _ARM_ARCH_6
+	cpsid	if			/* interrupts off */
+#else
 	orr	r0, r2, #(I32_bit | F32_bit) /* interrupts off */
 	msr	cpsr, r0
+#endif
 	ldrh	r0, [r1]		/* read the halfword */
-	andeq	r0, r0, #0xff00		/* even: preserve existing hi byte */
-	andeq	r3, r3, #0x00ff		/* even: mask junk in new hi byte */
-	orreq	r0, r0, r3		/* even: or in new data in lo byte */
+#ifdef __thumb__
+	ite	eq
+#endif
+#ifdef _ARM_ARCH_7
+	bfieq	r0, r3, #0, #8		/* even: insert new data in lo byte */
+	bfine	r0, r3, #8, #8		/* even: insert new data in hi byte */
+#else
+	biceq	r0, r0, #0x00ff		/* even: preserve existing hi byte */
 	andne	r0, r0, #0x00ff		/* odd:	preserve existing lo byte */
-	orrne	r0, r0, r3, lsl #8	/* odd: or data shifted to hi byte */
+	orr	r0, r0, r3		/* or in data */
+#endif
 	strh	r0, [r1]		/* store back halfword */
 	msr	cpsr, r2		/* restore interrupts */
 	RET

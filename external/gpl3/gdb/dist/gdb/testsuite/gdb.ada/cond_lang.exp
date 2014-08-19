@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,23 +13,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 load_lib "ada.exp"
 
-set testdir "cond_lang"
-set testfile "${testdir}/a"
-set cfile "${testdir}/foo"
-set adasrcfile ${srcdir}/${subdir}/${testfile}.adb
-set csrcfile ${srcdir}/${subdir}/${cfile}.c
-set cobject  ${objdir}/${subdir}/${cfile}.o
-set binfile ${objdir}/${subdir}/${testfile}
+standard_ada_testfile a
 
-file mkdir ${objdir}/${subdir}/${testdir}
+set cfile "${testdir}/foo"
+set csrcfile ${srcdir}/${subdir}/${cfile}.c
+set cobject [standard_output_file ${cfile}.o]
+
 gdb_compile "${csrcfile}" "${cobject}" object [list debug]
-if {[gdb_compile_ada "${adasrcfile}" "${binfile}" executable [list debug]] != "" } {
+if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug]] != "" } {
   return -1
 }
 

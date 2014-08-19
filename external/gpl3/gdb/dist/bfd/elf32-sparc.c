@@ -1,6 +1,7 @@
 /* SPARC-specific support for 32-bit ELF
    Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007, 2010 Free Software Foundation, Inc.
+   2003, 2004, 2005, 2006, 2007, 2010, 2011
+   Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -40,16 +41,16 @@ elf32_sparc_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
       return FALSE;
 
     case 260:			/* Solaris prpsinfo_t.  */
-      elf_tdata (abfd)->core_program
+      elf_tdata (abfd)->core->program
 	= _bfd_elfcore_strndup (abfd, note->descdata + 84, 16);
-      elf_tdata (abfd)->core_command
+      elf_tdata (abfd)->core->command
 	= _bfd_elfcore_strndup (abfd, note->descdata + 100, 80);
       break;
 
     case 336:			/* Solaris psinfo_t.  */
-      elf_tdata (abfd)->core_program
+      elf_tdata (abfd)->core->program
 	= _bfd_elfcore_strndup (abfd, note->descdata + 88, 16);
-      elf_tdata (abfd)->core_command
+      elf_tdata (abfd)->core->command
 	= _bfd_elfcore_strndup (abfd, note->descdata + 104, 80);
       break;
     }
@@ -110,7 +111,7 @@ elf32_sparc_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
       return FALSE;
     }
 
-  return TRUE;
+  return _bfd_sparc_elf_merge_private_bfd_data (ibfd, obfd);
 }
 
 /* The final processing done just before writing out the object file.
@@ -152,7 +153,9 @@ elf32_sparc_final_write_processing (bfd *abfd,
 }
 
 static enum elf_reloc_type_class
-elf32_sparc_reloc_type_class (const Elf_Internal_Rela *rela)
+elf32_sparc_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
+			      const asection *rel_sec ATTRIBUTE_UNUSED,
+			      const Elf_Internal_Rela *rela)
 {
   switch ((int) ELF32_R_TYPE (rela->r_info))
     {
@@ -180,8 +183,9 @@ elf32_sparc_add_symbol_hook (bfd * abfd,
 			     bfd_vma * valp ATTRIBUTE_UNUSED)
 {
   if ((abfd->flags & DYNAMIC) == 0
-      && ELF_ST_TYPE (sym->st_info) == STT_GNU_IFUNC)
-    elf_tdata (info->output_bfd)->has_ifunc_symbols = TRUE;
+      && (ELF_ST_TYPE (sym->st_info) == STT_GNU_IFUNC
+	  || ELF_ST_BIND (sym->st_info) == STB_GNU_UNIQUE))
+    elf_tdata (info->output_bfd)->has_gnu_symbols = TRUE;
   return TRUE;
 }
 
@@ -241,7 +245,6 @@ elf32_sparc_add_symbol_hook (bfd * abfd,
 #define elf_backend_got_header_size 4
 #define elf_backend_rela_normal 1
 
-#define elf_backend_post_process_headers	_bfd_elf_set_osabi
 #define elf_backend_add_symbol_hook		elf32_sparc_add_symbol_hook
 
 #include "elf32-target.h"

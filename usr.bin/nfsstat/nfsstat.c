@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsstat.c,v 1.24 2011/09/06 18:19:58 joerg Exp $	*/
+/*	$NetBSD: nfsstat.c,v 1.24.8.1 2014/08/20 00:05:01 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\
 #if 0
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: nfsstat.c,v 1.24 2011/09/06 18:19:58 joerg Exp $");
+__RCSID("$NetBSD: nfsstat.c,v 1.24.8.1 2014/08/20 00:05:01 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,7 +203,7 @@ static void
 intpr(void)
 {
 	struct nfsstats nfsstats;
-	int64_t	total;
+	uint64_t	total;
 	int	i;
 
 #define PCT(x,y)	((y) == 0 ? 0 : (int)((int64_t)(x) * 100 / (y)))
@@ -217,13 +217,13 @@ intpr(void)
 		for (i = 0; i < NFS_NPROCS; i++)
 			total += nfsstats.rpccnt[i];
 		printf("Client Info:\n");
-		printf("RPC Counts: (%lld call%s)\n", (long long)total,
+		printf("RPC Counts: (%" PRIu64 " call%s)\n", total,
 		    total == 1 ? "" : "s");
 
 		printf("%10s  %14s  %14s  %14s  %14s\n",
 		    "null", "getattr", "setattr", "lookup", "access");
 		printf(
-	    "%10d %2d%%  %10d %2d%%  %10d %2d%%  %10d %2d%%  %10d %2d%%\n",
+	    "%10u %2u%%  %10u %2u%%  %10u %2u%%  %10u %2u%%  %10u %2u%%\n",
 		    RPCSTAT(nfsstats.rpccnt[NFSPROC_NULL]),
 		    RPCSTAT(nfsstats.rpccnt[NFSPROC_GETATTR]),
 		    RPCSTAT(nfsstats.rpccnt[NFSPROC_SETATTR]),
@@ -232,7 +232,7 @@ intpr(void)
 		printf("%10s  %14s  %14s  %14s  %14s\n",
 		    "readlink", "read", "write", "create", "mkdir");
 		printf(
-	    "%10d %2d%%  %10d %2d%%  %10d %2d%%  %10d %2d%%  %10d %2d%%\n",
+	    "%10u %2u%%  %10u %2u%%  %10u %2u%%  %10u %2u%%  %10u %2u%%\n",
 		    RPCSTAT(nfsstats.rpccnt[NFSPROC_READLINK]),
 		    RPCSTAT(nfsstats.rpccnt[NFSPROC_READ]),
 		    RPCSTAT(nfsstats.rpccnt[NFSPROC_WRITE]),
@@ -241,7 +241,7 @@ intpr(void)
 		printf("%10s  %14s  %14s  %14s  %14s\n",
 		    "symlink", "mknod", "remove", "rmdir", "rename");
 		printf(
-	    "%10d %2d%%  %10d %2d%%  %10d %2d%%  %10d %2d%%  %10d %2d%%\n",
+	    "%10u %2u%%  %10u %2u%%  %10u %2u%%  %10u %2u%%  %10u %2u%%\n",
 		    RPCSTAT(nfsstats.rpccnt[NFSPROC_SYMLINK]),
 		    RPCSTAT(nfsstats.rpccnt[NFSPROC_MKNOD]),
 		    RPCSTAT(nfsstats.rpccnt[NFSPROC_REMOVE]),
@@ -250,7 +250,7 @@ intpr(void)
 		printf("%10s  %14s  %14s  %14s  %14s\n",
 		    "link", "readdir", "readdirplus", "fsstat", "fsinfo");
 		printf(
-	    "%10d %2d%%  %10d %2d%%  %10d %2d%%  %10d %2d%%  %10d %2d%%\n",
+	    "%10u %2u%%  %10u %2u%%  %10u %2u%%  %10u %2u%%  %10u %2u%%\n",
 		    RPCSTAT(nfsstats.rpccnt[NFSPROC_LINK]),
 		    RPCSTAT(nfsstats.rpccnt[NFSPROC_READDIR]),
 		    RPCSTAT(nfsstats.rpccnt[NFSPROC_READDIRPLUS]),
@@ -258,14 +258,14 @@ intpr(void)
 		    RPCSTAT(nfsstats.rpccnt[NFSPROC_FSINFO]));
 		printf("%10s  %14s\n",
 		    "pathconf", "commit");
-		printf("%10d %2d%%  %10d %2d%%\n",
+		printf("%10u %2u%%  %10u %2u%%\n",
 		    RPCSTAT(nfsstats.rpccnt[NFSPROC_PATHCONF]),
 		    RPCSTAT(nfsstats.rpccnt[NFSPROC_COMMIT]));
 
 		printf("RPC Info:\n");
 		printf("%10s  %14s  %14s  %14s  %14s\n",
 		    "timeout", "invalid", "unexpected", "retries", "requests");
-		printf("%10d  %14d  %14d  %14d  %14d\n",
+		printf("%10u  %14u  %14u  %14u  %14u\n",
 		    nfsstats.rpctimeouts,
 		    nfsstats.rpcinvalid,
 		    nfsstats.rpcunexpected,
@@ -276,7 +276,7 @@ intpr(void)
 		printf("%10s  %14s  %14s  %14s  %14s\n",
 		    "attrcache", "lookupcache", "read", "write", "readlink");
 		printf(
-	    "%10d %2d%%  %10d %2d%%  %10d %2d%%  %10d %2d%%  %10d %2d%%\n",
+	    "%10u %2u%%  %10u %2u%%  %10u %2u%%  %10u %2u%%  %10u %2u%%\n",
 		    NUMPCT(nfsstats.attrcache_hits,
 			nfsstats.attrcache_misses),
 		    NUMPCT(nfsstats.lookupcache_hits,
@@ -289,7 +289,7 @@ intpr(void)
 			nfsstats.readlink_bios));
 		printf("%10s  %14s\n",
 		    "readdir", "direofcache");
-		printf("%10d %2d%%  %10d %2d%%\n",
+		printf("%10u %2u%%  %10u %2u%%\n",
 		    NUMPCT(nfsstats.biocache_readdirs - nfsstats.readdir_bios,
 			nfsstats.readdir_bios),
 		    NUMPCT(nfsstats.direofcache_hits,
@@ -304,13 +304,13 @@ intpr(void)
 		for (i = 0; i < NFS_NPROCS; i++)
 			total += nfsstats.srvrpccnt[i];
 		printf("Server Info:\n");
-		printf("RPC Counts: (%lld call%s)\n", (long long)total,
+		printf("RPC Counts: (%" PRIu64 " call%s)\n", total,
 		    total == 1 ? "" : "s");
 
 		printf("%10s  %14s  %14s  %14s  %14s\n",
 		    "null", "getattr", "setattr", "lookup", "access");
 		printf(
-	    "%10d %2d%%  %10d %2d%%  %10d %2d%%  %10d %2d%%  %10d %2d%%\n",
+	    "%10u %2u%%  %10u %2u%%  %10u %2u%%  %10u %2u%%  %10u %2u%%\n",
 		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_NULL]),
 		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_GETATTR]),
 		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_SETATTR]),
@@ -319,7 +319,7 @@ intpr(void)
 		printf("%10s  %14s  %14s  %14s  %14s\n",
 		    "readlink", "read", "write", "create", "mkdir");
 		printf(
-	    "%10d %2d%%  %10d %2d%%  %10d %2d%%  %10d %2d%%  %10d %2d%%\n",
+	    "%10u %2u%%  %10u %2u%%  %10u %2u%%  %10u %2u%%  %10u %2u%%\n",
 		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_READLINK]),
 		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_READ]),
 		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_WRITE]),
@@ -328,7 +328,7 @@ intpr(void)
 		printf("%10s  %14s  %14s  %14s  %14s\n",
 		    "symlink", "mknod", "remove", "rmdir", "rename");
 		printf(
-	    "%10d %2d%%  %10d %2d%%  %10d %2d%%  %10d %2d%%  %10d %2d%%\n",
+	    "%10u %2u%%  %10u %2u%%  %10u %2u%%  %10u %2u%%  %10u %2u%%\n",
 		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_SYMLINK]),
 		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_MKNOD]),
 		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_REMOVE]),
@@ -337,7 +337,7 @@ intpr(void)
 		printf("%10s  %14s  %14s  %14s  %14s\n",
 		    "link", "readdir", "readdirplus", "fsstat", "fsinfo");
 		printf(
-	    "%10d %2d%%  %10d %2d%%  %10d %2d%%  %10d %2d%%  %10d %2d%%\n",
+	    "%10u %2u%%  %10u %2u%%  %10u %2u%%  %10u %2u%%  %10u %2u%%\n",
 		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_LINK]),
 		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_READDIR]),
 		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_READDIRPLUS]),
@@ -345,20 +345,20 @@ intpr(void)
 		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_FSINFO]));
 		printf("%10s  %14s\n",
 		    "pathconf", "commit");
-		printf("%10d %2d%%  %10d %2d%%\n",
+		printf("%10u %2u%%  %10u %2u%%\n",
 		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_PATHCONF]),
 		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_COMMIT]));
 
 		printf("Server Errors:\n");
 		printf("%10s  %14s\n",
 		    "RPC errors", "faults");
-		printf("%10d  %14d\n",
+		printf("%10u  %14u\n",
 		    nfsstats.srvrpc_errs,
 		    nfsstats.srv_errs);
 		printf("Server Cache Stats:\n");
 		printf("%10s  %14s  %14s  %14s\n",
 		    "inprogress", "idem", "non-idem", "misses");
-		printf("%10d  %14d  %14d  %14d\n",
+		printf("%10u  %14u  %14u  %14u\n",
 		    nfsstats.srvcache_inproghits,
 		    nfsstats.srvcache_idemdonehits,
 		    nfsstats.srvcache_nonidemdonehits,
@@ -366,7 +366,7 @@ intpr(void)
 		printf("Server Write Gathering:\n");
 		printf("%10s  %14s  %14s\n",
 		    "writes", "write RPC", "OPs saved");
-		printf("%10d  %14d  %14d %2d%%\n",
+		printf("%10u  %14u  %14u %2u%%\n",
 		    nfsstats.srvvop_writes,
 		    nfsstats.srvrpccnt[NFSPROC_WRITE],
 		    NUMPCT(
@@ -422,14 +422,14 @@ sidewaysintpr(u_int interval)
 		if (printall || clientinfo) {
 			printf("Client:");
 			for (i = 0; i < NSHORTPROC; i++)
-				printf(" %7d",
+				printf(" %7u",
 				    current.client[i] - last.client[i]);
 			printf("\n");
 		}
 		if (printall || serverinfo) {
 			printf("Server:");
 			for (i = 0; i < NSHORTPROC; i++)
-				printf(" %7d",
+				printf(" %7u",
 				    current.server[i] - last.server[i]);
 			printf("\n");
 		}
@@ -473,6 +473,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-		  "usage: nfsstat [-cs] [-M core] [-N system] [-w interval]\n");
+	      "Usage: %s [-cs] [-M core] [-N system] [-w interval]\n",
+	      getprogname());
 	exit(1);
 }

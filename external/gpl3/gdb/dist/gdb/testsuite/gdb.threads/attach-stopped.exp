@@ -1,4 +1,4 @@
-# Copyright 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2008-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,14 +18,13 @@
 # This file was updated by Jan Kratochvil <jan.kratochvil@redhat.com>.
 
 # This test only works on Linux
-if { ![isnative] || [is_remote host] || ![istarget *-linux*] } {
+if { ![isnative] || [is_remote host] || [target_info exists use_gdb_stub]
+     || ![istarget *-linux*] } {
     continue
 }
 
-set testfile "attach-stopped"
-set srcfile  ${testfile}.c
-set binfile  ${objdir}/${subdir}/${testfile}
-set escapedbinfile  [string_to_regexp ${objdir}/${subdir}/${testfile}]
+standard_testfile
+set escapedbinfile  [string_to_regexp $binfile]
 
 #execute_anywhere "rm -f ${binfile}"
 remote_exec build "rm -f ${binfile}"
@@ -41,7 +40,7 @@ proc corefunc { threadtype } {
     global subdir
     global gdb_prompt
 
-    if [get_compiler_info ${binfile}] {
+    if [get_compiler_info] {
 	return -1
     }
 
@@ -77,61 +76,16 @@ proc corefunc { threadtype } {
     } else {
 	gdb_test "bt" ".*sleep.*main.*" "$threadtype: attach2 to stopped bt"
     }
-    # This breakpoint is there for old/non-x86 kernels not restarting syscalls.
-    gdb_breakpoint [gdb_get_line_number "Second sleep"]
-    set test "$threadtype: attach2 continue"
-    gdb_test_multiple "continue" "continue ($test)" {
-	-re "Continuing" {
-	    pass "continue ($test)"
-	}
-    }
-
-    # For this to work we must be sure to consume the "Continuing."
-    # message first, or GDB's signal handler may not be in place.
-    after 1000 {send_gdb "\003"}
-    set test "$threadtype: attach2 stop interrupt"
-    gdb_expect 10 {
-      -re "Program received signal SIGINT.*$gdb_prompt $"
-	{
-	  pass $test
-	}
-      -re "Breakpoint \[0-9\].*$srcfile.*$gdb_prompt $"
-	{
-	  pass $test
-	}
-      timeout
-	{
-	  fail $test
-	}
-    }
 
     gdb_exit
 
     # Avoid some race:
     sleep 2
 
-    # At this point, the process should be sleeping
+    # At this point, the process may be sleeping or T (Stopped) depending on
+    # the Linux kernel version.  The behavior is not tested as it is not
+    # dependent on GDB.
 
-    if [catch {open /proc/${testpid}/status r} fileid2] {
-	set line2 "NOTFOUND"
-    } else {
-	gets $fileid2 line1;
-	gets $fileid2 line2;
-	close $fileid2;
-    }
-
-    set test "$threadtype: attach2, exit leaves process sleeping"
-    if {[string match "*(sleeping)*" $line2]} {
-      pass $test
-    } else {
-      fail $test
-    }
-
-    # Make sure we don't leave a process around to confuse
-    # the next test run (and prevent the compile by keeping
-    # the text file busy), in case the "set should_exit" didn't
-    # work.
-       
     remote_exec build "kill -9 ${testpid}"
 }
 

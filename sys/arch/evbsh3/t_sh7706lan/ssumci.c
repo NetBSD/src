@@ -1,4 +1,4 @@
-/*	$NetBSD: ssumci.c,v 1.2 2012/01/21 19:44:29 nonaka Exp $	*/
+/*	$NetBSD: ssumci.c,v 1.2.6.1 2014/08/20 00:02:59 tls Exp $	*/
 
 /*-
  * Copyright (C) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssumci.c,v 1.2 2012/01/21 19:44:29 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssumci.c,v 1.2.6.1 2014/08/20 00:02:59 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -151,7 +151,7 @@ do {									\
 #define SCPDR_CMD	0x04
 #define	SCPCR_CS_MASK	0x000C
 #define	SCPCR_CS_OUT	0x0004
-#define	SCPDR_CS	0x08
+#define	SCPDR_CS	0x02
 #define	SCPCR_EJECT	0x00C0
 #define	SCPDR_EJECT	0x08
 

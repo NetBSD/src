@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -97,19 +97,22 @@
 #endif
 
 /*
- * AcpiBin/AcpiHelp/AcpiSrc configuration. All single threaded, with
- * no debug output.
+ * AcpiBin/AcpiDump/AcpiSrc/AcpiXtract/Example configuration. All single
+ * threaded, with no debug output.
  */
-#if (defined ACPI_BIN_APP)   || \
-    (defined ACPI_SRC_APP)
+#if (defined ACPI_BIN_APP)      || \
+    (defined ACPI_DUMP_APP)     || \
+    (defined ACPI_SRC_APP)      || \
+    (defined ACPI_XTRACT_APP)   || \
+    (defined ACPI_EXAMPLE_APP)
 #define ACPI_APPLICATION
 #define ACPI_SINGLE_THREADED
 #endif
 
 #ifdef ACPI_HELP_APP
-#define ACPI_DEBUG_OUTPUT
 #define ACPI_APPLICATION
 #define ACPI_SINGLE_THREADED
+#define ACPI_NO_ERROR_MESSAGES
 #endif
 
 /* Linkable ACPICA library */
@@ -146,6 +149,9 @@
 #if defined(_LINUX) || defined(__linux__)
 #include "aclinux.h"
 
+#elif defined(_APPLE) || defined(__APPLE__)
+#include "acmacosx.h"
+
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 #include "acfreebsd.h"
 
@@ -178,6 +184,9 @@
 
 #elif defined(_AED_EFI)
 #include "acefi.h"
+
+#elif defined(__HAIKU__)
+#include "achaiku.h"
 
 #else
 
@@ -296,7 +305,7 @@
  */
 #ifdef ACPI_USE_SYSTEM_CLIBRARY
 
-/* Use the standard C library headers. We want to keep these to a minimum */
+/* Use the standard C library headers. We want to keep these to a minimum. */
 
 #ifdef ACPI_USE_STANDARD_HEADERS
 
@@ -363,7 +372,7 @@ typedef char *va_list;
 
 #define _Bnd(X, bnd)            (((sizeof (X)) + (bnd)) & (~(bnd)))
 #define va_arg(ap, T)           (*(T *)(((ap) += (_Bnd (T, _AUPBND))) - (_Bnd (T,_ADNBND))))
-#define va_end(ap)              (void) 0
+#define va_end(ap)              (ap = (va_list) NULL)
 #define va_start(ap, A)         (void) ((ap) = (((char *) &(A)) + (_Bnd (A,_AUPBND))))
 
 #endif /* va_arg */
@@ -387,5 +396,14 @@ typedef char *va_list;
 #define ACPI_TOLOWER(c)         AcpiUtToLower ((int) (c))
 
 #endif /* ACPI_USE_SYSTEM_CLIBRARY */
+
+#ifndef ACPI_FILE
+#ifdef ACPI_APPLICATION
+#include <stdio.h>
+#define ACPI_FILE              FILE *
+#else
+#define ACPI_FILE              void *
+#endif /* ACPI_APPLICATION */
+#endif /* ACPI_FILE */
 
 #endif /* __ACENV_H__ */

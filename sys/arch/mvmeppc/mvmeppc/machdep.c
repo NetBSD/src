@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29.12.1 2012/11/20 03:01:35 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29.12.2 2014/08/20 00:03:15 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29.12.1 2012/11/20 03:01:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29.12.2 2014/08/20 00:03:15 tls Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mvmetype.h"
@@ -123,7 +123,7 @@ initppc(u_long startkernel, u_long endkernel, void *btinfo)
 		extern void _mvmeppc_unsup_board(const char *, const char *);
 		char msg[80];
 
-		sprintf(msg, "Unsupported model: MVME%04x",
+		snprintf(msg, sizeof(msg), "Unsupported model: MVME%04x",
 		    bootinfo.bi_modelnumber);
 		_mvmeppc_unsup_board(msg, &msg[strlen(msg)]);
 		/* NOTREACHED */
@@ -168,7 +168,8 @@ cpu_startup(void)
 	if (!prep_intr_reg)
 		panic("startup: no room for interrupt register");
 
-	sprintf(modelbuf, "%s\nCore Speed: %dMHz, Bus Speed: %dMHz\n",
+	snprintf(modelbuf, sizeof(modelbuf),
+	    "%s\nCore Speed: %dMHz, Bus Speed: %dMHz\n",
 	    platform->model,
 	    bootinfo.bi_mpuspeed/1000000,
 	    bootinfo.bi_busspeed/1000000);

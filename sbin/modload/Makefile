@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.16 2012/08/22 07:47:18 jnemeth Exp $
+#	$NetBSD: Makefile,v 1.16.2.1 2014/08/20 00:02:25 tls Exp $
 
 .include <bsd.own.mk>
-
-WARNS=	5
 
 RUMPPRG=modload
 SRCS=	main.c

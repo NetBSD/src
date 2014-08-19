@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.59 2012/01/21 15:50:13 jakllsch Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.59.6.1 2014/08/20 00:03:38 tls Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.59 2012/01/21 15:50:13 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.59.6.1 2014/08/20 00:03:38 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1819,7 +1819,7 @@ static int
 wb_match(struct lm_softc *sc)
 {
 	const char *model = NULL;
-	int banksel, vendid, devid, cf_flags;
+	int banksel, vendid, cf_flags;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -1835,7 +1835,7 @@ wb_match(struct lm_softc *sc)
 
 	/* Read device/chip ID */
 	lm_generic_banksel(sc, WB_BANKSEL_B0);
-	devid = (*sc->lm_readreg)(sc, LMD_CHIPID);
+	(void)(*sc->lm_readreg)(sc, LMD_CHIPID);
 	sc->chipid = (*sc->lm_readreg)(sc, WB_BANK0_CHIPID);
 	lm_generic_banksel(sc, banksel);
 	cf_flags = device_cfdata(sc->sc_dev)->cf_flags;

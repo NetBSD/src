@@ -1,7 +1,6 @@
 /* Output generating routines for GDB.
 
-   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2005, 2007, 2008, 2009, 2010,
-   2011 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions.
    Written by Fernando Nasser for Cygnus.
@@ -33,7 +32,7 @@ struct ui_file;
 
 /* FIXME: This should not be a global but something passed down from main.c
    or top.c.  */
-extern struct ui_out *uiout;
+extern struct ui_out *current_uiout;
 
 /* alignment enum */
 enum ui_align
@@ -49,17 +48,6 @@ enum ui_flags
   {
     ui_from_tty = 1,
     ui_source_list = 2
-  };
-
-
-/* The ui_out stream structure.  */
-/* NOTE: cagney/2000-02-01: The ui_stream object can be subsumed by
-   the more generic ui_file object.  */
-
-struct ui_stream
-  {
-    struct ui_out *uiout;
-    struct ui_file *stream;
   };
 
 
@@ -113,6 +101,8 @@ extern void ui_out_field_fmt_int (struct ui_out *uiout, int width,
 				  enum ui_align align, const char *fldname, 
 		 		  int value);
 
+/* Output a field containing an address.  */
+
 extern void ui_out_field_core_addr (struct ui_out *uiout, const char *fldname,
 				    struct gdbarch *gdbarch, CORE_ADDR address);
 
@@ -120,7 +110,7 @@ extern void ui_out_field_string (struct ui_out * uiout, const char *fldname,
 				 const char *string);
 
 extern void ui_out_field_stream (struct ui_out *uiout, const char *fldname,
-				 struct ui_stream *buf);
+				 struct ui_file *stream);
 
 extern void ui_out_field_fmt (struct ui_out *uiout, const char *fldname,
 			      const char *format, ...)
@@ -136,17 +126,9 @@ extern void ui_out_message (struct ui_out *uiout, int verbosity,
 			    const char *format, ...)
      ATTRIBUTE_PRINTF (3, 4);
 
-extern struct ui_stream *ui_out_stream_new (struct ui_out *uiout);
-
-extern void ui_out_stream_delete (struct ui_stream *buf);
-
-struct cleanup *make_cleanup_ui_out_stream_delete (struct ui_stream *buf);
-
 extern void ui_out_wrap_hint (struct ui_out *uiout, char *identstring);
 
 extern void ui_out_flush (struct ui_out *uiout);
-
-extern void ui_out_get_field_separator (struct ui_out *uiout);
 
 extern int ui_out_set_flags (struct ui_out *uiout, int mask);
 
@@ -158,30 +140,6 @@ extern int ui_out_test_flags (struct ui_out *uiout, int mask);
 
 extern int ui_out_query_field (struct ui_out *uiout, int colno,
 			       int *width, int *alignment, char **col_name);
-
-#if 0
-extern void ui_out_result_begin (struct ui_out *uiout, char *class);
-
-extern void ui_out_result_end (struct ui_out *uiout);
-
-extern void ui_out_info_begin (struct ui_out *uiout, char *class);
-
-extern void ui_out_info_end (struct ui_out *uiout);
-
-extern void ui_out_notify_begin (struct ui_out *uiout, char *class);
-
-extern void ui_out_notify_end (struct ui_out *uiout);
-
-extern void ui_out_error_begin (struct ui_out *uiout, char *class);
-
-extern void ui_out_error_end (struct ui_out *uiout);
-#endif
-
-#if 0
-extern void gdb_error (struct ui_out *uiout, int severity, char *format, ...);
-
-extern void gdb_query (struct ui_out *uiout, int qflags, char *qprompt);
-#endif
 
 /* HACK: Code in GDB is currently checking to see the type of ui_out
    builder when determining which output to produce.  This function is
@@ -239,6 +197,7 @@ typedef void (wrap_hint_ftype) (struct ui_out * uiout, char *identstring);
 typedef void (flush_ftype) (struct ui_out * uiout);
 typedef int (redirect_ftype) (struct ui_out * uiout,
 			      struct ui_file * outstream);
+typedef void (data_destroy_ftype) (struct ui_out *uiout);
 
 /* ui-out-impl */
 
@@ -263,6 +222,7 @@ struct ui_out_impl
     wrap_hint_ftype *wrap_hint;
     flush_ftype *flush;
     redirect_ftype *redirect;
+    data_destroy_ftype *data_destroy;
     int is_mi_like_p;
   };
 
@@ -277,6 +237,10 @@ extern void uo_field_string (struct ui_out *uiout, int fldno, int width,
 extern struct ui_out *ui_out_new (struct ui_out_impl *impl,
 				  void *data,
 				  int flags);
+
+/* Destroy a ui_out object.  */
+
+extern void ui_out_destroy (struct ui_out *uiout);
 
 /* Redirect the ouptut of a ui_out object temporarily.  */
 

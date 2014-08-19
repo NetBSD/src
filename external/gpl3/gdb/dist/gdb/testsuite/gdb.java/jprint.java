@@ -1,7 +1,6 @@
 // jprint.java test program.
 //
-// Copyright 2004, 2010
-// Free Software Foundation, Inc.
+// Copyright 2004-2014 Free Software Foundation, Inc.
 //
 // Written by Jeff Johnston <jjohnstn@redhat.com> 
 // Contributed by Red Hat
@@ -28,9 +27,10 @@ class jvclass {
   static {
     k = 77;
   }
-  public static void addprint (int x, int y, int z) {
+  public static int addprint (int x, int y, int z) {
     int sum = x + y + z;
     System.out.println ("sum is " + sum);
+    return sum;
   }
 
   public int addk (int x) {
@@ -42,22 +42,26 @@ class jvclass {
     
 public class jprint extends jvclass {
   public static Properties props = new Properties ();
+  public static String hi = "hi maude";
 
   public int dothat (int x) {
     int y = x + 3;
     System.out.println ("new value is " + y);
     return y + 4;
   }
-  public static void print (int x) {
+  public static int print (int x) {
     System.out.println("x is " + x);
+    return x;
   }
-  public static void print (int x, int y) {
+  public static int print (int x, int y) {
     System.out.println("y is " + y);
+    return y;
   }
   public static void main(String[] args) {
     jprint x = new jprint ();
     x.dothat (44);
     print (k, 33);
+    print (x.addk(0), 33);
   }
 }
 

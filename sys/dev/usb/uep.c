@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.18 2011/12/23 00:51:45 jakllsch Exp $	*/
+/*	$NetBSD: uep.c,v 1.18.6.1 2014/08/20 00:03:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  *  eGalax USB touchpanel controller driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.18 2011/12/23 00:51:45 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.18.6.1 2014/08/20 00:03:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ uep_attach(device_t parent, device_t self, void *aux)
 	struct wsmousedev_attach_args a;
 	char *devinfop;
 	usbd_status err;
-	int i, found;
+	int i;
 
 	sc->sc_dev = self;
 
@@ -179,7 +179,6 @@ uep_attach(device_t parent, device_t self, void *aux)
 	/* Find the interrupt endpoint */
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 	sc->sc_iface_number = id->bInterfaceNumber;
-	found = 0;
 
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);

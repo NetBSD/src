@@ -1,4 +1,4 @@
-/*	$NetBSD: busfunc.S,v 1.8 2011/05/20 13:17:12 joerg Exp $	*/
+/*	$NetBSD: busfunc.S,v 1.8.14.1 2014/08/20 00:03:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: busfunc.S,v 1.8 2011/05/20 13:17:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: busfunc.S,v 1.8.14.1 2014/08/20 00:03:06 tls Exp $");
 
 #include "assym.h"
 
@@ -50,6 +50,7 @@ ENTRY(bus_space_read_1)
 	xorl	%eax, %eax
 	inb	%dx, %al
 	ret
+END(bus_space_read_1)
 
 /*
  * uint16_t bus_space_read_2(bus_space_tag_t tag, bus_space_handle_t bsh,
@@ -67,6 +68,7 @@ ENTRY(bus_space_read_2)
 	xorl	%eax, %eax
 	inw	%dx, %ax
 	ret
+END(bus_space_read_2)
 
 /*
  * uint32_t bus_space_read_4(bus_space_tag_t tag, bus_space_handle_t bsh,
@@ -83,6 +85,7 @@ ENTRY(bus_space_read_4)
 1:
 	inl	%dx, %eax
 	ret
+END(bus_space_read_4)
 
 STRONG_ALIAS(bus_space_read_stream_1,bus_space_read_1)
 STRONG_ALIAS(bus_space_read_stream_2,bus_space_read_2)
@@ -104,6 +107,7 @@ ENTRY(bus_space_write_1)
 1:
 	outb	%al, %dx
 	ret
+END(bus_space_write_1)
 
 /*
  * void bus_space_write_2(bus_space_tag_t tag, bus_space_handle_t bsh,
@@ -121,6 +125,7 @@ ENTRY(bus_space_write_2)
 1:
 	outw	%ax, %dx
 	ret
+END(bus_space_write_2)
 
 /*
  * void bus_space_write_4(bus_space_tag_t tag, bus_space_handle_t bsh,
@@ -138,6 +143,7 @@ ENTRY(bus_space_write_4)
 1:
 	outl	%eax, %dx
 	ret
+END(bus_space_write_4)
 
 STRONG_ALIAS(bus_space_write_stream_1,bus_space_write_1)
 STRONG_ALIAS(bus_space_write_stream_2,bus_space_write_2)
@@ -169,6 +175,7 @@ ENTRY(bus_space_read_multi_1)
 	jnz	1b
 	popl	%edi
 	ret
+END(bus_space_read_multi_1)
 
 /*
  * void bus_space_read_multi_2(bus_space_tag_t tag, bus_space_handle_t bsh,
@@ -196,6 +203,7 @@ ENTRY(bus_space_read_multi_2)
 	jnz	1b
 	popl	%edi
 	ret
+END(bus_space_read_multi_2)
 
 /*
  * void bus_space_read_multi_4(bus_space_tag_t tag, bus_space_handle_t bsh,
@@ -223,6 +231,7 @@ ENTRY(bus_space_read_multi_4)
 	jnz	1b
 	popl	%edi
 	ret
+END(bus_space_read_multi_4)
 
 STRONG_ALIAS(bus_space_read_multi_stream_1,bus_space_read_multi_1)
 STRONG_ALIAS(bus_space_read_multi_stream_2,bus_space_read_multi_2)
@@ -254,6 +263,7 @@ ENTRY(bus_space_write_multi_1)
 	jnz	1b
 	popl	%esi
 	ret
+END(bus_space_write_multi_1)
 
 /*
  * void bus_space_write_multi_2(bus_space_tag_t tag, bus_space_handle_t bsh,
@@ -281,6 +291,7 @@ ENTRY(bus_space_write_multi_2)
 	jnz	1b
 	popl	%esi
 	ret
+END(bus_space_write_multi_2)
 
 /*
  * void bus_space_write_multi_4(bus_space_tag_t tag, bus_space_handle_t bsh,
@@ -308,6 +319,7 @@ ENTRY(bus_space_write_multi_4)
 	jnz	1b
 	popl	%esi
 	ret
+END(bus_space_write_multi_4)
 
 STRONG_ALIAS(bus_space_write_multi_stream_1,bus_space_write_multi_1)
 STRONG_ALIAS(bus_space_write_multi_stream_2,bus_space_write_multi_2)
@@ -342,6 +354,7 @@ ENTRY(bus_space_read_region_1)
 	jnz	2b
 	popl	%edi
 	ret
+END(bus_space_read_region_1)
 
 /*
  * void bus_space_read_region_2(bus_space_tag_t tag, bus_space_handle_t bsh,
@@ -372,6 +385,7 @@ ENTRY(bus_space_read_region_2)
 	jnz	2b
 	popl	%edi
 	ret
+END(bus_space_read_region_2)
 
 /*
  * void bus_space_read_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
@@ -402,6 +416,7 @@ ENTRY(bus_space_read_region_4)
 	jnz	2b
 	popl	%edi
 	ret
+END(bus_space_read_region_4)
 
 STRONG_ALIAS(bus_space_read_region_stream_1,bus_space_read_region_1)
 STRONG_ALIAS(bus_space_read_region_stream_2,bus_space_read_region_2)
@@ -436,6 +451,7 @@ ENTRY(bus_space_write_region_1)
 	jnz	2b
 	popl	%esi
 	ret
+END(bus_space_write_region_1)
 
 /*
  * void bus_space_write_region_2(bus_space_tag_t tag, bus_space_handle_t bsh,
@@ -466,6 +482,7 @@ ENTRY(bus_space_write_region_2)
 	jnz	2b
 	popl	%esi
 	ret
+END(bus_space_write_region_2)
 
 /*
  * void bus_space_write_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
@@ -496,6 +513,7 @@ ENTRY(bus_space_write_region_4)
 	jnz	2b
 	popl	%esi
 	ret
+END(bus_space_write_region_4)
 
 STRONG_ALIAS(bus_space_write_region_stream_1,bus_space_write_region_1)
 STRONG_ALIAS(bus_space_write_region_stream_2,bus_space_write_region_2)

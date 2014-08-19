@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.54.2.2 2013/06/23 06:29:02 tls Exp $ */
+/* $NetBSD: decl.c,v 1.54.2.3 2014/08/20 00:05:06 tls Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.54.2.2 2013/06/23 06:29:02 tls Exp $");
+__RCSID("$NetBSD: decl.c,v 1.54.2.3 2014/08/20 00:05:06 tls Exp $");
 #endif
 
 #include <sys/param.h>
@@ -757,6 +757,7 @@ deftyp(void)
 			break;
 		case DOUBLE:
 			if (l == LONG) {
+		case LDOUBLE:
 				l = NOTSPEC;
 				t = LDOUBLE;
 				if (tflag)
@@ -778,7 +779,7 @@ deftyp(void)
 		case LCOMPLEX:
 			break;
 		default:
-			LERROR("deftyp()");
+			LERROR("deftyp(%s)", basictyname(t));
 		}
 		if (t != INT && t != CHAR && (s != NOTSPEC || l != NOTSPEC)) {
 			dcs->d_terr = 1;
@@ -1121,7 +1122,7 @@ decl1str(sym_t *dsym)
 			 */
 			if (bitfieldtype_ok == 0 || isityp(t) == 0) {
 				/* illegal bit-field type */
-				error(35);
+				warning(35);
 				sz = tp->t_flen;
 				dsym->s_type = tp = duptyp(gettyp(t = INT));
 				if ((tp->t_flen = sz) > size(t))

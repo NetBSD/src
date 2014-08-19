@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.22.12.1 2012/11/20 03:01:41 tls Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.22.12.2 2014/08/20 00:03:22 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.22.12.1 2012/11/20 03:01:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.22.12.2 2014/08/20 00:03:22 tls Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -121,9 +121,10 @@ pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 const char *
-pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
+    size_t len)
 {
-	return (*pc->pc_intr_string)(pc, ih);
+	return (*pc->pc_intr_string)(pc, ih, buf, len);
 }
 
 const struct evcnt *

@@ -1,7 +1,6 @@
 /* Target-dependent code for SPARC.
 
-   Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,9 +36,10 @@
 #include "value.h"
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 
 #include "sparc-tdep.h"
+#include "sparc-ravenscar-thread.h"
 
 struct regset;
 
@@ -86,6 +86,7 @@ struct regset;
 /* Sign extension macros.  */
 #define X_DISP22(i) ((X_IMM22 (i) ^ 0x200000) - 0x200000)
 #define X_DISP19(i) ((((i) & 0x7ffff) ^ 0x40000) - 0x40000)
+#define X_DISP10(i) ((((((i) >> 11) && 0x300) | (((i) >> 5) & 0xff)) ^ 0x200) - 0x200)
 #define X_SIMM13(i) ((((i) & 0x1fff) ^ 0x1000) - 0x1000)
 
 /* Fetch the instruction at PC.  Instructions are always big-endian
@@ -118,6 +119,37 @@ sparc_is_unimp_insn (CORE_ADDR pc)
   const unsigned long insn = sparc_fetch_instruction (pc);
   
   return ((insn & 0xc1c00000) == 0);
+}
+
+/* Return non-zero if the instruction corresponding to PC is an
+   "annulled" branch, i.e. the annul bit is set.  */
+
+int
+sparc_is_annulled_branch_insn (CORE_ADDR pc)
+{
+  /* The branch instructions featuring an annul bit can be identified
+     by the following bit patterns:
+
+     OP=0
+      OP2=1: Branch on Integer Condition Codes with Prediction (BPcc).
+      OP2=2: Branch on Integer Condition Codes (Bcc).
+      OP2=5: Branch on FP Condition Codes with Prediction (FBfcc).
+      OP2=6: Branch on FP Condition Codes (FBcc).
+      OP2=3 && Bit28=0:
+             Branch on Integer Register with Prediction (BPr).
+
+     This leaves out ILLTRAP (OP2=0), SETHI/NOP (OP2=4) and the V8
+     coprocessor branch instructions (Op2=7).  */
+
+  const unsigned long insn = sparc_fetch_instruction (pc);
+  const unsigned op2 = X_OP2 (insn);
+
+  if ((X_OP (insn) == 0)
+      && ((op2 == 1) || (op2 == 2) || (op2 == 5) || (op2 == 6)
+	  || ((op2 == 3) && ((insn & 0x10000000) == 0))))
+    return X_A (insn);
+  else
+    return 0;
 }
 
 /* OpenBSD/sparc includes StackGhost, which according to the author's
@@ -213,6 +245,25 @@ sparc_floating_p (const struct type *type)
       {
 	int len = TYPE_LENGTH (type);
 	return (len == 4 || len == 8 || len == 16);
+      }
+    default:
+      break;
+    }
+
+  return 0;
+}
+
+/* Check whether TYPE is "Complex Floating".  */
+
+static int
+sparc_complex_floating_p (const struct type *type)
+{
+  switch (TYPE_CODE (type))
+    {
+    case TYPE_CODE_COMPLEX:
+      {
+	int len = TYPE_LENGTH (type);
+	return (len == 8 || len == 16 || len == 32);
       }
     default:
       break;
@@ -454,7 +505,8 @@ sparc32_store_arguments (struct regcache *regcache, int nargs,
       int len = TYPE_LENGTH (type);
 
       if (sparc_structure_or_union_p (type)
-	  || (sparc_floating_p (type) && len == 16))
+	  || (sparc_floating_p (type) && len == 16)
+	  || sparc_complex_floating_p (type))
 	{
 	  /* Structure, Union and Quad-Precision Arguments.  */
 	  sp -= len;
@@ -582,7 +634,6 @@ static struct sparc_frame_cache *
 sparc_alloc_frame_cache (void)
 {
   struct sparc_frame_cache *cache;
-  int i;
 
   cache = FRAME_OBSTACK_ZALLOC (struct sparc_frame_cache);
 
@@ -592,7 +643,9 @@ sparc_alloc_frame_cache (void)
 
   /* Frameless until proven otherwise.  */
   cache->frameless_p = 1;
-
+  cache->frame_offset = 0;
+  cache->saved_regs_mask = 0;
+  cache->copied_regs_mask = 0;
   cache->struct_return_p = 0;
 
   return cache;
@@ -609,25 +662,60 @@ sparc_skip_stack_check (const CORE_ADDR start_pc)
   CORE_ADDR pc = start_pc;
   unsigned long insn;
   int offset_stack_checking_sequence = 0;
+  int probing_loop = 0;
 
   /* With GCC, all stack checking sequences begin with the same two
-     instructions.  */
+     instructions, plus an optional one in the case of a probing loop:
 
-  /* sethi <some immediate>,%g1 */
+         sethi <some immediate>, %g1
+         sub %sp, %g1, %g1
+
+     or:
+
+         sethi <some immediate>, %g1
+         sethi <some immediate>, %g4
+         sub %sp, %g1, %g1
+
+     or:
+
+         sethi <some immediate>, %g1
+         sub %sp, %g1, %g1
+         sethi <some immediate>, %g4
+
+     If the optional instruction is found (setting g4), assume that a
+     probing loop will follow.  */
+
+  /* sethi <some immediate>, %g1 */
   insn = sparc_fetch_instruction (pc);
   pc = pc + 4;
   if (!(X_OP (insn) == 0 && X_OP2 (insn) == 0x4 && X_RD (insn) == 1))
     return start_pc;
 
-  /* sub %sp, %g1, %g1 */
+  /* optional: sethi <some immediate>, %g4 */
   insn = sparc_fetch_instruction (pc);
   pc = pc + 4;
+  if (X_OP (insn) == 0 && X_OP2 (insn) == 0x4 && X_RD (insn) == 4)
+    {
+      probing_loop = 1;
+      insn = sparc_fetch_instruction (pc);
+      pc = pc + 4;
+    }
+
+  /* sub %sp, %g1, %g1 */
   if (!(X_OP (insn) == 2 && X_OP3 (insn) == 0x4 && !X_I(insn)
         && X_RD (insn) == 1 && X_RS1 (insn) == 14 && X_RS2 (insn) == 1))
     return start_pc;
 
   insn = sparc_fetch_instruction (pc);
   pc = pc + 4;
+
+  /* optional: sethi <some immediate>, %g4 */
+  if (X_OP (insn) == 0 && X_OP2 (insn) == 0x4 && X_RD (insn) == 4)
+    {
+      probing_loop = 1;
+      insn = sparc_fetch_instruction (pc);
+      pc = pc + 4;
+    }
 
   /* First possible sequence:
          [first two instructions above]
@@ -680,22 +768,21 @@ sparc_skip_stack_check (const CORE_ADDR start_pc)
     }
   
   /* Third sequence: A probing loop.
-         [first two instructions above]
-         sethi  <some immediate>, %g4
+         [first three instructions above]
          sub  %g1, %g4, %g4
          cmp  %g1, %g4
          be  <disp>
          add  %g1, -<some immediate>, %g1
          ba  <disp>
          clr  [%g1]
+
+     And an optional last probe for the remainder:
+
          clr [%g4 - some immediate]  */
 
-  /* sethi  <some immediate>, %g4 */
-  else if (X_OP (insn) == 0 && X_OP2 (insn) == 0x4 && X_RD (insn) == 4)
+  if (probing_loop)
     {
       /* sub  %g1, %g4, %g4 */
-      insn = sparc_fetch_instruction (pc);
-      pc = pc + 4;
       if (!(X_OP (insn) == 2 && X_OP3 (insn) == 0x4 && !X_I(insn)
             && X_RD (insn) == 4 && X_RS1 (insn) == 1 && X_RS2 (insn) == 4))
         return start_pc;
@@ -726,27 +813,54 @@ sparc_skip_stack_check (const CORE_ADDR start_pc)
       if (!(X_OP (insn) == 0 && X_COND (insn) == 0x8))
         return start_pc;
 
-      /* clr  [%g1] */
+      /* clr  [%g1] (st %g0, [%g1] or st %g0, [%g1+0]) */
       insn = sparc_fetch_instruction (pc);
       pc = pc + 4;
-      if (!(X_OP (insn) == 3 && X_OP3(insn) == 0x4 && !X_I(insn)
-            && X_RD (insn) == 0 && X_RS1 (insn) == 1))
+      if (!(X_OP (insn) == 3 && X_OP3(insn) == 0x4
+            && X_RD (insn) == 0 && X_RS1 (insn) == 1
+	    && (!X_I(insn) || X_SIMM13 (insn) == 0)))
         return start_pc;
 
-      /* clr [%g4 - some immediate]  */
+      /* We found a valid stack-check sequence, return the new PC.  */
+
+      /* optional: clr [%g4 - some immediate]  */
       insn = sparc_fetch_instruction (pc);
       pc = pc + 4;
       if (!(X_OP (insn) == 3 && X_OP3(insn) == 0x4 && X_I(insn)
             && X_RS1 (insn) == 4 && X_RD (insn) == 0))
-        return start_pc;
-
-      /* We found a valid stack-check sequence, return the new PC.  */
-      return pc;
+        return pc - 4;
+      else
+	return pc;
     }
 
   /* No stack check code in our prologue, return the start_pc.  */
   return start_pc;
 }
+
+/* Record the effect of a SAVE instruction on CACHE.  */
+
+void
+sparc_record_save_insn (struct sparc_frame_cache *cache)
+{
+  /* The frame is set up.  */
+  cache->frameless_p = 0;
+
+  /* The frame pointer contains the CFA.  */
+  cache->frame_offset = 0;
+
+  /* The `local' and `in' registers are all saved.  */
+  cache->saved_regs_mask = 0xffff;
+
+  /* The `out' registers are all renamed.  */
+  cache->copied_regs_mask = 0xff;
+}
+
+/* Do a full analysis of the prologue at PC and update CACHE accordingly.
+   Bail out early if CURRENT_PC is reached.  Return the address where
+   the analysis stopped.
+
+   We handle both the traditional register window model and the single
+   register window (aka flat) model.  */
 
 CORE_ADDR
 sparc_analyze_prologue (struct gdbarch *gdbarch, CORE_ADDR pc,
@@ -772,10 +886,37 @@ sparc_analyze_prologue (struct gdbarch *gdbarch, CORE_ADDR pc,
      dynamic linker patches up the first PLT with some code that
      starts with a SAVE instruction.  Patch up PC such that it points
      at the start of our PLT entry.  */
-  if (tdep->plt_entry_size > 0 && in_plt_section (current_pc, NULL))
+  if (tdep->plt_entry_size > 0 && in_plt_section (current_pc))
     pc = current_pc - ((current_pc - pc) % tdep->plt_entry_size);
 
   insn = sparc_fetch_instruction (pc);
+
+  /* Recognize store insns and record their sources.  */
+  while (X_OP (insn) == 3
+	 && (X_OP3 (insn) == 0x4     /* stw */
+	     || X_OP3 (insn) == 0x7  /* std */
+	     || X_OP3 (insn) == 0xe) /* stx */
+	 && X_RS1 (insn) == SPARC_SP_REGNUM)
+    {
+      int regnum = X_RD (insn);
+
+      /* Recognize stores into the corresponding stack slots.  */
+      if (regnum >= SPARC_L0_REGNUM && regnum <= SPARC_I7_REGNUM
+	  && ((X_I (insn)
+	       && X_SIMM13 (insn) == (X_OP3 (insn) == 0xe
+				      ? (regnum - SPARC_L0_REGNUM) * 8 + BIAS
+				      : (regnum - SPARC_L0_REGNUM) * 4))
+	      || (!X_I (insn) && regnum == SPARC_L0_REGNUM)))
+	{
+	  cache->saved_regs_mask |= (1 << (regnum - SPARC_L0_REGNUM));
+	  if (X_OP3 (insn) == 0x7)
+	    cache->saved_regs_mask |= (1 << (regnum + 1 - SPARC_L0_REGNUM));
+	}
+
+      offset += 4;
+
+      insn = sparc_fetch_instruction (pc + offset);
+    }
 
   /* Recognize a SETHI insn and record its destination.  */
   if (X_OP (insn) == 0 && X_OP2 (insn) == 0x04)
@@ -783,7 +924,7 @@ sparc_analyze_prologue (struct gdbarch *gdbarch, CORE_ADDR pc,
       dest = X_RD (insn);
       offset += 4;
 
-      insn = sparc_fetch_instruction (pc + 4);
+      insn = sparc_fetch_instruction (pc + offset);
     }
 
   /* Allow for an arithmetic operation on DEST or %g1.  */
@@ -792,14 +933,62 @@ sparc_analyze_prologue (struct gdbarch *gdbarch, CORE_ADDR pc,
     {
       offset += 4;
 
-      insn = sparc_fetch_instruction (pc + 8);
+      insn = sparc_fetch_instruction (pc + offset);
     }
 
   /* Check for the SAVE instruction that sets up the frame.  */
   if (X_OP (insn) == 2 && X_OP3 (insn) == 0x3c)
     {
-      cache->frameless_p = 0;
-      return pc + offset + 4;
+      sparc_record_save_insn (cache);
+      offset += 4;
+      return pc + offset;
+    }
+
+  /* Check for an arithmetic operation on %sp.  */
+  if (X_OP (insn) == 2
+      && (X_OP3 (insn) == 0 || X_OP3 (insn) == 0x4)
+      && X_RS1 (insn) == SPARC_SP_REGNUM
+      && X_RD (insn) == SPARC_SP_REGNUM)
+    {
+      if (X_I (insn))
+	{
+	  cache->frame_offset = X_SIMM13 (insn);
+	  if (X_OP3 (insn) == 0)
+	    cache->frame_offset = -cache->frame_offset;
+	}
+      offset += 4;
+
+      insn = sparc_fetch_instruction (pc + offset);
+
+      /* Check for an arithmetic operation that sets up the frame.  */
+      if (X_OP (insn) == 2
+	  && (X_OP3 (insn) == 0 || X_OP3 (insn) == 0x4)
+	  && X_RS1 (insn) == SPARC_SP_REGNUM
+	  && X_RD (insn) == SPARC_FP_REGNUM)
+	{
+	  cache->frameless_p = 0;
+	  cache->frame_offset = 0;
+	  /* We could check that the amount subtracted to %sp above is the
+	     same as the one added here, but this seems superfluous.  */
+	  cache->copied_regs_mask |= 0x40;
+	  offset += 4;
+
+	  insn = sparc_fetch_instruction (pc + offset);
+	}
+
+      /* Check for a move (or) operation that copies the return register.  */
+      if (X_OP (insn) == 2
+	  && X_OP3 (insn) == 0x2
+	  && !X_I (insn)
+	  && X_RS1 (insn) == SPARC_G0_REGNUM
+	  && X_RS2 (insn) == SPARC_O7_REGNUM
+	  && X_RD (insn) == SPARC_I7_REGNUM)
+	{
+	   cache->copied_regs_mask |= 0x80;
+	   offset += 4;
+	}
+
+      return pc + offset;
     }
 
   return pc;
@@ -842,21 +1031,36 @@ sparc32_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc)
      indeed what GCC seems to be doing.  In that case GCC will
      generate debug information that points to the stack slots instead
      of the registers, so we should consider the instructions that
-     write out these incoming arguments onto the stack.  Of course we
-     only need to do this if we have a stack frame.  */
+     write out these incoming arguments onto the stack.  */
 
-  while (!cache.frameless_p)
+  while (1)
     {
       unsigned long insn = sparc_fetch_instruction (start_pc);
 
-      /* Recognize instructions that store incoming arguments in
-         %i0...%i5 into the corresponding stack slot.  */
-      if (X_OP (insn) == 3 && (X_OP3 (insn) & 0x3c) == 0x04 && X_I (insn)
-	  && (X_RD (insn) >= 24 && X_RD (insn) <= 29) && X_RS1 (insn) == 30
-	  && X_SIMM13 (insn) == 68 + (X_RD (insn) - 24) * 4)
+      /* Recognize instructions that store incoming arguments into the
+	 corresponding stack slots.  */
+      if (X_OP (insn) == 3 && (X_OP3 (insn) & 0x3c) == 0x04
+	  && X_I (insn) && X_RS1 (insn) == SPARC_FP_REGNUM)
 	{
-	  start_pc += 4;
-	  continue;
+	  int regnum = X_RD (insn);
+
+	  /* Case of arguments still in %o[0..5].  */
+	  if (regnum >= SPARC_O0_REGNUM && regnum <= SPARC_O5_REGNUM
+	      && !(cache.copied_regs_mask & (1 << (regnum - SPARC_O0_REGNUM)))
+	      && X_SIMM13 (insn) == 68 + (regnum - SPARC_O0_REGNUM) * 4)
+	    {
+	      start_pc += 4;
+	      continue;
+	    }
+
+	  /* Case of arguments copied into %i[0..5].  */
+	  if (regnum >= SPARC_I0_REGNUM && regnum <= SPARC_I5_REGNUM
+	      && (cache.copied_regs_mask & (1 << (regnum - SPARC_I0_REGNUM)))
+	      && X_SIMM13 (insn) == 68 + (regnum - SPARC_I0_REGNUM) * 4)
+	    {
+	      start_pc += 4;
+	      continue;
+	    }
 	}
 
       break;
@@ -898,6 +1102,8 @@ sparc_frame_cache (struct frame_info *this_frame, void **this_cache)
       cache->base =
 	get_frame_register_unsigned (this_frame, SPARC_FP_REGNUM);
     }
+
+  cache->base += cache->frame_offset;
 
   if (cache->base & 1)
     cache->base += BIAS;
@@ -947,7 +1153,8 @@ sparc32_frame_cache (struct frame_info *this_frame, void **this_cache)
          an "unimp" instruction.  If it is, then it is a struct-return
          function.  */
       CORE_ADDR pc;
-      int regnum = cache->frameless_p ? SPARC_O7_REGNUM : SPARC_I7_REGNUM;
+      int regnum =
+	(cache->copied_regs_mask & 0x80) ? SPARC_I7_REGNUM : SPARC_O7_REGNUM;
 
       pc = get_frame_register_unsigned (this_frame, regnum) + 8;
       if (sparc_is_unimp_insn (pc))
@@ -989,7 +1196,8 @@ sparc32_frame_prev_register (struct frame_info *this_frame,
       if (cache->struct_return_p)
 	pc += 4;
 
-      regnum = cache->frameless_p ? SPARC_O7_REGNUM : SPARC_I7_REGNUM;
+      regnum =
+	(cache->copied_regs_mask & 0x80) ? SPARC_I7_REGNUM : SPARC_O7_REGNUM;
       pc += get_frame_register_unsigned (this_frame, regnum) + 8;
       return frame_unwind_got_constant (this_frame, regnum, pc);
     }
@@ -1009,20 +1217,20 @@ sparc32_frame_prev_register (struct frame_info *this_frame,
       }
   }
 
-  /* The previous frame's `local' and `in' registers have been saved
+  /* The previous frame's `local' and `in' registers may have been saved
      in the register save area.  */
-  if (!cache->frameless_p
-      && regnum >= SPARC_L0_REGNUM && regnum <= SPARC_I7_REGNUM)
+  if (regnum >= SPARC_L0_REGNUM && regnum <= SPARC_I7_REGNUM
+      && (cache->saved_regs_mask & (1 << (regnum - SPARC_L0_REGNUM))))
     {
       CORE_ADDR addr = cache->base + (regnum - SPARC_L0_REGNUM) * 4;
 
       return frame_unwind_got_memory (this_frame, regnum, addr);
     }
 
-  /* The previous frame's `out' registers are accessible as the
-     current frame's `in' registers.  */
-  if (!cache->frameless_p
-      && regnum >= SPARC_O0_REGNUM && regnum <= SPARC_O7_REGNUM)
+  /* The previous frame's `out' registers may be accessible as the current
+     frame's `in' registers.  */
+  if (regnum >= SPARC_O0_REGNUM && regnum <= SPARC_O7_REGNUM
+      && (cache->copied_regs_mask & (1 << (regnum - SPARC_O0_REGNUM))))
     regnum += (SPARC_I0_REGNUM - SPARC_O0_REGNUM);
 
   return frame_unwind_got_register (this_frame, regnum, regnum);
@@ -1076,17 +1284,29 @@ sparc32_extract_return_value (struct type *type, struct regcache *regcache,
 			      gdb_byte *valbuf)
 {
   int len = TYPE_LENGTH (type);
-  gdb_byte buf[8];
+  gdb_byte buf[32];
 
   gdb_assert (!sparc_structure_or_union_p (type));
   gdb_assert (!(sparc_floating_p (type) && len == 16));
 
-  if (sparc_floating_p (type))
+  if (sparc_floating_p (type) || sparc_complex_floating_p (type))
     {
       /* Floating return values.  */
       regcache_cooked_read (regcache, SPARC_F0_REGNUM, buf);
       if (len > 4)
 	regcache_cooked_read (regcache, SPARC_F1_REGNUM, buf + 4);
+      if (len > 8)
+	{
+	  regcache_cooked_read (regcache, SPARC_F2_REGNUM, buf + 8);
+	  regcache_cooked_read (regcache, SPARC_F3_REGNUM, buf + 12);
+	}
+      if (len > 16)
+	{
+	  regcache_cooked_read (regcache, SPARC_F4_REGNUM, buf + 16);
+	  regcache_cooked_read (regcache, SPARC_F5_REGNUM, buf + 20);
+	  regcache_cooked_read (regcache, SPARC_F6_REGNUM, buf + 24);
+	  regcache_cooked_read (regcache, SPARC_F7_REGNUM, buf + 28);
+	}
       memcpy (valbuf, buf, len);
     }
   else
@@ -1124,13 +1344,25 @@ sparc32_store_return_value (struct type *type, struct regcache *regcache,
   gdb_assert (!(sparc_floating_p (type) && len == 16));
   gdb_assert (len <= 8);
 
-  if (sparc_floating_p (type))
+  if (sparc_floating_p (type) || sparc_complex_floating_p (type))
     {
       /* Floating return values.  */
       memcpy (buf, valbuf, len);
       regcache_cooked_write (regcache, SPARC_F0_REGNUM, buf);
       if (len > 4)
 	regcache_cooked_write (regcache, SPARC_F1_REGNUM, buf + 4);
+      if (len > 8)
+	{
+	  regcache_cooked_write (regcache, SPARC_F2_REGNUM, buf + 8);
+	  regcache_cooked_write (regcache, SPARC_F3_REGNUM, buf + 12);
+	}
+      if (len > 16)
+	{
+	  regcache_cooked_write (regcache, SPARC_F4_REGNUM, buf + 16);
+	  regcache_cooked_write (regcache, SPARC_F5_REGNUM, buf + 20);
+	  regcache_cooked_write (regcache, SPARC_F6_REGNUM, buf + 24);
+	  regcache_cooked_write (regcache, SPARC_F7_REGNUM, buf + 28);
+	}
     }
   else
     {
@@ -1153,7 +1385,7 @@ sparc32_store_return_value (struct type *type, struct regcache *regcache,
 }
 
 static enum return_value_convention
-sparc32_return_value (struct gdbarch *gdbarch, struct type *func_type,
+sparc32_return_value (struct gdbarch *gdbarch, struct value *function,
 		      struct type *type, struct regcache *regcache,
 		      gdb_byte *readbuf, const gdb_byte *writebuf)
 {
@@ -1169,14 +1401,20 @@ sparc32_return_value (struct gdbarch *gdbarch, struct type *func_type,
   if (sparc_structure_or_union_p (type)
       || (sparc_floating_p (type) && TYPE_LENGTH (type) == 16))
     {
+      ULONGEST sp;
+      CORE_ADDR addr;
+
       if (readbuf)
 	{
-	  ULONGEST sp;
-	  CORE_ADDR addr;
-
 	  regcache_cooked_read_unsigned (regcache, SPARC_SP_REGNUM, &sp);
 	  addr = read_memory_unsigned_integer (sp + 64, 4, byte_order);
 	  read_memory (addr, readbuf, TYPE_LENGTH (type));
+	}
+      if (writebuf)
+	{
+	  regcache_cooked_read_unsigned (regcache, SPARC_SP_REGNUM, &sp);
+	  addr = read_memory_unsigned_integer (sp + 64, 4, byte_order);
+	  write_memory (addr, writebuf, TYPE_LENGTH (type));
 	}
 
       return RETURN_VALUE_ABI_PRESERVES_ADDRESS;
@@ -1194,7 +1432,8 @@ static int
 sparc32_stabs_argument_has_addr (struct gdbarch *gdbarch, struct type *type)
 {
   return (sparc_structure_or_union_p (type)
-	  || (sparc_floating_p (type) && TYPE_LENGTH (type) == 16));
+	  || (sparc_floating_p (type) && TYPE_LENGTH (type) == 16)
+	  || sparc_complex_floating_p (type));
 }
 
 static int
@@ -1250,14 +1489,24 @@ sparc_analyze_control_transfer (struct frame_info *frame,
 {
   unsigned long insn = sparc_fetch_instruction (pc);
   int conditional_p = X_COND (insn) & 0x7;
-  int branch_p = 0;
+  int branch_p = 0, fused_p = 0;
   long offset = 0;			/* Must be signed for sign-extend.  */
 
-  if (X_OP (insn) == 0 && X_OP2 (insn) == 3 && (insn & 0x1000000) == 0)
+  if (X_OP (insn) == 0 && X_OP2 (insn) == 3)
     {
-      /* Branch on Integer Register with Prediction (BPr).  */
-      branch_p = 1;
-      conditional_p = 1;
+      if ((insn & 0x10000000) == 0)
+	{
+	  /* Branch on Integer Register with Prediction (BPr).  */
+	  branch_p = 1;
+	  conditional_p = 1;
+	}
+      else
+	{
+	  /* Compare and Branch  */
+	  branch_p = 1;
+	  fused_p = 1;
+	  offset = 4 * X_DISP10 (insn);
+	}
     }
   else if (X_OP (insn) == 0 && X_OP2 (insn) == 6)
     {
@@ -1294,7 +1543,16 @@ sparc_analyze_control_transfer (struct frame_info *frame,
 
   if (branch_p)
     {
-      if (conditional_p)
+      if (fused_p)
+	{
+	  /* Fused compare-and-branch instructions are non-delayed,
+	     and do not have an annuling capability.  So we need to
+	     always set a breakpoint on both the NPC and the branch
+	     target address.  */
+	  gdb_assert (offset != 0);
+	  return pc + offset;
+	}
+      else if (conditional_p)
 	{
 	  /* For conditional branches, return nPC + 4 iff the annul
 	     bit is 1.  */
@@ -1311,7 +1569,6 @@ sparc_analyze_control_transfer (struct frame_info *frame,
 	  if (X_A (insn))
 	    *npc = 0;
 
-	  gdb_assert (offset != 0);
 	  return pc + offset;
 	}
     }
@@ -1462,6 +1719,8 @@ sparc32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   if (tdep->gregset)
     set_gdbarch_regset_from_core_section (gdbarch,
 					  sparc_regset_from_core_section);
+
+  register_sparc_ravenscar_ops (gdbarch);
 
   return gdbarch;
 }
@@ -1618,6 +1877,7 @@ sparc32_supply_gregset (const struct sparc_gregset *gregset,
 			int regnum, const void *gregs)
 {
   const gdb_byte *regs = gregs;
+  gdb_byte zero[4] = { 0 };
   int i;
 
   if (regnum == SPARC32_PSR_REGNUM || regnum == -1)
@@ -1637,7 +1897,7 @@ sparc32_supply_gregset (const struct sparc_gregset *gregset,
 			 regs + gregset->r_y_offset);
 
   if (regnum == SPARC_G0_REGNUM || regnum == -1)
-    regcache_raw_supply (regcache, SPARC_G0_REGNUM, NULL);
+    regcache_raw_supply (regcache, SPARC_G0_REGNUM, &zero);
 
   if ((regnum >= SPARC_G1_REGNUM && regnum <= SPARC_O7_REGNUM) || regnum == -1)
     {
@@ -1732,7 +1992,8 @@ sparc32_collect_gregset (const struct sparc_gregset *gregset,
 }
 
 void
-sparc32_supply_fpregset (struct regcache *regcache,
+sparc32_supply_fpregset (const struct sparc_fpregset *fpregset,
+			 struct regcache *regcache,
 			 int regnum, const void *fpregs)
 {
   const gdb_byte *regs = fpregs;
@@ -1741,15 +2002,18 @@ sparc32_supply_fpregset (struct regcache *regcache,
   for (i = 0; i < 32; i++)
     {
       if (regnum == (SPARC_F0_REGNUM + i) || regnum == -1)
-	regcache_raw_supply (regcache, SPARC_F0_REGNUM + i, regs + (i * 4));
+	regcache_raw_supply (regcache, SPARC_F0_REGNUM + i,
+			     regs + fpregset->r_f0_offset + (i * 4));
     }
 
   if (regnum == SPARC32_FSR_REGNUM || regnum == -1)
-    regcache_raw_supply (regcache, SPARC32_FSR_REGNUM, regs + (32 * 4) + 4);
+    regcache_raw_supply (regcache, SPARC32_FSR_REGNUM,
+			 regs + fpregset->r_fsr_offset);
 }
 
 void
-sparc32_collect_fpregset (const struct regcache *regcache,
+sparc32_collect_fpregset (const struct sparc_fpregset *fpregset,
+			  const struct regcache *regcache,
 			  int regnum, void *fpregs)
 {
   gdb_byte *regs = fpregs;
@@ -1758,11 +2022,13 @@ sparc32_collect_fpregset (const struct regcache *regcache,
   for (i = 0; i < 32; i++)
     {
       if (regnum == (SPARC_F0_REGNUM + i) || regnum == -1)
-	regcache_raw_collect (regcache, SPARC_F0_REGNUM + i, regs + (i * 4));
+	regcache_raw_collect (regcache, SPARC_F0_REGNUM + i,
+			      regs + fpregset->r_f0_offset + (i * 4));
     }
 
   if (regnum == SPARC32_FSR_REGNUM || regnum == -1)
-    regcache_raw_collect (regcache, SPARC32_FSR_REGNUM, regs + (32 * 4) + 4);
+    regcache_raw_collect (regcache, SPARC32_FSR_REGNUM,
+			  regs + fpregset->r_fsr_offset);
 }
 
 
@@ -1779,6 +2045,18 @@ const struct sparc_gregset sparc32_sunos4_gregset =
   -1,				/* %tbr */
   4 * 4,			/* %g1 */
   -1				/* %l0 */
+};
+
+const struct sparc_fpregset sparc32_sunos4_fpregset =
+{
+  0 * 4,			/* %f0 */
+  33 * 4,			/* %fsr */
+};
+
+const struct sparc_fpregset sparc32_bsd_fpregset =
+{
+  0 * 4,			/* %f0 */
+  32 * 4,			/* %fsr */
 };
 
 

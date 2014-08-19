@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_hook.c,v 1.4.18.1 2012/11/20 03:02:42 tls Exp $	*/
+/*	$NetBSD: kern_hook.c,v 1.4.18.2 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.4.18.1 2012/11/20 03:02:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.4.18.2 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -314,14 +314,14 @@ docritpollhooks(void)
  * registration order, when powering up in registration order.
  */
 struct powerhook_desc {
-	CIRCLEQ_ENTRY(powerhook_desc) sfd_list;
+	TAILQ_ENTRY(powerhook_desc) sfd_list;
 	void	(*sfd_fn)(int, void *);
 	void	*sfd_arg;
 	char	sfd_name[16];
 };
 
-static CIRCLEQ_HEAD(, powerhook_desc) powerhook_list =
-    CIRCLEQ_HEAD_INITIALIZER(powerhook_list);
+static TAILQ_HEAD(powerhook_head, powerhook_desc) powerhook_list =
+    TAILQ_HEAD_INITIALIZER(powerhook_list);
 
 void *
 powerhook_establish(const char *name, void (*fn)(int, void *), void *arg)
@@ -336,7 +336,7 @@ powerhook_establish(const char *name, void (*fn)(int, void *), void *arg)
 	ndp->sfd_fn = fn;
 	ndp->sfd_arg = arg;
 	strlcpy(ndp->sfd_name, name, sizeof(ndp->sfd_name));
-	CIRCLEQ_INSERT_HEAD(&powerhook_list, ndp, sfd_list);
+	TAILQ_INSERT_HEAD(&powerhook_list, ndp, sfd_list);
 
 	aprint_error("%s: WARNING: powerhook_establish is deprecated\n", name);
 	return (ndp);
@@ -348,14 +348,14 @@ powerhook_disestablish(void *vhook)
 #ifdef DIAGNOSTIC
 	struct powerhook_desc *dp;
 
-	CIRCLEQ_FOREACH(dp, &powerhook_list, sfd_list)
+	TAILQ_FOREACH(dp, &powerhook_list, sfd_list)
                 if (dp == vhook)
 			goto found;
 	panic("powerhook_disestablish: hook %p not established", vhook);
  found:
 #endif
 
-	CIRCLEQ_REMOVE(&powerhook_list, (struct powerhook_desc *)vhook,
+	TAILQ_REMOVE(&powerhook_list, (struct powerhook_desc *)vhook,
 	    sfd_list);
 	free(vhook, M_DEVBUF);
 }
@@ -372,14 +372,16 @@ dopowerhooks(int why)
 	why_name = why < __arraycount(pwr_names) ? pwr_names[why] : "???";
 
 	if (why == PWR_RESUME || why == PWR_SOFTRESUME) {
-		CIRCLEQ_FOREACH_REVERSE(dp, &powerhook_list, sfd_list) {
+		TAILQ_FOREACH_REVERSE(dp, &powerhook_list, powerhook_head,
+		    sfd_list)
+		{
 			if (powerhook_debug)
 				printf("dopowerhooks %s: %s (%p)\n",
 				    why_name, dp->sfd_name, dp);
 			(*dp->sfd_fn)(why, dp->sfd_arg);
 		}
 	} else {
-		CIRCLEQ_FOREACH(dp, &powerhook_list, sfd_list) {
+		TAILQ_FOREACH(dp, &powerhook_list, sfd_list) {
 			if (powerhook_debug)
 				printf("dopowerhooks %s: %s (%p)\n",
 				    why_name, dp->sfd_name, dp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.30 2012/06/24 15:26:03 christos Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.30.2.1 2014/08/20 00:02:14 tls Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.30 2012/06/24 15:26:03 christos Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.30.2.1 2014/08/20 00:02:14 tls Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -82,11 +82,12 @@ old2new(struct utmpx *utx)
 static void
 new2old(struct utmpx *utx)
 {
-	struct timeval tv;
-	struct otimeval *otv = (void *)&utx->ut_tv;
-	(void)memcpy(&tv, otv, sizeof(tv));
-	otv->tv_sec = (long)tv.tv_sec;
-	otv->tv_usec = (long)tv.tv_usec;
+	struct timeval otv;
+	struct timeval *tv = &utx->ut_tv;
+
+	otv.tv_sec = (long)tv->tv_sec;
+	otv.tv_usec = (long)tv->tv_usec;
+	(void)memcpy(tv, &otv, sizeof(otv));
 }
 
 void

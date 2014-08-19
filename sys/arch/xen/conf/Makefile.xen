@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.35 2011/12/19 14:06:17 joerg Exp $
+#	$NetBSD: Makefile.xen,v 1.35.6.1 2014/08/20 00:03:29 tls Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -38,17 +38,24 @@ ARCH_INC=	$S/arch/xen/include/${XEN_BUILD}
 ##
 ## (2) compile settings
 ##
-DEFCOPTS=	-O2
 CPPFLAGS+=	-D${XEN_BUILD}
 AFLAGS+=	-x assembler-with-cpp ${DBG} -D__XEN__
 EXTRA_INCLUDES=	-I${.CURDIR}/xen-ma
 
 .if ${XEN_BUILD} == "amd64"
+DEFCOPTS=	-O2 -fno-omit-frame-pointer
 CPPFLAGS+=	-Dx86_64
 CFLAGS+=	-mcmodel=kernel
-CFLAGS+=	-mno-red-zone
+CFLAGS+=	-mno-red-zone -mno-mmx -mno-sse -mno-avx
+CFLAGS+=	-msoft-float
+CFLAGS+=	${${ACTIVE_CC} == "gcc":?  -mno-fp-ret-in-387 :}
 .endif
 
+.if ${XEN_BUILD} == "i386"
+DEFCOPTS=	-O2 -fno-omit-frame-pointer
+CFLAGS+=	-msoft-float
+CFLAGS+=	-mno-mmx -mno-sse -mno-avx
+.endif
 
 ##
 ## (3) libkern and compat

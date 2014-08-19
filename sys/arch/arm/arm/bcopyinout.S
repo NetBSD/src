@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.18.2.1 2012/11/20 03:01:02 tls Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.18.2.2 2014/08/20 00:02:44 tls Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -41,7 +41,8 @@
 #include "assym.h"
 
 #include <machine/asm.h>
-#include <machine/cpu.h>
+
+#include <arm/locore.h>
 
 #if defined(__XSCALE__) || defined(_ARM_ARCH_6)
 /*
@@ -51,7 +52,7 @@
 #include "bcopyinout_xscale.S"
 #else
 
-RCSID("$NetBSD: bcopyinout.S,v 1.18.2.1 2012/11/20 03:01:02 tls Exp $")	
+RCSID("$NetBSD: bcopyinout.S,v 1.18.2.2 2014/08/20 00:02:44 tls Exp $")	
 
 	.text
 	.align	0
@@ -282,6 +283,7 @@ ENTRY(copyin)
 	RESTORE_REGS
 
 	RET
+END(copyin)
 
 /*
  * r0 = kernel space address
@@ -485,6 +487,7 @@ ENTRY(copyout)
 	RESTORE_REGS
 
 	RET
+END(copyout)
 
 /*
  * r0 = kernel space source address
@@ -676,6 +679,7 @@ ENTRY(kcopy)
 	RESTORE_REGS
 
 	RET
+END(kcopy)
 #endif	/* !__XSCALE__ */
 
 #ifdef __PROG32
@@ -701,6 +705,7 @@ ENTRY(badaddr_read_1)
 	mov	r0, #0		/* No fault */
 1:	str	ip, [r2, #PCB_ONFAULT]
 	RET
+END(badaddr_read_1)
 
 /*
  * int badaddr_read_2(const uint16_t *src, uint16_t *dest)
@@ -724,6 +729,7 @@ ENTRY(badaddr_read_2)
 	mov	r0, #0		/* No fault */
 1:	str	ip, [r2, #PCB_ONFAULT]
 	RET
+END(badaddr_read_2)
 
 /*
  * int badaddr_read_4(const uint32_t *src, uint32_t *dest)
@@ -747,4 +753,5 @@ ENTRY(badaddr_read_4)
 	mov	r0, #0		/* No fault */
 1:	str	ip, [r2, #PCB_ONFAULT]
 	RET
+END(badaddr_read_4)
 #endif /* __PROG32 */

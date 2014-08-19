@@ -1,4 +1,4 @@
-/*	$NetBSD: wav.c,v 1.10 2011/08/28 01:17:47 joerg Exp $	*/
+/*	$NetBSD: wav.c,v 1.10.8.1 2014/08/20 00:04:56 tls Exp $	*/
 
 /*
  * Copyright (c) 2002, 2009 Matthew R. Green
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wav.c,v 1.10 2011/08/28 01:17:47 joerg Exp $");
+__RCSID("$NetBSD: wav.c,v 1.10.8.1 2014/08/20 00:04:56 tls Exp $");
 #endif
 
 
@@ -48,8 +48,10 @@ __RCSID("$NetBSD: wav.c,v 1.10 2011/08/28 01:17:47 joerg Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <unistd.h>
 
 #include "libaudio.h"
+#include "auconv.h"
 
 static const struct {
 	int	wenc;
@@ -208,4 +210,266 @@ audio_wav_parse_hdr(void *hdr, size_t sz, u_int *enc, u_int *prec,
 		return (owhere - (char *)hdr + 8);
 	}
 	return (AUDIO_EWAVNODATA);
+}
+
+
+/*
+ * prepare a WAV header for writing; we fill in hdrp, lenp and leftp,
+ * and expect our caller (wav_write_header()) to use them.
+ */
+int
+wav_prepare_header(struct write_info *wi, void **hdrp, size_t *lenp, int *leftp)
+{
+	/*
+	 * WAV header we write looks like this:
+	 *
+	 *      bytes   purpose
+	 *      0-3     "RIFF"
+	 *      4-7     file length (minus 8)
+	 *      8-15    "WAVEfmt "
+	 *      16-19   format size
+	 *      20-21   format tag
+	 *      22-23   number of channels
+	 *      24-27   sample rate
+	 *      28-31   average bytes per second
+	 *      32-33   block alignment
+	 *      34-35   bits per sample
+	 *
+	 * then for ULAW and ALAW outputs, we have an extended chunk size
+	 * and a WAV "fact" to add:
+	 *
+	 *      36-37   length of extension (== 0)
+	 *      38-41   "fact"
+	 *      42-45   fact size
+	 *      46-49   number of samples written
+	 *      50-53   "data"
+	 *      54-57   data length
+	 *      58-     raw audio data
+	 *
+	 * for PCM outputs we have just the data remaining:
+	 *
+	 *      36-39   "data"
+	 *      40-43   data length
+	 *      44-     raw audio data
+	 *
+	 *	RIFF\^@^C^@WAVEfmt ^P^@^@^@^A^@^B^@D<AC>^@^@^P<B1>^B^@^D^@^P^@data^@^@^C^@^@^@^@^@^@^@^@^@^@
+	 */
+	static char wavheaderbuf[64];
+	char	*p = wavheaderbuf;
+	const char *riff = "RIFF",
+	    *wavefmt = "WAVEfmt ",
+	    *fact = "fact",
+	    *data = "data";
+	u_int32_t filelen, fmtsz, sps, abps, factsz = 4, nsample, datalen;
+	u_int16_t fmttag, nchan, align, extln = 0;
+
+	if (wi->header_info)
+		warnx("header information not supported for WAV");
+	*leftp = 0;
+
+	switch (wi->precision) {
+	case 8:
+		break;
+	case 16:
+		break;
+	case 32:
+		break;
+	default:
+		{
+			static int warned = 0;
+
+			if (warned == 0) {
+				warnx("can not support precision of %d", wi->precision);
+				warned = 1;
+			}
+		}
+		return (-1);
+	}
+
+	switch (wi->encoding) {
+	case AUDIO_ENCODING_ULAW:
+		fmttag = WAVE_FORMAT_MULAW;
+		fmtsz = 18;
+		align = wi->channels;
+		break;
+
+	case AUDIO_ENCODING_ALAW:
+		fmttag = WAVE_FORMAT_ALAW;
+		fmtsz = 18;
+		align = wi->channels;
+		break;
+
+	/*
+	 * we could try to support RIFX but it seems to be more portable
+	 * to output little-endian data for WAV files.
+	 */
+	case AUDIO_ENCODING_ULINEAR_BE:
+	case AUDIO_ENCODING_SLINEAR_BE:
+	case AUDIO_ENCODING_ULINEAR_LE:
+	case AUDIO_ENCODING_SLINEAR_LE:
+	case AUDIO_ENCODING_PCM16:
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+	case AUDIO_ENCODING_ULINEAR:
+	case AUDIO_ENCODING_SLINEAR:
+#endif
+		fmttag = WAVE_FORMAT_PCM;
+		fmtsz = 16;
+		align = wi->channels * (wi->precision / 8);
+		break;
+
+	default:
+#if 0 // move into record.c, and maybe merge.c
+		{
+			static int warned = 0;
+
+			if (warned == 0) {
+				const char *s = wav_enc_from_val(wi->encoding);
+
+				if (s == NULL)
+					warnx("can not support encoding of %s", s);
+				else
+					warnx("can not support encoding of %d", wi->encoding);
+				warned = 1;
+			}
+		}
+#endif
+		wi->format = AUDIO_FORMAT_NONE;
+		return (-1);
+	}
+
+	nchan = wi->channels;
+	sps = wi->sample_rate;
+
+	/* data length */
+	if (wi->outfd == STDOUT_FILENO)
+		datalen = 0;
+	else if (wi->total_size != -1)
+		datalen = wi->total_size;
+	else
+		datalen = 0;
+
+	/* file length */
+	filelen = 4 + (8 + fmtsz) + (8 + datalen);
+	if (fmttag != WAVE_FORMAT_PCM)
+		filelen += 8 + factsz;
+
+	abps = (double)align*wi->sample_rate / (double)1 + 0.5;
+
+	nsample = (datalen / wi->precision) / wi->sample_rate;
+	
+	/*
+	 * now we've calculated the info, write it out!
+	 */
+#define put32(x) do { \
+	u_int32_t _f; \
+	putle32(_f, (x)); \
+	memcpy(p, &_f, 4); \
+} while (0)
+#define put16(x) do { \
+	u_int16_t _f; \
+	putle16(_f, (x)); \
+	memcpy(p, &_f, 2); \
+} while (0)
+	memcpy(p, riff, 4);
+	p += 4;				/* 4 */
+	put32(filelen);
+	p += 4;				/* 8 */
+	memcpy(p, wavefmt, 8);
+	p += 8;				/* 16 */
+	put32(fmtsz);
+	p += 4;				/* 20 */
+	put16(fmttag);
+	p += 2;				/* 22 */
+	put16(nchan);
+	p += 2;				/* 24 */
+	put32(sps);
+	p += 4;				/* 28 */
+	put32(abps);
+	p += 4;				/* 32 */
+	put16(align);
+	p += 2;				/* 34 */
+	put16(wi->precision);
+	p += 2;				/* 36 */
+	/* NON PCM formats have an extended chunk; write it */
+	if (fmttag != WAVE_FORMAT_PCM) {
+		put16(extln);
+		p += 2;			/* 38 */
+		memcpy(p, fact, 4);
+		p += 4;			/* 42 */
+		put32(factsz);
+		p += 4;			/* 46 */
+		put32(nsample);
+		p += 4;			/* 50 */
+	}
+	memcpy(p, data, 4);
+	p += 4;				/* 40/54 */
+	put32(datalen);
+	p += 4;				/* 44/58 */
+#undef put32
+#undef put16
+
+	*hdrp = wavheaderbuf;
+	*lenp = (p - wavheaderbuf);
+
+	return 0;
+}
+
+write_conv_func
+wav_write_get_conv_func(struct write_info *wi)
+{
+	write_conv_func conv_func = NULL;
+
+	switch (wi->encoding) {
+
+	/*
+	 * we could try to support RIFX but it seems to be more portable
+	 * to output little-endian data for WAV files.
+	 */
+	case AUDIO_ENCODING_ULINEAR_BE:
+#if BYTE_ORDER == BIG_ENDIAN
+	case AUDIO_ENCODING_ULINEAR:
+#endif
+		if (wi->precision == 16)
+			conv_func = change_sign16_swap_bytes_be;
+		else if (wi->precision == 32)
+			conv_func = change_sign32_swap_bytes_be;
+		break;
+
+	case AUDIO_ENCODING_SLINEAR_BE:
+#if BYTE_ORDER == BIG_ENDIAN
+	case AUDIO_ENCODING_SLINEAR:
+#endif
+		if (wi->precision == 8)
+			conv_func = change_sign8;
+		else if (wi->precision == 16)
+			conv_func = swap_bytes;
+		else if (wi->precision == 32)
+			conv_func = swap_bytes32;
+		break;
+
+	case AUDIO_ENCODING_ULINEAR_LE:
+#if BYTE_ORDER == LITTLE_ENDIAN
+	case AUDIO_ENCODING_ULINEAR:
+#endif
+		if (wi->precision == 16)
+			conv_func = change_sign16_le;
+		else if (wi->precision == 32)
+			conv_func = change_sign32_le;
+		break;
+
+	case AUDIO_ENCODING_SLINEAR_LE:
+	case AUDIO_ENCODING_PCM16:
+#if BYTE_ORDER == LITTLE_ENDIAN
+	case AUDIO_ENCODING_SLINEAR:
+#endif
+		if (wi->precision == 8)
+			conv_func = change_sign8;
+		break;
+
+	default:
+		wi->format = AUDIO_FORMAT_NONE;
+	}
+
+	return conv_func;
 }

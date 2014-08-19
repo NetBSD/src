@@ -1,4 +1,4 @@
-/* $NetBSD: subr_evcnt.c,v 1.11 2011/09/27 01:02:39 jym Exp $ */
+/* $NetBSD: subr_evcnt.c,v 1.11.12.1 2014/08/20 00:04:29 tls Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.11 2011/09/27 01:02:39 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.11.12.1 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -345,11 +345,7 @@ sysctl_doevcnt(SYSCTLFN_ARGS)
 
 SYSCTL_SETUP(sysctl_evcnt_setup, "sysctl kern.evcnt subtree setup")
 {
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT, 
-		       CTLTYPE_NODE, "kern", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, CTL_EOL);
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "evcnt",

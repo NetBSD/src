@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.22.2.2 2013/06/23 06:20:17 tls Exp $ */
+/* $NetBSD: siisata.c,v 1.22.2.3 2014/08/20 00:03:38 tls Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.22.2.2 2013/06/23 06:20:17 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.22.2.3 2014/08/20 00:03:38 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -291,7 +291,7 @@ siisata_attach_port(struct siisata_softc *sc, int port)
 	chp->ch_channel = port;
 	chp->ch_atac = &sc->sc_atac;
 	chp->ch_queue = malloc(sizeof(struct ata_queue),
-			       M_DEVBUF, M_NOWAIT);
+			       M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (chp->ch_queue == NULL) {
 		aprint_error_dev(sc->sc_atac.atac_dev,
 		    "port %d: can't allocate memory "
@@ -1417,7 +1417,7 @@ siisata_atapi_probe_device(struct atapibus_softc *sc, int target)
 		return;
 
 	/* if no ATAPI device detected at attach time, skip */
-	if (drvp->drive_type == ATA_DRIVET_ATAPI) {
+	if (drvp->drive_type != ATA_DRIVET_ATAPI) {
 		SIISATA_DEBUG_PRINT(("%s: drive %d "
 		    "not present\n", __func__, target), DEBUG_PROBE);
 		return;

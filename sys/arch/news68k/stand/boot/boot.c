@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.18 2010/08/25 16:35:02 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.18.18.1 2014/08/20 00:03:15 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999 Izumi Tsutsui.  All rights reserved.
@@ -114,7 +114,8 @@ boot(uint32_t d4, uint32_t d5, uint32_t d6, uint32_t d7)
 		return;
 	}
 
-	sprintf(devname, "%s(%d,%d,%d)", devs[type], ctlr, unit, part);
+	snprintf(devname, sizeof(devname),
+	    "%s(%d,%d,%d)", devs[type], ctlr, unit, part);
 	printf("Booting %s%s\n", devname, netbsd);
 
 	/* use user specified kernel name if exists */
@@ -128,7 +129,7 @@ boot(uint32_t d4, uint32_t d5, uint32_t d6, uint32_t d7)
 		loadflag &= ~LOAD_BACKWARDS;
 
 	for (i = 0; kernels[i]; i++) {
-		sprintf(file, "%s%s", devname, kernels[i]);
+		snprintf(file, sizeof(file), "%s%s", devname, kernels[i]);
 		DPRINTF("trying %s...\n", file);
 		fd = loadfile(file, marks, loadflag);
 		if (fd != -1)

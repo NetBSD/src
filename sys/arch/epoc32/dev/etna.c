@@ -1,4 +1,4 @@
-/*	$NetBSD: etna.c,v 1.2.2.2 2013/06/23 06:20:02 tls Exp $	*/
+/*	$NetBSD: etna.c,v 1.2.2.3 2014/08/20 00:02:52 tls Exp $	*/
 /*
  * Copyright (c) 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: etna.c,v 1.2.2.2 2013/06/23 06:20:02 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: etna.c,v 1.2.2.3 2014/08/20 00:02:52 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -226,7 +226,7 @@ etna_doattach(device_t self)
 	struct etna_softc *sc = device_private(self);
 	int status;
 
-	config_pending_incr();
+	config_pending_incr(self);
 
 	status = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ETNA_SKT_STATUS);
 	if ((status & SKT_CARD_OUT) != SKT_CARD_OUT)
@@ -242,7 +242,7 @@ etna_event_thread(void *arg)
 {
 	struct etna_softc *sc = arg;
 
-	config_pending_decr();
+	config_pending_decr(sc->sc_dev);
 
 //	while (1) {
 //	}
@@ -341,6 +341,13 @@ etna_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start, bus_size_t size,
 	      bus_size_t align, struct pcmcia_io_handle *pcihp)
 {
 	struct etna_softc *sc = (struct etna_softc *)pch;
+	extern char epoc32_model[];
+
+	/*
+	 * XXXXX: Series 5 can't allocate I/O map???
+	 */
+	if (strcmp(epoc32_model, "SERIES5 R1") == 0)
+		return -1;
 
 	memset(pcihp, 0, sizeof(*pcihp));
 	pcihp->iot = sc->sc_iot;

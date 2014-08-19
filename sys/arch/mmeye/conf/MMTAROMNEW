@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAROMNEW,v 1.47.8.1 2013/06/23 06:20:09 tls Exp $
+#	$NetBSD: MMTAROMNEW,v 1.47.8.2 2014/08/20 00:03:13 tls Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -104,7 +104,6 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.

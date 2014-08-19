@@ -1,4 +1,4 @@
-/*	$NetBSD: mvphy.c,v 1.9 2009/06/18 08:40:26 rjs Exp $	*/
+/*	$NetBSD: mvphy.c,v 1.9.22.1 2014/08/20 00:03:41 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.9 2009/06/18 08:40:26 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.9.22.1 2014/08/20 00:03:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,6 +290,8 @@ mvphy_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_10_T;
 		if (hwstatus & MV_STATUS_RESOLVED_DUPLEX_FULL)
 			mii->mii_media_active |= IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
 	} else {
 		mii->mii_media_active |= IFM_NONE;
 		/* XXX flush ATU only on link down transition */

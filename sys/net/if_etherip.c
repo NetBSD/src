@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.33 2012/07/28 00:43:24 matt Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.33.2.1 2014/08/20 00:04:34 tls Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.33 2012/07/28 00:43:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.33.2.1 2014/08/20 00:04:34 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -397,6 +397,7 @@ etheripintr(void *arg)
 		} else  m_freem(m);
 	}
 	mutex_exit(softnet_lock);
+	__USE(error);
 }
 
 static int
@@ -639,14 +640,6 @@ SYSCTL_SETUP(sysctl_etherip_setup, "sysctl net.link.etherip subtree setup")
 {
 	const struct sysctlnode *node;
 	int error = 0;
-
-	error = sysctl_createv(clog, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "net", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_NET, CTL_EOL);
-	if (error)
-		return;
 
 	error = sysctl_createv(clog, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,

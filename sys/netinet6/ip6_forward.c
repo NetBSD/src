@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.70.2.1 2013/06/23 06:20:26 tls Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.70.2.2 2014/08/20 00:04:36 tls Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,11 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.70.2.1 2013/06/23 06:20:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.70.2.2 2014/08/20 00:04:36 tls Exp $");
 
 #include "opt_gateway.h"
 #include "opt_ipsec.h"
-#include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.70.2.1 2013/06/23 06:20:26 tls Exp
 
 #include <net/if.h>
 #include <net/route.h>
+#include <net/pfil.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -69,17 +69,11 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.70.2.1 2013/06/23 06:20:26 tls Exp
 #include <netipsec/xform.h>
 #endif /* IPSEC */
 
-#ifdef PFIL_HOOKS
-#include <net/pfil.h>
-#endif
-
 #include <net/net_osdep.h>
 
 struct	route ip6_forward_rt;
 
-#ifdef PFIL_HOOKS
-extern struct pfil_head inet6_pfil_hook;	/* XXX */
-#endif
+extern pfil_head_t *inet6_pfil_hook;	/* XXX */
 
 /*
  * Forward a packet.  If some error occurs return the sender
@@ -106,9 +100,8 @@ ip6_forward(struct mbuf *m, int srcrt)
 	u_int32_t inzone, outzone;
 	struct in6_addr src_in6, dst_in6;
 #ifdef IPSEC
-	struct secpolicy *sp = NULL;
 	int needipsec = 0;
-	int s;
+	struct secpolicy *sp = NULL;
 #endif
 
 	/*
@@ -161,19 +154,21 @@ ip6_forward(struct mbuf *m, int srcrt)
 	mcopy = m_copy(m, 0, imin(m->m_pkthdr.len, ICMPV6_PLD_MAXLEN));
 
 #ifdef IPSEC
-	/* Check the security policy (SP) for the packet */
+	if (ipsec_used) {
+		/* Check the security policy (SP) for the packet */
 
-	sp = ipsec6_check_policy(m,NULL,0,&needipsec,&error);
-	if (error != 0) {
-		/*
-		 * Hack: -EINVAL is used to signal that a packet
-		 * should be silently discarded.  This is typically
-		 * because we asked key management for an SA and
-		 * it was delayed (e.g. kicked up to IKE).
-		 */
-	if (error == -EINVAL)
-		error = 0;
-	goto freecopy;
+		sp = ipsec6_check_policy(m, NULL, 0, &needipsec, &error);
+		if (error != 0) {
+			/*
+			 * Hack: -EINVAL is used to signal that a packet
+			 * should be silently discarded.  This is typically
+			 * because we asked key management for an SA and
+			 * it was delayed (e.g. kicked up to IKE).
+			 */
+			if (error == -EINVAL)
+				error = 0;
+			goto freecopy;
+		}
 	}
 #endif /* IPSEC */
 
@@ -267,8 +262,8 @@ ip6_forward(struct mbuf *m, int srcrt)
 	 * ipsec6_proces_packet will send the packet using ip6_output 
 	 */
 	if (needipsec) {
-		s = splsoftnet();
-		error = ipsec6_process_packet(m,sp->req);
+		int s = splsoftnet();
+		error = ipsec6_process_packet(m, sp->req);
 		splx(s);
 		if (mcopy)
 			goto freecopy;
@@ -391,17 +386,15 @@ ip6_forward(struct mbuf *m, int srcrt)
 	in6_clearscope(&ip6->ip6_src);
 	in6_clearscope(&ip6->ip6_dst);
 
-#ifdef PFIL_HOOKS
 	/*
 	 * Run through list of hooks for output packets.
 	 */
-	if ((error = pfil_run_hooks(&inet6_pfil_hook, &m, rt->rt_ifp,
+	if ((error = pfil_run_hooks(inet6_pfil_hook, &m, rt->rt_ifp,
 	    PFIL_OUT)) != 0)
 		goto senderr;
 	if (m == NULL)
 		goto freecopy;
 	ip6 = mtod(m, struct ip6_hdr *);
-#endif /* PFIL_HOOKS */
 
 	error = nd6_output(rt->rt_ifp, origifp, m, dst, rt);
 	if (error) {
@@ -422,9 +415,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 		}
 	}
 
-#ifdef PFIL_HOOKS
  senderr:
-#endif
 	if (mcopy == NULL)
 		return;
 	switch (error) {

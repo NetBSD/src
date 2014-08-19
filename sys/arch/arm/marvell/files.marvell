@@ -1,4 +1,4 @@
-#       $NetBSD: files.marvell,v 1.7.2.1 2013/06/23 06:20:00 tls Exp $
+#       $NetBSD: files.marvell,v 1.7.2.2 2014/08/20 00:02:47 tls Exp $
 #
 # Configuration info for Marvell System on Chip support
 #
@@ -13,12 +13,16 @@ file	arch/arm/marvell/mvsoc_dma.c
 
 file	arch/arm/arm32/irq_dispatch.S
 
-defflag opt_mvsoc.h				ORION KIRKWOOD MV78XX0
+# Some SoC(ARMADAXP) reports false DeviceID. 
+defflag opt_mvsoc.h				ORION KIRKWOOD MV78XX0 ARMADAXP
+						MVSOC_CONSOLE_EARLY
+defparam opt_mvsoc.h				MVSOC_INTERREGS_PBASE
+						MVSOC_FIXUP_DEVID MEMSIZE
 file	arch/arm/marvell/mvsoc_intr.c
-file	arch/arm/marvell/armadaxp.c		armadaxp
 file	arch/arm/marvell/orion.c		orion
 file	arch/arm/marvell/kirkwood.c		kirkwood
-#file	arch/arm/marvell/mv78xx0.c		mv78xx0
+file	arch/arm/marvell/mv78xx0.c		mv78xx0
+file	arch/arm/marvell/armadaxp.c		armadaxp
 
 
 # Integrated peripherals
@@ -80,3 +84,6 @@ attach	mvsdio at mvsoc with mvsdio_mbus
 device	mvsocts: sysmon_envsys
 attach	mvsocts at mvsoc
 file	arch/arm/marvell/mvsocts.c		mvsocts
+
+# SPI Serial Peripheral Interface
+attach	mvspi at mvsoc with mvspi_mbus

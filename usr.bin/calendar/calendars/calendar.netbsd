@@ -3,6 +3,10 @@
 01/07   NetBSD/dreamcast port started, 2001
 01/17   NetBSD/hpcsh port started, 2001
 01/23   NetBSD/arc port started, 2000
+01/27   NetBSD 5.1.4 released, 2014
+01/27   NetBSD 5.2.2 released, 2014
+01/27   NetBSD 6.0.4 released, 2014
+01/27   NetBSD 6.1.3 released, 2014
 01/31   NetBSD/shark port started, 1996
 02/02	NetBSD 5.1.2 released, 2012
 02/06   NetBSD/evbsh3 port started, 2001
@@ -25,6 +29,8 @@
 03/21   NetBSD/i386 port started, 1993
 03/26   NetBSD/atari port started, 1995
 03/28   NetBSD/sun2 port started, 2001
+04/12   NetBSD 6.0.5 released, 2014
+04/12   NetBSD 6.1.4 released, 2014
 04/14   NetBSD 2.0.2 released, 2005
 04/20   NetBSD 0.8 released, 1993
 04/21   NetBSD 1.6.1 released, 2003
@@ -62,6 +68,7 @@
 08/02   NetBSD/vax port started, 1994
 08/12   NetBSD/mipsco port started, 2000
 08/20   pkgsrc forked from FreeBSD Ports, 1997
+08/22   NetBSD 6.1.1 released, 2013
 08/23   NetBSD 0.9 released, 1993
 08/26   NetBSD 1.4.1 released, 1999
 09/02   NetBSD/amiga port started, 1993
@@ -70,7 +77,11 @@
 09/13   NetBSD 1.5.2 released, 2001
 09/14   NetBSD 1.6 released, 2002
 09/25   NetBSD/hpcmips port started, 1999
+09/28	NetBSD 5.1.3 released, 2013
+09/28	NetBSD 5.2.1 released, 2013
 09/29   NetBSD/mac68k port started, 1993
+09/30	NetBSD 6.0.3 released, 2013
+09/30	NetBSD 6.1.2 released, 2013
 10/02   NetBSD/sparc port started, 1993
 10/04   NetBSD 1.2 released, 1996
 10/05   NetBSD/cats port started, 1998
@@ -105,3 +116,4 @@
 12/23   NetBSD 1.3.3 released, 1998
 12/23   NetBSD 3.0 released, 2005
 12/29   NetBSD/ews4800mips port started, 2005
+02/24   NetBSD/hp700 port renamed NetBSD/hppa, 2014

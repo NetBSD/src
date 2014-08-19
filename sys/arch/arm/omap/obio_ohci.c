@@ -1,7 +1,7 @@
-/*	$Id: obio_ohci.c,v 1.7.2.2 2013/06/23 06:20:01 tls Exp $	*/
+/*	$Id: obio_ohci.c,v 1.7.2.3 2014/08/20 00:02:47 tls Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: obio_ohci.c,v 1.7.2.2 2013/06/23 06:20:01 tls Exp $	*/
+/*	$NetBSD: obio_ohci.c,v 1.7.2.3 2014/08/20 00:02:47 tls Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -24,7 +24,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.7.2.2 2013/06/23 06:20:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.7.2.3 2014/08/20 00:02:47 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ obioohci_match(device_t parent, cfdata_t cf, void *aux)
 	if (obio->obio_addr != OHCI1_BASE_OMAP3)
 		return 0;
 #endif
-#if defined(OMAP4)
+#if defined(OMAP4) || defined(OMAP5)
 	if (obio->obio_addr != OHCI1_BASE_OMAP4)
 		return 0;
 #endif

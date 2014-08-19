@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.52.22.1 2012/11/20 03:01:49 tls Exp $	*/
+/*	$NetBSD: mha.c,v 1.52.22.2 2014/08/20 00:03:28 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.52.22.1 2012/11/20 03:01:49 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.52.22.2 2014/08/20 00:03:28 tls Exp $");
 
 #include "opt_ddb.h"
 
@@ -673,7 +673,6 @@ mha_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
     void *arg)
 {
 	struct scsipi_xfer *xs;
-	struct scsipi_periph *periph;
 	struct mha_softc *sc = device_private(chan->chan_adapter->adapt_dev);
 	struct acb *acb;
 	int s, flags;
@@ -681,7 +680,6 @@ mha_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
 		xs = arg;
-		periph = xs->xs_periph;
 
 		SPC_TRACE(("[mha_scsi_cmd] "));
 		SPC_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
@@ -1729,6 +1727,7 @@ mhaintr(void *arg)
 					WAIT;
 					s = MBR;
 					SPC_ASSERT(s == 1);
+					__USE(s);
 					acb->stat = sc->sc_pcx[0]; /* XXX */
 					SPC_MISC(("stat=0x%02x  ", acb->stat));
 					sc->sc_prevphase = STATUS_PHASE;

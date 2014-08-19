@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.34.2.1 2013/06/23 06:21:06 tls Exp $	*/
+/*	$NetBSD: local.h,v 1.34.2.2 2014/08/20 00:02:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -60,7 +60,7 @@ extern void	(*__cleanup)(void);
 extern void	__smakebuf(FILE *);
 extern int	__swhatbuf(FILE *, size_t *, int *);
 extern int	_fwalk(int (*)(FILE *));
-extern char	*_mktemp(char *);
+extern char    *_mktemp(char *);
 extern int	__swsetup(FILE *);
 extern int	__sflags(const char *, int *);
 extern int	__svfscanf(FILE * __restrict, const char * __restrict,
@@ -74,8 +74,6 @@ extern int	__vfprintf_unlocked_l(FILE * __restrict, locale_t,
 
 
 extern int	__sdidinit;
-
-extern int	__gettemp(char *, int *, int);
 
 extern wint_t	__fgetwc_unlock(FILE *);
 extern wint_t	__fputwc_unlock(wchar_t, FILE *);
@@ -116,6 +114,8 @@ extern int	 __vfwscanf_unlocked_l(FILE * __restrict, locale_t,
 
 extern void __flockfile_internal(FILE *, int);
 extern void __funlockfile_internal(FILE *, int);
+
+extern char *__gets(char *);
 
 /*
  * Detect if the current file position fits in a long int.

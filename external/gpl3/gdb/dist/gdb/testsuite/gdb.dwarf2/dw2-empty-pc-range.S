@@ -1,4 +1,4 @@
-/* Copyright 2011, 2011 Free Software Foundation, Inc.
+/* Copyright 2011-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,10 +20,10 @@ pc_end:
 
 	.section	.debug_info
 d:
-	.long	.Ldebug_info_end - 1f	/* Length of Compilation Unit Info */
+	.4byte	.Ldebug_info_end - 1f	/* Length of Compilation Unit Info */
 1:
 	.2byte	0x3	/* DWARF version number */
-	.long	.Ldebug_abbrev0	/* Offset Into Abbrev. Section */
+	.4byte	.Ldebug_abbrev0	/* Offset Into Abbrev. Section */
 	.byte	0x4	/* Pointer Size (in bytes) */
 dieb:
 	.uleb128 0x1	/* (DIE (0xb) DW_TAG_compile_unit) */

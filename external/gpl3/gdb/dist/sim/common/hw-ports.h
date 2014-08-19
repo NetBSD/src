@@ -1,6 +1,5 @@
 /* Hardware ports.
-   Copyright (C) 1998, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    Contributed by Andrew Cagney and Cygnus Solutions.
 
 This file is part of GDB, the GNU debugger.

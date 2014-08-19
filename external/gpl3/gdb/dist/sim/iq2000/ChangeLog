@@ -1,3 +1,48 @@
+2013-09-23  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2013-06-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4, configure: Regenerate.
+
+2013-03-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2013-03-23  Joel Sherrill  <joel.sherrill@oarcorp.com>
+
+	* configure.ac: Fail if dv-sockser.o not available.
+	Error when --disable-sim-hardware is specified.
+	* configure: Regenerated.
+
+2012-06-15  Joel Brobecker  <brobecker@adacore.com>
+
+	* config.in, configure: Regenerate.
+
+2012-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4, config.in, configure: Regenerate.
+
+2011-12-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4: New file.
+	* configure: Regenerate.
+
+2011-10-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Change include to common/acinclude.m4.
+
+2011-10-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Change AC_PREREQ to 2.64.  Delete AC_CONFIG_HEADER
+	call.  Replace common.m4 include with SIM_AC_COMMON.
+	* configure: Regenerate.
+
+2011-07-05  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (sim_do_command): Delete.
+
 2011-02-14  Mike Frysinger  <vapier@gentoo.org>
 
 	* iq2000.c (do_syscall): Change zfree to free.

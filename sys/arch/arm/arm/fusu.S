@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.2 2009/01/18 16:42:09 bjh21 Exp $	*/
+/*	$NetBSD: fusu.S,v 1.2.28.1 2014/08/20 00:02:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -36,8 +36,10 @@
 #include "opt_cpuoptions.h"
 
 #include "assym.h"
+
 #include <machine/asm.h>
-#include <machine/cpu.h>
+
+#include <arm/locore.h>
 
 /*
  * On PROG26 systems (i.e. acorn26) taking a page fault corrupts R14_svc.
@@ -74,6 +76,7 @@ ENTRY(fuword)
 	str	r1, [r2, #PCB_ONFAULT]
 	mov	r0, r3
 	FUSU_RET
+END(fuword)
 
 /*
  * fusword(void *uaddr);
@@ -102,6 +105,7 @@ ENTRY(fusword)
 	mov	r1, #0x00000000
 	str	r1, [r2, #PCB_ONFAULT]
 	FUSU_RET
+END(fusword)
 
 /*
  * fuswintr(void *uaddr);
@@ -110,7 +114,7 @@ ENTRY(fusword)
  */
 
 ENTRY(fuswintr)
-	ldr	r2, Lblock_userspace_access
+	ldr	r2, .Lblock_userspace_access
 	ldr	r2, [r2]
 	teq	r2, #0
 	mvnne	r0, #0x00000000
@@ -138,8 +142,9 @@ ENTRY(fuswintr)
 	mov	r1, #0x00000000
 	str	r1, [r2, #PCB_ONFAULT]
 	FUSU_RET
+END(fuswintr)
 
-Lblock_userspace_access:
+.Lblock_userspace_access:
 	.word	_C_LABEL(block_userspace_access)
 
 	.data
@@ -182,6 +187,7 @@ ENTRY(fubyte)
 	str	r0, [r2, #PCB_ONFAULT]
 	mvn	r0, #0x00000000
 	FUSU_RET
+END(fubyte)
 
 /*
  * Handle faults from [fs]u*().  Clean up and return -1.  This differs from
@@ -190,12 +196,12 @@ ENTRY(fubyte)
  */
 
 /* label must be global as fault.c references it */
-	.global	_C_LABEL(fusubailout)
-_C_LABEL(fusubailout):
+_ENTRY(fusubailout)
 	mov	r0, #0x00000000
 	str	r0, [r2, #PCB_ONFAULT]
 	mvn	r0, #0x00000000
 	FUSU_RET
+END(fusubailout)
 
 #ifdef DIAGNOSTIC
 /*
@@ -204,10 +210,10 @@ _C_LABEL(fusubailout):
 
 .Lfusupcbfault:
 	mov	r1, r0
-	adr	r0, fusupcbfaulttext
+	adr	r0, .Lfusupcbfaulttext
 	b	_C_LABEL(panic)
 
-fusupcbfaulttext:
+.Lfusupcbfaulttext:
 	.asciz	"Yikes - no valid PCB during fusuxxx() addr=%08x\n"
 	.align	0
 #endif
@@ -234,6 +240,7 @@ ENTRY(suword)
 	mov	r0, #0x00000000
 	str	r0, [r2, #PCB_ONFAULT]
 	FUSU_RET
+END(suword)
 
 /*
  * suswintr(void *uaddr, short x);
@@ -242,7 +249,7 @@ ENTRY(suword)
  */
 
 ENTRY(suswintr)
-	ldr	r2, Lblock_userspace_access
+	ldr	r2, .Lblock_userspace_access
 	ldr	r2, [r2]
 	teq	r2, #0
 	mvnne	r0, #0x00000000
@@ -271,6 +278,7 @@ ENTRY(suswintr)
 	mov	r0, #0x00000000
 	str	r0, [r2, #PCB_ONFAULT]
 	FUSU_RET
+END(suswintr)
 
 /*
  * susword(void *uaddr, short x);
@@ -301,6 +309,7 @@ ENTRY(susword)
 	mov	r0, #0x00000000
 	str	r0, [r2, #PCB_ONFAULT]
 	FUSU_RET
+END(susword)
 
 /*
  * subyte(void *uaddr, char x);
@@ -324,3 +333,4 @@ ENTRY(subyte)
 	mov	r0, #0x00000000
 	str	r0, [r2, #PCB_ONFAULT]
 	FUSU_RET
+END(subyte)

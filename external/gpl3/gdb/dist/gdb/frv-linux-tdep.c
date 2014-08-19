@@ -1,8 +1,7 @@
 /* Target-dependent code for GNU/Linux running on the Fujitsu FR-V,
    for GDB.
 
-   Copyright (C) 2004, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,7 +30,7 @@
 #include "trad-frame.h"
 #include "frame-unwind.h"
 #include "regset.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "linux-tdep.h"
 
 /* Define the size (in bytes) of an FR-V instruction.  */
@@ -43,10 +42,11 @@ enum {
 };
 
 static int
-frv_linux_pc_in_sigtramp (struct gdbarch *gdbarch, CORE_ADDR pc, char *name)
+frv_linux_pc_in_sigtramp (struct gdbarch *gdbarch, CORE_ADDR pc,
+			  const char *name)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  char buf[frv_instr_size];
+  gdb_byte buf[frv_instr_size];
   LONGEST instr;
   int retval = 0;
 
@@ -57,7 +57,7 @@ frv_linux_pc_in_sigtramp (struct gdbarch *gdbarch, CORE_ADDR pc, char *name)
 
   if (instr == 0x8efc0077)	/* setlos #__NR_sigreturn, gr7 */
     retval = NORMAL_SIGTRAMP;
-  else if (instr -= 0x8efc00ad)	/* setlos #__NR_rt_sigreturn, gr7 */
+  else if (instr == 0x8efc00ad)	/* setlos #__NR_rt_sigreturn, gr7 */
     retval = RT_SIGTRAMP;
   else
     return 0;
@@ -182,7 +182,7 @@ frv_linux_sigcontext_reg_addr (struct frame_info *this_frame, int regno,
   else
     {
       CORE_ADDR pc, sp;
-      char buf[4];
+      gdb_byte buf[4];
       int tramp_type;
 
       pc = get_frame_pc (this_frame);
@@ -266,7 +266,7 @@ frv_linux_sigtramp_frame_cache (struct frame_info *this_frame,
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct trad_frame_cache *cache;
   CORE_ADDR addr;
-  char buf[4];
+  gdb_byte buf[4];
   int regnum;
   CORE_ADDR sc_addr_cache_val = 0;
   struct frame_id this_id;
@@ -324,7 +324,7 @@ frv_linux_sigtramp_frame_sniffer (const struct frame_unwind *self,
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   CORE_ADDR pc = get_frame_pc (this_frame);
-  char *name;
+  const char *name;
 
   find_pc_partial_function (pc, &name, NULL, NULL);
   if (frv_linux_pc_in_sigtramp (gdbarch, pc, name))

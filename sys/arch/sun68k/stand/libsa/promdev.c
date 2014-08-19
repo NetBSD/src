@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.5 2009/01/12 07:00:59 tsutsui Exp $ */
+/*	$NetBSD: promdev.c,v 1.5.24.1 2014/08/20 00:03:26 tls Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -143,13 +143,11 @@ void
 prom_iclose(struct saioreq *si)
 {
 	struct boottab *ops;
-	struct devinfo *dip;
 
 	if (promdev_inuse == 0)
 		return;
 
 	ops = si->si_boottab;
-	dip = ops->b_devinfo;
 
 #ifdef	DEBUG_PROM
 	if (debug)

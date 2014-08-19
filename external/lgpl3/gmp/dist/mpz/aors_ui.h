@@ -1,8 +1,8 @@
 /* mpz_add_ui, mpz_sub_ui -- Add or subtract an mpz_t and an unsigned
    one-word integer.
 
-Copyright 1991, 1993, 1994, 1996, 1999, 2000, 2001, 2002, 2004 Free Software
-Foundation, Inc.
+Copyright 1991, 1993, 1994, 1996, 1999, 2000, 2001, 2002, 2004, 2012 Free
+Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -66,22 +66,20 @@ FUNCTION (mpz_ptr w, mpz_srcptr u, unsigned long int vval)
     }
 #endif
 
-  usize = u->_mp_size;
+  usize = SIZ (u);
   abs_usize = ABS (usize);
 
   /* If not space for W (and possible carry), increase space.  */
   wsize = abs_usize + 1;
-  if (w->_mp_alloc < wsize)
-    _mpz_realloc (w, wsize);
+  wp = MPZ_REALLOC (w, wsize);
 
   /* These must be after realloc (U may be the same as W).  */
-  up = u->_mp_d;
-  wp = w->_mp_d;
+  up = PTR (u);
 
   if (abs_usize == 0)
     {
       wp[0] = vval;
-      w->_mp_size = VARIATION_NEG (vval != 0);
+      SIZ (w) = VARIATION_NEG (vval != 0);
       return;
     }
 
@@ -109,5 +107,5 @@ FUNCTION (mpz_ptr w, mpz_srcptr u, unsigned long int vval)
 	}
     }
 
-  w->_mp_size = wsize;
+  SIZ (w) = wsize;
 }

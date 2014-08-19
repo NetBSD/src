@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.21 2012/07/08 20:14:11 dsl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.21.2.1 2014/08/20 00:02:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.21 2012/07/08 20:14:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.21.2.1 2014/08/20 00:02:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,10 +66,9 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.21 2012/07/08 20:14:11 dsl Exp
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/segments.h>
-#include <machine/fpu.h>
+#include <x86/fpu.h>
 
 static inline struct trapframe *process_frame(struct lwp *);
-static inline struct fxsave64 *process_fpframe(struct lwp *);
 #if 0
 static inline int verr_gdt(struct pmap *, int sel);
 static inline int verr_ldt(struct pmap *, int sel);
@@ -80,14 +79,6 @@ process_frame(struct lwp *l)
 {
 
 	return (l->l_md.md_regs);
-}
-
-static inline struct fxsave64 *
-process_fpframe(struct lwp *l)
-{
-	struct pcb *pcb = lwp_getpcb(l);
-
-	return &pcb->pcb_savefpu.fp_fxsave;
 }
 
 int
@@ -103,35 +94,12 @@ process_read_regs(struct lwp *l, struct reg *regs)
 }
 
 int
-process_read_fpregs(struct lwp *l, struct fpreg *regs)
+process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 {
-	struct fxsave64 *frame = process_fpframe(l);
 
-	if (l->l_md.md_flags & MDL_USEDFPU) {
-		fpusave_lwp(l, true);
-	} else {
-		uint16_t cw;
-		uint32_t mxcsr, mxcsr_mask;
+	process_read_fpregs_xmm(l, &regs->fxstate);
 
-		/*
-		 * Fake a FNINIT.
-		 * The initial control word was already set by setregs(), so
-		 * save it temporarily.
-		 */
-		cw = frame->fx_fcw;
-		mxcsr = frame->fx_mxcsr;
-		mxcsr_mask = frame->fx_mxcsr_mask;
-		memset(frame, 0, sizeof(*regs));
-		frame->fx_fcw = cw;
-		frame->fx_fsw = 0x0000;
-		frame->fx_ftw = 0x00;	/* abridged tag; all empty */
-		frame->fx_mxcsr = mxcsr;
-		frame->fx_mxcsr_mask = mxcsr_mask;
-		l->l_md.md_flags |= MDL_USEDFPU;
-	}
-
-	memcpy(&regs->fxstate, frame, sizeof(*regs));
-	return (0);
+	return 0;
 }
 
 int
@@ -158,18 +126,11 @@ process_write_regs(struct lwp *l, const struct reg *regp)
 }
 
 int
-process_write_fpregs(struct lwp *l, const struct fpreg *regs)
+process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 {
-	struct fxsave64 *frame = process_fpframe(l);
 
-	if (l->l_md.md_flags & MDL_USEDFPU) {
-		fpusave_lwp(l, false);
-	} else {
-		l->l_md.md_flags |= MDL_USEDFPU;
-	}
-
-	memcpy(frame, &regs->fxstate, sizeof(*regs));
-	return (0);
+	process_write_fpregs_xmm(l, &regs->fxstate);
+	return 0;
 }
 
 int

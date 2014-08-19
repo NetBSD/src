@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.129 2012/02/01 02:27:23 matt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.129.6.1 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -204,7 +204,6 @@ do {									\
 #define	SS_ISDISCONNECTED	0x800	/* socket disconnected from peer */
 
 #define	SS_ASYNC		0x100	/* async i/o notify */
-#define	SS_ISCONFIRMING		0x200	/* deciding to accept connection req */
 #define	SS_MORETOCOME		0x400	/*
 					 * hint from sosend to lower layer;
 					 * more data coming
@@ -272,6 +271,8 @@ void	sbcheck(struct sockbuf *);
 void	sbcompress(struct sockbuf *, struct mbuf *, struct mbuf *);
 struct mbuf *
 	sbcreatecontrol(void *, int, int, int);
+struct mbuf *
+	sbcreatecontrol1(void **, int, int, int, int);
 void	sbdrop(struct sockbuf *, int);
 void	sbdroprecord(struct sockbuf *);
 void	sbflush(struct sockbuf *);
@@ -294,7 +295,7 @@ int	soconnect(struct socket *, struct mbuf *, struct lwp *);
 int	soconnect2(struct socket *, struct socket *);
 int	socreate(int, struct socket **, int, int, struct lwp *,
 		 struct socket *);
-int	fsocreate(int, struct socket **, int, int, struct lwp *, int *);
+int	fsocreate(int, struct socket **, int, int, int *);
 int	sodisconnect(struct socket *);
 void	sofree(struct socket *);
 int	sogetopt(struct socket *, struct sockopt *);
@@ -305,9 +306,9 @@ void	soisdisconnected(struct socket *);
 void	soisdisconnecting(struct socket *);
 int	solisten(struct socket *, int, struct lwp *);
 struct socket *
-	sonewconn(struct socket *, int);
+	sonewconn(struct socket *, bool);
 void	soqinsque(struct socket *, struct socket *, int);
-int	soqremque(struct socket *, int);
+bool	soqremque(struct socket *, int);
 int	soreceive(struct socket *, struct mbuf **, struct uio *,
 	    struct mbuf **, struct mbuf **, int *);
 int	soreserve(struct socket *, u_long, u_long);
@@ -345,7 +346,8 @@ int	copyout_sockname(struct sockaddr *, unsigned int *, int, struct mbuf *);
 int	copyout_msg_control(struct lwp *, struct msghdr *, struct mbuf *);
 void	free_control_mbuf(struct lwp *, struct mbuf *, struct mbuf *);
 
-int	do_sys_getsockname(struct lwp *, int, int, struct mbuf **);
+int	do_sys_getpeername(int, struct mbuf **);
+int	do_sys_getsockname(int, struct mbuf **);
 int	do_sys_sendmsg(struct lwp *, int, struct msghdr *, int, register_t *);
 int	do_sys_recvmsg(struct lwp *, int, struct msghdr *, struct mbuf **,
 	    struct mbuf **, register_t *);

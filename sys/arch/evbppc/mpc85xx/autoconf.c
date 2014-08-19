@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 2012/07/29 21:39:43 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7.2.1 2014/08/20 00:02:59 tls Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2012/07/29 21:39:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.2.1 2014/08/20 00:02:59 tls Exp $");
 
 #define __INTR_PRIVATE
 
@@ -80,7 +80,7 @@ cpu_rootconf(void)
 	/*
 	 * We wait up to 10 seconds for a bootable device to be found.
 	 */
-	while (rootconf_timo-- > 0) {
+	while (rootconf_timo > 0) {
 		if (booted_device != NULL) {
 			aprint_normal_dev(booted_device, "boot device\n");
 			break;
@@ -92,7 +92,9 @@ cpu_rootconf(void)
 			break;
 		}
 
-		kpause("autoconf", true, 1, NULL);
+		if (EWOULDBLOCK == kpause("autoconf", true, 1, NULL)) {
+			rootconf_timo--;
+		}
 	}
 
 	rootconf();

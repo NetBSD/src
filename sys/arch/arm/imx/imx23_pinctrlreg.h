@@ -1,4 +1,4 @@
-/* $Id: imx23_pinctrlreg.h,v 1.1.6.2 2013/02/25 00:28:27 tls Exp $ */
+/* $Id: imx23_pinctrlreg.h,v 1.1.6.3 2014/08/20 00:02:46 tls Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #include <sys/cdefs.h>
 
 #define HW_PINCTRL_BASE 0x80018000
+#define HW_PINCTRL_SIZE	0x2000
 
 /*
  * PINCTRL Block Control Register.
@@ -956,6 +957,39 @@
 #define HW_PINCTRL_MUXSEL7_BANK3_PIN16_DISABLED		0x03
 
 /*
+ * PINCTRL Drive Strength and Voltage Register 0.
+ */
+#define HW_PINCTRL_DRIVE0       0x200
+#define HW_PINCTRL_DRIVE0_SET   0x204
+#define HW_PINCTRL_DRIVE0_CLR   0x208
+#define HW_PINCTRL_DRIVE0_TOG   0x20C
+
+/*
+ * PINCTRL Drive Strength and Voltage Register 2.
+ */
+#define HW_PINCTRL_DRIVE2	0x220
+#define HW_PINCTRL_DRIVE2_SET	0x224
+#define HW_PINCTRL_DRIVE2_CLR	0x228
+#define HW_PINCTRL_DRIVE2_TOG	0x22C
+
+#define HW_PINCTRL_DRIVE2_RSRVD7		__BITS(31, 30)
+#define HW_PINCTRL_DRIVE2_BANK0_PIN23_MA	__BITS(29, 28)
+#define HW_PINCTRL_DRIVE2_RSRVD6		__BITS(27, 26)
+#define HW_PINCTRL_DRIVE2_BANK0_PIN22_MA	__BITS(25, 24)
+#define HW_PINCTRL_DRIVE2_RSRVD5		__BITS(23, 22)
+#define HW_PINCTRL_DRIVE2_BANK0_PIN21_MA	__BITS(21, 20)
+#define HW_PINCTRL_DRIVE2_RSRVD4		__BITS(19, 18)
+#define HW_PINCTRL_DRIVE2_BANK0_PIN20_MA	__BITS(17, 16)
+#define HW_PINCTRL_DRIVE2_RSRVD3		__BITS(15, 14)
+#define HW_PINCTRL_DRIVE2_BANK0_PIN19_MA	__BITS(13, 12)
+#define HW_PINCTRL_DRIVE2_RSRVD2		__BITS(11, 10)
+#define HW_PINCTRL_DRIVE2_BANK0_PIN18_MA	__BITS(9, 8)
+#define HW_PINCTRL_DRIVE2_RSRVD1		__BITS(7, 6)
+#define HW_PINCTRL_DRIVE2_BANK0_PIN17_MA	__BITS(5, 4)
+#define HW_PINCTRL_DRIVE2_RSRVD0		__BITS(3, 2)
+#define HW_PINCTRL_DRIVE2_BANK0_PIN16_MA	__BITS(1, 0)
+
+/*
  * PINCTRL Drive Strength and Voltage Register 8.
  */
 #define HW_PINCTRL_DRIVE8	0x280
@@ -1171,6 +1205,14 @@
 #define HW_PINCTRL_DRIVE14_BANK3_PIN16_MA	__BITS(1, 0)
 
 /*
+ * PINCTRL Bank 0 Pull Up Resistor Enable Register.
+ */
+#define HW_PINCTRL_PULL0        0x400
+#define HW_PINCTRL_PULL0_SET    0x404
+#define HW_PINCTRL_PULL0_CLR    0x408
+#define HW_PINCTRL_PULL0_TOG    0x40C
+
+/*
  * PINCTRL Bank 2 Pull Up Resistor Enable Register.
  */
 #define HW_PINCTRL_PULL2	0x420
@@ -1218,5 +1260,43 @@
 #define HW_PINCTRL_PULL3_BANK3_PIN02	__BIT(2)
 #define HW_PINCTRL_PULL3_BANK3_PIN01	__BIT(1)
 #define HW_PINCTRL_PULL3_BANK3_PIN00	__BIT(0)
+
+/*
+ * PINCTRL Bank 0 Data Output Register.
+ */
+#define HW_PINCTRL_DOUT0	0x500
+#define HW_PINCTRL_DOUT0_SET	0x504
+#define HW_PINCTRL_DOUT0_CLR	0x508
+#define HW_PINCTRL_DOUT0_TOG	0x50C
+
+#define HW_PINCTRL_DOUT0_DOUT	__BITS(31, 0)
+
+/*
+ * PINCTRL Bank 1 Data Output Register.
+ */
+#define HW_PINCTRL_DOUT1	0x510
+#define HW_PINCTRL_DOUT1_SET	0x514
+#define HW_PINCTRL_DOUT1_CLR	0x518
+#define HW_PINCTRL_DOUT1_TOG	0x51C
+
+#define HW_PINCTRL_DOUT1_DOUT	__BITS(31, 0)
+
+/*
+ * PINCTRL Bank 0 Data Input Register.
+ */
+#define HW_PINCTRL_DIN0		0x600
+#define HW_PINCTRL_DIN0_SET	0x604
+#define HW_PINCTRL_DIN0_CLR	0x608
+#define HW_PINCTRL_DIN0_TOG	0x60C
+
+/*
+ * PINCTRL Bank 0 Data Output Enable Register.
+ */
+#define HW_PINCTRL_DOE0		0x700
+#define HW_PINCTRL_DOE0_SET	0x704
+#define HW_PINCTRL_DOE0_CLR	0x708
+#define HW_PINCTRL_DOE0_TOG	0x70C
+
+#define HW_PINCTRL_DOE0_DOE	__BITS(31, 0)
 
 #endif /* !_ARM_IMX_IMX23_PINCTRLREG_H_ */

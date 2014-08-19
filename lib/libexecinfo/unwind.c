@@ -1,4 +1,4 @@
-/*	$NetBSD: unwind.c,v 1.1 2012/05/26 22:02:29 christos Exp $	*/
+/*	$NetBSD: unwind.c,v 1.1.2.1 2014/08/20 00:02:17 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ tracer(struct _Unwind_Context *ctx, void *arg)
 		return 0;
 	}
 	if (t->n < t->len)
-		t->arr[t->n++] = _Unwind_GetIP(ctx);
+		t->arr[t->n++] = (void *)_Unwind_GetIP(ctx);
 	return 0;
 }
 

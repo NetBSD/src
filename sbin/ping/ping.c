@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.102.6.3 2013/06/23 06:28:52 tls Exp $	*/
+/*	$NetBSD: ping.c,v 1.102.6.4 2014/08/20 00:02:27 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.102.6.3 2013/06/23 06:28:52 tls Exp $");
+__RCSID("$NetBSD: ping.c,v 1.102.6.4 2014/08/20 00:02:27 tls Exp $");
 #endif
 
 #include <stdio.h>
@@ -1011,7 +1011,6 @@ pr_pack(u_char *buf,
 	icp = (struct icmp *)(buf + hlen);
 	if (icp->icmp_type == ICMP_ECHOREPLY
 	    && icp->icmp_id == ident) {
-		struct timespec tv;
 
 		if (icp->icmp_seq == htons((u_int16_t)(ntransmitted-1)))
 			lastrcvd = 1;
@@ -1019,16 +1018,20 @@ pr_pack(u_char *buf,
 		if (first_rx.tv_sec == 0)
 			first_rx = last_rx;
 		nreceived++;
-		if (pingflags & F_TIMING) {
-			struct tv32 tv32;
-
-			(void) memcpy(&tv32, icp->icmp_data, sizeof(tv32));
-			tv.tv_sec = (uint32_t)ntohl(tv32.tv32_sec);
-			tv.tv_nsec = ntohl(tv32.tv32_usec) * 1000;
-		} else if (pingflags & F_TIMING64) 
-			(void) memcpy(&tv, icp->icmp_data, sizeof(tv));
-
 		if (pingflags & (F_TIMING|F_TIMING64)) {
+			struct timespec tv;
+
+			if (pingflags & F_TIMING) {
+				struct tv32 tv32;
+
+				(void)memcpy(&tv32, icp->icmp_data, sizeof(tv32));
+				tv.tv_sec = (uint32_t)ntohl(tv32.tv32_sec);
+				tv.tv_nsec = ntohl(tv32.tv32_usec) * 1000;
+			} else if (pingflags & F_TIMING64) 
+				(void)memcpy(&tv, icp->icmp_data, sizeof(tv));
+			else
+				memset(&tv, 0, sizeof(tv));	/* XXX: gcc */
+
 			triptime = diffsec(&last_rx, &tv);
 			tsum += triptime;
 			tsumsq += triptime * triptime;

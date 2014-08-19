@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.16 2011/09/02 22:15:16 dyoung Exp $
+#	$NetBSD: Makefile,v 1.16.12.1 2014/08/20 00:04:28 tls Exp $
 #
 #	from: @(#)Makefile	8.2 (Berkeley) 3/21/94
 
 # Makefile for kernel tags files, init_sysent, etc.
 
-.include <bsd.sys.mk>		# for HOST_SH
+.include <bsd.own.mk>		# for HOST_SH
 
 all:
 	@echo "make tags, links, init_sysent.c, or vnode_if.c only"
@@ -59,3 +59,5 @@ links::
 	    (cd ../$$i && { rm -f tags; ln -s ${SYSTAGS} tags; }); done
 	-for i in ${ARCH}; do \
 	    (cd ../arch/$$i && ${MAKE} ${MFLAGS} SYSTAGS=${SYSTAGS} links); done
+
+.include <bsd.files.mk>

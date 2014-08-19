@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.89 2012/03/13 18:40:54 elad Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.89.2.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.89 2012/03/13 18:40:54 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.89.2.1 2014/08/20 00:04:29 tls Exp $");
 
 #define SYSVSEM
 
@@ -1150,11 +1150,6 @@ SYSCTL_SETUP(sysctl_ipc_sem_setup, "sysctl kern.ipc subtree setup")
 {
 	const struct sysctlnode *node = NULL;
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, &node,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "ipc",

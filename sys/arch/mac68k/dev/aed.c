@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.29.22.1 2012/11/20 03:01:30 tls Exp $	*/
+/*	$NetBSD: aed.c,v 1.29.22.2 2014/08/20 00:03:11 tls Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.29.22.1 2012/11/20 03:01:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.29.22.2 2014/08/20 00:03:11 tls Exp $");
 
 #include "opt_adb.h"
 
@@ -80,8 +80,18 @@ dev_type_poll(aedpoll);
 dev_type_kqfilter(aedkqfilter);
 
 const struct cdevsw aed_cdevsw = {
-	aedopen, aedclose, aedread, nullwrite, aedioctl,
-	nostop, notty, aedpoll, nommap, aedkqfilter,
+	.d_open = aedopen,
+	.d_close = aedclose,
+	.d_read = aedread,
+	.d_write = nullwrite,
+	.d_ioctl = aedioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = aedpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = aedkqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 static int
@@ -539,11 +549,8 @@ aedioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		/* Do nothing for now */
 		break;
 
-	case ADBIOC_LISTENCMD:{
-		adb_listencmd_t *lc;
-
-		lc = (void *)data;
-	}
+	case ADBIOC_LISTENCMD:
+		/* adb_listencmd_t *lc = data; */
 
 	default:
 		return (EINVAL);

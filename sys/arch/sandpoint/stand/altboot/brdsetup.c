@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.31.2.1 2013/02/25 00:28:55 tls Exp $ */
+/* $NetBSD: brdsetup.c,v 1.31.2.2 2014/08/20 00:03:22 tls Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -319,11 +319,11 @@ brdsetup(void)
 	brdfixup();
 
 	bi_mem.memsize = mpc107memsize();
-	snprintf(bi_cons.devname, sizeof(bi_cons.devname), consname);
+	snprintf(bi_cons.devname, sizeof(bi_cons.devname), "%s", consname);
 	bi_cons.addr = consport;
 	bi_cons.speed = brdprop->consspeed;
 	bi_clk.ticks_per_sec = ticks_per_sec;
-	snprintf(bi_fam.name, sizeof(bi_fam.name), brdprop->family);
+	snprintf(bi_fam.name, sizeof(bi_fam.name), "%s", brdprop->family);
 }
 
 struct brdprop *
@@ -446,6 +446,9 @@ encbrdfix(struct brdprop *brd)
 	val = pcicfgread(ac97, 0x3c) &~ 0xff;
 	val |= 5;
 	pcicfgwrite(ac97, 0x3c, val);
+
+	(void) pcicfgread(ide, 0x08);
+	(void) pcicfgread(pmgt, 0x08);
 }
 
 void
@@ -856,7 +859,7 @@ _rtt(void)
 		asm volatile ("sync; isync");
 		run(0, 0, 0, 0, (void *)0xFFF00100); /* reset entry */
 	}
-	/*NOTREACHED*/
+	__unreachable();
 }
 
 satime_t

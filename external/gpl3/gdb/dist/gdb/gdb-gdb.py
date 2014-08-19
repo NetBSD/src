@@ -1,4 +1,4 @@
-# Copyright (C) 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright (C) 2009-2014 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -99,10 +99,10 @@ class TypeFlagsPrinter:
             return
         # Note: TYPE_FLAG_MIN is a duplicate of TYPE_FLAG_UNSIGNED,
         # so exclude it from the list we are building.
-        TYPE_FLAGS = [TypeFlag(field.name, field.bitpos)
+        TYPE_FLAGS = [TypeFlag(field.name, field.enumval)
                       for field in flags.fields()
                       if field.name != 'TYPE_FLAG_MIN']
-        TYPE_FLAGS += [TypeFlag(field.name, field.bitpos)
+        TYPE_FLAGS += [TypeFlag(field.name, field.enumval)
                        for field in iflags.fields()]
         TYPE_FLAGS.sort()
 
@@ -154,17 +154,21 @@ class StructMainTypePrettyPrinter:
         loc_kind = str(field_val['loc_kind'])
         if loc_kind == "FIELD_LOC_KIND_BITPOS":
             return 'bitpos = %d' % loc_val['bitpos']
+        elif loc_kind == "FIELD_LOC_KIND_ENUMVAL":
+            return 'enumval = %d' % loc_val['enumval']
         elif loc_kind == "FIELD_LOC_KIND_PHYSADDR":
             return 'physaddr = 0x%x' % loc_val['physaddr']
         elif loc_kind == "FIELD_LOC_KIND_PHYSNAME":
             return 'physname = %s' % loc_val['physname']
+        elif loc_kind == "FIELD_LOC_KIND_DWARF_BLOCK":
+            return 'dwarf_block = %s' % loc_val['dwarf_block']
         else:
             return 'loc = ??? (unsupported loc_kind value)'
     def struct_field_img(self, fieldno):
         """Return an image of the main_type field number FIELDNO.
         """
         f = self.val['flds_bnds']['fields'][fieldno]
-        label = "field[%d]:" % fieldno
+        label = "flds_bnds.fields[%d]:" % fieldno
         if f['artificial']:
             label += " (artificial)"
         fields = []
@@ -184,7 +188,7 @@ class StructMainTypePrettyPrinter:
         high = str(b['high'])
         if b['high_undefined'] != 0:
             high += " (undefined)"
-        return "bounds = {%s, %s}" % (low, high)
+        return "flds_bnds.bounds = {%s, %s}" % (low, high)
     def type_specific_img(self):
         """Return a string image of the main_type type_specific union.
         Only the relevant component of that union is printed (based on
@@ -201,9 +205,10 @@ class StructMainTypePrettyPrinter:
                    % type_specific['gnat_stuff']['descriptive_type'])
         elif type_specific_kind == "TYPE_SPECIFIC_FLOATFORMAT":
             img = "floatformat[0..1] = %s" % type_specific['floatformat']
-        elif type_specific_kind == "TYPE_SPECIFIC_CALLING_CONVENTION":
+        elif type_specific_kind == "TYPE_SPECIFIC_FUNC":
             img = ("calling_convention = %d"
-                   % type_specific['calling_convention'])
+                   % type_specific['func_stuff']['calling_convention'])
+            # tail_call_list is not printed.
         else:
             img = ("type_specific = ??? (unknown type_secific_kind: %s)"
                    % type_specific_kind)

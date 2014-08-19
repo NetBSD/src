@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.24.1 2013/06/23 06:28:48 tls Exp $
+#	$NetBSD: Makefile,v 1.2.24.2 2014/08/20 00:00:15 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -13,10 +13,12 @@ SUBDIR=	\
 	iso8859-7 iso8859-8 iso8859-9 iso8859-9e iso8859-10 iso8859-11 \
 	iso8859-13 iso8859-14 iso8859-15 \
 	ja ja.JIS ja.SJIS ja_JP.UTF-8 \
-	ko ko_KR.UTF-8 koi8-c koi8-r koi8-u \
+	km_KH.UTF-8 ko ko_KR.UTF-8 koi8-c koi8-r koi8-u \
 	microsoft-cp1251 microsoft-cp1255 microsoft-cp1256 mulelao-1 \
 	nokhchi-1 \
 	pt_BR.UTF-8 \
+	ru_RU.UTF-8 \
+	sr_CS.UTF-8 \
 	tatar-cyr th_TH th_TH.UTF-8 tscii-0 \
 	vi_VN.tcvn vi_VN.viscii \
 	zh_CN zh_CN.UTF-8 zh_CN.gb18030 zh_CN.gbk zh_HK.UTF-8 \
@@ -59,6 +61,6 @@ realall: ${FILES}
 build_subdirs:
 .for _dir in ${SUBDIR}
 	mkdir ${.CURDIR}/${_dir}
-	printf '#	$$NetBSD: Makefile,v 1.2.24.1 2013/06/23 06:28:48 tls Exp $$\n\nNLS_SUBDIR=	${_dir}\n\n.include "../Makefile.nls"\n' > ${.CURDIR}/${_dir}/Makefile
+	printf '#	$$NetBSD: Makefile,v 1.2.24.2 2014/08/20 00:00:15 tls Exp $$\n\nNLS_SUBDIR=	${_dir}\n\n.include "../Makefile.nls"\n' > ${.CURDIR}/${_dir}/Makefile
 
 .endfor

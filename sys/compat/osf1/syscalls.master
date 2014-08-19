@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.48 2009/01/13 22:27:43 pooka Exp $
+	$NetBSD: syscalls.master,v 1.48.24.1 2014/08/20 00:03:33 tls Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -97,7 +97,7 @@
 38	UNIMPL		old stat
 39	NOARGS		{ int|sys||setpgid(int pid, int pgid); }
 40	UNIMPL		old lstat
-41	NOARGS		{ int|sys||dup(u_int fd); }
+41	NOARGS		{ int|sys||dup(int fd); }
 42	NOARGS		{ int|sys||pipe(void); }
 43	STD		{ int|osf1_sys||set_program_attributes( \
                           void *taddr, unsigned long tsize, \
@@ -165,7 +165,7 @@
 88	NOARGS		{ int|compat_43_sys||sethostname(const char *hostname, \
 			    u_int len); }
 89	NOARGS		{ int|compat_43_sys||getdtablesize(void); }
-90	NOARGS		{ int|sys||dup2(u_int from, u_int to); }
+90	NOARGS		{ int|sys||dup2(int from, int to); }
 91	STD		{ int|osf1_sys||fstat(int fd, void *sb); }
 92	STD		{ int|osf1_sys||fcntl(int fd, int cmd, void *arg); }
 93	STD		{ int|osf1_sys||select(u_int nd, fd_set *in, \

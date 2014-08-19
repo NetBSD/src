@@ -1,4 +1,4 @@
-/*	$NetBSD: schide.c,v 1.7.2.1 2012/10/09 13:36:06 bouyer Exp $	*/
+/*	$NetBSD: schide.c,v 1.7.2.2 2014/08/20 00:03:48 tls Exp $	*/
 /*	$OpenBSD: pciide.c,v 1.305 2009/11/01 01:50:15 dlg Exp $	*/
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: schide.c,v 1.7.2.1 2012/10/09 13:36:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: schide.c,v 1.7.2.2 2014/08/20 00:03:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ static int  schide_match(device_t, cfdata_t, void *);
 static void schide_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(schide, sizeof(struct pciide_softc),
-    schide_match, schide_attach, NULL, NULL);
+    schide_match, schide_attach, pciide_detach, NULL);
 
 static const struct pciide_product_desc pciide_sch_products[] =  {
 	{ PCI_PRODUCT_INTEL_SCH_IDE,

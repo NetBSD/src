@@ -1,4 +1,4 @@
-/* $NetBSD: t_sqrt.c,v 1.3 2012/02/13 05:09:01 jruoho Exp $ */
+/* $NetBSD: t_sqrt.c,v 1.3.6.1 2014/08/20 00:04:50 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,10 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sqrt.c,v 1.3 2012/02/13 05:09:01 jruoho Exp $");
+__RCSID("$NetBSD: t_sqrt.c,v 1.3.6.1 2014/08/20 00:04:50 tls Exp $");
 
 #include <atf-c.h>
 #include <math.h>
+#include <float.h>
 #include <stdio.h>
 
 /*
@@ -46,12 +47,10 @@ ATF_TC_HEAD(sqrt_nan, tc)
 
 ATF_TC_BODY(sqrt_nan, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L / 0.0L;
 
 	ATF_CHECK(isnan(x) != 0);
 	ATF_CHECK(isnan(sqrt(x)) != 0);
-#endif
 }
 
 ATF_TC(sqrt_pow);
@@ -62,9 +61,12 @@ ATF_TC_HEAD(sqrt_pow, tc)
 
 ATF_TC_BODY(sqrt_pow, tc)
 {
-#ifndef __vax__
 	const double x[] = { 0.0, 0.005, 1.0, 99.0, 123.123, 9999.9999 };
+#if __DBL_MIN_10_EXP__ <= -40
 	const double eps = 1.0e-40;
+#else
+	const double eps = __DBL_MIN__*4.0;
+#endif
 	double y, z;
 	size_t i;
 
@@ -77,7 +79,6 @@ ATF_TC_BODY(sqrt_pow, tc)
 			atf_tc_fail_nonfatal("sqrt(%0.03f) != "
 			    "pow(%0.03f, 1/2)\n", x[i], x[i]);
 	}
-#endif
 }
 
 ATF_TC(sqrt_inf_neg);
@@ -88,12 +89,10 @@ ATF_TC_HEAD(sqrt_inf_neg, tc)
 
 ATF_TC_BODY(sqrt_inf_neg, tc)
 {
-#ifndef __vax__
 	const double x = -1.0L / 0.0L;
 	double y = sqrt(x);
 
 	ATF_CHECK(isnan(y) != 0);
-#endif
 }
 
 ATF_TC(sqrt_inf_pos);
@@ -104,13 +103,11 @@ ATF_TC_HEAD(sqrt_inf_pos, tc)
 
 ATF_TC_BODY(sqrt_inf_pos, tc)
 {
-#ifndef __vax__
 	const double x = 1.0L / 0.0L;
 	double y = sqrt(x);
 
 	ATF_CHECK(isinf(y) != 0);
 	ATF_CHECK(signbit(y) == 0);
-#endif
 }
 
 ATF_TC(sqrt_zero_neg);
@@ -121,13 +118,11 @@ ATF_TC_HEAD(sqrt_zero_neg, tc)
 
 ATF_TC_BODY(sqrt_zero_neg, tc)
 {
-#ifndef __vax__
 	const double x = -0.0L;
 	double y = sqrt(x);
 
 	if (fabs(y) > 0.0 || signbit(y) == 0)
 		atf_tc_fail_nonfatal("sqrt(-0.0) != -0.0");
-#endif
 }
 
 ATF_TC(sqrt_zero_pos);
@@ -138,13 +133,11 @@ ATF_TC_HEAD(sqrt_zero_pos, tc)
 
 ATF_TC_BODY(sqrt_zero_pos, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L;
 	double y = sqrt(x);
 
 	if (fabs(y) > 0.0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("sqrt(+0.0) != +0.0");
-#endif
 }
 
 /*
@@ -158,12 +151,10 @@ ATF_TC_HEAD(sqrtf_nan, tc)
 
 ATF_TC_BODY(sqrtf_nan, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L / 0.0L;
 
 	ATF_CHECK(isnan(x) != 0);
 	ATF_CHECK(isnan(sqrtf(x)) != 0);
-#endif
 }
 
 ATF_TC(sqrtf_powf);
@@ -174,7 +165,6 @@ ATF_TC_HEAD(sqrtf_powf, tc)
 
 ATF_TC_BODY(sqrtf_powf, tc)
 {
-#ifndef __vax__
 	const float x[] = { 0.0, 0.005, 1.0, 99.0, 123.123, 9999.9999 };
 	const float eps = 1.0e-30;
 	volatile float y, z;
@@ -189,7 +179,6 @@ ATF_TC_BODY(sqrtf_powf, tc)
 			atf_tc_fail_nonfatal("sqrtf(%0.03f) != "
 			    "powf(%0.03f, 1/2)\n", x[i], x[i]);
 	}
-#endif
 }
 
 ATF_TC(sqrtf_inf_neg);
@@ -200,12 +189,10 @@ ATF_TC_HEAD(sqrtf_inf_neg, tc)
 
 ATF_TC_BODY(sqrtf_inf_neg, tc)
 {
-#ifndef __vax__
 	const float x = -1.0L / 0.0L;
 	float y = sqrtf(x);
 
 	ATF_CHECK(isnan(y) != 0);
-#endif
 }
 
 ATF_TC(sqrtf_inf_pos);
@@ -216,13 +203,11 @@ ATF_TC_HEAD(sqrtf_inf_pos, tc)
 
 ATF_TC_BODY(sqrtf_inf_pos, tc)
 {
-#ifndef __vax__
 	const float x = 1.0L / 0.0L;
 	float y = sqrtf(x);
 
 	ATF_CHECK(isinf(y) != 0);
 	ATF_CHECK(signbit(y) == 0);
-#endif
 }
 
 ATF_TC(sqrtf_zero_neg);
@@ -233,13 +218,11 @@ ATF_TC_HEAD(sqrtf_zero_neg, tc)
 
 ATF_TC_BODY(sqrtf_zero_neg, tc)
 {
-#ifndef __vax__
 	const float x = -0.0L;
 	float y = sqrtf(x);
 
 	if (fabsf(y) > 0.0 || signbit(y) == 0)
 		atf_tc_fail_nonfatal("sqrtf(-0.0) != -0.0");
-#endif
 }
 
 ATF_TC(sqrtf_zero_pos);
@@ -250,13 +233,111 @@ ATF_TC_HEAD(sqrtf_zero_pos, tc)
 
 ATF_TC_BODY(sqrtf_zero_pos, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L;
 	float y = sqrtf(x);
 
 	if (fabsf(y) > 0.0 || signbit(y) != 0)
 		atf_tc_fail_nonfatal("sqrtf(+0.0) != +0.0");
-#endif
+}
+
+/*
+ * sqrtl(3)
+ */
+ATF_TC(sqrtl_nan);
+ATF_TC_HEAD(sqrtl_nan, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test sqrtl(NaN) == NaN");
+}
+
+ATF_TC_BODY(sqrtl_nan, tc)
+{
+	const long double x = 0.0L / 0.0L;
+
+	ATF_CHECK(isnan(x) != 0);
+	ATF_CHECK(isnan(sqrtl(x)) != 0);
+}
+
+ATF_TC(sqrtl_powl);
+ATF_TC_HEAD(sqrtl_powl, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test sqrtl(3) vs. powl(3)");
+}
+
+ATF_TC_BODY(sqrtl_powl, tc)
+{
+	const long double x[] = { 0.0, 0.005, 1.0, 99.0, 123.123, 9999.9999 };
+	const long double eps = 5.0*DBL_EPSILON; /* XXX powl == pow for now */
+	volatile long double y, z;
+	size_t i;
+
+	for (i = 0; i < __arraycount(x); i++) {
+
+		y = sqrtl(x[i]);
+		z = powl(x[i], 1.0 / 2.0);
+
+		if (fabsl(y - z) > eps)
+			atf_tc_fail_nonfatal("sqrtl(%0.03Lf) != "
+			    "powl(%0.03Lf, 1/2)\n", x[i], x[i]);
+	}
+}
+
+ATF_TC(sqrtl_inf_neg);
+ATF_TC_HEAD(sqrtl_inf_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test sqrtl(-Inf) == NaN");
+}
+
+ATF_TC_BODY(sqrtl_inf_neg, tc)
+{
+	const long double x = -1.0L / 0.0L;
+	long double y = sqrtl(x);
+
+	ATF_CHECK(isnan(y) != 0);
+}
+
+ATF_TC(sqrtl_inf_pos);
+ATF_TC_HEAD(sqrtl_inf_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test sqrtl(+Inf) == +Inf");
+}
+
+ATF_TC_BODY(sqrtl_inf_pos, tc)
+{
+	const long double x = 1.0L / 0.0L;
+	long double y = sqrtl(x);
+
+	ATF_CHECK(isinf(y) != 0);
+	ATF_CHECK(signbit(y) == 0);
+}
+
+ATF_TC(sqrtl_zero_neg);
+ATF_TC_HEAD(sqrtl_zero_neg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test sqrtl(-0.0) == -0.0");
+}
+
+ATF_TC_BODY(sqrtl_zero_neg, tc)
+{
+	const long double x = -0.0L;
+	long double y = sqrtl(x);
+
+	if (fabsl(y) > 0.0 || signbit(y) == 0)
+		atf_tc_fail_nonfatal("sqrtl(-0.0) != -0.0");
+}
+
+ATF_TC(sqrtl_zero_pos);
+ATF_TC_HEAD(sqrtl_zero_pos, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test sqrtl(+0.0) == +0.0");
+}
+
+ATF_TC_BODY(sqrtl_zero_pos, tc)
+{
+	const long double x = 0.0L;
+	long double y = sqrtl(x);
+
+	if (fabsl(y) > 0.0 || signbit(y) != 0)
+		atf_tc_fail_nonfatal("sqrtl(+0.0) != +0.0");
 }
 
 ATF_TP_ADD_TCS(tp)
@@ -275,6 +356,13 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, sqrtf_inf_pos);
 	ATF_TP_ADD_TC(tp, sqrtf_zero_neg);
 	ATF_TP_ADD_TC(tp, sqrtf_zero_pos);
+
+	ATF_TP_ADD_TC(tp, sqrtl_nan);
+	ATF_TP_ADD_TC(tp, sqrtl_powl);
+	ATF_TP_ADD_TC(tp, sqrtl_inf_neg);
+	ATF_TP_ADD_TC(tp, sqrtl_inf_pos);
+	ATF_TP_ADD_TC(tp, sqrtl_zero_neg);
+	ATF_TP_ADD_TC(tp, sqrtl_zero_pos);
 
 	return atf_no_error();
 }

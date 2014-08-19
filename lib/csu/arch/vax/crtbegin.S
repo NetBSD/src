@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.S,v 1.1.2.2 2013/06/23 06:21:03 tls Exp $	*/
+/*	$NetBSD: crtbegin.S,v 1.1.2.3 2014/08/20 00:02:06 tls Exp $	*/
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,16 +30,17 @@
 
 #include <vax/asm.h>
 
-RCSID("$NetBSD: crtbegin.S,v 1.1.2.2 2013/06/23 06:21:03 tls Exp $")
+RCSID("$NetBSD: crtbegin.S,v 1.1.2.3 2014/08/20 00:02:06 tls Exp $")
 
 	.section	.ctors, "aw", @progbits
 	.p2align 2
 __CTOR_LIST__:		/* symbol is not used */
-	.word -1
+	.long -1
 
 	.section	.dtors, "aw", @progbits
 	.p2align 2
 __DTOR_LIST__:
+	.long -1
 
 	.section	.eh_frame, "a", @progbits
 	.p2align 2
@@ -57,13 +58,13 @@ __JCR_LIST__:
 	.hidden	__dso_handle
 __dso_handle:
 #ifdef SHARED
-	.word	__dso_handle
+	.long	__dso_handle
 #else
-	.word	0
+	.long	0
 #endif
 
 	.local	__dwarf_eh_object
-	.comm	__dwarf_eh_object,24
+	.comm	__dwarf_eh_object,32
 	.local	__initialized
 	.comm	__initialized,1
 	.local	__finished
@@ -79,9 +80,9 @@ __dso_handle:
  * needed.
  */
 
-	.type __do_global_dtors_aux, @function
-__do_global_dtors_aux:
-	.word	0x0100				/* save r8 */
+	.hidden __do_global_dtors_aux
+
+_ENTRY(__do_global_dtors_aux, 0x0100)		/* save r8 */
 	tstb	__finished			/* done this already? */
 	bneq	4f
 	movb	$1, __finished			/* mark it as done */
@@ -92,7 +93,7 @@ __do_global_dtors_aux:
 	 *	__cxa_finalize(&__dso_handle);
 	 */
 	movab	__cxa_finalize, %r0
-	bneq	1f
+	beql	1f
 	pushal	__dso_handle	
 	calls	$0, (%r0)
 1:
@@ -102,7 +103,7 @@ __do_global_dtors_aux:
 	 * We use load with postincrement to advance the pointer along.
 	 * We know the list ends with 0.  If we load one, we must be done.
 	 */
-	moval	__DTOR_LIST__, %r8	/* skip first entry */
+	moval	__DTOR_LIST__+4, %r8	/* skip first entry */
 2:	movl	(%r8)+, %r0		/* r0 = *r8++; */
 	beql	3f
 	calls	$0, (%r0)
@@ -115,12 +116,13 @@ __do_global_dtors_aux:
 	 *     __deregister_frame_info(&__EH_FRAME_LIST__[0]);
 	 */
 	moval	__deregister_frame_info, %r0
-	bneq	4f
+	beql	4f
 	pushal	__EH_FRAME_LIST__
 	calls	$0, (%r0)
 #endif /* SHARED */
 
 4:	ret
+END(__do_global_dtors_aux)
 
 	.weak	__deregister_frame_info
 	.weak	__cxa_finalize
@@ -128,8 +130,9 @@ __do_global_dtors_aux:
 	.weak	__register_frame_info
 	.weak	_Jv_RegisterClasses
 
-	.type __do_global_ctors_aux, @function
-__do_global_ctors_aux:
+	.hidden __do_global_ctors_aux
+
+_ENTRY(__do_global_ctors_aux, 0x0800)
 	tstb	__initialized
 	bneq	4f
 	movb	$1, __initialized
@@ -169,6 +172,7 @@ __do_global_ctors_aux:
 	brb	3b			/* get next one */
 
 4:	ret
+END(__do_global_ctors_aux)
 
 	.hidden	_C_LABEL(__CTOR_LIST_END__)
 

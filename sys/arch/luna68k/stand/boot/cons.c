@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.1.6.2 2013/02/25 00:28:48 tls Exp $	*/
+/*	$NetBSD: cons.c,v 1.1.6.3 2014/08/20 00:03:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -127,8 +127,8 @@ int
 cngetc(void)
 {
 	if (cn_tab == NULL)
-		return(0);
-	return((*cn_tab->cn_getc)(cn_tab->cn_dev));
+		return 0;
+	return (*cn_tab->cn_getc)(cn_tab->cn_dev);
 }
 
 void

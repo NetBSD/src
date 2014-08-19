@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259.c,v 1.15 2008/12/18 12:18:20 cegger Exp $	*/
+/*	$NetBSD: i8259.c,v 1.15.24.1 2014/08/20 00:03:29 tls Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.15 2008/12/18 12:18:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.15.24.1 2014/08/20 00:03:29 tls Exp $");
 
 #include <sys/param.h> 
 #include <sys/systm.h>
@@ -233,9 +233,11 @@ i8259_reinit_irqs(void)
 {
 	int irqs, irq;
 	struct cpu_info *ci = &cpu_info_primary;
+	const size_t array_len = MIN(__arraycount(ci->ci_isources),
+				     NUM_LEGACY_IRQS);
 
 	irqs = 0;
-	for (irq = 0; irq < NUM_LEGACY_IRQS; irq++)
+	for (irq = 0; irq < array_len; irq++)
 		if (ci->ci_isources[irq] != NULL)
 			irqs |= 1 << irq;
 	if (irqs >= 0x100) /* any IRQs >= 8 in use */

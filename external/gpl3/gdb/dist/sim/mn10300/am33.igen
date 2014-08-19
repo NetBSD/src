@@ -2573,7 +2573,7 @@
 
   z = (difference == 0);
   n = (difference & 0x80000000);
-  c = (source1 > source1);
+  c = (source1 > source2);
   v = ((source1 & 0x80000000) == (source2 & 0x80000000)
        && (source1 & 0x80000000) != (difference & 0x80000000));
 

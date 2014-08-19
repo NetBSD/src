@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.h,v 1.2 2005/12/11 12:20:14 christos Exp $ */
+/*	$NetBSD: linux_socket.h,v 1.2.120.1 2014/08/20 00:03:31 tls Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -34,27 +34,6 @@
 #ifndef _AMD64_LINUX_SOCKET_H
 #define _AMD64_LINUX_SOCKET_H
 
-#define LINUX_SOL_SOCKET	1
-
-#define LINUX_SO_DEBUG		1
-#define LINUX_SO_REUSEADDR	2
-#define LINUX_SO_TYPE		3
-#define LINUX_SO_ERROR		4
-#define LINUX_SO_DONTROUTE	5
-#define LINUX_SO_BROADCAST	6
-#define LINUX_SO_SNDBUF		7
-#define LINUX_SO_RCVBUF		8
-#define LINUX_SO_KEEPALIVE	9
-#define LINUX_SO_OOBINLINE	10
-#define LINUX_SO_NO_CHECK	11
-#define LINUX_SO_PRIORITY	12
-#define LINUX_SO_LINGER		13
-#define LINUX_SO_BSDCOMPAT	14
-#define LINUX_SO_PASSCRED	16
-#define LINUX_SO_PEERCRED	17
-#define LINUX_SO_RCVLOWAT	18
-#define LINUX_SO_SNDLOWAT	19
-#define LINUX_SO_RCVTIMEO	20
-#define LINUX_SO_SNDTIMEO	21
+#include <compat/linux/common/linux_socket_generic.h>
 
 #endif /* !_AMD64_LINUX_SOCKET_H */

@@ -255,7 +255,7 @@ for this delivery transport is deferred as soon as it arrives.
 10 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
 11   <a href="postconf.5.html#relay_domains">relay_domains</a> = customer.tld ...other domains...
 12   <a href="postconf.5.html#defer_transports">defer_transports</a> = etrn-only
-13   <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport
+13   <a href="postconf.5.html#transport_maps">transport_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/transport
 14
 15 /etc/postfix/transport:
 16   customer.tld     etrn-only:[mailhost.customer.tld]

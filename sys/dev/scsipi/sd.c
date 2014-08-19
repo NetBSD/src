@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.298.2.2 2013/06/23 06:20:21 tls Exp $	*/
+/*	$NetBSD: sd.c,v 1.298.2.3 2014/08/20 00:03:50 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.298.2.2 2013/06/23 06:20:21 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.298.2.3 2014/08/20 00:03:50 tls Exp $");
 
 #include "opt_scsi.h"
 
@@ -157,12 +157,29 @@ static dev_type_dump(sddump);
 static dev_type_size(sdsize);
 
 const struct bdevsw sd_bdevsw = {
-	sdopen, sdclose, sdstrategy, sdioctl, sddump, sdsize, D_DISK
+	.d_open = sdopen,
+	.d_close = sdclose,
+	.d_strategy = sdstrategy,
+	.d_ioctl = sdioctl,
+	.d_dump = sddump,
+	.d_psize = sdsize,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw sd_cdevsw = {
-	sdopen, sdclose, sdread, sdwrite, sdioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = sdopen,
+	.d_close = sdclose,
+	.d_read = sdread,
+	.d_write = sdwrite,
+	.d_ioctl = sdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 static struct dkdriver sddkdriver = { sdstrategy, sdminphys };
@@ -317,7 +334,7 @@ sdattach(device_t parent, device_t self, void *aux)
 	 * attach the device into the random source list
 	 */
 	rnd_attach_source(&sd->rnd_source, device_xname(sd->sc_dev),
-			  RND_TYPE_DISK, 0);
+			  RND_TYPE_DISK, RND_FLAG_DEFAULT);
 
 	/* Discover wedges on this disk. */
 	dkwedge_discover(&sd->sc_dk);
@@ -773,7 +790,7 @@ sdstart(struct scsipi_periph *periph)
 	struct scsi_rw_6 cmd_small;
 	struct scsipi_generic *cmdp;
 	struct scsipi_xfer *xs;
-	int nblks, cmdlen, error, flags;
+	int nblks, cmdlen, error __diagused, flags;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("sdstart "));
 	/*
@@ -1006,7 +1023,7 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	struct sd_softc *sd = device_lookup_private(&sd_cd, SDUNIT(dev));
 	struct scsipi_periph *periph = sd->sc_periph;
 	int part = SDPART(dev);
-	int error = 0;
+	int error;
 	int s;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel *newlabel = NULL;
@@ -1048,6 +1065,7 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	if (error != EPASSTHROUGH)
 		return (error);
 
+	error = 0;
 	switch (cmd) {
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(sd->sc_dk.dk_label);
@@ -1210,8 +1228,7 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 				sd->flags &= ~SDF_FLUSHING;
 			else
 				sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
-		} else
-			error = 0;
+		}
 		return (error);
 
 	case DIOCAWEDGE:

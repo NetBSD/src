@@ -605,10 +605,10 @@ $textra" "$filename_input" >"$filename_xtr"
   # If this is a Texinfo file with a specified input encoding, and
   # recode is available, then recode to plain 7 bit Texinfo.
   if test $language = texinfo; then
-    pgm='s/\(^\|.* \)@documentencoding  *\([^ ][^ ]*\)\( .*\|$\)/\2/  
-	t found                                                
-	d                                                     
-	:found                                               
+    pgm='s/\(^\|.* \)@documentencoding  *\([^ ][^ ]*\)\( .*\|$\)/\2/
+	t found
+	d
+	:found
 	q'
     encoding=`sed -e "$pgm" "$filename_input"`
     if $recode && test -n "$encoding" && findprog recode; then

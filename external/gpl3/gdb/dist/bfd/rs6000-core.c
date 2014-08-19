@@ -585,7 +585,7 @@ rs6000coff_core_p (bfd *abfd)
 	  {
 	    ldi_core = ldinfo.l32.ldinfo_core;
 	    ldi_datasize = ldinfo.l32.ldinfo_datasize;
-	    ldi_dataorg = (bfd_vma) (long) ldinfo.l32.ldinfo_dataorg;
+	    ldi_dataorg = (bfd_vma) (ptr_to_uint) ldinfo.l32.ldinfo_dataorg;
 	    ldi_next = ldinfo.l32.ldinfo_next;
 	  }
 
@@ -627,7 +627,7 @@ rs6000coff_core_p (bfd *abfd)
 	      }
 	    else
 	      {
-		vminfo_addr = (bfd_vma) (long) vminfo.old.vminfo_addr;
+		vminfo_addr = (bfd_vma) (ptr_to_uint) vminfo.old.vminfo_addr;
 		vminfo_size = vminfo.old.vminfo_size;
 		vminfo_offset = vminfo.old.vminfo_offset;
 	      }

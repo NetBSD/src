@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.h,v 1.1.12.2 2013/02/25 00:30:43 tls Exp $ */
+/* $NetBSD: ldp_peer.h,v 1.1.12.3 2014/08/20 00:05:09 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _LDP_PEER_H_
 
 #include "sys/types.h"
+#include "sys/rbtree.h"
 #include "sys/queue.h"
 #include "netinet/in.h"
 
@@ -48,7 +49,7 @@ struct label_mapping {
 	union sockunion address;
 	uint	prefix;
 	uint	label;
-	SLIST_ENTRY(label_mapping) mappings;
+	rb_node_t mappings_node;
 };
 
 struct ldp_peer {
@@ -69,7 +70,7 @@ struct ldp_peer {
 	time_t		established_t;	/* time when it did connect */
 	/* Here I maintain all the addresses announced by a peer */
 	SLIST_HEAD(,ldp_peer_address) ldp_peer_address_head;
-	SLIST_HEAD(,label_mapping) label_mapping_head;
+	rb_tree_t label_mapping_tree;
 
 	SLIST_ENTRY(ldp_peer) peers;
 };
@@ -88,32 +89,32 @@ struct peer_map {
 
 int	sockaddr_cmp(const struct sockaddr *, const struct sockaddr *);
 void            ldp_peer_init(void);
-struct ldp_peer *	ldp_peer_new(const struct in_addr *, struct sockaddr *,
-				struct sockaddr *, uint16_t, int);
+struct ldp_peer * ldp_peer_new(const struct in_addr *, const struct sockaddr *,
+				const struct sockaddr *, uint16_t, int);
 void            ldp_peer_holddown(struct ldp_peer *);
 void            ldp_peer_delete(struct ldp_peer *);
 struct ldp_peer * get_ldp_peer(const struct sockaddr *);
 struct ldp_peer * get_ldp_peer_by_id(const struct in_addr *);
 struct ldp_peer * get_ldp_peer_by_socket(int);
-int add_ifaddresses(struct ldp_peer *, struct al_tlv *);
-int add_ifaddr(struct ldp_peer *, struct sockaddr *);
-int del_ifaddr(struct ldp_peer *, struct sockaddr *);
-struct ldp_peer_address * check_ifaddr(struct ldp_peer *,
+int add_ifaddresses(struct ldp_peer *, const struct al_tlv *);
+int add_ifaddr(struct ldp_peer *, const struct sockaddr *);
+int del_ifaddr(struct ldp_peer *, const struct sockaddr *);
+struct ldp_peer_address * check_ifaddr(const struct ldp_peer *,
 	const struct sockaddr *);
-void print_bounded_addresses(struct ldp_peer *);
+void print_bounded_addresses(const struct ldp_peer *);
 void del_all_ifaddr(struct ldp_peer *);
-int del_ifaddresses(struct ldp_peer *, struct al_tlv *);
-void add_my_if_addrs(struct in_addr *, int);
+int del_ifaddresses(struct ldp_peer *, const struct al_tlv *);
 
-int ldp_peer_add_mapping(struct ldp_peer *, struct sockaddr *, int, int);
-int ldp_peer_delete_mapping(struct ldp_peer *, struct sockaddr *, int);
-struct label_mapping * ldp_peer_get_lm(struct ldp_peer *, struct sockaddr *,
-				uint);
-int ldp_peer_delete_all_mappings(struct ldp_peer *);
+int ldp_peer_add_mapping(struct ldp_peer *, const struct sockaddr *, int, int);
+int ldp_peer_delete_mapping(struct ldp_peer *, const struct sockaddr *, int);
+void ldp_peer_delete_all_mappings(struct ldp_peer *);
 void ldp_peer_holddown_all(void);
 
-struct peer_map * ldp_test_mapping(struct sockaddr *, int, struct sockaddr *);
+struct peer_map * ldp_test_mapping(const struct sockaddr *, int,
+	const struct sockaddr *);
+struct label_mapping * ldp_peer_lm_right(struct ldp_peer *,
+	struct label_mapping *);
 
-const char *	ldp_state_to_name(int);
+const char * ldp_state_to_name(int);
 
 #endif	/* !_LDP_PEER_H_ */

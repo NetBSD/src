@@ -1,6 +1,6 @@
 /* Blackfin Direct Memory Access (DMA) Controller model.
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -20,9 +20,6 @@
 
 #ifndef DV_BFIN_DMAC_H
 #define DV_BFIN_DMAC_H
-
-#define BFIN_MMR_DMAC0_BASE	0xFFC00C00
-#define BFIN_MMR_DMAC1_BASE	0xFFC01C00
 
 #define BFIN_DMAC_MDMA_BASE	0x100
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_svc.c,v 1.1 2010/07/26 15:53:00 pooka Exp $	*/
+/*	$NetBSD: pmap_svc.c,v 1.1.12.1 2014/08/20 00:04:47 tls Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -170,7 +170,6 @@ pmapproc_change(struct svc_req *rqstp, SVCXPRT *xprt, unsigned long op)
 	struct pmap reg;
 	RPCB rpcbreg;
 	long ans;
-	struct sockaddr_in *who;
 	struct sockcred *sc;
 	char uidbuf[32];
 
@@ -191,7 +190,7 @@ pmapproc_change(struct svc_req *rqstp, SVCXPRT *xprt, unsigned long op)
 		return FALSE;
 	}
 
-	who = svc_getcaller(xprt);
+	(void)svc_getcaller(xprt);
 	sc = __svc_getcallercreds(xprt);
 
 	/*

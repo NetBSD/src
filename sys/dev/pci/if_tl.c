@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.98.2.1 2013/06/23 06:20:18 tls Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.98.2.2 2014/08/20 00:03:42 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.98.2.1 2013/06/23 06:20:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.98.2.2 2014/08/20 00:03:42 tls Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -295,6 +295,7 @@ tl_pci_attach(device_t parent, device_t self, void *aux)
 	int reg_io, reg_mem;
 	pcireg_t reg10, reg14;
 	pcireg_t csr;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	aprint_normal("\n");
@@ -391,7 +392,7 @@ tl_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
 	sc->tl_if.if_softc = sc;
 	sc->tl_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
 	    tl_intr, sc);
@@ -469,7 +470,7 @@ tl_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 }
 
 static void

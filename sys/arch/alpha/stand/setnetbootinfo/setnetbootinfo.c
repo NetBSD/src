@@ -1,4 +1,4 @@
-/* $NetBSD: setnetbootinfo.c,v 1.13 2009/03/14 21:04:03 dsl Exp $ */
+/* $NetBSD: setnetbootinfo.c,v 1.13.22.1 2014/08/20 00:02:42 tls Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -139,10 +139,12 @@ main(int argc, char *argv[])
 		outfilename = outfile;
 	else {
 		/* name + 12 for enet addr + '.' before enet addr + NUL */
-		outfilename = malloc(strlen(netboot) + 14);
+		size_t len = strlen(netboot) + 14;
+		outfilename = malloc(len);
 		if (outfilename == NULL)
 			err(1, "malloc of output file name failed");
-		sprintf(outfilename, "%s.%02x%02x%02x%02x%02x%02x", netboot,
+		snprintf(outfilename, len,
+		    "%s.%02x%02x%02x%02x%02x%02x", netboot,
 		    ether_addr->ether_addr_octet[0],
 		    ether_addr->ether_addr_octet[1],
 		    ether_addr->ether_addr_octet[2],

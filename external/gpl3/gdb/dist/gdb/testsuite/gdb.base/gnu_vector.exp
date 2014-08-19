@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,15 +18,9 @@
 # Tests GDBs support for GNU vectors.
 # http://gcc.gnu.org/onlinedocs/gcc/Vector-Extensions.html
 
-if $tracelevel {
-    strace $tracelevel
-}
+standard_testfile .c
 
-set testfile "gnu_vector"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
-
-if [get_compiler_info ${binfile}] {
+if [get_compiler_info] {
     return -1
 }
 
@@ -44,6 +38,14 @@ if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} {debug}] } {
 if { ![runto main] } {
     fail "runto main"
     return -1
+}
+
+# Get endianess for the scalar->vector casts
+gdb_test_multiple "show endian" "show endian" {
+    -re ".* (big|little) endian.*$gdb_prompt $" { 
+	set endian $expect_out(1,string) 
+	pass "endianness: $endian"
+    }
 }
 
 # Test printing of character vector types
@@ -86,32 +88,57 @@ gdb_test "print f4a / f4b" "\\\$$decimal = \\{2, 2, 1, 4\\}"
 gdb_test "print +f4a" "\\\$$decimal = \\{2, 4, 8, 16\\}"
 gdb_test "print -f4a" "\\\$$decimal = \\{-2, -4, -8, -16\\}"
 
-# Test scalar to vector widening
-gdb_test "print (int2) 1" "\\\$$decimal = \\{1, 1\\}"
-gdb_test "print (longlong2) 2" "\\\$$decimal = \\{2, 2\\}"
-gdb_test "print (float2) 3" "\\\$$decimal = \\{3, 3\\}"
-gdb_test "print (double2) 4" "\\\$$decimal = \\{4, 4\\}"
-gdb_test "print (char4) 12" "\\\$$decimal = \\{12, 12, 12, 12\\}"
-gdb_test "print (uint4) ia" "\\\$$decimal = \\{2, 2, 2, 2\\}"
-gdb_test "print (int4) -3" "\\\$$decimal = \\{-3, -3, -3, -3\\}"
-gdb_test "print (float4) 4" "\\\$$decimal = \\{4, 4, 4, 4\\}"
+# When casting to vector the input type must have the same length as
+# the total length of the vector.
+gdb_test "print (char4) 0x01010101" "\\\$$decimal = \\{1, 1, 1, 1\\}"
+gdb_test "print (int2) lla" "\\\$$decimal = \\{1, 1\\}"
 
+if { ![string compare $endian big] } then {
+    gdb_test "print (char4) ia" "\\\$$decimal = \\{0, 0, 0, 2\\}"
+} else {
+    gdb_test "print (char4) ia" "\\\$$decimal = \\{2, 0, 0, 0\\}"
+}
+
+gdb_test "print (int2) 1" "can only cast scalar to vector of same size"
+gdb_test "print (longlong2) 2" "can only cast scalar to vector of same size"
+gdb_test "print (float2) 3" "can only cast scalar to vector of same size"
+gdb_test "print (double2) 4" "can only cast scalar to vector of same size"
+gdb_test "print (uint4) ia" "can only cast scalar to vector of same size"
+gdb_test "print (int4) -3" "can only cast scalar to vector of same size"
+gdb_test "print (float4) 4" "can only cast scalar to vector of same size"
+
+gdb_test "print i4b = ia" "can only cast scalar to vector of same size"
+gdb_test "print i4a = 3" "can only cast scalar to vector of same size"
+gdb_test "print f4a = fb" "can only cast scalar to vector of same size"
+gdb_test "print f4b = 2" "can only cast scalar to vector of same size"
+
+gdb_test "print c4 + lla" "conversion of scalar to vector involves truncation"
+gdb_test "print i4a + lla" "conversion of scalar to vector involves truncation"
+gdb_test "print lla + c4" "conversion of scalar to vector involves truncation"
+gdb_test "print lla + i4a" "conversion of scalar to vector involves truncation"
+
+gdb_test "print c4 + ib" "\\\$$decimal = \\{2, 3, 4, 5\\}"
 gdb_test "print i4a + ib" "\\\$$decimal = \\{3, 5, 9, 17\\}"
+gdb_test "print i4a + 1" "\\\$$decimal = \\{3, 5, 9, 17\\}"
+gdb_test "print 1 + i4a" "\\\$$decimal = \\{3, 5, 9, 17\\}"
 gdb_test "print fa - f4b" "\\\$$decimal = \\{1, 0, -6, -2\\}"
+gdb_test "print 2 - f4b" "\\\$$decimal = \\{1, 0, -6, -2\\}"
 gdb_test "print f4a * fb" "\\\$$decimal = \\{2, 4, 8, 16\\}"
+gdb_test "print f4a * 1" "\\\$$decimal = \\{2, 4, 8, 16\\}"
 gdb_test "print ia / i4b" "\\\$$decimal = \\{2, 1, 0, 0\\}"
+gdb_test "print 2 / i4b" "\\\$$decimal = \\{2, 1, 0, 0\\}"
 gdb_test "print i4a % ib" "\\\$$decimal = \\{0, 0, 0, 0\\}"
-
+gdb_test "print i4a % 1" "\\\$$decimal = \\{0, 0, 0, 0\\}"
 gdb_test "print ia & i4b" "\\\$$decimal = \\{0, 2, 0, 0\\}"
+gdb_test "print 2 & i4b" "\\\$$decimal = \\{0, 2, 0, 0\\}"
 gdb_test "print i4a | ib" "\\\$$decimal = \\{3, 5, 9, 17\\}"
+gdb_test "print i4a | 1" "\\\$$decimal = \\{3, 5, 9, 17\\}"
 gdb_test "print ia ^ i4b" "\\\$$decimal = \\{3, 0, 10, 6\\}"
+gdb_test "print 2 ^ i4b" "\\\$$decimal = \\{3, 0, 10, 6\\}"
 gdb_test "print i4a << ib" "\\\$$decimal = \\{4, 8, 16, 32\\}"
+gdb_test "print i4a << 1" "\\\$$decimal = \\{4, 8, 16, 32\\}"
 gdb_test "print i4a >> ib" "\\\$$decimal = \\{1, 2, 4, 8\\}"
-
-gdb_test "print i4b = ia" "\\\$$decimal = \\{2, 2, 2, 2\\}"
-gdb_test "print i4a = 3" "\\\$$decimal = \\{3, 3, 3, 3\\}"
-gdb_test "print f4a = fb" "\\\$$decimal = \\{1, 1, 1, 1\\}"
-gdb_test "print f4b = 2" "\\\$$decimal = \\{2, 2, 2, 2\\}"
+gdb_test "print i4a >> 1" "\\\$$decimal = \\{1, 2, 4, 8\\}"
 
 gdb_test "print i4a = \{2, 4, 8, 16\}" "\\\$$decimal = \\{2, 4, 8, 16\\}"
 gdb_test "print i4a <<= ib" "\\\$$decimal = \\{4, 8, 16, 32\\}"
@@ -134,3 +161,17 @@ gdb_test "print i2 + i4a" "Cannot perform operation on vectors with different ty
 gdb_test "print f4a + f2" "Cannot perform operation on vectors with different types"
 gdb_test "print f2 + f4a" "Cannot perform operation on vectors with different types"
 
+gdb_test "print (double2) f2" "Cannot convert between vector values of different sizes"
+gdb_test "print (int4) c4" "Cannot convert between vector values of different sizes"
+gdb_test "print (char4) i4a" "Cannot convert between vector values of different sizes"
+
+# Test ptype on vector types.
+gdb_test "ptype c4" "type = char __attribute__ \\(\\(vector_size\\(4\\)\\)\\)"
+gdb_test "ptype char4" "type = char __attribute__ \\(\\(vector_size\\(4\\)\\)\\)"
+gdb_test "ptype i4a" "type = int __attribute__ \\(\\(vector_size\\(4\\)\\)\\)"
+gdb_test "ptype int4" "type = int __attribute__ \\(\\(vector_size\\(4\\)\\)\\)"
+gdb_test "ptype f4b" "type = float __attribute__ \\(\\(vector_size\\(4\\)\\)\\)"
+gdb_test "ptype float4" "type = float __attribute__ \\(\\(vector_size\\(4\\)\\)\\)"
+
+gdb_test "ptype union_with_vector_1" "type = union {\r\n\[\t \]+int i;\r\n\[\t \]+char cv __attribute__ \\(\\(vector_size\\(4\\)\\)\\);\r\n}"
+gdb_test "ptype struct_with_vector_1" "type = struct {\r\n\[\t \]+int i;\r\n\[\t \]+char cv __attribute__ \\(\\(vector_size\\(4\\)\\)\\);\r\n\[\t \]+float4 f4;\r\n}"

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.71 2010/04/05 07:21:47 joerg Exp $ */
+/*      $NetBSD: if_qe.c,v 1.71.18.1 2014/08/20 00:03:49 tls Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.71 2010/04/05 07:21:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.71.18.1 2014/08/20 00:03:49 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -372,13 +372,13 @@ qeattach(device_t parent, device_t self, void *aux)
 	}
  fail_5:
 	for (i = 0; i < RXDESCS; i++) {
-		if (sc->sc_xmtmap[i] != NULL)
-			bus_dmamap_destroy(sc->sc_dmat, sc->sc_xmtmap[i]);
+		if (sc->sc_rcvmap[i] != NULL)
+			bus_dmamap_destroy(sc->sc_dmat, sc->sc_rcvmap[i]);
 	}
  fail_4:
 	for (i = 0; i < TXDESCS; i++) {
-		if (sc->sc_rcvmap[i] != NULL)
-			bus_dmamap_destroy(sc->sc_dmat, sc->sc_rcvmap[i]);
+		if (sc->sc_xmtmap[i] != NULL)
+			bus_dmamap_destroy(sc->sc_dmat, sc->sc_xmtmap[i]);
 	}
 }
 
@@ -452,7 +452,7 @@ qestart(struct ifnet *ifp)
 	struct qe_cdata *qc = sc->sc_qedata;
 	paddr_t	buffer;
 	struct mbuf *m, *m0;
-	int idx, len, s, i, totlen, buflen, error;
+	int idx, len, s, i, totlen, buflen;
 	short orword, csr;
 
 	if ((QE_RCSR(QE_CSR_CSR) & QE_RCV_ENABLE) == 0)
@@ -502,7 +502,7 @@ qestart(struct ifnet *ifp)
 			if (m0) {
 				if (m0->m_len == 0)
 					continue;
-				error = bus_dmamap_load(sc->sc_dmat,
+				bus_dmamap_load(sc->sc_dmat,
 				    sc->sc_xmtmap[idx], mtod(m0, void *),
 				    m0->m_len, 0, 0);
 				buffer = sc->sc_xmtmap[idx]->dm_segs[0].ds_addr;

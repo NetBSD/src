@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.44.6.2 2013/06/23 06:20:18 tls Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.44.6.3 2014/08/20 00:03:42 tls Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.44.6.2 2013/06/23 06:20:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.44.6.3 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -386,8 +386,9 @@ gem_pci_estintr(struct gem_pci_softc *gsc)
 {
 	struct gem_softc *sc = &gsc->gsc_gem;
 	const char *intrstr;
+	char intrbuf[PCI_INTRSTR_LEN];
 
-	intrstr = pci_intr_string(gsc->gsc_pc, gsc->gsc_handle);
+	intrstr = pci_intr_string(gsc->gsc_pc, gsc->gsc_handle, intrbuf, sizeof(intrbuf));
 	gsc->gsc_ih = pci_intr_establish(gsc->gsc_pc, gsc->gsc_handle, IPL_NET,
 	    gem_intr, sc);
 	if (gsc->gsc_ih == NULL) {

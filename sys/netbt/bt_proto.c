@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_proto.c,v 1.12 2009/09/13 18:45:11 pooka Exp $	*/
+/*	$NetBSD: bt_proto.c,v 1.12.22.1 2014/08/20 00:04:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.12 2009/09/13 18:45:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.12.22.1 2014/08/20 00:04:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -62,17 +62,7 @@ PR_WRAP_CTLOUTPUT(rfcomm_ctloutput)
 #define	l2cap_ctloutput		l2cap_ctloutput_wrapper
 #define	rfcomm_ctloutput	rfcomm_ctloutput_wrapper
 
-PR_WRAP_USRREQ(hci_usrreq)
-PR_WRAP_USRREQ(sco_usrreq)
-PR_WRAP_USRREQ(l2cap_usrreq)
-PR_WRAP_USRREQ(rfcomm_usrreq)
-
-#define	hci_usrreq		hci_usrreq_wrapper
-#define	sco_usrreq		sco_usrreq_wrapper
-#define	l2cap_usrreq		l2cap_usrreq_wrapper
-#define	rfcomm_usrreq		rfcomm_usrreq_wrapper
-
-const struct protosw btsw[] = {
+static const struct protosw btsw[] = {
 	{ /* raw HCI commands */
 		.pr_type = SOCK_RAW,
 		.pr_domain = &btdomain,
@@ -80,7 +70,7 @@ const struct protosw btsw[] = {
 		.pr_flags = (PR_ADDR | PR_ATOMIC),
 		.pr_init = hci_init,
 		.pr_ctloutput = hci_ctloutput,
-		.pr_usrreq = hci_usrreq,
+		.pr_usrreqs = &hci_usrreqs,
 	},
 	{ /* HCI SCO data (audio) */
 		.pr_type = SOCK_SEQPACKET,
@@ -88,7 +78,7 @@ const struct protosw btsw[] = {
 		.pr_protocol = BTPROTO_SCO,
 		.pr_flags = (PR_CONNREQUIRED | PR_ATOMIC | PR_LISTEN),
 		.pr_ctloutput = sco_ctloutput,
-		.pr_usrreq = sco_usrreq,
+		.pr_usrreqs = &sco_usrreqs,
 	},
 	{ /* L2CAP Connection Oriented */
 		.pr_type = SOCK_SEQPACKET,
@@ -96,7 +86,7 @@ const struct protosw btsw[] = {
 		.pr_protocol = BTPROTO_L2CAP,
 		.pr_flags = (PR_CONNREQUIRED | PR_ATOMIC | PR_LISTEN),
 		.pr_ctloutput = l2cap_ctloutput,
-		.pr_usrreq = l2cap_usrreq,
+		.pr_usrreqs = &l2cap_usrreqs,
 		.pr_init = l2cap_init,
 	},
 	{ /* RFCOMM */
@@ -105,7 +95,7 @@ const struct protosw btsw[] = {
 		.pr_protocol = BTPROTO_RFCOMM,
 		.pr_flags = (PR_CONNREQUIRED | PR_LISTEN | PR_WANTRCVD),
 		.pr_ctloutput = rfcomm_ctloutput,
-		.pr_usrreq = rfcomm_usrreq,
+		.pr_usrreqs = &rfcomm_usrreqs,
 		.pr_init = rfcomm_init,
 	},
 };

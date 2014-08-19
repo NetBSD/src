@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.16 2012/03/11 19:39:36 para Exp $ */
+/* $NetBSD: hdafg.c,v 1.16.2.1 2014/08/20 00:03:48 tls Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.16 2012/03/11 19:39:36 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.16.2.1 2014/08/20 00:03:48 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -532,7 +532,7 @@ static void
 hdafg_widget_pin_dump(struct hdafg_softc *sc)
 {
 	struct hdaudio_widget *w;
-	int i, conn, color, defdev;
+	int i, conn;
 
 	for (i = sc->sc_startnode; i < sc->sc_endnode; i++) {
 		w = hdafg_widget_lookup(sc, i);
@@ -541,14 +541,16 @@ hdafg_widget_pin_dump(struct hdafg_softc *sc)
 		if (w->w_type != COP_AWCAP_TYPE_PIN_COMPLEX)
 			continue;
 		conn = COP_CFG_PORT_CONNECTIVITY(w->w_pin.config);
-		color = COP_CFG_COLOR(w->w_pin.config);
-		defdev = COP_CFG_DEFAULT_DEVICE(w->w_pin.config);
 		if (conn != 1) {
+#ifdef HDAUDIO_DEBUG
+			int color = COP_CFG_COLOR(w->w_pin.config);
+			int defdev = COP_CFG_DEFAULT_DEVICE(w->w_pin.config);
 			hda_trace(sc, "io %02X: %s (%s, %s)\n",
 			    w->w_nid,
 			    hdafg_default_device[defdev],
 			    hdafg_color[color],
 			    hdafg_port_connectivity[conn]);
+#endif
 		}
 	}
 }
@@ -975,7 +977,7 @@ hdafg_assoc_dump(struct hdafg_softc *sc)
 {
 	struct hdaudio_assoc *as = sc->sc_assocs;
 	struct hdaudio_widget *w;
-	uint32_t conn, color, defdev, curdev, curport;
+	uint32_t conn, defdev, curdev, curport;
 	int maxassocs = sc->sc_nassocs;
 	int i, j;
 
@@ -1053,7 +1055,6 @@ hdafg_assoc_dump(struct hdafg_softc *sc)
 					if (w == NULL)
 						continue;
 					conn = COP_CFG_PORT_CONNECTIVITY(w->w_pin.config);
-					color = COP_CFG_COLOR(w->w_pin.config);
 					defdev = COP_CFG_DEFAULT_DEVICE(w->w_pin.config);
 					if (conn != curport || defdev != curdev)
 						continue;
@@ -1063,8 +1064,12 @@ hdafg_assoc_dump(struct hdafg_softc *sc)
 					else
 						hda_trace1(sc, " ");
 					firstport = false;
+#ifdef HDAUDIO_DEBUG
+					int color =
+					    COP_CFG_COLOR(w->w_pin.config);
 					hda_trace1(sc, "%s",
 					    hdafg_color[color]);
+#endif
 					hda_trace1(sc, "(%02X)", w->w_nid);
 				}
 				hda_print1(sc, "]");
@@ -2939,7 +2944,8 @@ hdafg_build_mixers(struct hdafg_softc *sc)
 			if (sc->sc_assocs[i].as_dir != HDAUDIO_PINDIR_OUT)
 				continue;
 			mx[index].mx_di.un.s.member[j].mask = 1 << i;
-			sprintf(mx[index].mx_di.un.s.member[j].label.name,
+			snprintf(mx[index].mx_di.un.s.member[j].label.name,
+			    sizeof(mx[index].mx_di.un.s.member[j].label.name),
 			    "%s%02X",
 			    hdafg_assoc_type_string(&sc->sc_assocs[i]), i);
 			++j;
@@ -2962,7 +2968,8 @@ hdafg_build_mixers(struct hdafg_softc *sc)
 			if (sc->sc_assocs[i].as_dir != HDAUDIO_PINDIR_IN)
 				continue;
 			mx[index].mx_di.un.s.member[j].mask = 1 << i;
-			sprintf(mx[index].mx_di.un.s.member[j].label.name,
+			snprintf(mx[index].mx_di.un.s.member[j].label.name,
+			    sizeof(mx[index].mx_di.un.s.member[j].label.name),
 			    "%s%02X",
 			    hdafg_assoc_type_string(&sc->sc_assocs[i]), i);
 			++j;
@@ -2978,7 +2985,7 @@ hdafg_commit(struct hdafg_softc *sc)
 {
 	struct hdaudio_widget *w;
 	uint32_t gdata, gmask, gdir;
-	int commitgpio, numgpio;
+	int commitgpio;
 	int i;
 
 	/* Commit controls */
@@ -3000,10 +3007,10 @@ hdafg_commit(struct hdafg_softc *sc)
 	}
 
 	gdata = gmask = gdir = commitgpio = 0;
-	numgpio = COP_GPIO_COUNT_NUM_GPIO(sc->sc_p.gpio_cnt);
+#ifdef notyet
+	int numgpio = COP_GPIO_COUNT_NUM_GPIO(sc->sc_p.gpio_cnt);
 
 	hda_trace(sc, "found %d GPIOs\n", numgpio);
-#if notyet
 	for (i = 0; i < numgpio && i < 8; i++) {
 		if (commitgpio == 0)
 			commitgpio = 1;
@@ -3199,9 +3206,8 @@ hdafg_stream_intr(struct hdaudio_stream *st)
 {
 	struct hdaudio_audiodev *ad = st->st_cookie;
 	int handled = 0;
-	uint8_t sts;
 
-	sts = hda_read1(ad->ad_sc->sc_host, HDAUDIO_SD_STS(st->st_shift));
+	(void)hda_read1(ad->ad_sc->sc_host, HDAUDIO_SD_STS(st->st_shift));
 	hda_write1(ad->ad_sc->sc_host, HDAUDIO_SD_STS(st->st_shift),
 	    HDAUDIO_STS_DESE | HDAUDIO_STS_FIFOE | HDAUDIO_STS_BCIS);
 
@@ -3587,6 +3593,7 @@ hdafg_attach(device_t parent, device_t self, void *opaque)
 	int err, i;
 	bool rv;
 
+	aprint_naive("\n");
 	sc->sc_dev = self;
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -4172,7 +4179,7 @@ static int
 hdafg_get_props(void *opaque)
 {
 	struct hdaudio_audiodev *ad = opaque;
-	int props = 0;
+	int props = AUDIO_PROP_MMAP;
 
 	if (ad->ad_playback)
 		props |= AUDIO_PROP_PLAYBACK;
@@ -4182,8 +4189,6 @@ hdafg_get_props(void *opaque)
 		props |= AUDIO_PROP_FULLDUPLEX;
 		props |= AUDIO_PROP_INDEPENDENT;
 	}
-
-	/* TODO: AUDIO_PROP_MMAP */
 
 	return props;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_start.S,v 1.8 2011/06/30 20:09:24 wiz Exp $	*/
+/*	$NetBSD: gemini_start.S,v 1.8.12.1 2014/08/20 00:02:54 tls Exp $	*/
 
 /*
  * Machine dependent startup code for GEMINI boards.
@@ -91,20 +91,20 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: gemini_start.S,v 1.8 2011/06/30 20:09:24 wiz Exp $")
+RCSID("$NetBSD: gemini_start.S,v 1.8.12.1 2014/08/20 00:02:54 tls Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
 # define _PUTCHAR(addr, areg, breg, c) 			\
 	ldr	areg, addr;				\
 1:							\
-	ldr	breg, [ areg, #0x14 ];	/* LSR    */	\
+	ldr	breg, [areg, #0x14];	/* LSR    */	\
 	tst	breg, #0x20;		/* TXRDY? */	\
 	beq	1b;					\
 	mov	breg, #(c);		/*   c    */	\
-	str	breg, [ areg ];		/* TXDATA */	\
+	str	breg, [areg];		/* TXDATA */	\
 2:							\
-	ldr	breg, [ areg, #0x14 ];	/* LSR    */	\
+	ldr	breg, [areg, #0x14];	/* LSR    */	\
 	tst	breg, #0x40;		/* TSRE?  */	\
 	beq	2b;
 #else

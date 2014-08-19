@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.51.18.1 2012/12/02 05:46:39 tls Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.51.18.2 2014/08/20 00:03:28 tls Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.51.18.1 2012/12/02 05:46:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.51.18.2 2014/08/20 00:03:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,6 +201,7 @@ const struct bdevsw rd_bdevsw = {
 	.d_ioctl = rdioctl,
 	.d_dump = nulldump,
 	.d_psize = rdpsize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 
@@ -215,6 +216,7 @@ const struct cdevsw rd_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 
@@ -510,7 +512,6 @@ hdcstart(struct hdcsoftc *sc, struct buf *ob)
 	struct rdsoftc *rd;
 	struct buf *bp;
 	int cn, sn, tn, bn, blks;
-	volatile char ch;
 
 	if (sc->sc_active)
 		return; /* Already doing something */
@@ -567,7 +568,7 @@ hdcstart(struct hdcsoftc *sc, struct buf *ob)
 	/* Count up vars */
 	sc->sc_xfer = blks * DEV_BSIZE;
 
-	ch = HDC_RSTAT; /* Avoid pending interrupts */
+	(void)HDC_RSTAT; /* Avoid pending interrupts */
 	WAIT;
 	vsbus_clrintr(sc->sc_intbit); /* Clear pending int's */
 

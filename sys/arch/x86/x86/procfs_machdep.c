@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.1 2010/07/08 11:25:00 rmind Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.1.26.1 2014/08/20 00:03:29 tls Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.1 2010/07/08 11:25:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.1.26.1 2014/08/20 00:03:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,9 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.1 2010/07/08 11:25:00 rmind Exp
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
-
-extern int	i386_fpu_present, i386_fpu_exception, i386_fpu_fdivbug;
-extern char	cpu_model[];
 
 static const char * const x86_features[] = {
 	/* Intel-defined */
@@ -105,7 +102,7 @@ static const char * const x86_features[] = {
 #endif
 };
 
-static int	procfs_getonecpu(int, struct cpu_info *, char *, int *);
+static int	procfs_getonecpu(int, struct cpu_info *, char *, size_t *);
 
 /*
  * Linux-style /proc/cpuinfo.
@@ -114,55 +111,54 @@ static int	procfs_getonecpu(int, struct cpu_info *, char *, int *);
  * In the multiprocessor case, this should be a loop over all CPUs.
  */
 int
-procfs_getcpuinfstr(char *bf, int *len)
+procfs_getcpuinfstr(char *bf, size_t *len)
 {
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
-	int i = 0, used = *len, total = *len;
+	size_t i, total, size, used;
 
-	*len = 0;
+	i = total = 0;
+	used = size = *len;
+	
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		if (procfs_getonecpu(i++, ci, bf, &used) == 0) {
-			*len += used;
-			total = 0;
-			break;
-		}
-		total -= used;
-		if (total > 0) {
+		procfs_getonecpu(i++, ci, bf, &used);
+		total += used + 1;
+		if (used + 1 < size) {
 			bf += used;
 			*bf++ = '\n';
-			*len += used + 1;
-			used = --total;
-			if (used == 0)
-				break;
-		} else {
-			*len += used;
-			break;
-		}
+			size -= used + 1;
+			used = size;
+		} else
+			used = 0;
 	}
-	return total == 0 ? -1 : 0;
+	size = *len;
+	*len = total;
+	return size < *len ? -1 : 0;
 }
 
 static int
-procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, int *len)
+procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, size_t *len)
 {
-	int left, l, i;
-	char featurebuf[256], *p;
+	size_t left, l, size;
+	char featurebuf[1024], *p;
 
 	p = featurebuf;
 	left = sizeof(featurebuf);
-	for (i = 0; i < 32; i++) {
+	size = *len;
+	for (size_t i = 0; i < 32; i++) {
 		if ((ci->ci_feat_val[0] & (1 << i)) && x86_features[i]) {
 			l = snprintf(p, left, "%s ", x86_features[i]);
-			left -= l;
-			p += l;
-			if (left <= 0)
+			if (l < left) {
+				left -= l;
+				p += l;
+			} else
 				break;
 		}
 	}
 
 	p = bf;
 	left = *len;
+	size = 0;
 	l = snprintf(p, left,
 	    "processor\t: %d\n"
 	    "vendor_id\t: %s\n"
@@ -176,21 +172,24 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, int *len)
 	    cpuid_level >= 0 ? ((ci->ci_signature >> 4) & 15) : 0,
 	    cpu_brand_string
 	);
-
-	left -= l;
-	p += l;
-	if (left <= 0)
-		return 0;
+	size += l;
+	if (l < left) {
+		left -= l;
+		p += l;
+	} else
+		left = 0;
 
 	if (cpuid_level >= 0)
 		l = snprintf(p, left, "%d\n", ci->ci_signature & 15);
 	else
 		l = snprintf(p, left, "unknown\n");
 
-	left -= l;
-	p += l;
-	if (left <= 0)
-		return 0;
+	size += l;
+	if (l < left) {
+		left -= l;
+		p += l;
+	} else
+		left = 0;
 
 	if (ci->ci_data.cpu_cc_freq != 0) {
 		uint64_t freq, fraq;
@@ -202,37 +201,31 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, int *len)
 	} else
 		l = snprintf(p, left, "cpu MHz\t\t: unknown\n");
 
-	left -= l;
-	p += l;
-	if (left <= 0)
-		return 0;
+	size += l;
+	if (l < left) {
+		left -= l;
+		p += l;
+	} else
+		left = 0;
 
 	l = snprintf(p, left,
 	    "fdiv_bug\t: %s\n"
 	    "fpu\t\t: %s\n"
-	    "fpu_exception\t: %s\n"
+	    "fpu_exception\t: yes\n"
 	    "cpuid level\t: %d\n"
 	    "wp\t\t: %s\n"
 	    "flags\t\t: %s\n",
-#ifdef __x86_64__
-	    "no",	/* XXX */
-	    "yes",	/* XXX */
-	    "yes",	/* XXX */
-#else
-	    i386_fpu_fdivbug ? "yes" : "no",
-	    i386_fpu_present ? "yes" : "no",
-	    i386_fpu_exception ? "yes" : "no",
-#endif
+	    i386_fpu_fdivbug ? "yes" : "no",	/* an old pentium */
+	    i386_fpu_present ? "yes" : "no",	/* not a 486SX */
 	    cpuid_level,
 	    (rcr0() & CR0_WP) ? "yes" : "no",
 	    featurebuf
 	);
+	size += l;
 
-	if (l > left)
-		return 0;
-	*len = (p + l) - bf;
-
-	return 1;
+	left = *len;
+	*len = size;
+	return left < *len ? -1 : 0;
 }
 
 #if defined(__HAVE_PROCFS_MACHDEP) && !defined(__x86_64__)

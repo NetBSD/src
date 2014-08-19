@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.h,v 1.13 2012/07/29 00:07:10 matt Exp $ */
+/*	$NetBSD: pxa2x0_intr.h,v 1.13.2.1 2014/08/20 00:02:48 tls Exp $ */
 
 /* Derived from i80321_intr.h */
 
@@ -134,14 +134,12 @@ find_first_bit(uint32_t bits)
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
-void	_setsoftintr(int);
 
 #if !defined(EVBARM_SPL_NOINLINE)
 
 #define splx(new)		pxa2x0_splx(new)
 #define	_spllower(ipl)		pxa2x0_spllower(ipl)
 #define	_splraise(ipl)		pxa2x0_splraise(ipl)
-#define	_setsoftintr(si)	pxa2x0_setsoftintr(si)
 
 #endif	/* !EVBARM_SPL_NOINTR */
 

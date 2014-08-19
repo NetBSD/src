@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.113.8.2 2013/02/25 00:29:14 tls Exp $	*/
+/*	$NetBSD: ath.c,v 1.113.8.3 2014/08/20 00:03:37 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.113.8.2 2013/02/25 00:29:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.113.8.3 2014/08/20 00:03:37 tls Exp $");
 #endif
 
 /*
@@ -4353,7 +4353,6 @@ ath_stoprecv(struct ath_softc *sc)
 	((struct ath_desc *)((char *)(_sc)->sc_rxdma.dd_desc + \
 		((_pa) - (_sc)->sc_rxdma.dd_desc_paddr)))
 	struct ath_hal *ah = sc->sc_ah;
-	u_int64_t tsf;
 
 	ath_hal_stoppcurecv(ah);	/* disable PCU */
 	ath_hal_setrxfilter(ah, 0);	/* clear recv filter */
@@ -4366,7 +4365,6 @@ ath_stoprecv(struct ath_softc *sc)
 			(void *)(uintptr_t) ath_hal_getrxbuf(ah), sc->sc_rxlink);
 		STAILQ_FOREACH(bf, &sc->sc_rxbuf, bf_list) {
 			struct ath_desc *ds = bf->bf_desc;
-			tsf = ath_hal_gettsf64(sc->sc_ah);
 			HAL_STATUS status = ath_hal_rxprocdesc(ah, ds,
 				bf->bf_daddr, PA2DESC(sc, ds->ds_link),
 				&ds->ds_rxstat);

@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_autoconf.c,v 1.6 2012/01/10 12:17:20 kiyohara Exp $	*/
+/*	$NetBSD: obs600_autoconf.c,v 1.6.6.1 2014/08/20 00:02:59 tls Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,7 +33,9 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs600_autoconf.c,v 1.6 2012/01/10 12:17:20 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs600_autoconf.c,v 1.6.6.1 2014/08/20 00:02:59 tls Exp $");
+
+#include "dwctwo.h"
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -46,6 +48,44 @@ __KERNEL_RCSID(0, "$NetBSD: obs600_autoconf.c,v 1.6 2012/01/10 12:17:20 kiyohara
 #include <powerpc/ibm4xx/dcr4xx.h>
 
 #include <dev/ic/comreg.h>
+
+#if NDWCTWO > 0
+#include <dev/usb/usb.h>
+#include <dev/usb/usbdi.h>
+#include <dev/usb/usbdivar.h>
+
+#include <dwc2/dwc2.h>
+#include "dwc2_core.h"
+
+/* This parameters was set from u-boot. */
+static struct dwc2_core_params dwctwo_obs600_params = {
+	.otg_cap			= 0,	/* HNP/SRP capable */
+	.otg_ver			= 0,	/* 1.3 */
+	.dma_enable			= 1,
+	.dma_desc_enable		= 0,
+	.speed				= 0,	/* High Speed */
+	.enable_dynamic_fifo		= 1,
+	.en_multiple_tx_fifo		= 0,
+	.host_rx_fifo_size		= 531,	/* 531 DWORDs */
+	.host_nperio_tx_fifo_size	= 256,	/* 256 DWORDs */
+	.host_perio_tx_fifo_size	= 256,	/* 256 DWORDs */
+	.max_transfer_size		= 524287,
+	.max_packet_count		= 1023,
+	.host_channels			= 4,
+	.phy_type			= 2,	/* ULPI */
+	.phy_utmi_width			= 8,	/* 8 bits */
+	.phy_ulpi_ddr			= 0,	/* Single */
+	.phy_ulpi_ext_vbus		= 0,
+	.i2c_enable			= 0,
+	.ulpi_fs_ls			= 0,
+	.host_support_fs_ls_low_power	= 0,
+	.host_ls_low_power_phy_clk	= 0,	/* 48 MHz */
+	.ts_dline			= 0,
+	.reload_ctl			= 0,
+	.ahbcfg				= 0x10,
+	.uframe_sched			= 1,
+};
+#endif
 
 
 /*
@@ -79,6 +119,16 @@ cpu_configure(void)
 void
 device_register(device_t dev, void *aux)
 {
+
+#if NDWCTWO > 0
+	if (device_is_a(dev, "dwctwo")) {
+		prop_dictionary_t dict = device_properties(dev);
+
+		prop_dictionary_set_uint32(dict, "params",
+		    (uint32_t)&dwctwo_obs600_params);
+		return;
+	}
+#endif
 
 	obs405_device_register(dev, aux, OBS600_COM_FREQ);
 }

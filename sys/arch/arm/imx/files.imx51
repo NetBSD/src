@@ -1,10 +1,11 @@
-#	$NetBSD: files.imx51,v 1.5 2012/04/19 09:53:53 bsh Exp $
+#	$NetBSD: files.imx51,v 1.5.2.1 2014/08/20 00:02:46 tls Exp $
 #
-# Configuration info for the Freescale i.MX51
+# Configuration info for the Freescale i.MX5x
 #
 
 defparam opt_imx.h				MEMSIZE
 defflag opt_imx.h				IMX51
+defflag opt_imx.h				IMX50
 
 define	bus_dma_generic
 
@@ -32,7 +33,8 @@ file	arch/arm/imx/imx51_clock.c
 # Clock Control Module
 device	imxccm
 attach	imxccm	at axi
-file	arch/arm/imx/imx51_ccm.c	imxccm		needs-flag
+file	arch/arm/imx/imx51_ccm.c		imxccm	needs-flag
+defflag opt_imx51clk.h				IMXCCMDEBUG
 
 # frequency of external low frequency clock
 # typically 32000, 32768, or 38400.
@@ -45,16 +47,29 @@ defparam opt_imx51clk.h	IMX51_OSC_FREQ
 defparam opt_imx51clk.h IMX51_AHBCLK_FREQ
 defparam opt_imx51clk.h IMX51_IPGCLK_FREQ
 
+# Watchdog
+device imxwdog: sysmon_wdog
+attach imxwdog at axi
+file   arch/arm/imx/imx51_wdog.c	imxwdog
+file   arch/arm/imx/imxwdog.c		imxwdog
+
 # iMX GPIO
 device	imxgpio: gpiobus
 attach	imxgpio at axi
 file	arch/arm/imx/imxgpio.c		imxgpio		needs-flag
 file	arch/arm/imx/imx51_gpio.c	imxgpio
+defflag opt_imxgpio.h			IMX_GPIO_INTR_SPLIT
 
 # iMX IOMUX
 device	imxiomux : bus_space_generic
 attach	imxiomux at axi
 file	arch/arm/imx/imx51_iomux.c		imxiomux
+
+# EPDC controller
+# device	epdc : bus_dma_generic, wsemuldisplaydev, rasops16, rasops8, rasops4, rasops_rotation, vcons
+# file	arch/arm/imx/imx50_epdc.c	epdc	 needs-flag
+# defflag opt_imx50_epdc.h		IMXEPDCCONSOLE
+# defparam opt_imx50_epdc.h		EPDC_DEBUG
 
 # IPU v3 controller
 device	ipu : bus_dma_generic, wsemuldisplaydev, rasops16, rasops8, rasops4, rasops_rotation, vcons
@@ -83,30 +98,37 @@ file   arch/arm/imx/imx51_usb.c			imxusbc
 attach ehci at imxusbc with imxehci
 file   arch/arm/imx/imxusb.c			imxehci
 
-# attach	wdc at ahb with wdc_ahb : bus_dma_generic
-# file	arch/arm/imx/wdc_axi.c			wdc_axi
-
 # SD host controller for SD/MMC
 attach	sdhc at axi with sdhc_axi
 file	arch/arm/imx/imx51_esdhc.c		sdhc_axi
 
 # iic Controler
-# device	imxi2c: i2cbus
-# file	arch/arm/imx/imx51_i2c.c		imxi2c
+device	imxi2c: i2cbus
+attach	imxi2c at axi
+file	arch/arm/imx/imxi2c.c		imxi2c
+file	arch/arm/imx/imx51_i2c.c	imxi2c
 
-# attach	imxi2c at aips with imxi2c_aips
-# file	arch/arm/imx/imxi2c_aips.c		imxi2c_aips
-
-# spi bus controlloer
-# device	imxspi: spibus
-# file	arch/arm/imx/imx51_spi.c		imxspi
+# SPI bus controlloer
+# attach of this driver need to be specified in paltform configuration
+# use flags to module version
+device  imxspi : spibus
+file    arch/arm/imx/imxspi.c			imxspi
+defparam opt_imxspi.h                   	IMXSPINSLAVES
+defparam opt_imxspi.h				IMXSPI_DEBUG
+# attach	imxspi at axi with imx51_spi
+# file	arch/arm/imx/imx51_spi.c		imx51_spi
 
 # Smart Direct Memory Access Controller
 # device	imxsdma: dmover_service, bus_dma_generic
-# attach	imxsdma at ahb
+# attach	imxsdma at axi
 # file	arch/arm/imx/imxsdma.c		imxsdma
 # file	arch/arm/imx/imxsdmaprog.c		imxsdma
 
 # iis sound Controller (SSI module)
 # device	imxi2s {} : bus_dma_generic
 # file	arch/arm/imx/imx51_i2s.c		imxi2s needs-flag
+
+# PWM controlloer
+device	imxpwm
+file	arch/arm/imx/imxpwm.c			imxpwm
+file	arch/arm/imx/imx51_pwm.c		imxpwm

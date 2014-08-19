@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_conf.c,v 1.19 2007/03/04 05:59:01 christos Exp $	*/
+/*	$NetBSD: altq_conf.c,v 1.19.86.1 2014/08/20 00:02:39 tls Exp $	*/
 /*	$KAME: altq_conf.c,v 1.24 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.19 2007/03/04 05:59:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.19.86.1 2014/08/20 00:02:39 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -168,8 +168,18 @@ dev_type_close(altqclose);
 dev_type_ioctl(altqioctl);
 
 const struct cdevsw altq_cdevsw = {
-	altqopen, altqclose, noread, nowrite, altqioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	.d_open = altqopen,
+	.d_close = altqclose,
+	.d_read = noread,
+	.d_write = nowrite, 
+	.d_ioctl = altqioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER,
 };
 
 int

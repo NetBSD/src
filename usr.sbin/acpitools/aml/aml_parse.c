@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_parse.c,v 1.3 2011/06/21 09:36:46 mrg Exp $	*/
+/*	$NetBSD: aml_parse.c,v 1.3.8.1 2014/08/20 00:05:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999 Doug Rabson
@@ -30,7 +30,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_parse.c,v 1.7 2001/10/23 14:54:15 takawata Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aml_parse.c,v 1.3 2011/06/21 09:36:46 mrg Exp $");
+__RCSID("$NetBSD: aml_parse.c,v 1.3.8.1 2014/08/20 00:05:06 tls Exp $");
 
 #include <sys/param.h>
 
@@ -761,12 +761,10 @@ static void
 aml_parse_fieldlist(struct aml_environ *env, struct aml_field *template,
     int indent)
 {
-	u_int32_t	offset;
 
-	offset = 0;
 	while (env->dp < env->end) {
 		aml_print_indent(indent);
-		offset = aml_parse_field(env, template);
+		(void)aml_parse_field(env, template);
 		if (env->dp < env->end) {
 			AML_DEBUGPRINT(",\n");
 		} else {

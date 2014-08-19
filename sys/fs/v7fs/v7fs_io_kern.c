@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_io_kern.c,v 1.1 2011/06/27 11:52:25 uch Exp $	*/
+/*	$NetBSD: v7fs_io_kern.c,v 1.1.12.1 2014/08/20 00:04:28 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,19 +30,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_io_kern.c,v 1.1 2011/06/27 11:52:25 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_io_kern.c,v 1.1.12.1 2014/08/20 00:04:28 tls Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: v7fs_io_kern.c,v 1.1 2011/06/27 11:52:25 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_io_kern.c,v 1.1.12.1 2014/08/20 00:04:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kauth.h>
 #include <sys/mutex.h>
 
@@ -69,8 +69,6 @@ static void v7fs_os_lock(void *);
 static void v7fs_os_unlock(void *);
 static bool lock_init(struct lock_ops *);
 
-MALLOC_JUSTDEFINE(M_V7FS, "v7fs core", "v7fs internal structures");
-
 int
 v7fs_io_init(struct v7fs_self **fs,
     const struct v7fs_mount_device *mount_device, size_t block_size)
@@ -80,11 +78,8 @@ v7fs_io_init(struct v7fs_self **fs,
 	struct local_io *local;
 	int error = 0;
 
-	/* Allocate myself */
-	if (!(p = (struct v7fs_self *)malloc(sizeof(*p), M_TEMP, M_WAITOK |
-	    M_ZERO)))
+	if ((p = kmem_zalloc(sizeof(*p), KM_SLEEP)) == NULL)
 		return ENOMEM;
-	memset(p, 0, sizeof(*p));
 
 	p->scratch_free = -1;
 	p->scratch_remain = V7FS_SELF_NSCRATCH;
@@ -95,8 +90,7 @@ v7fs_io_init(struct v7fs_self **fs,
 	v7fs_endian_init(p);
 #endif
 	/* IO */
-	if (!(local = (struct local_io *)malloc(sizeof(*local), M_TEMP,
-	    M_WAITOK | M_ZERO))) {
+	if ((local = kmem_zalloc(sizeof(*local), KM_SLEEP)) == NULL) {
 		error = ENOMEM;
 		goto errexit;
 	}
@@ -124,44 +118,41 @@ v7fs_io_init(struct v7fs_self **fs,
 	return 0;
 
 errexit:
-	if (p->io.cookie)
-		free(p->io.cookie, M_TEMP);
-	if (p->sb_lock.cookie)
-		free(p->sb_lock.cookie, M_TEMP);
-	if (p->ilist_lock.cookie)
-		free(p->ilist_lock.cookie, M_TEMP);
-	if (p->mem_lock.cookie)
-		free(p->mem_lock.cookie, M_TEMP);
-	free(p, M_TEMP);
-
+	v7fs_io_fini(p);
 	return error;
 }
 
 static bool
 lock_init(struct lock_ops *ops)
 {
-	if (!(ops->cookie = (kmutex_t *)malloc(sizeof(kmutex_t), M_TEMP,
-	    M_WAITOK | M_ZERO))) {
+	if ((ops->cookie = kmem_zalloc(sizeof(kmutex_t), KM_SLEEP)) == NULL) {
 		return false;
 	}
 	mutex_init(ops->cookie, MUTEX_DEFAULT, IPL_NONE);
 	ops->lock = v7fs_os_lock;
 	ops->unlock = v7fs_os_unlock;
-
 	return true;
 }
 
 void
 v7fs_io_fini(struct v7fs_self *fs)
 {
-	mutex_destroy(fs->sb_lock.cookie);
-	mutex_destroy(fs->ilist_lock.cookie);
-	mutex_destroy(fs->mem_lock.cookie);
-
-	free(fs->io.cookie, M_TEMP);
-	free(fs->sb_lock.cookie, M_TEMP);
-	free(fs->ilist_lock.cookie, M_TEMP);
-	free(fs, M_TEMP);
+	if (fs->io.cookie) {
+		kmem_free(fs->io.cookie, sizeof(struct local_io));
+	}
+	if (fs->sb_lock.cookie) {
+		mutex_destroy(fs->sb_lock.cookie);
+		kmem_free(fs->sb_lock.cookie, sizeof(kmutex_t));
+	}
+	if (fs->ilist_lock.cookie) {
+		mutex_destroy(fs->ilist_lock.cookie);
+		kmem_free(fs->ilist_lock.cookie, sizeof(kmutex_t));
+	}
+	if (fs->mem_lock.cookie) {
+		mutex_destroy(fs->mem_lock.cookie);
+		kmem_free(fs->mem_lock.cookie, sizeof(kmutex_t));
+	}
+	kmem_free(fs, sizeof(*fs));
 }
 
 static bool

@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.S,v 1.2 2003/08/07 16:42:37 agc Exp $	*/
+/*	$NetBSD: pipe.S,v 1.2.62.1 2014/08/20 00:02:12 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: pipe.S,v 1.2 2003/08/07 16:42:37 agc Exp $")
+	RCSID("$NetBSD: pipe.S,v 1.2.62.1 2014/08/20 00:02:12 tls Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -50,3 +50,4 @@ _SYSCALL(_pipe,pipe)
 	movl	%edx,4(%rdi)
 	xorl	%eax,%eax
 	ret
+END(_pipe)

@@ -1,6 +1,5 @@
 /* Target-dependent code for OSF/1 on Alpha.
-   Copyright (C) 2002, 2003, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,14 +21,14 @@
 #include "gdbcore.h"
 #include "value.h"
 #include "osabi.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "objfiles.h"
 
 #include "alpha-tdep.h"
 
 static int
 alpha_osf1_pc_in_sigtramp (struct gdbarch *gdbarch,
-			   CORE_ADDR pc, char *func_name)
+			   CORE_ADDR pc, const char *func_name)
 {
   return (func_name != NULL && strcmp ("__sigtramp", func_name) == 0);
 }

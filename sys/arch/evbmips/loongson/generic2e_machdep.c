@@ -48,7 +48,7 @@
  * Generic Loongson 2E code and configuration data.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: generic2e_machdep.c,v 1.2.6.1 2012/11/20 03:01:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: generic2e_machdep.c,v 1.2.6.2 2014/08/20 00:02:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ void	*generic2e_isa_intr_establish(void *, int, int, int,
 	     int (*)(void *), void *);
 void	generic2e_isa_intr_disestablish(void *, void *);
 const struct evcnt * generic2e_isa_intr_evcnt(void *, int);
-const char * generic2e_isa_intr_string(void *, int);
+const char * generic2e_isa_intr_string(void *, int, char *, size_t);
 
 void 	generic2e_isa_intr(int, vaddr_t, uint32_t);
 
@@ -274,12 +274,12 @@ generic2e_isa_intr_evcnt(void *v, int irq)
 }
 
 const char *
-generic2e_isa_intr_string(void *v, int irq)
+generic2e_isa_intr_string(void *v, int irq, char *buf, size_t len)
 {
 	if (irq == 0 || irq >= BONITO_NISA || irq == 2)
 		panic("generic2e_isa_intr_string: bogus isa irq 0x%x", irq);
 
-	return loongson_intr_string(&generic2e_bonito, irq);
+	return loongson_intr_string(&generic2e_bonito, irq, buf, len);
 }
 
 void

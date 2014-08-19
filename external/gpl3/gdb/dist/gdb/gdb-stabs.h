@@ -1,6 +1,5 @@
 /* Definitions for symbol-reading containing "stabs", for GDB.
-   Copyright (C) 1992, 1993, 1995, 1996, 1997, 1999, 2000, 2007, 2008, 2009,
-   2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1992-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Support.  Written by John Gilmore.
 
    This file is part of GDB.
@@ -27,6 +26,10 @@
 #if !defined (GDBSTABS_H)
 #define GDBSTABS_H
 
+/* The tag used to find the DBX info attached to an objfile.  This is
+   global because it is referenced by several modules.  */
+extern const struct objfile_data *dbx_objfile_data_key;
+
 /* The stab_section_info chain remembers info from the ELF symbol table,
    while psymtabs are being built for the other symbol tables in the 
    objfile.  It is destroyed at the complation of psymtab-reading.
@@ -42,8 +45,8 @@ struct stab_section_info
   };
 
 /* Information is passed among various dbxread routines for accessing
-   symbol files.  A pointer to this structure is kept in the
-   deprecated_sym_stab_info field of the objfile struct.  */
+   symbol files.  A pointer to this structure is kept in the objfile,
+   using the dbx_objfile_data_key.  */
 
 struct dbx_symfile_info
   {
@@ -73,7 +76,8 @@ struct dbx_symfile_info
     asection *stab_section;
   };
 
-#define DBX_SYMFILE_INFO(o)	((o)->deprecated_sym_stab_info)
+#define DBX_SYMFILE_INFO(o) \
+  ((struct dbx_symfile_info *) objfile_data ((o), dbx_objfile_data_key))
 #define DBX_TEXT_ADDR(o)	(DBX_SYMFILE_INFO(o)->text_addr)
 #define DBX_TEXT_SIZE(o)	(DBX_SYMFILE_INFO(o)->text_size)
 #define DBX_SYMCOUNT(o)		(DBX_SYMFILE_INFO(o)->symcount)

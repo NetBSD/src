@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_parse.c,v 1.16 2009/05/06 14:30:51 ginsbach Exp $	*/
+/*	$NetBSD: rpc_parse.c,v 1.16.12.1 2014/08/20 00:05:03 tls Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_parse.c 1.8 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_parse.c,v 1.16 2009/05/06 14:30:51 ginsbach Exp $");
+__RCSID("$NetBSD: rpc_parse.c,v 1.16.12.1 2014/08/20 00:05:03 tls Exp $");
 #endif
 #endif
 
@@ -56,24 +56,24 @@ __RCSID("$NetBSD: rpc_parse.c,v 1.16 2009/05/06 14:30:51 ginsbach Exp $");
 
 #define ARGNAME "arg"
 
-static void isdefined __P((definition *));
-static void def_struct __P((definition *));
-static void def_program __P((definition *));
-static void def_enum __P((definition *));
-static void def_const __P((definition *));
-static void def_union __P((definition *));
-static void check_type_name __P((char *, int));
-static void def_typedef __P((definition *));
-static void get_declaration __P((declaration *, defkind));
-static void get_prog_declaration __P((declaration *, defkind, int));
-static void get_type __P((char **, char **, defkind));
-static void unsigned_dec __P((char **));
+static void isdefined(definition *);
+static void def_struct(definition *);
+static void def_program(definition *);
+static void def_enum(definition *);
+static void def_const(definition *);
+static void def_union(definition *);
+static void check_type_name(const char *, int);
+static void def_typedef(definition *);
+static void get_declaration(declaration *, defkind);
+static void get_prog_declaration(declaration *, defkind, int);
+static void get_type(const char **, const char **, defkind);
+static void unsigned_dec(const char **);
 
 /*
  * return the next definition you see
  */
 definition *
-get_definition()
+get_definition(void)
 {
 	definition *defp;
 	token   tok;
@@ -111,15 +111,13 @@ get_definition()
 }
 
 static void
-isdefined(defp)
-	definition *defp;
+isdefined(definition *defp)
 {
 	STOREVAL(&defined, defp);
 }
 
 static void
-def_struct(defp)
-	definition *defp;
+def_struct(definition *defp)
 {
 	token   tok;
 	declaration dec;
@@ -146,8 +144,7 @@ def_struct(defp)
 }
 
 static void
-def_program(defp)
-	definition *defp;
+def_program(definition *defp)
 {
 	token   tok;
 	declaration dec;
@@ -251,8 +248,7 @@ def_program(defp)
 
 
 static void
-def_enum(defp)
-	definition *defp;
+def_enum(definition *defp)
 {
 	token   tok;
 	enumval_list *elist;
@@ -281,8 +277,7 @@ def_enum(defp)
 }
 
 static void
-def_const(defp)
-	definition *defp;
+def_const(definition *defp)
 {
 	token   tok;
 
@@ -295,8 +290,7 @@ def_const(defp)
 }
 
 static void
-def_union(defp)
-	definition *defp;
+def_union(definition *defp)
 {
 	token   tok;
 	declaration dec;
@@ -356,7 +350,7 @@ def_union(defp)
 	}
 }
 
-static char *reserved_words[] = {
+static const char *const reserved_words[] = {
 	"array",
 	"bytes",
 	"destroy",
@@ -372,7 +366,7 @@ static char *reserved_words[] = {
 	NULL
 };
 
-static char *reserved_types[] = {
+static const char *const reserved_types[] = {
 	"opaque",
 	"string",
 	NULL
@@ -380,9 +374,7 @@ static char *reserved_types[] = {
 /* check that the given name is not one that would eventually result in
    xdr routines that would conflict with internal XDR routines. */
 static void
-check_type_name(name, new_type)
-	int     new_type;
-	char   *name;
+check_type_name(const char *name, int new_type)
 {
 	int     i;
 	char    tmp[100];
@@ -406,8 +398,7 @@ check_type_name(name, new_type)
 }
 
 static void
-def_typedef(defp)
-	definition *defp;
+def_typedef(definition *defp)
 {
 	declaration dec;
 
@@ -422,9 +413,7 @@ def_typedef(defp)
 }
 
 static void
-get_declaration(dec, dkind)
-	declaration *dec;
-	defkind dkind;
+get_declaration(declaration *dec, defkind dkind)
 {
 	token   tok;
 
@@ -477,10 +466,7 @@ get_declaration(dec, dkind)
 }
 
 static void
-get_prog_declaration(dec, dkind, num)
-	declaration *dec;
-	defkind dkind;
-	int     num;		/* arg number */
+get_prog_declaration(declaration *dec, defkind dkind, int num /* arg number */)
 {
 	token   tok;
 	char    name[255];	/* argument name */
@@ -547,10 +533,7 @@ get_prog_declaration(dec, dkind, num)
 
 
 static void
-get_type(prefixp, typep, dkind)
-	char  **prefixp;
-	char  **typep;
-	defkind dkind;
+get_type(const char **prefixp, const char **typep, defkind dkind)
 {
 	token   tok;
 
@@ -604,8 +587,7 @@ get_type(prefixp, typep, dkind)
 }
 
 static void
-unsigned_dec(typep)
-	char  **typep;
+unsigned_dec(const char **typep)
 {
 	token   tok;
 

@@ -1,18 +1,29 @@
-#	$NetBSD: Makefile.common,v 1.3 2011/06/28 04:03:16 mrg Exp $
+#	$NetBSD: Makefile.common,v 1.3.8.1 2014/08/19 23:56:56 tls Exp $
 
-DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
+DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
 
-LIBSTDCXXSRCS=	${G_SRC_SOURCES}
+GCC_MACHINE_ARCH=${MACHINE_ARCH:S/earmv5/earm/}
+
+# Support src/compat builds
+.if defined(MLIBDIR) && exists(${.CURDIR}/../libstdc++-v3/arch/${MLIBDIR}/defs.mk)
+LIBSTDCXX_MACHINE_ARCH=${MLIBDIR}
+.else
+LIBSTDCXX_MACHINE_ARCH=${GCC_MACHINE_ARCH}
+.endif
+
+LIBSTDCXXSRCS=	${G_SRC_SOURCES} ${G_CPP98_SOURCES} ${G_CPP11_SOURCES}
 LIBSUPCXXSRCS=	${G_LIBSUPCXX_SOURCES} ${G_LIBSUPCXX_C_SOURCES}
 
 CPPFLAGS+=	-I${DIST}/gcc
 CPPFLAGS+=	-I${DIST}/include
 CPPFLAGS+=	-I${DIST}/libstdc++-v3/libsupc++
-CPPFLAGS+=	-I${.CURDIR}/../libstdc++-v3_4/arch/${MACHINE_ARCH} -I.
+CPPFLAGS+=	-I${DIST}/libgcc
+CPPFLAGS+=	-I${.CURDIR}/../libstdc++-v3/arch/${LIBSTDCXX_MACHINE_ARCH} -I.
 CPPFLAGS+=	-DHAVE_STDLIB_H -DHAVE_STRING_H
 
 CPPFLAGS.cp-demangle.c=-DIN_GLIBCPP_V3
-#CPPFLAGS.dyn-string.c=-DIN_GLIBCPP_V3
 
-#BUILDSYMLINKS+=	${DIST}/libiberty/cp-demangle.c cxa_demangle.c
+.for f in eh_ptr eh_throw guard atexit_thread nested_exception
+COPTS.${f}.cc+=	-std=gnu++0x
+.endfor

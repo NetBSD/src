@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,21 +18,15 @@
 
 # This file is part of the gdb testsuite.
 
-if $tracelevel {
-    strace $tracelevel
-}
-
 
 if { ![istarget x86_64-*-* ] || ![is_lp64_target] } {
     verbose "Skipping amd64 word register tests."
     return
 }
 
-set testfile "amd64-word"
-set srcfile amd64-pseudo.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile amd64-pseudo.c
 
-if [get_compiler_info ${binfile}] {
+if [get_compiler_info] {
     return -1
 }
 
@@ -41,10 +35,7 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list
     return
 }
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart ${binfile}
 
 if ![runto_main] then {
     gdb_suppress_tests

@@ -1,6 +1,5 @@
 /* Generic simulator halt/restart.
-   Copyright (C) 1997, 1998, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -149,7 +148,7 @@ sim_engine_abort (SIM_DESC sd,
 {
   va_list ap;
   ASSERT (sd == NULL || STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
-  va_start(ap, fmt);
+  va_start (ap, fmt);
   sim_engine_vabort (sd, cpu, cia, fmt, ap);
   va_end (ap);
 }

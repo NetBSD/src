@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.47.18.1 2012/11/20 03:01:37 tls Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.47.18.2 2014/08/20 00:03:16 tls Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.47.18.1 2012/11/20 03:01:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.47.18.2 2014/08/20 00:03:16 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,15 +68,65 @@ extern int turbo;
 #if defined(ND_DEBUG)
 int nextdma_debug = 0;
 #define DPRINTF(x) if (NEXTDMA_DEBUG) printf x;
-int ndtraceshow = 0;
-char ndtrace[8192+100];
-char *ndtracep = ndtrace;
-#define NDTRACEIF(x) if (10 && /* (nsc->sc_chan->nd_intr == NEXT_I_SCSI_DMA) && */ ndtracep < (ndtrace + 8192)) do {x;} while (0)
+int ndtrace_show = 0;
+char ndtrace_buf[8192+100];
+size_t ndtrace_len = 0;
+#define NDTRACEIF(x) if (10) do {x;} while (0)
 #else
 #define DPRINTF(x)
 #define NDTRACEIF(x)
 #endif
 #define PRINTF(x) printf x
+
+void
+ndtrace_printf(const char *fmt, ...) {
+#ifdef ND_DEBUG
+	int len;
+	va_list ap;
+
+	va_start(ap, fmt);
+	len = vsnprintf(ndtrace_buf + ndtrace_len, sizeof(ndtrace_buf)
+	    - ndtrace_len, fmt, ap);
+	va_end(ap);
+	ndtrace_len += len;
+#endif
+}
+
+int
+ndtrace_empty(void) {
+#ifdef ND_DEBUG
+	return ndtrace_len == 0;
+#else
+	return 1;
+#endif
+}
+
+void
+ndtrace_reset(void) {
+#ifdef ND_DEBUG
+	ndtrace_len = 0;
+#endif
+}
+
+void
+ndtrace_addc(int c) {
+#ifdef ND_DEBUG
+	if (ndtrace_len < sizeof(ndtrace_buf) - 1) {
+		ndtrace_buf[ndtrace_len++] = c;
+		ndtrace_buf[ndtrace_len] = '\0';
+	}
+#endif
+}
+
+const char *
+ndtrace_get(void) {
+#ifdef ND_DEBUG
+	return ndtrace_buf;
+#else
+	return NULL;
+#endif
+}
+
 
 #if defined(ND_DEBUG)
 int nextdma_debug_enetr_idx = 0;
@@ -293,7 +343,7 @@ nextdma_rotate(struct nextdma_softc *nsc)
 {
 	struct nextdma_status *stat = &nsc->sc_stat;
 
-	NDTRACEIF (*ndtracep++ = 'r');
+	NDTRACEIF (ndtrace_addc('r'));
 	DPRINTF(("DMA nextdma_rotate()\n"));
 
 	/* Rotate the continue map into the current map */
@@ -339,7 +389,7 @@ nextdma_setup_curr_regs(struct nextdma_softc *nsc)
 	bus_addr_t dd_saved_limit;
 	struct nextdma_status *stat = &nsc->sc_stat;
 
-	NDTRACEIF (*ndtracep++ = 'C');
+	NDTRACEIF (ndtrace_addc('C'));
 	DPRINTF(("DMA nextdma_setup_curr_regs()\n"));
 
 	if (stat->nd_map) {
@@ -360,8 +410,7 @@ nextdma_setup_curr_regs(struct nextdma_softc *nsc)
 	dd_saved_limit = dd_limit;
 
 	NDTRACEIF (if (stat->nd_map) {
-		sprintf (ndtracep, "%ld", stat->nd_map->dm_segs[stat->nd_idx].ds_len);
-		ndtracep += strlen (ndtracep);
+		ndtrace_printf("%ld", stat->nd_map->dm_segs[stat->nd_idx].ds_len);
 	});
 
 	if (!turbo && (nsc->sc_chan->nd_intr == NEXT_I_ENETX_DMA)) {
@@ -395,7 +444,7 @@ nextdma_setup_cont_regs(struct nextdma_softc *nsc)
 	bus_addr_t dd_saved_stop;
 	struct nextdma_status *stat = &nsc->sc_stat;
 
-	NDTRACEIF (*ndtracep++ = 'c');
+	NDTRACEIF (ndtrace_addc('c'));
 	DPRINTF(("DMA nextdma_setup_regs()\n"));
 
 	if (stat->nd_map_cont) {
@@ -416,8 +465,7 @@ nextdma_setup_cont_regs(struct nextdma_softc *nsc)
 	dd_saved_stop  = dd_stop;
 
 	NDTRACEIF (if (stat->nd_map_cont) {
-		sprintf (ndtracep, "%ld", stat->nd_map_cont->dm_segs[stat->nd_idx_cont].ds_len);
-		ndtracep += strlen (ndtracep);
+		ndtrace_printf("%ld", stat->nd_map_cont->dm_segs[stat->nd_idx_cont].ds_len);
 	});
 
 	nd_bsw4 (DD_START, dd_start);
@@ -483,7 +531,7 @@ nextdma_enet_intr(void *arg)
 		return 0;
 	/* Handle dma interrupts */
 
-	NDTRACEIF (*ndtracep++ = 'D');
+	NDTRACEIF (ndtrace_addc('D'));
 #ifdef ND_DEBUG
 	if (NEXTDMA_DEBUG) {
 		char sbuf[256];
@@ -655,10 +703,10 @@ nextdma_enet_intr(void *arg)
 		if (stat->nd_map_cont == NULL) {
 			KASSERT(stat->nd_idx+1 == stat->nd_map->dm_nsegs);
 			nd_bsw4 (DD_CSR, DMACSR_CLRCOMPLETE | dmadir);
-			NDTRACEIF (*ndtracep++ = 'g');
+			NDTRACEIF (ndtrace_addc('g'));
 		} else {
 			nd_bsw4 (DD_CSR, DMACSR_CLRCOMPLETE | dmadir | DMACSR_SETSUPDATE);
-			NDTRACEIF (*ndtracep++ = 'G');
+			NDTRACEIF (ndtrace_addc('G'));
 		}
 	} else {
 		DPRINTF(("DMA: a shutdown occurred\n"));
@@ -715,7 +763,7 @@ nextdma_start(struct nextdma_softc *nsc, u_long dmadir)
 {
 	struct nextdma_status *stat = &nsc->sc_stat;
 
-	NDTRACEIF (*ndtracep++ = 'n');
+	NDTRACEIF (ndtrace_addc('n'));
 #ifdef DIAGNOSTIC
 	if (!nextdma_finished(nsc)) {
 		char sbuf[256];

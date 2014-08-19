@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_regexp.c,v 1.1.1.1.16.1 2013/02/25 00:27:31 tls Exp $	*/
+/*	$NetBSD: dict_regexp.c,v 1.1.1.1.16.2 2014/08/19 23:59:45 tls Exp $	*/
 
 /*++
 /* NAME
@@ -740,9 +740,9 @@ static DICT_REGEXP_RULE *dict_regexp_parseline(const char *mapname, int lineno,
 DICT   *dict_regexp_open(const char *mapname, int open_flags, int dict_flags)
 {
     DICT_REGEXP *dict_regexp;
-    VSTREAM *map_fp;
+    VSTREAM *map_fp = 0;
     struct stat st;
-    VSTRING *line_buffer;
+    VSTRING *line_buffer = 0;
     DICT_REGEXP_RULE *rule;
     DICT_REGEXP_RULE *last_rule = 0;
     int     lineno = 0;
@@ -751,19 +751,33 @@ DICT   *dict_regexp_open(const char *mapname, int open_flags, int dict_flags)
     char   *p;
 
     /*
+     * Let the optimizer worry about eliminating redundant code.
+     */
+#define DICT_REGEXP_OPEN_RETURN(d) { \
+	DICT *__d = (d); \
+	if (line_buffer != 0) \
+	    vstring_free(line_buffer); \
+	if (map_fp != 0) \
+	    vstream_fclose(map_fp); \
+	return (__d); \
+    } while (0)
+
+    /*
      * Sanity checks.
      */
     if (open_flags != O_RDONLY)
-	return (dict_surrogate(DICT_TYPE_REGEXP, mapname, open_flags, dict_flags,
-			       "%s:%s map requires O_RDONLY access mode",
-			       DICT_TYPE_REGEXP, mapname));
+	DICT_REGEXP_OPEN_RETURN(dict_surrogate(DICT_TYPE_REGEXP,
+					    mapname, open_flags, dict_flags,
+				  "%s:%s map requires O_RDONLY access mode",
+					       DICT_TYPE_REGEXP, mapname));
 
     /*
      * Open the configuration file.
      */
     if ((map_fp = vstream_fopen(mapname, O_RDONLY, 0)) == 0)
-	return (dict_surrogate(DICT_TYPE_REGEXP, mapname, open_flags, dict_flags,
-			       "open %s: %m", mapname));
+	DICT_REGEXP_OPEN_RETURN(dict_surrogate(DICT_TYPE_REGEXP, mapname,
+					       open_flags, dict_flags,
+					       "open %s: %m", mapname));
     if (fstat(vstream_fileno(map_fp), &st) < 0)
 	msg_fatal("fstat %s: %m", mapname);
 
@@ -820,13 +834,7 @@ DICT   *dict_regexp_open(const char *mapname, int open_flags, int dict_flags)
 	dict_regexp->pmatch =
 	    (regmatch_t *) mymalloc(sizeof(regmatch_t) * (max_sub + 1));
 
-    /*
-     * Clean up.
-     */
-    vstring_free(line_buffer);
-    vstream_fclose(map_fp);
-
-    return (DICT_DEBUG (&dict_regexp->dict));
+    DICT_REGEXP_OPEN_RETURN(DICT_DEBUG (&dict_regexp->dict));
 }
 
 #endif

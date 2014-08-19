@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.125.2.2 2013/06/23 06:20:25 tls Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.125.2.3 2014/08/20 00:04:35 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.125.2.2 2013/06/23 06:20:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.125.2.3 2014/08/20 00:04:35 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -188,11 +188,15 @@ extern int rsvp_on;
 static void vif_input(struct mbuf *, ...);
 static int vif_encapcheck(struct mbuf *, int, int, void *);
 
-static const struct protosw vif_protosw =
-{ SOCK_RAW,	&inetdomain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR,
-  vif_input,	rip_output,	0,		rip_ctloutput,
-  rip_usrreq,
-  0,            0,              0,              0,
+static const struct protosw vif_protosw = {
+	.pr_type	= SOCK_RAW,
+	.pr_domain	= &inetdomain,
+	.pr_protocol	= IPPROTO_IPV4,
+	.pr_flags	= PR_ATOMIC|PR_ADDR,
+	.pr_input	= vif_input,
+	.pr_output	= rip_output,
+	.pr_ctloutput	= rip_ctloutput,
+	.pr_usrreqs	= &rip_usrreqs,
 };
 
 #define		EXPIRE_TIMEOUT	(hz / 4)	/* 4x / second */
@@ -1054,11 +1058,7 @@ add_mfc(struct sockopt *sopt)
 	struct rtdetq *rte, *nrte;
 	u_short nstl;
 	int s;
-	int mfcctl_size = sizeof(struct mfcctl);
 	int error;
-
-	if (mrt_api_config & MRT_API_FLAGS_ALL)
-		mfcctl_size = sizeof(struct mfcctl2);
 
 	/*
 	 * select data size depending on API version.
@@ -1872,8 +1872,6 @@ vif_input(struct mbuf *m, ...)
 	int off, proto;
 	va_list ap;
 	struct vif *vifp;
-	int s;
-	struct ifqueue *ifq;
 
 	va_start(ap, m);
 	off = va_arg(ap, int);
@@ -1889,22 +1887,10 @@ vif_input(struct mbuf *m, ...)
 
 	m_adj(m, off);
 	m->m_pkthdr.rcvif = vifp->v_ifp;
-	ifq = &ipintrq;
-	s = splnet();
-	if (IF_QFULL(ifq)) {
-		IF_DROP(ifq);
+
+	if (__predict_false(!pktq_enqueue(ip_pktq, m, 0))) {
 		m_freem(m);
-	} else {
-		IF_ENQUEUE(ifq, m);
-		/*
-		 * normally we would need a "schednetisr(NETISR_IP)"
-		 * here but we were called by ip_input and it is going
-		 * to loop back & try to dequeue the packet we just
-		 * queued as soon as we return so we avoid the
-		 * unnecessary software interrrupt.
-		 */
 	}
-	splx(s);
 }
 
 /*

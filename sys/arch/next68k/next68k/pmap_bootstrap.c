@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.42 2012/02/10 06:28:39 mhitch Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.42.6.1 2014/08/20 00:03:17 tls Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.42 2012/02/10 06:28:39 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.42.6.1 2014/08/20 00:03:17 tls Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -109,6 +109,42 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 #if defined(M68040) || defined(M68060)
 	u_int stfree = 0;	/* XXX: gcc -Wuninitialized */
 #endif
+
+	/*
+	 * Initialize the mem_clusters[] array for the crash dump
+	 * code.  While we're at it, compute the total amount of
+	 * physical memory in the system.
+	 */
+	for (i = 0; i < VM_PHYSSEG_MAX; i++) {
+		if (RELOC(phys_seg_list[i].ps_start, paddr_t) ==
+		    RELOC(phys_seg_list[i].ps_end, paddr_t)) {
+			/*
+			 * No more memory.
+			 */
+			break;
+		}
+
+		/*
+		 * Make sure these are properly rounded.
+		 */
+		RELOC(phys_seg_list[i].ps_start, paddr_t) =
+		    m68k_round_page(RELOC(phys_seg_list[i].ps_start,
+					  paddr_t));
+		RELOC(phys_seg_list[i].ps_end, paddr_t) =
+		    m68k_trunc_page(RELOC(phys_seg_list[i].ps_end,
+					  paddr_t));
+
+		size = RELOC(phys_seg_list[i].ps_end, paddr_t) -
+		    RELOC(phys_seg_list[i].ps_start, paddr_t);
+
+		RELOC(mem_clusters[i].start, u_quad_t) =
+		    RELOC(phys_seg_list[i].ps_start, paddr_t);
+		RELOC(mem_clusters[i].size, u_quad_t) = size;
+
+		RELOC(physmem, int) += size >> PGSHIFT;
+
+		RELOC(mem_cluster_cnt, int) += 1;
+	}
 
 	/*
 	 * Calculate important physical addresses:
@@ -482,42 +518,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * via uvm_lwp_setuarea() later in pmap_bootstrap_finalize().
 	 */
 	RELOC(lwp0uarea, vaddr_t) = lwp0upa - firstpa;
-
-	/*
-	 * Initialize the mem_clusters[] array for the crash dump
-	 * code.  While we're at it, compute the total amount of
-	 * physical memory in the system.
-	 */
-	for (i = 0; i < VM_PHYSSEG_MAX; i++) {
-		if (RELOC(phys_seg_list[i].ps_start, paddr_t) ==
-		    RELOC(phys_seg_list[i].ps_end, paddr_t)) {
-			/*
-			 * No more memory.
-			 */
-			break;
-		}
-
-		/*
-		 * Make sure these are properly rounded.
-		 */
-		RELOC(phys_seg_list[i].ps_start, paddr_t) =
-		    m68k_round_page(RELOC(phys_seg_list[i].ps_start,
-					  paddr_t));
-		RELOC(phys_seg_list[i].ps_end, paddr_t) =
-		    m68k_trunc_page(RELOC(phys_seg_list[i].ps_end,
-					  paddr_t));
-
-		size = RELOC(phys_seg_list[i].ps_end, paddr_t) -
-		    RELOC(phys_seg_list[i].ps_start, paddr_t);
-
-		RELOC(mem_clusters[i].start, u_quad_t) =
-		    RELOC(phys_seg_list[i].ps_start, paddr_t);
-		RELOC(mem_clusters[i].size, u_quad_t) = size;
-
-		RELOC(physmem, int) += size >> PGSHIFT;
-
-		RELOC(mem_cluster_cnt, int) += 1;
-	}
 
 	/*
 	 * Scoot the start of available on-board RAM forward to

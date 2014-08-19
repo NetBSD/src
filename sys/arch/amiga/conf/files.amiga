@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.160.2.3 2013/06/23 06:19:59 tls Exp $
+#	$NetBSD: files.amiga,v 1.160.2.4 2014/08/20 00:02:43 tls Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -57,6 +57,12 @@ file	arch/amiga/amiga/amiga_bus_simple_16.c	amibus_b16
 
 define	amibus_b800
 file	arch/amiga/amiga/amiga_bus_simple_0x800.c	amibus_b800
+
+define	amibus_b1000
+file	arch/amiga/amiga/amiga_bus_simple_0x1000.c	amibus_b1000
+
+define	amibus_b4000
+file	arch/amiga/amiga/amiga_bus_simple_0x4000.c	amibus_b4000
 
 define  amibus_empb
 file	arch/amiga/pci/empb_bsm.c	amibus_empb
@@ -234,6 +240,15 @@ file	arch/amiga/dev/if_ne_xsurf.c	ne_xsurf needs-flag
 
 attach	wdc at xsurfbus with wdc_xsurf
 file	arch/amiga/dev/wdc_xsurf.c	wdc_xsurf & xsurf
+
+define	xshbus {}
+
+device	xsh: xshbus
+attach	xsh at zbus
+file	arch/amiga/dev/xsh.c		xsh needs-flag
+
+attach	ne at xshbus with ne_xsh: ax88190
+file	arch/amiga/dev/if_ne_xsh.c	ne_xsh needs-flag
 
 # Hydra ethernet card
 device	ed: ifnet, ether, arp
@@ -471,7 +486,7 @@ include "dev/pcmcia/files.pcmcia"
 include "dev/ata/files.ata"
 
 # Amiga 4000/1200 IDE using MI wdc
-attach	wdc at mainbus with wdc_amiga: gayle
+attach	wdc at mainbus with wdc_amiga: gayle, amibus_b1000
 file	arch/amiga/dev/wdc_amiga.c	wdc_amiga
 
 # Buddha wdc
@@ -479,7 +494,7 @@ attach	wdc at zbus with wdc_buddha
 file	arch/amiga/dev/wdc_buddha.c	wdc_buddha
 
 # FastATA 
-device  efa: ata,wdc_common
+device  efa: ata, wdc_common, amibus_b1000
 attach  efa at mainbus
 file    arch/amiga/dev/efa.c		efa
 
@@ -569,6 +584,15 @@ file	arch/amiga/dev/z3rambd.c	z3rambd needs-flag
 
 attach	slhci at zbus with slhci_zbus
 file	arch/amiga/dev/slhci_zbus.c	slhci_zbus
+
+define	acafhbus {}
+
+device	acafh: acafhbus, amibus_b4000
+attach	acafh at mainbus 
+file	arch/amiga/dev/acafh.c		acafh needs-count 
+
+attach	wdc at acafhbus with wdc_acafh: gayle, amibus_b1000
+file	arch/amiga/dev/wdc_acafh.c	wdc_acafh & acafh 
 
 include "arch/amiga/clockport/files.clockport"
 

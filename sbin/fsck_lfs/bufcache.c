@@ -1,4 +1,4 @@
-/* $NetBSD: bufcache.c,v 1.13 2008/05/16 09:21:59 hannken Exp $ */
+/* $NetBSD: bufcache.c,v 1.13.24.1 2014/08/20 00:02:25 tls Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -344,7 +344,6 @@ bread(struct uvnode * vp, daddr_t lbn, int size, void * unused,
 {
 	struct ubuf *bp;
 	daddr_t daddr;
-	int error;
 
 	bp = getblk(vp, lbn, size);
 	*bpp = bp;
@@ -359,7 +358,7 @@ bread(struct uvnode * vp, daddr_t lbn, int size, void * unused,
 	 * and load it in.
 	 */
 	daddr = -1;
-	error = VOP_BMAP(vp, lbn, &daddr);
+	(void)VOP_BMAP(vp, lbn, &daddr);
 	bp->b_blkno = daddr;
 	if (daddr >= 0) {
 		bp->b_flags |= B_READ;

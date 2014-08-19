@@ -1,3 +1,218 @@
+2013-12-07  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4: Remove +x file mode.
+
+2013-11-29  Marek Polacek  <polacek@redhat.com>
+
+	* bootstrap-ubsan.mk (POSTSTAGE1_LDFLAGS): Remove -lpthread -ldl.
+	Add -B$$r/prev-$(TARGET_SUBDIR)/libsanitizer/.
+
+2013-11-29  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* bootstrap-asan.mk (POSTSTAGE1_LDFLAGS): Add
+	-B$$r/prev-$(TARGET_SUBDIR)/libsanitizer/.
+
+2013-11-19  Marek Polacek  <polacek@redhat.com>
+
+	* bootstrap-ubsan.mk (POSTSTAGE1_LDFLAGS): Add -ldl.
+
+2013-11-18  Jan Hubicka  <jh@suse.cz>
+
+	* bootstrap-lto.mk: Use -ffat-lto-objects.
+
+2013-11-15  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* picflag.m4 (m68k-*-*): Use default PIC flag.
+
+2013-09-29  Iain Sandoe  <iain@codesourcery.com>
+
+	* mh-darwin (BOOT_CFLAGS): Only add -mdynamic-no-pic for m32 hosts.
+	(STAGE1_CFLAGS, STAGE1_LDFLAGS): New.
+	Fix over-length lines and amend comments.
+
+2013-08-30  Marek Polacek  <polacek@redhat.com>
+
+	* bootstrap-ubsan.mk: New.
+
+2013-03-27  Kai Tietz  <ktietz@redhat.com>
+
+	* dfp.m4: Add support for cygwin x64 target.
+	* picflag.m4: Likewise.
+
+2013-02-25  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* bootstrap-asan.mk (POSTSTAGE1_LDFLAGS): Add
+	-B$$r/prev-$(TARGET_SUBDIR)/libsanitizer/asan/.
+
+2013-01-23  Shenghou Ma  <minux.ma@gmail.com>
+
+	* isl.m4: don't echo $CFLAGS for ISL_CHECK_VERSION.
+
+2013-01-15  Richard Biener  <rguenther@suse.de>
+
+	PR other/55973
+	* isl.m4 (ISL_INIT_FLAGS): Warn about disabled version check
+	for in-tree build.
+	(ISL_CHECK_VERSION): Do not use AC_CACHE_CHECK.
+	* cloog.m4 (CLOOG_INIT_FLAGS): Disable version check for
+	in-tree build and warn about that.
+	(CLOOG_CHECK_VERSION): Do not use AC_CACHE_CHECK.
+
+2013-01-07  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* libstdc++-raw-cxx.m4 (GCC_LIBSTDCXX_RAW_CXX_FLAGS): Remove
+	"-I" from LIBSTDCXX_RAW_CXX_LDFLAGS.
+
+2012-12-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* libstdc++-raw-cxx.m4 (GCC_LIBSTDCXX_RAW_CXX_FLAGS): Also
+	AC_SUBST LIBSTDCXX_RAW_CXX_LDFLAGS.
+
+2012-12-11  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR sanitizer/55533
+	* libstdc++-raw-cxx.m4: New file.
+
+2012-11-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* bootstrap-asan.mk: New file.
+
+2012-11-04  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* dfp.m4 (enable_decimal_float): Enable for i?86*-*-gnu*.
+
+2012-10-15  Pavel Chupin  <pavel.v.chupin@intel.com>
+
+	* gthr.m4: New. Define GCC_AC_THREAD_HEADER.
+
+2012-09-19  Steve Ellcey  <sellcey@mips.com>
+
+	* mt-sde: Change -mcode-xonly to -mcode-readable=pcrel.
+
+2012-09-03  Richard Guenther  <rguenther@suse.de>
+
+	PR bootstrap/54138
+	* config/cloog.m4: Adjust for toplevel reorg.
+	* config/isl.m4: Adjust.
+
+2012-08-26  Art Haas <ahaas@impactweather.com>
+
+	* cloog.m4 (CLOOG_INIT_FLAGS): Use = instead of == in test.
+
+2012-07-04  Tristan Gingold  <gingold@adacore.com>
+
+	* isl.m4 (ISL_CHECK_VERSION): Set to yes if cross-compiling.
+	Fix comments.
+
+2012-07-03  Richard Guenther  <rguenther@suse.de>
+
+	* cloog.m4: Remove debugging print.
+
+2012-07-03  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* isl.m4 (ISL_CHECK_VERSION): Add -lisl to LIBS, not LDFLAGS.
+
+2012-07-02  Richard Guenther  <rguenther@suse.de>
+
+	* isl.m4 (_ISL_CHECK_CT_PROG): Omit main function header/footer.
+	Fix version test. 
+
+2012-07-02  Richard Guenther  <rguenther@suse.de>
+	Michael Matz  <matz@suse.de>
+	Tobias Grosser <tobias@grosser.es>
+	Sebastian Pop <sebpop@gmail.com>
+
+	* cloog.m4: Set up to work against ISL only.
+	* isl.m4: New file.
+
+2012-05-29  Joseph Myers  <joseph@codesourcery.com>
+
+	* mt-sde: Fix typos.
+	* stdint.m4: Fix typos.
+	* tcl.m4: Fix typos.
+
+2012-05-03  Olivier Hainque  <hainque@adacore.com>
+
+	* mh-ppc-aix (LDFLAGS): Quote $(CC).
+
+2012-04-03  Tristan Gingold  <gingold@adacore.com>
+
+	* mmap.m4: Use *vms* instead of vms*.
+
+2012-04-02  Tristan Gingold  <gingold@adacore.com>
+
+	* math.m4 (GCC_CHECK_MATH_FUNC): Remove if-present
+	argument.  Define the variable.
+
+2012-03-26  Tristan Gingold  <gingold@adacore.com>
+
+	* math.m4: New file.
+
+2012-03-12  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* weakref.m4 (GCC_CHECK_ELF_STYLE_WEAKREF): Remove
+	alpha*-dec-osf*.
+
+2012-01-22  Douglas B Rupp  <rupp@gnat.com>
+
+	* config/mh-interix: Remove as unneeded.
+	* config/picflag.m4 (i[[34567]]86-*-interix3*):
+        Change triplet to i[[34567]]86-*-interix[[3-9]]*.
+
+2012-01-04  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	PR bootstrap/51734
+	* picflag.m4: Remove s390 case statement.
+
+2011-12-20  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* warnings.m4 (ACX_PROG_CC_WARNING_OPTS): Avoid leading dash in
+	expr call.
+
+2011-12-19  Andreas Schwab  <schwab@linux-m68k.org>
+
+	PR bootstrap/51388
+	* warnings.m4 (ACX_PROG_CC_WARNING_OPTS)
+	(ACX_PROG_CC_WARNING_ALMOST_PEDANTIC): Run the test without the
+	no- prefix.
+
+2011-12-18  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* acx.m4 (Test for GNAT): Update comment and add quotes in final test.
+
+2011-11-22  Iain Sandoe  <iains@gcc.gnu.org>
+
+	* weakref.m4: New file.
+
+2011-11-09  Richard Henderson  <rth@redhat.com>
+
+	* asmcfi.m4: New file.
+
+2011-11-02  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* mh-interix (LIBGCC2_DEBUG_CFLAGS): Remove.
+
+2011-08-22  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* picflag.m4: New file.
+
+2011-07-18  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* elf.m4 (target_elf): Remove *-netware*.
+
+2011-07-06  Uros Bizjak  <ubizjak@gmail.com>
+
+	* mt-alphaieee (GOCFLAGS_FOR_TARGET): Add -mieee.
+
+2011-06-15  Mike Stump  <mikestump@comcast.net>
+
+	PR target/49461
+	* mh-darwin: Turn off -pie on darwin11 and later.
+
+2011-04-20  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* bootstrap-lto.mk: Remove obsolete requirement.
+
 2011-03-24  Paolo Bonzini  <pbonzini@redhat.com>
 
 	* mt-mep: Remove, obsolete.

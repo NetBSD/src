@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.36 2011/07/14 22:31:22 matt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.36.12.1 2014/08/20 00:03:12 tls Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.36 2011/07/14 22:31:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.36.12.1 2014/08/20 00:03:12 tls Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -134,7 +134,7 @@ CTASSERT(sizeof(struct fpreg_oabi) <= sizeof(struct fpreg));
 #endif
 
 int
-process_read_xfpregs(struct lwp *l, struct fpreg *regs, size_t *regslen_p)
+process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *regslen_p)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 	KASSERT(*regslen_p == sizeof(struct fpreg));
@@ -150,7 +150,7 @@ process_read_xfpregs(struct lwp *l, struct fpreg *regs, size_t *regslen_p)
 }
 
 int
-process_write_xfpregs(struct lwp *l, const struct fpreg *regs, size_t regslen)
+process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t regslen)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 

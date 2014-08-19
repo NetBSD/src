@@ -139,13 +139,13 @@ ifdef(`PIC',`
 
 C The dependent chain here is as follows.
 C
-C				        latency
-C	psubq	 s = (src-cbit) - climb    2
-C	pmuludq	 q = s*inverse             8
-C	pmuludq	 prod = q*divisor          8
-C	psrlq	 climb = high(prod)        2
-C	                                  --
-C	                                  20
+C					latency
+C	psubq	 s = (src-cbit) - climb	   2
+C	pmuludq	 q = s*inverse		   8
+C	pmuludq	 prod = q*divisor	   8
+C	psrlq	 climb = high(prod)	   2
+C					  --
+C					  20
 C
 C Yet the loop measures 19.0 c/l, so obviously there's something gained
 C there over a straight reading of the chip documentation.

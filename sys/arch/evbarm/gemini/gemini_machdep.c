@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.20.2.1 2012/11/20 03:01:14 tls Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.20.2.2 2014/08/20 00:02:54 tls Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.20.2.1 2012/11/20 03:01:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.20.2.2 2014/08/20 00:02:54 tls Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -151,10 +151,12 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.20.2.1 2012/11/20 03:01:14 tls 
 #include <sys/reboot.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <sys/conf.h>
 #include <dev/cons.h>
 #include <dev/md.h>
 
@@ -165,14 +167,12 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.20.2.1 2012/11/20 03:01:14 tls 
 #include <sys/kgdb.h>
 #endif
 
-#include <machine/bootconfig.h>
-#include <sys/bus.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
-#include <arm/armreg.h>
+#include <arm/locore.h>
 #include <arm/undefined.h>
 
 #include <arm/arm32/machdep.h>
+
+#include <machine/bootconfig.h>
 
 #include <arm/gemini/gemini_reg.h>
 #include <arm/gemini/gemini_var.h>

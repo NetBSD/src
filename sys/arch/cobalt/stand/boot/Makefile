@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.25 2011/07/10 08:42:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.25.12.1 2014/08/20 00:02:51 tls Exp $
 
 NOMAN= # defined
 
 .include <bsd.own.mk>
-.include <bsd.sys.mk>		# for HOST_SH
 
 S=	${.CURDIR}/../../../..
 MIPS=	${S}/arch/mips
@@ -16,6 +15,7 @@ BINMODE?= 444
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
@@ -108,7 +108,7 @@ vers.c: ${.CURDIR}/version
 ${PROG}: ${LDSCRIPT} ${OBJS} ${LIBS}
 	${LD} ${LINKFORMAT} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \
 	    -T ${LDSCRIPT} -e start -o ${PROG} ${OBJS} ${LIBS}
-	${TOOL_GZIP} -c9 ${PROG} > ${PROG}.gz
+	${TOOL_GZIP_N} -c9 ${PROG} > ${PROG}.gz
 	@${SIZE} ${PROG}
 
 CLEANFILES+=	${PROG}.map ${PROG}.elf ${PROG}.gz

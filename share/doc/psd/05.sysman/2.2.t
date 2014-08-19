@@ -1,4 +1,4 @@
-.\"	$NetBSD: 2.2.t,v 1.4 2003/08/07 10:30:49 agc Exp $
+.\"	$NetBSD: 2.2.t,v 1.4.60.1 2014/08/20 00:02:29 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -30,8 +30,8 @@
 .\"	@(#)2.2.t	8.8 (Berkeley) 6/1/94
 .\"
 .ne 1i
-.Sh 2 "Filesystem
-.Sh 3 "Overview
+.Sh 2 23 "Filesystem
+.Sh 3 23 "Overview
 .PP
 The filesystem abstraction provides access to a hierarchical
 filesystem structure.
@@ -47,7 +47,7 @@ If permitted by the underlying storage mechanism,
 the user may read the data in a directory as though
 it were an ordinary file to determine the names of the contained files,
 but only the system may write into the directories.
-.Sh 3 "Naming
+.Sh 3 23 "Naming
 .PP
 The filesystem calls take \fIpath name\fP arguments.
 These consist of a zero or more component \fIfile names\fP
@@ -101,11 +101,11 @@ char *path; struct statfs *buf;
 fstatfs(fd, buf);
 int fd; struct statfs *buf;
 .DE
-.Sh 3 "Creation and removal
+.Sh 3 24 "Creation and removal
 .PP
 The filesystem allows directories, files, special devices,
 and fifos to be created and removed from the filesystem.
-.Sh 4 "Directory creation and removal
+.Sh 4 24 "Directory creation and removal
 .LP
 A directory is created with the
 .Fn mkdir
@@ -148,7 +148,7 @@ which provide a more convenient interface than
 .Fn getdirentries .
 The \fIfts\fP package is provided
 for recursive directory traversal.
-.Sh 4 "File creation
+.Sh 4 24 "File creation
 .LP
 Files are opened and/or created with the
 .Fn open
@@ -255,7 +255,7 @@ style locks.
 The O_ASYNC flag enables the SIGIO signal to be sent to
 the process group of the opening process when I/O is possible,
 e.g., upon availability of data to be read.
-.Sh 4 "Creating references to devices
+.Sh 4 26 "Creating references to devices
 .PP
 The filesystem allows entries which reference peripheral devices.
 Peripherals are distinguished as \fIblock\fP or \fIcharacter\fP
@@ -292,7 +292,7 @@ char *path; mode_t mode;
 .DE
 The \fImode\fP parameter is used solely to specify the access
 permissions of the newly created fifo.
-.Sh 4 "Links and renaming
+.Sh 4 26 "Links and renaming
 .PP
 Links allow multiple names for a file to exist.
 Links exist independently of the file to which they are linked.
@@ -374,7 +374,7 @@ then the other also must be a directory for the
 .Fn rename
 to succeed.
 If \fInewname\fP exists and is a directory, then it must be empty.
-.Sh 4 "File, device, and fifo removal
+.Sh 4 27 "File, device, and fifo removal
 .LP
 A reference to a file, special device or fifo may be removed with the
 .Fn unlink
@@ -415,7 +415,7 @@ This call is most useful for revoking access to a terminal line after
 a hangup in preparation for reuse by a new login session.
 Access to a controlling terminal is automatically revoked
 when the session leader for the session exits.
-.Sh 3 "Reading and modifying file attributes
+.Sh 3 27 "Reading and modifying file attributes
 .LP
 Detailed information about the attributes of a file
 may be obtained with the calls:
@@ -518,7 +518,7 @@ char *path; struct timeval *tvp[2];
 .DE
 This is particularly useful when moving files between media,
 to preserve file access and modification times.
-.Sh 3 "Checking accessibility
+.Sh 3 28 "Checking accessibility
 .PP
 A process running with
 different real and effective user-ids
@@ -572,7 +572,7 @@ the \fIfd\fP argument is an open file descriptor.
 The \fIname\fP argument specifies the system variable to be queried.
 Symbolic constants for each name value are found in the include file
 \fI<unistd.h>\fP.
-.Sh 3 "Extension and truncation
+.Sh 3 29 "Extension and truncation
 .PP
 Files are created with zero length and may be extended
 simply by writing or appending to them.  While a file is
@@ -634,7 +634,7 @@ ensures that the contents of a file are committed to disk
 before returning.
 This feature is used by applications such as editors that
 want to ensure the integrity of a new file before continuing.
-.Sh 3 "Locking
+.Sh 3 29 "Locking
 .PP
 The filesystem provides basic facilities that allow cooperating processes
 to synchronize their access to shared files.  A process may
@@ -684,7 +684,7 @@ in the \fIhow\fP parameter.
 Specifying LOCK_UN removes all locks associated with the descriptor.
 Advisory locks held by a process are automatically deleted when
 the process terminates.
-.Sh 3 "Disk quotas
+.Sh 3 30 "Disk quotas
 .PP
 As an optional facility, each local filesystem can impose limits on a
 user's or group's disk usage.
@@ -722,7 +722,7 @@ Q_SETUSE	/* set usage */
 Q_SYNC	/* sync disk copy of a filesystems quotas */
 .TE
 .DE
-.Sh 3 "Remote filesystems
+.Sh 3 30 "Remote filesystems
 .LP
 There are two system calls intended to help support the remote filesystem
 implementation.
@@ -749,7 +749,7 @@ file handle pointed to by fhp.
 This file handle can then be used in future calls to NFS to access 
 the file without the need to repeat the pathname translation.
 This system call is restricted to the superuser.
-.Sh 3 "Other filesystems
+.Sh 3 31 "Other filesystems
 .LP
 The kernel supports many other filesystems.
 These include:

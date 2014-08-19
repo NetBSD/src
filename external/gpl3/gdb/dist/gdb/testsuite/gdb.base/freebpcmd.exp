@@ -1,5 +1,4 @@
-#   Copyright 2003, 2007, 2008, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright 2003-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,19 +44,11 @@
 # suggestions for improving this.
 
 
-set testfile "freebpcmd"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
-
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
-     untested freebpcmd.exp
-     return -1
+standard_testfile
+if {[prepare_for_testing $testfile.exp $testfile $srcfile debug]} {
+    untested $testfile.exp
+    return -1
 }
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 
 gdb_test "break ${srcfile}:[gdb_get_line_number "euphonium"]" ".*" \
     "set breakpoint"
@@ -65,7 +56,10 @@ gdb_test "break ${srcfile}:[gdb_get_line_number "euphonium"]" ".*" \
 # The goal of all this is to make sure that there's plenty of memory
 # churn, and different amounts of it each time the inferior stops;
 # this seems to make GDB crash more reliably.
-set lines {{if (i%2) == 0}
+set lines {{if i<0 || i > 100}
+	   {echo Invalid i value\n}
+	   {else}
+	   {if (i%2) == 0}
            {echo "even "}
            {print i}
            {else}
@@ -82,6 +76,7 @@ set lines {{if (i%2) == 0}
            {if i != 40}
            {c}
            {end}
+	   {end}
            {end}}
 
 send_gdb "commands\n"
@@ -114,6 +109,9 @@ set timeout 120
 gdb_test_multiple "" "run program with breakpoint commands" {
     -re "warning: Invalid control type in command structure" {
         kfail "gdb/1489" "run program with breakpoint commands"
+    }
+    -re "Invalid i value\r\n$gdb_prompt $" {
+	xfail "run program with breakpoint commands (i value not readable)"
     }
     -re "$gdb_prompt $" {
         pass "run program with breakpoint commands"

@@ -1,4 +1,4 @@
-# Copyright 2003, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2003-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,10 +14,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 # until.exp -- Expect script to test 'until' in gdb
-
-if $tracelevel then {
-    strace $tracelevel
-}
 
 set srcfile break.c
 if { [prepare_for_testing until.exp "until" {break.c break1.c} {debug nowarnings}] } {
@@ -44,7 +40,8 @@ gdb_test "until $bp_location1" \
 # Verify that a malformed "advance" is gracefully caught.
 #
 gdb_test "until 80 then stop" \
-	"Junk at end of arguments." "malformed until"
+    "malformed linespec error: unexpected string, \"then stop\"." \
+    "malformed until"
 
 # Rerun up to factorial, outer invocation
 if { ![runto factorial] } then { gdb_suppress_tests; }

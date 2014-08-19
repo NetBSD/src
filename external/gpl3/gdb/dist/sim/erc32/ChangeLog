@@ -1,3 +1,80 @@
+2013-10-09  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	PR sim/16018:
+	* float.c (set_fsr): Add missing "break" statements.  Reindent
+	code.
+
+2013-09-23  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2013-06-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4, configure: Regenerate.
+
+2013-03-14  Joel Sherrill <joel.sherrill@oarcorp.com>
+
+	* Makefile.in: Include build directory in search path to find
+	config.h
+
+2012-08-16  Nick Clifton  <nickc@redhat.com>
+
+	* end.c: Include config.h before system header files.
+	* erc32.c: Likewise.
+	* exec.c: Likewise.
+	* float.c: Likewise.
+	* func.c: Likewise.
+	* help.c: Likewise.
+	* interf.c: Likewise.
+
+2012-06-15  Joel Brobecker  <brobecker@adacore.com>
+
+	* sys.h: Include "config.h".
+
+2012-06-15  Joel Brobecker  <brobecker@adacore.com>
+
+	* config.in, configure: Regenerate.
+
+2012-05-24  Pedro Alves  <palves@redhat.com>
+
+	PR gdb/7205
+
+        Replace TARGET_SIGNAL_ with GDB_SIGNAL_ throughout.
+
+2012-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4, config.in, configure: Regenerate.
+
+2011-12-31  Mike Frysinger  <vapier@gentoo.org>
+
+	PR sim/9971:
+	* configure.ac: Change AC_CHECK_LIB to AC_SEARCH_LIBS to match
+	the code in gdb's configure.ac with $TERMCAP.
+	* configure: Regenerated.
+
+2011-12-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4: New file.
+	* configure: Regenerate.
+
+2011-10-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Change include to common/acinclude.m4.
+
+2011-10-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Change AC_PREREQ to 2.64.  Delete AC_CONFIG_HEADER
+	call.  Replace common.m4 include with SIM_AC_COMMON.
+	* configure: Regenerate.
+
+2011-06-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* interf.c (sim_open): Accept and ignore `--sysroot=...'.
+
+2011-06-01  Joel Brobecker  <brobecker@adacore.com>
+
+	* interf.c (sim_complete_command): New stub function.
+
 2011-01-11  Andrew Burgess  <aburgess@broadcom.com>
 
 	* interf.c (sim_store_register): Update return value to

@@ -1,4 +1,4 @@
-/* $NetBSD: bt3c.c,v 1.22 2012/01/14 21:38:00 plunky Exp $ */
+/* $NetBSD: bt3c.c,v 1.22.6.1 2014/08/20 00:03:49 tls Exp $ */
 
 /*-
  * Copyright (c) 2005 Iain D. Hibbert,
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.22 2012/01/14 21:38:00 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.22.6.1 2014/08/20 00:03:49 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -976,7 +976,7 @@ bt3c_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Attach Bluetooth unit */
-	sc->sc_unit = hci_attach(&bt3c_hci, self, BTF_POWER_UP_NOOP);
+	sc->sc_unit = hci_attach_pcb(&bt3c_hci, self, BTF_POWER_UP_NOOP);
 	if (sc->sc_unit == NULL)
 		aprint_error_dev(self, "HCI attach failed\n");
 
@@ -1003,7 +1003,7 @@ bt3c_detach(device_t self, int flags)
 	bt3c_disable(self);
 
 	if (sc->sc_unit) {
-		hci_detach(sc->sc_unit);
+		hci_detach_pcb(sc->sc_unit);
 		sc->sc_unit = NULL;
 	}
 
@@ -1022,7 +1022,7 @@ bt3c_suspend(device_t self, const pmf_qual_t *qual)
 	struct bt3c_softc *sc = device_private(self);
 
 	if (sc->sc_unit) {
-		hci_detach(sc->sc_unit);
+		hci_detach_pcb(sc->sc_unit);
 		sc->sc_unit = NULL;
 	}
 
@@ -1036,7 +1036,7 @@ bt3c_resume(device_t self, const pmf_qual_t *qual)
 
 	KASSERT(sc->sc_unit == NULL);
 
-	sc->sc_unit = hci_attach(&bt3c_hci, self, BTF_POWER_UP_NOOP);
+	sc->sc_unit = hci_attach_pcb(&bt3c_hci, self, BTF_POWER_UP_NOOP);
 	if (sc->sc_unit == NULL)
 		return false;
 

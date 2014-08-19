@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.16.2.2 2013/06/23 06:28:52 tls Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.16.2.3 2014/08/20 00:02:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.16.2.2 2013/06/23 06:28:52 tls Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.16.2.3 2014/08/20 00:02:26 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -263,7 +263,7 @@ mke2fs(const char *fsys, int fi, int fo)
 	 * bsize is a power of two (i.e. 2048 bytes or more).
 	 */
 	sblock.e2fs.e2fs_first_dblock = (sblock.e2fs_bsize > BBSIZE) ? 0 : 1;
-	minfssize = fsbtodb(&sblock,
+	minfssize = EXT2_FSBTODB(&sblock,
 	    sblock.e2fs.e2fs_first_dblock +
 	    NBLOCK_SUPERBLOCK +
 	    1 /* at least one group descriptor */ +
@@ -278,7 +278,7 @@ mke2fs(const char *fsys, int fi, int fo)
 		errx(EXIT_FAILURE, "Filesystem size %" PRId64
 		    " < minimum size of %" PRId64 "\n", fssize, minfssize);
 
-	bcount = dbtofsb(&sblock, fssize);
+	bcount = EXT2_DBTOFSB(&sblock, fssize);
 
 	/*
 	 * While many people claim that ext2fs is a (bad) clone of ufs/ffs,
@@ -674,7 +674,7 @@ mke2fs(const char *fsys, int fi, int fo)
 	e2fs_sbsave(&sblock.e2fs, (struct ext2fs *)(iobuf + sboff));
 	e2fs_cgsave(gd, (struct ext2_gd *)(iobuf + sblock.e2fs_bsize),
 	   sizeof(struct ext2_gd) * sblock.e2fs_ncg);
-	wtfs(fsbtodb(&sblock, cgbase(&sblock, 0)) + sboff / sectorsize,
+	wtfs(EXT2_FSBTODB(&sblock, cgbase(&sblock, 0)) + sboff / sectorsize,
 	    iobufsize - sboff, iobuf + sboff);
 
 	munmap(iobuf, iobufsize);
@@ -707,7 +707,7 @@ initcg(uint cylno)
 		    sblock.e2fs_bsize * NBLOCK_SUPERBLOCK),
 		    sizeof(struct ext2_gd) * sblock.e2fs_ncg);
 		/* write superblock and group descriptor backups */
-		wtfs(fsbtodb(&sblock, cgbase(&sblock, cylno)) +
+		wtfs(EXT2_FSBTODB(&sblock, cgbase(&sblock, cylno)) +
 		    sboff / sectorsize, iobufsize - sboff, iobuf + sboff);
 	}
 
@@ -729,8 +729,8 @@ initcg(uint cylno)
 	i = i * NBBY;
 	for (; i < cgoverhead(cylno); i++)
 		setbit(buf, i);
-	wtfs(fsbtodb(&sblock, gd[cylno].ext2bgd_b_bitmap), sblock.e2fs_bsize,
-	    buf);
+	wtfs(EXT2_FSBTODB(&sblock, gd[cylno].ext2bgd_b_bitmap),
+	    sblock.e2fs_bsize, buf);
 
 	/*
 	 * Initialize inode bitmap.
@@ -747,8 +747,8 @@ initcg(uint cylno)
 		for (i = 1; i < EXT2_FIRSTINO; i++)
 			setbit(buf, EXT2_INO_INDEX(i));
 	}
-	wtfs(fsbtodb(&sblock, gd[cylno].ext2bgd_i_bitmap), sblock.e2fs_bsize,
-	    buf);
+	wtfs(EXT2_FSBTODB(&sblock, gd[cylno].ext2bgd_i_bitmap),
+	    sblock.e2fs_bsize, buf);
 
 	/*
 	 * Initialize inode tables.
@@ -764,7 +764,7 @@ initcg(uint cylno)
 			/* h2fs32() just for consistency */
 			dp->e2di_gen = h2fs32(arc4random());
 		}
-		wtfs(fsbtodb(&sblock, gd[cylno].ext2bgd_i_tables + i),
+		wtfs(EXT2_FSBTODB(&sblock, gd[cylno].ext2bgd_i_tables + i),
 		    sblock.e2fs_bsize, buf);
 	}
 }
@@ -945,7 +945,7 @@ fsinit(const struct timeval *tv)
 	node.e2di_gid = getegid();
 	node.e2di_nlink = PREDEFDIR;
 	/* e2di_nblock is a number of disk blocks, not ext2fs blocks */
-	node.e2di_nblock = fsbtodb(&sblock, nblks_lostfound);
+	node.e2di_nblock = EXT2_FSBTODB(&sblock, nblks_lostfound);
 	node.e2di_blocks[0] = alloc(sblock.e2fs_bsize, node.e2di_mode);
 	if (node.e2di_blocks[0] == 0) {
 		printf("%s: can't allocate block for lost+found\n", __func__);
@@ -960,13 +960,14 @@ fsinit(const struct timeval *tv)
 		}
 		node.e2di_blocks[i] = blk;
 	}
-	wtfs(fsbtodb(&sblock, node.e2di_blocks[0]), sblock.e2fs_bsize, buf);
+	wtfs(EXT2_FSBTODB(&sblock, node.e2di_blocks[0]),
+	    sblock.e2fs_bsize, buf);
 	pad_dir.e2d_reclen = sblock.e2fs_bsize;
 	for (i = 1; i < nblks_lostfound; i++) {
 		memset(buf, 0, sblock.e2fs_bsize);
 		copy_dir(&pad_dir, (struct ext2fs_direct *)buf);
-		wtfs(fsbtodb(&sblock, node.e2di_blocks[i]), sblock.e2fs_bsize,
-		    buf);
+		wtfs(EXT2_FSBTODB(&sblock, node.e2di_blocks[i]),
+		    sblock.e2fs_bsize, buf);
 	}
 	iput(&node, EXT2_LOSTFOUNDINO);
 #endif
@@ -991,13 +992,14 @@ fsinit(const struct timeval *tv)
 	node.e2di_gid = getegid();
 	node.e2di_nlink = PREDEFROOTDIR;
 	/* e2di_nblock is a number of disk block, not ext2fs block */
-	node.e2di_nblock = fsbtodb(&sblock, 1);
+	node.e2di_nblock = EXT2_FSBTODB(&sblock, 1);
 	node.e2di_blocks[0] = alloc(node.e2di_size, node.e2di_mode);
 	if (node.e2di_blocks[0] == 0) {
 		printf("%s: can't allocate block for root dir\n", __func__);
 		return 0;
 	}
-	wtfs(fsbtodb(&sblock, node.e2di_blocks[0]), sblock.e2fs_bsize, buf);
+	wtfs(EXT2_FSBTODB(&sblock, node.e2di_blocks[0]),
+	    sblock.e2fs_bsize, buf);
 	iput(&node, EXT2_ROOTINO);
 	return 1;
 }
@@ -1121,7 +1123,8 @@ init_resizeino(const struct timeval *tv)
 	/* set e2di_size which occupies whole blocks through DINDIR blocks */
 	isize = (uint64_t)sblock.e2fs_bsize * EXT2FS_NDADDR +
 	    (uint64_t)sblock.e2fs_bsize * EXT2_NINDIR(&sblock) +
-	    (uint64_t)sblock.e2fs_bsize * EXT2_NINDIR(&sblock) * EXT2_NINDIR(&sblock);
+	    (uint64_t)sblock.e2fs_bsize * EXT2_NINDIR(&sblock) *
+	    EXT2_NINDIR(&sblock);
 	if (isize > UINT32_MAX &&
 	    (sblock.e2fs.e2fs_features_rocompat &
 	     EXT2F_ROCOMPAT_LARGEFILE) == 0) {
@@ -1153,7 +1156,7 @@ init_resizeino(const struct timeval *tv)
 		    __func__);
 
 	/* account this first block */
-	nblock = fsbtodb(&sblock, 1);
+	nblock = EXT2_FSBTODB(&sblock, 1);
 
 	/* allocate buffer to set data in the dindirect block */
 	dindir_block = malloc(sblock.e2fs_bsize);
@@ -1214,15 +1217,15 @@ init_resizeino(const struct timeval *tv)
 			 */
 			reserved_gdb[n++] = h2fs32(cgbase(&sblock, cylno) +
 			    NBLOCK_SUPERBLOCK + i);
-			nblock += fsbtodb(&sblock, 1);
+			nblock += EXT2_FSBTODB(&sblock, 1);
 		}
 		for (; n < EXT2_NINDIR(&sblock); n++)
 			reserved_gdb[n] = 0;
 
 		/* write group descriptor block as the second dindirect refs */
-		wtfs(fsbtodb(&sblock, fs2h32(dindir_block[i])),
+		wtfs(EXT2_FSBTODB(&sblock, fs2h32(dindir_block[i])),
 		    sblock.e2fs_bsize, reserved_gdb);
-		nblock += fsbtodb(&sblock, 1);
+		nblock += EXT2_FSBTODB(&sblock, 1);
 	}
 	for (; i < EXT2_NINDIR(&sblock); i++) {
 		/* leave trailing entries unallocated */
@@ -1231,7 +1234,7 @@ init_resizeino(const struct timeval *tv)
 	free(reserved_gdb);
 
 	/* finally write the first level dindirect block */
-	wtfs(fsbtodb(&sblock, node.e2di_blocks[EXT2FS_NDADDR + DOUBLE]),
+	wtfs(EXT2_FSBTODB(&sblock, node.e2di_blocks[EXT2FS_NDADDR + DOUBLE]),
 	    sblock.e2fs_bsize, dindir_block);
 	free(dindir_block);
 
@@ -1261,7 +1264,8 @@ alloc(uint32_t size, uint16_t mode)
 	bbp = malloc(sblock.e2fs_bsize);
 	if (bbp == NULL)
 		return 0;
-	rdfs(fsbtodb(&sblock, gd[0].ext2bgd_b_bitmap), sblock.e2fs_bsize, bbp);
+	rdfs(EXT2_FSBTODB(&sblock, gd[0].ext2bgd_b_bitmap),
+	    sblock.e2fs_bsize, bbp);
 
 	/* XXX: kernel uses e2fs_fpg here */
 	len = sblock.e2fs.e2fs_bpg / NBBY;
@@ -1295,7 +1299,8 @@ alloc(uint32_t size, uint16_t mode)
 		errx(EXIT_FAILURE, "%s: inconsistent bitmap\n", __func__);
 
 	setbit(bbp, bno);
-	wtfs(fsbtodb(&sblock, gd[0].ext2bgd_b_bitmap), sblock.e2fs_bsize, bbp);
+	wtfs(EXT2_FSBTODB(&sblock, gd[0].ext2bgd_b_bitmap),
+	    sblock.e2fs_bsize, bbp);
 	free(bbp);
 	/* XXX: modified group descriptors won't be written into backups */
 	gd[0].ext2bgd_nbfree--;
@@ -1338,7 +1343,7 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
 			    __func__, (uint64_t)ino, c);
 
 		/* update inode bitmap */
-		rdfs(fsbtodb(&sblock, gd[0].ext2bgd_i_bitmap),
+		rdfs(EXT2_FSBTODB(&sblock, gd[0].ext2bgd_i_bitmap),
 		    sblock.e2fs_bsize, bp);
 
 		/* more sanity */
@@ -1346,7 +1351,7 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
 			errx(EXIT_FAILURE, "%s: inode %" PRIu64
 			    " already in use\n", __func__, (uint64_t)ino);
 		setbit(bp, EXT2_INO_INDEX(ino));
-		wtfs(fsbtodb(&sblock, gd[0].ext2bgd_i_bitmap),
+		wtfs(EXT2_FSBTODB(&sblock, gd[0].ext2bgd_i_bitmap),
 		    sblock.e2fs_bsize, bp);
 		gd[c].ext2bgd_nifree--;
 		sblock.e2fs.e2fs_ficount--;
@@ -1357,7 +1362,7 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
 		    ").\n", __func__, (uint64_t)ino);
 
 	/* update an inode entry in the table */
-	d = fsbtodb(&sblock, ino_to_fsba(&sblock, ino));
+	d = EXT2_FSBTODB(&sblock, ino_to_fsba(&sblock, ino));
 	rdfs(d, sblock.e2fs_bsize, bp);
 
 	dp = (struct ext2fs_dinode *)(bp +

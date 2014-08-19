@@ -1,7 +1,6 @@
 /* Target-dependent code for OpenBSD/vax.
 
-   Copyright (C) 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,7 +27,7 @@
 
 #include "vax-tdep.h"
 
-#include "gdb_string.h"
+#include <string.h>
 
 /* Signal trampolines.  */
 
@@ -66,7 +65,7 @@ vaxobsd_sigtramp_sniffer (const struct frame_unwind *self,
   CORE_ADDR start_pc = (pc & ~(vaxobsd_page_size - 1));
   CORE_ADDR sigreturn_addr = start_pc + vaxobsd_sigreturn_offset;
   gdb_byte *buf;
-  char *name;
+  const char *name;
 
   find_pc_partial_function (pc, &name, NULL, NULL);
   if (name)

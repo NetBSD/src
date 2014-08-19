@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,15 +15,14 @@
 
 # Test DW_OP_call_frame_cfa.
 
-set testfile "pr10770"
-set srcfile ${testfile}.c
+standard_testfile
 
 if {[prepare_for_testing ${testfile}.exp ${testfile} ${srcfile}]} {
     return 0
 }
 
 # This test can only be run on targets which use GCC.
-get_compiler_info ${testfile}
+get_compiler_info
 if {![test_compiler_info "gcc-*"]} {
     return 0
 }

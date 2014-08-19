@@ -1,4 +1,4 @@
-/*	$NetBSD: news3400.c,v 1.22 2011/03/10 15:40:36 tsutsui Exp $	*/
+/*	$NetBSD: news3400.c,v 1.22.14.1 2014/08/20 00:03:16 tls Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.22 2011/03/10 15:40:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.22.14.1 2014/08/20 00:03:16 tls Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -221,6 +221,7 @@ news3400_badaddr(void *addr, u_int size)
 		x = *(volatile uint32_t *)addr;
 		break;
 	}
+	__USE(x);
 
 	/* also check CPU INT4 here for bus errors during splhigh() */
 	if (badaddr_flag == 0) {

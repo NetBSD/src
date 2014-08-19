@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2007-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,23 +19,17 @@
 #                        watch commands.
 #
 
-if $tracelevel then {
-	strace $tracelevel
-}
-
 # This test verifies that a watchpoint is detected in the proper thread
 # so the test is only meaningful on a system with hardware watchpoints.
 if {[skip_hw_watchpoint_tests]} {
     return 0
 }
 
-set testfile watch_thread_num
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .c
 
 # What compiler are we using?
 #
-if [get_compiler_info ${binfile}] {
+if [get_compiler_info] {
     return -1
 }
 
@@ -43,10 +37,7 @@ if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executab
     return -1
 }
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart ${binfile}
 
 if { ![runto main] } then {
    fail "run to main"

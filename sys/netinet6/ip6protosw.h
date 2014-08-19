@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6protosw.h,v 1.21 2008/08/06 15:01:23 plunky Exp $	*/
+/*	$NetBSD: ip6protosw.h,v 1.21.38.1 2014/08/20 00:04:36 tls Exp $	*/
 /*	$KAME: ip6protosw.h,v 1.22 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -129,9 +129,7 @@ struct ip6protosw {
 			(int, struct socket *, struct sockopt *);
 
 /* user-protocol hook */
-	int	(*pr_usrreq)		/* user request: see list below */
-			(struct socket *, int, struct mbuf *,
-			     struct mbuf *, struct mbuf *, struct lwp *);
+	const struct pr_usrreqs *pr_usrreqs;
 
 /* utility hooks */
 	void	(*pr_init)		/* initialization hook */

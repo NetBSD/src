@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.h,v 1.16 2007/03/05 18:33:34 he Exp $	*/
+/*	$NetBSD: cc.h,v 1.16.88.1 2014/08/20 00:02:42 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -157,10 +157,13 @@ typedef struct copper_list {
  */
 
 struct mem_node {
-	CIRCLEQ_ENTRY(mem_node) link; 
-	CIRCLEQ_ENTRY(mem_node) free_link;
+	TAILQ_ENTRY(mem_node) link; 
+	TAILQ_ENTRY(mem_node) free_link;
 	u_long size;		/* size of memory following node. */
+	u_char type;		/* free, used */
 };
+#define MNODE_FREE 0
+#define MNODE_USED 1
 
 #define CM_BLOCKSIZE 0x4
 #define CM_BLOCKMASK (~(CM_BLOCKSIZE - 1))

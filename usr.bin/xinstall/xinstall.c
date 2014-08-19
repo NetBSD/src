@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.115 2011/09/06 18:50:32 joerg Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.115.8.1 2014/08/20 00:05:05 tls Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.115 2011/09/06 18:50:32 joerg Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.115.8.1 2014/08/20 00:05:05 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -1202,8 +1202,10 @@ metadata_log(const char *path, const char *type, struct timeval *tv,
 	if (*type == 'f') /* type=file */
 		fprintf(metafp, " size=%lld", (long long)size);
 	if (tv != NULL && dopreserve)
-		fprintf(metafp, " time=%lld.%ld",
-			(long long)tv[1].tv_sec, (long)tv[1].tv_usec);
+		fprintf(metafp, " time=%lld.%0*lld",
+			(long long)tv[1].tv_sec,
+			(tv[1].tv_usec == 0 ? 1 : 9),
+			(long long)tv[1].tv_usec * 1000);
 	if (digestresult && digest)
 		fprintf(metafp, " %s=%s", digest, digestresult);
 	if (fflags)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.45.6.1 2013/02/25 00:29:01 tls Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45.6.2 2014/08/20 00:03:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.45.6.1 2013/02/25 00:29:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.45.6.2 2014/08/20 00:03:26 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -1324,15 +1324,12 @@ pv_link(pmap_t pmap, int pte, vaddr_t va)
 	paddr_t pa;
 	pv_entry_t *head, pv;
 	u_char *pv_flags;
-	int flags;
 
 	if (!pv_initialized)
 		return 0;
 
 	CHECK_SPL();
 
-	/* Only the non-cached bit is of interest here. */
-	flags = (pte & PG_NC) ? PV_NC : 0;
 	pa = PG_PA(pte);
 
 #ifdef PMAP_DEBUG
@@ -1357,6 +1354,8 @@ pv_link(pmap_t pmap, int pte, vaddr_t va)
 	/*
 	 * Does this new mapping cause VAC alias problems?
 	 */
+	/* Only the non-cached bit is of interest here. */
+	int flags = (pte & PG_NC) ? PV_NC : 0;
 
 	*pv_flags |= flags;
 	if ((*pv_flags & PV_NC) == 0) {
@@ -3070,9 +3069,8 @@ out:
 void 
 pmap_protect_mmu(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
-	pmeg_t pmegp;
-	vaddr_t pgva, segva;
-	int pte, sme;
+	vaddr_t pgva, segva __diagused;
+	int pte;
 #ifdef	HAVECACHE
 	int flush_by_page = 0;
 #endif
@@ -3085,9 +3083,9 @@ pmap_protect_mmu(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 #endif
 
 	segva = sun2_trunc_seg(sva);
-	sme = get_segmap(segva);
 
 #ifdef	DIAGNOSTIC
+	int sme = get_segmap(segva);
 	/* Make sure it is valid and known. */
 	if (sme == SEGINV)
 		panic("pmap_protect_mmu: SEGINV");
@@ -3095,10 +3093,10 @@ pmap_protect_mmu(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 		panic("pmap_protect_mmu: incorrect sme, va=0x%lx", segva);
 #endif
 
-	pmegp = pmeg_p(sme);
-	/* have pmeg, will travel */
 
 #ifdef	DIAGNOSTIC
+	/* have pmeg, will travel */
+	pmeg_t pmegp = pmeg_p(sme);
 	/* Make sure we own the pmeg, right va, etc. */
 	if ((pmegp->pmeg_va != segva) ||
 	    (pmegp->pmeg_owner != pmap) ||

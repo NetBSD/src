@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader_machdep.c,v 1.6 2012/01/21 18:56:51 nonaka Exp $	*/
+/*	$NetBSD: kloader_machdep.c,v 1.6.6.1 2014/08/20 00:03:30 tls Exp $	*/
 
 /*-
  * Copyright (C) 2009-2012 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.6 2012/01/21 18:56:51 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.6.6.1 2014/08/20 00:03:30 tls Exp $");
 
 #include "debug_kloader.h"
 
@@ -78,7 +78,7 @@ kloader_zaurus_jump(kloader_bootfunc_t func, vaddr_t sp,
 	extern char KERNEL_BASE_virt[];
 	void (*bootinfop)(void *, void *);
 	uint32_t *bootmagicp;
-	vaddr_t top, ptr;
+	vaddr_t ptr;
 	struct bootinfo *bootinfo;
 	struct btinfo_howto *bi_howto;
 	struct btinfo_rootdevice *bi_rootdv;
@@ -96,7 +96,7 @@ kloader_zaurus_jump(kloader_bootfunc_t func, vaddr_t sp,
 	memset(bootmagicp, 0, BOOTARGS_BUFSIZ);
 	bootinfo = (struct bootinfo *)(bootmagicp + 1);
 	bootinfo->nentries = 0;
-	top = ptr = (vaddr_t)bootinfo->info;
+	ptr = (vaddr_t)bootinfo->info;
 
 	/* pass to howto for new kernel */
 	bi_howto = (struct btinfo_howto *)ptr;

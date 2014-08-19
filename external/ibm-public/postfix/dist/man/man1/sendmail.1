@@ -1,4 +1,4 @@
-.\"	$NetBSD: sendmail.1,v 1.1.1.1.16.1 2013/02/25 00:27:11 tls Exp $
+.\"	$NetBSD: sendmail.1,v 1.1.1.1.16.2 2014/08/19 23:59:41 tls Exp $
 .\"
 .TH SENDMAIL 1 
 .ad
@@ -84,6 +84,11 @@ Postfix has no persistent host status database.
 .IP \fB-bi\fR
 Initialize alias database. See the \fBnewaliases\fR
 command above.
+.IP \fB-bl\fR
+Go into daemon mode. To accept only local connections as
+with Sendmail\'s \fB-bl\fR option, specify "\fBinet_interfaces
+= loopback\fR" in the Postfix \fBmain.cf\fR configuration
+file.
 .IP \fB-bm\fR
 Read mail from standard input and arrange for delivery.
 This is the default mode of operation.
@@ -158,7 +163,8 @@ Non-default alias database. Specify \fIpathname\fR or
 \fItype\fR:\fIpathname\fR. See \fBpostalias\fR(1) for
 details.
 .IP "\fB-O \fIoption=value\fR (ignored)"
-Backwards compatibility.
+Set the named \fIoption\fR to \fIvalue\fR. Use the equivalent
+configuration parameter in \fBmain.cf\fR instead.
 .IP "\fB-o7\fR (ignored)"
 .IP "\fB-o8\fR (ignored)"
 To send 8-bit or binary content, use an appropriate MIME encapsulation
@@ -175,9 +181,16 @@ configuration parameter in \fBmain.cf\fR instead.
 Set the envelope sender address. This is the address where
 delivery problems are sent to. With Postfix versions before 2.1, the
 \fBErrors-To:\fR message header overrides the error return address.
-.IP "\fB-R \fIreturn_limit\fR (ignored)"
-Limit the size of bounced mail. Use the \fBbounce_size_limit\fR
-configuration parameter instead.
+.IP "\fB-R \fIreturn\fR"
+Delivery status notification control.  Specify "hdrs" to
+return only the header when a message bounces, "full" to
+return a full copy (the default behavior).
+
+The \fB-R\fR option specifies an upper bound; Postfix will
+return only the header, when a full copy would exceed the
+bounce_size_limit setting.
+
+This option is ignored before Postfix version 2.10.
 .IP \fB-q\fR
 Attempt to deliver all queued mail. This is implemented by
 executing the \fBpostqueue\fR(1) command.
@@ -375,8 +388,8 @@ The directory with Postfix support programs and daemon programs.
 The default database type for use in \fBnewaliases\fR(1), \fBpostalias\fR(1)
 and \fBpostmap\fR(1) commands.
 .IP "\fBdelay_warning_time (0h)\fR"
-The time after which the sender receives the message headers of
-mail that is still queued.
+The time after which the sender receives a copy of the message
+headers of mail that is still queued.
 .IP "\fBenable_errors_to (no)\fR"
 Report mail delivery errors to the address specified with the
 non-standard Errors-To: message header, instead of the envelope

@@ -1,4 +1,4 @@
-/*	$NetBSD: ldscript.rump,v 1.2 2010/03/01 13:12:19 pooka Exp $	*/
+/*	$NetBSD: ldscript.rump,v 1.2.22.1 2014/08/20 00:04:37 tls Exp $	*/
 
 /*
  * From binutils 2.19 onwards (in NetBSD) binutils ld PROVIDEs
@@ -16,13 +16,6 @@ SECTIONS
 		__start_link_set_modules = .;
 		*(link_set_modules);
 		__stop_link_set_modules = .;
-	}
-
-	link_set_domains :
-	{
-		__start_link_set_domains = .;
-		*(link_set_domains);
-		__stop_link_set_domains = .;
 	}
 
 	link_set_rump_components :

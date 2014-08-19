@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.57.2.1 2013/06/23 06:20:26 tls Exp $	*/
+/*	$NetBSD: nd6.h,v 1.57.2.2 2014/08/20 00:04:36 tls Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -93,6 +93,7 @@ struct nd_ifinfo {
 					 * DAD failure.  (XXX: not ND-specific)
 					 */
 #define	ND6_IFF_OVERRIDE_RTADV	0x10	/* See "RTADV Key", below. */
+#define	ND6_IFF_AUTO_LINKLOCAL	0x20
 
 /*
  * RTADV Key

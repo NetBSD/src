@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,19 +14,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # This test only works on GNU/Linux.
-if { ![isnative] || [is_remote host] || ![istarget *-linux*] || [skip_shlib_tests]} {
+if { ![isnative] || [is_remote host] || [target_info exists use_gdb_stub]
+     || ![istarget *-linux*] || [skip_shlib_tests]} {
     continue
 }
 
 load_lib prelink-support.exp
 
-set test "attach-pie-misread"
-set srcfile ${test}.c
-set genfile ${objdir}/${subdir}/${test}-gen.h
-set executable ${test}
-set binfile ${objdir}/${subdir}/${executable}
+standard_testfile .c
+set genfile [standard_output_file ${testfile}-gen.h]
+set executable $testfile
 
-if {[build_executable_own_libs ${test}.exp $executable $srcfile [list "additional_flags=-fPIE -pie"]] == ""} {
+if {[build_executable_own_libs ${testfile}.exp $executable $srcfile [list additional_flags=-fPIE ldflags=-pie]] == ""} {
     return -1
 }
 
@@ -37,7 +36,7 @@ if {[build_executable_own_libs ${test}.exp $executable $srcfile [list "additiona
 #   DYNAMIC        0x134f618 0x000000000194f618 0x000000000194f618 0x000200 0x000200 RW  0x8
 #
 proc read_phdr {binfile test} {
-    set readelf_program [transform readelf]
+    set readelf_program [gdb_find_readelf]
     set command "exec $readelf_program -Wl $binfile"
     verbose -log "command is $command"
     set result [catch $command output]
@@ -96,7 +95,7 @@ if {$result == 0} {
     fail $test
 }
 
-set prelink_args [build_executable_own_libs ${test}.exp $executable $srcfile [list "additional_flags=-fPIE -pie -DGEN=\"$genfile\""]]
+set prelink_args [build_executable_own_libs ${test}.exp $executable $srcfile [list "additional_flags=-fPIE -DGEN=\"$genfile\"" "ldflags=-pie"]]
 if {$prelink_args == ""} {
     return -1
 }
@@ -127,7 +126,7 @@ if {$first_offset == 0} {
 set test "start inferior"
 gdb_exit
 
-set res [remote_spawn host $binfile];
+set res [remote_spawn host $binfile]
 if { $res < 0 || $res == "" } {
     perror "Spawning $binfile failed."
     fail $test
@@ -151,9 +150,7 @@ gdb_expect {
 }
 
 # Due to alignments it was reproducible with 1 on x86_64 but 2 on i686.
-foreach align_mult {1 2} {
-    set old_ldprefix $pf_prefix
-    lappend pf_prefix "shift-by-$align_mult:"
+foreach align_mult {1 2} { with_test_prefix "shift-by-$align_mult" {
 
     # FIXME: We believe there is enough room under FIRST_OFFSET.
     set shifted_offset [format 0x%x [expr "$first_offset - $align_mult * $align_max"]]
@@ -197,8 +194,6 @@ foreach align_mult {1 2} {
     }
 
     gdb_test "detach" "Detaching from program: .*"
-
-    set pf_prefix $old_ldprefix
-}
+}}
 
 remote_exec host "kill -9 $pid"

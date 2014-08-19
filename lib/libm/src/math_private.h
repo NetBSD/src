@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.17.2.1 2013/02/25 00:27:58 tls Exp $
+ * $NetBSD: math_private.h,v 1.17.2.2 2014/08/20 00:02:18 tls Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -185,7 +185,7 @@ do {								\
 #define	STRICT_ASSIGN(type, lval, rval) do {	\
 	volatile type __lval;			\
 						\
-	if (sizeof(type) >= sizeof(double))	\
+	if (sizeof(type) >= sizeof(long double))	\
 		(lval) = (rval);		\
 	else {					\
 		__lval = (rval);		\
@@ -298,6 +298,10 @@ extern float __kernel_sinf __P((float,float,int));
 extern float __kernel_cosf __P((float,float));
 extern float __kernel_tanf __P((float,float,int));
 extern int   __kernel_rem_pio2f __P((float*,float*,int,int,int,const int*));
+
+/* ieee style elementary long double functions */
+extern long double __ieee754_fmodl(long double, long double);
+extern long double __ieee754_sqrtl(long double);
 
 /*
  * TRUNC() is a macro that sets the trailing 27 bits in the mantissa of an

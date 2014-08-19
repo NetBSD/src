@@ -6,7 +6,7 @@ arch/amiga/dev/toccata.c	done
 arch/arm/iomd/vidcaudio.c	done		port-acorn32
 arch/arm/xscale/pxa2x0_ac97.c	done
 arch/dreamcast/dev/g2/aica.c	done		port-dreamcast
-arch/hp700/gsc/harmony.c	done		port-hp700
+arch/hppa/gsc/harmony.c		done		port-hppa
 arch/hpcmips/vr/vraiu.c		done
 arch/macppc/dev/awacs.c		done		port-macppc
 arch/macppc/dev/snapper.c	done		port-macppc, TAS3004 only

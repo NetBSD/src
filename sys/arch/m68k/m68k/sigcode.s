@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.s,v 1.14 2011/02/08 20:20:16 rmind Exp $	*/
+/*	$NetBSD: sigcode.s,v 1.14.14.1 2014/08/20 00:03:11 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,11 +60,11 @@
 	.data
 	.align	2
 GLOBAL(sigcode)
-	leal	%sp@(12),%a0	/* get pointer to sigcontext */
-	movl	%a0,%sp@(4)	/* put it in the argument slot */
+	leal	12(%sp),%a0	/* get pointer to sigcontext */
+	movl	%a0,4(%sp)	/* put it in the argument slot */
 				/* fake return address already there */
 	trap	#3		/* special sigreturn trap */
-	movl	%d0,%sp@(4)	/* exit with errno */
+	movl	%d0,4(%sp)	/* exit with errno */
 	moveq	#SYS_exit,%d0	/* if sigreturn fails */
 	trap	#0
 

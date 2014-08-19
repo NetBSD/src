@@ -4,6 +4,17 @@ typedef void *ptr;
 
 ptr p = &p;
 
+static void
+foo_void (void)
+{
+}
+
+static int
+foo_int (void)
+{
+  return 0;
+}
+
 int
 main ()
 {

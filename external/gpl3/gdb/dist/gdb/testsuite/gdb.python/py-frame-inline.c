@@ -1,6 +1,6 @@
 /* This test is part of GDB, the GNU debugger.
 
-   Copyright 2011 Free Software Foundation, Inc.
+   Copyright 2011-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 
 volatile int v = 42;
 
-__attribute__((__always_inline__)) static int
+__attribute__((__always_inline__)) static inline int
 f (void)
 {
   /* Provide first stub line so that GDB understand the PC is already inside

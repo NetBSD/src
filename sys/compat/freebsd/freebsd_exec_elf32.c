@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec_elf32.c,v 1.17 2007/04/22 08:29:56 dsl Exp $	*/
+/*	$NetBSD: freebsd_exec_elf32.c,v 1.17.78.1 2014/08/20 00:03:31 tls Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_elf32.c,v 1.17 2007/04/22 08:29:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_elf32.c,v 1.17.78.1 2014/08/20 00:03:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,35 +44,21 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_exec_elf32.c,v 1.17 2007/04/22 08:29:56 dsl 
 #endif /* !ELFSIZE */
 #include <sys/exec_elf.h>
 
-#include <compat/sys/signal.h>
-#include <compat/sys/signalvar.h>
-
 #include <compat/freebsd/freebsd_exec.h>
 #include <compat/common/compat_util.h>
 
 #include <machine/freebsd_machdep.h>
 
-
 int
-ELFNAME2(freebsd,probe)(
-	struct lwp *l,
-	struct exec_package *epp,
-	void *veh,
-	char *itp,
-	vaddr_t *pos)
+ELFNAME2(freebsd,probe)(struct lwp *l, struct exec_package *epp, void *veh,
+    char *itp, vaddr_t *pos)
 {
 	int error;
-	size_t i;
-	size_t phsize;
 	Elf_Ehdr *eh = (Elf_Ehdr *) veh;
-	Elf_Phdr *ph;
-	Elf_Phdr *ephp;
-	Elf_Nhdr *np;
+	static const char wantBrand[] = FREEBSD_ELF_BRAND_STRING;
+	static const char wantInterp[] = FREEBSD_ELF_INTERP_PREFIX_STRING;
 
-        static const char wantBrand[] = FREEBSD_ELF_BRAND_STRING;
-        static const char wantInterp[] = FREEBSD_ELF_INTERP_PREFIX_STRING;
-
-        /*
+	/*
 	 * Insist that the executable have a brand, and that it be "FreeBSD".
 	 * Newer FreeBSD binaries have OSABI set to ELFOSABI_FREEBSD. This
 	 * is arguably broken, but they seem to think they need it, for
@@ -81,56 +67,17 @@ ELFNAME2(freebsd,probe)(
 #ifndef EI_BRAND
 #define EI_BRAND 8
 #endif
-        if ((eh->e_ident[EI_BRAND] == '\0'
-		|| strcmp(&eh->e_ident[EI_BRAND], wantBrand) != 0)
-	    && eh->e_ident[EI_OSABI] != ELFOSABI_FREEBSD)
+	if ((eh->e_ident[EI_BRAND] == '\0' ||
+	     strcmp(&eh->e_ident[EI_BRAND], wantBrand) != 0) &&
+		eh->e_ident[EI_OSABI] != ELFOSABI_FREEBSD)
 		return ENOEXEC;
 
-	i = eh->e_phnum;
-	if (i != 0) {
-		phsize = i * sizeof(Elf_Phdr);
-		ph = (Elf_Phdr *) malloc(phsize, M_TEMP, M_WAITOK);
-		if ((error = exec_read_from(l, epp->ep_vp, eh->e_phoff, ph,
-		    phsize)) != 0)
-			goto bad1;
-
-		for (ephp = ph; i--; ephp++) {
-			if (ephp->p_type != PT_INTERP)
-				continue;
-
-			/* Check for "legal" intepreter name. */
-			if (ephp->p_filesz < sizeof wantInterp)
-				goto bad1;
-
-			np = (Elf_Nhdr *) malloc(ephp->p_filesz+1,
-			    M_TEMP, M_WAITOK);
-
-			if (((error = exec_read_from(l, epp->ep_vp,
-			    ephp->p_offset, np, ephp->p_filesz)) != 0))
-				goto bad2;
-
-			if (strncmp((char *)np, wantInterp,
-			    sizeof wantInterp - 1))
-				goto bad2;
-
-			free(np, M_TEMP);
-			break;
-		}
-		free(ph, M_TEMP);
-	}
-
 	if (itp) {
+		if (strncmp(itp, wantInterp, sizeof(wantInterp) - 1))
+			return ENOEXEC;
 		if ((error = emul_find_interp(l, epp, itp)))
 			return error;
 	}
-#ifdef DEBUG_FREEBSD_ELF
-	printf("freebsd_elf32_probe: returning 0\n");
-#endif
-	return 0;
 
-bad2:
-	free(np, M_TEMP);
-bad1:
-	free(ph, M_TEMP);
-	return ENOEXEC;
+	return 0;
 }

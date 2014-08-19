@@ -1,4 +1,4 @@
-.\"	$NetBSD: chmod.2,v 1.40.2.2 2013/02/25 00:27:54 tls Exp $
+.\"	$NetBSD: chmod.2,v 1.40.2.3 2014/08/20 00:02:16 tls Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)chmod.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd November 18, 2012
+.Dd July 29, 2013
 .Dt CHMOD 2
 .Os
 .Sh NAME
@@ -48,6 +48,7 @@
 .Fn lchmod "const char *path" "mode_t mode"
 .Ft int
 .Fn fchmod "int fd" "mode_t mode"
+.In sys/stat.h
 .In fcntl.h
 .Ft int
 .Fn fchmodat "int fd" "const char *path" "mode_t mode" "int flag"
@@ -175,14 +176,12 @@ by protecting set-user-id (set-group-id) files
 from remaining set-user-id (set-group-id) if they are modified,
 at the expense of a degree of compatibility.
 .Sh RETURN VALUES
-Upon successful completion, a value of 0 is returned.
-Otherwise, a value of \-1 is returned and
-.Va errno
-is set to indicate the error.
+.Rv -std chmod lchmod fchmod fchmodat
 .Sh ERRORS
-.Fn chmod
-and
+.Fn chmod ,
 .Fn lchmod
+and
+.Fn fchmodat
 will fail and the file mode will be unchanged if:
 .Bl -tag -width Er
 .It Bq Er EACCES
@@ -221,6 +220,24 @@ but the file's group is neither the effective group ID nor is it in the
 group access list.
 .It Bq Er EROFS
 The named file resides on a read-only file system.
+.El
+.Pp
+In addition,
+.Fn fchmodat
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+.Fa path
+does not specify an absolute path and
+.Fa fd
+is neither
+.Dv AT_FDCWD
+nor a valid file descriptor open for reading or searching.
+.It Bq Er ENOTDIR
+.Fa path
+is not an absolute path and
+.Fa fd
+is a file descriptor associated with a non-directory file.
 .El
 .Pp
 .Fn fchmod

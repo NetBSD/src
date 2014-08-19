@@ -771,7 +771,7 @@ By default, the following architecture keywords are defined:
 .Bd -ragged -offset indent
 .No alpha , acorn26 , acorn32 , algor , amd64 , amiga , arc , arm26 ,
 .No arm32 , atari , bebox , cats , cesfic , cobalt , dreamcast , evbarm ,
-.No evbmips , evbppc , evbsh3 , hp300 , hp700 , hpcmips , i386 , luna68k ,
+.No evbmips , evbppc , evbsh3 , hp300 , hpcmips , hppa , i386 , luna68k ,
 .No m68k , mac68k , macppc , mips , mmeye , mvme68k , mvmeppc , netwinder ,
 .No news68k , newsmips , next68k , ofppc , pc532 , pmax , pmppc , powerpc ,
 .No prep , sandpoint , sgimips , sh3 , shark , sparc , sparc64 , sun3 ,
@@ -1180,8 +1180,8 @@ documented, or the name of the author of the actual manual page.
 .An "Joe Author"
 .It Li ".An \*[q]Joe Author\*[q] ,"
 .An "Joe Author" ,
-.It Li ".An \*[q]Joe Author\*[q] Aq nobody@FreeBSD.org"
-.An "Joe Author" Aq nobody@FreeBSD.org
+.It Li ".An \*[q]Joe Author\*[q] Aq Mt nobody@FreeBSD.org"
+.An "Joe Author" Aq Mt nobody@FreeBSD.org
 .It Li ".An \*[q]Joe Author\*[q] ) ) ,"
 .An "Joe Author" ) ) ,
 .El

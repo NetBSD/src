@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.153 2009/12/31 20:01:33 christos Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.153.22.1 2014/08/20 00:04:36 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.153 2009/12/31 20:01:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.153.22.1 2014/08/20 00:04:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -609,14 +609,19 @@ nfssvc_nfsd(struct nfsd_srvargs *nsd, void *argp, struct lwp *l)
 				}
 				if (error) {
 					nfsstats.srv_errs++;
-					nfsrv_updatecache(nd, false, mreq);
-					if (nd->nd_nam2)
-						m_freem(nd->nd_nam2);
+					if (nd) {
+						nfsrv_updatecache(nd, false,
+						    mreq);
+						if (nd->nd_nam2)
+							m_freem(nd->nd_nam2);
+					}
 					break;
 				}
-				nfsstats.srvrpccnt[nd->nd_procnum]++;
-				nfsrv_updatecache(nd, true, mreq);
-				nd->nd_mrep = (struct mbuf *)0;
+				if (nd) {
+					nfsstats.srvrpccnt[nd->nd_procnum]++;
+					nfsrv_updatecache(nd, true, mreq);
+					nd->nd_mrep = NULL;
+				}
 			case RC_REPLY:
 				m = mreq;
 				siz = 0;
@@ -640,13 +645,15 @@ nfssvc_nfsd(struct nfsd_srvargs *nsd, void *argp, struct lwp *l)
 					*mtod(m, u_int32_t *) =
 					    htonl(0x80000000 | siz);
 				}
-				nd->nd_mreq = m;
-				if (nfsrtton) {
-					nfsd_rt(slp->ns_so->so_type, nd,
-					    cacherep);
+				if (nd) {
+					nd->nd_mreq = m;
+					if (nfsrtton) {
+						nfsd_rt(slp->ns_so->so_type, nd,
+						    cacherep);
+					}
+					error = nfsdsock_sendreply(slp, nd);
+					nd = NULL;
 				}
-				error = nfsdsock_sendreply(slp, nd);
-				nd = NULL;
 				if (error == EPIPE)
 					nfsrv_zapsock(slp);
 				if (error == EINTR || error == ERESTART) {
@@ -656,10 +663,12 @@ nfssvc_nfsd(struct nfsd_srvargs *nsd, void *argp, struct lwp *l)
 				}
 				break;
 			case RC_DROPIT:
-				if (nfsrtton)
-					nfsd_rt(sotype, nd, cacherep);
-				m_freem(nd->nd_mrep);
-				m_freem(nd->nd_nam2);
+				if (nd) {
+					if (nfsrtton)
+						nfsd_rt(sotype, nd, cacherep);
+					m_freem(nd->nd_mrep);
+					m_freem(nd->nd_nam2);
+				}
 				break;
 			}
 			if (nd) {

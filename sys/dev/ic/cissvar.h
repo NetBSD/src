@@ -1,8 +1,8 @@
-/*	$NetBSD: cissvar.h,v 1.4.22.1 2012/11/20 03:02:03 tls Exp $	*/
-/*	$OpenBSD: cissvar.h,v 1.2 2005/09/07 04:00:16 mickey Exp $	*/
+/*	$NetBSD: cissvar.h,v 1.4.22.2 2014/08/20 00:03:37 tls Exp $	*/
+/*	$OpenBSD: cissvar.h,v 1.15 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
- * Copyright (c) 2005 Michael Shalayeff
+ * Copyright (c) 2005,2006 Michael Shalayeff
  * All rights reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -63,6 +63,7 @@ struct ciss_softc {
 
 	bus_space_handle_t	cfg_ioh;
 
+	int fibrillation;
 	struct ciss_config cfg;
 	int cfgoff;
 	u_int32_t iem;

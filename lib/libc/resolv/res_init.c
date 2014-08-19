@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.26 2012/09/09 18:04:26 christos Exp $	*/
+/*	$NetBSD: res_init.c,v 1.26.2.1 2014/08/20 00:02:15 tls Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static const char rcsid[] = "Id: res_init.c,v 1.26 2008/12/11 09:59:00 marka Exp";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.26 2012/09/09 18:04:26 christos Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.26.2.1 2014/08/20 00:02:15 tls Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -161,6 +161,8 @@ static uint32_t net_mask(struct in_addr);
 
 static struct timespec __res_conf_time;
 static const struct timespec ts = { 0, 0 };
+
+const char *__res_conf_name = _PATH_RESCONF;
 
 /*
  * Resolver state default settings.
@@ -269,7 +271,7 @@ __res_vinit(res_state statp, int preinit) {
 		 * Examples and applications exist which do not check
 		 * our return code.  Furthermore several applications
 		 * simply call us to get the systems domainname.  So
-		 * rather then immediately fail here we store the
+		 * rather than immediately fail here we store the
 		 * failure, which is returned later, in h_errno.  And
 		 * prevent the collection of 'nameserver' information
 		 * by setting maxns to 0.  Thus applications that fail
@@ -346,7 +348,7 @@ __res_vinit(res_state statp, int preinit) {
 	 line[sizeof(name) - 1] == '\t'))
 
 	nserv = 0;
-	if ((fp = fopen(_PATH_RESCONF, "re")) != NULL) {
+	if ((fp = fopen(__res_conf_name, "re")) != NULL) {
 	    struct stat st;
 	    struct kevent kc;
 

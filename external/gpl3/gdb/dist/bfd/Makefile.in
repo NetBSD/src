@@ -15,6 +15,24 @@
 
 @SET_MAKE@
 
+#
+#   Copyright 2012 Free Software Foundation
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
+#
+
 
 
 VPATH = @srcdir@
@@ -293,6 +311,7 @@ libdir = @libdir@
 libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
+lt_cv_dlopen_libs = @lt_cv_dlopen_libs@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
@@ -336,7 +355,7 @@ libbfd_la_LDFLAGS = $(am__append_1) -release `cat libtool-soversion` \
 @INSTALL_LIBBFD_FALSE@noinst_LTLIBRARIES = libbfd.la
 AM_CFLAGS = $(WARN_CFLAGS)
 AM_CPPFLAGS = -DBINDIR='"$(bindir)"'
-@PLUGINS_TRUE@LIBDL = -ldl
+@PLUGINS_TRUE@LIBDL = @lt_cv_dlopen_libs@
 
 # bfd.h goes here, for now
 BFD_H = bfd.h
@@ -370,6 +389,7 @@ BFD64_LIBS_CFILES = archive64.c
 # This list is alphabetized to make it easier to keep in sync
 # with the decls and initializer in archures.c.
 ALL_MACHINES = \
+	cpu-aarch64.lo \
 	cpu-alpha.lo \
 	cpu-arc.lo \
 	cpu-arm.lo \
@@ -382,6 +402,7 @@ ALL_MACHINES = \
 	cpu-d10v.lo \
 	cpu-d30v.lo \
 	cpu-dlx.lo \
+	cpu-epiphany.lo \
 	cpu-fr30.lo \
 	cpu-frv.lo \
 	cpu-h8300.lo \
@@ -390,6 +411,7 @@ ALL_MACHINES = \
 	cpu-i370.lo \
 	cpu-i386.lo \
 	cpu-l1om.lo \
+	cpu-k1om.lo \
 	cpu-i860.lo \
 	cpu-i960.lo \
 	cpu-ia64.lo \
@@ -402,16 +424,21 @@ ALL_MACHINES = \
 	cpu-m32r.lo \
 	cpu-m68hc11.lo \
 	cpu-m68hc12.lo \
+	cpu-m9s12x.lo \
+	cpu-m9s12xg.lo \
 	cpu-m68k.lo \
 	cpu-m88k.lo \
 	cpu-mcore.lo \
 	cpu-mep.lo \
+	cpu-metag.lo \
 	cpu-microblaze.lo \
 	cpu-mips.lo \
 	cpu-mmix.lo \
 	cpu-moxie.lo \
 	cpu-msp430.lo \
 	cpu-mt.lo \
+	cpu-nds32.lo \
+	cpu-nios2.lo \
 	cpu-ns32k.lo \
 	cpu-openrisc.lo \
 	cpu-or32.lo \
@@ -420,6 +447,7 @@ ALL_MACHINES = \
 	cpu-plugin.lo \
 	cpu-powerpc.lo \
 	cpu-rs6000.lo \
+	cpu-rl78.lo \
 	cpu-rx.lo \
 	cpu-s390.lo \
 	cpu-score.lo \
@@ -431,17 +459,22 @@ ALL_MACHINES = \
 	cpu-tic54x.lo \
 	cpu-tic6x.lo \
 	cpu-tic80.lo \
+	cpu-tilegx.lo \
+	cpu-tilepro.lo \
 	cpu-v850.lo \
+	cpu-v850_rh850.lo \
 	cpu-vax.lo \
 	cpu-w65.lo \
 	cpu-we32k.lo \
 	cpu-xc16x.lo \
+	cpu-xgate.lo \
 	cpu-xstormy16.lo \
 	cpu-xtensa.lo \
 	cpu-z80.lo \
 	cpu-z8k.lo
 
 ALL_MACHINES_CFILES = \
+	cpu-aarch64.c \
 	cpu-alpha.c \
 	cpu-arc.c \
 	cpu-arm.c \
@@ -454,6 +487,7 @@ ALL_MACHINES_CFILES = \
 	cpu-d10v.c \
 	cpu-d30v.c \
 	cpu-dlx.c \
+	cpu-epiphany.c \
 	cpu-fr30.c \
 	cpu-frv.c \
 	cpu-h8300.c \
@@ -462,6 +496,7 @@ ALL_MACHINES_CFILES = \
 	cpu-i370.c \
 	cpu-i386.c \
 	cpu-l1om.c \
+	cpu-k1om.c \
 	cpu-i860.c \
 	cpu-i960.c \
 	cpu-ia64.c \
@@ -474,17 +509,22 @@ ALL_MACHINES_CFILES = \
 	cpu-m32r.c \
 	cpu-m68hc11.c \
 	cpu-m68hc12.c \
+	cpu-m9s12x.c \
+	cpu-m9s12xg.c \
 	cpu-m68k.c \
 	cpu-m88k.c \
 	cpu-mcore.c \
 	cpu-mep.c \
+	cpu-metag.c \
 	cpu-microblaze.c \
 	cpu-mips.c \
 	cpu-mmix.c \
 	cpu-moxie.c \
 	cpu-msp430.c \
 	cpu-mt.c \
+	cpu-nds32.c \
 	cpu-ns32k.c \
+	cpu-nios2.c \
 	cpu-openrisc.c \
 	cpu-or32.c \
 	cpu-pdp11.c \
@@ -492,6 +532,7 @@ ALL_MACHINES_CFILES = \
 	cpu-plugin.c \
 	cpu-powerpc.c \
 	cpu-rs6000.c \
+	cpu-rl78.c \
 	cpu-rx.c \
 	cpu-s390.c \
 	cpu-score.c \
@@ -503,11 +544,15 @@ ALL_MACHINES_CFILES = \
 	cpu-tic54x.c \
 	cpu-tic6x.c \
 	cpu-tic80.c \
+	cpu-tilegx.c \
+	cpu-tilepro.c \
 	cpu-v850.c \
+	cpu-v850_rh850.c \
 	cpu-vax.c \
 	cpu-w65.c \
 	cpu-we32k.c \
 	cpu-xc16x.c \
+	cpu-xgate.c \
 	cpu-xstormy16.c \
 	cpu-xtensa.c \
 	cpu-z80.c \
@@ -565,6 +610,7 @@ BFD32_BACKENDS = \
 	elf-ifunc.lo \
 	elf-m10200.lo \
 	elf-m10300.lo \
+	elf-nacl.lo \
 	elf-strtab.lo \
 	elf-vxworks.lo \
 	elf.lo \
@@ -580,6 +626,7 @@ BFD32_BACKENDS = \
 	elf32-d10v.lo \
 	elf32-d30v.lo \
 	elf32-dlx.lo \
+	elf32-epiphany.lo \
 	elf32-fr30.lo \
 	elf32-frv.lo \
 	elf32-gen.lo \
@@ -601,15 +648,18 @@ BFD32_BACKENDS = \
 	elf32-m88k.lo \
 	elf32-mcore.lo \
 	elf32-mep.lo \
+	elf32-metag.lo \
 	elf32-microblaze.lo \
-	elf32-mips.lo \
 	elf32-moxie.lo \
 	elf32-msp430.lo \
 	elf32-mt.lo \
+	elf32-nds32.lo \
+	elf32-nios2.lo \
 	elf32-openrisc.lo \
 	elf32-or32.lo \
 	elf32-pj.lo \
 	elf32-ppc.lo \
+	elf32-rl78.lo \
 	elf32-rx.lo \
 	elf32-s390.lo \
 	elf32-sh-symbian.lo \
@@ -619,15 +669,18 @@ BFD32_BACKENDS = \
 	elf32-sparc.lo \
 	elf32-spu.lo \
 	elf32-tic6x.lo \
+	elf32-tilegx.lo \
+	elf32-tilepro.lo \
 	elf32-v850.lo \
 	elf32-vax.lo \
 	elf32-xc16x.lo \
+	elf32-xgate.lo \
 	elf32-xstormy16.lo \
 	elf32-xtensa.lo \
 	elf32.lo \
 	elflink.lo \
-	elfxx-mips.lo \
 	elfxx-sparc.lo \
+	elfxx-tilegx.lo \
 	epoc-pe-arm.lo \
 	epoc-pei-arm.lo \
 	hp300bsd.lo \
@@ -746,6 +799,7 @@ BFD32_BACKENDS_CFILES = \
 	elf-ifunc.c \
 	elf-m10200.c \
 	elf-m10300.c \
+	elf-nacl.c \
 	elf-strtab.c \
 	elf-vxworks.c \
 	elf.c \
@@ -761,6 +815,7 @@ BFD32_BACKENDS_CFILES = \
 	elf32-d10v.c \
 	elf32-d30v.c \
 	elf32-dlx.c \
+	elf32-epiphany.c \
 	elf32-fr30.c \
 	elf32-frv.c \
 	elf32-gen.c \
@@ -782,15 +837,18 @@ BFD32_BACKENDS_CFILES = \
 	elf32-m88k.c \
 	elf32-mcore.c \
 	elf32-mep.c \
+	elf32-metag.c \
 	elf32-microblaze.c \
-	elf32-mips.c \
 	elf32-moxie.c \
 	elf32-msp430.c \
 	elf32-mt.c \
+	elf32-nds32.c \
+	elf32-nios2.c \
 	elf32-openrisc.c \
 	elf32-or32.c \
 	elf32-pj.c \
 	elf32-ppc.c \
+	elf32-rl78.c \
 	elf32-rx.c \
 	elf32-s390.c \
 	elf32-sh-symbian.c \
@@ -800,15 +858,18 @@ BFD32_BACKENDS_CFILES = \
 	elf32-sparc.c \
 	elf32-spu.c \
 	elf32-tic6x.c \
+	elf32-tilegx.c \
+	elf32-tilepro.c \
 	elf32-v850.c \
 	elf32-vax.c \
 	elf32-xc16x.c \
+	elf32-xgate.c \
 	elf32-xstormy16.c \
 	elf32-xtensa.c \
 	elf32.c \
 	elflink.c \
-	elfxx-mips.c \
 	elfxx-sparc.c \
+	elfxx-tilegx.c \
 	epoc-pe-arm.c \
 	epoc-pei-arm.c \
 	hp300bsd.c \
@@ -884,6 +945,9 @@ BFD32_BACKENDS_CFILES = \
 # elf32-ia64.c requires a 64-bit bfd_vma, and hence can not be put in
 # BFD32_BACKENDS.
 BFD64_BACKENDS = \
+	elf32-aarch64.lo \
+	elf64-aarch64.lo \
+	elfxx-aarch64.lo \
 	aix5ppc-core.lo \
 	aout64.lo \
 	coff-alpha.lo \
@@ -891,21 +955,26 @@ BFD64_BACKENDS = \
 	coff64-rs6000.lo \
 	demo64.lo \
 	elf32-ia64.lo \
+	elf32-mips.lo \
 	elf32-score.lo \
 	elf32-score7.lo \
 	elf64-alpha.lo \
 	elf64-gen.lo \
 	elf64-hppa.lo \
 	elf64-ia64.lo \
+	elf64-ia64-vms.lo \
 	elf64-mips.lo \
 	elf64-mmix.lo \
 	elf64-ppc.lo \
 	elf64-s390.lo \
 	elf64-sh64.lo \
 	elf64-sparc.lo \
+	elf64-tilegx.lo \
 	elf64-x86-64.lo \
 	elf64.lo \
 	elfn32-mips.lo \
+	elfxx-ia64.lo \
+	elfxx-mips.lo \
 	mach-o-x86-64.lo \
 	mmo.lo \
 	nlm32-alpha.lo \
@@ -924,20 +993,26 @@ BFD64_BACKENDS_CFILES = \
 	coff-x86_64.c \
 	coff64-rs6000.c \
 	demo64.c \
+	elf32-mips.c \
 	elf32-score.c \
 	elf32-score7.c \
 	elf64-alpha.c \
 	elf64-gen.c \
 	elf64-hppa.c \
+	elf64-ia64-vms.c \
 	elf64-mips.c \
 	elf64-mmix.c \
 	elf64-ppc.c \
 	elf64-s390.c \
 	elf64-sh64.c \
 	elf64-sparc.c \
+	elf64-tilegx.c \
 	elf64-x86-64.c \
 	elf64.c \
 	elfn32-mips.c \
+	elfxx-aarch64.c \
+	elfxx-ia64.c \
+	elfxx-mips.c \
 	mach-o-x86-64.c \
 	mmo.c \
 	nlm32-alpha.c \
@@ -1000,19 +1075,20 @@ SOURCE_CFILES = \
 	$(OPTIONAL_BACKENDS_CFILES)
 
 BUILD_CFILES = \
+	elf32-aarch64.c elf64-aarch64.c \
 	elf32-ia64.c elf64-ia64.c peigen.c pepigen.c pex64igen.c
 
 CFILES = $(SOURCE_CFILES) $(BUILD_CFILES)
 SOURCE_HFILES = \
 	aout-target.h aoutf1.h aoutx.h coffcode.h coffswap.h ecoffswap.h \
-	elf-bfd.h elf-hppa.h elf32-hppa.h \
+	elf-bfd.h elf-hppa.h elf-linux-psinfo.h elf32-hppa.h \
 	elf64-hppa.h elfcode.h elfcore.h \
 	freebsd.h genlink.h go32stub.h \
 	libaout.h libbfd.h libcoff.h libecoff.h libhppa.h libieee.h \
 	libnlm.h liboasys.h libpei.h libxcoff.h mach-o.h \
 	netbsd.h nlm-target.h nlmcode.h nlmswap.h ns32k.h \
 	pef.h pef-traceback.h peicode.h som.h version.h \
-	vms.h xcoff-target.h xsym.h
+	vms.h xsym.h
 
 BUILD_HFILES = \
 	bfdver.h elf32-target.h elf64-target.h targmatch.h bfd_stdint.h
@@ -1232,6 +1308,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cofflink.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/compress.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/corefile.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-aarch64.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-alpha.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-arc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-arm.Plo@am__quote@
@@ -1244,6 +1321,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-d10v.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-d30v.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-dlx.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-epiphany.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-fr30.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-frv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-h8300.Plo@am__quote@
@@ -1256,6 +1334,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-ia64.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-ip2k.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-iq2000.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-k1om.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-l1om.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-lm32.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-m10200.Plo@am__quote@
@@ -1266,14 +1345,19 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-m68hc12.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-m68k.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-m88k.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-m9s12x.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-m9s12xg.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-mcore.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-mep.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-metag.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-microblaze.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-mips.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-mmix.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-moxie.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-msp430.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-mt.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-nds32.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-nios2.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-ns32k.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-openrisc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-or32.Plo@am__quote@
@@ -1281,6 +1365,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-pj.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-plugin.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-powerpc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-rl78.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-rs6000.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-rx.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-s390.Plo@am__quote@
@@ -1293,11 +1378,15 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-tic54x.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-tic6x.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-tic80.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-tilegx.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-tilepro.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-v850.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-v850_rh850.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-vax.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-w65.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-we32k.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-xc16x.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-xgate.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-xstormy16.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-xtensa.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-z80.Plo@am__quote@
@@ -1312,9 +1401,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf-ifunc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf-m10200.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf-m10300.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf-nacl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf-strtab.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf-vxworks.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-aarch64.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-am33lin.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-arc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-arm.Plo@am__quote@
@@ -1327,6 +1418,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-d10v.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-d30v.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-dlx.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-epiphany.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-fr30.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-frv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-gen.Plo@am__quote@
@@ -1349,15 +1441,19 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-m88k.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-mcore.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-mep.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-metag.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-microblaze.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-mips.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-moxie.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-msp430.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-mt.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-nds32.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-nios2.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-openrisc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-or32.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-pj.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-ppc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-rl78.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-rx.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-s390.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-score.Plo@am__quote@
@@ -1369,15 +1465,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-sparc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-spu.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-tic6x.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-tilegx.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-tilepro.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-v850.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-vax.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-xc16x.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-xgate.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-xstormy16.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-xtensa.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf64-aarch64.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf64-alpha.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf64-gen.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf64-hppa.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf64-ia64-vms.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf64-ia64.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf64-mips.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf64-mmix.Plo@am__quote@
@@ -1385,12 +1486,16 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf64-s390.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf64-sh64.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf64-sparc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf64-tilegx.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf64-x86-64.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf64.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elflink.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elfn32-mips.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elfxx-aarch64.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elfxx-ia64.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elfxx-mips.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elfxx-sparc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elfxx-tilegx.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/epoc-pe-arm.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/epoc-pei-arm.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/format.Plo@am__quote@
@@ -1895,14 +2000,26 @@ elf64-target.h : elfxx-target.h
 	sed -e s/NN/64/g < $(srcdir)/elfxx-target.h > elf64-target.new
 	mv -f elf64-target.new elf64-target.h
 
-elf32-ia64.c : elfxx-ia64.c
+elf32-aarch64.c : elfnn-aarch64.c
+	rm -f elf32-aarch64.c
+	echo "#line 1 \"$(srcdir)/elfnn-aarch64.c\"" > elf32-aarch64.new
+	sed -e s/NN/32/g < $(srcdir)/elfnn-aarch64.c >> elf32-aarch64.new
+	mv -f elf32-aarch64.new elf32-aarch64.c
+
+elf64-aarch64.c : elfnn-aarch64.c
+	rm -f elf64-aarch64.c
+	echo "#line 1 \"$(srcdir)/elfnn-aarch64.c\"" > elf64-aarch64.new
+	sed -e s/NN/64/g < $(srcdir)/elfnn-aarch64.c >> elf64-aarch64.new
+	mv -f elf64-aarch64.new elf64-aarch64.c
+
+elf32-ia64.c : elfnn-ia64.c
 	rm -f elf32-ia64.c
-	sed -e s/NN/32/g < $(srcdir)/elfxx-ia64.c > elf32-ia64.new
+	sed -e s/NN/32/g < $(srcdir)/elfnn-ia64.c > elf32-ia64.new
 	mv -f elf32-ia64.new elf32-ia64.c
 
-elf64-ia64.c : elfxx-ia64.c
+elf64-ia64.c : elfnn-ia64.c
 	rm -f elf64-ia64.c
-	sed -e s/NN/64/g < $(srcdir)/elfxx-ia64.c > elf64-ia64.new
+	sed -e s/NN/64/g < $(srcdir)/elfnn-ia64.c > elf64-ia64.new
 	mv -f elf64-ia64.new elf64-ia64.c
 
 peigen.c : peXXigen.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.15 2009/03/18 16:00:15 cegger Exp $ */
+/*	$NetBSD: conf.c,v 1.15.22.1 2014/08/20 00:03:27 tls Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -88,13 +88,14 @@ int	cnvtab[] = {
 int     ndevs = (sizeof(devsw)/sizeof(devsw[0]));
 
 struct fs_ops file_system[] = {
-	FS_OPS(ufs),
+	FS_OPS(ffsv1),
+	//FS_OPS(ffsv2),
 	FS_OPS(nfs),
 	FS_OPS(cd9660),
 	FS_OPS(ustarfs),
 };
 
-int nfsys = (sizeof(file_system) / sizeof(struct fs_ops));
+int nfsys = __arraycount(file_system);
 
 int
 nostrategy(void *f, int func, daddr_t dblk,

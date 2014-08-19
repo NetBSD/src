@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.15.2.1 2013/02/25 00:28:20 tls Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.15.2.2 2014/08/20 00:02:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@ typedef struct {
 
 #define _UC_UCONTEXT_ALIGN	(~0xf)
 
+/* AMD64 ABI 128-bytes "red zone". */
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_RSP] - 128)
 #define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_RIP])
 #define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_RAX])
@@ -131,18 +132,12 @@ typedef struct {
 	union {
 		struct {
 			int	__fp_state[27];	/* Environment and registers */
-			int	__fp_status;	/* Software status word */
 		} __fpchip_state;
-		struct {
-			char	__fp_emul[246];
-			char	__fp_epad[2];
-		} __fp_emul_space;
 		struct {
 			char	__fp_xmm[512];
 		} __fp_xmm_state;
-		int	__fp_fpregs[128];
 	} __fp_reg_set;
-	int	__fp_wregs[33];			/* Weitek? */
+	int	__fp_pad[33];			/* Historic padding */
 } __fpregset32_t;
 
 typedef struct {
@@ -150,6 +145,8 @@ typedef struct {
 	__fpregset32_t	__fpregs;
 	uint32_t	_mc_tlsbase;
 } mcontext32_t;
+
+#define _UC_FXSAVE       0x20    /* FP state is in FXSAVE format in XMM space */
 
 #define	_UC_MACHINE32_PAD	4
 #define	__UCONTEXT32_SIZE	776

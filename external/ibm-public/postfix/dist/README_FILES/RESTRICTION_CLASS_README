@@ -29,13 +29,17 @@ Example:
         permissive = permit
 
         smtpd_recipient_restrictions =
-    	permit_mynetworks
-    	reject_unauth_destination
-    	check_recipient_access hash:/etc/postfix/recipient_access
+            permit_mynetworks
+            # reject_unauth_destination is not needed here if the mail
+            # relay policy is specified with smtpd_relay_restrictions
+            # (available with Postfix 2.10 and later).
+            reject_unauth_destination
+            check_recipient_access hash:/etc/postfix/recipient_access
+            ...
 
     /etc/postfix/recipient_access:
-        joe@my.domain	permissive
-        jane@my.domain	restrictive
+        joe@my.domain       permissive
+        jane@my.domain      restrictive
 
 With this in place, you can use "restrictive" or "permissive" on the right-hand
 side of your per-client, helo, sender, or recipient SMTPD access tables.
@@ -63,6 +67,7 @@ SMTP client IP address, and therefore is subject to IP spoofing.
 
     /etc/postfix/main.cf:
         smtpd_recipient_restrictions =
+            ...
             check_recipient_access hash:/etc/postfix/access
             ...the usual stuff...
 
@@ -88,6 +93,7 @@ subject to SMTP sender spoofing.
 
     /etc/postfix/main.cf:
         smtpd_recipient_restrictions =
+            ...
             check_recipient_access hash:/etc/postfix/protected_destinations
             ...the usual stuff...
 
@@ -131,6 +137,7 @@ The example assumes DB/DBM files, but this could also be done with LDAP or SQL.
 
     /etc/postfix/main.cf:
         smtpd_recipient_restrictions =
+            ...
             check_sender_access hash:/etc/postfix/restricted_senders
             ...other stuff...
 

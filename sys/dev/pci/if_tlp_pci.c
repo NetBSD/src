@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.121.10.1 2012/11/20 03:02:18 tls Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.121.10.2 2014/08/20 00:03:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.121.10.1 2012/11/20 03:02:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.121.10.2 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,6 +357,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 	pcireg_t reg;
 	int error;
 	bus_size_t iosize = 0, memsize = 0;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_devno = pa->pa_device;
@@ -1010,7 +1011,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 			aprint_error_dev(self, "unable to map interrupt\n");
 			goto fail;
 		}
-		intrstr = pci_intr_string(pc, ih);
+		intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 		psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET,
 		    (psc->sc_flags & TULIP_PCI_SHAREDINTR) ?
 		    tlp_pci_shared_intr : tlp_intr, sc);

@@ -5,11 +5,26 @@
 #
 # Created by Klaus K"ampf, kkaempf@rmi.de
 #
+#   Copyright 2012 Free Software Foundation
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
 #
 
 ifeq ($(ARCH),IA64)
 HOSTFILE=alphavms.h
-OBJS:=cpu-ia64.obj,elf64-ia64.obj,\
+OBJS:=cpu-ia64.obj,elfxx-ia64.obj,elf64-ia64-vms.obj,\
   vms-misc.obj,vms-lib.obj,elf-strtab.obj,corefile.obj,stabs.obj,\
   merge.obj,elf-eh-frame.obj,elflink.obj,elf-attrs.obj,dwarf1.obj,elf64.obj
 DEFS=SELECT_VECS="&bfd_elf64_ia64_vms_vec",\
@@ -19,11 +34,6 @@ ifeq ($(ARCH),ALPHA)
 HOSTFILE=alphavms.h
 OBJS:=vms-alpha.obj,vms-lib.obj,vms-misc.obj,cpu-alpha.obj
 DEFS=SELECT_VECS="&vms_alpha_vec",SELECT_ARCHITECTURES="&bfd_alpha_arch"
-endif
-ifeq ($(ARCH),VAX)
-HOSTFILE=vaxvms.h
-OBJS:=vms.obj,vms-hdr.obj,vms-gsd.obj,vms-tir.obj,vms-misc.obj,cpu-vax.obj
-DEFS=SELECT_VECS="&vms_vax_vec",SELECT_ARCHITECTURES="&bfd_vax_arch"
 endif
 
 OBJS:=$(OBJS),archive.obj,archive64.obj,archures.obj,bfd.obj,bfdio.obj,\

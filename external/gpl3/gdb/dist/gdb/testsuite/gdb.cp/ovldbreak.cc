@@ -89,10 +89,6 @@ int main ()
     foo_instance1.overloadargs(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
    
 
-    #ifdef usestubs
-       set_debug_traps();
-       breakpoint();
-    #endif
 
 
     marker1();
@@ -107,18 +103,41 @@ foo::~foo ()                       {}
 
 /* Some functions to test overloading by varying one argument type. */
 
-int foo::overload1arg (void)                {  return 1; }
-int foo::overload1arg (char arg)            { arg = 0; return 2;}
-int foo::overload1arg (signed char arg)     { arg = 0; return 3;}
-int foo::overload1arg (unsigned char arg)   { arg = 0; return 4;}
-int foo::overload1arg (short arg)           { arg = 0; return 5;}
-int foo::overload1arg (unsigned short arg)  { arg = 0; return 6;}
-int foo::overload1arg (int arg)             { arg = 0; return 7;}
-int foo::overload1arg (unsigned int arg)    { arg = 0; return 8;}
-int foo::overload1arg (long arg)            { arg = 0; return 9;}
-int foo::overload1arg (unsigned long arg)   { arg = 0; return 10;}
-int foo::overload1arg (float arg)           { arg = 0; return 11;}
-int foo::overload1arg (double arg)          { arg = 0; return 12;}
+int foo::overload1arg (void)
+{ return 1; } /* fo1 void */
+
+int foo::overload1arg (char arg)
+{ arg = 0; return 2; } /* fo1 char */
+
+int foo::overload1arg (signed char arg)
+{ arg = 0; return 3; } /* fo1 signed_char */
+
+int foo::overload1arg (unsigned char arg)
+{ arg = 0; return 4; } /* fo1 unsigned_char */
+
+int foo::overload1arg (short arg)
+{ arg = 0; return 5; } /* fo1 short_int */
+
+int foo::overload1arg (unsigned short arg)
+{ arg = 0; return 6; } /* fo1 unsigned_short_int */
+
+int foo::overload1arg (int arg)
+{ arg = 0; return 7; } /* fo1 int */
+
+int foo::overload1arg (unsigned int arg)
+{ arg = 0; return 8; } /* fo1 unsigned_int */
+
+int foo::overload1arg (long arg)
+{ arg = 0; return 9; } /* fo1 long_int */
+
+int foo::overload1arg (unsigned long arg)
+{ arg = 0; return 10; } /* fo1 unsigned_long_int */
+
+int foo::overload1arg (float arg)
+{ arg = 0; return 11; } /* fo1 float */
+
+int foo::overload1arg (double arg)
+{ arg = 0; return 12; } /* fo1 double */
 
 
 /* Some functions to test overloading by varying argument count. */

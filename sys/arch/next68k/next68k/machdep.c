@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.109 2012/08/11 01:21:04 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.109.2.1 2014/08/20 00:03:17 tls Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 2012/08/11 01:21:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109.2.1 2014/08/20 00:03:17 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 2012/08/11 01:21:04 tsutsui Exp $"
 #include <sys/kgdb.h>
 #endif
 #include <sys/boot_flag.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -311,16 +312,10 @@ cpu_startup(void)
 	initcpu();
 }
 
-/*
- * Info for CTL_HW
- */
-char	cpu_model[124];
-
 void
 identifycpu(void)
 {
-	const char *mc;
-	int len;
+	const char *mc, *mmu_str, *fpu_str, *cache_str;
 
 	/*
 	 * ...and the CPU type.
@@ -340,67 +335,67 @@ identifycpu(void)
 		goto lose;
 	}
 
-	sprintf(cpu_model, "NeXT/MC680%s CPU",mc);
-
 	/*
 	 * ...and the MMU type.
 	 */
 	switch (mmutype) {
 	case MMU_68040:
 	case MMU_68030:
-		strcat(cpu_model, "+MMU");
+		mmu_str = "+MMU";
 		break;
 	case MMU_68851:
-		strcat(cpu_model, ", MC68851 MMU");
+		mmu_str = ", MC68851 MMU";
 		break;
 	case MMU_HP:
-		strcat(cpu_model, ", HP MMU");
+		mmu_str = ", HP MMU";
 		break;
 	default:
-		printf("%s\nunknown MMU type %d\n", cpu_model, mmutype);
+		printf("MC680%s: unknown MMU type %d\n", mc, mmutype);
 		panic("startup");
 	}
-
-	len = strlen(cpu_model);
 
 	/*
 	 * ...and the FPU type.
 	 */
 	switch (fputype) {
 	case FPU_68040:
-		len += sprintf(cpu_model + len, "+FPU");
+		fpu_str = "+FPU";
 		break;
 	case FPU_68882:
-		len += sprintf(cpu_model + len, ", MC68882 FPU");
+		fpu_str = ", MC68882 FPU";
 		break;
 	case FPU_68881:
-		len += sprintf(cpu_model + len, ", MHz MC68881 FPU");
+		fpu_str = ", MHz MC68881 FPU";
 		break;
 	default:
-		len += sprintf(cpu_model + len, ", unknown FPU");
+		fpu_str = ", unknown FPU";
 	}
 
 	/*
 	 * ...and finally, the cache type.
 	 */
 	if (cputype == CPU_68040)
-		sprintf(cpu_model + len, ", 4k on-chip physical I/D caches");
+		cache_str = ", 4k on-chip physical I/D caches";
 	else {
 #if defined(ENABLE_HP_CODE)
 		switch (ectype) {
 		case EC_VIRT:
-			sprintf(cpu_model + len,
-			    ", virtual-address cache");
+			cache_str = ", virtual-address cache";
 			break;
 		case EC_PHYS:
-			sprintf(cpu_model + len,
-			    ", physical-address cache");
+			cache_str = ", physical-address cache";
+			break;
+		default:
+			cache_str = "";
 			break;
 		}
+#else
+		cache_str = "";
 #endif
 	}
 
-	printf("%s\n", cpu_model);
+	cpu_setmodel("NeXT/MC680%s CPU%s%s%s", mc, mmu_str, fpu_str, cache_str);
+	printf("%s\n", cpu_getmodel());
 
 	return;
  lose:

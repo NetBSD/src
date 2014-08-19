@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.31.12.1 2013/02/25 00:28:54 tls Exp $	*/
+/*	$NetBSD: fpu.c,v 1.31.12.2 2014/08/20 00:03:20 tls Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.31.12.1 2013/02/25 00:28:54 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.31.12.2 2014/08/20 00:03:20 tls Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -49,8 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.31.12.1 2013/02/25 00:28:54 tls Exp $");
 
 #ifdef PPC_HAVE_FPU
 static void fpu_state_load(lwp_t *, u_int);
-static void fpu_state_save(lwp_t *, u_int);
-static void fpu_state_release(lwp_t *, u_int);
+static void fpu_state_save(lwp_t *);
+static void fpu_state_release(lwp_t *);
 #endif
 
 const pcu_ops_t fpu_ops = {
@@ -65,13 +65,13 @@ const pcu_ops_t fpu_ops = {
 bool
 fpu_used_p(lwp_t *l)
 {
-	return (l->l_md.md_flags & MDLWP_USEDFPU) != 0;
+	return pcu_valid_p(&fpu_ops);
 }
 
 void
 fpu_mark_used(lwp_t *l)
 {
-	l->l_md.md_flags |= MDLWP_USEDFPU;
+	pcu_discard(&fpu_ops, true);
 }
 
 #ifdef PPC_HAVE_FPU
@@ -80,9 +80,8 @@ fpu_state_load(lwp_t *l, u_int flags)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
-	if (__predict_false(!fpu_used_p(l))) {
+	if ((flags & PCU_VALID) == 0) {
 		memset(&pcb->pcb_fpu, 0, sizeof(pcb->pcb_fpu));
-		fpu_mark_used(l);
 	}
 
 	const register_t msr = mfmsr();
@@ -97,14 +96,13 @@ fpu_state_load(lwp_t *l, u_int flags)
 
 	curcpu()->ci_ev_fpusw.ev_count++;
 	l->l_md.md_utf->tf_srr1 |= PSL_FP|(pcb->pcb_flags & (PCB_FE0|PCB_FE1));
-	l->l_md.md_flags |= MDLWP_USEDFPU;
 }
 
 /*
  * Save the contents of the current CPU's FPU to its PCB.
  */
 void
-fpu_state_save(lwp_t *l, u_int flags)
+fpu_state_save(lwp_t *l)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
@@ -120,7 +118,7 @@ fpu_state_save(lwp_t *l, u_int flags)
 }
 
 void
-fpu_state_release(lwp_t *l, u_int flags)
+fpu_state_release(lwp_t *l)
 {
 	l->l_md.md_utf->tf_srr1 &= ~PSL_FP;
 }
@@ -213,7 +211,7 @@ fpu_save_to_mcontext(lwp_t *l, mcontext_t *mcp, unsigned int *flagp)
 {
 	KASSERT(l == curlwp);
 
-	if (!pcu_used_p(&fpu_ops))
+	if (!pcu_valid_p(&fpu_ops))
 		return false;
 
 	struct pcb * const pcb = lwp_getpcb(l);
@@ -242,7 +240,7 @@ fpu_restore_from_mcontext(lwp_t *l, const mcontext_t *mcp)
 #ifdef PPC_HAVE_FPU
 	/* we don't need to save the state, just drop it */
 	if (l == curlwp)
-		pcu_discard(&fpu_ops);
+		pcu_discard(&fpu_ops, true);
 #endif
 	(void)memcpy(&pcb->pcb_fpu.fpreg, &mcp->__fpregs.__fpu_regs,
 	    sizeof (pcb->pcb_fpu.fpreg));

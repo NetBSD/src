@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.55.2.2 2012/10/10 16:30:42 bouyer Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.55.2.3 2014/08/20 00:04:30 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.55.2.2 2012/10/10 16:30:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.55.2.3 2014/08/20 00:04:30 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1744,13 +1744,13 @@ genfs_do_directio(struct vmspace *vs, vaddr_t uva, size_t len, struct vnode *vp,
     off_t off, enum uio_rw rw)
 {
 	struct vm_map *map;
-	struct pmap *upm, *kpm;
+	struct pmap *upm, *kpm __unused;
 	size_t klen = round_page(uva + len) - trunc_page(uva);
 	off_t spoff, epoff;
 	vaddr_t kva, puva;
 	paddr_t pa;
 	vm_prot_t prot;
-	int error, rv, poff, koff;
+	int error, rv __diagused, poff, koff;
 	const int pgoflags = PGO_CLEANIT | PGO_SYNCIO | PGO_JOURNALLOCKED |
 		(rw == UIO_WRITE ? PGO_FREE : 0);
 

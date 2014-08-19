@@ -1,6 +1,6 @@
 /* Blackfin Event Vector Table (EVT) model.
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -20,9 +20,6 @@
 
 #ifndef DV_BFIN_EVT_H
 #define DV_BFIN_EVT_H
-
-#define BFIN_COREMMR_EVT_BASE	0xFFE02000
-#define BFIN_COREMMR_EVT_SIZE	(4 * 16)
 
 extern void cec_set_evt (SIM_CPU *, int ivg, bu32 handler_addr);
 extern bu32 cec_get_evt (SIM_CPU *, int ivg);

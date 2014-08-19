@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.50 2012/03/17 20:29:59 martin Exp $	*/
+/*	$NetBSD: autri.c,v 1.50.2.1 2014/08/20 00:03:42 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.50 2012/03/17 20:29:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.50.2.1 2014/08/20 00:03:42 tls Exp $");
 
 #include "midi.h"
 
@@ -206,6 +206,7 @@ static const struct audio_format autri_formats[AUTRI_NFORMATS] = {
 /*
  * register set/clear bit
  */
+#if NMIDI > 0
 static inline void
 autri_reg_set_1(struct autri_softc *sc, int no, uint8_t mask)
 {
@@ -219,6 +220,7 @@ autri_reg_clear_1(struct autri_softc *sc, int no, uint8_t mask)
 	bus_space_write_1(sc->memt, sc->memh, no,
 	    (bus_space_read_1(sc->memt, sc->memh, no) & ~mask));
 }
+#endif
 
 static inline void
 autri_reg_set_4(struct autri_softc *sc, int no, uint32_t mask)
@@ -522,6 +524,7 @@ autri_attach(device_t parent, device_t self, void *aux)
 	char const *intrstr;
 	int r;
 	uint32_t reg;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -549,7 +552,7 @@ autri_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, autri_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");

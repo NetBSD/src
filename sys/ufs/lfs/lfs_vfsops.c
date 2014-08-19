@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.296.2.2 2013/06/23 06:18:39 tls Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.296.2.3 2014/08/20 00:04:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.296.2.2 2013/06/23 06:18:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.296.2.3 2014/08/20 00:04:45 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -109,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.296.2.2 2013/06/23 06:18:39 tls Exp
 #include <uvm/uvm_pdaemon.h>
 
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_kernel.h>
 #include <ufs/lfs/lfs_extern.h>
 
 #include <miscfs/genfs/genfs.h>
@@ -117,10 +118,9 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.296.2.2 2013/06/23 06:18:39 tls Exp
 MODULE(MODULE_CLASS_VFS, lfs, NULL);
 
 static int lfs_gop_write(struct vnode *, struct vm_page **, int, int);
-static bool lfs_issequential_hole(const struct ulfsmount *,
-    daddr_t, daddr_t);
-
 static int lfs_mountfs(struct vnode *, struct mount *, struct lwp *);
+static int lfs_extattrctl(struct mount *, int, struct vnode *, int,
+			  const char *);
 
 static struct sysctllog *lfs_sysctl_log;
 
@@ -143,31 +143,29 @@ const struct vnodeopv_desc * const lfs_vnodeopv_descs[] = {
 };
 
 struct vfsops lfs_vfsops = {
-	MOUNT_LFS,
-	sizeof (struct ulfs_args),
-	lfs_mount,
-	ulfs_start,
-	lfs_unmount,
-	ulfs_root,
-	ulfs_quotactl,
-	lfs_statvfs,
-	lfs_sync,
-	lfs_vget,
-	lfs_fhtovp,
-	lfs_vptofh,
-	lfs_init,
-	lfs_reinit,
-	lfs_done,
-	lfs_mountroot,
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,	/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	lfs_vnodeopv_descs,
-	0,
-	{ NULL, NULL },
+	.vfs_name = MOUNT_LFS,
+	.vfs_min_mount_data = sizeof (struct ulfs_args),
+	.vfs_mount = lfs_mount,
+	.vfs_start = ulfs_start,
+	.vfs_unmount = lfs_unmount,
+	.vfs_root = ulfs_root,
+	.vfs_quotactl = ulfs_quotactl,
+	.vfs_statvfs = lfs_statvfs,
+	.vfs_sync = lfs_sync,
+	.vfs_vget = lfs_vget,
+	.vfs_fhtovp = lfs_fhtovp,
+	.vfs_vptofh = lfs_vptofh,
+	.vfs_init = lfs_init,
+	.vfs_reinit = lfs_reinit,
+	.vfs_done = lfs_done,
+	.vfs_mountroot = lfs_mountroot,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = lfs_extattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = lfs_vnodeopv_descs
 };
 
 const struct genfs_ops lfs_genfsops = {
@@ -175,16 +173,6 @@ const struct genfs_ops lfs_genfsops = {
 	.gop_alloc = ulfs_gop_alloc,
 	.gop_write = lfs_gop_write,
 	.gop_markupdate = ulfs_gop_markupdate,
-};
-
-static const struct ulfs_ops lfs_ulfsops = {
-	.uo_itimes = NULL,
-	.uo_update = lfs_update,
-	.uo_truncate = lfs_truncate,
-	.uo_valloc = lfs_valloc,
-	.uo_vfree = lfs_vfree,
-	.uo_balloc = lfs_balloc,
-	.uo_unmark_vnode = lfs_unmark_vnode,
 };
 
 struct shortlong {
@@ -251,16 +239,11 @@ lfs_sysctl_setup(struct sysctllog **clog)
 		{ "write_exceeded", "Number of times writer invoked flush" },
 		{ "flush_invoked",  "Number of times flush was invoked" },
 		{ "vflush_invoked", "Number of time vflush was called" },
-		{ "clean_inlocked", "Number of vnodes skipped for VI_XLOCK" },
+		{ "clean_inlocked", "Number of vnodes skipped for being dead" },
 		{ "clean_vnlocked", "Number of vnodes skipped for vget failure" },
 		{ "segs_reclaimed", "Number of segments reclaimed" },
 	};
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "lfs",
@@ -404,7 +387,6 @@ lfs_writerd(void *arg)
  	struct lfs *fs;
 	struct vfsops *vfs = NULL;
  	int fsflags;
- 	int loopcount;
 	int skipc;
 	int lfsc;
 	int wrote_something = 0;
@@ -425,7 +407,6 @@ lfs_writerd(void *arg)
 				&lfs_lock);
 
 		KASSERT(mutex_owned(&lfs_lock));
-		loopcount = 0;
 		wrote_something = 0;
 
 		/*
@@ -466,8 +447,7 @@ lfs_writerd(void *arg)
  		mutex_enter(&mountlist_lock);
 		lfsc = 0;
 		skipc = 0;
- 		for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
- 		     mp = nmp) {
+ 		for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
  			if (vfs_busy(mp, &nmp)) {
 				++skipc;
  				continue;
@@ -621,9 +601,7 @@ lfs_mountroot(void)
 		vfs_destroy(mp);
 		return (error);
 	}
-	mutex_enter(&mountlist_lock);
-	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mutex_exit(&mountlist_lock);
+	mountlist_append(mp);
 	ump = VFSTOULFS(mp);
 	fs = ump->um_lfs;
 	memset(fs->lfs_fsmnt, 0, sizeof(fs->lfs_fsmnt));
@@ -650,6 +628,8 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	int error = 0, update;
 	mode_t accessmode;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
@@ -769,11 +749,50 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 		ump = VFSTOULFS(mp);
 		fs = ump->um_lfs;
+
+		if (fs->lfs_ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
+			/*
+			 * Changing from read/write to read-only.
+			 * XXX: shouldn't we sync here? or does vfs do that?
+			 */
+#ifdef LFS_QUOTA2
+			/* XXX: quotas should remain on when readonly */
+			if (fs->lfs_use_quota2) {
+				error = lfsquota2_umount(mp, 0);
+				if (error) {
+					return error;
+				}
+			}
+#endif
+		}
+
 		if (fs->lfs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR)) {
 			/*
 			 * Changing from read-only to read/write.
 			 * Note in the superblocks that we're writing.
 			 */
+
+			/* XXX: quotas should have been on even if readonly */
+			if (fs->lfs_use_quota2) {
+#ifdef LFS_QUOTA2
+				error = lfs_quota2_mount(mp);
+#else
+				uprintf("%s: no kernel support for this "
+					"filesystem's quotas\n",
+					mp->mnt_stat.f_mntonname);
+				if (mp->mnt_flag & MNT_FORCE) {
+					uprintf("%s: mounting anyway; "
+						"fsck afterwards\n",
+						mp->mnt_stat.f_mntonname);
+				} else {
+					error = EINVAL;
+				}
+#endif
+				if (error) {
+					return error;
+				}
+			}
+
 			fs->lfs_ronly = 0;
 			if (fs->lfs_pflags & LFS_PF_CLEAN) {
 				fs->lfs_pflags &= ~LFS_PF_CLEAN;
@@ -965,7 +984,6 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	ump = kmem_zalloc(sizeof(*ump), KM_SLEEP);
 	ump->um_lfs = fs;
-	ump->um_ops = &lfs_ulfsops;
 	ump->um_fstype = ULFS1;
 	if (sizeof(struct lfs) < LFS_SBPAD) {			/* XXX why? */
 		brelse(bp, BC_INVAL);
@@ -1006,6 +1024,24 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	if (ronly == 0)
 		fs->lfs_fmod = 1;
 
+	/* ulfs-level information */
+	fs->um_flags = 0;
+	fs->um_bptrtodb = fs->lfs_ffshift - DEV_BSHIFT;
+	fs->um_seqinc = fs->lfs_frag;
+	fs->um_nindir = fs->lfs_nindir;
+	fs->um_lognindir = ffs(fs->lfs_nindir) - 1;
+	fs->um_maxsymlinklen = fs->lfs_maxsymlinklen;
+	fs->um_dirblksiz = LFS_DIRBLKSIZ;
+	fs->um_maxfilesize = fs->lfs_maxfilesize;
+
+	/* quota stuff */
+	/* XXX: these need to come from the on-disk superblock to be used */
+	fs->lfs_use_quota2 = 0;
+	fs->lfs_quota_magic = 0;
+	fs->lfs_quota_flags = 0;
+	fs->lfs_quotaino[0] = 0;
+	fs->lfs_quotaino[1] = 0;
+
 	/* Initialize the mount structure. */
 	dev = devvp->v_rdev;
 	mp->mnt_data = ump;
@@ -1016,22 +1052,15 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_stat.f_iosize = fs->lfs_bsize;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_fs_bshift = fs->lfs_bshift;
-	ump->um_flags = 0;
+	if (fs->um_maxsymlinklen > 0)
+		mp->mnt_iflag |= IMNT_DTYPE;
+
 	ump->um_mountp = mp;
 	ump->um_dev = dev;
 	ump->um_devvp = devvp;
-	ump->um_bptrtodb = fs->lfs_ffshift - DEV_BSHIFT;
-	ump->um_seqinc = fs->lfs_frag;
-	ump->um_nindir = fs->lfs_nindir;
-	ump->um_lognindir = ffs(fs->lfs_nindir) - 1;
 	for (i = 0; i < ULFS_MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
-	ump->um_maxsymlinklen = fs->lfs_maxsymlinklen;
-	ump->um_dirblksiz = LFS_DIRBLKSIZ;
-	ump->um_maxfilesize = fs->lfs_maxfilesize;
-	if (ump->um_maxsymlinklen > 0)
-		mp->mnt_iflag |= IMNT_DTYPE;
-	devvp->v_specmountpoint = mp;
+	spec_node_setmountedfs(devvp, mp);
 
 	/* Set up reserved memory for pageout */
 	lfs_setup_resblks(fs);
@@ -1093,6 +1122,58 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		else
 			brelse(bp, 0);
 	}
+
+	/*
+	 * XXX: if the fs has quotas, quotas should be on even if
+	 * readonly. Otherwise you can't query the quota info!
+	 * However, that's not how the quota2 code got written and I
+	 * don't know if it'll behave itself if enabled while
+	 * readonly, so for now use the same enable logic as ffs.
+	 *
+	 * XXX: also, if you use the -f behavior allowed here (and
+	 * equivalently above for remount) it will corrupt the fs. It
+	 * ought not to allow that. It should allow mounting readonly
+	 * if there are quotas and the kernel doesn't have the quota
+	 * code, but only readonly.
+	 *
+	 * XXX: and if you use the -f behavior allowed here it will
+	 * likely crash at unmount time (or remount time) because we
+	 * think quotas are active.
+	 *
+	 * Although none of this applies until there's a way to set
+	 * lfs_use_quota2 and have quotas in the fs at all.
+	 */
+	if (!ronly && fs->lfs_use_quota2) {
+#ifdef LFS_QUOTA2
+		error = lfs_quota2_mount(mp);
+#else
+		uprintf("%s: no kernel support for this filesystem's quotas\n",
+			mp->mnt_stat.f_mntonname);
+		if (mp->mnt_flag & MNT_FORCE) {
+			uprintf("%s: mounting anyway; fsck afterwards\n",
+				mp->mnt_stat.f_mntonname);
+		} else {
+			error = EINVAL;
+		}
+#endif
+		if (error) {
+			/* XXX XXX must clean up the stuff immediately above */
+			printf("lfs_mountfs: sorry, leaking some memory\n");
+			goto out;
+		}
+	}
+
+#ifdef LFS_EXTATTR
+	/*
+	 * Initialize file-backed extended attributes for ULFS1 file
+	 * systems.
+	 *
+	 * XXX: why is this limited to ULFS1?
+	 */
+	if (ump->um_fstype == ULFS1) {
+		ulfs_extattr_uepm_init(&ump->um_extattr);
+	}
+#endif
 
 #ifdef LFS_KERNEL_RFW
 	lfs_roll_forward(fs, mp, l);
@@ -1183,6 +1264,7 @@ lfs_unmount(struct mount *mp, int mntflags)
 	lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC);
 
 	/* wake up the cleaner so it can die */
+	/* XXX: shouldn't this be *after* the error cases below? */
 	lfs_wakeup_cleaner(fs);
 	mutex_enter(&lfs_lock);
 	while (fs->lfs_sleepers)
@@ -1190,8 +1272,22 @@ lfs_unmount(struct mount *mp, int mntflags)
 			&lfs_lock);
 	mutex_exit(&lfs_lock);
 
+#ifdef LFS_EXTATTR
+	if (ump->um_fstype == ULFS1) {
+		if (ump->um_extattr.uepm_flags & ULFS_EXTATTR_UEPM_STARTED) {
+			ulfs_extattr_stop(mp, curlwp);
+		}
+		if (ump->um_extattr.uepm_flags & ULFS_EXTATTR_UEPM_INITIALIZED) {
+			ulfs_extattr_uepm_destroy(&ump->um_extattr);
+		}
+	}
+#endif
 #ifdef LFS_QUOTA
         if ((error = lfsquota1_umount(mp, flags)) != 0)
+		return (error);
+#endif
+#ifdef LFS_QUOTA2
+        if ((error = lfsquota2_umount(mp, flags)) != 0)
 		return (error);
 #endif
 	if ((error = vflush(mp, fs->lfs_ivnode, flags)) != 0)
@@ -1219,7 +1315,7 @@ lfs_unmount(struct mount *mp, int mntflags)
 
 	ronly = !fs->lfs_ronly;
 	if (ump->um_devvp->v_type != VBAD)
-		ump->um_devvp->v_specmountpoint = NULL;
+		spec_node_setmountedfs(ump->um_devvp, NULL);
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ump->um_devvp,
 	    ronly ? FREAD : FREAD|FWRITE, NOCRED);
@@ -1584,9 +1680,11 @@ lfs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
  * we don't care about current daddr of them.
  */
 static bool
-lfs_issequential_hole(const struct ulfsmount *ump,
+lfs_issequential_hole(const struct lfs *fs,
     daddr_t daddr0, daddr_t daddr1)
 {
+	(void)fs; /* not used */
+
 	daddr0 = (daddr_t)((int32_t)daddr0); /* XXX ondisk32 */
 	daddr1 = (daddr_t)((int32_t)daddr1); /* XXX ondisk32 */
 
@@ -1659,10 +1757,13 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	 * We must write everything, however, if our vnode is being
 	 * reclaimed.
 	 */
-	if (LFS_STARVED_FOR_SEGS(fs) && !(vp->v_iflag & VI_XLOCK)) {
+	mutex_enter(vp->v_interlock);
+	if (LFS_STARVED_FOR_SEGS(fs) && vdead_check(vp, VDEAD_NOWAIT) == 0) {
+		mutex_exit(vp->v_interlock);
 		failreason = "Starved for segs and not flushing vp";
  		goto tryagain;
 	}
+	mutex_exit(vp->v_interlock);
 
 	/*
 	 * Sometimes things slip past the filters in lfs_putpages,
@@ -1969,7 +2070,7 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 	ip = VTOI(vp);
 
 	memset(ip->i_lfs_fragsize, 0, ULFS_NDADDR * sizeof(*ip->i_lfs_fragsize));
-	if (vp->v_type != VLNK || ip->i_size >= ip->i_ump->um_maxsymlinklen) {
+	if (vp->v_type != VLNK || ip->i_size >= ip->i_lfs->um_maxsymlinklen) {
 #ifdef DEBUG
 		for (i = (ip->i_size + fs->lfs_bsize - 1) >> fs->lfs_bshift;
 		    i < ULFS_NDADDR; i++) {
@@ -2010,6 +2111,9 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 
 	ip->i_devvp = ump->um_devvp;
 	vref(ip->i_devvp);
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
+	ulfsquota_init(ip);
+#endif
 	genfs_node_init(vp, &lfs_genfsops);
 	uvm_vnp_setsize(vp, ip->i_size);
 
@@ -2212,4 +2316,22 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
     out:
 	lfs_segunlock(fs);
 	return error;
+}
+
+/*
+ * Extended attribute dispatch
+ */
+static int
+lfs_extattrctl(struct mount *mp, int cmd, struct vnode *vp,
+	       int attrnamespace, const char *attrname)
+{
+#ifdef LFS_EXTATTR
+	struct ulfsmount *ump;
+
+	ump = VFSTOULFS(mp);
+	if (ump->um_fstype == ULFS1) {
+		return ulfs_extattrctl(mp, cmd, vp, attrnamespace, attrname);
+	}
+#endif
+	return vfs_stdextattrctl(mp, cmd, vp, attrnamespace, attrname);
 }

@@ -1,4 +1,4 @@
-# $NetBSD: files.podulebus,v 1.17 2006/10/01 12:39:35 bjh21 Exp $
+# $NetBSD: files.podulebus,v 1.17.98.1 2014/08/20 00:03:49 tls Exp $
 
 device	podulebus { [slot = -1] }
 define	podloader
@@ -49,3 +49,7 @@ device	acemidi { }
 attach	acemidi at podulebus
 attach	com at acemidi with com_acemidi
 file	dev/podulebus/acemidi.c			acemidi
+
+# Castle SCSI16 (Qlogic FAS209) boards
+attach	esp at podulebus with esp_podule : ncr53c9x
+file	dev/podulebus/esp_podule.c		esp_podule

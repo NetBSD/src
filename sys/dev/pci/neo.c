@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.48.2.1 2012/11/20 03:02:20 tls Exp $	*/
+/*	$NetBSD: neo.c,v 1.48.2.2 2014/08/20 00:03:43 tls Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.48.2.1 2012/11/20 03:02:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.48.2.2 2014/08/20 00:03:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -576,6 +576,7 @@ neo_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t csr;
 	int error;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 	pa = aux;
@@ -608,7 +609,7 @@ neo_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->ih = pci_intr_establish(pc, ih, IPL_AUDIO, neo_intr, sc);
 
 	if (sc->ih == NULL) {

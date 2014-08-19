@@ -1,7 +1,6 @@
 /* Target-dependent code for GDB, the GNU debugger.
 
-   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2010,
-   2011 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,13 +28,13 @@ struct type;
 
 /* From ppc-sysv-tdep.c ...  */
 enum return_value_convention ppc_sysv_abi_return_value (struct gdbarch *gdbarch,
-							struct type *func_type,
+							struct value *function,
 							struct type *valtype,
 							struct regcache *regcache,
 							gdb_byte *readbuf,
 							const gdb_byte *writebuf);
 enum return_value_convention ppc_sysv_abi_broken_return_value (struct gdbarch *gdbarch,
-							       struct type *func_type,
+							       struct value *function,
 							       struct type *valtype,
 							       struct regcache *regcache,
 							       gdb_byte *readbuf,
@@ -55,7 +54,7 @@ CORE_ADDR ppc64_sysv_abi_push_dummy_call (struct gdbarch *gdbarch,
 					  int struct_return,
 					  CORE_ADDR struct_addr);
 enum return_value_convention ppc64_sysv_abi_return_value (struct gdbarch *gdbarch,
-							  struct type *func_type,
+							  struct value *function,
 							  struct type *valtype,
 							  struct regcache *regcache,
 							  gdb_byte *readbuf,
@@ -292,6 +291,21 @@ enum {
   PPC_NUM_REGS
 };
 
+/* An instruction to match.  */
+
+struct ppc_insn_pattern
+{
+  unsigned int mask;            /* mask the insn with this...  */
+  unsigned int data;            /* ...and see if it matches this.  */
+  int optional;                 /* If non-zero, this insn may be absent.  */
+};
+
+extern int ppc_insns_match_pattern (struct frame_info *frame, CORE_ADDR pc,
+				    struct ppc_insn_pattern *pattern,
+				    unsigned int *insns);
+extern CORE_ADDR ppc_insn_d_field (unsigned int insn);
+
+extern CORE_ADDR ppc_insn_ds_field (unsigned int insn);
 
 /* Instruction size.  */
 #define PPC_INSN_SIZE 4

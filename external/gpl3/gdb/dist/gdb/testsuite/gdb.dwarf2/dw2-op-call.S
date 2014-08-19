@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2009, 2011 Free Software Foundation, Inc.
+   Copyright 2009-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,6 +23,23 @@ array2:	.2byte	2
 array3:	.2byte	3
 
 	.section .debug_info
+.Lcu0_begin:
+	/* CU header */
+	.4byte	.Lcu0_end - .Lcu0_start		/* Length of Compilation Unit */
+.Lcu0_start:
+	.2byte	2				/* DWARF Version */
+	.4byte	.Labbrev1_begin			/* Offset into abbrev section */
+	.byte	4				/* Pointer size */
+
+	/* CU die */
+	.uleb128 1				/* Abbrev: DW_TAG_compile_unit */
+	.ascii	"file0.txt\0"			/* DW_AT_name */
+	.ascii	"GNU C 3.3.3\0"			/* DW_AT_producer */
+	.byte	2				/* DW_LANG_C (C) */
+
+	.byte	0				/* End of children of CU */
+.Lcu0_end:
+
 .Lcu1_begin:
 	/* CU header */
 	.4byte	.Lcu1_end - .Lcu1_start		/* Length of Compilation Unit */
@@ -49,7 +66,7 @@ array3:	.2byte	3
 	.4byte		.L2byte_type-.Lcu1_begin	/* DW_AT_type */
 	.byte		2f - 1f			/* DW_AT_location */
 1:	.byte		3			/*   DW_OP_addr */
-	.4byte		array			/*     <addr> */
+	.4byte		array1			/*     <addr> */
 2:
 
 	.uleb128	3			/* Abbrev: DW_TAG_variable */
@@ -72,9 +89,29 @@ array3:	.2byte	3
 	.uleb128	array3-array1		/*     <uconst> */
 2:
 
+	.uleb128	3			/* Abbrev: DW_TAG_variable */
+	.ascii		"arraycallnoloc\0"	/* DW_AT_name */
+	.4byte		.L2byte_type-.Lcu1_begin /* DW_AT_type */
+	.byte		2f - 1f			/* DW_AT_location */
+1:	.byte		0x99			/*   DW_OP_call4 */
+	.4byte		.Larraynoloc-.Lcu1_begin /*     <current CU offset> */
+2:
+
+.Larraynoloc:
+	.uleb128	4			/* Abbrev: DW_TAG_variable-loclist */
+	.ascii		"arraynoloc\0"		/* DW_AT_name */
+	.4byte		.L2byte_type-.Lcu1_begin /* DW_AT_type */
+	.4byte		loclist			/* DW_AT_location */
+
 	.byte		0			/* End of children of CU */
 
 .Lcu1_end:
+
+/* Location list.  */
+	.section	.debug_loc
+loclist:
+	/* Location list end.  */
+	.4byte	0, 0
 
 /* Abbrev table */
 	.section .debug_abbrev
@@ -112,6 +149,18 @@ array3:	.2byte	3
 	.uleb128	0x13			/* DW_FORM_ref4 */
 	.uleb128	0x2			/* DW_AT_location */
 	.uleb128	0xa			/* DW_FORM_block1 */
+	.byte		0x0			/* Terminator */
+	.byte		0x0			/* Terminator */
+
+	.uleb128	4			/* Abbrev code */
+	.uleb128	0x34			/* DW_TAG_variable-loclist */
+	.byte		0			/* has_children */
+	.uleb128	0x3			/* DW_AT_name */
+	.uleb128	0x8			/* DW_FORM_string */
+	.uleb128	0x49			/* DW_AT_type */
+	.uleb128	0x13			/* DW_FORM_ref4 */
+	.uleb128	0x2			/* DW_AT_location */
+	.uleb128	0x06			/* DW_FORM_data4 */
 	.byte		0x0			/* Terminator */
 	.byte		0x0			/* Terminator */
 

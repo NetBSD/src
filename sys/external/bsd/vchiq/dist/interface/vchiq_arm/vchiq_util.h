@@ -34,6 +34,8 @@
 #ifndef VCHIQ_UTIL_H
 #define VCHIQ_UTIL_H
 
+#include <linux/kernel.h>
+
 #include <interface/compat/vchi_bsd.h>
 
 #include "vchiq_if.h"

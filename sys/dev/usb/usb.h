@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.96.2.2 2013/06/23 06:20:22 tls Exp $	*/
+/*	$NetBSD: usb.h,v 1.96.2.3 2014/08/20 00:03:51 tls Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ MALLOC_DECLARE(M_USBHC);
 #define AUVITEK_I2C_DEBUG 1
 #define AXE_DEBUG 1
 #define CUE_DEBUG 1
-#define DWC_OTG_DEBUG 1
+#define DWC2_DEBUG 1
 #define EHCI_DEBUG 1
 #define EZLOAD_DEBUG 1
 #define KUE_DEBUG 1
@@ -245,6 +245,7 @@ typedef struct {
 #define  UDESC_CS_INTERFACE	0x24
 #define  UDESC_CS_ENDPOINT	0x25
 #define  UDESC_HUB		0x29
+#define  UDESC_SSHUB		0x2a
 #define UR_SET_DESCRIPTOR	0x07
 #define UR_GET_CONFIG		0x08
 #define UR_SET_CONFIG		0x09
@@ -267,6 +268,8 @@ typedef struct {
 
 #define USB_2_MAX_CTRL_PACKET	64
 #define USB_2_MAX_BULK_PACKET	512
+
+#define USB_3_MAX_CTRL_PACKET	512
 
 typedef struct {
 	uByte		bLength;
@@ -513,6 +516,7 @@ typedef struct {
 #define  UDPROTO_FSHUB		0x00
 #define  UDPROTO_HSHUBSTT	0x01
 #define  UDPROTO_HSHUBMTT	0x02
+#define  UDPROTO_SSHUB		0x03
 #define UDCLASS_DIAGNOSTIC	0xdc
 #define UDCLASS_WIRELESS	0xe0
 #define  UDSUBCLASS_RF		0x01
@@ -757,6 +761,7 @@ struct usb_device_info {
 #define USB_SPEED_LOW  1
 #define USB_SPEED_FULL 2
 #define USB_SPEED_HIGH 3
+#define USB_SPEED_SUPER 4
 	int		udi_power;	/* power consumption in mA, 0 if selfpowered */
 	int		udi_nports;
 	char		udi_devnames[USB_MAX_DEVNAMES][USB_MAX_DEVNAMELEN];

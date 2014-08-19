@@ -1,4 +1,4 @@
-/*	$NetBSD: control.c,v 1.23 2008/04/28 20:23:38 martin Exp $	*/
+/*	$NetBSD: control.c,v 1.23.44.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,44 +30,44 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: control.c,v 1.23 2008/04/28 20:23:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: control.c,v 1.23.44.1 2014/08/20 00:03:26 tls Exp $");
 
 #include <sys/param.h>
 
 #include <machine/pte.h>
 #include <sun3/sun3/control.h>
 
-int 
+int
 get_context(void)
 {
 	return (get_control_byte(CONTEXT_REG) & CONTEXT_MASK);
 }
 
-void 
+void
 set_context(int c)
 {
 	set_control_byte(CONTEXT_REG, (c & CONTEXT_MASK));
 }
 
-u_int 
+u_int
 get_pte(vaddr_t va)
 {
 	return (get_control_word(CONTROL_ADDR_BUILD(PGMAP_BASE, va)));
 }
 
-void 
+void
 set_pte(vaddr_t va, u_int pte)
 {
 	set_control_word(CONTROL_ADDR_BUILD(PGMAP_BASE, va), pte);
 }
 
-int 
+int
 get_segmap(vaddr_t va)
 {
 	return (get_control_byte(CONTROL_ADDR_BUILD(SEGMAP_BASE, va)));
 }
 
-void 
+void
 set_segmap(vaddr_t va, int sme)
 {
 	set_control_byte(CONTROL_ADDR_BUILD(SEGMAP_BASE, va), sme);

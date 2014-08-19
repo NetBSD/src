@@ -1,7 +1,6 @@
 /* MI Interpreter Definitions and Commands for GDB, the GNU debugger.
 
-   Copyright (C) 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "interps.h"
 #include "event-top.h"
 #include "event-loop.h"
@@ -35,20 +34,23 @@
 #include "observer.h"
 #include "gdbthread.h"
 #include "solist.h"
+#include "gdb.h"
+#include "objfiles.h"
+#include "tracepoint.h"
 
-/* These are the interpreter setup, etc. functions for the MI interpreter */
-static void mi_execute_command_wrapper (char *cmd);
-static void mi_command_loop (int mi_version);
+/* These are the interpreter setup, etc. functions for the MI
+   interpreter.  */
+
+static void mi_execute_command_wrapper (const char *cmd);
+static void mi_execute_command_input_handler (char *cmd);
+static void mi_command_loop (void *data);
 
 /* These are hooks that we put in place while doing interpreter_exec
-   so we can report interesting things that happened "behind the mi's
-   back" in this command */
-static int mi_interp_query_hook (const char *ctlstr, va_list ap)
-     ATTRIBUTE_PRINTF (1, 0);
+   so we can report interesting things that happened "behind the MI's
+   back" in this command.  */
 
-static void mi3_command_loop (void);
-static void mi2_command_loop (void);
-static void mi1_command_loop (void);
+static int mi_interp_query_hook (const char *ctlstr, va_list ap)
+  ATTRIBUTE_PRINTF (1, 0);
 
 static void mi_insert_notify_hooks (void);
 static void mi_remove_notify_hooks (void);
@@ -56,6 +58,7 @@ static void mi_on_normal_stop (struct bpstats *bs, int print_frame);
 
 static void mi_new_thread (struct thread_info *t);
 static void mi_thread_exit (struct thread_info *t, int silent);
+static void mi_record_changed (struct inferior*, int);
 static void mi_inferior_added (struct inferior *inf);
 static void mi_inferior_appeared (struct inferior *inf);
 static void mi_inferior_exit (struct inferior *inf);
@@ -64,27 +67,56 @@ static void mi_on_resume (ptid_t ptid);
 static void mi_solib_loaded (struct so_list *solib);
 static void mi_solib_unloaded (struct so_list *solib);
 static void mi_about_to_proceed (void);
+static void mi_traceframe_changed (int tfnum, int tpnum);
+static void mi_tsv_created (const struct trace_state_variable *tsv);
+static void mi_tsv_deleted (const struct trace_state_variable *tsv);
+static void mi_tsv_modified (const struct trace_state_variable *tsv);
+static void mi_breakpoint_created (struct breakpoint *b);
+static void mi_breakpoint_deleted (struct breakpoint *b);
+static void mi_breakpoint_modified (struct breakpoint *b);
+static void mi_command_param_changed (const char *param, const char *value);
+static void mi_memory_changed (struct inferior *inf, CORE_ADDR memaddr,
+			       ssize_t len, const bfd_byte *myaddr);
 
 static int report_initial_inferior (struct inferior *inf, void *closure);
 
 static void *
-mi_interpreter_init (int top_level)
+mi_interpreter_init (struct interp *interp, int top_level)
 {
   struct mi_interp *mi = XMALLOC (struct mi_interp);
+  const char *name;
+  int mi_version;
 
-  /* HACK: We need to force stdout/stderr to point at the console.  This avoids
-     any potential side effects caused by legacy code that is still
-     using the TUI / fputs_unfiltered_hook.  So we set up output channels for
-     this now, and swap them in when we are run. */
+  /* Assign the output channel created at startup to its own global,
+     so that we can create a console channel that encapsulates and
+     prefixes all gdb_output-type bits coming from the rest of the
+     debugger.  */
 
-  raw_stdout = stdio_fileopen (stdout);
+  raw_stdout = gdb_stdout;
 
-  /* Create MI channels */
+  /* Create MI console channels, each with a different prefix so they
+     can be distinguished.  */
   mi->out = mi_console_file_new (raw_stdout, "~", '"');
   mi->err = mi_console_file_new (raw_stdout, "&", '"');
   mi->log = mi->err;
   mi->targ = mi_console_file_new (raw_stdout, "@", '"');
   mi->event_channel = mi_console_file_new (raw_stdout, "=", 0);
+
+  name = interp_name (interp);
+  /* INTERP_MI selects the most recent released version.  "mi2" was
+     released as part of GDB 6.0.  */
+  if (strcmp (name, INTERP_MI) == 0)
+    mi_version = 2;
+  else if (strcmp (name, INTERP_MI1) == 0)
+    mi_version = 1;
+  else if (strcmp (name, INTERP_MI2) == 0)
+    mi_version = 2;
+  else if (strcmp (name, INTERP_MI3) == 0)
+    mi_version = 3;
+  else
+    gdb_assert_not_reached ("unhandled MI version");
+
+  mi->uiout = mi_out_new (mi_version);
 
   if (top_level)
     {
@@ -94,15 +126,26 @@ mi_interpreter_init (int top_level)
       observer_attach_inferior_appeared (mi_inferior_appeared);
       observer_attach_inferior_exit (mi_inferior_exit);
       observer_attach_inferior_removed (mi_inferior_removed);
+      observer_attach_record_changed (mi_record_changed);
       observer_attach_normal_stop (mi_on_normal_stop);
       observer_attach_target_resumed (mi_on_resume);
       observer_attach_solib_loaded (mi_solib_loaded);
       observer_attach_solib_unloaded (mi_solib_unloaded);
       observer_attach_about_to_proceed (mi_about_to_proceed);
+      observer_attach_traceframe_changed (mi_traceframe_changed);
+      observer_attach_tsv_created (mi_tsv_created);
+      observer_attach_tsv_deleted (mi_tsv_deleted);
+      observer_attach_tsv_modified (mi_tsv_modified);
+      observer_attach_breakpoint_created (mi_breakpoint_created);
+      observer_attach_breakpoint_deleted (mi_breakpoint_deleted);
+      observer_attach_breakpoint_modified (mi_breakpoint_modified);
+      observer_attach_command_param_changed (mi_command_param_changed);
+      observer_attach_memory_changed (mi_memory_changed);
 
-      /* The initial inferior is created before this function is called, so we
-	 need to report it explicitly.  Use iteration in case future version
-	 of GDB creates more than one inferior up-front.  */
+      /* The initial inferior is created before this function is
+	 called, so we need to report it explicitly.  Use iteration in
+	 case future version of GDB creates more than one inferior
+	 up-front.  */
       iterate_over_inferiors (report_initial_inferior, mi);
     }
 
@@ -114,14 +157,14 @@ mi_interpreter_resume (void *data)
 {
   struct mi_interp *mi = data;
 
-  /* As per hack note in mi_interpreter_init, swap in the output channels... */
+  /* As per hack note in mi_interpreter_init, swap in the output
+     channels... */
   gdb_setup_readline ();
 
   /* These overwrite some of the initialization done in
      _intialize_event_loop.  */
   call_readline = gdb_readline2;
-  input_handler = mi_execute_command_wrapper;
-  add_file_handler (input_fd, stdin_event_handler, 0);
+  input_handler = mi_execute_command_input_handler;
   async_command_editing_p = 0;
   /* FIXME: This is a total hack for now.  PB's use of the MI
      implicitly relies on a bug in the async support which allows
@@ -132,12 +175,12 @@ mi_interpreter_resume (void *data)
   sync_execution = 0;
 
   gdb_stdout = mi->out;
-  /* Route error and log output through the MI */
+  /* Route error and log output through the MI.  */
   gdb_stderr = mi->err;
   gdb_stdlog = mi->log;
-  /* Route target output through the MI. */
+  /* Route target output through the MI.  */
   gdb_stdtarg = mi->targ;
-  /* Route target error through the MI as well. */
+  /* Route target error through the MI as well.  */
   gdb_stdtargerr = mi->targ;
 
   /* Replace all the hooks that we know about.  There really needs to
@@ -145,16 +188,6 @@ mi_interpreter_resume (void *data)
   clear_interpreter_hooks ();
 
   deprecated_show_load_progress = mi_load_progress;
-
-  /* If we're _the_ interpreter, take control. */
-  if (current_interp_named_p (INTERP_MI1))
-    deprecated_command_loop_hook = mi1_command_loop;
-  else if (current_interp_named_p (INTERP_MI2))
-    deprecated_command_loop_hook = mi2_command_loop;
-  else if (current_interp_named_p (INTERP_MI3))
-    deprecated_command_loop_hook = mi3_command_loop;
-  else
-    deprecated_command_loop_hook = mi2_command_loop;
 
   return 1;
 }
@@ -169,14 +202,12 @@ mi_interpreter_suspend (void *data)
 static struct gdb_exception
 mi_interpreter_exec (void *data, const char *command)
 {
-  char *tmp = alloca (strlen (command) + 1);
-
-  strcpy (tmp, command);
-  mi_execute_command_wrapper (tmp);
+  mi_execute_command_wrapper (command);
   return exception_none;
 }
 
-/* Never display the default gdb prompt in mi case.  */
+/* Never display the default GDB prompt in MI case.  */
+
 static int
 mi_interpreter_prompt_p (void *data)
 {
@@ -200,18 +231,14 @@ mi_cmd_interpreter_exec (char *command, char **argv, int argc)
     error (_("-interpreter-exec: could not find interpreter \"%s\""),
 	   argv[0]);
 
-  if (!interp_exec_p (interp_to_use))
-    error (_("-interpreter-exec: interpreter \"%s\" "
-	     "does not support command execution"),
-	      argv[0]);
-
-  /* Insert the MI out hooks, making sure to also call the interpreter's hooks
-     if it has any. */
-  /* KRS: We shouldn't need this... Events should be installed and they should
-     just ALWAYS fire something out down the MI channel... */
+  /* Insert the MI out hooks, making sure to also call the
+     interpreter's hooks if it has any.  */
+  /* KRS: We shouldn't need this... Events should be installed and
+     they should just ALWAYS fire something out down the MI
+     channel.  */
   mi_insert_notify_hooks ();
 
-  /* Now run the code... */
+  /* Now run the code.  */
 
   old_chain = make_cleanup (null_cleanup, 0);
   for (i = 1; i < argc; i++)
@@ -233,14 +260,12 @@ mi_cmd_interpreter_exec (char *command, char **argv, int argc)
   do_cleanups (old_chain);
 }
 
-/*
- * mi_insert_notify_hooks - This inserts a number of hooks that are
- * meant to produce async-notify ("=") MI messages while running
- * commands in another interpreter using mi_interpreter_exec.  The
- * canonical use for this is to allow access to the gdb CLI
- * interpreter from within the MI, while still producing MI style
- * output when actions in the CLI command change gdb's state.
-*/
+/* This inserts a number of hooks that are meant to produce
+   async-notify ("=") MI messages while running commands in another
+   interpreter using mi_interpreter_exec.  The canonical use for this
+   is to allow access to the gdb CLI interpreter from within the MI,
+   while still producing MI style output when actions in the CLI
+   command change GDB's state.  */
 
 static void
 mi_insert_notify_hooks (void)
@@ -261,38 +286,33 @@ mi_interp_query_hook (const char *ctlstr, va_list ap)
 }
 
 static void
-mi_execute_command_wrapper (char *cmd)
+mi_execute_command_wrapper (const char *cmd)
 {
   mi_execute_command (cmd, stdin == instream);
 }
 
-static void
-mi1_command_loop (void)
-{
-  mi_command_loop (1);
-}
+/* mi_execute_command_wrapper wrapper suitable for INPUT_HANDLER.  */
 
 static void
-mi2_command_loop (void)
+mi_execute_command_input_handler (char *cmd)
 {
-  mi_command_loop (2);
-}
+  mi_execute_command_wrapper (cmd);
 
-static void
-mi3_command_loop (void)
-{
-  mi_command_loop (3);
-}
-
-static void
-mi_command_loop (int mi_version)
-{
-  /* Turn off 8 bit strings in quoted output.  Any character with the
-     high bit set is printed using C's octal format. */
-  sevenbit_strings = 1;
-  /* Tell the world that we're alive */
   fputs_unfiltered ("(gdb) \n", raw_stdout);
   gdb_flush (raw_stdout);
+}
+
+static void
+mi_command_loop (void *data)
+{
+  /* Turn off 8 bit strings in quoted output.  Any character with the
+     high bit set is printed using C's octal format.  */
+  sevenbit_strings = 1;
+
+  /* Tell the world that we're alive.  */
+  fputs_unfiltered ("(gdb) \n", raw_stdout);
+  gdb_flush (raw_stdout);
+
   start_event_loop ();
 }
 
@@ -326,6 +346,19 @@ mi_thread_exit (struct thread_info *t, int silent)
   fprintf_unfiltered (mi->event_channel, 
 		      "thread-exited,id=\"%d\",group-id=\"i%d\"",
 		      t->num, inf->num);
+  gdb_flush (mi->event_channel);
+}
+
+/* Emit notification on changing the state of record.  */
+
+static void
+mi_record_changed (struct inferior *inferior, int started)
+{
+  struct mi_interp *mi = top_level_interpreter_data ();
+
+  fprintf_unfiltered (mi->event_channel,  "record-%s,thread-group=\"i%d\"",
+		      started ? "started" : "stopped", inferior->num);
+
   gdb_flush (mi->event_channel);
 }
 
@@ -394,18 +427,24 @@ mi_on_normal_stop (struct bpstats *bs, int print_frame)
     {
       int core;
 
-      if (uiout != mi_uiout)
+      if (current_uiout != mi_uiout)
 	{
-	  /* The normal_stop function has printed frame information into 
-	     CLI uiout, or some other non-MI uiout.  There's no way we
-	     can extract proper fields from random uiout object, so we print
-	     the frame again.  In practice, this can only happen when running
-	     a CLI command in MI.  */
-	  struct ui_out *saved_uiout = uiout;
+	  /* The normal_stop function has printed frame information
+	     into CLI uiout, or some other non-MI uiout.  There's no
+	     way we can extract proper fields from random uiout
+	     object, so we print the frame again.  In practice, this
+	     can only happen when running a CLI command in MI.  */
+	  struct ui_out *saved_uiout = current_uiout;
+	  struct target_waitstatus last;
+	  ptid_t last_ptid;
 
-	  uiout = mi_uiout;
-	  print_stack_frame (get_selected_frame (NULL), 0, SRC_AND_LOC);
-	  uiout = saved_uiout;
+	  current_uiout = mi_uiout;
+
+	  get_last_target_status (&last_ptid, &last);
+	  bpstat_print (bs, last.kind);
+
+	  print_stack_frame (get_selected_frame (NULL), 0, SRC_AND_LOC, 1);
+	  current_uiout = saved_uiout;
 	}
 
       ui_out_field_int (mi_uiout, "thread-id",
@@ -449,6 +488,185 @@ mi_about_to_proceed (void)
     }
 
   mi_proceeded = 1;
+}
+
+/* When the element is non-zero, no MI notifications will be emitted in
+   response to the corresponding observers.  */
+
+struct mi_suppress_notification mi_suppress_notification =
+  {
+    0,
+    0,
+    0,
+  };
+
+/* Emit notification on changing a traceframe.  */
+
+static void
+mi_traceframe_changed (int tfnum, int tpnum)
+{
+  struct mi_interp *mi = top_level_interpreter_data ();
+
+  if (mi_suppress_notification.traceframe)
+    return;
+
+  target_terminal_ours ();
+
+  if (tfnum >= 0)
+    fprintf_unfiltered (mi->event_channel, "traceframe-changed,"
+			"num=\"%d\",tracepoint=\"%d\"\n",
+			tfnum, tpnum);
+  else
+    fprintf_unfiltered (mi->event_channel, "traceframe-changed,end");
+
+  gdb_flush (mi->event_channel);
+}
+
+/* Emit notification on creating a trace state variable.  */
+
+static void
+mi_tsv_created (const struct trace_state_variable *tsv)
+{
+  struct mi_interp *mi = top_level_interpreter_data ();
+
+  target_terminal_ours ();
+
+  fprintf_unfiltered (mi->event_channel, "tsv-created,"
+		      "name=\"%s\",initial=\"%s\"\n",
+		      tsv->name, plongest (tsv->initial_value));
+
+  gdb_flush (mi->event_channel);
+}
+
+/* Emit notification on deleting a trace state variable.  */
+
+static void
+mi_tsv_deleted (const struct trace_state_variable *tsv)
+{
+  struct mi_interp *mi = top_level_interpreter_data ();
+
+  target_terminal_ours ();
+
+  if (tsv != NULL)
+    fprintf_unfiltered (mi->event_channel, "tsv-deleted,"
+			"name=\"%s\"\n", tsv->name);
+  else
+    fprintf_unfiltered (mi->event_channel, "tsv-deleted\n");
+
+  gdb_flush (mi->event_channel);
+}
+
+/* Emit notification on modifying a trace state variable.  */
+
+static void
+mi_tsv_modified (const struct trace_state_variable *tsv)
+{
+  struct mi_interp *mi = top_level_interpreter_data ();
+  struct ui_out *mi_uiout = interp_ui_out (top_level_interpreter ());
+
+  target_terminal_ours ();
+
+  fprintf_unfiltered (mi->event_channel,
+		      "tsv-modified");
+
+  ui_out_redirect (mi_uiout, mi->event_channel);
+
+  ui_out_field_string (mi_uiout, "name", tsv->name);
+  ui_out_field_string (mi_uiout, "initial",
+		       plongest (tsv->initial_value));
+  if (tsv->value_known)
+    ui_out_field_string (mi_uiout, "current", plongest (tsv->value));
+
+  ui_out_redirect (mi_uiout, NULL);
+
+  gdb_flush (mi->event_channel);
+}
+
+/* Emit notification about a created breakpoint.  */
+
+static void
+mi_breakpoint_created (struct breakpoint *b)
+{
+  struct mi_interp *mi = top_level_interpreter_data ();
+  struct ui_out *mi_uiout = interp_ui_out (top_level_interpreter ());
+  volatile struct gdb_exception e;
+
+  if (mi_suppress_notification.breakpoint)
+    return;
+
+  if (b->number <= 0)
+    return;
+
+  target_terminal_ours ();
+  fprintf_unfiltered (mi->event_channel,
+		      "breakpoint-created");
+  /* We want the output from gdb_breakpoint_query to go to
+     mi->event_channel.  One approach would be to just call
+     gdb_breakpoint_query, and then use mi_out_put to send the current
+     content of mi_outout into mi->event_channel.  However, that will
+     break if anything is output to mi_uiout prior to calling the
+     breakpoint_created notifications.  So, we use
+     ui_out_redirect.  */
+  ui_out_redirect (mi_uiout, mi->event_channel);
+  TRY_CATCH (e, RETURN_MASK_ERROR)
+    gdb_breakpoint_query (mi_uiout, b->number, NULL);
+  ui_out_redirect (mi_uiout, NULL);
+
+  gdb_flush (mi->event_channel);
+}
+
+/* Emit notification about deleted breakpoint.  */
+
+static void
+mi_breakpoint_deleted (struct breakpoint *b)
+{
+  struct mi_interp *mi = top_level_interpreter_data ();
+
+  if (mi_suppress_notification.breakpoint)
+    return;
+
+  if (b->number <= 0)
+    return;
+
+  target_terminal_ours ();
+
+  fprintf_unfiltered (mi->event_channel, "breakpoint-deleted,id=\"%d\"",
+		      b->number);
+
+  gdb_flush (mi->event_channel);
+}
+
+/* Emit notification about modified breakpoint.  */
+
+static void
+mi_breakpoint_modified (struct breakpoint *b)
+{
+  struct mi_interp *mi = top_level_interpreter_data ();
+  struct ui_out *mi_uiout = interp_ui_out (top_level_interpreter ());
+  volatile struct gdb_exception e;
+
+  if (mi_suppress_notification.breakpoint)
+    return;
+
+  if (b->number <= 0)
+    return;
+
+  target_terminal_ours ();
+  fprintf_unfiltered (mi->event_channel,
+		      "breakpoint-modified");
+  /* We want the output from gdb_breakpoint_query to go to
+     mi->event_channel.  One approach would be to just call
+     gdb_breakpoint_query, and then use mi_out_put to send the current
+     content of mi_outout into mi->event_channel.  However, that will
+     break if anything is output to mi_uiout prior to calling the
+     breakpoint_created notifications.  So, we use
+     ui_out_redirect.  */
+  ui_out_redirect (mi_uiout, mi->event_channel);
+  TRY_CATCH (e, RETURN_MASK_ERROR)
+    gdb_breakpoint_query (mi_uiout, b->number, NULL);
+  ui_out_redirect (mi_uiout, NULL);
+
+  gdb_flush (mi->event_channel);
 }
 
 static int
@@ -504,7 +722,7 @@ mi_on_resume (ptid_t ptid)
 			  current_token ? current_token : "");
     }
 
-  if (PIDGET (ptid) == -1)
+  if (ptid_get_pid (ptid) == -1)
     fprintf_unfiltered (raw_stdout, "*running,thread-id=\"all\"\n");
   else if (ptid_is_pid (ptid))
     {
@@ -548,7 +766,7 @@ mi_solib_loaded (struct so_list *solib)
   struct mi_interp *mi = top_level_interpreter_data ();
 
   target_terminal_ours ();
-  if (gdbarch_has_global_solist (target_gdbarch))
+  if (gdbarch_has_global_solist (target_gdbarch ()))
     fprintf_unfiltered (mi->event_channel,
 			"library-loaded,id=\"%s\",target-name=\"%s\","
 			"host-name=\"%s\",symbols-loaded=\"%d\"",
@@ -572,7 +790,7 @@ mi_solib_unloaded (struct so_list *solib)
   struct mi_interp *mi = top_level_interpreter_data ();
 
   target_terminal_ours ();
-  if (gdbarch_has_global_solist (target_gdbarch))
+  if (gdbarch_has_global_solist (target_gdbarch ()))
     fprintf_unfiltered (mi->event_channel,
 			"library-unloaded,id=\"%s\",target-name=\"%s\","
 			"host-name=\"%s\"",
@@ -584,6 +802,73 @@ mi_solib_unloaded (struct so_list *solib)
 			"host-name=\"%s\",thread-group=\"i%d\"",
 			solib->so_original_name, solib->so_original_name,
 			solib->so_name, current_inferior ()->num);
+
+  gdb_flush (mi->event_channel);
+}
+
+/* Emit notification about the command parameter change.  */
+
+static void
+mi_command_param_changed (const char *param, const char *value)
+{
+  struct mi_interp *mi = top_level_interpreter_data ();
+  struct ui_out *mi_uiout = interp_ui_out (top_level_interpreter ());
+
+  if (mi_suppress_notification.cmd_param_changed)
+    return;
+
+  target_terminal_ours ();
+
+  fprintf_unfiltered (mi->event_channel,
+		      "cmd-param-changed");
+
+  ui_out_redirect (mi_uiout, mi->event_channel);
+
+  ui_out_field_string (mi_uiout, "param", param);
+  ui_out_field_string (mi_uiout, "value", value);
+
+  ui_out_redirect (mi_uiout, NULL);
+
+  gdb_flush (mi->event_channel);
+}
+
+/* Emit notification about the target memory change.  */
+
+static void
+mi_memory_changed (struct inferior *inferior, CORE_ADDR memaddr,
+		   ssize_t len, const bfd_byte *myaddr)
+{
+  struct mi_interp *mi = top_level_interpreter_data ();
+  struct ui_out *mi_uiout = interp_ui_out (top_level_interpreter ());
+  struct obj_section *sec;
+
+  if (mi_suppress_notification.memory)
+    return;
+
+  target_terminal_ours ();
+
+  fprintf_unfiltered (mi->event_channel,
+		      "memory-changed");
+
+  ui_out_redirect (mi_uiout, mi->event_channel);
+
+  ui_out_field_fmt (mi_uiout, "thread-group", "i%d", inferior->num);
+  ui_out_field_core_addr (mi_uiout, "addr", target_gdbarch (), memaddr);
+  ui_out_field_fmt (mi_uiout, "len", "0x%zx", len);
+
+  /* Append 'type=code' into notification if MEMADDR falls in the range of
+     sections contain code.  */
+  sec = find_pc_section (memaddr);
+  if (sec != NULL && sec->objfile != NULL)
+    {
+      flagword flags = bfd_get_section_flags (sec->objfile->obfd,
+					      sec->the_bfd_section);
+
+      if (flags & SEC_CODE)
+	ui_out_field_string (mi_uiout, "type", "code");
+    }
+
+  ui_out_redirect (mi_uiout, NULL);
 
   gdb_flush (mi->event_channel);
 }
@@ -605,26 +890,82 @@ report_initial_inferior (struct inferior *inf, void *closure)
   return 0;
 }
 
+static struct ui_out *
+mi_ui_out (struct interp *interp)
+{
+  struct mi_interp *mi = interp_data (interp);
+
+  return mi->uiout;
+}
+
+/* Save the original value of raw_stdout here when logging, so we can
+   restore correctly when done.  */
+
+static struct ui_file *saved_raw_stdout;
+
+/* Do MI-specific logging actions; save raw_stdout, and change all
+   the consoles to use the supplied ui-file(s).  */
+
+static int
+mi_set_logging (struct interp *interp, int start_log,
+		struct ui_file *out, struct ui_file *logfile)
+{
+  struct mi_interp *mi = interp_data (interp);
+
+  if (!mi)
+    return 0;
+
+  if (start_log)
+    {
+      /* The tee created already is based on gdb_stdout, which for MI
+	 is a console and so we end up in an infinite loop of console
+	 writing to ui_file writing to console etc.  So discard the
+	 existing tee (it hasn't been used yet, and MI won't ever use
+	 it), and create one based on raw_stdout instead.  */
+      if (logfile)
+	{
+	  ui_file_delete (out);
+	  out = tee_file_new (raw_stdout, 0, logfile, 0);
+	}
+
+      saved_raw_stdout = raw_stdout;
+      raw_stdout = out;
+    }
+  else
+    {
+      raw_stdout = saved_raw_stdout;
+      saved_raw_stdout = NULL;
+    }
+  
+  mi_console_set_raw (mi->out, raw_stdout);
+  mi_console_set_raw (mi->err, raw_stdout);
+  mi_console_set_raw (mi->log, raw_stdout);
+  mi_console_set_raw (mi->targ, raw_stdout);
+  mi_console_set_raw (mi->event_channel, raw_stdout);
+
+  return 1;
+}
+
 extern initialize_file_ftype _initialize_mi_interp; /* -Wmissing-prototypes */
 
 void
 _initialize_mi_interp (void)
 {
   static const struct interp_procs procs =
-  {
-    mi_interpreter_init,	/* init_proc */
-    mi_interpreter_resume,	/* resume_proc */
-    mi_interpreter_suspend,	/* suspend_proc */
-    mi_interpreter_exec,	/* exec_proc */
-    mi_interpreter_prompt_p	/* prompt_proc_p */
-  };
+    {
+      mi_interpreter_init,	/* init_proc */
+      mi_interpreter_resume,	/* resume_proc */
+      mi_interpreter_suspend,	/* suspend_proc */
+      mi_interpreter_exec,	/* exec_proc */
+      mi_interpreter_prompt_p,	/* prompt_proc_p */
+      mi_ui_out, 		/* ui_out_proc */
+      mi_set_logging,		/* set_logging_proc */
+      mi_command_loop		/* command_loop_proc */
+    };
 
   /* The various interpreter levels.  */
-  interp_add (interp_new (INTERP_MI1, NULL, mi_out_new (1), &procs));
-  interp_add (interp_new (INTERP_MI2, NULL, mi_out_new (2), &procs));
-  interp_add (interp_new (INTERP_MI3, NULL, mi_out_new (3), &procs));
-
-  /* "mi" selects the most recent released version.  "mi2" was
-     released as part of GDB 6.0.  */
-  interp_add (interp_new (INTERP_MI, NULL, mi_out_new (2), &procs));
+  interp_add (interp_new (INTERP_MI1, &procs));
+  interp_add (interp_new (INTERP_MI2, &procs));
+  interp_add (interp_new (INTERP_MI3, &procs));
+  interp_add (interp_new (INTERP_MI, &procs));
 }

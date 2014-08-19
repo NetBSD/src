@@ -1,24 +1,24 @@
 /* input.c -- character input functions for readline. */
 
-/* Copyright (C) 1994-2005 Free Software Foundation, Inc.
+/* Copyright (C) 1994-2010 Free Software Foundation, Inc.
 
-   This file is part of the GNU Readline Library, a library for
-   reading lines of text with interactive input and history editing.
+   This file is part of the GNU Readline Library (Readline), a library
+   for reading lines of text with interactive input and history editing.      
 
-   The GNU Readline Library is free software; you can redistribute it
-   and/or modify it under the terms of the GNU General Public License
-   as published by the Free Software Foundation; either version 2, or
+   Readline is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
-   The GNU Readline Library is distributed in the hope that it will be
-   useful, but WITHOUT ANY WARRANTY; without even the implied warranty
-   of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   Readline is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
-   The GNU General Public License is often shipped with GNU software, and
-   is generally kept in a file called COPYING or LICENSE.  If you do not
-   have a copy of the license, write to the Free Software Foundation,
-   59 Temple Place, Suite 330, Boston, MA 02111 USA. */
+   You should have received a copy of the GNU General Public License
+   along with Readline.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #define READLINE_LIBRARY
 
 #if defined (__TANDEM)
@@ -45,14 +45,7 @@
 #  include "ansi_stdlib.h"
 #endif /* HAVE_STDLIB_H */
 
-#if defined (HAVE_SELECT)
-#  if !defined (HAVE_SYS_SELECT_H) || !defined (M_UNIX)
-#    include <sys/time.h>
-#  endif
-#endif /* HAVE_SELECT */
-#if defined (HAVE_SYS_SELECT_H)
-#  include <sys/select.h>
-#endif
+#include "posixselect.h"
 
 #if defined (FIONREAD_IN_SYS_IOCTL)
 #  include <sys/ioctl.h>
@@ -133,8 +126,11 @@ rl_get_char (key)
     return (0);
 
   *key = ibuffer[pop_index++];
-
+#if 0
   if (pop_index >= ibuffer_len)
+#else
+  if (pop_index > ibuffer_len)
+#endif
     pop_index = 0;
 
   return (1);
@@ -151,7 +147,7 @@ _rl_unget_char (key)
     {
       pop_index--;
       if (pop_index < 0)
-	pop_index = ibuffer_len - 1;
+	pop_index = ibuffer_len;
       ibuffer[pop_index] = key;
       return (1);
     }
@@ -179,6 +175,7 @@ rl_gather_tyi ()
   struct timeval timeout;
 #endif
 
+  chars_avail = 0;
   tty = fileno (rl_instream);
 
 #if defined (HAVE_SELECT)
@@ -186,8 +183,7 @@ rl_gather_tyi ()
   FD_ZERO (&exceptfds);
   FD_SET (tty, &readfds);
   FD_SET (tty, &exceptfds);
-  timeout.tv_sec = 0;
-  timeout.tv_usec = _keyboard_input_timeout;
+  USEC_TO_TIMEVAL (_keyboard_input_timeout, timeout);
   result = select (tty + 1, &readfds, (fd_set *)NULL, &exceptfds, &timeout);
   if (result <= 0)
     return 0;	/* Nothing to read. */
@@ -221,13 +217,10 @@ rl_gather_tyi ()
 #endif /* O_NDELAY */
 
 #if defined (__MINGW32__)
-  /* We use getch to read console input, so use the same
-     mechanism to check for more.  Otherwise, we don't know.  */
-  if (isatty (fileno (rl_instream)))
-    chars_avail = _kbhit ();
-  else
-    chars_avail = 0;
-  result = 0;
+  /* Use getch/_kbhit to check for available console input, in the same way
+     that we read it normally. */
+   chars_avail = isatty (tty) ? _kbhit () : 0;
+   result = 0;
 #endif
 
   /* If there's nothing available, don't waste time trying to read
@@ -251,8 +244,10 @@ rl_gather_tyi ()
     {
       while (chars_avail--)
 	{
+	  RL_CHECK_SIGNALS ();
 	  k = (*rl_getc_function) (rl_instream);
-	  rl_stuff_char (k);
+	  if (rl_stuff_char (k) == 0)
+	    break;			/* some problem; no more room */
 	  if (k == NEWLINE || k == RETURN)
 	    break;
 	}
@@ -273,7 +268,7 @@ rl_set_keyboard_input_timeout (u)
   int o;
 
   o = _keyboard_input_timeout;
-  if (u > 0)
+  if (u >= 0)
     _keyboard_input_timeout = u;
   return (o);
 }
@@ -316,10 +311,8 @@ _rl_input_available ()
 #endif
 
 #if defined (__MINGW32__)
-  /* We use getch to read console input, so use the same
-     mechanism to check for more.  Otherwise, we don't know.  */
-  if (isatty (fileno (rl_instream)))
-    return _kbhit ();
+  if (isatty (tty))
+    return (_kbhit ());
 #endif
 
   return 0;
@@ -358,7 +351,7 @@ _rl_insert_typein (c)
 
   string[i] = '\0';
   rl_insert_text (string);
-  free (string);
+  xfree (string);
 }
 
 /* Add KEY to the buffer of characters to be read.  Returns 1 if the
@@ -377,7 +370,11 @@ rl_stuff_char (key)
       RL_SETSTATE (RL_STATE_INPUTPENDING);
     }
   ibuffer[push_index++] = key;
+#if 0
   if (push_index >= ibuffer_len)
+#else
+  if (push_index > ibuffer_len)
+#endif
     push_index = 0;
 
   return 1;
@@ -430,22 +427,26 @@ rl_read_key ()
       /* If the user has an event function, then call it periodically. */
       if (rl_event_hook)
 	{
-	  while (rl_event_hook && rl_get_char (&c) == 0)
+	  while (rl_event_hook)
 	    {
-	      (*rl_event_hook) ();
-	      if (rl_done)		/* XXX - experimental */
-		return ('\n');
 	      if (rl_gather_tyi () < 0)	/* XXX - EIO */
 		{
 		  rl_done = 1;
 		  return ('\n');
 		}
+	      RL_CHECK_SIGNALS ();
+	      if (rl_get_char (&c) != 0)
+		break;
+	      if (rl_done)		/* XXX - experimental */
+		return ('\n');
+	      (*rl_event_hook) ();
 	    }
 	}
       else
 	{
 	  if (rl_get_char (&c) == 0)
 	    c = (*rl_getc_function) (rl_instream);
+	  RL_CHECK_SIGNALS ();
 	}
     }
 
@@ -461,6 +462,8 @@ rl_getc (stream)
 
   while (1)
     {
+      RL_CHECK_SIGNALS ();
+
 #if defined (__MINGW32__)
       if (isatty (fileno (stream)))
 	return (getch ());
@@ -506,7 +509,7 @@ rl_getc (stream)
 	 this is simply an interrupted system call to read ().
 	 Otherwise, some error ocurred, also signifying EOF. */
       if (errno != EINTR)
-	return (EOF);
+	return (RL_ISSTATE (RL_STATE_READCMD) ? READERR : EOF);
     }
 }
 
@@ -517,19 +520,25 @@ _rl_read_mbchar (mbchar, size)
      char *mbchar;
      int size;
 {
-  int mb_len = 0;
+  int mb_len, c;
   size_t mbchar_bytes_length;
   wchar_t wc;
   mbstate_t ps, ps_back;
 
   memset(&ps, 0, sizeof (mbstate_t));
   memset(&ps_back, 0, sizeof (mbstate_t));
-  
+
+  mb_len = 0;  
   while (mb_len < size)
     {
       RL_SETSTATE(RL_STATE_MOREINPUT);
-      mbchar[mb_len++] = rl_read_key ();
+      c = rl_read_key ();
       RL_UNSETSTATE(RL_STATE_MOREINPUT);
+
+      if (c < 0)
+	break;
+
+      mbchar[mb_len++] = c;
 
       mbchar_bytes_length = mbrtowc (&wc, mbchar, mb_len, &ps);
       if (mbchar_bytes_length == (size_t)(-1))
@@ -554,21 +563,21 @@ _rl_read_mbchar (mbchar, size)
 }
 
 /* Read a multibyte-character string whose first character is FIRST into
-   the buffer MB of length MBLEN.  Returns the last character read, which
+   the buffer MB of length MLEN.  Returns the last character read, which
    may be FIRST.  Used by the search functions, among others.  Very similar
    to _rl_read_mbchar. */
 int
-_rl_read_mbstring (first, mb, mblen)
+_rl_read_mbstring (first, mb, mlen)
      int first;
      char *mb;
-     int mblen;
+     int mlen;
 {
   int i, c;
   mbstate_t ps;
 
   c = first;
-  memset (mb, 0, mblen);
-  for (i = 0; i < mblen; i++)
+  memset (mb, 0, mlen);
+  for (i = 0; c >= 0 && i < mlen; i++)
     {
       mb[i] = (char)c;
       memset (&ps, 0, sizeof (mbstate_t));

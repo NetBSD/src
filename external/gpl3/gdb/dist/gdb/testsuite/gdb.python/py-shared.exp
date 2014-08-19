@@ -1,4 +1,4 @@
-# Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,12 +21,11 @@ if {[skip_shlib_tests]} {
     return 0
 }
 
-set testfile "py-shared"
-set srcfile  ${testfile}.c
+standard_testfile
+
 set libfile  "py-shared-sl"
 set libsrc   ${libfile}.c
-set library  ${objdir}/${subdir}/${libfile}.sl
-set binfile  ${objdir}/${subdir}/${testfile}
+set library  [standard_output_file ${libfile}.sl]
 
 if { [gdb_compile_shlib ${srcdir}/${subdir}/${libsrc} ${library} "debug"] != "" } {
     untested "Could not compile shared library."
@@ -41,10 +40,8 @@ if { [gdb_compile ${srcdir}/${subdir}/${srcfile} ${binfile} executable $exec_opt
 }
 
 # Start with a fresh gdb.
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart $testfile
+gdb_load_shlibs ${library}
 
 # Skip all tests if Python scripting is not enabled.
 if { [skip_python_tests] } { continue }
@@ -61,8 +58,11 @@ runto [gdb_get_line_number "Break to end."]
 # Test gdb.solib_name
 gdb_test "p &func1" "" "func1 address"
 gdb_py_test_silent_cmd "python func1 = gdb.history(0)" "Aquire func1 address" 1
-gdb_test "python print gdb.solib_name(long(func1))" "gdb/testsuite/gdb.python/py-shared-sl.sl" "test func1 solib location"
+if { $gdb_py_is_py3k == 1 } {
+  gdb_py_test_silent_cmd "python long = int" "" 0
+}
+gdb_test "python print (gdb.solib_name(long(func1)))" "py-shared-sl.sl" "test func1 solib location"
 
 gdb_test "p &main" "" "main address"
 gdb_py_test_silent_cmd "python main = gdb.history(0)" "Aquire main address" 1
-gdb_test "python print gdb.solib_name(long(main))" "None" "test main solib location"
+gdb_test "python print (gdb.solib_name(long(main)))" "None" "test main solib location"

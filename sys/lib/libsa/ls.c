@@ -1,4 +1,4 @@
-/* $NetBSD: ls.c,v 1.4 2012/03/02 12:08:44 tsutsui Exp $ */
+/* $NetBSD: ls.c,v 1.4.2.1 2014/08/20 00:04:30 tls Exp $ */
 
 /*-
  * Copyright (c) 2011
@@ -85,6 +85,7 @@
 
 
 #include "stand.h"
+#include "ls.h"
 #include <sys/stat.h>
 #include <lib/libkern/libkern.h>
 
@@ -159,4 +160,68 @@ ls(const char *path)
 
 out:
 	close(fd);
+}
+
+struct lsentry {
+	struct lsentry *e_next;
+	uint32_t e_ino;
+	const char *e_type;
+	char	e_name[1];
+};
+
+__compactcall void
+lsadd(lsentry_t **names, const char *pattern, const char *name, size_t namelen,
+    uint32_t ino, const char *type)
+{
+	lsentry_t *n, **np;
+
+	if (pattern && !fnmatch(name, pattern))
+		return;
+
+	n = alloc(sizeof *n + namelen);
+	if (!n) {
+		printf("%d: %.*s (%s)\n", ino, (int)namelen, name, type);
+		return;
+	}
+
+	n->e_ino = ino;
+	n->e_type = type;
+	memcpy(n->e_name, name, namelen);
+	n->e_name[namelen] = '\0';
+
+	for (np = names; *np; np = &(*np)->e_next) {
+		if (strcmp(n->e_name, (*np)->e_name) < 0)
+			break;
+	}
+	n->e_next = *np;
+	*np = n;
+}
+
+__compactcall void
+lsprint(lsentry_t *names) {
+	if (!names) {
+		printf("not found\n");
+		return;
+	}
+	do {
+		lsentry_t *n = names;
+		printf("%d: %s (%s)\n", n->e_ino, n->e_name, n->e_type);
+		names = n->e_next;
+	} while (names);
+}
+
+__compactcall void
+lsfree(lsentry_t *names) {
+	if (!names)
+		return;
+	do {
+		lsentry_t *n = names;
+		names = n->e_next;
+		dealloc(n, 0);
+	} while (names);
+}
+
+__compactcall void
+lsunsup(const char *name) {
+	printf("The ls command is not currently supported for %s\n", name);
 }

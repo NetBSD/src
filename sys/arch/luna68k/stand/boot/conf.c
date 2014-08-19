@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3.6.2 2013/02/25 00:28:48 tls Exp $	*/
+/*	$NetBSD: conf.c,v 1.3.6.3 2014/08/20 00:03:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -43,6 +43,7 @@
 #include <lib/libsa/nfs.h>
 #include <lib/libsa/ufs.h>
 
+#include <machine/bootinfo.h>
 #include <luna68k/stand/boot/samachdep.h>
 
 #define xxstrategy	\
@@ -79,6 +80,12 @@ struct devsw devsw[] = {
 	{ "le",	netstrategy,	netopen, netclose,	netioctl },
 };
 int	ndevs = __arraycount(devsw);
+
+/* XXX: These indices must sync with the above devsw */
+const int dev2adpt[] = {
+	LUNA68K_BOOTADPT_SPC,
+	LUNA68K_BOOTADPT_LANCE,
+};
 
 #ifdef SUPPORT_ETHERNET
 extern struct netif_driver le_netif_driver;

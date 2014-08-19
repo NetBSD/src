@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.61 2009/01/13 22:27:44 pooka Exp $
+	$NetBSD: syscalls.master,v 1.61.24.1 2014/08/20 00:03:33 tls Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -103,7 +103,7 @@
 38	UNIMPL		fstatfs
 39	STD		{ int|svr4_sys||pgrpsys(int cmd, int pid, int pgid); }
 40	UNIMPL		xenix
-41	NOARGS		{ int|sys||dup(u_int fd); }
+41	NOARGS		{ int|sys||dup(int fd); }
 42	NOARGS		{ int|sys||pipe(void); }
 43	STD		{ int|svr4_sys||times(struct tms *tp); }
 44	UNIMPL		profil

@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.22 2010/07/07 01:21:15 chs Exp $	*/
+/*	$NetBSD: copy.S,v 1.22.18.1 2014/08/20 00:03:06 tls Exp $	*/
 /*	NetBSD: locore.S,v 1.34 2005/04/01 11:59:31 yamt Exp $	*/
 
 /*-
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.22 2010/07/07 01:21:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.22.18.1 2014/08/20 00:03:06 tls Exp $");
 
 #include "assym.h"
 
@@ -270,9 +270,9 @@ ENTRY(copyin)
 	movl	16(%esp),%edi
 	movl	20(%esp),%eax
 	/*
-	 * We check that the end of the destination buffer is not past the end
-	 * of the user's address space.  If it's not, then we only need to
-	 * check that each page is readable, and the CPU will do that for us.
+	 * We check that the end of the source buffer is not past the end of
+	 * the user's address space.  If it's not, then we only need to check
+	 * that each page is readable, and the CPU will do that for us.
 	 */
 .Lcopyin_start:
 	movl	%esi,%edx

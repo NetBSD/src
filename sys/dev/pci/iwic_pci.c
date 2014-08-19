@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_pci.c,v 1.17.14.1 2012/11/20 03:02:19 tls Exp $	*/
+/*	$NetBSD: iwic_pci.c,v 1.17.14.2 2014/08/20 00:03:43 tls Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.17.14.1 2012/11/20 03:02:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.17.14.2 2014/08/20 00:03:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -234,6 +234,7 @@ iwic_pci_attach(device_t  parent, device_t  dev, void *aux)
 	const char *intrstr;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = dev;
 	sc->sc_cardname = iwic_find_card(pa);
@@ -252,7 +253,7 @@ iwic_pci_attach(device_t  parent, device_t  dev, void *aux)
 		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, iwic_pci_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");

@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_TINY,v 1.71.2.2 2013/06/23 06:20:09 tls Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.71.2.3 2014/08/20 00:03:15 tls Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
@@ -6,7 +6,9 @@ include		"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC_TINY-$Revision: 1.71.2.2 $"
+#ident 		"GENERIC_TINY-$Revision: 1.71.2.3 $"
+
+makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
 maxusers	4
 
@@ -36,7 +38,7 @@ options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	KMEMSTATS		# kernel memory statistics (vmstat -m)
 #options 	DDB			# kernel dynamic debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-#options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
+#options 	DDB_ONPANIC=1		# see also sysctl(7): `ddb.onpanic'
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	SCSIDEBUG		# extra SCSI debugging support
 #makeoptions	DEBUG="-g"		# compile full symbol table
@@ -99,7 +101,6 @@ options 	INET6		# IPV6
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default

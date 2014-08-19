@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.5 2012/01/21 19:44:30 nonaka Exp $	*/
+/*	$NetBSD: intr.c,v 1.5.6.1 2014/08/20 00:03:09 tls Exp $	*/
 
 /*-
  * Copyright (C) 2005 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.5 2012/01/21 19:44:30 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.5.6.1 2014/08/20 00:03:09 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,7 +252,7 @@ void
 extintr_enable(void *aux)
 {
 	struct intrhand *ih = aux;
-	struct intrhand *p, *q;
+	struct intrhand *p, *q __diagused;
 	struct extintr_handler *eih;
 	int irq;
 	int cnt;
@@ -288,7 +288,7 @@ void
 extintr_disable(void *aux)
 {
 	struct intrhand *ih = aux;
-	struct intrhand *p, *q;
+	struct intrhand *p, *q __diagused;
 	struct extintr_handler *eih;
 	int irq;
 	int cnt;

@@ -1,0 +1,13 @@
+#	$NetBSD: std.sgimips64_32,v 1.3.6.2 2014/08/20 00:03:22 tls Exp $
+# this is for building n32 kernels
+
+no makeoptions	MACHINE_ARCH
+makeoptions	MACHINE_ARCH="mips64eb"
+makeoptions	LP64="no"
+
+# ELF64 doesn't currently buid with 32bit kernels
+#options 	EXEC_ELF64	# exec ELF64 binaries
+
+# for some reason this kicks in for n32 binaries as well, causing problems
+# with pkgsrc ( MACHINE_ARCH vs. uname -p mismatch )
+#options 	COMPAT_NETBSD32

@@ -291,11 +291,13 @@ xcb_record_client_info_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_record_client_info_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* ranges */
     xcb_block_len += _aux->num_ranges * sizeof(xcb_record_range_t);
     xcb_tmp += xcb_block_len;
@@ -515,11 +517,13 @@ xcb_record_create_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_record_create_context_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* client_specs */
     xcb_block_len += _aux->num_client_specs * sizeof(xcb_record_client_spec_t);
     xcb_tmp += xcb_block_len;
@@ -678,11 +682,13 @@ xcb_record_register_clients_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_record_register_clients_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* client_specs */
     xcb_block_len += _aux->num_client_specs * sizeof(xcb_record_client_spec_t);
     xcb_tmp += xcb_block_len;
@@ -841,11 +847,13 @@ xcb_record_unregister_clients_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_record_unregister_clients_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* client_specs */
     xcb_block_len += _aux->num_client_specs * sizeof(xcb_record_client_spec_t);
     xcb_tmp += xcb_block_len;
@@ -964,13 +972,15 @@ xcb_record_get_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
     unsigned int i;
     unsigned int xcb_tmp_len;
 
     xcb_block_len += sizeof(xcb_record_get_context_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* intercepted_clients */
     for(i=0; i<_aux->num_intercepted_clients; i++) {
         xcb_tmp_len = xcb_record_client_info_sizeof(xcb_tmp);
@@ -1128,11 +1138,13 @@ xcb_record_enable_context_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_record_enable_context_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* data */
     xcb_block_len += (_aux->length * 4) * sizeof(uint8_t);
     xcb_tmp += xcb_block_len;

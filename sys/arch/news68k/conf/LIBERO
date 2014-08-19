@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.55.8.2 2013/06/23 06:20:09 tls Exp $
+# 	$NetBSD: LIBERO,v 1.55.8.3 2014/08/20 00:03:15 tls Exp $
 
 #	NEWS1750 config file;
 #
@@ -82,7 +82,6 @@ options 	INET6		# IPv6
 #options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG

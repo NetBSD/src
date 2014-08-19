@@ -1,6 +1,5 @@
 /*  iwmmxt.c -- Intel(r) Wireless MMX(tm) technology co-processor interface.
-    Copyright (C) 2002, 2007, 2008, 2009, 2010, 2011
-    Free Software Foundation, Inc.
+    Copyright (C) 2002-2014 Free Software Foundation, Inc.
     Contributed by matthew green (mrg@redhat.com).
  
     This program is free software; you can redistribute it and/or modify
@@ -1744,11 +1743,12 @@ WCMPGT (ARMul_State * state, ARMword instr)
 	    {
 	      signed long a, b;
 
-	      a = wRWORD (BITS (16, 19), i);
-	      b = wRWORD (BITS (0, 3), i);
+	      a = EXTEND32 (wRWORD (BITS (16, 19), i));
+	      b = EXTEND32 (wRWORD (BITS (0, 3), i));
 
 	      s = (a > b) ? 0xffffffff : 0;
 	      r |= s << (i * 32);
+
 	      SIMD32_SET (psr, NBIT32 (s), SIMD_NBIT, i);
 	      SIMD32_SET (psr, ZBIT32 (s), SIMD_ZBIT, i);
 	    }
@@ -2128,13 +2128,15 @@ WMAC (ARMword instr)
         }
     }
 
-  if (BIT (20))
-    wR [BITS (12, 15)] = 0;
-
-  if (BIT (21))	/* Signed.  */
-    wR[BITS (12, 15)] += t;
+  if (BIT (21))
+    t = EXTEND32 (t);
   else
-    wR [BITS (12, 15)] += t;
+    t &= 0xffffffff;
+
+  if (BIT (20))
+    wR [BITS (12, 15)] = t;
+  else
+    wR[BITS (12, 15)] += t;
 
   wC [wCon] |= WCON_MUP;
 
@@ -2904,7 +2906,7 @@ WSRA (ARMul_State * state, ARMword instr)
 	    t = (wRWORD (BITS (16, 19), i) & 0x80000000) ? 0xffffffff : 0;
 	  else
 	    {
-	      t = wRWORD (BITS (16, 19), i);
+	      t = EXTEND32 (wRWORD (BITS (16, 19), i));
 	      t >>= shift;
 	    }
 	  s = t;

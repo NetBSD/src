@@ -1,5 +1,4 @@
-# Copyright 1992, 1994, 1995, 1996, 1997, 1999, 2000, 2007, 2008, 2009, 2010,
-# 2011 Free Software Foundation, Inc.
+# Copyright 1992-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,25 +15,13 @@
 
 # This file was written by Jeff Law. (law@cs.utah.edu)
 
-if $tracelevel then {
-    strace $tracelevel
+
+standard_testfile
+
+if {[prepare_for_testing $testfile.exp $testfile $srcfile debug]} {
+    untested $testfile.exp
+    return -1
 }
-
-
-set testfile "recurse"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
-     untested recurse.exp
-     return -1
-}
-
-# Start with a fresh gdb.
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 
 proc recurse_tests {} {
 
@@ -54,7 +41,7 @@ proc recurse_tests {} {
 	if [gdb_test "continue" \
 	    "Continuing.*\[Ww\]atchpoint.*: b.*Old value = 0.*New value = 10.*" \
 	    "continue to first instance watchpoint, first time"] then {
-	    gdb_suppress_tests;
+	    gdb_suppress_tests
 	}
 
 	# Continue inward for a few iterations
@@ -80,7 +67,7 @@ proc recurse_tests {} {
 	if [gdb_test "continue" \
 	    "Continuing.*\[Ww\]atchpoint.*: b.*Old value = 0.*New value = 5.*"\
 	    "continue to second instance watchpoint, first time"] then {
-	gdb_suppress_tests;
+	gdb_suppress_tests
 	}
 
 	# Continue inward for a few iterations
@@ -97,14 +84,14 @@ proc recurse_tests {} {
 	if [gdb_test "continue" \
 	    "Continuing.*\[Ww\]atchpoint.*: b.*Old value = 5.*New value = 120.*return.*" \
 	    "continue to second instance watchpoint, second time"] then { 
-	    gdb_suppress_tests;
+	    gdb_suppress_tests
 	}
 
 	# Continue again.  We should have a watchpoint go out of scope now
 	if [gdb_test "continue" \
 	    "Continuing.*\[Ww\]atchpoint.*deleted.*recurse \\(a=6\\) .*" \
 	    "second instance watchpoint deleted when leaving scope"] then {
-	    gdb_suppress_tests;
+	    gdb_suppress_tests
 	}
 
 	# Continue until second set of b (first instance).
@@ -143,10 +130,10 @@ proc recurse_tests {} {
 	if [gdb_test "continue" \
 	    "Continuing.*\[Ww\]atchpoint.*deleted.*\(main \\(\\) \|21.*\}\).*" \
 	    "first instance watchpoint deleted when leaving scope"] then {
-	    gdb_suppress_tests;
+	    gdb_suppress_tests
 	}
     }
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 # Preserve the old timeout, and set a new one that should be

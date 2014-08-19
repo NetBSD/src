@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.h,v 1.17 2005/12/24 23:24:01 perry Exp $	*/
+/*	$NetBSD: prom.h,v 1.17.122.1 2014/08/20 00:03:14 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -155,8 +155,10 @@ struct mvmeprom_args {
 	__asm volatile ("clrl %sp@-")
 #define MVMEPROM_ARG1(arg) \
 	__asm volatile ("movel %0, %%sp@-"::"d" (arg))
-#define MVMEPROM_ARG2(arg) \
-	__asm volatile ("movel %0, %%sp@-"::"d" (arg))
+#define MVMEPROM_ARG2(arg0, arg1)				\
+	__asm volatile ("movel %0, %%sp@-;"			\
+			"movel %1, %%sp@-;"			\
+			:: "d" (arg0), "d" (arg1):)
 #define MVMEPROM_GETRES(ret) \
 	__asm volatile ("movel %%sp@+,%0": "=d" (ret):)
 #define MVMEPROM_GETSR(ret) \

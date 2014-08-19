@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.83.6.2 2013/06/23 06:20:09 tls Exp $
+# $NetBSD: GENERIC,v 1.83.6.3 2014/08/20 00:03:14 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,9 @@ include		"arch/mvme68k/conf/std.mvme68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.83.6.2 $"
+#ident 		"GENERIC-$Revision: 1.83.6.3 $"
+
+makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
 # Boards this kernel supports
 options 	MVME147

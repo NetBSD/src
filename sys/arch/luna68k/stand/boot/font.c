@@ -1,4 +1,4 @@
-/*	$NetBSD: font.c,v 1.2.6.2 2013/02/25 00:28:49 tls Exp $	*/
+/*	$NetBSD: font.c,v 1.2.6.3 2014/08/20 00:03:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -78,7 +78,7 @@
 
 #include <sys/param.h>
 
-u_short bmdfont[][20] = {
+const uint16_t bmdfont[][20] = {
 	{			/* 0x00 */
 		0x0000,		/* ---------------- */
 		0x0000,		/* ---------------- */

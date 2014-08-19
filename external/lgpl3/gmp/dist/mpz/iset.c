@@ -1,8 +1,8 @@
 /* mpz_init_set (src_integer) -- Make a new multiple precision number with
    a value copied from SRC_INTEGER.
 
-Copyright 1991, 1993, 1994, 1996, 2000, 2001, 2002 Free Software Foundation,
-Inc.
+Copyright 1991, 1993, 1994, 1996, 2000, 2001, 2002, 2012 Free Software
+Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -28,17 +28,17 @@ mpz_init_set (mpz_ptr w, mpz_srcptr u)
   mp_ptr wp, up;
   mp_size_t usize, size;
 
-  usize = u->_mp_size;
+  usize = SIZ (u);
   size = ABS (usize);
 
-  w->_mp_alloc = MAX (size, 1);
-  w->_mp_d = (mp_ptr) (*__gmp_allocate_func) (w->_mp_alloc * BYTES_PER_MP_LIMB);
+  ALLOC (w) = MAX (size, 1);
+  PTR (w) = (mp_ptr) (*__gmp_allocate_func) (ALLOC (w) * BYTES_PER_MP_LIMB);
 
-  wp = w->_mp_d;
-  up = u->_mp_d;
+  wp = PTR (w);
+  up = PTR (u);
 
   MPN_COPY (wp, up, size);
-  w->_mp_size = usize;
+  SIZ (w) = usize;
 
 #ifdef __CHECKER__
   /* let the low limb look initialized, for the benefit of mpz_get_ui etc */

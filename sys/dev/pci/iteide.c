@@ -1,4 +1,4 @@
-/*	$NetBSD: iteide.c,v 1.17.2.2 2012/11/20 03:02:19 tls Exp $	*/
+/*	$NetBSD: iteide.c,v 1.17.2.3 2014/08/20 00:03:43 tls Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iteide.c,v 1.17.2.2 2012/11/20 03:02:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iteide.c,v 1.17.2.3 2014/08/20 00:03:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ static int  iteide_match(device_t, cfdata_t, void *);
 static void iteide_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(iteide, sizeof(struct pciide_softc),
-    iteide_match, iteide_attach, NULL, NULL);
+    iteide_match, iteide_attach, pciide_detach, NULL);
 
 static const struct pciide_product_desc pciide_ite_products[] =  {
 	{ PCI_PRODUCT_ITE_IT8211,

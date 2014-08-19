@@ -1,4 +1,4 @@
-.\"     $NetBSD: fstrans.9,v 1.15 2010/04/12 21:28:55 jruoho Exp $
+.\"     $NetBSD: fstrans.9,v 1.15.14.1 2014/08/20 00:02:37 tls Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -213,12 +213,12 @@ xxx_create(void *v)
 	return 0;
 }
 .Ed
-.Sh SEE ALSO
-.Xr vfs_resume 9 ,
-.Xr vfs_suspend 9
 .Sh CODE REFERENCES
 The actual code implementing this subsystem can be found in the file
 .Pa sys/kern/vfs_trans.c .
+.Sh SEE ALSO
+.Xr vfs_resume 9 ,
+.Xr vfs_suspend 9
 .Sh HISTORY
 The
 .Nm

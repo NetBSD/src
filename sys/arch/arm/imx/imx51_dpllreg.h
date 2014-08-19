@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_dpllreg.h,v 1.1 2012/04/17 09:33:31 bsh Exp $	*/
+/*	$NetBSD: imx51_dpllreg.h,v 1.1.6.1 2014/08/20 00:02:46 tls Exp $	*/
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -33,22 +33,17 @@
 
 #define	IMX51_N_DPLLS		3		/* 1..3 */
 
-#define	DPLL_BASE(n)	      	(0x83F80000 + (0x4000 * ((n)-1)))
-#define	DPLL_SIZE		0x100
-
 #define	DPLL_DP_CTL		0x0000
 #define	 DP_CTL_HFSM		__BIT(7)
-#define	 DP_CTL_REF_CLK_SEL_MASK	__BITS(8,9)
-#define	 DP_CTL_REF_CLK_SEL_COSC	(__BIT(9)|0)
-#define	 DP_CTL_REF_CLK_SEL_FPM 	(__BIT(9)|__BIT(8))
+#define	 DP_CTL_REF_CLK_SEL	__BITS(8,9)
+#define	 DP_CTL_REF_CLK_SEL_COSC	__SHIFTIN(0x2, DP_CTL_REF_CLK_SEL)
+#define	 DP_CTL_REF_CLK_SEL_FPM		__SHIFTIN(0x3, DP_CTL_REF_CLK_SEL)
 #define	 DP_CTL_REF_CLK_DIV	__BIT(10)
 #define	 DP_CTL_DPDCK0_2_EN	__BIT(12)
 #define	DPLL_DP_CONFIG		0x0004
 #define	DPLL_DP_OP		0x0008
-#define	 DP_OP_PDF_SHIFT	0
-#define	 DP_OP_PDF_MASK		(0xf << DP_OP_PDF_SHIFT)
-#define	 DP_OP_MFI_SHIFT	4
-#define	 DP_OP_MFI_MASK		(0xf << DP_OP_MFI_SHIFT)
+#define	 DP_OP_PDF		__BITS(3, 0)
+#define	 DP_OP_MFI		__BITS(7, 4)
 #define	DPLL_DP_MFD		0x000C
 #define	DPLL_DP_MFN		0x0010
 #define	DPLL_DP_MFNMINUS	0x0014

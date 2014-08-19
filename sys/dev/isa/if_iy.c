@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.90.6.1 2012/11/20 03:02:10 tls Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.90.6.2 2014/08/20 00:03:39 tls Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.90.6.1 2012/11/20 03:02:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.90.6.2 2014/08/20 00:03:39 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -363,7 +363,7 @@ iyattach(device_t parent, device_t self, void *aux)
 	    IST_EDGE, IPL_NET, iyintr, sc);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_NET, 0);
+			  RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	temp = bus_space_read_1(iot, ioh, INT_NO_REG);
 	bus_space_write_1(iot, ioh, INT_NO_REG, (temp & 0xf8) | sc->mappedirq);
@@ -1088,6 +1088,8 @@ iy_intr_rx(struct iy_softc *sc)
 			printf("%s: pck at 0x%04x stat %s next 0x%x len 0x%x\n",
 			    device_xname(sc->sc_dev), rxadrs, sbuf, rxnext, rxlen);
 		}
+#else
+		__USE(rxstatus);
 #endif
 		iyget(sc, iot, ioh, rxlen);
 
@@ -1346,6 +1348,7 @@ iy_mc_setup(struct iy_softc *sc)
 		ETHER_NEXT_MULTI(step, enm);
 	}
 	dum = bus_space_read_2(iot, ioh, MEM_PORT_REG); /* dummy read */
+	__USE(dum);
 	bus_space_write_2(iot, ioh, XMT_ADDR_REG, last);
 	bus_space_write_1(iot, ioh, 0, MC_SETUP_CMD);
 

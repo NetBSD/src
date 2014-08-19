@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.84.2.1 2013/02/25 00:29:42 tls Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.84.2.2 2014/08/20 00:03:51 tls Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -190,7 +190,7 @@ void usb_desc_iter_init(usbd_device_handle, usbd_desc_iter_t *);
 const usb_descriptor_t *usb_desc_iter_next(usbd_desc_iter_t *);
 
 /* Used to clear endpoint stalls from the softint */
-void usbd_clear_endpoint_stall_async_cb(void *);
+void usbd_clear_endpoint_stall_task(void *);
 
 /*
  * The usb_task structs form a queue of things to run in the USB event
@@ -202,7 +202,7 @@ struct usb_task {
 	TAILQ_ENTRY(usb_task) next;
 	void (*fun)(void *);
 	void *arg;
-	int queue;
+	volatile unsigned queue;
 	int flags;
 };
 #define	USB_TASKQ_HC		0
@@ -213,7 +213,7 @@ struct usb_task {
 
 void usb_add_task(usbd_device_handle, struct usb_task *, int);
 void usb_rem_task(usbd_device_handle, struct usb_task *);
-#define usb_init_task(t, f, a, fl) ((t)->fun = (f), (t)->arg = (a), (t)->queue = -1, (t)->flags = (fl))
+#define usb_init_task(t, f, a, fl) ((t)->fun = (f), (t)->arg = (a), (t)->queue = USB_NUM_TASKQS, (t)->flags = (fl))
 
 struct usb_devno {
 	u_int16_t ud_vendor;
@@ -278,9 +278,16 @@ struct usbif_attach_arg {
 /* No match */
 #define UMATCH_NONE					 0
 
+
+/*
+ * IPL_USB is defined as IPL_VM for drivers that have not been made MP safe.
+ * IPL_VM (currently) takes the kernel lock.
+ *
+ * Eventually, IPL_USB can/should be changed
+ */
 #define splusb splsoftnet
-#define splhardusb splbio
-#define IPL_USB IPL_BIO
+#define splhardusb splvm
 #define IPL_SOFTUSB IPL_SOFTNET
+#define IPL_USB IPL_VM
 
 #endif /* _USBDI_H_ */

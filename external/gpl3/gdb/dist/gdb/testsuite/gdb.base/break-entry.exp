@@ -1,4 +1,4 @@
-# Copyright (C) 2010, 2011 Free Software Foundation, Inc.
+# Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,11 +16,6 @@
 # Test inferior can stop at its very first instruction, usually "_start".
 # Dynamic executables have first instruction in ld.so.
 
-set testfile break-entry
-if { [prepare_for_testing ${testfile}.exp ${testfile} start.c {additional_flags=-static}] } {
-    return -1
-}
-
 # If we're using a stub, we'll already be debugging a live program and
 # stopped at the entry point when we connect, and so the runto below
 # will issue a "continue", which always skips any breakpoint at PC.
@@ -30,9 +25,15 @@ if { [prepare_for_testing ${testfile}.exp ${testfile} start.c {additional_flags=
 # continues the process with the equivalent of "jump *$PC", which
 # triggers any breakpoint at $PC.  The latter is what we want to test.
 
+standard_testfile start.c
+
 if [target_info exists use_gdb_stub] {
     untested ${testfile}.exp
     return
+}
+
+if { [prepare_for_testing ${testfile}.exp ${testfile} $srcfile {additional_flags=-static}] } {
+    return -1
 }
 
 set test "info files"

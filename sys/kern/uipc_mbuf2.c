@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.29 2011/08/08 19:10:33 dyoung Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.29.12.1 2014/08/20 00:04:29 tls Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.29 2011/08/08 19:10:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.29.12.1 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,7 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 	 * now, we need to do the hard way.  don't m_copy as there's no room
 	 * on both end.
 	 */
-	MGET(o, M_DONTWAIT, m->m_type);
+	o = m_get(M_DONTWAIT, m->m_type);
 	if (o && len > MLEN) {
 		MCLGET(o, M_DONTWAIT);
 		if ((o->m_flags & M_EXT) == 0) {
@@ -237,9 +237,9 @@ m_getcl(int how, int type, int flags)
 	struct mbuf *mp;
 
 	if ((flags & M_PKTHDR) != 0)
-		MGETHDR(mp, how, type);
+		mp = m_gethdr(how, type);
 	else
-		MGET(mp, how, type);
+		mp = m_get(how, type);
 
 	if (mp == NULL)
 		return NULL;

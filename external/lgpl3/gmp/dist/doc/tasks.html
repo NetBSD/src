@@ -37,7 +37,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
 <hr>
 <!-- NB. timestamp updated automatically by emacs -->
-  This file current as of 28 Dec 2009.  An up-to-date version is available at
+  This file current as of 5 Dec 2011.  An up-to-date version is available at
   <a href="http://gmplib.org/tasks.html">http://gmplib.org/tasks.html</a>.
   Please send comments about this page to gmp-devel<font>@</font>gmplib.org.
 
@@ -62,13 +62,6 @@ either already been taken care of, or have become irrelevant.
      <code>_mpz_realloc</code> with a small (1 limb) size.
 <li> One reuse case is missing from mpX/tests/reuse.c:
      <code>mpz_XXX(a,a,a)</code>.
-<li> When printing <code>mpf_t</code> numbers with exponents &gt;2^53 on
-     machines with 64-bit <code>mp_exp_t</code>, the precision of
-     <code>__mp_bases[base].chars_per_bit_exactly</code> is insufficient and
-     <code>mpf_get_str</code> aborts.  Detect and compensate.  Alternately,
-     think seriously about using some sort of fixed-point integer value.
-     Avoiding unnecessary floating point is probably a good thing in general,
-     and it might be faster on some CPUs.
 <li> Make the string reading functions allow the `0x' prefix when the base is
      explicitly 16.  They currently only allow that prefix when the base is
      unspecified (zero).
@@ -122,9 +115,6 @@ either already been taken care of, or have become irrelevant.
      subsequent operations, especially if the value is otherwise only small.
      If low bits of the low limb are zero, use <code>mpn_rshift</code> so as
      to not increase the size.
-<li> <code>mpn_dc_sqrtrem</code>: Don't use <code>mpn_addmul_1</code> with
-     multiplier==2, instead either <code>mpn_addlsh1_n</code> when available,
-     or <code>mpn_lshift</code>+<code>mpn_add_n</code> if not.
 <li> <code>mpn_dc_sqrtrem</code>, <code>mpn_sqrtrem2</code>: Don't use
      <code>mpn_add_1</code> and <code>mpn_sub_1</code> for 1 limb operations,
      instead <code>ADDC_LIMB</code> and <code>SUBC_LIMB</code>.
@@ -133,20 +123,12 @@ either already been taken care of, or have become irrelevant.
      aliasing between <code>sp</code> and <code>rp</code>.
 <li> <code>mpn_sqrtrem</code>: Some work can be saved in the last step when
      the remainder is not required, as noted in Paul's paper.
-<li> <code>mpq_add</code>, <code>mpq_add</code>: The division "op1.den / gcd"
-     is done twice, where of course only once is necessary.  Reported by Larry
-     Lambe.
 <li> <code>mpq_add</code>, <code>mpq_sub</code>: The gcd fits a single limb
-     with high probability and in this case <code>modlimb_invert</code> could
+     with high probability and in this case <code>binvert_limb</code> could
      be used to calculate the inverse just once for the two exact divisions
      "op1.den / gcd" and "op2.den / gcd", rather than letting
-     <code>mpn_divexact_1</code> do it each time.  This would require a new
-     <code>mpn_preinv_divexact_1</code> interface.  Not sure if it'd be worth
-     the trouble.
-<li> <code>mpq_add</code>, <code>mpq_sub</code>: The use of
-     <code>mpz_mul(x,y,x)</code> causes temp allocation or copying in
-     <code>mpz_mul</code> which can probably be avoided.  A rewrite using
-     <code>mpn</code> might be best.
+     <code>mpn_bdiv_q_1</code> do it each time.  This would require calling
+     <code>mpn_pi1_bdiv_q_1</code>.
 <li> <code>mpn_gcdext</code>: Don't test <code>count_leading_zeros</code> for
      zero, instead check the high bit of the operand and avoid invoking
      <code>count_leading_zeros</code>.  This is an optimization on all
@@ -173,26 +155,20 @@ either already been taken care of, or have become irrelevant.
      since there's no apparent way to get <code>SHRT_MAX</code> with an
      expression (since <code>short</code> and <code>unsigned short</code> can
      be different sizes).
-<li> <code>mpz_powm</code> and <code>mpz_powm_ui</code> aren't very
-     fast on one or two limb moduli, due to a lot of function call
-     overheads.  These could perhaps be handled as special cases.
-<li> <code>mpz_powm</code> and <code>mpz_powm_ui</code> want better
-     algorithm selection, and the latter should use REDC.  Both could
-     change to use an <code>mpn_powm</code> and <code>mpn_redc</code>.
+<li> <code>mpz_powm</code> and <code>mpz_powm_ui</code> aren't very fast on one
+     or two limb moduli, due to a lot of function call overheads.  These could
+     perhaps be handled as special cases.
+<li> Make sure <code>mpz_powm_ui</code> is never slower than the corresponding
+     computation using <code>mpz_powm</code>.
 <li> <code>mpz_powm</code> REDC should do multiplications by <code>g[]</code>
      using the division method when they're small, since the REDC form of a
      small multiplier is normally a full size product.  Probably would need a
      new tuned parameter to say what size multiplier is "small", as a function
      of the size of the modulus.
-<li> <code>mpz_powm</code> REDC should handle even moduli if possible.  Maybe
-     this would mean for m=n*2^k doing mod n using REDC and an auxiliary
-     calculation mod 2^k, then putting them together at the end.
-<li> <code>mpn_gcd</code> might be able to be sped up on small to
-     moderate sizes by improving <code>find_a</code>, possibly just by
-     providing an alternate implementation for CPUs with slowish
+<li> <code>mpn_gcd</code> might be able to be sped up on small to moderate
+     sizes by improving <code>find_a</code>, possibly just by providing an
+     alternate implementation for CPUs with slowish
      <code>count_leading_zeros</code>.
-<li> Toom3 could use a low to high cache localized evaluate and interpolate.
-     The necessary <code>mpn_divexact_by3c</code> exists.
 <li> <code>mpf_set_str</code> produces low zero limbs when a string has a
      fraction but is exactly representable, eg. 0.5 in decimal.  These could be
      stripped to save work in later operations.
@@ -371,7 +347,7 @@ either already been taken care of, or have become irrelevant.
 <li> UltraSPARC/32: <code>mpn_divexact_by3c</code> can work 64-bits at a time
      using <code>mulx</code>, in assembler.  This would be the same as for
      sparc64.
-<li> UltraSPARC: <code>modlimb_invert</code> might save a few cycles from
+<li> UltraSPARC: <code>binvert_limb</code> might save a few cycles from
      masking down to just the useful bits at each point in the calculation,
      since <code>mulx</code> speed depends on the highest bit set.  Either
      explicit masks or small types like <code>short</code> and

@@ -1,0 +1,152 @@
+In July 2014 the layout of /usr/share/doc was drastically rearranged.
+Because of the lack of rename support in CVS, the source dirs for the
+docs have not yet been rearranged to match. (And also, many of the
+source dirs are scattered across the tree and are hard to find
+anyhow.)
+
+The following is a hopefully complete list of the /usr/share/doc docs
+and where they come from. For things in external, I've listed where
+the makefiles that install the docs are; these point to the doc
+sources, which are usually somewhere somewhat different.
+
+
+Reference docs (in /usr/share/doc/reference/ref[1-9])
+------------------------------------------------------------
+
+	ref1/atf		src/external/bsd/atf
+	ref1/bzip		src/lib/libbz2
+	ref1/config		src/share/doc/smm/config
+	ref1/csh		src/bin/csh/USD.doc
+	ref1/ex			src/external/bsd/nvi/docs/USD.doc/exref
+	ref1/gprof		src/usr.bin/gprof/PSD.doc
+	ref1/kyua/*		src/external/bsd/kyua-*/share/doc/kyua-*
+	ref1/mail		src/usr.bin/mail/USD.doc
+	ref1/make		src/usr.bin/make/USD.doc
+	ref1/roff/memacros	src/share/doc/usd/19.memacros
+	ref1/roff/meref		src/share/doc/usd/20.meref
+	ref1/roff/msdiffs	src/share/doc/usd/18.msdiffs
+	ref1/roff/msmacros	src/share/doc/usd/17.msmacros
+	ref1/roff/mom		src/gnu/usr.bin/groff/contrib/mom/momdoc
+	ref1/roff/mom_examples	src/gnu/usr.bin/groff/contrib/mom/examples
+	ref1/sh			src/bin/sh/USD.doc
+	ref1/vi			src/external/bsd/nvi/docs/USD.doc/vi.ref
+
+	ref3/curses		src/lib/libcurses/PSD.doc
+	ref3/sysman		src/share/doc/psd/05.sysman
+	ref3/sockets		src/share/doc/psd/20.ipctut
+	ref3/sockets-advanced	src/share/doc/psd/21.ipc
+
+	ref6/rogue		src/games/rogue/USD.doc
+	ref6/trek		src/games/trek/USD.doc
+
+	ref7/quotas		src/share/doc/smm/04.quotas
+
+	ref8/bind9		src/external/bsd/bind/bin/html
+	ref8/lpd		src/usr.sbin/lpr/SMM.doc
+	ref8/ntp		src/external/bsd/ntp/html
+	ref8/postfix		src/external/ibm-public/postfix/share/html
+	ref8/timedop		src/usr.sbin/timed/SMM.doc/timedop
+	ref8/timed		src/usr.sbin/timed/SMM.doc/timed
+
+	ref9/net		src/share/doc/smm/18.net
+	ref9/nfs		src/share/doc/smm/06.nfs
+
+Papers (in /usr/share/doc/papers)
+------------------------------------------------------------
+
+	mckusick84-ffs		src/share/doc/smm/05.fastfs
+	mckusick85-fsck		src/sbin/fsck_ffs/SMM.doc
+	morris78-password	src/share/doc/smm/17.password
+
+User supplementary documents (in /usr/share/doc/usd)
+------------------------------------------------------------
+
+	beginner		src/share/doc/usd/01.begin
+	ed			external/bsd/nvi/docs/USD.doc/edit
+	vi			external/bsd/nvi/docs/USD.doc/vitut
+
+System manager manual (in /usr/share/doc/smm)
+------------------------------------------------------------
+
+	(none)
+
+Programmer supplementary documents (in /usr/share/doc/psd)
+------------------------------------------------------------
+
+	(none)
+
+
+
+Here is a list of the historic documents as of just before the reorg:
+------------------------------------------------------------
+
+	usd/01.begin		kept in USD
+	usd/02.learn		missing
+	usd/03.shell		-> ref1/sh
+	usd/04.csh		-> ref1/csh
+	usd/05.dc		missing
+	usd/06.bc		missing
+	usd/07.mail		-> ref1/mail
+	usd/08.mh		missing
+	usd/09.edtut		missing
+	usd/10.edadv		missing
+	usd/11.edit		kept in USD
+	usd/12.ex		-> ref1/ex
+	usd/12.vi		kept in USD
+	usd/13.viref		-> ref1/vi
+	usd/14.jove		missing
+	usd/15.sed		missing
+	usd/16.awk		missing
+	usd/17.msmacros		-> ref1/roff/msmacros
+	usd/18.msdiffs		-> ref1/roff/msdiffs
+	usd/19.memacros		-> ref1/roff/memacros
+	usd/20.meref		-> ref1/roff/meref
+	usd/21.troff		missing
+	usd/22.trofftut		missing
+	usd/23.eqn		missing
+	usd/24.eqnguide		missing
+	usd/25.tbl		missing
+	usd/26.refer		missing
+	usd/27.invert		missing
+	usd/28.bib		missing
+	usd/29.diction		missing
+	usd/30.rogue		-> ref6/rogue
+	usd/31.trek		-> ref6/trek
+
+	smm/01.setup		kept (for now) in SMM
+	smm/02.config		-> ref1/config
+	smm/03.fsck_ffs		-> papers/mckusick85-fsck
+	smm/04.quotas		-> ref7/quotas
+	smm/05.fastfs		-> papers/mckusick84-ffs
+	smm/06.nfs		-> ref9/nfs
+	smm/07.lpd		-> ref8/lpd
+	smm/11.timedop		-> ref8/timed
+	smm/12.timed		-> ref5/timed
+	smm/13.amd		missing
+	smm/16.security		missing
+	smm/17.password		-> papers/morris78-password
+	smm/18.net		-> ref9/net
+
+	(It is not clear what happened to SMM docs 8-10, 14-15, and 19+.)
+
+	psd/01.cacm		missing
+	psd/02.implement	missing
+	psd/03.iosys		missing
+	psd/04.uprog		missing
+	psd/05.sysman		-> ref3/sysman
+	psd/06.Clang		missing
+	psd/07.pascal		missing
+	psd/08.f77		missing
+	psd/09.f77io		missing
+	psd/10.gdb		missing
+	psd/11.adb		missing
+	psd/12.make		-> ref1/make
+	psd/13.rcs		missing
+	psd/14.sccs		missing
+	psd/15.yacc		missing
+	psd/16.lex		missing
+	psd/17.m4		missing
+	psd/18.gprof		-> ref1/gprof
+	psd/19.curses		-> ref3/curses
+	psd/20.ipctut		-> ref3/sockets
+	psd/21.ipc		-> ref3/sockets-advanced

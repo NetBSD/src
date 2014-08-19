@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.8.2.3 2013/06/23 06:20:04 tls Exp $
+#	$NetBSD: RPI,v 1.8.2.4 2014/08/20 00:02:53 tls Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -38,7 +38,7 @@ file-system	MSDOSFS		# MS-DOS file system
 file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
 file-system	PROCFS		# /proc
-#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 file-system	TMPFS		# memory file system
@@ -65,7 +65,6 @@ options 	INET6		# IPV6
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
@@ -84,6 +83,7 @@ options		NFS_BOOT_RWSIZE=1024
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
 #options 	COMPAT_50	# NetBSD 5.0 compatibility.
@@ -130,7 +130,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 
 # Development and Debugging options
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	LOCKDEBUG
 #options 	IPKDB		# remote kernel debugging
@@ -140,7 +140,7 @@ options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB,KGDB_PLCOMUNIT=0,KGDB_DEVRATE=115200,KGDB_CONMODE=0xB00
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=800000
+options 	SYMTAB_SPACE=880000
 options 	PLCONSOLE
 #options 	PLCONSOLE,PLCOMCNUNIT=0,PLCONSPEED=115200,PLCONMODE=0xB00
 
@@ -203,6 +203,10 @@ bcmpm0		at obio?
 # Random number generator
 bcmrng0 	at obio?
 
+# GPIO
+bcmgpio0	at obio?	# pins  0 ... 31
+bcmgpio1	at obio?	# pins 32 ... 53
+
 # Arasan SD/MMC Interface
 sdhc* at obio?
 sdmmc*  at sdhc?
@@ -210,10 +214,10 @@ sdmmc*  at sdhc?
 ld*     at sdmmc?
 
 # On-board USB
-dotg*          at obio?
-usb*           at dotg?
+dwctwo* 	at obio?
+usb* 		at dwctwo?
 
-# USB device drivers, just as soon as we have something to attach them to
+# USB device drivers
 include "dev/usb/usbdevices.config"
 
 ukphy*		at mii? phy ?
@@ -225,6 +229,15 @@ iic* at i2cbus?
 # SPI controller
 bcmspi* at obio?
 spi* at spibus?
+
+# PIFace or other boards using that chip (needs gpio)
+#mcp23s17gpio0 at spi? slave 0 flags 0
+#mcp23s17gpio1 at spi? slave 0 flags 1 
+#mcp23s17gpio2 at spi? slave 0 flags 2
+#mcp23s17gpio3 at spi? slave 0 flags 3
+
+# gpio support (e. g. mcp23s17gpio, bcmgpio)
+gpio*		at gpiobus?
 
 # various options for wscons - we try to look as much like a standard
 # sun console as possible
@@ -247,7 +260,7 @@ options 	WSDISPLAY_DEFAULTSCREENS=4
 # disk/mass storage pseudo-devices
 #pseudo-device	fss			# file system snapshot device
 
-pseudo-device	md			# memory disk device (ramdisk)
+#pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 pseudo-device	putter			# for puffs and pud
 

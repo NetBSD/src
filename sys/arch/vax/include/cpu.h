@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.94.2.1 2012/11/20 03:01:48 tls Exp $      */
+/*      $NetBSD: cpu.h,v 1.94.2.2 2014/08/20 00:03:27 tls Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -101,6 +101,7 @@ struct cpu_mp_dep {
 #define	IPI_TBIA	4	/* Flush the TLB */
 #define	IPI_DDB		5	/* Jump into the DDB loop */
 #define	IPI_XCALL	6	/* Helper for xcall(9) */
+#define	IPI_GENERIC	7	/* Generic ipi(9) call */
 
 #define	IPI_DEST_MASTER	-1	/* Destination is mastercpu */
 #define	IPI_DEST_ALL	-2	/* Broadcast */
@@ -158,6 +159,7 @@ extern int cpu_printfataltraps;
 #define	cpu_number()		(curcpu()->ci_cpuid)
 #define	cpu_need_resched(ci, flags)		\
 	do {					\
+		__USE(flags);			\
 		(ci)->ci_want_resched = 1;	\
 		mtpr(AST_OK,PR_ASTLVL);		\
 	} while (/*CONSTCOND*/ 0)
@@ -184,8 +186,8 @@ cpu_intr_p(void)
 #if defined(MULTIPROCESSOR)
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CI_MASTERCPU)
 
-#define	CPU_INFO_ITERATOR	int
-#define	CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = SIMPLEQ_FIRST(&cpus); \
+#define	CPU_INFO_ITERATOR	int __unused
+#define	CPU_INFO_FOREACH(cii, ci)	ci = SIMPLEQ_FIRST(&cpus); \
 					ci != NULL; \
 					ci = SIMPLEQ_NEXT(ci, ci_next)
 

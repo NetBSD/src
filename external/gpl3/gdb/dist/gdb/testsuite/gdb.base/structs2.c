@@ -10,10 +10,6 @@ int bkpt;
 int
 main ()
 {
-#ifdef usestubs
-  set_debug_traps ();
-  breakpoint ();
-#endif
 
   bkpt = 0;
   param_reg (120, 130, 32000, 33000);

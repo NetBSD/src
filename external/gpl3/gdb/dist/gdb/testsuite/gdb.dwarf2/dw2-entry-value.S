@@ -1,4 +1,4 @@
-/* Copyright 2011 Free Software Foundation, Inc.
+/* Copyright 2011-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,10 +15,10 @@
 
 	.section	.debug_info
 debug_start:
-	.long	debug_end - 1f	/* Length of Compilation Unit Info */
+	.4byte	debug_end - 1f	/* Length of Compilation Unit Info */
 1:
 	.2byte	0x3	/* DWARF version number */
-	.long	.Ldebug_abbrev0	/* Offset Into Abbrev. Section */
+	.4byte	.Ldebug_abbrev0	/* Offset Into Abbrev. Section */
 	.byte	0x4	/* Pointer Size (in bytes) */
 	.uleb128 0x1	/* (DIE (0xb) DW_TAG_compile_unit) */
 	.ascii "GNU C 4.4.3\0"	/* DW_AT_producer */
@@ -26,13 +26,13 @@ debug_start:
 	.ascii "1.c\0"	/* DW_AT_name */
 	.uleb128 0x4	/* (DIE (0x3c) DW_TAG_subprogram) */
 	.ascii "f\0"	/* DW_AT_name */
-	.long	f_start	/* DW_AT_low_pc */
-	.long	f_end	/* DW_AT_high_pc */
+	.4byte	f_start	/* DW_AT_low_pc */
+	.4byte	f_end	/* DW_AT_high_pc */
 	.byte	0x1	/* DW_AT_prototyped */
 	.uleb128 0x5	/* (DIE (0x42) DW_TAG_formal_parameter) */
 	.ascii	"param\0"		/* DW_AT_name */
-	.long	type - debug_start	/* DW_AT_type */
-	.long	loclist	/* DW_AT_location */
+	.4byte	type - debug_start	/* DW_AT_type */
+	.4byte	loclist	/* DW_AT_location */
 	.byte	0x0	/* end of children of DIE 0x3c */
 type:
 	.uleb128	3			/* Abbrev: DW_TAG_base_type */
@@ -45,13 +45,13 @@ debug_end:
 
 	.section	.debug_loc
 loclist:
-	.long	f_start, f_end
+	.4byte	f_start, f_end
 	.2byte	2f-1f
 1:	.byte	0xf3	/* DW_OP_GNU_entry_value */
 	.uleb128  2f-3f
 3:	.byte	0x50	/* DW_OP_reg0 */
 2:
-	.long	0, 0
+	.4byte	0, 0
 
 	.section	.debug_abbrev
 .Ldebug_abbrev0:

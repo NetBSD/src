@@ -1,7 +1,7 @@
 /* Test file for exceptions.
 
-Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -282,6 +282,8 @@ check_set (void)
   MPFR_ASSERTN ((mpfr_overflow_p) ());
   mpfr_set_underflow ();
   MPFR_ASSERTN ((mpfr_underflow_p) ());
+  mpfr_set_divby0 ();
+  MPFR_ASSERTN ((mpfr_divby0_p) ());
   mpfr_set_nanflag ();
   MPFR_ASSERTN ((mpfr_nanflag_p) ());
   mpfr_set_inexflag ();
@@ -289,7 +291,52 @@ check_set (void)
   mpfr_set_erangeflag ();
   MPFR_ASSERTN ((mpfr_erangeflag_p) ());
 
-  mpfr_clear_flags ();
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_ALL);
+
+  mpfr_clear_overflow ();
+  MPFR_ASSERTN (! (mpfr_overflow_p) ());
+  mpfr_clear_underflow ();
+  MPFR_ASSERTN (! (mpfr_underflow_p) ());
+  mpfr_clear_divby0 ();
+  MPFR_ASSERTN (! (mpfr_divby0_p) ());
+  mpfr_clear_nanflag ();
+  MPFR_ASSERTN (! (mpfr_nanflag_p) ());
+  mpfr_clear_inexflag ();
+  MPFR_ASSERTN (! (mpfr_inexflag_p) ());
+  mpfr_clear_erangeflag ();
+  MPFR_ASSERTN (! (mpfr_erangeflag_p) ());
+
+  MPFR_ASSERTN (__gmpfr_flags == 0);
+
+  (mpfr_set_overflow) ();
+  MPFR_ASSERTN (mpfr_overflow_p ());
+  (mpfr_set_underflow) ();
+  MPFR_ASSERTN (mpfr_underflow_p ());
+  (mpfr_set_divby0) ();
+  MPFR_ASSERTN (mpfr_divby0_p ());
+  (mpfr_set_nanflag) ();
+  MPFR_ASSERTN (mpfr_nanflag_p ());
+  (mpfr_set_inexflag) ();
+  MPFR_ASSERTN (mpfr_inexflag_p ());
+  (mpfr_set_erangeflag) ();
+  MPFR_ASSERTN (mpfr_erangeflag_p ());
+
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_ALL);
+
+  (mpfr_clear_overflow) ();
+  MPFR_ASSERTN (! mpfr_overflow_p ());
+  (mpfr_clear_underflow) ();
+  MPFR_ASSERTN (! mpfr_underflow_p ());
+  (mpfr_clear_divby0) ();
+  MPFR_ASSERTN (! mpfr_divby0_p ());
+  (mpfr_clear_nanflag) ();
+  MPFR_ASSERTN (! mpfr_nanflag_p ());
+  (mpfr_clear_inexflag) ();
+  MPFR_ASSERTN (! mpfr_inexflag_p ());
+  (mpfr_clear_erangeflag) ();
+  MPFR_ASSERTN (! mpfr_erangeflag_p ());
+
+  MPFR_ASSERTN (__gmpfr_flags == 0);
 }
 
 int
@@ -342,7 +389,7 @@ main (int argc, char *argv[])
   if (!mpfr_inf_p (x) || (mpfr_sgn(x) <= 0))
     {
       printf ("Error: x+x rounded to nearest for x=2^1023 should give +Inf\n");
-      printf ("emax = %ld\n", mpfr_get_emax ());
+      printf ("emax = %ld\n", (long) mpfr_get_emax ());
       printf ("got "); mpfr_print_binary (x); puts ("");
       exit (1);
     }
@@ -377,7 +424,7 @@ main (int argc, char *argv[])
   if (!MPFR_IS_ZERO (x) )
     {
       printf ("Error: x rounded to nearest for x=2^-1024 should give Zero\n");
-      printf ("emin = %ld\n", mpfr_get_emin ());
+      printf ("emin = %ld\n", (long) mpfr_get_emin ());
       printf ("got "); mpfr_dump (x);
       exit (1);
     }

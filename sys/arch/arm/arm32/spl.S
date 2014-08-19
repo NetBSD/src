@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.8 2008/04/27 18:58:44 matt Exp $	*/
+/*	$NetBSD: spl.S,v 1.8.44.1 2014/08/20 00:02:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -39,11 +39,11 @@
  */
 
 #include "assym.h"
+#include <arm/asm.h>
+#include <arm/locore.h>
 #include <arm/arm32/psl.h>
-#include <machine/asm.h>
-#include <machine/cpu.h>
 
-	RCSID("$NetBSD: spl.S,v 1.8 2008/04/27 18:58:44 matt Exp $")
+	RCSID("$NetBSD: spl.S,v 1.8.44.1 2014/08/20 00:02:45 tls Exp $")
 
 	.text
 	.align	0
@@ -61,7 +61,7 @@ ENTRY(raisespl)
 	stmfd	sp!, {r0, r1, r4, lr}	/* Preserve registers */
 
 	/* Disable interrupts */
-	mrs	r4, cpsr_all
+	mrs	r4, cpsr
 	orr	r2, r4, #(I32_bit)
 	msr	cpsr_c, r2
 
@@ -81,7 +81,7 @@ ENTRY(lowerspl)
 	stmfd	sp!, {r0, r1, r4, lr}	/* Preserve registers */
 
 	/* Disable interrupts */
-	mrs	r4, cpsr_all
+	mrs	r4, cpsr
 	orr	r2, r4,  #(I32_bit)
 	msr	cpsr_c, r2
 
@@ -104,7 +104,7 @@ ENTRY(splx)
 	stmfd	sp!, {r0, r1, r4, lr}
 
 	/* Disable interrupts */
-	mrs	r4, cpsr_all
+	mrs	r4, cpsr
 	orr	r2, r4,  #(I32_bit)
 	msr	cpsr_c, r2
 

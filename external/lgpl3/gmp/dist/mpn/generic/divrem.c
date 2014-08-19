@@ -1,6 +1,5 @@
 /* mpn_divrem -- Divide natural numbers, producing both remainder and
-   quotient.  This is now just a middle layer for calling the new
-   internal mpn_tdiv_qr.
+   quotient.  This is now just a middle layer calling mpn_tdiv_qr.
 
 Copyright 1993, 1994, 1995, 1996, 1997, 1999, 2000, 2001, 2002, 2005 Free
 Software Foundation, Inc.

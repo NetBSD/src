@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.94 2012/07/22 14:32:58 matt Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.94.2.1 2014/08/20 00:03:38 tls Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.94 2012/07/22 14:32:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.94.2.1 2014/08/20 00:03:38 tls Exp $");
 
 
 #include <sys/param.h>
@@ -740,7 +740,7 @@ rtk_attach(struct rtk_softc *sc)
 	ether_ifattach(ifp, eaddr);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	return;
  fail_4:

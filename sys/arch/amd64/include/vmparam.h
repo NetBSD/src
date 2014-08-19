@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.31.2.1 2012/11/20 03:00:56 tls Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.31.2.2 2014/08/20 00:02:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -133,10 +133,16 @@
 #include "opt_uvm.h"
 #endif
 #define __USE_TOPDOWN_VM
-#define VM_DEFAULT_ADDRESS(da, sz) \
-	trunc_page(USRSTACK - MAXSSIZ - (sz))
-#define VM_DEFAULT_ADDRESS32(da, sz) \
+
+#define VM_DEFAULT_ADDRESS_TOPDOWN(da, sz) \
+    trunc_page(USRSTACK - MAXSSIZ - (sz))
+#define VM_DEFAULT_ADDRESS_BOTTOMUP(da, sz) \
+    round_page((vaddr_t)(da) + (vsize_t)maxdmap)
+
+#define VM_DEFAULT_ADDRESS32_TOPDOWN(da, sz) \
 	trunc_page(USRSTACK32 - MAXSSIZ32 - (sz))
+#define VM_DEFAULT_ADDRESS32_BOTTOMUP(da, sz) \
+    round_page((vaddr_t)(da) + (vsize_t)MAXDSIZ32)
 
 /*
  * XXXfvdl we have plenty of KVM now, remove this.
@@ -151,10 +157,13 @@
 #define VM_PHYSSEG_MAX		32	/* 1 "hole" + 31 free lists */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 
-#define	VM_NFREELIST		3
+#define	VM_NFREELIST		6
 #define	VM_FREELIST_DEFAULT	0
-#define	VM_FREELIST_FIRST4G	1
-#define	VM_FREELIST_FIRST16	2
+#define	VM_FREELIST_FIRST1T	1
+#define	VM_FREELIST_FIRST64G	2
+#define	VM_FREELIST_FIRST4G	3
+#define	VM_FREELIST_FIRST1G	4
+#define	VM_FREELIST_FIRST16	5
 
 #else	/*	!__x86_64__	*/
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.55 2011/10/12 16:45:37 christos Exp $   */
+/*      $NetBSD: raidctl.c,v 1.55.8.1 2014/08/20 00:02:27 tls Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.55 2011/10/12 16:45:37 christos Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.55.8.1 2014/08/20 00:02:27 tls Exp $");
 #endif
 
 
@@ -88,6 +88,8 @@ static  void rf_pm_configure(int, int, char *, int[]);
 
 int verbose;
 
+static const char *rootpart[] = { "No", "Force", "Soft", "*invalid*" };
+
 int
 main(int argc,char *argv[])
 {
@@ -104,7 +106,6 @@ main(int argc,char *argv[])
 	int do_output;
 	int do_recon;
 	int do_rewrite;
-	int is_clean;
 	int raidID;
 	int serial_number;
 	struct stat st;
@@ -117,7 +118,6 @@ main(int argc,char *argv[])
 	do_output = 0;
 	do_recon = 0;
 	do_rewrite = 0;
-	is_clean = 0;
 	serial_number = 0;
 	force = 0;
 	openmode = O_RDWR;	/* default to read/write */
@@ -750,7 +750,7 @@ get_component_label(int fd, char *component)
 	printf("   Autoconfig: %s\n", 
 	       component_label.autoconfigure ? "Yes" : "No" );
 	printf("   Root partition: %s\n",
-	       component_label.root_partition ? "Yes" : "No" );
+	       rootpart[component_label.root_partition & 3]);
 	printf("   Last configured as: raid%d\n", component_label.last_unit );
 }
 
@@ -808,12 +808,16 @@ set_autoconfig(int fd, int raidID, char *autoconf)
 	auto_config = 0;
 	root_config = 0;
 
-	if (strncasecmp(autoconf,"root", 4) == 0) {
+	if (strncasecmp(autoconf, "root", 4) == 0 ||
+	    strncasecmp(autoconf, "hard", 4) == 0 ||
+	    strncasecmp(autoconf, "force", 4) == 0) {
 		root_config = 1;
+	} else if (strncasecmp(autoconf, "soft", 4) == 0) {
+		root_config = 2;
 	}
 
 	if ((strncasecmp(autoconf,"yes", 3) == 0) ||
-	    root_config == 1) {
+	    root_config > 0) {
 		auto_config = 1;
 	}
 
@@ -826,9 +830,8 @@ set_autoconfig(int fd, int raidID, char *autoconf)
 	printf("raid%d: Autoconfigure: %s\n", raidID,
 	       auto_config ? "Yes" : "No");
 
-	if (root_config == 1) {
-		printf("raid%d: Root: %s\n", raidID,
-		       auto_config ? "Yes" : "No");
+	if (auto_config == 1) {
+		printf("raid%d: Root: %s\n", raidID, rootpart[root_config]);
 	}
 }
 
@@ -1132,7 +1135,7 @@ usage(void)
 	const char *progname = getprogname();
 
 	fprintf(stderr, "usage: %s [-v] -a component dev\n", progname);
-	fprintf(stderr, "       %s [-v] -A [yes | no | root] dev\n", progname);
+	fprintf(stderr, "       %s [-v] -A [yes | no | softroot | hardroot] dev\n", progname);
 	fprintf(stderr, "       %s [-v] -B dev\n", progname);
 	fprintf(stderr, "       %s [-v] -c config_file dev\n", progname);
 	fprintf(stderr, "       %s [-v] -C config_file dev\n", progname);

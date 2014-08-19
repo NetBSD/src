@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.135.2.1 2013/06/23 06:20:06 tls Exp $
+#	$NetBSD: INSTALL_TINY,v 1.135.2.2 2014/08/20 00:03:06 tls Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -56,11 +56,11 @@ options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 no options 	EXEC_AOUT	# we don't a.out support
 
 # Diagnostic/debugging support options
-#options 	DIAGNOSTIC	# expensive kernel consistency checks
+#options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	DDB		# in-kernel debugger
-#options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
+#options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 #options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
@@ -124,7 +124,6 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.
@@ -221,11 +220,6 @@ isa0	at mainbus?
 
 # ISA Plug-and-Play bus support
 #isapnp0 at isa?
-
-# Coprocessor Support
-
-# Math Coprocessor support
-npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 
 # Console Devices

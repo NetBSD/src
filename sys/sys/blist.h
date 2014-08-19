@@ -1,4 +1,4 @@
-/*	$NetBSD: blist.h,v 1.7 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: blist.h,v 1.7.120.1 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 Matthew Dillon.  All Rights Reserved.
@@ -66,7 +66,7 @@ typedef uint32_t blist_bitmap_t;
 typedef uint32_t blist_blkno_t;
 
 /*
- * note: currently use BLIST_NONE as an absolute value rather then 
+ * note: currently use BLIST_NONE as an absolute value rather than 
  * a flag bit.
  */
 

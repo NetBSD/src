@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.142 2012/04/30 22:51:27 rmind Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.142.2.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.142 2012/04/30 22:51:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.142.2.1 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -84,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.142 2012/04/30 22:51:27 rmind Exp 
 MALLOC_DEFINE(M_DEVBUF, "devbuf", "device driver memory");
 MALLOC_DEFINE(M_DMAMAP, "DMA map", "bus_dma(9) structures");
 MALLOC_DEFINE(M_FREE, "free", "should be on free list");
-MALLOC_DEFINE(M_PCB, "pcb", "protocol control block");
 MALLOC_DEFINE(M_TEMP, "temp", "misc. temporary data buffers");
 MALLOC_DEFINE(M_RTABLE, "routetbl", "routing tables");
 MALLOC_DEFINE(M_FTABLE, "fragtbl", "fragment reassembly header");

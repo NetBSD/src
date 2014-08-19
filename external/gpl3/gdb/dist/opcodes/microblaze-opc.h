@@ -45,7 +45,7 @@
 #define INST_TYPE_R1_RFSL    15
 
 /* New insn type for insn cache.  */
-#define INST_TYPE_RD_R1_SPECIAL 16
+#define INST_TYPE_R1_R2_SPECIAL 16
 
 /* New insn type for msrclr, msrset insns.  */
 #define INST_TYPE_RD_IMM15    17
@@ -55,6 +55,9 @@
 
 /* New insn type for t*put.  */
 #define INST_TYPE_RFSL  19
+
+/* For mbar.  */
+#define INST_TYPE_IMM5 20
 
 #define INST_TYPE_NONE 25
 
@@ -76,8 +79,8 @@
 #define OPCODE_MASK_H2  0xFC1F0000  /* High 6 and bits 20-16.  */
 #define OPCODE_MASK_H12 0xFFFF0000  /* High 16.  */
 #define OPCODE_MASK_H4  0xFC0007FF  /* High 6 and low 11 bits.  */
-#define OPCODE_MASK_H13S 0xFFE0EFF0 /* High 11 and 15:1 bits and last 
-				       nibble of last byte for spr.  */
+#define OPCODE_MASK_H13S 0xFFE0E7F0 /* High 11 16:18 21:27 bits, 19:20 bits
+                                       and last nibble of last byte for spr.  */
 #define OPCODE_MASK_H23S 0xFC1FC000 /* High 6, 20-16 and 15:1 bits and last 
 				       nibble of last byte for spr.  */
 #define OPCODE_MASK_H34 0xFC00FFFF  /* High 6 and low 16 bits.  */
@@ -92,11 +95,13 @@
 
 /* New Mask for msrset, msrclr insns.  */
 #define OPCODE_MASK_H23N  0xFC1F8000 /* High 6 and bits 11 - 16.  */
+/* Mask for mbar insn.  */
+#define OPCODE_MASK_HN 0xFF020004 /* High 16 bits and bits 14, 29.  */
 
 #define DELAY_SLOT 1
 #define NO_DELAY_SLOT 0
 
-#define MAX_OPCODES 280
+#define MAX_OPCODES 289
 
 struct op_code_struct
 {
@@ -166,10 +171,10 @@ struct op_code_struct
   {"srl",   INST_TYPE_RD_R1, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0x90000041, OPCODE_MASK_H34, srl, logical_inst },
   {"sext8", INST_TYPE_RD_R1, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0x90000060, OPCODE_MASK_H34, sext8, logical_inst },
   {"sext16",INST_TYPE_RD_R1, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0x90000061, OPCODE_MASK_H34, sext16, logical_inst },
-  {"wic",   INST_TYPE_RD_R1_SPECIAL, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0x90000068, OPCODE_MASK_H34B, wic, special_inst },
-  {"wdc",   INST_TYPE_RD_R1_SPECIAL, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0x90000064, OPCODE_MASK_H34B, wdc, special_inst },
-  {"wdc.clear", INST_TYPE_RD_R1_SPECIAL, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0x90000066, OPCODE_MASK_H34B, wdcclear, special_inst },    
-  {"wdc.flush", INST_TYPE_RD_R1_SPECIAL, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0x90000074, OPCODE_MASK_H34B, wdcflush, special_inst },
+  {"wic",   INST_TYPE_R1_R2_SPECIAL, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0x90000068, OPCODE_MASK_H34B, wic, special_inst },
+  {"wdc",   INST_TYPE_R1_R2_SPECIAL, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0x90000064, OPCODE_MASK_H34B, wdc, special_inst },
+  {"wdc.clear", INST_TYPE_R1_R2_SPECIAL, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0x90000066, OPCODE_MASK_H34B, wdcclear, special_inst },
+  {"wdc.flush", INST_TYPE_R1_R2_SPECIAL, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0x90000074, OPCODE_MASK_H34B, wdcflush, special_inst },
   {"mts",   INST_TYPE_SPECIAL_R1, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_MTS, 0x9400C000, OPCODE_MASK_H13S, mts, special_inst },
   {"mfs",   INST_TYPE_RD_SPECIAL, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_MFS, 0x94008000, OPCODE_MASK_H23S, mfs, special_inst },
   {"br",    INST_TYPE_R2, INST_PC_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0x98000000, OPCODE_MASK_H124, br, branch_inst },
@@ -220,12 +225,18 @@ struct op_code_struct
   {"bgei",  INST_TYPE_R1_IMM, INST_PC_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0xBCA00000, OPCODE_MASK_H1, bgei, branch_inst },
   {"bgeid", INST_TYPE_R1_IMM, INST_PC_OFFSET, DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0xBEA00000, OPCODE_MASK_H1, bgeid, branch_inst },
   {"lbu",   INST_TYPE_RD_R1_R2, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0xC0000000, OPCODE_MASK_H4, lbu, memory_load_inst },
+  {"lbur",  INST_TYPE_RD_R1_R2, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0xC0000200, OPCODE_MASK_H4, lbur, memory_load_inst },
   {"lhu",   INST_TYPE_RD_R1_R2, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0xC4000000, OPCODE_MASK_H4, lhu, memory_load_inst },
+  {"lhur",  INST_TYPE_RD_R1_R2, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0xC4000200, OPCODE_MASK_H4, lhur, memory_load_inst },
   {"lw",    INST_TYPE_RD_R1_R2, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0xC8000000, OPCODE_MASK_H4, lw, memory_load_inst },
+  {"lwr",   INST_TYPE_RD_R1_R2, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0xC8000200, OPCODE_MASK_H4, lwr, memory_load_inst },
   {"lwx",   INST_TYPE_RD_R1_R2, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0xC8000400, OPCODE_MASK_H4, lwx, memory_load_inst },
   {"sb",    INST_TYPE_RD_R1_R2, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0xD0000000, OPCODE_MASK_H4, sb, memory_store_inst },
+  {"sbr",   INST_TYPE_RD_R1_R2, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0xD0000200, OPCODE_MASK_H4, sbr, memory_store_inst },
   {"sh",    INST_TYPE_RD_R1_R2, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0xD4000000, OPCODE_MASK_H4, sh, memory_store_inst },
+  {"shr",   INST_TYPE_RD_R1_R2, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0xD4000200, OPCODE_MASK_H4, shr, memory_store_inst },
   {"sw",    INST_TYPE_RD_R1_R2, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0xD8000000, OPCODE_MASK_H4, sw, memory_store_inst },
+  {"swr",   INST_TYPE_RD_R1_R2, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0xD8000200, OPCODE_MASK_H4, swr, memory_store_inst },
   {"swx",   INST_TYPE_RD_R1_R2, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0xD8000400, OPCODE_MASK_H4, swx, memory_store_inst },
   {"lbui",  INST_TYPE_RD_R1_IMM, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0xE0000000, OPCODE_MASK_H, lbui, memory_load_inst },
   {"lhui",  INST_TYPE_RD_R1_IMM, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0xE4000000, OPCODE_MASK_H, lhui, memory_load_inst },
@@ -388,6 +399,11 @@ struct op_code_struct
   {"tneaputd",  INST_TYPE_R2,    INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0x4C0006E0, OPCODE_MASK_H34C, tneaputd,  anyware_inst },
   {"necaputd",  INST_TYPE_R1_R2, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0x4C000760, OPCODE_MASK_H34C, necaputd,  anyware_inst },
   {"tnecaputd", INST_TYPE_R2,    INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0x4C0007E0, OPCODE_MASK_H34C, tnecaputd, anyware_inst },
+  {"clz",       INST_TYPE_RD_R1, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0x900000E0, OPCODE_MASK_H34,  clz,       special_inst },
+  {"mbar",      INST_TYPE_IMM5,  INST_PC_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0xB8020004, OPCODE_MASK_HN,   mbar,      special_inst },
+  {"sleep",     INST_TYPE_NONE,  INST_PC_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0xBA020004, OPCODE_MASK_HN,   invalid_inst, special_inst }, /* translates to mbar 16.  */
+  {"swapb",     INST_TYPE_RD_R1, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0x900001E0, OPCODE_MASK_H4,   swapb,     arithmetic_inst },
+  {"swaph",     INST_TYPE_RD_R1, INST_NO_OFFSET, NO_DELAY_SLOT, IMMVAL_MASK_NON_SPECIAL, 0x900001E2, OPCODE_MASK_H4,   swaph,     arithmetic_inst },
   {"", 0, 0, 0, 0, 0, 0, 0, 0},
 };
 
@@ -404,6 +420,9 @@ char pvr_register_prefix[] = "rpvr";
 
 #define MIN_IMM15 ((int) 0x0000)
 #define MAX_IMM15 ((int) 0x7fff)
+
+#define MIN_IMM5  ((int) 0x00000000)
+#define MAX_IMM5  ((int) 0x0000001f)
 
 #endif /* MICROBLAZE_OPC */
 

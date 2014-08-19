@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.190.2.3 2013/06/23 06:19:59 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.190.2.4 2014/08/20 00:02:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.190.2.3 2013/06/23 06:19:59 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.190.2.4 2014/08/20 00:02:42 tls Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -174,7 +174,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.190.2.3 2013/06/23 06:19:59 tls Exp $"
 #include <machine/reg.h>
 #include <machine/specialreg.h>
 #include <machine/bootinfo.h>
-#include <machine/fpu.h>
+#include <x86/fpu.h>
 #include <machine/mtrr.h>
 #include <machine/mpbiosvar.h>
 
@@ -467,7 +467,7 @@ x86_64_proc0_tss_ldt_init(void)
 	pcb->pcb_flags = 0;
 	pcb->pcb_fs = 0;
 	pcb->pcb_gs = 0;
-	pcb->pcb_rsp0 = (uvm_lwp_getuarea(l) + KSTACK_SIZE - 16) & ~0xf;
+	pcb->pcb_rsp0 = (uvm_lwp_getuarea(l) + USPACE - 16) & ~0xf;
 	pcb->pcb_iopl = SEL_KPL;
 
 	pmap_kernel()->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
@@ -511,27 +511,6 @@ cpu_init_tss(struct cpu_info *ci)
 	ci->ci_tss_sel = tss_alloc(tss);
 }
 
-SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
-{
-	x86_sysctl_machdep_setup(clog);
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
-		       CTLTYPE_INT, "fpu_present", NULL,
-		       NULL, 1, NULL, 0,
-		       CTL_MACHDEP, CPU_FPU_PRESENT, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
-		       CTLTYPE_INT, "sse", NULL,
-		       NULL, 1, NULL, 0,
-		       CTL_MACHDEP, CPU_SSE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
-		       CTLTYPE_INT, "sse2", NULL,
-		       NULL, 1, NULL, 0,
-		       CTL_MACHDEP, CPU_SSE2, CTL_EOL);
-}
-
 void
 buildcontext(struct lwp *l, void *catcher, void *f)
 {
@@ -548,8 +527,8 @@ buildcontext(struct lwp *l, void *catcher, void *f)
 	tf->tf_rsp = (uint64_t)f;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 
-	/* Ensure FP state is reset, if FP is used. */
-	l->l_md.md_flags &= ~MDL_USEDFPU;
+	/* Ensure FP state is sane */
+	fpu_save_area_reset(l);
 }
 
 void
@@ -566,7 +545,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
-	int onstack, tocopy, error;
+	int onstack, error;
 	int sig = ksi->ksi_signo;
 	struct sigframe_siginfo *fp, frame;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
@@ -584,23 +563,12 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	if (onstack)
 		sp = ((char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
 	else
+		/* AMD64 ABI 128-bytes "red zone". */
 		sp = (char *)tf->tf_rsp - 128;
 
 	sp -= sizeof(struct sigframe_siginfo);
-	/*
-	 * Round down the stackpointer to a multiple of 16 for
-	 * fxsave and the ABI.
-	 */
+	/* Round down the stackpointer to a multiple of 16 for the ABI. */
 	fp = (struct sigframe_siginfo *)(((unsigned long)sp & ~15) - 8);
-
-	/*
-	 * Don't bother copying out FP state if there is none.
-	 */
-	if (l->l_md.md_flags & MDL_USEDFPU)
-		tocopy = sizeof (struct sigframe_siginfo);
-	else
-		tocopy = sizeof (struct sigframe_siginfo) -
-		    sizeof (frame.sf_uc.uc_mcontext.__fpregs);
 
 	frame.sf_ra = (uint64_t)ps->sa_sigdesc[sig].sd_tramp;
 	frame.sf_si._info = ksi->ksi_info;
@@ -614,7 +582,8 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	mutex_exit(p->p_lock);
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
-	error = copyout(&frame, fp, tocopy);
+	/* Copyout all the fp regs, the signal handler might expect them. */
+	error = copyout(&frame, fp, sizeof frame);
 	mutex_enter(p->p_lock);
 
 	if (error != 0) {
@@ -654,6 +623,7 @@ cpu_reboot(int howto, char *bootstr)
 {
 	static bool syncdone = false;
 	int s = IPL_NONE;
+	__USE(s);	/* ugly otherwise */
 
 	if (cold) {
 		howto |= RB_HALT;
@@ -727,7 +697,13 @@ haltsys:
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
 		cnpollc(1);	/* for proper keyboard command handling */
-		cngetc();
+		if (cngetc() == 0) {
+			/* no console attached, so just hlt */
+			printf("No keyboard - cannot reboot after all.\n");
+			for(;;) {
+				x86_hlt();
+			}
+		}
 		cnpollc(0);
 	}
 
@@ -1051,7 +1027,6 @@ cpu_dump_mempagecnt(void)
 int
 cpu_dump(void)
 {
-	int (*dump)(dev_t, daddr_t, void *, size_t);
 	kcore_seg_t seg;
 	cpu_kcore_hdr_t cpuhdr;
 	const struct bdevsw *bdev;
@@ -1059,8 +1034,6 @@ cpu_dump(void)
 	bdev = bdevsw_lookup(dumpdev);
 	if (bdev == NULL)
 		return (ENXIO);
-
-	dump = bdev->d_dump;
 
 	/*
 	 * Generate a segment header.
@@ -1325,20 +1298,13 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
 
-	/* If we were using the FPU, forget about it. */
-	if (pcb->pcb_fpcpu != NULL) {
-		fpusave_lwp(l, false);
-	}
-
 #ifdef USER_LDT
 	pmap_ldt_cleanup(l);
 #endif
 
-	l->l_md.md_flags &= ~MDL_USEDFPU;
+	fpu_save_area_clear(l, pack->ep_osversion >= 699002600
+	    ? __NetBSD_NPXCW__ : __NetBSD_COMPAT_NPXCW__);
 	pcb->pcb_flags = 0;
-	pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
-	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
-	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 
 	l->l_proc->p_flag &= ~PK_32;
 
@@ -1567,7 +1533,6 @@ init_x86_64(paddr_t first_avail)
 	extern void consinit(void);
 	struct region_descriptor region;
 	struct mem_segment_descriptor *ldt_segp;
-	struct pcb *pcb;
 	int x;
 #ifndef XEN
 	int ist;
@@ -1588,11 +1553,11 @@ init_x86_64(paddr_t first_avail)
 
 	cpu_init_msrs(&cpu_info_primary, true);
 
-	pcb = lwp_getpcb(&lwp0);
 
 	use_pae = 1; /* PAE always enabled in long mode */
 
 #ifdef XEN
+	struct pcb *pcb = lwp_getpcb(&lwp0);
 	mutex_init(&pte_lock, MUTEX_DEFAULT, IPL_VM);
 	pcb->pcb_cr3 = xen_start_info.pt_base - KERNBASE;
 	__PRINTK(("pcb_cr3 0x%lx\n", xen_start_info.pt_base - KERNBASE));
@@ -1924,19 +1889,11 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	*flags |= _UC_CPU;
 
-	mcp->_mc_tlsbase = (uintptr_t)l->l_private;;
+	mcp->_mc_tlsbase = (uintptr_t)l->l_private;
 	*flags |= _UC_TLSBASE;
 
-	if ((l->l_md.md_flags & MDL_USEDFPU) != 0) {
-		struct pcb *pcb = lwp_getpcb(l);
-
-		if (pcb->pcb_fpcpu) {
-			fpusave_lwp(l, true);
-		}
-		memcpy(mcp->__fpregs, &pcb->pcb_savefpu.fp_fxsave,
-		    sizeof (mcp->__fpregs));
-		*flags |= _UC_FPU;
-	}
+	process_read_fpregs_xmm(l, (struct fxsave *)&mcp->__fpregs);
+	*flags |= _UC_FPU;
 }
 
 int
@@ -1944,11 +1901,12 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	const __greg_t *gr = mcp->__gregs;
-	struct pcb *pcb = lwp_getpcb(l);
 	struct proc *p = l->l_proc;
 	int error;
 	int err, trapno;
 	int64_t rflags;
+
+	CTASSERT(sizeof (mcontext_t) == 26 * 8 + 8 + 512);
 
 	if ((flags & _UC_CPU) != 0) {
 		error = cpu_mcontext_validate(l, mcp);
@@ -1985,14 +1943,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		l->l_md.md_flags |= MDL_IRET;
 	}
 
-	if (pcb->pcb_fpcpu != NULL)
-		fpusave_lwp(l, false);
-
-	if ((flags & _UC_FPU) != 0) {
-		memcpy(&pcb->pcb_savefpu.fp_fxsave, mcp->__fpregs,
-		    sizeof (mcp->__fpregs));
-		l->l_md.md_flags |= MDL_USEDFPU;
-	}
+	if ((flags & _UC_FPU) != 0)
+		process_write_fpregs_xmm(l, (const struct fxsave *)&mcp->__fpregs);
 
 	if ((flags & _UC_TLSBASE) != 0)
 		lwp_setprivate(l, (void *)(uintptr_t)mcp->_mc_tlsbase);

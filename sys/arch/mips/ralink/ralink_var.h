@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_var.h,v 1.5 2012/02/01 02:05:14 matt Exp $	*/
+/*	$NetBSD: ralink_var.h,v 1.5.6.1 2014/08/20 00:03:13 tls Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -41,8 +41,9 @@ extern int  ra_spiflash_read(void *, vaddr_t, vsize_t, char *);
 
 extern void ra_gpio_toggle_LED(void *);
 
-extern struct mips_bus_space     ra_bus_memt;
-extern struct mips_bus_dma_tag	 ra_bus_dmat;
+extern struct mips_bus_space	ra_bus_memt;
+extern struct mips_bus_dma_tag	ra_bus_dmat;
+extern const bus_space_handle_t	ra_sysctl_bsh;
 
 struct mainbus_attach_args {
 	const char     *ma_name;

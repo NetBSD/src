@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.2.6.1 2013/02/25 00:28:33 tls Exp $	*/
+/*	$NetBSD: siop.c,v 1.2.6.2 2014/08/20 00:02:50 tls Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -32,6 +32,12 @@
 
 #include "boot.h"
 #include "sdvar.h"
+
+#ifdef DEBUG
+#define DPRINTF(x)	printf x
+#else
+#define DPRINTF(x)
+#endif
 
 #define ALLOC(T, A)	\
 		(T *)(((uint32_t)alloc(sizeof(T) + (A)) + (A)) & ~((A) - 1))
@@ -139,6 +145,25 @@ siop_ma(struct siop_adapter *adp, struct scsi_xfer *xs)
 	}
 	dbc = readl(adp->addr + SIOP_DBC) & 0x00ffffff;
 	xs->resid = dbc;
+}
+
+static void
+siop_clearfifo(struct siop_adapter *adp)
+{
+	int timo = 0;
+	uint8_t ctest3 = readb(adp->addr + SIOP_CTEST3);
+
+	DPRINTF(("DMA FIFO not empty!\n"));
+	writeb(adp->addr + SIOP_CTEST3, ctest3 | CTEST3_CLF);
+	while ((readb(adp->addr + SIOP_CTEST3) & CTEST3_CLF) != 0) {
+		delay(1);
+		if (++timo > 1000) {
+			printf("Clear FIFO failed!\n");
+			writeb(adp->addr + SIOP_CTEST3,
+			    readb(adp->addr + SIOP_CTEST3) & ~CTEST3_CLF);
+			return;
+		}
+	}
 }
 
 static void
@@ -296,8 +321,7 @@ siop_intr(struct siop_adapter *adp)
 					if (scratcha0 & A_flag_data)
 						siop_ma(adp, xs);
 					else if ((dstat & DSTAT_DFE) == 0)
-printf("PHASE STATUS: siop_clearfifo...\n");
-//						siop_clearfifo(adp);
+						siop_clearfifo(adp);
 					CALL_SCRIPT(Ent_status);
 					return 1;
 				case SSTAT1_PHASE_MSGIN:
@@ -309,8 +333,7 @@ printf("PHASE STATUS: siop_clearfifo...\n");
 					if (scratcha0 & A_flag_data)
 						siop_ma(adp, xs);
 					else if ((dstat & DSTAT_DFE) == 0)
-printf("PHASE MSGIN: siop_clearfifo...\n");
-//						siop_clearfifo(adp);
+						siop_clearfifo(adp);
 					writeb(adp->addr + SIOP_SCRATCHA,
 					    scratcha0 & ~A_flag_data);
 					CALL_SCRIPT(Ent_msgin);
@@ -879,7 +902,24 @@ scsi_interpret_sense(struct siop_adapter *adp, struct scsi_xfer *xs)
 
 	sense = (struct scsi_sense_data *)xs->data;
 
-	/* otherwise use the default */
+	DPRINTF((" sense debug information:\n"));
+	DPRINTF(("\tcode 0x%x valid %d\n",
+		SSD_RCODE(sense->response_code),
+		sense->response_code & SSD_RCODE_VALID ? 1 : 0));
+	DPRINTF(("\tseg 0x%x key 0x%x ili 0x%x eom 0x%x fmark 0x%x\n",
+		sense->segment,
+		SSD_SENSE_KEY(sense->flags),
+		sense->flags & SSD_ILI ? 1 : 0,
+		sense->flags & SSD_EOM ? 1 : 0,
+		sense->flags & SSD_FILEMARK ? 1 : 0));
+	DPRINTF(("\ninfo: 0x%x 0x%x 0x%x 0x%x followed by %d "
+		"extra bytes\n",
+		sense->info[0],
+		sense->info[1],
+		sense->info[2],
+		sense->info[3],
+		sense->extra_len));
+
 	switch (SSD_RCODE(sense->response_code)) {
 
 		/*

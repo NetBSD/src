@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs_msdos.c,v 1.7.4.2 2013/02/25 00:28:10 tls Exp $	*/
+/*	$NetBSD: mkfs_msdos.c,v 1.7.4.3 2014/08/20 00:02:27 tls Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -37,7 +37,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: mkfs_msdos.c,v 1.7.4.2 2013/02/25 00:28:10 tls Exp $");
+__RCSID("$NetBSD: mkfs_msdos.c,v 1.7.4.3 2014/08/20 00:02:27 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -274,7 +274,6 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 	return -1;
     }
     if (o.create_size) {
-	off_t pos;
 	if (o.no_create) {
 	    warnx("create (-C) is incompatible with -N");
 	    return -1;
@@ -286,12 +285,12 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 	    warnx("failed to create %s", fname);
 	    return -1;
 	}
-	pos = lseek(fd, o.create_size - 1, SEEK_SET);
+	(void)lseek(fd, o.create_size - 1, SEEK_SET);
 	if (write(fd, "\0", 1) != 1) {
 	    warn("failed to set file size");
 	    return -1;
 	}
-	pos = lseek(fd, 0, SEEK_SET);
+	(void)lseek(fd, 0, SEEK_SET);
     } else if ((fd = open(fname, o.no_create ? O_RDONLY : O_RDWR)) == -1 ||
 	fstat(fd, &sb)) {
 	warn("%s", fname);
@@ -710,7 +709,7 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 		mk4(img, 0x41615252);
 		mk4(img + MINBPS - 28, 0x61417272);
 		mk4(img + MINBPS - 24, 0xffffffff);
-		mk4(img + MINBPS - 20, bpb.rdcl);
+		mk4(img + MINBPS - 20, 0xffffffff);
 		mk2(img + MINBPS - 2, DOSMAGIC);
 	    } else if (lsn >= bpb.res && lsn < dir &&
 		       !((lsn - bpb.res) %

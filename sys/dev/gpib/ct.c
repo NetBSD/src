@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.23.14.1 2012/11/20 03:02:00 tls Exp $ */
+/*	$NetBSD: ct.c,v 1.23.14.2 2014/08/20 00:03:37 tls Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.23.14.1 2012/11/20 03:02:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.23.14.2 2014/08/20 00:03:37 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,12 +181,29 @@ dev_type_ioctl(ctioctl);
 dev_type_strategy(ctstrategy);
 
 const struct bdevsw ct_bdevsw = {
-	ctopen, ctclose, ctstrategy, ctioctl, nodump, nosize, D_TAPE
+	.d_open = ctopen,
+	.d_close = ctclose,
+	.d_strategy = ctstrategy,
+	.d_ioctl = ctioctl,
+	.d_dump = nodump,
+	.d_psize = nosize,
+	.d_discard = nodiscard,
+	.d_flag = D_TAPE
 };
 
 const struct cdevsw ct_cdevsw = {
-	ctopen, ctclose, ctread, ctwrite, ctioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
+	.d_open = ctopen,
+	.d_close = ctclose,
+	.d_read = ctread,
+	.d_write = ctwrite,
+	.d_ioctl = ctioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TAPE
 };
 
 extern struct cfdriver ct_cd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.19.6.2 2013/06/23 06:20:25 tls Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.19.6.3 2014/08/20 00:04:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.19.6.2 2013/06/23 06:20:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.19.6.3 2014/08/20 00:04:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,13 +308,14 @@ ip6flow_fastforward(struct mbuf **mp)
 
 	ip6f->ip6f_uses++;
 
+	KERNEL_LOCK(1, NULL);
 	/* Send on its way - straight to the interface output routine. */
 	if ((error = (*rt->rt_ifp->if_output)(rt->rt_ifp, m, dst, rt)) != 0) {
 		ip6f->ip6f_dropped++;
 	} else {
 		ip6f->ip6f_forwarded++;
 	}
-
+	KERNEL_UNLOCK_ONE(NULL);
 	return 1;
 }
 
@@ -463,6 +464,8 @@ ip6flow_create(const struct route *ro, struct mbuf *m)
 	if (ip6_maxflows == 0 || ip6->ip6_nxt == IPPROTO_IPV6_ICMP)
 		return;
 
+	KERNEL_LOCK(1, NULL);
+
 	/*
 	 * See if an existing flow exists.  If so:
 	 *	- Remove the flow
@@ -481,7 +484,7 @@ ip6flow_create(const struct route *ro, struct mbuf *m)
 		} else {
 			ip6f = pool_get(&ip6flow_pool, PR_NOWAIT);
 			if (ip6f == NULL)
-				return;
+				goto out;
 			ip6flow_inuse++;
 		}
 		memset(ip6f, 0, sizeof(*ip6f));
@@ -513,6 +516,9 @@ ip6flow_create(const struct route *ro, struct mbuf *m)
 	s = splnet();
 	IP6FLOW_INSERT(&ip6flowtable[hash], ip6f);
 	splx(s);
+
+ out:
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /*

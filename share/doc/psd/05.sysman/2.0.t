@@ -1,4 +1,4 @@
-.\"	$NetBSD: 2.0.t,v 1.3 2003/08/07 10:30:49 agc Exp $
+.\"	$NetBSD: 2.0.t,v 1.3.60.1 2014/08/20 00:02:29 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)2.0.t	8.4 (Berkeley) 5/26/94
 .\"
-.Sh 1 "System facilities
+.Sh 1 21 "System facilities
 .LP
 The system abstractions described are:
 .IP "Directory contexts

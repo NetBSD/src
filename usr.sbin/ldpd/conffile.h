@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.h,v 1.1.12.1 2013/02/25 00:30:43 tls Exp $ */
+/* $NetBSD: conffile.h,v 1.1.12.2 2014/08/20 00:05:09 tls Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -51,12 +51,14 @@ struct conf_neighbour {
 };
 SLIST_HEAD(,conf_neighbour) conei_head;
 
-struct passive_if {
+struct conf_interface {
 	char if_name[IF_NAMESIZE];
-	SLIST_ENTRY(passive_if) listentry;
+	struct in_addr tr_addr;
+	int passive;
+	SLIST_ENTRY(conf_interface) iflist;
 };
-SLIST_HEAD(,passive_if) passifs_head;
+SLIST_HEAD(,conf_interface) coifs_head;
 
-int conf_parsefile(char *fname);
+int conf_parsefile(const char *fname);
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.64 2011/12/22 15:33:30 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.64.6.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -431,12 +431,6 @@ Lbrkpt2:
  *   %d0,%d1,%a0,%a1, sr, pc, vo
  */
 
-#define INTERRUPT_SAVEREG \
-	moveml	#0xC0C0,%sp@-
-
-#define INTERRUPT_RESTORE \
-	moveml	%sp@+,#0x0303
-
 /*
  * This is the common auto-vector interrupt handler,
  * for which the CPU provides the vector=0x18+level.
@@ -450,7 +444,7 @@ Lbrkpt2:
 GLOBAL(_isr_autovec)
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(isr_autovec)
-	INTERRUPT_RESTORE
+	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)
 
 /* clock: see clock.c */
@@ -462,7 +456,7 @@ GLOBAL(_isr_autovec)
 GLOBAL(_isr_clock)
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(clock_intr)
-	INTERRUPT_RESTORE
+	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)
 
 | Handler for all vectored interrupts (i.e. VME interrupts)
@@ -474,11 +468,11 @@ GLOBAL(_isr_clock)
 GLOBAL(_isr_vectored)
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(isr_vectored)
-	INTERRUPT_RESTORE
+	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)
 
 #undef	INTERRUPT_SAVEREG
-#undef	INTERRUPT_RESTORE
+#undef	INTERRUPT_RESTOREREG
 
 /* interrupt counters (needed by vmstat) */
 GLOBAL(intrnames)

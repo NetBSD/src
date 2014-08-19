@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.257.2.1 2013/06/23 06:20:29 tls Exp $	*/
+/*	$NetBSD: systm.h,v 1.257.2.2 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -67,13 +67,13 @@ extern const char *panicstr;	/* panic message */
 extern int doing_shutdown;	/* shutting down */
 
 extern const char copyright[];	/* system copyright */
-extern char cpu_model[];	/* machine/cpu model name */
 extern char machine[];		/* machine type */
 extern char machine_arch[];	/* machine architecture */
 extern const char osrelease[];	/* short system version */
 extern const char ostype[];	/* system type */
 extern const char kernel_ident[];/* kernel configuration ID */
 extern const char version[];	/* system version */
+extern const char buildinfo[];	/* information from build environment */
 
 extern int autonicetime;        /* time (in seconds) before autoniceval */
 extern int autoniceval;         /* proc priority after autonicetime */
@@ -142,10 +142,11 @@ extern int nsysent;
 #define SYCALL_ARG6_64  0x0800000
 #define SYCALL_ARG7_64  0x1000000
 #define SYCALL_NOSYS    0x2000000 /* permanent nosys in sysent[] */
-#define	SYCALL_ARG_PTR	0x3000000 /* at least one argument is a pointer */
+#define	SYCALL_ARG_PTR	0x4000000 /* at least one argument is a pointer */
 #define SYCALL_RET_64_P(sy)	((sy)->sy_flags & SYCALL_RET_64)
 #define SYCALL_ARG_64_P(sy, n)	((sy)->sy_flags & (SYCALL_ARG0_64 << (n)))
 #define	SYCALL_ARG_64_MASK(sy)	(((sy)->sy_flags >> 17) & 0xff)
+#define	SYCALL_ARG_PTR_P(sy)	((sy)->sy_flags & SYCALL_ARG_PTR)
 #define	SYCALL_NARGS64(sy)	(((sy)->sy_flags >> 12) & 0x0f)
 #define	SYCALL_NARGS64_VAL(n)	((n) << 12)
 
@@ -185,7 +186,7 @@ void	aprint_naive(const char *, ...) __printflike(1, 2);
 void	aprint_verbose(const char *, ...) __printflike(1, 2);
 void	aprint_debug(const char *, ...) __printflike(1, 2);
 
-void device_printf(device_t, const char *fmt, ...) __printflike(2, 3);
+void	device_printf(device_t, const char *fmt, ...) __printflike(2, 3);
 
 void	aprint_normal_dev(device_t, const char *, ...) __printflike(2, 3);
 void	aprint_error_dev(device_t, const char *, ...) __printflike(2, 3);
@@ -214,13 +215,9 @@ void	printf_nolog(const char *, ...) __printflike(1, 2);
 
 void	printf(const char *, ...) __printflike(1, 2);
 
-int	sprintf(char *, const char *, ...) __printflike(2, 3);
-
 int	snprintf(char *, size_t, const char *, ...) __printflike(3, 4);
 
 void	vprintf(const char *, va_list) __printflike(1, 0);
-
-int	vsprintf(char *, const char *, va_list) __printflike(2, 0);
 
 int	vsnprintf(char *, size_t, const char *, va_list) __printflike(3, 0);
 
@@ -407,6 +404,7 @@ void	consinit(void);
 
 void	cpu_startup(void);
 void	cpu_configure(void);
+void	cpu_bootconf(void);
 void	cpu_rootconf(void);
 void	cpu_dumpconf(void);
 
@@ -530,7 +528,7 @@ void assert_sleepable(void);
 #if defined(DEBUG)
 #define	ASSERT_SLEEPABLE()	assert_sleepable()
 #else /* defined(DEBUG) */
-#define	ASSERT_SLEEPABLE()	/* nothing */
+#define	ASSERT_SLEEPABLE()	do {} while (0)
 #endif /* defined(DEBUG) */
 
 vaddr_t calc_cache_size(vsize_t , int, int);

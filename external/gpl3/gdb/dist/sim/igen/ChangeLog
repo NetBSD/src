@@ -1,3 +1,60 @@
+2013-11-25  Steve Ellcey  <sellcey@mips.com>
+
+	* igen/Makefile.in (igen): Use BUILD_CFLAGS in link.
+
+2013-05-10  Freddie Chopin  <freddie_chopin@op.pl>
+
+	* configure: Rebuild.
+
+2012-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2011-10-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Change include to common/acinclude.m4.
+
+2011-10-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Change AC_PREREQ to 2.64.  Delete AC_CONFIG_HEADER
+	call.  Replace common.m4 include with SIM_AC_COMMON.
+	* configure: Regenerate.
+
+2011-07-08  Hans-Peter Nilsson  <hp@axis.com>
+
+	* ld-insn.c (print_insn_words): For fields, print conditionals.
+
+	Correct handling of constant named fields.
+	* gen.c (insn_field_cmp): Tweak comment about neither field
+	being an insn_field_string with a cond_eq-to-value condition.
+	(insns_bit_useless) <case insn_field_string, case
+	decode_find_mixed>: Handle cond_eq-to-value fields as
+	insn_field_int.
+	* gen-idecode.c (print_idecode_validate): Handle
+	insn_field_string cond-equal-to-value fields as insn_field_int.
+	* gen-icache.c (print_icache_body): Add comment why constant
+	string fields are handled.
+
+	Remove all #if 0'd code.
+	* filter.c: Remove #if 0'd function it_is.
+	(main): Remove #if 0'd code.
+	* gen-engine.c: Remove #if 0'd functions print_jump,
+	print_jump_insn, print_jump_definition,
+	print_jump_internal_function, print_jump_body.
+	(gen_engine_c): Remove #if 0'd code.
+	* gen-idecode.c: Remove #if 0'd functions print_jump print_jump,
+	print_jump_insn, print_jump_definition,
+	print_jump_internal_function, print_jump_until_stop_body.
+	* gen-model.c: Remove #if 0'd functions model_c_or_h_data,
+	model_c_or_h_function, gen_model_h, model_c_insn,
+	model_c_function, gen_model_c and types model_c_passed_data
+	and struct _model_c_passed_data.
+	* gen.c: Remove #if 0'd type constant_field_types and function
+	insn_field_is_constant.
+	(gen_entry_find_opcode_field): Remove #if 0'd code.
+	* ld-insn.c (parse_insn_model_record): Remove #if 0'd code.
+	* misc.h (STRDUP, STRNDUP): Remove #if 0'd macros.
+
 2011-02-14  Mike Frysinger  <vapier@gentoo.org>
 
 	* table.c (table_push): Change zfree to free.

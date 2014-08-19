@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_start.S,v 1.2 2011/01/31 06:28:04 matt Exp $ */
+/*	$NetBSD: marvell_start.S,v 1.2.16.1 2014/08/20 00:02:55 tls Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -60,15 +60,20 @@
  */
 
 #include "opt_cputypes.h"
+#include "opt_mvsoc.h"
 #include <machine/asm.h>
 #include <arm/armreg.h>
+#include <evbarm/marvell/marvellreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: marvell_start.S,v 1.2 2011/01/31 06:28:04 matt Exp $")
+RCSID("$NetBSD: marvell_start.S,v 1.2.16.1 2014/08/20 00:02:55 tls Exp $")
 
 #ifndef SDRAM_START
 #define SDRAM_START	0x00000000
 #endif
+
+#define SHEEVA	1
+#define PJ4B	2
 
 /*
  * CPWAIT -- Canonical method to wait for CP15 update.
@@ -99,24 +104,37 @@ _C_LABEL(marvell_start):
 	 *  in VA 0xc0200000..
 	 */
 
-#ifdef CPU_SHEEVA
+	/* Check cores */
 	mrc	p15, 0, r4, c0, c0, 0
 	and	r4, r4, #CPU_ID_CPU_MASK
-	adr	r5, sheeva_cores_start
-	adr	r6, sheeva_cores_end
-1:
+	adr	r5, cores_start
+	adr	r6, cores_end
+0:
 	cmp	r5, r6
-	beq	2f
-	ldmia	r5!, {r7}
+	beq	1f
+	ldmia	r5!, {r7, r8}
 	cmp	r4, r7
-	bne	1b
+	bne	0b
 
+	cmp	r8, #SHEEVA
+	bne	1f
+
+sheeva_l2_disable:
 	/* Make sure L2 is disabled */
-	mrc	p15, 1, r0, c15, c1, 0	@ Get Marvell Extra Features Register
-	bic	r0, r0, #0x00400000	@ disable L2 cache
-	mcr	p15, 1, r0, c15, c1, 0
-2:
+	mrc	p15, 1, r5, c15, c1, 0	@ Get Marvell Extra Features Register
+	bic	r5, r5, #0x00400000	@ disable L2 cache
+	mcr	p15, 1, r5, c15, c1, 0
+
+#ifdef SHEEVA_L2_CACHE_WT
+	/* L2 WT Mode */
+	ldr	r2, =0xf1020128		/* CPU L2 Configuration Register */
+	ldr	r3, [r2]
+	bic	r3, r3, #0x10		/* Force Write Through */
+	str	r3, [r2]
 #endif
+
+1:
+
 	/* save u-boot's args */
 	adr	r4, u_boot_args
 	nop
@@ -126,6 +144,28 @@ _C_LABEL(marvell_start):
 	nop
 	nop
 	nop
+
+#if defined(MVSOC_FIXUP_DEVID) && MVSOC_FIXUP_DEVID > 0
+	adr	r6, marvell_interregs_pbase
+	ldr	r7, [r6]
+	add	r7, r7, #0x40000
+	ldr	r8, [r7]
+	bic	r8, r8, 0xff000000
+	bic	r8, r8, 0x00ff0000
+	/*
+	 * Some SoC returns ugly DeviceID.  Fixup it.
+	 */
+	adr	r5, devid
+	ldr	r5, [r5]
+	orr	r8, r8, r5, lsl #16
+	str	r8, [r7]
+	b	1f
+devid:
+	.word	MVSOC_FIXUP_DEVID
+marvell_interregs_pbase:
+	.word	MARVELL_INTERREGS_PBASE
+#endif
+1:
 
 	/* build page table from scratch */
 	ldr	r0, Lstartup_pagetable		/* pagetable */
@@ -146,17 +186,24 @@ _C_LABEL(marvell_start):
 	mcr	p15, 0, r0, c2, c0, 0	/* Set TTB */
 	mcr	p15, 0, r0, c8, c7, 0	/* Flush TLB */
 	mov	r0, #0
+	cmp	r8, #PJ4B
+	mcreq	p15, 0, r0, c13, c0, 1	/* Set ASID to 0 */
 	mcr	p15, 0, r0, c7, c6, 0	/* Invalidate D cache */
 	mcr	p15, 0, r0, c7, c10, 4	/* Drain write-buffer */
 
 	/* Ensure safe Translation Table. */
 
 	/* Set the Domain Access register.  Very important! */
-        mov     r0, #((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT)
+	mov	r0, #((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT)
 	mcr	p15, 0, r0, c3, c0, 0
 
 	/* Enable MMU */
 	mrc	p15, 0, r0, c1, c0, 0
+	cmp	r8, #PJ4B
+	orreq	r0, r0, #CPU_CONTROL_XP_ENABLE
+	biceq	r0, r0, #(CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_DC_ENABLE | CPU_CONTROL_WBUF_ENABLE)
+	biceq	r0, r0, #(CPU_CONTROL_IC_ENABLE)
+	biceq	r0, r0, #(CPU_CONTROL_BPRD_ENABLE)
 	orr	r0, r0, #CPU_CONTROL_SYST_ENABLE
 	orr	r0, r0, #CPU_CONTROL_MMU_ENABLE
 	mcr	p15, 0, r0, c1, c0, 0
@@ -179,12 +226,16 @@ Lstartup_pagetable:
 u_boot_args:
 	.space	16			/* r0, r1, r2, r3 */
 
-#ifdef CPU_SHEEVA
-sheeva_cores_start:
-	.word	CPU_ID_MV88SV131
-	.word	CPU_ID_MV88FR571_VD		/* Is it Sheeva? */
-sheeva_cores_end:
-#endif
+cores_start:
+	.word	CPU_ID_MV88SV131,	SHEEVA
+	.word	CPU_ID_MV88FR571_VD,	SHEEVA	/* Is it Sheeva? */
+	.word	CPU_ID_MV88SV581X_V6,	PJ4B
+	.word	CPU_ID_MV88SV581X_V7,	PJ4B
+	.word	CPU_ID_MV88SV584X_V7,	PJ4B
+	.word	CPU_ID_ARM_88SV581X_V6,	PJ4B
+	.word	CPU_ID_ARM_88SV581X_V7,	PJ4B
+	.word	0,			0
+cores_end:
 
 #define MMU_INIT(va,pa,n_sec,attr) \
 	.word	n_sec					    ; \

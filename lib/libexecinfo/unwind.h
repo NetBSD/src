@@ -1,4 +1,4 @@
-/*	$NetBSD: unwind.h,v 1.1 2012/05/26 22:02:29 christos Exp $	*/
+/*	$NetBSD: unwind.h,v 1.1.2.1 2014/08/20 00:02:17 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ _Unwind_Ptr		 _Unwind_GetDataRelBase(struct _Unwind_Context *);
 _Unwind_Word 		 _Unwind_GetGR(struct _Unwind_Context *, int);
 _Unwind_Ptr		 _Unwind_GetIP(struct _Unwind_Context *);
 _Unwind_Ptr		 _Unwind_GetIPInfo(struct _Unwind_Context *, int *);
-void 			*_Unwind_GetLanguageSpecificData(
+_Unwind_Ptr		 _Unwind_GetLanguageSpecificData(
     struct _Unwind_Context *);
 _Unwind_Ptr		 _Unwind_GetRegionStart(struct _Unwind_Context *);
 _Unwind_Ptr		 _Unwind_GetTextRelBase(struct _Unwind_Context *);

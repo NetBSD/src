@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.22 2010/09/23 07:08:57 kiyohara Exp $
+#	$NetBSD: files.evbarm,v 1.22.18.1 2014/08/20 00:02:53 tls Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -15,9 +15,9 @@ file	dev/md_root.c				md & memory_disk_hooks
 # Generic MD files
 file	arch/evbarm/evbarm/autoconf.c
 
-file	arch/arm/arm/disksubr.c			disk
-file	arch/arm/arm/disksubr_acorn.c		disk
-file	arch/arm/arm/disksubr_mbr.c		disk
+file	arch/arm/arm/disksubr.c
+file	arch/arm/arm/disksubr_acorn.c
+file	arch/arm/arm/disksubr_mbr.c
 
 # ARM FPE
 file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe

@@ -1,7 +1,6 @@
 /* Top level stuff for GDB, the GNU debugger.
 
-   Copyright (C) 1999, 2000, 2001, 2002, 2004, 2005, 2007, 2008, 2009, 2010,
-   2011 Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
    Written by Elena Zannoni <ezannoni@cygnus.com> of Cygnus Solutions.
 
@@ -33,8 +32,11 @@
 #include "cli/cli-script.h"     /* for reset_command_nest_depth */
 #include "main.h"
 #include "gdbthread.h"
-
+#include "observer.h"
+#include "continuations.h"
 #include "gdbcmd.h"		/* for dont_repeat() */
+#include "annotate.h"
+#include "maint.h"
 
 /* readline include files.  */
 #include "readline/readline.h"
@@ -46,8 +48,8 @@
 static void rl_callback_read_char_wrapper (gdb_client_data client_data);
 static void command_line_handler (char *rl);
 static void change_line_handler (void);
-static void change_annotation_level (void);
 static void command_handler (char *command);
+static char *top_level_prompt (void);
 
 /* Signal handlers.  */
 #ifdef SIGQUIT
@@ -57,9 +59,6 @@ static void handle_sigquit (int sig);
 static void handle_sighup (int sig);
 #endif
 static void handle_sigfpe (int sig);
-#if defined(SIGWINCH) && defined(SIGWINCH_HANDLER)
-static void handle_sigwinch (int sig);
-#endif
 
 /* Functions to be invoked by the event loop in response to
    signals.  */
@@ -107,10 +106,6 @@ void (*call_readline) (gdb_client_data);
    loop as default engine, and event-top.c is merged into top.c.  */
 int async_command_editing_p;
 
-/* This variable contains the new prompt that the user sets with the
-   set prompt command.  */
-char *new_async_prompt;
-
 /* This is the annotation suffix that will be used when the
    annotation_level is 2.  */
 char *async_annotation_suffix;
@@ -123,30 +118,22 @@ int exec_done_display_p = 0;
    read commands from.  */
 int input_fd;
 
-/* This is the prompt stack.  Prompts will be pushed on the stack as
-   needed by the different 'kinds' of user inputs GDB is asking
-   for.  See event-loop.h.  */
-struct prompts the_prompts;
-
 /* Signal handling variables.  */
 /* Each of these is a pointer to a function that the event loop will
    invoke if the corresponding signal has received.  The real signal
    handlers mark these functions as ready to be executed and the event
    loop, in a later iteration, calls them.  See the function
    invoke_async_signal_handler.  */
-void *sigint_token;
+static struct async_signal_handler *sigint_token;
 #ifdef SIGHUP
-void *sighup_token;
+static struct async_signal_handler *sighup_token;
 #endif
 #ifdef SIGQUIT
-void *sigquit_token;
+static struct async_signal_handler *sigquit_token;
 #endif
-void *sigfpe_token;
-#if defined(SIGWINCH) && defined(SIGWINCH_HANDLER)
-void *sigwinch_token;
-#endif
+static struct async_signal_handler *sigfpe_token;
 #ifdef STOP_SIGNAL
-void *sigtstp_token;
+static struct async_signal_handler *sigtstp_token;
 #endif
 
 /* Structure to save a partially entered command.  This is used when
@@ -154,7 +141,7 @@ void *sigtstp_token;
    because each line of input is handled by a different call to
    command_line_handler, and normally there is no state retained
    between different calls.  */
-int more_to_come = 0;
+static int more_to_come = 0;
 
 struct readline_input_state
   {
@@ -180,31 +167,13 @@ rl_callback_read_char_wrapper (gdb_client_data client_data)
 }
 
 /* Initialize all the necessary variables, start the event loop,
-   register readline, and stdin, start the loop.  */
-void
-cli_command_loop (void)
-{
-  /* If we are using readline, set things up and display the first
-     prompt, otherwise just print the prompt.  */
-  if (async_command_editing_p)
-    {
-      int length;
-      char *a_prompt;
-      char *gdb_prompt = get_prompt ();
+   register readline, and stdin, start the loop.  The DATA is the
+   interpreter data cookie, ignored for now.  */
 
-      /* Tell readline what the prompt to display is and what function
-         it will need to call after a whole line is read.  This also
-         displays the first prompt.  */
-      length = strlen (PREFIX (0)) 
-	+ strlen (gdb_prompt) + strlen (SUFFIX (0)) + 1;
-      a_prompt = (char *) alloca (length);
-      strcpy (a_prompt, PREFIX (0));
-      strcat (a_prompt, gdb_prompt);
-      strcat (a_prompt, SUFFIX (0));
-      rl_callback_handler_install (a_prompt, input_handler);
-    }
-  else
-    display_gdb_prompt (0);
+void
+cli_command_loop (void *data)
+{
+  display_gdb_prompt (0);
 
   /* Now it's time to start the event loop.  */
   start_event_loop ();
@@ -243,22 +212,30 @@ change_line_handler (void)
     }
 }
 
-/* Displays the prompt. The prompt that is displayed is the current
-   top of the prompt stack, if the argument NEW_PROMPT is
-   0. Otherwise, it displays whatever NEW_PROMPT is.  This is used
-   after each gdb command has completed, and in the following cases:
+/* Displays the prompt.  If the argument NEW_PROMPT is NULL, the
+   prompt that is displayed is the current top level prompt.
+   Otherwise, it displays whatever NEW_PROMPT is as a local/secondary
+   prompt.
+
+   This is used after each gdb command has completed, and in the
+   following cases:
+
    1. When the user enters a command line which is ended by '\'
-   indicating that the command will continue on the next line.
-   In that case the prompt that is displayed is the empty string.
+   indicating that the command will continue on the next line.  In
+   that case the prompt that is displayed is the empty string.
+
    2. When the user is entering 'commands' for a breakpoint, or
    actions for a tracepoint.  In this case the prompt will be '>'
-   3. Other????
-   FIXME: 2. & 3. not implemented yet for async.  */
+
+   3. On prompting for pagination.  */
+
 void
 display_gdb_prompt (char *new_prompt)
 {
-  int prompt_length = 0;
-  char *gdb_prompt = get_prompt ();
+  char *actual_gdb_prompt = NULL;
+  struct cleanup *old_chain;
+
+  annotate_display_prompt ();
 
   /* Reset the nesting depth used when trace-commands is set.  */
   reset_command_nest_depth ();
@@ -268,48 +245,48 @@ display_gdb_prompt (char *new_prompt)
   if (!current_interp_display_prompt_p ())
     return;
 
-  if (sync_execution && is_running (inferior_ptid))
+  old_chain = make_cleanup (free_current_contents, &actual_gdb_prompt);
+
+  /* Do not call the python hook on an explicit prompt change as
+     passed to this function, as this forms a secondary/local prompt,
+     IE, displayed but not set.  */
+  if (! new_prompt)
     {
-      /* This is to trick readline into not trying to display the
-         prompt.  Even though we display the prompt using this
-         function, readline still tries to do its own display if we
-         don't call rl_callback_handler_install and
-         rl_callback_handler_remove (which readline detects because a
-         global variable is not set).  If readline did that, it could
-         mess up gdb signal handlers for SIGINT.  Readline assumes
-         that between calls to rl_set_signals and rl_clear_signals gdb
-         doesn't do anything with the signal handlers.  Well, that's
-         not the case, because when the target executes we change the
-         SIGINT signal handler.  If we allowed readline to display the
-         prompt, the signal handler change would happen exactly
-         between the calls to the above two functions.
-         Calling rl_callback_handler_remove(), does the job.  */
+      if (sync_execution)
+	{
+	  /* This is to trick readline into not trying to display the
+	     prompt.  Even though we display the prompt using this
+	     function, readline still tries to do its own display if
+	     we don't call rl_callback_handler_install and
+	     rl_callback_handler_remove (which readline detects
+	     because a global variable is not set).  If readline did
+	     that, it could mess up gdb signal handlers for SIGINT.
+	     Readline assumes that between calls to rl_set_signals and
+	     rl_clear_signals gdb doesn't do anything with the signal
+	     handlers.  Well, that's not the case, because when the
+	     target executes we change the SIGINT signal handler.  If
+	     we allowed readline to display the prompt, the signal
+	     handler change would happen exactly between the calls to
+	     the above two functions.  Calling
+	     rl_callback_handler_remove(), does the job.  */
 
-      rl_callback_handler_remove ();
-      return;
+	  rl_callback_handler_remove ();
+	  do_cleanups (old_chain);
+	  return;
+	}
+      else
+	{
+	  /* Display the top level prompt.  */
+	  actual_gdb_prompt = top_level_prompt ();
+	}
     }
-
-  if (!new_prompt)
-    {
-      /* Just use the top of the prompt stack.  */
-      prompt_length = strlen (PREFIX (0)) +
-	strlen (SUFFIX (0)) +
-	strlen (gdb_prompt) + 1;
-
-      new_prompt = (char *) alloca (prompt_length);
-
-      /* Prefix needs to have new line at end.  */
-      strcpy (new_prompt, PREFIX (0));
-      strcat (new_prompt, gdb_prompt);
-      /* Suffix needs to have a new line at end and \032 \032 at
-         beginning.  */
-      strcat (new_prompt, SUFFIX (0));
-    }
+  else
+    actual_gdb_prompt = xstrdup (new_prompt);
 
   if (async_command_editing_p)
     {
       rl_callback_handler_remove ();
-      rl_callback_handler_install (new_prompt, input_handler);
+      rl_callback_handler_install (actual_gdb_prompt, input_handler);
     }
   /* new_prompt at this point can be the top of the stack or the one
      passed in.  It can't be NULL.  */
@@ -318,100 +295,64 @@ display_gdb_prompt (char *new_prompt)
       /* Don't use a _filtered function here.  It causes the assumed
          character position to be off, since the newline we read from
          the user is not accounted for.  */
-      fputs_unfiltered (new_prompt, gdb_stdout);
+      fputs_unfiltered (actual_gdb_prompt, gdb_stdout);
       gdb_flush (gdb_stdout);
     }
+
+  do_cleanups (old_chain);
 }
 
-/* Used when the user requests a different annotation level, with
-   'set annotate'.  It pushes a new prompt (with prefix and suffix) on top
-   of the prompt stack, if the annotation level desired is 2, otherwise
-   it pops the top of the prompt stack when we want the annotation level
-   to be the normal ones (1 or 0).  */
-static void
-change_annotation_level (void)
+/* Return the top level prompt, as specified by "set prompt", possibly
+   overriden by the python gdb.prompt_hook hook, and then composed
+   with the prompt prefix and suffix (annotations).  The caller is
+   responsible for freeing the returned string.  */
+
+static char *
+top_level_prompt (void)
 {
-  char *prefix, *suffix;
+  char *prefix;
+  char *prompt = NULL;
+  char *suffix;
+  char *composed_prompt;
+  size_t prompt_length;
 
-  if (!PREFIX (0) || !PROMPT (0) || !SUFFIX (0))
+  /* Give observers a chance of changing the prompt.  E.g., the python
+     `gdb.prompt_hook' is installed as an observer.  */
+  observer_notify_before_prompt (get_prompt ());
+
+  prompt = xstrdup (get_prompt ());
+
+  if (annotation_level >= 2)
     {
-      /* The prompt stack has not been initialized to "", we are
-         using gdb w/o the --async switch.  */
-      warning (_("Command has same effect as set annotate"));
-      return;
-    }
+      /* Prefix needs to have new line at end.  */
+      prefix = (char *) alloca (strlen (async_annotation_suffix) + 10);
+      strcpy (prefix, "\n\032\032pre-");
+      strcat (prefix, async_annotation_suffix);
+      strcat (prefix, "\n");
 
-  if (annotation_level > 1)
-    {
-      if (!strcmp (PREFIX (0), "") && !strcmp (SUFFIX (0), ""))
-	{
-	  /* Push a new prompt if the previous annotation_level was not >1.  */
-	  prefix = (char *) alloca (strlen (async_annotation_suffix) + 10);
-	  strcpy (prefix, "\n\032\032pre-");
-	  strcat (prefix, async_annotation_suffix);
-	  strcat (prefix, "\n");
-
-	  suffix = (char *) alloca (strlen (async_annotation_suffix) + 6);
-	  strcpy (suffix, "\n\032\032");
-	  strcat (suffix, async_annotation_suffix);
-	  strcat (suffix, "\n");
-
-	  push_prompt (prefix, (char *) 0, suffix);
-	}
+      /* Suffix needs to have a new line at end and \032 \032 at
+	 beginning.  */
+      suffix = (char *) alloca (strlen (async_annotation_suffix) + 6);
+      strcpy (suffix, "\n\032\032");
+      strcat (suffix, async_annotation_suffix);
+      strcat (suffix, "\n");
     }
   else
     {
-      if (strcmp (PREFIX (0), "") && strcmp (SUFFIX (0), ""))
-	{
-	  /* Pop the top of the stack, we are going back to annotation < 1.  */
-	  pop_prompt ();
-	}
+      prefix = "";
+      suffix = "";
     }
-}
 
-/* Pushes a new prompt on the prompt stack.  Each prompt has three
-   parts: prefix, prompt, suffix.  Usually prefix and suffix are empty
-   strings, except when the annotation level is 2.  Memory is allocated
-   within xstrdup for the new prompt.  */
-void
-push_prompt (char *prefix, char *prompt, char *suffix)
-{
-  the_prompts.top++;
-  PREFIX (0) = xstrdup (prefix);
+  prompt_length = strlen (prefix) + strlen (prompt) + strlen (suffix);
+  composed_prompt = xmalloc (prompt_length + 1);
 
-  /* Note that this function is used by the set annotate 2
-     command.  This is why we take care of saving the old prompt
-     in case a new one is not specified.  */
-  if (prompt)
-    PROMPT (0) = xstrdup (prompt);
-  else
-    PROMPT (0) = xstrdup (PROMPT (-1));
+  strcpy (composed_prompt, prefix);
+  strcat (composed_prompt, prompt);
+  strcat (composed_prompt, suffix);
 
-  SUFFIX (0) = xstrdup (suffix);
-}
+  xfree (prompt);
 
-/* Pops the top of the prompt stack, and frees the memory allocated
-   for it.  */
-void
-pop_prompt (void)
-{
-  /* If we are not during a 'synchronous' execution command, in which
-     case, the top prompt would be empty.  */
-  if (strcmp (PROMPT (0), ""))
-    /* This is for the case in which the prompt is set while the
-       annotation level is 2.  The top prompt will be changed, but when
-       we return to annotation level < 2, we want that new prompt to be
-       in effect, until the user does another 'set prompt'.  */
-    if (strcmp (PROMPT (0), PROMPT (-1)))
-      {
-	xfree (PROMPT (-1));
-	PROMPT (-1) = xstrdup (PROMPT (0));
-      }
-
-  xfree (PREFIX (0));
-  xfree (PROMPT (0));
-  xfree (SUFFIX (0));
-  the_prompts.top--;
+  return composed_prompt;
 }
 
 /* When there is an event ready on the stdin file desriptor, instead
@@ -448,7 +389,6 @@ async_enable_stdin (void)
 	 sync_execution.  Current target_terminal_ours() implementations
 	 check for sync_execution before switching the terminal.  */
       target_terminal_ours ();
-      pop_prompt ();
       sync_execution = 0;
     }
 }
@@ -459,11 +399,7 @@ async_enable_stdin (void)
 void
 async_disable_stdin (void)
 {
-  if (!sync_execution)
-    {
-      sync_execution = 1;
-      push_prompt ("", "", "");
-    }
+  sync_execution = 1;
 }
 
 
@@ -479,7 +415,7 @@ command_handler (char *command)
   int stdin_is_tty = ISATTY (stdin);
   struct cleanup *stat_chain;
 
-  quit_flag = 0;
+  clear_quit_flag ();
   if (instream == stdin && stdin_is_tty)
     reinitialize_more_filter ();
 
@@ -520,11 +456,7 @@ command_line_handler (char *rl)
   static unsigned linelength = 0;
   char *p;
   char *p1;
-  extern char *line;
-  extern int linesize;
   char *nline;
-  char got_eof = 0;
-
   int repeat = (instream == stdin);
 
   if (annotation_level > 1 && instream == stdin)
@@ -548,7 +480,6 @@ command_line_handler (char *rl)
       p = readline_input_state.linebuffer_ptr;
       xfree (readline_input_state.linebuffer);
       more_to_come = 0;
-      pop_prompt ();
     }
 
 #ifdef STOP_SIGNAL
@@ -570,7 +501,6 @@ command_line_handler (char *rl)
      and exit from gdb.  */
   if (!rl || rl == (char *) EOF)
     {
-      got_eof = 1;
       command_handler (0);
       return;			/* Lint.  */
     }
@@ -601,8 +531,7 @@ command_line_handler (char *rl)
 	 input expected to complete the command.  So, we need to
 	 print an empty prompt here.  */
       more_to_come = 1;
-      push_prompt ("", "", "");
-      display_gdb_prompt (0);
+      display_gdb_prompt ("");
       return;
     }
 
@@ -661,7 +590,7 @@ command_line_handler (char *rl)
      previous command, return the value in the global buffer.  */
   if (repeat && p == linebuffer && *p != '\\')
     {
-      command_handler (line);
+      command_handler (saved_command_line);
       display_gdb_prompt (0);
       return;
     }
@@ -669,7 +598,7 @@ command_line_handler (char *rl)
   for (p1 = linebuffer; *p1 == ' ' || *p1 == '\t'; p1++);
   if (repeat && !*p1)
     {
-      command_handler (line);
+      command_handler (saved_command_line);
       display_gdb_prompt (0);
       return;
     }
@@ -677,8 +606,7 @@ command_line_handler (char *rl)
   *p = 0;
 
   /* Add line to history if appropriate.  */
-  if (instream == stdin
-      && ISATTY (stdin) && *linebuffer)
+  if (*linebuffer && input_from_terminal_p ())
     add_history (linebuffer);
 
   /* Note: lines consisting solely of comments are added to the command
@@ -693,15 +621,15 @@ command_line_handler (char *rl)
   /* Save into global buffer if appropriate.  */
   if (repeat)
     {
-      if (linelength > linesize)
+      if (linelength > saved_command_line_size)
 	{
-	  line = xrealloc (line, linelength);
-	  linesize = linelength;
+	  saved_command_line = xrealloc (saved_command_line, linelength);
+	  saved_command_line_size = linelength;
 	}
-      strcpy (line, linebuffer);
+      strcpy (saved_command_line, linebuffer);
       if (!more_to_come)
 	{
-	  command_handler (line);
+	  command_handler (saved_command_line);
 	  display_gdb_prompt (0);
 	}
       return;
@@ -837,22 +765,11 @@ async_init_signals (void)
   sigfpe_token =
     create_async_signal_handler (async_float_handler, NULL);
 
-#if defined(SIGWINCH) && defined(SIGWINCH_HANDLER)
-  signal (SIGWINCH, handle_sigwinch);
-  sigwinch_token =
-    create_async_signal_handler (SIGWINCH_HANDLER, NULL);
-#endif
 #ifdef STOP_SIGNAL
   sigtstp_token =
     create_async_signal_handler (async_stop_sig, NULL);
 #endif
 
-}
-
-void
-mark_async_signal_handler_wrapper (void *token)
-{
-  mark_async_signal_handler ((struct async_signal_handler *) token);
 }
 
 /* Tell the event loop what to do if SIGINT is received.
@@ -867,7 +784,7 @@ handle_sigint (int sig)
      set quit_flag to 1 here.  Then if QUIT is called before we get to
      the event loop, we will unwind as expected.  */
 
-  quit_flag = 1;
+  set_quit_flag ();
 
   /* If immediate_quit is set, we go ahead and process the SIGINT right
      away, even if we usually would defer this to the event loop.  The
@@ -896,10 +813,9 @@ async_request_quit (gdb_client_data arg)
   /* If the quit_flag has gotten reset back to 0 by the time we get
      back here, that means that an exception was thrown to unwind the
      current command before we got back to the event loop.  So there
-     is no reason to call quit again here, unless immediate_quit is
-     set.  */
+     is no reason to call quit again here.  */
 
-  if (quit_flag || immediate_quit)
+  if (check_quit_flag ())
     quit ();
 }
 
@@ -909,7 +825,7 @@ async_request_quit (gdb_client_data arg)
 static void
 handle_sigquit (int sig)
 {
-  mark_async_signal_handler_wrapper (sigquit_token);
+  mark_async_signal_handler (sigquit_token);
   signal (sig, handle_sigquit);
 }
 #endif
@@ -930,7 +846,7 @@ async_do_nothing (gdb_client_data arg)
 static void
 handle_sighup (int sig)
 {
-  mark_async_signal_handler_wrapper (sighup_token);
+  mark_async_signal_handler (sighup_token);
   signal (sig, handle_sighup);
 }
 
@@ -938,9 +854,25 @@ handle_sighup (int sig)
 static void
 async_disconnect (gdb_client_data arg)
 {
-  catch_errors (quit_cover, NULL,
-		"Could not kill the program being debugged",
-		RETURN_MASK_ALL);
+  volatile struct gdb_exception exception;
+
+  TRY_CATCH (exception, RETURN_MASK_ALL)
+    {
+      quit_cover ();
+    }
+
+  if (exception.reason < 0)
+    {
+      fputs_filtered ("Could not kill the program being debugged",
+		      gdb_stderr);
+      exception_print (gdb_stderr, exception);
+    }
+
+  TRY_CATCH (exception, RETURN_MASK_ALL)
+    {
+      pop_all_targets ();
+    }
+
   signal (SIGHUP, SIG_DFL);	/*FIXME: ???????????  */
   raise (SIGHUP);
 }
@@ -950,7 +882,7 @@ async_disconnect (gdb_client_data arg)
 void
 handle_stop_sig (int sig)
 {
-  mark_async_signal_handler_wrapper (sigtstp_token);
+  mark_async_signal_handler (sigtstp_token);
   signal (sig, handle_stop_sig);
 }
 
@@ -990,7 +922,7 @@ async_stop_sig (gdb_client_data arg)
 static void
 handle_sigfpe (int sig)
 {
-  mark_async_signal_handler_wrapper (sigfpe_token);
+  mark_async_signal_handler (sigfpe_token);
   signal (sig, handle_sigfpe);
 }
 
@@ -1002,17 +934,6 @@ async_float_handler (gdb_client_data arg)
      divide by zero causes this, so "float" is a misnomer.  */
   error (_("Erroneous arithmetic operation."));
 }
-
-/* Tell the event loop what to do if SIGWINCH is received.
-   See event-signal.c.  */
-#if defined(SIGWINCH) && defined(SIGWINCH_HANDLER)
-static void
-handle_sigwinch (int sig)
-{
-  mark_async_signal_handler_wrapper (sigwinch_token);
-  signal (sig, handle_sigwinch);
-}
-#endif
 
 
 /* Called by do_setshow_command.  */
@@ -1021,21 +942,6 @@ set_async_editing_command (char *args, int from_tty,
 			   struct cmd_list_element *c)
 {
   change_line_handler ();
-}
-
-/* Called by do_setshow_command.  */
-void
-set_async_annotation_level (char *args, int from_tty,
-			    struct cmd_list_element *c)
-{
-  change_annotation_level ();
-}
-
-/* Called by do_setshow_command.  */
-void
-set_async_prompt (char *args, int from_tty, struct cmd_list_element *c)
-{
-  PROMPT (0) = xstrdup (new_async_prompt);
 }
 
 /* Set things up for readline to be invoked via the alternate
@@ -1050,7 +956,7 @@ gdb_setup_readline (void)
      time.  */
   if (!batch_silent)
     gdb_stdout = stdio_fileopen (stdout);
-  gdb_stderr = stdio_fileopen (stderr);
+  gdb_stderr = stderr_fileopen ();
   gdb_stdlog = gdb_stderr;  /* for moment */
   gdb_stdtarg = gdb_stderr; /* for moment */
   gdb_stdtargerr = gdb_stderr; /* for moment */

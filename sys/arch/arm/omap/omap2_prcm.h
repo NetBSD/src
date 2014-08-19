@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_prcm.h,v 1.1.24.1 2013/02/25 00:28:31 tls Exp $	*/
+/*	$NetBSD: omap2_prcm.h,v 1.1.24.2 2014/08/20 00:02:47 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 Adam Hoka
@@ -34,6 +34,7 @@ struct omap_module;
 uint32_t	prcm_read_4(bus_size_t, bus_size_t);
 void		prcm_write_4(bus_size_t, bus_size_t, uint32_t);
 void		prcm_cold_reset(void);
+void		prcm_bootstrap(bus_space_handle_t);
 
 void		prcm_module_enable(const struct omap_module *);
 void		prcm_module_disable(const struct omap_module *);

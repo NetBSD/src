@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.c,v 1.13.12.1 2013/02/25 00:27:46 tls Exp $	*/
+/*	$NetBSD: grep.c,v 1.13.12.2 2014/08/20 00:01:54 tls Exp $	*/
 
 /* grep.c - main driver file for grep.
    Copyright 1992, 1997-1999, 2000 Free Software Foundation, Inc.
@@ -1066,8 +1066,11 @@ Regexp selection and interpretation:\n"), program_name);
       printf (_("\
   -E, --extended-regexp     PATTERN is an extended regular expression\n\
   -F, --fixed-strings       PATTERN is a set of newline-separated strings\n\
-  -G, --basic-regexp        PATTERN is a basic regular expression\n\
+  -G, --basic-regexp        PATTERN is a basic regular expression\n"));
+#if HAVE_LIBPCRE
+      printf (_("\
   -P, --perl-regexp         PATTERN is a Perl regular expression\n"));
+#endif
       printf (_("\
   -e, --regexp=PATTERN      use PATTERN as a regular expression\n\
   -f, --file=FILE           obtain PATTERN from FILE\n\

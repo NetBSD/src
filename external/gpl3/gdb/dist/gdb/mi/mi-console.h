@@ -1,6 +1,5 @@
 /* MI Command Set - MI Console.
-   Copyright (C) 2000, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -24,5 +23,8 @@
 extern struct ui_file *mi_console_file_new (struct ui_file *raw,
 					    const char *prefix,
 					    char quote);
+
+extern void mi_console_set_raw (struct ui_file *console,
+				struct ui_file *raw);
 
 #endif

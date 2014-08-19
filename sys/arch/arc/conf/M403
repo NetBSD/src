@@ -1,4 +1,4 @@
-#	$NetBSD: M403,v 1.54.2.1 2013/06/23 06:19:59 tls Exp $
+#	$NetBSD: M403,v 1.54.2.2 2014/08/20 00:02:44 tls Exp $
 #
 #	configuration file for MIPS Magnum 4000 system
 #
@@ -97,10 +97,13 @@ options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!

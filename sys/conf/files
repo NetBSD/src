@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1057.2.3 2013/06/23 06:20:16 tls Exp $
+#	$NetBSD: files,v 1.1057.2.4 2014/08/20 00:03:34 tls Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -93,9 +93,9 @@ defflag	opt_veriexec.h		VERIFIED_EXEC_FP_SHA1
 
 # Per system call number counts and times
 defflag opt_syscall_stats.h	SYSCALL_STATS
-defflag opt_syscall_stats.h	SYSCALL_TIMES: SYSCALL_STATS 
+defflag opt_syscall_stats.h	SYSCALL_TIMES: SYSCALL_STATS
 # Assume cpu_hascounter() returns true - to use disabled rdtsc() (for soekris)
-defflag opt_syscall_stats.h	SYSCALL_TIMES_HASCOUNTER: SYSCALL_TIMES 
+defflag opt_syscall_stats.h	SYSCALL_TIMES_HASCOUNTER: SYSCALL_TIMES
 file kern/subr_syscall_stats.c	syscall_stats
 
 defparam opt_pax.h		PAX_MPROTECT
@@ -115,6 +115,9 @@ defflag	opt_gre.h		GRE_DEBUG
 # Write Ahead Physical Block Logging
 defflag opt_wapbl.h		WAPBL WAPBL_DEBUG
 defparam opt_wapbl.h		WAPBL_DEBUG_PRINT
+
+# printf entropy source
+defflag opt_rnd_printf.h	RND_PRINTF
 
 # compatibility options
 #
@@ -166,10 +169,14 @@ include "opencrypto/files.opencrypto"
 # NIST SP800.90 CTR DRBG
 include "crypto/nist_ctr_drbg/files.nist_ctr_drbg"
 
+# ChaCha-based fast PRNG
+include "crypto/cprng_fast/files.cprng_fast"
+
 #
 # Kernel history/tracing. Old UVMHIST depends upon this.
 #
 defflag opt_kernhist.h			KERNHIST KERNHIST_PRINT
+defparam opt_kernhist.h			KERNHIST_DELAY
 file	kern/kern_history.c		kernhist
 
 #
@@ -212,7 +219,6 @@ obsolete defflag		IPX		# obsolete
 obsolete defparam opt_md.h	MEMORY_RBFLAGS	# superseded by
 						# MEMORY_DISK_RBFLAGS
 
-defflag				PFIL_HOOKS	# pfil(9)
 defflag	opt_bridge_ipf.h	BRIDGE_IPF	# bridge(4) use inet_pfil_hooks
 defflag	opt_ppp.h		PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
 						# Include deflate or bsd
@@ -849,8 +855,9 @@ file	dev/ic/ne2000.c			ne | ipkdb_ne
 #
 defflag	opt_com.h		COM_DEBUG
 # XXX In a perfect world, this would be done with attributes
-defflag	opt_com.h		COM_16650 COM_HAYESP COM_PXA2X0 COM_AU1X00
-				COM_REGMAP
+defflag	opt_com.h		COM_16650 COM_16750
+				COM_HAYESP COM_PXA2X0 COM_AU1X00
+				COM_REGMAP COM_FUNCMAP
 defparam opt_com.h		COM_TOLERANCE
 device	com { } : tty
 file	dev/ic/com.c			com			needs-flag
@@ -956,8 +963,9 @@ define	ata_udma
 define	ata_piobm
 device	wdc: ata, wdc_common
 
-defflag	opt_ata.h	ATADEBUG
-defflag	opt_wdc.h	WDC_NO_IDS
+defflag opt_ata.h	ATADEBUG
+defparam opt_ata.h	ATADEBUG_MASK
+defflag opt_wdc.h	WDC_NO_IDS
 
 device	atabus: atapi,ata_hl
 attach	atabus at ata
@@ -1093,10 +1101,34 @@ file 	dev/ic/hpet.c		hpet			needs-flag
 device	smsh: arp, ether, ifnet, mii
 file	dev/ic/lan9118.c		smsh
 
+# Apple System Management Controller
+#
+define	applesmcbus	{ }
+device	applesmc: applesmcbus
+file	dev/ic/apple_smc.c		applesmc
+
+# Apple SMC fan sensors and control
+device	applesmcfan: applesmcbus, sysmon_envsys
+attach	applesmcfan at applesmcbus with apple_smc_fan
+file	dev/ic/apple_smc_fan.c		applesmcfan
+
+# Apple SMC temperature sensors
+device	applesmctemp: applesmcbus, sysmon_envsys
+attach	applesmctemp at applesmcbus with apple_smc_temp
+file	dev/ic/apple_smc_temp.c		applesmctemp
+
+# Apple SMC accelerometer (not yet implemented!)
+#device	applesmcaccel: applesmcbus, sysmon_envsys
+#attach	applesmcaccel at applesmcbus with apple_smc_accel
+#file	dev/ic/apple_smc_accel.c	applesmcaccel
+
 # DRM - Direct Rendering Infrastructure: dev/drm
 define drm {}
 include "external/bsd/drm/conf/files.drm"
 include "dev/drm/files.drm"
+
+# DRM/KMS - Newer direct rendering manager with kernel mode-switching
+include "external/bsd/drm2/drm/files.drmkms"
 
 
 # Definitions for wscons
@@ -1173,7 +1205,6 @@ define	sdmmcbus { }			# SD/MMC attachment
 
 # We need the USB bus controllers here so different busses can
 # use them in an 'attach-with'.
-# UHCI USB controller
 #
 
 defparam USB_MEM_RESERVE
@@ -1183,6 +1214,8 @@ file	dev/usb/usbroothub_subr.c	usbroothub
 
 define	usb_dma
 
+# UHCI USB controller
+#
 device	uhci: usbus, usbroothub, usb_dma
 file	dev/usb/uhci.c			uhci			needs-flag
 
@@ -1196,10 +1229,14 @@ file	dev/usb/ohci.c			ohci			needs-flag
 device	ehci: usbus, usbroothub, usb_dma
 file	dev/usb/ehci.c			ehci			needs-flag
 
-# XHCI USB3 controller
+# xHCI USB3 controller
 #
 device	xhci: usbus, usbroothub, usb_dma
 file	dev/usb/xhci.c			xhci			needs-flag
+
+# Mentor graphics OTG IP
+device	motg: usbus, usbroothub, usb_dma
+file	dev/usb/motg.c			motg			needs-flag
 
 # SL811HS/T USB controller
 defflag	opt_slhci.h	SLHCI_DEBUG SLHCI_TRY_LSVH SLHCI_PROFILE_TRANSFER
@@ -1208,21 +1245,24 @@ file	dev/ic/sl811hs.c		slhci			needs-flag
 
 # DesignWare OTG host controller
 #
-device dotg: usbus, usbroothub, usb_dma
-file	dev/usb/dwc_otg.c		dotg			needs-flag
+include "external/bsd/dwc2/conf/files.dwc2"
 
 # USB HID processing (as used by bluetooth and usb code)
 define	hid
 file	dev/usb/hid.c			hid
 
 # SD Host controller
-device sdhc: sdmmcbus
+device	sdhc: sdmmcbus
 file	dev/sdmmc/sdhc.c		sdhc			needs-flag
 
 # Winbond Integrated Media Reader
 device	wb: sdmmcbus
 file	dev/ic/w83l518d.c		wb
 file	dev/ic/w83l518d_sdmmc.c		wb
+
+# Realtek RTS5209/RTS5229 Card Reader
+device	rtsx: sdmmcbus
+file	dev/ic/rtsx.c			rtsx
 
 # Myson MTD803 3-in-1 Fast Ethernet Controller
 device	mtd: arp, ether, ifnet, mii
@@ -1468,7 +1508,7 @@ file	dev/radio.c			radio			needs-flag
 file	dev/rndpseudo.c			rnd			needs-flag
 file	dev/sequencer.c			sequencer		needs-flag
 file	dev/video.c			video			needs-flag
-file	dev/vnd.c			vnd	
+file	dev/vnd.c			vnd
 file	kern/bufq_disksort.c		bufq_disksort
 file	kern/bufq_fcfs.c		bufq_fcfs
 file	kern/bufq_priocscan.c		bufq_priocscan
@@ -1504,6 +1544,7 @@ file	kern/kern_idle.c
 file	kern/kern_hook.c
 file	kern/kern_kthread.c
 file	kern/kern_ktrace.c		ktrace
+file	kern/kern_ktrace_vfs.c		ktrace
 file	kern/kern_ksyms.c		ksyms | ddb | modular needs-flag
 file	kern/kern_lock.c
 file	kern/kern_lwp.c
@@ -1524,6 +1565,7 @@ file	kern/kern_rate.c
 file	kern/kern_resource.c
 file	kern/kern_rndpool.c
 file	kern/kern_rndq.c
+file	kern/kern_rndsink.c
 file	kern/kern_runq.c
 file	kern/kern_rwlock.c
 file	kern/kern_rwlock_obj.c
@@ -1566,6 +1608,7 @@ file	kern/subr_extent.c
 file	kern/subr_hash.c
 file	kern/subr_humanize.c
 file	kern/subr_iostat.c
+file	kern/subr_ipi.c
 file	kern/subr_kcpuset.c
 file	kern/subr_kmem.c
 file	kern/subr_kobj.c
@@ -1645,6 +1688,7 @@ file	kern/vfs_vnops.c
 file	kern/vfs_wapbl.c		wapbl
 file	kern/vfs_xattr.c
 file	kern/vnode_if.c
+file	miscfs/deadfs/dead_vfsops.c
 file	miscfs/deadfs/dead_vnops.c
 file	miscfs/fifofs/fifo_vnops.c
 file	miscfs/genfs/genfs_io.c
@@ -1670,30 +1714,31 @@ file	net/bridgestp.c			bridge
 file	net/if_ecosubr.c		eco
 file	net/if_etherip.c		etherip			needs-flag
 file	net/if_ethersubr.c		ether | fddi | netatalk | token |
-					    wlan
+					    wlan		needs-flag
 file	net/if_faith.c			faith & (inet | inet6)	needs-flag
 file	net/if_fddisubr.c		fddi			needs-flag
 file	net/if_gif.c			gif			needs-flag
 file	net/if_gre.c			gre			needs-flag
 file	net/if_hippisubr.c		hippi			needs-flag
 file	net/if_ieee1394subr.c		ieee1394
-file	net/if_loop.c			loop	
+file	net/if_loop.c			loop
 file	net/if_media.c
 file	net/if_mpls.c			ifmpls			needs-flag
 file	net/if_ppp.c			ppp			needs-flag
 file	net/if_srt.c			srt
-file	net/if_stf.c			stf & (inet | inet6)	needs-flag
+file	net/if_stf.c			stf & inet & inet6	needs-flag
 file	net/if_sl.c			sl			needs-flag
 file	net/if_spppsubr.c		sppp
 file	net/if_strip.c			strip			needs-flag
 file	net/if_tokensubr.c		token			needs-flag
-file	net/if_tap.c			tap	
+file	net/if_tap.c			tap
 file	net/if_tun.c			tun
 file	net/if_vlan.c			vlan			needs-flag
 file	net/if_pppoe.c			pppoe			needs-flag
-file	net/pfil.c			pfil_hooks | ipfilter | pf
+file	net/pfil.c
 file	net/ppp-deflate.c		ppp & ppp_deflate
 file	net/ppp_tty.c			ppp
+file	net/pktqueue.c
 file	net/net_stats.c
 file	net/radix.c
 file	net/raw_cb.c
@@ -1702,7 +1747,7 @@ file	net/route.c
 file	net/rtbl.c
 file	net/rtsock.c
 file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
-file	net/zlib.c			(ppp & ppp_deflate) | opencrypto | vnd_compression
+file	net/zlib.c			(ppp & ppp_deflate) | opencrypto | vnd_compression | kdtrace_hooks
 file	netinet/accf_data.c		accf_data
 file	netinet/accf_http.c		accf_http
 file	netinet/cpu_in_cksum.c		(inet | inet6) & !cpu_in_cksum

@@ -1,4 +1,4 @@
-/*	$NetBSD: master.h,v 1.1.1.2.10.1 2013/02/25 00:27:20 tls Exp $	*/
+/*	$NetBSD: master.h,v 1.1.1.2.10.2 2014/08/19 23:59:43 tls Exp $	*/
 
 /*++
 /* NAME
@@ -220,6 +220,11 @@ typedef struct {
 
 extern void master_str_watch(const MASTER_STR_WATCH *);
 extern void master_int_watch(MASTER_INT_WATCH *);
+
+ /*
+  * master_monitor.c
+  */
+extern int master_monitor(int);
 
 /* DIAGNOSTICS
 /* BUGS

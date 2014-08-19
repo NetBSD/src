@@ -1,0 +1,147 @@
+.\"	$NetBSD: rndsink.9,v 1.2.10.2 2014/08/20 00:02:37 tls Exp $
+.\"
+.\" Copyright (c) 2013 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This documentation is derived from text contributed to The NetBSD
+.\" Foundation by Taylor R. Campbell.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 10, 2013
+.Dt RNDSINK 9
+.Os
+.Sh NAME
+.Nm rndsink ,
+.Nm rndsink_create ,
+.Nm rndsink_destroy ,
+.Nm rndsink_request ,
+.Nm rndsink_schedule ,
+.Nd functions to asynchronously request entropy from the system entropy pool
+.Sh SYNOPSIS
+.In sys/rndsink.h
+.Ft struct rndsink *
+.Fn rndsink_create "size_t bytes" "void (*callback)(void *, const void *, size_t)" "void *arg"
+.Ft void
+.Fn rndsink_destroy "struct rndsink *rndsink"
+.Ft bool
+.Fn rndsink_request "struct rndsink *rndsink" "void *buffer" "size_t bytes"
+.Ft void
+.Fn rndsink_schedule "struct rndsink *rndsink"
+.Sh DESCRIPTION
+The
+.Nm
+functions support asynchronous requests for entropy from the system
+entropy pool.
+Users must call
+.Fn rndsink_create
+to create an rndsink which they may then pass to
+.Fn rndsink_request
+to request data from the system entropy pool.
+If full entropy is not available, the system will call a callback when
+entropy is next available.
+Users can schedule a callback without requesting data now using
+.Fn rndsink_schedule .
+When users no longer need an rndsink, they must pass it to
+.Fn rndsink_destroy .
+.Pp
+This API provides direct access to the system entropy pool.
+Most users should use the
+.Xr cprng 9
+API instead, which interposes a cryptographic pseudorandom number
+generator between the user and the entropy pool.
+.Sh FUNCTIONS
+.Bl -tag -width abcd
+.It Fn rndsink_create bytes callback arg
+Create an rndsink for requests of
+.Fa bytes
+bytes of entropy, which must be no more than
+.Dv RNDSINK_MAX_BYTES .
+When requested and enough entropy is available, the system will call
+.Fa callback
+with three arguments:
+.Bl -item -offset indent
+.It
+.Fa arg ,
+an arbitrary user-supplied pointer;
+.It
+a pointer to a buffer containing the bytes of entropy; and
+.It
+the number of bytes in the buffer, which will always be
+.Fa bytes .
+.El
+.Pp
+The callback will be called in soft interrupt context.
+.Pp
+.Fn rndsink_create
+may sleep to allocate memory.
+.It Fn rndsink_destroy rndsink
+Destroy an rndsink.
+.Fn rndsink_destroy
+may sleep to wait for pending callbacks to complete and to deallocate
+memory.
+.It Fn rndsink_request rndsink buffer bytes
+Store
+.Fa bytes
+bytes derived from the system entropy pool in
+.Fa buffer .
+If the bytes have full entropy, return true.
+Otherwise, schedule a callback as if with
+.Fn rndsink_schedule
+and return false.
+In either case,
+.Fn rndsink_request
+will store data in
+.Fa buffer .
+The argument
+.Fa bytes
+must be the same as the argument to
+.Fn rndsink_create
+that was used to create
+.Fa rndsink .
+May be called at
+.Dv IPL_VM
+or lower.
+The caller should use
+.Xr explicit_memset 3
+to clear
+.Fa buffer
+once it has used the data stored there.
+.It Fn rndsink_schedule rndsink
+Schedule a callback when the system entropy pool has enough entropy.
+If a callback is already scheduled, it remains scheduled.
+May be called at
+.Dv IPL_VM
+or lower.
+.El
+.Sh CODE REFERENCES
+The rndsink API is implemented in
+.Pa sys/kern/kern_rndsink.c
+and
+.Pa sys/sys/rndsink.h .
+.Sh SEE ALSO
+.Xr explicit_memset 3 ,
+.Xr cprng 9 ,
+.Xr rnd 9
+.Sh HISTORY
+The rndsink API first appeared in
+.Nx 7.0 .

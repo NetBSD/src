@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_addr_find.c,v 1.1.1.1.16.1 2013/02/25 00:27:18 tls Exp $	*/
+/*	$NetBSD: mail_addr_find.c,v 1.1.1.1.16.2 2014/08/19 23:59:42 tls Exp $	*/
 
 /*++
 /* NAME
@@ -111,7 +111,7 @@ const char *mail_addr_find(MAPS *path, const char *address, char **extp)
     if (*var_rcpt_delim == 0) {
 	bare_key = saved_ext = 0;
     } else {
-	bare_key = strip_addr(full_key, &saved_ext, *var_rcpt_delim);
+	bare_key = strip_addr(full_key, &saved_ext, var_rcpt_delim);
     }
 
     /*

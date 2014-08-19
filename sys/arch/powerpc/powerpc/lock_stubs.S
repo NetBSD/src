@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.8.12.1 2012/11/20 03:01:39 tls Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.8.12.2 2014/08/20 00:03:20 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 ENTRY(_lock_cas)
 1:
 	lptrarx	%r10,0,%r3
-	cmpw	%r10,%r4
+	cmpptr	%r10,%r4
 	bne-	2f
 	stptrcx. %r5,0,%r3
 	bne-	1b
@@ -71,7 +71,7 @@ ENTRY(_lock_cas)
 ENTRY(mutex_enter)
 1:
 	lptrarx	%r10,0,%r3
-	cmpwi	%r10,0
+	cmpptri	%r10,0
 	bne-	2f
 	stptrcx. %r13,0,%r3
 	bne-	1b
@@ -88,7 +88,7 @@ ENTRY(mutex_exit)
 	li	%r7,0
 1:
 	lptrarx	%r10,0,%r3
-	cmpw	%r10,%r13
+	cmpptr	%r10,%r13
 	bne-	2f
 	stptrcx. %r7,0,%r3
 	bne-	1b
@@ -123,7 +123,7 @@ ENTRY(rw_enter)
 	ori	%r7,%r13,RW_WRITE_LOCKED
 
 2:	lptrarx	%r10,0,%r3
-	cmpw	%r10,%r9
+	cmpptr	%r10,%r9
 	bne-	3f
 	stptrcx. %r7,0,%r3
 	bne-	2b
@@ -148,7 +148,7 @@ ENTRY(rw_tryenter)
 	ori	%r7,%r13,RW_WRITE_LOCKED
 
 2:	lptrarx	%r10,0,%r3
-	cmpw	%r10,%r9
+	cmpptr	%r10,%r9
 	bne-	3f
 	stptrcx. %r7,0,%r3
 	bne-	2b
@@ -179,7 +179,7 @@ ENTRY(rw_exit)
 	ori	%r9,%r13,RW_WRITE_LOCKED
 
 2:	lptrarx	%r10,0,%r3
-	cmpw	%r10,%r9
+	cmpptr	%r10,%r9
 	bne-	3f
 	stptrcx. %r7,0,%r3
 	bne-	2b

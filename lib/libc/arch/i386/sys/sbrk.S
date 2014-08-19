@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.20 2011/11/18 20:21:41 joerg Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.20.6.1 2014/08/20 00:02:10 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sbrk.S,v 1.20 2011/11/18 20:21:41 joerg Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.20.6.1 2014/08/20 00:02:10 tls Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -53,7 +53,7 @@ CURBRK:	.long	_end
 	.text
 
 ENTRY(_sbrk)
-#ifdef PIC
+#ifdef __PIC__
 	movl	4(%esp),%ecx
 	PIC_PROLOGUE
 	movl	PIC_GOT(CURBRK),%edx
@@ -89,3 +89,4 @@ out:
 err:
 	jmp	CERROR
 #endif
+END(_sbrk)

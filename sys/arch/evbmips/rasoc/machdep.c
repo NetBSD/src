@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2012/03/11 00:02:04 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8.2.1 2014/08/20 00:02:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
@@ -28,11 +28,12 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2012/03/11 00:02:04 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.2.1 2014/08/20 00:02:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/boot_flag.h>
 #include <sys/buf.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/mount.h>
 #include <sys/kcore.h>
@@ -113,12 +114,21 @@ mach_init(void)
 #endif
 
 	/* set CPU model info for sysctl_hw */
-	uint32_t tmp;
-	tmp = sysctl_read(RA_SYSCTL_ID0);
-	memcpy(&cpu_model[0], &tmp, 4);
-	tmp = sysctl_read(RA_SYSCTL_ID1);
-	memcpy(&cpu_model[4], &tmp, 4);
-	cpu_model[9] = 0;
+	uint32_t tmp1, tmp2;
+	char id1[5], id2[5];
+	tmp1 = sysctl_read(RA_SYSCTL_ID0);
+	memcpy(id1, &tmp1, sizeof(tmp1));
+	tmp2 = sysctl_read(RA_SYSCTL_ID1);
+	memcpy(id2, &tmp2, sizeof(tmp2));
+	id2[4] = id1[4] = '\0';
+	if (id2[2] == ' ') {
+		id2[2] = '\0';
+	} else if (id2[3] == ' ') {
+		id2[3] = '\0';
+	} else {
+		id2[4] = '\0';
+	}
+	cpu_setmodel("%s%s", id1, id2);
 
 	/*
 	 * Set up the exception vectors and CPU-specific function
@@ -152,6 +162,9 @@ mach_init(void)
 	/*
 	 * Determine the memory size.
 	 */
+#if defined(MT7620)
+	memsize = 128 << 20;
+#else
 	memsize = *(volatile uint32_t *)
 	    MIPS_PHYS_TO_KSEG1(RA_SYSCTL_BASE + RA_SYSCTL_CFG0);
 	memsize = __SHIFTOUT(memsize, SYSCTL_CFG0_DRAM_SIZE);
@@ -160,6 +173,7 @@ mach_init(void)
 	} else {
 		memsize = 4 << (20 + memsize);
 	}
+#endif
 
 	physmem = btoc(memsize);
 
@@ -318,7 +332,9 @@ ra_check_memo_reg(int key)
 
 	case SERIAL_CONSOLE:
 		magic = sysctl_read(RA_SYSCTL_MEMO1);
-		if (((SERIAL_MAGIC & magic) != 0) || ((keyvalue & 2) != 0)) {
+		if (magic == 0
+		    || (SERIAL_MAGIC & magic) != 0
+		    || (keyvalue & 2) != 0) {
 			keyvalue |= 2;
 			return 1;
 		}

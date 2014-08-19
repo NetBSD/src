@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.69 2012/03/13 18:40:29 elad Exp $	*/
+/*	$NetBSD: cons.c,v 1.69.2.1 2014/08/20 00:03:35 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.69 2012/03/13 18:40:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.69.2.1 2014/08/20 00:03:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -67,8 +67,18 @@ dev_type_kqfilter(cnkqfilter);
 static bool cn_redirect(dev_t *, int, int *);
 
 const struct cdevsw cons_cdevsw = {
-	cnopen, cnclose, cnread, cnwrite, cnioctl,
-	nostop, notty, cnpoll, nommap, cnkqfilter, D_TTY
+	.d_open = cnopen,
+	.d_close = cnclose,
+	.d_read = cnread,
+	.d_write = cnwrite,
+	.d_ioctl = cnioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = cnpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = cnkqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 struct	tty *constty = NULL;	/* virtual console output device */
@@ -239,7 +249,15 @@ cngetc(void)
 {
 	if (cn_tab == NULL)
 		return (0);
-	return ((*cn_tab->cn_getc)(cn_tab->cn_dev));
+	int s = splhigh();
+	for (;;) {
+		const int rv = (*cn_tab->cn_getc)(cn_tab->cn_dev);
+		if (rv >= 0) {
+			splx(s);
+			return rv;
+		}
+		docritpollhooks();
+	}
 }
 
 int
@@ -297,8 +315,10 @@ cnputc(int c)
 
 	if (c) {
 		(*cn_tab->cn_putc)(cn_tab->cn_dev, c);
-		if (c == '\n')
+		if (c == '\n') {
+			docritpollhooks();
 			(*cn_tab->cn_putc)(cn_tab->cn_dev, '\r');
+		}
 	}
 }
 

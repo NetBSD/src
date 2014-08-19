@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.35 2010/02/11 10:07:14 drochner Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.35.20.1 2014/08/20 00:03:52 tls Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.35 2010/02/11 10:07:14 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.35.20.1 2014/08/20 00:03:52 tls Exp $");
 
 #include "opt_wsmsgattrs.h"
 
@@ -1037,7 +1037,9 @@ wsemul_vt100_setmsgattrs(void *cookie, const struct wsscreen_descr *type,
 					   vd->msgattrs.default_bg,
 	                                   vd->msgattrs.default_attrs,
 	                                   &tmp);
-#ifdef VT100_DEBUG
+#ifndef VT100_DEBUG
+	__USE(error);
+#else
 	if (error)
 		printf("vt100: failed to allocate attribute for default "
 		       "messages\n");

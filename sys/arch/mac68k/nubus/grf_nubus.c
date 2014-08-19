@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.75.64.1 2012/11/20 03:01:30 tls Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.75.64.2 2014/08/20 00:03:11 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_nubus.c,v 1.75.64.1 2012/11/20 03:01:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_nubus.c,v 1.75.64.2 2014/08/20 00:03:11 tls Exp $");
 
 #include <sys/param.h>
 
@@ -628,9 +628,8 @@ static void
 grfmv_intr_supermacgfx(void *vsc)
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
-	u_int8_t dummy;
 
-	dummy = bus_space_read_1(sc->sc_tag, sc->sc_handle, 0xE70D3);
+	bus_space_read_1(sc->sc_tag, sc->sc_handle, 0xE70D3);
 }
 
 /*
@@ -641,10 +640,9 @@ static void
 grfmv_intr_cmax(void *vsc)
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
-	u_int32_t dummy;
 
-	dummy = bus_space_read_4(sc->sc_tag, sc->sc_handle, 0xf501c);
-	dummy = bus_space_read_4(sc->sc_tag, sc->sc_handle, 0xf5018);
+	bus_space_read_4(sc->sc_tag, sc->sc_handle, 0xf501c);
+	bus_space_read_4(sc->sc_tag, sc->sc_handle, 0xf5018);
 }
 
 /*
@@ -670,10 +668,9 @@ static void
 grfmv_intr_formac(void *vsc)
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
-	u_int8_t dummy;
 
-	dummy = bus_space_read_1(sc->sc_tag, sc->sc_handle, 0xde80db);
-	dummy = bus_space_read_1(sc->sc_tag, sc->sc_handle, 0xde80d3);
+	bus_space_read_1(sc->sc_tag, sc->sc_handle, 0xde80db);
+	bus_space_read_1(sc->sc_tag, sc->sc_handle, 0xde80d3);
 }
 
 /*
@@ -697,9 +694,8 @@ static void
 grfmv_intr_gvimage(void *vsc)
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
-	u_int8_t dummy;
 
-	dummy = bus_space_read_1(sc->sc_tag, sc->sc_handle, 0xf00000);
+	bus_space_read_1(sc->sc_tag, sc->sc_handle, 0xf00000);
 }
 
 /*
@@ -710,9 +706,8 @@ static void
 grfmv_intr_radius_gsc(void *vsc)
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
-	u_int8_t dummy;
 
-	dummy = bus_space_read_1(sc->sc_tag, sc->sc_handle, 0xfb802);
+	bus_space_read_1(sc->sc_tag, sc->sc_handle, 0xfb802);
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0xfb802, 0xff);
 }
 
@@ -737,10 +732,9 @@ static void
 grfmv_intr_relax_200(void *vsc)
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
-	unsigned long	scratch;
 
 	/* The board ROM driver code has a tst.l here. */
-	scratch = bus_space_read_4(sc->sc_tag, sc->sc_handle, 0x000D0040);
+	bus_space_read_4(sc->sc_tag, sc->sc_handle, 0x000D0040);
 }
 
 /*
@@ -764,9 +758,8 @@ static void
 grfmv_intr_viltro_340(void *vsc)
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
-	u_int8_t scratch;
 
 	/* Yes, two read accesses to the same spot. */
-	scratch = bus_space_read_1(sc->sc_tag, sc->sc_handle, 0x0500);
-	scratch = bus_space_read_1(sc->sc_tag, sc->sc_handle, 0x0500);
+	bus_space_read_1(sc->sc_tag, sc->sc_handle, 0x0500);
+	bus_space_read_1(sc->sc_tag, sc->sc_handle, 0x0500);
 }

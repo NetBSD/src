@@ -1,6 +1,6 @@
 /* rx.c --- opcode semantics for stand-alone RX simulator.
 
-Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+Copyright (C) 2008-2014 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -732,8 +732,7 @@ poppc()
       c = val & carry_mask; \
       val OP 1; \
     } \
-  if (count) \
-    set_oszc (val, 4, c); \
+  set_oszc (val, 4, c); \
   PD (val); \
 }
 
@@ -1802,6 +1801,22 @@ decode_opcode ()
       E1;
       break;
 
+    case RXO_satr:
+      if (FLAG_O && ! FLAG_S)
+	{
+	  put_reg (6, 0x0);
+	  put_reg (5, 0x7fffffff);
+	  put_reg (4, 0xffffffff);
+	}
+      else if (FLAG_O && FLAG_S)
+	{
+	  put_reg (6, 0xffffffff);
+	  put_reg (5, 0x80000000);
+	  put_reg (4, 0x0);
+	}
+      E1;
+      break;
+      
     case RXO_sbb:
       MATH_OP (-, ! carry);
       break;

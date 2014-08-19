@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.28 2011/02/12 16:32:36 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.28.14.1 2014/08/20 00:03:10 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -73,36 +73,40 @@
 #ifndef _M68K_ASM_H_
 #define _M68K_ASM_H_
 
-#if defined(__ELF__) && defined(PIC)
-#define PIC_PLT(name)	name@PLTPC
+#define __IMMEDIATE		#
+
+#ifdef __PIC__
+#define PIC_PLT(name)		name@PLTPC
+#ifdef __mcoldfire__
+#define LEA_LCL(name,reg) \
+	movl	__IMMEDIATE name - .,reg ; \
+	lea	(-6,%pc,reg),reg
+#define GOT_SETUP(reg) \
+	movl	__IMMEDIATE _GLOBAL_OFFSET_TABLE_@GOTPC,reg ; \
+	lea	(-6,%pc,reg),reg
 #else
-#define PIC_PLT(name)	name
+#define LEA_LCL(name,reg)	lea	(name,%pc),reg
+#define GOT_SETUP(reg)		lea	(_GLOBAL_OFFSET_TABLE_@GOTPC,%pc),reg
+#endif
+#else
+#define PIC_PLT(name)		name
+#define LEA_LCL(name,reg)	movl	__IMMEDIATE name,reg
+#define GOT_SETUP(reg)		/* nothing */
 #endif
 
-#ifdef __ELF__
-# if __STDC__
-#  define _C_LABEL(name)	name
-# else
-#  define _C_LABEL(name)	name
+#if __STDC__
+# define _C_LABEL(name)	name
+#else
+# define _C_LABEL(name)	name
 #endif /* __STDC__ */
-#else /* __ELF__ */
-# if __STDC__
-#  define _C_LABEL(name)	_ ## name
-# else
-#  define _C_LABEL(name)	_/**/name
-# endif /* __STDC__ */
-#endif /* __ELF__ */
 
 #define	_ASM_LABEL(name)	name
 
 #define	_ENTRY(name) \
 	.text; .even; .globl name; .type name,@function; name:
+#define	END(name)	.size name,.-name
 
-#ifdef __ELF__
 #define	MCOUNT_ENTRY	__mcount
-#else
-#define	MCOUNT_ENTRY	mcount
-#endif
 
 #ifdef GPROF
 #define _PROF_PROLOG	link %a6,#0; jbsr MCOUNT_ENTRY; unlk %a6
@@ -168,6 +172,18 @@
 #define	ASBSS(name, size)				\
 	.comm	_ASM_LABEL(name),size
 
+/*
+ * Need a better place for these but these are common across
+ * all m68k ports so let's define just once.
+ */
+#ifdef __mcoldfire__
+#define INTERRUPT_SAVEREG	lea -16(%sp),%sp; moveml #0xC0C0,(%sp)
+#define INTERRUPT_RESTOREREG	moveml (%sp),#0x0303; lea 16(%sp),%sp
+#else
+#define INTERRUPT_SAVEREG	moveml	#0xC0C0,-(%sp)
+#define INTERRUPT_RESTOREREG	moveml	(%sp)+,#0x0303
+#endif
+
 #ifdef _KERNEL
 /*
  * Shorthand for calling panic().
@@ -178,13 +194,6 @@
 		jbsr	_C_LABEL(panic)		;	\
 	9:	.asciz	x			;	\
 		.even
-
-/*
- * Need a better place for these but these are common across
- * all m68k ports so let's define just once.
- */
-#define INTERRUPT_SAVEREG	moveml	#0xC0C0,%sp@-
-#define INTERRUPT_RESTOREREG	moveml	%sp@+,#0x0303
 
 /* 64-bit counter increments */
 #define CPUINFO_INCREMENT(n)					\
@@ -218,11 +227,10 @@
 #define	VECTOR_UNUSED					\
 	.long	0
 
-#ifdef __ELF__
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
 	alias = sym
-#endif
+
 /*
  * STRONG_ALIAS: create a strong alias.
  */
@@ -245,13 +253,13 @@
 /*
  * Macros to hide shortcomings in the 68010.
  */
-#ifndef __mc68010__
-#define	EXTBL(reg)					\
-	extbl	reg
-#else	/* __mc68010__ */
+#ifdef __mc68010__
 #define	EXTBL(reg)					\
 	extw	reg		;			\
 	extl	reg
+#else	/* __mc68010__ */
+#define	EXTBL(reg)					\
+	extbl	reg
 #endif	/* __mc68010__ */
 
 #endif /* _M68K_ASM_H_ */

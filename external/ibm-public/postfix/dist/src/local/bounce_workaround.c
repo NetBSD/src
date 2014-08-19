@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_workaround.c,v 1.1.1.2.8.1 2013/02/25 00:27:20 tls Exp $	*/
+/*	$NetBSD: bounce_workaround.c,v 1.1.1.2.8.2 2014/08/19 23:59:43 tls Exp $	*/
 
 /*++
 /* NAME
@@ -111,7 +111,7 @@ int     bounce_workaround(LOCAL_STATE state)
 	if (alias_maps->error == 0 && owner_expansion == 0
 	    && (stripped_recipient = strip_addr(state.msg_attr.rcpt.address,
 						(char **) 0,
-						*var_rcpt_delim)) != 0) {
+						var_rcpt_delim)) != 0) {
 	    myfree(owner_alias);
 	    FIND_OWNER(owner_alias, owner_expansion, stripped_recipient);
 	    myfree(stripped_recipient);

@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.41.2.1 2013/06/23 06:28:49 tls Exp $	*/
+/*	$NetBSD: string.h,v 1.41.2.2 2014/08/20 00:02:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -89,12 +89,6 @@ size_t	strnlen(const char *, size_t);
 /* also in unistd.h */
 __aconst char *strsignal(int);
 #endif /* __STRSIGNAL_DECLARED */
-/*
- * For POSIX compliance, we still need:
- * strcoll_l
- * strerror_l
- * strxfrm_l
- */
 #endif
 __END_DECLS
 
@@ -109,8 +103,8 @@ char	*strsep(char **, const char *);
 char	*stresep(char **, const char *, int);
 char	*strndup(const char *, size_t);
 void	*memrchr(const void *, int, size_t);
-void	__explicit_bzero(void *, size_t);
-int	__consttime_bcmp(const void *, const void *, size_t);
+void	*explicit_memset(void *, int, size_t);
+int	consttime_memequal(const void *, const void *, size_t);
 __END_DECLS
 #endif
 
@@ -122,6 +116,7 @@ typedef struct _locale		*locale_t;
 __BEGIN_DECLS
 int	 strcoll_l(const char *, const char *, locale_t);
 size_t	 strxfrm_l(char * __restrict, const char * __restrict, size_t, locale_t);
+__aconst char *strerror_l(int, locale_t);
 __END_DECLS
 #endif /* _POSIX_C_SOURCE || _NETBSD_SOURCE */
 

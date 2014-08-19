@@ -29,17 +29,17 @@
 # .fi
 #	The general format of the master.cf file is as follows:
 # .IP \(bu
-#	Each logical line defines a single Postfix service.
-#	Each service is identified by its name and type as described
-#	below.  When multiple lines specify the same service name
-#	and type, only the last one is remembered.  Otherwise, the
-#	order of master.cf service definitions does not matter.
-# .IP \(bu
 #	Empty lines and whitespace-only lines are ignored, as are
 #	lines whose first non-whitespace character is a `#'.
 # .IP \(bu
 #	A logical line starts with non-whitespace text. A line that
 #	starts with whitespace continues a logical line.
+# .IP \(bu
+#	Each logical line defines a single Postfix service.
+#	Each service is identified by its name and type as described
+#	below.  When multiple lines specify the same service name
+#	and type, only the last one is remembered.  Otherwise, the
+#	order of master.cf service definitions does not matter.
 # .PP
 #	Each logical line consists of eight fields separated by
 #	whitespace.  These are described below in the order as they
@@ -63,8 +63,8 @@
 #	accepted. The host part (and colon) may be omitted.  Either
 #	host or port may be given in symbolic form (host or service
 #	name) or in numeric form (IP address or port number).
-#	Host information may be enclosed inside "[]", but this form
-#	is not necessary.
+#	Host information may be enclosed inside "[]"; this form
+#	is necessary only with IPv6 addresses.
 # .sp
 #	Examples: a service named \fB127.0.0.1:smtp\fR or \fB::1:smtp\fR
 #	receives
@@ -86,8 +86,8 @@
 #	queue directory (pathname controlled with the \fBqueue_directory\fR
 #	configuration parameter in main.cf).
 # .sp
-#	On Solaris systems the \fBunix\fR type is implemented with
-#	streams sockets.
+#	On Solaris 8 and earlier systems the \fBunix\fR type is
+#	implemented with streams sockets.
 # .IP \fBfifo\fR
 #	The service listens on a FIFO (named pipe) and is accessible
 #	for local clients only.
@@ -104,8 +104,8 @@
 #	queue directory (pathname controlled with the \fBqueue_directory\fR
 #	configuration parameter in main.cf).
 # .sp
-#	On Solaris systems the \fBpass\fR type is implemented with
-#	streams sockets.
+#	On Solaris 8 and earlier systems the \fBpass\fR type is
+#	implemented with streams sockets.
 #
 #	This feature is available as of Postfix version 2.5.
 # .RE
@@ -181,11 +181,19 @@
 #	etc., just like in main.cf.  See \fBpostconf\fR(5) for
 #	syntax.
 # .sp
-#	NOTE 1: do not specify whitespace around the "=". In parameter
-#	values, either avoid whitespace altogether, use commas
-#	instead of spaces, or consider overrides like "-o
-#	name=$override_parameter" with $override_parameter set in
-#	main.cf.
+#	NOTE 1: do not specify whitespace around the "=" or in
+#	parameter values. To specify a parameter value that contains
+#	whitespace, use commas instead of spaces, or specify the
+#	value in main.cf. Example:
+# .sp
+# .nf
+#	/etc/postfix/master.cf:
+#	    submission inet .... smtpd
+#		-o smtpd_mumble=$submission_mumble
+# .sp
+#	/etc/postfix/main.cf
+#	    submission_mumble = text with whitespace...
+# .fi
 # .sp
 #	NOTE 2: Over-zealous use of parameter overrides makes the
 #	Postfix configuration hard to understand and maintain.  At

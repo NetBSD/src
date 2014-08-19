@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.47 2011/10/04 04:04:15 chs Exp $
+#	$NetBSD: Makefile,v 1.47.12.1 2014/08/20 00:02:43 tls Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>		# for HOST_SH
@@ -66,11 +66,12 @@ DEFS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
 ### main target: ###
 
-realall: machine m68k ${FILES}
+realall: ${FILES}
 
-CLEANFILES += boot.amiga x.out xxstart.o libboot.a vers.c machine m68k
+CLEANFILES += boot.amiga x.out xxstart.o libboot.a vers.c
 
 .include <bsd.prog.mk>
+.include <bsd.klinks.mk>
 
 ### special  rules for bootblocks ###
 
@@ -80,10 +81,11 @@ INCPATH += -I${.CURDIR}
 INCPATH += -I${.CURDIR}/../../.. -I${.OBJDIR}
 INCPATH += -I${.CURDIR}/../elf2bb
 
-AFLAGS += -m68030 -l
-CAFLAGS += -Wa,-l -Wa,-m68030 ${INCPATH}
+AFLAGS += -march=68030 -mcpu=68030 -l
+CAFLAGS += -Wa,-l -Wa,-march=68030 -Wa,-mcpu=68030 ${INCPATH}
 
-COPTIM= -Os -fomit-frame-pointer -fcse-follow-jumps -fcse-skip-blocks  -Wa,-l -m68060 -Wa,-m68030
+COPTIM= -Os -fomit-frame-pointer -fcse-follow-jumps -fcse-skip-blocks
+COPTIM+= -Wa,-l -m68060 -Wa,-march=68030 -Wa,-mcpu=68030 -fno-unwind-tables
 CFLAGS= -ffreestanding ${COPTIM} ${INCPATH} ${DEFS}
 CFLAGS+= -Werror
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
@@ -92,46 +94,43 @@ CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 COPTS.cread.c = -O1
 
 .c.o:
+	${_MKTARGET_COMPILE}
 	${CC} ${CFLAGS} ${COPTS.${.IMPSRC:T}} -S $< -o $*.s
 	${TXLT} < $*.s | ${AS} ${AFLAGS} -o $@
 	rm $*.s
 
-.s.o: ; ${CC} ${CAFLAGS} ${COPTS} -x assembler-with-cpp -o $@ -c $<
+.s.o:
+	${_MKTARGET_COMPILE}
+	${CC} ${CAFLAGS} ${COPTS} -x assembler-with-cpp -o $@ -c $<
 
-.S.o: ; ${CC} ${CAFLAGS} ${COPTS} -x assembler-with-cpp -o $@ -c $<
+.S.o:
+	${_MKTARGET_COMPILE}
+	${CC} ${CAFLAGS} ${COPTS} -x assembler-with-cpp -o $@ -c $<
 
 boot.amiga: x.out
+	${_MKTARGET_CREATE}
 	${RELOC2BB} -S x.out $@ || (${NM} -u x.out && false)
 
 x.out: xxstart.o libboot.a ${LIBZ}
+	${_MKTARGET_LINK}
 	${LD} ${LDFLAGS} -r -dc -e start -o $@ $>
 	${SIZE} $@
 	${NM} -u $@
 
 xxstart.o: ${.CURDIR}/bbstart.s
+	${_MKTARGET_COMPILE}
 	${CC} ${CAFLAGS} ${COPTS} -x assembler-with-cpp \
 		-o $@ -c $>
 
 libboot.a: ${OBJS}
-	${AR} r $@ $> && ${RANLIB} $@
+	${_MKTARGET_BUILD}
+	${AR} crs $@ $> && ${RANLIB} $@
 
 vers.o: vers.c
 vers.c:	${.CURDIR}/version
+	${_MKTARGET_CREATE}
 	${HOST_SH} ${DIR_TOP}/conf/newvers_stand.sh \
 	    ${${MKREPRO} == "yes" :?:-D} -N ${.CURDIR}/version "amiga"
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.NOPATH: machine m68k
-.BEGIN: machine m68k
-
-machine:
-	-rm -f $@
-	ln -s ${DIR_TOP}/arch/amiga/include $@
-
-m68k:
-	-rm -f $@
-	ln -s ${DIR_TOP}/arch/m68k/include $@
-.endif
 
 # make sure these are built:
 

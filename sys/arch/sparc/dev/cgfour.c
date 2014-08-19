@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.46.12.1 2012/11/20 03:01:43 tls Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.46.12.2 2014/08/20 00:03:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgfour.c,v 1.46.12.1 2012/11/20 03:01:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgfour.c,v 1.46.12.2 2014/08/20 00:03:24 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,8 +153,18 @@ dev_type_ioctl(cgfourioctl);
 dev_type_mmap(cgfourmmap);
 
 const struct cdevsw cgfour_cdevsw = {
-	cgfouropen, nullclose, noread, nowrite, cgfourioctl,
-	nostop, notty, nopoll, cgfourmmap, nokqfilter,
+	.d_open = cgfouropen,
+	.d_close = nullclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = cgfourioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = cgfourmmap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 #if defined(SUN4)

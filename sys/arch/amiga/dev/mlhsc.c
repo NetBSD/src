@@ -1,4 +1,4 @@
-/*	$NetBSD: mlhsc.c,v 1.30.122.1 2012/11/20 03:00:58 tls Exp $ */
+/*	$NetBSD: mlhsc.c,v 1.30.122.2 2014/08/20 00:02:43 tls Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlhsc.c,v 1.30.122.1 2012/11/20 03:00:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlhsc.c,v 1.30.122.2 2014/08/20 00:02:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,6 +188,7 @@ mlhsc_dma_xfer_in(struct sci_softc *dev, int len, register u_char *buf,
 #endif
 
 	csr = *dev->sci_bus_csr;
+	__USE(csr);
 
 	QPRINTF(("mlhdma_in %d, csr=%02x\n", len, csr));
 
@@ -270,6 +271,7 @@ mlhsc_dma_xfer_out(struct sci_softc *dev, int len, register u_char *buf,
 	volatile register u_char *sci_csr = dev->sci_csr;
 
 	csr = *dev->sci_bus_csr;
+	__USE(csr);
 
 	QPRINTF(("mlhdma_xfer %d, csr=%02x\n", len, csr));
 

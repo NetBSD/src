@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.52.2.2 2013/06/23 06:18:27 tls Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.52.2.3 2014/08/20 00:04:27 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.52.2.2 2013/06/23 06:18:27 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.52.2.3 2014/08/20 00:04:27 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -649,7 +649,7 @@ ntfs_readdir(void *v)
 int
 ntfs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -729,6 +729,9 @@ ntfs_lookup(void *v)
 
 	cache_enter(dvp, *ap->a_vpp, cnp->cn_nameptr, cnp->cn_namelen,
 		    cnp->cn_flags);
+
+	if (*ap->a_vpp != dvp)
+		VOP_UNLOCK(*ap->a_vpp);
 
 	return error;
 }
@@ -815,6 +818,8 @@ const struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, genfs_eopnotsupp },	/* setattr */
 	{ &vop_read_desc, (vop_t *) ntfs_read },	/* read */
 	{ &vop_write_desc, (vop_t *) ntfs_write },	/* write */
+	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
+	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, genfs_enoioctl },		/* ioctl */
 	{ &vop_poll_desc, genfs_poll },			/* poll */

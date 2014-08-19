@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.36 2011/08/29 20:38:55 joerg Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.36.8.1 2014/08/20 00:05:13 tls Exp $	*/
 /*	$KAME: rtsold.c,v 1.77 2004/01/03 01:35:13 itojun Exp $	*/
 
 /*
@@ -56,31 +56,11 @@
 
 #include "rtsold.h"
 
-#ifdef __bsdi__
-#define	timeradd(tvp, uvp, vvp)						\
-	do {								\
-		(vvp)->tv_sec = (tvp)->tv_sec + (uvp)->tv_sec;		\
-		(vvp)->tv_usec = (tvp)->tv_usec + (uvp)->tv_usec;	\
-		if ((vvp)->tv_usec >= 1000000) {			\
-			(vvp)->tv_sec++;				\
-			(vvp)->tv_usec -= 1000000;			\
-		}							\
-	} while (/* CONSTCOND */ 0)
-#define	timersub(tvp, uvp, vvp)						\
-	do {								\
-		(vvp)->tv_sec = (tvp)->tv_sec - (uvp)->tv_sec;		\
-		(vvp)->tv_usec = (tvp)->tv_usec - (uvp)->tv_usec;	\
-		if ((vvp)->tv_usec < 0) {				\
-			(vvp)->tv_sec--;				\
-			(vvp)->tv_usec += 1000000;			\
-		}							\
-	} while (/* CONSTCOND */ 0)
-#endif
-
 struct ifinfo *iflist;
 struct timeval tm_max =	{0x7fffffff, 0x7fffffff};
 static int log_upto = 999;
 static int fflag = 0;
+static int isdaemon = 0;
 
 int aflag = 0;
 int dflag = 0;
@@ -96,8 +76,6 @@ int dflag = 0;
  */
 #define PROBE_INTERVAL 60
 
-int main __P((int, char **));
-
 /* static variables and functions */
 static int mobile_node = 0;
 #ifndef SMALL
@@ -106,22 +84,22 @@ static const char *dumpfilename = "/var/run/rtsold.dump"; /* XXX: should be conf
 #endif
 
 #if 0
-static int ifreconfig __P((char *));
+static int ifreconfig(char *);
 #endif
-static int make_packet __P((struct ifinfo *));
-static struct timeval *rtsol_check_timer __P((void));
+static int make_packet(struct ifinfo *);
+static struct timeval *rtsol_check_timer(void);
 
 #ifndef SMALL
-static void rtsold_set_dump_file __P((int));
+static void rtsold_set_dump_file(int);
 #endif
-__dead static void usage(char *);
+__dead static void usage(void);
 
 int
 main(int argc, char **argv)
 {
 	int s, ch, once = 0;
 	struct timeval *timeout;
-	char *argv0;
+	const char *ident;
 	const char *opts;
 	struct pollfd set[2];
 #ifdef USE_RTSOCK
@@ -131,10 +109,11 @@ main(int argc, char **argv)
 	/*
 	 * Initialization
 	 */
-	argv0 = argv[0];
+	ident = getprogname();
+	isdaemon = ident[strlen(ident) - 1] == 'd';
 
 	/* get option */
-	if (argv0 && argv0[strlen(argv0) - 1] != 'd') {
+	if (!isdaemon) {
 		fflag = 1;
 		once = 1;
 		opts = "adD";
@@ -162,7 +141,7 @@ main(int argc, char **argv)
 			once = 1;
 			break;
 		default:
-			usage(argv0);
+			usage();
 			/*NOTREACHED*/
 		}
 	}
@@ -170,7 +149,7 @@ main(int argc, char **argv)
 	argv += optind;
 
 	if ((!aflag && argc == 0) || (aflag && argc != 0)) {
-		usage(argv0);
+		usage();
 		/*NOTREACHED*/
 	}
 
@@ -178,13 +157,6 @@ main(int argc, char **argv)
 	if (dflag == 0)
 		log_upto = LOG_NOTICE;
 	if (!fflag) {
-		char *ident;
-
-		ident = strrchr(argv0, '/');
-		if (!ident)
-			ident = argv0;
-		else
-			ident++;
 		openlog(ident, LOG_NDELAY|LOG_PID, LOG_DAEMON);
 		if (log_upto >= 0)
 			setlogmask(LOG_UPTO(log_upto));
@@ -293,7 +265,9 @@ main(int argc, char **argv)
 			if (ifi == NULL)
 				break;
 		}
-		e = poll(set, 2, timeout ? (timeout->tv_sec * 1000 + timeout->tv_usec / 1000) : INFTIM);
+		e = poll(set, 2, (int)(timeout ?
+		    (timeout->tv_sec * 1000 + timeout->tv_usec / 1000) :
+		    INFTIM));
 		if (e < 1) {
 			if (e < 0 && errno != EINTR) {
 				warnmsg(LOG_ERR, __func__, "poll: %s",
@@ -325,19 +299,19 @@ ifconfig(char *ifname)
 	if ((sdl = if_nametosdl(ifname)) == NULL) {
 		warnmsg(LOG_ERR, __func__,
 		    "failed to get link layer information for %s", ifname);
-		return(-1);
+		return -1;
 	}
 	if (find_ifinfo(sdl->sdl_index)) {
 		warnmsg(LOG_ERR, __func__,
 		    "interface %s was already configured", ifname);
 		free(sdl);
-		return(-1);
+		return -1;
 	}
 
 	if ((ifinfo = malloc(sizeof(*ifinfo))) == NULL) {
 		warnmsg(LOG_ERR, __func__, "memory allocation failed");
 		free(sdl);
-		return(-1);
+		return -1;
 	}
 	memset(ifinfo, 0, sizeof(*ifinfo));
 	ifinfo->sdl = sdl;
@@ -387,12 +361,12 @@ ifconfig(char *ifname)
 		ifinfo->next = iflist;
 	iflist = ifinfo;
 
-	return(0);
+	return 0;
 
 bad:
 	free(ifinfo->sdl);
 	free(ifinfo);
-	return(-1);
+	return -1;
 }
 
 void
@@ -438,20 +412,20 @@ ifreconfig(char *ifname)
 #endif
 
 struct ifinfo *
-find_ifinfo(int ifindex)
+find_ifinfo(size_t ifindex)
 {
 	struct ifinfo *ifi;
 
 	for (ifi = iflist; ifi; ifi = ifi->next)
 		if (ifi->sdl->sdl_index == ifindex)
-			return(ifi);
-	return(NULL);
+			return ifi;
+	return NULL;
 }
 
 static int
 make_packet(struct ifinfo *ifinfo)
 {
-	size_t packlen = sizeof(struct nd_router_solicit), lladdroptlen = 0;
+	size_t packlen = sizeof(struct nd_router_solicit), lladdroptlen;
 	struct nd_router_solicit *rs;
 	u_char *buf;
 
@@ -467,7 +441,7 @@ make_packet(struct ifinfo *ifinfo)
 	if ((buf = malloc(packlen)) == NULL) {
 		warnmsg(LOG_ERR, __func__,
 		    "memory allocation failed for %s", ifinfo->ifname);
-		return(-1);
+		return -1;
 	}
 	ifinfo->rs_data = buf;
 
@@ -483,7 +457,7 @@ make_packet(struct ifinfo *ifinfo)
 	if (lladdroptlen)
 		lladdropt_fill(ifinfo->sdl, (struct nd_opt_hdr *)buf);
 
-	return(0);
+	return 0;
 }
 
 static struct timeval *
@@ -534,7 +508,7 @@ rtsol_check_timer(void)
 					probe = 1;
 					ifinfo->state = IFS_DELAY;
 				} else if (ifinfo->probeinterval &&
-				    (ifinfo->probetimer -=
+				    (ifinfo->probetimer -= (int)
 				    ifinfo->timer.tv_sec) <= 0) {
 					/* probe timer expired */
 					ifinfo->probetimer =
@@ -572,7 +546,7 @@ rtsol_check_timer(void)
 
 	if (timercmp(&rtsol_timer, &tm_max, ==)) {
 		warnmsg(LOG_DEBUG, __func__, "there is no timer");
-		return(NULL);
+		return NULL;
 	} else if (timercmp(&rtsol_timer, &now, <))
 		/* this may occur when the interval is too small */
 		returnval.tv_sec = returnval.tv_usec = 0;
@@ -583,7 +557,7 @@ rtsol_check_timer(void)
 		warnmsg(LOG_DEBUG, __func__, "New timer is %ld:%08ld",
 		    (long)returnval.tv_sec, (long)returnval.tv_usec);
 
-	return(&returnval);
+	return &returnval;
 }
 
 void
@@ -591,7 +565,7 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 {
 #define MILLION 1000000
 #define DADRETRY 10		/* XXX: adhoc */
-	long interval;
+	uint32_t interval;
 	struct timeval now;
 
 	bzero(&ifinfo->timer, sizeof(ifinfo->timer));
@@ -615,7 +589,7 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 	case IFS_DELAY:
 		interval = arc4random() % (MAX_RTR_SOLICITATION_DELAY * MILLION);
 		ifinfo->timer.tv_sec = interval / MILLION;
-		ifinfo->timer.tv_usec = interval % MILLION;
+		ifinfo->timer.tv_usec = (suseconds_t)(interval % MILLION);
 		break;
 	case IFS_PROBE:
 		if (ifinfo->probes < MAX_RTR_SOLICITATIONS)
@@ -669,15 +643,11 @@ rtsold_set_dump_file(int sig)
 #endif
 
 static void
-usage(char *progname)
+usage(void)
 {
-	if (progname && progname[strlen(progname) - 1] != 'd') {
-		fprintf(stderr, "usage: rtsol [-Dd] interface ...\n");
-		fprintf(stderr, "usage: rtsol [-Dd] -a\n");
-	} else {
-		fprintf(stderr, "usage: rtsold [-1Ddfm] interface ...\n");
-		fprintf(stderr, "usage: rtsold [-1Ddfm] -a\n");
-	}
+	const char *opts = isdaemon ? "-1Ddfm" : "Dd";
+	fprintf(stderr, "Usage: %s [%s] interface ...\n", getprogname(), opts);
+	fprintf(stderr, "\t%s [%s] -a\n", getprogname(), opts);
 	exit(1);
 }
 
@@ -685,18 +655,16 @@ void
 warnmsg(int priority, const char *func, const char *msg, ...)
 {
 	va_list ap;
-	char buf[BUFSIZ];
 
 	va_start(ap, msg);
 	if (fflag) {
-		if (priority <= log_upto) {
-			(void)vfprintf(stderr, msg, ap);
-			(void)fprintf(stderr, "\n");
-		}
+		if (priority <= log_upto)
+			vwarnx(msg, ap);
 	} else {
-		snprintf(buf, sizeof(buf), "<%s> %s", func, msg);
-		msg = buf;
-		vsyslog(priority, msg, ap);
+		char *buf;
+		evasprintf(&buf, msg, ap);
+		syslog(priority, "<%s> %s", func, buf);
+		free(buf);
 	}
 	va_end(ap);
 }
@@ -708,10 +676,11 @@ char **
 autoifprobe(void)
 {
 	static char **argv = NULL;
-	static int n = 0;
+	static size_t n = 0;
 	char **a;
-	int i, found;
-	struct ifaddrs *ifap, *ifa, *target;
+	size_t i;
+	int found;
+	struct ifaddrs *ifap, *ifa;
 
 	/* initialize */
 	while (n--)
@@ -725,7 +694,6 @@ autoifprobe(void)
 	if (getifaddrs(&ifap) != 0)
 		return NULL;
 
-	target = NULL;
 	/* find an ethernet */
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		if ((ifa->ifa_flags & IFF_UP) == 0)
@@ -754,20 +722,20 @@ autoifprobe(void)
 		if (n != 0 && dflag > 1)
 			warnx("multiple interfaces found");
 
-		a = (char **)realloc(argv, (n + 1) * sizeof(char **));
+		a = realloc(argv, (n + 1) * sizeof(char **));
 		if (a == NULL)
-			err(1, "realloc");
+			err(EXIT_FAILURE, "realloc");
 		argv = a;
 		argv[n] = strdup(ifa->ifa_name);
 		if (!argv[n])
-			err(1, "strdup");
+			err(EXIT_FAILURE, "strdup");
 		n++;
 	}
 
 	if (n) {
-		a = (char **)realloc(argv, (n + 1) * sizeof(char **));
+		a = realloc(argv, (n + 1) * sizeof(char **));
 		if (a == NULL)
-			err(1, "realloc");
+			err(EXIT_FAILURE, "realloc");
 		argv = a;
 		argv[n] = NULL;
 

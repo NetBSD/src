@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.106.2.1 2013/06/23 06:28:54 tls Exp $
+#	$NetBSD: bsd.x11.mk,v 1.106.2.2 2014/08/20 00:02:38 tls Exp $
 
 .include <bsd.init.mk>
 
@@ -246,7 +246,7 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 # Add a dependancy on the configure file if it exists; this way we
 # will rebuild the .pc file if the version in configure changes.
 .if exists(${PKGDIST.${_pkg}}/configure)
-${_pkg}.pc: ${PKGDIST.${_pkg}}/configure
+${_pkg}.pc: ${PKGDIST.${_pkg}}/configure Makefile
 .endif
 
 .endfor				# }
@@ -255,8 +255,8 @@ ${_pkg}.pc: ${PKGDIST.${_pkg}}/configure
 # The sed script is very, very ugly.  What we actually need is a
 # mknative-xorg script that will generate all the .pc files from
 # running the autoconfigure script.
-# And yes, it has to be splitted in two otherwise it's too long
-# for sed to handle.
+# And yes, it has to be split in multiple parts otherwise it's
+# too long for sed to handle.
 
 # hacky transforms:
 #   @XCBPROTO_VERSION@
@@ -272,6 +272,7 @@ ${_pkg}.pc: ${PKGDIST.${_pkg}}/configure
 		    ${PKGDIST.${.PREFIX}}/configure); \
 	fi; \
 	${TOOL_SED} \
+		${PKGCONFIG_SED_FLAGS} \
 		-e "s,@prefix@,${X11ROOTDIR},; \
 		s,@INSTALL_DIR@,${X11ROOTDIR},; \
 		s,@exec_prefix@,\\$$\{prefix\},; \
@@ -297,6 +298,8 @@ ${_pkg}.pc: ${PKGDIST.${_pkg}}/configure
 		s,@xcbincludedir@,\\$$\{prefix\}/share/xcb,; \
 		s,@fontrootdir@,\\$$\{libdir\}/X11/fonts,; \
 		s,@LIBXML2_LIBS@,,; \
+		s,@LIBXML2_CFLAGS@,,; \
+		s,@ICONV_CFLAGS@,,; \
 		s,@ICONV_LIBS@,,; \
 		s,@NEEDED@,,; \
 		s,@FT2_EXTRA_LIBS@,," \
@@ -319,7 +322,8 @@ ${_pkg}.pc: ${PKGDIST.${_pkg}}/configure
 		s,@GL_LIB@,GL,; \
 		s,@GL_PC_REQ_PRIV@,x11 xext,; \
 		s,@GL_PC_LIB_PRIV@,-lm -lpthread,; \
-		s,@GL_PC_CFLAGS@,," \
+		s,@GL_PC_CFLAGS@,,; \
+		s,@GLX_TLS@,no," \
 		-e "s,@GLU_LIB@,GLU,; \
 		s,@GLU_PC_REQ@,gl,; \
 		s,@GLU_PC_REQ_PRIV@,,; \
@@ -342,11 +346,19 @@ ${_pkg}.pc: ${PKGDIST.${_pkg}}/configure
 		s,@abi_font@,0.6,; \
 		s,@fchown_define@,-DHAS_FCHOWN,; \
 		s,@sticky_bit_define@,-DHAS_STICKY_DIR_BIT," \
+		-e "s,@PKG_CONFIG_LIBS@,${PKG_CONFIG_LIBS},; \
+		s,@PACKAGE@,${PKGDIST},; \
+		s,@PKGCONFIG_REQUIRES@,${PKGCONFIG_REQUIRES},; \
+		s,@PKGCONFIG_REQUIRES_PRIVATELY@,${PKGCONFIG_REQUIRES_PRIVATELY},; \
+		s,@ERRORDBDIR@,${X11LIBDIR},; \
+		s,@EXPAT_CFLAGS@,,; \
+		s,@FREETYPE_CFLAGS@,-I${X11ROOTDIR}/include/freetype2 -I${X11ROOTDIR}/include,; \
+		s,@SDK_REQUIRED_MODULES@,xproto >= 7.0.17 randrproto >= 1.2.99.3 renderproto >= 0.11 xextproto >= 7.1.99 inputproto >= 1.9.99.902 kbproto >= 1.0.3 fontsproto," \
 		-e '/^Libs:/ s%-L\([^ 	]*\)%-Wl,-rpath,\1 &%g' \
 		< ${.IMPSRC} > ${.TARGET}.tmp && \
 	mv -f ${.TARGET}.tmp ${.TARGET}
 
-CLEANDIRFILES+= ${_PKGCONFIG_FILES} ${_PKGCONFIG_FILES:C/$/.tmp/}
+CLEANFILES+= ${_PKGCONFIG_FILES} ${_PKGCONFIG_FILES:C/$/.tmp/}
 .endif
 
 #

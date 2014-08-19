@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.51 2011/07/26 20:51:24 dyoung Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.51.12.1 2014/08/20 00:03:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.51 2011/07/26 20:51:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.51.12.1 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,6 +234,7 @@ le_pci_attach(device_t parent, device_t self, void *aux)
 	pcireg_t csr;
 	int i, rseg;
 	const char *model, *intrstr;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 
@@ -335,7 +336,7 @@ le_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	lesc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, am79900_intr, sc);
 	if (lesc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");

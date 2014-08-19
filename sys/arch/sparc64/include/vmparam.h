@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.32.18.1 2013/02/25 00:28:59 tls Exp $ */
+/*	$NetBSD: vmparam.h,v 1.32.18.2 2014/08/20 00:03:25 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,6 +46,8 @@
 
 #ifndef VMPARAM_H
 #define VMPARAM_H
+
+#define __USE_TOPDOWN_VM
 
 /*
  * We use 8K VM pages on the Sun4U.  Override the PAGE_* definitions

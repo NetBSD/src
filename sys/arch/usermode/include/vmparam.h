@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.16 2012/02/08 17:55:21 reinoud Exp $ */
+/* $NetBSD: vmparam.h,v 1.16.6.1 2014/08/20 00:03:27 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -76,6 +76,15 @@ extern paddr_t kmem_user_start, kmem_user_end;
 #define	MAXTSIZ			(64 * 1024 * 1024)
 #define	MAXDSIZ			(8L * 1024 * 1024 * 1024)
 #define DFLSSIZ			(4 * 1024 * 1024)
+#define	DFLDSIZ			(256 * 1024 * 1024)
+#elif defined(__arm__)
+#define	PAGE_SHIFT		12
+#define	PAGE_SIZE		(1 << PAGE_SHIFT)
+#define	PAGE_MASK		(PAGE_SIZE - 1)
+#define	MAXSSIZ			(64 * 1024 * 1024)
+#define	MAXTSIZ			(64 * 1024 * 1024)
+#define	MAXDSIZ			(3U * 1024 * 1024 * 1024)
+#define DFLSSIZ			(2 * 1024 * 1024)
 #define	DFLDSIZ			(256 * 1024 * 1024)
 #else
 #error "platform not supported"

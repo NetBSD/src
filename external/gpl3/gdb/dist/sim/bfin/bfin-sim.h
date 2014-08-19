@@ -1,6 +1,6 @@
 /* Simulator for Analog Devices Blackfin processors.
 
-   Copyright (C) 2005-2011 Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -44,6 +44,13 @@ struct store {
   bu32 val;
 };
 
+enum bfin_parallel_group {
+  BFIN_PARALLEL_NONE,
+  BFIN_PARALLEL_GROUP0,	/* 32bit slot.  */
+  BFIN_PARALLEL_GROUP1,	/* 16bit group1.  */
+  BFIN_PARALLEL_GROUP2,	/* 16bit group2.  */
+};
+
 /* The KSP/USP handling wrt SP may not follow the hardware exactly (the hw
    looks at current mode and uses either SP or USP based on that.  We instead
    always operate on SP and mirror things in KSP and USP.  During a CEC
@@ -77,6 +84,10 @@ struct bfin_cpu_state
 
   /* The pc currently being interpreted in parallel insns.  */
   bu32 multi_pc;
+
+  /* Some insns are valid in group1, and others in group2, so we
+     need to keep track of the exact slot we're processing.  */
+  enum bfin_parallel_group group;
 
   /* Needed for supporting the DISALGNEXCPT instruction */
   int dis_algn_expt;
@@ -126,6 +137,7 @@ struct bfin_cpu_state
 #define EMUDAT_INREG	(BFIN_CPU_STATE.emudat[0])
 #define EMUDAT_OUTREG	(BFIN_CPU_STATE.emudat[1])
 #define INSN_LEN	(BFIN_CPU_STATE.insn_len)
+#define PARALLEL_GROUP	(BFIN_CPU_STATE.group)
 #define CYCLE_DELAY	(BFIN_CPU_STATE.cycle_delay)
 #define DIS_ALGN_EXPT	(BFIN_CPU_STATE.dis_algn_expt)
 

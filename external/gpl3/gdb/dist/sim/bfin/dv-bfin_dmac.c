@@ -1,6 +1,6 @@
 /* Blackfin Direct Memory Access (DMA) Controller model.
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -34,7 +34,7 @@ struct bfin_dmac
   struct hw *dma_master;
   bool acked;
 
-  const char **pmap;
+  const char * const *pmap;
   unsigned int pmap_count;
 };
 
@@ -84,7 +84,7 @@ bfin_dmac_default_pmap (struct hw *dma)
     return CTYPE;	/* MDMA */
 }
 
-static const char *bfin_dmac_50x_pmap[] =
+static const char * const bfin_dmac_50x_pmap[] =
 {
   "ppi@0", "rsi", "sport@0", "sport@0", "sport@1", "sport@1",
   "spi@0", "spi@1", "uart2@0", "uart2@0", "uart2@1", "uart2@1",
@@ -108,7 +108,7 @@ static const struct hw_port_descriptor bfin_dmac_50x_ports[] =
   { NULL, 0, 0, 0, },
 };
 
-static const char *bfin_dmac_51x_pmap[] =
+static const char * const bfin_dmac_51x_pmap[] =
 {
   "ppi@0", "emac", "emac", "sport@0", "sport@0", "sport@1",
   "sport@1", "spi@0", "uart@0", "uart@0", "uart@1", "uart@1",
@@ -134,7 +134,7 @@ static const struct hw_port_descriptor bfin_dmac_51x_ports[] =
   { NULL, 0, 0, 0, },
 };
 
-static const char *bfin_dmac_52x_pmap[] =
+static const char * const bfin_dmac_52x_pmap[] =
 {
   "ppi@0", "emac", "emac", "sport@0", "sport@0", "sport@1",
   "sport@1", "spi", "uart@0", "uart@0", "uart@1", "uart@1",
@@ -162,7 +162,7 @@ static const struct hw_port_descriptor bfin_dmac_52x_ports[] =
   { NULL, 0, 0, 0, },
 };
 
-static const char *bfin_dmac_533_pmap[] =
+static const char * const bfin_dmac_533_pmap[] =
 {
   "ppi@0", "sport@0", "sport@0", "sport@1", "sport@1", "spi",
   "uart@0", "uart@0",
@@ -181,7 +181,7 @@ static const struct hw_port_descriptor bfin_dmac_533_ports[] =
   { NULL, 0, 0, 0, },
 };
 
-static const char *bfin_dmac_537_pmap[] =
+static const char * const bfin_dmac_537_pmap[] =
 {
   "ppi@0", "emac", "emac", "sport@0", "sport@0", "sport@1",
   "sport@1", "spi", "uart@0", "uart@0", "uart@1", "uart@1",
@@ -204,7 +204,7 @@ static const struct hw_port_descriptor bfin_dmac_537_ports[] =
   { NULL, 0, 0, 0, },
 };
 
-static const char *bfin_dmac0_538_pmap[] =
+static const char * const bfin_dmac0_538_pmap[] =
 {
   "ppi@0", "sport@0", "sport@0", "sport@1", "sport@1", "spi@0",
   "uart@0", "uart@0",
@@ -223,7 +223,7 @@ static const struct hw_port_descriptor bfin_dmac0_538_ports[] =
   { NULL, 0, 0, 0, },
 };
 
-static const char *bfin_dmac1_538_pmap[] =
+static const char * const bfin_dmac1_538_pmap[] =
 {
   "sport@2", "sport@2", "sport@3", "sport@3", NULL, NULL,
   "spi@1", "spi@2", "uart@1", "uart@1", "uart@2", "uart@2",
@@ -244,7 +244,7 @@ static const struct hw_port_descriptor bfin_dmac1_538_ports[] =
   { NULL, 0, 0, 0, },
 };
 
-static const char *bfin_dmac0_54x_pmap[] =
+static const char * const bfin_dmac0_54x_pmap[] =
 {
   "sport@0", "sport@0", "sport@1", "sport@1", "spi@0", "spi@1",
   "uart2@0", "uart2@0", "uart2@1", "uart2@1", "atapi", "atapi",
@@ -267,7 +267,7 @@ static const struct hw_port_descriptor bfin_dmac0_54x_ports[] =
   { NULL, 0, 0, 0, },
 };
 
-static const char *bfin_dmac1_54x_pmap[] =
+static const char * const bfin_dmac1_54x_pmap[] =
 {
   "eppi@0", "eppi@1", "eppi@2", "pixc", "pixc", "pixc",
   "sport@2", "sport@2", "sport@3", "sport@3", "sdh",
@@ -296,7 +296,7 @@ static const struct hw_port_descriptor bfin_dmac1_54x_ports[] =
   { NULL, 0, 0, 0, },
 };
 
-static const char *bfin_dmac0_561_pmap[] =
+static const char * const bfin_dmac0_561_pmap[] =
 {
   "sport@0", "sport@0", "sport@1", "sport@1", "spi", "uart@0", "uart@0",
 };
@@ -313,7 +313,7 @@ static const struct hw_port_descriptor bfin_dmac0_561_ports[] =
   { NULL, 0, 0, 0, },
 };
 
-static const char *bfin_dmac1_561_pmap[] =
+static const char * const bfin_dmac1_561_pmap[] =
 {
   "ppi@0", "ppi@1",
 };
@@ -325,7 +325,7 @@ static const struct hw_port_descriptor bfin_dmac1_561_ports[] =
   { NULL, 0, 0, 0, },
 };
 
-static const char *bfin_dmac_59x_pmap[] =
+static const char * const bfin_dmac_59x_pmap[] =
 {
   "ppi@0", "sport@0", "sport@0", "sport@1", "sport@1", "spi@0",
   "spi@1", "uart@0", "uart@0",

@@ -1,4 +1,4 @@
-# Copyright 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2008-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,28 +16,27 @@
 # This file is part of the GDB testsuite.  It tests 'until' and 
 # 'advance' in reverse debugging.
 
-if ![target_info exists gdb,can_reverse] {
+if ![supports_reverse] {
     return
 }
 
-set testfile "until-reverse"
-set srcfile ${testfile}.c
-set srcfile1 ur1.c
+standard_testfile .c ur1.c
 
-if { [prepare_for_testing $testfile.exp $testfile {until-reverse.c ur1.c} ] } {
+if { [prepare_for_testing $testfile.exp $testfile \
+	  [list $srcfile $srcfile2]] } {
     return -1
 }
 
 set bp_location1  [gdb_get_line_number "set breakpoint 1 here"]
 set bp_location7  [gdb_get_line_number "set breakpoint 7 here"]
-set bp_location9  [gdb_get_line_number "set breakpoint 9 here" "$srcfile1"]
+set bp_location9  [gdb_get_line_number "set breakpoint 9 here" "$srcfile2"]
 set bp_location19 [gdb_get_line_number "set breakpoint 19 here"]
 set bp_location20 [gdb_get_line_number "set breakpoint 20 here"]
 set bp_location21 [gdb_get_line_number "set breakpoint 21 here"]
 
 runto main
 
-if [target_info exists gdb,use_precord] {
+if [supports_process_record] {
     # Activate process record/replay
     gdb_test_no_output "record" "Turn on process record"
 }
@@ -71,7 +70,7 @@ gdb_test "finish" \
 # Advance to a function called by main (marker2)
 #
 gdb_test "advance marker2" \
-    "marker2 .a=43.*$srcfile1:$bp_location9.*" \
+    "marker2 .a=43.*$srcfile2:$bp_location9.*" \
     "advance to marker2"
 
 # Now issue an until with another function, not called by the current
@@ -102,7 +101,7 @@ gdb_test_no_output "set exec-dir reverse" "set reverse execution"
 #
 
 gdb_test "advance marker2" \
-    "marker2 .a=43.*$srcfile1:$bp_location9.*" \
+    "marker2 .a=43.*$srcfile2:$bp_location9.*" \
     "reverse-advance to marker2"
 
 # Finish out to main scope (backward)

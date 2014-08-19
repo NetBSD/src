@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.c,v 1.6 2009/08/12 07:42:11 dholland Exp $	*/
+/*	$NetBSD: extern.c,v 1.6.12.1 2014/08/20 00:00:23 tls Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,13 +32,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: extern.c,v 1.6 2009/08/12 07:42:11 dholland Exp $");
+__RCSID("$NetBSD: extern.c,v 1.6.12.1 2014/08/20 00:00:23 tls Exp $");
 #endif /* not lint */
 
 #include "hunt.h"
 
 #if 0 /*def MONITOR*/ /* apparently unused (XXX?) */
-FLAG Am_monitor = FALSE;		/* current process is a monitor */
+bool Am_monitor = false;		/* current process is a monitor */
 #endif
 
 char Buf[BUFSIZ];			/* general scribbling buffer */
@@ -47,16 +47,11 @@ char Orig_maze[HEIGHT][WIDTH2];		/* the original maze */
 
 struct pollfd fdset[3+MAXPL+MAXMON];
 int Nplayer = 0;			/* number of players */
-int Socket;				/* main socket */
-int Status;				/* stat socket */
 int See_over[NASCII];			/* lookup table for determining whether
 					 * character represents "transparent"
 					 * item */
 
 BULLET *Bullets = NULL;			/* linked list of bullets */
-
-EXPL *Expl[EXPLEN];			/* explosion lists */
-EXPL *Last_expl;			/* last explosion on Expl[0] */
 
 PLAYER Player[MAXPL];			/* all the players */
 PLAYER *End_player = Player;		/* last active player slot */
@@ -69,24 +64,22 @@ PLAYER Monitor[MAXMON];			/* all the monitors */
 PLAYER *End_monitor = Monitor;		/* last active monitor slot */
 #endif
 
-#ifdef VOLCANO
-int volcano = 0;			/* Explosion size */
-#endif
-
-int shot_req[MAXBOMB] = {
+const int shot_req[MAXBOMB] = {
 	BULREQ, GRENREQ, SATREQ,
 	BOMB7REQ, BOMB9REQ, BOMB11REQ,
 	BOMB13REQ, BOMB15REQ, BOMB17REQ,
 	BOMB19REQ, BOMB21REQ,
 };
 
-int shot_type[MAXBOMB] = {
+const int shot_type[MAXBOMB] = {
 	SHOT, GRENADE, SATCHEL,
 	BOMB, BOMB, BOMB,
 	BOMB, BOMB, BOMB,
 	BOMB, BOMB,
 };
 
-int slime_req[MAXSLIME] = {
+#ifdef OOZE
+const int slime_req[MAXSLIME] = {
 	SLIMEREQ, SSLIMEREQ, SLIME2REQ, SLIME3REQ,
 };
+#endif

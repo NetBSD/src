@@ -1,4 +1,4 @@
-/* $Id: common.h,v 1.3.4.2 2013/02/25 00:28:38 tls Exp $ */
+/* $Id: common.h,v 1.3.4.3 2014/08/20 00:02:56 tls Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -48,13 +48,35 @@ do {									\
 	*(volatile uint8_t *)((reg)) = val;				\
 } while (0)
 
-int clock_prep(void);
 int emi_prep(void);
 int pinctrl_prep(void);
-int power_prep(void);
 int args_prep(void);
 void delay(unsigned int);
 void putchar(int);
 int getchar(void);
+
+/* Power prep. */
+void en_vbusvalid(void);
+int vbusvalid(void);
+void power_tune(void);
+void en_4p2_reg(void);
+void en_4p2_to_dcdc(void);
+void power_vddd_from_dcdc(int, int);
+void power_vdda_from_dcdc(int, int);
+void power_vddio_from_dcdc(int, int);
+void power_vddmem(int);
+
+/* Clock prep. */
+void en_pll(void);
+void set_hbus_div(unsigned int);
+void set_cpu_frac(unsigned int);
+void bypass_cpu(void);
+void set_emi_div(unsigned int);
+void set_emi_frac(unsigned int);
+void bypass_emi(void);
+void set_ssp_div(unsigned int);
+void set_io_frac(unsigned int);
+void bypass_ssp(void);
+void bypass_saif(void);
 
 #endif /* !_BOOTIMX23_COMMON_ */

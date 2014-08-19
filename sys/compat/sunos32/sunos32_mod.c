@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_mod.c,v 1.1 2008/11/19 18:36:05 ad Exp $	*/
+/*	$NetBSD: sunos32_mod.c,v 1.1.34.1 2014/08/20 00:03:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_mod.c,v 1.1 2008/11/19 18:36:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_mod.c,v 1.1.34.1 2014/08/20 00:03:33 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -44,19 +44,21 @@ __KERNEL_RCSID(0, "$NetBSD: sunos32_mod.c,v 1.1 2008/11/19 18:36:05 ad Exp $");
 
 #include <compat/netbsd32/netbsd32_exec.h>
 
-MODULE(MODULE_CLASS_MISC, compat_sunos, "compat,compat_netbsd32,exec_aout");
+MODULE(MODULE_CLASS_EXEC, compat_sunos, "compat,compat_netbsd32,exec_aout");
 
-static struct execsw sunos_execsw[] = {
-	{ SUNOS32_AOUT_HDR_SIZE,
-	  exec_sunos32_aout_makecmds,
-	  { NULL },
-	  &emul_sunos,
-	  EXECSW_PRIO_ANY,
-	  0,
-	  netbsd32_copyargs,
-	  NULL,
-	  coredump_netbsd,
-	  exec_setup_stack },
+static struct execsw sunos_execsw = {
+	.es_hdrsz = SUNOS32_AOUT_HDR_SIZE,
+	.es_makecmds = exec_sunos32_aout_makecmds,
+	.u = {
+		.elf_probe_func = NULL,
+	},
+	.es_emul = &emul_sunos,
+	.es_prio = EXECSW_PRIO_ANY,
+	.es_arglen = 0,
+	.es_copyargs = netbsd32_copyargs,
+	.es_setregs = NULL,
+	.es_coredump = coredump_netbsd,
+	.es_setup_stack = exec_setup_stack,
 };
 
 static int
@@ -65,12 +67,10 @@ compat_sunos_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return exec_add(sunos_execsw,
-		    __arraycount(sunos_execsw));
+		return exec_add(&sunos_execsw, 1);
 
 	case MODULE_CMD_FINI:
-		return exec_remove(sunos_execsw,
-		    __arraycount(sunos_execsw));
+		return exec_remove(&sunos_execsw, 1);
 
 	default:
 		return ENOTTY;

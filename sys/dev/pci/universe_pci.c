@@ -1,4 +1,4 @@
-/* $NetBSD: universe_pci.c,v 1.11 2009/11/26 15:17:10 njoly Exp $ */
+/* $NetBSD: universe_pci.c,v 1.11.22.1 2014/08/20 00:03:48 tls Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: universe_pci.c,v 1.11 2009/11/26 15:17:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: universe_pci.c,v 1.11.22.1 2014/08/20 00:03:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,7 @@ univ_pci_attach(struct univ_pci_data *d, struct pci_attach_args *pa, const char 
 	const char *intrstr = NULL;
 	u_int32_t reg;
 	int i;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	d->pc = pc;
 	strncpy(d->devname, name, sizeof(d->devname));
@@ -140,7 +141,7 @@ univ_pci_attach(struct univ_pci_data *d, struct pci_attach_args *pa, const char 
 		aprint_error("%s: couldn't map interrupt\n", name);
 		return (-1);
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	/*
 	 * Use a low interrupt level (the lowest?).
 	 * We will raise before calling a subdevice's handler.

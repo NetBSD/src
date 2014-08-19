@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1.28.1 2013/06/23 06:28:39 tls Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.28.2 2014/08/20 00:00:09 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,8 @@ SCRIPTS=	mkfontdir
 
 mkfontdir: mkfontdir.in
 	${TOOL_SED} -e "s#@bindir@#${X11BINDIR}#" < ${.ALLSRC} > ${.TARGET}
+
+CLEANFILES+=	mkfontdir
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

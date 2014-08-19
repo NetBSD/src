@@ -1,4 +1,4 @@
-/*	$NetBSD: quip_server.c,v 1.5 2009/04/15 00:13:51 lukem Exp $	*/
+/*	$NetBSD: quip_server.c,v 1.5.12.1 2014/08/20 00:05:06 tls Exp $	*/
 /*	$KAME: quip_server.c,v 1.6 2001/08/20 06:41:32 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -213,7 +213,6 @@ query_handle2name(const char *cmd, const char *arg, char *msg, size_t maxmsg)
 	struct fltrinfo *fltrinfo;
 	char *ifname, *class_field, *fltr_field, buf[256], *cp;
 	u_long handle;
-	int len;
 
 	strlcpy(buf, arg, sizeof(buf));
 	cp = buf;
@@ -229,7 +228,7 @@ query_handle2name(const char *cmd, const char *arg, char *msg, size_t maxmsg)
 		if ((fltrinfo = flhandle2fltrinfo(ifinfo, handle)) == NULL)
 			return (-1);
 
-		len = expand_filtername(fltrinfo, msg, maxmsg);
+		(void)expand_filtername(fltrinfo, msg, maxmsg);
 	} else {
 		if (sscanf(class_field, "%lx", &handle) != 1)
 			return (-1);
@@ -238,7 +237,7 @@ query_handle2name(const char *cmd, const char *arg, char *msg, size_t maxmsg)
 		if ((clinfo = clhandle2clinfo(ifinfo, handle)) == NULL)
 				return (-1);
 
-		len = expand_classname(clinfo, msg, maxmsg);
+		(void)expand_classname(clinfo, msg, maxmsg);
 	}
 	strlcat(msg, "\n", maxmsg);
 	return (strlen(msg));
@@ -264,13 +263,13 @@ query_filterspec(const char *cmd, const char *arg, char *msg, size_t maxmsg)
 	struct ifinfo *ifinfo;
 	struct fltrinfo *fltrinfo;
 	struct flow_filter *filt;
-	char *ifname, *class_field, *fltr_field, buf[256], *cp;
+	char *ifname, *fltr_field, buf[256], *cp;
 	u_long handle;
 
 	strlcpy(buf, arg, sizeof(buf));
 	cp = buf;
 	ifname = strsep(&cp, ":");
-	class_field = strsep(&cp, ":");
+	(void)strsep(&cp, ":");
 	fltr_field = cp;
 
 	if (fltr_field == NULL)

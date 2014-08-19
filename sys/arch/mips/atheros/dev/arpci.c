@@ -1,4 +1,4 @@
-/*	$NetBSD: arpci.c,v 1.2 2011/07/10 23:13:22 matt Exp $	*/
+/*	$NetBSD: arpci.c,v 1.2.12.1 2014/08/20 00:03:12 tls Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arpci.c,v 1.2 2011/07/10 23:13:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arpci.c,v 1.2.12.1 2014/08/20 00:03:12 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -207,9 +207,10 @@ arpci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 static const char *
-arpci_intr_string(void *v, pci_intr_handle_t ih)
+arpci_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
-	return NULL;
+	snprintf(buf, len, "fixme!");
+	return buf;
 }
 
 static const struct evcnt *

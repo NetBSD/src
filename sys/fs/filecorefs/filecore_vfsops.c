@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.69.2.1 2013/02/25 00:29:47 tls Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.69.2.2 2014/08/20 00:04:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.69.2.1 2013/02/25 00:29:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.69.2.2 2014/08/20 00:04:26 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -107,31 +107,28 @@ const struct vnodeopv_desc * const filecore_vnodeopv_descs[] = {
 };
 
 struct vfsops filecore_vfsops = {
-	MOUNT_FILECORE,
-	sizeof (struct filecore_args),
-	filecore_mount,
-	filecore_start,
-	filecore_unmount,
-	filecore_root,
-	(void *)eopnotsupp,		/* vfs_quotactl */
-	filecore_statvfs,
-	filecore_sync,
-	filecore_vget,
-	filecore_fhtovp,
-	filecore_vptofh,
-	filecore_init,
-	filecore_reinit,
-	filecore_done,
-	NULL,				/* filecore_mountroot */
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	filecore_vnodeopv_descs,
-	0,
-	{ NULL, NULL }
+	.vfs_name = MOUNT_FILECORE,
+	.vfs_min_mount_data = sizeof (struct filecore_args),
+	.vfs_mount = filecore_mount,
+	.vfs_start = filecore_start,
+	.vfs_unmount = filecore_unmount,
+	.vfs_root = filecore_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = filecore_statvfs,
+	.vfs_sync = filecore_sync,
+	.vfs_vget = filecore_vget,
+	.vfs_fhtovp = filecore_fhtovp,
+	.vfs_vptofh = filecore_vptofh,
+	.vfs_init = filecore_init,
+	.vfs_reinit = filecore_reinit,
+	.vfs_done = filecore_done,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = filecore_vnodeopv_descs
 };
 
 static const struct genfs_ops filecore_genfsops = {
@@ -148,11 +145,6 @@ filecore_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&filecore_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&filecore_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&filecore_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "filecore",
@@ -216,9 +208,7 @@ filecore_mountroot(void)
 		vfs_destroy(mp);
 		return (error);
 	}
-	mutex_enter(&mountlist_lock);
-	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mutex_exit(&mountlist_lock);
+	mountlist_append(mp);
 	(void)filecore_statvfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp, false, NULL);
 	return (0);
@@ -239,6 +229,8 @@ filecore_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	int error;
 	struct filecore_mnt *fcmp = NULL;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
@@ -292,6 +284,7 @@ filecore_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
 		error = filecore_mountfs(devvp, mp, l, args);
 	else {
+		fcmp = VFSTOFILECORE(mp);
 		if (devvp != fcmp->fc_devvp)
 			error = EINVAL;	/* needs translation */
 		else
@@ -456,7 +449,7 @@ filecore_unmount(struct mount *mp, int mntflags)
 	fcmp = VFSTOFILECORE(mp);
 
 	if (fcmp->fc_devvp->v_type != VBAD)
-		fcmp->fc_devvp->v_specmountpoint = NULL;
+		spec_node_setmountedfs(fcmp->fc_devvp, NULL);
 	vn_lock(fcmp->fc_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(fcmp->fc_devvp, FREAD, NOCRED);
 	vput(fcmp->fc_devvp);

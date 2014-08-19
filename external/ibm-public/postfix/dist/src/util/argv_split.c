@@ -1,4 +1,4 @@
-/*	$NetBSD: argv_split.c,v 1.1.1.1 2009/06/23 10:08:58 tron Exp $	*/
+/*	$NetBSD: argv_split.c,v 1.1.1.1.16.1 2014/08/19 23:59:45 tls Exp $	*/
 
 /*++
 /* NAME
@@ -10,9 +10,11 @@
 /*
 /*	ARGV	*argv_split(string, delim)
 /*	const char *string;
+/*	const char *delim;
 /*
 /*	ARGV	*argv_split_count(string, delim, count)
 /*	const char *string;
+/*	const char *delim;
 /*	ssize_t	count;
 /*
 /*	ARGV	*argv_split_append(argv, string, delim)

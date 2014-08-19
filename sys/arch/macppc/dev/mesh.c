@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.35 2011/06/30 00:52:57 matt Exp $	*/
+/*	$NetBSD: mesh.c,v 1.35.12.1 2014/08/20 00:03:11 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.35 2011/06/30 00:52:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.35.12.1 2014/08/20 00:03:11 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -321,7 +321,7 @@ mesh_intr(void *arg)
 	struct mesh_softc *sc = arg;
 	struct mesh_scb *scb;
 	int fifocnt;
-	u_char intr, exception, error, status0, status1;
+	u_char intr, exception, error, status0;
 
 	intr = mesh_read_reg(sc, MESH_INTERRUPT);
 	if (intr == 0) {
@@ -332,7 +332,7 @@ mesh_intr(void *arg)
 	exception = mesh_read_reg(sc, MESH_EXCEPTION);
 	error = mesh_read_reg(sc, MESH_ERROR);
 	status0 = mesh_read_reg(sc, MESH_BUS_STATUS0);
-	status1 = mesh_read_reg(sc, MESH_BUS_STATUS1);
+	(void)mesh_read_reg(sc, MESH_BUS_STATUS1);
 
 	/* clear interrupt */
 	mesh_set_reg(sc, MESH_INTERRUPT, intr);
@@ -1038,15 +1038,12 @@ mesh_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *a
 void
 mesh_sched(struct mesh_softc *sc)
 {
-	struct scsipi_xfer *xs;
 	struct mesh_scb *scb;
 
 	scb = sc->ready_scb.tqh_first;
 start:
 	if (scb == NULL)
 		return;
-
-	xs = scb->xs;
 
 	if (sc->sc_nexus == NULL) {
 		TAILQ_REMOVE(&sc->ready_scb, scb, chain);

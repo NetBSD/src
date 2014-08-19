@@ -1,4 +1,4 @@
-# $NetBSD: files.npf,v 1.7.2.3 2013/06/23 06:20:25 tls Exp $
+# $NetBSD: files.npf,v 1.7.2.4 2014/08/20 00:04:35 tls Exp $
 #
 # Public Domain.
 #
@@ -14,15 +14,16 @@ file	net/npf/npf.c				npf
 file	net/npf/npf_conf.c			npf
 file	net/npf/npf_ctl.c			npf
 file	net/npf/npf_handler.c			npf
-file	net/npf/npf_instr.c			npf
 file	net/npf/npf_mbuf.c			npf
-file	net/npf/npf_processor.c			npf
+file	net/npf/npf_bpf.c			npf
 file	net/npf/npf_ruleset.c			npf
 file	net/npf/npf_rproc.c			npf
 file	net/npf/npf_tableset.c			npf
 file	net/npf/npf_tableset_ptree.c		npf
+file	net/npf/npf_if.c			npf
 file	net/npf/npf_inet.c			npf
-file	net/npf/npf_session.c			npf
+file	net/npf/npf_conn.c			npf
+file	net/npf/npf_conndb.c			npf
 file	net/npf/npf_state.c			npf
 file	net/npf/npf_state_tcp.c			npf
 file	net/npf/npf_nat.c			npf

@@ -32,8 +32,9 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_usb.c,v 1.1.2.2 2013/02/25 00:28:25 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_usb.c,v 1.1.2.3 2014/08/20 00:02:45 tls Exp $");
 
+#include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/intr.h>
@@ -124,10 +125,11 @@ ohci_bcmusb_attach(device_t parent, device_t self, void *aux)
 	int error = ohci_init(sc);
 	if (error != USBD_NORMAL_COMPLETION) {
 		aprint_error_dev(self, "init failed, error=%d\n", error);
-	} else {
-		/* Attach usb device. */
-		sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
+		return;
 	}
+
+	/* Attach usb device. */
+	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
 }
 
 #ifdef EHCI_DEBUG
@@ -183,10 +185,10 @@ ehci_bcmusb_attach(device_t parent, device_t self, void *aux)
 	int error = ehci_init(sc);
 	if (error != USBD_NORMAL_COMPLETION) {
 		aprint_error_dev(self, "init failed, error=%d\n", error);
-	} else {
-		/* Attach usb device. */
-		sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
+		return;
 	}
+	/* Attach usb device. */
+	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
 }
 
 /*
@@ -227,6 +229,8 @@ bcmusb_ccb_match(device_t parent, cfdata_t cf, void *aux)
 	return 1;
 }
 
+#define	OHCI_OFFSET	(OHCI_BASE - EHCI_BASE)
+
 void
 bcmusb_ccb_attach(device_t parent, device_t self, void *aux)
 {
@@ -237,10 +241,10 @@ bcmusb_ccb_attach(device_t parent, device_t self, void *aux)
 	usbsc->usbsc_bst = ccbaa->ccbaa_ccb_bst;
 	usbsc->usbsc_dmat = ccbaa->ccbaa_dmat;
 
-	bus_space_subregion(usbsc->usbsc_bst, ccbaa->ccbaa_ccb_bsh, EHCI_BASE,
-	    0x1000, &usbsc->usbsc_ehci_bsh);
-	bus_space_subregion(usbsc->usbsc_bst, ccbaa->ccbaa_ccb_bsh, OHCI_BASE,
-	    0x1000, &usbsc->usbsc_ohci_bsh);
+	bus_space_subregion(usbsc->usbsc_bst, ccbaa->ccbaa_ccb_bsh,
+	    loc->loc_offset, 0x1000, &usbsc->usbsc_ehci_bsh);
+	bus_space_subregion(usbsc->usbsc_bst, ccbaa->ccbaa_ccb_bsh,
+	    loc->loc_offset + OHCI_OFFSET, 0x1000, &usbsc->usbsc_ohci_bsh);
 
 	/*
 	 * Bring the PHYs out of reset.

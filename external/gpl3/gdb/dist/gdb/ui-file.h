@@ -1,6 +1,5 @@
 /* UI_FILE - a generic STDIO like output stream.
-   Copyright (C) 1999, 2000, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -45,6 +44,17 @@ typedef void (ui_file_fputs_ftype) (const char *, struct ui_file *stream);
 extern void set_ui_file_fputs (struct ui_file *stream,
 			       ui_file_fputs_ftype *fputs);
 
+/* This version of "write" is safe for use in signal handlers.
+   It's not guaranteed that all existing output will have been
+   flushed first.
+   Implementations are also free to ignore some or all of the request.
+   fputs_async is not provided as the async versions are rarely used,
+   no point in having both for a rarely used interface.  */
+typedef void (ui_file_write_async_safe_ftype)
+  (struct ui_file *stream, const char *buf, long length_buf);
+extern void set_ui_file_write_async_safe
+  (struct ui_file *stream, ui_file_write_async_safe_ftype *write_async_safe);
+
 typedef long (ui_file_read_ftype) (struct ui_file *stream,
 				   char *buf, long length_buf);
 extern void set_ui_file_read (struct ui_file *stream,
@@ -69,6 +79,11 @@ typedef void (ui_file_delete_ftype) (struct ui_file * stream);
 extern void set_ui_file_data (struct ui_file *stream, void *data,
 			      ui_file_delete_ftype *delete);
 
+typedef int (ui_file_fseek_ftype) (struct ui_file *stream, long offset,
+				   int whence);
+extern void set_ui_file_fseek (struct ui_file *stream,
+			       ui_file_fseek_ftype *fseek_ptr);
+
 extern void *ui_file_data (struct ui_file *file);
 
 
@@ -82,6 +97,9 @@ extern int ui_file_isatty (struct ui_file *);
 
 extern void ui_file_write (struct ui_file *file, const char *buf,
 			   long length_buf);
+
+extern void ui_file_write_async_safe (struct ui_file *file, const char *buf,
+				      long length_buf);
 
 /* NOTE: copies left to right.  */
 extern void ui_file_put (struct ui_file *src,
@@ -100,6 +118,8 @@ extern char *ui_file_obsavestring (struct ui_file *file,
 
 extern long ui_file_read (struct ui_file *file, char *buf, long length_buf);
 
+extern int ui_file_fseek (struct ui_file *file, long offset, int whence);
+
 /* Create/open a memory based file.  Can be used as a scratch buffer
    for collecting output.  */
 extern struct ui_file *mem_fileopen (void);
@@ -109,14 +129,18 @@ extern struct ui_file *mem_fileopen (void);
 /* Open/create a STDIO based UI_FILE using the already open FILE.  */
 extern struct ui_file *stdio_fileopen (FILE *file);
 
+/* Create a ui_file from stderr.  */
+extern struct ui_file *stderr_fileopen (void);
+
+
 /* Open NAME returning an STDIO based UI_FILE.  */
-extern struct ui_file *gdb_fopen (char *name, char *mode);
+extern struct ui_file *gdb_fopen (const char *name, const char *mode);
 
 /* Create a file which writes to both ONE and TWO.  CLOSE_ONE
    and CLOSE_TWO indicate whether the original files should be
    closed when the new file is closed.  */
-struct ui_file *tee_file_new (struct ui_file *one,
-			      int close_one,
-			      struct ui_file *two,
-			      int close_two);
+extern struct ui_file *tee_file_new (struct ui_file *one,
+				     int close_one,
+				     struct ui_file *two,
+				     int close_two);
 #endif

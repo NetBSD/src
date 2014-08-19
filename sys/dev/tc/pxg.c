@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxg.c,v 1.34 2012/03/13 18:40:34 elad Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.34.2.1 2014/08/20 00:03:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.34 2012/03/13 18:40:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.34.2.1 2014/08/20 00:03:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,6 +338,7 @@ pxg_pbuf_post(struct stic_info *si, uint32_t *buf)
 			sr->sr_ipdvint = STIC_INT_P_WE;
 			tc_wmb();
 			junk = *poll;
+			__USE(junk);
 			return (0);
 		}
 		DELAY(STAMP_DELAY);

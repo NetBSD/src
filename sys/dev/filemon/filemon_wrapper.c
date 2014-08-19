@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.3.12.1 2013/02/25 00:29:13 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.3.12.2 2014/08/20 00:03:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -44,7 +44,6 @@ filemon_wrapper_chdir(struct lwp * l, const struct sys_chdir_args * uap,
 	int ret;
 	int error;
 	size_t done;
-	size_t len;
 	struct filemon *filemon;
 	
 	if ((ret = sys_chdir(l, uap, retval)) == 0) {
@@ -55,13 +54,9 @@ filemon_wrapper_chdir(struct lwp * l, const struct sys_chdir_args * uap,
 			error = copyinstr(SCARG(uap, path), filemon->fm_fname1,
 			    sizeof(filemon->fm_fname1), &done);
 			if (error == 0) {
-				len = snprintf(filemon->fm_msgbufr,
-				    sizeof(filemon->fm_msgbufr),
+				filemon_printf(filemon,
 				    "C %d %s\n",
 				    curproc->p_pid, filemon->fm_fname1);
-
-				filemon_output(filemon, filemon->fm_msgbufr,
-				    len);
 			}
 			rw_exit(&filemon->fm_mtx);
 		}
@@ -77,7 +72,6 @@ filemon_wrapper_execve(struct lwp * l, struct sys_execve_args * uap,
 	int ret;
 	int error;
 	size_t done;
-	size_t len;
 	struct filemon *filemon;
 	
 	error = copyinstr(SCARG(uap, path), fname, sizeof(fname), &done);
@@ -86,12 +80,8 @@ filemon_wrapper_execve(struct lwp * l, struct sys_execve_args * uap,
 		filemon = filemon_lookup(curproc);
 
 		if (filemon) {
-
-			len = snprintf(filemon->fm_msgbufr, sizeof(filemon->fm_msgbufr),
-			    "E %d %s\n",
+			filemon_printf(filemon, "E %d %s\n",
 			    curproc->p_pid, fname);
-
-			filemon_output(filemon, filemon->fm_msgbufr, len);
 			rw_exit(&filemon->fm_mtx);
 		}
 	}
@@ -103,20 +93,14 @@ static int
 filemon_wrapper_fork(struct lwp * l, const void *v, register_t * retval)
 {
 	int ret;
-	size_t len;
 	struct filemon *filemon;
 
 	if ((ret = sys_fork(l, v, retval)) == 0) {
 		filemon = filemon_lookup(curproc);
 
 		if (filemon) {
-			len = snprintf(filemon->fm_msgbufr,
-			    sizeof(filemon->fm_msgbufr),
-			    "F %d %ld\n",
+			filemon_printf(filemon, "F %d %ld\n",
 			    curproc->p_pid, (long) retval[0]);
-
-			filemon_output(filemon, filemon->fm_msgbufr, len);
-
 			rw_exit(&filemon->fm_mtx);
 		}
 	}
@@ -127,20 +111,14 @@ static int
 filemon_wrapper_vfork(struct lwp * l, const void *v, register_t * retval)
 {
 	int ret;
-	size_t len;
 	struct filemon *filemon;
 
 	if ((ret = sys_vfork(l, v, retval)) == 0) {
 		filemon = filemon_lookup(curproc);
 
 		if (filemon) {
-			len = snprintf(filemon->fm_msgbufr,
-			    sizeof(filemon->fm_msgbufr),
-			    "F %d %ld\n",
+			filemon_printf(filemon, "F %d %ld\n",
 			    curproc->p_pid, (long) retval[0]);
-
-			filemon_output(filemon, filemon->fm_msgbufr, len);
-
 			rw_exit(&filemon->fm_mtx);
 		}
 	}
@@ -154,7 +132,6 @@ filemon_wrapper_open(struct lwp * l, struct sys_open_args * uap,
 	int ret;
 	int error;
 	size_t done;
-	size_t len;
 	struct filemon *filemon;
 
 	if ((ret = sys_open(l, uap, retval)) == 0) {
@@ -166,23 +143,15 @@ filemon_wrapper_open(struct lwp * l, struct sys_open_args * uap,
 			if (error == 0) {
 				if (SCARG(uap, flags) & O_RDWR) {
 					/* we want a separate R record */
-					len = snprintf(filemon->fm_msgbufr,
-						sizeof(filemon->fm_msgbufr),
+					filemon_printf(filemon,
 						"R %d %s\n",
 						curproc->p_pid,
 						filemon->fm_fname1);
-
-					filemon_output(filemon,
-						filemon->fm_msgbufr, len);
 				}			
-				len = snprintf(filemon->fm_msgbufr,
-				    sizeof(filemon->fm_msgbufr),
+				filemon_printf(filemon,
 				    "%c %d %s\n",
 				    (SCARG(uap, flags) & O_ACCMODE) ? 'W' : 'R',
 				    curproc->p_pid, filemon->fm_fname1);
-
-				filemon_output(filemon, filemon->fm_msgbufr,
-				    len);
 			}
 			rw_exit(&filemon->fm_mtx);
 		}
@@ -197,7 +166,6 @@ filemon_wrapper_rename(struct lwp * l, struct sys_rename_args * uap,
 	int ret;
 	int error;
 	size_t done;
-	size_t len;
 	struct filemon *filemon;
 
 	if ((ret = sys_rename(l, uap, retval)) == 0) {
@@ -211,14 +179,10 @@ filemon_wrapper_rename(struct lwp * l, struct sys_rename_args * uap,
 				    filemon->fm_fname2,
 				    sizeof(filemon->fm_fname2), &done);
 			if (error == 0) {
-				len = snprintf(filemon->fm_msgbufr,
-				    sizeof(filemon->fm_msgbufr),
+				filemon_printf(filemon,
 				    "M %d '%s' '%s'\n",
 				    curproc->p_pid, filemon->fm_fname1,
 				    filemon->fm_fname2);
-
-				filemon_output(filemon, filemon->fm_msgbufr,
-				    len);
 			}
 			rw_exit(&filemon->fm_mtx);
 		}
@@ -233,7 +197,6 @@ filemon_wrapper_link(struct lwp * l, struct sys_link_args * uap,
 	int ret;
 	int error;
 	size_t done;
-	size_t len;
 	struct filemon *filemon;
 
 	if ((ret = sys_link(l, uap, retval)) == 0) {
@@ -248,13 +211,9 @@ filemon_wrapper_link(struct lwp * l, struct sys_link_args * uap,
 				    filemon->fm_fname2,
 				    sizeof(filemon->fm_fname2), &done);
 			if (error == 0) {
-				len = snprintf(filemon->fm_msgbufr,
-				    sizeof(filemon->fm_msgbufr), "L %d '%s' '%s'\n",
+				filemon_printf(filemon, "L %d '%s' '%s'\n",
 				    curproc->p_pid, filemon->fm_fname1,
 				    filemon->fm_fname2);
-
-				filemon_output(filemon, filemon->fm_msgbufr,
-				    len);
 			}
 			rw_exit(&filemon->fm_mtx);
 		}
@@ -269,7 +228,6 @@ filemon_wrapper_symlink(struct lwp * l, struct sys_symlink_args * uap,
 	int ret;
 	int error;
 	size_t done;
-	size_t len;
 	struct filemon *filemon;
 
 	if ((ret = sys_symlink(l, uap, retval)) == 0) {
@@ -284,14 +242,9 @@ filemon_wrapper_symlink(struct lwp * l, struct sys_symlink_args * uap,
 				    filemon->fm_fname2,
 				    sizeof(filemon->fm_fname2), &done);
 			if (error == 0) {
-				len = snprintf(filemon->fm_msgbufr,
-				    sizeof(filemon->fm_msgbufr),
-				    "L %d '%s' '%s'\n",
+				filemon_printf(filemon, "L %d '%s' '%s'\n",
 				    curproc->p_pid, filemon->fm_fname1,
 				    filemon->fm_fname2);
-
-				filemon_output(filemon, filemon->fm_msgbufr,
-				    len);
 			}
 			rw_exit(&filemon->fm_mtx);
 		}
@@ -304,24 +257,16 @@ static void
 filemon_wrapper_sys_exit(struct lwp * l, struct sys_exit_args * uap,
     register_t * retval)
 {
-	size_t len;
 	struct filemon *filemon;
 
 	filemon = filemon_lookup(curproc);
 
 	if (filemon) {
-		len = snprintf(filemon->fm_msgbufr,
-		    sizeof(filemon->fm_msgbufr), "X %d %d\n",
+		filemon_printf(filemon, "X %d %d\n",
 		    curproc->p_pid, SCARG(uap, rval));
-
-		filemon_output(filemon, filemon->fm_msgbufr, len);
-
 		/* Check if the monitored process is about to exit. */
 		if (filemon->fm_pid == curproc->p_pid) {
-			len = snprintf(filemon->fm_msgbufr,
-			    sizeof(filemon->fm_msgbufr), "# Bye bye\n");
-
-			filemon_output(filemon, filemon->fm_msgbufr, len);
+			filemon_printf(filemon, "# Bye bye\n");
 		}
 		rw_exit(&filemon->fm_mtx);
 	}
@@ -335,7 +280,6 @@ filemon_wrapper_unlink(struct lwp * l, struct sys_unlink_args * uap,
 	int ret;
 	int error;
 	size_t done;
-	size_t len;
 	struct filemon *filemon;
 
 	if ((ret = sys_unlink(l, uap, retval)) == 0) {
@@ -346,13 +290,8 @@ filemon_wrapper_unlink(struct lwp * l, struct sys_unlink_args * uap,
 			    filemon->fm_fname1,
 			    sizeof(filemon->fm_fname1), &done);
 			if (error == 0) {
-				len = snprintf(filemon->fm_msgbufr,
-				    sizeof(filemon->fm_msgbufr),
-				    "D %d %s\n",
+				filemon_printf(filemon, "D %d %s\n",
 				    curproc->p_pid, filemon->fm_fname1);
-
-				filemon_output(filemon, filemon->fm_msgbufr,
-				    len);
 			}
 			rw_exit(&filemon->fm_mtx);
 		}

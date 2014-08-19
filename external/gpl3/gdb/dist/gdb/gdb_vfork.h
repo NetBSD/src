@@ -1,6 +1,5 @@
 /* GDB-friendly replacement for <vfork.h>.
-   Copyright (C) 2001, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

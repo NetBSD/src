@@ -1,4 +1,4 @@
-/*	$NetBSD: orionreg.h,v 1.1 2010/10/03 05:49:24 kiyohara Exp $	*/
+/*	$NetBSD: orionreg.h,v 1.1.24.1 2014/08/20 00:02:47 tls Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -201,6 +201,6 @@
 /*
  * Cryptographic Engine and Security Accelerator Registers
  */
-#define ORION_CESA_BASE		(ORION_UNITID2PHYS(CRYPT))	/* 0x90000 */
+#define ORION_CESA_BASE		(ORION_UNITID2PHYS(CRYPT) + 0xd000)/* 0x9d000 */
 
 #endif	/* _ORIONREG_H_ */

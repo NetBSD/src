@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom_s3c2440.c,v 1.2.10.1 2012/11/20 03:01:07 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom_s3c2440.c,v 1.2.10.2 2014/08/20 00:02:47 tls Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -126,6 +126,24 @@ sscom_match(device_t parent, struct cfdata *cf, void *aux)
 	return (unit == 0 || unit == 1 || unit == 2);
 }
 
+#define	_sscom_intbit(irqno)	(1<<((irqno)-S3C2440_SUBIRQ_MIN))
+
+static void
+s3c2440_change_txrx_interrupts(struct sscom_softc *sc, bool unmask_p,
+    u_int flags)
+{
+	int intrbits = 0;
+	if (flags & SSCOM_HW_RXINT)
+		intrbits |= _sscom_intbit((sc)->sc_rx_irqno);
+	if (flags & SSCOM_HW_TXINT)
+		intrbits |= _sscom_intbit((sc)->sc_tx_irqno);
+	if (unmask_p) {
+		s3c2440_unmask_subinterrupts(intrbits);
+	} else {
+		s3c2440_mask_subinterrupts(intrbits);
+	}
+}
+
 static void
 sscom_attach(device_t parent, device_t self, void *aux)
 {
@@ -142,6 +160,8 @@ sscom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = s3c2xx0_softc->sc_iot;
 	sc->sc_unit = unit;
 	sc->sc_frequency = s3c2xx0_softc->sc_pclk;
+
+	sc->sc_change_txrx_interrupts = s3c2440_change_txrx_interrupts;
 
 	sc->sc_rx_irqno = s3c2440_uart_config[unit].rx_int;
 	sc->sc_tx_irqno = s3c2440_uart_config[unit].tx_int;

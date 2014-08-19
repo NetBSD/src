@@ -1,5 +1,4 @@
-# Copyright 2004, 2006, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 2004-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,18 +16,12 @@
 # This file was written by Jeff Johnston. (jjohnstn@redhat.com)
 #
 
-if $tracelevel then {
-	strace $tracelevel
-}
-
 load_lib "java.exp"
 
 if { [skip_java_tests] } { continue }
 
-set testfile "jprint"
-set srcfile ${srcdir}/$subdir/${testfile}.java
-set binfile ${objdir}/${subdir}/${testfile}
-if {[compile_java_from_source ${srcfile} ${binfile} "-g"] != ""} {
+standard_testfile .java
+if {[compile_java_from_source $srcdir/$subdir/$srcfile $binfile "-g"] != ""} {
     continue
 }
 
@@ -50,24 +43,35 @@ if [set_lang_java] then {
     # signature.
     runto_main
     set function "${testfile}.main(java.lang.String\[\])"
-    gdb_breakpoint "$function" { allow-pending }
-    gdb_breakpoint "${function}void" { allow-pending }
+    gdb_breakpoint "$function" allow-pending
+    gdb_breakpoint "${function}void" allow-pending
     gdb_continue_to_breakpoint $function
 
-    gdb_test "p jvclass.addprint(4,5,6)" "sum is 15\r\n.*" "unambiguous static call"
+    gdb_test "p jvclass.addprint(4,5,6)" " = 15" "unambiguous static call"
 
     gdb_test "next" ""
     gdb_test "next" ""
 
-    gdb_test "p x.print(44)" "x is 44\r\n.*" "single argument print call"
-    gdb_test "p x.print(22,33)" "y is 33\r\n.*" "double argument print call"
-    gdb_test "call x.dothat(55)" "new value is 58\r\n.*= 62.*" "virtual fn call"
-    gdb_test "p x.addprint(1,2,3)" "sum is 6\r\n.*" "inherited static call"
-    gdb_test "call x.addk(44)" "adding k gives 121\r\n.*= 121.*" "inherited virtual fn call"
+    gdb_test "p x.print(44)" " = 44" "single argument call"
+    gdb_test "p x.print(22,33)" " = 33" "double argument call"
+    gdb_test "p x.dothat(55)" " = 62.*" "virtual fn call"
+    gdb_test "p x.addprint(1,2,3)" "= 6" "inherited static call"
+    gdb_test "p x.addk(44)" " = 121" "inherited virtual fn call"
 
     # Regression test for a crasher.
     # GCC does not output location information for static class members,
     # so GDB will report these as "optimized out". See gcc/43260.
     setup_xfail *-*-* gcc/43260
     gdb_test "print *jprint.props" " = .*" "print a java.util.Properties"
+
+    set test "print a java.lang.String"
+    gdb_test_multiple "print jprint.hi" $test {
+	-re " = java.lang.String \"hi maude\"\r\n$gdb_prompt $" {
+	    pass $test
+	}
+	-re "There is no member named data\\.\r\n$gdb_prompt $" {
+	    # GCJ system debug info for java.lang.String is not installed.
+	    xfail $test
+	}
+    }
 }

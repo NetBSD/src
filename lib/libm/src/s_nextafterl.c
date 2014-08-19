@@ -1,4 +1,4 @@
-/*	$NetBSD: s_nextafterl.c,v 1.2.12.1 2013/02/25 00:27:58 tls Exp $	*/
+/*	$NetBSD: s_nextafterl.c,v 1.2.12.2 2014/08/20 00:02:18 tls Exp $	*/
 
 /* @(#)s_nextafter.c 5.1 93/09/24 */
 /*
@@ -13,11 +13,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_nextafterl.c,v 1.2.12.1 2013/02/25 00:27:58 tls Exp $");
+__RCSID("$NetBSD: s_nextafterl.c,v 1.2.12.2 2014/08/20 00:02:18 tls Exp $");
 
 #include <float.h>
 #include <math.h>
 #include <machine/ieee.h>
+
+#ifdef __HAVE_LONG_DOUBLE
 
 #ifdef EXT_EXP_INFNAN
 #if LDBL_MAX_EXP != 0x4000
@@ -46,9 +48,9 @@ nextafterl(long double x, long double y)
 	ux.extu_ld = x;
 	uy.extu_ld = y;
 
-	if ((ux.extu_exp == EXT_EXP_NAN &&
+	if ((ux.extu_exp == EXT_EXP_INFNAN &&
 		((ux.extu_frach &~ LDBL_NBIT)|ux.extu_fracl) != 0) ||
-	    (uy.extu_exp == EXT_EXP_NAN &&
+	    (uy.extu_exp == EXT_EXP_INFNAN &&
 		((uy.extu_frach &~ LDBL_NBIT)|uy.extu_fracl) != 0))
 		return x+y;			/* x or y is nan */
 
@@ -83,7 +85,7 @@ nextafterl(long double x, long double y)
 		}
 	}
 
-	if (ux.extu_exp == EXT_EXP_INF)
+	if (ux.extu_exp == EXT_EXP_INFNAN)
 		return x+x;			/* overflow  */
 
 	if (ux.extu_exp == 0) {			/* underflow */
@@ -98,3 +100,5 @@ nextafterl(long double x, long double y)
 	return ux.extu_ld;
 }
 #endif
+
+#endif /* __HAVE_LONG_DOUBLE */

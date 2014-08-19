@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_readwrite.c,v 1.4.2.2 2013/06/23 06:18:39 tls Exp $	*/
+/*	$NetBSD: ulfs_readwrite.c,v 1.4.2.3 2014/08/20 00:04:45 tls Exp $	*/
 /*  from NetBSD: ufs_readwrite.c,v 1.105 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.4.2.2 2013/06/23 06:18:39 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.4.2.3 2014/08/20 00:04:45 tls Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -69,7 +69,6 @@ READ(void *v)
 	struct vnode *vp;
 	struct inode *ip;
 	struct uio *uio;
-	struct ulfsmount *ump;
 	struct buf *bp;
 	FS *fs;
 	vsize_t bytelen;
@@ -81,7 +80,7 @@ READ(void *v)
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	ump = ip->i_ump;
+	fs = ip->I_FS;
 	uio = ap->a_uio;
 	ioflag = ap->a_ioflag;
 	error = 0;
@@ -91,14 +90,13 @@ READ(void *v)
 		panic("%s: mode", READ_S);
 
 	if (vp->v_type == VLNK) {
-		if (ip->i_size < ump->um_maxsymlinklen ||
-		    (ump->um_maxsymlinklen == 0 && DIP(ip, blocks) == 0))
+		if (ip->i_size < fs->um_maxsymlinklen ||
+		    (fs->um_maxsymlinklen == 0 && DIP(ip, blocks) == 0))
 			panic("%s: short symlink", READ_S);
 	} else if (vp->v_type != VREG && vp->v_type != VDIR)
 		panic("%s: type %d", READ_S, vp->v_type);
 #endif
-	fs = ip->I_FS;
-	if ((u_int64_t)uio->uio_offset > ump->um_maxfilesize)
+	if ((u_int64_t)uio->uio_offset > fs->um_maxfilesize)
 		return (EFBIG);
 	if (uio->uio_resid == 0)
 		return (0);
@@ -183,7 +181,7 @@ READ(void *v)
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
 		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC) {
-			error = ULFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+			error = lfs_update(vp, NULL, NULL, UPDATE_WAIT);
 		}
 	}
 
@@ -220,14 +218,12 @@ WRITE(void *v)
 #ifdef LFS_READWRITE
 	bool need_unreserve = false;
 #endif
-	struct ulfsmount *ump;
 
 	cred = ap->a_cred;
 	ioflag = ap->a_ioflag;
 	uio = ap->a_uio;
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	ump = ip->i_ump;
 
 	KASSERT(vp->v_size == ip->i_size);
 #ifdef DIAGNOSTIC
@@ -254,7 +250,7 @@ WRITE(void *v)
 
 	fs = ip->I_FS;
 	if (uio->uio_offset < 0 ||
-	    (u_int64_t)uio->uio_offset + uio->uio_resid > ump->um_maxfilesize)
+	    (u_int64_t)uio->uio_offset + uio->uio_resid > fs->um_maxfilesize)
 		return (EFBIG);
 #ifdef LFS_READWRITE
 	/* Disallow writes to the Ifile, even if noschg flag is removed */
@@ -406,6 +402,8 @@ WRITE(void *v)
 			if (error)
 				break;
 		}
+#else
+		__USE(async);
 #endif
 	}
 	if (error == 0 && ioflag & IO_SYNC) {
@@ -436,7 +434,7 @@ WRITE(void *v)
 			break;
 		need_unreserve = true;
 #endif
-		error = ULFS_BALLOC(vp, uio->uio_offset, xfersize,
+		error = lfs_balloc(vp, uio->uio_offset, xfersize,
 		    ap->a_cred, flags, &bp);
 
 		if (error)
@@ -514,11 +512,11 @@ out:
 	if (resid > uio->uio_resid)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error) {
-		(void) ULFS_TRUNCATE(vp, osize, ioflag & IO_SYNC, ap->a_cred);
+		(void) lfs_truncate(vp, osize, ioflag & IO_SYNC, ap->a_cred);
 		uio->uio_offset -= resid - uio->uio_resid;
 		uio->uio_resid = resid;
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC) {
-		error = ULFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+		error = lfs_update(vp, NULL, NULL, UPDATE_WAIT);
 	} else {
 		/* nothing */
 	}

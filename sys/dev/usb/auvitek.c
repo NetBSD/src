@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek.c,v 1.8 2012/01/09 10:57:34 jmcneill Exp $ */
+/* $NetBSD: auvitek.c,v 1.8.6.1 2014/08/20 00:03:51 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.8 2012/01/09 10:57:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.8.6.1 2014/08/20 00:03:51 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -117,8 +117,6 @@ auvitek_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_dying = sc->sc_running = 0;
 
 	mutex_init(&sc->sc_subdev_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_ab.ab_lock, MUTEX_DEFAULT, IPL_USB);
-	cv_init(&sc->sc_ab.ab_cv, "auvitekbulk");
 
 	err = usbd_set_config_index(dev, 0, 1);
 	if (err) {
@@ -303,8 +301,6 @@ auvitek_detach(device_t self, int flags)
 		if (sc->sc_ab.ab_bx[i].bx_xfer)
 			usbd_free_xfer(sc->sc_ab.ab_bx[i].bx_xfer);
 	}
-	cv_destroy(&sc->sc_ab.ab_cv);
-	mutex_destroy(&sc->sc_ab.ab_lock);
 
 	return 0;
 }

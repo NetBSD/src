@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_eisa.c,v 1.20.22.1 2012/11/20 03:02:00 tls Exp $	*/
+/*	$NetBSD: dpt_eisa.c,v 1.20.22.2 2014/08/20 00:03:36 tls Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.20.22.1 2012/11/20 03:02:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_eisa.c,v 1.20.22.2 2014/08/20 00:03:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,7 @@ dpt_eisa_attach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t iot;
 	const char *intrstr;
 	int irq;
+	char intrbuf[EISA_INTRSTR_LEN];
 
 	ea = aux;
 	sc = device_private(self);
@@ -158,7 +159,7 @@ dpt_eisa_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	intrstr = eisa_intr_string(ec, ih);
+	intrstr = eisa_intr_string(ec, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = eisa_intr_establish(ec, ih, IST_LEVEL, IPL_BIO,
 	    dpt_intr, sc);
 	if (sc->sc_ih == NULL) {

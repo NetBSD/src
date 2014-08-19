@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_dumpbus.c,v 1.8 2011/09/16 15:39:29 joerg Exp $	*/
+/*	$NetBSD: shmif_dumpbus.c,v 1.8.8.1 2014/08/20 00:05:04 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -30,11 +30,18 @@
  * examined with tcpdump -r, wireshark, etc.
  */
 
+#include <rump/rumpuser_port.h>
+
+#ifndef lint
+__RCSID("$NetBSD: shmif_dumpbus.c,v 1.8.8.1 2014/08/20 00:05:04 tls Exp $");
+#endif /* !lint */
+
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-
-#include <machine/bswap.h>
+#ifdef __NetBSD__
+#include <sys/bswap.h>
+#endif
 
 #include <assert.h>
 #include <err.h>
@@ -53,13 +60,24 @@ __dead static void
 usage(void)
 {
 
+#ifndef PLATFORM_HAS_SETGETPROGNAME
+#define getprogname() "shmif_dumpbus"
+#endif
+
 	fprintf(stderr, "usage: %s [-h] [-p pcapfile] buspath\n",getprogname());
 	exit(1);
 }
 
 #define BUFSIZE 64*1024
+#ifdef __NetBSD__
 #define SWAPME(a) (doswap ? bswap32(a) : (a))
 #define SWAPME64(a) (doswap ? bswap64(a) : (a))
+#else
+/* lazy, but let's assume everyone uses shmif_dumpbus only locally */
+#define SWAPME(a) (a)
+#define SWAPME64(a) (a)
+#define bswap32(a) (a)
+#endif
 int
 main(int argc, char *argv[])
 {
@@ -71,10 +89,14 @@ main(int argc, char *argv[])
 	int fd, i, ch;
 	int bonus;
 	char *buf;
-	bool hflag = false, doswap = false, isstdout;
+	bool hflag = false, doswap = false;
 	pcap_dumper_t *pdump;
+	FILE *dumploc = stdout;
 
+#ifdef PLATFORM_HAS_SETGETPROGNAME
 	setprogname(argv[0]);
+#endif
+
 	while ((ch = getopt(argc, argv, "hp:")) != -1) {
 		switch (ch) {
 		case 'h':
@@ -118,7 +140,11 @@ main(int argc, char *argv[])
 	if (SWAPME(bmem->shm_version) != SHMIF_VERSION)
 		errx(1, "bus vesrsion %d, program %d",
 		    SWAPME(bmem->shm_version), SHMIF_VERSION);
-	printf("bus version %d, lock: %d, generation: %" PRIu64
+
+	if (pcapfile && strcmp(pcapfile, "-") == 0)
+		dumploc = stderr;
+
+	fprintf(dumploc, "bus version %d, lock: %d, generation: %" PRIu64
 	    ", firstoff: 0x%04x, lastoff: 0x%04x\n",
 	    SWAPME(bmem->shm_version), SWAPME(bmem->shm_lock),
 	    SWAPME64(bmem->shm_gen),
@@ -128,14 +154,12 @@ main(int argc, char *argv[])
 		exit(0);
 
 	if (pcapfile) {
-		isstdout = strcmp(pcapfile, "-") == 0;
 		pcap_t *pcap = pcap_open_dead(DLT_EN10MB, 1518);
 		pdump = pcap_dump_open(pcap, pcapfile);
 		if (pdump == NULL)
 			err(1, "cannot open pcap dump file");
 	} else {
 		/* XXXgcc */
-		isstdout = false;
 		pdump = NULL;
 	}
 
@@ -171,8 +195,7 @@ main(int argc, char *argv[])
 			continue;
 		}
 
-		if (!(pcapfile && isstdout))
-			printf("packet %d, offset 0x%04x, length 0x%04x, "
+		fprintf(dumploc, "packet %d, offset 0x%04x, length 0x%04x, "
 			    "ts %d/%06d\n", i++, curbus,
 			    curlen, SWAPME(sp.sp_sec), SWAPME(sp.sp_usec));
 

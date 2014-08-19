@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.18 2011/05/28 13:59:31 phx Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.18.14.1 2014/08/20 00:03:37 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.18 2011/05/28 13:59:31 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.18.14.1 2014/08/20 00:03:37 tls Exp $");
 
 #include "opt_strtc.h"
 
@@ -78,8 +78,18 @@ dev_type_read(strtc_read);
 dev_type_write(strtc_write);
 
 const struct cdevsw strtc_cdevsw = {
-	strtc_open, strtc_close, strtc_read, strtc_write, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = strtc_open,
+	.d_close = strtc_close,
+	.d_read = strtc_read,
+	.d_write = strtc_write,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 #endif
 
@@ -282,7 +292,7 @@ strtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 static int
 strtc_clock_read(struct strtc_softc *sc, struct clock_ymdhms *dt)
 {
-	u_int8_t bcd[M41ST84_REG_DATE_BYTES], cmdbuf[1];
+	u_int8_t bcd[M41ST84_REG_DATE_BYTES], cmdbuf[2];
 	int i;
 
 	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {

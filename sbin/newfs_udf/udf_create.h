@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.h,v 1.3 2009/01/18 00:18:41 lukem Exp $ */
+/* $NetBSD: udf_create.h,v 1.3.14.1 2014/08/20 00:02:27 tls Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -30,7 +30,12 @@
 #define _FS_UDF_UDF_CREATE_H_
 
 #include <sys/types.h>
+#include <sys/stat.h>
+#if !HAVE_NBTOOL_CONFIG_H
 #include <fs/udf/ecma167-udf.h>
+#else
+#include "../../sys/fs/udf/ecma167-udf.h"
+#endif
 #include "udf_bswap.h"
 #include "udf_osta.h"
 
@@ -46,9 +51,10 @@
 #define FORMAT_WORM		0x00080
 #define FORMAT_TRACK512		0x00100
 #define FORMAT_INVALID		0x00200
+#define FORMAT_READONLY		0x00400
 #define FORMAT_FLAGBITS \
     "\10\1WRITEONCE\2SEQUENTIAL\3REWRITABLE\4SPARABLE\5META\6LOW" \
-    "\7VAT\10WORM\11TRACK512\12INVALID"
+    "\7VAT\10WORM\11TRACK512\12INVALID\13READONLY"
 
 
 /* structure space */
@@ -77,10 +83,10 @@
 
 /* handys */
 #define UDF_ROUNDUP(val, gran) \
-	((gran) * (((val) + (gran)-1) / (gran)))
+	((uint64_t) (gran) * (((uint64_t)(val) + (gran)-1) / (gran)))
 
 #define UDF_ROUNDDOWN(val, gran) \
-	((gran) * (((val)) / (gran)))
+	((uint64_t) (gran) * (((uint64_t)(val)) / (gran)))
 
 
 /* disc offsets for various structures and their sizes */
@@ -163,6 +169,10 @@ struct udf_create_context {
 	int	data_part;
 	int	metadata_part;
 
+	/* block numbers as offset in partition */
+	uint32_t metadata_alloc_pos;
+	uint32_t data_alloc_pos;
+
 	/* derived; points *into* other structures */
 	struct udf_logvol_info	*logvol_info;		/* inside integrity  */
 
@@ -172,10 +182,16 @@ struct udf_create_context {
 	/* logical to physical translations */
 	int 			 vtop[UDF_PMAPS+1];	/* vpartnr trans     */
 	int			 vtop_tp[UDF_PMAPS+1];	/* type of trans     */
-	int			 vtop_offset[UDF_PMAPS+1]; /* offset in lb   */
+	uint64_t		 vtop_offset[UDF_PMAPS+1]; /* offset in lb   */
 
 	/* sparable */
 	struct udf_sparing_table*sparing_table;		/* replacements      */
+
+	/* VAT file */
+	uint32_t		 vat_size;		/* length */
+	uint32_t		 vat_allocated;		/* allocated length */
+	uint32_t		 vat_start;		/* offset 1st entry */
+	uint8_t			*vat_contents;		/* the VAT */
 
 	/* meta data partition */
 	struct extfile_entry	*meta_file;
@@ -200,6 +216,8 @@ extern struct udf_disclayout     layout;
 
 /* prototypes */
 void udf_init_create_context(void);
+int a_udf_version(const char *s, const char *id_type);
+
 int udf_calculate_disc_layout(int format_flags, int min_udf,
 	uint32_t wrtrack_skew,
 	uint32_t first_lba, uint32_t last_lba,
@@ -221,7 +239,6 @@ int  udf_validate_tag_and_crc_sums(union dscrptr *dscr);
 
 void udf_set_timestamp_now(struct timestamp *timestamp);
 
-
 void udf_inittag(struct desc_tag *tag, int tagid, uint32_t loc);
 int udf_create_anchor(int num);
 
@@ -242,13 +259,25 @@ int udf_register_bad_block(uint32_t location);
 void udf_mark_allocated(uint32_t start_lb, int partnr, uint32_t blocks);
 
 int udf_create_new_fe(struct file_entry **fep, int file_type,
-	struct long_ad *parent_icb);
+	struct stat *st);
 int udf_create_new_efe(struct extfile_entry **efep, int file_type,
-	struct long_ad *parent_icb);
+	struct stat *st);
+
+int udf_encode_symlink(uint8_t **pathbufp, uint32_t *pathlenp, char *target);
+
+void udf_advance_uniqueid(void);
+int udf_fidsize(struct fileid_desc *fid);
+void udf_create_fid(uint32_t diroff, struct fileid_desc *fid,
+	char *name, int namelen, struct long_ad *ref);
+int udf_create_parentfid(struct fileid_desc *fid, struct long_ad *parent);
 
 int udf_create_meta_files(void);
 int udf_create_new_rootdir(union dscrptr **dscr);
-int udf_create_new_VAT(union dscrptr **vat_dscr);
+
+int udf_create_VAT(union dscrptr **vat_dscr);
+void udf_prepend_VAT_file(void);
+void udf_vat_update(uint32_t virt, uint32_t phys);
+int udf_append_VAT_file(void);
 
 #endif /* _FS_UDF_UDF_CREATE_H_ */
 

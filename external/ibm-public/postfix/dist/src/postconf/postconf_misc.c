@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_misc.c,v 1.1.1.1.6.2 2013/02/25 00:27:22 tls Exp $	*/
+/*	$NetBSD: postconf_misc.c,v 1.1.1.1.6.3 2014/08/19 23:59:43 tls Exp $	*/
 
 /*++
 /* NAME
@@ -8,9 +8,9 @@
 /* SYNOPSIS
 /*	#include <postconf.h>
 /*
-/*	void	set_config_dir()
+/*	void	pcf_set_config_dir()
 /* DESCRIPTION
-/*	set_config_dir() forcibly overrides the var_config_dir
+/*	pcf_set_config_dir() forcibly overrides the var_config_dir
 /*	parameter setting with the value from the environment or
 /*	with the default pathname, and updates the mail parameter
 /*	dictionary.
@@ -45,15 +45,15 @@
 
 #include <postconf.h>
 
-/* set_config_dir - forcibly override var_config_dir */
+/* pcf_set_config_dir - forcibly override var_config_dir */
 
-void set_config_dir(void)
+void    pcf_set_config_dir(void)
 {
     char   *config_dir;
 
     if (var_config_dir)
-        myfree(var_config_dir);
+	myfree(var_config_dir);
     var_config_dir = mystrdup((config_dir = safe_getenv(CONF_ENV_PATH)) != 0 ?
-                              config_dir : DEF_CONFIG_DIR);     /* XXX */
+			      config_dir : DEF_CONFIG_DIR);	/* XXX */
     set_mail_conf_str(VAR_CONFIG_DIR, var_config_dir);
 }

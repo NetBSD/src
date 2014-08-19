@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.8 2011/04/29 21:42:40 matt Exp $	*/
+/*	$NetBSD: profile.h,v 1.8.14.1 2014/08/20 00:03:19 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -81,7 +81,7 @@ __asm("	.globl	_mcount			\n" \
 
 #else
 
-#ifdef PIC
+#ifdef __PIC__
 #define _PLT "@plt"
 #else
 #define _PLT

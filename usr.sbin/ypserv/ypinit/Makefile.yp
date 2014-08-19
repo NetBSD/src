@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.yp,v 1.21 2006/10/07 16:54:38 elad Exp $
+#	$NetBSD: Makefile.yp,v 1.21.46.1 2014/08/20 00:05:19 tls Exp $
 #
 # This is the YP Makefile, used to create and push YP maps.
 #
@@ -112,12 +112,14 @@ passwd.time: ${DIR}/master.passwd
 			${MAKEDBM} - passwd.byuid; \
 		fi; \
 		${CAT} ${.ALLSRC} | \
-		${AWK} 'BEGIN { FS=":"; OFS="\t"; } /^[a-zA-Z0-9_]/ \
-		{ print $$1, $$0 }' - | ${SORT} | \
+		${AWK} -v minuid=${MINUID} \
+		'BEGIN { FS=":"; OFS="\t"; } /^[a-zA-Z0-9_]/ \
+		{ if (minuid <= $$3) print $$1, $$0 }' - | ${SORT} | \
 		${MAKEDBM_S} - master.passwd.byname; \
 		${CAT} ${.ALLSRC} | \
-		${AWK} 'BEGIN { FS=":"; OFS="\t"; } /^[a-zA-Z0-9_]/ \
-		{ print $$3, $$0 }' - | ${SORT} | \
+		${AWK} -v minuid=${MINUID} \
+		'BEGIN { FS=":"; OFS="\t"; } /^[a-zA-Z0-9_]/ \
+		{ if (minuid <= $$3) print $$3, $$0 }' - | ${SORT} | \
 		${MAKEDBM_S} - master.passwd.byuid; \
 		${TOUCH} ${.TARGET}; \
 		${ECHO} "updated passwd"; \
@@ -198,7 +200,7 @@ ${MAP}.time: ${AMDDIR}/${MAP} __makedbmesc
 
 ethers.time: ${DIR}/ethers
 	-@if [ -f ${.ALLSRC} ]; then \
-		${STDETHERS} ${.ALLSRC} | ${SED} -e s/#.*$$// | \
+		${STDETHERS} ${.ALLSRC} | \
 		${AWK} 'BEGIN { FS="\t"; OFS="\t"; } { print $$1, $$0 }' | \
 		${SORT} | ${MAKEDBM} - ethers.byaddr; \
 		${STDETHERS} ${.ALLSRC} | \
@@ -257,7 +259,7 @@ group.time: ${DIR}/group
 #
 hosts.time: ${DIR}/hosts
 	-@if [ -f ${.ALLSRC} ]; then \
-		${STDHOSTS} ${.ALLSRC} | ${SED} -e s/#.*$$// | \
+		${STDHOSTS} ${.ALLSRC} | \
 		${AWK} '{for (i = 2; i <= NF; i++) print $$i, $$0 }' | \
 		${SORT} | ${MAKEDBM} - hosts.byname; \
 		${STDHOSTS} ${.ALLSRC} | \
@@ -279,7 +281,7 @@ hosts.time: ${DIR}/hosts
 
 ipnodes.time: ${DIR}/hosts
 	-@if [ -f ${.ALLSRC} ]; then \
-		${STDHOSTS} -n ${.ALLSRC} | ${SED} -e s/#.*$$// | \
+		${STDHOSTS} -n ${.ALLSRC} | \
 		${AWK} '{for (i = 2; i <= NF; i++) print $$i, $$0 }' | \
 		${SORT} | ${MAKEDBM} - ipnodes.byname; \
 		${STDHOSTS} -n ${.ALLSRC} | \

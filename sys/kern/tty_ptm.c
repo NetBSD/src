@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.27.18.1 2012/11/20 03:02:44 tls Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.27.18.2 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.27.18.1 2012/11/20 03:02:44 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.27.18.2 2014/08/20 00:04:29 tls Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ptm.h"
@@ -66,8 +66,18 @@ __KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.27.18.1 2012/11/20 03:02:44 tls Exp $"
 
 #ifdef NO_DEV_PTM
 const struct cdevsw ptm_cdevsw = {
-	noopen, noclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_TTY
+	.d_open = noopen,
+	.d_close = noclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 #else
 
@@ -75,10 +85,19 @@ static struct ptm_pty *ptm;
 int pts_major, ptc_major;
 
 static dev_t pty_getfree(void);
-static int pty_alloc_master(struct lwp *, int *, dev_t *);
-static int pty_alloc_slave(struct lwp *, int *, dev_t);
+static int pty_alloc_master(struct lwp *, int *, dev_t *, struct mount *);
+static int pty_alloc_slave(struct lwp *, int *, dev_t, struct mount *);
 
 void ptmattach(int);
+
+int
+pty_getmp(struct lwp *l, struct mount **mpp)
+{
+	if (ptm == NULL)
+		return EOPNOTSUPP;
+
+	return (*ptm->getmp)(l, mpp);
+}
 
 dev_t
 pty_makedev(char ms, int minor)
@@ -131,7 +150,7 @@ pty_vn_open(struct vnode *vp, struct lwp *l)
 }
 
 static int
-pty_alloc_master(struct lwp *l, int *fd, dev_t *dev)
+pty_alloc_master(struct lwp *l, int *fd, dev_t *dev, struct mount *mp)
 {
 	int error;
 	struct file *fp;
@@ -155,7 +174,23 @@ retry:
 		error = EOPNOTSUPP;
 		goto bad;
 	}
-	if ((error = (*ptm->allocvp)(ptm, l, &vp, *dev, 'p')) != 0) {
+	/*
+	 * XXX Since PTYFS has now multiple instance support, if we mounted
+	 * more than one PTYFS we must check here the ptyfs_used_tbl, to find
+	 * out if the ptyfsnode is under the appropriate mount and skip the
+	 * node if not, because the pty could has been released, but
+	 * ptyfs_reclaim didn't get a chance to release the corresponding
+	 * node other mount point yet.
+	 *
+	 * It's important to have only one mount point's ptyfsnode for each
+	 * appropriate device in ptyfs_used_tbl, else we will have a security 
+	 * problem, because every entry will have access to this device.
+	 *
+	 * Also we will not have not efficient vnode and memory usage.
+	 * You can test this by changing a_recycle from true to false
+	 * in ptyfs_inactive.
+	 */
+	if ((error = (*ptm->allocvp)(mp, l, &vp, *dev, 'p')) != 0) {
 		DPRINTF(("pty_allocvp %d\n", error));
 		goto bad;
 	}
@@ -188,7 +223,7 @@ bad:
 }
 
 int
-pty_grant_slave(struct lwp *l, dev_t dev)
+pty_grant_slave(struct lwp *l, dev_t dev, struct mount *mp)
 {
 	int error;
 	struct vnode *vp;
@@ -204,12 +239,12 @@ pty_grant_slave(struct lwp *l, dev_t dev)
 	 */
 	if (ptm == NULL)
 		return EOPNOTSUPP;
-	if ((error = (*ptm->allocvp)(ptm, l, &vp, dev, 't')) != 0)
+	if ((error = (*ptm->allocvp)(mp, l, &vp, dev, 't')) != 0)
 		return error;
 
 	if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		struct vattr vattr;
-		(*ptm->getvattr)(ptm, l, &vattr);
+		(*ptm->getvattr)(mp, l, &vattr);
 		/* Do the VOP_SETATTR() as root. */
 		error = VOP_SETATTR(vp, &vattr, lwp0.l_cred);
 		if (error) {
@@ -230,7 +265,7 @@ pty_grant_slave(struct lwp *l, dev_t dev)
 }
 
 static int
-pty_alloc_slave(struct lwp *l, int *fd, dev_t dev)
+pty_alloc_slave(struct lwp *l, int *fd, dev_t dev, struct mount *mp)
 {
 	int error;
 	struct file *fp;
@@ -247,7 +282,7 @@ pty_alloc_slave(struct lwp *l, int *fd, dev_t dev)
 		goto bad;
 	}
 
-	if ((error = (*ptm->allocvp)(ptm, l, &vp, dev, 't')) != 0)
+	if ((error = (*ptm->allocvp)(mp, l, &vp, dev, 't')) != 0)
 		goto bad;
 	if ((error = pty_vn_open(vp, l)) != 0)
 		goto bad;
@@ -273,7 +308,7 @@ pty_sethandler(struct ptm_pty *nptm)
 }
 
 int
-pty_fill_ptmget(struct lwp *l, dev_t dev, int cfd, int sfd, void *data)
+pty_fill_ptmget(struct lwp *l, dev_t dev, int cfd, int sfd, void *data, struct mount *mp)
 {
 	struct ptmget *ptmg = data;
 	int error;
@@ -284,11 +319,11 @@ pty_fill_ptmget(struct lwp *l, dev_t dev, int cfd, int sfd, void *data)
 	ptmg->cfd = cfd == -1 ? minor(dev) : cfd;
 	ptmg->sfd = sfd == -1 ? minor(dev) : sfd;
 
-	error = (*ptm->makename)(ptm, l, ptmg->cn, sizeof(ptmg->cn), dev, 'p');
+	error = (*ptm->makename)(mp, l, ptmg->cn, sizeof(ptmg->cn), dev, 'p');
 	if (error)
 		return error;
 
-	return (*ptm->makename)(ptm, l, ptmg->sn, sizeof(ptmg->sn), dev, 't');
+	return (*ptm->makename)(mp, l, ptmg->sn, sizeof(ptmg->sn), dev, 't');
 }
 
 void
@@ -313,11 +348,14 @@ ptmopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int error;
 	int fd;
 	dev_t ttydev;
+	struct mount *mp;
 
 	switch(minor(dev)) {
 	case 0:		/* /dev/ptmx */
 	case 2:		/* /emul/linux/dev/ptmx */
-		if ((error = pty_alloc_master(l, &fd, &ttydev)) != 0)
+		if ((error = pty_getmp(l, &mp)) != 0)
+			return error;
+		if ((error = pty_alloc_master(l, &fd, &ttydev, mp)) != 0)
 			return error;
 		if (minor(dev) == 2) {
 			/*
@@ -325,7 +363,7 @@ ptmopen(dev_t dev, int flag, int mode, struct lwp *l)
 			 * Handle this case here, instead of writing
 			 * a new linux module.
 			 */
-			if ((error = pty_grant_slave(l, ttydev)) != 0) {
+			if ((error = pty_grant_slave(l, ttydev, mp)) != 0) {
 				file_t *fp = fd_getfile(fd);
 				if (fp != NULL) {
 					fd_close(fd);
@@ -358,21 +396,27 @@ ptmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	dev_t newdev;
 	int cfd, sfd;
 	file_t *fp;
+	struct mount *mp;
 
 	error = 0;
 	switch (cmd) {
 	case TIOCPTMGET:
-		if ((error = pty_alloc_master(l, &cfd, &newdev)) != 0)
+		if ((error = pty_getmp(l, &mp)) != 0)
 			return error;
 
-		if ((error = pty_grant_slave(l, newdev)) != 0)
+		if ((error = pty_alloc_master(l, &cfd, &newdev, mp)) != 0)
+			return error;
+
+		if ((error = pty_grant_slave(l, newdev, mp)) != 0)
 			goto bad;
 
-		if ((error = pty_alloc_slave(l, &sfd, newdev)) != 0)
+		if ((error = pty_alloc_slave(l, &sfd, newdev, mp)) != 0)
 			goto bad;
 
 		/* now, put the indices and names into struct ptmget */
-		return pty_fill_ptmget(l, newdev, cfd, sfd, data);
+		if ((error = pty_fill_ptmget(l, newdev, cfd, sfd, data, mp)) != 0)
+			goto bad2;
+		return 0;
 	default:
 #ifdef COMPAT_60
 		error = compat_60_ptmioctl(dev, cmd, data, flag, l);
@@ -381,6 +425,11 @@ ptmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #endif /* COMPAT_60 */
 		DPRINTF(("ptmioctl EINVAL\n"));
 		return EINVAL;
+	}
+bad2:
+	fp = fd_getfile(sfd);
+	if (fp != NULL) {
+		fd_close(sfd);
 	}
  bad:
 	fp = fd_getfile(cfd);
@@ -391,7 +440,17 @@ ptmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 }
 
 const struct cdevsw ptm_cdevsw = {
-	ptmopen, ptmclose, noread, nowrite, ptmioctl,
-	nullstop, notty, nopoll, nommap, nokqfilter, D_TTY
+	.d_open = ptmopen,
+	.d_close = ptmclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = ptmioctl,
+	.d_stop = nullstop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cd.c,v 1.4.2.1 2013/06/23 06:28:55 tls Exp $	*/
+/*	$NetBSD: t_cd.c,v 1.4.2.2 2014/08/20 00:04:46 tls Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,8 @@
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
-#include <rump/scsitest.h>
+
+#include "scsitest.h"
 
 #include "../../h_macros.h"
 

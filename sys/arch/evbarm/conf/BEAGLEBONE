@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.2.2.3 2013/06/23 06:20:03 tls Exp $
+#	$NetBSD: BEAGLEBONE,v 1.2.2.4 2014/08/20 00:02:53 tls Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -65,7 +65,6 @@ options 	INET6		# IPV6
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
@@ -84,6 +83,7 @@ options		NFS_BOOT_RWSIZE=1024
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
@@ -127,7 +127,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 # Development and Debugging options
 
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
@@ -154,7 +154,7 @@ options UHUB_DEBUG
 #  memorydisk=<n>	Set memorydisk size to <n> KB
 #  quiet		Show aprint_naive output
 #  verbose		Show aprint_normal and aprint_verbose output
-options		BOOT_ARGS="\"-d -v\""
+options		BOOT_ARGS="\"-v\""
 
 config		netbsd		root on ? type ?
 
@@ -195,8 +195,14 @@ sitaracm0	at obio0 addr 0x44e10000 size 0x2000
 # from other omap3.  (What about omap4?)  Need to adapt the omap sdhc
 # driver to handle this.
 sdhc0		at obio0 addr 0x48060100 size 0x0f00 intr 64
+sdmmc0		at sdhc0
+ld0		at sdmmc0
 sdhc1		at obio0 addr 0x481d8100 size 0x0f00 intr 28 # BB Black
+sdmmc1		at sdhc1
+ld1		at sdmmc1
 #sdhc2		at obio0 addr 0x47810100 size 0xff00 intr 29
+#sdmmc2		at sdhc2
+#ld2		at sdmmc2
 sdmmc*		at sdhc?		# SD/MMC bus
 ld*		at sdmmc?
 #options SDMMC_DEBUG
@@ -238,55 +244,91 @@ omapdmtimer2	at obio0 addr 0x48044000 size 0x1000 intr 92	# DM Timer 4
 # Watchdog timers
 omapwdt32k*	at obio0 addr 0x44e35000 size 0x1000	# WDT1
 
-# onboard video
-#omapfb* 	at obio0 addr 0x48050000 size 0x10000
+# onboard video, experimental. Video mode is hardcoded in the driver
+#tifb* 	at obio0 addr 0x4830E000 size 0x1000 intr 36
 
 # make sure the console display is always wsdisplay0
-#wsdisplay0	at wsemuldisplaydev? console 1
 #wsdisplay*	at wsemuldisplaydev?
 
 # various options for wscons - we try to look as much like a standard
 # sun console as possible
-#options 	WSEMUL_VT100		# sun terminal emulation
-#options 	WS_DEFAULT_FG=WSCOL_BLACK
-#options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
-#options		WS_KERNEL_FG=WSCOL_GREEN
-#options		WS_KERNEL_BG=WSCOL_LIGHT_WHITE
-#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
-#options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+options 	WSEMUL_VT100
+options 	WSDISPLAY_COMPAT_PCVT
+options 	WSDISPLAY_COMPAT_SYSCONS
+options 	WSDISPLAY_COMPAT_USL
+options 	WSDISPLAY_SCROLLSUPPORT
+options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WSDISPLAY_DEFAULTSCREENS=4
-#options		FONT_QVSS8x15
-#options 	FONT_GALLANT12x22	# the console font
+options 	FONT_GALLANT12x22
+options 	FONT_BOLD8x16
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_RAWKBD 	# can get raw scancodes
 
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
-# On-board USB
-#ehci*		at obio0 addr 0x48064800 size 0x0400 intr 77
-#ohci*		at obio0 addr 0x48064400 size 0x0400 intr 76
-#usb*		at ohci?
-#usb*		at ehci?
-#uhub*		at usb?
-#uhub*		at uhub? port ?
-#umass*		at uhub? port ? configuration ? interface ?
-#wd*		at umass?
-#uhidev*		at uhub?
-#ukbd*		at uhidev?
-#ums*		at uhidev?
-#wskbd*		at ukbd?
-#wsmouse*	at ums?
+# On-board USB. Experimental
+tiotg* 	at obio0 addr 0x47400000 size 0x5000 intrbase 17
+motg*	at tiotg? port ?
+usb*		at motg?
+uhub*		at usb?
+uhub*		at uhub? port ?
 
-#axe*		at uhub? port ? configuration ? interface ?
+uhidev*		at uhub?
+
+# USB Keyboards
+ukbd*	at uhidev? reportid ?
+wskbd*	at ukbd? console ? mux 1
+
+# USB Mice
+ums*	at uhidev? reportid ?
+wsmouse* at ums? mux 0
+
+# USB generic touchscreen
+uts*	at uhidev? reportid ?
+wsmouse* at uts? mux 0
+
+# USB Modem
+umodem* at uhub? port ? configuration ?
+ucom*	at umodem?
+# Serial adapters
+ubsa*	at uhub? port ?		# Belkin serial adapter
+ucom*	at ubsa? portno ?
+
+uchcom* at uhub? port ? 	# WinChipHead CH341/CH340 serial adapter
+ucom*	at uchcom? portno ?
+
+uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
+ucom*	at uftdi? portno ?
+
+uipaq*	at uhub? port ?		# iPAQ PDAs
+ucom*	at uipaq? portno ?
+
+umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
+ucom*	at umct? portno ?
+
+uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
+ucom*	at uplcom? portno ?
+
+uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
+ucom*	at uslsa? portno ?
+
+uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
+ucom*	at uvscom? portno ?
+
+
+umass*		at uhub? port ? configuration ? interface ?
+wd*		at umass?
+# SCSI bus support
+scsibus*	at scsi?
+# SCSI devices
+sd*		at scsibus? target ? lun ?      # SCSI disk drives
+
+axe*		at uhub? port ? configuration ? interface ?
 
 # Ethernet
 cpsw*		at obio0 addr 0x4a100000 size 0x8000 intrbase 40
 ukphy*		at mii?
-
-# Hardware clocking and power management
-
-options		HWCLOCK
-options		HWCLOCK_MACHINE="<arch/arm/omap/hwclock_omap1.h>"
-options		OMAP_CK_REF_SPEED=12000000
 
 # Pseudo-Devices
 
@@ -295,6 +337,7 @@ options		OMAP_CK_REF_SPEED=12000000
 #pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
 #pseudo-device	putter			# for puffs and pud
+pseudo-device	drvctl			# driver control
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
@@ -307,3 +350,6 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	lockstat		# lock profiling
+
+# local configuration
+cinclude "arch/evbarm/conf/BEAGLEBONE.local"

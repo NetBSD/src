@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.348.6.2 2013/02/25 00:28:58 tls Exp $ */
+/*	$NetBSD: pmap.c,v 1.348.6.3 2014/08/20 00:03:24 tls Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.348.6.2 2013/02/25 00:28:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.348.6.3 2014/08/20 00:03:24 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -280,7 +280,9 @@ pvhead4m(u_int pte)
  * altering an in-memory page table entry.
  */
 struct mmuentry {
-	CIRCLEQ_ENTRY(mmuentry)	me_list;	/* usage list link */
+	struct {
+	    struct mmuentry *prev, *next;
+	}			me_list;	/* usage list link */
 	TAILQ_ENTRY(mmuentry)	me_pmchain;	/* pmap owner link */
 	struct	pmap *me_pmap;		/* pmap, if in use */
 	u_short	me_vreg;		/* associated virtual region/segment */
@@ -293,23 +295,53 @@ struct mmuentry {
 struct mmuentry *mmusegments;	/* allocated in pmap_bootstrap */
 struct mmuentry *mmuregions;	/* allocated in pmap_bootstrap */
 
-CIRCLEQ_HEAD(mmuq, mmuentry);
-struct mmuq segm_freelist, segm_lru, segm_locked;
-struct mmuq region_freelist, region_lru, region_locked;
+#if defined(SUN4) || defined(SUN4C)
+struct mmuentry segm_freelist, segm_lru, segm_locked;
+#if defined(SUN4_MMU3L)
+struct mmuentry region_freelist, region_lru, region_locked;
+#endif
 /*
- * We use a circular queue, since that allows us to remove an element
- * from a list without knowing the list header.
+ * We use a double linked list looping through its static head (which
+ * alway remains on the list), so we can remove any other member from
+ * a list without knowing which list it is on.
  */
-#define CIRCLEQ_REMOVE_NOH(elm, field) do {				\
-	(elm)->field.cqe_next->field.cqe_prev = (elm)->field.cqe_prev;	\
-	(elm)->field.cqe_prev->field.cqe_next = (elm)->field.cqe_next;	\
-} while (/*CONSTCOND*/0)
+static void inline
+mmuq_remove(struct mmuentry *e)
+{
+	e->me_list.next->me_list.prev = e->me_list.prev;
+	e->me_list.prev->me_list.next = e->me_list.next;
+}
 
-#define MMUQ_INIT(head)			CIRCLEQ_INIT(head)
-#define MMUQ_REMOVE(elm,field)		CIRCLEQ_REMOVE_NOH(elm,field)
-#define MMUQ_INSERT_TAIL(head,elm,field)CIRCLEQ_INSERT_TAIL(head,elm,field)
-#define MMUQ_EMPTY(head)		CIRCLEQ_EMPTY(head)
-#define MMUQ_FIRST(head)		CIRCLEQ_FIRST(head)
+static void inline
+mmuq_init(struct mmuentry *e)
+{
+	memset(e, 0, sizeof(*e));
+	e->me_list.next = e;
+	e->me_list.prev = e;
+}
+
+static inline struct mmuentry *
+mmuq_first(struct mmuentry *head)
+{
+	KASSERT(head->me_list.next != head);
+	return head->me_list.next;
+}
+
+static inline bool
+mmuq_empty(struct mmuentry *head)
+{
+	return head->me_list.next == head;
+}
+
+static inline void
+mmuq_insert_tail(struct mmuentry *head, struct mmuentry *e)
+{
+	e->me_list.prev = head->me_list.prev;
+	e->me_list.next = head;
+	head->me_list.prev->me_list.next = e;
+	head->me_list.prev = e;
+}
+#endif
 
 
 int	seginval;		/* [4/4c] the invalid segment number */
@@ -910,7 +942,7 @@ pgt_page_free(struct pool *pp, void *v)
 {
 	vaddr_t va;
 	paddr_t pa;
-	bool rv;
+	bool rv __diagused;
 
 	va = (vaddr_t)v;
 	rv = pmap_extract(pmap_kernel(), va, &pa);
@@ -1223,10 +1255,10 @@ void
 mmu_reservemon4_4c(int *nrp, int *nsp)
 {
 	u_int va = 0, eva = 0;
-	int mmuseg, i, nr, ns, vr, lastvr;
+	int mmuseg, i, nr, ns, vr;
 	int *pte;
 #if defined(SUN4_MMU3L)
-	int mmureg;
+	int mmureg, lastvr = 0;
 #endif
 	struct regmap *rp;
 
@@ -1244,7 +1276,6 @@ mmu_reservemon4_4c(int *nrp, int *nsp)
 #endif
 	ns = *nsp;
 	nr = *nrp;
-	lastvr = 0;
 	while (va < eva) {
 		vr = VA_VREG(va);
 		rp = &pmap_kernel()->pm_regmap[vr];
@@ -1543,10 +1574,10 @@ mmu_setup4m_L3(int pagtblptd, struct segmap *sp)
 /*
  * MMU management.
  */
-static int	me_alloc(struct mmuq *, struct pmap *, int, int);
+static int	me_alloc(struct mmuentry *, struct pmap *, int, int);
 static void	me_free(struct pmap *, u_int);
 #if defined(SUN4_MMU3L)
-static int	region_alloc(struct mmuq *, struct pmap *, int);
+static int	region_alloc(struct mmuentry *, struct pmap *, int);
 static void	region_free(struct pmap *, u_int);
 #endif
 
@@ -1566,7 +1597,7 @@ static void	region_free(struct pmap *, u_int);
  */
 
 static inline int
-me_alloc(struct mmuq *mh, struct pmap *newpm, int newvreg, int newvseg)
+me_alloc(struct mmuentry *mh, struct pmap *newpm, int newvreg, int newvseg)
 {
 	struct mmuentry *me;
 	struct pmap *pm;
@@ -1576,16 +1607,16 @@ me_alloc(struct mmuq *mh, struct pmap *newpm, int newvreg, int newvseg)
 	struct segmap *sp;
 
 	/* try free list first */
-	if (!MMUQ_EMPTY(&segm_freelist)) {
-		me = MMUQ_FIRST(&segm_freelist);
-		MMUQ_REMOVE(me, me_list);
+	if (!mmuq_empty(&segm_freelist)) {
+		me = mmuq_first(&segm_freelist);
+		mmuq_remove(me);
 #ifdef DEBUG
 		if (me->me_pmap != NULL)
 			panic("me_alloc: freelist entry has pmap");
 		if (pmapdebug & PDB_MMU_ALLOC)
 			printf("me_alloc: got pmeg %d\n", me->me_cookie);
 #endif
-		MMUQ_INSERT_TAIL(mh, me, me_list);
+		mmuq_insert_tail(mh, me);
 
 		/* onto on pmap chain; pmap is already locked, if needed */
 		TAILQ_INSERT_TAIL(&newpm->pm_seglist, me, me_pmchain);
@@ -1609,10 +1640,10 @@ me_alloc(struct mmuq *mh, struct pmap *newpm, int newvreg, int newvseg)
 	}
 
 	/* no luck, take head of LRU list */
-	if (MMUQ_EMPTY(&segm_lru))
+	if (mmuq_empty(&segm_lru))
 		panic("me_alloc: all pmegs gone");
 
-	me = MMUQ_FIRST(&segm_lru);
+	me = mmuq_first(&segm_lru);
 	pm = me->me_pmap;
 #ifdef DEBUG
 	if (pmapdebug & (PDB_MMU_ALLOC | PDB_MMU_STEAL))
@@ -1626,8 +1657,8 @@ me_alloc(struct mmuq *mh, struct pmap *newpm, int newvreg, int newvseg)
 	 * Remove from LRU list, and insert at end of new list
 	 * (probably the LRU list again, but so what?).
 	 */
-	MMUQ_REMOVE(me, me_list);
-	MMUQ_INSERT_TAIL(mh, me, me_list);
+	mmuq_remove(me);
+	mmuq_insert_tail(mh, me);
 
 #ifdef DIAGNOSTIC
 	if (mh == &segm_locked) {
@@ -1797,7 +1828,7 @@ me_free(struct pmap *pm, u_int pmeg)
 	TAILQ_REMOVE(&pm->pm_seglist, me, me_pmchain);
 
 	/* off LRU or lock chain */
-	MMUQ_REMOVE(me, me_list);
+	mmuq_remove(me);
 #ifdef DIAGNOSTIC
 	if (me->me_statp == NULL)
 		panic("me_statp");
@@ -1807,7 +1838,7 @@ me_free(struct pmap *pm, u_int pmeg)
 
 	/* no associated pmap; on free list */
 	me->me_pmap = NULL;
-	MMUQ_INSERT_TAIL(&segm_freelist, me, me_list);
+	mmuq_insert_tail(&segm_freelist, me);
 #ifdef DIAGNOSTIC
 	pmap_stats.ps_npmeg_free++;
 #endif
@@ -1818,7 +1849,7 @@ me_free(struct pmap *pm, u_int pmeg)
 /* XXX - Merge with segm_alloc/segm_free ? */
 
 int
-region_alloc(struct mmuq *mh, struct pmap *newpm, int newvr)
+region_alloc(struct mmuentry *mh, struct pmap *newpm, int newvr)
 {
 	struct mmuentry *me;
 	struct pmap *pm;
@@ -1826,16 +1857,16 @@ region_alloc(struct mmuq *mh, struct pmap *newpm, int newvr)
 	struct regmap *rp;
 
 	/* try free list first */
-	if (!MMUQ_EMPTY(&region_freelist)) {
-		me = MMUQ_FIRST(&region_freelist);
-		MMUQ_REMOVE(me, me_list);
+	if (!mmuq_empty(&region_freelist)) {
+		me = mmuq_first(&region_freelist);
+		mmuq_remove(me);
 #ifdef DEBUG
 		if (me->me_pmap != NULL)
 			panic("region_alloc: freelist entry has pmap");
 		if (pmapdebug & PDB_MMUREG_ALLOC)
 			printf("region_alloc: got smeg 0x%x\n", me->me_cookie);
 #endif
-		MMUQ_INSERT_TAIL(mh, me, me_list);
+		mmuq_insert_tail(mh, me);
 
 		/* onto on pmap chain; pmap is already locked, if needed */
 		TAILQ_INSERT_TAIL(&newpm->pm_reglist, me, me_pmchain);
@@ -1848,10 +1879,10 @@ region_alloc(struct mmuq *mh, struct pmap *newpm, int newvr)
 	}
 
 	/* no luck, take head of LRU list */
-	if (MMUQ_EMPTY(&region_lru))
+	if (mmuq_empty(&region_lru))
 		panic("region_alloc: all smegs gone");
 
-	me = MMUQ_FIRST(&region_lru);
+	me = mmuq_first(&region_lru);
 
 	pm = me->me_pmap;
 	if (pm == NULL)
@@ -1867,8 +1898,8 @@ region_alloc(struct mmuq *mh, struct pmap *newpm, int newvr)
 	 * Remove from LRU list, and insert at end of new list
 	 * (probably the LRU list again, but so what?).
 	 */
-	MMUQ_REMOVE(me, me_list);
-	MMUQ_INSERT_TAIL(mh, me, me_list);
+	mmuq_remove(me);
+	mmuq_insert_tail(mh, me);
 
 	rp = &pm->pm_regmap[me->me_vreg];
 	ctx = getcontext4();
@@ -1923,16 +1954,16 @@ region_free(struct pmap *pm, u_int smeg)
 	TAILQ_REMOVE(&pm->pm_reglist, me, me_pmchain);
 
 	/* off LRU or lock chain */
-	MMUQ_REMOVE(me, me_list);
+	mmuq_remove(me);
 
 	/* no associated pmap; on free list */
 	me->me_pmap = NULL;
-	MMUQ_INSERT_TAIL(&region_freelist, me, me_list);
+	mmuq_insert_tail(&region_freelist, me);
 }
 
 static void
 mmu_pagein_reg(struct pmap *pm, struct regmap *rp, vaddr_t va,
-		int vr, struct mmuq *mh)
+		int vr, struct mmuentry *mh)
 {
 	int i, s, smeg;
 
@@ -1966,8 +1997,8 @@ mmu_pmeg_lock(int pmeg)
 {
 	struct mmuentry *me = &mmusegments[pmeg];
 
-	MMUQ_REMOVE(me, me_list);
-	MMUQ_INSERT_TAIL(&segm_locked, me, me_list);
+	mmuq_remove(me);
+	mmuq_insert_tail(&segm_locked, me);
 #ifdef DIAGNOSTIC
 	(*me->me_statp)--;
 	pmap_stats.ps_npmeg_locked++;
@@ -1980,8 +2011,8 @@ mmu_pmeg_unlock(int pmeg)
 {
 	struct mmuentry *me = &mmusegments[pmeg];
 
-	MMUQ_REMOVE(me, me_list);
-	MMUQ_INSERT_TAIL(&segm_lru, me, me_list);
+	mmuq_remove(me);
+	mmuq_insert_tail(&segm_lru, me);
 #ifdef DIAGNOSTIC
 	(*me->me_statp)--;
 	pmap_stats.ps_npmeg_lru++;
@@ -1991,7 +2022,7 @@ mmu_pmeg_unlock(int pmeg)
 
 static void
 mmu_pagein_seg(struct pmap *pm, struct segmap *sp, vaddr_t va,
-		int vr, int vs, struct mmuq *mh)
+		int vr, int vs, struct mmuentry *mh)
 {
 	int s, i, pmeg, *pte;
 
@@ -2289,7 +2320,9 @@ ctx_free(struct pmap *pm)
 
 #if defined(SUN4M) || defined(SUN4D)
 	if (CPU_HAS_SRMMU) {
-		int i;
+		CPU_INFO_ITERATOR i;
+
+		__USE(i);
 
 		cache_flush_context(ctx);
 		tlb_flush_context(ctx, PMAP_CPUSET(pm));
@@ -2635,7 +2668,6 @@ pv_changepte4m(struct vm_page *pg, int bis, int bic)
 		return;
 
 	for (; pv != NULL; pv = pv->pv_next) {
-		int tpte;
 		pm = pv->pv_pmap;
 		/* XXXSMP: should lock pm */
 		va = pv->pv_va;
@@ -2651,8 +2683,8 @@ pv_changepte4m(struct vm_page *pg, int bis, int bic)
 			cache_flush_page(va, pm->pm_ctxnum);
 		}
 
-		tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
-		KASSERT((tpte & SRMMU_TETYPE) == SRMMU_TEPTE);
+		KASSERT((sp->sg_pte[VA_SUN4M_VPG(va)] & SRMMU_TETYPE) ==
+			SRMMU_TEPTE);
 		VM_MDPAGE_PVHEAD(pg)->pv_flags |= MR4M(updatepte4m(va,
 		    &sp->sg_pte[VA_SUN4M_VPG(va)], bic, bis, pm->pm_ctxnum,
 		    PMAP_CPUSET(pm)));
@@ -3148,13 +3180,13 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 
 	/* Initialize MMU resource queues */
 #if defined(SUN4_MMU3L)
-	MMUQ_INIT(&region_freelist);
-	MMUQ_INIT(&region_lru);
-	MMUQ_INIT(&region_locked);
+	mmuq_init(&region_freelist);
+	mmuq_init(&region_lru);
+	mmuq_init(&region_locked);
 #endif
-	MMUQ_INIT(&segm_freelist);
-	MMUQ_INIT(&segm_lru);
-	MMUQ_INIT(&segm_locked);
+	mmuq_init(&segm_freelist);
+	mmuq_init(&segm_lru);
+	mmuq_init(&segm_locked);
 
 
 	/*
@@ -3308,8 +3340,8 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 				for (i = 1; i < nctx; i++)
 					prom_setcontext(i, (void *)p, rcookie);
 
-				MMUQ_INSERT_TAIL(&region_locked,
-						  mmureg, me_list);
+				mmuq_insert_tail(&region_locked,
+						  mmureg);
 				TAILQ_INSERT_TAIL(&pmap_kernel()->pm_reglist,
 						  mmureg, me_pmchain);
 #ifdef DIAGNOSTIC
@@ -3332,7 +3364,7 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 				prom_setcontext(i, (void *)p, scookie);
 
 		/* set up the mmu entry */
-		MMUQ_INSERT_TAIL(&segm_locked, mmuseg, me_list);
+		mmuq_insert_tail(&segm_locked, mmuseg);
 #ifdef DIAGNOSTIC
 		mmuseg->me_statp = &pmap_stats.ps_npmeg_locked;
 #endif
@@ -3410,7 +3442,7 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 				rcookie++;
 			mmureg = &mmuregions[rcookie];
 			mmureg->me_cookie = rcookie;
-			MMUQ_INSERT_TAIL(&region_freelist, mmureg, me_list);
+			mmuq_insert_tail(&region_freelist, mmureg);
 #ifdef DIAGNOSTIC
 			mmuseg->me_statp = NULL;
 #endif
@@ -3423,7 +3455,7 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 			scookie = zseg;
 		mmuseg = &mmusegments[scookie];
 		mmuseg->me_cookie = scookie;
-		MMUQ_INSERT_TAIL(&segm_freelist, mmuseg, me_list);
+		mmuq_insert_tail(&segm_freelist, mmuseg);
 		pmap_stats.ps_npmeg_free++;
 #ifdef DIAGNOSTIC
 		mmuseg->me_statp = NULL;

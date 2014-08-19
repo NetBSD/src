@@ -1,0 +1,11 @@
+#	$NetBSD: PANDABOARD_INSTALL,v 1.2.8.2 2014/08/20 00:02:53 tls Exp $
+#
+#	PANDABOARD_INSTALL -- PANDABOARD kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/PANDABOARD"
+include "arch/evbarm/conf/INSTALL"
+
+options BOOTHOWTO=RB_SINGLE
+no makeoptions	DEBUG

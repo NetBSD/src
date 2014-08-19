@@ -47,8 +47,6 @@ typedef char *caddr_t;
 #include <netinet/in.h>
 #include <netinet/ip.h>
 
-#include <sys/simplelock.h>
-
 #include <sys/kthread.h>
 #include <sys/workqueue.h>
 
@@ -69,12 +67,12 @@ void cxgb_make_task(void *);
 
 void m_cljset(struct mbuf *m, void *cl, int type);
 
-#define mtx simplelock
-#define mtx_init(a, b, c, d) { (a)->lock_data = __SIMPLELOCK_UNLOCKED; }
+#define mtx kmutex_t
+#define mtx_init(a, b, c, d) { mutex_init(a, MUTEX_DEFAULT, IPL_HIGH) }
 #define mtx_destroy(a)
-#define mtx_lock(a) simple_lock(a)
-#define mtx_unlock(a) simple_unlock(a)
-#define mtx_trylock(a) simple_lock_try(a)
+#define mtx_lock(a) mutex_spin_enter(a)
+#define mtx_unlock(a) mutex_spin_exit(a)
+#define mtx_trylock(a) mutex_tryenter(a)
 #define MA_OWNED 1
 #define MA_NOTOWNED 0
 #define mtx_assert(a, w) 

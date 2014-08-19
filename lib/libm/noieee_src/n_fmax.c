@@ -26,10 +26,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: n_fmax.c,v 1.1 2011/01/09 02:32:13 jakllsch Exp $");
+__RCSID("$NetBSD: n_fmax.c,v 1.1.12.1 2014/08/20 00:02:18 tls Exp $");
 #endif
 
 #include <math.h>
+
+#ifdef __weak_alias
+__weak_alias(fmaxl, fmax);
+#endif
 
 double
 fmax(double x, double y)

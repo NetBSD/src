@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.14 2012/08/07 01:19:05 jnemeth Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.14.2.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.14 2012/08/07 01:19:05 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.14.2.1 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.14 2012/08/07 01:19:05 jnemeth Exp 
 
 #include <opt_modular.h>
 
+/*
+ * Arbitrary limit to avoid DoS for excessive memory allocation.
+ */
+#define MAXPROPSLEN	4096
+
 static int
 handle_modctl_load(modctl_load_t *ml)
 {
@@ -57,31 +62,35 @@ handle_modctl_load(modctl_load_t *ml)
 
 	if ((ml->ml_props != NULL && ml->ml_propslen == 0) ||
 	    (ml->ml_props == NULL && ml->ml_propslen > 0)) {
-		error = EINVAL;
-		goto out1;
+		return EINVAL;
 	}
 
 	path = PNBUF_GET();
 	error = copyinstr(ml->ml_filename, path, MAXPATHLEN, NULL);
 	if (error != 0)
-		goto out2;
+		goto out1;
 
 	if (ml->ml_props != NULL) {
+		if (ml->ml_propslen > MAXPROPSLEN) {
+			error = ENOMEM;
+			goto out1;
+		}
 		propslen = ml->ml_propslen + 1;
-		props = (char *)kmem_alloc(propslen, KM_SLEEP);
+
+		props = kmem_alloc(propslen, KM_SLEEP);
 		if (props == NULL) {
 			error = ENOMEM;
-			goto out2;
+			goto out1;
 		}
 
 		error = copyinstr(ml->ml_props, props, propslen, NULL);
 		if (error != 0)
-			goto out3;
+			goto out2;
 
 		dict = prop_dictionary_internalize(props);
 		if (dict == NULL) {
 			error = EINVAL;
-			goto out3;
+			goto out2;
 		}
 	} else {
 		dict = NULL;
@@ -94,14 +103,12 @@ handle_modctl_load(modctl_load_t *ml)
 		prop_object_release(dict);
 	}
 
-out3:
+out2:
 	if (props != NULL) {
 		kmem_free(props, propslen);
 	}
-out2:
-	PNBUF_PUT(path);
 out1:
-
+	PNBUF_PUT(path);
 	return error;
 }
 
