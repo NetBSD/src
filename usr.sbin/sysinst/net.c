@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.3 2014/08/19 06:47:15 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.4 2014/08/19 13:01:48 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -264,7 +264,7 @@ get_ifconfig_info(struct net_desc *devs)
 		if (*ignore != NULL)
 			continue;
 
-		strncpy (devs[i].if_dev, buf, STRSIZE);
+		strlcpy (devs[i].if_dev, buf, STRSIZE);
 		i++;
 	}
 	strcpy(devs[i].if_dev, "\0");
