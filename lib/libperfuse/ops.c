@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.68 2014/08/16 16:31:15 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.69 2014/08/19 15:29:14 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -3139,8 +3139,6 @@ perfuse_node_write2(struct puffs_usermount *pu, puffs_cookie_t opc,
 	 * we get the latest value.
 	 */
 	if (ioflag & PUFFS_IO_APPEND) {
-		DWARNX("%s: PUFFS_IO_APPEND set, untested code", __func__);
-
 		if ((error = perfuse_node_getattr(pu, opc, vap, pcr)) != 0)
 			goto out;
 
