@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.5 2014/08/19 13:41:08 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.6 2014/08/19 13:44:31 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -2414,17 +2414,18 @@ pm_submenu(menudesc *m, void *arg)
 
 	switch (((part_entry_t *)arg)[m->cursel].type) {
 		case PM_DISK_T:
-			if (pm_cur->gpt) {
+			if (pm_cur != NULL && pm_cur->gpt) {
 				process_menu(MENU_pmgptentry, &part_num);
 				pm_wedges_fill(pm_cur);
-			} else
+			} else {
 				process_menu(MENU_pmdiskentry, &part_num);
+			}
 			break;
 		case PM_WEDGE_T:
 		case PM_PART_T:
 			part_num = ((part_entry_t *)arg)[m->cursel].dev_num;
 			process_menu(MENU_pmpartentry, &part_num);
-			if (pm_cur->gpt)
+			if (pm_cur != NULL && pm_cur->gpt)
 				pm_wedges_fill(pm_cur);
 			break;
 		case PM_SPEC_T:
