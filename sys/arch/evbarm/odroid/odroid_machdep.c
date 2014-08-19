@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.26 2014/08/14 15:57:51 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.27 2014/08/19 16:18:15 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.26 2014/08/14 15:57:51 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.27 2014/08/19 16:18:15 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -719,6 +719,17 @@ odroid_device_register(device_t self, void *aux)
 
 		/* internal hub IIRC, unknown if this line exists */
 		//prop_dictionary_set_cstring(dict, "p3v3_en", ">GPA1[3]");
+	}
+	if (device_is_a(self, "exyoiic") && (IS_EXYNOS5_P())) {
+		/* IIC0 not used (NC) */
+		prop_dictionary_set_bool(dict, "iic1_enable", true);
+		prop_dictionary_set_bool(dict, "iic2_enable", true);
+		/* IIC3 not used (NC) */
+		prop_dictionary_set_bool(dict, "iic4_enable", true);
+		/* IIC5 not used (NC) */
+		/* IIC6 used differently (SCLK used as led1) */
+		/* IIC7 used differently (PWM, though NC)    */
+		/* IIC8 HDMI, not possible trough GPIO */
 	}
 #endif
 }
