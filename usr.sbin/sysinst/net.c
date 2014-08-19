@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.3 2014/08/19 06:47:15 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1176,8 +1176,6 @@ mnt_net_config(void)
 			write_etc_hosts(hosts);
 			(void)fclose(hosts);
 			scripting_fprintf(NULL, "EOF\n");
-
-			fclose(hosts);
 		}
 
 		if (del_rc_conf("defaultroute") == 0)
