@@ -18,7 +18,7 @@ Dynamic section at offset .* contains 17 entries:
  0x00000013 \(RELENT\)                     8 \(bytes\)
  0x70000001 \(MIPS_RLD_VERSION\)           1
  0x70000005 \(MIPS_FLAGS\)                 NOTPOT
- 0x70000006 \(MIPS_BASE_ADDRESS\)          0
+ 0x70000006 \(MIPS_BASE_ADDRESS\)          0x0
  0x7000000a \(MIPS_LOCAL_GOTNO\)           2
  0x70000011 \(MIPS_SYMTABNO\)              [0-9]+
  0x70000012 \(MIPS_UNREFEXTNO\)            [0-9]+

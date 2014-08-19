@@ -1,8 +1,8 @@
 /* add.cpp - ldap NDB back-end add routine */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-ndb/add.cpp,v 1.3.2.5 2010/04/13 20:23:34 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2010 The OpenLDAP Foundation.
+ * Copyright 2008-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -51,6 +51,7 @@ ndb_back_add(Operation *op, SlapReply *rs )
 		op->oq_add.rs_e->e_name.bv_val, 0, 0);
 
 	ctrls[num_ctrls] = 0;
+	NA.txn = NULL;
 
 	/* check entry's schema */
 	rs->sr_err = entry_schema_check( op, op->oq_add.rs_e, NULL,

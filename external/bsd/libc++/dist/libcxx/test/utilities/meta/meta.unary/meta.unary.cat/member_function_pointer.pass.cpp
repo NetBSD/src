@@ -17,6 +17,9 @@ template <class T>
 void test_member_function_pointer_imp()
 {
     static_assert(!std::is_void<T>::value, "");
+#if _LIBCPP_STD_VER > 11
+    static_assert(!std::is_null_pointer<T>::value, "");
+#endif
     static_assert(!std::is_integral<T>::value, "");
     static_assert(!std::is_floating_point<T>::value, "");
     static_assert(!std::is_array<T>::value, "");
@@ -49,4 +52,27 @@ int main()
     test_member_function_pointer<void (Class::*)()>();
     test_member_function_pointer<void (Class::*)(int)>();
     test_member_function_pointer<void (Class::*)(int, char)>();
+
+    test_member_function_pointer<void (Class::*)() const>();
+    test_member_function_pointer<void (Class::*)(int) const>();
+    test_member_function_pointer<void (Class::*)(int, char) const>();
+
+    test_member_function_pointer<void (Class::*)() volatile>();
+    test_member_function_pointer<void (Class::*)(int) volatile>();
+    test_member_function_pointer<void (Class::*)(int, char) volatile>();
+
+#if __cplusplus >= 201103L
+// reference qualifiers on functions are a C++11 extension
+    test_member_function_pointer<void (Class::*)() &&>();
+    test_member_function_pointer<void (Class::*)(int) &&>();
+    test_member_function_pointer<void (Class::*)(int, char) &&>();
+
+    test_member_function_pointer<void (Class::*)() &>();
+    test_member_function_pointer<void (Class::*)(int) &>();
+    test_member_function_pointer<void (Class::*)(int, char) &>();
+
+    test_member_function_pointer<void (Class::*)() volatile &&>();
+    test_member_function_pointer<void (Class::*)(int) volatile &&>();
+    test_member_function_pointer<void (Class::*)(int, char) volatile &&>();
+#endif
 }

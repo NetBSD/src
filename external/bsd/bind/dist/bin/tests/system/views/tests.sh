@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -78,6 +78,50 @@ then
 	echo "I:no differences found.  something's wrong."
 	status=1
 fi
+
+echo "I:updating cloned zone in internal view"
+$NSUPDATE << EOF
+server 10.53.0.2 5300
+zone clone
+update add b.clone. 300 in a 10.1.0.3
+send
+EOF
+echo "I:sleeping to allow update to take effect"
+sleep 5
+
+echo "I:verifying update affected both views"
+ret=0
+one=`$DIG +tcp +short -p 5300 -b 10.53.0.2 @10.53.0.2 b.clone a`
+two=`$DIG +tcp +short -p 5300 -b 10.53.0.4 @10.53.0.2 b.clone a`
+if [ "$one" != "$two" ]; then
+        echo "'$one' does not match '$two'"
+        ret=1
+fi
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:verifying forwarder in cloned zone works"
+ret=0
+one=`$DIG +tcp +short -p 5300 -b 10.53.0.2 @10.53.0.2 child.clone txt`
+two=`$DIG +tcp +short -p 5300 -b 10.53.0.4 @10.53.0.2 child.clone txt`
+three=`$DIG +tcp +short -p 5300 @10.53.0.3 child.clone txt`
+four=`$DIG +tcp +short -p 5300 @10.53.0.5 child.clone txt`
+echo "$three" | grep NS3 > /dev/null || { ret=1; echo "expected response from NS3 got '$three'"; }
+echo "$four" | grep NS5 > /dev/null || { ret=1; echo "expected response from NS5 got '$four'"; }
+if [ "$one" = "$two" ]; then
+        echo "'$one' matches '$two'"
+        ret=1
+fi
+if [ "$one" != "$three" ]; then
+        echo "'$one' does not match '$three'"
+        ret=1
+fi
+if [ "$two" != "$four" ]; then
+        echo "'$two' does not match '$four'"
+        ret=1
+fi
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
 
 echo "I:exit status: $status"
 exit $status

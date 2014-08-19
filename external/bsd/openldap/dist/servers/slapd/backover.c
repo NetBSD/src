@@ -1,10 +1,10 @@
-/*	$NetBSD: backover.c,v 1.1.1.4 2010/12/12 15:22:19 adam Exp $	*/
+/*	$NetBSD: backover.c,v 1.1.1.4.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
 /* backover.c - backend overlay routines */
-/* OpenLDAP: pkg/ldap/servers/slapd/backover.c,v 1.71.2.21 2010/04/13 20:23:11 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2010 The OpenLDAP Foundation.
+ * Copyright 2003-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -476,15 +476,16 @@ over_acl_group(
 {
 	slap_overinfo *oi;
 	slap_overinst *on;
-	BackendInfo *bi = op->o_bd->bd_info;
+	BackendInfo *bi;
 	BackendDB *be = op->o_bd, db;
 	int rc = SLAP_CB_CONTINUE;
 
 	/* FIXME: used to happen for instance during abandon
 	 * when global overlays are used... */
-	assert( op->o_bd != NULL );
+	assert( be != NULL );
 
-	oi = op->o_bd->bd_info->bi_private;
+	bi = be->bd_info;
+	oi = bi->bi_private;
 	on = oi->oi_list;
 
 	for ( ; on; on = on->on_next ) {
@@ -544,15 +545,16 @@ over_acl_attribute(
 {
 	slap_overinfo *oi;
 	slap_overinst *on;
-	BackendInfo *bi = op->o_bd->bd_info;
+	BackendInfo *bi;
 	BackendDB *be = op->o_bd, db;
 	int rc = SLAP_CB_CONTINUE;
 
 	/* FIXME: used to happen for instance during abandon
 	 * when global overlays are used... */
-	assert( op->o_bd != NULL );
+	assert( be != NULL );
 
-	oi = op->o_bd->bd_info->bi_private;
+	bi = be->bd_info;
+	oi = bi->bi_private;
 	on = oi->oi_list;
 
 	for ( ; on; on = on->on_next ) {
@@ -1076,19 +1078,57 @@ overlay_register_control( BackendDB *be, const char *oid )
 				gotit = 1;
 			}
 
-			bd->be_ctrls[ cid ] = 1;
+			/* overlays can be instanciated multiple times, use
+			 * be_ctrls[ cid ] as an instance counter, so that the
+			 * overlay's controls are only really disabled after the
+			 * last instance called overlay_register_control() */
+			bd->be_ctrls[ cid ]++;
 			bd->be_ctrls[ SLAP_MAX_CIDS ] = 1;
 		}
 
 	}
 	
 	if ( !gotit ) {
-		be->bd_self->be_ctrls[ cid ] = 1;
+		/* overlays can be instanciated multiple times, use
+		 * be_ctrls[ cid ] as an instance counter, so that the
+		 * overlay's controls are only really unregistered after the
+		 * last instance called overlay_register_control() */
+		be->bd_self->be_ctrls[ cid ]++;
 		be->bd_self->be_ctrls[ SLAP_MAX_CIDS ] = 1;
 	}
 
 	return 0;
 }
+
+#ifdef SLAP_CONFIG_DELETE
+void
+overlay_unregister_control( BackendDB *be, const char *oid )
+{
+	int		gotit = 0;
+	int		cid;
+
+	if ( slap_find_control_id( oid, &cid ) == LDAP_CONTROL_NOT_FOUND ) {
+		return;
+	}
+
+	if ( SLAP_ISGLOBALOVERLAY( be ) ) {
+		BackendDB *bd;
+
+		/* remove from all backends... */
+		LDAP_STAILQ_FOREACH( bd, &backendDB, be_next ) {
+			if ( bd == be->bd_self ) {
+				gotit = 1;
+			}
+
+			bd->be_ctrls[ cid ]--;
+		}
+	}
+
+	if ( !gotit ) {
+		be->bd_self->be_ctrls[ cid ]--;
+	}
+}
+#endif /* SLAP_CONFIG_DELETE */
 
 void
 overlay_destroy_one( BackendDB *be, slap_overinst *on )
@@ -1112,39 +1152,75 @@ overlay_destroy_one( BackendDB *be, slap_overinst *on )
 }
 
 #ifdef SLAP_CONFIG_DELETE
+typedef struct ov_remove_ctx {
+	BackendDB *be;
+	slap_overinst *on;
+} ov_remove_ctx;
+
+int
+overlay_remove_cb( Operation *op, SlapReply *rs )
+{
+	ov_remove_ctx *rm_ctx = (ov_remove_ctx*) op->o_callback->sc_private;
+	BackendInfo *bi_orig = rm_ctx->be->bd_info;
+
+	rm_ctx->be->bd_info = (BackendInfo*) rm_ctx->on;
+
+	if ( rm_ctx->on->on_bi.bi_db_close ) {
+		rm_ctx->on->on_bi.bi_db_close( rm_ctx->be, NULL );
+	}
+	if ( rm_ctx->on->on_bi.bi_db_destroy ) {
+		rm_ctx->on->on_bi.bi_db_destroy( rm_ctx->be, NULL );
+	}
+
+	/* clean up after removing last overlay */
+	if ( ! rm_ctx->on->on_info->oi_list ) {
+		/* reset db flags and bd_info to orig */
+		SLAP_DBFLAGS( rm_ctx->be ) &= ~SLAP_DBFLAG_GLOBAL_OVERLAY;
+		rm_ctx->be->bd_info = rm_ctx->on->on_info->oi_orig;
+		ch_free(rm_ctx->on->on_info);
+	} else {
+		rm_ctx->be->bd_info = bi_orig;
+	}
+	free( rm_ctx->on );
+	op->o_tmpfree(rm_ctx, op->o_tmpmemctx);
+	return SLAP_CB_CONTINUE;
+}
+
 void
-overlay_remove( BackendDB *be, slap_overinst *on )
+overlay_remove( BackendDB *be, slap_overinst *on, Operation *op )
 {
 	slap_overinfo *oi = on->on_info;
 	slap_overinst **oidx;
-	BackendInfo *bi_orig;
+	ov_remove_ctx *rm_ctx;
+	slap_callback *rm_cb, *cb;
 
-	/* remove overlay from oi_list an call db_close and db_destroy
-	 * handlers */
+	/* remove overlay from oi_list */
 	for ( oidx = &oi->oi_list; *oidx; oidx = &(*oidx)->on_next ) {
 		if ( *oidx == on ) {
 			*oidx = on->on_next;
-			bi_orig = be->bd_info;
-			be->bd_info = (BackendInfo *)on;
-			if ( on->on_bi.bi_db_close ) {
-				on->on_bi.bi_db_close( be, NULL );
-			}
-			if ( on->on_bi.bi_db_destroy ) {
-				on->on_bi.bi_db_destroy( be, NULL );
-			}
-			be->bd_info = bi_orig;
-			free( on );
 			break;
 		}
 	}
-	
-	/* clean up after removing last overlay */
-	if ( ! oi->oi_list ) 
-	{
-		/* reset db flags and bd_info to orig */
-		SLAP_DBFLAGS( be ) &= ~SLAP_DBFLAG_GLOBAL_OVERLAY;
-		be->bd_info = oi->oi_orig;
-		ch_free(oi);
+
+	/* The db_close and db_destroy handlers to cleanup a release
+	 * the overlay's resources are called from the cleanup callback
+	 */
+	rm_ctx = op->o_tmpalloc( sizeof( ov_remove_ctx ), op->o_tmpmemctx );
+	rm_ctx->be = be;
+	rm_ctx->on = on;
+
+	rm_cb = op->o_tmpalloc( sizeof( slap_callback ), op->o_tmpmemctx );
+	rm_cb->sc_next = NULL;
+	rm_cb->sc_cleanup = overlay_remove_cb;
+	rm_cb->sc_response = NULL;
+	rm_cb->sc_private = (void*) rm_ctx;
+
+	/* Append callback to the end of the list */
+	if ( !op->o_callback ) {
+		op->o_callback = rm_cb;
+	} else {
+		for ( cb = op->o_callback; cb->sc_next; cb = cb->sc_next );
+		cb->sc_next = rm_cb;
 	}
 }
 #endif /* SLAP_CONFIG_DELETE */
@@ -1159,38 +1235,32 @@ overlay_insert( BackendDB *be, slap_overinst *on2, slap_overinst ***prev,
 		on2->on_next = oi->oi_list;
 		oi->oi_list = on2;
 	} else {
-		int i;
-		slap_overinst *on, *otmp1 = NULL, *otmp2;
+		int i, novs;
+		slap_overinst *on, **prev;
 
 		/* Since the list is in reverse order and is singly linked,
-		 * we reverse it to find the idx insertion point. Adding
-		 * on overlay at a specific point should be a pretty
+		 * we have to count the overlays and then insert backwards.
+		 * Adding on overlay at a specific point should be a pretty
 		 * infrequent occurrence.
 		 */
-		for ( on = oi->oi_list; on; on=otmp2 ) {
-			otmp2 = on->on_next;
-			on->on_next = otmp1;
-			otmp1 = on;
-		}
-		oi->oi_list = NULL;
+		novs = 0;
+		for ( on = oi->oi_list; on; on=on->on_next )
+			novs++;
+
+		if (idx > novs)
+			idx = 0;
+		else
+			idx = novs - idx;
+
 		/* advance to insertion point */
-		for ( i=0, on = otmp1; i<idx; i++ ) {
-			otmp1 = on->on_next;
-			on->on_next = oi->oi_list;
-			oi->oi_list = on;
+		prev = &oi->oi_list;
+		for ( i=0; i<idx; i++ ) {
+			on = *prev;
+			prev = &on->on_next;
 		}
 		/* insert */
-		on2->on_next = oi->oi_list;
-		oi->oi_list = on2;
-		if ( otmp1 ) {
-			*prev = &otmp1->on_next;
-			/* replace remainder of list */
-			for ( on=otmp1; on; on=otmp1 ) {
-				otmp1 = on->on_next;
-				on->on_next = oi->oi_list;
-				oi->oi_list = on;
-			}
-		}
+		on2->on_next = *prev;
+		*prev = on2;
 	}
 }
 

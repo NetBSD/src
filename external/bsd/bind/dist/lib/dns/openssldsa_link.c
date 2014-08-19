@@ -1,7 +1,7 @@
-/*	$NetBSD: openssldsa_link.c,v 1.4.2.1 2013/02/25 00:25:43 tls Exp $	*/
+/*	$NetBSD: openssldsa_link.c,v 1.4.2.2 2014/08/19 23:46:28 tls Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -170,7 +170,8 @@ openssldsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 	if (!EVP_SignFinal(evp_md_ctx, sigbuf, &siglen, pkey)) {
 		EVP_PKEY_free(pkey);
 		free(sigbuf);
-		return (dst__openssl_toresult2("EVP_SignFinal",
+		return (dst__openssl_toresult3(dctx->category,
+					       "EVP_SignFinal",
 					       ISC_R_FAILURE));
 	}
 	INSIST(EVP_PKEY_size(pkey) >= (int) siglen);
@@ -184,25 +185,30 @@ openssldsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 	sb = sigbuf;
 	if (d2i_DSA_SIG(&dsasig, &sb, (long) siglen) == NULL) {
 		free(sigbuf);
-		return (dst__openssl_toresult2("d2i_DSA_SIG", ISC_R_FAILURE));
+		return (dst__openssl_toresult3(dctx->category,
+					       "d2i_DSA_SIG",
+					       ISC_R_FAILURE));
 	}
 	free(sigbuf);
 #elif 0
 	/* Only use EVP for the Digest */
 	if (!EVP_DigestFinal_ex(evp_md_ctx, digest, &siglen)) {
-		return (dst__openssl_toresult2("EVP_DigestFinal_ex",
+		return (dst__openssl_toresult3(dctx->category,
+					       "EVP_DigestFinal_ex",
 					       ISC_R_FAILURE));
 	}
 	dsasig = DSA_do_sign(digest, ISC_SHA1_DIGESTLENGTH, dsa);
 	if (dsasig == NULL)
-		return (dst__openssl_toresult2("DSA_do_sign",
+		return (dst__openssl_toresult3(dctx->category,
+					       "DSA_do_sign",
 					       DST_R_SIGNFAILURE));
 #else
 	isc_sha1_final(sha1ctx, digest);
 
 	dsasig = DSA_do_sign(digest, ISC_SHA1_DIGESTLENGTH, dsa);
 	if (dsasig == NULL)
-		return (dst__openssl_toresult2("DSA_do_sign",
+		return (dst__openssl_toresult3(dctx->category,
+					       "DSA_do_sign",
 					       DST_R_SIGNFAILURE));
 #endif
 	*r.base++ = (key->key_size - 512)/64;
@@ -288,7 +294,8 @@ openssldsa_verify(dst_context_t *dctx, const isc_region_t *sig) {
 	case 0:
 		return (dst__openssl_toresult(DST_R_VERIFYFAILURE));
 	default:
-		return (dst__openssl_toresult2("DSA_do_verify",
+		return (dst__openssl_toresult3(dctx->category,
+					       "DSA_do_verify",
 					       DST_R_VERIFYFAILURE));
 	}
 }
@@ -518,6 +525,11 @@ openssldsa_tofile(const dst_key_t *key, const char *directory) {
 	if (key->keydata.dsa == NULL)
 		return (DST_R_NULLKEY);
 
+	if (key->external) {
+		priv.nelements = 0;
+		return (dst__privstruct_writefile(key, &priv, directory));
+	}
+
 	dsa = key->keydata.dsa;
 
 	priv.elements[cnt].tag = TAG_DSA_PRIME;
@@ -563,11 +575,23 @@ openssldsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	isc_mem_t *mctx = key->mctx;
 #define DST_RET(a) {ret = a; goto err;}
 
-	UNUSED(pub);
 	/* read private key file */
 	ret = dst__privstruct_parse(key, DST_ALG_DSA, lexer, mctx, &priv);
 	if (ret != ISC_R_SUCCESS)
 		return (ret);
+
+	if (key->external) {
+		if (priv.nelements != 0)
+			DST_RET(DST_R_INVALIDPRIVATEKEY);
+		if (pub == NULL)
+			DST_RET(DST_R_INVALIDPRIVATEKEY);
+		key->keydata.pkey = pub->keydata.pkey;
+		pub->keydata.pkey = NULL;
+		key->key_size = pub->key_size;
+		dst__privstruct_free(&priv, mctx);
+		memset(&priv, 0, sizeof(priv));
+		return (ISC_R_SUCCESS);
+	}
 
 	dsa = DSA_new();
 	if (dsa == NULL)
@@ -575,7 +599,7 @@ openssldsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	dsa->flags &= ~DSA_FLAG_CACHE_MONT_P;
 	key->keydata.dsa = dsa;
 
-	for (i=0; i < priv.nelements; i++) {
+	for (i = 0; i < priv.nelements; i++) {
 		BIGNUM *bn;
 		bn = BN_bin2bn(priv.elements[i].data,
 			       priv.elements[i].length, NULL);
@@ -601,9 +625,8 @@ openssldsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		}
 	}
 	dst__privstruct_free(&priv, mctx);
-
+	memset(&priv, 0, sizeof(priv));
 	key->key_size = BN_num_bits(dsa->p);
-
 	return (ISC_R_SUCCESS);
 
  err:
@@ -615,6 +638,7 @@ openssldsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 
 static dst_func_t openssldsa_functions = {
 	openssldsa_createctx,
+	NULL, /*%< createctx2 */
 	openssldsa_destroyctx,
 	openssldsa_adddata,
 	openssldsa_sign,

@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004-2007, 2010  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2007, 2010, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,6 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: nslookup.docbook,v 1.18 2010/02/22 23:49:11 tbox Exp  -->
 <!--
  - Copyright (c) 1985, 1989
  -    The Regents of the University of California.  All rights reserved.
@@ -30,11 +29,7 @@
  - 2. Redistributions in binary form must reproduce the above copyright
  -    notice, this list of conditions and the following disclaimer in the
  -    documentation and/or other materials provided with the distribution.
- - 3. All advertising materials mentioning features or use of this software
- -    must display the following acknowledgement:
- -     This product includes software developed by the University of
- -     California, Berkeley and its contributors.
- - 4. Neither the name of the University nor the names of its contributors
+ - 3. Neither the name of the University nor the names of its contributors
  -    may be used to endorse or promote products derived from this software
  -    without specific prior written permission.
  -
@@ -53,7 +48,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>Jun 30, 2000</date>
+    <date>January 24, 2014</date>
   </refentryinfo>
 
   <refmeta>
@@ -74,6 +69,8 @@
       <year>2006</year>
       <year>2007</year>
       <year>2010</year>
+      <year>2013</year>
+      <year>2014</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -135,6 +132,11 @@
 nslookup -query=hinfo  -timeout=10
 </programlisting>
       <!-- </informalexample> -->
+    </para>
+    <para>
+      The <option>-version</option> option causes
+      <command>nslookup</command> to print the version
+      number and immediately exits.
     </para>
 
   </refsect1>
@@ -405,6 +407,17 @@ nslookup -query=hinfo  -timeout=10
                   </para>
 		  <para>
                     (Default = recurse; abbreviation = [no]rec)
+                  </para>
+                </listitem>
+              </varlistentry>
+
+              <varlistentry>
+                <term><constant>ndots=</constant><replaceable>number</replaceable></term>
+                <listitem>
+                  <para>
+		    Set the number of dots (label separators) in a domain
+		    that will disable searching.  Absolute names always
+		    stop searching.
                   </para>
                 </listitem>
               </varlistentry>

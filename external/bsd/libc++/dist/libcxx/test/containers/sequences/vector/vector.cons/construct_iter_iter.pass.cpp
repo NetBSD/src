@@ -16,6 +16,8 @@
 
 #include "test_iterators.h"
 #include "../../../stack_allocator.h"
+#include "min_allocator.h"
+#include "asan_testing.h"
 
 template <class C, class Iterator>
 void
@@ -24,6 +26,7 @@ test(Iterator first, Iterator last)
     C c(first, last);
     assert(c.__invariants());
     assert(c.size() == std::distance(first, last));
+    assert(is_contiguous_container_asan_correct(c)); 
     for (typename C::const_iterator i = c.cbegin(), e = c.cend(); i != e; ++i, ++first)
         assert(*i == *first);
 }
@@ -43,4 +46,11 @@ int main()
     test<std::vector<int, stack_allocator<int, 18> > >(bidirectional_iterator<const int*>(a), bidirectional_iterator<const int*>(an));
     test<std::vector<int, stack_allocator<int, 18> > >(random_access_iterator<const int*>(a), random_access_iterator<const int*>(an));
     test<std::vector<int, stack_allocator<int, 18> > >(a, an);
+#if __cplusplus >= 201103L
+    test<std::vector<int, min_allocator<int>> >(input_iterator<const int*>(a), input_iterator<const int*>(an));
+    test<std::vector<int, min_allocator<int>> >(forward_iterator<const int*>(a), forward_iterator<const int*>(an));
+    test<std::vector<int, min_allocator<int>> >(bidirectional_iterator<const int*>(a), bidirectional_iterator<const int*>(an));
+    test<std::vector<int, min_allocator<int>> >(random_access_iterator<const int*>(a), random_access_iterator<const int*>(an));
+    test<std::vector<int> >(a, an);
+#endif
 }

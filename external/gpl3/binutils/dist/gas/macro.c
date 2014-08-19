@@ -1,6 +1,6 @@
 /* macro.c - macro support for gas
    Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-   2004, 2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+   2004, 2005, 2006, 2007, 2008, 2011, 2012, 2013 Free Software Foundation, Inc.
 
    Written by Steve and Judy Chamberlain of Cygnus Support,
       sac@cygnus.com
@@ -65,7 +65,7 @@ static int macro_strip_at;
 
 /* Function to use to parse an expression.  */
 
-static int (*macro_expr) (const char *, int, sb *, int *);
+static size_t (*macro_expr) (const char *, size_t, sb *, offsetT *);
 
 /* Number of macro expansions that have been done.  */
 
@@ -75,7 +75,7 @@ static int macro_number;
 
 void
 macro_init (int alternate, int mri, int strip_at,
-	    int (*exp) (const char *, int, sb *, int *))
+	    size_t (*exp) (const char *, size_t, sb *, offsetT *))
 {
   macro_hash = hash_new ();
   macro_defined = 0;
@@ -110,16 +110,15 @@ macro_mri_mode (int mri)
 
 int
 buffer_and_nest (const char *from, const char *to, sb *ptr,
-		 int (*get_line) (sb *))
+		 size_t (*get_line) (sb *))
 {
-  int from_len;
-  int to_len = strlen (to);
+  size_t from_len;
+  size_t to_len = strlen (to);
   int depth = 1;
-  int line_start = ptr->len;
+  size_t line_start = ptr->len;
+  size_t more = get_line (ptr);
 
-  int more = get_line (ptr);
-
-  if (to_len == 4 && strcasecmp(to, "ENDR") == 0)
+  if (to_len == 4 && strcasecmp (to, "ENDR") == 0)
     {
       from = NULL;
       from_len = 0;
@@ -130,7 +129,7 @@ buffer_and_nest (const char *from, const char *to, sb *ptr,
   while (more)
     {
       /* Try to find the first pseudo op on the line.  */
-      int i = line_start;
+      size_t i = line_start;
       bfd_boolean had_colon = FALSE;
 
       /* With normal syntax we can suck what we want till we get
@@ -227,8 +226,8 @@ buffer_and_nest (const char *from, const char *to, sb *ptr,
 
 /* Pick up a token.  */
 
-static int
-get_token (int idx, sb *in, sb *name)
+static size_t
+get_token (size_t idx, sb *in, sb *name)
 {
   if (idx < in->len
       && is_name_beginner (in->ptr[idx]))
@@ -253,8 +252,8 @@ get_token (int idx, sb *in, sb *name)
 
 /* Pick up a string.  */
 
-static int
-getstring (int idx, sb *in, sb *acc)
+static size_t
+getstring (size_t idx, sb *in, sb *acc)
 {
   while (idx < in->len
 	 && (in->ptr[idx] == '"'
@@ -339,8 +338,8 @@ getstring (int idx, sb *in, sb *acc)
     (string)		-> return (string-including-whitespaces)
     xyx<whitespace>     -> return xyz.  */
 
-static int
-get_any_string (int idx, sb *in, sb *out)
+static size_t
+get_any_string (size_t idx, sb *in, sb *out)
 {
   sb_reset (out);
   idx = sb_skip_white (idx, in);
@@ -354,7 +353,7 @@ get_any_string (int idx, sb *in, sb *out)
 	}
       else if (in->ptr[idx] == '%' && macro_alternate)
 	{
-	  int val;
+	  offsetT val;
 	  char buf[20];
 
 	  /* Turns the next expression into a string.  */
@@ -363,7 +362,7 @@ get_any_string (int idx, sb *in, sb *out)
 			       idx + 1,
 			       in,
 			       &val);
-	  sprintf (buf, "%d", val);
+	  sprintf (buf, "%" BFD_VMA_FMT "d", val);
 	  sb_add_string (out, buf);
 	}
       else if (in->ptr[idx] == '"'
@@ -384,7 +383,7 @@ get_any_string (int idx, sb *in, sb *out)
 	}
       else
 	{
-	  char *br_buf = (char *) xmalloc(1);
+	  char *br_buf = (char *) xmalloc (1);
 	  char *in_br = br_buf;
 
 	  *in_br = '\0';
@@ -407,7 +406,10 @@ get_any_string (int idx, sb *in, sb *out)
 			 && in->ptr[idx] != tchar)
 		    sb_add_char (out, in->ptr[idx++]);
 		  if (idx == in->len)
-		    return idx;
+		    {
+		      free (br_buf);
+		      return idx;
+		    }
 		  break;
 		case '(':
 		case '[':
@@ -415,9 +417,9 @@ get_any_string (int idx, sb *in, sb *out)
 		    --in_br;
 		  else
 		    {
-		      br_buf = (char *) xmalloc(strlen(in_br) + 2);
-		      strcpy(br_buf + 1, in_br);
-		      free(in_br);
+		      br_buf = (char *) xmalloc (strlen (in_br) + 2);
+		      strcpy (br_buf + 1, in_br);
+		      free (in_br);
 		      in_br = br_buf;
 		    }
 		  *in_br = tchar;
@@ -434,7 +436,7 @@ get_any_string (int idx, sb *in, sb *out)
 	      sb_add_char (out, tchar);
 	      ++idx;
 	    }
-	  free(br_buf);
+	  free (br_buf);
 	}
     }
 
@@ -471,8 +473,8 @@ del_formal (formal_entry *formal)
 
 /* Pick up the formal parameters of a macro definition.  */
 
-static int
-do_formals (macro_entry *macro, int idx, sb *in)
+static size_t
+do_formals (macro_entry *macro, size_t idx, sb *in)
 {
   formal_entry **p = &macro->formals;
   const char *name;
@@ -481,13 +483,14 @@ do_formals (macro_entry *macro, int idx, sb *in)
   while (idx < in->len)
     {
       formal_entry *formal = new_formal ();
-      int cidx;
+      size_t cidx;
 
       idx = get_token (idx, in, &formal->name);
       if (formal->name.len == 0)
 	{
 	  if (macro->formal_count)
 	    --idx;
+	  del_formal (formal);	/* 'formal' goes out of scope.  */
 	  break;
 	}
       idx = sb_skip_white (idx, in);
@@ -571,9 +574,9 @@ do_formals (macro_entry *macro, int idx, sb *in)
       formal_entry *formal = new_formal ();
 
       /* Add a special NARG formal, which macro_expand will set to the
-         number of arguments.  */
+	 number of arguments.  */
       /* The same MRI assemblers which treat '@' characters also use
-         the name $NARG.  At least until we find an exception.  */
+	 the name $NARG.  At least until we find an exception.  */
       if (macro_strip_at)
 	name = "$NARG";
       else
@@ -622,8 +625,8 @@ free_macro (macro_entry *macro)
    the macro which was defined.  */
 
 const char *
-define_macro (int idx, sb *in, sb *label,
-	      int (*get_line) (sb *),
+define_macro (size_t idx, sb *in, sb *label,
+	      size_t (*get_line) (sb *),
 	      char *file, unsigned int line,
 	      const char **namep)
 {
@@ -639,7 +642,7 @@ define_macro (int idx, sb *in, sb *label,
 
   macro->formal_count = 0;
   macro->formals = 0;
-  macro->formal_hash = hash_new ();
+  macro->formal_hash = hash_new_sized (7);
 
   idx = sb_skip_white (idx, in);
   if (! buffer_and_nest ("MACRO", "ENDM", &macro->sub, get_line))
@@ -665,7 +668,7 @@ define_macro (int idx, sb *in, sb *label,
     }
   else
     {
-      int cidx;
+      size_t cidx;
 
       idx = get_token (idx, in, &name);
       macro->name = sb_terminate (&name);
@@ -702,8 +705,8 @@ define_macro (int idx, sb *in, sb *label,
 
 /* Scan a token, and then skip KIND.  */
 
-static int
-get_apost_token (int idx, sb *in, sb *name, int kind)
+static size_t
+get_apost_token (size_t idx, sb *in, sb *name, int kind)
 {
   idx = get_token (idx, in, name);
   if (idx < in->len
@@ -716,11 +719,11 @@ get_apost_token (int idx, sb *in, sb *name, int kind)
 
 /* Substitute the actual value for a formal parameter.  */
 
-static int
-sub_actual (int start, sb *in, sb *t, struct hash_control *formal_hash,
+static size_t
+sub_actual (size_t start, sb *in, sb *t, struct hash_control *formal_hash,
 	    int kind, sb *out, int copyifnotthere)
 {
-  int src;
+  size_t src;
   formal_entry *ptr;
 
   src = get_apost_token (start, in, t, kind);
@@ -770,7 +773,8 @@ macro_expand_body (sb *in, sb *out, formal_entry *formals,
 		   struct hash_control *formal_hash, const macro_entry *macro)
 {
   sb t;
-  int src = 0, inquote = 0, macro_line = 0;
+  size_t src = 0;
+  int inquote = 0, macro_line = 0;
   formal_entry *loclist = NULL;
   const char *err = NULL;
 
@@ -946,13 +950,13 @@ macro_expand_body (sb *in, sb *out, formal_entry *formals,
 	  if (ptr == NULL)
 	    {
 	      /* FIXME: We should really return a warning string here,
-                 but we can't, because the == might be in the MRI
-                 comment field, and, since the nature of the MRI
-                 comment field depends upon the exact instruction
-                 being used, we don't have enough information here to
-                 figure out whether it is or not.  Instead, we leave
-                 the == in place, which should cause a syntax error if
-                 it is not in a comment.  */
+		 but we can't, because the == might be in the MRI
+		 comment field, and, since the nature of the MRI
+		 comment field depends upon the exact instruction
+		 being used, we don't have enough information here to
+		 figure out whether it is or not.  Instead, we leave
+		 the == in place, which should cause a syntax error if
+		 it is not in a comment.  */
 	      sb_add_char (out, '=');
 	      sb_add_char (out, '=');
 	      sb_add_sb (out, &t);
@@ -998,7 +1002,7 @@ macro_expand_body (sb *in, sb *out, formal_entry *formals,
    body.  */
 
 static const char *
-macro_expand (int idx, sb *in, macro_entry *m, sb *out)
+macro_expand (size_t idx, sb *in, macro_entry *m, sb *out)
 {
   sb t;
   formal_entry *ptr;
@@ -1019,7 +1023,7 @@ macro_expand (int idx, sb *in, macro_entry *m, sb *out)
   if (macro_mri)
     {
       /* The macro may be called with an optional qualifier, which may
-         be referred to in the macro body as \0.  */
+	 be referred to in the macro body as \0.  */
       if (idx < in->len && in->ptr[idx] == '.')
 	{
 	  /* The Microtec assembler ignores this if followed by a white space.
@@ -1045,7 +1049,7 @@ macro_expand (int idx, sb *in, macro_entry *m, sb *out)
   idx = sb_skip_white (idx, in);
   while (idx < in->len)
     {
-      int scan;
+      size_t scan;
 
       /* Look and see if it's a positional or keyword arg.  */
       scan = idx;
@@ -1285,7 +1289,7 @@ delete_macro (const char *name)
    success, or an error message otherwise.  */
 
 const char *
-expand_irp (int irpc, int idx, sb *in, sb *out, int (*get_line) (sb *))
+expand_irp (int irpc, size_t idx, sb *in, sb *out, size_t (*get_line) (sb *))
 {
   sb sub;
   formal_entry f;
@@ -1341,11 +1345,11 @@ expand_irp (int irpc, int idx, sb *in, sb *out, int (*get_line) (sb *))
 	    {
 	      if (in->ptr[idx] == '"')
 		{
-		  int nxt;
+		  size_t nxt;
 
 		  if (irpc)
 		    in_quotes = ! in_quotes;
-	  
+
 		  nxt = sb_skip_white (idx + 1, in);
 		  if (nxt >= in->len)
 		    {

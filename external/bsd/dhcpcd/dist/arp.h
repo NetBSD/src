@@ -1,8 +1,8 @@
-/* $NetBSD: arp.h,v 1.1.1.2.18.1 2013/06/23 06:26:31 tls Exp $ */
+/* $NetBSD: arp.h,v 1.1.1.2.18.2 2014/08/19 23:46:43 tls Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -47,4 +47,5 @@
 void arp_announce(void *);
 void arp_probe(void *);
 void arp_start(struct interface *);
+void arp_close(struct interface *);
 #endif

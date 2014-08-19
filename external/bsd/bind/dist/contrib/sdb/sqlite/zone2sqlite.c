@@ -1,4 +1,4 @@
-/*	$NetBSD: zone2sqlite.c,v 1.3 2012/06/05 00:40:04 christos Exp $	*/
+/*	$NetBSD: zone2sqlite.c,v 1.3.2.1 2014/08/19 23:46:24 tls Exp $	*/
 
 /*
  * Copyright (C) 2007  Internet Software Consortium.
@@ -131,7 +131,7 @@ addrdata(dns_name_t *name, dns_ttl_t ttl, dns_rdata_t *rdata)
     dataarray[isc_buffer_usedlength(&b)] = 0;
     
     sql = sqlite3_mprintf(
-	"INSERT INTO %q (NAME, TTL, RDTYPE, RDATA)"
+	"INSERT INTO %Q (NAME, TTL, RDTYPE, RDATA)"
 	" VALUES ('%q', %d, '%q', '%q') ",
 	dbi.table,
 	namearray, ttl, typearray, dataarray);
@@ -210,7 +210,7 @@ main(int argc, char *argv[])
 	closeandexit(1);
     }
     
-    sql = sqlite3_mprintf("DROP TABLE %q ", dbi.table);
+    sql = sqlite3_mprintf("DROP TABLE %Q ", dbi.table);
     printf("%s\n", sql);
     res = sqlite3_exec(dbi.db, sql, NULL, NULL, &errmsg);
     sqlite3_free(sql);
@@ -233,7 +233,7 @@ main(int argc, char *argv[])
 #endif
     
     sql = sqlite3_mprintf(
-	"CREATE TABLE %q "
+	"CREATE TABLE %Q "
 	"(NAME TEXT, TTL INTEGER, RDTYPE TEXT, RDATA TEXT) ",
 	dbi.table);
     printf("%s\n", sql);

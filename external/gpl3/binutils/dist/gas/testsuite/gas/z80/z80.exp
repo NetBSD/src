@@ -11,6 +11,10 @@ if [istarget z80-*-*] then {
     run_dump_test "suffix"
 # test assembling and disassembling instructions involving offsets
     run_dump_test "offset"
+    gas_test_error "jr-forwf.s" "" "relative jump out of range (jr)"
+    gas_test_error "jr-backf.s" "" "relative jump out of range (jr)"
+    gas_test_error "djnz-backf.s" "" "relative jump out of range (djnz)"
+ 
 # test assembling instruction with offset that is a label defined later
     run_dump_test "atend"
 # test for data transfer instructions
@@ -29,4 +33,5 @@ if [istarget z80-*-*] then {
     run_dump_test "inout"
 #test for other instructions
     run_dump_test "misc"
+    gas_test_error "ill_op.s" "" "Illegal operand: ld hl,(sp+0)"
 }

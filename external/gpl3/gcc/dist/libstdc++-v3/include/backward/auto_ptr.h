@@ -1,6 +1,6 @@
 // auto_ptr implementation -*- C++ -*-
 
-// Copyright (C) 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+// Copyright (C) 2007-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -24,7 +24,7 @@
 
 /** @file backward/auto_ptr.h
  *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
+ *  Do not attempt to use it directly. @headername{memory}
  */
 
 #ifndef _BACKWARD_AUTO_PTR_H
@@ -33,7 +33,9 @@
 #include <bits/c++config.h>
 #include <debug/debug.h>
 
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   /**
    *  A wrapper class to provide auto_ptr with reference semantics.
@@ -49,7 +51,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       
       explicit
       auto_ptr_ref(_Tp1* __p): _M_ptr(__p) { }
-    } _GLIBCXX_DEPRECATED_ATTR;
+    } _GLIBCXX_DEPRECATED;
 
 
   /**
@@ -93,30 +95,30 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       
       /**
        *  @brief  An %auto_ptr is usually constructed from a raw pointer.
-       *  @param  p  A pointer (defaults to NULL).
+       *  @param  __p  A pointer (defaults to NULL).
        *
-       *  This object now @e owns the object pointed to by @a p.
+       *  This object now @e owns the object pointed to by @a __p.
        */
       explicit
       auto_ptr(element_type* __p = 0) throw() : _M_ptr(__p) { }
 
       /**
        *  @brief  An %auto_ptr can be constructed from another %auto_ptr.
-       *  @param  a  Another %auto_ptr of the same type.
+       *  @param  __a  Another %auto_ptr of the same type.
        *
-       *  This object now @e owns the object previously owned by @a a,
+       *  This object now @e owns the object previously owned by @a __a,
        *  which has given up ownership.
        */
       auto_ptr(auto_ptr& __a) throw() : _M_ptr(__a.release()) { }
 
       /**
        *  @brief  An %auto_ptr can be constructed from another %auto_ptr.
-       *  @param  a  Another %auto_ptr of a different but related type.
+       *  @param  __a  Another %auto_ptr of a different but related type.
        *
        *  A pointer-to-Tp1 must be convertible to a
        *  pointer-to-Tp/element_type.
        *
-       *  This object now @e owns the object previously owned by @a a,
+       *  This object now @e owns the object previously owned by @a __a,
        *  which has given up ownership.
        */
       template<typename _Tp1>
@@ -124,9 +126,9 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
       /**
        *  @brief  %auto_ptr assignment operator.
-       *  @param  a  Another %auto_ptr of the same type.
+       *  @param  __a  Another %auto_ptr of the same type.
        *
-       *  This object now @e owns the object previously owned by @a a,
+       *  This object now @e owns the object previously owned by @a __a,
        *  which has given up ownership.  The object that this one @e
        *  used to own and track has been deleted.
        */
@@ -139,11 +141,11 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
       /**
        *  @brief  %auto_ptr assignment operator.
-       *  @param  a  Another %auto_ptr of a different but related type.
+       *  @param  __a  Another %auto_ptr of a different but related type.
        *
        *  A pointer-to-Tp1 must be convertible to a pointer-to-Tp/element_type.
        *
-       *  This object now @e owns the object previously owned by @a a,
+       *  This object now @e owns the object previously owned by @a __a,
        *  which has given up ownership.  The object that this one @e
        *  used to own and track has been deleted.
        */
@@ -229,9 +231,9 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       
       /**
        *  @brief  Forcibly deletes the managed object.
-       *  @param  p  A pointer (defaults to NULL).
+       *  @param  __p  A pointer (defaults to NULL).
        *
-       *  This object now @e owns the object pointed to by @a p.  The
+       *  This object now @e owns the object pointed to by @a __p.  The
        *  previous object has been deleted.
        */
       void
@@ -276,7 +278,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
       template<typename _Tp1>
         operator auto_ptr<_Tp1>() throw()
         { return auto_ptr<_Tp1>(this->release()); }
-    } _GLIBCXX_DEPRECATED_ATTR;
+    } _GLIBCXX_DEPRECATED;
 
   // _GLIBCXX_RESOLVE_LIB_DEFECTS
   // 541. shared_ptr template assignment and void
@@ -285,8 +287,43 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     {
     public:
       typedef void element_type;
-    } _GLIBCXX_DEPRECATED_ATTR;
+    } _GLIBCXX_DEPRECATED;
 
-_GLIBCXX_END_NAMESPACE
+#if __cplusplus >= 201103L
+  template<_Lock_policy _Lp>
+  template<typename _Tp>
+    inline
+    __shared_count<_Lp>::__shared_count(std::auto_ptr<_Tp>&& __r)
+    : _M_pi(new _Sp_counted_ptr<_Tp*, _Lp>(__r.get()))
+    { __r.release(); }
+
+  template<typename _Tp, _Lock_policy _Lp>
+  template<typename _Tp1>
+    inline
+    __shared_ptr<_Tp, _Lp>::__shared_ptr(std::auto_ptr<_Tp1>&& __r)
+    : _M_ptr(__r.get()), _M_refcount()
+    {
+      __glibcxx_function_requires(_ConvertibleConcept<_Tp1*, _Tp*>)
+      static_assert( sizeof(_Tp1) > 0, "incomplete type" );
+      _Tp1* __tmp = __r.get();
+      _M_refcount = __shared_count<_Lp>(std::move(__r));
+      __enable_shared_from_this_helper(_M_refcount, __tmp, __tmp);
+    }
+
+  template<typename _Tp>
+  template<typename _Tp1>
+    inline
+    shared_ptr<_Tp>::shared_ptr(std::auto_ptr<_Tp1>&& __r)
+    : __shared_ptr<_Tp>(std::move(__r)) { }
+
+  template<typename _Tp, typename _Dp>
+  template<typename _Up, typename>
+    inline
+    unique_ptr<_Tp, _Dp>::unique_ptr(auto_ptr<_Up>&& __u) noexcept
+    : _M_t(__u.release(), deleter_type()) { }
+#endif
+
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
 
 #endif /* _BACKWARD_AUTO_PTR_H */

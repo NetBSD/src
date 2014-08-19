@@ -1,9 +1,13 @@
-/*	$NetBSD: memcpy.S,v 1.1.56.1 2013/02/25 00:23:55 tls Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.1.56.2 2014/08/19 23:45:12 tls Exp $	*/
 
 #include <arm/cdefs.h>
 
-#if !defined(_ARM_ARCH_DWORD_OK) || defined(_STANDALONE)
+#if !defined(__XSCALE__) || defined(_STANDALONE)
 #include "memcpy_arm.S"
 #else
 #include "memcpy_xscale.S"
+#endif
+
+#if defined(__ARM_EABI__)
+STRONG_ALIAS(__aeabi_memcpy, memcpy)
 #endif

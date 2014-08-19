@@ -17,6 +17,9 @@ template <class T>
 void test_integral_imp()
 {
     static_assert(!std::is_void<T>::value, "");
+#if _LIBCPP_STD_VER > 11
+    static_assert(!std::is_null_pointer<T>::value, "");
+#endif
     static_assert( std::is_integral<T>::value, "");
     static_assert(!std::is_floating_point<T>::value, "");
     static_assert(!std::is_array<T>::value, "");
@@ -55,4 +58,8 @@ int main()
     test_integral<unsigned long>();
     test_integral<long long>();
     test_integral<unsigned long long>();
+#ifndef _LIBCPP_HAS_NO_INT128
+    test_integral<__int128_t>();
+    test_integral<__uint128_t>();
+#endif
 }

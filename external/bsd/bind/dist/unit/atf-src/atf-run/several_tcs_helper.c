@@ -1,4 +1,4 @@
-/*	$NetBSD: several_tcs_helper.c,v 1.1.1.1 2011/09/11 17:20:51 christos Exp $	*/
+/*	$NetBSD: several_tcs_helper.c,v 1.1.1.1.8.1 2014/08/19 23:46:38 tls Exp $	*/
 
 /*
  * Automated Testing Framework (atf)
@@ -54,10 +54,7 @@ ATF_TC_CLEANUP(second, tc)
 {
 }
 
-ATF_TC(third);
-ATF_TC_HEAD(third, tc)
-{
-}
+ATF_TC_WITHOUT_HEAD(third);
 ATF_TC_BODY(third, tc)
 {
 }

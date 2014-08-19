@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # icf_safe_so_test.sh -- test --icf=safe
 
 # Copyright 2010 Free Software Foundation, Inc.
@@ -76,7 +78,7 @@ check_fold()
 
 arch_specific_safe_fold()
 {
-    if [ $1 == 0 ];
+    if [ $1 -eq 0 ];
     then
       check_fold $2 $3 $4
     else

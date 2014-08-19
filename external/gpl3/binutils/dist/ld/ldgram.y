@@ -1,6 +1,6 @@
 /* A YACC grammar to parse a superset of the AT&T linker scripting language.
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
+   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
    Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support (steve@cygnus.com).
 
@@ -72,6 +72,8 @@ static int error_index;
   struct wildcard_spec wildcard;
   struct wildcard_list *wildcard_list;
   struct name_list *name_list;
+  struct flag_info_list *flag_info_list;
+  struct flag_info *flag_info;
   int token;
   union etree_union *etree;
   struct phdr_info
@@ -93,6 +95,8 @@ static int error_index;
 %type <fill> fill_opt fill_exp
 %type <name_list> exclude_name_list
 %type <wildcard_list> file_NAME_list
+%type <flag_info_list> sect_flag_list
+%type <flag_info> sect_flags
 %type <name> memspec_opt casesymlist
 %type <name> memspec_at_opt
 %type <cname> wildcard_name
@@ -125,7 +129,8 @@ static int error_index;
 %token <token> ALIGN_K BLOCK BIND QUAD SQUAD LONG SHORT BYTE
 %token SECTIONS PHDRS INSERT_K AFTER BEFORE
 %token DATA_SEGMENT_ALIGN DATA_SEGMENT_RELRO_END DATA_SEGMENT_END
-%token SORT_BY_NAME SORT_BY_ALIGNMENT
+%token SORT_BY_NAME SORT_BY_ALIGNMENT SORT_NONE
+%token SORT_BY_INIT_PRIORITY
 %token '{' '}'
 %token SIZEOF_HEADERS OUTPUT_FORMAT FORCE_COMMON_ALLOCATION OUTPUT_ARCH
 %token INHIBIT_COMMON_ALLOCATION
@@ -141,7 +146,7 @@ static int error_index;
 %token STARTUP HLL SYSLIB FLOAT NOFLOAT NOCROSSREFS
 %token ORIGIN FILL
 %token LENGTH CREATE_OBJECT_SYMBOLS INPUT GROUP OUTPUT CONSTRUCTORS
-%token ALIGNMOD AT SUBALIGN PROVIDE PROVIDE_HIDDEN AS_NEEDED
+%token ALIGNMOD AT SUBALIGN HIDDEN PROVIDE PROVIDE_HIDDEN AS_NEEDED
 %type <token> assign_op atype attributes_opt sect_constraint
 %type <name>  filename
 %token CHIP LIST SECT ABSOLUTE  LOAD NEWLINE ENDWORD ORDER NAMEWORD ASSERT_K
@@ -149,7 +154,7 @@ static int error_index;
 %token INPUT_SCRIPT INPUT_MRI_SCRIPT INPUT_DEFSYM CASE EXTERN START
 %token <name> VERS_TAG VERS_IDENTIFIER
 %token GLOBAL LOCAL VERSIONK INPUT_VERSION_SCRIPT
-%token KEEP ONLY_IF_RO ONLY_IF_RW SPECIAL
+%token KEEP ONLY_IF_RO ONLY_IF_RW SPECIAL INPUT_SECTION_FLAGS
 %token EXCLUDE_FILE
 %token CONSTANT
 %type <versyms> vers_defns
@@ -381,17 +386,20 @@ input_list:
 		{ lang_add_input_file($2,lang_input_file_is_l_enum,
 				 (char *)NULL); }
 	|	AS_NEEDED '('
-		  { $<integer>$ = add_DT_NEEDED_for_regular; add_DT_NEEDED_for_regular = TRUE; }
+		  { $<integer>$ = input_flags.add_DT_NEEDED_for_regular;
+		    input_flags.add_DT_NEEDED_for_regular = TRUE; }
 		     input_list ')'
-		  { add_DT_NEEDED_for_regular = $<integer>3; }
+		  { input_flags.add_DT_NEEDED_for_regular = $<integer>3; }
 	|	input_list ',' AS_NEEDED '('
-		  { $<integer>$ = add_DT_NEEDED_for_regular; add_DT_NEEDED_for_regular = TRUE; }
+		  { $<integer>$ = input_flags.add_DT_NEEDED_for_regular;
+		    input_flags.add_DT_NEEDED_for_regular = TRUE; }
 		     input_list ')'
-		  { add_DT_NEEDED_for_regular = $<integer>5; }
+		  { input_flags.add_DT_NEEDED_for_regular = $<integer>5; }
 	|	input_list AS_NEEDED '('
-		  { $<integer>$ = add_DT_NEEDED_for_regular; add_DT_NEEDED_for_regular = TRUE; }
+		  { $<integer>$ = input_flags.add_DT_NEEDED_for_regular;
+		    input_flags.add_DT_NEEDED_for_regular = TRUE; }
 		     input_list ')'
-		  { add_DT_NEEDED_for_regular = $<integer>4; }
+		  { input_flags.add_DT_NEEDED_for_regular = $<integer>4; }
 	;
 
 sections:
@@ -436,54 +444,128 @@ wildcard_spec:
 			  $$.name = $1;
 			  $$.sorted = none;
 			  $$.exclude_name_list = NULL;
+			  $$.section_flag_list = NULL;
 			}
 	| 	EXCLUDE_FILE '(' exclude_name_list ')' wildcard_name
 			{
 			  $$.name = $5;
 			  $$.sorted = none;
 			  $$.exclude_name_list = $3;
+			  $$.section_flag_list = NULL;
 			}
 	|	SORT_BY_NAME '(' wildcard_name ')'
 			{
 			  $$.name = $3;
 			  $$.sorted = by_name;
 			  $$.exclude_name_list = NULL;
+			  $$.section_flag_list = NULL;
 			}
 	|	SORT_BY_ALIGNMENT '(' wildcard_name ')'
 			{
 			  $$.name = $3;
 			  $$.sorted = by_alignment;
 			  $$.exclude_name_list = NULL;
+			  $$.section_flag_list = NULL;
+			}
+	|	SORT_NONE '(' wildcard_name ')'
+			{
+			  $$.name = $3;
+			  $$.sorted = by_none;
+			  $$.exclude_name_list = NULL;
+			  $$.section_flag_list = NULL;
 			}
 	|	SORT_BY_NAME '(' SORT_BY_ALIGNMENT '(' wildcard_name ')' ')'
 			{
 			  $$.name = $5;
 			  $$.sorted = by_name_alignment;
 			  $$.exclude_name_list = NULL;
+			  $$.section_flag_list = NULL;
 			}
 	|	SORT_BY_NAME '(' SORT_BY_NAME '(' wildcard_name ')' ')'
 			{
 			  $$.name = $5;
 			  $$.sorted = by_name;
 			  $$.exclude_name_list = NULL;
+			  $$.section_flag_list = NULL;
 			}
 	|	SORT_BY_ALIGNMENT '(' SORT_BY_NAME '(' wildcard_name ')' ')'
 			{
 			  $$.name = $5;
 			  $$.sorted = by_alignment_name;
 			  $$.exclude_name_list = NULL;
+			  $$.section_flag_list = NULL;
 			}
 	|	SORT_BY_ALIGNMENT '(' SORT_BY_ALIGNMENT '(' wildcard_name ')' ')'
 			{
 			  $$.name = $5;
 			  $$.sorted = by_alignment;
 			  $$.exclude_name_list = NULL;
+			  $$.section_flag_list = NULL;
 			}
 	|	SORT_BY_NAME '(' EXCLUDE_FILE '(' exclude_name_list ')' wildcard_name ')'
 			{
 			  $$.name = $7;
 			  $$.sorted = by_name;
 			  $$.exclude_name_list = $5;
+			  $$.section_flag_list = NULL;
+			}
+	|	SORT_BY_INIT_PRIORITY '(' wildcard_name ')'
+			{
+			  $$.name = $3;
+			  $$.sorted = by_init_priority;
+			  $$.exclude_name_list = NULL;
+			  $$.section_flag_list = NULL;
+			}
+	;
+
+sect_flag_list:	NAME
+			{
+			  struct flag_info_list *n;
+			  n = ((struct flag_info_list *) xmalloc (sizeof *n));
+			  if ($1[0] == '!')
+			    {
+			      n->with = without_flags;
+			      n->name = &$1[1];
+			    }
+			  else
+			    {
+			      n->with = with_flags;
+			      n->name = $1;
+			    }
+			  n->valid = FALSE;
+			  n->next = NULL;
+			  $$ = n;
+			}
+	|	sect_flag_list '&' NAME
+			{
+			  struct flag_info_list *n;
+			  n = ((struct flag_info_list *) xmalloc (sizeof *n));
+			  if ($3[0] == '!')
+			    {
+			      n->with = without_flags;
+			      n->name = &$3[1];
+			    }
+			  else
+			    {
+			      n->with = with_flags;
+			      n->name = $3;
+			    }
+			  n->valid = FALSE;
+			  n->next = $1;
+			  $$ = n;
+			}
+	;
+
+sect_flags:
+		INPUT_SECTION_FLAGS '(' sect_flag_list ')'
+			{
+			  struct flag_info *n;
+			  n = ((struct flag_info *) xmalloc (sizeof *n));
+			  n->flag_list = $3;
+			  n->flags_initialized = FALSE;
+			  n->not_with_flags = 0;
+			  n->only_with_flags = 0;
+			  $$ = n;
 			}
 	;
 
@@ -534,15 +616,39 @@ input_section_spec_no_keep:
 			  tmp.name = $1;
 			  tmp.exclude_name_list = NULL;
 			  tmp.sorted = none;
+			  tmp.section_flag_list = NULL;
+			  lang_add_wild (&tmp, NULL, ldgram_had_keep);
+			}
+	|	sect_flags NAME
+			{
+			  struct wildcard_spec tmp;
+			  tmp.name = $2;
+			  tmp.exclude_name_list = NULL;
+			  tmp.sorted = none;
+			  tmp.section_flag_list = $1;
 			  lang_add_wild (&tmp, NULL, ldgram_had_keep);
 			}
         |	'[' file_NAME_list ']'
 			{
 			  lang_add_wild (NULL, $2, ldgram_had_keep);
 			}
+        |	sect_flags '[' file_NAME_list ']'
+			{
+			  struct wildcard_spec tmp;
+			  tmp.name = NULL;
+			  tmp.exclude_name_list = NULL;
+			  tmp.sorted = none;
+			  tmp.section_flag_list = $1;
+			  lang_add_wild (&tmp, $3, ldgram_had_keep);
+			}
 	|	wildcard_spec '(' file_NAME_list ')'
 			{
 			  lang_add_wild (&$1, $3, ldgram_had_keep);
+			}
+	|	sect_flags wildcard_spec '(' file_NAME_list ')'
+			{
+			  $2.section_flag_list = $1;
+			  lang_add_wild (&$2, $4, ldgram_had_keep);
 			}
 	;
 
@@ -653,7 +759,7 @@ end:	';' | ','
 assignment:
 		NAME '=' mustbe_exp
 		{
-		  lang_add_assignment (exp_assign ($1, $3));
+		  lang_add_assignment (exp_assign ($1, $3, FALSE));
 		}
 	|	NAME assign_op mustbe_exp
 		{
@@ -661,7 +767,11 @@ assignment:
 						   exp_binop ($2,
 							      exp_nameop (NAME,
 									  $1),
-							      $3)));
+							      $3), FALSE));
+		}
+	|	HIDDEN '(' NAME '=' mustbe_exp ')'
+		{
+		  lang_add_assignment (exp_assign ($3, $5, TRUE));
 		}
 	|	PROVIDE '(' NAME '=' mustbe_exp ')'
 		{
@@ -979,7 +1089,7 @@ section:	NAME 		{ ldlex_expression(); }
 		opt_exp_with_type
 		{
 		  ldlex_popstate ();
-		  lang_add_assignment (exp_assign (".", $3));
+		  lang_add_assignment (exp_assign (".", $3, FALSE));
 		}
 		'{' sec_or_group_p1 '}'
 	|	INCLUDE filename
@@ -1123,7 +1233,7 @@ phdr_type:
 			    {
 			      einfo (_("\
 %X%P:%S: unknown phdr type `%s' (try integer literal)\n"),
-				     s);
+				     NULL, s);
 			      $$ = exp_intop (0);
 			    }
 			}
@@ -1146,7 +1256,8 @@ phdr_qualifiers:
 		  else if (strcmp ($1, "FLAGS") == 0 && $2 != NULL)
 		    $$.flags = $2;
 		  else
-		    einfo (_("%X%P:%S: PHDRS syntax error at `%s'\n"), $1);
+		    einfo (_("%X%P:%S: PHDRS syntax error at `%s'\n"),
+			   NULL, $1);
 		}
 	|	AT '(' exp ')' phdr_qualifiers
 		{
@@ -1352,9 +1463,9 @@ yyerror(arg)
 {
   if (ldfile_assumed_script)
     einfo (_("%P:%s: file format not recognized; treating as linker script\n"),
-	   ldfile_input_filename);
+	   ldlex_filename ());
   if (error_index > 0 && error_index < ERROR_NAME_MAX)
-     einfo ("%P%F:%S: %s in %s\n", arg, error_names[error_index-1]);
+    einfo ("%P%F:%S: %s in %s\n", NULL, arg, error_names[error_index - 1]);
   else
-     einfo ("%P%F:%S: %s\n", arg);
+    einfo ("%P%F:%S: %s\n", NULL, arg);
 }

@@ -1,11 +1,11 @@
-/*	$NetBSD: binio.c,v 1.1.1.1 2009/12/13 16:55:23 kardel Exp $	*/
+/*	$NetBSD: binio.c,v 1.1.1.1.12.1 2014/08/19 23:51:41 tls Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libntp/binio.c,v 4.5 2005/04/16 17:32:10 kardel RELEASE_20050508_A
  *
  * binio.c,v 4.5 2005/04/16 17:32:10 kardel RELEASE_20050508_A
  *
- * Created: Sun Jul 20 12:55:33 1997
+ * $Created: Sun Jul 20 12:55:33 1997 $
  *
  * Copyright (c) 1997-2005 by Frank Kardel <kardel <AT> ntp.org>
  *
@@ -35,6 +35,7 @@
  *
  */
 
+#include <config.h>
 #include "binio.h"
 
 long
@@ -70,7 +71,7 @@ get_lsb_long(
   retval  = *((*bufpp)++);
   retval |= *((*bufpp)++) << 8;
   retval |= *((*bufpp)++) << 16;
-  retval |= *((*bufpp)++) << 24;
+  retval |= (u_long)*((*bufpp)++) << 24;
 
   return retval;
 }
@@ -117,7 +118,7 @@ get_msb_long(
 {
   long retval;
 
-  retval  = *((*bufpp)++) << 24;
+  retval  = (u_long)*((*bufpp)++) << 24;
   retval |= *((*bufpp)++) << 16;
   retval |= *((*bufpp)++) << 8;
   retval |= *((*bufpp)++);

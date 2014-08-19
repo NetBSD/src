@@ -1,10 +1,10 @@
-/*	$NetBSD: at.c,v 1.1.1.4 2010/12/12 15:22:17 adam Exp $	*/
+/*	$NetBSD: at.c,v 1.1.1.4.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
 /* at.c - routines for dealing with attribute types */
-/* OpenLDAP: pkg/ldap/servers/slapd/at.c,v 1.84.2.11 2010/04/13 20:23:10 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -233,6 +233,8 @@ static void
 at_delete_names( AttributeType *at )
 {
 	char			**names = at->sat_names;
+
+	if (!names) return;
 
 	while (*names) {
 		struct aindexrec	tmpair, *air;

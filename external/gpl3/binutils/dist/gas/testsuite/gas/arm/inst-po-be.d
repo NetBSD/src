@@ -19,3 +19,4 @@ Disassembly of section .text:
 00000014 <.text\+0x14> 4649      	mov	r1, r9
 00000016 <.text\+0x16> ea4f 0109 	mov.w	r1, r9
 0000001a <.text\+0x1a> ea4f 0109 	mov.w	r1, r9
+0000001e <.text\+0x1e> bf00      	nop

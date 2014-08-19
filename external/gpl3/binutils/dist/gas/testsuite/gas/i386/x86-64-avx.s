@@ -1166,6 +1166,10 @@ _start:
 	vextractps $7,%xmm4,%ecx
 	vextractps $7,%xmm4,(%rcx)
 
+# Tests for op imm8, regl/mem32, xmm, xmm
+	vpinsrd $7,%ecx,%xmm4,%xmm6
+	vpinsrd $7,(%rcx),%xmm4,%xmm6
+
 # Tests for op regl/mem32, xmm, xmm
 	vcvtsi2sd %ecx,%xmm4,%xmm6
 	vcvtsi2sd (%rcx),%xmm4,%xmm6
@@ -1216,10 +1220,6 @@ _start:
 # Tests for op imm8, xmm, regq/mem8
 	vpextrb $7,%xmm4,%rcx
 	vpextrb $7,%xmm4,(%rcx)
-
-# Tests for op imm8, regl/mem8, xmm, xmm
-	vpinsrb $7,%ecx,%xmm4,%xmm6
-	vpinsrb $7,(%rcx),%xmm4,%xmm6
 
 # Tests for op xmm, xmm
 	vmaskmovdqu %xmm4,%xmm6
@@ -3333,6 +3333,11 @@ _start:
 	vextractps DWORD PTR [rcx],xmm4,7
 	vextractps [rcx],xmm4,7
 
+# Tests for op imm8, regl/mem32, xmm, xmm
+	vpinsrd xmm6,xmm4,ecx,7
+	vpinsrd xmm6,xmm4,DWORD PTR [rcx],7
+	vpinsrd xmm6,xmm4,[rcx],7
+
 # Tests for op regl/mem32, xmm, xmm
 	vcvtsi2sd xmm6,xmm4,ecx
 	vcvtsi2sd xmm6,xmm4,DWORD PTR [rcx]
@@ -3395,11 +3400,6 @@ _start:
 	vpextrb rcx,xmm4,7
 	vpextrb BYTE PTR [rcx],xmm4,7
 	vpextrb [rcx],xmm4,7
-
-# Tests for op imm8, regl/mem8, xmm, xmm
-	vpinsrb xmm6,xmm4,ecx,7
-	vpinsrb xmm6,xmm4,BYTE PTR [rcx],7
-	vpinsrb xmm6,xmm4,[rcx],7
 
 # Tests for op xmm, xmm
 	vmaskmovdqu xmm6,xmm4

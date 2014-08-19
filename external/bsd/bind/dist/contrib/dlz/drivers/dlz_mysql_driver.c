@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_mysql_driver.c,v 1.3 2012/06/05 00:39:38 christos Exp $	*/
+/*	$NetBSD: dlz_mysql_driver.c,v 1.3.2.1 2014/08/19 23:46:21 tls Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -505,13 +505,16 @@ mysql_process_rs(dns_sdlzlookup_t *lookup, MYSQL_RES *rs)
 /*% determine if the zone is supported by (in) the database */
 
 static isc_result_t
-mysql_findzone(void *driverarg, void *dbdata, const char *name)
+mysql_findzone(void *driverarg, void *dbdata, const char *name,
+	       dns_clientinfomethods_t *methods, dns_clientinfo_t *clientinfo)
 {
 	isc_result_t result;
 	MYSQL_RES *rs = NULL;
 	my_ulonglong rows;
 
 	UNUSED(driverarg);
+	UNUSED(methods);
+	UNUSED(clientinfo);
 
 	/* run the query and get the result set from the database. */
 	result = mysql_get_resultset(name, NULL, NULL, FINDZONE, dbdata, &rs);
@@ -552,7 +555,7 @@ mysql_allowzonexfr(void *driverarg, void *dbdata, const char *name,
 	UNUSED(driverarg);
 
 	/* first check if the zone is supported by the database. */
-	result = mysql_findzone(driverarg, dbdata, name);
+	result = mysql_findzone(driverarg, dbdata, name, NULL, NULL);
 	if (result != ISC_R_SUCCESS)
 		return (ISC_R_NOTFOUND);
 
@@ -965,7 +968,8 @@ mysql_create(const char *dlzname, unsigned int argc, char *argv[],
 
  full_cleanup:
 
-	destroy_sqldbinstance(dbi);
+	if (dbi != NULL)
+		destroy_sqldbinstance(dbi);
 
  cleanup:
 

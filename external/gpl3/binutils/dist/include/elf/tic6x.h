@@ -1,5 +1,5 @@
 /* TI C6X ELF support for BFD.
-   Copyright 2010
+   Copyright 2010, 2011
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -53,6 +53,10 @@ START_RELOC_NUMBERS (elf_tic6x_reloc_type)
   RELOC_NUMBER (R_C6000_DSBT_INDEX, 24)
   RELOC_NUMBER (R_C6000_PREL31, 25)
   RELOC_NUMBER (R_C6000_COPY, 26)
+  RELOC_NUMBER (R_C6000_JUMP_SLOT, 27)
+  RELOC_NUMBER (R_C6000_EHTYPE, 28)
+  RELOC_NUMBER (R_C6000_PCR_H16, 29)
+  RELOC_NUMBER (R_C6000_PCR_L16, 30)
   RELOC_NUMBER (R_C6000_ALIGN, 253)
   RELOC_NUMBER (R_C6000_FPHEAD, 254)
   RELOC_NUMBER (R_C6000_NOCMP, 255)
@@ -88,6 +92,13 @@ END_RELOC_NUMBERS (R_TIC6X_max)
 
 /* Extended program header attributes.  */
 #define SHT_TI_PHATTRS		0x7F000004
+
+/* Processor specific section indices.  These sections do not actually
+   exist.  Symbols with a st_shndx field corresponding to one of these
+   values have a special meaning.  */
+
+/* Small data area common symbol.  */
+#define SHN_TIC6X_SCOMMON	SHN_LORESERVE
 
 /* Processor-specific segment types.  */
 
@@ -146,5 +157,11 @@ enum
     C6XABI_Tag_ISA_C64XP = 7,
     C6XABI_Tag_ISA_C674X = 8
   };
+
+/* Special section names.  */
+#define ELF_STRING_C6000_unwind           ".c6xabi.exidx"
+#define ELF_STRING_C6000_unwind_info      ".c6xabi.extab"
+#define ELF_STRING_C6000_unwind_once      ".gnu.linkonce.c6xabi.exidx."
+#define ELF_STRING_C6000_unwind_info_once ".gnu.linkonce.c6xabi.extab."
 
 #endif /* _ELF_TIC6X_H */

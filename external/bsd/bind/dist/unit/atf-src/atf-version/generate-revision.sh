@@ -2,7 +2,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+# Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,9 +35,9 @@
 
 set -e
 
-Prog_Name=`echo "${0}" | sed 's;.*/;;'`
+Prog_Name=${0##*/}
 
-MTN=
+GIT=
 ROOT=
 
 #
@@ -49,57 +49,10 @@ err() {
 }
 
 #
-# call_mtn args
+# call_git args
 #
-call_mtn() {
-    ${MTN} --root=${ROOT} "${@}"
-}
-
-# extract_certs rev
-#
-extract_certs() {
-    call_mtn automate certs ${1} | awk '
-BEGIN {
-    current_cert = ""
-}
-
-/^[ \t]*name "([^"]*)"[ \t]*$/ {
-    current_cert = substr($2, 2, length($2) - 2)
-    next
-}
-
-/^[ \t]*value "([^"]*)"[ \t]*$/ {
-    value = substr($2, 2, length($2) - 2)
-    if (current_cert == "branch") {
-        print "rev_branch=\"" value "\""
-    } else if (current_cert == "date") {
-        print "rev_date=\"" value "\""
-    }
-    next
-}
-'
-}
-
-#
-# get_rev_info_into_vars
-#
-# Sets the following variables to describe the current revision of the tree:
-#    rev_base_id: The base revision identifier.
-#    rev_branch: The branch name.
-#    rev_modified: true if the tree has been locally modified.
-#    rev_date: The date of the revision.
-#
-get_rev_info_into_vars() {
-    rev_base_id=`call_mtn automate get_base_revision_id`
-
-    if call_mtn status | grep "no changes" >/dev/null; then
-        rev_modified=false
-    else
-        rev_modified=true
-    fi
-
-    # The following defines several rev_* variables.
-    eval `extract_certs ${rev_base_id}`
+call_git() {
+    ( cd "${ROOT}" && "${GIT}" "${@}" )
 }
 
 #
@@ -115,16 +68,23 @@ generate_from_dist() {
 }
 
 #
-# generate_from_mtn revfile
+# generate_from_git revfile
 #
-generate_from_mtn() {
+generate_from_git() {
     revfile=${1}
 
-    get_rev_info_into_vars
+    rev_base_id=$(call_git rev-parse HEAD)
+    rev_branch=$(call_git branch | grep '^\* ' | cut -d ' ' -f 2-)
+    rev_date=$(call_git log -1 | grep '^Date:' | sed -e 's,^Date:[ \t]*,,')
+    if [ -z "$(call_git status -s)" ]; then
+        rev_modified=false
+    else
+        rev_modified=true
+    fi
 
     >${revfile}
 
-    echo "#define PACKAGE_REVISION_TYPE_MTN" >>${revfile}
+    echo "#define PACKAGE_REVISION_TYPE_GIT" >>${revfile}
 
     echo "#define PACKAGE_REVISION_BRANCH \"${rev_branch}\"" >>${revfile}
     echo "#define PACKAGE_REVISION_BASE \"${rev_base_id}\"" >>${revfile}
@@ -144,10 +104,10 @@ generate_from_mtn() {
 main() {
     outfile=
     version=
-    while getopts :m:r:o:v: arg; do
+    while getopts :g:r:o:v: arg; do
         case ${arg} in
-            m)
-                MTN=${OPTARG}
+            g)
+                GIT=${OPTARG}
                 ;;
             o)
                 outfile=${OPTARG}
@@ -170,8 +130,8 @@ main() {
     [ -n "${version}" ] || \
         err "Must specify a version number with -v"
 
-    if [ -n "${MTN}" -a -d ${ROOT}/_MTN ]; then
-        generate_from_mtn ${outfile}
+    if [ -n "${GIT}" -a -d ${ROOT}/.git ]; then
+        generate_from_git ${outfile}
     else
         generate_from_dist ${outfile} ${version}
     fi

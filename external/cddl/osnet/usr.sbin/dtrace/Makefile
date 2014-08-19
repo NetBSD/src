@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/02/22 12:21:27 tron Exp $
+#	$NetBSD: Makefile,v 1.4.12.1 2014/08/19 23:52:23 tls Exp $
 
 # $FreeBSD: src/cddl/usr.sbin/dtrace/Makefile,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
 
@@ -6,6 +6,7 @@
 .include	"../../Makefile.inc"
 
 PROG=		dtrace
+MAN=		dtrace.1
 
 BINDIR?=	/usr/sbin
 
@@ -28,6 +29,7 @@ CFLAGS+=	-I${OSNETDIR}/sys \
 #YFLAGS+=	-d
 
 COPTS.dtrace.c += -Wno-stack-protector
+COPTS.dtrace.c += -Wno-stack-protector -Wno-format-extra-args
 
 LDFLAGS+=	-pthread
 
@@ -38,5 +40,6 @@ LIBDTRACE_OBJDIR!= cd ${.CURDIR}/../../lib/libdtrace && ${PRINTOBJDIR}
 LDFLAGS+=	-L${LIBCTF_OBJDIR} -lctf
 
 LDADD+=		-ly -ll -lelf -lz
+
 
 .include <bsd.prog.mk>

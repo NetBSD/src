@@ -1,7 +1,7 @@
-/*	$NetBSD: socket.h,v 1.4.2.1 2013/06/23 06:26:25 tls Exp $	*/
+/*	$NetBSD: socket.h,v 1.4.2.2 2014/08/19 23:46:33 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -59,14 +59,64 @@
  *** Imports
  ***/
 
-#include <isc/lang.h>
-#include <isc/types.h>
 #include <isc/event.h>
 #include <isc/eventclass.h>
-#include <isc/time.h>
+#include <isc/lang.h>
+#include <isc/json.h>
 #include <isc/region.h>
 #include <isc/sockaddr.h>
+#include <isc/time.h>
+#include <isc/types.h>
 #include <isc/xml.h>
+
+#ifdef WIN32
+
+/* from the old namespace.h */
+
+#define isc_socket_create isc__socket_create
+#define isc_socket_dup isc__socket_dup
+#define isc_socket_attach isc__socket_attach
+#define isc_socket_detach isc__socket_detach
+#define isc_socketmgr_create isc__socketmgr_create
+#define isc_socketmgr_create2 isc__socketmgr_create2
+#define isc_socketmgr_destroy isc__socketmgr_destroy
+#define isc_socket_open isc__socket_open
+#define isc_socket_close isc__socket_close
+#define isc_socket_recvv isc__socket_recvv
+#define isc_socket_recv isc__socket_recv
+#define isc_socket_recv2 isc__socket_recv2
+#define isc_socket_send isc__socket_send
+#define isc_socket_sendto isc__socket_sendto
+#define isc_socket_sendv isc__socket_sendv
+#define isc_socket_sendtov isc__socket_sendtov
+#define isc_socket_sendtov2 isc__socket_sendtov2
+#define isc_socket_sendto2 isc__socket_sendto2
+#define isc_socket_cleanunix isc__socket_cleanunix
+#define isc_socket_permunix isc__socket_permunix
+#define isc_socket_bind isc__socket_bind
+#define isc_socket_filter isc__socket_filter
+#define isc_socket_listen isc__socket_listen
+#define isc_socket_accept isc__socket_accept
+#define isc_socket_connect isc__socket_connect
+#define isc_socket_getfd isc__socket_getfd
+#define isc_socket_getname isc__socket_getname
+#define isc_socket_gettag isc__socket_gettag
+#define isc_socket_getpeername isc__socket_getpeername
+#define isc_socket_getsockname isc__socket_getsockname
+#define isc_socket_cancel isc__socket_cancel
+#define isc_socket_gettype isc__socket_gettype
+#define isc_socket_isbound isc__socket_isbound
+#define isc_socket_ipv6only isc__socket_ipv6only
+#define isc_socket_setname isc__socket_setname
+#define isc_socketmgr_getmaxsockets isc__socketmgr_getmaxsockets
+#define isc_socketmgr_setstats isc__socketmgr_setstats
+#define isc_socketmgr_setreserved isc__socketmgr_setreserved
+#define isc__socketmgr_maxudp isc___socketmgr_maxudp
+#define isc_socket_fdwatchcreate isc__socket_fdwatchcreate
+#define isc_socket_fdwatchpoke isc__socket_fdwatchpoke
+#define isc_socket_dscp isc__socket_dscp
+
+#endif
 
 ISC_LANG_BEGINDECLS
 
@@ -152,7 +202,19 @@ enum {
 	isc_sockstatscounter_unixrecvfail = 50,
 	isc_sockstatscounter_fdwatchrecvfail = 51,
 
-	isc_sockstatscounter_max = 52
+	isc_sockstatscounter_udp4active = 52,
+	isc_sockstatscounter_udp6active = 53,
+	isc_sockstatscounter_tcp4active = 54,
+	isc_sockstatscounter_tcp6active = 55,
+	isc_sockstatscounter_unixactive = 56,
+
+	isc_sockstatscounter_rawopen = 57,
+	isc_sockstatscounter_rawopenfail = 58,
+	isc_sockstatscounter_rawclose = 59,
+	isc_sockstatscounter_rawrecvfail = 60,
+	isc_sockstatscounter_rawactive = 61,
+
+	isc_sockstatscounter_max = 62
 };
 
 /***
@@ -172,6 +234,7 @@ struct isc_socketevent {
 	struct in6_pktinfo	pktinfo;	/*%< ipv6 pktinfo */
 	isc_uint32_t		attributes;	/*%< see below */
 	isc_eventdestructor_t   destroy;	/*%< original destructor */
+	unsigned int		dscp;		/*%< UDP dscp value */
 };
 
 typedef struct isc_socket_newconnev isc_socket_newconnev_t;
@@ -198,6 +261,7 @@ struct isc_socket_connev {
  * _TIMESTAMP:	The timestamp member is valid.
  * _PKTINFO:	The pktinfo member is valid.
  * _MULTICAST:	The UDP packet was received via a multicast transmission.
+ * _DSCP:	The UDP DSCP value is valid.
  */
 #define ISC_SOCKEVENTATTR_ATTACHED		0x80000000U /* internal */
 #define ISC_SOCKEVENTATTR_TRUNC			0x00800000U /* public */
@@ -205,6 +269,7 @@ struct isc_socket_connev {
 #define ISC_SOCKEVENTATTR_TIMESTAMP		0x00200000U /* public */
 #define ISC_SOCKEVENTATTR_PKTINFO		0x00100000U /* public */
 #define ISC_SOCKEVENTATTR_MULTICAST		0x00080000U /* public */
+#define ISC_SOCKEVENTATTR_DSCP			0x00040000U /* public */
 /*@}*/
 
 #define ISC_SOCKEVENT_ANYEVENT  (0)
@@ -223,7 +288,8 @@ typedef enum {
 	isc_sockettype_udp = 1,
 	isc_sockettype_tcp = 2,
 	isc_sockettype_unix = 3,
-	isc_sockettype_fdwatch = 4
+	isc_sockettype_fdwatch = 4,
+	isc_sockettype_raw = 5
 } isc_sockettype_t;
 
 /*@{*/
@@ -265,7 +331,6 @@ typedef enum {
 /*% Socket and socket manager methods */
 typedef struct isc_socketmgrmethods {
 	void		(*destroy)(isc_socketmgr_t **managerp);
-	void 		(*_maxudp)(isc_socketmgr_t *mgr, int maxudp);
 	isc_result_t	(*socketcreate)(isc_socketmgr_t *manager, int pf,
 					isc_sockettype_t type,
 					isc_socket_t **socketp);
@@ -277,16 +342,29 @@ typedef struct isc_socketmgrmethods {
 } isc_socketmgrmethods_t;
 
 typedef struct isc_socketmethods {
-	isc_result_t	(*open)(isc_socket_t *socket);
-	isc_result_t	(*close)(isc_socket_t *socket);
 	void		(*attach)(isc_socket_t *socket,
 				  isc_socket_t **socketp);
 	void		(*detach)(isc_socket_t **socketp);
 	isc_result_t	(*bind)(isc_socket_t *sock, isc_sockaddr_t *sockaddr,
 				unsigned int options);
+	isc_result_t	(*sendto)(isc_socket_t *sock, isc_region_t *region,
+				  isc_task_t *task, isc_taskaction_t action,
+				  const void *arg, isc_sockaddr_t *address,
+				  struct in6_pktinfo *pktinfo);
+	isc_result_t	(*sendto2)(isc_socket_t *sock, isc_region_t *region,
+				   isc_task_t *task, isc_sockaddr_t *address,
+				   struct in6_pktinfo *pktinfo,
+				   isc_socketevent_t *event,
+				   unsigned int flags);
 	isc_result_t	(*connect)(isc_socket_t *sock, isc_sockaddr_t *addr,
 				   isc_task_t *task, isc_taskaction_t action,
 				   const void *arg);
+	isc_result_t	(*recv)(isc_socket_t *sock, isc_region_t *region,
+				unsigned int minimum, isc_task_t *task,
+				isc_taskaction_t action, const void *arg);
+	isc_result_t	(*recv2)(isc_socket_t *sock, isc_region_t *region,
+				 unsigned int minimum, isc_task_t *task,
+				 isc_socketevent_t *event, unsigned int flags);
 	void		(*cancel)(isc_socket_t *sock, isc_task_t *task,
 				  unsigned int how);
 	isc_result_t	(*getsockname)(isc_socket_t *sock,
@@ -297,42 +375,7 @@ typedef struct isc_socketmethods {
 	isc_result_t		(*dup)(isc_socket_t *socket,
 				  isc_socket_t **socketp);
 	int 		(*getfd)(isc_socket_t *socket);
-	void 		(*setname)(isc_socket_t *socket, const char *, void *);
-	isc_result_t 	(*accept)(isc_socket_t *sock, isc_task_t *task,
-				  isc_taskaction_t action, const void *arg);
-	isc_result_t    (*filter)(isc_socket_t *sock, const char *filter);
-	isc_result_t    (*getpeername)(isc_socket_t *sock,
-				       isc_sockaddr_t *addressp);
-	isc_result_t	(*listen)(isc_socket_t *sock, unsigned int backlog);
-	isc_result_t	(*recv)(isc_socket_t *sock, isc_region_t *region,
-				unsigned int minimum, isc_task_t *task,
-				isc_taskaction_t action, const void *arg);
-	isc_result_t 	(*recvv)(isc_socket_t *sock, isc_bufferlist_t *buflist,
-				 unsigned int minimum, isc_task_t *task,
-				 isc_taskaction_t action, const void *arg);
-	isc_result_t 	(*recv2)(isc_socket_t *sock, isc_region_t *region,
-				 unsigned int minimum, isc_task_t *task,
-				 isc_socketevent_t *event, unsigned int flags);
-	isc_result_t 	(*send)(isc_socket_t *sock, isc_region_t *region,
-				isc_task_t *task, isc_taskaction_t action,
-				const void *arg);
-	isc_result_t 	(*sendv)(isc_socket_t *sock, isc_bufferlist_t *buflist,
-				 isc_task_t *task, isc_taskaction_t action,
-				 const void *arg);
-	isc_result_t	(*sendto)(isc_socket_t *sock, isc_region_t *region,
-				  isc_task_t *task, isc_taskaction_t action,
-				  const void *arg, isc_sockaddr_t *address,
-				  struct in6_pktinfo *pktinfo);
-	isc_result_t    (*sendtov)(isc_socket_t *sock,
-				   isc_bufferlist_t *buflist, isc_task_t *task,
-				   isc_taskaction_t action, const void *arg,
-				   isc_sockaddr_t *address,
-				   struct in6_pktinfo *pktinfo);
-	isc_result_t	(*sendto2)(isc_socket_t *sock, isc_region_t *region,
-				   isc_task_t *task, isc_sockaddr_t *address,
-				   struct in6_pktinfo *pktinfo,
-				   isc_socketevent_t *event,
-				   unsigned int flags);
+	void 		(*dscp)(isc_socket_t *socket, isc_dscp_t dscp);
 } isc_socketmethods_t;
 
 /*%
@@ -892,6 +935,11 @@ isc_socket_sendtov(isc_socket_t *sock, isc_bufferlist_t *buflist,
 		   isc_task_t *task, isc_taskaction_t action, const void *arg,
 		   isc_sockaddr_t *address, struct in6_pktinfo *pktinfo);
 isc_result_t
+isc_socket_sendtov2(isc_socket_t *sock, isc_bufferlist_t *buflist,
+		    isc_task_t *task, isc_taskaction_t action, const void *arg,
+		    isc_sockaddr_t *address, struct in6_pktinfo *pktinfo,
+		    unsigned int flags);
+isc_result_t
 isc_socket_sendto2(isc_socket_t *sock, isc_region_t *region,
 		   isc_task_t *task,
 		   isc_sockaddr_t *address, struct in6_pktinfo *pktinfo,
@@ -1079,7 +1127,10 @@ isc_socket_gettype(isc_socket_t *sock);
 
 /*@{*/
 isc_boolean_t
-isc_socket_isbound(isc_socket_t *sock);
+isc__socket_isbound(isc_socket_t *sock);
+/*%
+ * Intended for internal use in BIND9 only
+ */
 
 void
 isc_socket_ipv6only(isc_socket_t *sock, isc_boolean_t yes);
@@ -1091,6 +1142,24 @@ isc_socket_ipv6only(isc_socket_t *sock, isc_boolean_t yes);
  *\li	'sock' is a valid socket.
  */
 /*@}*/
+
+void
+isc_socket_dscp(isc_socket_t *sock, isc_dscp_t dscp);
+/*%<
+ * Sets the Differentiated Services Code Point (DSCP) field for packets
+ * transmitted on this socket.  If 'dscp' is -1, return immediately.
+ *
+ * Requires:
+ *\li	'sock' is a valid socket.
+ */
+
+isc_socketevent_t *
+isc_socket_socketevent(isc_mem_t *mctx, void *sender,
+		       isc_eventtype_t eventtype, isc_taskaction_t action,
+		       const void *arg);
+/*%<
+ * Get a isc_socketevent_t to be used with isc_socket_sendto2(), etc.
+ */
 
 void
 isc_socket_cleanunix(isc_sockaddr_t *addr, isc_boolean_t active);
@@ -1163,21 +1232,26 @@ isc__socketmgr_maxudp(isc_socketmgr_t *mgr, int maxudp);
  */
 
 #ifdef HAVE_LIBXML2
-
-void
+int
 isc_socketmgr_renderxml(isc_socketmgr_t *mgr, xmlTextWriterPtr writer);
 /*%<
  * Render internal statistics and other state into the XML document.
  */
-
 #endif /* HAVE_LIBXML2 */
+
+#ifdef HAVE_JSON
+isc_result_t
+isc_socketmgr_renderjson(isc_socketmgr_t *mgr, json_object *stats);
+/*%<
+ * Render internal statistics and other state into JSON format.
+ */
+#endif /* HAVE_JSON */
 
 /*%<
  * See isc_socketmgr_create() above.
  */
 typedef isc_result_t
-(*isc_socketmgrcreatefunc_t)(isc_mem_t *mctx, isc_socketmgr_t **managerp,
-			     unsigned int maxsocks);
+(*isc_socketmgrcreatefunc_t)(isc_mem_t *mctx, isc_socketmgr_t **managerp);
 
 isc_result_t
 isc_socket_register(isc_socketmgrcreatefunc_t createfunc);

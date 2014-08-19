@@ -1,11 +1,11 @@
-/*	$NetBSD: dhcpctl.c,v 1.1.1.1.4.2 2013/06/23 06:26:28 tls Exp $	*/
-
+/*	$NetBSD: dhcpctl.c,v 1.1.1.1.4.3 2014/08/19 23:46:41 tls Exp $	*/
 /* dhcpctl.c
 
    Subroutines providing general support for objects. */
 
 /*
- * Copyright (c) 2004,2007,2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009,2013,2014 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004,2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -26,16 +26,10 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  *
- * This software has been written for Internet Systems Consortium
- * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about Internet Systems Consortium, see
- * ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
- * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
- * ``http://www.nominum.com''.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpctl.c,v 1.1.1.1.4.2 2013/06/23 06:26:28 tls Exp $");
+__RCSID("$NetBSD: dhcpctl.c,v 1.1.1.1.4.3 2014/08/19 23:46:41 tls Exp $");
 
 #include "dhcpd.h"
 #include <omapip/omapip_p.h>
@@ -53,7 +47,8 @@ dhcpctl_status dhcpctl_initialize ()
 	isc_result_t status;
 
 	/* Set up the isc and dns library managers */
-	status = dhcp_context_create();
+	status = dhcp_context_create(DHCP_CONTEXT_PRE_DB | DHCP_CONTEXT_POST_DB,
+				     NULL, NULL);
 	if (status != ISC_R_SUCCESS)
 		return status;
 

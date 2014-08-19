@@ -1,6 +1,7 @@
 /* SPARC-specific support for 64-bit ELF
    Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+   2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
+   Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -56,7 +57,7 @@ elf64_sparc_slurp_one_reloc_table (bfd *abfd, asection *asect,
 				   Elf_Internal_Shdr *rel_hdr,
 				   asymbol **symbols, bfd_boolean dynamic)
 {
-  PTR allocated = NULL;
+  void * allocated = NULL;
   bfd_byte *native_relocs;
   arelent *relent;
   unsigned int i;
@@ -64,7 +65,7 @@ elf64_sparc_slurp_one_reloc_table (bfd *abfd, asection *asect,
   bfd_size_type count;
   arelent *relents;
 
-  allocated = (PTR) bfd_malloc (rel_hdr->sh_size);
+  allocated = bfd_malloc (rel_hdr->sh_size);
   if (allocated == NULL)
     goto error_return;
 
@@ -278,7 +279,7 @@ elf64_sparc_canonicalize_dynamic_reloc (bfd *abfd, arelent **storage,
 /* Write out the relocs.  */
 
 static void
-elf64_sparc_write_relocs (bfd *abfd, asection *sec, PTR data)
+elf64_sparc_write_relocs (bfd *abfd, asection *sec, void * data)
 {
   bfd_boolean *failedp = (bfd_boolean *) data;
   Elf_Internal_Shdr *rela_hdr;
@@ -329,7 +330,7 @@ elf64_sparc_write_relocs (bfd *abfd, asection *sec, PTR data)
   rela_hdr = elf_section_data (sec)->rela.hdr;
 
   rela_hdr->sh_size = rela_hdr->sh_entsize * count;
-  rela_hdr->contents = (PTR) bfd_alloc (abfd, rela_hdr->sh_size);
+  rela_hdr->contents = bfd_alloc (abfd, rela_hdr->sh_size);
   if (rela_hdr->contents == NULL)
     {
       *failedp = TRUE;
@@ -544,8 +545,8 @@ elf64_sparc_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
 static bfd_boolean
 elf64_sparc_output_arch_syms (bfd *output_bfd ATTRIBUTE_UNUSED,
 			      struct bfd_link_info *info,
-			      PTR finfo,
-			      int (*func) (PTR, const char *,
+			      void * flaginfo,
+			      int (*func) (void *, const char *,
 					   Elf_Internal_Sym *,
 					   asection *,
 					   struct elf_link_hash_entry *))
@@ -562,7 +563,7 @@ elf64_sparc_output_arch_syms (bfd *output_bfd ATTRIBUTE_UNUSED,
   if (elf_hash_table (info)->dynlocal)
     {
       bfd * dynobj = elf_hash_table (info)->dynobj;
-      asection *dynsymsec = bfd_get_section_by_name (dynobj, ".dynsym");
+      asection *dynsymsec = bfd_get_linker_section (dynobj, ".dynsym");
       struct elf_link_local_dynamic_entry *e;
 
       for (e = elf_hash_table (info)->dynlocal; e ; e = e->next)
@@ -592,7 +593,8 @@ elf64_sparc_output_arch_syms (bfd *output_bfd ATTRIBUTE_UNUSED,
 	sym.st_other = 0;
 	sym.st_info = ELF_ST_INFO (app_regs [reg].bind, STT_REGISTER);
 	sym.st_shndx = app_regs [reg].shndx;
-	if ((*func) (finfo, app_regs [reg].name, &sym,
+	sym.st_target_internal = 0;
+	if ((*func) (flaginfo, app_regs [reg].name, &sym,
 		     sym.st_shndx == SHN_ABS
 		     ? bfd_abs_section_ptr : bfd_und_section_ptr,
 		     NULL) != 1)
@@ -713,7 +715,7 @@ elf64_sparc_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
           return FALSE;
         }
     }
-  return TRUE;
+  return _bfd_sparc_elf_merge_private_bfd_data (ibfd, obfd);
 }
 
 /* MARCO: Set the correct entry size for the .stab section.  */
@@ -739,7 +741,7 @@ elf64_sparc_fake_sections (bfd *abfd ATTRIBUTE_UNUSED,
 /* Print a STT_REGISTER symbol to file FILE.  */
 
 static const char *
-elf64_sparc_print_symbol_all (bfd *abfd ATTRIBUTE_UNUSED, PTR filep,
+elf64_sparc_print_symbol_all (bfd *abfd ATTRIBUTE_UNUSED, void * filep,
 			      asymbol *symbol)
 {
   FILE *file = (FILE *) filep;

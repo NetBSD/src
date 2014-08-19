@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_internal.h,v 1.4.2.1 2013/02/25 00:25:42 tls Exp $	*/
+/*	$NetBSD: dst_internal.h,v 1.4.2.2 2014/08/19 23:46:28 tls Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -86,6 +86,12 @@ typedef struct dst_hmacsha256_key dst_hmacsha256_key_t;
 typedef struct dst_hmacsha384_key dst_hmacsha384_key_t;
 typedef struct dst_hmacsha512_key dst_hmacsha512_key_t;
 
+/*%
+ * Indicate whether a DST context will be used for signing
+ * or for verification
+ */
+typedef enum { DO_SIGN, DO_VERIFY } dst_use_t;
+
 /*% DST Key Structure */
 struct dst_key {
 	unsigned int	magic;
@@ -114,6 +120,8 @@ struct dst_key {
 		DSA *dsa;
 		DH *dh;
 		EVP_PKEY *pkey;
+#elif PKCS11CRYPTO
+		pk11_object_t *pkey;
 #endif
 		dst_hmacmd5_key_t *hmacmd5;
 		dst_hmacsha1_key_t *hmacsha1;
@@ -128,6 +136,9 @@ struct dst_key {
 	isc_boolean_t	timeset[DST_MAX_TIMES + 1];  /*%< data set? */
 	isc_stdtime_t	nums[DST_MAX_NUMERIC + 1];   /*%< numeric metadata */
 	isc_boolean_t	numset[DST_MAX_NUMERIC + 1]; /*%< data set? */
+	isc_boolean_t 	inactive;      /*%< private key not present as it is
+					    inactive */
+	isc_boolean_t 	external;      /*%< external key */
 
 	int		fmt_major;     /*%< private key format, major version */
 	int		fmt_minor;     /*%< private key format, minor version */
@@ -138,8 +149,10 @@ struct dst_key {
 
 struct dst_context {
 	unsigned int magic;
+	dst_use_t use;
 	dst_key_t *key;
 	isc_mem_t *mctx;
+	isc_logcategory_t *category;
 	union {
 		void *generic;
 		dst_gssapi_signverifyctx_t *gssctx;
@@ -155,6 +168,8 @@ struct dst_context {
 		isc_hmacsha512_t *hmacsha512ctx;
 #ifdef OPENSSL
 		EVP_MD_CTX *evp_md_ctx;
+#elif PKCS11CRYPTO
+		pk11_context_t *pk11_ctx;
 #endif
 	} ctxdata;
 };
@@ -164,6 +179,8 @@ struct dst_func {
 	 * Context functions
 	 */
 	isc_result_t (*createctx)(dst_key_t *key, dst_context_t *dctx);
+	isc_result_t (*createctx2)(dst_key_t *key, int maxbits,
+				   dst_context_t *dctx);
 	void (*destroyctx)(dst_context_t *dctx);
 	isc_result_t (*adddata)(dst_context_t *dctx, const isc_region_t *data);
 
@@ -207,6 +224,7 @@ struct dst_func {
  * Initializers
  */
 isc_result_t dst__openssl_init(const char *engine);
+#define dst__pkcs11_init pk11_initialize
 
 isc_result_t dst__hmacmd5_init(struct dst_func **funcp);
 isc_result_t dst__hmacsha1_init(struct dst_func **funcp);
@@ -216,20 +234,30 @@ isc_result_t dst__hmacsha384_init(struct dst_func **funcp);
 isc_result_t dst__hmacsha512_init(struct dst_func **funcp);
 isc_result_t dst__opensslrsa_init(struct dst_func **funcp,
 				  unsigned char algorithm);
+isc_result_t dst__pkcs11rsa_init(struct dst_func **funcp);
 isc_result_t dst__openssldsa_init(struct dst_func **funcp);
+isc_result_t dst__pkcs11dsa_init(struct dst_func **funcp);
 isc_result_t dst__openssldh_init(struct dst_func **funcp);
+isc_result_t dst__pkcs11dh_init(struct dst_func **funcp);
 isc_result_t dst__gssapi_init(struct dst_func **funcp);
+#ifdef HAVE_OPENSSL_ECDSA
+isc_result_t dst__opensslecdsa_init(struct dst_func **funcp);
+#endif
+#ifdef HAVE_PKCS11_ECDSA
+isc_result_t dst__pkcs11ecdsa_init(struct dst_func **funcp);
+#endif
 #ifdef HAVE_OPENSSL_GOST
 isc_result_t dst__opensslgost_init(struct dst_func **funcp);
 #endif
-#ifdef HAVE_OPENSSL_ECDSA
-isc_result_t dst__opensslecdsa_init(struct dst_func **funcp);
+#ifdef HAVE_PKCS11_GOST
+isc_result_t dst__pkcs11gost_init(struct dst_func **funcp);
 #endif
 
 /*%
  * Destructors
  */
 void dst__openssl_destroy(void);
+#define dst__pkcs11_destroy pk11_finalize
 
 /*%
  * Memory allocators using the DST memory pool.

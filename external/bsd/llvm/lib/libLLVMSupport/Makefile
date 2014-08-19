@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13.2.2 2013/06/23 06:28:23 tls Exp $
+#	$NetBSD: Makefile,v 1.13.2.3 2014/08/19 23:51:25 tls Exp $
 
 LIB=	LLVMSupport
 
@@ -11,13 +11,14 @@ NOGCCERROR=	yes
 SRCS+=	APFloat.cpp \
 	APInt.cpp \
 	APSInt.cpp \
+	ARMBuildAttrs.cpp \
+	ARMWinEH.cpp \
 	Allocator.cpp \
 	BlockFrequency.cpp \
 	BranchProbability.cpp \
 	circular_raw_ostream.cpp \
 	CommandLine.cpp \
 	Compression.cpp \
-	ConstantRange.cpp \
 	ConvertUTF.c \
 	ConvertUTFWrapper.cpp \
 	CrashRecoveryContext.cpp \
@@ -39,6 +40,8 @@ SRCS+=	APFloat.cpp \
 	IntrusiveRefCntPtr.cpp \
 	IsInf.cpp \
 	IsNAN.cpp \
+	LEB128.cpp \
+	LineIterator.cpp \
 	Locale.cpp \
 	LockFileManager.cpp \
 	MD5.cpp \
@@ -51,6 +54,7 @@ SRCS+=	APFloat.cpp \
 	SmallPtrSet.cpp \
 	SmallVector.cpp \
 	SourceMgr.cpp \
+	SpecialCaseList.cpp \
 	Statistic.cpp \
 	StreamableMemoryObject.cpp \
 	StringExtras.cpp \
@@ -64,6 +68,7 @@ SRCS+=	APFloat.cpp \
 	ToolOutputFile.cpp \
 	Triple.cpp \
 	Twine.cpp \
+	Unicode.cpp \
 	Watchdog.cpp \
 	YAMLParser.cpp \
 	YAMLTraits.cpp \
@@ -76,21 +81,19 @@ SRCS+=	APFloat.cpp \
 	regstrlcpy.c
 
 SRCS+=	Atomic.cpp \
-	Disassembler.cpp \
 	DynamicLibrary.cpp \
 	Errno.cpp \
 	Host.cpp \
-	IncludeFile.cpp \
 	Memory.cpp \
 	Mutex.cpp \
 	Path.cpp \
-	PathV2.cpp \
 	Process.cpp \
 	Program.cpp \
 	RWMutex.cpp \
+	RandomNumberGenerator.cpp \
+	ScaledNumber.cpp \
 	SearchForAddressOfSpecialSymbol.cpp \
 	Signals.cpp \
-	system_error.cpp \
 	ThreadLocal.cpp \
 	Threading.cpp \
 	TimeValue.cpp \
@@ -102,15 +105,17 @@ SRCS+=	Host.inc \
 	Memory.inc \
 	Mutex.inc \
 	Path.inc \
-	PathV2.inc \
 	Process.inc \
 	Program.inc \
 	RWMutex.inc \
 	Signals.inc \
 	Watchdog.inc \
-	system_error.inc \
 	ThreadLocal.inc \
 	TimeValue.inc
+
+.for src in ${SRCS:M*.c}
+CPPFLAGS.${src}+=	-std=gnu99
+.endfor
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

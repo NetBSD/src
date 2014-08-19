@@ -1,5 +1,5 @@
-/*	$NetBSD: addrmatch.c,v 1.4.8.1 2013/02/25 00:24:06 tls Exp $	*/
-/*	$OpenBSD: addrmatch.c,v 1.6 2012/06/21 00:16:07 dtucker Exp $ */
+/*	$NetBSD: addrmatch.c,v 1.4.8.2 2014/08/19 23:45:24 tls Exp $	*/
+/*	$OpenBSD: addrmatch.c,v 1.7 2013/05/17 00:13:13 djm Exp $ */
 
 /*
  * Copyright (c) 2004-2008 Damien Miller <djm@mindrot.org>
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: addrmatch.c,v 1.4.8.1 2013/02/25 00:24:06 tls Exp $");
+__RCSID("$NetBSD: addrmatch.c,v 1.4.8.2 2014/08/19 23:45:24 tls Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -419,7 +419,7 @@ addr_match_list(const char *addr, const char *_list)
 				goto foundit;
 		}
 	}
-	xfree(o);
+	free(o);
 
 	return ret;
 }
@@ -493,7 +493,7 @@ addr_match_cidr_list(const char *addr, const char *_list)
 			continue;
 		}
 	}
-	xfree(o);
+	free(o);
 
 	return ret;
 }

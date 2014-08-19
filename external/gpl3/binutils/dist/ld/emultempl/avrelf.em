@@ -71,8 +71,10 @@ avr_elf_${EMULATION_NAME}_before_allocation (void)
 
   gld${EMULATION_NAME}_before_allocation ();
 
-  /* We only need stubs for the avr6 family.  */
-  if (strcmp ("${EMULATION_NAME}","avr6"))
+  /* We only need stubs for avr6, avrxmega6, and avrxmega7. */
+  if (strcmp ("${EMULATION_NAME}","avr6") 
+      && strcmp ("${EMULATION_NAME}","avrxmega6")
+      && strcmp ("${EMULATION_NAME}","avrxmega7") )
     avr_no_stubs = TRUE;
 
   avr_elf_set_global_bfd_parameters ();
@@ -150,7 +152,7 @@ avr_elf_after_allocation (void)
     {
       /* If relaxing, elf32_avr_size_stubs will be called from
 	 elf32_avr_relax_section.  */
-      if (!elf32_avr_size_stubs (link_info.output_bfd, &link_info, FALSE))
+      if (!elf32_avr_size_stubs (link_info.output_bfd, &link_info, TRUE))
 	einfo ("%X%P: can not size stub section: %E\n");
     }
 

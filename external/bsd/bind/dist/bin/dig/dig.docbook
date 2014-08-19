@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -18,11 +18,10 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dig.docbook,v 1.51 2011/11/04 11:02:50 jreed Exp  -->
 <refentry id="man.dig">
 
   <refentryinfo>
-    <date>Jun 30, 2000</date>
+    <date>February 19, 2014</date>
   </refentryinfo>
 
   <refmeta>
@@ -46,6 +45,8 @@
       <year>2009</year>
       <year>2010</year>
       <year>2011</year>
+      <year>2013</year>
+      <year>2014</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -69,6 +70,7 @@
       <arg><option>-p <replaceable class="parameter">port#</replaceable></option></arg>
       <arg><option>-q <replaceable class="parameter">name</replaceable></option></arg>
       <arg><option>-t <replaceable class="parameter">type</replaceable></option></arg>
+      <arg><option>-v</option></arg>
       <arg><option>-x <replaceable class="parameter">addr</replaceable></option></arg>
       <arg><option>-y <replaceable class="parameter"><optional>hmac:</optional>name:key</replaceable></option></arg>
       <arg><option>-4</option></arg>
@@ -117,9 +119,10 @@
 
     <para>
       Unless it is told to query a specific name server,
-      <command>dig</command> will try each of the servers listed
-      in
-      <filename>/etc/resolv.conf</filename>.
+      <command>dig</command> will try each of the servers listed in
+      <filename>/etc/resolv.conf</filename>. If no usable server addresses
+      are found, <command>dig</command> will send the query to the local
+      host.
     </para>
 
     <para>
@@ -136,7 +139,7 @@
 
     <para>
       The IN and CH class names overlap with the IN and CH top level
-      domains names.  Either use the <option>-t</option> and
+      domain names.  Either use the <option>-t</option> and
       <option>-c</option> options to specify the type and class, 
       use the <option>-q</option> the specify the domain name, or
       use "IN." and "CH." when looking up these top level domains.
@@ -158,20 +161,25 @@
           <term><constant>server</constant></term>
           <listitem>
             <para>
-              is the name or IP address of the name server to query.  This can
-              be an IPv4
-              address in dotted-decimal notation or an IPv6
+              is the name or IP address of the name server to query.  This
+              can be an IPv4 address in dotted-decimal notation or an IPv6
               address in colon-delimited notation.  When the supplied
-              <parameter>server</parameter> argument is a
-              hostname,
-              <command>dig</command> resolves that name before
-              querying that name
-              server.  If no <parameter>server</parameter>
-              argument is provided,
-              <command>dig</command> consults <filename>/etc/resolv.conf</filename>
-              and queries the name servers listed there.  The reply from the
-              name
-              server that responds is displayed.
+              <parameter>server</parameter> argument is a hostname,
+              <command>dig</command> resolves that name before querying
+              that name server.
+            </para>
+            <para>
+              If no <parameter>server</parameter> argument is
+              provided, <command>dig</command> consults
+              <filename>/etc/resolv.conf</filename>; if an
+              address is found there, it queries the name server at
+              that address. If either of the <option>-4</option> or
+              <option>-6</option> options are in use, then
+              only addresses for the corresponding transport
+              will be tried.  If no usable addresses are found,
+              <command>dig</command> will send the query to the
+              local host.  The reply from the name server that
+              responds is displayed.
             </para>
           </listitem>
         </varlistentry>
@@ -274,8 +282,13 @@
 
     <para>
       The <option>-q</option> option sets the query name to 
-      <parameter>name</parameter>.  This useful do distinguish the
+      <parameter>name</parameter>.  This is useful to distinguish the
       <parameter>name</parameter> from other arguments.
+    </para>
+
+    <para>
+      The <option>-v</option> causes <command>dig</command> to
+      print the version number and exit.
     </para>
 
     <para>
@@ -606,6 +619,21 @@
         </varlistentry>
 
         <varlistentry>
+          <term><option>+[no]crypto</option></term>
+          <listitem>
+            <para>
+	      Toggle the display of cryptographic fields in DNSSEC records.
+	      The contents of these field are unnecessary to debug most DNSSEC
+	      validation failures and removing them makes it easier to see
+	      the common failures.  The default is to display the fields.
+	      When omitted they are replaced by the string "[omitted]" or
+	      in the DNSKEY case the key id is displayed as the replacement,
+	      e.g. "[ key id = value ]".
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
           <term><option>+split=W</option></term>
           <listitem>
             <para>
@@ -890,6 +918,49 @@
           </listitem>
         </varlistentry>
 
+        <varlistentry>
+          <term><option>+[no]keepopen</option></term>
+          <listitem>
+            <para>
+              Keep the TCP socket open between queries and reuse it rather
+	      than creating a new TCP socket for each lookup.  The default
+	      is <option>+nokeepopen</option>.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]sit<optional>=####</optional></option></term>
+          <listitem>
+            <para>
+	      Send a Source Identity Token EDNS option, with optional value.
+	      Replaying a SIT from a previous response will allow the
+	      server to identify a previous client.  The default is
+	      <option>+nosit</option>.  Currently using experimental value
+	      65001 for the option code.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]subnet=addr/prefix</option></term>
+          <listitem>
+            <para>
+	      Send an EDNS Client Subnet option with the speciifed
+              IP address or network prefix.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]expire</option></term>
+          <listitem>
+            <para>
+	      Send an EDNS Expire option.  Currently using experimental
+	      value 65002 for the option code.
+            </para>
+          </listitem>
+        </varlistentry>
 
       </variablelist>
 

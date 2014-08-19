@@ -27,7 +27,7 @@ There are 13 section headers.*
 #...
 Relocation section '\.rela\.dyn' at offset 0x[0-9a-f]+ contains 1 entries:
 #...
-00002[12][0-9a-f][048c] +0000000c R_CRIS_RELATIVE +00000150
+00002[12][0-9a-f][048c] +0000000c R_CRIS_RELATIVE +150
 #...
 Symbol table '\.dynsym' contains 4 entries:
  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
@@ -49,10 +49,10 @@ Symbol table '\.symtab' contains 18 entries:
  +8: [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +8 
  +9: [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +9 
  +10: 0+2..[046c] +0 +OBJECT +LOCAL +DEFAULT +ABS _DYNAMIC
- +11: 0+2..[046c] +0 +NOTYPE +LOCAL +DEFAULT +ABS __bss_start
- +12: 0+2..[046c] +0 +NOTYPE +LOCAL +DEFAULT +ABS _edata
+ +11: 0+2..[046c] +0 +NOTYPE +LOCAL +DEFAULT +9 __bss_start
+ +12: 0+2..[046c] +0 +NOTYPE +LOCAL +DEFAULT +9 _edata
  +13: 0+2..[046c] +0 +OBJECT +LOCAL +DEFAULT +ABS _GLOBAL_OFFSET_TABLE_
- +14: 0+2..[046c] +0 +NOTYPE +LOCAL +DEFAULT +ABS _end
+ +14: 0+2..[046c] +0 +NOTYPE +LOCAL +DEFAULT +9 _end
  +15: 0+150 +2 +FUNC +LOCAL +DEFAULT +7 dsofn
  +16: 0+ +0 +OBJECT +GLOBAL +DEFAULT +ABS TST1
  +17: 0+154 +0 +FUNC +GLOBAL +DEFAULT +7 export_1

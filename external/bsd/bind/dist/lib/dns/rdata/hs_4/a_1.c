@@ -1,7 +1,7 @@
-/*	$NetBSD: a_1.c,v 1.3 2012/06/05 00:42:18 christos Exp $	*/
+/*	$NetBSD: a_1.c,v 1.3.2.1 2014/08/19 23:46:30 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -50,7 +50,7 @@ fromtext_hs_a(ARGS_FROMTEXT) {
 	isc_buffer_availableregion(target, &region);
 	if (region.length < 4)
 		return (ISC_R_NOSPACE);
-	memcpy(region.base, &addr, 4);
+	memmove(region.base, &addr, 4);
 	isc_buffer_add(target, 4);
 	return (ISC_R_SUCCESS);
 }
@@ -89,7 +89,7 @@ fromwire_hs_a(ARGS_FROMWIRE) {
 	if (tregion.length < 4)
 		return (ISC_R_NOSPACE);
 
-	memcpy(tregion.base, sregion.base, 4);
+	memmove(tregion.base, sregion.base, 4);
 	isc_buffer_forward(source, 4);
 	isc_buffer_add(target, 4);
 	return (ISC_R_SUCCESS);
@@ -108,7 +108,7 @@ towire_hs_a(ARGS_TOWIRE) {
 	isc_buffer_availableregion(target, &region);
 	if (region.length < rdata->length)
 		return (ISC_R_NOSPACE);
-	memcpy(region.base, rdata->data, rdata->length);
+	memmove(region.base, rdata->data, rdata->length);
 	isc_buffer_add(target, 4);
 	return (ISC_R_SUCCESS);
 }

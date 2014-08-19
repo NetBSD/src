@@ -186,6 +186,6 @@ generic_core_file_matches_executable_p (bfd *core_bfd, bfd *exec_bfd)
   if (last_slash != NULL)
     exec = last_slash + 1;
   
-  return strcmp (exec, core) == 0;
+  return filename_cmp (exec, core) == 0;
 }
 

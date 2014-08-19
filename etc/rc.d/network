@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.61.12.2 2013/06/23 06:26:22 tls Exp $
+# $NetBSD: network,v 1.61.12.3 2014/08/19 23:45:51 tls Exp $
 #
 
 # PROVIDE: network
@@ -16,16 +16,21 @@ stop_cmd="network_stop"
 nl='
 ' # a newline
 
-intmissing() {
+intmissing()
+{
 	local int="$1"
 	shift
-	for i
-	do
+	for i; do
 		if [ "$int" = "$i" ]; then
 			return 1
 		fi
 	done
 	return 0
+}
+
+have_inet6()
+{
+	/sbin/ifconfig lo0 inet6 >/dev/null 2>&1
 }
 
 network_start()
@@ -34,6 +39,23 @@ network_start()
 	#
 	echo "Starting network."
 
+	network_start_hostname
+	network_start_domainname
+	network_start_loopback
+	have_inet6 &&
+	network_start_ipv6_route
+	[ "$net_interfaces" != NO ] &&
+	network_start_interfaces
+	network_start_aliases
+	network_start_defaultroute
+	network_start_defaultroute6
+	have_inet6 &&
+	network_start_ipv6_autoconf
+	network_start_local
+}
+
+network_start_hostname()
+{
 	# If $hostname is set, use it for my Internet name,
 	# otherwise use /etc/myname
 	#
@@ -54,7 +76,10 @@ network_start()
 			warn "\$hostname not set."
 		fi
 	fi
+}
 
+network_start_domainname()
+{
 	# Check $domainname first, then /etc/defaultdomain,
 	# for NIS/YP domain name
 	#
@@ -70,7 +95,10 @@ network_start()
 	if checkyesno flushroutes; then
 		/sbin/route -qn flush
 	fi
+}
 
+network_start_loopback()
+{
 	# Set the address for the first loopback interface, so that the
 	# auto-route from a newly configured interface's address to lo0
 	# works correctly.
@@ -82,93 +110,97 @@ network_start()
 	# According to RFC1122, 127.0.0.0/8 must not leave the node.
 	#
 	/sbin/route -q add -inet 127.0.0.0 -netmask 0xff000000 127.0.0.1 -reject
+}
 
+network_start_ipv6_route()
+{
 	# IPv6 routing setups, and host/router mode selection.
 	#
-	if /sbin/ifconfig lo0 inet6 >/dev/null 2>&1; then
-		# We have IPv6 support in kernel.
+	# We have IPv6 support in kernel.
 
-		# disallow link-local unicast dest without outgoing scope
-		# identifiers.
-		#
-		/sbin/route -q add -inet6 fe80:: -prefixlen 10 ::1 -reject
+	# disallow link-local unicast dest without outgoing scope
+	# identifiers.
+	#
+	/sbin/route -q add -inet6 fe80:: -prefixlen 10 ::1 -reject
 
-		# disallow the use of the RFC3849 documentation address
-		#
-		/sbin/route -q add -inet6 2001:db8:: -prefixlen 32 ::1 -reject
+	# disallow the use of the RFC3849 documentation address
+	#
+	/sbin/route -q add -inet6 2001:db8:: -prefixlen 32 ::1 -reject
 
-		# IPv6 site-local scoped address prefix (fec0::/10)
-		# has been deprecated by RFC3879.
-		#
-		if [ -n "$ip6sitelocal" ]; then
-			warn "\$ip6sitelocal is no longer valid"
-		fi
-
-		# disallow "internal" addresses to appear on the wire.
-		#
-		/sbin/route -q add -inet6 ::ffff:0.0.0.0 -prefixlen 96 ::1 -reject
-
-		# disallow packets to malicious IPv4 compatible prefix
-		#
-		/sbin/route -q add -inet6 ::224.0.0.0 -prefixlen 100 ::1 -reject
-		/sbin/route -q add -inet6 ::127.0.0.0 -prefixlen 104 ::1 -reject
-		/sbin/route -q add -inet6 ::0.0.0.0 -prefixlen 104 ::1 -reject
-		/sbin/route -q add -inet6 ::255.0.0.0 -prefixlen 104 ::1 -reject
-
-		# disallow packets to malicious 6to4 prefix
-		#
-		/sbin/route -q add -inet6 2002:e000:: -prefixlen 20 ::1 -reject
-		/sbin/route -q add -inet6 2002:7f00:: -prefixlen 24 ::1 -reject
-		/sbin/route -q add -inet6 2002:0000:: -prefixlen 24 ::1 -reject
-		/sbin/route -q add -inet6 2002:ff00:: -prefixlen 24 ::1 -reject
-
-		# Completely disallow packets to IPv4 compatible prefix.
-		# This may conflict with RFC1933 under following circumstances:
-		# (1) An IPv6-only KAME node tries to originate packets to IPv4
-		#     compatible destination.  The KAME node has no IPv4
-		#     compatible support.  Under RFC1933, it should transmit
-		#     native IPv6 packets toward IPv4 compatible destination,
-		#     hoping it would reach a router that forwards the packet
-		#     toward auto-tunnel interface.
-		# (2) An IPv6-only node originates a packet to IPv4 compatible
-		#     destination.  A KAME node is acting as an IPv6 router, and
-		#     asked to forward it.
-		# Due to rare use of IPv4 compatible address, and security
-		# issues with it, we disable it by default.
-		#
-		/sbin/route -q add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject
-
-		/sbin/sysctl -qw net.inet6.ip6.forwarding=0
-		/sbin/sysctl -qw net.inet6.ip6.accept_rtadv=0
-
-		case $ip6mode in
-		router)
-			echo 'IPv6 mode: router'
-			/sbin/sysctl -qw net.inet6.ip6.forwarding=1
-
-			# disallow unique-local unicast forwarding without
-			# explicit configuration.
-			if ! checkyesno ip6uniquelocal; then
-				/sbin/route -q add -inet6 fc00:: -prefixlen 7 \
-				    ::1 -reject
-			fi
-			;;
-
-		autohost)
-			echo 'IPv6 mode: autoconfigured host'
-			/sbin/sysctl -qw net.inet6.ip6.accept_rtadv=1
-			;;
-
-		host)	
-			echo 'IPv6 mode: host'
-			;;
-
-		*)	warn "invalid \$ip6mode value "\"$ip6mode\"
-			;;
-
-		esac
+	# IPv6 site-local scoped address prefix (fec0::/10)
+	# has been deprecated by RFC3879.
+	#
+	if [ -n "$ip6sitelocal" ]; then
+		warn "\$ip6sitelocal is no longer valid"
 	fi
 
+	# disallow "internal" addresses to appear on the wire.
+	#
+	/sbin/route -q add -inet6 ::ffff:0.0.0.0 -prefixlen 96 ::1 -reject
+
+	# disallow packets to malicious IPv4 compatible prefix
+	#
+	/sbin/route -q add -inet6 ::224.0.0.0 -prefixlen 100 ::1 -reject
+	/sbin/route -q add -inet6 ::127.0.0.0 -prefixlen 104 ::1 -reject
+	/sbin/route -q add -inet6 ::0.0.0.0 -prefixlen 104 ::1 -reject
+	/sbin/route -q add -inet6 ::255.0.0.0 -prefixlen 104 ::1 -reject
+
+	# disallow packets to malicious 6to4 prefix
+	#
+	/sbin/route -q add -inet6 2002:e000:: -prefixlen 20 ::1 -reject
+	/sbin/route -q add -inet6 2002:7f00:: -prefixlen 24 ::1 -reject
+	/sbin/route -q add -inet6 2002:0000:: -prefixlen 24 ::1 -reject
+	/sbin/route -q add -inet6 2002:ff00:: -prefixlen 24 ::1 -reject
+
+	# Completely disallow packets to IPv4 compatible prefix.
+	# This may conflict with RFC1933 under following circumstances:
+	# (1) An IPv6-only KAME node tries to originate packets to IPv4
+	#     compatible destination.  The KAME node has no IPv4
+	#     compatible support.  Under RFC1933, it should transmit
+	#     native IPv6 packets toward IPv4 compatible destination,
+	#     hoping it would reach a router that forwards the packet
+	#     toward auto-tunnel interface.
+	# (2) An IPv6-only node originates a packet to IPv4 compatible
+	#     destination.  A KAME node is acting as an IPv6 router, and
+	#     asked to forward it.
+	# Due to rare use of IPv4 compatible address, and security
+	# issues with it, we disable it by default.
+	#
+	/sbin/route -q add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject
+
+	/sbin/sysctl -qw net.inet6.ip6.forwarding=0
+	/sbin/sysctl -qw net.inet6.ip6.accept_rtadv=0
+
+	case $ip6mode in
+	router)
+		echo 'IPv6 mode: router'
+		/sbin/sysctl -qw net.inet6.ip6.forwarding=1
+
+		# disallow unique-local unicast forwarding without
+		# explicit configuration.
+		if ! checkyesno ip6uniquelocal; then
+			/sbin/route -q add -inet6 fc00:: -prefixlen 7 \
+			    ::1 -reject
+		fi
+		;;
+
+	autohost)
+		echo 'IPv6 mode: autoconfigured host'
+		/sbin/sysctl -qw net.inet6.ip6.accept_rtadv=1
+		;;
+
+	host)	
+		echo 'IPv6 mode: host'
+		;;
+
+	*)	warn "invalid \$ip6mode value "\"$ip6mode\"
+		;;
+
+	esac
+}
+
+network_start_interfaces()
+{
 	# Configure all of the network interfaces listed in $net_interfaces;
 	# if $auto_ifconfig is YES, grab all interfaces from ifconfig.
 	# In the following, "xxN" stands in for interface names, like "le0".
@@ -201,115 +233,116 @@ network_start()
 	# You can put shell script fragment into /etc/ifconfig.xxN by
 	# starting a line with "!".  Refer to ifconfig.if(5) for details.
 	#
-	if [ "$net_interfaces" != NO ]; then
-		ifaces="$(/sbin/ifconfig -l)"
-		if checkyesno auto_ifconfig; then
-			tmp="$ifaces"
-			for cloner in $(/sbin/ifconfig -C); do
-				for int in /etc/ifconfig.${cloner}[0-9]*; do
-					[ ! -f $int ] && break
-					tmp="$tmp ${int##*.}"
-				done
+	ifaces="$(/sbin/ifconfig -l)"
+	if checkyesno auto_ifconfig; then
+		tmp="$ifaces"
+		for cloner in $(/sbin/ifconfig -C); do
+			for int in /etc/ifconfig.${cloner}[0-9]*; do
+				[ ! -f $int ] && break
+				tmp="$tmp ${int##*.}"
 			done
-		else
-			tmp="$net_interfaces"
+		done
+	else
+		tmp="$net_interfaces"
+	fi
+	echo -n 'Configuring network interfaces:'
+	for int in $tmp; do
+		eval argslist=\$ifconfig_$int
+
+		# Skip interfaces that do not have explicit
+		# configuration information.  If auto_ifconfig is
+		# false then also warn about such interfaces.
+		#
+		if [ -z "$argslist" ] && ! [ -f /etc/ifconfig.$int ]
+		then
+			if ! checkyesno auto_ifconfig; then
+				echo
+				warn \
+		"/etc/ifconfig.$int missing and ifconfig_$int not set;"
+				warn "interface $int not configured."
+			fi
+			continue
 		fi
-		echo -n 'Configuring network interfaces:'
-		for int in $tmp; do
-			eval argslist=\$ifconfig_$int
 
-			# Skip interfaces that do not have explicit
-			# configuration information.  If auto_ifconfig is
-			# false then also warn about such interfaces.
-			#
-			if [ -z "$argslist" ] && ! [ -f /etc/ifconfig.$int ]
-			then
-				if ! checkyesno auto_ifconfig; then
-					echo
-					warn \
-			"/etc/ifconfig.$int missing and ifconfig_$int not set;"
-					warn "interface $int not configured."
-				fi
-				continue
+		echo -n " $int"
+
+		# Create the interface if necessary.
+		# If the interface did not exist before,
+		# then also resync ipf(4).
+		#
+		if intmissing $int $ifaces; then
+			if /sbin/ifconfig $int create && \
+			   checkyesno ipfilter; then
+				/sbin/ipf -y >/dev/null
 			fi
+		fi
 
-			echo -n " $int"
-
-			# Create the interface if necessary.
-			# If the interface did not exist before,
-			# then also resync ipf(4).
-			#
-			if intmissing $int $ifaces; then
-				if /sbin/ifconfig $int create && \
-				   checkyesno ipfilter; then
-					/sbin/ipf -y >/dev/null
-				fi
-			fi
-
-			# If $ifconfig_xxN is empty, then use
-			# /etc/ifconfig.xxN, which we know exists due to
-			# an earlier test.
-			#
-			# If $ifconfig_xxN is non-empty and contains a
-			# newline, then just use it as is.  (This allows
-			# semicolons through unmolested.)
-			#
-			# If $ifconfig_xxN is non-empty and does not
-			# contain a newline, then convert all semicolons
-			# to newlines.
-			#
-			case "$argslist" in
-			'')
-				cat /etc/ifconfig.$int
+		# If $ifconfig_xxN is empty, then use
+		# /etc/ifconfig.xxN, which we know exists due to
+		# an earlier test.
+		#
+		# If $ifconfig_xxN is non-empty and contains a
+		# newline, then just use it as is.  (This allows
+		# semicolons through unmolested.)
+		#
+		# If $ifconfig_xxN is non-empty and does not
+		# contain a newline, then convert all semicolons
+		# to newlines.
+		#
+		case "$argslist" in
+		'')
+			cat /etc/ifconfig.$int
+			;;
+		*"${nl}"*)
+			echo "$argslist"
+			;;
+		*)
+			(
+				set -o noglob
+				IFS=';'; set -- $argslist
+				#echo >&2 "[$#] [$1] [$2] [$3] [$4]"
+				IFS="$nl"; echo "$*"
+			)
+			;;
+		esac |
+		collapse_backslash_newline |
+		while read -r args; do
+			case "$args" in
+			''|"#"*|create)
 				;;
-			*"${nl}"*)
-				echo "$argslist"
+			"!"*)
+				# Run arbitrary command in a subshell.
+				( eval "${args#*!}" )
+				;;
+			dhcp)
+				if ! checkyesno dhcpcd; then
+					/sbin/dhcpcd -n \
+						${dhcpcd_flags} $int
+				fi
 				;;
 			*)
+				# Pass args to ifconfig.  Note
+				# that args may contain embedded
+				# shell metacharacters, such as
+				# "ssid 'foo;*>bar'". We eval
+				# one more time so that things
+				# like ssid "Columbia University" work.
 				(
 					set -o noglob
-					IFS=';'; set -- $argslist
-					#echo >&2 "[$#] [$1] [$2] [$3] [$4]"
-					IFS="$nl"; echo "$*"
+					eval set -- $args
+					#echo >&2 "[$#] [$1] [$2] [$3]"
+					/sbin/ifconfig $int "$@"
 				)
 				;;
-			esac |
-			collapse_backslash_newline |
-			while read -r args; do
-				case "$args" in
-				''|"#"*|create)
-					;;
-				"!"*)
-					# Run arbitrary command in a subshell.
-					( eval "${args#*!}" )
-					;;
-				dhcp)
-					if ! checkyesno dhcpcd; then
-						/sbin/dhcpcd -n \
-							${dhcpcd_flags} $int
-					fi
-					;;
-				*)
-					# Pass args to ifconfig.  Note
-					# that args may contain embedded
-					# shell metacharacters, such as
-					# "ssid 'foo;*>bar'". We eval
-					# one more time so that things
-					# like ssid "Columbia University" work.
-					(
-						set -o noglob
-						eval set -- $args
-						#echo >&2 "[$#] [$1] [$2] [$3]"
-						/sbin/ifconfig $int "$@"
-					)
-					;;
-				esac
-			done
-			configured_interfaces="$configured_interfaces $int"
+			esac
 		done
-		echo "."
-	fi
+		configured_interfaces="$configured_interfaces $int"
+	done
+	echo "."
+}
 
+network_start_aliases()
+{
 	echo -n "Adding interface aliases:"
 
 	# Check if each configured interface xxN has an $ifaliases_xxN variable
@@ -360,7 +393,10 @@ network_start()
 	fi
 
 	echo "." # for "Adding interface aliases:"
+}
 
+network_start_defaultroute()
+{
 	# Check $defaultroute, then /etc/mygate, for the name or address
 	# of my IPv4 gateway host. If using a name, that name must be in
 	# /etc/hosts.
@@ -371,7 +407,10 @@ network_start()
 	if [ -n "$defaultroute" ]; then
 		/sbin/route add default $defaultroute
 	fi
+}
 
+network_start_defaultroute6()
+{
 	# Check $defaultroute6, then /etc/mygate6, for the name or address
 	# of my IPv6 gateway host. If using a name, that name must be in
 	# /etc/hosts.  Note that the gateway host address must be a link-local
@@ -388,39 +427,43 @@ network_start()
 		fi
 		/sbin/route add -inet6 default $defaultroute6
 	fi
+}
 
+network_start_ipv6_autoconf()
+{
 	# IPv6 interface autoconfiguration.
 	#
-	if /sbin/ifconfig lo0 inet6 >/dev/null 2>&1; then
-		# wait till DAD is completed. always invoke it in case
-		# if are configured manually by ifconfig
+	# wait till DAD is completed. always invoke it in case
+	# if are configured manually by ifconfig
+	#
+	echo 'Waiting for DAD completion for' \
+	    'statically configured addresses...'
+	dadcount=$(/sbin/sysctl -n net.inet6.ip6.dad_count 2>/dev/null)
+	sleep $dadcount
+	sleep 1
+
+	if checkyesno rtsol; then
+		if [ "$ip6mode" = "autohost" ]; then
+			echo 'Sending router solicitation...'
+			/sbin/rtsol $rtsol_flags
+		else
+			echo
+			warn \
+		    "ip6mode must be set to 'autohost' to use rtsol."
+		fi
+
+		# wait till DAD is completed, for global addresses
+		# configured by router advert message.
 		#
 		echo 'Waiting for DAD completion for' \
-		    'statically configured addresses...'
-		dadcount=$(/sbin/sysctl -n net.inet6.ip6.dad_count 2>/dev/null)
+		    'addresses configured by router advert message...'
 		sleep $dadcount
 		sleep 1
-
-		if checkyesno rtsol; then
-			if [ "$ip6mode" = "autohost" ]; then
-				echo 'Sending router solicitation...'
-				/sbin/rtsol $rtsol_flags
-			else
-				echo
-				warn \
-			    "ip6mode must be set to 'autohost' to use rtsol."
-			fi
-
-			# wait till DAD is completed, for global addresses
-			# configured by router advert message.
-			#
-			echo 'Waiting for DAD completion for' \
-			    'addresses configured by router advert message...'
-			sleep $dadcount
-			sleep 1
-		fi
 	fi
+}
 
+network_start_local()
+{
 	# XXX this must die
 	if [ -s /etc/netstart.local ]; then
 		sh /etc/netstart.local start
@@ -431,11 +474,23 @@ network_stop()
 {
 	echo "Stopping network."
 
+	network_stop_local
+	network_stop_aliases
+	[ "$net_interfaces" != NO ] &&
+	network_stop_interfaces
+	network_stop_route
+}
+
+network_stop_local()
+{
 	# XXX this must die
 	if [ -s /etc/netstart.local ]; then
 		sh /etc/netstart.local stop
 	fi
+}
 
+network_stop_aliases()
+{
 	echo "Deleting aliases."
 	if [ -f /etc/ifaliases ]; then
 		while read addr int net; do
@@ -453,34 +508,38 @@ network_stop()
 			done
 		fi
 	done
+}
 
+network_stop_interfaces()
+{
 	# down interfaces
 	#
 	echo -n 'Downing network interfaces:'
-	if [ "$net_interfaces" != NO ]; then
-		if checkyesno auto_ifconfig; then
-			tmp=$(/sbin/ifconfig -l)
-		else
-			tmp="$net_interfaces"
-		fi
-		for int in $tmp; do
-			eval args=\$ifconfig_$int
-			if [ -n "$args" ] || [ -f /etc/ifconfig.$int ]; then
-				echo -n " $int"
-				if [ -f /var/run/dhcpcd-$int.pid ]; then
-					/sbin/dhcpcd -k $int 2> /dev/null
-				fi
-				/sbin/ifconfig $int down
-				if /sbin/ifconfig $int destroy 2>/dev/null && \
-				   checkyesno ipfilter; then
-					# resync ipf(4)
-					/sbin/ipf -y >/dev/null
-				fi
-			fi
-		done
-		echo "."
+	if checkyesno auto_ifconfig; then
+		tmp=$(/sbin/ifconfig -l)
+	else
+		tmp="$net_interfaces"
 	fi
+	for int in $tmp; do
+		eval args=\$ifconfig_$int
+		if [ -n "$args" ] || [ -f /etc/ifconfig.$int ]; then
+			echo -n " $int"
+			if [ -f /var/run/dhcpcd-$int.pid ]; then
+				/sbin/dhcpcd -k $int 2> /dev/null
+			fi
+			/sbin/ifconfig $int down
+			if /sbin/ifconfig $int destroy 2>/dev/null && \
+			   checkyesno ipfilter; then
+				# resync ipf(4)
+				/sbin/ipf -y >/dev/null
+			fi
+		fi
+	done
+	echo "."
+}
 
+network_stop_route()
+{
 	# flush routes
 	#
 	/sbin/route -qn flush

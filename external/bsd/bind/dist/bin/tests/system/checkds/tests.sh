@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -13,6 +13,8 @@
 # LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
+
+# Id
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -101,9 +103,10 @@ status=`expr $status + $ret`
 echo "I:checking for partially missing DS, looking up key via 'dig' ($n)"
 ret=0
 $CHECKDS missing.example > checkds.out.$n || ret=1
-grep 'SHA-1' checkds.out.$n > /dev/null 2>&1 || ret=1
-grep 'SHA-256' checkds.out.$n > /dev/null 2>&1 || ret=1
-grep 'No DS' checkds.out.$n > /dev/null 2>&1 || ret=1
+grep 'SHA-1.*found' checkds.out.$n > /dev/null 2>&1 || ret=1
+grep 'SHA-256.*found' checkds.out.$n > /dev/null 2>&1 || ret=1
+grep 'SHA-1.*missing' checkds.out.$n > /dev/null 2>&1 || ret=1
+grep 'SHA-256.*missing' checkds.out.$n > /dev/null 2>&1 || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -111,9 +114,10 @@ status=`expr $status + $ret`
 echo "I:checking for partially missing DS, obtaining key from file ($n)"
 ret=0
 $CHECKDS -f missing.example.dnskey.db missing.example > checkds.out.$n || ret=1
-grep 'SHA-1' checkds.out.$n > /dev/null 2>&1 || ret=1
-grep 'SHA-256' checkds.out.$n > /dev/null 2>&1 || ret=1
-grep 'No DS' checkds.out.$n > /dev/null 2>&1 || ret=1
+grep 'SHA-1.*found' checkds.out.$n > /dev/null 2>&1 || ret=1
+grep 'SHA-256.*found' checkds.out.$n > /dev/null 2>&1 || ret=1
+grep 'SHA-1.*missing' checkds.out.$n > /dev/null 2>&1 || ret=1
+grep 'SHA-256.*missing' checkds.out.$n > /dev/null 2>&1 || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -121,9 +125,10 @@ status=`expr $status + $ret`
 echo "I:checking for partially missing DLV, looking up key via 'dig' ($n)"
 ret=0
 $CHECKDS -l dlv.example missing.example > checkds.out.$n || ret=1
-grep 'SHA-1' checkds.out.$n > /dev/null 2>&1 || ret=1
-grep 'SHA-256' checkds.out.$n > /dev/null 2>&1 || ret=1
-grep 'No DLV' checkds.out.$n > /dev/null 2>&1 || ret=1
+grep 'SHA-1.*found' checkds.out.$n > /dev/null 2>&1 || ret=1
+grep 'SHA-256.*found' checkds.out.$n > /dev/null 2>&1 || ret=1
+grep 'SHA-1.*missing' checkds.out.$n > /dev/null 2>&1 || ret=1
+grep 'SHA-256.*missing' checkds.out.$n > /dev/null 2>&1 || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -131,9 +136,10 @@ status=`expr $status + $ret`
 echo "I:checking for partially missing DLV, obtaining key from file ($n)"
 ret=0
 $CHECKDS -l dlv.example -f missing.example.dnskey.db missing.example > checkds.out.$n || ret=1
-grep 'SHA-1' checkds.out.$n > /dev/null 2>&1 || ret=1
-grep 'SHA-256' checkds.out.$n > /dev/null 2>&1 || ret=1
-grep 'No DLV' checkds.out.$n > /dev/null 2>&1 || ret=1
+grep 'SHA-1.*found' checkds.out.$n > /dev/null 2>&1 || ret=1
+grep 'SHA-256.*found' checkds.out.$n > /dev/null 2>&1 || ret=1
+grep 'SHA-1.*missing' checkds.out.$n > /dev/null 2>&1 || ret=1
+grep 'SHA-256.*missing' checkds.out.$n > /dev/null 2>&1 || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`

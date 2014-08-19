@@ -1,7 +1,7 @@
-/*	$NetBSD: pkcs11-keygen.c,v 1.3.2.1 2013/06/23 06:26:24 tls Exp $	*/
+/*	$NetBSD: pkcs11-keygen.c,v 1.3.2.2 2014/08/19 23:46:01 tls Exp $	*/
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009,2012 Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -40,20 +40,19 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Id: pkcs11-keygen.c,v 1.9 2009/10/26 23:36:53 each Exp  */
-
-/* pkcs11-keygen - pkcs11 rsa key generator
-*
-* create RSASHA1 key in the keystore of an SCA6000
-* The calculation of key tag is left to the script
-* that converts the key into a DNSKEY RR and inserts 
-* it into a zone file.
-*
-* usage:
-* pkcs11-keygen [-P] [-m module] [-s slot] [-e] -b keysize
-*               -l label [-i id] [-p pin] 
-*
-*/
+/* pkcs11-keygen - PKCS#11 key generator
+ *
+ * Create a key in the keystore of an HSM
+ *
+ * The calculation of key tag is left to the script
+ * that converts the key into a DNSKEY RR and inserts 
+ * it into a zone file.
+ *
+ * usage:
+ * pkcs11-keygen [-P] [-m module] [-s slot] [-e] [-b keysize]
+ *               [-i id] [-p pin] -l label
+ *
+ */
 
 /*! \file */
 
@@ -65,15 +64,16 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
-#include "cryptoki.h"
 
-#ifdef WIN32
-#include "win32.c"
-#else
-#ifndef FORCE_STATIC_PROVIDER
-#include "unix.c"
-#endif
-#endif
+#include <isc/commandline.h>
+#include <isc/result.h>
+#include <isc/types.h>
+
+#include <pk11/pk11.h>
+#include <pk11/result.h>
+#define WANT_DH_PRIMES
+#define WANT_ECC_CURVES
+#include <pk11/constants.h>
 
 #if !(defined(HAVE_GETPASSPHRASE) || (defined (__SVR4) && defined (__sun)))
 #define getpassphrase(x)	getpass(x)
@@ -83,192 +83,477 @@
 static CK_BBOOL truevalue = TRUE;
 static CK_BBOOL falsevalue = FALSE;
 
+/* Key class: RSA, ECC, DSA, DH, or unknown */
+typedef enum {
+	key_unknown,
+	key_rsa,
+	key_dsa,
+	key_dh,
+	key_ecc
+} key_class_t;
+
+/*
+ * Private key template: usable for most key classes without
+ * modificaton; override CKA_SIGN with CKA_DERIVE for DH
+ */
+#define PRIVATE_LABEL 0
+#define PRIVATE_SIGN 1
+#define PRIVATE_DERIVE 1
+#define PRIVATE_TOKEN 2
+#define PRIVATE_PRIVATE 3
+#define PRIVATE_SENSITIVE 4
+#define PRIVATE_EXTRACTABLE 5
+#define PRIVATE_ID 6
+#define PRIVATE_ATTRS 7
+static CK_ATTRIBUTE private_template[] = {
+	{CKA_LABEL, NULL_PTR, 0},
+	{CKA_SIGN, &truevalue, sizeof(truevalue)},
+	{CKA_TOKEN, &truevalue, sizeof(truevalue)},
+	{CKA_PRIVATE, &truevalue, sizeof(truevalue)},
+	{CKA_SENSITIVE, &truevalue, sizeof(truevalue)},
+	{CKA_EXTRACTABLE, &falsevalue, sizeof(falsevalue)},
+	{CKA_ID, NULL_PTR, 0}
+};
+
+/*
+ * Public key template for RSA keys
+ */
+#define RSA_LABEL 0
+#define RSA_VERIFY 1
+#define RSA_TOKEN 2
+#define RSA_PRIVATE 3
+#define RSA_MODULUS_BITS 4
+#define RSA_PUBLIC_EXPONENT 5
+#define RSA_ID 6
+#define RSA_ATTRS 7
+static CK_ATTRIBUTE rsa_template[] = {
+	{CKA_LABEL, NULL_PTR, 0},
+	{CKA_VERIFY, &truevalue, sizeof(truevalue)},
+	{CKA_TOKEN, &truevalue, sizeof(truevalue)},
+	{CKA_PRIVATE, &falsevalue, sizeof(falsevalue)},
+	{CKA_MODULUS_BITS, NULL_PTR, 0},
+	{CKA_PUBLIC_EXPONENT, NULL_PTR, 0},
+	{CKA_ID, NULL_PTR, 0}
+};
+
+/*
+ * Public key template for ECC keys
+ */
+#define ECC_LABEL 0
+#define ECC_VERIFY 1
+#define ECC_TOKEN 2
+#define ECC_PRIVATE 3
+#define ECC_PARAMS 4
+#define ECC_ID 5
+#define ECC_ATTRS 6
+static CK_ATTRIBUTE ecc_template[] = {
+	{CKA_LABEL, NULL_PTR, 0},
+	{CKA_VERIFY, &truevalue, sizeof(truevalue)},
+	{CKA_TOKEN, &truevalue, sizeof(truevalue)},
+	{CKA_PRIVATE, &falsevalue, sizeof(falsevalue)},
+	{CKA_EC_PARAMS, NULL_PTR, 0},
+	{CKA_ID, NULL_PTR, 0}
+};
+
+/*
+ * Public key template for DSA keys
+ */
+#define DSA_LABEL 0
+#define DSA_VERIFY 1
+#define DSA_TOKEN 2
+#define DSA_PRIVATE 3
+#define DSA_PRIME 4
+#define DSA_SUBPRIME 5
+#define DSA_BASE 6
+#define DSA_ID 7
+#define DSA_ATTRS 8
+static CK_ATTRIBUTE dsa_template[] = {
+	{CKA_LABEL, NULL_PTR, 0},
+	{CKA_VERIFY, &truevalue, sizeof(truevalue)},
+	{CKA_TOKEN, &truevalue, sizeof(truevalue)},
+	{CKA_PRIVATE, &falsevalue, sizeof(falsevalue)},
+	{CKA_PRIME, NULL_PTR, 0},
+	{CKA_SUBPRIME, NULL_PTR, 0},
+	{CKA_BASE, NULL_PTR, 0},
+	{CKA_ID, NULL_PTR, 0}
+};
+#define DSA_PARAM_PRIME 0
+#define DSA_PARAM_SUBPRIME 1
+#define DSA_PARAM_BASE 2
+#define DSA_PARAM_ATTRS 3
+static CK_ATTRIBUTE dsa_param_template[] = {
+	{CKA_PRIME, NULL_PTR, 0},
+	{CKA_SUBPRIME, NULL_PTR, 0},
+	{CKA_BASE, NULL_PTR, 0},
+};
+#define DSA_DOMAIN_PRIMEBITS 0
+#define DSA_DOMAIN_PRIVATE 1
+#define DSA_DOMAIN_ATTRS 2
+static CK_ATTRIBUTE dsa_domain_template[] = {
+	{CKA_PRIME_BITS, NULL_PTR, 0},
+	{CKA_PRIVATE, &falsevalue, sizeof(falsevalue)},
+};
+
+/*
+ * Public key template for DH keys
+ */
+#define DH_LABEL 0
+#define DH_VERIFY 1
+#define DH_TOKEN 2
+#define DH_PRIVATE 3
+#define DH_PRIME 4
+#define DH_BASE 5
+#define DH_ID 6
+#define DH_ATTRS 7
+static CK_ATTRIBUTE dh_template[] = {
+	{CKA_LABEL, NULL_PTR, 0},
+	{CKA_VERIFY, &truevalue, sizeof(truevalue)},
+	{CKA_TOKEN, &truevalue, sizeof(truevalue)},
+	{CKA_PRIVATE, &falsevalue, sizeof(falsevalue)},
+	{CKA_PRIME, NULL_PTR, 0},
+	{CKA_BASE, NULL_PTR, 0},
+	{CKA_ID, NULL_PTR, 0}
+};
+#define DH_PARAM_PRIME 0
+#define DH_PARAM_BASE 1
+#define DH_PARAM_ATTRS 2
+static CK_ATTRIBUTE dh_param_template[] = {
+	{CKA_PRIME, NULL_PTR, 0},
+	{CKA_BASE, NULL_PTR, 0},
+};
+#define DH_DOMAIN_PRIMEBITS 0
+#define DH_DOMAIN_ATTRS 1
+static CK_ATTRIBUTE dh_domain_template[] = {
+	{CKA_PRIME_BITS, NULL_PTR, 0},
+};
+
+/*
+ * Convert from text to key class.  Accepts the names of DNSSEC
+ * signing algorithms, so e.g., ECDSAP256SHA256 maps to ECC and
+ * NSEC3RSASHA1 maps to RSA.
+ */
+static key_class_t
+keyclass_fromtext(const char *name) {
+	if (name == NULL)
+		return (key_unknown);
+
+	if (strncasecmp(name, "rsa", 3) == 0 ||
+	    strncasecmp(name, "nsec3rsa", 8) == 0)
+		return (key_rsa);
+	else if (strncasecmp(name, "dsa", 3) == 0 ||
+		 strncasecmp(name, "nsec3dsa", 8) == 0)
+		return (key_dsa);
+	else if (strcasecmp(name, "dh") == 0)
+		return (key_dh);
+	else if (strncasecmp(name, "ecc", 3) == 0 ||
+		 strncasecmp(name, "ecdsa", 5) == 0)
+		return (key_ecc);
+	else
+		return (key_unknown);
+}
+
+static void
+usage(void) {
+	fprintf(stderr,
+		"Usage:\n"
+		"\tpkcs11-keygen -a algorithm -b keysize -l label\n"
+		"\t              [-P] [-m module] "
+			"[-s slot] [-e] [-S] [-i id] [-p PIN]\n");
+	exit(2);
+}
+
 int
-main(int argc, char *argv[])
-{
+main(int argc, char *argv[]) {
+	isc_result_t result;
 	CK_RV rv;
 	CK_SLOT_ID slot = 0;
-	CK_MECHANISM genmech;
+	CK_MECHANISM mech, dpmech;
 	CK_SESSION_HANDLE hSession;
-	CK_UTF8CHAR *pin = NULL;
-	CK_ULONG modulusbits = 0;
+	char *lib_name = NULL;
+	char *pin = NULL;
+	CK_ULONG bits = 0;
 	CK_CHAR *label = NULL;
-	CK_OBJECT_HANDLE privatekey, publickey;
-	CK_BYTE public_exponent[5];
-	CK_ULONG expsize = 3;
+	CK_OBJECT_HANDLE privatekey, publickey, domainparams;
+	CK_BYTE exponent[5];
+	CK_ULONG expsize = 0;
+	pk11_context_t pctx;
 	int error = 0;
 	int c, errflg = 0;
-	int hide = 1;
-	int idlen = 0;
+	int hide = 1, special = 0, quiet = 0;
+	int idlen = 0, id_offset = 0;
+	unsigned int i;
 	unsigned long id = 0;
 	CK_BYTE idbuf[4];
 	CK_ULONG ulObjectCount;
-	/* Set search template */
 	CK_ATTRIBUTE search_template[] = {
 		{CKA_LABEL, NULL_PTR, 0}
 	};
-	CK_ATTRIBUTE publickey_template[] = {
-		{CKA_LABEL, NULL_PTR, 0},
-		{CKA_VERIFY, &truevalue, sizeof(truevalue)},
-		{CKA_TOKEN, &truevalue, sizeof(truevalue)},
-		{CKA_MODULUS_BITS, &modulusbits, sizeof(modulusbits)},
-		{CKA_PUBLIC_EXPONENT, &public_exponent, expsize},
-		{CKA_ID, &idbuf, idlen}
-	};
-	CK_ULONG publickey_attrcnt = 6;
-	CK_ATTRIBUTE privatekey_template[] = {
-		{CKA_LABEL, NULL_PTR, 0},
-		{CKA_SIGN, &truevalue, sizeof(truevalue)},
-		{CKA_TOKEN, &truevalue, sizeof(truevalue)},
-		{CKA_PRIVATE, &truevalue, sizeof(truevalue)},
-		{CKA_SENSITIVE, &truevalue, sizeof(truevalue)},
-		{CKA_EXTRACTABLE, &falsevalue, sizeof(falsevalue)},
-		{CKA_ID, &idbuf, idlen}
-	};
-	CK_ULONG privatekey_attrcnt = 7;
-	char *pk11_provider;
-	extern char *optarg;
-	extern int optopt;
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
+	CK_ATTRIBUTE *public_template = NULL;
+	CK_ATTRIBUTE *domain_template = NULL;
+	CK_ATTRIBUTE *param_template = NULL;
+	CK_ULONG public_attrcnt = 0, private_attrcnt = PRIVATE_ATTRS;
+	CK_ULONG domain_attrcnt = 0, param_attrcnt = 0;
+	key_class_t keyclass = key_rsa;
+	pk11_optype_t op_type = OP_ANY;
 
-	pk11_provider = getenv("PKCS11_PROVIDER");
-	if (pk11_provider != NULL)
-		pk11_libname = pk11_provider;
-
-	while ((c = getopt(argc, argv, ":Pm:s:b:ei:l:p:")) != -1) {
+#define OPTIONS ":a:b:ei:l:m:Pp:qSs:"
+	while ((c = isc_commandline_parse(argc, argv, OPTIONS)) != -1) {
 		switch (c) {
+		case 'a':
+			keyclass = keyclass_fromtext(isc_commandline_argument);
+			break;
 		case 'P':
 			hide = 0;
 			break;
 		case 'm':
-			pk11_libname = optarg;
+			lib_name = isc_commandline_argument;
 			break;
 		case 's':
-			slot = atoi(optarg);
+			slot = atoi(isc_commandline_argument);
 			break;
 		case 'e':
 			expsize = 5;
 			break;
 		case 'b':
-			modulusbits = atoi(optarg);
+			bits = atoi(isc_commandline_argument);
 			break;
 		case 'l':
-			label = (CK_CHAR *)optarg;
+			/* -l option is retained for backward compatibility * */
+			label = (CK_CHAR *)isc_commandline_argument;
 			break;
 		case 'i':
-			id = strtoul(optarg, NULL, 0);
+			id = strtoul(isc_commandline_argument, NULL, 0);
 			idlen = 4;
 			break;
 		case 'p':
-			pin = (CK_UTF8CHAR *)optarg;
+			pin = isc_commandline_argument;
+			break;
+		case 'q':
+			quiet = 1;
+			break;
+		case 'S':
+			special = 1;
 			break;
 		case ':':
 			fprintf(stderr,
 				"Option -%c requires an operand\n",
-				optopt);
+				isc_commandline_option);
 			errflg++;
 			break;
 		case '?':
 		default:
-			fprintf(stderr, "Unrecognised option: -%c\n", optopt);
+			fprintf(stderr, "Unrecognised option: -%c\n",
+				isc_commandline_option);
 			errflg++;
 		}
 	}
 
-	if (errflg || !modulusbits || (label == NULL)) {
-		fprintf(stderr, "Usage:\n");
-		fprintf(stderr, "\tpkcs11-keygen -b keysize -l label\n");
-		fprintf(stderr, "\t              [-P] [-m module] "
-				"[-s slot] [-e] [-i id] [-p PIN]\n");
+	if (label == NULL && isc_commandline_index < argc)
+		label = (CK_CHAR *)argv[isc_commandline_index];
+
+	if (errflg || (label == NULL))
+		usage();
+
+	if (expsize != 0 && keyclass != key_rsa) {
+		fprintf(stderr, "The -e option is only compatible "
+				"with RSA key generation\n");
 		exit(2);
+	}
+
+	if (special != 0 && keyclass != key_dh) {
+		fprintf(stderr, "The -S option is only compatible "
+				"with Diffie-Hellman key generation\n");
+		exit(2);
+	}
+
+	switch (keyclass) {
+	case key_rsa:
+		op_type = OP_RSA;
+		if (expsize == 0)
+			expsize = 3;
+		if (bits == 0)
+			usage();
+
+		mech.mechanism = CKM_RSA_PKCS_KEY_PAIR_GEN;
+		mech.pParameter = NULL;
+		mech.ulParameterLen = 0;
+
+		public_template = rsa_template;
+		public_attrcnt = RSA_ATTRS;
+		id_offset = RSA_ID;
+
+		/* Set public exponent to F4 or F5 */
+		exponent[0] = 0x01;
+		exponent[1] = 0x00;
+		if (expsize == 3)
+			exponent[2] = 0x01;
+		else {
+			exponent[2] = 0x00;
+			exponent[3] = 0x00;
+			exponent[4] = 0x01;
+		}
+
+		public_template[RSA_MODULUS_BITS].pValue = &bits;
+		public_template[RSA_MODULUS_BITS].ulValueLen = sizeof(bits);
+		public_template[RSA_PUBLIC_EXPONENT].pValue = &exponent;
+		public_template[RSA_PUBLIC_EXPONENT].ulValueLen = expsize;
+		break;
+	case key_ecc:
+		op_type = OP_EC;
+		if (bits == 0)
+			bits = 256;
+		else if (bits != 256 && bits != 384) {
+			fprintf(stderr, "ECC keys only support bit sizes of "
+					"256 and 384\n");
+			exit(2);
+		}
+
+		mech.mechanism = CKM_EC_KEY_PAIR_GEN;
+		mech.pParameter = NULL;
+		mech.ulParameterLen = 0;
+
+		public_template = ecc_template;
+		public_attrcnt = ECC_ATTRS;
+		id_offset = ECC_ID;
+
+		if (bits == 256) {
+			public_template[4].pValue = pk11_ecc_prime256v1;
+			public_template[4].ulValueLen =
+				sizeof(pk11_ecc_prime256v1);
+		} else {
+			public_template[4].pValue = pk11_ecc_secp384r1;
+			public_template[4].ulValueLen =
+				sizeof(pk11_ecc_secp384r1);
+		}
+
+		break;
+	case key_dsa:
+		op_type = OP_DSA;
+		if (bits == 0)
+			usage();
+
+		dpmech.mechanism = CKM_DSA_PARAMETER_GEN;
+		dpmech.pParameter = NULL;
+		dpmech.ulParameterLen = 0;
+		mech.mechanism = CKM_DSA_KEY_PAIR_GEN;
+		mech.pParameter = NULL;
+		mech.ulParameterLen = 0;
+
+		public_template = dsa_template;
+		public_attrcnt = DSA_ATTRS;
+		id_offset = DSA_ID;
+
+		domain_template = dsa_domain_template;
+		domain_attrcnt = DSA_DOMAIN_ATTRS;
+		param_template = dsa_param_template;
+		param_attrcnt = DSA_PARAM_ATTRS;
+
+		domain_template[DSA_DOMAIN_PRIMEBITS].pValue = &bits;
+		domain_template[DSA_DOMAIN_PRIMEBITS].ulValueLen = sizeof(bits);
+		break;
+	case key_dh:
+		op_type = OP_DH;
+		if (special && bits == 0)
+			bits = 1024;
+		else if (special &&
+			 bits != 768 && bits != 1024 && bits != 1536)
+		{
+			fprintf(stderr, "When using the special prime (-S) "
+				"option, only key sizes of\n"
+				"768, 1024 or 1536 are supported.\n");
+			exit(2);
+		} else if (bits == 0)
+			usage();
+
+		dpmech.mechanism = CKM_DH_PKCS_PARAMETER_GEN;
+		dpmech.pParameter = NULL;
+		dpmech.ulParameterLen = 0;
+		mech.mechanism = CKM_DH_PKCS_KEY_PAIR_GEN;
+		mech.pParameter = NULL;
+		mech.ulParameterLen = 0;
+
+		/* Override CKA_SIGN attribute */
+		private_template[PRIVATE_DERIVE].type = CKA_DERIVE;
+
+		public_template = dh_template;
+		public_attrcnt = DH_ATTRS;
+		id_offset = DH_ID;
+
+		domain_template = dh_domain_template;
+		domain_attrcnt = DH_DOMAIN_ATTRS;
+		param_template = dh_param_template;
+		param_attrcnt = DH_PARAM_ATTRS;
+
+		domain_template[DH_DOMAIN_PRIMEBITS].pValue = &bits;
+		domain_template[DH_DOMAIN_PRIMEBITS].ulValueLen = sizeof(bits);
+		break;
+	case key_unknown:
+		usage();
 	}
 	
 	search_template[0].pValue = label;
 	search_template[0].ulValueLen = strlen((char *)label);
-	publickey_template[0].pValue = label;
-	publickey_template[0].ulValueLen = strlen((char *)label);
-	privatekey_template[0].pValue = label;
-	privatekey_template[0].ulValueLen = strlen((char *)label);
-
-	/* Set public exponent to F4 or F5 */
-	public_exponent[0] = 0x01;
-	public_exponent[1] = 0x00;
-	if (expsize == 3)
-		public_exponent[2] = 0x01;
-	else {
-		publickey_template[4].ulValueLen = expsize;
-		public_exponent[2] = 0x00;
-		public_exponent[3] = 0x00;
-		public_exponent[4] = 0x01;
-	}
-
-	/* Set up mechanism for generating key pair */
-	genmech.mechanism = CKM_RSA_PKCS_KEY_PAIR_GEN;
-	genmech.pParameter = NULL_PTR;
-	genmech.ulParameterLen = 0;
+	public_template[0].pValue = label;
+	public_template[0].ulValueLen = strlen((char *)label);
+	private_template[0].pValue = label;
+	private_template[0].ulValueLen = strlen((char *)label);
 
 	if (idlen == 0) {
-		publickey_attrcnt--;
-		privatekey_attrcnt--;
-	} else if (id <= 0xffff) {
-		idlen = 2;
-		publickey_template[5].ulValueLen = idlen;
-		privatekey_template[6].ulValueLen = idlen;
-		idbuf[0] = (CK_BYTE)(id >> 8);
-		idbuf[1] = (CK_BYTE)id;
+		public_attrcnt--;
+		private_attrcnt--;
 	} else {
-		idbuf[0] = (CK_BYTE)(id >> 24);
-		idbuf[1] = (CK_BYTE)(id >> 16);
-		idbuf[2] = (CK_BYTE)(id >> 8);
-		idbuf[3] = (CK_BYTE)id;
+		if (id <= 0xffff) {
+			idlen = 2;
+			idbuf[0] = (CK_BYTE)(id >> 8);
+			idbuf[1] = (CK_BYTE)id;
+		} else {
+			idbuf[0] = (CK_BYTE)(id >> 24);
+			idbuf[1] = (CK_BYTE)(id >> 16);
+			idbuf[2] = (CK_BYTE)(id >> 8);
+			idbuf[3] = (CK_BYTE)id;
+		}
+
+		public_template[id_offset].pValue = idbuf;
+		public_template[id_offset].ulValueLen = idlen;
+		private_template[PRIVATE_ID].pValue = idbuf;
+		private_template[PRIVATE_ID].ulValueLen = idlen;
 	}
 
-	/* Initialize the CRYPTOKI library */
-	rv = C_Initialize(NULL_PTR);
+	pk11_result_register();
 
-	if (rv != CKR_OK) {
-		if (rv == 0xfe)
-			fprintf(stderr,
-				"Can't load or link module \"%s\"\n",
-				pk11_libname);
-		else
-			fprintf(stderr, "C_Initialize: Error = 0x%.8lX\n", rv);
+	/* Initialize the CRYPTOKI library */
+	if (lib_name != NULL)
+		pk11_set_lib_name(lib_name);
+
+	if (pin == NULL)
+		pin = getpassphrase("Enter Pin: ");
+
+	result = pk11_get_session(&pctx, op_type, ISC_FALSE, ISC_TRUE,
+				  ISC_TRUE, (const char *) pin, slot);
+	if (result == PK11_R_NORANDOMSERVICE ||
+	    result == PK11_R_NODIGESTSERVICE ||
+	    result == PK11_R_NOAESSERVICE) {
+		fprintf(stderr, "Warning: %s\n", isc_result_totext(result));
+		fprintf(stderr, "This HSM will not work with BIND 9 "
+				"using native PKCS#11.\n");
+	} else if (result != ISC_R_SUCCESS) {
+		fprintf(stderr, "Unrecoverable error initializing "
+				"PKCS#11: %s\n", isc_result_totext(result));
 		exit(1);
 	}
 
-	/* Open a session on the slot found */
-	rv = C_OpenSession(slot, CKF_RW_SESSION+CKF_SERIAL_SESSION,
-			   NULL_PTR, NULL_PTR, &hSession);
+	memset(pin, 0, strlen(pin));
 
-	if (rv != CKR_OK) {
-		fprintf(stderr, "C_OpenSession: Error = 0x%.8lX\n", rv);
-		error = 1;
-		goto exit_program;
-	}
-
-	/* Login to the Token (Keystore) */
-	if (pin == NULL)
-		pin = (CK_UTF8CHAR *)getpassphrase("Enter Pin: ");
-
-	rv = C_Login(hSession, CKU_USER, pin, strlen((char *)pin));
-	memset(pin, 0, strlen((char *)pin));
-	if (rv != CKR_OK) {
-		fprintf(stderr, "C_Login: Error = 0x%.8lX\n", rv);
-		error = 1;
-		goto exit_session;
-	}
+	hSession = pctx.session;
 
 	/* check if a key with the same id already exists */
-	rv = C_FindObjectsInit(hSession, search_template, 1); 
+	rv = pkcs_C_FindObjectsInit(hSession, search_template, 1); 
 	if (rv != CKR_OK) {
 		fprintf(stderr, "C_FindObjectsInit: Error = 0x%.8lX\n", rv);
 		error = 1;
 		goto exit_session;
 	}
-	rv = C_FindObjects(hSession, &privatekey, 1, &ulObjectCount);
+	rv = pkcs_C_FindObjects(hSession, &privatekey, 1, &ulObjectCount);
 	if (rv != CKR_OK) {
 		fprintf(stderr, "C_FindObjects: Error = 0x%.8lX\n", rv);
 		error = 1;
@@ -282,33 +567,140 @@ main(int argc, char *argv[])
 
 	/* Set attributes if the key is not to be hidden */
 	if (!hide) {
-		privatekey_template[4].pValue = &falsevalue;
-		privatekey_template[5].pValue = &truevalue;
+		private_template[4].pValue = &falsevalue;
+		private_template[5].pValue = &truevalue;
 	}
 
+	if (keyclass == key_rsa || keyclass == key_ecc)
+		goto generate_keys;
+
+	/*
+	 * Special setup for Diffie-Hellman keys
+	 */
+	if (special != 0) {
+		public_template[DH_BASE].pValue = pk11_dh_bn2;
+		public_template[DH_BASE].ulValueLen = sizeof(pk11_dh_bn2);
+		if (bits == 768) {
+			public_template[DH_PRIME].pValue = pk11_dh_bn768;
+			public_template[DH_PRIME].ulValueLen =
+				sizeof(pk11_dh_bn768);
+		} else if (bits == 1024) {
+			public_template[DH_PRIME].pValue = pk11_dh_bn1024;
+			public_template[DH_PRIME].ulValueLen =
+				sizeof(pk11_dh_bn1024);
+		} else {
+			public_template[DH_PRIME].pValue = pk11_dh_bn1536;
+			public_template[DH_PRIME].ulValueLen =
+				sizeof(pk11_dh_bn1536);
+		}
+		param_attrcnt = 0;
+		goto generate_keys;
+	}
+
+	/* Generate Domain parameters */
+	rv = pkcs_C_GenerateKey(hSession, &dpmech, domain_template,
+			   domain_attrcnt, &domainparams);
+
+	if (rv != CKR_OK) {
+		fprintf(stderr,
+			"C_GenerateKey: Error = 0x%.8lX\n", rv);
+		error = 1;
+		goto exit_search;
+	}
+
+	/* Get Domain parameters */
+	rv = pkcs_C_GetAttributeValue(hSession, domainparams,
+				 param_template, param_attrcnt);
+
+	if (rv != CKR_OK) {
+		fprintf(stderr,
+			"C_GetAttributeValue0: Error = 0x%.8lX\n", rv);
+		error = 1;
+		goto exit_domain;
+	}
+
+	/* Allocate space for parameter attributes */
+	for (i = 0; i < param_attrcnt; i++)
+		param_template[i].pValue = malloc(param_template[i].ulValueLen);
+
+	rv = pkcs_C_GetAttributeValue(hSession, domainparams,
+				 dsa_param_template, DSA_PARAM_ATTRS);
+
+	if (rv != CKR_OK) {
+		fprintf(stderr,
+			"C_GetAttributeValue1: Error = 0x%.8lX\n", rv);
+		error = 1;
+		goto exit_params;
+	}
+
+	switch (keyclass) {
+	case key_dsa:
+		public_template[DSA_PRIME].pValue =
+			param_template[DSA_PARAM_PRIME].pValue;
+		public_template[DSA_PRIME].ulValueLen =
+			param_template[DSA_PARAM_PRIME].ulValueLen;
+		public_template[DSA_SUBPRIME].pValue =
+			param_template[DSA_PARAM_SUBPRIME].pValue;
+		public_template[DSA_SUBPRIME].ulValueLen =
+			param_template[DSA_PARAM_SUBPRIME].ulValueLen;
+		public_template[DSA_BASE].pValue =
+			param_template[DSA_PARAM_BASE].pValue;
+		public_template[DSA_BASE].ulValueLen =
+			param_template[DSA_PARAM_BASE].ulValueLen;
+		break;
+	case key_dh:
+		public_template[DH_PRIME].pValue =
+			param_template[DH_PARAM_PRIME].pValue;
+		public_template[DH_PRIME].ulValueLen =
+			param_template[DH_PARAM_PRIME].ulValueLen;
+		public_template[DH_BASE].pValue =
+			param_template[DH_PARAM_BASE].pValue;
+		public_template[DH_BASE].ulValueLen =
+			param_template[DH_PARAM_BASE].ulValueLen;
+	default:
+		break;
+	}
+
+ generate_keys:
 	/* Generate Key pair for signing/verifying */
-	rv = C_GenerateKeyPair(hSession, &genmech,
-			       publickey_template, publickey_attrcnt,
-			       privatekey_template, privatekey_attrcnt,
+	rv = pkcs_C_GenerateKeyPair(hSession, &mech,
+			       public_template, public_attrcnt,
+			       private_template, private_attrcnt,
 			       &publickey, &privatekey);
 	
 	if (rv != CKR_OK) {
 		fprintf(stderr, "C_GenerateKeyPair: Error = 0x%.8lX\n", rv);
 		error = 1;
-	}
+	 } else if (!quiet)
+		printf("Key pair generation complete.\n");
 	
+ exit_params:
+	/* Free parameter attributes */
+	if (keyclass == key_dsa || keyclass == key_dh)
+		for (i = 0; i < param_attrcnt; i++)
+			free(param_template[i].pValue);
+
+ exit_domain:
+	/* Destroy domain parameters */
+	if (keyclass == key_dsa || (keyclass == key_dh && !special)) {
+		rv = pkcs_C_DestroyObject(hSession, domainparams);
+		if (rv != CKR_OK) {
+			fprintf(stderr,
+				"C_DestroyObject: Error = 0x%.8lX\n", rv);
+			error = 1;
+		}
+	}
+
  exit_search:
-	rv = C_FindObjectsFinal(hSession);
+	rv = pkcs_C_FindObjectsFinal(hSession);
 	if (rv != CKR_OK) {
 		fprintf(stderr, "C_FindObjectsFinal: Error = 0x%.8lX\n", rv);
 		error = 1;
 	}
 
  exit_session:
-	(void)C_CloseSession(hSession);
-
- exit_program:
-	(void)C_Finalize(NULL_PTR);
+	pk11_return_session(&pctx);
+	(void) pk11_finalize();
 
 	exit(error);
 }

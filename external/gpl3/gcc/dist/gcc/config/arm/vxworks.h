@@ -1,7 +1,6 @@
 /* Definitions of target machine for GCC,
-   for ARM with targetting the VXWorks run time environment. 
-   Copyright (C) 1999, 2000, 2003, 2004, 2007, 2008
-   Free Software Foundation, Inc.
+   for ARM with targeting the VXWorks run time environment. 
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
 
    Contributed by: Mike Stump <mrs@wrs.com>
    Brought up to date by CodeSourcery, LLC.
@@ -44,14 +43,8 @@ along with GCC; see the file COPYING3.  If not see
     VXWORKS_OS_CPP_BUILTINS ();			\
   } while (0)
 
-#undef OVERRIDE_OPTIONS
-#define OVERRIDE_OPTIONS			\
-  do						\
-    {						\
-      VXWORKS_OVERRIDE_OPTIONS;			\
-      arm_override_options ();			\
-    }						\
-  while (0)
+#undef SUBTARGET_OVERRIDE_OPTIONS
+#define SUBTARGET_OVERRIDE_OPTIONS VXWORKS_OVERRIDE_OPTIONS
 
 /* Subsume the arm/elf.h definition, and add RTP hooks.  */
 #undef SUBTARGET_CPP_SPEC
@@ -90,9 +83,6 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef ENDFILE_SPEC
 #define ENDFILE_SPEC VXWORKS_ENDFILE_SPEC
-
-#undef TARGET_VERSION
-#define TARGET_VERSION fputs (" (ARM/VxWorks)", stderr);
 
 /* There is no default multilib.  */
 #undef MULTILIB_DEFAULTS

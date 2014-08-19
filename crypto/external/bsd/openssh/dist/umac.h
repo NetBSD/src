@@ -1,5 +1,5 @@
-/*	$NetBSD: umac.h,v 1.2.12.1 2013/06/23 06:26:14 tls Exp $	*/
-/* $OpenBSD: umac.h,v 1.2 2012/10/04 13:21:50 markus Exp $ */
+/*	$NetBSD: umac.h,v 1.2.12.2 2014/08/19 23:45:25 tls Exp $	*/
+/* $OpenBSD: umac.h,v 1.3 2013/07/22 12:20:02 djm Exp $ */
 /* -----------------------------------------------------------------------
  * 
  * umac.h -- C Implementation UMAC Message Authentication
@@ -53,7 +53,7 @@
     extern "C" {
 #endif
 
-struct umac_ctx *umac_new(u_char key[]);
+struct umac_ctx *umac_new(const u_char key[]);
 /* Dynamically allocate a umac_ctx struct, initialize variables, 
  * generate subkeys from key.
  */
@@ -63,10 +63,10 @@ int umac_reset(struct umac_ctx *ctx);
 /* Reset a umac_ctx to begin authenicating a new message */
 #endif
 
-int umac_update(struct umac_ctx *ctx, u_char *input, long len);
+int umac_update(struct umac_ctx *ctx, const u_char *input, long len);
 /* Incorporate len bytes pointed to by input into context ctx */
 
-int umac_final(struct umac_ctx *ctx, u_char tag[], u_char nonce[8]);
+int umac_final(struct umac_ctx *ctx, u_char tag[], const u_char nonce[8]);
 /* Incorporate any pending data and the ctr value, and return tag. 
  * This function returns error code if ctr < 0. 
  */
@@ -118,9 +118,9 @@ int uhash(uhash_ctx_t ctx,
 #endif
 
 /* matching umac-128 API, we reuse umac_ctx, since it's opaque */
-struct umac_ctx *umac128_new(u_char key[]);
-int umac128_update(struct umac_ctx *ctx, u_char *input, long len);
-int umac128_final(struct umac_ctx *ctx, u_char tag[], u_char nonce[8]);
+struct umac_ctx *umac128_new(const u_char key[]);
+int umac128_update(struct umac_ctx *ctx, const u_char *input, long len);
+int umac128_final(struct umac_ctx *ctx, u_char tag[], const u_char nonce[8]);
 int umac128_delete(struct umac_ctx *ctx);
 
 #ifdef __cplusplus

@@ -71,7 +71,8 @@ over the main control interface.
 
 Device Discovery
 
-p2p_find [timeout in seconds] [type=<social|progressive>]
+p2p_find [timeout in seconds] [type=<social|progressive>] \
+	[dev_id=<addr>] [delay=<search delay in ms>]
 
 The default behavior is to run a single full scan in the beginning and
 then scan only social channels. type=social will scan only social
@@ -80,6 +81,11 @@ like the default behavior, but it will scan through all the channels
 progressively one channel at the time in the Search state rounds. This
 will help in finding new groups or groups missed during the initial
 full scan.
+
+The optional dev_id option can be used to specify a single P2P peer to
+search for. The optional delay parameter can be used to request an extra
+delay to be used between search iterations (e.g., to free up radio
+resources for concurrent operations).
 
 p2p_listen [timeout in seconds]
 
@@ -101,7 +107,7 @@ Flush P2P peer table and state.
 
 Group Formation
 
-p2p_prov_disc <peer device address> <display|keypad|pbc> [join]
+p2p_prov_disc <peer device address> <display|keypad|pbc> [join|auto]
 
 Send P2P provision discovery request to the specified peer. The
 parameters for this command are the P2P device address of the peer and
@@ -112,10 +118,14 @@ to enter a PIN that we display.
 
 The optional "join" parameter can be used to indicate that this command
 is requesting an already running GO to prepare for a new client. This is
-mainly used with "display" to request it to display a PIN.
+mainly used with "display" to request it to display a PIN. The "auto"
+parameter can be used to request wpa_supplicant to automatically figure
+out whether the peer device is operating as a GO and if so, use
+join-a-group style PD instead of GO Negotiation style PD.
 
 p2p_connect <peer device address> <pbc|pin|PIN#> [display|keypad]
-	[persistent] [join|auth] [go_intent=<0..15>] [freq=<in MHz>]
+	[persistent|persistent=<network id>] [join|auth]
+	[go_intent=<0..15>] [freq=<in MHz>] [ht40] [provdisc]
 
 Start P2P group formation with a discovered P2P peer. This includes
 optional group owner negotiation, group interface setup, provisioning,
@@ -128,7 +138,12 @@ the command return code), PIN# means that a pre-selected PIN can be
 used (e.g., 12345670). [display|keypad] is used with PIN method
 to specify which PIN is used (display=dynamically generated random PIN
 from local display, keypad=PIN entered from peer display). "persistent"
-parameter can be used to request a persistent group to be formed.
+parameter can be used to request a persistent group to be formed. The
+"persistent=<network id>" alternative can be used to pre-populate
+SSID/passphrase configuration based on a previously used persistent
+group where this device was the GO. The previously used parameters will
+then be used if the local end becomes the GO in GO Negotiation (which
+can be forced with go_intent=15).
 
 "join" indicates that this is a command to join an existing group as a
 client. It skips the GO Negotiation part. This will send a Provision
@@ -146,7 +161,12 @@ Negotiation.
 "freq" can be used to set a forced operating channel (e.g., freq=2412
 to select 2.4 GHz channel 1).
 
-p2p_group_add [persistent|persistent=<network id>] [freq=<freq in MHz>]
+"provdisc" can be used to request a Provision Discovery exchange to be
+used prior to starting GO Negotiation as a workaround with some deployed
+P2P implementations that require this to allow the user to accept the
+connection.
+
+p2p_group_add [persistent|persistent=<network id>] [freq=<freq in MHz>] [ht40]
 
 Set up a P2P group owner manually (i.e., without group owner
 negotiation with a specific peer). This is also known as autonomous
@@ -171,7 +191,13 @@ group interface is used as a parameter for this command.
 
 p2p_cancel
 
-Cancel an ongoing P2P group formation related operation.
+Cancel an ongoing P2P group formation and joining-a-group related
+operation. This operations unauthorizes the specific peer device (if any
+had been authorized to start group formation), stops P2P find (if in
+progress), stops pending operations for join-a-group, and removes the
+P2P group interface (if one was used) that is in the WPS provisioning
+step. If the WPS provisioning step has been completed, the group is not
+terminated.
 
 Service Discovery
 
@@ -235,6 +261,14 @@ p2p_serv_disc_req 00:00:00:00:00:00 upnp 10 upnp:rootdevice
 p2p_serv_disc_req 00:00:00:00:00:00 upnp 10 urn:schemas-upnp-org:service:ContentDirectory:2
 p2p_serv_disc_req 00:00:00:00:00:00 upnp 10 uuid:6859dede-8574-59ab-9332-123456789012
 p2p_serv_disc_req 00:00:00:00:00:00 upnp 10 urn:schemas-upnp-org:device:InternetGatewayDevice:1
+
+# Wi-Fi Display examples
+# format: wifi-display <list of roles> <list of subelements>
+p2p_serv_disc_req 00:00:00:00:00:00 wifi-display [source] 2,3,4,5
+p2p_serv_disc_req 02:01:02:03:04:05 wifi-display [pri-sink] 3
+p2p_serv_disc_req 00:00:00:00:00:00 wifi-display [sec-source] 2
+p2p_serv_disc_req 00:00:00:00:00:00 wifi-display [source+sink] 2,3,4,5
+p2p_serv_disc_req 00:00:00:00:00:00 wifi-display [source][pri-sink] 2,3,4,5
 
 p2p_serv_disc_cancel_req <query identifier>
 
@@ -318,15 +352,16 @@ Remove all local services from internal SD query processing.
 Invitation
 
 p2p_invite [persistent=<network id>|group=<group ifname>] [peer=address]
-	[go_dev_addr=address]
+	[go_dev_addr=address] [freq=<freq in MHz>] [ht40]
 
 Invite a peer to join a group (e.g., group=wlan1) or to reinvoke a
 persistent group (e.g., persistent=4). If the peer device is the GO of
-the persisten group, the peer parameter is not needed. Otherwise it is
+the persistent group, the peer parameter is not needed. Otherwise it is
 used to specify which device to invite. go_dev_addr parameter can be
 used to override the GO device address for Invitation Request should
 it be not known for some reason (this should not be needed in most
-cases).
+cases). When reinvoking a persistent group, the GO device can specify
+the frequency for the group with the freq parameter.
 
 Group Operations
 

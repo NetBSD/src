@@ -212,7 +212,7 @@ public:
 	void printUsage(Options & options)
 	{
 		options.usage(std::cout, "sb-file");
-		printf(k_usageText, k_toolName);
+		printf("%s", k_usageText);
 	}
 	
 	/*!

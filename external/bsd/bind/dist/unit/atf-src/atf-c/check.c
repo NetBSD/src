@@ -1,9 +1,9 @@
-/*	$NetBSD: check.c,v 1.1.1.1 2011/09/11 17:20:26 christos Exp $	*/
+/*	$NetBSD: check.c,v 1.1.1.1.8.1 2014/08/19 23:46:37 tls Exp $	*/
 
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -307,8 +307,6 @@ atf_check_result_init(atf_check_result_t *r, const char *const *argv,
     r->pimpl = malloc(sizeof(struct atf_check_result_impl));
     if (r->pimpl == NULL)
         return atf_no_memory_error();
-
-    (void) atf_config_get("atf_workdir");
 
     err = array_to_list(argv, &r->pimpl->m_argv);
     if (atf_is_error(err))

@@ -1,5 +1,5 @@
 /* Initialization of uninitialized regs.
-   Copyright (C) 2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2007-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -143,6 +143,7 @@ struct rtl_opt_pass pass_initialize_regs =
  {
   RTL_PASS,
   "init-regs",                          /* name */
+  OPTGROUP_NONE,                        /* optinfo_flags */
   gate_initialize_regs,                 /* gate */
   rest_of_handle_initialize_regs,       /* execute */
   NULL,                                 /* sub */
@@ -153,7 +154,6 @@ struct rtl_opt_pass pass_initialize_regs =
   0,                                    /* properties_provided */
   0,                                    /* properties_destroyed */
   0,                                    /* todo_flags_start */
-  TODO_dump_func |
   TODO_df_finish                        /* todo_flags_finish */
  }
 };

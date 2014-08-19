@@ -1,7 +1,6 @@
 // Debugging support implementation -*- C++ -*-
 
-// Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009
-// Free Software Foundation, Inc.
+// Copyright (C) 2003-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -44,7 +43,7 @@
  * @namespace std::__debug
  * @brief GNU debug code, replaces standard behavior with debug behavior.
  */
-namespace std 
+namespace std
 { 
   namespace __debug { } 
 }
@@ -64,6 +63,7 @@ namespace __gnu_debug
 # define _GLIBCXX_DEBUG_ONLY(_Statement) ;
 # define __glibcxx_requires_cond(_Cond,_Msg)
 # define __glibcxx_requires_valid_range(_First,_Last)
+# define __glibcxx_requires_non_empty_range(_First,_Last)
 # define __glibcxx_requires_sorted(_First,_Last)
 # define __glibcxx_requires_sorted_pred(_First,_Last,_Pred)
 # define __glibcxx_requires_sorted_set(_First1,_Last1,_First2)
@@ -96,6 +96,8 @@ namespace __gnu_debug
 # define __glibcxx_requires_cond(_Cond,_Msg) _GLIBCXX_DEBUG_VERIFY(_Cond,_Msg)
 # define __glibcxx_requires_valid_range(_First,_Last) \
      __glibcxx_check_valid_range(_First,_Last)
+# define __glibcxx_requires_non_empty_range(_First,_Last) \
+     __glibcxx_check_non_empty_range(_First,_Last)
 # define __glibcxx_requires_sorted(_First,_Last) \
      __glibcxx_check_sorted(_First,_Last)
 # define __glibcxx_requires_sorted_pred(_First,_Last,_Pred) \
@@ -123,7 +125,6 @@ namespace __gnu_debug
 # define __glibcxx_requires_subscript(_N) __glibcxx_check_subscript(_N)
 
 # include <debug/functions.h>
-# include <debug/formatter.h>
 
 #endif
 

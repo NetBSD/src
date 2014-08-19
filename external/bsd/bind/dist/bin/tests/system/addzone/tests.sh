@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010-2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -51,6 +51,26 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:adding a zone that requires quotes ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 addzone '"32/1.0.0.127-in-addr.added.example" { check-names ignore; type master; file "added.db"; };' 2>&1 | sed 's/^/I:ns2 /'
+$DIG $DIGOPTS @10.53.0.2 "a.32/1.0.0.127-in-addr.added.example" a > dig.out.ns2.$n || ret=1
+grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
+grep '^a.32/1.0.0.127-in-addr.added.example' dig.out.ns2.$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:adding a zone with a quote in the name ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 addzone '"foo\"bar.example" { check-names ignore; type master; file "added.db"; };' 2>&1 | sed 's/^/I:ns2 /'
+$DIG $DIGOPTS @10.53.0.2 "a.foo\"bar.example" a > dig.out.ns2.$n || ret=1
+grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
+grep '^a.foo\\"bar.example' dig.out.ns2.$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 echo "I:adding new zone with missing master file ($n)"
 ret=0
 $DIG $DIGOPTS +all @10.53.0.2 a.missing.example a > dig.out.ns2.pre.$n || ret=1
@@ -60,6 +80,14 @@ grep "file not found" rndc.out.ns2.$n > /dev/null || ret=1
 $DIG $DIGOPTS +all @10.53.0.2 a.missing.example a > dig.out.ns2.post.$n || ret=1
 grep "status: REFUSED" dig.out.ns2.post.$n > /dev/null || ret=1
 $PERL ../digcomp.pl dig.out.ns2.pre.$n dig.out.ns2.post.$n || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:verifying no comments in nzf file ($n)"
+ret=0
+hcount=`grep "^# New zone file for view: _default" ns2/3bf305731dd26307.nzf | wc -l`
+[ $hcount -eq 0 ] || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -74,12 +102,30 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:checking nzf file now has comment ($n)"
+ret=0
+hcount=`grep "^# New zone file for view: _default" ns2/3bf305731dd26307.nzf | wc -l`
+[ $hcount -eq 1 ] || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 echo "I:deleting newly added zone ($n)"
 ret=0
 $RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 delzone added.example 2>&1 | sed 's/^/I:ns2 /'
 $DIG $DIGOPTS @10.53.0.2 a.added.example a > dig.out.ns2.$n
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.added.example' dig.out.ns2.$n > /dev/null && ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:deleting newly added zone with escaped quote ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 delzone "foo\\\"bar.example" 2>&1 | sed 's/^/I:ns2 /'
+$DIG $DIGOPTS @10.53.0.2 "a.foo\"bar.example" a > dig.out.ns2.$n
+grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
+grep "^a.foo\"bar.example" dig.out.ns2.$n > /dev/null && ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -93,6 +139,96 @@ grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:attempting to add master zone with inline signing ($n)"
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 addzone 'inline.example { type master; file "inline.db"; inline-signing yes; };' 2>&1 | sed 's/^/I:ns2 /'
+for i in 1 2 3 4 5
+do
+ret=0
+$DIG $DIGOPTS @10.53.0.2 a.inline.example a > dig.out.ns2.$n || ret=1
+grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
+grep '^a.inline.example' dig.out.ns2.$n > /dev/null || ret=1
+[ $ret = 0 ] && break
+sleep 1
+done
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:attempting to add master zone with inline signing and missing master ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 addzone 'inlinemissing.example { type master; file "missing.db"; inline-signing yes; };' 2> rndc.out.ns2.$n
+grep "file not found" rndc.out.ns2.$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:attempting to add slave zone with inline signing ($n)"
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 addzone 'inlineslave.example { type slave; masters { 10.53.0.1; }; file "inlineslave.bk"; inline-signing yes; };' 2>&1 | sed 's/^/I:ns2 /'
+for i in 1 2 3 4 5
+do
+ret=0
+$DIG $DIGOPTS @10.53.0.2 a.inlineslave.example a > dig.out.ns2.$n || ret=1
+grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
+grep '^a.inlineslave.example' dig.out.ns2.$n > /dev/null || ret=1
+[ $ret = 0 ] && break
+sleep 1
+done
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:attempting to delete slave zone with inline signing ($n)"
+ret=0
+for i in 0 1 2 3 4 5 6 7 8 9
+do
+	test -f ns2/inlineslave.bk.signed -a -f ns2/inlineslave.bk && break
+	sleep 1
+done
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 delzone inlineslave.example 2>&1 > rndc.out2.test$n
+test -f inlineslave.bk ||
+grep '^inlineslave.bk$' rndc.out2.test$n > /dev/null || {
+	echo "I:failed to report inlineslave.bk"; ret=1;
+}
+test ! -f inlineslave.bk.signed ||
+grep '^inlineslave.bk.signed$' rndc.out2.test$n > /dev/null || {
+	echo "I:failed to report inlineslave.bk.signed"; ret=1;
+}
+n=`expr $n + 1`
+status=`expr $status + $ret`
+
+echo "I:restoring slave zone with inline signing ($n)"
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 addzone 'inlineslave.example { type slave; masters { 10.53.0.1; }; file "inlineslave.bk"; inline-signing yes; };' 2>&1 | sed 's/^/I:ns2 /'
+for i in 1 2 3 4 5
+do
+ret=0
+$DIG $DIGOPTS @10.53.0.2 a.inlineslave.example a > dig.out.ns2.$n || ret=1
+grep 'status: NOERROR' dig.out.ns2.$n > /dev/null || ret=1
+grep '^a.inlineslave.example' dig.out.ns2.$n > /dev/null || ret=1
+[ $ret = 0 ] && break
+sleep 1
+done
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:deleting slave zone with automatic zone file removal ($n)"
+ret=0
+for i in 0 1 2 3 4 5 6 7 8 9
+do
+	test -f ns2/inlineslave.bk.signed -a -f ns2/inlineslave.bk && break
+	sleep 1
+done
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 delzone -clean inlineslave.example 2>&1 > /dev/null
+for i in 0 1 2 3 4 5 6 7 8 9
+do
+        ret=0
+	test -f ns2/inlineslave.bk.signed -a -f ns2/inlineslave.bk && ret=1
+        [ $ret = 0 ] && break
+	sleep 1
+done
+n=`expr $n + 1`
 status=`expr $status + $ret`
 
 echo "I:reconfiguring server with multiple views"
@@ -122,6 +258,15 @@ grep '^a.added.example' dig.out.ns2.ext.$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
+
+echo "I:checking new nzf file has comment ($n)"
+ret=0
+hcount=`grep "^# New zone file for view: external" ns2/3c4623849a49a539.nzf | wc -l`
+[ $hcount -eq 1 ] || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 
 echo "I:deleting newly added zone ($n)"
 ret=0

@@ -1,11 +1,11 @@
-/*	$NetBSD: ascii.h,v 1.1.1.1 2009/12/13 16:54:48 kardel Exp $	*/
+/*	$NetBSD: ascii.h,v 1.1.1.1.12.1 2014/08/19 23:51:38 tls Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/include/ascii.h,v 4.4 2005/04/16 17:32:10 kardel RELEASE_20050508_A
  *
  * ascii.h,v 4.4 2005/04/16 17:32:10 kardel RELEASE_20050508_A
  *
- * Created: Sun Jul 20 11:42:53 1997
+ * $Created: Sun Jul 20 11:42:53 1997 $
  *
  * Copyright (c) 1997-2005 by Frank Kardel <kardel <AT> ntp.org>
  *

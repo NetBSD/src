@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+# Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,18 +27,12 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-dist-hook: check-install
-.PHONY: check-install
-check-install: $(srcdir)/INSTALL
-	$(srcdir)/admin/check-install.sh $(srcdir)/INSTALL
-
 dist-hook: check-style
-.PHONY: check-style
+PHONY_TARGETS += check-style
 check-style:
 	$(srcdir)/admin/check-style.sh
 
-EXTRA_DIST += admin/check-install.sh \
-              admin/check-style-common.awk \
+EXTRA_DIST += admin/check-style-common.awk \
               admin/check-style-c.awk \
               admin/check-style-cpp.awk \
               admin/check-style-man.awk \

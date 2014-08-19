@@ -1,10 +1,10 @@
-/*	$NetBSD: tavl.c,v 1.1.1.3 2010/12/12 15:22:11 adam Exp $	*/
+/*	$NetBSD: tavl.c,v 1.1.1.3.12.1 2014/08/19 23:52:00 tls Exp $	*/
 
 /* avl.c - routines to implement an avl tree */
-/* OpenLDAP: pkg/ldap/libraries/liblutil/tavl.c,v 1.12.2.8 2010/04/13 20:23:07 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2010 The OpenLDAP Foundation.
+ * Copyright 2005-2014 The OpenLDAP Foundation.
  * Portions Copyright (c) 2005 by Howard Chu, Symas Corp.
  * All rights reserved.
  *

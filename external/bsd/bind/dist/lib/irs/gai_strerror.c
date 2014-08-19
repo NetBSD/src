@@ -1,7 +1,7 @@
-/*	$NetBSD: gai_strerror.c,v 1.3 2012/06/05 00:42:23 christos Exp $	*/
+/*	$NetBSD: gai_strerror.c,v 1.3.2.1 2014/08/19 23:46:32 tls Exp $	*/
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -52,6 +52,8 @@
  * strerror(), getaddrinfo(), getnameinfo(), RFC3493.
  */
 #include <config.h>
+
+#include <isc/net.h>
 
 #include <irs/netdb.h>
 

@@ -1,7 +1,7 @@
 #source: tlsdesc.s
 #source: tlspic2.s
 #as: --32
-#ld: -shared -melf_i386
+#ld: -shared -melf_i386 --no-ld-generated-unwind-info
 #readelf: -Ssrl
 #target: i?86-*-*
 
@@ -87,12 +87,12 @@ Symbol table '\.dynsym' contains [0-9]+ entries:
  +[0-9]+: 0+10 +0 +TLS +GLOBAL +DEFAULT +7 sg5
  +[0-9]+: 0+ +0 +TLS +GLOBAL +DEFAULT +7 sg1
  +[0-9]+: [0-9a-f]+ +0 +FUNC +GLOBAL +DEFAULT +6 fn1
- +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS __bss_start
+ +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +11 __bss_start
  +[0-9]+: 0+4 +0 +TLS +GLOBAL +DEFAULT +7 sg2
  +[0-9]+: 0+14 +0 +TLS +GLOBAL +DEFAULT +7 sg6
  +[0-9]+: 0+18 +0 +TLS +GLOBAL +DEFAULT +7 sg7
- +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS _edata
- +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS _end
+ +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +11 _edata
+ +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +11 _end
 
 Symbol table '\.symtab' contains [0-9]+ entries:
  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
@@ -108,6 +108,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +9 *
  +[0-9]+: [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +10 *
  +[0-9]+: [0-9a-f]+ +0 +SECTION +LOCAL +DEFAULT +11 *
+.* FILE +LOCAL +DEFAULT +ABS .*
  +[0-9]+: 0+20 +0 +TLS +LOCAL +DEFAULT +7 sl1
  +[0-9]+: 0+24 +0 +TLS +LOCAL +DEFAULT +7 sl2
  +[0-9]+: 0+28 +0 +TLS +LOCAL +DEFAULT +7 sl3
@@ -117,8 +118,6 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: 0+38 +0 +TLS +LOCAL +DEFAULT +7 sl7
  +[0-9]+: 0+3c +0 +TLS +LOCAL +DEFAULT +7 sl8
  +[0-9]+: 0+60 +0 +TLS +LOCAL +DEFAULT +8 sH1
- +[0-9]+: 0+ +0 +TLS +LOCAL +DEFAULT +7 _TLS_MODULE_BASE_
- +[0-9]+: [0-9a-f]+ +0 +OBJECT +LOCAL +DEFAULT +ABS _DYNAMIC
  +[0-9]+: 0+48 +0 +TLS +LOCAL +DEFAULT +7 sh3
  +[0-9]+: 0+64 +0 +TLS +LOCAL +DEFAULT +8 sH2
  +[0-9]+: 0+78 +0 +TLS +LOCAL +DEFAULT +8 sH7
@@ -132,18 +131,21 @@ Symbol table '\.symtab' contains [0-9]+ entries:
  +[0-9]+: 0+74 +0 +TLS +LOCAL +DEFAULT +8 sH6
  +[0-9]+: 0+7c +0 +TLS +LOCAL +DEFAULT +8 sH8
  +[0-9]+: 0+40 +0 +TLS +LOCAL +DEFAULT +7 sh1
- +[0-9]+: [0-9a-f]+ +0 +OBJECT +LOCAL +DEFAULT +ABS _GLOBAL_OFFSET_TABLE_
  +[0-9]+: 0+44 +0 +TLS +LOCAL +DEFAULT +7 sh2
  +[0-9]+: 0+54 +0 +TLS +LOCAL +DEFAULT +7 sh6
+.* FILE +LOCAL +DEFAULT +ABS .*
+ +[0-9]+: 0+ +0 +TLS +LOCAL +DEFAULT +7 _TLS_MODULE_BASE_
+ +[0-9]+: [0-9a-f]+ +0 +OBJECT +LOCAL +DEFAULT +9 _DYNAMIC
+ +[0-9]+: [0-9a-f]+ +0 +OBJECT +LOCAL +DEFAULT +11 _GLOBAL_OFFSET_TABLE_
  +[0-9]+: 0+1c +0 +TLS +GLOBAL +DEFAULT +7 sg8
  +[0-9]+: 0+8 +0 +TLS +GLOBAL +DEFAULT +7 sg3
  +[0-9]+: 0+c +0 +TLS +GLOBAL +DEFAULT +7 sg4
  +[0-9]+: 0+10 +0 +TLS +GLOBAL +DEFAULT +7 sg5
  +[0-9]+: 0+ +0 +TLS +GLOBAL +DEFAULT +7 sg1
  +[0-9]+: [0-9a-f]+ +0 +FUNC +GLOBAL +DEFAULT +6 fn1
- +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS __bss_start
+ +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +11 __bss_start
  +[0-9]+: 0+4 +0 +TLS +GLOBAL +DEFAULT +7 sg2
  +[0-9]+: 0+14 +0 +TLS +GLOBAL +DEFAULT +7 sg6
  +[0-9]+: 0+18 +0 +TLS +GLOBAL +DEFAULT +7 sg7
- +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS _edata
- +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +ABS _end
+ +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +11 _edata
+ +[0-9]+: [0-9a-f]+ +0 +NOTYPE +GLOBAL +DEFAULT +11 _end

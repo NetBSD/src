@@ -1,7 +1,7 @@
-/*	$NetBSD: stats.h,v 1.3.2.1 2013/02/25 00:25:45 tls Exp $	*/
+/*	$NetBSD: stats.h,v 1.3.2.2 2014/08/19 23:46:29 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -63,8 +63,23 @@ enum {
 	dns_resstatscounter_queryrtt3 = 27,
 	dns_resstatscounter_queryrtt4 = 28,
 	dns_resstatscounter_queryrtt5 = 29,
+	dns_resstatscounter_nfetch = 30,
+	dns_resstatscounter_disprequdp = 31,
+	dns_resstatscounter_dispreqtcp = 32,
+	dns_resstatscounter_buckets = 33,
+	dns_resstatscounter_refused = 34,
+#ifdef ISC_PLATFORM_USESIT
+	dns_resstatscounter_sitcc = 35,
+	dns_resstatscounter_sitout = 36,
+	dns_resstatscounter_sitin = 37,
+	dns_resstatscounter_sitok = 38,
 
-	dns_resstatscounter_max = 30,
+	dns_resstatscounter_badvers = 39,
+	dns_resstatscounter_max = 40,
+#else
+	dns_resstatscounter_badvers = 35,
+	dns_resstatscounter_max = 36,
+#endif
 
 	/*
 	 * DNSSEC stats.
@@ -95,9 +110,31 @@ enum {
 
 	dns_zonestatscounter_max = 13,
 
+	/*
+	 * Adb statistics values.
+	 */
+	dns_adbstats_nentries = 0,
+	dns_adbstats_entriescnt = 1,
+	dns_adbstats_nnames = 2,
+	dns_adbstats_namescnt = 3,
+
+	dns_adbstats_max = 4,
+
+	/*
+	 * Cache statistics values.
+	 */
+	dns_cachestatscounter_hits = 1,
+	dns_cachestatscounter_misses = 2,
+	dns_cachestatscounter_queryhits = 3,
+	dns_cachestatscounter_querymisses = 4,
+	dns_cachestatscounter_deletelru = 5,
+	dns_cachestatscounter_deletettl = 6,
+
+	dns_cachestatscounter_max = 7,
+
 	/*%
-	* Query statistics counters (obsolete).
-	*/
+	 * Query statistics counters (obsolete).
+	 */
 	dns_statscounter_success = 0,    /*%< Successful lookup */
 	dns_statscounter_referral = 1,   /*%< Referral result */
 	dns_statscounter_nxrrset = 2,    /*%< NXRRSET result */
@@ -138,10 +175,18 @@ LIBDNS_EXTERNAL_DATA extern const char *dns_statscounter_names[];
  * _NXDOMAIN
  *	RRset type counters only.  Indicates a non existent name.  When this
  *	attribute is set, the base type is of no use.
+ *
+ * _STALE
+ *	RRset type counters only.  This indicates a record that marked for
+ *	removal.
+ *
+ *	Note: incrementing _STALE will decrement the corresponding non-stale
+ *	counter.
  */
 #define DNS_RDATASTATSTYPE_ATTR_OTHERTYPE	0x0001
 #define DNS_RDATASTATSTYPE_ATTR_NXRRSET		0x0002
 #define DNS_RDATASTATSTYPE_ATTR_NXDOMAIN	0x0004
+#define DNS_RDATASTATSTYPE_ATTR_STALE		0x0008
 
 /*%<
  * Conversion macros among dns_rdatatype_t, attributes and isc_statscounter_t.
@@ -274,6 +319,9 @@ void
 dns_rdatasetstats_increment(dns_stats_t *stats, dns_rdatastatstype_t rrsettype);
 /*%<
  * Increment the statistics counter for 'rrsettype'.
+ *
+ * Note: if 'rrsettype' has the _STALE attribute set the corresponding
+ * non-stale counter will be decremented.
  *
  * Requires:
  *\li	'stats' is a valid dns_stats_t created by dns_rdatasetstats_create().

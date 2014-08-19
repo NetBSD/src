@@ -1,10 +1,10 @@
-/*	$NetBSD: auditlog.c,v 1.1.1.3 2010/12/12 15:23:32 adam Exp $	*/
+/*	$NetBSD: auditlog.c,v 1.1.1.3.12.1 2014/08/19 23:52:03 tls Exp $	*/
 
 /* auditlog.c - log modifications for audit/history purposes */
-/* OpenLDAP: pkg/ldap/servers/slapd/overlays/auditlog.c,v 1.7.2.10 2010/04/13 20:23:44 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2010 The OpenLDAP Foundation.
+ * Copyright 2005-2014 The OpenLDAP Foundation.
  * Portions copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *
@@ -74,7 +74,7 @@ static int auditlog_response(Operation *op, SlapReply *rs) {
 	FILE *f;
 	Attribute *a;
 	Modifications *m;
-	struct berval *b, *who = NULL;
+	struct berval *b, *who = NULL, peername;
 	char *what, *whatm, *suffix;
 	time_t stamp;
 	int i;
@@ -121,6 +121,7 @@ static int auditlog_response(Operation *op, SlapReply *rs) {
 	if ( !who )
 		who = &op->o_dn;
 
+	peername = op->o_conn->c_peer_name;
 	ldap_pvt_thread_mutex_lock(&ad->ad_mutex);
 	if((f = fopen(ad->ad_logfile, "a")) == NULL) {
 		ldap_pvt_thread_mutex_unlock(&ad->ad_mutex);
@@ -128,8 +129,9 @@ static int auditlog_response(Operation *op, SlapReply *rs) {
 	}
 
 	stamp = slap_get_time();
-	fprintf(f, "# %s %ld %s%s%s\n",
-		what, (long)stamp, suffix, who ? " " : "", who ? who->bv_val : "");
+	fprintf(f, "# %s %ld %s%s%s %s conn=%ld\n",
+		what, (long)stamp, suffix, who ? " " : "", who ? who->bv_val : "",
+		peername.bv_val ? peername.bv_val: "", op->o_conn->c_connid);
 
 	if ( !BER_BVISEMPTY( &op->o_conn->c_dn ) &&
 		(!who || !dn_match( who, &op->o_conn->c_dn )))

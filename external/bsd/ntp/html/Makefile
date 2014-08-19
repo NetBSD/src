@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/08/28 15:42:45 kardel Exp $
+#	$NetBSD: Makefile,v 1.1.12.1 2014/08/19 23:51:49 tls Exp $
 
 .include <bsd.own.mk>
 .include "${.CURDIR}/../Makefile.inc"
@@ -21,7 +21,6 @@ NTP_DOCFILES= \
 		debug.html \
 		decode.html \
 		drivers/driver1.html \
-		drivers/driver2.html \
 		drivers/driver3.html \
 		drivers/driver4.html \
 		drivers/driver5.html \
@@ -61,14 +60,12 @@ NTP_DOCFILES= \
 		drivers/scripts/style.css \
 		drivers/tf582_4.html \
 		extern.html \
-		gadget.html \
 		hints.html \
 		howto.html \
 		index.html \
 		kern.html \
 		kernpps.html \
 		keygen.html \
-		manyopt.html \
 		miscopt.html \
 		monopt.html \
 		msyslog.html \
@@ -115,7 +112,7 @@ NTP_DOCFILES= \
 _FDIR:=		ntp/${F:H}				# subdir
 _FDIR:=		${_FDIR:S,/.$,,}			# remove trivial directory
 _FNAME:=	${F:T}					# name override
-_F:=		${DESTDIR}${HTMLDOCDIR}/${_FDIR}/${_FNAME}		# installed path
+_F:=		${DESTDIR}${NTP_HTMLDIR}/${_FDIR}/${_FNAME}		# installed path
 _FILE:=		${F}
 
 .if ${MKUPDATE} == "no"

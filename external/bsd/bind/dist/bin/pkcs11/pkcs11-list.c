@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs11-list.c,v 1.3.2.1 2013/06/23 06:26:24 tls Exp $	*/
+/*	$NetBSD: pkcs11-list.c,v 1.3.2.2 2014/08/19 23:46:01 tls Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -54,78 +54,68 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
-#include "cryptoki.h"
 
-#ifdef WIN32
-#include "win32.c"
-#else
-#ifndef FORCE_STATIC_PROVIDER
-#include "unix.c"
-#endif
-#endif
+#include <isc/commandline.h>
+#include <isc/result.h>
+#include <isc/types.h>
+
+#include <pk11/pk11.h>
+#include <pk11/result.h>
 
 #if !(defined(HAVE_GETPASSPHRASE) || (defined (__SVR4) && defined (__sun)))
 #define getpassphrase(x)		getpass(x)
 #endif
 
 int
-main(int argc, char *argv[])
-{
+main(int argc, char *argv[]) {
+	isc_result_t result;
 	CK_RV rv;
 	CK_SLOT_ID slot = 0;
 	CK_SESSION_HANDLE hSession;
-	CK_UTF8CHAR *pin = NULL;
 	CK_BYTE attr_id[2];
 	CK_OBJECT_HANDLE akey[50];
+	pk11_context_t pctx;
+	char *lib_name = NULL;
 	char *label = NULL;
-	int error = 0, public = 0, all = 0;
+	char *pin = NULL;
+	isc_boolean_t error = ISC_FALSE, logon = ISC_TRUE, all = ISC_FALSE;
 	unsigned int i = 0, id = 0;
 	int c, errflg = 0;
 	CK_ULONG ulObjectCount;
 	CK_ATTRIBUTE search_template[] = {
 		{CKA_ID, &attr_id, sizeof(attr_id)}
 	};
-	char *pk11_provider;
-	extern char *optarg;
-	extern int optopt;
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
-	pk11_provider = getenv("PKCS11_PROVIDER");
-	if (pk11_provider != NULL)
-		pk11_libname = pk11_provider;
-
-	while ((c = getopt(argc, argv, ":m:s:i:l:p:P")) != -1) {
+	while ((c = isc_commandline_parse(argc, argv, ":m:s:i:l:p:P")) != -1) {
 		switch (c) {
 		case 'P':
-			public = 1;
+			logon = ISC_FALSE;
 			break;
 		case 'm':
-			pk11_libname = optarg;
+			lib_name = isc_commandline_argument;
 			break;
 		case 's':
-			slot = atoi(optarg);
+			slot = atoi(isc_commandline_argument);
 			break;
 		case 'i':
-			id = atoi(optarg);
+			id = atoi(isc_commandline_argument);
 			id &= 0xffff;
 			break;
 		case 'l':
-			label = optarg;
+			label = isc_commandline_argument;
 			break;
 		case 'p':
-			pin = (CK_UTF8CHAR *)optarg;
+			pin = isc_commandline_argument;
 			break;
 		case ':':
 			fprintf(stderr, "Option -%c requires an operand\n",
-				optopt);
+				isc_commandline_option);
 			errflg++;
 			break;
 		case '?':
 		default:
-			fprintf(stderr, "Unrecognised option: -%c\n", optopt);
+			fprintf(stderr, "Unrecognised option: -%c\n",
+				isc_commandline_option);
 			errflg++;
 		}
 	}
@@ -138,7 +128,7 @@ main(int argc, char *argv[])
 	}
 
 	if (!id && (label == NULL))
-		all = 1;
+		all = ISC_TRUE;
 
 	if (slot)
 		printf("slot %lu\n", slot);
@@ -154,41 +144,37 @@ main(int argc, char *argv[])
 		search_template[0].ulValueLen = strlen(label);
 	}
 
+	pk11_result_register();
+
 	/* Initialize the CRYPTOKI library */
-	rv = C_Initialize(NULL_PTR);
-	if (rv != CKR_OK) {
-		if (rv == 0xfe)
-			fprintf(stderr,
-				"Can't load or link module \"%s\"\n",
-				pk11_libname);
-		else
-			fprintf(stderr, "C_Initialize: Error = 0x%.8lX\n", rv);
+	if (lib_name != NULL)
+		pk11_set_lib_name(lib_name);
+
+	if (logon && pin == NULL)
+		pin = getpassphrase("Enter Pin: ");
+
+	result = pk11_get_session(&pctx, OP_ANY, ISC_FALSE, ISC_FALSE,
+				  logon, pin, slot);
+	if (result == PK11_R_NORANDOMSERVICE ||
+	    result == PK11_R_NODIGESTSERVICE ||
+	    result == PK11_R_NOAESSERVICE) {
+		fprintf(stderr, "Warning: %s\n", isc_result_totext(result));
+		fprintf(stderr, "This HSM will not work with BIND 9 "
+				"using native PKCS#11.\n");
+	} else if (result != ISC_R_SUCCESS) {
+		fprintf(stderr, "Unrecoverable error initializing "
+			"PKCS#11: %s\n", isc_result_totext(result));
+		fprintf(stderr, "Unrecoverable error initializing "
+				"PKCS#11: %s\n", isc_result_totext(result));
 		exit(1);
 	}
 
-	/* Open a session on the slot found */
-	rv = C_OpenSession(slot, CKF_SERIAL_SESSION,
-			   NULL_PTR, NULL_PTR, &hSession);
-	if (rv != CKR_OK) {
-		fprintf(stderr, "C_OpenSession: Error = 0x%.8lX\n", rv);
-		error = 1;
-		goto exit_program;
-	}
+	if (pin != NULL)
+		memset(pin, 0, strlen(pin));
 
-	/* Login to the Token (Keystore) */
-	if (!public) {
-		if (pin == NULL)
-			pin = (CK_UTF8CHAR *)getpassphrase("Enter Pin: ");
-		rv = C_Login(hSession, CKU_USER, pin, strlen((char *)pin));
-		memset(pin, 0, strlen((char *)pin));
-		if (rv != CKR_OK) {
-			fprintf(stderr, "C_Login: Error = 0x%.8lX\n", rv);
-			error = 1;
-			goto exit_session;
-		}
-	}
+	hSession = pctx.session;
 
-	rv = C_FindObjectsInit(hSession, search_template, all ? 0 : 1); 
+	rv = pkcs_C_FindObjectsInit(hSession, search_template, all ? 0 : 1); 
 	if (rv != CKR_OK) {
 		fprintf(stderr, "C_FindObjectsInit: Error = 0x%.8lX\n", rv);
 		error = 1;
@@ -197,7 +183,7 @@ main(int argc, char *argv[])
 	
 	ulObjectCount = 1;
 	while (ulObjectCount) {
-		rv = C_FindObjects(hSession, akey, 50, &ulObjectCount);
+		rv = pkcs_C_FindObjects(hSession, akey, 50, &ulObjectCount);
 		if (rv != CKR_OK) {
 			fprintf(stderr,
 				"C_FindObjects: Error = 0x%.8lX\n",
@@ -205,7 +191,6 @@ main(int argc, char *argv[])
 			error = 1;
 			goto exit_search;
 		}
-
 		for (i = 0; i < ulObjectCount; i++) {
 			unsigned int j, len;
 
@@ -221,7 +206,7 @@ main(int argc, char *argv[])
 			memset(labelbuf, 0, sizeof(labelbuf));
 			memset(idbuf, 0, sizeof(idbuf));
 
-			rv = C_GetAttributeValue(hSession, akey[i],
+			rv = pkcs_C_GetAttributeValue(hSession, akey[i],
 						 template, 3);
 			if (rv != CKR_OK) {
 				fprintf(stderr,
@@ -266,17 +251,15 @@ main(int argc, char *argv[])
 	}
 
  exit_search:
-	rv = C_FindObjectsFinal(hSession);
+	rv = pkcs_C_FindObjectsFinal(hSession);
 	if (rv != CKR_OK) {
 		fprintf(stderr, "C_FindObjectsFinal: Error = 0x%.8lX\n", rv);
 		error = 1;
 	}
 
  exit_session:
-	(void)C_CloseSession(hSession);
-
- exit_program:
-	(void)C_Finalize(NULL_PTR);
+	pk11_return_session(&pctx);
+	(void) pk11_finalize();
 
 	exit(error);
 }

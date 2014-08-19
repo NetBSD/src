@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.41 2008/10/25 22:27:34 apb Exp $
+#	$NetBSD: Makefile.inc,v 1.41.24.1 2014/08/19 23:45:41 tls Exp $
 #
 
 # Ross Harvey <ross@NetBSD.org>
@@ -51,9 +51,12 @@ TOC.html=	${TOCS:M*.HTML.*}
 TOC.more=	${TOCS:M*.more.*}
 .endif
 
+REMOVE_CREATION_DATE= ${TOOL_SED} -e '/^%%CreationDate:/d'
 
 ${TARG}.ps: ${SRCS} ${TOC.ps} ${DISTRIBVERDEP}
-	${TOOL_GROFF} ${ARGS_PS}   -mdoc      ${MAIN} > $@
+	${TOOL_GROFF} ${ARGS_PS}   -mdoc      ${MAIN} \
+	    ${${MKREPRO:Uno} == "yes":? | ${REMOVE_CREATION_DATE} :} \
+	    > $@
 
 ${TARG}.pdf: ${TARG}.ps
 	ps2pdf ${TARG}.ps $@

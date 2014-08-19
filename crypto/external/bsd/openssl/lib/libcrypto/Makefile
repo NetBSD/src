@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.2.1 2013/02/25 00:24:19 tls Exp $
+#	$NetBSD: Makefile,v 1.6.2.2 2014/08/19 23:45:30 tls Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -23,7 +23,6 @@ USE_FIPS=	no
 
 .include <bsd.own.mk>
 .include <bsd.shlib.mk>
-.include <bsd.sys.mk>		# for HOST_SH
 
 # XXX There's a bit of work to do before we can enable warnings.
 WARNS=0

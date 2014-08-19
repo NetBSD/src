@@ -1,3 +1,75 @@
+2012-05-11  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gold/14091
+	* x86_64.h (R_X86_64_RELATIVE64): New.
+
+2012-05-01  Cary Coutant  <ccoutant@google.com>
+
+	* dwarf.h (enum DW_TAG, enum DW_FORM, enum DW_AT, enum DW_ENCODING)
+	(enum DW_OP, enum DW_CFA): Remove.
+	Include dwarf2.def.
+
+2012-04-23  Cary Coutant  <ccoutant@google.com>
+
+	* elfcpp_swap.h (struct Swap_aligned32): New template.
+
+2012-04-16  David S. Miller  <davem@davemloft.net>
+
+	* sparc.h (R_SPARC_JMP_IREL): New relocation.
+
+2012-04-12  David S. Miller  <davem@davemloft.net>
+
+	* sparc.h (R_SPARC_WDISP10): New relocation.
+
+2012-03-12  Cary Coutant  <ccoutant@google.com>
+
+	Update DWARF enums from ../include/dwarf2.h.
+	* dwarf.h (enum DW_TAG): Add new DWARF-4 tags.
+	(enum DW_FORM): Add new DWARF-4 and Fission extensions.
+	(enum DW_AT): New enum.
+	(enum DW_LINE_EXTENDED_OPS): Add new DWARF-4 opcode.
+	(enum DW_ENCODING): Add new DWARF-4 encoding.
+	(enum DW_OP): Add new DWARF-4 opcodes.
+	(enum DW_CHILDREN): New enum.
+	(enum DW_LANG): New enum.
+
+2012-01-27  Aleksandar Simeonov  <asimeonov@mips.com>
+
+	* mips.h: New file
+	* elfcpp.h (SHT_MIPS_REGINFO): New enums for processor-specific flags.
+	(SHF_MIPS_GPREL): Likewise.
+	(PT_MIPS_REGINFO, PT_MIPS_RTPROC, PT_MIPS_OPTIONS): Likewise.
+	(DT_MIPS_RLD_VERSION, DT_MIPS_TIME_STAMP, DT_MIPS_ICHECKSUM,
+	 DT_MIPS_IVERSION, DT_MIPS_FLAGS, DT_MIPS_BASE_ADDRESS, DT_MIPS_MSYM,
+	 DT_MIPS_CONFLICT, DT_MIPS_LIBLIST, DT_MIPS_LOCAL_GOTNO,
+	 DT_MIPS_CONFLICTNO, DT_MIPS_LIBLISTNO, DT_MIPS_SYMTABNO,
+	 DT_MIPS_UNREFEXTNO, DT_MIPS_GOTSYM, DT_MIPS_HIPAGENO, DT_MIPS_RLD_MAP,
+	 DT_MIPS_DELTA_CLASS, DT_MIPS_DELTA_CLASS_NO, DT_MIPS_DELTA_INSTANCE,
+	 DT_MIPS_DELTA_INSTANCE_NO, DT_MIPS_DELTA_RELOC, DT_MIPS_DELTA_RELOC_NO,
+	 DT_MIPS_DELTA_SYM, DT_MIPS_DELTA_SYM_NO, DT_MIPS_DELTA_CLASSSYM,
+	 DT_MIPS_DELTA_CLASSSYM_NO, DT_MIPS_CXX_FLAGS, DT_MIPS_PIXIE_INIT,
+	 DT_MIPS_SYMBOL_LIB, DT_MIPS_LOCALPAGE_GOTIDX, DT_MIPS_LOCAL_GOTIDX,
+	 DT_MIPS_HIDDEN_GOTIDX, DT_MIPS_PROTECTED_GOTIDX, DT_MIPS_OPTIONS,
+	 DT_MIPS_INTERFACE, DT_MIPS_DYNSTR_ALIGN, DT_MIPS_INTERFACE_SIZE,
+	 DT_MIPS_RLD_TEXT_RESOLVE_ADDR, DT_MIPS_PERF_SUFFIX,
+	 DT_MIPS_COMPACT_SIZE, DT_MIPS_GP_VALUE, DT_MIPS_AUX_DYNAMIC,
+	 DT_MIPS_PLTGOT, DT_MIPS_RWPLT): Likewise.
+
+2012-01-27  Ian Lance Taylor  <iant@google.com>
+
+	* elfcpp.h (STT_GNU_IFUNC): Add comment.
+
+2011-07-03  Samuel Thibault  <samuel.thibault@gnu.org>
+	    Thomas Schwinge  <thomas@schwinge.name>
+
+	PR binutils/12913
+	* elfcpp.h (ELFOSABI): Add ELFOSABI_GNU with value of ELFOSABI_LINUX,
+	keep ELFOSABI_LINUX as an alias.  Remove ELFOSABI_HURD.
+
+2011-07-01  Ian Lance Taylor  <iant@google.com>
+
+	* dwarf.h (enum DW_CFA): Define.
+
 2010-08-12  Cary Coutant  <ccoutant@google.com>
 
 	* elfcpp.h (enum SHT): Add SHT_GNU_INCREMENTAL_GOT_PLT.

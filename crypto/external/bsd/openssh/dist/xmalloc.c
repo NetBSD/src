@@ -1,5 +1,5 @@
-/*	$NetBSD: xmalloc.c,v 1.2 2009/06/07 22:38:48 christos Exp $	*/
-/* $OpenBSD: xmalloc.c,v 1.27 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: xmalloc.c,v 1.2.12.1 2014/08/19 23:45:25 tls Exp $	*/
+/* $OpenBSD: xmalloc.c,v 1.28 2013/05/17 00:13:14 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: xmalloc.c,v 1.2 2009/06/07 22:38:48 christos Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.2.12.1 2014/08/19 23:45:25 tls Exp $");
 #include <sys/param.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -72,14 +72,6 @@ xrealloc(void *ptr, size_t nmemb, size_t size)
 		fatal("xrealloc: out of memory (new_size %lu bytes)",
 		    (u_long) new_size);
 	return new_ptr;
-}
-
-void
-xfree(void *ptr)
-{
-	if (ptr == NULL)
-		fatal("xfree: NULL pointer given as argument");
-	free(ptr);
 }
 
 char *

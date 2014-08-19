@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_rawdcf.c,v 1.2 2010/12/04 23:08:35 christos Exp $	*/
+/*	$NetBSD: clk_rawdcf.c,v 1.2.12.1 2014/08/19 23:51:41 tls Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/libparse/clk_rawdcf.c,v 4.18 2006/06/22 18:40:01 kardel RELEASE_20060622_A
@@ -236,7 +236,7 @@ convert_rawdcf(
 	if (size < 57)
 	{
 #ifndef PARSEKERNEL
-		msyslog(LOG_ERR, "parse: convert_rawdcf: INCOMPLETE DATA - time code only has %d bits\n", size);
+		msyslog(LOG_ERR, "parse: convert_rawdcf: INCOMPLETE DATA - time code only has %d bits", size);
 #endif
 		return CVT_NONE;
 	}
@@ -322,7 +322,7 @@ convert_rawdcf(
 		 * bad format - not for us
 		 */
 #ifndef PARSEKERNEL
-		msyslog(LOG_ERR, "parse: convert_rawdcf: parity check FAILED for \"%s\"\n", buffer);
+		msyslog(LOG_ERR, "parse: convert_rawdcf: parity check FAILED for \"%s\"", buffer);
 #endif
 		return CVT_FAIL|CVT_BADFMT;
 	}

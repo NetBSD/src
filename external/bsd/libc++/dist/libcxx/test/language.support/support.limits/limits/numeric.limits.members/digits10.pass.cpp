@@ -34,7 +34,7 @@ int main()
     test<char, 2>();
     test<signed char, 2>();
     test<unsigned char, 2>();
-    test<wchar_t, 9>();
+    test<wchar_t, 5*sizeof(wchar_t)/2-1>();  // 4 -> 9 and 2 -> 4
 #ifndef _LIBCPP_HAS_NO_UNICODE_CHARS
     test<char16_t, 4>();
     test<char32_t, 9>();
@@ -47,6 +47,10 @@ int main()
     test<unsigned long, sizeof(long) == 4 ? 9 : 19>();
     test<long long, 18>();
     test<unsigned long long, 19>();
+#ifndef _LIBCPP_HAS_NO_INT128
+    test<__int128_t, 38>();
+    test<__uint128_t, 38>();
+#endif
     test<float, FLT_DIG>();
     test<double, DBL_DIG>();
     test<long double, LDBL_DIG>();

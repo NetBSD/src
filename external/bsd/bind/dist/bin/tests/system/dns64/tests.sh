@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010-2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -1348,6 +1348,13 @@ echo "I: checking TTL limited to minimum via cache ($n)"
 #expect 1200
 $DIG $DIGOPTS aaaa ttl-more-than-minimum.example +rec -b 10.53.0.2 @10.53.0.2 > dig.out.ns2.test$n || ret=1
 grep -i "ttl-more-than-minimum.example..1200.IN.AAAA" dig.out.ns2.test$n >/dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I: checking synthesis of AAAA from RPZ-remapped A ($n)"
+$DIG $DIGOPTS aaaa rpz.example +rec -b 10.53.0.7 @10.53.0.2 > dig.out.ns2.test$n || ret=1
+grep -i 'rpz.example.*IN.AAAA.2001:96::a0a:a0a' dig.out.ns2.test$n >/dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`

@@ -1,7 +1,7 @@
-/*	$NetBSD: grammar.h,v 1.3 2012/06/05 00:43:02 christos Exp $	*/
+/*	$NetBSD: grammar.h,v 1.3.2.1 2014/08/19 23:46:35 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -88,6 +88,7 @@ struct cfg_printer {
 	void (*f)(void *closure, const char *text, int textlen);
 	void *closure;
 	int indent;
+	int flags;
 };
 
 /*% A clause definition. */
@@ -159,6 +160,10 @@ struct cfg_obj {
 		cfg_list_t	list;
 		cfg_obj_t **	tuple;
 		isc_sockaddr_t	sockaddr;
+		struct {
+			isc_sockaddr_t	sockaddr;
+			isc_dscp_t	dscp;
+		} sockaddrdscp;
 		cfg_netprefix_t netprefix;
 	}               value;
 	isc_refcount_t  references;     /*%< reference counter */
@@ -239,6 +244,7 @@ struct cfg_parser {
 #define CFG_ADDR_V4PREFIXOK 	0x00000002
 #define CFG_ADDR_V6OK 		0x00000004
 #define CFG_ADDR_WILDOK		0x00000008
+#define CFG_ADDR_DSCPOK		0x00000010
 #define CFG_ADDR_MASK		(CFG_ADDR_V6OK|CFG_ADDR_V4OK)
 /*@}*/
 
@@ -268,7 +274,9 @@ LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_uint64;
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_qstring;
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_astring;
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_ustring;
+LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_sstring;
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_sockaddr;
+LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_sockaddrdscp;
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_netaddr;
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_netaddr4;
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_netaddr4wild;
@@ -316,6 +324,9 @@ isc_result_t
 cfg_parse_astring(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
 
 isc_result_t
+cfg_parse_sstring(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
+
+isc_result_t
 cfg_parse_rawaddr(cfg_parser_t *pctx, unsigned int flags, isc_netaddr_t *na);
 
 void
@@ -326,6 +337,9 @@ cfg_lookingat_netaddr(cfg_parser_t *pctx, unsigned int flags);
 
 isc_result_t
 cfg_parse_rawport(cfg_parser_t *pctx, unsigned int flags, in_port_t *port);
+
+isc_result_t
+cfg_parse_dscp(cfg_parser_t *pctx, isc_dscp_t *dscp);
 
 isc_result_t
 cfg_parse_sockaddr(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);

@@ -1,0 +1,15 @@
+#	$NetBSD: NetBSD.dist.powerpc64,v 1.2.4.2 2014/08/19 23:45:51 tls Exp $
+
+./lib/powerpc
+./lib/powerpc/npf
+./usr/include/g++/bits/powerpc
+./usr/include/g++/bits/powerpc64
+./usr/lib/powerpc
+./usr/lib/powerpc/i18n
+./usr/lib/powerpc/lua
+./usr/lib/powerpc/lua/5.3
+./usr/lib/powerpc/security
+./usr/libdata/debug/lib/powerpc
+./usr/libdata/debug/lib/powerpc/npf
+./usr/libdata/debug/usr/lib/powerpc
+./usr/libdata/debug/usr/lib/powerpc/i18n

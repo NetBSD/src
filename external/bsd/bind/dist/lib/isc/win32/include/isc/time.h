@@ -1,7 +1,7 @@
-/*	$NetBSD: time.h,v 1.3 2012/06/05 00:42:57 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.3.2.1 2014/08/19 23:46:34 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2006-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006-2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -41,7 +41,7 @@ struct isc_interval {
 	isc_int64_t interval;
 };
 
-LIBISC_EXTERNAL_DATA extern isc_interval_t *isc_interval_zero;
+LIBISC_EXTERNAL_DATA extern const isc_interval_t * const isc_interval_zero;
 
 ISC_LANG_BEGINDECLS
 
@@ -84,7 +84,7 @@ struct isc_time {
 	FILETIME absolute;
 };
 
-LIBISC_EXTERNAL_DATA extern isc_time_t *isc_time_epoch;
+LIBISC_EXTERNAL_DATA extern const isc_time_t * const isc_time_epoch;
 
 void
 isc_time_set(isc_time_t *t, unsigned int seconds, unsigned int nanoseconds);
@@ -226,6 +226,16 @@ isc_time_microdiff(const isc_time_t *t1, const isc_time_t *t2);
  *	The difference of t1 - t2, or 0 if t1 <= t2.
  */
 
+isc_result_t
+isc_time_parsehttptimestamp(char *input, isc_time_t *t);
+/*%<
+ * Parse the time in 'input' into the isc_time_t pointed to by 't',
+ * expecting a format like "Mon, 30 Aug 2000 04:06:47 GMT"
+ *
+ *  Requires:
+ *\li      'buf' and 't' are not NULL.
+ */
+
 isc_uint32_t
 isc_time_nanoseconds(const isc_time_t *t);
 /*
@@ -271,6 +281,16 @@ isc_time_formathttptimestamp(const isc_time_t *t, char *buf, unsigned int len);
  *
  */
 
+isc_result_t
+isc_time_parsehttptimestamp(char *input, isc_time_t *t);
+/*%<
+ * Parse the time in 'input' into the isc_time_t pointed to by 't',
+ * expecting a format like "Mon, 30 Aug 2000 04:06:47 GMT"
+ *
+ *  Requires:
+ *\li      'buf' and 't' are not NULL.
+ */
+
 void
 isc_time_formatISO8601(const isc_time_t *t, char *buf, unsigned int len);
 /*%<
@@ -287,6 +307,36 @@ isc_time_formatISO8601(const isc_time_t *t, char *buf, unsigned int len);
 
 isc_uint32_t
 isc_time_seconds(const isc_time_t *t);
+/*%<
+ * Return the number of seconds since the epoch stored in a time structure.
+ *
+ * Requires:
+ *
+ *\li	't' is a valid pointer.
+ */
+
+isc_result_t
+isc_time_secondsastimet(const isc_time_t *t, time_t *secondsp);
+/*%<
+ * Ensure the number of seconds in an isc_time_t is representable by a time_t.
+ *
+ * Notes:
+ *\li	The number of seconds stored in an isc_time_t might be larger
+ *	than the number of seconds a time_t is able to handle.  Since
+ *	time_t is mostly opaque according to the ANSI/ISO standard
+ *	(essentially, all you can be sure of is that it is an arithmetic type,
+ *	not even necessarily integral), it can be tricky to ensure that
+ *	the isc_time_t is in the range a time_t can handle.  Use this
+ *	function in place of isc_time_seconds() any time you need to set a
+ *	time_t from an isc_time_t.
+ *
+ * Requires:
+ *\li	't' is a valid pointer.
+ *
+ * Returns:
+ *\li	Success
+ *\li	Out of range
+ */
 
 ISC_LANG_ENDDECLS
 

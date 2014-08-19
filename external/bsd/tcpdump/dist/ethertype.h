@@ -153,6 +153,9 @@
 #ifndef ETHERTYPE_PPPOES2
 #define ETHERTYPE_PPPOES2	0x3c13
 #endif
+#ifndef ETHERTYPE_MS_NLB_HB
+#define ETHERTYPE_MS_NLB_HB	0x886f /* MS Network Load Balancing Heartbeat */
+#endif
 #ifndef ETHERTYPE_JUMBO
 #define ETHERTYPE_JUMBO         0x8870
 #endif
@@ -179,6 +182,15 @@
 #endif
 #ifndef	ETHERTYPE_ISO
 #define	ETHERTYPE_ISO           0xfefe  /* nonstandard - used in Cisco HDLC encapsulation */
+#endif
+#ifndef	ETHERTYPE_CALM_FAST
+#define	ETHERTYPE_CALM_FAST     0x1111  /* ISO CALM FAST */
+#endif
+#ifndef	ETHERTYPE_GEONET_OLD
+#define	ETHERTYPE_GEONET_OLD    0x0707  /* ETSI GeoNetworking (before Jan 2013) */
+#endif
+#ifndef	ETHERTYPE_GEONET
+#define	ETHERTYPE_GEONET        0x8947  /* ETSI GeoNetworking (Official IEEE registration from Jan 2013) */
 #endif
 
 extern const struct tok ethertype_values[];

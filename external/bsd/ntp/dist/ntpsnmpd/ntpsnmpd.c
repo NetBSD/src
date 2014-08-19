@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpsnmpd.c,v 1.1.1.2 2012/01/31 21:27:06 kardel Exp $	*/
+/*	$NetBSD: ntpsnmpd.c,v 1.1.1.2.6.1 2014/08/19 23:51:43 tls Exp $	*/
 
 /*****************************************************************************
  *
@@ -87,7 +87,7 @@ main (int argc, char **argv) {
   init_agent("ntpsnmpd");
 
   /* Try to connect to ntpd */
-  if ( ntpq_openhost("localhost") == 0 )
+  if ( ntpq_openhost("localhost", 0) == 0 )
   {
 	fprintf(stderr, "Error: Could not connect to ntpd. Aborting.\n");
 	exit(1);

@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.9.2.1 2013/06/23 06:26:24 tls Exp $	*/
+/*	$NetBSD: main.c,v 1.9.2.2 2014/08/19 23:46:00 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id */
 
 /*! \file */
 
@@ -52,8 +50,12 @@
 #include <dns/view.h>
 
 #include <dst/result.h>
+#ifdef PKCS11CRYPTO
+#include <pk11/result.h>
+#endif
 
 #include <dlz/dlz_dlopen_driver.h>
+
 
 /*
  * Defining NS_MAIN provides storage declarations (rather than extern)
@@ -98,6 +100,8 @@
 #ifndef BACKTRACE_MAXFRAME
 #define BACKTRACE_MAXFRAME 128
 #endif
+
+extern int isc_dscp_check_value;
 
 static isc_boolean_t	want_stats = ISC_FALSE;
 static char		program_name[ISC_DIR_NAMEMAX] = "named";
@@ -392,7 +396,7 @@ set_flags(const char *arg, struct flag_def *defs, unsigned int *ret) {
 		int arglen;
 		if (end == NULL)
 			end = arg + strlen(arg);
-		arglen = end - arg;
+		arglen = (int)(end - arg);
 		for (def = defs; def->name != NULL; def++) {
 			if (arglen == (int)strlen(def->name) &&
 			    memcmp(arg, def->name, arglen) == 0) {
@@ -412,15 +416,16 @@ static void
 parse_command_line(int argc, char *argv[]) {
 	int ch;
 	int port;
+	const char *p;
 	isc_boolean_t disable6 = ISC_FALSE;
 	isc_boolean_t disable4 = ISC_FALSE;
 
 	save_command_line(argc, argv);
 
+	/* PLEASE keep options synchronized when main is hooked! */
+#define CMDLINE_FLAGS "46c:C:d:D:E:fFgi:lm:n:N:p:P:sS:t:T:U:u:vVx:"
 	isc_commandline_errprint = ISC_FALSE;
-	while ((ch = isc_commandline_parse(argc, argv,
-					   "46c:C:d:E:fFgi:lm:n:N:p:P:"
-					   "sS:t:T:U:u:vVx:")) != -1) {
+	while ((ch = isc_commandline_parse(argc, argv, CMDLINE_FLAGS)) != -1) {
 		switch (ch) {
 		case '4':
 			if (disable4)
@@ -454,6 +459,9 @@ parse_command_line(int argc, char *argv[]) {
 		case 'd':
 			ns_g_debuglevel = parse_int(isc_commandline_argument,
 						    "debug level");
+			break;
+		case 'D':
+			/* Descriptive comment for 'ps'. */
 			break;
 		case 'E':
 			ns_g_engine = isc_commandline_argument;
@@ -512,8 +520,15 @@ parse_command_line(int argc, char *argv[]) {
 			break;
 		case 'T':	/* NOT DOCUMENTED */
 			/*
+			 * force the server to behave (or misbehave) in
+			 * specified ways for testing purposes.
+			 *
 			 * clienttest: make clients single shot with their
 			 * 	       own memory context.
+			 * delay=xxxx: delay client responses by xxxx ms to
+			 *	       simulate remote servers.
+			 * dscp=x:     check that dscp values are as
+			 * 	       expected and assert otherwise.
 			 */
 			if (!strcmp(isc_commandline_argument, "clienttest"))
 				ns_g_clienttest = ISC_TRUE;
@@ -525,6 +540,23 @@ parse_command_line(int argc, char *argv[]) {
 				maxudp = 512;
 			else if (!strcmp(isc_commandline_argument, "maxudp1460"))
 				maxudp = 1460;
+			else if (!strcmp(isc_commandline_argument, "dropedns"))
+				ns_g_dropedns = ISC_TRUE;
+			else if (!strcmp(isc_commandline_argument, "noedns"))
+				ns_g_noedns = ISC_TRUE;
+			else if (!strncmp(isc_commandline_argument,
+					  "maxudp=", 7))
+				maxudp = atoi(isc_commandline_argument + 7);
+			else if (!strncmp(isc_commandline_argument,
+					  "delay=", 6))
+				ns_g_delay = atoi(isc_commandline_argument + 6);
+			else if (!strcmp(isc_commandline_argument, "nosyslog"))
+				ns_g_nosyslog = ISC_TRUE;
+			else if (!strcmp(isc_commandline_argument, "nonearest"))
+				ns_g_nonearest = ISC_TRUE;
+			else if (!strncmp(isc_commandline_argument, "dscp=", 5))
+				isc_dscp_check_value =
+					   atoi(isc_commandline_argument + 5);
 			else
 				fprintf(stderr, "unknown -T flag '%s\n",
 					isc_commandline_argument);
@@ -538,11 +570,34 @@ parse_command_line(int argc, char *argv[]) {
 			ns_g_username = isc_commandline_argument;
 			break;
 		case 'v':
-			printf("BIND %s\n", ns_g_version);
+			printf("%s %s", ns_g_product, ns_g_version);
+			if (*ns_g_description != 0)
+				printf(" %s", ns_g_description);
+			printf("\n");
 			exit(0);
 		case 'V':
-			printf("BIND %s built with %s\n", ns_g_version,
-				ns_g_configargs);
+			printf("%s %s", ns_g_product, ns_g_version);
+			if (*ns_g_description != 0)
+				printf(" %s", ns_g_description);
+			printf(" <id:%s> built by %s with %s\n", ns_g_srcid,
+			       ns_g_builder, ns_g_configargs);
+#ifdef __clang__
+			printf("compiled by CLANG %s\n", __VERSION__);
+#else
+#if defined(__ICC) || defined(__INTEL_COMPILER)
+			printf("compiled by ICC %s\n", __VERSION__);
+#else
+#ifdef __GNUC__
+			printf("compiled by GCC %s\n", __VERSION__);
+#endif
+#endif
+#endif
+#ifdef _MSC_VER
+			printf("compiled by MSVC %d\n", _MSC_VER);
+#endif
+#ifdef __SUNPRO_C
+			printf("compiled by Solaris Studio %x\n", __SUNPRO_C);
+#endif
 #ifdef OPENSSL
 			printf("using OpenSSL version: %s\n",
 			       OPENSSL_VERSION_TEXT);
@@ -559,8 +614,14 @@ parse_command_line(int argc, char *argv[]) {
 			usage();
 			if (isc_commandline_option == '?')
 				exit(0);
-			ns_main_earlyfatal("unknown option '-%c'",
-					   isc_commandline_option);
+			p = strchr(CMDLINE_FLAGS, isc_commandline_option);
+			if (p == NULL || *++p != ':')
+				ns_main_earlyfatal("unknown option '-%c'",
+						   isc_commandline_option);
+			else
+				ns_main_earlyfatal("option '-%c' requires "
+						   "an argument",
+						   isc_commandline_option);
 			/* FALLTHROUGH */
 		default:
 			ns_main_earlyfatal("parsing options returned %d", ch);
@@ -595,7 +656,15 @@ create_managers(void) {
 #ifdef WIN32
 	ns_g_udpdisp = 1;
 #else
-	if (ns_g_udpdisp == 0 || ns_g_udpdisp > ns_g_cpus)
+	if (ns_g_udpdisp == 0) {
+		if (ns_g_cpus_detected == 1)
+			ns_g_udpdisp = 1;
+		else if (ns_g_cpus_detected < 4)
+			ns_g_udpdisp = 2;
+		else
+			ns_g_udpdisp = ns_g_cpus_detected / 2;
+	}
+	if (ns_g_udpdisp > ns_g_cpus)
 		ns_g_udpdisp = ns_g_cpus;
 #endif
 	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_SERVER,
@@ -804,8 +873,8 @@ setup(void) {
 				   isc_result_totext(result));
 
 	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
-		      ISC_LOG_NOTICE, "starting BIND %s%s", ns_g_version,
-		      saved_command_line);
+		      ISC_LOG_NOTICE, "starting %s %s%s", ns_g_product,
+		      ns_g_version, saved_command_line);
 
 	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
 		      ISC_LOG_NOTICE, "built with %s", ns_g_configargs);
@@ -1033,6 +1102,8 @@ ns_smf_get_instance(char **ins_name, int debug, isc_mem_t *mctx) {
 }
 #endif /* HAVE_LIBSCF */
 
+/* main entry point, possibly hooked */
+
 int
 main(int argc, char *argv[]) {
 	isc_result_t result;
@@ -1040,20 +1111,15 @@ main(int argc, char *argv[]) {
 	char *instance = NULL;
 #endif
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
-
 	/*
 	 * Record version in core image.
 	 * strings named.core | grep "named version:"
 	 */
 	strlcat(version,
 #if defined(NO_VERSION_DATE) || !defined(__DATE__)
-		"named version: BIND " VERSION,
+		"named version: BIND " VERSION " <" SRCID ">",
 #else
-		"named version: BIND " VERSION " (" __DATE__ ")",
+		"named version: BIND " VERSION " <" SRCID "> (" __DATE__ ")",
 #endif
 		sizeof(version));
 	result = isc_file_progname(*argv, program_name, sizeof(program_name));
@@ -1075,6 +1141,9 @@ main(int argc, char *argv[]) {
 	dns_result_register();
 	dst_result_register();
 	isccc_result_register();
+#ifdef PKCS11CRYPTO
+	pk11_result_register();
+#endif
 
 	parse_command_line(argc, argv);
 

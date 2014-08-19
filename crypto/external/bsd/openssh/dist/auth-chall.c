@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-chall.c,v 1.3 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: auth-chall.c,v 1.12 2006/08/03 03:34:41 deraadt Exp $ */
+/*	$NetBSD: auth-chall.c,v 1.3.8.1 2014/08/19 23:45:24 tls Exp $	*/
+/* $OpenBSD: auth-chall.c,v 1.13 2013/05/17 00:13:13 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-chall.c,v 1.3 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: auth-chall.c,v 1.3.8.1 2014/08/19 23:45:24 tls Exp $");
 #include <sys/types.h>
 
 #include "xmalloc.h"
@@ -72,11 +72,11 @@ get_challenge(Authctxt *authctxt)
 		fatal("get_challenge: numprompts < 1");
 	challenge = xstrdup(prompts[0]);
 	for (i = 0; i < numprompts; i++)
-		xfree(prompts[i]);
-	xfree(prompts);
-	xfree(name);
-	xfree(echo_on);
-	xfree(info);
+		free(prompts[i]);
+	free(prompts);
+	free(name);
+	free(echo_on);
+	free(info);
 
 	return (challenge);
 }

@@ -1136,13 +1136,13 @@ spa_generate_guid(spa_t *spa)
 }
 
 void
-sprintf_blkptr(char *buf, const blkptr_t *bp)
+snprintf_blkptr(char *buf, size_t buflen, const blkptr_t *bp)
 {
 	char *type = dmu_ot[BP_GET_TYPE(bp)].ot_name;
 	char *checksum = zio_checksum_table[BP_GET_CHECKSUM(bp)].ci_name;
 	char *compress = zio_compress_table[BP_GET_COMPRESS(bp)].ci_name;
 
-	SPRINTF_BLKPTR(snprintf, ' ', buf, bp, type, checksum, compress);
+	SNPRINTF_BLKPTR(snprintf, ' ', buf, buflen, bp, type, checksum, compress);
 }
 
 void

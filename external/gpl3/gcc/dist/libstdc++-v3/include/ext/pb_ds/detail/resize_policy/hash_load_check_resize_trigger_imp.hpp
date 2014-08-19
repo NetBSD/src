@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -38,66 +38,69 @@
  * Contains a resize trigger implementation.
  */
 
+#define PB_DS_ASSERT_VALID(X)						\
+  _GLIBCXX_DEBUG_ONLY(X.assert_valid(__FILE__, __LINE__);)
+
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-hash_load_check_resize_trigger(float load_min, float load_max) 
+hash_load_check_resize_trigger(float load_min, float load_max)
 : m_load_min(load_min), m_load_max(load_max), m_next_shrink_size(0),
   m_next_grow_size(0), m_resize_needed(false)
-{ _GLIBCXX_DEBUG_ONLY(assert_valid();) }
+{ PB_DS_ASSERT_VALID((*this)) }
 
 PB_DS_CLASS_T_DEC
 inline void
 PB_DS_CLASS_C_DEC::
 notify_find_search_start()
-{ _GLIBCXX_DEBUG_ONLY(assert_valid();) }
+{ PB_DS_ASSERT_VALID((*this)) }
 
 PB_DS_CLASS_T_DEC
 inline void
 PB_DS_CLASS_C_DEC::
 notify_find_search_collision()
-{ _GLIBCXX_DEBUG_ONLY(assert_valid();) }
+{ PB_DS_ASSERT_VALID((*this)) }
 
 PB_DS_CLASS_T_DEC
 inline void
 PB_DS_CLASS_C_DEC::
 notify_find_search_end()
-{ _GLIBCXX_DEBUG_ONLY(assert_valid();) }
+{ PB_DS_ASSERT_VALID((*this)) }
 
 PB_DS_CLASS_T_DEC
 inline void
 PB_DS_CLASS_C_DEC::
 notify_insert_search_start()
-{ _GLIBCXX_DEBUG_ONLY(assert_valid();) }
+{ PB_DS_ASSERT_VALID((*this)) }
 
 PB_DS_CLASS_T_DEC
 inline void
 PB_DS_CLASS_C_DEC::
 notify_insert_search_collision()
-{ _GLIBCXX_DEBUG_ONLY(assert_valid();) }
+{ PB_DS_ASSERT_VALID((*this)) }
 
 PB_DS_CLASS_T_DEC
 inline void
 PB_DS_CLASS_C_DEC::
 notify_insert_search_end()
-{ _GLIBCXX_DEBUG_ONLY(assert_valid();) }
+{ PB_DS_ASSERT_VALID((*this)) }
 
 PB_DS_CLASS_T_DEC
 inline void
 PB_DS_CLASS_C_DEC::
 notify_erase_search_start()
-{ _GLIBCXX_DEBUG_ONLY(assert_valid();) }
+{ PB_DS_ASSERT_VALID((*this)) }
 
 PB_DS_CLASS_T_DEC
 inline void
 PB_DS_CLASS_C_DEC::
 notify_erase_search_collision()
-{ _GLIBCXX_DEBUG_ONLY(assert_valid();) }
+{ PB_DS_ASSERT_VALID((*this)) }
 
 PB_DS_CLASS_T_DEC
 inline void
 PB_DS_CLASS_C_DEC::
 notify_erase_search_end()
-{ _GLIBCXX_DEBUG_ONLY(assert_valid();) }
+{ PB_DS_ASSERT_VALID((*this)) }
 
 PB_DS_CLASS_T_DEC
 inline void
@@ -106,7 +109,7 @@ notify_inserted(size_type num_entries)
 {
   m_resize_needed = (num_entries >= m_next_grow_size);
   size_base::set_size(num_entries);
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
 }
 
 PB_DS_CLASS_T_DEC
@@ -116,7 +119,7 @@ notify_erased(size_type num_entries)
 {
   size_base::set_size(num_entries);
   m_resize_needed = num_entries <= m_next_shrink_size;
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
 }
 
 PB_DS_CLASS_T_DEC
@@ -124,7 +127,7 @@ inline bool
 PB_DS_CLASS_C_DEC::
 is_resize_needed() const
 {
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
   return m_resize_needed;
 }
 
@@ -151,15 +154,15 @@ notify_resized(size_type new_size)
   m_next_shrink_size = size_type(m_load_min * new_size);
 
 #ifdef PB_DS_HT_MAP_RESIZE_TRACE_
-  std::cerr << "hlcrt::notify_resized " <<
-    static_cast<unsigned long>(new_size) << "    " <<
-    static_cast<unsigned long>(m_load_min) << "    " <<
-    static_cast<unsigned long>(m_load_max) << "    " <<
-    static_cast<unsigned long>(m_next_shrink_size) << " " <<
-    static_cast<unsigned long>(m_next_grow_size) << "    " << std::endl;
-#endif 
+  std::cerr << "hlcrt::notify_resized "  << std::endl
+	    << "1 " << new_size << std::endl
+	    << "2 " << m_load_min << std::endl
+	    << "3 " << m_load_max << std::endl
+	    << "4 " << m_next_shrink_size << std::endl
+	    << "5 " << m_next_grow_size << std::endl;
+#endif
 
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
 }
 
 PB_DS_CLASS_T_DEC
@@ -170,36 +173,30 @@ notify_externally_resized(size_type new_size)
   m_resize_needed = false;
   size_type new_grow_size = size_type(m_load_max * new_size - 1);
   size_type new_shrink_size = size_type(m_load_min * new_size);
+
+#ifdef PB_DS_HT_MAP_RESIZE_TRACE_
+  std::cerr << "hlcrt::notify_externally_resized "  << std::endl
+	    << "1 " << new_size << std::endl
+	    << "2 " << m_load_min << std::endl
+	    << "3 " << m_load_max << std::endl
+	    << "4 " << m_next_shrink_size << std::endl
+	    << "5 " << m_next_grow_size << std::endl
+	    << "6 " << new_shrink_size << std::endl
+	    << "7 " << new_grow_size << std::endl;
+#endif
+
   if (new_grow_size >= m_next_grow_size)
     {
-      _GLIBCXX_DEBUG_ASSERT(new_shrink_size > m_next_shrink_size);
+      _GLIBCXX_DEBUG_ASSERT(new_shrink_size >= m_next_shrink_size);
       m_next_grow_size = new_grow_size;
-      _GLIBCXX_DEBUG_ONLY(assert_valid();)
-
-#ifdef PB_DS_HT_MAP_RESIZE_TRACE_
-	std::cerr << "hlcrt::notify_externally_resized1 " <<
-        static_cast<unsigned long>(new_size) << "    " <<
-        static_cast<unsigned long>(m_load_min) << "    " <<
-        static_cast<unsigned long>(m_load_max) << "    " <<
-        static_cast<unsigned long>(m_next_shrink_size) << " " <<
-        static_cast<unsigned long>(m_next_grow_size) << "    " << std::endl;
-#endif 
-      return;
+    }
+  else
+    {
+      _GLIBCXX_DEBUG_ASSERT(new_shrink_size <= m_next_shrink_size);
+      m_next_shrink_size = new_shrink_size;
     }
 
-  _GLIBCXX_DEBUG_ASSERT(new_shrink_size <= m_next_shrink_size);
-  m_next_shrink_size = new_shrink_size;
-
-#ifdef PB_DS_HT_MAP_RESIZE_TRACE_
-  std::cerr << "hlcrt::notify_externally_resized2 " <<
-    static_cast<unsigned long>(new_size) << "    " <<
-    static_cast<unsigned long>(m_load_min) << "    " <<
-    static_cast<unsigned long>(m_load_max) << "    " <<
-    static_cast<unsigned long>(m_next_shrink_size) << " " <<
-    static_cast<unsigned long>(m_next_grow_size) << "    " << std::endl;
-#endif 
-
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
 }
 
 PB_DS_CLASS_T_DEC
@@ -207,10 +204,10 @@ void
 PB_DS_CLASS_C_DEC::
 notify_cleared()
 {
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
   size_base::set_size(0);
   m_resize_needed = (0 < m_next_shrink_size);
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
 }
 
 PB_DS_CLASS_T_DEC
@@ -218,9 +215,9 @@ void
 PB_DS_CLASS_C_DEC::
 swap(PB_DS_CLASS_C_DEC& other)
 {
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
-  _GLIBCXX_DEBUG_ONLY(other.assert_valid();)
-    
+  PB_DS_ASSERT_VALID((*this))
+  PB_DS_ASSERT_VALID(other)
+
   size_base::swap(other);
   std::swap(m_load_min, other.m_load_min);
   std::swap(m_load_max, other.m_load_max);
@@ -228,8 +225,8 @@ swap(PB_DS_CLASS_C_DEC& other)
   std::swap(m_next_grow_size, other.m_next_grow_size);
   std::swap(m_next_shrink_size, other.m_next_shrink_size);
 
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
-  _GLIBCXX_DEBUG_ONLY(other.assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
+  PB_DS_ASSERT_VALID(other)
 }
 
 PB_DS_CLASS_T_DEC
@@ -277,13 +274,20 @@ do_resize(size_type)
 { std::abort(); }
 
 #ifdef _GLIBCXX_DEBUG
+# define PB_DS_DEBUG_VERIFY(_Cond)					\
+  _GLIBCXX_DEBUG_VERIFY_AT(_Cond,					\
+			   _M_message(#_Cond" assertion from %1;:%2;")	\
+			   ._M_string(__FILE__)._M_integer(__LINE__)	\
+			   ,__file,__line)
+
 PB_DS_CLASS_T_DEC
 void
 PB_DS_CLASS_C_DEC::
-assert_valid() const
+assert_valid(const char* __file, int __line) const
 {
-  _GLIBCXX_DEBUG_ASSERT(m_load_max > m_load_min);
-  _GLIBCXX_DEBUG_ASSERT(m_next_grow_size >= m_next_shrink_size);
+  PB_DS_DEBUG_VERIFY(m_load_max > m_load_min);
+  PB_DS_DEBUG_VERIFY(m_next_grow_size >= m_next_shrink_size);
 }
-#endif 
-
+# undef PB_DS_DEBUG_VERIFY
+#endif
+#undef PB_DS_ASSERT_VALID

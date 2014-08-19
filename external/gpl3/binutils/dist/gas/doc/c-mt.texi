@@ -17,6 +17,7 @@
 @cindex MT support
 @menu
 * MT Options::              Options
+* MY Syntax::               Syntax
 @end menu
 
 @node MT Options
@@ -42,3 +43,29 @@ and @code{ms2}.
 This option disables scheduling restriction checking.
 
 @end table
+
+@node MT Syntax
+@section Syntax
+@menu
+* MT-Chars::                Special Characters
+@end menu
+
+@node MT-Chars
+@subsection Special Characters
+
+@cindex line comment character, MT
+@cindex MT line comment character
+The presence of a @samp{;} appearing anywhere on a line indicates the
+start of a comment that extends to the end of that line.
+
+If a @samp{#} appears as the first character of a line then the whole
+line is treated as a comment, but in this case the line can also be a
+logical line number directive (@pxref{Comments}) or a preprocessor
+control command (@pxref{Preprocessing}).
+
+@cindex line separator, MT
+@cindex statement separator, MT
+@cindex MT line separator
+The MT assembler does not currently support a line separator
+character.
+

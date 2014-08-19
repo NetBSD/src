@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_syslog.h,v 1.1.1.2 2012/01/31 21:23:23 kardel Exp $	*/
+/*	$NetBSD: ntp_syslog.h,v 1.1.1.2.6.1 2014/08/19 23:51:38 tls Exp $	*/
 
 /*
  * A hack for platforms which require specially built syslog facilities
@@ -9,19 +9,23 @@
 
 #include <ntp_types.h>		/* u_int32 type */
 
-# ifdef VMS
+#ifdef VMS
 extern void msyslog();
-# else
-#   ifndef SYS_VXWORKS
-#   include <syslog.h>
-#   endif
-# endif /* VMS */
-# include <stdio.h>
+#else
+# ifndef SYS_VXWORKS
+#  include <syslog.h>
+# endif
+#endif /* VMS */
+#include <stdio.h>
 
-extern int syslogit;
-extern int msyslog_term;	/* duplicate to stdout/err */
-extern FILE *syslog_file;	/* if syslogit is FALSE, log to 
+extern int	syslogit;
+extern int	msyslog_term;	/* duplicate to stdout/err */
+extern int	msyslog_term_pid;
+extern int	msyslog_include_timestamp;
+extern FILE *	syslog_file;	/* if syslogit is FALSE, log to 
 				   this file and not syslog */
+extern char *	syslog_fname;
+extern char *	syslog_abs_fname;
 
 #if defined(VMS) || defined (SYS_VXWORKS)
 #define	LOG_EMERG	0	/* system is unusable */
@@ -71,6 +75,13 @@ extern FILE *syslog_file;	/* if syslogit is FALSE, log to
 #define NLOG_SYNCSTATIST	0x00008000 /* sync statistics output */
 
 extern u_int32 ntp_syslogmask;
-#define NLOG(_X_)	if (ntp_syslogmask & (_X_))
+
+#define NLOG(bits)	if (ntp_syslogmask & (bits))
+
+#define LOGIF(nlog_suffix, msl_args)				\
+do {								\
+	NLOG(NLOG_##nlog_suffix)	/* like "if (...) */	\
+		msyslog msl_args;				\
+} while (FALSE)
 
 #endif /* NTP_SYSLOG_H */

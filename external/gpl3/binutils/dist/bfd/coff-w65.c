@@ -1,6 +1,6 @@
 /* BFD back-end for WDC 65816 COFF binaries.
    Copyright 1995, 1996, 1997, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007, 2008  Free Software Foundation, Inc.
+   2006, 2007, 2008, 2012  Free Software Foundation, Inc.
    Written by Steve Chamberlain, <sac@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -28,16 +28,10 @@
 #include "coff/internal.h"
 #include "libcoff.h"
 
-static int  select_reloc              PARAMS ((reloc_howto_type *));
-static void rtype2howto               PARAMS ((arelent *, struct internal_reloc *));
-static void reloc_processing          PARAMS ((arelent *, struct internal_reloc *, asymbol **, bfd *, asection *));
-static int  w65_reloc16_estimate    PARAMS ((bfd *, asection *, arelent *, unsigned int, struct bfd_link_info *));
-static void w65_reloc16_extra_cases PARAMS ((bfd *,struct bfd_link_info *, struct bfd_link_order *, arelent *, bfd_byte *, unsigned int *, unsigned int *));
-
 #define COFF_DEFAULT_SECTION_ALIGNMENT_POWER (1)
 static reloc_howto_type howto_table[] =
-  {
-    HOWTO (R_W65_ABS8,    0,  0, 8,  FALSE, 0, complain_overflow_bitfield, 0, "abs8", TRUE, 0x000000ff, 0x000000ff, FALSE),
+{
+  HOWTO (R_W65_ABS8,    0,  0, 8,  FALSE, 0, complain_overflow_bitfield, 0, "abs8", TRUE, 0x000000ff, 0x000000ff, FALSE),
     HOWTO (R_W65_ABS16,   1,  0, 16, FALSE, 0, complain_overflow_bitfield, 0, "abs16", TRUE, 0x0000ffff, 0x0000ffff, FALSE),
     HOWTO (R_W65_ABS24,   0,  2, 32, FALSE, 0, complain_overflow_bitfield, 0, "abs24", TRUE, 0x00ffffff, 0x00ffffff, FALSE),
     HOWTO (R_W65_ABS8S8,  0,  0, 8,  FALSE, 0, complain_overflow_bitfield, 0, ">abs8", TRUE, 0x000000ff, 0x000000ff, FALSE),
@@ -66,8 +60,7 @@ static reloc_howto_type howto_table[] =
   dst->r_stuff[1] = 'C';
 
 static int
-select_reloc (howto)
-     reloc_howto_type *howto;
+select_reloc (reloc_howto_type *howto)
 {
   return howto->type ;
 }
@@ -75,9 +68,8 @@ select_reloc (howto)
 /* Code to turn a r_type into a howto ptr, uses the above howto table.  */
 
 static void
-rtype2howto (internal, dst)
-     arelent *internal;
-     struct internal_reloc *dst;
+rtype2howto (arelent *internal,
+	     struct internal_reloc *dst)
 {
   internal->howto = howto_table + dst->r_type - 1;
 }
@@ -93,12 +85,11 @@ rtype2howto (internal, dst)
  reloc_processing(relent, reloc, symbols, abfd, section)
 
 static void
-reloc_processing (relent, reloc, symbols, abfd, section)
-     arelent * relent;
-     struct internal_reloc *reloc;
-     asymbol ** symbols;
-     bfd * abfd;
-     asection * section;
+reloc_processing (arelent * relent,
+		  struct internal_reloc *reloc,
+		  asymbol ** symbols,
+		  bfd * abfd,
+		  asection * section)
 {
   relent->address = reloc->r_vaddr;
   rtype2howto (relent, reloc);
@@ -115,21 +106,20 @@ reloc_processing (relent, reloc, symbols, abfd, section)
 }
 
 static int
-w65_reloc16_estimate (abfd, input_section, reloc, shrink, link_info)
-     bfd *abfd;
-     asection *input_section;
-     arelent *reloc;
-     unsigned int shrink;
-     struct bfd_link_info *link_info;
+w65_reloc16_estimate (bfd *abfd,
+		      asection *input_section,
+		      arelent *reloc,
+		      unsigned int shrink,
+		      struct bfd_link_info *link_info)
 {
   bfd_vma value;
   bfd_vma dot;
   bfd_vma gap;
 
   /* The address of the thing to be relocated will have moved back by
-   the size of the shrink  - but we don't change reloc->address here,
-   since we need it to know where the relocation lives in the source
-   uncooked section.  */
+     the size of the shrink  - but we don't change reloc->address here,
+     since we need it to know where the relocation lives in the source
+     uncooked section.  */
 
   /*  reloc->address -= shrink;   conceptual */
 
@@ -222,15 +212,13 @@ w65_reloc16_estimate (abfd, input_section, reloc, shrink, link_info)
    R_MOV24B1		R_MOV24B2	24 or 8 bit reloc for mov.b  */
 
 static void
-w65_reloc16_extra_cases (abfd, link_info, link_order, reloc, data, src_ptr,
-			   dst_ptr)
-     bfd *abfd;
-     struct bfd_link_info *link_info;
-     struct bfd_link_order *link_order;
-     arelent *reloc;
-     bfd_byte *data;
-     unsigned int *src_ptr;
-     unsigned int *dst_ptr;
+w65_reloc16_extra_cases (bfd *abfd,
+			 struct bfd_link_info *link_info,
+			 struct bfd_link_order *link_order,
+			 arelent *reloc,
+			 bfd_byte *data,
+			 unsigned int *src_ptr,
+			 unsigned int *dst_ptr)
 {
   unsigned int src_address = *src_ptr;
   unsigned int dst_address = *dst_ptr;

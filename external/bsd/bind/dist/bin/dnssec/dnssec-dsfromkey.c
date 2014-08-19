@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-dsfromkey.c,v 1.4.2.2 2013/06/23 06:26:23 tls Exp $	*/
+/*	$NetBSD: dnssec-dsfromkey.c,v 1.4.2.3 2014/08/19 23:45:59 tls Exp $	*/
 
 /*
- * Copyright (C) 2008-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2008-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-dsfromkey.c,v 1.24 2011/10/25 01:54:18 marka Exp  */
+/* Id: dnssec-dsfromkey.c,v 1.24.114.1 2012/02/07 00:44:12 each Exp  */
 
 /*! \file */
 
@@ -50,6 +50,10 @@
 #include <dns/result.h>
 
 #include <dst/dst.h>
+
+#ifdef PKCS11CRYPTO
+#include <pk11/result.h>
+#endif
 
 #include "dnssectool.h"
 
@@ -86,7 +90,7 @@ db_load_from_stream(dns_db_t *db, FILE *fp) {
 	dns_rdatacallbacks_t callbacks;
 
 	dns_rdatacallbacks_init(&callbacks);
-	result = dns_db_beginload(db, &callbacks.add, &callbacks.add_private);
+	result = dns_db_beginload(db, &callbacks);
 	if (result != ISC_R_SUCCESS)
 		fatal("dns_db_beginload failed: %s", isc_result_totext(result));
 
@@ -95,7 +99,7 @@ db_load_from_stream(dns_db_t *db, FILE *fp) {
 	if (result != ISC_R_SUCCESS)
 		fatal("can't load from input: %s", isc_result_totext(result));
 
-	result = dns_db_endload(db, &callbacks.add_private);
+	result = dns_db_endload(db, &callbacks);
 	if (result != ISC_R_SUCCESS)
 		fatal("dns_db_endload failed: %s", isc_result_totext(result));
 }
@@ -286,7 +290,9 @@ emit(unsigned int dtype, isc_boolean_t showall, char *lookaside,
 		}
 	}
 
-	result = dns_rdata_totext(&ds, (dns_name_t *) NULL, &textb);
+	result = dns_rdata_tofmttext(&ds, (dns_name_t *) NULL, 0, 0, 0, "",
+				     &textb);
+
 	if (result != ISC_R_SUCCESS)
 		fatal("can't print rdata");
 
@@ -361,7 +367,6 @@ main(int argc, char **argv) {
 	dns_rdataset_t	rdataset;
 	dns_rdata_t	rdata;
 
-	isc__mem_register();
 	dns_rdata_init(&rdata);
 
 	if (argc == 1)
@@ -371,6 +376,9 @@ main(int argc, char **argv) {
 	if (result != ISC_R_SUCCESS)
 		fatal("out of memory");
 
+#ifdef PKCS11CRYPTO
+	pk11_result_register();
+#endif
 	dns_result_register();
 
 	isc_commandline_errprint = ISC_FALSE;
@@ -449,7 +457,7 @@ main(int argc, char **argv) {
 		else if (strcasecmp(algname, "SHA256") == 0 ||
 			 strcasecmp(algname, "SHA-256") == 0)
 			dtype = DNS_DSDIGEST_SHA256;
-#ifdef HAVE_OPENSSL_GOST
+#if defined(HAVE_OPENSSL_GOST) || defined(HAVE_PKCS11_GOST)
 		else if (strcasecmp(algname, "GOST") == 0)
 			dtype = DNS_DSDIGEST_GOST;
 #endif

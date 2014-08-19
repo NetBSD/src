@@ -1,9 +1,9 @@
-/*	$NetBSD: compare.c,v 1.1.1.3 2010/12/12 15:23:09 adam Exp $	*/
+/*	$NetBSD: compare.c,v 1.1.1.3.12.1 2014/08/19 23:52:02 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-meta/compare.c,v 1.50.2.10 2010/04/13 20:23:30 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.

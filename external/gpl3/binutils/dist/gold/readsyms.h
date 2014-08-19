@@ -27,6 +27,7 @@
 
 #include "workqueue.h"
 #include "object.h"
+#include "incremental.h"
 
 namespace gold
 {
@@ -138,14 +139,13 @@ class Add_symbols : public Task
   Add_symbols(Input_objects* input_objects, Symbol_table* symtab,
 	      Layout* layout, Dirsearch* dirpath, int dirindex,
 	      Mapfile* mapfile, const Input_argument* input_argument,
-	      Object* object,
+	      Object* object, Incremental_library* library,
 	      Read_symbols_data* sd, Task_token* this_blocker,
 	      Task_token* next_blocker)
     : input_objects_(input_objects), symtab_(symtab), layout_(layout),
       dirpath_(dirpath), dirindex_(dirindex), mapfile_(mapfile),
-      input_argument_(input_argument),
-      object_(object), sd_(sd), this_blocker_(this_blocker),
-      next_blocker_(next_blocker)
+      input_argument_(input_argument), object_(object), library_(library),
+      sd_(sd), this_blocker_(this_blocker), next_blocker_(next_blocker)
   { }
 
   ~Add_symbols();
@@ -174,7 +174,149 @@ private:
   Mapfile* mapfile_;
   const Input_argument* input_argument_;
   Object* object_;
+  Incremental_library* library_;
   Read_symbols_data* sd_;
+  Task_token* this_blocker_;
+  Task_token* next_blocker_;
+};
+
+// This Task is responsible for reading the symbols from an archive
+// member that has changed since the last incremental link.
+
+class Read_member : public Task
+{
+ public:
+  // INPUT is the file to read.  INPUT_GROUP is not NULL if we are in
+  // the middle of an input group.  THIS_BLOCKER is used to prevent
+  // the associated Add_symbols task from running before the previous
+  // one has completed; it will be NULL for the first task.
+  // NEXT_BLOCKER is used to block the next input file from adding
+  // symbols.
+  Read_member(Input_objects* input_objects, Symbol_table* symtab,
+	      Layout* layout, Mapfile* mapfile,
+	      const Incremental_binary::Input_reader* input_reader,
+              Task_token* this_blocker, Task_token* next_blocker)
+    : input_objects_(input_objects), symtab_(symtab), layout_(layout),
+      mapfile_(mapfile), input_reader_(input_reader),
+      this_blocker_(this_blocker), next_blocker_(next_blocker)
+  { }
+
+  ~Read_member();
+
+  // The standard Task methods.
+
+  Task_token*
+  is_runnable();
+
+  void
+  locks(Task_locker*);
+
+  void
+  run(Workqueue*);
+
+  std::string
+  get_name() const
+  {
+    return (std::string("Read_member ") + this->input_reader_->filename());
+  }
+
+ private:
+  Input_objects* input_objects_;
+  Symbol_table* symtab_;
+  Layout* layout_;
+  Mapfile* mapfile_;
+  const Incremental_binary::Input_reader* input_reader_;
+  Task_token* this_blocker_;
+  Task_token* next_blocker_;
+};
+
+// This Task is responsible for processing an input script file that has
+// not changed since the last incremental link.
+
+class Check_script : public Task
+{
+ public:
+  Check_script(Layout* layout, Incremental_binary* ibase,
+	       unsigned int input_file_index,
+	       const Incremental_binary::Input_reader* input_reader,
+	       Task_token* this_blocker, Task_token* next_blocker)
+    : layout_(layout), ibase_(ibase), input_file_index_(input_file_index),
+      input_reader_(input_reader), this_blocker_(this_blocker),
+      next_blocker_(next_blocker)
+  {
+    this->filename_ = std::string(this->input_reader_->filename());
+  }
+
+  ~Check_script();
+
+  // The standard Task methods.
+
+  Task_token*
+  is_runnable();
+
+  void
+  locks(Task_locker*);
+
+  void
+  run(Workqueue*);
+
+  std::string
+  get_name() const
+  {
+    return (std::string("Check_script ") + this->input_reader_->filename());
+  }
+
+ private:
+  std::string filename_;
+  Layout* layout_;
+  Incremental_binary* ibase_;
+  unsigned int input_file_index_;
+  const Incremental_binary::Input_reader* input_reader_;
+  Task_token* this_blocker_;
+  Task_token* next_blocker_;
+};
+
+// This Task is responsible for processing an archive library that has
+// not changed since the last incremental link.
+
+class Check_library : public Task
+{
+ public:
+  Check_library(Symbol_table* symtab, Layout* layout,
+		Incremental_binary* ibase,
+		unsigned int input_file_index,
+		const Incremental_binary::Input_reader* input_reader,
+		Task_token* this_blocker, Task_token* next_blocker)
+    : layout_(layout), symtab_(symtab), ibase_(ibase),
+      input_file_index_(input_file_index), input_reader_(input_reader),
+      this_blocker_(this_blocker), next_blocker_(next_blocker)
+  { }
+
+  ~Check_library();
+
+  // The standard Task methods.
+
+  Task_token*
+  is_runnable();
+
+  void
+  locks(Task_locker*);
+
+  void
+  run(Workqueue*);
+
+  std::string
+  get_name() const
+  {
+    return (std::string("Check_library ") + this->input_reader_->filename());
+  }
+
+ private:
+  Layout* layout_;
+  Symbol_table* symtab_;
+  Incremental_binary* ibase_;
+  unsigned int input_file_index_;
+  const Incremental_binary::Input_reader* input_reader_;
   Task_token* this_blocker_;
   Task_token* next_blocker_;
 };

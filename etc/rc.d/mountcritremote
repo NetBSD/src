@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: mountcritremote,v 1.8 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: mountcritremote,v 1.8.56.1 2014/08/19 23:45:51 tls Exp $
 #
 
 # PROVIDE: mountcritremote
@@ -14,7 +14,7 @@ stop_cmd=":"
 
 mountcritremote_start()
 {
-	#	Mount critical filesystems that may be `remote'.
+	#	Mount critical file systems that may be `remote'.
 	#	(as specified in $critical_filesystems_remote)
 	#	This usually includes /usr.
 	#

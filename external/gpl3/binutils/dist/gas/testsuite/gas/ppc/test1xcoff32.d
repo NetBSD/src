@@ -55,6 +55,8 @@ AUX val     4 prmhsh 0 snhsh 0 typ 1 algn 2 clss 3 stb 0 snstb 0
 AUX val     0 prmhsh 0 snhsh 0 typ 0 algn 0 clss 0 stb 0 snstb 0
 \[ 36\]\(sec  0\)\(fl 0x00\)\(ty   0\)\(scl   2\) \(nx 1\) 0x00000000 esym1
 AUX val     0 prmhsh 0 snhsh 0 typ 0 algn 0 clss 0 stb 0 snstb 0
+\[ 38\]\(sec  1\)\(fl 0x00\)\(ty   0\)\(scl   3\) \(nx 1\) 0x00000000 \.text
+AUX scnlen 0x68 nreloc 7 nlnno 0
 
 
 Disassembly of section \.text:
@@ -67,7 +69,7 @@ Disassembly of section \.text:
    8:	80 63 00 00 	l       r3,0\(r3\)
    c:	80 63 00 04 	l       r3,4\(r3\)
   10:	80 63 00 04 	l       r3,4\(r3\)
-  14:	80 63 00 00 	l       r3,0\(r3\)
+  14:	80 63 00 08 	l       r3,8\(r3\)
 
 0+0018 <dubious_references_to_default_RW_csect>:
   18:	80 63 00 00 	l       r3,0\(r3\)
@@ -136,4 +138,4 @@ Disassembly of section \.data:
 
 0+008c <ignored6>:
   8c:	00 00 00 00 	\.long 0x0
-			8c: R_POS	\.crazy_table
+			8c: R_POS	\.text

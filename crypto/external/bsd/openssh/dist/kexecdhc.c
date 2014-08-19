@@ -1,5 +1,5 @@
-/*	$NetBSD: kexecdhc.c,v 1.2 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: kexecdhc.c,v 1.2 2010/09/22 05:01:29 djm Exp $ */
+/*	$NetBSD: kexecdhc.c,v 1.2.8.1 2014/08/19 23:45:24 tls Exp $	*/
+/* $OpenBSD: kexecdhc.c,v 1.4 2013/05/17 00:13:13 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2010 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexecdhc.c,v 1.2 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: kexecdhc.c,v 1.2.8.1 2014/08/19 23:45:24 tls Exp $");
 #include <sys/types.h>
 
 #include <stdio.h>
@@ -56,11 +56,8 @@ kexecdh_client(Kex *kex)
 	u_char *server_host_key_blob = NULL, *signature = NULL;
 	u_char *kbuf, *hash;
 	u_int klen, slen, sbloblen, hashlen;
-	int curve_nid;
 
-	if ((curve_nid = kex_ecdh_name_to_nid(kex->name)) == -1)
-		fatal("%s: unsupported ECDH curve \"%s\"", __func__, kex->name);
-	if ((client_key = EC_KEY_new_by_curve_name(curve_nid)) == NULL)
+	if ((client_key = EC_KEY_new_by_curve_name(kex->ec_nid)) == NULL)
 		fatal("%s: EC_KEY_new_by_curve_name failed", __func__);
 	if (EC_KEY_generate_key(client_key) != 1)
 		fatal("%s: EC_KEY_generate_key failed", __func__);
@@ -122,7 +119,7 @@ kexecdh_client(Kex *kex)
 	if (BN_bin2bn(kbuf, klen, shared_secret) == NULL)
 		fatal("%s: BN_bin2bn failed", __func__);
 	memset(kbuf, 0, klen);
-	xfree(kbuf);
+	free(kbuf);
 
 	/* calc and verify H */
 	kex_ecdh_hash(
@@ -138,14 +135,14 @@ kexecdh_client(Kex *kex)
 	    shared_secret,
 	    &hash, &hashlen
 	);
-	xfree(server_host_key_blob);
+	free(server_host_key_blob);
 	EC_POINT_clear_free(server_public);
 	EC_KEY_free(client_key);
 
 	if (key_verify(server_host_key, signature, slen, hash, hashlen) != 1)
 		fatal("key_verify failed for server_host_key");
 	key_free(server_host_key);
-	xfree(signature);
+	free(signature);
 
 	/* save session id */
 	if (kex->session_id == NULL) {

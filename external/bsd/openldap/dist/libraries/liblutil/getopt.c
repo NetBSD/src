@@ -1,10 +1,10 @@
-/*	$NetBSD: getopt.c,v 1.1.1.3 2010/12/12 15:22:08 adam Exp $	*/
+/*	$NetBSD: getopt.c,v 1.1.1.3.12.1 2014/08/19 23:52:00 tls Exp $	*/
 
 /* getopt.c -- replacement getopt(3) routines */
-/* OpenLDAP: pkg/ldap/libraries/liblutil/getopt.c,v 1.16.2.5 2010/04/13 20:23:05 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *

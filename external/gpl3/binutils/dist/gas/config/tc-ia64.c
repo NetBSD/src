@@ -1,6 +1,6 @@
 /* tc-ia64.c -- Assembler for the HP/Intel IA-64 architecture.
    Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-   2008, 2009   Free Software Foundation, Inc.
+   2008, 2009, 2011, 2012 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -114,7 +114,8 @@ enum reg_symbol
     REG_FR	= (REG_GR + 128),
     REG_AR	= (REG_FR + 128),
     REG_CR	= (REG_AR + 128),
-    REG_P	= (REG_CR + 128),
+    REG_DAHR	= (REG_CR + 128),
+    REG_P	= (REG_DAHR + 8),
     REG_BR	= (REG_P  + 64),
     REG_IP	= (REG_BR + 8),
     REG_CFM,
@@ -133,6 +134,7 @@ enum reg_symbol
     IND_PKR,
     IND_PMC,
     IND_PMD,
+    IND_DAHR,
     IND_RR,
     /* The following pseudo-registers are used for unwind directives only:  */
     REG_PSP,
@@ -539,6 +541,7 @@ indirect_reg[] =
     { "pkr",	IND_PKR },
     { "pmc",	IND_PMC },
     { "pmd",	IND_PMD },
+    { "dahr",	IND_DAHR },
     { "rr",	IND_RR },
   };
 
@@ -609,12 +612,18 @@ pseudo_func[] =
 
     /* hint constants: */
     { "pause",	PSEUDO_FUNC_CONST, { 0x0 } },
+    { "priority", PSEUDO_FUNC_CONST, { 0x1 } },
+
+    /* tf constants: */
+    { "clz",	PSEUDO_FUNC_CONST, {  32 } },
+    { "mpy",	PSEUDO_FUNC_CONST, {  33 } },
+    { "datahints",	PSEUDO_FUNC_CONST, {  34 } },
 
     /* unwind-related constants:  */
     { "svr4",	PSEUDO_FUNC_CONST,	{ ELFOSABI_NONE } },
     { "hpux",	PSEUDO_FUNC_CONST,	{ ELFOSABI_HPUX } },
     { "nt",	PSEUDO_FUNC_CONST,	{ 2 } },		/* conflicts w/ELFOSABI_NETBSD */
-    { "linux",	PSEUDO_FUNC_CONST,	{ ELFOSABI_LINUX } },
+    { "linux",	PSEUDO_FUNC_CONST,	{ ELFOSABI_GNU } },
     { "freebsd", PSEUDO_FUNC_CONST,	{ ELFOSABI_FREEBSD } },
     { "openvms", PSEUDO_FUNC_CONST,	{ ELFOSABI_OPENVMS } },
     { "nsk",	PSEUDO_FUNC_CONST,	{ ELFOSABI_NSK } },
@@ -1038,6 +1047,141 @@ ia64_cons_align (int nbytes)
       input_line_pointer = saved_input_line_pointer;
     }
 }
+
+#ifdef TE_VMS
+
+/* .vms_common section, symbol, size, alignment  */
+
+static void
+obj_elf_vms_common (int ignore ATTRIBUTE_UNUSED)
+{
+  char *sec_name;
+  char *sym_name;
+  char c;
+  offsetT size;
+  offsetT cur_size;
+  offsetT temp;
+  symbolS *symbolP;
+  segT current_seg = now_seg;
+  subsegT current_subseg = now_subseg;
+  offsetT log_align;
+
+  /* Section name.  */
+  sec_name = obj_elf_section_name ();
+  if (sec_name == NULL)
+    return;
+
+  /* Symbol name.  */
+  SKIP_WHITESPACE ();
+  if (*input_line_pointer == ',')
+    {
+      input_line_pointer++;
+      SKIP_WHITESPACE ();
+    }
+  else
+    {
+      as_bad (_("expected ',' after section name"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  sym_name = input_line_pointer;
+  c = get_symbol_end ();
+
+  if (input_line_pointer == sym_name)
+    {
+      *input_line_pointer = c;
+      as_bad (_("expected symbol name"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  symbolP = symbol_find_or_make (sym_name);
+  *input_line_pointer = c;
+
+  if ((S_IS_DEFINED (symbolP) || symbol_equated_p (symbolP))
+      && !S_IS_COMMON (symbolP))
+    {
+      as_bad (_("Ignoring attempt to re-define symbol"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  /* Symbol size.  */
+  SKIP_WHITESPACE ();
+  if (*input_line_pointer == ',')
+    {
+      input_line_pointer++;
+      SKIP_WHITESPACE ();
+    }
+  else
+    {
+      as_bad (_("expected ',' after symbol name"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  temp = get_absolute_expression ();
+  size = temp;
+  size &= ((offsetT) 2 << (stdoutput->arch_info->bits_per_address - 1)) - 1;
+  if (temp != size)
+    {
+      as_warn (_("size (%ld) out of range, ignored"), (long) temp);
+      ignore_rest_of_line ();
+      return;
+    }
+
+  /* Alignment.  */
+  SKIP_WHITESPACE ();
+  if (*input_line_pointer == ',')
+    {
+      input_line_pointer++;
+      SKIP_WHITESPACE ();
+    }
+  else
+    {
+      as_bad (_("expected ',' after symbol size"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  log_align = get_absolute_expression ();
+
+  demand_empty_rest_of_line ();
+
+  obj_elf_change_section
+    (sec_name, SHT_NOBITS,
+     SHF_ALLOC | SHF_WRITE | SHF_IA_64_VMS_OVERLAID | SHF_IA_64_VMS_GLOBAL,
+     0, NULL, 1, 0);
+
+  S_SET_VALUE (symbolP, 0);
+  S_SET_SIZE (symbolP, size);
+  S_SET_EXTERNAL (symbolP);
+  S_SET_SEGMENT (symbolP, now_seg);
+
+  symbol_get_bfdsym (symbolP)->flags |= BSF_OBJECT;
+
+  record_alignment (now_seg, log_align);
+
+  cur_size = bfd_section_size (stdoutput, now_seg);
+  if ((int) size > cur_size)
+    {
+      char *pfrag
+        = frag_var (rs_fill, 1, 1, (relax_substateT)0, NULL,
+                    (valueT)size - (valueT)cur_size, NULL);
+      *pfrag = 0;
+      bfd_section_size (stdoutput, now_seg) = size;
+    }
+
+  /* Switch back to current segment.  */
+  subseg_set (current_seg, current_subseg);
+
+#ifdef md_elf_section_change_hook
+  md_elf_section_change_hook ();
+#endif
+}
+
+#endif /* TE_VMS */
 
 /* Output COUNT bytes to a memory location.  */
 static char *vbyte_mem_ptr = NULL;
@@ -5232,6 +5376,10 @@ const pseudo_typeS md_pseudo_table[] =
     {"4byte", stmt_cons_ua, 4},
     {"8byte", stmt_cons_ua, 8},
 
+#ifdef TE_VMS
+    {"vms_common", obj_elf_vms_common, 0},
+#endif
+
     { NULL, 0, 0 }
   };
 
@@ -5428,6 +5576,12 @@ operand_match (const struct ia64_opcode *idesc, int res_index, expressionS *e)
 	return OPERAND_MATCH;
       break;
 
+    case IA64_OPND_DAHR3:
+      if (e->X_op == O_register && e->X_add_number >= REG_DAHR
+	  && e->X_add_number < REG_DAHR + 8)
+	return OPERAND_MATCH;
+      break;
+
     case IA64_OPND_F1:
     case IA64_OPND_F2:
     case IA64_OPND_F3:
@@ -5472,6 +5626,7 @@ operand_match (const struct ia64_opcode *idesc, int res_index, expressionS *e)
     case IA64_OPND_PKR_R3:
     case IA64_OPND_PMC_R3:
     case IA64_OPND_PMD_R3:
+    case IA64_OPND_DAHR_R3:
     case IA64_OPND_RR_R3:
       if (e->X_op == O_index && e->X_op_symbol
 	  && (S_GET_VALUE (e->X_op_symbol) - IND_CPUID
@@ -5592,6 +5747,8 @@ operand_match (const struct ia64_opcode *idesc, int res_index, expressionS *e)
     case IA64_OPND_IMMU2:
     case IA64_OPND_IMMU7a:
     case IA64_OPND_IMMU7b:
+    case IA64_OPND_IMMU16:
+    case IA64_OPND_IMMU19:
     case IA64_OPND_IMMU21:
     case IA64_OPND_IMMU24:
     case IA64_OPND_MBTYPE4:
@@ -5847,6 +6004,39 @@ operand_match (const struct ia64_opcode *idesc, int res_index, expressionS *e)
       fix->is_pcrel = 0;
       ++CURR_SLOT.num_fixups;
       return OPERAND_MATCH;
+
+    case IA64_OPND_STRD5b:
+      if (e->X_op == O_constant)
+	{
+	  /* 5-bit signed scaled by 64 */
+	  if ((e->X_add_number <=  	( 0xf  << 6 )) 
+	       && (e->X_add_number >=  -( 0x10 << 6 )))
+	    {
+	      
+	      /* Must be a multiple of 64 */
+	      if ((e->X_add_number & 0x3f) != 0)
+	        as_warn (_("stride must be a multiple of 64; lower 6 bits ignored"));
+
+	      e->X_add_number &= ~ 0x3f;
+	      return OPERAND_MATCH;
+	    }
+	  else
+	    return OPERAND_OUT_OF_RANGE;
+	}
+      break;
+    case IA64_OPND_CNT6a:
+      if (e->X_op == O_constant)
+	{
+	  /* 6-bit unsigned biased by 1 -- count 0 is meaningless */
+	  if ((e->X_add_number     <=   64) 
+	       && (e->X_add_number > 0) )
+	    {
+	      return OPERAND_MATCH;
+	    }
+	  else
+	    return OPERAND_OUT_OF_RANGE;
+	}
+      break;
 
     default:
       break;
@@ -6298,6 +6488,10 @@ build_insn (struct slot *slot, bfd_vma *insnp)
 	  val -= REG_CR;
 	  break;
 
+	case IA64_OPND_DAHR3:
+	  val -= REG_DAHR;
+	  break;
+
 	case IA64_OPND_F1:
 	case IA64_OPND_F2:
 	case IA64_OPND_F3:
@@ -6324,6 +6518,7 @@ build_insn (struct slot *slot, bfd_vma *insnp)
 	case IA64_OPND_PKR_R3:
 	case IA64_OPND_PMC_R3:
 	case IA64_OPND_PMD_R3:
+	case IA64_OPND_DAHR_R3:
 	case IA64_OPND_RR_R3:
 	  val -= REG_GR;
 	  break;
@@ -7001,7 +7196,9 @@ IA-64 options:\n\
 			  unwind directive check (default -munwind-check=warning)\n\
   -mhint.b=[ok|warning|error]\n\
 			  hint.b check (default -mhint.b=error)\n\
-  -x | -xexplicit	  turn on dependency violation checking\n\
+  -x | -xexplicit	  turn on dependency violation checking\n"), stream);
+  /* Note for translators: "automagically" can be translated as "automatically" here.  */
+  fputs (_("\
   -xauto		  automagically remove dependency violations (default)\n\
   -xnone		  turn off dependency violation checking\n\
   -xdebug		  debug dependency violation checker\n\
@@ -7293,6 +7490,9 @@ md_begin (void)
   declare_register_set ("cr", 128, REG_CR);
   for (i = 0; i < NELEMS (cr); ++i)
     declare_register (cr[i].name, REG_CR + cr[i].regnum);
+
+  /* dahr registers:  */
+  declare_register_set ("dahr", 8, REG_DAHR);
 
   declare_register ("ip", REG_IP);
   declare_register ("cfm", REG_CFM);
@@ -7644,9 +7844,9 @@ ia64_frob_label (struct symbol *sym)
 int
 ia64_frob_symbol (struct symbol *sym)
 {
-  if ((S_GET_SEGMENT (sym) == &bfd_und_section && ! symbol_used_p (sym) &&
+  if ((S_GET_SEGMENT (sym) == bfd_und_section_ptr && ! symbol_used_p (sym) &&
        ELF_ST_VISIBILITY (S_GET_OTHER (sym)) == STV_DEFAULT)
-      || (S_GET_SEGMENT (sym) == &bfd_abs_section
+      || (S_GET_SEGMENT (sym) == bfd_abs_section_ptr
 	  && ! S_IS_EXTERNAL (sym)))
     return 1;
   return 0;
@@ -8547,6 +8747,22 @@ dep->name, idesc->name, (rsrc_write?"write":"read"), note)
 	}
       break;
 
+    case IA64_RS_DAHR:
+      if (note == 0)
+	{
+	  if (idesc->operands[!rsrc_write] == IA64_OPND_DAHR3)
+	    {
+	      specs[count] = tmpl;
+	      specs[count++].index =
+		CURR_SLOT.opnd[!rsrc_write].X_add_number - REG_DAHR;
+	    }
+	}
+      else
+	{
+	  UNHANDLED;
+	}
+      break;
+
     case IA64_RS_FR:
     case IA64_RS_FRb:
       if (note != 1)
@@ -8621,6 +8837,7 @@ dep->name, idesc->name, (rsrc_write?"write":"read"), note)
 		      || idesc->operands[i] == IA64_OPND_PKR_R3
 		      || idesc->operands[i] == IA64_OPND_PMC_R3
 		      || idesc->operands[i] == IA64_OPND_PMD_R3
+		      || idesc->operands[i] == IA64_OPND_DAHR_R3
 		      || idesc->operands[i] == IA64_OPND_RR_R3
 		      || ((i >= idesc->num_outputs)
 			  && (idesc->operands[i] == IA64_OPND_R1
@@ -11286,7 +11503,7 @@ md_apply_fix (fixS *fix, valueT *valP, segT seg ATTRIBUTE_UNUSED)
     }
   if (fix->fx_addsy)
     {
-      switch (fix->fx_r_type)
+      switch ((unsigned) fix->fx_r_type)
 	{
 	case BFD_RELOC_UNUSED:
 	  /* This must be a TAG13 or TAG13b operand.  There are no external

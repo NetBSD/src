@@ -1,48 +1,1163 @@
-2012-07-02  Release Manager
+2014-05-22  Release Manager
 
-	* GCC 4.5.4 released.
+	* GCC 4.8.3 released.
 
-2011-04-28  Release Manager
+2014-04-04  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
 
-	* GCC 4.5.3 released.
+	Backport from mainline
+	2013-11-18  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
 
-2011-04-26  Jakub Jelinek  <jakub@redhat.com>
+	* lex.c (search_line_fast): Correct for little endian.
 
-	Backported from mainline
-	2011-04-24  Jakub Jelinek  <jakub@redhat.com>
+2014-03-06  Jakub Jelinek  <jakub@redhat.com>
+
+	Backport from mainline
+	2014-02-19  Jakub Jelinek  <jakub@redhat.com>
+
+	PR preprocessor/58844
+	* macro.c (enter_macro_context): Only push
+	macro_real_token_count (macro) tokens rather than
+	macro->count tokens, regardless of
+	CPP_OPTION (pfile, track-macro-expansion).
+
+	2014-02-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR preprocessor/56824
+	* line-map.c (linemap_compare_locations): Look through adhoc locations
+	for both l0 and l1.
+
+2014-03-06  Jakub Jelinek  <jakub@redhat.com>
+
+	PR preprocessor/60400
+	Backport from mainline
+	2013-06-24  Dehao Chen  <dehao@google.com>
+
+	* files.c (_cpp_stack_include): Fix the highest_location when header
+	file is guarded by #ifndef and is included twice.
+
+2013-10-16  Release Manager
+
+	* GCC 4.8.2 released.
+
+2013-05-31  Release Manager
+
+	* GCC 4.8.1 released.
+
+2013-04-03  Sebastian Huber  <sebastian.huber@embedded-brains.de>
+
+	PR target/56771
+	* configure.ac: Require 64-bit int for arm*-*-rtems*.
+	* configure: Regenerate.
+
+2013-03-22  Release Manager
+
+	* GCC 4.8.0 released.
+
+2013-03-06  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/56461
+	* internal.h (struct cpp_buffer): Add to_free field.
+	(_cpp_pop_file_buffer): Add third argument.
+	* files.c (_cpp_stack_file): Set buffer->to_free.
+	(_cpp_pop_file_buffer): Add to_free argument.  Free to_free
+	if non-NULL, and if equal to file->buffer_start, also clear
+	file->buffer{,_start,_valid}.
+	* directives.c (_cpp_pop_buffer): Pass buffer->to_free
+	to _cpp_pop_file_buffer.
+
+2013-03-01  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/56461
+	* files.c (_cpp_save_file_entries): Free result at the end.
+	* pch.c (cpp_string_free): New function.
+	(cpp_save_state): Use it in htab_create call.
+	(cpp_write_pch_deps): Free ss->defs.  Destroy ss->definedhash.
+
+2013-02-28  Jakub Jelinek  <jakub@redhat.com>
+
+	* files.c (_cpp_find_file): If returning early, before storing
+	something to *hash_slot and *hash_slot is NULL, call htab_clear_slot
+	on it.  Access *hash_slot using void * type rather than
+	struct file_hash_entry * to avoid aliasing issues.
+
+	* configure.ac: Don't define ENABLE_CHECKING whenever
+	--enable-checking is seen, instead use similar --enable-checking=yes
+	vs. --enable-checking=release default as gcc/ subdir has and
+	define ENABLE_CHECKING if ENABLE_CHECKING is defined in gcc/.
+	Define ENABLE_VALGRIND_CHECKING if requested.
+	* lex.c (new_buff): If ENABLE_VALGRIND_CHECKING, put _cpp_buff
+	struct first in the allocated buffer and result->base after it.
+	(_cpp_free_buff): If ENABLE_VALGRIND_CHECKING, free buff itself
+	instead of buff->base.
+	* config.in: Regenerated.
+	* configure: Regenerated.
+
+2013-02-13  Ed Smith-Rowland  <3dw4rd@verizon.net>
+
+	PR c++/55582
+	* libcpp/lex.c (lex_raw_string): Allow string literal with suffix
+	beginning with 's' to be parsed as a C++11 user-defined literal.
+
+2013-01-14  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	Update copyright years.
+
+2013-01-04  Paolo Carlini  <paolo.carlini@oracle.com>
+
+	PR c++/54526 (again)
+	* lex.c (_cpp_lex_direct): In C++11 mode, implement 2.5 p3, bullet 2.
+
+2013-01-03  Marc Glisse  <marc.glisse@inria.fr>
+
+	PR bootstrap/50177
+	* line-map.c (get_combined_adhoc_loc): Cast from extern "C" type.
+	(new_linemap): Likewise.
+	(linemap_enter_macro): Likewise.
+
+2012-12-03  Jakub Jelinek  <jakub@redhat.com>
+
+	PR bootstrap/55380
+	PR other/54691
+	* files.c (read_file_guts): Allocate extra 16 bytes instead of
+	1 byte at the end of buf.  Pass size + 16 instead of size
+	to _cpp_convert_input.
+	* charset.c (_cpp_convert_input): Reallocate if there aren't
+	at least 16 bytes beyond to.len in the buffer.  Clear 16 bytes
+	at to.text + to.len.
+
+2012-11-21  Steve Ellcey  <sellcey@mips.com>
+
+	PR pch/55399
+	* files.c (pch_open_file): Fix check for implicit_preinclude.
+
+2012-11-16  Simon Baldwin  <simonb@google.com>
+
+	* include/cpplib.h (struct cpp_options): Add canonical_system_headers.
+	* files.c (find_file_in_dir): Call maybe_shorter_path() only if
+	canonical_system_headers is set.
+	* init.c (cpp_create_reader): Initialize canonical_system_headers.
+	* configure.ac: Add new --enable-canonical-system-headers.
+	* configure: Regenerate.
+	* config.in: Regenerate.
+
+2012-11-09  Ed Smith-Rowland  <3dw4rd@verizon.net>
+
+	PR c++/54413
+	* include/cpplib.h (cpp_interpret_float_suffix): Add cpp_reader* arg.
+	(cpp_interpret_int_suffix): Add cpp_reader* arg.
+	* init.c (cpp_create_reader): Iitialize new flags.
+	* expr.c (interpret_float_suffix): Use new flags.
+	(cpp_interpret_float_suffix): Add cpp_reader* arg.
+	(interpret_int_suffix): Use new flags.
+	(cpp_interpret_int_suffix): Add cpp_reader* arg.
+	(cpp_classify_number): Adjust calls to interpret_x_suffix.
+
+2012-10-23  Ian Bolton  <ian.bolton@arm.com>
+	    Jim MacArthur  <jim.macarthur@arm.com>
+	    Marcus Shawcroft  <marcus.shawcroft@arm.com>
+	    Nigel Stephens  <nigel.stephens@arm.com>
+	    Ramana Radhakrishnan  <ramana.radhakrishnan@arm.com>
+	    Richard Earnshaw  <rearnsha@arm.com>
+	    Sofiane Naci  <sofiane.naci@arm.com>
+	    Stephen Thomas  <stephen.thomas@arm.com>
+	    Tejas Belagod  <tejas.belagod@arm.com>
+	    Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* configure.ac: Enable AArch64.
+	* configure: Regenerate.
+
+2012-10-23  Joseph Myers  <joseph@codesourcery.com>
+
+	* files.c (struct _cpp_file): Add implicit_preinclude.
+	(pch_open_file): Allow a previously opened implicitly included
+	file.
+	(_cpp_find_file): Add implicit_preinclude argument.  Free file and
+	do not call open_file_failed if implicit_preinclude.  Store
+	implicit_preinclude value.
+	(_cpp_stack_include, _cpp_fake_include, _cpp_compare_file_date):
+	Update calls to _cpp_find_file.
+	(_cpp_stack_include): Handle IT_DEFAULT.
+	(cpp_push_default_include): New.
+	* include/cpplib.h (cpp_push_default_include): Declare.
+	* init.c (cpp_read_main_file): Update call to _cpp_find_file.
+	* internal.h (enum include_type): Add IT_DEFAULT.
+	(_cpp_find_file): Update prototype.
+
+2012-10-15  Tobias Burnus  <burnus@net-b.de>
+
+	* files.c (read_file_guts, _cpp_save_file_entries): Free memory
+	before returning.
+	* lex.c (warn_about_normalization): Ditto.
+	* mkdeps.c (deps_save): Ditto.
+	* pch.c (cpp_valid_state): Ditto.
+
+2012-10-04  Florian Weimer  <fweimer@redhat.com>
+
+	* directives.c (do_pragma_warning_or_error): New.
+	(do_pragma_warning): New.
+	(do_pragma_error): New.
+	(_cpp_init_internal_pragmas): Register new pragmas.
+
+2012-09-25  Dehao Chen  <dehao@google.com>
+
+	PR middle-end/54704
+	* line-map.c (location_adhoc_data_hash): Fix the hash function.
+
+2012-09-25  Dehao Chen  <dehao@google.com>
+
+	PR middle-end/54645
+	* include/line-map.h (location_adhoc_data): Move location_adhoc_data
+	into GC.
+	(location_adhoc_data_map): Likewise.
+	(line_maps): Likewise.
+	(rebuild_location_adhoc_htab): New Function.
+	* line-map.c (+rebuild_location_adhoc_htab): new Funcion.
+	(get_combined_adhoc_loc): Move location_adhoc_data into GC.
+	(location_adhoc_data_fini): Likewise.
+	(linemap_init): Likewise.
+	(location_adhoc_data_init): Remove Function.
+
+2012-09-19  Dehao Chen  <dehao@google.com>
+
+	* include/line-map.h (MAX_SOURCE_LOCATION): New value.
+	(location_adhoc_data_fini): New.
+	(get_combined_adhoc_loc): New.
+	(get_data_from_adhoc_loc): New.
+	(get_location_from_adhoc_loc): New.
+	(location_adhoc_data_map): New.
+	(COMBINE_LOCATION_DATA): New.
+	(IS_ADHOC_LOC): New.
+	(expanded_location): New field.
+	(line_maps): New field.
+	* line-map.c (location_adhoc_data): New.
+	(location_adhoc_data_hash): New.
+	(location_adhoc_data_eq): New.
+	(location_adhoc_data_update): New.
+	(get_combined_adhoc_loc): New.
+	(get_data_from_adhoc_loc): New.
+	(get_location_from_adhoc_loc): New.
+	(location_adhoc_data_init): New.
+	(location_adhoc_data_fini): New.
+	(linemap_init): Initialize location_adhoc_data.
+	(linemap_lookup): Change to use new location.
+	(linemap_ordinary_map_lookup): Likewise.
+	(linemap_macro_map_lookup): Likewise.
+	(linemap_macro_map_loc_to_def_point): Likewise.
+	(linemap_macro_map_loc_unwind_toward_spel): Likewise.
+	(linemap_get_expansion_line): Likewise.
+	(linemap_get_expansion_filename): Likewise.
+	(linemap_location_in_system_header_p): Likewise.
+	(linemap_location_from_macro_expansion_p): Likewise.
+	(linemap_macro_loc_to_spelling_point): Likewise.
+	(linemap_macro_loc_to_def_point): Likewise.
+	(linemap_macro_loc_to_exp_point): Likewise.
+	(linemap_resolve_location): Likewise.
+	(linemap_unwind_toward_expansion): Likewise.
+	(linemap_unwind_to_first_non_reserved_loc): Likewise.
+	(linemap_expand_location): Likewise.
+	(linemap_dump_location): Likewise.
+	(linemap_line_start): Likewise.
+
+2012-05-25  Dodji Seketeli  <dodji@redhat.com>
+
+	PR preprocessor/53469
+	* directives.c (do_pragma): Use the virtual location for the
+	pragma token, instead of its spelling location.
+
+2012-08-14   Diego Novillo  <dnovillo@google.com>
+
+	Merge from cxx-conversion branch.  Configury.
+
+	* Makefile.in: Remove all handlers of ENABLE_BUILD_WITH_CXX.
+	* configure.ac: Likewise.
+	* configure: Regenerate.
+
+2012-08-14   Lawrence Crowl  <crowl@google.com>
+
+	Merge from cxx-conversion branch.  New C++ hash table.
+
+	* include/symtab.h (typedef struct ht hash_table): Change the typedef
+	name to cpp_hash_table.  Update all users of the typedef.
+
+2012-07-30  Laurynas Biveinis  <laurynas.biveinis@gmail.com>
+
+	* include/line-map.h (line_map_macro): Use the "atomic" GTY option
+	for the macro_locations field.
+
+2011-06-19  Uros Bizjak  <ubizjak@gmail.com>
+
+	* lex.c (search_line_sse42): Use __builtin_ia32_loaddqu and
+	__builtin_ia32_pcmpestri128 instead of asm.
+
+2012-06-04  Dimitrios Apostolou <jimis@gmx.net>
+
+	* line-map.c (linemap_enter_macro): Don't zero max_column_hint in
+	every macro. This improves performance by reducing the number of
+	reallocations when track-macro-expansion is on.
+
+2012-06-04  Dodji Seketeli  <dodji@redhat.com>
+
+	PR preprocessor/53463
+	* line-map.c (linemap_location_in_system_header_p): For built-in
+	macro tokens, check the first expansion point location that is not
+	for a token coming from a built-in macro.
+
+2012-05-29  Joseph Myers  <joseph@codesourcery.com>
+
+	* directives.c: Fix typos.
+	* include/line-map.h: Fix typos.
+	* line-map.c: Fix typos.
+	* macro.c: Fix typos.
+
+2012-05-25  Dodji Seketeli  <dodji@redhat.com>
+
+	PR bootstrap/53459
+	* lex.c (search_line_fast): Avoid unused local typedefs to simulate
+	a static assertion.
+
+2012-05-29  Dodji Seketeli  <dodji@redhat.com>
+
+	PR preprocessor/53229
+	* internal.h (cpp_reader::set_invocation_location): Remove.
+	(cpp_reader::about_to_expand_macro_p): New member flag.
+	* directives.c (do_pragma):  Remove Kludge as
+	pfile->set_invocation_location is no more.
+	* macro.c (cpp_get_token_1): Do away with the use of
+	cpp_reader::set_invocation_location.  Just collect the macro
+	expansion point when we are about to expand the top-most macro.
+	Do not override cpp_reader::about_to_expand_macro_p.
+	This fixes gcc.dg/cpp/paste12.c by making get_token_no_padding
+	properly handle locations of expansion points.
+	(cpp_get_token_with_location): Adjust, as
+	cpp_reader::set_invocation_location is no more.
+	(paste_tokens): Take a virtual location parameter for
+	the LHS of the pasting operator.  Use it in diagnostics.  Update
+	comments.
+	(paste_all_tokens): Tighten the assert.  Propagate the location of
+	the expansion point when no virtual locations are available.
+	Pass the virtual location to paste_tokens.
+	(in_macro_expansion_p): New static function.
+	(enter_macro_context): Set the cpp_reader::about_to_expand_macro_p
+	flag until we really start expanding the macro.
+
+2012-05-16  Dodji Seketeli  <dodji@redhat.com>
+
+	PR preprocessor/7263
+	* include/cpplib.h (cpp_classify_number): Take a location
+	parameter.
+	* expr.c (SYNTAX_ERROR_AT, SYNTAX_ERROR2_AT): New diagnostic
+	macros that take a location parameter.
+	(cpp_classify_number): Take a (virtual) location parameter.  Use
+	it for diagnostics.  Adjust comments.
+	(eval_token): Take a location parameter.  Pass it to
+	cpp_classify_number and to diagnostic routines.
+	(_cpp_parse_expr): Use virtual locations of tokens when parsing
+	expressions.  Pass a virtual location to eval_token and to
+	diagnostic routines.
+
+2012-05-10  Tristan Gingold  <gingold@adacore.com>
+
+	* expr.c (interpret_float_suffix): Add a guard.
+
+2012-05-02  Dodji Seketeli  <dodji@redhat.com>
+
+	Properly initialize cpp_context in destringize_and_run
+	* directives.c (destringize_and_run): Properly initialize the new
+	context.
+	* macro.c (_cpp_pop_context): Assert that we shouldn't try to pop
+	the initial base context, which has the same life time as the
+	current instance of cpp_file.
+
+2012-04-30  Manuel López-Ibáñez  <manu@gcc.gnu.org>
+	    Dodji Seketeli  <dodji@seketeli.org>
+
+	PR c++/52974
+	* libcpp/files.c (maybe_shorter_path): New.
+	(find_file_in_dir): Use it.
+
+2012-04-30  Dodji Seketeli  <dodji@redhat.com>
+
+	Switch -ftrack-macro-expansion=2 on by default.
+	* init.c (cpp_create_reader): Switch -ftrack-macro-expansion=2 on
+	by default.  Add comments.
+
+	Strip "<built-in>" loc from displayed expansion context
+	* include/line-map.h (linemap_unwind_toward_expansion): Fix typo
+	in comment.
+	(linemap_unwind_to_first_non_reserved_loc): Declare new function.
+	* line-map.c (linemap_unwind_to_first_non_reserved_loc): Define
+	new function.
+
+	Fix expansion point loc for macro-like tokens
+	* macro.c (macro_of_context): New static function.
+	(_cpp_push_token_context, push_extended_tokens_context): If the
+	macro argument is NULL, it means we are continuing the expansion
+	of the current macro, if any.  Update comments.
+	(_cpp_pop_context): Re-enable expansion of the macro only when we
+	are really out of the context of the current expansion.
+
+	Fix token pasting with -ftrack-macro-expansion
+	* macro.c (paste_all_tokens): Put the token resulting from pasting
+	into an extended token context with -ftrack-macro-location is in
+	effect.
+
+	Fix cpp_sys_macro_p with -ftrack-macro-expansion
+	* macro.c (cpp_sys_macro_p):  Support -ftrack-macro-expansion.
+
+2012-04-29  Dodji Seketeli  <dodji@redhat.com>
+
+	* lex.c (lex_raw_string): Change C++ style comments into C style
+	comments.
+    	(lex_string): Likewise.
+
+2012-04-27   Ollie Wild  <aaw@google.com>
+
+	* include/cpplib.h (struct cpp_options): Add new field,
+	warn_literal_suffix.
+	(CPP_W_LITERAL_SUFFIX): New enum.
+	* init.c (cpp_create_reader): Default initialization of
+	warn_literal_suffix.
+	* lex.c (lex_raw_string): Treat user-defined literals which don't
+	begin with '_' as separate tokens and produce a warning.
+	(lex_string): Ditto.
+
+2012-04-26  Manuel López-Ibáñez  <manu@gcc.gnu.org>
+
+	* line-map.c (linemap_resolve_location): Synchronize comments with
+	those in line-map.h.
+	* include/line-map.h (linemap_resolve_location): Fix spelling in
+	comment.
+
+2012-03-22  Richard Earnshaw  <rearnsha@arm.com>
+
+	* lex.c (search_line_fast): Provide Neon-optimized version for ARM.
+
+2012-03-14  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* lex.c: Remove Solaris 8 reference.
+
+2012-02-14  Walter Lee  <walt@tilera.com>
+
+	* configure.ac: Require 64-bit hwint for tilegx and tilepro.
+	* configure: Regenerate.
+
+2012-01-09  Richard Guenther  <rguenther@suse.de>
+
+	* macro.c (_cpp_builtin_macro_text): Remove unused variable map.
+
+2012-01-09  Gary Funck  <gary@intrepid.com>
+
+	PR preprocessor/33919
+	* files.c (_cpp_get_file_name): New. Implement file name
+	access function.
+	* internal.h (_cpp_get_file_name): New prototype.
+	* macro.c (_cpp_builtin_macro_text): Call _cpp_get_file_name()
+	to use pfile->main_file in lieu of traversing INCLUDED_FROM chain.
+
+2012-01-03  Olivier Hainque  <hainque@adacore.com>
+
+	* system.h: Prior to #define, #undef fopen and freopen unconditionally.
+
+2011-12-20  Joseph Myers  <joseph@codesourcery.com>
+
+	* include/cpplib.h (CLK_GNUC1X): Change to CLK_GNUC11.
+	(CLK_STDC1X): Change to CLK_STDC11.
+	* init.c (lang_defaults): Update comments.
+	(cpp_init_builtins): Update language tests.  Use 201112L for C11
+	__STDC_VERSION__.
+
+2011-12-20  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* configure: Regenerate.
+
+2011-12-19  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* configure: Regenerate.
+
+2011-12-07  Jakub Jelinek  <jakub@redhat.com>
+
+	PR bootstrap/50237
+	* internal.h (_cpp_init_lexer): New prototype.
+	* init.c (init_library): Call it.
+	* lex.c (init_vectorized_lexer): Remove constructor attribute,
+	add inline keyword.
+	(HAVE_init_vectorized_lexer): Define.
+	(_cpp_init_lexer): New function.
+
+2011-12-03  Dodji Seketeli  <dodji@redhat.com>
+
+	* macro.c (tokens_buff_remove_last_token)
+	(tokens_buff_put_token_to): Add an 'inline' function specifier to
+	the prototype.
+
+2011-11-22   Diego Novillo  <dnovillo@google.com>
+
+	* include/line-map.h (linemap_dump): Declare.
+	(line_table_dump): Declare.
+	* line-map.c (linemap_dump): New.
+	(line_table_dump): New.
+
+2011-11-21  Ed Smith-Rowland  <3dw4rd@verizon.net>
+
+	PR c++/50958
+	* expr.c (cpp_userdef_char_remove_type): Fix typo.
+
+2011-11-03  Michael Matz  <matz@suse.de>
+
+	PR bootstrap/50857
+	* configure.ac: Check for -fno-exceptions -fno-rtti.
+	* configure: Regenerate.
+	* Makefile.in (NOEXCEPTION_FLAGS): New flag.
+	(ALL_CXXFLAGS): Use it.
+
+2011-11-02  Paolo Carlini  <paolo.carlini@oracle.com>
+
+	* internal.h (uxstrdup, ustrchr): Return const unsigned char *.
+
+2011-11-02  Jason Merrill  <jason@redhat.com>
+
+	PR c++/50810
+	* configure.ac: Add -Wno-narrowing to warning options.
+
+2011-10-31  Jason Merrill  <jason@redhat.com>
+
+	PR libstdc++/1773
+	* init.c (cpp_init_builtins): Set __cplusplus for C++11.
+
+	PR c++/50920
+	* include/cpplib.h (enum c_lang): Rename CLK_CXX0X to CLK_CXX11,
+	CLK_GNUCXX0X to CLK_GNUCXX11.
+
+2011-10-26  Ed Smith-Rowland  <3dw4rd@verizon.net>
+
+	Implement C++11 user-defined literals.
+	* expr.c: (cpp_interpret_float_suffix, cpp_interpret_int_suffix,
+	cpp_userdef_string_remove_type, cpp_userdef_string_add_type,
+	cpp_userdef_char_remove_type, cpp_userdef_char_add_type,
+	cpp_userdef_string_p, cpp_userdef_char_p, cpp_get_userdef_suffix): New.
+	(cpp_classify_number): Classify unrecognized tokens as user-defined
+	literals.
+	* include/cpplib.h: Add new tokens for user-defined literals.
+	* init.c: Add new preprocessor flag (cxx11).
+	* lex.c: (lex_string, lex_raw_string): Handle user-defined literals
+	including concatenation and promotion with suffixes.
+
+2011-10-24  Dodji Seketeli  <dodji@redhat.com>
+
+	* line-map.c (linemap_macro_map_lookup): Fix logic.
+
+2011-10-24  Dodji Seketeli  <dodji@redhat.com>
+
+	* include/line-map.h (linemap_expand_location): Take a line table
+	parameter.  Update comment.
+	(linemap_resolve_location): Update comment.
+	(linemap_expand_location_full): Remove.
+	* line-map.c (linemap_resolve_location):  Handle reserved
+	locations; return a NULL map in those cases.
+	(linemap_expand_location): If location is reserved, return a
+	zeroed expanded location.  Update comment.  Take a line table to
+	assert that the function takes non-virtual locations only.
+	(linemap_expand_location_full): remove.
+	(linemap_dump_location): Handle the fact that
+	linemap_resolve_location can return NULL line maps when the
+	location resolves to a reserved location.
+
+	* line-map.c (linemap_macro_map_lookup): Fix logic.
+
+2011-10-22  Dodji Seketeli  <dodji@redhat.com>
+
+	PR bootstrap/50778
+	* include/internal.h (_cpp_remaining_tokens_num_in_context): Take the
+	context to act upon.
+	* lex.c (_cpp_remaining_tokens_num_in_context): Likewise.  Update
+	comment.
+	(cpp_token_from_context_at): Likewise.
+	(cpp_peek_token): Use the context to peek tokens from.
+
+2011-10-20  Dodji Seketeli  <dodji@redhat.com>
+
+	PR bootstrap/50801
+	* lex.c (_cpp_remaining_tokens_num_in_context): Fix computation of
+	number of tokens.
+
+2011-10-18  Dodji Seketeli  <dodji@redhat.com>
+
+	PR bootstrap/50760
+	* include/line-map.h (struct linemap_stats): Change the type of
+    	the members from size_t to long.
+	* macro.c (macro_arg_token_iter_init): Unconditionally initialize
+    	iter->location_ptr.
+
+2011-10-17  Dodji Seketeli  <dodji@redhat.com>
+
+	* line-map.c (linemap_macro_map_loc_to_exp_point): Avoid setting a
+    	variable without using it if ENABLE_CHECKING is not defined.  Mark
+    	the LOCATION parameter as being unused.
+
+2011-10-15  Tom Tromey  <tromey@redhat.com>
+	    Dodji Seketeli  <dodji@redhat.com>
+
+	* include/line-map.h (struct line_maps::alloced_size_for_request):
+	New member.
+	* line-map.c (new_linemap): Use set->alloced_size_for_request to
+	get the actual allocated size of line maps.
+
+2011-10-15  Tom Tromey  <tromey@redhat.com>
+	    Dodji Seketeli  <dodji@redhat.com>
+
+	* line-map.h (struct linemap_stats): Declare new struct.
+	(linemap_get_statistics): Declare ...
+	* line-map.c (linemap_get_statistics):  ... new function.
+	* macro.c (num_expanded_macros_counter, num_macro_tokens_counter):
+	Declare new counters.
+	(enter_macro_context, replace_args): Update
+	num_macro_tokens_counter.
+	(cpp_get_token_1): Update num_expanded_macros_counter.
+
+2011-10-15  Tom Tromey  <tromey@redhat.com>
+	    Dodji Seketeli  <dodji@redhat.com>
+
+	* include/cpplib.h (struct cpp_options)<debug>: New struct member.
+	* include/line-map.h (linemap_dump_location): Declare ...
+	* line-map.c (linemap_dump_location): ... new function.
+
+2011-10-15  Tom Tromey  <tromey@redhat.com>
+	    Dodji Seketeli  <dodji@redhat.com>
+
+	* include/cpplib.h (struct cpp_options)<track_macro_expansion>:
+	New option.
+	* internal.h (struct macro_context): New struct.
+	(enum context_tokens_kind): New enum.
+	(struct cpp_context)<tokens_kind>: New member of type enum
+	context_tokens_kind.
+	(struct cpp_context)<macro>: Remove this.  Replace it with an enum
+	of macro and  macro_context.
+	(struct cpp_context)<direct_p>: Remove.
+	(_cpp_remaining_tokens_num_in_context): Declare new function.
+	* directives.c (destringize_and_run): Adjust.
+	* lex.c (_cpp_remaining_tokens_num_in_context)
+	(_cpp_token_from_context_at): Define new functions
+	(cpp_peek_token): Use them.
+	* init.c (cpp_create_reader): Initialize the base context to zero.
+	(_cpp_token_from_context_at): Define new static function.
+	(cpp_peek_token): Use new _cpp_remaining_tokens_num_in_context and
+	_cpp_token_from_context_at.
+	* macro.c (struct macro_arg)<virt_locs, expanded_virt_locs>: New
+	members.
+	(enum macro_arg_token_kind): New enum.
+	(struct macro_arg_token_iter): New struct.
+	(maybe_adjust_loc_for_trad_cpp, push_extended_tokens_context)
+	(alloc_expanded_arg_mem, ensure_expanded_arg_room)
+	(delete_macro_args, set_arg_token, get_arg_token_location)
+	(arg_token_ptr_at, macro_arg_token_iter_init)
+	(macro_arg_token_iter_get_token)
+	(macro_arg_token_iter_get_location, macro_arg_token_iter_forward)
+	(expanded_token_index, tokens_buff_new, tokens_buff_count)
+	(tokens_buff_last_token_ptr, tokens_buff_put_token_to)
+	(tokens_buff_add_token, tokens_buff_remove_last_token)
+	(reached_end_of_context, consume_next_token_from_context): New
+	static functions.
+	(cpp_get_token_1): New static function. Split and extended from
+	cpp_get_token.  Use reached_end_of_context and
+	consume_next_token_from_context.  Unify its return point.  Move
+	the location tweaking from cpp_get_token_with_location in here.
+	(cpp_get_token): Use cpp_get_token_1
+	(stringify_arg): Use the new arg_token_at.
+	(paste_all_tokens): Support tokens coming from extended tokens
+	contexts.
+	(collect_args): Return the number of collected arguments, by
+	parameter.  Store virtual locations of tokens that constitute the
+	collected args.
+	(funlike_invocation_p): Return the number of collected arguments,
+	by parameter.
+	(enter_macro_context): Add a parameter for macro expansion point.
+	Pass it to replace_args and to the "used" cpp callback.  Get the
+	number of function-like macro arguments from funlike_invocation_p,
+	pass it to the new delete_macro_args to free the memory used by
+	macro args.  When -ftrack-macro-expansion is in effect, for macros
+	that have no arguments, create a macro map for the macro expansion
+	and use it to allocate proper virtual locations for tokens
+	resulting from the expansion.  Push an extended tokens context
+	containing the tokens resulting from macro expansion and their
+	virtual locations.
+	(replace_args): Rename the different variables named 'count' into
+	variables with more meaningful names.  Create a macro map;
+	allocate virtual locations of tokens resulting from this
+	expansion.  Use macro_arg_token_iter to iterate over tokens of a
+	given macro.  Handle the case of the argument of
+	-ftrack-macro-expansion being < 2.  Don't free macro arguments
+	memory resulting from expand_arg here, as these are freed by the
+	caller of replace_arg using delete_macro_args now.  Push extended
+	token context.
+	(next_context, push_ptoken_context, _cpp_push_token_context)
+	(_cpp_push_text_context): Properly initialize the context.
+	(expand_arg): Use the new alloc_expanded_arg_mem,
+	push_extended_tokens_context, cpp_get_token_1, and set_arg_token.
+	(_cpp_pop_context): Really free the memory held by the context.
+	Handle freeing memory used by extended tokens contexts.
+	(cpp_get_token_with_location): Use cpp_get_token_1.
+	(cpp_sys_macro_p): Adjust.
+	(_cpp_backup_tokens): Support the new kinds of token contexts.
+	* traditional.c (recursive_macro): Adjust.
+
+2011-10-15  Tom Tromey  <tromey@redhat>
+	    Dodji Seketeli  <dodji@redhat.com>
+
+	* include/line-map.h (enum lc_reason)<LC_ENTER_MACRO>: New enum
+	member.
+	(MAX_SOURCE_LOCATION): New constant.
+	(struct line_map_ordinary, struct line_map_macro): New structs.
+    	(struct line_map): Turn this into a union of the two above.  Add
+	comments.
+	(struct maps_info): New struct.
+	(struct line_maps)<info_ordinary, info_macro>: Two new fields.
+	These now carry the map information that was previously scattered
+	in struct line_maps.
+	(struct map_info::allocated): Fix comment.
+	(MAP_START_LOCATION, ORDINARY_MAP_FILE_NAME)
+	(ORDINARY_MAP_STARTING_LINE_NUMBER)
+	(ORDINARY_MAP_INCLUDER_FILE_INDEX)
+	(ORDINARY_MAP_IN_SYSTEM_HEADER_P)
+	(ORDINARY_MAP_NUMBER_OF_COLUMN_BITS, MACRO_MAP_MACRO)
+	(MACRO_MAP_NUM_MACRO_TOKENS MACRO_MAP_LOCATIONS)
+	(MACRO_MAP_EXPANSION_POINT_LOCATION)
+	(LOCATION_POSSIBLY_IN_MACRO_MAP_P, LINEMAPS_MAP_INFO)
+	(LINEMAPS_MAPS, LINEMAPS_ALLOCATE, LINEMAPS_USED, LINEMAPS_CACHE)
+	(LINEMAPS_LAST_MAP, LINEMAPS_LAST_ALLOCATED_MAP)
+	(LINEMAPS_ORDINARY_MAPS, LINEMAPS_ORDINARY_ALLOCATED)
+	(LINEMAPS_ORDINARY_USED, LINEMAPS_ORDINARY_CACHE)
+	(LINEMAPS_LAST_ORDINARY_MAP, LINEMAPS_LAST_ALLOCATED_ORDINARY_MAP)
+	(LINEMAPS_MACRO_MAPS, LINEMAPS_MACRO_ALLOCATED)
+	(LINEMAPS_MACRO_USED, LINEMAPS_MACRO_CACHE)
+	(LINEMAPS_LAST_MACRO_MAP, LINEMAPS_LAST_ALLOCATED_MACRO_MAP)
+	(LINEMAPS_MAP_AT, LINEMAPS_ORDINARY_MAP_AT)
+	(LINEMAPS_MACRO_MAP_AT): New accessors for ordinary and macro map
+	information.
+	(linemap_check_ordinary, linemap_assert)
+	(linemap_location_before_p): New macros.
+	(linemap_position_for_line_and_column)
+	(linemap_tracks_macro_expansion_locs_p, linemap_add_macro_token)
+	(linemap_macro_expansion_map_p)
+	(linemap_macro_map_loc_to_def_point)
+	(linemap_macro_map_loc_unwind_once)
+	(linemap_macro_map_loc_to_exp_point, linemap_step_out_once)
+	(linemap_get_source_line linemap_get_source_column)
+	(linemap_map_get_macro_name, linemap_get_file_path)
+	(linemap_location_in_system_header_p)
+	(linemap_location_from_macro_expansion_p): Declare new functions.
+	(SOURCE_LINE, SOURCE_COLUMN, LAST_SOURCE_LINE_LOCATION)
+	(LINEMAP_FILE, LINEMAP_LINE, LINEMAP_SYSP): Assert that this
+	accessors act on ordinary maps only.
+	(INCLUDED_FROM): Return NULL for main files; use the new
+	accessors.
+	(LINEMAP_POSITION_FOR_COLUMN): Use the new accessors.
+	(struct expanded_location): Move here from gcc/input.h
+	(linemap_resolve_location, linemap_expand_location)
+	(linemap_expand_location_full): Declare new functions.
+	* line-map.c: Include cpplib.h, internal.h
+	(linemap_enter_macro, linemap_add_macro_token)
+	(linemap_get_expansion_line, linemap_get_expansion_filename): New
+	functions that are private to libcpp.
+	(linemap_assert): New macro.
+	(linemap_macro_loc_to_exp_point, linemap_macro_loc_to_exp_point)
+	(linemap_macro_loc_unwind, linemap_macro_map_loc_to_def_point)
+	(linemap_macro_map_loc_unwind_toward_spelling)
+	(linemap_macro_map_loc_to_exp_point)
+	(first_map_in_common_1, first_map_in_common): New static
+	functions.
+	(new_linemap): Define new static functions.  Extracted and
+	enhanced from ...
+	(linemap_add): ... here.  Use linemap_assert in lieu of abort
+	previously.
+	(linemap_tracks_macro_expansion_locs_p)
+	(linemap_add_macro_token, linemap_macro_expansion_map_p)
+	(linemap_check_ordinary, linemap_macro_map_loc_to_exp_point)
+	(linemap_macro_map_loc_to_def_point)
+	(linemap_macro_map_loc_unwind_once)
+	(linemap_step_out_once, linemap_map_get_index)
+	(linemap_get_source_line,linemap_get_source_column)
+	(linemap_get_file_path, linemap_map_get_macro_name)
+	(linemap_location_in_system_header_p)
+	(linemap_location_originated_from_system_header_p)
+	(linemap_location_from_macro_expansion_p)
+	(linemap_tracks_macro_expansion_locs_p)
+	(linemap_resolve_location, linemap_expand_location)
+	(linemap_expand_location_full)
+	(linemap_tracks_macro_expansion_locs_p)
+	(linemap_position_for_line_and_column, linemap_compare_locations):
+	Define new public functions.
+	(linemap_init): Initialize ordinary and macro maps information in
+	the map set.
+	(linemap_check_files_exited): Use the new accessors.
+	(linemap_free): Remove this dead code.
+	(linemap_line_start): Assert this uses an ordinary map.  Adjust to
+	use the new ordinary map accessors and data structures.  Don't
+	overflow past the lowest possible macro token's location.
+	(linemap_position_for_column): Assert the ordinary maps of the map
+	set are really ordinary.  Use ordinary map accessors.
+	(linemap_lookup): Keep the same logic but generalize to allow
+	lookup of both ordinary and macro maps.  Do not crash when called
+	with an empty line table.
+	* directives-only.c (_cpp_preprocess_dir_only): Adjust to use the
+	new API of line-map.h.
+	* directives.c (start_directive, do_line, do_linemarker)
+	(do_linemarker): Likewise.
+	* files.c (_cpp_find_file, _cpp_stack_include, open_file_failed)
+	(make_cpp_dir, cpp_make_system_header): Likewise.
+	* init.c (cpp_read_main_file): Likewise.
+	* internal.h (CPP_INCREMENT_LINE): Likewise.
+	(linemap_enter_macro, linemap_add_macro_token)
+	(linemap_get_expansion_line, linemap_get_expansion_filename): New
+	functions private to libcpp.
+	* lex.c (_cpp_process_line_notes, _cpp_skip_block_comment)
+	(skip_line_comment, skip_whitespace, lex_raw_string)
+	(_cpp_lex_direct): Likewise.
+	* macro.c (_cpp_builtin_macro_text): Likewise.
+	(_cpp_aligned_alloc): Initialize the new name member of the macro.
+	* traditional.c (copy_comment, _cpp_scan_out_logical_line):
+	Likewise.
+	* errors.c (cpp_diagnostic): Adjust to new linemap API.
+
+2011-08-28  Dodji Seketeli  <dodji@redhat.com>
+
+	* line-map.c (linemap_add): Assert that reason must not be
+	LC_RENAME when called for the first time on a "main input file".
+
+2011-08-22  Gabriel Charette  <gchare@google.com>
+
+	* init.c (cpp_create_reader): Inititalize forced_token_location_p.
+	* internal.h (struct cpp_reader): Add field forced_token_location_p.
+	* lex.c (_cpp_lex_direct): Use forced_token_location_p.
+	(cpp_force_token_locations): New.
+	(cpp_stop_forcing_token_locations): New.
+
+2011-08-18  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	PR libstdc++/1773
+	* init.c (cpp_init_builtins): Define __cplusplus 19971L.
+
+2011-08-18  Joseph Myers  <joseph@codesourcery.com>
+
+	* include/cpplib.h (struct cpp_options): Fix typo.
+
+2011-08-18  Joseph Myers  <joseph@codesourcery.com>
+
+	* include/cpplib.h (struct cpp_options): Add rliterals.
+	* init.c  (struct lang_flags, lang_defaults): Add rliterals.
+	(cpp_set_lang): Set rliterals option.
+	(cpp_init_builtins): Define __STDC_UTF_16__ and __STDC_UTF_32__.
+	* lex.c (_cpp_lex_direct): Only accept raw strings if rliterals.
+
+2011-08-15  Gabriel Charette  <gchare@google.com>
+
+	* include/line-map.h (LINEMAP_POSITION_FOR_COLUMN): Remove.
+	Update all users to use linemap_position_for_column instead.
+
+2011-07-28  Gabriel Charette  <gchare@google.com>
+
+	* include/line-map.h (struct line_maps):
+	Remove unused field last_listed. Update all users.
+
+2011-07-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* configure.ac: Set need_64bit_hwint to yes for x86 targets.
+	* configure: Regenerated.
+
+2011-07-25  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* system.h [__cplusplus]: Wrap C function declarations in extern "C".
+
+2011-07-22  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+	    Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	PR bootstrap/49794
+	* configure.ac: Test AM_ICONV with CXX.
+	* configure: Regenerate.
+	* system.h (HAVE_DESIGNATED_INITIALIZERS): Never define for C++.
+
+2011-07-15  Dodji Seketeli  <dodji@redhat.com>
+
+	* directives.c (struct if_stack): Use source_location as type
+	here.
+	* include/cpplib.h (struct cpp_callbacks)<include, define, undef,
+	indent, def_pragma, used_define, used_undef>: Properly use
+	source_location as parameter type, rather than unsigned int.
+
+2011-07-07  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	PR target/39150
+	* configure.ac (host_wide_int): Handle x86_64-*-solaris2.1[0-9]
+	like i[34567]86-*-solaris2.1[0-9]*.
+	* configure: Regenerate.
+
+2011-06-16  Jason Merrill  <jason@redhat.com>
+
+	PR c++/45399
+	* lex.c (lex_raw_string): Don't check for embedded NUL.
+
+2011-06-06  Dodji Seketeli  <dodji@redhat.com>
+
+	PR preprocessor/48532
+	* directives.c (do_pragma): Don't forget the invocation location
+	when parsing the pragma name of a namespaced pragma directive.
+
+2011-05-29  John Tytgat  <John.Tytgat@aaug.net>
+
+	* files.c (read_file_guts): Add test on non-zero value of S_ISREG.
+
+2011-05-22  Uros Bizjak  <ubizjak@gmail.com>
+
+	PR target/49104
+	* lex.c (init_vectorized_lexer): Do not set "minimum" when __3dNOW_A__
+	is defined.  Check bit_MMXEXT and bit_CMOV to use search_line_mmx.
+
+2011-04-25  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* system.h (ENUM_BITFIELD): Remove.
+
+2011-04-24  Jakub Jelinek  <jakub@redhat.com>
 
 	PR preprocessor/48740
 	* lex.c (lex_raw_string): When raw string ends with
 	??) followed by raw prefix and ", ensure it is preprocessed
 	with ??) rather than ??].
 
+2011-04-20  Jim Meyering  <meyering@redhat.com>
+
+	* files.c (destroy_cpp_file): Remove useless if-before-free.
+	* init.c (cpp_destroy): Likewise.
+	* macro.c (replace_args): Likewise.
+	* pch.c (cpp_valid_state): Likewise.
+
+2011-03-25  Kai Tietz  <ktietz@redhat.com>
+
+	* files.c (file_hash_eq): Use filename_cmp
+	instead of strcmp.
+	(nonexistent_file_hash_eq): Likewise.
+	(remap_filename): Likewise.
+	Handle absolute DOS-path,
+	(append_file_to_dir): Check for IS_DIR_SEPARATOR
+	instead of slash.
+	(read_name_map): Likewise.
+	* linemap.c (linemap_add): Use filename_cmp
+	instead of strcmp.
+	* mkdeps.c (apply_vpath): Use filename_ncmp
+	instead of strncmp.
+	(deps_restore): Use filename_cmp instead of
+	strcmp.
+	* init.c (read_original_directory): Use
+	IS_DIR_SEPARATOR instead of checking for slash.
+
 2011-03-21  Michael Meissner  <meissner@linux.vnet.ibm.com>
 
 	PR preprocessor/48192
-	Backport from trunk
 	* directives.c (do_ifdef): Do not consider conditional macros as
 	being defined.
 	(do_ifndef): Ditto.
 	* expr.c (parse_defined): Ditto.
 
-2011-01-04  Eric Botcazou  <ebotcazou@adacore.com>
+2011-03-18  Richard Henderson  <rth@redhat.com>
+
+	PR bootstrap/45381
+	* lex.c [ALTIVEC] (search_line_fast): Require gcc version 4.5.
+
+2011-11-04  Eric Botcazou  <ebotcazou@adacore.com>
             Jakub Jelinek  <jakub@redhat.com>
 
 	PR preprocessor/39213
 	* directives.c (end_directive): Call _cpp_remove_overlay for deferred
 	pragmas as well in traditional mode.
 
-2010-12-16  Release Manager
+2010-11-17  Ian Lance Taylor  <iant@google.com>
 
-	* GCC 4.5.2 released.
+	PR bootstrap/45538
+	* configure.ac: Use AC_USE_SYSTEM_EXTENSIONS.  Remove switch of
+	AC_LANG based on ENABLE_BUILD_WITH_CXX.
 
-2010-07-31  Release Manager
+2010-11-16  Kai Tietz  <kai.tietz@onevision.com>
 
-	* GCC 4.5.1 released.
+	PR preprocessor/17349
+	* lex.c (save_comment): Handle in argument passing c++
+	comments special.
 
-2010-04-14  Release Manager
+2010-11-02  Ian Lance Taylor  <iant@google.com>
 
-	* GCC 4.5.0 released.
+	* configure.ac: Use AC_SYS_LARGEFILE.
+	* configure: Rebuild.
+	* config.in: Rebuild.
+
+2010-10-19  Basile Starynkevitch  <basile@starynkevitch.net>
+
+	* line-map.h (source_location): Remove obsolete comment
+	mentioning location_s.
+
+2010-09-29  Kai Tietz  <kai.tietz@onevision.com>
+
+	PR preprocessor/45362
+	* directives.c (cpp_pop_definition): Make static.
+	(do_pragma_push_macro): Reworked to store text
+	definition.
+	(do_pragma_pop_macro): Add free text definition.
+	(cpp_push_definition): Removed.
+	* include/cpplib.h (cpp_push_definition): Removed.
+	(cpp_pop_definition): Likewise.
+	* internal.h (def_pragma_macro): Remove member 'value'
+	and add new members 'definition', 'line',
+	'syshdr', 'sued' and 'is_undef'.
+	* pch.c (_cpp_restore_pushed_macros): Rework to work
+	on text definition and store additional macro flags.
+	(_cpp_save_pushed_macros): Likewise.
+
+2010-09-29  Joseph Myers  <joseph@codesourcery.com>
+
+	* include/cpplib.h (cpp_options): Rename warn_deprecated,
+	warn_traditional, warn_long_long and pedantic.
+	* directives.c (directive_diagnostics, _cpp_handle_directive):
+	Update names of cpp_options members.
+	* expr.c (cpp_classify_number, eval_token): Update names of
+	cpp_options members.
+	* init.c (cpp_create_reader, post_options): Update names of
+	cpp_options members.
+	* internal.h (CPP_PEDANTIC, CPP_WTRADITIONAL): Update names of
+	cpp_options members.
+	* macro.c (parse_params): Update names of cpp_options members.
+
+2010-09-15  Ian Lance Taylor  <iant@google.com>
+
+	* init.c: Fix type name in comment.
+
+2010-08-31  Jakub Jelinek  <jakub@redhat.com>
+
+	PR preprocessor/45457
+	* expr.c (parse_defined): Call pfile->cb.user_builtin_macro hook if
+	needed.
+	* directives.c (do_ifdef, do_ifndef): Likewise.
+
+2010-08-26  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* system.h [HAVE_INTTYPES_H]: Include inttypes.h.
+
+2010-08-24  Richard Henderson  <rth@redhat.com>
+
+	PR bootstrap/45376
+	* configure.ac (HAVE_SSE4): New check.
+	* configure, config.in: Rebuild.
+	* lex.c (search_line_sse42): Omit if !HAVE_SSE4.
+
+2010-08-24  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* lex.c [__sun__ && __svr4__]: Disable init_vectorized_lexer
+	etc. on Solaris 2/x86.
+
+2010-08-21  Richard Henderson  <rth@redhat.com>
+	    Andi Kleen <ak@linux.intel.com>
+	    David S. Miller  <davem@davemloft.net>
+
+	* configure.ac (AC_C_BIGENDIAN, AC_TYPE_UINTPTR_T): New tests.
+	(ssize_t): Check via AC_TYPE_SSIZE_T instead of AC_CHECK_TYPE.
+	(ptrdiff_t): Check via AC_CHECK_TYPE.
+	* config.in, configure: Rebuild.
+	* system.h: Include stdint.h, if available.
+	* lex.c (WORDS_BIGENDIAN): Provide default.
+	(acc_char_mask_misalign, acc_char_replicate, acc_char_cmp,
+	acc_char_index, search_line_acc_char, repl_chars, search_line_mmx,
+	search_line_sse2, search_line_sse42, init_vectorized_lexer,
+	search_line_fast): New.
+	(_cpp_clean_line): Use search_line_fast.  Restructure the fast
+	loop to make it clear when we're leaving the loop.  Stay in the
+	fast loop for non-trigraph '?'.
+
+2010-06-11  Jakub Jelinek  <jakub@redhat.com>
+
+	* include/cpplib.h (struct cpp_callbacks): Add user_builtin_macro
+	callback.
+	(enum cpp_builtin_type): Add BT_FIRST_USER and BT_LAST_USER.
+	(cpp_macro_definition): Remove const qual from second argument.
+	* macro.c (enter_macro_context): Call user_builtin_macro callback for
+	NODE_BUILTIN !NODE_USED macros.
+	(warn_of_redefinition): Likewise.  Remove const qual from second
+	argument.
+	(cpp_macro_definition): Likewise.
+	* pch.c (write_macdef, save_macros): Call user_builtin_macro callback
+	for NODE_BUILTIN !NODE_USED macros.
+
+2010-06-10  Joseph Myers  <joseph@codesourcery.com>
+
+	* include/cpplib.h (struct cpp_options): Remove show_column.
+	* init.c (cpp_create_reader, post_options): Don't set show_column.
+
+2010-06-09  Joern Rennecke  <joern.rennecke@embecosm.com>
+
+	PR bootstrap/44432
+	* configure.ac: Before using ZW_PROG_COMPILER_DEPENDENCIES for C++,
+	check that C++ compiler works.
+	* configure: Regenerate.
+
+2010-06-08  Laurynas Biveinis  <laurynas.biveinis@gmail.com>
+
+	* include/symtab.h (ht_identifier_ptr): New.
+
+2010-06-03  Joern Rennecke <joern.rennecke@embecosm.com>
+	    Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	PR bootstrap/42798
+	* configure.ac: Check for declaration of 'basename(char *)'.
+	* configure: Regenerate.
+	* config.in: Regenerate.
+
+2010-04-25  Joseph Myers  <joseph@codesourcery.com>
+
+	* include/cpplib.h (enum c_lang): Add CLK_GNUC1X and CLK_STDC1X.
+	* init.c (lang_defaults): Add entries for new language variants.
+	(cpp_init_builtins): Define __STDC_VERSION__ to 201000L for C1X
+	variants.
+
+2010-04-09  Manuel López-Ibáñez <manu@gcc.gnu.org>
+
+	PR cpp/43195
+	* files.c (report_missing_guard): Test for #pragma once.
+
+2010-04-07  Simon Baldwin  <simonb@google.com>
+
+	* directives.c (do_diagnostic): Add warning reason argument,
+	call appropriate error reporting function for code.
+	(directive_diagnostics): Call specific warning functions with
+	warning reason where appropriate.
+	(do_error, do_warning, do_pragma_dependency): Add warning reason
+	argument to do_diagnostic calls.
+	* macro.c (_cpp_warn_if_unused_macro, enter_macro_context,
+	_cpp_create_definition): Call specific warning functions with
+	warning reason where appropriate.
+	* Makefile.in: Add new diagnostic functions to gettext translations.
+	* include/cpplib.h (struct cpp_callbacks): Add warning reason code
+	to error callback.
+	(CPP_DL_WARNING, CPP_DL_WARNING_SYSHDR, CPP_DL_PEDWARN, CPP_DL_ERROR,
+	CPP_DL_ICE, CPP_DL_NOTE, CPP_DL_FATAL): Replace macros with enums.
+	(CPP_W_NONE, CPP_W_DEPRECATED, CPP_W_COMMENTS,
+	CPP_W_MISSING_INCLUDE_DIRS, CPP_W_TRIGRAPHS, CPP_W_MULTICHAR,
+	CPP_W_TRADITIONAL, CPP_W_LONG_LONG, CPP_W_ENDIF_LABELS,
+	CPP_W_NUM_SIGN_CHANGE, CPP_W_VARIADIC_MACROS,
+	CPP_W_BUILTIN_MACRO_REDEFINED, CPP_W_DOLLARS, CPP_W_UNDEF,
+	CPP_W_UNUSED_MACROS, CPP_W_CXX_OPERATOR_NAMES, CPP_W_NORMALIZE,
+	CPP_W_INVALID_PCH, CPP_W_WARNING_DIRECTIVE): New enums for cpp
+	warning reason codes.
+	(cpp_warning, cpp_pedwarning, cpp_warning_syshdr,
+	cpp_warning_with_line, cpp_pedwarning_with_line,
+	cpp_warning_with_line_syshdr): New specific error reporting functions.
+	* pch.c (cpp_valid_state): Call specific warning functions with
+	warning reason where appropriate.
+	* errors.c (cpp_diagnostic, cpp_diagnostic_with_line): New central
+	diagnostic handlers.
+	(cpp_warning, cpp_pedwarning, cpp_warning_syshdr,
+	cpp_warning_with_line, cpp_pedwarning_with_line,
+	cpp_warning_with_line_syshdr): New specific error reporting functions.
+	* expr.c (cpp_classify_number, eval_token, num_unary_op): Call
+	specific warning functions with warning reason where appropriate.
+	* lex.c (_cpp_process_line_notes, _cpp_skip_block_comment,
+	warn_about_normalization, lex_identifier_intern, lex_identifier,
+	_cpp_lex_direct): Ditto.
+	* charset.c (_cpp_valid_ucn, convert_hex, convert_escape,
+	narrow_str_to_charconst): Ditto.
 
 2010-04-06  Jakub Jelinek  <jakub@redhat.com>
 

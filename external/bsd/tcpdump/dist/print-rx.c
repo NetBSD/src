@@ -38,7 +38,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-rx.c,v 1.42 2008-07-01 07:44:50 guy Exp ";
 #else
-__RCSID("$NetBSD: print-rx.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-rx.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: print-rx.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
 
 #include "ip.h"
 
-static struct tok rx_types[] = {
+static const struct tok rx_types[] = {
 	{ RX_PACKET_TYPE_DATA,		"data" },
 	{ RX_PACKET_TYPE_ACK,		"ack" },
 	{ RX_PACKET_TYPE_BUSY,		"busy" },
@@ -87,7 +87,7 @@ static struct double_tok {
 	{ RX_JUMBO_PACKET,	RX_PACKET_TYPE_DATA,	"jumbogram" }
 };
 
-static struct tok fs_req[] = {
+static const struct tok fs_req[] = {
 	{ 130,		"fetch-data" },
 	{ 131,		"fetch-acl" },
 	{ 132,		"fetch-status" },
@@ -132,7 +132,7 @@ static struct tok fs_req[] = {
 	{ 0,		NULL },
 };
 
-static struct tok cb_req[] = {
+static const struct tok cb_req[] = {
 	{ 204,		"callback" },
 	{ 205,		"initcb" },
 	{ 206,		"probe" },
@@ -154,7 +154,7 @@ static struct tok cb_req[] = {
 	{ 0,		NULL },
 };
 
-static struct tok pt_req[] = {
+static const struct tok pt_req[] = {
 	{ 500,		"new-user" },
 	{ 501,		"where-is-it" },
 	{ 502,		"dump-entry" },
@@ -181,7 +181,7 @@ static struct tok pt_req[] = {
 	{ 0,		NULL },
 };
 
-static struct tok vldb_req[] = {
+static const struct tok vldb_req[] = {
 	{ 501,		"create-entry" },
 	{ 502,		"delete-entry" },
 	{ 503,		"get-entry-by-id" },
@@ -219,7 +219,7 @@ static struct tok vldb_req[] = {
 	{ 0,		NULL },
 };
 
-static struct tok kauth_req[] = {
+static const struct tok kauth_req[] = {
 	{ 1,		"auth-old" },
 	{ 21,		"authenticate" },
 	{ 22,		"authenticate-v2" },
@@ -241,7 +241,7 @@ static struct tok kauth_req[] = {
 	{ 0,		NULL },
 };
 
-static struct tok vol_req[] = {
+static const struct tok vol_req[] = {
 	{ 100,		"create-volume" },
 	{ 101,		"delete-volume" },
 	{ 102,		"restore" },
@@ -277,7 +277,7 @@ static struct tok vol_req[] = {
 	{ 0,		NULL },
 };
 
-static struct tok bos_req[] = {
+static const struct tok bos_req[] = {
 	{ 80,		"create-bnode" },
 	{ 81,		"delete-bnode" },
 	{ 82,		"set-status" },
@@ -318,7 +318,7 @@ static struct tok bos_req[] = {
 	{ 0,		NULL },
 };
 
-static struct tok ubik_req[] = {
+static const struct tok ubik_req[] = {
 	{ 10000,	"vote-beacon" },
 	{ 10001,	"vote-debug-old" },
 	{ 10002,	"vote-sdebug-old" },
@@ -349,14 +349,14 @@ static struct tok ubik_req[] = {
 #define DISK_LOW	20000
 #define DISK_HIGH	20013
 
-static struct tok cb_types[] = {
+static const struct tok cb_types[] = {
 	{ 1,		"exclusive" },
 	{ 2,		"shared" },
 	{ 3,		"dropped" },
 	{ 0,		NULL },
 };
 
-static struct tok ubik_lock_types[] = {
+static const struct tok ubik_lock_types[] = {
 	{ 1,		"read" },
 	{ 2,		"write" },
 	{ 3,		"wait" },
@@ -365,7 +365,7 @@ static struct tok ubik_lock_types[] = {
 
 static const char *voltype[] = { "read-write", "read-only", "backup" };
 
-static struct tok afs_fs_errors[] = {
+static const struct tok afs_fs_errors[] = {
 	{ 101,		"salvage volume" },
 	{ 102, 		"no such vnode" },
 	{ 103, 		"no such volume" },
@@ -386,7 +386,7 @@ static struct tok afs_fs_errors[] = {
  * Reasons for acknowledging a packet
  */
 
-static struct tok rx_ack_reasons[] = {
+static const struct tok rx_ack_reasons[] = {
 	{ 1,		"ack requested" },
 	{ 2,		"duplicate packet" },
 	{ 3,		"out of sequence" },
@@ -658,7 +658,7 @@ rx_cache_find(const struct rx_header *rxh, const struct ip *ip, int sport,
 			*opcode = rxent->opcode;
 			return(1);
 		}
-		if (++i > RX_CACHE_SIZE)
+		if (++i >= RX_CACHE_SIZE)
 			i = 0;
 	} while (i != rx_cache_hint);
 

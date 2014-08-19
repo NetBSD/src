@@ -11,12 +11,14 @@
 
 // template <class... Args> void emplace(const_iterator p, Args&&... args);
 
-#if _LIBCPP_DEBUG2 >= 1
+#if _LIBCPP_DEBUG >= 1
 #define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
 #endif
 
 #include <list>
 #include <cassert>
+
+#include "min_allocator.h"
 
 class A
 {
@@ -36,6 +38,7 @@ public:
 int main()
 {
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    {
     std::list<A> c;
     c.emplace(c.cbegin(), 2, 3.5);
     assert(c.size() == 1);
@@ -47,13 +50,39 @@ int main()
     assert(c.front().getd() == 3.5);
     assert(c.back().geti() == 3);
     assert(c.back().getd() == 4.5);
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-#if _LIBCPP_DEBUG2 >= 1
+    }
+#if _LIBCPP_DEBUG >= 1
     {
         std::list<A> c1;
         std::list<A> c2;
         std::list<A>::iterator i = c1.emplace(c2.cbegin(), 2, 3.5);
         assert(false);
     }
+#endif
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#if __cplusplus >= 201103L
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    {
+    std::list<A, min_allocator<A>> c;
+    c.emplace(c.cbegin(), 2, 3.5);
+    assert(c.size() == 1);
+    assert(c.front().geti() == 2);
+    assert(c.front().getd() == 3.5);
+    c.emplace(c.cend(), 3, 4.5);
+    assert(c.size() == 2);
+    assert(c.front().geti() == 2);
+    assert(c.front().getd() == 3.5);
+    assert(c.back().geti() == 3);
+    assert(c.back().getd() == 4.5);
+    }
+#if _LIBCPP_DEBUG >= 1
+    {
+        std::list<A, min_allocator<A>> c1;
+        std::list<A, min_allocator<A>> c2;
+        std::list<A, min_allocator<A>>::iterator i = c1.emplace(c2.cbegin(), 2, 3.5);
+        assert(false);
+    }
+#endif
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #endif
 }

@@ -1,6 +1,6 @@
 /* ld.h -- general linker header file
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
+   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
    Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
@@ -82,11 +82,12 @@ typedef struct name_list {
 name_list;
 
 typedef enum {sort_none, sort_ascending, sort_descending} sort_order;
-  
+
 /* A wildcard specification.  */
 
 typedef enum {
-  none, by_name, by_alignment, by_name_alignment, by_alignment_name
+  none, by_name, by_alignment, by_name_alignment, by_alignment_name,
+  by_none, by_init_priority
 } sort_type;
 
 extern sort_type sort_section;
@@ -95,6 +96,7 @@ struct wildcard_spec {
   const char *name;
   struct name_list *exclude_name_list;
   sort_type sorted;
+  struct flag_info *section_flag_list;
 };
 
 struct wildcard_list {
@@ -198,6 +200,9 @@ typedef struct {
      input files.  */
   bfd_boolean accept_unknown_input_arch;
 
+  /* If TRUE we'll just print the default output on stdout.  */
+  bfd_boolean print_output_format;
+
   /* Big or little endian as set on command line.  */
   enum endian_enum endian;
 
@@ -244,9 +249,6 @@ typedef int token_code_type;
 typedef struct {
   bfd_boolean magic_demand_paged;
   bfd_boolean make_executable;
-
-  /* If TRUE, doing a dynamic link.  */
-  bfd_boolean dynamic_link;
 
   /* If TRUE, -shared is supported.  */
   /* ??? A better way to do this is perhaps to define this in the
@@ -295,6 +297,9 @@ typedef struct {
      numbers everywhere.  */
   bfd_boolean sane_expr;
 
+  /* If set, code and non-code sections should never be in one segment.  */
+  bfd_boolean separate_code;
+
   /* The rpath separation character.  Usually ':'.  */
   char rpath_separator;
 
@@ -307,7 +312,7 @@ typedef struct {
   bfd_size_type specified_data_size;
 
   /* The size of the hash table to use.  */
-  bfd_size_type hash_table_size;
+  unsigned long hash_table_size;
 
   /* The maximum page size for ELF.  */
   bfd_vma maxpagesize;
@@ -320,9 +325,6 @@ extern ld_config_type config;
 
 extern FILE * saved_script_handle;
 extern bfd_boolean force_make_executable;
-
-/* Non-zero if we are processing a --defsym from the command line.  */
-extern int parsing_defsym;
 
 extern int yyparse (void);
 extern void add_cref (const char *, bfd *, asection *, bfd_vma);

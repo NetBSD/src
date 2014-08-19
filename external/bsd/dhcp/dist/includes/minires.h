@@ -1,5 +1,4 @@
-/*	$NetBSD: minires.h,v 1.1.1.1.4.2 2013/06/23 06:26:29 tls Exp $	*/
-
+/*	$NetBSD: minires.h,v 1.1.1.1.4.3 2014/08/19 23:46:41 tls Exp $	*/
 /*
  * Copyright (c) 2004,2007-2009 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2001-2003 by Internet Software Consortium

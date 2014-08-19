@@ -2,7 +2,7 @@
 #readelf: -wl
 #name: DWARF2 debugging information 1
 
-Raw dump of debug contents of section .debug_line:
+Raw dump of debug contents of section \.z?debug_line:
 
   Offset:                      0x0
   Length:                      .*

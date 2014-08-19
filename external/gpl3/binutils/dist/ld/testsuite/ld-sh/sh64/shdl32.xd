@@ -27,7 +27,9 @@ SYMBOL TABLE:
 0+1204 l    d  \.rodata	0+ (|\.rodata)
 0+13c8 l    d  \.data	0+ (|\.data)
 0+80000 l    d  \.stack	0+ (|\.stack)
+0+ l    df \*ABS\*	0+ .*
 0+1150 l       \.text	0+ 0x04 part2
+0+ l    df \*ABS\*	0+ .*
 0+13f8 g       \.data	0+ dfoo_otherboth2
 0+1178 g       \.text	0+ 0x04 bar_otherwithout
 0+11b4 g       \.text	0+ 0x04 bazwithout
@@ -82,7 +84,7 @@ SYMBOL TABLE:
 0+1164 g       \.text	0+ 0x04 barboth2
 0+1168 g       \.text	0+ 0x04 barwithout
 0+14d8 g       \.data	0+ dbar_mix2
-0+1560 g       \*ABS\*	0+ __bss_start
+0+1560 g       \.data	0+ __bss_start
 0+1410 g       \.data	0+ dfoo_mixboth
 0+14c4 g       \.data	0+ dbar_other
 0+1180 g       \.text	0+ 0x04 bar_mix2
@@ -102,8 +104,8 @@ SYMBOL TABLE:
 0+14c0 g       \.data	0+ dbarwithout
 0+1004 g       \.text	0+ 0x04 foo
 0+102c g       \.text	0+ 0x04 foo_other
-0+1560 g       \*ABS\*	0+ _edata
-0+1560 g       \*ABS\*	0+ _end
+0+1560 g       \.data	0+ _edata
+0+1560 g       \.data	0+ _end
 0+1430 g       \.data	0+ dfoo_mixwithout2
 0+1058 g       \.text	0+ 0x04 foo_mixboth2
 0+11d4 g       \.text	0+ 0x04 baz_mix2

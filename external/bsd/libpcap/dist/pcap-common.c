@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-common.c,v 1.1.1.2.12.1 2013/06/23 06:28:19 tls Exp $	*/
+/*	$NetBSD: pcap-common.c,v 1.1.1.2.12.2 2014/08/19 23:47:16 tls Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -843,7 +843,7 @@
 #define LINKTYPE_NETANALYZER_TRANSPARENT	241
 
 /*
- * IP-over-Infiniband, as specified by RFC 4391.
+ * IP-over-InfiniBand, as specified by RFC 4391.
  *
  * Requested by Petr Sumbera <petr.sumbera@oracle.com>.
  */
@@ -885,7 +885,56 @@
  */
 #define LINKTYPE_PFSYNC		246
 
-#define LINKTYPE_MATCHING_MAX	246		/* highest value in the "matching" range */
+/*
+ * Raw InfiniBand packets, starting with the Local Routing Header.
+ *
+ * Requested by Oren Kladnitsky <orenk@mellanox.com>.
+ */
+#define LINKTYPE_INFINIBAND	247
+
+/*
+ * SCTP, with no lower-level protocols (i.e., no IPv4 or IPv6).
+ *
+ * Requested by Michael Tuexen <Michael.Tuexen@lurchi.franken.de>.
+ */
+#define LINKTYPE_SCTP		248
+
+/*
+ * USB packets, beginning with a USBPcap header.
+ *
+ * Requested by Tomasz Mon <desowin@gmail.com>
+ */
+#define LINKTYPE_USBPCAP	249
+
+/*
+ * Schweitzer Engineering Laboratories "RTAC" product serial-line
+ * packets.
+ *
+ * Requested by Chris Bontje <chris_bontje@selinc.com>.
+ */
+#define DLT_RTAC_SERIAL		250
+
+/*
+ * Bluetooth Low Energy air interface link-layer packets.
+ *
+ * Requested by Mike Kershaw <dragorn@kismetwireless.net>.
+ */
+#define LINKTYPE_BLUETOOTH_LE_LL	251
+
+/*
+ * Link-layer header type for upper-protocol layer PDU saves from wireshark.
+ * 
+ * the actual contents are determined by two TAGs stored with each
+ * packet:
+ *   EXP_PDU_TAG_LINKTYPE          the link type (LINKTYPE_ value) of the
+ *				   original packet.
+ *
+ *   EXP_PDU_TAG_PROTO_NAME        the name of the wireshark dissector
+ * 				   that can make sense of the data stored.
+ */
+#define LINKTYPE_WIRESHARK_UPPER_PDU	252
+
+#define LINKTYPE_MATCHING_MAX	252		/* highest value in the "matching" range */
 
 static struct linktype_map {
 	int	dlt;

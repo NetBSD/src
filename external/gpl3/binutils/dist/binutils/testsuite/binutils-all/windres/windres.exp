@@ -56,6 +56,7 @@ foreach res $res_list {
     set sroot [file rootname $res]
     set broot [file tail $sroot]
     set done 0
+    set cpp_opts ""
 
     set rc [open $res]
     while { [gets $rc line] != -1 } {
@@ -66,10 +67,14 @@ foreach res $res_list {
 	    setup_xfail $sys
 	    continue
 	}
+	if [regexp "cpparg *(\[^ \]*)" $line junk cppopt] {
+	    set cpp_opts "--preprocessor-arg \"$cppopt\""
+	    continue
+	}
     }
 
     verbose "$wr -J rc -O res $res tmpdir/$broot.res" 1
-    catch "exec $wr -J rc -O res $res tmpdir/$broot.res" err
+    catch "exec $wr $cpp_opts -J rc -O res $res tmpdir/$broot.res" err
 
     if ![string match "" $err] then {
 	send_log "$err\n"

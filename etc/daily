@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.87.2.1 2013/06/23 06:26:21 tls Exp $
+#	$NetBSD: daily,v 1.87.2.2 2014/08/19 23:45:50 tls Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -17,6 +17,9 @@ fi
 host="$(hostname)"
 date="$(date)"
 rcvar_manpage='daily.conf(5)'
+
+pkg_admin=${pkg_admin:-/usr/sbin/pkg_admin}
+pkg_info=${pkg_info:-/usr/sbin/pkg_info}
 
 echo "To: ${MAILTO:-root}"
 echo "Subject: $host daily output for $date"
@@ -245,7 +248,7 @@ fi
 
 if checkyesno run_fsck; then
 	echo ""
-	echo "Checking filesystems:"
+	echo "Checking file systems:"
 	fsck -n -f ${run_fsck_flags} | grep -v '^\*\* Phase'
 fi
 

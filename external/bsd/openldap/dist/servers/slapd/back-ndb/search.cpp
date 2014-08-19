@@ -1,8 +1,8 @@
 /* search.cpp - tools for slap tools */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-ndb/search.cpp,v 1.3.2.5 2010/04/13 20:23:35 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2010 The OpenLDAP Foundation.
+ * Copyright 2008-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -447,7 +447,7 @@ static int ndb_oc_search( Operation *op, SlapReply *rs, Ndb *ndb, NdbTransaction
 		{
 #if 1	/* NDBapi was broken here but seems to work now */
 			Ndb::Key_part_ptr keys[2];
-			char xbuf[32];
+			char xbuf[512];
 			keys[0].ptr = &eid;
 			keys[0].len = sizeof(eid);
 			keys[1].ptr = NULL;
@@ -483,6 +483,7 @@ static int ndb_oc_search( Operation *op, SlapReply *rs, Ndb *ndb, NdbTransaction
 				rs->sr_flags = 0;
 				rc = send_search_entry( op, rs );
 				rs->sr_entry = NULL;
+				rs->sr_attrs = NULL;
 			} else {
 				rc = 0;
 			}
@@ -826,11 +827,16 @@ ndb_operational(
 
 	assert( rs->sr_entry != NULL );
 
-	for ( ap = &rs->sr_operational_attrs; *ap; ap = &(*ap)->a_next )
-		/* just count */ ;
+	for ( ap = &rs->sr_operational_attrs; *ap; ap = &(*ap)->a_next ) {
+		if ( (*ap)->a_desc == slap_schema.si_ad_hasSubordinates ) {
+			break;
+		}
+	}
 
-	if ( SLAP_OPATTRS( rs->sr_attr_flags ) ||
-			ad_inlist( slap_schema.si_ad_hasSubordinates, rs->sr_attrs ) )
+	if ( *ap == NULL &&
+		attr_find( rs->sr_entry->e_attrs, slap_schema.si_ad_hasSubordinates ) == NULL &&
+		( SLAP_OPATTRS( rs->sr_attr_flags ) ||
+			ad_inlist( slap_schema.si_ad_hasSubordinates, rs->sr_attrs ) ) )
 	{
 		int	hasSubordinates, rc;
 

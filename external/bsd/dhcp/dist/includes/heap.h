@@ -1,5 +1,4 @@
-/*	$NetBSD: heap.h,v 1.1.1.2.4.2 2013/06/23 06:26:29 tls Exp $	*/
-
+/*	$NetBSD: heap.h,v 1.1.1.2.4.3 2014/08/19 23:46:41 tls Exp $	*/
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2001  Internet Software Consortium.

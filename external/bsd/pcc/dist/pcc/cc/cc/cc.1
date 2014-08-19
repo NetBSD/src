@@ -1,5 +1,5 @@
-.\"	Id: cc.1,v 1.36 2011/11/11 09:13:14 plunky Exp 	
-.\"	$NetBSD: cc.1,v 1.5 2012/01/11 20:46:47 plunky Exp $
+.\"	Id: cc.1,v 1.42 2014/06/20 19:07:34 plunky Exp 	
+.\"	$NetBSD: cc.1,v 1.5.6.1 2014/08/19 23:52:09 tls Exp $
 .\"
 .\" Copyright (c) 2007 Jeremy C. Reed <reed@reedmedia.net>
 .\"
@@ -16,7 +16,7 @@
 .\" ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd November 11, 2011
+.Dd June 20, 2014
 .Dt CC 1
 .Os
 .Sh NAME
@@ -24,13 +24,15 @@
 .Nd front-end to the C compiler
 .Sh SYNOPSIS
 .Nm
-.Op Fl cEgkLMPStvX
+.Op Fl cEgkMPStvX
 .Op Fl B Ns Ar prefix
 .Op Fl D Ar macro Ns Oo = Ns Ar value Oc
+.Op Fl d Ns Ar flags
 .Op Fl f Ns Ar feature
 .Op Fl I Ar path
 .Op Fl include Ar file
 .Op Fl isystem Ar path
+.Op Fl L Ns Ar path
 .Op Fl m Ns Ar option
 .Op Fl nodefaultlibs
 .Op Fl nostartfiles
@@ -136,6 +138,16 @@ preprocessor to define
 .Ar macro
 with an optional
 .Ar value .
+.It Fl d Ns Ar flags
+Debug options.
+.Ar flags
+is a string of characters, which signify the following actions.
+.Bl -tag -width ".Sy M"
+.It Sy M
+Cause the preprocessor to output a list of macro definitions.
+.El
+.Lp
+any unknown flags are ignored.
 .It Fl E
 Stop after preprocessing with
 .Xr cpp 1 .
@@ -152,6 +164,21 @@ Generate PIC code.
 Tells C compiler to generate PIC code
 and tells assembler that PIC code has been generated.
 .\" TODO: document difference between PIC and pic
+.It Fl funsigned-char
+Tell the compiler to treat
+.Sq char
+types as if they were unsigned unless explicitly defined otherwise.
+.Fl fsigned-char
+can be used to signify the opposite behaviour.
+The default for the
+.Sq char
+type depends on the compiler target architecture.
+.It Fl fstack-protector
+Tell the compiler to wrap functions with code which checks at
+runtime that a stack overflow has not occurred.
+When stack protection is in effect, the
+.Dv __SSP__
+macro will be defined.
 .\" other -f GCC compatibility flags are ignored for now
 .It Fl g
 Send
@@ -182,8 +209,10 @@ Generate PIC code.
 See
 .Fl fpic
 option.
-.It Fl L
-TODO
+.It Fl L Ns Ar path
+Passed to the linker, to add
+.Ar path
+to the list of directories searched for shared libraries.
 .It Fl M
 Pass
 .Fl M
@@ -224,6 +253,7 @@ this defines
 in the
 .Xr cpp 1
 preprocessor, and passes
+.Fl xdce ,
 .Fl xdeljumps ,
 .Fl xtemps
 and
@@ -237,9 +267,8 @@ optimizations can be disabled using
 Save result to
 .Ar outfile .
 .It Fl P
-TODO
-.\" TODO: what is this?
-.\" TODO: Looks like it does cpp only, but I couldn't get it to work for me.
+Inhibit generation of line markers in preprocessor output.
+This is sometimes useful when running the preprocessor on something other than C code.
 .It Fl pg
 Enable profiling on the generated executable.
 .It Fl pthread
@@ -299,8 +328,10 @@ Don't remove temporary files on exit.
 GCC compatibility option; specify the language in use rather than
 interpreting the filename extension.
 Currently known language values are
+.Sy none ,
 .Sy c ,
-.Sy c++
+.Sy c++ ,
+.Sy assembler
 and
 .Sy assembler-with-cpp .
 Any unknown
@@ -315,9 +346,6 @@ macros are predefined by
 when sent to
 .Xr cpp 1 .
 .Bl -diag
-.\" TODO:
-.\" .It __ASSEMBLER__
-.\" Defined if suffix is .S -- why not with .s? what does this mean?
 .It __PCC__
 Set to the major version of
 .Xr pcc 1 .
@@ -335,6 +363,10 @@ Set to the minor-minor version \(em the number after the minor version.
 Defined when
 .Fl pthread
 switch is used.
+.It __ASSEMBLER__
+Defined when input files have a .S suffix, or if the
+.Fl x Ns assembler-with-cpp
+option is specified.
 .El
 .Pp
 Also system- and/or machine-dependent macros may also be predefined;

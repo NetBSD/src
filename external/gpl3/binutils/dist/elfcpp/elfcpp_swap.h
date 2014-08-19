@@ -1,6 +1,6 @@
 // elfcpp_swap.h -- Handle swapping for elfcpp   -*- C++ -*-
 
-// Copyright 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2012 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of elfcpp.
@@ -427,6 +427,71 @@ struct Swap_unaligned<64, true>
     wv[5] = v >> 16;
     wv[6] = v >> 8;
     wv[7] = v;
+  }
+};
+
+// Swap_aligned32 is a template based on size and on whether the
+// target is big endian.  It defines the type Valtype and the
+// functions readval and writeval.  The functions read and write
+// values of the appropriate size out of buffers which may not be
+// 64-bit aligned, but are 32-bit aligned.
+
+template<int size, bool big_endian>
+struct Swap_aligned32
+{
+  typedef typename Valtype_base<size>::Valtype Valtype;
+
+  static inline Valtype
+  readval(const unsigned char* wv)
+  { return Swap<size, big_endian>::readval(
+	reinterpret_cast<const Valtype*>(wv)); }
+
+  static inline void
+  writeval(unsigned char* wv, Valtype v)
+  { Swap<size, big_endian>::writeval(reinterpret_cast<Valtype*>(wv), v); }
+};
+
+template<>
+struct Swap_aligned32<64, true>
+{
+  typedef Valtype_base<64>::Valtype Valtype;
+
+  static inline Valtype
+  readval(const unsigned char* wv)
+  {
+    return ((static_cast<Valtype>(Swap<32, true>::readval(wv)) << 32)
+	    | static_cast<Valtype>(Swap<32, true>::readval(wv + 4)));
+  }
+
+  static inline void
+  writeval(unsigned char* wv, Valtype v)
+  {
+    typedef Valtype_base<32>::Valtype Valtype32;
+
+    Swap<32, true>::writeval(wv, static_cast<Valtype32>(v >> 32));
+    Swap<32, true>::writeval(wv + 4, static_cast<Valtype32>(v));
+  }
+};
+
+template<>
+struct Swap_aligned32<64, false>
+{
+  typedef Valtype_base<64>::Valtype Valtype;
+
+  static inline Valtype
+  readval(const unsigned char* wv)
+  {
+    return ((static_cast<Valtype>(Swap<32, false>::readval(wv + 4)) << 32)
+	    | static_cast<Valtype>(Swap<32, false>::readval(wv)));
+  }
+
+  static inline void
+  writeval(unsigned char* wv, Valtype v)
+  {
+    typedef Valtype_base<32>::Valtype Valtype32;
+
+    Swap<32, false>::writeval(wv + 4, static_cast<Valtype32>(v >> 32));
+    Swap<32, false>::writeval(wv, static_cast<Valtype32>(v));
   }
 };
 

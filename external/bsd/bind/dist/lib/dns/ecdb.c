@@ -1,7 +1,7 @@
-/*	$NetBSD: ecdb.c,v 1.3.2.1 2013/06/23 06:26:25 tls Exp $	*/
+/*	$NetBSD: ecdb.c,v 1.3.2.2 2014/08/19 23:46:28 tls Exp $	*/
 
 /*
- * Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,8 +15,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id: ecdb.c,v 1.10 2011/12/20 00:06:53 marka Exp  */
 
 #include "config.h"
 
@@ -82,8 +80,11 @@ typedef struct rdatasetheader {
 
 /* Copied from rbtdb.c */
 #define RDATASET_ATTR_NXDOMAIN		0x0010
+#define RDATASET_ATTR_NEGATIVE		0x0100
 #define NXDOMAIN(header) \
 	(((header)->attributes & RDATASET_ATTR_NXDOMAIN) != 0)
+#define NEGATIVE(header) \
+	(((header)->attributes & RDATASET_ATTR_NEGATIVE) != 0)
 
 static isc_result_t dns_ecdb_create(isc_mem_t *mctx, dns_name_t *origin,
 				    dns_dbtype_t type,
@@ -408,6 +409,8 @@ bind_rdataset(dns_ecdb_t *ecdb, dns_ecdbnode_t *node,
 	rdataset->trust = header->trust;
 	if (NXDOMAIN(header))
 		rdataset->attributes |= DNS_RDATASETATTR_NXDOMAIN;
+	if (NEGATIVE(header))
+		rdataset->attributes |= DNS_RDATASETATTR_NEGATIVE;
 
 	rdataset->private1 = ecdb;
 	rdataset->private2 = node;
@@ -471,6 +474,8 @@ addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	header->attributes = 0;
 	if ((rdataset->attributes & DNS_RDATASETATTR_NXDOMAIN) != 0)
 		header->attributes |= RDATASET_ATTR_NXDOMAIN;
+	if ((rdataset->attributes & DNS_RDATASETATTR_NEGATIVE) != 0)
+		header->attributes |= RDATASET_ATTR_NEGATIVE;
 	ISC_LINK_INIT(header, link);
 	ISC_LIST_APPEND(ecdbnode->rdatasets, header, link);
 
@@ -545,6 +550,7 @@ static dns_dbmethods_t ecdb_methods = {
 	detach,
 	NULL,			/* beginload */
 	NULL,			/* endload */
+	NULL,			/* serialize */
 	NULL,			/* dump */
 	NULL,			/* currentversion */
 	NULL,			/* newversion */
@@ -577,10 +583,12 @@ static dns_dbmethods_t ecdb_methods = {
 	NULL,			/* resigned */
 	NULL,			/* isdnssec */
 	NULL,			/* getrrsetstats */
-	NULL,			/* rpz_enabled */
-	NULL,			/* rpz_findips */
+	NULL,			/* rpz_attach */
+	NULL,			/* rpz_ready */
 	NULL,			/* findnodeext */
-	NULL			/* findext */
+	NULL,			/* findext */
+	NULL,			/* setcachestats */
+	NULL			/* hashsize */
 };
 
 static isc_result_t
@@ -767,23 +775,24 @@ rdataset_settrust(dns_rdataset_t *rdataset, dns_trust_t trust) {
 
 static void
 rdatasetiter_destroy(dns_rdatasetiter_t **iteratorp) {
+	isc_mem_t *mctx;
 	union {
 		dns_rdatasetiter_t *rdatasetiterator;
 		ecdb_rdatasetiter_t *ecdbiterator;
 	} u;
-	isc_mem_t *mctx;
 
 	REQUIRE(iteratorp != NULL);
+	REQUIRE(DNS_RDATASETITER_VALID(*iteratorp));
+
 	u.rdatasetiterator = *iteratorp;
-//	REQUIRE(DNS_RDATASETITER_VALID(&(u.ecdbiterator->common)));
 
 	mctx = u.ecdbiterator->common.db->mctx;
-
 	u.ecdbiterator->common.magic = 0;
 
 	dns_db_detachnode(u.ecdbiterator->common.db,
-	    &u.ecdbiterator->common.node);
-	isc_mem_put(mctx, u.ecdbiterator, sizeof(ecdb_rdatasetiter_t));
+			  &u.ecdbiterator->common.node);
+	isc_mem_put(mctx, u.ecdbiterator,
+		    sizeof(ecdb_rdatasetiter_t));
 
 	*iteratorp = NULL;
 }

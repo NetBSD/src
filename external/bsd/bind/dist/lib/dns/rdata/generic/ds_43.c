@@ -1,7 +1,7 @@
-/*	$NetBSD: ds_43.c,v 1.4.2.1 2013/02/25 00:25:46 tls Exp $	*/
+/*	$NetBSD: ds_43.c,v 1.4.2.2 2014/08/19 23:46:30 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -19,7 +19,7 @@
 
 /* Id */
 
-/* draft-ietf-dnsext-delegation-signer-05.txt */
+/* RFC3658 */
 
 #ifndef RDATA_GENERIC_DS_43_C
 #define RDATA_GENERIC_DS_43_C
@@ -31,6 +31,8 @@
 #include <isc/sha2.h>
 
 #include <dns/ds.h>
+
+#include "dst_gost.h"
 
 static inline isc_result_t
 fromtext_ds(ARGS_FROMTEXT) {
@@ -66,12 +68,10 @@ fromtext_ds(ARGS_FROMTEXT) {
 	/*
 	 * Digest type.
 	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
+	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      ISC_FALSE));
-	if (token.value.as_ulong > 0xffU)
-		RETTOK(ISC_R_RANGE);
-	RETERR(uint8_tobuffer(token.value.as_ulong, target));
-	c = (unsigned char) token.value.as_ulong;
+	RETTOK(dns_dsdigest_fromtext(&c, &token.value.as_textregion));
+	RETERR(mem_tobuffer(target, &c, 1));
 
 	/*
 	 * Digest.
@@ -83,9 +83,11 @@ fromtext_ds(ARGS_FROMTEXT) {
 	case DNS_DSDIGEST_SHA256:
 		length = ISC_SHA256_DIGESTLENGTH;
 		break;
+#ifdef ISC_GOST_DIGESTLENGTH
 	case DNS_DSDIGEST_GOST:
 		length = ISC_GOST_DIGESTLENGTH;
 		break;
+#endif
 	case DNS_DSDIGEST_SHA384:
 		length = ISC_SHA384_DIGESTLENGTH;
 		break;
@@ -139,11 +141,14 @@ totext_ds(ARGS_TOTEXT) {
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		RETERR(str_totext(" (", target));
 	RETERR(str_totext(tctx->linebreak, target));
-	if (tctx->width == 0) /* No splitting */
-		RETERR(isc_hex_totext(&sr, 0, "", target));
-	else
-		RETERR(isc_hex_totext(&sr, tctx->width - 2,
-				      tctx->linebreak, target));
+	if ((tctx->flags & DNS_STYLEFLAG_NOCRYPTO) == 0) {
+		if (tctx->width == 0) /* No splitting */
+			RETERR(isc_hex_totext(&sr, 0, "", target));
+		else
+			RETERR(isc_hex_totext(&sr, tctx->width - 2,
+					      tctx->linebreak, target));
+	} else
+		RETERR(str_totext("[omitted]", target));
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		RETERR(str_totext(" )", target));
 	return (ISC_R_SUCCESS);
@@ -170,8 +175,10 @@ fromwire_ds(ARGS_FROMWIRE) {
 	     sr.length < 4 + ISC_SHA1_DIGESTLENGTH) ||
 	    (sr.base[3] == DNS_DSDIGEST_SHA256 &&
 	     sr.length < 4 + ISC_SHA256_DIGESTLENGTH) ||
+#ifdef ISC_GOST_DIGESTLENGTH
 	    (sr.base[3] == DNS_DSDIGEST_GOST &&
 	     sr.length < 4 + ISC_GOST_DIGESTLENGTH) ||
+#endif
 	    (sr.base[3] == DNS_DSDIGEST_SHA384 &&
 	     sr.length < 4 + ISC_SHA384_DIGESTLENGTH))
 		return (ISC_R_UNEXPECTEDEND);
@@ -185,8 +192,10 @@ fromwire_ds(ARGS_FROMWIRE) {
 		sr.length = 4 + ISC_SHA1_DIGESTLENGTH;
 	else if (sr.base[3] == DNS_DSDIGEST_SHA256)
 		sr.length = 4 + ISC_SHA256_DIGESTLENGTH;
+#ifdef ISC_GOST_DIGESTLENGTH
 	else if (sr.base[3] == DNS_DSDIGEST_GOST)
 		sr.length = 4 + ISC_GOST_DIGESTLENGTH;
+#endif
 	else if (sr.base[3] == DNS_DSDIGEST_SHA384)
 		sr.length = 4 + ISC_SHA384_DIGESTLENGTH;
 
@@ -238,9 +247,11 @@ fromstruct_ds(ARGS_FROMSTRUCT) {
 	case DNS_DSDIGEST_SHA256:
 		REQUIRE(ds->length == ISC_SHA256_DIGESTLENGTH);
 		break;
+#ifdef ISC_GOST_DIGESTLENGTH
 	case DNS_DSDIGEST_GOST:
 		REQUIRE(ds->length == ISC_GOST_DIGESTLENGTH);
 		break;
+#endif
 	case DNS_DSDIGEST_SHA384:
 		REQUIRE(ds->length == ISC_SHA384_DIGESTLENGTH);
 		break;

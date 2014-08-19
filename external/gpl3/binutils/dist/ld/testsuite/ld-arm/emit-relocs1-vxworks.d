@@ -7,6 +7,6 @@
  +10008:	e1a00000 	nop	.*
  +1000c:	e1a00000 	nop	.*
  +10010:	eaffeffa 	b	c000 <target>
-	+10010: R_ARM_PC24	target\+0xf+8
+	+10010: R_ARM_PC24	target-0x8
  +10014:	eaffeffd 	b	c010 <target\+0x10>
 	+10014: R_ARM_PC24	target\+0x8

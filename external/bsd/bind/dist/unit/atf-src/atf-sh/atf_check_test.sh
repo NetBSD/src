@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
+# Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,7 @@ atf_test_case expout_mismatch
 expout_mismatch_head()
 {
     atf_set "descr" "Verifies that atf_check prints a diff of the" \
-                    "stdout and the expected stdout if the two do no" \
+                    "stdout and the expected stdout if the two do not" \
                     "match"
 }
 expout_mismatch_body()
@@ -79,7 +79,7 @@ atf_test_case experr_mismatch
 experr_mismatch_head()
 {
     atf_set "descr" "Verifies that atf_check prints a diff of the" \
-                    "stderr and the expected stderr if the two do no" \
+                    "stderr and the expected stderr if the two do not" \
                     "match"
 }
 experr_mismatch_body()

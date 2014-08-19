@@ -1,5 +1,5 @@
-/*	Id: trees.c,v 1.2 2012/03/22 18:51:40 plunky Exp 	*/	
-/*	$NetBSD: trees.c,v 1.1.1.2 2012/03/26 14:27:03 plunky Exp $	*/
+/*	Id: trees.c,v 1.13 2014/06/20 07:04:49 plunky Exp 	*/	
+/*	$NetBSD: trees.c,v 1.1.1.2.4.1 2014/08/19 23:52:09 tls Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -375,6 +375,7 @@ runtime:
 
 		case BITYPE:
 			p->n_right = pconvert( p->n_right );
+			/* FALLTHROUGH */
 		case UTYPE:
 			p->n_left = pconvert( p->n_left );
 
@@ -799,7 +800,9 @@ cbranch(NODE *p, NODE *q)
 }
 
 NODE *
-strargs( p ) register NODE *p;  { /* rewrite structure flavored arguments */
+strargs(register NODE *p)
+{
+	/* rewrite structure flavored arguments */
 
 	if( p->n_op == CM ){
 		p->n_left = strargs( p->n_left );
@@ -987,7 +990,7 @@ valcast(CONSZ v, TWORD t)
 }
 
 /*
- * Checks p for the existance of a pun.  This is called when the op of p
+ * Checks p for the existence of a pun.  This is called when the op of p
  * is ASSIGN, RETURN, CAST, COLON, or relational.
  * One case is when enumerations are used: this applies only to lint.
  * In the other case, one operand is a pointer, the other integer type
@@ -1019,6 +1022,7 @@ chkpun(NODE *p)
 			uerror("using void value");
 			return;
 		}
+		break;
 	case COLON:
 		if (t1 == VOID && t2 == VOID)
 			return;
@@ -1118,7 +1122,9 @@ stref(NODE *p)
 	s = p->n_right->n_sp;
 	nfree(p->n_right);
 	r = nfree(p);
+#ifdef GCC_COMPAT
 	xap = attr_find(r->n_ap, GCC_ATYP_PACKED);
+#endif
 
 	p = pconvert(r);
 
@@ -1131,10 +1137,14 @@ stref(NODE *p)
 	q = INCQAL(s->squal);
 	d = s->sdf;
 	ap = s->sap;
+#ifdef GCC_COMPAT
 	if ((yap = attr_find(ap, GCC_ATYP_PACKED)) != NULL)
 		xap = yap;
 	else if (xap != NULL)
 		ap = attr_add(ap, attr_dup(xap, 3));
+#else
+	xap = yap = NULL;
+#endif
 	/* xap set if packed struct */
 
 	p = makety(p, t, q, d, ap);
@@ -1169,8 +1179,8 @@ stref(NODE *p)
 }
 
 int
-notlval(p) register NODE *p; {
-
+notlval(register NODE *p)
+{
 	/* return 0 if p an lvalue, 1 otherwise */
 
 	again:
@@ -1191,10 +1201,9 @@ notlval(p) register NODE *p; {
 
 	default:
 		return(1);
-
-		}
-
 	}
+}
+
 /* make a constant node with value i */
 NODE *
 bcon(int i)
@@ -1316,8 +1325,8 @@ convert(NODE *p, int f)
 }
 
 NODE *
-pconvert( p ) register NODE *p; {
-
+pconvert(register NODE *p)
+{
 	/* if p should be changed into a pointer, do so */
 
 	if( ISARY( p->n_type) ){
@@ -1329,10 +1338,11 @@ pconvert( p ) register NODE *p; {
 		return( buildtree( ADDROF, p, NIL ) );
 
 	return( p );
-	}
+}
 
 NODE *
-oconvert(p) register NODE *p; {
+oconvert(register NODE *p)
+{
 	/* convert the result itself: used for pointer and unsigned */
 
 	switch(p->n_op) {
@@ -1360,7 +1370,7 @@ oconvert(p) register NODE *p; {
 	cerror( "illegal oconvert: %d", p->n_op );
 
 	return(p);
-	}
+}
 
 /*
  * makes the operands of p agree; they are
@@ -1461,7 +1471,7 @@ ptmatch(NODE *p)
 		}
 
 	return(clocal(p));
-	}
+}
 
 /*
  * Satisfy the types of various arithmetic binary ops.
@@ -1517,11 +1527,11 @@ tymatch(NODE *p)
 #ifdef PCC_DEBUG
 	if (tdebug) {
 		printf("tymatch(%p): ", p);
-		tprint(stdout, tl, 0);
+		tprint(tl, 0);
 		printf(" %s ", copst(o));
-		tprint(stdout, tr, 0);
+		tprint(tr, 0);
 		printf(" => ");
-		tprint(stdout, t, 0);
+		tprint(t, 0);
 		printf("\n");
 		fwalk(p, eprint, 0);
 	}
@@ -1552,7 +1562,6 @@ makety(NODE *p, TWORD t, TWORD q, union dimfun *d, struct attr *ap)
 	p = block(t & TMASK ? PCONV : SCONV, p, NIL, t, d, ap);
 	p->n_qual = q;
 	return clocal(p);
-
 }
 
 NODE *
@@ -1575,7 +1584,7 @@ block(int o, NODE *l, NODE *r, TWORD t, union dimfun *d, struct attr *ap)
 	p->n_regw = 0;
 #endif
 	return(p);
-	}
+}
 
 /*
  * Return the constant value from an ICON.
@@ -1639,6 +1648,7 @@ opact(NODE *p)
 	switch (coptype(o = p->n_op)) {
 	case BITYPE:
 		mt12=mt2 = moditype(p->n_right->n_type);
+		/* FALLTHROUGH */
 	case UTYPE:
 		mt12 &= (mt1 = moditype(p->n_left->n_type));
 		break;
@@ -1904,9 +1914,11 @@ eprint(NODE *p, int down, int *a, int *b)
 		else
 			printf(", %d, ", p->n_rval);
 	}
-	tprint(stdout, p->n_type, p->n_qual);
+	tprint(p->n_type, p->n_qual);
 	printf( ", %p, ", p->n_df);
+#ifdef GCC_COMPAT
 	dump_attr(p->n_ap);
+#endif
 }
 # endif
 
@@ -1960,6 +1972,7 @@ logwalk(NODE *p)
 		return;
 	case BITYPE:
 		logwalk(r);
+		/* FALLTHROUGH */
 	case UTYPE:
 		logwalk(l);
 	}
@@ -2435,9 +2448,8 @@ static NODE *
 wrualfld(NODE *val, NODE *d, TWORD t, TWORD ct, int off, int fsz)
 { 
 	NODE *p, *q, *r, *rn, *s;
-	int tsz, ctsz, t2f, inbits;
+	int ctsz, t2f, inbits;
  
-	tsz = (int)tsize(t, 0, 0);
 	ctsz = (int)tsize(ct, 0, 0);
   
 	ct = ENUNSIGN(ct);
@@ -2509,19 +2521,18 @@ wrualfld(NODE *val, NODE *d, TWORD t, TWORD ct, int off, int fsz)
 static NODE *
 rmfldops(NODE *p)
 {
-	CONSZ msk;
 	TWORD t, ct;
 	NODE *q, *r, *t1, *t2, *bt, *t3, *t4;
-	int fsz, foff, tsz;
+	int fsz, foff;
 
 	if (p->n_op == FLD) {
 		/* Rewrite a field read operation */
 		fsz = UPKFSZ(p->n_rval);
 		foff = UPKFOFF(p->n_rval);
-		tsz = (int)tsize(p->n_left->n_type, 0, 0);
 		q = buildtree(ADDROF, p->n_left, NIL);
 
 		ct = t = p->n_type;
+#ifdef GCC_COMPAT
 		if (attr_find(p->n_ap, GCC_ATYP_PACKED) &&
 		    coptype(q->n_op) != LTYPE) {
 			t1 = tempnode(0, q->n_type, 0, 0);
@@ -2531,6 +2542,7 @@ rmfldops(NODE *p)
 			ct = UCHAR;
 #endif
 		} else
+#endif
 			bt = bcon(0);
 		q = rdualfld(q, t, ct, foff, fsz);
 		p->n_left = bt;
@@ -2547,11 +2559,9 @@ rmfldops(NODE *p)
 		fsz = UPKFSZ(q->n_rval);
 		foff = UPKFOFF(q->n_rval);
 		t = q->n_left->n_type;
-		tsz = (int)tsize(t, 0, 0);
 #if TARGET_ENDIAN == TARGET_BE
-		foff = tsz - fsz - foff;
+		foff = (int)tsize(t, 0, 0) - fsz - foff;
 #endif
-		msk = (((1LL << (fsz-1))-1) << 1) | 1;
 		bt = NULL;
 		if (p->n_right->n_op != ICON && p->n_right->n_op != NAME) {
 			t2 = tempnode(0, p->n_right->n_type, 0, 0);
@@ -2560,9 +2570,11 @@ rmfldops(NODE *p)
 			t2 = p->n_right;
 
 		ct = t;
+#ifdef GCC_COMPAT
 #ifndef UNALIGNED_ACCESS
 		if (attr_find(q->n_ap, GCC_ATYP_PACKED))
 			ct = UCHAR;
+#endif
 #endif
 		/* t2 is what we have to write (RHS of ASSIGN) */
 		/* bt is (eventually) something that must be written */
@@ -2944,7 +2956,9 @@ pprop(NODE *p, TWORD t, struct attr *ap)
 		if (coptype(o) == LTYPE)
 			break;
 
-fwalk(p, eprint, 0);
+#ifdef PCC_DEBUG
+		fwalk(p, eprint, 0);
+#endif
 		cerror("pprop op error %d\n", o);
 	}
 	if (coptype(o) == BITYPE)
@@ -3093,9 +3107,7 @@ send_passt(int type, ...)
 		break;
 	case IP_ASM:
 		if (blevel == 0) { /* outside function */
-			printf("\t");
 			printf("%s", va_arg(ap, char *));
-			printf("\n");
 			va_end(ap);
 			locctr(NOSEG, NULL);
 			return;

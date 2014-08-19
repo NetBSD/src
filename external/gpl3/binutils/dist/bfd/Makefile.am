@@ -71,6 +71,7 @@ BFD64_LIBS_CFILES = archive64.c
 # This list is alphabetized to make it easier to keep in sync
 # with the decls and initializer in archures.c.
 ALL_MACHINES = \
+	cpu-aarch64.lo \
 	cpu-alpha.lo \
 	cpu-arc.lo \
 	cpu-arm.lo \
@@ -83,6 +84,7 @@ ALL_MACHINES = \
 	cpu-d10v.lo \
 	cpu-d30v.lo \
 	cpu-dlx.lo \
+	cpu-epiphany.lo \
 	cpu-fr30.lo \
 	cpu-frv.lo \
 	cpu-h8300.lo \
@@ -91,6 +93,7 @@ ALL_MACHINES = \
 	cpu-i370.lo \
 	cpu-i386.lo \
 	cpu-l1om.lo \
+	cpu-k1om.lo \
 	cpu-i860.lo \
 	cpu-i960.lo \
 	cpu-ia64.lo \
@@ -103,6 +106,8 @@ ALL_MACHINES = \
 	cpu-m32r.lo \
 	cpu-m68hc11.lo \
 	cpu-m68hc12.lo \
+	cpu-m9s12x.lo \
+	cpu-m9s12xg.lo \
 	cpu-m68k.lo \
 	cpu-m88k.lo \
 	cpu-mcore.lo \
@@ -121,6 +126,7 @@ ALL_MACHINES = \
 	cpu-plugin.lo \
 	cpu-powerpc.lo \
 	cpu-rs6000.lo \
+	cpu-rl78.lo \
 	cpu-rx.lo \
 	cpu-s390.lo \
 	cpu-score.lo \
@@ -132,17 +138,21 @@ ALL_MACHINES = \
 	cpu-tic54x.lo \
 	cpu-tic6x.lo \
 	cpu-tic80.lo \
+	cpu-tilegx.lo \
+	cpu-tilepro.lo \
 	cpu-v850.lo \
 	cpu-vax.lo \
 	cpu-w65.lo \
 	cpu-we32k.lo \
 	cpu-xc16x.lo \
+	cpu-xgate.lo \
 	cpu-xstormy16.lo \
 	cpu-xtensa.lo \
 	cpu-z80.lo \
 	cpu-z8k.lo
 
 ALL_MACHINES_CFILES = \
+	cpu-aarch64.c \
 	cpu-alpha.c \
 	cpu-arc.c \
 	cpu-arm.c \
@@ -155,6 +165,7 @@ ALL_MACHINES_CFILES = \
 	cpu-d10v.c \
 	cpu-d30v.c \
 	cpu-dlx.c \
+	cpu-epiphany.c \
 	cpu-fr30.c \
 	cpu-frv.c \
 	cpu-h8300.c \
@@ -163,6 +174,7 @@ ALL_MACHINES_CFILES = \
 	cpu-i370.c \
 	cpu-i386.c \
 	cpu-l1om.c \
+	cpu-k1om.c \
 	cpu-i860.c \
 	cpu-i960.c \
 	cpu-ia64.c \
@@ -175,6 +187,8 @@ ALL_MACHINES_CFILES = \
 	cpu-m32r.c \
 	cpu-m68hc11.c \
 	cpu-m68hc12.c \
+	cpu-m9s12x.c \
+	cpu-m9s12xg.c \
 	cpu-m68k.c \
 	cpu-m88k.c \
 	cpu-mcore.c \
@@ -193,6 +207,7 @@ ALL_MACHINES_CFILES = \
 	cpu-plugin.c \
 	cpu-powerpc.c \
 	cpu-rs6000.c \
+	cpu-rl78.c \
 	cpu-rx.c \
 	cpu-s390.c \
 	cpu-score.c \
@@ -204,11 +219,14 @@ ALL_MACHINES_CFILES = \
 	cpu-tic54x.c \
 	cpu-tic6x.c \
 	cpu-tic80.c \
+	cpu-tilegx.c \
+	cpu-tilepro.c \
 	cpu-v850.c \
 	cpu-vax.c \
 	cpu-w65.c \
 	cpu-we32k.c \
 	cpu-xc16x.c \
+	cpu-xgate.c \
 	cpu-xstormy16.c \
 	cpu-xtensa.c \
 	cpu-z80.c \
@@ -265,6 +283,7 @@ BFD32_BACKENDS = \
 	elf-ifunc.lo \
 	elf-m10200.lo \
 	elf-m10300.lo \
+	elf-nacl.lo \
 	elf-strtab.lo \
 	elf-vxworks.lo \
 	elf.lo \
@@ -280,6 +299,7 @@ BFD32_BACKENDS = \
 	elf32-d10v.lo \
 	elf32-d30v.lo \
 	elf32-dlx.lo \
+	elf32-epiphany.lo \
 	elf32-fr30.lo \
 	elf32-frv.lo \
 	elf32-gen.lo \
@@ -310,6 +330,7 @@ BFD32_BACKENDS = \
 	elf32-or32.lo \
 	elf32-pj.lo \
 	elf32-ppc.lo \
+	elf32-rl78.lo \
 	elf32-rx.lo \
 	elf32-s390.lo \
 	elf32-sh-symbian.lo \
@@ -319,15 +340,19 @@ BFD32_BACKENDS = \
 	elf32-sparc.lo \
 	elf32-spu.lo \
 	elf32-tic6x.lo \
+	elf32-tilegx.lo \
+	elf32-tilepro.lo \
 	elf32-v850.lo \
 	elf32-vax.lo \
 	elf32-xc16x.lo \
+	elf32-xgate.lo \
 	elf32-xstormy16.lo \
 	elf32-xtensa.lo \
 	elf32.lo \
 	elflink.lo \
 	elfxx-mips.lo \
 	elfxx-sparc.lo \
+	elfxx-tilegx.lo \
 	epoc-pe-arm.lo \
 	epoc-pei-arm.lo \
 	hp300bsd.lo \
@@ -446,6 +471,7 @@ BFD32_BACKENDS_CFILES = \
 	elf-ifunc.c \
 	elf-m10200.c \
 	elf-m10300.c \
+	elf-nacl.c \
 	elf-strtab.c \
 	elf-vxworks.c \
 	elf.c \
@@ -461,6 +487,7 @@ BFD32_BACKENDS_CFILES = \
 	elf32-d10v.c \
 	elf32-d30v.c \
 	elf32-dlx.c \
+	elf32-epiphany.c \
 	elf32-fr30.c \
 	elf32-frv.c \
 	elf32-gen.c \
@@ -491,6 +518,7 @@ BFD32_BACKENDS_CFILES = \
 	elf32-or32.c \
 	elf32-pj.c \
 	elf32-ppc.c \
+	elf32-rl78.c \
 	elf32-rx.c \
 	elf32-s390.c \
 	elf32-sh-symbian.c \
@@ -500,15 +528,19 @@ BFD32_BACKENDS_CFILES = \
 	elf32-sparc.c \
 	elf32-spu.c \
 	elf32-tic6x.c \
+	elf32-tilegx.c \
+	elf32-tilepro.c \
 	elf32-v850.c \
 	elf32-vax.c \
 	elf32-xc16x.c \
+	elf32-xgate.c \
 	elf32-xstormy16.c \
 	elf32-xtensa.c \
 	elf32.c \
 	elflink.c \
 	elfxx-mips.c \
 	elfxx-sparc.c \
+	elfxx-tilegx.c \
 	epoc-pe-arm.c \
 	epoc-pei-arm.c \
 	hp300bsd.c \
@@ -583,12 +615,14 @@ BFD32_BACKENDS_CFILES = \
 # elf32-ia64.c requires a 64-bit bfd_vma, and hence can not be put in
 # BFD32_BACKENDS.
 BFD64_BACKENDS = \
+	elf64-aarch64.lo \
 	aix5ppc-core.lo \
 	aout64.lo \
 	coff-alpha.lo \
 	coff-x86_64.lo \
 	coff64-rs6000.lo \
 	demo64.lo \
+	elf-nacl.lo \
 	elf32-ia64.lo \
 	elf32-score.lo \
 	elf32-score7.lo \
@@ -596,15 +630,18 @@ BFD64_BACKENDS = \
 	elf64-gen.lo \
 	elf64-hppa.lo \
 	elf64-ia64.lo \
+	elf64-ia64-vms.lo \
 	elf64-mips.lo \
 	elf64-mmix.lo \
 	elf64-ppc.lo \
 	elf64-s390.lo \
 	elf64-sh64.lo \
 	elf64-sparc.lo \
+	elf64-tilegx.lo \
 	elf64-x86-64.lo \
 	elf64.lo \
 	elfn32-mips.lo \
+	elfxx-ia64.lo \
 	mach-o-x86-64.lo \
 	mmo.lo \
 	nlm32-alpha.lo \
@@ -617,26 +654,31 @@ BFD64_BACKENDS = \
 	vms-alpha.lo
 
 BFD64_BACKENDS_CFILES = \
+	elf64-aarch64.c \
 	aix5ppc-core.c \
 	aout64.c \
 	coff-alpha.c \
 	coff-x86_64.c \
 	coff64-rs6000.c \
 	demo64.c \
+	elf-nacl.c \
 	elf32-score.c \
 	elf32-score7.c \
 	elf64-alpha.c \
 	elf64-gen.c \
 	elf64-hppa.c \
+	elf64-ia64-vms.c \
 	elf64-mips.c \
 	elf64-mmix.c \
 	elf64-ppc.c \
 	elf64-s390.c \
 	elf64-sh64.c \
 	elf64-sparc.c \
+	elf64-tilegx.c \
 	elf64-x86-64.c \
 	elf64.c \
 	elfn32-mips.c \
+	elfxx-ia64.c \
 	mach-o-x86-64.c \
 	mmo.c \
 	nlm32-alpha.c \
@@ -711,7 +753,7 @@ SOURCE_HFILES = \
 	libnlm.h liboasys.h libpei.h libxcoff.h mach-o.h \
 	netbsd.h nlm-target.h nlmcode.h nlmswap.h ns32k.h \
 	pef.h pef-traceback.h peicode.h som.h version.h \
-	vms.h xcoff-target.h xsym.h
+	vms.h xsym.h
 
 ## ... and all .h files which are in the build tree.
 BUILD_HFILES = \
@@ -845,14 +887,14 @@ elf64-target.h : elfxx-target.h
 	sed -e s/NN/64/g < $(srcdir)/elfxx-target.h > elf64-target.new
 	mv -f elf64-target.new elf64-target.h
 
-elf32-ia64.c : elfxx-ia64.c
+elf32-ia64.c : elfnn-ia64.c
 	rm -f elf32-ia64.c
-	sed -e s/NN/32/g < $(srcdir)/elfxx-ia64.c > elf32-ia64.new
+	sed -e s/NN/32/g < $(srcdir)/elfnn-ia64.c > elf32-ia64.new
 	mv -f elf32-ia64.new elf32-ia64.c
 
-elf64-ia64.c : elfxx-ia64.c
+elf64-ia64.c : elfnn-ia64.c
 	rm -f elf64-ia64.c
-	sed -e s/NN/64/g < $(srcdir)/elfxx-ia64.c > elf64-ia64.new
+	sed -e s/NN/64/g < $(srcdir)/elfnn-ia64.c > elf64-ia64.new
 	mv -f elf64-ia64.new elf64-ia64.c
 
 peigen.c : peXXigen.c

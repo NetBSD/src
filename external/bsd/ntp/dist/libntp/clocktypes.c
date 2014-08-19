@@ -1,8 +1,9 @@
-/*	$NetBSD: clocktypes.c,v 1.1.1.1 2009/12/13 16:55:02 kardel Exp $	*/
+/*	$NetBSD: clocktypes.c,v 1.1.1.1.12.1 2014/08/19 23:51:41 tls Exp $	*/
 
 /*
  * Data for pretty printing clock types
  */
+#include <config.h>
 #include <stdio.h>
 
 #include "ntp_fp.h"
@@ -102,6 +103,8 @@ struct clktype clktypes[] = {
 	  "GPS_RIPENCC" },
 	{ REFCLK_NEOCLOCK4X,	"NeoClock4X DCF77 / TDF receiver (44)",
 	  "NEOCLK4X"},
+        { REFCLK_TSYNCPCI,    "Spectracom TSYNC PCI timing board (45)",
+          "PCI_TSYNC"},
 	{ -1,			"", "" }
 };
 

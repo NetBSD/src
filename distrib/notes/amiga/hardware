@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.52.2.1 2013/02/25 00:24:28 tls Exp $
+.\"	$NetBSD: hardware,v 1.52.2.2 2014/08/19 23:45:41 tls Exp $
 .
 .Nx \*V
 runs on any Amiga that has a 68020 or better CPU with
@@ -40,6 +40,8 @@ IDE controllers
 A4000/A1200 IDE controller, including ATAPI devices
 .It
 ELBOX FastATA 1200 Mk-III/Mk-IV
+.It
+Individual Computers ACA500 (both CF slots) 
 .It
 Individual Computers X-Surf IDE
 .bullet)
@@ -123,7 +125,9 @@ Ariadne II Ethernet
 .It
 Quicknet Ethernet
 .It
-X-surf Ethernet port
+X-Surf Ethernet
+.It
+X-Surf 100 Ethernet
 .bullet)
 .It
 ARCnet controllers

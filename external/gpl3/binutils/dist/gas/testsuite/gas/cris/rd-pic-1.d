@@ -28,31 +28,31 @@ Disassembly of section \.text:
 [ 	]+3a:[ 	]+af9e 0000 0000[ 	]+sub\.d 0 <start>,\$?r9
 [ 	]+3c:[ 	]+R_CRIS_32_GOTREL	extsym4\+0x2a
 [ 	]+40:[ 	]+af3e 0000 0000[ 	]+sub\.d 0 <start>,\$?r3
-[ 	]+42:[ 	]+R_CRIS_32_GOTREL	extsym4\+0x[f]+fffffa0
+[ 	]+42:[ 	]+R_CRIS_32_GOTREL	extsym4-0x60
 [ 	]+46:[ 	]+6fad 0000 0000 287a[ 	]+add\.d \[\$?r10\+0 <start>\],\$?r7,\$?r8
 [ 	]+48:[ 	]+R_CRIS_32_GOT	extsym3\+0x38
 [ 	]+4e:[ 	]+6f5d 0000 0000 611a[ 	]+move\.d \[\$?r5\+0 <start>\],\$?r1
 [ 	]+50:[ 	]+R_CRIS_32_GOT	extsym6\+0xa
 [ 	]+56:[ 	]+6fad 0000 0000 284a[ 	]+add\.d \[\$?r10\+0 <start>\],\$?r4,\$?r8
-[ 	]+58:[ 	]+R_CRIS_32_GOT	extsym3\+0x[f]+ffffdd0
+[ 	]+58:[ 	]+R_CRIS_32_GOT	extsym3-0x230
 [ 	]+5e:[ 	]+6f5d 0000 0000 6cca[ 	]+move\.d \[\$?r5\+0 <start>\],\$?r12
-[ 	]+60:[ 	]+R_CRIS_32_GOT	extsym6\+0x[f]+fffff92
+[ 	]+60:[ 	]+R_CRIS_32_GOT	extsym6-0x6e
 [ 	]+66:[ 	]+6f5d 0000 0000 69ce[ 	]+move\.d \[\$?r9=\$?r5\+0 <start>\],\$?r12
-[ 	]+68:[ 	]+R_CRIS_32_GOT	extsym6\+0x[f]+fffff24
+[ 	]+68:[ 	]+R_CRIS_32_GOT	extsym6-0xdc
 [ 	]+6e:[ 	]+6f3d 0000 0000 67de[ 	]+move\.d \[\$?r7=\$?r3\+0 <start>\],\$?r13
-[ 	]+70:[ 	]+R_CRIS_32_GOTREL	extsym10\+0x[f]+ffffeb6
+[ 	]+70:[ 	]+R_CRIS_32_GOTREL	extsym10-0x14a
 [ 	]+76:[ 	]+6f5e 0000 0000[ 	]+move\.d 0 <start>,\$?r5
 [ 	]+78:[ 	]+R_CRIS_32_PLT_PCREL	extsym7\+0x4
 [ 	]+7c:[ 	]+6f9e 0000 0000[ 	]+move\.d 0 <start>,\$?r9
-[ 	]+7e:[ 	]+R_CRIS_32_PLT_PCREL	extsym7\+0x[f]+fffffd8
+[ 	]+7e:[ 	]+R_CRIS_32_PLT_PCREL	extsym7-0x28
 [ 	]+82:[ 	]+6f5e 0000 0000[ 	]+move\.d 0 <start>,\$?r5
 [ 	]+84:[ 	]+R_CRIS_32_PLT_GOTREL	extsym11\+0x10
 [ 	]+88:[ 	]+6f9e 0000 0000[ 	]+move\.d 0 <start>,\$?r9
-[ 	]+8a:[ 	]+R_CRIS_32_PLT_GOTREL	extsym12\+0x[f]+fffffc4
+[ 	]+8a:[ 	]+R_CRIS_32_PLT_GOTREL	extsym12-0x3c
 [ 	]+8e:[ 	]+5fcd 0000 a89a[ 	]+sub\.d \[\$?r12\+0\],\$?r9,\$?r8
-[ 	]+90:[ 	]+R_CRIS_16_GOT	extsym3\+0x[f]+fffff64
+[ 	]+90:[ 	]+R_CRIS_16_GOT	extsym3-0x9c
 [ 	]+94:[ 	]+5fbd 0000 699a[ 	]+move\.d \[\$?r11\+0\],\$?r9
-[ 	]+96:[ 	]+R_CRIS_16_GOTPLT	extsym14\+0x[f]+fffff00
+[ 	]+96:[ 	]+R_CRIS_16_GOTPLT	extsym14-0x100
 [ 	]+9a:[ 	]+6fad 0000 0000 287a[ 	]+add\.d \[\$?r10\+0 <start>\],\$?r7,\$?r8
 [ 	]+9c:[ 	]+R_CRIS_32_GOTPLT	extsym3\+0x38
 [ 	]+\.\.\.

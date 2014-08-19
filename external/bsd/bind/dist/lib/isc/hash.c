@@ -1,7 +1,7 @@
-/*	$NetBSD: hash.c,v 1.3.2.1 2013/06/23 06:26:25 tls Exp $	*/
+/*	$NetBSD: hash.c,v 1.3.2.2 2014/08/19 23:46:32 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -96,7 +96,7 @@ struct isc_hash {
 	isc_boolean_t	initialized;
 	isc_refcount_t	refcnt;
 	isc_entropy_t	*entropy; /*%< entropy source */
-	unsigned int	limit;	/*%< upper limit of key length */
+	size_t		limit;	/*%< upper limit of key length */
 	size_t		vectorlen; /*%< size of the vector below */
 	hash_random_t	*rndvector; /*%< random vector for universal hashing */
 };
@@ -142,7 +142,7 @@ static unsigned char maptolower[] = {
 
 isc_result_t
 isc_hash_ctxcreate(isc_mem_t *mctx, isc_entropy_t *entropy,
-		   unsigned int limit, isc_hash_t **hctxp)
+		   size_t limit, isc_hash_t **hctxp)
 {
 	isc_result_t result;
 	isc_hash_t *hctx;
@@ -243,16 +243,17 @@ isc_hash_ctxinit(isc_hash_t *hctx) {
 	if (hctx->initialized == ISC_TRUE)
 		goto out;
 
-	if (hctx->entropy) {
+	if (hctx->entropy != NULL) {
 		isc_result_t result;
 
 		result = isc_entropy_getdata(hctx->entropy,
-					     hctx->rndvector, hctx->vectorlen,
+					     hctx->rndvector,
+					     (unsigned int)hctx->vectorlen,
 					     NULL, 0);
 		INSIST(result == ISC_R_SUCCESS);
 	} else {
 		isc_uint32_t pr;
-		unsigned int i, copylen;
+		size_t i, copylen;
 		unsigned char *p;
 
 		p = (unsigned char *)hctx->rndvector;
@@ -263,7 +264,7 @@ isc_hash_ctxinit(isc_hash_t *hctx) {
 			else
 				copylen = hctx->vectorlen - i;
 
-			memcpy(p, &pr, copylen);
+			memmove(p, &pr, copylen);
 		}
 		INSIST(p == (unsigned char *)hctx->rndvector +
 		       hctx->vectorlen);
@@ -276,7 +277,7 @@ isc_hash_ctxinit(isc_hash_t *hctx) {
 }
 
 void
-isc_hash_init() {
+isc_hash_init(void) {
 	INSIST(hash != NULL && VALID_HASH(hash));
 
 	isc_hash_ctxinit(hash);
@@ -315,9 +316,9 @@ destroy(isc_hash_t **hctxp) {
 
 	DESTROYLOCK(&hctx->lock);
 
-	memcpy(canary0, hctx + 1, sizeof(canary0));
+	memmove(canary0, hctx + 1, sizeof(canary0));
 	memset(hctx, 0, sizeof(isc_hash_t));
-	memcpy(canary1, hctx + 1, sizeof(canary1));
+	memmove(canary1, hctx + 1, sizeof(canary1));
 	INSIST(memcmp(canary0, canary1, sizeof(canary0)) == 0);
 	isc_mem_put(mctx, hctx, sizeof(isc_hash_t));
 	isc_mem_detach(&mctx);
@@ -339,7 +340,7 @@ isc_hash_ctxdetach(isc_hash_t **hctxp) {
 }
 
 void
-isc_hash_destroy() {
+isc_hash_destroy(void) {
 	unsigned int refs;
 
 	INSIST(hash != NULL && VALID_HASH(hash));

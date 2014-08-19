@@ -13,18 +13,25 @@
 
 #include <type_traits>
 
-template <class T, bool Result>
+template <class T>
 void test_is_destructible()
 {
-    static_assert( std::is_destructible<T>::value == Result, "");
-    static_assert( std::is_destructible<const T>::value == Result, "");
-    static_assert( std::is_destructible<volatile T>::value == Result, "");
-    static_assert( std::is_destructible<const volatile T>::value == Result, "");
+    static_assert( std::is_destructible<T>::value, "");
+    static_assert( std::is_destructible<const T>::value, "");
+    static_assert( std::is_destructible<volatile T>::value, "");
+    static_assert( std::is_destructible<const volatile T>::value, "");
 }
 
-class Empty
+template <class T>
+void test_is_not_destructible()
 {
-};
+    static_assert(!std::is_destructible<T>::value, "");
+    static_assert(!std::is_destructible<const T>::value, "");
+    static_assert(!std::is_destructible<volatile T>::value, "");
+    static_assert(!std::is_destructible<const volatile T>::value, "");
+}
+
+class Empty {};
 
 class NotEmpty
 {
@@ -38,29 +45,77 @@ struct bit_zero
     int :  0;
 };
 
-class Abstract
-{
-    virtual ~Abstract() = 0;
-};
-
 struct A
 {
     ~A();
 };
 
+typedef void (Function) ();
+
+struct PublicAbstract                    { public:    virtual void foo() = 0; };
+struct ProtectedAbstract                 { protected: virtual void foo() = 0; };
+struct PrivateAbstract                   { private:   virtual void foo() = 0; };
+
+struct PublicDestructor                  { public:    ~PublicDestructor() {}};
+struct ProtectedDestructor               { protected: ~ProtectedDestructor() {}};
+struct PrivateDestructor                 { private:   ~PrivateDestructor() {}};
+
+struct VirtualPublicDestructor           { public:    virtual ~VirtualPublicDestructor() {}};
+struct VirtualProtectedDestructor        { protected: virtual ~VirtualProtectedDestructor() {}};
+struct VirtualPrivateDestructor          { private:   virtual ~VirtualPrivateDestructor() {}};
+
+struct PurePublicDestructor              { public:    virtual ~PurePublicDestructor() = 0; };
+struct PureProtectedDestructor           { protected: virtual ~PureProtectedDestructor() = 0; };
+struct PurePrivateDestructor             { private:   virtual ~PurePrivateDestructor() = 0; };
+
+struct DeletedPublicDestructor           { public:    ~DeletedPublicDestructor() = delete; };
+struct DeletedProtectedDestructor        { protected: ~DeletedProtectedDestructor() = delete; };
+struct DeletedPrivateDestructor          { private:   ~DeletedPrivateDestructor() = delete; };
+
+struct DeletedVirtualPublicDestructor    { public:    virtual ~DeletedVirtualPublicDestructor() = delete; };
+struct DeletedVirtualProtectedDestructor { protected: virtual ~DeletedVirtualProtectedDestructor() = delete; };
+struct DeletedVirtualPrivateDestructor   { private:   virtual ~DeletedVirtualPrivateDestructor() = delete; };
+
+
 int main()
 {
-    test_is_destructible<void, false>();
-    test_is_destructible<A, true>();
-    test_is_destructible<Abstract, false>();
-    test_is_destructible<NotEmpty, false>();
-    test_is_destructible<int&, true>();
-    test_is_destructible<Union, true>();
-    test_is_destructible<Empty, true>();
-    test_is_destructible<int, true>();
-    test_is_destructible<double, true>();
-    test_is_destructible<int*, true>();
-    test_is_destructible<const int*, true>();
-    test_is_destructible<char[3], true>();
-    test_is_destructible<bit_zero, true>();
+    test_is_destructible<A>();
+    test_is_destructible<int&>();
+    test_is_destructible<Union>();
+    test_is_destructible<Empty>();
+    test_is_destructible<int>();
+    test_is_destructible<double>();
+    test_is_destructible<int*>();
+    test_is_destructible<const int*>();
+    test_is_destructible<char[3]>();
+    test_is_destructible<bit_zero>();
+    test_is_destructible<int[3]>();
+    test_is_destructible<ProtectedAbstract>();
+    test_is_destructible<PublicAbstract>();
+    test_is_destructible<PrivateAbstract>();
+    test_is_destructible<PublicDestructor>();
+    test_is_destructible<VirtualPublicDestructor>();
+    test_is_destructible<PurePublicDestructor>();
+
+    test_is_not_destructible<int[]>();
+    test_is_not_destructible<void>();
+
+    test_is_not_destructible<ProtectedDestructor>();
+    test_is_not_destructible<PrivateDestructor>();
+    test_is_not_destructible<VirtualProtectedDestructor>();
+    test_is_not_destructible<VirtualPrivateDestructor>();
+    test_is_not_destructible<PureProtectedDestructor>();
+    test_is_not_destructible<PurePrivateDestructor>();
+    test_is_not_destructible<DeletedPublicDestructor>();
+    test_is_not_destructible<DeletedProtectedDestructor>();
+    test_is_not_destructible<DeletedPrivateDestructor>();
+
+//     test_is_not_destructible<DeletedVirtualPublicDestructor>(); // currently fails due to clang bug #20268
+    test_is_not_destructible<DeletedVirtualProtectedDestructor>();
+    test_is_not_destructible<DeletedVirtualPrivateDestructor>();
+
+#if __has_feature(cxx_access_control_sfinae) 
+    test_is_not_destructible<NotEmpty>();
+#endif
+    test_is_not_destructible<Function>();
 }

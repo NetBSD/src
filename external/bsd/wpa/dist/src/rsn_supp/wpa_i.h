@@ -2,14 +2,8 @@
  * Internal WPA/RSN supplicant state machine definitions
  * Copyright (c) 2004-2010, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #ifndef WPA_I_H
@@ -147,12 +141,6 @@ static inline void wpa_sm_deauthenticate(struct wpa_sm *sm, int reason_code)
 {
 	WPA_ASSERT(sm->ctx->deauthenticate);
 	sm->ctx->deauthenticate(sm->ctx->ctx, reason_code);
-}
-
-static inline void wpa_sm_disassociate(struct wpa_sm *sm, int reason_code)
-{
-	WPA_ASSERT(sm->ctx->disassociate);
-	sm->ctx->disassociate(sm->ctx->ctx, reason_code);
 }
 
 static inline int wpa_sm_set_key(struct wpa_sm *sm, enum wpa_alg alg,

@@ -1,5 +1,5 @@
-/*	Id: macdefs.h,v 1.14 2011/07/28 11:04:14 ragge Exp 	*/	
-/*	$NetBSD: macdefs.h,v 1.1.1.4 2011/09/01 12:46:51 plunky Exp $	*/
+/*	Id: macdefs.h,v 1.19 2014/06/01 11:35:03 ragge Exp 	*/	
+/*	$NetBSD: macdefs.h,v 1.1.1.4.8.1 2014/08/19 23:52:09 tls Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -166,7 +166,6 @@ extern int maxargs;
 
 # define BYTEOFF(x) ((x)&03)
 # define wdal(k) (BYTEOFF(k)==0)
-# define BITOOR(x) ((x))  /* bit offset to oreg offset XXX wrong */
 
 # define REGSZ 16
 
@@ -248,20 +247,16 @@ int COLORMAP(int c, int *r);
 
 #define	SNCON		(MAXSPECIAL+1)	/* named constand */
 
+#define TARGET_FLT_EVAL_METHOD	0	/* all as their type */
 /*
  * Builtins.
  */
-#define TARGET_BUILTINS							\
-	{ "__builtin_frame_address", vax_builtin_frame_address, -1 },	\
-	{ "__builtin_return_address", vax_builtin_return_address, -1 },
-
 #define NODE struct node
 struct node;
+struct bitable;
 
 #define	TARGET_FFS		/* target-specific ffs */
-NODE *builtin_ffs(NODE *f, NODE *a, unsigned int t);
-
-NODE *vax_builtin_frame_address(NODE *f, NODE *a, unsigned int t);
-NODE *vax_builtin_return_address(NODE *f, NODE *a, unsigned int t);
-
+NODE *builtin_ffs(const struct bitable *, NODE *a);
+NODE *builtin_ffsl(const struct bitable *, NODE *a);
+NODE *builtin_ffsll(const struct bitable *, NODE *a);
 #undef NODE

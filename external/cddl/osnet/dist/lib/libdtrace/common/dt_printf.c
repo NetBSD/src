@@ -1861,10 +1861,10 @@ dtrace_printf_format(dtrace_hdl_t *dtp, void *fmtdata, char *s, size_t len)
 			*f++ = '@';
 
 		if (width != 0)
-			f += snprintf(f, sizeof (format), "%d", width);
+			f += snprintf(f, format + formatlen - f, "%d", width);
 
 		if (prec != 0)
-			f += snprintf(f, sizeof (format), ".%d", prec);
+			f += snprintf(f, format + formatlen - f, ".%d", prec);
 
 		/*
 		 * If the output format is %s, then either %s is the underlying

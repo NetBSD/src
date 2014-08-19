@@ -1,4 +1,4 @@
-/*	$NetBSD: a_md5encrypt.c,v 1.1.1.2 2012/01/31 21:23:56 kardel Exp $	*/
+/*	$NetBSD: a_md5encrypt.c,v 1.1.1.2.6.1 2014/08/19 23:51:40 tls Exp $	*/
 
 /*
  *	digest support for NTP, MD5 and with OpenSSL more
@@ -11,11 +11,7 @@
 #include "ntp_string.h"
 #include "ntp_stdlib.h"
 #include "ntp.h"
-#ifdef OPENSSL
-# include "openssl/evp.h"
-#else
-# include "ntp_md5.h"	/* provides clone of OpenSSL MD5 API */
-#endif
+#include "ntp_md5.h"	/* provides OpenSSL digest API */
 
 /*
  * MD5authencrypt - generate message digest
@@ -40,8 +36,16 @@ MD5authencrypt(
 	 * was creaded.
 	 */
 	INIT_SSL();
+#if defined(OPENSSL) && OPENSSL_VERSION_NUMBER >= 0x0090700fL
+	if (!EVP_DigestInit(&ctx, EVP_get_digestbynid(type))) {
+		msyslog(LOG_ERR,
+		    "MAC encrypt: digest init failed");
+		return (0);
+	}
+#else
 	EVP_DigestInit(&ctx, EVP_get_digestbynid(type));
-	EVP_DigestUpdate(&ctx, key, (u_int)cache_keylen);
+#endif
+	EVP_DigestUpdate(&ctx, key, cache_secretsize);
 	EVP_DigestUpdate(&ctx, (u_char *)pkt, (u_int)length);
 	EVP_DigestFinal(&ctx, digest, &len);
 	memmove((u_char *)pkt + length + 4, digest, len);
@@ -73,8 +77,16 @@ MD5authdecrypt(
 	 * was created.
 	 */
 	INIT_SSL();
+#if defined(OPENSSL) && OPENSSL_VERSION_NUMBER >= 0x0090700fL
+	if (!EVP_DigestInit(&ctx, EVP_get_digestbynid(type))) {
+		msyslog(LOG_ERR,
+		    "MAC decrypt: digest init failed");
+		return (0);
+	}
+#else
 	EVP_DigestInit(&ctx, EVP_get_digestbynid(type));
-	EVP_DigestUpdate(&ctx, key, (u_int)cache_keylen);
+#endif
+	EVP_DigestUpdate(&ctx, key, cache_secretsize);
 	EVP_DigestUpdate(&ctx, (u_char *)pkt, (u_int)length);
 	EVP_DigestFinal(&ctx, digest, &len);
 	if ((u_int)size != len + 4) {
@@ -82,7 +94,7 @@ MD5authdecrypt(
 		    "MAC decrypt: MAC length error");
 		return (0);
 	}
-	return (!memcmp(digest, (char *)pkt + length + 4, len));
+	return !memcmp(digest, (char *)pkt + length + 4, len);
 }
 
 /*
@@ -103,10 +115,25 @@ addr2refid(sockaddr_u *addr)
 		return (NSRCADR(addr));
 
 	INIT_SSL();
-	EVP_DigestInit(&ctx, EVP_get_digestbynid(NID_md5));
+
+#if defined(OPENSSL) && OPENSSL_VERSION_NUMBER >= 0x0090700fL
+	EVP_MD_CTX_init(&ctx);
+#ifdef EVP_MD_CTX_FLAG_NON_FIPS_ALLOW
+	/* MD5 is not used as a crypto hash here. */
+	EVP_MD_CTX_set_flags(&ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
+#endif
+	if (!EVP_DigestInit_ex(&ctx, EVP_md5(), NULL)) {
+		msyslog(LOG_ERR,
+		    "MD5 init failed");
+		exit(1);
+	}
+#else
+	EVP_DigestInit(&ctx, EVP_md5());
+#endif
+
 	EVP_DigestUpdate(&ctx, (u_char *)PSOCK_ADDR6(addr),
 	    sizeof(struct in6_addr));
 	EVP_DigestFinal(&ctx, digest, &len);
-	memcpy(&addr_refid, digest, 4);
+	memcpy(&addr_refid, digest, sizeof(addr_refid));
 	return (addr_refid);
 }

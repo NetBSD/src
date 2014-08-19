@@ -273,8 +273,7 @@ screen_readtermcap(int interactive)
     /* set up common terminal capabilities */
     if ((screen_length = tgetnum("li")) <= 0)
     {
-	screen_length = smart_terminal = 0;
-	return No;
+	screen_length = 0;
     }
 
     /* screen_width is a little different */
@@ -328,6 +327,13 @@ screen_readtermcap(int interactive)
     /* This may change screen_width and screen_length, and it always
        sets lower_left. */
     screen_getsize();
+
+    /* If screen_length is 0 from both termcap and ioctl then we are dumb */
+    if (screen_length == 0)
+    {
+        smart_terminal = No;
+        return No;
+    }
 
     /* if stdout is not a terminal, pretend we are a dumb terminal */
 #ifdef USE_SGTTY

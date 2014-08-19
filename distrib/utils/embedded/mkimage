@@ -1,7 +1,7 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.3.4.2 2013/06/23 06:26:19 tls Exp $
+# $NetBSD: mkimage,v 1.3.4.3 2014/08/19 23:45:45 tls Exp $
 #
-# Copyright (c) 2013 The NetBSD Foundation, Inc.
+# Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -39,12 +39,12 @@ PROG="$(basename "$0")"
 
 DISKLABEL=${TOOL_DISKLABEL:-disklabel}
 FDISK=${TOOL_FDISK:-fdisk}
-GZIP=${TOOL_GZIP:-gzip}
 MAKEFS=${TOOL_MAKEFS:-makefs}
 MTREE=${TOOL_MTREE:-mtree}
+INSTALLBOOT=${TOOL_INSTALLBOOT:-installboot}
+GZIP_CMD=${TOOL_GZIP:-gzip} # ${GZIP} is special to gzip(1)
 
 src="/usr/src"
-release="/usr/obj/evbarm/release"
 sets="base comp etc games man misc modules text"
 xsets="xbase xcomp xetc xfont xserver" 
 minfree="10%"
@@ -52,7 +52,7 @@ bar="==="
 
 tmp="$(mktemp -d "/tmp/$PROG.XXXXXX")"
 mnt="${tmp}/mnt"
-mkdir -p "${mnt}/etc" "${mnt}/dev" "${mnt}/boot"
+mkdir -p "${mnt}/etc" "${mnt}/dev"
 
 trap "cleanup" 0 1 2 3 15
 
@@ -69,18 +69,19 @@ getsize() {
 
 usage() {
 	cat << EOF 1>&2
-Usage: $PROG -h <host-arch> [-bmx] [-K <kerneldir>] [-S <srcdir>] [-D <destdir>] [-c <custom-files-dir>] [-s <Mb size>] [<image>]
+Usage: $PROG -h <host-arch> [-bdmx] [-K <kerneldir>] [-S <srcdir>] [-D <destdir>] [-c <custom-files-dir>] [-s <Mb size>] [<image>]
 
 -b	Boot only, no sets loaded
+-r	root device kind (sd, wd, ld)
 -d	Add the debug sets
--m	Mimimize disk writes for sd cards
+-m	Optimize the OS installation to mimimize disk writes for SSDs
 -x	Load the x sets too, not just the base ones
 EOF
 	exit 1
 }
 
 # First pass for options to get the host and src directories
-OPTS="K:D:S:bc:dh:ms:x"
+OPTS="K:D:S:bc:dh:mr:s:x"
 while getopts "$OPTS" f
 do
 	case $f in
@@ -102,11 +103,13 @@ then
 fi
 
 . "${DIR}/conf/${h}.conf"
+release="/usr/obj/${MACHINE}/release"
 
 selected_sets="$sets"
 dsets=false
 xsets=false
 minwrites=false
+rootdev=ld
 
 OPTIND=1
 while getopts "$OPTS" f
@@ -115,7 +118,7 @@ do
 	D)	release="$OPTARG";;
 	K)	kernel="$OPTARG";;
 	S)	;;
-	b)	bootonly="true";;
+	b)	bootonly=true;;
 	d)	dsets=true
 		selected_sets="$selected_sets debug"
 		if $xsets; then
@@ -125,6 +128,7 @@ do
 	c)	custom="$OPTARG";;
 	h)	;;
 	m)	minwrites=true;;
+	r)	rootdev="$OPTARG";;
 	s)	size="$OPTARG";;
 	x)	xsets=true
 		selected_sets="$selected_sets $xsets"
@@ -148,7 +152,7 @@ case "$image" in
 *)	compress=false;;
 esac
 
-if [ -z "$bootonly" ]; then
+if [ -z "${bootonly}" ]; then
 	echo ${bar} configuring sets ${bar}
 	(echo '/set type=dir uname=root gname=wheel mode=0755'
 	for i in $selected_sets; do
@@ -163,22 +167,22 @@ make_fstab
 customize
 populate
 
-if [ -z "$bootonly" ]; then
+if [ -z "${bootonly}" ]; then
 	(cd ${mnt}; ${MTREE} -N ${release}/etc -c -k all | 
 	    ${MTREE} -N ${release}/etc -C -k all) >> "$tmp/selected_sets"
 fi
-if [ -n ${msdosid} ]; then
+if [ -n "${msdosid}" ]; then
 	echo ${bar} Populating msdos filesystem ${bar}
 	${MAKEFS} -N ${release}/etc -t msdos \
-	    -O $((${init} / 2))m -s $((${boot} / 2 + ${init} / 2))m ${image} ${mnt}/boot
+	    -O $((${init} / 2))m -s $((${boot} / 2 + ${init} / 2))m \
+	    ${image} ${mnt}/boot
 fi
 
-if [ -z "$bootonly" ]; then
+if [ -z "${bootonly}" ]; then
 	echo ${bar} Populating ffs filesystem ${bar}
 	${MAKEFS} -N ${release}/etc -t ffs -rx \
-	    -O $(((${init} + ${boot} + ${swap}) / 2))m \
-		-o d=4096 \
-	    -b $((${extra}))m \
+	    -O ${ffsoffset} \
+	    -o d=4096 -b $((${extra}))m \
 	    -F "$tmp/selected_sets" ${image} "${release}" "${mnt}"
 fi
 
@@ -190,17 +194,22 @@ newsize=$((${size} / 2 / 1024))
 echo ${bar} Adding label ${bar}
 make_label > ${tmp}/label
 ${DISKLABEL} -R -F ${image} ${tmp}/label
-if [ -n ${msdosid} ]; then
+if [ -n "${msdosid}" ]; then
 	echo ${bar} Running fdisk ${bar}
 	initsecs=$((${init} * 1024))
 	bootsecs=$((${boot} * 1024))
 	${FDISK} -f -u -0 -s ${msdosid}/${initsecs}/${bootsecs} -F ${image}
+elif [ -n "${netbsdid}" ]; then
+	echo ${bar} Running fdisk ${bar}
+	${FDISK} -f -i ${image}
+	${FDISK} -f -a -u -0 -s 169 ${image}
+	${INSTALLBOOT} -f -v ${image} ${release}/usr/mdec/bootxx_ffsv1
 fi
 
 if $compress; then
 	echo ${bar} Compressing image ${bar}
 	rm -f "${image}.gz"
-	${GZIP} -9 ${image}
+	${GZIP_CMD} -9 ${image}
 	image="${image}.gz"
 fi
 

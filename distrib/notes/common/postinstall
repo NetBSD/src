@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.76.2.1 2012/11/20 02:57:43 tls Exp $
+.\"	$NetBSD: postinstall,v 1.76.2.2 2014/08/19 23:45:41 tls Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -163,7 +163,7 @@ For example:
 .if \n[arc]       .ds IFname sn0
 .if \n[cats]      .ds IFname tlp0
 .if \n[evbarm]    .ds IFname fxp0
-.if \n[hp700]     .ds IFname ie0
+.if \n[hppa]      .ds IFname ie0
 .if \n[hpcmips]   .ds IFname ne0
 .if \n[hpcsh]     .ds IFname ne0
 .if \n[i386]      .ds IFname wm0
@@ -300,7 +300,7 @@ The X Window System
 .Pp
 If you installed the X Window System, you may want to read the
 chapter about X in the NetBSD Guide:
-.Lk http://netbsd.org/docs/guide/en/chap-x.html
+.Lk http://www.NetBSD.org/docs/guide/en/chap-x.html
 .if \n[hp300] \{\
 Also, you may want to read through the
 .Nx*M

@@ -1,10 +1,10 @@
-/*	$NetBSD: extended.c,v 1.1.1.3 2010/12/12 15:22:55 adam Exp $	*/
+/*	$NetBSD: extended.c,v 1.1.1.3.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
 /* extended.c - bdb backend extended routines */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/extended.c,v 1.18.2.5 2010/04/13 20:23:24 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2010 The OpenLDAP Foundation.
+ * Copyright 2000-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -51,6 +51,6 @@ bdb_extended( Operation *op, SlapReply *rs )
 	}
 
 	rs->sr_text = "not supported within naming context";
-	return LDAP_UNWILLING_TO_PERFORM;
+	return rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
 }
 

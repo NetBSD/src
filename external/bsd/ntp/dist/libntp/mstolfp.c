@@ -1,8 +1,9 @@
-/*	$NetBSD: mstolfp.c,v 1.2 2009/12/14 00:38:48 christos Exp $	*/
+/*	$NetBSD: mstolfp.c,v 1.2.12.1 2014/08/19 23:51:41 tls Exp $	*/
 
 /*
  * mstolfp - convert an ascii string in milliseconds to an l_fp number
  */
+#include <config.h>
 #include <stdio.h>
 #include <ctype.h>
 

@@ -594,19 +594,23 @@ LTLIBOBJS
 MAINT
 MAINTAINER_MODE_FALSE
 MAINTAINER_MODE_TRUE
+HAVE_PUBNAMES_FALSE
+HAVE_PUBNAMES_TRUE
 CXXCPP
 HAVE_ZLIB_FALSE
 HAVE_ZLIB_TRUE
 LIBOBJS
 LFS_CFLAGS
+GOLD_LDADD
+GOLD_LDFLAGS
 WARN_CXXFLAGS
 NO_WERROR
 WARN_CFLAGS
+IFUNC_STATIC_FALSE
+IFUNC_STATIC_TRUE
 IFUNC_FALSE
 IFUNC_TRUE
 RANDOM_SEED_CFLAGS
-CONSTRUCTOR_PRIORITY_FALSE
-CONSTRUCTOR_PRIORITY_TRUE
 TLS_DESCRIPTORS_FALSE
 TLS_DESCRIPTORS_TRUE
 TLS_GNU2_DIALECT_FALSE
@@ -621,6 +625,8 @@ MCMODEL_MEDIUM_FALSE
 MCMODEL_MEDIUM_TRUE
 FN_PTRS_IN_SO_WITHOUT_PIC_FALSE
 FN_PTRS_IN_SO_WITHOUT_PIC_TRUE
+HAVE_STATIC_FALSE
+HAVE_STATIC_TRUE
 NATIVE_OR_CROSS_LINKER_FALSE
 NATIVE_OR_CROSS_LINKER_TRUE
 GCC_FALSE
@@ -671,6 +677,7 @@ CPPFLAGS
 LDFLAGS
 CFLAGS
 CC
+NM
 TARGETOBJS
 DEFAULT_TARGET_X86_64_FALSE
 DEFAULT_TARGET_X86_64_TRUE
@@ -770,10 +777,14 @@ enable_gold
 enable_threads
 enable_plugins
 enable_targets
+with_lib_path
 enable_dependency_tracking
 enable_nls
 enable_werror
 enable_build_warnings
+with_gold_ldflags
+with_gold_ldadd
+with_zlib
 enable_maintainer_mode
 '
       ac_precious_vars='build_alias
@@ -1428,6 +1439,10 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-sysroot=DIR    search for usr/lib et al within DIR
+  --with-lib-path=dir1:dir2...  set default LIB_PATH
+  --with-gold-ldflags=FLAGS  additional link flags for gold
+  --with-gold-ldadd=LIBS     additional libraries for gold
+  --with-zlib             include zlib support (auto/yes/no) default=auto
 
 Some influential environment variables:
   CC          C compiler command
@@ -3211,6 +3226,9 @@ am__tar='${AMTAR} chof - "$$tardir"'; am__untar='${AMTAR} xf -'
 ac_config_headers="$ac_config_headers config.h:config.in"
 
 
+# PR 14072
+
+
 
 # Check whether --with-sysroot was given.
 if test "${with_sysroot+set}" = set; then :
@@ -3524,6 +3542,122 @@ _ACEOF
 cat >>confdefs.h <<_ACEOF
 #define GOLD_DEFAULT_OSABI $default_osabi
 _ACEOF
+
+
+
+# Check whether --with-lib-path was given.
+if test "${with_lib_path+set}" = set; then :
+  withval=$with_lib_path; case "$withval" in
+ yes) LIB_PATH='"/lib:/usr/lib"' ;;
+ no) LIB_PATH='""' ;;
+ *) LIB_PATH='"'"$withval"'"' ;;
+ esac
+else
+  LIB_PATH='"::DEFAULT::"'
+fi
+
+
+cat >>confdefs.h <<_ACEOF
+#define LIB_PATH $LIB_PATH
+_ACEOF
+
+if test "x$target_alias" = "x" -o "x$host_alias" = "x$target_alias"; then
+
+$as_echo "#define NATIVE_LINKER 1" >>confdefs.h
+
+fi
+
+if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}nm", so it can be a program name with args.
+set dummy ${ac_tool_prefix}nm; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if test "${ac_cv_prog_NM+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$NM"; then
+  ac_cv_prog_NM="$NM" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_prog_NM="${ac_tool_prefix}nm"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+NM=$ac_cv_prog_NM
+if test -n "$NM"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NM" >&5
+$as_echo "$NM" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_prog_NM"; then
+  ac_ct_NM=$NM
+  # Extract the first word of "nm", so it can be a program name with args.
+set dummy nm; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if test "${ac_cv_prog_ac_ct_NM+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$ac_ct_NM"; then
+  ac_cv_prog_ac_ct_NM="$ac_ct_NM" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_prog_ac_ct_NM="nm"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_NM=$ac_cv_prog_ac_ct_NM
+if test -n "$ac_ct_NM"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ct_NM" >&5
+$as_echo "$ac_ct_NM" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+  if test "x$ac_ct_NM" = x; then
+    NM=""
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+$as_echo "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    NM=$ac_ct_NM
+  fi
+else
+  NM="$ac_cv_prog_NM"
+fi
 
 
 ac_ext=c
@@ -6106,6 +6240,45 @@ else
 fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether static linking works" >&5
+$as_echo_n "checking whether static linking works... " >&6; }
+if test "${gold_cv_lib_static+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  LDFLAGS_hold=$LDFLAGS
+LDFLAGS="$LDFLAGS -static"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+void f() { }
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  gold_cv_lib_static=yes
+else
+  gold_cv_lib_static=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LDFLAGS=$LDFLAGS_hold
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gold_cv_lib_static" >&5
+$as_echo "$gold_cv_lib_static" >&6; }
+ if test "$gold_cv_lib_static" = "yes"; then
+  HAVE_STATIC_TRUE=
+  HAVE_STATIC_FALSE='#'
+else
+  HAVE_STATIC_TRUE='#'
+  HAVE_STATIC_FALSE=
+fi
+
+
  if
   case $target_cpu in
     i?86) true;;
@@ -6146,7 +6319,20 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $gold_cv_prog_gcc41" >&5
 $as_echo "$gold_cv_prog_gcc41" >&6; }
 
- if test "$target_cpu" = "x86_64" -a "$gold_cv_prog_gcc41" = "yes"; then
+save_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -mcmodel=medium"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int i;
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  have_mcmodel_medium=yes
+else
+  have_mcmodel_medium=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+CFLAGS="$save_CFLAGS"
+ if test "$target_cpu" = "x86_64" -a "$have_mcmodel_medium" = "yes" -a "$gold_cv_prog_gcc41" = "yes"; then
   MCMODEL_MEDIUM_TRUE=
   MCMODEL_MEDIUM_FALSE='#'
 else
@@ -6258,10 +6444,16 @@ fi
 
 
 save_CFLAGS="$CFLAGS"
-CFLAGS="$CFLAGS -mtls-dialect=gnu2"
+CFLAGS="$CFLAGS -fpic -mtls-dialect=gnu2"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-int i;
+
+__thread int i;
+void foo (void)
+{
+  i = 10;
+}
+
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
   have_tls_gnu2=yes
@@ -6314,34 +6506,6 @@ else
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for constructor priorities" >&5
-$as_echo_n "checking for constructor priorities... " >&6; }
-if test "${gold_cv_c_conprio+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void f() __attribute__ ((constructor (1)));
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  gold_cv_c_conprio=yes
-else
-  gold_cv_c_conprio=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gold_cv_c_conprio" >&5
-$as_echo "$gold_cv_c_conprio" >&6; }
-
- if test "$gold_cv_c_conprio" = "yes"; then
-  CONSTRUCTOR_PRIORITY_TRUE=
-  CONSTRUCTOR_PRIORITY_FALSE='#'
-else
-  CONSTRUCTOR_PRIORITY_TRUE='#'
-  CONSTRUCTOR_PRIORITY_FALSE=
-fi
-
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -frandom-seed support" >&5
 $as_echo_n "checking for -frandom-seed support... " >&6; }
 if test "${gold_cv_c_random_seed+set}" = set; then :
@@ -6370,12 +6534,14 @@ if test "$gold_cv_c_random_seed" = "yes"; then
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for glibc >= 2.11" >&5
-$as_echo_n "checking for glibc >= 2.11... " >&6; }
-if test "${gold_cv_lib_glibc2_11+set}" = set; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for glibc ifunc support" >&5
+$as_echo_n "checking for glibc ifunc support... " >&6; }
+if test "${gold_cv_lib_glibc_ifunc+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+  save_LDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS -static"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 #include <features.h>
@@ -6384,25 +6550,52 @@ error
 #elif __GLIBC__ < 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ < 11)
 error
 #endif
-__asm__(".type foo, %gnu_indirect_function");
+void func (void) { }
+void invoke (void);
+__asm__(".type invoke, %gnu_indirect_function");
+typedef void (*funcptr) (void);
+funcptr dispatch (void) __asm__ ("invoke");
+funcptr dispatch (void) { return &func; }
+int
+main ()
+{
+invoke();
+  ;
+  return 0;
+}
 
 _ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  gold_cv_lib_glibc2_11=yes
-else
-  gold_cv_lib_glibc2_11=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gold_cv_lib_glibc2_11" >&5
-$as_echo "$gold_cv_lib_glibc2_11" >&6; }
+if ac_fn_c_try_link "$LINENO"; then :
 
- if test "$gold_cv_lib_glibc2_11" = "yes"; then
+if ${NM} conftest$EXEEXT | grep "__rela\?_iplt_start" >/dev/null 2>&1; then
+  gold_cv_lib_glibc_ifunc=both
+else
+  gold_cv_lib_glibc_ifunc=dyn
+fi
+else
+  gold_cv_lib_glibc_ifunc=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LDFLAGS="$save_LDFLAGS"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gold_cv_lib_glibc_ifunc" >&5
+$as_echo "$gold_cv_lib_glibc_ifunc" >&6; }
+
+ if test "$gold_cv_lib_glibc_ifunc" != "no"; then
   IFUNC_TRUE=
   IFUNC_FALSE='#'
 else
   IFUNC_TRUE='#'
   IFUNC_FALSE=
+fi
+
+ if test "$gold_cv_lib_glibc_ifunc" = "both"; then
+  IFUNC_STATIC_TRUE=
+  IFUNC_STATIC_FALSE='#'
+else
+  IFUNC_STATIC_TRUE='#'
+  IFUNC_STATIC_FALSE=
 fi
 
 
@@ -6483,21 +6676,63 @@ fi
 WARN_CXXFLAGS=`echo ${WARN_CFLAGS} | sed -e 's/-Wstrict-prototypes//' -e 's/-Wmissing-prototypes//' -e 's/-Wshadow//'`
 
 
+
+# Check whether --with-gold-ldflags was given.
+if test "${with_gold_ldflags+set}" = set; then :
+  withval=$with_gold_ldflags; if test "$withval" = "no" -o "$withval" = "yes"; then
+   GOLD_LDFLAGS=
+ else
+   GOLD_LDFLAGS=$withval
+ fi
+else
+  GOLD_LDFLAGS=
+fi
+
+
+
+
+# Check whether --with-gold-ldadd was given.
+if test "${with_gold_ldadd+set}" = set; then :
+  withval=$with_gold_ldadd; if test "$withval" = "no" -o "$withval" = "yes"; then
+   GOLD_LDADD=
+ else
+   GOLD_LDADD=$withval
+ fi
+else
+  GOLD_LDADD=
+fi
+
+
+
 LFS_CFLAGS="-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
 
 
-for ac_func in chsize
+for ac_header in sys/mman.h
 do :
-  ac_fn_c_check_func "$LINENO" "chsize" "ac_cv_func_chsize"
-if test "x$ac_cv_func_chsize" = x""yes; then :
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/mman.h" "ac_cv_header_sys_mman_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_mman_h" = x""yes; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_CHSIZE 1
+#define HAVE_SYS_MMAN_H 1
+_ACEOF
+
+fi
+
+done
+
+for ac_func in chsize mmap
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+eval as_val=\$$as_ac_var
+   if test "x$as_val" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
 _ACEOF
 
 fi
 done
 
-for ac_func in pread ftruncate mremap ffsll
+for ac_func in pread ftruncate ffsll
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -6519,8 +6754,63 @@ done
 
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking mremap with MREMAP_MAYMOVE" >&5
+$as_echo_n "checking mremap with MREMAP_MAYMOVE... " >&6; }
+if test "${gold_cv_lib_mremap_maymove+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+#include <sys/mman.h>
+void f() { mremap (0, 0, 0, MREMAP_MAYMOVE); }
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  gold_cv_lib_mremap_maymove=yes
+else
+  gold_cv_lib_mremap_maymove=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gold_cv_lib_mremap_maymove" >&5
+$as_echo "$gold_cv_lib_mremap_maymove" >&6; }
+if test "$gold_cv_lib_mremap_maymove" = "yes"; then
+
+$as_echo "#define HAVE_MREMAP 1" >>confdefs.h
+
+else
+  case " $LIBOBJS " in
+  *" mremap.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS mremap.$ac_objext"
+ ;;
+esac
+
+fi
+
 # Link in zlib if we can.  This allows us to write compressed sections.
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing zlibVersion" >&5
+
+  # See if the user specified whether he wants zlib support or not.
+
+# Check whether --with-zlib was given.
+if test "${with_zlib+set}" = set; then :
+  withval=$with_zlib;
+else
+  with_zlib=auto
+fi
+
+
+  if test "$with_zlib" != "no"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing zlibVersion" >&5
 $as_echo_n "checking for library containing zlibVersion... " >&6; }
 if test "${ac_cv_search_zlibVersion+set}" = set; then :
   $as_echo_n "(cached) " >&6
@@ -6587,7 +6877,12 @@ done
 
 fi
 
- if test "$ac_cv_search_zlibVersion" != "no"; then
+    if test "$with_zlib" = "yes" -a "$ac_cv_header_zlib_h" != "yes"; then
+      as_fn_error "zlib (libz) library was explicitly requested but not found" "$LINENO" 5
+    fi
+  fi
+
+ if test "$ac_cv_header_zlib_h" = "yes"; then
   HAVE_ZLIB_TRUE=
   HAVE_ZLIB_FALSE='#'
 else
@@ -6850,7 +7145,7 @@ fi
 
 done
 
-for ac_func in mallinfo posix_fallocate readv sysconf times
+for ac_func in mallinfo posix_fallocate fallocate readv sysconf times
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_cxx_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -6992,6 +7287,39 @@ $as_echo "#define HAVE_TR1_UNORDERED_MAP_REHASH 1" >>confdefs.h
 
 fi
 
+# Use of tr1/unordered_map with off_t as a key is not supported on GCC
+# 4.1.xx when compiling in 32-bit mode with a 64-bit off_t type.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether std::tr1::hash<off_t> is defined" >&5
+$as_echo_n "checking whether std::tr1::hash<off_t> is defined... " >&6; }
+if test "${gold_cv_hash_off_t+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  CXXFLAGS_hold=$CXXFLAGS
+CXXFLAGS="$CXXFLAGS $LFS_CFLAGS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <sys/types.h>
+#include <tr1/unordered_map>
+std::tr1::hash<off_t> h;
+
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  gold_cv_hash_off_t=yes
+else
+  gold_cv_hash_off_t=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+CXXFLAGS=$CFLAGS_hold
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gold_cv_hash_off_t" >&5
+$as_echo "$gold_cv_hash_off_t" >&6; }
+if test "$gold_cv_hash_off_t" = "yes"; then
+
+$as_echo "#define HAVE_TR1_HASH_OFF_T 1" >>confdefs.h
+
+fi
+
 # gcc 4.3.0 doesn't recognize the printf attribute on a template
 # function.  Check for that.  This is gcc bug 35546.  This test can
 # probably be removed after the bug has been fixed for a while.
@@ -7058,11 +7386,90 @@ $as_echo "#define HAVE_STAT_ST_MTIM 1" >>confdefs.h
 
 fi
 
+save_CXXFLAGS="$CXXFLAGS"
+CXXFLAGS="$CXXFLAGS -gpubnames"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int i;
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  have_pubnames=yes
+else
+  have_pubnames=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+CXXFLAGS="$save_CXXFLAGS"
+ if test "$have_pubnames" = "yes"; then
+  HAVE_PUBNAMES_TRUE=
+  HAVE_PUBNAMES_FALSE='#'
+else
+  HAVE_PUBNAMES_TRUE='#'
+  HAVE_PUBNAMES_FALSE=
+fi
+
+
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+
+for ac_header in locale.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "locale.h" "ac_cv_header_locale_h" "$ac_includes_default"
+if test "x$ac_cv_header_locale_h" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LOCALE_H 1
+_ACEOF
+
+fi
+
+done
+
+for ac_func in setlocale
+do :
+  ac_fn_c_check_func "$LINENO" "setlocale" "ac_cv_func_setlocale"
+if test "x$ac_cv_func_setlocale" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SETLOCALE 1
+_ACEOF
+
+fi
+done
+
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for LC_MESSAGES" >&5
+$as_echo_n "checking for LC_MESSAGES... " >&6; }
+if test "${am_cv_val_LC_MESSAGES+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <locale.h>
+int
+main ()
+{
+return LC_MESSAGES
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  am_cv_val_LC_MESSAGES=yes
+else
+  am_cv_val_LC_MESSAGES=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $am_cv_val_LC_MESSAGES" >&5
+$as_echo "$am_cv_val_LC_MESSAGES" >&6; }
+  if test $am_cv_val_LC_MESSAGES = yes; then
+
+$as_echo "#define HAVE_LC_MESSAGES 1" >>confdefs.h
+
+  fi
 
 
 
@@ -7249,6 +7656,10 @@ if test -z "${NATIVE_OR_CROSS_LINKER_TRUE}" && test -z "${NATIVE_OR_CROSS_LINKER
   as_fn_error "conditional \"NATIVE_OR_CROSS_LINKER\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${HAVE_STATIC_TRUE}" && test -z "${HAVE_STATIC_FALSE}"; then
+  as_fn_error "conditional \"HAVE_STATIC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${FN_PTRS_IN_SO_WITHOUT_PIC_TRUE}" && test -z "${FN_PTRS_IN_SO_WITHOUT_PIC_FALSE}"; then
   as_fn_error "conditional \"FN_PTRS_IN_SO_WITHOUT_PIC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -7277,16 +7688,20 @@ if test -z "${TLS_DESCRIPTORS_TRUE}" && test -z "${TLS_DESCRIPTORS_FALSE}"; then
   as_fn_error "conditional \"TLS_DESCRIPTORS\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${CONSTRUCTOR_PRIORITY_TRUE}" && test -z "${CONSTRUCTOR_PRIORITY_FALSE}"; then
-  as_fn_error "conditional \"CONSTRUCTOR_PRIORITY\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 if test -z "${IFUNC_TRUE}" && test -z "${IFUNC_FALSE}"; then
   as_fn_error "conditional \"IFUNC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${IFUNC_STATIC_TRUE}" && test -z "${IFUNC_STATIC_FALSE}"; then
+  as_fn_error "conditional \"IFUNC_STATIC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${HAVE_ZLIB_TRUE}" && test -z "${HAVE_ZLIB_FALSE}"; then
   as_fn_error "conditional \"HAVE_ZLIB\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HAVE_PUBNAMES_TRUE}" && test -z "${HAVE_PUBNAMES_FALSE}"; then
+  as_fn_error "conditional \"HAVE_PUBNAMES\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MAINTAINER_MODE_TRUE}" && test -z "${MAINTAINER_MODE_FALSE}"; then

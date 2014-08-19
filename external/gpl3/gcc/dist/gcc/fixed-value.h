@@ -1,5 +1,5 @@
 /* Fixed-point arithmetic support.
-   Copyright (C) 2006, 2007, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2006-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -48,6 +48,22 @@ extern FIXED_VALUE_TYPE fconst1[MAX_FCONST1];
 #define CONST_FIXED_FROM_FIXED_VALUE(r, m) \
   const_fixed_from_fixed_value (r, m)
 extern rtx const_fixed_from_fixed_value (FIXED_VALUE_TYPE, enum machine_mode);
+
+/* Construct a FIXED_VALUE from a bit payload and machine mode MODE.
+   The bits in PAYLOAD are sign-extended/zero-extended according to MODE.  */
+extern FIXED_VALUE_TYPE fixed_from_double_int (double_int,
+						     enum machine_mode);
+
+/* Return a CONST_FIXED from a bit payload and machine mode MODE.
+   The bits in PAYLOAD are sign-extended/zero-extended according to MODE.  */
+static inline rtx
+const_fixed_from_double_int (double_int payload,
+                             enum machine_mode mode)
+{
+  return
+    const_fixed_from_fixed_value (fixed_from_double_int (payload, mode),
+                                  mode);
+}
 
 /* Initialize from a decimal or hexadecimal string.  */
 extern void fixed_from_string (FIXED_VALUE_TYPE *, const char *,

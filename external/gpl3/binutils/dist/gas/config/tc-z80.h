@@ -1,5 +1,5 @@
 /* this is tc-z80.h
-   Copyright 2005, 2006, 2007 Free Software Foundation, Inc.
+   Copyright 2005, 2006, 2007, 2012 Free Software Foundation, Inc.
 
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
@@ -101,5 +101,9 @@ extern void z80_cons_fix_new (fragS *, int, int, expressionS *);
    also affected by this macro.  The default definition will set
    P2VAR to the truncated power of two of sizes up to eight bytes.  */
 #define TC_IMPLICIT_LCOMM_ALIGNMENT(SIZE, P2VAR) (P2VAR) = 0
+
+/* It does not make any sense to perform arithmetic on the numbers 
+   we use to identify registers.  */
+#define md_register_arithmetic 0
 
 #endif

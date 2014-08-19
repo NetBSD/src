@@ -1,7 +1,11 @@
-/* $NetBSD: strcpy.S,v 1.4.8.2 2013/02/25 00:23:57 tls Exp $ */
+/* $NetBSD: strcpy.S,v 1.4.8.3 2014/08/19 23:45:12 tls Exp $ */
 
 #if defined(_STANDALONE)
+#ifdef __thumb__
+#include "strcpy_thumb.S"
+#else
 #include "strcpy_naive.S"
+#endif
 #else
 #include "strcpy_arm.S"
 #endif

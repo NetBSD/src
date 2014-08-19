@@ -1,7 +1,6 @@
 /* Definitions of target machine for GNU compiler,
    for Alpha NetBSD systems.
-   Copyright (C) 1998, 2002, 2003, 2004, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1998-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -18,9 +17,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
-
-#undef TARGET_DEFAULT
-#define TARGET_DEFAULT (MASK_FPREGS | MASK_GAS)
 
 #define TARGET_OS_CPP_BUILTINS()		\
     do {					\
@@ -61,6 +57,15 @@ along with GCC; see the file COPYING3.  If not see
 
 #define NETBSD_ENTRY_POINT "__start"
 
+/* Provide a STARTFILE_SPEC appropriate for NetBSD.  Here we add the
+   (even more) magical crtbegin.o file which provides part of the
+   support for getting C++ file-scope static object constructed
+   before entering `main'.  */
+
+#undef	STARTFILE_SPEC
+#define STARTFILE_SPEC \
+  "%{!shared: %{pg|p:gcrt0.o%s;:crt0.o%s}}\
+   crti.o%s %{static:crtbeginT.o%s;shared|pie:crtbeginS.o%s;:crtbegin.o%s}"
 
 /* Provide an ENDFILE_SPEC appropriate for NetBSD/alpha ELF.  Here we
    add crtend.o, which provides part of the support for getting
@@ -70,14 +75,7 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef ENDFILE_SPEC
 #define ENDFILE_SPEC		\
-  "%{ffast-math|funsafe-math-optimizations:crtfm%O%s} \
+  "%{Ofast|ffast-math|funsafe-math-optimizations:crtfm%O%s} \
    %(netbsd_endfile_spec)"
 
-
-/* Attempt to enable execute permissions on the stack.  */
-
-#define ENABLE_EXECUTE_STACK NETBSD_ENABLE_EXECUTE_STACK
-
-
-#undef TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (NetBSD/alpha ELF)");
+#define HAVE_ENABLE_EXECUTE_STACK

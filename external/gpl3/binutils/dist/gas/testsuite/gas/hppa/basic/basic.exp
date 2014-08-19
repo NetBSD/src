@@ -675,6 +675,7 @@ proc do_add2 {} {
 	    -re "^ +\[0-9\]+ 0138 08A4DF26\[^\n\]*\n"	{ set x [expr $x+1] }
 	    -re "^ +\[0-9\]+ 013c 08A4FF26\[^\n\]*\n"	{ set x [expr $x+1] }
 	    -re "^ +\[0-9\]+ 0140 08210601\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0144 08210721\[^\n\]*\n"	{ set x [expr $x+1] }
 	    -re "\[^\n\]*\n"				{ }
 	    timeout				{ perror "timeout\n"; break }
 	    eof					{ break }
@@ -686,7 +687,7 @@ proc do_add2 {} {
     gas_finish
 
     # Did we find what we were looking for?  If not, flunk it.
-    if [expr $x==81] then { pass $testname } else { fail $testname }
+    if [expr $x==82] then { pass $testname } else { fail $testname }
 }
 
 proc do_sh1add {} {
@@ -1582,6 +1583,8 @@ proc do_sub2 {} {
 	    -re "^ +\[0-9\]+ 0174 08A4BCE6\[^\n\]*\n"	{ set x [expr $x+1] }
 	    -re "^ +\[0-9\]+ 0178 08A4DCE6\[^\n\]*\n"	{ set x [expr $x+1] }
 	    -re "^ +\[0-9\]+ 017c 08A4FCE6\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0180 08210401\[^\n\]*\n"	{ set x [expr $x+1] }
+	    -re "^ +\[0-9\]+ 0184 08210521\[^\n\]*\n"	{ set x [expr $x+1] }
 	    -re "\[^\n\]*\n"				{ }
 	    timeout				{ perror "timeout\n"; break }
 	    eof					{ break }
@@ -1593,7 +1596,7 @@ proc do_sub2 {} {
     gas_finish
 
     # Did we find what we were looking for?  If not, flunk it.
-    if [expr $x==96] then { pass $testname } else { fail $testname }
+    if [expr $x==98] then { pass $testname } else { fail $testname }
 }
 
 proc do_ds {} {

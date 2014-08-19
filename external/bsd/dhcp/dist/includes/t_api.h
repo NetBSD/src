@@ -1,5 +1,4 @@
-/*	$NetBSD: t_api.h,v 1.1.1.2.4.2 2013/06/23 06:26:29 tls Exp $	*/
-
+/*	$NetBSD: t_api.h,v 1.1.1.2.4.3 2014/08/19 23:46:41 tls Exp $	*/
 /*
  * Copyright (C) 2004-2007,2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -17,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_api.h,v 1.3.8.1 2009/11/20 01:49:01 sar Exp  */
+/* Id: t_api.h,v 1.4 2009/11/24 02:06:56 sar Exp  */
 
 #ifndef TESTS_T_API_H
 #define TESTS_T_API_H 1

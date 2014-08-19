@@ -983,23 +983,36 @@ coff_write_symbol (bfd *abfd,
    file originally.  This symbol may have been created by the linker,
    or we may be linking a non COFF file to a COFF file.  */
 
-static bfd_boolean
+bfd_boolean
 coff_write_alien_symbol (bfd *abfd,
 			 asymbol *symbol,
+			 struct internal_syment *isym,
 			 bfd_vma *written,
 			 bfd_size_type *string_size_p,
 			 asection **debug_string_section_p,
 			 bfd_size_type *debug_string_size_p)
 {
   combined_entry_type *native;
-  combined_entry_type dummy;
+  combined_entry_type dummy[2];
   asection *output_section = symbol->section->output_section
 			       ? symbol->section->output_section
 			       : symbol->section;
+  struct bfd_link_info *link_info = coff_data (abfd)->link_info;
+  bfd_boolean ret;
 
-  native = &dummy;
+  if ((!link_info || link_info->strip_discarded)
+      && !bfd_is_abs_section (symbol->section)
+      && symbol->section->output_section == bfd_abs_section_ptr)
+    {
+      symbol->name = "";
+      if (isym != NULL)
+        memset (isym, 0, sizeof(*isym));
+      return TRUE;
+    }
+  native = dummy;
   native->u.syment.n_type = T_NULL;
   native->u.syment.n_flags = 0;
+  native->u.syment.n_numaux = 0;
   if (bfd_is_und_section (symbol->section))
     {
       native->u.syment.n_scnum = N_UNDEF;
@@ -1010,6 +1023,11 @@ coff_write_alien_symbol (bfd *abfd,
       native->u.syment.n_scnum = N_UNDEF;
       native->u.syment.n_value = symbol->value;
     }
+  else if (symbol->flags & BSF_FILE)
+    {
+      native->u.syment.n_scnum = N_DEBUG;
+      native->u.syment.n_numaux = 1;
+    }
   else if (symbol->flags & BSF_DEBUGGING)
     {
       /* There isn't much point to writing out a debugging symbol
@@ -1017,6 +1035,8 @@ coff_write_alien_symbol (bfd *abfd,
          format.  So, we just ignore them.  We must clobber the symbol
          name to keep it from being put in the string table.  */
       symbol->name = "";
+      if (isym != NULL)
+        memset (isym, 0, sizeof(*isym));
       return TRUE;
     }
   else
@@ -1037,16 +1057,20 @@ coff_write_alien_symbol (bfd *abfd,
     }
 
   native->u.syment.n_type = 0;
-  if (symbol->flags & BSF_LOCAL)
+  if (symbol->flags & BSF_FILE)
+    native->u.syment.n_sclass = C_FILE;
+  else if (symbol->flags & BSF_LOCAL)
     native->u.syment.n_sclass = C_STAT;
   else if (symbol->flags & BSF_WEAK)
     native->u.syment.n_sclass = obj_pe (abfd) ? C_NT_WEAK : C_WEAKEXT;
   else
     native->u.syment.n_sclass = C_EXT;
-  native->u.syment.n_numaux = 0;
 
-  return coff_write_symbol (abfd, symbol, native, written, string_size_p,
-			    debug_string_section_p, debug_string_size_p);
+  ret = coff_write_symbol (abfd, symbol, native, written, string_size_p,
+			   debug_string_section_p, debug_string_size_p);
+  if (isym != NULL)
+    *isym = native->u.syment;
+  return ret;
 }
 
 /* Write a native symbol to a COFF file.  */
@@ -1061,6 +1085,15 @@ coff_write_native_symbol (bfd *abfd,
 {
   combined_entry_type *native = symbol->native;
   alent *lineno = symbol->lineno;
+  struct bfd_link_info *link_info = coff_data (abfd)->link_info;
+
+  if ((!link_info || link_info->strip_discarded)
+      && !bfd_is_abs_section (symbol->symbol.section)
+      && symbol->symbol.section->output_section == bfd_abs_section_ptr)
+    {
+      symbol->symbol.name = "";
+      return TRUE;
+    }
 
   /* If this symbol has an associated line number, we must store the
      symbol index in the line number field.  We also tag the auxent to
@@ -1153,8 +1186,8 @@ coff_write_symbols (bfd *abfd)
       if (c_symbol == (coff_symbol_type *) NULL
 	  || c_symbol->native == (combined_entry_type *) NULL)
 	{
-	  if (!coff_write_alien_symbol (abfd, symbol, &written, &string_size,
-					&debug_string_section,
+	  if (!coff_write_alien_symbol (abfd, symbol, NULL, &written,
+					&string_size, &debug_string_section,
 					&debug_string_size))
 	    return FALSE;
 	}
@@ -2085,13 +2118,14 @@ _bfd_coff_is_local_label_name (bfd *abfd ATTRIBUTE_UNUSED,
    nearest to the wanted location.  */
 
 bfd_boolean
-coff_find_nearest_line (bfd *abfd,
-			asection *section,
-			asymbol **symbols,
-			bfd_vma offset,
-			const char **filename_ptr,
-			const char **functionname_ptr,
-			unsigned int *line_ptr)
+coff_find_nearest_line_with_names (bfd *abfd,
+                                   const struct dwarf_debug_section *debug_sections,
+                                   asection *section,
+                                   asymbol **symbols,
+                                   bfd_vma offset,
+                                   const char **filename_ptr,
+                                   const char **functionname_ptr,
+                                   unsigned int *line_ptr)
 {
   bfd_boolean found;
   unsigned int i;
@@ -2116,9 +2150,10 @@ coff_find_nearest_line (bfd *abfd,
     return TRUE;
 
   /* Also try examining DWARF2 debugging information.  */
-  if (_bfd_dwarf2_find_nearest_line (abfd, section, symbols, offset,
+  if (_bfd_dwarf2_find_nearest_line (abfd, debug_sections,
+                                     section, symbols, offset,
 				     filename_ptr, functionname_ptr,
-				     line_ptr, 0,
+				     line_ptr, NULL, 0,
 				     &coff_data(abfd)->dwarf2_find_line_info))
     return TRUE;
 
@@ -2299,6 +2334,21 @@ coff_find_nearest_line (bfd *abfd,
 }
 
 bfd_boolean
+coff_find_nearest_line (bfd *abfd,
+			asection *section,
+			asymbol **symbols,
+			bfd_vma offset,
+			const char **filename_ptr,
+			const char **functionname_ptr,
+			unsigned int *line_ptr)
+{
+  return coff_find_nearest_line_with_names (abfd, dwarf_debug_sections,
+                                            section, symbols, offset,
+                                            filename_ptr, functionname_ptr,
+                                            line_ptr);
+}
+
+bfd_boolean
 coff_find_inliner_info (bfd *abfd,
 			const char **filename_ptr,
 			const char **functionname_ptr,
@@ -2398,4 +2448,71 @@ bfd_coff_get_comdat_section (bfd *abfd, struct bfd_section *sec)
     return coff_section_data (abfd, sec)->comdat;
   else
     return NULL;
+}
+
+bfd_boolean
+_bfd_coff_section_already_linked (bfd *abfd,
+				  asection *sec,
+				  struct bfd_link_info *info)
+{
+  flagword flags;
+  const char *name, *key;
+  struct bfd_section_already_linked *l;
+  struct bfd_section_already_linked_hash_entry *already_linked_list;
+  struct coff_comdat_info *s_comdat;
+
+  flags = sec->flags;
+  if ((flags & SEC_LINK_ONCE) == 0)
+    return FALSE;
+
+  /* The COFF backend linker doesn't support group sections.  */
+  if ((flags & SEC_GROUP) != 0)
+    return FALSE;
+
+  name = bfd_get_section_name (abfd, sec);
+  s_comdat = bfd_coff_get_comdat_section (abfd, sec);
+
+  if (s_comdat != NULL)
+    key = s_comdat->name;
+  else
+    {
+      if (CONST_STRNEQ (name, ".gnu.linkonce.")
+	  && (key = strchr (name + sizeof (".gnu.linkonce.") - 1, '.')) != NULL)
+	key++;
+      else
+	/* FIXME: gcc as of 2011-09 emits sections like .text$<key>,
+	   .xdata$<key> and .pdata$<key> only the first of which has a
+	   comdat key.  Should these all match the LTO IR key?  */
+	key = name;
+    }
+
+  already_linked_list = bfd_section_already_linked_table_lookup (key);
+
+  for (l = already_linked_list->entry; l != NULL; l = l->next)
+    {
+      struct coff_comdat_info *l_comdat;
+
+      l_comdat = bfd_coff_get_comdat_section (l->sec->owner, l->sec);
+
+      /* The section names must match, and both sections must be
+	 comdat and have the same comdat name, or both sections must
+	 be non-comdat.  LTO IR plugin sections are an exception.  They
+	 are always named .gnu.linkonce.t.<key> (<key> is some string)
+	 and match any comdat section with comdat name of <key>, and
+	 any linkonce section with the same suffix, ie.
+	 .gnu.linkonce.*.<key>.  */
+      if (((s_comdat != NULL) == (l_comdat != NULL)
+	   && strcmp (name, l->sec->name) == 0)
+	  || (l->sec->owner->flags & BFD_PLUGIN) != 0)
+	{
+	  /* The section has already been linked.  See if we should
+	     issue a warning.  */
+	  return _bfd_handle_already_linked (sec, l, info);
+	}
+    }
+
+  /* This is the first section with this name.  Record it.  */
+  if (!bfd_section_already_linked_table_insert (already_linked_list, sec))
+    info->callbacks->einfo (_("%F%P: already_linked_table: %E\n"));
+  return FALSE;
 }

@@ -42,7 +42,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-gre.c,v 1.28 2005-04-06 21:32:39 mcr Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-gre.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-gre.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: print-gre.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
 #define	GRE_RECRS	0x0700		/* recursion count */
 #define	GRE_AP		0x0080		/* acknowledgment# present */
 
-struct tok gre_flag_values[] = {
+static const struct tok gre_flag_values[] = {
     { GRE_CP, "checksum present"},
     { GRE_RP, "routing present"}, 
     { GRE_KP, "key present"}, 

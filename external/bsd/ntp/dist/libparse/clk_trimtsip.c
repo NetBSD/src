@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_trimtsip.c,v 1.1.1.1 2009/12/13 16:55:18 kardel Exp $	*/
+/*	$NetBSD: clk_trimtsip.c,v 1.1.1.1.12.1 2014/08/19 23:51:41 tls Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/libparse/clk_trimtsip.c,v 4.19 2009/11/01 10:47:49 kardel RELEASE_20091101_A
@@ -46,7 +46,7 @@
 #include "ntp_syslog.h"
 #include "ntp_types.h"
 #include "ntp_fp.h"
-#include "ntp_unixtime.h"
+#include "timevalops.h"
 #include "ntp_calendar.h"
 #include "ntp_machine.h"
 #include "ntp_stdlib.h"

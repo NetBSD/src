@@ -1,7 +1,7 @@
-/*	$NetBSD: portlist.c,v 1.3 2012/06/05 00:41:36 christos Exp $	*/
+/*	$NetBSD: portlist.c,v 1.3.2.1 2014/08/19 23:46:28 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -82,7 +82,7 @@ dns_portlist_create(isc_mem_t *mctx, dns_portlist_t **portlistp) {
 	portlist = isc_mem_get(mctx, sizeof(*portlist));
 	if (portlist == NULL)
 		return (ISC_R_NOMEMORY);
-        result = isc_mutex_init(&portlist->lock);
+	result = isc_mutex_init(&portlist->lock);
 	if (result != ISC_R_SUCCESS) {
 		isc_mem_put(mctx, portlist, sizeof(*portlist));
 		return (result);
@@ -113,7 +113,7 @@ find_port(dns_element_t *list, unsigned int len, in_port_t port) {
 	for (;;) {
 		if (list[xtry].port == port)
 			return (&list[xtry]);
-	        if (port > list[xtry].port) {
+		if (port > list[xtry].port) {
 			if (xtry == max)
 				break;
 			min = xtry;
@@ -166,8 +166,8 @@ dns_portlist_add(dns_portlist_t *portlist, int af, in_port_t port) {
 			goto unlock;
 		}
 		if (portlist->list != NULL) {
-			memcpy(el, portlist->list,
-			       portlist->allocated * sizeof(*el)); 
+			memmove(el, portlist->list,
+				portlist->allocated * sizeof(*el));
 			isc_mem_put(portlist->mctx, portlist->list,
 				    portlist->allocated * sizeof(*el));
 		}
@@ -217,7 +217,7 @@ isc_boolean_t
 dns_portlist_match(dns_portlist_t *portlist, int af, in_port_t port) {
 	dns_element_t *el;
 	isc_boolean_t result = ISC_FALSE;
-	
+
 	REQUIRE(DNS_VALID_PORTLIST(portlist));
 	REQUIRE(af == AF_INET || af == AF_INET6);
 	LOCK(&portlist->lock);
@@ -229,7 +229,7 @@ dns_portlist_match(dns_portlist_t *portlist, int af, in_port_t port) {
 			if (af == AF_INET6 && (el->flags & DNS_PL_INET6) != 0)
 				result = ISC_TRUE;
 		}
-	}	
+	}
 	UNLOCK(&portlist->lock);
 	return (result);
 }

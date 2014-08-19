@@ -1,10 +1,10 @@
-/*	$NetBSD: aclparse.c,v 1.1.1.3 2010/12/12 15:22:15 adam Exp $	*/
+/*	$NetBSD: aclparse.c,v 1.1.1.3.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
 /* aclparse.c - routines to parse and check acl's */
-/* OpenLDAP: pkg/ldap/servers/slapd/aclparse.c,v 1.198.2.13 2010/04/15 22:26:06 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,6 +58,9 @@ const char *style_strings[] = {
 	"path",
 	NULL
 };
+
+#define ACLBUF_CHUNKSIZE	8192
+static struct berval aclbuf;
 
 static void		split(char *line, int splitchar, char **left, char **right);
 static void		access_append(Access **l, Access *a);
@@ -2452,6 +2455,11 @@ acl_destroy( AccessControl *a )
 		n = a->acl_next;
 		acl_free( a );
 	}
+
+	if ( !BER_BVISNULL( &aclbuf ) ) {
+		ch_free( aclbuf.bv_val );
+		BER_BVZERO( &aclbuf );
+	}
 }
 
 char *
@@ -2529,9 +2537,39 @@ str2access( const char *str )
 	return( ACL_INVALID_ACCESS );
 }
 
-#define ACLBUF_MAXLEN	8192
+static char *
+safe_strncopy( char *ptr, const char *src, size_t n, struct berval *buf )
+{
+	while ( ptr + n >= buf->bv_val + buf->bv_len ) {
+		char *tmp = ch_realloc( buf->bv_val, 2*buf->bv_len );
+		if ( tmp == NULL ) {
+			return NULL;
+		}
+		ptr = tmp + (ptr - buf->bv_val);
+		buf->bv_val = tmp;
+		buf->bv_len *= 2;
+	}
 
-static char aclbuf[ACLBUF_MAXLEN];
+	return lutil_strncopy( ptr, src, n );
+}
+
+static char *
+safe_strcopy( char *ptr, const char *s, struct berval *buf )
+{
+	size_t n = strlen( s );
+
+	return safe_strncopy( ptr, s, n, buf );
+}
+
+static char *
+safe_strbvcopy( char *ptr, const struct berval *bv, struct berval *buf )
+{
+	return safe_strncopy( ptr, bv->bv_val, bv->bv_len, buf );
+}
+
+#define acl_safe_strcopy( ptr, s ) safe_strcopy( (ptr), (s), &aclbuf )
+#define acl_safe_strncopy( ptr, s, n ) safe_strncopy( (ptr), (s), (n), &aclbuf )
+#define acl_safe_strbvcopy( ptr, bv ) safe_strbvcopy( (ptr), (bv), &aclbuf )
 
 static char *
 dnaccess2text( slap_dn_access *bdn, char *ptr, int is_realdn )
@@ -2539,7 +2577,7 @@ dnaccess2text( slap_dn_access *bdn, char *ptr, int is_realdn )
 	*ptr++ = ' ';
 
 	if ( is_realdn ) {
-		ptr = lutil_strcopy( ptr, "real" );
+		ptr = acl_safe_strcopy( ptr, "real" );
 	}
 
 	if ( ber_bvccmp( &bdn->a_pat, '*' ) ||
@@ -2551,33 +2589,34 @@ dnaccess2text( slap_dn_access *bdn, char *ptr, int is_realdn )
 			assert( ! ber_bvccmp( &bdn->a_pat, '*' ) );
 		}
 			
-		ptr = lutil_strcopy( ptr, bdn->a_pat.bv_val );
+		ptr = acl_safe_strbvcopy( ptr, &bdn->a_pat );
 		if ( bdn->a_style == ACL_STYLE_SELF && bdn->a_self_level != 0 ) {
-			int n = sprintf( ptr, ".level{%d}", bdn->a_self_level );
+			char buf[SLAP_TEXT_BUFLEN];
+			int n = snprintf( buf, sizeof(buf), ".level{%d}", bdn->a_self_level );
 			if ( n > 0 ) {
-				ptr += n;
+				ptr = acl_safe_strncopy( ptr, buf, n );
 			} /* else ? */
 		}
 
 	} else {
-		ptr = lutil_strcopy( ptr, "dn." );
+		ptr = acl_safe_strcopy( ptr, "dn." );
 		if ( bdn->a_style == ACL_STYLE_BASE )
-			ptr = lutil_strcopy( ptr, style_base );
+			ptr = acl_safe_strcopy( ptr, style_base );
 		else 
-			ptr = lutil_strcopy( ptr, style_strings[bdn->a_style] );
+			ptr = acl_safe_strcopy( ptr, style_strings[bdn->a_style] );
 		if ( bdn->a_style == ACL_STYLE_LEVEL ) {
-			int n = sprintf( ptr, "{%d}", bdn->a_level );
+			char buf[SLAP_TEXT_BUFLEN];
+			int n = snprintf( buf, sizeof(buf), "{%d}", bdn->a_level );
 			if ( n > 0 ) {
-				ptr += n;
+				ptr = acl_safe_strncopy( ptr, buf, n );
 			} /* else ? */
 		}
 		if ( bdn->a_expand ) {
-			ptr = lutil_strcopy( ptr, ",expand" );
+			ptr = acl_safe_strcopy( ptr, ",expand" );
 		}
-		*ptr++ = '=';
-		*ptr++ = '"';
-		ptr = lutil_strcopy( ptr, bdn->a_pat.bv_val );
-		*ptr++ = '"';
+		ptr = acl_safe_strcopy( ptr, "=\"" );
+		ptr = acl_safe_strbvcopy( ptr, &bdn->a_pat );
+		ptr = acl_safe_strcopy( ptr, "\"" );
 	}
 	return ptr;
 }
@@ -2587,88 +2626,83 @@ access2text( Access *b, char *ptr )
 {
 	char maskbuf[ACCESSMASK_MAXLEN];
 
-	ptr = lutil_strcopy( ptr, "\tby" );
+	ptr = acl_safe_strcopy( ptr, "\tby" );
 
 	if ( !BER_BVISEMPTY( &b->a_dn_pat ) ) {
 		ptr = dnaccess2text( &b->a_dn, ptr, 0 );
 	}
 	if ( b->a_dn_at ) {
-		ptr = lutil_strcopy( ptr, " dnattr=" );
-		ptr = lutil_strcopy( ptr, b->a_dn_at->ad_cname.bv_val );
+		ptr = acl_safe_strcopy( ptr, " dnattr=" );
+		ptr = acl_safe_strbvcopy( ptr, &b->a_dn_at->ad_cname );
 	}
 
 	if ( !BER_BVISEMPTY( &b->a_realdn_pat ) ) {
 		ptr = dnaccess2text( &b->a_realdn, ptr, 1 );
 	}
 	if ( b->a_realdn_at ) {
-		ptr = lutil_strcopy( ptr, " realdnattr=" );
-		ptr = lutil_strcopy( ptr, b->a_realdn_at->ad_cname.bv_val );
+		ptr = acl_safe_strcopy( ptr, " realdnattr=" );
+		ptr = acl_safe_strbvcopy( ptr, &b->a_realdn_at->ad_cname );
 	}
 
 	if ( !BER_BVISEMPTY( &b->a_group_pat ) ) {
-		ptr = lutil_strcopy( ptr, " group/" );
-		ptr = lutil_strcopy( ptr, b->a_group_oc ?
+		ptr = acl_safe_strcopy( ptr, " group/" );
+		ptr = acl_safe_strcopy( ptr, b->a_group_oc ?
 			b->a_group_oc->soc_cname.bv_val : SLAPD_GROUP_CLASS );
-		*ptr++ = '/';
-		ptr = lutil_strcopy( ptr, b->a_group_at ?
+		ptr = acl_safe_strcopy( ptr, "/" );
+		ptr = acl_safe_strcopy( ptr, b->a_group_at ?
 			b->a_group_at->ad_cname.bv_val : SLAPD_GROUP_ATTR );
-		*ptr++ = '.';
-		ptr = lutil_strcopy( ptr, style_strings[b->a_group_style] );
-		*ptr++ = '=';
-		*ptr++ = '"';
-		ptr = lutil_strcopy( ptr, b->a_group_pat.bv_val );
-		*ptr++ = '"';
+		ptr = acl_safe_strcopy( ptr, "." );
+		ptr = acl_safe_strcopy( ptr, style_strings[b->a_group_style] );
+		ptr = acl_safe_strcopy( ptr, "=\"" );
+		ptr = acl_safe_strbvcopy( ptr, &b->a_group_pat );
+		ptr = acl_safe_strcopy( ptr, "\"" );
 	}
 
 	if ( !BER_BVISEMPTY( &b->a_peername_pat ) ) {
-		ptr = lutil_strcopy( ptr, " peername" );
-		*ptr++ = '.';
-		ptr = lutil_strcopy( ptr, style_strings[b->a_peername_style] );
-		*ptr++ = '=';
-		*ptr++ = '"';
-		ptr = lutil_strcopy( ptr, b->a_peername_pat.bv_val );
-		*ptr++ = '"';
+		ptr = acl_safe_strcopy( ptr, " peername" );
+		ptr = acl_safe_strcopy( ptr, "." );
+		ptr = acl_safe_strcopy( ptr, style_strings[b->a_peername_style] );
+		ptr = acl_safe_strcopy( ptr, "=\"" );
+		ptr = acl_safe_strbvcopy( ptr, &b->a_peername_pat );
+		ptr = acl_safe_strcopy( ptr, "\"" );
 	}
 
 	if ( !BER_BVISEMPTY( &b->a_sockname_pat ) ) {
-		ptr = lutil_strcopy( ptr, " sockname" );
-		*ptr++ = '.';
-		ptr = lutil_strcopy( ptr, style_strings[b->a_sockname_style] );
-		*ptr++ = '=';
-		*ptr++ = '"';
-		ptr = lutil_strcopy( ptr, b->a_sockname_pat.bv_val );
-		*ptr++ = '"';
+		ptr = acl_safe_strcopy( ptr, " sockname" );
+		ptr = acl_safe_strcopy( ptr, "." );
+		ptr = acl_safe_strcopy( ptr, style_strings[b->a_sockname_style] );
+		ptr = acl_safe_strcopy( ptr, "=\"" );
+		ptr = acl_safe_strbvcopy( ptr, &b->a_sockname_pat );
+		ptr = acl_safe_strcopy( ptr, "\"" );
 	}
 
 	if ( !BER_BVISEMPTY( &b->a_domain_pat ) ) {
-		ptr = lutil_strcopy( ptr, " domain" );
-		*ptr++ = '.';
-		ptr = lutil_strcopy( ptr, style_strings[b->a_domain_style] );
+		ptr = acl_safe_strcopy( ptr, " domain" );
+		ptr = acl_safe_strcopy( ptr, "." );
+		ptr = acl_safe_strcopy( ptr, style_strings[b->a_domain_style] );
 		if ( b->a_domain_expand ) {
-			ptr = lutil_strcopy( ptr, ",expand" );
+			ptr = acl_safe_strcopy( ptr, ",expand" );
 		}
-		*ptr++ = '=';
-		ptr = lutil_strcopy( ptr, b->a_domain_pat.bv_val );
+		ptr = acl_safe_strcopy( ptr, "=" );
+		ptr = acl_safe_strbvcopy( ptr, &b->a_domain_pat );
 	}
 
 	if ( !BER_BVISEMPTY( &b->a_sockurl_pat ) ) {
-		ptr = lutil_strcopy( ptr, " sockurl" );
-		*ptr++ = '.';
-		ptr = lutil_strcopy( ptr, style_strings[b->a_sockurl_style] );
-		*ptr++ = '=';
-		*ptr++ = '"';
-		ptr = lutil_strcopy( ptr, b->a_sockurl_pat.bv_val );
-		*ptr++ = '"';
+		ptr = acl_safe_strcopy( ptr, " sockurl" );
+		ptr = acl_safe_strcopy( ptr, "." );
+		ptr = acl_safe_strcopy( ptr, style_strings[b->a_sockurl_style] );
+		ptr = acl_safe_strcopy( ptr, "=\"" );
+		ptr = acl_safe_strbvcopy( ptr, &b->a_sockurl_pat );
+		ptr = acl_safe_strcopy( ptr, "\"" );
 	}
 
 	if ( !BER_BVISEMPTY( &b->a_set_pat ) ) {
-		ptr = lutil_strcopy( ptr, " set" );
-		*ptr++ = '.';
-		ptr = lutil_strcopy( ptr, style_strings[b->a_set_style] );
-		*ptr++ = '=';
-		*ptr++ = '"';
-		ptr = lutil_strcopy( ptr, b->a_set_pat.bv_val );
-		*ptr++ = '"';
+		ptr = acl_safe_strcopy( ptr, " set" );
+		ptr = acl_safe_strcopy( ptr, "." );
+		ptr = acl_safe_strcopy( ptr, style_strings[b->a_set_style] );
+		ptr = acl_safe_strcopy( ptr, "=\"" );
+		ptr = acl_safe_strbvcopy( ptr, &b->a_set_pat );
+		ptr = acl_safe_strcopy( ptr, "\"" );
 	}
 
 #ifdef SLAP_DYNACL
@@ -2680,7 +2714,7 @@ access2text( Access *b, char *ptr )
 				struct berval bv = BER_BVNULL;
 				(void)( *da->da_unparse )( da->da_private, &bv );
 				assert( !BER_BVISNULL( &bv ) );
-				ptr = lutil_strcopy( ptr, bv.bv_val );
+				ptr = acl_safe_strbvcopy( ptr, &bv );
 				ch_free( bv.bv_val );
 			}
 		}
@@ -2689,43 +2723,51 @@ access2text( Access *b, char *ptr )
 
 	/* Security Strength Factors */
 	if ( b->a_authz.sai_ssf ) {
-		ptr += sprintf( ptr, " ssf=%u", 
+		char buf[SLAP_TEXT_BUFLEN];
+		int n = snprintf( buf, sizeof(buf), " ssf=%u", 
 			b->a_authz.sai_ssf );
+		ptr = acl_safe_strncopy( ptr, buf, n );
 	}
 	if ( b->a_authz.sai_transport_ssf ) {
-		ptr += sprintf( ptr, " transport_ssf=%u",
+		char buf[SLAP_TEXT_BUFLEN];
+		int n = snprintf( buf, sizeof(buf), " transport_ssf=%u",
 			b->a_authz.sai_transport_ssf );
+		ptr = acl_safe_strncopy( ptr, buf, n );
 	}
 	if ( b->a_authz.sai_tls_ssf ) {
-		ptr += sprintf( ptr, " tls_ssf=%u",
+		char buf[SLAP_TEXT_BUFLEN];
+		int n = snprintf( buf, sizeof(buf), " tls_ssf=%u",
 			b->a_authz.sai_tls_ssf );
+		ptr = acl_safe_strncopy( ptr, buf, n );
 	}
 	if ( b->a_authz.sai_sasl_ssf ) {
-		ptr += sprintf( ptr, " sasl_ssf=%u",
+		char buf[SLAP_TEXT_BUFLEN];
+		int n = snprintf( buf, sizeof(buf), " sasl_ssf=%u",
 			b->a_authz.sai_sasl_ssf );
+		ptr = acl_safe_strncopy( ptr, buf, n );
 	}
 
-	*ptr++ = ' ';
+	ptr = acl_safe_strcopy( ptr, " " );
 	if ( b->a_dn_self ) {
-		ptr = lutil_strcopy( ptr, "self" );
+		ptr = acl_safe_strcopy( ptr, "self" );
 	} else if ( b->a_realdn_self ) {
-		ptr = lutil_strcopy( ptr, "realself" );
+		ptr = acl_safe_strcopy( ptr, "realself" );
 	}
-	ptr = lutil_strcopy( ptr, accessmask2str( b->a_access_mask, maskbuf, 0 ));
+	ptr = acl_safe_strcopy( ptr, accessmask2str( b->a_access_mask, maskbuf, 0 ));
 	if ( !maskbuf[0] ) ptr--;
 
 	if( b->a_type == ACL_BREAK ) {
-		ptr = lutil_strcopy( ptr, " break" );
+		ptr = acl_safe_strcopy( ptr, " break" );
 
 	} else if( b->a_type == ACL_CONTINUE ) {
-		ptr = lutil_strcopy( ptr, " continue" );
+		ptr = acl_safe_strcopy( ptr, " continue" );
 
 	} else if( b->a_type != ACL_STOP ) {
-		ptr = lutil_strcopy( ptr, " unknown-control" );
+		ptr = acl_safe_strcopy( ptr, " unknown-control" );
 	} else {
-		if ( !maskbuf[0] ) ptr = lutil_strcopy( ptr, " stop" );
+		if ( !maskbuf[0] ) ptr = acl_safe_strcopy( ptr, " stop" );
 	}
-	*ptr++ = '\n';
+	ptr = acl_safe_strcopy( ptr, "\n" );
 
 	return ptr;
 }
@@ -2737,35 +2779,37 @@ acl_unparse( AccessControl *a, struct berval *bv )
 	char	*ptr;
 	int	to = 0;
 
-	bv->bv_val = aclbuf;
+	if ( BER_BVISNULL( &aclbuf ) ) {
+		aclbuf.bv_val = ch_malloc( ACLBUF_CHUNKSIZE );
+		aclbuf.bv_len = ACLBUF_CHUNKSIZE;
+	}
+
 	bv->bv_len = 0;
 
-	ptr = bv->bv_val;
+	ptr = aclbuf.bv_val;
 
-	ptr = lutil_strcopy( ptr, "to" );
+	ptr = acl_safe_strcopy( ptr, "to" );
 	if ( !BER_BVISNULL( &a->acl_dn_pat ) ) {
 		to++;
-		ptr = lutil_strcopy( ptr, " dn." );
+		ptr = acl_safe_strcopy( ptr, " dn." );
 		if ( a->acl_dn_style == ACL_STYLE_BASE )
-			ptr = lutil_strcopy( ptr, style_base );
+			ptr = acl_safe_strcopy( ptr, style_base );
 		else
-			ptr = lutil_strcopy( ptr, style_strings[a->acl_dn_style] );
-		*ptr++ = '=';
-		*ptr++ = '"';
-		ptr = lutil_strcopy( ptr, a->acl_dn_pat.bv_val );
-		ptr = lutil_strcopy( ptr, "\"\n" );
+			ptr = acl_safe_strcopy( ptr, style_strings[a->acl_dn_style] );
+		ptr = acl_safe_strcopy( ptr, "=\"" );
+		ptr = acl_safe_strbvcopy( ptr, &a->acl_dn_pat );
+		ptr = acl_safe_strcopy( ptr, "\"\n" );
 	}
 
 	if ( a->acl_filter != NULL ) {
-		struct berval	bv = BER_BVNULL;
+		struct berval	fbv = BER_BVNULL;
 
 		to++;
-		filter2bv( a->acl_filter, &bv );
-		ptr = lutil_strcopy( ptr, " filter=\"" );
-		ptr = lutil_strcopy( ptr, bv.bv_val );
-		*ptr++ = '"';
-		*ptr++ = '\n';
-		ch_free( bv.bv_val );
+		filter2bv( a->acl_filter, &fbv );
+		ptr = acl_safe_strcopy( ptr, " filter=\"" );
+		ptr = acl_safe_strbvcopy( ptr, &fbv );
+		ptr = acl_safe_strcopy( ptr, "\"\n" );
+		ch_free( fbv.bv_val );
 	}
 
 	if ( a->acl_attrs != NULL ) {
@@ -2773,45 +2817,44 @@ acl_unparse( AccessControl *a, struct berval *bv )
 		AttributeName *an;
 		to++;
 
-		ptr = lutil_strcopy( ptr, " attrs=" );
+		ptr = acl_safe_strcopy( ptr, " attrs=" );
 		for ( an = a->acl_attrs; an && !BER_BVISNULL( &an->an_name ); an++ ) {
-			if ( ! first ) *ptr++ = ',';
+			if ( ! first ) ptr = acl_safe_strcopy( ptr, ",");
 			if (an->an_oc) {
-				*ptr++ = ( an->an_flags & SLAP_AN_OCEXCLUDE ) ? '!' : '@';
-				ptr = lutil_strcopy( ptr, an->an_oc->soc_cname.bv_val );
+				ptr = acl_safe_strcopy( ptr, ( an->an_flags & SLAP_AN_OCEXCLUDE ) ? "!" : "@" );
+				ptr = acl_safe_strbvcopy( ptr, &an->an_oc->soc_cname );
 
 			} else {
-				ptr = lutil_strcopy( ptr, an->an_name.bv_val );
+				ptr = acl_safe_strbvcopy( ptr, &an->an_name );
 			}
 			first = 0;
 		}
-		*ptr++ = '\n';
+		ptr = acl_safe_strcopy( ptr, "\n" );
 	}
 
-	if ( !BER_BVISEMPTY( &a->acl_attrval ) ) {
+	if ( !BER_BVISNULL( &a->acl_attrval ) ) {
 		to++;
-		ptr = lutil_strcopy( ptr, " val." );
+		ptr = acl_safe_strcopy( ptr, " val." );
 		if ( a->acl_attrval_style == ACL_STYLE_BASE &&
 			a->acl_attrs[0].an_desc->ad_type->sat_syntax ==
 				slap_schema.si_syn_distinguishedName )
-			ptr = lutil_strcopy( ptr, style_base );
+			ptr = acl_safe_strcopy( ptr, style_base );
 		else
-			ptr = lutil_strcopy( ptr, style_strings[a->acl_attrval_style] );
-		*ptr++ = '=';
-		*ptr++ = '"';
-		ptr = lutil_strcopy( ptr, a->acl_attrval.bv_val );
-		*ptr++ = '"';
-		*ptr++ = '\n';
+			ptr = acl_safe_strcopy( ptr, style_strings[a->acl_attrval_style] );
+		ptr = acl_safe_strcopy( ptr, "=\"" );
+		ptr = acl_safe_strbvcopy( ptr, &a->acl_attrval );
+		ptr = acl_safe_strcopy( ptr, "\"\n" );
 	}
 
-	if( !to ) {
-		ptr = lutil_strcopy( ptr, " *\n" );
+	if ( !to ) {
+		ptr = acl_safe_strcopy( ptr, " *\n" );
 	}
 
 	for ( b = a->acl_access; b != NULL; b = b->a_next ) {
 		ptr = access2text( b, ptr );
 	}
 	*ptr = '\0';
+	bv->bv_val = aclbuf.bv_val;
 	bv->bv_len = ptr - bv->bv_val;
 }
 

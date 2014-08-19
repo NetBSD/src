@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.3 2009/11/01 00:12:00 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.3.12.1 2014/08/19 23:53:08 tls Exp $
 
 BINDIR?=	/usr/sbin
 WARNS?=		1
 
+CPPFLAGS+=-DPACKAGE -DPACKAGE_VERSION
 LDADD+=-lz
 .ifndef HOSTPROG
+BINUTILS_MACHINE_ARCH=${MACHINE_ARCH:C/armv[4-7]/arm/}
 DPADD+=${LIBZ}
 .endif

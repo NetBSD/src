@@ -1,6 +1,6 @@
 // C++ includes used for precompiling extensions -*- C++ -*-
 
-// Copyright (C) 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2006-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -26,7 +26,7 @@
  *  This is an implementation file for a precompiled header.
  */
 
-#ifndef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus < 201103L
 #include <bits/stdtr1c++.h>
 #endif
 

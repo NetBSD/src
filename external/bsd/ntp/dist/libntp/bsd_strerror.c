@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_strerror.c,v 1.1.1.1 2009/12/13 16:55:01 kardel Exp $	*/
+/*	$NetBSD: bsd_strerror.c,v 1.1.1.1.12.1 2014/08/19 23:51:41 tls Exp $	*/
 
 #include <config.h>
 
@@ -41,9 +41,10 @@ strerror(
 	static char ebuf[20];
 
 	if ((unsigned int)errnum < sys_nerr)
-		return(sys_errlist[errnum]);
-	(void)sprintf(ebuf, "Unknown error: %d", errnum);
-	return(ebuf);
+		return sys_errlist[errnum];
+	snprintf(ebuf, sizeof(ebuf), "Unknown error: %d", errnum);
+
+	return ebuf;
 }
 #else
 int strerror_bs;

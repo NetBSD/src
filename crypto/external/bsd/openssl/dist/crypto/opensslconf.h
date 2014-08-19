@@ -30,6 +30,9 @@
 #ifndef OPENSSL_NO_STORE
 # define OPENSSL_NO_STORE
 #endif
+#ifndef OPENSSL_NO_UNIT_TEST
+# define OPENSSL_NO_UNIT_TEST
+#endif
 #else
 #ifndef OPENSSL_NO_SCTP
 # define OPENSSL_NO_SCTP
@@ -78,6 +81,9 @@
 # endif
 # if defined(OPENSSL_NO_STORE) && !defined(NO_STORE)
 #  define NO_STORE
+# endif
+# if defined(OPENSSL_NO_UNIT_TEST) && !defined(NO_UNIT_TEST)
+#  define NO_UNIT_TEST
 # endif
 #endif
 

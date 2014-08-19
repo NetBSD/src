@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,14 +34,14 @@
 // warranty.
 
 /**
- * @file find_fn_imps.hpp
+ * @file splay_tree_/find_fn_imps.hpp
  * Contains an implementation class for splay_tree_.
  */
 
 PB_DS_CLASS_T_DEC
 inline typename PB_DS_CLASS_C_DEC::point_iterator
 PB_DS_CLASS_C_DEC::
-find(const_key_reference r_key)
+find(key_const_reference r_key)
 {
   node_pointer p_found = find_imp(r_key);
   if (p_found != base_type::m_p_head)
@@ -50,9 +50,9 @@ find(const_key_reference r_key)
 }
 
 PB_DS_CLASS_T_DEC
-inline typename PB_DS_CLASS_C_DEC::const_point_iterator
+inline typename PB_DS_CLASS_C_DEC::point_const_iterator
 PB_DS_CLASS_C_DEC::
-find(const_key_reference r_key) const
+find(key_const_reference r_key) const
 {
   const node_pointer p_found = find_imp(r_key);
   if (p_found != base_type::m_p_head)
@@ -63,11 +63,12 @@ find(const_key_reference r_key) const
 PB_DS_CLASS_T_DEC
 inline typename PB_DS_CLASS_C_DEC::node_pointer
 PB_DS_CLASS_C_DEC::
-find_imp(const_key_reference r_key)
+find_imp(key_const_reference r_key)
 {
-  _GLIBCXX_DEBUG_ONLY(base_type::structure_only_assert_valid();)
+  _GLIBCXX_DEBUG_ONLY(base_type::structure_only_assert_valid(__FILE__,
+							     __LINE__);)
   node_pointer p_nd = base_type::m_p_head->m_p_parent;
-  while (p_nd != NULL)
+  while (p_nd != 0)
     if (!Cmp_Fn::operator()(PB_DS_V2F(p_nd->m_value), r_key))
       {
 	if (!Cmp_Fn::operator()(r_key, PB_DS_V2F(p_nd->m_value)))
@@ -82,11 +83,11 @@ find_imp(const_key_reference r_key)
 PB_DS_CLASS_T_DEC
 inline const typename PB_DS_CLASS_C_DEC::node_pointer
 PB_DS_CLASS_C_DEC::
-find_imp(const_key_reference r_key) const
+find_imp(key_const_reference r_key) const
 {
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
   node_pointer p_nd = base_type::m_p_head->m_p_parent;
-  while (p_nd != NULL)
+  while (p_nd != 0)
     if (!Cmp_Fn::operator()(PB_DS_V2F(p_nd->m_value), r_key))
       {
 	if (!Cmp_Fn::operator()(r_key, PB_DS_V2F(p_nd->m_value)))

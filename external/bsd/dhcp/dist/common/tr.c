@@ -1,5 +1,4 @@
-/*	$NetBSD: tr.c,v 1.1.1.2.4.2 2013/06/23 06:26:28 tls Exp $	*/
-
+/*	$NetBSD: tr.c,v 1.1.1.2.4.3 2014/08/19 23:46:40 tls Exp $	*/
 /* tr.c
 
    token ring interface support
@@ -30,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tr.c,v 1.1.1.2.4.2 2013/06/23 06:26:28 tls Exp $");
+__RCSID("$NetBSD: tr.c,v 1.1.1.2.4.3 2014/08/19 23:46:40 tls Exp $");
 
 #include "dhcpd.h"
 

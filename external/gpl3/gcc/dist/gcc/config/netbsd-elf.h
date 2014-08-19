@@ -1,5 +1,5 @@
 /* Common configuration file for NetBSD ELF targets.
-   Copyright (C) 2002, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
 This file is part of GCC.
@@ -25,18 +25,6 @@ along with GCC; see the file COPYING3.  If not see
       NETBSD_OS_CPP_BUILTINS_COMMON();		\
     }						\
   while (0)
-
-/* This defines which switch letters take arguments.  On NetBSD, most
-   of the normal cases (defined by gcc.c) apply, and we also have -h*
-   and -z* options (for the linker) (coming from SVR4).  */
-
-#undef SWITCH_TAKES_ARG
-#define SWITCH_TAKES_ARG(CHAR)			\
-  (DEFAULT_SWITCH_TAKES_ARG (CHAR)		\
-   || (CHAR) == 'h'				\
-   || (CHAR) == 'z'				\
-   || (CHAR) == 'R')
-
 
 /* Provide a STARTFILE_SPEC appropriate for NetBSD ELF.  Here we
    provide support for the special GCC option -static.  On ELF
@@ -92,11 +80,11 @@ along with GCC; see the file COPYING3.  If not see
    %{!shared: \
      -dc -dp \
      %{!nostdlib: \
-       %{!r*: \
+       %{!r: \
 	 %{!e*:-e %(netbsd_entry_point)}}} \
      %{!static: \
        %{rdynamic:-export-dynamic} \
-       %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.elf_so}} \
+       -dynamic-linker /usr/libexec/ld.elf_so} \
      %{static:-static}}"
 
 /* Use --as-needed -lgcc_s for eh support.  */
@@ -108,3 +96,6 @@ along with GCC; see the file COPYING3.  If not see
  %{static:%(link_gcc_c_sequence) -lmudflap}} \
  %{fmudflapth: -export-dynamic -lmudflapth -lpthread \
  %{static:%(link_gcc_c_sequence) -lmudflapth}} "
+
+#undef TARGET_UNWIND_TABLES_DEFAULT
+#define TARGET_UNWIND_TABLES_DEFAULT true

@@ -1,4 +1,4 @@
-# Copyright (C) 2005-2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2005-2007, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -12,10 +12,14 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id
+SYSTEMTESTTOP=..
+. $SYSTEMTESTTOP/conf.sh
+
+test -r $RANDFILE || $GENRANDOM 400 $RANDFILE
 
 rm -f named-compilezone
 ln -s $CHECKZONE named-compilezone
+
 rm -f ns1/example.db.raw
 cp ns1/example.db ns2/
 cp ns2/formerly-text.db.in ns2/formerly-text.db

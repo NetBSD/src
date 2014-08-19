@@ -23,7 +23,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-cfm.c,v 1.5 2007-07-24 16:01:42 hannes Exp ";
 #else
-__RCSID("$NetBSD: print-cfm.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-cfm.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -287,7 +287,7 @@ cfm_egress_id_string(register const u_char *tptr) {
     static char egress_id_buffer[80];
     
     snprintf(egress_id_buffer, sizeof(egress_id_buffer),
-             "MAC %0x4x-%s",
+             "MAC 0x%4x-%s",
              EXTRACT_16BITS(tptr),
              etheraddr_string(tptr+2));
 

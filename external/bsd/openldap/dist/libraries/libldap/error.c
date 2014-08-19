@@ -1,9 +1,9 @@
-/*	$NetBSD: error.c,v 1.1.1.3 2010/12/12 15:21:30 adam Exp $	*/
+/*	$NetBSD: error.c,v 1.1.1.3.12.1 2014/08/19 23:51:59 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/libldap/error.c,v 1.76.2.8 2010/04/15 20:03:50 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -262,9 +262,7 @@ ldap_parse_result(
 	if(referralsp != NULL) *referralsp = NULL;
 	if(serverctrls != NULL) *serverctrls = NULL;
 
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_lock( &ld->ld_res_mutex );
-#endif
+	LDAP_MUTEX_LOCK( &ld->ld_res_mutex );
 	/* Find the result, last msg in chain... */
 	lm = r->lm_chain_tail;
 	/* FIXME: either this is not possible (assert?)
@@ -284,9 +282,7 @@ ldap_parse_result(
 
 	if( lm == NULL ) {
 		errcode = ld->ld_errno = LDAP_NO_RESULTS_RETURNED;
-#ifdef LDAP_R_COMPILE
-		ldap_pvt_thread_mutex_unlock( &ld->ld_res_mutex );
-#endif
+		LDAP_MUTEX_UNLOCK( &ld->ld_res_mutex );
 	    goto done;
 	}
 
@@ -392,10 +388,7 @@ ldap_parse_result(
 			*referralsp = ldap_value_dup( ld->ld_referrals );
 		}
 	}
-
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_unlock( &ld->ld_res_mutex );
-#endif
+	LDAP_MUTEX_UNLOCK( &ld->ld_res_mutex );
 
 done:
 	if ( freeit ) {

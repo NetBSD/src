@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_postgres_driver.c,v 1.3 2012/06/05 00:39:39 christos Exp $	*/
+/*	$NetBSD: dlz_postgres_driver.c,v 1.3.2.1 2014/08/19 23:46:21 tls Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -294,8 +294,10 @@ postgres_get_resultset(const char *zone, const char *record,
 	unsigned int i = 0;
 	unsigned int j = 0;
 
+#if 0
 	/* temporarily get a unique thread # */
 	unsigned int dlz_thread_num = 1+(int) (1000.0*rand()/(RAND_MAX+1.0));
+#endif
 
 	REQUIRE(*rs == NULL);
 
@@ -772,12 +774,17 @@ postgres_process_rs(dns_sdlzlookup_t *lookup, PGresult *rs)
 /*% determine if the zone is supported by (in) the database */
 
 static isc_result_t
-postgres_findzone(void *driverarg, void *dbdata, const char *name)
+postgres_findzone(void *driverarg, void *dbdata, const char *name,
+		  dns_clientinfomethods_t *methods,
+		  dns_clientinfo_t *clientinfo)
 {
 	isc_result_t result;
 	PGresult *rs = NULL;
 	unsigned int rows;
+
 	UNUSED(driverarg);
+	UNUSED(methods);
+	UNUSED(clientinfo);
 
 	/* run the query and get the result set from the database. */
 	result = postgres_get_resultset(name, NULL, NULL,
@@ -816,7 +823,7 @@ postgres_allowzonexfr(void *driverarg, void *dbdata, const char *name,
 	UNUSED(driverarg);
 
 	/* first check if the zone is supported by the database. */
-	result = postgres_findzone(driverarg, dbdata, name);
+	result = postgres_findzone(driverarg, dbdata, name, NULL, NULL);
 	if (result != ISC_R_SUCCESS)
 		return (ISC_R_NOTFOUND);
 

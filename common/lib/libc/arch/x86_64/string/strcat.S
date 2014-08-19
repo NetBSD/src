@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strcat.S,v 1.1 2005/12/20 19:28:51 christos Exp $")
+	RCSID("$NetBSD: strcat.S,v 1.1.56.1 2014/08/19 23:45:14 tls Exp $")
 #endif
 
 ENTRY(strcat)
@@ -162,3 +162,4 @@ ENTRY(strcat)
 
 .Ldone:
 	ret
+END(strcat)

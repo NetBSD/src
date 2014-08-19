@@ -1,7 +1,7 @@
-/*	$NetBSD: net.c,v 1.3 2012/06/05 00:42:52 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.3.2.1 2014/08/19 23:46:34 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -66,7 +66,6 @@ void InitSockets(void);
 static isc_result_t
 try_proto(int domain) {
 	SOCKET s;
-	isc_result_t result = ISC_R_SUCCESS;
 	char strbuf[ISC_STRERRORSIZE];
 	int errval;
 
@@ -214,7 +213,8 @@ initialize_ipv6only(void) {
 
 static void
 try_ipv6pktinfo(void) {
-	int s, on;
+	SOCKET s;
+	int on;
 	char strbuf[ISC_STRERRORSIZE];
 	isc_result_t result;
 	int optname;
@@ -333,4 +333,9 @@ isc_net_enableipv6(void) {
 	initialize();
 	if (ipv6_result == ISC_R_DISABLED)
 		ipv6_result = ISC_R_SUCCESS;
+}
+
+unsigned int
+isc_net_probedscp(void) {
+	return (0);
 }

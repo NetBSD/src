@@ -1,7 +1,6 @@
-/*	$NetBSD: dhcpv6.c,v 1.4.4.2 2013/06/23 06:26:30 tls Exp $	*/
-
+/*	$NetBSD: dhcpv6.c,v 1.4.4.3 2014/08/19 23:46:42 tls Exp $	*/
 /*
- * Copyright (C) 2006-2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006-2013 by Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,8 +16,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpv6.c,v 1.4.4.2 2013/06/23 06:26:30 tls Exp $");
+__RCSID("$NetBSD: dhcpv6.c,v 1.4.4.3 2014/08/19 23:46:42 tls Exp $");
 
+/*! \file server/dhcpv6.c */
 
 #include "dhcpd.h"
 
@@ -65,6 +65,7 @@ struct reply_state {
 	struct ia_xx *old_ia;
 	struct option_state *reply_ia;
 	struct data_string fixed;
+	struct iaddrcidrnet fixed_pref; /* static prefix for logging */
 
 	/* IAADDR/PREFIX level persistent state */
 	struct iasubopt *lease;
@@ -86,6 +87,9 @@ struct reply_state {
 
 	/* Index into the data field that has been consumed. */
 	unsigned cursor;
+
+	/* Space for the on commit statements for a fixed host */
+	struct on_star on_star;
 
 	union reply_buffer {
 		unsigned char data[65536];
@@ -236,7 +240,8 @@ set_server_duid_from_option(void) {
 	}
 
 	execute_statements_in_scope(NULL, NULL, NULL, NULL, NULL,
-				    opt_state, &global_scope, root_group, NULL);
+				    opt_state, &global_scope, root_group,
+				    NULL, NULL);
 
 	oc = lookup_option(&dhcpv6_universe, opt_state, D6O_SERVERID);
 	if (oc == NULL) {
@@ -826,7 +831,7 @@ start_reply(struct packet *packet,
 	}
 	execute_statements_in_scope(NULL, packet, NULL, NULL,
 				    packet->options, *opt_state,
-				    &global_scope, root_group, NULL);
+				    &global_scope, root_group, NULL, NULL);
 
 	/*
 	 * A small bit of special handling for Solicit messages.
@@ -991,83 +996,112 @@ try_client_v6_address(struct iasubopt **addr,
 	return result;
 }
 
-/*
- * Get an IPv6 address for the client.
+
+/*!
  *
- * addr is the result (should be a pointer to NULL on entry)
- * packet is the information about the packet from the client
- * requested_iaaddr is a hint from the client
- * client_id is the DUID for the client
+ * \brief  Get an IPv6 address for the client.
+ *
+ * Attempt to find a usable address for the client.  We walk through
+ * the ponds checking for permit and deny then through the pools
+ * seeing if they have an available address.
+ *
+ * \param reply = the state structure for the current work on this request
+ *                if we create a lease we return it using reply->lease
+ *
+ * \return
+ * ISC_R_SUCCESS = we were able to find an address and are returning a
+ *                 pointer to the lease
+ * ISC_R_NORESOURCES = there don't appear to be any free addresses.  This
+ *                     is probabalistic.  We don't exhaustively try the
+ *                     address range, instead we hash the duid and if
+ *                     the address derived from the hash is in use we
+ *                     hash the address.  After a number of failures we
+ *                     conclude the pool is basically full.
  */
 static isc_result_t 
-pick_v6_address(struct iasubopt **addr, struct shared_network *shared_network,
-		const struct data_string *client_id)
+pick_v6_address(struct reply_state *reply)
 {
-	struct ipv6_pool *p;
+	struct ipv6_pool *p = NULL;
+	struct ipv6_pond *pond;
 	int i;
 	int start_pool;
 	unsigned int attempts;
 	char tmp_buf[INET6_ADDRSTRLEN];
+	struct iasubopt **addr = &reply->lease;
 
 	/*
-	 * No address pools, we're done.
+	 * Do a quick walk through of the ponds and pools
+	 * to see if we have any NA address pools
 	 */
-	if (shared_network->ipv6_pools == NULL) {
+	for (pond = reply->shared->ipv6_pond; pond != NULL; pond = pond->next) {
+		if (pond->ipv6_pools == NULL)
+			continue;
+
+		for (i = 0; (p = pond->ipv6_pools[i]) != NULL; i++) {
+			if (p->pool_type == D6O_IA_NA)
+				break;
+		}
+		if (p != NULL)
+			break;
+	}
+
+	/* If we get here and p is NULL we have no useful pools */
+	if (p == NULL) {
 		log_debug("Unable to pick client address: "
 			  "no IPv6 pools on this shared network");
 		return ISC_R_NORESOURCES;
 	}
-	for (i = 0;; i++) {
-		p = shared_network->ipv6_pools[i];
-		if (p == NULL) {
-			log_debug("Unable to pick client address: "
-				  "no IPv6 address pools "
-				  "on this shared network");
-			return ISC_R_NORESOURCES;
-		}
-		if (p->pool_type == D6O_IA_NA) {
-			break;
-		}
-	}
-
+		
 	/*
-	 * Otherwise try to get a lease from the first subnet possible.
-	 *
-	 * We start looking at the last pool we allocated from, unless
-	 * it had a collision trying to allocate an address. This will
-	 * tend to move us into less-filled pools.
+	 * We have at least one pool that could provide an address
+	 * Now we walk through the ponds and pools again and check
+	 * to see if the client is permitted and if an address is
+	 * available
+	 * 
+	 * Within a given pond we start looking at the last pool we
+	 * allocated from, unless it had a collision trying to allocate
+	 * an address. This will tend to move us into less-filled pools.
 	 */
-	start_pool = shared_network->last_ipv6_pool;
-	i = start_pool;
-	do {
 
-		p = shared_network->ipv6_pools[i];
-		if ((p->pool_type == D6O_IA_NA) &&
-		    (create_lease6(p, addr, &attempts, client_id,
-				   cur_time + 120) == ISC_R_SUCCESS)) {
-			/*
-			 * Record the pool used (or next one if there 
-			 * was a collision).
-			 */
-			if (attempts > 1) {
-				i++;
-				if (shared_network->ipv6_pools[i] == NULL) {
-					i = 0;
+	for (pond = reply->shared->ipv6_pond; pond != NULL; pond = pond->next) {
+		if (((pond->prohibit_list != NULL) &&
+		     (permitted(reply->packet, pond->prohibit_list))) ||
+		    ((pond->permit_list != NULL) &&
+		     (!permitted(reply->packet, pond->permit_list))))
+			continue;
+
+		start_pool = pond->last_ipv6_pool;
+		i = start_pool;
+		do {
+			p = pond->ipv6_pools[i];
+			if ((p->pool_type == D6O_IA_NA) &&
+			    (create_lease6(p, addr, &attempts,
+					   &reply->ia->iaid_duid,
+					   cur_time + 120) == ISC_R_SUCCESS)) {
+				/*
+				 * Record the pool used (or next one if there 
+				 * was a collision).
+				 */
+				if (attempts > 1) {
+					i++;
+					if (pond->ipv6_pools[i] == NULL) {
+						i = 0;
+					}
 				}
+				pond->last_ipv6_pool = i;
+
+				log_debug("Picking pool address %s",
+					  inet_ntop(AF_INET6, &((*addr)->addr),
+						    tmp_buf, sizeof(tmp_buf)));
+				return (ISC_R_SUCCESS);
 			}
-			shared_network->last_ipv6_pool = i;
 
-			log_debug("Picking pool address %s",
-				  inet_ntop(AF_INET6, &((*addr)->addr),
-				  	    tmp_buf, sizeof(tmp_buf)));
-			return ISC_R_SUCCESS;
-		}
-
-		i++;
-		if (shared_network->ipv6_pools[i] == NULL) {
-			i = 0;
-		}
-	} while (i != start_pool);
+			i++;
+			if (pond->ipv6_pools[i] == NULL) {
+				i = 0;
+			}
+		} while (i != start_pool);
+	}
 
 	/*
 	 * If we failed to pick an IPv6 address from any of the subnets.
@@ -1136,72 +1170,97 @@ try_client_v6_prefix(struct iasubopt **pref,
 	return result;
 }
 
-/*
- * Get an IPv6 prefix for the client.
+/*!
  *
- * pref is the result (should be a pointer to NULL on entry)
- * packet is the information about the packet from the client
- * requested_iaprefix is a hint from the client
- * plen is -1 or the requested prefix length
- * client_id is the DUID for the client
+ * \brief  Get an IPv6 prefix for the client.
+ *
+ * Attempt to find a usable prefix for the client.  We walk through
+ * the ponds checking for permit and deny then through the pools
+ * seeing if they have an available prefix.
+ *
+ * \param reply = the state structure for the current work on this request
+ *                if we create a lease we return it using reply->lease
+ *
+ * \return
+ * ISC_R_SUCCESS = we were able to find an prefix and are returning a
+ *                 pointer to the lease
+ * ISC_R_NORESOURCES = there don't appear to be any free addresses.  This
+ *                     is probabalistic.  We don't exhaustively try the
+ *                     address range, instead we hash the duid and if
+ *                     the address derived from the hash is in use we
+ *                     hash the address.  After a number of failures we
+ *                     conclude the pool is basically full.
  */
+
 static isc_result_t 
-pick_v6_prefix(struct iasubopt **pref, int plen,
-	       struct shared_network *shared_network,
-	       const struct data_string *client_id)
+pick_v6_prefix(struct reply_state *reply)
 {
-	struct ipv6_pool *p;
+	struct ipv6_pool *p = NULL;
+	struct ipv6_pond *pond;
 	int i;
 	unsigned int attempts;
 	char tmp_buf[INET6_ADDRSTRLEN];
+	struct iasubopt **pref = &reply->lease;
 
 	/*
-	 * No prefix pools, we're done.
+	 * Do a quick walk through of the ponds and pools
+	 * to see if we have any prefix pools
 	 */
-	if (shared_network->ipv6_pools == NULL) {
+	for (pond = reply->shared->ipv6_pond; pond != NULL; pond = pond->next) {
+		if (pond->ipv6_pools == NULL)
+			continue;
+
+		for (i = 0; (p = pond->ipv6_pools[i]) != NULL; i++) {
+			if (p->pool_type == D6O_IA_PD)
+				break;
+		}
+		if (p != NULL)
+			break;
+	}
+
+	/* If we get here and p is NULL we have no useful pools */
+	if (p == NULL) {
 		log_debug("Unable to pick client prefix: "
 			  "no IPv6 pools on this shared network");
 		return ISC_R_NORESOURCES;
 	}
-	for (i = 0;; i++) {
-		p = shared_network->ipv6_pools[i];
-		if (p == NULL) {
-			log_debug("Unable to pick client prefix: "
-				  "no IPv6 prefix pools "
-				  "on this shared network");
-			return ISC_R_NORESOURCES;
-		}
-		if (p->pool_type == D6O_IA_PD) {
-			break;
-		}
-	}
 
 	/*
-	 * Otherwise try to get a prefix.
+	 * We have at least one pool that could provide a prefix
+	 * Now we walk through the ponds and pools again and check
+	 * to see if the client is permitted and if an prefix is
+	 * available
+	 * 
 	 */
-	for (i = 0;; i++) {
-		p = shared_network->ipv6_pools[i];
-		if (p == NULL) {
-			break;
-		}
-		if (p->pool_type != D6O_IA_PD) {
-			continue;
-		}
 
-		/*
-		 * Try only pools with the requested prefix length if any.
-		 */
-		if ((plen >= 0) && (p->units != plen)) {
+	for (pond = reply->shared->ipv6_pond; pond != NULL; pond = pond->next) {
+		if (((pond->prohibit_list != NULL) &&
+		     (permitted(reply->packet, pond->prohibit_list))) ||
+		    ((pond->permit_list != NULL) &&
+		     (!permitted(reply->packet, pond->permit_list))))
 			continue;
-		}
 
-		if (create_prefix6(p, pref, &attempts, client_id,
-				   cur_time + 120) == ISC_R_SUCCESS) {
-			log_debug("Picking pool prefix %s/%u",
-				  inet_ntop(AF_INET6, &((*pref)->addr),
-				  	    tmp_buf, sizeof(tmp_buf)),
-				  (unsigned) (*pref)->plen);
-			return ISC_R_SUCCESS;
+		for (i = 0; (p = pond->ipv6_pools[i]) != NULL; i++) {
+			if (p->pool_type != D6O_IA_PD) {
+				continue;
+			}
+
+			/*
+			 * Try only pools with the requested prefix length if any.
+			 */
+			if ((reply->preflen >= 0) && (p->units != reply->preflen)) {
+				continue;
+			}
+
+			if (create_prefix6(p, pref, &attempts, &reply->ia->iaid_duid,
+					   cur_time + 120) == ISC_R_SUCCESS) {
+				log_debug("Picking pool prefix %s/%u",
+					  inet_ntop(AF_INET6, &((*pref)->addr),
+						    tmp_buf, sizeof(tmp_buf)),
+					  (unsigned) (*pref)->plen);
+
+				return (ISC_R_SUCCESS);
+			}
 		}
 	}
 
@@ -1260,6 +1319,7 @@ lease_to_client(struct data_string *reply_ret,
 #if defined (RFC3315_PRE_ERRATA_2010_08)
 	isc_boolean_t no_resources_avail = ISC_FALSE;
 #endif
+	int i;
 
 	memset(&packet_oro, 0, sizeof(packet_oro));
 
@@ -1300,20 +1360,26 @@ lease_to_client(struct data_string *reply_ret,
 	 * valid for the shared network the client is on.
 	 */
 	if (find_hosts_by_uid(&reply.host, client_id->data, client_id->len,
-			      MDL))
+			      MDL)) {
+		packet->known = 1;
 		seek_shared_host(&reply.host, reply.shared);
+	}
 
 	if ((reply.host == NULL) &&
-	    find_hosts_by_option(&reply.host, packet, packet->options, MDL))
+	    find_hosts_by_option(&reply.host, packet, packet->options, MDL)) {
+		packet->known = 1;
 		seek_shared_host(&reply.host, reply.shared);
+	}
 
 	/*
 	 * Check for 'hardware' matches last, as some of the synthesis methods
 	 * are not considered to be as reliable.
 	 */
 	if ((reply.host == NULL) &&
-	    find_hosts_by_duid_chaddr(&reply.host, client_id))
+	    find_hosts_by_duid_chaddr(&reply.host, client_id)) {
+		packet->known = 1;
 		seek_shared_host(&reply.host, reply.shared);
+	}
 
 	/* Process the client supplied IA's onto the reply buffer. */
 	reply.ia_count = 0;
@@ -1411,16 +1477,29 @@ lease_to_client(struct data_string *reply_ret,
 		execute_statements_in_scope(NULL, reply.packet, NULL, NULL,
 					    reply.packet->options,
 					    reply.opt_state, &global_scope,
-					    reply.shared->group, root_group);
+					    reply.shared->group, root_group,
+					    NULL);
+
+		/* Execute statements from class scopes. */
+		for (i = reply.packet->class_count; i > 0; i--) {
+			execute_statements_in_scope(NULL, reply.packet,
+						    NULL, NULL,
+						    reply.packet->options,
+						    reply.opt_state,
+						    &global_scope,
+						    reply.packet->classes[i - 1]->group,
+						    reply.shared->group, NULL);
+		}
 
 		/* Bring in any configuration from a host record. */
 		if (reply.host != NULL)
-			execute_statements_in_scope(NULL, reply.packet, NULL,
-						    NULL, reply.packet->options,
+			execute_statements_in_scope(NULL, reply.packet,
+						    NULL, NULL,
+						    reply.packet->options,
 						    reply.opt_state,
 						    &global_scope,
 						    reply.host->group,
-						    reply.shared->group);
+						    reply.shared->group, NULL);
 	}
 
 	/*
@@ -1660,7 +1739,7 @@ reply_process_ia_na(struct reply_state *reply, struct option_cache *ia) {
 	 *
 	 * Guidelines:
 	 *
-	 * The client leaves unchanged any infomation about addresses
+	 * The client leaves unchanged any information about addresses
 	 * it has recorded but are not included ("cancel/break" below).
 	 * A not included IA ("cleanup" below) could give a Renew/Rebind.
 	 */
@@ -1822,6 +1901,62 @@ reply_process_ia_na(struct reply_state *reply, struct option_cache *ia) {
 	putULong(reply->buf.data + ia_cursor + 12, reply->rebind);
 
 	/*
+	 * yes, goto's aren't the best but we also want to avoid extra
+	 * indents
+	 */
+	if (status == ISC_R_CANCELED)
+		goto cleanup;
+
+	/*
+	 * Handle static leases, we always log stuff and if it's
+	 * a hard binding we run any commit statements that we have
+	 */
+	if (reply->static_lease) {
+		char tmp_addr[INET6_ADDRSTRLEN];
+		log_info("%s NA: address %s to client with duid %s iaid = %d "
+			 "static",
+			 dhcpv6_type_names[reply->buf.reply.msg_type],
+			 inet_ntop(AF_INET6, reply->fixed.data, tmp_addr,
+				   sizeof(tmp_addr)),
+			 print_hex_1(reply->client_id.len,
+				     reply->client_id.data, 60),
+			 iaid);
+
+		if ((reply->buf.reply.msg_type == DHCPV6_REPLY) &&
+		    (reply->on_star.on_commit != NULL)) {
+			execute_statements(NULL, reply->packet, NULL, NULL, 
+					   reply->packet->options,
+					   reply->opt_state, NULL,
+					   reply->on_star.on_commit, NULL);
+			executable_statement_dereference
+				(&reply->on_star.on_commit, MDL);
+		}
+		goto cleanup;
+	}
+
+	/*
+	 * If we have any addresses log what we are doing.
+	 */
+	if (reply->ia->num_iasubopt != 0) {
+		struct iasubopt *tmp;
+		int i;
+		char tmp_addr[INET6_ADDRSTRLEN];
+
+		for (i = 0 ; i < reply->ia->num_iasubopt ; i++) {
+			tmp = reply->ia->iasubopt[i];
+
+			log_info("%s NA: address %s to client with duid %s "
+				 "iaid = %d valid for %d seconds",
+				 dhcpv6_type_names[reply->buf.reply.msg_type],
+				 inet_ntop(AF_INET6, &tmp->addr,
+					   tmp_addr, sizeof(tmp_addr)),
+				 print_hex_1(reply->client_id.len,
+					     reply->client_id.data, 60),
+				 iaid, tmp->valid);
+		}
+	}
+
+	/*
 	 * If this is not a 'soft' binding, consume the new changes into
 	 * the database (if any have been attached to the ia_na).
 	 *
@@ -1829,9 +1964,9 @@ reply_process_ia_na(struct reply_state *reply, struct option_cache *ia) {
 	 * leases onto this IA_NA rather than any old ones, and updating
 	 * pool timers for each (if any).
 	 */
-	if ((status != ISC_R_CANCELED) && !reply->static_lease &&
-	    (reply->buf.reply.msg_type == DHCPV6_REPLY) &&
-	    (reply->ia->num_iasubopt != 0)) {
+
+	if ((reply->ia->num_iasubopt != 0) &&
+	    (reply->buf.reply.msg_type == DHCPV6_REPLY)) {
 		struct iasubopt *tmp;
 		struct data_string *ia_id;
 		int i;
@@ -1846,6 +1981,19 @@ reply_process_ia_na(struct reply_state *reply, struct option_cache *ia) {
 			/* Commit 'hard' bindings. */
 			renew_lease6(tmp->ipv6_pool, tmp);
 			schedule_lease_timeout(tmp->ipv6_pool);
+
+			/* If we have anything to do on commit do it now */
+			if (tmp->on_star.on_commit != NULL) {
+				execute_statements(NULL, reply->packet,
+						   NULL, NULL, 
+						   reply->packet->options,
+						   reply->opt_state,
+						   &tmp->scope,
+						   tmp->on_star.on_commit,
+						   &tmp->on_star);
+				executable_statement_dereference
+					(&tmp->on_star.on_commit, MDL);
+			}
 
 #if defined (NSUPDATE)
 			/*
@@ -1903,6 +2051,12 @@ reply_process_ia_na(struct reply_state *reply, struct option_cache *ia) {
 		data_string_forget(&reply->fixed, MDL);
 	if (reply->subnet != NULL)
 		subnet_dereference(&reply->subnet, MDL);
+	if (reply->on_star.on_expiry != NULL)
+		executable_statement_dereference
+			(&reply->on_star.on_expiry, MDL);
+	if (reply->on_star.on_release != NULL)
+		executable_statement_dereference
+			(&reply->on_star.on_release, MDL);
 
 	/*
 	 * ISC_R_CANCELED is a status code used by the addr processing to
@@ -2150,7 +2304,7 @@ reply_process_addr(struct reply_state *reply, struct option_cache *addr) {
 			log_fatal("Impossible condition at %s:%d.", MDL);
 
 		scope = &reply->lease->scope;
-		group = reply->lease->ipv6_pool->subnet->group;
+		group = reply->lease->ipv6_pool->ipv6_pond->group;
 	}
 
 	/*
@@ -2221,6 +2375,7 @@ reply_process_addr(struct reply_state *reply, struct option_cache *addr) {
 static isc_boolean_t
 address_is_owned(struct reply_state *reply, struct iaddr *addr) {
 	int i;
+	struct ipv6_pond *pond;
 
 	/*
 	 * This faults out addresses that don't match fixed addresses.
@@ -2247,7 +2402,16 @@ address_is_owned(struct reply_state *reply, struct iaddr *addr) {
 			if (lease6_usable(tmp) == ISC_FALSE) {
 				return (ISC_FALSE);
 			}
+
+			pond = tmp->ipv6_pool->ipv6_pond;
+			if (((pond->prohibit_list != NULL) &&
+			     (permitted(reply->packet, pond->prohibit_list))) ||
+			    ((pond->permit_list != NULL) &&
+			     (!permitted(reply->packet, pond->permit_list))))
+				return (ISC_FALSE);
+
 			iasubopt_reference(&reply->lease, tmp, MDL);
+
 			return (ISC_TRUE);
 		}
 	}
@@ -2383,7 +2547,7 @@ reply_process_ia_ta(struct reply_state *reply, struct option_cache *ia) {
 			goto bad_temp;
 		status = reply_process_is_addressed(reply,
 						    &reply->lease->scope,
-						    reply->shared->group);
+						    reply->lease->ipv6_pool->ipv6_pond->group);
 		if (status != ISC_R_SUCCESS)
 			goto bad_temp;
 		status = reply_process_send_addr(reply, &tmp_addr);
@@ -2480,16 +2644,45 @@ reply_process_ia_ta(struct reply_state *reply, struct option_cache *ia) {
 		  reply->cursor - (ia_cursor + 4));
 
 	/*
-	 * Consume the new changes into the database (if any have been
-	 * attached to the ia_ta).
+	 * yes, goto's aren't the best but we also want to avoid extra
+	 * indents
+	 */
+	if (status == ISC_R_CANCELED)
+		goto cleanup;
+
+	/*
+	 * If we have any addresses log what we are doing.
+	 */
+	if (reply->ia->num_iasubopt != 0) {
+		struct iasubopt *tmp;
+		int i;
+		char tmp_addr[INET6_ADDRSTRLEN];
+
+		for (i = 0 ; i < reply->ia->num_iasubopt ; i++) {
+			tmp = reply->ia->iasubopt[i];
+
+			log_info("%s TA: address %s to client with duid %s "
+				 "iaid = %d valid for %d seconds",
+				 dhcpv6_type_names[reply->buf.reply.msg_type],
+				 inet_ntop(AF_INET6, &tmp->addr,
+					   tmp_addr, sizeof(tmp_addr)),
+				 print_hex_1(reply->client_id.len,
+					     reply->client_id.data, 60),
+				 iaid,
+				 tmp->valid);
+		}
+	}
+
+	/*
+	 * For hard bindings we consume the new changes into
+	 * the database (if any have been attached to the ia_ta).
 	 *
 	 * Loop through the assigned dynamic addresses, referencing the
 	 * leases onto this IA_TA rather than any old ones, and updating
 	 * pool timers for each (if any).
 	 */
-	if ((status != ISC_R_CANCELED) &&
-	    (reply->buf.reply.msg_type == DHCPV6_REPLY) &&
-	    (reply->ia->num_iasubopt != 0)) {
+	if ((reply->ia->num_iasubopt != 0) &&
+	    (reply->buf.reply.msg_type == DHCPV6_REPLY)) {
 		struct iasubopt *tmp;
 		struct data_string *ia_id;
 		int i;
@@ -2504,6 +2697,19 @@ reply_process_ia_ta(struct reply_state *reply, struct option_cache *ia) {
 			/* Commit 'hard' bindings. */
 			renew_lease6(tmp->ipv6_pool, tmp);
 			schedule_lease_timeout(tmp->ipv6_pool);
+
+			/* If we have anything to do on commit do it now */
+			if (tmp->on_star.on_commit != NULL) {
+				execute_statements(NULL, reply->packet,
+						   NULL, NULL, 
+						   reply->packet->options,
+						   reply->opt_state,
+						   &tmp->scope,
+						   tmp->on_star.on_commit,
+						   &tmp->on_star);
+				executable_statement_dereference
+					(&tmp->on_star.on_commit, MDL);
+			}
 
 #if defined (NSUPDATE)
 			/*
@@ -2575,7 +2781,8 @@ static isc_boolean_t
 temporary_is_available(struct reply_state *reply, struct iaddr *addr) {
 	struct in6_addr tmp_addr;
 	struct subnet *subnet;
-	struct ipv6_pool *pool;
+	struct ipv6_pool *pool = NULL;
+	struct ipv6_pond *pond = NULL;
 	int i;
 
 	memcpy(&tmp_addr, addr->iabuf, sizeof(tmp_addr));
@@ -2610,14 +2817,25 @@ temporary_is_available(struct reply_state *reply, struct iaddr *addr) {
 	/*
 	 * Verify that this address is in a temporary pool and try to get it.
 	 */
-	if (reply->shared->ipv6_pools == NULL)
-		return ISC_FALSE;
-	for (i = 0 ; (pool = reply->shared->ipv6_pools[i]) != NULL ; i++) {
-		if (pool->pool_type != D6O_IA_TA)
+	for (pond = reply->shared->ipv6_pond; pond != NULL; pond = pond->next) {
+		if (((pond->prohibit_list != NULL) &&
+		     (permitted(reply->packet, pond->prohibit_list))) ||
+		    ((pond->permit_list != NULL) &&
+		     (!permitted(reply->packet, pond->permit_list))))
 			continue;
-		if (ipv6_in_pool(&tmp_addr, pool))
+
+		for (i = 0 ; (pool = pond->ipv6_pools[i]) != NULL ; i++) {
+			if (pool->pool_type != D6O_IA_TA)
+				continue;
+
+			if (ipv6_in_pool(&tmp_addr, pool))
+				break;
+		}
+
+		if (pool != NULL)
 			break;
 	}
+
 	if (pool == NULL)
 		return ISC_FALSE;
 	if (lease6_exists(pool, &tmp_addr))
@@ -2638,60 +2856,83 @@ temporary_is_available(struct reply_state *reply, struct iaddr *addr) {
  */
 static isc_result_t
 find_client_temporaries(struct reply_state *reply) {
-	struct shared_network *shared;
 	int i;
-	struct ipv6_pool *p;
-	isc_result_t status;
+	struct ipv6_pool *p = NULL;
+	struct ipv6_pond *pond;
+	isc_result_t status = ISC_R_NORESOURCES;;
 	unsigned int attempts;
 	struct iaddr send_addr;
 
 	/*
-	 * No pools, we're done.
+	 * Do a quick walk through of the ponds and pools
+	 * to see if we have any prefix pools
 	 */
-	shared = reply->shared;
-	if (shared->ipv6_pools == NULL) {
+	for (pond = reply->shared->ipv6_pond; pond != NULL; pond = pond->next) {
+		if (pond->ipv6_pools == NULL)
+			continue;
+
+		for (i = 0; (p = pond->ipv6_pools[i]) != NULL; i++) {
+			if (p->pool_type == D6O_IA_TA)
+				break;
+		}
+		if (p != NULL)
+			break;
+	}
+
+	/* If we get here and p is NULL we have no useful pools */
+	if (p == NULL) {
 		log_debug("Unable to get client addresses: "
 			  "no IPv6 pools on this shared network");
 		return ISC_R_NORESOURCES;
 	}
 
-	status = ISC_R_NORESOURCES;
-	for (i = 0;; i++) {
-		p = shared->ipv6_pools[i];
-		if (p == NULL) {
-			break;
-		}
-		if (p->pool_type != D6O_IA_TA) {
+	/*
+	 * We have at least one pool that could provide an address
+	 * Now we walk through the ponds and pools again and check
+	 * to see if the client is permitted and if an address is
+	 * available
+	 */
+
+	for (pond = reply->shared->ipv6_pond; pond != NULL; pond = pond->next) {
+		if (((pond->prohibit_list != NULL) &&
+		     (permitted(reply->packet, pond->prohibit_list))) ||
+		    ((pond->permit_list != NULL) &&
+		     (!permitted(reply->packet, pond->permit_list))))
 			continue;
-		}
 
-		/*
-		 * Get an address in this temporary pool.
-		 */
-		status = create_lease6(p, &reply->lease, &attempts,
-				       &reply->client_id, cur_time + 120);
-		if (status != ISC_R_SUCCESS) {
-			log_debug("Unable to get a temporary address.");
-			goto cleanup;
-		}
+		for (i = 0; (p = pond->ipv6_pools[i]) != NULL; i++) {
+			if (p->pool_type != D6O_IA_TA) {
+				continue;
+			}
 
-		status = reply_process_is_addressed(reply,
-						    &reply->lease->scope,
-				      reply->lease->ipv6_pool->subnet->group);
-		if (status != ISC_R_SUCCESS) {
-			goto cleanup;
+			/*
+			 * Get an address in this temporary pool.
+			 */
+			status = create_lease6(p, &reply->lease, &attempts,
+					       &reply->client_id, cur_time + 120);
+			if (status != ISC_R_SUCCESS) {
+				log_debug("Unable to get a temporary address.");
+				goto cleanup;
+			}
+
+			status = reply_process_is_addressed(reply,
+							    &reply->lease->scope,
+							    pond->group);
+			if (status != ISC_R_SUCCESS) {
+				goto cleanup;
+			}
+			send_addr.len = 16;
+			memcpy(send_addr.iabuf, &reply->lease->addr, 16);
+			status = reply_process_send_addr(reply, &send_addr);
+			if (status != ISC_R_SUCCESS) {
+				goto cleanup;
+			}
+			/*
+			 * reply->lease can't be null as we use it above
+			 * add check if that changes
+			 */
+			iasubopt_dereference(&reply->lease, MDL);
 		}
-		send_addr.len = 16;
-		memcpy(send_addr.iabuf, &reply->lease->addr, 16);
-		status = reply_process_send_addr(reply, &send_addr);
-		if (status != ISC_R_SUCCESS) {
-			goto cleanup;
-		}
-		/*
-		 * reply->lease can't be null as we use it above
-		 * add check if that changes
-		 */
-		iasubopt_dereference(&reply->lease, MDL);
 	}
 
       cleanup:
@@ -2708,7 +2949,8 @@ find_client_temporaries(struct reply_state *reply) {
 static isc_result_t
 reply_process_try_addr(struct reply_state *reply, struct iaddr *addr) {
 	isc_result_t status = ISC_R_ADDRNOTAVAIL;
-	struct ipv6_pool *pool;
+	struct ipv6_pool *pool = NULL;
+	struct ipv6_pond *pond = NULL;
 	int i;
 	struct data_string data_addr;
 
@@ -2716,18 +2958,61 @@ reply_process_try_addr(struct reply_state *reply, struct iaddr *addr) {
 	    (addr == NULL) || (reply->lease != NULL))
 		return (DHCP_R_INVALIDARG);
 
-	if  (reply->shared->ipv6_pools == NULL)
+	/*
+	 * Do a quick walk through of the ponds and pools
+	 * to see if we have any NA address pools
+	 */
+	for (pond = reply->shared->ipv6_pond; pond != NULL; pond = pond->next) {
+		if (pond->ipv6_pools == NULL)
+			continue;
+
+		for (i = 0; ; i++) {
+			pool = pond->ipv6_pools[i];
+			if ((pool == NULL) ||
+			    (pool->pool_type == D6O_IA_NA))
+				break;
+		}
+		if (pool != NULL)
+			break;
+	}
+
+	/* If we get here and p is NULL we have no useful pools */
+	if (pool == NULL) {
 		return (ISC_R_ADDRNOTAVAIL);
+	}
 
 	memset(&data_addr, 0, sizeof(data_addr));
 	data_addr.len = addr->len;
 	data_addr.data = addr->iabuf;
 
-	for (i = 0 ; (pool = reply->shared->ipv6_pools[i]) != NULL ; i++) {
-		if (pool->pool_type != D6O_IA_NA)
+	/*
+	 * We have at least one pool that could provide an address
+	 * Now we walk through the ponds and pools again and check
+	 * to see if the client is permitted and if an address is
+	 * available
+	 * 
+	 * Within a given pond we start looking at the last pool we
+	 * allocated from, unless it had a collision trying to allocate
+	 * an address. This will tend to move us into less-filled pools.
+	 */
+
+	for (pond = reply->shared->ipv6_pond; pond != NULL; pond = pond->next) {
+		if (((pond->prohibit_list != NULL) &&
+		     (permitted(reply->packet, pond->prohibit_list))) ||
+		    ((pond->permit_list != NULL) &&
+		     (!permitted(reply->packet, pond->permit_list))))
 			continue;
-		status = try_client_v6_address(&reply->lease, pool,
-					       &data_addr);
+
+		for (i = 0 ; (pool = pond->ipv6_pools[i]) != NULL ; i++) {
+			if (pool->pool_type != D6O_IA_NA)
+				continue;
+
+			status = try_client_v6_address(&reply->lease, pool,
+						       &data_addr);
+			if (status == ISC_R_SUCCESS)
+				break;
+		}
+
 		if (status == ISC_R_SUCCESS)
 			break;
 	}
@@ -2758,7 +3043,6 @@ find_client_address(struct reply_state *reply) {
 		send_addr.len = 16;
 		memcpy(send_addr.iabuf, reply->fixed.data, 16);
 
-		status = ISC_R_SUCCESS;
 		scope = &global_scope;
 		group = reply->subnet->group;
 		goto send_addr;
@@ -2767,18 +3051,28 @@ find_client_address(struct reply_state *reply) {
 	if (reply->old_ia != NULL)  {
 		for (i = 0 ; i < reply->old_ia->num_iasubopt ; i++) {
 			struct shared_network *candidate_shared;
+			struct ipv6_pond *pond;
 
 			lease = reply->old_ia->iasubopt[i];
 			candidate_shared = lease->ipv6_pool->shared_network;
+			pond = lease->ipv6_pool->ipv6_pond;
 
 			/*
 			 * Look for the best lease on the client's shared
-			 * network.
+			 * network, that is still permitted
 			 */
-			if ((candidate_shared == reply->shared) && 
-			    (lease6_usable(lease) == ISC_TRUE)) {
-				best_lease = lease_compare(lease, best_lease);
-			}
+
+			if ((candidate_shared != reply->shared) ||
+			    (lease6_usable(lease) != ISC_TRUE))
+				continue;
+
+			if (((pond->prohibit_list != NULL) &&
+			     (permitted(reply->packet, pond->prohibit_list))) ||
+			    ((pond->permit_list != NULL) &&
+			     (!permitted(reply->packet, pond->permit_list))))
+				continue;
+
+			best_lease = lease_compare(lease, best_lease);
 		}
 	}
 
@@ -2786,8 +3080,7 @@ find_client_address(struct reply_state *reply) {
 	 * abandoned lease.
 	 */
 	if ((best_lease == NULL) || (best_lease->state == FTS_ABANDONED)) {
-		status = pick_v6_address(&reply->lease, reply->shared,
-					 &reply->ia->iaid_duid);
+		status = pick_v6_address(reply);
 	} else if (best_lease != NULL) {
 		iasubopt_reference(&reply->lease, best_lease, MDL);
 		status = ISC_R_SUCCESS;
@@ -2814,7 +3107,7 @@ find_client_address(struct reply_state *reply) {
 	 * be desirable to place the group attachment directly in the pool.
 	 */
 	scope = &reply->lease->scope;
-	group = reply->lease->ipv6_pool->subnet->group;
+	group = reply->lease->ipv6_pool->ipv6_pond->group;
 
 	send_addr.len = 16;
 	memcpy(send_addr.iabuf, &reply->lease->addr, 16);
@@ -2839,9 +3132,38 @@ reply_process_is_addressed(struct reply_state *reply,
 	isc_result_t status = ISC_R_SUCCESS;
 	struct data_string data;
 	struct option_cache *oc;
+	struct option_state *tmp_options = NULL;
+	struct on_star *on_star;
+	int i;
 
 	/* Initialize values we will cleanup. */
 	memset(&data, 0, sizeof(data));
+
+	/*
+	 * Find the proper on_star block to use.  We use the
+	 * one in the lease if we have a lease or the one in
+	 * the reply if we don't have a lease because this is
+	 * a static instance
+	 */
+	if (reply->lease) {
+		on_star = &reply->lease->on_star;
+	} else {
+		on_star = &reply->on_star;
+	}
+
+	/*
+	 * Bring in the root configuration.  We only do this to bring
+	 * in the on * statements, as we didn't have the lease available
+	 * we did it the first time.
+	 */
+	option_state_allocate(&tmp_options, MDL);
+	execute_statements_in_scope(NULL, reply->packet, NULL, NULL,
+				    reply->packet->options, tmp_options,
+				    &global_scope, root_group, NULL,
+				    on_star);
+	if (tmp_options != NULL) {
+		option_state_dereference(&tmp_options, MDL);
+	}
 
 	/*
 	 * Bring configured options into the root packet level cache - start
@@ -2850,7 +3172,16 @@ reply_process_is_addressed(struct reply_state *reply,
 	 */
 	execute_statements_in_scope(NULL, reply->packet, NULL, NULL,
 				    reply->packet->options, reply->opt_state,
-				    scope, group, root_group);
+				    scope, group, root_group, on_star);
+
+	/* Execute statements from class scopes. */
+	for (i = reply->packet->class_count; i > 0; i--) {
+		execute_statements_in_scope(NULL, reply->packet, NULL, NULL,
+					    reply->packet->options,
+					    reply->opt_state, scope,
+					    reply->packet->classes[i - 1]->group,
+					    group, on_star);
+	}
 
 	/*
 	 * If there is a host record, over-ride with values configured there,
@@ -2861,7 +3192,8 @@ reply_process_is_addressed(struct reply_state *reply,
 		execute_statements_in_scope(NULL, reply->packet, NULL, NULL,
 					    reply->packet->options,
 					    reply->opt_state, scope,
-					    reply->host->group, group);
+					    reply->host->group, group,
+					    on_star);
 
 	/* Determine valid lifetime. */
 	if (reply->client_valid == 0)
@@ -2967,8 +3299,17 @@ reply_process_is_addressed(struct reply_state *reply,
 	/* Bring a copy of the relevant options into the IA scope. */
 	execute_statements_in_scope(NULL, reply->packet, NULL, NULL,
 				    reply->packet->options, reply->reply_ia,
-				    scope, group, root_group);
+				    scope, group, root_group, NULL);
 
+	/* Execute statements from class scopes. */
+	for (i = reply->packet->class_count; i > 0; i--) {
+		execute_statements_in_scope(NULL, reply->packet, NULL, NULL,
+					    reply->packet->options,
+					    reply->reply_ia, scope,
+					    reply->packet->classes[i - 1]->group,
+					    group, NULL);
+	}
+	  
 	/*
 	 * And bring in host record configuration, if any, but not to overlap
 	 * the previous group or its common enclosers.
@@ -2977,7 +3318,7 @@ reply_process_is_addressed(struct reply_state *reply,
 		execute_statements_in_scope(NULL, reply->packet, NULL, NULL,
 					    reply->packet->options,
 					    reply->reply_ia, scope,
-					    reply->host->group, group);
+					    reply->host->group, group, NULL);
 
       cleanup:
 	if (data.data != NULL)
@@ -3351,6 +3692,64 @@ reply_process_ia_pd(struct reply_state *reply, struct option_cache *ia) {
 	putULong(reply->buf.data + ia_cursor + 12, reply->rebind);
 
 	/*
+	 * yes, goto's aren't the best but we also want to avoid extra
+	 * indents
+	 */
+	if (status == ISC_R_CANCELED)
+		goto cleanup;
+
+	/*
+	 * Handle static prefixes, we always log stuff and if it's
+	 * a hard binding we run any commit statements that we have
+	 */
+	if (reply->static_prefixes != 0) {
+		char tmp_addr[INET6_ADDRSTRLEN];
+		log_info("%s PD: address %s/%d to client with duid %s "
+			 "iaid = %d static",
+			 dhcpv6_type_names[reply->buf.reply.msg_type],
+			 inet_ntop(AF_INET6, reply->fixed_pref.lo_addr.iabuf,
+				   tmp_addr, sizeof(tmp_addr)),
+			 reply->fixed_pref.bits,
+			 print_hex_1(reply->client_id.len,
+				     reply->client_id.data, 60),
+			 iaid);
+		if ((reply->buf.reply.msg_type == DHCPV6_REPLY) &&
+		    (reply->on_star.on_commit != NULL)) {
+			execute_statements(NULL, reply->packet, NULL, NULL,
+					   reply->packet->options,
+					   reply->opt_state,
+					   NULL, reply->on_star.on_commit,
+					   NULL);
+			executable_statement_dereference
+				(&reply->on_star.on_commit, MDL);
+		}
+		goto cleanup;
+	}
+
+	/*
+	 * If we have any addresses log what we are doing.
+	 */
+	if (reply->ia->num_iasubopt != 0) {
+		struct iasubopt *tmp;
+		int i;
+		char tmp_addr[INET6_ADDRSTRLEN];
+
+		for (i = 0 ; i < reply->ia->num_iasubopt ; i++) {
+			tmp = reply->ia->iasubopt[i];
+
+			log_info("%s PD: address %s/%d to client with duid %s"
+				 " iaid = %d valid for %d seconds",
+				 dhcpv6_type_names[reply->buf.reply.msg_type],
+				 inet_ntop(AF_INET6, &tmp->addr,
+					   tmp_addr, sizeof(tmp_addr)),
+				 (int)tmp->plen,
+				 print_hex_1(reply->client_id.len,
+					     reply->client_id.data, 60),
+				 iaid, tmp->valid);
+		}
+	}
+
+	/*
 	 * If this is not a 'soft' binding, consume the new changes into
 	 * the database (if any have been attached to the ia_pd).
 	 *
@@ -3358,8 +3757,7 @@ reply_process_ia_pd(struct reply_state *reply, struct option_cache *ia) {
 	 * prefixes onto this IA_PD rather than any old ones, and updating
 	 * prefix pool timers for each (if any).
 	 */
-	if ((status != ISC_R_CANCELED) && (reply->static_prefixes == 0) &&
-	    (reply->buf.reply.msg_type == DHCPV6_REPLY) &&
+	if ((reply->buf.reply.msg_type == DHCPV6_REPLY) &&
 	    (reply->ia->num_iasubopt != 0)) {
 		struct iasubopt *tmp;
 		struct data_string *ia_id;
@@ -3375,6 +3773,19 @@ reply_process_ia_pd(struct reply_state *reply, struct option_cache *ia) {
 			/* Commit 'hard' bindings. */
 			renew_lease6(tmp->ipv6_pool, tmp);
 			schedule_lease_timeout(tmp->ipv6_pool);
+
+			/* If we have anything to do on commit do it now */
+			if (tmp->on_star.on_commit != NULL) {
+				execute_statements(NULL, reply->packet,
+						   NULL, NULL, 
+						   reply->packet->options,
+						   reply->opt_state,
+						   &tmp->scope,
+						   tmp->on_star.on_commit,
+						   &tmp->on_star);
+				executable_statement_dereference
+					(&tmp->on_star.on_commit, MDL);
+			}
 		}
 
 		/* Remove any old ia from the hash. */
@@ -3410,6 +3821,12 @@ reply_process_ia_pd(struct reply_state *reply, struct option_cache *ia) {
 		ia_dereference(&reply->old_ia, MDL);
 	if (reply->lease != NULL)
 		iasubopt_dereference(&reply->lease, MDL);
+	if (reply->on_star.on_expiry != NULL)
+		executable_statement_dereference
+			(&reply->on_star.on_expiry, MDL);
+	if (reply->on_star.on_release != NULL)
+		executable_statement_dereference
+			(&reply->on_star.on_release, MDL);
 
 	/*
 	 * ISC_R_CANCELED is a status code used by the prefix processing to
@@ -3433,6 +3850,7 @@ reply_process_prefix(struct reply_state *reply, struct option_cache *pref) {
 	struct option_cache *oc;
 	struct data_string iapref, data;
 	isc_result_t status = ISC_R_SUCCESS;
+	struct group *group;
 
 	/* Initializes values that will be cleaned up. */
 	memset(&iapref, 0, sizeof(iapref));
@@ -3574,11 +3992,22 @@ reply_process_prefix(struct reply_state *reply, struct option_cache *pref) {
 			log_fatal("Impossible condition at %s:%d.", MDL);
 
 		scope = &global_scope;
+
+		/* Find the static prefixe's subnet. */
+		if (find_grouped_subnet(&reply->subnet, reply->shared,
+					tmp_pref.lo_addr, MDL) == 0)
+			log_fatal("Impossible condition at %s:%d.", MDL);
+		group = reply->subnet->group;
+		subnet_dereference(&reply->subnet, MDL);
+
+		/* Copy the static prefix for logging purposes */
+		memcpy(&reply->fixed_pref, &tmp_pref, sizeof(tmp_pref));
 	} else {
 		if (reply->lease == NULL)
 			log_fatal("Impossible condition at %s:%d.", MDL);
 
 		scope = &reply->lease->scope;
+		group = reply->lease->ipv6_pool->ipv6_pond->group;
 	}
 
 	/*
@@ -3622,7 +4051,7 @@ reply_process_prefix(struct reply_state *reply, struct option_cache *pref) {
 			goto cleanup;
 	}
 
-	status = reply_process_is_prefixed(reply, scope, reply->shared->group);
+	status = reply_process_is_prefixed(reply, scope, group);
 	if (status != ISC_R_SUCCESS)
 		goto cleanup;
 
@@ -3650,6 +4079,7 @@ static isc_boolean_t
 prefix_is_owned(struct reply_state *reply, struct iaddrcidrnet *pref) {
 	struct iaddrcidrnetlist *l;
 	int i;
+	struct ipv6_pond *pond;
 
 	/*
 	 * This faults out prefixes that don't match fixed prefixes.
@@ -3678,6 +4108,14 @@ prefix_is_owned(struct reply_state *reply, struct iaddrcidrnet *pref) {
 			if (lease6_usable(tmp) == ISC_FALSE) {
 				return (ISC_FALSE);
 			}
+
+			pond = tmp->ipv6_pool->ipv6_pond;
+			if (((pond->prohibit_list != NULL) &&
+			     (permitted(reply->packet, pond->prohibit_list))) ||
+			    ((pond->permit_list != NULL) &&
+			     (!permitted(reply->packet, pond->permit_list))))
+				return (ISC_FALSE);
+
 			iasubopt_reference(&reply->lease, tmp, MDL);
 			return (ISC_TRUE);
 		}
@@ -3694,7 +4132,8 @@ static isc_result_t
 reply_process_try_prefix(struct reply_state *reply,
 			 struct iaddrcidrnet *pref) {
 	isc_result_t status = ISC_R_ADDRNOTAVAIL;
-	struct ipv6_pool *pool;
+	struct ipv6_pool *pool = NULL;
+	struct ipv6_pond *pond = NULL;
 	int i;
 	struct data_string data_pref;
 
@@ -3702,8 +4141,26 @@ reply_process_try_prefix(struct reply_state *reply,
 	    (pref == NULL) || (reply->lease != NULL))
 		return (DHCP_R_INVALIDARG);
 
-	if (reply->shared->ipv6_pools == NULL)
+	/*
+	 * Do a quick walk through of the ponds and pools
+	 * to see if we have any prefix pools
+	 */
+	for (pond = reply->shared->ipv6_pond; pond != NULL; pond = pond->next) {
+		if (pond->ipv6_pools == NULL)
+			continue;
+
+		for (i = 0; (pool = pond->ipv6_pools[i]) != NULL; i++) {
+			if (pool->pool_type == D6O_IA_PD)
+				break;
+		}
+		if (pool != NULL)
+			break;
+	}
+
+	/* If we get here and p is NULL we have no useful pools */
+	if (pool == NULL) {
 		return (ISC_R_ADDRNOTAVAIL);
+	}
 
 	memset(&data_pref, 0, sizeof(data_pref));
 	data_pref.len = 17;
@@ -3715,13 +4172,33 @@ reply_process_try_prefix(struct reply_state *reply,
 	data_pref.buffer->data[0] = (u_int8_t) pref->bits;
 	memcpy(data_pref.buffer->data + 1, pref->lo_addr.iabuf, 16);
 
-	for (i = 0 ; (pool = reply->shared->ipv6_pools[i]) != NULL ; i++) {
-		if (pool->pool_type != D6O_IA_PD)
+	/*
+	 * We have at least one pool that could provide a prefix
+	 * Now we walk through the ponds and pools again and check
+	 * to see if the client is permitted and if an prefix is
+	 * available
+	 * 
+	 */
+
+	for (pond = reply->shared->ipv6_pond; pond != NULL; pond = pond->next) {
+		if (((pond->prohibit_list != NULL) &&
+		     (permitted(reply->packet, pond->prohibit_list))) ||
+		    ((pond->permit_list != NULL) &&
+		     (!permitted(reply->packet, pond->permit_list))))
 			continue;
-		status = try_client_v6_prefix(&reply->lease, pool,
-					      &data_pref);
-                /* If we found it in this pool (either in use or available), 
-                   there is no need to look further. */
+
+		for (i = 0; (pool = pond->ipv6_pools[i]) != NULL; i++) {
+			if (pool->pool_type != D6O_IA_PD) {
+				continue;
+			}
+
+			status = try_client_v6_prefix(&reply->lease, pool,
+						      &data_pref);
+			/* If we found it in this pool (either in use or available), 
+			   there is no need to look further. */
+			if ( (status == ISC_R_SUCCESS) || (status == ISC_R_ADDRINUSE) )
+				break;
+			}
 		if ( (status == ISC_R_SUCCESS) || (status == ISC_R_ADDRINUSE) )
 			break;
 	}
@@ -3742,6 +4219,7 @@ find_client_prefix(struct reply_state *reply) {
 	struct iasubopt *prefix, *best_prefix = NULL;
 	struct binding_scope **scope;
 	int i;
+	struct group *group;
 
 	if (reply->static_prefixes > 0) {
 		struct iaddrcidrnetlist *l;
@@ -3762,29 +4240,52 @@ find_client_prefix(struct reply_state *reply) {
 		}
 		memcpy(&send_pref, &l->cidrnet, sizeof(send_pref));
 
-		status = ISC_R_SUCCESS;
 		scope = &global_scope;
+
+		/* Find the static prefixe's subnet. */
+		if (find_grouped_subnet(&reply->subnet, reply->shared,
+					send_pref.lo_addr, MDL) == 0)
+			log_fatal("Impossible condition at %s:%d.", MDL);
+		group = reply->subnet->group;
+		subnet_dereference(&reply->subnet, MDL);
+
+		/* Copy the prefix for logging purposes */
+		memcpy(&reply->fixed_pref, &l->cidrnet, sizeof(send_pref));
+
 		goto send_pref;
 	}
 
 	if (reply->old_ia != NULL)  {
 		for (i = 0 ; i < reply->old_ia->num_iasubopt ; i++) {
 			struct shared_network *candidate_shared;
+			struct ipv6_pond *pond;
 
 			prefix = reply->old_ia->iasubopt[i];
 			candidate_shared = prefix->ipv6_pool->shared_network;
+			pond = prefix->ipv6_pool->ipv6_pond;
 
 			/*
 			 * Consider this prefix if it is in a global pool or
 			 * if it is scoped in a pool under the client's shared
 			 * network.
 			 */
-			if (((candidate_shared == NULL) ||
-			     (candidate_shared == reply->shared)) &&
-			    (lease6_usable(prefix) == ISC_TRUE)) {
-				best_prefix = prefix_compare(reply, prefix,
-							     best_prefix);
-			}
+			if (((candidate_shared != NULL) &&
+			     (candidate_shared != reply->shared)) ||
+			    (lease6_usable(prefix) != ISC_TRUE))
+				continue;
+
+			/*
+			 * And check if the prefix is still permitted
+			 */
+
+			if (((pond->prohibit_list != NULL) &&
+			     (permitted(reply->packet, pond->prohibit_list))) ||
+			    ((pond->permit_list != NULL) &&
+			     (!permitted(reply->packet, pond->permit_list))))
+				continue;
+
+			best_prefix = prefix_compare(reply, prefix,
+						     best_prefix);
 		}
 	}
 
@@ -3792,8 +4293,7 @@ find_client_prefix(struct reply_state *reply) {
 	 * abandoned prefix.
 	 */
 	if ((best_prefix == NULL) || (best_prefix->state == FTS_ABANDONED)) {
-		status = pick_v6_prefix(&reply->lease, reply->preflen,
-					reply->shared, &reply->client_id);
+		status = pick_v6_prefix(reply);
 	} else if (best_prefix != NULL) {
 		iasubopt_reference(&reply->lease, best_prefix, MDL);
 		status = ISC_R_SUCCESS;
@@ -3816,13 +4316,14 @@ find_client_prefix(struct reply_state *reply) {
 		log_fatal("Impossible condition at %s:%d.", MDL);
 
 	scope = &reply->lease->scope;
+	group = reply->lease->ipv6_pool->ipv6_pond->group;
 
 	send_pref.lo_addr.len = 16;
 	memcpy(send_pref.lo_addr.iabuf, &reply->lease->addr, 16);
 	send_pref.bits = (int) reply->lease->plen;
 
       send_pref:
-	status = reply_process_is_prefixed(reply, scope, reply->shared->group);
+	status = reply_process_is_prefixed(reply, scope, group);
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -3841,9 +4342,38 @@ reply_process_is_prefixed(struct reply_state *reply,
 	isc_result_t status = ISC_R_SUCCESS;
 	struct data_string data;
 	struct option_cache *oc;
+	struct option_state *tmp_options = NULL;
+	struct on_star *on_star;
+	int i;
 
 	/* Initialize values we will cleanup. */
 	memset(&data, 0, sizeof(data));
+
+	/*
+	 * Find the proper on_star block to use.  We use the
+	 * one in the lease if we have a lease or the one in
+	 * the reply if we don't have a lease because this is
+	 * a static instance
+	 */
+	if (reply->lease) {
+		on_star = &reply->lease->on_star;
+	} else {
+		on_star = &reply->on_star;
+	}
+
+	/*
+	 * Bring in the root configuration.  We only do this to bring
+	 * in the on * statements, as we didn't have the lease available
+	 * we we did it the first time.
+	 */
+	option_state_allocate(&tmp_options, MDL);
+	execute_statements_in_scope(NULL, reply->packet, NULL, NULL,
+				    reply->packet->options, tmp_options,
+				    &global_scope, root_group, NULL,
+				    on_star);
+	if (tmp_options != NULL) {
+		option_state_dereference(&tmp_options, MDL);
+	}
 
 	/*
 	 * Bring configured options into the root packet level cache - start
@@ -3852,8 +4382,17 @@ reply_process_is_prefixed(struct reply_state *reply,
 	 */
 	execute_statements_in_scope(NULL, reply->packet, NULL, NULL,
 				    reply->packet->options, reply->opt_state,
-				    scope, group, root_group);
+				    scope, group, root_group, on_star);
 
+	/* Execute statements from class scopes. */
+	for (i = reply->packet->class_count; i > 0; i--) {
+		execute_statements_in_scope(NULL, reply->packet, NULL, NULL,
+					    reply->packet->options,
+					    reply->opt_state, scope,
+					    reply->packet->classes[i - 1]->group,
+					    group, on_star);
+	}
+	  
 	/*
 	 * If there is a host record, over-ride with values configured there,
 	 * without re-evaluating configuration from the previously executed
@@ -3863,7 +4402,8 @@ reply_process_is_prefixed(struct reply_state *reply,
 		execute_statements_in_scope(NULL, reply->packet, NULL, NULL,
 					    reply->packet->options,
 					    reply->opt_state, scope,
-					    reply->host->group, group);
+					    reply->host->group, group,
+					    on_star);
 
 	/* Determine valid lifetime. */
 	if (reply->client_valid == 0)
@@ -3954,8 +4494,17 @@ reply_process_is_prefixed(struct reply_state *reply,
 	/* Bring a copy of the relevant options into the IA_PD scope. */
 	execute_statements_in_scope(NULL, reply->packet, NULL, NULL,
 				    reply->packet->options, reply->reply_ia,
-				    scope, group, root_group);
+				    scope, group, root_group, NULL);
 
+	/* Execute statements from class scopes. */
+	for (i = reply->packet->class_count; i > 0; i--) {
+		execute_statements_in_scope(NULL, reply->packet, NULL, NULL,
+					    reply->packet->options,
+					    reply->reply_ia, scope,
+					    reply->packet->classes[i - 1]->group,
+					    group, NULL);
+	}
+	  
 	/*
 	 * And bring in host record configuration, if any, but not to overlap
 	 * the previous group or its common enclosers.
@@ -3964,7 +4513,7 @@ reply_process_is_prefixed(struct reply_state *reply,
 		execute_statements_in_scope(NULL, reply->packet, NULL, NULL,
 					    reply->packet->options,
 					    reply->reply_ia, scope,
-					    reply->host->group, group);
+					    reply->host->group, group, NULL);
 
       cleanup:
 	if (data.data != NULL)
@@ -4617,12 +5166,12 @@ iterate_over_ia_na(struct data_string *reply_ret,
 		   const struct data_string *server_id,
 		   const char *packet_type,
 		   void (*ia_na_match)(const struct data_string *,
-				       const struct data_string *,
-				       struct iasubopt *),
+                                       const struct data_string *,
+                                       struct iasubopt *),
 		   void (*ia_na_nomatch)(const struct data_string *,
-					 const struct data_string *,
-					 u_int32_t *, struct packet *, char *,
-					 int *, int))
+                                         const struct data_string *,
+                                         u_int32_t *, struct packet *, char *,
+                                         int *, int))
 {
 	struct option_state *opt_state;
 	struct host_decl *packet_host;
@@ -4696,7 +5245,7 @@ iterate_over_ia_na(struct data_string *reply_ret,
 	}
 	execute_statements_in_scope(NULL, packet, NULL, NULL, 
 				    packet->options, opt_state, 
-				    &global_scope, root_group, NULL);
+				    &global_scope, root_group, NULL, NULL);
 
 	/* 
 	 * RFC 3315, section 18.2.7 tells us which options to include.
@@ -5137,13 +5686,13 @@ iterate_over_ia_pd(struct data_string *reply_ret,
 		   const struct data_string *client_id,
 		   const struct data_string *server_id,
 		   const char *packet_type,
-		   void (*ia_pd_match)(const struct data_string *,
-				       const struct data_string *,
-				       struct iasubopt *),
-		   void (*ia_pd_nomatch)(const struct data_string *,
-					 const struct data_string *,
-					 u_int32_t *, struct packet *, char *,
-					 int *, int))
+                   void (*ia_pd_match)(const struct data_string *,
+                                       const struct data_string *,
+                                       struct iasubopt *),
+                   void (*ia_pd_nomatch)(const struct data_string *,
+                                         const struct data_string *,
+                                         u_int32_t *, struct packet *, char *,
+                                         int *, int))
 {
 	struct data_string reply_new;
 	int reply_len;
@@ -5215,7 +5764,7 @@ iterate_over_ia_pd(struct data_string *reply_ret,
 	}
 	execute_statements_in_scope(NULL, packet, NULL, NULL, 
 				    packet->options, opt_state, 
-				    &global_scope, root_group, NULL);
+				    &global_scope, root_group, NULL, NULL);
 
 	/*
 	 * Loop through the IA_PD reported by the client, and deal with
@@ -5763,38 +6312,55 @@ dhcpv6_discard(struct packet *packet) {
 static void 
 build_dhcpv6_reply(struct data_string *reply, struct packet *packet) {
 	memset(reply, 0, sizeof(*reply));
+
+	/* I would like to classify the client once here, but
+	 * as I don't want to classify all of the incoming packets
+	 * I need to do it before handling specific types.
+	 * We don't need to classify if we are tossing the packet
+	 * or if it is a relay - the classification step will get
+	 * done when we process the inner client packet.
+	 */
+
 	switch (packet->dhcpv6_msg_type) {
 		case DHCPV6_SOLICIT:
+			classify_client(packet);
 			dhcpv6_solicit(reply, packet);
 			break;
 		case DHCPV6_ADVERTISE:
 			dhcpv6_discard(packet);
 			break;
 		case DHCPV6_REQUEST:
+			classify_client(packet);
 			dhcpv6_request(reply, packet);
 			break;
 		case DHCPV6_CONFIRM:
+			classify_client(packet);
 			dhcpv6_confirm(reply, packet);
 			break;
 		case DHCPV6_RENEW:
+			classify_client(packet);
 			dhcpv6_renew(reply, packet);
 			break;
 		case DHCPV6_REBIND:
+			classify_client(packet);
 			dhcpv6_rebind(reply, packet);
 			break;
 		case DHCPV6_REPLY:
 			dhcpv6_discard(packet);
 			break;
 		case DHCPV6_RELEASE:
+			classify_client(packet);
 			dhcpv6_release(reply, packet);
 			break;
 		case DHCPV6_DECLINE:
+			classify_client(packet);
 			dhcpv6_decline(reply, packet);
 			break;
 		case DHCPV6_RECONFIGURE:
 			dhcpv6_discard(packet);
 			break;
 		case DHCPV6_INFORMATION_REQUEST:
+			classify_client(packet);
 			dhcpv6_information_request(reply, packet);
 			break;
 		case DHCPV6_RELAY_FORW:
@@ -5804,6 +6370,7 @@ build_dhcpv6_reply(struct data_string *reply, struct packet *packet) {
 			dhcpv6_discard(packet);
 			break;
 		case DHCPV6_LEASEQUERY:
+			classify_client(packet);
 			dhcpv6_leasequery(reply, packet);
 			break;
 		case DHCPV6_LEASEQUERY_REPLY:

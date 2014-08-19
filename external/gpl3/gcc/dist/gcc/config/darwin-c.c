@@ -1,6 +1,5 @@
 /* Darwin support needed only by C/C++ frontends.
-   Copyright (C) 2001, 2003, 2004, 2005, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
 This file is part of GCC.
@@ -25,17 +24,20 @@ along with GCC; see the file COPYING3.  If not see
 #include "tm.h"
 #include "cpplib.h"
 #include "tree.h"
-#include "c-pragma.h"
-#include "c-tree.h"
+#include "target.h"
 #include "incpath.h"
-#include "c-common.h"
-#include "toplev.h"
+#include "c-family/c-common.h"
+#include "c-family/c-pragma.h"
+#include "c-family/c-format.h"
+#include "diagnostic-core.h"
 #include "flags.h"
 #include "tm_p.h"
 #include "cppdefault.h"
 #include "prefix.h"
-#include "target.h"
-#include "target-def.h"
+#include "c-family/c-target.h"
+#include "c-family/c-target-def.h"
+#include "cgraph.h"
+#include "../../libcpp/internal.h"
 
 /* Pragmas.  */
 
@@ -144,7 +146,10 @@ darwin_pragma_unused (cpp_reader *pfile ATTRIBUTE_UNUSED)
 	  tree local = lookup_name (decl);
 	  if (local && (TREE_CODE (local) == PARM_DECL
 			|| TREE_CODE (local) == VAR_DECL))
-	    TREE_USED (local) = 1;
+	    {
+	      TREE_USED (local) = 1;
+	      DECL_READ_P (local) = 1;
+	    }
 	  tok = pragma_lex (&x);
 	  if (tok != CPP_COMMA)
 	    break;
@@ -262,7 +267,7 @@ static struct framework_header framework_header_dirs[] = {
 static char *
 framework_construct_pathname (const char *fname, cpp_dir *dir)
 {
-  char *buf;
+  const char *buf;
   size_t fname_len, frname_len;
   cpp_dir *fast_dir;
   char *frname;
@@ -339,7 +344,7 @@ find_subframework_file (const char *fname, const char *pname)
 {
   char *sfrname;
   const char *dot_framework = ".framework/";
-  char *bufptr;
+  const char *bufptr;
   int sfrname_len, i, fname_len;
   struct cpp_dir *fast_dir;
   static struct cpp_dir subframe_dir;
@@ -586,7 +591,7 @@ version_as_macro (void)
   return result;
 
  fail:
-  error ("Unknown value %qs of -mmacosx-version-min",
+  error ("unknown value %qs of -mmacosx-version-min",
 	 darwin_macosx_version_min);
   return "1000";
 }
@@ -605,8 +610,30 @@ darwin_cpp_builtins (cpp_reader *pfile)
      to be defined and won't work if it isn't.  */
   builtin_define_with_value ("__APPLE_CC__", "1", false);
 
+  if (darwin_constant_cfstrings)
+    builtin_define ("__CONSTANT_CFSTRINGS__");
+
   builtin_define_with_value ("__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__",
 			     version_as_macro(), false);
+
+  /* Since we do not (at 4.6) support ObjC gc for the NeXT runtime, the
+     following will cause a syntax error if one tries to compile gc attributed
+     items.  However, without this, NeXT system headers cannot be parsed 
+     properly (on systems >= darwin 9).  */
+  if (flag_objc_gc)
+    {
+      builtin_define ("__strong=__attribute__((objc_gc(strong)))");
+      builtin_define ("__weak=__attribute__((objc_gc(weak)))");
+      builtin_define ("__OBJC_GC__");
+    }
+  else
+    {
+      builtin_define ("__strong=");
+      builtin_define ("__weak=");
+    }
+
+  if (CPP_OPTION (pfile, objc) && flag_objc_abi == 2)
+    builtin_define ("__OBJC2__");
 }
 
 /* Handle C family front-end options.  */
@@ -635,7 +662,114 @@ handle_c_option (size_t code,
   return true;
 }
 
-#undef TARGET_HANDLE_C_OPTION
+/* Allow ObjC* access to CFStrings.  */
+static tree
+darwin_objc_construct_string (tree str)
+{
+  if (!darwin_constant_cfstrings)
+    {
+    /* Even though we are not using CFStrings, place our literal
+       into the cfstring_htab hash table, so that the
+       darwin_constant_cfstring_p() function will see it.  */
+      darwin_enter_string_into_cfstring_table (str);
+      /* Fall back to NSConstantString.  */
+      return NULL_TREE;
+    }
+
+  return darwin_build_constant_cfstring (str);
+}
+
+/* The string ref type is created as CFStringRef by <CFBase.h> therefore, we
+   must match for it explicitly, since it's outside the gcc code.  */
+
+static bool
+darwin_cfstring_ref_p (const_tree strp)
+{
+  tree tn;
+  if (!strp || TREE_CODE (strp) != POINTER_TYPE)
+    return false;
+
+  tn = TYPE_NAME (strp);
+  if (tn) 
+    tn = DECL_NAME (tn);
+  return (tn 
+	  && IDENTIFIER_POINTER (tn)
+	  && !strncmp (IDENTIFIER_POINTER (tn), "CFStringRef", 8));
+}
+
+/* At present the behavior of this is undefined and it does nothing.  */
+static void
+darwin_check_cfstring_format_arg (tree ARG_UNUSED (format_arg), 
+				  tree ARG_UNUSED (args_list))
+{
+}
+
+/* The extra format types we recognize.  */
+EXPORTED_CONST format_kind_info darwin_additional_format_types[] = {
+  { "CFString",   NULL,  NULL, NULL, NULL, 
+    NULL, NULL, 
+    FMT_FLAG_ARG_CONVERT|FMT_FLAG_PARSE_ARG_CONVERT_EXTERNAL, 0, 0, 0, 0, 0, 0,
+    NULL, NULL
+  }
+};
+
+
+/* Support routines to dump the class references for NeXT ABI v1, aka
+   32-bits ObjC-2.0, as top-level asms.
+   The following two functions should only be called from
+   objc/objc-next-runtime-abi-01.c.  */
+
+static void
+darwin_objc_declare_unresolved_class_reference (const char *name)
+{
+  const char *lazy_reference = ".lazy_reference\t";
+  const char *hard_reference = ".reference\t";
+  const char *reference = MACHOPIC_INDIRECT ? lazy_reference : hard_reference;
+  size_t len = strlen (reference) + strlen(name) + 2;
+  char *buf = (char *) alloca (len);
+
+  gcc_checking_assert (!strncmp (name, ".objc_class_name_", 17));
+
+  snprintf (buf, len, "%s%s", reference, name);
+  add_asm_node (build_string (strlen (buf), buf));
+}
+
+static void
+darwin_objc_declare_class_definition (const char *name)
+{
+  const char *xname = targetm.strip_name_encoding (name);
+  size_t len = strlen (xname) + 7 + 5;
+  char *buf = (char *) alloca (len);
+
+  gcc_checking_assert (!strncmp (name, ".objc_class_name_", 17)
+		       || !strncmp (name, "*.objc_category_name_", 21));
+
+  /* Mimic default_globalize_label.  */
+  snprintf (buf, len, ".globl\t%s", xname);
+  add_asm_node (build_string (strlen (buf), buf));
+
+  snprintf (buf, len, "%s = 0", xname);
+  add_asm_node (build_string (strlen (buf), buf));
+}
+
+#undef  TARGET_HANDLE_C_OPTION
 #define TARGET_HANDLE_C_OPTION handle_c_option
+
+#undef  TARGET_OBJC_CONSTRUCT_STRING_OBJECT
+#define TARGET_OBJC_CONSTRUCT_STRING_OBJECT darwin_objc_construct_string
+
+#undef  TARGET_OBJC_DECLARE_UNRESOLVED_CLASS_REFERENCE
+#define TARGET_OBJC_DECLARE_UNRESOLVED_CLASS_REFERENCE \
+	darwin_objc_declare_unresolved_class_reference
+
+#undef  TARGET_OBJC_DECLARE_CLASS_DEFINITION
+#define TARGET_OBJC_DECLARE_CLASS_DEFINITION \
+	darwin_objc_declare_class_definition
+
+#undef  TARGET_STRING_OBJECT_REF_TYPE_P
+#define TARGET_STRING_OBJECT_REF_TYPE_P darwin_cfstring_ref_p
+
+#undef TARGET_CHECK_STRING_OBJECT_FORMAT_ARG
+#define TARGET_CHECK_STRING_OBJECT_FORMAT_ARG darwin_check_cfstring_format_arg
 
 struct gcc_targetcm targetcm = TARGETCM_INITIALIZER;

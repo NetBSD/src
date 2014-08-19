@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.h,v 1.1.1.2.12.1 2013/06/23 06:28:19 tls Exp $	*/
+/*	$NetBSD: gencode.h,v 1.1.1.2.12.2 2014/08/19 23:47:16 tls Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -188,11 +188,22 @@
 #define M_LSSU		23	/* LSSU */
 #define M_MSU		24	/* MSU */
 
+/* MTP2 HSL types */
+#define MH_FISU		25	/* FISU for HSL */
+#define MH_LSSU		26	/* LSSU */
+#define MH_MSU		27	/* MSU */
+
 /* MTP3 field types */
 #define M_SIO		1
 #define M_OPC		2
 #define M_DPC		3
 #define M_SLS		4
+
+/* MTP3 field types in case of MTP2 HSL */
+#define MH_SIO		5
+#define MH_OPC		6
+#define MH_DPC		7
+#define MH_SLS		8
 
 
 struct slist;
@@ -305,7 +316,7 @@ struct block *gen_vlan(int);
 struct block *gen_mpls(int);
 
 struct block *gen_pppoed(void);
-struct block *gen_pppoes(void);
+struct block *gen_pppoes(int);
 
 struct block *gen_atmfield_code(int atmfield, bpf_int32 jvalue, bpf_u_int32 jtype, int reverse);
 struct block *gen_atmtype_abbrev(int type);
@@ -327,7 +338,11 @@ struct block *gen_p80211_fcdir(int);
 
 void bpf_optimize(struct block **);
 void bpf_error(const char *, ...)
-    __attribute__((noreturn, format (printf, 1, 2)));
+    __attribute__((noreturn))
+#ifdef __ATTRIBUTE___FORMAT_OK
+    __attribute__((format (printf, 1, 2)))
+#endif /* __ATTRIBUTE___FORMAT_OK */
+    ;
 
 void finish_parse(struct block *);
 char *sdup(const char *);

@@ -1,5 +1,5 @@
-/*	Id: cpy.y,v 1.18 2010/02/25 15:49:00 ragge Exp 	*/	
-/*	$NetBSD: cpy.y,v 1.1.1.3 2010/06/03 18:57:35 plunky Exp $	*/
+/*	Id: cpy.y,v 1.21 2014/05/28 08:52:42 plunky Exp 	*/	
+/*	$NetBSD: cpy.y,v 1.1.1.3.12.1 2014/08/19 23:52:09 tls Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -42,7 +42,7 @@
  * documentation and/or other materials provided with the distribution.
  * All advertising materials mentioning features or use of this software
  * must display the following acknowledgement:
- * 	This product includes software developed or owned by Caldera
+ *	This product includes software developed or owned by Caldera
  *	International, Inc.
  * Neither the name of Caldera International, Inc. nor the names of other
  * contributors may be used to endorse or promote products derived from
@@ -63,11 +63,11 @@
  */
 
 %{
+#include "config.h"
 
 #include "cpp.h"
 
 void yyerror(const char *);
-int yylex(void);
 int setd(int l, int r);
 
 #define	EVALUNARY(tok, l, r) l.nd_val = tok r.nd_val; l.op = r.op

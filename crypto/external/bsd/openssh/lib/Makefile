@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11.2.1 2013/06/23 06:26:14 tls Exp $
+#	$NetBSD: Makefile,v 1.11.2.2 2014/08/19 23:45:25 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,6 @@ canohost.c \
 channels.c \
 cipher-3des1.c \
 cipher-bf1.c \
-cipher-ctr.c \
 cipher.c \
 cleanup.c \
 compat.c \

@@ -25,7 +25,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-pim.c,v 1.49 2006-02-13 01:31:35 hannes Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-pim.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-pim.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: print-pim.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
 #define PIMV2_TYPE_CANDIDATE_RP  8
 #define PIMV2_TYPE_PRUNE_REFRESH 9
 
-static struct tok pimv2_type_values[] = {
+static const struct tok pimv2_type_values[] = {
     { PIMV2_TYPE_HELLO,         "Hello" },
     { PIMV2_TYPE_REGISTER,      "Register" },
     { PIMV2_TYPE_REGISTER_STOP, "Register Stop" },
@@ -79,7 +79,7 @@ static struct tok pimv2_type_values[] = {
 #define PIMV2_HELLO_OPTION_ADDRESS_LIST        24
 #define PIMV2_HELLO_OPTION_ADDRESS_LIST_OLD 65001
 
-static struct tok pimv2_hello_option_values[] = {
+static const struct tok pimv2_hello_option_values[] = {
     { PIMV2_HELLO_OPTION_HOLDTIME,         "Hold Time" },
     { PIMV2_HELLO_OPTION_LANPRUNEDELAY,    "LAN Prune Delay" },
     { PIMV2_HELLO_OPTION_DR_PRIORITY_OLD,  "DR Priority (Old)" },
@@ -96,7 +96,7 @@ static struct tok pimv2_hello_option_values[] = {
 #define PIMV2_REGISTER_FLAG_BORDER 0x80000000
 #define PIMV2_REGISTER_FLAG_NULL   0x40000000
 
-static struct tok pimv2_register_flag_values[] = {
+static const struct tok pimv2_register_flag_values[] = {
     { PIMV2_REGISTER_FLAG_BORDER, "Border" },
     { PIMV2_REGISTER_FLAG_NULL, "Null" },
     { 0, NULL}
@@ -126,7 +126,7 @@ static void pimv2_print(register const u_char *bp, register u_int len, u_int cks
 static void
 pimv1_join_prune_print(register const u_char *bp, register u_int len)
 {
-	int maddrlen, addrlen, ngroups, njoin, nprune;
+	int addrlen, maddrlen, ngroups, njoin, nprune;
 	int njp;
 
 	/* If it's a single group and a single source, use 1-line output. */
@@ -177,6 +177,8 @@ pimv1_join_prune_print(register const u_char *bp, register u_int len)
 		 * XXX - does the address have length "addrlen" and the
 		 * mask length "maddrlen"?
 		 */
+		__USE(addrlen);
+		__USE(maddrlen);
 		TCHECK2(bp[0], sizeof(struct in_addr));
 		(void)printf("\n\tGroup: %s", ipaddr_string(bp));
 		TCHECK2(bp[4], sizeof(struct in_addr));

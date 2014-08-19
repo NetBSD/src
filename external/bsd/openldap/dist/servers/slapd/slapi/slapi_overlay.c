@@ -1,10 +1,10 @@
-/*	$NetBSD: slapi_overlay.c,v 1.1.1.4 2010/12/12 15:23:52 adam Exp $	*/
+/*	$NetBSD: slapi_overlay.c,v 1.1.1.4.12.1 2014/08/19 23:52:04 tls Exp $	*/
 
 /* slapi_overlay.c - SLAPI overlay */
-/* OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_overlay.c,v 1.40.2.9 2010/04/13 20:23:50 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2010 The OpenLDAP Foundation.
+ * Copyright 2001-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -298,6 +298,7 @@ static int
 slapi_op_search_callback( Operation *op, SlapReply *rs, int prc )
 {
 	Slapi_PBlock		*pb = SLAPI_OPERATION_PBLOCK( op );
+	Filter *f = op->ors_filter;
 
 	/* check preoperation result code */
 	if ( prc < 0 ) {
@@ -312,8 +313,10 @@ slapi_op_search_callback( Operation *op, SlapReply *rs, int prc )
 		 * The plugin can set the SLAPI_SEARCH_FILTER.
 		 * SLAPI_SEARCH_STRFILER is not normative.
 		 */
-		op->o_tmpfree( op->ors_filterstr.bv_val, op->o_tmpmemctx );
-		filter2bv_x( op, op->ors_filter, &op->ors_filterstr );
+		if (f != op->ors_filter) {
+			op->o_tmpfree( op->ors_filterstr.bv_val, op->o_tmpmemctx );
+			filter2bv_x( op, op->ors_filter, &op->ors_filterstr );
+		}
 	}
 
 	return LDAP_SUCCESS;
@@ -453,10 +456,10 @@ slapi_over_merge_controls( Operation *op, SlapReply *rs )
 	n_slapi_ctrls = slapi_int_count_controls( slapi_ctrls );
 	n_rs_ctrls = slapi_int_count_controls( rs->sr_ctrls );
 
-	slapi_pblock_set( pb, SLAPI_X_OLD_RESCONTROLS, (void *)rs->sr_ctrls );
-
 	if ( n_slapi_ctrls == 0 )
 		return LDAP_SUCCESS; /* no SLAPI controls */
+
+	slapi_pblock_set( pb, SLAPI_X_OLD_RESCONTROLS, (void *)rs->sr_ctrls );
 
 	ctrls = (LDAPControl **) op->o_tmpalloc(
 		( n_slapi_ctrls + n_rs_ctrls + 1 ) * sizeof(LDAPControl *),

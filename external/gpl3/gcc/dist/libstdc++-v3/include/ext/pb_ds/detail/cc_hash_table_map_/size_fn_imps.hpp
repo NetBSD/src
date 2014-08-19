@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,9 +34,9 @@
 // warranty.
 
 /**
- * @file size_fn_imps.hpp
+ * @file cc_hash_table_map_/size_fn_imps.hpp
  * Contains implementations of cc_ht_map_'s entire container size related
- *    functions.
+ * functions.
  */
 
 PB_DS_CLASS_T_DEC

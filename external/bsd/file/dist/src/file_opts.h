@@ -1,5 +1,4 @@
-/*	$NetBSD: file_opts.h,v 1.1.1.2.10.1 2013/02/25 00:26:07 tls Exp $	*/
-
+/*	$NetBSD: file_opts.h,v 1.1.1.2.10.2 2014/08/19 23:46:47 tls Exp $	*/
 /*
  * Table of command-line options
  *
@@ -34,8 +33,8 @@ OPT_LONGONLY("apple", 0, "                output the Apple CREATOR/TYPE\n")
 OPT_LONGONLY("mime-type", 0, "            output the MIME type\n")
 OPT_LONGONLY("mime-encoding", 0, "        output the MIME encoding\n")
 OPT('k', "keep-going", 0, "           don't stop at the first match\n")
-#ifdef S_IFLNK
 OPT('l', "list", 0, "                 list magic strength\n")
+#ifdef S_IFLNK
 OPT('L', "dereference", 0, "          follow symlinks (default)\n")
 OPT('h', "no-dereference", 0, "       don't follow symlinks\n")
 #endif

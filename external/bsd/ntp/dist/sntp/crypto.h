@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.h,v 1.1.1.2 2012/01/31 21:27:42 kardel Exp $	*/
+/*	$NetBSD: crypto.h,v 1.1.1.2.6.1 2014/08/19 23:51:44 tls Exp $	*/
 
 #ifndef CRYPTO_H
 #define CRYPTO_H
@@ -10,11 +10,7 @@
 #include <ntp_fp.h>
 #include <ntp.h>
 #include <ntp_stdlib.h>
-#ifdef OPENSSL
-# include "openssl/evp.h"
-#else
-# include <ntp_md5.h>		/* provides clone of OpenSSL MD5 API */
-#endif
+#include <ntp_md5.h>	/* provides OpenSSL digest API */
 #include "utilities.h"
 #include "sntp-opts.h"
 

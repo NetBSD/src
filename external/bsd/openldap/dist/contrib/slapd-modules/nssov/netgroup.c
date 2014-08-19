@@ -1,10 +1,10 @@
-/*	$NetBSD: netgroup.c,v 1.1.1.3 2010/12/12 15:19:08 adam Exp $	*/
+/*	$NetBSD: netgroup.c,v 1.1.1.3.12.1 2014/08/19 23:51:57 tls Exp $	*/
 
 /* netgroup.c - netgroup lookup routines */
-/* OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/netgroup.c,v 1.1.2.5 2010/04/15 21:32:56 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2010 The OpenLDAP Foundation.
+ * Copyright 2008-2014 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
  *

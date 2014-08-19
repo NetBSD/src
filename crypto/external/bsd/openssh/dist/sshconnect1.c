@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect1.c,v 1.3 2011/04/24 14:01:46 elric Exp $	*/
-/* $OpenBSD: sshconnect1.c,v 1.70 2006/11/06 21:25:28 markus Exp $ */
+/*	$NetBSD: sshconnect1.c,v 1.3.10.1 2014/08/19 23:45:25 tls Exp $	*/
+/* $OpenBSD: sshconnect1.c,v 1.71 2013/05/17 00:13:14 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect1.c,v 1.3 2011/04/24 14:01:46 elric Exp $");
+__RCSID("$NetBSD: sshconnect1.c,v 1.3.10.1 2014/08/19 23:45:25 tls Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -97,7 +97,7 @@ try_agent_authentication(void)
 
 		/* Try this identity. */
 		debug("Trying RSA authentication via agent with '%.100s'", comment);
-		xfree(comment);
+		free(comment);
 
 		/* Tell the server that we are willing to authenticate using this key. */
 		packet_start(SSH_CMSG_AUTH_RSA);
@@ -296,7 +296,7 @@ try_krb4_authentication(void)
 		if (auth.length >= MAX_KTXT_LEN)
 			fatal("Kerberos v4: Malformed response from server");
 		memcpy(auth.dat, reply, auth.length);
-		xfree(reply);
+		free(reply);
 
 		packet_check_eom();
 
@@ -366,7 +366,7 @@ try_rsa_authentication(int idx)
 	 */
 	if (type == SSH_SMSG_FAILURE) {
 		debug("Server refused our key.");
-		xfree(comment);
+		free(comment);
 		return 0;
 	}
 	/* Otherwise, the server should respond with a challenge. */
@@ -405,14 +405,14 @@ try_rsa_authentication(int idx)
 				quit = 1;
 			}
 			memset(passphrase, 0, strlen(passphrase));
-			xfree(passphrase);
+			free(passphrase);
 			if (private != NULL || quit)
 				break;
 			debug2("bad passphrase given, try again...");
 		}
 	}
 	/* We no longer need the comment. */
-	xfree(comment);
+	free(comment);
 
 	if (private == NULL) {
 		if (!options.batch_mode && perm_ok)
@@ -521,7 +521,7 @@ try_krb5_authentication(krb5_context *context, krb5_auth_context *auth_context)
 	packet_send();
 	packet_write_wait();
 
-	xfree(ap.data);
+	free(ap.data);
 	ap.length = 0;
 
 	type = packet_read();
@@ -628,7 +628,7 @@ send_krb5_tgt(krb5_context context, krb5_auth_context auth_context)
 
 		krb5_unparse_name(context, creds.client, &pname);
 		debug("Kerberos v5 TGT forwarded (%s).", pname);
-		xfree(pname);
+		free(pname);
 	} else
 		debug("Kerberos v5 TGT forwarding failed.");
 
@@ -650,7 +650,7 @@ send_krb5_tgt(krb5_context context, krb5_auth_context auth_context)
 	if (ccache)
 		krb5_cc_close(context, ccache);
 	if (outbuf.data)
-		xfree(outbuf.data);
+		free(outbuf.data);
 }
 #endif /* KRB5 */
 
@@ -698,12 +698,12 @@ send_krb4_tgt(void)
 	else
 		debug("Kerberos v4 TGT rejected.");
 
-	xfree(creds);
+	free(creds);
 	return;
 
  out:
 	debug("Kerberos v4 TGT passing failed: %s", krb_err_txt[problem]);
-	xfree(creds);
+	free(creds);
 }
 
 static void
@@ -873,7 +873,7 @@ try_challenge_response_authentication(void)
 		packet_check_eom();
 		snprintf(prompt, sizeof prompt, "%s%s", challenge,
 		    strchr(challenge, '\n') ? "" : "\nResponse: ");
-		xfree(challenge);
+		free(challenge);
 		if (i != 0)
 			error("Permission denied, please try again.");
 		if (options.cipher == SSH_CIPHER_NONE)
@@ -881,13 +881,13 @@ try_challenge_response_authentication(void)
 			    "Response will be transmitted in clear text.");
 		response = read_passphrase(prompt, 0);
 		if (strcmp(response, "") == 0) {
-			xfree(response);
+			free(response);
 			break;
 		}
 		packet_start(SSH_CMSG_AUTH_TIS_RESPONSE);
 		ssh_put_password(response);
 		memset(response, 0, strlen(response));
-		xfree(response);
+		free(response);
 		packet_send();
 		packet_write_wait();
 		type = packet_read();
@@ -920,7 +920,7 @@ try_password_authentication(char *prompt)
 		packet_start(SSH_CMSG_AUTH_PASSWORD);
 		ssh_put_password(password);
 		memset(password, 0, strlen(password));
-		xfree(password);
+		free(password);
 		packet_send();
 		packet_write_wait();
 

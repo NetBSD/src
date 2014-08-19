@@ -28,19 +28,29 @@
  */
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlen_naive.S,v 1.3.6.2 2013/02/25 00:23:59 tls Exp $")
+RCSID("$NetBSD: strlen_naive.S,v 1.3.6.3 2014/08/19 23:45:12 tls Exp $")
 
 #ifdef STRNLEN
 /* LINTSTUB: size_t strnlen(const char *, size_t) */
 ENTRY(strnlen)
-	add	ip, r0, #1	/* start of src + NUL */
-	add	r2, r0, r1	/* &src[maxlen] */
-1:	cmp	r0, r2		/* is this of string? */
+	adds	r3, r0, #1	/* start of src + NUL */
+#ifdef __thumb__
+	adds	r2, r0, r1	/* &src[maxlen] */
+	mov	ip, r2
+#else
+	adds	ip, r0, r1	/* &src[maxlen] */
+#endif
+1:	cmp	r0, ip		/* is this of string? */
 	beq	2f		/*   yes it is */
-	ldrb	r3, [r0], #1	/* read a byte */
-	teq	r3, #0		/* is it a NUL? */
+#ifdef __thumb__
+	ldrb	r2, [r0]	/* read a byte */
+	adds	r0, r0, #1	/* advance to next byte */
+#else
+	ldrb	r2, [r0], #1	/* read a byte */
+#endif
+	cmp	r2, #0		/* is it a NUL? */
 	bne	1b		/*   no, get next byte */
-	sub	r0, r0, ip	/* get difference between start and end */
+	subs	r0, r0, r3	/* get difference between start and end */
 	RET			/* return */
 2:	mov	r0, r1		/* get maxlen */
 	RET			/* return */
@@ -48,11 +58,17 @@ END(strnlen)
 #else /* STRNLEN */
 /* LINTSTUB: size_t strlen(const char *) */
 ENTRY(strlen)
-	add	ip, r0, #1	/* start of src + NUL */
-1:	ldrb	r3, [r0], #1	/* read a byte */
-	teq	r3, #0		/* is it a NUL? */
+	adds	r3, r0, #1	/* start of src + NUL */
+1:
+#ifdef __thumb__
+	ldrb	r2, [r0]	/* read a byte */
+	adds	r0, r0, #1
+#else
+	ldrb	r2, [r0], #1	/* read a byte */
+#endif
+	cmp	r2, #0		/* is it a NUL? */
 	bne	1b		/*   no, get next byte */
-	sub	r0, r0, ip	/* return difference between start and end */
+	subs	r0, r0, r3	/* return difference between start and end */
 	RET
 END(strlen)
 #endif /* !STRNLEN */

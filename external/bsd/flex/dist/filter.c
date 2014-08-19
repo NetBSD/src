@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.1.1.1.12.1 2013/06/23 06:26:33 tls Exp $	*/
+/*	$NetBSD: filter.c,v 1.1.1.1.12.2 2014/08/19 23:46:47 tls Exp $	*/
 
 /* filter - postprocessing of flex output through filters */
 
@@ -363,11 +363,10 @@ int filter_fix_linedirs (struct filter *chain)
 		if (buf[0] == '#'
 			&& regexec (&regex_linedir, buf, 3, m, 0) == 0) {
 
-			int     num;
 			char   *fname;
 
 			/* extract the line number and filename */
-			num = regmatch_strtol (&m[1], buf, NULL, 0);
+			(void)regmatch_strtol (&m[1], buf, NULL, 0);
 			fname = regmatch_dup (&m[2], buf);
 
 			if (strcmp (fname,

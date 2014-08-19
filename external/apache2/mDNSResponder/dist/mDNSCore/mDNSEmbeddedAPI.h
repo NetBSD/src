@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 
-
    NOTE:
    If you're building an application that uses DNS Service Discovery
    this is probably NOT the header file you're looking for.
@@ -50,934 +49,7 @@
    you can still use the exact same client C code as you'd use on a
    general-purpose desktop system.
 
-
-    Change History (most recent first):
-
-Log: mDNSEmbeddedAPI.h,v $
-Revision 1.573  2009/06/30 18:17:45  herscher
-Add to 64 bit macro check for 64 bit Windows OSes
-
-Revision 1.572  2009/06/27 00:52:27  cheshire
-<rdar://problem/6959273> mDNSResponder taking up 13% CPU with 400 KBps incoming bonjour requests
-Removed overly-complicate and ineffective multi-packet known-answer snooping code
-(Bracketed it with "#if ENABLE_MULTI_PACKET_QUERY_SNOOPING" for now; will delete actual code later)
-
-Revision 1.571  2009/06/26 01:55:54  cheshire
-<rdar://problem/6890712> mDNS: iChat's Buddy photo always appears as the "shadow person" over Bonjour
-Additional refinements -- except for the case of explicit queries for record types we don't have (for names we own),
-add additional NSEC records only when there's space to do that without having to generate an additional packet
-
-Revision 1.570  2009/06/24 22:14:21  cheshire
-<rdar://problem/6911445> Plugging and unplugging the power cable shouldn't cause a network change event
-
-Revision 1.569  2009/06/03 23:07:12  cheshire
-<rdar://problem/6890712> mDNS: iChat's Buddy photo always appears as the "shadow person" over Bonjour
-Large records were not being added in cases where an NSEC record was also required
-
-Revision 1.568  2009/05/19 22:37:04  cheshire
-<rdar://problem/6903507> Sleep Proxy: Retransmission logic not working reliably on quiet networks
-Added NextScheduledSPRetry field
-
-Revision 1.567  2009/05/13 17:25:33  mkrochma
-<rdar://problem/6879926> Should not schedule maintenance wake when machine has no advertised services
-Sleep proxy client should only look for services being advertised via Multicast
-
-Revision 1.566  2009/05/12 23:09:24  cheshire
-<rdar://problem/6879926> Should not schedule maintenance wake when machine has no advertised services
-Declare mDNSCoreHaveAdvertisedServices routine so it can be called from daemon.c
-
-Revision 1.565  2009/05/09 00:10:58  jessic2
-Change expected size of NetworkInterfaceInfo to fix build failure
-
-Revision 1.564  2009/05/07 23:31:26  cheshire
-<rdar://problem/6601427> Sleep Proxy: Retransmit and retry Sleep Proxy Server requests
-Added NextSPSAttempt and NextSPSAttemptTime fields to NetworkInterfaceInfo_struct
-
-Revision 1.563  2009/04/24 21:06:38  cheshire
-Added comment about UDP length field (includes UDP header, so minimum value is 8 bytes)
-
-Revision 1.562  2009/04/24 00:22:23  cheshire
-<rdar://problem/3476350> Return negative answers when host knows authoritatively that no answer exists
-Added definition of rdataNSEC
-
-Revision 1.561  2009/04/23 22:06:29  cheshire
-Added CacheRecord and InterfaceID parameters to MakeNegativeCacheRecord, in preparation for:
-<rdar://problem/3476350> Return negative answers when host knows authoritatively that no answer exists
-
-Revision 1.560  2009/04/23 21:54:50  cheshire
-Updated comments
-
-Revision 1.559  2009/04/22 00:37:38  cheshire
-<rdar://problem/6814427> Remove unused kDNSType_MAC
-
-Revision 1.558  2009/04/21 23:36:25  cheshire
-<rdar://problem/6814427> Remove unused kDNSType_MAC
-
-Revision 1.557  2009/04/15 20:42:51  mcguire
-<rdar://problem/6768947> uDNS: Treat RCODE 5 (Refused) responses as failures
-
-Revision 1.556  2009/04/11 00:19:43  jessic2
-<rdar://problem/4426780> Daemon: Should be able to turn on LogOperation dynamically
-
-Revision 1.555  2009/04/01 21:12:27  herscher
-<rdar://problem/5925472> Current Bonjour code does not compile on Windows.
-
-Revision 1.554  2009/04/01 17:50:11  mcguire
-cleanup mDNSRandom
-
-Revision 1.553  2009/03/26 03:59:00  jessic2
-Changes for <rdar://problem/6492552&6492593&6492609&6492613&6492628&6492640&6492699>
-
-Revision 1.552  2009/03/20 23:53:03  jessic2
-<rdar://problem/6646228> SIGHUP should restart all in-progress queries
-
-Revision 1.551  2009/03/18 20:41:04  cheshire
-Added definition of the all-ones mDNSOpaque16 ID
-
-Revision 1.550  2009/03/17 19:10:29  mcguire
-Fix sizechecks for x86_64
-
-Revision 1.549  2009/03/17 01:22:56  cheshire
-<rdar://problem/6601427> Sleep Proxy: Retransmit and retry Sleep Proxy Server requests
-Initial support for resolving up to three Sleep Proxies in parallel
-
-Revision 1.548  2009/03/14 01:42:56  mcguire
-<rdar://problem/5457116> BTMM: Fix issues with multiple .Mac accounts on the same machine
-
-Revision 1.547  2009/03/10 01:14:30  cheshire
-Sleep Proxies with invalid names need to be ignored (score 10000),
-not treated as "Sleep Proxy of last resort" (score 9999)
-
-Revision 1.546  2009/03/06 23:51:51  mcguire
-Fix broken build by defining DiscardPort
-
-Revision 1.545  2009/03/06 22:39:23  cheshire
-<rdar://problem/6655850> Ignore prototype base stations when picking Sleep Proxy to register with
-
-Revision 1.544  2009/03/04 01:33:30  cheshire
-Add m->ProxyRecords counter
-
-Revision 1.543  2009/03/03 23:04:43  cheshire
-For clarity, renamed "MAC" field to "HMAC" (Host MAC, as opposed to Interface MAC)
-
-Revision 1.542  2009/03/03 22:51:53  cheshire
-<rdar://problem/6504236> Sleep Proxy: Waking on same network but different interface will cause conflicts
-
-Revision 1.541  2009/03/03 00:45:19  cheshire
-Added m->PrimaryMAC field
-
-Revision 1.540  2009/02/27 02:56:57  cheshire
-Moved struct SearchListElem definition from uDNS.c into mDNSEmbeddedAPI.h
-
-Revision 1.539  2009/02/17 23:29:01  cheshire
-Throttle logging to a slower rate when running on SnowLeopard
-
-Revision 1.538  2009/02/11 02:31:57  cheshire
-Moved SystemWakeOnLANEnabled from mDNSMacOSX.h, so it's accessible to mDNSCore routines
-
-Revision 1.537  2009/02/07 02:51:48  cheshire
-<rdar://problem/6084043> Sleep Proxy: Need to adopt IOPMConnection
-Added new functions and timing variables
-
-Revision 1.536  2009/01/30 23:50:31  cheshire
-Added LastLabel() routine to get the last label of a domainname
-
-Revision 1.535  2009/01/23 00:38:36  mcguire
-<rdar://problem/5570906> BTMM: Doesn't work with Linksys WRT54GS firmware 4.71.1
-
-Revision 1.534  2009/01/22 02:14:25  cheshire
-<rdar://problem/6515626> Sleep Proxy: Set correct target MAC address, instead of all zeroes
-
-Revision 1.533  2009/01/21 03:43:57  mcguire
-<rdar://problem/6511765> BTMM: Add support for setting kDNSServiceErr_NATPortMappingDisabled in DynamicStore
-
-Revision 1.532  2009/01/16 19:50:36  cheshire
-Oops. Fixed definition of SleepProxyServiceType.
-
-Revision 1.531  2009/01/16 19:48:09  cheshire
-Added definition of SleepProxyServiceType
-
-Revision 1.530  2009/01/15 00:22:49  mcguire
-<rdar://problem/6437092> NAT-PMP: mDNSResponder needs to listen on 224.0.0.1:5350/UDP with REUSEPORT
-
-Revision 1.529  2009/01/13 00:31:44  cheshire
-Fixed off-by-one error in computing the implicit limit pointer in the "DomainNameLength(name)" macro
-
-Revision 1.528  2009/01/10 01:43:52  cheshire
-Changed misleading function name 'AnsweredLOQ' to more informative 'AnsweredLocalQ'
-
-Revision 1.527  2008/12/12 01:23:19  cheshire
-Added m->SPSProxyListChanged state variable to flag when we need to update our BPF filter program
-
-Revision 1.526  2008/12/12 00:51:14  cheshire
-Added structure definitions for IPv6Header, etc.
-
-Revision 1.525  2008/12/10 02:18:31  cheshire
-Increased MaxMsg to 160 for showing longer TXT records in SIGINFO output
-
-Revision 1.524  2008/12/10 01:49:39  cheshire
-Fixes for alignment issues on ARMv5
-
-Revision 1.523  2008/12/05 02:35:24  mcguire
-<rdar://problem/6107390> Write to the DynamicStore when a Sleep Proxy server is available on the network
-
-Revision 1.522  2008/12/04 21:08:51  mcguire
-<rdar://problem/6116863> mDNS: Provide mechanism to disable Multicast advertisements
-
-Revision 1.521  2008/12/04 02:19:24  cheshire
-Updated comment
-
-Revision 1.520  2008/11/26 20:28:05  cheshire
-Added new SSHPort constant
-
-Revision 1.519  2008/11/25 22:46:30  cheshire
-For ease of code searching, renamed ZoneData field of ServiceRecordSet_struct from "nta" to "srs_nta"
-
-Revision 1.518  2008/11/25 05:07:15  cheshire
-<rdar://problem/6374328> Advertise Sleep Proxy metrics in service name
-
-Revision 1.517  2008/11/20 01:51:19  cheshire
-Exported RecreateNATMappings so it's callable from other files
-
-Revision 1.516  2008/11/16 16:49:25  cheshire
-<rdar://problem/6375808> LLQs broken in mDNSResponder-184
-DNSOpt_LLQData_Space was incorrectly defined to be 18 instead of 22
-
-Revision 1.515  2008/11/14 20:59:41  cheshire
-Added mDNSEthAddressIsZero(A) macro
-
-Revision 1.514  2008/11/14 02:17:41  cheshire
-Added NextScheduledSPS task scheduling variable
-
-Revision 1.513  2008/11/14 00:47:19  cheshire
-Added TimeRcvd and TimeExpire fields to AuthRecord_struct
-
-Revision 1.512  2008/11/14 00:00:53  cheshire
-After client machine wakes up, Sleep Proxy machine need to remove any records
-it was temporarily holding as proxy for that client
-
-Revision 1.511  2008/11/13 19:04:44  cheshire
-Added definition of OwnerOptData
-
-Revision 1.510  2008/11/06 23:48:32  cheshire
-Changed SleepProxyServerType to mDNSu8
-
-Revision 1.509  2008/11/04 23:06:50  cheshire
-Split RDataBody union definition into RDataBody and RDataBody2, and removed
-SOA from the normal RDataBody union definition, saving 270 bytes per AuthRecord
-
-Revision 1.508  2008/11/04 22:21:43  cheshire
-Changed zone field of AuthRecord_struct from domainname to pointer, saving 252 bytes per AuthRecord
-
-Revision 1.507  2008/11/04 22:13:43  cheshire
-Made RDataBody parameter to GetRRDisplayString_rdb "const"
-
-Revision 1.506  2008/11/04 20:06:19  cheshire
-<rdar://problem/6186231> Change MAX_DOMAIN_NAME to 256
-
-Revision 1.505  2008/11/03 23:49:47  mkrochma
-Increase NATMAP_DEFAULT_LEASE to 2 hours so we do maintenance wake less often
-
-Revision 1.504  2008/10/31 22:55:04  cheshire
-Initial support for structured SPS names
-
-Revision 1.503  2008/10/24 23:58:47  cheshire
-Ports should be mDNSIPPort, not mDNSOpaque16
-
-Revision 1.502  2008/10/23 22:25:56  cheshire
-Renamed field "id" to more descriptive "updateid"
-
-Revision 1.501  2008/10/22 22:22:27  cheshire
-Added packet structure definitions
-
-Revision 1.500  2008/10/22 19:55:35  cheshire
-Miscellaneous fixes; renamed FindFirstAnswerInCache to FindSPSInCache
-
-Revision 1.499  2008/10/22 17:15:47  cheshire
-Updated definitions of mDNSIPv4AddressIsZero/mDNSIPv4AddressIsOnes, etc.
-
-Revision 1.498  2008/10/22 01:01:52  cheshire
-Added onesEthAddr constant, used for sending ARP broadcasts
-
-Revision 1.497  2008/10/21 00:51:11  cheshire
-Added declaration of mDNSPlatformSetBPF(), used by uds_daemon.c to pass BPF fd to mDNSMacOSX.c
-
-Revision 1.496  2008/10/16 22:38:52  cheshire
-Added declaration of mDNSCoreReceiveRawPacket()
-
-Revision 1.495  2008/10/15 22:53:51  cheshire
-Removed unused "#define LocalReverseMapDomain"
-
-Revision 1.494  2008/10/15 20:37:17  cheshire
-Added "#define DNSOpt_Lease_Space 19"
-
-Revision 1.493  2008/10/14 21:37:56  cheshire
-Removed unnecessary m->BeSleepProxyServer variable
-
-Revision 1.492  2008/10/14 20:26:36  cheshire
-Added definition of a new kDNSType_MAC rdata type
-
-Revision 1.491  2008/10/09 22:29:04  cheshire
-Added "mDNSEthAddr MAC" to NetworkInterfaceInfo_struct
-
-Revision 1.490  2008/10/09 21:39:20  cheshire
-Update list of DNS types
-
-Revision 1.489  2008/10/09 18:59:19  cheshire
-Added NetWakeResolve code, removed unused m->SendDeregistrations and m->SendImmediateAnswers
-
-Revision 1.488  2008/10/08 01:02:03  cheshire
-Added mDNS_SetupQuestion() convenience function
-
-Revision 1.487  2008/10/07 21:41:57  mcguire
-Increase sizecheck limits to account for DNSQuestion added to NetworkInterfaceInfo_struct in 64bit builds
-
-Revision 1.486  2008/10/07 15:56:24  cheshire
-Increase sizecheck limits to account for DNSQuestion added to NetworkInterfaceInfo_struct
-
-Revision 1.485  2008/10/04 00:48:37  cheshire
-Added DNSQuestion to NetworkInterfaceInfo_struct, used for browsing for Sleep Proxy Servers
-
-Revision 1.484  2008/10/04 00:01:45  cheshire
-Move NetworkInterfaceInfo_struct further down in file (we'll need to add a DNSQuestion to it later)
-
-Revision 1.483  2008/10/03 23:28:41  cheshire
-Added declaration of mDNSPlatformSendRawPacket
-
-Revision 1.482  2008/10/03 17:30:05  cheshire
-Added declaration of mDNS_ConfigChanged(mDNS *const m);
-
-Revision 1.481  2008/10/02 22:38:58  cheshire
-Added SleepProxyServer fields, and mDNSCoreBeSleepProxyServer() call for turning SleepProxyServer on and off
-
-Revision 1.480  2008/10/01 21:22:17  cheshire
-Added NetWake field to NetworkInterfaceInfo structure, to signal when Wake-On-Magic-Packet is enabled for that interface
-
-Revision 1.479  2008/09/29 20:12:37  cheshire
-Rename 'AnswerLocalQuestions' to more descriptive 'AnswerLocalOnlyQuestions' and 'AnsweredLocalQ' to 'AnsweredLOQ'
-
-Revision 1.478  2008/09/23 02:37:10  cheshire
-Added FirstLabel/SecondLabel macros
-
-Revision 1.477  2008/09/20 00:34:22  mcguire
-<rdar://problem/6129039> BTMM: Add support for WANPPPConnection
-
-Revision 1.476  2008/09/05 22:22:01  cheshire
-Move "UDPSocket *LocalSocket" field to more logical place in DNSQuestion_struct
-
-Revision 1.475  2008/07/25 22:34:11  mcguire
-fix sizecheck issues for 64bit
-
-Revision 1.474  2008/07/24 20:23:03  cheshire
-<rdar://problem/3988320> Should use randomized source ports and transaction IDs to avoid DNS cache poisoning
-
-Revision 1.473  2008/07/18 21:37:42  mcguire
-<rdar://problem/5736845> BTMM: alternate SSDP queries between multicast & unicast
-
-Revision 1.472  2008/07/01 01:39:59  mcguire
-<rdar://problem/5823010> 64-bit fixes
-
-Revision 1.471  2008/06/26 17:24:11  mkrochma
-<rdar://problem/5450912> BTMM: Stop listening on UDP 5351 for NAT Status Announcements
-
-Revision 1.470  2008/06/19 01:20:49  mcguire
-<rdar://problem/4206534> Use all configured DNS servers
-
-Revision 1.469  2008/03/07 18:56:02  cheshire
-<rdar://problem/5777647> dnsbugtest query every three seconds when source IP address of response doesn't match
-
-Revision 1.468  2008/03/06 02:48:34  mcguire
-<rdar://problem/5321824> write status to the DS
-
-Revision 1.467  2008/02/26 20:48:46  cheshire
-Need parentheses around use of macro argument in mDNS_TimeNow_NoLock(m)
-
-Revision 1.466  2008/02/21 21:36:32  cheshire
-Updated comment about record type values (kDNSRecordTypePacketAns/Auth/Add)
-
-Revision 1.465  2008/02/20 00:39:05  mcguire
-<rdar://problem/5427102> Some device info XML blobs too large
-
-Revision 1.464  2008/01/31 23:33:29  mcguire
-<rdar://problem/5614450> changes to build using gcc 4.2 with -Werror
-
-Revision 1.463  2007/12/17 23:53:25  cheshire
-Added DNSDigest_SignMessageHostByteOrder, for signing messages not yet converted to network byte order
-
-Revision 1.462  2007/12/17 23:48:29  cheshire
-DNSDigest_SignMessage doesn't need to return a result -- it already updates the 'end' parameter
-
-Revision 1.461  2007/12/15 00:18:51  cheshire
-Renamed question->origLease to question->ReqLease
-
-Revision 1.460  2007/12/14 23:55:28  cheshire
-Moved "struct tcpInfo_t" definition from uDNS.c to mDNSEmbeddedAPI.h
-
-Revision 1.459  2007/12/07 22:40:34  cheshire
-Rename 'LocalAnswer' to more descriptive 'AnsweredLocalQ'
-
-Revision 1.458  2007/12/07 00:45:58  cheshire
-<rdar://problem/5526800> BTMM: Need to clean up registrations on shutdown
-
-Revision 1.457  2007/12/06 00:22:27  mcguire
-<rdar://problem/5604567> BTMM: Doesn't work with Linksys WAG300N 1.01.06 (sending from 1026/udp)
-
-Revision 1.456  2007/12/05 01:45:35  cheshire
-Renamed markedForDeletion -> MarkedForDeletion
-
-Revision 1.455  2007/12/01 01:21:27  jgraessley
-<rdar://problem/5623140> mDNSResponder unicast DNS improvements
-
-Revision 1.454  2007/12/01 00:34:03  cheshire
-Fixes from Bob Bradley for building on EFI
-
-Revision 1.453  2007/10/29 23:51:22  cheshire
-Added comment about NATTraversalInfo ExternalAddress field
-
-Revision 1.452  2007/10/29 18:13:40  cheshire
-Added Question_uDNS macro, analogous to AuthRecord_uDNS macro
-
-Revision 1.451  2007/10/26 23:42:57  cheshire
-Removed unused "mDNSs32 expire" field from ServiceRecordSet_struct
-
-Revision 1.450  2007/10/26 22:24:08  cheshire
-Added AuthRecord_uDNS() macro to determine when a given AuthRecord needs to be registered via unicast DNS
-
-Revision 1.449  2007/10/25 20:48:47  cheshire
-For naming consistency (with AuthRecord's UpdateServer) renamed 'ns' to 'SRSUpdateServer'
-
-Revision 1.448  2007/10/22 22:19:44  cheshire
-Tidied up code alignment
-
-Revision 1.447  2007/10/22 19:40:30  cheshire
-<rdar://problem/5519458> BTMM: Machines don't appear in the sidebar on wake from sleep
-Made subroutine mDNSPlatformSourceAddrForDest(mDNSAddr *const src, const mDNSAddr *const dst)
-
-Revision 1.446  2007/10/17 22:49:54  cheshire
-<rdar://problem/5519458> BTMM: Machines don't appear in the sidebar on wake from sleep
-
-Revision 1.445  2007/10/17 22:37:23  cheshire
-<rdar://problem/5536979> BTMM: Need to create NAT port mapping for receiving LLQ events
-
-Revision 1.444  2007/09/29 03:14:52  cheshire
-<rdar://problem/5513168> BTMM: mDNSResponder memory corruption in GetAuthInfoForName_internal
-Added AutoTunnelUnregistered macro to check state of DomainAuthInfo AuthRecords
-
-Revision 1.443  2007/09/27 21:21:39  cheshire
-Export CompleteDeregistration so it's callable from other files
-
-Revision 1.442  2007/09/27 00:25:39  cheshire
-Added ttl_seconds parameter to MakeNegativeCacheRecord in preparation for:
-<rdar://problem/4947392> uDNS: Use SOA to determine TTL for negative answers
-
-Revision 1.441  2007/09/26 23:17:49  cheshire
-Get rid of unused kWideAreaTTL constant
-
-Revision 1.440  2007/09/26 22:06:02  cheshire
-<rdar://problem/5507399> BTMM: No immediate failure notifications for BTMM names
-
-Revision 1.439  2007/09/21 21:12:36  cheshire
-DNSDigest_SignMessage does not need separate "mDNSu16 *numAdditionals" parameter
-
-Revision 1.438  2007/09/19 20:32:09  cheshire
-Export GetAuthInfoForName so it's callable from other files
-
-Revision 1.437  2007/09/18 21:42:29  cheshire
-To reduce programming mistakes, renamed ExtPort to RequestedPort
-
-Revision 1.436  2007/09/14 21:26:08  cheshire
-<rdar://problem/5482627> BTMM: Need to manually avoid port conflicts when using UPnP gateways
-
-Revision 1.435  2007/09/13 00:16:41  cheshire
-<rdar://problem/5468706> Miscellaneous NAT Traversal improvements
-
-Revision 1.434  2007/09/12 23:03:07  cheshire
-<rdar://problem/5476978> DNSServiceNATPortMappingCreate callback not giving correct interface index
-
-Revision 1.433  2007/09/12 22:19:28  cheshire
-<rdar://problem/5476977> Need to listen for port 5350 NAT-PMP announcements
-
-Revision 1.432  2007/09/12 19:22:19  cheshire
-Variable renaming in preparation for upcoming fixes e.g. priv/pub renamed to intport/extport
-Made NAT Traversal packet handlers take typed data instead of anonymous "mDNSu8 *" byte pointers
-
-Revision 1.431  2007/09/11 19:19:16  cheshire
-Correct capitalization of "uPNP" to "UPnP"
-
-Revision 1.430  2007/09/10 22:06:50  cheshire
-Rename uptime => upseconds and LastNATUptime => LastNATupseconds to make it clear these time values are in seconds
-
-Revision 1.429  2007/09/07 21:16:58  cheshire
-Add new symbol "NATPMPAnnouncementPort" (5350)
-
-Revision 1.428  2007/09/05 21:48:01  cheshire
-<rdar://problem/5385864> BTMM: mDNSResponder flushes wide-area Bonjour records after an hour for a zone.
-Now that we're respecting the TTL of uDNS records in the cache, the LLQ maintenance code needs
-to update the cache lifetimes of all relevant records every time it successfully renews an LLQ,
-otherwise those records will expire and vanish from the cache.
-
-Revision 1.427  2007/09/05 20:47:12  cheshire
-Tidied up alignment of code layout
-
-Revision 1.426  2007/09/04 20:37:06  cheshire
-<rdar://problem/5457287> mDNSResponder taking up 100% CPU in ReissueBlockedQuestions
-Reorder fields into more logical order, with AuthInfo before DuplicateOf
-
-Revision 1.425  2007/08/31 19:53:14  cheshire
-<rdar://problem/5431151> BTMM: IPv6 address lookup should not succeed if autotunnel cannot be setup
-If AutoTunnel setup fails, the code now generates a fake NXDomain error saying that the requested AAAA record does not exist
-
-Revision 1.424  2007/08/31 18:49:49  vazquez
-<rdar://problem/5393719> BTMM: Need to properly deregister when stopping BTMM
-
-Revision 1.423  2007/08/31 00:04:28  cheshire
-Added comment explaining deltime in DomainAuthInfo structure
-
-Revision 1.422  2007/08/28 23:58:42  cheshire
-Rename HostTarget -> AutoTarget
-
-Revision 1.421  2007/08/27 20:30:43  cheshire
-Only include TunnelClients list when building for OS X
-
-Revision 1.420  2007/08/23 21:47:09  vazquez
-<rdar://problem/5427316> BTMM: mDNSResponder sends NAT-PMP packets on public network
-make sure we clean up port mappings on base stations by sending a lease value of 0,
-and only send NAT-PMP packets on private networks; also save some memory by
-not using packet structs in NATTraversals.
-
-Revision 1.419  2007/08/08 21:07:47  vazquez
-<rdar://problem/5244687> BTMM: Need to advertise model information via wide-area bonjour
-
-Revision 1.418  2007/08/01 16:09:13  cheshire
-Removed unused NATTraversalInfo substructure from AuthRecord; reduced structure sizecheck values accordingly
-
-Revision 1.417  2007/08/01 03:04:59  cheshire
-Add NATTraversalInfo structures to HostnameInfo and DomainAuthInfo
-
-Revision 1.416  2007/08/01 00:04:13  cheshire
-<rdar://problem/5261696> Crash in tcpKQSocketCallback
-Half-open TCP connections were not being cancelled properly
-
-Revision 1.415  2007/07/31 02:28:35  vazquez
-<rdar://problem/3734269> NAT-PMP: Detect public IP address changes and base station reboot
-
-Revision 1.414  2007/07/30 23:34:19  cheshire
-Remove unused "udpSock" from DNSQuestion
-
-Revision 1.413  2007/07/28 01:25:56  cheshire
-<rdar://problem/4780038> BTMM: Add explicit UDP event port to LLQ setup request, to fix LLQs not working behind NAT
-
-Revision 1.412  2007/07/27 23:57:23  cheshire
-Added compile-time structure size checks
-
-Revision 1.411  2007/07/27 22:50:08  vazquez
-Allocate memory for UPnP request and reply buffers instead of using arrays
-
-Revision 1.410  2007/07/27 19:37:19  cheshire
-Moved AutomaticBrowseDomainQ into main mDNS object
-
-Revision 1.409  2007/07/27 19:30:39  cheshire
-Changed mDNSQuestionCallback parameter from mDNSBool to QC_result,
-to properly reflect tri-state nature of the possible responses
-
-Revision 1.408  2007/07/27 18:44:01  cheshire
-Rename "AnswerQuestionWithResourceRecord" to more informative "AnswerCurrentQuestionWithResourceRecord"
-
-Revision 1.407  2007/07/26 21:19:26  vazquez
-Retry port mapping with incremented port number (up to max) in order to handle
-port mapping conflicts on UPnP gateways
-
-Revision 1.406  2007/07/25 22:19:59  cheshire
-ClientTunnel structure also needs a rmt_outer_port field
-
-Revision 1.405  2007/07/25 03:05:02  vazquez
-Fixes for:
-<rdar://problem/5338913> LegacyNATTraversal: UPnP heap overflow
-<rdar://problem/5338933> LegacyNATTraversal: UPnP stack buffer overflow
-and a myriad of other security problems
-
-Revision 1.404  2007/07/24 20:22:07  cheshire
-Add AutoTunnelHostAddrActive flag
-
-Revision 1.403  2007/07/24 04:14:29  cheshire
-<rdar://problem/5356281> LLQs not working in with NAT Traversal
-
-Revision 1.402  2007/07/21 00:54:44  cheshire
-<rdar://problem/5344576> Delay IPv6 address callback until AutoTunnel route and policy is configured
-
-Revision 1.401  2007/07/20 20:01:38  cheshire
-Rename "mDNS_DomainTypeBrowseLegacy" as "mDNS_DomainTypeBrowseAutomatic"
-
-Revision 1.400  2007/07/20 00:54:18  cheshire
-<rdar://problem/4641118> Need separate SCPreferences for per-user .Mac settings
-
-Revision 1.399  2007/07/18 03:22:35  cheshire
-SetupLocalAutoTunnelInterface_internal needs to be callable from uDNS.c
-
-Revision 1.398  2007/07/18 02:26:56  cheshire
-Don't need to declare UpdateTunnels here
-
-Revision 1.397  2007/07/18 01:03:50  cheshire
-<rdar://problem/5303834> Automatically configure IPSec policy when resolving services
-Add list of client tunnels so we can automatically reconfigure when local address changes
-
-Revision 1.396  2007/07/16 23:54:48  cheshire
-<rdar://problem/5338850> Crash when removing or changing DNS keys
-
-Revision 1.395  2007/07/16 20:12:33  vazquez
-<rdar://problem/3867231> LegacyNATTraversal: Need complete rewrite
-
-Revision 1.394  2007/07/12 02:51:27  cheshire
-<rdar://problem/5303834> Automatically configure IPSec policy when resolving services
-
-Revision 1.393  2007/07/11 23:43:42  cheshire
-Rename PurgeCacheResourceRecord to mDNS_PurgeCacheResourceRecord
-
-Revision 1.392  2007/07/11 22:44:40  cheshire
-<rdar://problem/5328801> SIGHUP should purge the cache
-
-Revision 1.391  2007/07/11 20:30:45  cheshire
-<rdar://problem/5304766> Register IPSec tunnel with IPv4-only hostname and create NAT port mappings
-Added AutoTunnelTarget and AutoTunnelService to DomainAuthInfo structure
-
-Revision 1.390  2007/07/11 18:56:55  cheshire
-Added comments about AutoTunnelHostAddr and AutoTunnelLabel
-
-Revision 1.389  2007/07/11 02:44:03  cheshire
-<rdar://problem/5303807> Register IPv6-only hostname and don't create port mappings for AutoTunnel services
-Added AutoTunnel fields to structures
-
-Revision 1.388  2007/07/10 01:53:18  cheshire
-<rdar://problem/5196524> uDNS: mDNSresponder is leaking TCP connections to DNS server
-AuthRecord, ServiceRecordSet, and DNSQuestion structures need tcpInfo_t pointers
-so they can keep track of what TCP connections they open
-
-Revision 1.387  2007/07/06 18:55:15  cheshire
-Add explicit NextScheduledNATOp scheduling variable
-
-Revision 1.386  2007/07/03 20:54:11  cheshire
-Tidied up code layout of NATTraversalInfo_struct fields and comments
-
-Revision 1.385  2007/07/03 00:40:23  vazquez
-More changes for <rdar://problem/5301908> Clean up NAT state machine (necessary for 6 other fixes)
-Safely deal with packet replies and client callbacks
-
-Revision 1.384  2007/06/29 00:08:07  vazquez
-<rdar://problem/5301908> Clean up NAT state machine (necessary for 6 other fixes)
-
-Revision 1.383  2007/06/20 01:10:12  cheshire
-<rdar://problem/5280520> Sync iPhone changes into main mDNSResponder code
-
-Revision 1.382  2007/06/19 20:31:59  cheshire
-Add DNSServer_Disabled state
-Add mDNSInterfaceID for DNS servers reachable over specific interfaces
-
-Revision 1.381  2007/06/15 18:11:16  cheshire
-<rdar://problem/5174466> mDNSResponder crashed in memove() near end of MobileSafari stress test
-Made AssignDomainName more defensive when source name is garbage
-
-Revision 1.380  2007/05/25 00:04:51  cheshire
-Added comment explaining rdlength
-
-Revision 1.379  2007/05/21 18:04:40  cheshire
-Updated comments -- port_mapping_create_reply renamed to port_mapping_reply
-
-Revision 1.378  2007/05/17 19:11:46  cheshire
-Tidy up code layout
-
-Revision 1.377  2007/05/15 00:43:33  cheshire
-Remove unused regState_Cancelled
-
-Revision 1.376  2007/05/14 23:51:49  cheshire
-Added constants MAX_REVERSE_MAPPING_NAME_V4 and MAX_REVERSE_MAPPING_NAME_V6
-
-Revision 1.375  2007/05/10 21:19:18  cheshire
-Rate-limit DNS test queries to at most one per three seconds
-(useful when we have a dozen active WAB queries, and then we join a new network)
-
-Revision 1.374  2007/05/07 22:07:47  cheshire
-<rdar://problem/4738025> Enhance GetLargeResourceRecord to decompress more record types
-
-Revision 1.373  2007/05/07 20:43:45  cheshire
-<rdar://problem/4241419> Reduce the number of queries and announcements
-
-Revision 1.372  2007/05/04 22:15:29  cheshire
-Get rid of unused q->RestartTime
-
-Revision 1.371  2007/05/03 22:40:37  cheshire
-<rdar://problem/4669229> mDNSResponder ignores bogus null target in SRV record
-
-Revision 1.370  2007/05/02 22:18:09  cheshire
-Renamed NATTraversalInfo_struct context to NATTraversalContext
-
-Revision 1.369  2007/05/01 21:21:42  cheshire
-Add missing parentheses in LEASE_OPT_RDLEN definition
-
-Revision 1.368  2007/04/30 21:33:38  cheshire
-Fix crash when a callback unregisters a service while the UpdateSRVRecords() loop
-is iterating through the m->ServiceRegistrations list
-
-Revision 1.367  2007/04/28 01:31:59  cheshire
-Improve debugging support for catching memory corruption problems
-
-Revision 1.366  2007/04/27 19:28:02  cheshire
-Any code that calls StartGetZoneData needs to keep a handle to the structure, so
-it can cancel it if necessary. (First noticed as a crash in Apple Remote Desktop
--- it would start a query and then quickly cancel it, and then when
-StartGetZoneData completed, it had a dangling pointer and crashed.)
-
-Revision 1.365  2007/04/26 00:35:15  cheshire
-<rdar://problem/5140339> uDNS: Domain discovery not working over VPN
-Fixes to make sure results update correctly when connectivity changes (e.g. a DNS server
-inside the firewall may give answers where a public one gives none, and vice versa.)
-
-Revision 1.364  2007/04/24 02:07:42  cheshire
-<rdar://problem/4246187> Identical client queries should reference a single shared core query
-Deleted some more redundant code
-
-Revision 1.363  2007/04/24 00:09:47  cheshire
-Remove MappedV4 field from mDNS_struct (not actually used anywhere)
-
-Revision 1.362  2007/04/22 06:02:02  cheshire
-<rdar://problem/4615977> Query should immediately return failure when no server
-
-Revision 1.361  2007/04/21 19:43:33  cheshire
-Code tidying: represent NAT opcodes as bitwise combinations rather than numerical additions
-
-Revision 1.360  2007/04/20 21:17:24  cheshire
-For naming consistency, kDNSRecordTypeNegative should be kDNSRecordTypePacketNegative
-
-Revision 1.359  2007/04/19 22:50:53  cheshire
-<rdar://problem/4246187> Identical client queries should reference a single shared core query
-
-Revision 1.358  2007/04/19 20:06:41  cheshire
-Rename field 'Private' (sounds like a boolean) to more informative 'AuthInfo' (it's a DomainAuthInfo pointer)
-
-Revision 1.357  2007/04/19 18:14:51  cheshire
-In mDNS_AddSearchDomain_CString check for NULL pointer before calling MakeDomainNameFromDNSNameString()
-
-Revision 1.356  2007/04/18 20:56:46  cheshire
-Added mDNS_AddSearchDomain_CString macro
-
-Revision 1.355  2007/04/17 19:21:29  cheshire
-<rdar://problem/5140339> Domain discovery not working over VPN
-
-Revision 1.354  2007/04/05 22:55:34  cheshire
-<rdar://problem/5077076> Records are ending up in Lighthouse without expiry information
-
-Revision 1.353  2007/04/05 20:40:37  cheshire
-Remove unused mDNSPlatformTCPGetFlags()
-
-Revision 1.352  2007/04/04 21:48:52  cheshire
-<rdar://problem/4720694> Combine unicast authoritative answer list with multicast list
-
-Revision 1.351  2007/04/04 01:27:45  cheshire
-Update comment
-
-Revision 1.350  2007/04/04 00:03:26  cheshire
-<rdar://problem/5089862> DNSServiceQueryRecord is returning kDNSServiceErr_NoSuchRecord for empty rdata
-
-Revision 1.349  2007/04/03 19:37:58  cheshire
-Rename mDNSAddrIsv4Private() to more precise mDNSAddrIsRFC1918()
-
-Revision 1.348  2007/04/03 19:13:39  cheshire
-Added macros mDNSSameIPPort, mDNSSameOpaque16, mDNSIPPortIsZero, mDNSOpaque16IsZero
-
-Revision 1.347  2007/03/28 20:59:26  cheshire
-<rdar://problem/4743285> Remove inappropriate use of IsPrivateV4Addr()
-
-Revision 1.346  2007/03/28 15:56:37  cheshire
-<rdar://problem/5085774> Add listing of NAT port mapping and GetAddrInfo requests in SIGINFO output
-
-Revision 1.345  2007/03/22 19:29:23  cheshire
-Add comment and check to ensure StandardAuthRDSize is at least 256 bytes
-
-Revision 1.344  2007/03/22 18:31:48  cheshire
-Put dst parameter first in mDNSPlatformStrCopy/mDNSPlatformMemCopy, like conventional Posix strcpy/memcpy
-
-Revision 1.343  2007/03/22 00:49:20  cheshire
-<rdar://problem/4848295> Advertise model information via Bonjour
-
-Revision 1.342  2007/03/21 23:06:00  cheshire
-Rename uDNS_HostnameInfo to HostnameInfo; deleted some unused fields
-
-Revision 1.341  2007/03/21 20:44:11  cheshire
-Added mDNSAddressIsv4LinkLocal macro
-
-Revision 1.340  2007/03/21 00:30:02  cheshire
-<rdar://problem/4789455> Multiple errors in DNameList-related code
-
-Revision 1.339  2007/03/20 17:07:15  cheshire
-Rename "struct uDNS_TCPSocket_struct" to "TCPSocket", "struct uDNS_UDPSocket_struct" to "UDPSocket"
-
-Revision 1.338  2007/03/10 02:28:28  cheshire
-Added comment explaining NATResponseHndlr
-
-Revision 1.337  2007/03/10 02:02:58  cheshire
-<rdar://problem/4961667> uDNS: LLQ refresh response packet causes cached records to be removed from cache
-Eliminate unnecessary "InternalResponseHndlr responseCallback" function pointer
-
-Revision 1.336  2007/02/28 22:12:24  cheshire
-Get rid of unused mDNSVal32 and mDNSOpaque32fromIntVal
-
-Revision 1.335  2007/02/28 21:49:07  cheshire
-Off-by-one error: SameDomainLabelCS (case-sensitive) was stopping one character short of
-the end of the label, e.g. it would fail to detect that "chesh1" and "chesh2" are different.
-
-Revision 1.334  2007/02/28 01:44:26  cheshire
-<rdar://problem/5027863> Byte order bugs in uDNS.c, uds_daemon.c, dnssd_clientstub.c
-
-Revision 1.333  2007/02/27 22:55:22  cheshire
-Get rid of unused AllDNSLinkGroupv4 and AllDNSLinkGroupv6
-
-Revision 1.332  2007/02/27 02:48:24  cheshire
-Parameter to LNT_GetPublicIP function is IPv4 address, not anonymous "mDNSOpaque32" object
-
-Revision 1.331  2007/02/14 03:16:39  cheshire
-<rdar://problem/4789477> Eliminate unnecessary malloc/free in mDNSCore code
-
-Revision 1.330  2007/02/08 21:12:28  cheshire
-<rdar://problem/4386497> Stop reading /etc/mDNSResponder.conf on every sleep/wake
-
-Revision 1.329  2007/02/07 01:19:36  cheshire
-<rdar://problem/4849427> API: Reconcile conflicting error code values
-
-Revision 1.328  2007/01/25 00:19:40  cheshire
-Add CNAMEReferrals field to DNSQuestion_struct
-
-Revision 1.327  2007/01/23 02:56:10  cheshire
-Store negative results in the cache, instead of generating them out of pktResponseHndlr()
-
-Revision 1.326  2007/01/20 01:30:49  cheshire
-Update comments
-
-Revision 1.325  2007/01/19 18:39:11  cheshire
-Fix a bunch of parameters that should have been declared "const"
-
-Revision 1.324  2007/01/19 18:04:04  cheshire
-For naming consistency, use capital letters for RR types: rdataOpt should be rdataOPT
-
-Revision 1.323  2007/01/17 21:46:02  cheshire
-Remove redundant duplicated "isPrivate" field from LLQ_Info
-
-Revision 1.322  2007/01/10 22:51:56  cheshire
-<rdar://problem/4917539> Add support for one-shot private queries as well as long-lived private queries
-
-Revision 1.321  2007/01/09 22:37:18  cheshire
-Provide ten-second grace period for deleted keys, to give mDNSResponder
-time to delete host name before it gives up access to the required key.
-
-Revision 1.320  2007/01/05 08:30:41  cheshire
-Trim excessive "Log" checkin history from before 2006
-(checkin history still available via "cvs log ..." of course)
-
-Revision 1.319  2007/01/04 23:11:11  cheshire
-<rdar://problem/4720673> uDNS: Need to start caching unicast records
-When an automatic browsing domain is removed, generate appropriate "remove" events for legacy queries
-
-Revision 1.318  2007/01/04 20:57:48  cheshire
-Rename ReturnCNAME to ReturnIntermed (for ReturnIntermediates)
-
-Revision 1.317  2007/01/04 02:39:53  cheshire
-<rdar://problem/4030599> Hostname passed into DNSServiceRegister ignored for Wide-Area service registrations
-
-Revision 1.316  2006/12/22 20:59:49  cheshire
-<rdar://problem/4742742> Read *all* DNS keys from keychain,
- not just key for the system-wide default registration domain
-
-Revision 1.315  2006/12/20 04:07:35  cheshire
-Remove uDNS_info substructure from AuthRecord_struct
-
-Revision 1.314  2006/12/19 22:49:23  cheshire
-Remove uDNS_info substructure from ServiceRecordSet_struct
-
-Revision 1.313  2006/12/19 02:38:20  cheshire
-Get rid of unnecessary duplicate query ID field from DNSQuestion_struct
-
-Revision 1.312  2006/12/19 02:18:48  cheshire
-Get rid of unnecessary duplicate "void *context" field from DNSQuestion_struct
-
-Revision 1.311  2006/12/16 01:58:31  cheshire
-<rdar://problem/4720673> uDNS: Need to start caching unicast records
-
-Revision 1.310  2006/12/15 19:09:56  cheshire
-<rdar://problem/4769083> ValidateRData() should be stricter about malformed MX and SRV records
-Made DomainNameLength() more defensive by adding a limit parameter, so it can be
-safely used to inspect potentially malformed data received from external sources.
-Without this, a domain name that starts off apparently valid, but extends beyond the end of
-the received packet data, could have appeared valid if the random bytes are already in memory
-beyond the end of the packet just happened to have reasonable values (e.g. all zeroes).
-
-Revision 1.309  2006/12/14 03:02:37  cheshire
-<rdar://problem/4838433> Tools: dns-sd -G 0 only returns IPv6 when you have a routable IPv6 address
-
-Revision 1.308  2006/11/30 23:07:56  herscher
-<rdar://problem/4765644> uDNS: Sync up with Lighthouse changes for Private DNS
-
-Revision 1.307  2006/11/18 05:01:30  cheshire
-Preliminary support for unifying the uDNS and mDNS code,
-including caching of uDNS answers
-
-Revision 1.306  2006/11/10 07:44:04  herscher
-<rdar://problem/4825493> Fix Daemon locking failures while toggling BTMM
-
-Revision 1.305  2006/11/10 00:54:15  cheshire
-<rdar://problem/4816598> Changing case of Computer Name doesn't work
-
-Revision 1.304  2006/10/20 05:35:05  herscher
-<rdar://problem/4720713> uDNS: Merge unicast active question list with multicast list.
-
-Revision 1.303  2006/10/04 21:37:33  herscher
-Remove uDNS_info substructure from DNSQuestion_struct
-
-Revision 1.302  2006/09/26 01:53:25  herscher
-<rdar://problem/4245016> NAT Port Mapping API (for both NAT-PMP and UPnP Gateway Protocol)
-
-Revision 1.301  2006/09/15 21:20:15  cheshire
-Remove uDNS_info substructure from mDNS_struct
-
-Revision 1.300  2006/08/14 23:24:23  cheshire
-Re-licensed mDNSResponder daemon source code under Apache License, Version 2.0
-
-Revision 1.299  2006/07/15 02:01:28  cheshire
-<rdar://problem/4472014> Add Private DNS client functionality to mDNSResponder
-Fix broken "empty string" browsing
-
-Revision 1.298  2006/07/05 22:55:03  cheshire
-<rdar://problem/4472014> Add Private DNS client functionality to mDNSResponder
-Need Private field in uDNS_RegInfo
-
-Revision 1.297  2006/07/05 22:20:03  cheshire
-<rdar://problem/4472014> Add Private DNS client functionality to mDNSResponder
-
-Revision 1.296  2006/06/29 05:28:01  cheshire
-Added comment about mDNSlocal and mDNSexport
-
-Revision 1.295  2006/06/29 03:02:43  cheshire
-<rdar://problem/4607042> mDNSResponder NXDOMAIN and CNAME support
-
-Revision 1.294  2006/06/28 06:50:08  cheshire
-In future we may want to change definition of mDNSs32 from "signed long" to "signed int"
-I doubt anyone is building mDNSResponder on systems where int is 16-bits,
-but lets add a compile-time assertion to make sure.
-
-Revision 1.293  2006/06/12 18:00:43  cheshire
-To make code a little more defensive, check _ILP64 before _LP64,
-in case both are set by mistake on some platforms
-
-Revision 1.292  2006/03/19 17:00:57  cheshire
-Define symbol MaxMsg instead of using hard-coded constant value '80'
-
-Revision 1.291  2006/03/19 02:00:07  cheshire
-<rdar://problem/4073825> Improve logic for delaying packets after repeated interface transitions
-
-Revision 1.290  2006/03/08 22:42:23  cheshire
-Fix spelling mistake: LocalReverseMapomain -> LocalReverseMapDomain
-
-Revision 1.289  2006/02/26 00:54:41  cheshire
-Fixes to avoid code generation warning/error on FreeBSD 7
-
-*/
+ */
 
 #ifndef __mDNSClientAPI_h
 #define __mDNSClientAPI_h
@@ -1207,12 +279,25 @@ typedef mDNSOpaque32  mDNSv4Addr;		// An IP address is a four-byte opaque identi
 typedef mDNSOpaque128 mDNSv6Addr;		// An IPv6 address is a 16-byte opaque identifier (not an integer)
 typedef mDNSOpaque48  mDNSEthAddr;		// An Ethernet address is a six-byte opaque identifier (not an integer)
 
+// Bit operations for opaque 64 bit quantity. Uses the 32 bit quantity(l[2]) to set and clear bits
+#define mDNSNBBY 8
+#define bit_set_opaque64(op64, index) (op64.l[((index))/(sizeof(mDNSu32) * mDNSNBBY)] |= (1 << ((index) % (sizeof(mDNSu32) * mDNSNBBY))))
+#define bit_clr_opaque64(op64, index) (op64.l[((index))/(sizeof(mDNSu32) * mDNSNBBY)] &= ~(1 << ((index) % (sizeof(mDNSu32) * mDNSNBBY))))
+#define bit_get_opaque64(op64, index) (op64.l[((index))/(sizeof(mDNSu32) * mDNSNBBY)] & (1 << ((index) % (sizeof(mDNSu32) * mDNSNBBY))))
+
 enum
 	{
 	mDNSAddrType_None    = 0,
 	mDNSAddrType_IPv4    = 4,
 	mDNSAddrType_IPv6    = 6,
 	mDNSAddrType_Unknown = ~0	// Special marker value used in known answer list recording
+	};
+
+enum
+	{
+	mDNSTransport_None = 0,
+	mDNSTransport_UDP  = 1,
+	mDNSTransport_TCP  = 2
 	};
 
 typedef struct
@@ -1266,6 +351,7 @@ enum
 	mStatus_NATPortMappingDisabled    = -65565,     // NAT supports NAT-PMP or UPnP but it's disabled by the administrator
 	mStatus_NoRouter                  = -65566,
 	mStatus_PollingMode               = -65567,
+	mStatus_Timeout                   = -65568,
 	// -65568 to -65786 currently unused; available for allocation
 
 	// tcp connection status
@@ -1286,7 +372,8 @@ typedef mDNSs32 mStatus;
 #define MAX_DOMAIN_LABEL 63
 typedef struct { mDNSu8 c[ 64]; } domainlabel;		// One label: length byte and up to 63 characters
 
-// RFC 1034/1035/2181 specify that a domain name, including length bytes, data bytes, and terminating zero, may be up to 256 bytes long
+// RFC 1034/1035/2181 specify that a domain name (length bytes and data bytes) may be up to 255 bytes long,
+// plus the terminating zero at the end makes 256 bytes total in the on-the-wire format.
 #define MAX_DOMAIN_NAME 256
 typedef struct { mDNSu8 c[256]; } domainname;		// Up to 256 bytes of length-prefixed domainlabels
 
@@ -1323,12 +410,32 @@ typedef struct { mDNSu8 c[256]; } UTF8str255;		// Null-terminated C string
 #define kStandardTTL (3600UL * 100 / 80)
 #define kHostNameTTL 120UL
 
+// Some applications want to register their SRV records with a lower ttl so that in case the server
+// using a dynamic port number restarts, the clients will not have stale information for more than
+// 10 seconds
+
+#define kHostNameSmallTTL 10UL
+
+
+// Multicast DNS uses announcements (gratuitous responses) to update peer caches.
+// This means it is feasible to use relatively larger TTL values than we might otherwise
+// use, because we have a cache coherency protocol to keep the peer caches up to date.
+// With Unicast DNS, once an authoritative server gives a record with a certain TTL value to a client
+// or caching server, that client or caching server is entitled to hold onto the record until its TTL
+// expires, and has no obligation to contact the authoritative server again until that time arrives.
+// This means that whereas Multicast DNS can use announcements to pre-emptively update stale data
+// before it would otherwise have expired, standard Unicast DNS (not using LLQs) has no equivalent
+// mechanism, and TTL expiry is the *only* mechanism by which stale data gets deleted. Because of this,
+// we currently limit the TTL to ten seconds in such cases where no dynamic cache updating is possible.
+#define kStaticCacheTTL 10
+
 #define DefaultTTLforRRType(X) (((X) == kDNSType_A || (X) == kDNSType_AAAA || (X) == kDNSType_SRV) ? kHostNameTTL : kStandardTTL)
 
 typedef struct AuthRecord_struct AuthRecord;
 typedef struct ServiceRecordSet_struct ServiceRecordSet;
 typedef struct CacheRecord_struct CacheRecord;
 typedef struct CacheGroup_struct CacheGroup;
+typedef struct AuthGroup_struct AuthGroup;
 typedef struct DNSQuestion_struct DNSQuestion;
 typedef struct ZoneData_struct ZoneData;
 typedef struct mDNS_struct mDNS;
@@ -1378,10 +485,10 @@ typedef struct tcpInfo_t
 	DNSMessage        request;
 	int               requestLen;
 	DNSQuestion      *question;   // For queries
-	ServiceRecordSet *srs;        // For service record updates
 	AuthRecord       *rr;         // For record updates
 	mDNSAddr          Addr;
 	mDNSIPPort        Port;
+	mDNSIPPort        SrcPort;
 	DNSMessage       *reply;
 	mDNSu16           replylen;
 	unsigned long     nread;
@@ -1422,7 +529,7 @@ typedef packedstruct
 	mDNSOpaque16 id;
 	mDNSOpaque16 flagsfrags;
 	mDNSu8       ttl;
-	mDNSu8       protocol;
+	mDNSu8       protocol;	// Payload type: 0x06 = TCP, 0x11 = UDP
 	mDNSu16      checksum;
 	mDNSv4Addr   src;
 	mDNSv4Addr   dst;
@@ -1432,7 +539,7 @@ typedef packedstruct
 	{
 	mDNSu32      vcf;		// Version, Traffic Class, Flow Label
 	mDNSu16      len;		// Payload Length
-	mDNSu8       protocol;	// Type of next header: 0x06 = TCP, 0x11 = UDP, 0x3A = ICMPv6
+	mDNSu8       pro;		// Type of next header: 0x06 = TCP, 0x11 = UDP, 0x3A = ICMPv6
 	mDNSu8       ttl;		// Hop Limit
 	mDNSv6Addr   src;
 	mDNSv6Addr   dst;
@@ -1440,20 +547,19 @@ typedef packedstruct
 
 typedef packedstruct
 	{
-	mDNSu8       type;		// 0x87 == Neighbor Solicitation, 0x88 == Neighbor Advertisement
-	mDNSu8       code;
-	mDNSu16      checksum;
-	mDNSu32      reserved;
-	mDNSv6Addr   target;
-	} IPv6ND;				// 24 bytes
+	mDNSv6Addr   src;
+	mDNSv6Addr   dst;
+	mDNSOpaque32 len;
+	mDNSOpaque32 pro;
+	} IPv6PseudoHeader;		// 40 bytes
 
-typedef packedstruct
+typedef union
 	{
-	mDNSIPPort   src;
-	mDNSIPPort   dst;
-	mDNSu16      len;		// Length including UDP header (ie. minimum value is 8 bytes)
-	mDNSu16      checksum;
-	} UDPHeader;			// 8 bytes
+	mDNSu8       bytes[20];
+	ARP_EthIP    arp;
+	IPv4Header   v4;
+	IPv6Header   v6;
+	} NetworkLayerPacket;
 
 typedef packedstruct
 	{
@@ -1466,7 +572,55 @@ typedef packedstruct
 	mDNSu16      window;
 	mDNSu16      checksum;
 	mDNSu16      urgent;
-	} TCPHeader;			// 20 bytes
+	} TCPHeader;			// 20 bytes; IP protocol type 0x06
+
+typedef packedstruct
+	{
+	mDNSIPPort   src;
+	mDNSIPPort   dst;
+	mDNSu16      len;		// Length including UDP header (i.e. minimum value is 8 bytes)
+	mDNSu16      checksum;
+	} UDPHeader;			// 8 bytes; IP protocol type 0x11
+
+typedef packedstruct
+	{
+	mDNSu8       type;		// 0x87 == Neighbor Solicitation, 0x88 == Neighbor Advertisement
+	mDNSu8       code;
+	mDNSu16      checksum;
+	mDNSu32      flags_res;	// R/S/O flags and reserved bits
+	mDNSv6Addr   target;
+	// Typically 8 bytes of options are also present
+	} IPv6NDP;				// 24 bytes or more; IP protocol type 0x3A
+
+#define NDP_Sol 0x87
+#define NDP_Adv 0x88
+
+#define NDP_Router    0x80
+#define NDP_Solicited 0x40
+#define NDP_Override  0x20
+
+#define NDP_SrcLL 1
+#define NDP_TgtLL 2
+
+typedef union
+	{
+	mDNSu8       bytes[20];
+	TCPHeader    tcp;
+	UDPHeader    udp;
+	IPv6NDP      ndp;
+	} TransportLayerPacket;
+
+typedef packedstruct
+	{
+	mDNSOpaque64 InitiatorCookie;
+	mDNSOpaque64 ResponderCookie;
+	mDNSu8       NextPayload;
+	mDNSu8       Version;
+	mDNSu8       ExchangeType;
+	mDNSu8       Flags;
+	mDNSOpaque32 MessageID;
+	mDNSu32      Length;
+	} IKEHeader;			// 28 bytes
 
 // ***************************************************************************
 #if 0
@@ -1541,7 +695,9 @@ enum
 	kDNSRecordTypeKnownUnique      = 0x20,	// Known Unique means mDNS can assume name is unique without checking
 	                                        // For Dynamic Update records, Known Unique means the record must already exist on the server.
 	kDNSRecordTypeUniqueMask       = (kDNSRecordTypeUnique | kDNSRecordTypeVerified | kDNSRecordTypeKnownUnique),
-	kDNSRecordTypeActiveMask       = (kDNSRecordTypeAdvisory | kDNSRecordTypeShared | kDNSRecordTypeVerified | kDNSRecordTypeKnownUnique),
+	kDNSRecordTypeActiveSharedMask = (kDNSRecordTypeAdvisory         | kDNSRecordTypeShared),
+	kDNSRecordTypeActiveUniqueMask = (kDNSRecordTypeVerified         | kDNSRecordTypeKnownUnique),
+	kDNSRecordTypeActiveMask       = (kDNSRecordTypeActiveSharedMask | kDNSRecordTypeActiveUniqueMask),
 
 	kDNSRecordTypePacketAdd        = 0x80,	// Received in the Additional  Section of a DNS Response
 	kDNSRecordTypePacketAddUnique  = 0x90,	// Received in the Additional  Section of a DNS Response with kDNSClass_UniqueRRSet set
@@ -1552,7 +708,7 @@ enum
 
 	kDNSRecordTypePacketNegative   = 0xF0,	// Pseudo-RR generated to cache non-existence results like NXDomain
 
-	kDNSRecordTypePacketUniqueMask = 0x10	// True for PacketAddUnique, PacketAnsUnique, PacketAuthUnique
+	kDNSRecordTypePacketUniqueMask = 0x10	// True for PacketAddUnique, PacketAnsUnique, PacketAuthUnique, kDNSRecordTypePacketNegative
 	};
 
 typedef packedstruct { mDNSu16 priority; mDNSu16 weight; mDNSIPPort port; domainname target;   } rdataSRV;
@@ -1625,16 +781,12 @@ typedef packedstruct
 								(X) == DNSOpt_OwnerData_ID_Wake_PW4_Space - 4 || \
 								(X) == DNSOpt_OwnerData_ID_Wake_PW6_Space - 4    )
 
-#define ValidDNSOpt(O) (((O)->opt == kDNSOpt_LLQ   && (O)->optlen == DNSOpt_LLQData_Space   - 4) || \
-						((O)->opt == kDNSOpt_Lease && (O)->optlen == DNSOpt_LeaseData_Space - 4) || \
-						((O)->opt == kDNSOpt_Owner && ValidOwnerLength((O)->optlen)            )    )
-
-#define DNSOpt_Owner_Space(O) (mDNSSameEthAddress(&(O)->u.owner.HMAC, &(O)->u.owner.IMAC) ? DNSOpt_OwnerData_ID_Space : DNSOpt_OwnerData_ID_Wake_Space)
+#define DNSOpt_Owner_Space(A,B) (mDNSSameEthAddress((A),(B)) ? DNSOpt_OwnerData_ID_Space : DNSOpt_OwnerData_ID_Wake_Space)
 
 #define DNSOpt_Data_Space(O) (                                  \
 	(O)->opt == kDNSOpt_LLQ   ? DNSOpt_LLQData_Space   :        \
 	(O)->opt == kDNSOpt_Lease ? DNSOpt_LeaseData_Space :        \
-	(O)->opt == kDNSOpt_Owner ? DNSOpt_Owner_Space(O)  : 0x10000)
+	(O)->opt == kDNSOpt_Owner ? DNSOpt_Owner_Space(&(O)->u.owner.HMAC, &(O)->u.owner.IMAC) : 0x10000)
 
 // A maximal NSEC record is:
 //   256 bytes domainname 'nextname'
@@ -1669,15 +821,15 @@ typedef struct
 // On 64-bit, the pointers in a CacheRecord are bigger, and that creates 8 bytes more space for the name in a CacheGroup
 #if ENABLE_MULTI_PACKET_QUERY_SNOOPING
 	#if defined(_ILP64) || defined(__ILP64__) || defined(_LP64) || defined(__LP64__) || defined(_WIN64)
-	#define InlineCacheGroupNameSize 152
+	#define InlineCacheGroupNameSize 160
 	#else
-	#define InlineCacheGroupNameSize 144
+	#define InlineCacheGroupNameSize 148
 	#endif
 #else
 	#if defined(_ILP64) || defined(__ILP64__) || defined(_LP64) || defined(__LP64__) || defined(_WIN64)
-	#define InlineCacheGroupNameSize 136
+	#define InlineCacheGroupNameSize 144
 	#else
-	#define InlineCacheGroupNameSize 128
+	#define InlineCacheGroupNameSize 132
 	#endif
 #endif
 
@@ -1737,7 +889,7 @@ typedef void mDNSRecordCallback(mDNS *const m, AuthRecord *const rr, mStatus res
 // Restrictions: An mDNSRecordUpdateCallback may not make any mDNS API calls.
 // The intent of this callback is to allow the client to free memory, if necessary.
 // The internal data structures of the mDNS code may not be in a state where mDNS API calls may be made safely.
-typedef void mDNSRecordUpdateCallback(mDNS *const m, AuthRecord *const rr, RData *OldRData);
+typedef void mDNSRecordUpdateCallback(mDNS *const m, AuthRecord *const rr, RData *OldRData, mDNSu16 OldRDLen);
 
 // ***************************************************************************
 #if 0
@@ -1829,9 +981,9 @@ struct tcpLNTInfo_struct
 	LNTOp_t           op;				// operation performed using this connection
 	mDNSAddr          Address;			// router address
 	mDNSIPPort        Port;				// router port
-	mDNSs8           *Request;			// xml request to router
+	mDNSu8           *Request;			// xml request to router
 	int               requestLen;
-	mDNSs8           *Reply;			// xml reply from router
+	mDNSu8           *Reply;			// xml reply from router
 	int               replyLen;
 	unsigned long     nread;			// number of bytes read so far
 	int               retries;			// number of times we've tried to do this port mapping
@@ -1882,6 +1034,52 @@ struct NATTraversalInfo_struct
 	void                       *clientContext;
 	};
 
+enum
+	{
+	DNSServer_Untested = 0,
+	DNSServer_Passed   = 1,
+	DNSServer_Failed   = 2,
+	DNSServer_Disabled = 3
+	};
+
+enum
+	{
+	DNSServer_FlagDelete = 1,
+	DNSServer_FlagNew    = 2
+	};
+
+enum
+	{
+	McastResolver_FlagDelete = 1,
+	McastResolver_FlagNew    = 2
+	};
+
+typedef struct McastResolver
+	{
+	struct McastResolver *next;
+	mDNSInterfaceID interface;
+	mDNSu32         flags;		// Set when we're planning to delete this from the list
+	domainname      domain;
+	mDNSu32         timeout;	// timeout value for questions
+	} McastResolver;
+
+typedef struct DNSServer
+	{
+	struct DNSServer *next;
+	mDNSInterfaceID interface;	// For specialized uses; we can have DNS servers reachable over specific interfaces
+	mDNSAddr        addr;
+	mDNSIPPort      port;
+	mDNSOpaque16    testid;
+	mDNSu32         flags;		// Set when we're planning to delete this from the list
+	mDNSu32         teststate;	// Have we sent bug-detection query to this server?
+	mDNSs32         lasttest;	// Time we sent last bug-detection query to this server
+	domainname      domain;		// name->server matching for "split dns"
+	mDNSs32			penaltyTime; // amount of time this server is penalized
+	mDNSBool		scoped;		// interface should be matched against question only
+								// if scoped is set
+	mDNSu32			timeout;	// timeout value for questions
+	} DNSServer;
+
 typedef struct							// Size is 36 bytes when compiling for 32-bit; 48 when compiling for 64-bit
 	{
 	mDNSu8           RecordType;		// See enum above
@@ -1907,24 +1105,22 @@ typedef struct							// Size is 36 bytes when compiling for 32-bit; 48 when comp
 										// that are interface-specific (e.g. address records, especially linklocal addresses)
 	const domainname *name;
 	RData           *rdata;				// Pointer to storage for this rdata
+	DNSServer       *rDNSServer;		// Unicast DNS server authoritative for this entry;null for multicast
 	} ResourceRecord;
 
 // Unless otherwise noted, states may apply to either independent record registrations or service registrations
 typedef enum
 	{
 	regState_Zero              = 0,
-	regState_FetchingZoneData  = 1,     // getting info - update not sent
-	regState_Pending           = 2,     // update sent, reply not received
-	regState_Registered        = 3,     // update sent, reply received
-	regState_DeregPending      = 4,     // dereg sent, reply not received
-	regState_DeregDeferred     = 5,     // dereg requested while in Pending state - send dereg AFTER registration is confirmed
-	regState_Unregistered      = 8,     // not in any list
-	regState_Refresh           = 9,     // outstanding refresh (or target change) message
-	regState_NATMap            = 10,    // establishing NAT port mapping (service registrations only)
-	regState_UpdatePending     = 11,    // update in flight as result of mDNS_Update call
-	regState_NoTarget          = 12,    // service registration pending registration of hostname (ServiceRegistrations only)
-	regState_ExtraQueued       = 13,    // extra record to be registered upon completion of service registration (RecordRegistrations only)
-	regState_NATError          = 14     // unable to complete NAT traversal
+	regState_Pending           = 1,     // update sent, reply not received
+	regState_Registered        = 2,     // update sent, reply received
+	regState_DeregPending      = 3,     // dereg sent, reply not received
+	regState_Unregistered      = 4,     // not in any list
+	regState_Refresh           = 5,     // outstanding refresh (or target change) message
+	regState_NATMap            = 6,     // establishing NAT port mapping 
+	regState_UpdatePending     = 7,     // update in flight as result of mDNS_Update call
+	regState_NoTarget          = 8,     // SRV Record registration pending registration of hostname 
+	regState_NATError          = 9     // unable to complete NAT traversal
 	} regState_t;
 
 enum
@@ -1933,6 +1129,51 @@ enum
 	Target_AutoHost = 1,
 	Target_AutoHostAndNATMAP = 2
 	};
+
+typedef enum
+	{
+	mergeState_Zero = 0,
+	mergeState_DontMerge = 1  // Set on fatal error conditions to disable merging
+	} mergeState_t;
+
+struct AuthGroup_struct				// Header object for a list of AuthRecords with the same name
+	{
+	AuthGroup      *next;				// Next AuthGroup object in this hash table bucket
+	mDNSu32         namehash;			// Name-based (i.e. case insensitive) hash of name
+	AuthRecord     *members;			// List of CacheRecords with this same name
+	AuthRecord    **rrauth_tail;		// Tail end of that list
+	domainname     *name;				// Common name for all AuthRecords in this list
+	AuthRecord     *NewLocalOnlyRecords;
+	// Size to here is 20 bytes when compiling 32-bit; 40 bytes when compiling 64-bit
+	mDNSu8          namestorage[InlineCacheGroupNameSize];
+	};
+
+#define AUTH_HASH_SLOTS 499
+#define FORALL_AUTHRECORDS(SLOT,AG,AR)                           	\
+	for ((SLOT) = 0; (SLOT) < AUTH_HASH_SLOTS; (SLOT)++)         	\
+		for ((AG)=m->rrauth.rrauth_hash[(SLOT)]; (AG); (AG)=(AG)->next) \
+			for ((AR) = (AG)->members; (AR); (AR)=(AR)->next)
+
+typedef union AuthEntity_union AuthEntity;
+union AuthEntity_union { AuthEntity *next; AuthGroup ag; };
+typedef struct {
+	mDNSu32 rrauth_size;				// Total number of available auth entries
+	mDNSu32 rrauth_totalused;			// Number of auth entries currently occupied
+	mDNSu32 rrauth_report;
+	mDNSu8  rrauth_lock;				// For debugging: Set at times when these lists may not be modified
+	AuthEntity *rrauth_free;
+	AuthGroup *rrauth_hash[AUTH_HASH_SLOTS];
+}AuthHash;
+
+// AuthRecordAny includes mDNSInterface_Any and interface specific auth records (anything
+// other than P2P or LocalOnly)
+typedef enum 
+	{
+	AuthRecordAny, 				// registered for *Any, NOT including P2P interfaces
+	AuthRecordAnyIncludeP2P, 	// registered for *Any, including P2P interfaces
+	AuthRecordLocalOnly, 
+	AuthRecordP2P				// discovered over D2D/P2P framework
+	} AuthRecType;
 
 struct AuthRecord_struct
 	{
@@ -1956,11 +1197,11 @@ struct AuthRecord_struct
 	mDNSu8          AllowRemoteQuery;	// Set if we allow hosts not on the local link to query this record
 	mDNSu8          ForceMCast;			// Set by client to advertise solely via multicast, even for apparently unicast names
 
-	OwnerOptData    WakeUp;				// Fpr Sleep Proxy records, MAC address of original owner (so we can wake it)
+	OwnerOptData    WakeUp;				// WakeUp.HMAC.l[0] nonzero indicates that this is a Sleep Proxy record
 	mDNSAddr        AddressProxy;		// For reverse-mapping Sleep Proxy PTR records, address in question
 	mDNSs32         TimeRcvd;			// In platform time units
 	mDNSs32         TimeExpire;			// In platform time units
-	
+	AuthRecType     ARType;             // LocalOnly, P2P or Normal ?
 
 	// Field Group 3: Transient state for Authoritative Records
 	mDNSu8          Acknowledged;		// Set if we've given the success callback to the client
@@ -2003,15 +1244,17 @@ struct AuthRecord_struct
 	mDNSBool     Private;		// If zone is private, DNS updates may have to be encrypted to prevent eavesdropping
 	mDNSOpaque16 updateid;		// Identifier to match update request and response -- also used when transferring records to Sleep Proxy
 	const domainname *zone;		// the zone that is updated
-	mDNSAddr     UpdateServer;	// DNS server that handles updates for this zone
-	mDNSIPPort   UpdatePort;	// port on which server accepts dynamic updates
-								// !!!KRS not technically correct to cache longer than TTL
-								// SDC Perhaps should keep a reference to the relevant SRV record in the cache?
 	ZoneData  *nta;
 	struct tcpInfo_t *tcp;
+	NATTraversalInfo  NATinfo;
+	mDNSBool SRVChanged;       // temporarily deregistered service because its SRV target or port changed
+	mergeState_t  mState;      // Unicast Record Registrations merge state
+	mDNSu8		  refreshCount; // Number of refreshes to the server
+	mStatus		  updateError;  // Record update resulted in Error ?
 
 	// uDNS_UpdateRecord support fields
 	// Do we really need all these in *addition* to NewRData and newrdlength above?
+	void *UpdateContext;	// Context parameter for the update callback function
 	mDNSu16 OrigRDLen;		// previously registered, being deleted
 	mDNSu16 InFlightRDLen;	// currently being registered
 	mDNSu16 QueuedRDLen;	// pending operation (re-transmitting if necessary) THEN register the queued update
@@ -2027,8 +1270,36 @@ struct AuthRecord_struct
 	// DO NOT ADD ANY MORE FIELDS HERE
 	};
 
+// IsLocalDomain alone is not sufficient to determine that a record is mDNS or uDNS. By default domain names within
+// the "local" pseudo-TLD (and within the IPv4 and IPv6 link-local reverse mapping domains) are automatically treated
+// as mDNS records, but it is also possible to force any record (even those not within one of the inherently local
+// domains) to be handled as an mDNS record by setting the ForceMCast flag, or by setting a non-zero InterfaceID.
+// For example, the reverse-mapping PTR record created in AdvertiseInterface sets the ForceMCast flag, since it points to
+// a dot-local hostname, and therefore it would make no sense to register this record with a wide-area Unicast DNS server.
+// The same applies to Sleep Proxy records, which we will answer for when queried via mDNS, but we never want to try
+// to register them with a wide-area Unicast DNS server -- and we probably don't have the required credentials anyway.
+// Currently we have no concept of a wide-area uDNS record scoped to a particular interface, so if the InterfaceID is
+// nonzero we treat this the same as ForceMCast.
+// Note: Question_uDNS(Q) is used in *only* one place -- on entry to mDNS_StartQuery_internal, to decide whether to set TargetQID.
+// Everywhere else in the code, the determination of whether a question is unicast is made by checking to see if TargetQID is nonzero.
 #define AuthRecord_uDNS(R) ((R)->resrec.InterfaceID == mDNSInterface_Any && !(R)->ForceMCast && !IsLocalDomain((R)->resrec.name))
-#define Question_uDNS(Q)   ((Q)->InterfaceID == mDNSInterface_Any        && !(Q)->ForceMCast && !IsLocalDomain(&(Q)->qname))
+#define Question_uDNS(Q)   ((Q)->InterfaceID == mDNSInterface_Unicast || \
+	((Q)->InterfaceID != mDNSInterface_LocalOnly && (Q)->InterfaceID != mDNSInterface_P2P && !(Q)->ForceMCast && !IsLocalDomain(&(Q)->qname)))
+
+#define RRLocalOnly(rr) ((rr)->ARType == AuthRecordLocalOnly || (rr)->ARType == AuthRecordP2P)
+
+#define RRAny(rr) ((rr)->ARType == AuthRecordAny || (rr)->ARType == AuthRecordAnyIncludeP2P)
+
+// Question (A or AAAA) that is suppressed currently because IPv4 or IPv6 address
+// is not available locally for A or AAAA question respectively
+#define QuerySuppressed(Q) ((Q)->SuppressUnusable && (Q)->SuppressQuery)
+
+#define PrivateQuery(Q) ((Q)->AuthInfo && (Q)->AuthInfo->AutoTunnel)
+
+// Normally we always lookup the cache and /etc/hosts before sending the query on the wire. For single label
+// queries (A and AAAA) that are unqualified (indicated by AppendSearchDomains), we want to append search
+// domains before we try them as such
+#define ApplySearchDomainsFirst(q) ((q)->AppendSearchDomains && (CountLabels(&((q)->qname))) == 1)
 
 // Wrapper struct for Auth Records for higher-level code that cannot use the AuthRecord's ->next pointer field
 typedef struct ARListElem
@@ -2048,6 +1319,7 @@ struct CacheGroup_struct				// Header object for a list of CacheRecords with the
 	mDNSu8          namestorage[InlineCacheGroupNameSize];
 	};
 
+
 struct CacheRecord_struct
 	{
 	CacheRecord    *next;				// Next in list; first element of structure for efficiency reasons
@@ -2059,7 +1331,7 @@ struct CacheRecord_struct
 	mDNSs32         DelayDelivery;		// Set if we want to defer delivery of this answer to local clients
 	mDNSs32         NextRequiredQuery;	// In platform time units
 	mDNSs32         LastUsed;			// In platform time units
-	DNSQuestion    *CRActiveQuestion;	// Points to an active question referencing this answer
+	DNSQuestion    *CRActiveQuestion;	// Points to an active question referencing this answer. Can never point to a NewQuestion.
 	mDNSu32         UnansweredQueries;	// Number of times we've issued a query for this record without getting an answer
 	mDNSs32         LastUnansweredTime;	// In platform time units; last time we incremented UnansweredQueries
 #if ENABLE_MULTI_PACKET_QUERY_SNOOPING
@@ -2096,33 +1368,6 @@ typedef struct HostnameInfo
 	const void *StatusContext;                // Client Context
 	} HostnameInfo;
 
-enum
-	{
-	DNSServer_Untested = 0,
-	DNSServer_Passed   = 1,
-	DNSServer_Failed   = 2,
-	DNSServer_Disabled = 3
-	};
-
-enum
-	{
-	DNSServer_FlagDelete = 1,
-	DNSServer_FlagNew    = 2
-	};
-
-typedef struct DNSServer
-	{
-	struct DNSServer *next;
-	mDNSInterfaceID interface;	// For specialized uses; we can have DNS servers reachable over specific interfaces
-	mDNSAddr        addr;
-	mDNSIPPort      port;
-	mDNSOpaque16    testid;
-	mDNSu32         flags;		// Set when we're planning to delete this from the list
-	mDNSu32         teststate;	// Have we sent bug-detection query to this server?
-	mDNSs32         lasttest;	// Time we sent last bug-detection query to this server
-	domainname      domain;		// name->server matching for "split dns"
-	} DNSServer;
-
 typedef struct ExtraResourceRecord_struct ExtraResourceRecord;
 struct ExtraResourceRecord_struct
 	{
@@ -2137,49 +1382,21 @@ struct ExtraResourceRecord_struct
 // Note: Within an mDNSServiceCallback mDNS all API calls are legal except mDNS_Init(), mDNS_Exit(), mDNS_Execute()
 typedef void mDNSServiceCallback(mDNS *const m, ServiceRecordSet *const sr, mStatus result);
 
-// A ServiceRecordSet is basically a convenience structure to group together
-// the PTR/SRV/TXT records that make up a standard service registration
-// It contains its own ServiceCallback+ServiceContext to report aggregate results up to the next layer of software above
+// A ServiceRecordSet has no special meaning to the core code of the Multicast DNS protocol engine;
+// it is just a convenience structure to group together the records that make up a standard service
+// registration so that they can be allocted and deallocted together as a single memory object.
+// It contains its own ServiceCallback+ServiceContext to report aggregate results up to the next layer of software above.
 // It also contains:
+//  * the basic PTR/SRV/TXT triplet used to represent any DNS-SD service
 //  * the "_services" PTR record for service enumeration
-//  * the optional target host name (for proxy registrations)
 //  * the optional list of SubType PTR records
 //  * the optional list of additional records attached to the service set (e.g. iChat pictures)
-//
-// ... and a bunch of stuff related to uDNS, some of which could be simplified or eliminated
 
 struct ServiceRecordSet_struct
 	{
 	// These internal state fields are used internally by mDNSCore; the client layer needn't be concerned with them.
 	// No fields need to be set up by the client prior to calling mDNS_RegisterService();
 	// all required data is passed as parameters to that function.
-
-	// Begin uDNS info ****************
-	// All of these fields should be eliminated
-
-	// Note: The current uDNS code keeps an explicit list of registered services, and handles them
-	// differently to how individual records are treated (this is probably a mistake). What this means is
-	// that ServiceRecordSets for uDNS are kept in a linked list, whereas ServiceRecordSets for mDNS exist
-	// just as a convenient placeholder to group the component records together and are not kept on any list.
-	ServiceRecordSet *uDNS_next;
-	regState_t        state;
-	mDNSBool          srs_uselease;				// dynamic update contains (should contain) lease option
-	mDNSBool          TestForSelfConflict;		// on name conflict, check if we're just seeing our own orphaned records
-	mDNSBool          Private;					// If zone is private, DNS updates may have to be encrypted to prevent eavesdropping
-	ZoneData         *srs_nta;
-	mDNSOpaque16      id;
-	domainname        zone;						// the zone that is updated
-	mDNSAddr          SRSUpdateServer;			// primary name server for the record's zone  !!!KRS not technically correct to cache longer than TTL
-	mDNSIPPort        SRSUpdatePort;			// port on which server accepts dynamic updates
-	NATTraversalInfo  NATinfo;
-	mDNSBool          ClientCallbackDeferred;	// invoke client callback on completion of pending operation(s)
-	mStatus           DeferredStatus;			// status to deliver when above flag is set
-	mDNSBool          SRVUpdateDeferred;		// do we need to change target or port once current operation completes?
-	mDNSBool          SRVChanged;				// temporarily deregistered service because its SRV target or port changed
-	struct tcpInfo_t *tcp;
-
-	// End uDNS info ****************
-
 	mDNSServiceCallback *ServiceCallback;
 	void                *ServiceContext;
 	mDNSBool             Conflict;	// Set if this record set was forcibly deregistered because of a conflict
@@ -2202,7 +1419,7 @@ struct ServiceRecordSet_struct
 #endif
 
 // We record the last eight instances of each duplicate query
-// This gives us v4/v6 on each of Ethernet/AirPort and Firewire, and two free slots "for future expansion"
+// This gives us v4/v6 on each of Ethernet, AirPort and Firewire, and two free slots "for future expansion"
 // If the host has more active interfaces that this it is not fatal -- duplicate question suppression will degrade gracefully.
 // Since we will still remember the last eight, the busiest interfaces will still get the effective duplicate question suppression.
 #define DupSuppressInfoSize 8
@@ -2252,23 +1469,29 @@ enum { NoAnswer_Normal = 0, NoAnswer_Suspended = 1, NoAnswer_Fail = 2 };
 #define MD5_LEN     16
 
 #define AutoTunnelUnregistered(X) (                                              \
-	(X)->AutoTunnelHostRecord.resrec.RecordType == kDNSRecordTypeUnregistered && \
-	(X)->AutoTunnelDeviceInfo.resrec.RecordType == kDNSRecordTypeUnregistered && \
-	(X)->AutoTunnelService.   resrec.RecordType == kDNSRecordTypeUnregistered    )
+	(X)->AutoTunnelHostRecord. resrec.RecordType == kDNSRecordTypeUnregistered && \
+	(X)->AutoTunnelDeviceInfo. resrec.RecordType == kDNSRecordTypeUnregistered && \
+	(X)->AutoTunnelService.    resrec.RecordType == kDNSRecordTypeUnregistered && \
+	(X)->AutoTunnel6Record.    resrec.RecordType == kDNSRecordTypeUnregistered && \
+	(X)->AutoTunnel6MetaRecord.resrec.RecordType == kDNSRecordTypeUnregistered    )
 
 // Internal data structure to maintain authentication information
 typedef struct DomainAuthInfo
 	{
 	struct DomainAuthInfo *next;
 	mDNSs32          deltime;				// If we're planning to delete this DomainAuthInfo, the time we want it deleted
-	mDNSBool         AutoTunnel;
+	const char*      AutoTunnel;            // If NULL, this is not an AutoTunnel DAI. Otherwise, this is prepended to the IPSec identifier
 	AuthRecord       AutoTunnelHostRecord;	// User-visible hostname; used as SRV target for AutoTunnel services
 	AuthRecord       AutoTunnelTarget;		// Opaque hostname of tunnel endpoint; used as SRV target for AutoTunnelService record
 	AuthRecord       AutoTunnelDeviceInfo;	// Device info of tunnel endpoint
 	AuthRecord       AutoTunnelService;		// Service record (possibly NAT-Mapped) of IKE daemon implementing tunnel endpoint
+	AuthRecord       AutoTunnel6Record;     // AutoTunnel AAAA record obtained from awacsd
+	AuthRecord       AutoTunnel6MetaRecord; // Notify remote peers to connect to the relay servers for potential outbound connections from this host
 	NATTraversalInfo AutoTunnelNAT;
 	domainname       domain;
 	domainname       keyname;
+	domainname       hostname;
+	mDNSIPPort       port;
 	char             b64keydata[32];
 	mDNSu8           keydata_ipad[HMAC_LEN];	// padded key for inner hash rounds
 	mDNSu8           keydata_opad[HMAC_LEN];	// padded key for outer hash rounds
@@ -2277,6 +1500,11 @@ typedef struct DomainAuthInfo
 // Note: Within an mDNSQuestionCallback mDNS all API calls are legal except mDNS_Init(), mDNS_Exit(), mDNS_Execute()
 typedef enum { QC_rmv = 0, QC_add = 1, QC_addnocache = 2 } QC_result;
 typedef void mDNSQuestionCallback(mDNS *const m, DNSQuestion *question, const ResourceRecord *const answer, QC_result AddRecord);
+
+#define NextQSendTime(Q)  ((Q)->LastQTime + (Q)->ThisQInterval)
+#define ActiveQuestion(Q) ((Q)->ThisQInterval > 0 && !(Q)->DuplicateOf)
+#define TimeToSendThisQuestion(Q,time) (ActiveQuestion(Q) && (time) - NextQSendTime(Q) >= 0)
+
 struct DNSQuestion_struct
 	{
 	// Internal state fields. These are used internally by mDNSCore; the client layer needn't be concerned with them.
@@ -2305,23 +1533,37 @@ struct DNSQuestion_struct
 	mDNSu32               RequestUnicast;	// Non-zero if we want to send query with kDNSQClass_UnicastResponse bit set
 	mDNSs32               LastQTxTime;		// Last time this Q was sent on one (but not necessarily all) interfaces
 	mDNSu32               CNAMEReferrals;	// Count of how many CNAME redirections we've done
+	mDNSBool              SuppressQuery;    // This query should be suppressed and not sent on the wire 
+	mDNSu8                LOAddressAnswers; // Number of answers from the local only auth records that are
+		                                    // answering A, AAAA and CNAME (/etc/hosts)
+	mDNSu8                WakeOnResolveCount; // Number of wakes that should be sent on resolve
+	mDNSs32               StopTime;			// Time this question should be stopped by giving them a negative answer
 
 	// Wide Area fields. These are used internally by the uDNS core
 	UDPSocket            *LocalSocket;
+	mDNSBool             deliverAddEvents;  // Change in DNSSserver requiring to deliver ADD events
 	DNSServer            *qDNSServer;		// Caching server for this query (in the absence of an SRV saying otherwise)
-	mDNSu8                unansweredQueries;// The number of unanswered queries to this server
+	mDNSOpaque64          validDNSServers;  // Valid DNSServers for this question
+	mDNSu16              noServerResponse;  // At least one server did not respond.
+	mDNSu16              triedAllServersOnce; // Tried all DNS servers once
+	mDNSu8               unansweredQueries;// The number of unanswered queries to this server
 
 	ZoneData             *nta;				// Used for getting zone data for private or LLQ query
 	mDNSAddr              servAddr;			// Address and port learned from _dns-llq, _dns-llq-tls or _dns-query-tls SRV query
 	mDNSIPPort            servPort;
 	struct tcpInfo_t *tcp;
+	mDNSIPPort            tcpSrcPort;		// Local Port TCP packet received on;need this as tcp struct is disposed
+											// by tcpCallback before calling into mDNSCoreReceive
 	mDNSu8                NoAnswer;			// Set if we want to suppress answers until tunnel setup has completed
 
 	// LLQ-specific fields. These fields are only meaningful when LongLived flag is set
 	LLQ_State             state;
 	mDNSu32               ReqLease;			// seconds (relative)
 	mDNSs32               expire;			// ticks (absolute)
-	mDNSs16               ntries;
+	mDNSs16               ntries;           // for UDP: the number of packets sent for this LLQ state
+	                                       // for TCP: there is some ambiguity in the use of this variable, but in general, it is
+	                                       //          the number of TCP/TLS connection attempts for this LLQ state, or
+	                                       //          the number of packets sent for this TCP/TLS connection
 	mDNSOpaque64          id;
 
 	// Client API fields: The client must set up these fields *before* calling mDNS_StartQuery()
@@ -2336,6 +1578,14 @@ struct DNSQuestion_struct
 	mDNSBool              ExpectUnique;		// Set by client if it's expecting unique RR(s) for this question, not shared RRs
 	mDNSBool              ForceMCast;		// Set by client to force mDNS query, even for apparently uDNS names
 	mDNSBool              ReturnIntermed;	// Set by client to request callbacks for intermediate CNAME/NXDOMAIN results
+	mDNSBool              SuppressUnusable; // Set by client to suppress unusable queries to be sent on the wire
+	mDNSBool              RetryWithSearchDomains;	// Retry with search domains if there is no entry in the cache or AuthRecords
+	mDNSu8                TimeoutQuestion; // Timeout this question if there is no reply in configured time
+	mDNSu8                WakeOnResolve; // Send wakeup on resolve
+	mDNSs8                SearchListIndex;  // Index into SearchList; Used by the client layer but not touched by core
+	mDNSs8                AppendSearchDomains; // Search domains can be appended for this query
+	mDNSs8                AppendLocalSearchDomains; // Search domains ending in .local can be appended for this query
+	domainname           *qnameOrig;       // Copy of the original question name if it is not fully qualified
 	mDNSQuestionCallback *QuestionCallback;
 	void                 *QuestionContext;
 	};
@@ -2398,6 +1648,7 @@ struct ZoneData_struct
 
 extern ZoneData *StartGetZoneData(mDNS *const m, const domainname *const name, const ZoneService target, ZoneDataCallback callback, void *callbackInfo);
 extern void CancelGetZoneData(mDNS *const m, ZoneData *nta);
+extern mDNSBool IsGetZoneDataQuestion(DNSQuestion *q);
 
 typedef struct DNameListElem
 	{
@@ -2407,16 +1658,26 @@ typedef struct DNameListElem
 	} DNameListElem;
 
 #if APPLE_OSX_mDNSResponder
+// Different states that we go through locating the peer
+#define TC_STATE_AAAA_PEER			0x000000001		/* Peer's BTMM IPv6 address */
+#define TC_STATE_AAAA_PEER_RELAY	0x000000002		/* Peer's IPv6 Relay address */
+#define TC_STATE_SRV_PEER			0x000000003		/* Peer's SRV Record corresponding to IPv4 address */
+#define TC_STATE_ADDR_PEER			0x000000004		/* Peer's IPv4 address */
+
 typedef struct ClientTunnel
 	{
 	struct ClientTunnel *next;
+	const char *prefix;
 	domainname dstname;
 	mDNSBool   MarkedForDeletion;
 	mDNSv6Addr loc_inner;
 	mDNSv4Addr loc_outer;
+	mDNSv6Addr loc_outer6;
 	mDNSv6Addr rmt_inner;
 	mDNSv4Addr rmt_outer;
+	mDNSv6Addr rmt_outer6;
 	mDNSIPPort rmt_outer_port;
+	mDNSu16	tc_state;
 	DNSQuestion q;
 	} ClientTunnel;
 #endif
@@ -2468,18 +1729,24 @@ struct NetworkInterfaceInfo_struct
 	mDNSu8          Advertise;			// False if you are only searching on this interface
 	mDNSu8          McastTxRx;			// Send/Receive multicast on this { InterfaceID, address family } ?
 	mDNSu8          NetWake;			// Set if Wake-On-Magic-Packet is enabled on this interface
+	mDNSu8          Loopback;			// Set if this is the loopback interface
 	};
+
+#define SLE_DELETE              0x00000001
+#define SLE_WAB_QUERY_STARTED   0x00000002
 
 typedef struct SearchListElem
 	{
 	struct SearchListElem *next;
 	domainname domain;
-	int flag;		// -1 means delete, 0 means unchanged, +1 means newly added
+	int flag;
+	mDNSInterfaceID InterfaceID;
 	DNSQuestion BrowseQ;
 	DNSQuestion DefBrowseQ;
 	DNSQuestion AutomaticBrowseQ;
 	DNSQuestion RegisterQ;
 	DNSQuestion DefRegisterQ;
+	int	numCfAnswers;
 	ARListElem *AuthRecs;
 	} SearchListElem;
 
@@ -2500,9 +1767,9 @@ typedef void mDNSCallback(mDNS *const m, mStatus result);
 
 #define CACHE_HASH_SLOTS 499
 
-enum
+enum		// Bit flags -- i.e. values should be 1, 2, 4, 8, etc.
 	{
-	mDNS_KnownBug_PhantomInterfaces = 1,
+	mDNS_KnownBug_LimitedIPv6       = 1,
 	mDNS_KnownBug_LossySyslog       = 2		// <rdar://problem/6561888>
 	};
 
@@ -2549,7 +1816,7 @@ struct mDNS_struct
 	mDNSs32  timenow_last;				// The time the last time we ran
 	mDNSs32  NextScheduledEvent;		// Derived from values below
 	mDNSs32  ShutdownTime;				// Set when we're shutting down; allows us to skip some unnecessary steps
-	mDNSs32  SuppressSending;			// Don't send *any* packets during this time
+	mDNSs32  SuppressSending;			// Don't send local-link mDNS packets during this time
 	mDNSs32  NextCacheCheck;			// Next time to refresh cache record before it expires
 	mDNSs32  NextScheduledQuery;		// Next time to send query in its exponential backoff sequence
 	mDNSs32  NextScheduledProbe;		// Next time to probe for new authoritative record
@@ -2559,26 +1826,37 @@ struct mDNS_struct
 	mDNSs32  RandomQueryDelay;			// For de-synchronization of query packets on the wire
 	mDNSu32  RandomReconfirmDelay;		// For de-synchronization of reconfirmation queries on the wire
 	mDNSs32  PktNum;					// Unique sequence number assigned to each received packet
+	mDNSu8   LocalRemoveEvents;			// Set if we may need to deliver remove events for local-only questions and/or local-only records
 	mDNSu8   SleepState;				// Set if we're sleeping
 	mDNSu8   SleepSeqNum;				// "Epoch number" of our current period of wakefulness
 	mDNSu8   SystemWakeOnLANEnabled;	// Set if we want to register with a Sleep Proxy before going to sleep
+	mDNSu8   SentSleepProxyRegistration;// Set if we registered (or tried to register) with a Sleep Proxy
+	mDNSu8   SystemSleepOnlyIfWakeOnLAN;// Set if we may only sleep if we managed to register with a Sleep Proxy
+	mDNSs32  AnnounceOwner;				// After waking from sleep, include OWNER option in packets until this time
 	mDNSs32  DelaySleep;				// To inhibit re-sleeping too quickly right after wake
 	mDNSs32  SleepLimit;				// Time window to allow deregistrations, etc.,
 										// during which underying platform layer should inhibit system sleep
-	mDNSs32  NextScheduledSPRetry;		// Time next sleep proxy registration action is required. Only valid if SleepLimit is nonzero.
+	mDNSs32  NextScheduledSPRetry;		// Time next sleep proxy registration action is required.
+										// Only valid if SleepLimit is nonzero and DelaySleep is zero.
+
+	mDNSs32 NextScheduledStopTime;      // Next time to stop a question
 
 	// These fields only required for mDNS Searcher...
 	DNSQuestion *Questions;				// List of all registered questions, active and inactive
 	DNSQuestion *NewQuestions;			// Fresh questions not yet answered from cache
 	DNSQuestion *CurrentQuestion;		// Next question about to be examined in AnswerLocalQuestions()
-	DNSQuestion *LocalOnlyQuestions;	// Questions with InterfaceID set to mDNSInterface_LocalOnly
-	DNSQuestion *NewLocalOnlyQuestions;	// Fresh local-only questions not yet answered
+	DNSQuestion *LocalOnlyQuestions;	// Questions with InterfaceID set to mDNSInterface_LocalOnly or mDNSInterface_P2P
+	DNSQuestion *NewLocalOnlyQuestions;	// Fresh local-only or P2P questions not yet answered
+	DNSQuestion *RestartQuestion;		// Questions that are being restarted (stop followed by start)
 	mDNSu32 rrcache_size;				// Total number of available cache entries
 	mDNSu32 rrcache_totalused;			// Number of cache entries currently occupied
 	mDNSu32 rrcache_active;				// Number of cache entries currently occupied by records that answer active questions
 	mDNSu32 rrcache_report;
 	CacheEntity *rrcache_free;
 	CacheGroup *rrcache_hash[CACHE_HASH_SLOTS];
+	mDNSs32  rrcache_nextcheck[CACHE_HASH_SLOTS];
+
+	AuthHash rrauth;
 
 	// Fields below only required for mDNS Responder...
 	domainlabel nicelabel;				// Rich text label encoded using canonically precomposed UTF-8
@@ -2589,8 +1867,9 @@ struct mDNS_struct
 	AuthRecord  DeviceInfo;
 	AuthRecord *ResourceRecords;
 	AuthRecord *DuplicateRecords;		// Records currently 'on hold' because they are duplicates of existing records
-	AuthRecord *NewLocalRecords;		// Fresh local-only records not yet delivered to local-only questions
+	AuthRecord *NewLocalRecords;		// Fresh AuthRecords (public) not yet delivered to our local-only questions
 	AuthRecord *CurrentRecord;			// Next AuthRecord about to be examined
+	mDNSBool    NewLocalOnlyRecords;	// Fresh AuthRecords (local only) not yet delivered to our local questions
 	NetworkInterfaceInfo *HostInterfaces;
 	mDNSs32 ProbeFailTime;
 	mDNSu32 NumFailedProbes;
@@ -2599,10 +1878,9 @@ struct mDNS_struct
 	// Unicast-specific data
 	mDNSs32           NextuDNSEvent;		// uDNS next event
 	mDNSs32           NextSRVUpdate;        // Time to perform delayed update
-	mDNSs32 SuppressStdPort53Queries;       // Wait before allowing the next standard unicast query to the user's configured DNS server
 
-	ServiceRecordSet *ServiceRegistrations;
 	DNSServer        *DNSServers;           // list of DNS servers
+	McastResolver    *McastResolvers;       // list of Mcast Resolvers
 
 	mDNSAddr          Router;
 	mDNSAddr          AdvertisedV4;         // IPv4 address pointed to by hostname
@@ -2617,9 +1895,16 @@ struct mDNS_struct
 	HostnameInfo     *Hostnames;            // List of registered hostnames + hostname metadata
 	mDNSv6Addr        AutoTunnelHostAddr;	// IPv6 address advertised for AutoTunnel services on this machine
 	mDNSBool          AutoTunnelHostAddrActive;
+	// AutoTunnel Relay address has two distinct uses
+	// AutoTunnelRelayAddrIn: If non-zero, it means that this host can be reached (inbound connection) through the relay
+	// AutoTunnelRelayAddrOut: If non-zero, it means that this host can use the relay to reach (outbound connection) the
+	// other hosts through the relay
+	mDNSv6Addr        AutoTunnelRelayAddrIn;
+	mDNSv6Addr        AutoTunnelRelayAddrOut;
 	domainlabel       AutoTunnelLabel;		// Used to construct hostname for *IPv4* address of tunnel endpoints
 
-	mDNSBool          RegisterSearchDomains;
+	mDNSBool          StartWABQueries;		// Start WAB queries for the purpose of domain enumeration
+	mDNSBool          RegisterAutoTunnel6;
 
 	// NAT-Traversal fields
 	NATTraversalInfo  LLQNAT;					// Single shared NAT Traversal to receive inbound LLQ notifications
@@ -2664,6 +1949,7 @@ struct mDNS_struct
 #if APPLE_OSX_mDNSResponder
 	ClientTunnel     *TunnelClients;
 	uuid_t           asl_uuid;					// uuid for ASL logging
+	void		    *WCF;
 #endif
 
 	// Fixed storage, to avoid creating large objects on the stack
@@ -2684,6 +1970,27 @@ struct mDNS_struct
 #pragma mark - Useful Static Constants
 #endif
 
+extern const mDNSInterfaceID mDNSInterface_Any;				// Zero
+extern const mDNSInterfaceID mDNSInterface_LocalOnly;		// Special value
+extern const mDNSInterfaceID mDNSInterface_Unicast;			// Special value
+extern const mDNSInterfaceID mDNSInterfaceMark;				// Special value
+extern const mDNSInterfaceID mDNSInterface_P2P;				// Special value
+
+extern const mDNSIPPort   DiscardPort;
+extern const mDNSIPPort   SSHPort;
+extern const mDNSIPPort   UnicastDNSPort;
+extern const mDNSIPPort   SSDPPort;
+extern const mDNSIPPort   IPSECPort;
+extern const mDNSIPPort   NSIPCPort;
+extern const mDNSIPPort   NATPMPAnnouncementPort;
+extern const mDNSIPPort   NATPMPPort;
+extern const mDNSIPPort   DNSEXTPort;
+extern const mDNSIPPort   MulticastDNSPort;
+extern const mDNSIPPort   LoopbackIPCPort;
+extern const mDNSIPPort   PrivateDNSPort;
+
+extern const OwnerOptData    zeroOwner;
+
 extern const mDNSIPPort      zeroIPPort;
 extern const mDNSv4Addr      zerov4Addr;
 extern const mDNSv6Addr      zerov6Addr;
@@ -2693,26 +2000,11 @@ extern const mDNSv6Addr      onesIPv6Addr;
 extern const mDNSEthAddr     onesEthAddr;
 extern const mDNSAddr        zeroAddr;
 
-extern const OwnerOptData    zeroOwner;
-
-extern const mDNSInterfaceID mDNSInterface_Any;				// Zero
-extern const mDNSInterfaceID mDNSInterface_LocalOnly;		// Special value
-extern const mDNSInterfaceID mDNSInterface_Unicast;			// Special value
-
-extern const mDNSIPPort   DiscardPort;
-extern const mDNSIPPort   SSHPort;
-extern const mDNSIPPort   UnicastDNSPort;
-extern const mDNSIPPort   SSDPPort;
-extern const mDNSIPPort   NSIPCPort;
-extern const mDNSIPPort   NATPMPAnnouncementPort;
-extern const mDNSIPPort   NATPMPPort;
-extern const mDNSIPPort   DNSEXTPort;
-extern const mDNSIPPort   MulticastDNSPort;
-extern const mDNSIPPort   LoopbackIPCPort;
-extern const mDNSIPPort   PrivateDNSPort;
-
 extern const mDNSv4Addr   AllDNSAdminGroup;
-extern const mDNSv4Addr   AllSystemsMcast;
+extern const mDNSv4Addr   AllHosts_v4;
+extern const mDNSv6Addr   AllHosts_v6;
+extern const mDNSv6Addr   NDP_prefix;
+extern const mDNSEthAddr  AllHosts_v6_Eth;
 extern const mDNSAddr     AllDNSLinkGroup_v4;
 extern const mDNSAddr     AllDNSLinkGroup_v6;
 
@@ -2725,6 +2017,9 @@ extern const mDNSOpaque16 UpdateReqFlags;
 extern const mDNSOpaque16 UpdateRespFlags;
 
 extern const mDNSOpaque64 zeroOpaque64;
+
+extern mDNSBool StrictUnicastOrdering;
+extern mDNSu8 NumUnicastDNSServers;
 
 #define localdomain           (*(const domainname *)"\x5" "local")
 #define DeviceInfoName        (*(const domainname *)"\xC" "_device-info" "\x4" "_tcp")
@@ -2842,10 +2137,11 @@ extern mStatus mDNS_Init      (mDNS *const m, mDNS_PlatformSupport *const p,
 
 extern void    mDNS_ConfigChanged(mDNS *const m);
 extern void    mDNS_GrowCache (mDNS *const m, CacheEntity *storage, mDNSu32 numrecords);
+extern void    mDNS_GrowAuth (mDNS *const m, AuthEntity *storage, mDNSu32 numrecords);
 extern void    mDNS_StartExit (mDNS *const m);
 extern void    mDNS_FinalExit (mDNS *const m);
 #define mDNS_Close(m) do { mDNS_StartExit(m); mDNS_FinalExit(m); } while(0)
-#define mDNS_ExitNow(m, now) ((now) - (m)->ShutdownTime >= 0 || (!(m)->ResourceRecords && !(m)->ServiceRegistrations))
+#define mDNS_ExitNow(m, now) ((now) - (m)->ShutdownTime >= 0 || (!(m)->ResourceRecords))
 
 extern mDNSs32 mDNS_Execute   (mDNS *const m);
 
@@ -2868,6 +2164,8 @@ extern mStatus mDNS_StopNATOperation_internal(mDNS *m, NATTraversalInfo *travers
 
 extern DomainAuthInfo *GetAuthInfoForName(mDNS *m, const domainname *const name);
 
+extern void    mDNS_UpdateAllowSleep(mDNS *const m);
+
 // ***************************************************************************
 #if 0
 #pragma mark -
@@ -2881,6 +2179,12 @@ extern mDNSs32  mDNSPlatformOneSecond;
 #pragma mark -
 #pragma mark - General utility and helper functions
 #endif
+
+// mDNS_Dereg_normal is used for most calls to mDNS_Deregister_internal
+// mDNS_Dereg_rapid is used to send one goodbye instead of three, when we want the memory available for reuse sooner
+// mDNS_Dereg_conflict is used to indicate that this record is being forcibly deregistered because of a conflict
+// mDNS_Dereg_repeat is used when cleaning up, for records that may have already been forcibly deregistered
+typedef enum { mDNS_Dereg_normal, mDNS_Dereg_rapid, mDNS_Dereg_conflict, mDNS_Dereg_repeat } mDNS_Dereg_type;
 
 // mDNS_RegisterService is a single call to register the set of resource records associated with a given named service.
 //
@@ -2905,22 +2209,30 @@ extern mDNSs32  mDNSPlatformOneSecond;
 // and the default domain in which to register in the case where the user has made no selection.
 
 extern void    mDNS_SetupResourceRecord(AuthRecord *rr, RData *RDataStorage, mDNSInterfaceID InterfaceID,
-               mDNSu16 rrtype, mDNSu32 ttl, mDNSu8 RecordType, mDNSRecordCallback Callback, void *Context);
+               mDNSu16 rrtype, mDNSu32 ttl, mDNSu8 RecordType, AuthRecType artype, mDNSRecordCallback Callback, void *Context);
+
+// mDNS_RegisterService() flags parameter bit definitions
+enum
+	{
+		regFlagIncludeP2P	= 0x1,	// include P2P interfaces when using mDNSInterface_Any
+		regFlagKnownUnique	= 0x2	// client guarantees that SRV and TXT record names are unique
+	};
 
 extern mStatus mDNS_RegisterService  (mDNS *const m, ServiceRecordSet *sr,
                const domainlabel *const name, const domainname *const type, const domainname *const domain,
                const domainname *const host, mDNSIPPort port, const mDNSu8 txtinfo[], mDNSu16 txtlen,
                AuthRecord *SubTypes, mDNSu32 NumSubTypes,
-               const mDNSInterfaceID InterfaceID, mDNSServiceCallback Callback, void *Context);
-extern mStatus mDNS_AddRecordToService(mDNS *const m, ServiceRecordSet *sr, ExtraResourceRecord *extra, RData *rdata, mDNSu32 ttl);
+               mDNSInterfaceID InterfaceID, mDNSServiceCallback Callback, void *Context, mDNSu32 flags);
+extern mStatus mDNS_AddRecordToService(mDNS *const m, ServiceRecordSet *sr, ExtraResourceRecord *extra, RData *rdata, mDNSu32 ttl,  mDNSu32 includeP2P);
 extern mStatus mDNS_RemoveRecordFromService(mDNS *const m, ServiceRecordSet *sr, ExtraResourceRecord *extra, mDNSRecordCallback MemFreeCallback, void *Context);
 extern mStatus mDNS_RenameAndReregisterService(mDNS *const m, ServiceRecordSet *const sr, const domainlabel *newname);
-extern mStatus mDNS_DeregisterService(mDNS *const m, ServiceRecordSet *sr);
+extern mStatus mDNS_DeregisterService_drt(mDNS *const m, ServiceRecordSet *sr, mDNS_Dereg_type drt);
+#define mDNS_DeregisterService(M,S) mDNS_DeregisterService_drt((M), (S), mDNS_Dereg_normal)
 
 extern mStatus mDNS_RegisterNoSuchService(mDNS *const m, AuthRecord *const rr,
                const domainlabel *const name, const domainname *const type, const domainname *const domain,
                const domainname *const host,
-               const mDNSInterfaceID InterfaceID, mDNSRecordCallback Callback, void *Context);
+               const mDNSInterfaceID InterfaceID, mDNSRecordCallback Callback, void *Context, mDNSBool includeP2P);
 #define        mDNS_DeregisterNoSuchService mDNS_Deregister
 
 extern void mDNS_SetupQuestion(DNSQuestion *const q, const mDNSInterfaceID InterfaceID, const domainname *const name,
@@ -2954,8 +2266,11 @@ extern mStatus mDNS_AdvertiseDomains(mDNS *const m, AuthRecord *rr, mDNS_DomainT
 #define        mDNS_StopAdvertiseDomains mDNS_Deregister
 
 extern mDNSOpaque16 mDNS_NewMessageID(mDNS *const m);
-		
-extern DNSServer *GetServerForName(mDNS *m, const domainname *name);
+extern mDNSBool mDNS_AddressIsLocalSubnet(mDNS *const m, const mDNSInterfaceID InterfaceID, const mDNSAddr *addr);
+
+extern DNSServer *GetServerForName(mDNS *m, const domainname *name, mDNSInterfaceID InterfaceID);
+extern DNSServer *GetServerForQuestion(mDNS *m, DNSQuestion *question);
+extern mDNSu32 SetValidDNSServers(mDNS *m, DNSQuestion *question);
 
 // ***************************************************************************
 #if 0
@@ -2980,10 +2295,15 @@ extern DNSServer *GetServerForName(mDNS *m, const domainname *name);
 extern mDNSBool SameDomainLabel(const mDNSu8 *a, const mDNSu8 *b);
 extern mDNSBool SameDomainName(const domainname *const d1, const domainname *const d2);
 extern mDNSBool SameDomainNameCS(const domainname *const d1, const domainname *const d2);
+typedef mDNSBool DomainNameComparisonFn(const domainname *const d1, const domainname *const d2);
 extern mDNSBool IsLocalDomain(const domainname *d);     // returns true for domains that by default should be looked up using link-local multicast
 
+#define StripFirstLabel(X) ((const domainname *)&(X)->c[(X)->c[0] ? 1 + (X)->c[0] : 0])
+
 #define FirstLabel(X)  ((const domainlabel *)(X))
-#define SecondLabel(X) ((const domainlabel *)&(X)->c[1 + (X)->c[0]])
+#define SecondLabel(X) ((const domainlabel *)StripFirstLabel(X))
+#define ThirdLabel(X)  ((const domainlabel *)StripFirstLabel(StripFirstLabel(X)))
+
 extern const mDNSu8 *LastLabel(const domainname *d);
 
 // Get total length of domain name, in native DNS format, including terminal root label
@@ -3109,6 +2429,9 @@ extern mDNSBool mDNSv4AddrIsRFC1918(mDNSv4Addr *addr);  // returns true for RFC1
 	((X)->type == mDNSAddrType_IPv4) ? mDNSv4AddressIsLinkLocal(&(X)->ip.v4) :          \
 	((X)->type == mDNSAddrType_IPv6) ? mDNSv6AddressIsLinkLocal(&(X)->ip.v6) : mDNSfalse)
 
+#define mDNSv4AddressIsLoopback(X) ((X)->b[0] == 127 && (X)->b[1] == 0 && (X)->b[2] == 0 && (X)->b[3] == 1)
+#define mDNSv6AddressIsLoopback(X) ((((X)->l[0] | (X)->l[1] | (X)->l[2]) == 0) && ((X)->b[12] == 0 && (X)->b[13] == 0 && (X)->b[14] == 0 && (X)->b[15] == 1))
+
 // ***************************************************************************
 #if 0
 #pragma mark -
@@ -3122,10 +2445,11 @@ extern mDNSBool mDNSv4AddrIsRFC1918(mDNSv4Addr *addr);  // returns true for RFC1
 // domain name format.  The shared secret must be a null-terminated base64 encoded string.  A minimum size of
 // 16 bytes (128 bits) is recommended for an MD5 hash as per RFC 2485.
 // Calling this routine multiple times for a zone replaces previously entered values.  Call with a NULL key
-// to dissable authentication for the zone.
+// to disable authentication for the zone.  A non-NULL autoTunnelPrefix means this is an AutoTunnel domain,
+// and the value is prepended to the IPSec identifier (used for key lookup)
 
 extern mStatus mDNS_SetSecretForDomain(mDNS *m, DomainAuthInfo *info,
-	const domainname *domain, const domainname *keyname, const char *b64keydata, mDNSBool AutoTunnel);
+	const domainname *domain, const domainname *keyname, const char *b64keydata, const domainname *hostname, mDNSIPPort *port, const char *autoTunnelPrefix);
 
 extern void RecreateNATMappings(mDNS *const m);
 
@@ -3149,13 +2473,15 @@ extern void RecreateNATMappings(mDNS *const m);
 extern void mDNS_AddDynDNSHostName(mDNS *m, const domainname *fqdn, mDNSRecordCallback *StatusCallback, const void *StatusContext);
 extern void mDNS_RemoveDynDNSHostName(mDNS *m, const domainname *fqdn);
 extern void mDNS_SetPrimaryInterfaceInfo(mDNS *m, const mDNSAddr *v4addr,  const mDNSAddr *v6addr, const mDNSAddr *router);
-extern DNSServer *mDNS_AddDNSServer(mDNS *const m, const domainname *d, const mDNSInterfaceID interface, const mDNSAddr *addr, const mDNSIPPort port);
-extern void PushDNSServerToEnd(mDNS *const m, DNSQuestion *q);
-extern void mDNS_AddSearchDomain(const domainname *const domain);
+extern DNSServer *mDNS_AddDNSServer(mDNS *const m, const domainname *d, const mDNSInterfaceID interface, const mDNSAddr *addr, const mDNSIPPort port, mDNSBool scoped, mDNSu32 timeout);
+extern void PenalizeDNSServer(mDNS *const m, DNSQuestion *q);
+extern void mDNS_AddSearchDomain(const domainname *const domain, mDNSInterfaceID InterfaceID);
+
+extern McastResolver *mDNS_AddMcastResolver(mDNS *const m, const domainname *d, const mDNSInterfaceID interface, mDNSu32 timeout);
 
 // We use ((void *)0) here instead of mDNSNULL to avoid compile warnings on gcc 4.2
-#define mDNS_AddSearchDomain_CString(X) \
-	do { domainname d__; if (((X) != (void*)0) && MakeDomainNameFromDNSNameString(&d__, (X)) && d__.c[0]) mDNS_AddSearchDomain(&d__); } while(0)
+#define mDNS_AddSearchDomain_CString(X, I) \
+	do { domainname d__; if (((X) != (void*)0) && MakeDomainNameFromDNSNameString(&d__, (X)) && d__.c[0]) mDNS_AddSearchDomain(&d__, I); } while(0)
 
 // Routines called by the core, exported by DNSDigest.c
 
@@ -3270,7 +2596,7 @@ mDNSexport void mDNSASLLog(uuid_t *uuid, const char *subdomain, const char *resu
 // and interface indexes in order to support the DNS-SD API. If your target platform does not support
 // multiple interfaces and/or does not support the DNS-SD API, these functions can be empty.
 extern mDNSInterfaceID mDNSPlatformInterfaceIDfromInterfaceIndex(mDNS *const m, mDNSu32 ifindex);
-extern mDNSu32 mDNSPlatformInterfaceIndexfromInterfaceID(mDNS *const m, mDNSInterfaceID id);
+extern mDNSu32 mDNSPlatformInterfaceIndexfromInterfaceID(mDNS *const m, mDNSInterfaceID id, mDNSBool suppressNetworkChange);
 
 // Every platform support module must provide the following functions if it is to support unicast DNS
 // and Dynamic Update.
@@ -3299,8 +2625,8 @@ typedef void (*TCPConnectionCallback)(TCPSocket *sock, void *context, mDNSBool C
 extern TCPSocket *mDNSPlatformTCPSocket(mDNS *const m, TCPSocketFlags flags, mDNSIPPort *port);	// creates a TCP socket
 extern TCPSocket *mDNSPlatformTCPAccept(TCPSocketFlags flags, int sd);
 extern int        mDNSPlatformTCPGetFD(TCPSocket *sock);
-extern mStatus    mDNSPlatformTCPConnect(TCPSocket *sock, const mDNSAddr *dst, mDNSOpaque16 dstport, mDNSInterfaceID InterfaceID,
-                                         TCPConnectionCallback callback, void *context);
+extern mStatus    mDNSPlatformTCPConnect(TCPSocket *sock, const mDNSAddr *dst, mDNSOpaque16 dstport, domainname *hostname,
+										mDNSInterfaceID InterfaceID, TCPConnectionCallback callback, void *context);
 extern void       mDNSPlatformTCPCloseConnection(TCPSocket *sock);
 extern long       mDNSPlatformReadTCP(TCPSocket *sock, void *buf, unsigned long buflen, mDNSBool *closed);
 extern long       mDNSPlatformWriteTCP(TCPSocket *sock, const char *msg, unsigned long len);
@@ -3309,7 +2635,7 @@ extern void       mDNSPlatformUDPClose(UDPSocket *sock);
 extern void       mDNSPlatformReceiveBPF_fd(mDNS *const m, int fd);
 extern void       mDNSPlatformUpdateProxyList(mDNS *const m, const mDNSInterfaceID InterfaceID);
 extern void       mDNSPlatformSendRawPacket(const void *const msg, const mDNSu8 *const end, mDNSInterfaceID InterfaceID);
-extern void       mDNSPlatformSetLocalARP(const mDNSv4Addr *const tpa, const mDNSEthAddr *const tha, mDNSInterfaceID InterfaceID);
+extern void       mDNSPlatformSetLocalAddressCacheEntry(mDNS *const m, const mDNSAddr *const tpa, const mDNSEthAddr *const tha, mDNSInterfaceID InterfaceID);
 extern void       mDNSPlatformSourceAddrForDest(mDNSAddr *const src, const mDNSAddr *const dst);
 
 // mDNSPlatformTLSSetupCerts/mDNSPlatformTLSTearDownCerts used by dnsextd
@@ -3323,10 +2649,14 @@ extern void       mDNSPlatformSetDNSConfig(mDNS *const m, mDNSBool setservers, m
 extern mStatus    mDNSPlatformGetPrimaryInterface(mDNS *const m, mDNSAddr *v4, mDNSAddr *v6, mDNSAddr *router);
 extern void       mDNSPlatformDynDNSHostNameStatusChanged(const domainname *const dname, const mStatus status);
 
+extern void       mDNSPlatformSetAllowSleep(mDNS *const m, mDNSBool allowSleep, const char *reason);
+extern void       mDNSPlatformSendWakeupPacket(mDNS *const m, mDNSInterfaceID InterfaceID, char *EthAddr, char *IPAddr, int iteration);
+extern mDNSBool   mDNSPlatformValidRecordForInterface(AuthRecord *rr, const NetworkInterfaceInfo *intf);
+
 #ifdef _LEGACY_NAT_TRAVERSAL_
 // Support for legacy NAT traversal protocols, implemented by the platform layer and callable by the core.
 extern void     LNT_SendDiscoveryMsg(mDNS *m);
-extern void     LNT_ConfigureRouterInfo(mDNS *m, const mDNSInterfaceID InterfaceID, mDNSu8 *data, mDNSu16 len);
+extern void     LNT_ConfigureRouterInfo(mDNS *m, const mDNSInterfaceID InterfaceID, const mDNSu8 *const data, const mDNSu16 len);
 extern mStatus  LNT_GetExternalAddress(mDNS *m);
 extern mStatus  LNT_MapPort(mDNS *m, NATTraversalInfo *n);
 extern mStatus  LNT_UnmapPort(mDNS *m, NATTraversalInfo *n);
@@ -3376,23 +2706,189 @@ extern void     mDNS_DeregisterInterface(mDNS *const m, NetworkInterfaceInfo *se
 extern void     mDNSCoreInitComplete(mDNS *const m, mStatus result);
 extern void     mDNSCoreReceive(mDNS *const m, void *const msg, const mDNSu8 *const end,
 								const mDNSAddr *const srcaddr, const mDNSIPPort srcport,
-								const mDNSAddr *const dstaddr, const mDNSIPPort dstport, const mDNSInterfaceID InterfaceID);
-extern void 	mDNSCoreRestartQueries(mDNS *const m);
+								const mDNSAddr *dstaddr, const mDNSIPPort dstport, const mDNSInterfaceID InterfaceID);
+extern void		mDNSCoreRestartQueries(mDNS *const m);
+typedef void    (*FlushCache)(mDNS *const m);
+typedef void    (*CallbackBeforeStartQuery)(mDNS *const m, void *context);
+extern void		mDNSCoreRestartAddressQueries(mDNS *const m, mDNSBool SearchDomainsChanged, FlushCache flushCacheRecords,
+											  CallbackBeforeStartQuery beforeQueryStart, void *context);
 extern mDNSBool mDNSCoreHaveAdvertisedMulticastServices(mDNS *const m);
 extern void     mDNSCoreMachineSleep(mDNS *const m, mDNSBool wake);
-extern mDNSBool mDNSCoreReadyForSleep(mDNS *m);
+extern mDNSBool mDNSCoreReadyForSleep(mDNS *m, mDNSs32 now);
 extern mDNSs32  mDNSCoreIntervalToNextWake(mDNS *const m, mDNSs32 now);
 
-extern void     mDNSCoreBeSleepProxyServer(mDNS *const m, mDNSu8 sps, mDNSu8 port, mDNSu8 marginalpower, mDNSu8 totpower);
 extern void     mDNSCoreReceiveRawPacket  (mDNS *const m, const mDNSu8 *const p, const mDNSu8 *const end, const mDNSInterfaceID InterfaceID);
 
 extern mDNSBool mDNSAddrIsDNSMulticast(const mDNSAddr *ip);
 
-extern CacheRecord *CreateNewCacheEntry(mDNS *const m, const mDNSu32 slot, CacheGroup *cg);
+extern CacheRecord *CreateNewCacheEntry(mDNS *const m, const mDNSu32 slot, CacheGroup *cg, mDNSs32 delay);
+extern void ScheduleNextCacheCheckTime(mDNS *const m, const mDNSu32 slot, const mDNSs32 event);
 extern void GrantCacheExtensions(mDNS *const m, DNSQuestion *q, mDNSu32 lease);
 extern void MakeNegativeCacheRecord(mDNS *const m, CacheRecord *const cr,
-	const domainname *const name, const mDNSu32 namehash, const mDNSu16 rrtype, const mDNSu16 rrclass, mDNSu32 ttl_seconds, mDNSInterfaceID InterfaceID);
+	const domainname *const name, const mDNSu32 namehash, const mDNSu16 rrtype, const mDNSu16 rrclass, mDNSu32 ttl_seconds,
+	mDNSInterfaceID InterfaceID, DNSServer *dnsserver);
 extern void CompleteDeregistration(mDNS *const m, AuthRecord *rr);
+extern void AnswerCurrentQuestionWithResourceRecord(mDNS *const m, CacheRecord *const rr, const QC_result AddRecord);
+extern char *InterfaceNameForID(mDNS *const m, const mDNSInterfaceID InterfaceID);
+extern void DNSServerChangeForQuestion(mDNS *const m, DNSQuestion *q, DNSServer *newServer);
+extern void ActivateUnicastRegistration(mDNS *const m, AuthRecord *const rr);
+extern void CheckSuppressUnusableQuestions(mDNS *const m);
+extern void RetrySearchDomainQuestions(mDNS *const m);
+
+// Used only in logging to restrict the number of /etc/hosts entries printed
+extern void FreeEtcHosts(mDNS *const m, AuthRecord *const rr, mStatus result);
+// exported for using the hash for /etc/hosts AuthRecords
+extern AuthGroup *AuthGroupForName(AuthHash *r, const mDNSu32 slot, const mDNSu32 namehash, const domainname *const name);
+extern AuthGroup *AuthGroupForRecord(AuthHash *r, const mDNSu32 slot, const ResourceRecord *const rr);
+extern AuthGroup *InsertAuthRecord(mDNS *const m, AuthHash *r, AuthRecord *rr);
+extern AuthGroup *RemoveAuthRecord(mDNS *const m, AuthHash *r, AuthRecord *rr);
+extern mDNSBool mDNS_CheckForCacheRecord(mDNS *const m, DNSQuestion *q, mDNSu16 qtype);
+
+// For now this AutoTunnel stuff is specific to Mac OS X.
+// In the future, if there's demand, we may see if we can abstract it out cleanly into the platform layer
+#if APPLE_OSX_mDNSResponder
+extern void AutoTunnelCallback(mDNS *const m, DNSQuestion *question, const ResourceRecord *const answer, QC_result AddRecord);
+extern void AddNewClientTunnel(mDNS *const m, DNSQuestion *const q);
+extern void SetupLocalAutoTunnelInterface_internal(mDNS *const m, mDNSBool servicesStarting);
+extern void UpdateAutoTunnelDomainStatuses(const mDNS *const m);
+extern mStatus ActivateLocalProxy(mDNS *const m, char *ifname);
+extern void RemoveAutoTunnel6Record(mDNS *const m);
+extern mDNSBool RecordReadyForSleep(mDNS *const m, AuthRecord *rr);
+#endif
+
+// ***************************************************************************
+#if 0
+#pragma mark -
+#pragma mark - Sleep Proxy
+#endif
+
+// Sleep Proxy Server Property Encoding
+//
+// Sleep Proxy Servers are advertised using a structured service name, consisting of four
+// metrics followed by a human-readable name. The metrics assist clients in deciding which
+// Sleep Proxy Server(s) to use when multiple are available on the network. Each metric
+// is a two-digit decimal number in the range 10-99. Lower metrics are generally better.
+//
+//   AA-BB-CC-DD Name
+//
+// Metrics:
+//
+// AA = Intent
+// BB = Portability
+// CC = Marginal Power
+// DD = Total Power
+//
+//
+// ** Intent Metric **
+//
+// 20 = Dedicated Sleep Proxy Server -- a device, permanently powered on,
+//      installed for the express purpose of providing Sleep Proxy Service.
+//
+// 30 = Primary Network Infrastructure Hardware -- a router, DHCP server, NAT gateway,
+//      or similar permanently installed device which is permanently powered on.
+//      This is hardware designed for the express purpose of being network
+//      infrastructure, and for most home users is typically a single point
+//      of failure for the local network -- e.g. most home users only have
+//      a single NAT gateway / DHCP server. Even though in principle the
+//      hardware might technically be capable of running different software,
+//      a typical user is unlikely to do that. e.g. AirPort base station.
+//
+// 40 = Primary Network Infrastructure Software -- a general-purpose computer
+//      (e.g. Mac, Windows, Linux, etc.) which is currently running DHCP server
+//      or NAT gateway software, but the user could choose to turn that off
+//      fairly easily. e.g. iMac running Internet Sharing
+//
+// 50 = Secondary Network Infrastructure Hardware -- like primary infrastructure
+//      hardware, except not a single point of failure for the entire local network.
+//      For example, an AirPort base station in bridge mode. This may have clients
+//      associated with it, and if it goes away those clients will be inconvenienced,
+//      but unlike the NAT gateway / DHCP server, the entire local network is not
+//      dependent on it.
+//
+// 60 = Secondary Network Infrastructure Software -- like 50, but in a general-
+//      purpose CPU.
+//
+// 70 = Incidentally Available Hardware -- a device which has no power switch
+//      and is generally left powered on all the time. Even though it is not a
+//      part of what we conventionally consider network infrastructure (router,
+//      DHCP, NAT, DNS, etc.), and the rest of the network can operate fine
+//      without it, since it's available and unlikely to be turned off, it is a
+//      reasonable candidate for providing Sleep Proxy Service e.g. Apple TV,
+//      or an AirPort base station in client mode, associated with an existing
+//      wireless network (e.g. AirPort Express connected to a music system, or
+//      being used to share a USB printer).
+//
+// 80 = Incidentally Available Software -- a general-purpose computer which
+//      happens at this time to be set to "never sleep", and as such could be
+//      useful as a Sleep Proxy Server, but has not been intentionally provided
+//      for this purpose. Of all the Intent Metric categories this is the
+//      one most likely to be shut down or put to sleep without warning.
+//      However, if nothing else is availalable, it may be better than nothing.
+//      e.g. Office computer in the workplace which has been set to "never sleep"
+//
+//
+// ** Portability Metric **
+//
+// Inversely related to mass of device, on the basis that, all other things
+// being equal, heavier devices are less likely to be moved than lighter devices.
+// E.g. A MacBook running Internet Sharing is probably more likely to be
+// put to sleep and taken away than a Mac Pro running Internet Sharing.
+// The Portability Metric is a logarithmic decibel scale, computed by taking the
+// (approximate) mass of the device in milligrammes, taking the base 10 logarithm
+// of that, multiplying by 10, and subtracting the result from 100:
+//
+//   Portability Metric = 100 - (log10(mg) * 10)
+//
+// The Portability Metric is not necessarily computed literally from the actual
+// mass of the device; the intent is just that lower numbers indicate more
+// permanent devices, and higher numbers indicate devices more likely to be
+// removed from the network, e.g., in order of increasing portability:
+//
+// Mac Pro < iMac < Laptop < iPhone
+//
+// Example values:
+//
+// 10 = 1 metric tonne
+// 40 = 1kg
+// 70 = 1g
+// 90 = 10mg
+//
+//
+// ** Marginal Power and Total Power Metrics **
+//
+// The Marginal Power Metric is the power difference between sleeping and staying awake
+// to be a Sleep Proxy Server.
+//
+// The Total Power Metric is the total power consumption when being Sleep Proxy Server.
+//
+// The Power Metrics use a logarithmic decibel scale, computed as ten times the
+// base 10 logarithm of the (approximate) power in microwatts:
+//
+//   Power Metric = log10(uW) * 10
+//
+// Higher values indicate higher power consumption. Example values:
+//
+// 10 =  10 uW
+// 20 = 100 uW
+// 30 =   1 mW
+// 60 =   1 W
+// 90 =   1 kW
+
+typedef enum
+	{
+	mDNSSleepProxyMetric_Dedicated          = 20,
+	mDNSSleepProxyMetric_PrimaryHardware    = 30,
+	mDNSSleepProxyMetric_PrimarySoftware    = 40,
+	mDNSSleepProxyMetric_SecondaryHardware  = 50,
+	mDNSSleepProxyMetric_SecondarySoftware  = 60,
+	mDNSSleepProxyMetric_IncidentalHardware = 70,
+	mDNSSleepProxyMetric_IncidentalSoftware = 80
+	} mDNSSleepProxyMetric;
+
+extern void mDNSCoreBeSleepProxyServer_internal(mDNS *const m, mDNSu8 sps, mDNSu8 port, mDNSu8 marginalpower, mDNSu8 totpower);
+#define mDNSCoreBeSleepProxyServer(M,S,P,MP,TP) \
+	do { mDNS_Lock(m); mDNSCoreBeSleepProxyServer_internal((M),(S),(P),(MP),(TP)); mDNS_Unlock(m); } while(0)
+
 extern void FindSPSInCache(mDNS *const m, const DNSQuestion *const q, const CacheRecord *sps[3]);
 #define PrototypeSPSName(X) ((X)[0] >= 11 && (X)[3] == '-' && (X)[ 4] == '9' && (X)[ 5] == '9' && \
                                              (X)[6] == '-' && (X)[ 7] == '9' && (X)[ 8] == '9' && \
@@ -3400,16 +2896,6 @@ extern void FindSPSInCache(mDNS *const m, const DNSQuestion *const q, const Cach
 #define ValidSPSName(X) ((X)[0] >= 5 && mDNSIsDigit((X)[1]) && mDNSIsDigit((X)[2]) && mDNSIsDigit((X)[4]) && mDNSIsDigit((X)[5]))
 #define SPSMetric(X) (!ValidSPSName(X) || PrototypeSPSName(X) ? 1000000 : \
 	((X)[1]-'0') * 100000 + ((X)[2]-'0') * 10000 + ((X)[4]-'0') * 1000 + ((X)[5]-'0') * 100 + ((X)[7]-'0') * 10 + ((X)[8]-'0'))
-extern void AnswerCurrentQuestionWithResourceRecord(mDNS *const m, CacheRecord *const rr, const QC_result AddRecord);
-
-// For now this AutoTunnel stuff is specific to Mac OS X.
-// In the future, if there's demand, we may see if we can abstract it out cleanly into the platform layer
-#if APPLE_OSX_mDNSResponder
-extern void AutoTunnelCallback(mDNS *const m, DNSQuestion *question, const ResourceRecord *const answer, QC_result AddRecord);
-extern void AddNewClientTunnel(mDNS *const m, DNSQuestion *const q);
-extern void SetupLocalAutoTunnelInterface_internal(mDNS *const m);
-extern void UpdateAutoTunnelDomainStatuses(const mDNS *const m);
-#endif
 
 // ***************************************************************************
 #if 0
@@ -3446,29 +2932,30 @@ struct CompileTimeAssertionChecks_mDNS
 	char assertG[(sizeof(ARP_EthIP     )   ==   28                         ) ? 1 : -1];
 	char assertH[(sizeof(IPv4Header    )   ==   20                         ) ? 1 : -1];
 	char assertI[(sizeof(IPv6Header    )   ==   40                         ) ? 1 : -1];
-	char assertJ[(sizeof(IPv6ND        )   ==   24                         ) ? 1 : -1];
+	char assertJ[(sizeof(IPv6NDP       )   ==   24                         ) ? 1 : -1];
 	char assertK[(sizeof(UDPHeader     )   ==    8                         ) ? 1 : -1];
-	char assertL[(sizeof(TCPHeader     )   ==   20                         ) ? 1 : -1];
+	char assertL[(sizeof(IKEHeader     )   ==   28                         ) ? 1 : -1];
+	char assertM[(sizeof(TCPHeader     )   ==   20                         ) ? 1 : -1];
 
 	// Check our structures are reasonable sizes. Including overly-large buffers, or embedding
 	// other overly-large structures instead of having a pointer to them, can inadvertently
 	// cause structure sizes (and therefore memory usage) to balloon unreasonably.
 	char sizecheck_RDataBody           [(sizeof(RDataBody)            ==   264) ? 1 : -1];
-	char sizecheck_ResourceRecord      [(sizeof(ResourceRecord)       <=    56) ? 1 : -1];
-	char sizecheck_AuthRecord          [(sizeof(AuthRecord)           <=  1000) ? 1 : -1];
-	char sizecheck_CacheRecord         [(sizeof(CacheRecord)          <=   176) ? 1 : -1];
-	char sizecheck_CacheGroup          [(sizeof(CacheGroup)           <=   176) ? 1 : -1];
-	char sizecheck_DNSQuestion         [(sizeof(DNSQuestion)          <=   728) ? 1 : -1];
-	char sizecheck_ZoneData            [(sizeof(ZoneData)             <=  1560) ? 1 : -1];
+	char sizecheck_ResourceRecord      [(sizeof(ResourceRecord)       <=    64) ? 1 : -1];
+	char sizecheck_AuthRecord          [(sizeof(AuthRecord)           <=  1208) ? 1 : -1];
+	char sizecheck_CacheRecord         [(sizeof(CacheRecord)          <=   184) ? 1 : -1];
+	char sizecheck_CacheGroup          [(sizeof(CacheGroup)           <=   184) ? 1 : -1];
+	char sizecheck_DNSQuestion         [(sizeof(DNSQuestion)          <=   786) ? 1 : -1];
+	char sizecheck_ZoneData            [(sizeof(ZoneData)             <=  1624) ? 1 : -1];
 	char sizecheck_NATTraversalInfo    [(sizeof(NATTraversalInfo)     <=   192) ? 1 : -1];
-	char sizecheck_HostnameInfo        [(sizeof(HostnameInfo)         <=  2800) ? 1 : -1];
-	char sizecheck_DNSServer           [(sizeof(DNSServer)            <=   312) ? 1 : -1];
-	char sizecheck_NetworkInterfaceInfo[(sizeof(NetworkInterfaceInfo) <=  5968) ? 1 : -1];
+	char sizecheck_HostnameInfo        [(sizeof(HostnameInfo)         <=  3050) ? 1 : -1];
+	char sizecheck_DNSServer           [(sizeof(DNSServer)            <=   320) ? 1 : -1];
+	char sizecheck_NetworkInterfaceInfo[(sizeof(NetworkInterfaceInfo) <=  6850) ? 1 : -1];
 	char sizecheck_ServiceRecordSet    [(sizeof(ServiceRecordSet)     <=  5500) ? 1 : -1];
-	char sizecheck_DomainAuthInfo      [(sizeof(DomainAuthInfo)       <=  5500) ? 1 : -1];
-	char sizecheck_ServiceInfoQuery    [(sizeof(ServiceInfoQuery)     <=  2944) ? 1 : -1];
+	char sizecheck_DomainAuthInfo      [(sizeof(DomainAuthInfo)       <=  7968) ? 1 : -1];
+	char sizecheck_ServiceInfoQuery    [(sizeof(ServiceInfoQuery)     <=  3200) ? 1 : -1];
 #if APPLE_OSX_mDNSResponder
-	char sizecheck_ClientTunnel        [(sizeof(ClientTunnel)         <=  1072) ? 1 : -1];
+	char sizecheck_ClientTunnel        [(sizeof(ClientTunnel)         <=  1148) ? 1 : -1];
 #endif
 	};
 

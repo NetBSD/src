@@ -1,9 +1,9 @@
-/*	$NetBSD: pagectrl.c,v 1.1.1.3 2010/12/12 15:21:34 adam Exp $	*/
+/*	$NetBSD: pagectrl.c,v 1.1.1.3.12.1 2014/08/19 23:52:00 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/libldap/pagectrl.c,v 1.5.2.7 2010/04/13 20:22:59 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * Copyright 2006 Hans Leidekker
  * All rights reserved.
  *

@@ -1,18 +1,21 @@
-#	$NetBSD: NetBSD.dist.mips64eb,v 1.3.8.2 2013/06/23 06:26:21 tls Exp $
+#	$NetBSD: NetBSD.dist.mips64eb,v 1.3.8.3 2014/08/19 23:45:51 tls Exp $
 
 ./lib/o32
 ./lib/o32/npf
 ./lib/64
 ./lib/64/npf
+./usr/include/g++/bits/mips64
+./usr/include/g++/bits/mips32
+./usr/include/g++/bits/mipso32
 ./usr/lib/o32
 ./usr/lib/o32/i18n
 ./usr/lib/o32/lua
-./usr/lib/o32/lua/5.1
+./usr/lib/o32/lua/5.3
 ./usr/lib/o32/security
 ./usr/lib/64
 ./usr/lib/64/i18n
 ./usr/lib/64/lua
-./usr/lib/64/lua/5.1
+./usr/lib/64/lua/5.3
 ./usr/lib/64/security
 ./usr/libdata/debug/lib/o32
 ./usr/libdata/debug/lib/o32/npf

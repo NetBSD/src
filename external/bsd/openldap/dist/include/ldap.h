@@ -1,9 +1,9 @@
-/*	$NetBSD: ldap.h,v 1.1.1.4 2010/12/12 15:21:23 adam Exp $	*/
+/*	$NetBSD: ldap.h,v 1.1.1.4.12.1 2014/08/19 23:51:59 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/include/ldap.h,v 1.312.2.25 2010/06/10 18:48:36 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,9 @@ LDAP_BEGIN_DECL
 		defined( LDAP_API_FEATURE_X_OPENLDAP_THREAD_SAFE ) )
 	/* -lldap may or may not be thread safe */
 	/* -lldap_r, if available, is always thread safe */
-#	define	LDAP_API_FEATURE_THREAD_SAFE 1
+#	define	LDAP_API_FEATURE_THREAD_SAFE 		1
+#	define  LDAP_API_FEATURE_SESSION_THREAD_SAFE	1
+#	define  LDAP_API_FEATURE_OPERATION_THREAD_SAFE	1
 #endif
 #if defined( LDAP_THREAD_SAFE ) && \
 	defined( LDAP_API_FEATURE_X_OPENLDAP_THREAD_SAFE )
@@ -137,6 +139,7 @@ LDAP_BEGIN_DECL
 #define LDAP_OPT_DEFBASE		0x5009	/* searchbase */
 #define	LDAP_OPT_CONNECT_ASYNC		0x5010	/* create connections asynchronously */
 #define	LDAP_OPT_CONNECT_CB			0x5011	/* connection callbacks */
+#define	LDAP_OPT_SESSION_REFCNT		0x5012	/* session reference count */
 
 /* OpenLDAP TLS options */
 #define LDAP_OPT_X_TLS				0x6000
@@ -156,6 +159,7 @@ LDAP_BEGIN_DECL
 #define LDAP_OPT_X_TLS_DHFILE		0x600e
 #define LDAP_OPT_X_TLS_NEWCTX		0x600f
 #define LDAP_OPT_X_TLS_CRLFILE		0x6010	/* GNUtls only */
+#define LDAP_OPT_X_TLS_PACKAGE		0x6011
 
 #define LDAP_OPT_X_TLS_NEVER	0
 #define LDAP_OPT_X_TLS_HARD		1
@@ -333,7 +337,6 @@ typedef struct ldapcontrol {
 /* MS Active Directory controls - not implemented in slapd(8) */
 #define LDAP_CONTROL_X_EXTENDED_DN		"1.2.840.113556.1.4.529"
 
-#ifdef LDAP_DEVEL
 /* <draft-wahl-ldap-session> */
 #define LDAP_CONTROL_X_SESSION_TRACKING		"1.3.6.1.4.1.21008.108.63.1"
 #define LDAP_CONTROL_X_SESSION_TRACKING_RADIUS_ACCT_SESSION_ID \
@@ -342,9 +345,8 @@ typedef struct ldapcontrol {
 						LDAP_CONTROL_X_SESSION_TRACKING ".2"
 #define LDAP_CONTROL_X_SESSION_TRACKING_USERNAME \
 						LDAP_CONTROL_X_SESSION_TRACKING ".3"
-#endif /* LDAP_DEVEL */
-
 /* various expired works */
+
 /* LDAP Duplicated Entry Control Extension *//* not implemented in slapd(8) */
 #define LDAP_CONTROL_DUPENT_REQUEST		"2.16.840.1.113719.1.27.101.1"
 #define LDAP_CONTROL_DUPENT_RESPONSE	"2.16.840.1.113719.1.27.101.2"
@@ -382,7 +384,7 @@ typedef struct ldapcontrol {
 #define	LDAP_EXOP_REFRESH		"1.3.6.1.4.1.1466.101.119.1"	/* RFC 2589 */
 #define	LDAP_TAG_EXOP_REFRESH_REQ_DN	((ber_tag_t) 0x80U)
 #define	LDAP_TAG_EXOP_REFRESH_REQ_TTL	((ber_tag_t) 0x81U)
-#define	LDAP_TAG_EXOP_REFRESH_RES_TTL	((ber_tag_t) 0x80U)
+#define	LDAP_TAG_EXOP_REFRESH_RES_TTL	((ber_tag_t) 0x81U)
 
 #define LDAP_EXOP_WHO_AM_I		"1.3.6.1.4.1.4203.1.11.3"		/* RFC 4532 */
 #define LDAP_EXOP_X_WHO_AM_I	LDAP_EXOP_WHO_AM_I
@@ -1189,6 +1191,26 @@ typedef int (LDAP_SASL_INTERACT_PROC) LDAP_P((
 	LDAP *ld, unsigned flags, void* defaults, void *interact ));
 
 LDAP_F( int )
+ldap_sasl_interactive_bind LDAP_P((
+	LDAP *ld,
+	LDAP_CONST char *dn, /* usually NULL */
+	LDAP_CONST char *saslMechanism,
+	LDAPControl **serverControls,
+	LDAPControl **clientControls,
+
+	/* should be client controls */
+	unsigned flags,
+	LDAP_SASL_INTERACT_PROC *proc,
+	void *defaults,
+	
+	/* as obtained from ldap_result() */
+	LDAPMessage *result,
+
+	/* returned during bind processing */
+	const char **rmech,
+	int *msgid ));
+
+LDAP_F( int )
 ldap_sasl_interactive_bind_s LDAP_P((
 	LDAP *ld,
 	LDAP_CONST char *dn, /* usually NULL */
@@ -1500,6 +1522,10 @@ LDAP_F( int )
 ldap_initialize LDAP_P((
 	LDAP **ldp,
 	LDAP_CONST char *url ));
+
+LDAP_F( LDAP * )
+ldap_dup LDAP_P((
+	LDAP *old ));
 
 /*
  * in tls.c
@@ -1912,6 +1938,10 @@ ldap_unbind_ext_s LDAP_P((
 	LDAP			*ld,
 	LDAPControl		**serverctrls,
 	LDAPControl		**clientctrls));
+
+LDAP_F( int )
+ldap_destroy LDAP_P((
+	LDAP			*ld));
 
 #if LDAP_DEPRECATED
 LDAP_F( int )
@@ -2403,7 +2433,7 @@ ldap_create_session_tracking_value LDAP_P((
 	struct berval	*value ));
 
 LDAP_F( int )
-ldap_create_session_tracking LDAP_P((
+ldap_create_session_tracking_control LDAP_P((
 	LDAP		*ld,
 	char		*sessionSourceIp,
 	char		*sessionSourceName,

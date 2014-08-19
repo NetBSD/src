@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.28 2011/07/03 23:11:34 tron Exp $
+# $NetBSD: list,v 1.28.8.1 2014/08/19 23:45:45 tls Exp $
 #
 
 COPY	${KERNEL3}			netbsd.sun3
@@ -138,7 +138,7 @@ PROG	usr/bin/gzip	usr/bin/gzcat usr/bin/gunzip
 PROG	usr/bin/sort
 
 SPECIAL	less		srcdir external/bsd/less/bin/less
-SPECIAL	vi		srcdir usr.bin/nvi/build
+SPECIAL	vi		srcdir external/bsd/nvi/usr.bin/nvi
 
 SPECIAL	ed		srcdir	distrib/utils/x_ed
 SPECIAL	gzip		srcdir	distrib/utils/x_gzip

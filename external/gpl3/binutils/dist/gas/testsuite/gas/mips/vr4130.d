@@ -61,7 +61,66 @@ Disassembly.*
 .*	addiu	.*
 .*	mult	.*
 #
+.*	mfhi	.*
+.*	nop
+.*	nop
+.*	nop
+.*	nop
+.*	mult	.*
+#
+.*	mfhi	.*
+.*	nop
+.*	nop
+.*	nop
+.*	addiu	.*
+.*	mult	.*
+#
+.*	mfhi	.*
+.*	nop
+.*	nop
+.*	addiu	.*
+.*	addiu	.*
+.*	mult	.*
+#
+.*	mfhi	.*
+.*	nop
+.*	addiu	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	mult	.*
+#
+.*	mfhi	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	mult	.*
+#
 # PART C
+#
+.*	mfhi	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	mult	.*
+#
+.*	mfhi	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	mult	.*
+#
+.*	mfhi	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	mult	.*
+#
+.*	mfhi	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	mult	.*
 #
 .*	mfhi	.*
 .*	addiu	.*
@@ -484,7 +543,66 @@ Disassembly.*
 .*	addiu	.*
 .*	mult	.*
 #
+.*	mfhi	.*
+.*	nop
+.*	nop
+.*	nop
+.*	nop
+.*	mult	.*
+#
+.*	mfhi	.*
+.*	nop
+.*	nop
+.*	nop
+.*	addiu	.*
+.*	mult	.*
+#
+.*	mfhi	.*
+.*	nop
+.*	nop
+.*	addiu	.*
+.*	addiu	.*
+.*	mult	.*
+#
+.*	mfhi	.*
+.*	nop
+.*	addiu	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	mult	.*
+#
+.*	mfhi	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	mult	.*
+#
 # PART C
+#
+.*	mfhi	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	mult	.*
+#
+.*	mfhi	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	mult	.*
+#
+.*	mfhi	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	mult	.*
+#
+.*	mfhi	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	addiu	.*
+.*	mult	.*
 #
 .*	mfhi	.*
 .*	addiu	.*

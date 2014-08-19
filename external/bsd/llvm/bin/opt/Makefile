@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.2.3 2013/06/23 06:28:22 tls Exp $
+#	$NetBSD: Makefile,v 1.3.2.4 2014/08/19 23:47:18 tls Exp $
 
 PROG_CXX=	opt
 NOMAN=		yes
@@ -8,7 +8,11 @@ NOMAN=		yes
 .PATH: ${LLVM_SRCDIR}/tools/opt
 
 SRCS=	AnalysisWrappers.cpp \
+	BreakpointPrinter.cpp \
 	GraphPrinters.cpp \
+	NewPMDriver.cpp \
+	PassPrinters.cpp \
+	Passes.cpp \
 	PrintSCC.cpp \
 	opt.cpp
 
@@ -39,12 +43,16 @@ LLVM_LIBS+= \
 	SparcCodeGen \
 	SparcTargetInfo \
 	SparcMCTargetDesc \
+	SparcAsmPrinter \
 	X86CodeGen \
 	X86MCTargetDesc \
 	X86TargetInfo \
 	X86Utils \
 	X86AsmPrinter \
+	MCDisassembler \
+	AsmPrinter \
 	Object \
+	MCParser \
 	SelectionDAG \
 	CodeGen \
 	Vectorize \
@@ -58,6 +66,9 @@ LLVM_LIBS+= \
 	ipa \
 	IR \
 	Support
+
+LDADD+=	-lz
+DPADD+=	${LIBZ}
 
 .include "${.PARSEDIR}/../../link.mk"
 

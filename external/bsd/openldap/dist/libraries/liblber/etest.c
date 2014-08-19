@@ -1,10 +1,10 @@
-/*	$NetBSD: etest.c,v 1.1.1.3 2010/12/12 15:21:28 adam Exp $	*/
+/*	$NetBSD: etest.c,v 1.1.1.3.12.1 2014/08/19 23:51:59 tls Exp $	*/
 
 /* etest.c - lber encoding test program */
-/* OpenLDAP: pkg/ldap/libraries/liblber/etest.c,v 1.35.2.6 2010/04/13 20:22:54 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

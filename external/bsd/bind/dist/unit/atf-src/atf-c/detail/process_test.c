@@ -1,9 +1,9 @@
-/*	$NetBSD: process_test.c,v 1.1.1.1.8.1 2013/02/25 00:26:01 tls Exp $	*/
+/*	$NetBSD: process_test.c,v 1.1.1.1.8.2 2014/08/19 23:46:37 tls Exp $	*/
 
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,8 @@
  */
 
 #include <sys/types.h>
-#include <sys/resource.h>
 #include <sys/time.h>
+#include <sys/resource.h>
 #include <sys/wait.h>
 
 #include <errno.h>
@@ -97,12 +97,12 @@ check_file(const enum out_type type)
 {
     switch (type) {
     case stdout_type:
-        ATF_CHECK(grep_file("stdout", "stdout: msg"));
-        ATF_CHECK(!grep_file("stdout", "stderr: msg"));
+        ATF_CHECK(atf_utils_grep_file("stdout: msg", "stdout"));
+        ATF_CHECK(!atf_utils_grep_file("stderr: msg", "stdout"));
         break;
     case stderr_type:
-        ATF_CHECK(grep_file("stderr", "stderr: msg"));
-        ATF_CHECK(!grep_file("stderr", "stdout: msg"));
+        ATF_CHECK(atf_utils_grep_file("stderr: msg", "stderr"));
+        ATF_CHECK(!atf_utils_grep_file("stdout: msg", "stderr"));
         break;
     default:
         UNREACHABLE;
@@ -112,7 +112,7 @@ check_file(const enum out_type type)
 struct capture_stream {
     struct base_stream m_base;
 
-    atf_dynstr_t m_msg;
+    char *m_msg;
 };
 #define CAPTURE_STREAM(type) \
     { .m_base = BASE_STREAM(capture_stream_init, \
@@ -128,7 +128,7 @@ capture_stream_init(void *v)
 
     s->m_base.m_sb_ptr = &s->m_base.m_sb;
     RE(atf_process_stream_init_capture(&s->m_base.m_sb));
-    RE(atf_dynstr_init(&s->m_msg));
+    s->m_msg = NULL;
 }
 
 static
@@ -139,10 +139,10 @@ capture_stream_process(void *v, atf_process_child_t *c)
 
     switch (s->m_base.m_type) {
     case stdout_type:
-        (void) read_line(atf_process_child_stdout(c), &s->m_msg);
+        s->m_msg = atf_utils_readline(atf_process_child_stdout(c));
         break;
     case stderr_type:
-        (void) read_line(atf_process_child_stderr(c), &s->m_msg);
+        s->m_msg = atf_utils_readline(atf_process_child_stderr(c));
         break;
     default:
         UNREACHABLE;
@@ -157,18 +157,18 @@ capture_stream_fini(void *v)
 
     switch (s->m_base.m_type) {
     case stdout_type:
-        ATF_CHECK(grep_string(&s->m_msg, "stdout: msg"));
-        ATF_CHECK(!grep_string(&s->m_msg, "stderr: msg"));
+        ATF_CHECK(atf_utils_grep_string("stdout: msg", s->m_msg));
+        ATF_CHECK(!atf_utils_grep_string("stderr: msg", s->m_msg));
         break;
     case stderr_type:
-        ATF_CHECK(!grep_string(&s->m_msg, "stdout: msg"));
-        ATF_CHECK(grep_string(&s->m_msg, "stderr: msg"));
+        ATF_CHECK(!atf_utils_grep_string("stdout: msg", s->m_msg));
+        ATF_CHECK(atf_utils_grep_string("stderr: msg", s->m_msg));
         break;
     default:
         UNREACHABLE;
     }
 
-    atf_dynstr_fini(&s->m_msg);
+    free(s->m_msg);
     atf_process_stream_fini(&s->m_base.m_sb);
 }
 
@@ -691,7 +691,7 @@ static void child_report_pid(void *) ATF_DEFS_ATTRIBUTE_NORETURN;
 
 static
 void
-child_report_pid(void *v)
+child_report_pid(void *v ATF_DEFS_ATTRIBUTE_UNUSED)
 {
     const pid_t pid = getpid();
     if (write(STDOUT_FILENO, &pid, sizeof(pid)) != sizeof(pid))
@@ -732,7 +732,7 @@ ATF_TC_BODY(child_pid, tc)
 
 static
 void
-child_loop(void *v)
+child_loop(void *v ATF_DEFS_ATTRIBUTE_UNUSED)
 {
     for (;;)
         sleep(1);
@@ -740,13 +740,13 @@ child_loop(void *v)
 
 static
 void
-nop_signal(int sig)
+nop_signal(int sig ATF_DEFS_ATTRIBUTE_UNUSED)
 {
 }
 
 static
 void
-child_spawn_loop_and_wait_eintr(void *v)
+child_spawn_loop_and_wait_eintr(void *v ATF_DEFS_ATTRIBUTE_UNUSED)
 {
     atf_process_child_t child;
     atf_process_status_t status;
@@ -862,7 +862,8 @@ ATF_TC_BODY(child_wait_eintr, tc)
 
 static
 void
-do_exec(const atf_tc_t *tc, const char *helper_name, atf_process_status_t *s)
+do_exec(const atf_tc_t *tc, const char *helper_name, atf_process_status_t *s,
+        void (*prehook)(void))
 {
     atf_fs_path_t process_helpers;
     const char *argv[3];
@@ -874,7 +875,7 @@ do_exec(const atf_tc_t *tc, const char *helper_name, atf_process_status_t *s)
     argv[2] = NULL;
     printf("Executing %s %s\n", argv[0], argv[1]);
 
-    RE(atf_process_exec_array(s, &process_helpers, argv, NULL, NULL));
+    RE(atf_process_exec_array(s, &process_helpers, argv, NULL, NULL, prehook));
     atf_fs_path_fini(&process_helpers);
 }
 
@@ -882,16 +883,10 @@ static
 void
 check_line(int fd, const char *exp)
 {
-    atf_dynstr_t line;
-    bool eof;
-
-    atf_dynstr_init(&line);
-    eof = read_line(fd, &line);
-    ATF_CHECK(!eof);
-    ATF_CHECK_MSG(atf_equal_dynstr_cstring(&line, exp),
-                  "read: '%s', expected: '%s'",
-                  atf_dynstr_cstring(&line), exp);
-    atf_dynstr_fini(&line);
+    char *line = atf_utils_readline(fd);
+    ATF_CHECK(line != NULL);
+    ATF_CHECK_STREQ_MSG(exp, line, "read: '%s', expected: '%s'", line, exp);
+    free(line);
 }
 
 ATF_TC(exec_failure);
@@ -903,7 +898,7 @@ ATF_TC_BODY(exec_failure, tc)
 {
     atf_process_status_t status;
 
-    do_exec(tc, "exit-failure", &status);
+    do_exec(tc, "exit-failure", &status, NULL);
     ATF_CHECK(atf_process_status_exited(&status));
     ATF_CHECK_EQ(atf_process_status_exitstatus(&status), EXIT_FAILURE);
     atf_process_status_fini(&status);
@@ -933,7 +928,7 @@ ATF_TC_BODY(exec_list, tc)
         RE(atf_fs_path_init_fmt(&outpath, "stdout"));
         RE(atf_process_stream_init_redirect_path(&outsb, &outpath));
         RE(atf_process_exec_list(&status, &process_helpers, &argv, &outsb,
-                                 NULL));
+                                 NULL, NULL));
         atf_process_stream_fini(&outsb);
         atf_fs_path_fini(&outpath);
     }
@@ -953,6 +948,27 @@ ATF_TC_BODY(exec_list, tc)
     atf_fs_path_fini(&process_helpers);
 }
 
+static void
+exit_early(void)
+{
+    exit(80);
+}
+
+ATF_TC(exec_prehook);
+ATF_TC_HEAD(exec_prehook, tc)
+{
+    atf_tc_set_md_var(tc, "descr", "Tests execing a command with a prehook");
+}
+ATF_TC_BODY(exec_prehook, tc)
+{
+    atf_process_status_t status;
+
+    do_exec(tc, "exit-success", &status, exit_early);
+    ATF_CHECK(atf_process_status_exited(&status));
+    ATF_CHECK_EQ(atf_process_status_exitstatus(&status), 80);
+    atf_process_status_fini(&status);
+}
+
 ATF_TC(exec_success);
 ATF_TC_HEAD(exec_success, tc)
 {
@@ -962,7 +978,7 @@ ATF_TC_BODY(exec_success, tc)
 {
     atf_process_status_t status;
 
-    do_exec(tc, "exit-success", &status);
+    do_exec(tc, "exit-success", &status, NULL);
     ATF_CHECK(atf_process_status_exited(&status));
     ATF_CHECK_EQ(atf_process_status_exitstatus(&status), EXIT_SUCCESS);
     atf_process_status_fini(&status);
@@ -1105,6 +1121,7 @@ ATF_TP_ADD_TCS(tp)
     /* Add the tests for the free functions. */
     ATF_TP_ADD_TC(tp, exec_failure);
     ATF_TP_ADD_TC(tp, exec_list);
+    ATF_TP_ADD_TC(tp, exec_prehook);
     ATF_TP_ADD_TC(tp, exec_success);
     ATF_TP_ADD_TC(tp, fork_cookie);
     ATF_TP_ADD_TC(tp, fork_out_capture_err_capture);

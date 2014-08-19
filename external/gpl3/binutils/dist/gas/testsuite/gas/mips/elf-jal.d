@@ -24,3 +24,4 @@ Disassembly of section .text:
 0+0028 <[^>]*> j	0+ <text_label>
 [ 	]*28: (MIPS_JMP|JMPADDR|R_MIPS_26)	external_text_label
 0+002c <[^>]*> nop
+	\.\.\.

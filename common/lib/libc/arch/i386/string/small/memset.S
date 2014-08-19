@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.1 2011/06/16 16:39:14 joerg Exp $	*/
+/*	$NetBSD: memset.S,v 1.1.8.1 2014/08/19 23:45:13 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-	RCSID("$NetBSD: memset.S,v 1.1 2011/06/16 16:39:14 joerg Exp $")
+	RCSID("$NetBSD: memset.S,v 1.1.8.1 2014/08/19 23:45:13 tls Exp $")
 
 ENTRY(memset)
 	pushl	%edi
@@ -43,3 +43,4 @@ ENTRY(memset)
 	popl	%eax
 	popl	%edi
 	ret
+END(memset)

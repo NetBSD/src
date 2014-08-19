@@ -1,5 +1,5 @@
 #readelf: --relocs
-#as: -mabi=n32 -KPIC
+#as: -march=from-abi -mabi=n32 -KPIC
 
 Relocation section '\.rela\.text' at offset .* contains 4 entries:
  Offset     Info    Type            Sym.Value  Sym. Name \+ Addend

@@ -1,7 +1,7 @@
-/*	$NetBSD: netaddr.c,v 1.4 2012/06/05 00:42:29 christos Exp $	*/
+/*	$NetBSD: netaddr.c,v 1.4.2.1 2014/08/19 23:46:32 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2010-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -342,7 +342,7 @@ isc_netaddr_fromsockaddr(isc_netaddr_t *t, const isc_sockaddr_t *s) {
 		t->zone = 0;
 		break;
 	case AF_INET6:
-		memcpy(&t->type.in6, &s->type.sin6.sin6_addr, 16);
+		memmove(&t->type.in6, &s->type.sin6.sin6_addr, 16);
 #ifdef ISC_PLATFORM_HAVESCOPEID
 		t->zone = s->type.sin6.sin6_scope_id;
 #else
@@ -351,7 +351,7 @@ isc_netaddr_fromsockaddr(isc_netaddr_t *t, const isc_sockaddr_t *s) {
 		break;
 #ifdef ISC_PLATFORM_HAVESYSUNH
 	case AF_UNIX:
-		memcpy(t->type.un, s->type.sunix.sun_path, sizeof(t->type.un));
+		memmove(t->type.un, s->type.sunix.sun_path, sizeof(t->type.un));
 		t->zone = 0;
 		break;
 #endif
@@ -431,6 +431,6 @@ isc_netaddr_fromv4mapped(isc_netaddr_t *t, const isc_netaddr_t *s) {
 
 	memset(t, 0, sizeof(*t));
 	t->family = AF_INET;
-	memcpy(&t->type.in, (char *)&src->type.in6 + 12, 4);
+	memmove(&t->type.in, (char *)&src->type.in6 + 12, 4);
 	return;
 }

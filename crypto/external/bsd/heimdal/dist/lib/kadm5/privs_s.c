@@ -1,4 +1,4 @@
-/*	$NetBSD: privs_s.c,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $	*/
+/*	$NetBSD: privs_s.c,v 1.1.1.1.10.1 2014/08/19 23:45:19 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: privs_s.c,v 1.1.1.1 2011/04/13 18:15:30 elric Exp $");
+__RCSID("NetBSD");
 
 kadm5_ret_t
 kadm5_s_get_privs(void *server_handle, uint32_t *privs)

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.5.8.1 2013/06/23 06:26:26 tls Exp $	*/
+/*	$NetBSD: defs.h,v 1.5.8.2 2014/08/19 23:46:39 tls Exp $	*/
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
@@ -109,6 +109,7 @@
 #define PARSE_PARAM 13
 #define LEX_PARAM 14
 #define POSIX_YACC 15
+#define TOKEN_TABLE 16
 
 /*  symbol classes  */
 
@@ -253,6 +254,7 @@ extern int lineno;
 extern int outline;
 extern int exit_code;
 extern int pure_parser;
+extern int token_table;
 
 extern const char *const banner[];
 extern const char *const xdecls[];

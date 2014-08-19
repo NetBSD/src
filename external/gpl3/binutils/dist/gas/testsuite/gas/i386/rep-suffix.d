@@ -12,4 +12,8 @@ Disassembly of section .text:
    7:	66 f3 ab[ 	]+rep stosw %ax,%es:\(%edi\)
    a:	f3 ad[ 	]+rep lodsl %ds:\(%esi\),%eax
    c:	f3 ab[ 	]+rep stosl %eax,%es:\(%edi\)
+   e:	f3 0f bc c1[	 ]+tzcntl %ecx,%eax
+  12:	f3 0f bd c1[	 ]+lzcntl %ecx,%eax
+  16:	f3 c3[	 ]+repz retl\s*
+  18:	f3 90[	 ]+pause\s*
 #pass

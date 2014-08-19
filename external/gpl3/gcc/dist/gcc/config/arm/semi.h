@@ -1,6 +1,5 @@
 /* Definitions of target machine for GNU compiler.  ARM on semi-hosted platform
-   Copyright (C) 1994, 1995, 1996, 1997, 2001, 2004, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1994-2013 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (richard.earnshaw@arm.com)
 
    This file is part of GCC.
@@ -33,10 +32,6 @@
 #define LINK_SPEC "%{mbig-endian:-EB} -X"
 #endif
 
-#ifndef TARGET_VERSION
-#define TARGET_VERSION fputs (" (ARM/semi-hosted)", stderr);
-#endif
-
 #ifndef TARGET_DEFAULT_FLOAT_ABI
 #define TARGET_DEFAULT_FLOAT_ABI ARM_FLOAT_ABI_HARD
 #endif
@@ -65,10 +60,8 @@
 #define ASM_SPEC "\
 %{fpic|fpie: -k} %{fPIC|fPIE: -k} \
 %{mbig-endian:-EB} \
-%{mcpu=*:-mcpu=%*} \
-%{march=*:-march=%*} \
+%(arm_cpu_spec) \
 %{mapcs-float:-mfloat} \
-%{msoft-float:-mfloat-abi=soft} %{mhard-float:-mfloat-abi=hard} \
 %{mfloat-abi=*} %{mfpu=*} \
 %{mthumb-interwork:-mthumb-interwork} \
 %(subtarget_extra_asm_spec)"

@@ -1,6 +1,6 @@
 /* BFD Xilinx MicroBlaze architecture definition
 
-   Copyright 2009 Free Software Foundation, Inc.
+   Copyright 2009, 2012 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -19,8 +19,8 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-#include "bfd.h"
 #include "sysdep.h"
+#include "bfd.h"
 #include "libbfd.h"
 
 const bfd_arch_info_type bfd_microblaze_arch =
@@ -36,5 +36,6 @@ const bfd_arch_info_type bfd_microblaze_arch =
   TRUE,		  		/* Is this the default architecture ?  */
   bfd_default_compatible,	/* Architecture comparison function.  */
   bfd_default_scan,	   	/* String to architecture conversion.  */
+  bfd_arch_default_fill,	/* Default fill.  */
   NULL			   	/* Next in list.  */
 };

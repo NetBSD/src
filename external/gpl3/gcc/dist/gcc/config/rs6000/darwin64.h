@@ -1,5 +1,5 @@
 /* Target definitions for PowerPC running Darwin (Mac OS X).
-   Copyright (C) 2006, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2006-2013 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
    This file is part of GCC.
@@ -18,15 +18,12 @@
    along with GCC; see the file COPYING3.  If not see
    <http://www.gnu.org/licenses/>.  */
 
-#undef  TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (Darwin/PowerPC64)");
-
 #undef  TARGET_DEFAULT
-#define TARGET_DEFAULT (MASK_POWERPC | MASK_POWERPC64 | MASK_64BIT \
-			| MASK_MULTIPLE	| MASK_NEW_MNEMONICS | MASK_PPC_GFXOPT)
+#define TARGET_DEFAULT (MASK_POWERPC64 | MASK_64BIT \
+			| MASK_MULTIPLE | MASK_PPC_GFXOPT)
 
 #undef DARWIN_ARCH_SPEC
-#define DARWIN_ARCH_SPEC "ppc64"
+#define DARWIN_ARCH_SPEC "%{m32:ppc;:ppc64}"
 
 #undef DARWIN_SUBARCH_SPEC
 #define DARWIN_SUBARCH_SPEC DARWIN_ARCH_SPEC

@@ -1,4 +1,4 @@
-/*	$NetBSD: iterated_hash.c,v 1.1.1.1 2009/12/13 16:54:11 kardel Exp $	*/
+/*	$NetBSD: iterated_hash.c,v 1.1.1.1.12.1 2014/08/19 23:51:39 tls Exp $	*/
 
 /*
  * Copyright (C) 2006, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: iterated_hash.c,v 1.4.48.2 2009/02/18 23:47:12 tbox Exp */
+/* Id: iterated_hash.c,v 1.6 2009/02/18 23:47:48 tbox Exp  */
 
 #include "config.h"
 

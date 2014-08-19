@@ -1,5 +1,6 @@
 /* Binutils emulation layer.
-   Copyright 2002, 2003, 2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+   Copyright 2002, 2003, 2005, 2006, 2007, 2008, 2010
+   Free Software Foundation, Inc.
    Written by Tom Rix, Red Hat Inc.
 
    This file is part of GNU Binutils.
@@ -27,6 +28,7 @@
 #include "libxcoff.h"
 
 /* Default to <bigaf>.  */
+/* FIXME: write only variable.  */
 static bfd_boolean big_archive = TRUE;
 
 /* Whether to include 32 bit objects.  */
@@ -47,88 +49,54 @@ ar_emul_aix_usage (FILE *fp)
 }
 
 static bfd_boolean
-ar_emul_aix_internal (bfd **       after_bfd,
-		      char *       file_name,
-		      bfd_boolean  verbose,
-		      const char * target_name,
-		      bfd_boolean  is_append,
-		      bfd_boolean  flatten ATTRIBUTE_UNUSED)
+check_aix (bfd *try_bfd)
 {
-  bfd *temp;
-  bfd *try_bfd;
+  extern const bfd_target rs6000coff_vec;
+  extern const bfd_target rs6000coff64_vec;
+  extern const bfd_target aix5coff64_vec;
 
-  temp = *after_bfd;
-
-  /* Try 64 bit.  */
-  try_bfd = bfd_openr (file_name, target_name);
-
-  /* Failed or the object is possibly 32 bit.  */
-  if (NULL == try_bfd || ! bfd_check_format (try_bfd, bfd_object))
-    try_bfd = bfd_openr (file_name, "aixcoff-rs6000");
-
-  AR_EMUL_ELEMENT_CHECK (try_bfd, file_name);
-
-  if (bfd_xcoff_is_xcoff64 (try_bfd) && (! X64))
-    return FALSE;
-
-  if (bfd_xcoff_is_xcoff32 (try_bfd)
-      && bfd_check_format (try_bfd, bfd_object) && (! X32))
-    return FALSE;
-
-  if (is_append)
+  if (bfd_check_format (try_bfd, bfd_object))
     {
-      AR_EMUL_APPEND_PRINT_VERBOSE (verbose, file_name);
-    }
-  else
-    {
-      AR_EMUL_REPLACE_PRINT_VERBOSE (verbose, file_name);
-    }
+      if (!X32 && try_bfd->xvec == &rs6000coff_vec)
+	return FALSE;
 
-  *after_bfd = try_bfd;
-  (*after_bfd)->archive_next = temp;
-
+      if (!X64 && (try_bfd->xvec == &rs6000coff64_vec
+		   || try_bfd->xvec == &aix5coff64_vec))
+	return FALSE;
+    }
   return TRUE;
 }
-
 
 static bfd_boolean
 ar_emul_aix_append (bfd **after_bfd, char *file_name, const char *target,
 		    bfd_boolean verbose, bfd_boolean flatten)
 {
-  if (target)
-    non_fatal (_("target `%s' ignored."), target);
-  return ar_emul_aix_internal (after_bfd, file_name, verbose,
-			       "aixcoff64-rs6000", TRUE, flatten);
-}
+  bfd *new_bfd;
 
-static bfd_boolean
-ar_emul_aix5_append (bfd **after_bfd, char *file_name, const char *target,
-		     bfd_boolean verbose, bfd_boolean flatten)
-{
-  if (target)
-    non_fatal (_("target `%s' ignored."), target);
-  return ar_emul_aix_internal (after_bfd, file_name, verbose,
-			       "aix5coff64-rs6000", TRUE, flatten);
+  new_bfd = bfd_openr (file_name, target);
+  AR_EMUL_ELEMENT_CHECK (new_bfd, file_name);
+
+  return do_ar_emul_append (after_bfd, new_bfd, verbose, flatten, check_aix);
 }
 
 static bfd_boolean
 ar_emul_aix_replace (bfd **after_bfd, char *file_name, const char *target,
 		     bfd_boolean verbose)
 {
-  if (target)
-    non_fatal (_("target `%s' ignored."), target);
-  return ar_emul_aix_internal (after_bfd, file_name, verbose,
-			       "aixcoff64-rs6000", FALSE, FALSE);
-}
+  bfd *new_bfd;
 
-static bfd_boolean
-ar_emul_aix5_replace (bfd **after_bfd, char *file_name,
-		      const char *target, bfd_boolean verbose)
-{
-  if (target)
-    non_fatal (_("target `%s' ignored."), target);
-  return ar_emul_aix_internal (after_bfd, file_name, verbose,
-			       "aix5coff64-rs6000", FALSE, FALSE);
+  new_bfd = bfd_openr (file_name, target);
+  AR_EMUL_ELEMENT_CHECK (new_bfd, file_name);
+
+  if (!check_aix (new_bfd))
+    return FALSE;
+
+  AR_EMUL_REPLACE_PRINT_VERBOSE (verbose, file_name);
+
+  new_bfd->archive_next = *after_bfd;
+  *after_bfd = new_bfd;
+
+  return TRUE;
 }
 
 static bfd_boolean
@@ -169,13 +137,5 @@ struct bin_emulation_xfer_struct bin_aix_emulation =
   ar_emul_aix_usage,
   ar_emul_aix_append,
   ar_emul_aix_replace,
-  ar_emul_aix_parse_arg,
-};
-
-struct bin_emulation_xfer_struct bin_aix5_emulation =
-{
-  ar_emul_aix_usage,
-  ar_emul_aix5_append,
-  ar_emul_aix5_replace,
   ar_emul_aix_parse_arg,
 };

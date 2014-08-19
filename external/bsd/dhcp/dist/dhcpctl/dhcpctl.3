@@ -1,12 +1,12 @@
-.\"	$NetBSD: dhcpctl.3,v 1.1.1.2.4.2 2013/06/23 06:26:28 tls Exp $
+.\"	$NetBSD: dhcpctl.3,v 1.1.1.2.4.3 2014/08/19 23:46:41 tls Exp $
 .\"
 .\" -*- nroff -*-
 .\"
 .\" Project:      DHCP
 .\" File:         dhcpctl.3
-.\" RCSId:        Id: dhcpctl.3,v 1.7.24.2 2011/04/25 23:49:52 sar Exp 
+.\" RCSId:        Id: dhcpctl.3,v 1.9 2011/04/25 23:43:16 sar Exp 
 .\" 
-.\" Copyright (c) 2011 by Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (c) 2011,2014 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 2000-2003 by Internet Software Consortium
 .\" Copyright (c) 2000 Nominum, Inc.
@@ -299,8 +299,8 @@ functions all set a value on the object handle.
 .Pp
 .Fn dhcpctl_object_update
 function queues a request for
-all the changes made to the object handle be be sent to the remote
-for processing. The changes made to the atributes on the handle will be
+all the changes made to the object handle be sent to the remote
+for processing. The changes made to the attributes on the handle will be
 applied to remote object if permitted.
 .\"
 .\"
@@ -354,7 +354,7 @@ from how the value appears in the dhcpd.conf file.
 .\"
 .Pp
 .Fn dhcpctl_new_object
-creates a local handle for an object on the the server. The 
+creates a local handle for an object on the server. The 
 .Dq object_type
 parameter is the ascii name of the type of object being accessed. e.g. 
 .Qq lease .
@@ -420,7 +420,7 @@ released.
 The following program will connect to the DHCP server running on the local
 host and will get the details of the existing lease for IP address
 10.0.0.101. It will then print out the time the lease is due to expire. Note
-that most error checking has been ommitted for brevity.  
+that most error checking has been omitted for brevity.  
 .Bd -literal -offset indent
 #include <sys/time.h>
 #include <stdio.h>
@@ -491,5 +491,7 @@ int main (int argc, char **argv) {
 omapi(3), omshell(1), dhcpd(8), dhclient(8), dhcpd.conf(5), dhclient.conf(5).
 .Sh AUTHOR
 .Em dhcpctl
-was written by Ted Lemon of Nominum, Inc.
-This preliminary documentation was written by James Brister of Nominum, Inc.
+is maintained by ISC.  To learn more about Internet Systems Consortium,
+see
+.B https://www.isc.org
+

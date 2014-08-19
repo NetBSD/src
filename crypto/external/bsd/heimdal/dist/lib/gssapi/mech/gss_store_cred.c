@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_store_cred.c,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $	*/
+/*	$NetBSD: gss_store_cred.c,v 1.1.1.1.10.1 2014/08/19 23:45:17 tls Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -55,7 +55,7 @@ gss_store_cred(OM_uint32         *minor_status,
 	*elements_stored = NULL;
     if (cred_usage_stored)
 	*cred_usage_stored = 0;
-	
+
     if (cred == NULL)
 	return GSS_S_NO_CONTEXT;
 

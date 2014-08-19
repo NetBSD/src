@@ -1,7 +1,7 @@
-/*	$NetBSD: ds.c,v 1.3.2.1 2013/02/25 00:25:42 tls Exp $	*/
+/*	$NetBSD: ds.c,v 1.3.2.2 2014/08/19 23:46:28 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2010, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -40,11 +40,8 @@
 
 #include <dst/dst.h>
 
-#ifdef HAVE_OPENSSL_GOST
-#include <dst/result.h>
-#include <openssl/evp.h>
-
-extern const EVP_MD * EVP_gost(void);
+#if defined(HAVE_OPENSSL_GOST) || defined(HAVE_PKCS11_GOST)
+#include "dst_gost.h"
 #endif
 
 isc_result_t
@@ -61,15 +58,14 @@ dns_ds_buildrdata(dns_name_t *owner, dns_rdata_t *key,
 	isc_sha1_t sha1;
 	isc_sha256_t sha256;
 	isc_sha384_t sha384;
-#ifdef HAVE_OPENSSL_GOST
-	EVP_MD_CTX ctx;
-	const EVP_MD *md;
+#if defined(HAVE_OPENSSL_GOST) || defined(HAVE_PKCS11_GOST)
+	isc_gost_t gost;
 #endif
 
 	REQUIRE(key != NULL);
 	REQUIRE(key->type == dns_rdatatype_dnskey);
 
-	if (!dns_ds_digest_supported(digest_type))
+	if (!dst_ds_digest_supported(digest_type))
 		return (ISC_R_NOTIMPLEMENTED);
 
 	dns_fixedname_init(&fname);
@@ -90,29 +86,23 @@ dns_ds_buildrdata(dns_name_t *owner, dns_rdata_t *key,
 		isc_sha1_final(&sha1, digest);
 		break;
 
-#ifdef HAVE_OPENSSL_GOST
-#define CHECK(x)					\
-	if ((x) != 1) {					\
-		EVP_MD_CTX_cleanup(&ctx);		\
-		return (DST_R_CRYPTOFAILURE);		\
-	}
+#if defined(HAVE_OPENSSL_GOST) || defined(HAVE_PKCS11_GOST)
+#define RETERR(x) do {					\
+	isc_result_t ret = (x);				\
+	if (ret != ISC_R_SUCCESS) {			\
+		isc_gost_invalidate(&gost);		\
+		return (ret);				\
+	}						\
+} while (/*CONSTCOND*/0)
 
 	case DNS_DSDIGEST_GOST:
-		md = EVP_gost();
-		if (md == NULL)
-			return (DST_R_CRYPTOFAILURE);
-		EVP_MD_CTX_init(&ctx);
-		CHECK(EVP_DigestInit(&ctx, md));
+		RETERR(isc_gost_init(&gost));
 		dns_name_toregion(name, &r);
-		CHECK(EVP_DigestUpdate(&ctx,
-				       (const void *) r.base,
-				       (size_t) r.length));
+		RETERR(isc_gost_update(&gost, r.base, r.length));
 		dns_rdata_toregion(key, &r);
 		INSIST(r.length >= 4);
-		CHECK(EVP_DigestUpdate(&ctx,
-				       (const void *) r.base,
-				       (size_t) r.length));
-		CHECK(EVP_DigestFinal(&ctx, digest, NULL));
+		RETERR(isc_gost_update(&gost, r.base, r.length));
+		RETERR(isc_gost_final(&gost, digest));
 		break;
 #endif
 
@@ -149,7 +139,7 @@ dns_ds_buildrdata(dns_name_t *owner, dns_rdata_t *key,
 		ds.length = ISC_SHA1_DIGESTLENGTH;
 		break;
 
-#ifdef HAVE_OPENSSL_GOST
+#if defined(HAVE_OPENSSL_GOST) || defined(HAVE_PKCS11_GOST)
 	case DNS_DSDIGEST_GOST:
 		ds.length = ISC_GOST_DIGESTLENGTH;
 		break;
@@ -168,18 +158,4 @@ dns_ds_buildrdata(dns_name_t *owner, dns_rdata_t *key,
 
 	return (dns_rdata_fromstruct(rdata, key->rdclass, dns_rdatatype_ds,
 				     &ds, &b));
-}
-
-isc_boolean_t
-dns_ds_digest_supported(unsigned int digest_type) {
-#ifdef HAVE_OPENSSL_GOST
-	return  (ISC_TF(digest_type == DNS_DSDIGEST_SHA1 ||
-			digest_type == DNS_DSDIGEST_SHA256 ||
-			digest_type == DNS_DSDIGEST_GOST ||
-			digest_type == DNS_DSDIGEST_SHA384));
-#else
-	return  (ISC_TF(digest_type == DNS_DSDIGEST_SHA1 ||
-			digest_type == DNS_DSDIGEST_SHA256 ||
-			digest_type == DNS_DSDIGEST_SHA384));
-#endif
 }

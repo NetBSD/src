@@ -1,6 +1,5 @@
 /* Definitions for Toshiba Media Processor
-   Copyright (C) 2001, 2003, 2004, 2005, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
 This file is part of GCC.
@@ -108,8 +107,6 @@ crtbegin.o%s"
     }						\
   while (0)
 
-extern int target_flags;
-
 /* Controlled by MeP-Integrator.  */
 #define TARGET_H1		0
 
@@ -132,21 +129,6 @@ extern int target_flags;
 
 #define TARGET_COPRO_MULT	0
 
-#define TARGET_VERSION fprintf (stderr, " (Toshiba Media Processor (MeP))");
-
-#define OVERRIDE_OPTIONS mep_override_options ();
-
-/* The MeP config tool will add TARGET_OPTION_TRANSLATE_TABLE here.  */
-#define TARGET_OPTION_TRANSLATE_TABLE \
-  {"-mall-opts", "-maverage -mmult -mdiv -mbitops -mleadz \
-                  -mabsdiff -mminmax -mclip -msatur -mdebug" }, \
-  {"-mno-opts", "-mno-average -mno-mult -mno-div -mno-bitops -mno-leadz \
-                  -mno-absdiff -mno-minmax -mno-clip -mno-satur -mno-debug" }, \
-  {"-mfar", "-ml -mtf -mc=far" } \
-/* start-target-option-table */ \
-, {"-mconfig=default", "-mconfig=default -mmult -mdiv -D__MEP_CONFIG_ISA=1" } \
-/* end-target-option-table */
-
 /* The MeP config tool will replace this as appropriate.  */
 #define DEFAULT_ENDIAN_SPEC "%{!meb: -mel}"
 
@@ -156,28 +138,24 @@ extern int target_flags;
 /* Don't add an endian option when building the libraries.  */
 #define DRIVER_SELF_SPECS \
   "%{!mlibrary:" DEFAULT_ENDIAN_SPEC "}", \
-  "%{mlibrary: " LIBRARY_CONFIG_SPEC " %{!mel:-meb}}"
+  "%{mlibrary: " LIBRARY_CONFIG_SPEC " %{!mel:-meb}}", \
+  "%{mall-opts:-maverage -mmult -mdiv -mbitops -mleadz \
+     -mabsdiff -mminmax -mclip -msatur -mdebug} %<mall-opts", \
+  "%{mno-opts:-mno-average -mno-mult -mno-div -mno-bitops -mno-leadz \
+     -mno-absdiff -mno-minmax -mno-clip -mno-satur -mno-debug} %<mno-opts", \
+  "%{mfar:-ml -mtf -mc=far} %<mfar", \
+  "%{mconfig=default:-mmult -mdiv -D__MEP_CONFIG_ISA=1}"
 
 /* The MeP config tool will add COPROC_SELECTION_TABLE here.  */
 /* start-coproc-selection-table */
 #define COPROC_SELECTION_TABLE \
 {"default", ISA_EXT1}
 /* end-coproc-selection-table */
-
-#define CAN_DEBUG_WITHOUT_FP
-
-#define OPTIMIZATION_OPTIONS(LEVEL, FOR_SIZE) mep_optimization_options ()
 
 
 #define BITS_BIG_ENDIAN 0
 #define BYTES_BIG_ENDIAN (TARGET_LITTLE_ENDIAN ? 0 : 1)
 #define WORDS_BIG_ENDIAN (TARGET_LITTLE_ENDIAN ? 0 : 1)
-
-#ifdef __LITTLE_ENDIAN__
-#define LIBGCC2_WORDS_BIG_ENDIAN 0
-#else
-#define LIBGCC2_WORDS_BIG_ENDIAN 1
-#endif
 
 #define UNITS_PER_WORD 4
 
@@ -221,6 +199,18 @@ extern int target_flags;
 #define DOUBLE_TYPE_SIZE      64
 #define LONG_DOUBLE_TYPE_SIZE 64
 #define DEFAULT_SIGNED_CHAR    1
+
+#undef  SIZE_TYPE
+#define SIZE_TYPE "unsigned int"
+
+#undef  PTRDIFF_TYPE
+#define PTRDIFF_TYPE "int"
+
+#undef  WCHAR_TYPE
+#define WCHAR_TYPE "long int"
+
+#undef  WCHAR_TYPE_SIZE
+#define WCHAR_TYPE_SIZE BITS_PER_WORD
 
 /* Register numbers:
  	0..15	core registers
@@ -274,9 +264,6 @@ extern int target_flags;
   /* virtual arg pointer */				\
   1, CALL_USED_SHADOW_REGISTERS				\
   }
-
-#define CONDITIONAL_REGISTER_USAGE \
-	mep_conditional_register_usage (fixed_regs, call_used_regs);
 
 #define REG_ALLOC_ORDER {						\
   /* core registers */							\
@@ -415,17 +402,10 @@ enum reg_class
   { 0xffffffff, 0xffffffff, 0xffffffff, 0x0001ffff }, /* ALL_REGS */ \
   }
 
-#define REGNO_REG_CLASS(REGNO) mep_regno_reg_class (REGNO)
-
-#define IRA_COVER_CLASSES { GENERAL_REGS, CONTROL_REGS, CR_REGS, CCR_REGS, LIM_REG_CLASSES }
+#define REGNO_REG_CLASS(REGNO) (enum reg_class) mep_regno_reg_class (REGNO)
 
 #define BASE_REG_CLASS GENERAL_REGS
 #define INDEX_REG_CLASS GENERAL_REGS
-
-#if 0
-#define REG_CLASS_FROM_CONSTRAINT(CHAR, STRING) \
-	mep_reg_class_from_constraint (CHAR, STRING)
-#endif
 
 #define REGNO_OK_FOR_BASE_P(NUM) (GR_REGNO_P (NUM) \
 	|| (NUM) == ARG_POINTER_REGNUM \
@@ -441,19 +421,6 @@ enum reg_class
 	mep_secondary_output_reload_class (CLASS, MODE, X)
 #define SECONDARY_MEMORY_NEEDED(CLASS1, CLASS2, MODE) \
 	mep_secondary_memory_needed (CLASS1, CLASS2, MODE)
-
-#define CLASS_MAX_NREGS(CLASS, MODE) \
-  ((GET_MODE_SIZE (MODE) + UNITS_PER_WORD - 1) / UNITS_PER_WORD)
-
-#if 0
-#define CONST_OK_FOR_LETTER_P(VALUE, C) mep_const_ok_for_letter_p (VALUE, C)
-
-#define CONST_DOUBLE_OK_FOR_LETTER_P(VALUE, C) 0
-
-#define CONSTRAINT_LEN(C, STR) \
-	((C) == 'e' ? 2 : DEFAULT_CONSTRAINT_LEN (C, STR))
-#define EXTRA_CONSTRAINT(VALUE, C) mep_extra_constraint (VALUE, C)
-#endif
 
 #define WANT_GCC_DECLARATIONS
 #include "mep-intrin.h"
@@ -503,17 +470,7 @@ extern unsigned int mep_selected_isa;
 
 #define ACCUMULATE_OUTGOING_ARGS 1
 
-#define RETURN_POPS_ARGS(FUNDECL, FUNTYPE, STACK_SIZE) 0
-
 
-
-/* The ABI is thus: Arguments are in $1, $2, $3, $4, stack.  Arguments
-   larger than 4 bytes are passed indirectly.  Return value in 0,
-   unless bigger than 4 bytes, then the caller passes a pointer as the
-   first arg.  For varargs, we copy $1..$4 to the stack.  */
-
-#define FUNCTION_ARG(CUM, MODE, TYPE, NAMED) \
-	mep_function_arg (CUM, MODE, TYPE, NAMED)
 
 #define FUNCTION_ARG_CALLEE_COPIES(CUM, MODE, TYPE, NAMED) 1
 
@@ -525,9 +482,6 @@ typedef struct
 
 #define INIT_CUMULATIVE_ARGS(CUM, FNTYPE, LIBNAME, FNDECL, N_NAMED_ARGS) \
 	mep_init_cumulative_args (& (CUM), FNTYPE, LIBNAME, FNDECL)
-
-#define FUNCTION_ARG_ADVANCE(CUM, MODE, TYPE, NAMED)		\
-	mep_arg_advance (& (CUM), MODE, TYPE, NAMED)
 
 #define FUNCTION_ARG_REGNO_P(REGNO) \
 	(((REGNO) >= 1 && (REGNO) <= 4) \
@@ -590,11 +544,6 @@ typedef struct
 #define LEGITIMIZE_RELOAD_ADDRESS(X, MODE, OPNUM, TYPE, IND_LEVELS, WIN) \
   if (mep_legitimize_reload_address (&(X), (MODE), (OPNUM), (TYPE), (IND_LEVELS))) \
     goto WIN
-
-#define GO_IF_MODE_DEPENDENT_ADDRESS(ADDR, LABEL)
-
-#define LEGITIMATE_CONSTANT_P(X) \
-  mep_legitimate_constant_p(X)
 
 #define SELECT_CC_MODE(OP, X, Y)  CCmode
 
@@ -668,9 +617,6 @@ typedef struct
       fprintf (FILE, "\n");			\
     }						\
   while (0)
-
-#define ASM_OUTPUT_BYTE(STREAM, VALUE) \
-  fprintf (STREAM, "\t%s\t0x%x\n", ASM_BYTE_OP, (VALUE))
 
 /* Most of these are here to support based/tiny/far/io attributes.  */
 
@@ -836,8 +782,6 @@ typedef struct
 
 #define REGISTER_TARGET_PRAGMAS()	 mep_register_pragmas ()
 
-#define HANDLE_PRAGMA_PACK_PUSH_POP 1
-   
 /* If defined, a C expression to determine the base term of address X.
    This macro is used in only one place: `find_base_term' in alias.c.
 

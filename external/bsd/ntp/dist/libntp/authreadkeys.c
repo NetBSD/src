@@ -1,4 +1,4 @@
-/*	$NetBSD: authreadkeys.c,v 1.2 2010/12/04 23:08:34 christos Exp $	*/
+/*	$NetBSD: authreadkeys.c,v 1.2.12.1 2014/08/19 23:51:41 tls Exp $	*/
 
 /*
  * authreadkeys.c - routines to support the reading of the key file
@@ -14,7 +14,8 @@
 
 #ifdef OPENSSL
 #include "openssl/objects.h"
-#endif /* OPENSSL */
+#include "openssl/evp.h"
+#endif	/* OPENSSL */
 
 /* Forwards */
 static char *nexttok (char **);
@@ -36,7 +37,7 @@ nexttok(
 	 * Space past white space
 	 */
 	while (*cp == ' ' || *cp == '\t')
-	    cp++;
+		cp++;
 	
 	/*
 	 * Save this and space to end of token
@@ -44,19 +45,19 @@ nexttok(
 	starttok = cp;
 	while (*cp != '\0' && *cp != '\n' && *cp != ' '
 	       && *cp != '\t' && *cp != '#')
-	    cp++;
+		cp++;
 	
 	/*
 	 * If token length is zero return an error, else set end of
 	 * token to zero and return start.
 	 */
 	if (starttok == cp)
-	    return (NULL);
+		return NULL;
 	
 	if (*cp == ' ' || *cp == '\t')
-	    *cp++ = '\0';
+		*cp++ = '\0';
 	else
-	    *cp = '\0';
+		*cp = '\0';
 	
 	*str = cp;
 	return starttok;
@@ -149,7 +150,7 @@ authreadkeys(
 			    "authreadkeys: no algorithm for key %d", keyno);
 			continue;
 		}
-#else /* OPENSSL */
+#else	/* !OPENSSL follows */
 
 		/*
 		 * The key type is unused, but is required to be 'M' or
@@ -161,7 +162,7 @@ authreadkeys(
 			continue;
 		}
 		keytype = KEY_TYPE_MD5;
-#endif /* OPENSSL */
+#endif	/* !OPENSSL */
 
 		/*
 		 * Finally, get key and insert it. If it is longer than 20
@@ -176,7 +177,7 @@ authreadkeys(
 			continue;
 		}
 		len = strlen(token);
-		if (len <= 20) {
+		if (len <= sizeof(keystr)) {
 			MD5auth_setkey(keyno, keytype, (u_char *)token, len);
 		} else {
 			char	hex[] = "0123456789abcdef";
@@ -187,16 +188,18 @@ authreadkeys(
 			jlim = min(len, 2 * sizeof(keystr));
 			for (j = 0; j < jlim; j++) {
 				ptr = strchr(hex, tolower((unsigned char)token[j]));
-				if (ptr == NULL) {
-					msyslog(LOG_ERR,
-					    "authreadkeys: invalid hex digit for key %d", keyno);
-					continue;
-				}
+				if (ptr == NULL)
+					break;	/* abort decoding */
 				temp = (u_char)(ptr - hex);
 				if (j & 1)
 					keystr[j / 2] |= temp;
 				else
 					keystr[j / 2] = temp << 4;
+			}
+			if (j < jlim) {
+				msyslog(LOG_ERR,
+					"authreadkeys: invalid hex digit for key %d", keyno);
+				continue;
 			}
 			MD5auth_setkey(keyno, keytype, keystr, jlim / 2);
 		}

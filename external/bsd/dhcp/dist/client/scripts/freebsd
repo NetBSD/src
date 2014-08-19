@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Id: freebsd,v 1.23.54.1 2011/05/18 20:01:54 sar Exp 
+# Id: freebsd,v 1.24 2011/05/18 19:55:44 sar Exp 
 #
 # $FreeBSD$
 
@@ -64,7 +64,7 @@ make_resolv_conf() {
 	case $nameserver in
 	    fe80:*) zone_id="%$interface";;
 	    FE80:*) zone_id="%$interface";;
-	    *)      zone_id='';;
+	    *)      zone_id="";;
 	esac
 	( echo nameserver ${nameserver}$zone_id >> /etc/resolv.conf.dhclient6 )
 	exit_status=$?

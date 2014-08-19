@@ -43,6 +43,38 @@ typedef struct tic6x_label_list
   symbolS *label;
 } tic6x_label_list;
 
+/* Must be consistent with the enum in tc-tic6x.c.  */
+#define TIC6X_NUM_UNWIND_REGS 13
+
+/* Unwinding information state.  */
+typedef struct tic6x_unwind_info {
+    int personality_index;
+    symbolS *personality_routine;
+    symbolS *function_start;
+    segT saved_seg;
+    subsegT saved_subseg;
+    /* NULL if table entry is inline.  */
+    symbolS *table_entry;
+    char *frag_start;
+    valueT data;
+    /* 0 before .cfi_startproc
+      -1 between .cfi_startproc and .handlerdata
+      >0 between .handlerdata and .endp */
+    int data_bytes;
+
+    offsetT reg_offset[TIC6X_NUM_UNWIND_REGS];
+    bfd_boolean reg_saved[TIC6X_NUM_UNWIND_REGS];
+    int cfa_reg;
+    int return_reg;
+    unsigned safe_mask;
+    unsigned compact_mask;
+    unsigned reg_saved_mask;
+    offsetT cfa_offset;
+    bfd_boolean pop_rts;
+    /* Only valid for UNWIND_OP_POP_REG */
+    int saved_reg_count;
+} tic6x_unwind_info;
+
 typedef struct
 {
   /* Any labels seen since the last instruction or data.  If not NULL,
@@ -77,6 +109,14 @@ typedef struct
      from the SPLOOP instruction (in the range 1 to 14); otherwise
      0.  */
   int sploop_ii;
+
+  /* Bit N indicates that an R_C6000_NONE relocation has been output for
+     __c6xabi_unwind_cpp_prN already if set. This enables dependencies to be
+     emitted only once per section, to save unnecessary bloat.  */
+  unsigned int marked_pr_dependency;
+
+  tic6x_unwind_info *unwind;
+  tic6x_unwind_info *text_unwind;
 } tic6x_segment_info_type;
 #define TC_SEGMENT_INFO_TYPE tic6x_segment_info_type
 
@@ -102,6 +142,9 @@ typedef struct
      instruction, whereas a non-constant represents a DP-relative
      value counting in the appropriate units).  */
   bfd_boolean fix_adda;
+  /* The symbol to be subtracted in case of a PCR_H16 or PCR_L16
+     reloc.  */
+  symbolS *fix_subsy;
 } tic6x_fix_info;
 #define TC_FIX_TYPE tic6x_fix_info
 #define TC_INIT_FIX_DATA(fixP) tic6x_init_fix_data (fixP)
@@ -158,3 +201,28 @@ extern void tic6x_init_after_args (void);
 
 #define tc_unrecognized_line(c) tic6x_unrecognized_line (c)
 extern int tic6x_unrecognized_line (int c);
+
+/* We want .cfi_* pseudo-ops for generating unwind info.  */
+#define TARGET_USE_CFIPOP              1
+
+/* CFI hooks.  */
+#define tc_regname_to_dw2regnum            tic6x_regname_to_dw2regnum
+int tic6x_regname_to_dw2regnum (char *regname);
+
+#define tc_cfi_frame_initial_instructions  tic6x_frame_initial_instructions
+void tic6x_frame_initial_instructions (void);
+
+/* The return register is B3.  */
+#define DWARF2_DEFAULT_RETURN_COLUMN  (16 + 3)
+
+/* Registers are generally saved at negative offsets to the CFA.  */
+#define DWARF2_CIE_DATA_ALIGNMENT     (-4)
+
+#define tc_cfi_startproc tic6x_cfi_startproc
+void tic6x_cfi_startproc (void);
+
+#define tc_cfi_endproc tic6x_cfi_endproc
+struct fde_entry;
+void tic6x_cfi_endproc (struct fde_entry *fde);
+
+#define tc_cfi_section_name ".c6xabi.exidx"

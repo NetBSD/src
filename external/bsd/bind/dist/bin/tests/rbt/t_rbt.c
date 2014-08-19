@@ -1,7 +1,7 @@
-/*	$NetBSD: t_rbt.c,v 1.4 2012/06/05 00:39:32 christos Exp $	*/
+/*	$NetBSD: t_rbt.c,v 1.4.2.1 2014/08/19 23:46:03 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1058,6 +1058,12 @@ t_dns_rbtnodechain_first(char *dbfile, char *expected_firstname,
 	dns_fixedname_t		dns_origin;
 	isc_result_t		expected_result;
 
+	REQUIRE(dbfile != NULL);
+	REQUIRE(expected_firstname != NULL);
+	REQUIRE(expected_firstorigin != NULL);
+	REQUIRE(expected_nextname != NULL);
+	REQUIRE(expected_nextorigin != NULL);
+
 	result = T_UNRESOLVED;
 
 	nfails = 0;
@@ -1248,6 +1254,12 @@ t_dns_rbtnodechain_last(char *dbfile, char *expected_lastname,
 	dns_fixedname_t		dns_name;
 	dns_fixedname_t		dns_origin;
 	isc_result_t		expected_result;
+
+	REQUIRE(dbfile != NULL);
+	REQUIRE(expected_lastname != NULL);
+	REQUIRE(expected_lastorigin != NULL);
+	REQUIRE(expected_prevname != NULL);
+	REQUIRE(expected_prevorigin != NULL);
 
 	result = T_UNRESOLVED;
 
@@ -1837,22 +1849,27 @@ t13() {
 	t_result(result);
 }
 
-
-
 testspec_t	T_testlist[] = {
-	{	t1,	"dns_rbt_create"		},
-	{	t2,	"dns_rbt_addname 1"		},
-	{	t3,	"dns_rbt_addname 2"		},
-	{	t4,	"dns_rbt_deletename 1"		},
-	{	t5,	"dns_rbt_deletename 2"		},
-	{	t6,	"dns_rbt_findname 1"		},
-	{	t7,	"dns_rbt_findname 2"		},
-	{	t8,	"dns_rbt_findname 3"		},
-	{	t9,	"dns_rbtnodechain_init"		},
-	{	t10,	"dns_rbtnodechain_first"	},
-	{	t11,	"dns_rbtnodechain_last"		},
-	{	t12,	"dns_rbtnodechain_next"		},
-	{	t13,	"dns_rbtnodechain_prev"		},
-	{	NULL,	NULL				}
+	{	(PFV) t1,	"dns_rbt_create"		},
+	{	(PFV) t2,	"dns_rbt_addname 1"		},
+	{	(PFV) t3,	"dns_rbt_addname 2"		},
+	{	(PFV) t4,	"dns_rbt_deletename 1"		},
+	{	(PFV) t5,	"dns_rbt_deletename 2"		},
+	{	(PFV) t6,	"dns_rbt_findname 1"		},
+	{	(PFV) t7,	"dns_rbt_findname 2"		},
+	{	(PFV) t8,	"dns_rbt_findname 3"		},
+	{	(PFV) t9,	"dns_rbtnodechain_init"		},
+	{	(PFV) t10,	"dns_rbtnodechain_first"	},
+	{	(PFV) t11,	"dns_rbtnodechain_last"		},
+	{	(PFV) t12,	"dns_rbtnodechain_next"		},
+	{	(PFV) t13,	"dns_rbtnodechain_prev"		},
+	{	(PFV) 0,	NULL				}
 };
 
+#ifdef WIN32
+int
+main(int argc, char **argv) {
+	t_settests(T_testlist);
+	return (t_main(argc, argv));
+}
+#endif

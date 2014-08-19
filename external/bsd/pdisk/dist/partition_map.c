@@ -317,13 +317,11 @@ read_partition_map(partition_map_header *map)
 void
 write_partition_map(partition_map_header *map)
 {
-    MEDIA m;
     char *block;
     partition_map * entry;
     int i = 0;
     int result = 0;
 
-    m = map->m;
     if (map->misc != NULL) {
 	convert_block0(map->misc, 0);
 	result = write_block(map, 0, (char *)map->misc);

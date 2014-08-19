@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.4 2008/04/29 06:53:01 martin Exp $	*/
+/*	$NetBSD: memset.S,v 1.4.26.1 2014/08/19 23:45:13 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memset.S,v 1.4 2008/04/29 06:53:01 martin Exp $")
+	RCSID("$NetBSD: memset.S,v 1.4.26.1 2014/08/19 23:45:13 tls Exp $")
 #endif
 
 #ifdef BZERO
@@ -104,3 +104,8 @@ ENTRY(memset)
 #endif
 	popl	%edi
 	ret
+#ifdef BZERO
+END(bzero)
+#else
+END(memset)
+#endif

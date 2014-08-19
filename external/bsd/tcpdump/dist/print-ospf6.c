@@ -27,7 +27,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-ospf6.c,v 1.15 2006-09-13 06:31:11 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-ospf6.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-ospf6.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -73,7 +73,7 @@ static const struct tok ospf6_asla_flag_values[] = {
 	{ 0,			NULL }
 };
 
-static struct tok ospf6_type_values[] = {
+static const struct tok ospf6_type_values[] = {
 	{ OSPF_TYPE_HELLO,	"Hello" },
 	{ OSPF_TYPE_DD,		"Database Description" },
 	{ OSPF_TYPE_LS_REQ,	"LS-Request" },
@@ -82,7 +82,7 @@ static struct tok ospf6_type_values[] = {
 	{ 0,			NULL }
 };
 
-static struct tok ospf6_lsa_values[] = {
+static const struct tok ospf6_lsa_values[] = {
 	{ LS_TYPE_ROUTER,       "Router" },
 	{ LS_TYPE_NETWORK,      "Network" },
 	{ LS_TYPE_INTER_AP,     "Inter-Area Prefix" },
@@ -97,21 +97,21 @@ static struct tok ospf6_lsa_values[] = {
 	{ 0,			NULL }
 };
 
-static struct tok ospf6_ls_scope_values[] = {
+static const struct tok ospf6_ls_scope_values[] = {
 	{ LS_SCOPE_LINKLOCAL,   "Link Local" },
 	{ LS_SCOPE_AREA,        "Area Local" },
 	{ LS_SCOPE_AS,          "Domain Wide" },
 	{ 0,			NULL }
 };
 
-static struct tok ospf6_dd_flag_values[] = {
+static const struct tok ospf6_dd_flag_values[] = {
 	{ OSPF6_DB_INIT,	"Init" },
 	{ OSPF6_DB_MORE,	"More" },
 	{ OSPF6_DB_MASTER,	"Master" },
 	{ 0,			NULL }
 };
 
-static struct tok ospf6_lsa_prefix_option_values[] = {
+static const struct tok ospf6_lsa_prefix_option_values[] = {
         { LSA_PREFIX_OPT_NU, "No Unicast" },
         { LSA_PREFIX_OPT_LA, "Local address" },
         { LSA_PREFIX_OPT_MC, "Multicast" },
@@ -121,10 +121,6 @@ static struct tok ospf6_lsa_prefix_option_values[] = {
 };
 
 static char tstr[] = " [|ospf3]";
-
-#ifdef WIN32
-#define inline __inline
-#endif /* WIN32 */
 
 /* Forwards */
 static void ospf6_print_ls_type(u_int, const rtrid_t *);

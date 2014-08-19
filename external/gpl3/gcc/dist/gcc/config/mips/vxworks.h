@@ -1,4 +1,4 @@
-/* Copyright (C) 1999, 2003, 2004, 2007, 2008 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -16,18 +16,6 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#undef  TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (MIPS, VxWorks syntax)");
-
-/* Combination of mips.h and svr4.h.  */
-#undef  SWITCH_TAKES_ARG
-#define SWITCH_TAKES_ARG(CHAR)          \
-  (DEFAULT_SWITCH_TAKES_ARG (CHAR)      \
-   || (CHAR) == 'G'                     \
-   || (CHAR) == 'h'                     \
-   || (CHAR) == 'x'                     \
-   || (CHAR) == 'z')
-
 #undef  ASM_SPEC
 #define ASM_SPEC "\
 %{!G:-G 0} %{G*} %(endian_spec) %{mips1} %{mips2} %{mips3} %{mips4} \
@@ -37,15 +25,13 @@ along with GCC; see the file COPYING3.  If not see
 %(subtarget_asm_debugging_spec) \
 %{mabi=*} %{!mabi*: %(asm_abi_default_spec)} \
 %{mgp32} %{mgp64} %{march=*} %{mxgot:-xgot} \
-%{mtune=*} %{v} \
+%{mtune=*} \
 %(subtarget_asm_spec)"
 
 #undef LINK_SPEC
-/* LINK_SPEC is clobbered in svr4.h. ugh!  */
 #define LINK_SPEC "\
 %(endian_spec) \
-%{!G:-G 0} %{G*} %{mips1} %{mips2} %{mips3} %{mips4} %{mips32} %{mips64} \
-%{bestGnum}" \
+%{!G:-G 0} %{G*} %{mips1} %{mips2} %{mips3} %{mips4} %{mips32} %{mips64} " \
 VXWORKS_LINK_SPEC
 
 #undef  LIB_SPEC
@@ -88,3 +74,5 @@ VXWORKS_LINK_SPEC
 
 #undef SUBTARGET_OVERRIDE_OPTIONS
 #define SUBTARGET_OVERRIDE_OPTIONS VXWORKS_OVERRIDE_OPTIONS
+
+#undef DBX_REGISTER_NUMBER

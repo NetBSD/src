@@ -1,11 +1,10 @@
-/*	$NetBSD: failover.h,v 1.1.1.2.4.2 2013/06/23 06:26:29 tls Exp $	*/
-
+/*	$NetBSD: failover.h,v 1.1.1.2.4.3 2014/08/19 23:46:41 tls Exp $	*/
 /* failover.h
 
    Definitions for address trees... */
 
 /*
- * Copyright (c) 2004,2005,2007,2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004,2005,2007,2009,2014 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 2000-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -26,12 +25,6 @@
  *   <info@isc.org>
  *   https://www.isc.org/
  *
- * This software has been written for Internet Systems Consortium
- * by Ted Lemon in cooperation with Vixie Enterprises and Nominum, Inc.
- * To learn more about Internet Systems Consortium, see
- * ``https://www.isc.org/''.  To learn more about Vixie Enterprises,
- * see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
- * ``http://www.nominum.com''.
  */
 
 #if defined (FAILOVER_PROTOCOL)

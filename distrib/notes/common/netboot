@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.34 2009/01/26 00:14:42 snj Exp $
+.\"	$NetBSD: netboot,v 1.34.14.1 2014/08/19 23:45:41 tls Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@ If the server(s) are another operating system, you should consult the
 NetBSD Diskless HOW-TO, which will walk you through the steps necessary to
 configure the netboot services on a variety of platforms.
 .Lk http://www.NetBSD.org/docs/network/netboot/
-.if !\n[hp700]:\n[next68k] \{\
+.if !\n[hppa]:\n[next68k] \{\
 .Pp
 You may either netboot the installer so you can install onto a locally
 attached disk, or you may run your system entirely over the network.
@@ -61,7 +61,7 @@ process involves discovery, bootstrap, kernel and file system stages.
 In the first stage, the client discovers information
 about where to find the bootstrap program.
 Next, it downloads and executes the bootstrap program.
-.ie \n[hp700] \{\
+.ie \n[hppa] \{\
 The server contains one large file (a LIF file system) with the bootloader
 and the kernel.  The bootstrap program simply loads the kernel from the
 LIF image.
@@ -73,7 +73,7 @@ The bootstrap program tries to mount the NFS share containing the kernel.
 .\}
 Once the kernel is loaded, it starts executing.
 .\}
-.ie !\n[hp700]:\n[next68k] \{\
+.ie !\n[hppa]:\n[next68k] \{\
 For RAM disk kernels, it mounts the RAM disk file system and begins
 executing the installer from the RAM disk.
 For normal (non-RAM disk) kernels, the
@@ -81,7 +81,7 @@ For normal (non-RAM disk) kernels, the
 .el The
 kernel tries to mount the NFS share that had the kernel and starts
 executing
-.if !\n[hp700]:\n[next68k] the installation tools or
+.if !\n[hppa]:\n[next68k] the installation tools or
 .Xr init 8 .
 .if \n[hp300] \{\
 All supported \*M systems use HP's proprietary RMP (the
@@ -89,7 +89,7 @@ All supported \*M systems use HP's proprietary RMP (the
 daemon) for the first discovery stage and bootstrap download stages.
 The bootstrap program uses DHCP for its discovery stage.
 .\}
-.if \n[hp700] \{\
+.if \n[hppa] \{\
 Early \*M systems use HP's proprietary RMP (the
 .Xr rbootd 8
 daemon) for the discovery stage, bootstrap download, and kernel download 
@@ -108,7 +108,7 @@ booting from OpenFirmware use DHCP.
 .if \n[sparc64] \{\
 All \*M systems use a combination of RARP and DHCP for the discovery stage.
 .\}
-.if !\n[hp300]:\n[hp700] \{\
+.if !\n[hp300]:\n[hppa] \{\
 TFTP is used in the bootstrap phase to download
 .if \n[macppc] \{\
 the bootstrap program,
@@ -146,8 +146,8 @@ will not suffice; you have to provide a second Ethernet card
 supported by
 .Nx "" .
 .\}
-.\} \" ! !\n[hp300]:\n[hp700]
-.if !\n[evbppc]:\n[hp700] \{\
+.\} \" ! !\n[hp300]:\n[hppa]
+.if !\n[evbppc]:\n[hppa] \{\
 NFS is used in both the kernel and file system stages to download the
 kernel, and to access files on the file server.
 .\} \" !\n[evbppc]
@@ -173,7 +173,7 @@ and paths appropriate to your environment.
 You should set up each netboot stage in order (i.e., discovery,
 bootstrap, kernel, and then file system) so that you can test them as you
 proceed.
-.if \n[hp700] \{\
+.if \n[hppa] \{\
 .Pp
 If your system uses RMP to netboot, you must set up
 .Xr rbootd 8
@@ -190,21 +190,21 @@ but can skip
 .\}
 .Pp
 .It
-.if \n[hp300]:\n[hp700] \{\
+.if \n[hp300]:\n[hppa] \{\
 .Xr rbootd 8
 .Pp
 Get
 .if \n[hp300] .Pa SYS_UBOOT
-.if \n[hp700] .Pa SYSNBSD
+.if \n[hppa] .Pa SYSNBSD
 from the
 .if \n[hp300] .Pa installation/misc
-.if \n[hp700] .Pa installation
+.if \n[hppa] .Pa installation
 directory of the distribution.
 .Pp
 .(disp
 .No # Ic "mkdir -p /usr/mdec/rbootd"
 .if \n[hp300] .No # Ic "cp SYS_UBOOT /usr/mdec/rbootd"
-.if \n[hp700] .No # Ic "cp SYSNBSD /usr/mdec/rbootd"
+.if \n[hppa] .No # Ic "cp SYSNBSD /usr/mdec/rbootd"
 .No # Ic "chmod -R a+rX /usr/mdec/rbootd"
 .disp)
 .Pp
@@ -213,7 +213,7 @@ Create
 with the following line:
 .(disp
 .if \n[hp300] CC:CC:CC:CC:CC:CC SYS_UBOOT
-.if \n[hp700] CC:CC:CC:CC:CC:CC SYSNBSD
+.if \n[hppa] CC:CC:CC:CC:CC:CC SYSNBSD
 .disp)
 .Pp
 You will need to start the
@@ -241,8 +241,8 @@ in the NetBSD Diskless HOW-TO
 for details.
 .Pp
 .It
-.\} \" ! \n[hp300]:\n[hp700]
-.if \n[evbppc]:\n[hp300]:\n[hp700]:\n[macppc]:\n[next68k]:\n[sparc]:\n[sparc64] \{\
+.\} \" ! \n[hp300]:\n[hppa]
+.if \n[evbppc]:\n[hp300]:\n[hppa]:\n[macppc]:\n[next68k]:\n[sparc]:\n[sparc64] \{\
 .ie !\n[hp300] \{\
 .Xr dhcpd 8
 in
@@ -316,7 +316,7 @@ group {
                 #
                 filename                "bootjs.net";
 .\}
-.if \n[hp700] \{\
+.if \n[hppa] \{\
                 #
                 filename                "SYSNBSD";
 .\}
@@ -389,7 +389,7 @@ you can achieve this with:
 .No # Ic "/etc/rc.d/dhcpd restart"
 .disp)
 .Pp
-.\} \" ! \n[evbppc]:\n[hp300]:\n[hp700]:\n[macppc]:\n[next68k]:\n[sparc]:\n[sparc64]
+.\} \" ! \n[evbppc]:\n[hp300]:\n[hppa]:\n[macppc]:\n[next68k]:\n[sparc]:\n[sparc64]
 .if \n[sparc]:\n[sparc64] \{\
 .Pp
 .It
@@ -467,7 +467,7 @@ Now, you need to copy the
 .el bootloader
 for your \*M machine to
 .Pa /tftpboot .
-.if \n[hp700] \{\
+.if \n[hppa] \{\
 Get
 .Pa SYSNBSD
 from the
@@ -630,15 +630,15 @@ you can achieve this with:
 .It
 .Nx
 kernel
-.if !\n[next68k]:\n[hp700] and installation tools
+.if !\n[next68k]:\n[hppa] and installation tools
 .Pp
-.if !\n[evbppc]:\n[hp700] \{\
+.if !\n[evbppc]:\n[hppa] \{\
 Now, if you place a kernel named
 .Pa netbsd
 in
 .Pa /export/client/root
 your client should boot the kernel.
-.\} \" !\n[evbppc]:\n[hp700]
+.\} \" !\n[evbppc]:\n[hppa]
 .if \n[hp300] \{\
 If you are netbooting the installer, you can use either
 the traditional miniroot-based installer
@@ -681,7 +681,7 @@ Also, copy the distribution files to the client's root directory.
 If you are running your \*M diskless, simply use
 .Pa binary/kernel/netbsd-GENERIC.gz .
 .\} \" \n[hp300]
-.if \n[hp700] \{\
+.if \n[hppa] \{\
 You do not need to place a kernel in
 .Pa /export/client/root
 since the kernel is contained inside 
@@ -758,7 +758,7 @@ If you are running your \*M diskless, simply use
 .It
 Client file system
 .Pp
-.ie !\n[hp700]:\n[next68k] \{\
+.ie !\n[hppa]:\n[next68k] \{\
 You can skip this step if you do not plan to run your client
 diskless after installation.
 Otherwise, you
@@ -855,16 +855,16 @@ Edit
 .It
 Setting up the server daemons
 .Pp
-.ie !\n[hp700]:\n[next68k] If you want
+.ie !\n[hppa]:\n[next68k] If you want
 .el You need
 these services to start up every time you boot
 your server, make sure the following lines are present in your
 .Pa /etc/rc.conf :
 .(disp
-.if \n[hp300]:\n[hp700] \{\
+.if \n[hp300]:\n[hppa] \{\
 rbootd=YES       rbootd_flags=""
 .\}
-.if \n[hp300]:\n[hp700]:\n[macppc]:\n[next68k]:\n[sparc]:\n[sparc64] \{\
+.if \n[hp300]:\n[hppa]:\n[macppc]:\n[next68k]:\n[sparc]:\n[sparc64] \{\
 dhcpd=YES        dhcpd_flags="-q"
 .\}
 .if \n[sparc]:\n[sparc64] \{\

@@ -3248,9 +3248,15 @@ test -n "$AUTOHEADER" || AUTOHEADER="$MISSING autoheader"
 
 WARN_CFLAGS=
 save_CFLAGS="$CFLAGS"
-for option in -W -Wall -Wwrite-strings -Wstrict-prototypes \
+for real_option in -W -Wall -Wwrite-strings -Wstrict-prototypes \
 			  -Wmissing-prototypes -Wold-style-definition \
 			  -Wmissing-format-attribute -Wcast-qual; do
+  # Do the check with the no- prefix removed since gcc silently
+  # accepts any -Wno-* option on purpose
+  case $real_option in
+    -Wno-*) option=-W`expr x$real_option : 'x-Wno-\(.*\)'` ;;
+    *) option=$real_option ;;
+  esac
   as_acx_Woption=`$as_echo "acx_cv_prog_cc_warning_$option" | $as_tr_sh`
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports $option" >&5
@@ -3282,20 +3288,22 @@ eval ac_res=\$$as_acx_Woption
 	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
 $as_echo "$ac_res" >&6; }
   if test `eval 'as_val=${'$as_acx_Woption'};$as_echo "$as_val"'` = yes; then :
-  WARN_CFLAGS="$WARN_CFLAGS${WARN_CFLAGS:+ }$option"
+  WARN_CFLAGS="$WARN_CFLAGS${WARN_CFLAGS:+ }$real_option"
 fi
   done
 CFLAGS="$save_CFLAGS"
 
 WARN_PEDANTIC=
+# Do the check with the no- prefix removed from the warning options
+# since gcc silently accepts any -Wno-* option on purpose
 if test "$GCC" = yes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -pedantic -Wno-long-long" >&5
-$as_echo_n "checking whether $CC supports -pedantic -Wno-long-long... " >&6; }
-if test "${acx_cv_prog_cc_pedantic__Wno_long_long+set}" = set; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -pedantic -Wlong-long" >&5
+$as_echo_n "checking whether $CC supports -pedantic -Wlong-long... " >&6; }
+if test "${acx_cv_prog_cc_pedantic__Wlong_long+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   save_CFLAGS="$CFLAGS"
-CFLAGS="-pedantic -Wno-long-long"
+CFLAGS="-pedantic -Wlong-long"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -3308,16 +3316,16 @@ main ()
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-  acx_cv_prog_cc_pedantic__Wno_long_long=yes
+  acx_cv_prog_cc_pedantic__Wlong_long=yes
 else
-  acx_cv_prog_cc_pedantic__Wno_long_long=no
+  acx_cv_prog_cc_pedantic__Wlong_long=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 CFLAGS="$save_CFLAGS"
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $acx_cv_prog_cc_pedantic__Wno_long_long" >&5
-$as_echo "$acx_cv_prog_cc_pedantic__Wno_long_long" >&6; }
-if test $acx_cv_prog_cc_pedantic__Wno_long_long = yes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $acx_cv_prog_cc_pedantic__Wlong_long" >&5
+$as_echo "$acx_cv_prog_cc_pedantic__Wlong_long" >&6; }
+if test $acx_cv_prog_cc_pedantic__Wlong_long = yes; then :
   WARN_PEDANTIC="$WARN_PEDANTIC${WARN_PEDANTIC:+ }-pedantic -Wno-long-long"
 fi
 
@@ -4101,8 +4109,7 @@ _ACEOF
 $as_echo_n "checking for type equivalent to int8_t... " >&6; }
   case "$ac_cv_sizeof_char" in
     1) acx_cv_type_int8_t=char ;;
-    *) { as_fn_set_status please report a bug
-as_fn_error "no 8-bit type" "$LINENO" 5; }
+    *) as_fn_error "no 8-bit type, please report a bug" "$LINENO" 5
   esac
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $acx_cv_type_int8_t" >&5
 $as_echo "$acx_cv_type_int8_t" >&6; }
@@ -4112,8 +4119,7 @@ $as_echo_n "checking for type equivalent to int16_t... " >&6; }
   case "$ac_cv_sizeof_int:$ac_cv_sizeof_short" in
     2:*) acx_cv_type_int16_t=int ;;
     *:2) acx_cv_type_int16_t=short ;;
-    *) { as_fn_set_status please report a bug
-as_fn_error "no 16-bit type" "$LINENO" 5; }
+    *) as_fn_error "no 16-bit type, please report a bug" "$LINENO" 5
   esac
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $acx_cv_type_int16_t" >&5
 $as_echo "$acx_cv_type_int16_t" >&6; }
@@ -4123,8 +4129,7 @@ $as_echo_n "checking for type equivalent to int32_t... " >&6; }
   case "$ac_cv_sizeof_int:$ac_cv_sizeof_long" in
     4:*) acx_cv_type_int32_t=int ;;
     *:4) acx_cv_type_int32_t=long ;;
-    *) { as_fn_set_status please report a bug
-as_fn_error "no 32-bit type" "$LINENO" 5; }
+    *) as_fn_error "no 32-bit type, please report a bug" "$LINENO" 5
   esac
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $acx_cv_type_int32_t" >&5
 $as_echo "$acx_cv_type_int32_t" >&6; }
@@ -4151,8 +4156,7 @@ $as_echo_n "checking for type equivalent to intptr_t... " >&6; }
     2) acx_cv_type_intptr_t=int16_t ;;
     4) acx_cv_type_intptr_t=int32_t ;;
     8) acx_cv_type_intptr_t=int64_t ;;
-    *) { as_fn_set_status please report a bug
-as_fn_error "no equivalent for intptr_t" "$LINENO" 5; }
+    *) as_fn_error "no equivalent for intptr_t, please report a bug" "$LINENO" 5
   esac
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $acx_cv_type_intptr_t" >&5
 $as_echo "$acx_cv_type_intptr_t" >&6; }
@@ -4459,7 +4463,7 @@ for ac_dir in "$srcdir" "$srcdir/.." "$srcdir/../.."; do
   for ac_t in install-sh install.sh shtool; do
     if test -f "$ac_dir/$ac_t"; then
       ac_aux_dir=$ac_dir
-      ac_install_sh="$ac_aux_dir/$ac_t -c"
+      ac_install_sh="$SHELL $ac_aux_dir/$ac_t -c"
       break 2
     fi
   done
@@ -4592,11 +4596,13 @@ test -n "$target_alias" &&
 # If you change the defaults here, be sure to change them in the GCC directory also
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for decimal floating point" >&5
 $as_echo_n "checking for decimal floating point... " >&6; }
+
+
 # Check whether --enable-decimal-float was given.
 if test "${enable_decimal_float+set}" = set; then :
   enableval=$enable_decimal_float;
   case $enable_decimal_float in
-    yes | no | bid | dpd) ;;
+    yes | no | bid | dpd) default_decimal_float=$enable_decimal_float ;;
     *) as_fn_error "'$enable_decimal_float' is an invalid value for --enable-decimal-float.
 Valid choices are 'yes', 'bid', 'dpd', and 'no'." "$LINENO" 5 ;;
   esac
@@ -4604,10 +4610,15 @@ Valid choices are 'yes', 'bid', 'dpd', and 'no'." "$LINENO" 5 ;;
 else
 
   case $target in
-    powerpc*-*-linux* | i?86*-*-linux* | x86_64*-*-linux*)
+    powerpc*-*-linux* | i?86*-*-linux* | x86_64*-*-linux* | s390*-*-linux* | \
+    i?86*-*-gnu* | \
+    i?86*-*-mingw* | x86_64*-*-mingw* | \
+    i?86*-*-cygwin*)
       enable_decimal_float=yes
       ;;
     *)
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: decimal float is not supported for this target, ignored" >&5
+$as_echo "$as_me: WARNING: decimal float is not supported for this target, ignored" >&2;}
       enable_decimal_float=no
       ;;
   esac
@@ -4616,18 +4627,30 @@ fi
 
 
 # x86's use BID format instead of DPD
-# In theory --enable-decimal-float=no should not compile anything
-# For the sake of simplicity, just use the default format in this directory
-if test x$enable_decimal_float = xyes -o x$enable_decimal_float = xno; then
-  case $target in
-    i?86*-*-linux* | x86_64*-*-linux*)
-      enable_decimal_float=bid
-      ;;
-    *)
-      enable_decimal_float=dpd
-      ;;
-  esac
-fi
+case x$enable_decimal_float in
+  xyes)
+    case $target in
+      i?86*-*-* | x86_64*-*-*)
+	enable_decimal_float=bid
+	;;
+      *)
+	enable_decimal_float=dpd
+	;;
+    esac
+    default_decimal_float=$enable_decimal_float
+    ;;
+  xno)
+    # ENABLE_DECIMAL_FLOAT is set to 0. But we have to have proper
+    # dependency on libdecnumber.
+    default_decimal_float=dpd
+    ;;
+esac
+
+
+
+
+# Use default_decimal_float for dependency.
+enable_decimal_float=$default_decimal_float
 
 # If BID is being used, additional objects should be linked in.
 if test x$enable_decimal_float = xbid; then

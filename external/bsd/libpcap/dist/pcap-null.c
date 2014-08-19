@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-null.c,v 1.1.1.2.12.1 2013/06/23 06:28:19 tls Exp $	*/
+/*	$NetBSD: pcap-null.c,v 1.1.1.2.12.2 2014/08/19 23:47:16 tls Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -42,7 +42,7 @@ static const char rcsid[] _U_ =
 static char nosup[] = "live packet capture not supported on this system";
 
 pcap_t *
-pcap_create(const char *device, char *ebuf)
+pcap_create_interface(const char *device, char *ebuf)
 {
 	(void)strlcpy(ebuf, nosup, PCAP_ERRBUF_SIZE);
 	return (NULL);

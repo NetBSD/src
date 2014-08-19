@@ -1,7 +1,7 @@
-/*	$NetBSD: symtab.h,v 1.3 2012/06/05 00:42:41 christos Exp $	*/
+/*	$NetBSD: symtab.h,v 1.3.2.1 2014/08/19 23:46:33 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1996-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -136,6 +136,9 @@ isc_symtab_define(isc_symtab_t *symtab, const char *key, unsigned int type,
 isc_result_t
 isc_symtab_undefine(isc_symtab_t *symtab, const char *key, unsigned int type);
 
+/*% Return the number of items in a symbol table. */
+unsigned int
+isc_symtab_count(isc_symtab_t *symtab);
 ISC_LANG_ENDDECLS
 
 #endif /* ISC_SYMTAB_H */

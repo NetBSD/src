@@ -25,7 +25,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-domain.c,v 1.98 2007-12-09 01:40:32 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-domain.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-domain.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -149,7 +149,7 @@ labellen(const u_char *cp)
 		return(i);
 }
 
-static const u_char *
+const u_char *
 ns_nprint(register const u_char *cp, register const u_char *bp)
 {
 	register u_int i, l;
@@ -247,7 +247,7 @@ ns_cprint(register const u_char *cp)
 }
 
 /* http://www.iana.org/assignments/dns-parameters */
-struct tok ns_type2str[] = {
+const struct tok ns_type2str[] = {
 	{ T_A,		"A" },			/* RFC 1035 */
 	{ T_NS,		"NS" },			/* RFC 1035 */
 	{ T_MD,		"MD" },			/* RFC 1035 */
@@ -312,7 +312,7 @@ struct tok ns_type2str[] = {
 	{ 0,		NULL }
 };
 
-struct tok ns_class2str[] = {
+const struct tok ns_class2str[] = {
 	{ C_IN,		"IN" },		/* Not used */
 	{ C_CHAOS,	"CHAOS" },
 	{ C_HS,		"HS" },

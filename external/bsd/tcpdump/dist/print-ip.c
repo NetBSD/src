@@ -25,7 +25,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-ip.c,v 1.159 2007-09-14 01:29:28 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-ip.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-ip.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: print-ip.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
 #include "ip.h"
 #include "ipproto.h"
 
-struct tok ip_option_values[] = {
+static const struct tok ip_option_values[] = {
     { IPOPT_EOL, "EOL" },
     { IPOPT_NOP, "NOP" },
     { IPOPT_TS, "timestamp" },
@@ -308,7 +308,7 @@ trunc:
 
 #define IP_RES 0x8000
 
-static struct tok ip_frag_values[] = {
+static const struct tok ip_frag_values[] = {
         { IP_MF,        "+" },
         { IP_DF,        "DF" },
 	{ IP_RES,       "rsvd" }, /* The RFC3514 evil ;-) bit */

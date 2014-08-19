@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.4 2011/04/02 04:57:35 rmind Exp $	*/
+/*	$NetBSD: vfs.c,v 1.4.10.1 2014/08/19 23:52:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006-2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -324,9 +324,7 @@ domount(kthread_t *td, vnode_t *vp, const char *fstype, char *fspath,
 		vp->v_iflag &= ~VI_MOUNT;
 		simple_unlock(&vp->v_interlock);
 		vp->v_mountedhere = mp;
-		mutex_enter(&mountlist_lock);
-		CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-		mutex_exit(&mountlist_lock);
+		mountlist_append(mp);
 		vfs_event_signal(NULL, VQ_MOUNT, 0);
 		if (VFS_ROOT(mp, LK_EXCLUSIVE, &mvp, td))
 			panic("mount: lost mount");

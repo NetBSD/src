@@ -1,6 +1,5 @@
 /* Declarations for rtx-reader support for gen* routines.
-   Copyright (C) 2000, 2002, 2003, 2004, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -23,14 +22,10 @@ along with GCC; see the file COPYING3.  If not see
 
 struct obstack;
 extern struct obstack *rtl_obstack;
-extern const char *in_fname;
 
-extern int init_md_reader_args_cb (int, char **, bool (*)(const char *));
-extern int init_md_reader_args (int, char **);
+extern bool init_rtx_reader_args_cb (int, char **, bool (*)(const char *));
+extern bool init_rtx_reader_args (int, char **);
 extern rtx read_md_rtx (int *, int *);
-
-extern void message_with_line (int, const char *, ...)
-     ATTRIBUTE_PRINTF_2;
 
 /* Set this to 0 to disable automatic elision of insn patterns which
    can never be used in this configuration.  See genconditions.c.
@@ -60,9 +55,6 @@ extern int cmp_c_test (const void *, const void *);
 extern void traverse_c_tests (htab_trav, void *);
 #endif
 
-extern int n_comma_elts	(const char *);
-extern const char *scan_comma_elt (const char **);
-
 /* Predicate handling: helper functions and data structures.  */
 
 struct pred_data
@@ -90,8 +82,32 @@ extern void add_predicate (struct pred_data *);
 
 #define FOR_ALL_PREDICATES(p) for (p = first_predicate; p; p = p->next)
 
-/* This callback will be invoked whenever an rtl include directive is
-   processed.  To be used for creation of the dependency file.  */
-extern void (*include_callback) (const char *);
+struct pattern_stats
+{
+  /* The largest match_operand, match_operator or match_parallel
+     number found.  */
+  int max_opno;
+
+  /* The largest match_dup, match_op_dup or match_par_dup number found.  */
+  int max_dup_opno;
+
+  /* The largest match_scratch number found.  */
+  int max_scratch_opno;
+
+  /* The number of times match_dup, match_op_dup or match_par_dup appears
+     in the pattern.  */
+  int num_dups;
+
+  /* The number of rtx arguments to the generator function.  */
+  int num_generator_args;
+
+  /* The number of rtx operands in an insn.  */
+  int num_insn_operands;
+
+  /* The number of operand variables that are needed.  */
+  int num_operand_vars;
+};
+
+extern void get_pattern_stats (struct pattern_stats *ranges, rtvec vec);
 
 #endif /* GCC_GENSUPPORT_H */

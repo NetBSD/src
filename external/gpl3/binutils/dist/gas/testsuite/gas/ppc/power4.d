@@ -2,7 +2,7 @@
 #as: -mpower4
 #name: Power4 instructions
 
-.*: +file format elf64-powerpc
+.*
 .*
 architecture: powerpc:common64, flags 0x0+11:
 HAS_RELOC, HAS_SYMS
@@ -10,23 +10,23 @@ start address 0x0+
 
 Sections:
 Idx Name +Size +VMA +LMA +File off +Algn
- +0 \.text +0+c4 +0+ +0+ +.*
+ +0 \.text +0+c8 +0+ +0+ +.*
  +CONTENTS, ALLOC, LOAD, RELOC, READONLY, CODE
- +1 \.data +0+10 +0+ +0+ +.*
+ +1 \.data +0+20 +0+ +0+ +.*
  +CONTENTS, ALLOC, LOAD, DATA
  +2 \.bss +0+ +0+ +0+ +.*
  +ALLOC
- +3 \.toc +0+30 +0+ +0+ +.*
+ +3 \.toc +0+20 +0+ +0+ +.*
  +CONTENTS, ALLOC, LOAD, RELOC, DATA
 SYMBOL TABLE:
 0+ l +d +\.text	0+ (|\.text)
 0+ l +d +\.data	0+ (|\.data)
 0+ l +d +\.bss	0+ (|\.bss)
 0+ l +\.data	0+ dsym0
-0+8 l +\.data	0+ dsym1
+0+10 l +\.data	0+ dsym1
 0+ l +d +\.toc	0+ (|\.toc)
-0+8 l +\.data	0+ usym0
-0+10 l +\.data	0+ usym1
+0+10 l +\.data	0+ usym0
+0+20 l +\.data	0+ usym1
 0+ +\*UND\*	0+ esym0
 0+ +\*UND\*	0+ esym1
 
@@ -34,71 +34,67 @@ SYMBOL TABLE:
 Disassembly of section \.text:
 
 0+ <\.text>:
- +0:	e0 83 00 00 	lq      r4,0\(r3\)
-			2: R_PPC64_ADDR16_LO_DS	\.data
- +4:	e0 83 00 00 	lq      r4,0\(r3\)
-			6: R_PPC64_ADDR16_LO_DS	\.data\+0x8
- +8:	e0 83 00 00 	lq      r4,0\(r3\)
-			a: R_PPC64_ADDR16_LO_DS	\.data\+0x8
- +c:	e0 83 00 10 	lq      r4,16\(r3\)
-			e: R_PPC64_ADDR16_LO_DS	\.data\+0x10
- +10:	e0 83 00 00 	lq      r4,0\(r3\)
-			12: R_PPC64_ADDR16_LO_DS	esym0
- +14:	e0 83 00 00 	lq      r4,0\(r3\)
-			16: R_PPC64_ADDR16_LO_DS	esym1
- +18:	e0 82 00 00 	lq      r4,0\(r2\)
-			1a: R_PPC64_TOC16_DS	\.toc
- +1c:	e0 82 00 00 	lq      r4,0\(r2\)
-			1e: R_PPC64_TOC16_DS	\.toc\+0x8
- +20:	e0 82 00 10 	lq      r4,16\(r2\)
-			22: R_PPC64_TOC16_DS	\.toc\+0x10
- +24:	e0 82 00 10 	lq      r4,16\(r2\)
-			26: R_PPC64_TOC16_DS	\.toc\+0x18
- +28:	e0 82 00 20 	lq      r4,32\(r2\)
-			2a: R_PPC64_TOC16_DS	\.toc\+0x20
- +2c:	e0 82 00 20 	lq      r4,32\(r2\)
-			2e: R_PPC64_TOC16_DS	\.toc\+0x28
- +30:	e0 c2 00 20 	lq      r6,32\(r2\)
-			32: R_PPC64_TOC16_LO_DS	\.toc\+0x28
- +34:	e0 80 00 00 	lq      r4,0\(0\)
-			36: R_PPC64_ADDR16_LO_DS	\.text
- +38:	e0 c3 00 00 	lq      r6,0\(r3\)
-			3a: R_PPC64_GOT16_DS	dsym0
- +3c:	e0 c3 00 00 	lq      r6,0\(r3\)
-			3e: R_PPC64_GOT16_LO_DS	dsym0
- +40:	e0 c3 00 00 	lq      r6,0\(r3\)
-			42: R_PPC64_PLT16_LO_DS	\.data
- +44:	e0 c3 00 00 	lq      r6,0\(r3\)
-			46: R_PPC64_SECTOFF_DS	\.data\+0x8
- +48:	e0 c3 00 00 	lq      r6,0\(r3\)
-			4a: R_PPC64_SECTOFF_LO_DS	\.data\+0x8
- +4c:	e0 c4 00 10 	lq      r6,16\(r4\)
- +50:	f8 c7 00 02 	stq     r6,0\(r7\)
- +54:	f8 c7 00 12 	stq     r6,16\(r7\)
- +58:	f8 c7 ff f2 	stq     r6,-16\(r7\)
- +5c:	f8 c7 80 02 	stq     r6,-32768\(r7\)
- +60:	f8 c7 7f f2 	stq     r6,32752\(r7\)
- +64:	00 00 02 00 	attn
- +68:	7c 6f f1 20 	mtcr    r3
- +6c:	7c 6f f1 20 	mtcr    r3
- +70:	7c 68 11 20 	mtcrf   129,r3
- +74:	7c 70 11 20 	mtocrf  1,r3
- +78:	7c 70 21 20 	mtocrf  2,r3
- +7c:	7c 70 41 20 	mtocrf  4,r3
- +80:	7c 70 81 20 	mtocrf  8,r3
- +84:	7c 71 01 20 	mtocrf  16,r3
- +88:	7c 72 01 20 	mtocrf  32,r3
- +8c:	7c 74 01 20 	mtocrf  64,r3
- +90:	7c 78 01 20 	mtocrf  128,r3
- +94:	7c 60 00 26 	mfcr    r3
- +98:	7c 70 10 26 	mfocrf  r3,1
- +9c:	7c 70 20 26 	mfocrf  r3,2
- +a0:	7c 70 40 26 	mfocrf  r3,4
- +a4:	7c 70 80 26 	mfocrf  r3,8
- +a8:	7c 71 00 26 	mfocrf  r3,16
- +ac:	7c 72 00 26 	mfocrf  r3,32
- +b0:	7c 74 00 26 	mfocrf  r3,64
- +b4:	7c 78 00 26 	mfocrf  r3,128
- +b8:	7c 01 17 ec 	dcbz    r1,r2
- +bc:	7c 23 27 ec 	dcbzl   r3,r4
- +c0:	7c 05 37 ec 	dcbz    r5,r6
+.*:	(e0 83 00 00|00 00 83 e0) 	lq      r4,0\(r3\)
+.*: R_PPC64_ADDR16_LO_DS	\.data
+.*:	(e0 83 00 .0|.0 00 83 e0) 	lq      r4,.*\(r3\)
+.*: R_PPC64_ADDR16_LO_DS	\.data\+0x10
+.*:	(e0 83 00 .0|.0 00 83 e0) 	lq      r4,.*\(r3\)
+.*: R_PPC64_ADDR16_LO_DS	\.data\+0x10
+.*:	(e0 83 00 .0|.0 00 83 e0) 	lq      r4,.*\(r3\)
+.*: R_PPC64_ADDR16_LO_DS	\.data\+0x20
+.*:	(e0 83 00 00|00 00 83 e0) 	lq      r4,0\(r3\)
+.*: R_PPC64_ADDR16_LO_DS	esym0
+.*:	(e0 83 00 00|00 00 83 e0) 	lq      r4,0\(r3\)
+.*: R_PPC64_ADDR16_LO_DS	esym1
+.*:	(e0 82 00 00|00 00 82 e0) 	lq      r4,0\(r2\)
+.*: R_PPC64_TOC16_DS	\.toc
+.*:	(e0 82 00 .0|.0 00 82 e0) 	lq      r4,.*\(r2\)
+.*: R_PPC64_TOC16_DS	\.toc\+0x10
+.*:	(e0 80 00 00|00 00 80 e0) 	lq      r4,0\(0\)
+.*: R_PPC64_ADDR16_LO_DS	\.text
+.*:	(e0 c3 00 00|00 00 c3 e0) 	lq      r6,0\(r3\)
+.*: R_PPC64_GOT16_DS	dsym0
+.*:	(e0 c3 00 00|00 00 c3 e0) 	lq      r6,0\(r3\)
+.*: R_PPC64_GOT16_LO_DS	dsym0
+.*:	(e0 c3 00 00|00 00 c3 e0) 	lq      r6,0\(r3\)
+.*: R_PPC64_PLT16_LO_DS	\.data
+.*:	(e0 c3 00 .0|.0 00 c3 e0) 	lq      r6,.*\(r3\)
+.*: R_PPC64_SECTOFF_DS	\.data\+0x10
+.*:	(e0 c3 00 .0|.0 00 c3 e0) 	lq      r6,.*\(r3\)
+.*: R_PPC64_SECTOFF_LO_DS	\.data\+0x10
+.*:	(e0 c4 00 20|20 00 c4 e0) 	lq      r6,32\(r4\)
+.*:	(f8 c7 00 02|02 00 c7 f8) 	stq     r6,0\(r7\)
+.*:	(f8 c7 00 12|12 00 c7 f8) 	stq     r6,16\(r7\)
+.*:	(f8 c7 ff f2|f2 ff c7 f8) 	stq     r6,-16\(r7\)
+.*:	(f8 c7 80 02|02 80 c7 f8) 	stq     r6,-32768\(r7\)
+.*:	(f8 c7 7f f2|f2 7f c7 f8) 	stq     r6,32752\(r7\)
+.*:	(00 00 02 00|00 02 00 00) 	attn
+.*:	(7c 6f f1 20|20 f1 6f 7c) 	mtcr    r3
+.*:	(7c 6f f1 20|20 f1 6f 7c) 	mtcr    r3
+.*:	(7c 68 11 20|20 11 68 7c) 	mtcrf   129,r3
+.*:	(7c 70 11 20|20 11 70 7c) 	mtocrf  1,r3
+.*:	(7c 70 21 20|20 21 70 7c) 	mtocrf  2,r3
+.*:	(7c 70 41 20|20 41 70 7c) 	mtocrf  4,r3
+.*:	(7c 70 81 20|20 81 70 7c) 	mtocrf  8,r3
+.*:	(7c 71 01 20|20 01 71 7c) 	mtocrf  16,r3
+.*:	(7c 72 01 20|20 01 72 7c) 	mtocrf  32,r3
+.*:	(7c 74 01 20|20 01 74 7c) 	mtocrf  64,r3
+.*:	(7c 78 01 20|20 01 78 7c) 	mtocrf  128,r3
+.*:	(7c 60 00 26|26 00 60 7c) 	mfcr    r3
+.*:	(7c 70 10 26|26 10 70 7c) 	mfocrf  r3,1
+.*:	(7c 70 20 26|26 20 70 7c) 	mfocrf  r3,2
+.*:	(7c 70 40 26|26 40 70 7c) 	mfocrf  r3,4
+.*:	(7c 70 80 26|26 80 70 7c) 	mfocrf  r3,8
+.*:	(7c 71 00 26|26 00 71 7c) 	mfocrf  r3,16
+.*:	(7c 72 00 26|26 00 72 7c) 	mfocrf  r3,32
+.*:	(7c 74 00 26|26 00 74 7c) 	mfocrf  r3,64
+.*:	(7c 78 00 26|26 00 78 7c) 	mfocrf  r3,128
+.*:	(7c 01 17 ec|ec 17 01 7c) 	dcbz    r1,r2
+.*:	(7c 23 27 ec|ec 27 23 7c) 	dcbzl   r3,r4
+.*:	(7c 05 37 ec|ec 37 05 7c) 	dcbz    r5,r6
+.*:	(e0 40 00 10|10 00 40 e0) 	lq      r2,16\(0\)
+.*:	(e0 05 00 10|10 00 05 e0) 	lq      r0,16\(r5\)
+.*:	(e0 45 00 10|10 00 45 e0) 	lq      r2,16\(r5\)
+.*:	(f8 40 00 12|12 00 40 f8) 	stq     r2,16\(0\)
+.*:	(f8 05 00 12|12 00 05 f8) 	stq     r0,16\(r5\)
+.*:	(f8 45 00 12|12 00 45 f8) 	stq     r2,16\(r5\)

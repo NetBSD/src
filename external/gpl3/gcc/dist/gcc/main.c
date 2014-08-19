@@ -1,5 +1,5 @@
 /* main.c: defines main() for cc1, cc1plus, etc.
-   Copyright (C) 2007  Free Software Foundation, Inc.
+   Copyright (C) 2007-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,6 +21,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
+#include "diagnostic-core.h"
 #include "toplev.h"
 
 int main (int argc, char **argv);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_tx.c,v 1.2 2012/07/22 14:27:36 darrenr Exp $	*/
+/*	$NetBSD: ipft_tx.c,v 1.2.2.1 2014/08/19 23:46:48 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -122,10 +122,8 @@ static	int	text_readip(mb, ifn, dir)
 	char	line[513];
 	ip_t	*ip;
 	char	*buf;
-	int	cnt;
 
 	buf = (char *)mb->mb_buf;
-	cnt = sizeof(mb->mb_buf);
 
 	*ifn = NULL;
 	while (fgets(line, sizeof(line)-1, tfp)) {

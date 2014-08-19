@@ -10,13 +10,13 @@
 .*:     file format elf32-cris
 
 DYNAMIC SYMBOL TABLE:
-0+2214 l    d  \.data	0+ .data
+0+2214 l    d  \.data	0+ \.data
 0+2214 g    DO \.data	0+c x
 0+      D  \*UND\*	0+ xregobj
-0+2220 g    D  \*ABS\*	0+ __bss_start
+0+2220 g    D  \.data	0+ __bss_start
 0+  w   D  \*UND\*	0+ xweakobj
-0+2220 g    D  \*ABS\*	0+ _edata
-0+2220 g    D  \*ABS\*	0+ _end
+0+2220 g    D  \.data	0+ _edata
+0+2220 g    D  \.data	0+ _end
 
 
 DYNAMIC RELOCATION RECORDS
@@ -27,5 +27,5 @@ OFFSET   TYPE              VALUE
 
 Contents of section \.hash:
 #...
-Contents of section .data:
+Contents of section \.data:
  2214 00000000 00000000 00000000           .*

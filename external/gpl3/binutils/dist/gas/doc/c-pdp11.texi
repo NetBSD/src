@@ -323,6 +323,9 @@ alternatively @code{fr0} through @code{fr3}.
 Comments are started with a @code{#} or a @code{/} character, and extend
 to the end of the line.  (FIXME: clash with immediates?)
 
+@cindex PDP-11 line separator
+Multiple statements on the same line can be separated by the @samp{;} character.
+
 @node PDP-11-Mnemonics
 @section Instruction Naming
 

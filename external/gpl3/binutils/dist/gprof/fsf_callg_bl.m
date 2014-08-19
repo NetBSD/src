@@ -10,7 +10,7 @@
      index	A unique number given to each element of the table.
 		Index numbers are sorted numerically.
 		The index number is printed next to every function name so
-		it is easier to look up where the function in the table.
+		it is easier to look up where the function is in the table.
 
      % time	This is the percentage of the `total' time that was spent
 		in this function and its children.  Note that due to

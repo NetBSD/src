@@ -1,4 +1,4 @@
-/*	$NetBSD: audio-pcm.c,v 1.1.1.1 2009/12/13 16:57:28 kardel Exp $	*/
+/*	$NetBSD: audio-pcm.c,v 1.1.1.1.12.1 2014/08/19 23:51:49 tls Exp $	*/
 
 /*
  * audio-pcm.c - Scope out the PCM audio stuff
@@ -96,8 +96,8 @@ main( )
 	char *actl = ac_dev;
 	int devmask = 0, recmask = 0, recsrc = 0;
 
-	(void)sprintf(ai_dev, AI_DEV, unit);
-	(void)sprintf(ac_dev, AC_DEV, unit);
+	snprintf(ai_dev, sizeof(ai_dev), AI_DEV, unit);
+	snprintf(ac_dev, sizeof(ac_dev), AC_DEV, unit);
 
 	/*
 	 * Open audio device. Do not complain if not there.

@@ -1,9 +1,9 @@
-/*	$NetBSD: init.c,v 1.1.1.3 2010/12/12 15:23:21 adam Exp $	*/
+/*	$NetBSD: init.c,v 1.1.1.3.12.1 2014/08/19 23:52:02 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-perl/init.c,v 1.44.2.7 2010/04/13 20:23:37 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * Portions Copyright 1999 John C. Quillan.
  * Portions Copyright 2002 myinternet Limited.
  * All rights reserved.
@@ -19,6 +19,11 @@
 
 #include "perl_back.h"
 #include "../config.h"
+
+#ifdef PERL_SYS_INIT3
+#include <ac/unistd.h>		/* maybe get environ */
+extern char **environ;
+#endif
 
 static void perl_back_xs_init LDAP_P((PERL_BACK_XS_INIT_PARAMS));
 EXT void boot_DynaLoader LDAP_P((PERL_BACK_BOOT_DYNALOADER_PARAMS));
@@ -38,8 +43,13 @@ perl_back_initialize(
 	BackendInfo	*bi
 )
 {
-	char *embedding[] = { "", "-e", "0" };
+	char *embedding[] = { "", "-e", "0", NULL }, **argv = embedding;
 	int argc = 3;
+#ifdef PERL_SYS_INIT3
+	char **env = environ;
+#else
+	char **env = NULL;
+#endif
 
 	bi->bi_open = NULL;
 	bi->bi_config = 0;
@@ -81,16 +91,16 @@ perl_back_initialize(
 	ldap_pvt_thread_mutex_init( &perl_interpreter_mutex );
 
 #ifdef PERL_SYS_INIT3
-	PERL_SYS_INIT3(&argc, &embedding, (char **)NULL);
+	PERL_SYS_INIT3(&argc, &argv, &env);
 #endif
 	PERL_INTERPRETER = perl_alloc();
 	perl_construct(PERL_INTERPRETER);
 #ifdef PERL_EXIT_DESTRUCT_END
 	PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
 #endif
-	perl_parse(PERL_INTERPRETER, perl_back_xs_init, argc, embedding, (char **)NULL);
+	perl_parse(PERL_INTERPRETER, perl_back_xs_init, argc, argv, env);
 	perl_run(PERL_INTERPRETER);
-	return 0;
+	return perl_back_init_cf( bi );
 }
 
 int
@@ -105,6 +115,8 @@ perl_back_db_init(
 	((PerlBackend *)be->be_private)->pb_filter_search_results = 0;
 
 	Debug( LDAP_DEBUG_TRACE, "perl backend db init\n", 0, 0, 0 );
+
+	be->be_cf_ocs = be->bd_info->bi_cf_ocs;
 
 	return 0;
 }
@@ -130,11 +142,7 @@ perl_back_db_open(
 
 		PUTBACK;
 
-#ifdef PERL_IS_5_6
 		count = call_method("init", G_SCALAR);
-#else
-		count = perl_call_method("init", G_SCALAR);
-#endif
 
 		SPAGAIN;
 

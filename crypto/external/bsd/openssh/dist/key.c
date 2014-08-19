@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.10.2.2 2013/06/23 06:26:14 tls Exp $	*/
-/* $OpenBSD: key.c,v 1.100 2013/01/17 23:00:01 djm Exp $ */
+/*	$NetBSD: key.c,v 1.10.2.3 2014/08/19 23:45:25 tls Exp $	*/
+/* $OpenBSD: key.c,v 1.104 2013/05/19 02:42:42 djm Exp $ */
 /*
  * read_bignum():
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: key.c,v 1.10.2.2 2013/06/23 06:26:14 tls Exp $");
+__RCSID("$NetBSD: key.c,v 1.10.2.3 2014/08/19 23:45:25 tls Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 
@@ -184,14 +184,13 @@ cert_free(struct KeyCert *cert)
 	buffer_free(&cert->certblob);
 	buffer_free(&cert->critical);
 	buffer_free(&cert->extensions);
-	if (cert->key_id != NULL)
-		xfree(cert->key_id);
+	free(cert->key_id);
 	for (i = 0; i < cert->nprincipals; i++)
-		xfree(cert->principals[i]);
-	if (cert->principals != NULL)
-		xfree(cert->principals);
+		free(cert->principals[i]);
+	free(cert->principals);
 	if (cert->signature_key != NULL)
 		key_free(cert->signature_key);
+	free(cert);
 }
 
 void
@@ -233,7 +232,7 @@ key_free(Key *k)
 		k->cert = NULL;
 	}
 
-	xfree(k);
+	free(k);
 }
 
 static int
@@ -377,7 +376,7 @@ key_fingerprint_raw(const Key *k, enum fp_type dgst_type,
 		EVP_DigestUpdate(&ctx, blob, len);
 		EVP_DigestFinal(&ctx, retval, dgst_raw_length);
 		memset(blob, 0, len);
-		xfree(blob);
+		free(blob);
 	} else {
 		fatal("key_fingerprint_raw: blob is null");
 	}
@@ -559,7 +558,7 @@ key_fingerprint_randomart(u_char *dgst_raw, u_int dgst_raw_len, const Key *k)
 }
 
 char *
-key_fingerprint(Key *k, enum fp_type dgst_type, enum fp_rep dgst_rep)
+key_fingerprint(const Key *k, enum fp_type dgst_type, enum fp_rep dgst_rep)
 {
 	char *retval = NULL;
 	u_char *dgst_raw;
@@ -584,7 +583,7 @@ key_fingerprint(Key *k, enum fp_type dgst_type, enum fp_rep dgst_rep)
 		break;
 	}
 	memset(dgst_raw, 0, dgst_raw_len);
-	xfree(dgst_raw);
+	free(dgst_raw);
 	return retval;
 }
 
@@ -724,11 +723,11 @@ key_read(Key *ret, char **cpp)
 		n = uudecode(cp, blob, len);
 		if (n < 0) {
 			error("key_read: uudecode %s failed", cp);
-			xfree(blob);
+			free(blob);
 			return -1;
 		}
 		k = key_from_blob(blob, (u_int)n);
-		xfree(blob);
+		free(blob);
 		if (k == NULL) {
 			error("key_read: key_from_blob %s failed", cp);
 			return -1;
@@ -863,36 +862,10 @@ key_write(const Key *key, FILE *f)
 		fprintf(f, "%s %s", key_ssh_name(key), uu);
 		success = 1;
 	}
-	xfree(blob);
-	xfree(uu);
+	free(blob);
+	free(uu);
 
 	return success;
-}
-
-const char *
-key_type(const Key *k)
-{
-	switch (k->type) {
-	case KEY_RSA1:
-		return "RSA1";
-	case KEY_RSA:
-		return "RSA";
-	case KEY_DSA:
-		return "DSA";
-	case KEY_ECDSA:
-		return "ECDSA";
-	case KEY_RSA_CERT_V00:
-		return "RSA-CERT-V00";
-	case KEY_DSA_CERT_V00:
-		return "DSA-CERT-V00";
-	case KEY_RSA_CERT:
-		return "RSA-CERT";
-	case KEY_DSA_CERT:
-		return "DSA-CERT";
-	case KEY_ECDSA_CERT:
-		return "ECDSA-CERT";
-	}
-	return "unknown";
 }
 
 const char *
@@ -908,46 +881,55 @@ key_cert_type(const Key *k)
 	}
 }
 
+struct keytype {
+	const char *name;
+	const char *shortname;
+	int type;
+	int nid;
+	int cert;
+};
+static const struct keytype keytypes[] = {
+	{ NULL, "RSA1", KEY_RSA1, 0, 0 },
+	{ "ssh-rsa", "RSA", KEY_RSA, 0, 0 },
+	{ "ssh-dss", "DSA", KEY_DSA, 0, 0 },
+	{ "ecdsa-sha2-nistp256", "ECDSA", KEY_ECDSA, NID_X9_62_prime256v1, 0 },
+	{ "ecdsa-sha2-nistp384", "ECDSA", KEY_ECDSA, NID_secp384r1, 0 },
+	{ "ecdsa-sha2-nistp521", "ECDSA", KEY_ECDSA, NID_secp521r1, 0 },
+	{ "ssh-rsa-cert-v01@openssh.com", "RSA-CERT", KEY_RSA_CERT, 0, 1 },
+	{ "ssh-dss-cert-v01@openssh.com", "DSA-CERT", KEY_DSA_CERT, 0, 1 },
+	{ "ecdsa-sha2-nistp256-cert-v01@openssh.com", "ECDSA-CERT",
+	    KEY_ECDSA_CERT, NID_X9_62_prime256v1, 1 },
+	{ "ecdsa-sha2-nistp384-cert-v01@openssh.com", "ECDSA-CERT",
+	    KEY_ECDSA_CERT, NID_secp384r1, 1 },
+	{ "ecdsa-sha2-nistp521-cert-v01@openssh.com", "ECDSA-CERT",
+	    KEY_ECDSA_CERT, NID_secp521r1, 1 },
+	{ "ssh-rsa-cert-v00@openssh.com", "RSA-CERT-V00",
+	    KEY_RSA_CERT_V00, 0, 1 },
+	{ "ssh-dss-cert-v00@openssh.com", "DSA-CERT-V00",
+	    KEY_DSA_CERT_V00, 0, 1 },
+	{ NULL, NULL, -1, -1, 0 }
+};
+
+const char *
+key_type(const Key *k)
+{
+	const struct keytype *kt;
+
+	for (kt = keytypes; kt->type != -1; kt++) {
+		if (kt->type == k->type)
+			return kt->shortname;
+	}
+	return "unknown";
+}
+
 static const char *
 key_ssh_name_from_type_nid(int type, int nid)
 {
-	switch (type) {
-	case KEY_RSA:
-		return "ssh-rsa";
-	case KEY_DSA:
-		return "ssh-dss";
-	case KEY_RSA_CERT_V00:
-		return "ssh-rsa-cert-v00@openssh.com";
-	case KEY_DSA_CERT_V00:
-		return "ssh-dss-cert-v00@openssh.com";
-	case KEY_RSA_CERT:
-		return "ssh-rsa-cert-v01@openssh.com";
-	case KEY_DSA_CERT:
-		return "ssh-dss-cert-v01@openssh.com";
-	case KEY_ECDSA:
-		switch (nid) {
-		case NID_X9_62_prime256v1:
-			return "ecdsa-sha2-nistp256";
-		case NID_secp384r1:
-			return "ecdsa-sha2-nistp384";
-		case NID_secp521r1:
-			return "ecdsa-sha2-nistp521";
-		default:
-			break;
-		}
-		break;
-	case KEY_ECDSA_CERT:
-		switch (nid) {
-		case NID_X9_62_prime256v1:
-			return "ecdsa-sha2-nistp256-cert-v01@openssh.com";
-		case NID_secp384r1:
-			return "ecdsa-sha2-nistp384-cert-v01@openssh.com";
-		case NID_secp521r1:
-			return "ecdsa-sha2-nistp521-cert-v01@openssh.com";
-		default:
-			break;
-		}
-		break;
+	const struct keytype *kt;
+
+	for (kt = keytypes; kt->type != -1; kt++) {
+		if (kt->type == type && (kt->nid == 0 || kt->nid == nid))
+			return kt->name;
 	}
 	return "ssh-unknown";
 }
@@ -963,6 +945,56 @@ key_ssh_name_plain(const Key *k)
 {
 	return key_ssh_name_from_type_nid(key_type_plain(k->type),
 	    k->ecdsa_nid);
+}
+
+int
+key_type_from_name(const char *name)
+{
+	const struct keytype *kt;
+
+	for (kt = keytypes; kt->type != -1; kt++) {
+		/* Only allow shortname matches for plain key types */
+		if ((kt->name != NULL && strcmp(name, kt->name) == 0) ||
+		    (!kt->cert && strcasecmp(kt->shortname, name) == 0))
+			return kt->type;
+	}
+	debug2("key_type_from_name: unknown key type '%s'", name);
+	return KEY_UNSPEC;
+}
+
+int
+key_ecdsa_nid_from_name(const char *name)
+{
+	const struct keytype *kt;
+
+	for (kt = keytypes; kt->type != -1; kt++) {
+		if (kt->type != KEY_ECDSA && kt->type != KEY_ECDSA_CERT)
+			continue;
+		if (kt->name != NULL && strcmp(name, kt->name) == 0)
+			return kt->nid;
+	}
+	debug2("%s: unknown/non-ECDSA key type '%s'", __func__, name);
+	return -1;
+}
+
+char *
+key_alg_list(void)
+{
+	char *ret = NULL;
+	size_t nlen, rlen = 0;
+	const struct keytype *kt;
+
+	for (kt = keytypes; kt->type != -1; kt++) {
+		if (kt->name == NULL)
+			continue;
+		if (ret != NULL)
+			ret[rlen++] = '\n';
+		nlen = strlen(kt->name);
+		ret = xrealloc(ret, 1, rlen + nlen + 2);
+		memcpy(ret + rlen, kt->name, nlen + 1);
+		rlen += nlen;
+	}
+	return ret;
 }
 
 u_int
@@ -1210,58 +1242,6 @@ key_from_private(const Key *k)
 }
 
 int
-key_type_from_name(const char *name)
-{
-	if (strcmp(name, "rsa1") == 0) {
-		return KEY_RSA1;
-	} else if (strcmp(name, "rsa") == 0) {
-		return KEY_RSA;
-	} else if (strcmp(name, "dsa") == 0) {
-		return KEY_DSA;
-	} else if (strcmp(name, "ssh-rsa") == 0) {
-		return KEY_RSA;
-	} else if (strcmp(name, "ssh-dss") == 0) {
-		return KEY_DSA;
-	} else if (strcmp(name, "ecdsa") == 0 ||
-	    strcmp(name, "ecdsa-sha2-nistp256") == 0 ||
-	    strcmp(name, "ecdsa-sha2-nistp384") == 0 ||
-	    strcmp(name, "ecdsa-sha2-nistp521") == 0) {
-		return KEY_ECDSA;
-	} else if (strcmp(name, "ssh-rsa-cert-v00@openssh.com") == 0) {
-		return KEY_RSA_CERT_V00;
-	} else if (strcmp(name, "ssh-dss-cert-v00@openssh.com") == 0) {
-		return KEY_DSA_CERT_V00;
-	} else if (strcmp(name, "ssh-rsa-cert-v01@openssh.com") == 0) {
-		return KEY_RSA_CERT;
-	} else if (strcmp(name, "ssh-dss-cert-v01@openssh.com") == 0) {
-		return KEY_DSA_CERT;
-	} else if (strcmp(name, "ecdsa-sha2-nistp256-cert-v01@openssh.com") == 0 ||
-	    strcmp(name, "ecdsa-sha2-nistp384-cert-v01@openssh.com") == 0 ||
-	    strcmp(name, "ecdsa-sha2-nistp521-cert-v01@openssh.com") == 0)
-		return KEY_ECDSA_CERT;
-
-	debug2("key_type_from_name: unknown key type '%s'", name);
-	return KEY_UNSPEC;
-}
-
-int
-key_ecdsa_nid_from_name(const char *name)
-{
-	if (strcmp(name, "ecdsa-sha2-nistp256") == 0 ||
-	    strcmp(name, "ecdsa-sha2-nistp256-cert-v01@openssh.com") == 0)
-		return NID_X9_62_prime256v1;
-	if (strcmp(name, "ecdsa-sha2-nistp384") == 0 ||
-	    strcmp(name, "ecdsa-sha2-nistp384-cert-v01@openssh.com") == 0)
-		return NID_secp384r1;
-	if (strcmp(name, "ecdsa-sha2-nistp521") == 0 ||
-	    strcmp(name, "ecdsa-sha2-nistp521-cert-v01@openssh.com") == 0)
-		return NID_secp521r1;
-
-	debug2("%s: unknown/non-ECDSA key type '%s'", __func__, name);
-	return -1;
-}
-
-int
 key_names_valid2(const char *names)
 {
 	char *s, *cp, *p;
@@ -1274,12 +1254,12 @@ key_names_valid2(const char *names)
 		switch (key_type_from_name(p)) {
 		case KEY_RSA1:
 		case KEY_UNSPEC:
-			xfree(s);
+			free(s);
 			return 0;
 		}
 	}
 	debug3("key names ok: [%s]", names);
-	xfree(s);
+	free(s);
 	return 1;
 }
 
@@ -1401,16 +1381,11 @@ cert_parse(Buffer *b, Key *key, const u_char *blob, u_int blen)
 
  out:
 	buffer_free(&tmp);
-	if (principals != NULL)
-		xfree(principals);
-	if (critical != NULL)
-		xfree(critical);
-	if (exts != NULL)
-		xfree(exts);
-	if (sig_key != NULL)
-		xfree(sig_key);
-	if (sig != NULL)
-		xfree(sig);
+	free(principals);
+	free(critical);
+	free(exts);
+	free(sig_key);
+	free(sig);
 	return ret;
 }
 
@@ -1523,10 +1498,8 @@ key_from_blob(const u_char *blob, u_int blen)
 	if (key != NULL && rlen != 0)
 		error("key_from_blob: remaining bytes in key blob %d", rlen);
  out:
-	if (ktype != NULL)
-		xfree(ktype);
-	if (curve != NULL)
-		xfree(curve);
+	free(ktype);
+	free(curve);
 	if (q != NULL)
 		EC_POINT_free(q);
 	buffer_free(&b);
@@ -1539,6 +1512,8 @@ to_blob(const Key *key, u_char **blobp, u_int *lenp, int force_plain)
 	Buffer b;
 	int len, type;
 
+	if (blobp)
+		*blobp = NULL;
 	if (key == NULL) {
 		error("key_to_blob: key == NULL");
 		return 0;
@@ -1864,7 +1839,7 @@ key_certify(Key *k, Key *ca)
 	default:
 		error("%s: key has incorrect type %s", __func__, key_type(k));
 		buffer_clear(&k->cert->certblob);
-		xfree(ca_blob);
+		free(ca_blob);
 		return -1;
 	}
 
@@ -1900,7 +1875,7 @@ key_certify(Key *k, Key *ca)
 
 	buffer_put_string(&k->cert->certblob, NULL, 0); /* reserved */
 	buffer_put_string(&k->cert->certblob, ca_blob, ca_len);
-	xfree(ca_blob);
+	free(ca_blob);
 
 	/* Sign the whole mess */
 	if (key_sign(ca, &sig_blob, &sig_len, buffer_ptr(&k->cert->certblob),
@@ -1911,7 +1886,7 @@ key_certify(Key *k, Key *ca)
 	}
 	/* Append signature and we are done */
 	buffer_put_string(&k->cert->certblob, sig_blob, sig_len);
-	xfree(sig_blob);
+	free(sig_blob);
 
 	return 0;
 }

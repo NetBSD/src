@@ -1,0 +1,32 @@
+# $NetBSD: Makefile.bsd,v 1.1.8.2 2014/08/19 23:45:23 tls Exp $
+
+PROG=netpgpverify
+
+SRCS= b64.c bignum.c bufgap.c digest.c
+SRCS+= libverify.c main.c misc.c
+SRCS+= pgpsum.c rsa.c
+
+SRCS+= bzlib.c zlib.c
+
+SRCS+= md5c.c rmd160.c sha1.c sha2.c tiger.c
+
+CPPFLAGS+=-I.
+
+.ifndef PRODUCTION
+CPPFLAGS+=-g -O0
+LDFLAGS+=-g -O0
+.endif
+
+MAN=	netpgpverify.1
+WARNS=	6
+
+.include <bsd.prog.mk>
+
+tst:
+	./${PROG} -k pubring.gpg NetBSD-6.0_RC1_hashes.asc
+	./${PROG} -k pubring.gpg NetBSD-6.0_RC1_hashes.gpg
+	./${PROG} -v
+	./${PROG} -S sshtest-20140202.pub data.gpg
+	./${PROG} -S sshtest-20140202.pub data.sig
+	@echo "expected failure, to check bad signatures fail to verify"
+	-sed -e 's|A|B|' data.gpg | ./${PROG} -S sshtest-20140202.pub 

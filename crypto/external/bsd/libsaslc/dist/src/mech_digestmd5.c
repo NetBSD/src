@@ -1,4 +1,4 @@
-/* $NetBSD: mech_digestmd5.c,v 1.10 2011/02/20 01:59:46 christos Exp $ */
+/* $NetBSD: mech_digestmd5.c,v 1.10.10.1 2014/08/19 23:45:22 tls Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mech_digestmd5.c,v 1.10 2011/02/20 01:59:46 christos Exp $");
+__RCSID("$NetBSD: mech_digestmd5.c,v 1.10.10.1 2014/08/19 23:45:22 tls Exp $");
 
 #include <sys/param.h>
 
@@ -1626,7 +1626,7 @@ saslc__mech_digestmd5_parse_challenge(saslc_sess_t *sess, const char *challenge)
 		if (val == NULL)
 			goto no_mem;
 		*val = '\0';
-		val = strip_quotes(++val);
+		val = strip_quotes(val + 1);
 
 		saslc__msg_dbg("key='%s' val='%s'\n", key, val);
 		switch (get_challenge_t(key)) {

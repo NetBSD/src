@@ -1,15 +1,9 @@
 /*
- * TLS v1.0 (RFC 2246) and v1.1 (RFC 4346) client - read handshake message
+ * TLSv1 client - read handshake message
  * Copyright (c) 2006-2011, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "includes.h"
@@ -17,6 +11,7 @@
 #include "common.h"
 #include "crypto/md5.h"
 #include "crypto/sha1.h"
+#include "crypto/sha256.h"
 #include "crypto/tls.h"
 #include "x509v3.h"
 #include "tlsv1_common.h"
@@ -81,9 +76,7 @@ static int tls_process_server_hello(struct tlsv1_client *conn, u8 ct,
 	if (end - pos < 2)
 		goto decode_error;
 	tls_version = WPA_GET_BE16(pos);
-	if (tls_version != TLS_VERSION_1 &&
-	    (tls_version != TLS_VERSION_1_1 ||
-	     TLS_VERSION == TLS_VERSION_1)) {
+	if (!tls_version_ok(tls_version)) {
 		wpa_printf(MSG_DEBUG, "TLSv1: Unexpected protocol version in "
 			   "ServerHello %u.%u", pos[0], pos[1]);
 		tls_alert(conn, TLS_ALERT_LEVEL_FATAL,
@@ -93,7 +86,7 @@ static int tls_process_server_hello(struct tlsv1_client *conn, u8 ct,
 	pos += 2;
 
 	wpa_printf(MSG_DEBUG, "TLSv1: Using TLS v%s",
-		   tls_version == TLS_VERSION_1_1 ? "1.1" : "1.0");
+		   tls_version_str(tls_version));
 	conn->rl.tls_version = tls_version;
 
 	/* Random random */
@@ -824,6 +817,21 @@ static int tls_process_server_finished(struct tlsv1_client *conn, u8 ct,
 	wpa_hexdump(MSG_MSGDUMP, "TLSv1: verify_data in Finished",
 		    pos, TLS_VERIFY_DATA_LEN);
 
+#ifdef CONFIG_TLSV12
+	if (conn->rl.tls_version >= TLS_VERSION_1_2) {
+		hlen = SHA256_MAC_LEN;
+		if (conn->verify.sha256_server == NULL ||
+		    crypto_hash_finish(conn->verify.sha256_server, hash, &hlen)
+		    < 0) {
+			tls_alert(conn, TLS_ALERT_LEVEL_FATAL,
+				  TLS_ALERT_INTERNAL_ERROR);
+			conn->verify.sha256_server = NULL;
+			return -1;
+		}
+		conn->verify.sha256_server = NULL;
+	} else {
+#endif /* CONFIG_TLSV12 */
+
 	hlen = MD5_MAC_LEN;
 	if (conn->verify.md5_server == NULL ||
 	    crypto_hash_finish(conn->verify.md5_server, hash, &hlen) < 0) {
@@ -845,9 +853,15 @@ static int tls_process_server_finished(struct tlsv1_client *conn, u8 ct,
 		return -1;
 	}
 	conn->verify.sha1_server = NULL;
+	hlen = MD5_MAC_LEN + SHA1_MAC_LEN;
 
-	if (tls_prf(conn->master_secret, TLS_MASTER_SECRET_LEN,
-		    "server finished", hash, MD5_MAC_LEN + SHA1_MAC_LEN,
+#ifdef CONFIG_TLSV12
+	}
+#endif /* CONFIG_TLSV12 */
+
+	if (tls_prf(conn->rl.tls_version,
+		    conn->master_secret, TLS_MASTER_SECRET_LEN,
+		    "server finished", hash, hlen,
 		    verify_data, TLS_VERIFY_DATA_LEN)) {
 		wpa_printf(MSG_DEBUG, "TLSv1: Failed to derive verify_data");
 		tls_alert(conn, TLS_ALERT_LEVEL_FATAL,

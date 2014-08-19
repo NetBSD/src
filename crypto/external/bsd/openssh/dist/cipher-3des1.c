@@ -1,5 +1,5 @@
-/*	$NetBSD: cipher-3des1.c,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: cipher-3des1.c,v 1.7 2010/10/01 23:05:32 djm Exp $ */
+/*	$NetBSD: cipher-3des1.c,v 1.4.8.1 2014/08/19 23:45:24 tls Exp $	*/
+/* $OpenBSD: cipher-3des1.c,v 1.8.2.1 2013/11/08 01:33:56 djm Exp $ */
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: cipher-3des1.c,v 1.4 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: cipher-3des1.c,v 1.4.8.1 2014/08/19 23:45:24 tls Exp $");
 #include <sys/types.h>
 
 #include <openssl/evp.h>
@@ -65,7 +65,7 @@ ssh1_3des_init(EVP_CIPHER_CTX *ctx, const u_char *key, const u_char *iv,
 	u_char *k1, *k2, *k3;
 
 	if ((c = EVP_CIPHER_CTX_get_app_data(ctx)) == NULL) {
-		c = xmalloc(sizeof(*c));
+		c = xcalloc(1, sizeof(*c));
 		EVP_CIPHER_CTX_set_app_data(ctx, c);
 	}
 	if (key == NULL)
@@ -87,7 +87,7 @@ ssh1_3des_init(EVP_CIPHER_CTX *ctx, const u_char *key, const u_char *iv,
 	    EVP_CipherInit(&c->k2, EVP_des_cbc(), k2, NULL, !enc) == 0 ||
 	    EVP_CipherInit(&c->k3, EVP_des_cbc(), k3, NULL, enc) == 0) {
 		memset(c, 0, sizeof(*c));
-		xfree(c);
+		free(c);
 		EVP_CIPHER_CTX_set_app_data(ctx, NULL);
 		return (0);
 	}
@@ -120,7 +120,7 @@ ssh1_3des_cleanup(EVP_CIPHER_CTX *ctx)
 		EVP_CIPHER_CTX_cleanup(&c->k2);
 		EVP_CIPHER_CTX_cleanup(&c->k3);
 		memset(c, 0, sizeof(*c));
-		xfree(c);
+		free(c);
 		EVP_CIPHER_CTX_set_app_data(ctx, NULL);
 	}
 	return (1);

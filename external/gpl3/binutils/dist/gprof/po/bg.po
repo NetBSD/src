@@ -1,16 +1,17 @@
 # Translation of binutils gprof to Bulgarian
-# Copyright (C) 2009 Free Software Foundation, Inc.
+# Copyright (C) 2009, 2011 Free Software Foundation, Inc.
 # This file is distributed under the same license as the binutils package.
 #
-# Roumen Petrov <transl@roumenpetrov.info>, 2009.
+# Roumen Petrov <transl@roumenpetrov.info>, 2009, 2011, 2012.
 msgid ""
 msgstr ""
-"Project-Id-Version: gprof 2.20.90\n"
+"Project-Id-Version: gprof 2.22.90\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2010-11-05 11:34+0100\n"
-"PO-Revision-Date: 2010-11-10 22:47+0200\n"
+"POT-Creation-Date: 2011-10-18 14:20+0100\n"
+"PO-Revision-Date: 2012-07-28 01:08+0300\n"
 "Last-Translator: Roumen Petrov <transl@roumenpetrov.info>\n"
 "Language-Team: Bulgarian <dict@fsa-bg.org>\n"
+"Language: bg\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -35,27 +36,27 @@ msgstr "[find_call] 0x%lx: jsr%s <косвен_потомък>\n"
 msgid "[find_call] 0x%lx: bsr"
 msgstr "[find_call] 0x%lx: bsr <относително адресиране>"
 
-#: basic_blocks.c:128 call_graph.c:89 hist.c:107
+#: basic_blocks.c:129 call_graph.c:89 hist.c:107
 #, c-format
 msgid "%s: %s: unexpected end of file\n"
 msgstr "%s: %s: неочакван край на файл\n"
 
-#: basic_blocks.c:196
+#: basic_blocks.c:197
 #, c-format
 msgid "%s: warning: ignoring basic-block exec counts (use -l or --line)\n"
 msgstr "%s: предупреждение: игнориране на броене за базов-блок (да се използва -l или --line)\n"
 
 #. FIXME: This only works if bfd_vma is unsigned long.
-#: basic_blocks.c:289 basic_blocks.c:299
+#: basic_blocks.c:290 basic_blocks.c:300
 #, c-format
 msgid "%s:%d: (%s:0x%lx) %lu executions\n"
 msgstr "%s:%d: (%s:0x%lx) %lu изпълнения\n"
 
-#: basic_blocks.c:290 basic_blocks.c:300
+#: basic_blocks.c:291 basic_blocks.c:301
 msgid "<unknown>"
 msgstr "<неизвестен>"
 
-#: basic_blocks.c:543
+#: basic_blocks.c:544
 #, c-format
 msgid ""
 "\n"
@@ -72,7 +73,7 @@ msgstr ""
 "     Ред       Брой\n"
 "\n"
 
-#: basic_blocks.c:567
+#: basic_blocks.c:568
 #, c-format
 msgid ""
 "\n"
@@ -83,22 +84,22 @@ msgstr ""
 "Накратко за изпълнението:\n"
 "\n"
 
-#: basic_blocks.c:568
+#: basic_blocks.c:569
 #, c-format
 msgid "%9ld   Executable lines in this file\n"
 msgstr "%9ld   Изпълними редове в файла\n"
 
-#: basic_blocks.c:570
+#: basic_blocks.c:571
 #, c-format
 msgid "%9ld   Lines executed\n"
 msgstr "%9ld   Редове изпълнени\n"
 
-#: basic_blocks.c:571
+#: basic_blocks.c:572
 #, c-format
 msgid "%9.2f   Percent of the file executed\n"
 msgstr "%9.2f   Проценти от изпълнения файл\n"
 
-#: basic_blocks.c:575
+#: basic_blocks.c:576
 #, c-format
 msgid ""
 "\n"
@@ -107,7 +108,7 @@ msgstr ""
 "\n"
 "%9lu   Общ брой на изпълнените редове\n"
 
-#: basic_blocks.c:577
+#: basic_blocks.c:578
 #, c-format
 msgid "%9.2f   Average executions per line\n"
 msgstr "%9.2f   Средно изпълняване за ред\n"
@@ -117,7 +118,7 @@ msgstr "%9.2f   Средно изпълняване за ред\n"
 msgid "[cg_tally] arc from %s to %s traversed %lu times\n"
 msgstr "[cg_tally] дъгата от %s до %s е премината %lu пъти\n"
 
-#: cg_print.c:74
+#: cg_print.c:75
 #, c-format
 msgid ""
 "\t\t     Call graph (explanation follows)\n"
@@ -126,7 +127,7 @@ msgstr ""
 "\t\tГраф на извикванията (обяснението следва)\n"
 "\n"
 
-#: cg_print.c:76
+#: cg_print.c:77
 #, c-format
 msgid ""
 "\t\t\tCall graph\n"
@@ -135,7 +136,7 @@ msgstr ""
 "\t\t\tГраф на извикванията\n"
 "\n"
 
-#: cg_print.c:79 hist.c:468
+#: cg_print.c:80 hist.c:468
 #, c-format
 msgid ""
 "\n"
@@ -144,7 +145,7 @@ msgstr ""
 "\n"
 "точност: всяка проба е за %ld байта"
 
-#: cg_print.c:83
+#: cg_print.c:84
 #, c-format
 msgid ""
 " for %.2f%% of %.2f seconds\n"
@@ -153,7 +154,7 @@ msgstr ""
 " за %.2f%% от %.2f секунди\n"
 "\n"
 
-#: cg_print.c:87
+#: cg_print.c:88
 #, c-format
 msgid ""
 " no time propagated\n"
@@ -162,65 +163,65 @@ msgstr ""
 " без разпространяване за време\n"
 "\n"
 
-#: cg_print.c:96 cg_print.c:99 cg_print.c:101
+#: cg_print.c:97 cg_print.c:102 cg_print.c:105
 msgid "called"
 msgstr "извик."
 
-#: cg_print.c:96 cg_print.c:101
+#: cg_print.c:97 cg_print.c:105
 msgid "total"
 msgstr "общо"
 
-#: cg_print.c:96
+#: cg_print.c:97
 msgid "parents"
 msgstr "родители"
 
-#: cg_print.c:98 cg_print.c:99
+#: cg_print.c:99 cg_print.c:103
 msgid "index"
 msgstr "индекс"
 
 #
-#: cg_print.c:98
-#, fuzzy, c-format
+#: cg_print.c:101
+#, no-c-format
 msgid "%time"
 msgstr "%време"
 
-#: cg_print.c:98 cg_print.c:99
+#: cg_print.c:102
 msgid "self"
 msgstr "собст."
 
-#: cg_print.c:98
+#: cg_print.c:102
 msgid "descendants"
 msgstr "наследници"
 
-#: cg_print.c:99 hist.c:494
+#: cg_print.c:103 hist.c:494
 msgid "name"
 msgstr "име"
 
-#: cg_print.c:101
+#: cg_print.c:105
 msgid "children"
 msgstr "потомци"
 
-#: cg_print.c:106
+#: cg_print.c:110
 #, c-format
 msgid "index %% time    self  children    called     name\n"
 msgstr "индекс%% време   собс. потомци      извик.     име \n"
 
-#: cg_print.c:129
+#: cg_print.c:133
 #, c-format
 msgid " <cycle %d as a whole> [%d]\n"
 msgstr " <цикъл %d от> [%d]\n"
 
-#: cg_print.c:355
+#: cg_print.c:359
 #, c-format
 msgid "%6.6s %5.5s %7.7s %11.11s %7.7s %7.7s     <spontaneous>\n"
 msgstr "%6.6s %5.5s %7.7s %11.11s %7.7s %7.7s     <спонтанни>\n"
 
-#: cg_print.c:356
+#: cg_print.c:360
 #, c-format
 msgid "%6.6s %5.5s %7.7s %7.7s %7.7s %7.7s     <spontaneous>\n"
 msgstr "%6.6s %5.5s %7.7s %7.7s %7.7s %7.7s     <спонтанни>\n"
 
-#: cg_print.c:590
+#: cg_print.c:594
 #, c-format
 msgid ""
 "Index by function name\n"
@@ -229,52 +230,52 @@ msgstr ""
 "Индекс по име на функция\n"
 "\n"
 
-#: cg_print.c:647 cg_print.c:656
+#: cg_print.c:651 cg_print.c:660
 #, c-format
 msgid "<cycle %d>"
 msgstr "<цикъл %d>"
 
-#: corefile.c:60
+#: corefile.c:61
 #, c-format
 msgid "%s: unable to parse mapping file %s.\n"
 msgstr "%s: не може да се обработи файла със съответствията %s.\n"
 
-#: corefile.c:84 corefile.c:504
+#: corefile.c:85 corefile.c:514
 #, c-format
 msgid "%s: could not open %s.\n"
 msgstr "%s: не може да се отвори %s.\n"
 
-#: corefile.c:183
+#: corefile.c:185
 #, c-format
 msgid "%s: %s: not in executable format\n"
 msgstr "%s: %s: не е изпълним формат\n"
 
-#: corefile.c:194
+#: corefile.c:196
 #, c-format
 msgid "%s: can't find .text section in %s\n"
 msgstr "%s: не може да се намери изпълнима(.text) секция в %s\n"
 
-#: corefile.c:269
+#: corefile.c:271
 #, c-format
 msgid "%s: ran out room for %lu bytes of text space\n"
 msgstr "%s: недостиг на %lu байта за изпълнима секция\n"
 
-#: corefile.c:283
+#: corefile.c:285
 #, c-format
 msgid "%s: can't do -c\n"
 msgstr "%s: не може с команда -c\n"
 
-#: corefile.c:322
+#: corefile.c:324
 #, c-format
 msgid "%s: -c not supported on architecture %s\n"
 msgstr "%s: -c не се поддържа за архитектура %s\n"
 
-#: corefile.c:513 corefile.c:598
+#: corefile.c:523 corefile.c:622
 #, c-format
 msgid "%s: file `%s' has no symbols\n"
 msgstr "%s: файлът '%s' е без символи\n"
 
-#: corefile.c:859
+#: corefile.c:884
 #, c-format
 msgid "%s: somebody miscounted: ltab.len=%d instead of %ld\n"
 msgstr "%s: нещо не е преброено: ltab.len=%d вместо %ld\n"

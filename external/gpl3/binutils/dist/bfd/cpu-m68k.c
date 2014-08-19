@@ -30,7 +30,8 @@ bfd_m68k_compatible (const bfd_arch_info_type *a,
 		     const bfd_arch_info_type *b);
 
 #define N(name, print,d,next)  \
-{  32, 32, 8, bfd_arch_m68k, name, "m68k",print,2,d,bfd_m68k_compatible,bfd_default_scan, next, }
+{  32, 32, 8, bfd_arch_m68k, name, "m68k",print,2,d,bfd_m68k_compatible, \
+   bfd_default_scan, bfd_arch_default_fill, next, }
 
 static const bfd_arch_info_type arch_info_struct[] =
   {

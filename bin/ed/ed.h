@@ -1,4 +1,4 @@
-/*	$NetBSD: ed.h,v 1.35 2011/08/29 14:51:18 joerg Exp $	*/
+/*	$NetBSD: ed.h,v 1.35.8.1 2014/08/19 23:45:11 tls Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
 /*
@@ -115,7 +115,7 @@ if (--mutex == 0) { \
 	errno = 0 ; \
 	if (((i = strtol(p, &p, 10)) == LONG_MIN || i == LONG_MAX) && \
 	    errno == ERANGE) { \
-		sprintf(errmsg, "number out of range"); \
+		seterrmsg("number out of range"); \
 	    	i = 0; \
 		return ERR; \
 	} \
@@ -131,14 +131,14 @@ if ((i) > (n)) { \
 	if ((b) != NULL) { \
 		if ((ts = (char *) realloc((b), ti += max((i), MINBUFSZ))) == NULL) { \
 			fprintf(stderr, "%s\n", strerror(errno)); \
-			sprintf(errmsg, "out of memory"); \
+			seterrmsg("out of memory"); \
 			SPL0(); \
 			return err; \
 		} \
 	} else { \
 		if ((ts = (char *) malloc(ti += max((i), MINBUFSZ))) == NULL) { \
 			fprintf(stderr, "%s\n", strerror(errno)); \
-			sprintf(errmsg, "out of memory"); \
+			seterrmsg("out of memory"); \
 			SPL0(); \
 			return err; \
 		} \
@@ -156,7 +156,7 @@ if ((i) > (n)) { \
 	SPL1(); \
 	if ((ts = (char *) realloc((b), ti += max((i), MINBUFSZ))) == NULL) { \
 		fprintf(stderr, "%s\n", strerror(errno)); \
-		sprintf(errmsg, "out of memory"); \
+		seterrmsg("out of memory"); \
 		SPL0(); \
 		return err; \
 	} \
@@ -257,6 +257,7 @@ void unmark_line_node(line_t *);
 void unset_active_nodes(line_t *, line_t *);
 long write_file(const char *, const char *, long, long);
 long write_stream(FILE *, long, long);
+void seterrmsg(const char *, ...) __printflike(1, 2);
 
 /* global buffers */
 extern char stdinbuf[];
@@ -284,7 +285,7 @@ extern int ere;
 extern int des;
 extern int newline_added;	/* io.c */
 extern int patlock;
-extern char errmsg[];		/* re.c */
+extern char errmsg[];	/* re.c */
 extern long u_current_addr;	/* undo.c */
 extern long u_addr_last;	/* undo.c */
 #if defined(sun) && !defined(__SVR4)

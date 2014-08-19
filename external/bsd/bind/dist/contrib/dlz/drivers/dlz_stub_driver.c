@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_stub_driver.c,v 1.3 2012/06/05 00:39:39 christos Exp $	*/
+/*	$NetBSD: dlz_stub_driver.c,v 1.3.2.1 2014/08/19 23:46:21 tls Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -149,12 +149,16 @@ stub_dlz_authority(const char *zone, void *driverarg, void *dbdata,
 }
 
 static isc_result_t
-stub_dlz_findzonedb(void *driverarg, void *dbdata, const char *name)
+stub_dlz_findzonedb(void *driverarg, void *dbdata, const char *name,
+		    dns_clientinfomethods_t *methods,
+		    dns_clientinfo_t *clientinfo)
 {
 
 	config_data_t *cd;
 
 	UNUSED(driverarg);
+	UNUSED(methods);
+	UNUSED(clientinfo);
 
 	cd = (config_data_t *) dbdata;
 

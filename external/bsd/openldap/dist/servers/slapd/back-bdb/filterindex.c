@@ -1,10 +1,10 @@
-/*	$NetBSD: filterindex.c,v 1.1.1.3 2010/12/12 15:22:55 adam Exp $	*/
+/*	$NetBSD: filterindex.c,v 1.1.1.3.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
 /* filterindex.c - generate the list of candidate entries from a filter */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/filterindex.c,v 1.64.2.11 2010/04/13 20:23:24 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2010 The OpenLDAP Foundation.
+ * Copyright 2000-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -729,6 +729,10 @@ equality_candidates(
 		}
 		if ( ei ) {
 			bdb_cache_entryinfo_unlock( ei );
+		}
+		if ( rc == DB_NOTFOUND ) {
+			BDB_IDL_ZERO( ids );
+			rc = 0;
 		}
 		return rc;
 	}

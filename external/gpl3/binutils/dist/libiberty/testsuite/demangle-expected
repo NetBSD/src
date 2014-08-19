@@ -3610,8 +3610,8 @@ std::_Alloc_traits<std::basic_string<char, std::string_char_traits<char>, libcw:
 #
 --format=gnu-v3 --no-params
 _GLOBAL__I__Z2fnv
-global constructors keyed to _Z2fnv
-global constructors keyed to _Z2fnv
+global constructors keyed to fn()
+global constructors keyed to fn()
 #
 --format=gnu-v3 --no-params
 _Z1rM1GFivEMS_KFivES_M1HFivES1_4whatIKS_E5what2IS8_ES3_
@@ -3901,10 +3901,18 @@ java resource java/util/iso4217.properties
 --format=gnu-v3
 _Z3addIidEDTplfp_fp0_ET_T0_
 decltype ({parm#1}+{parm#2}) add<int, double>(int, double)
+# decltype scope test
+--format=gnu-v3
+_Z1fI1SENDtfp_E4typeET_
+decltype ({parm#1})::type f<S>(S)
 # decltype/fn call test
 --format=gnu-v3
 _Z4add3IidEDTclL_Z1gEfp_fp0_EET_T0_
 decltype (g({parm#1}, {parm#2})) add3<int, double>(int, double)
+# 'this' test
+--format=gnu-v3
+_ZN1A1fIiEEDTcldtdtdefpT1b1fIT_EEEv
+decltype ((((*this).b).(f<int>))()) A::f<int>()
 # new (2008) built in types test
 --format=gnu-v3
 _Z1fDfDdDeDhDsDi
@@ -3920,10 +3928,14 @@ decltype (({parm#1}.(g<double>))()) h<A<int>, double>(A<int>, double)
 # test for typed function in decltype
 --format=gnu-v3
 _ZN1AIiE1jIiEEDTplfp_clL_Z1xvEEET_
-decltype ({parm#1}+((x())())) A<int>::j<int>(int)
+decltype ({parm#1}+(x())) A<int>::j<int>(int)
+# typed function in decltype with an argument list
+--format=gnu-v3
+_Z1tIlEDTplcvT_Li5EclL_Z1qsELi6EEEv
+decltype (((long)(5))+(q(6))) t<long>()
 # test for expansion of function parameter pack
 --format=gnu-v3
-_Z1gIIidEEDTclL_Z1fEspplfp_Li1EEEDpT_
+_Z1gIJidEEDTclL_Z1fEspplfp_Li1EEEDpT_
 decltype (f(({parm#1}+(1))...)) g<int, double>(int, double)
 # lambda tests
 --format=gnu-v3
@@ -3957,8 +3969,121 @@ decltype (({parm#1}.(operator-))()) h<A>(A)
 _Z1fDn
 f(decltype(nullptr))
 --format=gnu-v3
+_Z1fIRiEvOT_b
+void f<int&>(int&, bool)
+--format=gnu-v3
 _ZN5aaaaa6bbbbbb5cccccIN23ddddddddddddddddddddddd3eeeENS2_4ffff16ggggggggggggggggENS0_9hhhhhhhhhES6_S6_S6_S6_S6_S6_S6_EE
 aaaaa::bbbbbb::ccccc<ddddddddddddddddddddddd::eee, ddddddddddddddddddddddd::ffff::gggggggggggggggg, aaaaa::bbbbbb::hhhhhhhhh, aaaaa::bbbbbb::hhhhhhhhh, aaaaa::bbbbbb::hhhhhhhhh, aaaaa::bbbbbb::hhhhhhhhh, aaaaa::bbbbbb::hhhhhhhhh, aaaaa::bbbbbb::hhhhhhhhh, aaaaa::bbbbbb::hhhhhhhhh, aaaaa::bbbbbb::hhhhhhhhh>
+--format=gnu-v3
+_Z5outerIsEcPFilE
+char outer<short>(int (*)(long))
+--format=gnu-v3
+_Z5outerPFsiEl
+outer(short (*)(int), long)
+--format=gnu-v3
+_Z6outer2IsEPFilES1_
+int (*outer2<short>(int (*)(long)))(long)
+--format=gnu-v3 --ret-postfix
+_Z5outerIsEcPFilE
+outer<short>(int (*)(long))char
+--format=gnu-v3 --ret-postfix
+_Z5outerPFsiEl
+outer(short (*)(int), long)
+--format=gnu-v3 --ret-postfix
+_Z6outer2IsEPFilES1_
+outer2<short>(int (*)(long))int (*)(long)
+--format=gnu-v3 --ret-drop
+_Z5outerIsEcPFilE
+outer<short>(int (*)(long))
+--format=gnu-v3 --ret-drop
+_Z5outerPFsiEl
+outer(short (*)(int), long)
+--format=gnu-v3 --ret-drop
+_Z6outer2IsEPFilES1_
+outer2<short>(int (*)(long))
+#
+--format=gnu-v3 --no-params
+_ZN1KIXadL_ZN1S1mEiEEE1fEv
+K<&S::m>::f()
+K<&S::m>::f
+--format=gnu-v3
+_ZN1KILi1EXadL_ZN1S1mEiEEE1fEv
+K<1, &S::m>::f()
+# Here the `(int)' argument list of `S::m' is already removed.
+--format=gnu-v3
+_ZN1KILi1EXadL_ZN1S1mEEEE1fEv
+K<1, &S::m>::f()
+#
+# Used to crash -- binutils PR 13030.
+--format=gnu-v3
+_ZSt10_ConstructI10CellBorderIS0_EEvPT_DpOT0_
+_ZSt10_ConstructI10CellBorderIS0_EEvPT_DpOT0_
+# A pack expansion is substitutable.
+--format=gnu-v3
+_Z1fIJiEiEv1AIJDpT_EET0_S4_
+void f<int, int>(A<int>, int, int)
+# So is decltype.
+--format=gnu-v3
+_Z1fIiiEDTcvT__EET0_S2_
+decltype ((int)()) f<int, int>(int, int)
+# And vector.
+--format=gnu-v3
+_Z1fDv4_iS_
+f(int __vector(4), int __vector(4))
+--format=gnu-v3
+_Z2f1Ii1AEDTdsfp_fp0_ET0_MS2_T_
+decltype ({parm#1}.*{parm#2}) f1<int, A>(A, int A::*)
+--format=gnu-v3
+_Z2f2IiEDTquL_Z1bEfp_trET_
+decltype (b?{parm#1} : (throw)) f2<int>(int)
+--format=gnu-v3
+_Z6check1IiEvP6helperIXsznw_T_EEE
+void check1<int>(helper<sizeof (new int)>*)
+--format=gnu-v3
+_Z6check2IiEvP6helperIXszgsnw_T_piEEE
+void check2<int>(helper<sizeof (::new int())>*)
+--format=gnu-v3
+_Z6check3IiEvP6helperIXsznwadL_Z1iE_T_piLi1EEEE
+void check3<int>(helper<sizeof (new (&i) int(1))>*)
+--format=gnu-v3
+_Z6check4IiEvP6helperIXszna_A1_T_EEE
+void check4<int>(helper<sizeof (new int [1])>*)
+--format=gnu-v3
+_Z6check5IiEvP6helperIXszna_A1_T_piEEE
+void check5<int>(helper<sizeof (new int [1]())>*)
+--format=gnu-v3
+_Z1fIiEDTcmgsdlfp_psfp_EPT_
+decltype ((::delete {parm#1}),(+{parm#1})) f<int>(int*)
+--format=gnu-v3
+_Z1fIiEDTcmdafp_psfp_EPT_
+decltype ((delete[] {parm#1}),(+{parm#1})) f<int>(int*)
+--format=gnu-v3
+_ZN1AdlEPv
+A::operator delete(void*)
+--format=gnu-v3
+_Z2f1IiEDTppfp_ET_
+decltype ({parm#1}++) f1<int>(int)
+--format=gnu-v3
+_Z2f1IiEDTpp_fp_ET_
+decltype (++{parm#1}) f1<int>(int)
+--format=gnu-v3
+_Z2f1IiEDTcl1gfp_ilEEET_
+decltype (g({parm#1}, {})) f1<int>(int)
+--format=gnu-v3
+_Z2f1IiEDTnw_T_ilEES0_
+decltype (new int{}) f1<int>(int)
+--format=gnu-v3
+_Zli2_wPKc
+operator"" _w(char const*)
+--format=gnu-v3
+_Z1fIiEDTnw_Dapifp_EET_
+decltype (new auto({parm#1})) f<int>(int)
+--format=gnu-v3
+_Z1fIiERDaRKT_S1_
+auto& f<int>(int const&, int)
+--format=gnu-v3
+_Z1gILi1EEvR1AIXT_EER1BIXscbT_EE
+void g<1>(A<1>&, B<static_cast<bool>(1)>&)
 #
 # Ada (GNAT) tests.
 #
@@ -4091,4 +4216,60 @@ DFA
 # http://sourceware.org/bugzilla/show_bug.cgi?id=11572
 --format=auto
 _ZN3Psi7VariantIIcPKcEE5visitIIRZN11VariantTest9TestVisit11test_methodEvEUlS2_E0_RZNS6_11test_methodEvEUlcE1_RZNS6_11test_methodEvEUlNS_4NoneEE_EEENS_13VariantDetail19SelectVisitorResultIIDpT_EE4typeEDpOSG_
-Psi::VariantDetail::SelectVisitorResult<VariantTest::TestVisit::test_method()::{lambda(char const*)#2}&, VariantTest::TestVisit::test_method()::{lambda(char)#3}&, VariantTest::TestVisit::test_method()::{lambda(Psi::None)#1}&>::type Psi::Variant<char, char const*>::visit<VariantTest::TestVisit::test_method()::{lambda(char const*)#2}&, VariantTest::TestVisit::test_method()::{lambda(char)#3}&, VariantTest::TestVisit::test_method()::{lambda(Psi::None)#1}&>((VariantTest::TestVisit::test_method()::{lambda(Psi::None)#1}&&&)...)
+Psi::VariantDetail::SelectVisitorResult<VariantTest::TestVisit::test_method()::{lambda(char const*)#2}&, VariantTest::TestVisit::test_method()::{lambda(char)#3}&, VariantTest::TestVisit::test_method()::{lambda(Psi::None)#1}&>::type Psi::Variant<char, char const*>::visit<VariantTest::TestVisit::test_method()::{lambda(char const*)#2}&, VariantTest::TestVisit::test_method()::{lambda(char)#3}&, VariantTest::TestVisit::test_method()::{lambda(Psi::None)#1}&>((VariantTest::TestVisit::test_method()::{lambda(Psi::None)#1}&)...)
+#
+# Clone suffix tests
+#
+--format=gnu-v3 --no-params
+_Z3fo5n.clone.1
+fo5(__int128) [clone .clone.1]
+fo5
+#
+--format=gnu-v3 --no-params
+_Z3fo5n.constprop.2
+fo5(__int128) [clone .constprop.2]
+fo5
+#
+--format=gnu-v3 --no-params
+_Z3fo5n.isra.3
+fo5(__int128) [clone .isra.3]
+fo5
+#
+--format=gnu-v3 --no-params
+_Z3fo5n.part.4
+fo5(__int128) [clone .part.4]
+fo5
+#
+--format=gnu-v3 --no-params
+_Z12to_be_clonediPv.clone.0
+to_be_cloned(int, void*) [clone .clone.0]
+to_be_cloned
+#
+--format=gnu-v3 --no-params
+_Z3fooi.1988
+foo(int) [clone .1988]
+foo
+#
+--format=gnu-v3 --no-params
+_Z3fooi.part.9.165493.constprop.775.31805
+foo(int) [clone .part.9.165493] [clone .constprop.775.31805]
+foo
+#
+--format=gnu-v3 --no-params
+_Z2f1IiEvT_S0_S0_._omp_fn.2
+void f1<int>(int, int, int) [clone ._omp_fn.2]
+f1<int>
+#
+--format=gnu-v3 --no-params
+_Z3fooi._omp_cpyfn.6
+foo(int) [clone ._omp_cpyfn.6]
+foo
+#
+--format=gnu-v3 --no-params
+_Z1fIKFvvES0_Evv
+void f<void () const, void ()>()
+f<void () const, void ()>
+#
+--format=gnu-v3
+_ZN4modc6parser8sequenceINS_9astParser13LocatedParserINS0_9ParserRefINS2_UlRNS2_16TokenParserInputEE_EEEEEINS0_14OptionalParserINS2_18ListParserTemplateILNS_6tokens5Token4TypeE4EXadL_ZNSD_Ut_13parenthesizedEEEE6ParserINS4_INS0_6ParserIS5_NS_3ast10ExpressionEEEEEEEEENSA_INS4_INS2_22OneOfKeywordsToTParserINSJ_5StyleEEEEEEENS0_14SequenceParserIS5_INS0_18ExactElementParserIS5_EENSA_ISM_EEEEENS0_14RepeatedParserINS4_INS0_15TransformParserINSU_IS5_INS4_INSP_INSJ_10Annotation12RelationshipEEEEESX_EEENS2_UlNS2_3LocES12_ONS_5MaybeISK_EEE19_EEEEELb0EEEEEENSU_INS0_17ExtractParserTypeIT_E9InputTypeEINS0_8MaybeRefIS1F_E4TypeEDpNS1I_IT0_E4TypeEEEEOS1F_DpOS1L_
+modc::parser::ParserRef<modc::astParser::OneOfKeywordsToTParser<modc::astParser::ListParserTemplate<(modc::tokens::Token::Type)4, &modc::tokens::{unnamed type#1}::parenthesized>::Parser::Style> ><modc::parser::ExtractParserType<modc::astParser::LocatedParser<modc::parser::ParserRef<modc::astParser::{lambda(modc::astParser::TokenParserInput&)#1}> > >::InputType, modc::parser::MaybeRef<modc::astParser::{lambda(modc::astParser::Loc, modc::parser::RepeatedParser, modc::Maybe<modc::parser::Parser>&&)#21}>::Type, modc::parser::RepeatedParser<modc::parser::ParserRef<modc::parser::TransformParser<modc::parser::ParserRef<modc::astParser::OneOfKeywordsToTParser<modc::astParser::ListParserTemplate<(modc::tokens::Token::Type)4, &modc::tokens::{unnamed type#1}::parenthesized>::Parser::Style> ><modc::astParser::TokenParserInput<modc::parser::ParserRef<modc::astParser::ListParserTemplate<(modc::tokens::Token::Type)4, &modc::tokens::{unnamed type#1}::parenthesized>::Parser<modc::parser::ParserRef<modc::parser::Parser<modc::astParser::TokenParserInput, modc::ast::Expression> > ><modc::astParser::ListParserTemplate<(modc::tokens::Token::Type)4, &modc::tokens::{unnamed type#1}::parenthesized>::Parser::Annotation::Relationship> >, modc::parser::ExactElementParser> >, modc::astParser::{lambda(modc::astParser::Loc, modc::parser::RepeatedParser, modc::Maybe<modc::parser::Parser>&&)#21}> >, false><modc::parser::OptionalParser<modc::astParser::ListParserTemplate<(modc::tokens::Token::Type)4, &modc::tokens::{unnamed type#1}::parenthesized>::Parser<modc::parser::ParserRef<modc::parser::Parser<modc::astParser::TokenParserInput, modc::ast::Expression> > > > >::Type, modc::parser::RepeatedParser<modc::parser::ParserRef<modc::parser::TransformParser<modc::parser::ParserRef<modc::astParser::OneOfKeywordsToTParser<modc::astParser::ListParserTemplate<(modc::tokens::Token::Type)4, &modc::tokens::{unnamed type#1}::parenthesized>::Parser::Style> ><modc::astParser::TokenParserInput<modc::parser::ParserRef<modc::astParser::ListParserTemplate<(modc::tokens::Token::Type)4, &modc::tokens::{unnamed type#1}::parenthesized>::Parser<modc::parser::ParserRef<modc::parser::Parser<modc::astParser::TokenParserInput, modc::ast::Expression> > ><modc::astParser::ListParserTemplate<(modc::tokens::Token::Type)4, &modc::tokens::{unnamed type#1}::parenthesized>::Parser::Annotation::Relationship> >, modc::parser::ExactElementParser> >, modc::astParser::{lambda(modc::astParser::Loc, modc::parser::RepeatedParser, modc::Maybe<modc::parser::Parser>&&)#21}> >, false><modc::astParser::LocatedParser<modc::parser::ParserRef<modc::astParser::{lambda(modc::astParser::TokenParserInput&)#1}> ><modc::parser::ParserRef<modc::astParser::OneOfKeywordsToTParser<modc::astParser::ListParserTemplate<(modc::tokens::Token::Type)4, &modc::tokens::{unnamed type#1}::parenthesized>::Parser::Style> > > >::Type, modc::parser::RepeatedParser<modc::parser::ParserRef<modc::parser::TransformParser<modc::parser::ParserRef<modc::astParser::OneOfKeywordsToTParser<modc::astParser::ListParserTemplate<(modc::tokens::Token::Type)4, &modc::tokens::{unnamed type#1}::parenthesized>::Parser::Style> ><modc::astParser::TokenParserInput<modc::parser::ParserRef<modc::astParser::ListParserTemplate<(modc::tokens::Token::Type)4, &modc::tokens::{unnamed type#1}::parenthesized>::Parser<modc::parser::ParserRef<modc::parser::Parser<modc::astParser::TokenParserInput, modc::ast::Expression> > ><modc::astParser::ListParserTemplate<(modc::tokens::Token::Type)4, &modc::tokens::{unnamed type#1}::parenthesized>::Parser::Annotation::Relationship> >, modc::parser::ExactElementParser> >, modc::astParser::{lambda(modc::astParser::Loc, modc::parser::RepeatedParser, modc::Maybe<modc::parser::Parser>&&)#21}> >, false><modc::parser::SequenceParser<modc::astParser::TokenParserInput<modc::parser::ExactElementParser<modc::astParser::TokenParserInput>, modc::astParser::LocatedParser<modc::parser::ParserRef<modc::astParser::{lambda(modc::astParser::TokenParserInput&)#1}> ><modc::ast::Expression> > > >::Type, modc::parser::RepeatedParser<modc::parser::ParserRef<modc::parser::TransformParser<modc::parser::ParserRef<modc::astParser::OneOfKeywordsToTParser<modc::astParser::ListParserTemplate<(modc::tokens::Token::Type)4, &modc::tokens::{unnamed type#1}::parenthesized>::Parser::Style> ><modc::astParser::TokenParserInput<modc::parser::ParserRef<modc::astParser::ListParserTemplate<(modc::tokens::Token::Type)4, &modc::tokens::{unnamed type#1}::parenthesized>::Parser<modc::parser::ParserRef<modc::parser::Parser<modc::astParser::TokenParserInput, modc::ast::Expression> > ><modc::astParser::ListParserTemplate<(modc::tokens::Token::Type)4, &modc::tokens::{unnamed type#1}::parenthesized>::Parser::Annotation::Relationship> >, modc::parser::ExactElementParser> >, modc::astParser::{lambda(modc::astParser::Loc, modc::parser::RepeatedParser, modc::Maybe<modc::parser::Parser>&&)#21}> >, false><modc::parser::RepeatedParser<modc::parser::ParserRef<modc::parser::TransformParser<modc::parser::ParserRef<modc::astParser::OneOfKeywordsToTParser<modc::astParser::ListParserTemplate<(modc::tokens::Token::Type)4, &modc::tokens::{unnamed type#1}::parenthesized>::Parser::Style> ><modc::astParser::TokenParserInput<modc::parser::ParserRef<modc::astParser::ListParserTemplate<(modc::tokens::Token::Type)4, &modc::tokens::{unnamed type#1}::parenthesized>::Parser<modc::parser::ParserRef<modc::parser::Parser<modc::astParser::TokenParserInput, modc::ast::Expression> > ><modc::astParser::ListParserTemplate<(modc::tokens::Token::Type)4, &modc::tokens::{unnamed type#1}::parenthesized>::Parser::Annotation::Relationship> >, modc::parser::ExactElementParser> >, modc::astParser::{lambda(modc::astParser::Loc, modc::parser::RepeatedParser, modc::Maybe<modc::parser::Parser>&&)#21}> >, false> >::Type> modc::parser::sequence<modc::astParser::LocatedParser<modc::parser::ParserRef<modc::astParser::{lambda(modc::astParser::TokenParserInput&)#1}> >, modc::parser::OptionalParser<modc::astParser::ListParserTemplate<(modc::tokens::Token::Type)4, &modc::tokens::{unnamed type#1}::parenthesized>::Parser<modc::parser::ParserRef<modc::parser::Parser<modc::astParser::TokenParserInput, modc::ast::Expression> > > >, modc::astParser::LocatedParser<modc::parser::ParserRef<modc::astParser::{lambda(modc::astParser::TokenParserInput&)#1}> ><modc::parser::ParserRef<modc::astParser::OneOfKeywordsToTParser<modc::astParser::ListParserTemplate<(modc::tokens::Token::Type)4, &modc::tokens::{unnamed type#1}::parenthesized>::Parser::Style> > >, modc::parser::SequenceParser<modc::astParser::TokenParserInput<modc::parser::ExactElementParser<modc::astParser::TokenParserInput>, modc::astParser::LocatedParser<modc::parser::ParserRef<modc::astParser::{lambda(modc::astParser::TokenParserInput&)#1}> ><modc::ast::Expression> > >, modc::parser::RepeatedParser<modc::parser::ParserRef<modc::parser::TransformParser<modc::parser::ParserRef<modc::astParser::OneOfKeywordsToTParser<modc::astParser::ListParserTemplate<(modc::tokens::Token::Type)4, &modc::tokens::{unnamed type#1}::parenthesized>::Parser::Style> ><modc::astParser::TokenParserInput<modc::parser::ParserRef<modc::astParser::ListParserTemplate<(modc::tokens::Token::Type)4, &modc::tokens::{unnamed type#1}::parenthesized>::Parser<modc::parser::ParserRef<modc::parser::Parser<modc::astParser::TokenParserInput, modc::ast::Expression> > ><modc::astParser::ListParserTemplate<(modc::tokens::Token::Type)4, &modc::tokens::{unnamed type#1}::parenthesized>::Parser::Annotation::Relationship> >, modc::parser::ExactElementParser> >, modc::astParser::{lambda(modc::astParser::Loc, modc::parser::RepeatedParser, modc::Maybe<modc::parser::Parser>&&)#21}> >, false> >(modc::astParser::{lambda(modc::astParser::Loc, modc::parser::RepeatedParser, modc::Maybe<modc::parser::Parser>&&)#21}&&, (modc::parser::ExtractParserType<modc::astParser::LocatedParser<modc::parser::ParserRef<modc::astParser::{lambda(modc::astParser::TokenParserInput&)#1}> > >&&)...)

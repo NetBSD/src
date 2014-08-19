@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: duid.c,v 1.1.1.3.14.2 2013/06/23 06:26:31 tls Exp $");
+ __RCSID("$NetBSD: duid.c,v 1.1.1.3.14.3 2014/08/19 23:46:43 tls Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2008 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -51,18 +51,18 @@
 #endif
 
 #include "common.h"
+#include "dhcpcd.h"
 #include "duid.h"
-#include "net.h"
 
 static size_t
-make_duid(unsigned char *duid, const struct interface *ifp, uint16_t type)
+duid_make(unsigned char *d, const struct interface *ifp, uint16_t type)
 {
 	unsigned char *p;
 	uint16_t u16;
 	time_t t;
 	uint32_t u32;
 
-	p = duid;
+	p = d;
 	u16 = htons(type);
 	memcpy(p, &u16, 2);
 	p += 2;
@@ -73,37 +73,43 @@ make_duid(unsigned char *duid, const struct interface *ifp, uint16_t type)
 		/* time returns seconds from jan 1 1970, but DUID-LLT is
 		 * seconds from jan 1 2000 modulo 2^32 */
 		t = time(NULL) - DUID_TIME_EPOCH;
-		u32 = htonl(t & 0xffffffff);
+		u32 = htonl((uint32_t)t & 0xffffffff);
 		memcpy(p, &u32, 4);
 		p += 4;
 	}
 	/* Finally, add the MAC address of the interface */
 	memcpy(p, ifp->hwaddr, ifp->hwlen);
 	p += ifp->hwlen;
-	return p - duid;
+	return (size_t)(p - d);
 }
 
-size_t
-get_duid(unsigned char *duid, const struct interface *iface)
+#define DUID_STRLEN DUID_LEN * 3
+static size_t
+duid_get(unsigned char *d, const struct interface *ifp)
 {
-	FILE *f;
+	FILE *fp;
 	int x = 0;
 	size_t len = 0;
-	char *line;
-	const struct interface *ifp;
+	char line[DUID_STRLEN];
+	const struct interface *ifp2;
 
 	/* If we already have a DUID then use it as it's never supposed
 	 * to change once we have one even if the interfaces do */
-	if ((f = fopen(DUID, "r"))) {
-		while ((line = get_line(f))) {
+	if ((fp = fopen(DUID, "r"))) {
+		while (fgets(line, DUID_STRLEN, fp)) {
+			len = strlen(line);
+			if (len) {
+				if (line[len - 1] == '\n')
+					line[len - 1] = '\0';
+			}
 			len = hwaddr_aton(NULL, line);
 			if (len && len <= DUID_LEN) {
-				hwaddr_aton(duid, line);
+				hwaddr_aton(d, line);
 				break;
 			}
 			len = 0;
 		}
-		fclose(f);
+		fclose(fp);
 		if (len)
 			return len;
 	} else {
@@ -112,37 +118,51 @@ get_duid(unsigned char *duid, const struct interface *iface)
 	}
 
 	/* No file? OK, lets make one based on our interface */
-	if (iface->family == ARPHRD_NETROM) {
+	if (ifp->family == ARPHRD_NETROM) {
 		syslog(LOG_WARNING, "%s: is a NET/ROM psuedo interface",
-		    iface->name);
-		TAILQ_FOREACH(ifp, ifaces, next) {
-			if (ifp->family != ARPHRD_NETROM)
+		    ifp->name);
+		TAILQ_FOREACH(ifp2, ifp->ctx->ifaces, next) {
+			if (ifp2->family != ARPHRD_NETROM)
 				break;
 		}
-		if (ifp) {
-			iface = ifp;
+		if (ifp2) {
+			ifp = ifp2;
 			syslog(LOG_WARNING,
 			    "picked interface %s to generate a DUID",
-			    iface->name);
+			    ifp->name);
 		} else {
 			syslog(LOG_WARNING,
 			    "no interfaces have a fixed hardware address");
-			return make_duid(duid, iface, DUID_LL);
+			return duid_make(d, ifp, DUID_LL);
 		}
 	}
 
-	if (!(f = fopen(DUID, "w"))) {
+	if (!(fp = fopen(DUID, "w"))) {
 		syslog(LOG_ERR, "error writing DUID: %s: %m", DUID);
-		return make_duid(duid, iface, DUID_LL);
+		return duid_make(d, ifp, DUID_LL);
 	}
-	len = make_duid(duid, iface, DUID_LLT);
-	x = fprintf(f, "%s\n", hwaddr_ntoa(duid, len));
-	fclose(f);
+	len = duid_make(d, ifp, DUID_LLT);
+	x = fprintf(fp, "%s\n", hwaddr_ntoa(d, len, line, sizeof(line)));
+	fclose(fp);
 	/* Failed to write the duid? scrub it, we cannot use it */
 	if (x < 1) {
 		syslog(LOG_ERR, "error writing DUID: %s: %m", DUID);
 		unlink(DUID);
-		return make_duid(duid, iface, DUID_LL);
+		return duid_make(d, ifp, DUID_LL);
 	}
 	return len;
+}
+
+size_t duid_init(const struct interface *ifp)
+{
+
+	if (ifp->ctx->duid == NULL) {
+		ifp->ctx->duid = malloc(DUID_LEN);
+		if (ifp->ctx->duid == NULL) {
+			syslog(LOG_ERR, "%s: %m", __func__);
+			return 0;
+		}
+		ifp->ctx->duid_len = duid_get(ifp->ctx->duid, ifp);
+	}
+	return ifp->ctx->duid_len;
 }

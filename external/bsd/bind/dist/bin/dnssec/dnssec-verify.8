@@ -1,6 +1,6 @@
-.\"	$NetBSD: dnssec-verify.8,v 1.2.8.2 2013/02/25 00:25:02 tls Exp $
+.\"	$NetBSD: dnssec-verify.8,v 1.2.8.3 2014/08/19 23:45:59 tls Exp $
 .\"
-.\" Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 .\"
 .\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -21,11 +21,11 @@
 .\"     Title: dnssec\-verify
 .\"    Author: 
 .\" Generator: DocBook XSL Stylesheets v1.71.1 <http://docbook.sf.net/>
-.\"      Date: April 12, 2012
+.\"      Date: January 15, 2014
 .\"    Manual: BIND9
 .\"    Source: BIND9
 .\"
-.TH "DNSSEC\-VERIFY" "8" "April 12, 2012" "BIND9" "BIND9"
+.TH "DNSSEC\-VERIFY" "8" "January 15, 2014" "BIND9" "BIND9"
 .\" disable hyphenation
 .nh
 .\" disable justification (adjust text to left margin only)
@@ -44,6 +44,13 @@ verifies that a zone is fully signed for each algorithm found in the DNSKEY RRse
 \-c \fIclass\fR
 .RS 4
 Specifies the DNS class of the zone.
+.RE
+.PP
+\-E \fIengine\fR
+.RS 4
+Specifies the cryptographic hardware to use, when applicable.
+.sp
+When BIND is built with OpenSSL PKCS#11 support, this defaults to the string "pkcs11", which identifies an OpenSSL engine that can drive a cryptographic accelerator or hardware service module. When BIND is built with native PKCS#11 cryptography (\-\-enable\-native\-pkcs11), it defaults to the path of the PKCS#11 provider library specified via "\-\-with\-pkcs11".
 .RE
 .PP
 \-I \fIinput\-format\fR
@@ -95,5 +102,5 @@ RFC 4033.
 .PP
 Internet Systems Consortium
 .SH "COPYRIGHT"
-Copyright \(co 2012 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2012, 2014 Internet Systems Consortium, Inc. ("ISC")
 .br

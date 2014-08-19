@@ -1,4 +1,0 @@
-# $NetBSD: md.evbarm,v 1.2.6.2 2013/02/25 00:24:37 tls Exp $
-./usr/libdata/debug/usr/sbin/elftosb.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/sbin/sbkeygen.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/sbin/sbtool.debug	comp-util-debug		debug

@@ -3,7 +3,7 @@
 #ld: -melf_i386 -Ttext 0x0
 #objdump: -drj.text -m i8086
 
-.*: +file format elf32-i386
+.*: +file format elf32-i386.*
 
 Disassembly of section .text:
 

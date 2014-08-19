@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,7 +34,7 @@
 // warranty.
 
 /**
- * @file info_fn_imps.hpp
+ * @file rb_tree_map_/info_fn_imps.hpp
  * Contains an implementation for rb_tree_.
  */
 
@@ -42,5 +42,5 @@ PB_DS_CLASS_T_DEC
 inline bool
 PB_DS_CLASS_C_DEC::
 is_effectively_black(const node_pointer p_nd)
-{ return (p_nd == NULL || !p_nd->m_red); }
+{ return (p_nd == 0 || !p_nd->m_red); }
 

@@ -1,6 +1,5 @@
 /* Prototypes of target machine for GNU compiler for Xtensa.
-   Copyright 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
    Contributed by Bob Wilson (bwilson@tensilica.com) at Tensilica.
 
 This file is part of GCC.
@@ -36,7 +35,6 @@ extern bool xtensa_mem_offset (unsigned, enum machine_mode);
 extern int xt_true_regnum (rtx);
 extern int xtensa_valid_move (enum machine_mode, rtx *);
 extern int smalloffset_mem_p (rtx);
-extern int constantpool_address_p (rtx);
 extern int constantpool_mem_p (rtx);
 extern void xtensa_extend_reg (rtx, rtx);
 extern void xtensa_expand_conditional_branch (rtx *, enum machine_mode);
@@ -62,26 +60,12 @@ extern void init_cumulative_args (CUMULATIVE_ARGS *, int);
 
 extern void print_operand (FILE *, rtx, int);
 extern void print_operand_address (FILE *, rtx);
-extern bool xtensa_output_addr_const_extra (FILE *, rtx);
 extern void xtensa_output_literal (FILE *, rtx, enum machine_mode, int);
 extern rtx xtensa_return_addr (int, rtx);
-extern enum reg_class xtensa_preferred_reload_class (rtx, enum reg_class, int);
-struct secondary_reload_info;
-extern enum reg_class xtensa_secondary_reload (bool, rtx, enum reg_class,
-					       enum machine_mode,
-					       struct secondary_reload_info *);
 #endif /* RTX_CODE */
-
-#ifdef TREE_CODE
-extern void function_arg_advance (CUMULATIVE_ARGS *, enum machine_mode, tree);
-extern struct rtx_def *function_arg (CUMULATIVE_ARGS *, enum machine_mode,
-				     tree, int);
-extern int function_arg_boundary (enum machine_mode, tree);
-#endif /* TREE_CODE */
 
 extern void xtensa_setup_frame_addresses (void);
 extern int xtensa_dbx_register_number (int);
-extern void override_options (void);
 extern long compute_frame_size (int);
 extern void xtensa_expand_prologue (void);
 extern void order_regs_for_local_alloc (void);

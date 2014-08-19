@@ -1,6 +1,6 @@
 /* LTO IL compression streams.
 
-   Copyright 2009 Free Software Foundation, Inc.
+   Copyright (C) 2009-2013 Free Software Foundation, Inc.
    Contributed by Simon Baldwin <simonb@google.com>
 
 This file is part of GCC.
@@ -28,8 +28,7 @@ along with GCC; see the file COPYING3.  If not see
 #include <zlib.h>
 #include "coretypes.h"
 #include "tree.h"
-#include "diagnostic.h"
-#include "errors.h"
+#include "diagnostic-core.h"
 #include "langhooks.h"
 #include "lto-streamer.h"
 #include "lto-compress.h"

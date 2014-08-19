@@ -1,4 +1,4 @@
-# Copyright (C) 2004, 2006-2009, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006-2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -23,10 +23,14 @@ top_srcdir =	@top_srcdir@
 
 @BIND9_MAKE_INCLUDES@
 
-CINCLUDES =	${LWRES_INCLUDES} ${DNS_INCLUDES} ${BIND9_INCLUDES} \
-		${ISC_INCLUDES} ${ISCCFG_INCLUDES} @DST_GSSAPI_INC@
+READLINE_LIB = @READLINE_LIB@
 
-CDEFINES =	@USE_GSSAPI@
+DST_GSSAPI_INC = @DST_GSSAPI_INC@
+
+CINCLUDES =	${LWRES_INCLUDES} ${DNS_INCLUDES} ${BIND9_INCLUDES} \
+		${ISC_INCLUDES} ${ISCCFG_INCLUDES} ${DST_GSSAPI_INC}
+
+CDEFINES =	-DVERSION=\"${VERSION}\" @USE_GSSAPI@
 CWARNINGS =
 
 LWRESLIBS =	../../lib/lwres/liblwres.@A@
@@ -72,7 +76,7 @@ nsupdate.@O@: nsupdate.c
 		-c ${srcdir}/nsupdate.c
 
 nsupdate@EXEEXT@: nsupdate.@O@ ${UOBJS} ${DEPLIBS}
-	export BASEOBJS="nsupdate.@O@ ${UOBJS}"; \
+	export BASEOBJS="nsupdate.@O@ ${READLINE_LIB} ${UOBJS}"; \
 	${FINALBUILDCMD}
 
 doc man:: ${MANOBJS}

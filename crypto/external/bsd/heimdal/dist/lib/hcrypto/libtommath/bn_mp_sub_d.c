@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_sub_d.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_sub_d.c,v 1.1.1.1.10.1 2014/08/19 23:45:18 tls Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_SUB_D_C
@@ -90,6 +90,6 @@ mp_sub_d (mp_int * a, mp_digit b, mp_int * c)
 
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_sub_d.c,v */
-/* Revision: 1.6 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_sub_d.c,v  */
+/* Revision: 1.6  */
+/* Date: 2006/12/28 01:25:13  */

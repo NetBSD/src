@@ -244,7 +244,7 @@ Disassembly of section \.text:
  976:	30 20 18 84 03 60 	            mov\.ret\.dptk b3=r4,a70 <_start\+0xa70>
  97c:	40 70 08 07       	            mov\.ret\.dptk\.imp b3=r4,a70 <_start\+0xa70>;;
 	\.\.\.
- a70:	00 00 00 80 01 00 	\[MII\]       hint\.m 0x0
+ a70:	00 00 00 80 01 00 	\[MII\]       hint\.m 0
  a76:	00 00 00 03 00 00 	            hint\.i 0x0
  a7c:	00 00 06 00       	            hint\.i 0x0
  a80:	00 00 00 00 01 00 	\[MII\]       nop\.m 0x0

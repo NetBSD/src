@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -45,11 +45,11 @@ namespace __gnu_pbds
 {
   namespace detail
   {
-    // Primary template.
+    /// Primary template.
     template<typename Size_Type, bool Hold_Size>
     class hash_load_check_resize_trigger_size_base;
 
-    // Specializations.
+    /// Specializations.
     template<typename Size_Type>
     class hash_load_check_resize_trigger_size_base<Size_Type, true>
     {

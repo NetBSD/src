@@ -1,7 +1,7 @@
 #objdump: --syms --special-syms -d
 #name: ARM Mapping Symbols for .short (EABI version)
 # This test is only valid on EABI based ports.
-#target: *-*-*eabi *-*-symbianelf *-*-linux-* *-*-elf
+#target: *-*-*eabi *-*-symbianelf *-*-linux-* *-*-elf *-*-nacl*
 #source: mapshort.s
 
 # Test the generation and use of ARM ELF Mapping Symbols

@@ -1,7 +1,7 @@
-/*	$NetBSD: openssldh_link.c,v 1.3.2.1 2013/02/25 00:25:42 tls Exp $	*/
+/*	$NetBSD: openssldh_link.c,v 1.3.2.2 2014/08/19 23:46:28 tls Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -465,6 +465,9 @@ openssldh_tofile(const dst_key_t *key, const char *directory) {
 	if (key->keydata.dh == NULL)
 		return (DST_R_NULLKEY);
 
+	if (key->external)
+		return (DST_R_EXTERNALKEY);
+
 	dh = key->keydata.dh;
 
 	memset(bufs, 0, sizeof(bufs));
@@ -529,6 +532,9 @@ openssldh_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 	ret = dst__privstruct_parse(key, DST_ALG_DH, lexer, mctx, &priv);
 	if (ret != ISC_R_SUCCESS)
 		return (ret);
+
+	if (key->external)
+		DST_RET(DST_R_EXTERNALKEY);
 
 	dh = DH_new();
 	if (dh == NULL)
@@ -610,11 +616,11 @@ BN_fromhex(BIGNUM *b, const char *str) {
 
 		s = strchr(hexdigits, tolower((unsigned char)str[i]));
 		RUNTIME_CHECK(s != NULL);
-		high = s - hexdigits;
+		high = (unsigned int)(s - hexdigits);
 
 		s = strchr(hexdigits, tolower((unsigned char)str[i + 1]));
 		RUNTIME_CHECK(s != NULL);
-		low = s - hexdigits;
+		low = (unsigned int)(s - hexdigits);
 
 		data[i/2] = (unsigned char)((high << 4) + low);
 	}
@@ -632,6 +638,7 @@ openssldh_cleanup(void) {
 
 static dst_func_t openssldh_functions = {
 	NULL, /*%< createctx */
+	NULL, /*%< createctx2 */
 	NULL, /*%< destroyctx */
 	NULL, /*%< adddata */
 	NULL, /*%< openssldh_sign */

@@ -1,9 +1,10 @@
-/*	$NetBSD: netof.c,v 1.1.1.1 2009/12/13 16:55:04 kardel Exp $	*/
+/*	$NetBSD: netof.c,v 1.1.1.1.12.1 2014/08/19 23:51:41 tls Exp $	*/
 
 /* 
  * netof - return the net address part of an ip address in a sockaddr_storage structure
  *         (zero out host part)
  */
+#include <config.h>
 #include <stdio.h>
 #include <syslog.h>
 
@@ -44,7 +45,7 @@ netof(
 
 	} else if (IS_IPV6(netaddr))
 		/* assume the typical /64 subnet size */
-		memset(&NSRCADR6(netaddr)[8], 0, 8);
+		zero_mem(&NSRCADR6(netaddr)[8], 8);
 #ifdef DEBUG
 	else {
 		msyslog(LOG_ERR, "netof unknown AF %d", AF(netaddr));

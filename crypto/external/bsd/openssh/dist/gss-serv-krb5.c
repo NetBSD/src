@@ -1,5 +1,5 @@
-/*	$NetBSD: gss-serv-krb5.c,v 1.5 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: gss-serv-krb5.c,v 1.7 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: gss-serv-krb5.c,v 1.5.8.1 2014/08/19 23:45:24 tls Exp $	*/
+/* $OpenBSD: gss-serv-krb5.c,v 1.8 2013/07/20 01:55:13 djm Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: gss-serv-krb5.c,v 1.5 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: gss-serv-krb5.c,v 1.5.8.1 2014/08/19 23:45:24 tls Exp $");
 #ifdef GSSAPI
 #ifdef KRB5
 
@@ -47,15 +47,8 @@ __RCSID("$NetBSD: gss-serv-krb5.c,v 1.5 2011/07/25 03:03:10 christos Exp $");
 
 extern ServerOptions options;
 
-#ifdef HEIMDAL
-# include <gssapi/gssapi_krb5.h>
-#else
-# ifdef HAVE_GSSAPI_KRB5_H
-#  include <gssapi_krb5.h>
-# elif HAVE_GSSAPI_GSSAPI_KRB5_H
-#  include <gssapi/gssapi_krb5.h>
-# endif
-#endif
+#include <krb5.h>
+#include <gssapi/gssapi_krb5.h>
 
 static krb5_context krb_context = NULL;
 
@@ -91,19 +84,16 @@ ssh_gssapi_krb5_userok(ssh_gssapi_client *client, char *name)
 {
 	krb5_principal princ;
 	int retval;
-	const char *errtxt;
+	const char *errmsg;
 
 	if (ssh_gssapi_krb5_init() == 0)
 		return 0;
 
 	if ((retval = krb5_parse_name(krb_context, client->exportedname.value,
 	    &princ))) {
-		errtxt = krb5_get_error_message(krb_context, retval);
-		if (errtxt) {
-			logit("krb5_parse_name(): %.100s", errtxt);
-			krb5_free_error_message(krb_context, errtxt);
-		} else
-			logit("krb5_parse_name(): %d", retval);
+		errmsg = krb5_get_error_message(krb_context, retval);
+		logit("krb5_parse_name(): %.100s", errmsg);
+		krb5_free_error_message(krb_context, errmsg);
 		return 0;
 	}
 	if (krb5_kuserok(krb_context, princ, name)) {
@@ -128,8 +118,8 @@ ssh_gssapi_krb5_storecreds(ssh_gssapi_client *client)
 	krb5_error_code problem;
 	krb5_principal princ;
 	OM_uint32 maj_status, min_status;
-	int len;
-	const char *errtxt;
+	size_t len;
+	const char *errmsg;
 
 	if (client->creds == NULL) {
 		debug("No credentials stored");
@@ -139,44 +129,27 @@ ssh_gssapi_krb5_storecreds(ssh_gssapi_client *client)
 	if (ssh_gssapi_krb5_init() == 0)
 		return;
 
-#ifdef HEIMDAL
-	problem = krb5_cc_new_unique(krb_context, "FILE", NULL, &ccache);
-	if (problem != 0) {
-		errtxt = krb5_get_error_message(krb_context, problem);
-		if (errtxt != NULL) {
-			logit("krb5_cc_new_unique(): %.100s", errtxt);
-			krb5_free_error_message(krb_context, errtxt);
-		} else
-			logit("krb5_cc_new_unique(): %d", problem);
+	if ((problem = krb5_cc_new_unique(krb_context, krb5_fcc_ops.prefix,
+	    NULL, &ccache)) != 0) {
+		errmsg = krb5_get_error_message(krb_context, problem);
+		logit("krb5_cc_new_unique(): %.100s", errmsg);
+		krb5_free_error_message(krb_context, errmsg);
 		return;
 	}
-#else
-	if ((problem = ssh_krb5_cc_gen(krb_context, &ccache))) {
-		logit("ssh_krb5_cc_gen(): %.100s",
-		    krb5_get_err_text(krb_context, problem));
-		return;
-	}
-#endif	/* #ifdef HEIMDAL */
 
 	if ((problem = krb5_parse_name(krb_context,
 	    client->exportedname.value, &princ))) {
-		errtxt = krb5_get_error_message(krb_context, problem);
-		if (errtxt != NULL) {
-			logit("krb5_parse_name(): %.100s", errtxt);
-			krb5_free_error_message(krb_context, errtxt);
-		} else
-			logit("krb5_parse_name(): %d", problem);
+		errmsg = krb5_get_error_message(krb_context, problem);
+		logit("krb5_parse_name(): %.100s", errmsg);
+		krb5_free_error_message(krb_context, errmsg);
 		krb5_cc_destroy(krb_context, ccache);
 		return;
 	}
 
 	if ((problem = krb5_cc_initialize(krb_context, ccache, princ))) {
-		errtxt = krb5_get_error_message(krb_context, problem);
-		if (errtxt != NULL) {
-			logit("krb5_cc_initialize(): %.100s", errtxt);
-			krb5_free_error_message(krb_context, errtxt);
-		} else
-			logit("krb5_cc_initialize(): %d", problem);
+		errmsg = krb5_get_error_message(krb_context, problem);
+		logit("krb5_cc_initialize(): %.100s", errmsg);
+		krb5_free_error_message(krb_context, errmsg);
 		krb5_free_principal(krb_context, princ);
 		krb5_cc_destroy(krb_context, ccache);
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_conf.c,v 1.1.1.2 2012/01/31 21:26:35 kardel Exp $	*/
+/*	$NetBSD: refclock_conf.c,v 1.1.1.2.6.1 2014/08/19 23:51:42 tls Exp $	*/
 
 /*
  * refclock_conf.c - reference clock configuration
@@ -24,12 +24,6 @@ static struct refclock refclock_none = {
 extern	struct refclock	refclock_local;
 #else
 #define	refclock_local	refclock_none
-#endif
-
-#if 0 && defined(CLOCK_TRAK) && defined(PPS)
-extern	struct refclock	refclock_trak;
-#else
-#define	refclock_trak	refclock_none
 #endif
 
 #ifdef CLOCK_PST
@@ -260,6 +254,11 @@ extern	struct refclock	refclock_neoclock4x;
 #define	refclock_neoclock4x	refclock_none
 #endif
 
+#ifdef CLOCK_TSYNCPCI
+extern struct refclock refclock_tsyncpci;
+#else
+#define refclock_tsyncpci refclock_none
+#endif
 /*
  * Order is clock_start(), clock_shutdown(), clock_poll(),
  * clock_control(), clock_init(), clock_buginfo, clock_flags;
@@ -311,7 +310,8 @@ struct refclock * const refclock_conf[] = {
 	&refclock_tt560,	/* 41 REFCLK_TT560 */
 	&refclock_zyfer,	/* 42 REFCLK_ZYFER */
 	&refclock_ripencc,	/* 43 REFCLK_RIPENCC */
-	&refclock_neoclock4x    /* 44 REFCLK_NEOCLOCK4X */
+	&refclock_neoclock4x,	/* 44 REFCLK_NEOCLOCK4X */
+	&refclock_tsyncpci	/* 45 REFCLK_TSYNCPCI */
 };
 
 u_char num_refclock_conf = sizeof(refclock_conf)/sizeof(struct refclock *);

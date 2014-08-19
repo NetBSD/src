@@ -1,10 +1,10 @@
-/*	$NetBSD: posixgroup.c,v 1.1.1.3 2010/12/12 15:18:53 adam Exp $	*/
+/*	$NetBSD: posixgroup.c,v 1.1.1.3.12.1 2014/08/19 23:51:56 tls Exp $	*/
 
 /* posixgroup.c */
-/* OpenLDAP: pkg/ldap/contrib/slapd-modules/acl/posixgroup.c,v 1.3.2.7 2010/04/13 20:22:25 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -166,7 +166,7 @@ pg_dynacl_unparse(
 static int
 pg_dynacl_mask(
 	void			*priv,
-	struct slap_op		*op,
+	Operation		*op,
 	Entry			*target,
 	AttributeDescription	*desc,
 	struct berval		*val,
@@ -192,7 +192,7 @@ pg_dynacl_mask(
 		rc = LDAP_SUCCESS;
 
 	} else {
-		user_be = op->o_bd = select_backend( &op->o_ndn, 0, 0 );
+		user_be = op->o_bd = select_backend( &op->o_ndn, 0 );
 		if ( op->o_bd == NULL ) {
 			op->o_bd = be;
 			return 0;
@@ -209,13 +209,17 @@ pg_dynacl_mask(
 	if ( pg->pg_style == ACL_STYLE_EXPAND ) {
 		char		buf[ 1024 ];
 		struct berval	bv;
+		AclRegexMatches amatches = { 0 };
+
+		amatches.dn_count = nmatch;
+		AC_MEMCPY( amatches.dn_data, matches, sizeof( amatches.dn_data ) );
 
 		bv.bv_len = sizeof( buf ) - 1;
 		bv.bv_val = buf;
 
 		if ( acl_string_expand( &bv, &pg->pg_pat,
-				target->e_nname.bv_val,
-				nmatch, matches ) )
+				&target->e_nname,
+				NULL, &amatches ) )
 		{
 			goto cleanup;
 		}
@@ -236,7 +240,7 @@ pg_dynacl_mask(
 		rc = LDAP_SUCCESS;
 
 	} else {
-		group_be = op->o_bd = select_backend( &group_ndn, 0, 0 );
+		group_be = op->o_bd = select_backend( &group_ndn, 0 );
 		if ( op->o_bd == NULL ) {
 			goto cleanup;
 		}

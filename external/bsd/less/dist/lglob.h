@@ -1,13 +1,12 @@
-/*	$NetBSD: lglob.h,v 1.3 2011/07/03 20:14:13 tron Exp $	*/
+/*	$NetBSD: lglob.h,v 1.3.8.1 2014/08/19 23:46:50 tls Exp $	*/
 
 /*
- * Copyright (C) 1984-2011  Mark Nudelman
+ * Copyright (C) 1984-2012  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
  *
- * For more information about less, or for information on how to 
- * contact the author, see the README file.
+ * For more information, see the README file.
  */
 
 

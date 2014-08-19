@@ -1,8 +1,9 @@
-/*	$NetBSD: authusekey.c,v 1.1.1.1 2009/12/13 16:55:02 kardel Exp $	*/
+/*	$NetBSD: authusekey.c,v 1.1.1.1.12.1 2014/08/19 23:51:41 tls Exp $	*/
 
 /*
  * authusekey - decode a key from ascii and use it
  */
+#include <config.h>
 #include <stdio.h>
 #include <ctype.h>
 
@@ -24,14 +25,12 @@ authusekey(
 	const u_char *str
 	)
 {
-	const u_char *cp;
 	int len;
 
-	cp = str;
-	len = strlen((const char *)cp);
-	if (len == 0)
+	len = strlen((const char *)str);
+	if (0 == len)
 		return 0;
 
-	MD5auth_setkey(keyno, keytype, str, (int)strlen((const char *)str));
+	MD5auth_setkey(keyno, keytype, str, len);
 	return 1;
 }

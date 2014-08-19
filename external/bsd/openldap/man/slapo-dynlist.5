@@ -1,7 +1,8 @@
-.TH SLAPO-DYNLIST 5 "2010/06/30" "OpenLDAP 2.4.23"
-.\" Copyright 1998-2010 The OpenLDAP Foundation, All Rights Reserved.
+.lf 1 stdin
+.TH SLAPO-DYNLIST 5 "2014/01/26" "OpenLDAP 2.4.39"
+.\" Copyright 1998-2014 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
-.\" OpenLDAP: pkg/ldap/doc/man/man5/slapo-dynlist.5,v 1.7.2.9 2010/04/13 20:22:44 kurt Exp
+.\" $OpenLDAP$
 .SH NAME
 slapo\-dynlist \- Dynamic List overlay to slapd
 .SH SYNOPSIS
@@ -12,16 +13,23 @@ The
 overlay to
 .BR slapd (8)
 allows expansion of dynamic groups and more.
-Any time an entry with a specific objectClass is being returned,
-the LDAP URI-valued occurrences of a specific attribute are
+Any time an entry with a specific objectClass (defined in the overlay configuration) is being returned,
+the LDAP URI-valued occurrences of a specific attribute (also defined in the overlay configuration) are
 expanded into the corresponding entries, and the values
 of the attributes listed in the URI are added to the original
 entry.
 No recursion is allowed, to avoid potential infinite loops.
+
+Since the resulting entry is dynamically constructed,
+it does not exist until it is constructed while being returned.
+As a consequence, dynamically added attributes do not participate
+in the filter matching phase of the search request handling.
+In other words, \fIfiltering for dynamically added attributes always fails\fP.
+
 The resulting entry must comply with the LDAP data model, so constraints
 are enforced.
 For example, if a \fISINGLE\-VALUE\fP attribute is listed,
-only the first value results in the final entry.
+only the first value found during the list expansion appears in the final entry.
 The above described behavior is disabled when the \fImanageDSAit\fP
 control (RFC 3296) is used.
 In that case, the contents of the dynamic group entry is returned;

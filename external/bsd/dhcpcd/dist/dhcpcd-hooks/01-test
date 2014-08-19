@@ -1,8 +1,10 @@
-# $NetBSD: 01-test,v 1.1.1.3.2.1 2013/06/23 06:26:31 tls Exp $
+# $NetBSD: 01-test,v 1.1.1.3.2.2 2014/08/19 23:46:43 tls Exp $
 
 # Just echo our DHCP options we have
 
 if [ "$reason" = "TEST" ]; then
-	set | grep "^\(interface\|metric\|pid\|reason\|skip_hooks\)=" | sort
+	set | grep "^\(interface\|pid\|reason\|skip_hooks\)=" | sort
+	set | grep "^if\(carrier\|flags\|mtu\|wireless\)=" | sort
 	set | grep "^\(new_\|old_\|ra_count=\|ra[0-9]*_\)" | sort
+	exit 0
 fi

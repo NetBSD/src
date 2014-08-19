@@ -1,7 +1,6 @@
 // Wrapper for underlying C-language localization -*- C++ -*-
 
-// Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-// Free Software Foundation, Inc.
+// Copyright (C) 2001-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -36,13 +35,14 @@
 #include <cstdio>
 #include <locale>
 #include <limits>
-#include <cstddef>
 
 #ifdef _GLIBCXX_HAVE_IEEEFP_H
 #include <ieeefp.h>
 #endif
 
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   template<>
     void
@@ -50,7 +50,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 		   const __c_locale&) throw()
     {
       // Assumes __s formatted for "C" locale.
-      char* __old = setlocale(LC_ALL, NULL);
+      char* __old = setlocale(LC_ALL, 0);
       const size_t __len = strlen(__old) + 1;
       char* __sav = new char[__len];
       memcpy(__sav, __old, __len);
@@ -115,7 +115,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 		   const __c_locale&) throw()
     {
       // Assumes __s formatted for "C" locale.
-      char* __old = setlocale(LC_ALL, NULL);
+      char* __old = setlocale(LC_ALL, 0);
       const size_t __len = strlen(__old) + 1;
       char* __sav = new char[__len];
       memcpy(__sav, __old, __len);
@@ -160,7 +160,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 		   ios_base::iostate& __err, const __c_locale&) throw()
     {
       // Assumes __s formatted for "C" locale.
-      char* __old = setlocale(LC_ALL, NULL);
+      char* __old = setlocale(LC_ALL, 0);
       const size_t __len = strlen(__old) + 1;
       char* __sav = new char[__len];
       memcpy(__sav, __old, __len);
@@ -212,7 +212,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
   {
     // Currently, the generic model only supports the "C" locale.
     // See http://gcc.gnu.org/ml/libstdc++/2003-02/msg00345.html
-    __cloc = NULL;
+    __cloc = 0;
     if (strcmp(__s, "C"))
       __throw_runtime_error(__N("locale::facet::_S_create_c_locale "
 			    "name not valid"));
@@ -220,7 +220,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
   void
   locale::facet::_S_destroy_c_locale(__c_locale& __cloc)
-  { __cloc = NULL; }
+  { __cloc = 0; }
 
   __c_locale
   locale::facet::_S_clone_c_locale(__c_locale&) throw()
@@ -230,9 +230,12 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
   locale::facet::_S_lc_ctype_c_locale(__c_locale, const char*)
   { return __c_locale(); }
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
 
-_GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
+namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   const char* const category_names[6 + _GLIBCXX_NUM_CATEGORIES] =
     {
@@ -244,13 +247,17 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
       "LC_MESSAGES"
     };
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
 
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   const char* const* const locale::_S_categories = __gnu_cxx::category_names;
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
 
 // XXX GLIBCXX_ABI Deprecated
 #ifdef _GLIBCXX_LONG_DOUBLE_COMPAT

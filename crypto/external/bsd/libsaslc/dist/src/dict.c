@@ -1,4 +1,4 @@
-/* $NetBSD: dict.c,v 1.6.10.1 2013/06/23 06:26:14 tls Exp $ */
+/* $NetBSD: dict.c,v 1.6.10.2 2014/08/19 23:45:22 tls Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dict.c,v 1.6.10.1 2013/06/23 06:26:14 tls Exp $");
+__RCSID("$NetBSD: dict.c,v 1.6.10.2 2014/08/19 23:45:22 tls Exp $");
 
 #include <sys/queue.h>
 
@@ -136,7 +136,7 @@ saslc__dict_list_node_destroy(saslc__dict_node_t *node)
 
 	free(node->key);
 	/* zero value, it may contain sensitive data */
-	__explicit_bzero(node->value, node->value_len);
+	explicit_memset(node->value, 0, node->value_len);
 	free(node->value);
 	LIST_REMOVE(node, nodes);
 	free(node);

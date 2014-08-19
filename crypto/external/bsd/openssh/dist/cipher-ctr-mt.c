@@ -1,4 +1,4 @@
-/*	$NetBSD: cipher-ctr-mt.c,v 1.3 2011/07/25 03:03:10 christos Exp $	*/
+/*	$NetBSD: cipher-ctr-mt.c,v 1.3.8.1 2014/08/19 23:45:24 tls Exp $	*/
 /*
  * OpenSSH Multi-threaded AES-CTR Cipher
  *
@@ -445,7 +445,7 @@ ssh_aes_ctr_cleanup(EVP_CIPHER_CTX *ctx)
 			pthread_join(c->tid[i], NULL);
 
 		memset(c, 0, sizeof(*c));
-		xfree(c);
+		free(c);
 		EVP_CIPHER_CTX_set_app_data(ctx, NULL);
 	}
 	return (1);

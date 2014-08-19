@@ -1,7 +1,7 @@
-/*	$NetBSD: master.h,v 1.3 2012/06/05 00:41:49 christos Exp $	*/
+/*	$NetBSD: master.h,v 1.3.2.1 2014/08/19 23:46:29 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
+/* Id: master.h,v 1.57.8.1 2012/02/07 00:44:16 each Exp  */
 
 #ifndef DNS_MASTER_H
 #define DNS_MASTER_H 1
@@ -59,6 +59,8 @@
 
 #define DNS_MASTER_RESIGN	0x00002000
 #define DNS_MASTER_KEY	 	0x00004000	/*%< Loading a key zone master file. */
+#define DNS_MASTER_NOTTL	0x00008000	/*%< Don't require ttl. */
+#define DNS_MASTER_CHECKTTL	0x00010000	/*%< Check max-zone-ttl */
 
 ISC_LANG_BEGINDECLS
 
@@ -80,7 +82,9 @@ ISC_LANG_BEGINDECLS
 /* Common header */
 struct dns_masterrawheader {
 	isc_uint32_t		format;		/* must be
-						 * dns_masterformat_raw */
+						 * dns_masterformat_raw
+						 * or
+						 * dns_masterformat_map */
 	isc_uint32_t		version;	/* compatibility for future
 						 * extensions */
 	isc_uint32_t		dumptime;	/* timestamp on creation
@@ -104,6 +108,13 @@ typedef struct {
 	isc_uint32_t		nrdata;		/* number of RRs in this set */
 	/* followed by encoded owner name, and then rdata */
 } dns_masterrawrdataset_t;
+
+/*
+ * Method prototype: a callback to register each include file as
+ * it is encountered.
+ */
+typedef void
+(*dns_masterincludecb_t)(const char *file, void *arg);
 
 /***
  ***	Function
@@ -138,6 +149,31 @@ dns_master_loadfile3(const char *master_file,
 		     dns_rdatacallbacks_t *callbacks,
 		     isc_mem_t *mctx,
 		     dns_masterformat_t format);
+
+isc_result_t
+dns_master_loadfile4(const char *master_file,
+		     dns_name_t *top,
+		     dns_name_t *origin,
+		     dns_rdataclass_t zclass,
+		     unsigned int options,
+		     isc_uint32_t resign,
+		     dns_rdatacallbacks_t *callbacks,
+		     dns_masterincludecb_t include_cb,
+		     void *include_arg, isc_mem_t *mctx,
+		     dns_masterformat_t format);
+
+isc_result_t
+dns_master_loadfile5(const char *master_file,
+		     dns_name_t *top,
+		     dns_name_t *origin,
+		     dns_rdataclass_t zclass,
+		     unsigned int options,
+		     isc_uint32_t resign,
+		     dns_rdatacallbacks_t *callbacks,
+		     dns_masterincludecb_t include_cb,
+		     void *include_arg, isc_mem_t *mctx,
+		     dns_masterformat_t format,
+		     dns_ttl_t maxttl);
 
 isc_result_t
 dns_master_loadstream(FILE *stream,
@@ -201,6 +237,35 @@ dns_master_loadfileinc3(const char *master_file,
 			dns_loaddonefunc_t done, void *done_arg,
 			dns_loadctx_t **ctxp, isc_mem_t *mctx,
 			dns_masterformat_t format);
+
+isc_result_t
+dns_master_loadfileinc4(const char *master_file,
+			dns_name_t *top,
+			dns_name_t *origin,
+			dns_rdataclass_t zclass,
+			unsigned int options,
+			isc_uint32_t resign,
+			dns_rdatacallbacks_t *callbacks,
+			isc_task_t *task,
+			dns_loaddonefunc_t done, void *done_arg,
+			dns_loadctx_t **ctxp,
+			dns_masterincludecb_t include_cb, void *include_arg,
+			isc_mem_t *mctx, dns_masterformat_t format);
+
+isc_result_t
+dns_master_loadfileinc5(const char *master_file,
+			dns_name_t *top,
+			dns_name_t *origin,
+			dns_rdataclass_t zclass,
+			unsigned int options,
+			isc_uint32_t resign,
+			dns_rdatacallbacks_t *callbacks,
+			isc_task_t *task,
+			dns_loaddonefunc_t done, void *done_arg,
+			dns_loadctx_t **ctxp,
+			dns_masterincludecb_t include_cb, void *include_arg,
+			isc_mem_t *mctx, dns_masterformat_t format,
+			isc_uint32_t maxttl);
 
 isc_result_t
 dns_master_loadstreaminc(FILE *stream,

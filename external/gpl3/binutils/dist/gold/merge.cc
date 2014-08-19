@@ -1,6 +1,6 @@
 // merge.cc -- handle section merging for gold
 
-// Copyright 2006, 2007, 2008, 2010 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -242,6 +242,7 @@ Merge_map::add_mapping(Relobj* object, unsigned int shndx,
 		       section_offset_type offset, section_size_type length,
 		       section_offset_type output_offset)
 {
+  gold_assert(object != NULL);
   Object_merge_map* object_merge_map = object->merge_map();
   if (object_merge_map == NULL)
     {
@@ -405,27 +406,16 @@ bool
 Output_merge_data::do_add_input_section(Relobj* object, unsigned int shndx)
 {
   section_size_type len;
-  section_size_type uncompressed_size = 0;
-  unsigned char* uncompressed_data = NULL;
-  const unsigned char* p = object->section_contents(shndx, &len, false);
-
-  if (object->section_is_compressed(shndx, &uncompressed_size))
-    {
-      uncompressed_data = new unsigned char[uncompressed_size];
-      if (!decompress_input_section(p, len, uncompressed_data,
-				    uncompressed_size))
-	object->error(_("could not decompress section %s"),
-		      object->section_name(shndx).c_str());
-      p = uncompressed_data;
-      len = uncompressed_size;
-    }
+  bool is_new;
+  const unsigned char* p = object->decompressed_section_contents(shndx, &len,
+								 &is_new);
 
   section_size_type entsize = convert_to_section_size_type(this->entsize());
 
   if (len % entsize != 0)
     {
-      if (uncompressed_data != NULL)
-	delete[] uncompressed_data;
+      if (is_new)
+	delete[] p;
       return false;
     }
 
@@ -456,8 +446,8 @@ Output_merge_data::do_add_input_section(Relobj* object, unsigned int shndx)
   if (this->keeps_input_sections())
     record_input_section(object, shndx);
 
-  if (uncompressed_data != NULL)
-    delete[] uncompressed_data;
+  if (is_new)
+    delete[] p;
 
   return true;
 }
@@ -516,20 +506,10 @@ Output_merge_string<Char_type>::do_add_input_section(Relobj* object,
 						     unsigned int shndx)
 {
   section_size_type len;
-  section_size_type uncompressed_size = 0;
-  unsigned char* uncompressed_data = NULL;
-  const unsigned char* pdata = object->section_contents(shndx, &len, false);
-
-  if (object->section_is_compressed(shndx, &uncompressed_size))
-    {
-      uncompressed_data = new unsigned char[uncompressed_size];
-      if (!decompress_input_section(pdata, len, uncompressed_data,
-				    uncompressed_size))
-	object->error(_("could not decompress section %s"),
-		      object->section_name(shndx).c_str());
-      pdata = uncompressed_data;
-      len = uncompressed_size;
-    }
+  bool is_new;
+  const unsigned char* pdata = object->decompressed_section_contents(shndx,
+								     &len,
+								     &is_new);
 
   const Char_type* p = reinterpret_cast<const Char_type*>(pdata);
   const Char_type* pend = p + len / sizeof(Char_type);
@@ -539,8 +519,8 @@ Output_merge_string<Char_type>::do_add_input_section(Relobj* object,
     {
       object->error(_("mergeable string section length not multiple of "
 		      "character size"));
-      if (uncompressed_data != NULL)
-	delete[] uncompressed_data;
+      if (is_new)
+	delete[] pdata;
       return false;
     }
 
@@ -605,8 +585,8 @@ Output_merge_string<Char_type>::do_add_input_section(Relobj* object,
   if (this->keeps_input_sections())
     record_input_section(object, shndx);
 
-  if (uncompressed_data != NULL)
-    delete[] uncompressed_data;
+  if (is_new)
+    delete[] pdata;
 
   return true;
 }

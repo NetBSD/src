@@ -1,5 +1,5 @@
-/*	$NetBSD: kexdhs.c,v 1.5 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: kexdhs.c,v 1.12 2010/11/10 01:33:07 djm Exp $ */
+/*	$NetBSD: kexdhs.c,v 1.5.8.1 2014/08/19 23:45:24 tls Exp $	*/
+/* $OpenBSD: kexdhs.c,v 1.14 2013/07/19 07:37:48 markus Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexdhs.c,v 1.5 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: kexdhs.c,v 1.5.8.1 2014/08/19 23:45:24 tls Exp $");
 #include <sys/types.h>
 #include <string.h>
 #include <signal.h>
@@ -79,9 +79,6 @@ kexdh_server(Kex *kex)
 	if (server_host_public == NULL)
 		fatal("Unsupported hostkey type %d", kex->hostkey_type);
 	server_host_private = kex->load_host_private_key(kex->hostkey_type);
-	if (server_host_private == NULL)
-		fatal("Missing private key for hostkey type %d",
-		    kex->hostkey_type);
 
 	/* key, cert */
 	if ((dh_client_pub = BN_new()) == NULL)
@@ -117,7 +114,7 @@ kexdh_server(Kex *kex)
 	if (BN_bin2bn(kbuf, kout, shared_secret) == NULL)
 		fatal("kexdh_server: BN_bin2bn failed");
 	memset(kbuf, 0, klen);
-	xfree(kbuf);
+	free(kbuf);
 
 	key_to_blob(server_host_public, &server_host_key_blob, &sbloblen);
 
@@ -143,9 +140,8 @@ kexdh_server(Kex *kex)
 	}
 
 	/* sign H */
-	if (PRIVSEP(key_sign(server_host_private, &signature, &slen, hash,
-	    hashlen)) < 0)
-		fatal("kexdh_server: key_sign failed");
+	kex->sign(server_host_private, server_host_public, &signature, &slen,
+	    hash, hashlen);
 
 	/* destroy_sensitive_data(); */
 
@@ -156,8 +152,8 @@ kexdh_server(Kex *kex)
 	packet_put_string(signature, slen);
 	packet_send();
 
-	xfree(signature);
-	xfree(server_host_key_blob);
+	free(signature);
+	free(server_host_key_blob);
 	/* have keys, free DH */
 	DH_free(dh);
 

@@ -1,7 +1,7 @@
-.\"	$NetBSD: file.1,v 1.9.2.2 2013/06/23 06:26:32 tls Exp $
+.\"	$NetBSD: file.1,v 1.9.2.3 2014/08/19 23:46:46 tls Exp $
 .\"
-.\" $File: file.man,v 1.102 2013/01/04 15:39:22 christos Exp $
-.Dd October 25, 2012
+.\" $File: file.man,v 1.106 2014/03/07 23:11:51 christos Exp $
+.Dd January 30, 2014
 .Dt FILE 1
 .Os
 .Sh NAME
@@ -10,7 +10,7 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl bchiklLNnprsvz0
+.Op Fl bcEhiklLNnprsvz0
 .Op Fl Fl apple
 .Op Fl Fl mime-encoding
 .Op Fl Fl mime-type
@@ -26,7 +26,7 @@
 .Nm
 .Op Fl Fl help
 .Sh DESCRIPTION
-This manual page documents version 5.14 of the
+This manual page documents version 5.19 of the
 .Nm
 command.
 .Pp
@@ -166,6 +166,10 @@ in any of the character sets listed above is simply said to be
 .Dq data .
 .Sh OPTIONS
 .Bl -tag -width indent
+.It Fl Fl apple
+Causes the file command to output the file type and creator code as
+used by older MacOS versions. The code consists of eight letters,
+the first describing the file type, the latter the creator.
 .It Fl b , Fl Fl brief
 Do not prepend filenames to output lines (brief mode).
 .It Fl C , Fl Fl compile
@@ -177,6 +181,10 @@ Cause a checking printout of the parsed form of the magic file.
 This is usually used in conjunction with the
 .Fl m
 flag to debug a new magic file before installing it.
+.It Fl E
+On filesystem errors (file not found etc), instead of handling the error
+as regular output as POSIX mandates and keep going, issue an error message
+and exit.
 .It Fl e , Fl Fl exclude Ar testname
 Exclude the test named in
 .Ar testname
@@ -333,7 +341,7 @@ after the end of the filename.
 Nice to
 .Xr cut 1
 the output.
-This does not affect the separator which is still printed.
+This does not affect the separator, which is still printed.
 .It Fl -help
 Print a help message and exit.
 .El
@@ -555,7 +563,10 @@ returns 0 on success, and non-zero on error.
 Please report bugs and send patches to the bug tracker at
 .Pa http://bugs.gw.com/
 or the mailing list at
-.Aq file@mx.gw.com .
+.Aq file@mx.gw.com
+(visit
+.Pa http://mx.gw.com/mailman/listinfo/file
+first to subscribe).
 .Sh TODO
 .Pp
 Fix output so that tests for MIME and APPLE flags are not needed all

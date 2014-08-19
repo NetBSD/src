@@ -1,7 +1,7 @@
-/*	$NetBSD: log_test.c,v 1.3.2.1 2013/06/23 06:26:24 tls Exp $	*/
+/*	$NetBSD: log_test.c,v 1.3.2.2 2014/08/19 23:46:01 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -58,10 +58,6 @@ main(int argc, char **argv) {
 	const isc_logcategory_t *category;
 	const isc_logmodule_t *module;
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	progname = strrchr(*argv, '/');
 	if (progname != NULL)
 		progname++;
@@ -330,13 +326,26 @@ main(int argc, char **argv) {
 	 * XXXDCL NT
 	 */
 	fputc('\n', stderr);
-	system("head " TEST_FILE "*; rm -f " TEST_FILE "*");
+	if (system("head " TEST_FILE "*; rm -f " TEST_FILE "*") != 0) {
+		fprintf(stderr, "system(\"head " TEST_FILE "*; rm -f "
+			TEST_FILE "*\") failed\n");
+		goto cleanup;
+	}
 
-	freopen(syslog_file, "r", stdin);
+	/* This is highly system specific. */
+	if (freopen(syslog_file, "r", stdin) == NULL) {
+		fprintf(stderr, "freopen(%s, \"r\", stdin) failed\n",
+			syslog_file);
+		goto cleanup;
+	}
 	fprintf(stderr, "\n==> %s <==\n", syslog_file);
-	system("tail -2");
+	if (system("tail -2") != 0) {
+		fprintf(stderr, "system(\"tail -2\") failed\n");
+		goto cleanup;
+	}
 	fputc('\n', stderr);
 
+ cleanup:
 	isc_log_destroy(&lctx);
 
 	if (show_final_mem)

@@ -1,3 +1,183 @@
+2012-05-29  Joseph Myers  <joseph@codesourcery.com>
+
+	* mt-sde: Fix typos.
+	* stdint.m4: Fix typos.
+	* tcl.m4: Fix typos.
+
+2012-04-03  Tristan Gingold  <gingold@adacore.com>
+
+	* mmap.m4: Use *vms* instead of vms*.
+
+2012-04-02  Tristan Gingold  <gingold@adacore.com>
+
+	* math.m4 (GCC_CHECK_MATH_FUNC): Remove if-present
+	argument.  Define the variable.
+
+2012-03-26  Tristan Gingold  <gingold@adacore.com>
+
+	* math.m4: New file.
+
+2012-03-12  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* weakref.m4 (GCC_CHECK_ELF_STYLE_WEAKREF): Remove
+	alpha*-dec-osf*.
+
+2012-01-22  Douglas B Rupp  <rupp@gnat.com>
+
+	* config/mh-interix: Remove as unneeded.
+	* config/picflag.m4 (i[[34567]]86-*-interix3*):
+        Change triplet to i[[34567]]86-*-interix[[3-9]]*.
+
+2012-01-04  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	PR bootstrap/51734
+	* picflag.m4: Remove s390 case statement.
+
+2011-12-20  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* warnings.m4 (ACX_PROG_CC_WARNING_OPTS): Avoid leading dash in
+	expr call.
+
+2011-12-19  Andreas Schwab  <schwab@linux-m68k.org>
+
+	PR bootstrap/51388
+	* warnings.m4 (ACX_PROG_CC_WARNING_OPTS)
+	(ACX_PROG_CC_WARNING_ALMOST_PEDANTIC): Run the test without the
+	no- prefix.
+
+2011-12-18  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* acx.m4 (Test for GNAT): Update comment and add quotes in final test.
+
+2011-11-22  Iain Sandoe  <iains@gcc.gnu.org>
+
+	* weakref.m4: New file.
+
+2011-11-09  Richard Henderson  <rth@redhat.com>
+
+	* asmcfi.m4: New file.
+
+2011-11-02  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* mh-interix (LIBGCC2_DEBUG_CFLAGS): Remove.
+
+2011-08-22  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* picflag.m4: New file.
+
+2011-07-18  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* elf.m4 (target_elf): Remove *-netware*.
+
+2011-07-06  Uros Bizjak  <ubizjak@gmail.com>
+
+	* mt-alphaieee (GOCFLAGS_FOR_TARGET): Add -mieee.
+
+2011-06-15  Mike Stump  <mikestump@comcast.net>
+
+	PR target/49461
+	* mh-darwin: Turn off -pie on darwin11 and later.
+
+2011-04-20  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* bootstrap-lto.mk: Remove obsolete requirement.
+
+2011-03-24  Paolo Bonzini  <pbonzini@redhat.com>
+
+	* mt-mep: Remove, obsolete.
+	* mt-netware: Remove, obsolete.
+	* mt-wince: Remove, obsolete.
+	* mt-v810: Remove, unused.
+
+2011-03-24  Paolo Bonzini  <bonzini@gnu.org>
+
+	* mh-x86omitfp: Remove.
+
+2011-03-24  Paolo Bonzini  <bonzini@gnu.org>
+
+	* mh-cygwin: Remove obsolete variables and dependencies.
+
+2011-03-24  Paolo Bonzini  <bonzini@gnu.org>
+
+	* mh-sysv4: Remove.
+	* mh-solaris: Remove.
+
+2011-03-24  Paolo Bonzini  <bonzini@gnu.org>
+
+	* mh-sysv4: Remove AR_CFLAGS.
+
+2011-03-24  Joseph Myers  <joseph@codesourcery.com>
+
+	* mh-cxux, mh-decstation, mh-dgux386, mh-lynxrs6k, mh-ncr3000,
+	mh-necv4, mh-sco, mh-sysv5: Remove.
+
+2011-03-05  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+	    Eric Blake  <eblake@redhat.com>
+
+	* override.m4: Error out if a buggy M4 was detected, to
+	avoid spurious diffs in generated files.
+
+2011-01-25  Jakub Jelinek  <jakub@redhat.com>
+
+	* cloog.m4 (CLOOG_REQUESTED): Use $2 if --without-cloog.
+
+2011-01-10  Jan Hubicka  <jh@suse.cz>
+
+	* bootstrap-lto.mk: -fuse-linker-plugin is default now;
+	pass -fno-lto to STAGEprofile.
+
+2010-12-06  Dave Korn  <dave.korn.cygwin@gmail.com>
+
+	PR target/40125
+	PR lto/46695
+	* lthostflags.m4: New file.
+	(ACX_LT_HOST_FLAGS): Define.
+
+2010-12-02  Dave Korn  <dave.korn.cygwin@gmail.com>
+
+	* mh-cygwin (LDFLAGS): Turn up stack allocation to 12MB.
+	(BOOT_LDFLAGS): Add matching stack size flag.
+	* mh-mingw (LDFLAGS): Likewise.
+	(BOOT_LDFLAGS): Likewise.
+
+2010-11-27  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* bootstrap-lto.mk (BOOT_ADAFLAGS): Delete.
+
+2010-11-19  Tobias Grosser  <grosser@fim.uni-passau.de>
+
+	* cloog.m4: Use AS_HELP_STRING and fix help formatting.
+
+2010-11-15  Andreas Schwab  <schwab@redhat.com>
+
+	* cloog.m4 (CLOOG_INIT_FLAGS): Fix spelling in option names.
+
+2010-11-12  Tobias Grosser  <grosser@fim.uni-passau.de>
+
+	* cloog.m4: Add -enable-cloog-backend=(isl|ppl|ppl-legacy) to
+	define the cloog backend to use. Furthermore, only pass the ppllibs to
+	the configure checks, if necessary.
+
+2010-11-12  Tobias Grosser  <grosser@fim.uni-passau.de>
+
+	* cloog.m4: Use CLooG predefined macro to check for CLooG PPL.
+
+2010-11-12  Tobias Grosser  <grosser@fim.uni-passau.de>
+
+	* cloog.m4: Fix typo.  verison -> version.
+
+2010-11-12  Tobias Grosser  <grosser@fim.uni-passau.de>
+
+	* cloog.m4: Pass ppl libraries to the CLooG version check.
+
+2010-11-11  Jan Hubicka  <jh@suse.cz>
+
+	* bootstrap-lto: Use -flto.
+
+2010-11-04  Iain Sandoe  <iains@gcc.gnu.org>
+
+	* mh-darwin: Renamed from mh-ppc-darwin.
+
 2010-06-27  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
 
 	* po.m4 (AM_PO_SUBDIRS): Fix unportable shell quoting.
@@ -47,8 +227,8 @@
 2010-06-09  Iain Sandoe  <iains@gcc.gnu.org>
 
 	PR bootstrap/43170
-	* tls.m4 (GCC_CHECK_TLS): Add volatile qualifier to the test 
-	references.  Move the main () test reference ahead of 
+	* tls.m4 (GCC_CHECK_TLS): Add volatile qualifier to the test
+	references.  Move the main () test reference ahead of
 	pthread_create().  Add a comment to explain the requirements
 	of the test.
 
@@ -330,7 +510,7 @@
 
 	PR bootstrap/32009
 	* mh-ppc-darwin (BOOT_CFLAGS): Reenable.
-		
+
 2008-01-08  Jakub Jelinek  <jakub@redhat.com>
 
 	* futex.m4: New file.
@@ -404,7 +584,7 @@
 
 	* acx.m4 (ACX_CHECK_INSTALLED_TARGET_TOOL): Fixup logic for cross
 	builds.
-	
+
 2007-06-20  Mike Stump  <mrs@apple.com>
 
 	* acx.m4 (NCN_STRICT_CHECK_TARGET_TOOLS): Fix incremental builds.
@@ -429,7 +609,7 @@
 
 2007-04-11  Kai Tietz  <kai.tietz@onevision.com>
 
-	* stdint.m4: Make template compatible with older cygwin 
+	* stdint.m4: Make template compatible with older cygwin
 	types.h, wrapping each type in a __XXX_t_defined #ifdef.
 
 2007-03-26  H.J. Lu  <hongjiu.lu@intel.com>
@@ -533,7 +713,8 @@
 2006-07-25  Paolo Bonzini  <bonzini@gnu.org>
 
 	PR build/26188
-	* stdint.m4: Test for uintptr_t even on systems with uint64_t or uint32_t.
+	* stdint.m4: Test for uintptr_t even on systems with uint64_t
+	or uint32_t.
 
 2006-07-21  Steve Ellcey  <sje@cup.hp.com>
 

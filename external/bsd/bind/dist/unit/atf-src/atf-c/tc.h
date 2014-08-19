@@ -1,9 +1,9 @@
-/*	$NetBSD: tc.h,v 1.1.1.1 2011/09/11 17:20:29 christos Exp $	*/
+/*	$NetBSD: tc.h,v 1.1.1.1.8.1 2014/08/19 23:46:37 tls Exp $	*/
 
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -105,22 +105,35 @@ atf_error_t atf_tc_run(const atf_tc_t *, const char *);
 atf_error_t atf_tc_cleanup(const atf_tc_t *);
 
 /* To be run from test case bodies only. */
-void atf_tc_fail(const char *, ...) ATF_DEFS_ATTRIBUTE_NORETURN;
-void atf_tc_fail_nonfatal(const char *, ...);
-void atf_tc_pass(void) ATF_DEFS_ATTRIBUTE_NORETURN;
+void atf_tc_fail(const char *, ...)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(1, 2)
+    ATF_DEFS_ATTRIBUTE_NORETURN;
+void atf_tc_fail_nonfatal(const char *, ...)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(1, 2);
+void atf_tc_pass(void)
+    ATF_DEFS_ATTRIBUTE_NORETURN;
 void atf_tc_require_prog(const char *);
-void atf_tc_skip(const char *, ...) ATF_DEFS_ATTRIBUTE_NORETURN;
+void atf_tc_skip(const char *, ...)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(1, 2)
+    ATF_DEFS_ATTRIBUTE_NORETURN;
 void atf_tc_expect_pass(void);
-void atf_tc_expect_fail(const char *, ...);
-void atf_tc_expect_exit(const int, const char *, ...);
-void atf_tc_expect_signal(const int, const char *, ...);
-void atf_tc_expect_death(const char *, ...);
-void atf_tc_expect_timeout(const char *, ...);
+void atf_tc_expect_fail(const char *, ...)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(1, 2);
+void atf_tc_expect_exit(const int, const char *, ...)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(2, 3);
+void atf_tc_expect_signal(const int, const char *, ...)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(2, 3);
+void atf_tc_expect_death(const char *, ...)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(1, 2);
+void atf_tc_expect_timeout(const char *, ...)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(1, 2);
 
 /* To be run from test case bodies only; internal to macros.h. */
-void atf_tc_fail_check(const char *, const size_t, const char *, ...);
+void atf_tc_fail_check(const char *, const size_t, const char *, ...)
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(3, 4);
 void atf_tc_fail_requirement(const char *, const size_t, const char *, ...)
-     ATF_DEFS_ATTRIBUTE_NORETURN;
+    ATF_DEFS_ATTRIBUTE_FORMAT_PRINTF(3, 4)
+    ATF_DEFS_ATTRIBUTE_NORETURN;
 void atf_tc_check_errno(const char *, const size_t, const int,
                         const char *, const bool);
 void atf_tc_require_errno(const char *, const size_t, const int,

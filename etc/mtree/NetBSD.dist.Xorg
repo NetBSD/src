@@ -1,5 +1,4 @@
-#	$NetBSD: NetBSD.dist.Xorg,v 1.11.8.1 2013/06/23 06:26:21 tls Exp $
-
+#	$NetBSD: NetBSD.dist.Xorg,v 1.11.8.2 2014/08/19 23:45:51 tls Exp $
 ./usr/X11R7
 ./usr/X11R7/bin
 ./usr/X11R7/include
@@ -7,7 +6,6 @@
 ./usr/X11R7/include/GL
 ./usr/X11R7/include/GL/internal
 ./usr/X11R7/include/X11
-./usr/X11R7/include/X11/dri
 ./usr/X11R7/include/X11/ICE
 ./usr/X11R7/include/X11/PM
 ./usr/X11R7/include/X11/SM
@@ -17,18 +15,19 @@
 ./usr/X11R7/include/X11/Xmu
 ./usr/X11R7/include/X11/Xtrans
 ./usr/X11R7/include/X11/bitmaps
+./usr/X11R7/include/X11/dri
 ./usr/X11R7/include/X11/extensions
 ./usr/X11R7/include/X11/fonts
 ./usr/X11R7/include/X11/pixmaps
-./usr/X11R7/include/libdrm
-./usr/X11R7/include/libkms
 ./usr/X11R7/include/fontconfig
 ./usr/X11R7/include/freetype2
-./usr/X11R7/include/freetype2/freetype
-./usr/X11R7/include/freetype2/freetype/cache
-./usr/X11R7/include/freetype2/freetype/config
-./usr/X11R7/include/freetype2/freetype/internal
-./usr/X11R7/include/freetype2/freetype/internal/services
+./usr/X11R7/include/freetype2
+./usr/X11R7/include/freetype2/cache
+./usr/X11R7/include/freetype2/config
+./usr/X11R7/include/freetype2/internal
+./usr/X11R7/include/freetype2/internal/services
+./usr/X11R7/include/libdrm
+./usr/X11R7/include/libkms
 ./usr/X11R7/include/pixman-1
 ./usr/X11R7/include/xcb
 ./usr/X11R7/include/xorg
@@ -81,6 +80,7 @@
 ./usr/X11R7/lib/X11/locale/ja.JIS
 ./usr/X11R7/lib/X11/locale/ja.SJIS
 ./usr/X11R7/lib/X11/locale/ja_JP.UTF-8
+./usr/X11R7/lib/X11/locale/km_KH.UTF-8
 ./usr/X11R7/lib/X11/locale/ko
 ./usr/X11R7/lib/X11/locale/ko_KR.UTF-8
 ./usr/X11R7/lib/X11/locale/koi8-c
@@ -94,6 +94,8 @@
 ./usr/X11R7/lib/X11/locale/mulelao-1
 ./usr/X11R7/lib/X11/locale/nokhchi-1
 ./usr/X11R7/lib/X11/locale/pt_BR.UTF-8
+./usr/X11R7/lib/X11/locale/ru_RU.UTF-8
+./usr/X11R7/lib/X11/locale/sr_CS.UTF-8
 ./usr/X11R7/lib/X11/locale/tatar-cyr
 ./usr/X11R7/lib/X11/locale/th_TH
 ./usr/X11R7/lib/X11/locale/th_TH.UTF-8
@@ -139,9 +141,9 @@
 ./usr/X11R7/lib/X11/xkb/types
 ./usr/X11R7/lib/modules
 ./usr/X11R7/lib/modules/dri
+./usr/X11R7/lib/modules/drivers
 ./usr/X11R7/lib/modules/extensions
 ./usr/X11R7/lib/modules/fonts
-./usr/X11R7/lib/modules/drivers
 ./usr/X11R7/lib/modules/input
 ./usr/X11R7/lib/pkgconfig
 ./usr/X11R7/lib/xorg

@@ -1,5 +1,5 @@
-/*	Id: cgram.y,v 1.2 2012/01/04 19:04:08 ragge Exp 	*/	
-/*	$NetBSD: cgram.y,v 1.1.1.1 2012/01/11 20:33:17 plunky Exp $	*/
+/*	Id: cgram.y,v 1.7 2014/06/06 13:19:03 plunky Exp 	*/	
+/*	$NetBSD: cgram.y,v 1.1.1.1.8.1 2014/08/19 23:52:09 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -182,6 +182,7 @@ static void addcase(NODE *p);
 #ifdef GCC_COMPAT
 static void gcccase(NODE *p, NODE *);
 #endif
+static struct attr *gcc_attr_wrapper(NODE *p);
 static void adddef(void);
 static void savebc(void);
 static void swstart(int, TWORD);
@@ -197,10 +198,8 @@ static char *stradd(char *old, char *new);
 static NODE *biop(int op, NODE *l, NODE *r);
 static void flend(void);
 static char * simname(char *s);
-#ifdef GCC_COMPAT
 static NODE *tyof(NODE *);	/* COMPAT_GCC */
 static NODE *voidcon(void);	/* COMPAT_GCC */
-#endif
 static NODE *funargs(NODE *p);
 static void oldargs(NODE *p);
 static void uawarn(NODE *p, char *s);
@@ -450,7 +449,7 @@ declarator:	   '*' declarator { $$ = bdty(UMUL, $2); }
 		|  C_NAME { $$ = bdty(NAME, $1); }
 		|  '(' attr_spec_list declarator ')' {
 			$$ = $3;
-			$$->n_ap = attr_add($$->n_ap, gcc_attr_parse($2));
+			$$->n_ap = attr_add($$->n_ap, gcc_attr_wrapper($2));
 		}
 		|  '(' declarator ')' { $$ = $2; }
 		|  declarator '[' e ']' { $$ = biop(LB, $1, $3); }
@@ -480,10 +479,10 @@ type_qualifier_list:
 			nfree($2);
 		}
 		|  attribute_specifier {
-			$$ = block(UMUL, NIL, NIL, 0, 0, gcc_attr_parse($1));
+			$$ = block(UMUL, NIL, NIL, 0, 0, gcc_attr_wrapper($1));
 		}
 		|  type_qualifier_list attribute_specifier {
-			$1->n_ap = attr_add($1->n_ap, gcc_attr_parse($2));
+			$1->n_ap = attr_add($1->n_ap, gcc_attr_wrapper($2));
 		}
 		;
 
@@ -523,7 +522,7 @@ parameter_declaration:
 		   declaration_specifiers declarator attr_var {
 			if ($1->n_lval != SNULL && $1->n_lval != REGISTER)
 				uerror("illegal parameter class");
-			$$ = block(TYMERGE, $1, $2, INT, 0, gcc_attr_parse($3));
+			$$ = block(TYMERGE, $1, $2, INT, 0, gcc_attr_wrapper($3));
 		}
 		|  declaration_specifiers abstract_declarator { 
 			$$ = block(TYMERGE, $1, $2, INT, 0, 0);
@@ -547,18 +546,18 @@ abstract_declarator:
 		|  '(' abstract_declarator ')' { $$ = $2; }
 		|  '[' ']' attr_var {
 			$$ = block(LB, bdty(NAME, NULL), bcon(NOOFFSET),
-			    INT, 0, gcc_attr_parse($3));
+			    INT, 0, gcc_attr_wrapper($3));
 		}
 		|  '[' e ']' attr_var {
 			$$ = block(LB, bdty(NAME, NULL), $2,
-			    INT, 0, gcc_attr_parse($4));
+			    INT, 0, gcc_attr_wrapper($4));
 		}
 		|  abstract_declarator '[' ']' attr_var {
 			$$ = block(LB, $1, bcon(NOOFFSET),
-			    INT, 0, gcc_attr_parse($4));
+			    INT, 0, gcc_attr_wrapper($4));
 		}
 		|  abstract_declarator '[' e ']' attr_var {
-			$$ = block(LB, $1, $3, INT, 0, gcc_attr_parse($5));
+			$$ = block(LB, $1, $3, INT, 0, gcc_attr_wrapper($5));
 		}
 		|  '(' ')' { $$ = bdty(UCALL, bdty(NAME, NULL)); }
 		|  '(' ib2 parameter_type_list ')' {
@@ -659,7 +658,7 @@ struct_dcl:	   str_head '{' struct_dcl_list '}' {
 			if (pragma_allpacked) {
 				p = bdty(CALL, bdty(NAME, "packed"),
 				    bcon(pragma_allpacked));
-				$$->n_ap = attr_add($$->n_ap,gcc_attr_parse(p)); }
+				$$->n_ap = attr_add($$->n_ap,gcc_attr_wrapper(p)); }
 		}
 		|  C_STRUCT attr_var C_NAME { 
 			$$ = rstruct($3,$1);
@@ -730,7 +729,7 @@ struct_declarator: declarator attr_var {
 			$1 = aryfix($1);
 			p = tymerge($<nodep>0, tymfix($1));
 			if ($2)
-				p->n_ap = attr_add(p->n_ap, gcc_attr_parse($2));
+				p->n_ap = attr_add(p->n_ap, gcc_attr_wrapper($2));
 			soumemb(p, (char *)$1->n_sp, $<nodep>0->n_lval);
 			tfree(p);
 		}
@@ -761,7 +760,7 @@ struct_declarator: declarator attr_var {
 				tymerge($<nodep>0, tymfix($1));
 				if ($4)
 					$1->n_ap = attr_add($1->n_ap,
-					    gcc_attr_parse($4));
+					    gcc_attr_wrapper($4));
 				soumemb($1, (char *)$1->n_sp, FIELD | ie);
 				nfree($1);
 			} else
@@ -1600,7 +1599,7 @@ init_declarator(NODE *tn, NODE *p, int assign, NODE *a)
 	} else
 		p = tymerge(tn, p);
 	if (a) {
-		struct attr *ap = gcc_attr_parse(a);
+		struct attr *ap = gcc_attr_wrapper(a);
 		p->n_ap = attr_add(p->n_ap, ap);
 	}
 
@@ -1609,7 +1608,7 @@ init_declarator(NODE *tn, NODE *p, int assign, NODE *a)
 	if (fun_inline && ISFTN(p->n_type))
 		sp->sflags |= SINLINE;
 
-	if (ISFTN(p->n_type) == 0) {
+	if (!ISFTN(p->n_type)) {
 		if (assign) {
 			defid(p, class);
 			sp = p->n_sp;
@@ -1883,7 +1882,7 @@ olddecl(NODE *p, NODE *a)
 	} else if (s->stype == FLOAT)
 		s->stype = DOUBLE;
 	if (a)
-		attr_add(s->sap, gcc_attr_parse(a));
+		attr_add(s->sap, gcc_attr_wrapper(a));
 	nfree(p);
 }
 
@@ -2107,7 +2106,7 @@ xasmop(char *str, NODE *p)
 {
 
 	p = biop(XARG, p, NIL);
-	p->n_name = isinlining ? newstring(str, strlen(str)+1) : str;
+	p->n_name = isinlining ? newstring(str, strlen(str)) : str;
 	return p;
 }
 
@@ -2120,10 +2119,22 @@ mkxasm(char *str, NODE *p)
 	NODE *q;
 
 	q = biop(XASM, p->n_left, p->n_right);
-	q->n_name = isinlining ? newstring(str, strlen(str)+1) : str;
+	q->n_name = isinlining ? newstring(str, strlen(str)) : str;
 	nfree(p);
 	ecomp(q);
 }
+
+static struct attr *
+gcc_attr_wrapper(NODE *p)
+{
+#ifdef GCC_COMPAT
+	return gcc_attr_parse(p);
+#else
+	uerror("gcc attribute used");
+	return NULL;
+#endif
+}
+
 
 #ifdef GCC_COMPAT
 static NODE *
@@ -2135,6 +2146,13 @@ tyof(NODE *p)
 	q->n_sp = &spp; /* for typenode */
 	tfree(p);
 	return q;
+}
+#else
+static NODE *
+tyof(NODE *p)
+{
+	uerror("typeof gcc extension");
+	return bcon(0);
 }
 #endif
 
@@ -2176,7 +2194,7 @@ eve(NODE *p)
 			r = buildtree(UMUL, r, NIL);
 #ifdef GCC_COMPAT
 		if (attr_find(sp->sap, GCC_ATYP_DEPRECATED))
-			werror("`%s' is deprecated", sp->sname);
+			warner(Wdeprecated_declarations, sp->sname);
 #endif
 		break;
 
@@ -2236,14 +2254,17 @@ eve(NODE *p)
 		break;
 
 	case CALL:
-		p2 = eve(p2);
-		/* FALLTHROUGH */
 	case UCALL:
 		if (p1->n_op == NAME || p1->n_op == NMLIST) {
 			sp = cxxlookup(p1, SNORMAL);
+#ifndef NO_C_BUILTINS
+			if (sp->sflags & SBUILTIN) {
+				nfree(p1);
+				r = builtin_check(sp, p2);
+				break;
+			}
+#endif
 			if (sp->stype == UNDEF) {
-				if (!isbuiltin(sp->sname))
-					uerror("'%s' undefined", sp->sname);
 				p1->n_type = FTN|INT;
 				p1->n_sp = sp;
 				p1->n_ap = NULL;
@@ -2252,8 +2273,9 @@ eve(NODE *p)
 			nfree(p1);
 #ifdef GCC_COMPAT
 			if (attr_find(sp->sap, GCC_ATYP_DEPRECATED))
-				werror("`%s' is deprecated", sp->sname);
+				warner(Wdeprecated_declarations, sp->sname);
 #endif
+			p2 = p->n_op == CALL ? eve(p2) : NIL;
 			r = doacall(sp, nametree(sp), p2, 0);
 		} else if (p1->n_op == DOT || p1->n_op == STREF) {
 			/*
@@ -2262,9 +2284,8 @@ eve(NODE *p)
 			 * - add hidden arg0 as pointer to this struct
 			 */
 
+			p2 = p->n_op == CALL ? eve(p2) : NIL;
 			p1->n_left = eve(p1->n_left); /* eval rest */
-			if (p->n_op == UCALL)
-				p2 = NULL;
 			r = cxxmatchftn(p1, p2);
 			if (p1->n_op == DOT)
 				p1->n_left = buildtree(ADDROF, p1->n_left, NIL);
@@ -2272,8 +2293,10 @@ eve(NODE *p)
 			p1 = nfree(p1);
 			p2 = cxxaddhidden(p2, p1);
 			r = doacall(NULL, r, p2, 1);
-		} else
+		} else {
+			p2 = p->n_op == CALL ? eve(p2) : NIL;
 			r = doacall(NULL, eve(p1), p2, 0);
+		}
 		break;
 
 #ifndef NO_COMPLEX

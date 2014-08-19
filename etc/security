@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.111.2.1 2013/06/23 06:26:21 tls Exp $
+#	$NetBSD: security,v 1.111.2.2 2014/08/19 23:45:50 tls Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -30,6 +30,7 @@ fi
 backup_dir=${backup_dir:-/var/backups}
 max_loginlen=${max_loginlen:-8}
 max_grouplen=${max_grouplen:-8}
+pkg_admin=${pkg_admin:-/usr/sbin/pkg_admin}
 pkg_info=${pkg_info:-/usr/sbin/pkg_info}
 
 # Other configurable variables
@@ -336,9 +337,16 @@ if checkyesno check_group; then
 	fi
 
 	awk -F: '{ print $1 }' $GRP | sort | uniq -d > $OUTPUT
-	if [ -s $OUTPUT ] ; then
+	dupgroups=""
+	for group in $(cat $OUTPUT) ; do
+		gcount=$(awk -F: "/$group/ { print \$1,\$3 }" $GRP | sort -u | wc -l)
+		if [ $gcount -gt 1 ]; then
+			dupgroups="$dupgroups $group"
+		fi
+	done
+	if [ ! -z $dupgroups ] ; then
 		printf "\n$GRP has duplicate group names.\n"
-		column $OUTPUT
+		printf "$dupgroups\n"
 	fi
 fi
 
@@ -521,8 +529,13 @@ if checkyesno check_homes; then
 			printf -- "$uid $file\n"
 		fi
 	done < $MPBYPATH |
-	awk -v "usergroups=$permit_usergroups" '
-	     $1 != $4 && $4 != "root" \
+	awk -v "usergroups=$permit_usergroups" \
+            -v "permit_owners_list=$check_homes_permit_other_owner"  '
+	     BEGIN {
+		split(permit_owners_list, a);
+		for (i in a) permit_owners[a[i]]++;
+	     }
+	     $1 != $4 && $4 != "root" && !permit_owners[$1] \
 		{ print "user " $1 " home directory is owned by " $4 }
 	     $2 ~ /^d....w/ && (!usergroups || $5 != $1) \
 		{ print "user " $1 " home directory is group writable" }
@@ -544,8 +557,13 @@ if checkyesno check_homes; then
 			fi
 		done
 	done < $MPBYPATH |
-	awk  -v "usergroups=$permit_usergroups" '
-	     $1 != $5 && $5 != "root" \
+	awk -v "usergroups=$permit_usergroups" \
+            -v "permit_owners_list=$check_homes_permit_other_owner"  '
+	     BEGIN {
+		split(permit_owners_list, a);
+		for (i in a) permit_owners[a[i]]++;
+	     }
+	     $1 != $5 && $5 != "root" && !permit_owners[$1] \
 		{ print "user " $1 " " $2 " file is owned by " $5 }
 	     $3 ~ /^-...r/ && (!usergroups || $6 != $1) \
 		{ print "user " $1 " " $2 " file is group readable" }
@@ -573,8 +591,13 @@ if checkyesno check_homes; then
 			fi
 		done
 	done < $MPBYPATH |
-	awk -v "usergroups=$permit_usergroups" '
-	     $1 != $5 && $5 != "root" \
+	awk -v "usergroups=$permit_usergroups" \
+            -v "permit_owners_list=$check_homes_permit_other_owner"  '
+	     BEGIN {
+		split(permit_owners_list, a);
+		for (i in a) permit_owners[a[i]]++;
+	     }
+	     $1 != $5 && $5 != "root" && !permit_owners[$1] \
 		{ print "user " $1 " " $2 " file is owned by " $5 }
 	     $3 ~ /^-....w/ && (!usergroups || $6 != $1) \
 		{ print "user " $1 " " $2 " file is group writable" }

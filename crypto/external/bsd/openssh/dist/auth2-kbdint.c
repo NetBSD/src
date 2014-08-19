@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-kbdint.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
-/* $OpenBSD: auth2-kbdint.c,v 1.5 2006/08/03 03:34:41 deraadt Exp $ */
+/*	$NetBSD: auth2-kbdint.c,v 1.2.12.1 2014/08/19 23:45:24 tls Exp $	*/
+/* $OpenBSD: auth2-kbdint.c,v 1.6 2013/05/17 00:13:13 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-kbdint.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
+__RCSID("$NetBSD: auth2-kbdint.c,v 1.2.12.1 2014/08/19 23:45:24 tls Exp $");
 #include <sys/types.h>
 
 #include "xmalloc.h"
@@ -55,8 +55,8 @@ userauth_kbdint(Authctxt *authctxt)
 	if (options.challenge_response_authentication)
 		authenticated = auth2_challenge(authctxt, devs);
 
-	xfree(devs);
-	xfree(lang);
+	free(devs);
+	free(lang);
 	return authenticated;
 }
 

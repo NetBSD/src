@@ -53,6 +53,21 @@ if { "$target_xfail" == "yes" } {
     setup_xfail *-*
 }
 
+verbose "$DLLTOOL -l libversion.a --def $srcdir/$subdir/version.def" 1
+catch "exec $DLLTOOL -l libersion.a --def $srcdir/$subdir/version.def" err
+
+if ![string match "" $err] then {
+    send_log "$err\n"
+    verbose "$err" 1
+    fail "dlltool (version.dll)"
+} else {
+    pass "dlltool (version.dll)"
+}
+
+if { "$target_xfail" == "yes" } {
+    setup_xfail *-*
+}
+
 verbose "$DLLTOOL -p prefix --leading-underscore -l tmpdir/libalias.a -d $srcdir/$subdir/alias.def $dlltool_gas_flag" 1
 catch "exec $DLLTOOL -p prefix --leading-underscore -l tmpdir/libalias.a -d $srcdir/$subdir/alias.def $dlltool_gas_flag" err
 

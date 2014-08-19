@@ -1,7 +1,7 @@
-/*	$NetBSD: rdataset.h,v 1.5.2.1 2013/02/25 00:25:45 tls Exp $	*/
+/*	$NetBSD: rdataset.h,v 1.5.2.2 2014/08/19 23:46:29 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -207,6 +207,7 @@ struct dns_rdataset {
 #define DNS_RDATASETATTR_CLOSEST	0x00080000
 #define DNS_RDATASETATTR_OPTOUT		0x00100000	/*%< OPTOUT proof */
 #define DNS_RDATASETATTR_NEGATIVE	0x00200000
+#define DNS_RDATASETATTR_PREFETCH	0x00400000
 
 /*%
  * _OMITDNSSEC:
@@ -675,7 +676,7 @@ dns_rdataset_trimttl(dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset,
 
 const char *
 dns_trust_totext(dns_trust_t trust);
-/*
+/*%<
  * Display trust in textual form.
  */
 

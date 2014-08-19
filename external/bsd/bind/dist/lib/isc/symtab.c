@@ -1,7 +1,7 @@
-/*	$NetBSD: symtab.c,v 1.3 2012/06/05 00:42:32 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.3.2.1 2014/08/19 23:46:33 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1996-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -73,15 +73,17 @@ isc_symtab_create(isc_mem_t *mctx, unsigned int size,
 	symtab = (isc_symtab_t *)isc_mem_get(mctx, sizeof(*symtab));
 	if (symtab == NULL)
 		return (ISC_R_NOMEMORY);
+
+	symtab->mctx = NULL;
+	isc_mem_attach(mctx, &symtab->mctx);
 	symtab->table = (eltlist_t *)isc_mem_get(mctx,
 						 size * sizeof(eltlist_t));
 	if (symtab->table == NULL) {
-		isc_mem_put(mctx, symtab, sizeof(*symtab));
+		isc_mem_putanddetach(&symtab->mctx, symtab, sizeof(*symtab));
 		return (ISC_R_NOMEMORY);
 	}
 	for (i = 0; i < size; i++)
 		INIT_LIST(symtab->table[i]);
-	symtab->mctx = mctx;
 	symtab->size = size;
 	symtab->count = 0;
 	symtab->maxload = size * 3 / 4;
@@ -119,7 +121,7 @@ isc_symtab_destroy(isc_symtab_t **symtabp) {
 	isc_mem_put(symtab->mctx, symtab->table,
 		    symtab->size * sizeof(eltlist_t));
 	symtab->magic = 0;
-	isc_mem_put(symtab->mctx, symtab, sizeof(*symtab));
+	isc_mem_putanddetach(&symtab->mctx, symtab, sizeof(*symtab));
 
 	*symtabp = NULL;
 }
@@ -300,4 +302,10 @@ isc_symtab_undefine(isc_symtab_t *symtab, const char *key, unsigned int type) {
 	symtab->count--;
 
 	return (ISC_R_SUCCESS);
+}
+
+unsigned int
+isc_symtab_count(isc_symtab_t *symtab) {
+	REQUIRE(VALID_SYMTAB(symtab));
+	return (symtab->count);
 }

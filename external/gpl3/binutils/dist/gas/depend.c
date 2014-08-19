@@ -20,6 +20,7 @@
    02110-1301, USA.  */
 
 #include "as.h"
+#include "filenames.h"
 
 /* The file to write to, or NULL if no dependencies being kept.  */
 static char * dep_file = NULL;
@@ -63,7 +64,7 @@ register_dependency (char *filename)
 
   for (dep = dep_chain; dep != NULL; dep = dep->next)
     {
-      if (!strcmp (filename, dep->file))
+      if (!filename_cmp (filename, dep->file))
 	return;
     }
 

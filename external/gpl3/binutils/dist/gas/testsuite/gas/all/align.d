@@ -1,6 +1,8 @@
 #objdump: -s -j .text
 #name: align
-#not-target: m32c-*
+# The RX port will always replace zeros in any aligned area with NOPs,
+# even if the user requested that they filled with zeros.
+#not-target: m32c-* rx-*
 
 # Test the alignment pseudo-op.
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/02/24 12:18:37 tron Exp $
+#	$NetBSD: Makefile,v 1.4.12.1 2014/08/19 23:52:22 tls Exp $
 #
 #
 
@@ -6,6 +6,8 @@
 
 .if (defined(MKDTRACE) && ${MKDTRACE} != "no")
 SUBDIR+=	libdtrace
+.endif
+.if ${MKDTRACE:Uno} != "no" || ${MKCTF:Uno} != "no"
 SUBDIR+=	libctf
 .endif
 
@@ -14,6 +16,7 @@ SUBDIR+=	libavl
 SUBDIR+=	libnvpair
 SUBDIR+=	libumem
 SUBDIR+=	libuutil
+SUBDIR+=	.WAIT
 SUBDIR+=	libzfs
 SUBDIR+=	libzpool
 .endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.28.1 2013/06/23 06:26:17 tls Exp $
+#	$NetBSD: Makefile,v 1.2.28.2 2014/08/19 23:45:39 tls Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -16,5 +16,5 @@ release:: check_RELEASEDIR .WAIT ${HPCBOOT}
 	${INSTALL} -c -m ${NONBINMODE} \
 		${HPCBOOT} ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation
 
-.include <bsd.files.mk>
 .include <bsd.obj.mk>
+.include <bsd.files.mk>

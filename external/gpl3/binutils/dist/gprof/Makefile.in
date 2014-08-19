@@ -94,7 +94,7 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(gprof_SOURCES)
 INFO_DEPS = gprof.info
-am__TEXINFO_TEX_DIR = $(srcdir)/$(top_srcdir)/../texinfo
+am__TEXINFO_TEX_DIR = $(srcdir)/../texinfo
 DVIS = gprof.dvi
 PDFS = gprof.pdf
 PSS = gprof.ps
@@ -277,7 +277,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = 1.11 foreign no-dist no-texinfo.tex
 ACLOCAL_AMFLAGS = -I .. -I ../config -I ../bfd
-TEXINFO_TEX = $(top_srcdir)/../texinfo/texinfo.tex
+TEXINFO_TEX = ../texinfo/texinfo.tex
 SUFFIXES = .m
 SUBDIRS = po
 BASEDIR = $(srcdir)/..

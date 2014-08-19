@@ -1,7 +1,7 @@
-/*	$NetBSD: net.c,v 1.3 2012/06/05 00:42:47 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.3.2.1 2014/08/19 23:46:34 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -29,17 +29,24 @@
 #endif
 #include <sys/sysctl.h>
 #endif
+#include <sys/uio.h>
 
 #include <errno.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include <isc/log.h>
 #include <isc/msgs.h>
 #include <isc/net.h>
+#include <isc/netdb.h>
 #include <isc/once.h>
 #include <isc/strerror.h>
 #include <isc/string.h>
 #include <isc/util.h>
+
+#ifndef ISC_SOCKADDR_LEN_T
+#define ISC_SOCKADDR_LEN_T unsigned int
+#endif
 
 /*%
  * Definitions about UDP port range specification.  This is a total mess of
@@ -113,12 +120,14 @@ static isc_once_t 	once_ipv6pktinfo = ISC_ONCE_INIT;
 #endif /* ISC_PLATFORM_HAVEIPV6 */
 
 static isc_once_t 	once = ISC_ONCE_INIT;
+static isc_once_t 	once_dscp = ISC_ONCE_INIT;
 
 static isc_result_t	ipv4_result = ISC_R_NOTFOUND;
 static isc_result_t	ipv6_result = ISC_R_NOTFOUND;
 static isc_result_t	unix_result = ISC_R_NOTFOUND;
 static isc_result_t	ipv6only_result = ISC_R_NOTFOUND;
 static isc_result_t	ipv6pktinfo_result = ISC_R_NOTFOUND;
+static unsigned int	dscp_result = 0;
 
 static isc_result_t
 try_proto(int domain) {
@@ -303,8 +312,6 @@ try_ipv6only(void) {
 		goto close;
 	}
 
-	close(s);
-
 	ipv6only_result = ISC_R_SUCCESS;
 
 close:
@@ -360,7 +367,6 @@ try_ipv6pktinfo(void) {
 		goto close;
 	}
 
-	close(s);
 	ipv6pktinfo_result = ISC_R_SUCCESS;
 
 close:
@@ -400,6 +406,338 @@ isc_net_probe_ipv6pktinfo(void) {
 #endif
 #endif
 	return (ipv6pktinfo_result);
+}
+
+static inline ISC_SOCKADDR_LEN_T
+cmsg_len(ISC_SOCKADDR_LEN_T len) {
+#ifdef CMSG_LEN
+	return (CMSG_LEN(len));
+#else
+	ISC_SOCKADDR_LEN_T hdrlen;
+
+	/*
+	 * Cast NULL so that any pointer arithmetic performed by CMSG_DATA
+	 * is correct.
+	 */
+	hdrlen = (ISC_SOCKADDR_LEN_T)CMSG_DATA(((struct cmsghdr *)NULL));
+	return (hdrlen + len);
+#endif
+}
+
+static inline ISC_SOCKADDR_LEN_T
+cmsg_space(ISC_SOCKADDR_LEN_T len) {
+#ifdef CMSG_SPACE
+	return (CMSG_SPACE(len));
+#else
+	struct msghdr msg;
+	struct cmsghdr *cmsgp;
+	/*
+	 * XXX: The buffer length is an ad-hoc value, but should be enough
+	 * in a practical sense.
+	 */
+	char dummybuf[sizeof(struct cmsghdr) + 1024];
+
+	memset(&msg, 0, sizeof(msg));
+	msg.msg_control = dummybuf;
+	msg.msg_controllen = sizeof(dummybuf);
+
+	cmsgp = (struct cmsghdr *)dummybuf;
+	cmsgp->cmsg_len = cmsg_len(len);
+
+	cmsgp = CMSG_NXTHDR(&msg, cmsgp);
+	if (cmsgp != NULL)
+		return ((char *)cmsgp - (char *)msg.msg_control);
+	else
+		return (0);
+#endif
+}
+
+#ifdef ISC_NET_BSD44MSGHDR
+/*
+ * Make a fd non-blocking.
+ */
+static isc_result_t
+make_nonblock(int fd) {
+	int ret;
+	int flags;
+	char strbuf[ISC_STRERRORSIZE];
+#ifdef USE_FIONBIO_IOCTL
+	int on = 1;
+
+	ret = ioctl(fd, FIONBIO, (char *)&on);
+#else
+	flags = fcntl(fd, F_GETFL, 0);
+	flags |= PORT_NONBLOCK;
+	ret = fcntl(fd, F_SETFL, flags);
+#endif
+
+	if (ret == -1) {
+		isc__strerror(errno, strbuf, sizeof(strbuf));
+		UNEXPECTED_ERROR(__FILE__, __LINE__,
+#ifdef USE_FIONBIO_IOCTL
+				 "ioctl(%d, FIONBIO, &on): %s", fd,
+#else
+				 "fcntl(%d, F_SETFL, %d): %s", fd, flags,
+#endif
+				 strbuf);
+
+		return (ISC_R_UNEXPECTED);
+	}
+
+	return (ISC_R_SUCCESS);
+}
+
+static isc_boolean_t
+cmsgsend(int s, int level, int type, struct addrinfo *res) {
+	char strbuf[ISC_STRERRORSIZE];
+	struct sockaddr_storage ss;
+	ISC_SOCKADDR_LEN_T len = sizeof(ss);
+	struct msghdr msg;
+	union {
+		struct cmsghdr h;
+		unsigned char b[256];
+	} control;
+	struct cmsghdr *cmsgp;
+	int dscp = 46;
+	struct iovec iovec;
+	char buf[1] = { 0 };
+	isc_result_t result;
+
+	if (bind(s, res->ai_addr, res->ai_addrlen) < 0) {
+		isc__strerror(errno, strbuf, sizeof(strbuf));
+		isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
+			      ISC_LOGMODULE_SOCKET, ISC_LOG_DEBUG(10),
+			      "bind: %s", strbuf);
+		return (ISC_FALSE);
+	}
+
+	if (getsockname(s, (struct sockaddr *)&ss, &len) < 0) {
+		isc__strerror(errno, strbuf, sizeof(strbuf));
+		isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
+			      ISC_LOGMODULE_SOCKET, ISC_LOG_DEBUG(10),
+			      "getsockname: %s", strbuf);
+		return (ISC_FALSE);
+	}
+
+	iovec.iov_base = buf;
+	iovec.iov_len = sizeof(buf);
+
+	memset(&msg, 0, sizeof(msg));
+	msg.msg_name = (struct sockaddr *)&ss;
+	msg.msg_namelen = len;
+	msg.msg_iov = &iovec;
+	msg.msg_iovlen = 1;
+	msg.msg_control = (void*)&control;
+	msg.msg_controllen = cmsg_space(sizeof(int));
+	msg.msg_flags = 0;
+
+	cmsgp = msg.msg_control;
+	cmsgp->cmsg_level = level;
+	cmsgp->cmsg_type = type;
+
+	switch (cmsgp->cmsg_type) {
+#ifdef IP_TOS
+	case IP_TOS:
+		cmsgp->cmsg_len = cmsg_len(sizeof(char));
+		*(unsigned char*)CMSG_DATA(cmsgp) = dscp;
+		break;
+#endif
+#ifdef IPV6_TCLASS
+	case IPV6_TCLASS:
+		cmsgp->cmsg_len = cmsg_len(sizeof(dscp));
+		memmove(CMSG_DATA(cmsgp), &dscp, sizeof(dscp));
+		break;
+#endif
+	default:
+		INSIST(0);
+	}
+
+	if (sendmsg(s, &msg, 0) < 0) {
+		int debug = ISC_LOG_DEBUG(10);
+		switch (errno) {
+#ifdef ENOPROTOOPT
+		case ENOPROTOOPT:
+#endif
+#ifdef EOPNOTSUPP
+		case EOPNOTSUPP:
+#endif
+		case EINVAL:
+			break;
+		default:
+			debug = ISC_LOG_NOTICE;
+		}
+		isc__strerror(errno, strbuf, sizeof(strbuf));
+		if (debug != ISC_LOG_NOTICE) {
+			isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
+				      ISC_LOGMODULE_SOCKET, ISC_LOG_DEBUG(10),
+				      "sendmsg: %s", strbuf);
+		} else {
+			UNEXPECTED_ERROR(__FILE__, __LINE__,
+					 "sendmsg() %s: %s",
+					 isc_msgcat_get(isc_msgcat,
+							ISC_MSGSET_GENERAL,
+							ISC_MSG_FAILED,
+							"failed"),
+					 strbuf);
+		}
+		return (ISC_FALSE);
+	}
+
+	/*
+	 * Make sure the message actually got sent.
+	 */
+	result = make_nonblock(s);
+	RUNTIME_CHECK(result == ISC_R_SUCCESS);
+
+	iovec.iov_base = buf;
+	iovec.iov_len = sizeof(buf);
+
+	memset(&msg, 0, sizeof(msg));
+	msg.msg_name = (struct sockaddr *)&ss;
+	msg.msg_namelen = sizeof(ss);
+	msg.msg_iov = &iovec;
+	msg.msg_iovlen = 1;
+	msg.msg_control = NULL;
+	msg.msg_controllen = 0;
+	msg.msg_flags = 0;
+
+	if (recvmsg(s, &msg, 0) < 0)
+		return (ISC_FALSE);
+
+	return (ISC_TRUE);
+}
+#endif
+
+static void
+try_dscp_v4(void) {
+#ifdef IP_TOS
+	char strbuf[ISC_STRERRORSIZE];
+	struct addrinfo hints, *res0;
+	int s, dscp = 0, n;
+#ifdef IP_RECVTOS
+	int on = 1;
+#endif
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_protocol = IPPROTO_UDP;
+	hints.ai_flags = AI_PASSIVE | AI_NUMERICHOST;
+
+	n = getaddrinfo("127.0.0.1", NULL, &hints, &res0);
+	if (n != 0 || res0 == NULL) {
+		isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
+			      ISC_LOGMODULE_SOCKET, ISC_LOG_DEBUG(10),
+			      "getaddrinfo(127.0.0.1): %s", gai_strerror(n));
+		return;
+	}
+
+	s = socket(res0->ai_family, res0->ai_socktype, res0->ai_protocol);
+
+	if (s == -1) {
+		isc__strerror(errno, strbuf, sizeof(strbuf));
+		isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
+			      ISC_LOGMODULE_SOCKET, ISC_LOG_DEBUG(10),
+			      "socket: %s", strbuf);
+		freeaddrinfo(res0);
+		return;
+	}
+
+	if (setsockopt(s, IPPROTO_IP, IP_TOS, &dscp, sizeof(dscp)) == 0)
+		dscp_result |= ISC_NET_DSCPSETV4;
+
+#ifdef IP_RECVTOS
+	on = 1;
+	if (setsockopt(s, IPPROTO_IP, IP_RECVTOS, &on, sizeof(on)) == 0)
+		dscp_result |= ISC_NET_DSCPRECVV4;
+#endif
+#ifdef ISC_NET_BSD44MSGHDR
+#ifndef ISC_CMSG_IP_TOS
+#ifdef __APPLE__
+#define ISC_CMSG_IP_TOS 0	/* As of 10.8.2. */
+#else
+#define ISC_CMSG_IP_TOS 1
+#endif
+#endif
+#if ISC_CMSG_IP_TOS
+	if (cmsgsend(s, IPPROTO_IP, IP_TOS, res0))
+		dscp_result |= ISC_NET_DSCPPKTV4;
+#endif
+#endif
+	freeaddrinfo(res0);
+	close(s);
+#endif
+}
+
+static void
+try_dscp_v6(void) {
+#ifdef ISC_PLATFORM_HAVEIPV6
+#ifdef WANT_IPV6
+#ifdef IPV6_TCLASS
+	char strbuf[ISC_STRERRORSIZE];
+	struct addrinfo hints, *res0;
+	int s, dscp = 0, n;
+#if defined(IPV6_RECVTCLASS)
+	int on = 1;
+#endif
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET6;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_protocol = IPPROTO_UDP;
+	hints.ai_flags = AI_PASSIVE | AI_NUMERICHOST;
+
+	n = getaddrinfo("::1", NULL, &hints, &res0);
+	if (n != 0 || res0 == NULL) {
+		isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
+			      ISC_LOGMODULE_SOCKET, ISC_LOG_DEBUG(10),
+			      "getaddrinfo(::1): %s", gai_strerror(n));
+		return;
+	}
+
+	s = socket(res0->ai_family, res0->ai_socktype, res0->ai_protocol);
+	if (s == -1) {
+		isc__strerror(errno, strbuf, sizeof(strbuf));
+		isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
+			      ISC_LOGMODULE_SOCKET, ISC_LOG_DEBUG(10),
+			      "socket: %s", strbuf);
+		freeaddrinfo(res0);
+		return;
+	}
+	if (setsockopt(s, IPPROTO_IPV6, IPV6_TCLASS, &dscp, sizeof(dscp)) == 0)
+		dscp_result |= ISC_NET_DSCPSETV6;
+
+#ifdef IPV6_RECVTCLASS
+	on = 1;
+	if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVTCLASS, &on, sizeof(on)) == 0)
+		dscp_result |= ISC_NET_DSCPRECVV6;
+#endif
+#ifdef ISC_NET_BSD44MSGHDR
+	if (cmsgsend(s, IPPROTO_IPV6, IPV6_TCLASS, res0))
+		dscp_result |= ISC_NET_DSCPPKTV6;
+#endif
+	freeaddrinfo(res0);
+	close(s);
+#endif
+#endif
+#endif
+}
+
+static void
+try_dscp(void) {
+	try_dscp_v4();
+	try_dscp_v6();
+}
+
+static void
+initialize_dscp(void) {
+	RUNTIME_CHECK(isc_once_do(&once_dscp, try_dscp) == ISC_R_SUCCESS);
+}
+
+unsigned int
+isc_net_probedscp(void) {
+	initialize_dscp();
+	return (dscp_result);
 }
 
 #if defined(USE_SYSCTL_PORTRANGE)

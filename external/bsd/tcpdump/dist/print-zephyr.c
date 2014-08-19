@@ -26,7 +26,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-zephyr.c,v 1.10 2007-08-09 18:47:27 hannes Exp ";
 #else
-__RCSID("$NetBSD: print-zephyr.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-zephyr.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -75,7 +75,7 @@ enum z_packet_type {
     Z_PACKET_STAT
 };
 
-static struct tok z_types[] = {
+static const struct tok z_types[] = {
     { Z_PACKET_UNSAFE,		"unsafe" },
     { Z_PACKET_UNACKED,		"unacked" },
     { Z_PACKET_ACKED,		"acked" },

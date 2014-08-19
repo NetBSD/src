@@ -1,7 +1,7 @@
 [^:]*: Assembler messages:
-[^:]*:9: Error: syntax error -- `msr APSR_g,r9'
-[^:]*:10: Error: syntax error -- `msr APSR_nzcvq,r9'
-[^:]*:11: Error: syntax error -- `msr APSR_nzcvqg,r9'
+[^:]*:8: writing to APSR without specifying a bitmask is deprecated
+[^:]*:9: Error: selected processor does not support DSP extension -- `msr APSR_g,r9'
+[^:]*:11: Error: selected processor does not support DSP extension -- `msr APSR_nzcvqg,r9'
 [^:]*:14: Error: selected processor does not support requested special purpose register -- `msr CPSR,r9'
 [^:]*:15: Error: selected processor does not support requested special purpose register -- `msr CPSR_s,r9'
 [^:]*:16: Error: selected processor does not support requested special purpose register -- `msr CPSR_f,r9'

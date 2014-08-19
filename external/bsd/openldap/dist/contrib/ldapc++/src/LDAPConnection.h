@@ -1,8 +1,8 @@
-/*	$NetBSD: LDAPConnection.h,v 1.1.1.3 2010/12/12 15:18:45 adam Exp $	*/
+/*	$NetBSD: LDAPConnection.h,v 1.1.1.3.12.1 2014/08/19 23:51:55 tls Exp $	*/
 
-// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPConnection.h,v 1.8.4.3 2010/04/14 23:50:44 quanah Exp
+// $OpenLDAP$
 /*
- * Copyright 2000, OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2014 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

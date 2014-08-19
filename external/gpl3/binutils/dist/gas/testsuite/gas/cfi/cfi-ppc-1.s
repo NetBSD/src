@@ -4,7 +4,6 @@
 	.text
 	.align 2
 	.globl foo
-	.type   foo, @function
 foo:
 	.cfi_startproc
 	stwu 1,-48(1)
@@ -42,4 +41,3 @@ foo:
 	addi 1,1,48
 	blr
 	.cfi_endproc
-	.size   foo, .-foo

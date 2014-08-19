@@ -1,4 +1,4 @@
-/*	$NetBSD: der_free.c,v 1.1.1.1 2011/04/13 18:14:40 elric Exp $	*/
+/*	$NetBSD: der_free.c,v 1.1.1.1.10.1 2014/08/19 23:45:17 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -37,7 +37,7 @@
 
 #include "der_locl.h"
 
-__RCSID("$NetBSD: der_free.c,v 1.1.1.1 2011/04/13 18:14:40 elric Exp $");
+__RCSID("NetBSD");
 
 void
 der_free_general_string (heim_general_string *str)

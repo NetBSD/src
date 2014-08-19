@@ -2,7 +2,7 @@
 #name: DWARF2 3
 #not-target: ia64-*-* h8300-*-*
 
-Raw dump of debug contents of section .debug_line:
+Raw dump of debug contents of section \.z?debug_line:
 
   Offset:                      0x0
   Length:                      41

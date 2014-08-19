@@ -1,4 +1,4 @@
-/*	$NetBSD: pkg_signature.c,v 1.1.1.7 2010/02/20 04:41:58 joerg Exp $	*/
+/*	$NetBSD: pkg_signature.c,v 1.1.1.7.12.1 2014/08/19 23:52:11 tls Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pkg_signature.c,v 1.1.1.7 2010/02/20 04:41:58 joerg Exp $");
+__RCSID("$NetBSD: pkg_signature.c,v 1.1.1.7.12.1 2014/08/19 23:52:11 tls Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -325,10 +325,7 @@ pkg_verify_signature(const char *archive_name, struct archive **archive,
 
 	*pkgname = NULL;
 
-	state = xmalloc(sizeof(*state));
-	state->sign_blocks = NULL;
-	state->sign_buf = NULL;
-	state->archive = NULL;
+	state = xcalloc(sizeof(*state), 1);
 
 	r = read_file_from_archive(archive_name, *archive, entry, HASH_FNAME,
 	    &hash_file, &hash_len);

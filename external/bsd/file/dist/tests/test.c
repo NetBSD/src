@@ -1,5 +1,4 @@
-/*	$NetBSD: test.c,v 1.1.1.1 2009/05/08 16:35:10 christos Exp $	*/
-
+/*	$NetBSD: test.c,v 1.1.1.1.14.1 2014/08/19 23:46:47 tls Exp $	*/
 /*
  * Copyright (c) Christos Zoulas 2003.
  * All Rights Reserved.

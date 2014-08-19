@@ -1,7 +1,7 @@
-/*	$NetBSD: acache.h,v 1.3 2012/06/05 00:41:44 christos Exp $	*/
+/*	$NetBSD: acache.h,v 1.3.2.1 2014/08/19 23:46:29 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -27,7 +27,7 @@
 
 /*
  * Acache
- * 
+ *
  * The Additional Cache Object
  *
  *	This module manages internal caching entries that correspond to
@@ -133,7 +133,7 @@
  *	- 76 bytes for each additional cache entry
  *	- if the entry has a DNS name and associated RRset,
  *	  * 44 bytes + size of the name (1-255 bytes)
- *	  * 52 bytes x number_of_RRs 
+ *	  * 52 bytes x number_of_RRs
  *	- 28 bytes for each DB related to this module
  *
  *	Using the additional cache also requires extra memory consumption in
@@ -240,7 +240,7 @@ dns_acache_setcleaninginterval(dns_acache_t *acache, unsigned int t);
  */
 
 void
-dns_acache_setcachesize(dns_acache_t *acache, isc_uint32_t size);
+dns_acache_setcachesize(dns_acache_t *acache, size_t size);
 /*
  * Set the maximum additional cache size.  0 means unlimited.
  */
@@ -389,7 +389,7 @@ dns_acache_setentry(dns_acache_t *acache, dns_acacheentry_t *entry,
  *	ISC_R_NOTFOUND
  */
 
-void
+isc_boolean_t
 dns_acache_cancelentry(dns_acacheentry_t *entry);
 /*
  * Cancel the use of the cache entry 'entry'.  This function is supposed to
@@ -400,6 +400,9 @@ dns_acache_cancelentry(dns_acacheentry_t *entry);
  *
  * Requires:
  *	'entry' is a valid additional cache entry.
+ *
+ * Returns:
+ * 	ISC_TRUE if the entry was active when canceled
  */
 
 void
@@ -417,7 +420,7 @@ dns_acache_attachentry(dns_acacheentry_t *source, dns_acacheentry_t **targetp);
  *
  *	*targetp is attached to 'source'.
  */
-		       
+
 void
 dns_acache_detachentry(dns_acacheentry_t **entryp);
 /*
@@ -431,7 +434,7 @@ dns_acache_detachentry(dns_acacheentry_t **entryp);
  *
  *	*entryp is NULL.
  *
- *	If '*entryp' is the last reference to the entry, 
+ *	If '*entryp' is the last reference to the entry,
  *	cache does not have an outstanding task, all resources used by the
  *	entry (including the entry object itself) will be freed.
  */

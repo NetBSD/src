@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_wharton.c,v 1.1.1.1 2009/12/13 16:55:22 kardel Exp $	*/
+/*	$NetBSD: clk_wharton.c,v 1.1.1.1.12.1 2014/08/19 23:51:41 tls Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libparse/clk_wharton.c,v 4.2 2004/11/14 15:29:41 kardel RELEASE_20050508_A
@@ -93,7 +93,7 @@ cvt_wharton_400a(
 	int	i;
 
 	/* The given `size' includes a terminating null-character. */
-	if (size != 16 || buffer[0] != STX || buffer[14] != ETX
+	if (size != 15 || buffer[0] != STX || buffer[14] != ETX
 	    || buffer[13] < '0' || buffer[13] > ('0' + 0xf))
 		return CVT_NONE;
 	for (i = 1; i < 13; i += 1)

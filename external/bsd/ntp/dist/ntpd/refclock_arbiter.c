@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_arbiter.c,v 1.1.1.2 2012/01/31 21:26:42 kardel Exp $	*/
+/*	$NetBSD: refclock_arbiter.c,v 1.1.1.2.6.1 2014/08/19 23:51:42 tls Exp $	*/
 
 /*
  * refclock_arbiter - clock driver for Arbiter 1088A/B Satellite
@@ -165,17 +165,17 @@ arb_start(
 	 * Open serial port. Use CLK line discipline, if available.
 	 */
 	snprintf(device, sizeof(device), DEVICE, unit);
-	if (!(fd = refclock_open(device, SPEED232, LDISC_CLK)))
+	fd = refclock_open(device, SPEED232, LDISC_CLK);
+	if (fd <= 0)
 		return (0);
 
 	/*
 	 * Allocate and initialize unit structure
 	 */
-	up = emalloc(sizeof(*up));
-	memset(up, 0, sizeof(*up));
+	up = emalloc_zero(sizeof(*up));
 	pp = peer->procptr;
 	pp->io.clock_recv = arb_receive;
-	pp->io.srcclock = (caddr_t)peer;
+	pp->io.srcclock = peer;
 	pp->io.datalen = 0;
 	pp->io.fd = fd;
 	if (!io_addclock(&pp->io)) {
@@ -184,7 +184,7 @@ arb_start(
 		free(up);
 		return (0);
 	}
-	pp->unitptr = (caddr_t)up;
+	pp->unitptr = up;
 
 	/*
 	 * Initialize miscellaneous variables
@@ -220,7 +220,7 @@ arb_shutdown(
 	struct refclockproc *pp;
 
 	pp = peer->procptr;
-	up = (struct arbunit *)pp->unitptr;
+	up = pp->unitptr;
 	if (-1 != pp->io.fd)
 		io_closeclock(&pp->io);
 	if (NULL != up)
@@ -247,10 +247,10 @@ arb_receive(
 	/*
 	 * Initialize pointers and read the timecode and timestamp
 	 */
-	peer = (struct peer *)rbufp->recv_srcclock;
+	peer = rbufp->recv_peer;
 	pp = peer->procptr;
-	up = (struct arbunit *)pp->unitptr;
-	temp = refclock_gtlin(rbufp, tbuf, BMAX, &trtmp);
+	up = pp->unitptr;
+	temp = refclock_gtlin(rbufp, tbuf, sizeof(tbuf), &trtmp);
 
 	/*
 	 * Note we get a buffer and timestamp for both a <cr> and <lf>,
@@ -291,7 +291,8 @@ arb_receive(
 			return;
 
 		} else if (!strncmp(tbuf, "SR", 2)) {
-			strcpy(up->status, tbuf + 2);
+			strlcpy(up->status, tbuf + 2,
+				sizeof(up->status));
 			if (pp->sloppyclockflag & CLK_FLAG4)
 				write(pp->io.fd, "LA", 2);
 			else
@@ -299,25 +300,25 @@ arb_receive(
 			return;
 
 		} else if (!strncmp(tbuf, "LA", 2)) {
-			strcpy(up->latlon, tbuf + 2);
+			strlcpy(up->latlon, tbuf + 2, sizeof(up->latlon));
 			write(pp->io.fd, "LO", 2);
 			return;
 
 		} else if (!strncmp(tbuf, "LO", 2)) {
-			strcat(up->latlon, " ");
-			strcat(up->latlon, tbuf + 2);
+			strlcat(up->latlon, " ", sizeof(up->latlon));
+			strlcat(up->latlon, tbuf + 2, sizeof(up->latlon));
 			write(pp->io.fd, "LH", 2);
 			return;
 
 		} else if (!strncmp(tbuf, "LH", 2)) {
-			strcat(up->latlon, " ");
-			strcat(up->latlon, tbuf + 2);
+			strlcat(up->latlon, " ", sizeof(up->latlon));
+			strlcat(up->latlon, tbuf + 2, sizeof(up->latlon));
 			write(pp->io.fd, "DB", 2);
 			return;
 
 		} else if (!strncmp(tbuf, "DB", 2)) {
-			strcat(up->latlon, " ");
-			strcat(up->latlon, tbuf + 2);
+			strlcat(up->latlon, " ", sizeof(up->latlon));
+			strlcat(up->latlon, tbuf + 2, sizeof(up->latlon));
 			record_clock_stats(&peer->srcadr, up->latlon);
 #ifdef DEBUG
 			if (debug)
@@ -343,9 +344,9 @@ arb_receive(
 	/*
 	 * Timecode format B5: "i yy ddd hh:mm:ss.000   "
 	 */
-	strncpy(pp->a_lastcode, tbuf, BMAX);
+	strlcpy(pp->a_lastcode, tbuf, sizeof(pp->a_lastcode));
 	pp->a_lastcode[LENARB - 2] = up->qualchar;
-	strcat(pp->a_lastcode, up->status);
+	strlcat(pp->a_lastcode, up->status, sizeof(pp->a_lastcode));
 	pp->lencode = strlen(pp->a_lastcode);
 	syncchar = ' ';
 	if (sscanf(pp->a_lastcode, "%c%2d %3d %2d:%2d:%2d",
@@ -452,7 +453,7 @@ arb_poll(
 	 * need poll the clock; all others just listen in.
 	 */
 	pp = peer->procptr;
-	up = (struct arbunit *)pp->unitptr;
+	up = pp->unitptr;
 	pp->polls++;
 	up->tcswitch = 0;
 	if (write(pp->io.fd, "TQ", 2) != 2)

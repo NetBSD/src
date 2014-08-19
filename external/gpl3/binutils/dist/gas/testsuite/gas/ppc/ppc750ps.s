@@ -1,5 +1,5 @@
 # PowerPC 750 paired single precision tests
-	.section ".text"
+	.text
 start:
 	psq_l	0, 4(3), 1, 5
 	psq_lu	1, 8(2), 0, 3

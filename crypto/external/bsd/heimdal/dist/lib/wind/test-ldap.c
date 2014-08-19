@@ -1,4 +1,4 @@
-/*	$NetBSD: test-ldap.c,v 1.1.1.1 2011/04/13 18:16:00 elric Exp $	*/
+/*	$NetBSD: test-ldap.c,v 1.1.1.1.10.1 2014/08/19 23:45:20 tls Exp $	*/
 
 /*
  * Copyright (c) 2008 Kungliga Tekniska Högskolan
@@ -105,7 +105,7 @@ main(void)
 	olen = sizeof(out)/sizeof(out[0]);
 	assert(olen > t->olen);
 
-	ret = wind_stringprep(t->in, t->ilen, out, &olen, 
+	ret = wind_stringprep(t->in, t->ilen, out, &olen,
 			      WIND_PROFILE_LDAP_CASE);
 
 	if (ret) {

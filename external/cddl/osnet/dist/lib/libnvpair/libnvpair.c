@@ -128,13 +128,13 @@ nvlist_print_with_indent(FILE *fp, nvlist_t *nvl, int depth)
 		case DATA_TYPE_INT64: {
 			int64_t val;
 			(void) nvpair_value_int64(nvp, &val);
-			(void) fprintf(fp, " %lld", (longlong_t)val);
+			(void) fprintf(fp, " %" PRId64 , val);
 			break;
 		}
 		case DATA_TYPE_UINT64: {
 			uint64_t val;
 			(void) nvpair_value_uint64(nvp, &val);
-			(void) fprintf(fp, " 0x%llx", (u_longlong_t)val);
+			(void) fprintf(fp, " 0x%" PRIx64, val);
 			break;
 		}
 		case DATA_TYPE_DOUBLE: {
@@ -209,15 +209,14 @@ nvlist_print_with_indent(FILE *fp, nvlist_t *nvl, int depth)
 			int64_t *val;
 			(void) nvpair_value_int64_array(nvp, &val, &nelem);
 			for (i = 0; i < nelem; i++)
-				(void) fprintf(fp, " %lld", (longlong_t)val[i]);
+				(void) fprintf(fp, " %" PRId64, val[i]);
 			break;
 		}
 		case DATA_TYPE_UINT64_ARRAY: {
 			uint64_t *val;
 			(void) nvpair_value_uint64_array(nvp, &val, &nelem);
 			for (i = 0; i < nelem; i++)
-				(void) fprintf(fp, " 0x%llx",
-				    (u_longlong_t)val[i]);
+				(void) fprintf(fp, " 0x%" PRIx64, val[i]);
 			break;
 		}
 		case DATA_TYPE_STRING_ARRAY: {
@@ -230,7 +229,7 @@ nvlist_print_with_indent(FILE *fp, nvlist_t *nvl, int depth)
 		case DATA_TYPE_HRTIME: {
 			hrtime_t val;
 			(void) nvpair_value_hrtime(nvp, &val);
-			(void) fprintf(fp, " 0x%llx", val);
+			(void) fprintf(fp, " 0x%jx", (intmax_t)val);
 			break;
 		}
 		case DATA_TYPE_NVLIST: {
@@ -344,11 +343,11 @@ dump_nvlist(nvlist_t *list, int indent)
 			break;
 
 		case DATA_TYPE_INT64:
-			NVP(elem, int64, int64_t, longlong_t, "%lld");
+			NVP(elem, int64, int64_t, int64_t, "%" PRIx64);
 			break;
 
 		case DATA_TYPE_UINT64:
-			NVP(elem, uint64, uint64_t, u_longlong_t, "%llu");
+			NVP(elem, uint64, uint64_t, uint64_t, "%" PRIu64);
 			break;
 
 		case DATA_TYPE_STRING:
@@ -384,12 +383,12 @@ dump_nvlist(nvlist_t *list, int indent)
 			break;
 
 		case DATA_TYPE_INT64_ARRAY:
-			NVPA(elem, int64_array, int64_t, longlong_t, "%lld");
+			NVPA(elem, int64_array, int64_t, int64_t, "%" PRId64);
 			break;
 
 		case DATA_TYPE_UINT64_ARRAY:
-			NVPA(elem, uint64_array, uint64_t, u_longlong_t,
-			    "%llu");
+			NVPA(elem, uint64_array, uint64_t, uint64_t,
+			    "%" PRIu64);
 			break;
 
 		case DATA_TYPE_STRING_ARRAY:

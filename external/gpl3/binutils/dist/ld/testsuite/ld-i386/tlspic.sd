@@ -1,11 +1,11 @@
 #source: tlspic1.s
 #source: tlspic2.s
 #as: --32
-#ld: -shared -melf_i386
+#ld: -shared -melf_i386 --no-ld-generated-unwind-info
 #objdump: -sj.got
 #target: i?86-*-*
 
-.*:     file format elf32-i386
+.*:     file format elf32-i386.*
 
 Contents of section \.got:
  [0-9a-f]+ 00000000 20000000 dcffffff 28000000  .*

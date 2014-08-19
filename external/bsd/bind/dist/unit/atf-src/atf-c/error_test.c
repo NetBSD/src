@@ -1,9 +1,9 @@
-/*	$NetBSD: error_test.c,v 1.1.1.1 2011/09/11 17:20:27 christos Exp $	*/
+/*	$NetBSD: error_test.c,v 1.1.1.1.8.1 2014/08/19 23:46:37 tls Exp $	*/
 
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@
 
 #include <atf-c.h>
 
+#include "atf-c/defs.h"
 #include "atf-c/error.h"
 
 #include "detail/test_helpers.h"
@@ -46,7 +47,8 @@
 
 static
 void
-test_format(const atf_error_t err, char *buf, size_t buflen)
+test_format(const atf_error_t err ATF_DEFS_ATTRIBUTE_UNUSED,
+            char *buf, size_t buflen)
 {
     snprintf(buf, buflen, "Test formatting function");
 }

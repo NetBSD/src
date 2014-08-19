@@ -317,7 +317,7 @@ public:
 	void printUsage(Options & options)
 	{
 		options.usage(std::cout, "files...");
-		printf(k_usageText, k_toolName);
+		printf("%s", k_usageText);
 	}
 	
 	/*!

@@ -1,5 +1,5 @@
 /* TI C6X assembler.
-   Copyright 2010
+   Copyright 2010, 2011, 2012
    Free Software Foundation, Inc.
    Contributed by Joseph Myers <joseph@codesourcery.com>
    		  Bernd Schmidt  <bernds@codesourcery.com>
@@ -23,6 +23,7 @@
 
 #include "as.h"
 #include "dwarf2dbg.h"
+#include "dw2gencfi.h"
 #include "safe-ctype.h"
 #include "subsegs.h"
 #include "opcode/tic6x.h"
@@ -33,6 +34,13 @@
    host gives identical results to a 32-bit host.  */
 #define TRUNC(X)	((valueT) (X) & 0xffffffffU)
 #define SEXT(X)		((TRUNC (X) ^ 0x80000000U) - 0x80000000U)
+
+#define streq(a, b)           (strcmp (a, b) == 0)
+
+/* Stuff for .scomm symbols.  */
+static segT sbss_section;
+static asection scom_section;
+static asymbol scom_symbol;
 
 const char comment_chars[] = ";";
 const char line_comment_chars[] = "#*;";
@@ -46,8 +54,6 @@ const char *md_shortopts = "";
 enum
   {
     OPTION_MARCH = OPTION_MD_BASE,
-    OPTION_MATOMIC,
-    OPTION_MNO_ATOMIC,
     OPTION_MBIG_ENDIAN,
     OPTION_MLITTLE_ENDIAN,
     OPTION_MDSBT,
@@ -61,8 +67,6 @@ enum
 struct option md_longopts[] =
   {
     { "march", required_argument, NULL, OPTION_MARCH },
-    { "matomic", no_argument, NULL, OPTION_MATOMIC },
-    { "mno-atomic", no_argument, NULL, OPTION_MNO_ATOMIC },
     { "mbig-endian", no_argument, NULL, OPTION_MBIG_ENDIAN },
     { "mlittle-endian", no_argument, NULL, OPTION_MLITTLE_ENDIAN },
     { "mdsbt", no_argument, NULL, OPTION_MDSBT },
@@ -75,20 +79,14 @@ struct option md_longopts[] =
   };
 size_t md_longopts_size = sizeof (md_longopts);
 
-/* Whether to enable atomic instructions.  1 to enable them, 0 to
-   disable, -1 to default from architecture.  */
-static int tic6x_atomic = -1;
-
 /* The instructions enabled based only on the selected architecture
-   (all instructions, if no architecture specified).  Atomic
-   instructions may be enabled or disabled separately.  */
+   (all instructions, if no architecture specified).  */
 static unsigned short tic6x_arch_enable = (TIC6X_INSN_C62X
 					   | TIC6X_INSN_C64X
 					   | TIC6X_INSN_C64XP
 					   | TIC6X_INSN_C67X
 					   | TIC6X_INSN_C67XP
-					   | TIC6X_INSN_C674X
-					   | TIC6X_INSN_ATOMIC);
+					   | TIC6X_INSN_C674X);
 
 /* The instructions enabled based on the current set of features
    (architecture, as modified by other options).  */
@@ -167,6 +165,49 @@ static const tic6x_arch_table tic6x_arches[] =
 				      | TIC6X_INSN_C674X) }
   };
 
+/* Caller saved register encodings.  The standard frame layout uses this
+   order, starting from the highest address.  There must be
+   TIC6X_NUM_UNWIND_REGS values.  */
+enum
+{
+  UNWIND_A15,
+  UNWIND_B15,
+  UNWIND_B14,
+  UNWIND_B13,
+  UNWIND_B12,
+  UNWIND_B11,
+  UNWIND_B10,
+  UNWIND_B3,
+  UNWIND_A14,
+  UNWIND_A13,
+  UNWIND_A12,
+  UNWIND_A11,
+  UNWIND_A10
+};
+
+static void tic6x_output_unwinding (bfd_boolean need_extab);
+
+/* Return the frame unwind state for the current function, allocating
+   as necessary.  */
+
+static tic6x_unwind_info *tic6x_get_unwind (void)
+{
+  tic6x_unwind_info *unwind;
+
+  unwind = seg_info (now_seg)->tc_segment_info_data.unwind;
+  if (unwind)
+    return unwind;
+
+  unwind = seg_info (now_seg)->tc_segment_info_data.text_unwind;
+  if (unwind)
+    return unwind;
+
+  unwind = (tic6x_unwind_info *)xmalloc (sizeof (tic6x_unwind_info));
+  seg_info (now_seg)->tc_segment_info_data.unwind = unwind;
+  memset (unwind, 0, sizeof (*unwind));
+  return unwind;
+}
+
 /* Update the selected architecture based on ARCH, giving an error if
    ARCH is an invalid value.  Does not call tic6x_update_features; the
    caller must do that if necessary.  */
@@ -233,14 +274,6 @@ md_parse_option (int c, char *arg)
       tic6x_use_arch (arg);
       break;
 
-    case OPTION_MATOMIC:
-      tic6x_atomic = 1;
-      break;
-
-    case OPTION_MNO_ATOMIC:
-      tic6x_atomic = 0;
-      break;
-
     case OPTION_MBIG_ENDIAN:
       target_big_endian = 1;
       break;
@@ -287,8 +320,6 @@ md_show_usage (FILE *stream ATTRIBUTE_UNUSED)
   fputc ('\n', stream);
   fprintf (stream, _("TMS320C6000 options:\n"));
   fprintf (stream, _("  -march=ARCH             enable instructions from architecture ARCH\n"));
-  fprintf (stream, _("  -matomic                enable atomic operation instructions\n"));
-  fprintf (stream, _("  -mno-atomic             disable atomic operation instructions\n"));
   fprintf (stream, _("  -mbig-endian            generate big-endian code\n"));
   fprintf (stream, _("  -mlittle-endian         generate little-endian code\n"));
   fprintf (stream, _("  -mdsbt                  code uses DSBT addressing\n"));
@@ -315,23 +346,7 @@ md_show_usage (FILE *stream ATTRIBUTE_UNUSED)
 static void
 tic6x_update_features (void)
 {
-  switch (tic6x_atomic)
-    {
-    case -1:
-      tic6x_features = tic6x_arch_enable;
-      break;
-
-    case 0:
-      tic6x_features = tic6x_arch_enable & ~TIC6X_INSN_ATOMIC;
-      break;
-
-    case 1:
-      tic6x_features = tic6x_arch_enable | TIC6X_INSN_ATOMIC;
-      break;
-
-    default:
-      abort ();
-    }
+  tic6x_features = tic6x_arch_enable;
 
   tic6x_num_registers
     = (tic6x_arch_enable & (TIC6X_INSN_C64X | TIC6X_INSN_C67XP)) ? 32 : 16;
@@ -356,8 +371,122 @@ tic6x_after_parse_args (void)
   tic6x_update_features ();
 }
 
-/* Parse a .arch directive.  */
+/* Parse a .cantunwind directive.  */
+static void
+s_tic6x_cantunwind (int ignored ATTRIBUTE_UNUSED)
+{
+  tic6x_unwind_info *unwind = tic6x_get_unwind ();
 
+  /* GCC sometimes spits out superfluous .cantunwind directives, so ignore
+     them.  */
+  if (unwind->data_bytes == 0)
+    return;
+
+  if (unwind->data_bytes != -1)
+    {
+      as_bad (_("unexpected .cantunwind directive"));
+      return;
+    }
+
+  demand_empty_rest_of_line ();
+
+  if (unwind->personality_routine || unwind->personality_index != -1)
+    as_bad (_("personality routine specified for cantunwind frame"));
+
+  unwind->personality_index = -2;
+}
+
+/* Parse a .handlerdata directive.  */
+static void
+s_tic6x_handlerdata (int ignored ATTRIBUTE_UNUSED)
+{
+  tic6x_unwind_info *unwind = tic6x_get_unwind ();
+
+  if (!unwind->saved_seg)
+    {
+      as_bad (_("unexpected .handlerdata directive"));
+      return;
+    }
+
+  if (unwind->table_entry || unwind->personality_index == -2)
+    {
+      as_bad (_("duplicate .handlerdata directive"));
+      return;
+    }
+
+  if (unwind->personality_index == -1 && unwind->personality_routine == NULL)
+    {
+      as_bad (_("personality routine required before .handlerdata directive"));
+      return;
+    }
+
+  tic6x_output_unwinding (TRUE);
+}
+
+/* Parse a .endp directive.  */
+static void
+s_tic6x_endp (int ignored ATTRIBUTE_UNUSED)
+{
+  tic6x_unwind_info *unwind = tic6x_get_unwind ();
+
+  if (unwind->data_bytes != 0)
+    {
+      /* Output a .exidx entry if we have not already done so.
+	 Then switch back to the text section.  */
+      if (!unwind->table_entry)
+	tic6x_output_unwinding (FALSE);
+
+      subseg_set (unwind->saved_seg, unwind->saved_subseg);
+    }
+
+  unwind->saved_seg = NULL;
+  unwind->table_entry = NULL;
+  unwind->data_bytes = 0;
+}
+
+/* Parse a .personalityindex directive.  */
+static void
+s_tic6x_personalityindex (int ignored ATTRIBUTE_UNUSED)
+{
+  tic6x_unwind_info *unwind = tic6x_get_unwind ();
+  expressionS exp;
+
+  if (unwind->personality_routine || unwind->personality_index != -1)
+    as_bad (_("duplicate .personalityindex directive"));
+
+  expression (&exp);
+
+  if (exp.X_op != O_constant
+      || exp.X_add_number < 0 || exp.X_add_number > 15)
+    {
+      as_bad (_("bad personality routine number"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  unwind->personality_index = exp.X_add_number;
+
+  demand_empty_rest_of_line ();
+}
+
+static void
+s_tic6x_personality (int ignored ATTRIBUTE_UNUSED)
+{
+  char *name, *p, c;
+  tic6x_unwind_info *unwind = tic6x_get_unwind ();
+
+  if (unwind->personality_routine || unwind->personality_index != -1)
+    as_bad (_("duplicate .personality directive"));
+
+  name = input_line_pointer;
+  c = get_symbol_end ();
+  p = input_line_pointer;
+  unwind->personality_routine = symbol_find_or_make (name);
+  *p = c;
+  demand_empty_rest_of_line ();
+}
+
+/* Parse a .arch directive.  */
 static void
 s_tic6x_arch (int ignored ATTRIBUTE_UNUSED)
 {
@@ -376,23 +505,41 @@ s_tic6x_arch (int ignored ATTRIBUTE_UNUSED)
   demand_empty_rest_of_line ();
 }
 
-/* Parse a .atomic directive.  */
+/* Parse a .ehtype directive.  */
 
 static void
-s_tic6x_atomic (int ignored ATTRIBUTE_UNUSED)
+s_tic6x_ehtype (int ignored ATTRIBUTE_UNUSED)
 {
-  tic6x_atomic = 1;
-  tic6x_update_features ();
-  demand_empty_rest_of_line ();
-}
+  expressionS exp;
+  char *p;
 
-/* Parse a .noatomic directive.  */
+#ifdef md_flush_pending_output
+  md_flush_pending_output ();
+#endif
 
-static void
-s_tic6x_noatomic (int ignored ATTRIBUTE_UNUSED)
-{
-  tic6x_atomic = 0;
-  tic6x_update_features ();
+  if (is_it_end_of_statement ())
+    {
+      demand_empty_rest_of_line ();
+      return;
+    }
+
+#ifdef md_cons_align
+  md_cons_align (4);
+#endif
+
+
+  expression (&exp);
+
+  if (exp.X_op != O_symbol)
+    {
+      as_bad (_("expected symbol"));
+      return;
+    }
+
+  p = frag_more (4);
+  fix_new_exp (frag_now, p - frag_now->fr_literal, 4,
+	       &exp, 0, BFD_RELOC_C6000_EHTYPE);
+
   demand_empty_rest_of_line ();
 }
 
@@ -402,6 +549,138 @@ static void
 s_tic6x_nocmp (int ignored ATTRIBUTE_UNUSED)
 {
   seg_info (now_seg)->tc_segment_info_data.nocmp = TRUE;
+  demand_empty_rest_of_line ();
+}
+
+/* .scomm pseudo-op handler.
+
+   This is a new pseudo-op to handle putting objects in .scommon.
+   By doing this the linker won't need to do any work,
+   and more importantly it removes the implicit -G arg necessary to
+   correctly link the object file.  */
+
+static void
+s_tic6x_scomm (int ignore ATTRIBUTE_UNUSED)
+{
+  char *name;
+  char c;
+  char *p;
+  offsetT size;
+  symbolS *symbolP;
+  offsetT align;
+  int align2;
+
+  name = input_line_pointer;
+  c = get_symbol_end ();
+
+  /* Just after name is now '\0'.  */
+  p = input_line_pointer;
+  *p = c;
+  SKIP_WHITESPACE ();
+  if (*input_line_pointer != ',')
+    {
+      as_bad (_("expected comma after symbol name"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  /* Skip ','.  */
+  input_line_pointer++;
+  if ((size = get_absolute_expression ()) < 0)
+    {
+      /* xgettext:c-format  */
+      as_warn (_("invalid length for .scomm directive"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  /* The third argument to .scomm is the alignment.  */
+  if (*input_line_pointer != ',')
+    align = 8;
+  else
+    {
+      ++input_line_pointer;
+      align = get_absolute_expression ();
+      if (align <= 0)
+	{
+	  as_warn (_("alignment is not a positive number"));
+	  align = 8;
+	}
+    }
+
+  /* Convert to a power of 2 alignment.  */
+  if (align)
+    {
+      for (align2 = 0; (align & 1) == 0; align >>= 1, ++align2)
+	continue;
+      if (align != 1)
+	{
+	  as_bad (_("alignment is not a power of 2"));
+	  ignore_rest_of_line ();
+	  return;
+	}
+    }
+  else
+    align2 = 0;
+
+  *p = 0;
+  symbolP = symbol_find_or_make (name);
+  *p = c;
+
+  if (S_IS_DEFINED (symbolP))
+    {
+      /* xgettext:c-format  */
+      as_bad (_("attempt to re-define symbol `%s'"),
+	      S_GET_NAME (symbolP));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  if (S_GET_VALUE (symbolP) && S_GET_VALUE (symbolP) != (valueT) size)
+    {
+      /* xgettext:c-format  */
+      as_bad (_("attempt to redefine `%s' with a different length"),
+	      S_GET_NAME (symbolP));
+
+      ignore_rest_of_line ();
+      return;
+    }
+
+  if (symbol_get_obj (symbolP)->local)
+    {
+      segT old_sec = now_seg;
+      int old_subsec = now_subseg;
+      char *pfrag;
+
+      record_alignment (sbss_section, align2);
+      subseg_set (sbss_section, 0);
+
+      if (align2)
+	frag_align (align2, 0, 0);
+
+      if (S_GET_SEGMENT (symbolP) == sbss_section)
+	symbol_get_frag (symbolP)->fr_symbol = 0;
+
+      symbol_set_frag (symbolP, frag_now);
+
+      pfrag = frag_var (rs_org, 1, 1, (relax_substateT) 0, symbolP, size,
+			(char *) 0);
+      *pfrag = 0;
+      S_SET_SIZE (symbolP, size);
+      S_SET_SEGMENT (symbolP, sbss_section);
+      S_CLEAR_EXTERNAL (symbolP);
+      subseg_set (old_sec, old_subsec);
+    }
+  else
+    {
+      S_SET_VALUE (symbolP, (valueT) size);
+      S_SET_ALIGN (symbolP, 1 << align2);
+      S_SET_EXTERNAL (symbolP);
+      S_SET_SEGMENT (symbolP, &scom_section);
+    }
+
+  symbol_get_bfdsym (symbolP)->flags |= BSF_OBJECT;
+
   demand_empty_rest_of_line ();
 }
 
@@ -450,11 +729,16 @@ tic6x_convert_symbolic_attribute (const char *name)
 const pseudo_typeS md_pseudo_table[] =
   {
     { "arch", s_tic6x_arch, 0 },
-    { "atomic", s_tic6x_atomic, 0 },
     { "c6xabi_attribute", s_tic6x_c6xabi_attribute, 0 },
-    { "noatomic", s_tic6x_noatomic, 0 },
     { "nocmp", s_tic6x_nocmp, 0 },
+    { "scomm",	s_tic6x_scomm, 0 },
     { "word", cons, 4 },
+    { "ehtype", s_tic6x_ehtype, 0 },
+    { "endp", s_tic6x_endp, 0 },
+    { "handlerdata", s_tic6x_handlerdata, 0 },
+    { "personalityindex", s_tic6x_personalityindex, 0 },
+    { "personality", s_tic6x_personality, 0 },
+    { "cantunwind", s_tic6x_cantunwind, 0 },
     { 0, 0, 0 }
   };
 
@@ -469,6 +753,9 @@ void
 md_begin (void)
 {
   tic6x_opcode_id id;
+  flagword applicable;
+  segT seg;
+  subsegT subseg;
 
   bfd_set_arch_mach (stdoutput, TARGET_ARCH, 0);
 
@@ -485,6 +772,32 @@ md_begin (void)
 	  != NULL)
 	as_fatal ("%s", _(errmsg));
     }
+
+  /* Save the current subseg so we can restore it [it's the default one and
+     we don't want the initial section to be .sbss].  */
+  seg = now_seg;
+  subseg = now_subseg;
+
+  /* The sbss section is for local .scomm symbols.  */
+  sbss_section = subseg_new (".bss", 0);
+  seg_info (sbss_section)->bss = 1;
+
+  /* This is copied from perform_an_assembly_pass.  */
+  applicable = bfd_applicable_section_flags (stdoutput);
+  bfd_set_section_flags (stdoutput, sbss_section, applicable & SEC_ALLOC);
+
+  subseg_set (seg, subseg);
+
+  /* We must construct a fake section similar to bfd_com_section
+     but with the name .scommon.  */
+  scom_section                = *bfd_com_section_ptr;
+  scom_section.name           = ".scommon";
+  scom_section.output_section = & scom_section;
+  scom_section.symbol         = & scom_symbol;
+  scom_section.symbol_ptr_ptr = & scom_section.symbol;
+  scom_symbol                 = * bfd_com_section_ptr->symbol;
+  scom_symbol.name            = ".scommon";
+  scom_symbol.section         = & scom_section;
 }
 
 /* Whether the current line being parsed had the "||" parallel bars.  */
@@ -1425,6 +1738,8 @@ static const tic6x_operator_table tic6x_operators[] = {
   { "dpr_hword", O_dpr_hword },
 #define O_dpr_word O_md6
   { "dpr_word", O_dpr_word },
+#define O_pcr_offset O_md7
+  { "pcr_offset", O_pcr_offset }
 };
 
 /* Parse a name in some machine-specific way.  Used on C6X to handle
@@ -1439,7 +1754,7 @@ tic6x_parse_name (const char *name, expressionS *exprP,
   const char *inner_name;
   unsigned int i;
   operatorT op = O_illegal;
-  symbolS *sym;
+  symbolS *sym, *op_sym = NULL;
 
   if (*name != '$')
     return 0;
@@ -1478,6 +1793,37 @@ tic6x_parse_name (const char *name, expressionS *exprP,
   name_end = p;
   skip_whitespace (p);
 
+  if (op == O_pcr_offset)
+    {
+      char *op_name_start, *op_name_end;
+
+      if (*p != ',')
+	{
+	  *input_line_pointer = 0;
+	  return 0;
+	}
+      p++;
+      skip_whitespace (p);
+
+      if (!is_name_beginner (*p))
+	{
+	  *input_line_pointer = 0;
+	  return 0;
+	}
+
+      op_name_start = p;
+      p++;
+      while (is_part_of_name (*p))
+	p++;
+      op_name_end = p;
+      skip_whitespace (p);
+
+      c = *op_name_end;
+      *op_name_end = 0;
+      op_sym = symbol_find_or_make (op_name_start);
+      *op_name_end = c;
+    }
+
   if (*p != ')')
     {
       *input_line_pointer = 0;
@@ -1502,7 +1848,7 @@ tic6x_parse_name (const char *name, expressionS *exprP,
   exprP->X_op = op;
   exprP->X_add_symbol = sym;
   exprP->X_add_number = 0;
-  exprP->X_op_symbol = NULL;
+  exprP->X_op_symbol = op_sym;
   exprP->X_md = 0;
 
   return 1;
@@ -1520,6 +1866,7 @@ tic6x_fix_new_exp (fragS *frag, int where, int size, expressionS *exp,
 		   bfd_boolean fix_adda)
 {
   bfd_reloc_code_real_type new_reloc = BFD_RELOC_UNUSED;
+  symbolS *subsy = NULL;
   fixS *fix;
 
   switch (exp->X_op)
@@ -1622,6 +1969,25 @@ tic6x_fix_new_exp (fragS *frag, int where, int size, expressionS *exp,
 	}
       break;
 
+    case O_pcr_offset:
+      subsy = exp->X_op_symbol;
+      switch (r_type)
+	{
+	case BFD_RELOC_C6000_ABS_S16:
+	case BFD_RELOC_C6000_ABS_L16:
+	  new_reloc = BFD_RELOC_C6000_PCR_L16;
+	  break;
+
+	case BFD_RELOC_C6000_ABS_H16:
+	  new_reloc = BFD_RELOC_C6000_PCR_H16;
+	  break;
+
+	default:
+	  as_bad (_("$PCR_OFFSET not supported in this context"));
+	  return;
+	}
+      break;
+
     case O_symbol:
       break;
 
@@ -1639,6 +2005,7 @@ tic6x_fix_new_exp (fragS *frag, int where, int size, expressionS *exp,
   else
     fix = fix_new (frag, where, size, exp->X_add_symbol, exp->X_add_number,
 		   pcrel, new_reloc);
+  fix->tc_fix_data.fix_subsy = subsy;
   fix->tc_fix_data.fix_adda = fix_adda;
 }
 
@@ -1678,6 +2045,7 @@ void
 tic6x_init_fix_data (fixS *fixP)
 {
   fixP->tc_fix_data.fix_adda = FALSE;
+  fixP->tc_fix_data.fix_subsy = NULL;
 }
 
 /* Return true if the fix can be handled by GAS, false if it must
@@ -1692,8 +2060,16 @@ tic6x_fix_adjustable (fixS *fixP)
     case BFD_RELOC_C6000_SBR_GOT_U15_W:
     case BFD_RELOC_C6000_SBR_GOT_H16_W:
     case BFD_RELOC_C6000_SBR_GOT_L16_W:
+    case BFD_RELOC_C6000_EHTYPE:
       return 0;
 
+    case BFD_RELOC_C6000_PREL31:
+      return 0;
+
+    case BFD_RELOC_C6000_PCR_H16:
+    case BFD_RELOC_C6000_PCR_L16:
+      return 0;
+      
     default:
       return 1;
     }
@@ -3399,6 +3775,7 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
   switch (fixP->fx_r_type)
     {
     case BFD_RELOC_NONE:
+    case BFD_RELOC_C6000_EHTYPE:
       /* Force output to the object file.  */
       fixP->fx_done = 0;
       break;
@@ -3503,6 +3880,19 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 	}
       if (fixP->fx_done && fixP->fx_r_type != BFD_RELOC_C6000_ABS_H16)
 	abort ();
+      break;
+
+    case BFD_RELOC_C6000_PCR_H16:
+    case BFD_RELOC_C6000_PCR_L16:
+      if (fixP->fx_done || !seg->use_rela_p)
+	{
+	  offsetT newval = md_chars_to_number (buf, 4);
+	  int shift = fixP->fx_r_type == BFD_RELOC_C6000_PCR_H16 ? 16 : 0;
+
+	  MODIFY_VALUE (newval, value, shift, 7, 16);
+
+	  md_number_to_chars (buf, newval, 4);
+	}
       break;
 
     case BFD_RELOC_C6000_SBR_U15_B:
@@ -3654,6 +4044,11 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 
 	  md_number_to_chars (buf, newval, 4);
 	}
+      break;
+
+    case BFD_RELOC_C6000_PREL31:
+      /* Force output to the object file.  */
+      fixP->fx_done = 0;
       break;
 
     default:
@@ -4087,11 +4482,13 @@ arelent *
 tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
 {
   arelent *reloc;
+  asymbol *symbol;
   bfd_reloc_code_real_type r_type;
 
   reloc = xmalloc (sizeof (arelent));
   reloc->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
-  *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
+  symbol = symbol_get_bfdsym (fixp->fx_addsy);
+  *reloc->sym_ptr_ptr = symbol;
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
   reloc->addend = (tic6x_generate_rela ? fixp->fx_offset : 0);
   r_type = fixp->fx_r_type;
@@ -4107,7 +4504,850 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
 
   /* Correct for adjustments bfd_install_relocation will make.  */
   if (reloc->howto->pcrel_offset && reloc->howto->partial_inplace)
-    reloc->addend += reloc->address;
+    {
+      reloc->addend += reloc->address;
+      if (!bfd_is_com_section (symbol))
+	reloc->addend -= symbol->value;
+    }
+  if (r_type == BFD_RELOC_C6000_PCR_H16
+      || r_type == BFD_RELOC_C6000_PCR_L16)
+    {
+      symbolS *t = fixp->tc_fix_data.fix_subsy;
+      segT sub_symbol_segment;
 
+      resolve_symbol_value (t);
+      sub_symbol_segment = S_GET_SEGMENT (t);
+      if (sub_symbol_segment == undefined_section)
+	as_bad_where (fixp->fx_file, fixp->fx_line,
+		      _("undefined symbol %s in PCR relocation"),
+		      S_GET_NAME (t));
+      else
+	{
+	  reloc->addend = reloc->address & ~0x1F;
+	  reloc->addend -= S_GET_VALUE (t);
+	}
+    }
   return reloc;
+}
+
+/* Convert REGNAME to a DWARF-2 register number.  */
+
+int
+tic6x_regname_to_dw2regnum (char *regname)
+{
+  bfd_boolean reg_ok;
+  tic6x_register reg;
+  char *rq = regname;
+
+  reg_ok = tic6x_parse_register (&rq, &reg);
+
+  if (!reg_ok)
+    return -1;
+
+  switch (reg.side)
+    {
+    case 1: /* A regs.  */
+      if (reg.num < 16)
+	return reg.num;
+      else if (reg.num < 32)
+	return (reg.num - 16) + 37;
+      else
+	return -1;
+
+    case 2: /* B regs.  */
+      if (reg.num < 16)
+	return reg.num + 16;
+      else if (reg.num < 32)
+	return (reg.num - 16) + 53;
+      else
+	return -1;
+
+    default:
+      return -1;
+    }
+}
+
+/* Initialize the DWARF-2 unwind information for this procedure.  */
+
+void
+tic6x_frame_initial_instructions (void)
+{
+  /* CFA is initial stack pointer (B15).  */
+  cfi_add_CFA_def_cfa (31, 0);
+}
+
+/* Start an exception table entry.  If idx is nonzero this is an index table
+   entry.  */
+
+static void
+tic6x_start_unwind_section (const segT text_seg, int idx)
+{
+  tic6x_unwind_info *unwind = tic6x_get_unwind ();
+  const char * text_name;
+  const char * prefix;
+  const char * prefix_once;
+  const char * group_name;
+  size_t prefix_len;
+  size_t text_len;
+  char * sec_name;
+  size_t sec_name_len;
+  int type;
+  int flags;
+  int linkonce;
+
+  if (idx)
+    {
+      prefix = ELF_STRING_C6000_unwind;
+      prefix_once = ELF_STRING_C6000_unwind_once;
+      type = SHT_C6000_UNWIND;
+    }
+  else
+    {
+      prefix = ELF_STRING_C6000_unwind_info;
+      prefix_once = ELF_STRING_C6000_unwind_info_once;
+      type = SHT_PROGBITS;
+    }
+
+  text_name = segment_name (text_seg);
+  if (streq (text_name, ".text"))
+    text_name = "";
+
+  if (strncmp (text_name, ".gnu.linkonce.t.",
+	       strlen (".gnu.linkonce.t.")) == 0)
+    {
+      prefix = prefix_once;
+      text_name += strlen (".gnu.linkonce.t.");
+    }
+
+  prefix_len = strlen (prefix);
+  text_len = strlen (text_name);
+  sec_name_len = prefix_len + text_len;
+  sec_name = (char *) xmalloc (sec_name_len + 1);
+  memcpy (sec_name, prefix, prefix_len);
+  memcpy (sec_name + prefix_len, text_name, text_len);
+  sec_name[prefix_len + text_len] = '\0';
+
+  flags = SHF_ALLOC;
+  linkonce = 0;
+  group_name = 0;
+
+  /* Handle COMDAT group.  */
+  if (prefix != prefix_once && (text_seg->flags & SEC_LINK_ONCE) != 0)
+    {
+      group_name = elf_group_name (text_seg);
+      if (group_name == NULL)
+	{
+	  as_bad (_("group section `%s' has no group signature"),
+		  segment_name (text_seg));
+	  ignore_rest_of_line ();
+	  return;
+	}
+      flags |= SHF_GROUP;
+      linkonce = 1;
+    }
+
+  obj_elf_change_section (sec_name, type, flags, 0, group_name, linkonce, 0);
+
+  /* Set the section link for index tables.  */
+  if (idx)
+    elf_linked_to_section (now_seg) = text_seg;
+
+  seg_info (now_seg)->tc_segment_info_data.text_unwind = unwind;
+}
+
+
+static const int
+tic6x_unwind_frame_regs[TIC6X_NUM_UNWIND_REGS] = 
+/* A15 B15 B14 B13 B12 B11 B10  B3 A14 A13 A12 A11 A10.  */
+  { 15, 31, 30, 29, 28, 27, 26, 19, 14, 13, 12, 11, 10 };
+
+/* Register save offsets for __c6xabi_push_rts.  */
+static const int
+tic6x_pop_rts_offset_little[TIC6X_NUM_UNWIND_REGS] = 
+/* A15 B15 B14 B13 B12 B11 B10  B3 A14 A13 A12 A11 A10.  */
+  { -1,  1,  0, -3, -4, -7, -8,-11, -2, -5, -6, -9,-10};
+
+static const int
+tic6x_pop_rts_offset_big[TIC6X_NUM_UNWIND_REGS] = 
+/* A15 B15 B14 B13 B12 B11 B10  B3 A14 A13 A12 A11 A10.  */
+  { -2,  1,  0, -4, -3, -8, -7,-12, -1, -6, -5,-10, -9};
+
+/* Map from dwarf register number to unwind frame register number.  */
+static int
+tic6x_unwind_reg_from_dwarf (int dwarf)
+{
+  int reg;
+
+  for (reg = 0; reg < TIC6X_NUM_UNWIND_REGS; reg++)
+    {
+      if (tic6x_unwind_frame_regs[reg] == dwarf)
+	return reg;
+    }
+
+  return -1;
+}
+
+/* Unwinding bytecode definitions.  */
+#define UNWIND_OP_ADD_SP  0x00
+#define UNWIND_OP_ADD_SP2 0xd2
+#define UNWIND_OP2_POP 0x8000
+#define UNWIND_OP2_POP_COMPACT 0xa000
+#define UNWIND_OP_POP_REG 0xc0
+#define UNWIND_OP_MV_FP 0xd0
+#define UNWIND_OP_POP_RTS 0xd1
+#define UNWIND_OP_RET 0xe0
+
+/* Maximum stack adjustment for __c6xabi_unwind_cpp_pr3/4 */
+#define MAX_COMPACT_SP_OFFSET (0x7f << 3)
+
+static void
+tic6x_flush_unwind_word (valueT data)
+{
+  tic6x_unwind_info *unwind = tic6x_get_unwind ();
+  char *ptr;
+
+  /* Create EXTAB entry if it does not exist.  */
+  if (unwind->table_entry == NULL)
+    {
+      tic6x_start_unwind_section (unwind->saved_seg, 0);
+      frag_align (2, 0, 0);
+      record_alignment (now_seg, 2);
+      unwind->table_entry = expr_build_dot ();
+      ptr = frag_more (4);
+      unwind->frag_start = ptr;
+    }
+  else
+    {
+      /* Append additional word of data.  */
+      ptr = frag_more (4);
+    }
+
+  md_number_to_chars (ptr, data, 4);
+}
+
+/* Add a single byte of unwinding data.  */
+
+static void
+tic6x_unwind_byte (int byte)
+{
+  tic6x_unwind_info *unwind = tic6x_get_unwind ();
+
+  unwind->data_bytes++;
+  /* Only flush the first word after we know multiple words are required.  */
+  if (unwind->data_bytes == 5)
+    {
+      if (unwind->personality_index == -1)
+	{
+	  /* At this point we know we are too big for pr0.  */
+	  unwind->personality_index = 1;
+	  tic6x_flush_unwind_word (0x81000000 | ((unwind->data >> 8) & 0xffff));
+	  unwind->data = ((unwind->data & 0xff) << 8) | byte;
+	  unwind->data_bytes++;
+	}
+      else
+	{
+	  tic6x_flush_unwind_word (unwind->data);
+	  unwind->data = byte;
+	}
+    }
+  else
+    {
+      unwind->data = (unwind->data << 8) | byte;
+      if ((unwind->data_bytes & 3) == 0 && unwind->data_bytes > 4)
+	{
+	  tic6x_flush_unwind_word (unwind->data);
+	  unwind->data = 0;
+	}
+    }
+}
+
+/* Add a two-byte unwinding opcode.  */
+static void
+tic6x_unwind_2byte (int bytes)
+{
+  tic6x_unwind_byte (bytes >> 8);
+  tic6x_unwind_byte (bytes & 0xff);
+}
+
+static void
+tic6x_unwind_uleb (offsetT offset)
+{
+  while (offset > 0x7f)
+    {
+      tic6x_unwind_byte ((offset & 0x7f) | 0x80);
+      offset >>= 7;
+    }
+  tic6x_unwind_byte (offset);
+}
+
+void
+tic6x_cfi_startproc (void)
+{
+  tic6x_unwind_info *unwind = tic6x_get_unwind ();
+
+  unwind->personality_index = -1;
+  unwind->personality_routine = NULL;
+  if (unwind->table_entry)
+    as_bad (_("missing .endp before .cfi_startproc"));
+
+  unwind->table_entry = NULL;
+  unwind->data_bytes = -1;
+}
+
+static void
+tic6x_output_exidx_entry (void)
+{
+  char *ptr;
+  long where;
+  unsigned int marked_pr_dependency;
+  segT old_seg;
+  subsegT old_subseg;
+  tic6x_unwind_info *unwind = tic6x_get_unwind ();
+
+  old_seg = now_seg;
+  old_subseg = now_subseg;
+
+  /* Add index table entry.  This is two words.	 */
+  tic6x_start_unwind_section (unwind->saved_seg, 1);
+  frag_align (2, 0, 0);
+  record_alignment (now_seg, 2);
+
+  ptr = frag_more (8);
+  where = frag_now_fix () - 8;
+
+  /* Self relative offset of the function start.  */
+  fix_new (frag_now, where, 4, unwind->function_start, 0, 1,
+	   BFD_RELOC_C6000_PREL31);
+
+  /* Indicate dependency on ABI-defined personality routines to the
+     linker, if it hasn't been done already.  */
+  marked_pr_dependency
+    = seg_info (now_seg)->tc_segment_info_data.marked_pr_dependency;
+  if (unwind->personality_index >= 0 && unwind->personality_index < 5
+      && !(marked_pr_dependency & (1 << unwind->personality_index)))
+    {
+      static const char *const name[] =
+	{
+	  "__c6xabi_unwind_cpp_pr0",
+	  "__c6xabi_unwind_cpp_pr1",
+	  "__c6xabi_unwind_cpp_pr2",
+	  "__c6xabi_unwind_cpp_pr3",
+	  "__c6xabi_unwind_cpp_pr4"
+	};
+      symbolS *pr = symbol_find_or_make (name[unwind->personality_index]);
+      fix_new (frag_now, where, 0, pr, 0, 1, BFD_RELOC_NONE);
+      seg_info (now_seg)->tc_segment_info_data.marked_pr_dependency
+	|= 1 << unwind->personality_index;
+    }
+
+  if (unwind->table_entry)
+    {
+      /* Self relative offset of the table entry.	 */
+      fix_new (frag_now, where + 4, 4, unwind->table_entry, 0, 1,
+	       BFD_RELOC_C6000_PREL31);
+    }
+  else
+    {
+      /* Inline exception table entry.  */
+      md_number_to_chars (ptr + 4, unwind->data, 4);
+    }
+
+  /* Restore the original section.  */
+  subseg_set (old_seg, old_subseg);
+}
+
+static void
+tic6x_output_unwinding (bfd_boolean need_extab)
+{
+  tic6x_unwind_info *unwind = tic6x_get_unwind ();
+  unsigned safe_mask = unwind->safe_mask;
+  unsigned compact_mask = unwind->compact_mask;
+  unsigned reg_saved_mask = unwind->reg_saved_mask;
+  offsetT cfa_offset = unwind->cfa_offset;
+  long where;
+  int reg;
+
+  if (unwind->personality_index == -2)
+    {
+      /* Function can not be unwound.  */
+      unwind->data = 1;
+      tic6x_output_exidx_entry ();
+      return;
+    }
+
+  if (unwind->personality_index == -1 && unwind->personality_routine == NULL)
+    {
+      /* Auto-select a personality routine if none specified.  */
+      if (reg_saved_mask || cfa_offset >= MAX_COMPACT_SP_OFFSET)
+	unwind->personality_index = -1;
+      else if (safe_mask)
+	unwind->personality_index = 3;
+      else
+	unwind->personality_index = 4;
+    }
+
+  /* Calculate unwinding opcodes, and emit to EXTAB if necessary.  */
+  unwind->table_entry = NULL;
+  if (unwind->personality_index == 3 || unwind->personality_index == 4)
+    {
+      if (cfa_offset >= MAX_COMPACT_SP_OFFSET)
+	{
+	  as_bad (_("stack pointer offset too large for personality routine"));
+	  return;
+	}
+      if (reg_saved_mask
+	  || (unwind->personality_index == 3 && compact_mask != 0)
+	  || (unwind->personality_index == 4 && safe_mask != 0))
+	{
+	  as_bad (_("stack frame layout does not match personality routine"));
+	  return;
+	}
+
+      unwind->data = (1u << 31) | (unwind->personality_index << 24);
+      if (unwind->cfa_reg == 15)
+	unwind->data |= 0x7f << 17;
+      else
+	unwind->data |= cfa_offset << (17 - 3);
+
+      if (unwind->personality_index == 3)
+	unwind->data |= safe_mask << 4;
+      else
+	unwind->data |= compact_mask << 4;
+      unwind->data |= unwind->return_reg;
+      unwind->data_bytes = 4;
+    }
+  else
+    {
+      if (unwind->personality_routine)
+	{
+	  unwind->data = 0;
+	  unwind->data_bytes = 5;
+	  tic6x_flush_unwind_word (0);
+	  /* First word is personality routine.  */
+	  where = frag_now_fix () - 4;
+	  fix_new (frag_now, where, 4, unwind->personality_routine, 0, 1,
+		   BFD_RELOC_C6000_PREL31);
+	}
+      else if (unwind->personality_index > 0)
+	{
+	  unwind->data = 0x8000 | (unwind->personality_index << 8);
+	  unwind->data_bytes = 2;
+	}
+      else /* pr0 or undecided */
+	{
+	  unwind->data = 0x80;
+	  unwind->data_bytes = 1;
+	}
+
+      if (unwind->return_reg != UNWIND_B3)
+	{
+	  tic6x_unwind_byte (UNWIND_OP_RET | unwind->return_reg);
+	}
+
+      if (unwind->cfa_reg == 15)
+	{
+	  tic6x_unwind_byte (UNWIND_OP_MV_FP);
+	}
+      else if (cfa_offset != 0)
+	{
+	  cfa_offset >>= 3;
+	  if (cfa_offset > 0x80)
+	    {
+	      tic6x_unwind_byte (UNWIND_OP_ADD_SP2);
+	      tic6x_unwind_uleb (cfa_offset - 0x81);
+	    }
+	  else if (cfa_offset > 0x40)
+	    {
+	      tic6x_unwind_byte (UNWIND_OP_ADD_SP | 0x3f);
+	      tic6x_unwind_byte (UNWIND_OP_ADD_SP | (cfa_offset - 0x40));
+	    }
+	  else
+	    {
+	      tic6x_unwind_byte (UNWIND_OP_ADD_SP | (cfa_offset - 1));
+	    }
+	}
+
+      if (safe_mask)
+	tic6x_unwind_2byte (UNWIND_OP2_POP | unwind->safe_mask);
+      else if (unwind->pop_rts)
+	tic6x_unwind_byte (UNWIND_OP_POP_RTS);
+      else if (compact_mask)
+	tic6x_unwind_2byte (UNWIND_OP2_POP_COMPACT | unwind->compact_mask);
+      else if (reg_saved_mask)
+	{
+	  offsetT cur_offset;
+	  int val;
+	  int last_val;
+
+	  tic6x_unwind_byte (UNWIND_OP_POP_REG | unwind->saved_reg_count);
+	  last_val = 0;
+	  for (cur_offset = 0; unwind->saved_reg_count > 0; cur_offset -= 4)
+	    {
+	      val = 0xf;
+	      for (reg = 0; reg < TIC6X_NUM_UNWIND_REGS; reg++)
+		{
+		  if (!unwind->reg_saved[reg])
+		    continue;
+
+		  if (unwind->reg_offset[reg] == cur_offset)
+		    {
+		      unwind->saved_reg_count--;
+		      val = reg;
+		      break;
+		    }
+		}
+	      if ((cur_offset & 4) == 4)
+		tic6x_unwind_byte ((last_val << 4) | val);
+	      else
+		last_val = val;
+	    }
+	  if ((cur_offset & 4) == 4)
+	    tic6x_unwind_byte ((last_val << 4) | 0xf);
+	}
+
+      /* Pad with RETURN opcodes.  */
+      while ((unwind->data_bytes & 3) != 0)
+	tic6x_unwind_byte (UNWIND_OP_RET | UNWIND_B3);
+
+      if (unwind->personality_index == -1 && unwind->personality_routine == NULL)
+	unwind->personality_index = 0;
+    }
+
+  /* Force creation of an EXTAB entry if an LSDA is required.  */
+  if (need_extab && !unwind->table_entry)
+    {
+      if (unwind->data_bytes != 4)
+	abort ();
+
+      tic6x_flush_unwind_word (unwind->data);
+    }
+  else if (unwind->table_entry && !need_extab)
+    {
+      /* Add an empty descriptor if there is no user-specified data.   */
+      char *ptr = frag_more (4);
+      md_number_to_chars (ptr, 0, 4);
+    }
+
+  /* Fill in length of unwinding bytecode.  */
+  if (unwind->table_entry)
+    {
+      valueT tmp;
+      if (unwind->data_bytes > 0x400)
+	as_bad (_("too many unwinding instructions"));
+
+      if (unwind->personality_index == -1)
+	{
+	  tmp = md_chars_to_number (unwind->frag_start + 4, 4);
+	  tmp |= ((unwind->data_bytes - 8) >> 2) << 24;
+	  md_number_to_chars (unwind->frag_start + 4, tmp, 4);
+	}
+      else if (unwind->personality_index == 1 || unwind->personality_index == 2)
+	{
+	  tmp = md_chars_to_number (unwind->frag_start, 4);
+	  tmp |= ((unwind->data_bytes - 4) >> 2) << 16;
+	  md_number_to_chars (unwind->frag_start, tmp, 4);
+	}
+    }
+  tic6x_output_exidx_entry ();
+}
+
+/* FIXME: This will get horribly confused if cfi directives are emitted for
+   function epilogue.  */
+void
+tic6x_cfi_endproc (struct fde_entry *fde)
+{
+  tic6x_unwind_info *unwind = tic6x_get_unwind ();
+  struct cfi_insn_data *insn;
+  int reg;
+  unsigned safe_mask = 0;
+  unsigned compact_mask = 0;
+  unsigned reg_saved_mask = 0;
+  offsetT cfa_offset = 0;
+  offsetT save_offset = 0;
+
+  unwind->cfa_reg = 31;
+  unwind->return_reg = UNWIND_B3;
+  unwind->saved_reg_count = 0;
+  unwind->pop_rts = FALSE;
+
+  unwind->saved_seg = now_seg;
+  unwind->saved_subseg = now_subseg;
+
+  for (reg = 0; reg < TIC6X_NUM_UNWIND_REGS; reg++)
+    unwind->reg_saved[reg] = FALSE;
+
+  /* Scan FDE instructions to build up stack frame layout.  */
+  for (insn = fde->data; insn; insn = insn->next)
+    {
+      switch (insn->insn)
+	{
+	case DW_CFA_advance_loc:
+	  break;
+
+	case DW_CFA_def_cfa:
+	  unwind->cfa_reg = insn->u.ri.reg;
+	  cfa_offset = insn->u.ri.offset;
+	  break;
+
+	case DW_CFA_def_cfa_register:
+	  unwind->cfa_reg = insn->u.r;
+	  break;
+
+	case DW_CFA_def_cfa_offset:
+	  cfa_offset = insn->u.i;
+	  break;
+
+	case DW_CFA_undefined:
+	case DW_CFA_same_value:
+	  reg = tic6x_unwind_reg_from_dwarf (insn->u.r);
+	  if (reg >= 0)
+	    unwind->reg_saved[reg] = FALSE;
+	  break;
+
+	case DW_CFA_offset:
+	  reg = tic6x_unwind_reg_from_dwarf (insn->u.ri.reg);
+	  if (reg < 0)
+	    {
+	      as_bad (_("unable to generate unwinding opcode for reg %d"),
+		      insn->u.ri.reg);
+	      return;
+	    }
+	  unwind->reg_saved[reg] = TRUE;
+	  unwind->reg_offset[reg] = insn->u.ri.offset;
+	  if (insn->u.ri.reg == UNWIND_B3)
+	    unwind->return_reg = UNWIND_B3;
+	  break;
+
+	case DW_CFA_register:
+	  if (insn->u.rr.reg1 != 19)
+	    {
+	      as_bad (_("unable to generate unwinding opcode for reg %d"),
+		      insn->u.rr.reg1);
+	      return;
+	    }
+
+	  reg = tic6x_unwind_reg_from_dwarf (insn->u.rr.reg2);
+	  if (reg < 0)
+	    {
+	      as_bad (_("unable to generate unwinding opcode for reg %d"),
+		      insn->u.rr.reg2);
+	      return;
+	    }
+
+	  unwind->return_reg = reg;
+	  unwind->reg_saved[UNWIND_B3] = FALSE;
+	  if (unwind->reg_saved[reg])
+	    {
+	      as_bad (_("unable to restore return address from "
+			"previously restored reg"));
+	      return;
+	    }
+	  break;
+
+	case DW_CFA_restore:
+	case DW_CFA_remember_state:
+	case DW_CFA_restore_state:
+	case DW_CFA_GNU_window_save:
+	case CFI_escape:
+	case CFI_val_encoded_addr:
+	  as_bad (_("unhandled CFA insn for unwinding (%d)"), insn->insn);
+	  break;
+
+	default:
+	  abort ();
+	}
+    }
+
+  if (unwind->cfa_reg != 15 && unwind->cfa_reg != 31)
+    {
+      as_bad (_("unable to generate unwinding opcode for frame pointer reg %d"),
+	      unwind->cfa_reg);
+      return;
+    }
+
+  if (unwind->cfa_reg == 15)
+    {
+      if (cfa_offset != 0)
+	{
+	  as_bad (_("unable to generate unwinding opcode for "
+		    "frame pointer offset"));
+	  return;
+	}
+    }
+  else
+    {
+      if ((cfa_offset & 7) != 0)
+	{
+	  as_bad (_("unwound stack pointer not doubleword aligned"));
+	  return;
+	}
+    }
+
+  for (reg = 0; reg < TIC6X_NUM_UNWIND_REGS; reg++)
+    {
+      if (unwind->reg_saved[reg])
+	reg_saved_mask |= 1 << (TIC6X_NUM_UNWIND_REGS - (reg + 1));
+    }
+
+  /* Check for standard "safe debug" frame layout */
+  if (reg_saved_mask)
+    {
+      save_offset = 0;
+      for (reg = 0; reg < TIC6X_NUM_UNWIND_REGS; reg++)
+	{
+	  if (!unwind->reg_saved[reg])
+	    continue;
+
+	  if (target_big_endian
+	      && reg < TIC6X_NUM_UNWIND_REGS - 1
+	      && unwind->reg_saved[reg + 1]
+	      && tic6x_unwind_frame_regs[reg]
+		  == tic6x_unwind_frame_regs[reg + 1] + 1
+	      && (tic6x_unwind_frame_regs[reg] & 1) == 1
+	      && (save_offset & 4) == 4)
+	    {
+	      /* Swapped pair */
+	      if (save_offset != unwind->reg_offset[reg + 1]
+		  || save_offset - 4 != unwind->reg_offset[reg])
+		break;
+	      save_offset -= 8;
+	      reg++;
+	    }
+	  else
+	    {
+	      if (save_offset != unwind->reg_offset[reg])
+		break;
+	      save_offset -= 4;
+	    }
+	}
+      if (reg == TIC6X_NUM_UNWIND_REGS)
+	{
+	  safe_mask = reg_saved_mask;
+	  reg_saved_mask = 0;
+	}
+    }
+
+  /* Check for compact frame layout.  */
+  if (reg_saved_mask)
+    {
+      save_offset = 0;
+      for (reg = 0; reg < TIC6X_NUM_UNWIND_REGS; reg++)
+	{
+	  int reg2;
+
+	  if (!unwind->reg_saved[reg])
+	    continue;
+
+	  if (reg < TIC6X_NUM_UNWIND_REGS - 1)
+	    {
+	      reg2 = reg + 1;
+
+	      if (!unwind->reg_saved[reg2]
+		  || tic6x_unwind_frame_regs[reg]
+		      != tic6x_unwind_frame_regs[reg2] + 1
+		  || (tic6x_unwind_frame_regs[reg2] & 1) != 0
+		  || save_offset == 0)
+		reg2 = -1;
+	    }
+	  else
+	    reg2 = -1;
+
+	  if (reg2 >= 0)
+	    {
+	      int high_offset;
+	      if (target_big_endian)
+		high_offset = 4; /* lower address = positive stack offset.  */
+	      else
+		high_offset = 0;
+
+	      if (save_offset + 4 - high_offset != unwind->reg_offset[reg]
+		  || save_offset + high_offset != unwind->reg_offset[reg2])
+		{
+		  break;
+		}
+	      reg++;
+	    }
+	  else
+	    {
+	      if (save_offset != unwind->reg_offset[reg])
+		break;
+	    }
+	  save_offset -= 8;
+	}
+
+      if (reg == TIC6X_NUM_UNWIND_REGS)
+	{
+	  compact_mask = reg_saved_mask;
+	  reg_saved_mask = 0;
+	}
+    }
+
+  /* Check for __c6xabi_pop_rts format */
+  if (reg_saved_mask == 0x17ff)
+    {
+      const int *pop_rts_offset = target_big_endian
+				? tic6x_pop_rts_offset_big
+			       	: tic6x_pop_rts_offset_little;
+
+      save_offset = 0;
+      for (reg = 0; reg < TIC6X_NUM_UNWIND_REGS; reg++)
+	{
+	  if (reg == UNWIND_B15)
+	    continue;
+
+	  if (unwind->reg_offset[reg] != pop_rts_offset[reg] * 4)
+	    break;
+	}
+
+      if (reg == TIC6X_NUM_UNWIND_REGS)
+	{
+	  unwind->pop_rts = TRUE;
+	  reg_saved_mask = 0;
+	}
+    }
+  /* If all else fails then describe the frame manually.  */
+  if (reg_saved_mask)
+    {
+      save_offset = 0;
+
+      for (reg = 0; reg < TIC6X_NUM_UNWIND_REGS; reg++)
+	{
+	  if (!unwind->reg_saved[reg])
+	    continue;
+
+	  unwind->saved_reg_count++;
+	  /* Encoding uses 4 bits per word, so size of unwinding opcode data 
+	     limits the save area size.  The exact cap will be figured out
+	     later due to overflow, the 0x800 here is just a quick sanity
+	     check to weed out obviously excessive offsets.  */
+	  if (unwind->reg_offset[reg] > 0 || unwind->reg_offset[reg] < -0x800
+	      || (unwind->reg_offset[reg] & 3) != 0)
+	    {
+	      as_bad (_("stack frame layout too complex for unwinder"));
+	      return;
+	    }
+
+	  if (unwind->reg_offset[reg] < save_offset)
+	    save_offset = unwind->reg_offset[reg] - 4;
+	}
+    }
+
+  /* Align to 8-byte boundary (stack grows towards negative offsets).  */
+  save_offset &= ~7;
+
+  if (unwind->cfa_reg == 31 && !reg_saved_mask)
+    {
+      cfa_offset += save_offset;
+      if (cfa_offset < 0)
+	{
+	  as_bad (_("unwound frame has negative size"));
+	  return;
+	}
+    }
+
+  unwind->safe_mask = safe_mask;
+  unwind->compact_mask = compact_mask;
+  unwind->reg_saved_mask = reg_saved_mask;
+  unwind->cfa_offset = cfa_offset;
+  unwind->function_start = fde->start_address;
 }

@@ -1,0 +1,2 @@
+.*: error: required section '.rel.plt' not found in the linker script
+.*: final link failed: Invalid operation

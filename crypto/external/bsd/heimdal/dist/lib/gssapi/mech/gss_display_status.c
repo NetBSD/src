@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_display_status.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_display_status.c,v 1.1.1.1.10.1 2014/08/19 23:45:17 tls Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -192,7 +192,7 @@ gss_display_status(OM_uint32 *minor_status,
 		    oid.value = rk_UNCONST("unknown");
 		    oid.length = 7;
 		}
-		
+
 		e = asprintf (&buf, "unknown mech-code %lu for mech %.*s",
 			  (unsigned long)status_value,
 			  (int)oid.length, (char *)oid.value);

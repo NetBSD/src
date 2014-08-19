@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.2.2 2013/06/23 06:28:25 tls Exp $
+#	$NetBSD: Makefile,v 1.6.2.3 2014/08/19 23:51:26 tls Exp $
 
 LIB=	clangBasic
 
@@ -6,7 +6,8 @@ LIB=	clangBasic
 
 .PATH: ${CLANG_SRCDIR}/lib/Basic
 
-SRCS+=	Builtins.cpp \
+SRCS+=	Attributes.cpp \
+	Builtins.cpp \
 	CharInfo.cpp \
 	Diagnostic.cpp \
 	DiagnosticIDs.cpp \
@@ -24,7 +25,9 @@ SRCS+=	Builtins.cpp \
 	Targets.cpp \
 	TokenKinds.cpp \
 	Version.cpp \
-	VersionTuple.cpp
+	VersionTuple.cpp \
+	VirtualFileSystem.cpp \
+	Warnings.cpp
 
 CPPFLAGS.Version.cpp=	-DSVN_REVISION=\"${CLANG_REVISION}\" \
 			-DLLVM_REVISION=\"${LLVM_REVISION}\"

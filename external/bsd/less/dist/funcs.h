@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.h,v 1.3 2011/07/03 20:14:12 tron Exp $	*/
+/*	$NetBSD: funcs.h,v 1.3.8.1 2014/08/19 23:46:50 tls Exp $	*/
 
 	public char * save ();
 	public VOID_POINTER ecalloc ();
@@ -48,6 +48,7 @@
 	public void ch_setbufspace ();
 	public void ch_flush ();
 	public int seekable ();
+	public void ch_set_eof ();
 	public void ch_init ();
 	public void ch_close ();
 	public int ch_getflags ();

@@ -1,4 +1,4 @@
-/* $NetBSD: time.c,v 1.19 2011/11/09 19:16:01 christos Exp $ */
+/* $NetBSD: time.c,v 1.19.6.1 2014/08/19 23:45:10 tls Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: time.c,v 1.19 2011/11/09 19:16:01 christos Exp $");
+__RCSID("$NetBSD: time.c,v 1.19.6.1 2014/08/19 23:45:10 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,7 +136,7 @@ prusage(FILE *fp, struct rusage *r0, struct rusage *r1, struct timespec *e,
     const char *cp;
     long i;
     time_t t;
-    int ms;
+    time_t ms;
 
     cp = "%Uu %Ss %E %P %X+%Dk %I+%Oio %Fpf+%Ww";
     ms = (e->tv_sec - b->tv_sec) * 100 + (e->tv_nsec - b->tv_nsec) / 10000000;
@@ -187,7 +187,8 @@ prusage(FILE *fp, struct rusage *r0, struct rusage *r1, struct timespec *e,
 			(void)fputs("0.0%", fp);
 		} else {
 			char pb[32];
-			(void)fputs(strpct(pb, sizeof(pb), t, ms, 1), fp);
+			(void)fputs(strpct(pb, sizeof(pb),
+			    (uintmax_t)t, (uintmax_t)ms, 1), fp);
 			(void)fputc('%', fp);
 		}
 		break;
@@ -237,23 +238,23 @@ pdeltat(FILE *fp, struct timeval *t1, struct timeval *t0)
 	(long)(td.tv_usec / 100000));
 }
 
-#define  P2DIG(fp, i) (void)fprintf(fp, "%d%d", (i) / 10, (i) % 10)
+#define  P2DIG(fp, i) (void)fprintf(fp, "%ld%ld", (i) / 10, (i) % 10)
 
 #ifndef NOT_CSH
 void
 psecs(long l)
 {
-    int i;
+    long i;
 
     i = l / 3600;
     if (i) {
-	(void)fprintf(cshout, "%d:", i);
+	(void)fprintf(cshout, "%ld:", i);
 	i = l % 3600;
 	P2DIG(cshout, i / 60);
 	goto minsec;
     }
     i = l;
-    (void)fprintf(cshout, "%d", i / 60);
+    (void)fprintf(cshout, "%ld", i / 60);
 minsec:
     i %= 60;
     (void)fputc(':', cshout);
@@ -264,21 +265,21 @@ minsec:
 static void
 pcsecs(FILE *fp, long l)	/* PWP: print mm:ss.dd, l is in sec*100 */
 {
-    int i;
+    long i;
 
     i = l / 360000;
     if (i) {
-	(void)fprintf(fp, "%d:", i);
+	(void)fprintf(fp, "%ld:", i);
 	i = (l % 360000) / 100;
 	P2DIG(fp, i / 60);
 	goto minsec;
     }
     i = l / 100;
-    (void)fprintf(fp, "%d", i / 60);
+    (void)fprintf(fp, "%ld", i / 60);
 minsec:
     i %= 60;
     (void)fputc(':', fp);
     P2DIG(fp, i);
     (void)fputc('.', fp);
-    P2DIG(fp, (int) (l % 100));
+    P2DIG(fp, (l % 100));
 }

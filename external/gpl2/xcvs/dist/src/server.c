@@ -153,6 +153,8 @@ static int argument_count;
 static char **argument_vector;
 static int argument_vector_size;
 
+#define MAXARGS 1000000		/* arbitrary limit */
+
 /*
  * This is where we stash stuff we are going to use.  Format string
  * which expects a single directory within it, starting with a slash.
@@ -1130,7 +1132,7 @@ serve_max_dotdot (char *arg)
     if (proxy_log) return;
 #endif /* PROXY_SUPPORT */
 
-    if (lim < 0 || lim > 10000)
+    if (lim < 0 || lim > MAXARGS)
 	return;
     p = xmalloc (strlen (server_temp_dir) + 2 * lim + 10);
     if (p == NULL)
@@ -2989,7 +2991,7 @@ serve_argument (char *arg)
 
     if (error_pending()) return;
 
-    if (argument_count >= 10000)
+    if (argument_count >= MAXARGS)
     {
 	if (alloc_pending (80))
 	    sprintf (pending_error_text, 

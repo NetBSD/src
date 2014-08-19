@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.h,v 1.8.2.1 2013/06/23 06:26:14 tls Exp $	*/
-/* $OpenBSD: readconf.h,v 1.93 2013/02/22 04:45:09 dtucker Exp $ */
+/*	$NetBSD: readconf.h,v 1.8.2.2 2014/08/19 23:45:25 tls Exp $	*/
+/* $OpenBSD: readconf.h,v 1.95 2013/05/16 04:27:50 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -125,6 +125,7 @@ typedef struct {
 
 	int	enable_ssh_keysign;
 	int64_t rekey_limit;
+	int	rekey_interval;
 	int     none_switch;    /* Use none cipher */
 	int     none_enabled;   /* Allow none to be used */
 	int	no_host_authentication_for_localhost;
@@ -154,6 +155,8 @@ typedef struct {
 
 	int	request_tty;
 	int	send_version_first;
+
+	char	*ignored_unknown; /* Pattern list of unknown tokens to ignore */
 }       Options;
 
 #define SSHCTL_MASTER_NO	0

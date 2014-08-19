@@ -1,4 +1,4 @@
-# $NetBSD: TODO.i18n,v 1.8 2006/10/13 17:28:09 tnozaki Exp $
+# $NetBSD: TODO.i18n,v 1.8.46.1 2014/08/19 23:45:49 tls Exp $
 
 NetBSD I18N support status / TODO
 
@@ -20,7 +20,7 @@ nl_langinfo    sm
 locale.h
              status     spec            remarks
 localeconv     sm
-setlocale      im                       LC_CTYPE / LC_MESSAGES only.
+setlocale      im                       Except LC_COLLATE.
 
 
 nl_types.h
@@ -133,13 +133,8 @@ locale         sm       SUSv3
 
 misc TODO:
 
-printf family                           support %$.
 LC_COLLATE                              should be supported.
-LC_MONETARY                             should be supported.
-LC_NUMERIC                              should be supported.
-LC_TIME                                 should be supported.
 message catalog                         make consistent with LC_CTYPE names.
-curses                                  support multibyte char.
 regexp                                  support multibyte char.
 regress                                 enrich test items.
 this list                               add forgotten items.

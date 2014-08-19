@@ -1,9 +1,9 @@
-/*	$NetBSD: slapi_utils.c,v 1.1.1.3 2010/12/12 15:23:54 adam Exp $	*/
+/*	$NetBSD: slapi_utils.c,v 1.1.1.3.12.1 2014/08/19 23:52:04 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_utils.c,v 1.189.2.15 2010/04/13 20:23:51 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2010 The OpenLDAP Foundation.
+ * Copyright 2002-2014 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002-2003 IBM Corporation.
  * All rights reserved.
  *
@@ -1845,6 +1845,42 @@ slapi_pw_find(
 	return 1;
 }
 
+/* Get connected client IP address.
+ *
+ * The user must free the returned client IP after its use.
+ * Compatible with IBM Tivoli call.
+ *
+ * Errors:
+ * * LDAP_PARAM_ERROR - If the pb parameter is null.
+ * * LDAP_OPERATIONS_ERROR - If the API encounters error processing the request.
+ * * LDAP_NO_MEMORY - Failed to allocate required memory.
+ */
+int
+slapi_get_client_ip(Slapi_PBlock *pb, char **clientIP)
+{
+	char *s = NULL;
+
+	if(pb == NULL || pb->pb_conn == NULL) return(LDAP_PARAM_ERROR);
+	if((s = (char *) slapi_ch_malloc(pb->pb_conn->c_peer_name.bv_len + 1)) == NULL) {
+		return(LDAP_NO_MEMORY);
+	}
+
+	memcpy(s, pb->pb_conn->c_peer_name.bv_val, pb->pb_conn->c_peer_name.bv_len);
+
+	s[pb->pb_conn->c_peer_name.bv_len] = 0;
+
+	*clientIP = s;
+
+	return(LDAP_SUCCESS);
+}
+
+/* Free previously allocated client IP address. */
+void
+slapi_free_client_ip(char **clientIP)
+{
+	slapi_ch_free((void **) clientIP);
+}
+
 #define MAX_HOSTNAME 512
 
 char *
@@ -2110,12 +2146,7 @@ int slapi_attr_add_value( Slapi_Attr *a, const Slapi_Value *v )
 		nvalp = NULL;
 	}
 
-	rc = value_add_one( &a->a_vals, (Slapi_Value *)v );
-	if ( rc == 0 && nvalp != NULL ) {
-		rc = value_add_one( &a->a_nvals, nvalp );
-	} else {
-		a->a_nvals = a->a_vals;
-	}
+	rc = attr_valadd( a, (Slapi_Value *)v, nvalp, 1 );
 
 	if ( nvalp != NULL ) {
 		slapi_ch_free_string( &nval.bv_val );

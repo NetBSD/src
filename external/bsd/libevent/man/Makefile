@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2.4.2 2013/06/23 06:28:19 tls Exp $
+# $NetBSD: Makefile,v 1.2.4.3 2014/08/19 23:47:16 tls Exp $
 
 # Try to undo the doxygen lossage in the man pages.
 
@@ -20,7 +20,7 @@ HMAN1=${HSRCS1:S/^/ev/g:S/.h.3/.3/g}
 
 .for i in ${HSRCS1}
 ev${i:S/.h.3/.3/g}: $i
-	${.CURDIR}/fixman ${TOOL_SED} ${.ALLSRC} ${.TARGET}
+	${HOST_SH} ${.CURDIR}/fixman ${TOOL_SED} ${.ALLSRC} ${.TARGET}
 .endfor
 
 HSRCS2= \
@@ -30,7 +30,7 @@ event_compat.h.3
 
 .for i in ${HSRCS2}
 ${i:S/.h.3/.3/g}: $i
-	${.CURDIR}/fixman ${TOOL_SED} ${.ALLSRC} ${.TARGET}
+	${HOST_SH} ${.CURDIR}/fixman ${TOOL_SED} ${.ALLSRC} ${.TARGET}
 .endfor
 
 HMAN2=${HSRCS2:S/.h.3/.3/g}
@@ -58,5 +58,7 @@ evutil_addrinfo.3
 MAN+= ${HMAN1} ${HMAN2} ${MAN1}
 
 CLEANFILES+=${HMAN1} ${HMAN2} ${MAN1}
+
+USETBL=	yes
 
 .include <bsd.man.mk>

@@ -258,13 +258,13 @@ md_assemble (char * str)
 	       && insn.fields.f_sr1 == delayed_load_register)
 	      || (CGEN_INSN_ATTR_VALUE (insn.insn, CGEN_INSN_USES_FRSR2)
 		  && insn.fields.f_sr2 == delayed_load_register))
-	    as_warn (_("operand references R%ld of previous instrutcion."),
+	    as_warn (_("operand references R%ld of previous instruction."),
 		     delayed_load_register);
 	  else if ((CGEN_INSN_ATTR_VALUE (insn.insn, CGEN_INSN_USES_FRSR1)
 		    && insn.fields.f_sr1 == prev_delayed_load_register)
 		   || (CGEN_INSN_ATTR_VALUE (insn.insn, CGEN_INSN_USES_FRSR2)
 		       && insn.fields.f_sr2 == prev_delayed_load_register))
-	    as_warn (_("operand references R%ld of instructcion before previous."),
+	    as_warn (_("operand references R%ld of instruction before previous."),
 		     prev_delayed_load_register);
 	}
       

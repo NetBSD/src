@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.8.3 2013/06/23 06:28:21 tls Exp $
+#	$NetBSD: Makefile,v 1.6.8.4 2014/08/19 23:47:17 tls Exp $
 
 PROG_CXX=	lli
 NOMAN=		yes
@@ -8,8 +8,9 @@ NOMAN=		yes
 .PATH: ${LLVM_SRCDIR}/tools/lli
 
 SRCS=	lli.cpp \
-	RecordingMemoryManager.cpp \
-	RemoteTarget.cpp
+	RemoteMemoryManager.cpp \
+	RemoteTarget.cpp \
+	RemoteTargetExternal.cpp
 
 LLVM_LIBS+= \
 	X86CodeGen \
@@ -20,14 +21,15 @@ LLVM_LIBS+= \
 	AsmPrinter \
 	IRReader \
 	AsmParser \
+	Object \
 	MCParser \
 	BitReader \
 	JIT \
 	MCJIT \
 	RuntimeDyld \
+	Instrumentation \
 	Interpreter \
 	ExecutionEngine \
-	Object \
 	SelectionDAG \
 	CodeGen \
 	ScalarOpts \

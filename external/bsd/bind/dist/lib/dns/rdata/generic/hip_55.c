@@ -1,7 +1,7 @@
-/*	$NetBSD: hip_55.c,v 1.3 2012/06/05 00:42:09 christos Exp $	*/
+/*	$NetBSD: hip_55.c,v 1.3.2.1 2014/08/19 23:46:30 tls Exp $	*/
 
 /*
- * Copyright (C) 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -78,7 +78,7 @@ fromtext_hip(ARGS_FROMTEXT) {
 	len = (unsigned char *)isc_buffer_used(target) - start;
 	if (len > 0xffU)
 		RETTOK(ISC_R_RANGE);
-	RETERR(uint8_tobuffer(len, &hit_len));
+	RETERR(uint8_tobuffer((isc_uint32_t)len, &hit_len));
 
 	/*
 	 * Public key (base64).
@@ -94,7 +94,7 @@ fromtext_hip(ARGS_FROMTEXT) {
 	len = (unsigned char *)isc_buffer_used(target) - start;
 	if (len > 0xffffU)
 		RETTOK(ISC_R_RANGE);
-	RETERR(uint16_tobuffer(len, &key_len));
+	RETERR(uint16_tobuffer((isc_uint32_t)len, &key_len));
 
 	/*
 	 * Rendezvous Servers.
@@ -124,7 +124,7 @@ static inline isc_result_t
 totext_hip(ARGS_TOTEXT) {
 	isc_region_t region;
 	dns_name_t name;
-	size_t length, key_len, hit_len;
+	unsigned int length, key_len, hit_len;
 	unsigned char algorithm;
 	char buf[sizeof("225 ")];
 

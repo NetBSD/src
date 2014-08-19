@@ -1,7 +1,7 @@
-/*	$NetBSD: log.h,v 1.3 2012/06/05 00:42:37 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.3.2.1 2014/08/19 23:46:33 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -69,8 +69,9 @@
 #define ISC_LOG_PRINTLEVEL	0x0002
 #define ISC_LOG_PRINTCATEGORY	0x0004
 #define ISC_LOG_PRINTMODULE	0x0008
-#define ISC_LOG_PRINTTAG	0x0010
-#define ISC_LOG_PRINTALL	0x001F
+#define ISC_LOG_PRINTTAG	0x0010		/* tag and ":" */
+#define ISC_LOG_PRINTPREFIX	0x0020		/* tag only, no colon */
+#define ISC_LOG_PRINTALL	0x003F
 #define ISC_LOG_DEBUGONLY	0x1000
 #define ISC_LOG_OPENERR		0x8000		/* internal */
 /*@}*/
@@ -169,6 +170,7 @@ LIBISC_EXTERNAL_DATA extern isc_logmodule_t isc_modules[];
 #define ISC_LOGMODULE_INTERFACE (&isc_modules[2])
 #define ISC_LOGMODULE_TIMER (&isc_modules[3])
 #define ISC_LOGMODULE_FILE (&isc_modules[4])
+#define ISC_LOGMODULE_OTHER (&isc_modules[5])
 
 ISC_LANG_BEGINDECLS
 

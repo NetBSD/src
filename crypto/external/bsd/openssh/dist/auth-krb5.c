@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-krb5.c,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: auth-krb5.c,v 1.19 2006/08/03 03:34:41 deraadt Exp $ */
+/*	$NetBSD: auth-krb5.c,v 1.4.8.1 2014/08/19 23:45:24 tls Exp $	*/
+/* $OpenBSD: auth-krb5.c,v 1.20 2013/07/20 01:55:13 djm Exp $ */
 /*
  *    Kerberos v5 authentication and ticket-passing routines.
  *
@@ -30,7 +30,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-krb5.c,v 1.4 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: auth-krb5.c,v 1.4.8.1 2014/08/19 23:45:24 tls Exp $");
 #include <sys/types.h>
 #include <pwd.h>
 #include <stdarg.h>
@@ -139,7 +139,7 @@ auth_krb5(Authctxt *authctxt, krb5_data *auth, char **client, krb5_data *reply)
 	if (ticket)
 		krb5_free_ticket(authctxt->krb5_ctx, ticket);
 	if (!ret && reply->length) {
-		xfree(reply->data);
+		free(reply->data);
 		memset(reply, 0, sizeof(*reply));
 	}
 
@@ -229,7 +229,7 @@ auth_krb5_password(Authctxt *authctxt, const char *password)
 {
 	krb5_error_code problem;
 	krb5_ccache ccache = NULL;
-	const char *errtxt;
+	const char *errmsg;
 
 	temporarily_use_uid(authctxt->pw);
 
@@ -242,8 +242,8 @@ auth_krb5_password(Authctxt *authctxt, const char *password)
 	if (problem)
 		goto out;
 
-	problem = krb5_cc_new_unique(authctxt->krb5_ctx, "MEMORY", NULL,
-	    &ccache);
+	problem = krb5_cc_new_unique(authctxt->krb5_ctx,
+	     krb5_mcc_ops.prefix, NULL, &ccache);
 	if (problem)
 		goto out;
 
@@ -262,8 +262,8 @@ auth_krb5_password(Authctxt *authctxt, const char *password)
 	if (problem)
 		goto out;
 
-	problem = krb5_cc_new_unique(authctxt->krb5_ctx, "FILE", NULL,
-	    &authctxt->krb5_fwd_ccache);
+	problem = krb5_cc_new_unique(authctxt->krb5_ctx,
+	     krb5_fcc_ops.prefix, NULL, &authctxt->krb5_fwd_ccache);
 	if (problem)
 		goto out;
 
@@ -284,14 +284,12 @@ auth_krb5_password(Authctxt *authctxt, const char *password)
 		if (ccache)
 			krb5_cc_destroy(authctxt->krb5_ctx, ccache);
 
-		errtxt = NULL;
-		if (authctxt->krb5_ctx != NULL)
-			errtxt = krb5_get_error_message(authctxt->krb5_ctx,
+		if (authctxt->krb5_ctx != NULL) {
+			errmsg = krb5_get_error_message(authctxt->krb5_ctx,
 			    problem);
-		if (errtxt != NULL) {
 			debug("Kerberos password authentication failed: %s",
-			    errtxt);
-			krb5_free_error_message(authctxt->krb5_ctx, errtxt);
+			    errmsg);
+			krb5_free_error_message(authctxt->krb5_ctx, errmsg);
 		} else
 			debug("Kerberos password authentication failed: %d",
 			    problem);

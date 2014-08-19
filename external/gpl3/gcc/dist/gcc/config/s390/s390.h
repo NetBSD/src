@@ -1,6 +1,5 @@
 /* Definitions of target machine for GNU compiler, for IBM S/390
-   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-   2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
    Contributed by Hartmut Penner (hpenner@de.ibm.com) and
                   Ulrich Weigand (uweigand@de.ibm.com).
                   Andreas Krebbel (Andreas.Krebbel@de.ibm.com)
@@ -24,21 +23,6 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef _S390_H
 #define _S390_H
 
-/* Which processor to generate code or schedule for. The cpu attribute
-   defines a list that mirrors this list, so changes to s390.md must be
-   made at the same time.  */
-
-enum processor_type
-{
-  PROCESSOR_9672_G5,
-  PROCESSOR_9672_G6,
-  PROCESSOR_2064_Z900,
-  PROCESSOR_2084_Z990,
-  PROCESSOR_2094_Z9_109,
-  PROCESSOR_2097_Z10,
-  PROCESSOR_max
-};
-
 /* Optional architectural facilities supported by the processor.  */
 
 enum processor_flags
@@ -48,18 +32,15 @@ enum processor_flags
   PF_LONG_DISPLACEMENT = 4,
   PF_EXTIMM = 8,
   PF_DFP = 16,
-  PF_Z10 = 32
+  PF_Z10 = 32,
+  PF_Z196 = 64,
+  PF_ZEC12 = 128,
+  PF_TX = 256
 };
-
-extern enum processor_type s390_tune;
-extern int s390_tune_flags;
 
 /* This is necessary to avoid a warning about comparing different enum
    types.  */
 #define s390_tune_attr ((enum attr_cpu)s390_tune)
-
-extern enum processor_type s390_arch;
-extern int s390_arch_flags;
 
 /* These flags indicate that the generated code should run on a cpu
    providing the respective hardware facility regardless of the
@@ -77,6 +58,12 @@ extern int s390_arch_flags;
  	(s390_arch_flags & PF_DFP)
 #define TARGET_CPU_Z10 \
  	(s390_arch_flags & PF_Z10)
+#define TARGET_CPU_Z196 \
+ 	(s390_arch_flags & PF_Z196)
+#define TARGET_CPU_ZEC12 \
+ 	(s390_arch_flags & PF_ZEC12)
+#define TARGET_CPU_HTM \
+ 	(s390_arch_flags & PF_TX)
 
 /* These flags indicate that the generated code should run on a cpu
    providing the respective hardware facility when run in
@@ -90,6 +77,14 @@ extern int s390_arch_flags;
        (TARGET_ZARCH && TARGET_CPU_DFP && TARGET_HARD_FLOAT)
 #define TARGET_Z10 \
        (TARGET_ZARCH && TARGET_CPU_Z10)
+#define TARGET_Z196 \
+       (TARGET_ZARCH && TARGET_CPU_Z196)
+#define TARGET_ZEC12 \
+       (TARGET_ZARCH && TARGET_CPU_ZEC12)
+#define TARGET_HTM (TARGET_OPT_HTM)
+
+
+#define TARGET_AVOID_CMP_AND_BRANCH (s390_tune == PROCESSOR_2817_Z196)
 
 /* Run-time target specification.  */
 
@@ -102,21 +97,25 @@ extern int s390_arch_flags;
 #define TARGET_TPF 0
 
 /* Target CPU builtins.  */
-#define TARGET_CPU_CPP_BUILTINS()			\
-  do							\
-    {							\
-      builtin_assert ("cpu=s390");			\
-      builtin_assert ("machine=s390");			\
-      builtin_define ("__s390__");			\
-      if (TARGET_64BIT)					\
-        builtin_define ("__s390x__");			\
-      if (TARGET_LONG_DOUBLE_128)			\
-        builtin_define ("__LONG_DOUBLE_128__");		\
-    }							\
+#define TARGET_CPU_CPP_BUILTINS()					\
+  do									\
+    {									\
+      builtin_assert ("cpu=s390");					\
+      builtin_assert ("machine=s390");					\
+      builtin_define ("__s390__");					\
+      if (TARGET_ZARCH)							\
+	builtin_define ("__zarch__");					\
+      if (TARGET_64BIT)							\
+        builtin_define ("__s390x__");					\
+      if (TARGET_LONG_DOUBLE_128)					\
+        builtin_define ("__LONG_DOUBLE_128__");				\
+      if (TARGET_HTM)							\
+	builtin_define ("__HTM__");					\
+    }									\
   while (0)
 
 #ifdef DEFAULT_TARGET_64BIT
-#define TARGET_DEFAULT             (MASK_64BIT | MASK_ZARCH | MASK_HARD_DFP)
+#define TARGET_DEFAULT             (MASK_64BIT | MASK_ZARCH | MASK_HARD_DFP | MASK_OPT_HTM)
 #else
 #define TARGET_DEFAULT             0
 #endif
@@ -139,20 +138,6 @@ extern int s390_arch_flags;
   "%{!mesa:%{!mzarch:%{m31:-mesa}%{m64:-mzarch}}}",		\
   "%{!march=*:%{mesa:-march=g5}%{mzarch:-march=z900}}"
 #endif
-
-/* Target version string.  Overridden by the OS header.  */
-#ifdef DEFAULT_TARGET_64BIT
-#define TARGET_VERSION fprintf (stderr, " (zSeries)");
-#else
-#define TARGET_VERSION fprintf (stderr, " (S/390)");
-#endif
-
-/* Hooks to override options.  */
-#define OPTIMIZATION_OPTIONS(LEVEL, SIZE) optimization_options(LEVEL, SIZE)
-#define OVERRIDE_OPTIONS override_options ()
-
-/* Frame pointer is not used for debugging.  */
-#define CAN_DEBUG_WITHOUT_FP
 
 /* Constants needed to control the TEST DATA CLASS (TDC) instruction.  */
 #define S390_TDC_POSITIVE_ZERO                     (1 << 11)
@@ -185,16 +170,10 @@ extern int s390_arch_flags;
 #define S390_TDC_INFINITY (S390_TDC_POSITIVE_INFINITY \
 			  | S390_TDC_NEGATIVE_INFINITY )
 
-/* In libgcc2, determine target settings as compile-time constants.  */
-#ifdef IN_LIBGCC2
-#undef TARGET_64BIT
-#ifdef __s390x__
-#define TARGET_64BIT 1
-#else
-#define TARGET_64BIT 0
-#endif
-#endif
-
+/* This is used by float.h to define the float_t and double_t data
+   types.  For historical reasons both are double on s390 what cannot
+   be changed anymore.  */
+#define TARGET_FLT_EVAL_METHOD 1
 
 /* Target machine storage layout.  */
 
@@ -203,12 +182,33 @@ extern int s390_arch_flags;
 #define BYTES_BIG_ENDIAN 1
 #define WORDS_BIG_ENDIAN 1
 
-/* Width of a word, in units (bytes).  */
-#define UNITS_PER_WORD (TARGET_64BIT ? 8 : 4)
+#define STACK_SIZE_MODE (Pmode)
+
 #ifndef IN_LIBGCC2
-#define MIN_UNITS_PER_WORD 4
+
+/* Width of a word, in units (bytes).  */
+  #define UNITS_PER_WORD (TARGET_ZARCH ? 8 : 4)
+
+/* Width of a pointer.  To be used instead of UNITS_PER_WORD in
+   ABI-relevant contexts.  This always matches
+   GET_MODE_SIZE (Pmode).  */
+  #define UNITS_PER_LONG (TARGET_64BIT ? 8 : 4)
+  #define MIN_UNITS_PER_WORD 4
+  #define MAX_BITS_PER_WORD 64
+#else
+
+  /* In libgcc, UNITS_PER_WORD has ABI-relevant effects, e.g. whether
+     the library should export TImode functions or not.  Thus, we have
+     to redefine UNITS_PER_WORD depending on __s390x__ for libgcc.  */
+  #ifdef __s390x__
+    #define UNITS_PER_WORD 8
+  #else
+    #define UNITS_PER_WORD 4
+  #endif
 #endif
-#define MAX_BITS_PER_WORD 64
+
+/* Width of a pointer, in bits.  */
+#define POINTER_SIZE (TARGET_64BIT ? 64 : 32)
 
 /* Allocation boundary (in *bits*) for storing arguments in argument list.  */
 #define PARM_BOUNDARY (TARGET_64BIT ? 64 : 32)
@@ -217,7 +217,7 @@ extern int s390_arch_flags;
 #define STACK_BOUNDARY 64
 
 /* Allocation boundary (in *bits*) for the code of a function.  */
-#define FUNCTION_BOUNDARY 32
+#define FUNCTION_BOUNDARY 64
 
 /* There is no point aligning anything to a rounder boundary than this.  */
 #define BIGGEST_ALIGNMENT 64
@@ -359,8 +359,6 @@ extern int s390_arch_flags;
   1, 1, 1, 1,					\
   0, 0 }
 
-#define CONDITIONAL_REGISTER_USAGE s390_conditional_register_usage ()
-
 /* Preferred register allocation order.  */
 #define REG_ALLOC_ORDER                                         \
 {  1, 2, 3, 4, 5, 0, 12, 11, 10, 9, 8, 7, 6, 14, 13,            \
@@ -401,6 +399,15 @@ extern int s390_arch_flags;
 #define MODES_TIEABLE_P(MODE1, MODE2)		\
    (((MODE1) == SFmode || (MODE1) == DFmode)	\
    == ((MODE2) == SFmode || (MODE2) == DFmode))
+
+/* When generating code that runs in z/Architecture mode,
+   but conforms to the 31-bit ABI, GPRs can hold 8 bytes;
+   the ABI guarantees only that the lower 4 bytes are
+   saved across calls, however.  */
+#define HARD_REGNO_CALL_PART_CLOBBERED(REGNO, MODE)		\
+  (!TARGET_64BIT && TARGET_ZARCH				\
+   && GET_MODE_SIZE (MODE) > 4					\
+   && (((REGNO) >= 6 && (REGNO) <= 15) || (REGNO) == 32))
 
 /* Maximum number of registers to represent a value of mode MODE
    in a register of class CLASS.  */
@@ -469,19 +476,6 @@ enum reg_class
   { 0xffffffff, 0x0000003f },	/* ALL_REGS */		\
 }
 
-/* The following macro defines cover classes for Integrated Register
-   Allocator.  Cover classes is a set of non-intersected register
-   classes covering all hard registers used for register allocation
-   purpose.  Any move between two registers of a cover class should be
-   cheaper than load or store of the registers.  The macro value is
-   array of register classes with LIM_REG_CLASSES used as the end
-   marker.  */
-
-#define IRA_COVER_CLASSES						     \
-{									     \
-  GENERAL_REGS, FP_REGS, CC_REGS, ACCESS_REGS, LIM_REG_CLASSES		     \
-}
-
 /* In some case register allocation order is not enough for IRA to
    generate a good code.  The following macro (if defined) increases
    cost of REGNO for a pseudo approximately by pseudo usage frequency
@@ -509,11 +503,6 @@ extern const enum reg_class regclass_map[FIRST_PSEUDO_REGISTER];
      || ADDR_REGNO_P (reg_renumber[REGNO]))
 #define REGNO_OK_FOR_BASE_P(REGNO) REGNO_OK_FOR_INDEX_P (REGNO)
 
-
-/* Given an rtx X being reloaded into a reg required to be in class CLASS,
-   return the class of reg to actually use.  */
-#define PREFERRED_RELOAD_CLASS(X, CLASS)	\
-  s390_preferred_reload_class ((X), (CLASS))
 
 /* We need secondary memory to move data between GPRs and FPRs.  With
    DFP the ldgr lgdr instructions are available.  But these
@@ -565,7 +554,7 @@ extern const enum reg_class regclass_map[FIRST_PSEUDO_REGISTER];
 /* Defining this macro makes __builtin_frame_address(0) and
    __builtin_return_address(0) work with -fomit-frame-pointer.  */
 #define INITIAL_FRAME_ADDRESS_RTX                                             \
-  (plus_constant (arg_pointer_rtx, -STACK_POINTER_OFFSET))
+  (plus_constant (Pmode, arg_pointer_rtx, -STACK_POINTER_OFFSET))
 
 /* The return address of the current frame is retrieved
    from the initial value of register RETURN_REGNUM.
@@ -573,7 +562,8 @@ extern const enum reg_class regclass_map[FIRST_PSEUDO_REGISTER];
    the corresponding RETURN_REGNUM register was saved.  */
 #define DYNAMIC_CHAIN_ADDRESS(FRAME)                                          \
   (TARGET_PACKED_STACK ?                                                      \
-   plus_constant ((FRAME), STACK_POINTER_OFFSET - UNITS_PER_WORD) : (FRAME))
+   plus_constant (Pmode, (FRAME),					      \
+		  STACK_POINTER_OFFSET - UNITS_PER_LONG) : (FRAME))
 
 /* For -mpacked-stack this adds 160 - 8 (96 - 4) to the output of
    builtin_frame_address.  Otherwise arg pointer -
@@ -608,6 +598,12 @@ extern const enum reg_class regclass_map[FIRST_PSEUDO_REGISTER];
   (flag_pic								    \
     ? ((GLOBAL) ? DW_EH_PE_indirect : 0) | DW_EH_PE_pcrel | DW_EH_PE_sdata4 \
    : DW_EH_PE_absptr)
+
+/* Register save slot alignment.  */
+#define DWARF_CIE_DATA_ALIGNMENT (-UNITS_PER_LONG)
+
+/* Let the assembler generate debug line info.  */
+#define DWARF2_ASM_LINE_DEBUG_INFO 1
 
 
 /* Frame registers.  */
@@ -649,9 +645,6 @@ extern const enum reg_class regclass_map[FIRST_PSEUDO_REGISTER];
 /* We need current_function_outgoing_args to be valid.  */
 #define ACCUMULATE_OUTGOING_ARGS 1
 
-/* Return doesn't modify the stack.  */
-#define RETURN_POPS_ARGS(FUNDECL, FUNTYPE, SIZE) 0
-
 
 /* Register arguments.  */
 
@@ -665,26 +658,12 @@ CUMULATIVE_ARGS;
 #define INIT_CUMULATIVE_ARGS(CUM, FNTYPE, LIBNAME, NN, N_NAMED_ARGS) \
   ((CUM).gprs=0, (CUM).fprs=0)
 
-#define FUNCTION_ARG_ADVANCE(CUM, MODE, TYPE, NAMED)                    \
-  s390_function_arg_advance (&CUM, MODE, TYPE, NAMED)
-
-#define FUNCTION_ARG(CUM, MODE, TYPE, NAMED)   \
-  s390_function_arg (&CUM, MODE, TYPE, NAMED)
-
 /* Arguments can be placed in general registers 2 to 6, or in floating
    point registers 0 and 2 for 31 bit and fprs 0, 2, 4 and 6 for 64
    bit.  */
 #define FUNCTION_ARG_REGNO_P(N) (((N) >=2 && (N) <7) || \
   (N) == 16 || (N) == 17 || (TARGET_64BIT && ((N) == 18 || (N) == 19)))
 
-
-/* Scalar return values.  */
-
-#define FUNCTION_VALUE(VALTYPE, FUNC) \
-  s390_function_value ((VALTYPE), (FUNC), VOIDmode)
-
-#define LIBCALL_VALUE(MODE) \
-  s390_function_value (NULL, NULL, (MODE))
 
 /* Only gpr 2 and fpr 0 are ever used as return registers.  */
 #define FUNCTION_VALUE_REGNO_P(N) ((N) == 2 || (N) == 16)
@@ -737,11 +716,6 @@ do {									\
     }									\
 } while (0)
 
-/* Nonzero if the constant value X is a legitimate general operand.
-   It is given that X satisfies CONSTANT_P or is a CONST_DOUBLE.  */
-#define LEGITIMATE_CONSTANT_P(X) \
-     legitimate_constant_p (X)
-
 /* Helper macro for s390.c and s390.md to check for symbolic constants.  */
 #define SYMBOLIC_CONST(X)       \
 (GET_CODE (X) == SYMBOL_REF                                             \
@@ -759,27 +733,11 @@ do {									\
    return the mode to be used for the comparison.  */
 #define SELECT_CC_MODE(OP, X, Y) s390_select_ccmode ((OP), (X), (Y))
 
-/* Canonicalize a comparison from one we don't have to one we do have.  */
-#define CANONICALIZE_COMPARISON(CODE, OP0, OP1) \
-  s390_canonicalize_comparison (&(CODE), &(OP0), &(OP1))
-
 /* Relative costs of operations.  */
-
-/* On s390, copy between fprs and gprs is expensive.  */
-#define REGISTER_MOVE_COST(MODE, CLASS1, CLASS2)                        \
-  ((   (   reg_classes_intersect_p ((CLASS1), GENERAL_REGS)		\
-        && reg_classes_intersect_p ((CLASS2), FP_REGS))			\
-    || (   reg_classes_intersect_p ((CLASS1), FP_REGS)			\
-        && reg_classes_intersect_p ((CLASS2), GENERAL_REGS))) ? 10 : 1)
-
-/* A C expression for the cost of moving data of mode M between a
-   register and memory.  A value of 2 is the default; this cost is
-   relative to those in `REGISTER_MOVE_COST'.  */
-#define MEMORY_MOVE_COST(M, C, I) 1
 
 /* A C expression for the cost of a branch instruction.  A value of 1
    is the default; other values are interpreted relative to that.  */
-#define BRANCH_COST(speed_p, predictable_p) 1
+#define BRANCH_COST(speed_p, predictable_p) s390_branch_cost
 
 /* Nonzero if access to memory by bytes is slow and undesirable.  */
 #define SLOW_BYTE_ACCESS 1
@@ -790,19 +748,19 @@ do {									\
 
 /* The maximum number of bytes that a single instruction can move quickly
    between memory and registers or between two memory locations.  */
-#define MOVE_MAX (TARGET_64BIT ? 16 : 8)
-#define MOVE_MAX_PIECES (TARGET_64BIT ? 8 : 4)
+#define MOVE_MAX (TARGET_ZARCH ? 16 : 8)
+#define MOVE_MAX_PIECES (TARGET_ZARCH ? 8 : 4)
 #define MAX_MOVE_MAX 16
 
 /* Determine whether to use move_by_pieces or block move insn.  */
 #define MOVE_BY_PIECES_P(SIZE, ALIGN)		\
   ( (SIZE) == 1 || (SIZE) == 2 || (SIZE) == 4	\
-    || (TARGET_64BIT && (SIZE) == 8) )
+    || (TARGET_ZARCH && (SIZE) == 8) )
 
 /* Determine whether to use clear_by_pieces or block clear insn.  */
 #define CLEAR_BY_PIECES_P(SIZE, ALIGN)		\
   ( (SIZE) == 1 || (SIZE) == 2 || (SIZE) == 4	\
-    || (TARGET_64BIT && (SIZE) == 8) )
+    || (TARGET_ZARCH && (SIZE) == 8) )
 
 /* This macro is used to determine whether store_by_pieces should be
    called to "memcpy" storage when the source is a constant string.  */
@@ -818,7 +776,7 @@ do {									\
 /* This value is used in tree-sra to decide whether it might benefical
    to split a struct move into several word-size moves.  For S/390
    only small values make sense here since struct moves are relatively
-   cheap thanks to mvc so the small default value choosen for archs
+   cheap thanks to mvc so the small default value chosen for archs
    with memmove patterns should be ok.  But this value is multiplied
    in tree-sra with UNITS_PER_WORD to make a decision so we adjust it
    here to compensate for that factor since mvc costs exactly the same
@@ -852,8 +810,6 @@ do {									\
 
 /* Position independent code.  */
 
-extern int flag_pic;
-
 #define PIC_OFFSET_TABLE_REGNUM (flag_pic ? 12 : INVALID_REGNUM)
 
 #define LEGITIMATE_PIC_OPERAND_P(X)  legitimate_pic_operand_p (X)
@@ -882,6 +838,9 @@ extern int flag_pic;
 /* The LOCAL_LABEL_PREFIX variable is used by dbxelf.h.  */
 #define LOCAL_LABEL_PREFIX "."
 
+#define LABEL_ALIGN(LABEL) \
+  s390_label_align (LABEL)
+
 /* How to refer to registers in assembler output.  This sequence is
    indexed by compiler's hard-register-number (see above).  */
 #define REGISTER_NAMES							\
@@ -896,18 +855,11 @@ extern int flag_pic;
 #define PRINT_OPERAND(FILE, X, CODE) print_operand (FILE, X, CODE)
 #define PRINT_OPERAND_ADDRESS(FILE, ADDR) print_operand_address (FILE, ADDR)
 
-/* Output machine-dependent UNSPECs in address constants.  */
-#define OUTPUT_ADDR_CONST_EXTRA(FILE, X, FAIL)		\
-do {							\
-  if (!s390_output_addr_const_extra (FILE, (X)))	\
-    goto FAIL;						\
-} while (0);
-
 /* Output an element of a case-vector that is absolute.  */
 #define ASM_OUTPUT_ADDR_VEC_ELT(FILE, VALUE)				\
 do {									\
   char buf[32];								\
-  fputs (integer_asm_op (UNITS_PER_WORD, TRUE), (FILE));		\
+  fputs (integer_asm_op (UNITS_PER_LONG, TRUE), (FILE));		\
   ASM_GENERATE_INTERNAL_LABEL (buf, "L", (VALUE));			\
   assemble_name ((FILE), buf);						\
   fputc ('\n', (FILE));							\
@@ -917,7 +869,7 @@ do {									\
 #define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL)		\
 do {									\
   char buf[32];								\
-  fputs (integer_asm_op (UNITS_PER_WORD, TRUE), (FILE));		\
+  fputs (integer_asm_op (UNITS_PER_LONG, TRUE), (FILE));		\
   ASM_GENERATE_INTERNAL_LABEL (buf, "L", (VALUE));			\
   assemble_name ((FILE), buf);						\
   fputc ('-', (FILE));							\
@@ -926,6 +878,9 @@ do {									\
   fputc ('\n', (FILE));							\
 } while (0)
 
+#undef ASM_OUTPUT_FUNCTION_LABEL
+#define ASM_OUTPUT_FUNCTION_LABEL(FILE, NAME, DECL) \
+  s390_asm_output_function_label (FILE, NAME, DECL)
 
 /* Miscellaneous parameters.  */
 
@@ -965,4 +920,8 @@ do {									\
   (TARGET_LONG_DISPLACEMENT? ((d) >= -524288 && (d) <= 524287) \
                            : ((d) >= 0 && (d) <= 4095))
 
+/* Reads can reuse write prefetches, used by tree-ssa-prefetch-loops.c.  */
+#define READ_CAN_USE_WRITE_PREFETCH 1
+
+extern const int processor_flags_table[];
 #endif

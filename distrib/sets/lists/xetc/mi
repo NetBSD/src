@@ -1,11 +1,11 @@
-# $NetBSD: mi,v 1.18.10.1 2013/06/23 06:26:19 tls Exp $
+# $NetBSD: mi,v 1.18.10.2 2014/08/19 23:45:44 tls Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
 ./etc/X11/fs/config					-unknown-	x11
 ./etc/X11/fs/config					-unknown-	xorg
-./etc/X11/lbxproxy/AtomControl				-unknown-	x11
 ./etc/X11/lbxproxy/AtomControl				-obsolete-	obsolete,xorg
+./etc/X11/lbxproxy/AtomControl				-unknown-	x11
 ./etc/X11/proxymngr/pmconfig				-unknown-	x11
 ./etc/X11/proxymngr/pmconfig				-unknown-	xorg
 ./etc/X11/rstart/commands/@List				-unknown-	x11
@@ -30,9 +30,9 @@
 ./etc/X11/xdm/TakeConsole				-unknown-	xorg
 ./etc/X11/xdm/Xaccess					-unknown-	x11
 ./etc/X11/xdm/Xaccess					-unknown-	xorg
+./etc/X11/xdm/Xreset					-unknown-	xorg
 ./etc/X11/xdm/Xresources				-unknown-	x11
 ./etc/X11/xdm/Xresources				-unknown-	xorg
-./etc/X11/xdm/Xreset					-unknown-	xorg
 ./etc/X11/xdm/Xservers					-unknown-	x11
 ./etc/X11/xdm/Xservers					-unknown-	xorg
 ./etc/X11/xdm/Xservers.fs				-unknown-	x11
@@ -107,9 +107,9 @@
 ./etc/fonts/fonts.dtd					-unknown-	xorg
 ./etc/mtree/set.xetc					xetc-sys-root	x11
 ./etc/mtree/set.xetc					xetc-sys-root	xorg
+./etc/rc.d/fccache					etc-x11-rc	x11
+./etc/rc.d/fccache					etc-x11-rc	xorg
 ./etc/rc.d/xdm						etc-x11-rc	x11
 ./etc/rc.d/xdm						etc-x11-rc	xorg
 ./etc/rc.d/xfs						etc-x11-rc	x11
 ./etc/rc.d/xfs						etc-x11-rc	xorg
-./etc/rc.d/fccache					etc-x11-rc	x11
-./etc/rc.d/fccache					etc-x11-rc	xorg

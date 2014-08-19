@@ -18,11 +18,11 @@ Disassembly of section \.text:
 [ 	]+18:[ 	]+af9e 0000 0000[ 	]+sub\.d 0 <start>,\$?r9
 [ 	]+1a:[ 	]+R_CRIS_32_GD	extsym4\+0x2a
 [ 	]+1e:[ 	]+af3e 0000 0000[ 	]+sub\.d 0 <start>,\$?r3
-[ 	]+20:[ 	]+R_CRIS_32_GD	extsym4\+0xffffffa0
+[ 	]+20:[ 	]+R_CRIS_32_GD	extsym4-0x60
 [ 	]+24:[ 	]+6f3d 0000 0000 67de[ 	]+move\.d \[\$?r7=\$?r3\+0 <start>\],\$?r13
-[ 	]+26:[ 	]+R_CRIS_32_GD	extsym10\+0xfffffeb6
+[ 	]+26:[ 	]+R_CRIS_32_GD	extsym10-0x14a
 [ 	]+2c:[ 	]+5fbd 0000 699a[ 	]+move\.d \[\$?r11\+0\],\$?r9
-[ 	]+2e:[ 	]+R_CRIS_16_TPREL	extsym14\+0xffffff00
+[ 	]+2e:[ 	]+R_CRIS_16_TPREL	extsym14-0x100
 [ 	]+32:[ 	]+6fad 0000 0000 287a[ 	]+add\.d \[\$?r10\+0 <start>\],\$?r7,\$?r8
 [ 	]+34:[ 	]+R_CRIS_32_TPREL	extsym3\+0x38
 [ 	]+3a:[ 	]+7f0d 0000 0000 611a[ 	]+move.d \[0 <start>],\$?r1

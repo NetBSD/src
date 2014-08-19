@@ -1,12 +1,12 @@
-/*	$NetBSD: errwarn.c,v 1.1.1.2.4.2 2013/06/23 06:26:29 tls Exp $	*/
-
+/*	$NetBSD: errwarn.c,v 1.1.1.2.4.3 2014/08/19 23:46:41 tls Exp $	*/
 /* errwarn.c
 
    Errors and warnings... */
 
 /*
  * Copyright (c) 1995 RadioMail Corporation.
- * Copyright (c) 2004,2007,2009 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2009,2014 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004,2007 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: errwarn.c,v 1.1.1.2.4.2 2013/06/23 06:26:29 tls Exp $");
+__RCSID("$NetBSD: errwarn.c,v 1.1.1.2.4.3 2014/08/19 23:46:41 tls Exp $");
 
 #include "dhcpd.h"
 
@@ -79,25 +79,15 @@ void log_fatal (const char * fmt, ... )
 	  IGNORE_RET (write (STDERR_FILENO, "\n", 1));
   }
 
-#if !defined (NOMINUM)
   log_error ("%s", "");
-  log_error ("If you did not get this software from ftp.isc.org, please");
-  log_error ("get the latest from ftp.isc.org and install that before");
-  log_error ("requesting help.");
-  log_error ("%s", "");
-  log_error ("If you did get this software from ftp.isc.org and have not");
-  log_error ("yet read the README, please read it before requesting help.");
-  log_error ("If you intend to request help from the dhcp-server@isc.org");
-  log_error ("mailing list, please read the section on the README about");
-  log_error ("submitting bug reports and requests for help.");
-  log_error ("%s", "");
-  log_error ("Please do not under any circumstances send requests for");
-  log_error ("help directly to the authors of this software - please");
-  log_error ("send them to the appropriate mailing list as described in");
-  log_error ("the README file.");
+  log_error ("If you think you have received this message due to a bug rather");
+  log_error ("than a configuration issue please read the section on submitting");
+  log_error ("bugs on either our web page at www.isc.org or in the README file");
+  log_error ("before submitting a bug.  These pages explain the proper");
+  log_error ("process and the information we find helpful for debugging..");
   log_error ("%s", "");
   log_error ("exiting.");
-#endif
+
   if (log_cleanup)
 	  (*log_cleanup) ();
   exit (1);

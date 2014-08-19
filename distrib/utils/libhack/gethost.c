@@ -1,4 +1,4 @@
-/*	$NetBSD: gethost.c,v 1.8 2003/08/07 09:27:57 agc Exp $	*/
+/*	$NetBSD: gethost.c,v 1.8.62.1 2014/08/19 23:45:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1988, 1993
@@ -49,10 +49,7 @@
  * --Copyright--
  */
 
-/*
- * Copied from:  lib/libc/net/gethostnamadr.c
- * and then gutted, leaving only /etc/hosts support.
- */
+/* Provide just /etc/hosts lookup support */
 
 #include <sys/cdefs.h>
 
@@ -61,218 +58,175 @@
 #define gethostbyname		_gethostbyname
 #endif
 
-#include <sys/param.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <arpa/nameser.h>
 #include <netdb.h>
-#include <resolv.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <errno.h>
 #include <string.h>
+#include <nsswitch.h>
+#include <errno.h>
+#include <arpa/nameser.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+
+#include "hostent.h"
 
 #ifdef __weak_alias
 __weak_alias(gethostbyaddr,_gethostbyaddr);
 __weak_alias(gethostbyname,_gethostbyname);
 #endif
 
-#define	MAXALIASES	35
-#define	MAXADDRS	35
+int h_errno;
+FILE *_h_file;
+static struct hostent h_ent;
+static char h_buf[4096]; 
 
-static char *h_addr_ptrs[MAXADDRS + 1];
-
-static struct hostent host;
-static char *host_aliases[MAXALIASES];
-static char hostbuf[BUFSIZ+1];
-static struct in_addr host_addr;
-static FILE *hostf = NULL;
-static int stayopen = 0;
-
-void _sethtent __P((int));
-void _endhtent __P((void));
-struct hostent *_gethtent __P((void));
-struct hostent *_gethtbyname __P((const char *));
-struct hostent *_gethtbyaddr __P((const char *, int, int));
-
-
-#if PACKETSZ > 1024
-#define	MAXPACKET	PACKETSZ
-#else
-#define	MAXPACKET	1024
-#endif
-
-extern int h_errno;
+static struct hostent *
+getby(int (*f)(void *, void *, va_list), struct getnamaddr *info, ...)
+{
+        va_list ap;
+        int e;
+        
+        va_start(ap, info);
+        e = (*f)(info, NULL, ap);
+        va_end(ap); 
+        switch (e) {
+        case NS_SUCCESS: 
+                return info->hp;  
+        default:
+		return NULL;
+        }       
+}                       
 
 struct hostent *
-gethostbyname(name)
-	const char *name;
+gethostbyname_r(const char *name, struct hostent *hp, char *buf, size_t bufsiz,
+    int *he)
 {
-	register const char *cp;
+	struct getnamaddr info;
+	info.hp = hp;
+	info.buf = buf;
+	info.buflen = bufsiz;
+	info.he = he;
+	return getby(_hf_gethtbyname, &info, name, 0, AF_INET);
+}
 
-	/*
-	 * disallow names consisting only of digits/dots, unless
-	 * they end in a dot.
-	 */
-	if (isdigit(name[0]))
-		for (cp = name;; ++cp) {
-			if (!*cp) {
-				if (*--cp == '.')
-					break;
-				/*
-				 * All-numeric, no dot at the end.
-				 * Fake up a hostent as if we'd actually
-				 * done a lookup.
-				 */
-				if (!inet_aton(name, &host_addr)) {
-					h_errno = HOST_NOT_FOUND;
-					return((struct hostent *) NULL);
-				}
-				host.h_name = (char *)name;
-				host.h_aliases = host_aliases;
-				host_aliases[0] = NULL;
-				host.h_addrtype = AF_INET;
-				host.h_length = sizeof(u_int32_t);
-				h_addr_ptrs[0] = (char *)&host_addr;
-				h_addr_ptrs[1] = NULL;
-				host.h_addr_list = h_addr_ptrs;
-				return (&host);
-			}
-			if (!isdigit(*cp) && *cp != '.') 
-				break;
-		}
 
-	/* XXX - Force host table lookup. */
-	return (_gethtbyname(name));
+struct hostent *
+gethostbyname(const char *name)
+{
+	return gethostbyname_r(name, &h_ent, h_buf, sizeof(h_buf), &h_errno);
 }
 
 struct hostent *
-gethostbyaddr(addr, len, type)
-	const char *addr;
-	socklen_t len;
-	int type;
+gethostbyaddr_r(const void *addr, socklen_t len, int type, struct hostent *hp,
+    char *buf, size_t bufsiz, int *he)
 {
-	char qbuf[MAXDNAME];
-
-	if (type != AF_INET)
-		return ((struct hostent *) NULL);
-	(void)sprintf(qbuf, "%u.%u.%u.%u.in-addr.arpa",
-		((unsigned)addr[3] & 0xff),
-		((unsigned)addr[2] & 0xff),
-		((unsigned)addr[1] & 0xff),
-		((unsigned)addr[0] & 0xff));
-
-	/* XXX - Force host table lookup. */
-	return (_gethtbyaddr(addr, len, type));
+	struct getnamaddr info;
+	info.hp = hp;
+	info.buf = buf;
+	info.buflen = bufsiz;
+	info.he = he;
+	return getby(_hf_gethtbyaddr, &info, addr, len, type);
 }
 
-void
-_sethtent(f)
-	int f;
+struct hostent *
+gethostbyaddr(const void *addr, socklen_t len, int type)
 {
-	if (hostf == NULL)
-		hostf = fopen(_PATH_HOSTS, "r" );
-	else
-		rewind(hostf);
-	stayopen = f;
+	return gethostbyaddr_r(addr, len, type, &h_ent, h_buf, sizeof(h_buf),
+	    &h_errno);
 }
 
-void
-_endhtent()
+struct hostent *
+gethostent_r(FILE *hf, struct hostent *hent, char *buf, size_t buflen, int *he)
 {
-	if (hostf && !stayopen) {
-		(void) fclose(hostf);
-		hostf = NULL;
+	char *p, *name;
+	char *cp, **q;
+	int af, len;
+	size_t llen, anum;
+	char *aliases[MAXALIASES];
+	struct in6_addr host_addr;
+
+	if (hf == NULL) {
+		*he = NETDB_INTERNAL;
+		errno = EINVAL;
+		return NULL;
 	}
-}
-
-struct hostent *
-_gethtent()
-{
-	char *p;
-	register char *cp, **q;
-
-	if (hostf == NULL && (hostf = fopen(_PATH_HOSTS, "r" )) == NULL)
-		return (NULL);
-again:
-	if ((p = fgets(hostbuf, BUFSIZ, hostf)) == NULL)
-		return (NULL);
+ again:
+	if ((p = fgetln(hf, &llen)) == NULL) {
+		*he = HOST_NOT_FOUND;
+		return NULL;
+	}
+	if (llen < 1)
+		goto again;
 	if (*p == '#')
 		goto again;
-	cp = strpbrk(p, "#\n");
-	if (cp == NULL)
+	p[llen] = '\0';
+	if (!(cp = strpbrk(p, "#\n")))
 		goto again;
 	*cp = '\0';
-	cp = strpbrk(p, " \t");
-	if (cp == NULL)
+	if (!(cp = strpbrk(p, " \t")))
 		goto again;
 	*cp++ = '\0';
-	/* THIS STUFF IS INTERNET SPECIFIC */
-	h_addr_ptrs[0] = (char *)&host_addr;
-	h_addr_ptrs[1] = NULL;
-	(void) inet_aton(p, &host_addr);
-	host.h_addr_list = h_addr_ptrs;
-	host.h_length = sizeof(u_int32_t);
-	host.h_addrtype = AF_INET;
+	if (inet_pton(AF_INET6, p, &host_addr) > 0) {
+		af = AF_INET6;
+		len = NS_IN6ADDRSZ;
+	} else if (inet_pton(AF_INET, p, &host_addr) > 0) {
+#if 0
+		res_state res = __res_get_state();
+		if (res == NULL)
+			return NULL;
+		if (res->options & RES_USE_INET6) {
+			map_v4v6_address(buf, buf);
+			af = AF_INET6;
+			len = NS_IN6ADDRSZ;
+		} else {
+#endif
+			af = AF_INET;
+			len = NS_INADDRSZ;
+#if 0
+		}
+		__res_put_state(res);
+#endif
+	} else {
+		goto again;
+	}
+	/* if this is not something we're looking for, skip it. */
+	if (hent->h_addrtype != 0 && hent->h_addrtype != af)
+		goto again;
+	if (hent->h_length != 0 && hent->h_length != len)
+		goto again;
+
 	while (*cp == ' ' || *cp == '\t')
 		cp++;
-	host.h_name = cp;
-	q = host.h_aliases = host_aliases;
-	cp = strpbrk(cp, " \t");
-	if (cp != NULL) 
+	if ((cp = strpbrk(name = cp, " \t")) != NULL)
 		*cp++ = '\0';
+	q = aliases;
 	while (cp && *cp) {
 		if (*cp == ' ' || *cp == '\t') {
 			cp++;
 			continue;
 		}
-		if (q < &host_aliases[MAXALIASES - 1])
-			*q++ = cp;
-		cp = strpbrk(cp, " \t");
-		if (cp != NULL)
+		if (q >= &aliases[__arraycount(aliases)])
+			goto nospc;
+		*q++ = cp;
+		if ((cp = strpbrk(cp, " \t")) != NULL)
 			*cp++ = '\0';
 	}
-	*q = NULL;
-	return (&host);
+	hent->h_length = len;
+	hent->h_addrtype = af;
+	HENT_ARRAY(hent->h_addr_list, 1, buf, buflen);
+	anum = (size_t)(q - aliases);
+	HENT_ARRAY(hent->h_aliases, anum, buf, buflen);
+	HENT_COPY(hent->h_addr_list[0], &host_addr, hent->h_length, buf,
+	    buflen);
+	hent->h_addr_list[1] = NULL;
+
+	HENT_SCOPY(hent->h_name, name, buf, buflen);
+	for (size_t i = 0; i < anum; i++)
+		HENT_SCOPY(hent->h_aliases[i], aliases[i], buf, buflen);
+	hent->h_aliases[anum] = NULL;
+
+	*he = NETDB_SUCCESS;
+	return hent;
+nospc:
+	errno = ENOSPC;
+	*he = NETDB_INTERNAL;
+	return NULL;
 }
-
-struct hostent *
-_gethtbyname(name)
-	const char *name;
-{
-	register struct hostent *p;
-	register char **cp;
-	
-	_sethtent(0);
-	while ((p = _gethtent()) != NULL) {
-		if (strcasecmp(p->h_name, name) == 0)
-			break;
-		for (cp = p->h_aliases; *cp != 0; cp++)
-			if (strcasecmp(*cp, name) == 0)
-				goto found;
-	}
-found:
-	_endhtent();
-	if (p==NULL)
-		h_errno = HOST_NOT_FOUND;
-	return (p);
-}
-
-struct hostent *
-_gethtbyaddr(addr, len, type)
-	const char *addr;
-	int len, type;
-{
-	register struct hostent *p;
-
-	_sethtent(0);
-	while ((p = _gethtent()) != NULL)
-		if (p->h_addrtype == type && !memcmp(p->h_addr, addr, len))
-			break;
-	_endhtent();
-	if (p==NULL)
-		h_errno = HOST_NOT_FOUND;
-	return (p);
-}
-

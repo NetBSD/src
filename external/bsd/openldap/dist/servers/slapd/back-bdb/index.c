@@ -1,10 +1,10 @@
-/*	$NetBSD: index.c,v 1.1.1.3 2010/12/12 15:22:56 adam Exp $	*/
+/*	$NetBSD: index.c,v 1.1.1.3.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
 /* index.c - routines for dealing with attribute indexes */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/index.c,v 1.61.2.9 2010/04/13 20:23:25 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2010 The OpenLDAP Foundation.
+ * Copyright 2000-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -454,7 +454,7 @@ int bdb_index_recrun(
 	if ( id == 0 )
 		return 0;
 
-	for (i=base; i<bdb->bi_nattrs; i+=slap_tool_thread_max) {
+	for (i=base; i<bdb->bi_nattrs; i+=slap_tool_thread_max-1) {
 		ir = ir0 + i;
 		if ( !ir->ai ) continue;
 		while (( al = ir->attrs )) {

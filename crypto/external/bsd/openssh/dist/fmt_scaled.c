@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_scaled.c,v 1.1 2009/06/07 22:38:46 christos Exp $	*/
+/*	$NetBSD: fmt_scaled.c,v 1.1.12.1 2014/08/19 23:45:24 tls Exp $	*/
 /*	$OpenBSD: fmt_scaled.c,v 1.9 2007/03/20 03:42:52 tedu Exp $	*/
 
 /*
@@ -40,10 +40,8 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: fmt_scaled.c,v 1.1 2009/06/07 22:38:46 christos Exp $");
 
 #ifndef HAVE_FMT_SCALED
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -73,13 +71,13 @@ static long long scale_factors[] = {
 
 #define MAX_DIGITS (SCALE_LENGTH * 3)	/* XXX strlen(sprintf("%lld", -1)? */
 
-#ifdef notdef
 /** Convert the given input string "scaled" into numeric in "result".
  * Return 0 on success, -1 and errno set on error.
  */
-scan_scaled(char *scaled, long long *result)
+int
+scan_scaled(const char *scaled, long long *result)
 {
-	char *p = scaled;
+	const char *p = scaled;
 	int sign = 0;
 	unsigned int i, ndigits = 0, fract_digits = 0;
 	long long scale_fact = 1, whole = 0, fpart = 0;
@@ -188,7 +186,6 @@ scan_scaled(char *scaled, long long *result)
 	errno = ERANGE;
 	return -1;
 }
-#endif
 
 /* Format the given "number" into human-readable form in "result".
  * Result must point to an allocated buffer of length FMT_SCALED_STRSIZE.

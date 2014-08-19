@@ -321,6 +321,7 @@ zfs_replay_create_acl(zfsvfs_t *zfsvfs,
 
 	if (lr->lr_common.lrc_txtype & TX_CI)
 		vflg |= FIGNORECASE;
+	vn_lock(ZTOV(dzp), LK_EXCLUSIVE | LK_RETRY);
 	switch (txtype) {
 	case TX_CREATE_ACL:
 		aclstart = (caddr_t)(lracl + 1);
@@ -395,6 +396,7 @@ zfs_replay_create_acl(zfsvfs_t *zfsvfs,
 	default:
 		error = ENOTSUP;
 	}
+	VOP_UNLOCK(ZTOV(dzp));
 
 bail:
 	if (error == 0 && vp != NULL)
@@ -529,10 +531,8 @@ zfs_replay_create(zfsvfs_t *zfsvfs, lr_create_t *lr, boolean_t byteswap)
 	VOP_UNLOCK(ZTOV(dzp));
 
 out:
-	if (error == 0 && vp != NULL) {
-		VOP_UNLOCK(vp);
+	if (error == 0 && vp != NULL)
 		VN_RELE(vp);
-	}
 
 	VN_RELE(ZTOV(dzp));
 
@@ -570,6 +570,12 @@ zfs_replay_remove(zfsvfs_t *zfsvfs, lr_remove_t *lr, boolean_t byteswap)
 	error = VOP_LOOKUP(ZTOV(dzp), &vp, &cn);
 	if (error != 0) {
 		VOP_UNLOCK(ZTOV(dzp));
+		goto fail;
+	}
+	error = vn_lock(vp, LK_EXCLUSIVE);
+	if (error != 0) {
+		VOP_UNLOCK(ZTOV(dzp));
+		vrele(vp);
 		goto fail;
 	}
 
@@ -667,7 +673,6 @@ zfs_replay_rename(zfsvfs_t *zfsvfs, lr_rename_t *lr, boolean_t byteswap)
 	VOP_UNLOCK(ZTOV(sdzp));
 	if (error != 0)
 		goto fail;
-	VOP_UNLOCK(svp);
 
 	tcn.cn_nameptr = tname;
 	tcn.cn_namelen = strlen(tname);
@@ -682,6 +687,13 @@ zfs_replay_rename(zfsvfs_t *zfsvfs, lr_rename_t *lr, boolean_t byteswap)
 	else if (error != 0) {
 		VOP_UNLOCK(ZTOV(tdzp));
 		goto fail;
+	} else {
+		error = vn_lock(tvp, LK_EXCLUSIVE);
+		if (error != 0) {
+			VOP_UNLOCK(ZTOV(tdzp));
+			vrele(tvp);
+			goto fail;
+		}
 	}
 
 	error = VOP_RENAME(ZTOV(sdzp), svp, &scn, ZTOV(tdzp), tvp, &tcn /*,vflg*/);

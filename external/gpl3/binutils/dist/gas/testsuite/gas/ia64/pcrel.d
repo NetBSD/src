@@ -9,28 +9,28 @@ OFFSET[[:space:]]+TYPE[[:space:]]+VALUE[[:space:]]*
 0+10[[:space:]]+PCREL22[[:space:]]+esym
 0+20[[:space:]]+PCREL22[[:space:]]+esym\+0x0+20
 0+30[[:space:]]+PCREL22[[:space:]]+esym
-0+40[[:space:]]+PCREL22[[:space:]]+esym\+0xf+e0
+0+40[[:space:]]+PCREL22[[:space:]]+esym-0x0+20
 
 RELOCATION RECORDS FOR \[\.movl\]:
 OFFSET[[:space:]]+TYPE[[:space:]]+VALUE[[:space:]]*
 0+12[[:space:]]+PCREL64I[[:space:]]+esym
 0+22[[:space:]]+PCREL64I[[:space:]]+esym\+0x0+20
 0+32[[:space:]]+PCREL64I[[:space:]]+esym
-0+42[[:space:]]+PCREL64I[[:space:]]+esym\+0xf+e0
+0+42[[:space:]]+PCREL64I[[:space:]]+esym-0x0+20
 
 RELOCATION RECORDS FOR \[\.data8\]:
 OFFSET[[:space:]]+TYPE[[:space:]]+VALUE[[:space:]]*
 0+10[[:space:]]+PCREL64[LM]SB[[:space:]]+esym
 0+20[[:space:]]+PCREL64[LM]SB[[:space:]]+esym\+0x0+20
 0+30[[:space:]]+PCREL64[LM]SB[[:space:]]+esym
-0+40[[:space:]]+PCREL64[LM]SB[[:space:]]+esym\+0xf+e0
+0+40[[:space:]]+PCREL64[LM]SB[[:space:]]+esym-0x0+20
 
 RELOCATION RECORDS FOR \[\.data4\]:
 OFFSET[[:space:]]+TYPE[[:space:]]+VALUE[[:space:]]*
 0+10[[:space:]]+PCREL32[LM]SB[[:space:]]+esym
 0+20[[:space:]]+PCREL32[LM]SB[[:space:]]+esym\+0x0+20
 0+30[[:space:]]+PCREL32[LM]SB[[:space:]]+esym
-0+40[[:space:]]+PCREL32[LM]SB[[:space:]]+esym\+0xf+e0
+0+40[[:space:]]+PCREL32[LM]SB[[:space:]]+esym-0x0+20
 
 
 Contents of section \.mov:

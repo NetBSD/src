@@ -32,6 +32,8 @@ If @code{NULL} is returned then an error has occured.   Possible errors
 are @code{bfd_error_no_memory}, @code{bfd_error_invalid_target} or
 @code{system_call} error.
 
+On error, @var{fd} is always closed.
+
 @findex bfd_openr
 @subsubsection @code{bfd_openr}
 @strong{Synopsis}
@@ -72,6 +74,8 @@ on other files.
 
 Possible errors are @code{bfd_error_no_memory},
 @code{bfd_error_invalid_target} and @code{bfd_error_system_call}.
+
+On error, @var{fd} is closed.
 
 @findex bfd_openstreamr
 @subsubsection @code{bfd_openstreamr}

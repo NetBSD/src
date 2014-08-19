@@ -1,5 +1,5 @@
 /* FRV-specific support for 32-bit ELF.
-   Copyright 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
+   Copyright 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
    Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -28,56 +28,7 @@
 #include "hashtab.h"
 
 /* Forward declarations.  */
-static bfd_reloc_status_type elf32_frv_relocate_lo16
-  PARAMS ((bfd *,  Elf_Internal_Rela *, bfd_byte *, bfd_vma));
-static bfd_reloc_status_type elf32_frv_relocate_hi16
-  PARAMS ((bfd *,  Elf_Internal_Rela *, bfd_byte *, bfd_vma));
-static bfd_reloc_status_type elf32_frv_relocate_label24
-  PARAMS ((bfd *, asection *, Elf_Internal_Rela *, bfd_byte *, bfd_vma));
-static bfd_reloc_status_type elf32_frv_relocate_gprel12
-  PARAMS ((struct bfd_link_info *, bfd *, asection *, Elf_Internal_Rela *,
-	   bfd_byte *, bfd_vma));
-static bfd_reloc_status_type elf32_frv_relocate_gprelu12
-  PARAMS ((struct bfd_link_info *, bfd *, asection *, Elf_Internal_Rela *,
-	   bfd_byte *, bfd_vma));
-static bfd_reloc_status_type elf32_frv_relocate_gprello
-  PARAMS ((struct bfd_link_info *, bfd *, asection *, Elf_Internal_Rela *,
-	   bfd_byte *, bfd_vma));
-static bfd_reloc_status_type elf32_frv_relocate_gprelhi
-  PARAMS ((struct bfd_link_info *, bfd *, asection *, Elf_Internal_Rela *,
-	   bfd_byte *, bfd_vma));
-static reloc_howto_type *frv_reloc_type_lookup
-  PARAMS ((bfd *, bfd_reloc_code_real_type));
-static void frv_info_to_howto_rela
-  PARAMS ((bfd *, arelent *, Elf_Internal_Rela *));
-static bfd_boolean elf32_frv_relocate_section
-  PARAMS ((bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
-	   Elf_Internal_Rela *, Elf_Internal_Sym *, asection **));
-static bfd_boolean elf32_frv_add_symbol_hook
-  PARAMS (( bfd *, struct bfd_link_info *, Elf_Internal_Sym *,
-	    const char **, flagword *, asection **, bfd_vma *));
-static bfd_reloc_status_type frv_final_link_relocate
-  PARAMS ((reloc_howto_type *, bfd *, asection *, bfd_byte *,
-	   Elf_Internal_Rela *, bfd_vma));
-static bfd_boolean elf32_frv_check_relocs
-  PARAMS ((bfd *, struct bfd_link_info *, asection *,
-	   const Elf_Internal_Rela *));
-static int elf32_frv_machine
-  PARAMS ((bfd *));
-static bfd_boolean elf32_frv_object_p
-  PARAMS ((bfd *));
-static bfd_boolean frv_elf_set_private_flags
-  PARAMS ((bfd *, flagword));
-static bfd_boolean frv_elf_copy_private_bfd_data
-  PARAMS ((bfd *, bfd *));
-static bfd_boolean frv_elf_merge_private_bfd_data
-  PARAMS ((bfd *, bfd *));
-static bfd_boolean frv_elf_print_private_bfd_data
-  PARAMS ((bfd *, PTR));
-static bfd_boolean elf32_frv_grok_prstatus (bfd * abfd,
-					    Elf_Internal_Note * note);
-static bfd_boolean elf32_frv_grok_psinfo (bfd * abfd,
-					  Elf_Internal_Note * note);
+
 
 static reloc_howto_type elf32_frv_howto_table [] =
 {
@@ -2176,14 +2127,12 @@ _frvfdpic_emit_got_relocs_plt_entries (struct frvfdpic_relocs_info *entry,
 /* Handle an FRV small data reloc.  */
 
 static bfd_reloc_status_type
-elf32_frv_relocate_gprel12 (info, input_bfd, input_section, relocation,
-			    contents, value)
-     struct bfd_link_info *info;
-     bfd *input_bfd;
-     asection *input_section;
-     Elf_Internal_Rela *relocation;
-     bfd_byte *contents;
-     bfd_vma value;
+elf32_frv_relocate_gprel12 (struct bfd_link_info *info,
+			    bfd *input_bfd,
+			    asection *input_section,
+			    Elf_Internal_Rela *relocation,
+			    bfd_byte *contents,
+			    bfd_vma value)
 {
   bfd_vma insn;
   bfd_vma gp;
@@ -2215,14 +2164,12 @@ elf32_frv_relocate_gprel12 (info, input_bfd, input_section, relocation,
 /* Handle an FRV small data reloc. for the u12 field.  */
 
 static bfd_reloc_status_type
-elf32_frv_relocate_gprelu12 (info, input_bfd, input_section, relocation,
-			     contents, value)
-     struct bfd_link_info *info;
-     bfd *input_bfd;
-     asection *input_section;
-     Elf_Internal_Rela *relocation;
-     bfd_byte *contents;
-     bfd_vma value;
+elf32_frv_relocate_gprelu12 (struct bfd_link_info *info,
+			     bfd *input_bfd,
+			     asection *input_section,
+			     Elf_Internal_Rela *relocation,
+			     bfd_byte *contents,
+			     bfd_vma value)
 {
   bfd_vma insn;
   bfd_vma gp;
@@ -2257,11 +2204,10 @@ elf32_frv_relocate_gprelu12 (info, input_bfd, input_section, relocation,
 /* Handle an FRV ELF HI16 reloc.  */
 
 static bfd_reloc_status_type
-elf32_frv_relocate_hi16 (input_bfd, relhi, contents, value)
-     bfd *input_bfd;
-     Elf_Internal_Rela *relhi;
-     bfd_byte *contents;
-     bfd_vma value;
+elf32_frv_relocate_hi16 (bfd *input_bfd,
+			 Elf_Internal_Rela *relhi,
+			 bfd_byte *contents,
+			 bfd_vma value)
 {
   bfd_vma insn;
 
@@ -2280,11 +2226,10 @@ elf32_frv_relocate_hi16 (input_bfd, relhi, contents, value)
 
 }
 static bfd_reloc_status_type
-elf32_frv_relocate_lo16 (input_bfd, rello, contents, value)
-     bfd *input_bfd;
-     Elf_Internal_Rela *rello;
-     bfd_byte *contents;
-     bfd_vma value;
+elf32_frv_relocate_lo16 (bfd *input_bfd,
+			 Elf_Internal_Rela *rello,
+			 bfd_byte *contents,
+			 bfd_vma value)
 {
   bfd_vma insn;
 
@@ -2305,12 +2250,11 @@ elf32_frv_relocate_lo16 (input_bfd, rello, contents, value)
 /* Perform the relocation for the CALL label24 instruction.  */
 
 static bfd_reloc_status_type
-elf32_frv_relocate_label24 (input_bfd, input_section, rello, contents, value)
-     bfd *input_bfd;
-     asection *input_section;
-     Elf_Internal_Rela *rello;
-     bfd_byte *contents;
-     bfd_vma value;
+elf32_frv_relocate_label24 (bfd *input_bfd,
+			    asection *input_section,
+			    Elf_Internal_Rela *rello,
+			    bfd_byte *contents,
+			    bfd_vma value)
 {
   bfd_vma insn;
   bfd_vma label6;
@@ -2348,14 +2292,12 @@ elf32_frv_relocate_label24 (input_bfd, input_section, rello, contents, value)
 }
 
 static bfd_reloc_status_type
-elf32_frv_relocate_gprelhi (info, input_bfd, input_section, relocation,
-			    contents, value)
-     struct bfd_link_info *info;
-     bfd *input_bfd;
-     asection *input_section;
-     Elf_Internal_Rela *relocation;
-     bfd_byte *contents;
-     bfd_vma value;
+elf32_frv_relocate_gprelhi (struct bfd_link_info *info,
+			    bfd *input_bfd,
+			    asection *input_section,
+			    Elf_Internal_Rela *relocation,
+			    bfd_byte *contents,
+			    bfd_vma value)
 {
   bfd_vma insn;
   bfd_vma gp;
@@ -2383,14 +2325,12 @@ elf32_frv_relocate_gprelhi (info, input_bfd, input_section, relocation,
 }
 
 static bfd_reloc_status_type
-elf32_frv_relocate_gprello (info, input_bfd, input_section, relocation,
-			    contents, value)
-     struct bfd_link_info *info;
-     bfd *input_bfd;
-     asection *input_section;
-     Elf_Internal_Rela *relocation;
-     bfd_byte *contents;
-     bfd_vma value;
+elf32_frv_relocate_gprello (struct bfd_link_info *info,
+			    bfd *input_bfd,
+			    asection *input_section,
+			    Elf_Internal_Rela *relocation,
+			    bfd_byte *contents,
+			    bfd_vma value)
 {
   bfd_vma insn;
   bfd_vma gp;
@@ -2419,9 +2359,8 @@ elf32_frv_relocate_gprello (info, input_bfd, input_section, relocation,
 }
 
 static reloc_howto_type *
-frv_reloc_type_lookup (abfd, code)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     bfd_reloc_code_real_type code;
+frv_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
+		       bfd_reloc_code_real_type code)
 {
   switch (code)
     {
@@ -2601,10 +2540,9 @@ frv_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED, const char *r_name)
 /* Set the howto pointer for an FRV ELF reloc.  */
 
 static void
-frv_info_to_howto_rela (abfd, cache_ptr, dst)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     arelent *cache_ptr;
-     Elf_Internal_Rela *dst;
+frv_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
+			arelent *cache_ptr,
+			Elf_Internal_Rela *dst)
 {
   unsigned int r_type;
 
@@ -2665,14 +2603,12 @@ frvfdpic_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
    routines, but a few relocs, we have to do them ourselves.  */
 
 static bfd_reloc_status_type
-frv_final_link_relocate (howto, input_bfd, input_section, contents, rel,
-			 relocation)
-     reloc_howto_type *howto;
-     bfd *input_bfd;
-     asection *input_section;
-     bfd_byte *contents;
-     Elf_Internal_Rela *rel;
-     bfd_vma relocation;
+frv_final_link_relocate (reloc_howto_type *howto,
+			 bfd *input_bfd,
+			 asection *input_section,
+			 bfd_byte *contents,
+			 Elf_Internal_Rela *rel,
+			 bfd_vma relocation)
 {
   return _bfd_final_link_relocate (howto, input_bfd, input_section,
 				   contents, rel->r_offset, relocation,
@@ -2711,16 +2647,14 @@ frv_final_link_relocate (howto, input_bfd, input_section, contents, rel,
    accordingly.  */
 
 static bfd_boolean
-elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
-			    contents, relocs, local_syms, local_sections)
-     bfd *output_bfd ATTRIBUTE_UNUSED;
-     struct bfd_link_info *info;
-     bfd *input_bfd;
-     asection *input_section;
-     bfd_byte *contents;
-     Elf_Internal_Rela *relocs;
-     Elf_Internal_Sym *local_syms;
-     asection **local_sections;
+elf32_frv_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
+			    struct bfd_link_info *info,
+			    bfd *input_bfd,
+			    asection *input_section,
+			    bfd_byte *contents,
+			    Elf_Internal_Rela *relocs,
+			    Elf_Internal_Sym *local_syms,
+			    asection **local_sections)
 {
   Elf_Internal_Shdr *symtab_hdr;
   struct elf_link_hash_entry **sym_hashes;
@@ -2812,9 +2746,9 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 	  name = h->root.root.string;
 	}
 
-      if (sec != NULL && elf_discarded_section (sec))
+      if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, relend, howto, contents);
+					 rel, 1, relend, howto, 0, contents);
 
       if (info->relocatable)
 	continue;
@@ -2884,8 +2818,9 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 						      osec, sym,
 						      rel->r_addend))
 	    {
-	      (*_bfd_error_handler)
-		(_("%B(%A+0x%x): relocation to `%s+%x' may have caused the error above"),
+	      info->callbacks->einfo
+		(_("%H: relocation to `%s+%v'"
+		   " may have caused the error above\n"),
 		 input_bfd, input_section, rel->r_offset, name, rel->r_addend);
 	      return FALSE;
 	    }
@@ -2895,11 +2830,15 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 	default:
 	non_fdpic:
 	  picrel = NULL;
-	  if (h && ! FRVFDPIC_SYM_LOCAL (info, h))
+	  if (h
+	      && ! FRVFDPIC_SYM_LOCAL (info, h)
+	      && _bfd_elf_section_offset (output_bfd, info, input_section,
+					  rel->r_offset) != (bfd_vma) -1)
 	    {
-	      info->callbacks->warning
-		(info, _("relocation references symbol not defined in the module"),
-		 name, input_bfd, input_section, rel->r_offset);
+	      info->callbacks->einfo
+		(_("%H: relocation references symbol"
+		   " not defined in the module\n"),
+		 input_bfd, input_section, rel->r_offset);
 	      return FALSE;
 	    }
 	  break;
@@ -2972,10 +2911,9 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 	    /* Is this a call instruction?  */
 	    if ((insn & (unsigned long)0x01fc0000) != 0x003c0000)
 	      {
-		r = info->callbacks->warning
-		  (info,
-		   _("R_FRV_GETTLSOFF not applied to a call instruction"),
-		   name, input_bfd, input_section, rel->r_offset);
+		info->callbacks->einfo
+		  (_("%H: R_FRV_GETTLSOFF not applied to a call instruction\n"),
+		   input_bfd, input_section, rel->r_offset);
 		return FALSE;
 	      }
 
@@ -3014,10 +2952,10 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 	    /* Is this an lddi instruction?  */
 	    if ((insn & (unsigned long)0x01fc0000) != 0x00cc0000)
 	      {
-		r = info->callbacks->warning
-		  (info,
-		   _("R_FRV_GOTTLSDESC12 not applied to an lddi instruction"),
-		   name, input_bfd, input_section, rel->r_offset);
+		info->callbacks->einfo
+		  (_("%H: R_FRV_GOTTLSDESC12"
+		     " not applied to an lddi instruction\n"),
+		   input_bfd, input_section, rel->r_offset);
 		return FALSE;
 	      }
 
@@ -3085,10 +3023,10 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 	    /* Is this a sethi instruction?  */
 	    if ((insn & (unsigned long)0x01ff0000) != 0x00f80000)
 	      {
-		r = info->callbacks->warning
-		  (info,
-		   _("R_FRV_GOTTLSDESCHI not applied to a sethi instruction"),
-		   name, input_bfd, input_section, rel->r_offset);
+		info->callbacks->einfo
+		  (_("%H: R_FRV_GOTTLSDESCHI"
+		     " not applied to a sethi instruction\n"),
+		   input_bfd, input_section, rel->r_offset);
 		return FALSE;
 	      }
 
@@ -3122,11 +3060,10 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 	    /* Is this a setlo or setlos instruction?  */
 	    if ((insn & (unsigned long)0x01f70000) != 0x00f40000)
 	      {
-		r = info->callbacks->warning
-		  (info,
-		   _("R_FRV_GOTTLSDESCLO"
-		     " not applied to a setlo or setlos instruction"),
-		   name, input_bfd, input_section, rel->r_offset);
+		info->callbacks->einfo
+		  (_("%H: R_FRV_GOTTLSDESCLO"
+		     " not applied to a setlo or setlos instruction\n"),
+		   input_bfd, input_section, rel->r_offset);
 		return FALSE;
 	      }
 
@@ -3170,10 +3107,10 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 	    /* Is this an ldd instruction?  */
 	    if ((insn & (unsigned long)0x01fc0fc0) != 0x00080140)
 	      {
-		r = info->callbacks->warning
-		  (info,
-		   _("R_FRV_TLSDESC_RELAX not applied to an ldd instruction"),
-		   name, input_bfd, input_section, rel->r_offset);
+		info->callbacks->einfo
+		  (_("%H: R_FRV_TLSDESC_RELAX"
+		     " not applied to an ldd instruction\n"),
+		   input_bfd, input_section, rel->r_offset);
 		return FALSE;
 	      }
 
@@ -3254,11 +3191,10 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 	    /* Is this a calll or callil instruction?  */
 	    if ((insn & (unsigned long)0x7ff80fc0) != 0x02300000)
 	      {
-		r = info->callbacks->warning
-		  (info,
-		   _("R_FRV_GETTLSOFF_RELAX"
-		     " not applied to a calll instruction"),
-		   name, input_bfd, input_section, rel->r_offset);
+		info->callbacks->einfo
+		  (_("%H: R_FRV_GETTLSOFF_RELAX"
+		     " not applied to a calll instruction\n"),
+		   input_bfd, input_section, rel->r_offset);
 		return FALSE;
 	      }
 
@@ -3309,10 +3245,10 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 	    /* Is this an ldi instruction?  */
 	    if ((insn & (unsigned long)0x01fc0000) != 0x00c80000)
 	      {
-		r = info->callbacks->warning
-		  (info,
-		   _("R_FRV_GOTTLSOFF12 not applied to an ldi instruction"),
-		   name, input_bfd, input_section, rel->r_offset);
+		info->callbacks->einfo
+		  (_("%H: R_FRV_GOTTLSOFF12"
+		     " not applied to an ldi instruction\n"),
+		   input_bfd, input_section, rel->r_offset);
 		return FALSE;
 	      }
 
@@ -3339,10 +3275,10 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 	    /* Is this a sethi instruction?  */
 	    if ((insn & (unsigned long)0x01ff0000) != 0x00f80000)
 	      {
-		r = info->callbacks->warning
-		  (info,
-		   _("R_FRV_GOTTLSOFFHI not applied to a sethi instruction"),
-		   name, input_bfd, input_section, rel->r_offset);
+		info->callbacks->einfo
+		  (_("%H: R_FRV_GOTTLSOFFHI"
+		     " not applied to a sethi instruction\n"),
+		   input_bfd, input_section, rel->r_offset);
 		return FALSE;
 	      }
 
@@ -3368,11 +3304,10 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 	    /* Is this a setlo or setlos instruction?  */
 	    if ((insn & (unsigned long)0x01f70000) != 0x00f40000)
 	      {
-		r = info->callbacks->warning
-		  (info,
-		   _("R_FRV_GOTTLSOFFLO"
-		     " not applied to a setlo or setlos instruction"),
-		   name, input_bfd, input_section, rel->r_offset);
+		info->callbacks->einfo
+		  (_("%H: R_FRV_GOTTLSOFFLO"
+		     " not applied to a setlo or setlos instruction\n"),
+		   input_bfd, input_section, rel->r_offset);
 		return FALSE;
 	      }
 
@@ -3399,10 +3334,10 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 	    /* Is this an ld instruction?  */
 	    if ((insn & (unsigned long)0x01fc0fc0) != 0x00080100)
 	      {
-		r = info->callbacks->warning
-		  (info,
-		   _("R_FRV_TLSOFF_RELAX not applied to an ld instruction"),
-		   name, input_bfd, input_section, rel->r_offset);
+		info->callbacks->einfo
+		  (_("%H: R_FRV_TLSOFF_RELAX"
+		     " not applied to an ld instruction\n"),
+		   input_bfd, input_section, rel->r_offset);
 		return FALSE;
 	      }
 
@@ -3444,10 +3379,10 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 	    /* Is this a sethi instruction?  */
 	    if ((insn & (unsigned long)0x01ff0000) != 0x00f80000)
 	      {
-		r = info->callbacks->warning
-		  (info,
-		   _("R_FRV_TLSMOFFHI not applied to a sethi instruction"),
-		   name, input_bfd, input_section, rel->r_offset);
+		info->callbacks->einfo
+		  (_("%H: R_FRV_TLSMOFFHI"
+		     " not applied to a sethi instruction\n"),
+		   input_bfd, input_section, rel->r_offset);
 		return FALSE;
 	      }
 
@@ -3471,11 +3406,10 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 	    /* Is this a setlo or setlos instruction?  */
 	    if ((insn & (unsigned long)0x01f70000) != 0x00f40000)
 	      {
-		r = info->callbacks->warning
-		  (info,
-		   _("R_FRV_TLSMOFFLO"
-		     " not applied to a setlo or setlos instruction"),
-		   name, input_bfd, input_section, rel->r_offset);
+		info->callbacks->einfo
+		  (_("R_FRV_TLSMOFFLO"
+		     " not applied to a setlo or setlos instruction\n"),
+		   input_bfd, input_section, rel->r_offset);
 		return FALSE;
 	      }
 
@@ -3593,9 +3527,10 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 		  {
 		    if (addend)
 		      {
-			info->callbacks->warning
-			  (info, _("R_FRV_FUNCDESC references dynamic symbol with nonzero addend"),
-			   name, input_bfd, input_section, rel->r_offset);
+			info->callbacks->einfo
+			  (_("%H: R_FRV_FUNCDESC references dynamic symbol"
+			     " with nonzero addend\n"),
+			   input_bfd, input_section, rel->r_offset);
 			return FALSE;
 		      }
 		    dynindx = h->dynindx;
@@ -3633,10 +3568,10 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 						       input_section
 						       ->output_section))
 			  {
-			    info->callbacks->warning
-			      (info,
-			       _("cannot emit fixups in read-only section"),
-			       name, input_bfd, input_section, rel->r_offset);
+			    info->callbacks->einfo
+			      (_("%H: cannot emit fixups"
+				 " in read-only section\n"),
+			       input_bfd, input_section, rel->r_offset);
 			    return FALSE;
 			  }
 
@@ -3664,10 +3599,10 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 						   input_section
 						   ->output_section))
 		      {
-			info->callbacks->warning
-			  (info,
-			   _("cannot emit dynamic relocations in read-only section"),
-			   name, input_bfd, input_section, rel->r_offset);
+			info->callbacks->einfo
+			  (_("%H: cannot emit dynamic relocations"
+			     " in read-only section\n"),
+			   input_bfd, input_section, rel->r_offset);
 			return FALSE;
 		      }
 
@@ -3713,9 +3648,10 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 	      {
 		if (addend && r_type == R_FRV_FUNCDESC_VALUE)
 		  {
-		    info->callbacks->warning
-		      (info, _("R_FRV_FUNCDESC_VALUE references dynamic symbol with nonzero addend"),
-		       name, input_bfd, input_section, rel->r_offset);
+		    info->callbacks->einfo
+		      (_("%H: R_FRV_FUNCDESC_VALUE"
+			 " references dynamic symbol with nonzero addend\n"),
+		       input_bfd, input_section, rel->r_offset);
 		    return FALSE;
 		  }
 		dynindx = h->dynindx;
@@ -3754,10 +3690,9 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 						   input_section
 						   ->output_section))
 		      {
-			info->callbacks->warning
-			  (info,
-			   _("cannot emit fixups in read-only section"),
-			   name, input_bfd, input_section, rel->r_offset);
+			info->callbacks->einfo
+			  (_("%H: cannot emit fixups in read-only section\n"),
+			   input_bfd, input_section, rel->r_offset);
 			return FALSE;
 		      }
 		    if (!h || h->root.type != bfd_link_hash_undefweak)
@@ -3798,10 +3733,10 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 						   input_section
 						   ->output_section))
 		      {
-			info->callbacks->warning
-			  (info,
-			   _("cannot emit dynamic relocations in read-only section"),
-			   name, input_bfd, input_section, rel->r_offset);
+			info->callbacks->einfo
+			  (_("%H: cannot emit dynamic relocations"
+			     " in read-only section\n"),
+			   input_bfd, input_section, rel->r_offset);
 			return FALSE;
 		      }
 
@@ -3957,10 +3892,10 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 	  if (silence_segment_error == 1)
 	    silence_segment_error =
 	      (strlen (input_bfd->filename) == 6
-	       && strcmp (input_bfd->filename, "crt0.o") == 0)
+	       && filename_cmp (input_bfd->filename, "crt0.o") == 0)
 	      || (strlen (input_bfd->filename) > 6
-		  && strcmp (input_bfd->filename
-			     + strlen (input_bfd->filename) - 7,
+		  && filename_cmp (input_bfd->filename
+				   + strlen (input_bfd->filename) - 7,
 			     "/crt0.o") == 0)
 	      ? -1 : 0;
 	  if (!silence_segment_error
@@ -3969,16 +3904,9 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 	      && !(picrel && picrel->symndx == -1
 		   && picrel->d.h->root.type == bfd_link_hash_undefined))
 	    {
-	      if (info->shared || info->pie)
-		(*_bfd_error_handler)
-		  (_("%B(%A+0x%lx): reloc against `%s': %s"),
-		   input_bfd, input_section, (long)rel->r_offset, name,
-		   _("relocation references a different segment"));
-	      else
-		info->callbacks->warning
-		  (info,
-		   _("relocation references a different segment"),
-		   name, input_bfd, input_section, rel->r_offset);
+	      info->callbacks->einfo
+		(_("%H: reloc against `%s' references a different segment\n"),
+		 input_bfd, input_section, rel->r_offset, name);
 	    }
 	  if (!silence_segment_error && (info->shared || info->pie))
 	    return FALSE;
@@ -4126,9 +4054,9 @@ elf32_frv_relocate_section (output_bfd, info, input_bfd, input_section,
 
 	  if (msg)
 	    {
-	      (*_bfd_error_handler)
-		(_("%B(%A+0x%lx): reloc against `%s': %s"),
-		 input_bfd, input_section, (long)rel->r_offset, name, msg);
+	      info->callbacks->einfo
+		(_("%H: reloc against `%s': %s\n"),
+		 input_bfd, input_section, rel->r_offset, name, msg);
 	      return FALSE;
 	    }
 
@@ -4165,14 +4093,13 @@ elf32_frv_gc_mark_hook (asection *sec,
    file.  We use it to put .comm items in .scomm, and not .comm.  */
 
 static bfd_boolean
-elf32_frv_add_symbol_hook (abfd, info, sym, namep, flagsp, secp, valp)
-     bfd *abfd;
-     struct bfd_link_info *info;
-     Elf_Internal_Sym *sym;
-     const char **namep ATTRIBUTE_UNUSED;
-     flagword *flagsp ATTRIBUTE_UNUSED;
-     asection **secp;
-     bfd_vma *valp;
+elf32_frv_add_symbol_hook (bfd *abfd,
+			   struct bfd_link_info *info,
+			   Elf_Internal_Sym *sym,
+			   const char **namep ATTRIBUTE_UNUSED,
+			   flagword *flagsp ATTRIBUTE_UNUSED,
+			   asection **secp,
+			   bfd_vma *valp)
 {
   if (sym->st_shndx == SHN_COMMON
       && !info->relocatable
@@ -4240,8 +4167,8 @@ _frv_create_got_section (bfd *abfd, struct bfd_link_info *info)
   int offset;
 
   /* This function may be called more than once.  */
-  s = bfd_get_section_by_name (abfd, ".got");
-  if (s != NULL && (s->flags & SEC_LINKER_CREATED) != 0)
+  s = bfd_get_linker_section (abfd, ".got");
+  if (s != NULL)
     return TRUE;
 
   /* Machine specific: although pointers are 32-bits wide, we want the
@@ -4254,14 +4181,14 @@ _frv_create_got_section (bfd *abfd, struct bfd_link_info *info)
 	   | SEC_LINKER_CREATED);
   pltflags = flags;
 
-  s = bfd_make_section_with_flags (abfd, ".got", flags);
+  s = bfd_make_section_anyway_with_flags (abfd, ".got", flags);
   if (s == NULL
       || !bfd_set_section_alignment (abfd, s, ptralign))
     return FALSE;
 
   if (bed->want_got_plt)
     {
-      s = bfd_make_section_with_flags (abfd, ".got.plt", flags);
+      s = bfd_make_section_anyway_with_flags (abfd, ".got.plt", flags);
       if (s == NULL
 	  || !bfd_set_section_alignment (abfd, s, ptralign))
 	return FALSE;
@@ -4299,8 +4226,8 @@ _frv_create_got_section (bfd *abfd, struct bfd_link_info *info)
       if (! frvfdpic_relocs_info (info))
 	return FALSE;
 
-      s = bfd_make_section_with_flags (abfd, ".rel.got",
-				       (flags | SEC_READONLY));
+      s = bfd_make_section_anyway_with_flags (abfd, ".rel.got",
+					      (flags | SEC_READONLY));
       if (s == NULL
 	  || ! bfd_set_section_alignment (abfd, s, 2))
 	return FALSE;
@@ -4308,8 +4235,8 @@ _frv_create_got_section (bfd *abfd, struct bfd_link_info *info)
       frvfdpic_gotrel_section (info) = s;
 
       /* Machine-specific.  */
-      s = bfd_make_section_with_flags (abfd, ".rofixup",
-				       (flags | SEC_READONLY));
+      s = bfd_make_section_anyway_with_flags (abfd, ".rofixup",
+					      (flags | SEC_READONLY));
       if (s == NULL
 	  || ! bfd_set_section_alignment (abfd, s, 2))
 	return FALSE;
@@ -4357,7 +4284,7 @@ _frv_create_got_section (bfd *abfd, struct bfd_link_info *info)
   if (bed->plt_readonly)
     pltflags |= SEC_READONLY;
 
-  s = bfd_make_section_with_flags (abfd, ".plt", pltflags);
+  s = bfd_make_section_anyway_with_flags (abfd, ".plt", pltflags);
   if (s == NULL
       || ! bfd_set_section_alignment (abfd, s, bed->plt_alignment))
     return FALSE;
@@ -4376,8 +4303,8 @@ _frv_create_got_section (bfd *abfd, struct bfd_link_info *info)
     }
 
   /* FRV-specific: we want rel relocations for the plt.  */
-  s = bfd_make_section_with_flags (abfd, ".rel.plt",
-				   flags | SEC_READONLY);
+  s = bfd_make_section_anyway_with_flags (abfd, ".rel.plt",
+					  flags | SEC_READONLY);
   if (s == NULL
       || ! bfd_set_section_alignment (abfd, s, bed->s->log_file_align))
     return FALSE;
@@ -4424,8 +4351,8 @@ elf32_frvfdpic_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 	 image and use a R_*_COPY reloc to tell the dynamic linker to
 	 initialize them at run time.  The linker script puts the .dynbss
 	 section into the .bss section of the final image.  */
-      s = bfd_make_section_with_flags (abfd, ".dynbss",
-				       SEC_ALLOC | SEC_LINKER_CREATED);
+      s = bfd_make_section_anyway_with_flags (abfd, ".dynbss",
+					      SEC_ALLOC | SEC_LINKER_CREATED);
       if (s == NULL)
 	return FALSE;
 
@@ -4442,10 +4369,10 @@ elf32_frvfdpic_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
      copy relocs.  */
       if (! info->shared)
 	{
-	  s = bfd_make_section_with_flags (abfd,
-					   (bed->default_use_rela_p
-					    ? ".rela.bss" : ".rel.bss"),
-					   flags | SEC_READONLY);
+	  s = bfd_make_section_anyway_with_flags (abfd,
+						  (bed->default_use_rela_p
+						   ? ".rela.bss" : ".rel.bss"),
+						  flags | SEC_READONLY);
 	  if (s == NULL
 	      || ! bfd_set_section_alignment (abfd, s, bed->s->log_file_align))
 	    return FALSE;
@@ -5510,7 +5437,7 @@ elf32_frvfdpic_size_dynamic_sections (bfd *output_bfd,
       /* Set the contents of the .interp section to the interpreter.  */
       if (info->executable)
 	{
-	  s = bfd_get_section_by_name (dynobj, ".interp");
+	  s = bfd_get_linker_section (dynobj, ".interp");
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (bfd_byte *) ELF_DYNAMIC_INTERPRETER;
@@ -5687,7 +5614,7 @@ frvfdpic_elf_discard_info (bfd *ibfd,
 
   /* Account for relaxation of .eh_frame section.  */
   for (s = ibfd->sections; s; s = s->next)
-    if (s->sec_info_type == ELF_INFO_TYPE_EH_FRAME)
+    if (s->sec_info_type == SEC_INFO_TYPE_EH_FRAME)
       {
 	if (!_frvfdpic_check_discarded_relocs (ibfd, s, info, &changed))
 	  return FALSE;
@@ -5882,8 +5809,8 @@ elf32_frvfdpic_finish_dynamic_sections (bfd *output_bfd,
 	      != (frvfdpic_gotfixup_section (info)->reloc_count * 4))
 	    {
 	    error:
-	      (*_bfd_error_handler)
-		("LINKER BUG: .rofixup section size mismatch");
+	      info->callbacks->einfo
+		("LINKER BUG: .rofixup section size mismatch\n");
 	      return FALSE;
 	    }
 
@@ -5919,7 +5846,7 @@ elf32_frvfdpic_finish_dynamic_sections (bfd *output_bfd,
       Elf32_External_Dyn * dyncon;
       Elf32_External_Dyn * dynconend;
 
-      sdyn = bfd_get_section_by_name (dynobj, ".dynamic");
+      sdyn = bfd_get_linker_section (dynobj, ".dynamic");
 
       BFD_ASSERT (sdyn != NULL);
 
@@ -6156,11 +6083,10 @@ frvfdpic_elf_encode_eh_address (bfd *abfd,
    Given infinite time and money... :-)  */
 
 static bfd_boolean
-elf32_frv_check_relocs (abfd, info, sec, relocs)
-     bfd *abfd;
-     struct bfd_link_info *info;
-     asection *sec;
-     const Elf_Internal_Rela *relocs;
+elf32_frv_check_relocs (bfd *abfd,
+			struct bfd_link_info *info,
+			asection *sec,
+			const Elf_Internal_Rela *relocs)
 {
   Elf_Internal_Shdr *symtab_hdr;
   struct elf_link_hash_entry **sym_hashes;
@@ -6402,8 +6328,8 @@ elf32_frv_check_relocs (abfd, info, sec, relocs)
 
 	default:
 	bad_reloc:
-	  (*_bfd_error_handler)
-	    (_("%B: unsupported relocation type %i"),
+	  info->callbacks->einfo
+	    (_("%B: unsupported relocation type %i\n"),
 	     abfd, ELF32_R_TYPE (rel->r_info));
 	  return FALSE;
         }
@@ -6416,8 +6342,7 @@ elf32_frv_check_relocs (abfd, info, sec, relocs)
 /* Return the machine subcode from the ELF e_flags header.  */
 
 static int
-elf32_frv_machine (abfd)
-     bfd *abfd;
+elf32_frv_machine (bfd *abfd)
 {
   switch (elf_elfheader (abfd)->e_flags & EF_FRV_CPU_MASK)
     {
@@ -6438,8 +6363,7 @@ elf32_frv_machine (abfd)
 /* Set the right machine number for a FRV ELF file.  */
 
 static bfd_boolean
-elf32_frv_object_p (abfd)
-     bfd *abfd;
+elf32_frv_object_p (bfd *abfd)
 {
   bfd_default_set_arch_mach (abfd, bfd_arch_frv, elf32_frv_machine (abfd));
   return (((elf_elfheader (abfd)->e_flags & EF_FRV_FDPIC) != 0)
@@ -6449,9 +6373,7 @@ elf32_frv_object_p (abfd)
 /* Function to set the ELF flag bits.  */
 
 static bfd_boolean
-frv_elf_set_private_flags (abfd, flags)
-     bfd *abfd;
-     flagword flags;
+frv_elf_set_private_flags (bfd *abfd, flagword flags)
 {
   elf_elfheader (abfd)->e_flags = flags;
   elf_flags_init (abfd) = TRUE;
@@ -6461,9 +6383,7 @@ frv_elf_set_private_flags (abfd, flags)
 /* Copy backend specific data from one object module to another.  */
 
 static bfd_boolean
-frv_elf_copy_private_bfd_data (ibfd, obfd)
-     bfd *ibfd;
-     bfd *obfd;
+frv_elf_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
 {
   if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
       || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
@@ -6556,9 +6476,7 @@ elf32_frvfdpic_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
    object file when linking.  */
 
 static bfd_boolean
-frv_elf_merge_private_bfd_data (ibfd, obfd)
-     bfd *ibfd;
-     bfd *obfd;
+frv_elf_merge_private_bfd_data (bfd *ibfd, bfd *obfd)
 {
   flagword old_flags, old_partial;
   flagword new_flags, new_partial;
@@ -6826,10 +6744,8 @@ frv_elf_merge_private_bfd_data (ibfd, obfd)
 }
 
 
-bfd_boolean
-frv_elf_print_private_bfd_data (abfd, ptr)
-     bfd *abfd;
-     PTR ptr;
+static bfd_boolean
+frv_elf_print_private_bfd_data (bfd *abfd, void * ptr)
 {
   FILE *file = (FILE *) ptr;
   flagword flags;

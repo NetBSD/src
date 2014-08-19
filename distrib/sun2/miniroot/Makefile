@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2010/02/11 09:06:50 roy Exp $
+#	$NetBSD: Makefile,v 1.33.12.1 2014/08/19 23:45:45 tls Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -12,7 +12,7 @@ MAKEFS_FLAGS=	-o density=8k
 KERNEL=		${KERNOBJDIR}/INSTALL/netbsd
 
 WARNS=		1
-DBG=		-Os
+DBG=		-Os -fno-unwind-tables
 
 CRUNCHBIN=	instbin
 CRUNCHGEN_FLAGS= -d "${DBG}"

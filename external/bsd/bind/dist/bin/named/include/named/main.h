@@ -1,7 +1,7 @@
-/*	$NetBSD: main.h,v 1.3 2012/06/05 00:39:10 christos Exp $	*/
+/*	$NetBSD: main.h,v 1.3.2.1 2014/08/19 23:46:00 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -23,6 +23,10 @@
 #define NAMED_MAIN_H 1
 
 /*! \file */
+
+#ifdef ISC_MAIN_HOOK
+#define main(argc, argv) bindmain(argc, argv)
+#endif
 
 ISC_PLATFORM_NORETURN_PRE void
 ns_main_earlyfatal(const char *format, ...)

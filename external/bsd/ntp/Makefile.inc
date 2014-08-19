@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2012/02/01 20:48:01 kardel Exp $
+#	$NetBSD: Makefile.inc,v 1.11.6.1 2014/08/19 23:51:32 tls Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=yes
@@ -7,8 +7,8 @@ USE_FORT?= yes	# network client/server
 
 CWARNFLAGS+=	-Wno-missing-noreturn
 CWARNFLAGS.clang+=	-Wno-unneeded-internal-declaration \
-			-Wno-format-security \
-			-Wno-parentheses -Wno-constant-logical-operand
+			-Wno-parentheses -Wno-constant-logical-operand \
+			-Wno-error=unused-const-variable
 
 WARNS?=	4
 
@@ -17,7 +17,7 @@ WARNS?=	4
 
 IDIST=		${NETBSDSRCDIR}/external/bsd/ntp/dist
 NTP_SRCDIR=	${NETBSDSRCDIR}/external/bsd/ntp
-NTP_HTMLDIR=	/usr/share/doc/html/ntp
+NTP_HTMLDIR=	/usr/share/doc/reference/ref8
 
 SYSCONFDIR=/etc
 LOCALSTATEDIR=/var

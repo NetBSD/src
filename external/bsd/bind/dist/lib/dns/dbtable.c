@@ -1,7 +1,7 @@
-/*	$NetBSD: dbtable.c,v 1.3 2012/06/05 00:41:29 christos Exp $	*/
+/*	$NetBSD: dbtable.c,v 1.3.2.1 2014/08/19 23:46:28 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -91,7 +91,8 @@ dns_dbtable_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 		goto clean3;
 
 	dbtable->default_db = NULL;
-	dbtable->mctx = mctx;
+	dbtable->mctx = NULL;
+	isc_mem_attach(mctx, &dbtable->mctx);
 	dbtable->rdclass = rdclass;
 	dbtable->magic = DBTABLE_MAGIC;
 	dbtable->references = 1;
@@ -107,7 +108,7 @@ dns_dbtable_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	dns_rbt_destroy(&dbtable->rbt);
 
  clean1:
-	isc_mem_put(mctx, dbtable, sizeof(*dbtable));
+	isc_mem_putanddetach(&mctx, dbtable, sizeof(*dbtable));
 
 	return (result);
 }
@@ -131,7 +132,7 @@ dbtable_free(dns_dbtable_t *dbtable) {
 
 	dbtable->magic = 0;
 
-	isc_mem_put(dbtable->mctx, dbtable, sizeof(*dbtable));
+	isc_mem_putanddetach(&dbtable->mctx, dbtable, sizeof(*dbtable));
 }
 
 void

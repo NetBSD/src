@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.41 2012/01/04 15:58:37 christos Exp $ */
+/* $NetBSD: utils.c,v 1.41.6.1 2014/08/19 23:45:10 tls Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.41 2012/01/04 15:58:37 christos Exp $");
+__RCSID("$NetBSD: utils.c,v 1.41.6.1 2014/08/19 23:45:10 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,7 +174,6 @@ copy_file(FTSENT *entp, int dne)
 		}
 		return (0);
 	}
-	/* NOTREACHED */
 
 	/*
 	 * There's no reason to do anything other than close the file

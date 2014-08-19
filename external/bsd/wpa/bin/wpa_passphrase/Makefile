@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/08/04 17:12:34 christos Exp $
+# $NetBSD: Makefile,v 1.1.12.1 2014/08/19 23:52:16 tls Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -8,8 +8,6 @@ PROG=	wpa_passphrase
 SRCS= \
 md5.c \
 os_unix.c \
-sha1-pbkdf2.c \
-sha1.c \
 wpa_debug.c \
 wpa_passphrase.c \
 wpabuf.c 

@@ -1,5 +1,5 @@
 /* BFD back-end for rs6000 support
-   Copyright 1990, 1991, 1993, 1995, 2000, 2002, 2003, 2005, 2007
+   Copyright 1990, 1991, 1993, 1995, 2000, 2002, 2003, 2005, 2007, 2012
    Free Software Foundation, Inc.
    Written by Mimi Phuong-Thao Vo of IBM
    and John Gilmore of Cygnus Support.
@@ -28,13 +28,9 @@
 /* The RS/6000 architecture is compatible with the PowerPC common
    architecture.  */
 
-static const bfd_arch_info_type *rs6000_compatible
-  PARAMS ((const bfd_arch_info_type *, const bfd_arch_info_type *));
-
 static const bfd_arch_info_type *
-rs6000_compatible (a,b)
-     const bfd_arch_info_type *a;
-     const bfd_arch_info_type *b;
+rs6000_compatible (const bfd_arch_info_type *a,
+		   const bfd_arch_info_type *b)
 {
   BFD_ASSERT (a->arch == bfd_arch_rs6000);
   switch (b->arch)
@@ -65,6 +61,7 @@ static const bfd_arch_info_type arch_info_struct[] =
     FALSE, /* not the default */
     rs6000_compatible,
     bfd_default_scan,
+    bfd_arch_default_fill,
     &arch_info_struct[1]
   },
   {
@@ -79,6 +76,7 @@ static const bfd_arch_info_type arch_info_struct[] =
     FALSE, /* not the default */
     rs6000_compatible,
     bfd_default_scan,
+    bfd_arch_default_fill,
     &arch_info_struct[2]
   },
   {
@@ -93,6 +91,7 @@ static const bfd_arch_info_type arch_info_struct[] =
     FALSE, /* not the default */
     rs6000_compatible,
     bfd_default_scan,
+    bfd_arch_default_fill,
     0
   }
 };
@@ -110,5 +109,6 @@ const bfd_arch_info_type bfd_rs6000_arch =
     TRUE, /* the default */
     rs6000_compatible,
     bfd_default_scan,
+    bfd_arch_default_fill,
     &arch_info_struct[0]
   };

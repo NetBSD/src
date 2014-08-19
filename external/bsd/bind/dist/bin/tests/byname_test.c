@@ -1,7 +1,7 @@
-/*	$NetBSD: byname_test.c,v 1.3.2.1 2013/06/23 06:26:24 tls Exp $	*/
+/*	$NetBSD: byname_test.c,v 1.3.2.2 2014/08/19 23:46:01 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -210,10 +210,6 @@ main(int argc, char *argv[]) {
 	dns_cache_t *cache;
 	isc_buffer_t b;
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	RUNTIME_CHECK(isc_app_start() == ISC_R_SUCCESS);
 
 	dns_result_register();
@@ -309,7 +305,7 @@ main(int argc, char *argv[]) {
 			INSIST(disp6 != NULL);
 		}
 
-		RUNTIME_CHECK(dns_view_createresolver(view, taskmgr, 10,
+		RUNTIME_CHECK(dns_view_createresolver(view, taskmgr, 10, 1,
 						      socketmgr,
 						      timermgr, 0,
 						      dispatchmgr,

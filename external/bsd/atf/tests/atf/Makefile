@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.6.12.1 2013/06/23 06:26:23 tls Exp $
+# $NetBSD: Makefile,v 1.6.12.2 2014/08/19 23:45:55 tls Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 TESTSDIR=	${TESTSBASE}/atf
 
@@ -10,12 +10,9 @@ TESTS_SUBDIRS=	atf-c \
 		test-programs
 
 .if !(${MKKYUA} != "no")
-TESTS_SUBDIRS+=	atf-config \
-		atf-report \
-		atf-run
+TESTS_SUBDIRS+=	tools
 .endif
 
-SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
 .PATH:		${SRCDIR}
 
 .include <bsd.test.mk>

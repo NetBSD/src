@@ -29,39 +29,51 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlcat_naive.S,v 1.1.8.2 2013/02/25 00:23:58 tls Exp $")
+RCSID("$NetBSD: strlcat_naive.S,v 1.1.8.3 2014/08/19 23:45:12 tls Exp $")
 
 /* LINTSTUB: size_t strlcat(char *, const char *, size_t) */
 ENTRY(strlcat)
-	mov	ip, r0			/* need to preserve r0 */
-	add	r3, r2, r0		/* point to just end of dst */
+	adds	r3, r2, r0		/* point to just end of dst */
+	mov	ip, r0			/* need to keep r0 for a while */
 1:	cmp	ip, r3			/* still within dst? */
-	beq	4f			/*   no, get length of src */
+	beq	3f			/*   no, get length of src */
 	ldrb	r2, [ip], #1		/* load next byte */
-	teq	r2, #0			/* was it a NUL? */
+	cmp	r2, #0			/* was it a NUL? */
 	bne	1b			/*   no, get next byte */
 
-	sub	r0, ip, r0		/* get actual length was dst */
-	sub	r0, r0, #1		/* account for the trailing NUL */
-	sub	r3, r3, #1		/* back up to last byte in dst */
+	sub	r0, ip, r0		/* get actual length of dst */
+	subs	r0, r0, #1		/* account for the trailing NUL */
+	subs	r3, r3, #1		/* back up to last byte in dst */
 	sub	ip, ip, #1		/* back up over the NUL */
 
 2:	ldrb	r2, [r1], #1		/* load next byte from append */
-	teq	r2, #0			/* was it a NUL? */
-	beq	3f			/*   yes, end of append */
-	add	r0, r0, #1		/* count another byte */
+#if defined(__thumb__) && defined(_ARM_ARCH_T2)
+	cbz	r2, 5f			/* was it a NUL? yes, end of append */
+#else
+	cmp	r2, #0			/* was it a NUL? */
+	beq	5f			/*   yes, end of append */
+#endif
+	adds	r0, r0, #1		/* count another byte */
 	cmp	ip, r3			/* do we have enough room for it? */
-	strltb	r2, [ip], #1		/*   yes, store it */
+#ifdef __thumb__
+	bge	2b
+	strb	r2, [ip], #1		/*   yes, store it */
+#else
+	strblt	r2, [ip], #1		/*   yes, store it */
+#endif
 	b	2b			/* get next byte from append */
 
-3:	mov	r2, #0			/* NUL */
-	strb	r2, [ip]		/* append final NUL */
-	RET				/* return */
-
-4:	sub	r0, r3, r0		/* move size to return value */
-5:	ldrb	r2, [r1], #1		/* load next byte from append */
-	teq	r2, #0			/* was it a NUL? */
+3:	subs	r0, r3, r0		/* move size to return value */
+4:	ldrb	r2, [r1], #1		/* load next byte from append */
+#if defined(__thumb__) && defined(_ARM_ARCH_T2)
+	cbz	r2, 6f			/* was it a NUL? yes, we're done */
+#else
 	RETc(eq)			/*   yes, we're done */
-	add	r0, r0, #1		/* add one to return value */
-	b	5b			/* get next byte from append */
+#endif
+	adds	r0, r0, #1		/* add one to return value */
+	b	4b			/* get next byte from append */
+
+5:	movs	r2, #0			/* NUL */
+	strb	r2, [ip]		/* append final NUL */
+6:	RET				/* return */
 END(strlcat)

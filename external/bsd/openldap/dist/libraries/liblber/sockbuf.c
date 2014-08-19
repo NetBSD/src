@@ -1,10 +1,10 @@
-/*	$NetBSD: sockbuf.c,v 1.1.1.3 2010/12/12 15:21:29 adam Exp $	*/
+/*	$NetBSD: sockbuf.c,v 1.1.1.3.12.1 2014/08/19 23:51:59 tls Exp $	*/
 
 /* sockbuf.c - i/o routines with support for adding i/o layers. */
-/* OpenLDAP: pkg/ldap/libraries/liblber/sockbuf.c,v 1.65.2.6 2010/04/13 20:22:54 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -543,7 +543,8 @@ sb_stream_close( Sockbuf_IO_Desc *sbiod )
 {
 	assert( sbiod != NULL );
 	assert( SOCKBUF_VALID( sbiod->sbiod_sb ) );
-	tcp_close( sbiod->sbiod_sb->sb_fd );
+	if ( sbiod->sbiod_sb->sb_fd != AC_SOCKET_INVALID )
+		tcp_close( sbiod->sbiod_sb->sb_fd );
    return 0;
 }
 
@@ -756,7 +757,8 @@ sb_fd_close( Sockbuf_IO_Desc *sbiod )
 	assert( sbiod != NULL );
 	assert( SOCKBUF_VALID( sbiod->sbiod_sb ) );
 
-	close( sbiod->sbiod_sb->sb_fd );
+	if ( sbiod->sbiod_sb->sb_fd != AC_SOCKET_INVALID )
+		close( sbiod->sbiod_sb->sb_fd );
 	return 0;
 }
 
@@ -888,8 +890,8 @@ Sockbuf_IO ber_sockbuf_io_debug = {
  *
  * All I/O at this level must be atomic. For ease of use, the sb_readahead
  * must be used above this module. All data reads and writes are prefixed
- * with a sockaddr containing the address of the remote entity. Upper levels
- * must read and write this sockaddr before doing the usual ber_printf/scanf
+ * with a sockaddr_storage containing the address of the remote entity. Upper levels
+ * must read and write this sockaddr_storage before doing the usual ber_printf/scanf
  * operations on LDAP messages.
  */
 
@@ -914,13 +916,13 @@ sb_dgram_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len )
 	assert( SOCKBUF_VALID( sbiod->sbiod_sb ) );
 	assert( buf != NULL );
 
-	addrlen = sizeof( struct sockaddr );
+	addrlen = sizeof( struct sockaddr_storage );
 	src = buf;
 	buf = (char *) buf + addrlen;
 	len -= addrlen;
 	rc = recvfrom( sbiod->sbiod_sb->sb_fd, buf, len, 0, src, &addrlen );
 
-	return rc > 0 ? rc+sizeof(struct sockaddr) : rc;
+	return rc > 0 ? rc+sizeof(struct sockaddr_storage) : rc;
 }
 
 static ber_slen_t 
@@ -934,11 +936,11 @@ sb_dgram_write( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len )
 	assert( buf != NULL );
 
 	dst = buf;
-	buf = (char *) buf + sizeof( struct sockaddr );
-	len -= sizeof( struct sockaddr );
+	buf = (char *) buf + sizeof( struct sockaddr_storage );
+	len -= sizeof( struct sockaddr_storage );
    
 	rc = sendto( sbiod->sbiod_sb->sb_fd, buf, len, 0, dst,
-		sizeof( struct sockaddr ) );
+		sizeof( struct sockaddr_storage ) );
 
 	if ( rc < 0 ) return -1;
    
@@ -949,7 +951,7 @@ sb_dgram_write( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len )
 # endif
 		return -1;
 	}
-	rc = len + sizeof(struct sockaddr);
+	rc = len + sizeof(struct sockaddr_storage);
 	return rc;
 }
 
@@ -958,8 +960,9 @@ sb_dgram_close( Sockbuf_IO_Desc *sbiod )
 {
 	assert( sbiod != NULL );
 	assert( SOCKBUF_VALID( sbiod->sbiod_sb ) );
-
-	tcp_close( sbiod->sbiod_sb->sb_fd );
+  
+	if ( sbiod->sbiod_sb->sb_fd != AC_SOCKET_INVALID )
+		tcp_close( sbiod->sbiod_sb->sb_fd );
 	return 0;
 }
 

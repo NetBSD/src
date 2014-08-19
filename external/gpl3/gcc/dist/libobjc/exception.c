@@ -1,5 +1,5 @@
 /* The implementation of exception handling primitives for Objective-C.
-   Copyright (C) 2004, 2005, 2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2004-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -22,11 +22,65 @@ a copy of the GCC Runtime Library Exception along with this program;
 see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 <http://www.gnu.org/licenses/>.  */
 
+#include "objc-private/common.h"
 #include <stdlib.h>
 #include "config.h"
-#include "objc/objc-api.h"
+#include "objc/runtime.h"
+#include "objc/objc-exception.h"
 #include "unwind.h"
 #include "unwind-pe.h"
+#include <string.h> /* For memcpy */
+
+/* 'is_kind_of_exception_matcher' is our default exception matcher -
+   it determines if the object 'exception' is of class 'catch_class',
+   or of a subclass.  */
+static int
+is_kind_of_exception_matcher (Class catch_class, id exception)
+{
+  /* NULL catch_class is catch-all (eg, @catch (id object)).  */
+  if (catch_class == Nil)
+    return 1;
+
+  /* If exception is nil (eg, @throw nil;), then it can only be
+     catched by a catch-all (eg, @catch (id object)).  */
+  if (exception != nil)
+    {
+      Class c;
+
+      for (c = exception->class_pointer; c != Nil; 
+	   c = class_getSuperclass (c))
+	if (c == catch_class)
+	  return 1;
+    }
+  return 0;
+}
+
+/* The exception matcher currently in use.  */
+static objc_exception_matcher
+__objc_exception_matcher = is_kind_of_exception_matcher;
+
+objc_exception_matcher
+objc_setExceptionMatcher (objc_exception_matcher new_matcher)
+{
+  objc_exception_matcher old_matcher = __objc_exception_matcher;
+  __objc_exception_matcher = new_matcher;
+  return old_matcher;
+}
+
+/* The uncaught exception handler currently in use.  */
+static objc_uncaught_exception_handler
+__objc_uncaught_exception_handler = NULL;
+
+objc_uncaught_exception_handler
+objc_setUncaughtExceptionHandler (objc_uncaught_exception_handler 
+				  new_handler)
+{
+  objc_uncaught_exception_handler old_handler 
+    = __objc_uncaught_exception_handler;
+  __objc_uncaught_exception_handler = new_handler;
+  return old_handler;
+}
+
 
 
 #ifdef __ARM_EABI_UNWINDER__
@@ -51,19 +105,18 @@ static const _Unwind_Exception_Class __objc_exception_class
 
 /* This is the object that is passed around by the Objective C runtime
    to represent the exception in flight.  */
-
 struct ObjcException
 {
   /* This bit is needed in order to interact with the unwind runtime.  */
   struct _Unwind_Exception base;
 
-  /* The actual object we want to throw. Note: must come immediately after
-     unwind header.  */
+  /* The actual object we want to throw. Note: must come immediately
+     after unwind header.  */
   id value;
 
 #ifdef __ARM_EABI_UNWINDER__
-  /* Note: we use the barrier cache defined in the unwind control block for
-     ARM EABI.  */
+  /* Note: we use the barrier cache defined in the unwind control
+     block for ARM EABI.  */
 #else
   /* Cache some internal unwind data between phase 1 and phase 2.  */
   _Unwind_Ptr landingPad;
@@ -84,11 +137,6 @@ struct lsda_header_info
   unsigned char call_site_encoding;
 };
 
-/* This hook allows libraries to sepecify special actions when an
-   exception is thrown without a handler in place.
- */
-void (*_objc_unexpected_exception) (id exception); /* !T:SAFE */
-
 static const unsigned char *
 parse_lsda_header (struct _Unwind_Context *context, const unsigned char *p,
 		   struct lsda_header_info *info)
@@ -98,17 +146,24 @@ parse_lsda_header (struct _Unwind_Context *context, const unsigned char *p,
 
   info->Start = (context ? _Unwind_GetRegionStart (context) : 0);
 
-  /* Find @LPStart, the base to which landing pad offsets are relative.  */
+  /* Find @LPStart, the base to which landing pad offsets are
+     relative.  */
   lpstart_encoding = *p++;
   if (lpstart_encoding != DW_EH_PE_omit)
     p = read_encoded_value (context, lpstart_encoding, p, &info->LPStart);
   else
     info->LPStart = info->Start;
 
-  /* Find @TType, the base of the handler and exception spec type data.  */
+  /* Find @TType, the base of the handler and exception spec type
+     data.  */
   info->ttype_encoding = *p++;
   if (info->ttype_encoding != DW_EH_PE_omit)
     {
+#if _GLIBCXX_OVERRIDE_TTYPE_ENCODING
+      /* Older ARM EABI toolchains set this value incorrectly, so use a
+	 hardcoded OS-specific format.  */
+      info->ttype_encoding = _GLIBCXX_OVERRIDE_TTYPE_ENCODING;
+#endif
       p = read_uleb128 (p, &tmp);
       info->TType = p + tmp;
     }
@@ -124,24 +179,6 @@ parse_lsda_header (struct _Unwind_Context *context, const unsigned char *p,
   return p;
 }
 
-#ifdef __ARM_EABI_UNWINDER__
-
-static Class
-get_ttype_entry (struct lsda_header_info *info, _uleb128_t i)
-{
-  _Unwind_Ptr ptr;
-  
-  ptr = (_Unwind_Ptr) (info->TType - (i * 4));
-  ptr = _Unwind_decode_target2 (ptr);
-  
-  if (ptr)
-    return objc_get_class ((const char *) ptr);
-  else
-    return 0;
-}
-
-#else
-
 static Class
 get_ttype_entry (struct lsda_header_info *info, _Unwind_Word i)
 {
@@ -151,39 +188,22 @@ get_ttype_entry (struct lsda_header_info *info, _Unwind_Word i)
   read_encoded_value_with_base (info->ttype_encoding, info->ttype_base,
 				info->TType - i, &ptr);
 
-  /* NULL ptr means catch-all.  */
+  /* NULL ptr means catch-all.  Note that if the class is not found,
+     this will abort the program.  */
   if (ptr)
-    return objc_get_class ((const char *) ptr);
+    return objc_getRequiredClass ((const char *) ptr);
   else
     return 0;
 }
 
-#endif
-
-/* Like unto the method of the same name on Object, but takes an id.  */
-/* ??? Does this bork the meta-type system?  Can/should we look up an
-   isKindOf method on the id?  */
-
-static int
-isKindOf (id value, Class target)
-{
-  Class c;
-
-  /* NULL target is catch-all.  */
-  if (target == 0)
-    return 1;
-
-  for (c = value->class_pointer; c; c = class_get_super_class (c))
-    if (c == target)
-      return 1;
-  return 0;
-}
-
 /* Using a different personality function name causes link failures
-   when trying to mix code using different exception handling models.  */
+   when trying to mix code using different exception handling
+   models.  */
 #ifdef SJLJ_EXCEPTIONS
 #define PERSONALITY_FUNCTION	__gnu_objc_personality_sj0
 #define __builtin_eh_return_data_regno(x) x
+#elif defined(__SEH__) && !defined (__USING_SJLJ_EXCEPTIONS__)
+#define PERSONALITY_FUNCTION	__gnu_objc_personality_imp
 #else
 #define PERSONALITY_FUNCTION	__gnu_objc_personality_v0
 #endif
@@ -207,6 +227,9 @@ PERSONALITY_FUNCTION (_Unwind_State state,
 
 #define CONTINUE_UNWINDING return _URC_CONTINUE_UNWIND
 
+#if defined (__SEH__) && !defined (__USING_SJLJ_EXCEPTIONS__)
+static
+#endif
 _Unwind_Reason_Code
 PERSONALITY_FUNCTION (int version,
 		      _Unwind_Action actions,
@@ -252,14 +275,14 @@ PERSONALITY_FUNCTION (int version,
     }
   actions |= state & _US_FORCE_UNWIND;
 
-  /* TODO: Foreign exceptions need some attention (e.g. rethrowing doesn't
-     work).  */
+  /* TODO: Foreign exceptions need some attention (e.g. rethrowing
+     doesn't work).  */
   foreign_exception = 0;
 
-  /* The dwarf unwinder assumes the context structure holds things like the
-     function and LSDA pointers.  The ARM implementation caches these in
-     the exception header (UCB).  To avoid rewriting everything we make the
-     virtual IP register point at the UCB.  */
+  /* The dwarf unwinder assumes the context structure holds things
+     like the function and LSDA pointers.  The ARM implementation
+     caches these in the exception header (UCB).  To avoid rewriting
+     everything we make the virtual IP register point at the UCB.  */
   ip = (_Unwind_Ptr) ue_header;
   _Unwind_SetGR (context, 12, ip);
 
@@ -309,8 +332,8 @@ PERSONALITY_FUNCTION (int version,
 #ifdef SJLJ_EXCEPTIONS
   /* The given "IP" is an index into the call-site table, with two
      exceptions -- -1 means no-action, and 0 means terminate.  But
-     since we're using uleb128 values, we've not got random access
-     to the array.  */
+     since we're using uleb128 values, we've not got random access to
+     the array.  */
   if ((int) ip < 0)
     return _URC_CONTINUE_UNWIND;
   else
@@ -331,13 +354,15 @@ PERSONALITY_FUNCTION (int version,
       goto found_something;
     }
 #else
-  /* Search the call-site table for the action associated with this IP.  */
+  /* Search the call-site table for the action associated with this
+     IP.  */
   while (p < info.action_table)
     {
       _Unwind_Ptr cs_start, cs_len, cs_lp;
       _uleb128_t cs_action;
 
-      /* Note that all call-site encodings are "absolute" displacements.  */
+      /* Note that all call-site encodings are "absolute"
+	 displacements.  */
       p = read_encoded_value (0, info.call_site_encoding, p, &cs_start);
       p = read_encoded_value (0, info.call_site_encoding, p, &cs_len);
       p = read_encoded_value (0, info.call_site_encoding, p, &cs_lp);
@@ -358,8 +383,8 @@ PERSONALITY_FUNCTION (int version,
 #endif /* SJLJ_EXCEPTIONS  */
 
   /* If ip is not present in the table, C++ would call terminate.  */
-  /* ??? As with Java, it's perhaps better to tweek the LSDA to
-     that no-action is mapped to no-entry.  */
+  /* ??? As with Java, it's perhaps better to tweek the LSDA to that
+     no-action is mapped to no-entry.  */
   CONTINUE_UNWINDING;
 
  found_something:
@@ -368,8 +393,8 @@ PERSONALITY_FUNCTION (int version,
 
   if (landing_pad == 0)
     {
-      /* If ip is present, and has a null landing pad, there are
-	 no cleanups or handlers to be run.  */
+      /* If ip is present, and has a null landing pad, there are no
+	 cleanups or handlers to be run.  */
     }
   else if (action_record == 0)
     {
@@ -396,17 +421,17 @@ PERSONALITY_FUNCTION (int version,
 	    }
 
 	  /* During forced unwinding, we only run cleanups.  With a
-	     foreign exception class, we have no class info to match.  */
+	     foreign exception class, we have no class info to
+	     match.  */
 	  else if ((actions & _UA_FORCE_UNWIND) || foreign_exception)
 	    ;
 
 	  else if (ar_filter > 0)
 	    {
 	      /* Positive filter values are handlers.  */
-
 	      Class catch_type = get_ttype_entry (&info, ar_filter);
 
-	      if (isKindOf (xh->value, catch_type))
+	      if ((*__objc_exception_matcher) (catch_type, xh->value))
 		{
 		  handler_switch_value = ar_filter;
 		  saw_handler = 1;
@@ -434,7 +459,8 @@ PERSONALITY_FUNCTION (int version,
       if (!saw_handler)
 	CONTINUE_UNWINDING;
 
-      /* For domestic exceptions, we cache data from phase 1 for phase 2.  */
+      /* For domestic exceptions, we cache data from phase 1 for phase
+	 2.  */
       if (!foreign_exception)
         {
 #ifdef __ARM_EABI_UNWINDER__
@@ -473,14 +499,14 @@ __objc_exception_cleanup (_Unwind_Reason_Code code __attribute__((unused)),
 }
 
 void
-objc_exception_throw (id value)
+objc_exception_throw (id exception)
 {
   struct ObjcException *header = calloc (1, sizeof (*header));
-  
+
   memcpy (&header->base.exception_class, &__objc_exception_class,
 	  sizeof (__objc_exception_class));
   header->base.exception_cleanup = __objc_exception_cleanup;
-  header->value = value;
+  header->value = exception;
 
 #ifdef SJLJ_EXCEPTIONS
   _Unwind_SjLj_RaiseException (&header->base);
@@ -488,10 +514,23 @@ objc_exception_throw (id value)
   _Unwind_RaiseException (&header->base);
 #endif
 
-  /* Some sort of unwinding error.  */
-  if (_objc_unexpected_exception != 0)
+  /* No exception handler was installed.  Call the uncaught exception
+     handler if any is defined.  */
+  if (__objc_uncaught_exception_handler != 0)
     {
-      (*_objc_unexpected_exception) (value);
+      (*__objc_uncaught_exception_handler) (exception);
     }
+
   abort ();
 }
+
+#if defined (__SEH__) && !defined (__USING_SJLJ_EXCEPTIONS__)
+EXCEPTION_DISPOSITION
+__gnu_objc_personality_seh0 (PEXCEPTION_RECORD ms_exc, void *this_frame,
+			     PCONTEXT ms_orig_context,
+			     PDISPATCHER_CONTEXT ms_disp)
+{
+  return _GCC_specific_handler (ms_exc, this_frame, ms_orig_context,
+				ms_disp, __gnu_objc_personality_imp);
+}
+#endif

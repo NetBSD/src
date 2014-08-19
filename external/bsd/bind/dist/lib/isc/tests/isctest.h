@@ -1,4 +1,4 @@
-/*	$NetBSD: isctest.h,v 1.1.1.2.2.1 2013/02/25 00:25:55 tls Exp $	*/
+/*	$NetBSD: isctest.h,v 1.1.1.2.2.2 2014/08/19 23:46:33 tls Exp $	*/
 
 /*
  * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -45,8 +45,8 @@ extern isc_mem_t *mctx;
 extern isc_entropy_t *ectx;
 extern isc_log_t *lctx;
 extern isc_taskmgr_t *taskmgr;
-isc_timermgr_t *timermgr;
-isc_socketmgr_t *socketmgr;
+extern isc_timermgr_t *timermgr;
+extern isc_socketmgr_t *socketmgr;
 extern int ncpus;
 
 isc_result_t

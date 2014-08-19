@@ -21,7 +21,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-rsvp.c,v 1.50 2008-08-16 11:36:20 hannes Exp ";
 #else
-__RCSID("$NetBSD: print-rsvp.c,v 1.3.6.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-rsvp.c,v 1.3.6.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -395,7 +395,7 @@ static const struct tok rsvp_intserv_parameter_id_values[] = {
     { 0, NULL}
 };
 
-static struct tok rsvp_session_attribute_flag_values[] = {
+static const struct tok rsvp_session_attribute_flag_values[] = {
     { 0x01,	              "Local Protection" },
     { 0x02,                   "Label Recording" },
     { 0x04,                   "SE Style" },
@@ -404,7 +404,7 @@ static struct tok rsvp_session_attribute_flag_values[] = {
     { 0, NULL}
 };
 
-static struct tok rsvp_obj_prop_tlv_values[] = {
+static const struct tok rsvp_obj_prop_tlv_values[] = {
     { 0x01,                   "Cos" },
     { 0x02,                   "Metric 1" },
     { 0x04,                   "Metric 2" },
@@ -418,7 +418,7 @@ static struct tok rsvp_obj_prop_tlv_values[] = {
 #define RSVP_OBJ_ERROR_SPEC_CODE_DIFFSERV_TE 28
 #define RSVP_OBJ_ERROR_SPEC_CODE_DIFFSERV_TE_OLD 125
 
-static struct tok rsvp_obj_error_code_values[] = {
+static const struct tok rsvp_obj_error_code_values[] = {
     { RSVP_OBJ_ERROR_SPEC_CODE_ROUTING, "Routing Problem" },
     { RSVP_OBJ_ERROR_SPEC_CODE_NOTIFY,  "Notify Error" },
     { RSVP_OBJ_ERROR_SPEC_CODE_DIFFSERV_TE, "Diffserv TE Error" },
@@ -426,7 +426,7 @@ static struct tok rsvp_obj_error_code_values[] = {
     { 0, NULL}
 };
 
-static struct tok rsvp_obj_error_code_routing_values[] = {
+static const struct tok rsvp_obj_error_code_routing_values[] = {
     { 1,                      "Bad EXPLICIT_ROUTE object" },
     { 2,                      "Bad strict node" },
     { 3,                      "Bad loose node" },
@@ -440,7 +440,7 @@ static struct tok rsvp_obj_error_code_routing_values[] = {
     { 0, NULL}
 };
 
-static struct tok rsvp_obj_error_code_diffserv_te_values[] = {
+static const struct tok rsvp_obj_error_code_diffserv_te_values[] = {
     { 1,                      "Unexpected CT object" },
     { 2,                      "Unsupported CT" },
     { 3,                      "Invalid CT value" },

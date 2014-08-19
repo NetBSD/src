@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2008-2012  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2008-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -17,10 +17,9 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dnssec-keyfromlabel.docbook,v 1.21 2011/03/17 01:40:34 each Exp  -->
 <refentry id="man.dnssec-keyfromlabel">
   <refentryinfo>
-    <date>February 8, 2008</date>
+    <date>February 27, 2014</date>
   </refentryinfo>
 
   <refmeta>
@@ -41,6 +40,7 @@
       <year>2010</year>
       <year>2011</year>
       <year>2012</year>
+      <year>2014</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -58,6 +58,7 @@
       <arg><option>-f <replaceable class="parameter">flag</replaceable></option></arg>
       <arg><option>-G</option></arg>
       <arg><option>-I <replaceable class="parameter">date/offset</replaceable></option></arg>
+      <arg><option>-i <replaceable class="parameter">interval</replaceable></option></arg>
       <arg><option>-k</option></arg>
       <arg><option>-K <replaceable class="parameter">directory</replaceable></option></arg>
       <arg><option>-L <replaceable class="parameter">ttl</replaceable></option></arg>
@@ -65,6 +66,7 @@
       <arg><option>-P <replaceable class="parameter">date/offset</replaceable></option></arg>
       <arg><option>-p <replaceable class="parameter">protocol</replaceable></option></arg>
       <arg><option>-R <replaceable class="parameter">date/offset</replaceable></option></arg>
+      <arg><option>-S <replaceable class="parameter">key</replaceable></option></arg>
       <arg><option>-t <replaceable class="parameter">type</replaceable></option></arg>
       <arg><option>-v <replaceable class="parameter">level</replaceable></option></arg>
       <arg><option>-y</option></arg>
@@ -75,9 +77,12 @@
   <refsect1>
     <title>DESCRIPTION</title>
     <para><command>dnssec-keyfromlabel</command>
-      gets keys with the given label from a crypto hardware and builds
-      key files for DNSSEC (Secure DNS), as defined in RFC 2535
-      and RFC 4034.  
+      generates a key pair of files that referencing a key object stored
+      in a cryptographic hardware service module (HSM).  The private key
+      file can be used for DNSSEC signing of zone data as if it were a
+      conventional signing key created by <command>dnssec-keygen</command>,
+      but the key material is stored within the HSM, and the actual signing
+      takes place there.
     </para>
     <para>
       The <option>name</option> of the key is specified on the command
@@ -133,8 +138,15 @@
         <term>-E <replaceable class="parameter">engine</replaceable></term>
         <listitem>
           <para>
-            Specifies the name of the crypto hardware (OpenSSL engine).
-            When compiled with PKCS#11 support it defaults to "pkcs11".
+            Specifies the cryptographic hardware to use.
+          </para>
+          <para>
+            When BIND is built with OpenSSL PKCS#11 support, this defaults
+            to the string "pkcs11", which identifies an OpenSSL engine
+            that can drive a cryptographic accelerator or hardware service
+            module.  When BIND is built with native PKCS#11 cryptography
+            (--enable-native-pkcs11), it defaults to the path of the PKCS#11
+            provider library specified via "--with-pkcs11".
           </para>
         </listitem>
       </varlistentry>
@@ -143,9 +155,32 @@
         <term>-l <replaceable class="parameter">label</replaceable></term>
         <listitem>
           <para>
-            Specifies the label of the key pair in the crypto hardware.
-            The label may be preceded by an optional OpenSSL engine name,
-            separated by a colon, as in "pkcs11:keylabel".
+            Specifies the label for a key pair in the crypto hardware.
+          </para>
+          <para>
+            When <acronym>BIND</acronym> 9 is built with OpenSSL-based
+            PKCS#11 support, the label is an arbitrary string that
+            identifies a particular key.  It may be preceded by an
+            optional OpenSSL engine name, followed by a colon, as in
+            "pkcs11:<replaceable>keylabel</replaceable>".
+          </para>
+          <para>
+            When <acronym>BIND</acronym> 9 is built with native PKCS#11
+            support, the label is a PKCS#11 URI string in the format
+            "pkcs11:<option>keyword</option>=<replaceable>value</replaceable><optional>;<option>keyword</option>=<replaceable>value</replaceable>;...</optional>"
+            Keywords include "token", which identifies the HSM; "object", which
+            identifies the key; and "pin-source", which identifies a file from
+            which the HSM's PIN code can be obtained.  The label will be
+            stored in the on-disk "private" file.
+          </para>
+          <para>
+            If the label contains a
+            <option>pin-source</option> field, tools using the generated
+            key files will be able to use the HSM for signing and other
+            operations without any need for an operator to manually enter
+            a PIN.  Note: Making the HSM's PIN accessible in this manner
+            may reduce the security advantage of using an HSM; be sure
+            this is what you want to do before making use of this feature.
           </para>
         </listitem>
       </varlistentry>
@@ -264,6 +299,21 @@
       </varlistentry>
 
       <varlistentry>
+        <term>-S <replaceable class="parameter">key</replaceable></term>
+        <listitem>
+          <para>
+            Generate a key as an explicit successor to an existing key.
+	    The name, algorithm, size, and type of the key will be set
+	    to match the predecessor. The activation date of the new
+	    key will be set to the inactivation date of the existing
+	    one. The publication date will be set to the activation
+	    date minus the prepublication interval, which defaults to
+	    30 days.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term>-t <replaceable class="parameter">type</replaceable></term>
         <listitem>
           <para>
@@ -311,7 +361,8 @@
       then the offset is computed in years (defined as 365 24-hour days,
       ignoring leap years), months (defined as 30 24-hour days), weeks,
       days, hours, or minutes, respectively.  Without a suffix, the offset
-      is computed in seconds.
+      is computed in seconds.  To explicitly prevent a date from being
+      set, use 'none' or 'never'.
     </para>
 
     <variablelist>
@@ -371,6 +422,34 @@
           </para>
         </listitem>
       </varlistentry>
+
+      <varlistentry>
+        <term>-i <replaceable class="parameter">interval</replaceable></term>
+        <listitem>
+          <para>
+            Sets the prepublication interval for a key.  If set, then
+            the publication and activation dates must be separated by at least
+            this much time.  If the activation date is specified but the
+            publication date isn't, then the publication date will default
+            to this much time before the activation date; conversely, if
+            the publication date is specified but activation date isn't,
+            then activation will be set to this much time after publication.
+          </para>
+          <para>
+            If the key is being created as an explicit successor to another
+            key, then the default prepublication interval is 30 days; 
+            otherwise it is zero.
+          </para>
+          <para>
+            As with date offsets, if the argument is followed by one of
+            the suffixes 'y', 'mo', 'w', 'd', 'h', or 'mi', then the
+            interval is measured in years, months, weeks, days, hours,
+            or minutes, respectively.  Without a suffix, the interval is
+            measured in seconds.
+          </para>
+        </listitem>
+      </varlistentry>
+
     </variablelist>
   </refsect1>
 
@@ -429,7 +508,8 @@
         <refentrytitle>dnssec-signzone</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citetitle>BIND 9 Administrator Reference Manual</citetitle>,
-      <citetitle>RFC 4034</citetitle>.
+      <citetitle>RFC 4034</citetitle>,
+      <citetitle>The PKCS#11 URI Scheme (draft-pechanec-pkcs11uri-13)</citetitle>.
     </para>
   </refsect1>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_assert.h,v 1.1.1.2 2012/01/31 21:23:24 kardel Exp $	*/
+/*	$NetBSD: ntp_assert.h,v 1.1.1.2.6.1 2014/08/19 23:51:38 tls Exp $	*/
 
 /*
  * ntp_assert.h - design by contract stuff
@@ -90,10 +90,10 @@ extern void calysto_assert(unsigned char cnd); /* check whether this holds */
 #define	DEBUG_INVARIANT(x)	INVARIANT(x)
 #define	DEBUG_ENSURE(x)		ENSURE(x)
 # else
-#define	DEBUG_REQUIRE(x)	(void)(x)
-#define	DEBUG_INSIST(x)		(void)(x)
-#define	DEBUG_INVARIANT(x)	(void)(x)
-#define	DEBUG_ENSURE(x)		(void)(x)
+#define	DEBUG_REQUIRE(x)	do {} while (FALSE)
+#define	DEBUG_INSIST(x)		do {} while (FALSE)
+#define	DEBUG_INVARIANT(x)	do {} while (FALSE)
+#define	DEBUG_ENSURE(x)		do {} while (FALSE)
 # endif
 
 #endif	/* NTP_ASSERT_H */

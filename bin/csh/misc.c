@@ -1,4 +1,4 @@
-/* $NetBSD: misc.c,v 1.19 2006/03/18 06:24:26 christos Exp $ */
+/* $NetBSD: misc.c,v 1.19.48.1 2014/08/19 23:45:10 tls Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.19 2006/03/18 06:24:26 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.19.48.1 2014/08/19 23:45:10 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ strsave(const char *s)
 	s = "";
     for (n = s; *n++;)
 	continue;
-    r = p = (char *)xmalloc((size_t)((n - s) * sizeof(char)));
+    r = p = xmalloc((size_t)(n - s) * sizeof(*p));
     while ((*p++ = *s++) != '\0')
 	continue;
     return (r);
@@ -147,7 +147,7 @@ saveblk(Char **v)
     if (v == NULL)
 	return NULL;
 
-    newv = (Char **)xcalloc((size_t)(blklen(v) + 1), sizeof(Char **));
+    newv = xcalloc((size_t)(blklen(v) + 1), sizeof(*newv));
     onewv = newv;
     while (*v)
 	*newv++ = Strsave(*v++);
@@ -189,7 +189,7 @@ strspl(char *cp, char *dp)
 	continue;
     for (q = dp; *q++;)
 	continue;
-    ep = (char *) xmalloc((size_t)(((p - cp) + (q - dp) - 1) * sizeof(char)));
+    ep = xmalloc((size_t)(((p - cp) + (q - dp) - 1) * sizeof(*ep)));
     for (p = ep, q = cp; *p++ = *q++;)
 	continue;
     for (p--, q = dp; *p++ = *q++;)
@@ -204,8 +204,7 @@ blkspl(Char **up, Char **vp)
 {
     Char **wp;
 
-    wp = (Char **)xcalloc((size_t)(blklen(up) + blklen(vp) + 1),
-        sizeof(Char **));
+    wp = xcalloc((size_t)(blklen(up) + blklen(vp) + 1), sizeof(*wp));
     (void)blkcpy(wp, up);
     return (blkcat(wp, vp));
 }
@@ -312,11 +311,11 @@ renum(int i, int j)
  * as well as by commands like "repeat".
  */
 void
-lshift(Char **v, int c)
+lshift(Char **v, size_t c)
 {
     Char **u;
 
-    for (u = v; *u && --c >= 0; u++)
+    for (u = v; *u && c-- > 0; u++)
 	xfree((ptr_t) *u);
     (void)blkcpy(v, u);
 }
@@ -342,7 +341,7 @@ copyblk(Char **v)
 {
     Char **nv;
 
-    nv = (Char **)xcalloc((size_t)(blklen(v) + 1), sizeof(Char **));
+    nv = xcalloc((size_t)(blklen(v) + 1), sizeof(*nv));
 
     return (blkcpy(nv, v));
 }

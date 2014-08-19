@@ -32,7 +32,7 @@ Disassembly of section .text:
   20:	00a4 [	 ]*clz
   22:	00a8 [	 ]*cln
   24:	00af [	 ]*ccc
-  26:	00a1 [	 ]*clc
+  26:	00b1 [	 ]*sec
   28:	00b2 [	 ]*sev
   2a:	00b4 [	 ]*sez
   2c:	00b8 [	 ]*sen

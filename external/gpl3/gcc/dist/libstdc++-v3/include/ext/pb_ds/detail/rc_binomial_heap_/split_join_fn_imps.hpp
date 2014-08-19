@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,7 +34,7 @@
 // warranty.
 
 /**
- * @file split_join_fn_imps.hpp
+ * @file rc_binomial_heap_/split_join_fn_imps.hpp
  * Contains an implementation for rc_binomial_heap_.
  */
 
@@ -44,38 +44,34 @@ void
 PB_DS_CLASS_C_DEC::
 split(Pred pred, PB_DS_CLASS_C_DEC& other)
 {
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
-    _GLIBCXX_DEBUG_ONLY(other.assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
+  PB_DS_ASSERT_VALID(other)
 
-    make_binomial_heap();
+  make_binomial_heap();
   other.make_binomial_heap();
-
   base_type::split(pred, other);
-
   base_type::find_max();
   other.find_max();
 
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
-    _GLIBCXX_DEBUG_ONLY(other.assert_valid();)
-    }
+  PB_DS_ASSERT_VALID((*this))
+  PB_DS_ASSERT_VALID(other)
+}
 
 PB_DS_CLASS_T_DEC
 inline void
 PB_DS_CLASS_C_DEC::
 join(PB_DS_CLASS_C_DEC& other)
 {
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
-    _GLIBCXX_DEBUG_ONLY(other.assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
+  PB_DS_ASSERT_VALID(other)
 
-    make_binomial_heap();
+  make_binomial_heap();
   other.make_binomial_heap();
-
   base_type::join(other);
-
   base_type::find_max();
   other.find_max();
 
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
-    _GLIBCXX_DEBUG_ONLY(other.assert_valid();)
-    }
+  PB_DS_ASSERT_VALID((*this))
+  PB_DS_ASSERT_VALID(other)
+}
 

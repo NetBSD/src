@@ -1,4 +1,4 @@
-@c Copyright 2009
+@c Copyright 2009, 2011
 @c Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
@@ -22,6 +22,7 @@ Reference Guide (UG081)} available at www.xilinx.com.
 @cindex MicroBlaze support
 @menu
 * MicroBlaze Directives::           Directives for MicroBlaze Processors.
+* MicroBlaze Syntax::               Syntax for the MicroBlaze
 @end menu
 
 @node MicroBlaze Directives
@@ -72,3 +73,28 @@ Switch to .bss section. Equivalent to @code{.section .bss}
 @item .sbss
 Switch to .sbss section. Equivalent to @code{.section .sbss}
 @end table
+
+@node MicroBlaze Syntax
+@section Syntax for the MicroBlaze
+@menu
+* MicroBlaze-Chars::                Special Characters
+@end menu
+
+@node MicroBlaze-Chars
+@subsection Special Characters
+
+@cindex line comment character, MicroBlaze
+@cindex MicroBlaze line comment character
+The presence of a @samp{#} on a line indicates the start of a comment
+that extends to the end of the current line.
+
+If a @samp{#} appears as the first character of a line, the whole line
+is treated as a comment, but in this case the line can also be a
+logical line number directive (@pxref{Comments}) or a
+preprocessor control command (@pxref{Preprocessing}).
+
+@cindex line separator, MicroBlaze
+@cindex statement separator, MicroBlaze
+@cindex MicroBlaze line separator
+The @samp{;} character can be used to separate statements on the same
+line.

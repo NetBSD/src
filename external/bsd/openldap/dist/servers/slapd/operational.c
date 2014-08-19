@@ -1,9 +1,9 @@
-/*	$NetBSD: operational.c,v 1.1.1.3 2010/12/12 15:22:34 adam Exp $	*/
+/*	$NetBSD: operational.c,v 1.1.1.3.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
 /* operational.c - routines to deal with on-the-fly operational attrs */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2010 The OpenLDAP Foundation.
+ * Copyright 2001-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

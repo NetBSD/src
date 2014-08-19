@@ -1,10 +1,10 @@
-/*	$NetBSD: ch_malloc.c,v 1.1.1.3 2010/12/12 15:22:24 adam Exp $	*/
+/*	$NetBSD: ch_malloc.c,v 1.1.1.3.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
 /* ch_malloc.c - malloc routines that test returns from malloc and friends */
-/* OpenLDAP: pkg/ldap/servers/slapd/ch_malloc.c,v 1.28.2.5 2010/04/13 20:23:12 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

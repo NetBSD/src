@@ -1,10 +1,10 @@
-/*	$NetBSD: rwmmap.c,v 1.1.1.3 2010/12/12 15:23:43 adam Exp $	*/
+/*	$NetBSD: rwmmap.c,v 1.1.1.3.12.1 2014/08/19 23:52:03 tls Exp $	*/
 
 /* rwmmap.c - rewrite/mapping routines */
-/* OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmmap.c,v 1.31.2.15 2010/04/19 19:31:17 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -188,19 +188,30 @@ rwm_map_attrnames(
 	AttributeName	**anp,
 	int		remap )
 {
-	int		i, j;
+	int		i, j, x;
 
 	assert( anp != NULL );
 
 	*anp = NULL;
 
-	if ( an == NULL ) {
+	if ( an == NULL && op->o_bd->be_extra_anlist == NULL ) {
 		return LDAP_SUCCESS;
 	}
 
-	for ( i = 0; !BER_BVISNULL( &an[i].an_name ); i++ )
-		/* just count */ ;
-	*anp = op->o_tmpalloc( ( i + 1 )* sizeof( AttributeName ),
+	i = 0;
+	if ( an != NULL ) {
+		for ( i = 0; !BER_BVISNULL( &an[i].an_name ); i++ )
+			/* just count */ ;
+	}
+
+	x = 0;
+	if ( op->o_bd->be_extra_anlist ) {
+		for ( ; !BER_BVISNULL( &op->o_bd->be_extra_anlist[x].an_name ); x++ )
+			/* just count */ ;
+	}
+
+	assert( i > 0 || x > 0 );
+	*anp = op->o_tmpcalloc( ( i + x + 1 ), sizeof( AttributeName ),
 		op->o_tmpmemctx );
 	if ( *anp == NULL ) {
 		return LDAP_NO_MEMORY;
@@ -323,7 +334,22 @@ rwm_map_attrnames(
 		}
 	}
 
-	if ( j == 0 && i != 0 ) {
+	if ( op->o_bd->be_extra_anlist != NULL ) {
+		/* we assume be_extra_anlist are already mapped */
+		for ( x = 0; !BER_BVISNULL( &op->o_bd->be_extra_anlist[x].an_name ); x++ ) {
+			BER_BVZERO( &(*anp)[j].an_name );
+			if ( op->o_bd->be_extra_anlist[x].an_desc &&
+				ad_inlist( op->o_bd->be_extra_anlist[x].an_desc, *anp ) )
+			{
+				continue;
+			}
+
+			(*anp)[j] = op->o_bd->be_extra_anlist[x];
+			j++;
+		}
+	}
+
+	if ( j == 0 && ( i != 0 || x != 0 ) ) {
 		memset( &(*anp)[0], 0, sizeof( AttributeName ) );
 		(*anp)[0].an_name = *slap_bv_no_attrs;
 		j = 1;
@@ -438,7 +464,9 @@ map_attr_value(
 				return -1;
 			}
 
-		} else if ( ad->ad_type->sat_equality->smr_usage & SLAP_MR_MUTATION_NORMALIZER ) {
+		} else if ( ad->ad_type->sat_equality &&
+			( ad->ad_type->sat_equality->smr_usage & SLAP_MR_MUTATION_NORMALIZER ) )
+		{
 			if ( ad->ad_type->sat_equality->smr_normalize(
 				(SLAP_MR_DENORMALIZE|SLAP_MR_VALUE_OF_ASSERTION_SYNTAX),
 				NULL, NULL, value, &vtmp, memctx ) )
@@ -517,9 +545,12 @@ rwm_int_filter_map_rewrite(
 		return LDAP_OTHER;
 	}
 
+#if 0
+	/* ITS#6814: give the caller a chance to use undefined filters */
 	if ( f->f_choice & SLAPD_FILTER_UNDEFINED ) {
 		goto computed;
 	}
+#endif
 
 	switch ( f->f_choice & SLAPD_FILTER_MASK ) {
 	case LDAP_FILTER_EQUALITY:
@@ -963,7 +994,7 @@ rwm_referral_rewrite(
 				}
 
 				ber_str2bv( newurl, 0, 1, &a_vals[i] );
-				LDAP_FREE( newurl );
+				ber_memfree( newurl );
 
 				if ( pa_nvals ) {
 					ludp->lud_dn = ndn.bv_val;
@@ -983,7 +1014,7 @@ rwm_referral_rewrite(
 						ch_free( (*pa_nvals)[i].bv_val );
 					}
 					ber_str2bv( newurl, 0, 1, &(*pa_nvals)[i] );
-					LDAP_FREE( newurl );
+					ber_memfree( newurl );
 				}
 
 				ch_free( oldval.bv_val );
@@ -1194,7 +1225,7 @@ rwm_referral_result_rewrite(
 
 				ch_free( a_vals[i].bv_val );
 				ber_str2bv( newurl, 0, 1, &a_vals[i] );
-				LDAP_FREE( newurl );
+				ber_memfree( newurl );
 				ludp->lud_dn = olddn.bv_val;
 			}
 			break;

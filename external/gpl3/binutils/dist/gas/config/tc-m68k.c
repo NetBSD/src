@@ -609,10 +609,16 @@ static const struct m68k_cpu m68k_cpus[] =
 
   {mcfisa_a|mcfisa_c|mcfusp,                    mcf51_ctrl, "51", 0},
   {mcfisa_a|mcfisa_c|mcfusp,                    mcf51_ctrl, "51ac", 1},
+  {mcfisa_a|mcfisa_c|mcfusp,                    mcf51_ctrl, "51ag", 1},
   {mcfisa_a|mcfisa_c|mcfusp,                    mcf51_ctrl, "51cn", 1},
   {mcfisa_a|mcfisa_c|mcfusp|mcfmac,  		mcf51_ctrl, "51em", 1},
+  {mcfisa_a|mcfisa_c|mcfusp|mcfmac,  		mcf51_ctrl, "51je", 1},
+  {mcfisa_a|mcfisa_c|mcfusp|mcfemac,            mcf51_ctrl, "51jf", 1},
+  {mcfisa_a|mcfisa_c|mcfusp|mcfemac,            mcf51_ctrl, "51jg", 1},
   {mcfisa_a|mcfisa_c|mcfusp,  			mcf51_ctrl, "51jm", 1},
+  {mcfisa_a|mcfisa_c|mcfusp|mcfmac,  		mcf51_ctrl, "51mm", 1},
   {mcfisa_a|mcfisa_c|mcfusp,                    mcf51_ctrl, "51qe", 1},
+  {mcfisa_a|mcfisa_c|mcfusp|mcfemac,            mcf51_ctrl, "51qm", 1},
 
   {mcfisa_a,					mcf_ctrl, "5200", 0},
   {mcfisa_a,					mcf_ctrl, "5202", 1},
@@ -7420,12 +7426,12 @@ m68k_lookup_cpu (const char *arg, const struct m68k_cpu *table,
 	}
     }
   
-  /* Remove 'm' or 'mc' prefix from 68k variants.  */
+  /* Remove 'm' or 'mc' prefix from 68k or coldfire variants.  */
   if (allow_m)
     {
       if (arg[0] == 'm')
 	{
-	  if (arg[1] == '6')
+	  if (arg[1] == '6' || arg[1] == '5')
 	    arg += 1;
 	  else if (arg[1] == 'c'  && arg[2] == '6')
 	    arg += 2;

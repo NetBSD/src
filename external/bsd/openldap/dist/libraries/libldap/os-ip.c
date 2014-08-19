@@ -1,10 +1,10 @@
-/*	$NetBSD: os-ip.c,v 1.5 2011/05/24 16:03:15 joerg Exp $	*/
+/*	$NetBSD: os-ip.c,v 1.5.10.1 2014/08/19 23:52:00 tls Exp $	*/
 
 /* os-ip.c -- platform-specific TCP & UDP related code */
-/* OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.118.2.20 2010/04/13 20:22:58 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * Portions Copyright 1999 Lars Uffmann.
  * All rights reserved.
  *
@@ -278,7 +278,8 @@ int
 ldap_int_poll(
 	LDAP *ld,
 	ber_socket_t s,
-	struct timeval *tvp )
+	struct timeval *tvp,
+	int wr )
 {
 	int		rc;
 		
@@ -290,9 +291,10 @@ ldap_int_poll(
 	{
 		struct pollfd fd;
 		int timeout = INFTIM;
+		short event = wr ? POLL_WRITE : POLL_READ;
 
 		fd.fd = s;
-		fd.events = POLL_WRITE;
+		fd.events = event;
 
 		if ( tvp != NULL ) {
 			timeout = TV2MILLISEC( tvp );
@@ -312,7 +314,7 @@ ldap_int_poll(
 			return -2;
 		}
 
-		if ( fd.revents & POLL_WRITE ) {
+		if ( fd.revents & event ) {
 			if ( ldap_pvt_is_socket_ready( ld, s ) == -1 ) {
 				return -1;
 			}
@@ -422,8 +424,8 @@ ldap_pvt_connect(LDAP *ld, ber_socket_t s,
 	if (LDAP_IS_UDP(ld)) {
 		if (ld->ld_options.ldo_peer)
 			ldap_memfree(ld->ld_options.ldo_peer);
-		ld->ld_options.ldo_peer=ldap_memalloc(sizeof(struct sockaddr));
-		AC_MEMCPY(ld->ld_options.ldo_peer,sin,sizeof(struct sockaddr));
+		ld->ld_options.ldo_peer=ldap_memcalloc(1, sizeof(struct sockaddr_storage));
+		AC_MEMCPY(ld->ld_options.ldo_peer,sin,addrlen);
 		return ( 0 );
 	}
 #endif
@@ -438,13 +440,21 @@ ldap_pvt_connect(LDAP *ld, ber_socket_t s,
 	if ( opt_tv && ldap_pvt_ndelay_on(ld, s) == -1 )
 		return ( -1 );
 
-	if ( connect(s, sin, addrlen) != AC_SOCKET_ERROR ) {
-		if ( opt_tv && ldap_pvt_ndelay_off(ld, s) == -1 )
-			return ( -1 );
-		return ( 0 );
-	}
+	do{
+		osip_debug(ld, "attempting to connect: \n", 0, 0, 0);
+		if ( connect(s, sin, addrlen) != AC_SOCKET_ERROR ) {
+			osip_debug(ld, "connect success\n", 0, 0, 0);
 
-	err = sock_errno();
+			if ( opt_tv && ldap_pvt_ndelay_off(ld, s) == -1 )
+				return ( -1 );
+			return ( 0 );
+		}
+		err = sock_errno();
+		osip_debug(ld, "connect errno: %d\n", err, 0, 0);
+
+	} while(err == EINTR &&
+		LDAP_BOOL_GET( &ld->ld_options, LDAP_BOOL_RESTART ));
+
 	if ( err != EINPROGRESS && err != EWOULDBLOCK ) {
 		return ( -1 );
 	}
@@ -454,7 +464,7 @@ ldap_pvt_connect(LDAP *ld, ber_socket_t s,
 		return ( -2 );
 	}
 
-	rc = ldap_int_poll( ld, s, opt_tv );
+	rc = ldap_int_poll( ld, s, opt_tv, 1 );
 
 	osip_debug(ld, "ldap_pvt_connect: %d\n", rc, 0, 0);
 
@@ -594,16 +604,12 @@ ldap_connect_to_host(LDAP *ld, Sockbuf *sb,
 	hints.ai_socktype = socktype;
 	snprintf(serv, sizeof serv, "%d", port );
 
-#ifdef LDAP_R_COMPILE
 	/* most getaddrinfo(3) use non-threadsafe resolver libraries */
-	ldap_pvt_thread_mutex_lock(&ldap_int_resolv_mutex);
-#endif
+	LDAP_MUTEX_LOCK(&ldap_int_resolv_mutex);
 
 	err = getaddrinfo( host, serv, &hints, &res );
 
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_unlock(&ldap_int_resolv_mutex);
-#endif
+	LDAP_MUTEX_UNLOCK(&ldap_int_resolv_mutex);
 
 	if ( err != 0 ) {
 		osip_debug(ld, "ldap_connect_to_host: getaddrinfo failed: %s\n",
@@ -729,9 +735,9 @@ ldap_connect_to_host(LDAP *ld, Sockbuf *sb,
 			async);
    
 		if ( (rc == 0) || (rc == -2) ) {
-			i = ldap_int_connect_cbs( ld, sb, &s, srv, (struct sockaddr *)&sin );
-			if ( i )
-				rc = i;
+			int err = ldap_int_connect_cbs( ld, sb, &s, srv, (struct sockaddr *)&sin );
+			if ( err )
+				rc = err;
 			else
 				break;
 		}
@@ -969,6 +975,32 @@ ldap_mark_select_clear( LDAP *ld, Sockbuf *sb )
 	/* for UNIX select(2) */
 	FD_CLR( sd, &sip->si_writefds );
 	FD_CLR( sd, &sip->si_readfds );
+#endif
+}
+
+void
+ldap_clear_select_write( LDAP *ld, Sockbuf *sb )
+{
+	struct selectinfo	*sip;
+	ber_socket_t		sd;
+
+	sip = (struct selectinfo *)ld->ld_selectinfo;
+
+	ber_sockbuf_ctrl( sb, LBER_SB_OPT_GET_FD, &sd );
+
+#ifdef HAVE_POLL
+	/* for UNIX poll(2) */
+	{
+		int i;
+		for(i=0; i < sip->si_maxfd; i++) {
+			if( sip->si_fds[i].fd == sd ) {
+				sip->si_fds[i].events &= ~POLL_WRITE;
+			}
+		}
+	}
+#else
+	/* for UNIX select(2) */
+	FD_CLR( sd, &sip->si_writefds );
 #endif
 }
 

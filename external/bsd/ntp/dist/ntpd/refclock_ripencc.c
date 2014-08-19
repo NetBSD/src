@@ -1,7 +1,7 @@
-/*	$NetBSD: refclock_ripencc.c,v 1.1.1.2 2012/01/31 21:26:30 kardel Exp $	*/
+/*	$NetBSD: refclock_ripencc.c,v 1.1.1.2.6.1 2014/08/19 23:51:42 tls Exp $	*/
 
 /*
- * Id: refclock_ripencc.c,v 1.13 2002/06/18 14:20:55 marks Exp marks
+ * Id: refclock_ripencc.c,v 1.13 2002/06/18 14:20:55 marks Exp marks 
  *
  * Copyright (c) 2002  RIPE NCC
  *
@@ -479,7 +479,8 @@ ripencc_start(int unit, struct peer *peer)
 	 * Open serial port
 	 */
 	(void)snprintf(device, sizeof(device), DEVICE, unit);
-	if (!(fd = refclock_open(device, SPEED232, LDISC_RAW))) {
+	fd = refclock_open(device, SPEED232, LDISC_RAW);
+	if (fd <= 0) {
 		pp->io.fd = -1;
 		return (0);
 	}
@@ -505,23 +506,18 @@ ripencc_start(int unit, struct peer *peer)
 	/*
 	 * Allocate and initialize unit structure
 	 */
-	if (!(up = (struct ripencc_unit *) 
-	      emalloc(sizeof(struct ripencc_unit)))) {
-		(void) close(fd);
-		return (0);
-	}
-	memset((char *)up, 0, sizeof(struct ripencc_unit));
+	up = emalloc_zero(sizeof(*up));
 
 	pp->io.clock_recv = ripencc_receive;
-	pp->io.srcclock = (caddr_t)peer;
+	pp->io.srcclock = peer;
 	pp->io.datalen = 0;
 	if (!io_addclock(&pp->io)) {
 		pp->io.fd = -1;
-		(void) close(fd);
+		close(fd);
 		free(up);
 		return (0);
 	}
-	pp->unitptr = (caddr_t)up;
+	pp->unitptr = up;
 
 	/*
 	 * Initialize miscellaneous variables
@@ -655,7 +651,7 @@ ripencc_ppsapi(
 	int capability;
 
 	pp = peer->procptr;
-	up = (struct ripencc_unit *)pp->unitptr;
+	up = pp->unitptr;
 	if (time_pps_getcap(up->handle, &capability) < 0) {
 		msyslog(LOG_ERR,
 			"refclock_ripencc: time_pps_getcap failed: %m");
@@ -721,7 +717,7 @@ ripencc_get_pps_ts(
 	l_fp tstmp;
 
 #ifdef DEBUG_PPS
-	msyslog(LOG_INFO,"ripencc_get_pps_ts\n");
+	msyslog(LOG_INFO,"ripencc_get_pps_ts");
 #endif /* DEBUG_PPS */
 
 
@@ -758,8 +754,8 @@ ripencc_get_pps_ts(
 	tstmp.l_uf = (u_int32)dtemp;
 
 #ifdef DEBUG_PPS
-	msyslog(LOG_INFO,"ts.tv_sec: %d\n",(int)ts.tv_sec);
-	msyslog(LOG_INFO,"ts.tv_nsec: %ld\n",ts.tv_nsec);
+	msyslog(LOG_INFO,"ts.tv_sec: %d",(int)ts.tv_sec);
+	msyslog(LOG_INFO,"ts.tv_nsec: %ld",ts.tv_nsec);
 #endif /* DEBUG_PPS */
 
 	*tsptr = tstmp;
@@ -776,7 +772,7 @@ ripencc_shutdown(int unit, struct peer *peer)
 	struct refclockproc *pp;
 
 	pp = peer->procptr;
-	up = (struct ripencc_unit *)pp->unitptr;
+	up = pp->unitptr;
 
 	if (up != NULL) {
 		if (up->handle != 0)
@@ -804,7 +800,7 @@ ripencc_poll(int unit, struct peer *peer)
 		fprintf(stderr, "ripencc_poll(%d)\n", unit);
 #endif /* DEBUG_NCC */
 	pp = peer->procptr;
-	up = (struct ripencc_unit *)pp->unitptr;
+	up = pp->unitptr;
 	if (up->pollcnt == 0)
 		refclock_report(peer, CEVNT_TIMEOUT);
 	else
@@ -835,7 +831,7 @@ ripencc_send(struct peer *peer, TSIPPKT spt)
 		register struct refclockproc *pp;	
 
 		pp = peer->procptr;
-		up = (struct ripencc_unit *)pp->unitptr;
+		up = pp->unitptr;
 		if (debug)
 			printf("ripencc_send(%d, %02X)\n", up->unit, cmd);
 	}
@@ -910,9 +906,9 @@ ripencc_receive(struct recvbuf *rbufp)
 	/*
 	 * Initialize pointers and read the timecode and timestamp
 	 */
-	peer = (struct peer *)rbufp->recv_srcclock;
+	peer = rbufp->recv_peer;
 	pp = peer->procptr;
-	up = (struct ripencc_unit *)pp->unitptr;
+	up = pp->unitptr;
 	rd_lencode = refclock_gtlin(rbufp, rd_lastcode, BMAX, &rd_tmp);
 
 #ifdef DEBUG_RAW
@@ -1000,11 +996,11 @@ ripencc_receive(struct recvbuf *rbufp)
 					pp->nsec = 0;
 				}
 				else
-					msyslog(LOG_INFO, "%s(): ripencc_get_pps_ts returns failure\n",__FUNCTION__);
+					msyslog(LOG_INFO, "%s(): ripencc_get_pps_ts returns failure",__FUNCTION__);
 
 
 				if (!up->polled) { 
-					msyslog(LOG_INFO, "%s(): unrequested packet\n",__FUNCTION__);
+					msyslog(LOG_INFO, "%s(): unrequested packet",__FUNCTION__);
 					/* unrequested packet */
 					break;
 				}

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.4.4.2 2013/06/23 06:26:26 tls Exp $
+# $NetBSD: Makefile.inc,v 1.4.4.3 2014/08/19 23:46:40 tls Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
@@ -7,7 +7,7 @@ WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 USE_FORT?= yes	# network client/server
 CWARNFLAGS.clang+=	-Wno-tautological-compare \
 			-Wno-conversion -Wno-constant-logical-operand \
-			-Wno-format-security
+			-Wno-format-security -Wno-error=unused-const-variable
 
 DIST:=	${.PARSEDIR}/dist
 BIND:=	${.PARSEDIR}/../bind/dist
@@ -23,7 +23,7 @@ CPPFLAGS+=	-DDHCPv6
 CPPFLAGS+= -DISC_PLATFORM_USETHREADS -DHAVE_CONFIG_H
 CPPFLAGS+= -I${DIST} -I${DIST}/includes -I${DIST}/../include
 CPPFLAGS+= -I${BIND} -I${BIND}/includes -I${BIND}/../include
-.for dir in isc dns
+.for dir in isc dns irs
 CPPFLAGS+= -I${BIND}/lib/${dir}/include
 CPPFLAGS+= -I${BIND}/lib/${dir}/unix/include
 CPPFLAGS+= -I${BIND}/lib/${dir}/pthreads/include
@@ -34,14 +34,22 @@ LDADD+= ${OMOBJDIR}/libomapi.a ${DSTOBJDIR}/libdst.a
 .if defined(PROG) && ${PROG} == "dhclient"
 LDADD+=-Wl,-Bstatic
 .endif
-LDADD+= -ldns -lisc
+LDADD+= -lirs -lisccfg -ldns -lisc
 LDADD+=-lpthread
 .if defined(PROG) && ${PROG} == "dhclient"
 LDADD+=-Wl,-Bdynamic
 .endif
-LDADD+= -lcrypto -lipsec
+.if (${MKCRYPTO} != "no")
+.if (${MKKERBEROS} != "no")
+LDADD+= -lgssapi -lkrb5 -lhx509 -lheimntlm -lheimbase \
+	-lcom_err  -lroken -lasn1 -lwind
+DPADD+= ${LIBGSSAPI} ${LIBKRB5} ${LIBHX509} ${LIBHEIMNTLM} ${LIBHEIMBASE} \
+	${LIBCOM_ERR} ${LIBROKEN} ${LIBASN1} ${LIBWIND}
+.endif
+LDADD+= -lcrypto -lipsec -lcrypt
+DPADD+= ${LIBCRYPTO} ${LIBIPSEC} ${LIBCRYPT}
+.endif
 DPADD+= ${COBJDIR}/libdhcp.a
 DPADD+= ${OMOBJDIR}/libomapi.a ${DSTOBJDIR}/libdst.a
 DPADD+=	${LIBDNS} ${LIBISC}
-DPADD+= ${LIBCRYPTO} ${LIBIPSEC}
 DPADD+= ${LIBPTHREAD}

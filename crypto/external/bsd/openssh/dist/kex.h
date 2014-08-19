@@ -1,5 +1,5 @@
-/*	$NetBSD: kex.h,v 1.5.8.1 2013/06/23 06:26:14 tls Exp $	*/
-/* $OpenBSD: kex.h,v 1.54 2013/01/08 18:49:04 markus Exp $ */
+/*	$NetBSD: kex.h,v 1.5.8.2 2014/08/19 23:45:24 tls Exp $	*/
+/* $OpenBSD: kex.h,v 1.56 2013/07/19 07:37:48 markus Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -38,8 +38,9 @@
 #define	KEX_DHGEX_SHA1		"diffie-hellman-group-exchange-sha1"
 #define	KEX_DHGEX_SHA256	"diffie-hellman-group-exchange-sha256"
 #define	KEX_RESUME		"resume@appgate.com"
-/* The following represents the family of ECDH methods */
-#define	KEX_ECDH_SHA2_STEM	"ecdh-sha2-"
+#define	KEX_ECDH_SHA2_NISTP256	"ecdh-sha2-nistp256"
+#define	KEX_ECDH_SHA2_NISTP384	"ecdh-sha2-nistp384"
+#define	KEX_ECDH_SHA2_NISTP521	"ecdh-sha2-nistp521"
 
 #define COMP_NONE	0
 #define COMP_ZLIB	1
@@ -84,7 +85,7 @@ typedef struct Newkeys Newkeys;
 
 struct Enc {
 	char	*name;
-	Cipher	*cipher;
+	const Cipher *cipher;
 	int	enabled;
 	u_int	key_len;
 	u_int	iv_len;
@@ -129,18 +130,21 @@ struct Kex {
 	sig_atomic_t done;
 	int	flags;
 	const EVP_MD *evp_md;
+	int	ec_nid;
 	char	*client_version_string;
 	char	*server_version_string;
 	int	(*verify_host_key)(Key *);
 	Key	*(*load_host_public_key)(int);
 	Key	*(*load_host_private_key)(int);
 	int	(*host_key_index)(Key *);
+	void    (*sign)(Key *, Key *, u_char **, u_int *, u_char *, u_int);
 	void	(*kex[KEX_MAX])(Kex *);
 };
 
 void	 kex_prop2buf(Buffer *, const char *proposal[PROPOSAL_MAX]);
 
 int	 kex_names_valid(const char *);
+char	*kex_alg_list(void);
 
 Kex	*kex_setup(const char *[PROPOSAL_MAX]);
 void	 kex_finish(Kex *);
@@ -169,9 +173,6 @@ void
 kex_ecdh_hash(const EVP_MD *, const EC_GROUP *, char *, char *, char *, int,
     char *, int, u_char *, int, const EC_POINT *, const EC_POINT *,
     const BIGNUM *, u_char **, u_int *);
-
-int	kex_ecdh_name_to_nid(const char *);
-const EVP_MD *kex_ecdh_name_to_evpmd(const char *);
 
 void
 derive_ssh1_session_id(BIGNUM *, BIGNUM *, u_int8_t[8], u_int8_t[16]);

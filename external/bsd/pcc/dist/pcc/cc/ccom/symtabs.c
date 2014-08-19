@@ -1,5 +1,5 @@
-/*	Id: symtabs.c,v 1.24 2011/07/16 20:34:50 ragge Exp 	*/	
-/*	$NetBSD: symtabs.c,v 1.1.1.3 2011/09/01 12:47:02 plunky Exp $	*/
+/*	Id: symtabs.c,v 1.26 2014/06/20 07:07:33 plunky Exp 	*/	
+/*	$NetBSD: symtabs.c,v 1.1.1.3.8.1 2014/08/19 23:52:09 tls Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -73,7 +73,7 @@ addstring(char *key)
  * return its address.
  * This is a simple patricia implementation.
  */
-char *
+static char *
 symtab_add(char *key, struct tree **first, int *tabs, int *stlen)
 {
 	struct tree *w, *new, *last;
@@ -369,16 +369,20 @@ hide(struct symtab *sym)
 void
 locctr(int seg, struct symtab *sp)
 {
+#ifdef GCC_COMPAT
 	struct attr *ga;
+#endif
 
 	if (seg == NOSEG) {
 		;
 	} else if (sp == NULL) {
 		if (lastloc != seg)
 			setseg(seg, NULL);
+#ifdef GCC_COMPAT
 	} else if ((ga = attr_find(sp->sap, GCC_ATYP_SECTION)) != NULL) {
 		setseg(NMSEG, ga->sarg(0));
 		seg = NOSEG;
+#endif
 	} else {
 		if (seg == DATA) {
 			if (ISCON(cqual(sp->stype, sp->squal)))
@@ -437,6 +441,7 @@ defalign(int al)
 void
 symdirec(struct symtab *sp)
 {
+#ifdef GCC_COMPAT
 	struct attr *ga;
 	char *name;
 
@@ -451,5 +456,6 @@ symdirec(struct symtab *sp)
 		printf("\t.weak %s\n", ga->sarg(0));
 		printf("\t.set %s,%s\n", ga->sarg(0), name);
 	}
+#endif
 }
 #endif

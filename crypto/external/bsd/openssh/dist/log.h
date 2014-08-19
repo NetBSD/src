@@ -1,5 +1,5 @@
-/*	$NetBSD: log.h,v 1.4.8.1 2013/06/23 06:26:14 tls Exp $	*/
-/* $OpenBSD: log.h,v 1.19 2012/09/06 04:37:39 dtucker Exp $ */
+/*	$NetBSD: log.h,v 1.4.8.2 2014/08/19 23:45:25 tls Exp $	*/
+/* $OpenBSD: log.h,v 1.20 2013/04/07 02:10:33 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -49,6 +49,7 @@ typedef void (log_handler_fn)(LogLevel, const char *, void *);
 void     log_init(const char *, LogLevel, SyslogFacility, int);
 void     log_change_level(LogLevel);
 int      log_is_on_stderr(void);
+void     log_redirect_stderr_to(const char *);
 
 SyslogFacility	log_facility_number(char *);
 const char * 	log_facility_name(SyslogFacility);
@@ -70,6 +71,7 @@ void     debug3(const char *, ...) __attribute__((format(printf, 1, 2)));
 void	 set_log_handler(log_handler_fn *, void *);
 void	 do_log2(LogLevel, const char *, ...)
     __attribute__((format(printf, 2, 3)));
-void	 do_log(LogLevel, const char *, va_list);
+void	 do_log(LogLevel, const char *, va_list)
+    __attribute__((format(printf, 2, 0)));
 void	 cleanup_exit(int) __attribute__((noreturn));
 #endif

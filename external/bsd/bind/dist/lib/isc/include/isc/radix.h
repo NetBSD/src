@@ -1,7 +1,7 @@
-/*	$NetBSD: radix.h,v 1.5 2012/06/05 00:42:39 christos Exp $	*/
+/*	$NetBSD: radix.h,v 1.5.2.1 2014/08/19 23:46:33 tls Exp $	*/
 
 /*
- * Copyright (C) 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2007, 2008, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -43,26 +43,27 @@
 			(pt).family = (na)->family; \
 			(pt).bitlen = (bits); \
 			if ((pt).family == AF_INET6) { \
-				memcpy(&(pt).add.sin6, &(na)->type.in6, \
+				memmove(&(pt).add.sin6, &(na)->type.in6, \
 				       ((bits)+7)/8); \
 			} else \
-				memcpy(&(pt).add.sin, &(na)->type.in, \
+				memmove(&(pt).add.sin, &(na)->type.in, \
 				       ((bits)+7)/8); \
 		} else { \
 			(pt).family = AF_UNSPEC; \
 			(pt).bitlen = 0; \
 		} \
 		isc_refcount_init(&(pt).refcount, 0); \
-	} while(0)
+	} while(/*CONSTCOND*/0)
 
 typedef struct isc_prefix {
-    unsigned int family;	/* AF_INET | AF_INET6, or AF_UNSPEC for "any" */
-    unsigned int bitlen;	/* 0 for "any" */
-    isc_refcount_t refcount;
-    union {
+	isc_mem_t *mctx;
+	unsigned int family;	/* AF_INET | AF_INET6, or AF_UNSPEC for "any" */
+	unsigned int bitlen;	/* 0 for "any" */
+	isc_refcount_t refcount;
+	union {
 		struct in_addr sin;
 		struct in6_addr sin6;
-    } add;
+	} add;
 } isc_prefix_t;
 
 typedef void (*isc_radix_destroyfunc_t)(void *);
@@ -92,12 +93,13 @@ typedef void (*isc_radix_processfunc_t)(isc_prefix_t *, void **);
 
 #define ISC_IS6(family) ((family) == AF_INET6 ? 1 : 0)
 typedef struct isc_radix_node {
-   isc_uint32_t bit;			/* bit length of the prefix */
-   isc_prefix_t *prefix;		/* who we are in radix tree */
-   struct isc_radix_node *l, *r;	/* left and right children */
-   struct isc_radix_node *parent;	/* may be used */
-   void *data[2];			/* pointers to IPv4 and IPV6 data */
-   int node_num[2];			/* which node this was in the tree,
+	isc_mem_t *mctx;
+	isc_uint32_t bit;		/* bit length of the prefix */
+	isc_prefix_t *prefix;		/* who we are in radix tree */
+	struct isc_radix_node *l, *r;	/* left and right children */
+	struct isc_radix_node *parent;	/* may be used */
+	void *data[2];			/* pointers to IPv4 and IPV6 data */
+	int node_num[2];		/* which node this was in the tree,
 					   or -1 for glue nodes */
 } isc_radix_node_t;
 
@@ -105,12 +107,12 @@ typedef struct isc_radix_node {
 #define RADIX_TREE_VALID(a)      ISC_MAGIC_VALID(a, RADIX_TREE_MAGIC);
 
 typedef struct isc_radix_tree {
-   unsigned int		magic;
-   isc_mem_t		*mctx;
-   isc_radix_node_t 	*head;
-   isc_uint32_t		maxbits;	/* for IP, 32 bit addresses */
-   int num_active_node;			/* for debugging purposes */
-   int num_added_node;			/* total number of nodes */
+	unsigned int magic;
+	isc_mem_t *mctx;
+	isc_radix_node_t *head;
+	isc_uint32_t maxbits;		/* for IP, 32 bit addresses */
+	int num_active_node;		/* for debugging purposes */
+	int num_added_node;		/* total number of nodes */
 } isc_radix_tree_t;
 
 isc_result_t

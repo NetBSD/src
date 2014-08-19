@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define _LIBCPP_EXTERN_TEMPLATE(...) extern template __VA_ARGS__;
+
 #include "ios"
 #include "streambuf"
 #include "istream"
@@ -54,14 +56,16 @@ __iostream_category::message(int ev) const
     if (ev != static_cast<int>(io_errc::stream)
 #ifdef ELAST
         && ev <= ELAST
-#endif
+#elif defined(__linux__)
+        && ev <= 4095
+#endif  // ELAST
         )
         return __do_message::message(ev);
     return string("unspecified iostream_category error");
 }
 
 const error_category&
-iostream_category()
+iostream_category() _NOEXCEPT
 {
     static __iostream_category s;
     return s;
@@ -132,7 +136,7 @@ locale
 ios_base::imbue(const locale& newloc)
 {
     static_assert(sizeof(locale) == sizeof(__loc_), "");
-    locale& loc_storage = *(locale*)&__loc_;
+    locale& loc_storage = *reinterpret_cast<locale*>(&__loc_);
     locale oldloc = loc_storage;
     loc_storage = newloc;
     __call_callbacks(imbue_event);
@@ -142,13 +146,16 @@ ios_base::imbue(const locale& newloc)
 locale
 ios_base::getloc() const
 {
-    const locale& loc_storage = *(locale*)&__loc_;
+    const locale& loc_storage = *reinterpret_cast<const locale*>(&__loc_);
     return loc_storage;
 }
 
 // xalloc
-
+#if __has_feature(cxx_atomic)
+atomic<int> ios_base::__xindex_ = ATOMIC_VAR_INIT(0);
+#else
 int ios_base::__xindex_ = 0;
+#endif
 
 int
 ios_base::xalloc()
@@ -168,7 +175,8 @@ ios_base::iword(int index)
             newcap = _VSTD::max(2 * __iarray_cap_, req_size);
         else
             newcap = mx;
-        long* iarray = (long*)realloc(__iarray_, newcap * sizeof(long));
+        size_t newsize = newcap * sizeof(long);
+        long* iarray = static_cast<long*>(realloc(__iarray_, newsize));
         if (iarray == 0)
         {
             setstate(badbit);
@@ -196,7 +204,8 @@ ios_base::pword(int index)
             newcap = _VSTD::max(2 * __parray_cap_, req_size);
         else
             newcap = mx;
-        void** parray = (void**)realloc(__parray_, newcap * sizeof(void*));
+        size_t newsize = newcap * sizeof(void*);
+        void** parray = static_cast<void**>(realloc(__parray_, newsize));
         if (parray == 0)
         {
             setstate(badbit);
@@ -226,11 +235,13 @@ ios_base::register_callback(event_callback fn, int index)
             newcap = _VSTD::max(2 * __event_cap_, req_size);
         else
             newcap = mx;
-        event_callback* fns = (event_callback*)realloc(__fn_, newcap * sizeof(event_callback));
+        size_t newesize = newcap * sizeof(event_callback);
+        event_callback* fns = static_cast<event_callback*>(realloc(__fn_, newesize));
         if (fns == 0)
             setstate(badbit);
         __fn_ = fns;
-        int* indxs = (int*)realloc(__index_, newcap * sizeof(int));
+        size_t newisize = newcap * sizeof(int);
+        int* indxs = static_cast<int *>(realloc(__index_, newisize));
         if (indxs == 0)
             setstate(badbit);
         __index_ = indxs;
@@ -243,7 +254,7 @@ ios_base::register_callback(event_callback fn, int index)
 ios_base::~ios_base()
 {
     __call_callbacks(erase_event);
-    locale& loc_storage = *(locale*)&__loc_;
+    locale& loc_storage = *reinterpret_cast<locale*>(&__loc_);
     loc_storage.~locale();
     free(__fn_);
     free(__index_);
@@ -294,19 +305,22 @@ void
 ios_base::copyfmt(const ios_base& rhs)
 {
     // If we can't acquire the needed resources, throw bad_alloc (can't set badbit)
-    // Don't alter *this until all needed resources are aquired
+    // Don't alter *this until all needed resources are acquired
     unique_ptr<event_callback, void (*)(void*)> new_callbacks(0, free);
     unique_ptr<int, void (*)(void*)> new_ints(0, free);
     unique_ptr<long, void (*)(void*)> new_longs(0, free);
     unique_ptr<void*, void (*)(void*)> new_pointers(0, free);
     if (__event_cap_ < rhs.__event_size_)
     {
-        new_callbacks.reset((event_callback*)malloc(sizeof(event_callback) * rhs.__event_size_));
+        size_t newesize = sizeof(event_callback) * rhs.__event_size_;
+        new_callbacks.reset(static_cast<event_callback*>(malloc(newesize)));
 #ifndef _LIBCPP_NO_EXCEPTIONS
         if (!new_callbacks)
             throw bad_alloc();
 #endif  // _LIBCPP_NO_EXCEPTIONS
-        new_ints.reset((int*)malloc(sizeof(int) * rhs.__event_size_));
+
+        size_t newisize = sizeof(int) * rhs.__event_size_;
+        new_ints.reset(static_cast<int *>(malloc(newisize)));
 #ifndef _LIBCPP_NO_EXCEPTIONS
         if (!new_ints)
             throw bad_alloc();
@@ -314,7 +328,8 @@ ios_base::copyfmt(const ios_base& rhs)
     }
     if (__iarray_cap_ < rhs.__iarray_size_)
     {
-        new_longs.reset((long*)malloc(sizeof(long) * rhs.__iarray_size_));
+        size_t newsize = sizeof(long) * rhs.__iarray_size_;
+        new_longs.reset(static_cast<long*>(malloc(newsize)));
 #ifndef _LIBCPP_NO_EXCEPTIONS
         if (!new_longs)
             throw bad_alloc();
@@ -322,7 +337,8 @@ ios_base::copyfmt(const ios_base& rhs)
     }
     if (__parray_cap_ < rhs.__parray_size_)
     {
-        new_pointers.reset((void**)malloc(sizeof(void*) * rhs.__parray_size_));
+        size_t newsize = sizeof(void*) * rhs.__parray_size_;
+        new_pointers.reset(static_cast<void**>(malloc(newsize)));
 #ifndef _LIBCPP_NO_EXCEPTIONS
         if (!new_pointers)
             throw bad_alloc();
@@ -332,8 +348,8 @@ ios_base::copyfmt(const ios_base& rhs)
     __fmtflags_ = rhs.__fmtflags_;
     __precision_ = rhs.__precision_;
     __width_ = rhs.__width_;
-    locale& lhs_loc = *(locale*)&__loc_;
-    locale& rhs_loc = *(locale*)&rhs.__loc_;
+    locale& lhs_loc = *reinterpret_cast<locale*>(&__loc_);
+    const locale& rhs_loc = *reinterpret_cast<const locale*>(&rhs.__loc_);
     lhs_loc = rhs_loc;
     if (__event_cap_ < rhs.__event_size_)
     {
@@ -376,7 +392,7 @@ ios_base::move(ios_base& rhs)
     __rdstate_ = rhs.__rdstate_;
     __exceptions_ = rhs.__exceptions_;
     __rdbuf_ = 0;
-    locale& rhs_loc = *(locale*)&rhs.__loc_;
+    locale& rhs_loc = *reinterpret_cast<locale*>(&rhs.__loc_);
     ::new(&__loc_) locale(rhs_loc);
     __fn_ = rhs.__fn_;
     rhs.__fn_ = 0;
@@ -408,8 +424,8 @@ ios_base::swap(ios_base& rhs) _NOEXCEPT
     _VSTD::swap(__width_, rhs.__width_);
     _VSTD::swap(__rdstate_, rhs.__rdstate_);
     _VSTD::swap(__exceptions_, rhs.__exceptions_);
-    locale& lhs_loc = *(locale*)&__loc_;
-    locale& rhs_loc = *(locale*)&rhs.__loc_;
+    locale& lhs_loc = *reinterpret_cast<locale*>(&__loc_);
+    locale& rhs_loc = *reinterpret_cast<locale*>(&rhs.__loc_);
     _VSTD::swap(lhs_loc, rhs_loc);
     _VSTD::swap(__fn_, rhs.__fn_);
     _VSTD::swap(__index_, rhs.__index_);

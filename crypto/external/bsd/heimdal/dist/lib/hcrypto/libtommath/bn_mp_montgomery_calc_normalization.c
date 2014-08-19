@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_montgomery_calc_normalization.c,v 1.1.1.1 2011/04/13 18:14:54 elric Exp $	*/
+/*	$NetBSD: bn_mp_montgomery_calc_normalization.c,v 1.1.1.1.10.1 2014/08/19 23:45:18 tls Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_MONTGOMERY_CALC_NORMALIZATION_C
@@ -56,6 +56,6 @@ int mp_montgomery_calc_normalization (mp_int * a, mp_int * b)
 }
 #endif
 
-/* Source: /cvs/libtom/libtommath/bn_mp_montgomery_calc_normalization.c,v */
-/* Revision: 1.4 */
-/* Date: 2006/12/28 01:25:13 */
+/* Source: /cvs/libtom/libtommath/bn_mp_montgomery_calc_normalization.c,v  */
+/* Revision: 1.4  */
+/* Date: 2006/12/28 01:25:13  */

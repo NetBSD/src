@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: random_seed,v 1.2.2.2 2013/02/25 00:24:52 tls Exp $
+# $NetBSD: random_seed,v 1.2.2.3 2014/08/19 23:45:51 tls Exp $
 #
 
 # PROVIDE: random_seed
@@ -42,7 +42,7 @@ getfstype() {
 fs_safe()
 {
 	#
-	# Enforce that the file's on a local filesystem.
+	# Enforce that the file's on a local file system.
 	# Include only the types we can actually write.
 	#
 	fstype="$(getfstype "$1")"
@@ -51,7 +51,7 @@ fs_safe()
 		return 0
 		;;
 	*)
-		message "Bad filesystem type ${fstype}"
+		message "Bad file system type ${fstype}"
 		return 1
 		;;
 	esac

@@ -1,7 +1,7 @@
-/*	$NetBSD: interfaceiter.c,v 1.1.1.2 2012/01/31 21:22:41 kardel Exp $	*/
+/*	$NetBSD: interfaceiter.c,v 1.1.1.2.6.1 2014/08/19 23:51:40 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: interfaceiter.c,v 1.44.120.2 2009/02/16 23:47:15 tbox Exp */
+/* Id: interfaceiter.c,v 1.45 2008/12/01 03:51:47 marka Exp  */
 
 /*! \file */
 
@@ -191,11 +191,9 @@ static isc_result_t
 linux_if_inet6_current(isc_interfaceiter_t *iter) {
 	char address[33];
 	char name[IF_NAMESIZE+1];
-	char strbuf[ISC_STRERRORSIZE];
 	struct in6_addr addr6;
 	unsigned int ifindex;
 	int prefix, scope, flags;
-	struct ifreq ifreq;
 	int res;
 	unsigned int i;
 
@@ -240,34 +238,7 @@ linux_if_inet6_current(isc_interfaceiter_t *iter) {
 		addr6.s6_addr[i] = byte;
 	}
 	iter->current.af = AF_INET6;
-	iter->current.flags = 0;
-	memset(&ifreq, 0, sizeof(ifreq));
-	INSIST(sizeof(ifreq.ifr_name) <= sizeof(iter->current.name));
-	strncpy(ifreq.ifr_name, name, sizeof(ifreq.ifr_name));
-
-	if (ioctl(iter->socket, SIOCGIFFLAGS, (char *) &ifreq) < 0) {
-		isc__strerror(errno, strbuf, sizeof(strbuf));
-		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				"%s: getting interface flags: %s",
-				ifreq.ifr_name, strbuf);
-		return (ISC_R_IGNORE);
-	}
-
-	if ((ifreq.ifr_flags & IFF_UP) != 0)
-		iter->current.flags |= INTERFACE_F_UP;
-#ifdef IFF_POINTOPOINT
-	if ((ifreq.ifr_flags & IFF_POINTOPOINT) != 0)
-		iter->current.flags |= INTERFACE_F_POINTTOPOINT;
-#endif
-	if ((ifreq.ifr_flags & IFF_LOOPBACK) != 0)
-		iter->current.flags |= INTERFACE_F_LOOPBACK;
-	if ((ifreq.ifr_flags & IFF_BROADCAST) != 0)
-		iter->current.flags |= INTERFACE_F_BROADCAST;
-#ifdef IFF_MULTICAST
-	if ((ifreq.ifr_flags & IFF_MULTICAST) != 0)
-		iter->current.flags |= INTERFACE_F_MULTICAST;
-#endif
-
+	iter->current.flags = INTERFACE_F_UP;
 	isc_netaddr_fromin6(&iter->current.address, &addr6);
 	iter->current.ifindex = ifindex;
 	if (isc_netaddr_islinklocal(&iter->current.address)) {

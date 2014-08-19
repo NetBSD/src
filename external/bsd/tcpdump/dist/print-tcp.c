@@ -29,7 +29,7 @@
 static const char rcsid[] _U_ =
 "@(#) Header: /tcpdump/master/tcpdump/print-tcp.c,v 1.135 2008-11-09 23:35:03 mcr Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-tcp.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-tcp.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -73,13 +73,8 @@ static void print_tcp_rst_data(register const u_char *sp, u_int length);
 
 
 struct tha {
-#ifndef INET6
         struct in_addr src;
         struct in_addr dst;
-#else
-        struct in6_addr src;
-        struct in6_addr dst;
-#endif /*INET6*/
         u_int port;
 };
 
@@ -90,14 +85,32 @@ struct tcp_seq_hash {
         tcp_seq ack;
 };
 
+#ifdef INET6
+struct tha6 {
+        struct in6_addr src;
+        struct in6_addr dst;
+        u_int port;
+};
+
+struct tcp_seq_hash6 {
+        struct tcp_seq_hash6 *nxt;
+        struct tha6 addr;
+        tcp_seq seq;
+        tcp_seq ack;
+};
+#endif
+
 #define TSEQ_HASHSIZE 919
 
 /* These tcp optinos do not have the size octet */
 #define ZEROLENOPT(o) ((o) == TCPOPT_EOL || (o) == TCPOPT_NOP)
 
-static struct tcp_seq_hash tcp_seq_hash[TSEQ_HASHSIZE];
+static struct tcp_seq_hash tcp_seq_hash4[TSEQ_HASHSIZE];
+#ifdef INET6
+static struct tcp_seq_hash6 tcp_seq_hash6[TSEQ_HASHSIZE];
+#endif
 
-struct tok tcp_flag_values[] = {
+static const struct tok tcp_flag_values[] = {
         { TH_FIN, "F" },
         { TH_SYN, "S" },
         { TH_RST, "R" },
@@ -109,7 +122,7 @@ struct tok tcp_flag_values[] = {
         { 0, NULL }
 };
 
-struct tok tcp_option_values[] = {
+static const struct tok tcp_option_values[] = {
         { TCPOPT_EOL, "eol" },
         { TCPOPT_NOP, "nop" },
         { TCPOPT_MAXSEG, "mss" },
@@ -125,6 +138,8 @@ struct tok tcp_option_values[] = {
         { TCPOPT_SIGNATURE, "md5" },
         { TCPOPT_AUTH, "enhanced auth" },
         { TCPOPT_UTO, "uto" },
+        { TCPOPT_MPTCP, "mptcp" },
+        { TCPOPT_EXPERIMENT2, "exp" },
         { 0, NULL }
 };
 
@@ -148,7 +163,8 @@ tcp_print(register const u_char *bp, register u_int length,
         u_int16_t sport, dport, win, urp;
         u_int32_t seq, ack, thseq, thack;
         u_int utoval;
-        int threv;
+        u_int16_t magic;
+        register int rev;
 #ifdef INET6
         register const struct ip6_hdr *ip6;
 #endif
@@ -174,42 +190,6 @@ tcp_print(register const u_char *bp, register u_int length,
 
         hlen = TH_OFF(tp) * 4;
 
-        /*
-	 * If data present, header length valid, and NFS port used,
-	 * assume NFS.
-	 * Pass offset of data plus 4 bytes for RPC TCP msg length
-	 * to NFS print routines.
-	 */
-	if (!qflag && hlen >= sizeof(*tp) && hlen <= length &&
-	    (length - hlen) >= 4) {
-		u_char *fraglenp;
-		u_int32_t fraglen;
-		register struct sunrpc_msg *rp;
-		enum sunrpc_msg_type direction;
-
-		fraglenp = (u_char *)tp + hlen;
-		if (TTEST2(*fraglenp, 4)) {
-			fraglen = EXTRACT_32BITS(fraglenp) & 0x7FFFFFFF;
-			if (fraglen > (length - hlen) - 4)
-				fraglen = (length - hlen) - 4;
-			rp = (struct sunrpc_msg *)(fraglenp + 4);
-			if (TTEST(rp->rm_direction)) {
-				direction = (enum sunrpc_msg_type)EXTRACT_32BITS(&rp->rm_direction);
-				if (dport == NFS_PORT &&
-				    direction == SUNRPC_CALL) {
-					nfsreq_print((u_char *)rp, fraglen,
-					    (u_char *)ip);
-					return;
-				}
-				if (sport == NFS_PORT &&
-				    direction == SUNRPC_REPLY) {
-					nfsreply_print((u_char *)rp, fraglen,
-					    (u_char *)ip);
-					return;
-				}
-			}
-                }
-        }
 #ifdef INET6
         if (ip6) {
                 if (ip6->ip6_nxt == IPPROTO_TCP) {
@@ -263,19 +243,21 @@ tcp_print(register const u_char *bp, register u_int length,
         printf("Flags [%s]", bittok2str_nosep(tcp_flag_values, "none", flags));
 
         if (!Sflag && (flags & TH_ACK)) {
-                register struct tcp_seq_hash *th;
-                const void *src, *dst;
-                register int rev;
-                struct tha tha;
                 /*
                  * Find (or record) the initial sequence numbers for
                  * this conversation.  (we pick an arbitrary
                  * collating order so there's only one entry for
                  * both directions).
                  */
-#ifdef INET6
                 rev = 0;
+#ifdef INET6
                 if (ip6) {
+                        register struct tcp_seq_hash6 *th;
+                        struct tcp_seq_hash6 *tcp_seq_hash;
+                        const struct in6_addr *src, *dst;
+                        struct tha6 tha;
+
+                        tcp_seq_hash = tcp_seq_hash6;
                         src = &ip6->ip6_src;
                         dst = &ip6->ip6_dst;
                         if (sport > dport)
@@ -293,28 +275,45 @@ tcp_print(register const u_char *bp, register u_int length,
                                 memcpy(&tha.src, src, sizeof ip6->ip6_src);
                                 tha.port = sport << 16 | dport;
                         }
+
+                        for (th = &tcp_seq_hash[tha.port % TSEQ_HASHSIZE];
+                             th->nxt; th = th->nxt)
+                                if (memcmp((char *)&tha, (char *)&th->addr,
+                                           sizeof(th->addr)) == 0)
+                                        break;
+
+                        if (!th->nxt || (flags & TH_SYN)) {
+                                /* didn't find it or new conversation */
+                                if (th->nxt == NULL) {
+                                        th->nxt = (struct tcp_seq_hash6 *)
+                                                calloc(1, sizeof(*th));
+                                        if (th->nxt == NULL)
+                                                error("tcp_print: calloc");
+                                }
+                                th->addr = tha;
+                                if (rev)
+                                        th->ack = seq, th->seq = ack - 1;
+                                else
+                                        th->seq = seq, th->ack = ack - 1;
+                        } else {
+                                if (rev)
+                                        seq -= th->ack, ack -= th->seq;
+                                else
+                                        seq -= th->seq, ack -= th->ack;
+                        }
+
+                        thseq = th->seq;
+                        thack = th->ack;
                 } else {
-                        /*
-                         * Zero out the tha structure; the src and dst
-                         * fields are big enough to hold an IPv6
-                         * address, but we only have IPv4 addresses
-                         * and thus must clear out the remaining 124
-                         * bits.
-                         *
-                         * XXX - should we just clear those bytes after
-                         * copying the IPv4 addresses, rather than
-                         * zeroing out the entire structure and then
-                         * overwriting some of the zeroes?
-                         *
-                         * XXX - this could fail if we see TCP packets
-                         * with an IPv6 address with the lower 124 bits
-                         * all zero and also see TCP packes with an
-                         * IPv4 address with the same 32 bits as the
-                         * upper 32 bits of the IPv6 address in question.
-                         * Can that happen?  Is it likely enough to be
-                         * an issue?
-                         */
-                        memset(&tha, 0, sizeof(tha));
+#else  /*INET6*/
+                {
+#endif /*INET6*/
+                        register struct tcp_seq_hash *th;
+                        struct tcp_seq_hash *tcp_seq_hash;
+                        const struct in_addr *src, *dst;
+                        struct tha tha;
+
+                        tcp_seq_hash = tcp_seq_hash4;
                         src = &ip->ip_src;
                         dst = &ip->ip_dst;
                         if (sport > dport)
@@ -332,60 +331,39 @@ tcp_print(register const u_char *bp, register u_int length,
                                 memcpy(&tha.src, src, sizeof ip->ip_src);
                                 tha.port = sport << 16 | dport;
                         }
-                }
-#else
-                rev = 0;
-                src = &ip->ip_src;
-                dst = &ip->ip_dst;
-                if (sport > dport)
-                        rev = 1;
-                else if (sport == dport) {
-                        if (memcmp(src, dst, sizeof ip->ip_dst) > 0)
-                                rev = 1;
-                }
-                if (rev) {
-                        memcpy(&tha.src, dst, sizeof ip->ip_dst);
-                        memcpy(&tha.dst, src, sizeof ip->ip_src);
-                        tha.port = dport << 16 | sport;
-                } else {
-                        memcpy(&tha.dst, dst, sizeof ip->ip_dst);
-                        memcpy(&tha.src, src, sizeof ip->ip_src);
-                        tha.port = sport << 16 | dport;
-                }
-#endif
 
-                threv = rev;
-                for (th = &tcp_seq_hash[tha.port % TSEQ_HASHSIZE];
-                     th->nxt; th = th->nxt)
-                        if (memcmp((char *)&tha, (char *)&th->addr,
-                                   sizeof(th->addr)) == 0)
-                                break;
+                        for (th = &tcp_seq_hash[tha.port % TSEQ_HASHSIZE];
+                             th->nxt; th = th->nxt)
+                                if (memcmp((char *)&tha, (char *)&th->addr,
+                                           sizeof(th->addr)) == 0)
+                                        break;
 
-                if (!th->nxt || (flags & TH_SYN)) {
-                        /* didn't find it or new conversation */
-                        if (th->nxt == NULL) {
-                                th->nxt = (struct tcp_seq_hash *)
-                                        calloc(1, sizeof(*th));
-                                if (th->nxt == NULL)
-                                        error("tcp_print: calloc");
+                        if (!th->nxt || (flags & TH_SYN)) {
+                                /* didn't find it or new conversation */
+                                if (th->nxt == NULL) {
+                                        th->nxt = (struct tcp_seq_hash *)
+                                                calloc(1, sizeof(*th));
+                                        if (th->nxt == NULL)
+                                                error("tcp_print: calloc");
+                                }
+                                th->addr = tha;
+                                if (rev)
+                                        th->ack = seq, th->seq = ack - 1;
+                                else
+                                        th->seq = seq, th->ack = ack - 1;
+                        } else {
+                                if (rev)
+                                        seq -= th->ack, ack -= th->seq;
+                                else
+                                        seq -= th->seq, ack -= th->ack;
                         }
-                        th->addr = tha;
-                        if (rev)
-                                th->ack = seq, th->seq = ack - 1;
-                        else
-                                th->seq = seq, th->ack = ack - 1;
-                } else {
-                        if (rev)
-                                seq -= th->ack, ack -= th->seq;
-                        else
-                                seq -= th->seq, ack -= th->ack;
-                }
 
-                thseq = th->seq;
-                thack = th->ack;
+                        thseq = th->seq;
+                        thack = th->ack;
+                }
         } else {
                 /*fool gcc*/
-                thseq = thack = threv = 0;
+                thseq = thack = rev = 0;
         }
         if (hlen > length) {
                 (void)printf(" [bad hdr length %u - too long, > %u]",
@@ -477,7 +455,7 @@ tcp_print(register const u_char *bp, register u_int length,
 #define LENCHECK(l) { if ((l) > hlen) goto bad; TCHECK2(*cp, l); }
 
 
-                        printf("%s", tok2str(tcp_option_values, "Unknown Option %u", opt));
+                        printf("%s", tok2str(tcp_option_values, "unknown-%u", opt));
 
                         switch (opt) {
 
@@ -506,7 +484,7 @@ tcp_print(register const u_char *bp, register u_int length,
                                                 s = EXTRACT_32BITS(cp + i);
                                                 LENCHECK(i + 8);
                                                 e = EXTRACT_32BITS(cp + i + 4);
-                                                if (threv) {
+                                                if (rev) {
                                                         s -= thseq;
                                                         e -= thseq;
                                                 } else {
@@ -599,8 +577,52 @@ tcp_print(register const u_char *bp, register u_int length,
                                 (void)printf(" %u", utoval);
                                 break;
 
+                        case TCPOPT_MPTCP:
+                                datalen = len - 2;
+                                LENCHECK(datalen);
+                                if (!mptcp_print(cp-2, len, flags))
+                                        goto bad;
+                                break;
+
+                        case TCPOPT_EXPERIMENT2:
+                                datalen = len - 2;
+                                LENCHECK(datalen);
+                                if (datalen < 2)
+                                        goto bad;
+                                /* RFC6994 */
+                                magic = EXTRACT_16BITS(cp);
+                                (void)printf("-");
+
+                                switch(magic) {
+
+                                case 0xf989:
+                                        /* TCP Fast Open: draft-ietf-tcpm-fastopen-04 */
+                                        if (datalen == 2) {
+                                                /* Fast Open Cookie Request */
+                                                (void)printf("tfo cookiereq");
+                                        } else {
+                                                /* Fast Open Cookie */
+                                                if (datalen % 2 != 0 || datalen < 6 || datalen > 18) {
+                                                        (void)printf("tfo malformed");
+                                                } else {
+                                                        (void)printf("tfo cookie ");
+                                                        for (i = 2; i < datalen; ++i)
+                                                                (void)printf("%02x", cp[i]);
+                                                }
+                                        }
+                                        break;
+
+                                default:
+                                        /* Unknown magic number */
+                                        (void)printf("%04x", magic);
+                                        break;
+                                }
+                                break;
+
                         default:
                                 datalen = len - 2;
+                                if (datalen)
+                                        printf(" 0x");
                                 for (i = 0; i < datalen; ++i) {
                                         LENCHECK(i);
                                         (void)printf("%02x", cp[i]);
@@ -642,6 +664,15 @@ tcp_print(register const u_char *bp, register u_int length,
                 return;
         } 
 
+        if (packettype) {
+                switch (packettype) {
+                case PT_ZMTP1:
+                        zmtp1_print(bp, length);
+                        break;
+                }
+                return;
+        }
+
         if (sport == TELNET_PORT || dport == TELNET_PORT) {
                 if (!qflag && vflag)
                         telnet_print(bp, length);
@@ -657,6 +688,8 @@ tcp_print(register const u_char *bp, register u_int length,
 #endif
         else if (sport == BEEP_PORT || dport == BEEP_PORT)
                 beep_print(bp, length);
+        else if (sport == OPENFLOW_PORT || dport == OPENFLOW_PORT)
+                openflow_print(bp, length);
         else if (length > 2 &&
                  (sport == NAMESERVER_PORT || dport == NAMESERVER_PORT ||
                   sport == MULTICASTDNS_PORT || dport == MULTICASTDNS_PORT)) {
@@ -672,6 +705,36 @@ tcp_print(register const u_char *bp, register u_int length,
         }
         else if (length > 0 && (sport == LDP_PORT || dport == LDP_PORT)) {
                 ldp_print(bp, length);
+        }
+        else if ((sport == NFS_PORT || dport == NFS_PORT) &&
+                 length >= 4 && TTEST2(*bp, 4)) {
+                /*
+                 * If data present, header length valid, and NFS port used,
+                 * assume NFS.
+                 * Pass offset of data plus 4 bytes for RPC TCP msg length
+                 * to NFS print routines.
+                 */
+                u_int32_t fraglen;
+                register struct sunrpc_msg *rp;
+                enum sunrpc_msg_type direction;
+
+                fraglen = EXTRACT_32BITS(bp) & 0x7FFFFFFF;
+                if (fraglen > (length) - 4)
+                        fraglen = (length) - 4;
+                rp = (struct sunrpc_msg *)(bp + 4);
+                if (TTEST(rp->rm_direction)) {
+                        direction = (enum sunrpc_msg_type)EXTRACT_32BITS(&rp->rm_direction);
+                        if (dport == NFS_PORT && direction == SUNRPC_CALL) {
+                                (void)printf(": NFS request xid %u ", EXTRACT_32BITS(&rp->rm_xid));
+                                nfsreq_print_noaddr((u_char *)rp, fraglen, (u_char *)ip);
+                                return;
+                        }
+                        if (sport == NFS_PORT && direction == SUNRPC_REPLY) {
+                                (void)printf(": NFS reply xid %u ", EXTRACT_32BITS(&rp->rm_xid));
+                                nfsreply_print_noaddr((u_char *)rp, fraglen, (u_char *)ip);
+                                return;
+                        }
+                }
         }
 
         return;
@@ -723,6 +786,7 @@ print_tcp_rst_data(register const u_char *sp, u_int length)
 }
 
 #ifdef HAVE_LIBCRYPTO
+USES_APPLE_DEPRECATED_API
 static int
 tcp_verify_signature(const struct ip *ip, const struct tcphdr *tp,
                      const u_char *data, int length, const u_char *rcvsig)
@@ -809,6 +873,7 @@ tcp_verify_signature(const struct ip *ip, const struct tcphdr *tp,
         else
                 return (SIGNATURE_INVALID);
 }
+USES_APPLE_RST
 #endif /* HAVE_LIBCRYPTO */
 
 /*

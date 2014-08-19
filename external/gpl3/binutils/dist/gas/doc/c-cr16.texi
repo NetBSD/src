@@ -1,4 +1,4 @@
-@c Copyright 2007, 2008 Free Software Foundation, Inc.
+@c Copyright 2007, 2008, 2011 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 
@@ -15,6 +15,7 @@
 @cindex CR16 support
 @menu
 * CR16 Operand Qualifiers::     CR16 Machine Operand Qualifiers
+* CR16 Syntax::                 Syntax for the CR16
 @end menu
 
 @node CR16 Operand Qualifiers
@@ -90,3 +91,27 @@ For example:
 
     This loads the address of _myfun, shifted right by 1, into global offset table (ie GOT) and its offset value from GOT loads into register-pair r1-r0.	
 @end example
+
+@node CR16 Syntax
+@section CR16 Syntax
+@menu
+* CR16-Chars::                Special Characters
+@end menu
+
+@node CR16-Chars
+@subsection Special Characters
+
+@cindex line comment character, CR16
+@cindex CR16 line comment character
+The presence of a @samp{#} on a line indicates the start of a comment
+that extends to the end of the current line.  If the @samp{#} appears
+as the first character of a line, the whole line is treated as a
+comment, but in this case the line can also be a logical line number
+directive (@pxref{Comments}) or a preprocessor control command
+(@pxref{Preprocessing}).
+
+@cindex line separator, CR16
+@cindex statement separator, CR16
+@cindex CR16 line separator
+The @samp{;} character can be used to separate statements on the same
+line.

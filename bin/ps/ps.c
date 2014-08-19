@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.78 2012/05/07 13:14:31 joerg Exp $	*/
+/*	$NetBSD: ps.c,v 1.78.2.1 2014/08/19 23:45:11 tls Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,12 +68,11 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.78 2012/05/07 13:14:31 joerg Exp $");
+__RCSID("$NetBSD: ps.c,v 1.78.2.1 2014/08/19 23:45:11 tls Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/user.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/lwp.h>
@@ -136,7 +135,7 @@ char dfmt[] = "pid tt state time command";
 char jfmt[] = "user pid ppid pgid sess jobc state tt time command";
 char lfmt[] = "uid pid ppid cpu pri nice vsz rss wchan state tt time command";
 char sfmt[] = "uid pid ppid cpu lid nlwp pri nice vsz rss wchan lstate tt "
-		"time command";
+		"ltime command";
 char ufmt[] = "user pid %cpu %mem vsz rss tt state start time command";
 char vfmt[] = "pid state time sl re pagein vsz rss lim tsiz %cpu %mem command";
 
@@ -176,8 +175,11 @@ ttyname2dev(const char *ttname, int *xflg, int *what)
 		ttypath = ttname;
 	*what = KERN_PROC_TTY;
 	if (stat(ttypath, &sb) == -1) {
-		devmajor_t pts = getdevmajor("pts", S_IFCHR);
+		devmajor_t pts;
+		int serrno;
 
+		serrno = errno;
+		pts = getdevmajor("pts", S_IFCHR);
 		if (pts != NODEVMAJOR && strncmp(ttname, "pts/", 4) == 0) {
 			int ptsminor = atoi(ttname + 4);
 
@@ -185,6 +187,7 @@ ttyname2dev(const char *ttname, int *xflg, int *what)
 			if (strcmp(pathbuf, ttname) == 0 && ptsminor >= 0)
 				return makedev(pts, ptsminor);
 		}
+		errno = serrno;
 		err(1, "%s", ttypath);
 	}
 	if (!S_ISCHR(sb.st_mode))
@@ -200,7 +203,7 @@ main(int argc, char *argv[])
 	struct kinfo_lwp *kl, *l;
 	int ch, i, j, fmt, lineno, nentries, nlwps;
 	long long flag;
-	int prtheader, wflag, what, xflg, mode, showlwps;
+	int prtheader, wflag, what, xflg, showlwps;
 	char *nlistf, *memf, *swapf, errbuf[_POSIX2_LINE_MAX];
 	char *ttname;
 
@@ -222,7 +225,7 @@ main(int argc, char *argv[])
 	what = KERN_PROC_UID;
 	flag = myuid = getuid();
 	memf = nlistf = swapf = NULL;
-	mode = PRINTMODE;
+
 	while ((ch = getopt(argc, argv, GETOPTSTR)) != -1)
 		switch((char)ch) {
 		case 'A':
@@ -422,33 +425,32 @@ main(int argc, char *argv[])
 	 * "setwidth" mode to determine the widest element of
 	 * the column.
 	 */
-	if (mode == PRINTMODE)
-		for (i = 0; i < nentries; i++) {
-			struct kinfo_proc2 *ki = &kinfo[i];
 
-			if (xflg == 0 && (ki->p_tdev == (uint32_t)NODEV ||
-			    (ki->p_flag & P_CONTROLT) == 0))
-				continue;
+	for (i = 0; i < nentries; i++) {
+		struct kinfo_proc2 *ki = &kinfo[i];
 
-			kl = kvm_getlwps(kd, ki->p_pid, ki->p_paddr,
-			    sizeof(struct kinfo_lwp), &nlwps);
-			if (kl == 0)
-				nlwps = 0;
-			if (showlwps == 0) {
-				l = pick_representative_lwp(ki, kl, nlwps);
-				SIMPLEQ_FOREACH(vent, &displaylist, next)
-					OUTPUT(vent, ki, l, WIDTHMODE);
-			} else {
-				/* The printing is done with the loops
-				 * reversed, but here we don't need that,
-				 * and this improves the code locality a bit.
-				 */
-				SIMPLEQ_FOREACH(vent, &displaylist, next)
-					for (j = 0; j < nlwps; j++)
-						OUTPUT(vent, ki, &kl[j],
-						    WIDTHMODE);
-			}
+		if (xflg == 0 && (ki->p_tdev == (uint32_t)NODEV ||
+		    (ki->p_flag & P_CONTROLT) == 0))
+			continue;
+
+		kl = kvm_getlwps(kd, ki->p_pid, ki->p_paddr,
+		    sizeof(struct kinfo_lwp), &nlwps);
+		if (kl == 0)
+			nlwps = 0;
+		if (showlwps == 0) {
+			l = pick_representative_lwp(ki, kl, nlwps);
+			SIMPLEQ_FOREACH(vent, &displaylist, next)
+				OUTPUT(vent, ki, l, WIDTHMODE);
+		} else {
+			/* The printing is done with the loops
+			 * reversed, but here we don't need that,
+			 * and this improves the code locality a bit.
+			 */
+			SIMPLEQ_FOREACH(vent, &displaylist, next)
+				for (j = 0; j < nlwps; j++)
+					OUTPUT(vent, ki, &kl[j], WIDTHMODE);
 		}
+	}
 	/*
 	 * Print header - AFTER determining process field widths.
 	 * printheader() also adds up the total width of all
@@ -472,7 +474,7 @@ main(int argc, char *argv[])
 		if (showlwps == 0) {
 			l = pick_representative_lwp(ki, kl, nlwps);
 			SIMPLEQ_FOREACH(vent, &displaylist, next) {
-				OUTPUT(vent, ki, l, mode);
+				OUTPUT(vent, ki, l, PRINTMODE);
 				if (SIMPLEQ_NEXT(vent, next) != NULL)
 					(void)putchar(' ');
 			}
@@ -485,7 +487,7 @@ main(int argc, char *argv[])
 		} else {
 			for (j = 0; j < nlwps; j++) {
 				SIMPLEQ_FOREACH(vent, &displaylist, next) {
-					OUTPUT(vent, ki, &kl[j], mode);
+					OUTPUT(vent, ki, &kl[j], PRINTMODE);
 					if (SIMPLEQ_NEXT(vent, next) != NULL)
 						(void)putchar(' ');
 				}

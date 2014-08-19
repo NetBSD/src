@@ -21,17 +21,11 @@
 /* Using ELF ABI */
 #undef ELFABI
 
-/* Enable STABS debugging output */
-#undef STABS
-
 /* Define to 1 if you have the `basename' function. */
 #undef HAVE_BASENAME
 
 /* Define to 1 if printf supports C99 size specifiers */
 #undef HAVE_C99_FORMAT
-
-/* Define to 1 if your compiler supports C99 variadic macros */
-#undef HAVE_CPP_VARARG_MACRO_GCC
 
 /* Define to 1 if you have the `ffs' function. */
 #undef HAVE_FFS
@@ -102,9 +96,6 @@
 /* Define if host is LITTLE endian */
 #undef HOST_LITTLE_ENDIAN
 
-/* lex is flex */
-#undef ISFLEX
-
 /* Define alternate standard lib directory */
 #undef LIBDIR
 
@@ -143,6 +134,9 @@
 
 /* Define path to alternate preprocessor */
 #undef PREPROCESSOR
+
+/* Enable STABS debugging output */
+#undef STABS
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS

@@ -1,7 +1,7 @@
-/*	$NetBSD: a6_38.c,v 1.3 2012/06/05 00:42:19 christos Exp $	*/
+/*	$NetBSD: a6_38.c,v 1.3.2.1 2014/08/19 23:46:30 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -124,7 +124,7 @@ totext_in_a6(ARGS_TOTEXT) {
 	if (prefixlen != 128) {
 		octets = prefixlen/8;
 		memset(addr, 0, sizeof(addr));
-		memcpy(&addr[octets], sr.base, 16 - octets);
+		memmove(&addr[octets], sr.base, 16 - octets);
 		mask = 0xff >> (prefixlen % 8);
 		addr[octets] &= mask;
 		ar.base = addr;
@@ -349,7 +349,7 @@ tostruct_in_a6(ARGS_TOSTRUCT) {
 	if (a6->prefixlen != 128) {
 		octets = 16 - a6->prefixlen / 8;
 		INSIST(r.length >= octets);
-		memcpy(a6->in6_addr.s6_addr + 16 - octets, r.base, octets);
+		memmove(a6->in6_addr.s6_addr + 16 - octets, r.base, octets);
 		isc_region_consume(&r, octets);
 	}
 

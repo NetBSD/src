@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf.h,v 1.7 2010/02/22 10:48:32 darran Exp $	*/
+/*	$NetBSD: libelf.h,v 1.7.12.1 2014/08/19 23:47:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -54,6 +54,7 @@
 # define __LIBELF_HAVE_ELF_NOTE		1
 # define __LIBELF_HAVE_ELF_SYMINFO	1
 # define __LIBELF_HAVE_ELF_VERS		1
+# define __LIBELF_HAVE_ELF_ATTRIBUTES	1
 #elif defined(__FreeBSD__)
 # include <sys/elf32.h>
 # include <sys/elf64.h>

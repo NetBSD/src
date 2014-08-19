@@ -1,7 +1,8 @@
-.TH SLAPO_PPOLICY 5 "2010/06/30" "OpenLDAP 2.4.23"
-.\" Copyright 2004-2010 The OpenLDAP Foundation All Rights Reserved.
+.lf 1 stdin
+.TH SLAPO_PPOLICY 5 "2014/01/26" "OpenLDAP 2.4.39"
+.\" Copyright 2004-2014 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" OpenLDAP: pkg/ldap/doc/man/man5/slapo-ppolicy.5,v 1.12.2.14 2010/04/13 20:22:44 kurt Exp
+.\" $OpenLDAP$
 .SH NAME
 slapo\-ppolicy \- Password Policy overlay to slapd
 .SH SYNOPSIS
@@ -414,6 +415,23 @@ is set to "TRUE", or if the attribute is not present, users will be
 allowed to change their own passwords.  If its value is "FALSE",
 users will not be allowed to change their own passwords.
 .LP
+Note: this implies that when
+.B pwdAllowUserChange
+is set to "TRUE",
+users will still be able to change the password of another user,
+subjected to access control.
+This restriction only applies to modifications of ones's own password.
+It should also be noted that
+.B pwdAllowUserChange
+was defined in the specification to provide rough access control
+to the password attribute in implementations that do not allow fine-grain
+access control.
+Since OpenLDAP provides fine-grain access control, the use of this attribute
+is discouraged; ACLs should be used instead
+(see
+.BR slapd.access (5)
+for details).
+.LP
 .RS 4
 (  1.3.6.1.4.1.42.2.27.8.1.14
    NAME 'pwdAllowUserChange'
@@ -785,8 +803,10 @@ the
 IETF document named draft-behera-ldap-password-policy-09.txt,
 written in July of 2005.
 .P
+.lf 1 ./../Project
 .\" Shared Project Acknowledgement Text
 .B "OpenLDAP Software"
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
 is derived from University of Michigan LDAP 3.3 Release.  
+.lf 806 stdin

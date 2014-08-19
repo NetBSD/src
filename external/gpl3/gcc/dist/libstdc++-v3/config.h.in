@@ -27,6 +27,9 @@
 /* Define to 1 if you have the `atanl' function. */
 #undef HAVE_ATANL
 
+/* Define to 1 if you have the `at_quick_exit' function. */
+#undef HAVE_AT_QUICK_EXIT
+
 /* Define to 1 if the target assembler supports thread-local storage. */
 #undef HAVE_CC_TLS
 
@@ -60,6 +63,9 @@
 /* Define if ECANCELED exists. */
 #undef HAVE_ECANCELED
 
+/* Define if ECHILD exists. */
+#undef HAVE_ECHILD
+
 /* Define if EIDRM exists. */
 #undef HAVE_EIDRM
 
@@ -71,6 +77,9 @@
 
 /* Define if ENOLINK exists. */
 #undef HAVE_ENOLINK
+
+/* Define if ENOSPC exists. */
+#undef HAVE_ENOSPC
 
 /* Define if ENOSR exists. */
 #undef HAVE_ENOSR
@@ -90,14 +99,23 @@
 /* Define if EOWNERDEAD exists. */
 #undef HAVE_EOWNERDEAD
 
+/* Define if EPERM exists. */
+#undef HAVE_EPERM
+
 /* Define if EPROTO exists. */
 #undef HAVE_EPROTO
 
 /* Define if ETIME exists. */
 #undef HAVE_ETIME
 
+/* Define if ETIMEDOUT exists. */
+#undef HAVE_ETIMEDOUT
+
 /* Define if ETXTBSY exists. */
 #undef HAVE_ETXTBSY
+
+/* Define if EWOULDBLOCK exists. */
+#undef HAVE_EWOULDBLOCK
 
 /* Define to 1 if you have the <execinfo.h> header file. */
 #undef HAVE_EXECINFO_H
@@ -156,9 +174,8 @@
 /* Define if _Unwind_GetIPInfo is available. */
 #undef HAVE_GETIPINFO
 
-/* Define if gthr-default.h exists (meaning that threading support is
-   enabled). */
-#undef HAVE_GTHR_DEFAULT
+/* Define if gets is available in <stdio.h>. */
+#undef HAVE_GETS
 
 /* Define to 1 if you have the `hypot' function. */
 #undef HAVE_HYPOT
@@ -289,6 +306,9 @@
 /* Define to 1 if you have the `qfpclass' function. */
 #undef HAVE_QFPCLASS
 
+/* Define to 1 if you have the `quick_exit' function. */
+#undef HAVE_QUICK_EXIT
+
 /* Define to 1 if you have the `setenv' function. */
 #undef HAVE_SETENV
 
@@ -313,11 +333,17 @@
 /* Define to 1 if you have the `sinl' function. */
 #undef HAVE_SINL
 
+/* Defined if sleep exists. */
+#undef HAVE_SLEEP
+
 /* Define to 1 if you have the `sqrtf' function. */
 #undef HAVE_SQRTF
 
 /* Define to 1 if you have the `sqrtl' function. */
 #undef HAVE_SQRTL
+
+/* Define to 1 if you have the <stdalign.h> header file. */
+#undef HAVE_STDALIGN_H
 
 /* Define to 1 if you have the <stdbool.h> header file. */
 #undef HAVE_STDBOOL_H
@@ -349,6 +375,10 @@
 /* Define if strxfrm_l is available in <string.h>. */
 #undef HAVE_STRXFRM_L
 
+/* Define to 1 if the target runtime linker supports binding the same symbol
+   to different versions. */
+#undef HAVE_SYMVER_SYMBOL_RENAMING_RUNTIME_SUPPORT
+
 /* Define to 1 if you have the <sys/filio.h> header file. */
 #undef HAVE_SYS_FILIO_H
 
@@ -370,11 +400,17 @@
 /* Define to 1 if you have the <sys/resource.h> header file. */
 #undef HAVE_SYS_RESOURCE_H
 
+/* Define to 1 if you have a suitable <sys/sdt.h> header file */
+#undef HAVE_SYS_SDT_H
+
 /* Define to 1 if you have the <sys/sem.h> header file. */
 #undef HAVE_SYS_SEM_H
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/sysinfo.h> header file. */
+#undef HAVE_SYS_SYSINFO_H
 
 /* Define to 1 if you have the <sys/time.h> header file. */
 #undef HAVE_SYS_TIME_H
@@ -412,6 +448,9 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* Defined if usleep exists. */
+#undef HAVE_USLEEP
+
 /* Defined if vfwscanf exists. */
 #undef HAVE_VFWSCANF
 
@@ -429,6 +468,9 @@
 
 /* Define to 1 if you have the <wctype.h> header file. */
 #undef HAVE_WCTYPE_H
+
+/* Defined if Sleep exists. */
+#undef HAVE_WIN32_SLEEP
 
 /* Define if writev is available in <sys/uio.h>. */
 #undef HAVE_WRITEV
@@ -619,6 +661,9 @@
 /* Define to 1 if you have the `_tanl' function. */
 #undef HAVE__TANL
 
+/* Define to 1 if you have the `__cxa_thread_atexit_impl' function. */
+#undef HAVE___CXA_THREAD_ATEXIT_IMPL
+
 /* Define as const if the declaration of iconv() needs const. */
 #undef ICONV_CONST
 
@@ -668,24 +713,14 @@
 /* Version number of package */
 #undef VERSION
 
-/* Define if builtin atomic operations for bool are supported on this host. */
-#undef _GLIBCXX_ATOMIC_BUILTINS_1
-
-/* Define if builtin atomic operations for short are supported on this host.
-   */
-#undef _GLIBCXX_ATOMIC_BUILTINS_2
-
-/* Define if builtin atomic operations for int are supported on this host. */
-#undef _GLIBCXX_ATOMIC_BUILTINS_4
-
-/* Define if builtin atomic operations for long long are supported on this
-   host. */
-#undef _GLIBCXX_ATOMIC_BUILTINS_8
+/* Define if the compiler supports C++11 atomics. */
+#undef _GLIBCXX_ATOMIC_BUILTINS
 
 /* Define to use concept checking code from the boost libraries. */
 #undef _GLIBCXX_CONCEPT_CHECKS
 
-/* Define if a fully dynamic basic_string is wanted. */
+/* Define to 1 if a fully dynamic basic_string is wanted, 0 to disable,
+   undefined for platform defaults */
 #undef _GLIBCXX_FULLY_DYNAMIC_STRING
 
 /* Define if gthreads library is available. */
@@ -709,8 +744,14 @@
 /* Define if the compiler is configured for setjmp/longjmp exceptions. */
 #undef _GLIBCXX_SJLJ_EXCEPTIONS
 
-/* Define if EOF == -1, SEEK_CUR == 1, SEEK_END == 2. */
-#undef _GLIBCXX_STDIO_MACROS
+/* Define to the value of the EOF integer constant. */
+#undef _GLIBCXX_STDIO_EOF
+
+/* Define to the value of the SEEK_CUR integer constant. */
+#undef _GLIBCXX_STDIO_SEEK_CUR
+
+/* Define to the value of the SEEK_END integer constant. */
+#undef _GLIBCXX_STDIO_SEEK_END
 
 /* Define to use symbol versioning in the shared library. */
 #undef _GLIBCXX_SYMVER
@@ -723,6 +764,9 @@
 
 /* Define to use GNU namespace versioning in the shared library. */
 #undef _GLIBCXX_SYMVER_GNU_NAMESPACE
+
+/* Define to use Sun versioning in the shared library. */
+#undef _GLIBCXX_SYMVER_SUN
 
 /* Define if C99 functions or macros from <wchar.h>, <math.h>, <complex.h>,
    <stdio.h>, and <stdlib.h> can be used or exposed. */
@@ -769,6 +813,9 @@
 /* Defined if clock_gettime has monotonic clock support. */
 #undef _GLIBCXX_USE_CLOCK_MONOTONIC
 
+/* Defined if clock_gettime syscall has monotonic and realtime clock support. */
+#undef _GLIBCXX_USE_CLOCK_GETTIME_SYSCALL
+
 /* Defined if clock_gettime has realtime clock support. */
 #undef _GLIBCXX_USE_CLOCK_REALTIME
 
@@ -776,8 +823,17 @@
    this host. */
 #undef _GLIBCXX_USE_DECIMAL_FLOAT
 
+/* Define if __float128 is supported on this host. */
+#undef _GLIBCXX_USE_FLOAT128
+
 /* Defined if gettimeofday is available. */
 #undef _GLIBCXX_USE_GETTIMEOFDAY
+
+/* Define if get_nprocs is available in <sys/sysinfo.h>. */
+#undef _GLIBCXX_USE_GET_NPROCS
+
+/* Define if __int128 is supported on this host. */
+#undef _GLIBCXX_USE_INT128
 
 /* Define if LFS support is available. */
 #undef _GLIBCXX_USE_LFS
@@ -791,6 +847,9 @@
 /* Define if NLS translations are to be used. */
 #undef _GLIBCXX_USE_NLS
 
+/* Define if pthreads_num_processors_np is available in <pthread.h>. */
+#undef _GLIBCXX_USE_PTHREADS_NUM_PROCESSORS_NP
+
 /* Define if /dev/random and /dev/urandom are available for the random_device
    of TR1 (Chapter 5.1). */
 #undef _GLIBCXX_USE_RANDOM_TR1
@@ -798,8 +857,26 @@
 /* Defined if sched_yield is available. */
 #undef _GLIBCXX_USE_SCHED_YIELD
 
+/* Define if _SC_NPROCESSORS_ONLN is available in <unistd.h>. */
+#undef _GLIBCXX_USE_SC_NPROCESSORS_ONLN
+
+/* Define if _SC_NPROC_ONLN is available in <unistd.h>. */
+#undef _GLIBCXX_USE_SC_NPROC_ONLN
+
+/* Define if sysctl(), CTL_HW and HW_NCPU are available in <sys/sysctl.h>. */
+#undef _GLIBCXX_USE_SYSCTL_HW_NCPU
+
 /* Define if code specialized for wchar_t should be used. */
 #undef _GLIBCXX_USE_WCHAR_T
+
+/* Define to 1 if a verbose library is built, or 0 otherwise. */
+#undef _GLIBCXX_VERBOSE
+
+/* Defined if as can handle rdrand. */
+#undef _GLIBCXX_X86_RDRAND
+
+/* Define to 1 if mutex_timedlock is available. */
+#undef _GTHREAD_USE_MUTEX_TIMEDLOCK
 
 #if defined (HAVE__ACOSF) && ! defined (HAVE_ACOSF)
 # define HAVE_ACOSF 1

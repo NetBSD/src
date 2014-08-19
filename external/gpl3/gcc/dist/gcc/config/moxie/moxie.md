@@ -1,5 +1,5 @@
 ;; Machine description for Moxie
-;; Copyright (C) 2009 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2013 Free Software Foundation, Inc.
 ;; Contributed by Anthony Green <green@moxielogic.com>
 
 ;; This file is part of GCC.
@@ -188,15 +188,15 @@
 
 ;; Push a register onto the stack
 (define_insn "movsi_push"
-  [(set:SI (mem:SI (pre_dec:SI (reg:SI 1)))
-	(match_operand:SI 0 "register_operand" "r"))]
+  [(set (mem:SI (pre_dec:SI (reg:SI 1)))
+  	(match_operand:SI 0 "register_operand" "r"))]
   ""
   "push   $sp, %0")
 
 ;; Pop a register from the stack
 (define_insn "movsi_pop"
-  [(set:SI (match_operand:SI 1 "register_operand" "=r")
-	(mem:SI (post_inc:SI (match_operand:SI 0 "register_operand" "r"))))]
+  [(set (match_operand:SI 1 "register_operand" "=r")
+  	(mem:SI (post_inc:SI (match_operand:SI 0 "register_operand" "r"))))]
   ""
   "pop    %0, %1")
 
@@ -308,7 +308,7 @@
          (match_operand:SI 1 "general_operand" "")
          (match_operand:SI 2 "general_operand" "")))
    (set (pc)
-        (if_then_else (match_operator:CC 0 "comparison_operator"
+        (if_then_else (match_operator 0 "comparison_operator"
                        [(reg:CC CC_REG) (const_int 0)])
                       (label_ref (match_operand 3 "" ""))
                       (pc)))]

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_image.c,v 1.1.1.2.12.1 2013/06/23 06:28:19 tls Exp $	*/
+/*	$NetBSD: bpf_image.c,v 1.1.1.2.12.2 2014/08/19 23:47:16 tls Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1994, 1995, 1996
@@ -294,11 +294,14 @@ bpf_image(p, n)
 		break;
 	}
 	(void)snprintf(operand, sizeof operand, fmt, v);
-	(void)snprintf(image, sizeof image,
-		      (BPF_CLASS(p->code) == BPF_JMP &&
-		       BPF_OP(p->code) != BPF_JA) ?
-		      "(%03d) %-8s %-16s jt %d\tjf %d"
-		      : "(%03d) %-8s %s",
-		      n, op, operand, n + 1 + p->jt, n + 1 + p->jf);
+	if (BPF_CLASS(p->code) == BPF_JMP && BPF_OP(p->code) != BPF_JA) {
+		(void)snprintf(image, sizeof image,
+			      "(%03d) %-8s %-16s jt %d\tjf %d",
+			      n, op, operand, n + 1 + p->jt, n + 1 + p->jf);
+	} else {
+		(void)snprintf(image, sizeof image,
+			      "(%03d) %-8s %s",
+			      n, op, operand);
+	}
 	return image;
 }

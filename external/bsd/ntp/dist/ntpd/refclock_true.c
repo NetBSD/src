@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_true.c,v 1.1.1.2 2012/01/31 21:26:30 kardel Exp $	*/
+/*	$NetBSD: refclock_true.c,v 1.1.1.2.6.1 2014/08/19 23:51:42 tls Exp $	*/
 
 /*
  * refclock_true - clock driver for the Kinemetrics Truetime receivers
@@ -14,14 +14,14 @@
 
 #if defined(REFCLOCK) && defined(CLOCK_TRUETIME)
 
+#include <stdio.h>
+#include <ctype.h>
+
 #include "ntpd.h"
 #include "ntp_io.h"
 #include "ntp_refclock.h"
 #include "ntp_unixtime.h"
 #include "ntp_stdlib.h"
-
-#include <stdio.h>
-#include <ctype.h>
 
 #ifdef SYS_WINNT
 extern int async_write(int, const void *, unsigned int);
@@ -79,9 +79,9 @@ extern int async_write(int, const void *, unsigned int);
  *       ?     >+/- 500 milliseconds    #     >+/- 50 milliseconds
  *       *     >+/- 5 milliseconds      .     >+/- 1 millisecond
  *      A-H    less than 1 millisecond.  Character indicates which station
- *             is being received as follows:
- *             A = Norway, B = Liberia, C = Hawaii, D = North Dakota,
- *             E = La Reunion, F = Argentina, G = Australia, H = Japan.
+ *	       is being received as follows:
+ *	       A = Norway, B = Liberia, C = Hawaii, D = North Dakota,
+ *	       E = La Reunion, F = Argentina, G = Australia, H = Japan.
  *
  * The carriage return start bit begins on 0 seconds and extends to 1 bit time.
  *
@@ -111,7 +111,7 @@ extern int async_write(int, const void *, unsigned int);
  * val1  - stratum to assign to this clock (default = 0)
  * val2  - refid assigned to this clock (default = "TRUE", see below)
  * flag1 - will silence the clock side of ntpd, just reading the clock
- *         without trying to write to it.  (default = 0)
+ *	   without trying to write to it.  (default = 0)
  * flag2 - generate a debug file /tmp/true%d.
  * flag3 - enable ppsclock streams module
  * flag4 - use the PCL-720 (BSD/OS only)
@@ -203,6 +203,7 @@ struct	refclock refclock_true = {
 #if !defined(__STDC__)
 # define true_debug (void)
 #else
+NTP_PRINTF(2, 3)
 static void
 true_debug(struct peer *peer, const char *fmt, ...)
 {
@@ -213,30 +214,33 @@ true_debug(struct peer *peer, const char *fmt, ...)
 
 	va_start(ap, fmt);
 	pp = peer->procptr;
-	up = (struct true_unit *)pp->unitptr;
+	up = pp->unitptr;
 
 	want_debugging = (pp->sloppyclockflag & CLK_FLAG2) != 0;
 	now_debugging = (up->debug != NULL);
 	if (want_debugging != now_debugging)
 	{
 		if (want_debugging) {
-		    char filename[40];
-		    int fd;
+			char filename[40];
+			int fd;
 
-		    snprintf(filename, sizeof(filename), "/tmp/true%d.debug", up->unit);
-		    fd = open(filename, O_CREAT | O_WRONLY | O_EXCL, 0600);
-		    if (fd >= 0 && (up->debug = fdopen(fd, "r+"))) {
+			snprintf(filename, sizeof(filename),
+				 "/tmp/true%d.debug", up->unit);
+			fd = open(filename, O_CREAT | O_WRONLY | O_EXCL,
+				  0600);
+			if (fd >= 0 && (up->debug = fdopen(fd, "r+"))) {
 #ifdef HAVE_SETVBUF
-			    static char buf[BUFSIZ];
-			    setvbuf(up->debug, buf, _IOLBF, BUFSIZ);
+				static char buf[BUFSIZ];
+
+				setvbuf(up->debug, buf, _IOLBF, BUFSIZ);
 #else
-			    setlinebuf(up->debug);
+				setlinebuf(up->debug);
 #endif
-		    }
-	    } else {
-		    fclose(up->debug);
-		    up->debug = NULL;
-	    }
+			}
+		} else {
+			fclose(up->debug);
+			up->debug = NULL;
+		}
 	}
 
 	if (up->debug) {
@@ -264,37 +268,34 @@ true_start(
 	/*
 	 * Open serial port
 	 */
-	(void)snprintf(device, sizeof(device), DEVICE, unit);
-	if (!(fd = refclock_open(device, SPEED232, LDISC_CLK)))
-	    return (0);
+	snprintf(device, sizeof(device), DEVICE, unit);
+	fd = refclock_open(device, SPEED232, LDISC_CLK);
+	if (fd <= 0)
+		return 0;
 
 	/*
 	 * Allocate and initialize unit structure
 	 */
-	if (!(up = (struct true_unit *)
-	      emalloc(sizeof(struct true_unit)))) {
-		(void) close(fd);
-		return (0);
-	}
-	memset((char *)up, 0, sizeof(struct true_unit));
+	up = emalloc_zero(sizeof(*up));
 	pp = peer->procptr;
 	pp->io.clock_recv = true_receive;
-	pp->io.srcclock = (caddr_t)peer;
+	pp->io.srcclock = peer;
 	pp->io.datalen = 0;
 	pp->io.fd = fd;
 	if (!io_addclock(&pp->io)) {
-		(void) close(fd);
+		close(fd);
+		pp->io.fd = -1;
 		free(up);
 		return (0);
 	}
-	pp->unitptr = (caddr_t)up;
+	pp->unitptr = up;
 
 	/*
 	 * Initialize miscellaneous variables
 	 */
 	peer->precision = PRECISION;
 	pp->clockdesc = DESCRIPTION;
-	memcpy((char *)&pp->refid, REFID, 4);
+	memcpy(&pp->refid, REFID, 4);
 	up->pollcnt = 2;
 	up->type = t_unknown;
 	up->state = s_Base;
@@ -311,6 +312,7 @@ true_start(
 	return (1);
 }
 
+
 /*
  * true_shutdown - shut down the clock
  */
@@ -324,9 +326,11 @@ true_shutdown(
 	struct refclockproc *pp;
 
 	pp = peer->procptr;
-	up = (struct true_unit *)pp->unitptr;
-	io_closeclock(&pp->io);
-	free(up);
+	up = pp->unitptr;
+	if (pp->io.fd != -1)
+		io_closeclock(&pp->io);
+	if (up != NULL)
+		free(up);
 }
 
 
@@ -345,33 +349,34 @@ true_receive(
 	char synced;
 	int i;
 	int lat, lon, off;	/* GOES Satellite position */
-        /* Use these variable to hold data until we decide its worth keeping */
-        char    rd_lastcode[BMAX];
-        l_fp    rd_tmp;
-        u_short rd_lencode;
+	/* These variables hold data until we decide to keep it */
+	char	rd_lastcode[BMAX];
+	l_fp	rd_tmp;
+	u_short	rd_lencode;
 
 	/*
 	 * Get the clock this applies to and pointers to the data.
 	 */
-	peer = (struct peer *)rbufp->recv_srcclock;
+	peer = rbufp->recv_peer;
 	pp = peer->procptr;
-	up = (struct true_unit *)pp->unitptr;
+	up = pp->unitptr;
 
 	/*
 	 * Read clock output.  Automatically handles STREAMS, CLKLDISC.
 	 */
-        rd_lencode = refclock_gtlin(rbufp, rd_lastcode, BMAX, &rd_tmp);
-        rd_lastcode[rd_lencode] = '\0';
+	rd_lencode = refclock_gtlin(rbufp, rd_lastcode, BMAX, &rd_tmp);
+	rd_lastcode[rd_lencode] = '\0';
 
 	/*
 	 * There is a case where <cr><lf> generates 2 timestamps.
 	 */
-        if (rd_lencode == 0)
-            return;
-        pp->lencode = rd_lencode;
-        strcpy(pp->a_lastcode, rd_lastcode);
-        pp->lastrec = rd_tmp;
-	true_debug(peer, "receive(%s) [%d]\n", pp->a_lastcode, pp->lencode);
+	if (rd_lencode == 0)
+		return;
+	pp->lencode = rd_lencode;
+	strlcpy(pp->a_lastcode, rd_lastcode, sizeof(pp->a_lastcode));
+	pp->lastrec = rd_tmp;
+	true_debug(peer, "receive(%s) [%d]\n", pp->a_lastcode,
+		   pp->lencode);
 
 	up->pollcnt = 2;
 	record_clock_stats(&peer->srcadr, pp->a_lastcode);
@@ -442,13 +447,13 @@ true_receive(
 	 */
 	if (sscanf(pp->a_lastcode, "F%2d", &i) == 1 && i > 0 && i < 80) {
 		switch (i) {
-		    case 50:
+		case 50:
 			true_doevent(peer, e_F50);
 			break;
-		    case 51:
+		case 51:
 			true_doevent(peer, e_F51);
 			break;
-		    default:
+		default:
 			true_debug(peer, "got F%02d - ignoring\n", i);
 			break;
 		}
@@ -470,8 +475,8 @@ true_receive(
 
 	/*
 	 * Timecode: "N03726428W12209421+000033"
-	 *                      1         2
-	 *            0123456789012345678901234
+	 *			1	   2
+	 * index      0123456789012345678901234
 	 * (from a TCU during initialization)
 	 */
 	if ((pp->a_lastcode[0] == 'N' || pp->a_lastcode[0] == 'S') &&
@@ -485,6 +490,8 @@ true_receive(
 	}
 	/*
 	 * Timecode: "ddd:hh:mm:ssQ"
+	 *			1	   2
+	 * index      0123456789012345678901234
 	 * (from all clocks supported by this driver.)
 	 */
 	if (pp->a_lastcode[3] == ':' &&
@@ -500,9 +507,9 @@ true_receive(
 		 */
 		if (synced == '>' || synced == '#' || synced == '?'
 		    || synced == 'X')
-		    pp->leap = LEAP_NOTINSYNC;
+			pp->leap = LEAP_NOTINSYNC;
 		else
-                    pp->leap = LEAP_NOWARNING;
+			pp->leap = LEAP_NOWARNING;
 
 		true_doevent(peer, e_TS);
 
@@ -554,7 +561,7 @@ true_receive(
 		 * want one when polled.  If we havn't been polled, bail out.
 		 */
 		if (!up->polled)
-		    return;
+			return;
 
 		true_doevent(peer, e_Poll);
 		if (!refclock_process(pp)) {
@@ -565,7 +572,7 @@ true_receive(
 		 * If clock is good we send a NOMINAL message so that
 		 * any previous BAD messages are nullified
 		 */
-                pp->lastref = pp->lastrec;
+		pp->lastref = pp->lastrec;
 		refclock_receive(peer);
 		refclock_report(peer, CEVNT_NOMINAL);
 
@@ -599,13 +606,13 @@ true_send(
 
 	pp = peer->procptr;
 	if (!(pp->sloppyclockflag & CLK_FLAG1)) {
-		register int len = strlen(cmd);
+		int len = strlen(cmd);
 
 		true_debug(peer, "Send '%s'\n", cmd);
 		if (write(pp->io.fd, cmd, (unsigned)len) != len)
-		    refclock_report(peer, CEVNT_FAULT);
+			refclock_report(peer, CEVNT_FAULT);
 		else
-		    pp->polls++;
+			pp->polls++;
 	}
 }
 
@@ -623,7 +630,7 @@ true_doevent(
 	struct refclockproc *pp;
 
 	pp = peer->procptr;
-	up = (struct true_unit *)pp->unitptr;
+	up = pp->unitptr;
 	if (event != e_TS) {
 		NLOG(NLOG_CLOCKSTATUS) {
 			msyslog(LOG_INFO, "TRUE: clock %s, state %s, event %s",
@@ -635,158 +642,158 @@ true_doevent(
 	true_debug(peer, "clock %s, state %s, event %s\n",
 		   typeStr(up->type), stateStr(up->state), eventStr(event));
 	switch (up->type) {
-	    case t_goes:
+	case t_goes:
 		switch (event) {
-		    case e_Init:	/* FALLTHROUGH */
-		    case e_Satellite:
+		case e_Init:	/* FALLTHROUGH */
+		case e_Satellite:
 			/*
 			 * Switch back to on-second time codes and return.
 			 */
 			true_send(peer, "C");
 			up->state = s_Start;
 			break;
-		    case e_Poll:
+		case e_Poll:
 			/*
 			 * After each poll, check the station (satellite).
 			 */
 			true_send(peer, "P");
 			/* No state change needed. */
 			break;
-		    default:
+		default:
 			break;
 		}
 		/* FALLTHROUGH */
-	    case t_omega:
+	case t_omega:
 		switch (event) {
-		    case e_Init:
+		case e_Init:
 			true_send(peer, "C");
 			up->state = s_Start;
 			break;
-		    case e_TS:
+		case e_TS:
 			if (up->state != s_Start && up->state != s_Auto) {
 				true_send(peer, "\03\r");
 				break;
 			}
 			up->state = s_Auto;
 			break;
-		    default:
+		default:
 			break;
 		}
 		break;
-	    case t_tm:
+	case t_tm:
 		switch (event) {
-		    case e_Init:
+		case e_Init:
 			true_send(peer, "F18\r");
 			up->state = s_Init;
 			break;
-		    case e_F18:
+		case e_F18:
 			true_send(peer, "F50\r");
 			up->state = s_F18;
 			break;
-		    case e_F50:
+		case e_F50:
 			true_send(peer, "F51\r");
 			up->state = s_F50;
 			break;
-		    case e_F51:
+		case e_F51:
 			true_send(peer, "F08\r");
 			up->state = s_Start;
 			break;
-		    case e_TS:
+		case e_TS:
 			if (up->state != s_Start && up->state != s_Auto) {
 				true_send(peer, "\03\r");
 				break;
 			}
 			up->state = s_Auto;
 			break;
-		    default:
+		default:
 			break;
 		}
 		break;
-	    case t_tcu:
+	case t_tcu:
 		switch (event) {
-		    case e_Init:
+		case e_Init:
 			true_send(peer, "MD3\r");	/* GPS Synch'd Gen. */
 			true_send(peer, "TSU\r");	/* UTC, not GPS. */
 			true_send(peer, "AU\r");	/* Auto Timestamps. */
 			up->state = s_Start;
 			break;
-		    case e_TS:
+		case e_TS:
 			if (up->state != s_Start && up->state != s_Auto) {
 				true_send(peer, "\03\r");
 				break;
 			}
 			up->state = s_Auto;
 			break;
-		    default:
+		default:
 			break;
 		}
 		break;
-	    case t_unknown:
+	case t_unknown:
 		switch (up->state) {
-		    case s_Base:
+		case s_Base:
 			if (event != e_Init)
 			    abort();
 			true_send(peer, "P\r");
 			up->state = s_InqGOES;
 			break;
-		    case s_InqGOES:
+		case s_InqGOES:
 			switch (event) {
-			    case e_Satellite:
+			case e_Satellite:
 				up->type = t_goes;
 				true_doevent(peer, e_Init);
 				break;
-			    case e_Init:	/*FALLTHROUGH*/
-			    case e_Huh:	/*FALLTHROUGH*/
-			    case e_TS:
+			case e_Init:	/*FALLTHROUGH*/
+			case e_Huh:	/*FALLTHROUGH*/
+			case e_TS:
 				up->state = s_InqOmega;
 				true_send(peer, "C\r");
 				break;
-			    default:
+			default:
 				abort();
 			}
 			break;
-		    case s_InqOmega:
+		case s_InqOmega:
 			switch (event) {
-			    case e_TS:
+			case e_TS:
 				up->type = t_omega;
 				up->state = s_Auto;	/* Inq side-effect. */
 				break;
-			    case e_Init:	/*FALLTHROUGH*/
-			    case e_Huh:
+			case e_Init:	/*FALLTHROUGH*/
+			case e_Huh:
 				up->state = s_InqTM;
 				true_send(peer, "F18\r");
 				break;
-			    default:
+			default:
 				abort();
 			}
 			break;
-		    case s_InqTM:
+		case s_InqTM:
 			switch (event) {
-			    case e_F18:
+			case e_F18:
 				up->type = t_tm;
 				true_doevent(peer, e_Init);
 				break;
-			    case e_Init:	/*FALLTHROUGH*/
-			    case e_Huh:
+			case e_Init:	/*FALLTHROUGH*/
+			case e_Huh:
 				true_send(peer, "PO\r");
 				up->state = s_InqTCU;
 				break;
-			    default:
+			default:
 				abort();
 			}
 			break;
-		    case s_InqTCU:
+		case s_InqTCU:
 			switch (event) {
-			    case e_Location:
+			case e_Location:
 				up->type = t_tcu;
 				true_doevent(peer, e_Init);
 				break;
-			    case e_Init:	/*FALLTHROUGH*/
-			    case e_Huh:
+			case e_Init:	/*FALLTHROUGH*/
+			case e_Huh:
 				up->state = s_Base;
 				sleep(1);	/* XXX */
 				break;
-			    default:
+			default:
 				abort();
 			}
 			break;
@@ -794,16 +801,17 @@ true_doevent(
 			 * An expedient hack to prevent lint complaints,
 			 * these don't actually need to be used here...
 			 */
-		    case s_Init:
-		    case s_F18:
-		    case s_F50:
-		    case s_Start:
-		    case s_Auto:
-		    case s_Max:
-			msyslog(LOG_INFO, "TRUE: state %s is unexpected!", stateStr(up->state));
+		case s_Init:
+		case s_F18:
+		case s_F50:
+		case s_Start:
+		case s_Auto:
+		case s_Max:
+			msyslog(LOG_INFO, "TRUE: state %s is unexpected!",
+				stateStr(up->state));
 		}
 		break;
-	    default:
+	default:
 		abort();
 		/* NOTREACHED */
 	}
@@ -844,10 +852,10 @@ true_poll(
 	 * The next time a timecode comes in, it will be fed back.
 	 */
 	pp = peer->procptr;
-	up = (struct true_unit *)pp->unitptr;
-	if (up->pollcnt > 0)
-	    up->pollcnt--;
-	else {
+	up = pp->unitptr;
+	if (up->pollcnt > 0) {
+		up->pollcnt--;
+	} else {
 		true_doevent(peer, e_Init);
 		refclock_report(peer, CEVNT_TIMEOUT);
 	}

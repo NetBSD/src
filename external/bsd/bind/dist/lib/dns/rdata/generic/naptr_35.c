@@ -1,7 +1,7 @@
-/*	$NetBSD: naptr_35.c,v 1.1.1.2 2012/06/04 17:56:36 christos Exp $	*/
+/*	$NetBSD: naptr_35.c,v 1.1.1.2.2.1 2014/08/19 23:46:30 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -27,9 +27,8 @@
 #define RDATA_GENERIC_NAPTR_35_C
 
 #define RRTYPE_NAPTR_ATTRIBUTES (0)
-#ifdef HAVE_REGEX_H
-#include <regex.h>
-#endif
+
+#include <isc/regex.h>
 
 /*
  * Check the wire format of the Regexp field.
@@ -37,18 +36,15 @@
  */
 static inline isc_result_t
 txt_valid_regex(const unsigned char *txt) {
-#ifdef HAVE_REGEX_H
-	regex_t preg;
-	unsigned int regflags = REG_EXTENDED;
 	unsigned int nsub = 0;
 	char regex[256];
 	char *cp;
-#endif
 	isc_boolean_t flags = ISC_FALSE;
 	isc_boolean_t replace = ISC_FALSE;
 	unsigned char c;
 	unsigned char delim;
 	unsigned int len;
+	int n;
 
 	len = *txt++;
 	if (len == 0U)
@@ -67,11 +63,7 @@ txt_valid_regex(const unsigned char *txt) {
 		return (DNS_R_SYNTAX);
 	}
 
-#ifdef HAVE_REGEX_H
-	memset(&preg, 0, sizeof(preg));
 	cp = regex;
-#endif
-
 	while (len-- > 0) {
 		c = *txt++;
 		if (c == 0)
@@ -90,18 +82,13 @@ txt_valid_regex(const unsigned char *txt) {
 		if (flags) {
 			switch (c) {
 			case 'i':
-#ifdef HAVE_REGEX_H
-				regflags |= REG_ICASE;
-#endif
 				continue;
 			default:
 				return (DNS_R_SYNTAX);
 			}
 		}
-#ifdef HAVE_REGEX_H
 		if (!replace)
 			*cp++ = c;
-#endif
 		if (c == '\\') {
 			if (len == 0)
 				return (DNS_R_SYNTAX);
@@ -112,7 +99,6 @@ txt_valid_regex(const unsigned char *txt) {
 			if (replace)
 				switch (c) {
 				case '0': return (DNS_R_SYNTAX);
-#ifdef HAVE_REGEX_H
 				case '1': if (nsub < 1) nsub = 1; break;
 				case '2': if (nsub < 2) nsub = 2; break;
 				case '3': if (nsub < 3) nsub = 3; break;
@@ -122,30 +108,17 @@ txt_valid_regex(const unsigned char *txt) {
 				case '7': if (nsub < 7) nsub = 7; break;
 				case '8': if (nsub < 8) nsub = 8; break;
 				case '9': if (nsub < 9) nsub = 9; break;
-#endif
 				}
-#ifdef HAVE_REGEX_H
 			if (!replace)
 				*cp++ = c;
-#endif
 		}
 	}
 	if (!flags)
 		return (DNS_R_SYNTAX);
-#ifdef HAVE_REGEX_H
 	*cp = '\0';
-	if (regcomp(&preg, regex, regflags))
+	n = isc_regex_validate(regex);
+	if (n < 0 || nsub > (unsigned int)n)
 		return (DNS_R_SYNTAX);
-	/*
-	 * Check that substitutions in the replacement string are consistant
-	 * with the regular expression.
-	 */
-	if (preg.re_nsub < nsub) {
-		regfree(&preg);
-		return (DNS_R_SYNTAX);
-	}
-	regfree(&preg);
-#endif
 	return (ISC_R_SUCCESS);
 }
 

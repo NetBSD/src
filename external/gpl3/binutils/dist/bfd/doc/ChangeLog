@@ -1,3 +1,7 @@
+2012-02-27  Alan Modra  <amodra@gmail.com>
+
+	* chew.c (print_stack_level, main): Use %ld to print stack delta.
+
 2010-10-28  Matthias Klose  <doko@ubuntu.com>
 
 	* bfd.texinfo: Add directory section for info document.

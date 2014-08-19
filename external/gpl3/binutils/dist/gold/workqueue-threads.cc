@@ -174,7 +174,7 @@ Workqueue_threader_threadpool::set_thread_count(int thread_count)
 // Return whether the current thread should be cancelled.
 
 bool
-Workqueue_threader_threadpool::should_cancel_thread()
+Workqueue_threader_threadpool::should_cancel_thread(int thread_number)
 {
   // Fast exit without taking a lock.
   if (!this->check_thread_count_)
@@ -182,12 +182,13 @@ Workqueue_threader_threadpool::should_cancel_thread()
 
   {
     Hold_lock hl(this->lock_);
-    if (this->threads_ > this->desired_thread_count_)
+    if (thread_number > this->desired_thread_count_)
       {
 	--this->threads_;
+	if (this->threads_ <= this->desired_thread_count_)
+	  this->check_thread_count_ = 0;
 	return true;
       }
-    this->check_thread_count_ = 0;
   }
 
   return false;

@@ -62,7 +62,7 @@ public:
         inline uint32_t endAddress() const { return m_address + m_length - 1; }
         
         //! \brief Equality operator.
-        bool operator == (const MemoryRegion & other);
+        bool operator == (const MemoryRegion & other) const;
 	};
 	
 	//! A list of #StExecutableImage::MemoryRegion objects.

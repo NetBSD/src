@@ -1,4 +1,4 @@
-; Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,8 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: base.db,v 1.6.4.1 2011/10/15 23:03:38 vjs Exp 
+; Id
+
 
 
 ; RPZ test
@@ -20,23 +21,7 @@
 ;   Its contents are also changed with nsupdate
 
 
-$TTL	120
+$TTL	300
 @	SOA	blx.  hostmaster.ns.blx. ( 1 3600 1200 604800 60 )
-	NS	ns
-ns	A	10.53.0.3
+	NS	ns.tld3.
 
-; Poke the radix tree a little.
-128.1111.2222.3333.4444.5555.6666.7777.8888.rpz-ip	CNAME	.
-128.1111.2222.3333.4444.5555.6666.zz.rpz-ip		CNAME	.
-128.1111.2222.3333.4444.5555.zz.8888.rpz-ip		CNAME	.
-128.1111.2222.3333.4444.zz.8888.rpz-ip			CNAME	.
-128.zz.3333.4444.0.0.8888.rpz-ip			CNAME	.
-128.zz.3333.4444.0.7777.8888.rpz-ip			CNAME	.
-128.zz.3333.4444.0.8777.8888.rpz-ip			CNAME	.
-127.zz.3333.4444.0.8777.8888.rpz-ip			CNAME	.
-
-
-; regression testing for some old crashes
-redirect	A       127.0.0.1
-*.redirect	A       127.0.0.1
-*.credirect	CNAME   google.com.

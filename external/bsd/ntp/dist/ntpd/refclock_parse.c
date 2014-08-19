@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.9 2012/08/12 07:22:24 christos Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.9.2.1 2014/08/19 23:51:42 tls Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/ntpd/refclock_parse.c,v 4.81 2009/05/01 10:15:29 kardel RELEASE_20090105_A
@@ -50,6 +50,8 @@
 # include "config.h"
 #endif
 
+#include "ntp_types.h"
+
 #if defined(REFCLOCK) && defined(CLOCK_PARSE)
 
 /*
@@ -98,7 +100,7 @@
 
 #include "ntpd.h"
 #include "ntp_refclock.h"
-#include "ntp_unixtime.h"	/* includes <sys/time.h> */
+#include "timevalops.h"		/* includes <sys/time.h> */
 #include "ntp_control.h"
 #include "ntp_string.h"
 
@@ -122,6 +124,7 @@
 #endif
 
 #ifdef HAVE_TERMIOS
+# include <termios.h>
 # define TTY_GETATTR(_FD_, _ARG_) tcgetattr((_FD_), (_ARG_))
 # define TTY_SETATTR(_FD_, _ARG_) tcsetattr((_FD_), TCSANOW, (_ARG_))
 # undef HAVE_SYSV_TTYS
@@ -200,7 +203,7 @@ static char rcsid[] = "refclock_parse.c,v 4.81 2009/05/01 10:15:29 kardel RELEAS
 static	int	parse_start	(int, struct peer *);
 static	void	parse_shutdown	(int, struct peer *);
 static	void	parse_poll	(int, struct peer *);
-static	void	parse_control	(int, struct refclockstat *, struct refclockstat *, struct peer *);
+static	void	parse_control	(int, const struct refclockstat *, struct refclockstat *, struct peer *);
 
 struct	refclock refclock_parse = {
 	parse_start,
@@ -858,6 +861,35 @@ static poll_info_t rcc8000_pollinfo = { RCC_POLLRATE, RCC_POLLCMD, RCC_CMDSIZE }
 #define VARITEXT_SAMPLES     32
 #define VARITEXT_KEEP        20
 
+/*
+ * SEL240x Satellite Sychronized Clock
+ */
+#define SEL240X_POLLRATE	0 /* only true direct polling */
+#define SEL240X_POLLCMD		"BUB8"
+#define SEL240X_CMDSIZE		4
+
+static poll_info_t sel240x_pollinfo = { SEL240X_POLLRATE,
+	                                SEL240X_POLLCMD,
+					SEL240X_CMDSIZE };
+#define SEL240X_FLAGS		(PARSE_F_PPSONSECOND)
+#define SEL240X_POLL		poll_dpoll
+#define SEL240X_INIT		poll_init
+#define SEL240X_END		0
+#define SEL240X_DATA            ((void *)(&sel240x_pollinfo))
+#define SEL240X_ROOTDELAY	0.0
+#define SEL240X_BASEDELAY	0.0
+#define SEL240X_ID		GPS_ID
+#define SEL240X_DESCRIPTION	"SEL240x Satellite Synchronized Clock"
+#define SEL240X_FORMAT		"SEL B8"
+#define SEL240X_MAXUNSYNC	60*60*12 /* only trust clock for 12 hours */
+#define SEL240X_SPEED		(B9600)
+#define SEL240X_CFLAG		(CS8|CREAD|CLOCAL)
+#define SEL240X_IFLAG		(IGNBRK|IGNPAR)
+#define SEL240X_OFLAG		(0)
+#define SEL240X_LFLAG		(0)
+#define SEL240X_SAMPLES		5
+#define SEL240X_KEEP		3
+
 static struct parse_clockinfo
 {
 	u_long  cl_flags;		/* operation flags (PPS interpretation, trust handling) */
@@ -1447,6 +1479,29 @@ static struct parse_clockinfo
 		GPS16X_SAMPLES,
 		GPS16X_KEEP
 	},
+	{				/* mode 24 */
+		SEL240X_FLAGS,
+		SEL240X_POLL,
+		SEL240X_INIT,
+		NO_EVENT,
+		SEL240X_END,
+		NO_MESSAGE,
+		SEL240X_DATA,
+		SEL240X_ROOTDELAY,
+		SEL240X_BASEDELAY,
+		SEL240X_ID,
+		SEL240X_DESCRIPTION,
+		SEL240X_FORMAT,
+		GPS_TYPE,
+		SEL240X_MAXUNSYNC,
+		SEL240X_SPEED,
+		SEL240X_CFLAG,
+		SEL240X_IFLAG,
+		SEL240X_OFLAG,
+		SEL240X_LFLAG,
+		SEL240X_SAMPLES,
+		SEL240X_KEEP
+	},
 };
 
 static int ncltypes = sizeof(parse_clockinfo) / sizeof(struct parse_clockinfo);
@@ -1569,13 +1624,14 @@ mkreadable(
 	int hex
 	)
 {
+	static const char ellipsis[] = "...";
 	char *b    = buffer;
 	char *endb = NULL;
 
 	if (blen < 4)
 		return NULL;		/* don't bother with mini buffers */
 
-	endb = buffer + blen - 4;
+	endb = buffer + blen - sizeof(ellipsis);
 
 	blen--;			/* account for '\0' */
 
@@ -1604,7 +1660,7 @@ mkreadable(
 			{
 				if (*src == '\\')
 				{
-					strcpy(buffer,"\\\\");
+					memcpy(buffer, "\\\\", 2);
 					buffer += 2;
 					blen   -= 2;
 					src++;
@@ -1618,7 +1674,7 @@ mkreadable(
 			}
 		}
 		if (srclen && !blen && endb) /* overflow - set last chars to ... */
-			strcpy(endb, "...");
+			memcpy(endb, ellipsis, sizeof(ellipsis));
 	}
 
 	*buffer = '\0';
@@ -1731,29 +1787,6 @@ static bind_t io_bindings[] =
 };
 
 #ifdef STREAM
-
-#define fix_ts(_X_) \
-                        if ((&(_X_))->tv.tv_usec >= 1000000)                \
-                          {                                                 \
-			    (&(_X_))->tv.tv_usec -= 1000000;                \
-			    (&(_X_))->tv.tv_sec  += 1;                      \
-			  }
-
-#define cvt_ts(_X_, _Y_) \
-                        {                                                   \
-			  l_fp ts;				            \
-			  fix_ts((_X_));                                    \
-			  if (!buftvtots((const char *)&(&(_X_))->tv, &ts)) \
-			    {                                               \
-                              ERR(ERR_BADDATA)	 		            \
-                                msyslog(LOG_ERR,"parse: stream_receive: timestamp conversion error (buftvtots) (%s) (%ld.%06ld) ", (_Y_), (long)(&(_X_))->tv.tv_sec, (long)(&(_X_))->tv.tv_usec);\
-			      return;                                       \
-			    }                                               \
-			  else                                              \
-			    {                                               \
-			      (&(_X_))->fp = ts;                            \
-			    }                                               \
-		        }
 
 /*--------------------------------------------------
  * ppsclock STREAM init
@@ -1998,9 +2031,10 @@ stream_receive(
 	struct recvbuf *rbufp
 	)
 {
-	struct parseunit *parse = (struct parseunit *)((void *)rbufp->recv_srcclock);
+	struct parseunit * parse;
 	parsetime_t parsetime;
 
+	parse = (struct parseunit *)rbufp->recv_peer->procptr->unitptr;
 	if (!parse->peer)
 	    return;
 
@@ -2039,15 +2073,17 @@ stream_receive(
 	 * errors.
 	 */
 
-	cvt_ts(parsetime.parse_stime, "parse_stime");
+	parsetime.parse_stime.fp = tval_stamp_to_lfp(parsetime.parse_stime.tv);
 
 	if (PARSE_TIMECODE(parsetime.parse_state))
 	{
-	    cvt_ts(parsetime.parse_time, "parse_time");
+		parsetime.parse_time.fp = tval_stamp_to_lfp(parsetime.parse_time.tv);
 	}
 
 	if (PARSE_PPS(parsetime.parse_state))
-	    cvt_ts(parsetime.parse_ptime, "parse_ptime");
+	{
+		parsetime.parse_ptime.fp = tval_stamp_to_lfp(parsetime.parse_ptime.tv);
+	}
 
 	parse_process(parse, &parsetime);
 }
@@ -2144,11 +2180,13 @@ local_input(
 	struct recvbuf *rbufp
 	)
 {
-	struct parseunit *parse = (struct parseunit *)((void *)rbufp->recv_srcclock);
+	struct parseunit * parse;
+
 	int count;
 	unsigned char *s;
 	timestamp_t ts;
 
+	parse = (struct parseunit *)rbufp->recv_peer->procptr->unitptr;
 	if (!parse->peer)
 		return 0;
 
@@ -2323,12 +2361,19 @@ local_input(
 						sizeof(parsetime_t));
 					buf->recv_length  = sizeof(parsetime_t);
 					buf->recv_time    = rbufp->recv_time;
+#ifndef HAVE_IO_COMPLETION_PORT
 					buf->srcadr       = rbufp->srcadr;
+#endif
 					buf->dstadr       = rbufp->dstadr;
 					buf->receiver     = rbufp->receiver;
 					buf->fd           = rbufp->fd;
 					buf->X_from_where = rbufp->X_from_where;
+					parse->generic->io.recvcount++;
+					packets_received++;
 					add_full_recv_buffer(buf);
+#ifdef HAVE_IO_COMPLETION_PORT
+					SetEvent(WaitableIoEventHandle);
+#endif
 				}
 				parse_iodone(&parse->parseio);
 			}
@@ -2354,9 +2399,10 @@ local_receive(
 	struct recvbuf *rbufp
 	)
 {
-	struct parseunit *parse = (struct parseunit *)((void *)rbufp->recv_srcclock);
+	struct parseunit * parse;
 	parsetime_t parsetime;
 
+	parse = (struct parseunit *)rbufp->recv_peer->procptr->unitptr;
 	if (!parse->peer)
 	    return;
 
@@ -2418,7 +2464,7 @@ init_iobinding(
  ** support routines
  **/
 
-static char *
+static __printflike(4, 5) char *
 ap(char *buffer, size_t len, char *pos, const char *fmt, ...)
 {
 	va_list va;
@@ -2727,10 +2773,10 @@ parse_shutdown(
 	struct peer *peer
 	)
 {
-	struct parseunit *parse = (struct parseunit *)0;
+	struct parseunit *parse = NULL;
 
 	if (peer && peer->procptr)
-		parse = (struct parseunit *)peer->procptr->unitptr;
+		parse = peer->procptr->unitptr;
 
 	if (!parse)
 	{
@@ -2738,7 +2784,7 @@ parse_shutdown(
 		return;
 	}
 
-        if (!parse->peer)
+	if (!parse->peer)
 	{
 		msyslog(LOG_INFO, "PARSE receiver #%d: INTERNAL ERROR - unit already inactive - shutdown ignored", unit);
 		return;
@@ -2751,7 +2797,7 @@ parse_shutdown(
 	}
 #endif
 	if (parse->generic->io.fd != parse->ppsfd && parse->ppsfd != -1)
-		(void)close(parse->ppsfd);  /* close separate PPS source */
+		(void)closeserial(parse->ppsfd);  /* close separate PPS source */
 
 	/*
 	 * print statistics a last time and
@@ -2962,12 +3008,11 @@ parse_start(
 #ifndef O_NOCTTY
 #define O_NOCTTY 0
 #endif
-
-	fd232 = open(parsedev, O_RDWR | O_NOCTTY
-#ifdef O_NONBLOCK
-		     | O_NONBLOCK
+#ifndef O_NONBLOCK
+#define O_NONBLOCK 0
 #endif
-		     , 0777);
+
+	fd232 = tty_open(parsedev, O_RDWR | O_NOCTTY | O_NONBLOCK, 0777);
 
 	if (fd232 == -1)
 	{
@@ -2975,9 +3020,7 @@ parse_start(
 		return 0;
 	}
 
-	parse = (struct parseunit *)emalloc(sizeof(struct parseunit));
-
-	memset((char *)parse, 0, sizeof(struct parseunit));
+	parse = emalloc_zero(sizeof(*parse));
 
 	parse->generic = peer->procptr;	 /* link up */
 	parse->generic->unitptr = (caddr_t)parse; /* link down */
@@ -3091,11 +3134,7 @@ parse_start(
 		 * if the PARSEPPSDEVICE can be opened that will be used
 		 * for PPS else PARSEDEVICE will be used
 		 */
-		parse->ppsfd = open(parseppsdev, O_RDWR | O_NOCTTY
-#ifdef O_NONBLOCK
-				    | O_NONBLOCK
-#endif
-				    , 0777);
+		parse->ppsfd = tty_open(parseppsdev, O_RDWR | O_NOCTTY | O_NONBLOCK, 0777);
 
 		if (parse->ppsfd == -1)
 		{
@@ -3177,7 +3216,7 @@ parse_start(
 	/*
 	 * pick correct input machine
 	 */
-	parse->generic->io.srcclock = (caddr_t)parse;
+	parse->generic->io.srcclock = peer;
 	parse->generic->io.datalen = 0;
 	
 	parse->binding = init_iobinding(parse);
@@ -3187,7 +3226,7 @@ parse_start(
 			msyslog(LOG_ERR, "PARSE receiver #%d: parse_start: io sub system initialisation failed.", CLK_UNIT(parse->peer));
 			parse_shutdown(CLK_UNIT(parse->peer), peer); /* let our cleaning staff do the work */
 			return 0;			/* well, ok - special initialisation broke */
-		}      
+		}
 
 	parse->generic->io.clock_recv = parse->binding->bd_receive; /* pick correct receive routine */
 	parse->generic->io.io_input   = parse->binding->bd_io_input; /* pick correct input routine */
@@ -3320,7 +3359,7 @@ parse_start(
 static void
 parse_ctl(
 	    struct parseunit *parse,
-	    struct refclockstat *in
+	    const struct refclockstat *in
 	    )
 {
         if (in)
@@ -3381,7 +3420,7 @@ parse_poll(
 	struct peer *peer
 	)
 {
-	struct parseunit *parse = (struct parseunit *)peer->procptr->unitptr;
+	struct parseunit *parse = peer->procptr->unitptr;
 
 	if (peer != parse->peer)
 	{
@@ -3433,12 +3472,12 @@ parse_poll(
 static void
 parse_control(
 	int unit,
-	struct refclockstat *in,
+	const struct refclockstat *in,
 	struct refclockstat *out,
 	struct peer *peer
 	)
 {
-        struct parseunit *parse = (struct parseunit *)peer->procptr->unitptr;
+	struct parseunit *parse = peer->procptr->unitptr;
 	parsectl_t tmpctl;
 
 	static char outstatus[400];	/* status output buffer */
@@ -3669,7 +3708,7 @@ parse_event(
 
 		if (parse->parse_type->cl_event)
 		    parse->parse_type->cl_event(parse, event);
-      
+
 		if (event == CEVNT_NOMINAL)
 		{
 			NLOG(NLOG_CLOCKSTATUS)
@@ -3693,6 +3732,9 @@ parse_process(
 	l_fp off, rectime, reftime;
 	double fudge;
 	
+	/* silence warning: 'off.Ul_i.Xl_i' may be used uninitialized in this function */
+	ZERO(off);
+
 	/*
 	 * check for changes in conversion status
 	 * (only one for each new status !)
@@ -3964,8 +4006,8 @@ parse_process(
 #endif
 		if (PARSE_TIMECODE(parsetime->parse_state))
 		{
-			if (M_ISGEQ(off.l_i, off.l_f, -1, 0x80000000) &&
-			    M_ISGEQ(0, 0x7fffffff, off.l_i, off.l_f))
+			if (M_ISGEQ(off.l_i, off.l_uf, -1, 0x80000000) &&
+			    M_ISGEQ(0, 0x7fffffff, off.l_i, off.l_uf))
 			{
 				fudge = ppsphaseadjust; /* pick PPS fudge factor */
 			
@@ -3976,7 +4018,7 @@ parse_process(
 				if (parse->parse_type->cl_flags & PARSE_F_PPSONSECOND)
 				{
 					reftime = off = offset;
-					if (reftime.l_uf & (unsigned)0x80000000)
+					if (reftime.l_uf & 0x80000000)
 						reftime.l_ui++;
 					reftime.l_uf = 0;
 
@@ -3985,7 +4027,7 @@ parse_process(
 					 * implied on second offset
 					 */
 					off.l_uf = ~off.l_uf; /* map [0.5..1[ -> [-0.5..0[ */
-					off.l_ui = (off.l_f < 0) ? ~0 : 0; /* sign extend */
+					off.l_i = (off.l_uf & 0x8000000) ? -1 : 0; /* sign extend */
 				}
 				else
 				{
@@ -4010,14 +4052,14 @@ parse_process(
 			 */
 			off = offset;
 			reftime = offset;
-			if (reftime.l_uf & (unsigned)0x80000000)
+			if (reftime.l_uf & 0x80000000)
 				reftime.l_ui++;
 			reftime.l_uf = 0;
 			/*
 			 * implied on second offset
 			 */
 			off.l_uf = ~off.l_uf; /* map [0.5..1[ -> [-0.5..0[ */
-			off.l_ui = (off.l_f < 0) ? ~0 : 0; /* sign extend */
+			off.l_i = (off.l_uf & 0x80000000) ? -1 : 0; /* sign extend */
 		}
 	}
 	else
@@ -4615,7 +4657,7 @@ gps16x_poll(
 	    struct peer *peer
 	    )
 {
-	struct parseunit *parse = (struct parseunit *)peer->procptr->unitptr;
+	struct parseunit *parse = peer->procptr->unitptr;
 	
 	static GPS_MSG_HDR sequence[] = 
 	{
@@ -4629,7 +4671,7 @@ gps16x_poll(
 		{ GPS_POS_LLA,         0, 0, 0 },
 		{ (unsigned short)~0,  0, 0, 0 }
 	};
-      
+
 	int rtc;
 	unsigned char cmd_buffer[64];
 	unsigned char *outp = cmd_buffer;
@@ -4637,7 +4679,7 @@ gps16x_poll(
 	
 	if (((poll_info_t *)parse->parse_type->cl_data)->rate)
 	{
-		parse->peer->nextaction = current_time + ((poll_info_t *)parse->parse_type->cl_data)->rate;
+		parse->peer->procptr->nextaction = current_time + ((poll_info_t *)parse->parse_type->cl_data)->rate;
 	}
 
 	if (sequence[parse->localstate].gps_cmd == (unsigned short)~0)
@@ -4695,7 +4737,7 @@ gps16x_poll_init(
 {
 	if (((poll_info_t *)parse->parse_type->cl_data)->rate)
 	{
-		parse->peer->action = gps16x_poll;
+		parse->peer->procptr->action = gps16x_poll;
 		gps16x_poll(parse->peer);
 	}
 
@@ -4757,14 +4799,14 @@ poll_poll(
 	struct peer *peer
 	)
 {
-	struct parseunit *parse = (struct parseunit *)peer->procptr->unitptr;
+	struct parseunit *parse = peer->procptr->unitptr;
 	
 	if (parse->parse_type->cl_poll)
 		parse->parse_type->cl_poll(parse);
 
 	if (((poll_info_t *)parse->parse_type->cl_data)->rate)
 	{
-		parse->peer->nextaction = current_time + ((poll_info_t *)parse->parse_type->cl_data)->rate;
+		parse->peer->procptr->nextaction = current_time + ((poll_info_t *)parse->parse_type->cl_data)->rate;
 	}
 }
 
@@ -4778,7 +4820,7 @@ poll_init(
 {
 	if (((poll_info_t *)parse->parse_type->cl_data)->rate)
 	{
-		parse->peer->action = poll_poll;
+		parse->peer->procptr->action = poll_poll;
 		poll_poll(parse->peer);
 	}
 
@@ -5152,7 +5194,7 @@ trimble_check(
 	      struct peer *peer
 	      )
 {
-	struct parseunit *parse = (struct parseunit *)peer->procptr->unitptr;
+	struct parseunit *parse = peer->procptr->unitptr;
 	trimble_t *t = parse->localdata;
 	u_char buffer[256];
 	struct txbuf buf;
@@ -5206,10 +5248,10 @@ trimbletsip_end(
 	if (t)
 	{
 		free(t);
-		parse->localdata = (void *)0;
+		parse->localdata = NULL;
 	}
-	parse->peer->nextaction = 0;
-	parse->peer->action = (void (*) (struct peer *))0;
+	parse->peer->procptr->nextaction = 0;
+	parse->peer->procptr->action = NULL;
 }
 
 /*--------------------------------------------------
@@ -5243,8 +5285,8 @@ trimbletsip_init(
 		}
 	}
 
-	parse->peer->action     = trimble_check;
-	parse->peer->nextaction = current_time;
+	parse->peer->procptr->action     = trimble_check;
+	parse->peer->procptr->nextaction = current_time;
 
 	/*
 	 * configure terminal line for ICANON mode with VEOL characters
@@ -5510,28 +5552,28 @@ trimbletsip_message(
 				t = ap(pbuffer, sizeof(pbuffer), t, "illegal value 0x%02x", mb(0) & 0xFF);
 				break;
 			case 0x00:
-				t = ap(pbuffer, sizeof(pbuffer), t, "doing position fixes", BUFFER_SIZE(pbuffer, t));
+				t = ap(pbuffer, sizeof(pbuffer), t, "doing position fixes");
 				break;
 			case 0x01:
-				t = ap(pbuffer, sizeof(pbuffer), t, "no GPS time yet", BUFFER_SIZE(pbuffer, t));
+				t = ap(pbuffer, sizeof(pbuffer), t, "no GPS time yet");
 				break;
 			case 0x03:
-				t = ap(pbuffer, sizeof(pbuffer), t, "PDOP too high", BUFFER_SIZE(pbuffer, t));
+				t = ap(pbuffer, sizeof(pbuffer), t, "PDOP too high");
 				break;
 			case 0x08:
-				t = ap(pbuffer, sizeof(pbuffer), t, "no usable satellites", BUFFER_SIZE(pbuffer, t));
+				t = ap(pbuffer, sizeof(pbuffer), t, "no usable satellites");
 				break;
 			case 0x09:
-				t = ap(pbuffer, sizeof(pbuffer), t, "only ONE usable satellite", BUFFER_SIZE(pbuffer, t));
+				t = ap(pbuffer, sizeof(pbuffer), t, "only ONE usable satellite");
 				break;
 			case 0x0A:
-				t = ap(pbuffer, sizeof(pbuffer), t, "only TWO usable satellites", BUFFER_SIZE(pbuffer, t));
+				t = ap(pbuffer, sizeof(pbuffer), t, "only TWO usable satellites");
 				break;
 			case 0x0B:
-				t = ap(pbuffer, sizeof(pbuffer), t, "only THREE usable satellites", BUFFER_SIZE(pbuffer, t));
+				t = ap(pbuffer, sizeof(pbuffer), t, "only THREE usable satellites");
 				break;
 			case 0x0C:
-				t = ap(pbuffer, sizeof(pbuffer), t, "the chosen satellite is unusable", BUFFER_SIZE(pbuffer, t));
+				t = ap(pbuffer, sizeof(pbuffer), t, "the chosen satellite is unusable");
 				break;
 			}
 
@@ -5594,13 +5636,13 @@ trimbletsip_message(
 			short dtlsf = getshort((unsigned char *)&mb(24));
 
 			if ((int)t0t != 0)
-			  {
-				  mk_utcinfo(t, wnt, wnlsf, dn, dtls, dtlsf, BUFFER_SIZE(pbuffer, t));
-			  }
+			{
+				mk_utcinfo(t, wnt, wnlsf, dn, dtls, dtlsf, BUFFER_SIZE(pbuffer, t));
+			}
 			else
-			  {
-			    t = ap(pbuffer, sizeof(pbuffer), t, "<NO UTC DATA>");
-			  }
+			{
+			        t = ap(pbuffer, sizeof(pbuffer), t, "<NO UTC DATA>");
+			}
 		}
 		break;
 
@@ -5633,7 +5675,7 @@ trimbletsip_message(
 				  x, y, z,
 				  f);
 			else
-			  return;
+				return;
 		}
 		break;
 
@@ -5649,7 +5691,7 @@ trimbletsip_message(
 				  ((lng < 0.0) ? (-lng) : (lng))*RTOD, (lng < 0.0 ? 'W' : 'E'),
 				  getflt((unsigned char *)&mb(8)));
 			else
-			  return;
+				return;
 		}
 		break;
 
@@ -5715,7 +5757,7 @@ trimbletsip_message(
 			}
 
 			if (tr)
-                        { /* mark for tracking status query */
+			{	/* mark for tracking status query */
 				tr->qtracking = 1;
 			}
 		}
@@ -5867,7 +5909,7 @@ rawdcf_init_2(
 #endif  /* DTR initialisation type */
 
 #else	/* defined(REFCLOCK) && defined(PARSE) */
-int refclock_parse_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif	/* defined(REFCLOCK) && defined(PARSE) */
 
 /*

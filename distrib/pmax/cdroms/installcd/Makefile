@@ -1,7 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2012/01/15 22:34:33 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.2.6.1 2014/08/19 23:45:42 tls Exp $
 CDBASE=		pmaxcd			# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
+.if ${MACHINE_ARCH} == "mipsel"
 CDKERNELS=	netbsd-INSTALL.gz netbsd
+.else
+CDKERNELS=	netbsd-INSTALL64.gz netbsd
+.endif
 CDINSTKERNEL=	../../instkernel
 
 #make the CD bootable

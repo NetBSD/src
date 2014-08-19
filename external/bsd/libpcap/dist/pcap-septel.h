@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-septel.h,v 1.1.1.2.12.1 2013/06/23 06:28:19 tls Exp $	*/
+/*	$NetBSD: pcap-septel.h,v 1.1.1.2.12.2 2014/08/19 23:47:16 tls Exp $	*/
 
 /*
  * pcap-septel.c: Packet capture interface for Intel Septel card
@@ -13,5 +13,5 @@
  * @(#) Header: /tcpdump/master/libpcap/pcap-septel.h,v 1.2 2008-04-04 19:37:45 guy Exp 
  */
 
-pcap_t *septel_create(const char *device, char *ebuf);
-
+pcap_t *septel_create(const char *device, char *ebuf, int *is_ours);
+int septel_findalldevs(pcap_if_t **devlistp, char *errbuf);

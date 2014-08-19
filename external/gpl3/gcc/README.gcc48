@@ -1,0 +1,43 @@
+$Id: README.gcc48,v 1.5.4.2 2014/08/19 23:53:09 tls Exp $
+
+usr.bin:
+	note:
+		-static-libstdc++ -static-libgcc
+		-rdynamic  -lz
+lib:
+
+	G_NOEXCEPTION_FLAGS -- need to use this
+
+new stuff:
+	cc1objcplus
+	collect2 -- need to re-introduce?
+
+	gcc-ar, -nm and -ranlib, for lto plugin stuff
+
+	- what is libitm?
+
+	- asan/libsanitizer
+
+x86_64 port:
+- copied manually i386-builtin-types.inc instead of generating it.
+
+
+arch/feature list.  anything not here has been switched already:
+
+architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
+------------	-----	-------	------	----------	------------	----	---
+coldfire	yes	N/A[9]	yes	yes		yes[7]		?	?
+m68000		yes	?	yes	no[3]		
+m68k		yes	yes	yes	yes		no[7]
+powerpc		yes	yes[1]	yes	yes		yes		yes	yes
+powerpc64	yes[4]
+
+[1] ofppc/pegasos has issues with symtab loading.
+    sandpoint works fine in multi-user, found an annoyance by com(4) change.
+[3] relocations fail in libgcc
+[4] cc1 gets segv compiling libgcc.
+[7] m68k/vax/sh3 gcc seem to randomly get -fstack-protector/-Wstack-protector
+    wrong, for example m68k flags alarm() as unprotected in
+    libc/gen/alarm.c:53, vax ifinit() in sbin/routed/if.c:680.
+   --> hacked around, now fixed?
+[9] no kernels in evbcf port yet

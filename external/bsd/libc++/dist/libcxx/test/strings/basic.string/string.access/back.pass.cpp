@@ -12,8 +12,14 @@
 // const charT& back() const;
 //       charT& back();
 
+#ifdef _LIBCPP_DEBUG
+#define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : std::exit(0))
+#endif
+
 #include <string>
 #include <cassert>
+
+#include "min_allocator.h"
 
 template <class S>
 void
@@ -28,7 +34,23 @@ test(S s)
 
 int main()
 {
+    {
     typedef std::string S;
     test(S("1"));
     test(S("1234567890123456789012345678901234567890"));
+    }
+#if __cplusplus >= 201103L
+    {
+    typedef std::basic_string<char, std::char_traits<char>, min_allocator<char>> S;
+    test(S("1"));
+    test(S("1234567890123456789012345678901234567890"));
+    }
+#endif
+#ifdef _LIBCPP_DEBUG
+    {
+        std::string s;
+        char c = s.back();
+        assert(false);
+    }
+#endif
 }

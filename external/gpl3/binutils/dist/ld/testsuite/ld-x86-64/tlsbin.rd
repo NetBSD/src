@@ -1,7 +1,7 @@
 #source: tlsbinpic.s
 #source: tlsbin.s
 #as: --64
-#ld: -shared -melf_x86_64
+#ld: -shared -melf_x86_64 --no-ld-generated-unwind-info
 #readelf: -WSsrl
 #target: x86_64-*-*
 
@@ -17,12 +17,12 @@ Section Headers:
  +\[[ 0-9]+\] .rela.dyn +.*
  +\[[ 0-9]+\] .rela.plt +.*
  +\[[ 0-9]+\] .plt +.*
- +\[[ 0-9]+\] .text +PROGBITS +0+401000 0+1000 0+22a 00 +AX +0 +0 +4096
- +\[[ 0-9]+\] .tdata +PROGBITS +0+60122a 0+122a 0+60 00 WAT +0 +0 +1
- +\[[ 0-9]+\] .tbss +NOBITS +0+60128a 0+128a 0+40 00 WAT +0 +0 +1
- +\[[ 0-9]+\] .dynamic +DYNAMIC +0+601290 0+1290 0+140 10 +WA +4 +0 +8
- +\[[ 0-9]+\] .got +PROGBITS +0+6013d0 0+13d0 0+20 08 +WA +0 +0 +8
- +\[[ 0-9]+\] .got.plt +PROGBITS +0+6013f0 0+13f0 0+20 08 +WA +0 +0 +8
+ +\[[ 0-9]+\] .text +PROGBITS +0+401000 0+1000 0+234 00 +AX +0 +0 +4096
+ +\[[ 0-9]+\] .tdata +PROGBITS +0+601234 0+1234 0+60 00 WAT +0 +0 +1
+ +\[[ 0-9]+\] .tbss +NOBITS +0+601294 0+1294 0+40 00 WAT +0 +0 +1
+ +\[[ 0-9]+\] .dynamic +DYNAMIC +0+601298 0+1298 0+140 10 +WA +4 +0 +8
+ +\[[ 0-9]+\] .got +PROGBITS +0+6013d8 0+13d8 0+20 08 +WA +0 +0 +8
+ +\[[ 0-9]+\] .got.plt +PROGBITS +0+6013f8 0+13f8 0+20 08 +WA +0 +0 +8
  +\[[ 0-9]+\] .shstrtab +.*
  +\[[ 0-9]+\] .symtab +.*
  +\[[ 0-9]+\] .strtab +.*
@@ -40,10 +40,10 @@ Program Headers:
  +PHDR.*
  +INTERP.*
 .*Requesting program interpreter.*
- +LOAD +0x0+ 0x0+400000 0x0+400000 0x0+122a 0x0+122a R E 0x200000
- +LOAD +0x0+122a 0x0+60122a 0x0+60122a 0x0+1e6 0x0+1e6 RW +0x200000
- +DYNAMIC +0x0+1290 0x0+601290 0x0+601290 0x0+140 0x0+140 RW +0x8
- +TLS +0x0+122a 0x0+60122a 0x0+60122a 0x0+60 0x0+a0 R +0x1
+ +LOAD +0x0+ 0x0+400000 0x0+400000 0x0+1234 0x0+1234 R E 0x200000
+ +LOAD +0x0+1234 0x0+601234 0x0+601234 0x0+1e4 0x0+1e4 RW +0x200000
+ +DYNAMIC +0x0+1298 0x0+601298 0x0+601298 0x0+140 0x0+140 RW +0x8
+ +TLS +0x0+1234 0x0+601234 0x0+601234 0x0+60 0x0+a0 R +0x1
 
  Section to Segment mapping:
  +Segment Sections...
@@ -71,11 +71,11 @@ Symbol table '\.dynsym' contains [0-9]+ entries:
 .* TLS +GLOBAL +DEFAULT +UND sG5
 .* TLS +GLOBAL +DEFAULT +UND sG2
 .* FUNC +GLOBAL +DEFAULT +UND __tls_get_addr
-.* NOTYPE +GLOBAL +DEFAULT +ABS __bss_start
+.* NOTYPE +GLOBAL +DEFAULT +13 __bss_start
 .* TLS +GLOBAL +DEFAULT +UND sG6
 .* TLS +GLOBAL +DEFAULT +UND sG1
-.* NOTYPE +GLOBAL +DEFAULT +ABS _edata
-.* NOTYPE +GLOBAL +DEFAULT +ABS _end
+.* NOTYPE +GLOBAL +DEFAULT +13 _edata
+.* NOTYPE +GLOBAL +DEFAULT +13 _end
 
 Symbol table '\.symtab' contains [0-9]+ entries:
  +Num: +Value +Size +Type +Bind +Vis +Ndx +Name
@@ -93,6 +93,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* SECTION +LOCAL +DEFAULT +11 *
 .* SECTION +LOCAL +DEFAULT +12 *
 .* SECTION +LOCAL +DEFAULT +13 *
+.* FILE +LOCAL +DEFAULT +ABS .*
 .* TLS +LOCAL +DEFAULT +9 sl1
 .* TLS +LOCAL +DEFAULT +9 sl2
 .* TLS +LOCAL +DEFAULT +9 sl3
@@ -101,6 +102,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* TLS +LOCAL +DEFAULT +9 sl6
 .* TLS +LOCAL +DEFAULT +9 sl7
 .* TLS +LOCAL +DEFAULT +9 sl8
+.* FILE +LOCAL +DEFAULT +ABS .*
 .* TLS +LOCAL +DEFAULT +10 bl1
 .* TLS +LOCAL +DEFAULT +10 bl2
 .* TLS +LOCAL +DEFAULT +10 bl3
@@ -109,6 +111,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* TLS +LOCAL +DEFAULT +10 bl6
 .* TLS +LOCAL +DEFAULT +10 bl7
 .* TLS +LOCAL +DEFAULT +10 bl8
+.* FILE +LOCAL +DEFAULT +ABS .*
 .* OBJECT +LOCAL +DEFAULT +11 _DYNAMIC
 .* OBJECT +LOCAL +DEFAULT +13 _GLOBAL_OFFSET_TABLE_
 .* TLS +GLOBAL +DEFAULT +9 sg8
@@ -130,7 +133,7 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* TLS +GLOBAL +HIDDEN +9 sh4
 .* TLS +GLOBAL +DEFAULT +10 bg7
 .* TLS +GLOBAL +HIDDEN +9 sh5
-.* NOTYPE +GLOBAL +DEFAULT +ABS __bss_start
+.* NOTYPE +GLOBAL +DEFAULT +13 __bss_start
 .* TLS +GLOBAL +DEFAULT +UND sG6
 .* FUNC +GLOBAL +DEFAULT +8 fn2
 .* TLS +GLOBAL +DEFAULT +9 sg2
@@ -138,8 +141,8 @@ Symbol table '\.symtab' contains [0-9]+ entries:
 .* TLS +GLOBAL +HIDDEN +9 sh1
 .* TLS +GLOBAL +DEFAULT +9 sg6
 .* TLS +GLOBAL +DEFAULT +9 sg7
-.* NOTYPE +GLOBAL +DEFAULT +ABS _edata
-.* NOTYPE +GLOBAL +DEFAULT +ABS _end
+.* NOTYPE +GLOBAL +DEFAULT +13 _edata
+.* NOTYPE +GLOBAL +DEFAULT +13 _end
 .* TLS +GLOBAL +HIDDEN +9 sh2
 .* TLS +GLOBAL +HIDDEN +9 sh6
 .* TLS +GLOBAL +DEFAULT +10 bg2

@@ -235,4 +235,26 @@ bfd_boolean xcoff_reloc_type_toc  (XCOFF_RELOC_FUNCTION_ARGS);
 bfd_boolean xcoff_reloc_type_ba   (XCOFF_RELOC_FUNCTION_ARGS);
 bfd_boolean xcoff_reloc_type_crel (XCOFF_RELOC_FUNCTION_ARGS);
 
+/* Structure to describe dwarf sections.
+   Useful to convert from XCOFF section name to flag and vice-versa.
+   Also mark if section has a length field at the beginning.  */
+struct xcoff_dwsect_name {
+  /* A XCOFF dwarf section is identified by its name.  */
+  unsigned int flag;
+
+  /* Corresponding XCOFF section name.  */
+  const char *name;
+
+  /* True if size must be prepended.  */
+  bfd_boolean def_size;
+};
+
+/* Number of entries in the array.  The number is known and public so that user
+   can 'extend' this array by index.  */
+#define XCOFF_DWSECT_NBR_NAMES	8
+
+/* The dwarf sections array.  */
+extern const struct xcoff_dwsect_name
+  xcoff_dwsect_names[XCOFF_DWSECT_NBR_NAMES];
+
 #endif /* LIBXCOFF_H */

@@ -1,10 +1,10 @@
-/*	$NetBSD: lastmod.c,v 1.1.1.3 2010/12/12 15:19:07 adam Exp $	*/
+/*	$NetBSD: lastmod.c,v 1.1.1.3.12.1 2014/08/19 23:51:57 tls Exp $	*/
 
 /* lastmod.c - returns last modification info */
-/* OpenLDAP: pkg/ldap/contrib/slapd-modules/lastmod/lastmod.c,v 1.2.2.6 2010/04/19 16:53:00 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2010 The OpenLDAP Foundation.
+ * Copyright 2004-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

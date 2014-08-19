@@ -1,7 +1,7 @@
-/*	$NetBSD: lib.c,v 1.3.2.1 2013/06/23 06:26:25 tls Exp $	*/
+/*	$NetBSD: lib.c,v 1.3.2.2 2014/08/19 23:46:28 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -115,9 +115,11 @@ initialize(void) {
   cleanup_hash:
 	isc_hash_destroy();
   cleanup_db:
-	dns_ecdb_unregister(&dbimp);
+	if (dbimp != NULL)
+		dns_ecdb_unregister(&dbimp);
   cleanup_mctx:
-	isc_mem_detach(&dns_g_mctx);
+	if (dns_g_mctx != NULL)
+		isc_mem_detach(&dns_g_mctx);
 }
 
 isc_result_t
@@ -157,6 +159,8 @@ dns_lib_shutdown(void) {
 
 	dst_lib_destroy();
 	isc_hash_destroy();
-	dns_ecdb_unregister(&dbimp);
-	isc_mem_detach(&dns_g_mctx);
+	if (dbimp != NULL)
+		dns_ecdb_unregister(&dbimp);
+	if (dns_g_mctx != NULL)
+		isc_mem_detach(&dns_g_mctx);
 }

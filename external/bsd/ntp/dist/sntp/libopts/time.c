@@ -1,14 +1,16 @@
-/*	$NetBSD: time.c,v 1.1.1.2 2012/01/31 21:27:45 kardel Exp $	*/
+/*	$NetBSD: time.c,v 1.1.1.2.6.1 2014/08/19 23:51:47 tls Exp $	*/
 
 
 /**
  * \file time.c
  *
- *  Time-stamp:      "2011-03-06 11:52:23 bkorb"
- *
+ * @addtogroup autoopts
+ * @{
+ */
+/*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (c) 1992-2011 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2013 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -20,11 +22,11 @@
  *   The Modified Berkeley Software Distribution License
  *      See the file "COPYING.mbsd"
  *
- *  These files have the following md5sums:
+ *  These files have the following sha256 sums:
  *
- *  43b91e8ca915626ed3818ffb1b71248b pkg/libopts/COPYING.gplv3
- *  06a1a2e4760c90ea5e1dad8dfaac4d39 pkg/libopts/COPYING.lgplv3
- *  66a5cedaf62c4b2637025f049f9b826f pkg/libopts/COPYING.mbsd
+ *  8584710e9b04216a394078dc156b781d0b47e1729104d666658aecef8ee32e95  COPYING.gplv3
+ *  4379e7444a0e2ce2b12dd6f5a52a27a4d02d39d247901d3285c88cf0d37f477b  COPYING.lgplv3
+ *  13aa749a5b0a454917a944ed8fffc530b784f5ead522b1aacaf4ec8aa55a6239  COPYING.mbsd
  */
 
 /*=export_func  optionTimeVal
@@ -42,6 +44,9 @@ optionTimeVal(tOptions * pOpts, tOptDesc * pOD)
 {
     time_t val;
 
+    if (pOpts <= OPTPROC_EMIT_LIMIT)
+        return;
+
     if ((pOD->fOptState & OPTST_RESET) != 0)
         return;
 
@@ -57,7 +62,7 @@ optionTimeVal(tOptions * pOpts, tOptDesc * pOD)
         pOD->fOptState &= ~OPTST_ALLOC_ARG;
     }
 
-    pOD->optArg.argInt = val;
+    pOD->optArg.argInt = (long)val;
 }
 
 /*=export_func  optionTimeDate
@@ -74,6 +79,9 @@ void
 optionTimeDate(tOptions * pOpts, tOptDesc * pOD)
 {
 #if defined(HAVE_GETDATE_R) && defined(HAVE_PUTENV)
+    if (pOpts <= OPTPROC_EMIT_LIMIT)
+        return;
+
     if ((! HAS_pzPkgDataDir(pOpts)) || (pOpts->pzPkgDataDir == NULL))
         goto default_action;
 
@@ -123,14 +131,15 @@ optionTimeDate(tOptions * pOpts, tOptDesc * pOD)
     }
     return;
 
-default_action:
+ default_action:
 
 #endif
     optionTimeVal(pOpts, pOD);
     if (pOD->optArg.argInt != BAD_TIME)
-        pOD->optArg.argInt += (unsigned long)time(NULL);
+        pOD->optArg.argInt += (long)time(NULL);
 }
-/*
+/** @}
+ *
  * Local Variables:
  * mode: C
  * c-file-style: "stroustrup"

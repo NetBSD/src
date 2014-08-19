@@ -1,5 +1,5 @@
-/*	$NetBSD: bufec.c,v 1.2 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: bufec.c,v 1.1 2010/08/31 11:54:45 djm Exp $ */
+/*	$NetBSD: bufec.c,v 1.2.8.1 2014/08/19 23:45:24 tls Exp $	*/
+/* $OpenBSD: bufec.c,v 1.2 2013/05/17 00:13:13 djm Exp $ */
 /*
  * Copyright (c) 2010 Damien Miller <djm@mindrot.org>
  *
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: bufec.c,v 1.2 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: bufec.c,v 1.2.8.1 2014/08/19 23:45:24 tls Exp $");
 #include <sys/types.h>
 
 #include <openssl/bn.h>
@@ -76,7 +76,7 @@ buffer_put_ecpoint_ret(Buffer *buffer, const EC_GROUP *curve,
  out:
 	if (buf != NULL) {
 		bzero(buf, len);
-		xfree(buf);
+		free(buf);
 	}
 	BN_CTX_free(bnctx);
 	return ret;
@@ -129,7 +129,7 @@ buffer_get_ecpoint_ret(Buffer *buffer, const EC_GROUP *curve,
  out:
 	BN_CTX_free(bnctx);
 	bzero(buf, len);
-	xfree(buf);
+	free(buf);
 	return ret;
 }
 

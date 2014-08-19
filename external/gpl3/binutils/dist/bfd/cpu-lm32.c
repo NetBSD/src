@@ -1,5 +1,5 @@
 /* BFD support for the Lattice Mico32 architecture.
-   Copyright 2008 Free Software Foundation, Inc.
+   Copyright 2008, 2012 Free Software Foundation, Inc.
    Contributed by Jon Beniston <jon@beniston.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -19,8 +19,8 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-#include "bfd.h"
 #include "sysdep.h"
+#include "bfd.h"
 #include "libbfd.h"
 
 const bfd_arch_info_type bfd_lm32_arch = 
@@ -36,6 +36,7 @@ const bfd_arch_info_type bfd_lm32_arch =
     TRUE,                         /* Is this the default machine for the target.  */
     bfd_default_compatible,       /* Function callback to test if two files have compatible machines.  */
     bfd_default_scan,
+    bfd_arch_default_fill,
     NULL                          /* Next.  */
 };
 

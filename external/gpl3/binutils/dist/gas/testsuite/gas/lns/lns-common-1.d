@@ -1,6 +1,6 @@
 #readelf: -wl
 #name: lns-common-1
-Raw dump of debug contents of section \.debug_line:
+Raw dump of debug contents of section \.z?debug_line:
 #...
   Initial value of 'is_stmt':  1
 #...

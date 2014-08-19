@@ -1,6 +1,6 @@
-.\"	$NetBSD: dnssec-keygen.8,v 1.4.2.1 2013/02/25 00:25:02 tls Exp $
+.\"	$NetBSD: dnssec-keygen.8,v 1.4.2.2 2014/08/19 23:45:59 tls Exp $
 .\"
-.\" Copyright (C) 2004, 2005, 2007-2012 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004, 2005, 2007-2012, 2014 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000-2003 Internet Software Consortium.
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
@@ -22,11 +22,11 @@
 .\"     Title: dnssec\-keygen
 .\"    Author: 
 .\" Generator: DocBook XSL Stylesheets v1.71.1 <http://docbook.sf.net/>
-.\"      Date: June 30, 2000
+.\"      Date: February 06, 2014
 .\"    Manual: BIND9
 .\"    Source: BIND9
 .\"
-.TH "DNSSEC\-KEYGEN" "8" "June 30, 2000" "BIND9" "BIND9"
+.TH "DNSSEC\-KEYGEN" "8" "February 06, 2014" "BIND9" "BIND9"
 .\" disable hyphenation
 .nh
 .\" disable justification (adjust text to left margin only)
@@ -102,7 +102,9 @@ Indicates that the DNS record containing the key should have the specified class
 .PP
 \-E \fIengine\fR
 .RS 4
-Uses a crypto hardware (OpenSSL engine) for random number and, when supported, key generation. When compiled with PKCS#11 support it defaults to pkcs11; the empty name resets it to no engine.
+Specifies the cryptographic hardware to use, when applicable.
+.sp
+When BIND is built with OpenSSL PKCS#11 support, this defaults to the string "pkcs11", which identifies an OpenSSL engine that can drive a cryptographic accelerator or hardware service module. When BIND is built with native PKCS#11 cryptography (\-\-enable\-native\-pkcs11), it defaults to the path of the PKCS#11 provider library specified via "\-\-with\-pkcs11".
 .RE
 .PP
 \-f \fIflag\fR
@@ -201,7 +203,7 @@ Sets the debugging level.
 .RE
 .SH "TIMING OPTIONS"
 .PP
-Dates can be expressed in the format YYYYMMDD or YYYYMMDDHHMMSS. If the argument begins with a '+' or '\-', it is interpreted as an offset from the present time. For convenience, if such an offset is followed by one of the suffixes 'y', 'mo', 'w', 'd', 'h', or 'mi', then the offset is computed in years (defined as 365 24\-hour days, ignoring leap years), months (defined as 30 24\-hour days), weeks, days, hours, or minutes, respectively. Without a suffix, the offset is computed in seconds.
+Dates can be expressed in the format YYYYMMDD or YYYYMMDDHHMMSS. If the argument begins with a '+' or '\-', it is interpreted as an offset from the present time. For convenience, if such an offset is followed by one of the suffixes 'y', 'mo', 'w', 'd', 'h', or 'mi', then the offset is computed in years (defined as 365 24\-hour days, ignoring leap years), months (defined as 30 24\-hour days), weeks, days, hours, or minutes, respectively. Without a suffix, the offset is computed in seconds. To explicitly prevent a date from being set, use 'none' or 'never'.
 .PP
 \-P \fIdate/offset\fR
 .RS 4
@@ -210,7 +212,7 @@ Sets the date on which a key is to be published to the zone. After that date, th
 .PP
 \-A \fIdate/offset\fR
 .RS 4
-Sets the date on which the key is to be activated. After that date, the key will be included in the zone and used to sign it. If not set, and if the \-G option has not been used, the default is "now".
+Sets the date on which the key is to be activated. After that date, the key will be included in the zone and used to sign it. If not set, and if the \-G option has not been used, the default is "now". If set, if and \-P is not set, then the publication date will be set to the activation date minus the prepublication interval.
 .RE
 .PP
 \-R \fIdate/offset\fR
@@ -304,7 +306,7 @@ RFC 4034.
 .PP
 Internet Systems Consortium
 .SH "COPYRIGHT"
-Copyright \(co 2004, 2005, 2007\-2012 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004, 2005, 2007\-2012, 2014 Internet Systems Consortium, Inc. ("ISC")
 .br
 Copyright \(co 2000\-2003 Internet Software Consortium.
 .br

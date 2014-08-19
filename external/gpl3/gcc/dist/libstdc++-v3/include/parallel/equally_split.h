@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2007-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -45,8 +45,8 @@ namespace __gnu_parallel
    *  @returns End of __splitter sequence, i.e. @c __s+__num_threads+1 */
   template<typename _DifferenceType, typename _OutputIterator>
     _OutputIterator
-    equally_split(_DifferenceType __n, _ThreadIndex __num_threads,
-		  _OutputIterator __s)
+    __equally_split(_DifferenceType __n, _ThreadIndex __num_threads,
+		    _OutputIterator __s)
     {
       _DifferenceType __chunk_length = __n / __num_threads;
       _DifferenceType __num_longer_chunks = __n % __num_threads;
@@ -68,12 +68,13 @@ namespace __gnu_parallel
    *  thread number __thread_no+1 (excluded).
    *  @param __n Number of elements
    *  @param __num_threads Number of parts
+   *  @param __thread_no Number of threads
    *  @returns splitting point */
   template<typename _DifferenceType>
     _DifferenceType
-    equally_split_point(_DifferenceType __n,
-			_ThreadIndex __num_threads,
-			_ThreadIndex __thread_no)
+    __equally_split_point(_DifferenceType __n,
+			  _ThreadIndex __num_threads,
+			  _ThreadIndex __thread_no)
     {
       _DifferenceType __chunk_length = __n / __num_threads;
       _DifferenceType __num_longer_chunks = __n % __num_threads;

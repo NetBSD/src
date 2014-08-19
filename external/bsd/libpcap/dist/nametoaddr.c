@@ -1,4 +1,4 @@
-/*	$NetBSD: nametoaddr.c,v 1.1.1.2.12.1 2013/06/23 06:28:19 tls Exp $	*/
+/*	$NetBSD: nametoaddr.c,v 1.1.1.2.12.2 2014/08/19 23:47:16 tls Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -249,6 +249,7 @@ pcap_nametoportrange(const char *name, int *port1, int *port2, int *proto)
 			free(cpy);
 			return 0;
 		}
+		free(cpy);
 
 		if (*proto != save_proto)
 			*proto = PROTO_UNDEF;
@@ -416,6 +417,8 @@ pcap_ether_aton(const char *s)
 	register u_int d;
 
 	e = ep = (u_char *)malloc(6);
+	if (e == NULL)
+		return (NULL);
 
 	while (*s) {
 		if (*s == ':' || *s == '.' || *s == '-')

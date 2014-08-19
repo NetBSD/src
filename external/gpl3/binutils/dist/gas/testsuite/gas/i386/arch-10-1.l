@@ -29,6 +29,7 @@
 .*:58: Error: .*
 .*:60: Error: .*
 .*:62: Error: .*
+.*:64: Error: .*
 GAS LISTING .*
 
 
@@ -81,20 +82,22 @@ GAS LISTING .*
 [ 	]*46[ 	]+invept  \(%ecx\),%ebx
 [ 	]*47[ 	]+\# RDTSCP
 [ 	]*48[ 	]+rdtscp
-[ 	]*49[ 	]+\# 3DNow
-[ 	]*50[ 	]+pmulhrw %mm4,%mm3
-[ 	]*51[ 	]+\# 3DNow Extensions
-[ 	]*52[ 	]+pswapd %mm4,%mm3
-[ 	]*53[ 	]+\# SSE4a
-[ 	]*54[ 	]+insertq %xmm2,%xmm1
-[ 	]*55[ 	]+\# SVME
-[ 	]*56[ 	]+vmload
+[ 	]*49[ 	]+\# 3DNow or PRFCHW
+[ 	]*50[ 	]+prefetchw 0x1000\(,%esi,2\)
+[ 	]*51[ 	]+\# SSE4a
+[ 	]*52[ 	]+insertq %xmm2,%xmm1
+[ 	]*53[ 	]+\# SVME
+[ 	]*54[ 	]+vmload
+[ 	]*55[ 	]+\# ABM/LZCNT
+[ 	]*56[ 	]+lzcnt %ecx,%ebx
 GAS LISTING .*
 
 
-[ 	]*57[ 	]+\# ABM
-[ 	]*58[ 	]+lzcnt %ecx,%ebx
-[ 	]*59[ 	]+\# PadLock
-[ 	]*60[ 	]+xstorerng
-[ 	]*61[ 	]+\# nop
-[ 	]*62[ 	]+nopl \(%eax\)
+[ 	]*57[ 	]+\# PadLock
+[ 	]*58[ 	]+xstorerng
+[ 	]*59[ 	]+\# nop
+[ 	]*60[ 	]+nopl \(%eax\)
+[ 	]*61[ 	]+\# BMI
+[ 	]*62[ 	]+blsr %ecx,%ebx
+[ 	]*63[ 	]+\# TBM
+[ 	]*64[ 	]+blcfill %ecx,%ebx

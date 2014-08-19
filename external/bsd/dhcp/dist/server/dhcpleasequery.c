@@ -1,7 +1,6 @@
-/*	$NetBSD: dhcpleasequery.c,v 1.4.4.2 2013/06/23 06:26:30 tls Exp $	*/
-
+/*	$NetBSD: dhcpleasequery.c,v 1.4.4.3 2014/08/19 23:46:42 tls Exp $	*/
 /*
- * Copyright (C) 2011-2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2013 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2006-2007,2009 by Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -18,8 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dhcpleasequery.c,v 1.4.4.2 2013/06/23 06:26:30 tls Exp $");
-
+__RCSID("$NetBSD: dhcpleasequery.c,v 1.4.4.3 2014/08/19 23:46:42 tls Exp $");
 
 #include "dhcpd.h"
 
@@ -210,26 +208,16 @@ dhcpleasequery(struct packet *packet, int ms_nulltp) {
 		return;
 	}
 
-	execute_statements_in_scope(NULL,
-				    packet,
-				    NULL,
-				    NULL,
-				    packet->options,
-				    options,
-				    &global_scope,
-				    relay_group,
-				    NULL);
+	execute_statements_in_scope(NULL, packet, NULL, NULL, packet->options,
+				    options, &global_scope, relay_group,
+				    NULL, NULL);
 
 	for (i=packet->class_count-1; i>=0; i--) {
-		execute_statements_in_scope(NULL,
-					    packet,
-					    NULL,
-					    NULL,
-					    packet->options,
-					    options,
+		execute_statements_in_scope(NULL, packet, NULL, NULL,
+					    packet->options, options,
 					    &global_scope,
 					    packet->classes[i]->group,
-					    relay_group);
+					    relay_group, NULL);
 	}
 
 	/* 
@@ -1099,7 +1087,7 @@ dhcpv6_leasequery(struct data_string *reply_ret, struct packet *packet) {
 	}
 	execute_statements_in_scope(NULL, lq.packet, NULL, NULL,
 				    lq.packet->options, lq.reply_opts,
-				    &global_scope, root_group, NULL);
+				    &global_scope, root_group, NULL, NULL);
 
 	lq.buf.reply.msg_type = DHCPV6_LEASEQUERY_REPLY;
 

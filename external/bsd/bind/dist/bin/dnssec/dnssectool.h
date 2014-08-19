@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssectool.h,v 1.3.2.1 2013/02/25 00:25:03 tls Exp $	*/
+/*	$NetBSD: dnssectool.h,v 1.3.2.2 2014/08/19 23:45:59 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -70,7 +70,8 @@ cleanup_entropy(isc_entropy_t **ectx);
 dns_ttl_t strtottl(const char *str);
 
 isc_stdtime_t
-strtotime(const char *str, isc_int64_t now, isc_int64_t base);
+strtotime(const char *str, isc_int64_t now, isc_int64_t base,
+	  isc_boolean_t *setp);
 
 dns_rdataclass_t
 strtoclass(const char *str);

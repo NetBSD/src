@@ -1,10 +1,10 @@
-/*	$NetBSD: cache.c,v 1.1.1.3 2010/12/12 15:23:13 adam Exp $	*/
+/*	$NetBSD: cache.c,v 1.1.1.3.12.1 2014/08/19 23:52:02 tls Exp $	*/
 
 /* cache.c - routines to maintain an in-core cache of entries */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/cache.c,v 1.27.2.7 2010/04/13 20:23:32 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2010 The OpenLDAP Foundation.
+ * Copyright 2001-2014 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -441,3 +441,11 @@ monitor_cache_destroy(
 	return 0;
 }
 
+int monitor_back_release(
+	Operation *op,
+	Entry *e,
+	int rw )
+{
+	monitor_info_t	*mi = ( monitor_info_t * )op->o_bd->be_private;
+	return monitor_cache_release( mi, e );
+}

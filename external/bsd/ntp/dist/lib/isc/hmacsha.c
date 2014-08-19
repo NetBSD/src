@@ -1,7 +1,7 @@
-/*	$NetBSD: hmacsha.c,v 1.1.1.1 2009/12/13 16:54:20 kardel Exp $	*/
+/*	$NetBSD: hmacsha.c,v 1.1.1.1.12.1 2014/08/19 23:51:39 tls Exp $	*/
 
 /*
- * Copyright (C) 2005-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2005-2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hmacsha.c,v 1.8 2007/08/27 03:27:53 marka Exp */
+/* Id */
 
 /*
  * This code implements the HMAC-SHA1, HMAC-SHA224, HMAC-SHA256, HMAC-SHA384
@@ -28,11 +28,171 @@
 
 #include <isc/assertions.h>
 #include <isc/hmacsha.h>
+#include <isc/platform.h>
 #include <isc/sha1.h>
 #include <isc/sha2.h>
 #include <isc/string.h>
 #include <isc/types.h>
 #include <isc/util.h>
+
+#ifdef ISC_PLATFORM_OPENSSLHASH
+
+void
+isc_hmacsha1_init(isc_hmacsha1_t *ctx, const unsigned char *key,
+		  unsigned int len)
+{
+	HMAC_Init(ctx, (const void *) key, (int) len, EVP_sha1());
+}
+
+void
+isc_hmacsha1_invalidate(isc_hmacsha1_t *ctx) {
+	HMAC_CTX_cleanup(ctx);
+}
+
+void
+isc_hmacsha1_update(isc_hmacsha1_t *ctx, const unsigned char *buf,
+		   unsigned int len)
+{
+	HMAC_Update(ctx, buf, (int) len);
+}
+
+void
+isc_hmacsha1_sign(isc_hmacsha1_t *ctx, unsigned char *digest, size_t len) {
+	unsigned char newdigest[ISC_SHA1_DIGESTLENGTH];
+
+	REQUIRE(len <= ISC_SHA1_DIGESTLENGTH);
+
+	HMAC_Final(ctx, newdigest, NULL);
+	HMAC_CTX_cleanup(ctx);
+	memcpy(digest, newdigest, len);
+	memset(newdigest, 0, sizeof(newdigest));
+}
+
+void
+isc_hmacsha224_init(isc_hmacsha224_t *ctx, const unsigned char *key,
+		    unsigned int len)
+{
+	HMAC_Init(ctx, (const void *) key, (int) len, EVP_sha224());
+}
+
+void
+isc_hmacsha224_invalidate(isc_hmacsha224_t *ctx) {
+	HMAC_CTX_cleanup(ctx);
+}
+
+void
+isc_hmacsha224_update(isc_hmacsha224_t *ctx, const unsigned char *buf,
+		   unsigned int len)
+{
+	HMAC_Update(ctx, buf, (int) len);
+}
+
+void
+isc_hmacsha224_sign(isc_hmacsha224_t *ctx, unsigned char *digest, size_t len) {
+	unsigned char newdigest[ISC_SHA224_DIGESTLENGTH];
+
+	REQUIRE(len <= ISC_SHA224_DIGESTLENGTH);
+
+	HMAC_Final(ctx, newdigest, NULL);
+	HMAC_CTX_cleanup(ctx);
+	memcpy(digest, newdigest, len);
+	memset(newdigest, 0, sizeof(newdigest));
+}
+
+void
+isc_hmacsha256_init(isc_hmacsha256_t *ctx, const unsigned char *key,
+		    unsigned int len)
+{
+	HMAC_Init(ctx, (const void *) key, (int) len, EVP_sha256());
+}
+
+void
+isc_hmacsha256_invalidate(isc_hmacsha256_t *ctx) {
+	HMAC_CTX_cleanup(ctx);
+}
+
+void
+isc_hmacsha256_update(isc_hmacsha256_t *ctx, const unsigned char *buf,
+		   unsigned int len)
+{
+	HMAC_Update(ctx, buf, (int) len);
+}
+
+void
+isc_hmacsha256_sign(isc_hmacsha256_t *ctx, unsigned char *digest, size_t len) {
+	unsigned char newdigest[ISC_SHA256_DIGESTLENGTH];
+
+	REQUIRE(len <= ISC_SHA256_DIGESTLENGTH);
+
+	HMAC_Final(ctx, newdigest, NULL);
+	HMAC_CTX_cleanup(ctx);
+	memcpy(digest, newdigest, len);
+	memset(newdigest, 0, sizeof(newdigest));
+}
+
+void
+isc_hmacsha384_init(isc_hmacsha384_t *ctx, const unsigned char *key,
+		    unsigned int len)
+{
+	HMAC_Init(ctx, (const void *) key, (int) len, EVP_sha384());
+}
+
+void
+isc_hmacsha384_invalidate(isc_hmacsha384_t *ctx) {
+	HMAC_CTX_cleanup(ctx);
+}
+
+void
+isc_hmacsha384_update(isc_hmacsha384_t *ctx, const unsigned char *buf,
+		   unsigned int len)
+{
+	HMAC_Update(ctx, buf, (int) len);
+}
+
+void
+isc_hmacsha384_sign(isc_hmacsha384_t *ctx, unsigned char *digest, size_t len) {
+	unsigned char newdigest[ISC_SHA384_DIGESTLENGTH];
+
+	REQUIRE(len <= ISC_SHA384_DIGESTLENGTH);
+
+	HMAC_Final(ctx, newdigest, NULL);
+	HMAC_CTX_cleanup(ctx);
+	memcpy(digest, newdigest, len);
+	memset(newdigest, 0, sizeof(newdigest));
+}
+
+void
+isc_hmacsha512_init(isc_hmacsha512_t *ctx, const unsigned char *key,
+		    unsigned int len)
+{
+	HMAC_Init(ctx, (const void *) key, (int) len, EVP_sha512());
+}
+
+void
+isc_hmacsha512_invalidate(isc_hmacsha512_t *ctx) {
+	HMAC_CTX_cleanup(ctx);
+}
+
+void
+isc_hmacsha512_update(isc_hmacsha512_t *ctx, const unsigned char *buf,
+		   unsigned int len)
+{
+	HMAC_Update(ctx, buf, (int) len);
+}
+
+void
+isc_hmacsha512_sign(isc_hmacsha512_t *ctx, unsigned char *digest, size_t len) {
+	unsigned char newdigest[ISC_SHA512_DIGESTLENGTH];
+
+	REQUIRE(len <= ISC_SHA512_DIGESTLENGTH);
+
+	HMAC_Final(ctx, newdigest, NULL);
+	HMAC_CTX_cleanup(ctx);
+	memcpy(digest, newdigest, len);
+	memset(newdigest, 0, sizeof(newdigest));
+}
+
+#else
 
 #define IPAD 0x36
 #define OPAD 0x5C
@@ -66,8 +226,7 @@ isc_hmacsha1_init(isc_hmacsha1_t *ctx, const unsigned char *key,
 void
 isc_hmacsha1_invalidate(isc_hmacsha1_t *ctx) {
 	isc_sha1_invalidate(&ctx->sha1ctx);
-	memset(ctx->key, 0, sizeof(ctx->key));
-	memset(ctx, 0, sizeof(ctx));
+	memset(ctx, 0, sizeof(*ctx));
 }
 
 /*
@@ -107,19 +266,6 @@ isc_hmacsha1_sign(isc_hmacsha1_t *ctx, unsigned char *digest, size_t len) {
 }
 
 /*
- * Verify signature - finalize SHA1 operation and reapply SHA1, then
- * compare to the supplied digest.
- */
-isc_boolean_t
-isc_hmacsha1_verify(isc_hmacsha1_t *ctx, unsigned char *digest, size_t len) {
-	unsigned char newdigest[ISC_SHA1_DIGESTLENGTH];
-
-	REQUIRE(len <= ISC_SHA1_DIGESTLENGTH);
-	isc_hmacsha1_sign(ctx, newdigest, ISC_SHA1_DIGESTLENGTH);
-	return (ISC_TF(memcmp(digest, newdigest, len) == 0));
-}
-
-/*
  * Start HMAC-SHA224 process.  Initialize an sha224 context and digest the key.
  */
 void
@@ -147,8 +293,7 @@ isc_hmacsha224_init(isc_hmacsha224_t *ctx, const unsigned char *key,
 
 void
 isc_hmacsha224_invalidate(isc_hmacsha224_t *ctx) {
-	memset(ctx->key, 0, sizeof(ctx->key));
-	memset(ctx, 0, sizeof(ctx));
+	memset(ctx, 0, sizeof(*ctx));
 }
 
 /*
@@ -187,19 +332,6 @@ isc_hmacsha224_sign(isc_hmacsha224_t *ctx, unsigned char *digest, size_t len) {
 }
 
 /*
- * Verify signature - finalize SHA224 operation and reapply SHA224, then
- * compare to the supplied digest.
- */
-isc_boolean_t
-isc_hmacsha224_verify(isc_hmacsha224_t *ctx, unsigned char *digest, size_t len) {
-	unsigned char newdigest[ISC_SHA224_DIGESTLENGTH];
-
-	REQUIRE(len <= ISC_SHA224_DIGESTLENGTH);
-	isc_hmacsha224_sign(ctx, newdigest, ISC_SHA224_DIGESTLENGTH);
-	return (ISC_TF(memcmp(digest, newdigest, len) == 0));
-}
-
-/*
  * Start HMAC-SHA256 process.  Initialize an sha256 context and digest the key.
  */
 void
@@ -227,8 +359,7 @@ isc_hmacsha256_init(isc_hmacsha256_t *ctx, const unsigned char *key,
 
 void
 isc_hmacsha256_invalidate(isc_hmacsha256_t *ctx) {
-	memset(ctx->key, 0, sizeof(ctx->key));
-	memset(ctx, 0, sizeof(ctx));
+	memset(ctx, 0, sizeof(*ctx));
 }
 
 /*
@@ -267,19 +398,6 @@ isc_hmacsha256_sign(isc_hmacsha256_t *ctx, unsigned char *digest, size_t len) {
 }
 
 /*
- * Verify signature - finalize SHA256 operation and reapply SHA256, then
- * compare to the supplied digest.
- */
-isc_boolean_t
-isc_hmacsha256_verify(isc_hmacsha256_t *ctx, unsigned char *digest, size_t len) {
-	unsigned char newdigest[ISC_SHA256_DIGESTLENGTH];
-
-	REQUIRE(len <= ISC_SHA256_DIGESTLENGTH);
-	isc_hmacsha256_sign(ctx, newdigest, ISC_SHA256_DIGESTLENGTH);
-	return (ISC_TF(memcmp(digest, newdigest, len) == 0));
-}
-
-/*
  * Start HMAC-SHA384 process.  Initialize an sha384 context and digest the key.
  */
 void
@@ -307,8 +425,7 @@ isc_hmacsha384_init(isc_hmacsha384_t *ctx, const unsigned char *key,
 
 void
 isc_hmacsha384_invalidate(isc_hmacsha384_t *ctx) {
-	memset(ctx->key, 0, sizeof(ctx->key));
-	memset(ctx, 0, sizeof(ctx));
+	memset(ctx, 0, sizeof(*ctx));
 }
 
 /*
@@ -347,19 +464,6 @@ isc_hmacsha384_sign(isc_hmacsha384_t *ctx, unsigned char *digest, size_t len) {
 }
 
 /*
- * Verify signature - finalize SHA384 operation and reapply SHA384, then
- * compare to the supplied digest.
- */
-isc_boolean_t
-isc_hmacsha384_verify(isc_hmacsha384_t *ctx, unsigned char *digest, size_t len) {
-	unsigned char newdigest[ISC_SHA384_DIGESTLENGTH];
-
-	REQUIRE(len <= ISC_SHA384_DIGESTLENGTH);
-	isc_hmacsha384_sign(ctx, newdigest, ISC_SHA384_DIGESTLENGTH);
-	return (ISC_TF(memcmp(digest, newdigest, len) == 0));
-}
-
-/*
  * Start HMAC-SHA512 process.  Initialize an sha512 context and digest the key.
  */
 void
@@ -387,8 +491,7 @@ isc_hmacsha512_init(isc_hmacsha512_t *ctx, const unsigned char *key,
 
 void
 isc_hmacsha512_invalidate(isc_hmacsha512_t *ctx) {
-	memset(ctx->key, 0, sizeof(ctx->key));
-	memset(ctx, 0, sizeof(ctx));
+	memset(ctx, 0, sizeof(*ctx));
 }
 
 /*
@@ -424,6 +527,59 @@ isc_hmacsha512_sign(isc_hmacsha512_t *ctx, unsigned char *digest, size_t len) {
 	isc_sha512_final(newdigest, &ctx->sha512ctx);
 	memcpy(digest, newdigest, len);
 	memset(newdigest, 0, sizeof(newdigest));
+}
+#endif /* !ISC_PLATFORM_OPENSSLHASH */
+
+/*
+ * Verify signature - finalize SHA1 operation and reapply SHA1, then
+ * compare to the supplied digest.
+ */
+isc_boolean_t
+isc_hmacsha1_verify(isc_hmacsha1_t *ctx, unsigned char *digest, size_t len) {
+	unsigned char newdigest[ISC_SHA1_DIGESTLENGTH];
+
+	REQUIRE(len <= ISC_SHA1_DIGESTLENGTH);
+	isc_hmacsha1_sign(ctx, newdigest, ISC_SHA1_DIGESTLENGTH);
+	return (ISC_TF(memcmp(digest, newdigest, len) == 0));
+}
+
+/*
+ * Verify signature - finalize SHA224 operation and reapply SHA224, then
+ * compare to the supplied digest.
+ */
+isc_boolean_t
+isc_hmacsha224_verify(isc_hmacsha224_t *ctx, unsigned char *digest, size_t len) {
+	unsigned char newdigest[ISC_SHA224_DIGESTLENGTH];
+
+	REQUIRE(len <= ISC_SHA224_DIGESTLENGTH);
+	isc_hmacsha224_sign(ctx, newdigest, ISC_SHA224_DIGESTLENGTH);
+	return (ISC_TF(memcmp(digest, newdigest, len) == 0));
+}
+
+/*
+ * Verify signature - finalize SHA256 operation and reapply SHA256, then
+ * compare to the supplied digest.
+ */
+isc_boolean_t
+isc_hmacsha256_verify(isc_hmacsha256_t *ctx, unsigned char *digest, size_t len) {
+	unsigned char newdigest[ISC_SHA256_DIGESTLENGTH];
+
+	REQUIRE(len <= ISC_SHA256_DIGESTLENGTH);
+	isc_hmacsha256_sign(ctx, newdigest, ISC_SHA256_DIGESTLENGTH);
+	return (ISC_TF(memcmp(digest, newdigest, len) == 0));
+}
+
+/*
+ * Verify signature - finalize SHA384 operation and reapply SHA384, then
+ * compare to the supplied digest.
+ */
+isc_boolean_t
+isc_hmacsha384_verify(isc_hmacsha384_t *ctx, unsigned char *digest, size_t len) {
+	unsigned char newdigest[ISC_SHA384_DIGESTLENGTH];
+
+	REQUIRE(len <= ISC_SHA384_DIGESTLENGTH);
+	isc_hmacsha384_sign(ctx, newdigest, ISC_SHA384_DIGESTLENGTH);
+	return (ISC_TF(memcmp(digest, newdigest, len) == 0));
 }
 
 /*

@@ -281,6 +281,8 @@ static const struct reg_name other_registers[] =
   { "pc", AM33 },
   { "psw", 0 },
   { "sp", 0 },
+  { "ssp", 0 },
+  { "usp", 0 },
 };
 
 #define OTHER_REG_NAME_CNT	ARRAY_SIZE (other_registers)
@@ -2063,6 +2065,12 @@ keep_going:
 	      && fixups[i].reloc != BFD_RELOC_32_GOT_PCREL
 	      && fixups[i].reloc != BFD_RELOC_32_GOTOFF
 	      && fixups[i].reloc != BFD_RELOC_32_PLT_PCREL
+	      && fixups[i].reloc != BFD_RELOC_MN10300_TLS_GD
+	      && fixups[i].reloc != BFD_RELOC_MN10300_TLS_LD
+	      && fixups[i].reloc != BFD_RELOC_MN10300_TLS_LDO
+	      && fixups[i].reloc != BFD_RELOC_MN10300_TLS_GOTIE
+	      && fixups[i].reloc != BFD_RELOC_MN10300_TLS_IE
+	      && fixups[i].reloc != BFD_RELOC_MN10300_TLS_LE
 	      && fixups[i].reloc != BFD_RELOC_MN10300_GOT32)
 	    {
 	      reloc_howto_type *reloc_howto;
@@ -2501,6 +2509,18 @@ mn10300_parse_name (char const *name,
     reloc_type = BFD_RELOC_MN10300_GOT32;
   else if ((next_end = mn10300_end_of_match (next + 1, "PLT")))
     reloc_type = BFD_RELOC_32_PLT_PCREL;
+  else if ((next_end = mn10300_end_of_match (next + 1, "tlsgd")))
+    reloc_type = BFD_RELOC_MN10300_TLS_GD;
+  else if ((next_end = mn10300_end_of_match (next + 1, "tlsldm")))
+    reloc_type = BFD_RELOC_MN10300_TLS_LD;
+  else if ((next_end = mn10300_end_of_match (next + 1, "dtpoff")))
+    reloc_type = BFD_RELOC_MN10300_TLS_LDO;
+  else if ((next_end = mn10300_end_of_match (next + 1, "gotntpoff")))
+    reloc_type = BFD_RELOC_MN10300_TLS_GOTIE;
+  else if ((next_end = mn10300_end_of_match (next + 1, "indntpoff")))
+    reloc_type = BFD_RELOC_MN10300_TLS_IE;
+  else if ((next_end = mn10300_end_of_match (next + 1, "tpoff")))
+    reloc_type = BFD_RELOC_MN10300_TLS_LE;
   else
     goto no_suffix;
 

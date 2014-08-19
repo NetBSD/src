@@ -1,6 +1,7 @@
-# $NetBSD: md.vax,v 1.37.6.1 2013/02/25 00:24:33 tls Exp $
-./usr/include/ieeefp.h				comp-obsolete		obsolete
+# $NetBSD: md.vax,v 1.37.6.2 2014/08/19 23:45:43 tls Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
+./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
+./usr/include/ieeefp.h				comp-obsolete		obsolete
 ./usr/include/vax				comp-c-include
 ./usr/include/vax/_G_config.h			comp-obsolete		obsolete
 ./usr/include/vax/ansi.h			comp-c-include
@@ -41,8 +42,8 @@
 ./usr/include/vax/macros.h			comp-c-include
 ./usr/include/vax/math.h			comp-c-include
 ./usr/include/vax/mcontext.h			comp-c-include
-./usr/include/vax/mutex.h			comp-c-include
 ./usr/include/vax/mtpr.h			comp-c-include
+./usr/include/vax/mutex.h			comp-c-include
 ./usr/include/vax/nexus.h			comp-c-include
 ./usr/include/vax/param.h			comp-c-include
 ./usr/include/vax/pcb.h				comp-c-include

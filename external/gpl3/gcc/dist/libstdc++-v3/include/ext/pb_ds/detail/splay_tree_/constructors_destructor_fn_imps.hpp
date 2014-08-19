@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,7 +34,7 @@
 // warranty.
 
 /**
- * @file constructors_destructor_fn_imps.hpp
+ * @file splay_tree_/constructors_destructor_fn_imps.hpp
  * Contains an implementation class for splay_tree_.
  */
 
@@ -50,37 +50,37 @@ copy_from_range(It first_it, It last_it)
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-PB_DS_CLASS_NAME()
+PB_DS_S_TREE_NAME()
 {
   initialize();
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
 }
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-PB_DS_CLASS_NAME(const Cmp_Fn& r_cmp_fn) :
+PB_DS_S_TREE_NAME(const Cmp_Fn& r_cmp_fn) :
   base_type(r_cmp_fn)
 {
   initialize();
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
 }
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-PB_DS_CLASS_NAME(const Cmp_Fn& r_cmp_fn, const node_update& r_node_update) :
+PB_DS_S_TREE_NAME(const Cmp_Fn& r_cmp_fn, const node_update& r_node_update) :
   base_type(r_cmp_fn, r_node_update)
 {
   initialize();
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
 }
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-PB_DS_CLASS_NAME(const PB_DS_CLASS_C_DEC& other) :
+PB_DS_S_TREE_NAME(const PB_DS_CLASS_C_DEC& other) :
   base_type(other)
 {
   initialize();
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
 }
 
 PB_DS_CLASS_T_DEC
@@ -88,11 +88,11 @@ void
 PB_DS_CLASS_C_DEC::
 swap(PB_DS_CLASS_C_DEC& other)
 {
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
-  _GLIBCXX_DEBUG_ONLY(other.assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
+  PB_DS_ASSERT_VALID(other)
   base_type::swap(other);
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
-  _GLIBCXX_DEBUG_ONLY(other.assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
+  PB_DS_ASSERT_VALID(other)
 }
 
 PB_DS_CLASS_T_DEC

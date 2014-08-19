@@ -2,7 +2,7 @@
    using ELF objects with special linker post-processing to produce FLAT
    executables.
 
-   Copyright (C) 2003, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2003-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -20,9 +20,6 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#undef TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (68k uClinux)");
-
 #undef STARTFILE_SPEC
 #define STARTFILE_SPEC \
 "%{mshared-library-id=0|!mshared-library-id=*: crt1.o%s ;: Scrt1.o%s} \
@@ -35,7 +32,7 @@ along with GCC; see the file COPYING3.  If not see
    profiling, or libg.a.  */
 #undef LIB_SPEC
 #define LIB_SPEC \
-"%{mid-shared-library:%{!static-libc:-R libc.gdb%s}} -lc"
+"%{mid-shared-library:%{!static-libc:-R libc.gdb%s}} %{pthread:-lpthread} -lc"
 
 /* Default to using -elf2flt with no options.  */
 #undef LINK_SPEC
@@ -48,7 +45,7 @@ along with GCC; see the file COPYING3.  If not see
 #define TARGET_OS_CPP_BUILTINS()				\
   do								\
     {								\
-      LINUX_TARGET_OS_CPP_BUILTINS ();				\
+      GNU_USER_TARGET_OS_CPP_BUILTINS ();			\
       builtin_define ("__uClinux__");				\
       if (TARGET_ID_SHARED_LIBRARY)				\
 	{							\

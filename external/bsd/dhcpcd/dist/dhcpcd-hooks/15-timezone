@@ -1,4 +1,4 @@
-# $NetBSD: 15-timezone,v 1.1.1.1.2.2 2013/06/23 06:26:31 tls Exp $
+# $NetBSD: 15-timezone,v 1.1.1.1.2.3 2014/08/19 23:46:43 tls Exp $
 
 # Configure timezone
 
@@ -33,11 +33,8 @@ set_zoneinfo()
 		return 1
 	fi
 
-	syslog info "timezone changed to $new_tzdb_timezone"
-	if [ -h "$localtime" ]; then
-		ln -sf "$zone_file" "$localtime"
-	else
-		cp "$zone_file" "$localtime"
+	if copy_file "$zone_file" "$localtime"; then
+		syslog info "timezone changed to $new_tzdb_timezone"
 	fi
 }
 

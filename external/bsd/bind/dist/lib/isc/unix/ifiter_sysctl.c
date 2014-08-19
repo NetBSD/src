@@ -1,7 +1,7 @@
-/*	$NetBSD: ifiter_sysctl.c,v 1.3 2012/06/05 00:42:46 christos Exp $	*/
+/*	$NetBSD: ifiter_sysctl.c,v 1.3.2.1 2014/08/19 23:46:34 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -39,7 +39,7 @@
 		sizeof(__uint64_t))
 #else
 #define ROUNDUP(a) ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) \
-                    : sizeof(long))
+		    : sizeof(long))
 #endif
 
 #define IFITER_MAGIC		ISC_MAGIC('I', 'F', 'I', 'S')
@@ -60,9 +60,9 @@ struct isc_interfaceiter {
 static int mib[6] = {
 	CTL_NET,
 	PF_ROUTE,
-        0,
+	0,
 	0, 			/* Any address family. */
-        NET_RT_IFLIST,
+	NET_RT_IFLIST,
 	0 			/* Flags. */
 };
 
@@ -173,7 +173,7 @@ internal_current(isc_interfaceiter_t *iter) {
 			namelen = sizeof(iter->current.name) - 1;
 
 		memset(iter->current.name, 0, sizeof(iter->current.name));
-		memcpy(iter->current.name, sdl->sdl_data, namelen);
+		memmove(iter->current.name, sdl->sdl_data, namelen);
 
 		iter->current.flags = 0;
 

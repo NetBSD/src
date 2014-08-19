@@ -1,10 +1,10 @@
-/*	$NetBSD: init.c,v 1.1.1.4 2010/12/12 15:23:05 adam Exp $	*/
+/*	$NetBSD: init.c,v 1.1.1.4.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
 /* init.c - initialize ldap backend */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/init.c,v 1.99.2.16 2010/04/15 20:25:48 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2010 The OpenLDAP Foundation.
+ * Copyright 2003-2014 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -37,9 +37,9 @@
 static const ldap_extra_t ldap_extra = {
 	ldap_back_proxy_authz_ctrl,
 	ldap_back_controls_free,
-	slap_idassert_authzfrom_parse_cf,
+	slap_idassert_authzfrom_parse,
 	slap_idassert_passthru_parse_cf,
-	slap_idassert_parse_cf,
+	slap_idassert_parse,
 	slap_retry_info_destroy,
 	slap_retry_info_parse,
 	slap_retry_info_unparse,
@@ -102,6 +102,11 @@ ldap_back_initialize( BackendInfo *bi )
 
 	bi->bi_extra = (void *)&ldap_extra;
 
+	rc =  ldap_back_init_cf( bi );
+	if ( rc ) {
+		return rc;
+	}
+
 	rc = chain_initialize();
 	if ( rc ) {
 		return rc;
@@ -118,8 +123,7 @@ ldap_back_initialize( BackendInfo *bi )
 		return rc;
 	}
 #endif
-
-	return ldap_back_init_cf( bi );
+	return rc;
 }
 
 int
@@ -177,6 +181,11 @@ ldap_back_db_init( Backend *be, ConfigReply *cr )
 		LDAP_TAILQ_INIT( &li->li_conn_priv[ i ].lic_priv );
 	}
 	li->li_conn_priv_max = LDAP_BACK_CONN_PRIV_DEFAULT;
+
+	ldap_pvt_thread_mutex_init( &li->li_counter_mutex );
+	for ( i = 0; i < SLAP_OP_LAST; i++ ) {
+		ldap_pvt_mp_init( li->li_ops_completed[ i ] );
+	}
 
 	be->be_private = li;
 	SLAP_DBFLAGS( be ) |= SLAP_DBFLAG_NOLASTMOD;
@@ -334,6 +343,11 @@ ldap_back_db_destroy( Backend *be, ConfigReply *cr )
 		ldap_pvt_thread_mutex_unlock( &li->li_conninfo.lai_mutex );
 		ldap_pvt_thread_mutex_destroy( &li->li_conninfo.lai_mutex );
 		ldap_pvt_thread_mutex_destroy( &li->li_uri_mutex );
+
+		for ( i = 0; i < SLAP_OP_LAST; i++ ) {
+			ldap_pvt_mp_clear( li->li_ops_completed[ i ] );
+		}
+		ldap_pvt_thread_mutex_destroy( &li->li_counter_mutex );
 	}
 
 	ch_free( be->be_private );

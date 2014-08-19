@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.11 2011/02/22 18:45:10 pooka Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.11.10.1 2014/08/19 23:45:14 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -63,14 +63,14 @@
 #if defined(MULTIPROCESSOR)
 	.section .bss
 	.align	1024
-#ifdef PIC
+#ifdef __PIC__
 	.globl _C_LABEL(_atomic_cas_locktab)
 #endif
 OTYPE(_C_LABEL(_atomic_cas_locktab))
 _C_LABEL(_atomic_cas_locktab):
 	.space	1024
 
-#ifdef PIC
+#ifdef __PIC__
 /* o4 is not used for PSR in PIC cases, so we can use it here */
 #define GETLOCKTAB							\
 	PIC_PROLOGUE(%o3,%o4)						;\
@@ -147,6 +147,7 @@ ATOMIC_OP_ALIAS(atomic_cas_ulong,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_ptr,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_32)
+STRONG_ALIAS(__sync_val_compare_and_swap_4,_atomic_cas_32)
 
 ATOMIC_OP_ALIAS(atomic_cas_32_ni,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_32_ni,_atomic_cas_32)

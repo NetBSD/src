@@ -1,7 +1,7 @@
-/*	$NetBSD: ifiter_ioctl.c,v 1.3 2012/06/05 00:42:46 christos Exp $	*/
+/*	$NetBSD: ifiter_ioctl.c,v 1.3.2.1 2014/08/19 23:46:34 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -400,7 +400,7 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 static void
 get_inaddr(isc_netaddr_t *dst, struct in_addr *src) {
 	dst->family = AF_INET;
-	memcpy(&dst->type.in, src, sizeof(struct in_addr));
+	memmove(&dst->type.in, src, sizeof(struct in_addr));
 }
 
 static isc_result_t
@@ -456,7 +456,7 @@ internal_current4(isc_interfaceiter_t *iter) {
 	ifrp = (struct ifreq *)((char *) iter->ifc.ifc_req + iter->pos);
 
 	memset(&ifreq, 0, sizeof(ifreq));
-	memcpy(&ifreq, ifrp, sizeof(ifreq));
+	memmove(&ifreq, ifrp, sizeof(ifreq));
 
 	family = ifreq.ifr_addr.sa_family;
 #if defined(ISC_PLATFORM_HAVEIPV6)
@@ -471,7 +471,7 @@ internal_current4(isc_interfaceiter_t *iter) {
 
 	INSIST(sizeof(ifreq.ifr_name) <= sizeof(iter->current.name));
 	memset(iter->current.name, 0, sizeof(iter->current.name));
-	memcpy(iter->current.name, ifreq.ifr_name, sizeof(ifreq.ifr_name));
+	memmove(iter->current.name, ifreq.ifr_name, sizeof(ifreq.ifr_name));
 
 	get_addr(family, &iter->current.address,
 		 (struct sockaddr *)&ifrp->ifr_addr, ifreq.ifr_name);
@@ -526,8 +526,8 @@ internal_current4(isc_interfaceiter_t *iter) {
 
 #if !defined(ISC_PLATFORM_HAVEIF_LADDRREQ) && defined(SIOCGLIFADDR)
 	memset(&lifreq, 0, sizeof(lifreq));
-	memcpy(lifreq.lifr_name, iter->current.name, sizeof(lifreq.lifr_name));
-	memcpy(&lifreq.lifr_addr, &iter->current.address.type.in6,
+	memmove(lifreq.lifr_name, iter->current.name, sizeof(lifreq.lifr_name));
+	memmove(&lifreq.lifr_addr, &iter->current.address.type.in6,
 	       sizeof(iter->current.address.type.in6));
 
 	if (ioctl(iter->socket, SIOCGLIFADDR, &lifreq) < 0) {
@@ -601,7 +601,7 @@ internal_current4(isc_interfaceiter_t *iter) {
 	 * Get the network mask.
 	 */
 	memset(&ifreq, 0, sizeof(ifreq));
-	memcpy(&ifreq, ifrp, sizeof(ifreq));
+	memmove(&ifreq, ifrp, sizeof(ifreq));
 	/*
 	 * Ignore the HP/UX warning about "integer overflow during
 	 * conversion.  It comes from its own macro definition,
@@ -639,7 +639,7 @@ internal_current6(isc_interfaceiter_t *iter) {
 	ifrp = (struct LIFREQ *)((char *) iter->lifc.lifc_req + iter->pos6);
 
 	memset(&lifreq, 0, sizeof(lifreq));
-	memcpy(&lifreq, ifrp, sizeof(lifreq));
+	memmove(&lifreq, ifrp, sizeof(lifreq));
 
 	family = lifreq.lifr_addr.ss_family;
 #ifdef ISC_PLATFORM_HAVEIPV6
@@ -654,7 +654,7 @@ internal_current6(isc_interfaceiter_t *iter) {
 
 	INSIST(sizeof(lifreq.lifr_name) <= sizeof(iter->current.name));
 	memset(iter->current.name, 0, sizeof(iter->current.name));
-	memcpy(iter->current.name, lifreq.lifr_name, sizeof(lifreq.lifr_name));
+	memmove(iter->current.name, lifreq.lifr_name, sizeof(lifreq.lifr_name));
 
 	get_addr(family, &iter->current.address,
 		 (struct sockaddr *)&lifreq.lifr_addr, lifreq.lifr_name);
@@ -741,7 +741,7 @@ internal_current6(isc_interfaceiter_t *iter) {
 	 * Get the network mask.  Netmask already zeroed.
 	 */
 	memset(&lifreq, 0, sizeof(lifreq));
-	memcpy(&lifreq, ifrp, sizeof(lifreq));
+	memmove(&lifreq, ifrp, sizeof(lifreq));
 
 #ifdef lifr_addrlen
 	/*

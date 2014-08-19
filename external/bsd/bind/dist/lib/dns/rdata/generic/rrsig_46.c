@@ -1,7 +1,7 @@
-/*	$NetBSD: rrsig_46.c,v 1.4 2012/06/05 00:42:14 christos Exp $	*/
+/*	$NetBSD: rrsig_46.c,v 1.4.2.1 2014/08/19 23:46:30 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -92,7 +92,20 @@ fromtext_rrsig(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      ISC_FALSE));
-	RETTOK(dns_time32_fromtext(DNS_AS_STR(token), &time_expire));
+	if (strlen(DNS_AS_STR(token)) <= 10U &&
+	    *DNS_AS_STR(token) != '-' && *DNS_AS_STR(token) != '+') {
+		char *end;
+		unsigned long u;
+		isc_uint64_t u64;
+
+		u64 = u = strtoul(DNS_AS_STR(token), &end, 10);
+		if (u == ULONG_MAX || *end != 0)
+			RETTOK(DNS_R_SYNTAX);
+		if (u64 > 0xffffffffUL)
+			RETTOK(ISC_R_RANGE);
+		time_expire = u;
+	} else
+		RETTOK(dns_time32_fromtext(DNS_AS_STR(token), &time_expire));
 	RETERR(uint32_tobuffer(time_expire, target));
 
 	/*
@@ -100,7 +113,20 @@ fromtext_rrsig(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      ISC_FALSE));
-	RETTOK(dns_time32_fromtext(DNS_AS_STR(token), &time_signed));
+	if (strlen(DNS_AS_STR(token)) <= 10U &&
+	    *DNS_AS_STR(token) != '-' && *DNS_AS_STR(token) != '+') {
+		char *end;
+		unsigned long u;
+		isc_uint64_t u64;
+
+		u64 = u = strtoul(DNS_AS_STR(token), &end, 10);
+		if (u == ULONG_MAX || *end != 0)
+			RETTOK(DNS_R_SYNTAX);
+		if (u64 > 0xffffffffUL)
+			RETTOK(ISC_R_RANGE);
+		time_signed = u;
+	} else
+		RETTOK(dns_time32_fromtext(DNS_AS_STR(token), &time_signed));
 	RETERR(uint32_tobuffer(time_signed, target));
 
 	/*
@@ -225,11 +251,15 @@ totext_rrsig(ARGS_TOTEXT) {
 	 * Sig.
 	 */
 	RETERR(str_totext(tctx->linebreak, target));
-	if (tctx->width == 0)   /* No splitting */
-		RETERR(isc_base64_totext(&sr, 60, "", target));
-	else
-		RETERR(isc_base64_totext(&sr, tctx->width - 2,
-					 tctx->linebreak, target));
+	if ((tctx->flags & DNS_STYLEFLAG_NOCRYPTO) == 0) {
+		if (tctx->width == 0)   /* No splitting */
+			RETERR(isc_base64_totext(&sr, 60, "", target));
+		else
+			RETERR(isc_base64_totext(&sr, tctx->width - 2,
+						 tctx->linebreak, target));
+	} else
+		RETERR(str_totext("[omitted]", target));
+
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
 		RETERR(str_totext(" )", target));
 

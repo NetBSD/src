@@ -1,4 +1,4 @@
-/*	$NetBSD: regress.h,v 1.1.1.1.12.1 2013/06/23 06:28:18 tls Exp $	*/
+/*	$NetBSD: regress.h,v 1.1.1.1.12.2 2014/08/19 23:47:16 tls Exp $	*/
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -112,7 +112,7 @@ int _test_ai_eq(const struct evutil_addrinfo *ai, const char *sockaddr_port,
 	} while (/*CONSTCOND*/0)
 
 #define test_timeval_diff_leq(tv1, tv2, diff, tolerance)		\
-	tt_int_op(abs(timeval_msec_diff((tv1), (tv2)) - diff), <=, tolerance)
+	tt_int_op(imaxabs(timeval_msec_diff((tv1), (tv2)) - diff), <=, tolerance)
 
 #define test_timeval_diff_eq(tv1, tv2, diff)				\
 	test_timeval_diff_leq((tv1), (tv2), (diff), 50)

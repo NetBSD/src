@@ -10,6 +10,7 @@ data_label:
 	.lcomm small_local_common,1
 	
 	.text
+text_label:
 	lb	$4,0
 	lb	$4,1
 	lb	$4,0x8000

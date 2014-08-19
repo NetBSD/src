@@ -1,9 +1,9 @@
-/*	$NetBSD: check_test.c,v 1.1.1.1 2011/09/11 17:20:27 christos Exp $	*/
+/*	$NetBSD: check_test.c,v 1.1.1.1.8.1 2014/08/19 23:46:37 tls Exp $	*/
 
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -92,14 +92,10 @@ static
 void
 check_line(int fd, const char *exp)
 {
-    atf_dynstr_t line;
-
-    atf_dynstr_init(&line);
-    ATF_CHECK(!read_line(fd, &line));
-    ATF_CHECK_MSG(atf_equal_dynstr_cstring(&line, exp),
-                  "read: '%s', expected: '%s'",
-                  atf_dynstr_cstring(&line), exp);
-    atf_dynstr_fini(&line);
+    char *line = atf_utils_readline(fd);
+    ATF_CHECK(line != NULL);
+    ATF_CHECK_STREQ_MSG(exp, line, "read: '%s', expected: '%s'", line, exp);
+    free(line);
 }
 
 /* ---------------------------------------------------------------------
@@ -248,15 +244,15 @@ ATF_TC_BODY(build_c_o, tc)
 {
     init_and_run_h_tc(&ATF_TC_NAME(h_build_c_o_ok),
              &ATF_TC_PACK_NAME(h_build_c_o_ok), "stdout", "stderr");
-    ATF_CHECK(grep_file("stdout", "-o test.o"));
-    ATF_CHECK(grep_file("stdout", "-c test.c"));
+    ATF_CHECK(atf_utils_grep_file("-o test.o", "stdout"));
+    ATF_CHECK(atf_utils_grep_file("-c test.c", "stdout"));
 
     init_and_run_h_tc(&ATF_TC_NAME(h_build_c_o_fail),
              &ATF_TC_PACK_NAME(h_build_c_o_fail), "stdout", "stderr");
-    ATF_CHECK(grep_file("stdout", "-o test.o"));
-    ATF_CHECK(grep_file("stdout", "-c test.c"));
-    ATF_CHECK(grep_file("stderr", "test.c"));
-    ATF_CHECK(grep_file("stderr", "UNDEFINED_SYMBOL"));
+    ATF_CHECK(atf_utils_grep_file("-o test.o", "stdout"));
+    ATF_CHECK(atf_utils_grep_file("-c test.c", "stdout"));
+    ATF_CHECK(atf_utils_grep_file("test.c", "stderr"));
+    ATF_CHECK(atf_utils_grep_file("UNDEFINED_SYMBOL", "stderr"));
 }
 
 ATF_TC(build_cpp);
@@ -269,16 +265,16 @@ ATF_TC_BODY(build_cpp, tc)
 {
     init_and_run_h_tc(&ATF_TC_NAME(h_build_cpp_ok),
              &ATF_TC_PACK_NAME(h_build_cpp_ok), "stdout", "stderr");
-    ATF_CHECK(grep_file("stdout", "-o.*test.p"));
-    ATF_CHECK(grep_file("stdout", "test.c"));
-    ATF_CHECK(grep_file("test.p", "foo bar"));
+    ATF_CHECK(atf_utils_grep_file("-o.*test.p", "stdout"));
+    ATF_CHECK(atf_utils_grep_file("test.c", "stdout"));
+    ATF_CHECK(atf_utils_grep_file("foo bar", "test.p"));
 
     init_and_run_h_tc(&ATF_TC_NAME(h_build_cpp_fail),
              &ATF_TC_PACK_NAME(h_build_cpp_fail), "stdout", "stderr");
-    ATF_CHECK(grep_file("stdout", "-o test.p"));
-    ATF_CHECK(grep_file("stdout", "test.c"));
-    ATF_CHECK(grep_file("stderr", "test.c"));
-    ATF_CHECK(grep_file("stderr", "non-existent.h"));
+    ATF_CHECK(atf_utils_grep_file("-o test.p", "stdout"));
+    ATF_CHECK(atf_utils_grep_file("test.c", "stdout"));
+    ATF_CHECK(atf_utils_grep_file("test.c", "stderr"));
+    ATF_CHECK(atf_utils_grep_file("non-existent.h", "stderr"));
 }
 
 ATF_TC(build_cxx_o);
@@ -291,15 +287,15 @@ ATF_TC_BODY(build_cxx_o, tc)
 {
     init_and_run_h_tc(&ATF_TC_NAME(h_build_cxx_o_ok),
              &ATF_TC_PACK_NAME(h_build_cxx_o_ok), "stdout", "stderr");
-    ATF_CHECK(grep_file("stdout", "-o test.o"));
-    ATF_CHECK(grep_file("stdout", "-c test.cpp"));
+    ATF_CHECK(atf_utils_grep_file("-o test.o", "stdout"));
+    ATF_CHECK(atf_utils_grep_file("-c test.cpp", "stdout"));
 
     init_and_run_h_tc(&ATF_TC_NAME(h_build_cxx_o_fail),
              &ATF_TC_PACK_NAME(h_build_cxx_o_fail), "stdout", "stderr");
-    ATF_CHECK(grep_file("stdout", "-o test.o"));
-    ATF_CHECK(grep_file("stdout", "-c test.cpp"));
-    ATF_CHECK(grep_file("stderr", "test.cpp"));
-    ATF_CHECK(grep_file("stderr", "UNDEFINED_SYMBOL"));
+    ATF_CHECK(atf_utils_grep_file("-o test.o", "stdout"));
+    ATF_CHECK(atf_utils_grep_file("-c test.cpp", "stdout"));
+    ATF_CHECK(atf_utils_grep_file("test.cpp", "stderr"));
+    ATF_CHECK(atf_utils_grep_file("UNDEFINED_SYMBOL", "stderr"));
 }
 
 ATF_TC(exec_array);

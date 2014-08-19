@@ -1,10 +1,10 @@
-/*	$NetBSD: ldapmodify.c,v 1.1.1.3 2010/12/12 15:18:12 adam Exp $	*/
+/*	$NetBSD: ldapmodify.c,v 1.1.1.3.12.1 2014/08/19 23:51:55 tls Exp $	*/
 
 /* ldapmodify.c - generic program to modify or add entries using LDAP */
-/* OpenLDAP: pkg/ldap/clients/tools/ldapmodify.c,v 1.186.2.14 2010/04/15 22:16:50 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * Portions Copyright 2006 Howard Chu.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
@@ -66,7 +66,6 @@
 #include "lutil_ldap.h"
 #include "ldif.h"
 #include "ldap_defaults.h"
-#include "ldap_log.h"
 #include "ldap_pvt.h"
 #include "lber_pvt.h"
 
@@ -100,7 +99,7 @@ static struct berval BV_NEWSUP = BER_BVC("newsuperior");
 #define	BV_CASEMATCH(a, b) \
 	((a)->bv_len == (b)->bv_len && 0 == strcasecmp((a)->bv_val, (b)->bv_val))
 
-static int process_ldif_rec LDAP_P(( char *rbuf, int lineno ));
+static int process_ldif_rec LDAP_P(( char *rbuf, unsigned long lineno ));
 static int parse_ldif_control LDAP_P(( struct berval *val, LDAPControl ***pctrls ));
 static int domodify LDAP_P((
 	const char *dn,
@@ -244,12 +243,12 @@ main( int argc, char **argv )
 {
 	char		*rbuf = NULL, *rejbuf = NULL;
 	FILE		*rejfp;
-	struct LDIFFP *ldiffp, ldifdummy = {0};
+	struct LDIFFP *ldiffp = NULL, ldifdummy = {0};
 	char		*matched_msg, *error_msg;
 	int		rc, retval, ldifrc;
 	int		len;
-	int		i = 0;
-	int		lineno, nextline = 0, lmax = 0;
+	int		i = 0, lmax = 0;
+	unsigned long	lineno, nextline = 0;
 	LDAPControl	c[1];
 
 	prog = lutil_progname( "ldapmodify", argc, argv );
@@ -266,7 +265,8 @@ main( int argc, char **argv )
 	if ( rejfile != NULL ) {
 		if (( rejfp = fopen( rejfile, "w" )) == NULL ) {
 			perror( rejfile );
-			return( EXIT_FAILURE );
+			retval = EXIT_FAILURE;
+			goto fail;
 		}
 	} else {
 		rejfp = NULL;
@@ -275,7 +275,8 @@ main( int argc, char **argv )
 	if ( infile != NULL ) {
 		if (( ldiffp = ldif_open( infile, "r" )) == NULL ) {
 			perror( infile );
-			return( EXIT_FAILURE );
+			retval = EXIT_FAILURE;
+			goto fail;
 		}
 	} else {
 		ldifdummy.fp = stdin;
@@ -296,7 +297,10 @@ main( int argc, char **argv )
 		rc = ldap_txn_start_s( ld, NULL, NULL, &txn_id );
 		if( rc != LDAP_SUCCESS ) {
 			tool_perror( "ldap_txn_start_s", rc, NULL, NULL, NULL, NULL );
-			if( txn > 1 ) return EXIT_FAILURE;
+			if( txn > 1 ) {
+				retval = EXIT_FAILURE;
+				goto fail;
+			}
 			txn = 0;
 		}
 	}
@@ -330,7 +334,8 @@ main( int argc, char **argv )
 			len = strlen( rbuf );
 			if (( rejbuf = (char *)ber_memalloc( len+1 )) == NULL ) {
 				perror( "malloc" );
-				exit( EXIT_FAILURE );
+				retval = EXIT_FAILURE;
+				goto fail;
 			}
 			memcpy( rejbuf, rbuf, len+1 );
 		}
@@ -385,21 +390,21 @@ main( int argc, char **argv )
 	}
 #endif
 
-	if ( !dont ) {
-		tool_unbind( ld );
-	}
-
+fail:;
 	if ( rejfp != NULL ) {
 		fclose( rejfp );
 	}
 
-	tool_destroy();
-	return( retval );
+	if ( ldiffp != NULL && ldiffp != &ldifdummy ) {
+		ldif_close( ldiffp );
+	}
+
+	tool_exit( ld, retval );
 }
 
 
 static int
-process_ldif_rec( char *rbuf, int linenum )
+process_ldif_rec( char *rbuf, unsigned long linenum )
 {
 	char	*line, *dn, *newrdn, *newsup;
 	int		rc, modop;
@@ -449,10 +454,10 @@ process_ldif_rec( char *rbuf, int linenum )
 		}
 	
 		if ( ( rc = ldif_parse_line2( line, btype+i, vals+i, &freev ) ) < 0 ) {
-			fprintf( stderr, _("%s: invalid format (line %d) entry: \"%s\"\n"),
+			fprintf( stderr, _("%s: invalid format (line %lu) entry: \"%s\"\n"),
 				prog, linenum+i, dn == NULL ? "" : dn );
 			rc = LDAP_PARAM_ERROR;
-			break;
+			goto leave;
 		}
 		freeval[i] = freev;
 
@@ -461,7 +466,7 @@ process_ldif_rec( char *rbuf, int linenum )
 				int	v;
 				if( vals[i].bv_len == 0 || lutil_atoi( &v, vals[i].bv_val) != 0 || v != 1 ) {
 					fprintf( stderr,
-						_("%s: invalid version %s, line %d (ignored)\n"),
+						_("%s: invalid version %s, line %lu (ignored)\n"),
 						prog, vals[i].bv_val, linenum );
 				}
 				version++;
@@ -499,14 +504,14 @@ process_ldif_rec( char *rbuf, int linenum )
 		rc = parse_ldif_control( vals+i, &pctrls );
 		if (rc != 0) {
 			fprintf( stderr,
-				_("%s: Error processing %s line, line %d: %s\n"),
+				_("%s: Error processing %s line, line %lu: %s\n"),
 				prog, BV_CONTROL.bv_val, linenum+i, ldap_err2string(rc) );
 		}
 		i++;
 		if ( i>= lines ) {
 short_input:
 			fprintf( stderr,
-				_("%s: Expecting more input after %s line, line %d\n"),
+				_("%s: Expecting more input after %s line, line %lu\n"),
 				prog, btype[i-1].bv_val, linenum+i );
 			
 			rc = LDAP_PARAM_ERROR;
@@ -527,7 +532,7 @@ short_input:
 
 		if ( ++icnt != vals[i].bv_len ) {
 			fprintf( stderr, _("%s: illegal trailing space after"
-				" \"%s: %s\" trimmed (line %d, entry \"%s\")\n"),
+				" \"%s: %s\" trimmed (line %lu, entry \"%s\")\n"),
 				prog, BV_CHANGETYPE.bv_val, vals[i].bv_val, linenum+i, dn );
 			vals[i].bv_val[icnt] = '\0';
 		}
@@ -548,7 +553,7 @@ short_input:
 				goto short_input;
 			if ( !BV_CASEMATCH( btype+i, &BV_NEWRDN )) {
 				fprintf( stderr, _("%s: expecting \"%s:\" but saw"
-					" \"%s:\" (line %d, entry \"%s\")\n"),
+					" \"%s:\" (line %lu, entry \"%s\")\n"),
 					prog, BV_NEWRDN.bv_val, btype[i].bv_val, linenum+i, dn );
 				rc = LDAP_PARAM_ERROR;
 				goto leave;
@@ -559,7 +564,7 @@ short_input:
 				goto short_input;
 			if ( !BV_CASEMATCH( btype+i, &BV_DELETEOLDRDN )) {
 				fprintf( stderr, _("%s: expecting \"%s:\" but saw"
-					" \"%s:\" (line %d, entry \"%s\")\n"),
+					" \"%s:\" (line %lu, entry \"%s\")\n"),
 					prog, BV_DELETEOLDRDN.bv_val, btype[i].bv_val, linenum+i, dn );
 				rc = LDAP_PARAM_ERROR;
 				goto leave;
@@ -569,7 +574,7 @@ short_input:
 			if ( i < lines ) {
 				if ( !BV_CASEMATCH( btype+i, &BV_NEWSUP )) {
 					fprintf( stderr, _("%s: expecting \"%s:\" but saw"
-						" \"%s:\" (line %d, entry \"%s\")\n"),
+						" \"%s:\" (line %lu, entry \"%s\")\n"),
 						prog, BV_NEWSUP.bv_val, btype[i].bv_val, linenum+i, dn );
 					rc = LDAP_PARAM_ERROR;
 					goto leave;
@@ -582,7 +587,7 @@ short_input:
 			got_all = delete_entry = 1;
 		} else {
 			fprintf( stderr,
-				_("%s:  unknown %s \"%s\" (line %d, entry \"%s\")\n"),
+				_("%s:  unknown %s \"%s\" (line %lu, entry \"%s\")\n"),
 				prog, BV_CHANGETYPE.bv_val, vals[i].bv_val, linenum+i, dn );
 			rc = LDAP_PARAM_ERROR;
 			goto leave;
@@ -598,7 +603,7 @@ short_input:
 	if ( got_all ) {
 		if ( i < lines ) {
 			fprintf( stderr,
-				_("%s: extra lines at end (line %d, entry \"%s\")\n"),
+				_("%s: extra lines at end (line %lu, entry \"%s\")\n"),
 				prog, linenum+i, dn );
 			rc = LDAP_PARAM_ERROR;
 			goto leave;
@@ -615,6 +620,13 @@ short_input:
 		/* Make sure all attributes with multiple values are contiguous */
 		for (; i<lines; i++) {
 			for (j=i+1; j<lines; j++) {
+				if ( !btype[j].bv_val ) {
+					fprintf( stderr,
+						_("%s: missing attributeDescription (line %lu, entry \"%s\")\n"),
+						prog, linenum+j, dn );
+					rc = LDAP_PARAM_ERROR;
+					goto leave;
+				}
 				if ( BV_CASEMATCH( btype+i, btype+j )) {
 					nmods--;
 					/* out of order, move intervening attributes down */
@@ -652,7 +664,7 @@ short_input:
 			if ( BV_CASEMATCH( btype+i, &BV_DN )) {
 				fprintf( stderr, _("%s: attributeDescription \"%s\":"
 					" (possible missing newline"
-						" after line %d, entry \"%s\"?)\n"),
+						" after line %lu, entry \"%s\"?)\n"),
 					prog, btype[i].bv_val, linenum+i - 1, dn );
 			}
 			if ( !BV_CASEMATCH( btype+i, &bv )) {
@@ -686,7 +698,7 @@ short_input:
     
 			if ( ++icnt != vals[i].bv_len ) {
 				fprintf( stderr, _("%s: illegal trailing space after"
-					" \"%s: %s\" trimmed (line %d, entry \"%s\")\n"),
+					" \"%s: %s\" trimmed (line %lu, entry \"%s\")\n"),
 					prog, type, vals[i].bv_val, linenum+i, dn );
 				vals[i].bv_val[icnt] = '\0';
 			}
@@ -717,7 +729,7 @@ short_input:
 				nmods--;
 			} else {	/* no modify op: invalid LDIF */
 				fprintf( stderr, _("%s: modify operation type is missing at"
-					" line %d, entry \"%s\"\n"),
+					" line %lu, entry \"%s\"\n"),
 					prog, linenum+i, dn );
 				rc = LDAP_PARAM_ERROR;
 				goto leave;
@@ -731,7 +743,7 @@ short_input:
 		} else {
 			if ( !BV_CASEMATCH( btype+i, &bv )) {
 				fprintf( stderr, _("%s: wrong attributeType at"
-					" line %d, entry \"%s\"\n"),
+					" line %lu, entry \"%s\"\n"),
 					prog, linenum+i, dn );
 				rc = LDAP_PARAM_ERROR;
 				goto leave;
@@ -906,8 +918,8 @@ parse_ldif_control(
 	char *s, *oidStart;
 	LDAPControl *newctrl = NULL;
 	LDAPControl **pctrls = NULL;
-	struct berval type, bv;
-	int freeval;
+	struct berval type, bv = BER_BVNULL;
+	int freeval = 0;
 
 	if (ppctrls) pctrls = *ppctrls;
 	/* OID should come first. Validate and extract it. */
@@ -1261,7 +1273,7 @@ static int process_response(
 
 	if ( text ) ldap_memfree( text );
 	if ( matched ) ldap_memfree( matched );
-	if ( text ) ber_memvfree( (void **)refs );
+	if ( refs ) ber_memvfree( (void **)refs );
 
 	if ( ctrls ) {
 		tool_print_ctrls( ld, ctrls );

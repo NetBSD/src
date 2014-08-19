@@ -1,6 +1,6 @@
-.\"	$NetBSD: dig.1,v 1.4 2012/06/05 00:38:52 christos Exp $
+.\"	$NetBSD: dig.1,v 1.4.2.1 2014/08/19 23:45:59 tls Exp $
 .\"
-.\" Copyright (C) 2004-2011 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2011, 2013, 2014 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000-2003 Internet Software Consortium.
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
@@ -22,11 +22,11 @@
 .\"     Title: dig
 .\"    Author: 
 .\" Generator: DocBook XSL Stylesheets v1.71.1 <http://docbook.sf.net/>
-.\"      Date: Jun 30, 2000
+.\"      Date: February 19, 2014
 .\"    Manual: BIND9
 .\"    Source: BIND9
 .\"
-.TH "DIG" "1" "Jun 30, 2000" "BIND9" "BIND9"
+.TH "DIG" "1" "February 19, 2014" "BIND9" "BIND9"
 .\" disable hyphenation
 .nh
 .\" disable justification (adjust text to left margin only)
@@ -35,7 +35,7 @@
 dig \- DNS lookup utility
 .SH "SYNOPSIS"
 .HP 4
-\fBdig\fR [@server] [\fB\-b\ \fR\fB\fIaddress\fR\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-f\ \fR\fB\fIfilename\fR\fR] [\fB\-k\ \fR\fB\fIfilename\fR\fR] [\fB\-m\fR] [\fB\-p\ \fR\fB\fIport#\fR\fR] [\fB\-q\ \fR\fB\fIname\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-x\ \fR\fB\fIaddr\fR\fR] [\fB\-y\ \fR\fB\fI[hmac:]\fR\fIname:key\fR\fR] [\fB\-4\fR] [\fB\-6\fR] [name] [type] [class] [queryopt...]
+\fBdig\fR [@server] [\fB\-b\ \fR\fB\fIaddress\fR\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-f\ \fR\fB\fIfilename\fR\fR] [\fB\-k\ \fR\fB\fIfilename\fR\fR] [\fB\-m\fR] [\fB\-p\ \fR\fB\fIport#\fR\fR] [\fB\-q\ \fR\fB\fIname\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-v\fR] [\fB\-x\ \fR\fB\fIaddr\fR\fR] [\fB\-y\ \fR\fB\fI[hmac:]\fR\fIname:key\fR\fR] [\fB\-4\fR] [\fB\-6\fR] [name] [type] [class] [queryopt...]
 .HP 4
 \fBdig\fR [\fB\-h\fR]
 .HP 4
@@ -59,7 +59,9 @@ allows multiple lookups to be issued from the command line.
 Unless it is told to query a specific name server,
 \fBdig\fR
 will try each of the servers listed in
-\fI/etc/resolv.conf\fR.
+\fI/etc/resolv.conf\fR. If no usable server addresses are found,
+\fBdig\fR
+will send the query to the local host.
 .PP
 When no command line arguments or options are given,
 \fBdig\fR
@@ -70,7 +72,7 @@ It is possible to set per\-user defaults for
 via
 \fI${HOME}/.digrc\fR. This file is read and any options in it are applied before the command line arguments.
 .PP
-The IN and CH class names overlap with the IN and CH top level domains names. Either use the
+The IN and CH class names overlap with the IN and CH top level domain names. Either use the
 \fB\-t\fR
 and
 \fB\-c\fR
@@ -97,13 +99,20 @@ is the name or IP address of the name server to query. This can be an IPv4 addre
 \fIserver\fR
 argument is a hostname,
 \fBdig\fR
-resolves that name before querying that name server. If no
+resolves that name before querying that name server.
+.sp
+If no
 \fIserver\fR
 argument is provided,
 \fBdig\fR
 consults
-\fI/etc/resolv.conf\fR
-and queries the name servers listed there. The reply from the name server that responds is displayed.
+\fI/etc/resolv.conf\fR; if an address is found there, it queries the name server at that address. If either of the
+\fB\-4\fR
+or
+\fB\-6\fR
+options are in use, then only addresses for the corresponding transport will be tried. If no usable addresses are found,
+\fBdig\fR
+will send the query to the local host. The reply from the name server that responds is displayed.
 .RE
 .PP
 \fBname\fR
@@ -179,9 +188,15 @@ ixfr=N. The incremental zone transfer will contain the changes made to the zone 
 The
 \fB\-q\fR
 option sets the query name to
-\fIname\fR. This useful do distinguish the
+\fIname\fR. This is useful to distinguish the
 \fIname\fR
 from other arguments.
+.PP
+The
+\fB\-v\fR
+causes
+\fBdig\fR
+to print the version number and exit.
 .PP
 Reverse lookups \(em mapping addresses to names \(em are simplified by the
 \fB\-x\fR
@@ -368,6 +383,11 @@ Toggle the display of comment lines in the output. The default is to print comme
 Toggle the display of per\-record comments in the output (for example, human\-readable key information about DNSKEY records). The default is not to print record comments unless multiline mode is active.
 .RE
 .PP
+\fB+[no]crypto\fR
+.RS 4
+Toggle the display of cryptographic fields in DNSSEC records. The contents of these field are unnecessary to debug most DNSSEC validation failures and removing them makes it easier to see the common failures. The default is to display the fields. When omitted they are replaced by the string "[omitted]" or in the DNSKEY case the key id is displayed as the replacement, e.g. "[ key id = value ]".
+.RE
+.PP
 \fB+split=W\fR
 .RS 4
 Split long hex\- or base64\-formatted fields in resource records into chunks of
@@ -528,6 +548,28 @@ When chasing DNSSEC signature chains perform a top\-down validation. Requires di
 .RS 4
 Include an EDNS name server ID request when sending a query.
 .RE
+.PP
+\fB+[no]keepopen\fR
+.RS 4
+Keep the TCP socket open between queries and reuse it rather than creating a new TCP socket for each lookup. The default is
+\fB+nokeepopen\fR.
+.RE
+.PP
+\fB+[no]sit\fR\fB[=####]\fR
+.RS 4
+Send a Source Identity Token EDNS option, with optional value. Replaying a SIT from a previous response will allow the server to identify a previous client. The default is
+\fB+nosit\fR. Currently using experimental value 65001 for the option code.
+.RE
+.PP
+\fB+[no]subnet=addr/prefix\fR
+.RS 4
+Send an EDNS Client Subnet option with the speciifed IP address or network prefix.
+.RE
+.PP
+\fB+[no]expire\fR
+.RS 4
+Send an EDNS Expire option. Currently using experimental value 65002 for the option code.
+.RE
 .SH "MULTIPLE QUERIES"
 .PP
 The BIND 9 implementation of
@@ -590,7 +632,7 @@ RFC1035.
 .PP
 There are probably too many query options.
 .SH "COPYRIGHT"
-Copyright \(co 2004\-2011 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004\-2011, 2013, 2014 Internet Systems Consortium, Inc. ("ISC")
 .br
 Copyright \(co 2000\-2003 Internet Software Consortium.
 .br

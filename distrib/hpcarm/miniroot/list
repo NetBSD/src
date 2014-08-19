@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.9 2010/05/01 12:14:11 tsutsui Exp $
+#	$NetBSD: list,v 1.9.12.1 2014/08/19 23:45:39 tls Exp $
 
 # extras in bin
 PROG	bin/csh
@@ -21,7 +21,7 @@ PROG	usr/bin/tset usr/bin/reset
 PROG	usr/bin/vi
 
 # crunchgen source directory specials: progs built in nonstandard places
-SPECIAL	vi		srcdir usr.bin/nvi/build
+SPECIAL	vi		srcdir external/bsd/nvi/usr.bin/nvi
 
 # Minimize use of MFS
 SYMLINK	/tmp	var/tmp

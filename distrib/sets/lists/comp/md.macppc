@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.36.2.1 2013/02/25 00:24:33 tls Exp $
+# $NetBSD: md.macppc,v 1.36.2.2 2014/08/19 23:45:43 tls Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/macppc				comp-c-include
 ./usr/include/macppc/_G_config.h		comp-obsolete		obsolete
@@ -56,6 +56,8 @@
 ./usr/include/macppc/rwlock.h			comp-c-include
 ./usr/include/macppc/setjmp.h			comp-c-include
 ./usr/include/macppc/signal.h			comp-c-include
+./usr/include/macppc/sljitarch.h		comp-obsolete		obsolete
+./usr/include/macppc/sljit_machdep.h		comp-c-include
 ./usr/include/macppc/spr.h			comp-obsolete		obsolete
 ./usr/include/macppc/stdarg.h			comp-obsolete		obsolete
 ./usr/include/macppc/trap.h			comp-c-include

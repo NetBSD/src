@@ -1,7 +1,7 @@
-/*	$NetBSD: getnameinfo.c,v 1.4 2012/06/05 00:42:23 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.4.2.1 2014/08/19 23:46:32 tls Exp $	*/
 
 /*
- * Copyright (C) 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -149,7 +149,7 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host,
 	    IRS_GETNAMEINFO_BUFLEN_T hostlen, char *serv,
 	    IRS_GETNAMEINFO_BUFLEN_T servlen, IRS_GETNAMEINFO_FLAGS_T flags)
 {
-	struct afd *afd;
+	struct afd *afd = NULL;
 	struct servent *sp;
 	unsigned short port = 0;
 #ifdef IRS_PLATFORM_HAVESALEN
@@ -330,6 +330,7 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen, char *host,
 		case DNS_R_NOVALIDDS:
 		case DNS_R_NOVALIDSIG:
 			ERR(EAI_INSECUREDATA);
+			break;
 		default:
 			ERR(EAI_FAIL);
 		}

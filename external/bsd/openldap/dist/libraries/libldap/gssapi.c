@@ -1,9 +1,9 @@
-/*	$NetBSD: gssapi.c,v 1.1.1.2 2010/12/12 15:21:32 adam Exp $	*/
+/*	$NetBSD: gssapi.c,v 1.1.1.2.12.1 2014/08/19 23:51:59 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/libldap/gssapi.c,v 1.1.2.6 2010/04/19 20:40:08 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Author: Stefan Metzmacher <metze@sernet.de>
@@ -666,9 +666,7 @@ ldap_int_gss_spnego_bind_s( LDAP *ld )
 	gss_buffer_desc input_token, output_token = GSS_C_EMPTY_BUFFER;
 	struct berval cred, *scred = NULL;
 
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_lock( &ldap_int_gssapi_mutex );
-#endif
+	LDAP_MUTEX_LOCK( &ldap_int_gssapi_mutex );
 
 	/* get information from RootDSE entry */
 	rc = ldap_gssapi_get_rootdse_infos ( ld, &mechlist,
@@ -704,7 +702,7 @@ ldap_int_gss_spnego_bind_s( LDAP *ld )
 		req_mech = &spnego_oid;
 	}
 
-	req_flags = ld->ld_options.gssapi_flags;
+	req_flags = ld->ld_options.ldo_gssapi_flags;
 	req_flags |= GSS_C_MUTUAL_FLAG | GSS_C_REPLAY_FLAG;
 
 	/*
@@ -786,9 +784,7 @@ gss_error:
 			      (ret_mech != GSS_C_NO_OID ? ret_mech : req_mech ),
 			      gss_rc, minor_status );
 rc_error:
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_unlock( &ldap_int_gssapi_mutex );
-#endif
+	LDAP_MUTEX_UNLOCK( &ldap_int_gssapi_mutex );
 	LDAP_FREE( mechlist );
 	LDAP_FREE( ldapServiceName );
 	LDAP_FREE( dnsHostName );
@@ -871,11 +867,11 @@ ldap_int_gssapi_get_option( LDAP *ld, int option, void *arg )
 
 	switch ( option ) {
 	case LDAP_OPT_SSPI_FLAGS:
-		* (unsigned *) arg = (unsigned) ld->ld_options.gssapi_flags;
+		* (unsigned *) arg = (unsigned) ld->ld_options.ldo_gssapi_flags;
 		break;
 
 	case LDAP_OPT_SIGN:
-		if ( ld->ld_options.gssapi_flags & GSS_C_INTEG_FLAG ) {
+		if ( ld->ld_options.ldo_gssapi_flags & GSS_C_INTEG_FLAG ) {
 			* (int *) arg = (int)-1;
 		} else {
 			* (int *) arg = (int)0;
@@ -883,7 +879,7 @@ ldap_int_gssapi_get_option( LDAP *ld, int option, void *arg )
 		break;
 
 	case LDAP_OPT_ENCRYPT:
-		if ( ld->ld_options.gssapi_flags & GSS_C_CONF_FLAG ) {
+		if ( ld->ld_options.ldo_gssapi_flags & GSS_C_CONF_FLAG ) {
 			* (int *) arg = (int)-1;
 		} else {
 			* (int *) arg = (int)0;
@@ -934,19 +930,19 @@ ldap_int_gssapi_set_option( LDAP *ld, int option, void *arg )
 	switch ( option ) {
 	case LDAP_OPT_SSPI_FLAGS:
 		if ( arg != LDAP_OPT_OFF ) {
-			ld->ld_options.gssapi_flags = * (unsigned *)arg;
+			ld->ld_options.ldo_gssapi_flags = * (unsigned *)arg;
 		}
 		break;
 
 	case LDAP_OPT_SIGN:
 		if ( arg != LDAP_OPT_OFF ) {
-			ld->ld_options.gssapi_flags |= GSS_C_INTEG_FLAG;
+			ld->ld_options.ldo_gssapi_flags |= GSS_C_INTEG_FLAG;
 		}
 		break;
 
 	case LDAP_OPT_ENCRYPT:
 		if ( arg != LDAP_OPT_OFF ) {
-			ld->ld_options.gssapi_flags |= GSS_C_INTEG_FLAG | GSS_C_CONF_FLAG;
+			ld->ld_options.ldo_gssapi_flags |= GSS_C_INTEG_FLAG | GSS_C_CONF_FLAG;
 		}
 		break;
 

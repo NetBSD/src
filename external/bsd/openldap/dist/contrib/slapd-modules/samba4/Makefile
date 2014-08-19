@@ -1,7 +1,7 @@
-# OpenLDAP: pkg/ldap/contrib/slapd-modules/samba4/Makefile,v 1.3.2.3 2010/06/10 17:44:02 quanah Exp
+# $OpenLDAP$
 # This work is part of OpenLDAP Software <http://www.openldap.org/>.
 #
-# Copyright 1998-2010 The OpenLDAP Foundation.
+# Copyright 1998-2014 The OpenLDAP Foundation.
 # Copyright 2004 Howard Chu, Symas Corp. All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -12,22 +12,23 @@
 # top-level directory of the distribution or, alternatively, at
 # <http://www.OpenLDAP.org/license.html>.
 
-LDAP_SRC=../../..
-# craft according to your installation
-LDAP_BUILD=../../..
+LDAP_SRC = ../../..
+LDAP_BUILD = ../../..
+LDAP_INC = -I$(LDAP_BUILD)/include -I$(LDAP_SRC)/include -I$(LDAP_SRC)/servers/slapd
+LDAP_LIB = $(LDAP_BUILD)/libraries/libldap_r/libldap_r.la \
+	$(LDAP_BUILD)/libraries/liblber/liblber.la
 
-LIBTOOL=$(LDAP_BUILD)/libtool
-OPT=-g -O2
-CC=gcc
+LIBTOOL = $(LDAP_BUILD)/libtool
+CC = gcc
+OPT = -g -O2 -Wall
+DEFS = -DSLAPD_OVER_RDNVAL=SLAPD_MOD_DYNAMIC \
+	-DSLAPD_OVER_PGUID=SLAPD_MOD_DYNAMIC \
+	-DSLAPD_OVER_VERNUM=SLAPD_MOD_DYNAMIC
+INCS = $(LDAP_INC)
+LIBS = $(LDAP_LIB)
 
-DEFS=-DSLAPD_OVER_RDNVAL=2 -DSLAPD_OVER_PGUID=2 -DSLAPD_OVER_VERNUM=2
-
-LDAP_INC=-I$(LDAP_SRC)/include -I$(LDAP_SRC)/servers/slapd \
-	-I$(LDAP_BUILD)/include
-INCS=$(LDAP_INC)
-
-LDAP_LIB=-lldap_r -llber
-LIBS=$(LDAP_LIB)
+PROGRAMS = pguid.la rdnval.la vernum.la
+LTVER = 0:0:0
 
 prefix=/usr/local
 exec_prefix=$(prefix)
@@ -37,36 +38,27 @@ libdir=$(exec_prefix)/lib
 libexecdir=$(exec_prefix)/libexec
 moduledir = $(libexecdir)$(ldap_subdir)
 
-PROGRAMS = pguid.la rdnval.la vernum.la
+.SUFFIXES: .c .o .lo
 
-all:	$(PROGRAMS)
+.c.lo:
+	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $<
 
-pguid.lo:	pguid.c
-	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $?
+all: $(PROGRAMS)
 
-pguid.la:	pguid.lo
-	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info 0:0:0 \
+pguid.la: pguid.lo
+	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
 	-rpath $(moduledir) -module -o $@ $? $(LIBS)
 
-rdnval.lo:	rdnval.c
-	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $?
-
-rdnval.la:	rdnval.lo
-	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info 0:0:0 \
+rdnval.la: rdnval.lo
+	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
 	-rpath $(moduledir) -module -o $@ $? $(LIBS)
 
-vernum.lo:	vernum.c
-	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $?
-
-vernum.la:	vernum.lo
-	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info 0:0:0 \
+vernum.la: vernum.lo
+	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
 	-rpath $(moduledir) -module -o $@ $? $(LIBS)
 
 clean:
-	rm -f \
-		pguid.o pguid.lo pguid.la \
-		rdnval.o rdnval.lo rdnval.la \
-		vernum.o vernum.lo vernum.la
+	rm -rf *.o *.lo *.la .libs
 
 install: $(PROGRAMS)
 	mkdir -p $(DESTDIR)$(moduledir)

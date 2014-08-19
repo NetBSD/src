@@ -14,9 +14,11 @@
 #include <vector>
 #include <cassert>
 
-#include "../../../test_allocator.h"
+#include "test_allocator.h"
 #include "../../../NotConstructible.h"
 #include "../../../stack_allocator.h"
+#include "min_allocator.h"
+#include "asan_testing.h"
 
 template <class C>
 void
@@ -26,6 +28,14 @@ test0()
     assert(c.__invariants());
     assert(c.empty());
     assert(c.get_allocator() == typename C::allocator_type());
+    assert(is_contiguous_container_asan_correct(c)); 
+#if __cplusplus >= 201103L
+    C c1 = {};
+    assert(c1.__invariants());
+    assert(c1.empty());
+    assert(c1.get_allocator() == typename C::allocator_type());
+    assert(is_contiguous_container_asan_correct(c1)); 
+#endif
 }
 
 template <class C>
@@ -36,6 +46,7 @@ test1(const typename C::allocator_type& a)
     assert(c.__invariants());
     assert(c.empty());
     assert(c.get_allocator() == a);
+    assert(is_contiguous_container_asan_correct(c)); 
 }
 
 int main()
@@ -51,4 +62,17 @@ int main()
         std::vector<int, stack_allocator<int, 10> > v;
         assert(v.empty());
     }
+#if __cplusplus >= 201103L
+    {
+    test0<std::vector<int, min_allocator<int>> >();
+    test0<std::vector<NotConstructible, min_allocator<NotConstructible>> >();
+    test1<std::vector<int, min_allocator<int> > >(min_allocator<int>{});
+    test1<std::vector<NotConstructible, min_allocator<NotConstructible> > >
+        (min_allocator<NotConstructible>{});
+    }
+    {
+        std::vector<int, min_allocator<int> > v;
+        assert(v.empty());
+    }
+#endif
 }

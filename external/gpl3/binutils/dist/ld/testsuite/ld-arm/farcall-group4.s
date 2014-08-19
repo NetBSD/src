@@ -8,6 +8,7 @@ myfunc:
 	bl bar
 
 	.section .far, "xa"
+	.type bar, %function
 	.global bar
 bar:
 	bx lr

@@ -29,13 +29,15 @@
 /*
  * RFC3315: DHCPv6
  * supported DHCPv6 options: 
- *  RFC3319,
- *  RFC3633,
- *  RFC3646,
- *  RFC3898,
- *  RFC4075,
- *  RFC4242,
- *  RFC4280,
+ *  RFC3319: Session Initiation Protocol (SIP) Servers options,
+ *  RFC3633: IPv6 Prefix options,
+ *  RFC3646: DNS Configuration options,
+ *  RFC3898: Network Information Service (NIS) Configuration options,
+ *  RFC4075: Simple Network Time Protocol (SNTP) Configuration option,
+ *  RFC4242: Information Refresh Time option,
+ *  RFC4280: Broadcast and Multicast Control Servers options,
+ *  RFC5908: Network Time Protocol (NTP) Server Option for DHCPv6
+ *  RFC6334: Dual-Stack Lite option,
  */
 
 #include <sys/cdefs.h>
@@ -44,7 +46,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-dhcp6.c,v 1.37 2008-02-06 10:26:09 guy Exp ";
 #else
-__RCSID("$NetBSD: print-dhcp6.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-dhcp6.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -150,15 +152,15 @@ struct dhcp6_relay {
 #define DH6OPT_RECONF_ACCEPT 20
 #define DH6OPT_SIP_SERVER_D 21
 #define DH6OPT_SIP_SERVER_A 22
-#define DH6OPT_DNS 23
-#define DH6OPT_DNSNAME 24
+#define DH6OPT_DNS_SERVERS 23
+#define DH6OPT_DOMAIN_LIST 24
 #define DH6OPT_IA_PD 25
 #define DH6OPT_IA_PD_PREFIX 26
 #define DH6OPT_NIS_SERVERS 27
 #define DH6OPT_NISP_SERVERS 28
 #define DH6OPT_NIS_NAME 29
 #define DH6OPT_NISP_NAME 30
-#define DH6OPT_NTP_SERVERS 31
+#define DH6OPT_SNTP_SERVERS 31
 #define DH6OPT_LIFETIME 32
 #define DH6OPT_BCMCS_SERVER_D 33
 #define DH6OPT_BCMCS_SERVER_A 34
@@ -175,6 +177,11 @@ struct dhcp6_relay {
 #define DH6OPT_CLT_TIME 46
 #define DH6OPT_LQ_RELAY_DATA 47
 #define DH6OPT_LQ_CLIENT_LINK 48
+#define DH6OPT_NTP_SERVER 56
+#  define DH6OPT_NTP_SUBOPTION_SRV_ADDR 1
+#  define DH6OPT_NTP_SUBOPTION_MC_ADDR 2
+#  define DH6OPT_NTP_SUBOPTION_SRV_FQDN 3
+#define DH6OPT_AFTR_NAME 64
 
 struct dhcp6opt {
 	u_int16_t dh6opt_type;
@@ -233,16 +240,16 @@ dhcp6opt_name(int type)
 		return "SIP-servers-domain";
 	case DH6OPT_SIP_SERVER_A:
 		return "SIP-servers-address";
-	case DH6OPT_DNS:
+	case DH6OPT_DNS_SERVERS:
 		return "DNS-server";
-	case DH6OPT_DNSNAME:
+	case DH6OPT_DOMAIN_LIST:
 		return "DNS-search-list";
 	case DH6OPT_IA_PD:
 		return "IA_PD";
 	case DH6OPT_IA_PD_PREFIX:
 		return "IA_PD-prefix";
-	case DH6OPT_NTP_SERVERS:
-		return "NTP-server";
+	case DH6OPT_SNTP_SERVERS:
+		return "SNTP-servers";
 	case DH6OPT_LIFETIME:
 		return "lifetime";
 	case DH6OPT_NIS_SERVERS:
@@ -283,6 +290,10 @@ dhcp6opt_name(int type)
 		return "LQ-relay-data";
 	case DH6OPT_LQ_CLIENT_LINK:
 		return "LQ-client-link";
+	case DH6OPT_NTP_SERVER:
+		return "NTP-server";
+	case DH6OPT_AFTR_NAME:
+		return "AFTR-Name";
 	default:
 		snprintf(genstr, sizeof(genstr), "opt_%d", type);
 		return(genstr);
@@ -329,13 +340,17 @@ dhcp6stcode(int code)
 static void
 dhcp6opt_print(const u_char *cp, const u_char *ep)
 {
-	struct dhcp6opt *dh6o;
-	u_char *tp;
+	const struct dhcp6opt *dh6o;
+	const u_char *tp;
 	size_t i;
 	u_int16_t opttype;
 	size_t optlen;
 	u_int8_t auth_proto;
 	u_int authinfolen, authrealmlen;
+	int remain_len;  /* Length of remaining options */
+	int label_len;   /* Label length */
+	u_int16_t subopt_code;
+	u_int16_t subopt_len;
 
 	if (cp == ep)
 		return;
@@ -343,6 +358,7 @@ dhcp6opt_print(const u_char *cp, const u_char *ep)
 		if (ep < cp + sizeof(*dh6o))
 			goto trunc;
 		dh6o = (struct dhcp6opt *)cp;
+		TCHECK(*dh6o);
 		optlen = EXTRACT_16BITS(&dh6o->dh6opt_len);
 		if (ep < cp + sizeof(*dh6o) + optlen)
 			goto trunc;
@@ -415,7 +431,7 @@ dhcp6opt_print(const u_char *cp, const u_char *ep)
 			    EXTRACT_32BITS(&tp[20]));
 			if (optlen > 24) {
 				/* there are sub-options */
-				dhcp6opt_print(tp + 24, tp + 24 + optlen);
+				dhcp6opt_print(tp + 24, tp + optlen);
 			}
 			printf(")");
 			break;
@@ -578,8 +594,8 @@ dhcp6opt_print(const u_char *cp, const u_char *ep)
 			printf(")");
 			break;
 		case DH6OPT_SIP_SERVER_A:
-		case DH6OPT_DNS:
-		case DH6OPT_NTP_SERVERS:
+		case DH6OPT_DNS_SERVERS:
+		case DH6OPT_SNTP_SERVERS:
 		case DH6OPT_NIS_SERVERS:
 		case DH6OPT_NISP_SERVERS:
 		case DH6OPT_BCMCS_SERVER_A:
@@ -592,6 +608,16 @@ dhcp6opt_print(const u_char *cp, const u_char *ep)
 			tp = (u_char *)(dh6o + 1);
 			for (i = 0; i < optlen; i += 16)
 				printf(" %s", ip6addr_string(&tp[i]));
+			printf(")");
+			break;
+		case DH6OPT_SIP_SERVER_D:
+		case DH6OPT_DOMAIN_LIST:
+			tp = (u_char *)(dh6o + 1);
+			while (tp < cp + sizeof(*dh6o) + optlen) {
+				putchar(' ');
+				if ((tp = ns_nprint(tp, cp + sizeof(*dh6o) + optlen)) == NULL)
+					goto trunc;
+			}
 			printf(")");
 			break;
 		case DH6OPT_STATUS_CODE:
@@ -615,7 +641,7 @@ dhcp6opt_print(const u_char *cp, const u_char *ep)
 			    EXTRACT_32BITS(&tp[8]));
 			if (optlen > 12) {
 				/* there are sub-options */
-				dhcp6opt_print(tp + 12, tp + 12 + optlen);
+				dhcp6opt_print(tp + 12, tp + optlen);
 			}
 			printf(")");
 			break;
@@ -628,7 +654,7 @@ dhcp6opt_print(const u_char *cp, const u_char *ep)
 			printf(" IAID:%u", EXTRACT_32BITS(tp));
 			if (optlen > 4) {
 				/* there are sub-options */
-				dhcp6opt_print(tp + 4, tp + 4 + optlen);
+				dhcp6opt_print(tp + 4, tp + optlen);
 			}
 			printf(")");
 			break;
@@ -644,7 +670,7 @@ dhcp6opt_print(const u_char *cp, const u_char *ep)
 			    EXTRACT_32BITS(&tp[4]));
 			if (optlen > 25) {
 				/* there are sub-options */
-				dhcp6opt_print(tp + 25, tp + 25 + optlen);
+				dhcp6opt_print(tp + 25, tp + optlen);
 			}
 			printf(")");
 			break;
@@ -716,6 +742,65 @@ dhcp6opt_print(const u_char *cp, const u_char *ep)
 			for (i = 16; i < optlen && i < 26; i++)
 				printf("%02x", tp[i]);
 			printf("...)");
+			break;
+		case DH6OPT_NTP_SERVER:
+			if (optlen < 4) {
+				printf(" ?)");
+				break;
+			}
+			tp = (u_char *)(dh6o + 1);
+			while (tp < cp + sizeof(*dh6o) + optlen - 4) {
+				subopt_code = EXTRACT_16BITS(tp);
+				tp += 2;
+				subopt_len = EXTRACT_16BITS(tp);
+				tp += 2;
+				if (tp + subopt_len > cp + sizeof(*dh6o) + optlen)
+					goto trunc;
+				printf(" subopt:%d", subopt_code);
+				switch (subopt_code) {
+				case DH6OPT_NTP_SUBOPTION_SRV_ADDR:
+				case DH6OPT_NTP_SUBOPTION_MC_ADDR:
+					if (subopt_len != 16) {
+						printf(" ?");
+						break;
+					}
+					printf(" %s", ip6addr_string(&tp[0]));
+					break;
+				case DH6OPT_NTP_SUBOPTION_SRV_FQDN:
+					putchar(' ');
+					if (ns_nprint(tp, tp + subopt_len) == NULL)
+						goto trunc;
+					break;
+				default:
+					printf(" ?");
+					break;
+				}
+				tp += subopt_len;
+			}
+			printf(")");
+			break;
+		case DH6OPT_AFTR_NAME:
+			if (optlen < 3) {
+				printf(" ?)");
+				break;
+			}
+			tp = (u_char *)(dh6o + 1);
+			remain_len = optlen;
+			printf(" ");
+			/* Encoding is described in section 3.1 of RFC 1035 */
+			while (remain_len && *tp) {
+				label_len =  *tp++;
+				if (label_len < remain_len - 1) {
+					printf("%.*s", label_len, tp);
+					tp += label_len;
+					remain_len -= (label_len + 1);
+					if(*tp) printf(".");
+				} else {
+					printf(" ?");
+					break;
+				}
+			}
+			printf(")");
 			break;
 		default:
 			printf(")");

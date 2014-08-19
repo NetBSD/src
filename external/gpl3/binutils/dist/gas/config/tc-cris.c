@@ -815,7 +815,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, segT sec ATTRIBUTE_UNUSED,
 
   /* Used to check integrity of the relaxation.
      One of 2 = long, 1 = word, or 0 = byte.  */
-  int length_code;
+  int length_code ATTRIBUTE_UNUSED;
 
   /* Size in bytes of variable-sized part of frag.  */
   int var_part_size = 0;
@@ -3811,6 +3811,8 @@ md_parse_option (int arg, char *argp ATTRIBUTE_UNUSED)
       break;
 
     case OPTION_PIC:
+      if (OUTPUT_FLAVOR != bfd_target_elf_flavour)
+	as_bad (_("--pic is invalid for this object format"));
       pic = TRUE;
       if (cris_arch != arch_crisv32)
 	md_long_jump_size = cris_any_v0_v10_long_jump_size_pic;
@@ -4008,8 +4010,10 @@ md_show_usage (FILE *stream)
 	   _("  --no-underscore         User symbols do not have any prefix.\n"));
   fprintf (stream, "%s",
 	   _("                          Registers will require a `$'-prefix.\n"));
+#if defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF)
   fprintf (stream, "%s",
 	   _("  --pic			Enable generation of position-independent code.\n"));
+#endif
   fprintf (stream, "%s",
 	   _("  --march=<arch>		Generate code for <arch>.  Valid choices for <arch>\n\
 				are v0_v10, v10, v32 and common_v10_v32.\n"));

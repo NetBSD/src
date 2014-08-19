@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.4 2011/06/10 01:32:37 each Exp 
+# Id: tests.sh,v 1.4.154.1 2012/01/04 20:05:03 smann Exp 
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -225,9 +225,119 @@ $DIGCMD frozen.nil. TXT | grep 'frozen addition' >/dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+# temp test
+echo "I:dumping stats"
+$RNDCCMD stats
+echo "I: verifying adb records in named.stats"
+grep "ADB stats" ns2/named.stats > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 echo "I:test using second key"
 ret=0
 $RNDC -s 10.53.0.2 -p 9953 -c ns2/secondkey.conf status > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:test 'rndc dumpdb' on a empty cache"
+ret=0
+$RNDC -s 10.53.0.3 -p 9953 -c ../common/rndc.conf dumpdb > /dev/null || ret=1
+for i in 1 2 3 4 5 6 7 8 9
+do
+	tmp=0
+	grep "Dump complete" ns3/named_dump.db > /dev/null || tmp=1
+	[ $tmp -eq 0 ] && break
+	sleep 1
+done
+[ $tmp -eq 1 ] && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:test 'rndc reload' on a zone with include files"
+ret=0
+grep "incl/IN: skipping load" ns2/named.run > /dev/null && ret=1
+loads=`grep "incl/IN: starting load" ns2/named.run | wc -l`
+[ "$loads" -eq 1 ] || ret=1
+$RNDC -s 10.53.0.2 -p 9953 -c ../common/rndc.conf reload > /dev/null || ret=1
+for i in 1 2 3 4 5 6 7 8 9
+do
+    tmp=0
+    grep "incl/IN: skipping load" ns2/named.run > /dev/null || tmp=1
+    [ $tmp -eq 0 ] && break
+    sleep 1
+done
+[ $tmp -eq 1 ] && ret=1
+touch ns2/static.db
+$RNDC -s 10.53.0.2 -p 9953 -c ../common/rndc.conf reload > /dev/null || ret=1
+for i in 1 2 3 4 5 6 7 8 9
+do
+    tmp=0
+    loads=`grep "incl/IN: starting load" ns2/named.run | wc -l`
+    [ "$loads" -eq 2 ] || tmp=1
+    [ $tmp -eq 0 ] && break
+    sleep 1
+done
+[ $tmp -eq 1 ] && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:testing rndc with hmac-md5"
+ret=0
+$RNDC -s 10.53.0.4 -p 9951 -c ns4/key1.conf status > /dev/null 2>&1 || ret=1
+for i in 2 3 4 5 6
+do
+        $RNDC -s 10.53.0.4 -p 9951 -c ns4/key${i}.conf status > /dev/null 2>&1 && ret=1
+done
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:testing rndc with hmac-sha1"
+ret=0
+$RNDC -s 10.53.0.4 -p 9952 -c ns4/key2.conf status > /dev/null 2>&1 || ret=1
+for i in 1 3 4 5 6
+do
+        $RNDC -s 10.53.0.4 -p 9952 -c ns4/key${i}.conf status > /dev/null 2>&1 && ret=1
+done
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:testing rndc with hmac-sha224"
+ret=0
+$RNDC -s 10.53.0.4 -p 9953 -c ns4/key3.conf status > /dev/null 2>&1 || ret=1
+for i in 1 2 4 5 6
+do
+        $RNDC -s 10.53.0.4 -p 9953 -c ns4/key${i}.conf status > /dev/null 2>&1 && ret=1
+done
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:testing rndc with hmac-sha256"
+ret=0
+$RNDC -s 10.53.0.4 -p 9954 -c ns4/key4.conf status > /dev/null 2>&1 || ret=1
+for i in 1 2 3 5 6
+do
+        $RNDC -s 10.53.0.4 -p 9954 -c ns4/key${i}.conf status > /dev/null 2>&1 && ret=1
+done
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:testing rndc with hmac-sha384"
+ret=0
+$RNDC -s 10.53.0.4 -p 9955 -c ns4/key5.conf status > /dev/null 2>&1 || ret=1
+for i in 1 2 3 4 6
+do
+        $RNDC -s 10.53.0.4 -p 9955 -c ns4/key${i}.conf status > /dev/null 2>&1 && ret=1
+done
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:testing rndc with hmac-sha512"
+ret=0
+$RNDC -s 10.53.0.4 -p 9956 -c ns4/key6.conf status > /dev/null 2>&1 || ret=1
+for i in 1 2 3 4 5
+do
+        $RNDC -s 10.53.0.4 -p 9956 -c ns4/key${i}.conf status > /dev/null 2>&1 2>&1 && ret=1
+done
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

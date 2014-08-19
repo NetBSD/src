@@ -1,5 +1,5 @@
-/*	Id: inline.c,v 1.2 2012/03/22 18:51:40 plunky Exp 	*/	
-/*	$NetBSD: inline.c,v 1.1.1.2 2012/03/26 14:26:57 plunky Exp $	*/
+/*	Id: inline.c,v 1.5 2014/05/29 19:20:03 plunky Exp 	*/	
+/*	$NetBSD: inline.c,v 1.1.1.2.4.1 2014/08/19 23:52:09 tls Exp $	*/
 /*
  * Copyright (c) 2003, 2008 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -178,7 +178,7 @@ inline_start(struct symtab *sp)
  * Since pcc mimics gcc 4.3.1 that is the behaviour we emulate.
  */
 void
-inline_end()
+inline_end(void)
 {
 	struct symtab *sp = cifun->sp;
 
@@ -187,6 +187,7 @@ inline_end()
 	if (sdebug)printip(&cifun->shead);
 	isinlining = 0;
 
+#ifdef GCC_COMPAT
 	if (sp->sclass != STATIC &&
 	    (attr_find(sp->sap, GCC_ATYP_GNU_INLINE) || xgnu89)) {
 		if (sp->sclass == EXTDEF)
@@ -194,7 +195,7 @@ inline_end()
 		else
 			sp->sclass = EXTDEF;
 	}
-
+#endif
 	if (sp->sclass == EXTDEF) {
 		cifun->flags |= REFD;
 		inline_prtout();
@@ -292,7 +293,7 @@ puto(struct istat *w)
  * printout functions that are referenced.
  */
 void
-inline_prtout()
+inline_prtout(void)
 {
 	struct istat *w;
 	int gotone = 0;
@@ -346,7 +347,7 @@ printip(struct interpass *pole)
 			break;
 		case IP_DEFLAB: printf(LABFMT "\n", ip->ip_lbl); break;
 		case IP_DEFNAM: printf("\n"); break;
-		case IP_ASM: printf("%s\n", ip->ip_asm); break;
+		case IP_ASM: printf("%s", ip->ip_asm); break;
 		default:
 			break;
 		}
@@ -408,7 +409,11 @@ inlinetree(struct symtab *sp, NODE *f, NODE *ap)
 
 	SDEBUG(("inlinetree(%p,%p) OK %d\n", f, ap, is->flags & CANINL));
 
+#ifdef GCC_COMPAT
 	gainl = attr_find(sp->sap, GCC_ATYP_ALW_INL) != NULL;
+#else
+	gainl = 0;
+#endif
 
 	if ((is->flags & CANINL) == 0 && gainl)
 		werror("cannot inline but always_inline");

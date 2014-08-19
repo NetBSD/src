@@ -141,45 +141,45 @@ Disassembly of section \.text:
  13c:	f400 3480 	sll	a0,16
  140:	f010 4c00 	addiu	a0,-32768
  144:	f000 6c00 	li	a0,0
-			144: R_MIPS16_HI16	\.data\+0xffff8000
+			144: R_MIPS16_HI16	\.data-0x8000
  148:	f400 3480 	sll	a0,16
  14c:	f000 4c00 	addiu	a0,0
-			14c: R_MIPS16_LO16	\.data\+0xffff8000
+			14c: R_MIPS16_LO16	\.data-0x8000
  150:	f000 6c00 	li	a0,0
-			150: R_MIPS16_HI16	\.data\+0xffff8004
+			150: R_MIPS16_HI16	\.data-0x7ffc
  154:	f400 3480 	sll	a0,16
  158:	f000 4c00 	addiu	a0,0
-			158: R_MIPS16_LO16	\.data\+0xffff8004
+			158: R_MIPS16_LO16	\.data-0x7ffc
  15c:	f000 6c00 	li	a0,0
-			15c: R_MIPS16_HI16	big_external_data_label\+0xffff8000
+			15c: R_MIPS16_HI16	big_external_data_label-0x8000
  160:	f400 3480 	sll	a0,16
  164:	f000 4c00 	addiu	a0,0
-			164: R_MIPS16_LO16	big_external_data_label\+0xffff8000
+			164: R_MIPS16_LO16	big_external_data_label-0x8000
  168:	f000 6c00 	li	a0,0
-			168: R_MIPS16_HI16	small_external_data_label\+0xffff8000
+			168: R_MIPS16_HI16	small_external_data_label-0x8000
  16c:	f400 3480 	sll	a0,16
  170:	f000 4c00 	addiu	a0,0
-			170: R_MIPS16_LO16	small_external_data_label\+0xffff8000
+			170: R_MIPS16_LO16	small_external_data_label-0x8000
  174:	f000 6c00 	li	a0,0
-			174: R_MIPS16_HI16	big_external_common\+0xffff8000
+			174: R_MIPS16_HI16	big_external_common-0x8000
  178:	f400 3480 	sll	a0,16
  17c:	f000 4c00 	addiu	a0,0
-			17c: R_MIPS16_LO16	big_external_common\+0xffff8000
+			17c: R_MIPS16_LO16	big_external_common-0x8000
  180:	f000 6c00 	li	a0,0
-			180: R_MIPS16_HI16	small_external_common\+0xffff8000
+			180: R_MIPS16_HI16	small_external_common-0x8000
  184:	f400 3480 	sll	a0,16
  188:	f000 4c00 	addiu	a0,0
-			188: R_MIPS16_LO16	small_external_common\+0xffff8000
+			188: R_MIPS16_LO16	small_external_common-0x8000
  18c:	f000 6c00 	li	a0,0
-			18c: R_MIPS16_HI16	\.bss\+0xffff8000
+			18c: R_MIPS16_HI16	\.bss-0x8000
  190:	f400 3480 	sll	a0,16
  194:	f000 4c00 	addiu	a0,0
-			194: R_MIPS16_LO16	\.bss\+0xffff8000
+			194: R_MIPS16_LO16	\.bss-0x8000
  198:	f000 6c00 	li	a0,0
-			198: R_MIPS16_HI16	\.sbss\+0xffff8000
+			198: R_MIPS16_HI16	\.sbss-0x8000
  19c:	f400 3480 	sll	a0,16
  1a0:	f000 4c00 	addiu	a0,0
-			1a0: R_MIPS16_LO16	\.sbss\+0xffff8000
+			1a0: R_MIPS16_LO16	\.sbss-0x8000
  1a4:	6c01      	li	a0,1
  1a6:	f400 3480 	sll	a0,16
  1aa:	4c00      	addiu	a0,0
@@ -399,45 +399,45 @@ Disassembly of section \.text:
  3b4:	f400 35a0 	sll	a1,16
  3b8:	f010 9d80 	lw	a0,-32768\(a1\)
  3bc:	f000 6d00 	li	a1,0
-			3bc: R_MIPS16_HI16	\.data\+0xffff8000
+			3bc: R_MIPS16_HI16	\.data-0x8000
  3c0:	f400 35a0 	sll	a1,16
  3c4:	f000 9d80 	lw	a0,0\(a1\)
-			3c4: R_MIPS16_LO16	\.data\+0xffff8000
+			3c4: R_MIPS16_LO16	\.data-0x8000
  3c8:	f000 6d00 	li	a1,0
-			3c8: R_MIPS16_HI16	\.data\+0xffff8004
+			3c8: R_MIPS16_HI16	\.data-0x7ffc
  3cc:	f400 35a0 	sll	a1,16
  3d0:	f000 9d80 	lw	a0,0\(a1\)
-			3d0: R_MIPS16_LO16	\.data\+0xffff8004
+			3d0: R_MIPS16_LO16	\.data-0x7ffc
  3d4:	f000 6d00 	li	a1,0
-			3d4: R_MIPS16_HI16	big_external_data_label\+0xffff8000
+			3d4: R_MIPS16_HI16	big_external_data_label-0x8000
  3d8:	f400 35a0 	sll	a1,16
  3dc:	f000 9d80 	lw	a0,0\(a1\)
-			3dc: R_MIPS16_LO16	big_external_data_label\+0xffff8000
+			3dc: R_MIPS16_LO16	big_external_data_label-0x8000
  3e0:	f000 6d00 	li	a1,0
-			3e0: R_MIPS16_HI16	small_external_data_label\+0xffff8000
+			3e0: R_MIPS16_HI16	small_external_data_label-0x8000
  3e4:	f400 35a0 	sll	a1,16
  3e8:	f000 9d80 	lw	a0,0\(a1\)
-			3e8: R_MIPS16_LO16	small_external_data_label\+0xffff8000
+			3e8: R_MIPS16_LO16	small_external_data_label-0x8000
  3ec:	f000 6d00 	li	a1,0
-			3ec: R_MIPS16_HI16	big_external_common\+0xffff8000
+			3ec: R_MIPS16_HI16	big_external_common-0x8000
  3f0:	f400 35a0 	sll	a1,16
  3f4:	f000 9d80 	lw	a0,0\(a1\)
-			3f4: R_MIPS16_LO16	big_external_common\+0xffff8000
+			3f4: R_MIPS16_LO16	big_external_common-0x8000
  3f8:	f000 6d00 	li	a1,0
-			3f8: R_MIPS16_HI16	small_external_common\+0xffff8000
+			3f8: R_MIPS16_HI16	small_external_common-0x8000
  3fc:	f400 35a0 	sll	a1,16
  400:	f000 9d80 	lw	a0,0\(a1\)
-			400: R_MIPS16_LO16	small_external_common\+0xffff8000
+			400: R_MIPS16_LO16	small_external_common-0x8000
  404:	f000 6d00 	li	a1,0
-			404: R_MIPS16_HI16	\.bss\+0xffff8000
+			404: R_MIPS16_HI16	\.bss-0x8000
  408:	f400 35a0 	sll	a1,16
  40c:	f000 9d80 	lw	a0,0\(a1\)
-			40c: R_MIPS16_LO16	\.bss\+0xffff8000
+			40c: R_MIPS16_LO16	\.bss-0x8000
  410:	f000 6d00 	li	a1,0
-			410: R_MIPS16_HI16	\.sbss\+0xffff8000
+			410: R_MIPS16_HI16	\.sbss-0x8000
  414:	f400 35a0 	sll	a1,16
  418:	f000 9d80 	lw	a0,0\(a1\)
-			418: R_MIPS16_LO16	\.sbss\+0xffff8000
+			418: R_MIPS16_LO16	\.sbss-0x8000
  41c:	6d01      	li	a1,1
  41e:	f400 35a0 	sll	a1,16
  422:	9d80      	lw	a0,0\(a1\)

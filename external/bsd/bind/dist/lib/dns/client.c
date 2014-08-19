@@ -1,7 +1,7 @@
-/*	$NetBSD: client.c,v 1.4 2012/06/05 00:41:28 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.4.2.1 2014/08/19 23:46:28 tls Exp $	*/
 
 /*
- * Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,7 @@
 #include <stddef.h>
 
 #include <isc/app.h>
+#include <isc/buffer.h>
 #include <isc/mem.h>
 #include <isc/mutex.h>
 #include <isc/sockaddr.h>
@@ -68,6 +69,12 @@
 #define UCTX_VALID(c)			ISC_MAGIC_VALID(c, UCTX_MAGIC)
 
 #define MAX_RESTARTS 16
+
+#ifdef TUNE_LARGE
+#define RESOLVER_NTASKS 523
+#else
+#define RESOLVER_NTASKS 31
+#endif /* TUNE_LARGE */
 
 /*%
  * DNS client object
@@ -125,6 +132,8 @@ typedef struct resctx {
 	isc_mutex_t		lock;
 	dns_client_t		*client;
 	isc_boolean_t		want_dnssec;
+	isc_boolean_t		want_validation;
+	isc_boolean_t		want_cdflag;
 
 	/* Locked */
 	ISC_LINK(struct resctx)	link;
@@ -251,13 +260,14 @@ static isc_result_t send_update(updatectx_t *uctx);
 static isc_result_t
 getudpdispatch(int family, dns_dispatchmgr_t *dispatchmgr,
 	       isc_socketmgr_t *socketmgr, isc_taskmgr_t *taskmgr,
-	       isc_boolean_t is_shared, dns_dispatch_t **dispp)
+	       isc_boolean_t is_shared, dns_dispatch_t **dispp,
+	       isc_sockaddr_t *localaddr)
 {
 	unsigned int attrs, attrmask;
-	isc_sockaddr_t sa;
 	dns_dispatch_t *disp;
 	unsigned buffersize, maxbuffers, maxrequests, buckets, increment;
 	isc_result_t result;
+	isc_sockaddr_t anyaddr;
 
 	attrs = 0;
 	attrs |= DNS_DISPATCHATTR_UDP;
@@ -277,7 +287,10 @@ getudpdispatch(int family, dns_dispatchmgr_t *dispatchmgr,
 	attrmask |= DNS_DISPATCHATTR_IPV4;
 	attrmask |= DNS_DISPATCHATTR_IPV6;
 
-	isc_sockaddr_anyofpf(&sa, family);
+	if (localaddr == NULL) {
+		localaddr = &anyaddr;
+		isc_sockaddr_anyofpf(localaddr, family);
+	}
 
 	buffersize = 4096;
 	maxbuffers = is_shared ? 1000 : 8;
@@ -287,7 +300,7 @@ getudpdispatch(int family, dns_dispatchmgr_t *dispatchmgr,
 
 	disp = NULL;
 	result = dns_dispatch_getudp(dispatchmgr, socketmgr,
-				     taskmgr, &sa,
+				     taskmgr, localaddr,
 				     buffersize, maxbuffers, maxrequests,
 				     buckets, increment,
 				     attrs, attrmask, &disp);
@@ -298,12 +311,12 @@ getudpdispatch(int family, dns_dispatchmgr_t *dispatchmgr,
 }
 
 static isc_result_t
-dns_client_createview(isc_mem_t *mctx, dns_rdataclass_t rdclass,
-		      unsigned int options, isc_taskmgr_t *taskmgr,
-		      unsigned int ntasks, isc_socketmgr_t *socketmgr,
-		      isc_timermgr_t *timermgr, dns_dispatchmgr_t *dispatchmgr,
-		      dns_dispatch_t *dispatchv4, dns_dispatch_t *dispatchv6,
-		      dns_view_t **viewp)
+createview(isc_mem_t *mctx, dns_rdataclass_t rdclass,
+	   unsigned int options, isc_taskmgr_t *taskmgr,
+	   unsigned int ntasks, isc_socketmgr_t *socketmgr,
+	   isc_timermgr_t *timermgr, dns_dispatchmgr_t *dispatchmgr,
+	   dns_dispatch_t *dispatchv4, dns_dispatch_t *dispatchv6,
+	   dns_view_t **viewp)
 {
 	isc_result_t result;
 	dns_view_t *view = NULL;
@@ -320,9 +333,9 @@ dns_client_createview(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 		return (result);
 	}
 
-	result = dns_view_createresolver(view, taskmgr, ntasks, socketmgr,
-					 timermgr, 0, dispatchmgr,
-					 dispatchv4, dispatchv6);
+	result = dns_view_createresolver(view, taskmgr, ntasks, 1,
+					 socketmgr, timermgr, 0,
+					 dispatchmgr, dispatchv4, dispatchv6);
 	if (result != ISC_R_SUCCESS) {
 		dns_view_detach(&view);
 		return (result);
@@ -356,6 +369,12 @@ dns_client_create(dns_client_t **clientp, unsigned int options) {
 	isc_taskmgr_t *taskmgr = NULL;
 	isc_socketmgr_t *socketmgr = NULL;
 	isc_timermgr_t *timermgr = NULL;
+#if 0
+	/* XXXMPA add debug logging support */
+	isc_log_t *lctx = NULL;
+	isc_logconfig_t *logconfig = NULL;
+	unsigned int logdebuglevel = 0;
+#endif
 
 	result = isc_mem_create(0, 0, &mctx);
 	if (result != ISC_R_SUCCESS)
@@ -375,7 +394,18 @@ dns_client_create(dns_client_t **clientp, unsigned int options) {
 	result = isc_timermgr_createinctx(mctx, actx, &timermgr);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
-
+#if 0
+	result = isc_log_create(mctx, &lctx, &logconfig);
+	if (result != ISC_R_SUCCESS)
+		goto cleanup;
+	isc_log_setcontext(lctx);
+	dns_log_init(lctx);
+	dns_log_setcontext(lctx);
+	result = isc_log_usechannel(logconfig, "default_debug", NULL, NULL);
+	if (result != ISC_R_SUCCESS)
+		goto cleanup;
+	isc_log_setdebuglevel(lctx, logdebuglevel);
+#endif
 	result = dns_client_createx(mctx, actx, taskmgr, socketmgr, timermgr,
 				    options, clientp);
 	if (result != ISC_R_SUCCESS)
@@ -406,6 +436,19 @@ isc_result_t
 dns_client_createx(isc_mem_t *mctx, isc_appctx_t *actx, isc_taskmgr_t *taskmgr,
 		   isc_socketmgr_t *socketmgr, isc_timermgr_t *timermgr,
 		   unsigned int options, dns_client_t **clientp)
+{
+	isc_result_t result;
+	result = dns_client_createx2(mctx, actx, taskmgr, socketmgr, timermgr,
+				     options, clientp, NULL, NULL);
+	return (result);
+}
+
+isc_result_t
+dns_client_createx2(isc_mem_t *mctx, isc_appctx_t *actx,
+		    isc_taskmgr_t *taskmgr, isc_socketmgr_t *socketmgr,
+		    isc_timermgr_t *timermgr, unsigned int options,
+		    dns_client_t **clientp, isc_sockaddr_t *localaddr4,
+		    isc_sockaddr_t *localaddr6)
 {
 	dns_client_t *client;
 	isc_result_t result;
@@ -445,17 +488,27 @@ dns_client_createx(isc_mem_t *mctx, isc_appctx_t *actx, isc_taskmgr_t *taskmgr,
 		goto cleanup;
 	client->dispatchmgr = dispatchmgr;
 
-	/* TODO: whether to use dispatch v4 or v6 should be configurable */
+	/*
+	 * If only one address family is specified, use it.
+	 * If neither family is specified, or if both are, use both.
+	 */
 	client->dispatchv4 = NULL;
+	if (localaddr4 != NULL || localaddr6 == NULL) {
+		result = getudpdispatch(AF_INET, dispatchmgr, socketmgr,
+					taskmgr, ISC_TRUE,
+					&dispatchv4, localaddr4);
+		if (result == ISC_R_SUCCESS)
+			client->dispatchv4 = dispatchv4;
+	}
+
 	client->dispatchv6 = NULL;
-	result = getudpdispatch(AF_INET, dispatchmgr, socketmgr,
-				taskmgr, ISC_TRUE, &dispatchv4);
-	if (result == ISC_R_SUCCESS)
-		client->dispatchv4 = dispatchv4;
-	result = getudpdispatch(AF_INET6, dispatchmgr, socketmgr,
-				taskmgr, ISC_TRUE, &dispatchv6);
-	if (result == ISC_R_SUCCESS)
-		client->dispatchv6 = dispatchv6;
+	if (localaddr6 != NULL || localaddr4 == NULL) {
+		result = getudpdispatch(AF_INET6, dispatchmgr, socketmgr,
+					taskmgr, ISC_TRUE,
+					&dispatchv6, localaddr6);
+		if (result == ISC_R_SUCCESS)
+			client->dispatchv6 = dispatchv6;
+	}
 
 	/* We need at least one of the dispatchers */
 	if (dispatchv4 == NULL && dispatchv6 == NULL) {
@@ -464,10 +517,9 @@ dns_client_createx(isc_mem_t *mctx, isc_appctx_t *actx, isc_taskmgr_t *taskmgr,
 	}
 
 	/* Create the default view for class IN */
-	result = dns_client_createview(mctx, dns_rdataclass_in, options,
-				       taskmgr, 31, socketmgr, timermgr,
-				       dispatchmgr, dispatchv4, dispatchv6,
-				       &view);
+	result = createview(mctx, dns_rdataclass_in, options, taskmgr,
+			    RESOLVER_NTASKS, socketmgr, timermgr,
+			    dispatchmgr, dispatchv4, dispatchv6, &view);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 	ISC_LIST_INIT(client->viewlist);
@@ -487,6 +539,7 @@ dns_client_createx(isc_mem_t *mctx, isc_appctx_t *actx, isc_taskmgr_t *taskmgr,
 	client->update_udpretries = DEF_UPDATE_UDPRETRIES;
 	client->find_timeout = DEF_FIND_TIMEOUT;
 	client->find_udpretries = DEF_FIND_UDPRETRIES;
+	client->attributes = 0;
 
 	client->references = 1;
 	client->magic = DNS_CLIENT_MAGIC;
@@ -631,6 +684,46 @@ dns_client_clearservers(dns_client_t *client, dns_rdataclass_t rdclass,
 	return (result);
 }
 
+isc_result_t
+dns_client_setdlv(dns_client_t *client, dns_rdataclass_t rdclass,
+		  const char *dlvname)
+{
+	isc_result_t result;
+	isc_buffer_t b;
+	dns_view_t *view = NULL;
+
+	REQUIRE(DNS_CLIENT_VALID(client));
+
+	LOCK(&client->lock);
+	result = dns_viewlist_find(&client->viewlist, DNS_CLIENTVIEW_NAME,
+				   rdclass, &view);
+	UNLOCK(&client->lock);
+	if (result != ISC_R_SUCCESS)
+		goto cleanup;
+
+	if (dlvname == NULL)
+		view->dlv = NULL;
+	else {
+		dns_name_t *newdlv;
+
+		isc_buffer_constinit(&b, dlvname, strlen(dlvname));
+		isc_buffer_add(&b, strlen(dlvname));
+		newdlv = dns_fixedname_name(&view->dlv_fixed);
+		result = dns_name_fromtext(newdlv, &b, dns_rootname,
+					   DNS_NAME_DOWNCASE, NULL);
+		if (result != ISC_R_SUCCESS)
+			goto cleanup;
+
+		view->dlv = dns_fixedname_name(&view->dlv_fixed);
+	}
+
+ cleanup:
+	if (view != NULL)
+		dns_view_detach(&view);
+
+	return (result);
+}
+
 static isc_result_t
 getrdataset(isc_mem_t *mctx, dns_rdataset_t **rdatasetp) {
 	dns_rdataset_t *rdataset;
@@ -681,6 +774,7 @@ fetch_done(isc_task_t *task, isc_event_t *event) {
 static inline isc_result_t
 start_fetch(resctx_t *rctx) {
 	isc_result_t result;
+	int fopts = 0;
 
 	/*
 	 * The caller must be holding the rctx's lock.
@@ -688,10 +782,15 @@ start_fetch(resctx_t *rctx) {
 
 	REQUIRE(rctx->fetch == NULL);
 
+	if (!rctx->want_cdflag)
+		fopts |= DNS_FETCHOPT_NOCDFLAG;
+	if (!rctx->want_validation)
+		fopts |= DNS_FETCHOPT_NOVALIDATE;
+
 	result = dns_resolver_createfetch(rctx->view->resolver,
 					  dns_fixedname_name(&rctx->name),
 					  rctx->type,
-					  NULL, NULL, NULL, 0,
+					  NULL, NULL, NULL, fopts,
 					  rctx->task, fetch_done, rctx,
 					  rctx->rdataset,
 					  rctx->sigrdataset,
@@ -1078,11 +1177,23 @@ client_resfind(resctx_t *rctx, dns_fetchevent_t *event) {
 	UNLOCK(&rctx->lock);
 }
 
+
+static void
+suspend(isc_task_t *task, isc_event_t *event) {
+	isc_appctx_t *actx = event->ev_arg;
+
+	UNUSED(task);
+
+	isc_app_ctxsuspend(actx);
+	isc_event_free(&event);
+}
+
 static void
 resolve_done(isc_task_t *task, isc_event_t *event) {
 	resarg_t *resarg = event->ev_arg;
 	dns_clientresevent_t *rev = (dns_clientresevent_t *)event;
 	dns_name_t *name;
+	isc_result_t result;
 
 	UNUSED(task);
 
@@ -1101,8 +1212,16 @@ resolve_done(isc_task_t *task, isc_event_t *event) {
 	if (!resarg->canceled) {
 		UNLOCK(&resarg->lock);
 
-		/* Exit from the internal event loop */
-		isc_app_ctxsuspend(resarg->actx);
+		/*
+		 * We may or may not be running.  isc__appctx_onrun will
+		 * fail if we are currently running otherwise we post a
+		 * action to call isc_app_ctxsuspend when we do start
+		 * running.
+		 */
+		result = isc_app_ctxonrun(resarg->actx, resarg->client->mctx,
+					   task, suspend, resarg->actx);
+		if (result == ISC_R_ALREADYRUNNING)
+			isc_app_ctxsuspend(resarg->actx);
 	} else {
 		/*
 		 * We have already exited from the loop (due to some
@@ -1214,7 +1333,7 @@ dns_client_startresolve(dns_client_t *client, dns_name_t *name,
 	isc_mem_t *mctx;
 	isc_result_t result;
 	dns_rdataset_t *rdataset, *sigrdataset;
-	isc_boolean_t want_dnssec;
+	isc_boolean_t want_dnssec, want_validation, want_cdflag;
 
 	REQUIRE(DNS_CLIENT_VALID(client));
 	REQUIRE(transp != NULL && *transp == NULL);
@@ -1230,6 +1349,8 @@ dns_client_startresolve(dns_client_t *client, dns_name_t *name,
 	rdataset = NULL;
 	sigrdataset = NULL;
 	want_dnssec = ISC_TF((options & DNS_CLIENTRESOPT_NODNSSEC) == 0);
+	want_validation = ISC_TF((options & DNS_CLIENTRESOPT_NOVALIDATE) == 0);
+	want_cdflag = ISC_TF((options & DNS_CLIENTRESOPT_NOCDFLAG) == 0);
 
 	/*
 	 * Prepare some intermediate resources
@@ -1285,6 +1406,8 @@ dns_client_startresolve(dns_client_t *client, dns_name_t *name,
 	rctx->restarts = 0;
 	rctx->fetch = NULL;
 	rctx->want_dnssec = want_dnssec;
+	rctx->want_validation = want_validation;
+	rctx->want_cdflag = want_cdflag;
 	ISC_LIST_INIT(rctx->namelist);
 	rctx->event = event;
 
@@ -1294,9 +1417,8 @@ dns_client_startresolve(dns_client_t *client, dns_name_t *name,
 	ISC_LIST_APPEND(client->resctxs, rctx, link);
 	UNLOCK(&client->lock);
 
-	client_resfind(rctx, NULL);
-
 	*transp = (dns_clientrestrans_t *)rctx;
+	client_resfind(rctx, NULL);
 
 	return (ISC_R_SUCCESS);
 
@@ -2002,8 +2124,9 @@ resolveaddr_done(isc_task_t *task, isc_event_t *event) {
 				switch (family) {
 				case AF_INET:
 					dns_rdataset_current(rdataset, &rdata);
-					dns_rdata_tostruct(&rdata, &rdata_a,
-							   NULL);
+					result = dns_rdata_tostruct(&rdata, &rdata_a,
+								    NULL);
+					RUNTIME_CHECK(result == ISC_R_SUCCESS);
 					isc_sockaddr_fromin(sa,
 							    &rdata_a.in_addr,
 							    53);
@@ -2011,8 +2134,9 @@ resolveaddr_done(isc_task_t *task, isc_event_t *event) {
 					break;
 				case AF_INET6:
 					dns_rdataset_current(rdataset, &rdata);
-					dns_rdata_tostruct(&rdata, &rdata_aaaa,
-							   NULL);
+					result = dns_rdata_tostruct(&rdata, &rdata_aaaa,
+								    NULL);
+					RUNTIME_CHECK(result == ISC_R_SUCCESS);
 					isc_sockaddr_fromin6(sa,
 							     &rdata_aaaa.in6_addr,
 							     53);
@@ -2929,7 +3053,9 @@ dns_client_updaterec(dns_client_updateop_t op, dns_name_t *owner,
 		dns_rdatalist_init(&updaterec->rdatalist);
 		dns_rdata_init(&updaterec->rdata);
 		isc_buffer_init(&updaterec->buffer, updaterec->data,
-				size - offsetof(dns_client_updaterec_t, data));
+				(unsigned int)
+				(size -
+				 offsetof(dns_client_updaterec_t, data)));
 		dns_name_copy(owner, target, &updaterec->buffer);
 		if (source != NULL) {
 			isc_region_t r;

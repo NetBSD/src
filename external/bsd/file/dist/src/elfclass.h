@@ -1,5 +1,4 @@
-/*	$NetBSD: elfclass.h,v 1.1.1.3.8.1 2013/06/23 06:26:33 tls Exp $	*/
-
+/*	$NetBSD: elfclass.h,v 1.1.1.3.8.2 2014/08/19 23:46:47 tls Exp $	*/
 /*
  * Copyright (c) Christos Zoulas 2008.
  * All Rights Reserved.

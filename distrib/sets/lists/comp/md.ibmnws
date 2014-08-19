@@ -1,4 +1,4 @@
-# $NetBSD: md.ibmnws,v 1.10 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.ibmnws,v 1.10.8.1 2014/08/19 23:45:43 tls Exp $
 ./usr/include/ibmnws				comp-c-include
 ./usr/include/ibmnws/_G_config.h		comp-obsolete		obsolete
 ./usr/include/ibmnws/ansi.h			comp-c-include
@@ -51,6 +51,8 @@
 ./usr/include/ibmnws/rwlock.h			comp-c-include
 ./usr/include/ibmnws/setjmp.h			comp-c-include
 ./usr/include/ibmnws/signal.h			comp-c-include
+./usr/include/ibmnws/sljitarch.h		comp-obsolete		obsolete
+./usr/include/ibmnws/sljit_machdep.h		comp-c-include
 ./usr/include/ibmnws/spr.h			comp-obsolete		obsolete
 ./usr/include/ibmnws/stdarg.h			comp-obsolete		obsolete
 ./usr/include/ibmnws/trap.h			comp-c-include

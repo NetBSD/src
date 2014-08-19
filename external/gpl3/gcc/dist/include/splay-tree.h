@@ -1,5 +1,5 @@
 /* A splay-tree datatype.  
-   Copyright 1998, 1999, 2000, 2002, 2005, 2007, 2009
+   Copyright 1998, 1999, 2000, 2002, 2005, 2007, 2009, 2010
    Free Software Foundation, Inc.
    Contributed by Mark Mitchell (mark@markmitchell.com).
 
@@ -37,18 +37,11 @@ extern "C" {
 
 #include "ansidecl.h"
 
-#ifndef _WIN64
-  typedef unsigned long int libi_uhostptr_t;
-  typedef long int libi_shostptr_t;
-#else
-#ifdef __GNUC__
-  __extension__
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
 #endif
-  typedef unsigned long long libi_uhostptr_t;
-#ifdef __GNUC__
-  __extension__
-#endif
-  typedef long long libi_shostptr_t;
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
 #endif
 
 #ifndef GTY
@@ -59,8 +52,8 @@ extern "C" {
    these types, if necessary.  These types should be sufficiently wide
    that any pointer or scalar can be cast to these types, and then
    cast back, without loss of precision.  */
-typedef libi_uhostptr_t splay_tree_key;
-typedef libi_uhostptr_t splay_tree_value;
+typedef uintptr_t splay_tree_key;
+typedef uintptr_t splay_tree_value;
 
 /* Forward declaration for a node in the tree.  */
 typedef struct splay_tree_node_s *splay_tree_node;
@@ -119,9 +112,13 @@ struct GTY(()) splay_tree_s {
   /* The deallocate-value function.  NULL if no cleanup is necessary.  */
   splay_tree_delete_value_fn delete_value;
 
-  /* Allocate/free functions, and a data pointer to pass to them.  */
+  /* Node allocate function.  Takes allocate_data as a parameter. */
   splay_tree_allocate_fn allocate;
+
+  /* Free function for nodes and trees.  Takes allocate_data as a parameter.  */
   splay_tree_deallocate_fn deallocate;
+
+  /* Parameter for allocate/free functions.  */
   void * GTY((skip)) allocate_data;
 };
 
@@ -136,6 +133,13 @@ extern splay_tree splay_tree_new_with_allocator (splay_tree_compare_fn,
 						 splay_tree_allocate_fn,
 						 splay_tree_deallocate_fn,
 						 void *);
+extern splay_tree splay_tree_new_typed_alloc (splay_tree_compare_fn,
+					      splay_tree_delete_key_fn,
+					      splay_tree_delete_value_fn,
+					      splay_tree_allocate_fn,
+					      splay_tree_allocate_fn,
+					      splay_tree_deallocate_fn,
+					      void *);
 extern void splay_tree_delete (splay_tree);
 extern splay_tree_node splay_tree_insert (splay_tree,
 					  splay_tree_key,

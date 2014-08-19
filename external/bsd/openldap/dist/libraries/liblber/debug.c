@@ -1,9 +1,9 @@
-/*	$NetBSD: debug.c,v 1.1.1.3 2010/12/12 15:21:27 adam Exp $	*/
+/*	$NetBSD: debug.c,v 1.1.1.3.12.1 2014/08/19 23:51:59 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/liblber/debug.c,v 1.21.2.5 2010/04/13 20:22:53 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,8 +64,9 @@ void (lutil_debug)( int debug, int level, const char *fmt, ... )
 	}
 #endif
 
+	sprintf(buffer, "%08x ", (unsigned) time(0L));
 	va_start( vl, fmt );
-	vsnprintf( buffer, sizeof(buffer), fmt, vl );
+	vsnprintf( buffer+9, sizeof(buffer)-9, fmt, vl );
 	buffer[sizeof(buffer)-1] = '\0';
 	if( log_file != NULL ) {
 		fputs( buffer, log_file );

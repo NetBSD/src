@@ -1,5 +1,5 @@
 @c Copyright 1991, 1992, 1993, 1994, 1995, 1997, 2001, 2003, 2004,
-@c 2005, 2008, 2010  Free Software Foundation, Inc.
+@c 2005, 2008, 2010, 2011, 2012  Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @page
@@ -92,6 +92,11 @@ Support H'00 style hex constants in addition to 0x00 style.
 @cindex statement separator, SH
 @cindex SH line separator
 You can use @samp{;} instead of a newline to separate statements.
+
+If a @samp{#} appears as the first character of a line then the whole
+line is treated as a comment, but in this case the line could also be
+a logical line number directive (@pxref{Comments}) or a preprocessor
+control command (@pxref{Preprocessing}).
 
 @cindex symbol names, @samp{$} in
 @cindex @code{$} in symbol names
@@ -205,13 +210,16 @@ conventional architectures at the same frequency.
 @cindex machine directives, SH
 @cindex @code{uaword} directive, SH
 @cindex @code{ualong} directive, SH
+@cindex @code{uaquad} directive, SH
 
 @table @code
 @item uaword
 @itemx ualong
-@code{@value{AS}} will issue a warning when a misaligned @code{.word} or
-@code{.long} directive is used.  You may use @code{.uaword} or
-@code{.ualong} to indicate that the value is intentionally misaligned.
+@itemx uaquad
+@code{@value{AS}} will issue a warning when a misaligned @code{.word},
+@code{.long}, or @code{.quad} directive is used.  You may use
+@code{.uaword}, @code{.ualong}, or @code{.uaquad} to indicate that the
+value is intentionally misaligned.
 @end table
 
 @node SH Opcodes

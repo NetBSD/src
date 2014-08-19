@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+# Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@ bin_PROGRAMS += atf-report/atf-report
 atf_report_atf_report_SOURCES = atf-report/atf-report.cpp \
                                 atf-report/reader.cpp \
                                 atf-report/reader.hpp
-atf_report_atf_report_LDADD = libatf-c++.la
+atf_report_atf_report_LDADD = $(ATF_CXX_LIBS)
 dist_man_MANS += atf-report/atf-report.1
 
 cssdir = $(atf_cssdir)
@@ -46,21 +46,22 @@ xsldir = $(atf_xsldir)
 xsl_DATA = atf-report/tests-results.xsl
 EXTRA_DIST += $(xsl_DATA)
 
-tests_atf_report_DATA = atf-report/Atffile
+tests_atf_report_DATA = atf-report/Atffile \
+                        atf-report/Kyuafile
 tests_atf_reportdir = $(pkgtestsdir)/atf-report
 EXTRA_DIST += $(tests_atf_report_DATA)
 
 tests_atf_report_PROGRAMS = atf-report/fail_helper
 atf_report_fail_helper_SOURCES = atf-report/fail_helper.cpp
-atf_report_fail_helper_LDADD = libatf-c++.la
+atf_report_fail_helper_LDADD = $(ATF_CXX_LIBS)
 
 tests_atf_report_PROGRAMS += atf-report/misc_helpers
 atf_report_misc_helpers_SOURCES = atf-report/misc_helpers.cpp
-atf_report_misc_helpers_LDADD = libatf-c++.la
+atf_report_misc_helpers_LDADD = $(ATF_CXX_LIBS)
 
 tests_atf_report_PROGRAMS += atf-report/pass_helper
 atf_report_pass_helper_SOURCES = atf-report/pass_helper.cpp
-atf_report_pass_helper_LDADD = libatf-c++.la
+atf_report_pass_helper_LDADD = $(ATF_CXX_LIBS)
 
 tests_atf_report_SCRIPTS = atf-report/integration_test
 CLEANFILES += atf-report/integration_test
@@ -74,6 +75,6 @@ tests_atf_report_PROGRAMS += atf-report/reader_test
 atf_report_reader_test_SOURCES = atf-report/reader_test.cpp \
                                  atf-report/reader.cpp
 atf_report_reader_test_CPPFLAGS = -I$(srcdir)/atf-c++/detail
-atf_report_reader_test_LDADD = atf-c++/detail/libtest_helpers.la libatf-c++.la
+atf_report_reader_test_LDADD = atf-c++/detail/libtest_helpers.la $(ATF_CXX_LIBS)
 
 # vim: syntax=make:noexpandtab:shiftwidth=8:softtabstop=8

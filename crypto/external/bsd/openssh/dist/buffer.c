@@ -1,5 +1,5 @@
-/*	$NetBSD: buffer.c,v 1.3 2010/11/21 18:29:48 adam Exp $	*/
-/* $OpenBSD: buffer.c,v 1.32 2010/02/09 03:56:28 djm Exp $ */
+/*	$NetBSD: buffer.c,v 1.3.12.1 2014/08/19 23:45:24 tls Exp $	*/
+/* $OpenBSD: buffer.c,v 1.33 2013/05/17 00:13:13 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: buffer.c,v 1.3 2010/11/21 18:29:48 adam Exp $");
+__RCSID("$NetBSD: buffer.c,v 1.3.12.1 2014/08/19 23:45:24 tls Exp $");
 #include <sys/param.h>
 
 #include <stdio.h>
@@ -51,7 +51,7 @@ buffer_free(Buffer *buffer)
 	if (buffer->alloc > 0) {
 		memset(buffer->buf, 0, buffer->alloc);
 		buffer->alloc = 0;
-		xfree(buffer->buf);
+		free(buffer->buf);
 	}
 }
 

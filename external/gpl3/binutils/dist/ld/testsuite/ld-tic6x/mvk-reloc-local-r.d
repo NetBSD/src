@@ -23,5 +23,5 @@ Disassembly of section \.text:
 [ \t]*24:[ \t]+01000028[ \t]+mvk \.S1 0,a2
 [ \t]*24: R_C6000_ABS_L16[ \t]+\.data\+0x10
 [ \t]*28:[ \t]+01800068[ \t]+mvkh \.S1 0,a3
-[ \t]*28: R_C6000_ABS_H16[ \t]+\.data\+0xffffff14
+[ \t]*28: R_C6000_ABS_H16[ \t]+\.data-0xec
 [ \t]*\.\.\.

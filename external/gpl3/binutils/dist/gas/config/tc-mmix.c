@@ -1,6 +1,6 @@
 /* tc-mmix.c -- Assembler for Don Knuth's MMIX.
-   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-   Free Software Foundation.
+   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
+   2012  Free Software Foundation.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -27,8 +27,8 @@
    compatible syntax, but the main purpose is to serve GCC.  */
 
 
-#include <limits.h>
 #include "as.h"
+#include <limits.h>
 #include "subsegs.h"
 #include "elf/mmix.h"
 #include "opcode/mmix.h"
@@ -40,11 +40,11 @@
    for example assert something of what it became or make a relocation.  */
 
 enum mmix_fixup_action
- {
-   mmix_fixup_byte,
-   mmix_fixup_register,
-   mmix_fixup_register_or_adjust_for_byte
- };
+{
+  mmix_fixup_byte,
+  mmix_fixup_register,
+  mmix_fixup_register_or_adjust_for_byte
+};
 
 static int get_spec_regno (char *);
 static int get_operands (int, char *, expressionS *);
@@ -108,6 +108,13 @@ static struct
    char *label;
    expressionS exp;
  } mmix_raw_gregs[MAX_GREGS];
+
+static struct loc_assert_s
+ {
+   segT old_seg;
+   symbolS *loc_sym;
+   struct loc_assert_s *next;
+ } *loc_asserts = NULL;
 
 /* Fixups for all unique GREG registers.  We store the fixups here in
    md_convert_frag, then we use the array to convert
@@ -1994,10 +2001,11 @@ static void
 mmix_greg_internal (char *label)
 {
   expressionS *expP = &mmix_raw_gregs[n_of_raw_gregs].exp;
+  segT section;
 
   /* Don't set the section to register contents section before the
      expression has been parsed; it may refer to the current position.  */
-  expression (expP);
+  section = expression (expP);
 
   /* FIXME: Check that no expression refers to the register contents
      section.  May need to be done in elf64-mmix.c.  */
@@ -2009,6 +2017,24 @@ mmix_greg_internal (char *label)
       expP->X_unsigned = 0;
       expP->X_add_symbol = NULL;
       expP->X_op_symbol = NULL;
+    }
+
+  if (section == undefined_section)
+    {
+      /* This is an error or a LOC with an expression involving
+	 forward references.  For the expression to be correctly
+	 evaluated, we need to force a proper symbol; gas loses track
+	 of the segment for "local symbols".  */
+      if (expP->X_op == O_add)
+	{
+	  symbol_get_value_expression (expP->X_op_symbol);
+	  symbol_get_value_expression (expP->X_add_symbol);
+	}
+      else
+	{
+	  gas_assert (expP->X_op == O_symbol);
+	  symbol_get_value_expression (expP->X_add_symbol);
+	}
     }
 
   /* We must handle prefixes here, as we save the labels and expressions
@@ -3457,6 +3483,7 @@ mmix_md_end (void)
   fragS *fragP;
   symbolS *mainsym;
   asection *regsec;
+  struct loc_assert_s *loc_assert;
   int i;
 
   /* The first frag of GREG:s going into the register contents section.  */
@@ -3512,6 +3539,29 @@ mmix_md_end (void)
     {
       symbol_get_bfdsym (mainsym)->flags |= BSF_FUNCTION;
       S_SET_EXTERNAL (mainsym);
+    }
+
+  /* Check that we didn't LOC into the unknown, or rather that when it
+     was unknown, we actually change sections.  */
+  for (loc_assert = loc_asserts;
+       loc_assert != NULL;
+       loc_assert = loc_assert->next)
+    {
+      segT actual_seg;
+
+      resolve_symbol_value (loc_assert->loc_sym);
+      actual_seg = S_GET_SEGMENT (loc_assert->loc_sym);
+      if (actual_seg != loc_assert->old_seg)
+	{
+	  char *fnam;
+	  unsigned int line;
+	  int e_valid = expr_symbol_where (loc_assert->loc_sym, &fnam, &line);
+
+	  gas_assert (e_valid == 1);
+	  as_bad_where (fnam, line,
+			_("LOC to section unknown or indeterminable "
+			  "at first pass"));
+	}
     }
 
   if (n_of_raw_gregs != 0)
@@ -3892,11 +3942,28 @@ s_loc (int ignore ATTRIBUTE_UNUSED)
 
   if (exp.X_op == O_illegal
       || exp.X_op == O_absent
-      || exp.X_op == O_big
-      || section == undefined_section)
+      || exp.X_op == O_big)
     {
       as_bad (_("invalid LOC expression"));
       return;
+    }
+
+  if (section == undefined_section)
+    {
+      /* This is an error or a LOC with an expression involving
+	 forward references.  For the expression to be correctly
+	 evaluated, we need to force a proper symbol; gas loses track
+	 of the segment for "local symbols".  */
+      if (exp.X_op == O_add)
+	{
+	  symbol_get_value_expression (exp.X_op_symbol);
+	  symbol_get_value_expression (exp.X_add_symbol);
+	}
+      else
+	{
+	  gas_assert (exp.X_op == O_symbol);
+	  symbol_get_value_expression (exp.X_add_symbol);
+	}
     }
 
   if (section == absolute_section)
@@ -3970,7 +4037,9 @@ s_loc (int ignore ATTRIBUTE_UNUSED)
 	}
     }
 
-  if (section != now_seg)
+  /* If we can't deduce the section, it must be the current one.
+     Below, we arrange to assert this.  */
+  if (section != now_seg && section != undefined_section)
     {
       obj_elf_section_change_hook ();
       subseg_set (section, 0);
@@ -3981,16 +4050,41 @@ s_loc (int ignore ATTRIBUTE_UNUSED)
 
   if (exp.X_op != O_absent)
     {
+      symbolS *esym = NULL;
+
       if (exp.X_op != O_constant && exp.X_op != O_symbol)
 	{
 	  /* Handle complex expressions.  */
-	  sym = make_expr_symbol (&exp);
+	  esym = sym = make_expr_symbol (&exp);
 	  off = 0;
 	}
       else
 	{
 	  sym = exp.X_add_symbol;
 	  off = exp.X_add_number;
+
+	  if (section == undefined_section)
+	    {
+	      /* We need an expr_symbol when tracking sections.  In
+		 order to make this an expr_symbol with file and line
+		 tracked, we have to make the exp non-trivial; not an
+		 O_symbol with .X_add_number == 0.  The constant part
+		 is unused.  */
+	      exp.X_add_number = 1;
+	      esym = make_expr_symbol (&exp);
+	    }
+	}
+
+      /* Track the LOC's where we couldn't deduce the section: assert
+	 that we weren't supposed to change section.  */
+      if (section == undefined_section)
+	{
+	  struct loc_assert_s *next = loc_asserts;
+	  loc_asserts
+	    = (struct loc_assert_s *) xmalloc (sizeof (*loc_asserts));
+	  loc_asserts->next = next;
+	  loc_asserts->old_seg = now_seg;
+	  loc_asserts->loc_sym = esym;
 	}
 
       p = frag_var (rs_org, 1, 1, (relax_substateT) 0, sym, off, (char *) 0);

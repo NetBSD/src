@@ -1,6 +1,6 @@
 // Nested Exception support header (nested_exception class) for -*- C++ -*-
 
-// Copyright (C) 2009, 2010 Free Software Foundation, Inc.
+// Copyright (C) 2009-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -22,9 +22,9 @@
 // see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 // <http://www.gnu.org/licenses/>.
 
-/** @file nested_exception.h
- *  This is an internal header file, included by other headers and the
- *  implementation. You should not attempt to use it directly.
+/** @file bits/nested_exception.h
+ *  This is an internal header file, included by other library headers.
+ *  Do not attempt to use it directly. @headername{exception}
  */
 
 #ifndef _GLIBCXX_NESTED_EXCEPTION_H
@@ -32,13 +32,13 @@
 
 #pragma GCC visibility push(default)
 
-#ifndef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus < 201103L
 # include <bits/c++0x_warning.h>
 #else
 
 #include <bits/c++config.h>
 
-#if !defined(_GLIBCXX_ATOMIC_BUILTINS_4)
+#if ATOMIC_INT_LOCK_FREE < 2
 #  error This platform does not support exception propagation.
 #endif
 
@@ -57,13 +57,13 @@ namespace std
     exception_ptr _M_ptr;
 
   public:
-    nested_exception() throw() : _M_ptr(current_exception()) { }
+    nested_exception() noexcept : _M_ptr(current_exception()) { }
 
     nested_exception(const nested_exception&) = default;
 
     nested_exception& operator=(const nested_exception&) = default;
 
-    inline virtual ~nested_exception();
+    virtual ~nested_exception() noexcept;
 
     void
     rethrow_nested() const __attribute__ ((__noreturn__))
@@ -73,8 +73,6 @@ namespace std
     nested_ptr() const
     { return _M_ptr; }
   };
-
-  inline nested_exception::~nested_exception() = default;
 
   template<typename _Except>
     struct _Nested_exception : public _Except, public nested_exception
@@ -161,7 +159,7 @@ namespace std
 
 } // extern "C++"
 
-#endif // __GXX_EXPERIMENTAL_CXX0X__
+#endif // C++11
 
 #pragma GCC visibility pop
 

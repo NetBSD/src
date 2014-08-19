@@ -1,9 +1,9 @@
-/*	$NetBSD: dynstr.c,v 1.1.1.1 2011/09/11 17:20:29 christos Exp $	*/
+/*	$NetBSD: dynstr.c,v 1.1.1.1.8.1 2014/08/19 23:46:37 tls Exp $	*/
 
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

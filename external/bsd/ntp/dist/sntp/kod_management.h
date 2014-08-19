@@ -1,4 +1,4 @@
-/*	$NetBSD: kod_management.h,v 1.1.1.1 2009/12/13 16:57:10 kardel Exp $	*/
+/*	$NetBSD: kod_management.h,v 1.1.1.1.12.1 2014/08/19 23:51:44 tls Exp $	*/
 
 #ifndef KOD_MANAGEMENT_H
 #define KOD_MANAGEMENT_H
@@ -11,12 +11,12 @@ struct kod_entry {
 	char type[5];
 };
 
-int search_entry(char *hostname, struct kod_entry **dst);
-
-void add_entry(char *hostname, char *type);
-void delete_entry(char *hostname, char *type);
-void kod_init_kod_db(const char *db_file);
-void write_kod_db(void);
+int search_entry(const char *hostname, struct kod_entry **dst);
+void add_entry(const char *hostname, const char *type);
+void delete_entry(const char *hostname, const char *type);
+void kod_init_kod_db(const char *db_file, int readonly);
+int  write_kod_db(void);
+void atexit_write_kod_db(void);
 
 
 #endif

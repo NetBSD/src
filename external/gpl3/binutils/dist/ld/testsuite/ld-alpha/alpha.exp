@@ -41,19 +41,24 @@ set alphatests {
      "" {align.s tlspic1.s tlspic2.s}
      {{readelf -WSsrl tlspic.rd} {objdump -drj.text tlspic.dd}
       {objdump -sj.got tlspic.sd} {objdump -sj.tdata tlspic.td}}
-      "libtlspic.so"}
+     "libtlspic.so"}
     {"Helper shared library" "-shared -melf64alpha"
      "" {tlslib.s} {} "libtlslib.so"}
     {"TLS -fpic and -fno-pic exec"
      "-melf64alpha tmpdir/libtlslib.so" "" {align.s tlsbinpic.s tlsbin.s}
      {{readelf -WSsrl tlsbin.rd} {objdump -drj.text tlsbin.dd}
       {objdump -sj.got tlsbin.sd} {objdump -sj.tdata tlsbin.td}}
-      "tlsbin"}
+     "tlsbin"}
     {"TLS -fpic and -fno-pic exec -relax"
      "-relax -melf64alpha tmpdir/libtlslib.so" "" {align.s tlsbinpic.s tlsbin.s}
      {{readelf -WSsrl tlsbinr.rd} {objdump -drj.text tlsbinr.dd}
       {objdump -sj.got tlsbinr.sd}}
-      "tlsbinr"}
+     "tlsbinr"}
+    {"empty got"
+     "-melf64alpha" ""
+     {emptygot.s}
+     {{nm "-n" emptygot.nm}}
+     "emptygot"}
 }
 
 # Not implemented yet

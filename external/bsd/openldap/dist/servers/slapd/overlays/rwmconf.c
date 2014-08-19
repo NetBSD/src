@@ -1,10 +1,10 @@
-/*	$NetBSD: rwmconf.c,v 1.1.1.3 2010/12/12 15:23:43 adam Exp $	*/
+/*	$NetBSD: rwmconf.c,v 1.1.1.3.12.1 2014/08/19 23:52:03 tls Exp $	*/
 
 /* rwmconf.c - rewrite/map configuration file routines */
-/* OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmconf.c,v 1.25.2.7 2010/06/10 17:37:40 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.

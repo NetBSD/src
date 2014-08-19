@@ -1,10 +1,10 @@
-/*	$NetBSD: tls2.c,v 1.1.1.2 2010/12/12 15:21:38 adam Exp $	*/
+/*	$NetBSD: tls2.c,v 1.1.1.2.12.1 2014/08/19 23:52:00 tls Exp $	*/
 
 /* tls.c - Handle tls/ssl. */
-/* OpenLDAP: pkg/ldap/libraries/libldap/tls2.c,v 1.4.2.10 2010/04/13 20:23:00 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,15 +39,15 @@
 
 #include "ldap-tls.h"
 
-#ifdef LDAP_R_COMPILE
-#include <ldap_pvt_thread.h>
-#endif
-
 static tls_impl *tls_imp = &ldap_int_tls_impl;
 #define HAS_TLS( sb )	ber_sockbuf_ctrl( sb, LBER_SB_OPT_HAS_IO, \
 				(void *)tls_imp->ti_sbio )
 
 #endif /* HAVE_TLS */
+
+#ifdef LDAP_DEVEL
+#define LDAP_USE_NON_BLOCKING_TLS
+#endif /* LDAP_DEVEL */
 
 /* RFC2459 minimum required set of supported attribute types
  * in a certificate DN
@@ -271,13 +271,9 @@ ldap_pvt_tls_init_def_ctx( int is_server )
 {
 	struct ldapoptions *lo = LDAP_INT_GLOBAL_OPT();   
 	int rc;
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_lock( &tls_def_ctx_mutex );
-#endif
+	LDAP_MUTEX_LOCK( &tls_def_ctx_mutex );
 	rc = ldap_int_tls_init_ctx( lo, is_server );
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_unlock( &tls_def_ctx_mutex );
-#endif
+	LDAP_MUTEX_UNLOCK( &tls_def_ctx_mutex );
 	return rc;
 }
 
@@ -588,6 +584,11 @@ ldap_pvt_tls_get_option( LDAP *ld, int option, void *arg )
 {
 	struct ldapoptions *lo;
 
+	if( option == LDAP_OPT_X_TLS_PACKAGE ) {
+		*(char **)arg = LDAP_STRDUP( tls_imp->ti_name );
+		return 0;
+	}
+
 	if( ld != NULL ) {
 		assert( LDAP_VALID( ld ) );
 
@@ -812,10 +813,19 @@ ldap_pvt_tls_set_option( LDAP *ld, int option, void *arg )
 int
 ldap_int_tls_start ( LDAP *ld, LDAPConn *conn, LDAPURLDesc *srv )
 {
-	Sockbuf *sb = conn->lconn_sb;
+	Sockbuf *sb;
 	char *host;
 	void *ssl;
+	int ret;
+#ifdef LDAP_USE_NON_BLOCKING_TLS
+	struct timeval start_time_tv, tv, tv0;
+	ber_socket_t	sd = AC_SOCKET_ERROR;
+#endif /* LDAP_USE_NON_BLOCKING_TLS */
 
+	if ( !conn )
+		return LDAP_PARAM_ERROR;
+
+	sb = conn->lconn_sb;
 	if( srv ) {
 		host = srv->lud_host;
 	} else {
@@ -829,11 +839,101 @@ ldap_int_tls_start ( LDAP *ld, LDAPConn *conn, LDAPURLDesc *srv )
 
 	(void) tls_init( tls_imp );
 
+#ifdef LDAP_USE_NON_BLOCKING_TLS
 	/*
-	 * Fortunately, the lib uses blocking io...
+	 * Use non-blocking io during SSL Handshake when a timeout is configured
 	 */
-	if ( ldap_int_tls_connect( ld, conn ) < 0 ) {
-		ld->ld_errno = LDAP_CONNECT_ERROR;
+	if ( ld->ld_options.ldo_tm_net.tv_sec >= 0 ) {
+		ber_sockbuf_ctrl( ld->ld_sb, LBER_SB_OPT_SET_NONBLOCK, sb );
+		ber_sockbuf_ctrl( sb, LBER_SB_OPT_GET_FD, &sd );
+		tv = ld->ld_options.ldo_tm_net;
+		tv0 = tv;
+#ifdef HAVE_GETTIMEOFDAY
+		gettimeofday( &start_time_tv, NULL );
+#else /* ! HAVE_GETTIMEOFDAY */
+		time( &start_time_tv.tv_sec );
+		start_time_tv.tv_usec = 0;
+#endif /* ! HAVE_GETTIMEOFDAY */
+	}
+
+#endif /* LDAP_USE_NON_BLOCKING_TLS */
+
+	ld->ld_errno = LDAP_SUCCESS;
+	ret = ldap_int_tls_connect( ld, conn );
+
+#ifdef LDAP_USE_NON_BLOCKING_TLS
+	while ( ret > 0 ) { /* this should only happen for non-blocking io */
+		int wr=0;
+
+		if ( sb->sb_trans_needs_read ) {
+			wr=0;
+		} else if ( sb->sb_trans_needs_write ) {
+			wr=1;
+		}
+		Debug( LDAP_DEBUG_TRACE, "ldap_int_tls_start: ldap_int_tls_connect needs %s\n",
+				wr ? "write": "read", 0, 0);
+
+		ret = ldap_int_poll( ld, sd, &tv, wr);
+		if ( ret < 0 ) {
+			ld->ld_errno = LDAP_TIMEOUT;
+			break;
+		} else {
+			/* ldap_int_poll called ldap_pvt_ndelay_off */
+			ber_sockbuf_ctrl( ld->ld_sb, LBER_SB_OPT_SET_NONBLOCK, sb );
+			ret = ldap_int_tls_connect( ld, conn );
+			if ( ret > 0 ) { /* need to call tls_connect once more */
+				struct timeval curr_time_tv, delta_tv;
+
+				/* This is mostly copied from result.c:wait4msg(), should
+				 * probably be moved into a separate function */
+#ifdef HAVE_GETTIMEOFDAY
+				gettimeofday( &curr_time_tv, NULL );
+#else /* ! HAVE_GETTIMEOFDAY */
+				time( &curr_time_tv.tv_sec );
+				curr_time_tv.tv_usec = 0;
+#endif /* ! HAVE_GETTIMEOFDAY */
+
+				/* delta = curr - start */
+				delta_tv.tv_sec = curr_time_tv.tv_sec - start_time_tv.tv_sec;
+				delta_tv.tv_usec = curr_time_tv.tv_usec - start_time_tv.tv_usec;
+				if ( delta_tv.tv_usec < 0 ) {
+					delta_tv.tv_sec--;
+					delta_tv.tv_usec += 1000000;
+				}
+
+				/* tv0 < delta ? */
+				if ( ( tv0.tv_sec < delta_tv.tv_sec ) ||
+					 ( ( tv0.tv_sec == delta_tv.tv_sec ) &&
+					   ( tv0.tv_usec < delta_tv.tv_usec ) ) )
+				{
+					ret = -1;
+					ld->ld_errno = LDAP_TIMEOUT;
+					break;
+				} else {
+					/* timeout -= delta_time */
+					tv0.tv_sec -= delta_tv.tv_sec;
+					tv0.tv_usec -= delta_tv.tv_usec;
+					if ( tv0.tv_usec < 0 ) {
+						tv0.tv_sec--;
+						tv0.tv_usec += 1000000;
+					}
+					start_time_tv.tv_sec = curr_time_tv.tv_sec;
+					start_time_tv.tv_usec = curr_time_tv.tv_usec;
+				}
+				tv = tv0;
+				Debug( LDAP_DEBUG_TRACE, "ldap_int_tls_start: ld %p %ld s %ld us to go\n",
+					(void *)ld, (long) tv.tv_sec, (long) tv.tv_usec );
+			}
+		}
+	}
+	if ( ld->ld_options.ldo_tm_net.tv_sec >= 0 ) {
+		ber_sockbuf_ctrl( ld->ld_sb, LBER_SB_OPT_SET_NONBLOCK, NULL );
+	}
+#endif /* LDAP_USE_NON_BLOCKING_TLS */
+
+	if ( ret < 0 ) {
+		if ( ld->ld_errno == LDAP_SUCCESS )
+			ld->ld_errno = LDAP_CONNECT_ERROR;
 		return (ld->ld_errno);
 	}
 
@@ -843,7 +943,8 @@ ldap_int_tls_start ( LDAP *ld, LDAPConn *conn, LDAPURLDesc *srv )
 	/* 
 	 * compare host with name(s) in certificate
 	 */
-	if (ld->ld_options.ldo_tls_require_cert != LDAP_OPT_X_TLS_NEVER) {
+	if (ld->ld_options.ldo_tls_require_cert != LDAP_OPT_X_TLS_NEVER &&
+	    ld->ld_options.ldo_tls_require_cert != LDAP_OPT_X_TLS_ALLOW) {
 		ld->ld_errno = ldap_pvt_tls_check_hostname( ld, ssl, host );
 		if (ld->ld_errno != LDAP_SUCCESS) {
 			return ld->ld_errno;
@@ -975,6 +1076,93 @@ find_oid( struct berval *oid )
 			return &oids[i];
 	}
 	return NULL;
+}
+
+/* Converts BER Bitstring value to LDAP BitString value (RFC4517)
+ *
+ * berValue    : IN
+ * rfc4517Value: OUT
+ *
+ * berValue and ldapValue should not be NULL
+ */
+
+#define BITS_PER_BYTE	8
+#define SQUOTE_LENGTH	1
+#define B_CHAR_LENGTH	1
+#define STR_OVERHEAD    (2*SQUOTE_LENGTH + B_CHAR_LENGTH)
+
+static int
+der_to_ldap_BitString (struct berval *berValue,
+                                   struct berval *ldapValue)
+{
+	ber_len_t bitPadding=0;
+	ber_len_t bits, maxBits;
+	char *tmpStr;
+	unsigned char byte;
+	ber_len_t bitLength;
+	ber_len_t valLen;
+	unsigned char* valPtr;
+
+	ldapValue->bv_len=0;
+	ldapValue->bv_val=NULL;
+
+	/* Gets padding and points to binary data */
+	valLen=berValue->bv_len;
+	valPtr=(unsigned char*)berValue->bv_val;
+	if (valLen) {
+		bitPadding=(ber_len_t)(valPtr[0]);
+		valLen--;
+		valPtr++;
+	}
+	/* If Block is non DER encoding fixes to DER encoding */
+	if (bitPadding >= BITS_PER_BYTE) {
+		if (valLen*BITS_PER_BYTE > bitPadding ) {
+			valLen-=(bitPadding/BITS_PER_BYTE);
+			bitPadding%=BITS_PER_BYTE;
+		} else {
+			valLen=0;
+			bitPadding=0;
+		}
+	}
+	/* Just in case bad encoding */
+	if (valLen*BITS_PER_BYTE < bitPadding ) {
+		bitPadding=0;
+		valLen=0;
+	}
+
+	/* Gets buffer to hold RFC4517 Bit String format */
+	bitLength=valLen*BITS_PER_BYTE-bitPadding;
+	tmpStr=LDAP_MALLOC(bitLength + STR_OVERHEAD + 1);
+
+	if (!tmpStr)
+		return LDAP_NO_MEMORY;
+
+	ldapValue->bv_val=tmpStr;
+	ldapValue->bv_len=bitLength + STR_OVERHEAD;
+
+	/* Formatting in '*binary-digit'B format */
+	maxBits=BITS_PER_BYTE;
+	*tmpStr++ ='\'';
+	while(valLen) {
+		byte=*valPtr;
+		if (valLen==1)
+			maxBits-=bitPadding;
+		for (bits=0; bits<maxBits; bits++) {
+			if (0x80 & byte)
+				*tmpStr='1';
+			else
+				*tmpStr='0';
+			tmpStr++;
+			byte<<=1;
+		}
+		valPtr++;
+		valLen--;
+	}
+	*tmpStr++ ='\'';
+	*tmpStr++ ='B';
+	*tmpStr=0;
+
+	return LDAP_SUCCESS;
 }
 
 /* Convert a structured DN from an X.509 certificate into an LDAPV3 DN.
@@ -1119,6 +1307,8 @@ ldap_X509dn2bv( void *x509_name, struct berval *bv, LDAPDN_rewrite_func *func,
 					newAVA->la_attr = oidname->name;
 				}
 			}
+			newAVA->la_private = NULL;
+			newAVA->la_flags = LDAP_AVA_STRING;
 			tag = ber_get_stringbv( ber, &Val, LBER_BV_NOTERM );
 			switch(tag) {
 			case LBER_TAG_UNIVERSAL:
@@ -1131,22 +1321,29 @@ ldap_X509dn2bv( void *x509_name, struct berval *bv, LDAPDN_rewrite_func *func,
 				/* This uses 8-bit, assume ISO 8859-1 */
 				csize = 1;
 to_utf8:		rc = ldap_ucs_to_utf8s( &Val, csize, &newAVA->la_value );
+				newAVA->la_flags |= LDAP_AVA_NONPRINTABLE;
+allocd:
 				newAVA->la_flags |= LDAP_AVA_FREE_VALUE;
 				if (rc != LDAP_SUCCESS) goto nomem;
-				newAVA->la_flags = LDAP_AVA_NONPRINTABLE;
 				break;
 			case LBER_TAG_UTF8:
-				newAVA->la_flags = LDAP_AVA_NONPRINTABLE;
+				newAVA->la_flags |= LDAP_AVA_NONPRINTABLE;
 				/* This is already in UTF-8 encoding */
 			case LBER_TAG_IA5:
 			case LBER_TAG_PRINTABLE:
 				/* These are always 7-bit strings */
 				newAVA->la_value = Val;
+				break;
+			case LBER_BITSTRING:
+				/* X.690 bitString value converted to RFC4517 Bit String */
+				rc = der_to_ldap_BitString( &Val, &newAVA->la_value );
+				goto allocd;
 			default:
-				;
+				/* Not a string type at all */
+				newAVA->la_flags = 0;
+				newAVA->la_value = Val;
+				break;
 			}
-			newAVA->la_private = NULL;
-			newAVA->la_flags = LDAP_AVA_STRING;
 			newAVA++;
 		}
 		*newRDN++ = NULL;

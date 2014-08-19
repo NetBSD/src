@@ -1,4 +1,4 @@
-/*	$NetBSD: asn1parse.y,v 1.1.1.2 2011/04/14 14:08:19 elric Exp $	*/
+/*	$NetBSD: asn1parse.y,v 1.1.1.2.10.1 2014/08/19 23:45:17 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2007 Kungliga Tekniska Högskolan
@@ -49,7 +49,7 @@
 #include "gen_locl.h"
 #include "der.h"
 
-__RCSID("$NetBSD: asn1parse.y,v 1.1.1.2 2011/04/14 14:08:19 elric Exp $");
+__RCSID("NetBSD");
 
 static Type *new_type (Typetype t);
 static struct constraint_spec *new_constraint_spec(enum ctype);
@@ -367,7 +367,7 @@ range		: '(' Value RANGE Value ')'
 		    $$->max = $4->u.integervalue;
 		}
 		| '(' Value RANGE kw_MAX ')'
-		{	
+		{
 		    if($2->type != integervalue)
 			lex_error_message("Non-integer in first part of range");
 		    $$ = ecalloc(1, sizeof(*$$));
@@ -375,7 +375,7 @@ range		: '(' Value RANGE Value ')'
 		    $$->max = $2->u.integervalue - 1;
 		}
 		| '(' kw_MIN RANGE Value ')'
-		{	
+		{
 		    if($4->type != integervalue)
 			lex_error_message("Non-integer in second part of range");
 		    $$ = ecalloc(1, sizeof(*$$));

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rtadvd,v 1.6.56.1 2013/02/25 00:24:52 tls Exp $
+# $NetBSD: rtadvd,v 1.6.56.2 2014/08/19 23:45:51 tls Exp $
 #
 
 # PROVIDE: rtadvd
@@ -9,20 +9,51 @@
 
 $_rc_subr_loaded . /etc/rc.subr
 
-name="rtadvd"
+name=rtadvd
 rcvar=$name
-command="/usr/sbin/${name}"
+command="/usr/sbin/$name"
 pidfile="/var/run/$name.pid"
-extra_commands="reload"
-start_precmd="rtadvd_precmd"
+extra_commands=reload
+start_precmd=rtadvd_prestart
+reload_precmd=rtadvd_prereload
 
-rtadvd_precmd()
+rtadvd_prereload()
 {
-	if [ "$ip6mode" != "router" ]; then
+	local chdir="$(getent passwd _rtadvd | cut -d: -f6)"
+	local conf=/etc/rtadvd.conf myflags o confdir
+	
+	[ -z "$chdir" -o "$chdir" = / ] && return 0
+
+	if [ -n "$flags" ]; then
+		myflags=$flags
+	else
+		eval myflags=\$${name}_flags
+	fi
+	set -- ${myflags}
+	while getopts c:dDfM:Rs o; do
+		case "$1" in
+		-c)	conf="$OPTARG";;
+		esac
+		shift
+	done
+	confdir=$(dirname "$conf")
+	
+	echo "$name: copying $conf to $chdir$conf"
+	cp "$conf" "$chdir$conf"
+
+	# Provide a link to the chrooted dump file
+	ln -snf "$chdir/var/run/$name.dump" /var/run
+}
+
+rtadvd_prestart()
+{
+	if [ "$ip6mode" != router ]; then
 		warn \
 	"${name} cannot be used on IPv6 host, only on an IPv6 router."
 		return 1
 	fi
+
+	rtadvd_prereload
 }
 
 load_rc_config $name

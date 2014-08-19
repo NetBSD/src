@@ -1,9 +1,9 @@
-/*	$NetBSD: test_helpers.h,v 1.1.1.1 2011/09/11 17:20:33 christos Exp $	*/
+/*	$NetBSD: test_helpers.h,v 1.1.1.1.8.1 2014/08/19 23:46:37 tls Exp $	*/
 
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,7 @@ struct atf_fs_path;
     } \
     ATF_TC_BODY(name, tc) \
     { \
-        header_check(tc, hdrname); \
+        header_check(hdrname); \
     }
 
 #define BUILD_TC(name, sfile, descr, failmsg) \
@@ -65,14 +65,23 @@ struct atf_fs_path;
     } \
     ATF_TC_BODY(name, tc) \
     { \
-        build_check_c_o(tc, sfile, failmsg); \
+        build_check_c_o(tc, sfile, failmsg, true);   \
     }
 
-void build_check_c_o(const atf_tc_t *, const char *, const char *);
-void header_check(const atf_tc_t *, const char *);
+#define BUILD_TC_FAIL(name, sfile, descr, failmsg) \
+    ATF_TC(name); \
+    ATF_TC_HEAD(name, tc) \
+    { \
+        atf_tc_set_md_var(tc, "descr", descr); \
+    } \
+    ATF_TC_BODY(name, tc) \
+    { \
+        build_check_c_o(tc, sfile, failmsg, false);   \
+    }
+
+void build_check_c_o(const atf_tc_t *, const char *, const char *, const bool);
+void header_check(const char *);
 void get_process_helpers_path(const atf_tc_t *, const bool,
                               struct atf_fs_path *);
-bool grep_string(const struct atf_dynstr *, const char *);
-bool grep_file(const char *, const char *, ...);
 bool read_line(int, struct atf_dynstr *);
 void run_h_tc(atf_tc_t *, const char *, const char *, const char *);

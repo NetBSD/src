@@ -1,7 +1,42 @@
 -*- text -*-
 
-Changes in 2.21:
+Changes in 2.23:
 
+* Add support for 64-bit ARM architecture: AArch64
+
+* Added SORT_NONE to the linker script language to disable section sorting.
+
+* Add a linker-provided symbol when producing ELF output, '__ehdr_start'
+  to point to the ELF file header (and nearby program headers) in the
+  program's memory image.
+
+* Add support for S12X processor.
+
+* Add support for the VLE extension to the PowerPC architecture.
+
+* Add support for the Freescale XGATE architecture.
+
+* Add option -f FILE on AIX (for response file).
+
+* Add support for the Renesas RL78 architecture.
+
+* Add support for the Adapteva EPIPHANY architecture.
+
+Changes in 2.22:
+
+* --copy-dt-needed-entries is no longer enabled by default.  Instead
+  --no-copy-dt-needed-entries is the default.
+
+* INPUT_SECTION_FLAGS has been added to the linker script language
+  to allow selection of input sections by section header section flags.
+
+* Add support for the Tilera TILEPro and TILE-Gx architectures.
+
+* Added SORT_BY_INIT_PRIORITY to the linker script language to permit
+  sorting sections by numerical value of the GCC init_priority attribute
+  encoded in the section name.
+
+Changes in 2.21:
 
 * Linker script expression evaluation is somewhat more sane.  This may
   break scripts that depend on quirks of the old expression evaluation.
@@ -18,7 +53,7 @@ Changes in 2.21:
 * Extend .def file syntax by '== <ID>' for imports and exports. This allows
   to alias the import/export table name written in PE image.
 
-* Add --exlcude-all-symbols option to PE based linkers.  This prevents all
+* Add --exclude-all-symbols option to PE based linkers.  This prevents all
   symbols from automatically being exported.
 
 * Add support for the Renesas RX processor.
@@ -78,7 +113,7 @@ Changes in 2.20:
 
 * Add support for Lattice Mico32 (lm32) architecture.
 
-* Add CR16 ELF --embedded-relocs (used to embedded relocations into binaries 
+* Add CR16 ELF --embedded-relocs (used to embedded relocations into binaries
   for Embedded-PIC code) option.
 
 * Add to the PE/PE+ targets the support of two different kinds of

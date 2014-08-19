@@ -2,6 +2,7 @@
 
 	.globl	__start
 	.ent	__start
+	.align	4
 __start:
 	.frame	$sp,24,$31
 	save	24,$31

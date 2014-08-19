@@ -1,4 +1,4 @@
-/*	$NetBSD: mktime.c,v 1.1.1.2 2012/01/31 21:24:08 kardel Exp $	*/
+/*	$NetBSD: mktime.c,v 1.1.1.2.6.1 2014/08/19 23:51:41 tls Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989 Regents of the University of California.
@@ -61,6 +61,7 @@
  * by hand.  Sorry about that.
  */
 
+#include <config.h>
 #include "ntp_machine.h"
 
 #if !defined(HAVE_MKTIME) || !defined(HAVE_TIMEGM)

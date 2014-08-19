@@ -1,6 +1,7 @@
 /* Linker file opening and searching.
    Copyright 1991, 1992, 1993, 1994, 1995, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+   2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011, 2012
+   Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -39,7 +40,6 @@
 #include "plugin.h"
 #endif /* ENABLE_PLUGINS */
 
-const char * ldfile_input_filename;
 bfd_boolean  ldfile_assumed_script = FALSE;
 const char * ldfile_output_machine_name = "";
 unsigned long ldfile_output_machine;
@@ -70,29 +70,26 @@ static search_arch_type **search_arch_tail_ptr = &search_arch_head;
    sub-directory of the sysroot directory.  */
 
 static bfd_boolean
-is_sysrooted_pathname (const char *name, bfd_boolean notsame)
+is_sysrooted_pathname (const char *name)
 {
-  char * realname = ld_canon_sysroot ? lrealpath (name) : NULL;
+  char *realname;
   int len;
   bfd_boolean result;
 
-  if (! realname)
+  if (ld_canon_sysroot == NULL)
     return FALSE;
 
+  realname = lrealpath (name);
   len = strlen (realname);
+  result = FALSE;
+  if (len > ld_canon_sysroot_len
+      && IS_DIR_SEPARATOR (realname[ld_canon_sysroot_len]))
+    {
+      realname[ld_canon_sysroot_len] = '\0';
+      result = FILENAME_CMP (ld_canon_sysroot, realname) == 0;
+    }
 
-  if (((! notsame && len == ld_canon_sysroot_len)
-       || (len >= ld_canon_sysroot_len
-	   && IS_DIR_SEPARATOR (realname[ld_canon_sysroot_len])
-	   && (realname[ld_canon_sysroot_len] = '\0') == '\0'))
-      && FILENAME_CMP (ld_canon_sysroot, realname) == 0)
-    result = TRUE;
-  else
-    result = FALSE;
-
-  if (realname)
-    free (realname);
-
+  free (realname);
   return result;
 }
 
@@ -116,15 +113,9 @@ ldfile_add_library_path (const char *name, bfd_boolean cmdline)
   /* If a directory is marked as honoring sysroot, prepend the sysroot path
      now.  */
   if (name[0] == '=')
-    {
-      new_dirs->name = concat (ld_sysroot, name + 1, (const char *) NULL);
-      new_dirs->sysrooted = TRUE;
-    }
+    new_dirs->name = concat (ld_sysroot, name + 1, (const char *) NULL);
   else
-    {
-      new_dirs->name = xstrdup (name);
-      new_dirs->sysrooted = is_sysrooted_pathname (name, FALSE);
-    }
+    new_dirs->name = xstrdup (name);
 }
 
 /* Try to open a BFD for a lang_input_statement.  */
@@ -135,7 +126,7 @@ ldfile_try_open_bfd (const char *attempt,
 {
   entry->the_bfd = bfd_openr (attempt, entry->target);
 
-  if (trace_file_tries)
+  if (verbose)
     {
       if (entry->the_bfd == NULL)
 	info_msg (_("attempt to open %s failed\n"), attempt);
@@ -164,7 +155,7 @@ ldfile_try_open_bfd (const char *attempt,
      checks out compatible, do not exit early returning TRUE, or
      the plugins will not get a chance to claim the file.  */
 
-  if (entry->search_dirs_flag || !entry->dynamic)
+  if (entry->flags.search_dirs || !entry->flags.dynamic)
     {
       bfd *check;
 
@@ -178,7 +169,7 @@ ldfile_try_open_bfd (const char *attempt,
 	  if (! bfd_check_format (check, bfd_object))
 	    {
 	      if (check == entry->the_bfd
-		  && entry->search_dirs_flag
+		  && entry->flags.search_dirs
 		  && bfd_get_error () == bfd_error_file_not_recognized
 		  && ! ldemul_unrecognized_file (entry))
 		{
@@ -274,7 +265,7 @@ ldfile_try_open_bfd (const char *attempt,
 	      goto success;
 	    }
 
-	  if (!entry->dynamic && (entry->the_bfd->flags & DYNAMIC) != 0)
+	  if (!entry->flags.dynamic && (entry->the_bfd->flags & DYNAMIC) != 0)
 	    {
 	      einfo (_("%F%P: attempted static link of dynamic object `%s'\n"),
 		     attempt);
@@ -283,7 +274,7 @@ ldfile_try_open_bfd (const char *attempt,
 	      return FALSE;
 	    }
 
-	  if (entry->search_dirs_flag
+	  if (entry->flags.search_dirs
 	      && !bfd_arch_get_compatible (check, link_info.output_bfd,
 					   command_line.accept_unknown_input_arch)
 	      /* XCOFF archives can have 32 and 64 bit objects.  */
@@ -348,9 +339,9 @@ ldfile_open_file_search (const char *arch,
 
   /* If this is not an archive, try to open it in the current
      directory first.  */
-  if (! entry->maybe_archive)
+  if (! entry->flags.maybe_archive)
     {
-      if (entry->sysrooted && IS_ABSOLUTE_PATH (entry->filename))
+      if (entry->flags.sysrooted && IS_ABSOLUTE_PATH (entry->filename))
 	{
 	  char *name = concat (ld_sysroot, entry->filename,
 			       (const char *) NULL);
@@ -362,11 +353,7 @@ ldfile_open_file_search (const char *arch,
 	  free (name);
 	}
       else if (ldfile_try_open_bfd (entry->filename, entry))
-	{
-	  entry->sysrooted = IS_ABSOLUTE_PATH (entry->filename)
-	    && is_sysrooted_pathname (entry->filename, TRUE);
-	  return TRUE;
-	}
+	return TRUE;
 
       if (IS_ABSOLUTE_PATH (entry->filename))
 	return FALSE;
@@ -376,16 +363,13 @@ ldfile_open_file_search (const char *arch,
     {
       char *string;
 
-      if (entry->dynamic && ! link_info.relocatable)
+      if (entry->flags.dynamic && ! link_info.relocatable)
 	{
 	  if (ldemul_open_dynamic_archive (arch, search, entry))
-	    {
-	      entry->sysrooted = search->sysrooted;
-	      return TRUE;
-	    }
+	    return TRUE;
 	}
 
-      if (entry->maybe_archive)
+      if (entry->flags.maybe_archive)
 	string = concat (search->name, slash, lib, entry->filename,
 			 arch, suffix, (const char *) NULL);
       else
@@ -395,7 +379,6 @@ ldfile_open_file_search (const char *arch,
       if (ldfile_try_open_bfd (string, entry))
 	{
 	  entry->filename = string;
-	  entry->sysrooted = search->sysrooted;
 	  return TRUE;
 	}
 
@@ -416,19 +399,19 @@ ldfile_open_file (lang_input_statement_type *entry)
   if (entry->the_bfd != NULL)
     return;
 
-  if (! entry->search_dirs_flag)
+  if (! entry->flags.search_dirs)
     {
       if (ldfile_try_open_bfd (entry->filename, entry))
 	return;
 
-      if (strcmp (entry->filename, entry->local_sym_name) != 0)
+      if (filename_cmp (entry->filename, entry->local_sym_name) != 0)
 	einfo (_("%P: cannot find %s (%s): %E\n"),
 	       entry->filename, entry->local_sym_name);
       else
 	einfo (_("%P: cannot find %s: %E\n"), entry->local_sym_name);
 
-      entry->missing_file = TRUE;
-      missing_file = TRUE;
+      entry->flags.missing_file = TRUE;
+      input_flags.missing_file = TRUE;
     }
   else
     {
@@ -454,57 +437,40 @@ ldfile_open_file (lang_input_statement_type *entry)
       /* If we have found the file, we don't need to search directories
 	 again.  */
       if (found)
-	entry->search_dirs_flag = FALSE;
+	entry->flags.search_dirs = FALSE;
       else
 	{
-	  if (entry->sysrooted
+	  if (entry->flags.sysrooted
 	       && ld_sysroot
 	       && IS_ABSOLUTE_PATH (entry->local_sym_name))
 	    einfo (_("%P: cannot find %s inside %s\n"),
 		   entry->local_sym_name, ld_sysroot);
 	  else
 	    einfo (_("%P: cannot find %s\n"), entry->local_sym_name);
-	  entry->missing_file = TRUE;
-	  missing_file = TRUE;
+	  entry->flags.missing_file = TRUE;
+	  input_flags.missing_file = TRUE;
 	}
     }
 }
 
-/* Try to open NAME; if that fails, try NAME with EXTEN appended to it.  */
+/* Try to open NAME.  */
 
 static FILE *
-try_open (const char *name, const char *exten)
+try_open (const char *name, bfd_boolean *sysrooted)
 {
   FILE *result;
 
   result = fopen (name, "r");
 
-  if (trace_file_tries)
+  if (result != NULL)
+    *sysrooted = is_sysrooted_pathname (name);
+
+  if (verbose)
     {
       if (result == NULL)
 	info_msg (_("cannot find script file %s\n"), name);
       else
 	info_msg (_("opened script file %s\n"), name);
-    }
-
-  if (result != NULL)
-    return result;
-
-  if (*exten)
-    {
-      char *buff;
-
-      buff = concat (name, exten, (const char *) NULL);
-      result = fopen (buff, "r");
-
-      if (trace_file_tries)
-	{
-	  if (result == NULL)
-	    info_msg (_("cannot find script file %s\n"), buff);
-	  else
-	    info_msg (_("opened script file %s\n"), buff);
-	}
-      free (buff);
     }
 
   return result;
@@ -567,22 +533,23 @@ find_scripts_dir (void)
 
 /* If DEFAULT_ONLY is false, try to open NAME; if that fails, look for
    it in directories specified with -L, then in the default script
-   directory, without and with EXTEND appended.  If DEFAULT_ONLY is
-   true, the search is restricted to the default script location.  */
+   directory.  If DEFAULT_ONLY is true, the search is restricted to
+   the default script location.  */
 
 static FILE *
-ldfile_find_command_file (const char *name, const char *extend,
-			  bfd_boolean default_only)
+ldfile_find_command_file (const char *name,
+			  bfd_boolean default_only,
+			  bfd_boolean *sysrooted)
 {
   search_dirs_type *search;
   FILE *result = NULL;
-  char *buffer;
+  char *path;
   static search_dirs_type *script_search;
 
   if (!default_only)
     {
       /* First try raw name.  */
-      result = try_open (name, "");
+      result = try_open (name, sysrooted);
       if (result != NULL)
 	return result;
     }
@@ -608,9 +575,9 @@ ldfile_find_command_file (const char *name, const char *extend,
        search != NULL;
        search = search->next)
     {
-      buffer = concat (search->name, slash, name, (const char *) NULL);
-      result = try_open (buffer, extend);
-      free (buffer);
+      path = concat (search->name, slash, name, (const char *) NULL);
+      result = try_open (path, sysrooted);
+      free (path);
       if (result)
 	break;
     }
@@ -627,7 +594,9 @@ static void
 ldfile_open_command_file_1 (const char *name, bfd_boolean default_only)
 {
   FILE *ldlex_input_stack;
-  ldlex_input_stack = ldfile_find_command_file (name, "", default_only);
+  bfd_boolean sysrooted;
+
+  ldlex_input_stack = ldfile_find_command_file (name, default_only, &sysrooted);
 
   if (ldlex_input_stack == NULL)
     {
@@ -635,9 +604,8 @@ ldfile_open_command_file_1 (const char *name, bfd_boolean default_only)
       einfo (_("%P%F: cannot open linker script file %s: %E\n"), name);
     }
 
-  lex_push_file (ldlex_input_stack, name);
+  lex_push_file (ldlex_input_stack, name, sysrooted);
 
-  ldfile_input_filename = name;
   lineno = 1;
 
   saved_script_handle = ldlex_input_stack;

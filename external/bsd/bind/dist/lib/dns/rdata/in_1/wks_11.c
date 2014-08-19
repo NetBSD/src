@@ -1,7 +1,7 @@
-/*	$NetBSD: wks_11.c,v 1.3 2012/06/05 00:42:21 christos Exp $	*/
+/*	$NetBSD: wks_11.c,v 1.3.2.1 2014/08/19 23:46:30 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -100,7 +100,7 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 		RETTOK(DNS_R_BADDOTTEDQUAD);
 	if (region.length < 4)
 		return (ISC_R_NOSPACE);
-	memcpy(region.base, &addr, 4);
+	memmove(region.base, &addr, 4);
 	isc_buffer_add(target, 4);
 
 	/*
@@ -224,7 +224,7 @@ fromwire_in_wks(ARGS_FROMWIRE) {
 	if (tr.length < sr.length)
 		return (ISC_R_NOSPACE);
 
-	memcpy(tr.base, sr.base, sr.length);
+	memmove(tr.base, sr.base, sr.length);
 	isc_buffer_add(target, sr.length);
 	isc_buffer_forward(source, sr.length);
 
@@ -280,7 +280,7 @@ fromstruct_in_wks(ARGS_FROMSTRUCT) {
 
 	a = ntohl(wks->in_addr.s_addr);
 	RETERR(uint32_tobuffer(a, target));
-	RETERR(uint16_tobuffer(wks->protocol, target));
+	RETERR(uint8_tobuffer(wks->protocol, target));
 	return (mem_tobuffer(target, wks->map, wks->map_len));
 }
 
@@ -302,8 +302,8 @@ tostruct_in_wks(ARGS_TOSTRUCT) {
 	n = uint32_fromregion(&region);
 	wks->in_addr.s_addr = htonl(n);
 	isc_region_consume(&region, 4);
-	wks->protocol = uint16_fromregion(&region);
-	isc_region_consume(&region, 2);
+	wks->protocol = uint8_fromregion(&region);
+	isc_region_consume(&region, 1);
 	wks->map_len = region.length;
 	wks->map = mem_maybedup(mctx, region.base, region.length);
 	if (wks->map == NULL)

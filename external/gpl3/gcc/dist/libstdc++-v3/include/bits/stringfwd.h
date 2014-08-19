@@ -1,8 +1,6 @@
-// String support -*- C++ -*-
+// <string> Forward declarations -*- C++ -*-
 
-// Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-// 2010
-// Free Software Foundation, Inc.
+// Copyright (C) 2001-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -24,9 +22,9 @@
 // see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 // <http://www.gnu.org/licenses/>.
 
-/** @file stringfwd.h
+/** @file bits/stringfwd.h
  *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
+ *  Do not attempt to use it directly. @headername{string}
  */
 
 //
@@ -39,11 +37,11 @@
 #pragma GCC system_header
 
 #include <bits/c++config.h>
+#include <bits/memoryfwd.h>
 
-_GLIBCXX_BEGIN_NAMESPACE(std)
-
-  template<typename _Alloc>
-    class allocator;
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   /**
    *  @defgroup strings Strings
@@ -60,26 +58,32 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
   template<> struct char_traits<char>;
 
-  typedef basic_string<char>    string;   ///< A string of @c char
+  /// A string of @c char
+  typedef basic_string<char>    string;   
 
 #ifdef _GLIBCXX_USE_WCHAR_T
   template<> struct char_traits<wchar_t>;
 
-  typedef basic_string<wchar_t> wstring;   ///< A string of @c wchar_t
+  /// A string of @c wchar_t
+  typedef basic_string<wchar_t> wstring;   
 #endif
 
-#if (defined(__GXX_EXPERIMENTAL_CXX0X__) \
+#if ((__cplusplus >= 201103L) \
      && defined(_GLIBCXX_USE_C99_STDINT_TR1))
 
   template<> struct char_traits<char16_t>;
   template<> struct char_traits<char32_t>;
 
-  typedef basic_string<char16_t> u16string; ///< A string of @c char16_t
-  typedef basic_string<char32_t> u32string; ///< A string of @c char32_t
+  /// A string of @c char16_t
+  typedef basic_string<char16_t> u16string; 
+
+  /// A string of @c char32_t
+  typedef basic_string<char32_t> u32string; 
 
 #endif
   /** @}  */
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace std
 
 #endif	// _STRINGFWD_H

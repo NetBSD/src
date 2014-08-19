@@ -30,13 +30,6 @@ Boston, MA 02110-1301, USA.  */
 
 /* Define default target values.  */
 
-#undef MACHINE_TYPE
-#if TARGET_ENDIAN_DEFAULT != 0
-#define MACHINE_TYPE "NetBSD/mips64eb ELF"
-#else
-#define MACHINE_TYPE "NetBSD/mips64el ELF"
-#endif
-
 /* Provide a LINK_SPEC appropriate for a NetBSD/mips target.
    This is a copy of LINK_SPEC from <netbsd-elf.h> tweaked for
    the MIPS target.  */

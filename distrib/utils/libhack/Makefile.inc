@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.23.14.1 2012/11/20 02:57:53 tls Exp $
+# $NetBSD: Makefile.inc,v 1.23.14.2 2014/08/19 23:45:45 tls Exp $
 #
 # Include this fragment to build libhack.o
 # It is .o and not .a to make sure these are the
@@ -25,6 +25,7 @@ CPPFLAGS.runetable.c+= -I${HACKSRC}/../../../lib/libc/citrus \
 			-DALL_80_TO_FF_SW1
 
 CPPFLAGS.syslog.c+= -I${HACKSRC}/../../../lib/libc/include
+CPPFLAGS.gethost.c+= -I${HACKSRC}/../../../lib/libc/net
 
 libhack.o: ${HACKOBJS}
 	${LD} -r -o $@ ${HACKOBJS}

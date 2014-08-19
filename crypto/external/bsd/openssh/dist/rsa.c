@@ -1,5 +1,5 @@
-/*	$NetBSD: rsa.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
-/* $OpenBSD: rsa.c,v 1.29 2006/11/06 21:25:28 markus Exp $ */
+/*	$NetBSD: rsa.c,v 1.2.12.1 2014/08/19 23:45:25 tls Exp $	*/
+/* $OpenBSD: rsa.c,v 1.30 2013/05/17 00:13:14 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -62,7 +62,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: rsa.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
+__RCSID("$NetBSD: rsa.c,v 1.2.12.1 2014/08/19 23:45:25 tls Exp $");
 #include <sys/types.h>
 
 #include <string.h>
@@ -96,8 +96,8 @@ rsa_public_encrypt(BIGNUM *out, BIGNUM *in, RSA *key)
 
 	memset(outbuf, 0, olen);
 	memset(inbuf, 0, ilen);
-	xfree(outbuf);
-	xfree(inbuf);
+	free(outbuf);
+	free(inbuf);
 }
 
 int
@@ -122,8 +122,8 @@ rsa_private_decrypt(BIGNUM *out, BIGNUM *in, RSA *key)
 	}
 	memset(outbuf, 0, olen);
 	memset(inbuf, 0, ilen);
-	xfree(outbuf);
-	xfree(inbuf);
+	free(outbuf);
+	free(inbuf);
 	return len;
 }
 

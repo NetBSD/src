@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+// Copyright (c) 2007 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@ extern "C" {
 #include <atf-c/defs.h>
 }
 
-#include <atf-c++/utils.hpp>
+#include <atf-c++/noncopyable.hpp>
 
 namespace atf {
 namespace tests {
@@ -74,7 +74,7 @@ typedef std::map< std::string, std::string > vars_map;
 
 struct tc_impl;
 
-class tc : utils::noncopyable {
+class tc : noncopyable {
     std::auto_ptr< tc_impl > pimpl;
 
 protected:

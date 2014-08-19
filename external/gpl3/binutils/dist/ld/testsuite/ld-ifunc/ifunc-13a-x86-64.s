@@ -1,6 +1,6 @@
 	.text
         .type foo, @function
-	.global
+	.global foo
 foo:
         movl xxx(%rip), %eax
         ret

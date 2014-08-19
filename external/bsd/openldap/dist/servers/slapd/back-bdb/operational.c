@@ -1,10 +1,10 @@
-/*	$NetBSD: operational.c,v 1.1.1.3 2010/12/12 15:22:59 adam Exp $	*/
+/*	$NetBSD: operational.c,v 1.1.1.3.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
 /* operational.c - bdb backend operational attributes function */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/operational.c,v 1.29.2.7 2010/06/10 17:25:02 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2010 The OpenLDAP Foundation.
+ * Copyright 2000-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -126,11 +126,16 @@ bdb_operational(
 
 	assert( rs->sr_entry != NULL );
 
-	for ( ap = &rs->sr_operational_attrs; *ap; ap = &(*ap)->a_next )
-		/* just count */ ;
+	for ( ap = &rs->sr_operational_attrs; *ap; ap = &(*ap)->a_next ) {
+		if ( (*ap)->a_desc == slap_schema.si_ad_hasSubordinates ) {
+			break;
+		}
+	}
 
-	if ( SLAP_OPATTRS( rs->sr_attr_flags ) ||
-			ad_inlist( slap_schema.si_ad_hasSubordinates, rs->sr_attrs ) )
+	if ( *ap == NULL &&
+		attr_find( rs->sr_entry->e_attrs, slap_schema.si_ad_hasSubordinates ) == NULL &&
+		( SLAP_OPATTRS( rs->sr_attr_flags ) ||
+			ad_inlist( slap_schema.si_ad_hasSubordinates, rs->sr_attrs ) ) )
 	{
 		int	hasSubordinates, rc;
 

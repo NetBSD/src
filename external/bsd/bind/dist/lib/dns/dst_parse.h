@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_parse.h,v 1.3.2.1 2013/02/25 00:25:42 tls Exp $	*/
+/*	$NetBSD: dst_parse.h,v 1.3.2.2 2014/08/19 23:46:28 tls Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2010, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2010, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -65,7 +65,6 @@
 #define TAG_RSA_COEFFICIENT	((DST_ALG_RSAMD5 << TAG_SHIFT) + 7)
 #define TAG_RSA_ENGINE		((DST_ALG_RSAMD5 << TAG_SHIFT) + 8)
 #define TAG_RSA_LABEL		((DST_ALG_RSAMD5 << TAG_SHIFT) + 9)
-#define TAG_RSA_PIN		((DST_ALG_RSAMD5 << TAG_SHIFT) + 10)
 
 #define DH_NTAGS		4
 #define TAG_DH_PRIME		((DST_ALG_DH << TAG_SHIFT) + 0)
@@ -82,9 +81,12 @@
 
 #define GOST_NTAGS		1
 #define TAG_GOST_PRIVASN1	((DST_ALG_ECCGOST << TAG_SHIFT) + 0)
+#define TAG_GOST_PRIVRAW	((DST_ALG_ECCGOST << TAG_SHIFT) + 1)
 
-#define ECDSA_NTAGS		1
+#define ECDSA_NTAGS		4
 #define TAG_ECDSA_PRIVATEKEY	((DST_ALG_ECDSA256 << TAG_SHIFT) + 0)
+#define TAG_ECDSA_ENGINE	((DST_ALG_ECDSA256 << TAG_SHIFT) + 1)
+#define TAG_ECDSA_LABEL		((DST_ALG_ECDSA256 << TAG_SHIFT) + 2)
 
 #define OLD_HMACMD5_NTAGS	1
 #define HMACMD5_NTAGS		2

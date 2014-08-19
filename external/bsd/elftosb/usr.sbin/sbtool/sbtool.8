@@ -1,4 +1,4 @@
-.\" $NetBSD: sbtool.8,v 1.1.2.2 2012/11/15 19:49:18 jkunz Exp $
+.\" $NetBSD: sbtool.8,v 1.1.2.3 2014/08/19 23:46:46 tls Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,33 +25,31 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd November 3, 2012
-.Dt sbtool 1
+.Dt SBTOOL 8
 .Os
 .Sh NAME
 .Nm sbtool
 .Nd manipulate sb files
 .Sh SYNOPSIS
 .Nm
-.Oo Fl ? Ns \&| Ns Fl -help Oc
-.Oo Fl b|--binary Oc
-.Oo Fl d|--debug Oc
-.Oo Fl k|--key Ar file Oc
-.Oo Fl q|--quiet Oc
-.Oo Fl V|--verbose Oc
-.Oo Fl v|--version Oc
-.Oo Fl x|--extract value Oc
-.Oo Fl z|--zero-key Oc
+.Oo Fl ?, Fl Fl help Oc
+.Oo Fl b, Fl Fl binary Oc
+.Oo Fl d, Fl Fl debug Oc
+.Oo Fl k, Fl Fl key Ar file Oc
+.Oo Fl q, Fl Fl quiet Oc
+.Oo Fl V, Fl Fl verbose Oc
+.Oo Fl v, Fl Fl version Oc
+.Oo Fl x, Fl Fl extract value Oc
+.Oo Fl z, Fl Fl zero-key Oc
 .Ar sb-file
-.Oc
-.Oc
 .Sh DESCRIPTION
 The
 .Nm
 programm is used to manipulate sb boot files for Freescale
 i.MX23 and i.MX28 application processors.
 .Sh SEE ALSO
-.Xr elftosb 1
-.Xr sbkeygen 1
+.Xr elftosb 8 ,
+.Xr sbkeygen 8
 .br
 Freescale Application Note AN4555
 .Sh COPYRIGHT

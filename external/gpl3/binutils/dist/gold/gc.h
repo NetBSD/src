@@ -1,6 +1,6 @@
 // gc.h -- garbage collection of unused sections
 
-// Copyright 2009, 2010 Free Software Foundation, Inc.
+// Copyright 2009, 2010, 2011, 2012 Free Software Foundation, Inc.
 // Written by Sriraman Tallam <tmsriram@google.com>.
 
 // This file is part of gold.
@@ -37,10 +37,10 @@ namespace gold
 class Object;
 
 template<int size, bool big_endian>
-class Sized_relobj;
+class Sized_relobj_file;
 
 template<int sh_type, int size, bool big_endian>
-class Reloc_types;
+struct Reloc_types;
 
 class Output_section;
 class General_options;
@@ -178,7 +178,7 @@ gc_process_relocs(
     Symbol_table* symtab,
     Layout*,
     Target_type* target,
-    Sized_relobj<size, big_endian>* src_obj,
+    Sized_relobj_file<size, big_endian>* src_obj,
     unsigned int src_indx,
     const unsigned char* prelocs,
     size_t reloc_count,

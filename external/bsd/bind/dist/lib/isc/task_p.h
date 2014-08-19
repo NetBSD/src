@@ -1,7 +1,7 @@
-/*	$NetBSD: task_p.h,v 1.3.2.1 2013/06/23 06:26:25 tls Exp $	*/
+/*	$NetBSD: task_p.h,v 1.3.2.2 2014/08/19 23:46:33 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -24,15 +24,18 @@
 
 /*! \file */
 
+#if defined(ISC_PLATFORM_USETHREADS)
 void
 isc__taskmgr_pause(isc_taskmgr_t *taskmgr);
 
 void
 isc__taskmgr_resume(isc_taskmgr_t *taskmgr);
+#else
 isc_boolean_t
 isc__taskmgr_ready(isc_taskmgr_t *taskmgr);
 
 isc_result_t
 isc__taskmgr_dispatch(isc_taskmgr_t *taskmgr);
+#endif /* !ISC_PLATFORM_USETHREADS */
 
 #endif /* ISC_TASK_P_H */

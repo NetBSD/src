@@ -25,7 +25,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-icmp6.c,v 1.86 2008-02-05 19:36:13 guy Exp ";
 #else
-__RCSID("$NetBSD: print-icmp6.c,v 1.3.6.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-icmp6.c,v 1.3.6.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -70,7 +70,7 @@ static void icmp6_rrenum_print(const u_char *, const u_char *);
 /* inline the various RPL definitions */
 #define ND_RPL_MESSAGE 0x9B
 
-static struct tok icmp6_type_values[] = {
+static const struct tok icmp6_type_values[] = {
     { ICMP6_DST_UNREACH, "destination unreachable"},
     { ICMP6_PACKET_TOO_BIG, "packet too big"},
     { ICMP6_TIME_EXCEEDED, "time exceeded in-transit"},
@@ -103,7 +103,7 @@ static struct tok icmp6_type_values[] = {
     { 0,	NULL }
 };
 
-static struct tok icmp6_dst_unreach_code_values[] = {
+static const struct tok icmp6_dst_unreach_code_values[] = {
     { ICMP6_DST_UNREACH_NOROUTE, "unreachable route" },
     { ICMP6_DST_UNREACH_ADMIN, " unreachable prohibited"},
     { ICMP6_DST_UNREACH_BEYONDSCOPE, "beyond scope"},
@@ -112,21 +112,21 @@ static struct tok icmp6_dst_unreach_code_values[] = {
     { 0,	NULL }
 };
 
-static struct tok icmp6_opt_pi_flag_values[] = {
+static const struct tok icmp6_opt_pi_flag_values[] = {
     { ND_OPT_PI_FLAG_ONLINK, "onlink" },
     { ND_OPT_PI_FLAG_AUTO, "auto" },
     { ND_OPT_PI_FLAG_ROUTER, "router" },
     { 0,	NULL }
 };
 
-static struct tok icmp6_opt_ra_flag_values[] = {
+static const struct tok icmp6_opt_ra_flag_values[] = {
     { ND_RA_FLAG_MANAGED, "managed" },
     { ND_RA_FLAG_OTHER, "other stateful"},
     { ND_RA_FLAG_HOME_AGENT, "home agent"},
     { 0,	NULL }
 };
 
-static struct tok icmp6_nd_na_flag_values[] = {
+static const struct tok icmp6_nd_na_flag_values[] = {
     { ND_NA_FLAG_ROUTER, "router" },
     { ND_NA_FLAG_SOLICITED, "solicited" },
     { ND_NA_FLAG_OVERRIDE, "override" },
@@ -134,13 +134,14 @@ static struct tok icmp6_nd_na_flag_values[] = {
 };
 
 
-static struct tok icmp6_opt_values[] = {
+static const struct tok icmp6_opt_values[] = {
    { ND_OPT_SOURCE_LINKADDR, "source link-address"},
    { ND_OPT_TARGET_LINKADDR, "destination link-address"},
    { ND_OPT_PREFIX_INFORMATION, "prefix info"},
    { ND_OPT_REDIRECTED_HEADER, "redirected header"},
    { ND_OPT_MTU, "mtu"},
    { ND_OPT_RDNSS, "rdnss"},
+   { ND_OPT_DNSSL, "dnssl"},
    { ND_OPT_ADVINTERVAL, "advertisement interval"},
    { ND_OPT_HOMEAGENT_INFO, "homeagent information"},
    { ND_OPT_ROUTE_INFO, "route info"},
@@ -148,7 +149,7 @@ static struct tok icmp6_opt_values[] = {
 };
 
 /* mldv2 report types */
-static struct tok mldv2report2str[] = {
+static const struct tok mldv2report2str[] = {
 	{ 1,	"is_in" },
 	{ 2,	"is_ex" },
 	{ 3,	"to_in" },
@@ -179,7 +180,7 @@ get_lifetime(u_int32_t v)
 	if (v == (u_int32_t)~0UL)
 		return "infinity";
 	else {
-		snprintf(buf, sizeof(buf), "%u", v);
+		snprintf(buf, sizeof(buf), "%us", v);
 		return buf;
 	}
 }
@@ -427,7 +428,7 @@ icmp6_print(netdissect_options *ndo,
 		TCHECK(oip->ip6_dst);
 		switch (dp->icmp6_code) {
 		case ICMP6_PARAMPROB_HEADER:
-			printf(", errorneous - octet %u", EXTRACT_32BITS(&dp->icmp6_pptr));
+			printf(", erroneous - octet %u", EXTRACT_32BITS(&dp->icmp6_pptr));
 			break;
 		case ICMP6_PARAMPROB_NEXTHEADER:
 			printf(", next header - octet %u", EXTRACT_32BITS(&dp->icmp6_pptr));
@@ -450,7 +451,7 @@ icmp6_print(netdissect_options *ndo,
 		if (length == MLD_MINLEN) {
 			mld6_print((const u_char *)dp);
 		} else if (length >= MLDV2_MINLEN) {
-			printf("v2 ");
+			printf(" v2");
 			mldv2_query_print((const u_char *)dp, length);
 		} else {
 			printf(" unknown-version (len %u) ", length);
@@ -679,15 +680,14 @@ static void
 icmp6_opt_print(const u_char *bp, int resid)
 {
 	const struct nd_opt_hdr *op;
-	const struct nd_opt_hdr *opl;	/* why there's no struct? */
 	const struct nd_opt_prefix_info *opp;
-	const struct icmp6_opts_redirect *opr;
 	const struct nd_opt_mtu *opm;
 	const struct nd_opt_rdnss *oprd;
+	const struct nd_opt_dnssl *opds;
 	const struct nd_opt_advinterval *opa;
 	const struct nd_opt_homeagent_info *oph;
 	const struct nd_opt_route_info *opri;
-	const u_char *cp, *ep;
+	const u_char *cp, *ep, *domp;
 	struct in6_addr in6, *in6p;
 	size_t l;
 	u_int i;
@@ -717,28 +717,25 @@ icmp6_opt_print(const u_char *bp, int resid)
 
 		switch (op->nd_opt_type) {
 		case ND_OPT_SOURCE_LINKADDR:
-			opl = (struct nd_opt_hdr *)op;
 			l = (op->nd_opt_len << 3) - 2;
 			print_lladdr(cp + 2, l);
 			break;
 		case ND_OPT_TARGET_LINKADDR:
-			opl = (struct nd_opt_hdr *)op;
 			l = (op->nd_opt_len << 3) - 2;
 			print_lladdr(cp + 2, l);
 			break;
 		case ND_OPT_PREFIX_INFORMATION:
 			opp = (struct nd_opt_prefix_info *)op;
 			TCHECK(opp->nd_opt_pi_prefix);
-                        printf("%s/%u%s, Flags [%s], valid time %ss",
+                        printf("%s/%u%s, Flags [%s], valid time %s",
                                ip6addr_string(&opp->nd_opt_pi_prefix),
                                opp->nd_opt_pi_prefix_len,
                                (op->nd_opt_len != 4) ? "badlen" : "",
                                bittok2str(icmp6_opt_pi_flag_values, "none", opp->nd_opt_pi_flags_reserved),
                                get_lifetime(EXTRACT_32BITS(&opp->nd_opt_pi_valid_time)));
-                        printf(", pref. time %ss", get_lifetime(EXTRACT_32BITS(&opp->nd_opt_pi_preferred_time)));
+                        printf(", pref. time %s", get_lifetime(EXTRACT_32BITS(&opp->nd_opt_pi_preferred_time)));
 			break;
 		case ND_OPT_REDIRECTED_HEADER:
-			opr = (struct icmp6_opts_redirect *)op;
                         print_unknown_data(bp,"\n\t    ",op->nd_opt_len<<3);
 			/* xxx */
 			break;
@@ -758,6 +755,18 @@ icmp6_opt_print(const u_char *bp, int resid)
 				TCHECK(oprd->nd_opt_rdnss_addr[i]);
 				printf(" addr: %s", 
 				    ip6addr_string(&oprd->nd_opt_rdnss_addr[i]));
+			}
+			break;
+		case ND_OPT_DNSSL:
+			opds = (struct nd_opt_dnssl *)op;
+			printf(" lifetime %us, domain(s):",
+				EXTRACT_32BITS(&opds->nd_opt_dnssl_lifetime));
+			domp = cp + 8; /* domain names, variable-sized, RFC1035-encoded */
+			while (domp < cp + (op->nd_opt_len << 3) && *domp != '\0')
+			{
+				printf (" ");
+				if ((domp = ns_nprint (domp, bp)) == NULL)
+					goto trunc;
 			}
 			break;
 		case ND_OPT_ADVINTERVAL:

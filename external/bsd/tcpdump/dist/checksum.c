@@ -23,7 +23,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/checksum.c,v 1.4 2006-09-25 09:23:32 hannes Exp ";
 #else
-__RCSID("$NetBSD: checksum.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: checksum.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -156,8 +156,6 @@ create_osi_cksum (const u_int8_t *pptr, int checksum_offset, int length)
     u_int32_t c1;
     u_int16_t checksum;
     int index;
-
-    checksum = 0;
 
     c0 = 0;
     c1 = 0;

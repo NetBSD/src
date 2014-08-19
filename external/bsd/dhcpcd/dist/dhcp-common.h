@@ -1,8 +1,8 @@
-/* $NetBSD: dhcp-common.h,v 1.1.1.1.2.2 2013/06/23 06:26:31 tls Exp $ */
+/* $NetBSD: dhcp-common.h,v 1.1.1.1.2.3 2014/08/19 23:46:43 tls Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@
 #include <stdint.h>
 
 #include "common.h"
+#include "dhcpcd.h"
 
 /* Max MTU - defines dhcp option length */
 #define MTU_MAX             1500
@@ -49,31 +50,61 @@
 #define SINT32		(1 << 5)
 #define ADDRIPV4	(1 << 6)
 #define STRING		(1 << 7)
-#define PAIR		(1 << 8)
-#define ARRAY		(1 << 9)
-#define RFC3361		(1 << 10)
-#define RFC3397		(1 << 11)
-#define RFC3442		(1 << 12)
-#define RFC5969		(1 << 13)
-#define ADDRIPV6	(1 << 14)
-#define BINHEX		(1 << 15)
-#define SCODE		(1 << 16)
-#define FLAG		(1 << 17)
-#define NOREQ		(1 << 18)
+#define ARRAY		(1 << 8)
+#define RFC3361		(1 << 9)
+#define RFC3397		(1 << 10)
+#define RFC3442		(1 << 11)
+#define RFC5969		(1 << 12)
+#define ADDRIPV6	(1 << 13)
+#define BINHEX		(1 << 14)
+#define FLAG		(1 << 15)
+#define NOREQ		(1 << 16)
+#define EMBED		(1 << 17)
+#define ENCAP		(1 << 18)
+#define INDEX		(1 << 19)
+#define OPTION		(1 << 20)
 
 struct dhcp_opt {
-	uint16_t option;
+	uint32_t option; /* Also used for IANA Enterpise Number */
 	int type;
-	const char *var;
+	size_t len;
+	char *var;
+
+	int index; /* Index counter for many instances of the same option */
+
+	/* Embedded options.
+	 * The option code is irrelevant here. */
+	struct dhcp_opt *embopts;
+	size_t embopts_len;
+
+	/* Encapsulated options */
+	struct dhcp_opt *encopts;
+	size_t encopts_len;
 };
+
+struct dhcp_opt *vivso_find(uint32_t, const void *);
+
+size_t dhcp_vendor(char *, size_t);
 
 #define add_option_mask(var, val) (var[val >> 3] |= 1 << (val & 7))
 #define del_option_mask(var, val) (var[val >> 3] &= ~(1 << (val & 7)))
-#define has_option_mask(var, val) (var[val >> 3] & (1 << (val & 7)))
-int make_option_mask(const struct dhcp_opt *,uint8_t *, const char *, int);
+#define has_option_mask(var, val) (var[val >>3] & (1 << (val & 7)))
+int make_option_mask(const struct dhcp_opt *, size_t,
+    const struct dhcp_opt *, size_t,
+    uint8_t *, const char *, int);
+
 size_t encode_rfc1035(const char *src, uint8_t *dst);
-ssize_t decode_rfc3397(char *, ssize_t, int, const uint8_t *);
-ssize_t print_string(char *, ssize_t, int, const uint8_t *);
-ssize_t print_option(char *, ssize_t, int, int, const uint8_t *, const char *);
+ssize_t decode_rfc3397(char *, size_t, const uint8_t *, size_t);
+ssize_t print_string(char *, size_t, const uint8_t *, size_t);
+ssize_t print_option(char *, size_t, int, const uint8_t *, size_t,
+    const char *);
+
+size_t dhcp_envoption(struct dhcpcd_ctx *,
+    char **, const char *, const char *, struct dhcp_opt *,
+    const uint8_t *(*dgetopt)(struct dhcpcd_ctx *,
+    size_t *, unsigned int *, size_t *,
+    const uint8_t *, size_t, struct dhcp_opt **),
+    const uint8_t *od, size_t ol);
+void dhcp_zero_index(struct dhcp_opt *);
 
 #endif

@@ -1327,10 +1327,10 @@ Disassembly of section \.text:
     1b70:	18 20 00 0a 1e 04 	\[MMB\]       tpa r4=r5
     1b76:	40 00 14 3e 08 00 	            tak r4=r5
     1b7c:	00 00 00 20       	            nop\.b 0x0
-    1b80:	18 00 00 80 01 00 	\[MMB\]       hint\.m 0x0
-    1b86:	00 00 00 03 00 00 	            hint\.m 0x0
+    1b80:	18 00 00 80 01 00 	\[MMB\]       hint\.m 0
+    1b86:	00 00 00 03 00 00 	            hint\.m 0
     1b8c:	00 00 00 20       	            nop\.b 0x0
-    1b90:	18 f8 ff 8f 01 00 	\[MMB\]       hint\.m 0x1ffff
+    1b90:	18 78 fe bf 01 00 	\[MMB\]       hint\.m 131071
     1b96:	40 30 14 02 22 00 	            cmp8xchg16\.acq r4=\[r5\],r6,ar\.csd,ar\.ccv
     1b9c:	00 00 00 20       	            nop\.b 0x0
     1ba0:	18 20 18 0a 03 11 	\[MMB\]       cmp8xchg16\.acq\.nt1 r4=\[r5\],r6,ar\.csd,ar\.ccv

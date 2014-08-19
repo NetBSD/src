@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd_args.c,v 1.1.1.2 2012/01/31 21:26:01 kardel Exp $	*/
+/*	$NetBSD: cmd_args.c,v 1.1.1.2.6.1 2014/08/19 23:51:41 tls Exp $	*/
 
 /*
  * cmd_args.c = command-line argument processing
@@ -9,6 +9,7 @@
 
 #include "ntpd.h"
 #include "ntp_stdlib.h"
+#include "ntp_config.h"
 #include "ntp_cmdargs.h"
 
 #include "ntpd-opts.h"
@@ -17,7 +18,6 @@
  * Definitions of things either imported from or exported to outside
  */
 extern char const *progname;
-extern const char *specific_interface;
 
 #ifdef HAVE_NETINFO
 extern int	check_netinfo;
@@ -25,17 +25,19 @@ extern int	check_netinfo;
 
 
 /*
- * getCmdOpts - get command line options
+ * getCmdOpts - apply most command line options
+ *
+ * A few options are examined earlier in ntpd.c ntpdmain() and
+ * ports/winnt/ntpd/ntservice.c main().
  */
 void
 getCmdOpts(
-	int argc,
-	char *argv[]
+	int	argc,
+	char **	argv
 	)
 {
 	extern const char *config_file;
 	int errflg;
-	tOptions *myOptions = &ntpdOptions;
 
 	/*
 	 * Initialize, initialize
@@ -132,21 +134,29 @@ getCmdOpts(
 	if (HAVE_OPT( USER )) {
 		droproot = 1;
 		user = estrdup(OPT_ARG( USER ));
-		group = rindex(user, ':');
-		if (group)
+		group = strrchr(user, ':');
+		if (group != NULL) {
+			size_t	len;
+
 			*group++ = '\0'; /* get rid of the ':' */
+			len = group - user;
+			group = estrdup(group);
+			user = erealloc(user, len);
+		}
 	}
 #endif
 
 	if (HAVE_OPT( VAR )) {
-		int		ct = STACKCT_OPT(  VAR );
-		const char**	pp = STACKLST_OPT( VAR );
+		int		ct;
+		const char **	pp;
+		const char *	v_assign;
+
+		ct = STACKCT_OPT(  VAR );
+		pp = STACKLST_OPT( VAR );
 
 		do  {
-			const char* my_ntp_optarg = *pp++;
-
-			set_sys_var(my_ntp_optarg, strlen(my_ntp_optarg)+1,
-			    (u_short) (RW));
+			v_assign = *pp++;
+			set_sys_var(v_assign, strlen(v_assign) + 1, RW);
 		} while (--ct > 0);
 	}
 
@@ -162,10 +172,9 @@ getCmdOpts(
 		} while (--ct > 0);
 	}
 
-	if (HAVE_OPT( SLEW )) {
-		clock_max = 600;
-		kern_enable = 0;
-	}
+	if (HAVE_OPT( SLEW ))
+		loop_config(LOOP_MAX, 600);
+
 	if (HAVE_OPT( UPDATEINTERVAL )) {
 		long val = OPT_VALUE_UPDATEINTERVAL;
 			  
@@ -181,19 +190,15 @@ getCmdOpts(
 			errflg++;
 		}
 	}
-#ifdef SIM
 
-	/* SK:
-	 * The simulator no longer takes any command line arguments. Hence,
-	 * all the code that was here has been removed.
-	 */
 
-#endif /* SIM */
-
-	if (errflg || argc) {
-		if (argc)
-			fprintf(stderr, "argc after processing is <%d>\n", argc);
-		optionUsage(myOptions, 2);
+	/* save list of servers from cmd line for config_peers() use */
+	if (argc > 0) {
+		cmdline_server_count = argc;
+		cmdline_servers = argv;
 	}
-	return;
+
+	/* display usage & exit with any option processing errors */
+	if (errflg)
+		optionUsage(&ntpdOptions, 2);	/* does not return */
 }

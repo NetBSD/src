@@ -1,3 +1,5 @@
+/*	$NetBSD: dtrace_subr.c,v 1.1.2.3 2014/08/19 23:52:21 tls Exp $	*/
+
 /*
  * CDDL HEADER START
  *
@@ -27,25 +29,25 @@
  * Use is subject to license terms.
  */
 
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD$");
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/kmem.h>
-#include <sys/smp.h>
+#include <sys/xcall.h>
+#include <sys/cpu.h>
+#include <sys/cpuvar.h>
 #include <sys/dtrace_impl.h>
 #include <sys/dtrace_bsd.h>
-#include <machine/clock.h>
+#include <machine/cpu.h>
 #include <machine/frame.h>
-#include <machine/trap.h>
-#include <vm/pmap.h>
+#include <machine/vmparam.h>
+#include <uvm/uvm_pglist.h>
+#include <uvm/uvm_prot.h>
+#include <uvm/uvm_pmap.h>
 
-#define	DELAYBRANCH(x)	((int)(x) < 0)
-		
+extern uintptr_t 	kernelbase;
 extern uintptr_t 	dtrace_in_probe_addr;
 extern int		dtrace_in_probe;
 extern dtrace_id_t	dtrace_probeid_error;
@@ -58,6 +60,8 @@ typedef struct dtrace_invop_hdlr {
 } dtrace_invop_hdlr_t;
 
 dtrace_invop_hdlr_t *dtrace_invop_hdlr;
+
+void dtrace_gethrtime_init(void *arg);
 
 int
 dtrace_invop(uintptr_t addr, uintptr_t *stack, uintptr_t eax)
@@ -72,26 +76,76 @@ dtrace_invop(uintptr_t addr, uintptr_t *stack, uintptr_t eax)
 	return (0);
 }
 
+void
+dtrace_invop_add(int (*func)(uintptr_t, uintptr_t *, uintptr_t))
+{
+	dtrace_invop_hdlr_t *hdlr;
 
-/*ARGSUSED*/
+	hdlr = kmem_alloc(sizeof (dtrace_invop_hdlr_t), KM_SLEEP);
+	hdlr->dtih_func = func;
+	hdlr->dtih_next = dtrace_invop_hdlr;
+	dtrace_invop_hdlr = hdlr;
+}
+
+void
+dtrace_invop_remove(int (*func)(uintptr_t, uintptr_t *, uintptr_t))
+{
+	dtrace_invop_hdlr_t *hdlr = dtrace_invop_hdlr, *prev = NULL;
+
+	for (;;) {
+		if (hdlr == NULL)
+			panic("attempt to remove non-existent invop handler");
+
+		if (hdlr->dtih_func == func)
+			break;
+
+		prev = hdlr;
+		hdlr = hdlr->dtih_next;
+	}
+
+	if (prev == NULL) {
+		ASSERT(dtrace_invop_hdlr == hdlr);
+		dtrace_invop_hdlr = hdlr->dtih_next;
+	} else {
+		ASSERT(dtrace_invop_hdlr != hdlr);
+		prev->dtih_next = hdlr->dtih_next;
+	}
+
+	kmem_free(hdlr, sizeof (dtrace_invop_hdlr_t));
+}
+
 void
 dtrace_toxic_ranges(void (*func)(uintptr_t base, uintptr_t limit))
 {
-	printf("IMPLEMENT ME: dtrace_toxic_ranges\n");
+	(*func)(0, kernelbase);
+}
+
+static void
+xcall_func(void *arg0, void *arg1)
+{
+    	dtrace_xcall_t func = arg0;
+
+    	(*func)(arg1);
 }
 
 void
 dtrace_xcall(processorid_t cpu, dtrace_xcall_t func, void *arg)
 {
-	cpuset_t cpus;
+	uint64_t where;
 
-	if (cpu == DTRACE_CPUALL)
-		cpus = all_cpus;
-	else
-		CPU_SETOF(cpu, &cpus);
+	if (cpu == DTRACE_CPUALL) {
+		where = xc_broadcast(0, xcall_func, func, arg);
+	} else {
+		struct cpu_info *cinfo = cpu_lookup(cpu);
 
-	smp_rendezvous_cpus(cpus, smp_no_rendevous_barrier, func,
-	    smp_no_rendevous_barrier, arg);
+		KASSERT(cinfo != NULL);
+		where = xc_unicast(0, xcall_func, func, arg, cinfo);
+	}
+	xc_wait(where);
+
+	/* XXX Q. Do we really need the other cpus to wait also? 
+	 * (see solaris:xc_sync())
+	 */
 }
 
 static void
@@ -133,10 +187,12 @@ dtrace_gethrestime(void)
 	return (curtime.tv_sec * 1000000000UL + curtime.tv_nsec);
 }
 
-/* Function to handle DTrace traps during probes. See amd64/amd64/trap.c */
+/* Function to handle DTrace traps during probes. Not used on ARM yet */
 int
 dtrace_trap(struct trapframe *frame, u_int type)
 {
+	cpuid_t cpuid = cpu_number();	/* current cpu id */
+
 	/*
 	 * A trap can occur while DTrace executes a probe. Before
 	 * executing the probe, DTrace blocks re-scheduling and sets
@@ -147,7 +203,8 @@ dtrace_trap(struct trapframe *frame, u_int type)
 	 * Check if DTrace has enabled 'no-fault' mode:
 	 *
 	 */
-	if ((cpu_core[curcpu].cpuc_dtrace_flags & CPU_DTRACE_NOFAULT) != 0) {
+
+	if ((cpu_core[cpuid].cpuc_dtrace_flags & CPU_DTRACE_NOFAULT) != 0) {
 		/*
 		 * There are only a couple of trap types that are expected.
 		 * All the rest will be handled in the usual way.
@@ -156,8 +213,8 @@ dtrace_trap(struct trapframe *frame, u_int type)
 		/* Page fault. */
 		case 0:
 			/* Flag a bad address. */
-			cpu_core[curcpu].cpuc_dtrace_flags |= CPU_DTRACE_BADADDR;
-			cpu_core[curcpu].cpuc_dtrace_illval = 0;
+			cpu_core[cpuid].cpuc_dtrace_flags |= CPU_DTRACE_BADADDR;
+			cpu_core[cpuid].cpuc_dtrace_illval = 0;
 
 			/*
 			 * Offset the instruction pointer to the instruction
@@ -184,4 +241,10 @@ dtrace_probe_error(dtrace_state_t *state, dtrace_epid_t epid, int which,
 	dtrace_probe(dtrace_probeid_error, (uint64_t)(uintptr_t)state,
 	    (uintptr_t)epid,
 	    (uintptr_t)which, (uintptr_t)fault, (uintptr_t)fltoffs);
+}
+
+void
+dtrace_gethrtime_init(void *arg)
+{
+	/* FIXME */
 }

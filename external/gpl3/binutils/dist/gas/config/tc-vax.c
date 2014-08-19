@@ -24,6 +24,7 @@
 
 #include "vax-inst.h"
 #include "obstack.h"		/* For FRAG_APPEND_1_CHAR macro in "frags.h" */
+#include "dw2gencfi.h"
 #include "subsegs.h"
 #include "safe-ctype.h"
 
@@ -3569,4 +3570,39 @@ char *
 md_atof (int type, char * litP, int * sizeP)
 {
   return vax_md_atof (type, litP, sizeP);
+}
+
+void
+vax_cfi_frame_initial_instructions (void)
+{
+  cfi_add_CFA_def_cfa (14, 0);
+}
+
+int
+tc_vax_regname_to_dw2regnum (char *regname)
+{
+  unsigned int i;
+  static const struct { char *name; int dw2regnum; } regnames[] =
+    {
+      { "r0",   0 }, { "r1",  1 }, { "r2",   2 }, { "r3",   3 },
+      { "r4",   4 }, { "r5",  5 }, { "r6",   6 }, { "r7",   7 },
+      { "r8",   8 }, { "r9",  9 }, { "r10", 10 }, { "r11", 11 },
+      { "ap",  12 }, { "fp", 13 }, { "sp",  14 }, { "pc",  15 },
+      { "psw", 16 },
+    };
+
+  for (i = 0; i < ARRAY_SIZE (regnames); ++i)
+    if (strcmp (regnames[i].name, regname) == 0)
+      return regnames[i].dw2regnum;
+
+  return -1;
+}
+
+void
+vax_cfi_emit_pcrel_expr (expressionS *expP, unsigned int nbytes)
+{
+  vax_cons_special_reloc = "pcrel";
+  expP->X_add_number += nbytes;
+  emit_expr (expP, nbytes);
+  vax_cons_special_reloc = NULL;
 }

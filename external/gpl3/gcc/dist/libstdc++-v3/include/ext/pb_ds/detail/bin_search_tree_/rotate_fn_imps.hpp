@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,7 +34,7 @@
 // warranty.
 
 /**
- * @file rotate_fn_imps.hpp
+ * @file bin_search_tree_/rotate_fn_imps.hpp
  * Contains imps for rotating nodes.
  */
 
@@ -47,7 +47,7 @@ rotate_left(node_pointer p_x)
 
   p_x->m_p_right = p_y->m_p_left;
 
-  if (p_y->m_p_left != NULL)
+  if (p_y->m_p_left != 0)
     p_y->m_p_left->m_p_parent = p_x;
 
   p_y->m_p_parent = p_x->m_p_parent;
@@ -62,10 +62,10 @@ rotate_left(node_pointer p_x)
   p_y->m_p_left = p_x;
   p_x->m_p_parent = p_y;
 
-  _GLIBCXX_DEBUG_ONLY(assert_node_consistent(p_x);)
-    _GLIBCXX_DEBUG_ONLY(assert_node_consistent(p_y);)
+  PB_DS_ASSERT_NODE_CONSISTENT(p_x)
+  PB_DS_ASSERT_NODE_CONSISTENT(p_y)
 
-    apply_update(p_x, (node_update* )this);
+  apply_update(p_x, (node_update* )this);
   apply_update(p_x->m_p_parent, (node_update* )this);
 }
 
@@ -78,7 +78,7 @@ rotate_right(node_pointer p_x)
 
   p_x->m_p_left = p_y->m_p_right;
 
-  if (p_y->m_p_right != NULL)
+  if (p_y->m_p_right != 0)
     p_y->m_p_right->m_p_parent = p_x;
 
   p_y->m_p_parent = p_x->m_p_parent;
@@ -93,10 +93,10 @@ rotate_right(node_pointer p_x)
   p_y->m_p_right = p_x;
   p_x->m_p_parent = p_y;
 
-  _GLIBCXX_DEBUG_ONLY(assert_node_consistent(p_x);)
-    _GLIBCXX_DEBUG_ONLY(assert_node_consistent(p_y);)
+  PB_DS_ASSERT_NODE_CONSISTENT(p_x)
+  PB_DS_ASSERT_NODE_CONSISTENT(p_y)
 
-    apply_update(p_x, (node_update* )this);
+  apply_update(p_x, (node_update* )this);
   apply_update(p_x->m_p_parent, (node_update* )this);
 }
 
@@ -129,9 +129,8 @@ inline void
 PB_DS_CLASS_C_DEC::
 apply_update(node_pointer p_nd, Node_Update_*  /*p_update*/)
 {
-  node_update::operator()(
-			   node_iterator(p_nd),
-			   const_node_iterator(static_cast<node_pointer>(NULL)));
+  node_update::operator()(node_iterator(p_nd),
+			  node_const_iterator(static_cast<node_pointer>(0)));
 }
 
 PB_DS_CLASS_T_DEC

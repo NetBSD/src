@@ -1,5 +1,5 @@
-.\"	Id: ccom.1,v 1.27 2012/03/22 21:09:41 plunky Exp 	
-.\"	$NetBSD: ccom.1,v 1.7 2012/03/26 22:06:04 wiz Exp $
+.\"	Id: ccom.1,v 1.31 2014/06/06 14:59:46 plunky Exp 	
+.\"	$NetBSD: ccom.1,v 1.7.2.1 2014/08/19 23:52:09 tls Exp $
 .\"
 .\" Copyright (c) 2007 Jeremy C. Reed <reed@reedmedia.net>
 .\"
@@ -149,6 +149,11 @@ Enable
 .Ar warning ,
 and treat it as an error condition.
 If a specific warning is not given, producing any warning will cause an error.
+.It Sy deprecated-declarations
+Report whenever a symbol marked with the
+.Sq deprecated
+attribute is used.
+This warning is enabled by default.
 .It Sy implicit-function-declaration
 (TODO) Require explicit prototypes for all called functions.
 .It Sy implicit-int
@@ -280,7 +285,7 @@ directive can be used to modify behaviour of
 during compilation.
 All tokens up to the first unescaped newline are considered part
 of the pragma command, with the following operations being recognized:
-.Bl -tag
+.Bl -tag -width Ds
 .It Sy STDC
 Standard C99 operator follows.
 Currently no C99 operations are implemented, and any directives starting
@@ -309,6 +314,9 @@ Cause an error if any of the following
 .Ar identifier Ns s
 subsequently appear in the code
 .Pq but not in any macro expansions .
+Currently not implemented.
+.It Sy GCC system_header
+GNU C compatibility.
 Currently not implemented.
 .It Sy GCC visibility
 GNU C compatibility.
@@ -358,7 +366,7 @@ Currently not implemented.
 .Lp
 and the following target-specific operations are handled by
 machine-dependent code:
-.Bl -tag
+.Bl -tag -width Ds
 .It Sy tls
 For AMD64 and i386 targets, the variable declared in the current statement
 will be referenced via the

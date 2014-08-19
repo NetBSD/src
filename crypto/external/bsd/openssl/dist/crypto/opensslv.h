@@ -25,11 +25,11 @@
  * (Prior to 0.9.5a beta1, a different scheme was used: MMNNFFRBB for
  *  major minor fix final patch/beta)
  */
-#define OPENSSL_VERSION_NUMBER	0x1000105fL
+#define OPENSSL_VERSION_NUMBER	0x1000109fL
 #ifdef OPENSSL_FIPS
-#define OPENSSL_VERSION_TEXT	"OpenSSL 1.0.1e-fips 11 Feb 2013"
+#define OPENSSL_VERSION_TEXT	"OpenSSL 1.0.1i-fips 6 Aug 2014"
 #else
-#define OPENSSL_VERSION_TEXT	"OpenSSL 1.0.1e 11 Feb 2013"
+#define OPENSSL_VERSION_TEXT	"OpenSSL 1.0.1i 6 Aug 2014"
 #endif
 #define OPENSSL_VERSION_PTEXT	" part of " OPENSSL_VERSION_TEXT
 
@@ -85,10 +85,5 @@
 #define SHLIB_VERSION_HISTORY ""
 #define SHLIB_VERSION_NUMBER "1.0.0"
 
-/* The following macro indicates that this version of OpenSSL
- * contains the security related patch from
- * http://www.openssl.org/news/patch-CAN-2005-2969.txt
- */
-#define OPENSSL_HAS_20051011_FIX
 
 #endif /* HEADER_OPENSSLV_H */

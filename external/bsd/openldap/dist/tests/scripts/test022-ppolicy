@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/test022-ppolicy,v 1.17.2.9 2010/04/13 20:24:03 kurt Exp
+# $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2010 The OpenLDAP Foundation.
+## Copyright 1998-2014 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -538,6 +538,13 @@ sleep $SLEEP1
 
 echo "Testing policy state forwarding..."
 $LDAPSEARCH -H $URI2 -D "$USER" -w wrongpw >$SEARCHOUT 2>&1
+RC=$?
+if test $RC != 49 ; then
+	echo "ldapsearch should have failed with 49, got ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
 $LDAPSEARCH -H $URI1 -D "$MANAGERDN" -w $PASSWD -b "$USER" \* \+ >> $SEARCHOUT 2>&1
 COUNT=`grep "pwdFailureTime" $SEARCHOUT | wc -l`
 if test $COUNT != 1 ; then

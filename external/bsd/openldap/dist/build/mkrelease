@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/build/mkrelease,v 1.23.2.6 2010/04/13 20:22:21 kurt Exp
+# $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2010 The OpenLDAP Foundation.
+## Copyright 1998-2014 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -14,25 +14,26 @@
 ## <http://www.OpenLDAP.org/license.html>.
 #
 # Make a release
-#	mkrelease RELNAME CVSTAG CVSMODULES
-# where CVSTAG is the tag to export from the current CVSROOT
 #
 
 #
 # This script MUST NOT add files to the export nor modify
-# any file in the export.
+# any file in the export, exceptions:
+#	make guide.html
 #
 
 set -e 		# exit immediately if any errors occur
 
 if test $# != 3 ; then
-	echo 'usage: mkrelease RELNAME CVSTAG CVSMODULES ...'
+	echo 'usage: mkrelease REPO RELNAME TAG'
 	exit 1
 fi
 
+REPO=$1
+shift
 RELNAME=openldap-$1
 shift
-CVSTAG=$1
+TAG=$1
 shift
 
 if test -e $RELNAME ; then
@@ -41,10 +42,9 @@ if test -e $RELNAME ; then
 fi
 
 echo Release: $RELNAME
-echo CVS Tag: $CVSTAG
-echo Modules: $*
+echo Tag: $TAG
 
-cvs -q export -kkv -r $CVSTAG -d $RELNAME $*
+git archive --format=tar --prefix="${RELNAME}/" --remote="${REPO}" "$TAG" |  tar xvf -
 
 if test ! -d $RELNAME ; then
 	echo "error: $RELNAME doesn't exists"

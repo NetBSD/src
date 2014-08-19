@@ -1,7 +1,7 @@
-/*	$NetBSD: md5.c,v 1.3 2012/06/05 00:42:29 christos Exp $	*/
+/*	$NetBSD: md5.c,v 1.3.2.1 2014/08/19 23:46:32 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -43,10 +43,15 @@
 #include <isc/platform.h>
 #include <isc/string.h>
 #include <isc/types.h>
+
+#if PKCS11CRYPTO
+#include <pk11/internal.h>
+#include <pk11/pk11.h>
+#endif
+
 #include <isc/util.h>
 
 #ifdef ISC_PLATFORM_OPENSSLHASH
-
 void
 isc_md5_init(isc_md5_t *ctx) {
 	EVP_DigestInit(ctx, EVP_md5());
@@ -65,6 +70,50 @@ isc_md5_update(isc_md5_t *ctx, const unsigned char *buf, unsigned int len) {
 void
 isc_md5_final(isc_md5_t *ctx, unsigned char *digest) {
 	EVP_DigestFinal(ctx, digest, NULL);
+}
+
+#elif PKCS11CRYPTO
+
+void
+isc_md5_init(isc_md5_t *ctx) {
+	CK_RV rv;
+	CK_MECHANISM mech = { CKM_MD5, NULL, 0 };
+
+	RUNTIME_CHECK(pk11_get_session(ctx, OP_DIGEST, ISC_TRUE, ISC_FALSE,
+				       ISC_FALSE, NULL, 0) == ISC_R_SUCCESS);
+	PK11_FATALCHECK(pkcs_C_DigestInit, (ctx->session, &mech));
+}
+
+void
+isc_md5_invalidate(isc_md5_t *ctx) {
+	CK_BYTE garbage[ISC_MD5_DIGESTLENGTH];
+	CK_ULONG len = ISC_MD5_DIGESTLENGTH;
+
+	if (ctx->handle == NULL)
+		return;
+	(void) pkcs_C_DigestFinal(ctx->session, garbage, &len);
+	memset(garbage, 0, sizeof(garbage));
+	pk11_return_session(ctx);
+}
+
+void
+isc_md5_update(isc_md5_t *ctx, const unsigned char *buf, unsigned int len) {
+	CK_RV rv;
+	CK_BYTE_PTR pPart;
+
+	DE_CONST(buf, pPart);
+	PK11_FATALCHECK(pkcs_C_DigestUpdate,
+			(ctx->session, pPart, (CK_ULONG) len));
+}
+
+void
+isc_md5_final(isc_md5_t *ctx, unsigned char *digest) {
+	CK_RV rv;
+	CK_ULONG len = ISC_MD5_DIGESTLENGTH;
+
+	PK11_FATALCHECK(pkcs_C_DigestFinal,
+			(ctx->session, (CK_BYTE_PTR) digest, &len));
+	pk11_return_session(ctx);
 }
 
 #else
@@ -219,11 +268,11 @@ isc_md5_update(isc_md5_t *ctx, const unsigned char *buf, unsigned int len) {
 
 	t = 64 - (t & 0x3f);	/* Space available in ctx->in (at least 1) */
 	if (t > len) {
-		memcpy((unsigned char *)ctx->in + 64 - t, buf, len);
+		memmove((unsigned char *)ctx->in + 64 - t, buf, len);
 		return;
 	}
 	/* First chunk is an odd size */
-	memcpy((unsigned char *)ctx->in + 64 - t, buf, t);
+	memmove((unsigned char *)ctx->in + 64 - t, buf, t);
 	byteSwap(ctx->in, 16);
 	transform(ctx->buf, ctx->in);
 	buf += t;
@@ -231,7 +280,7 @@ isc_md5_update(isc_md5_t *ctx, const unsigned char *buf, unsigned int len) {
 
 	/* Process data in 64-byte chunks */
 	while (len >= 64) {
-		memcpy(ctx->in, buf, 64);
+		memmove(ctx->in, buf, 64);
 		byteSwap(ctx->in, 16);
 		transform(ctx->buf, ctx->in);
 		buf += 64;
@@ -239,7 +288,7 @@ isc_md5_update(isc_md5_t *ctx, const unsigned char *buf, unsigned int len) {
 	}
 
 	/* Handle any remaining bytes of data. */
-	memcpy(ctx->in, buf, len);
+	memmove(ctx->in, buf, len);
 }
 
 /*!
@@ -273,7 +322,7 @@ isc_md5_final(isc_md5_t *ctx, unsigned char *digest) {
 	transform(ctx->buf, ctx->in);
 
 	byteSwap(ctx->buf, 4);
-	memcpy(digest, ctx->buf, 16);
+	memmove(digest, ctx->buf, 16);
 	memset(ctx, 0, sizeof(isc_md5_t));	/* In case it's sensitive */
 }
 #endif

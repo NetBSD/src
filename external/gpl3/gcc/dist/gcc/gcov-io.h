@@ -1,6 +1,5 @@
 /* File format for coverage information
-   Copyright (C) 1996, 1997, 1998, 2000, 2002,
-   2003, 2004, 2005, 2008, 2009 Free Software Foundation, Inc.
+   Copyright (C) 1996-2013 Free Software Foundation, Inc.
    Contributed by Bob Manson <manson@cygnus.com>.
    Completely remangled by Nathan Sidwell <nathan@codesourcery.com>.
 
@@ -99,11 +98,12 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
    tags, values [41..9f] for the notes file and [a1..ff] for the data
    file.
 
-   The basic block graph file contains the following records
+   The notes file contains the following records
    	note: unit function-graph*
 	unit: header int32:checksum string:source
 	function-graph: announce_function basic_blocks {arcs | lines}*
-	announce_function: header int32:ident int32:checksum
+	announce_function: header int32:ident
+		int32:lineno_checksum int32:cfg_checksum
 		string:name string:source int32:lineno
 	basic_block: header int32:flags*
 	arcs: header int32:block_no arc*
@@ -129,25 +129,28 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
    blocks they are for.
 
    The data file contains the following records.
-        data: {unit function-data* summary:object summary:program*}*
+        data: {unit summary:object summary:program* function-data*}*
 	unit: header int32:checksum
-        function-data:	announce_function arc_counts
-	announce_function: header int32:ident int32:checksum
-	arc_counts: header int64:count*
-	summary: int32:checksum {count-summary}GCOV_COUNTERS
+        function-data:	announce_function present counts
+	announce_function: header int32:ident
+		int32:lineno_checksum int32:cfg_checksum
+	present: header int32:present
+	counts: header int64:count*
+	summary: int32:checksum {count-summary}GCOV_COUNTERS_SUMMABLE
 	count-summary:	int32:num int32:runs int64:sum
-			int64:max int64:sum_max
+			int64:max int64:sum_max histogram
+        histogram: {int32:bitvector}8 histogram-buckets*
+        histogram-buckets: int32:num int64:min int64:sum
 
    The ANNOUNCE_FUNCTION record is the same as that in the note file,
-   but without the source location.  The ARC_COUNTS gives the counter
-   values for those arcs that are instrumented.  The SUMMARY records
-   give information about the whole object file and about the whole
+   but without the source location.  The COUNTS gives the
+   counter values for instrumented features.  The about the whole
    program.  The checksum is used for whole program summaries, and
    disambiguates different programs which include the same
    instrumented object file.  There may be several program summaries,
-   each with a unique checksum.  The object summary's checksum is zero.
-   Note that the data file might contain information from several runs
-   concatenated, or the data might be merged.
+   each with a unique checksum.  The object summary's checksum is
+   zero.  Note that the data file might contain information from
+   several runs concatenated, or the data might be merged.
 
    This file is included by both the compiler, gcov tools and the
    runtime support library libgcov. IN_LIBGCOV and IN_GCOV are used to
@@ -169,8 +172,10 @@ typedef unsigned gcov_unsigned_t __attribute__ ((mode (SI)));
 typedef unsigned gcov_position_t __attribute__ ((mode (SI)));
 #if LONG_LONG_TYPE_SIZE > 32
 typedef signed gcov_type __attribute__ ((mode (DI)));
+typedef unsigned gcov_type_unsigned __attribute__ ((mode (DI)));
 #else
 typedef signed gcov_type __attribute__ ((mode (SI)));
+typedef unsigned gcov_type_unsigned __attribute__ ((mode (SI)));
 #endif
 #else
 #if BITS_PER_UNIT == 16
@@ -178,16 +183,20 @@ typedef unsigned gcov_unsigned_t __attribute__ ((mode (HI)));
 typedef unsigned gcov_position_t __attribute__ ((mode (HI)));
 #if LONG_LONG_TYPE_SIZE > 32
 typedef signed gcov_type __attribute__ ((mode (SI)));
+typedef unsigned gcov_type_unsigned __attribute__ ((mode (SI)));
 #else
 typedef signed gcov_type __attribute__ ((mode (HI)));
+typedef unsigned gcov_type_unsigned __attribute__ ((mode (HI)));
 #endif
 #else
 typedef unsigned gcov_unsigned_t __attribute__ ((mode (QI)));
 typedef unsigned gcov_position_t __attribute__ ((mode (QI)));
 #if LONG_LONG_TYPE_SIZE > 32
 typedef signed gcov_type __attribute__ ((mode (HI)));
+typedef unsigned gcov_type_unsigned __attribute__ ((mode (HI)));
 #else
 typedef signed gcov_type __attribute__ ((mode (QI)));
+typedef unsigned gcov_type_unsigned __attribute__ ((mode (QI)));
 #endif
 #endif
 #endif
@@ -208,6 +217,7 @@ typedef unsigned gcov_position_t;
 #if IN_GCOV
 #define GCOV_LINKAGE static
 typedef HOST_WIDEST_INT gcov_type;
+typedef unsigned HOST_WIDEST_INT gcov_type_unsigned;
 #if IN_GCOV > 0
 #include <sys/types.h>
 #endif
@@ -294,7 +304,7 @@ typedef HOST_WIDEST_INT gcov_type;
    file marker -- it is not required to be present.  */
 
 #define GCOV_TAG_FUNCTION	 ((gcov_unsigned_t)0x01000000)
-#define GCOV_TAG_FUNCTION_LENGTH (2)
+#define GCOV_TAG_FUNCTION_LENGTH (3)
 #define GCOV_TAG_BLOCKS		 ((gcov_unsigned_t)0x01410000)
 #define GCOV_TAG_BLOCKS_LENGTH(NUM) (NUM)
 #define GCOV_TAG_BLOCKS_NUM(LENGTH) (LENGTH)
@@ -305,10 +315,11 @@ typedef HOST_WIDEST_INT gcov_type;
 #define GCOV_TAG_COUNTER_BASE 	 ((gcov_unsigned_t)0x01a10000)
 #define GCOV_TAG_COUNTER_LENGTH(NUM) ((NUM) * 2)
 #define GCOV_TAG_COUNTER_NUM(LENGTH) ((LENGTH) / 2)
-#define GCOV_TAG_OBJECT_SUMMARY  ((gcov_unsigned_t)0xa1000000)
+#define GCOV_TAG_OBJECT_SUMMARY  ((gcov_unsigned_t)0xa1000000) /* Obsolete */
 #define GCOV_TAG_PROGRAM_SUMMARY ((gcov_unsigned_t)0xa3000000)
-#define GCOV_TAG_SUMMARY_LENGTH  \
-	(1 + GCOV_COUNTERS_SUMMABLE * (2 + 3 * 2))
+#define GCOV_TAG_SUMMARY_LENGTH(NUM)  \
+        (1 + GCOV_COUNTERS_SUMMABLE * (10 + 3 * 2) + (NUM) * 5)
+
 
 /* Counters that are collected.  */
 #define GCOV_COUNTER_ARCS 	0  /* Arc transitions.  */
@@ -341,7 +352,7 @@ typedef HOST_WIDEST_INT gcov_type;
 
   /* A list of human readable names of the counters */
 #define GCOV_COUNTER_NAMES	{"arcs", "interval", "pow2", "single", \
-				 "delta","indirect_call", "average", "ior"}
+      				 "delta", "indirect_call", "average", "ior"}
 
   /* Names of merge functions for counters.  */
 #define GCOV_MERGE_FUNCTIONS	{"__gcov_merge_add",	\
@@ -387,6 +398,29 @@ typedef HOST_WIDEST_INT gcov_type;
 
 /* Structured records.  */
 
+/* Structure used for each bucket of the log2 histogram of counter values.  */
+typedef struct
+{
+  /* Number of counters whose profile count falls within the bucket.  */
+  gcov_unsigned_t num_counters;
+  /* Smallest profile count included in this bucket.  */
+  gcov_type min_value;
+  /* Cumulative value of the profile counts in this bucket.  */
+  gcov_type cum_value;
+} gcov_bucket_type;
+
+/* For a log2 scale histogram with each range split into 4
+   linear sub-ranges, there will be at most 64 (max gcov_type bit size) - 1 log2
+   ranges since the lowest 2 log2 values share the lowest 4 linear
+   sub-range (values 0 - 3).  This is 252 total entries (63*4).  */
+
+#define GCOV_HISTOGRAM_SIZE 252
+
+/* How many unsigned ints are required to hold a bit vector of non-zero
+   histogram entries when the histogram is written to the gcov file.
+   This is essentially a ceiling divide by 32 bits.  */
+#define GCOV_HISTOGRAM_BITVECTOR_SIZE (GCOV_HISTOGRAM_SIZE + 31) / 32
+
 /* Cumulative counter data.  */
 struct gcov_ctr_summary
 {
@@ -395,6 +429,8 @@ struct gcov_ctr_summary
   gcov_type sum_all;		/* sum of all counters accumulated.  */
   gcov_type run_max;		/* maximum value on a single run.  */
   gcov_type sum_max;    	/* sum of individual run max values.  */
+  gcov_bucket_type histogram[GCOV_HISTOGRAM_SIZE]; /* histogram of
+                                                      counter values.  */
 };
 
 /* Object & program summary record.  */
@@ -408,27 +444,30 @@ struct gcov_summary
    by write_profile must match these.  */
 
 #if IN_LIBGCOV
-/* Information about a single function.  This uses the trailing array
-   idiom. The number of counters is determined from the counter_mask
-   in gcov_info.  We hold an array of function info, so have to
-   explicitly calculate the correct array stride.  */
-struct gcov_fn_info
-{
-  gcov_unsigned_t ident;	/* unique ident of function */
-  gcov_unsigned_t checksum;	/* function checksum */
-  unsigned n_ctrs[0];		/* instrumented counters */
-};
-
-/* Type of function used to merge counters.  */
-typedef void (*gcov_merge_fn) (gcov_type *, gcov_unsigned_t);
-
-/* Information about counters.  */
+/* Information about counters for a single function.  */
 struct gcov_ctr_info
 {
   gcov_unsigned_t num;		/* number of counters.  */
   gcov_type *values;		/* their values.  */
-  gcov_merge_fn merge;  	/* The function used to merge them.  */
 };
+
+/* Information about a single function.  This uses the trailing array
+   idiom. The number of counters is determined from the merge pointer
+   array in gcov_info.  The key is used to detect which of a set of
+   comdat functions was selected -- it points to the gcov_info object
+   of the object file containing the selected comdat function.  */
+
+struct gcov_fn_info
+{
+  const struct gcov_info *key;		/* comdat key */
+  gcov_unsigned_t ident;		/* unique ident of function */
+  gcov_unsigned_t lineno_checksum;	/* function lineo_checksum */
+  gcov_unsigned_t cfg_checksum;		/* function cfg checksum */
+  struct gcov_ctr_info ctrs[0];		/* instrumented counters */
+};
+
+/* Type of function used to merge counters.  */
+typedef void (*gcov_merge_fn) (gcov_type *, gcov_unsigned_t);
 
 /* Information about a single object file.  */
 struct gcov_info
@@ -439,14 +478,12 @@ struct gcov_info
   gcov_unsigned_t stamp;	/* uniquifying time stamp */
   const char *filename;		/* output file name */
 
+  gcov_merge_fn merge[GCOV_COUNTERS];  /* merge functions (null for
+					  unused) */
+  
   unsigned n_functions;		/* number of functions */
-  const struct gcov_fn_info *functions; /* table of functions */
-
-  unsigned ctr_mask;		/* mask of counters instrumented.  */
-  struct gcov_ctr_info counts[0]; /* count data. The number of bits
-				     set in the ctr_mask field
-				     determines how big this array
-				     is.  */
+  const struct gcov_fn_info *const *functions; /* pointer to pointers
+					          to function information  */
 };
 
 /* Register a new object file module.  */
@@ -454,6 +491,12 @@ extern void __gcov_init (struct gcov_info *) ATTRIBUTE_HIDDEN;
 
 /* Called before fork, to avoid double counting.  */
 extern void __gcov_flush (void) ATTRIBUTE_HIDDEN;
+
+/* Function to reset all counters to 0.  */
+extern void __gcov_reset (void);
+
+/* Function to enable early write of profile information so far.  */
+extern void __gcov_dump (void);
 
 /* The merge function that just sums the counters.  */
 extern void __gcov_merge_add (gcov_type *, unsigned) ATTRIBUTE_HIDDEN;
@@ -568,6 +611,7 @@ GCOV_LINKAGE void gcov_write_unsigned (gcov_unsigned_t) ATTRIBUTE_HIDDEN;
 
 #if !IN_GCOV && !IN_LIBGCOV
 /* Available only in compiler */
+GCOV_LINKAGE unsigned gcov_histo_index (gcov_type value);
 GCOV_LINKAGE void gcov_write_string (const char *);
 GCOV_LINKAGE gcov_position_t gcov_write_tag (gcov_unsigned_t);
 GCOV_LINKAGE void gcov_write_length (gcov_position_t /*position*/);

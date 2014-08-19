@@ -28,7 +28,7 @@ to determine which parts of a program are taking most of the execution
 time.  We assume that you know how to write, compile, and execute
 programs.  GNU `gprof' was written by Jay Fenlason.
 
-   This manual is for `gprof' (GNU Binutils)\ version 2.21.1.
+   This manual is for `gprof' (GNU Binutils) version 2.23.1.
 
    This document is distributed under the terms of the GNU Free
 Documentation License version 1.3.  A copy of the license is included

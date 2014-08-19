@@ -192,13 +192,13 @@ dt_handle_err(dtrace_hdl_t *dtp, dtrace_probedata_t *data)
 	str = (char *)alloca(len);
 
 	if (err.dteda_action == 0) {
-		(void) sprintf(where, "predicate");
+		(void) snprintf(where, sizeof(where), "predicate");
 	} else {
-		(void) sprintf(where, "action #%d", err.dteda_action);
+		(void) snprintf(where, sizeof(where), "action #%d", err.dteda_action);
 	}
 
 	if (err.dteda_offset != -1) {
-		(void) sprintf(offinfo, " at DIF offset %d", err.dteda_offset);
+		(void) snprintf(offinfo, sizeof(offinfo), " at DIF offset %d", err.dteda_offset);
 	} else {
 		offinfo[0] = 0;
 	}
@@ -207,8 +207,7 @@ dt_handle_err(dtrace_hdl_t *dtp, dtrace_probedata_t *data)
 	case DTRACEFLT_BADADDR:
 	case DTRACEFLT_BADALIGN:
 	case DTRACEFLT_BADSTACK:
-		(void) sprintf(details, " (0x%llx)",
-		    (u_longlong_t)err.dteda_addr);
+		(void) snprintf(details, sizeof(details), " (0x%" PRIx64 ")", err.dteda_addr);
 		break;
 
 	default:
@@ -334,7 +333,7 @@ dt_handle_cpudrop(dtrace_hdl_t *dtp, processorid_t cpu,
 		size = sizeof (str);
 	}
 
-	(void) snprintf(s, size, "%llu %sdrop%s on CPU %d\n",
+	(void) snprintf(s, size, "%" PRIu64 "%sdrop%s on CPU %ld\n",
 	    howmany, what == DTRACEDROP_PRINCIPAL ? "" : "aggregation ",
 	    howmany > 1 ? "s" : "", cpu);
 
@@ -427,7 +426,7 @@ dt_handle_status(dtrace_hdl_t *dtp, dtrace_status_t *old, dtrace_status_t *new)
 			size = sizeof (str);
 		}
 
-		(void) snprintf(s, size, "%llu %s%s%s\n", nval - oval,
+		(void) snprintf(s, size, "%" PRIu64 "%s%s%s\n", nval - oval,
 		    _dt_droptab[i].dtdrt_str, (nval - oval > 1) ? "s" : "",
 		    _dt_droptab[i].dtdrt_msg != NULL ?
 		    _dt_droptab[i].dtdrt_msg : "");

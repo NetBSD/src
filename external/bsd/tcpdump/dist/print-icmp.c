@@ -25,7 +25,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-icmp.c,v 1.87 2007-09-13 17:42:31 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-icmp.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-icmp.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -199,7 +199,7 @@ struct icmp {
 #endif
 
 /* Most of the icmp types */
-static struct tok icmp2str[] = {
+static const struct tok icmp2str[] = {
 	{ ICMP_ECHOREPLY,		"echo reply" },
 	{ ICMP_SOURCEQUENCH,		"source quench" },
 	{ ICMP_ECHO,			"echo request" },
@@ -213,7 +213,7 @@ static struct tok icmp2str[] = {
 };
 
 /* Formats for most of the ICMP_UNREACH codes */
-static struct tok unreach2str[] = {
+static const struct tok unreach2str[] = {
 	{ ICMP_UNREACH_NET,		"net %s unreachable" },
 	{ ICMP_UNREACH_HOST,		"host %s unreachable" },
 	{ ICMP_UNREACH_SRCFAIL,
@@ -240,7 +240,7 @@ static struct tok unreach2str[] = {
 };
 
 /* Formats for the ICMP_REDIRECT codes */
-static struct tok type2str[] = {
+static const struct tok type2str[] = {
 	{ ICMP_REDIRECT_NET,		"redirect %s to net %s" },
 	{ ICMP_REDIRECT_HOST,		"redirect %s to host %s" },
 	{ ICMP_REDIRECT_TOSNET,		"redirect-tos %s to net %s" },

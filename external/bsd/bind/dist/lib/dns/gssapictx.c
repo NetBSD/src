@@ -1,7 +1,7 @@
-/*	$NetBSD: gssapictx.c,v 1.4 2012/06/05 00:41:32 christos Exp $	*/
+/*	$NetBSD: gssapictx.c,v 1.4.2.1 2014/08/19 23:46:28 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -70,8 +70,12 @@
  * always use one.  If we're not using our own SPNEGO implementation,
  * we include SPNEGO's OID.
  */
-#if defined(GSSAPI)
+#ifdef GSSAPI
+#ifdef WIN32
+#include <krb5/krb5.h>
+#else
 #include ISC_PLATFORM_KRB5HEADER
+#endif
 
 static unsigned char krb5_mech_oid_bytes[] = {
 	0x2a, 0x86, 0x48, 0x86, 0xf7, 0x12, 0x01, 0x02, 0x02
@@ -105,7 +109,7 @@ static gss_OID_set_desc mech_oid_set = {
 
 #define GBUFFER_TO_REGION(gb, r) \
 	do { \
-		(r).length = (gb).length; \
+	  (r).length = (unsigned int)(gb).length; \
 		(r).base = (gb).value; \
 	} while (/*CONSTCOND*/0)
 
@@ -231,7 +235,7 @@ check_config(const char *gss_name) {
 		krb5_free_context(krb5_ctx);
 		return;
 	}
-	p = strchr(gss_name, '/');
+	p = strchr(gss_name, '@');
 	if (p == NULL) {
 		gss_log(ISC_LOG_ERROR, "badly formatted "
 			"tkey-gssapi-credentials (%s)", gss_name);
@@ -254,12 +258,12 @@ dst_gssapi_acquirecred(dns_name_t *name, isc_boolean_t initiate,
 		       gss_cred_id_t *cred)
 {
 #ifdef GSSAPI
+	isc_result_t result;
 	isc_buffer_t namebuf;
 	gss_name_t gname;
 	gss_buffer_desc gnamebuf;
 	unsigned char array[DNS_NAME_MAXTEXT + 1];
 	OM_uint32 gret, minor;
-	gss_OID_set mechs;
 	OM_uint32 lifetime;
 	gss_cred_usage_t usage;
 	char buf[1024];
@@ -306,16 +310,17 @@ dst_gssapi_acquirecred(dns_name_t *name, isc_boolean_t initiate,
 		usage = GSS_C_ACCEPT;
 
 	gret = gss_acquire_cred(&minor, gname, GSS_C_INDEFINITE,
-				&mech_oid_set,
-				usage, cred, &mechs, &lifetime);
+				&mech_oid_set, usage, cred, NULL, &lifetime);
 
 	if (gret != GSS_S_COMPLETE) {
 		gss_log(3, "failed to acquire %s credentials for %s: %s",
 			initiate ? "initiate" : "accept",
 			(gname != NULL) ? (char *)gnamebuf.value : "?",
 			gss_error_tostring(gret, minor, buf, sizeof(buf)));
-		check_config((char *)array);
-		return (ISC_R_FAILURE);
+		if (gname != NULL)
+			check_config((char *)array);
+		result = ISC_R_FAILURE;
+		goto cleanup;
 	}
 
 	gss_log(4, "acquired %s credentials for %s",
@@ -323,8 +328,18 @@ dst_gssapi_acquirecred(dns_name_t *name, isc_boolean_t initiate,
 		(gname != NULL) ? (char *)gnamebuf.value : "?");
 
 	log_cred(*cred);
+	result = ISC_R_SUCCESS;
 
-	return (ISC_R_SUCCESS);
+cleanup:
+	if (gname != NULL) {
+		gret = gss_release_name(&minor, &gname);
+		if (gret != GSS_S_COMPLETE)
+			gss_log(3, "failed gss_release_name: %s",
+				gss_error_tostring(gret, minor, buf,
+						   sizeof(buf)));
+	}
+
+	return (result);
 #else
 	REQUIRE(cred != NULL && *cred == NULL);
 
@@ -543,7 +558,7 @@ gss_err_message(isc_mem_t *mctx, isc_uint32_t major, isc_uint32_t minor,
 	}
 
 	estr = gss_error_tostring(major, minor, buf, sizeof(buf));
-	if (estr)
+	if (estr != NULL)
 		(*err_message) = isc_mem_strdup(mctx, estr);
 }
 #endif
@@ -599,8 +614,12 @@ dst_gssapi_initctx(dns_name_t *name, isc_buffer_t *intoken,
 
 	if (gret != GSS_S_COMPLETE && gret != GSS_S_CONTINUE_NEEDED) {
 		gss_err_message(mctx, gret, minor, err_message);
-		gss_log(3, "Failure initiating security context: %s",
-			*err_message);
+		if (err_message != NULL && *err_message != NULL)
+			gss_log(3, "Failure initiating security context: %s",
+				*err_message);
+		else
+			gss_log(3, "Failure initiating security context");
+
 		result = ISC_R_FAILURE;
 		goto out;
 	}
@@ -618,7 +637,6 @@ dst_gssapi_initctx(dns_name_t *name, isc_buffer_t *intoken,
 		RETERR(isc_buffer_copyregion(outtoken, &r));
 		(void)gss_release_buffer(&minor, &gouttoken);
 	}
-	(void)gss_release_name(&minor, &gname);
 
 	if (gret == GSS_S_COMPLETE)
 		result = ISC_R_SUCCESS;
@@ -626,6 +644,7 @@ dst_gssapi_initctx(dns_name_t *name, isc_buffer_t *intoken,
 		result = DNS_R_CONTINUE;
 
  out:
+	(void)gss_release_name(&minor, &gname);
 	return (result);
 #else
 	UNUSED(name);
@@ -667,7 +686,7 @@ dst_gssapi_acceptctx(gss_cred_id_t cred,
 		context = *ctxout;
 
 	if (gssapi_keytab != NULL) {
-#ifdef ISC_PLATFORM_GSSAPI_KRB5_HEADER
+#if defined(ISC_PLATFORM_GSSAPI_KRB5_HEADER) || defined(WIN32)
 		gret = gsskrb5_register_acceptor_identity(gssapi_keytab);
 		if (gret != GSS_S_COMPLETE) {
 			gss_log(3, "failed "
@@ -728,7 +747,8 @@ dst_gssapi_acceptctx(gss_cred_id_t cred,
 	}
 
 	if (gouttoken.length > 0U) {
-		RETERR(isc_buffer_allocate(mctx, outtoken, gouttoken.length));
+		RETERR(isc_buffer_allocate(mctx, outtoken,
+					   (unsigned int)gouttoken.length));
 		GBUFFER_TO_REGION(gouttoken, r);
 		RETERR(isc_buffer_copyregion(*outtoken, &r));
 		(void)gss_release_buffer(&minor, &gouttoken);

@@ -1,4 +1,4 @@
-#	$NetBSD: archdirs.mk,v 1.2.2.1 2013/06/23 06:26:13 tls Exp $
+#	$NetBSD: archdirs.mk,v 1.2.2.2 2014/08/19 23:45:15 tls Exp $
 
 # list of subdirs used per-platform
 
@@ -24,4 +24,16 @@ ARCHDIR_SUBDIR=	arm/oabi arm/eabi
 
 .if (${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el")
 ARCHDIR_SUBDIR=	mips64/64 mips64/o32
+.endif
+
+.if ${MACHINE_ARCH} == "powerpc64"
+ARCHDIR_SUBDIR= powerpc64/powerpc
+.endif
+
+.if (${MACHINE_ARCH} == "aarch64")
+ARCHDIR_SUBDIR+= arm/eabi
+#ARCHDIR_SUBDIR+= arm/eabihf
+ARCHDIR_SUBDIR+= arm/oabi
+.elif (${MACHINE_ARCH} == "aarch64eb")
+ARCHDIR_SUBDIR= arm/eabi
 .endif

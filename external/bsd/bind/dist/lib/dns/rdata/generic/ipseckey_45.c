@@ -1,7 +1,7 @@
-/*	$NetBSD: ipseckey_45.c,v 1.4 2012/06/05 00:42:09 christos Exp $	*/
+/*	$NetBSD: ipseckey_45.c,v 1.4.2.1 2014/08/19 23:46:30 tls Exp $	*/
 
 /*
- * Copyright (C) 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2005, 2007, 2009, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -89,7 +89,7 @@ fromtext_ipseckey(ARGS_FROMTEXT) {
 		isc_buffer_availableregion(target, &region);
 		if (region.length < 4)
 			return (ISC_R_NOSPACE);
-		memcpy(region.base, &addr, 4);
+		memmove(region.base, &addr, 4);
 		isc_buffer_add(target, 4);
 		break;
 
@@ -99,7 +99,7 @@ fromtext_ipseckey(ARGS_FROMTEXT) {
 		isc_buffer_availableregion(target, &region);
 		if (region.length < 16)
 			return (ISC_R_NOSPACE);
-		memcpy(region.base, addr6, 16);
+		memmove(region.base, addr6, 16);
 		isc_buffer_add(target, 16);
 		break;
 
@@ -366,7 +366,7 @@ tostruct_ipseckey(ARGS_TOSTRUCT) {
 		break;
 
 	case 2:
-		memcpy(ipseckey->in6_addr.s6_addr, region.base, 16);
+		memmove(ipseckey->in6_addr.s6_addr, region.base, 16);
 		isc_region_consume(&region, 16);
 		break;
 

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.19 2012/08/18 09:33:25 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.19.2.1 2014/08/19 23:45:45 tls Exp $
 
-IMAGESIZE=	8192k
-DBG=		-Os
+IMAGESIZE=	9216k
+DBG=		-Os -fno-unwind-tables
 MAKEFS_FLAGS=   -o density=4k
 IMAGEENDIAN=	be
 MAKEDEVTARGETS=	all ipty

@@ -64,7 +64,7 @@ class Cref_inputs
   void
   print_symbol_counts(const Symbol_table*, FILE*) const;
 
-  // Print a cross reference tabl.e
+  // Print a cross reference table.
   void
   print_cref(const Symbol_table*, FILE*) const;
 

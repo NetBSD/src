@@ -1,7 +1,7 @@
-/*	$NetBSD: stdio.h,v 1.3 2012/06/05 00:42:40 christos Exp $	*/
+/*	$NetBSD: stdio.h,v 1.3.2.1 2014/08/19 23:46:33 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -24,7 +24,7 @@
 
 /*! \file isc/stdio.h */
 
-/*% 
+/*%
  * These functions are wrappers around the corresponding stdio functions.
  *
  * They return a detailed error code in the form of an an isc_result_t.  ANSI C
@@ -50,7 +50,11 @@ isc_stdio_close(FILE *f);
 
 /*% Seek */
 isc_result_t
-isc_stdio_seek(FILE *f, long offset, int whence);
+isc_stdio_seek(FILE *f, off_t offset, int whence);
+
+/*% Tell */
+isc_result_t
+isc_stdio_tell(FILE *f, off_t *offsetp);
 
 /*% Read */
 isc_result_t

@@ -1,7 +1,7 @@
-/*	$NetBSD: keydelete.c,v 1.3.2.1 2013/06/23 06:26:25 tls Exp $	*/
+/*	$NetBSD: keydelete.c,v 1.3.2.2 2014/08/19 23:46:17 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009-2011, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -134,8 +134,8 @@ sendquery(isc_task_t *task, isc_event_t *event) {
 
 	request = NULL;
 	result = dns_request_create(requestmgr, query, &address,
-				    0, tsigkey, TIMEOUT, task,
-				    recvquery, query, &request);
+				    DNS_REQUESTOPT_TCP, tsigkey, TIMEOUT,
+				    task, recvquery, query, &request);
 	CHECK("dns_request_create", result);
 }
 
@@ -160,10 +160,6 @@ main(int argc, char **argv) {
 	isc_result_t result;
 	int type;
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	RUNCHECK(isc_app_start());
 
 	if (argc < 2) {
@@ -179,7 +175,7 @@ main(int argc, char **argv) {
 
 	ectx = NULL;
 	RUNCHECK(isc_entropy_create(mctx, &ectx));
-	RUNCHECK(isc_entropy_createfilesource(ectx, "random.data"));
+	RUNCHECK(isc_entropy_createfilesource(ectx, "../random.data"));
 	RUNCHECK(isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE));
 
 	log = NULL;

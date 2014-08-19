@@ -1,5 +1,4 @@
-/*	$NetBSD: ns_name.c,v 1.4.4.2 2013/06/23 06:26:27 tls Exp $	*/
-
+/*	$NetBSD: ns_name.c,v 1.4.4.3 2014/08/19 23:46:40 tls Exp $	*/
 /*
  * Copyright (c) 2004,2009 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1996-2003 by Internet Software Consortium
@@ -24,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ns_name.c,v 1.4.4.2 2013/06/23 06:26:27 tls Exp $");
+__RCSID("$NetBSD: ns_name.c,v 1.4.4.3 2014/08/19 23:46:40 tls Exp $");
 
 #ifndef lint
 static const char rcsid[] = "Id: ns_name.c,v 1.2 2009/10/28 04:12:29 sar Exp ";
@@ -256,7 +255,7 @@ MRns_name_pton(const char *src, u_char *dst, size_t dstsiz) {
  *	Enforces label and domain length limits.
  */
 
-static int
+int
 MRns_name_ntol(const u_char *src, u_char *dst, size_t dstsiz) {
 	const u_char *cp;
 	u_char *dn, *eom;
@@ -344,11 +343,12 @@ MRns_name_unpack(const u_char *msg, const u_char *eom, const u_char *src,
 			}
 			if (len < 0)
 				len = srcp - src + 1;
-			srcp = msg + (((n & 0x3f) << 8) | (*srcp & 0xff));
-			if (srcp < msg || srcp >= eom) {  /* Out of range. */
+			n = ((n & 0x3f) << 8) | (*srcp & 0xff);
+			if (n >= eom - msg) {  /* Out of range. */
 				errno = EMSGSIZE;
 				return (-1);
 			}
+			srcp = msg + n;
 			checked += 2;
 			/*
 			 * Check for loops in the compressed name;
@@ -482,7 +482,7 @@ cleanup:
  * note:
  *	Root domain returns as "." not "".
  */
-static int
+int
 MRns_name_uncompress(const u_char *msg, const u_char *eom, const u_char *src,
 		     char *dst, size_t dstsiz)
 {
@@ -529,7 +529,7 @@ MRns_name_compress(const char *src, u_char *dst, size_t dstsiz,
  * return:
  *	0 on success, -1 (with errno set) on failure.
  */
-static int
+int
 MRns_name_skip(const u_char **ptrptr, const u_char *eom) {
 	const u_char *cp;
 	u_int n;

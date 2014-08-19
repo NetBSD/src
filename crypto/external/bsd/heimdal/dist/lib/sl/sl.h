@@ -1,4 +1,4 @@
-/*	$NetBSD: sl.h,v 1.1.1.2 2011/04/14 14:09:33 elric Exp $	*/
+/*	$NetBSD: sl.h,v 1.1.1.2.10.1 2014/08/19 23:45:20 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 - 2004 Kungliga Tekniska Högskolan
@@ -43,10 +43,10 @@
 typedef int (*cmd_func)(int, char **);
 
 struct sl_cmd {
-  char *name;
+  const char *name;
   cmd_func func;
-  char *usage;
-  char *help;
+  const char *usage;
+  const char *help;
 };
 
 typedef struct sl_cmd SL_cmd;

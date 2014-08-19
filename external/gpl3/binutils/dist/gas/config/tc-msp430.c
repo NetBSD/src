@@ -1,6 +1,6 @@
 /* tc-msp430.c -- Assembler code for the Texas Instruments MSP430
 
-  Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010
+  Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010, 2012
   Free Software Foundation, Inc.
   Contributed by Dmitry Diky <diwil@mail.ru>
 
@@ -21,10 +21,9 @@
   the Free Software Foundation, 51 Franklin Street - Fifth Floor,
   Boston, MA 02110-1301, USA.  */
 
-#include <limits.h>
-
-#define PUSH_1X_WORKAROUND
 #include "as.h"
+#include <limits.h>
+#define PUSH_1X_WORKAROUND
 #include "subsegs.h"
 #include "opcode/msp430.h"
 #include "safe-ctype.h"

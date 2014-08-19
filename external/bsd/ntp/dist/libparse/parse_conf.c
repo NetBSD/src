@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_conf.c,v 1.1.1.1 2009/12/13 16:55:20 kardel Exp $	*/
+/*	$NetBSD: parse_conf.c,v 1.1.1.1.12.1 2014/08/19 23:51:41 tls Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libparse/parse_conf.c,v 4.9 2005/04/16 17:32:10 kardel RELEASE_20050508_A
@@ -98,6 +98,10 @@ extern clockformat_t clock_wharton_400a;
 extern clockformat_t clock_varitext;
 #endif
 
+#ifdef CLOCK_SEL240X
+extern clockformat_t clock_sel240x;
+#endif
+
 /*
  * format definitions
  */
@@ -137,6 +141,9 @@ clockformat_t *clockformats[] =
 #endif
 #ifdef CLOCK_VARITEXT
         &clock_varitext,
+#endif
+#ifdef CLOCK_SEL240X
+        &clock_sel240x,
 #endif
 	0};
 

@@ -1,0 +1,50 @@
+# Expect script for VAX ELF linker tests
+#   Copyright 2012 Free Software Foundation, Inc.
+#
+# This file is part of the GNU Binutils.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
+# MA 02110-1301, USA.
+#
+
+if { ![istarget vax-*-*] || ![is_elf_format] } {
+    return
+}
+
+run_ld_link_tests [list \
+    [list "PLT test (shared library)" \
+	  "-shared -T plt-local-lib.ld" \
+	  "-k" \
+	  { plt-local-lib.s } \
+	  { { objdump -d plt-local-lib.dd } } \
+	  "plt-local-lib.so"] \
+    [list "PLT test (object 1)" \
+	  "-r" \
+	  "-k" \
+	  { plt-local-hidden-pic.s } \
+	  {} \
+	  "plt-local-hidden-pic-r.o"] \
+    [list "PLT test (object 2)" \
+	  "-r" \
+	  "-k" \
+	  { plt-local-rehidden-pic.s } \
+	  {} \
+	  "plt-local-rehidden-pic-r.o"] \
+    [list "PLT test (executable)" \
+	  "-T plt-local.ld tmpdir/plt-local-hidden-pic-r.o tmpdir/plt-local-rehidden-pic-r.o tmpdir/plt-local-lib.so" \
+	  "" \
+	  { plt-local.s } \
+	  { { objdump -d plt-local.dd } } \
+	  "plt-local"]]

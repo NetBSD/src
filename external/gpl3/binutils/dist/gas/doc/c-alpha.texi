@@ -1,7 +1,8 @@
-@c Copyright 2002, 2003, 2005, 2009
+@c Copyright 2002, 2003, 2005, 2009, 2011
 @c Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
+@c man end
 
 @ifset GENERIC
 @page
@@ -38,7 +39,8 @@ features specific to these formats are not yet documented.
 @cindex Alpha options
 @cindex options for Alpha
 
-@table @option
+@c man begin OPTIONS
+@table @gcctabopt
 @cindex @code{-m@var{cpu}} command line option, Alpha
 @item -m@var{cpu}
 This option specifies the target processor.  If an attempt is made to
@@ -117,6 +119,7 @@ while smaller symbols are placed in @code{.sbss}.
 @itemx -32addr
 These options are ignored for backward compatibility.
 @end table
+@c man end
 
 @cindex Alpha Syntax
 @node Alpha Syntax
@@ -136,7 +139,10 @@ OpenVMS syntax, with a few differences for ELF.
 
 @cindex line comment character, Alpha
 @cindex Alpha line comment character
-@samp{#} is the line comment character.
+@samp{#} is the line comment character.  Note that if @samp{#} is the
+first character on a line then it can also be a logical line number
+directive (@pxref{Comments}) or a preprocessor control
+command (@pxref{Preprocessing}).
 
 @cindex line separator, Alpha
 @cindex statement separator, Alpha

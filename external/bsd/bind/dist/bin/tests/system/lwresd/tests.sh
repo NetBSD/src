@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id
+# Id: tests.sh,v 1.22 2012/02/03 23:46:58 tbox Exp 
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -40,6 +40,11 @@ status=`expr $status + $ret`
 
 echo "I:using resolv.conf"
 ret=0
+for i in 0 1 2 3 4 5 6 7 8 9 
+do
+	grep ' running$' lwresd1/lwresd.run > /dev/null && break
+	sleep 1
+done
 ./lwtest || ret=1
 if [ $ret != 0 ]; then
 	echo "I:failed"
@@ -48,11 +53,17 @@ status=`expr $status + $ret`
 
 $PERL $SYSTEMTESTTOP/stop.pl . lwresd1
 
+mv lwresd1/lwresd.run lwresd1/lwresd.run.resolv
+
 $PERL $SYSTEMTESTTOP/start.pl . lwresd1 -- "-m record,size,mctx -c lwresd.conf -d 99 -g"
 
 echo "I:using lwresd.conf"
 ret=0
-sleep 1 # allow lwresd to finish starting.
+for i in 0 1 2 3 4 5 6 7 8 9 
+do
+	grep ' running$' lwresd1/lwresd.run > /dev/null && break
+	sleep 1
+done
 ./lwtest || ret=1
 if [ $ret != 0 ]; then
 	echo "I:failed"

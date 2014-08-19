@@ -1,6 +1,6 @@
 #name: MIPS relax-jalr-shared n64
 #source: relax-jalr.s
-#as: -KPIC -64 -EB
+#as: -march=from-abi -KPIC -64 -EB
 #objdump: --prefix-addresses -d --show-raw-insn
 #ld: --relax -shared -melf64btsmip
 

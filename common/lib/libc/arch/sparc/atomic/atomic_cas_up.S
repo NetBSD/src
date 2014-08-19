@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_up.S,v 1.1.6.2 2013/02/25 00:24:00 tls Exp $	*/
+/*	$NetBSD: atomic_cas_up.S,v 1.1.6.3 2014/08/19 23:45:14 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -39,6 +39,30 @@ RAS_START_ASM_HIDDEN(_atomic_cas)
 	beq,a	1f				! yes, do the store
 	 st	%o2, [%o0]			! (in the delay slot)
 RAS_END_ASM_HIDDEN(_atomic_cas)
+1:
+	retl
+	 mov	%o3, %o0			! return old value
+
+ENTRY(_atomic_cas_16_up)
+	.hidden	_C_LABEL(_atomic_cas_16_up)
+RAS_START_ASM_HIDDEN(_atomic_cas_16)
+	lduh	[%o0], %o3			! get old value
+	cmp	%o1, %o3			! old == new?
+	beq,a	1f				! yes, do the store
+	 sth	%o2, [%o0]			! (in the delay slot)
+RAS_END_ASM_HIDDEN(_atomic_cas_16)
+1:
+	retl
+	 mov	%o3, %o0			! return old value
+
+ENTRY(_atomic_cas_8_up)
+	.hidden	_C_LABEL(_atomic_cas_8_up)
+RAS_START_ASM_HIDDEN(_atomic_cas_8)
+	ldub	[%o0], %o3			! get old value
+	cmp	%o1, %o3			! old == new?
+	beq,a	1f				! yes, do the store
+	 stb	%o2, [%o0]			! (in the delay slot)
+RAS_END_ASM_HIDDEN(_atomic_cas_8)
 1:
 	retl
 	 mov	%o3, %o0			! return old value

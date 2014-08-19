@@ -1,4 +1,4 @@
-/* $NetBSD: strlcat.S,v 1.1.6.2 2013/02/25 00:23:58 tls Exp $ */
+/* $NetBSD: strlcat.S,v 1.1.6.3 2014/08/19 23:45:12 tls Exp $ */
 
 #include <machine/asm.h>
 
@@ -7,7 +7,7 @@ WEAK_ALIAS(strlcat, _strlcat)
 #include "namespace.h"
 #endif
 
-#ifdef _STANDALONE
+#if defined(_STANDALONE) && 0	/* arm version is always smaller */
 #include "strlcat_naive.S"
 #else
 #include "strlcat_arm.S"

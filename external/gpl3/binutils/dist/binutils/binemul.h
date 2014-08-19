@@ -32,6 +32,9 @@ extern bfd_boolean ar_emul_append (bfd **, char *, const char *,
 				   bfd_boolean, bfd_boolean);
 extern bfd_boolean ar_emul_default_append (bfd **, char *, const char *,
 					   bfd_boolean, bfd_boolean);
+extern bfd_boolean do_ar_emul_append (bfd **, bfd *,
+				      bfd_boolean, bfd_boolean,
+				      bfd_boolean (*)(bfd *));
 extern bfd_boolean ar_emul_replace (bfd **, char *, const char *,
 				    bfd_boolean);
 extern bfd_boolean ar_emul_default_replace (bfd **, char *,

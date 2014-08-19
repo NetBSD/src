@@ -1,10 +1,12 @@
-/*	$NetBSD: refclock_msfees.c,v 1.1.1.2 2012/01/31 21:26:03 kardel Exp $	*/
+/*	$NetBSD: refclock_msfees.c,v 1.1.1.2.6.1 2014/08/19 23:51:42 tls Exp $	*/
 
 /* refclock_ees - clock driver for the EES M201 receiver */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
+#include "ntp_types.h"
 
 #if defined(REFCLOCK) && defined(CLOCK_MSFEES) && defined(PPS)
 
@@ -16,8 +18,7 @@
 #include "ntpd.h"
 #include "ntp_io.h"
 #include "ntp_refclock.h"
-#include "ntp_unixtime.h"
-#include "ntp_calendar.h"
+#include "timevalops.h"
 
 #include <ctype.h>
 #if defined(HAVE_BSD_TTYS)
@@ -351,11 +352,7 @@ static	void	dump_buf	P((l_fp *coffs, int from, int to, char *text));
 static	void	ees_report_event P((struct eesunit *ees, int code));
 static	void	ees_receive	P((struct recvbuf *rbufp));
 static	void	ees_process	P((struct eesunit *ees));
-#ifdef QSORT_USES_VOID_P
 static	int	offcompare	P((const void *va, const void *vb));
-#else
-static	int	offcompare	P((const l_fp *a, const l_fp *b));
-#endif /* QSORT_USES_VOID_P */
 
 
 /*
@@ -539,7 +536,7 @@ msfees_start(
 	ees->timestarted= current_time;
 	ees->ttytype	= 0;
 	ees->io.clock_recv= ees_receive;
-	ees->io.srcclock= (caddr_t)ees;
+	ees->io.srcclock= peer;
 	ees->io.datalen	= 0;
 	ees->io.fd	= fd232;
 
@@ -591,7 +588,7 @@ msfees_start(
 		peer->refid = htonl(EESHSREFID);
 	}
 	unitinuse[unit] = 1;
-	pp->unitptr = (caddr_t) &eesunits[unit];
+	pp->unitptr = &eesunits[unit];
 	pp->clockdesc = EESDESCRIPTION;
 	msyslog(LOG_ERR, "ees clock: %s OK on %d", eesdev, unit);
 	return (1);
@@ -679,7 +676,7 @@ ees_receive(
 #endif
 
 	/* Get the clock this applies to and a pointer to the data */
-	ees = (struct eesunit *)rbufp->recv_srcclock;
+	ees = (struct eesunit *)rbufp->recv_peer->procptr->unitptr;
 	dpt = (u_char *)&rbufp->recv_space;
 	dpend = dpt + rbufp->recv_length;
 	if ((dbg & DB_LOG_AWAITMORE) && (rbufp->recv_length != LENEESCODE))
@@ -923,9 +920,9 @@ ees_receive(
 		if (pps_step != 1 && pps_step != 2)
 		    fprintf(stderr, "PPS step: %d too far off %ld (%d)\n",
 			    ppsclockev.serial, ees->last_pps_no, pps_step);
-		else if (!buftvtots((char *) &(ppsclockev.tv), &pps_arrvstamp))
-		    fprintf(stderr, "buftvtots failed\n");
-		else {	/* if ((ABS(time difference) - 0.25) < 0)
+		else {
+			pps_arrvstamp = tval_stamp_to_lfp(ppsclockev.tv);
+			/* if ((ABS(time difference) - 0.25) < 0)
 			 * then believe it ...
 			 */
 			l_fp diff;
@@ -1229,7 +1226,6 @@ ees_receive(
 
 /* offcompare - auxiliary comparison routine for offset sort */
 
-#ifdef QSORT_USES_VOID_P
 static int
 offcompare(
 	const void *va,
@@ -1240,16 +1236,6 @@ offcompare(
 	const l_fp *b = (const l_fp *)vb;
 	return(L_ISGEQ(a, b) ? (L_ISEQU(a, b) ? 0 : 1) : -1);
 }
-#else
-static int
-offcompare(
-	const l_fp *a,
-	const l_fp *b
-	)
-{
-	return(L_ISGEQ(a, b) ? (L_ISEQU(a, b) ? 0 : 1) : -1);
-}
-#endif /* QSORT_USES_VOID_P */
 
 
 /* ees_process - process a pile of samples from the clock */
@@ -1291,16 +1277,11 @@ ees_process(
 	if (samples < 1) return;
 
 	/* If requested, dump the raw data we have in the buffer */
-	if (ees->dump_vals) dump_buf(coffs, 0, samples, "Raw  data  is:");
+	if (ees->dump_vals)
+		dump_buf(coffs, 0, samples, "Raw  data  is:");
 
 	/* Sort the offsets, trim off the extremes, then choose one. */
-	qsort(
-#ifdef QSORT_USES_VOID_P
-	    (void *)
-#else
-	    (char *)
-#endif
-	    coffs, (size_t)samples, sizeof(l_fp), offcompare);
+	qsort(coffs, (size_t)samples, sizeof(coffs[0]), offcompare);
 
 	noff = samples;
 	i = 0;
@@ -1432,7 +1413,7 @@ ees_process(
 	 * reference time, and lastsampletime as the receive time.
 	 */
 	if (ees->fix_pending) {
-		msyslog(LOG_ERR, "MSF%d: fix_pending=%d -> jump %x.%08x\n",
+		msyslog(LOG_ERR, "MSF%d: fix_pending=%d -> jump %x.%08x",
 			ees->fix_pending, ees->unit, offset.l_i, offset.l_f);
 		ees->fix_pending = 0;
 	}
@@ -1467,5 +1448,5 @@ msfees_poll(
 
 
 #else
-int refclock_msfees_bs;
+NONEMPTY_TRANSLATION_UNIT
 #endif /* REFCLOCK */

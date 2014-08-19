@@ -1,9 +1,9 @@
-/*	$NetBSD: operational.c,v 1.1.1.3 2010/12/12 15:23:25 adam Exp $	*/
+/*	$NetBSD: operational.c,v 1.1.1.3.12.1 2014/08/19 23:52:03 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-sql/operational.c,v 1.21.2.8 2010/04/19 16:53:04 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2014 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * All rights reserved.
@@ -125,7 +125,7 @@ backsql_operational(
 	Debug( LDAP_DEBUG_TRACE, "==>backsql_operational(): entry \"%s\"\n",
 			rs->sr_entry->e_nname.bv_val, 0, 0 );
 
-	for ( ap = &rs->sr_operational_attrs; *ap; ap = &(*ap)->a_next ) {
+	for ( ap = &rs->sr_entry->e_attrs; *ap; ap = &(*ap)->a_next ) {
 		if ( (*ap)->a_desc == slap_schema.si_ad_hasSubordinates ) {
 			get_conn--;
 			got[ BACKSQL_OP_HASSUBORDINATES ] = 1;
@@ -135,6 +135,27 @@ backsql_operational(
 			got[ BACKSQL_OP_ENTRYUUID ] = 1;
 
 		} else if ( (*ap)->a_desc == slap_schema.si_ad_entryCSN ) {
+			get_conn--;
+			got[ BACKSQL_OP_ENTRYCSN ] = 1;
+		}
+	}
+
+	for ( ap = &rs->sr_operational_attrs; *ap; ap = &(*ap)->a_next ) {
+		if ( !got[ BACKSQL_OP_HASSUBORDINATES ] &&
+			(*ap)->a_desc == slap_schema.si_ad_hasSubordinates )
+		{
+			get_conn--;
+			got[ BACKSQL_OP_HASSUBORDINATES ] = 1;
+
+		} else if ( !got[ BACKSQL_OP_ENTRYUUID ] && 
+			(*ap)->a_desc == slap_schema.si_ad_entryUUID )
+		{
+			get_conn--;
+			got[ BACKSQL_OP_ENTRYUUID ] = 1;
+
+		} else if ( !got[ BACKSQL_OP_ENTRYCSN ] &&
+			(*ap)->a_desc == slap_schema.si_ad_entryCSN )
+		{
 			get_conn--;
 			got[ BACKSQL_OP_ENTRYCSN ] = 1;
 		}

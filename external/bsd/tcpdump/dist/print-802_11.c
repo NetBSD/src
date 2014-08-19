@@ -26,7 +26,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-802_11.c,v 1.49 2007-12-29 23:25:02 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-802_11.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-802_11.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -1228,6 +1228,34 @@ handle_deauth(const struct mgmt_header_t *pmh, const u_char *p, u_int length)
 		   printf("Act#%d", (v)) \
 )
 
+#define PRINT_MESH_ACTION(v) (\
+	(v) == 0 ? printf("MeshLink") : \
+	(v) == 1 ? printf("HWMP") : \
+	(v) == 2 ? printf("Gate Announcement") : \
+	(v) == 3 ? printf("Congestion Control") : \
+	(v) == 4 ? printf("MCCA Setup Request") : \
+	(v) == 5 ? printf("MCCA Setup Reply") : \
+	(v) == 6 ? printf("MCCA Advertisement Request") : \
+	(v) == 7 ? printf("MCCA Advertisement") : \
+	(v) == 8 ? printf("MCCA Teardown") : \
+	(v) == 9 ? printf("TBTT Adjustment Request") : \
+	(v) == 10 ? printf("TBTT Adjustment Response") : \
+		   printf("Act#%d", (v)) \
+)
+#define PRINT_MULTIHOP_ACTION(v) (\
+	(v) == 0 ? printf("Proxy Update") : \
+	(v) == 1 ? printf("Proxy Update Confirmation") : \
+		   printf("Act#%d", (v)) \
+)
+#define PRINT_SELFPROT_ACTION(v) (\
+	(v) == 1 ? printf("Peering Open") : \
+	(v) == 2 ? printf("Peering Confirm") : \
+	(v) == 3 ? printf("Peering Close") : \
+	(v) == 4 ? printf("Group Key Inform") : \
+	(v) == 5 ? printf("Group Key Acknowledge") : \
+		   printf("Act#%d", (v)) \
+)
+
 static int
 handle_action(const struct mgmt_header_t *pmh, const u_char *p, u_int length)
 {
@@ -1246,12 +1274,13 @@ handle_action(const struct mgmt_header_t *pmh, const u_char *p, u_int length)
 	case 2: printf("DLS Act#%d", p[1]); break;
 	case 3: printf("BA "); PRINT_BA_ACTION(p[1]); break;
 	case 7: printf("HT "); PRINT_HT_ACTION(p[1]); break;
-	case 13: printf("MeshLMetric "); PRINT_MESHLINK_ACTION(p[1]); break;
-	case 15: printf("Interwork Act#%d", p[1]); break;
-	case 16: printf("Resource Act#%d", p[1]); break;
-	case 17: printf("Proxy Act#%d", p[1]); break;
-	case 30: printf("MeshPeering "); PRINT_MESHPEERING_ACTION(p[1]); break;
-	case 32: printf("MeshPath "); PRINT_MESHPATH_ACTION(p[1]); break;
+	case 13: printf("MeshAction "); PRINT_MESH_ACTION(p[1]); break;
+	case 14:
+		printf("MultiohopAction ");
+		PRINT_MULTIHOP_ACTION(p[1]); break;
+	case 15:
+		printf("SelfprotectAction ");
+		PRINT_SELFPROT_ACTION(p[1]); break;
 	case 127: printf("Vendor Act#%d", p[1]); break;
 	default:
 		printf("Reserved(%d) Act#%d", p[0], p[1]);
@@ -2160,6 +2189,11 @@ print_radiotap_field(struct cpack_state *s, u_int32_t bit, u_int8_t *flags,
 				(u2.u8 & IEEE80211_RADIOTAP_MCS_FEC_LDPC) ?
 				"LDPC" : "BCC");
 		}
+		if (u.u8 & IEEE80211_RADIOTAP_MCS_STBC_KNOWN) {
+			printf("RX-STBC%u ",
+				(u2.u8 & IEEE80211_RADIOTAP_MCS_STBC_MASK) >> IEEE80211_RADIOTAP_MCS_STBC_SHIFT);
+		}
+
 		break;
 		}
 	}
@@ -2185,7 +2219,6 @@ ieee802_11_radio_print(const u_char *p, u_int length, u_int caplen)
 	u_int32_t *presentp, *last_presentp;
 	enum ieee80211_radiotap_type bit;
 	int bit0;
-	const u_char *iter;
 	u_int len;
 	u_int8_t flags;
 	int pad;
@@ -2205,21 +2238,16 @@ ieee802_11_radio_print(const u_char *p, u_int length, u_int caplen)
 		printf("[|802.11]");
 		return caplen;
 	}
+	cpack_init(&cpacker, (u_int8_t *)hdr, len); /* align against header start */
+	cpack_advance(&cpacker, sizeof(*hdr)); /* includes the 1st bitmap */
 	for (last_presentp = &hdr->it_present;
 	     IS_EXTENDED(last_presentp) &&
 	     (u_char*)(last_presentp + 1) <= p + len;
-	     last_presentp++);
+	     last_presentp++)
+	  cpack_advance(&cpacker, sizeof(hdr->it_present)); /* more bitmaps */
 
 	/* are there more bitmap extensions than bytes in header? */
 	if (IS_EXTENDED(last_presentp)) {
-		printf("[|802.11]");
-		return caplen;
-	}
-
-	iter = (u_char*)(last_presentp + 1);
-
-	if (cpack_init(&cpacker, (u_int8_t*)iter, len - (iter - p)) != 0) {
-		/* XXX */
 		printf("[|802.11]");
 		return caplen;
 	}

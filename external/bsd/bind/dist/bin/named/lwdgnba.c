@@ -1,7 +1,7 @@
-/*	$NetBSD: lwdgnba.c,v 1.3 2012/06/05 00:39:01 christos Exp $	*/
+/*	$NetBSD: lwdgnba.c,v 1.3.2.1 2014/08/19 23:46:00 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -228,12 +228,12 @@ ns_lwdclient_processgnba(ns_lwdclient_t *client, lwres_buffer_t *b) {
 		client->na.family = AF_INET;
 		if (req->addr.length != 4)
 			goto out;
-		memcpy(&client->na.type.in, req->addr.address, 4);
+		memmove(&client->na.type.in, req->addr.address, 4);
 	} else if (req->addr.family == LWRES_ADDRTYPE_V6) {
 		client->na.family = AF_INET6;
 		if (req->addr.length != 16)
 			goto out;
-		memcpy(&client->na.type.in6, req->addr.address, 16);
+		memmove(&client->na.type.in6, req->addr.address, 16);
 	} else {
 		goto out;
 	}

@@ -1,5 +1,5 @@
-/*	Id: macdefs.h,v 1.16 2011/07/28 14:12:07 ragge Exp 	*/	
-/*	$NetBSD: macdefs.h,v 1.1.1.4 2011/09/01 12:46:40 plunky Exp $	*/
+/*	Id: macdefs.h,v 1.18 2014/06/01 11:35:02 ragge Exp 	*/	
+/*	$NetBSD: macdefs.h,v 1.1.1.4.8.1 2014/08/19 23:52:08 tls Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -128,7 +128,6 @@ typedef long long OFFSZ;
 /* Definitions mostly used in pass2 */
 
 #define BYTEOFF(x)	((x)&03)
-#define BITOOR(x)	(x)	/* bit offset to oreg offset */
 
 #define	szty(t)		(((t) == DOUBLE || (t) == LDOUBLE || \
 	DEUNSIGN(t) == LONGLONG) ? 2 : 1)
@@ -337,14 +336,21 @@ extern int nargregs;
 #define SPCON           (MAXSPECIAL+1)  /* positive constant */
 
 #define TARGET_STDARGS
-#define TARGET_BUILTINS						\
-	{ "__builtin_stdarg_start", mips_builtin_stdarg_start, 2 },	\
-	{ "__builtin_va_arg", mips_builtin_va_arg, 2 },		\
-	{ "__builtin_va_end", mips_builtin_va_end, 1 },		\
-	{ "__builtin_va_copy", mips_builtin_va_copy, 2 },
+#define TARGET_BUILTINS							\
+	{ "__builtin_stdarg_start", mips_builtin_stdarg_start,	       \
+						0, 2, 0, VOID },	\
+	{ "__builtin_va_start", mips_builtin_stdarg_start,	       \
+						0, 2, 0, VOID },	\
+	{ "__builtin_va_arg", mips_builtin_va_arg, BTNORVAL|BTNOPROTO, \
+							2, 0, 0 },	\
+	{ "__builtin_va_end", mips_builtin_va_end, 0, 1, 0, VOID },    \
+	{ "__builtin_va_copy", mips_builtin_va_copy, 0, 2, 0, VOID },
 
+#define NODE struct node
 struct node;
-struct node *mips_builtin_stdarg_start(struct node *f, struct node *a, unsigned int);
-struct node *mips_builtin_va_arg(struct node *f, struct node *a, unsigned int);
-struct node *mips_builtin_va_end(struct node *f, struct node *a, unsigned int);
-struct node *mips_builtin_va_copy(struct node *f, struct node *a, unsigned int);
+struct bitable;
+NODE *mips_builtin_stdarg_start(const struct bitable *, NODE *a);
+NODE *mips_builtin_va_arg(const struct bitable *, NODE *a);
+NODE *mips_builtin_va_end(const struct bitable *, NODE *a);
+NODE *mips_builtin_va_copy(const struct bitable *, NODE *a);
+#undef NODE

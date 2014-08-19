@@ -1,4 +1,4 @@
-/*	$NetBSD: lfsr.h,v 1.1.1.1 2009/12/13 16:54:26 kardel Exp $	*/
+/*	$NetBSD: lfsr.h,v 1.1.1.1.12.1 2014/08/19 23:51:39 tls Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lfsr.h,v 1.17 2007/06/19 23:47:18 tbox Exp */
+/* Id: lfsr.h,v 1.17 2007/06/19 23:47:18 tbox Exp  */
 
 #ifndef ISC_LFSR_H
 #define ISC_LFSR_H 1

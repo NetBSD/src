@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.114.2.1 2013/06/23 06:26:19 tls Exp $
+# $NetBSD: mi,v 1.114.2.2 2014/08/19 23:45:44 tls Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1368,9 +1368,9 @@
 ./usr/X11R7/bin/fc-cat					-unknown-	xorg
 ./usr/X11R7/bin/fc-list					-unknown-	xorg
 ./usr/X11R7/bin/fc-match				-unknown-	xorg
+./usr/X11R7/bin/fc-pattern				-unknown-	xorg
 ./usr/X11R7/bin/fc-query				-unknown-	xorg
 ./usr/X11R7/bin/fc-scan					-unknown-	xorg
-./usr/X11R7/bin/fc-pattern				-unknown-	xorg
 ./usr/X11R7/bin/fc-validate				-unknown-	xorg
 ./usr/X11R7/bin/fillblnk				-unknown-	xorg
 ./usr/X11R7/bin/fonttosfnt				-unknown-	xorg
@@ -1509,23 +1509,27 @@
 ./usr/X11R7/include/X11/fonts				base-x11-root	xorg
 ./usr/X11R7/include/X11/pixmaps				base-x11-root	xorg
 ./usr/X11R7/include/X11/pixmaps/NetBSD-bw.xpm		-unknown-	xorg
-./usr/X11R7/include/X11/pixmaps/NetBSD-inv.xpm		-unknown-	xorg
-./usr/X11R7/include/X11/pixmaps/NetBSD.xpm		-unknown-	xorg
 ./usr/X11R7/include/X11/pixmaps/NetBSD-flag.png		-unknown-	xorg
 ./usr/X11R7/include/X11/pixmaps/NetBSD-flag1.xpm	-unknown-	xorg
 ./usr/X11R7/include/X11/pixmaps/NetBSD-flag2.xpm	-unknown-	xorg
+./usr/X11R7/include/X11/pixmaps/NetBSD-inv.xpm		-unknown-	xorg
+./usr/X11R7/include/X11/pixmaps/NetBSD.xpm		-unknown-	xorg
 ./usr/X11R7/include/X11/pixmaps/xorg-bw.xpm		-unknown-	xorg
 ./usr/X11R7/include/X11/pixmaps/xorg.xpm		-unknown-	xorg
 ./usr/X11R7/include/drm					base-x11-root	obsolete
-./usr/X11R7/include/libdrm				base-x11-root	xorg
-./usr/X11R7/include/libkms				base-x11-root	xorg
 ./usr/X11R7/include/fontconfig				base-x11-root	xorg
 ./usr/X11R7/include/freetype2				base-x11-root	xorg
-./usr/X11R7/include/freetype2/freetype			base-x11-root	xorg
-./usr/X11R7/include/freetype2/freetype/cache		base-x11-root	xorg
-./usr/X11R7/include/freetype2/freetype/config		base-x11-root	xorg
-./usr/X11R7/include/freetype2/freetype/internal		base-x11-root	xorg
-./usr/X11R7/include/freetype2/freetype/internal/services base-x11-root	xorg
+./usr/X11R7/include/freetype2/cache			base-x11-root	xorg
+./usr/X11R7/include/freetype2/config			base-x11-root	xorg
+./usr/X11R7/include/freetype2/freetype			base-obsolete	obsolete
+./usr/X11R7/include/freetype2/freetype/cache		base-obsolete	obsolete
+./usr/X11R7/include/freetype2/freetype/config		base-obsolete	obsolete
+./usr/X11R7/include/freetype2/freetype/internal		base-obsolete	obsolete
+./usr/X11R7/include/freetype2/freetype/internal/services base-obsolete	obsolete
+./usr/X11R7/include/freetype2/internal			base-x11-root	xorg
+./usr/X11R7/include/freetype2/internal/services		base-x11-root	xorg
+./usr/X11R7/include/libdrm				base-x11-root	xorg
+./usr/X11R7/include/libkms				base-x11-root	xorg
 ./usr/X11R7/include/pixman-1				base-x11-root	xorg
 ./usr/X11R7/include/xcb					base-x11-root	xorg
 ./usr/X11R7/include/xorg				base-x11-root	xorg
@@ -1715,6 +1719,10 @@
 ./usr/X11R7/lib/X11/locale/ja_JP.UTF-8/Compose		-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/ja_JP.UTF-8/XI18N_OBJS	-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/ja_JP.UTF-8/XLC_LOCALE	-unknown-	xorg
+./usr/X11R7/lib/X11/locale/km_KH.UTF-8			base-x11-root	xorg
+./usr/X11R7/lib/X11/locale/km_KH.UTF-8/Compose		-unknown-	xorg
+./usr/X11R7/lib/X11/locale/km_KH.UTF-8/XI18N_OBJS	-unknown-	xorg
+./usr/X11R7/lib/X11/locale/km_KH.UTF-8/XLC_LOCALE	-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/ko				base-x11-root	xorg
 ./usr/X11R7/lib/X11/locale/ko/Compose			-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/ko/XI18N_OBJS		-unknown-	xorg
@@ -1763,6 +1771,14 @@
 ./usr/X11R7/lib/X11/locale/pt_BR.UTF-8/Compose		-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/pt_BR.UTF-8/XI18N_OBJS	-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/pt_BR.UTF-8/XLC_LOCALE	-unknown-	xorg
+./usr/X11R7/lib/X11/locale/ru_RU.UTF-8			base-x11-root	xorg
+./usr/X11R7/lib/X11/locale/ru_RU.UTF-8/Compose		-unknown-	xorg
+./usr/X11R7/lib/X11/locale/ru_RU.UTF-8/XI18N_OBJS	-unknown-	xorg
+./usr/X11R7/lib/X11/locale/ru_RU.UTF-8/XLC_LOCALE	-unknown-	xorg
+./usr/X11R7/lib/X11/locale/sr_CS.UTF-8			base-x11-root	xorg
+./usr/X11R7/lib/X11/locale/sr_CS.UTF-8/Compose		-unknown-	xorg
+./usr/X11R7/lib/X11/locale/sr_CS.UTF-8/XI18N_OBJS	-unknown-	xorg
+./usr/X11R7/lib/X11/locale/sr_CS.UTF-8/XLC_LOCALE	-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/tatar-cyr			base-x11-root	xorg
 ./usr/X11R7/lib/X11/locale/tatar-cyr/Compose		-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/tatar-cyr/XI18N_OBJS		-unknown-	xorg
@@ -2088,8 +2104,8 @@
 ./usr/X11R7/lib/X11/xkb/symbols/ben			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/bg			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/br			-unknown-	xorg
-./usr/X11R7/lib/X11/xkb/symbols/braille			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/brai			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/braille			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/bs			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/bt			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/bw			-unknown-	xorg
@@ -2124,18 +2140,19 @@
 ./usr/X11R7/lib/X11/xkb/symbols/dvorak			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/ee			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/el			-unknown-	obsolete
-./usr/X11R7/lib/X11/xkb/symbols/en_US			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/empty			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/en_US			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/epo			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/es			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/et			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/eu			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/eurosign		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/extras			base-x11-root	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/extras/apl		-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/extras/ir		-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/extras/rs		-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/extras/ru		-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/extras/us		-unknown-	obsolete
-./usr/X11R7/lib/X11/xkb/symbols/eurosign		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/fi			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/fo			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/fr			-unknown-	xorg
@@ -2417,8 +2434,8 @@
 ./usr/X11R7/lib/X11/xkb/symbols/tml			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/tr			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/tr_f			-unknown-	obsolete
-./usr/X11R7/lib/X11/xkb/symbols/typo			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/tw			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/typo			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/tz			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/ua			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/us			-unknown-	xorg
@@ -2497,9 +2514,9 @@
 ./usr/X11R7/man/cat1/fc-cat.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fc-list.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fc-match.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/fc-pattern.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fc-query.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fc-scan.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat1/fc-pattern.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fc-validate.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fonttosfnt.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fslsfonts.0			-unknown-	.cat,xorg
@@ -2637,9 +2654,9 @@
 ./usr/X11R7/man/html1/fc-cat.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fc-list.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fc-match.html			-unknown-	html,xorg
+./usr/X11R7/man/html1/fc-pattern.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fc-query.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fc-scan.html			-unknown-	html,xorg
-./usr/X11R7/man/html1/fc-pattern.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fc-validate.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fonttosfnt.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fslsfonts.html			-unknown-	html,xorg
@@ -2777,9 +2794,9 @@
 ./usr/X11R7/man/man1/fc-cat.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fc-list.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fc-match.1				-unknown-	.man,xorg
+./usr/X11R7/man/man1/fc-pattern.1			-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fc-query.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fc-scan.1				-unknown-	.man,xorg
-./usr/X11R7/man/man1/fc-pattern.1			-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fc-validate.1			-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fonttosfnt.1			-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fslsfonts.1			-unknown-	.man,xorg

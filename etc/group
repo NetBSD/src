@@ -25,6 +25,7 @@ _tests:*:26:
 _tcpdump:*:27:
 _tss:*:28:
 _gpio:*:29:
+_rtadvd:*:30:
 guest:*:31:root
 nobody:*:39:
 utmp:*:45:

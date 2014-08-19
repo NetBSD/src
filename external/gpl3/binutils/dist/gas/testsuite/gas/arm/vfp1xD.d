@@ -278,5 +278,12 @@ Disassembly of section .text:
 0+430 <[^>]*> eee1ba10 	vmsr	fpscr, fp
 0+434 <[^>]*> eee1ca10 	vmsr	fpscr, ip
 0+438 <[^>]*> eee1ea10 	vmsr	fpscr, lr
-0+43c <[^>]*> e1a00000 	nop			; \(mov r0, r0\)
-
+0+43c <[^>]*> eee01a10 	vmsr	fpsid, r1
+0+440 <[^>]*> eee82a10 	vmsr	fpexc, r2
+0+444 <[^>]*> eef03a10 	vmrs	r3, fpsid
+0+448 <[^>]*> eef64a10 	vmrs	r4, mvfr1
+0+44c <[^>]*> eef75a10 	vmrs	r5, mvfr0
+0+450 <[^>]*> eef86a10 	vmrs	r6, fpexc
+0+454 <[^>]*> e1a00000 	nop			; \(mov r0, r0\)
+0+458 <[^>]*> e1a00000 	nop			; \(mov r0, r0\)
+0+45c <[^>]*> e1a00000 	nop			; \(mov r0, r0\)

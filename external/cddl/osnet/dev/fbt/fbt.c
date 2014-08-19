@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.11.2.1 2013/06/23 06:28:31 tls Exp $	*/
+/*	$NetBSD: fbt.c,v 1.11.2.2 2014/08/19 23:52:21 tls Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -58,12 +58,19 @@
 #include <sys/unistd.h>
 
 #include <machine/cpu.h>
+#if defined(__i386__) || defined(__amd64__)
 #include <machine/cpufunc.h>
 #include <machine/specialreg.h>
 #if 0
 #include <x86/cpuvar.h>
 #endif
 #include <x86/cputypes.h>
+#elif __arm__
+#include <machine/trap.h>
+#include <arm/cpufunc.h>
+#include <arm/armreg.h>
+#include <arm/frame.h>
+#endif
 
 #define ELFSIZE ARCH_ELFSIZE
 #include <sys/exec_elf.h>
@@ -77,6 +84,7 @@ mod_ctf_t *modptr;
 
 MALLOC_DEFINE(M_FBT, "fbt", "Function Boundary Tracing");
 
+#if defined(__i386__) || defined(__amd64__)
 #define	FBT_PUSHL_EBP		0x55
 #define	FBT_MOVL_ESP_EBP0_V0	0x8b
 #define	FBT_MOVL_ESP_EBP1_V0	0xec
@@ -88,11 +96,43 @@ MALLOC_DEFINE(M_FBT, "fbt", "Function Boundary Tracing");
 #define	FBT_RET			0xc3
 #define	FBT_RET_IMM16		0xc2
 #define	FBT_LEAVE		0xc9
+#endif
 
 #ifdef __amd64__
 #define	FBT_PATCHVAL		0xcc
-#else
+#elif defined(__i386__)
 #define	FBT_PATCHVAL		0xf0
+
+#elif defined(__arm__)
+#define	FBT_PATCHVAL		DTRACE_BREAKPOINT
+
+/* entry and return */
+#define	FBT_BX_LR_P(insn)	(((insn) & ~INSN_COND_MASK) == 0x012fff1e)
+#define	FBT_B_LABEL_P(insn)	(((insn) & 0xff000000) == 0xea000000)
+/* entry */
+#define	FBT_MOV_IP_SP_P(insn)	((insn) == 0xe1a0c00d)
+/* index=1, add=1, wback=0 */
+#define	FBT_LDR_IMM_P(insn)	(((insn) & 0xfff00000) == 0xe5900000)
+#define	FBT_MOVW_P(insn)	(((insn) & 0xfff00000) == 0xe3000000)
+#define	FBT_MOV_IMM_P(insn)	(((insn) & 0xffff0000) == 0xe3a00000)
+#define	FBT_CMP_IMM_P(insn)	(((insn) & 0xfff00000) == 0xe3500000)
+#define	FBT_PUSH_P(insn)	(((insn) & 0xffff0000) == 0xe92d0000)
+/* return */
+/* cond=always, writeback=no, rn=sp and register_list includes pc */
+#define	FBT_LDM_P(insn)	(((insn) & 0x0fff8000) == 0x089d8000)
+#define	FBT_LDMIB_P(insn)	(((insn) & 0x0fff8000) == 0x099d8000)
+#define	FBT_MOV_PC_LR_P(insn)	(((insn) & ~INSN_COND_MASK) == 0x01a0f00e)
+/* cond=always, writeback=no, rn=sp and register_list includes lr, but not pc */
+#define	FBT_LDM_LR_P(insn)	(((insn) & 0xffffc000) == 0xe89d4000)
+#define	FBT_LDMIB_LR_P(insn)	(((insn) & 0xffffc000) == 0xe99d4000)
+
+/* rval = insn | invop_id (overwriting cond with invop ID) */
+#define	BUILD_RVAL(insn, id)	(((insn) & ~INSN_COND_MASK) | __SHIFTIN((id), INSN_COND_MASK))
+/* encode cond in the first byte */
+#define	PATCHVAL_ENCODE_COND(insn)	(FBT_PATCHVAL | __SHIFTOUT((insn), INSN_COND_MASK))
+
+#else
+#error "architecture not supported"
 #endif
 
 static dev_type_open(fbt_open);
@@ -113,7 +153,7 @@ static void	fbt_resume(void *, dtrace_id_t, void *);
 
 static const struct cdevsw fbt_cdevsw = {
 	fbt_open, noclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, nodiscard,
 	D_OTHER
 };
 
@@ -140,10 +180,17 @@ static dtrace_pops_t fbt_pops = {
 
 typedef struct fbt_probe {
 	struct fbt_probe *fbtp_hashnext;
+#if defined(__i386__) || defined(__amd64__)
 	uint8_t		*fbtp_patchpoint;
 	int8_t		fbtp_rval;
 	uint8_t		fbtp_patchval;
 	uint8_t		fbtp_savedval;
+#elif __arm__
+	uint32_t	*fbtp_patchpoint;
+	int32_t		fbtp_rval;
+	uint32_t	fbtp_patchval;
+	uint32_t	fbtp_savedval;
+#endif
 	uintptr_t	fbtp_roffset;
 	dtrace_id_t	fbtp_id;
 	const char	*fbtp_name;
@@ -163,6 +210,226 @@ static dtrace_provider_id_t	fbt_id;
 static fbt_probe_t		**fbt_probetab;
 static int			fbt_probetab_size;
 static int			fbt_probetab_mask;
+
+#ifdef __arm__
+extern void (* dtrace_emulation_jump_addr)(int, struct trapframe *);
+
+static uint32_t
+expand_imm(uint32_t imm12)
+{
+	uint32_t unrot = imm12 & 0xff;
+	int amount = 2 * (imm12 >> 8);
+
+	if (amount)
+		return (unrot >> amount) | (unrot << (32 - amount));
+	else
+		return unrot;
+}
+
+static uint32_t
+add_with_carry(uint32_t x, uint32_t y, int carry_in,
+	int *carry_out, int *overflow)
+{
+	uint32_t result;
+	uint64_t unsigned_sum = x + y + (uint32_t)carry_in;
+	int64_t signed_sum = (int32_t)x + (int32_t)y + (int32_t)carry_in;
+	KASSERT(carry_in == 1);
+
+	result = (uint32_t)(unsigned_sum & 0xffffffff);
+	*carry_out = ((uint64_t)result == unsigned_sum) ? 1 : 0;
+	*overflow = ((int64_t)result == signed_sum) ? 0 : 1;
+	
+	return result;
+}
+
+static void
+fbt_emulate(int _op, struct trapframe *frame)
+{
+	uint32_t op = _op;
+
+	switch (op >> 28) {
+	case DTRACE_INVOP_MOV_IP_SP:
+		/* mov ip, sp */
+		frame->tf_ip = frame->tf_svc_sp;
+		frame->tf_pc += 4;
+		break;
+	case DTRACE_INVOP_BX_LR:
+		/* bx lr */
+		frame->tf_pc = frame->tf_svc_lr;
+		break;
+	case DTRACE_INVOP_MOV_PC_LR:
+		/* mov pc, lr */
+		frame->tf_pc = frame->tf_svc_lr;
+		break;
+	case DTRACE_INVOP_LDM:
+		/* ldm sp, {..., pc} */
+		/* FALLTHRU */
+	case DTRACE_INVOP_LDMIB: {
+		/* ldmib sp, {..., pc} */
+		uint32_t register_list = (op & 0xffff);
+		uint32_t *sp = (uint32_t *)(intptr_t)frame->tf_svc_sp;
+		uint32_t *regs = &frame->tf_r0;
+		int i;
+
+		/* IDMIB */
+		if ((op >> 28) == 5)
+			sp++;
+
+		for (i=0; i <= 12; i++) {
+			if (register_list & (1 << i))
+				regs[i] = *sp++;
+		}
+		if (register_list & (1 << 13))
+			frame->tf_svc_sp = *sp++;
+		if (register_list & (1 << 14))
+			frame->tf_svc_lr = *sp++;
+		frame->tf_pc = *sp;
+		break;
+	}
+	case DTRACE_INVOP_LDR_IMM: {
+		/* ldr r?, [{pc,r?}, #?] */
+		uint32_t rt = (op >> 12) & 0xf;
+		uint32_t rn = (op >> 16) & 0xf;
+		uint32_t imm = op & 0xfff;
+		uint32_t *regs = &frame->tf_r0;
+		KDASSERT(rt <= 12);
+		KDASSERT(rn == 15 || rn =< 12);
+		if (rn == 15)
+			regs[rt] = *((uint32_t *)(intptr_t)(frame->tf_pc + 8 + imm));
+		else
+			regs[rt] = *((uint32_t *)(intptr_t)(regs[rn] + imm));
+		frame->tf_pc += 4;
+		break;
+	}
+	case DTRACE_INVOP_MOVW: {
+		/* movw r?, #? */
+		uint32_t rd = (op >> 12) & 0xf;
+		uint32_t imm = (op & 0xfff) | ((op & 0xf0000) >> 4);
+		uint32_t *regs = &frame->tf_r0;
+		KDASSERT(rd <= 12);
+		regs[rd] = imm;
+		frame->tf_pc += 4;
+		break;
+	}
+	case DTRACE_INVOP_MOV_IMM: {
+		/* mov r?, #? */
+		uint32_t rd = (op >> 12) & 0xf;
+		uint32_t imm = expand_imm(op & 0xfff);
+		uint32_t *regs = &frame->tf_r0;
+		KDASSERT(rd <= 12);
+		regs[rd] = imm;
+		frame->tf_pc += 4;
+		break;
+	}
+	case DTRACE_INVOP_CMP_IMM: {
+		/* cmp r?, #? */
+		uint32_t rn = (op >> 16) & 0xf;
+		uint32_t *regs = &frame->tf_r0;
+		uint32_t imm = expand_imm(op & 0xfff);
+		uint32_t spsr = frame->tf_spsr;
+		uint32_t result;
+		int carry;
+		int overflow;
+		/*
+		 * (result, carry, overflow) = AddWithCarry(R[n], NOT(imm32), ’1’);
+		 * APSR.N = result<31>;
+		 * APSR.Z = IsZeroBit(result);
+		 * APSR.C = carry;
+		 * APSR.V = overflow; 
+		 */
+		KDASSERT(rn <= 12);
+		result = add_with_carry(regs[rn], ~imm, 1, &carry, &overflow);
+		if (result & 0x80000000)
+			spsr |= PSR_N_bit;
+		else
+			spsr &= ~PSR_N_bit;
+		if (result == 0)
+			spsr |= PSR_Z_bit;
+		else
+			spsr &= ~PSR_Z_bit;
+		if (carry)
+			spsr |= PSR_C_bit;
+		else
+			spsr &= ~PSR_C_bit;
+		if (overflow)
+			spsr |= PSR_V_bit;
+		else
+			spsr &= ~PSR_V_bit;
+
+#if 0
+		aprint_normal("pc=%x Rn=%x imm=%x %c%c%c%c\n", frame->tf_pc, regs[rn], imm,
+		    (spsr & PSR_N_bit) ? 'N' : 'n',
+		    (spsr & PSR_Z_bit) ? 'Z' : 'z',
+		    (spsr & PSR_C_bit) ? 'C' : 'c',
+		    (spsr & PSR_V_bit) ? 'V' : 'v');
+#endif
+		frame->tf_spsr = spsr;
+		frame->tf_pc += 4;
+		break;
+	}
+	case DTRACE_INVOP_B_LABEL: {
+		/* b ??? */
+		uint32_t imm = (op & 0x00ffffff) << 2;
+		int32_t diff;
+		/* SignExtend(imm26, 32) */
+		if (imm & 0x02000000)
+			imm |= 0xfc000000;
+		diff = (int32_t)imm;
+		frame->tf_pc += 8 + diff;
+		break;
+	}
+	/* FIXME: push will overwrite trapframe... */
+	case DTRACE_INVOP_PUSH: {
+		/* push {...} */
+		uint32_t register_list = (op & 0xffff);
+		uint32_t *sp = (uint32_t *)(intptr_t)frame->tf_svc_sp;
+		uint32_t *regs = &frame->tf_r0;
+		int i;
+		int count = 0;
+
+#if 0
+		if ((op & 0x0fff0fff) == 0x052d0004) {
+			/* A2: str r4, [sp, #-4]! */
+			*(sp - 1) = regs[4];
+			frame->tf_pc += 4;
+			break;
+		}
+#endif
+
+		for (i=0; i < 16; i++) {
+			if (register_list & (1 << i))
+				count++;
+		}
+		sp -= count;
+
+		for (i=0; i <= 12; i++) {
+			if (register_list & (1 << i))
+				*sp++ = regs[i];
+		}
+		if (register_list & (1 << 13))
+			*sp++ = frame->tf_svc_sp;
+		if (register_list & (1 << 14))
+			*sp++ = frame->tf_svc_lr;
+		if (register_list & (1 << 15))
+			*sp = frame->tf_pc + 8;
+
+		/* make sure the caches and memory are in sync */
+		cpu_dcache_wbinv_range(frame->tf_svc_sp, count * 4);
+
+		/* In case the current page tables have been modified ... */
+		cpu_tlb_flushID();
+		cpu_cpwait();
+
+		frame->tf_svc_sp -= count * 4;
+		frame->tf_pc += 4;
+
+		break;
+	}
+	default:
+		KDASSERTMSG(0, "op=%u\n", op >> 28);
+	}
+}
+#endif
 
 static void
 fbt_doubletrap(void)
@@ -238,6 +505,7 @@ fbt_invop(uintptr_t addr, uintptr_t *stack, uintptr_t rval)
 	return (0);
 }
 
+#if defined(__i386__) || defined(__amd64__)
 static int
 fbt_provide_module_cb(const char *name, int symindx, void *value,
 	uint32_t symsize, int type, void *opaque)
@@ -446,6 +714,179 @@ fbt_provide_module_cb(const char *name, int symindx, void *value,
 	return 0;
 }
 
+#elif defined(__arm__)
+
+static int
+fbt_provide_module_cb(const char *name, int symindx, void *value,
+	uint32_t symsize, int type, void *opaque)
+{
+	fbt_probe_t *fbt, *retfbt;
+	uint32_t *instr, *limit;
+	bool was_ldm_lr = false;
+	dtrace_modctl_t *mod = opaque;
+	const char *modname = mod->mod_info->mi_name;
+	int size;
+
+	/* got a function? */
+	if (ELF_ST_TYPE(type) != STT_FUNC) {
+	    return 0;
+	}
+
+	if (strncmp(name, "dtrace_", 7) == 0 &&
+	    strncmp(name, "dtrace_safe_", 12) != 0) {
+		/*
+		 * Anything beginning with "dtrace_" may be called
+		 * from probe context unless it explicitly indicates
+		 * that it won't be called from probe context by
+		 * using the prefix "dtrace_safe_".
+		 */
+		return (0);
+	}
+
+	if (name[0] == '_' && name[1] == '_')
+		return (0);
+
+	/*
+	 * Exclude some more symbols which can be called from probe context.
+	 */
+	if (strncmp(name, "db_", 3) == 0 /* debugger */
+	    || strncmp(name, "ddb_", 4) == 0 /* debugger */
+	    || strncmp(name, "kdb_", 4) == 0 /* debugger */
+	    || strncmp(name, "lockdebug_", 10) == 0 /* lockdebug XXX for now */
+	    || strncmp(name, "kauth_", 5) == 0 /* CRED XXX for now */
+	    /* Sensitive functions on ARM */
+	    || strncmp(name, "_spl", 4) == 0
+	    || strcmp(name, "binuptime") == 0
+	    || strcmp(name, "dosoftints") == 0
+	    || strcmp(name, "fbt_emulate") == 0
+	    || strcmp(name, "nanouptime") == 0
+	    || strcmp(name, "undefinedinstruction") == 0
+	    || strncmp(name, "dmt_", 4) == 0 /* omap */
+	    || strncmp(name, "mvsoctmr_", 9) == 0 /* marvell */
+	    ) {
+		return 0;
+	}
+
+	instr = (uint32_t *) value;
+	limit = (uint32_t *)((uintptr_t)value + symsize);
+
+	if (!FBT_MOV_IP_SP_P(*instr)
+	    && !FBT_BX_LR_P(*instr)
+	    && !FBT_MOVW_P(*instr)
+	    && !FBT_MOV_IMM_P(*instr)
+	    && !FBT_B_LABEL_P(*instr)
+	    && !FBT_LDR_IMM_P(*instr)
+	    && !FBT_CMP_IMM_P(*instr)
+	    /* && !FBT_PUSH_P(*instr) */
+	    ) {
+		return 0;
+	}
+
+	fbt = malloc(sizeof (fbt_probe_t), M_FBT, M_WAITOK | M_ZERO);
+	fbt->fbtp_name = name;
+	fbt->fbtp_id = dtrace_probe_create(fbt_id, modname,
+	    name, FBT_ENTRY, 3, fbt);
+	fbt->fbtp_patchpoint = instr;
+	fbt->fbtp_ctl = mod;
+	/* fbt->fbtp_loadcnt = lf->loadcnt; */
+	if (FBT_MOV_IP_SP_P(*instr))
+		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_MOV_IP_SP);
+	else if (FBT_LDR_IMM_P(*instr))
+		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_LDR_IMM);
+	else if (FBT_MOVW_P(*instr))
+		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_MOVW);
+	else if (FBT_MOV_IMM_P(*instr))
+		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_MOV_IMM);
+	else if (FBT_CMP_IMM_P(*instr))
+		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_CMP_IMM);
+	else if (FBT_BX_LR_P(*instr))
+		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_BX_LR);
+	else if (FBT_PUSH_P(*instr))
+		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_PUSH);
+	else if (FBT_B_LABEL_P(*instr))
+		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_B_LABEL);
+
+	fbt->fbtp_patchval = PATCHVAL_ENCODE_COND(*instr);
+	fbt->fbtp_savedval = *instr;
+	fbt->fbtp_symindx = symindx;
+
+	fbt->fbtp_hashnext = fbt_probetab[FBT_ADDR2NDX(instr)];
+	fbt_probetab[FBT_ADDR2NDX(instr)] = fbt;
+	mod->mod_fbtentries++;
+
+	retfbt = NULL;
+
+	while (instr < limit) {
+		if (instr >= limit)
+			return (0);
+
+		size = 1;
+
+		if (!FBT_BX_LR_P(*instr)
+		    && !FBT_MOV_PC_LR_P(*instr)
+		    && !FBT_LDM_P(*instr)
+		    && !FBT_LDMIB_P(*instr)
+		    && !(was_ldm_lr && FBT_B_LABEL_P(*instr))
+		    ) {
+			if (FBT_LDM_LR_P(*instr) || FBT_LDMIB_LR_P(*instr))
+				was_ldm_lr = true;
+			else
+				was_ldm_lr = false;
+			instr += size;
+			continue;
+		}
+
+		/*
+		 * We have a winner!
+		 */
+		fbt = malloc(sizeof (fbt_probe_t), M_FBT, M_WAITOK | M_ZERO);
+		fbt->fbtp_name = name;
+
+		if (retfbt == NULL) {
+			fbt->fbtp_id = dtrace_probe_create(fbt_id, modname,
+			    name, FBT_RETURN, 3, fbt);
+		} else {
+			retfbt->fbtp_next = fbt;
+			fbt->fbtp_id = retfbt->fbtp_id;
+		}
+
+		retfbt = fbt;
+		fbt->fbtp_patchpoint = instr;
+		fbt->fbtp_ctl = mod;
+		/* fbt->fbtp_loadcnt = lf->loadcnt; */
+		fbt->fbtp_symindx = symindx;
+
+		if (FBT_BX_LR_P(*instr))
+			fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_BX_LR);
+		else if (FBT_MOV_PC_LR_P(*instr))
+			fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_MOV_PC_LR);
+		else if (FBT_LDM_P(*instr))
+			fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_LDM);
+		else if (FBT_LDMIB_P(*instr))
+			fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_LDMIB);
+		else if (FBT_B_LABEL_P(*instr))
+			fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_B_LABEL);
+
+		fbt->fbtp_roffset = (uintptr_t)(instr - (uint32_t *) value);
+		fbt->fbtp_patchval = PATCHVAL_ENCODE_COND(*instr);
+
+		fbt->fbtp_savedval = *instr;
+		fbt->fbtp_hashnext = fbt_probetab[FBT_ADDR2NDX(instr)];
+		fbt_probetab[FBT_ADDR2NDX(instr)] = fbt;
+
+		mod->mod_fbtentries++;
+
+		instr += size;
+		was_ldm_lr = false;
+	}
+
+	return 0;
+}
+#else
+#error "architecture not supported"
+#endif
+
+
 static void
 fbt_provide_module(void *arg, dtrace_modctl_t *mod)
 {
@@ -535,6 +976,8 @@ fbt_destroy(void *arg, dtrace_id_t id, void *parg)
 		fbt = next;
 	} while (fbt != NULL);
 }
+
+#if defined(__i386__) || defined(__amd64__)
 
 static int
 fbt_enable(void *arg, dtrace_id_t id, void *parg)
@@ -699,11 +1142,136 @@ fbt_resume(void *arg, dtrace_id_t id, void *parg)
 	lcr0(cr0);
 }
 
+#elif defined(__arm__)
+
+static int
+fbt_enable(void *arg, dtrace_id_t id, void *parg)
+{
+	fbt_probe_t *fbt = parg;
+#if 0
+	dtrace_modctl_t *ctl = fbt->fbtp_ctl;
+#endif
+	dtrace_icookie_t c;
+
+
+#if 0	/* XXX TBD */
+	ctl->nenabled++;
+
+	/*
+	 * Now check that our modctl has the expected load count.  If it
+	 * doesn't, this module must have been unloaded and reloaded -- and
+	 * we're not going to touch it.
+	 */
+	if (ctl->loadcnt != fbt->fbtp_loadcnt) {
+		if (fbt_verbose) {
+			printf("fbt is failing for probe %s "
+			    "(module %s reloaded)",
+			    fbt->fbtp_name, ctl->filename);
+		}
+
+		return;
+	}
+#endif
+
+	c = dtrace_interrupt_disable();
+
+	for (fbt = parg; fbt != NULL; fbt = fbt->fbtp_next) {
+		*fbt->fbtp_patchpoint = fbt->fbtp_patchval;
+		cpu_idcache_wbinv_range((vaddr_t)fbt->fbtp_patchpoint, 4);
+	}
+
+	dtrace_interrupt_enable(c);
+
+	return 0;
+}
+
+static void
+fbt_disable(void *arg, dtrace_id_t id, void *parg)
+{
+	fbt_probe_t *fbt = parg;
+#if 0
+	dtrace_modctl_t *ctl = fbt->fbtp_ctl;
+#endif
+	dtrace_icookie_t c;
+
+#if 0	/* XXX TBD */
+	ASSERT(ctl->nenabled > 0);
+	ctl->nenabled--;
+
+	if ((ctl->loadcnt != fbt->fbtp_loadcnt))
+		return;
+#endif
+
+	c = dtrace_interrupt_disable();
+
+	for (; fbt != NULL; fbt = fbt->fbtp_next) {
+		*fbt->fbtp_patchpoint = fbt->fbtp_savedval;
+		cpu_idcache_wbinv_range((vaddr_t)fbt->fbtp_patchpoint, 4);
+	}
+
+	dtrace_interrupt_enable(c);
+}
+
+static void
+fbt_suspend(void *arg, dtrace_id_t id, void *parg)
+{
+	fbt_probe_t *fbt = parg;
+#if 0
+	dtrace_modctl_t *ctl = fbt->fbtp_ctl;
+#endif
+	dtrace_icookie_t c;
+
+#if 0	/* XXX TBD */
+	ASSERT(ctl->nenabled > 0);
+
+	if ((ctl->loadcnt != fbt->fbtp_loadcnt))
+		return;
+#endif
+
+	c = dtrace_interrupt_disable();
+
+	for (; fbt != NULL; fbt = fbt->fbtp_next) {
+		*fbt->fbtp_patchpoint = fbt->fbtp_savedval;
+		cpu_idcache_wbinv_range((vaddr_t)fbt->fbtp_patchpoint, 4);
+	}
+
+	dtrace_interrupt_enable(c);
+}
+
+static void
+fbt_resume(void *arg, dtrace_id_t id, void *parg)
+{
+	fbt_probe_t *fbt = parg;
+#if 0
+	dtrace_modctl_t *ctl = fbt->fbtp_ctl;
+#endif
+	dtrace_icookie_t c;
+
+#if 0	/* XXX TBD */
+	ASSERT(ctl->nenabled > 0);
+
+	if ((ctl->loadcnt != fbt->fbtp_loadcnt))
+		return;
+#endif
+
+	c = dtrace_interrupt_disable();
+
+	for (; fbt != NULL; fbt = fbt->fbtp_next) {
+		*fbt->fbtp_patchpoint = fbt->fbtp_patchval;
+		cpu_idcache_wbinv_range((vaddr_t)fbt->fbtp_patchpoint, 4);
+	}
+
+	dtrace_interrupt_enable(c);
+}
+
+#else
+#error "architecture not supported"
+#endif
+
 static int
 fbt_ctfoff_init(dtrace_modctl_t *mod, mod_ctf_t *mc)
 {
 	const Elf_Sym *symp = mc->symtab;
-	const char *name;
 	const ctf_header_t *hp = (const ctf_header_t *) mc->ctftab;
 	const uint8_t *ctfdata = mc->ctftab + sizeof(ctf_header_t);
 	int i;
@@ -757,11 +1325,6 @@ fbt_ctfoff_init(dtrace_modctl_t *mod, mod_ctf_t *mc)
 			*ctfoff = 0xffffffff;
 			continue;
 		}
-
-		if (symp->st_name < mc->strcnt)
-			name = mc->strtab + symp->st_name;
-		else
-			name = "(?)";
 
 		switch (ELF_ST_TYPE(symp->st_info)) {
 		case STT_OBJECT:
@@ -1504,6 +2067,9 @@ fbt_load(void)
 
 	dtrace_doubletrap_func = fbt_doubletrap;
 	dtrace_invop_add(fbt_invop);
+#ifdef __arm__
+	dtrace_emulation_jump_addr = fbt_emulate;
+#endif
 
 	if (dtrace_register("fbt", &fbt_attr, DTRACE_PRIV_USER,
 	    NULL, &fbt_pops, NULL, &fbt_id) != 0)
@@ -1516,6 +2082,9 @@ fbt_unload(void)
 {
 	int error = 0;
 
+#ifdef __arm__
+	dtrace_emulation_jump_addr = NULL;
+#endif
 	/* De-register the invalid opcode handler. */
 	dtrace_invop_remove(fbt_invop);
 

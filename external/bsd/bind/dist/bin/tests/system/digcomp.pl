@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2004, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -21,6 +21,11 @@
 # Ignore "unimportant" differences, like ordering of NS lines, TTL's,
 # etc...
 
+$lc = 0;
+if ($ARGV[0] eq "--lc") {
+	$lc = 1;
+	shift;
+}
 $file1 = $ARGV[0];
 $file2 = $ARGV[1];
 
@@ -42,6 +47,10 @@ while (<FILE1>) {
 		$class = $2;
 		$type = $3;
 		$value = $4;
+		if ($lc) {
+			$name = lc($name);
+			$value = lc($value);
+		}
 		if ($type eq "SOA") {
 			$firstname = $name if ($firstname eq "");
 			if ($name eq $firstname) {
@@ -73,6 +82,10 @@ while (<FILE2>) {
 		$class = $2;
 		$type = $3;
 		$value = $4;
+		if ($lc) {
+			$name = lc($name);
+			$value = lc($value);
+		}
 		if (($name eq $firstname) && ($type eq "SOA")) {
 			$count--;
 			$name = "$name$count";

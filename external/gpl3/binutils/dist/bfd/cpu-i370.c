@@ -40,6 +40,7 @@ static const bfd_arch_info_type arch_info_struct[] =
     FALSE, 	/* Not the default.  */
     bfd_default_compatible,
     bfd_default_scan,
+    bfd_arch_default_fill,
     &arch_info_struct[1]
   },
   {
@@ -54,6 +55,7 @@ static const bfd_arch_info_type arch_info_struct[] =
     FALSE, 	/* Not the default.  */
     bfd_default_compatible,
     bfd_default_scan,
+    bfd_arch_default_fill,
     0
   },
 };
@@ -71,5 +73,6 @@ const bfd_arch_info_type bfd_i370_arch =
   TRUE, 	/* The default.  */
   bfd_default_compatible,
   bfd_default_scan,
+  bfd_arch_default_fill,
   & arch_info_struct[0]
 };

@@ -1,10 +1,10 @@
-/*	$NetBSD: wait.h,v 1.1.1.3 2010/12/12 15:21:27 adam Exp $	*/
+/*	$NetBSD: wait.h,v 1.1.1.3.12.1 2014/08/19 23:51:59 tls Exp $	*/
 
 /* Generic wait.h */
-/* OpenLDAP: pkg/ldap/include/ac/wait.h,v 1.16.2.5 2010/04/13 20:22:52 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

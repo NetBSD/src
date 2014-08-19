@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.6.1 2013/06/23 06:28:22 tls Exp $
+#	$NetBSD: Makefile,v 1.6.6.2 2014/08/19 23:51:23 tls Exp $
 
 LIB=	LLVMAsmPrinter
 
@@ -7,18 +7,24 @@ LIB=	LLVMAsmPrinter
 .PATH: ${LLVM_SRCDIR}/lib/CodeGen/AsmPrinter
 
 SRCS+=	ARMException.cpp \
+	AddressPool.cpp \
 	AsmPrinter.cpp \
 	AsmPrinterDwarf.cpp \
 	AsmPrinterInlineAsm.cpp \
 	DIE.cpp \
+	DIEHash.cpp \
+	DbgValueHistoryCalculator.cpp \
 	DwarfAccelTable.cpp \
 	DwarfCFIException.cpp \
-	DwarfCompileUnit.cpp \
 	DwarfDebug.cpp \
-	DwarfException.cpp \
+	DwarfFile.cpp \
+	DwarfStringPool.cpp \
+	DwarfUnit.cpp \
+	EHStreamer.cpp \
 	ErlangGCPrinter.cpp \
 	OcamlGCPrinter.cpp \
-	Win64Exception.cpp
+	Win64Exception.cpp \
+	WinCodeViewLineTables.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

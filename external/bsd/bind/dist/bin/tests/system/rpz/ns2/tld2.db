@@ -1,4 +1,4 @@
-; Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,8 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: tld2.db,v 1.4.4.2 2012/02/24 17:22:37 vjs Exp 
+; Id
+
 
 
 ; RPZ rewrite responses from this zone
@@ -110,6 +111,9 @@ a5-1-2		A	192.168.5.1
 		A	192.168.5.2
 		TXT	"a5-1-2 tld2 text"
 
+a5-2		A	192.168.5.2
+		TXT	"a5-2 tld2 text"
+
 a5-3		A	192.168.5.3
 		TXT	"a5-3 tld2 text"
 
@@ -120,3 +124,6 @@ a6-1		A	192.168.6.1
 		TXT	"a6-1 tld2 text"
 a6-2		A	192.168.6.2
 		TXT	"a6-2 tld2 text"
+
+a7-1		A	192.168.7.1
+		TXT	"a7-1 tld2 text"

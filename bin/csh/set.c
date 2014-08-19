@@ -1,4 +1,4 @@
-/* $NetBSD: set.c,v 1.29.40.2 2013/06/23 06:26:12 tls Exp $ */
+/* $NetBSD: set.c,v 1.29.40.3 2014/08/19 23:45:10 tls Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: set.c,v 1.29.40.2 2013/06/23 06:26:12 tls Exp $");
+__RCSID("$NetBSD: set.c,v 1.29.40.3 2014/08/19 23:45:10 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -346,7 +346,7 @@ operate(int op, Char *vp, Char *p)
     if (op != '=') {
 	if (*vp)
 	    *v++ = vp;
-	opr[0] = op;
+	opr[0] = (Char)op;
 	opr[1] = 0;
 	*v++ = opr;
 	if (op == '<' || op == '>')
@@ -386,7 +386,7 @@ putn1(int n)
 {
     if (n > 9)
 	putn1(n / 10);
-    *putp++ = n % 10 + '0';
+    *putp++ = (Char)(n % 10 + '0');
 }
 
 int
@@ -457,7 +457,7 @@ set(Char *var, Char *val)
 {
     Char **vec;
 
-    vec = (Char **)xmalloc((size_t)(2 * sizeof(Char **)));
+    vec = xmalloc(2 * sizeof(*vec));
     vec[0] = val;
     vec[1] = 0;
     set1(var, vec, &shvhed);
@@ -499,7 +499,7 @@ setq(Char *name, Char **vec, struct varent *p)
 	p = c;
 	f = f > 0;
     }
-    p->v_link[f] = c = (struct varent *)xmalloc((size_t)sizeof(struct varent));
+    p->v_link[f] = c = xmalloc(sizeof(*c));
     c->v_name = Strsave(name);
     c->v_bal = 0;
     c->v_left = c->v_right = 0;

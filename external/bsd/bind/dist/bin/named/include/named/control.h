@@ -1,7 +1,7 @@
-/*	$NetBSD: control.h,v 1.4 2012/06/05 00:39:08 christos Exp $	*/
+/*	$NetBSD: control.h,v 1.4.2.1 2014/08/19 23:46:00 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
+/* Id: control.h,v 1.38 2012/01/31 23:47:31 tbox Exp  */
 
 #ifndef NAMED_CONTROL_H
 #define NAMED_CONTROL_H 1
@@ -61,12 +61,14 @@
 #define NS_COMMAND_NULL		"null"
 #define NS_COMMAND_NOTIFY	"notify"
 #define NS_COMMAND_VALIDATION	"validation"
+#define NS_COMMAND_SCAN 	"scan"
 #define NS_COMMAND_SIGN 	"sign"
 #define NS_COMMAND_LOADKEYS 	"loadkeys"
 #define NS_COMMAND_ADDZONE	"addzone"
 #define NS_COMMAND_DELZONE	"delzone"
 #define NS_COMMAND_SYNC		"sync"
 #define NS_COMMAND_SIGNING	"signing"
+#define NS_COMMAND_ZONESTATUS	"zonestatus"
 
 isc_result_t
 ns_controls_create(ns_server_t *server, ns_controls_t **ctrlsp);

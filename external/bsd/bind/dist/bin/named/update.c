@@ -1,7 +1,7 @@
-/*	$NetBSD: update.c,v 1.5 2012/06/05 00:39:06 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.5.2.1 2014/08/19 23:46:00 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -406,7 +406,6 @@ do_one_tuple(dns_difftuple_t **tuple, dns_db_t *db, dns_dbversion_t *ver,
 	 * Create a singleton diff.
 	 */
 	dns_diff_init(diff->mctx, &temp_diff);
-	temp_diff.resign = diff->resign;
 	ISC_LIST_APPEND(temp_diff.tuples, *tuple, link);
 
 	/*
@@ -2371,7 +2370,8 @@ add_signing_records(dns_db_t *db, dns_rdatatype_t privatetype,
 		ISC_LIST_UNLINK(temp_diff.tuples, tuple, link);
 		ISC_LIST_APPEND(diff->tuples, tuple, link);
 
-		dns_rdata_tostruct(&tuple->rdata, &dnskey, NULL);
+		result = dns_rdata_tostruct(&tuple->rdata, &dnskey, NULL);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 		if ((dnskey.flags &
 		     (DNS_KEYFLAG_OWNERMASK|DNS_KEYTYPE_NOAUTH))
 			 != DNS_KEYOWNER_ZONE)
@@ -2436,7 +2436,6 @@ update_action(isc_task_t *task, isc_event_t *event) {
 	update_event_t *uev = (update_event_t *) event;
 	dns_zone_t *zone = uev->zone;
 	ns_client_t *client = (ns_client_t *)event->ev_arg;
-
 	isc_result_t result;
 	dns_db_t *db = NULL;
 	dns_dbversion_t *oldver = NULL;
@@ -2452,11 +2451,12 @@ update_action(isc_task_t *task, isc_event_t *event) {
 	dns_ssutable_t *ssutable = NULL;
 	dns_fixedname_t tmpnamefixed;
 	dns_name_t *tmpname = NULL;
-	unsigned int options;
+	unsigned int options, options2;
 	dns_difftuple_t *tuple;
 	dns_rdata_dnskey_t dnskey;
 	isc_boolean_t had_dnskey;
 	dns_rdatatype_t privatetype = dns_zone_getprivatetype(zone);
+	dns_ttl_t maxttl = 0;
 
 	INSIST(event->ev_type == DNS_EVENT_UPDATE);
 
@@ -2732,6 +2732,7 @@ update_action(isc_task_t *task, isc_event_t *event) {
 	 */
 
 	options = dns_zone_getoptions(zone);
+	options2 = dns_zone_getoptions2(zone);
 	for (result = dns_message_firstname(request, DNS_SECTION_UPDATE);
 	     result == ISC_R_SUCCESS;
 	     result = dns_message_nextname(request, DNS_SECTION_UPDATE))
@@ -2857,16 +2858,45 @@ update_action(isc_task_t *task, isc_event_t *event) {
 					   "a non-terminal wildcard", namestr);
 			}
 
+			if ((options2 & DNS_ZONEOPT2_CHECKTTL) != 0) {
+				maxttl = dns_zone_getmaxttl(zone);
+				if (ttl > maxttl) {
+					ttl = maxttl;
+					update_log(client, zone,
+						   LOGLEVEL_PROTOCOL,
+						   "reducing TTL to the "
+						   "configured max-zone-ttl %d",
+						   maxttl);
+				}
+			}
+
 			if (isc_log_wouldlog(ns_g_lctx, LOGLEVEL_PROTOCOL)) {
 				char namestr[DNS_NAME_FORMATSIZE];
 				char typestr[DNS_RDATATYPE_FORMATSIZE];
-				dns_name_format(name, namestr,
-						sizeof(namestr));
+				char rdstr[2048];
+				isc_buffer_t buf;
+				int len = 0;
+				const char *truncated = "";
+
+				dns_name_format(name, namestr, sizeof(namestr));
 				dns_rdatatype_format(rdata.type, typestr,
 						     sizeof(typestr));
+				isc_buffer_init(&buf, rdstr, sizeof(rdstr));
+				result = dns_rdata_totext(&rdata, NULL, &buf);
+				if (result == ISC_R_NOSPACE) {
+					len = (int)isc_buffer_usedlength(&buf);
+					truncated = " [TRUNCATED]";
+				} else if (result != ISC_R_SUCCESS) {
+					snprintf(rdstr, sizeof(rdstr), "[dns_"
+						 "rdata_totext failed: %s]",
+						 dns_result_totext(result));
+					len = strlen(rdstr);
+				} else
+					len = (int)isc_buffer_usedlength(&buf);
 				update_log(client, zone, LOGLEVEL_PROTOCOL,
-					   "adding an RR at '%s' %s",
-					   namestr, typestr);
+					   "adding an RR at '%s' %s %.*s%s",
+					   namestr, typestr, len, rdstr,
+					   truncated);
 			}
 
 			/* Prepare the affected RRset for the addition. */
@@ -3343,6 +3373,8 @@ forward_action(isc_task_t *task, isc_event_t *event) {
 
 static isc_result_t
 send_forward_event(ns_client_t *client, dns_zone_t *zone) {
+	char namebuf[DNS_NAME_FORMATSIZE];
+	char classbuf[DNS_RDATACLASS_FORMATSIZE];
 	isc_result_t result = ISC_R_SUCCESS;
 	update_event_t *event = NULL;
 	isc_task_t *zonetask = NULL;
@@ -3367,6 +3399,15 @@ send_forward_event(ns_client_t *client, dns_zone_t *zone) {
 	INSIST(client->nupdates == 0);
 	client->nupdates++;
 	event->ev_arg = evclient;
+
+	dns_name_format(dns_zone_getorigin(zone), namebuf,
+			sizeof(namebuf));
+	dns_rdataclass_format(dns_zone_getclass(zone), classbuf,
+			      sizeof(classbuf));
+
+	ns_client_log(client, NS_LOGCATEGORY_UPDATE, NS_LOGMODULE_UPDATE,
+		      LOGLEVEL_PROTOCOL, "forwarding update for zone '%s/%s'",
+		      namebuf, classbuf);
 
 	dns_zone_gettask(zone, &zonetask);
 	isc_task_send(zonetask, ISC_EVENT_PTR(&event));

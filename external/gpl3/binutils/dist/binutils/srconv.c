@@ -32,6 +32,7 @@
 #include "sysroff.h"
 #include "coffgrok.h"
 #include "libiberty.h"
+#include "filenames.h"
 #include "getopt.h"
 
 #include "coff/internal.h"
@@ -1818,7 +1819,7 @@ main (int ac, char **av)
 	  ++optind;
 	  if (optind < ac)
 	    show_usage (stderr, 1);
-	  if (strcmp (input_file, output_file) == 0)
+	  if (filename_cmp (input_file, output_file) == 0)
 	    {
 	      fatal (_("input and output files must be different"));
 	    }

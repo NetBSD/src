@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.1.1.1 2009/12/13 16:54:13 kardel Exp $	*/
+/*	$NetBSD: error.c,v 1.1.1.1.12.1 2014/08/19 23:51:39 tls Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: error.c,v 1.21 2007/06/19 23:47:17 tbox Exp */
+/* Id: error.c,v 1.21 2007/06/19 23:47:17 tbox Exp  */
 
 /*! \file */
 

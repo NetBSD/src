@@ -1,9 +1,9 @@
-/*	$NetBSD: user.c,v 1.1.1.1 2011/09/11 17:20:33 christos Exp $	*/
+/*	$NetBSD: user.c,v 1.1.1.1.8.1 2014/08/19 23:46:37 tls Exp $	*/
 
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

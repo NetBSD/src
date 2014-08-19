@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: control.c,v 1.1.1.3.14.1 2013/06/23 06:26:31 tls Exp $");
+ __RCSID("$NetBSD: control.c,v 1.1.1.3.14.2 2014/08/19 23:46:43 tls Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2012 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -28,10 +28,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
 
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,191 +46,239 @@
 #include "control.h"
 #include "eloop.h"
 
-static int fd = -1;
-static char buffer[1024];
-static char *argvp[255];
-
-static struct sockaddr_un sun;
-struct fd_list *control_fds = NULL;
-
-#ifdef DEBUG_MEMORY
-static void
-cleanup(void)
-{
-	struct fd_list *f;
-
-	f = control_fds;
-	while (f) {
-		control_fds = f->next;
-		free(f);
-		f = control_fds;
-	}
-}
+#ifndef SUN_LEN
+#define SUN_LEN(su) \
+            (sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
 #endif
-
-static void
-control_remove(void *arg)
-{
-	struct fd_list *l, *n, *last = NULL;
-
-	l = control_fds;
-	while (l) {
-		n = l->next;
-		if (l == arg) {
-			close(l->fd);
-			eloop_event_delete(l->fd);
-			if (last == NULL)
-				control_fds = l->next;
-			else
-				last->next = l->next;
-			free(l);
-			break;
-		}
-		last = l;
-		l = n;
-	}
-}
 
 static void
 control_handle_data(void *arg)
 {
-	struct fd_list *l = arg;
+	struct fd_list *l = arg, *lp, *last;
+	char buffer[1024], *e, *p, *argvp[255], **ap, *a;
 	ssize_t bytes;
+	size_t len;
 	int argc;
-	char *e, *p;
-	char **ap;
 
 	bytes = read(l->fd, buffer, sizeof(buffer) - 1);
 	if (bytes == -1 || bytes == 0) {
-		control_remove(l);
+		/* Control was closed or there was an error.
+		 * Remove it from our list. */
+		last = NULL;
+		for (lp = l->ctx->control_fds; lp; lp = lp->next) {
+			if (lp == l) {
+				eloop_event_delete(lp->ctx->eloop, lp->fd);
+				close(lp->fd);
+				if (last == NULL)
+					lp->ctx->control_fds = lp->next;
+				else
+					last->next = lp->next;
+				free(lp);
+				break;
+			}
+			last = lp;
+		}
 		return;
 	}
 	buffer[bytes] = '\0';
 	p = buffer;
 	e = buffer + bytes;
-	argc = 0;
-	ap = argvp;
-	while (p < e && (size_t)argc < sizeof(argvp)) {
-		argc++;
-		*ap++ = p;
-		p += strlen(p) + 1;
+
+	/* Each command is \n terminated
+	 * Each argument is NULL separated */
+	while (p < e) {
+		argc = 0;
+		ap = argvp;
+		while (p < e) {
+			argc++;
+			if ((size_t)argc > sizeof(argvp)) {
+				errno = ENOBUFS;
+				return;
+			}
+			a = *ap++ = p;
+			len = strlen(p);
+			p += len + 1;
+			if (a[len - 1] == '\n') {
+				a[len - 1] = '\0';
+				break;
+			}
+		}
+		dhcpcd_handleargs(l->ctx, l, argc, argvp);
 	}
-	handle_args(l, argc, argvp);
 }
 
-/* ARGSUSED */
 static void
-control_handle(__unused void *arg)
+control_handle(void *arg)
 {
+	struct dhcpcd_ctx *ctx;
 	struct sockaddr_un run;
 	socklen_t len;
 	struct fd_list *l;
-	int f;
+	int fd, flags;
 
+	ctx = arg;
 	len = sizeof(run);
-	if ((f = accept(fd, (struct sockaddr *)&run, &len)) == -1)
+	if ((fd = accept(ctx->control_fd, (struct sockaddr *)&run, &len)) == -1)
 		return;
-	set_cloexec(f);
-	l = malloc(sizeof(*l));
-	if (l) {
-		l->fd = f;
-		l->listener = 0;
-		l->next = control_fds;
-		control_fds = l;
-		eloop_event_add(l->fd, control_handle_data, l);
-	}
-}
-
-static int
-make_sock(void)
-{
-	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-		return -1;
-	memset(&sun, 0, sizeof(sun));
-	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, CONTROLSOCKET, sizeof(sun.sun_path));
-	return sizeof(sun.sun_family) + strlen(sun.sun_path) + 1;
-}
-
-int
-control_start(void)
-{
-	int len;
-
-	if ((len = make_sock()) == -1)
-		return -1;
-	unlink(CONTROLSOCKET);
-	if (bind(fd, (struct sockaddr *)&sun, len) == -1 ||
-	    chmod(CONTROLSOCKET,
-		S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) == -1 ||
-	    set_cloexec(fd) == -1 ||
-	    set_nonblock(fd) == -1 ||
-	    listen(fd, sizeof(control_fds)) == -1)
+	if ((flags = fcntl(fd, F_GETFD, 0)) == -1 ||
+	    fcntl(fd, F_SETFD, flags | FD_CLOEXEC) == -1)
 	{
 		close(fd);
-		return -1;
+	        return;
 	}
-	eloop_event_add(fd, control_handle, NULL);
-	return fd;
+	if ((flags = fcntl(fd, F_GETFL, 0)) == -1 ||
+	    fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
+	{
+		close(fd);
+	        return;
+	}
+	l = malloc(sizeof(*l));
+	if (l) {
+		l->ctx = ctx;
+		l->fd = fd;
+		l->listener = 0;
+		l->next = ctx->control_fds;
+		ctx->control_fds = l;
+		eloop_event_add(ctx->eloop, l->fd, control_handle_data, l);
+	} else
+		close(fd);
+}
+
+static socklen_t
+make_sock(struct dhcpcd_ctx *ctx, struct sockaddr_un *sa, const char *ifname)
+{
+
+#ifdef SOCK_CLOEXEC
+	if ((ctx->control_fd = socket(AF_UNIX,
+	    SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0)) == -1)
+		return 0;
+#else
+	int flags;
+
+	if ((ctx->control_fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+		return 0;
+	if ((flags = fcntl(ctx->control_fd, F_GETFD, 0)) == -1 ||
+	    fcntl(ctx->control_fd, F_SETFD, flags | FD_CLOEXEC) == -1)
+	{
+		close(ctx->control_fd);
+		ctx->control_fd = -1;
+	        return 0;
+	}
+	if ((flags = fcntl(ctx->control_fd, F_GETFL, 0)) == -1 ||
+	    fcntl(ctx->control_fd, F_SETFL, flags | O_NONBLOCK) == -1)
+	{
+		close(ctx->control_fd);
+		ctx->control_fd = -1;
+	        return 0;
+	}
+#endif
+	memset(sa, 0, sizeof(*sa));
+	sa->sun_family = AF_UNIX;
+	snprintf(sa->sun_path, sizeof(sa->sun_path), CONTROLSOCKET,
+	    ifname ? "-" : "", ifname ? ifname : "");
+	strlcpy(ctx->control_sock, sa->sun_path, sizeof(ctx->control_sock));
+	return (socklen_t)SUN_LEN(sa);
 }
 
 int
-control_stop(void)
+control_start(struct dhcpcd_ctx *ctx, const char *ifname)
+{
+	struct sockaddr_un sa;
+	socklen_t len;
+
+	if ((len = make_sock(ctx, &sa, ifname)) == 0)
+		return -1;
+	unlink(ctx->control_sock);
+	if (bind(ctx->control_fd, (struct sockaddr *)&sa, len) == -1 ||
+	    chmod(ctx->control_sock,
+		S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) == -1 ||
+	    (ctx->control_group &&
+	        chown(ctx->control_sock,
+		geteuid(), ctx->control_group) == -1) ||
+	    listen(ctx->control_fd, sizeof(ctx->control_fds)) == -1)
+	{
+		close(ctx->control_fd);
+		ctx->control_fd = -1;
+		unlink(ctx->control_sock);
+		return -1;
+	}
+	eloop_event_add(ctx->eloop, ctx->control_fd, control_handle, ctx);
+	return ctx->control_fd;
+}
+
+int
+control_stop(struct dhcpcd_ctx *ctx)
 {
 	int retval = 0;
 	struct fd_list *l;
 
-	eloop_event_delete(fd);
-	if (shutdown(fd, SHUT_RDWR) == -1)
+	if (ctx->control_fd == -1)
+		return 0;
+	eloop_event_delete(ctx->eloop, ctx->control_fd);
+	if (shutdown(ctx->control_fd, SHUT_RDWR) == -1)
 		retval = 1;
-	fd = -1;
-	if (unlink(CONTROLSOCKET) == -1)
+	ctx->control_fd = -1;
+	if (unlink(ctx->control_sock) == -1)
 		retval = -1;
 
-	l = control_fds;
+	l = ctx->control_fds;
 	while (l != NULL) {
-		control_fds = l->next;
-		eloop_event_delete(l->fd);
+		ctx->control_fds = l->next;
+		eloop_event_delete(ctx->eloop, l->fd);
 		shutdown(l->fd, SHUT_RDWR);
 		free(l);
-		l = control_fds;
+		l = ctx->control_fds;
 	}
 
 	return retval;
 }
 
 int
-control_open(void)
+control_open(struct dhcpcd_ctx *ctx, const char *ifname)
 {
-	int len;
+	struct sockaddr_un sa;
+	socklen_t len;
 
-	if ((len = make_sock()) == -1)
+	if ((len = make_sock(ctx, &sa, ifname)) == 0)
 		return -1;
-#ifdef DEBUG_MEMORY
-	atexit(cleanup);
-#endif
-	return connect(fd, (struct sockaddr *)&sun, len);
+	if (connect(ctx->control_fd, (struct sockaddr *)&sa, len) == -1) {
+		close(ctx->control_fd);
+		ctx->control_fd = -1;
+		return -1;
+	}
+	return 0;
 }
 
-int
-control_send(int argc, char * const *argv)
+ssize_t
+control_send(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 {
-	char *p = buffer;
+	char buffer[1024];
 	int i;
-	size_t len;
+	size_t len, l;
 
 	if (argc > 255) {
 		errno = ENOBUFS;
 		return -1;
 	}
+	len = 0;
 	for (i = 0; i < argc; i++) {
-		len = strlen(argv[i]) + 1;
-		if ((p - buffer) + len > sizeof(buffer)) {
+		l = strlen(argv[i]) + 1;
+		if (len + l > sizeof(buffer)) {
 			errno = ENOBUFS;
 			return -1;
 		}
-		memcpy(p, argv[i], len);
-		p += len;
+		memcpy(buffer + len, argv[i], l);
+		len += l;
 	}
-	return write(fd, buffer, p - buffer);
+	return write(ctx->control_fd, buffer, len);
+}
+
+void
+control_close(struct dhcpcd_ctx *ctx)
+{
+
+	if (ctx->control_fd != -1) {
+		close(ctx->control_fd);
+		ctx->control_fd = -1;
+	}
 }

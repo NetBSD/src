@@ -1,7 +1,7 @@
-/*	$NetBSD: app.h,v 1.3.2.1 2013/06/23 06:26:25 tls Exp $	*/
+/*	$NetBSD: app.h,v 1.3.2.2 2014/08/19 23:46:33 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -119,6 +119,9 @@ typedef struct isc_appmethods {
 					isc_socketmgr_t *timermgr);
 	void		(*settimermgr)(isc_appctx_t *ctx,
 				       isc_timermgr_t *timermgr);
+	isc_result_t 	(*ctxonrun)(isc_appctx_t *ctx, isc_mem_t *mctx,
+				    isc_task_t *task, isc_taskaction_t action,
+				    void *arg);
 } isc_appmethods_t;
 
 /*%
@@ -155,9 +158,12 @@ isc_app_start(void);
  *	close to the beginning of the application as possible.
  *
  * Requires:
- *	'ctx' is a valid application context (for app_ctxstart()).
+ *\li	'ctx' is a valid application context (for app_ctxstart()).
  */
 
+isc_result_t
+isc_app_ctxonrun(isc_appctx_t *ctx, isc_mem_t *mctx, isc_task_t *task,
+		 isc_taskaction_t action, void *arg);
 isc_result_t
 isc_app_onrun(isc_mem_t *mctx, isc_task_t *task, isc_taskaction_t action,
 	      void *arg);
@@ -166,6 +172,7 @@ isc_app_onrun(isc_mem_t *mctx, isc_task_t *task, isc_taskaction_t action,
  *
  * Requires:
  *\li	isc_app_start() has been called.
+ *\li	'ctx' is a valid application context (for app_ctxonrun()).
  *
  * Returns:
  *	ISC_R_SUCCESS

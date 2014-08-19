@@ -1,7 +1,7 @@
-/*	$NetBSD: util.h,v 1.2 2011/06/29 02:41:03 mrg Exp $	*/
+/*	$NetBSD: util.h,v 1.2.8.1 2014/08/19 23:51:39 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: util.h,v 1.30 2007/06/19 23:47:18 tbox Exp */
+/* Id */
 
 #ifndef ISC_UTIL_H
 #define ISC_UTIL_H 1
@@ -50,6 +50,11 @@
  */
 #define UNUSED(x)      (void)(x)
 
+/*%
+ * The opposite: silent warnings about stored values which are never read.
+ */
+#define POST(x)        (void)(x)
+
 #define ISC_MAX(a, b)  ((a) > (b) ? (a) : (b))
 #define ISC_MIN(a, b)  ((a) < (b) ? (a) : (b))
 
@@ -72,7 +77,7 @@
  * Use this in translation units that would otherwise be empty, to
  * suppress compiler warnings.
  */
-#define EMPTY_TRANSLATION_UNIT static void __unused isc__empty(void) { } 
+#define EMPTY_TRANSLATION_UNIT extern void exit(int);
 
 /*%
  * We use macros instead of calling the routines directly because

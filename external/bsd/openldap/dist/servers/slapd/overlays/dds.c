@@ -1,9 +1,9 @@
-/*	$NetBSD: dds.c,v 1.1.1.3 2010/12/12 15:23:33 adam Exp $	*/
+/*	$NetBSD: dds.c,v 1.1.1.3.12.1 2014/08/19 23:52:03 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/overlays/dds.c,v 1.7.2.16 2010/04/15 19:59:56 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2010 The OpenLDAP Foundation.
+ * Copyright 2005-2014 The OpenLDAP Foundation.
  * Portions Copyright 2005-2006 SysNet s.n.c.
  * All rights reserved.
  *
@@ -158,7 +158,7 @@ dds_expire( void *ctx, dds_info_t *di )
 	op->ors_slimit = SLAP_NO_LIMIT;
 	op->ors_attrs = slap_anlist_no_attrs;
 
-	expire = slap_get_time() + di->di_tolerance;
+	expire = slap_get_time() - di->di_tolerance;
 	ts.bv_val = tsbuf;
 	ts.bv_len = sizeof( tsbuf );
 	slap_timestamp( &expire, &ts );
@@ -589,6 +589,7 @@ dds_op_modify( Operation *op, SlapReply *rs )
 
 			switch ( mod->sml_op ) {
 			case LDAP_MOD_DELETE:
+			case SLAP_MOD_SOFTDEL: /* FIXME? */
 				if ( mod->sml_values != NULL ) {
 					if ( BER_BVISEMPTY( &bv_entryTtl ) 
 						|| !bvmatch( &bv_entryTtl, &mod->sml_values[ 0 ] ) )
@@ -613,8 +614,9 @@ dds_op_modify( Operation *op, SlapReply *rs )
 				entryTtl = -1;
 				/* fallthru */
 
-			case SLAP_MOD_SOFTADD: /* FIXME? */
 			case LDAP_MOD_ADD:
+			case SLAP_MOD_SOFTADD: /* FIXME? */
+			case SLAP_MOD_ADD_IF_NOT_PRESENT: /* FIXME? */
 				assert( mod->sml_values != NULL );
 				assert( BER_BVISNULL( &mod->sml_values[ 1 ] ) );
 
@@ -1708,6 +1710,9 @@ dds_db_open(
 	int		rc = 0;
 	void		*thrctx = ldap_pvt_thread_pool_context();
 
+	if ( slapMode & SLAP_TOOL_MODE )
+		return 0;
+
 	if ( DDS_OFF( di ) ) {
 		goto done;
 	}
@@ -1730,18 +1735,19 @@ dds_db_open(
 	di->di_suffix = be->be_suffix;
 	di->di_nsuffix = be->be_nsuffix;
 
-	/* ... so that count, if required, is accurate */
-	if ( di->di_max_dynamicObjects > 0 ) {
+	/* count the dynamic objects first */
+	rc = dds_count( thrctx, be );
+	if ( rc != LDAP_SUCCESS ) {
+		rc = 1;
+		goto done;
+	}
+
+	/* ... if there are dynamic objects, delete those expired */
+	if ( di->di_num_dynamicObjects > 0 ) {
 		/* force deletion of expired entries... */
 		be->bd_info = (BackendInfo *)on->on_info;
 		rc = dds_expire( thrctx, di );
 		be->bd_info = (BackendInfo *)on;
-		if ( rc != LDAP_SUCCESS ) {
-			rc = 1;
-			goto done;
-		}
-
-		rc = dds_count( thrctx, be );
 		if ( rc != LDAP_SUCCESS ) {
 			rc = 1;
 			goto done;

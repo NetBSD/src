@@ -1,4 +1,4 @@
-/*	$NetBSD: renew.c,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $	*/
+/*	$NetBSD: renew.c,v 1.1.1.1.10.1 2014/08/19 23:45:16 tls Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.
@@ -34,7 +34,7 @@
 
 #include "kcm_locl.h"
 
-__RCSID("$NetBSD: renew.c,v 1.1.1.1 2011/04/13 18:14:36 elric Exp $");
+__RCSID("NetBSD");
 
 krb5_error_code
 kcm_ccache_refresh(krb5_context context,

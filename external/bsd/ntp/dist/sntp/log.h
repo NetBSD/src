@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.3 2012/02/01 07:46:23 kardel Exp $	*/
+/*	$NetBSD: log.h,v 1.3.6.1 2014/08/19 23:51:45 tls Exp $	*/
 
 #ifndef LOG_H
 #define LOG_H
@@ -21,7 +21,9 @@
 # define OPENLOG_FAC	LOG_DAEMON
 #endif
 
-void init_logging(void);
+void sntp_init_logging(const char *program);
 void open_logfile(const char *logfile);
+
+extern char *progname;		/* for msyslog use too */
 
 #endif

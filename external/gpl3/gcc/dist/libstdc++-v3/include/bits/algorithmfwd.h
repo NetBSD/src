@@ -1,6 +1,6 @@
-// <algorithm> declarations  -*- C++ -*-
+// <algorithm> Forward declarations  -*- C++ -*-
 
-// Copyright (C) 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+// Copyright (C) 2007-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -24,7 +24,7 @@
 
 /** @file bits/algorithmfwd.h
  *  This is an internal header file, included by other library headers.
- *  You should not attempt to use it directly.
+ *  Do not attempt to use it directly. @headername{algorithm}
  */
 
 #ifndef _GLIBCXX_ALGORITHMFWD_H
@@ -35,9 +35,13 @@
 #include <bits/c++config.h>
 #include <bits/stl_pair.h>
 #include <bits/stl_iterator_base_types.h>
+#if __cplusplus >= 201103L
 #include <initializer_list>
+#endif
 
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   /*
     adjacent_find
@@ -186,7 +190,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
   // adjacent_find
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
   template<typename _IIter, typename _Predicate>
     bool
     all_of(_IIter, _IIter, _Predicate);
@@ -212,7 +216,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     _BIter2
     copy_backward(_BIter1, _BIter1, _BIter2);
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
   template<typename _IIter, typename _OIter, typename _Predicate>
     _OIter
     copy_if(_IIter, _IIter, _OIter, _Predicate);
@@ -254,7 +258,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
   // find_first_of
   // find_if
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
   template<typename _IIter, typename _Predicate>
     _IIter
     find_if_not(_IIter, _IIter, _Predicate);
@@ -280,7 +284,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     void 
     inplace_merge(_BIter, _BIter, _BIter, _Compare);
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
   template<typename _RAIter>
     bool 
     is_heap(_RAIter, _RAIter);
@@ -300,6 +304,15 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
   template<typename _IIter, typename _Predicate>
     bool
     is_partitioned(_IIter, _IIter, _Predicate);
+
+  template<typename _FIter1, typename _FIter2>
+    bool
+    is_permutation(_FIter1, _FIter1, _FIter2);
+
+  template<typename _FIter1, typename _FIter2,
+	   typename _BinaryPredicate>
+    bool
+    is_permutation(_FIter1, _FIter1, _FIter2, _BinaryPredicate);
 
   template<typename _FIter>
     bool 
@@ -359,7 +372,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
   // min_element
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
   template<typename _Tp>
     pair<const _Tp&, const _Tp&> 
     minmax(const _Tp&, const _Tp&);
@@ -411,7 +424,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     bool 
     next_permutation(_BIter, _BIter, _Compare);
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
   template<typename _IIter, typename _Predicate>
     bool
     none_of(_IIter, _IIter, _Predicate);
@@ -430,7 +443,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
   // partition
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
   template<typename _IIter, typename _OIter1,
 	   typename _OIter2, typename _Predicate>
     pair<_OIter1, _OIter2>
@@ -518,10 +531,10 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
   // set_symmetric_difference
   // set_union
 
-#if defined(__GXX_EXPERIMENTAL_CXX0X__) && defined(_GLIBCXX_USE_C99_STDINT_TR1)
+#if (__cplusplus >= 201103L) && defined(_GLIBCXX_USE_C99_STDINT_TR1)
   template<typename _RAIter, typename _UGenerator>
     void
-    shuffle(_RAIter, _RAIter, _UGenerator&);
+    shuffle(_RAIter, _RAIter, _UGenerator&&);
 #endif
 
   template<typename _RAIter>
@@ -538,11 +551,20 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 
   template<typename _Tp> 
     void 
-    swap(_Tp&, _Tp&);
+    swap(_Tp&, _Tp&)
+#if __cplusplus >= 201103L
+    noexcept(__and_<is_nothrow_move_constructible<_Tp>,
+	            is_nothrow_move_assignable<_Tp>>::value)
+#endif
+    ;
 
   template<typename _Tp, size_t _Nm>
     void
-    swap(_Tp (&)[_Nm], _Tp (&)[_Nm]);
+    swap(_Tp (&__a)[_Nm], _Tp (&__b)[_Nm])
+#if __cplusplus >= 201103L
+    noexcept(noexcept(swap(*__a, *__b)))
+#endif
+    ;
 
   template<typename _FIter1, typename _FIter2>
     _FIter2 
@@ -568,9 +590,9 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     _FIter 
     upper_bound(_FIter, _FIter, const _Tp&, _Compare);
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
 
-_GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
+_GLIBCXX_BEGIN_NAMESPACE_ALGO
 
   template<typename _FIter>
     _FIter 
@@ -692,7 +714,7 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
   template<typename _RAIter, typename _Generator>
     void 
     random_shuffle(_RAIter, _RAIter,
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
 		   _Generator&&);
 #else
 		   _Generator&);
@@ -793,9 +815,10 @@ _GLIBCXX_BEGIN_NESTED_NAMESPACE(std, _GLIBCXX_STD_P)
     _OIter 
     unique_copy(_IIter, _IIter, _OIter, _BinaryPredicate);
 
-_GLIBCXX_END_NESTED_NAMESPACE
+_GLIBCXX_END_NAMESPACE_ALGO
+} // namespace std
 
-#ifdef _GLIBCXX_NAMESPACE_ASSOCIATION_PARALLEL
+#ifdef _GLIBCXX_PARALLEL
 # include <parallel/algorithmfwd.h>
 #endif
 

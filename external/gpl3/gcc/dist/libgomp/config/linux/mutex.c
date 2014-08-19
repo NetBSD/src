@@ -1,4 +1,4 @@
-/* Copyright (C) 2005, 2008, 2009 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2013 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>.
 
    This file is part of the GNU OpenMP Library (libgomp).
@@ -32,15 +32,34 @@ long int gomp_futex_wake = FUTEX_WAKE | FUTEX_PRIVATE_FLAG;
 long int gomp_futex_wait = FUTEX_WAIT | FUTEX_PRIVATE_FLAG;
 
 void
-gomp_mutex_lock_slow (gomp_mutex_t *mutex)
+gomp_mutex_lock_slow (gomp_mutex_t *mutex, int oldval)
 {
-  do
+  /* First loop spins a while.  */
+  while (oldval == 1)
     {
-      int oldval = __sync_val_compare_and_swap (mutex, 1, 2);
-      if (oldval != 0)
-	do_wait (mutex, 2);
+      if (do_spin (mutex, 1))
+	{
+	  /* Spin timeout, nothing changed.  Set waiting flag.  */
+	  oldval = __atomic_exchange_n (mutex, -1, MEMMODEL_ACQUIRE);
+	  if (oldval == 0)
+	    return;
+	  futex_wait (mutex, -1);
+	  break;
+	}
+      else
+	{
+	  /* Something changed.  If now unlocked, we're good to go.  */
+	  oldval = 0;
+	  if (__atomic_compare_exchange_n (mutex, &oldval, 1, false,
+					   MEMMODEL_ACQUIRE, MEMMODEL_RELAXED))
+	    return;
+	}
     }
-  while (!__sync_bool_compare_and_swap (mutex, 0, 2));
+
+  /* Second loop waits until mutex is unlocked.  We always exit this
+     loop with wait flag set, so next unlock will awaken a thread.  */
+  while ((oldval = __atomic_exchange_n (mutex, -1, MEMMODEL_ACQUIRE)))
+    do_wait (mutex, -1);
 }
 
 void

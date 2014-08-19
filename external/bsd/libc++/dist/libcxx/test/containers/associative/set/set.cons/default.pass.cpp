@@ -16,9 +16,25 @@
 #include <set>
 #include <cassert>
 
+#include "min_allocator.h"
+
 int main()
 {
+    {
     std::set<int> m;
     assert(m.empty());
     assert(m.begin() == m.end());
+    }
+#if __cplusplus >= 201103L
+    {
+    std::set<int, std::less<int>, min_allocator<int>> m;
+    assert(m.empty());
+    assert(m.begin() == m.end());
+    }
+    {
+    std::set<int> m = {};
+    assert(m.empty());
+    assert(m.begin() == m.end());
+    }
+#endif
 }

@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,149 +34,138 @@
 // warranty.
 
 /**
- * @file find_fn_imps.hpp
+ * @file bin_search_tree_/find_fn_imps.hpp
  * Contains an implementation class for bin_search_tree_.
  */
 
 PB_DS_CLASS_T_DEC
-inline typename PB_DS_CLASS_C_DEC::const_point_iterator
+inline typename PB_DS_CLASS_C_DEC::point_const_iterator
 PB_DS_CLASS_C_DEC::
-lower_bound(const_key_reference r_key) const
+lower_bound(key_const_reference r_key) const
 {
   node_pointer p_pot = m_p_head;
   node_pointer p_nd = m_p_head->m_p_parent;
 
-  while (p_nd != NULL)
-    if (Cmp_Fn::operator()(
-			   PB_DS_V2F(p_nd->m_value),
-			   r_key))
+  while (p_nd != 0)
+    if (Cmp_Fn::operator()(PB_DS_V2F(p_nd->m_value), r_key))
       p_nd = p_nd->m_p_right;
     else
       {
 	p_pot = p_nd;
-
 	p_nd = p_nd->m_p_left;
       }
-
-  return (iterator(p_pot));
+  return iterator(p_pot);
 }
 
 PB_DS_CLASS_T_DEC
 inline typename PB_DS_CLASS_C_DEC::point_iterator
 PB_DS_CLASS_C_DEC::
-lower_bound(const_key_reference r_key)
+lower_bound(key_const_reference r_key)
 {
   node_pointer p_pot = m_p_head;
   node_pointer p_nd = m_p_head->m_p_parent;
 
-  while (p_nd != NULL)
-    if (Cmp_Fn::operator()(
-			   PB_DS_V2F(p_nd->m_value),
-			   r_key))
+  while (p_nd != 0)
+    if (Cmp_Fn::operator()(PB_DS_V2F(p_nd->m_value), r_key))
       p_nd = p_nd->m_p_right;
     else
       {
 	p_pot = p_nd;
-
 	p_nd = p_nd->m_p_left;
       }
-
-  return (iterator(p_pot));
+  return iterator(p_pot);
 }
 
 PB_DS_CLASS_T_DEC
-inline typename PB_DS_CLASS_C_DEC::const_point_iterator
+inline typename PB_DS_CLASS_C_DEC::point_const_iterator
 PB_DS_CLASS_C_DEC::
-upper_bound(const_key_reference r_key) const
+upper_bound(key_const_reference r_key) const
 {
   node_pointer p_pot = m_p_head;
   node_pointer p_nd = m_p_head->m_p_parent;
 
-  while (p_nd != NULL)
-    if (Cmp_Fn::operator()(r_key,
-			   PB_DS_V2F(p_nd->m_value)))
+  while (p_nd != 0)
+    if (Cmp_Fn::operator()(r_key, PB_DS_V2F(p_nd->m_value)))
       {
-	p_pot = p_nd,
-
-	  p_nd = p_nd->m_p_left;
+	p_pot = p_nd;
+	p_nd = p_nd->m_p_left;
       }
     else
       p_nd = p_nd->m_p_right;
-
-  return (const_iterator(p_pot));
+  return const_iterator(p_pot);
 }
 
 PB_DS_CLASS_T_DEC
 inline typename PB_DS_CLASS_C_DEC::point_iterator
 PB_DS_CLASS_C_DEC::
-upper_bound(const_key_reference r_key)
+upper_bound(key_const_reference r_key)
 {
   node_pointer p_pot = m_p_head;
   node_pointer p_nd = m_p_head->m_p_parent;
 
-  while (p_nd != NULL)
-    if (Cmp_Fn::operator()(r_key,
-			   PB_DS_V2F(p_nd->m_value)))
+  while (p_nd != 0)
+    if (Cmp_Fn::operator()(r_key, PB_DS_V2F(p_nd->m_value)))
       {
-	p_pot = p_nd,
-
-	  p_nd = p_nd->m_p_left;
+	p_pot = p_nd;
+	p_nd = p_nd->m_p_left;
       }
     else
       p_nd = p_nd->m_p_right;
-
-  return (point_iterator(p_pot));
+  return point_iterator(p_pot);
 }
 
 PB_DS_CLASS_T_DEC
 inline typename PB_DS_CLASS_C_DEC::point_iterator
 PB_DS_CLASS_C_DEC::
-find(const_key_reference r_key)
+find(key_const_reference r_key)
 {
-  _GLIBCXX_DEBUG_ONLY(structure_only_assert_valid();)
-
-    node_pointer p_pot = m_p_head;
+  PB_DS_STRUCT_ONLY_ASSERT_VALID((*this))
+  node_pointer p_pot = m_p_head;
   node_pointer p_nd = m_p_head->m_p_parent;
 
-  while (p_nd != NULL)
+  while (p_nd != 0)
     if (!Cmp_Fn::operator()(PB_DS_V2F(p_nd->m_value), r_key))
       {
 	p_pot = p_nd;
-
 	p_nd = p_nd->m_p_left;
       }
     else
       p_nd = p_nd->m_p_right;
 
-  return point_iterator((p_pot != m_p_head&&  Cmp_Fn::operator()(
-								 r_key,
-								 PB_DS_V2F(p_pot->m_value)))?
-			m_p_head : p_pot);
+  node_pointer ret = p_pot;
+  if (p_pot != m_p_head)
+    {
+      const bool __cmp = Cmp_Fn::operator()(r_key, PB_DS_V2F(p_pot->m_value));
+      if (__cmp)
+	ret = m_p_head;
+    }
+  return point_iterator(ret);
 }
 
 PB_DS_CLASS_T_DEC
-inline typename PB_DS_CLASS_C_DEC::const_point_iterator
+inline typename PB_DS_CLASS_C_DEC::point_const_iterator
 PB_DS_CLASS_C_DEC::
-find(const_key_reference r_key) const
+find(key_const_reference r_key) const
 {
-  _GLIBCXX_DEBUG_ONLY(structure_only_assert_valid();)
-
-    node_pointer p_pot = m_p_head;
+  PB_DS_STRUCT_ONLY_ASSERT_VALID((*this))
+  node_pointer p_pot = m_p_head;
   node_pointer p_nd = m_p_head->m_p_parent;
 
-  while (p_nd != NULL)
+  while (p_nd != 0)
     if (!Cmp_Fn::operator()(PB_DS_V2F(p_nd->m_value), r_key))
       {
 	p_pot = p_nd;
-
 	p_nd = p_nd->m_p_left;
       }
     else
       p_nd = p_nd->m_p_right;
 
-  return const_point_iterator((p_pot != m_p_head&&  Cmp_Fn::operator()(
-								       r_key,
-								       PB_DS_V2F(p_pot->m_value)))?
-			      m_p_head : p_pot);
+  node_pointer ret = p_pot;
+  if (p_pot != m_p_head)
+    {
+      const bool __cmp = Cmp_Fn::operator()(r_key, PB_DS_V2F(p_pot->m_value));
+      if (__cmp)
+	ret = m_p_head;
+    }
+  return point_const_iterator(ret);
 }
-

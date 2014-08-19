@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libldap,v 1.6 2010/03/08 05:18:17 lukem Exp $
+#	$NetBSD: Makefile.libldap,v 1.6.12.1 2014/08/19 23:52:05 tls Exp $
 
 .include "../../openldap.mk"
 
@@ -15,7 +15,7 @@ SRCS+=		bind.c open.c result.c error.c compare.c search.c \
 		init.c options.c print.c string.c util-int.c schema.c \
 		charray.c os-local.c dnssrv.c utf-8.c utf-8-conv.c \
 		turn.c ppolicy.c dds.c txn.c ldap_sync.c stctrl.c \
-		assertion.c deref.c
+		assertion.c deref.c fetch.c ldif.c
 
 .if ${MKCRYPTO} != "no"
 SRCS+=		tls2.c tls_o.c tls_g.c tls_m.c

@@ -1,5 +1,5 @@
-/*	$NetBSD: buffer.h,v 1.4 2011/07/25 03:03:10 christos Exp $	*/
-/* $OpenBSD: buffer.h,v 1.21 2010/08/31 11:54:45 djm Exp $ */
+/*	$NetBSD: buffer.h,v 1.4.8.1 2014/08/19 23:45:24 tls Exp $	*/
+/* $OpenBSD: buffer.h,v 1.22 2013/07/12 00:19:58 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -88,7 +88,7 @@ int	buffer_get_int64_ret(u_int64_t *, Buffer *);
 void	*buffer_get_string_ret(Buffer *, u_int *);
 char	*buffer_get_cstring_ret(Buffer *, u_int *);
 void	*buffer_get_string_ptr_ret(Buffer *, u_int *);
-int	buffer_get_char_ret(char *, Buffer *);
+int	buffer_get_char_ret(u_char *, Buffer *);
 
 #include <openssl/ec.h>
 

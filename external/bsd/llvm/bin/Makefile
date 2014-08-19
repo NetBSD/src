@@ -1,10 +1,20 @@
-#	$NetBSD: Makefile,v 1.5.2.3 2013/06/23 06:28:21 tls Exp $
+#	$NetBSD: Makefile,v 1.5.2.4 2014/08/19 23:47:17 tls Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	clang \
 	clang-tblgen \
 	tblgen
+
+.if ${MKLLD} != "no"
+SUBDIR+=	\
+	lld
+.endif
+
+.if ${MKLLDB} != "no"
+SUBDIR+=	\
+	lldb
+.endif
 
 .if ${MKMCLINKER} != "no"
 SUBDIR+=	\
@@ -29,8 +39,7 @@ SUBDIR+= \
 	llvm-mc \
 	llvm-nm \
 	llvm-objdump \
-	llvm-prof \
-	llvm-ranlib \
+	llvm-profdata \
 	llvm-readobj \
 	llvm-size \
 	llvm-symbolizer \

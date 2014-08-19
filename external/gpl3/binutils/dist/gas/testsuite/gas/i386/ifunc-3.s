@@ -8,9 +8,10 @@ start1:
 	.long	bar1-base
 
 	.type	bar1,%gnu_indirect_function
+	.size	bar1,.Lendbar1-bar1
 bar1:
 	ret
-	.size	bar1,.-bar1
+.Lendbar1:
 	.align	4
 
 	.long	bar1-.

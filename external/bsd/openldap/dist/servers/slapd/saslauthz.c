@@ -1,9 +1,9 @@
-/*	$NetBSD: saslauthz.c,v 1.1.1.3 2010/12/12 15:22:40 adam Exp $	*/
+/*	$NetBSD: saslauthz.c,v 1.1.1.3.12.1 2014/08/19 23:52:01 tls Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.163.2.12 2010/04/13 20:23:18 kurt Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * Portions Copyright 2000 Mark Adamson, Carnegie Mellon.
  * All rights reserved.
  *
@@ -2007,7 +2007,7 @@ slap_sasl2dn(
 	op.o_bd->be_search( &op, &rs );
 	
 FINISHED:
-	if( !BER_BVISEMPTY( sasldn ) ) {
+	if( opx == opx->o_conn->c_sasl_bindop && !BER_BVISEMPTY( sasldn ) ) {
 		opx->o_conn->c_authz_backend = op.o_bd;
 	}
 	if( !BER_BVISNULL( &op.o_req_dn ) ) {

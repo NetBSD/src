@@ -1,7 +1,7 @@
 #objdump: --syms --special-syms -d
 #name: ARM Mapping Symbols for .short (ELF version)
 # This test is only valid on ELF based ports.
-#not-target: *-*-*coff *-*-pe *-*-wince *-*-*aout* *-*-netbsd *-*-riscix* *-*-*eabi *-*-syymbianelf *-*-linux-* *-*-vxworks *-*-elf
+#not-target: *-*-*coff *-*-pe *-*-wince *-*-*aout* *-*-netbsd *-*-riscix* *-*-*eabi *-*-syymbianelf *-*-linux-* *-*-vxworks *-*-elf *-*-nacl*
 #source: mapshort.s
 
 # Test the generation and use of ARM ELF Mapping Symbols

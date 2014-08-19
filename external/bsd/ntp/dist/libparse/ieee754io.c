@@ -1,11 +1,11 @@
-/*	$NetBSD: ieee754io.c,v 1.1.1.1 2009/12/13 16:55:22 kardel Exp $	*/
+/*	$NetBSD: ieee754io.c,v 1.1.1.1.12.1 2014/08/19 23:51:41 tls Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libntp/ieee754io.c,v 4.12 2005/04/16 17:32:10 kardel RELEASE_20050508_A
  *
  * ieee754io.c,v 4.12 2005/04/16 17:32:10 kardel RELEASE_20050508_A
  *
- * Created: Sun Jul 13 09:12:02 1997
+ * $Created: Sun Jul 13 09:12:02 1997 $
  *
  * Copyright (c) 1997-2005 by Frank Kardel <kardel <AT> ntp.org>
  *
@@ -91,14 +91,15 @@ fmt_flt(
 	unsigned long ch
 	)
 {
-  char *buf;
+	char *buf;
 
-  LIB_GETBUF(buf);
-  sprintf(buf, "%c %s %s %s", sign ? '-' : '+',
-	  fmt_blong(ch, 11),
-	  fmt_blong(mh, 20),
-	  fmt_blong(ml, 32));
-  return buf;
+	LIB_GETBUF(buf);
+	snprintf(buf, LIB_BUFLENGTH, "%c %s %s %s", sign ? '-' : '+',
+		 fmt_blong(ch, 11),
+		 fmt_blong(mh, 20),
+		 fmt_blong(ml, 32));
+
+	return buf;
 }
 
 static char *
@@ -107,15 +108,18 @@ fmt_hex(
 	int length
 	)
 {
-  char *buf;
-  int i;
+	char *	buf;
+	char	hex[4];
+	int	i;
 
-  LIB_GETBUF(buf);
-  for (i = 0; i < length; i++)
-    {
-      sprintf(buf+i*2, "%02x", bufp[i]);
-    }
-  return buf;
+	LIB_GETBUF(buf);
+	buf[0] = '\0';
+	for (i = 0; i < length; i++) {
+		snprintf(hex, sizeof(hex), "%02x", bufp[i]);
+		strlcat(buf, hex, LIB_BUFLENGTH);
+	}
+
+	return buf;
 }
 
 #endif
@@ -219,7 +223,7 @@ fetch_ieee754(
       mantissa_high  = 0;
 
       mantissa_low   = (val &0x7F) << 16;
-      mantissa_low  |= get_byte(bufp, offsets, &fieldindex) << 8;
+      mantissa_low  |= (u_long)get_byte(bufp, offsets, &fieldindex) << 8;
       mantissa_low  |= get_byte(bufp, offsets, &fieldindex);
       break;
       
@@ -228,12 +232,12 @@ fetch_ieee754(
       characteristic  |= (val & 0xF0) >> 4; /* grab lower characteristic bits */
 
       mantissa_high  = (val & 0x0F) << 16;
-      mantissa_high |= get_byte(bufp, offsets, &fieldindex) << 8;
+      mantissa_high |= (u_long)get_byte(bufp, offsets, &fieldindex) << 8;
       mantissa_high |= get_byte(bufp, offsets, &fieldindex);
 
-      mantissa_low   = get_byte(bufp, offsets, &fieldindex) << 24;
-      mantissa_low  |= get_byte(bufp, offsets, &fieldindex) << 16;
-      mantissa_low  |= get_byte(bufp, offsets, &fieldindex) << 8;
+      mantissa_low   = (u_long)get_byte(bufp, offsets, &fieldindex) << 24;
+      mantissa_low  |= (u_long)get_byte(bufp, offsets, &fieldindex) << 16;
+      mantissa_low  |= (u_long)get_byte(bufp, offsets, &fieldindex) << 8;
       mantissa_low  |= get_byte(bufp, offsets, &fieldindex);
       break;
       

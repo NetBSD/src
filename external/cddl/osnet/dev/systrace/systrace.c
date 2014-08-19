@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.3 2011/07/17 20:54:33 joerg Exp $	*/
+/*	$NetBSD: systrace.c,v 1.3.8.1 2014/08/19 23:52:21 tls Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -38,7 +38,9 @@
 #include <sys/cpuvar.h>
 #include <sys/fcntl.h>
 #include <sys/filio.h>
+#ifdef __FreeBSD__
 #include <sys/kdb.h>
+#endif
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
@@ -51,9 +53,12 @@
 #include <sys/poll.h>
 #include <sys/proc.h>
 #include <sys/selinfo.h>
+#ifdef __FreeBSD__
 #include <sys/smp.h>
 #include <sys/sysproto.h>
 #include <sys/sysent.h>
+#endif
+#include <sys/syscallargs.h>
 #include <sys/uio.h>
 #include <sys/unistd.h>
 
@@ -78,7 +83,7 @@ extern struct sysent linux_sysent[];
  */
 #include <sys/syscall.h>
 #include <kern/systrace_args.c>
-extern const char	*syscallnames[];
+extern const char	* const syscallnames[];
 #define	DEVNAME		"dtrace/systrace"
 #define	PROVNAME	"syscall"
 #define	MAXSYSCALL	SYS_MAXSYSCALL
@@ -98,15 +103,18 @@ extern const char	*syscallnames[];
 #error 1 << SYSTRACE_SHIFT must exceed number of system calls
 #endif
 
+#ifdef __FreeBSD__
 static d_open_t	systrace_open;
+#endif
 static int	systrace_unload(void);
 static void	systrace_getargdesc(void *, dtrace_id_t, void *, dtrace_argdesc_t *);
-static void	systrace_provide(void *, dtrace_probedesc_t *);
+static void	systrace_provide(void *, const dtrace_probedesc_t *);
 static void	systrace_destroy(void *, dtrace_id_t, void *);
-static void	systrace_enable(void *, dtrace_id_t, void *);
+static int	systrace_enable(void *, dtrace_id_t, void *);
 static void	systrace_disable(void *, dtrace_id_t, void *);
 static void	systrace_load(void *);
 
+#ifdef __FreeBSD__
 static struct cdevsw systrace_cdevsw = {
 	.d_version	= D_VERSION,
 	.d_open		= systrace_open,
@@ -116,9 +124,10 @@ static struct cdevsw systrace_cdevsw = {
 	.d_name		= "systrace",
 #endif
 };
+#endif
 
 static union	{
-	const char	**p_constnames;
+	const char	* const *p_constnames;
 	char		**pp_syscallnames;
 } uglyhack = { SYSCALLNAMES };
 
@@ -143,7 +152,9 @@ static dtrace_pops_t systrace_pops = {
 	systrace_destroy
 };
 
+#ifdef __FreeBSD__
 static struct cdev		*systrace_cdev;
+#endif
 static dtrace_provider_id_t	systrace_id;
 
 #if !defined(LINUX_SYSTRACE)
@@ -155,21 +166,21 @@ static dtrace_provider_id_t	systrace_id;
  *       compat syscall from something like Linux.
  */
 static void
-systrace_probe(u_int32_t id, int sysnum, struct sysent *sysent, void *params)
+systrace_probe(u_int32_t id, int sysnum, struct sysent *se, void *params)
 {
 	int		n_args	= 0;
-	u_int64_t	uargs[8];
+	union systrace_probe_args_un	uargs[SYS_MAXSYSARGS];
 
 	/*
 	 * Check if this syscall has an argument conversion function
 	 * registered.
 	 */
-	if (sysent->sy_systrace_args_func != NULL)
+	if (se->sy_systrace_args_func != NULL)
 		/*
 		 * Convert the syscall parameters using the registered
 		 * function.
 		 */
-		(*sysent->sy_systrace_args_func)(sysnum, params, uargs, &n_args);
+		(*se->sy_systrace_args_func)(sysnum, params, uargs, &n_args);
 	else
 		/*
 		 * Use the built-in system call argument conversion
@@ -180,7 +191,8 @@ systrace_probe(u_int32_t id, int sysnum, struct sysent *sysent, void *params)
 		systrace_args(sysnum, params, uargs, &n_args);
 
 	/* Process the probe using the converted argments. */
-	dtrace_probe(id, uargs[0], uargs[1], uargs[2], uargs[3], uargs[4]);
+	dtrace_probe(id, uargs[0].u, uargs[1].u, uargs[2].u, uargs[3].u,
+		uargs[4].u);
 }
 #endif
 
@@ -199,7 +211,7 @@ systrace_getargdesc(void *arg, dtrace_id_t id, void *parg, dtrace_argdesc_t *des
 }
 
 static void
-systrace_provide(void *arg, dtrace_probedesc_t *desc)
+systrace_provide(void *arg, const dtrace_probedesc_t *desc)
 {
 	int i;
 
@@ -238,7 +250,7 @@ systrace_destroy(void *arg, dtrace_id_t id, void *parg)
 #endif
 }
 
-static void
+static int
 systrace_enable(void *arg, dtrace_id_t id, void *parg)
 {
 	int sysnum = SYSTRACE_SYSNUM((uintptr_t)parg);
@@ -250,6 +262,7 @@ systrace_enable(void *arg, dtrace_id_t id, void *parg)
 		SYSENT[sysnum].sy_entry = id;
 	else
 		SYSENT[sysnum].sy_return = id;
+	return 0;
 }
 
 static void
@@ -264,16 +277,18 @@ systrace_disable(void *arg, dtrace_id_t id, void *parg)
 static void
 systrace_load(void *dummy)
 {
+#ifdef __FreeBSD__
 	/* Create the /dev/dtrace/systrace entry. */
 	systrace_cdev = make_dev(&systrace_cdevsw, 0, UID_ROOT, GID_WHEEL, 0600,
 	   DEVNAME);
+#endif
 
 	if (dtrace_register(PROVNAME, &systrace_attr, DTRACE_PRIV_USER,
 	    NULL, &systrace_pops, NULL, &systrace_id) != 0)
 		return;
 
 #if !defined(LINUX_SYSTRACE)
-	systrace_probe_func = systrace_probe;
+	systrace_probe_func = (systrace_probe_func_t)systrace_probe;
 #endif
 }
 
@@ -290,11 +305,14 @@ systrace_unload()
 	systrace_probe_func = NULL;
 #endif
 
+#ifdef __FreeBSD__
 	destroy_dev(systrace_cdev);
+#endif
 
 	return (error);
 }
 
+#ifdef __FreeBSD__
 static int
 systrace_modevent(module_t mod __unused, int type, void *data __unused)
 {
@@ -339,4 +357,28 @@ DEV_MODULE(systrace, systrace_modevent, NULL);
 MODULE_VERSION(systrace, 1);
 MODULE_DEPEND(systrace, dtrace, 1, 1, 1);
 MODULE_DEPEND(systrace, opensolaris, 1, 1, 1);
+#endif
+#endif /* __FreeBSD__ */
+
+#ifdef __NetBSD__
+
+static int
+systrace_modcmd(modcmd_t cmd, void *data)
+{
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		systrace_load(NULL);
+		return 0;
+
+	case MODULE_CMD_FINI:
+		systrace_unload();
+		return 0;
+
+	default:
+		return ENOTTY;
+	}
+}
+
+MODULE(MODULE_CLASS_MISC, systrace, "dtrace");
+
 #endif

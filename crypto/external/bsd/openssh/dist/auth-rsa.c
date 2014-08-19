@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-rsa.c,v 1.6.8.1 2013/06/23 06:26:14 tls Exp $	*/
-/* $OpenBSD: auth-rsa.c,v 1.81 2012/10/30 21:29:54 djm Exp $ */
+/*	$NetBSD: auth-rsa.c,v 1.6.8.2 2014/08/19 23:45:24 tls Exp $	*/
+/* $OpenBSD: auth-rsa.c,v 1.85 2013/07/12 00:19:58 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-rsa.c,v 1.6.8.1 2013/06/23 06:26:14 tls Exp $");
+__RCSID("$NetBSD: auth-rsa.c,v 1.6.8.2 2014/08/19 23:45:24 tls Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -164,9 +164,8 @@ static int
 rsa_key_allowed_in_file(struct passwd *pw, char *file,
     const BIGNUM *client_n, Key **rkey)
 {
-	char line[SSH_MAX_PUBKEY_BYTES];
-	int allowed = 0;
-	u_int bits;
+	char *fp, line[SSH_MAX_PUBKEY_BYTES];
+	int allowed = 0, bits;
 	FILE *f;
 	u_long linenum = 0;
 	Key *key;
@@ -227,10 +226,15 @@ rsa_key_allowed_in_file(struct passwd *pw, char *file,
 
 		/* check the real bits  */
 		keybits = BN_num_bits(key->rsa->n);
-		if (keybits < 0 || bits != (u_int)keybits)
+		if (keybits < 0 || bits != keybits)
 			logit("Warning: %s, line %lu: keysize mismatch: "
 			    "actual %d vs. announced %d.",
 			    file, linenum, BN_num_bits(key->rsa->n), bits);
+
+		fp = key_fingerprint(key, SSH_FP_MD5, SSH_FP_HEX);
+		debug("matching key found: file %s, line %lu %s %s",
+		    file, linenum, key_type(key), fp);
+		free(fp);
 
 		/* Never accept a revoked key */
 		if (auth_key_is_revoked(key))
@@ -278,6 +282,7 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 #ifdef WITH_LDAP_PUBKEY
 	if (options.lpk.on) {
 	    u_int bits;
+	    int sbits;
 	    ldap_key_t *k;
 	    /* here is the job */
 	    Key *key = key_new(KEY_RSA1);
@@ -312,10 +317,11 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 			    xoptions = NULL;
 
 			/* Parse the key from the line. */
-			if (hostfile_read_key(&cp, &bits, key) == 0) {
+			if (hostfile_read_key(&cp, &sbits, key) == 0) {
 			    debug("[LDAP] line %d: non ssh1 key syntax", i);
 			    continue;
 			}
+			bits = sbits;
 			/* cp now points to the comment part. */
 
 			/* Check if the we have found the desired key (identified by its modulus). */
@@ -366,7 +372,7 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 		file = expand_authorized_keys(
 		    options.authorized_keys_files[i], pw);
 		allowed = rsa_key_allowed_in_file(pw, file, client_n, rkey);
-		xfree(file);
+		free(file);
 	}
 
 	restore_uid();
@@ -383,7 +389,6 @@ int
 auth_rsa(Authctxt *authctxt, BIGNUM *client_n)
 {
 	Key *key;
-	char *fp;
 	struct passwd *pw = authctxt->pw;
 
 	/* no user given */
@@ -413,11 +418,7 @@ auth_rsa(Authctxt *authctxt, BIGNUM *client_n)
 	 * options; this will be reset if the options cause the
 	 * authentication to be rejected.
 	 */
-	fp = key_fingerprint(key, SSH_FP_MD5, SSH_FP_HEX);
-	verbose("Found matching %s key: %s",
-	    key_type(key), fp);
-	xfree(fp);
-	key_free(key);
+	pubkey_auth_info(authctxt, key, NULL);
 
 	packet_send_debug("RSA authentication accepted.");
 	return (1);

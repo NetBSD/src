@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.4.3 2013/06/23 06:28:21 tls Exp $
+#	$NetBSD: Makefile,v 1.3.4.4 2014/08/19 23:47:18 tls Exp $
 
 PROG_CXX=	llvm-objdump
 NOMAN=		yes
@@ -13,39 +13,50 @@ SRCS=	llvm-objdump.cpp \
 	MachODump.cpp
 
 LLVM_LIBS+= \
-	Object \
 	AArch64Disassembler \
-	AArch64TargetInfo \
-	AArch64MCTargetDesc \
 	AArch64AsmParser \
+	AArch64MCTargetDesc \
 	AArch64AsmPrinter \
+	AArch64TargetInfo \
 	AArch64Utils \
 	ARMDisassembler \
-	ARMTargetInfo \
-	ARMMCTargetDesc \
 	ARMAsmParser \
+	ARMMCTargetDesc \
 	ARMAsmPrinter \
+	ARMTargetInfo \
 	MipsDisassembler \
-	MipsTargetInfo \
+	MipsAsmParser \
 	MipsMCTargetDesc \
 	MipsAsmPrinter \
-	MipsAsmParser \
-	PowerPCTargetInfo \
+	MipsTargetInfo \
+	PowerPCDisassembler \
+	PowerPCAsmParser \
 	PowerPCMCTargetDesc \
 	PowerPCAsmPrinter \
-	SparcTargetInfo \
+	PowerPCTargetInfo \
+	SparcDisassembler \
+	SparcAsmParser \
 	SparcMCTargetDesc \
+	SparcAsmPrinter \
+	SparcTargetInfo \
 	X86Disassembler \
-	X86MCTargetDesc \
-	X86TargetInfo \
 	X86AsmParser \
+	X86MCTargetDesc \
 	X86AsmPrinter \
+	X86TargetInfo \
 	X86Utils \
+	MCDisassembler \
 	DebugInfo \
+	Object \
+	BitReader \
 	MCParser \
+	MCAnalysis \
 	MC \
 	IR \
 	Support
+
+LDADD+=	-lz
+DPADD+=	${LIBZ}
 
 .include "${.PARSEDIR}/../../link.mk"
 

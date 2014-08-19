@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_gpsvme.c,v 1.1.1.2 2012/01/31 21:26:02 kardel Exp $	*/
+/*	$NetBSD: refclock_gpsvme.c,v 1.1.1.2.6.1 2014/08/19 23:51:42 tls Exp $	*/
 
 /* refclock_psc.c:  clock driver for Brandywine PCI-SyncClock32/HP-UX 11.X */
 
@@ -124,10 +124,10 @@ psc_start(
     /* initialize peer variables	*/
     pp = peer->procptr;
     pp->io.clock_recv = noentry;
-    pp->io.srcclock = (caddr_t) peer;
+    pp->io.srcclock = peer;
     pp->io.datalen = 0;
     pp->io.fd = -1;
-    pp->unitptr = (caddr_t) up;
+    pp->unitptr = up;
     get_systime(&pp->lastrec);
     memcpy(&pp->refid, REFID, 4);
     peer->precision = PRECISION;
@@ -175,7 +175,7 @@ psc_poll(
 	if (!up->msg_flag[unit]) {	/* write once to system log	*/
 	    msyslog(LOG_WARNING,
 		"SYNCHRONIZATION LOST on unit %1d, status %02x\n",
-		status, unit);
+		unit, status);
 	    up->msg_flag[unit] = 1;
 	}
 	return;

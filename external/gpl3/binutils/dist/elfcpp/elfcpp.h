@@ -1,6 +1,7 @@
 // elfcpp.h -- main header file for elfcpp    -*- C++ -*-
 
-// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010, 2011, 2012
+// Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of elfcpp.
@@ -129,10 +130,9 @@ enum ELFOSABI
   ELFOSABI_NONE = 0,
   ELFOSABI_HPUX = 1,
   ELFOSABI_NETBSD = 2,
-  // ELFOSABI_LINUX is not listed in the ELF standard.
+  ELFOSABI_GNU = 3,
+  // ELFOSABI_LINUX is an alias for ELFOSABI_GNU.
   ELFOSABI_LINUX = 3,
-  // ELFOSABI_HURD is not listed in the ELF standard.
-  ELFOSABI_HURD = 4,
   ELFOSABI_SOLARIS = 6,
   ELFOSABI_AIX = 7,
   ELFOSABI_IRIX = 8,
@@ -400,6 +400,10 @@ enum SHT
   // x86_64 unwind information.
   SHT_X86_64_UNWIND = 0x70000001,
 
+  //MIPS-specific section types.
+  // Register info section
+  SHT_MIPS_REGINFO = 0x70000006,
+
   // Link editor is to sort the entries in this section based on the
   // address specified in the associated symbol table entry.
   SHT_ORDERED = 0x7fffffff
@@ -433,6 +437,9 @@ enum SHF
   // executable or shared object.  This flag is ignored if SHF_ALLOC
   // is also set, or if relocations exist against the section.
   SHF_EXCLUDE = 0x80000000,
+
+  // Section with data that is GP relative addressable.
+  SHF_MIPS_GPREL = 0x10000000,
 
   // x86_64 specific large section.
   SHF_X86_64_LARGE = 0x10000000
@@ -475,7 +482,13 @@ enum PT
   // Platform architecture compatibility information
   PT_ARM_ARCHEXT = 0x70000000,
   // Exception unwind tables
-  PT_ARM_EXIDX = 0x70000001
+  PT_ARM_EXIDX = 0x70000001,
+  // Register usage information.  Identifies one .reginfo section.
+  PT_MIPS_REGINFO =0x70000000,
+  // Runtime procedure table.
+  PT_MIPS_RTPROC = 0x70000001,
+  // .MIPS.options section.
+  PT_MIPS_OPTIONS = 0x70000002
 };
 
 // The valid bit flags found in the Phdr p_flags field.
@@ -514,8 +527,12 @@ enum STT
   STT_FILE = 4,
   STT_COMMON = 5,
   STT_TLS = 6,
-  STT_LOOS = 10,
+
+  // GNU extension: symbol value points to a function which is called
+  // at runtime to determine the final value of the symbol.
   STT_GNU_IFUNC = 10,
+
+  STT_LOOS = 10,
   STT_HIOS = 12,
   STT_LOPROC = 13,
   STT_HIPROC = 15,
@@ -733,6 +750,98 @@ enum DT
   // symbol table.  One dynamic entry exists for every STT_SPARC_REGISTER
   // symbol in the symbol table.
   DT_SPARC_REGISTER = 0x70000001,
+
+  // MIPS specific dynamic array tags.
+  // 32 bit version number for runtime linker interface.
+  DT_MIPS_RLD_VERSION = 0x70000001,
+  // Time stamp.
+  DT_MIPS_TIME_STAMP = 0x70000002,
+  // Checksum of external strings and common sizes.
+  DT_MIPS_ICHECKSUM = 0x70000003,
+  // Index of version string in string table.
+  DT_MIPS_IVERSION = 0x70000004,
+  // 32 bits of flags.
+  DT_MIPS_FLAGS = 0x70000005,
+  // Base address of the segment.
+  DT_MIPS_BASE_ADDRESS = 0x70000006,
+  // ???
+  DT_MIPS_MSYM = 0x70000007,
+  // Address of .conflict section.
+  DT_MIPS_CONFLICT = 0x70000008,
+  // Address of .liblist section.
+  DT_MIPS_LIBLIST = 0x70000009,
+  // Number of local global offset table entries.
+  DT_MIPS_LOCAL_GOTNO = 0x7000000a,
+  // Number of entries in the .conflict section.
+  DT_MIPS_CONFLICTNO = 0x7000000b,
+  // Number of entries in the .liblist section.
+  DT_MIPS_LIBLISTNO = 0x70000010,
+  // Number of entries in the .dynsym section.
+  DT_MIPS_SYMTABNO = 0x70000011,
+  // Index of first external dynamic symbol not referenced locally.
+  DT_MIPS_UNREFEXTNO = 0x70000012,
+  // Index of first dynamic symbol in global offset table.
+  DT_MIPS_GOTSYM = 0x70000013,
+  // Number of page table entries in global offset table.
+  DT_MIPS_HIPAGENO = 0x70000014,
+  // Address of run time loader map, used for debugging.
+  DT_MIPS_RLD_MAP = 0x70000016,
+  // Delta C++ class definition.
+  DT_MIPS_DELTA_CLASS = 0x70000017,
+  // Number of entries in DT_MIPS_DELTA_CLASS.
+  DT_MIPS_DELTA_CLASS_NO = 0x70000018,
+  // Delta C++ class instances.
+  DT_MIPS_DELTA_INSTANCE = 0x70000019,
+  // Number of entries in DT_MIPS_DELTA_INSTANCE.
+  DT_MIPS_DELTA_INSTANCE_NO = 0x7000001a,
+  // Delta relocations.
+  DT_MIPS_DELTA_RELOC = 0x7000001b,
+  // Number of entries in DT_MIPS_DELTA_RELOC.
+  DT_MIPS_DELTA_RELOC_NO = 0x7000001c,
+  // Delta symbols that Delta relocations refer to.
+  DT_MIPS_DELTA_SYM = 0x7000001d,
+  // Number of entries in DT_MIPS_DELTA_SYM.
+  DT_MIPS_DELTA_SYM_NO = 0x7000001e,
+  // Delta symbols that hold class declarations.
+  DT_MIPS_DELTA_CLASSSYM = 0x70000020,
+  // Number of entries in DT_MIPS_DELTA_CLASSSYM.
+  DT_MIPS_DELTA_CLASSSYM_NO = 0x70000021,
+  // Flags indicating information about C++ flavor.
+  DT_MIPS_CXX_FLAGS = 0x70000022,
+  // Pixie information (???).
+  DT_MIPS_PIXIE_INIT = 0x70000023,
+  // Address of .MIPS.symlib
+  DT_MIPS_SYMBOL_LIB = 0x70000024,
+  // The GOT index of the first PTE for a segment
+  DT_MIPS_LOCALPAGE_GOTIDX = 0x70000025,
+  // The GOT index of the first PTE for a local symbol
+  DT_MIPS_LOCAL_GOTIDX = 0x70000026,
+  // The GOT index of the first PTE for a hidden symbol
+  DT_MIPS_HIDDEN_GOTIDX = 0x70000027,
+  // The GOT index of the first PTE for a protected symbol
+  DT_MIPS_PROTECTED_GOTIDX = 0x70000028,
+  // Address of `.MIPS.options'.
+  DT_MIPS_OPTIONS = 0x70000029,
+  // Address of `.interface'.
+  DT_MIPS_INTERFACE = 0x7000002a,
+  // ???
+  DT_MIPS_DYNSTR_ALIGN = 0x7000002b,
+  // Size of the .interface section.
+  DT_MIPS_INTERFACE_SIZE = 0x7000002c,
+  // Size of rld_text_resolve function stored in the GOT.
+  DT_MIPS_RLD_TEXT_RESOLVE_ADDR = 0x7000002d,
+  // Default suffix of DSO to be added by rld on dlopen() calls.
+  DT_MIPS_PERF_SUFFIX = 0x7000002e,
+  // Size of compact relocation section (O32).
+  DT_MIPS_COMPACT_SIZE = 0x7000002f,
+  // GP value for auxiliary GOTs.
+  DT_MIPS_GP_VALUE = 0x70000030,
+  // Address of auxiliary .dynamic.
+  DT_MIPS_AUX_DYNAMIC = 0x70000031,
+  // Address of the base of the PLTGOT.
+  DT_MIPS_PLTGOT = 0x70000032,
+  // Points to the base of a writable PLT.
+  DT_MIPS_RWPLT = 0x70000034,
 
   DT_AUXILIARY = 0x7ffffffd,
   DT_USED = 0x7ffffffe,

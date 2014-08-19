@@ -4,6 +4,7 @@ LIBRARY libisccfg
 EXPORTS
 
 cfg_acl_fromconfig
+cfg_acl_fromconfig2
 cfg_aclconfctx_attach
 cfg_aclconfctx_create
 cfg_aclconfctx_detach
@@ -11,6 +12,7 @@ cfg_list_first
 cfg_list_next
 cfg_listelt_value
 cfg_log_init
+cfg_map_count
 cfg_map_get
 cfg_map_getname
 cfg_obj_asboolean
@@ -22,6 +24,7 @@ cfg_obj_asuint64
 cfg_obj_attach
 cfg_obj_destroy
 cfg_obj_file
+cfg_obj_getdscp
 cfg_obj_isboolean
 cfg_obj_islist
 cfg_obj_ismap
@@ -42,6 +45,7 @@ cfg_parser_create
 cfg_parser_destroy
 cfg_parser_setcallback
 cfg_print
+cfg_printx
 cfg_tuple_get
 
 ; Exported Data

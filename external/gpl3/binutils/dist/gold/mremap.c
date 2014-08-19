@@ -1,6 +1,6 @@
 /* mremap.c -- version of mremap for gold.  */
 
-/* Copyright 2009 Free Software Foundation, Inc.
+/* Copyright 2009, 2011 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <iant@google.com>.
 
    This file is part of gold.
@@ -23,9 +23,17 @@
 #include "config.h"
 #include "ansidecl.h"
 
+#include <errno.h>
 #include <string.h>
 #include <sys/types.h>
+
+#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
+#endif
+
+extern void *gold_mremap (void *, size_t, size_t, int);
+
+#ifdef HAVE_MMAP
 
 /* This file implements mremap for systems which don't have it.  The
    gold code requires support for mmap.  However, there are systems
@@ -40,11 +48,9 @@
 # define MAP_ANONYMOUS MAP_ANON
 #endif
 
-extern void *mremap (void *, size_t, size_t, int, ...);
-
 void *
-mremap (void *old_address, size_t old_size, size_t new_size,
-	int flags ATTRIBUTE_UNUSED, ...)
+gold_mremap (void *old_address, size_t old_size, size_t new_size,
+	     int flags ATTRIBUTE_UNUSED)
 {
   void *ret;
 
@@ -57,3 +63,25 @@ mremap (void *old_address, size_t old_size, size_t new_size,
   (void) munmap (old_address, old_size);
   return ret;
 }
+
+#else /* !defined(HAVE_MMAP) */
+
+#ifndef MAP_FAILED
+#define MAP_FAILED ((void *) -1)
+#endif
+
+#ifndef ENOSYS
+#define ENOSYS EINVAL
+#endif
+
+void *
+gold_mremap (void *old_address ATTRIBUTE_UNUSED,
+	     size_t old_size ATTRIBUTE_UNUSED,
+	     size_t new_size ATTRIBUTE_UNUSED,
+	     int flags ATTRIBUTE_UNUSED)
+{
+  errno = ENOSYS;
+  return MAP_FAILED;
+}
+
+#endif /* !defined(HAVE_MMAP) */

@@ -1,6 +1,6 @@
 // dynobj.cc -- dynamic object support for gold
 
-// Copyright 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+// Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
 // Written by Ian Lance Taylor <iant@google.com>.
 
 // This file is part of gold.
@@ -49,16 +49,23 @@ Dynobj::Dynobj(const std::string& name, Input_file* input_file, off_t offset)
   // object's filename.  The only exception is when the dynamic object
   // is part of an archive (so the filename is the archive's
   // filename).  In that case, we use just the dynobj's name-in-archive.
-  this->soname_ = this->input_file()->found_name();
-  if (this->offset() != 0)
+  if (input_file == NULL)
+    this->soname_ = name;
+  else
     {
-      std::string::size_type open_paren = this->name().find('(');
-      std::string::size_type close_paren = this->name().find(')');
-      if (open_paren != std::string::npos && close_paren != std::string::npos)
+      this->soname_ = input_file->found_name();
+      if (this->offset() != 0)
 	{
-	  // It's an archive, and name() is of the form 'foo.a(bar.so)'.
-	  this->soname_ = this->name().substr(open_paren + 1,
-					      close_paren - (open_paren + 1));
+	  std::string::size_type open_paren = this->name().find('(');
+	  std::string::size_type close_paren = this->name().find(')');
+	  if (open_paren != std::string::npos
+	      && close_paren != std::string::npos)
+	    {
+	      // It's an archive, and name() is of the form 'foo.a(bar.so)'.
+	      open_paren += 1;
+	      this->soname_ = this->name().substr(open_paren,
+						  close_paren - open_paren);
+	    }
 	}
     }
 }
@@ -705,10 +712,11 @@ Sized_dynobj<size, big_endian>::do_add_symbols(Symbol_table* symtab,
   Version_map version_map;
   this->make_version_map(sd, &version_map);
 
-  // If printing symbol counts or a cross reference table, we want to
-  // track symbols.
+  // If printing symbol counts or a cross reference table or
+  // preparing for an incremental link, we want to track symbols.
   if (parameters->options().user_set_print_symbol_counts()
-      || parameters->options().cref())
+      || parameters->options().cref()
+      || parameters->incremental())
     {
       this->symbols_ = new Symbols();
       this->symbols_->resize(symcount);
@@ -761,6 +769,42 @@ Sized_dynobj<size, big_endian>::do_should_include_member(Symbol_table*,
   return Archive::SHOULD_INCLUDE_YES;
 }
 
+// Iterate over global symbols, calling a visitor class V for each.
+
+template<int size, bool big_endian>
+void
+Sized_dynobj<size, big_endian>::do_for_all_global_symbols(
+    Read_symbols_data* sd,
+    Library_base::Symbol_visitor_base* v)
+{
+  const char* sym_names =
+      reinterpret_cast<const char*>(sd->symbol_names->data());
+  const unsigned char* syms =
+      sd->symbols->data() + sd->external_symbols_offset;
+  const int sym_size = elfcpp::Elf_sizes<size>::sym_size;
+  size_t symcount = ((sd->symbols_size - sd->external_symbols_offset)
+                     / sym_size);
+  const unsigned char* p = syms;
+
+  for (size_t i = 0; i < symcount; ++i, p += sym_size)
+    {
+      elfcpp::Sym<size, big_endian> sym(p);
+      if (sym.get_st_shndx() != elfcpp::SHN_UNDEF
+	  && sym.get_st_bind() != elfcpp::STB_LOCAL)
+	v->visit(sym_names + sym.get_st_name());
+    }
+}
+
+// Iterate over local symbols, calling a visitor class V for each GOT offset
+// associated with a local symbol.
+
+template<int size, bool big_endian>
+void
+Sized_dynobj<size, big_endian>::do_for_all_local_got_entries(
+    Got_offset_list::Visitor*) const
+{
+}
+
 // Get symbol counts.
 
 template<int size, bool big_endian>
@@ -779,7 +823,7 @@ Sized_dynobj<size, big_endian>::do_get_global_symbol_counts(
 	&& (*p)->source() == Symbol::FROM_OBJECT
 	&& (*p)->object() == this
 	&& (*p)->is_defined()
-	&& (*p)->dynsym_index() != -1U)
+	&& (*p)->has_dynsym_index())
       ++count;
   *used = count;
 }
@@ -1439,7 +1483,7 @@ Versions::record_version(const Symbol_table* symtab,
   if (!sym->is_from_dynobj() && !sym->is_copied_from_dynobj())
     {
       if (parameters->options().shared())
-        this->add_def(sym, version, version_key);
+        this->add_def(dynpool, sym, version, version_key);
     }
   else
     {
@@ -1452,7 +1496,7 @@ Versions::record_version(const Symbol_table* symtab,
 // We've found a symbol SYM defined in version VERSION.
 
 void
-Versions::add_def(const Symbol* sym, const char* version,
+Versions::add_def(Stringpool* dynpool, const Symbol* sym, const char* version,
 		  Stringpool::Key version_key)
 {
   Key k(version_key, 0);
@@ -1476,8 +1520,12 @@ Versions::add_def(const Symbol* sym, const char* version,
       // find a definition of a symbol with a version which is not
       // in the version script.
       if (parameters->options().shared())
-	gold_error(_("symbol %s has undefined version %s"),
-		   sym->demangled_name().c_str(), version);
+	{
+	  gold_error(_("symbol %s has undefined version %s"),
+		     sym->demangled_name().c_str(), version);
+	  if (this->needs_base_version_)
+	    this->define_base_version(dynpool);
+	}
       else
 	// We only insert a base version for shared library.
 	gold_assert(!this->needs_base_version_);

@@ -1,5 +1,5 @@
-/*	Id: macdefs.h,v 1.83 2011/06/23 13:41:25 ragge Exp 	*/	
-/*	$NetBSD: macdefs.h,v 1.1.1.4 2011/09/01 12:46:36 plunky Exp $	*/
+/*	Id: macdefs.h,v 1.89 2014/06/01 11:35:02 ragge Exp 	*/	
+/*	$NetBSD: macdefs.h,v 1.1.1.4.8.1 2014/08/19 23:52:08 tls Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -100,7 +100,7 @@
 /* Default char is signed */
 #undef	CHAR_UNSIGNED
 #define	BOOL_TYPE	UCHAR	/* what used to store _Bool */
-
+#undef UNALIGNED_ACCESS
 /*
  * Use large-enough types.
  */
@@ -144,7 +144,6 @@ typedef long long OFFSZ;
 
 #define BYTEOFF(x)	((x)&03)
 #define wdal(k)		(BYTEOFF(k)==0)
-#define BITOOR(x)	(x)	/* bit offset to oreg offset XXX die! */
 
 #define STOARG(p)
 #define STOFARG(p)
@@ -335,6 +334,9 @@ int COLORMAP(int c, int *r);
 #define TARGET_IPP_MEMBERS			\
 	int ipp_argstacksize;
 
+#define	HAVE_WEAKREF
+#define	TARGET_FLT_EVAL_METHOD	2	/* all as long double */
+
 /*
  * Extended assembler macros.
  */
@@ -348,19 +350,6 @@ int xasmconstregs(char *);
 #define	XASMCONSTREGS(x) xasmconstregs(x)
 #define	MYSETXARG if (XASMVAL(cw) == 'q') {	\
 	c = 'r'; addalledges(&ablock[ESI]); addalledges(&ablock[EDI]); }
-
-/*
- * builtins.
- */
-#define TARGET_BUILTINS							\
-	{ "__builtin_frame_address", i386_builtin_frame_address, -1 },	\
-	{ "__builtin_return_address", i386_builtin_return_address, -1 },
-
-#define NODE struct node
-struct node;
-NODE *i386_builtin_frame_address(NODE *f, NODE *a, unsigned int);
-NODE *i386_builtin_return_address(NODE *f, NODE *a, unsigned int);
-#undef NODE
 
 #if defined(MACHOABI)
 struct stub {

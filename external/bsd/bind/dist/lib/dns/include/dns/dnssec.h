@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec.h,v 1.4.2.1 2013/02/25 00:25:45 tls Exp $	*/
+/*	$NetBSD: dnssec.h,v 1.4.2.2 2014/08/19 23:46:29 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -176,6 +176,7 @@ dns_dnssec_findzonekeys(dns_db_t *db, dns_dbversion_t *ver, dns_dbnode_t *node,
 			dns_name_t *name, isc_mem_t *mctx,
 			unsigned int maxkeys, dst_key_t **keys,
 			unsigned int *nkeys);
+
 isc_result_t
 dns_dnssec_findzonekeys2(dns_db_t *db, dns_dbversion_t *ver,
 			 dns_dbnode_t *node, dns_name_t *name,
@@ -187,6 +188,20 @@ dns_dnssec_findzonekeys2(dns_db_t *db, dns_dbversion_t *ver,
  * 	XXX temporary - this should be handled in dns_zone_t.
  */
 /*@}*/
+
+isc_boolean_t
+dns_dnssec_keyactive(dst_key_t *key, isc_stdtime_t now);
+/*%<
+ *
+ * 	Returns ISC_TRUE if 'key' is active as of the time specified
+ * 	in 'now' (i.e., if the activation date has passed, inactivation or
+ * 	deletion date has not yet been reached, and the key is not revoked
+ * 	-- or if it is a legacy key without metadata). Otherwise returns
+ * 	ISC_FALSE.
+ *
+ *	Requires:
+ *\li		'key' is a valid key
+ */
 
 isc_result_t
 dns_dnssec_signmessage(dns_message_t *msg, dst_key_t *key);

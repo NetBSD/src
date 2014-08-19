@@ -1,5 +1,5 @@
-/*	Id: ccconfig.h,v 1.4 2011/06/04 19:27:26 plunky Exp 	*/	
-/*	$NetBSD: ccconfig.h,v 1.1.1.4 2011/09/01 12:47:18 plunky Exp $	*/
+/*	Id: ccconfig.h,v 1.5 2012/08/05 14:35:00 ragge Exp 	*/	
+/*	$NetBSD: ccconfig.h,v 1.1.1.4.8.1 2014/08/19 23:52:10 tls Exp $	*/
 
 /*
  * Copyright (c) 2008 Adam Hoka.
@@ -42,14 +42,10 @@
 /* TODO: _ _SunOS_5_6, _ _SunOS_5_7, _ _SunOS_5_8, _ _SunOS_5_9, _ _SunOS_5_10 */
 
 /* host-dependent */
-#define CRT0FILE LIBDIR "crt1.o"
-#define CRT0FILE_PROFILE LIBDIR "gcrt1.o"
-#define STARTFILES { LIBDIR "crti.o", NULL }
-#define	ENDFILES { LIBDIR "crtn.o", NULL }
-/* shared libraries linker files */
-#define STARTFILES_S { LIBDIR "crti.o", NULL }
-#define	ENDFILES_S { LIBDIR "crtn.o", NULL }
-#define LIBCLIBS { "-lc", "-lpcc", NULL }
+#define CRT0		"crt1.o"
+#define GCRT0		"gcrt1.o"
+#define CRTBEGIN	0
+#define CRTEND		0
 
 #ifdef LANG_F77
 #define F77LIBLIST { "-L/usr/local/lib", "-lF77", "-lI77", "-lm", "-lc", NULL };

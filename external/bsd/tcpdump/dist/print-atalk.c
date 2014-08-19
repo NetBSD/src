@@ -27,7 +27,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-atalk.c,v 1.81 2004-05-01 09:41:50 hannes Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-atalk.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-atalk.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: print-atalk.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
 #include "extract.h"			/* must come after interface.h */
 #include "appletalk.h"
 
-static struct tok type2str[] = {
+static const struct tok type2str[] = {
 	{ ddpRTMP,		"rtmp" },
 	{ ddpRTMPrequest,	"rtmpReq" },
 	{ ddpECHO,		"echo" },
@@ -545,7 +545,7 @@ ataddr_string(u_short atnet, u_char athost)
 {
 	register struct hnamemem *tp, *tp2;
 	register int i = (atnet << 8) | athost;
-	char nambuf[MAXHOSTNAMELEN + 20];
+	char nambuf[256+1];
 	static int first = 1;
 	FILE *fp;
 
@@ -607,7 +607,7 @@ ataddr_string(u_short atnet, u_char athost)
 	return (tp->name);
 }
 
-static struct tok skt2str[] = {
+static const struct tok skt2str[] = {
 	{ rtmpSkt,	"rtmp" },	/* routing table maintenance */
 	{ nbpSkt,	"nis" },	/* name info socket */
 	{ echoSkt,	"echo" },	/* AppleTalk echo protocol */

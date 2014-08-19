@@ -15,7 +15,7 @@ Disassembly of section .text:
 
 0+ <Main>:
    0:	f2010000 	pushj \$1,0 <Main>
-			0: R_MMIX_PUSHJ	\*ABS\*\+0xffff0000ffff0000
+			0: R_MMIX_PUSHJ	\*ABS\*-0xffff00010000
    4:	fd000000 	swym 0,0,0
    8:	fd000000 	swym 0,0,0
    c:	fd000000 	swym 0,0,0

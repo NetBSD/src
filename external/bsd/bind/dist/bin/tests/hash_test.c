@@ -1,7 +1,7 @@
-/*	$NetBSD: hash_test.c,v 1.3.2.1 2013/06/23 06:26:24 tls Exp $	*/
+/*	$NetBSD: hash_test.c,v 1.3.2.2 2014/08/19 23:46:01 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -66,41 +66,37 @@ main(int argc, char **argv) {
 	UNUSED(argc);
 	UNUSED(argv);
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	s = "abc";
 	isc_sha1_init(&sha1);
-	memcpy(buffer, s, strlen(s));
+	memmove(buffer, s, strlen(s));
 	isc_sha1_update(&sha1, buffer, strlen(s));
 	isc_sha1_final(&sha1, digest);
 	print_digest(s, "sha1", digest, ISC_SHA1_DIGESTLENGTH/4);
 
 	s = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq";
 	isc_sha1_init(&sha1);
-	memcpy(buffer, s, strlen(s));
+	memmove(buffer, s, strlen(s));
 	isc_sha1_update(&sha1, buffer, strlen(s));
 	isc_sha1_final(&sha1, digest);
 	print_digest(s, "sha1", digest, ISC_SHA1_DIGESTLENGTH/4);
 
 	s = "abc";
 	isc_sha224_init(&sha224);
-	memcpy(buffer, s, strlen(s));
+	memmove(buffer, s, strlen(s));
 	isc_sha224_update(&sha224, buffer, strlen(s));
 	isc_sha224_final(digest, &sha224);
 	print_digest(s, "sha224", digest, ISC_SHA224_DIGESTLENGTH/4);
 
 	s = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq";
 	isc_sha224_init(&sha224);
-	memcpy(buffer, s, strlen(s));
+	memmove(buffer, s, strlen(s));
 	isc_sha224_update(&sha224, buffer, strlen(s));
 	isc_sha224_final(digest, &sha224);
 	print_digest(s, "sha224", digest, ISC_SHA224_DIGESTLENGTH/4);
 
 	s = "abc";
 	isc_md5_init(&md5);
-	memcpy(buffer, s, strlen(s));
+	memmove(buffer, s, strlen(s));
 	isc_md5_update(&md5, buffer, strlen(s));
 	isc_md5_final(&md5, digest);
 	print_digest(s, "md5", digest, 4);
@@ -111,7 +107,7 @@ main(int argc, char **argv) {
 	s = "Hi There";
 	memset(key, 0x0b, 16);
 	isc_hmacmd5_init(&hmacmd5, key, 16);
-	memcpy(buffer, s, strlen(s));
+	memmove(buffer, s, strlen(s));
 	isc_hmacmd5_update(&hmacmd5, buffer, strlen(s));
 	isc_hmacmd5_sign(&hmacmd5, digest);
 	print_digest(s, "hmacmd5", digest, 4);
@@ -119,7 +115,7 @@ main(int argc, char **argv) {
 	s = "what do ya want for nothing?";
 	strcpy((char *)key, "Jefe");
 	isc_hmacmd5_init(&hmacmd5, key, 4);
-	memcpy(buffer, s, strlen(s));
+	memmove(buffer, s, strlen(s));
 	isc_hmacmd5_update(&hmacmd5, buffer, strlen(s));
 	isc_hmacmd5_sign(&hmacmd5, digest);
 	print_digest(s, "hmacmd5", digest, 4);
@@ -131,7 +127,7 @@ main(int argc, char **argv) {
 	    "\335\335\335\335\335\335\335\335\335\335";
 	memset(key, 0xaa, 16);
 	isc_hmacmd5_init(&hmacmd5, key, 16);
-	memcpy(buffer, s, strlen(s));
+	memmove(buffer, s, strlen(s));
 	isc_hmacmd5_update(&hmacmd5, buffer, strlen(s));
 	isc_hmacmd5_sign(&hmacmd5, digest);
 	print_digest(s, "hmacmd5", digest, 4);
@@ -142,7 +138,7 @@ main(int argc, char **argv) {
 	s = "Hi There";
 	memset(key, 0x0b, 20);
 	isc_hmacsha1_init(&hmacsha1, key, 20);
-	memcpy(buffer, s, strlen(s));
+	memmove(buffer, s, strlen(s));
 	isc_hmacsha1_update(&hmacsha1, buffer, strlen(s));
 	isc_hmacsha1_sign(&hmacsha1, digest, ISC_SHA1_DIGESTLENGTH);
 	print_digest(s, "hmacsha1", digest, ISC_SHA1_DIGESTLENGTH/4);
@@ -150,7 +146,7 @@ main(int argc, char **argv) {
 	s = "what do ya want for nothing?";
 	strcpy((char *)key, "Jefe");
 	isc_hmacsha1_init(&hmacsha1, key, 4);
-	memcpy(buffer, s, strlen(s));
+	memmove(buffer, s, strlen(s));
 	isc_hmacsha1_update(&hmacsha1, buffer, strlen(s));
 	isc_hmacsha1_sign(&hmacsha1, digest, ISC_SHA1_DIGESTLENGTH);
 	print_digest(s, "hmacsha1", digest, ISC_SHA1_DIGESTLENGTH/4);
@@ -162,7 +158,7 @@ main(int argc, char **argv) {
 	    "\335\335\335\335\335\335\335\335\335\335";
 	memset(key, 0xaa, 20);
 	isc_hmacsha1_init(&hmacsha1, key, 20);
-	memcpy(buffer, s, strlen(s));
+	memmove(buffer, s, strlen(s));
 	isc_hmacsha1_update(&hmacsha1, buffer, strlen(s));
 	isc_hmacsha1_sign(&hmacsha1, digest, ISC_SHA1_DIGESTLENGTH);
 	print_digest(s, "hmacsha1", digest, ISC_SHA1_DIGESTLENGTH/4);
@@ -173,7 +169,7 @@ main(int argc, char **argv) {
 	s = "Hi There";
 	memset(key, 0x0b, 20);
 	isc_hmacsha224_init(&hmacsha224, key, 20);
-	memcpy(buffer, s, strlen(s));
+	memmove(buffer, s, strlen(s));
 	isc_hmacsha224_update(&hmacsha224, buffer, strlen(s));
 	isc_hmacsha224_sign(&hmacsha224, digest, ISC_SHA224_DIGESTLENGTH);
 	print_digest(s, "hmacsha224", digest, ISC_SHA224_DIGESTLENGTH/4);
@@ -181,7 +177,7 @@ main(int argc, char **argv) {
 	s = "what do ya want for nothing?";
 	strcpy((char *)key, "Jefe");
 	isc_hmacsha224_init(&hmacsha224, key, 4);
-	memcpy(buffer, s, strlen(s));
+	memmove(buffer, s, strlen(s));
 	isc_hmacsha224_update(&hmacsha224, buffer, strlen(s));
 	isc_hmacsha224_sign(&hmacsha224, digest, ISC_SHA224_DIGESTLENGTH);
 	print_digest(s, "hmacsha224", digest, ISC_SHA224_DIGESTLENGTH/4);
@@ -193,7 +189,7 @@ main(int argc, char **argv) {
 	    "\335\335\335\335\335\335\335\335\335\335";
 	memset(key, 0xaa, 20);
 	isc_hmacsha224_init(&hmacsha224, key, 20);
-	memcpy(buffer, s, strlen(s));
+	memmove(buffer, s, strlen(s));
 	isc_hmacsha224_update(&hmacsha224, buffer, strlen(s));
 	isc_hmacsha224_sign(&hmacsha224, digest, ISC_SHA224_DIGESTLENGTH);
 	print_digest(s, "hmacsha224", digest, ISC_SHA224_DIGESTLENGTH/4);
@@ -204,7 +200,7 @@ main(int argc, char **argv) {
 	s = "Hi There";
 	memset(key, 0x0b, 20);
 	isc_hmacsha256_init(&hmacsha256, key, 20);
-	memcpy(buffer, s, strlen(s));
+	memmove(buffer, s, strlen(s));
 	isc_hmacsha256_update(&hmacsha256, buffer, strlen(s));
 	isc_hmacsha256_sign(&hmacsha256, digest, ISC_SHA256_DIGESTLENGTH);
 	print_digest(s, "hmacsha256", digest, ISC_SHA256_DIGESTLENGTH/4);
@@ -212,7 +208,7 @@ main(int argc, char **argv) {
 	s = "what do ya want for nothing?";
 	strcpy((char *)key, "Jefe");
 	isc_hmacsha256_init(&hmacsha256, key, 4);
-	memcpy(buffer, s, strlen(s));
+	memmove(buffer, s, strlen(s));
 	isc_hmacsha256_update(&hmacsha256, buffer, strlen(s));
 	isc_hmacsha256_sign(&hmacsha256, digest, ISC_SHA256_DIGESTLENGTH);
 	print_digest(s, "hmacsha256", digest, ISC_SHA256_DIGESTLENGTH/4);
@@ -224,7 +220,7 @@ main(int argc, char **argv) {
 	    "\335\335\335\335\335\335\335\335\335\335";
 	memset(key, 0xaa, 20);
 	isc_hmacsha256_init(&hmacsha256, key, 20);
-	memcpy(buffer, s, strlen(s));
+	memmove(buffer, s, strlen(s));
 	isc_hmacsha256_update(&hmacsha256, buffer, strlen(s));
 	isc_hmacsha256_sign(&hmacsha256, digest, ISC_SHA256_DIGESTLENGTH);
 	print_digest(s, "hmacsha256", digest, ISC_SHA256_DIGESTLENGTH/4);
@@ -235,7 +231,7 @@ main(int argc, char **argv) {
 	s = "Hi There";
 	memset(key, 0x0b, 20);
 	isc_hmacsha384_init(&hmacsha384, key, 20);
-	memcpy(buffer, s, strlen(s));
+	memmove(buffer, s, strlen(s));
 	isc_hmacsha384_update(&hmacsha384, buffer, strlen(s));
 	isc_hmacsha384_sign(&hmacsha384, digest, ISC_SHA384_DIGESTLENGTH);
 	print_digest(s, "hmacsha384", digest, ISC_SHA384_DIGESTLENGTH/4);
@@ -243,7 +239,7 @@ main(int argc, char **argv) {
 	s = "what do ya want for nothing?";
 	strcpy((char *)key, "Jefe");
 	isc_hmacsha384_init(&hmacsha384, key, 4);
-	memcpy(buffer, s, strlen(s));
+	memmove(buffer, s, strlen(s));
 	isc_hmacsha384_update(&hmacsha384, buffer, strlen(s));
 	isc_hmacsha384_sign(&hmacsha384, digest, ISC_SHA384_DIGESTLENGTH);
 	print_digest(s, "hmacsha384", digest, ISC_SHA384_DIGESTLENGTH/4);
@@ -255,7 +251,7 @@ main(int argc, char **argv) {
 	    "\335\335\335\335\335\335\335\335\335\335";
 	memset(key, 0xaa, 20);
 	isc_hmacsha384_init(&hmacsha384, key, 20);
-	memcpy(buffer, s, strlen(s));
+	memmove(buffer, s, strlen(s));
 	isc_hmacsha384_update(&hmacsha384, buffer, strlen(s));
 	isc_hmacsha384_sign(&hmacsha384, digest, ISC_SHA384_DIGESTLENGTH);
 	print_digest(s, "hmacsha384", digest, ISC_SHA384_DIGESTLENGTH/4);
@@ -266,7 +262,7 @@ main(int argc, char **argv) {
 	s = "Hi There";
 	memset(key, 0x0b, 20);
 	isc_hmacsha512_init(&hmacsha512, key, 20);
-	memcpy(buffer, s, strlen(s));
+	memmove(buffer, s, strlen(s));
 	isc_hmacsha512_update(&hmacsha512, buffer, strlen(s));
 	isc_hmacsha512_sign(&hmacsha512, digest, ISC_SHA512_DIGESTLENGTH);
 	print_digest(s, "hmacsha512", digest, ISC_SHA512_DIGESTLENGTH/4);
@@ -274,7 +270,7 @@ main(int argc, char **argv) {
 	s = "what do ya want for nothing?";
 	strcpy((char *)key, "Jefe");
 	isc_hmacsha512_init(&hmacsha512, key, 4);
-	memcpy(buffer, s, strlen(s));
+	memmove(buffer, s, strlen(s));
 	isc_hmacsha512_update(&hmacsha512, buffer, strlen(s));
 	isc_hmacsha512_sign(&hmacsha512, digest, ISC_SHA512_DIGESTLENGTH);
 	print_digest(s, "hmacsha512", digest, ISC_SHA512_DIGESTLENGTH/4);
@@ -286,7 +282,7 @@ main(int argc, char **argv) {
 	    "\335\335\335\335\335\335\335\335\335\335";
 	memset(key, 0xaa, 20);
 	isc_hmacsha512_init(&hmacsha512, key, 20);
-	memcpy(buffer, s, strlen(s));
+	memmove(buffer, s, strlen(s));
 	isc_hmacsha512_update(&hmacsha512, buffer, strlen(s));
 	isc_hmacsha512_sign(&hmacsha512, digest, ISC_SHA512_DIGESTLENGTH);
 	print_digest(s, "hmacsha512", digest, ISC_SHA512_DIGESTLENGTH/4);

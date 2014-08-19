@@ -1,4 +1,4 @@
-/* $NetBSD: key.c,v 1.20 2004/04/01 16:10:03 tsarna Exp $ */
+/* $NetBSD: key.c,v 1.20.54.1 2014/08/19 23:45:11 tls Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.4 (Berkeley) 2/20/95";
 #else
-__RCSID("$NetBSD: key.c,v 1.20 2004/04/01 16:10:03 tsarna Exp $");
+__RCSID("$NetBSD: key.c,v 1.20.54.1 2014/08/19 23:45:11 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,7 +146,7 @@ ksearch(char ***argvp, struct info *ip)
 void
 f_all(struct info *ip)
 {
-	print(&ip->t, &ip->win, ip->ldisc, STTY_BSD);
+	print(&ip->t, &ip->win, ip->queue, ip->ldisc, STTY_BSD);
 }
 
 void
@@ -185,7 +185,7 @@ f_dec(struct info *ip)
 void
 f_everything(struct info *ip)
 {
-	print(&ip->t, &ip->win, ip->ldisc, STTY_BSD);
+	print(&ip->t, &ip->win, ip->queue, ip->ldisc, STTY_BSD);
 }
 
 void

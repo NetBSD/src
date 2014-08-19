@@ -1,7 +1,7 @@
-/*	$NetBSD: message.h,v 1.3 2012/06/05 00:41:50 christos Exp $	*/
+/*	$NetBSD: message.h,v 1.3.2.1 2014/08/19 23:46:29 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2010, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -107,6 +107,14 @@
 
 /*%< EDNS0 extended OPT codes */
 #define DNS_OPT_NSID		0x0003		/*%< NSID opt code */
+#define DNS_OPT_CLIENT_SUBNET	0x0008		/*%< client subnet opt code */
+#define DNS_OPT_EXPIRE		0x0009		/*%< EXPIRE opt code */
+
+/*%< Experimental options [65001...65534] as per RFC6891 */
+#define DNS_OPT_SIT		65001		/*%< SIT opt code */
+
+/*%< The number of EDNS options we know about. */
+#define DNS_EDNSOPTIONS	4
 
 #define DNS_MESSAGE_REPLYPRESERVE	(DNS_MESSAGEFLAG_RD|DNS_MESSAGEFLAG_CD)
 #define DNS_MESSAGEEXTFLAG_REPLYPRESERVE (DNS_MESSAGEEXTFLAG_DO)
@@ -140,6 +148,7 @@ typedef int dns_messagetextflag_t;
 #define DNS_MESSAGETEXTFLAG_NOHEADERS	0x0002
 #define DNS_MESSAGETEXTFLAG_ONESOA	0x0004
 #define DNS_MESSAGETEXTFLAG_OMITSOA	0x0008
+#define DNS_MESSAGETEXTFLAG_COMMENTDATA	0x0010
 
 /*
  * Dynamic update names for these sections.
@@ -177,7 +186,7 @@ typedef int dns_messagetextflag_t;
 						      additional section. */
 #define DNS_MESSAGERENDER_PREFER_AAAA	0x0010	/*%< prefer AAAA records in
 						  additional section. */
-#ifdef ALLOW_FILTER_AAAA_ON_V4
+#ifdef ALLOW_FILTER_AAAA
 #define DNS_MESSAGERENDER_FILTER_AAAA	0x0020	/*%< filter AAAA records */
 #endif
 
@@ -212,6 +221,8 @@ struct dns_message {
 	unsigned int			verify_attempted : 1;
 	unsigned int			free_query : 1;
 	unsigned int			free_saved : 1;
+	unsigned int			sitok : 1;
+	unsigned int			sitbad : 1;
 
 	unsigned int			opt_reserved;
 	unsigned int			sig_reserved;
@@ -251,6 +262,12 @@ struct dns_message {
 
 	dns_rdatasetorderfunc_t		order;
 	const void *			order_arg;
+};
+
+struct dns_ednsopt {
+	isc_uint16_t			code;
+	isc_uint16_t			length;
+	unsigned char			*value;
 };
 
 /***
@@ -1350,6 +1367,39 @@ dns_message_gettimeadjust(dns_message_t *msg);
  *
  * Requires:
  *\li	msg be a valid message.
+ */
+
+void
+dns_message_logpacket(dns_message_t *message, const char *description,
+		      isc_logcategory_t *category, isc_logmodule_t *module,
+		      int level, isc_mem_t *mctx);
+void
+dns_message_logfmtpacket(dns_message_t *message, const char *description,
+			 isc_logcategory_t *category, isc_logmodule_t *module,
+			 const dns_master_style_t *style, int level,
+			 isc_mem_t *mctx);
+/*%<
+ * Log 'message' at the specified logging parameters.
+ * 'description' will be emitted at the start of the message and will
+ * normally end with a newline.
+ */
+
+isc_result_t
+dns_message_buildopt(dns_message_t *msg, dns_rdataset_t **opt,
+		     unsigned int version, isc_uint16_t udpsize,
+		     unsigned int flags, dns_ednsopt_t *ednsopts, size_t count);
+/*%<
+ * Built a opt record.
+ *
+ * Requires:
+ * \li   msg be a valid message.
+ * \li   opt to be a non NULL and *opt to be NULL.
+ *
+ * Returns:
+ * \li	 ISC_R_SUCCESS on success.
+ * \li	 ISC_R_NOMEMORY
+ * \li	 ISC_R_NOSPACE
+ * \li	 other.
  */
 
 ISC_LANG_ENDDECLS

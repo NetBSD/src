@@ -118,7 +118,7 @@ read_coff_rsrc (const char *filename, const char *target)
   asection *sec;
   bfd_size_type size;
   bfd_byte *data;
-  struct coff_file_info finfo;
+  struct coff_file_info flaginfo;
 
   if (filename == NULL)
     fatal (_("filename required for COFF input"));
@@ -147,10 +147,10 @@ read_coff_rsrc (const char *filename, const char *target)
 
   get_windres_bfd_content (&wrbfd, data, 0, size);
 
-  finfo.filename = filename;
-  finfo.data = data;
-  finfo.data_end = data + size;
-  finfo.secaddr = (bfd_get_section_vma (abfd, sec)
+  flaginfo.filename = filename;
+  flaginfo.data = data;
+  flaginfo.data_end = data + size;
+  flaginfo.secaddr = (bfd_get_section_vma (abfd, sec)
 		   - pe_data (abfd)->pe_opthdr.ImageBase);
 
   /* Now just read in the top level resource directory.  Note that we
@@ -158,7 +158,7 @@ read_coff_rsrc (const char *filename, const char *target)
      it.  If we ever want to free up the resource information we read,
      this will have to be cleaned up.  */
 
-  ret = read_coff_res_dir (&wrbfd, data, &finfo, (const rc_res_id *) NULL, 0);
+  ret = read_coff_res_dir (&wrbfd, data, &flaginfo, (const rc_res_id *) NULL, 0);
   
   bfd_close (abfd);
 
@@ -168,16 +168,16 @@ read_coff_rsrc (const char *filename, const char *target)
 /* Give an error if we are out of bounds.  */
 
 static void
-overrun (const struct coff_file_info *finfo, const char *msg)
+overrun (const struct coff_file_info *flaginfo, const char *msg)
 {
-  fatal (_("%s: %s: address out of bounds"), finfo->filename, msg);
+  fatal (_("%s: %s: address out of bounds"), flaginfo->filename, msg);
 }
 
 /* Read a resource directory.  */
 
 static rc_res_directory *
 read_coff_res_dir (windres_bfd *wrbfd, const bfd_byte *data,
-		   const struct coff_file_info *finfo,
+		   const struct coff_file_info *flaginfo,
 		   const rc_res_id *type, int level)
 {
   const struct extern_res_directory *erd;
@@ -186,8 +186,8 @@ read_coff_res_dir (windres_bfd *wrbfd, const bfd_byte *data,
   rc_res_entry **pp;
   const struct extern_res_entry *ere;
 
-  if ((size_t) (finfo->data_end - data) < sizeof (struct extern_res_directory))
-    overrun (finfo, _("directory"));
+  if ((size_t) (flaginfo->data_end - data) < sizeof (struct extern_res_directory))
+    overrun (flaginfo, _("directory"));
 
   erd = (const struct extern_res_directory *) data;
 
@@ -214,8 +214,8 @@ read_coff_res_dir (windres_bfd *wrbfd, const bfd_byte *data,
       const bfd_byte *ers;
       int length, j;
 
-      if ((const bfd_byte *) ere >= finfo->data_end)
-	overrun (finfo, _("named directory entry"));
+      if ((const bfd_byte *) ere >= flaginfo->data_end)
+	overrun (flaginfo, _("named directory entry"));
 
       name = windres_get_32 (wrbfd, ere->name, 4);
       rva = windres_get_32 (wrbfd, ere->rva, 4);
@@ -223,10 +223,10 @@ read_coff_res_dir (windres_bfd *wrbfd, const bfd_byte *data,
       /* For some reason the high bit in NAME is set.  */
       name &=~ 0x80000000;
 
-      if (name > (rc_uint_type) (finfo->data_end - finfo->data))
-	overrun (finfo, _("directory entry name"));
+      if (name > (rc_uint_type) (flaginfo->data_end - flaginfo->data))
+	overrun (flaginfo, _("directory entry name"));
 
-      ers = finfo->data + name;
+      ers = flaginfo->data + name;
 
       re = (rc_res_entry *) res_alloc (sizeof *re);
       re->next = NULL;
@@ -243,18 +243,18 @@ read_coff_res_dir (windres_bfd *wrbfd, const bfd_byte *data,
       if ((rva & 0x80000000) != 0)
 	{
 	  rva &=~ 0x80000000;
-	  if (rva >= (rc_uint_type) (finfo->data_end - finfo->data))
-	    overrun (finfo, _("named subdirectory"));
+	  if (rva >= (rc_uint_type) (flaginfo->data_end - flaginfo->data))
+	    overrun (flaginfo, _("named subdirectory"));
 	  re->subdir = 1;
-	  re->u.dir = read_coff_res_dir (wrbfd, finfo->data + rva, finfo, type,
+	  re->u.dir = read_coff_res_dir (wrbfd, flaginfo->data + rva, flaginfo, type,
 					 level + 1);
 	}
       else
 	{
-	  if (rva >= (rc_uint_type) (finfo->data_end - finfo->data))
-	    overrun (finfo, _("named resource"));
+	  if (rva >= (rc_uint_type) (flaginfo->data_end - flaginfo->data))
+	    overrun (flaginfo, _("named resource"));
 	  re->subdir = 0;
-	  re->u.res = read_coff_data_entry (wrbfd, finfo->data + rva, finfo, type);
+	  re->u.res = read_coff_data_entry (wrbfd, flaginfo->data + rva, flaginfo, type);
 	}
 
       *pp = re;
@@ -266,8 +266,8 @@ read_coff_res_dir (windres_bfd *wrbfd, const bfd_byte *data,
       unsigned long name, rva;
       rc_res_entry *re;
 
-      if ((const bfd_byte *) ere >= finfo->data_end)
-	overrun (finfo, _("ID directory entry"));
+      if ((const bfd_byte *) ere >= flaginfo->data_end)
+	overrun (flaginfo, _("ID directory entry"));
 
       name = windres_get_32 (wrbfd, ere->name, 4);
       rva = windres_get_32 (wrbfd, ere->rva, 4);
@@ -283,18 +283,18 @@ read_coff_res_dir (windres_bfd *wrbfd, const bfd_byte *data,
       if ((rva & 0x80000000) != 0)
 	{
 	  rva &=~ 0x80000000;
-	  if (rva >= (rc_uint_type) (finfo->data_end - finfo->data))
-	    overrun (finfo, _("ID subdirectory"));
+	  if (rva >= (rc_uint_type) (flaginfo->data_end - flaginfo->data))
+	    overrun (flaginfo, _("ID subdirectory"));
 	  re->subdir = 1;
-	  re->u.dir = read_coff_res_dir (wrbfd, finfo->data + rva, finfo, type,
+	  re->u.dir = read_coff_res_dir (wrbfd, flaginfo->data + rva, flaginfo, type,
 					 level + 1);
 	}
       else
 	{
-	  if (rva >= (rc_uint_type) (finfo->data_end - finfo->data))
-	    overrun (finfo, _("ID resource"));
+	  if (rva >= (rc_uint_type) (flaginfo->data_end - flaginfo->data))
+	    overrun (flaginfo, _("ID resource"));
 	  re->subdir = 0;
-	  re->u.res = read_coff_data_entry (wrbfd, finfo->data + rva, finfo, type);
+	  re->u.res = read_coff_data_entry (wrbfd, flaginfo->data + rva, flaginfo, type);
 	}
 
       *pp = re;
@@ -308,7 +308,7 @@ read_coff_res_dir (windres_bfd *wrbfd, const bfd_byte *data,
 
 static rc_res_resource *
 read_coff_data_entry (windres_bfd *wrbfd, const bfd_byte *data,
-		      const struct coff_file_info *finfo,
+		      const struct coff_file_info *flaginfo,
 		      const rc_res_id *type)
 {
   const struct extern_res_data *erd;
@@ -319,21 +319,21 @@ read_coff_data_entry (windres_bfd *wrbfd, const bfd_byte *data,
   if (type == NULL)
     fatal (_("resource type unknown"));
 
-  if ((size_t) (finfo->data_end - data) < sizeof (struct extern_res_data))
-    overrun (finfo, _("data entry"));
+  if ((size_t) (flaginfo->data_end - data) < sizeof (struct extern_res_data))
+    overrun (flaginfo, _("data entry"));
 
   erd = (const struct extern_res_data *) data;
 
   size = windres_get_32 (wrbfd, erd->size, 4);
   rva = windres_get_32 (wrbfd, erd->rva, 4);
-  if (rva < finfo->secaddr
-      || rva - finfo->secaddr >= (rc_uint_type) (finfo->data_end - finfo->data))
-    overrun (finfo, _("resource data"));
+  if (rva < flaginfo->secaddr
+      || rva - flaginfo->secaddr >= (rc_uint_type) (flaginfo->data_end - flaginfo->data))
+    overrun (flaginfo, _("resource data"));
 
-  resdata = finfo->data + (rva - finfo->secaddr);
+  resdata = flaginfo->data + (rva - flaginfo->secaddr);
 
-  if (size > (rc_uint_type) (finfo->data_end - resdata))
-    overrun (finfo, _("resource data size"));
+  if (size > (rc_uint_type) (flaginfo->data_end - resdata))
+    overrun (flaginfo, _("resource data size"));
 
   r = bin_to_res (wrbfd, *type, resdata, size);
 

@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: common.c,v 1.1.1.10.6.2 2013/06/23 06:26:31 tls Exp $");
+ __RCSID("$NetBSD: common.c,v 1.1.1.10.6.3 2014/08/19 23:46:43 tls Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2012 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,9 @@
 #  define _GNU_SOURCE
 #endif
 
-#include <sys/cdefs.h>
+#ifndef __sun
+#  include <sys/cdefs.h>
+#endif
 
 #ifdef __APPLE__
 #  include <mach/mach_time.h>
@@ -43,6 +45,7 @@
 #include <sys/param.h>
 #include <sys/time.h>
 
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -63,93 +66,27 @@
 #  define _PATH_DEVNULL "/dev/null"
 #endif
 
-static char hostname_buffer[HOSTNAME_MAX_LEN + 1];
-int clock_monotonic;
-static char *lbuf;
-static size_t lbuf_len;
-#ifdef DEBUG_MEMORY
-static char lbuf_set;
-#endif
-
-#ifdef DEBUG_MEMORY
-static void
-free_lbuf(void)
-{
-	free(lbuf);
-	lbuf = NULL;
-}
-#endif
-
-/* Handy routine to read very long lines in text files.
- * This means we read the whole line and avoid any nasty buffer overflows.
- * We strip leading space and avoid comment lines, making the code that calls
- * us smaller.
- * As we don't use threads, this API is clean too. */
-char *
-get_line(FILE * __restrict fp)
+const char *
+get_hostname(char *buf, size_t buflen, int short_hostname)
 {
 	char *p;
-	ssize_t bytes;
 
-#ifdef DEBUG_MEMORY
-	if (lbuf_set == 0) {
-		atexit(free_lbuf);
-		lbuf_set = 1;
-	}
-#endif
-
-	do {
-		bytes = getline(&lbuf, &lbuf_len, fp);
-		if (bytes == -1)
-			return NULL;
-		for (p = lbuf; *p == ' ' || *p == '\t'; p++)
-			;
-	} while (*p == '\0' || *p == '\n' || *p == '#' || *p == ';');
-	if (lbuf[--bytes] == '\n')
-		lbuf[bytes] = '\0';
-	return p;
-}
-
-int
-set_cloexec(int fd)
-{
-	int flags;
-
-	if ((flags = fcntl(fd, F_GETFD, 0)) == -1 ||
-	    fcntl(fd, F_SETFD, flags | FD_CLOEXEC) == -1)
-	{
-		syslog(LOG_ERR, "fcntl: %m");
-		return -1;
-	}
-	return 0;
-}
-
-int
-set_nonblock(int fd)
-{
-	int flags;
-
-	if ((flags = fcntl(fd, F_GETFL, 0)) == -1 ||
-	    fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
-	{
-		syslog(LOG_ERR, "fcntl: %m");
-		return -1;
-	}
-	return 0;
-}
-
-const char *
-get_hostname(void)
-{
-
-	gethostname(hostname_buffer, sizeof(hostname_buffer));
-	hostname_buffer[sizeof(hostname_buffer) - 1] = '\0';
-	if (strcmp(hostname_buffer, "(none)") == 0 ||
-	    strcmp(hostname_buffer, "localhost") == 0 ||
-	    strncmp(hostname_buffer, "localhost.", strlen("localhost.")) == 0 ||
-	    hostname_buffer[0] == '.')
+	if (gethostname(buf, buflen) != 0)
 		return NULL;
-	return hostname_buffer;
+	buf[buflen - 1] = '\0';
+	if (strcmp(buf, "(none)") == 0 ||
+	    strcmp(buf, "localhost") == 0 ||
+	    strncmp(buf, "localhost.", strlen("localhost.")) == 0 ||
+	    buf[0] == '.')
+		return NULL;
+
+	if (short_hostname) {
+		p = strchr(buf, '.');
+		if (p)
+			*p = '\0';
+	}
+
+	return buf;
 }
 
 /* Handy function to get the time.
@@ -161,24 +98,13 @@ get_hostname(void)
 int
 get_monotonic(struct timeval *tp)
 {
-	static int posix_clock_set = 0;
 #if defined(_POSIX_MONOTONIC_CLOCK) && defined(CLOCK_MONOTONIC)
 	struct timespec ts;
-	static clockid_t posix_clock;
 
-	if (!posix_clock_set) {
-		if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
-			posix_clock = CLOCK_MONOTONIC;
-			clock_monotonic = posix_clock_set = 1;
-		}
-	}
-
-	if (clock_monotonic) {
-		if (clock_gettime(posix_clock, &ts) == 0) {
-			tp->tv_sec = ts.tv_sec;
-			tp->tv_usec = ts.tv_nsec / 1000;
-			return 0;
-		}
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
+		tp->tv_sec = ts.tv_sec;
+		tp->tv_usec = (suseconds_t)(ts.tv_nsec / 1000);
+		return 0;
 	}
 #elif defined(__APPLE__)
 #define NSEC_PER_SEC 1000000000
@@ -210,11 +136,13 @@ get_monotonic(struct timeval *tp)
 	}
 #endif
 
+#if 0
 	/* Something above failed, so fall back to gettimeofday */
 	if (!posix_clock_set) {
 		syslog(LOG_WARNING, NO_MONOTONIC);
 		posix_clock_set = 1;
 	}
+#endif
 	return gettimeofday(tp, NULL);
 }
 
@@ -235,15 +163,15 @@ setvar(char ***e, const char *prefix, const char *var, const char *value)
 	else
 		snprintf(**e, len, "%s=%s", var, value);
 	(*e)++;
-	return len;
+	return (ssize_t)len;
 }
 
 ssize_t
-setvard(char ***e, const char *prefix, const char *var, int value)
+setvard(char ***e, const char *prefix, const char *var, size_t value)
 {
 	char buffer[32];
 
-	snprintf(buffer, sizeof(buffer), "%d", value);
+	snprintf(buffer, sizeof(buffer), "%zu", value);
 	return setvar(e, prefix, var, buffer);
 }
 
@@ -258,17 +186,65 @@ uptime(void)
 	return tv.tv_sec;
 }
 
-int
-writepid(int fd, pid_t pid)
+char *
+hwaddr_ntoa(const unsigned char *hwaddr, size_t hwlen, char *buf, size_t buflen)
 {
-	char spid[16];
-	ssize_t len;
+	char *p;
+	size_t i;
 
-	if (ftruncate(fd, (off_t)0) == -1)
-		return -1;
-	snprintf(spid, sizeof(spid), "%u\n", pid);
-	len = pwrite(fd, spid, strlen(spid), (off_t)0);
-	if (len != (ssize_t)strlen(spid))
-		return -1;
-	return 0;
+	if (buf == NULL) {
+		return NULL;
+	}
+
+	if (hwlen * 3 > buflen) {
+		errno = ENOBUFS;
+		return 0;
+	}
+
+	p = buf;
+	for (i = 0; i < hwlen; i++) {
+		if (i > 0)
+			*p ++= ':';
+		p += snprintf(p, 3, "%.2x", hwaddr[i]);
+	}
+	*p ++= '\0';
+	return buf;
+}
+
+size_t
+hwaddr_aton(unsigned char *buffer, const char *addr)
+{
+	char c[3];
+	const char *p = addr;
+	unsigned char *bp = buffer;
+	size_t len = 0;
+
+	c[2] = '\0';
+	while (*p) {
+		c[0] = *p++;
+		c[1] = *p++;
+		/* Ensure that digits are hex */
+		if (isxdigit((unsigned char)c[0]) == 0 ||
+		    isxdigit((unsigned char)c[1]) == 0)
+		{
+			errno = EINVAL;
+			return 0;
+		}
+		/* We should have at least two entries 00:01 */
+		if (len == 0 && *p == '\0') {
+			errno = EINVAL;
+			return 0;
+		}
+		/* Ensure that next data is EOL or a seperator with data */
+		if (!(*p == '\0' || (*p == ':' && *(p + 1) != '\0'))) {
+			errno = EINVAL;
+			return 0;
+		}
+		if (*p)
+			p++;
+		if (bp)
+			*bp++ = (unsigned char)strtol(c, NULL, 16);
+		len++;
+	}
+	return len;
 }

@@ -28,28 +28,45 @@ if { [istarget powerpc64*-*-*] || [istarget *-*-elf64*]} then {
 
 if { [istarget powerpc*-*-*] } then {
     run_dump_test "simpshft"
-    run_dump_test "machine"
     run_dump_test "regnames"
+    if { [is_elf_format] } then {
+	run_dump_test "machine"
+	run_dump_test "common"
+	run_dump_test "476"
+	run_dump_test "a2"
+	if { ![istarget powerpc*le-*-*] } then {
+	    run_dump_test "vle"
+	    run_dump_test "vle-reloc"
+	    run_dump_test "vle-simple-1"
+	    run_dump_test "vle-simple-2"
+	    run_dump_test "vle-simple-3"
+	    run_dump_test "vle-simple-4"
+	    run_dump_test "vle-simple-5"
+	    run_dump_test "vle-simple-6"
+	}
+    }
 
     if { [istarget powerpc-*-*aix*] } then {
 	run_dump_test "altivec_xcoff"
 	run_dump_test "altivec_xcoff64"
     } else {
 	run_dump_test "altivec"
+	run_dump_test "altivec2"
 	run_dump_test "altivec_and_spe"
 	run_dump_test "booke"
 	run_dump_test "e500"
 	run_list_test "range" "-a32"
 	run_dump_test "ppc750ps"
 	run_dump_test "e500mc"
-	run_dump_test "a2"
+	run_dump_test "e6500"
+	run_dump_test "e500mc64_nop"
+	run_dump_test "e5500_nop"
+	run_dump_test "e6500_nop"
 	run_dump_test "cell"
-	run_dump_test "common"
 	run_dump_test "power4_32"
 	run_dump_test "power6"
 	run_dump_test "power7"
 	run_dump_test "vsx"
-	run_dump_test "476"
 	run_dump_test "titan"
     }
 }

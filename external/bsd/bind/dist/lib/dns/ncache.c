@@ -1,7 +1,7 @@
-/*	$NetBSD: ncache.c,v 1.6 2012/06/05 00:41:35 christos Exp $	*/
+/*	$NetBSD: ncache.c,v 1.6.2.1 2014/08/19 23:46:28 tls Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2010-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -48,6 +48,12 @@
  *		rdata				times.
  *
  */
+
+static isc_result_t
+addoptout(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
+	  dns_rdatatype_t covers, isc_stdtime_t now, dns_ttl_t maxttl,
+	  isc_boolean_t optout, isc_boolean_t secure,
+	  dns_rdataset_t *addedrdataset);
 
 static inline isc_result_t
 copy_rdataset(dns_rdataset_t *rdataset, isc_buffer_t *buffer) {
@@ -98,8 +104,8 @@ dns_ncache_add(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
 	       dns_rdatatype_t covers, isc_stdtime_t now, dns_ttl_t maxttl,
 	       dns_rdataset_t *addedrdataset)
 {
-	return (dns_ncache_addoptout(message, cache, node, covers, now, maxttl,
-				    ISC_FALSE, addedrdataset));
+	return (addoptout(message, cache, node, covers, now, maxttl,
+			  ISC_FALSE, ISC_FALSE, addedrdataset));
 }
 
 isc_result_t
@@ -107,6 +113,16 @@ dns_ncache_addoptout(dns_message_t *message, dns_db_t *cache,
 		     dns_dbnode_t *node, dns_rdatatype_t covers,
 		     isc_stdtime_t now, dns_ttl_t maxttl,
 		     isc_boolean_t optout, dns_rdataset_t *addedrdataset)
+{
+	return (addoptout(message, cache, node, covers, now, maxttl,
+			  optout, ISC_TRUE, addedrdataset));
+}
+
+static isc_result_t
+addoptout(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
+	  dns_rdatatype_t covers, isc_stdtime_t now, dns_ttl_t maxttl,
+	  isc_boolean_t optout, isc_boolean_t secure,
+	  dns_rdataset_t *addedrdataset)
 {
 	isc_result_t result;
 	isc_buffer_t buffer;
@@ -244,6 +260,8 @@ dns_ncache_addoptout(dns_message_t *message, dns_db_t *cache,
 	dns_rdataset_init(&ncrdataset);
 	RUNTIME_CHECK(dns_rdatalist_tordataset(&ncrdatalist, &ncrdataset)
 		      == ISC_R_SUCCESS);
+	if (!secure && trust > dns_trust_answer)
+		trust = dns_trust_answer;
 	ncrdataset.trust = trust;
 	ncrdataset.attributes |= DNS_RDATASETATTR_NEGATIVE;
 	if (message->rcode == dns_rcode_nxdomain)

@@ -1,4 +1,7 @@
-# $NetBSD: md.i386,v 1.2.6.3 2013/06/23 06:26:18 tls Exp $
+# $NetBSD: md.i386,v 1.2.6.4 2014/08/19 23:45:43 tls Exp $
+./usr/lib/libi386_g.a				comp-c-debuglib		debuglib
+./usr/lib/libm387_g.a				comp-c-debuglib		debuglib
+./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
 ./usr/libdata/debug/lib/libm387.so.0.1.debug	comp-sys-debug	pic,debug
 ./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
@@ -14,6 +17,3 @@
 ./usr/libdata/debug/usr/sbin/bad144.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ipwctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ndiscvt.debug	comp-sysutil-debug	debug
-./usr/lib/libi386_g.a				-unknown-		debuglib
-./usr/lib/libm387_g.a				-unknown-		debuglib
-./usr/lib/libpmc_g.a				-unknown-		debuglib

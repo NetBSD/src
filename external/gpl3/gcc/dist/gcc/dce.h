@@ -1,5 +1,5 @@
 /* RTL dead code elimination.
-   Copyright (C) 2005, 2006, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2005-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -20,6 +20,7 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_DCE_H
 #define GCC_DCE_H
 
+extern void run_word_dce (void);
 extern void run_fast_dce (void);
 extern void run_fast_df_dce (void);
 

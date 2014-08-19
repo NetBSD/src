@@ -49,18 +49,6 @@ byteop2p:
 	R7 = byteop2p (r1:0, R3:2) (TH, r);
 
 	.text
-	.global byteop2m
-byteop2m:
-	R0 = BYTEOP2M (R1:0, R3:2) (RNDL);
-	r1 = byteop2m (r1:0, r3:2) (rndh);
-	R2 = Byteop2m (R1:0, R3:2) (tL);
-	R3 = Byteop2m (r1:0, r3:2) (TH);
-	r4 = ByTEOP2M (r1:0, R3:2) (Rndl, R);
-	R5 = byTeOp2m (R1:0, r3:2) (rndH, r);
-	r6 = BYTEop2m (r1:0, r3:2) (tl, R);
-	R7 = byteop2m (r1:0, R3:2) (TH, r);
-
-	.text
 	.global bytepack
 bytepack:
 	R5 = BytePack (R0, R3);

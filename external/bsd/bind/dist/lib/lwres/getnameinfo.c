@@ -1,7 +1,7 @@
-/*	$NetBSD: getnameinfo.c,v 1.4 2012/06/15 19:54:21 joerg Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.4.2.1 2014/08/19 23:46:35 tls Exp $	*/
 
 /*
- * Portions Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2005, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -149,9 +149,13 @@ static struct afd {
 #define ENI_SALEN	6
 #define ENI_NOSOCKET 	7
 
+/*!
+ * The test against 0 is there to keep the Solaris compiler
+ * from complaining about "end-of-loop code not reached".
+ */
 #define ERR(code) \
 	do { result = (code);			\
-		goto cleanup;			\
+		goto cleanup;	\
 	} while (/*CONSTCOND*/0)
 
 /*% lightweight resolver socket address structure to hostname and service name */
@@ -159,7 +163,7 @@ int
 lwres_getnameinfo(const struct sockaddr *sa, size_t salen, char *host,
 		  size_t hostlen, char *serv, size_t servlen, int flags)
 {
-	struct afd *afd;
+	struct afd *afd = NULL;
 	struct servent *sp;
 	unsigned short port;
 #ifdef LWRES_PLATFORM_HAVESALEN

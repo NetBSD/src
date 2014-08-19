@@ -1,6 +1,6 @@
 /* bucomm.c -- Bin Utils COMmon code.
    Copyright 1991, 1992, 1993, 1994, 1995, 1997, 1998, 2000, 2001, 2002,
-   2003, 2005, 2006, 2007, 2008, 2009, 2010, 2011
+   2003, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
    Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
@@ -29,7 +29,6 @@
 #include "filenames.h"
 #include "libbfd.h"
 
-#include <sys/stat.h>
 #include <time.h>		/* ctime, maybe time_t */
 #include <assert.h>
 #include "bucomm.h"
@@ -225,9 +224,9 @@ endian_string (enum bfd_endian endian)
 {
   switch (endian)
     {
-    case BFD_ENDIAN_BIG: return "big endian";
-    case BFD_ENDIAN_LITTLE: return "little endian";
-    default: return "endianness unknown";
+    case BFD_ENDIAN_BIG: return _("big endian");
+    case BFD_ENDIAN_LITTLE: return _("little endian");
+    default: return _("endianness unknown");
     }
 }
 
@@ -248,7 +247,7 @@ display_target_list (void)
       bfd *abfd = bfd_openw (dummy_name, p->name);
       int a;
 
-      printf ("%s\n (header %s, data %s)\n", p->name,
+      printf (_("%s\n (header %s, data %s)\n"), p->name,
 	      endian_string (p->header_byteorder),
 	      endian_string (p->byteorder));
 
@@ -428,16 +427,18 @@ print_arelt_descr (FILE *file, bfd *abfd, bfd_boolean verbose)
 	  char timebuf[40];
 	  time_t when = buf.st_mtime;
 	  const char *ctime_result = (const char *) ctime (&when);
+	  bfd_size_type size;
 
 	  /* POSIX format:  skip weekday and seconds from ctime output.  */
 	  sprintf (timebuf, "%.12s %.4s", ctime_result + 4, ctime_result + 20);
 
 	  mode_string (buf.st_mode, modebuf);
 	  modebuf[10] = '\0';
+	  size = buf.st_size;
 	  /* POSIX 1003.2/D11 says to skip first character (entry type).  */
-	  fprintf (file, "%s %ld/%ld %6ld %s ", modebuf + 1,
+	  fprintf (file, "%s %ld/%ld %6" BFD_VMA_FMT "u %s ", modebuf + 1,
 		   (long) buf.st_uid, (long) buf.st_gid,
-		   (long) buf.st_size, timebuf);
+		   size, timebuf);
 	}
     }
 
@@ -511,7 +512,10 @@ make_tempname (char *filename)
   fd = open (tmpname, O_RDWR | O_CREAT | O_EXCL, 0600);
 #endif
   if (fd == -1)
-    return NULL;
+    {
+      free (tmpname);
+      return NULL;
+    }
   close (fd);
   return tmpname;
 }

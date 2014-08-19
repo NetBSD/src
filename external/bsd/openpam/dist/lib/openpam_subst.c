@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_subst.c,v 1.2.8.1 2013/06/23 06:28:27 tls Exp $	*/
+/*	$NetBSD: openpam_subst.c,v 1.2.8.2 2014/08/19 23:52:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011 Dag-Erling Smørgrav
@@ -8,8 +8,7 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer
- *    in this position and unchanged.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
@@ -29,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_subst.c 543 2012-03-31 22:11:34Z des 
+ * Id: openpam_subst.c 648 2013-03-05 17:54:27Z des 
  */
 
 #ifdef HAVE_CONFIG_H
@@ -41,7 +40,7 @@
 #include "openpam_impl.h"
 
 #define subst_char(ch) do {			\
-	int ch_ = (ch);				\
+	char ch_ = (ch);			\
 	if (buf && len < *bufsize)		\
 		*buf++ = ch_;			\
 	++len;					\

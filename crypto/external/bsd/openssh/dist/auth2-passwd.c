@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-passwd.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
-/* $OpenBSD: auth2-passwd.c,v 1.9 2006/08/03 03:34:41 deraadt Exp $ */
+/*	$NetBSD: auth2-passwd.c,v 1.2.12.1 2014/08/19 23:45:24 tls Exp $	*/
+/* $OpenBSD: auth2-passwd.c,v 1.10 2013/05/17 00:13:13 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-passwd.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
+__RCSID("$NetBSD: auth2-passwd.c,v 1.2.12.1 2014/08/19 23:45:24 tls Exp $");
 #include <sys/types.h>
 
 #include <string.h>
@@ -61,7 +61,7 @@ userauth_passwd(Authctxt *authctxt)
 		/* discard new password from packet */
 		newpass = packet_get_string(&newlen);
 		memset(newpass, 0, newlen);
-		xfree(newpass);
+		free(newpass);
 	}
 	packet_check_eom();
 
@@ -70,7 +70,7 @@ userauth_passwd(Authctxt *authctxt)
 	else if (PRIVSEP(auth_password(authctxt, password)) == 1)
 		authenticated = 1;
 	memset(password, 0, len);
-	xfree(password);
+	free(password);
 	return authenticated;
 }
 

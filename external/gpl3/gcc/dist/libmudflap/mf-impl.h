@@ -1,6 +1,6 @@
 /* Implementation header for mudflap runtime library.
    Mudflap: narrow-pointer bounds-checking by tree rewriting.
-   Copyright (C) 2002, 2003, 2004, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
    Contributed by Frank Ch. Eigler <fche@redhat.com>
    and Graydon Hoare <graydon@redhat.com>
 
@@ -46,7 +46,7 @@ typedef __mf_uintptr_t uintptr_t;
 
 /* Private definitions related to mf-runtime.h  */
 
-#define __MF_TYPE_MAX_CEM  __MF_TYPE_STACK  /* largest type# for the cemetary */
+#define __MF_TYPE_MAX_CEM  __MF_TYPE_STACK  /* largest type# for the cemetery */
 #define __MF_TYPE_MAX __MF_TYPE_GUESS
 
 
@@ -212,6 +212,9 @@ extern struct __mf_dynamic_entry __mf_dynamic[];
 enum __mf_dynamic_index
 {
   dyn_calloc, dyn_free, dyn_malloc, dyn_mmap,
+#ifdef HAVE_MMAP64
+  dyn_mmap64,
+#endif
   dyn_munmap, dyn_realloc,
   dyn_INITRESOLVE,  /* Marker for last init-time resolution. */
 #ifdef LIBMUDFLAPTH

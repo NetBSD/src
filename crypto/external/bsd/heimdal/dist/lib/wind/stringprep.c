@@ -1,4 +1,4 @@
-/*	$NetBSD: stringprep.c,v 1.1.1.1 2011/04/13 18:16:00 elric Exp $	*/
+/*	$NetBSD: stringprep.c,v 1.1.1.1.10.1 2014/08/19 23:45:20 tls Exp $	*/
 
 /*
  * Copyright (c) 2004, 2006, 2008 Kungliga Tekniska Högskolan
@@ -113,7 +113,7 @@ wind_stringprep(const uint32_t *in, size_t in_len,
     return ret;
 }
 
-const static struct {
+static const struct {
     const char *name;
     wind_profile_flags flags;
 } profiles[] = {

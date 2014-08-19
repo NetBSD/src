@@ -1,6 +1,6 @@
-# Test ALIGN in a linker script.
+# Test expressions in a linker script.
 # By Nathan Sidwell, CodeSourcery LLC
-#   Copyright 2006, 2007
+#   Copyright 2006, 2007, 2010
 #   Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
@@ -21,3 +21,5 @@
 # MA 02110-1301, USA.
 
 run_dump_test expr1
+run_dump_test expr2
+run_dump_test sane1

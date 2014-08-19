@@ -1,5 +1,5 @@
-# OpenLDAP: pkg/openldap-guide/admin/tls.sdf,v 1.13.2.10 2010/04/13 20:22:35 kurt Exp
-# Copyright 1999-2010 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP$
+# Copyright 1999-2014 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Using TLS
@@ -19,7 +19,8 @@ identities.  All servers are required to have valid certificates,
 whereas client certificates are optional.  Clients must have a
 valid certificate in order to authenticate via SASL EXTERNAL.
 For more information on creating and managing certificates,
-see the {{PRD:OpenSSL}} documentation.
+see the {{PRD:OpenSSL}}, {{PRD:GnuTLS}}, or {{PRD:MozNSS}} documentation,
+depending on which TLS implementation libraries you are using.
 
 H3: Server Certificates
 
@@ -89,11 +90,36 @@ this option can only be used with a filesystem that actually supports
 symbolic links. In general, it is simpler to use the
 {{EX:TLSCACertificateFile}} directive instead.
 
+When using Mozilla NSS, this directive can be used to specify the
+path of the directory containing the NSS certificate and key database
+files.  The {{certutil}} command can be used to add a {{TERM:CA}} certificate:
+
+>	certutil -d <path> -A -n "name of CA cert" -t CT,, -a -i /path/to/cacertfile.pem
+
+. This command will add a CA certficate stored in the PEM (ASCII) formatted
+. file named /path/to/cacertfile.pem.  {{EX:-t CT,,}} means that the certificate is
+. trusted to be a CA issuing certs for use in TLS clients and servers.
+
 H4: TLSCertificateFile <filename>
 
 This directive specifies the file that contains the slapd server
 certificate. Certificates are generally public information and
 require no special protection.
+
+When using Mozilla NSS, if using a cert/key database (specified with
+{{EX:TLSCACertificatePath}}), this directive specifies
+the name of the certificate to use:
+
+>       TLSCertificateFile Server-Cert
+
+. If using a token other than the internal built in token, specify the
+. token name first, followed by a colon:
+
+>       TLSCertificateFile my hardware device:Server-Cert
+
+. Use {{EX:certutil -L}} to list the certificates by name:
+
+>       certutil -d /path/to/certdbdir -L
 
 H4: TLSCertificateKeyFile <filename>
 
@@ -103,6 +129,18 @@ file. Private keys themselves are sensitive data and are usually
 password encrypted for protection. However, the current implementation
 doesn't support encrypted keys so the key must not be encrypted
 and the file itself must be protected carefully.
+
+When using Mozilla NSS, this directive specifies the name of
+a file that contains the password for the key for the certificate specified with
+{{EX:TLSCertificateFile}}.  The modutil command can be used to turn off password
+protection for the cert/key database.  For example, if {{EX:TLSCACertificatePath}}
+specifes /etc/openldap/certdb as the location of the cert/key database, use
+modutil to change the password to the empty string:
+
+>	modutil -dbdir /etc/openldap/certdb -changepw 'NSS Certificate DB'
+
+. You must have the old password, if any.  Ignore the WARNING about the running
+. browser.  Press 'Enter' for the new password.
 
 H4: TLSCipherSuite <cipher-suite-spec>
 
@@ -114,14 +152,21 @@ specification for OpenSSL. You can use the command
 
 to obtain a verbose list of available cipher specifications.
 
-To obtain the list of ciphers in GNUtls use:
-
->	gnutls-cli -l
-
 Besides the individual cipher names, the specifiers {{EX:HIGH}},
 {{EX:MEDIUM}}, {{EX:LOW}}, {{EX:EXPORT}}, and {{EX:EXPORT40}}
 may be helpful, along with {{EX:TLSv1}}, {{EX:SSLv3}},
 and {{EX:SSLv2}}.
+
+To obtain the list of ciphers in GnuTLS use:
+
+>	gnutls-cli -l
+
+When using Mozilla NSS, the OpenSSL cipher suite specifications are used and
+translated into the format used internally by Mozilla NSS.  There isn't an easy
+way to list the cipher suites from the command line.  The authoritative list
+is in the source code for Mozilla NSS in the file sslinfo.c in the structure
+
+>       static const SSLCipherSuiteInfo suiteInfo[]
 
 H4: TLSRandFile <filename>
 
@@ -141,6 +186,8 @@ copy a few hundred bytes of arbitrary data into the file. The file
 is only used to provide a seed for the pseudo-random number generator,
 and it doesn't need very much data to work.
 
+This directive is ignored with GnuTLS and Mozilla NSS.
+
 H4: TLSEphemeralDHParamFile <filename>
 
 This directive specifies the file that contains parameters for
@@ -151,6 +198,8 @@ of parameters can be included in the file; all of them will be
 processed.  Parameters can be generated using the following command
 
 >	openssl dhparam [-dsaparam] -out <filename> <numbits>
+
+This directive is ignored with GnuTLS and Mozilla NSS.
 
 H4: TLSVerifyClient { never | allow | try | demand }
 
@@ -210,13 +259,29 @@ H4: TLS_CACERTDIR <path>
 
 This is equivalent to the server's {{EX:TLSCACertificatePath}} option. The
 specified directory must be managed with the OpenSSL {{c_rehash}}
-utility as well.
+utility as well.  If using Mozilla NSS, <path> may contain a cert/key database.
 
 H4: TLS_CERT <filename>
 
 This directive specifies the file that contains the client certificate.
 This is a user-only directive and can only be specified in a user's
 {{.ldaprc}} file.
+
+When using Mozilla NSS, if using a cert/key database (specified with
+{{EX:TLS_CACERTDIR}}), this directive specifies
+the name of the certificate to use:
+
+>       TLS_CERT Certificate for Sam Carter
+
+. If using a token other than the internal built in token, specify the
+. token name first, followed by a colon:
+
+>       TLS_CERT my hardware device:Certificate for Sam Carter
+
+. Use {{EX:certutil -L}} to list the certificates by name:
+
+>       certutil -d /path/to/certdbdir -L
+
 
 H4: TLS_KEY <filename>
 

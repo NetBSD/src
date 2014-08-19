@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.2 2011/04/16 18:41:58 he Exp $
+# $NetBSD: Makefile.inc,v 1.2.10.1 2014/08/19 23:45:15 tls Exp $
 
 HEIMBASE?=	${NETBSDSRCDIR}/crypto/external/bsd/heimdal
 HEIMDIST=	${HEIMBASE}/dist
@@ -45,3 +45,4 @@ HOST_CPPFLAGS+=	-DHAVE_CONFIG_H
 CPPFLAGS+= ${.PATH:S/^/-I/}
 CPPFLAGS+= -I${HEIMBASE}/include
 CPPFLAGS+= -I${HEIMDIST}/include
+CWARNFLAGS.clang+=	-Wno-error=absolute-value

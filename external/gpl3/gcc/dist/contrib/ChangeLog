@@ -1,37 +1,517 @@
-2012-07-02  Release Manager
+2014-05-22  Release Manager
 
-	* GCC 4.5.4 released.
+	* GCC 4.8.3 released.
 
-2011-04-28  Release Manager
+2013-10-21  Mike Stump  <mikestump@comcast.net>
 
-	* GCC 4.5.3 released.
+	* gcc_update (configure): Update to handle svn 1.8.1.
 
-2010-12-16  Release Manager
+2013-10-16  Release Manager
 
-	* GCC 4.5.2 released.
+	* GCC 4.8.2 released.
 
-2010-07-31  Release Manager
+2013-05-31  Release Manager
 
-	* GCC 4.5.1 released.
+	* GCC 4.8.1 released.
 
-2010-07-01  Iain Sandoe  <iains@gcc.gnu.org>
+2013-03-22  Release Manager
 
-	* compare-debug (Darwin): Remove '-x' flag from ld-based object
-	stripping.  Add a comment as to why we do it this way.
+	* GCC 4.8.0 released.
+
+2013-03-22  Jakub Jelinek  <jakub@redhat.com>
+
+	* gennews (files): Add files for GCC 4.8.
+
+2013-03-06  Tobias Burnus  <burnus@net-b.de>
+
+	* make-obstacks-texi.pl: New.
+
+2013-02-27  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* make_sunver.pl: Enforce C locale.
+
+2013-02-06  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* update-copyright.py: Add libdecnumber to the default list.
+	Remove libquadmath and libssp.
+
+2013-02-06  Diego Novillo  <dnovillo@google.com>
+
+	* testsuite-management/validate_failures.py: Fix typo.
+
+2013-02-06  Diego Novillo  <dnovillo@google.com>
+
+	* testsuite-management/validate_failures.py: Update
+	Copyright years.
+	Request contributions not to use Python features newer
+	than 2.4.
+	(GetBuildData): If this is not a build directory,
+	emit an error only if --results or --manifest are missing.
+
+2013-02-06  Bernhard Reutner-Fischer  <aldot@gcc.gnu.org>
+
+	* testsuite-management/validate_failures.py
+	(IsInterestingResult): Fix performance regression
+
+2013-02-04  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* update-copyright.py: New file.
+
+2013-01-15  David Blaikie  <dblaikie@gmail.com>
+
+	* dg-extract-results.sh: Handle KPASSes.
+
+	* dg-extract-results.sh: Constrain the start-of-log pattern.
+
+	* dg-extract-results.sh: Fix order of summary counts.
+
+2012-12-01  Bernhard Reutner-Fischer  <aldot@gcc.gnu.org>
+
+	* testsuite-management/validate_failures.py
+	(IsInterestingResult): Only strip line a second time if we did split.
+	Rephrase return statement while at it.
+	(CollectSumFiles): Also ignore .git directory.
+
+2012-12-03  Diego Novillo  <dnovillo@google.com>
+
+	* testsuite-management/validate_failures.py: Fix stale
+	use of 'options'.
+
+2012-11-30  Doug Evans  <dje@google.com>
+
+	* testsuite-management/validate_failures.py: Add support for @include,
+	@remove directives in manifest files.
+
+	* testsuite-management/validate_failures.py: Add function
+	GetManifestPath.  New global _MANIFEST_SUBDIR.
+
+2012-11-29  Doug Evans  <dje@google.com>
+
+	* testsuite-management/validate_failures.py: Remove pass/fail
+	indicator from result of GetBuildData.
+
+	* testsuite-management/validate_failures.py: Store options in global
+	variable _OPTIONS.
+
+	* testsuite-management/validate_failures.py: Rename variable
+	manifest_name to manifest_path everywhere.
+
+	* testsuite-management/validate_failures.py (CompareBuilds): Pass
+	options.results to GetSumFiles for clean build.
+
+2012-11-28  Doug Evans  <dje@google.com>
+
+	* testsuite-management/validate_failures.py: Use <target_alias> instead
+	of <target>.  Minor whitespace changes.
+
+	* testsuite-management/validate_failures.py: Record ordinal with
+	TestResult.
+
+2012-11-19  Mike Stump  <mikestump@comcast.net>
+
+	* compare_tests: Add export LC_ALL=C to make sort happier.
+
+2012-11-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gcc_update: Update libsanitizer generated files.
+
+2012-11-12  Tobias Burnus  <burnus@net-b.de>
+
+	* gcc_update: Add libquadmath generated files.
+
+2012-11-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* gcc_update: Add libsanitizer generated files.
+
+2012-11-05  Lawrence Crowl  <crowl@google.com>
+
+	* compare_two_ftime_report_sets: New.
+
+2012-11-02  Diego Novillo  <dnovillo@google.com>
+
+	* testsuite-management/validate_failures.py: Add option
+	--clean_build to compare test results against another
+	build.
+
+2012-10-31  Diego Novillo  <dnovillo@google.com>
+
+	* testsuite-management/validate_failures.py: Fix parsing
+	of summary lines.
+
+2012-10-29  Diego Novillo  <dnovillo@google.com>
+
+	* testsuite-management/x86_64-unknown-linux-gnu.xfail: Update.
+
+2012-10-06  Diego Novillo  <dnovillo@google.com>
+
+	* testsuite-management/x86_64-unknown-linux-gnu.xfail: Update.
+
+2012-10-02   Christophe Lyon  <christophe.lyon@linaro.org>
+
+	* check_GNU_style.sh: Remove temporay file upon exit.
+
+2012-09-26  Joern Rennecke  <joern.rennecke@embecosm.com>
+
+	* contrib-list.mk (LIST): Remove arm-freebsd6, arm-linux,
+	arm-ecos-elf, arm-rtems, arm-elf and arm-wince-pe.
+	Use --enable-obsolete for picochip-elf.
+
+2012-09-10   Diego Novillo  <dnovillo@google.com>
+
+	* testsuite-management/x86_64-unknown-linux-gnu.xfail: Update.
+
+2012-09-04  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* make_sunver.pl: Add missing newline at the end of extern "C++" block.
+
+2012-08-24   Diego Novillo  <dnovillo@google.com>
+
+	* testsuite-management/x86_64-unknown-linux-gnu.xfail: Update.
 	
+2012-08-14   Diego Novillo  <dnovillo@google.com>
+
+	* testsuite-management/x86_64-unknown-linux-gnu.xfail: New.
+
+2012-08-13  Diego Novillo  <dnovillo@google.com>
+
+	* testsuite-management/validate_failures.py (ExpirationDate): Tidy
+	comment.
+
+2012-08-13  Diego Novillo  <dnovillo@google.com>
+
+	* testsuite-management/validate_failures.py (ParseSummary): Fix
+	comment.
+
+2012-08-13  Diego Novillo  <dnovillo@google.com>
+
+	* testsuite-management/validate_failures.py: Import datetime.
+	(TestResult.ExpirationDate): New.
+	(TestResult.HasExpired): New.
+	(ParseSummary): Call it.  If it returns True, warn that the
+	expected failure has expired and do not add it to the set of
+	expected results.
+	(GetResults): Clarify documentation.
+
+2012-07-26   Diego Novillo  <dnovillo@google.com>
+
+	* testsuite-management/validate_failures.py: Do not use
+	'with ... as ...' constructs.
+
+2012-07-19   Diego Novillo  <dnovillo@google.com>
+
+	* testsuite-management/validate_failures.py (CollectSumFiles):
+	Rename from GetSumFiles.
+	(GetSumFiles): Factor out of CheckExpectedResults.
+	(CheckExpectedResults): Call it.
+	(ProduceManifest): Call it.
+
+2012-07-18   Diego Novillo  <dnovillo@google.com>
+
+	* testsuite-management/validate_failures.py: Fix
+	/usr/bin/python invocation.
+
+2012-06-19  Steven Bosscher  <steven@gcc.gnu.org>
+
+	* check_makefile_deps.sh: Look for c-common.o in c-family/.
+	Add a few more crt* files to the list of files to skip.
+
+2012-05-31  Marek Polacek  <polacek@redhat.com>
+
+       * mklog: Prevent printing three spaces after the date.
+
+2012-06-04   Diego Novillo  <dnovillo@google.com>
+
+	* testsuite-management/validate_failures.py (GetResults):
+	Change argument to accept list of summary files to analyze.
+	Update callers.
+	(CheckExpectedResults): Handle options.manifest, options.results
+	and options.ignore_missing_failures.
+	(Main): Add options --manifest, --results and --ignore_missing_failures.
+
+2012-05-31   Diego Novillo  <dnovillo@google.com>
+	     Cary Coutant  <ccoutant@google.com>
+
+	* mklog: New.
+
+2012-05-25  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR bootstrap/53472
+	* contrib/compare-debug (remove_comment): New function.
+	Remove any .comment sections if the first cmp failed.
+
+2012-05-09  David Edelsohn  <dje.gcc@gmail.com>
+
+	* gcc_update: Use $GCC_SVN to retrieve branch and revision.
+
+2012-05-01  Richard Henderson  <rth@redhat.com>
+
+	* gcc_update: Add libatomic generated files.
+
+2012-04-23  Manuel López-Ibáñez  <manu@gcc.gnu.org>
+
+	* compare_tests: Append '/' to make 'find' traverse
+	symlinked directories.
+
+2012-04-16  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* testsuite-management/validate_failures.py (GetBuildData): Use
+	target_alias.
+
+2012-04-06  Doug Evans  <dje@google.com>
+
+	* dg-extract-results.sh: Handle KFAILs.
+
+2012-03-14  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* config-list.mk (LIST): Remove mips-sgi-irix6.5.
+
+2012-03-13  Joseph Myers  <joseph@codesourcery.com>
+
+	* gennews (files): Add files for GCC 4.7.
+
+2012-03-12  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* config-list.mk (LIST): Remove mips-openbsd.
+
+2012-03-12  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* config-list.mk (LIST): Remove alpha-dec-osf5.1.
+
+2012-03-02   Diego Novillo  <dnovillo@google.com>
+
+	* testsuite-management/validate_failures.py (class TestResult): Fix
+	match pattern for the summary line.  If there is a parsing failure,
+	show the line we failed to parse.
+
+2012-02-27  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	PR libstdc++/52188
+	* make_sunver.pl: Remove #ifdef handling.
+
+2012-02-17   Doug Kwan  <dougkwan@google.com>
+
+	* contrib/testsuite-management/validate_failures.py
+	(GetMakefileValue): Check for cross compilers.
+
+2012-02-15   Quentin Neill  <quentin.neill@amd.com>
+
+	* compare_tests: Fix trailing paths in dir arguments.
+	Handle sum1/sum2 temp files with others.
+
+2012-02-14  Walter Lee  <walt@tilera.com>
+
+	* config-list.mk (LIST): Add tilegx-linux-gnu and
+	tilepro-linux-gnu.
+	* gcc_update (gcc/config/tilegx/mul-tables.c): New dependencies.
+	(gcc/config/tilepro/mul-tables.c): New dependencies.
+
+2012-02-11  Mike Stump  <mikestump@comcast.net>
+
+	* compare_tests (exit_status): Fix.
+
+2012-02-10   Diego Novillo  <dnovillo@google.com>
+
+	* repro_fail: Add --debug and --debug-tui flags.
+
+2012-02-02  Sumanth G  <sumanth.gundapaneni@kpitcummins.com>
+	    Jayant R Sonar  <jayant.sonar@kpitcummins.com>
+
+	* config-list.mk (LIST): Add cr16-elf.
+
+2012-01-02  Georg-Johann Lay  <avr@gjlay.de>
+
+	PR target/51345
+	* gcc_update (files_and_dependencies): Add
+	gcc/config/avr/t-multilib, gcc/config/avr/multilib.h.
+
+2011-11-29  DJ Delorie  <dj@redhat.com>
+
+	* config-list.mk (LIST): Add rl78-elf.
+
+2011-11-21  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* make_sunver.pl: Convert '?' in glob patterns to '.'.
+
+2011-11-07  Richard Henderson  <rth@redhat.com>
+
+	Merged from transactional-memory.
+
+	* gcc_update: Add libitm to touch data.
+
+2011-11-07   Quentin Neill  <quentin.neill@amd.com>
+
+	* compare_tests: Add ability to compare all .sum
+	files from two build directories.
+
+2011-11-05  Joern Rennecke  <joern.rennecke@embecosm.com>
+
+	* contrib-list.mk: Add Epiphany configurations.
+
+2011-09-13   Diego Novillo  <dnovillo@google.com>
+
+	* testsuite-management: New.
+	* testsuite-management/validate_failures.py: New.
+
+2011-08-25  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* gcc_update: Determine svn branch from hg convert_revision.
+
+2011-07-18  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* config-list.mk (i586-netware): Remove.
+	(.PHONY): Remove make-script-dir dependency.
+	(make-script-dir): Remove.
+	($(LIST)): Remove make-script-dir dependency.
+
+2011-07-15  Bernd Schmidt  <bernds@codesourcery.com>
+
+	* gcc_update: Add C6X generated files.
+	* contrib/config-list.mk: Add c6x-elf and c6x-uclinux.
+
+2011-07-01  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* config-list.mk (LIST): Append OPT-enable-obsolete to
+	alpha-dec-osf5.1, mips-sgi-irix6.5.
+
+2011-06-24  Diego Novillo  <dnovillo@google.com>
+
+	* repro_fail: New.
+
+2011-06-21  Joseph Myers  <joseph@codesourcery.com>
+
+	* gcc_update (gcc/config/avr/avr-tables.opt): New dependencies.
+
+2011-05-19  Joseph Myers  <joseph@codesourcery.com>
+
+	* gcc_update (gcc/config/arm/arm-tables.opt): Also depend on
+	gcc/config/arm/arm-fpus.def.
+
+2011-05-10  Joseph Myers  <joseph@codesourcery.com>
+
+	* gcc_update (gcc/config/rs6000/rs6000-tables.opt): New
+	dependencies.
+
+2011-05-09  Joseph Myers  <joseph@codesourcery.com>
+
+	* gcc_update (gcc/config/mips/mips-tables.opt): New dependencies.
+
+2010-05-05  Joern Rennecke  <joern.rennecke@embecosm.com>
+
+	* config-list.mk: New file.
+
+2011-05-02  Joseph Myers  <joseph@codesourcery.com>
+
+	* gcc_update (gcc/config/m68k/m68k-tables.opt): New dependencies.
+
+2011-04-25  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* paranoia.cc (ENUM_BITFIELD): Remove.
+
+2011-04-08  Joseph Myers  <joseph@codesourcery.com>
+
+	* gcc_update (gcc/config/arm/arm-tables.opt): New dependencies.
+
+2011-03-22  Joseph Myers  <joseph@codesourcery.com>
+
+	* compare-all-tests (all_targets): Remove crx and m68hc11.
+
+2011-03-21  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	PR bootstrap/48135
+	* make_sunver.pl: Don't use File::Glob.
+
+2011-03-05  Joseph Myers  <joseph@codesourcery.com>
+
+	* gennews (files): Add files for GCC 4.6.
+
+2011-01-26  Dave Korn  <dave.korn.cygwin@gmail.com>
+
+	* patch_tester.sh (nopristinecache): New shell var, set according
+	to presence or absence of new -nopristinecache option.
+	(usage): Document new option.
+	(bootntest_pristine): Implement it.
+
+2010-11-25  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* make_sunver.pl: Use elfdump -s to extract symbols if possible,
+	readelf -s otherwise.
+
+2010-11-08  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* make_sunver.pl: Ignore entries without symbol name first.  Then do
+	not ignore symbols marked as 'R'.
+
+2010-10-18  Andi Kleen  <ak@linux.intel.com>
+
+	* gccbug.el: Remove.
+
+2010-10-12  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* gcc_update: Run $GCC_HG pull and update separately.
+	Check parents for SVN revision.
+
+2010-10-11  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* test_recheck: New script.
+
+2010-08-22  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* texi2pod.pl: Replace @@ before @{ and @}, for @samp{@@}.
+	Also escape characters with grave accents, to be fixed ...
+	(unmunge): ... here.
+	(postprocess): Also handle @/ and @acronym{...}.
+
+2010-07-02  Sebastian Pop  <sebastian.pop@amd.com>
+
+	* check_GNU_style.sh: Do not print warning messages when there are
+	no occurences.
+
+2010-09-13  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* gcc_update: Handle hg, too.
+
+2010-07-08  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* make_sunver.pl: Remove extra whitespace in regexp.
+
+2010-07-02  Sebastian Pop  <sebastian.pop@amd.com>
+
+	* check_GNU_style.sh: New.
+
+2010-07-02  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* make_sunver.pl: New file.
+
+2010-07-02  Iain Sandoe  <iains@gcc.gnu.org>
+
+       * compare-debug (Darwin): Remove '-x' flag from ld-based object
+       stripping.  Add a comment as to why we do it this way.
+
+2010-06-20  Alexandre Oliva  <aoliva@redhat.com>
+
+	* compare-debug: Drop LTO sections.
+
+2010-06-15  Bernhard Reutner-Fischer  <aldot@gcc.gnu.org>
+
+	* gcc_update: Support updating a git clone.
+
 2010-06-04  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
 
 	* test_summary: Don't use diff -u.
 	Adapt egrep regex.
+
+2010-06-02  Andrew Haley  <aph@redhat.com>
+
+	* download_prerequisites: New script.
 
 2010-05-25  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
 
 	* dg-extract-results.sh: Redirect grep output to /dev/null instead
 	of grep -q.
 
-2010-04-14  Release Manager
+2010-04-22  Basile Starynkevitch  <basile@starynkevitch.net>
 
-	* GCC 4.5.0 released.
+	* gcc_update: Sets the locale to C.
 
 2010-04-06  Joseph Myers  <joseph@codesourcery.com>
 
@@ -252,7 +732,7 @@
 	* compare-debug: New.
 
 2007-08-16  H.J. Lu  <hongjiu.lu@intel.com>
-	    Andreas Schwab <schwab@suse.de>
+	    Andreas Schwab  <schwab@suse.de>
 
 	* gcc_update: Use "svn info" for revision number.  Create
 	gcc/REVISION with branch name and revision number.
@@ -393,7 +873,7 @@
 	* gcc_build: Remove -d from the call to gcc_update.
 
 2005-10-28  Daniel Berlin  <dberlin@dberlin.org>
-	    Ben Elliston <bje@au1.ibm.com>
+	    Ben Elliston  <bje@au1.ibm.com>
 	
 	* gcc_update: Update for svn.
 	* newcvsroot: Ditto.
@@ -495,7 +975,7 @@
 
 	* gcc_update: libjava/configure.in -> configure.ac.
 
-2004-08-03  Richard Earnshaw <rearnsha@arm.com>
+2004-08-03  Richard Earnshaw  <rearnsha@arm.com>
 
 	* gcc_update: gcc/config/arm/arm-tune.md -> arm-cores.def gentune.sh.
 
@@ -662,7 +1142,7 @@
 	gcc/testsuite/gcc.dg/cpp/_Pragma3.c depends on
 	gcc/testsuite/gcc.dg/cpp/mi1c.h.
 
-2003-05-23  Nathanael Nerode <neroden@gcc.gnu.org>
+2003-05-23  Nathanael Nerode  <neroden@gcc.gnu.org>
 
 	* paranoia.cc: Fix spelling error.
 
@@ -677,7 +1157,7 @@
 
 	* test_summary:  Add -h, print existing comments as help.
 
-2003-03-03  H.J. Lu <hjl@gnu.org>
+2003-03-03  H.J. Lu  <hjl@gnu.org>
 
 	* gcc_build: Use $GCC_CVS/$CVS instead of cvs.
 	* gcc_update: Likewise.
@@ -760,7 +1240,7 @@
 
 	* enquire.c: Move from gcc.
 
-2002-07-16  H.J. Lu <hjl@gnu.org>
+2002-07-16  H.J. Lu  <hjl@gnu.org>
 
 	* gcc_update (touch_files): Pass -s to ${MAKE}.
 
@@ -833,7 +1313,7 @@
 	and @center.  Allow [a-z] after @enumerate.  Handle 0 and numbers
 	greater than 9 in enumerations.
 
-2001-11-07  Laurent Guerby <guerby@acm.org>
+2001-11-07  Laurent Guerby  <guerby@acm.org>
 
 	* gcc_update (files_and_dependencies): Add Ada dependencies.
 
@@ -848,7 +1328,7 @@
 	gcc/java/parse-scan.c and gcc/java/keyword.h to list of files to
 	touch.
 
-2001-09-04  David.Billinghurst <David.Billinghurst@riotinto.com>
+2001-09-04  David.Billinghurst  <David.Billinghurst@riotinto.com>
 
 	* gcc_update: (files_and_dependencies) Add gcc/java/parse.c
 	gcc/java/parse-scan.c and gcc/java/keyword.h to list of files to
@@ -875,7 +1355,7 @@ Fri Jul 27 18:01:21 CEST 2001  Jan Hubicka  <jh@suse.cz>
 	* gcc_update: Dump timestamp in LAST_UPDATED.
 
 2001-07-26  Andreas Jaeger  <aj@suse.de>,
-	    Hans-Peter Nilsson <hp@bitrange.com>
+	    Hans-Peter Nilsson  <hp@bitrange.com>
 
 	* analyze_brprob: Fix documentation.
 
@@ -899,7 +1379,7 @@ Mon Jul 23 15:47:19 CEST 2001  Jan Hubicka  <jh@suse.cz>
 
 	* gcc_update: Remove entries for gcc.1, cpp.1, gcov.1.
 
-2001-07-01  Zoltan Felleg <zfelleg@telnet.hu>
+2001-07-01  Zoltan Felleg  <zfelleg@telnet.hu>
 
 	* warn_summary: Fix typo in a comment.
 
@@ -1174,7 +1654,7 @@ Sun Jul 16 12:04:33 2000  Mark P Mitchell  <mark@codesourcery.com>
 
 	* index-prop: Use a single pattern.  Also support *** cdiffs.
 
-2000-04-28  Pavel Roskin <pavel_roskin@geocities.com>
+2000-04-28  Pavel Roskin  <pavel_roskin@geocities.com>
 
 	* index-prop: Don't change /dev/null.
 
@@ -1200,7 +1680,7 @@ Sun Nov 28 00:41:44 1999  William Bader (william@nscs.fast.net)
 
 	* gcc_update: Allow patches compressed by bzip2.
 
-1999-10-11  Martin v. Löwis <loewis@informatik.hu-berlin.de>
+1999-10-11  Martin v. Löwis  <loewis@informatik.hu-berlin.de>
 
 	* newcvsroot: New file.
 
@@ -1237,7 +1717,7 @@ Sun Nov 28 00:41:44 1999  William Bader (william@nscs.fast.net)
 	* test_summary: Replace egcs with gcc.  Update e-mail address.
 
 1999-07-05  Gerald Pfeifer  <pfeifer@dbai.tuwien.ac.at>
-	    Jerry Quinn <jquinn@nortelnetworks.com>
+	    Jerry Quinn  <jquinn@nortelnetworks.com>
 
 	* egcs_update (touch_files, apply_patch): New functions.
 	Use them.  New command-line option --patch.  Split test of local
@@ -1333,7 +1813,7 @@ Fri Oct 30 00:39:27 1998  Jeffrey A Law  (law@cygnus.com)
 	* egcs_update: Do touch java/parse.c and java/parse-scan.c. They're
 	in the repo again.
 
-Fri Oct 16 07:35:00 1998  Bruce Korb <korb@datadesign.com>
+Fri Oct 16 07:35:00 1998  Bruce Korb  <korb@datadesign.com>
 
 	* egcs_update:  Added gcc/fixinc/* generated files to touch list.
 
@@ -1356,7 +1836,7 @@ Mon Oct  5 14:19:48 1998  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
 	keywords that are preserved in the "warning type" summary and
 	tighten up the "arg ???" regexp.
 
-Tue Sep 22 07:30 Bruce Korb <korb@datadesign.com>
+Tue Sep 22 07:30  Bruce Korb  <korb@datadesign.com>
 
 	* fixinc/inclhack.def:  Not all C++ comments in C headers
 	were treated alike.  They are now.  Also fixed syntax
@@ -1370,7 +1850,7 @@ Wed Sep 16 16:06:51 1998  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
 
 	* egcs_update: Additionally touch gcc/java/parse.[ch].
 
-Thu Sep  9 16:48 Bruce Korb <korb@datadesign.com>
+Thu Sep  9 16:48  Bruce Korb <korb@datadesign.com>
 
 	* fixinc/inclhack.def:  Added two files required by
 	SCO's Open Server 5's avoid_bool fix.
@@ -1401,7 +1881,7 @@ Tue Aug 11 17:33:19 1998  Gerald Pfeifer  <pfeifer@dbai.tuwien.ac.at>
 
 	* egcs_update: New script.
 
-1998-08-05  Bruce Korb <korbb@datadesign.com>
+1998-08-05  Bruce Korb  <korbb@datadesign.com>
 
 	* fixinc/Makefile
 	Added define for target machine so machine-specific tests
@@ -1434,7 +1914,7 @@ Mon Jul 27 20:33:02 1998  Gerald Pfeifer  <pfeifer@dbai.tuwien.ac.at>
 	* test_summary: Corrected script name in comments providing
 	documentation.  Added linebreaks for lines with > 80 characters.
 
-Fri Jun 19 02:36:59 1998  Alexandre Oliva <oliva@dcc.unicamp.br>
+Fri Jun 19 02:36:59 1998  Alexandre Oliva  <oliva@dcc.unicamp.br>
 
 	* test_summary: New switch, -i, and environment variable,
 	append_logs, for including files in the report.
@@ -1444,7 +1924,7 @@ Fri Jun 19 02:36:59 1998  Alexandre Oliva <oliva@dcc.unicamp.br>
 	* warn_summary: Update to Kaveh's latest version allowing to
 	specify the last stage built.
 
-1998-05-29  Bruce Korb <korbb@datadesign.com>
+1998-05-29  Bruce Korb  <korbb@datadesign.com>
 
 	* fixinc/mkfixinc.sh
 	Changes to make it easier to invoke on platforms that
@@ -1454,7 +1934,7 @@ Fri Jun 19 02:36:59 1998  Alexandre Oliva <oliva@dcc.unicamp.br>
 	Applied fixes from egcs/gcc/fixincludes from the past several
 	months.
 
-1998-05-28  Bruce Korb <korbb@datadesign.com>
+1998-05-28  Bruce Korb  <korbb@datadesign.com>
 
 	* fixinc/*: Updated most everything for a first real
 	try at getting "fast_fixincludes" working.

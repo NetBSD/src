@@ -1,0 +1,21 @@
+
+# 1 "<stdin>"
+testing that pp-numbers are parsed correctly
+
+
+
+
+
+123.4e+foo
+123.4f+FOO
+123.4e+foo
+
+
+
+
+123.4e+foo
+
+
+
+
+FOO.123.foo.456+FOO+789.foo

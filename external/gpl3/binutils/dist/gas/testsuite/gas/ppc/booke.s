@@ -1,6 +1,6 @@
 # Motorola PowerPC BookE tests
 #as: -mbooke
-	.section ".text"
+	.text
 
 branch_target_1:	
 	icbt	5, 8, 9	

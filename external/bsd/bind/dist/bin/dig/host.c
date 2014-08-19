@@ -1,7 +1,7 @@
-/*	$NetBSD: host.c,v 1.4.2.1 2013/06/23 06:26:23 tls Exp $	*/
+/*	$NetBSD: host.c,v 1.4.2.2 2014/08/19 23:45:59 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id: host.c,v 1.127 2011/03/11 06:11:20 marka Exp  */
 
 /*! \file */
 
@@ -169,7 +167,8 @@ show_usage(void) {
 "       -W specifies how long to wait for a reply\n"
 "       -4 use IPv4 query transport only\n"
 "       -6 use IPv6 query transport only\n"
-"       -m set memory debugging flag (trace|record|usage)\n", stderr);
+"       -m set memory debugging flag (trace|record|usage)\n"
+"       -v print version number and exit\n", stderr);
 	exit(1);
 }
 
@@ -449,10 +448,18 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 	if (msg->rcode != 0) {
 		char namestr[DNS_NAME_FORMATSIZE];
 		dns_name_format(query->lookup->name, namestr, sizeof(namestr));
-		printf("Host %s not found: %d(%s)\n",
-		       (msg->rcode != dns_rcode_nxdomain) ? namestr :
-		       query->lookup->textname, msg->rcode,
-		       rcode_totext(msg->rcode));
+
+		if (query->lookup->identify_previous_line)
+			printf("Nameserver %s:\n\t%s not found: %d(%s)\n",
+			       query->servname,
+			       (msg->rcode != dns_rcode_nxdomain) ? namestr :
+			       query->lookup->textname, msg->rcode,
+			       rcode_totext(msg->rcode));
+		else
+			printf("Host %s not found: %d(%s)\n",
+			       (msg->rcode != dns_rcode_nxdomain) ? namestr :
+			       query->lookup->textname, msg->rcode,
+			       rcode_totext(msg->rcode));
 		return (ISC_R_SUCCESS);
 	}
 
@@ -598,7 +605,13 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 	return (result);
 }
 
-static const char * optstring = "46ac:dilnm:rst:vwCDN:R:TW:";
+static const char * optstring = "46ac:dilnm:rst:vVwCDN:R:TW:";
+
+/*% version */
+static void
+version(void) {
+	fputs("host " VERSION "\n", stderr);
+}
 
 static void
 pre_parse_args(int argc, char **argv) {
@@ -630,9 +643,15 @@ pre_parse_args(int argc, char **argv) {
 		case 's': break;
 		case 't': break;
 		case 'v': break;
+		case 'V':
+			  version();
+			  exit(0);
+			  break;
 		case 'w': break;
 		case 'C': break;
 		case 'D':
+			if (debugging)
+				debugtiming = ISC_TRUE;
 			debugging = ISC_TRUE;
 			break;
 		case 'N': break;
@@ -860,10 +879,6 @@ main(int argc, char **argv) {
 
 	tries = 2;
 
-	isc__mem_register();
-	isc__task_register();
-	isc__timer_register();
-	isc__socket_register();
 	ISC_LIST_INIT(lookup_list);
 	ISC_LIST_INIT(server_list);
 	ISC_LIST_INIT(search_list);

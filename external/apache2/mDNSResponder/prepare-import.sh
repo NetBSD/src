@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: prepare-import.sh,v 1.1 2009/09/29 23:56:27 tsarna Exp $
+# $NetBSD: prepare-import.sh,v 1.1.12.1 2014/08/19 23:45:51 tls Exp $
 #
 # Extract the new tarball and rename the mDNSResponder-X.Y directory
 # to dist.  Run this script and check for additional files and
@@ -16,8 +16,8 @@ rm -rf BonjourExample DNS-SD.VisualStudio DNS-SD.xcodeproj
 rm -rf DNSServiceBrowser-Info.plist DNSServiceBrowser.NET
 rm -rf DNSServiceBrowser.VB DNSServiceBrowser.m DNSServiceBrowser.nib
 rm -rf DNSServiceReg-Info.plist DNSServiceReg.m DNSServiceReg.nib
-rm -rf ExplorerPlugin Java Makefile PrinterSetupWizard ReadMe.txt
-rm -rf SimpleChat.NET SimpleChat.VB
+rm -rf ExplorerPlugin FirefoxExtension Java Makefile PrinterSetupWizard
+rm -rf ReadMe.txt SimpleChat.NET SimpleChat.VB mDNSNetMonitor.VisualStudio
 
 cd ../mDNSCore
 rm -f Implementer\ Notes.txt

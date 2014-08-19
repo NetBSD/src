@@ -1,10 +1,10 @@
-/*	$NetBSD: ldif-filter.c,v 1.1.1.1 2010/12/12 15:24:16 adam Exp $	*/
+/*	$NetBSD: ldif-filter.c,v 1.1.1.1.12.1 2014/08/19 23:52:05 tls Exp $	*/
 
 /* ldif-filter -- clean up LDIF testdata from stdin */
-/* OpenLDAP: pkg/ldap/tests/progs/ldif-filter.c,v 1.3.2.2 2010/04/19 19:14:31 quanah Exp */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2009-2010 The OpenLDAP Foundation.
+ * Copyright 2009-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

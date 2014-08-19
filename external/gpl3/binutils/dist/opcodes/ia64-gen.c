@@ -1,5 +1,5 @@
 /* ia64-gen.c -- Generate a shrunk set of opcode tables
-   Copyright 1999, 2000, 2001, 2002, 2004, 2005, 2006, 2007, 2008, 2009
+   Copyright 1999, 2000, 2001, 2002, 2004, 2005, 2006, 2007, 2008, 2009, 2012
    Free Software Foundation, Inc.
    Written by Bob Manson, Cygnus Solutions, <manson@cygnus.com>
 
@@ -34,14 +34,13 @@
    The resource table is constructed based on some text dependency tables, 
    which are also easier to maintain than the final representation.  */
 
+#include "sysdep.h"
 #include <stdio.h>
 #include <stdarg.h>
 #include <errno.h>
 
-#include "ansidecl.h"
 #include "libiberty.h"
 #include "safe-ctype.h"
-#include "sysdep.h"
 #include "getopt.h"
 #include "ia64-opc.h"
 #include "ia64-opc-a.c"
@@ -70,6 +69,7 @@ int debug = 0;
 #define NELEMS(a) (sizeof (a) / sizeof ((a)[0]))
 #define tmalloc(X) (X *) xmalloc (sizeof (X))
 
+typedef unsigned long long  ci_t;
 /* The main opcode table entry.  Each entry is a unique combination of
    name and flags (no two entries in the table compare as being equal
    via opcodes_eq).  */
@@ -147,7 +147,7 @@ struct disent
   int priority;
 
   /* The completer_index value for this entry.  */
-  int completer_index;
+  ci_t completer_index;
 
   /* How many other entries share this decode.  */
   int nextcnt;
@@ -291,11 +291,11 @@ static void shrink (struct ia64_opcode *);
 static void print_version (void);
 static void usage (FILE *, int);
 static void finish_distable (void);
-static void insert_bit_table_ent (struct bittree *, int, ia64_insn, ia64_insn, int, int, int);
-static void add_dis_entry (struct bittree *, ia64_insn, ia64_insn, int, struct completer_entry *, int);
+static void insert_bit_table_ent (struct bittree *, int, ia64_insn, ia64_insn, int, int, ci_t);
+static void add_dis_entry (struct bittree *, ia64_insn, ia64_insn, int, struct completer_entry *, ci_t);
 static void compact_distree (struct bittree *);
 static struct bittree * make_bittree_entry (void);
-static struct disent * add_dis_table_ent (struct disent *, int, int, int);
+static struct disent * add_dis_table_ent (struct disent *, int, int, ci_t);
 
 
 static void
@@ -903,12 +903,13 @@ irf_operand (int op, const char *field)
               || (op == IA64_OPND_PMC_R3 && strstr (field, "pmc"))
               || (op == IA64_OPND_PMD_R3 && strstr (field, "pmd"))
               || (op == IA64_OPND_MSR_R3 && strstr (field, "msr"))
-              || (op == IA64_OPND_CPUID_R3 && strstr (field, "cpuid")));
+              || (op == IA64_OPND_CPUID_R3 && strstr (field, "cpuid"))
+              || (op == IA64_OPND_DAHR_R3  && strstr (field, "dahr")));
     }
 }
 
-/* Handle mov_ar, mov_br, mov_cr, mov_indirect, mov_ip, mov_pr, mov_psr, and
-   mov_um insn classes.  */
+/* Handle mov_ar, mov_br, mov_cr, move_dahr, mov_indirect, mov_ip, mov_pr,
+ * mov_psr, and  mov_um insn classes.  */
 static int
 in_iclass_mov_x (struct ia64_opcode *idesc, struct iclass *ic, 
                  const char *format, const char *field)
@@ -964,6 +965,13 @@ in_iclass_mov_x (struct ia64_opcode *idesc, struct iclass *ic,
           return strstr (format, "M32") != NULL;
         if (m33)
           return strstr (format, "M33") != NULL;
+      }
+      break;
+    case 'd':
+      {
+        int m50 = plain_mov && idesc->operands[0] == IA64_OPND_DAHR3;
+        if (m50)
+          return strstr (format, "M50") != NULL;
       }
       break;
     case 'i':
@@ -1442,6 +1450,8 @@ lookup_specifier (const char *name)
         return IA64_RS_CR_LRR;
       if (strstr (name, "CR%") != NULL)
         return IA64_RS_CR;
+      if (strstr (name, "DAHR%, % in 0") != NULL)
+        return IA64_RS_DAHR;
       if (strstr (name, "FR%, % in 0") != NULL)
         return IA64_RS_FR;
       if (strstr (name, "FR%, % in 2") != NULL)
@@ -1724,7 +1734,7 @@ make_bittree_entry (void)
 
 static struct disent *
 add_dis_table_ent (struct disent *which, int insn, int order,
-                   int completer_index)
+                   ci_t completer_index)
 {
   int ci = 0;
   struct disent *ent;
@@ -1777,7 +1787,7 @@ finish_distable (void)
 static void
 insert_bit_table_ent (struct bittree *curr_ent, int bit, ia64_insn opcode,
                       ia64_insn mask, int opcodenum, int order,
-                      int completer_index)
+                      ci_t completer_index)
 {
   ia64_insn m;
   int b;
@@ -1811,9 +1821,9 @@ insert_bit_table_ent (struct bittree *curr_ent, int bit, ia64_insn opcode,
 
 static void
 add_dis_entry (struct bittree *first, ia64_insn opcode, ia64_insn mask,
-               int opcodenum, struct completer_entry *ent, int completer_index)
+               int opcodenum, struct completer_entry *ent, ci_t completer_index)
 {
-  if (completer_index & (1 << 20))
+  if (completer_index & ((ci_t)1 << 32) )
     abort ();
 
   while (ent != NULL)
@@ -2132,7 +2142,7 @@ print_dis_table (void)
 
       while (ent != NULL)
 	{
-	  printf ("{ 0x%x, %d, %d, %d },\n", ent->completer_index,
+	  printf ("{ 0x%lx, %d, %d, %d },\n", ( long ) ent->completer_index,
 		  ent->insn, (ent->nexte != NULL ? 1 : 0),
                   ent->priority);
 	  ent = ent->nexte;

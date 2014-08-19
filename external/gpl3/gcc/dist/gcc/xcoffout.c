@@ -1,6 +1,5 @@
 /* Output xcoff-format symbol table information from GNU compiler.
-   Copyright (C) 1992, 1994, 1995, 1997, 1998, 1999, 2000, 2002, 2003, 2004,
-   2007, 2008  Free Software Foundation, Inc.
+   Copyright (C) 1992-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -30,7 +29,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree.h"
 #include "rtl.h"
 #include "flags.h"
-#include "toplev.h"
+#include "diagnostic-core.h"
 #include "output.h"
 #include "ggc.h"
 #include "target.h"
@@ -66,6 +65,8 @@ static const char *xcoff_current_function_file;
 
 char *xcoff_bss_section_name;
 char *xcoff_private_data_section_name;
+char *xcoff_tls_data_section_name;
+char *xcoff_tbss_section_name;
 char *xcoff_read_only_section_name;
 
 /* Last source file name mentioned in a NOTE insn.  */

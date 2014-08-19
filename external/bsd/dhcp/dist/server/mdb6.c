@@ -1,7 +1,6 @@
-/*	$NetBSD: mdb6.c,v 1.4.4.2 2013/06/23 06:26:30 tls Exp $	*/
-
+/*	$NetBSD: mdb6.c,v 1.4.4.3 2014/08/19 23:46:42 tls Exp $	*/
 /*
- * Copyright (C) 2007-2012 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2007-2013 by Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,8 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mdb6.c,v 1.4.4.2 2013/06/23 06:26:30 tls Exp $");
-
+__RCSID("$NetBSD: mdb6.c,v 1.4.4.3 2014/08/19 23:46:42 tls Exp $");
 
 /*!
  * \todo assert()
@@ -31,23 +29,109 @@ __RCSID("$NetBSD: mdb6.c,v 1.4.4.2 2013/06/23 06:26:30 tls Exp $");
  *
  * A brief description of the IPv6 structures as reverse engineered.
  *
- * There are three major data strucutes involved in the database:
+ * There are four major data structures in the lease configuraion.
+ *
+ * - shared_network - The shared network is the outer enclosing scope for a
+ *                    network region that shares a broadcast domain.  It is
+ *                    composed of one or more subnets all of which are valid
+ *                    in the given region.  The share network may be
+ *                    explicitly defined or implicitly created if there is
+ *                    only a subnet statement.  This structrure is shared
+ *                    with v4.  Each shared network statment or naked subnet
+ *                    will map to one of these structures
+ *
+ * - subnet     - The subnet structure mostly specifies the address range
+ *                that could be valid in a given region.  This structute
+ *                doesn't include the addresses that the server can delegate
+ *                those are in the ipv6_pool.  This structure is also shared
+ *                with v4.  Each subnet statement will map to one of these
+ *                structures.
+ *
+ * - ipv6_pond  - The pond structure is a grouping of the address and prefix
+ *                information via the pointers to the ipv6_pool and the
+ *                allowability of this pool for given clinets via the permit
+ *                lists and the valid TIMEs.  This is equivilent to the v4
+ *                pool structure and would have been named ip6_pool except
+ *                that the name was already in use.  Generally each pool6
+ *                statement will map to one of these structures. In addition
+ *                there may be one or for each group of naked range6 and
+ *                prefix6 statements within a shared network that share
+ *                the same group of statements.
  *
  * - ipv6_pool - this contains information about a pool of addresses or prefixes
- *             that the server is using.  This includes a hash table that
- *             tracks the active items and a pair of heap tables one for
- *             active items and one for non-active items.  The heap tables
- *             are used to determine the next items to be modified due to
- *             timing events (expire mostly).
+ *               that the server is using.  This includes a hash table that
+ *               tracks the active items and a pair of heap tables one for
+ *               active items and one for non-active items.  The heap tables
+ *               are used to determine the next items to be modified due to
+ *               timing events (expire mostly).  
+ * 
+ * The linkages then look like this:
+ * \verbatim
+ *+--------------+   +-------------+
+ *|Shared Network|   | ipv6_pond   |
+ *|   group      |   |   group     |
+ *|              |   | permit info |
+ *|              |   |    next    ---->
+ *|    ponds    ---->|             |
+ *|              |<----  shared    |
+ *|   Subnets    |   |    pools    |
+ *+-----|--------+   +------|------+
+ *      |  ^                |    ^
+ *      |  |                v    |
+ *      |  |         +-----------|-+
+ *      |  |         | ipv6_pool | |
+ *      |  |         |    type   | |
+ *      |  |         |   ipv6_pond |
+ *      |  |         |             |
+ *      |  |         |    next    ---->    
+ *      |  |         |             |
+ *      |  |         |   subnet    |
+ *      |  |         +-----|-------+
+ *      |  |               |
+ *      |  |               v
+ *      |  |         +-------------+
+ *      |  |         |   subnet    |
+ *      |  +----------   shared    |
+ *      +----------->|             |
+ *                   |   group     |
+ *                   +-------------+
+ *
+ * The shared network contains a list of all the subnets that are on a broadcast
+ * doamin.  These can be used to determine if an address makes sense in a given
+ * domain, but the subnets do not contain the addresses the server can delegate.
+ * Those are stored in the ponds and pools.
+ *
+ * In the simple case to find an acceptable address the server would first find
+ * the shared network the client is on based on either the interface used to 
+ * receive the request or the relay agent's information.  From the shared 
+ * network the server will walk through it's list of ponds.  For each pond it 
+ * will evaluate the permit information against the (already done) classification.
+ * If it finds an acceptable pond it will then walk through the pools for that
+ * pond.  The server first checks the type of the pool (NA, TA and PD) agaisnt the
+ * request and if they match it attemps to find an address within that pool.  On
+ * success the address is used, on failure the server steps to the next pool and
+ * if necessary to the next pond.
+ *
+ * When the server is successful in finding an address it will execute any
+ * statements assocaited with the pond, then the subnet, then the shared
+ * network the group field is for in the above picture).
+ *
+ * In configurations that don't include either a shared network or a pool6
+ * statement (or both) the missing pieces are created.
+ * 
+ *
+ * There are three major data structuress involved in the lease database:
+ *
+ * - ipv6_pool - see above
  * - ia_xx   - this contains information about a single IA from a request
  *             normally it will contain one pointer to a lease for the client
  *             but it may contain more in some circumstances.  There are 3
  *             hash tables to aid in accessing these one each for NA, TA and PD.
- * - iasubopt- the v6 lease structure.  These are created dynamically when
- *             a client asks for something and will eventually be destroyed
- *             if the client doesn't re-ask for that item.  A lease has space
- *             for backpointers to the IA and to the pool to which it belongs.
- *             The pool backpointer is always filled, the IA pointer may not be.
+ * - iasubopt - the v6 lease structure.  These are created dynamically when
+ *              a client asks for something and will eventually be destroyed
+ *              if the client doesn't re-ask for that item.  A lease has space
+ *              for backpointers to the IA and to the pool to which it belongs.
+ *              The pool backpointer is always filled, the IA pointer may not be.
  *
  * In normal use we then have something like this:
  *
@@ -203,6 +287,20 @@ iasubopt_dereference(struct iasubopt **iasubopt, const char *file, int line) {
 		if (tmp->scope != NULL) {
 			binding_scope_dereference(&tmp->scope, file, line);
 		}
+
+		if (tmp->on_star.on_expiry != NULL) {
+			executable_statement_dereference
+				(&tmp->on_star.on_expiry, MDL);
+		}
+		if (tmp->on_star.on_commit != NULL) {
+			executable_statement_dereference
+				(&tmp->on_star.on_commit, MDL);
+		}
+		if (tmp->on_star.on_release != NULL) {
+			executable_statement_dereference
+				(&tmp->on_star.on_release, MDL);
+		}
+
 		dfree(tmp, file, line);
 	}
 
@@ -515,11 +613,27 @@ lease_index_changed(void *iasubopt, unsigned int new_heap_index) {
 }
 
 
-/*
- * Create a new IPv6 lease pool structure.
+/*!
  *
- * - pool must be a pointer to a (struct ipv6_pool *) pointer previously
- *   initialized to NULL
+ * \brief Create a new IPv6 lease pool structure
+ *
+ * Allocate space for a new ipv6_pool structure and return a reference
+ * to it, includes setting the reference count to 1.
+ *
+ * \param     pool       = space for returning a referenced pointer to the pool.
+ *			   This must point to a space that has been initialzied
+ *			   to NULL by the caller.
+ * \param[in] type       = The type of the pool NA, TA or PD
+ * \param[in] start_addr = The first address in the range for the pool
+ * \param[in] bits       = The contiguous bits of the pool
+
+ * 
+ * \return
+ * ISC_R_SUCCESS     = The pool was successfully created, pool points to it.
+ * DHCP_R_INVALIDARG = One of the arugments was invalid, pool has not been
+ *		       modified
+ * ISC_R_NOMEMORY    = The system wasn't able to allocate memory, pool has
+ *		       not been modified.
  */
 isc_result_t
 ipv6_pool_allocate(struct ipv6_pool **pool, u_int16_t type,
@@ -568,11 +682,24 @@ ipv6_pool_allocate(struct ipv6_pool **pool, u_int16_t type,
 	return ISC_R_SUCCESS;
 }
 
-/*
- * Reference an IPv6 pool structure.
+/*!
  *
- * - pool must be a pointer to a (struct pool *) pointer previously
- *   initialized to NULL
+ * \brief reference an IPv6 pool structure.
+ *
+ * This function genreates a reference to an ipv6_pool structure
+ * and increments the reference count on the structure.
+ *
+ * \param[out] pool = space for returning a referenced pointer to the pool.
+ *		      This must point to a space that has been initialzied
+ *		      to NULL by the caller.
+ * \param[in]  src  = A pointer to the pool to reference.  This must not be
+ *		      NULL.
+ *
+ * \return
+ * ISC_R_SUCCESS     = The pool was successfully referenced, pool now points
+ *		       to src.
+ * DHCP_R_INVALIDARG = One of the arugments was invalid, pool has not been
+ *		       modified.
  */
 isc_result_t
 ipv6_pool_reference(struct ipv6_pool **pool, struct ipv6_pool *src,
@@ -626,12 +753,24 @@ dereference_heap_entry(void *value, void *dummy) {
 	iasubopt_dereference(&iasubopt, MDL);
 }
 
-
-/*
- * Dereference an IPv6 pool structure.
+/*!
  *
- * If it is the last reference, then the memory for the 
- * structure is freed.
+ * \brief de-reference an IPv6 pool structure.
+ *
+ * This function decrements the reference count in an ipv6_pool structure.
+ * If this was the last reference then the memory for the structure is
+ * freed.
+ *
+ * \param[in] pool = A pointer to the pointer to the pool that should be
+ *		     de-referenced.  On success the pointer to the pool
+ *		     is cleared.  It must not be NULL and must not point
+ *		     to NULL.
+ *
+ * \return
+ * ISC_R_SUCCESS     = The pool was successfully de-referenced, pool now points
+ *		       to NULL
+ * DHCP_R_INVALIDARG = One of the arugments was invalid, pool has not been
+ *		       modified.
  */
 isc_result_t
 ipv6_pool_dereference(struct ipv6_pool **pool, const char *file, int line) {
@@ -796,7 +935,7 @@ static struct in6_addr resany;
 /*
  * Create a lease for the given address and client duid.
  *
- * - pool must be a pointer to a (struct pool *) pointer previously
+ * - pool must be a pointer to a (struct ipv6_pool *) pointer previously
  *   initialized to NULL
  *
  * Right now we simply hash the DUID, and if we get a collision, we hash 
@@ -1247,6 +1386,7 @@ move_lease_to_active(struct ipv6_pool *pool, struct iasubopt *lease) {
 }
 
 /*!
+ *
  * \brief Renew a lease in the pool.
  *
  * The hard_lifetime_end_time of the lease should be set to
@@ -1269,8 +1409,8 @@ move_lease_to_active(struct ipv6_pool *pool, struct iasubopt *lease) {
  * If the lease is moving to active we call that routine
  * which will move it from the inactive list to the active list.
  *
- * \param pool a pool the lease belongs to
- * \param lease the lease to be renewed
+ * \param pool  = a pool the lease belongs to
+ * \param lease = the lease to be renewed
  *
  * \return result of the renew operation (ISC_R_SUCCESS if successful,
            ISC_R_NOMEMORY when run out of memory)
@@ -1315,6 +1455,38 @@ move_lease_to_inactive(struct ipv6_pool *pool, struct iasubopt *lease,
 	old_heap_index = lease->heap_index;
 	insert_result = isc_heap_insert(pool->inactive_timeouts, lease);
 	if (insert_result == ISC_R_SUCCESS) {
+		/*
+		 * Handle expire and release statements
+		 * To get here we must be active and have done a commit so
+		 * we should run the proper statements if they exist, though
+		 * that will change when we remove the inactive heap.
+		 * In addition we get rid of the references for both as we
+		 * can only do one (expire or release) on a lease
+		 */
+		if (lease->on_star.on_expiry != NULL) {
+			if (state == FTS_EXPIRED) {
+				execute_statements(NULL, NULL, NULL,
+						   NULL, NULL, NULL,
+						   &lease->scope,
+						   lease->on_star.on_expiry,
+						   &lease->on_star);
+			}
+			executable_statement_dereference
+				(&lease->on_star.on_expiry, MDL);
+		}
+
+		if (lease->on_star.on_release != NULL) {
+			if (state == FTS_RELEASED) {
+				execute_statements(NULL, NULL, NULL,
+						   NULL, NULL, NULL,
+						   &lease->scope,
+						   lease->on_star.on_release,
+						   &lease->on_star);
+			}
+			executable_statement_dereference
+				(&lease->on_star.on_release, MDL);
+		}
+
 #if defined (NSUPDATE)
 		/* Process events upon expiration. */
 		if (pool->pool_type != D6O_IA_PD) {
@@ -1478,7 +1650,7 @@ build_prefix6(struct in6_addr *pref,
 /*
  * Create a lease for the given prefix and client duid.
  *
- * - pool must be a pointer to a (struct pool *) pointer previously
+ * - pool must be a pointer to a (struct ipv6_pool *) pointer previously
  *   initialized to NULL
  *
  * Right now we simply hash the DUID, and if we get a collision, we hash 
@@ -1998,20 +2170,25 @@ write_ia_leases(const void *name, unsigned len, void *value) {
  */
 int
 write_leases6(void) {
+	int nas, tas, pds;
+
 	write_error = 0;
 	write_server_duid();
-	ia_hash_foreach(ia_na_active, write_ia_leases);
+	nas = ia_hash_foreach(ia_na_active, write_ia_leases);
 	if (write_error) {
 		return 0;
 	}
-	ia_hash_foreach(ia_ta_active, write_ia_leases);
+	tas = ia_hash_foreach(ia_ta_active, write_ia_leases);
 	if (write_error) {
 		return 0;
 	}
-	ia_hash_foreach(ia_pd_active, write_ia_leases);
+	pds = ia_hash_foreach(ia_pd_active, write_ia_leases);
 	if (write_error) {
 		return 0;
 	}
+
+	log_info("Wrote %d NA, %d TA, %d PD leases to lease file.",
+		 nas, tas, pds);
 	return 1;
 }
 #endif /* DHCPv6 */
@@ -2148,6 +2325,130 @@ mark_interfaces_unavailable(void) {
 		}
 		ip = ip->next;
 	}
+}
+
+/*!
+ * \brief Create a new IPv6 pond structure.
+ *
+ * Allocate space for a new ipv6_pond structure and return a reference
+ * to it, includes setting the reference count to 1.
+ *
+ * \param pond = space for returning a referenced pointer to the pond.
+ *		 This must point to a space that has been initialzied
+ *		 to NULL by the caller.
+ *
+ * \return
+ * ISC_R_SUCCESS     = The pond was successfully created, pond points to it.
+ * DHCP_R_INVALIDARG = One of the arugments was invalid, pond has not been
+ *		       modified
+ * ISC_R_NOMEMORY    = The system wasn't able to allocate memory, pond has
+ *		       not been modified.
+ */
+isc_result_t
+ipv6_pond_allocate(struct ipv6_pond **pond, const char *file, int line) {
+	struct ipv6_pond *tmp;
+
+	if (pond == NULL) {
+		log_error("%s(%d): NULL pointer reference", file, line);
+		return DHCP_R_INVALIDARG;
+	}
+	if (*pond != NULL) {
+		log_error("%s(%d): non-NULL pointer", file, line);
+		return DHCP_R_INVALIDARG;
+	}
+
+	tmp = dmalloc(sizeof(*tmp), file, line);
+	if (tmp == NULL) {
+		return ISC_R_NOMEMORY;
+	}
+
+	tmp->refcnt = 1;
+
+	*pond = tmp;
+	return ISC_R_SUCCESS;
+}
+
+/*!
+ *
+ * \brief reference an IPv6 pond structure.
+ *
+ * This function genreates a reference to an ipv6_pond structure
+ * and increments the reference count on the structure.
+ *
+ * \param[out] pond = space for returning a referenced pointer to the pond.
+ *		      This must point to a space that has been initialzied
+ *		      to NULL by the caller.
+ * \param[in]  src  = A pointer to the pond to reference.  This must not be
+ *		      NULL.
+ *
+ * \return
+ * ISC_R_SUCCESS     = The pond was successfully referenced, pond now points
+ *		       to src.
+ * DHCP_R_INVALIDARG = One of the arugments was invalid, pond has not been
+ *		       modified.
+ */
+isc_result_t
+ipv6_pond_reference(struct ipv6_pond **pond, struct ipv6_pond *src,
+		    const char *file, int line) {
+	if (pond == NULL) {
+		log_error("%s(%d): NULL pointer reference", file, line);
+		return DHCP_R_INVALIDARG;
+	}
+	if (*pond != NULL) {
+		log_error("%s(%d): non-NULL pointer", file, line);
+		return DHCP_R_INVALIDARG;
+	}
+	if (src == NULL) {
+		log_error("%s(%d): NULL pointer reference", file, line);
+		return DHCP_R_INVALIDARG;
+	}
+	*pond = src;
+	src->refcnt++;
+	return ISC_R_SUCCESS;
+}
+
+/*!
+ *
+ * \brief de-reference an IPv6 pond structure.
+ *
+ * This function decrements the reference count in an ipv6_pond structure.
+ * If this was the last reference then the memory for the structure is
+ * freed.
+ *
+ * \param[in] pond = A pointer to the pointer to the pond that should be
+ *		     de-referenced.  On success the pointer to the pond
+ *		     is cleared.  It must not be NULL and must not point
+ *		     to NULL.
+ *
+ * \return
+ * ISC_R_SUCCESS     = The pond was successfully de-referenced, pond now points
+ *		       to NULL
+ * DHCP_R_INVALIDARG = One of the arugments was invalid, pond has not been
+ *		       modified.
+ */
+
+isc_result_t
+ipv6_pond_dereference(struct ipv6_pond **pond, const char *file, int line) {
+	struct ipv6_pond *tmp;
+
+	if ((pond == NULL) || (*pond == NULL)) {
+		log_error("%s(%d): NULL pointer", file, line);
+		return DHCP_R_INVALIDARG;
+	}
+
+	tmp = *pond;
+	*pond = NULL;
+
+	tmp->refcnt--;
+	if (tmp->refcnt < 0) {
+		log_error("%s(%d): negative refcnt", file, line);
+		tmp->refcnt = 0;
+	}
+	if (tmp->refcnt == 0) {
+		dfree(tmp, file, line);
+	}
+
+	return ISC_R_SUCCESS;
 }
 
 /* unittest moved to server/tests/mdb6_unittest.c */

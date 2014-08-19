@@ -1,5 +1,5 @@
-/*	Id: reader.c,v 1.278 2012/03/22 18:51:41 plunky Exp 	*/	
-/*	$NetBSD: reader.c,v 1.1.1.6 2012/03/26 14:27:14 plunky Exp $	*/
+/*	Id: reader.c,v 1.288 2014/06/01 11:33:52 ragge Exp 	*/	
+/*	$NetBSD: reader.c,v 1.1.1.6.2.1 2014/08/19 23:52:09 tls Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -77,13 +77,11 @@ int fregs;
 int p2autooff, p2maxautooff;
 
 NODE *nodepole;
-FILE *prfil;
 struct interpass prepole;
 
 void saveip(struct interpass *ip);
 void deltemp(NODE *p, void *);
 static void cvtemps(struct interpass *ipole, int op, int off);
-NODE *store(NODE *);
 static void fixxasm(struct p2env *);
 
 static void gencode(NODE *p, int cookie);
@@ -186,7 +184,7 @@ sanitychecks(struct p2env *p2e)
  * a new place, and remove the move-to-temp statement.
  */
 static int
-stkarg(int tnr, int (*soff)[2])
+stkarg(int tnr, int *soff)
 {
 	struct p2env *p2e = &p2env;
 	struct interpass *ip;
@@ -221,11 +219,9 @@ stkarg(int tnr, int (*soff)[2])
 		    p->n_left->n_op == PLUS &&
 		    p->n_left->n_left->n_op == REG &&
 		    p->n_left->n_right->n_op == ICON) {
-			soff[0][0] = regno(p->n_left->n_left);
-			soff[0][1] = (int)p->n_left->n_right->n_lval;
+			soff[0] = (int)p->n_left->n_right->n_lval;
 		} else if (p->n_op == OREG) {
-			soff[0][0] = regno(p);
-			soff[0][1] = (int)p->n_lval;
+			soff[0] = (int)p->n_lval;
 		} else
 			comperr("stkarg: bad arg");
 		tfree(ip->ip_node);
@@ -242,18 +238,17 @@ stkarg(int tnr, int (*soff)[2])
 static void
 findaof(NODE *p, void *arg)
 {
-	int (*aof)[2] = arg;
+	int *aof = arg;
 	int tnr;
 
 	if (p->n_op != ADDROF || p->n_left->n_op != TEMP)
 		return;
 	tnr = regno(p->n_left);
-	if (aof[tnr][0])
+	if (aof[tnr])
 		return; /* already gotten stack address */
 	if (stkarg(tnr, &aof[tnr]))
 		return;	/* argument was on stack */
-	aof[tnr][0] = FPREG;
-	aof[tnr][1] = BITOOR(freetemp(szty(p->n_left->n_type)));
+	aof[tnr] = freetemp(szty(p->n_left->n_type));
 }
 
 /*
@@ -329,7 +324,7 @@ pass2_compile(struct interpass *ip)
 {
 	void deljumps(struct p2env *);
 	struct p2env *p2e = &p2env;
-	int (*addrp)[2];
+	int *addrp;
 	MARK mark;
 
 	if (ip->type == IP_PROLOG) {
@@ -410,7 +405,7 @@ pass2_compile(struct interpass *ip)
 	optimize(p2e);
 	ngenregs(p2e);
 
-	if (xssa && xtemps && xdeljumps)
+	if (xtemps && xdeljumps)
 		deljumps(p2e);
 
 	DLIST_FOREACH(ip, &p2e->ipole, qelem)
@@ -430,10 +425,12 @@ emit(struct interpass *ip)
 
 		nodepole = p;
 		canon(p); /* may convert stuff after genregs */
+#ifdef PCC_DEBUG
 		if (c2debug > 1) {
 			printf("emit IP_NODE:\n");
 			fwalk(p, e2print, 0);
 		}
+#endif
 		switch (p->n_op) {
 		case CBRANCH:
 			/* Only emit branch insn if RESCC */
@@ -683,27 +680,6 @@ again:	switch (o = p->n_op) {
 	return rv;
 }
 
-/*
- * Store a given subtree in a temporary location.
- * Return an OREG node where it is located.
- */
-NODE *
-store(NODE *p)
-{
-	extern struct interpass *storesave;
-	struct interpass *ip;
-	NODE *q, *r;
-	int s;
-
-	s = BITOOR(freetemp(szty(p->n_type)));
-	q = mklnode(OREG, s, FPREG, p->n_type);
-	r = mklnode(OREG, s, FPREG, p->n_type);
-	ip = ipnode(mkbinode(ASSIGN, q, p, p->n_type));
-
-	storesave = ip;
-	return r;
-}
-
 #ifdef PCC_DEBUG
 #define	CDEBUG(x) if (c2debug) printf x
 #else
@@ -797,7 +773,7 @@ void
 genxasm(NODE *p)
 {
 	NODE *q, **nary;
-	int n = 1, o = 0;
+	int n = 1, o = 0, v = 0;
 	char *w;
 
 	if (p->n_left->n_op != ICON || p->n_left->n_type != STRTY) {
@@ -822,7 +798,16 @@ genxasm(NODE *p)
 				putchar('%');
 			else if (XASM_TARGARG(w, nary))
 				; /* handled by target */
-			else if (w[1] < '0' || w[1] > (n + '0'))
+			else if (w[1] == '=') {
+				if (v == 0) v = getlab2();
+				printf("%d", v);
+			} else if (w[1] == 'c') {
+				q = nary[(int)w[2]-'0']; 
+				if (q->n_left->n_op != ICON)
+					uerror("impossible constraint");
+				printf(CONFMT, q->n_left->n_lval);
+				w++;
+			} else if (w[1] < '0' || w[1] > (n + '0'))
 				uerror("bad xasm arg number %c", w[1]);
 			else {
 				if (w[1] == (n + '0'))
@@ -867,11 +852,15 @@ allo(NODE *p, struct optab *q)
 	if (i > NRESC)
 		comperr("allo: too many allocs");
 	if (q->needs & NTMASK) {
+#ifdef	MYALLOTEMP
+		MYALLOTEMP(resc[i], stktemp);
+#else
 		resc[i].n_op = OREG;
 		resc[i].n_lval = stktemp;
 		resc[i].n_rval = FPREG;
 		resc[i].n_su = p->n_su; /* ??? */
 		resc[i].n_name = "";
+#endif
 	}
 }
 
@@ -1054,58 +1043,57 @@ e2print(NODE *p, int down, int *a, int *b)
 	extern int tablesize;
 #endif
 
-	prfil = stdout;
 	*a = *b = down+1;
 	while( down >= 2 ){
-		fprintf(prfil, "\t");
+		printf("\t");
 		down -= 2;
 		}
-	if( down-- ) fprintf(prfil, "    " );
+	if( down-- ) printf("    " );
 
 
-	fprintf(prfil, "%p) %s", p, opst[p->n_op] );
+	printf("%p) %s", p, opst[p->n_op] );
 	switch( p->n_op ) { /* special cases */
 
 	case FLD:
-		fprintf(prfil, " sz=%d, shift=%d",
+		printf(" sz=%d, shift=%d",
 		    UPKFSZ(p->n_rval), UPKFOFF(p->n_rval));
 		break;
 
 	case REG:
-		fprintf(prfil, " %s", rnames[p->n_rval] );
+		printf(" %s", rnames[p->n_rval] );
 		break;
 
 	case TEMP:
-		fprintf(prfil, " %d", regno(p));
+		printf(" %d", regno(p));
 		break;
 
 	case XASM:
 	case XARG:
-		fprintf(prfil, " '%s'", p->n_name);
+		printf(" '%s'", p->n_name);
 		break;
 
 	case ICON:
 	case NAME:
 	case OREG:
-		fprintf(prfil, " " );
-		adrput(prfil, p );
+		printf(" " );
+		adrput(stdout, p );
 		break;
 
 	case STCALL:
 	case USTCALL:
 	case STARG:
 	case STASG:
-		fprintf(prfil, " size=%d", p->n_stsize );
-		fprintf(prfil, " align=%d", p->n_stalign );
+		printf(" size=%d", p->n_stsize );
+		printf(" align=%d", p->n_stalign );
 		break;
 		}
 
-	fprintf(prfil, ", " );
-	tprint(prfil, p->n_type, p->n_qual);
-	fprintf(prfil, ", " );
+	printf(", " );
+	tprint(p->n_type, p->n_qual);
+	printf(", " );
 
-	prtreg(prfil, p);
-	fprintf(prfil, ", SU= %d(%cREG,%s,%s,%s,%s,%s,%s)\n",
+	prtreg(p);
+	printf(", SU= %d(%cREG,%s,%s,%s,%s,%s,%s)\n",
 	    TBLIDX(p->n_su), 
 	    TCLASS(p->n_su)+'@',
 #ifdef PRTABLE
@@ -1126,20 +1114,16 @@ e2print(NODE *p, int down, int *a, int *b)
 void
 deltemp(NODE *p, void *arg)
 {
-	int (*aor)[2] = arg;
-	NODE *l, *r;
+	int *aor = arg;
+	NODE *l;
 
 	if (p->n_op == TEMP) {
-		if (aor[regno(p)][0] == 0) {
+		if (aor[regno(p)] == 0) {
 			if (xtemps)
 				return;
-			aor[regno(p)][0] = FPREG;
-			aor[regno(p)][1] = BITOOR(freetemp(szty(p->n_type)));
+			aor[regno(p)] = freetemp(szty(p->n_type));
 		}
-		l = mklnode(REG, 0, aor[regno(p)][0], INCREF(p->n_type));
-		r = mklnode(ICON, aor[regno(p)][1], 0, INT);
-		p->n_left = mkbinode(PLUS, l, r, INCREF(p->n_type));
-		p->n_op = UMUL;
+		storemod(p, aor[regno(p)]);
 	} else if (p->n_op == ADDROF && p->n_left->n_op == OREG) {
 		p->n_op = PLUS;
 		l = p->n_left;
@@ -1284,13 +1268,13 @@ oreg2(NODE *p, void *arg)
 }
 
 void
-canon(p) NODE *p; {
+canon(NODE *p)
+{
 	/* put p in canonical form */
 
 	walkf(p, setleft, 0);	/* ptrs at left node for arithmetic */
 	walkf(p, oreg2, 0);	/* look for and create OREG nodes */
 	mycanon(p);		/* your own canonicalization routine(s) */
-
 }
 
 void
@@ -1310,7 +1294,6 @@ comperr(char *str, ...)
 	vfprintf(stderr, str, ap);
 	fprintf(stderr, "\n");
 	va_end(ap);
-	prfil = stderr;
 
 #ifdef PCC_DEBUG
 	if (nodepole && nodepole->n_op != FREE)
@@ -1323,40 +1306,55 @@ comperr(char *str, ...)
  * allocate k integers worth of temp space
  * we also make the convention that, if the number of words is
  * more than 1, it must be aligned for storing doubles...
- * Returns bits offset from base register.
- * XXX - redo this.
+ * Returns bytes offset from base register.
  */
 int
 freetemp(int k)
 {
+	int t, al, sz;
+
+	al = (k > 1 ? ALDOUBLE/ALCHAR : ALINT/ALCHAR);
+	sz = k * (SZINT/SZCHAR);
+
 #ifndef BACKTEMP
-	int t;
-
-	if (k > 1) {
-		SETOFF(p2autooff, ALDOUBLE/ALCHAR);
-	} else {
-		SETOFF(p2autooff, ALINT/ALCHAR);
-	}
-
+	SETOFF(p2autooff, al);
 	t = p2autooff;
-	p2autooff += k*(SZINT/SZCHAR);
+	p2autooff += sz;
+#else
+	p2autooff += sz;
+	SETOFF(p2autooff, al);
+	t = ( -p2autooff );
+#endif
 	if (p2autooff > p2maxautooff)
 		p2maxautooff = p2autooff;
 	return (t);
+}
 
-#else
-	p2autooff += k*(SZINT/SZCHAR);
-	if (k > 1) {
-		SETOFF(p2autooff, ALDOUBLE/ALCHAR);
-	} else {
-		SETOFF(p2autooff, ALINT/ALCHAR);
-	}
+NODE *
+storenode(TWORD t, int off)
+{
+	NODE *p;
 
-	if (p2autooff > p2maxautooff)
-		p2maxautooff = p2autooff;
-	return( -p2autooff );
+	p = talloc();
+	p->n_type = t;
+	storemod(p, off);
+	return p;
+}
+
+#ifndef MYSTOREMOD
+void
+storemod(NODE *q, int off)
+{
+	NODE *l, *r, *p;
+
+	l = mklnode(REG, 0, FPREG, INCREF(q->n_type));
+	r = mklnode(ICON, off, 0, INT);
+	p = mkbinode(PLUS, l, r, INCREF(q->n_type));
+	q->n_op = UMUL;
+	q->n_left = p;
+	q->n_rval = q->n_su = 0;
+}
 #endif
-	}
 
 NODE *
 mklnode(int op, CONSZ lval, int rval, TWORD type)
@@ -1450,6 +1448,10 @@ delnums(NODE *p, void *arg)
 	TWORD t;
 	int cnt, num;
 
+	/* gcc allows % in constraints, but we ignore it */
+	if (p->n_name[0] == '%' && p->n_name[1] >= '0' && p->n_name[1] <= '9')
+		p->n_name++;
+
 	if (p->n_name[0] < '0' || p->n_name[0] > '9')
 		return; /* not numeric */
 	if ((q = listarg(r, p->n_name[0] - '0', &cnt)) == NIL)
@@ -1514,10 +1516,11 @@ again:
 			p->n_name = "i";
 			break;
 		}
+		/* FALLTHROUGH */
 	case 'r': /* general reg */
 		/* set register class */
 		p->n_label = gclass(p->n_left->n_type);
-		if (p->n_left->n_op == REG)
+		if (p->n_left->n_op == REG || p->n_left->n_op == TEMP)
 			break;
 		q = p->n_left;
 		r = (cw & XASMINOUT ? tcopy(q) : q);
@@ -1542,7 +1545,7 @@ again:
 		q = p->n_left;
 		if (optype(q->n_op) == LTYPE) {
 			if (q->n_op == TEMP) {
-				ooff = BITOOR(freetemp(szty(t)));
+				ooff = freetemp(szty(t));
 				cvtemps(ip, q->n_rval, ooff);
 			} else if (q->n_op == REG)
 				comperr("xasm m and reg");
@@ -1641,9 +1644,7 @@ xconv(NODE *p, void *arg)
 {
 	if (p->n_op != TEMP || p->n_rval != xasnum)
 		return;
-	p->n_op = OREG;
-	p->n_rval = FPREG;
-	p->n_lval = xoffnum;
+	storemod(p, xoffnum);
 }
 
 /*

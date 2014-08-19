@@ -3,7 +3,7 @@
 # objdump: -dr --prefix-addresses --show-raw-insn
 # The arm-aout and arm-pe ports do not support Thumb branch relocations.
 # EABI targets have their own variant.
-# not-target: *-*-*aout* *-*-pe *-*-*eabi *-*-symbianelf
+# not-target: *-*-*aout* *-*-pe *-*-*eabi *-*-symbianelf *-*-nacl*
 
 .*: +file format .*arm.*
 

@@ -1,8 +1,8 @@
-/* $NetBSD: ipv4.h,v 1.1.1.1.2.2 2013/06/23 06:26:31 tls Exp $ */
+/* $NetBSD: ipv4.h,v 1.1.1.1.2.3 2014/08/19 23:46:43 tls Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2013 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -38,55 +38,57 @@ struct rt {
 	struct in_addr net;
 	struct in_addr gate;
 	const struct interface *iface;
-	int metric;
+	unsigned int metric;
 	struct in_addr src;
 };
 TAILQ_HEAD(rt_head, rt);
 
+struct ipv4_addr {
+	TAILQ_ENTRY(ipv4_addr) next;
+	struct in_addr addr;
+	struct in_addr net;
+	struct in_addr dst;
+};
+TAILQ_HEAD(ipv4_addrhead, ipv4_addr);
+
+struct ipv4_state {
+	struct ipv4_addrhead addrs;
+};
+
+#define IPV4_STATE(ifp)							       \
+	((struct ipv4_state *)(ifp)->if_data[IF_DATA_IPV4])
+#define IPV4_CSTATE(ifp)						       \
+	((const struct ipv4_state *)(ifp)->if_data[IF_DATA_IPV4])
+
 #ifdef INET
-int ipv4_init(void);
-int inet_ntocidr(struct in_addr);
+int ipv4_init(struct dhcpcd_ctx *);
+void ipv4_sortinterfaces(struct dhcpcd_ctx *);
+uint8_t inet_ntocidr(struct in_addr);
 int inet_cidrtoaddr(int, struct in_addr *);
 uint32_t ipv4_getnetmask(uint32_t);
+int ipv4_addrexists(struct dhcpcd_ctx *, const struct in_addr *);
 
-void ipv4_buildroutes(void);
+void ipv4_buildroutes(struct dhcpcd_ctx *);
 void ipv4_applyaddr(void *);
-int ipv4_routedeleted(const struct rt *);
+int ipv4_routedeleted(struct dhcpcd_ctx *, const struct rt *);
 
-void ipv4_handleifa(int, const char *,
-    struct in_addr *, struct in_addr *, struct in_addr *);
+struct ipv4_addr *ipv4_findaddr(struct interface *,
+    const struct in_addr *, const struct in_addr *);
+void ipv4_handleifa(struct dhcpcd_ctx *, int, struct if_head *, const char *,
+    const struct in_addr *, const struct in_addr *, const struct in_addr *);
 
-int ipv4_doaddress(const char *,
-    struct in_addr *, struct in_addr *, struct in_addr *, int);
-int if_address(const struct interface *,
-    const struct in_addr *, const struct in_addr *,
-    const struct in_addr *, int);
-#define ipv4_addaddress(iface, addr, net, brd)				      \
-	if_address(iface, addr, net, brd, 1)
-#define ipv4_setaddress(iface, addr, net, brd)				      \
-	if_address(iface, addr, net, brd, 2)
-#define ipv4_deleteaddress(iface, addr, net)				      \
-	if_address(iface, addr, net, NULL, -1)
-#define ipv4_hasaddress(iface, addr, net)				      \
-	ipv4_doaddress(iface, addr, net, NULL, 0)
-#define ipv4_getaddress(iface, addr, net, dst)				      \
-	ipv4_doaddress(iface, addr, net, dst, 1)
-
-int if_route(const struct rt *rt, int);
-#define ipv4_addroute(rt) if_route(rt, 1)
-#define ipv4_changeroute(rt) if_route(rt, 0)
-#define ipv4_deleteroute(rt) if_route(rt, -1)
-#define del_src_route(rt) i_route(rt, -2);
 void ipv4_freeroutes(struct rt_head *);
 
-int ipv4_opensocket(struct interface *, int);
-ssize_t ipv4_sendrawpacket(const struct interface *,
-    int, const void *, ssize_t);
-ssize_t ipv4_getrawpacket(struct interface *, int, void *, ssize_t, int *);
+void ipv4_free(struct interface *);
+void ipv4_ctxfree(struct dhcpcd_ctx *);
 #else
-#define ipv4_init() -1
+#define ipv4_init(a) (-1)
+#define ipv4_sortinterfaces(a) {}
 #define ipv4_applyaddr(a) {}
 #define ipv4_freeroutes(a) {}
+#define ipv4_free(a) {}
+#define ipv4_ctxfree(a) {}
+#define ipv4_addrexists(a, b) (0)
 #endif
 
 #endif

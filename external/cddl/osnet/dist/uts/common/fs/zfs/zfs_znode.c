@@ -497,7 +497,9 @@ zfs_create_share_dir(zfsvfs_t *zfsvfs, dmu_tx_t *tx)
 	zfs_mknode(sharezp, &vattr, tx, kcred, IS_ROOT_NODE,
 	    &zp, 0, &acl_ids);
 	ASSERT3P(zp, ==, sharezp);
+#ifndef __NetBSD__
 	ASSERT(!vn_in_dnlc(ZTOV(sharezp))); /* not valid to move */
+#endif
 	POINTER_INVALIDATE(&sharezp->z_zfsvfs);
 	error = zap_add(zfsvfs->z_os, MASTER_NODE_OBJ,
 	    ZFS_SHARES_DIR, 8, 1, &sharezp->z_id, tx);
@@ -1618,6 +1620,7 @@ zfs_create_fs(objset_t *os, cred_t *cr, nvlist_t *zplprops, dmu_tx_t *tx)
 
 	ASSERT(error == 0);
 
+	mutex_destroy(&zfsvfs.z_znodes_lock);
 	for (i = 0; i != ZFS_OBJ_MTX_SZ; i++)
 		mutex_destroy(&zfsvfs.z_hold_mtx[i]);
 }
@@ -1680,7 +1683,8 @@ zfs_obj_to_path(objset_t *osp, uint64_t obj, char *buf, int len)
 
 		component[0] = '/';
 		if (is_xattrdir) {
-			(void) sprintf(component + 1, "<xattrdir>");
+			(void) snprintf(component + 1, sizeof(component) - 1,
+			    "<xattrdir>");
 		} else {
 			error = zap_value_search(osp, pobj, obj,
 			    ZFS_DIRENT_OBJ(-1ULL), component + 1);

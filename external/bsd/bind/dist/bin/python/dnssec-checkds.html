@@ -1,19 +1,18 @@
 <!--
- - Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
- -
+ - Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+ - 
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
- -
+ - 
  - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
  - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - AND FITNESS. IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
  - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
  - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-
 <!-- Id -->
 <html>
 <head>
@@ -22,18 +21,18 @@
 <meta name="generator" content="DocBook XSL Stylesheets V1.71.1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en">
-<a name="man.dnssec-dsfromkey"></a><div class="titlepage"></div>
+<a name="man.dnssec-checkds"></a><div class="titlepage"></div>
 <div class="refnamediv">
 <h2>Name</h2>
-<p><span class="application">dnssec-dsfromkey</span> &#8212; DNSSEC DS RR generation tool</p>
+<p><span class="application">dnssec-checkds</span> &#8212; A DNSSEC delegation consistency checking tool.</p>
 </div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
-<div class="cmdsynopsis"><p><code class="command">dnssec-chedkcs</code>  [<code class="option">-l <em class="replaceable"><code>domain</code></em></code>] [<code class="option">-f <em class="replaceable"><code>file</code></em></code>] [<code class="option">-d <em class="replaceable"><code>dig path</code></em></code>] [<code class="option">-D <em class="replaceable"><code>dsfromkey path</code></em></code>] {zone}</p></div>
+<div class="cmdsynopsis"><p><code class="command">dnssec-checkds</code>  [<code class="option">-l <em class="replaceable"><code>domain</code></em></code>] [<code class="option">-f <em class="replaceable"><code>file</code></em></code>] [<code class="option">-d <em class="replaceable"><code>dig path</code></em></code>] [<code class="option">-D <em class="replaceable"><code>dsfromkey path</code></em></code>] {zone}</p></div>
 <div class="cmdsynopsis"><p><code class="command">dnssec-dsfromkey</code>  [<code class="option">-l <em class="replaceable"><code>domain</code></em></code>] [<code class="option">-f <em class="replaceable"><code>file</code></em></code>] [<code class="option">-d <em class="replaceable"><code>dig path</code></em></code>] [<code class="option">-D <em class="replaceable"><code>dsfromkey path</code></em></code>] {zone}</p></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2543418"></a><h2>DESCRIPTION</h2>
+<a name="id2543426"></a><h2>DESCRIPTION</h2>
 <p><span><strong class="command">dnssec-checkds</strong></span>
       verifies the correctness of Delegation Signer (DS) or DNSSEC
       Lookaside Validation (DLV) resource records for keys in a specified
@@ -41,7 +40,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2543430"></a><h2>OPTIONS</h2>
+<a name="id2543437"></a><h2>OPTIONS</h2>
 <div class="variablelist"><dl>
 <dt><span class="term">-f <em class="replaceable"><code>file</code></em></span></dt>
 <dd><p>
@@ -70,14 +69,14 @@
 </dl></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2543526"></a><h2>SEE ALSO</h2>
+<a name="id2543533"></a><h2>SEE ALSO</h2>
 <p><span class="citerefentry"><span class="refentrytitle">dnssec-dsfromkey</span>(8)</span>,
       <span class="citerefentry"><span class="refentrytitle">dnssec-keygen</span>(8)</span>,
       <span class="citerefentry"><span class="refentrytitle">dnssec-signzone</span>(8)</span>,
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2543560"></a><h2>AUTHOR</h2>
+<a name="id2543568"></a><h2>AUTHOR</h2>
 <p><span class="corpauthor">Internet Systems Consortium</span>
     </p>
 </div>

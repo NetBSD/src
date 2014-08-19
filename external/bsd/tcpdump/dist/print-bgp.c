@@ -40,7 +40,7 @@
 static const char rcsid[] _U_ =
      "@(#) Header: /tcpdump/master/tcpdump/print-bgp.c,v 1.118 2007-12-07 15:54:52 hannes Exp ";
 #else
-__RCSID("$NetBSD: print-bgp.c,v 1.2.12.1 2013/06/23 06:28:29 tls Exp $");
+__RCSID("$NetBSD: print-bgp.c,v 1.2.12.2 2014/08/19 23:52:14 tls Exp $");
 #endif
 #endif
 
@@ -70,7 +70,7 @@ struct bgp {
 #define BGP_KEEPALIVE		4
 #define BGP_ROUTE_REFRESH       5
 
-static struct tok bgp_msg_values[] = {
+static const struct tok bgp_msg_values[] = {
     { BGP_OPEN,                 "Open"},
     { BGP_UPDATE,               "Update"},
     { BGP_NOTIFICATION,         "Notification"},
@@ -147,7 +147,7 @@ struct bgp_route_refresh {
 
 #define BGP_MP_NLRI_MINSIZE              3       /* End of RIB Marker detection */
 
-static struct tok bgp_attr_values[] = {
+static const struct tok bgp_attr_values[] = {
     { BGPTYPE_ORIGIN,           "Origin"},
     { BGPTYPE_AS_PATH,          "AS Path"},
     { BGPTYPE_AS4_PATH,         "AS4 Path"},
@@ -180,7 +180,7 @@ static struct tok bgp_attr_values[] = {
 #define BGP_AS_SEG_TYPE_MIN    BGP_AS_SET
 #define BGP_AS_SEG_TYPE_MAX    BGP_CONFED_AS_SET
 
-static struct tok bgp_as_path_segment_open_values[] = {
+static const struct tok bgp_as_path_segment_open_values[] = {
     { BGP_AS_SEQUENCE,         ""},
     { BGP_AS_SET,              "{ "},
     { BGP_CONFED_AS_SEQUENCE,  "( "},
@@ -188,7 +188,7 @@ static struct tok bgp_as_path_segment_open_values[] = {
     { 0, NULL}
 };
 
-static struct tok bgp_as_path_segment_close_values[] = {
+static const struct tok bgp_as_path_segment_close_values[] = {
     { BGP_AS_SEQUENCE,         ""},
     { BGP_AS_SET,              "}"},
     { BGP_CONFED_AS_SEQUENCE,  ")"},
@@ -200,7 +200,7 @@ static struct tok bgp_as_path_segment_close_values[] = {
 #define BGP_OPT_CAP                     2
 
 
-static struct tok bgp_opt_values[] = {
+static const struct tok bgp_opt_values[] = {
     { BGP_OPT_AUTH,             "Authentication Information"},
     { BGP_OPT_CAP,              "Capabilities Advertisement"},
     { 0, NULL}
@@ -214,7 +214,7 @@ static struct tok bgp_opt_values[] = {
 #define BGP_CAPCODE_DYN_CAP            67 /* XXX */
 #define BGP_CAPCODE_RR_CISCO          128
 
-static struct tok bgp_capcode_values[] = {
+static const struct tok bgp_capcode_values[] = {
     { BGP_CAPCODE_MP,           "Multiprotocol Extensions"},
     { BGP_CAPCODE_RR,           "Route Refresh"},
     { BGP_CAPCODE_ORF,          "Cooperative Route Filtering"},
@@ -233,7 +233,7 @@ static struct tok bgp_capcode_values[] = {
 #define BGP_NOTIFY_MAJOR_CEASE          6
 #define BGP_NOTIFY_MAJOR_CAP            7
 
-static struct tok bgp_notify_major_values[] = {
+static const struct tok bgp_notify_major_values[] = {
     { BGP_NOTIFY_MAJOR_MSG,     "Message Header Error"},
     { BGP_NOTIFY_MAJOR_OPEN,    "OPEN Message Error"},
     { BGP_NOTIFY_MAJOR_UPDATE,  "UPDATE Message Error"},
@@ -246,7 +246,7 @@ static struct tok bgp_notify_major_values[] = {
 
 /* draft-ietf-idr-cease-subcode-02 */
 #define BGP_NOTIFY_MINOR_CEASE_MAXPRFX  1
-static struct tok bgp_notify_minor_cease_values[] = {
+static const struct tok bgp_notify_minor_cease_values[] = {
     { BGP_NOTIFY_MINOR_CEASE_MAXPRFX, "Maximum Number of Prefixes Reached"},
     { 2,                        "Administratively Shutdown"},
     { 3,                        "Peer Unconfigured"},
@@ -257,14 +257,14 @@ static struct tok bgp_notify_minor_cease_values[] = {
     { 0, NULL}
 };
 
-static struct tok bgp_notify_minor_msg_values[] = {
+static const struct tok bgp_notify_minor_msg_values[] = {
     { 1,                        "Connection Not Synchronized"},
     { 2,                        "Bad Message Length"},
     { 3,                        "Bad Message Type"},
     { 0, NULL}
 };
 
-static struct tok bgp_notify_minor_open_values[] = {
+static const struct tok bgp_notify_minor_open_values[] = {
     { 1,                        "Unsupported Version Number"},
     { 2,                        "Bad Peer AS"},
     { 3,                        "Bad BGP Identifier"},
@@ -275,7 +275,7 @@ static struct tok bgp_notify_minor_open_values[] = {
     { 0, NULL}
 };
 
-static struct tok bgp_notify_minor_update_values[] = {
+static const struct tok bgp_notify_minor_update_values[] = {
     { 1,                        "Malformed Attribute List"},
     { 2,                        "Unrecognized Well-known Attribute"},
     { 3,                        "Missing Well-known Attribute"},
@@ -290,7 +290,7 @@ static struct tok bgp_notify_minor_update_values[] = {
     { 0, NULL}
 };
 
-static struct tok bgp_notify_minor_cap_values[] = {
+static const struct tok bgp_notify_minor_cap_values[] = {
     { 1,                        "Invalid Action Value" },
     { 2,                        "Invalid Capability Length" },
     { 3,                        "Malformed Capability Value" },
@@ -298,7 +298,7 @@ static struct tok bgp_notify_minor_cap_values[] = {
     { 0, NULL }
 };
 
-static struct tok bgp_origin_values[] = {
+static const struct tok bgp_origin_values[] = {
     { 0,                        "IGP"},
     { 1,                        "EGP"},
     { 2,                        "Incomplete"},
@@ -313,7 +313,7 @@ static struct tok bgp_origin_values[] = {
 #define BGP_PMSI_TUNNEL_INGRESS   6
 #define BGP_PMSI_TUNNEL_LDP_MP2MP 7
 
-static struct tok bgp_pmsi_tunnel_values[] = {
+static const struct tok bgp_pmsi_tunnel_values[] = {
     { BGP_PMSI_TUNNEL_RSVP_P2MP, "RSVP-TE P2MP LSP"},
     { BGP_PMSI_TUNNEL_LDP_P2MP, "LDP P2MP LSP"},
     { BGP_PMSI_TUNNEL_PIM_SSM, "PIM-SSM Tree"},
@@ -324,7 +324,7 @@ static struct tok bgp_pmsi_tunnel_values[] = {
     { 0, NULL}
 };
 
-static struct tok bgp_pmsi_flag_values[] = {
+static const struct tok bgp_pmsi_flag_values[] = {
     { 0x01, "Leaf Information required"},
     { 0, NULL}
 };
@@ -352,7 +352,7 @@ static struct tok bgp_pmsi_flag_values[] = {
 
 #define BGP_VPN_RD_LEN                  8
 
-static struct tok bgp_safi_values[] = {
+static const struct tok bgp_safi_values[] = {
     { SAFNUM_RES,               "Reserved"},
     { SAFNUM_UNICAST,           "Unicast"},
     { SAFNUM_MULTICAST,         "Multicast"},
@@ -410,13 +410,13 @@ static struct tok bgp_safi_values[] = {
 #define BGP_EXT_COM_EIGRP_EXT_REMAS_REMID  0x8804
 #define BGP_EXT_COM_EIGRP_EXT_REMPROTO_REMMETRIC 0x8805
 
-static struct tok bgp_extd_comm_flag_values[] = {
+static const struct tok bgp_extd_comm_flag_values[] = {
     { 0x8000,                  "vendor-specific"},
     { 0x4000,                  "non-transitive"},
     { 0, NULL},
 };
 
-static struct tok bgp_extd_comm_subtype_values[] = {
+static const struct tok bgp_extd_comm_subtype_values[] = {
     { BGP_EXT_COM_RT_0,        "target"},
     { BGP_EXT_COM_RT_1,        "target"},
     { BGP_EXT_COM_RT_2,        "target"},
@@ -455,7 +455,7 @@ static struct tok bgp_extd_comm_subtype_values[] = {
 #define BGP_OSPF_RTYPE_SHAM     129 /* OSPF-MPLS-VPN Sham link */
 #define BGP_OSPF_RTYPE_METRIC_TYPE 0x1 /* LSB of RTYPE Options Field */
 
-static struct tok bgp_extd_comm_ospf_rtype_values[] = {
+static const struct tok bgp_extd_comm_ospf_rtype_values[] = {
   { BGP_OSPF_RTYPE_RTR, "Router" },  
   { BGP_OSPF_RTYPE_NET, "Network" },  
   { BGP_OSPF_RTYPE_SUM, "Summary" },  
@@ -843,7 +843,7 @@ return -2;
 #define BGP_MULTICAST_VPN_ROUTE_TYPE_SHARED_TREE_JOIN  6
 #define BGP_MULTICAST_VPN_ROUTE_TYPE_SOURCE_TREE_JOIN  7
 
-static struct tok bgp_multicast_vpn_route_type_values[] = {
+static const struct tok bgp_multicast_vpn_route_type_values[] = {
     { BGP_MULTICAST_VPN_ROUTE_TYPE_INTRA_AS_I_PMSI, "Intra-AS I-PMSI"},
     { BGP_MULTICAST_VPN_ROUTE_TYPE_INTER_AS_I_PMSI, "Inter-AS I-PMSI"},
     { BGP_MULTICAST_VPN_ROUTE_TYPE_S_PMSI, "S-PMSI"},
@@ -1536,8 +1536,12 @@ bgp_attr_print(u_int atype, const u_char *pptr, u_int len)
                 tptr++;
 
 		if (tlen) {
+                    int nnh = 0;
                     printf("\n\t    nexthop: ");
                     while (tlen > 0) {
+                        if ( nnh++ > 0 ) {
+                            printf( ", " );
+                        }
                         switch(af<<8 | safi) {
                         case (AFNUM_INET<<8 | SAFNUM_UNICAST):
                         case (AFNUM_INET<<8 | SAFNUM_MULTICAST):

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2011/09/23 15:24:35 jruoho Exp $
+# $NetBSD: Makefile,v 1.7.8.1 2014/08/19 23:45:22 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -54,6 +54,7 @@ EXTDIST=${.CURDIR}/../dist
 INCS+= saslc.h
 INCSDIR=/usr/include
 
+LIBDPLIBS+= crypto ${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto
 LIBDPLIBS+= ssl ${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libssl
 .if (${MKKERBEROS} != "no")
 LIBDPLIBS+= gssapi ${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/libgssapi

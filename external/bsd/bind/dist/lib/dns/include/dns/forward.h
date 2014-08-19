@@ -1,7 +1,7 @@
-/*	$NetBSD: forward.h,v 1.3 2012/06/05 00:41:48 christos Exp $	*/
+/*	$NetBSD: forward.h,v 1.3.2.1 2014/08/19 23:46:29 tls Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,8 +31,16 @@
 
 ISC_LANG_BEGINDECLS
 
+struct dns_forwarder {
+	isc_sockaddr_t			addr;
+	isc_dscp_t			dscp;
+	ISC_LINK(dns_forwarder_t)	link;
+};
+
+typedef ISC_LIST(struct dns_forwarder)	dns_forwarderlist_t;
+
 struct dns_forwarders {
-	isc_sockaddrlist_t	addrs;
+	dns_forwarderlist_t	fwdrs;
 	dns_fwdpolicy_t		fwdpolicy;
 };
 
@@ -51,17 +59,22 @@ dns_fwdtable_create(isc_mem_t *mctx, dns_fwdtable_t **fwdtablep);
  */
 
 isc_result_t
+dns_fwdtable_addfwd(dns_fwdtable_t *fwdtable, dns_name_t *name,
+		    dns_forwarderlist_t *fwdrs, dns_fwdpolicy_t policy);
+isc_result_t
 dns_fwdtable_add(dns_fwdtable_t *fwdtable, dns_name_t *name,
 		 isc_sockaddrlist_t *addrs, dns_fwdpolicy_t policy);
 /*%<
  * Adds an entry to the forwarding table.  The entry associates
  * a domain with a list of forwarders and a forwarding policy.  The
- * addrs list is copied if not empty, so the caller should free its copy.
+ * addrs/fwdrs list is copied if not empty, so the caller should free
+ * its copy.
  *
  * Requires:
  * \li	fwdtable is a valid forwarding table.
  * \li	name is a valid name
- * \li	addrs is a valid list of sockaddrs, which may be empty.
+ * \li	addrs/fwdrs is a valid list of isc_sockaddr/dns_forwarder
+ *      structures, which may be empty.
  *
  * Returns:
  * \li	#ISC_R_SUCCESS

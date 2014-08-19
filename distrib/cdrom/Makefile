@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.49 2009/12/05 16:29:10 pooka Exp $
+# $NetBSD: Makefile,v 1.49.12.1 2014/08/19 23:45:38 tls Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -172,6 +172,7 @@ MACHINE_ARCH.news68k=	m68k
 MACHINE_ARCH.newsmips=	mipseb
 MACHINE_ARCH.next68k=	m68k
 MACHINE_ARCH.ofppc=	powerpc
+MACHINE_ARCH.playstation2=mipsel
 MACHINE_ARCH.pmax=	mipsel
 MACHINE_ARCH.prep=	powerpc
 MACHINE_ARCH.sandpoint=	powerpc
