@@ -1,4 +1,4 @@
-/*	$NetBSD: common_limits.h,v 1.1 2014/08/19 07:27:31 matt Exp $	*/
+/*	$NetBSD: common_limits.h,v 1.2 2014/08/19 15:46:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,31 +34,21 @@
 
 #define	CHAR_BIT	__CHAR_BIT__	/* number of bits in a char */
 
-#define	UCHAR_MAX	(2*__SCHAR_MAX__+1) /* max value for an unsigned char */
-#define	SCHAR_MAX	__SCHAR_MAX__	/* max value for a signed char */
 #define SCHAR_MIN	(-__SCHAR_MAX__-1) /* min value for a signed char */
+#define	SCHAR_MAX	__SCHAR_MAX__	/* max value for a signed char */
+#define	UCHAR_MAX	(2*SCHAR_MAX+1)	/* max value for an unsigned char */
 
-#define	USHRT_MAX	(2*__SHRT_MAX__+1) /* max value for an unsigned short */
-#define	SHRT_MAX	__SHRT_MAX__	/* max value for a short */
 #define	SHRT_MIN	(-__SHRT_MAX__-1) /* min value for a short */
+#define	SHRT_MAX	__SHRT_MAX__	/* max value for a short */
+#define	USHRT_MAX	(2*SHRT_MAX+1)	/* max value for an unsigned short */
 
-#if defined(__UINT_MAX__)
-#define	UINT_MAX	__UINT_MAX__	/* max value for an unsigned int */
-#else
-#define	UINT_MAX	0xffffffffU	/* max value for an unsigned int */
-#endif
-#define	INT_MAX		__INT_MAX__	/* max value for an int */
 #define	INT_MIN		(-__INT_MAX__-1) /* min value for an int */
+#define	INT_MAX		__INT_MAX__	/* max value for an int */
+#define	UINT_MAX	(2U*INT_MAX+1U)	/* max value for an unsigned int */
 
-#if defined(__ULONG_MAX__)
-#define	ULONG_MAX	__ULONG_MAX__	/* max value for an unsigned long */
-#elif __SIZEOF_LONG__ == __SIZEOF_LONG_LONG__
-#define	ULONG_MAX	0xffffffffffffffffUL	/* max unsigned long */
-#else
-#define	ULONG_MAX	0xffffffffUL	/* max unsigned long */
-#endif
-#define	LONG_MAX	__LONG_MAX__	/* max value for a long */
-#define	LONG_MIN	(-__LONG_MAX__-1)	/* min value for a long */
+#define	LONG_MIN	(-__LONG_MAX__-1L)	/* min value for a long */
+#define	LONG_MAX	__LONG_MAX__		/* max value for a long */
+#define	ULONG_MAX	(2UL*LONG_MAX+1UL)	/* max unsigned long */
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
@@ -66,13 +56,9 @@
 
 #if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
     defined(_NETBSD_SOURCE)
-#if defined(__ULONG_LONG_MAX__)
-#define	ULLONG_MAX	__ULONG_LONG_MAX__	/* max unsigned long long */
-#else
-#define	ULLONG_MAX	0xffffffffffffffffULL	/* max unsigned long long */
-#endif
+#define	LLONG_MIN	(-__LONG_LONG_MAX__-1LL) /* min signed long long */
 #define	LLONG_MAX	__LONG_LONG_MAX__	/* max signed long long */
-#define	LLONG_MIN	(-__LONG_LONG_MAX__-1)	/* min signed long long */
+#define	ULLONG_MAX	(2ULL*LLONG_MAX+1ULL)	/* max unsigned long long */
 #endif
 
 #if defined(_NETBSD_SOURCE)
