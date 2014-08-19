@@ -91,7 +91,7 @@
 #define IRQ_CPU_NFIQ_1			IRQ_SPI(67)
 #define IRQ_CPU_NFIQ_0			IRQ_SPI(66)
 #define IRQ_TMU				IRQ_SPI(65)
-#define IRQ_I2C				IRQ_SPI(64)
+#define IRQ_HDMI_I2C			IRQ_SPI(64)
 #define IRQ_I2C7			IRQ_SPI(63)
 #define IRQ_I2C6			IRQ_SPI(62)
 #define IRQ_I2C5			IRQ_SPI(61)
@@ -229,6 +229,16 @@ const struct exyo_locinfo exynos5_locinfo = {
 
 /* flag signal the use of gpio */
 static const struct exyo_locators exynos5_i2c_locators[] = {
+					/* busname, sdabit, slcbit, func */
+	{ "iic0", OFFANDSIZE(,I2C0), 0, IRQ_I2C0_USI0, 1 , "GPB3", 0, 1, 2 },
+	{ "iic1", OFFANDSIZE(,I2C1), 1, IRQ_I2C1_USI1, 1 , "GPB3", 2, 3, 2 },
+	{ "iic2", OFFANDSIZE(,I2C2), 2, IRQ_I2C2_USI2, 1 , "GPA0", 6, 7, 3 },
+	{ "iic3", OFFANDSIZE(,I2C3), 3, IRQ_I2C3_USI3, 1 , "GPA1", 2, 3, 3 },
+	{ "iic4", OFFANDSIZE(,I2C4), 4, IRQ_I2C4,      1 , "GPA2", 0, 1, 3 },
+	{ "iic5", OFFANDSIZE(,I2C5), 5, IRQ_I2C5,      1 , "GPA2", 2, 3, 3 },
+	{ "iic6", OFFANDSIZE(,I2C6), 6, IRQ_I2C6,      1 , "GPB1", 3, 4, 4 },
+	{ "iic7", OFFANDSIZE(,I2C7), 7, IRQ_I2C7,      1 , "GPB2", 2, 3, 3 },
+	{ "iic8", OFFANDSIZE(,I2CHDMI), 8, IRQ_HDMI_I2C, 0 , "", 0, 0, 0 },
 };
 
 
