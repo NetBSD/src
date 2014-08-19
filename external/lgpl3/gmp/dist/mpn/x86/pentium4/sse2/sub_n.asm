@@ -20,18 +20,14 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 include(`../config.m4')
 
 
-C P4 Willamette, Northwood: 4.0 cycles/limb if dst!=src1 and dst!=src2
-C			    6.0 cycles/limb if dst==src1 or dst==src2
-C P4 Prescott:		    >= 5 cycles/limb
-
-
-C mp_limb_t mpn_sub_n (mp_ptr dst, mp_srcptr src1, mp_srcptr src2,
-C                      mp_size_t size);
-C mp_limb_t mpn_sub_nc (mp_ptr dst, mp_srcptr src1, mp_srcptr src2,
-C                       mp_size_t size, mp_limb_t carry);
-C
-C The main loop code is 2x unrolled so that the carry bit can alternate
-C between mm0 and mm1.
+C					cycles/limb
+C			     dst!=src1,2  dst==src1  dst==src2
+C P6 model 0-8,10-12		-
+C P6 model 9   (Banias)		?
+C P6 model 13  (Dothan)		?
+C P4 model 0-1 (Willamette)	?
+C P4 model 2   (Northwood)	4	     6		6
+C P4 model 3-4 (Prescott)	4.25	     7.5	7.5
 
 defframe(PARAM_CARRY,20)
 defframe(PARAM_SIZE, 16)
@@ -47,10 +43,8 @@ define(SAVE_EBX,`PARAM_SRC1')
 
 PROLOGUE(mpn_sub_nc)
 deflit(`FRAME',0)
-
 	movd	PARAM_CARRY, %mm0
 	jmp	L(start_nc)
-
 EPILOGUE()
 
 	ALIGN(8)
@@ -58,16 +52,16 @@ PROLOGUE(mpn_sub_n)
 deflit(`FRAME',0)
 	pxor	%mm0, %mm0
 L(start_nc):
-	movl	PARAM_SRC1, %eax
-	movl	%ebx, SAVE_EBX
-	movl	PARAM_SRC2, %ebx
-	movl	PARAM_DST, %edx
-	movl	PARAM_SIZE, %ecx
+	mov	PARAM_SRC1, %eax
+	mov	%ebx, SAVE_EBX
+	mov	PARAM_SRC2, %ebx
+	mov	PARAM_DST, %edx
+	mov	PARAM_SIZE, %ecx
 
-	leal	(%eax,%ecx,4), %eax	C src1 end
-	leal	(%ebx,%ecx,4), %ebx	C src2 end
-	leal	(%edx,%ecx,4), %edx	C dst end
-	negl	%ecx			C -size
+	lea	(%eax,%ecx,4), %eax	C src1 end
+	lea	(%ebx,%ecx,4), %ebx	C src2 end
+	lea	(%edx,%ecx,4), %edx	C dst end
+	neg	%ecx			C -size
 
 L(top):
 	C eax	src1 end
@@ -85,7 +79,7 @@ L(top):
 
 	psrlq	$63, %mm1
 
-	addl	$1, %ecx
+	add	$1, %ecx
 	jz	L(done_mm1)
 
 	movd	(%eax,%ecx,4), %mm0
@@ -97,18 +91,17 @@ L(top):
 
 	psrlq	$63, %mm0
 
-	addl	$1, %ecx
+	add	$1, %ecx
 	jnz	L(top)
 
-
 	movd	%mm0, %eax
-	movl	SAVE_EBX, %ebx
+	mov	SAVE_EBX, %ebx
 	emms
 	ret
 
 L(done_mm1):
 	movd	%mm1, %eax
-	movl	SAVE_EBX, %ebx
+	mov	SAVE_EBX, %ebx
 	emms
 	ret
 

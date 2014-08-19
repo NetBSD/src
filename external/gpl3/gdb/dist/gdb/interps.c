@@ -1,7 +1,6 @@
 /* Manages interpreters for GDB, the GNU debugger.
 
-   Copyright (C) 2000, 2002, 2003, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
    Written by Jim Ingham <jingham@apple.com> of Apple Computer, Inc.
 
@@ -37,10 +36,17 @@
 #include "event-top.h"
 #include "interps.h"
 #include "completer.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdb_assert.h"
 #include "top.h"		/* For command_loop.  */
 #include "exceptions.h"
+#include "continuations.h"
+
+/* True if the current interpreter in is async mode.  See interps.h
+   for more details.  This starts out disabled, until all the explicit
+   command line arguments (e.g., `gdb -ex "start" -ex "next"') are
+   processed.  */
+int interpreter_async = 0;
 
 struct interp
 {
@@ -60,19 +66,12 @@ struct interp
   /* Has the init_proc been run?  */
   int inited;
 
-  /* This is the ui_out used to collect results for this interpreter.
-     It can be a formatter for stdout, as is the case for the console
-     & mi outputs, or it might be a result formatter.  */
-  struct ui_out *interpreter_out;
-
   const struct interp_procs *procs;
   int quiet_p;
 };
 
 /* Functions local to this file.  */
 static void initialize_interps (void);
-static char **interpreter_completer (struct cmd_list_element *cmd,
-				     char *text, char *word);
 
 /* The magic initialization routine for this module.  */
 
@@ -90,19 +89,20 @@ static int interpreter_initialized = 0;
    fills the fields from the inputs, and returns a pointer to the
    interpreter.  */
 struct interp *
-interp_new (const char *name, void *data, struct ui_out *uiout,
-	    const struct interp_procs *procs)
+interp_new (const char *name, const struct interp_procs *procs)
 {
   struct interp *new_interp;
 
   new_interp = XMALLOC (struct interp);
 
   new_interp->name = xstrdup (name);
-  new_interp->data = data;
-  new_interp->interpreter_out = uiout;
+  new_interp->data = NULL;
   new_interp->quiet_p = 0;
   new_interp->procs = procs;
   new_interp->inited = 0;
+
+  /* Check for required procs.  */
+  gdb_assert (procs->command_loop_proc != NULL);
 
   return new_interp;
 }
@@ -149,8 +149,7 @@ interp_set (struct interp *interp, int top_level)
 
   if (current_interpreter != NULL)
     {
-      do_all_continuations ();
-      ui_out_flush (uiout);
+      ui_out_flush (current_uiout);
       if (current_interpreter->procs->suspend_proc
 	  && !current_interpreter->procs->suspend_proc (current_interpreter->
 							data))
@@ -178,18 +177,19 @@ interp_set (struct interp *interp, int top_level)
       interpreter_p = xstrdup (current_interpreter->name);
     }
 
-  uiout = interp->interpreter_out;
-
   /* Run the init proc.  If it fails, try to restore the old interp.  */
 
   if (!interp->inited)
     {
       if (interp->procs->init_proc != NULL)
 	{
-	  interp->data = interp->procs->init_proc (top_level);
+	  interp->data = interp->procs->init_proc (interp, top_level);
 	}
       interp->inited = 1;
     }
+
+  /* Do this only after the interpreter is initialized.  */
+  current_uiout = interp->procs->ui_out_proc (interp);
 
   /* Clear out any installed interpreter hooks/event handlers.  */
   clear_interpreter_hooks ();
@@ -212,9 +212,9 @@ interp_set (struct interp *interp, int top_level)
     {
       if (!interp_quiet_p (interp))
 	{
-	  sprintf (buffer, "Switching to interpreter \"%.24s\".\n",
-		   interp->name);
-	  ui_out_text (uiout, buffer);
+	  xsnprintf (buffer, sizeof (buffer),
+		     "Switching to interpreter \"%.24s\".\n", interp->name);
+	  ui_out_text (current_uiout, buffer);
 	}
       display_gdb_prompt (NULL);
     }
@@ -248,9 +248,50 @@ struct ui_out *
 interp_ui_out (struct interp *interp)
 {
   if (interp != NULL)
-    return interp->interpreter_out;
+    return interp->procs->ui_out_proc (interp);
 
-  return current_interpreter->interpreter_out;
+  return current_interpreter->procs->ui_out_proc (current_interpreter);
+}
+
+int
+current_interp_set_logging (int start_log, struct ui_file *out,
+			    struct ui_file *logfile)
+{
+  if (current_interpreter == NULL
+      || current_interpreter->procs->set_logging_proc == NULL)
+    return 0;
+
+  return current_interpreter->procs->set_logging_proc (current_interpreter,
+						       start_log, out,
+						       logfile);
+}
+
+/* Temporarily overrides the current interpreter.  */
+struct interp *
+interp_set_temp (const char *name)
+{
+  struct interp *interp = interp_lookup (name);
+  struct interp *old_interp = current_interpreter;
+
+  if (interp)
+    current_interpreter = interp;
+  return old_interp;
+}
+
+/* Returns the interpreter's cookie.  */
+
+void *
+interp_data (struct interp *interp)
+{
+  return interp->data;
+}
+
+/* Returns the interpreter's name.  */
+
+const char *
+interp_name (struct interp *interp)
+{
+  return interp->name;
 }
 
 /* Returns true if the current interp is the passed in name.  */
@@ -281,16 +322,9 @@ current_interp_display_prompt_p (void)
 void
 current_interp_command_loop (void)
 {
-  /* Somewhat messy.  For the moment prop up all the old ways of
-     selecting the command loop.  `deprecated_command_loop_hook'
-     should be deprecated.  */
-  if (deprecated_command_loop_hook != NULL)
-    deprecated_command_loop_hook ();
-  else if (current_interpreter != NULL
-	   && current_interpreter->procs->command_loop_proc != NULL)
-    current_interpreter->procs->command_loop_proc (current_interpreter->data);
-  else
-    cli_command_loop ();
+  gdb_assert (current_interpreter != NULL);
+
+  current_interpreter->procs->command_loop_proc (current_interpreter->data);
 }
 
 int
@@ -313,20 +347,13 @@ interp_set_quiet (struct interp *interp, int quiet)
 
 /* interp_exec - This executes COMMAND_STR in the current 
    interpreter.  */
-int
-interp_exec_p (struct interp *interp)
-{
-  return interp->procs->exec_proc != NULL;
-}
 
 struct gdb_exception
 interp_exec (struct interp *interp, const char *command_str)
 {
-  if (interp->procs->exec_proc != NULL)
-    {
-      return interp->procs->exec_proc (interp->data, command_str);
-    }
-  return exception_none;
+  gdb_assert (interp->procs->exec_proc != NULL);
+
+  return interp->procs->exec_proc (interp->data, command_str);
 }
 
 /* A convenience routine that nulls out all the common command hooks.
@@ -348,7 +375,6 @@ clear_interpreter_hooks (void)
   deprecated_target_wait_hook = 0;
   deprecated_call_command_hook = 0;
   deprecated_error_begin_hook = 0;
-  deprecated_command_loop_hook = 0;
 }
 
 /* This is a lazy init routine, called the first time the interpreter
@@ -371,12 +397,13 @@ interpreter_exec_cmd (char *args, int from_tty)
   unsigned int nrules;
   unsigned int i;
   int old_quiet, use_quiet;
+  struct cleanup *cleanup;
 
   if (args == NULL)
     error_no_arg (_("interpreter-exec command"));
 
   prules = gdb_buildargv (args);
-  make_cleanup_freeargv (prules);
+  cleanup = make_cleanup_freeargv (prules);
 
   nrules = 0;
   for (trule = prules; *trule != NULL; trule++)
@@ -414,55 +441,43 @@ interpreter_exec_cmd (char *args, int from_tty)
   interp_set (old_interp, 0);
   interp_set_quiet (interp_to_use, use_quiet);
   interp_set_quiet (old_interp, old_quiet);
+
+  do_cleanups (cleanup);
 }
 
 /* List the possible interpreters which could complete the given text.  */
-static char **
-interpreter_completer (struct cmd_list_element *ignore, char *text, char *word)
+static VEC (char_ptr) *
+interpreter_completer (struct cmd_list_element *ignore,
+		       const char *text, const char *word)
 {
-  int alloced = 0;
   int textlen;
-  int num_matches;
-  char **matches;
+  VEC (char_ptr) *matches = NULL;
   struct interp *interp;
 
-  /* We expect only a very limited number of interpreters, so just
-     allocate room for all of them plus one for the last that must be NULL
-     to correctly end the list.  */
-  for (interp = interp_list; interp != NULL; interp = interp->next)
-    ++alloced;
-  matches = (char **) xcalloc (alloced + 1, sizeof (char *));
-
-  num_matches = 0;
   textlen = strlen (text);
   for (interp = interp_list; interp != NULL; interp = interp->next)
     {
       if (strncmp (interp->name, text, textlen) == 0)
 	{
-	  matches[num_matches] =
-	    (char *) xmalloc (strlen (word) + strlen (interp->name) + 1);
+	  char *match;
+
+	  match = (char *) xmalloc (strlen (word) + strlen (interp->name) + 1);
 	  if (word == text)
-	    strcpy (matches[num_matches], interp->name);
+	    strcpy (match, interp->name);
 	  else if (word > text)
 	    {
 	      /* Return some portion of interp->name.  */
-	      strcpy (matches[num_matches], interp->name + (word - text));
+	      strcpy (match, interp->name + (word - text));
 	    }
 	  else
 	    {
 	      /* Return some of text plus interp->name.  */
-	      strncpy (matches[num_matches], word, text - word);
-	      matches[num_matches][text - word] = '\0';
-	      strcat (matches[num_matches], interp->name);
+	      strncpy (match, word, text - word);
+	      match[text - word] = '\0';
+	      strcat (match, interp->name);
 	    }
-	  ++num_matches;
+	  VEC_safe_push (char_ptr, matches, match);
 	}
-    }
-
-  if (num_matches == 0)
-    {
-      xfree (matches);
-      matches = NULL;
     }
 
   return matches;

@@ -1,4 +1,4 @@
-# Copyright 2011 Free Software Foundation, Inc.
+# Copyright 2011-2014 Free Software Foundation, Inc.
 #
 # Contributed by Red Hat, originally written by Keith Seitz.
 #
@@ -30,11 +30,11 @@ proc test_class {class} {
     }
 
     # Test each overload instance twice: once quoted, once unquoted
-    set conditional1 "if (a == 3)"
+    set conditional1 "if (a_param == 3)"
     set conditional2 "if (A::outer::func ())"
     foreach ovld [array names tests] {
 	set method "${class}::foo  ($ovld)  const"
-	set result "Breakpoint (\[0-9\]).*file .*/ovsrch$tests($ovld).*"
+	set result "Breakpoint (\[0-9\]).*file .*ovsrch$tests($ovld).*"
 	gdb_test "break $method" $result
 	gdb_test "break '$method'" $result
 
@@ -49,21 +49,16 @@ proc test_class {class} {
 
     # Test whether open parentheses are correctly identified as overload
     # information or conditional.
-    gdb_test "break ${class}::foo if (a == 3)" "Breakpoint (\[0-9\]).*"
+    gdb_test "break ${class}::hibob if (a_param == 3)" "Breakpoint (\[0-9\]).*"
 }
 
 if { [skip_cplus_tests] } { continue }
 
 # Test for c++/11734
-set testfile "ovsrch"
-set binfile [file join $objdir $subdir $testfile]
+standard_testfile ovsrch1.cc ovsrch2.cc ovsrch3.cc ovsrch4.cc
 
-set srcfiles {}
-for {set i 1} {$i < 5} {incr i} {
-    lappend srcfiles $testfile$i.cc
-}
-
-if {[prepare_for_testing $testfile $testfile $srcfiles {c++ debug}]} {
+if {[prepare_for_testing $testfile $testfile \
+	 [list $srcfile $srcfile2 $srcfile3 $srcfile4] {c++ debug}]} {
     return -1
 }
 
@@ -73,28 +68,28 @@ if {![runto_main]} {
 }
 
 # Break in A::stop_here and run tests.
-if {[gdb_breakpoint "stop_here"]} {
-    pass "break stop_here"
+if {[gdb_breakpoint "A::stop_here"]} {
+    pass "break A::stop_here"
 }
 
-if {[gdb_breakpoint "'stop_here'"]} {
-    pass "break 'stop_here'"
+if {[gdb_breakpoint "'A::stop_here'"]} {
+    pass "break 'A::stop_here'"
 }
 
 gdb_continue_to_breakpoint "stop_here"
-test_class outer
+test_class A::outer
 
 # Break in A::B::stop_here_too and run tests.
-if {[gdb_breakpoint "B::stop_here_too"]} {
-    pass "break B::stop_here_too"
+if {[gdb_breakpoint "A::B::stop_here_too"]} {
+    pass "break A::B::stop_here_too"
 }
 
-if {[gdb_breakpoint "'B::stop_here_too'"]} {
-    pass "break 'B::stop_here_too'"
+if {[gdb_breakpoint "'A::B::stop_here_too'"]} {
+    pass "break 'A::B::stop_here_too'"
 }
 
 gdb_continue_to_breakpoint "stop_here_too"
-test_class inner
+test_class A::B::inner
 
 gdb_exit
 return 0

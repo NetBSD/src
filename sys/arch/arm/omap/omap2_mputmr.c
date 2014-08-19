@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_mputmr.c,v 1.4.12.2 2013/06/23 06:20:01 tls Exp $	*/
+/*	$NetBSD: omap2_mputmr.c,v 1.4.12.3 2014/08/20 00:02:47 tls Exp $	*/
 
 /*
  * OMAP 2430 GP timers
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_mputmr.c,v 1.4.12.2 2013/06/23 06:20:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_mputmr.c,v 1.4.12.3 2014/08/20 00:02:47 tls Exp $");
 
 #include "opt_omap.h"
 #include "opt_cpuoptions.h"
@@ -129,7 +129,7 @@ _timer_intr_enb(struct mputmr_softc *sc)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, TIER, TIER_OVF_IT_ENA);
 }
 
-static inline uint32_t
+__unused static inline uint32_t
 _timer_intr_sts(struct mputmr_softc *sc)
 {
 	return bus_space_read_4(sc->sc_iot, sc->sc_ioh, TISR);

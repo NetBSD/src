@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p6032_intr.c,v 1.21 2011/07/09 16:03:00 matt Exp $	*/
+/*	$NetBSD: algor_p6032_intr.c,v 1.21.12.1 2014/08/20 00:02:41 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.21 2011/07/09 16:03:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.21.12.1 2014/08/20 00:02:41 tls Exp $");
 
 #include "opt_ddb.h"
 #define	__INTR_PRIVATE
@@ -177,7 +177,7 @@ void	algor_p6032_intr_disestablish(void *);
 
 int	algor_p6032_pci_intr_map(const struct pci_attach_args *,
 	    pci_intr_handle_t *);
-const char *algor_p6032_pci_intr_string(void *, pci_intr_handle_t);
+const char *algor_p6032_pci_intr_string(void *, pci_intr_handle_t, char *, size_t);
 const struct evcnt *algor_p6032_pci_intr_evcnt(void *, pci_intr_handle_t);
 void	*algor_p6032_pci_intr_establish(void *, pci_intr_handle_t, int,
 	    int (*)(void *), void *);
@@ -477,13 +477,14 @@ algor_p6032_pci_intr_map(const struct pci_attach_args *pa,
 }
 
 const char *
-algor_p6032_pci_intr_string(void *v, pci_intr_handle_t ih)
+algor_p6032_pci_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
 
 	if (ih >= NIRQMAPS)
 		panic("algor_p6032_intr_string: bogus IRQ %ld", ih);
 
-	return (p6032_intrnames[ih]);
+	strlcpy(buf, p6032_intrnames[ih], len);
+	return buf;
 }
 
 const struct evcnt *

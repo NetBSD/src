@@ -1,0 +1,24 @@
+# $NetBSD: INSTALL_ZYXELKX,v 1.1.10.2 2014/08/20 00:02:58 tls Exp $
+
+include		"arch/evbmips/conf/ZYXELKX"
+
+#ident 		"INSTALL_ZYXELKX-$Revision: 1.1.10.2 $"
+
+# Enable the hooks used for initializing the root memory-disk.
+#     The ramdisk size must be kept in sync manually with the size of
+#     the `ramdisk' image (which is built in distrib/evbmips/ramdisk/ramdisk).
+pseudo-device	md				# memory disk device
+options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_IS_ROOT		# force root on memory disk
+options 	MEMORY_DISK_SERVER=0		# no userspace memory disk
+options 	MEMORY_DISK_ROOT_SIZE=12288	# size of memory disk, in blocks
+
+#options 	UVMHIST
+#options 	UVMHIST_PRINT
+makeoptions	DEBUG="-g"
+makeoptions	NEED_MDSETIMAGE=yes
+#makeoptions	NEED_UBOOTIMAGE=yes
+no config	netbsd-sd0a
+no config	netbsd-reth0
+
+no options 	VMSWAP

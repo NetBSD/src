@@ -1,4 +1,4 @@
-/* $NetBSD: curterm.c,v 1.8.8.1 2013/06/23 06:21:08 tls Exp $ */
+/* $NetBSD: curterm.c,v 1.8.8.2 2014/08/20 00:02:21 tls Exp $ */
 
 /*
  * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: curterm.c,v 1.8.8.1 2013/06/23 06:21:08 tls Exp $");
+__RCSID("$NetBSD: curterm.c,v 1.8.8.2 2014/08/20 00:02:21 tls Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -151,7 +151,7 @@ termname(void)
 	return __UNCONST(cur_term->name);
 }
 
-static const char * nullname = '\0';
+static const char * nullname = "";
 
 char *
 longname(void)

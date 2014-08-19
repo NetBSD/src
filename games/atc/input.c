@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.24 2009/08/12 04:48:03 dholland Exp $	*/
+/*	$NetBSD: input.c,v 1.24.12.1 2014/08/20 00:00:21 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: input.c,v 1.24 2009/08/12 04:48:03 dholland Exp $");
+__RCSID("$NetBSD: input.c,v 1.24.12.1 2014/08/20 00:00:21 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -199,7 +199,9 @@ static PLANE p;
 static STACK stack[MAXDEPTH];
 static int level;
 static int tval;
-static int dest_type, dest_no, dir;
+static int dir;
+static enum places dest_type;
+static unsigned dest_no;
 
 static int
 pop(void)
@@ -393,7 +395,7 @@ setplane(int c)
 	if (pp == NULL)
 		return ("Unknown Plane");
 	(void)memcpy(&p, pp, sizeof (p));
-	p.delayd = 0;
+	p.delayd = false;
 	return (NULL);
 }
 
@@ -459,36 +461,37 @@ Right(int c __unused)
 }
 
 static const char *
-delayb(int c)
+delayb(int ch)
 {
 	int	xdiff, ydiff;
+	unsigned bn;
 
-	c -= '0';
+	bn = ch -= '0';
 
-	if (c >= sp->num_beacons)
+	if (bn >= sp->num_beacons)
 		return ("Unknown beacon");
-	xdiff = sp->beacon[(int)c].x - p.xpos;
+	xdiff = sp->beacon[bn].x - p.xpos;
 	xdiff = SGN(xdiff);
-	ydiff = sp->beacon[(int)c].y - p.ypos;
+	ydiff = sp->beacon[bn].y - p.ypos;
 	ydiff = SGN(ydiff);
 	if (xdiff != displacement[p.dir].dx || ydiff != displacement[p.dir].dy)
 		return ("Beacon is not in flight path");
-	p.delayd = 1;
-	p.delayd_no = c;
+	p.delayd = true;
+	p.delayd_no = bn;
 
 	if (dest_type != T_NODEST) {
 		switch (dest_type) {
 		case T_BEACON:
-			xdiff = sp->beacon[dest_no].x - sp->beacon[(int)c].x;
-			ydiff = sp->beacon[dest_no].y - sp->beacon[(int)c].y;
+			xdiff = sp->beacon[dest_no].x - sp->beacon[bn].x;
+			ydiff = sp->beacon[dest_no].y - sp->beacon[bn].y;
 			break;
 		case T_EXIT:
-			xdiff = sp->exit[dest_no].x - sp->beacon[(int)c].x;
-			ydiff = sp->exit[dest_no].y - sp->beacon[(int)c].y;
+			xdiff = sp->exit[dest_no].x - sp->beacon[bn].x;
+			ydiff = sp->exit[dest_no].y - sp->beacon[bn].y;
 			break;
 		case T_AIRPORT:
-			xdiff = sp->airport[dest_no].x - sp->beacon[(int)c].x;
-			ydiff = sp->airport[dest_no].y - sp->beacon[(int)c].y;
+			xdiff = sp->airport[dest_no].x - sp->beacon[bn].x;
+			ydiff = sp->airport[dest_no].y - sp->beacon[bn].y;
 			break;
 		default:
 			return ("Bad case in delayb!  Get help!");
@@ -587,28 +590,31 @@ setrelalt(int c)
 }
 
 static const char *
-benum(int c)
+benum(int ch)
 {
-	dest_no = c -= '0';
+	unsigned n;
+
+	n = ch - '0';
+	dest_no = n;
 
 	switch (dest_type) {
 	case T_BEACON:
-		if (c >= sp->num_beacons)
+		if (n >= sp->num_beacons)
 			return ("Unknown beacon");
-		p.new_dir = DIR_FROM_DXDY(sp->beacon[(int)c].x - p.xpos,
-			sp->beacon[(int)c].y - p.ypos);
+		p.new_dir = DIR_FROM_DXDY(sp->beacon[n].x - p.xpos,
+			sp->beacon[n].y - p.ypos);
 		break;
 	case T_EXIT:
-		if (c >= sp->num_exits)
+		if (n >= sp->num_exits)
 			return ("Unknown exit");
-		p.new_dir = DIR_FROM_DXDY(sp->exit[(int)c].x - p.xpos,
-			sp->exit[(int)c].y - p.ypos);
+		p.new_dir = DIR_FROM_DXDY(sp->exit[n].x - p.xpos,
+			sp->exit[n].y - p.ypos);
 		break;
 	case T_AIRPORT:
-		if (c >= sp->num_airports)
+		if (n >= sp->num_airports)
 			return ("Unknown airport");
-		p.new_dir = DIR_FROM_DXDY(sp->airport[(int)c].x - p.xpos,
-			sp->airport[(int)c].y - p.ypos);
+		p.new_dir = DIR_FROM_DXDY(sp->airport[n].x - p.xpos,
+			sp->airport[n].y - p.ypos);
 		break;
 	default:
 		return ("Unknown case in benum!  Get help!");

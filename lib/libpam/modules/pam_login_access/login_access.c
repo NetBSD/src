@@ -1,4 +1,4 @@
-/*	$NetBSD: login_access.c,v 1.6 2012/01/03 19:02:55 christos Exp $	*/
+/*	$NetBSD: login_access.c,v 1.6.6.1 2014/08/20 00:02:19 tls Exp $	*/
 
 /*
  * This module implements a simple but effective form of login access
@@ -19,7 +19,7 @@ static char sccsid[] = "%Z% %M% %I% %E% %U%";
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_login_access/login_access.c,v 1.12 2004/03/05 08:10:18 markm Exp $");
 #else
-__RCSID("$NetBSD: login_access.c,v 1.6 2012/01/03 19:02:55 christos Exp $");
+__RCSID("$NetBSD: login_access.c,v 1.6.6.1 2014/08/20 00:02:19 tls Exp $");
 #endif
 
 #include <sys/types.h>
@@ -56,6 +56,7 @@ static int	user_match(const char *, const char *);
 
 /* login_access - match username/group and host/tty with access control file */
 
+__printflike(2, 3)
 static void
 logit(int level, const char *fmt, ...)
 {
@@ -78,7 +79,7 @@ login_access(const char *user, const char *from)
     char   *users;			/* becomes list of login names */
     char   *froms;			/* becomes list of terminals or hosts */
     int     match = NO;
-    int     end;
+    size_t  end;
     int     lineno = 0;			/* for diagnostics */
 
     /*
@@ -92,7 +93,7 @@ login_access(const char *user, const char *from)
     if ((fp = fopen(_PATH_LOGACCESS, "r")) != NULL) {
 	while (!match && fgets(line, sizeof(line), fp)) {
 	    lineno++;
-	    if (line[end = strlen(line) - 1] != '\n') {
+	    if ((end = strlen(line)) == 0 || line[end - 1] != '\n') {
 		logit(LOG_ERR, "%s: line %d: missing newline or line too long",
 		       _PATH_LOGACCESS, lineno);
 		continue;
@@ -203,8 +204,8 @@ user_match(const char *tok, const char *string)
 static int
 from_match(const char *tok, const char *string)
 {
-    int     tok_len;
-    int     str_len;
+    size_t     tok_len;
+    size_t     str_len;
 
     /*
      * If a token has the magic value "ALL" the match always succeeds. Return

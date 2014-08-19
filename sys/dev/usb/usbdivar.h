@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.99.2.2 2013/06/23 06:20:22 tls Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.99.2.3 2014/08/20 00:03:51 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 /*
  * Discussion about locking in the USB code:
  *
- * The host controller presents one lock at IPL_SOFTUSB.
+ * The host controller presents one lock at IPL_SOFTUSB (aka IPL_SOFTNET).
  *
  * List of hardware interface methods, and whether the lock is held
  * when each is called by this module:
@@ -48,6 +48,7 @@
  *	allocx			-
  *	freex			-
  *	get_lock 		-	Called at attach time
+ *	new_device		
  *
  *	PIPE METHOD		LOCK  NOTES
  *	----------------------- -------	-------------------------
@@ -82,6 +83,7 @@ typedef struct {
 
 struct usbd_xfer;
 struct usbd_pipe;
+struct usbd_port;
 
 struct usbd_endpoint {
 	usb_endpoint_descriptor_t *edesc;
@@ -99,6 +101,8 @@ struct usbd_bus_methods {
 	struct usbd_xfer *    (*allocx)(struct usbd_bus *);
 	void		      (*freex)(struct usbd_bus *, struct usbd_xfer *);
 	void		      (*get_lock)(struct usbd_bus *, kmutex_t **);
+	usbd_status	      (*new_device)(device_t, usbd_bus_handle, int,
+					    int, int, struct usbd_port *);
 };
 
 struct usbd_pipe_methods {
@@ -191,6 +195,7 @@ struct usbd_device {
 	int			subdevlen;     /* array length of following */
 	device_t	       *subdevs;       /* sub-devices */
 	int			nifaces_claimed; /* number of ifaces in use */
+	void		       *hci_private;
 };
 
 struct usbd_interface {
@@ -308,29 +313,20 @@ usbd_status	usb_insert_transfer(usbd_xfer_handle);
 void		usb_transfer_complete(usbd_xfer_handle);
 int		usb_disconnect_port(struct usbd_port *, device_t, int);
 
+void		usbd_kill_pipe(usbd_pipe_handle);
+usbd_status	usbd_attach_roothub(device_t, usbd_device_handle);
+usbd_status	usbd_probe_and_attach(device_t, usbd_device_handle, int, int);
+usbd_status	usbd_get_initial_ddesc(usbd_device_handle,
+				       usb_device_descriptor_t *);
+
 /* Routines from usb.c */
 void		usb_needs_explore(usbd_device_handle);
 void		usb_needs_reattach(usbd_device_handle);
 void		usb_schedsoftintr(struct usbd_bus *);
 
 /*
- * These macros help while not all host controllers are ported to the MP code.
+ * These macros reflect the current locking scheme.  They might change.
  */
-#define usbd_mutex_enter(m)	do { \
-	if (m) { \
-		s = -1; \
-		mutex_enter(m); \
-	} else \
-		s = splusb(); \
-} while (0)
 
-#define usbd_mutex_exit(m)	do { \
-	if (m) { \
-		s = -1; \
-		mutex_exit(m); \
-	} else \
-		splx(s); \
-} while (0)
-
-#define usbd_lock_pipe(p)	usbd_mutex_enter((p)->device->bus->lock)
-#define usbd_unlock_pipe(p)	usbd_mutex_exit((p)->device->bus->lock)
+#define usbd_lock_pipe(p)	mutex_enter((p)->device->bus->lock)
+#define usbd_unlock_pipe(p)	mutex_exit((p)->device->bus->lock)

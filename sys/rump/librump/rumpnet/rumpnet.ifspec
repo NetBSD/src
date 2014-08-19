@@ -1,4 +1,4 @@
-;       $NetBSD: rumpnet.ifspec,v 1.2 2009/10/20 23:28:50 pooka Exp $
+;       $NetBSD: rumpnet.ifspec,v 1.2.24.1 2014/08/20 00:04:42 tls Exp $
 
 NAME|net
 PUBHDR|include/rump/rumpnet_if_pub.h
@@ -8,5 +8,4 @@ WRAPPERS|librump/rumpnet/rumpnet_if_wrappers.c
 ; type          | name          | args			| attrs
 ;
 
-int		|virtif_create	|int			|WEAK
 int		|shmif_create	|const char *, int *	|WEAK

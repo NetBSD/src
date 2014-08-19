@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_irc_pxy.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: ip_irc_pxy.c,v 1.3.2.1 2014/08/20 00:04:24 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_irc_pxy.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_irc_pxy.c,v 1.3.2.1 2014/08/20 00:04:24 tls Exp $");
 
 #define	IPF_IRC_PROXY
 
@@ -309,12 +309,7 @@ ipf_p_irc_send(fr_info_t *fin, nat_t *nat)
 	i = irc->irc_addr - ctcpbuf;
 	i++;
 	(void) strncpy(newbuf, ctcpbuf, i);
-	/* DO NOT change these! */
-#if defined(SNPRINTF) && defined(KERNEL)
-	SNPRINTF(newbuf, sizeof(newbuf) - i, "%u %u\001\r\n", a1, a5);
-#else
-	(void) sprintf(newbuf, "%u %u\001\r\n", a1, a5);
-#endif
+	snprintf(newbuf, sizeof(newbuf) - i, "%u %u\001\r\n", a1, a5);
 
 	nlen = strlen(newbuf);
 	inc = nlen - olen;

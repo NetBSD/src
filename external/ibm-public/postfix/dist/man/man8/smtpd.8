@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtpd.8,v 1.1.1.4.2.1 2013/02/25 00:27:12 tls Exp $
+.\"	$NetBSD: smtpd.8,v 1.1.1.4.2.2 2014/08/19 23:59:42 tls Exp $
 .\"
 .TH SMTPD 8 
 .ad
@@ -64,6 +64,7 @@ RFC 3463 (Enhanced status codes)
 RFC 3848 (ESMTP transmission types)
 RFC 4409 (Message submission)
 RFC 4954 (AUTH command)
+RFC 5321 (SMTP protocol)
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -107,10 +108,6 @@ commands are enclosed with <>, and that those addresses do
 not contain RFC 822 style comments or phrases.
 .PP
 Available in Postfix version 2.1 and later:
-.IP "\fBresolve_null_domain (no)\fR"
-Resolve an address that ends in the "@" null domain as if the
-local hostname were specified, instead of rejecting the address as
-invalid.
 .IP "\fBsmtpd_reject_unlisted_sender (no)\fR"
 Request that the Postfix SMTP server rejects mail from unknown
 sender addresses, even when no explicit reject_unlisted_sender
@@ -151,7 +148,8 @@ A mechanism to transform commands from remote SMTP clients.
 .PP
 Available in Postfix version 2.9 and later:
 .IP "\fBsmtpd_per_record_deadline (normal: no, overload: yes)\fR"
-Change the behavior of the smtpd_timeout time limit, from a
+Change the behavior of the smtpd_timeout and smtpd_starttls_timeout
+time limits, from a
 time limit per read or write system call, to a time limit to send
 or receive a complete record (an SMTP command line, SMTP response
 line, SMTP message content line, or TLS protocol message).
@@ -174,6 +172,18 @@ $mydomain; either don't rewrite message headers from other clients
 at all, or rewrite message headers and update incomplete addresses
 with the domain specified in the remote_header_rewrite_domain
 parameter.
+.SH "BEFORE-SMTPD PROXY AGENT"
+.na
+.nf
+.ad
+.fi
+Available in Postfix version 2.10 and later:
+.IP "\fBsmtpd_upstream_proxy_protocol (empty)\fR"
+The name of the proxy protocol used by an optional before-smtpd
+proxy agent.
+.IP "\fBsmtpd_upstream_proxy_timeout (5s)\fR"
+The time limit for the proxy protocol specified with the
+smtpd_upstream_proxy_protocol parameter.
 .SH "AFTER QUEUE EXTERNAL CONTENT INSPECTION CONTROLS"
 .na
 .nf
@@ -339,6 +349,11 @@ Available in Postfix version 2.5 and later:
 .IP "\fBcyrus_sasl_config_path (empty)\fR"
 Search path for Cyrus SASL application configuration files,
 currently used only to locate the $smtpd_sasl_path.conf file.
+.PP
+Available in Postfix version 2.11 and later:
+.IP "\fBsmtpd_sasl_service (smtp)\fR"
+The service name that is passed to the SASL plug-in that is
+selected with \fBsmtpd_sasl_type\fR and \fBsmtpd_sasl_path\fR.
 .SH "STARTTLS SUPPORT CONTROLS"
 .na
 .nf
@@ -385,10 +400,10 @@ cipher list at all TLS security levels.
 File with the Postfix SMTP server DSA certificate in PEM format.
 .IP "\fBsmtpd_tls_dh1024_param_file (empty)\fR"
 File with DH parameters that the Postfix SMTP server should
-use with EDH ciphers.
+use with non-export EDH ciphers.
 .IP "\fBsmtpd_tls_dh512_param_file (empty)\fR"
 File with DH parameters that the Postfix SMTP server should
-use with EDH ciphers.
+use with export-grade EDH ciphers.
 .IP "\fBsmtpd_tls_dkey_file ($smtpd_tls_dcert_file)\fR"
 File with the Postfix SMTP server DSA private key in PEM format.
 .IP "\fBsmtpd_tls_key_file ($smtpd_tls_cert_file)\fR"
@@ -412,12 +427,6 @@ CommonName.
 .IP "\fBsmtpd_tls_req_ccert (no)\fR"
 With mandatory TLS encryption, require a trusted remote SMTP client
 certificate in order to allow TLS connections to proceed.
-.IP "\fBsmtpd_tls_session_cache_database (empty)\fR"
-Name of the file containing the optional Postfix SMTP server
-TLS session cache.
-.IP "\fBsmtpd_tls_session_cache_timeout (3600s)\fR"
-The expiration time of Postfix SMTP server TLS session cache
-information.
 .IP "\fBsmtpd_tls_wrappermode (no)\fR"
 Run the Postfix SMTP server in the non-standard "wrapper" mode,
 instead of using the STARTTLS command.
@@ -474,6 +483,10 @@ preference order instead of the remote client's cipher preference
 order.
 .IP "\fBtls_disable_workarounds (see 'postconf -d' output)\fR"
 List or bit-mask of OpenSSL bug work-arounds to disable.
+.PP
+Available in Postfix version 2.11 and later:
+.IP "\fBtlsmgr_service_name (tlsmgr)\fR"
+The name of the \fBtlsmgr\fR(8) service entry in master.cf.
 .SH "OBSOLETE STARTTLS CONTROLS"
 .na
 .nf
@@ -554,6 +567,12 @@ the sender.
 Available in Postfix version 2.1 and later:
 .IP "\fBsmtpd_authorized_xclient_hosts (empty)\fR"
 What remote SMTP clients are allowed to use the XCLIENT feature.
+.PP
+Available in Postfix version 2.10 and later:
+.IP "\fBsmtpd_log_access_permit_actions (empty)\fR"
+Enable logging of the named "permit" actions in SMTP server
+access lists (by default, the SMTP server logs "reject" actions but
+not "permit" actions).
 .SH "KNOWN VERSUS UNKNOWN RECIPIENT CONTROLS"
 .na
 .nf
@@ -693,7 +712,8 @@ time unit.
 .PP
 Available in Postfix version 2.9 and later:
 .IP "\fBsmtpd_per_record_deadline (normal: no, overload: yes)\fR"
-Change the behavior of the smtpd_timeout time limit, from a
+Change the behavior of the smtpd_timeout and smtpd_starttls_timeout
+time limits, from a
 time limit per read or write system call, to a time limit to send
 or receive a complete record (an SMTP command line, SMTP response
 line, SMTP message content line, or TLS protocol message).
@@ -762,24 +782,24 @@ evaluating $smtpd_client_restrictions and $smtpd_helo_restrictions.
 What Postfix features match subdomains of "domain.tld" automatically,
 instead of requiring an explicit ".domain.tld" pattern.
 .IP "\fBsmtpd_client_restrictions (empty)\fR"
-Optional Postfix SMTP server access restrictions in the context of
-a remote SMTP client connection request.
+Optional restrictions that the Postfix SMTP server applies in the
+context of a client connection request.
 .IP "\fBsmtpd_helo_required (no)\fR"
 Require that a remote SMTP client introduces itself with the HELO
 or EHLO command before sending the MAIL command or other commands
 that require EHLO negotiation.
 .IP "\fBsmtpd_helo_restrictions (empty)\fR"
 Optional restrictions that the Postfix SMTP server applies in the
-context of the SMTP HELO command.
+context of a client HELO command.
 .IP "\fBsmtpd_sender_restrictions (empty)\fR"
 Optional restrictions that the Postfix SMTP server applies in the
-context of the MAIL FROM command.
-.IP "\fBsmtpd_recipient_restrictions (permit_mynetworks, reject_unauth_destination)\fR"
-The access restrictions that the Postfix SMTP server applies in
-the context of the RCPT TO command.
+context of a client MAIL FROM command.
+.IP "\fBsmtpd_recipient_restrictions (see 'postconf -d' output)\fR"
+Optional restrictions that the Postfix SMTP server applies in the
+context of a client RCPT TO command, after smtpd_relay_restrictions.
 .IP "\fBsmtpd_etrn_restrictions (empty)\fR"
-Optional SMTP server access restrictions in the context of a client
-ETRN request.
+Optional restrictions that the Postfix SMTP server applies in the
+context of a client ETRN command.
 .IP "\fBallow_untrusted_routing (no)\fR"
 Forward mail with sender-specified routing (user[@%!]remote[@%!]site)
 from untrusted clients to destinations matching $relay_domains.
@@ -814,6 +834,12 @@ Available in Postfix version 2.2 and later:
 .IP "\fBsmtpd_end_of_data_restrictions (empty)\fR"
 Optional access restrictions that the Postfix SMTP server
 applies in the context of the SMTP END-OF-DATA command.
+.PP
+Available in Postfix version 2.10 and later:
+.IP "\fBsmtpd_relay_restrictions (permit_mynetworks, permit_sasl_authenticated, defer_unauth_destination)\fR"
+Access restrictions for mail relay control that the Postfix
+SMTP server applies in the context of the RCPT TO command, before
+smtpd_recipient_restrictions.
 .SH "SENDER AND RECIPIENT ADDRESS VERIFICATION CONTROLS"
 .na
 .nf
@@ -989,7 +1015,9 @@ The process name of a Postfix command or daemon process.
 .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
 The location of the Postfix top-level queue directory.
 .IP "\fBrecipient_delimiter (empty)\fR"
-The separator between user names and address extensions (user+foo).
+The set of characters that can separate a user name from its
+extension (example: user+foo), or a .forward file name from its
+extension (example: .forward+foo).
 .IP "\fBsmtpd_banner ($myhostname ESMTP $mail_name)\fR"
 The text that follows the 220 status code in the SMTP greeting
 banner.

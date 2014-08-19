@@ -94,7 +94,7 @@ static int log_cfg_read(char *buffer,
 		break;
 	}
 
-	len += sprintf(buffer + len,
+	len += snprintf(buffer + len, count - len,
 		"%s\n",
 		log_value ? log_value : "(null)");
 

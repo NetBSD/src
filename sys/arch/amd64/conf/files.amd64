@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.76.2.1 2012/11/20 03:00:56 tls Exp $
+#	$NetBSD: files.amd64,v 1.76.2.2 2014/08/20 00:02:42 tls Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -42,7 +42,8 @@ file	arch/amd64/amd64/gdt.c
 file	arch/amd64/amd64/machdep.c
 file	arch/amd64/amd64/process_machdep.c
 file	arch/amd64/amd64/trap.c
-file	arch/amd64/amd64/fpu.c
+file	arch/x86/x86/fpu.c
+file	arch/x86/x86/convert_xmm_s87.c
 file	arch/amd64/amd64/lock_stubs.S
 file	dev/cons.c
 
@@ -106,13 +107,6 @@ include "arch/x86/pci/files.pci"
 #
 
 include	"dev/isa/files.isa"
-
-# PC clock
-file 	arch/x86/isa/clock.c 			isa
-file	arch/x86/isa/rtc.c			isa
-
-# TSC timecounter support
-file	arch/x86/x86/tsc.c
 
 # attribute used to represent the "keyboard controller"
 # XXX should be a real device

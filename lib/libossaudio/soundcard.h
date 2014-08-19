@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.22 2012/05/05 15:57:45 christos Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.22.2.1 2014/08/20 00:02:18 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,7 +39,9 @@
 #ifndef _SOUNDCARD_H_
 #define _SOUNDCARD_H_
 
-#define SOUND_VERSION	0x030001
+#ifndef SOUND_VERSION
+#define SOUND_VERSION 0x030001
+#endif
 
 #define	SNDCTL_DSP_RESET		_IO  ('P', 0)
 #define	SNDCTL_DSP_SYNC			_IO  ('P', 1)
@@ -60,6 +62,11 @@
 #define	 AFMT_U16_BE			0x00000100
 #define	 AFMT_MPEG			0x00000200
 #define	 AFMT_AC3			0x00000400
+#define	 AFMT_S24_LE			0x00000800
+#define	 AFMT_S24_BE			0x00001000
+#define	 AFMT_S32_LE			0x00002000
+#define	 AFMT_S32_BE			0x00004000
+#define	 AFMT_S32_NE			0x00008000
 #define SNDCTL_DSP_SAMPLESIZE		SNDCTL_DSP_SETFMT
 #define	SOUND_PCM_READ_BITS		_IOR ('P', 5, int)
 #define	SNDCTL_DSP_CHANNELS		_IOWR('P', 6, int)
@@ -82,6 +89,10 @@
 # define DSP_CAP_COPROC			0x00000800
 # define DSP_CAP_TRIGGER		0x00001000
 # define DSP_CAP_MMAP			0x00002000
+# define PCM_CAP_INPUT			0x00004000
+# define PCM_CAP_OUTPUT			0x00008000
+# define PCM_CAP_MODEM			0x00010000
+# define PCM_CAP_HIDDEN			0x00020000
 #define SNDCTL_DSP_GETTRIGGER		_IOR ('P', 16, int)
 #define SNDCTL_DSP_SETTRIGGER		_IOW ('P', 16, int)
 # define PCM_ENABLE_INPUT		0x00000001
@@ -290,6 +301,77 @@ typedef struct buffmem_desc {
 	unsigned int *buffer;
 	int size;
 } buffmem_desc;
+
+/* Some OSSv4 calls. */
+
+#define OSS_DEVNODE_SIZE		32
+#define OSS_LABEL_SIZE			16
+#define OSS_LONGNAME_SIZE		64
+#define OSS_MAX_AUDIO_DEVS		64
+
+#define SNDCTL_SYSINFO			_IOR ('P',24, struct oss_sysinfo)
+#define SNDCTL_AUDIOINFO		_IOWR ('P',25, struct oss_audioinfo)
+#define SNDCTL_ENGINEINFO		_IOWR ('P',26, struct oss_audioinfo)
+#define SNDCTL_DSP_GETPLAYVOL		_IOR ('P',27, uint)
+#define SNDCTL_DSP_SETPLAYVOL		_IOW ('P',28, uint)
+#define SNDCTL_DSP_GETRECVOL		_IOR ('P',29, uint)
+#define SNDCTL_DSP_SETRECVOL		_IOW ('P',30, uint)
+#define SNDCTL_DSP_SKIP			_IO ('P',31)
+#define SNDCTL_DSP_SILENCE		_IO ('P',32)
+
+typedef struct oss_sysinfo {
+	char product[32];
+	char version[32];
+	int versionnum;
+	char options[128];		/* Future use */
+	int numaudios;
+	int openedaudio[8];		/* Obsolete */
+	int numsynths;			/* Obsolete */
+	int nummidis;
+	int numtimers;
+	int nummixers;
+	int openedmidi[8];
+	int numcards;
+	int numaudioengines;
+	char license[16];
+	char revision_info[256];	/* Internal Use */
+	int filler[172];		/* For expansion */
+} oss_sysinfo;
+
+typedef struct oss_audioinfo {
+	int dev;		/* Set by caller */
+	char name[OSS_LONGNAME_SIZE];
+	int busy;
+	int pid;
+	int caps;
+	int iformats;
+	int oformats;
+	int magic;		/* Unused */
+	char cmd[OSS_LONGNAME_SIZE];
+	int card_number;
+	int port_number;
+	int mixer_dev;
+	int legacy_device;	/* Obsolete */
+	int enabled;
+	int flags;		/* Reserved */
+	int min_rate;
+	int max_rate;
+	int min_channels;
+	int max_channels;
+	int binding;		/* Reserved */
+	int rate_source;
+	char handle[32];
+#define OSS_MAX_SAMPLE_RATES	20
+	int nrates;
+	int rates[OSS_MAX_SAMPLE_RATES];
+	char song_name[OSS_LONGNAME_SIZE];
+	char label[OSS_LABEL_SIZE];
+	int latency;				/* In usecs -1 = unknown */
+	char devnode[OSS_DEVNODE_SIZE];	
+	int next_play_engine;
+	int next_rec_engine;
+	int filler[184];			/* For expansion */
+} oss_audioinfo;
 
 #define ioctl _oss_ioctl
 /*

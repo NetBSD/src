@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.10.1 2013/02/25 00:27:33 tls Exp $
+#	$NetBSD: Makefile,v 1.3.10.2 2014/08/19 23:59:46 tls Exp $
 
 # XXX Note we aren't building ../conf/main.cf.default
 # The shipped makefiles construct it using postconf -d after building
@@ -17,11 +17,12 @@ DIST=	${NETBSDSRCDIR}/external/ibm-public/postfix/dist/src/${PROG}
 
 PSRCS=	postconf.c postconf_builtin.c postconf_dbms.c postconf_edit.c \
 	postconf_main.c postconf_master.c postconf_misc.c postconf_node.c \
-	postconf_other.c postconf_service.c postconf_unused.c postconf_user.c
+	postconf_other.c postconf_service.c postconf_unused.c postconf_user.c \
+	postconf_lookup.c postconf_match.c postconf_print.c
 GENSRCS=bool_table.h bool_vars.h int_table.h int_vars.h str_table.h \
 	str_vars.h time_table.h time_vars.h raw_table.h raw_vars.h \
 	nint_table.h nint_vars.h nbool_table.h nbool_vars.h long_table.h \
-	long_vars.h
+	long_vars.h str_fn_table.h str_fn_vars.h
 
 SRCS=	${PSRCS} ${GENSRCS}
 DPSRCS=	${GENSRCS}

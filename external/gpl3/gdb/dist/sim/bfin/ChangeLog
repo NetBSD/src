@@ -1,4 +1,514 @@
-2011-05-17  Mike Frysinger  <vapier@gentoo.org>
+2013-09-23  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2013-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin-sim.c (decode_dsp32alu_0): Add note about broken handling of
+	SEARCH with parallel insns.
+
+2013-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin-sim.c (decode_dsp32shift_0): Make sure HLs is 0 after last
+	insn that uses it.
+	(decode_dsp32shiftimm_0): Likewise.
+	Require HLs be less than 2 for accumulator shift insns.
+
+2013-06-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin-sim.c (decode_dsp32alu_0): Check more opcode fields before
+	decoding various insns.
+
+2013-06-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* TODO: Add more notes.
+
+2013-06-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in ($(srcdir)/linux-fixed-code.h): Add
+	@MAINTAINER_MODE_TRUE@ as the first item in the dependency list.
+
+2013-06-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4, configure: Regenerate.
+
+2013-05-10  Freddie Chopin  <freddie_chopin@op.pl>
+
+	* configure: Rebuild.
+
+2013-03-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4, configure: Regenerate.
+
+2013-03-23  Joel Sherrill  <joel.sherrill@oarcorp.com>
+
+	* configure.ac: Use $SIM_DV_SOCKSER_O.
+	* configure: Regenerated.
+
+2012-12-20  Joel Brobecker  <brobecker@adacore.com>
+
+	* aclocal.m4: Revert the previous change changing
+	the license from GPL v2 or later to GPL v3 or later
+	(this file was generated).
+
+2012-12-20  Joel Brobecker  <brobecker@adacore.com>
+
+	* linux-fixed-code.s: Revert the previous change changing
+	the license from GPL v2 or later to GPL v3 or later.
+
+2012-07-31  Mike Frysinger  <vapier@gentoo.org>
+
+	* machs.c (bf54x_roms): Pass 0x1000 to alias field of BFROM, and
+	0x10000 to the alias field of BFROMA.
+	(bf561_roms): Pass 0x1000 to alias field of BFROM.
+	(bf59x_roms): Pass 0x10000 to alias field of BFROMA.
+
+2012-07-31  Mike Frysinger  <vapier@gentoo.org>
+
+	* machs.c (bfin_reg_fetch): Change return 0 to return -1, and
+	return -1 to return 4.
+	(bfin_reg_store): Likewise.
+
+2012-06-15  Joel Brobecker  <brobecker@adacore.com>
+
+	* config.in, configure: Regenerate.
+
+2012-04-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_HARDWARE): Add bfin_pint.
+	* configure: Regenerate.
+	* dv-bfin_pint.c, dv-bfin_pint.h: New device model.
+	* machs.c (bf542_dev): Add PINT register blocks.
+	(bf544_dev, bf547_dev): Likewise.
+	(PINT_PIQS): Define.
+	(bf54x_port): Add pint/gpio routing.
+	* machs.h (BFIN_MMR_PINT_SIZE): Define.
+
+2012-04-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_HARDWARE): Add bfin_gpio2.
+	* configure: Regenerate.
+	* dv-bfin_gpio2.c, dv-bfin_gpio2.h: New device model.
+	* machs.c (bf54x_mem): Delete GPIO mem stub.
+	(bf542_dev): Add GPIO register blocks.
+	(bf544_dev, bf547_dev): Likewise.
+	* machs.h (BFIN_MMR_GPIO2_SIZE): Define.
+
+2012-04-09  Robin Getz  <robin.getz@analog.com>
+
+	* bfin-sim.c (decode_dsp32shift_0): Extract the sign for ASHIFT
+	and LSHIFT, and set ASTAT based on the before/after values.
+	Rename "val" to "acc" to be consistent with other code branches.
+
+2012-04-09  Robin Getz  <robin.getz@analog.com>
+
+	* bfin-sim.c (sgn_extend): New helper.
+	(decode_dsp32shiftimm_0): Call lshift when newimmag is more
+	than 16, otherwise call ashiftrt.  Set ASTAT fields as needed.
+	For accumulator shifts, call new sgn_extend helper.
+
+2012-04-08  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin-sim.c (illegal_instruction_or_combination): New helper.
+	(decode_ProgCtrl_0): Call illegal_instruction_or_combination instead
+	of illegal_instruction.
+	(decode_PushPopReg_0, decode_CCflag_0, decode_CC2dreg_0,
+	decode_LDSTpmod_0, decode_dagMODim_0, decode_dagMODik_0,
+	decode_dspLDST_0, decode_LDST_0, _interp_insn_bfin): Likewise.
+	(decode_PushPopMultiple_0): Call illegal_instruction_combination when
+	PARALLEL_GROUP is not BFIN_PARALLEL_NONE.
+	(decode_CCflag_0, decode_REGMV_0, decode_ALU2op_0, decode_PTR2op_0,
+	decode_COMPI2opD_0, decode_COMPI2opP_0): Likewise.
+	(decode_CC2stat_0): Check PARALLEL_GROUP before cbit.
+	(decode_LDSTpmod_0): Call illegal_instruction_combination when
+	PARALLEL_GROUP is BFIN_PARALLEL_GROUP2.
+	(decode_dagMODim_0, decode_dagMODik_0, decode_LDST_0,
+	decode_LDSTiiFP_0, decode_LDSTii_0): Likewise.
+
+2012-04-08  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin-sim.h (bfin_parallel_group): New enum.
+	(bfin_cpu_state): Add new "group" member.
+	(PARALLEL_GROUP): Define.
+	* bfin-sim.c (decode_ProgCtrl_0): Change INSN_LEN check to
+	PARALLEL_GROUP.
+	(decode_CaCTRL_0, decode_PushPopReg_0, decode_ccMV_0, decode_CCflag_0,
+	decode_CC2dreg_0, decode_CC2stat_0, decode_BRCC_0, decode_UJUMP_0,
+	decode_LOGI2op_0, decode_LoopSetup_0, decode_LDIMMhalf_0,
+	decode_CALLa_0, decode_linkage_0): Likewise.
+	(_interp_insn_bfin): Set PARALLEL_GROUP.
+	(interp_insn_bfin): Likewise.
+
+2012-04-08  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin-sim.c (decode_dsp32alu_0): Delete extra space in TRACE_INSN.
+
+2012-04-01  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin-sim.c (_interp_insn_bfin): Call illegal_instruction_combination
+	when INSN_LEN is non-zero before 32bit decode.
+
+2012-04-01  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin-dis.c (fmtconst): Replace decimal handling with a single
+	sprintf call and the '*' field width.
+
+2012-04-01  Mike Frysinger  <vapier@gentoo.org>
+
+	* machs.c (bfin_model_map_bfrom): Return when mnum is 535.
+
+2012-04-01  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (bfin_user_init): Move auxvt_size decl from top to
+	inside of auxvt check.
+
+2012-03-31  Mike Frysinger  <vapier@gentoo.org>
+
+	* dv-bfin_sic.c (bfin_sic_finish): Change iwr1 to iwr2.
+
+2012-03-31  Mike Frysinger  <vapier@gentoo.org>
+
+	* devices.c: Include devices.h.
+
+2012-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4, config.in, configure: Regenerate.
+
+2012-03-19  Robin Getz  <robin.getz@analog.com>
+	    Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin-sim.c (lshift): Add an overflow flag.  Delete now unused
+	i, j, and tmp vars.  Add a new v_i var.  Split the overflow logic
+	out from the saturate logic.  Do not set V ASTAT bits when working
+	with accumulators.
+	(decode_ALU2op_0): Add new argument to lshift call.
+	(decode_LOGI2op_0, decode_dsp32shift_0, decode_dsp32shiftimm_0):
+	Likewise.
+
+2012-03-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* dv-bfin_ebiu_amc.c (struct bfin_ebiu_amc): Add bank_base.
+	(bfin_ebiu_amc_write_amgctl): Replace BFIN_EBIU_AMC_BASE with
+	amc->bank_base.
+	(bfin_ebiu_amc_finish): Assign BFIN_EBIU_AMC_BASE to amc->bank_base.
+
+2012-03-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* dv-bfin_ebiu_amc.c (bfin_ebiu_amc_attach_address_callback): Use
+	ARRAY_SIZE rather than hardcoded constant.
+
+2012-02-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in: Regenerate.
+	* configure: Likewise.
+	* configure.ac: Add linux/types.h to AC_CHECK_HEADERS.
+	* dv-eth_phy.c: Check for HAVE_LINUX_TYPES_H, and delete __u16 and
+	_LINUX_TYPES_H defines.
+
+2011-12-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (bfin_syscall): Increase _tbuf storage.  Declare new local
+	tstr buffer.  Call cb_get_string on tstr when handling CB_SYS_stat64,
+	CB_SYS_lstat64, CB_SYS_open, CB_SYS_write, CB_SYS_unlink,
+	CB_SYS_truncate, CB_SYS_rename, CB_SYS_stat, CB_SYS_lstat.  Include
+	tstr in the tbuf output.
+
+2011-12-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in: Delete all dependency rules.
+	* aclocal.m4, configure: Regenerate.
+
+2011-10-19  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate after common/acinclude.m4 update.
+
+2011-10-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Change include to common/acinclude.m4.
+	* aclocal.m4, configure: Regenerate.
+
+2011-10-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Change AC_PREREQ to 2.64.  Delete AC_CONFIG_HEADER
+	call.  Replace common.m4 include with SIM_AC_COMMON.
+	* configure: Regenerate.
+
+2011-09-28  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin-sim.c (decode_dsp32shift_0): Use STORE() for VIT_MAX insns.
+
+2011-07-05  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_do_command): Delete.
+
+2011-07-01  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (cb_linux_stat_map_32, cb_linux_stat_map_64): Rename from
+	stat_map_32 and stat_map_64.
+	(cb_libgloss_stat_map_32): New stat map.
+	(stat_map_32, stat_map_64): New stat map pointers.
+	(bfin_user_init): Assign stat_map_32 to cb_linux_stat_map_32 and
+	stat_map_64 to cb_linux_stat_map_64.
+	(bfin_virtual_init): New function.
+	(sim_create_inferior): Call bfin_virtual_init for all other envs.
+
+2011-06-22  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (bfin_syscall): Delete old comment.  Set dreg 1 to
+	sc.result2 and dreg 2 to sc.errcode.
+
+2011-06-18  Robin Getz  <robin.getz@analog.com>
+
+	* bfin-sim.c (decode_dsp32shift_0): Clear ASTAT[AV] if val is 0,
+	else set it.  Set ASTAT[AVS] if val is 0.  Do this for LSHIFT and
+	ASHIFT accumulator insns.
+
+2011-06-18  Robin Getz  <robin.getz@analog.com>
+
+	* bfin-sim.c (ashiftrt): If size is 40, do not call SET_ASTATREG.
+	(lshiftrt): Likewise.
+
+2011-06-18  Robin Getz  <robin.getz@analog.com>
+
+	* bfin-sim.c (decode_dsp32shift_0): Use get_unextended_acc
+	rather than get_extended_acc in LSHIFT insns.
+
+2011-06-18  Robin Getz  <robin.getz@analog.com>
+
+	* bfin-sim.c (decode_macfunc): Handle MM when mmod is M_TFU.
+	Check MM once when mmod is M_FU to match M_TFU better.
+
+2011-06-18  Robin Getz  <robin.getz@analog.com>
+
+	* bfin-sim.c (decode_dsp32shiftimm_0): When shift is greater than
+	32, perform a left shift.  Update the corresponding AV bit.  Set
+	AZ when the low 32bits are also zero.
+
+2011-06-18  Robin Getz  <robin.getz@analog.com>
+
+	* bfin-sim.c (decode_dsp32shiftimm_0): With left shift vector insns,
+	call lshift only when count is positive.  Otherwise, call ashiftrt.
+	With arithmetic right shift insns, call ashiftrt when the value is
+	small enough, otherwise call lshift.
+
+2011-06-18  Robin Getz  <robin.getz@analog.com>
+
+	* bfin-sim.c (extract_mult): Call saturate_s16 directly when
+	mmod is M_IH rather than computing the result by hand.
+
+2011-06-18  Robin Getz  <robin.getz@analog.com>
+
+	* bfin-sim.c (decode_macfunc): Add nosat_acc to track acc value
+	before saturation, set sat when more cases saturate, and set the
+	overflow bit based on these results.  For M_TFU, M_IU, M_FU, and
+	M_W32, change the max values compared against.
+	(decode_dsp32mac_0): Delete v_i and add v_0 and v_1.  Pass v_1
+	when processing MAC1 and pass v_0 when processing MAC0.  Combine
+	the results into the V/VS ASTAT bits.
+
+2011-06-18  Robin Getz  <robin.getz@analog.com>
+
+	* bfin-sim.c (extract_mult): Call saturate_s32 when MM is set
+	and mmod is M_IU.  Call saturate_s16 when MM is set and mmod
+	is M_TFU.
+
+2011-06-18  Robin Getz  <robin.getz@analog.com>
+
+	* bfin-sim.c (decode_multfunc): Call new is_macmod_signed, and
+	allow MM to sign extend all the time.
+	(decode_macfunc): Likewise.  Drop sign extension of unsigned
+	values.
+
+2011-06-18  Robin Getz  <robin.getz@analog.com>
+
+	* bfin-sim.c (saturate_s40_astat): Change ">=" to ">".
+	(decode_macfunc): Likewise when mmod is M_IH.
+
+2011-06-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_create_inferior): Change free to freeargv.
+
+2011-06-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* machs.c (bf534_dev, bf537_dev): Add glue-or devices.
+	(bf537_port): Define applicable devices with PORT to the glue-or
+	devices instead of SIC.
+	(bfin_model_hw_tree_init): Drop old sim_hw_parse call for bfin_sic.
+	Only parse reg/type when the device has an address.  Move the call
+	to dv_bfin_hw_port_parse up before slash check.
+
+2011-06-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* dv-bfin_sic.c (ENC, DEC_PIN, DEC_SIC): Move above the
+	BFIN_SIC_TO_CEC_PORTS definition.
+	(SIC_PORTS): New define.
+	(bfin_sic_50x_ports, bfin_sic_51x_ports, bfin_sic_52x_ports,
+	bfin_sic_533_ports, bfin_sic_537_ports, bfin_sic_538_ports,
+	bfin_sic_54x_ports, bfin_sic_561_ports, bfin_sic_59x_ports):
+	Delete old layouts.
+	(bfin_sic1_ports, bfin_sic2_ports, bfin_sic3_ports,
+	bfin_sic_561_ports): Define new layouts with SIC_PORTS().
+	(bfin_sic_finish): Change reference to bfin_sic_50x_ports,
+	bfin_sic_51x_ports, bfin_sic_52x_ports, and bfin_sic_538_ports
+	to bfin_sic2_ports.  Change reference to bfin_sic_533_ports,
+	bfin_sic_537_ports, and bfin_sic_59x_ports to bfin_sic1_ports.
+	Change reference to bfin_sic_54x_ports to bfin_sic3_ports.
+	* machs.c (bfin_port_layout): New structure.
+	(bfin_model_data): Add new "port" and "port_count" members.
+	(PORT, SIC): New defines.
+	(bf000_port, bf50x_port, bf51x_port, bf52x_port, bf533_port,
+	bf537_port, bf538_port, bf54x_port, bf561_port, bf592_port):
+	Move and redefine port layout from dv-bfin_sic.c to here.
+	(bf504_port, bf506_port, bf512_port, bf514_port, bf516_port,
+	bf518_port, bf522_port, bf523_port, bf524_port, bf525_port,
+	bf526_port, bf527_port, bf531_port, bf532_port, bf534_port,
+	bf536_port, bf539_port, bf542_port, bf544_port, bf547_port,
+	bf548_port, bf549_port): New defines.
+	(bfin_model_data): Link in new bfin_port_layout.port member.
+	(dv_bfin_hw_port_parse): New function.
+	(dv_bfin_hw_parse): Call new dv_bfin_hw_port_parse function.
+	(bfin_model_hw_tree_init): Replace calls to sim_hw_parse for
+	bfin_sic links with new dv_bfin_hw_port_parse function.
+
+2011-06-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* dv-bfin_dma.c (bfin_dma_io_write_buffer): Fix indentation.
+
+2011-05-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (TRACE_SYSCALL): Change EVENTS to SYSCALL.
+
+2011-05-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* dv-bfin_cec.h (BFIN_COREMMR_CEC_{BASE,SIZE}): Move to ...
+	* dv-bfin_ctimer.h (BFIN_COREMMR_CTIMER_{BASE,SIZE}): Move to ...
+	* dv-bfin_dma.h (BFIN_MMR_DMA_SIZE): Move to ...
+	* dv-bfin_dmac.h (BFIN_MMR_DMAC{0,1}_BASE): Move to ...
+	* dv-bfin_ebiu_amc.h (BF{IN,50X,54X}_MMR_EBIU_AMC_SIZE): Move to ...
+	* dv-bfin_ebiu_ddrc.h (BFIN_MMR_EBIU_DDRC_SIZE): Move to ...
+	* dv-bfin_ebiu_sdc.h (BFIN_MMR_EBIU_SDC_SIZE): Move to ...
+	* dv-bfin_emac.h (BFIN_MMR_EMAC_{BASE,SIZE}): Move to ...
+	* dv-bfin_eppi.h (BFIN_MMR_EPPI_SIZE): Move to ...
+	* dv-bfin_evt.h (BFIN_COREMMR_EVT_{BASE,SIZE}): Move to ...
+	* dv-bfin_gpio.h (BFIN_MMR_GPIO_SIZE): Move to ...
+	* dv-bfin_gptimer.h (BFIN_MMR_GPTIMER_SIZE): Move to ...
+	* dv-bfin_jtag.h (BFIN_COREMMR_JTAG_{BASE,SIZE}): Move to ...
+	* dv-bfin_mmu.h (BFIN_COREMMR_MMU_{BASE,SIZE}): Move to ...
+	* dv-bfin_nfc.h (BFIN_MMR_NFC_SIZE): Move to ...
+	* dv-bfin_otp.h (BFIN_MMR_OTP_SIZE): Move to ...
+	* dv-bfin_pfmon.h (BFIN_COREMMR_PFMON_{BASE,SIZE}): Move to ...
+	* dv-bfin_pll.h (BFIN_MMR_PLL_{BASE,SIZE}): Move to ...
+	* dv-bfin_ppi.h (BFIN_MMR_PPI_SIZE): Move to ...
+	* dv-bfin_rtc.h (BFIN_MMR_RTC_SIZE): Move to ...
+	* dv-bfin_sic.h (BFIN_MMR_SIC_{BASE,SIZE}): Move to ...
+	* dv-bfin_spi.h (BFIN_MMR_SPI_SIZE): Move to ...
+	* dv-bfin_trace.h (BFIN_COREMMR_TRACE_{BASE,SIZE}): Move to ...
+	* dv-bfin_twi.h (BFIN_MMR_TWI_SIZE): Move to ...
+	* dv-bfin_uart.h (BFIN_MMR_UART_SIZE): Move to ...
+	* dv-bfin_uart2.h (BFIN_MMR_UART2_SIZE): Move to ...
+	* dv-bfin_wdog.h (BFIN_MMR_WDOG_SIZE): Move to ...
+	* dv-bfin_wp.h (BFIN_COREMMR_WP_{BASE,SIZE}): Move to ...
+	* machs.h: ... here.
+	* machs.c: Delete all dv-bfin_*.h includes except for cec/dmac.
+
+2011-05-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (dv-bfin_pfmon.o): New target.
+	* configure.ac (SIM_AC_OPTION_HARDWARE): Add bfin_pfmon.
+	* configure: Regenerated.
+	* dv-bfin_pfmon.c, dv-bfin_pfmon.h: New files.
+	* machs.c: Add include new bfin_pfmon.h.
+	(bfin_core_dev): Add pfmon.
+
+2011-05-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* machs.c (bf526_roms): Add a region with rev of 2.
+	(bf54x_roms): Add regions with rev of 4.
+	* bfroms/all.h: Include new bf526-0.2.h, bf54x-0.4.h, and
+	bf54x_l1-0.4.h headers.
+	* bfroms/bf526-0.2.h, bfroms/bf54x-0.4.h, bfroms/bf54x_l1-0.4.h:
+	New header files.
+
+2011-05-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin-sim.c (decode_PushPopReg_0): Delete (grp == 1 && reg == 6)
+	check for SP reg.
+
+2011-05-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* dv-bfin_uart.c (bfin_uart_write_byte): Add a mcr arg.  Declare a
+	local uart.  When LOOP_ENA is set in mcr, write to the saved byte
+	and count fields of the uart.
+	(bfin_uart_io_write_buffer): Pass uart->mcr to bfin_uart_write_byte
+	and bfin_uart_get_next_byte.
+	(bfin_uart_get_next_byte): Add a mcr arg.  Move uart->saved_count
+	check first, and skip the remaining code when LOOP_ENA is set in mcr.
+	* dv-bfin_uart.h (bfin_uart_write_byte): Add an mcr argument.
+	(bfin_uart_get_next_byte): Likewise.
+	(XOFF, MRTS, RFIT, RFRT, LOOP_ENA, FCPOL, ARTS, ACTS): Define.
+	* dv-bfin_uart2.c (bfin_uart_io_write_buffer): Padd uart->mcr when
+	calling bfin_uart_write_byte and bfin_uart_get_next_byte.
+
+2011-05-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* dv-bfin_uart2.c (bfin_uart_io_read_buffer): Clear DR/THRE/TEMT bits
+	from uart->lsr before setting them.
+
+2011-04-27  Mike Frysinger  <vapier@gentoo.org>
+
+	* dv-bfin_dmac.c (bfin_dmac): Constify pmap array.
+	(bfin_dmac_50x_pmap, bfin_dmac_51x_pmap, bfin_dmac_52x_pmap,
+	bfin_dmac_533_pmap, bfin_dmac_537_pmap, bfin_dmac0_538_pmap,
+	bfin_dmac1_538_pmap, bfin_dmac0_54x_pmap, bfin_dmac1_54x_pmap,
+	bfin_dmac0_561_pmap, bfin_dmac1_561_pmap, bfin_dmac_59x_pmap):
+	Likewise.
+
+2011-04-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* dv-bfin_gpio.c (bfin_gpio_forward_ouput): New function.
+	(bfin_gpio_io_write_buffer): Store the current port state into
+	"data", and call bfin_gpio_forward_ouput when the data or dir
+	MMRs are updated.
+	(bfin_gpio_ports): Change p0..p15 to bidirect_port.
+
+2011-04-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* dv-bfin_gpio.c (bfin_gpio): Add "int_state" member.
+	(bfin_gpio_forward_int, bfin_gpio_forward_ints): New functions.
+	(bfin_gpio_io_write_buffer): Call bfin_gpio_forward_int when the
+	mask a or mask b MMRs are written.
+	(bfin_gpio_port_event): When handling edge gpios, set the bit in
+	int_state, call bfin_gpio_forward_ints, and then clear the bit.
+	When handling level gpios, clear/set the bit in int_state rather
+	than returning immediately.  Call bfin_gpio_forward_ints instead
+	of checking mask[ab] and calling HW_TRACE/hw_port_event directly.
+
+2011-04-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin-sim.c (decode_dsp32alu_0): Call STORE instead of SET_DREG for
+	BYTEOP2P, BYTEOP3P, BYTEOP1P, BYTEOP16P, BYTEOP16M, BYTEPACK, and
+	BYTEUNPACK.
+	(decode_dsp32shift_0): Call STORE instead of SET_DREG for PACK,
+	BITMUX, EXTRACT, DEPOSIT, ALIGN8, ALIGN16, and ALIGN24.
+
+2011-04-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin-sim.c (decode_dsp32alu_0): Set DIS_ALGN_EXPT when handling
+	BYTEOP2P, BYTEOP3P, SAA, BYTEOP1P, BYTEOP16P, BYTEOP16M, BYTEPACK,
+	and BYTEUNPACK insns.
+
+2011-04-11  Mike Frysinger  <vapier@gentoo.org>
+
+	* dv-bfin_sic.c (bfin_sic_port_event): New helper function.
+	(bfin_sic_52x_port_event, bfin_sic_537_port_event,
+	bfin_sic_54x_port_event, bfin_sic_561_port_event): Include level
+	in the trace output, and call the new bfin_sic_port_event func.
+
+2011-04-11  Mike Frysinger  <vapier@gentoo.org>
+
+	* dv-bfin_gpio.c (bfin_gpio_ports): Add p15.
+
+2011-04-01  Mike Frysinger  <vapier@gentoo.org>
 
 	* dv-bfin_otp.c (bfin_otp_ports): Declare.
 	(bfin_otp_finish): Call set_hw_ports with bfin_otp_ports.

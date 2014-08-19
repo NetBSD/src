@@ -1,4 +1,4 @@
-/*	$NetBSD: puccn.c,v 1.10 2010/04/28 19:17:05 dyoung Exp $ */
+/*	$NetBSD: puccn.c,v 1.10.18.1 2014/08/20 00:03:48 tls Exp $ */
 
 /*
  * Derived from  pci.c
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puccn.c,v 1.10 2010/04/28 19:17:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puccn.c,v 1.10.18.1 2014/08/20 00:03:48 tls Exp $");
 
 #include "opt_kgdb.h"
 
@@ -71,22 +71,11 @@ __KERNEL_RCSID(0, "$NetBSD: puccn.c,v 1.10 2010/04/28 19:17:05 dyoung Exp $");
 #define	CONMODE		((TTYDEF_CFLAG & ~(CSIZE|CSTOPB|PARENB))|CS8) /* 8N1 */
 #endif
 
-#ifdef i386		/* Handle i386 directly */
-int
-cpu_comcnprobe(struct consdev *cn, struct pci_attach_args *pa)
-{
-	pci_mode_detect();
-	pa->pa_iot = x86_bus_space_io;
-	pa->pa_pc = 0;
-	pa->pa_tag = pci_make_tag(0, 0, 31, 0);
-	return 0;
-}
-#endif
-
 cons_decl(com);
 
 static bus_addr_t puccnbase;
 static bus_space_tag_t puctag;
+static int puccnflags;
 
 #ifdef KGDB
 static bus_addr_t pucgdbbase;
@@ -110,14 +99,14 @@ pucprobe_doit(struct consdev *cn)
 	pcireg_t base;
 
 	/* Fetch our tags */
-	if (cpu_comcnprobe(cn, &pa) != 0) {
+#if defined(amd64) || defined(i386)
+	if (cpu_puc_cnprobe(cn, &pa) != 0)
+#endif
 		return 0;
-	}
-	puctag = pa.pa_iot;
+
 	pci_decompose_tag(pa.pa_pc, pa.pa_tag, &bus, &maxdev, NULL);
 
-	/* scan through devices */
-
+	/* Scan through devices and find a communication class device. */
 	for (; dev <= maxdev ; dev++) {
 		pa.pa_tag = pci_make_tag(pa.pa_pc, bus, dev, 0);
 		reg = pci_conf_read(pa.pa_pc, pa.pa_tag, PCI_ID_REG);
@@ -133,11 +122,13 @@ pucprobe_doit(struct consdev *cn)
 resume_scan:
 		for (; func < nfunctions; func++)  {
 			pa.pa_tag = pci_make_tag(pa.pa_pc, bus, dev, func);
-			reg = pci_conf_read(pa.pa_pc, pa.pa_tag, PCI_CLASS_REG);
+			reg = pci_conf_read(pa.pa_pc, pa.pa_tag,
+			    PCI_CLASS_REG);
 			if (PCI_CLASS(reg)  == PCI_CLASS_COMMUNICATIONS
 			    && PCI_SUBCLASS(reg)
 			       == PCI_SUBCLASS_COMMUNICATIONS_SERIAL) {
-				pa.pa_id = pci_conf_read(pa.pa_pc, pa.pa_tag, PCI_ID_REG);
+				pa.pa_id = pci_conf_read(pa.pa_pc, pa.pa_tag,
+				    PCI_ID_REG);
 				subsys = pci_conf_read(pa.pa_pc, pa.pa_tag,
 				    PCI_SUBSYS_ID_REG);
 				foundport = 1;
@@ -149,27 +140,50 @@ resume_scan:
 
 		func = 0;
 	}
+
+	/*
+	 * If all devices was scanned and couldn't find any communication
+	 * device, return with 0.
+	 */
 	if (!foundport)
 		return 0;
+
+	/* Clear foundport flag */
 	foundport = 0;
 
+	/* Check whether the device is in the puc device table or not */
 	desc = puc_find_description(PCI_VENDOR(pa.pa_id),
 	    PCI_PRODUCT(pa.pa_id), PCI_VENDOR(subsys), PCI_PRODUCT(subsys));
+
+	/* If not, check the next communication device */
 	if (desc == NULL) {
+		/* Resume from the next function */
 		func++;
 		goto resume_scan;
 	}
 
-	for (i = 0; PUC_PORT_VALID(desc, i); i++)
-	{
+	/*
+	 * We found a device and it's on the puc table. Set the tag and
+	 * the base address.
+	 */
+	for (i = 0; PUC_PORT_VALID(desc, i); i++) {
 		if (desc->ports[i].type != PUC_PORT_TYPE_COM)
 			continue;
+		puccnflags = desc->ports[i].flags;
 		base = pci_conf_read(pa.pa_pc, pa.pa_tag, desc->ports[i].bar);
 		base += desc->ports[i].offset;
 
-		if (PCI_MAPREG_TYPE(base) != PCI_MAPREG_TYPE_IO)
-			continue;
-		base = PCI_MAPREG_IO_ADDR(base);
+		if (PCI_MAPREG_TYPE(base) == PCI_MAPREG_TYPE_IO) {
+			puctag = pa.pa_iot;
+			base = PCI_MAPREG_IO_ADDR(base);
+		}
+#if 0 /* For MMIO device */
+		else {
+			puctag = pa.pa_memt;
+			base = PCI_MAPREG_MEM_ADDR(base);
+		}
+#endif
+
 		if (com_is_console(puctag, base, NULL))
 			continue;
 		foundport = 1;
@@ -181,44 +195,51 @@ resume_scan:
 		goto resume_scan;
 	}
 
+#if 0
 	cn->cn_pri = CN_REMOTE;
-	return PCI_MAPREG_IO_ADDR(base);
+#else
+	if (cn)
+		cn->cn_pri = CN_REMOTE;
+#endif
+	return base;
 }
 
 #ifdef KGDB
-void comgdbprobe(struct consdev *);
-void comgdbinit(struct consdev *);
-
 void
-comgdbprobe(struct consdev *cn)
+puc_gdbprobe(struct consdev *cn)
 {
+
 	pucgdbbase = pucprobe_doit(cn);
 }
 
 void
-comgdbinit(struct consdev *cn)
+puc_gdbinit(struct consdev *cn)
 {
-	if (pucgdbbase == 0) {
+
+	if (pucgdbbase == 0)
 		return;
-	}
+
 	com_kgdb_attach(puctag, pucgdbbase, CONSPEED, COM_FREQ,
 	    COM_TYPE_NORMAL, CONMODE);
 }
 #endif
 
 void
-comcnprobe(struct consdev *cn)
+puc_cnprobe(struct consdev *cn)
 {
+
 	puccnbase = pucprobe_doit(cn);
 }
 
-void
-comcninit(struct consdev *cn)
+int
+puc_cninit(struct consdev *cn)
 {
-	if (puccnbase == 0) {
-		return;
-	}
-	comcnattach(puctag, puccnbase, CONSPEED, COM_FREQ, COM_TYPE_NORMAL,
+
+	if (puccnbase == 0)
+		return -1;
+
+	return comcnattach(puctag, puccnbase, CONSPEED,
+	    puccnflags & PUC_COM_CLOCKMASK, COM_TYPE_NORMAL,
 	    CONMODE);
 }
 

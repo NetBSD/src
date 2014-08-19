@@ -1,4 +1,4 @@
-/* $NetBSD: plb.c,v 1.20 2011/06/18 06:41:42 matt Exp $ */
+/* $NetBSD: plb.c,v 1.20.12.1 2014/08/20 00:03:19 tls Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.20 2011/06/18 06:41:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.20.12.1 2014/08/20 00:03:19 tls Exp $");
 
 #include "locators.h"
 #include "emac.h"
@@ -107,7 +107,7 @@ const struct plb_dev plb_devs [] = {
 	{ AMCC405EX,	"cpu", },
 	{ AMCC405EX,	"ecc", },
 	{ AMCC405EX,	"opb", },
-	{ AMCC405EX,	"pchb", },
+	{ AMCC405EX,	"dwctwo", },
 
 	{ 0,		NULL }
 };
@@ -174,6 +174,7 @@ plb_attach(device_t parent, device_t self, void *aux)
 			continue;
 
 		paa.plb_name = plb_devs[i].plb_name;
+		paa.plb_addr = PLBCF_ADDR_DEFAULT;
 		paa.plb_dmat = &ibm4xx_default_bus_dma_tag;
 		paa.plb_irq = PLBCF_IRQ_DEFAULT;
 
@@ -185,6 +186,7 @@ plb_attach(device_t parent, device_t self, void *aux)
 			continue;
 
 		paa.plb_name = local_plb_devs->plb_name;
+		paa.plb_addr = PLBCF_ADDR_DEFAULT;
 		paa.plb_dmat = &ibm4xx_default_bus_dma_tag;
 		paa.plb_irq = PLBCF_IRQ_DEFAULT;
 
@@ -200,6 +202,8 @@ plb_print(void *aux, const char *pnp)
 
 	if (pnp)
 		aprint_normal("%s at %s", paa->plb_name, pnp);
+	if (paa->plb_addr != PLBCF_ADDR_DEFAULT)
+		aprint_normal(" address 0x%08x", paa->plb_addr);
 	if (paa->plb_irq != PLBCF_IRQ_DEFAULT)
 		aprint_normal(" irq %d", paa->plb_irq);
 

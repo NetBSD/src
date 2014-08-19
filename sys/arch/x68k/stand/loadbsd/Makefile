@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2012/02/08 23:51:37 joerg Exp $
+#	$NetBSD: Makefile,v 1.14.6.1 2014/08/20 00:03:28 tls Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -14,13 +14,14 @@ BINDIR=		/usr/mdec
 .PATH:	${.CURDIR}/../common
 
 .include <bsd.own.mk>
+.include <bsd.klinks.mk>
 
 AOUT2HUXDIR!=	cd ${.CURDIR}/../aout2hux && ${PRINTOBJDIR}
 AOUT2HUX=	${AOUT2HUXDIR}/aout2hux
 LIBDOS!=	cd ${.CURDIR}/../libdos && ${PRINTOBJDIR}
 LIBIOCS!=	cd ${.CURDIR}/../libiocs && ${PRINTOBJDIR}
 
-CPPFLAGS=	-W -Wall -O -fomit-frame-pointer
+CPPFLAGS=	-W -Wall -O -fomit-frame-pointer -fno-unwind-tables
 CPPFLAGS+=	-m68000 -Wa,-mc68000
 CPPFLAGS+=	-nostdinc 
 CPPFLAGS+=	-I$S -I.
@@ -31,13 +32,6 @@ LDLIBS=		-L${LIBDOS} -ldos -L${LIBIOCS} -liocs -L${DESTDIR}/usr/lib -lc
 DPADD+=		${AOUT2HUX}
 
 CLEANFILES+=	${BASE}1 ${BASE}2
-CLEANFILES+=	machine m68k
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	rm -f machine && ln -s $S/arch/x68k/include machine
-	rm -f m68k && ln -s $S/arch/m68k/include m68k
-.endif
 
 ${PROG}: ${BASE}1 ${BASE}2
 	${_MKTARGET_LINK}

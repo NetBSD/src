@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.40 2011/07/01 18:50:41 dyoung Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.40.12.1 2014/08/20 00:03:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.40 2011/07/01 18:50:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.40.12.1 2014/08/20 00:03:24 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,7 +254,6 @@ ie_obio_attach(device_t parent, device_t self, void *aux)
 	int rseg;
 	int error;
 	paddr_t pa;
-	struct intrhand *ih;
 	bus_size_t memsize;
 	u_long iebase;
 	uint8_t myaddr[ETHER_ADDR_LEN];
@@ -392,7 +391,7 @@ ie_obio_attach(device_t parent, device_t self, void *aux)
 	i82586_attach(sc, "onboard", myaddr, media, NMEDIA, media[0]);
 
 	/* Establish interrupt channel */
-	ih = bus_intr_establish(oba->oba_bustag,
-				oba->oba_pri, IPL_NET,
-				i82586_intr, sc);
+	(void)bus_intr_establish(oba->oba_bustag,
+				 oba->oba_pri, IPL_NET,
+				 i82586_intr, sc);
 }

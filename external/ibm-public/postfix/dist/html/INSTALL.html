@@ -91,7 +91,7 @@ receive mail via virtual interface </a>
 
 <blockquote>
 <pre>
-% command
+$ command
 </pre>
 </blockquote>
 
@@ -110,7 +110,7 @@ characters, use the col(1) command.  For example: </p>
 
 <blockquote>
 <pre>
-% col -bx &lt;file | lpr
+$ col -bx &lt;file | lpr
 </pre>
 </blockquote>
 
@@ -120,8 +120,8 @@ be sure to use an absolute path.  </p>
 
 <blockquote>
 <pre>
-% export MANPATH; MANPATH="`pwd`/man:$MANPATH"
-% setenv MANPATH "`pwd`/man:$MANPATH"
+$ export MANPATH; MANPATH="`pwd`/man:$MANPATH"
+$ setenv MANPATH "`pwd`/man:$MANPATH"
 </pre>
 </blockquote>
 
@@ -141,22 +141,20 @@ mantools directory. </p>
 <p>
 AIX 3.2.5, 4.1.x, 4.2.0, 4.3.x, 5.2 <br>
 BSD/OS 2.x, 3.x, 4.x <br>
-Darwin 1.x <br>
-FreeBSD 2.x, 3.x, 4.x, 5.x <br>
+FreeBSD 2.x .. 9.x <br>
 HP-UX  9.x, 10.x, 11.x <br>
 IRIX 5.x, 6.x <br>
-Linux Debian 1.3.1, 2.x, 3.x <br>
-Linux RedHat 3.x (January 2004) - 9.x <br>
-Linux Slackware 3.x, 4.x, 7.x <br>
-Linux SuSE 5.x, 6.x, 7.x <br>
-Linux Ubuntu 4.10..7.04<br>
+Linux Debian 1.3.1 and later <br>
+Linux RedHat 3.x (January 2004) and later <br>
+Linux Slackware 3.x and later <br>
+Linux SuSE 5.x and later <br>
+Linux Ubuntu 4.10 and later<br>
 Mac OS X <br>
 NEXTSTEP 3.x <br>
-NetBSD 1.x <br>
+NetBSD 1.x and later <br>
 OPENSTEP 4.x <br>
 OSF1.V3 - OSF1.V5 (Digital UNIX) <br>
 Reliant UNIX 5.x <br>
-Rhapsody 5.x <br>
 SunOS 4.1.4 (March 2007) <br>
 SunOS 5.4 - 5.10 (Solaris 2.4..10) <br>
 Ultrix 4.x (well, that was long ago) <br>
@@ -184,7 +182,7 @@ the following command from the Postfix top-level directory: </p>
 
 <blockquote>
 <pre>
-% make -f Makefile.init makefiles
+$ make -f Makefile.init makefiles
 </pre>
 </blockquote>
 
@@ -194,7 +192,7 @@ first do this:</p>
 
 <blockquote>
 <pre>
-% make tidy
+$ make tidy
 </pre>
 </blockquote>
 
@@ -209,7 +207,7 @@ directory of the source tree and type: </p>
 
 <blockquote>
 <pre>
-% make
+$ make
 </pre>
 </blockquote>
 
@@ -218,33 +216,37 @@ of the compiler. Here are a few examples: </p>
 
 <blockquote> 
 <pre>
-% make makefiles CC=/opt/SUNWspro/bin/cc        (Solaris)
-% make
+$ make makefiles CC=/opt/SUNWspro/bin/cc        (Solaris)
+$ make
 
-% make makefiles CC="/opt/ansic/bin/cc -Ae"     (HP-UX)
-% make
+$ make makefiles CC="/opt/ansic/bin/cc -Ae"     (HP-UX)
+$ make
 
-% make makefiles CC="purify cc"
-% make
+$ make makefiles CC="purify cc"
+$ make
 </pre>
 </blockquote>
 
 <p> and so on. In some cases, optimization is turned off automatically. </p>
 
-<h3>4.3 - Building with optional extensions</h3>
+<h3>4.3 - Building with optional features</h3>
 
 By default, Postfix builds as a mail system with relatively few
 bells and whistles. Support for third-party databases etc.
-must be configured when Postfix is compiled.  The following documents describe how to build Postfix with support for extensions:
+must be configured when Postfix is compiled.  The following documents
+describe how to build Postfix with support for optional features:
 
 <blockquote>
 <table border="1">
 
-<tr> <th>Postfix extension </th> <th>Document </th> <th>Availability</th>
+<tr> <th>Optional feature </th> <th>Document </th> <th>Availability</th>
 </tr>
 
 <tr> <td> Berkeley DB database</td> <td><a href="DB_README.html">DB_README</a></td> <td> Postfix
 1.0 </td> </tr>
+
+<tr> <td> LMDB database</td> <td><a href="LMDB_README.html">LMDB_README</a></td> <td> Postfix
+2.11 </td> </tr>
 
 <tr> <td> LDAP database</td> <td><a href="LDAP_README.html">LDAP_README</a></td> <td> Postfix
 1.0 </td> </tr>
@@ -285,8 +287,8 @@ use: </p>
 
 <blockquote>
 <pre>
-% make makefiles CCARGS='-DDEF_CONFIG_DIR=\"/some/where\"'
-% make
+$ make makefiles CCARGS='-DDEF_CONFIG_DIR=\"/some/where\"'
+$ make
 </pre>
 </blockquote>
 
@@ -307,6 +309,9 @@ default</th> </tr>
 
 <tr> <td>DEF_CONFIG_DIR</td> <td><a href="postconf.5.html#config_directory">config_directory</a></td>
 <td>/etc/postfix</td> </tr>
+
+<tr> <td>DEF_DB_TYPE</td> <td><a href="postconf.5.html#default_database_type">default_database_type</a></td>
+<td>hash</td> </tr>
 
 <tr> <td>DEF_DAEMON_DIR</td> <td><a href="postconf.5.html#daemon_directory">daemon_directory</a></td>
 <td>/usr/libexec/postfix</td> </tr>
@@ -349,8 +354,8 @@ is as follows: </p>
 
 <blockquote>
 <pre>
-% make makefiles name=value name=value...
-% make
+$ make makefiles name=value name=value...
+$ make
 </pre>
 </blockquote>
 
@@ -374,7 +379,9 @@ off Postfix features at compile time:</td> </tr>
 
 <tr> <td> </td> <td> -DNO_DB </td> <td> Do not build with Berkeley
 DB support. By default, Berkeley DB support is compiled in on
-platforms that are known to support this feature.  </td> </tr>
+platforms that are known to support this feature. If you override
+this, then you probably should also override DEF_DB_TYPE as described
+in section 4.4.  </td> </tr>
 
 <tr> <td> </td> <td> -DNO_DEVPOLL </td> <td> Do not build with
 Solaris <tt>/dev/poll</tt> support. By default, <tt>/dev/poll</tt>
@@ -397,7 +404,11 @@ support is compiled in on platforms that are known to support it.
 </td> </tr>
 
 <tr> <td> </td> <td> -DNO_NIS </td> <td> Do not build with NIS or
-NISPLUS support. NIS is not available on some recent Linux or Solaris
+NISPLUS support. NIS is not available on some recent Linux
+distributions. </td> </tr>
+
+<tr> <td> </td> <td> -DNO_NISPLUS </td> <td> Do not build with
+NISPLUS support. NISPLUS is not available on some recent Solaris
 distributions. </td> </tr>
 
 <tr> <td> </td> <td> -DNO_PCRE </td> <td> Do not build with PCRE
@@ -460,7 +471,7 @@ macro to make select() work correctly: </p>
 
 <blockquote>
 <pre>
-% make makefiles CCARGS=-DFD_SETSIZE=2048
+$ make makefiles CCARGS=-DFD_SETSIZE=2048
 </pre>
 </blockquote>
 
@@ -482,7 +493,7 @@ number of open sockets or files. </p>
 
 <blockquote>
 <pre>
-% make
+$ make
 </pre>
 </blockquote>
 
@@ -693,7 +704,7 @@ file. </p>
 
 <blockquote>
 <pre>
-% egrep '(reject|warning|error|fatal|panic):' /some/log/file
+$ egrep '(reject|warning|error|fatal|panic):' /some/log/file
 </pre>
 </blockquote>
 
@@ -705,11 +716,11 @@ commands: </p>
 
 <blockquote>
 <pre>
-% mailq
+$ mailq
 
-% sendmail -bp
+$ sendmail -bp
 
-% postqueue -p
+$ postqueue -p
 </pre>
 </blockquote>
 
@@ -774,7 +785,7 @@ file. </p>
 
 <blockquote>
 <pre>
-% egrep '(reject|warning|error|fatal|panic):' /some/log/file
+$ egrep '(reject|warning|error|fatal|panic):' /some/log/file
 </pre>
 </blockquote>
 
@@ -786,11 +797,11 @@ commands: </p>
 
 <blockquote>
 <pre>
-% mailq
+$ mailq
 
-% sendmail -bp
+$ sendmail -bp
 
-% postqueue -p
+$ postqueue -p
 </pre>
 </blockquote>
 
@@ -839,7 +850,7 @@ file. </p>
 
 <blockquote>
 <pre>
-% egrep '(reject|warning|error|fatal|panic):' /some/log/file
+$ egrep '(reject|warning|error|fatal|panic):' /some/log/file
 </pre>
 </blockquote>
 
@@ -851,11 +862,11 @@ commands: </p>
 
 <blockquote>
 <pre>
-% mailq
+$ mailq
 
-% sendmail -bp
+$ sendmail -bp
 
-% postqueue -p
+$ postqueue -p
 </pre>
 </blockquote>
 

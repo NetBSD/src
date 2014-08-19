@@ -1,3 +1,36 @@
+2013-10-14  Nick Clifton  <nickc@redhat.com>
+
+	* chew.c (perform): Free next.
+
+2013-04-15  Alan Modra  <amodra@gmail.com>
+
+	* Makefile.am ($(MKDOC)): Append $(EXEEXT_FOR_BUILD) to temp file.
+	* Makefile.in: Regenerate.
+
+2013-04-09  Mingjie Xing  <mingjie.xing@gmail.com>
+
+	* bfd.texinfo (typedef bfd, Error reporting, Miscellaneous):
+	Add menu items.
+
+2013-01-07  Patrice Dumas  <pertusus@free.fr>
+
+	* bfd.texinfo: Replace @ with @@ when it is part of the text.
+
+2012-12-17  Nick Clifton  <nickc@redhat.com>
+
+	* Makefile.am: Add copyright notice.
+	* bfdsumm.texi: Likewise.
+	* makefile.vms: Likewise.
+	* Makefile.in: Regenerate.
+
+2012-11-08  Alan Modra  <amodra@gmail.com>
+
+	* Makefile.in: Regenerate.
+
+2012-02-27  Alan Modra  <amodra@gmail.com>
+
+	* chew.c (print_stack_level, main): Use %ld to print stack delta.
+
 2010-10-28  Matthias Klose  <doko@ubuntu.com>
 
 	* bfd.texinfo: Add directory section for info document.
@@ -234,6 +267,12 @@
 
 For older changes see ChangeLog-9103
 
+Copyright (C) 2004-2012 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

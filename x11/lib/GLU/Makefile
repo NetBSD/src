@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.8.8.1 2013/06/23 06:29:07 tls Exp $
+#	$NetBSD: Makefile,v 1.8.8.2 2014/08/20 00:05:19 tls Exp $
 
 NOLINT=		1	# XTODO: tess.ln SIGSEGVs lint :(
 
 .include <bsd.own.mk>
 
 LIB=		GLU
+LIBISCXX=	yes
 
 GLUDIR=		${X11SRCDIR.xc}/extras/ogl-sample/main/gfx/lib/glu
 
@@ -61,16 +62,14 @@ SRCS=		${SRCS.libutil} ${SRCS.libtess} \
 		${SRCS.interface} ${SRCS.internals} ${SRCS.nurbtess}
 
 LIBDPLIBS=\
-	GL	${.CURDIR}/../GL
-
-LDADD+=		-lstdc++ -lm
-DPADD+=		${LIBSTDCXX} ${LIBM}
+	GL	${.CURDIR}/../GL \
+	m	${NETBSDSRCDIR}/lib/libm
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
 
 # Many const char * vs char * issues in xsrc/xfree
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45
+.if defined(HAVE_GCC)
 # XXX -Wno-deprecated doesn't work?
 CXXFLAGS+=	-Wno-error
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.50.12.1 2012/11/20 03:02:45 tls Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.50.12.2 2014/08/20 00:04:31 tls Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.50.12.1 2012/11/20 03:02:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.50.12.2 2014/08/20 00:04:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,16 +316,14 @@ layer_bypass(void *v)
 		vppp = VOPARG_OFFSETTO(struct vnode***,
 				 descp->vdesc_vpp_offset, ap);
 		/*
-		 * Only vop_lookup, vop_create, vop_makedir, vop_bmap,
-		 * vop_mknod, and vop_symlink return vpp's. vop_bmap
-		 * doesn't call bypass as the lower vpp is fine (we're just
-		 * going to do i/o on it). vop_lookup doesn't call bypass
+		 * Only vop_lookup, vop_create, vop_makedir, vop_mknod
+		 * and vop_symlink return vpp's. vop_lookup doesn't call bypass
 		 * as a lookup on "." would generate a locking error.
-		 * So all the calls which get us here have a locked vpp. :-)
+		 * So all the calls which get us here have a unlocked vpp. :-)
 		 */
 		error = layer_node_create(mp, **vppp, *vppp);
 		if (error) {
-			vput(**vppp);
+			vrele(**vppp);
 			**vppp = NULL;
 		}
 	}
@@ -340,7 +338,7 @@ layer_bypass(void *v)
 int
 layer_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnodeop_desc *a_desc;
 		struct vnode * a_dvp;
 		struct vnode ** a_vpp;
@@ -383,10 +381,10 @@ layer_lookup(void *v)
 		*ap->a_vpp = dvp;
 		vrele(lvp);
 	} else if (lvp != NULL) {
-		/* Note: dvp, ldvp and lvp are all locked. */
+		/* Note: dvp and ldvp are both locked. */
 		error = layer_node_create(dvp->v_mount, lvp, ap->a_vpp);
 		if (error) {
-			vput(lvp);
+			vrele(lvp);
 		}
 	}
 	return error;
@@ -696,16 +694,56 @@ layer_reclaim(void *v)
 		 */
 		lmp->layerm_rootvp = NULL;
 	}
+	vcache_remove(vp->v_mount, &lowervp, sizeof(lowervp));
 	/* After this assignment, this node will not be re-used. */
 	xp->layer_lowervp = NULL;
-	mutex_enter(&lmp->layerm_hashlock);
-	LIST_REMOVE(xp, layer_hash);
-	mutex_exit(&lmp->layerm_hashlock);
 	kmem_free(vp->v_data, lmp->layerm_size);
 	vp->v_data = NULL;
 	vrele(lowervp);
 
 	return 0;
+}
+
+int
+layer_lock(void *v)
+{
+	struct vop_lock_args /* {
+		struct vnode *a_vp;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct vnode *lowervp = LAYERVPTOLOWERVP(vp);
+	int flags = ap->a_flags;
+	int error;
+
+	if (ISSET(flags, LK_NOWAIT)) {
+		error = VOP_LOCK(lowervp, flags);
+		if (error)
+			return error;
+		if (mutex_tryenter(vp->v_interlock)) {
+			error = vdead_check(vp, VDEAD_NOWAIT);
+			mutex_exit(vp->v_interlock);
+		} else
+			error = EBUSY;
+		if (error)
+			VOP_UNLOCK(lowervp);
+		return error;
+	}
+
+	error = VOP_LOCK(lowervp, flags);
+	if (error)
+		return error;
+
+	mutex_enter(vp->v_interlock);
+	error = vdead_check(vp, VDEAD_NOWAIT);
+	if (error) {
+		VOP_UNLOCK(lowervp);
+		error = vdead_check(vp, 0);
+		KASSERT(error == ENOENT);
+	}
+	mutex_exit(vp->v_interlock);
+
+	return error;
 }
 
 /*

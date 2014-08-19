@@ -20,13 +20,15 @@
  *
  ****************************************************************
  */
+#include "config.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <signal.h>
 
-#include "config.h"
+#include <unistd.h>
+
 #include "screen.h"
 
 #ifndef sun
@@ -34,7 +36,7 @@
 #endif
 
 /* for solaris 2.1, Unixware (SVR4.2) and possibly others */
-#ifdef HAVE_SVR4_PTYS
+#if defined (HAVE_SVR4_PTYS) && defined (HAVE_SYS_STROPTS_H)
 # include <sys/stropts.h>
 #endif
 
@@ -384,4 +386,3 @@ char **ttyn;
   return -1;
 }
 #endif
-

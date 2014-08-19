@@ -1,6 +1,5 @@
 /*  dv-m68hc11sio.c -- Simulation of the 68HC11 serial device.
-    Copyright (C) 1999, 2000, 2001, 2007, 2008, 2009, 2010, 2011
-    Free Software Foundation, Inc.
+    Copyright (C) 1999-2014 Free Software Foundation, Inc.
     Written by Stephane Carrez (stcarrez@worldnet.fr)
     (From a driver model Contributed by Cygnus Solutions.)
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sk.4,v 1.15.2.1 2012/11/20 03:00:50 tls Exp $
+.\"	$NetBSD: sk.4,v 1.15.2.2 2014/08/20 00:02:35 tls Exp $
 .\"
 .\" Copyright (c) 2003, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -221,7 +221,7 @@ Set 1000Mbps (Gigabit Ethernet) operation and force full-duplex mode.
 For more information on configuring this device, see
 .Xr ifconfig 8 .
 To view a list of media types and options supported by the card, try
-.Ic ifconfig Fl m Aq device .
+.Ic ifconfig Fl m Aq Mt device .
 For example,
 .Ic ifconfig Fl m Ar sk0 .
 .Sh DIAGNOSTICS
@@ -279,9 +279,9 @@ and was ported to
 The
 .Nm
 driver was written by
-.An Bill Paul Aq wpaul@ctr.columbia.edu .
+.An Bill Paul Aq Mt wpaul@ctr.columbia.edu .
 Support for the Marvell Yukon-2 was added by
-.An Mark Kettenis Aq kettenis@openbsd.org .
+.An Mark Kettenis Aq Mt kettenis@openbsd.org .
 .Sh BUGS
 This driver is
 .Em experimental .

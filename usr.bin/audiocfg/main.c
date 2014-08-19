@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.6 2010/09/03 19:20:37 jmcneill Exp $ */
+/* $NetBSD: main.c,v 1.6.12.1 2014/08/20 00:04:56 tls Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
 #include "audiodev.h"
 #include "drvctl.h"
 
-static void
+__dead static void
 usage(const char *p)
 {
 	fprintf(stderr, "usage: %s list\n", p);

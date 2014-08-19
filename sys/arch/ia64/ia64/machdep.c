@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32.2.2 2013/02/25 00:28:44 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32.2.3 2014/08/20 00:03:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -716,16 +716,16 @@ setregs(register struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		kst = ksttop - 1;
 		if (((uintptr_t)kst & 0x1ff) == 0x1f8)
 			*kst-- = 0;
-		*kst-- = l->l_proc->p_psstrp;	/* in3 = ps_strings */
+		*kst-- = stack;				/* in3 = sp */
 		if (((uintptr_t)kst & 0x1ff) == 0x1f8)
 			*kst-- = 0;
-		*kst-- = 0;				/* in2 = *obj */
+		*kst-- = l->l_proc->p_psstrp;		/* in2 = ps_strings */
 		if (((uintptr_t)kst & 0x1ff) == 0x1f8)
 			*kst-- = 0;
-		*kst-- = 0;				/* in1 = *cleanup */
+		*kst-- = 0;				/* in1 = *obj */
 		if (((uintptr_t)kst & 0x1ff) == 0x1f8)
 			*kst-- = 0;
-		*kst = stack; /* in0 = sp */
+		*kst = 0;				/* in0 = *cleanup */
 		tf->tf_special.ndirty = (ksttop - kst) << 3;
 	} else {				/* epc syscalls (default). */
 		tf->tf_special.cfm = (3UL<<62) | (3UL<<7) | 3UL;
@@ -737,18 +737,18 @@ setregs(register struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		 * Assumes that (bspstore & 0x1f8) < 0x1e0.
 		 */
 
-		/* in0 = sp */
-		suword((char *)tf->tf_special.bspstore - 32, stack);
+		/* in0 = *cleanup */
+		suword((char *)tf->tf_special.bspstore - 32, 0);
 
-		/* in1 == *cleanup */
+		/* in1 == *obj */
 		suword((char *)tf->tf_special.bspstore -  24, 0);
 
-		/* in2 == *obj */
-		suword((char *)tf->tf_special.bspstore -  16, 0);
+		/* in2 == ps_strings */
+		suword((char *)tf->tf_special.bspstore -  16, l->l_proc->p_psstrp);
 
-		/* in3 = ps_strings */
+		/* in3 = sp */
 		suword((char *)tf->tf_special.bspstore - 8,
-		    l->l_proc->p_psstrp);
+		    stack);
 
 	}
 

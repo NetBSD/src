@@ -1,4 +1,4 @@
-/*	$NetBSD: makphyreg.h,v 1.5 2009/04/19 11:17:46 msaitoh Exp $	*/
+/*	$NetBSD: makphyreg.h,v 1.5.22.1 2014/08/20 00:03:41 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -94,6 +94,8 @@
 
 #define	MII_MAKPHY_REC		0x15	/* receive error counter */
 
+#define	MII_MAKPHY_EADR		0x16	/* extended address register */
+
 #define	MII_MAKPHY_LEDCTRL	0x18	/* LED control */
 #define	LEDCTRL_LED_TX		(1U << 0)   /* 1 = activ/link, 0 = xmit */
 #define	LEDCTRL_LED_RX		(1U << 1)   /* 1 = activ/link, 1 = recv */
@@ -102,5 +104,13 @@
 #define	LEDCTRL_BLINK_RATE(x)	((x) << 8)
 #define	LEDCTRL_PULSE_STRCH(x)	((x) << 12)
 #define	LEDCTRL_DISABLE		(1U << 15)  /* disable LED */
+
+#define MII_MAKPHY_ESSR		0x1b    /* Extended PHY specific status */
+#define ESSR_FIBER_LINK		0x2000
+#define ESSR_GMII_COPPER	0x000f
+#define ESSR_GMII_FIBER		0x0007
+#define ESSR_TBI_COPPER		0x000d
+#define ESSR_TBI_FIBER		0x0005
+
 
 #endif /* _DEV_MII_MAKPHYREG_H_ */

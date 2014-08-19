@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.81 2012/09/10 04:32:24 msaitoh Exp $	*/
+/*	$NetBSD: ping6.c,v 1.81.2.1 2014/08/20 00:02:27 tls Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.81 2012/09/10 04:32:24 msaitoh Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.81.2.1 2014/08/20 00:02:27 tls Exp $");
 #endif
 #endif
 
@@ -703,8 +703,10 @@ main(int argc, char *argv[])
 
 	ident = arc4random() & 0xFFFF;
 	memset(nonce, 0, sizeof(nonce));
-	for (i = 0; i < sizeof(nonce); i += sizeof(u_int32_t))
-		*((u_int32_t *)&nonce[i]) = arc4random();
+	for (i = 0; i < sizeof(nonce); i += sizeof(u_int32_t)) {
+		uint32_t r = arc4random();
+		memcpy(&nonce[i], &r, sizeof(r));
+	}
 
 	hold = 1;
 
@@ -1019,7 +1021,6 @@ main(int argc, char *argv[])
 
 	for (;;) {
 		struct msghdr m;
-		struct cmsghdr *cm;
 		u_char buf[1024];
 		struct iovec iov[2];
 
@@ -1067,7 +1068,6 @@ main(int argc, char *argv[])
 		iov[0].iov_len = packlen;
 		m.msg_iov = iov;
 		m.msg_iovlen = 1;
-		cm = (struct cmsghdr *)buf;
 		m.msg_control = (caddr_t)buf;
 		m.msg_controllen = sizeof(buf);
 

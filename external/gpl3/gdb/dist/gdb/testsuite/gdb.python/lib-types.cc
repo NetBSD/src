@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2010-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -53,6 +53,34 @@ subclass1 subclass1_obj (42, 43);
 enum enum1 { A, B, C };
 
 enum1 enum1_obj (A);
+
+struct A
+{
+	int a;
+	union {
+		int b0;
+		int b1;
+		union {
+			int bb0;
+			int bb1;
+			union {
+				int bbb0;
+				int bbb1;
+			};
+		};
+	};
+	int c;
+	union {
+		union {
+			int dd0;
+			int dd1;
+		};
+		int d2;
+		int d3;
+	};
+};
+
+struct A a = {1,20,3,40};
 
 int
 main ()

@@ -1,5 +1,4 @@
-# Copyright 1992, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-# 2004, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 1992-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,21 +18,14 @@
 
 set nl "\[\r\n\]+"
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 if { [skip_cplus_tests] } { continue }
 
 load_lib "cp-support.exp"
 
-set testfile "classes"
-set srcfile ${testfile}.cc
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .cc
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
-     untested classes.exp
-     return -1
+if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
+    return -1
 }
 
 # Test ptype of class objects.
@@ -43,7 +35,7 @@ proc test_ptype_class_objects {} {
     # Simple type.
 
     cp_test_ptype_class \
-	"ptype struct default_public_struct" "" "struct" "default_public_struct" \
+	"struct default_public_struct" "" "struct" "default_public_struct" \
 	{
 	    { field public "int a;" }
 	    { field public "int b;" }
@@ -52,7 +44,7 @@ proc test_ptype_class_objects {} {
     # Another simple type.
 
     cp_test_ptype_class \
-	"ptype struct explicit_public_struct" "" "struct" "explicit_public_struct" \
+	"struct explicit_public_struct" "" "struct" "explicit_public_struct" \
 	{
 	    { field public "int a;" }
 	    { field public "int b;" }
@@ -61,7 +53,7 @@ proc test_ptype_class_objects {} {
     # Another simple type.
 
     cp_test_ptype_class \
-	"ptype struct protected_struct" "" "struct" "protected_struct" \
+	"struct protected_struct" "" "struct" "protected_struct" \
 	{
 	    { field protected "int a;" }
 	    { field protected "int b;" }
@@ -70,7 +62,7 @@ proc test_ptype_class_objects {} {
     # Another simple type.
 
     cp_test_ptype_class \
-	"ptype struct private_struct" "" "struct" "private_struct" \
+	"struct private_struct" "" "struct" "private_struct" \
 	{
 	    { field private "int a;" }
 	    { field private "int b;" }
@@ -79,7 +71,7 @@ proc test_ptype_class_objects {} {
     # A bigger type.
 
     cp_test_ptype_class \
-	"ptype struct mixed_protection_struct" "" "struct" "mixed_protection_struct" \
+	"struct mixed_protection_struct" "" "struct" "mixed_protection_struct" \
 	{
 	    { field public    "int a;" }
 	    { field public    "int b;" }
@@ -96,7 +88,7 @@ proc test_ptype_class_objects {} {
     # gdb does not care about the difference anyways.
 
     cp_test_ptype_class \
-	"ptype class public_class" "" "class" "public_class" \
+	"class public_class" "" "class" "public_class" \
 	{
 	    { field public "int a;" }
 	    { field public "int b;" }
@@ -105,7 +97,7 @@ proc test_ptype_class_objects {} {
     # Another simple type.
 
     cp_test_ptype_class \
-	"ptype class protected_class" "" "class" "protected_class" \
+	"class protected_class" "" "class" "protected_class" \
 	{
 	    { field protected "int a;" }
 	    { field protected "int b;" }
@@ -114,7 +106,7 @@ proc test_ptype_class_objects {} {
     # Another simple type.
 
     cp_test_ptype_class \
-	"ptype class default_private_class" "" "class" "default_private_class" \
+	"class default_private_class" "" "class" "default_private_class" \
 	{
 	    { field private "int a;" }
 	    { field private "int b;" }
@@ -123,7 +115,7 @@ proc test_ptype_class_objects {} {
     # Another simple type.
 
     cp_test_ptype_class \
-	"ptype class explicit_private_class" "" "class" "explicit_private_class" \
+	"class explicit_private_class" "" "class" "explicit_private_class" \
 	{
 	    { field private "int a;" }
 	    { field private "int b;" }
@@ -132,7 +124,7 @@ proc test_ptype_class_objects {} {
     # A bigger type.
 
     cp_test_ptype_class \
-	"ptype class mixed_protection_class" "" "class" "mixed_protection_class" \
+	"class mixed_protection_class" "" "class" "mixed_protection_class" \
 	{
 
 	    { field public    "int a;" }
@@ -151,7 +143,7 @@ proc test_ptype_class_objects {} {
     # Base class.
 
     cp_test_ptype_class \
-	"ptype class A" "" "class" "A" \
+	"class A" "" "class" "A" \
 	{
 	    { field public "int a;" }
 	    { field public "int x;" }
@@ -160,7 +152,7 @@ proc test_ptype_class_objects {} {
     # Derived class.
 
     cp_test_ptype_class \
-	"ptype class B" "" "class" "B" \
+	"class B" "" "class" "B" \
 	{
 	    { base         "public A" }
 	    { field public "int b;" }
@@ -170,7 +162,7 @@ proc test_ptype_class_objects {} {
     # Derived class.
 
     cp_test_ptype_class \
-	"ptype class C" "" "class" "C" \
+	"class C" "" "class" "C" \
 	{
 	    { base         "public A" }
 	    { field public "int c;" }
@@ -180,7 +172,7 @@ proc test_ptype_class_objects {} {
     # Derived class, multiple inheritance.
 
     cp_test_ptype_class \
-	"ptype class D" "" "class" "D" \
+	"class D" "" "class" "D" \
 	{
 	    { base         "public B" }
 	    { base         "public C" }
@@ -191,7 +183,7 @@ proc test_ptype_class_objects {} {
     # Derived class.
 
     cp_test_ptype_class \
-	"ptype class E" "" "class" "E" \
+	"class E" "" "class" "E" \
 	{
 	    { base         "public D" }
 	    { field public "int e;" }
@@ -204,7 +196,7 @@ proc test_ptype_class_objects {} {
     # static methods whose name is the same as their argument mangling.
  
     cp_test_ptype_class \
-	"ptype class Static" "" "class" "Static" \
+	"class Static" "" "class" "Static" \
 	{
 	    { method public "static void ii(int, int);" }
 	}
@@ -214,7 +206,7 @@ proc test_ptype_class_objects {} {
     # A virtual base class.
 
     cp_test_ptype_class \
-	"ptype class vA" "" "class" "vA" \
+	"class vA" "" "class" "vA" \
 	{
 	    { field public "int va;" }
 	    { field public "int vx;" }
@@ -223,7 +215,7 @@ proc test_ptype_class_objects {} {
     # A derived class with a virtual base.
 
     cp_test_ptype_class \
-	"ptype class vB" "" "class" "vB" \
+	"class vB" "" "class" "vB" \
 	{
 	    { base         "public virtual vA" }
 	    { vbase        "vA" }
@@ -234,7 +226,7 @@ proc test_ptype_class_objects {} {
     # Another derived class with a virtual base.
 
     cp_test_ptype_class \
-	"ptype class vC" "" "class" "vC" \
+	"class vC" "" "class" "vC" \
 	{
 	    { base         "public virtual vA" }
 	    { vbase        "vA" }
@@ -245,7 +237,7 @@ proc test_ptype_class_objects {} {
     # A classic diamond class.
 
     cp_test_ptype_class \
-	"ptype class vD" "" "class" "vD" \
+	"class vD" "" "class" "vD" \
 	{
 	    { base         "public virtual vB" }
 	    { base         "public virtual vC" }
@@ -258,7 +250,7 @@ proc test_ptype_class_objects {} {
     # A class derived from a diamond class.
 
     cp_test_ptype_class \
-	"ptype class vE" "" "class" "vE" \
+	"class vE" "" "class" "vE" \
 	{
 	    { base         "public virtual vD" }
 	    { vbase        "vD" }
@@ -271,7 +263,7 @@ proc test_ptype_class_objects {} {
     # A base class.
 
     cp_test_ptype_class \
-	"ptype class Base1" "" "class" "Base1" \
+	"class Base1" "" "class" "Base1" \
 	{
 	    { field  public "int x;" }
 	    { method public "Base1(int);" }
@@ -280,7 +272,7 @@ proc test_ptype_class_objects {} {
     # Another base class.
 
     cp_test_ptype_class \
-	"ptype class Foo" "" "class" "Foo" \
+	"class Foo" "" "class" "Foo" \
 	{
 	    { field public "int x;" }
 	    { field public "int y;" }
@@ -307,7 +299,7 @@ proc test_ptype_class_objects {} {
     # A multiple inheritance derived class.
 
     cp_test_ptype_class \
-	"ptype class Bar" "" "class" "Bar" \
+	"class Bar" "" "class" "Bar" \
 	{
 	    { base          "public Base1" }
 	    { base          "public Foo" }
@@ -453,7 +445,7 @@ proc test_enums {} {
     # stabs, we probably can't get this right; under DWARF-2, we can.
 
     cp_test_ptype_class \
-	"ptype obj_with_enum" "" "class" "ClassWithEnum" \
+	"obj_with_enum" "" "class" "ClassWithEnum" \
 	{
 	    { field public "ClassWithEnum::PrivEnum priv_enum;" }
 	    { field public "int x;" }
@@ -524,8 +516,8 @@ proc test_static_members {} {
     gdb_test "print Foo::st" "\\$\[0-9\]+ = 100"
     gdb_test_no_output "set foo.st = 200" ""
     gdb_test "print bar.st" "\\$\[0-9\]+ = 200"
-    gdb_test "print &foo.st" "\\$\[0-9\]+ = \\(int ?\\*\\) $hex"
-    gdb_test "print &Bar::st" "\\$\[0-9\]+ = \\(int ?\\*\\) $hex"
+    gdb_test "print &foo.st" "\\$\[0-9\]+ = \\(int ?\\*\\) $hex <Foo::st>"
+    gdb_test "print &Bar::st" "\\$\[0-9\]+ = \\(int ?\\*\\) $hex <Foo::st>"
     gdb_test "print *\$" "\\$\[0-9\]+ = 200"
 
     gdb_test_no_output "set print static-members off"
@@ -546,20 +538,9 @@ proc test_static_members {} {
 }
 
 proc do_tests {} {
-    global subdir
-    global objdir
-    global srcdir
-    global binfile
     global gdb_prompt
     global nl
 
-
-    # Start with a fresh gdb.
-
-    gdb_exit
-    gdb_start
-    gdb_reinitialize_dir $srcdir/$subdir
-    gdb_load $binfile
 
     gdb_test_no_output "set language c++" ""
     gdb_test_no_output "set width 0" ""

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.112.2.2 2013/06/23 06:18:39 tls Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.112.2.3 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.112.2.2 2013/06/23 06:18:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.112.2.3 2014/08/20 00:04:44 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.112.2.2 2013/06/23 06:18:39 tls Exp 
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
+#include <ufs/lfs/lfs_kernel.h>
 
 /* Constants for inode free bitmap */
 #define BMSHIFT 5	/* 2 ** 5 = 32 */
@@ -337,7 +338,7 @@ lfs_vcreate(struct mount *mp, ino_t ino, struct vnode *vp)
 	SPLAY_INIT(&ip->i_lfs_lbtree);
 	ip->i_lfs_nbtree = 0;
 	LIST_INIT(&ip->i_lfs_segdhd);
-#ifdef LFS_QUOTA
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	ulfsquota_init(ip);
 #endif
 }

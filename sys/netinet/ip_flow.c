@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.60 2012/01/19 13:13:48 liamjfoy Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.60.6.1 2014/08/20 00:04:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.60 2012/01/19 13:13:48 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.60.6.1 2014/08/20 00:04:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,20 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.60 2012/01/19 13:13:48 liamjfoy Exp $"
  * Similar code is very well commented in netinet6/ip6_flow.c
  */ 
 
-struct ipflow {
-	LIST_ENTRY(ipflow) ipf_list;	/* next in active list */
-	LIST_ENTRY(ipflow) ipf_hash;	/* next ipflow in bucket */
-	struct in_addr ipf_dst;		/* destination address */
-	struct in_addr ipf_src;		/* source address */
-	uint8_t ipf_tos;		/* type-of-service */
-	struct route ipf_ro;		/* associated route entry */
-	u_long ipf_uses;		/* number of uses in this period */
-	u_long ipf_last_uses;		/* number of uses in last period */
-	u_long ipf_dropped;		/* ENOBUFS retured by if_output */
-	u_long ipf_errors;		/* other errors returned by if_output */
-	u_int ipf_timer;		/* lifetime timer */
-};
-
 #define	IPFLOW_HASHBITS		6	/* should not be a multiple of 8 */
 
 static struct pool ipflow_pool;
@@ -105,8 +91,10 @@ do { \
 #ifndef IPFLOW_MAX
 #define	IPFLOW_MAX		256
 #endif
-int ip_maxflows = IPFLOW_MAX;
-int ip_hashsize = IPFLOW_DEFAULT_HASHSIZE;
+static int ip_maxflows = IPFLOW_MAX;
+static int ip_hashsize = IPFLOW_DEFAULT_HASHSIZE;
+
+static void ipflow_sysctl_init(struct sysctllog **);
 
 static size_t 
 ipflow_hash(const struct ip *ip)
@@ -147,8 +135,8 @@ ipflow_poolinit(void)
 	    NULL, IPL_NET);
 }
 
-int
-ipflow_init(int table_size)
+static int
+ipflow_reinit(int table_size)
 {
 	struct ipflowhead *new_table;
 	size_t i;
@@ -170,6 +158,13 @@ ipflow_init(int table_size)
 		LIST_INIT(&ipflowtable[i]);
 
 	return 0;
+}
+
+void
+ipflow_init(void)
+{
+	(void)ipflow_reinit(ip_hashsize);
+	ipflow_sysctl_init(NULL);
 }
 
 int
@@ -348,7 +343,7 @@ ipflow_free(struct ipflow *ipf)
 	splx(s);
 }
 
-static struct ipflow *
+struct ipflow *
 ipflow_reap(bool just_one)
 {
 	while (just_one || ipflow_inuse > ip_maxflows) {
@@ -396,13 +391,6 @@ ipflow_reap(bool just_one)
 }
 
 void
-ipflow_prune(void)
-{
-
-	(void) ipflow_reap(false);
-}
-
-void
 ipflow_slowtimo(void)
 {
 	struct rtentry *rt;
@@ -444,6 +432,9 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	 */
 	if (ip_maxflows == 0 || ip->ip_p == IPPROTO_ICMP)
 		return;
+
+	KERNEL_LOCK(1, NULL);
+
 	/*
 	 * See if an existing flow struct exists.  If so remove it from it's
 	 * list and free the old route.  If not, try to malloc a new one
@@ -458,7 +449,7 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 			ipf = pool_get(&ipflow_pool, PR_NOWAIT);
 			splx(s);
 			if (ipf == NULL)
-				return;
+				goto out;
 			ipflow_inuse++;
 		}
 		memset(ipf, 0, sizeof(*ipf));
@@ -488,6 +479,9 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	s = splnet();
 	IPFLOW_INSERT(&ipflowtable[hash], ipf);
 	splx(s);
+
+ out:
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 int
@@ -504,8 +498,102 @@ ipflow_invalidate_all(int new_size)
 	}
 
 	if (new_size)
-		error = ipflow_init(new_size);
+		error = ipflow_reinit(new_size);
 	splx(s);
 
 	return error;
+}
+
+#ifdef GATEWAY
+/*
+ * sysctl helper routine for net.inet.ip.maxflows.
+ */
+static int
+sysctl_net_inet_ip_maxflows(SYSCTLFN_ARGS)
+{
+	int error;
+
+	error = sysctl_lookup(SYSCTLFN_CALL(rnode));
+	if (error || newp == NULL)
+		return (error);
+
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
+
+	ipflow_reap(false);
+
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
+
+	return (0);
+}
+
+static int
+sysctl_net_inet_ip_hashsize(SYSCTLFN_ARGS)
+{
+	int error, tmp;
+	struct sysctlnode node;
+
+	node = *rnode;
+	tmp = ip_hashsize;
+	node.sysctl_data = &tmp;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if ((tmp & (tmp - 1)) == 0 && tmp != 0) {
+		/*
+		 * Can only fail due to malloc()
+		 */
+		mutex_enter(softnet_lock);
+		KERNEL_LOCK(1, NULL);
+
+		error = ipflow_invalidate_all(tmp);
+
+		KERNEL_UNLOCK_ONE(NULL);
+		mutex_exit(softnet_lock);
+
+	} else {
+		/*
+		 * EINVAL if not a power of 2
+	         */
+		error = EINVAL;
+	}
+
+	return error;
+}
+#endif /* GATEWAY */
+
+static void
+ipflow_sysctl_init(struct sysctllog **clog)
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "inet",
+		       SYSCTL_DESCR("PF_INET related settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ip",
+		       SYSCTL_DESCR("IPv4 related settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET, IPPROTO_IP, CTL_EOL);
+
+#ifdef GATEWAY
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "maxflows",
+		       SYSCTL_DESCR("Number of flows for fast forwarding"),
+		       sysctl_net_inet_ip_maxflows, 0, &ip_maxflows, 0,
+		       CTL_NET, PF_INET, IPPROTO_IP,
+		       IPCTL_MAXFLOWS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "hashsize",
+			SYSCTL_DESCR("Size of hash table for fast forwarding (IPv4)"),
+			sysctl_net_inet_ip_hashsize, 0, &ip_hashsize, 0,
+			CTL_NET, PF_INET, IPPROTO_IP,
+			CTL_CREATE, CTL_EOL);
+#endif /* GATEWAY */
 }

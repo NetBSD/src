@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetmask.S,v 1.5 2012/01/19 16:37:18 drochner Exp $	*/
+/*	$NetBSD: fpsetmask.S,v 1.5.6.1 2014/08/20 00:02:12 tls Exp $	*/
 
 /*
  * Written by Frank van der Linden at Wasabi Systems for NetBSD.
@@ -42,3 +42,8 @@ ENTRY(fpsetmask)
 	notl	%eax
 	andl	$0x0000003f, %eax
 	ret
+#ifdef WEAK_ALIAS
+END(_fpsetmask)
+#else
+END(fpsetmask)
+#endif

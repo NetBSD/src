@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_rpcb_pxy.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: ip_rpcb_pxy.c,v 1.3.2.1 2014/08/20 00:04:24 tls Exp $	*/
 
 /*
  * Copyright (C) 2002-2012 by Ryan Beasley <ryanb@goddamnbastard.org>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_rpcb_pxy.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_rpcb_pxy.c,v 1.3.2.1 2014/08/20 00:04:24 tls Exp $");
 
 #define	IPF_RPCB_PROXY
 
@@ -760,15 +760,9 @@ ipf_p_rpcb_modreq(fr_info_t *fin, nat_t *nat, rpc_msg_t *rm, mb_t *m, u_int off)
 
 	/* Form new string. */
 	bzero(uaddr, sizeof(uaddr)); /* Just in case we need padding. */
-#if defined(SNPRINTF) && defined(_KERNEL)
-	SNPRINTF(uaddr, sizeof(uaddr),
+	snprintf(uaddr, sizeof(uaddr),
 		       "%u.%u.%u.%u.%u.%u", i[0] & 0xff, i[1] & 0xff,
 		       i[2] & 0xff, i[3] & 0xff, p[0] & 0xff, p[1] & 0xff);
-#else
-	(void) sprintf(uaddr,
-		       "%u.%u.%u.%u.%u.%u", i[0] & 0xff, i[1] & 0xff,
-		       i[2] & 0xff, i[3] & 0xff, p[0] & 0xff, p[1] & 0xff);
-#endif
 	len = strlen(uaddr);
 	xlen = XDRALIGN(len);
 
@@ -1279,15 +1273,9 @@ ipf_p_rpcb_modv3(fr_info_t *fin, nat_t *nat, rpc_msg_t *rm, mb_t *m, u_int off)
 
 	/* Form new string. */
 	bzero(uaddr, sizeof(uaddr)); /* Just in case we need padding. */
-#if defined(SNPRINTF) && defined(_KERNEL)
-	SNPRINTF(uaddr, sizeof(uaddr),
+	snprintf(uaddr, sizeof(uaddr),
 		       "%u.%u.%u.%u.%u.%u", i[0] & 0xff, i[1] & 0xff,
 		       i[2] & 0xff, i[3] & 0xff, p[0] & 0xff, p[1] & 0xff);
-#else
-	(void) sprintf(uaddr,
-		       "%u.%u.%u.%u.%u.%u", i[0] & 0xff, i[1] & 0xff,
-		       i[2] & 0xff, i[3] & 0xff, p[0] & 0xff, p[1] & 0xff);
-#endif
 	len = strlen(uaddr);
 	xlen = XDRALIGN(len);
 
@@ -1356,17 +1344,10 @@ ipf_p_rpcb_modv4(fr_info_t *fin, nat_t *nat, rpc_msg_t *rm, mb_t *m, u_int off)
 		/* Form new string. */
 		bzero(uaddr, sizeof(uaddr)); /* Just in case we need
 						padding. */
-#if defined(SNPRINTF) && defined(_KERNEL)
-		SNPRINTF(uaddr, sizeof(uaddr),
+		snprintf(uaddr, sizeof(uaddr),
 			       "%u.%u.%u.%u.%u.%u", i[0] & 0xff,
 			       i[1] & 0xff, i[2] & 0xff, i[3] & 0xff,
 			       p[0] & 0xff, p[1] & 0xff);
-#else
-		(void) sprintf(uaddr,
-			       "%u.%u.%u.%u.%u.%u", i[0] & 0xff,
-			       i[1] & 0xff, i[2] & 0xff, i[3] & 0xff,
-			       p[0] & 0xff, p[1] & 0xff);
-#endif
 		len = strlen(uaddr);
 		xlen = XDRALIGN(len);
 

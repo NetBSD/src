@@ -1,5 +1,4 @@
-#   Copyright 2002, 2004, 2007, 2008, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright 2002-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,31 +20,20 @@
 # aliases.  If the ISA doesn't provide any equivalent registers, then
 # GDB will provide registers that map onto the frame's PC and FP.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 #
 # test running programs
 #
 
-set testfile "pc-fp"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
-    untested pc-fp.exp
+if [get_compiler_info] {
     return -1
 }
 
-if [get_compiler_info ${binfile}] {
+if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug nowarnings}]} {
+    untested $testfile.exp
     return -1
 }
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 
 if ![runto_main] then {
     perror "couldn't run to breakpoint"
@@ -65,11 +53,10 @@ set valueof_fp [get_hexadecimal_valueof "\$fp" "0"]
 gdb_test "display/i \$pc" "1: x/i +\\\$pc( +|\r\n)=> ${valueof_pc}.*"
 gdb_test "display/w \$fp" "2: x/xw +\\\$fp +${valueof_fp}.*"
 
-# FIXME: cagney/2002-09-04: Should also check that ``info registers
-# $pc'' et.al.'' come back with the same value as the above displays
-# and a print --- assuming that is that people agree to such behavour.
-# Need to re-write default_print_registers_info() for it to work (and
-# such a rewrite is on the reggroups branch).
+gdb_test "info register \$pc" "${valueof_pc}.*"
+gdb_test "info register \$fp" "${valueof_fp}.*"
 
-# gdb_test "info registers \$pc" "${valueof_pc}"
-# gdb_test "info registers \$fp" "${valueof_fp}"
+# Regression test for
+# http://sourceware.org/bugzilla/show_bug.cgi?id=12659
+gdb_test "info register pc fp" \
+    "pc +${valueof_pc}\t${valueof_pc} <.*>\[\r\n\]+fp +${valueof_fp}\t${valueof_fp}\[\r\n\]+"

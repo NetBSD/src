@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.33 2012/01/20 14:08:07 joerg Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.33.6.1 2014/08/20 00:03:33 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.33 2012/01/20 14:08:07 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.33.6.1 2014/08/20 00:03:33 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -67,7 +67,7 @@ struct sysctlnode netbsd32_sysctl_root = {
 	.sysctl_flags = SYSCTL_VERSION|CTLFLAG_ROOT|CTLTYPE_NODE,
 	.sysctl_num = 0,
 	.sysctl_name = "(netbsd32_root)",
-	sysc_init_field(_sysctl_size, sizeof(struct sysctlnode)),
+	.sysctl_size = sizeof(struct sysctlnode),
 };
 
 static struct sysctllog *netbsd32_clog;
@@ -186,8 +186,8 @@ netbsd32___sysctl(struct lwp *l, const struct netbsd32___sysctl_args *uap, regis
 	 * get and convert 32 bit size_t to native size_t
 	 */
 	namep = SCARG_P32(uap, name);
-	oldp = SCARG_P32(uap, old);
-	newp = SCARG_P32(uap, new);
+	oldp = SCARG_P32(uap, oldv);
+	newp = SCARG_P32(uap, newv);
 	oldlenp = SCARG_P32(uap, oldlenp);
 	oldlen = 0;
 	if (oldlenp != NULL) {

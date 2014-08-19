@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.55 2011/07/31 18:39:00 jakllsch Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.55.12.1 2014/08/20 00:03:38 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -130,9 +130,10 @@ struct ncr53c9x_ecb {
 #if NCR53C9X_DEBUG > 1
 #define ECB_TRACE(ecb, msg, a, b) do { \
 	const char *f = "[" msg "]"; \
-	int n = strlen((ecb)->trace); \
-	if (n < (sizeof((ecb)->trace)-100)) \
-		sprintf((ecb)->trace + n, f,  a, b); \
+	size_t n = strlen((ecb)->trace); \
+	if (n >= (sizeof((ecb)->trace)-100)) \
+		break; \
+	snprintf((ecb)->trace + n, sizeof((ecb)->trace) - n, f,  a, b); \
 } while(0)
 #else
 #define ECB_TRACE(ecb, msg, a, b)

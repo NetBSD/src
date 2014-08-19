@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.14.2.1 2013/02/25 00:29:05 tls Exp $
+#	$NetBSD: files.pci,v 1.14.2.2 2014/08/20 00:03:29 tls Exp $
 
 device 	aapic
 attach 	aapic at pci
@@ -59,3 +59,8 @@ file	arch/x86/pci/tcpcib.c		tcpcib
 device	fwhrng
 attach	fwhrng at fwhichbus
 file	arch/x86/pci/fwhrng.c		fwhrng needs-flag
+
+# VMware VMXNET3 virtual interface
+device	vmx: ether, ifnet, arp
+attach	vmx at pci
+file	arch/x86/pci/if_vmx.c		vmx

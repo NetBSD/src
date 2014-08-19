@@ -1,4 +1,4 @@
-# $NetBSD: RAWHIDE,v 1.35.18.1 2013/06/23 06:19:58 tls Exp $
+# $NetBSD: RAWHIDE,v 1.35.18.2 2014/08/20 00:02:41 tls Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
@@ -34,7 +34,6 @@ file-system	PTYFS		# /dev/pts/N support
 
 options 	INET
 options 	GATEWAY
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter

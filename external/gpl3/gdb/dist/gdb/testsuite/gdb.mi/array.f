@@ -1,4 +1,4 @@
-c Copyright 2006, 2010, 2011 Free Software Foundation, Inc.
+c Copyright 2006-2014 Free Software Foundation, Inc.
 
 c This program is free software; you can redistribute it and/or modify
 c it under the terms of the GNU General Public License as published by

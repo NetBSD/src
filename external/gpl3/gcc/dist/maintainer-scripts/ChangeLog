@@ -1,22 +1,144 @@
-2012-07-02  Release Manager
+2014-05-22  Release Manager
 
-	* GCC 4.5.4 released.
+	* GCC 4.8.3 released.
 
-2011-04-28  Release Manager
+2014-02-01  Dmitry Gorbachev  <d.g.gorbachev@gmail.com>
 
-	* GCC 4.5.3 released.
+	PR other/56653
+	* gcc_release: Avoid printing empty line to generated MD5SUMS files.
+	Bump copyright year.
 
-2010-12-16  Release Manager
+2013-10-16  Release Manager
 
-	* GCC 4.5.2 released.
+	* GCC 4.8.2 released.
 
-2010-07-31  Release Manager
+2013-05-31  Release Manager
 
-	* GCC 4.5.1 released.
+	* GCC 4.8.1 released.
 
-2010-04-14  Release Manager
+2013-03-22  Release Manager
 
-	* GCC 4.5.0 released.
+	* GCC 4.8.0 released.
+
+2012-07-02  Richard Guenther  <rguenther@suse.de>
+
+	* crontab: Disable snapshots from gcc-4_5-branch.
+	* update_version_svn: Ingore gcc-4_5-branch.
+
+2012-03-23  Richard Guenther  <rguenther@suse.de>
+
+	* crontab: Enable snapshots from gcc-4_7-branch.
+
+2012-03-13  Jakub Jelinek  <jakub@redhat.com>
+
+	* crontab: Remove 4.4 branch from the list of snapshots to make.
+	* update_version_svn (IGNORE_BRANCHES): Add gcc-4_4-branch.
+
+2012-03-05  Richard Guenther  <rguenther@suse.de>
+
+	* crontab: Remove 4.3 branch from the list of snapshots to make.
+
+2012-03-02  Richard Guenther  <rguenther@suse.de>
+
+	* crontab: Fix day-of-week.
+
+2012-03-02  Richard Guenther  <rguenther@suse.de>
+
+	* crontab: Update for 4.7 branching.
+
+2011-11-21  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* update_web_docs_svn: Make $DOCSDIR group writable after
+	creating it.
+
+2011-06-27  Richard Guenther  <rguenther@suse.de>
+
+	* update_version_svn (IGNORE_BRANCHES): Add gcc-4_3-branch.
+
+2011-05-22  Joseph Myers  <joseph@codesourcery.com>
+
+	* gcc_release (adjust_dirs, maybe_build_tarfile): Remove.
+	(build_tarfiles): Don't build separate files for languages and
+	core.
+	(build_diffs): Only build one set of diffs.
+	(announce_snapshot): Only announce one tar file.
+	(ADA_DIRS, CPLUSPLUS_DIRS, FORTRAN95_DIRS, GO_DIRS, JAVA_DIRS,
+	OBJECTIVEC_DIRS, TESTSUITE_DIRS): Remove.  Don't adjust names
+	relative to WORKING_DIRECTORY.
+
+2011-04-21  Jakub Jelinek  <jakub@redhat.com>
+
+	* gcc_release (maybe_build_tarfile): Don't build a tarfile if
+	the first directory doesn't exist.
+
+2011-03-14  Jakub Jelinek  <jakub@redhat.com>
+
+	* crontab: Enable 4.7 snapshots, switch 4.6 snapshots to
+	4.6 branch.
+
+2011-02-07  Joseph Myers  <joseph@codesourcery.com>
+
+	* update_web_docs_svn: Generate libquadmath-vers.texi.
+
+2011-01-31  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* update_version_svn (FILES): Merge with datestamp_FILES.
+	(SVNROOT2): Introduce and use.
+	
+2011-01-30  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* update_version_svn (SVN): Remove obsolete comment.
+	(CURR_DATE): Fix description.
+	Fix description of checkout procedure.
+
+2010-12-18  Tobias Burnus  <burnus@net-b.de>
+
+	* update_web_docs_svn (MANUALS): Add libquadmath.
+
+2010-12-08  Ian Lance Taylor  <iant@google.com>
+
+	* gcc_release: Add support for releasing Go as a separate
+	tarball.
+
+2010-12-08  Ian Lance Taylor  <iant@google.com>
+
+	* update_web_docs_svn (MANUALS): Add gccgo.
+
+2010-12-08  Ian Lance Taylor  <iant@google.com>
+
+	* README: Change "CVS" to "Subversion".
+
+2010-08-23  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* gcc_release (snapshot_print): Also include an sha1 hash for
+	every tarball.  Slightly tweak indentation.
+
+2010-08-15  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* gcc_release (CVSROOT): Remove all occurrences.
+
+2010-08-14  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* gcc_release (snapshot_print): Include md5 hash for every tarball
+	in the README file and notification mail.
+
+2010-08-01  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* update_web_docs_libstdcxx_svn: Do not compress generated .html
+	files any more.
+
+2010-06-24  Joseph Myers  <joseph@codesourcery.com>
+
+	* update_web_docs_svn: Also pass -I option pointing to ada/ source
+	directory for Ada manual.
+
+2010-04-16  Joseph Myers  <joseph@codesourcery.com>
+
+	* crontab: Enable 4.6 snapshots.
+
+2010-04-07  Joseph Myers  <joseph@codesourcery.com>
+
+	* crontab: Switch 4.5 snapshots to 4.5 branch.
 
 2010-03-31  Joseph Myers  <joseph@codesourcery.com>
 

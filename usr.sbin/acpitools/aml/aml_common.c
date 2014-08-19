@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_common.c,v 1.3 2011/05/30 01:15:30 dyoung Exp $	*/
+/*	$NetBSD: aml_common.c,v 1.3.10.1 2014/08/20 00:05:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999 Takanori Watanabe
@@ -30,7 +30,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_common.c,v 1.6 2000/11/09 06:24:45 iwasaki Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aml_common.c,v 1.3 2011/05/30 01:15:30 dyoung Exp $");
+__RCSID("$NetBSD: aml_common.c,v 1.3.10.1 2014/08/20 00:05:06 tls Exp $");
 
 #include <sys/param.h>
 
@@ -537,10 +537,8 @@ aml_region_handle_alloc(struct aml_environ *env, int regtype, u_int32_t flags,
     struct aml_region_handle *h)
 {
 	int	state;
-	struct	aml_name *pci_info;
 
 	state = 0;
-	pci_info = NULL;
 	bzero(h, sizeof(struct aml_region_handle));
 
 	h->env = env;

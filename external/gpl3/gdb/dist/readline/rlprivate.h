@@ -1,25 +1,24 @@
 /* rlprivate.h -- functions and variables global to the readline library,
 		  but not intended for use by applications. */
 
-/* Copyright (C) 1999-2005 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2010 Free Software Foundation, Inc.
 
-   This file is part of the GNU Readline Library, a library for
-   reading lines of text with interactive input and history editing.
+   This file is part of the GNU Readline Library (Readline), a library
+   for reading lines of text with interactive input and history editing.      
 
-   The GNU Readline Library is free software; you can redistribute it
-   and/or modify it under the terms of the GNU General Public License
-   as published by the Free Software Foundation; either version 2, or
+   Readline is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
-   The GNU Readline Library is distributed in the hope that it will be
-   useful, but WITHOUT ANY WARRANTY; without even the implied warranty
-   of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   Readline is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
-   The GNU General Public License is often shipped with GNU software, and
-   is generally kept in a file called COPYING or LICENSE.  If you do not
-   have a copy of the license, write to the Free Software Foundation,
-   59 Temple Place, Suite 330, Boston, MA 02111 USA. */
+   You should have received a copy of the GNU General Public License
+   along with Readline.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #if !defined (_RL_PRIVATE_H_)
 #define _RL_PRIVATE_H_
@@ -27,6 +26,21 @@
 #include "rlconf.h"	/* for VISIBLE_STATS */
 #include "rlstdc.h"
 #include "posixjmp.h"	/* defines procenv_t */
+
+/*************************************************************************
+ *									 *
+ * Convenience definitions						 *
+ *									 *
+ *************************************************************************/
+
+#define EMACS_MODE()		(rl_editing_mode == emacs_mode)
+#define VI_COMMAND_MODE()	(rl_editing_mode == vi_mode && _rl_keymap == vi_movement_keymap)
+#define VI_INSERT_MODE()	(rl_editing_mode == vi_mode && _rl_keymap == vi_insertion_keymap)
+
+#define RL_CHECK_SIGNALS() \
+	do { \
+	  if (_rl_caught_signal) _rl_signal_handler (_rl_caught_signal); \
+	} while (0)
 
 /*************************************************************************
  *									 *
@@ -42,6 +56,7 @@
 #define SF_REVERSE		0x01
 #define SF_FOUND		0x02
 #define SF_FAILED		0x04
+#define SF_CHGKMAP		0x08
 
 typedef struct  __rl_search_context
 {
@@ -64,6 +79,9 @@ typedef struct  __rl_search_context
   char *prev_line_found;
 
   UNDO_LIST *save_undo_list;
+
+  Keymap keymap;	/* used when dispatching commands in search string */
+  Keymap okeymap;	/* original keymap */
 
   int history_pos;
   int direction;
@@ -106,7 +124,28 @@ typedef struct __rl_keyseq_context
   int childval;
 } _rl_keyseq_cxt;
 
-  /* fill in more as needed */
+/* vi-mode commands that use result of motion command to define boundaries */
+#define VIM_DELETE	0x01
+#define VIM_CHANGE	0x02
+#define VIM_YANK	0x04
+
+/* various states for vi-mode commands that use motion commands.  reflects
+   RL_READLINE_STATE */
+#define VMSTATE_READ	0x01
+#define VMSTATE_NUMARG	0x02
+
+typedef struct __rl_vimotion_context
+{
+  int op;
+  int state;
+  int flags;		/* reserved */
+  _rl_arg_cxt ncxt;
+  int numeric_arg;
+  int start, end;	/* rl_point, rl_end */
+  int key, motion;	/* initial key, motion command */
+} _rl_vimotion_cxt;
+
+/* fill in more as needed */
 /* `Generic' callback data and functions */
 typedef struct __rl_callback_generic_arg 
 {
@@ -139,11 +178,8 @@ extern int rl_visible_stats;
 extern int rl_line_buffer_len;
 extern int rl_arg_sign;
 extern int rl_visible_prompt_length;
-extern int readline_echoing_p;
 extern int rl_key_sequence_length;
 extern int rl_byte_oriented;
-
-extern _rl_keyseq_cxt *_rl_kscxt;
 
 /* display.c */
 extern int rl_display_fixed;
@@ -206,6 +242,7 @@ extern void _rl_callback_data_dispose PARAMS((_rl_callback_generic_arg *));
 /* bind.c */
 
 /* complete.c */
+extern void _rl_reset_completion_state PARAMS((void));
 extern char _rl_find_completion_word PARAMS((int *, int *));
 extern void _rl_free_match_list PARAMS((char **));
 
@@ -261,6 +298,8 @@ extern void _rl_start_using_history PARAMS((void));
 extern int _rl_free_saved_history_line PARAMS((void));
 extern void _rl_set_insert_mode PARAMS((int, int));
 
+extern void _rl_revert_all_lines PARAMS((void));
+
 /* nls.c */
 extern int _rl_init_eightbit PARAMS((void));
 
@@ -281,6 +320,14 @@ extern int _rl_restore_tty_signals PARAMS((void));
 /* search.c */
 extern int _rl_nsearch_callback PARAMS((_rl_search_cxt *));
 
+/* signals.c */
+extern void _rl_signal_handler PARAMS((int));
+
+extern void _rl_block_sigint PARAMS((void));
+extern void _rl_release_sigint PARAMS((void));
+extern void _rl_block_sigwinch PARAMS((void));
+extern void _rl_release_sigwinch PARAMS((void));
+
 /* terminal.c */
 extern void _rl_get_screen_size PARAMS((int, int));
 extern int _rl_init_terminal_io PARAMS((const char *));
@@ -298,6 +345,7 @@ extern void _rl_set_cursor PARAMS((int, int));
 /* text.c */
 extern void _rl_fix_point PARAMS((int));
 extern int _rl_replace_text PARAMS((const char *, int, int));
+extern int _rl_forward_char_internal PARAMS((int));
 extern int _rl_insert_char PARAMS((int, int));
 extern int _rl_overwrite_char PARAMS((int, int));
 extern int _rl_overwrite_rubout PARAMS((int, int));
@@ -309,8 +357,25 @@ extern int _rl_char_search_internal PARAMS((int, int, int));
 #endif
 extern int _rl_set_mark_at_pos PARAMS((int));
 
+/* undo.c */
+extern UNDO_LIST *_rl_copy_undo_entry PARAMS((UNDO_LIST *));
+extern UNDO_LIST *_rl_copy_undo_list PARAMS((UNDO_LIST *));
+
 /* util.c */
+#if defined (USE_VARARGS) && defined (PREFER_STDARG)
+extern void _rl_ttymsg (const char *, ...)  __attribute__((__format__ (printf, 1, 2)));
+extern void _rl_errmsg (const char *, ...)  __attribute__((__format__ (printf, 1, 2)));
+extern void _rl_trace (const char *, ...)  __attribute__((__format__ (printf, 1, 2)));
+#else
+extern void _rl_ttymsg ();
+extern void _rl_errmsg ();
+extern void _rl_trace ();
+#endif
+
+extern int _rl_tropen PARAMS((void));
+
 extern int _rl_abort_internal PARAMS((void));
+extern int _rl_null_function PARAMS((int, int));
 extern char *_rl_strindex PARAMS((const char *, const char *));
 extern int _rl_qsort_string_compare PARAMS((char **, char **));
 extern int (_rl_uppercase_p) PARAMS((int));
@@ -327,14 +392,15 @@ extern void _rl_vi_reset_last PARAMS((void));
 extern void _rl_vi_set_last PARAMS((int, int, int));
 extern int _rl_vi_textmod_command PARAMS((int));
 extern void _rl_vi_done_inserting PARAMS((void));
+extern int _rl_vi_domove_callback PARAMS((_rl_vimotion_cxt *));
 
 /*************************************************************************
  * Undocumented private variables					 *
  *************************************************************************/
 
 /* bind.c */
-extern const char *_rl_possible_control_prefixes[];
-extern const char *_rl_possible_meta_prefixes[];
+extern const char * const _rl_possible_control_prefixes[];
+extern const char * const _rl_possible_meta_prefixes[];
 
 /* callback.c */
 extern _rl_callback_func_t *_rl_callback_func;
@@ -345,17 +411,21 @@ extern int _rl_complete_show_all;
 extern int _rl_complete_show_unmodified;
 extern int _rl_complete_mark_directories;
 extern int _rl_complete_mark_symlink_dirs;
+extern int _rl_completion_prefix_display_length;
+extern int _rl_completion_columns;
 extern int _rl_print_completions_horizontally;
 extern int _rl_completion_case_fold;
+extern int _rl_completion_case_map;
 extern int _rl_match_hidden_files;
 extern int _rl_page_completions;
+extern int _rl_skip_completed_text;
+extern int _rl_menu_complete_prefix_first;
 
 /* display.c */
 extern int _rl_vis_botlin;
 extern int _rl_last_c_pos;
 extern int _rl_suppress_redisplay;
 extern int _rl_want_redisplay;
-extern char *rl_display_prompt;
 
 /* isearch.c */
 extern char *_rl_isearch_terminators;
@@ -372,6 +442,7 @@ extern int _rl_history_saved_point;
 extern _rl_arg_cxt _rl_argcxt;
 
 /* readline.c */
+extern int _rl_echoing_p;
 extern int _rl_horizontal_scroll_mode;
 extern int _rl_mark_modified_lines;
 extern int _rl_bell_preference;
@@ -379,6 +450,8 @@ extern int _rl_meta_flag;
 extern int _rl_convert_meta_chars_to_ascii;
 extern int _rl_output_meta_chars;
 extern int _rl_bind_stty_chars;
+extern int _rl_revert_all_at_newline;
+extern int _rl_echo_control_chars;
 extern char *_rl_comment_begin;
 extern unsigned char _rl_parsing_conditionalized_out;
 extern Keymap _rl_keymap;
@@ -386,10 +459,21 @@ extern FILE *_rl_in_stream;
 extern FILE *_rl_out_stream;
 extern int _rl_last_command_was_kill;
 extern int _rl_eof_char;
-extern procenv_t readline_top_level;
+extern procenv_t _rl_top_level;
+extern _rl_keyseq_cxt *_rl_kscxt;
 
 /* search.c */
 extern _rl_search_cxt *_rl_nscxt;
+
+/* signals.c */
+extern int _rl_interrupt_immediately;
+extern int volatile _rl_caught_signal;
+
+extern int _rl_echoctl;
+
+extern int _rl_intr_char;
+extern int _rl_quit_char;
+extern int _rl_susp_char;
 
 /* terminal.c */
 extern int _rl_enable_keypad;
@@ -404,6 +488,7 @@ extern char *_rl_term_up;
 extern char *_rl_term_dc;
 extern char *_rl_term_cr;
 extern char *_rl_term_IC;
+extern char *_rl_term_forward_char;
 extern int _rl_screenheight;
 extern int _rl_screenwidth;
 extern int _rl_screenchars;
@@ -416,5 +501,6 @@ extern int _rl_undo_group_level;
 
 /* vi_mode.c */
 extern int _rl_vi_last_command;
+extern _rl_vimotion_cxt *_rl_vimvcxt;
 
 #endif /* _RL_PRIVATE_H_ */

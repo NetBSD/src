@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.20.2.1 2013/02/25 00:30:40 tls Exp $ */
+/* $NetBSD: tic.c,v 1.20.2.2 2014/08/20 00:05:04 tls Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.20.2.1 2013/02/25 00:30:40 tls Exp $");
+__RCSID("$NetBSD: tic.c,v 1.20.2.2 2014/08/20 00:05:04 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -585,7 +585,7 @@ main(int argc, char **argv)
 		free(term->name);
 		free(term);
 	}
-	hdestroy();
+	hdestroy1(free, NULL);
 #endif
 
 

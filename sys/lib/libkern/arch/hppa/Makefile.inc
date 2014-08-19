@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2009/09/22 09:57:16 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.11.22.1 2014/08/20 00:04:30 tls Exp $
 
 SRCS+=	milli.S
 SRCS+=	bcopy.S memcpy.S memmove.S
@@ -8,5 +8,4 @@ SRCS+=	bcopy.S memcpy.S memmove.S
 SRCS+=	spcopy.S
 .endif
 
-SRCS+= ashrdi3.c divdi3.c    
 SRCS+= ffs.c bswap16.c bswap32.c

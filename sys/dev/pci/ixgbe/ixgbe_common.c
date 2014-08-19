@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe_common.c,v 1.12 2011/01/19 19:36:27 jfv Exp $*/
-/*$NetBSD: ixgbe_common.c,v 1.1 2011/08/12 21:55:29 dyoung Exp $*/
+/*$NetBSD: ixgbe_common.c,v 1.1.12.1 2014/08/20 00:03:48 tls Exp $*/
 
 #include "ixgbe_common.h"
 #include "ixgbe_phy.h"
@@ -2181,7 +2181,7 @@ static s32 ixgbe_fc_autoneg_fiber(struct ixgbe_hw *hw)
 
 	linkstat = IXGBE_READ_REG(hw, IXGBE_PCS1GLSTA);
 	if (((linkstat & IXGBE_PCS1GLSTA_AN_COMPLETE) == 0) ||
-	    ((linkstat & IXGBE_PCS1GLSTA_AN_TIMED_OUT) == 1)) {
+	    ((linkstat & IXGBE_PCS1GLSTA_AN_TIMED_OUT) != 0)) {
 		ret_val = IXGBE_ERR_FC_NOT_NEGOTIATED;
 		goto out;
 	}

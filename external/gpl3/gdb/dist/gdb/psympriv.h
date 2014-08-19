@@ -1,6 +1,6 @@
 /* Private partial symbol table definitions.
 
-   Copyright (C) 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -45,7 +45,9 @@ struct partial_symbol
 
   ENUM_BITFIELD(domain_enum_tag) domain : 6;
 
-  /* Address class (for info_symbols).  */
+  /* Address class (for info_symbols).  Note that we don't allow
+     synthetic "aclass" values here at present, simply because there's
+     no need.  */
 
   ENUM_BITFIELD(address_class) aclass : 6;
 
@@ -53,6 +55,17 @@ struct partial_symbol
 
 #define PSYMBOL_DOMAIN(psymbol)	(psymbol)->domain
 #define PSYMBOL_CLASS(psymbol)		(psymbol)->aclass
+
+/* A convenience enum to give names to some constants used when
+   searching psymtabs.  This is internal to psymtab and should not be
+   used elsewhere.  */
+
+enum psymtab_search_status
+  {
+    PST_NOT_SEARCHED,
+    PST_SEARCHED_AND_FOUND,
+    PST_SEARCHED_AND_NOT_FOUND
+  };
 
 /* Each source file that has not been fully read in is represented by
    a partial_symtab.  This contains the information on where in the
@@ -71,7 +84,9 @@ struct partial_symtab
 
   struct partial_symtab *next;
 
-  /* Name of the source file which this partial_symtab defines.  */
+  /* Name of the source file which this partial_symtab defines,
+     or if the psymtab is anonymous then a descriptive name for
+     debugging purposes, or "".  It must not be NULL.  */
 
   const char *filename;
 
@@ -83,19 +98,47 @@ struct partial_symtab
 
   const char *dirname;
 
-  /* Information about the object file from which symbols should be read.  */
-
-  struct objfile *objfile;
-
-  /* Set of relocation offsets to apply to each section.  */
+  /* Set of relocation offsets to apply to each section.
+     This is typically objfile->section_offsets, but in some cases
+     it's different.  See, e.g., elfstab_offset_sections.  */
 
   struct section_offsets *section_offsets;
 
   /* Range of text addresses covered by this file; texthigh is the
-     beginning of the next section.  */
+     beginning of the next section.  Do not use if PSYMTABS_ADDRMAP_SUPPORTED
+     is set.  */
 
   CORE_ADDR textlow;
   CORE_ADDR texthigh;
+
+  /* If NULL, this is an ordinary partial symbol table.
+
+     If non-NULL, this holds a single includer of this partial symbol
+     table, and this partial symbol table is a shared one.
+
+     A shared psymtab is one that is referenced by multiple other
+     psymtabs, and which conceptually has its contents directly
+     included in those.
+
+     Shared psymtabs have special semantics.  When a search finds a
+     symbol in a shared table, we instead return one of the non-shared
+     tables that include this one.
+
+     A shared psymtabs can be referred to by other shared ones.
+
+     The psymtabs that refer to a shared psymtab will list the shared
+     psymtab in their 'dependencies' array.
+
+     In DWARF terms, a shared psymtab is a DW_TAG_partial_unit; but
+     of course using a name based on that would be too confusing, so
+     "shared" was chosen instead.
+     
+     Only a single user is needed because, when expanding a shared
+     psymtab, we only need to expand its "canonical" non-shared user.
+     The choice of which one should be canonical is left to the
+     debuginfo reader; it can be arbitrary.  */
+
+  struct partial_symtab *user;
 
   /* Array of pointers to all of the partial_symtab's which this one
      depends on.  Since this array can only be set to previous or
@@ -135,6 +178,20 @@ struct partial_symtab
 
   unsigned char readin;
 
+  /* True iff objfile->psymtabs_addrmap is properly populated for this
+     partial_symtab.  For discontiguous overlapping psymtabs is the only usable
+     info in PSYMTABS_ADDRMAP.  */
+
+  unsigned char psymtabs_addrmap_supported;
+
+  /* True if the name of this partial symtab is not a source file name.  */
+
+  unsigned char anonymous;
+
+  /* A flag that is temporarily used when searching psymtabs.  */
+
+  ENUM_BITFIELD (psymtab_search_status) searched_flag : 2;
+
   /* Pointer to symtab eventually allocated for this source file, 0 if
      !readin or if we haven't looked for the symtab after it was readin.  */
 
@@ -143,7 +200,7 @@ struct partial_symtab
   /* Pointer to function which will read in the symtab corresponding to
      this psymtab.  */
 
-  void (*read_symtab) (struct partial_symtab *);
+  void (*read_symtab) (struct partial_symtab *, struct objfile *);
 
   /* Information that lets read_symtab() locate the part of the symbol table
      that this psymtab corresponds to.  This information is private to the
@@ -153,17 +210,16 @@ struct partial_symtab
   void *read_symtab_private;
 };
 
-extern void sort_pst_symbols (struct partial_symtab *);
+extern void sort_pst_symbols (struct objfile *, struct partial_symtab *);
 
 /* Add any kind of symbol to a psymbol_allocation_list.  */
 
-extern const
-struct partial_symbol *add_psymbol_to_list (const char *, int,
-					    int, domain_enum,
-					    enum address_class,
-					    struct psymbol_allocation_list *,
-					    long, CORE_ADDR,
-					    enum language, struct objfile *);
+extern void add_psymbol_to_list (const char *, int,
+				 int, domain_enum,
+				 enum address_class,
+				 struct psymbol_allocation_list *,
+				 long, CORE_ADDR,
+				 enum language, struct objfile *);
 
 extern void init_psymbol_list (struct objfile *, int);
 
@@ -174,9 +230,12 @@ extern struct partial_symtab *start_psymtab_common (struct objfile *,
 						    struct partial_symbol **);
 
 extern struct partial_symtab *allocate_psymtab (const char *,
-						struct objfile *);
+						struct objfile *)
+  ATTRIBUTE_NONNULL (1);
 
-extern void discard_psymtab (struct partial_symtab *);
+extern void discard_psymtab (struct objfile *, struct partial_symtab *);
+
+extern struct cleanup *make_cleanup_discard_psymtabs (struct objfile *);
 
 /* Traverse all psymtabs in one objfile.  */
 

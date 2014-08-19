@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.45.6.1 2012/11/20 03:00:46 tls Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.45.6.2 2014/08/20 00:02:23 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.45.6.1 2012/11/20 03:00:46 tls Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.45.6.2 2014/08/20 00:02:23 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -690,7 +690,7 @@ addarg(char **argv, const char *val)
 		/*
 		 * 10 entries, a leading length, and a null
 		 */
-		argv = (char **)malloc(sizeof(*argv) * 12);
+		argv = malloc(sizeof(*argv) * 12);
 		if (argv == NULL)
 			return(NULL);
 		*argv++ = (char *)10;
@@ -700,9 +700,8 @@ addarg(char **argv, const char *val)
 		;
 	if (cpp == &argv[(long)argv[-1]]) {
 		--argv;
-		nargv = (char **)realloc(argv,
-		    sizeof(*argv) * ((long)(*argv) + 10 + 2));
-		if (argv == NULL) {
+		nargv = realloc(argv, sizeof(*argv) * ((long)(*argv) + 10 + 2));
+		if (nargv == NULL) {
 			fatal(net, "not enough memory");
 			/*NOTREACHED*/
 		}

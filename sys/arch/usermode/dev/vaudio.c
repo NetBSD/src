@@ -1,4 +1,4 @@
-/* $NetBSD: vaudio.c,v 1.3 2012/01/15 10:51:12 jmcneill Exp $ */
+/* $NetBSD: vaudio.c,v 1.3.10.1 2014/08/20 00:03:26 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vaudio.c,v 1.3 2012/01/15 10:51:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vaudio.c,v 1.3.10.1 2014/08/20 00:03:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -396,8 +396,8 @@ vaudio_getdev(void *opaque, struct audio_device *adev)
 {
 	struct vaudio_softc *sc = opaque;
 
-	sprintf(adev->name, "Virtual Audio");
-	sprintf(adev->version, "");
+	snprintf(adev->name, sizeof(adev->name), "Virtual Audio");
+	adev->version[0] = '\0';
 	snprintf(adev->config, sizeof(adev->config), "%s", sc->sc_audiopath);
 
 	return 0;

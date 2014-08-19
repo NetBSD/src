@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.107.2.1 2013/02/25 00:30:12 tls Exp $	*/
+/*	$NetBSD: socket.h,v 1.107.2.2 2014/08/20 00:04:44 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -341,7 +341,8 @@ struct sockcred {
  * Compute size of a sockcred structure with groups.
  */
 #define	SOCKCREDSIZE(ngrps) \
-	(sizeof(struct sockcred) + (sizeof(gid_t) * ((ngrps) - 1)))
+	(sizeof(struct sockcred) + (sizeof(gid_t) * \
+	    ((ngrps) ? ((ngrps) - 1) : 0)))
 #endif /* _NETBSD_SOURCE */
 
 
@@ -428,6 +429,8 @@ struct kinfo_pcb {
 
 #define ki_src ki_s._kis_src
 #define ki_dst ki_d._kid_dst
+#define ki_spad ki_s._kis_pad
+#define ki_dpad ki_d._kid_pad
 
 #define PCB_SLOP		20
 #define PCB_ALL			0

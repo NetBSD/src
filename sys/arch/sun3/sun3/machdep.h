@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.37 2011/05/16 13:22:55 tsutsui Exp $	*/
+/*	$NetBSD: machdep.h,v 1.37.14.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -113,7 +113,7 @@ void	enable_fpu(int);
 void	enable_init(void);
 void	enable_video(int);
 
-int 	fpu_emulate(struct trapframe *, struct fpframe *, ksiginfo_t *);
+int	fpu_emulate(struct trapframe *, struct fpframe *, ksiginfo_t *);
 
 /* Backward compatibility... */
 #define getsr	_getsr
@@ -184,7 +184,7 @@ void	loadcrp(struct mmu_rootptr *);
 
 void	pmap_bootstrap(vaddr_t);
 void	pmap_kcore_hdr(struct sun3x_kcore_hdr *);
-int 	pmap_pa_exists(paddr_t);
+int	pmap_pa_exists(paddr_t);
 
 #endif	/* SUN3X */
 

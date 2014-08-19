@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.38.22.1 2012/11/20 03:02:12 tls Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.38.22.2 2014/08/20 00:03:41 tls Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.38.22.1 2012/11/20 03:02:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.38.22.2 2014/08/20 00:03:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -124,12 +124,29 @@ dev_type_strategy(mtstrategy);
 dev_type_dump(mtdump);
 
 const struct bdevsw mt_bdevsw = {
-	mtopen, mtclose, mtstrategy, mtioctl, mtdump, nosize, D_TAPE
+	.d_open = mtopen,
+	.d_close = mtclose,
+	.d_strategy = mtstrategy,
+	.d_ioctl = mtioctl,
+	.d_dump = mtdump,
+	.d_psize = nosize,
+	.d_discard = nodiscard,
+	.d_flag = D_TAPE
 };
 
 const struct cdevsw mt_cdevsw = {
-	mtopen, mtclose, mtread, mtwrite, mtioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
+	.d_open = mtopen,
+	.d_close = mtclose,
+	.d_read = mtread,
+	.d_write = mtwrite,
+	.d_ioctl = mtioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TAPE
 };
 
 /*
@@ -178,7 +195,6 @@ mt_putonline(struct mt_softc *mt)
 	struct	mscp *mp;
 	struct	mscp_softc *mi =
 	    device_private(device_parent(mt->mt_dev));
-	volatile int i;
 
 	((volatile struct mt_softc *) mt)->mt_state = MT_OFFLINE;
 	mp = mscp_getcp(mi, MSCP_WAIT);
@@ -188,7 +204,7 @@ mt_putonline(struct mt_softc *mt)
 	*mp->mscp_addr |= MSCP_OWN | MSCP_INT;
 
 	/* Poll away */
-	i = bus_space_read_2(mi->mi_iot, mi->mi_iph, 0);
+	bus_space_read_2(mi->mi_iot, mi->mi_iph, 0);
 	if (tsleep(&mt->mt_state, PRIBIO, "mtonline", 240 * hz))
 		return MSCP_FAILED;
 
@@ -449,7 +465,6 @@ mtcmd(struct mt_softc *mt, int cmd, int count, int complete)
 {
 	struct mscp *mp;
 	struct mscp_softc *mi = device_private(device_parent(mt->mt_dev));
-	volatile int i;
 
 	mp = mscp_getcp(mi, MSCP_WAIT);
 
@@ -508,7 +523,7 @@ mtcmd(struct mt_softc *mt, int cmd, int count, int complete)
 		break;
 	}
 
-	i = bus_space_read_2(mi->mi_iot, mi->mi_iph, 0);
+	bus_space_read_2(mi->mi_iot, mi->mi_iph, 0);
 	tsleep(&mt->mt_inuse, PRIBIO, "mtioctl", 0);
 	return mt->mt_ioctlerr;
 }

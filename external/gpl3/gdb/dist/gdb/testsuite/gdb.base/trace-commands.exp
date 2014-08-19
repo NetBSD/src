@@ -1,4 +1,4 @@
-# Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2006-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,15 +16,12 @@
 # Test that the source command's verbose mode works, the 'set trace-commands'
 # command works, and that the nest depth is correct in various circumstances.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 gdb_exit
 gdb_start
 
 # Create a file to source
-set fd [open "tracecommandsscript" w]
+set tracecommandsscript [standard_output_file tracecommandsscript]
+set fd [open "$tracecommandsscript" w]
 puts $fd "\
 echo in tracecommandsscript\\n
 define func
@@ -48,7 +45,7 @@ gdb_test "show trace-commands" "State of GDB CLI command tracing is off\\." \
 	 "show trace-commands says off"
 
 # Source the script with verbose mode.
-gdb_test_sequence "source -v tracecommandsscript" "source -v" {
+gdb_test_sequence "source -v $tracecommandsscript" "source -v" {
   {[\r\n]\+echo in tracecommandsscript\\n}
   {[\r\n]\+define func}
   {[\r\n]\+if 1}
@@ -95,13 +92,13 @@ gdb_test_sequence "if 1\nset \$i = 0\nwhile \$i < 5\nfunc \$i\nset \$i += 1\nend
 }
 
 # Function with source works
-gdb_test_sequence "define topfunc\nsource tracecommandsscript\nend" \
+gdb_test_sequence "define topfunc\nsource $tracecommandsscript\nend" \
     "define user command" {
   {[\r\n]\+define topfunc}
 }
 gdb_test_sequence "topfunc" "nested trace-commands test with source" {
   {[\r\n]\+topfunc}
-  {[\r\n]\+\+source tracecommandsscript}
+  {[\r\n]\+\+source .*/tracecommandsscript}
   {[\r\n]\+\+echo in tracecommandsscript\\n}
   {[\r\n]\+\+define func}
   {[\r\n]\+\+if 1}

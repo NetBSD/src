@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 2012/06/11 16:27:08 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43.2.1 2014/08/20 00:02:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2012/06/11 16:27:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43.2.1 2014/08/20 00:02:51 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2012/06/11 16:27:08 tsutsui Exp $")
 #include <sys/ksyms.h>
 #include <sys/device.h>
 #include <sys/module.h>
+#include <sys/cpu.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -174,7 +175,7 @@ void
 cpu_startup(void)
 {
 
-	strcpy(cpu_model, "SEGA Dreamcast\n");
+	cpu_setmodel("SEGA Dreamcast");
 
 	sh_startup();
 }
@@ -270,7 +271,7 @@ void
 intc_intr(int ssr, int spc, int ssp)
 {
 	struct intc_intrhand *ih;
-	int s, evtcode;
+	int evtcode;
 
 	curcpu()->ci_data.cpu_nintr++;
 
@@ -282,7 +283,7 @@ intc_intr(int ssr, int spc, int ssp)
 	 * On entry, all interrrupts are disabled, and exception is enabled.
 	 * Enable higher level interrupt here.
 	 */
-	s = _cpu_intr_resume(ih->ih_level);
+	_cpu_intr_resume(ih->ih_level);
 
 	if (evtcode == SH_INTEVT_TMU0_TUNI0) {	/* hardclock */
 		struct clockframe cf;

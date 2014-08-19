@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.8,v 1.46.6.1 2013/06/23 06:28:52 tls Exp $
+.\"	$NetBSD: route.8,v 1.46.6.2 2014/08/20 00:02:27 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)route.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd February 5, 2013
+.Dd November 5, 2013
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -242,16 +242,21 @@ or are specified as link-level addresses in the form described in
 and the names must be numeric specifications rather than
 symbolic names.
 .Pp
-The optional modifiers
-.Fl mpls
-and
+The optional modifier
 .Fl tag
-specify that all subsequent addresses are in the
+specifies an address associated with the route.
+How the address is used is specific to the address family of
+the destination and the interface used to forward the packet.
+Currently route tags are consumed only by the
+.Xr mpls 4
+stack; therefore
+.Nm
+assumes that the subsequent addresses are in the
 .Tn MPLS
 address family.
 See
 .Xr mpls 4
-for examples about setting routes involving MPLS.
+for examples of setting routes involving MPLS.
 .Pp
 The optional
 .Fl netmask
@@ -396,7 +401,6 @@ Only root may modify the routing tables.
 These privileges are enforced by the kernel.
 .El
 .Sh SEE ALSO
-.Xr esis 4 ,
 .Xr mpls 4 ,
 .Xr netintro 4 ,
 .Xr route 4 ,

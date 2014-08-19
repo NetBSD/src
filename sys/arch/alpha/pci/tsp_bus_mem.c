@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_bus_mem.c,v 1.12 2012/02/06 02:14:15 matt Exp $ */
+/* $NetBSD: tsp_bus_mem.c,v 1.12.6.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsp_bus_mem.c,v 1.12 2012/02/06 02:14:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsp_bus_mem.c,v 1.12.6.1 2014/08/20 00:02:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: tsp_bus_mem.c,v 1.12 2012/02/06 02:14:15 matt Exp $"
 #define	CHIP_MEM_EX_STORE_SIZE(v)					\
 	(sizeof (((struct tsp_config *)(v))->pc_mem_exstorage))
 
-#define CHIP_MEM_SYS_START(v)    (((struct tsp_config *)(v))->pc_iobase)
+#define CHIP_MEM_SYS_START(v)						\
+	(((struct tsp_config *)(v))->pc_iobase | P_PCI_MEM)
 
 /*
  * Tsunami core logic appears on EV6.  We require at least EV56

@@ -697,9 +697,12 @@ mach64_update_ring_snapshot(drm_mach64_private_t * dev_priv)
  * queuing the buffer in the ring. 
  */
 
-#define DMALOCALS				\
+#define DMALOCALS_NOOUT				\
 	drm_mach64_freelist_t *_entry = NULL;	\
-	struct drm_buf *_buf = NULL;		\
+	struct drm_buf *_buf = NULL
+
+#define	DMALOCALS				\
+	DMALOCALS_NOOUT;			\
 	u32 *_buf_wptr; int _outcount
 
 #define GETBUFPTR( __buf )						\
@@ -735,8 +738,12 @@ static __inline__ int mach64_find_pending_buf_entry(drm_mach64_private_t *
 	return 0;
 }
 
+#define DMASETPTR_NOOUT( _p )			\
+	_buf = (_p)
+
 #define DMASETPTR( _p )				\
 do {						\
+	DMASETPTR_NOOUT( _p );			\
 	_buf = (_p);				\
 	_outcount = 0;				\
 	_buf_wptr = GETBUFPTR( _buf );		\

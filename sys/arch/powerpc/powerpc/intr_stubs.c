@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: intr_stubs.c,v 1.3 2011/06/29 05:57:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr_stubs.c,v 1.3.14.1 2014/08/20 00:03:20 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -83,12 +83,12 @@ intr_disestablish(void *ih)
 	(*powerpc_intrsw->intrsw_disestablish)(ih);
 }
 
-const char *intr_string(int, int) __stub;
+const char *intr_string(int, int, char *, size_t) __stub;
 
 const char *
-intr_string(int irq, int ist)
+intr_string(int irq, int ist, char *buf, size_t len)
 {
-	return (*powerpc_intrsw->intrsw_string)(irq, ist);
+	return (*powerpc_intrsw->intrsw_string)(irq, ist, buf, len);
 }
 
 void spl0(void) __stub;

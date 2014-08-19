@@ -1,4 +1,4 @@
-/* $NetBSD: sysident.S,v 1.1 2010/08/07 18:01:33 joerg Exp $ */
+/* $NetBSD: sysident.S,v 1.1.12.1 2014/08/20 00:02:07 tls Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -59,7 +59,7 @@
 #include "sysident_assym.h"
 
 	.section ".note.netbsd.ident", "a"
-	.align 4
+	.p2align 2
 
 	.long	ELF_NOTE_NETBSD_NAMESZ
 	.long	ELF_NOTE_NETBSD_DESCSZ
@@ -68,10 +68,22 @@
 	.long	__NetBSD_Version__
 
 	.section ".note.netbsd.pax", "a"
-	.align 4
+	.p2align 2
 
 	.long	ELF_NOTE_PAX_NAMESZ
 	.long	ELF_NOTE_PAX_DESCSZ
 	.long	ELF_NOTE_TYPE_PAX_TAG
 	.ascii	"PaX\0"		/* ELF_NOTE_PAX_NAME */
 	.long	0
+
+#ifdef ELF_NOTE_MARCH_DESC
+	.section ".note.netbsd.march", "a"
+	.p2align 2
+
+	.long	ELF_NOTE_MARCH_NAMESZ
+	.long	ELF_NOTE_MARCH_DESCSZ
+	.long	ELF_NOTE_TYPE_MARCH_TAG
+	.ascii	"NetBSD\0\0"
+	.asciz	ELF_NOTE_MARCH_DESC
+	.p2align 2
+#endif

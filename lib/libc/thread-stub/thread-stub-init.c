@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub-init.c,v 1.1.2.2 2013/06/23 06:21:06 tls Exp $	*/
+/*	$NetBSD: thread-stub-init.c,v 1.1.2.3 2014/08/20 00:02:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: thread-stub-init.c,v 1.1.2.2 2013/06/23 06:21:06 tls Exp $");
+__RCSID("$NetBSD: thread-stub-init.c,v 1.1.2.3 2014/08/20 00:02:16 tls Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef _REENTRANT
@@ -43,7 +43,7 @@ __RCSID("$NetBSD: thread-stub-init.c,v 1.1.2.2 2013/06/23 06:21:06 tls Exp $");
 
 __weak_alias(__libc_thr_init,__libc_thr_init_stub)
 
-void
+void __section(".text.startup")
 __libc_thr_init_stub(void)
 {
 

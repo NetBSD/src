@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigpending.S,v 1.1 2006/03/11 18:59:21 christos Exp $	*/
+/*	$NetBSD: compat_sigpending.S,v 1.1.50.1 2014/08/20 00:02:13 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: compat_sigpending.S,v 1.1 2006/03/11 18:59:21 christos Exp $")
+	RCSID("$NetBSD: compat_sigpending.S,v 1.1.50.1 2014/08/20 00:02:13 tls Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -48,3 +48,4 @@ _SYSCALL(sigpending,compat_13_sigpending13)
 	movl	%eax,(%rdi)		# store old mask
 	xorl	%eax,%eax
 	ret
+END(sigpending)

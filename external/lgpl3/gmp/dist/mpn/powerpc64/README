@@ -113,7 +113,7 @@ Memory:		  2 ld/st.  Stores go to the L2 cache, which can sustain just
 		  one store per cycle.
 		  L1 load latency: to gregs 3-4 cycles, to fregs 5-6 cycles.
 		  Operations that modify the address register might be split
-		  to use also a an integer issue slot.
+		  to use also an integer issue slot.
 Simple integer:	  2 operations every cycle, latency 2.
 Integer multiply: 2 operations every 6th cycle, latency 7 cycles.
 Integer divide:	  ?

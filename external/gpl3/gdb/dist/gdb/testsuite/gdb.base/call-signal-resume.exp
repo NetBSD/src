@@ -1,4 +1,4 @@
-# Copyright 2008, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2008-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,10 +20,6 @@
 # 2) Inferior is stopped at a signal.  Upon resumption it should continue
 #    with that signal, regardless of whatever the hand-called function did.
 
-if $tracelevel then {
-	strace $tracelevel
-}
-
 if [target_info exists gdb,noinferiorio] {
     verbose "Skipping call-signal-resume.exp because of no fileio capabilities."
     continue
@@ -35,9 +31,7 @@ if [target_info exists gdb,nosignals] {
 }
 
 
-set testfile "call-signals"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile call-signals.c
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
      untested call-signal-resume.exp
@@ -65,10 +59,7 @@ proc get_dummy_frame_number { } {
 
 # Start with a fresh gdb.
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart ${binfile}
 
 if { ![runto_main] } {
     fail "Can't run to main"
@@ -103,7 +94,19 @@ if { "$frame_number" == "" } {
 # Pop the dummy frame.
 gdb_test "frame $frame_number" ".*"
 gdb_test_no_output "set confirm off"
-gdb_test_no_output "return"
+gdb_test "return" ""
+
+# Verify there are no remains of the dummy frame.
+gdb_test_no_output "maintenance print dummy-frames"
+set test "maintenance info breakpoints"
+gdb_test_multiple $test $test {
+    -re " call dummy .*\r\n$gdb_prompt $" {
+	fail $test
+    }
+    -re "\r\n$gdb_prompt $" {
+	pass $test
+    }
+}
 
 # Resume execution, the program should continue without any signal.
 
@@ -136,7 +139,7 @@ if { "$frame_number" == "" } {
 # Pop the dummy frame.
 gdb_test "frame $frame_number" ".*"
 gdb_test_no_output "set confirm off"
-gdb_test_no_output "return"
+gdb_test "return" ""
 
 # Continue again, this time we should get to the signal handler.
 

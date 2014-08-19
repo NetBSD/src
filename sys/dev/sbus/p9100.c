@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.56.6.1 2012/11/20 03:02:32 tls Exp $ */
+/*	$NetBSD: p9100.c,v 1.56.6.2 2014/08/20 00:03:50 tls Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.56.6.1 2012/11/20 03:02:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.56.6.2 2014/08/20 00:03:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,6 @@ struct p9100_softc {
 #ifdef PNOZZ_USE_LATCH
 	bus_space_handle_t sc_fb_memh;	/*   bus space handle */
 #endif
-	volatile uint32_t sc_junk;
 	uint32_t 	sc_mono_width;	/* for setup_mono */
 
 	uint32_t	sc_width;
@@ -174,8 +173,18 @@ static dev_type_ioctl(p9100ioctl);
 static dev_type_mmap(p9100mmap);
 
 const struct cdevsw pnozz_cdevsw = {
-	p9100open, nullclose, noread, nowrite, p9100ioctl,
-	nostop, notty, nopoll, p9100mmap, nokqfilter,
+	.d_open = p9100open,
+	.d_close = nullclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = p9100ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = p9100mmap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 /* frame buffer generic driver */
@@ -262,9 +271,8 @@ struct wsdisplay_accessops p9100_accessops = {
 
 #ifdef PNOZZ_USE_LATCH
 #define PNOZZ_LATCH(sc, off) if(sc->sc_last_offset != (off & 0xffffff80)) { \
-		sc->sc_junk = bus_space_read_4(sc->sc_bustag, sc->sc_fb_memh, \
-		    off); \
-		sc->sc_last_offset = off & 0xffffff80; }
+	(void)bus_space_read_4(sc->sc_bustag, sc->sc_fb_memh, off); \
+	sc->sc_last_offset = off & 0xffffff80; }
 #else
 #define PNOZZ_LATCH(a, b)
 #endif
@@ -791,7 +799,7 @@ p9100_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
 	p9100_ctl_write_4(sc, ABS_XY2, dst << sc->sc_depthshift);
 	p9100_ctl_write_4(sc, ABS_XY3, dstw << sc->sc_depthshift);
 
-	sc->sc_junk = p9100_ctl_read_4(sc, COMMAND_BLIT);
+	(void)p9100_ctl_read_4(sc, COMMAND_BLIT);
 }
 
 /* solid rectangle fill */
@@ -813,7 +821,7 @@ p9100_rectfill(void *cookie, int xs, int ys, int wi, int he, uint32_t col)
 	p9100_ctl_write_4(sc, COORD_INDEX, 0);
 	p9100_ctl_write_4(sc, RECT_RTW_XY, src);
 	p9100_ctl_write_4(sc, RECT_RTW_XY, srcw);
-	sc->sc_junk = p9100_ctl_read_4(sc, COMMAND_QUAD);
+	(void)p9100_ctl_read_4(sc, COMMAND_QUAD);
 }
 
 /* setup for mono->colour expansion */
@@ -892,7 +900,7 @@ static uint8_t
 p9100_ramdac_read(struct p9100_softc *sc, bus_size_t off)
 {
 
-	sc->sc_junk = p9100_ctl_read_4(sc, PWRUP_CNFG);
+	(void)p9100_ctl_read_4(sc, PWRUP_CNFG);
 	return ((bus_space_read_4(sc->sc_bustag,
 	    sc->sc_ctl_memh, off) >> 16) & 0xff);
 }
@@ -901,7 +909,7 @@ static void
 p9100_ramdac_write(struct p9100_softc *sc, bus_size_t off, uint8_t v)
 {
 
-	sc->sc_junk = p9100_ctl_read_4(sc, PWRUP_CNFG);
+	(void)p9100_ctl_read_4(sc, PWRUP_CNFG);
 	bus_space_write_4(sc->sc_bustag, sc->sc_ctl_memh, off,
 	    ((uint32_t)v) << 16);
 }

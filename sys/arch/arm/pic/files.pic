@@ -1,4 +1,4 @@
-#	$NetBSD: files.pic,v 1.4.2.1 2013/06/23 06:20:01 tls Exp $
+#	$NetBSD: files.pic,v 1.4.2.2 2014/08/20 00:02:47 tls Exp $
 #
 # Configuration info for the common PIC code.
 #
@@ -8,5 +8,4 @@ defflag opt_arm_intr_impl.h		__HAVE_PIC_SET_PRIORITY
 defflag opt_arm_intr_impl.h		__HAVE_PIC_SOFTINT
 
 file	arch/arm/pic/pic.c			pic
-file	arch/arm/pic/pic_splfuncs.c		pic & pic_splfuncs & !armadaxp
-file	arch/arm/pic/armadaxp_splfuncs.c	pic & pic_splfuncs & armadaxp
+file	arch/arm/pic/pic_splfuncs.c		pic & pic_splfuncs

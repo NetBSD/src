@@ -1,7 +1,7 @@
 #ifndef MICROBLAZE_SIM_MAIN
 #define MICROBLAZE_SIM_MAIN
 
-/* Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
+/* Copyright 2009-2014 Free Software Foundation, Inc.
 
    This file is part of the Xilinx MicroBlaze simulator.
 
@@ -16,9 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
-   MA 02110-1301, USA.  */
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #include "microblaze.h"
 #include "sim-basics.h"

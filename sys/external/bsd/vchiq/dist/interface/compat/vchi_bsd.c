@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: vchi_bsd.c,v 1.2.4.2 2013/06/23 06:20:23 tls Exp $
+ * $Id: vchi_bsd.c,v 1.2.4.3 2014/08/20 00:04:25 tls Exp $
  */
 
 #include <sys/types.h>
@@ -121,123 +121,6 @@ del_timer(struct timer_list *t)
 }
 
 /*
- * Completion API
- */
-void
-init_completion(struct completion *c)
-{
-	cv_init(&c->cv, "VCHI completion cv");
-	mutex_init(&c->lock, MUTEX_DEFAULT, IPL_NONE);
-	c->done = 0;
-}
-
-void
-destroy_completion(struct completion *c)
-{
-	cv_destroy(&c->cv);
-	mutex_destroy(&c->lock);
-}
-
-void
-wait_for_completion(struct completion *c)
-{
-	mutex_enter(&c->lock);
-	if (!c->done)
-		cv_wait(&c->cv, &c->lock);
-	c->done--;
-	mutex_exit(&c->lock);
-}
-
-int
-try_wait_for_completion(struct completion *c)
-{
-	int res = 0;
-
-	mutex_enter(&c->lock);
-	if (!c->done)
-		c->done--;
-	else
-		res = 1;
-	mutex_exit(&c->lock);
-	return res != 0;
-}
-
-int
-wait_for_completion_timeout(struct completion *c, unsigned long timeout)
-{
-	int res = 0;
-
-	mutex_enter(&c->lock);
-	if (!c->done)
-		res = cv_timedwait(&c->cv, &c->lock, timeout);
-	if (res == 0)
-		c->done--;
-	mutex_exit(&c->lock);
-	return res != 0;
-}
-
-int
-wait_for_completion_interruptible_timeout(struct completion *c, unsigned long timeout)
-{
-	int res = 0;
-
-	mutex_enter(&c->lock);
-	if (!c->done)
-		res = cv_timedwait_sig(&c->cv, &c->lock, timeout);
-	if (res == 0)
-		c->done--;
-	mutex_exit(&c->lock);
-	return res != 0;
-}
-
-int
-wait_for_completion_interruptible(struct completion *c)
-{
-	int res = 0;
-
-	mutex_enter(&c->lock);
-	if (!c->done)
-		res = cv_wait_sig(&c->cv, &c->lock);
-	if (res == 0)
-		c->done--;
-	mutex_exit(&c->lock);
-	return res != 0;
-}
-
-int
-wait_for_completion_killable(struct completion *c)
-{
-	int res = 0;
-
-	mutex_enter(&c->lock);
-	if (!c->done)
-		res = cv_wait_sig(&c->cv, &c->lock);
-	/* TODO: check actual signals here ? */
-	if (res == 0)
-		c->done--;
-	mutex_exit(&c->lock);
-	return res != 0;
-}
-
-void
-complete(struct completion *c)
-{
-	mutex_enter(&c->lock);
-	c->done++;
-	cv_signal(&c->cv);
-	mutex_exit(&c->lock);
-}
-
-void
-complete_all(struct completion *c)
-{
-	mutex_enter(&c->lock);
-	c->done++;
-	cv_broadcast(&c->cv);
-	mutex_exit(&c->lock);
-}
-
-/*
  * Semaphore API
  */
 
@@ -252,9 +135,9 @@ void sema_sysinit(void *arg)
 void
 _sema_init(struct semaphore *s, int value)
 {
-	bzero(s, sizeof(*s));
+	memset(s, 0, sizeof(*s));
 	mutex_init(&s->mtx, MUTEX_DEFAULT, IPL_VM);
-	cv_init(&s->cv, "sema cv");
+	cv_init(&s->cv, "semacv");
 	s->value = value;
 }
 
@@ -283,35 +166,30 @@ down(struct semaphore *s)
 int
 down_interruptible(struct semaphore *s)
 {
-	int ret ;
-
-	ret = 0;
 
 	mutex_enter(&s->mtx);
 
 	while (s->value == 0) {
 		s->waiters++;
-		ret = cv_wait_sig(&s->cv, &s->mtx);
+		int ret = cv_wait_sig(&s->cv, &s->mtx);
 		s->waiters--;
 
 		if (ret == EINTR || ret == ERESTART) {
 			mutex_exit(&s->mtx);
-			return (-EINTR);
+			return -EINTR;
 		}
 	}
 
 	s->value--;
 	mutex_exit(&s->mtx);
 
-	return (0);
+	return 0;
 }
 
 int
 down_trylock(struct semaphore *s)
 {
-	int ret;
-
-	ret = 0;
+	int ret = 1;
 
 	mutex_enter(&s->mtx);
 
@@ -319,13 +197,11 @@ down_trylock(struct semaphore *s)
 		/* Success. */
 		s->value--;
 		ret = 0;
-	} else {
-		ret = -EAGAIN;
 	}
 
 	mutex_exit(&s->mtx);
 
-	return (ret);
+	return ret;
 }
 
 void
@@ -333,7 +209,7 @@ up(struct semaphore *s)
 {
 	mutex_enter(&s->mtx);
 	s->value++;
-	if (s->waiters && s->value > 0)
+	if (s->value > 0 && s->waiters)
 		cv_signal(&s->cv);
 
 	mutex_exit(&s->mtx);
@@ -385,7 +261,7 @@ int
 fatal_signal_pending(VCHIQ_THREAD_T thr)
 {
 	printf("Implement ME: %s\n", __func__);
-	return (0);
+	return 0;
 }
 
 /*
@@ -405,7 +281,7 @@ struct thread_data {
 
 static struct thread_data thread_slots[MAX_THREAD_DATA_SLOTS];
 
-static void 
+static void
 kthread_wrapper(void *data)
 {
 	struct thread_data *slot;
@@ -426,7 +302,7 @@ vchiq_thread_create(int (*threadfn)(void *data),
 
 	if (thread_data_slot >= MAX_THREAD_DATA_SLOTS) {
 		printf("kthread_create: out of thread data slots\n");
-		return (NULL);
+		return NULL;
 	}
 
 	slot = &thread_slots[thread_data_slot];
@@ -436,7 +312,7 @@ vchiq_thread_create(int (*threadfn)(void *data),
 	va_start(ap, namefmt);
 	vsnprintf(name, sizeof(name), namefmt, ap);
 	va_end(ap);
-	
+
 	newt = NULL;
 	if (kthread_create(PRI_NONE, 0, NULL, kthread_wrapper, slot, &newt,
 	    "%s", name) != 0) {

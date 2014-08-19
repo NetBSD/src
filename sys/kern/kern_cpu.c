@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.58.2.1 2012/11/20 03:02:42 tls Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.58.2.2 2014/08/20 00:04:28 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.58.2.1 2012/11/20 03:02:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.58.2.2 2014/08/20 00:04:28 tls Exp $");
 
 #include "opt_cpu_ucode.h"
 #include "opt_compat_netbsd.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.58.2.1 2012/11/20 03:02:42 tls Exp $"
 #include <sys/select.h>
 #include <sys/namei.h>
 #include <sys/callout.h>
+#include <sys/pcu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -101,9 +102,18 @@ static void	cpu_xc_offline(struct cpu_info *);
 dev_type_ioctl(cpuctl_ioctl);
 
 const struct cdevsw cpuctl_cdevsw = {
-	nullopen, nullclose, nullread, nullwrite, cpuctl_ioctl,
-	nullstop, notty, nopoll, nommap, nokqfilter,
-	D_OTHER | D_MPSAFE
+	.d_open = nullopen,
+	.d_close = nullclose,
+	.d_read = nullread,
+	.d_write = nullwrite,
+	.d_ioctl = cpuctl_ioctl,
+	.d_stop = nullstop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 kmutex_t	cpu_lock		__cacheline_aligned;
@@ -111,14 +121,15 @@ int		ncpu			__read_mostly;
 int		ncpuonline		__read_mostly;
 bool		mp_online		__read_mostly;
 
+/* An array of CPUs.  There are ncpu entries. */
+struct cpu_info **cpu_infos		__read_mostly;
+
 /* Note: set on mi_cpu_attach() and idle_loop(). */
 kcpuset_t *	kcpuset_attached	__read_mostly	= NULL;
 kcpuset_t *	kcpuset_running		__read_mostly	= NULL;
 
-struct cpuqueue	cpu_queue		__cacheline_aligned
-    = CIRCLEQ_HEAD_INITIALIZER(cpu_queue);
 
-static struct cpu_info **cpu_infos	__read_mostly;
+static char cpu_model[128];
 
 /*
  * mi_cpu_init: early initialisation of MI CPU related structures.
@@ -152,7 +163,6 @@ mi_cpu_attach(struct cpu_info *ci)
 	kcpuset_create(&ci->ci_data.cpu_kcpuset, true);
 	kcpuset_set(ci->ci_data.cpu_kcpuset, cpu_index(ci));
 
-	CIRCLEQ_INSERT_TAIL(&cpu_queue, ci, ci_data.cpu_qchain);
 	TAILQ_INIT(&ci->ci_data.cpu_ld_locks);
 	__cpu_simple_lock_init(&ci->ci_data.cpu_ld_lock);
 
@@ -161,8 +171,8 @@ mi_cpu_attach(struct cpu_info *ci)
 	    cpu_index(ci));
 
 	if (__predict_false(cpu_infos == NULL)) {
-		cpu_infos =
-		    kmem_zalloc(sizeof(cpu_infos[0]) * maxcpus, KM_SLEEP);
+		size_t ci_bufsize = (maxcpus + 1) * sizeof(struct cpu_info *);
+		cpu_infos = kmem_zalloc(ci_bufsize, KM_SLEEP);
 	}
 	cpu_infos[cpu_index(ci)] = ci;
 
@@ -389,6 +399,10 @@ cpu_xc_offline(struct cpu_info *ci)
 	}
 	mutex_exit(proc_lock);
 
+#if PCU_UNIT_COUNT > 0
+	pcu_save_all_on_cpu();
+#endif
+
 #ifdef __HAVE_MD_CPU_OFFLINE
 	cpu_offline_md();
 #endif
@@ -463,6 +477,24 @@ cpu_setstate(struct cpu_info *ci, bool online)
 
 	spc->spc_lastmod = time_second;
 	return 0;
+}
+
+int
+cpu_setmodel(const char *fmt, ...)
+{
+	int len;
+	va_list ap;
+
+	va_start(ap, fmt);
+	len = vsnprintf(cpu_model, sizeof(cpu_model), fmt, ap);
+	va_end(ap);
+	return len;
+}
+
+const char *
+cpu_getmodel(void)
+{
+	return cpu_model;
 }
 
 #ifdef __HAVE_INTR_CONTROL

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.264.2.2 2013/02/25 00:28:44 tls Exp $	*/
+/*	$NetBSD: trap.c,v 1.264.2.3 2014/08/20 00:03:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.264.2.2 2013/02/25 00:28:44 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.264.2.3 2014/08/20 00:03:06 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -112,8 +112,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.264.2.2 2013/02/25 00:28:44 tls Exp $");
 
 #include <sys/kgdb.h>
 
-#include "npx.h"
-
 #ifdef KDTRACE_HOOKS
 #include <sys/dtrace_bsd.h>
 
@@ -128,7 +126,6 @@ dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
 #endif
 
 
-static inline int xmm_si_code(struct lwp *);
 void trap(struct trapframe *);
 void trap_tss(struct i386tss *, int, int);
 void trap_return_fault_return(struct trapframe *) __dead;
@@ -188,46 +185,6 @@ trap_tss(struct i386tss *tss, int trapno, int code)
 	tf.tf_esp = tss->tss_esp;
 	tf.tf_ss = tss->__tss_ss;
 	trap(&tf);
-}
-
-static inline int
-xmm_si_code(struct lwp *l)
-{
-	struct pcb *pcb;
-	uint32_t mxcsr, mask;
-
-	if (!i386_use_fxsave) {
-#ifdef DIAGNOSTIC
-		panic("SSE FP Exception, but no SSE");
-#endif
-		return 0;
-	}
-	pcb = lwp_getpcb(l);
-	mxcsr = pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr;
-
-	/*
-         * Since we only have a single status and control register,
-	 * we use the exception mask bits to mask disabled exceptions
-	 */
-	mask = ~((mxcsr & __INITIAL_MXCSR__) >> 7) & 0xff;
-        switch (mask & mxcsr) {
-	case EN_SW_INVOP:
-		return FPE_FLTINV;
-	case EN_SW_DENORM:
-	case EN_SW_PRECLOSS:
-		return FPE_FLTRES;
-	case EN_SW_ZERODIV:
-		return FPE_FLTDIV;
-	case EN_SW_OVERFLOW:
-		return FPE_FLTOVF;
-	case EN_SW_UNDERFLOW:
-		return FPE_FLTUND;
-	case EN_SW_DATACHAIN:
-		return FPE_FLTSUB;
-	case 0:
-	default:
-		return 0;
-	}
 }
 
 static void *
@@ -556,27 +513,13 @@ kernelfault:
 		}
 		goto out;
 
-	case T_DNA|T_USER: {
-		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGKILL;
-		ksi.ksi_addr = (void *)frame->tf_eip;
-		printf("pid %d killed due to lack of floating point\n",
-		    p->p_pid);
-		goto trapsignal;
-	}
-
-	case T_XMM|T_USER:
 	case T_BOUND|T_USER:
 	case T_OFLOW|T_USER:
 	case T_DIVIDE|T_USER:
-	case T_ARITHTRAP|T_USER:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGFPE;
 		ksi.ksi_addr = (void *)frame->tf_eip;
 		switch (type) {
-		case T_XMM|T_USER:
-			ksi.ksi_code = xmm_si_code(l);
-			break;
 		case T_BOUND|T_USER:
 			ksi.ksi_code = FPE_FLTSUB;
 			break;
@@ -586,11 +529,6 @@ kernelfault:
 		case T_DIVIDE|T_USER:
 			ksi.ksi_code = FPE_INTDIV;
 			break;
-#if NNPX > 0
-		case T_ARITHTRAP|T_USER:
-			ksi.ksi_code = npxtrap(l);
-			break;
-#endif
 		default:
 			ksi.ksi_code = 0;
 			break;
@@ -809,7 +747,7 @@ startlwp(void *arg)
 {
 	ucontext_t *uc = arg;
 	lwp_t *l = curlwp;
-	int error;
+	int error __diagused;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.148 2012/08/02 14:06:34 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.148.2.1 2014/08/20 00:03:20 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.148 2012/08/02 14:06:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.148.2.1 2014/08/20 00:03:20 tls Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -76,6 +76,13 @@ void trap(struct trapframe *);	/* Called from locore / trap_subr */
 /* Why are these not defined in a header? */
 int badaddr(void *, size_t);
 int badaddr_read(void *, size_t, int *);
+
+struct dsi_info {
+    uint16_t indicator;
+    uint16_t flags;
+};
+
+static const struct dsi_info* get_dsi_info(register_t);
 
 void
 trap(struct trapframe *tf)
@@ -695,9 +702,12 @@ badaddr_read(void *addr, size_t size, int *rptr)
 static int
 fix_unaligned(struct lwp *l, struct trapframe *tf)
 {
-	int indicator = EXC_ALI_OPCODE_INDICATOR(tf->tf_dsisr);
+	const struct dsi_info* dsi = get_dsi_info(tf->tf_dsisr);
 
-	switch (indicator) {
+	if ( !dsi )
+	    return -1;
+
+	switch (dsi->indicator) {
 	case EXC_ALI_DCBZ:
 		{
 			/*
@@ -716,13 +726,18 @@ fix_unaligned(struct lwp *l, struct trapframe *tf)
 				return -1;
 			return 0;
 		}
+		break;
 
 	case EXC_ALI_LFD:
-	case EXC_ALI_STFD:
+	case EXC_ALI_LFDU:
+	case EXC_ALI_LDFX:
+	case EXC_ALI_LFDUX:
 		{
 			struct pcb * const pcb = lwp_getpcb(l);
 			const int reg = EXC_ALI_RST(tf->tf_dsisr);
+			const int a_reg = EXC_ALI_RA(tf->tf_dsisr);
 			double * const fpreg = &pcb->pcb_fpu.fpreg[reg];
+			register_t* a_reg_addr = &tf->tf_fixreg[a_reg];
 
 			/*
 			 * Juggle the FPU to ensure that we've initialized
@@ -737,17 +752,258 @@ fix_unaligned(struct lwp *l, struct trapframe *tf)
 			} else {
 				fpu_save();
 			}
-			if (indicator == EXC_ALI_LFD) {
+
 				if (copyin((void *)tf->tf_dar, fpreg,
 				    sizeof(double)) != 0)
 					return -1;
+
+			if (dsi->flags & DSI_OP_INDEXED) {
+			    /* do nothing */
+			}
+
+			if (dsi->flags & DSI_OP_UPDATE) {
+			    /* this is valid for 601, but to simplify logic don't pass for any */
+			    if (a_reg == 0)
+				return -1;
+			    else
+				*a_reg_addr = tf->tf_dar;
+			}
+
+			fpu_load();
+			return 0;
+		}
+		break;
+
+	case EXC_ALI_STFD:
+	case EXC_ALI_STFDU:
+	case EXC_ALI_STFDX:
+	case EXC_ALI_STFDUX:
+		{
+			struct pcb * const pcb = lwp_getpcb(l);
+			const int reg = EXC_ALI_RST(tf->tf_dsisr);
+			const int a_reg = EXC_ALI_RA(tf->tf_dsisr);
+			double * const fpreg = &pcb->pcb_fpu.fpreg[reg];
+			register_t* a_reg_addr = &tf->tf_fixreg[a_reg];
+
+			/*
+			 * Juggle the FPU to ensure that we've initialized
+			 * the FPRs, and that their current state is in
+			 * the PCB.
+			 */
+
+			KASSERT(l == curlwp);
+			if (!fpu_used_p(l)) {
+				memset(&pcb->pcb_fpu, 0, sizeof(pcb->pcb_fpu));
+				fpu_mark_used(l);
 			} else {
+				fpu_save();
+			}
+
 				if (copyout(fpreg, (void *)tf->tf_dar,
 				    sizeof(double)) != 0)
 					return -1;
+
+			if (dsi->flags & DSI_OP_INDEXED) {
+			    /* do nothing */
 			}
+
+			if (dsi->flags & DSI_OP_UPDATE) {
+			    /* this is valid for 601, but to simplify logic don't pass for any */
+			    if (a_reg == 0)
+				return -1;
+			    else
+				*a_reg_addr = tf->tf_dar;
+			}
+
 			fpu_load();
 			return 0;
+		}
+		break;
+
+	case EXC_ALI_LHZ:
+	case EXC_ALI_LHZU:
+	case EXC_ALI_LHZX:
+	case EXC_ALI_LHZUX:
+	case EXC_ALI_LHA:
+	case EXC_ALI_LHAU:
+	case EXC_ALI_LHAX:
+	case EXC_ALI_LHAUX:
+	case EXC_ALI_LHBRX:
+		{
+		    const register_t ea_addr = tf->tf_dar;
+		    const unsigned int t_reg = EXC_ALI_RST(tf->tf_dsisr);
+		    const unsigned int a_reg = EXC_ALI_RA(tf->tf_dsisr);
+		    register_t* t_reg_addr = &tf->tf_fixreg[t_reg];
+		    register_t* a_reg_addr = &tf->tf_fixreg[a_reg];
+
+		    /* load into lower 2 bytes of reg */
+		    if (copyin((void *)ea_addr,
+			       t_reg_addr+2,
+			       sizeof(uint16_t)) != 0)
+			return -1;
+
+		    if (dsi->flags & DSI_OP_UPDATE) {
+			/* this is valid for 601, but to simplify logic don't pass for any */
+			if (a_reg == 0)
+			    return -1;
+			else
+			    *a_reg_addr = ea_addr;
+		    }
+
+		    if (dsi->flags & DSI_OP_INDEXED) {
+			/* do nothing , indexed address already in ea */
+		    }
+
+		    if (dsi->flags & DSI_OP_ZERO) {
+			/* clear upper 2 bytes */
+			*t_reg_addr &= 0x0000ffff;
+		    } else if (dsi->flags & DSI_OP_ALGEBRAIC) {
+			/* sign extend upper 2 bytes */
+			if (*t_reg_addr & 0x00008000)
+			    *t_reg_addr |= 0xffff0000;
+			else
+			    *t_reg_addr &= 0x0000ffff;
+		    }
+
+		    if (dsi->flags & DSI_OP_REVERSED) {
+			/* reverse lower 2 bytes */
+			uint32_t temp = *t_reg_addr;
+
+			*t_reg_addr = ((temp & 0x000000ff) << 8 ) |
+			              ((temp & 0x0000ff00) >> 8 );
+		    }
+		    return 0;
+		}
+		break;
+
+	case EXC_ALI_STH:
+	case EXC_ALI_STHU:
+	case EXC_ALI_STHX:
+	case EXC_ALI_STHUX:
+	case EXC_ALI_STHBRX:
+		{
+		    const register_t ea_addr = tf->tf_dar;
+		    const unsigned int s_reg = EXC_ALI_RST(tf->tf_dsisr);
+		    const unsigned int a_reg = EXC_ALI_RA(tf->tf_dsisr);
+		    register_t* s_reg_addr = &tf->tf_fixreg[s_reg];
+		    register_t* a_reg_addr = &tf->tf_fixreg[a_reg];
+
+		    /* byte-reversed write out of lower 2 bytes */
+		    if (dsi->flags & DSI_OP_REVERSED) {
+			uint16_t tmp = *s_reg_addr & 0xffff;
+			tmp = bswap16(tmp);
+
+			if (copyout(&tmp,
+				    (void *)ea_addr,
+				    sizeof(uint16_t)) != 0)
+			    return -1;
+		    }
+		    /* write out lower 2 bytes */
+		    else if (copyout(s_reg_addr+2,
+				     (void *)ea_addr,
+				     sizeof(uint16_t)) != 0) {
+			return -1;
+		    }
+
+		    if (dsi->flags & DSI_OP_INDEXED) {
+			/* do nothing, indexed address already in ea */
+		    }
+
+		    if (dsi->flags & DSI_OP_UPDATE) {
+			/* this is valid for 601, but to simplify logic don't pass for any */
+			if (a_reg == 0)
+			    return -1;
+			else
+			    *a_reg_addr = ea_addr;
+		    }
+
+		    return 0;
+		}
+		break;
+
+	case EXC_ALI_LWARX_LWZ:
+	case EXC_ALI_LWZU:
+	case EXC_ALI_LWZX:
+	case EXC_ALI_LWZUX:
+	case EXC_ALI_LWBRX:
+		{
+		    const register_t ea_addr = tf->tf_dar;
+		    const unsigned int t_reg = EXC_ALI_RST(tf->tf_dsisr);
+		    const unsigned int a_reg = EXC_ALI_RA(tf->tf_dsisr);
+		    register_t* t_reg_addr = &tf->tf_fixreg[t_reg];
+		    register_t* a_reg_addr = &tf->tf_fixreg[a_reg];
+
+		    if (copyin((void *)ea_addr,
+			       t_reg_addr,
+			       sizeof(uint32_t)) != 0)
+			return -1;
+
+		    if (dsi->flags & DSI_OP_UPDATE) {
+			/* this is valid for 601, but to simplify logic don't pass for any */
+			if (a_reg == 0)
+			    return -1;
+			else
+			    *a_reg_addr = ea_addr;
+		    }
+
+		    if (dsi->flags & DSI_OP_INDEXED) {
+			/* do nothing , indexed address already in ea */
+		    }
+
+		    if (dsi->flags & DSI_OP_ZERO) {
+			/* XXX - 64bit clear upper word */
+		    }
+
+		    if (dsi->flags & DSI_OP_REVERSED) {
+			/* reverse  bytes */
+			register_t temp = bswap32(*t_reg_addr);
+			*t_reg_addr = temp;
+		    }
+
+		    return 0;
+		}
+		break;
+
+	case EXC_ALI_STW:
+	case EXC_ALI_STWU:
+	case EXC_ALI_STWX:
+	case EXC_ALI_STWUX:
+	case EXC_ALI_STWBRX:
+		{
+		    const register_t ea_addr = tf->tf_dar;
+		    const unsigned int s_reg = EXC_ALI_RST(tf->tf_dsisr);
+		    const unsigned int a_reg = EXC_ALI_RA(tf->tf_dsisr);
+		    register_t* s_reg_addr = &tf->tf_fixreg[s_reg];
+		    register_t* a_reg_addr = &tf->tf_fixreg[a_reg];
+
+		    if (dsi->flags & DSI_OP_REVERSED) {
+			/* byte-reversed write out */
+			register_t temp = bswap32(*s_reg_addr);
+
+			if (copyout(&temp,
+				    (void *)ea_addr,
+				    sizeof(uint32_t)) != 0)
+			    return -1;
+		    }
+		    /* write out word */
+		    else if (copyout(s_reg_addr,
+				     (void *)ea_addr,
+				     sizeof(uint32_t)) != 0)
+			return -1;
+
+		    if (dsi->flags & DSI_OP_INDEXED) {
+			/* do nothing, indexed address already in ea */
+		    }
+
+		    if (dsi->flags & DSI_OP_UPDATE) {
+			/* this is valid for 601, but to simplify logic don't pass for any */
+			if (a_reg == 0)
+			    return -1;
+			else
+			    *a_reg_addr = ea_addr;
+		    }
+
+		    return 0;
 		}
 		break;
 	}
@@ -891,4 +1147,124 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
  out2:
 	curpcb->pcb_onfault = 0;
 	return rv;
+}
+
+const struct dsi_info*
+get_dsi_info(register_t dsisr)
+{
+    static const struct dsi_info dsi[] = 
+	{
+	    /* data cache block zero */
+	    {EXC_ALI_DCBZ, 0},
+
+	    /* load halfwords */
+	    {EXC_ALI_LHZ,   DSI_OP_ZERO},
+	    {EXC_ALI_LHZU,  DSI_OP_ZERO|DSI_OP_UPDATE},
+	    {EXC_ALI_LHZX,  DSI_OP_ZERO|DSI_OP_INDEXED},
+	    {EXC_ALI_LHZUX, DSI_OP_ZERO|DSI_OP_UPDATE|DSI_OP_INDEXED},
+	    {EXC_ALI_LHA,   DSI_OP_ALGEBRAIC},
+	    {EXC_ALI_LHAU,  DSI_OP_ALGEBRAIC|DSI_OP_UPDATE},
+	    {EXC_ALI_LHAX,  DSI_OP_ALGEBRAIC|DSI_OP_INDEXED},
+	    {EXC_ALI_LHAUX, DSI_OP_ALGEBRAIC|DSI_OP_UPDATE|DSI_OP_INDEXED},
+
+	    /* store halfwords */
+	    {EXC_ALI_STH,   0},
+	    {EXC_ALI_STHU,  DSI_OP_UPDATE},
+	    {EXC_ALI_STHX,  DSI_OP_INDEXED},
+	    {EXC_ALI_STHUX, DSI_OP_UPDATE|DSI_OP_INDEXED},
+
+	    /* load words */
+	    {EXC_ALI_LWARX_LWZ, DSI_OP_ZERO},
+	    {EXC_ALI_LWZU,      DSI_OP_ZERO|DSI_OP_UPDATE},
+	    {EXC_ALI_LWZX,      DSI_OP_ZERO|DSI_OP_INDEXED},
+	    {EXC_ALI_LWZUX,     DSI_OP_ZERO|DSI_OP_UPDATE|DSI_OP_INDEXED},
+
+	    /* store words */
+	    {EXC_ALI_STW,   0},				  
+	    {EXC_ALI_STWU,  DSI_OP_UPDATE},		  
+	    {EXC_ALI_STWX,  DSI_OP_INDEXED},		  
+	    {EXC_ALI_STWUX, DSI_OP_UPDATE|DSI_OP_INDEXED},
+
+	    /* load byte-reversed */
+	    {EXC_ALI_LHBRX, DSI_OP_REVERSED|DSI_OP_INDEXED|DSI_OP_ZERO},
+	    {EXC_ALI_LWBRX, DSI_OP_REVERSED|DSI_OP_INDEXED},
+
+	    /* store byte-reversed */
+	    {EXC_ALI_STHBRX, DSI_OP_REVERSED|DSI_OP_INDEXED},
+	    {EXC_ALI_STWBRX, DSI_OP_REVERSED|DSI_OP_INDEXED},
+
+	    /* load float double-precision */
+	    {EXC_ALI_LFD,   0},
+	    {EXC_ALI_LFDU,  DSI_OP_UPDATE},
+	    {EXC_ALI_LDFX,  DSI_OP_INDEXED},
+	    {EXC_ALI_LFDUX, DSI_OP_UPDATE|DSI_OP_INDEXED},
+
+	    /* store float double precision */
+	    {EXC_ALI_STFD,   0},
+	    {EXC_ALI_STFDU,  DSI_OP_UPDATE},
+	    {EXC_ALI_STFDX,  DSI_OP_INDEXED},
+	    {EXC_ALI_STFDUX, DSI_OP_UPDATE|DSI_OP_INDEXED},
+
+	    /* XXX - ones below here not yet implemented in fix_unaligned() */
+	    /* load float single precision */
+	    {EXC_ALI_LFS,   0},
+	    {EXC_ALI_LFSU,  DSI_OP_UPDATE},
+	    {EXC_ALI_LSFX,  DSI_OP_INDEXED},
+	    {EXC_ALI_LFSUX, DSI_OP_UPDATE|DSI_OP_INDEXED},
+
+	    /* store float single precision */
+	    {EXC_ALI_STFS,   0},
+	    {EXC_ALI_STFSU,  DSI_OP_UPDATE},
+	    {EXC_ALI_STFSX,  DSI_OP_INDEXED},
+	    {EXC_ALI_STFSUX, DSI_OP_UPDATE|DSI_OP_INDEXED},
+
+	    /* multiple */
+	    {EXC_ALI_LMW,  0},
+	    {EXC_ALI_STMW, 0},
+
+	    /* load & store string */
+	    {EXC_ALI_LSWI, 0},
+	    {EXC_ALI_LSWX, DSI_OP_INDEXED},
+	    {EXC_ALI_STSWI, 0},
+	    {EXC_ALI_STSWX, DSI_OP_INDEXED},
+
+	    /* get/send word from external */
+	    {EXC_ALI_ECIWX, DSI_OP_INDEXED},
+	    {EXC_ALI_ECOWX, DSI_OP_INDEXED},
+
+	    /* store float as integer word */
+	    {EXC_ALI_STFIWX, 0},
+
+	    /* store conditional */
+	    {EXC_ALI_LDARX, DSI_OP_INDEXED}, /* stdcx */
+	    {EXC_ALI_STDCX, DSI_OP_INDEXED},
+	    {EXC_ALI_STWCX, DSI_OP_INDEXED},  /* lwarx */
+
+#ifdef PPC_OEA64
+	    /* 64 bit, load word algebriac */ 
+	    {EXC_ALI_LWAX,  DSI_OP_ALGEBRAIC|DSI_OP_INDEXED},
+	    {EXC_ALI_LWAUX, DSI_OP_ALGEBRAIC|DSI_OP_UPDATE|DSI_OP_INDEXED},
+
+	    /* 64 bit load doubleword */
+	    {EXC_ALI_LD_LDU_LWA, 0},
+	    {EXC_ALI_LDX,        DSI_OP_INDEXED},
+	    {EXC_ALI_LDUX,       DSI_OP_UPDATE|DSI_OP_INDEXED},
+
+	    /* 64 bit store double word */
+	    {EXC_ALI_STD_STDU, 0},
+	    {EXC_ALI_STDX,     DSI_OP_INDEXED},
+	    {EXC_ALI_STDUX,    DSI_OP_UPDATE|DSI_OP_INDEXED},
+#endif
+	};
+
+    int num_elems = sizeof(dsi)/sizeof(dsi[0]);
+    int indicator = EXC_ALI_OPCODE_INDICATOR(dsisr);
+    int i;
+
+    for (i = 0 ; i < num_elems; i++) {
+	if (indicator == dsi[i].indicator){
+	    return &dsi[i];
+	}
+    }
+    return 0;
 }

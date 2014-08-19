@@ -1,4 +1,4 @@
-.\"	$NetBSD: huntd.6,v 1.9 2009/03/11 13:01:49 joerg Exp $
+.\"	$NetBSD: huntd.6,v 1.9.12.1 2014/08/20 00:00:23 tls Exp $
 .\"
 .\" huntd
 .\"
@@ -31,7 +31,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 4, 2001
+.Dd March 29, 2014
 .Dt HUNTD 6
 .Os
 .Sh NAME
@@ -40,20 +40,12 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl s
-.Op Fl p Ar port
+.Op Fl p Ar address
 .Sh DESCRIPTION
 .Nm
 controls the multi-player
 .Xr hunt 6
 game.
-When it starts up, it tries to notify all members of the
-.Em hunt-players
-mailing list (see
-.Xr sendmail 8 )
-by faking a
-.Xr talk 1
-request from user
-.Dq Hunt Game .
 .Pp
 The
 .Fl s
@@ -66,11 +58,10 @@ This is similar to running it under the control of
 .Pp
 The
 .Fl p
-option changes the UDP port number used to rendezvous with the player
-process and thus allows for private games of hunt.
-This option turns off the notification of players on the
-.Em hunt-players
-mailing list.
+option can be either a pathname, in which case a local socket by that
+name is used for the game, or a number, in which case it selects an
+alternate port number for the internet socket used for the game.
+This allows for private games of hunt.
 .Ss INETD
 To run
 .Nm
@@ -116,9 +107,8 @@ process starts up a
 .Nm
 on the local machine and tries to rendezvous with it.
 .Sh SEE ALSO
-.Xr talk 1 ,
-.Xr hunt 6 ,
-.Xr sendmail 8
+.Xr sendmail 1 ,
+.Xr hunt 6
 .Sh AUTHORS
 Conrad Huang, Ken Arnold, and Greg Couch;
 .br

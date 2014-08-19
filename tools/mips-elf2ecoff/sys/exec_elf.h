@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.4 2010/08/28 21:30:02 joerg Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.4.12.1 2014/08/20 00:04:56 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -63,8 +63,6 @@ typedef	uint64_t	Elf64_Addr;
 #define	ELF64_FSZ_ADDR	8
 typedef	uint64_t	Elf64_Off;
 #define	ELF64_FSZ_OFF	8
-typedef	int32_t		Elf64_Shalf;
-#define	ELF64_FSZ_SHALF	4
 
 #ifndef ELF64_FSZ_SWORD
 typedef	int32_t		Elf64_Sword;
@@ -748,58 +746,5 @@ struct netbsd_elfcore_procinfo {
 
 #define	AuxInfo		Aux64Info
 #endif
-
-#ifdef _KERNEL
-
-#define ELF_AUX_ENTRIES	8		/* Size of aux array passed to loader */
-#define ELF32_NO_ADDR	(~(Elf32_Addr)0) /* Indicates addr. not yet filled in */
-#define ELF64_NO_ADDR	(~(Elf64_Addr)0) /* Indicates addr. not yet filled in */
-
-#if defined(ELFSIZE) && (ELFSIZE == 64)
-#define ELF_NO_ADDR	ELF64_NO_ADDR
-#elif defined(ELFSIZE) && (ELFSIZE == 32)
-#define ELF_NO_ADDR	ELF32_NO_ADDR
-#endif
-
-#if defined(ELFSIZE)
-struct elf_args {
-        Elf_Addr  arg_entry;      /* program entry point */
-        Elf_Addr  arg_interp;     /* Interpreter load address */
-        Elf_Addr  arg_phaddr;     /* program header address */
-        Elf_Addr  arg_phentsize;  /* Size of program header */
-        Elf_Addr  arg_phnum;      /* Number of program headers */
-};
-#endif
-
-#ifndef _LKM
-#include "opt_execfmt.h"
-#endif
-
-#ifdef EXEC_ELF32
-int	exec_elf32_makecmds __P((struct proc *, struct exec_package *));
-int	elf32_copyargs __P((struct exec_package *, struct ps_strings *,
-    char **, void *));
-
-int	coredump_elf32 __P((struct proc *, struct vnode *, struct ucred *));
-int	coredump_writenote_elf32 __P((struct proc *, struct vnode *,
-	    struct ucred *, off_t, Elf32_Nhdr *, const char *, void *));
-#endif
-
-#ifdef EXEC_ELF64
-int	exec_elf64_makecmds __P((struct proc *, struct exec_package *));
-int	elf64_read_from __P((struct proc *, struct vnode *, u_long,
-    caddr_t, int));
-int	elf64_copyargs __P((struct exec_package *, struct ps_strings *,
-    char **, void *));
-
-int	coredump_elf64 __P((struct proc *, struct vnode *, struct ucred *));
-int	coredump_writenote_elf64 __P((struct proc *, struct vnode *,
-	    struct ucred *, off_t, Elf64_Nhdr *, const char *, void *));
-#endif
-
-/* common */
-int	exec_elf_setup_stack __P((struct proc *, struct exec_package *));
-
-#endif /* _KERNEL */
 
 #endif /* !_SYS_EXEC_ELF_H_ */

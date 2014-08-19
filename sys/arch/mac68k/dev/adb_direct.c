@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.63 2008/04/04 09:16:59 yamt Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.63.48.1 2014/08/20 00:03:11 tls Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.63 2008/04/04 09:16:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.63.48.1 2014/08/20 00:03:11 tls Exp $");
 
 #include "opt_adb.h"
 
@@ -391,7 +391,7 @@ adb_cuda_tickle(void)
 void
 adb_intr_cuda(void *arg)
 {
-	volatile int i, ending;
+	volatile int i __unused, ending;
 	volatile unsigned int s;
 	struct adbCommand packet;
 
@@ -1238,7 +1238,7 @@ void
 adb_intr_IIsi(void *arg)
 {
 	struct adbCommand packet;
-	int i, ending;
+	int ending;
 	unsigned int s;
 
 	s = splhigh();		/* can't be too careful - might be called */
@@ -1351,7 +1351,7 @@ switch_start:
 		break;
 
 	case ADB_ACTION_OUT:
-		i = ADB_SR();	/* reset SR-intr in IFR */
+		(void)ADB_SR();	/* reset SR-intr in IFR */
 		ADB_SET_SR_OUTPUT();	/* set shift register for OUT */
 
 		ADB_SET_STATE_ACKOFF();	/* finish ACK */
@@ -1693,6 +1693,8 @@ adb_pass_up(struct adbCommand *in)
  	 * the caller sent us.
  	 */
 	if (in->unsol) {
+		if (in->ack_only) panic("invalid ack-only pkg");
+
 		adbInbound[adbInTail].compRout = (void *)block.dbServiceRtPtr;
 		adbInbound[adbInTail].compData = (void *)block.dbDataAreaAddr;
 		adbInbound[adbInTail].saveBuf = (void *)adbInbound[adbInTail].data;
@@ -2040,7 +2042,6 @@ void
 adb_hw_setup_IIsi(u_char *buffer)
 {
 	int i;
-	int dummy;
 	int s;
 	long my_time;
 	int endofframe;
@@ -2066,7 +2067,7 @@ adb_hw_setup_IIsi(u_char *buffer)
 			 */
 			my_time = ADB_DELAY * 5;
 			while ((ADB_SR_INTR_IS_OFF) && (my_time-- > 0))
-				dummy = via_reg(VIA1, vBufB);
+				(void)via_reg(VIA1, vBufB);
 
 			buffer[i++] = ADB_SR();	/* reset interrupt flag by
 						 * reading vSR */

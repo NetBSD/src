@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.70.12.1 2012/11/20 03:00:59 tls Exp $ */
+/*	$NetBSD: sbic.c,v 1.70.12.2 2014/08/20 00:02:43 tls Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.70.12.1 2012/11/20 03:00:59 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.70.12.2 2014/08/20 00:02:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -798,15 +798,12 @@ printf("%s: sbicabort - sending DISC command\n", device_xname(dev->sc_dev));
 void
 sbicinit(struct sbic_softc *dev)
 {
-	sbic_regmap_t regs;
 	u_int i;
 	struct sbic_acb *acb;
 	u_int inhibit_sync;
 
 	extern u_long scsi_nosync;
 	extern int shift_nosync;
-
-	regs = dev->sc_sbic;
 
 	if ((dev->sc_flags & SBICF_ALIVE) == 0) {
 		TAILQ_INIT(&dev->ready_list);
@@ -885,6 +882,7 @@ sbicreset(struct sbic_softc *dev)
 	DELAY(25);
 	SBIC_WAIT(regs, SBIC_ASR_INT, 0);
 	GET_SBIC_csr(regs, csr);       /* clears interrupt also */
+	__USE(csr);
 
 	if (dev->sc_clkfreq < 110)
 		my_id |= SBIC_ID_FS_8_10;
@@ -1191,6 +1189,7 @@ sbicxfout(sbic_regmap_t regs, int len, void *bp, int phase)
 	    buf[3], buf[4], buf[5], buf[6], buf[7], buf[8], buf[9]));
 
 	GET_SBIC_csr (regs, orig_csr);
+	__USE(orig_csr);
 	CSR_TRACE('>',orig_csr,0,0);
 
 	/*
@@ -1232,14 +1231,14 @@ int
 sbicxfin(sbic_regmap_t regs, int len, void *bp)
 {
 	int wait;
-	u_char *obp, *buf;
+	u_char *buf;
 	u_char orig_csr, csr, asr;
 
 	wait = sbic_data_wait;
-	obp = bp;
 	buf = bp;
 
 	GET_SBIC_csr (regs, orig_csr);
+	__USE(orig_csr);
 	CSR_TRACE('<',orig_csr,0,0);
 
 	QPRINTF(("sbicxfin %d, csr=%02x\n", len, orig_csr));
@@ -1274,6 +1273,7 @@ sbicxfin(sbic_regmap_t regs, int len, void *bp)
 
 			if (!(asr & SBIC_ASR_BSY)) {
 				GET_SBIC_csr(regs, csr);
+				__USE(csr);
 				CSR_TRACE('<',csr,asr,len);
 				QPRINTF(("[CSR%02xASR%02x]", csr, asr));
 			}
@@ -1568,6 +1568,7 @@ sbicxfdone(struct sbic_softc *dev, sbic_regmap_t regs, int target)
 
 	do {
 		asr = SBIC_WAIT (regs, SBIC_ASR_INT, 0);
+		__USE(asr);
 		GET_SBIC_csr (regs, csr);
 		CSR_TRACE('f',csr,asr,target);
 		QPRINTF(("%02x:", csr));
@@ -2059,17 +2060,17 @@ sbicmsgin(struct sbic_softc *dev)
 			SET_SBIC_syn(regs,
 				     SBIC_SYN(dev->sc_sync[dev->target].offset,
 					      dev->sc_sync[dev->target].period));
-		} else if ((dev->sc_msg[0] == MSG_REJECT)) {
+		} else if (dev->sc_msg[0] == MSG_REJECT) {
 			QPRINTF(("REJECT"));
 			/*
 			 * we'll never REJECt a REJECT message..
 			 */
-		} else if ((dev->sc_msg[0] == MSG_SAVE_DATA_PTR)) {
+		} else if (dev->sc_msg[0] == MSG_SAVE_DATA_PTR) {
 			QPRINTF(("MSG_SAVE_DATA_PTR"));
 			/*
 			 * don't reject this either.
 			 */
-		} else if ((dev->sc_msg[0] == MSG_DISCONNECT)) {
+		} else if (dev->sc_msg[0] == MSG_DISCONNECT) {
 			QPRINTF(("DISCONNECT"));
 #ifdef DEBUG
 			if( reselect_debug>1 && dev->sc_msg[0] == MSG_DISCONNECT )

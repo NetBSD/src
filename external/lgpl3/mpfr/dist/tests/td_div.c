@@ -1,7 +1,7 @@
 /* Test file for mpfr_d_div
 
-Copyright 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -42,7 +42,7 @@ check_nans (void)
   mpfr_clear_flags ();
   inexact = mpfr_d_div (y, 1.0, x, MPFR_RNDN);
   MPFR_ASSERTN (inexact == 0);
-  MPFR_ASSERTN ((__gmpfr_flags ^ MPFR_FLAGS_NAN) == 0);
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_NAN);
   MPFR_ASSERTN (mpfr_nan_p (y));
 
   /* 1.0 / +inf == +0 */
@@ -63,14 +63,85 @@ check_nans (void)
   MPFR_ASSERTN (mpfr_zero_p (y));
   MPFR_ASSERTN (MPFR_IS_NEG (y));
 
+#if !defined(MPFR_ERRDIVZERO)
+
   /* 1.0 / 0 == +inf */
-  mpfr_set_d (x, 0.0, MPFR_RNDN);
+  mpfr_set_ui (x, 0, MPFR_RNDN);
   mpfr_clear_flags ();
   inexact = mpfr_d_div (y, 1.0, x, MPFR_RNDN);
+  MPFR_ASSERTN (inexact == 0);
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_DIVBY0);
+  MPFR_ASSERTN (mpfr_inf_p (y));
+  MPFR_ASSERTN (MPFR_IS_POS (y));
+
+  /* -1.0 / 0 == -inf */
+  mpfr_set_ui (x, 0, MPFR_RNDN);
+  mpfr_clear_flags ();
+  inexact = mpfr_d_div (y, -1.0, x, MPFR_RNDN);
+  MPFR_ASSERTN (inexact == 0);
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_DIVBY0);
+  MPFR_ASSERTN (mpfr_inf_p (y));
+  MPFR_ASSERTN (MPFR_IS_NEG (y));
+
+  /* 1.0 / -0 == -inf */
+  mpfr_set_ui (x, 0, MPFR_RNDN);
+  mpfr_neg (x, x, MPFR_RNDN);
+  mpfr_clear_flags ();
+  inexact = mpfr_d_div (y, 1.0, x, MPFR_RNDN);
+  MPFR_ASSERTN (inexact == 0);
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_DIVBY0);
+  MPFR_ASSERTN (mpfr_inf_p (y));
+  MPFR_ASSERTN (MPFR_IS_NEG (y));
+
+  /* -1.0 / -0 == +inf */
+  mpfr_set_ui (x, 0, MPFR_RNDN);
+  mpfr_neg (x, x, MPFR_RNDN);
+  mpfr_clear_flags ();
+  inexact = mpfr_d_div (y, -1.0, x, MPFR_RNDN);
+  MPFR_ASSERTN (inexact == 0);
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_DIVBY0);
+  MPFR_ASSERTN (mpfr_inf_p (y));
+  MPFR_ASSERTN (MPFR_IS_POS (y));
+
+  /* +inf / 0 == +inf */
+  mpfr_set_ui (x, 0, MPFR_RNDN);
+  mpfr_clear_flags ();
+  inexact = mpfr_d_div (y, DBL_POS_INF, x, MPFR_RNDN);
   MPFR_ASSERTN (inexact == 0);
   MPFR_ASSERTN (__gmpfr_flags == 0);
   MPFR_ASSERTN (mpfr_inf_p (y));
   MPFR_ASSERTN (MPFR_IS_POS (y));
+
+  /* -inf / 0 == -inf */
+  mpfr_set_ui (x, 0, MPFR_RNDN);
+  mpfr_clear_flags ();
+  inexact = mpfr_d_div (y, DBL_NEG_INF, x, MPFR_RNDN);
+  MPFR_ASSERTN (inexact == 0);
+  MPFR_ASSERTN (__gmpfr_flags == 0);
+  MPFR_ASSERTN (mpfr_inf_p (y));
+  MPFR_ASSERTN (MPFR_IS_NEG (y));
+
+  /* +inf / -0 == -inf */
+  mpfr_set_ui (x, 0, MPFR_RNDN);
+  mpfr_neg (x, x, MPFR_RNDN);
+  mpfr_clear_flags ();
+  inexact = mpfr_d_div (y, DBL_POS_INF, x, MPFR_RNDN);
+  MPFR_ASSERTN (inexact == 0);
+  MPFR_ASSERTN (__gmpfr_flags == 0);
+  MPFR_ASSERTN (mpfr_inf_p (y));
+  MPFR_ASSERTN (MPFR_IS_NEG (y));
+
+  /* -inf / -0 == +inf */
+  mpfr_set_ui (x, 0, MPFR_RNDN);
+  mpfr_neg (x, x, MPFR_RNDN);
+  mpfr_clear_flags ();
+  inexact = mpfr_d_div (y, DBL_NEG_INF, x, MPFR_RNDN);
+  MPFR_ASSERTN (inexact == 0);
+  MPFR_ASSERTN (__gmpfr_flags == 0);
+  MPFR_ASSERTN (mpfr_inf_p (y));
+  MPFR_ASSERTN (MPFR_IS_POS (y));
+
+#endif
 
   mpfr_clear (x);
   mpfr_clear (y);

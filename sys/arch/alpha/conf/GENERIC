@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.345.2.2 2013/06/23 06:19:58 tls Exp $
+# $NetBSD: GENERIC,v 1.345.2.3 2014/08/20 00:02:41 tls Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.345.2.2 $"
+ident		"GENERIC-$Revision: 1.345.2.3 $"
 
 maxusers 32
 
@@ -111,7 +111,6 @@ options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
@@ -226,6 +225,8 @@ mcmem*	at	mcbus? mid ?
 #EV6 Tsunami Core Logic
 
 tsc*	at	mainbus0
+tsciic* 	at	tsc?
+iic* 	at	tsciic?
 
 # DECpc AXP150 (Jensen) internal bus support
 jensenio* at	mainbus0
@@ -313,6 +314,7 @@ adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
 #options 	SCSI_ADW_TAGQ_DISABLE		# 	disable Tag Queuing
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 autri*	at	pci? dev ? function ?		# Trident 4DWAVE based AC'97 Audio
+bge*	at	pci? dev ? function ?		# Broadcom 570x gigabit Ethernet
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 cac*	at	pci? dev ? function ?		# Compaq array controller (untested)
 cmpci*	at	pci? dev ? function ?		# C-Media CMI8338/8738 Audio
@@ -359,6 +361,8 @@ pcn*	at	pci? dev ? function ?		# AMD PCnet-PCI Ethernet
 pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 puc*	at 	pci? dev ? function ?		# PCI "universal" comm. cards
+radeonfb* at	pci? dev ? function ?		# ATI/AMD Radeon Graphics
+options 	RADEONFB_DEPTH_32
 re*	at	pci? dev ? function ?		# Realtek 8169 Ethernet
 rtk*	at	pci? dev ? function ?		# Realtek 8129/8139 Ethernet
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
@@ -378,11 +382,13 @@ yds*	at	pci? dev ? function ?		# Yamaha DS-1 PCI Audio
 
 opl*	at	cmpci? flags 1
 opl*	at	eso?
+opl*	at	sb?
 #opl*	at	sv?
 opl*	at	yds?
 
 mpu*	at	cmpci?
 mpu*	at	eso?
+mpu*	at	sb?
 mpu*	at	yds?
 
 # I2O devices
@@ -536,6 +542,25 @@ fd*	at	fdc? drive ?
 ld*	at	cac? unit ?
 ld*	at	mlx? unit ?
 
+# Acer Labs M7101 SMBus controller
+alipm* 	at pci? dev ? function ?
+iic* 	at alipm?
+
+# AlphaServer DS20L i2c devices
+#lmenv* 	at iic? addr 0x2c
+#lmenv* 	at iic? addr 0x2d
+#lmenv* 	at iic? addr 0x2e
+#lmenv* 	at iic? addr 0x2f
+#spdmem* 	at iic? addr 0x50
+#spdmem* 	at iic? addr 0x51
+#spdmem* 	at iic? addr 0x52
+#spdmem* 	at iic? addr 0x53
+#spdmem* 	at iic? addr 0x54
+#spdmem* 	at iic? addr 0x55
+#spdmem* 	at iic? addr 0x56
+#spdmem* 	at iic? addr 0x57
+#seeprom* 	at iic0 addr 0x51 flags 0x2
+
 # PCMCIA USB controllers
 slhci*	at pcmcia? function ?			# ScanLogic SL811HS
 
@@ -673,6 +698,7 @@ btsco* at bthub?
 audio*	at audiobus?
 midi*	at midibus?
 midi*	at pcppi?
+midi*	at sb?
 
 # Workstation Console attachments
 wsdisplay*	at	cfb?
@@ -682,6 +708,7 @@ wsdisplay*	at	sfb?
 #wsdisplay*	at	sfbp?
 wsdisplay*	at	px?
 wsdisplay*	at	pxg?
+wsdisplay*	at	radeonfb?
 wsdisplay*	at	vga?
 wsdisplay*	at	tga?
 wskbd*		at	lkkbd? console ?

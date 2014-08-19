@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.100.2.1 2013/06/23 06:28:49 tls Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.100.2.2 2014/08/20 00:02:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -174,12 +174,16 @@ int	 putenv(char *) __RENAME(__putenv50);
 long	 a64l(const char *);
 char	*l64a(long);
 
-char	*initstate(unsigned long, char *, size_t);
 long	 random(void);
 char	*setstate(char *);
-void	 srandom(unsigned long);
+#ifndef __LIBC12_SOURCE__
+char	*initstate(unsigned int, char *, size_t) __RENAME(__initstate60);
+void	 srandom(unsigned int) __RENAME(__srandom60);
+#endif
 #ifdef _NETBSD_SOURCE
 #define	RANDOM_MAX	0x7fffffff	/* (((long)1 << 31) - 1) */
+int	 mkostemp(char *, int);
+int	 mkostemps(char *, int, int);
 #endif
 
 char	*mkdtemp(char *);
@@ -302,6 +306,7 @@ void	 cfree(void *);
 int	 heapsort(void *, size_t, size_t, int (*)(const void *, const void *));
 int	 mergesort(void *, size_t, size_t,
 	    int (*)(const void *, const void *));
+int	 ptsname_r(int, char *, size_t);
 int	 radixsort(const unsigned char **, int, const unsigned char *,
 	    unsigned);
 int	 sradixsort(const unsigned char **, int, const unsigned char *,

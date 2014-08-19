@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2012/05/14 10:05:50 abs Exp $
+#	$NetBSD: Makefile,v 1.40.2.1 2014/08/20 00:03:27 tls Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -11,6 +11,8 @@ SRCS=	srt0.S boot.c devopen.c conf.c autoconf.c netio.c rom.c romread.S \
 LIBC=
 
 CLEANFILES+=${PROG} ${PROG}.sym vers.c
+# XXX - hack, doesn't work with -O2 and gcc 4.8
+CFLAGS+=-O1
 CPPFLAGS+=-DSUPPORT_BOOTPARAMS -DSUPPORT_BOOTP -DSUPPORT_DHCP -D_STANDALONE \
 	-DNO_MID_CHECK
 #CPPFLAGS+=-DBOOTP_DEBUG -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG -DDEV_DEBUG \
@@ -36,7 +38,7 @@ vers.c: ${.CURDIR}/version
 	${HOST_SH} ${S}/conf/newvers_stand.sh -N ${${MKREPRO} == "yes" :?:-D} \
 	    ${.CURDIR}/version "${MACHINE}"
 
-${PROG}: machine-links ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${_MKTARGET_LINK}
 	${LD} -N -Ttext ${RELOC} -e nisse -o ${PROG}.sym ${OBJS} \
 	    ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}

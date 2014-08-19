@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.16.2.2 2013/06/23 06:20:04 tls Exp $
+#	$NetBSD: NETWALKER,v 1.16.2.3 2014/08/20 00:02:53 tls Exp $
 #
 #	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
@@ -22,8 +22,6 @@ options 	IMX51
 options 	PMAPCOUNTERS
 
 # Architecture options
-
-options        IMX51_IPGCLK_FREQ=50000000   # XXX This value is not correct.
 
 # File systems
 
@@ -63,7 +61,6 @@ options 	INET6		# IPV6
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
@@ -76,10 +73,11 @@ options 	INET6		# IPV6
 
 # Compatibility options
 
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
+#options 	COMPAT_50	# NetBSD 5.0 compatibility.
+#options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_20	# NetBSD 2.0 compatibility.
 #options 	COMPAT_16	# NetBSD 1.6 compatibility.
@@ -131,17 +129,17 @@ options 	NO_POWERSAVE	# uncomment this to run under ICE
 
 # Development and Debugging options
 #options 	PERFCTRS	# performance counters
-options 	DIAGNOSTIC	# internally consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
-options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
+options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 options 	DDB_VERBOSE_HELP
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
-options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 makeoptions	DEBUG="-g"	# compile full symbol table
 #makeoptions	COPTS="-O2"
 #options 	SYSCALL_STATS	# per syscall counts
@@ -152,8 +150,20 @@ makeoptions	DEBUG="-g"	# compile full symbol table
 #options	SCSIPI_DEBUG_TARGET=0
 #options	SCSIPI_DEBUG_LUN=0
 
+# Valid options for BOOT_ARGS:
+#  single		Boot to single user only
+#  kdb			Give control to kernel debugger
+#  ask			Ask for file name to reboot from
+#  pmapdebug=<n>	If PMAP_DEBUG, set pmap_debug_level to <n>
+#  memorydisk=<n>	Set memorydisk size to <n> KB
+#  quiet		Show aprint_naive output
+#  verbose		Show aprint_normal and aprint_verbose output
+#options		BOOT_ARGS="\"verbose\""
+#options		BOOT_ARGS="\"pmapdebug=1\""
+
 # Kernel root file system and dump configuration.
 config		netbsd		root on ? type ?
+config		netbsd-ld0	root on ld0 type ffs
 
 # The main bus device
 mainbus0	at root
@@ -173,11 +183,12 @@ tzic0		at axi? addr 0xe0000000 size 0x4000 irqbase 0
 imxuart0	at axi? addr 0x73fbc000 irq 31		# UART1
 #imxuart1	at axi? addr 0x73fc0000 irq 32
 #imxuart2	at axi? addr 0x7000c000 irq 33
-options		IMXUARTCONSOLE
+#options	IMXUARTCONSOLE
 
 # Clock Control
 imxccm0		at axi? addr 0x73fd4000
 options		IMX51_CKIL_FREQ=32768
+#options	IMXCCMDEBUG
 
 # Enhanced Periodic Interrupt Timer
 imxclock0	at axi? addr 0x73fac000 size 0x4000 irq 40
@@ -186,11 +197,51 @@ imxclock1	at axi? addr 0x73fb0000 size 0x4000 irq 41
 # IOMUX
 imxiomux0	at axi? addr 0x73fa8000
 
+# WatchDog
+imxwdog0	at axi? addr 0x73f98000 irq 58 flags 0
+
 # GPIO
-imxgpio0	at axi? addr 0x73f84000
-imxgpio1	at axi? addr 0x73f88000
-imxgpio2	at axi? addr 0x73f8c000
-imxgpio3	at axi? addr 0x73f90000
+imxgpio0	at axi? addr 0x73f84000 irqbase 128 irq 50
+imxgpio1	at axi? addr 0x73f88000 irqbase 160 irq 52
+imxgpio2	at axi? addr 0x73f8c000 irqbase 192 irq 54
+imxgpio3	at axi? addr 0x73f90000 irqbase 224 irq 56
+gpio*		at imxgpio?
+options		IMX_GPIO_INTR_SPLIT
+
+# I2C
+#imxi2c0	at axi? addr 0x83fc8000 irq 62
+#imxi2c1	at axi? addr 0x83fc4000 irq 63
+
+# IIC
+#iic*	   at imxi2c?
+
+# SPI bus
+imxspi0		at axi? addr 0x70010000 irq 36 flags 1
+#imxspi1	at axi? addr 0x83fac000 irq 37 flags 1
+#imxspi2	at axi? addr 0x83fc0000 irq 38 flags 0
+spi0		at imxspi0 # eCSPI1
+#spi1		at imxspi1 # eCSPI2
+#spi2		at imxspi2 # CSPI1
+options		IMXSPINSLAVES=3
+#options	IMXSPI_DEBUG=10
+
+# Optical Joystick
+oj6sh0		at spi0 slave 2
+#options	OJ6SH_DEBUG=4
+options		OJ6SH_UP_X_LEFT_Y
+wsmouse*	at oj6sh? mux 0
+
+mousebtn0	at gpio1 offset 22 mask 0x03 # intr 182, 183
+#options	MOUSEBTN_POLLING
+wsmouse*	at mousebtn? mux 0
+
+pwrbtn0		at gpio1 offset 21 mask 0x01 # intr 181
+lidsw0		at gpio3 offset 12 mask 0x01 # intr 236
+imxpwm0		at axi? addr 0x73FB4000 irq 61
+
+# SPI NOR-Flash
+#spiflash0	at spiflashbus?
+#m25p0		at spi0 slave 1
 
 # SD/MMC
 sdhc0    	at axi? addr 0x70004000 irq 1	     # eSDHC1
@@ -208,50 +259,11 @@ ehci1	  at imxusbc0	unit 1	irq 14 # Host1
 #ehci3	  at imxusbc0	unit 3	irq 17 # Host3
 
 usb*		at ehci?
-uhub*		at usb?
-uhub*		at uhub? port ?
-ugen*		at uhub? port ?
 
-# USB HID device
-uhidev* at uhub? port ? configuration ? interface ?
+# USB device drivers
+include "dev/usb/usbdevices.config"
 
-# USB Mice
-ums*	at uhidev? reportid ?
-wsmouse* at ums? mux 0
-
-# USB Keyboards
-ukbd*	at uhidev? reportid ?
-wskbd*	at ukbd? console ? mux 1
-
-# USB Mass Storage
-umass*	at uhub? port ? configuration ? interface ?
-wd*	at umass?
-
-# Serial adapters
-ubsa*	at uhub? port ?		# Belkin serial adapter
-ucom*	at ubsa? portno ?
-
-uchcom* at uhub? port ? 	# WinChipHead CH341/CH340 serial adapter
-ucom*	at uchcom? portno ?
-
-uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
-ucom*	at uftdi? portno ?
-
-umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
-ucom*	at umct? portno ?
-
-uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
-ucom*	at uplcom? portno ?
-
-uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
-ucom*	at uslsa? portno ?
-
-uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
-ucom*	at uvscom? portno ?
-
-# USB generic serial port (e.g., data over cellular)
-ugensa* at uhub? port ?
-ucom*	at ugensa?
+ukphy*		at mii? phy ?
 
 # IPUv3 LCD Controller
 ipu0		at axi?
@@ -273,12 +285,6 @@ options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSDISPLAY_DEFAULTSCREENS=4
 
-# SCSI bus support
-scsibus* at scsi?
-
-# SCSI devices
-sd*	at scsibus? target ? lun ?	# SCSI disk drives
-
 # Pseudo-Devices
 
 pseudo-device	crypto			# /dev/crypto device
@@ -286,21 +292,32 @@ pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
 #pseudo-device	md			# memory disk device (ramdisk)
-#pseudo-device	vnd			# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
-#pseudo-device	putter			# for puffs and pud
+pseudo-device	putter			# for puffs and pud
 
 # network pseudo-devices
-#pseudo-device	bpfilter		# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-pseudo-device	ppp			# Point-to-Point Protocol
+#pseudo-device	ppp			# Point-to-Point Protocol
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	clockctl		# NTP clockctl
+pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	lockstat		# lock profiling
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+# data mover pseudo-devices
+#pseudo-device	swdmover		# software dmover(9) back-end
+#pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device 	drvctl
+
+# local configuration
+cinclude "arch/evbarm/conf/NETWALKER.local"

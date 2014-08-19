@@ -1,608 +1,279 @@
 #! /usr/bin/env python
 
+# Copyright (C) 2011-2014 Free Software Foundation, Inc.
+#
+# This file is part of GDB.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """copyright.py
 
-This script updates most of the files that are not already handled
-by copyright.sh.  It must be run from the gdb/ subdirectory of the
-GDB source tree.
+This script updates the list of years in the copyright notices in
+most files maintained by the GDB project.
 
+Usage: cd src/gdb && python copyright.py
+
+Always review the output of this script before committing it!
+A useful command to review the output is:
+    % filterdiff -x \*.c -x \*.cc -x \*.h -x \*.exp updates.diff
+This removes the bulk of the changes which are most likely to be correct.
 """
 
 import datetime
-import re
 import os
 import os.path
+import subprocess
 
-class Comment(object):
-    """A class describing comment.
 
-    ATTRIBUTES
-      start:  A string describing how comments are started.
-      stop:   A string describing how comments end.  If None, then
-              a comment ends at the end of the line.
-      start2: Some files accept more than 1 kind of comment.
-              For those that do, this is the alternative form.
-              For now, it is assumed that if start2 is not None,
-              then stop is None (thus no stop2 attribute).
+def get_update_list():
+    """Return the list of files to update.
+
+    Assumes that the current working directory when called is the root
+    of the GDB source tree (NOT the gdb/ subdirectory!).  The names of
+    the files are relative to that root directory.
     """
-    def __init__(self, start, stop=None, start2=None, max_lines=30):
-        """The "Copyright" keyword should be within MAX_LINES lines
-        from the start of the file."""
-        self.start = start
-        self.stop = stop
-        self.start2 = start2
-        self.max_lines = max_lines
+    result = []
+    for gdb_dir in ('gdb', 'sim', 'include/gdb'):
+        for root, dirs, files in os.walk(gdb_dir, topdown=True):
+            for dirname in dirs:
+                reldirname = "%s/%s" % (root, dirname)
+                if (dirname in EXCLUDE_ALL_LIST
+                    or reldirname in EXCLUDE_LIST
+                    or reldirname in NOT_FSF_LIST
+                    or reldirname in BY_HAND):
+                    # Prune this directory from our search list.
+                    dirs.remove(dirname)
+            for filename in files:
+                relpath = "%s/%s" % (root, filename)
+                if (filename in EXCLUDE_ALL_LIST
+                    or relpath in EXCLUDE_LIST
+                    or relpath in NOT_FSF_LIST
+                    or relpath in BY_HAND):
+                    # Ignore this file.
+                    pass
+                else:
+                    result.append(relpath)
+    return result
 
-# The Comment object for Ada code (and GPR files).
-ADA_COMMENT = Comment(start="--")
 
-THIS_YEAR = str(datetime.date.today().year)
+def update_files(update_list):
+    """Update the copyright header of the files in the given list.
+
+    We use gnulib's update-copyright script for that.
+    """
+    # We want to use year intervals in the copyright notices, and
+    # all years should be collapsed to one single year interval,
+    # even if there are "holes" in the list of years found in the
+    # original copyright notice (OK'ed by the FSF, case [gnu.org #719834]).
+    os.environ['UPDATE_COPYRIGHT_USE_INTERVALS'] = '2'
+
+    # Perform the update, and save the output in a string.
+    update_cmd = ['bash', 'gdb/gnulib/import/extra/update-copyright']
+    update_cmd += update_list
+
+    p = subprocess.Popen(update_cmd, stdout=subprocess.PIPE,
+                         stderr=subprocess.STDOUT)
+    update_out = p.communicate()[0]
+
+    # Process the output.  Typically, a lot of files do not have
+    # a copyright notice :-(.  The update-copyright script prints
+    # a well defined warning when it did not find the copyright notice.
+    # For each of those, do a sanity check and see if they may in fact
+    # have one.  For the files that are found not to have one, we filter
+    # the line out from the output, since there is nothing more to do,
+    # short of looking at each file and seeing which notice is appropriate.
+    # Too much work! (~4,000 files listed as of 2012-01-03).
+    update_out = update_out.splitlines()
+    warning_string = ': warning: copyright statement not found'
+    warning_len = len(warning_string)
+
+    for line in update_out:
+        if line.endswith('\n'):
+            line = line[:-1]
+        if line.endswith(warning_string):
+            filename = line[:-warning_len]
+            if may_have_copyright_notice(filename):
+                print line
+        else:
+            # Unrecognized file format. !?!
+            print "*** " + line
+
+
+def may_have_copyright_notice(filename):
+    """Check that the given file does not seem to have a copyright notice.
+
+    The filename is relative to the root directory.
+    This function assumes that the current working directory is that root
+    directory.
+
+    The algorigthm is fairly crude, meaning that it might return
+    some false positives.  I do not think it will return any false
+    negatives...  We might improve this function to handle more
+    complex cases later...
+    """
+    # For now, it may have a copyright notice if we find the word
+    # "Copyright" at the (reasonable) start of the given file, say
+    # 50 lines...
+    MAX_LINES = 50
+
+    fd = open(filename)
+
+    lineno = 1
+    for line in fd:
+        if 'Copyright' in line:
+            return True
+        lineno += 1
+        if lineno > 50:
+            return False
+    return False
+
+
+def main ():
+    """The main subprogram."""
+    if not os.path.isfile("gnulib/import/extra/update-copyright"):
+        print "Error: This script must be called from the gdb directory."
+    root_dir = os.path.dirname(os.getcwd())
+    os.chdir(root_dir)
+
+    update_list = get_update_list()
+    update_files (update_list)
+
+    # Remind the user that some files need to be updated by HAND...
+    if BY_HAND:
+        print
+        print "\033[31mREMINDER: The following files must be updated by hand." \
+              "\033[0m"
+        for filename in BY_HAND + MULTIPLE_COPYRIGHT_HEADERS:
+            print "  ", filename
+
+############################################################################
+#
+# Some constants, placed at the end because they take up a lot of room.
+# The actual value of these constants is not significant to the understanding
+# of the script.
+#
+############################################################################
 
 # Files which should not be modified, either because they are
 # generated, non-FSF, or otherwise special (e.g. license text,
 # or test cases which must be sensitive to line numbering).
-EXCLUSION_LIST = (
-  "COPYING", "COPYING.LIB", "CVS", "configure", "copying.c", "gdbarch.c",
-  "gdbarch.h", "fdl.texi", "gpl.texi", "gdbtk", "gdb.gdbtk", "osf-share",
-  "aclocal.m4", "step-line.inp", "step-line.c",
-  )
+#
+# Filenames are relative to the root directory.
+EXCLUDE_LIST = (
+    'gdb/common/glibc_thread_db.h',
+    'gdb/CONTRIBUTE',
+    'gdb/gnulib/import'
+)
 
-# Files that are too different from the rest to be processed automatically.
-BY_HAND = ['../sim/ppc/psim.texinfo']
+# Files which should not be modified, either because they are
+# generated, non-FSF, or otherwise special (e.g. license text,
+# or test cases which must be sensitive to line numbering).
+#
+# Matches any file or directory name anywhere.  Use with caution.
+# This is mostly for files that can be found in multiple directories.
+# Eg: We want all files named COPYING to be left untouched.
 
-# Files for which we know that they do not have a copyright header.
-# Ideally, this list should be empty (but it may not be possible to
-# add a copyright header in some of them).
-NO_COPYRIGHT = (
-   # Configure files.  We should fix those, one day.
-   "testsuite/gdb.cell/configure.ac", "testsuite/gdb.hp/configure.ac",
-   "testsuite/gdb.hp/gdb.aCC/configure.ac",
-   "testsuite/gdb.hp/gdb.base-hp/configure.ac",
-   "testsuite/gdb.hp/gdb.compat/configure.ac",
-   "testsuite/gdb.hp/gdb.defects/configure.ac",
-   "testsuite/gdb.hp/gdb.objdbg/configure.ac",
-   "testsuite/gdb.stabs/configure.ac",
-   "../sim/arm/configure.ac", "../sim/avr/configure.ac",
-   "../sim/common/configure.ac", "../sim/configure.ac",
-   "../sim/cr16/configure.ac", "../sim/cris/configure.ac",
-   "../sim/d10v/configure.ac", "../sim/erc32/configure.ac",
-   "../sim/frv/configure.ac", "../sim/h8300/configure.ac",
-   "../sim/igen/configure.ac", "../sim/iq2000/configure.ac",
-   "../sim/lm32/configure.ac", "../sim/m32r/configure.ac",
-   "../sim/m68hc11/configure.ac", "../sim/mcore/configure.ac",
-   "../sim/microblaze/configure.ac", "../sim/mips/configure.ac",
-   "../sim/mn10300/configure.ac", "../sim/moxie/configure.ac",
-   "../sim/ppc/configure.ac", "../sim/sh/configure.ac",
-   "../sim/sh64/configure.ac", "../sim/testsuite/configure.ac",
-   "../sim/testsuite/d10v-elf/configure.ac",
-   "../sim/testsuite/frv-elf/configure.ac",
-   "../sim/testsuite/m32r-elf/configure.ac",
-   "../sim/testsuite/mips64el-elf/configure.ac", "../sim/v850/configure.ac",
-   # Assembly files.  It's not certain that we can add a copyright
-   # header in a way that works for all platforms supported by the
-   # testcase...
-   "testsuite/gdb.arch/pa-nullify.s", "testsuite/gdb.arch/pa64-nullify.s",
-   "testsuite/gdb.asm/asmsrc1.s", "testsuite/gdb.asm/asmsrc2.s",
-   "testsuite/gdb.disasm/am33.s", "testsuite/gdb.disasm/h8300s.s",
-   "testsuite/gdb.disasm/hppa.s", "testsuite/gdb.disasm/mn10200.s",
-   "testsuite/gdb.disasm/mn10300.s", "testsuite/gdb.disasm/sh3.s",
-   "testsuite/gdb.disasm/t01_mov.s", "testsuite/gdb.disasm/t02_mova.s",
-   "testsuite/gdb.disasm/t03_add.s", "testsuite/gdb.disasm/t04_sub.s",
-   "testsuite/gdb.disasm/t05_cmp.s", "testsuite/gdb.disasm/t06_ari2.s",
-   "testsuite/gdb.disasm/t07_ari3.s", "testsuite/gdb.disasm/t08_or.s",
-   "testsuite/gdb.disasm/t09_xor.s", "testsuite/gdb.disasm/t10_and.s",
-   "testsuite/gdb.disasm/t11_logs.s", "testsuite/gdb.disasm/t12_bit.s",
-   "testsuite/gdb.disasm/t13_otr.s", "testsuite/gdb.hp/gdb.base-hp/reg-pa64.s",
-   "testsuite/gdb.hp/gdb.base-hp/reg.s",
-   "../sim/testsuite/d10v-elf/exit47.s",
-   "../sim/testsuite/d10v-elf/hello.s",
-   "../sim/testsuite/d10v-elf/loop.s",
-   "../sim/testsuite/d10v-elf/t-ae-ld-d.s",
-   "../sim/testsuite/d10v-elf/t-ae-ld-i.s",
-   "../sim/testsuite/d10v-elf/t-ae-ld-id.s",
-   "../sim/testsuite/d10v-elf/t-ae-ld-im.s",
-   "../sim/testsuite/d10v-elf/t-ae-ld-ip.s",
-   "../sim/testsuite/d10v-elf/t-ae-ld2w-d.s",
-   "../sim/testsuite/d10v-elf/t-ae-ld2w-i.s",
-   "../sim/testsuite/d10v-elf/t-ae-ld2w-id.s",
-   "../sim/testsuite/d10v-elf/t-ae-ld2w-im.s",
-   "../sim/testsuite/d10v-elf/t-ae-ld2w-ip.s",
-   "../sim/testsuite/d10v-elf/t-ae-st-d.s",
-   "../sim/testsuite/d10v-elf/t-ae-st-i.s",
-   "../sim/testsuite/d10v-elf/t-ae-st-id.s",
-   "../sim/testsuite/d10v-elf/t-ae-st-im.s",
-   "../sim/testsuite/d10v-elf/t-ae-st-ip.s",
-   "../sim/testsuite/d10v-elf/t-ae-st-is.s",
-   "../sim/testsuite/d10v-elf/t-ae-st2w-d.s",
-   "../sim/testsuite/d10v-elf/t-ae-st2w-i.s",
-   "../sim/testsuite/d10v-elf/t-ae-st2w-id.s",
-   "../sim/testsuite/d10v-elf/t-ae-st2w-im.s",
-   "../sim/testsuite/d10v-elf/t-ae-st2w-ip.s",
-   "../sim/testsuite/d10v-elf/t-ae-st2w-is.s",
-   "../sim/testsuite/d10v-elf/t-dbt.s",
-   "../sim/testsuite/d10v-elf/t-ld-st.s",
-   "../sim/testsuite/d10v-elf/t-mac.s",
-   "../sim/testsuite/d10v-elf/t-mod-ld-pre.s",
-   "../sim/testsuite/d10v-elf/t-msbu.s",
-   "../sim/testsuite/d10v-elf/t-mulxu.s",
-   "../sim/testsuite/d10v-elf/t-mvtac.s",
-   "../sim/testsuite/d10v-elf/t-mvtc.s",
-   "../sim/testsuite/d10v-elf/t-rac.s",
-   "../sim/testsuite/d10v-elf/t-rachi.s",
-   "../sim/testsuite/d10v-elf/t-rdt.s",
-   "../sim/testsuite/d10v-elf/t-rep.s",
-   "../sim/testsuite/d10v-elf/t-rie-xx.s",
-   "../sim/testsuite/d10v-elf/t-rte.s",
-   "../sim/testsuite/d10v-elf/t-sac.s",
-   "../sim/testsuite/d10v-elf/t-sachi.s",
-   "../sim/testsuite/d10v-elf/t-sadd.s",
-   "../sim/testsuite/d10v-elf/t-slae.s",
-   "../sim/testsuite/d10v-elf/t-sp.s",
-   "../sim/testsuite/d10v-elf/t-sub.s",
-   "../sim/testsuite/d10v-elf/t-sub2w.s",
-   "../sim/testsuite/d10v-elf/t-subi.s",
-   "../sim/testsuite/d10v-elf/t-trap.s",
-   "../sim/testsuite/frv-elf/cache.s",
-   "../sim/testsuite/frv-elf/exit47.s",
-   "../sim/testsuite/frv-elf/grloop.s",
-   "../sim/testsuite/frv-elf/hello.s",
-   "../sim/testsuite/frv-elf/loop.s",
-   "../sim/testsuite/m32r-elf/exit47.s",
-   "../sim/testsuite/m32r-elf/hello.s",
-   "../sim/testsuite/m32r-elf/loop.s",
-   "../sim/testsuite/sim/cris/hw/rv-n-cris/quit.s",
-   "../sim/testsuite/sim/h8300/addb.s",
-   "../sim/testsuite/sim/h8300/addl.s",
-   "../sim/testsuite/sim/h8300/adds.s",
-   "../sim/testsuite/sim/h8300/addw.s",
-   "../sim/testsuite/sim/h8300/addx.s",
-   "../sim/testsuite/sim/h8300/andb.s",
-   "../sim/testsuite/sim/h8300/andl.s",
-   "../sim/testsuite/sim/h8300/andw.s",
-   "../sim/testsuite/sim/h8300/band.s",
-   "../sim/testsuite/sim/h8300/bfld.s",
-   "../sim/testsuite/sim/h8300/biand.s",
-   "../sim/testsuite/sim/h8300/bra.s",
-   "../sim/testsuite/sim/h8300/brabc.s",
-   "../sim/testsuite/sim/h8300/bset.s",
-   "../sim/testsuite/sim/h8300/cmpb.s",
-   "../sim/testsuite/sim/h8300/cmpl.s",
-   "../sim/testsuite/sim/h8300/cmpw.s",
-   "../sim/testsuite/sim/h8300/daa.s",
-   "../sim/testsuite/sim/h8300/das.s",
-   "../sim/testsuite/sim/h8300/dec.s",
-   "../sim/testsuite/sim/h8300/div.s",
-   "../sim/testsuite/sim/h8300/extl.s",
-   "../sim/testsuite/sim/h8300/extw.s",
-   "../sim/testsuite/sim/h8300/inc.s",
-   "../sim/testsuite/sim/h8300/jmp.s",
-   "../sim/testsuite/sim/h8300/ldc.s",
-   "../sim/testsuite/sim/h8300/ldm.s",
-   "../sim/testsuite/sim/h8300/mac.s",
-   "../sim/testsuite/sim/h8300/mova.s",
-   "../sim/testsuite/sim/h8300/movb.s",
-   "../sim/testsuite/sim/h8300/movl.s",
-   "../sim/testsuite/sim/h8300/movmd.s",
-   "../sim/testsuite/sim/h8300/movsd.s",
-   "../sim/testsuite/sim/h8300/movw.s",
-   "../sim/testsuite/sim/h8300/mul.s",
-   "../sim/testsuite/sim/h8300/neg.s",
-   "../sim/testsuite/sim/h8300/nop.s",
-   "../sim/testsuite/sim/h8300/not.s",
-   "../sim/testsuite/sim/h8300/orb.s",
-   "../sim/testsuite/sim/h8300/orl.s",
-   "../sim/testsuite/sim/h8300/orw.s",
-   "../sim/testsuite/sim/h8300/rotl.s",
-   "../sim/testsuite/sim/h8300/rotr.s",
-   "../sim/testsuite/sim/h8300/rotxl.s",
-   "../sim/testsuite/sim/h8300/rotxr.s",
-   "../sim/testsuite/sim/h8300/shal.s",
-   "../sim/testsuite/sim/h8300/shar.s",
-   "../sim/testsuite/sim/h8300/shll.s",
-   "../sim/testsuite/sim/h8300/shlr.s",
-   "../sim/testsuite/sim/h8300/stack.s",
-   "../sim/testsuite/sim/h8300/stc.s",
-   "../sim/testsuite/sim/h8300/subb.s",
-   "../sim/testsuite/sim/h8300/subl.s",
-   "../sim/testsuite/sim/h8300/subs.s",
-   "../sim/testsuite/sim/h8300/subw.s",
-   "../sim/testsuite/sim/h8300/subx.s",
-   "../sim/testsuite/sim/h8300/tas.s",
-   "../sim/testsuite/sim/h8300/xorb.s",
-   "../sim/testsuite/sim/h8300/xorl.s",
-   "../sim/testsuite/sim/h8300/xorw.s",
-   "../sim/testsuite/sim/mips/fpu64-ps-sb1.s",
-   "../sim/testsuite/sim/mips/fpu64-ps.s",
-   "../sim/testsuite/sim/mips/hilo-hazard-1.s",
-   "../sim/testsuite/sim/mips/hilo-hazard-2.s",
-   "../sim/testsuite/sim/mips/hilo-hazard-3.s",
-   "../sim/testsuite/sim/mips/mdmx-ob-sb1.s",
-   "../sim/testsuite/sim/mips/mdmx-ob.s",
-   "../sim/testsuite/sim/mips/mips32-dsp.s",
-   "../sim/testsuite/sim/mips/mips32-dsp2.s",
-   "../sim/testsuite/sim/mips/sanity.s",
-   "../sim/testsuite/sim/sh/add.s",
-   "../sim/testsuite/sim/sh/and.s",
-   "../sim/testsuite/sim/sh/bandor.s",
-   "../sim/testsuite/sim/sh/bandornot.s",
-   "../sim/testsuite/sim/sh/bclr.s",
-   "../sim/testsuite/sim/sh/bld.s",
-   "../sim/testsuite/sim/sh/bldnot.s",
-   "../sim/testsuite/sim/sh/bset.s",
-   "../sim/testsuite/sim/sh/bst.s",
-   "../sim/testsuite/sim/sh/bxor.s",
-   "../sim/testsuite/sim/sh/clip.s",
-   "../sim/testsuite/sim/sh/div.s",
-   "../sim/testsuite/sim/sh/dmxy.s",
-   "../sim/testsuite/sim/sh/fabs.s",
-   "../sim/testsuite/sim/sh/fadd.s",
-   "../sim/testsuite/sim/sh/fail.s",
-   "../sim/testsuite/sim/sh/fcmpeq.s",
-   "../sim/testsuite/sim/sh/fcmpgt.s",
-   "../sim/testsuite/sim/sh/fcnvds.s",
-   "../sim/testsuite/sim/sh/fcnvsd.s",
-   "../sim/testsuite/sim/sh/fdiv.s",
-   "../sim/testsuite/sim/sh/fipr.s",
-   "../sim/testsuite/sim/sh/fldi0.s",
-   "../sim/testsuite/sim/sh/fldi1.s",
-   "../sim/testsuite/sim/sh/flds.s",
-   "../sim/testsuite/sim/sh/float.s",
-   "../sim/testsuite/sim/sh/fmac.s",
-   "../sim/testsuite/sim/sh/fmov.s",
-   "../sim/testsuite/sim/sh/fmul.s",
-   "../sim/testsuite/sim/sh/fneg.s",
-   "../sim/testsuite/sim/sh/fpchg.s",
-   "../sim/testsuite/sim/sh/frchg.s",
-   "../sim/testsuite/sim/sh/fsca.s",
-   "../sim/testsuite/sim/sh/fschg.s",
-   "../sim/testsuite/sim/sh/fsqrt.s",
-   "../sim/testsuite/sim/sh/fsrra.s",
-   "../sim/testsuite/sim/sh/fsub.s",
-   "../sim/testsuite/sim/sh/ftrc.s",
-   "../sim/testsuite/sim/sh/ldrc.s",
-   "../sim/testsuite/sim/sh/loop.s",
-   "../sim/testsuite/sim/sh/macl.s",
-   "../sim/testsuite/sim/sh/macw.s",
-   "../sim/testsuite/sim/sh/mov.s",
-   "../sim/testsuite/sim/sh/movi.s",
-   "../sim/testsuite/sim/sh/movli.s",
-   "../sim/testsuite/sim/sh/movua.s",
-   "../sim/testsuite/sim/sh/movxy.s",
-   "../sim/testsuite/sim/sh/mulr.s",
-   "../sim/testsuite/sim/sh/pabs.s",
-   "../sim/testsuite/sim/sh/padd.s",
-   "../sim/testsuite/sim/sh/paddc.s",
-   "../sim/testsuite/sim/sh/pand.s",
-   "../sim/testsuite/sim/sh/pass.s",
-   "../sim/testsuite/sim/sh/pclr.s",
-   "../sim/testsuite/sim/sh/pdec.s",
-   "../sim/testsuite/sim/sh/pdmsb.s",
-   "../sim/testsuite/sim/sh/pinc.s",
-   "../sim/testsuite/sim/sh/pmuls.s",
-   "../sim/testsuite/sim/sh/prnd.s",
-   "../sim/testsuite/sim/sh/pshai.s",
-   "../sim/testsuite/sim/sh/pshar.s",
-   "../sim/testsuite/sim/sh/pshli.s",
-   "../sim/testsuite/sim/sh/pshlr.s",
-   "../sim/testsuite/sim/sh/psub.s",
-   "../sim/testsuite/sim/sh/pswap.s",
-   "../sim/testsuite/sim/sh/pushpop.s",
-   "../sim/testsuite/sim/sh/resbank.s",
-   "../sim/testsuite/sim/sh/sett.s",
-   "../sim/testsuite/sim/sh/shll.s",
-   "../sim/testsuite/sim/sh/shll16.s",
-   "../sim/testsuite/sim/sh/shll2.s",
-   "../sim/testsuite/sim/sh/shll8.s",
-   "../sim/testsuite/sim/sh/shlr.s",
-   "../sim/testsuite/sim/sh/shlr16.s",
-   "../sim/testsuite/sim/sh/shlr2.s",
-   "../sim/testsuite/sim/sh/shlr8.s",
-   "../sim/testsuite/sim/sh/swap.s",
-   "../sim/testsuite/sim/sh64/misc/fr-dr.s",
-   # .inc files.  These are usually assembly or C files...
-   "testsuite/gdb.asm/alpha.inc",
-   "testsuite/gdb.asm/arm.inc",
-   "testsuite/gdb.asm/common.inc",
-   "testsuite/gdb.asm/empty.inc",
-   "testsuite/gdb.asm/frv.inc",
-   "testsuite/gdb.asm/h8300.inc",
-   "testsuite/gdb.asm/i386.inc",
-   "testsuite/gdb.asm/ia64.inc",
-   "testsuite/gdb.asm/iq2000.inc",
-   "testsuite/gdb.asm/m32c.inc",
-   "testsuite/gdb.asm/m32r-linux.inc",
-   "testsuite/gdb.asm/m32r.inc",
-   "testsuite/gdb.asm/m68hc11.inc",
-   "testsuite/gdb.asm/m68k.inc",
-   "testsuite/gdb.asm/mips.inc",
-   "testsuite/gdb.asm/netbsd.inc",
-   "testsuite/gdb.asm/openbsd.inc",
-   "testsuite/gdb.asm/pa.inc",
-   "testsuite/gdb.asm/pa64.inc",
-   "testsuite/gdb.asm/powerpc.inc",
-   "testsuite/gdb.asm/powerpc64.inc",
-   "testsuite/gdb.asm/s390.inc",
-   "testsuite/gdb.asm/s390x.inc",
-   "testsuite/gdb.asm/sh.inc",
-   "testsuite/gdb.asm/sparc.inc",
-   "testsuite/gdb.asm/sparc64.inc",
-   "testsuite/gdb.asm/spu.inc",
-   "testsuite/gdb.asm/v850.inc",
-   "testsuite/gdb.asm/x86_64.inc",
-   "testsuite/gdb.asm/xstormy16.inc",
-   "../sim/testsuite/sim/arm/iwmmxt/testutils.inc",
-   "../sim/testsuite/sim/arm/testutils.inc",
-   "../sim/testsuite/sim/arm/thumb/testutils.inc",
-   "../sim/testsuite/sim/arm/xscale/testutils.inc",
-   "../sim/testsuite/sim/cr16/testutils.inc",
-   "../sim/testsuite/sim/cris/asm/testutils.inc",
-   "../sim/testsuite/sim/cris/hw/rv-n-cris/testutils.inc",
-   "../sim/testsuite/sim/fr30/testutils.inc",
-   "../sim/testsuite/sim/frv/testutils.inc",
-   "../sim/testsuite/sim/h8300/testutils.inc",
-   "../sim/testsuite/sim/m32r/testutils.inc",
-   "../sim/testsuite/sim/sh/testutils.inc",
-   "../sim/testsuite/sim/sh64/compact/testutils.inc",
-   "../sim/testsuite/sim/sh64/media/testutils.inc",
-   "../sim/testsuite/sim/v850/testutils.inc",
-   )
+EXCLUDE_ALL_LIST = (
+    "COPYING", "COPYING.LIB", "CVS", "configure", "copying.c",
+    "fdl.texi", "gpl.texi", "aclocal.m4",
+)
 
-# A mapping between file extensions to their associated Comment object.
-# This dictionary also contains a number of exceptions, based on
-# filename.
-COMMENT_MAP = \
-  {".1" : Comment(start=r'.\"'),
-   ".ac" : Comment(start="dnl", start2="#"),
-   ".ads" : ADA_COMMENT,
-   ".adb" : ADA_COMMENT,
-   ".f" : Comment(start="c"),
-   ".f90" : Comment(start="!"),
-   ".gpr" : ADA_COMMENT,
-   ".inc" : Comment(start="#", start2=";"),
-   ".s" : Comment(start="!"),
-   ".tex" : Comment(start="%"),
-   ".texi" : Comment(start="@c"),
-   ".texinfo" : Comment(start="@c"),
+# The list of files to update by hand.
+BY_HAND = (
+    # These files are sensitive to line numbering.
+    "gdb/testsuite/gdb.base/step-line.inp",
+    "gdb/testsuite/gdb.base/step-line.c",
+)
 
-   # Files that use a different way of including the copyright
-   # header...
-   "ada-operator.inc" : Comment(start="/*", stop="*/"),
-   "gdbint.texinfo" : Comment(start='@copying', stop="@end copying"),
-   "annotate.texinfo" : Comment(start='@copying', stop="@end copying",
-                                max_lines=50),
-   "stabs.texinfo" : Comment(start='@copying', stop="@end copying"),
-  }
+# Files containing multiple copyright headers.  This script is only
+# fixing the first one it finds, so we need to finish the update
+# by hand.
+MULTIPLE_COPYRIGHT_HEADERS = (
+    "gdb/doc/gdb.texinfo",
+    "gdb/doc/refcard.tex",
+    "gdb/gdbarch.sh",
+)
 
-class NotFound(Exception):
-    pass
-
-class AlreadyDone(Exception):
-    pass
-
-def process_header(src, dst, cdescr):
-    """Read from SRC for up to CDESCR.MAX_LINES until we find a copyright
-    notice.  If found, then write the entire file, with the copyright
-    noticed updated with the current year added.
-
-    Raises NotFound if the copyright notice could not be found or has
-    some inconsistencies.
-
-    Raises AlreadyDone if the copyright notice already includes the current
-    year.
-    """
-    line_count = 0
-    # The start-of-comment marker used for this file.  Only really useful
-    # in the case where comments ends at the end of the line, as this
-    # allows us to know which comment marker to use when breaking long
-    # lines (in the cases where there are more than one.
-    cdescr_start = ""
-
-    while True:
-        # If we still haven't found a copyright line within a certain
-        # number of lines, then give up.
-        if line_count > cdescr.max_lines:
-            raise NotFound("start of Copyright not found")
-
-        line = src.readline()
-        line_count += 1
-        if not line:
-            raise NotFound("start of Copyright not found (EOF)")
-
-        # Is this a copyright line?  If not, then no transformation is
-        # needed.  Write it as is, and continue.
-        if not re.search(r"Copyright\b.*\b(199\d|20\d\d)\b", line):
-            dst.write(line)
-            continue
-
-        # If a start-of-comment marker is needed for every line, try to
-        # figure out which one it is that is being used in this file (most
-        # files only accept one, in which case it's easy - but some accept
-        # two or more...).
-        if cdescr.stop is None:
-            stripped_line = line.lstrip()
-            if stripped_line.startswith(cdescr.start):
-                cdescr_start = cdescr.start
-            elif (cdescr.start2 is not None
-                  and stripped_line.startswith(cdescr.start2)):
-                cdescr_start = cdescr.start2
-            elif cdescr.start in stripped_line:
-                cdescr_start = cdescr.start
-            elif (cdescr.start2 is not None
-                  and cdescr.start2 in stripped_line):
-                cdescr_start = cdescr.start2
-            else:
-                # This can't be a line with a comment, so not the copyright
-                # line we were looking for.  Ignore.
-                continue
-
-        comment = line
-        break
-
-    while not re.search(r"Free\s+Software\s+Foundation", comment):
-        line = src.readline()
-        line_count += 1
-        if not line:
-            raise NotFound("Copyright owner not found (EOF)")
-
-        if cdescr.stop is None:
-            # Expect a new comment marker at the start of each line
-            line = line.lstrip()
-            if not line.startswith(cdescr_start):
-                raise NotFound("Copyright owner not found "
-                               "(end of comment)")
-            comment += " " + line[len(cdescr_start):]
-        else:
-            if cdescr.stop in comment:
-                raise NotFound("Copyright owner not found "
-                               "(end of comment)")
-            comment += line
-
-    # Normalize a bit the copyright string (we preserve the string
-    # up until "Copyright", in order to help preserve any original
-    # alignment.
-    (before, after) = comment.split("Copyright", 1)
-    after = after.replace("\n", " ")
-    after = re.sub("\s+", " ", after)
-    after = after.rstrip()
-
-    # If the copyright year has already been added, the nothing else
-    # to do.
-    if THIS_YEAR in after:
-        raise AlreadyDone
-
-    m = re.match("(.*[0-9]+)(.*)", after)
-    if m is None:
-        raise NotFound("Internal error - cannot split copyright line: "
-                       "`%s'" % comment)
-
-    # Reconstruct the comment line
-    comment = before + "Copyright" + m.group(1) + ', %s' % THIS_YEAR
-    owner_part = m.group(2).lstrip()
-
-    # Max comment len...
-    max_len = 76
-
-    # If we have to break the copyright line into multiple lines,
-    # we want to align all the lines on the "Copyright" keyword.
-    # Create a small "indent" string that we can use for that.
-    if cdescr.stop is None:
-        # The comment marker is needed on every line, so put it at the
-        # start of our "indent" string.
-        indent = cdescr_start + ' ' * (len(before) - len(cdescr_start))
-    else:
-        indent = ' ' * len(before)
-
-    # If the line is too long...
-    while len(comment) > max_len:
-        # Split the line at the first space before max_len.
-        space_index = comment[0:max_len].rfind(' ')
-        if space_index < 0:  # No space in the first max_len characters???
-            # Split at the first space, then...
-            space_index = comment.find(' ')
-        if space_index < 0:
-            # Still no space found.  This is extremely unlikely, but
-            # just pretend there is one at the end of the string.
-            space_index = len(comment)
-
-        # Write the first part of the string up until the space
-        # we selected to break our line.
-        dst.write(comment[:space_index] + '\n')
-
-        # Strip the part of comment that we have finished printing.
-        if space_index < len(comment):
-            comment = comment[space_index + 1:]
-        else:
-            comment = ""
-
-        # Prepend the "indent" string to make sure that we remain
-        # aligned on the "Copyright" word.
-        comment = indent + comment
-
-    # And finally, write the rest of the last line...  We want to write
-    # "Free Software Foundation, Inc" on the same line, so handle this
-    # with extra care.
-    dst.write(comment)
-    if len(comment) + 1 + len (owner_part) > max_len:
-        dst.write('\n' + indent)
-    else:
-        dst.write(' ')
-    dst.write(owner_part + '\n')
-
-def comment_for_filename(filename):
-    """Return the Comment object that best describes the given file.
-    This a smart lookup of the COMMENT_MAP dictionary where we check
-    for filename-based exceptions first, before looking up the comment
-    by filename extension.  """
-    # First, consult the COMMENT_MAP using the filename, in case this
-    # file needs special treatment.
-    basename = os.path.basename(filename)
-    if basename in COMMENT_MAP:
-        return COMMENT_MAP[basename]
-    # Not a special file.  Check the file extension.
-    ext = os.path.splitext(filename)[1]
-    if ext in COMMENT_MAP:
-        return COMMENT_MAP[ext]
-    # Not a know extension either, return None.
-    return None
-
-def process_file(filename):
-    """Processes the given file.
-    """
-    cdescr = comment_for_filename(filename)
-    if cdescr is None:
-        # Either no filename extension, or not an extension that we
-        # know how to handle.
-        return
-
-    dst_filename = filename + '.new'
-    src = open(filename)
-    dst = open(dst_filename, 'w')
-    try:
-        process_header(src, dst, cdescr)
-    except AlreadyDone:
-        print "+++ Already up to date: `%s'." % filename
-        dst.close()
-        os.unlink(dst_filename)
-        if filename in NO_COPYRIGHT:
-            # We expect the search for a copyright header to fail, and
-            # yet we found one...
-            print "Warning: `%s' should not be in NO_COPYRIGHT" % filename
-        return
-    except NotFound as inst:
-        dst.close()
-        os.unlink(dst_filename)
-        if not filename in NO_COPYRIGHT:
-            print "*** \033[31m%s\033[0m: %s" % (filename, inst)
-        return
-
-    if filename in NO_COPYRIGHT:
-        # We expect the search for a copyright header to fail, and
-        # yet we found one...
-        print "Warning: `%s' should not be in NO_COPYRIGHT" % filename
-
-    for line in src:
-        dst.write(line)
-    src.close()
-    dst.close()
-    os.rename(dst_filename, filename)
+# The list of file which have a copyright, but not head by the FSF.
+# Filenames are relative to the root directory.
+NOT_FSF_LIST = (
+    "gdb/exc_request.defs",
+    "gdb/gdbtk",
+    "gdb/testsuite/gdb.gdbtk/",
+    "sim/arm/armemu.h", "sim/arm/armos.c", "sim/arm/gdbhost.c",
+    "sim/arm/dbg_hif.h", "sim/arm/dbg_conf.h", "sim/arm/communicate.h",
+    "sim/arm/armos.h", "sim/arm/armcopro.c", "sim/arm/armemu.c",
+    "sim/arm/kid.c", "sim/arm/thumbemu.c", "sim/arm/armdefs.h",
+    "sim/arm/armopts.h", "sim/arm/dbg_cp.h", "sim/arm/dbg_rdi.h",
+    "sim/arm/parent.c", "sim/arm/armsupp.c", "sim/arm/armrdi.c",
+    "sim/arm/bag.c", "sim/arm/armvirt.c", "sim/arm/main.c", "sim/arm/bag.h",
+    "sim/arm/communicate.c", "sim/arm/gdbhost.h", "sim/arm/armfpe.h",
+    "sim/arm/arminit.c",
+    "sim/common/cgen-fpu.c", "sim/common/cgen-fpu.h",
+    "sim/common/cgen-accfp.c",
+    "sim/erc32/sis.h", "sim/erc32/erc32.c", "sim/erc32/func.c",
+    "sim/erc32/float.c", "sim/erc32/interf.c", "sim/erc32/sis.c",
+    "sim/erc32/exec.c",
+    "sim/mips/m16run.c", "sim/mips/sim-main.c",
+    "sim/moxie/moxie-gdb.dts",
+    # Not a single file in sim/ppc/ appears to be copyright FSF :-(.
+    "sim/ppc/filter.h", "sim/ppc/gen-support.h", "sim/ppc/ld-insn.h",
+    "sim/ppc/hw_sem.c", "sim/ppc/hw_disk.c", "sim/ppc/idecode_branch.h",
+    "sim/ppc/sim-endian.h", "sim/ppc/table.c", "sim/ppc/hw_core.c",
+    "sim/ppc/gen-support.c", "sim/ppc/gen-semantics.h", "sim/ppc/cpu.h",
+    "sim/ppc/sim_callbacks.h", "sim/ppc/RUN", "sim/ppc/Makefile.in",
+    "sim/ppc/emul_chirp.c", "sim/ppc/hw_nvram.c", "sim/ppc/dc-test.01",
+    "sim/ppc/hw_phb.c", "sim/ppc/hw_eeprom.c", "sim/ppc/bits.h",
+    "sim/ppc/hw_vm.c", "sim/ppc/cap.h", "sim/ppc/os_emul.h",
+    "sim/ppc/options.h", "sim/ppc/gen-idecode.c", "sim/ppc/filter.c",
+    "sim/ppc/corefile-n.h", "sim/ppc/std-config.h", "sim/ppc/ld-decode.h",
+    "sim/ppc/filter_filename.h", "sim/ppc/hw_shm.c",
+    "sim/ppc/pk_disklabel.c", "sim/ppc/dc-simple", "sim/ppc/misc.h",
+    "sim/ppc/device_table.h", "sim/ppc/ld-insn.c", "sim/ppc/inline.c",
+    "sim/ppc/emul_bugapi.h", "sim/ppc/hw_cpu.h", "sim/ppc/debug.h",
+    "sim/ppc/hw_ide.c", "sim/ppc/debug.c", "sim/ppc/gen-itable.h",
+    "sim/ppc/interrupts.c", "sim/ppc/hw_glue.c", "sim/ppc/emul_unix.c",
+    "sim/ppc/sim_calls.c", "sim/ppc/dc-complex", "sim/ppc/ld-cache.c",
+    "sim/ppc/registers.h", "sim/ppc/dc-test.02", "sim/ppc/options.c",
+    "sim/ppc/igen.h", "sim/ppc/registers.c", "sim/ppc/device.h",
+    "sim/ppc/emul_chirp.h", "sim/ppc/hw_register.c", "sim/ppc/hw_init.c",
+    "sim/ppc/sim-endian-n.h", "sim/ppc/filter_filename.c",
+    "sim/ppc/bits.c", "sim/ppc/idecode_fields.h", "sim/ppc/hw_memory.c",
+    "sim/ppc/misc.c", "sim/ppc/double.c", "sim/ppc/psim.h",
+    "sim/ppc/hw_trace.c", "sim/ppc/emul_netbsd.h", "sim/ppc/psim.c",
+    "sim/ppc/ppc-instructions", "sim/ppc/tree.h", "sim/ppc/README",
+    "sim/ppc/gen-icache.h", "sim/ppc/gen-model.h", "sim/ppc/ld-cache.h",
+    "sim/ppc/mon.c", "sim/ppc/corefile.h", "sim/ppc/vm.c",
+    "sim/ppc/INSTALL", "sim/ppc/gen-model.c", "sim/ppc/hw_cpu.c",
+    "sim/ppc/corefile.c", "sim/ppc/hw_opic.c", "sim/ppc/gen-icache.c",
+    "sim/ppc/events.h", "sim/ppc/os_emul.c", "sim/ppc/emul_generic.c",
+    "sim/ppc/main.c", "sim/ppc/hw_com.c", "sim/ppc/gen-semantics.c",
+    "sim/ppc/emul_bugapi.c", "sim/ppc/device.c", "sim/ppc/emul_generic.h",
+    "sim/ppc/tree.c", "sim/ppc/mon.h", "sim/ppc/interrupts.h",
+    "sim/ppc/cap.c", "sim/ppc/cpu.c", "sim/ppc/hw_phb.h",
+    "sim/ppc/device_table.c", "sim/ppc/lf.c", "sim/ppc/lf.c",
+    "sim/ppc/dc-stupid", "sim/ppc/hw_pal.c", "sim/ppc/ppc-spr-table",
+    "sim/ppc/emul_unix.h", "sim/ppc/words.h", "sim/ppc/basics.h",
+    "sim/ppc/hw_htab.c", "sim/ppc/lf.h", "sim/ppc/ld-decode.c",
+    "sim/ppc/sim-endian.c", "sim/ppc/gen-itable.c",
+    "sim/ppc/idecode_expression.h", "sim/ppc/table.h", "sim/ppc/dgen.c",
+    "sim/ppc/events.c", "sim/ppc/gen-idecode.h", "sim/ppc/emul_netbsd.c",
+    "sim/ppc/igen.c", "sim/ppc/vm_n.h", "sim/ppc/vm.h",
+    "sim/ppc/hw_iobus.c", "sim/ppc/inline.h",
+    "sim/testsuite/sim/bfin/s21.s", "sim/testsuite/sim/mips/mips32-dsp2.s",
+)
 
 if __name__ == "__main__":
-    if not os.path.isfile("doc/gdb.texinfo"):
-        print "Error: This script must be called from the gdb directory."
-    for gdb_dir in ('.', '../sim', '../include/gdb'):
-        for root, dirs, files in os.walk(gdb_dir):
-            for filename in files:
-                fullpath = os.path.join(root, filename)
-                if fullpath.startswith('./'):
-                    fullpath = fullpath[2:]
-                if filename not in EXCLUSION_LIST and fullpath not in BY_HAND:
-                    # Paths that start with './' are ugly, so strip that.
-                    # This also allows us to omit them in the NO_COPYRIGHT
-                    # list...
-                    process_file(fullpath)
-    print
-    print "\033[32mREMINDER: The following files must be updated by hand." \
-          "\033[0m"
-    for filename in BY_HAND:
-        print "  ", filename
+    main()
 

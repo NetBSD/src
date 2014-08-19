@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_sysvbfs.c,v 1.8 2011/08/29 14:35:03 joerg Exp $	*/
+/*	$NetBSD: newfs_sysvbfs.c,v 1.8.8.1 2014/08/20 00:02:27 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -220,10 +220,10 @@ bfs_newfs(int fd, uint32_t nsectors)
 	/* dirent table */
 	memset(buf, 0, BFS_BSIZE);
 	dirent->inode = BFS_ROOT_INODE;
-	sprintf(dirent->name, ".");
+	strcpy(dirent->name, ".");
 	dirent++;
 	dirent->inode = BFS_ROOT_INODE;
-	sprintf(dirent->name, "..");
+	strcpy(dirent->name, "..");
 	if (write(fd, buf, BFS_BSIZE) < 0) {
 		perror("write dirent");
 		return -1;

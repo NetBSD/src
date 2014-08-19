@@ -120,8 +120,8 @@ typedef struct xcb_xevie_end_reply_t {
 } xcb_xevie_end_reply_t;
 
 typedef enum xcb_xevie_datatype_t {
-    XCB_XEVIE_DATATYPE_UNMODIFIED,
-    XCB_XEVIE_DATATYPE_MODIFIED
+    XCB_XEVIE_DATATYPE_UNMODIFIED = 0,
+    XCB_XEVIE_DATATYPE_MODIFIED = 1
 } xcb_xevie_datatype_t;
 
 /**

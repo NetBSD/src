@@ -1,4 +1,4 @@
-#	$NetBSD: postfix-files,v 1.3.10.1 2013/02/25 00:27:05 tls Exp $
+#	$NetBSD: postfix-files,v 1.3.10.2 2014/08/19 23:59:41 tls Exp $
 #
 # Commented out entries mean files not installed under NetBSD.
 #
@@ -167,10 +167,12 @@ $manpage_directory/man5/cidr_table.5:f:root:-:644
 $manpage_directory/man5/generics.5:f:root:-:644:o
 $manpage_directory/man5/generic.5:f:root:-:644
 $manpage_directory/man5/header_checks.5:f:root:-:644
-#$manpage_directory/man5/ldap_table.5:f:root:-:644
+$manpage_directory/man5/ldap_table.5:f:root:-:644
+#$manpage_directory/man5/lmdb_table.5:f:root:-:644
 $manpage_directory/man5/master.5:f:root:-:644
 $manpage_directory/man5/memcache_table.5:f:root:-:644
 #$manpage_directory/man5/mysql_table.5:f:root:-:644
+$manpage_directory/man5/socketmap_table.5:f:root:-:644
 $manpage_directory/man5/sqlite_table.5:f:root:-:644
 $manpage_directory/man5/nisplus_table.5:f:root:-:644
 $manpage_directory/man5/pcre_table.5:f:root:-:644
@@ -260,11 +262,13 @@ $readme_directory/DEBUG_README:f:root:-:644
 $readme_directory/DSN_README:f:root:-:644
 $readme_directory/ETRN_README:f:root:-:644
 $readme_directory/FILTER_README:f:root:-:644
+$readme_directory/FORWARD_SECRECY_README:f:root:-:644
 $readme_directory/HOSTING_README:f:root:-:644:o
 #$readme_directory/INSTALL:f:root:-:644
 $readme_directory/IPV6_README:f:root:-:644
 $readme_directory/LDAP_README:f:root:-:644
 #$readme_directory/LINUX_README:f:root:-:644
+#$readme_directory/LMDB_README:f:root:-:644
 $readme_directory/LOCAL_RECIPIENT_README:f:root:-:644
 $readme_directory/MACOSX_README:f:root:-:644:o
 $readme_directory/MAILDROP_README:f:root:-:644
@@ -316,10 +320,12 @@ $html_directory/DEBUG_README.html:f:root:-:644
 $html_directory/DSN_README.html:f:root:-:644
 $html_directory/ETRN_README.html:f:root:-:644
 $html_directory/FILTER_README.html:f:root:-:644
+$html_directory/FORWARD_SECRECY_README.html:f:root:-:644
 #$html_directory/INSTALL.html:f:root:-:644
 $html_directory/IPV6_README.html:f:root:-:644
 $html_directory/LDAP_README.html:f:root:-:644
 #$html_directory/LINUX_README.html:f:root:-:644
+#$html_directory/LMDB_README.html:f:root:-:644
 $html_directory/LOCAL_RECIPIENT_README.html:f:root:-:644
 $html_directory/MAILDROP_README.html:f:root:-:644
 $html_directory/MILTER_README.html:f:root:-:644

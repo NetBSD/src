@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.94.6.1 2012/11/20 03:01:27 tls Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.94.6.2 2014/08/20 00:03:06 tls Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.94.6.1 2012/11/20 03:01:27 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.94.6.2 2014/08/20 00:03:06 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,6 +242,8 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		pci_addr_fixup(NULL, pci_maxbus);
 #endif
 	}
+#else
+	__USE(mode);
 #endif
 #endif
 
@@ -390,7 +392,10 @@ mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 		mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
 		mba.mba_pba.pba_dmat64 = NULL;
 		mba.mba_pba.pba_pc = NULL;
-		mba.mba_pba.pba_flags = pci_bus_flags();
+		mba.mba_pba.pba_flags =
+		    PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
+		    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
+		    PCI_FLAGS_MWI_OKAY;
 		mba.mba_pba.pba_bus = 0;
 		/* XXX On those machines with >1 Host-PCI bridge,
 		 * XXX not every bus > pba_bus is subordinate to pba_bus,

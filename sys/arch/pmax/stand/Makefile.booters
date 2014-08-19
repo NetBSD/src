@@ -1,9 +1,8 @@
-# $NetBSD: Makefile.booters,v 1.57 2011/07/10 08:42:55 mrg Exp $
+# $NetBSD: Makefile.booters,v 1.57.12.1 2014/08/20 00:03:19 tls Exp $
 
 NOMAN=		# defined
 
 .include <bsd.own.mk>
-.include <bsd.sys.mk>		# for HOST_SH
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
@@ -12,6 +11,7 @@ BINMODE?=	444
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
@@ -23,6 +23,7 @@ CPPFLAGS+=	-nostdinc -D_STANDALONE -DNO_ABICALLS -D_NO_PROM_DEFINES \
 		-I${.OBJDIR} -I${S}
 # compiler flags for smallest code size
 CFLAGS=		-ffreestanding -Os -g -mmemcpy -mno-abicalls -G 128
+CFLAGS+=	-fno-unwind-tables
 CFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 CFLAGS+=	-Werror
 LDBUG=		-T $S/arch/mips/conf/stand.ldscript

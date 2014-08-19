@@ -1,4 +1,4 @@
-.\" $NetBSD: mklocale.1,v 1.15 2010/05/14 17:23:13 joerg Exp $
+.\" $NetBSD: mklocale.1,v 1.15.12.1 2014/08/20 00:05:01 tls Exp $
 .\" FreeBSD: src/usr.bin/mklocale/mklocale.1,v 1.6 1999/09/20 09:15:21 phantom Exp
 .\"
 .\" Copyright (c) 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)mklocale.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd January 2, 2009
+.Dd July 15, 2013
 .Dt MKLOCALE 1
 .Os
 .Sh NAME
@@ -90,7 +90,7 @@ the following are valid tokens in
 A
 .Dv RUNE
 may be any of the following:
-.Bl -tag -width 0x[0-9a-z]*
+.Bl -tag -width 0x[0-9a-f]+
 .It Ar 'x'
 The ASCII character
 .Ar x .
@@ -108,7 +108,7 @@ is one of
 .Dv \et ,
 or
 .Dv \ev .
-.It Ar 0x[0-9a-z]*
+.It Ar 0x[0-9a-f]+
 A hexadecimal number representing a rune code.
 .It Ar 0[0-7]*
 An octal number representing a rune code.

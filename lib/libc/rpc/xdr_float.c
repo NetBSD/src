@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_float.c,v 1.37.2.1 2013/06/23 06:21:05 tls Exp $	*/
+/*	$NetBSD: xdr_float.c,v 1.37.2.2 2014/08/20 00:02:15 tls Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)xdr_float.c 1.12 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_float.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_float.c,v 1.37.2.1 2013/06/23 06:21:05 tls Exp $");
+__RCSID("$NetBSD: xdr_float.c,v 1.37.2.2 2014/08/20 00:02:15 tls Exp $");
 #endif
 #endif
 
@@ -74,7 +74,8 @@ __weak_alias(xdr_float,_xdr_float)
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
     defined(__mips__) || defined(__ns32k__) || defined(__alpha__) || \
     defined(__arm__) || defined(__powerpc__) || defined(__sh__) || \
-    defined(__x86_64__) || defined(__hppa__) || defined(__ia64__)
+    defined(__x86_64__) || defined(__hppa__) || defined(__ia64__) || \
+    defined(__aarch64__)
 #include <machine/endian.h>
 #define IEEEFP
 #endif

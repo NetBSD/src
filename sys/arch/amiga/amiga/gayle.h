@@ -1,58 +1,73 @@
-/*	$NetBSD: gayle.h,v 1.2 2002/01/26 13:24:54 aymeric Exp $	*/
+/*	$NetBSD: gayle.h,v 1.2.166.1 2014/08/20 00:02:42 tls Exp $	*/
 #ifndef AMIGA_GAYLE_H_
 #define AMIGA_GAYLE_H_
 
 #include <sys/types.h>
 
-struct gayle_struct {
-	volatile u_int8_t	pcc_status;
+#define GAYLE_IDE_BASE          0xDA0000
+#define GAYLE_IDE_BASE_A4000	0xDD2020
+#define GAYLE_IDE_INTREQ_A4000		0x1000	/* with stride of 1 */
+
+#define GAYLE_REGS_BASE		0xDA8000
+
+#define GAYLE_PCC_STATUS		0x0
+
 /* Depending on the mode the card is in, most of the bits have different
    meanings */
-#define GAYLE_CCMEM_DETECT	0x40
-#define GAYLE_CCMEM_BVD1	0x20
-#define GAYLE_CCMEM_BVD2	0x10
-#define GAYLE_CCMEM_WP		0x08
-#define GAYLE_CCMEM_BUSY	0x04
+#define GAYLE_CCMEM_DETECT			__BIT(6)	
+#define GAYLE_CCMEM_BVD1			__BIT(5)
+#define GAYLE_CCMEM_BVD2			__BIT(4)
+#define GAYLE_CCMEM_WP				__BIT(3)
+#define GAYLE_CCMEM_BUSY			__BIT(2)
 
-#define GAYLE_CCIO_STSCHG	0x20
-#define GAYLE_CCIO_SPKR		0x10
-#define GAYLE_CCIO_IREQ		0x04
+#define GAYLE_CCIO_STSCHG			__BIT(5)
+#define GAYLE_CCIO_SPKR				__BIT(4)	
+#define GAYLE_CCIO_IREQ				__BIT(2)	
 
-	u_int8_t __pad0[0xfff];
-	volatile u_int8_t	intreq;
+#define GAYLE_INTREQ			0x1 /* 0x1000 */
+#define GAYLE_INTENA			0x2 /* 0x2000 */
 
-	u_int8_t __pad1[0xfff];
-	volatile u_int8_t	intena;
-#define GAYLE_INT_IDE		0x80
-#define GAYLE_INT_DETECT	0x40
-#define GAYLE_INT_BVD1		0x20
-#define GAYLE_INT_STSCHG	0x20
-#define GAYLE_INT_BVD2		0x10
-#define GAYLE_INT_SPKR		0x10
-#define GAYLE_INT_WP		0x08
-#define GAYLE_INT_BUSY		0x04
-#define GAYLE_INT_IREQ		0x04
-#define GAYLE_INT_IDEACK0	0x02
-#define GAYLE_INT_IDEACK1	0x01
+#define GAYLE_INT_IDE				__BIT(7)	
+#define GAYLE_INT_DETECT			__BIT(6)
+#define GAYLE_INT_BVD1				__BIT(5)	
+#define GAYLE_INT_STSCHG			__BIT(5)
+#define GAYLE_INT_BVD2				__BIT(4)	
+#define GAYLE_INT_SPKR				__BIT(4)	
+#define GAYLE_INT_WP				__BIT(3)	
+#define GAYLE_INT_BUSY				__BIT(2)	
+#define GAYLE_INT_IREQ				__BIT(2)	
+#define GAYLE_INT_IDEACK0			__BIT(1)
+#define GAYLE_INT_IDEACK1			__BIT(0)
 
-	u_int8_t __pad2[0xfff];
-	volatile u_int8_t	pcc_config;
-};
+#define GAYLE_INT_IDEACK			(GAYLE_INT_IDEACK0 | GAYLE_INT_IDEACK1)
 
-#define GAYLE_PCMCIA_START	0xa00000
-#define GAYLE_PCMCIA_ATTR_START	0xa00000
-#define GAYLE_PCMCIA_ATTR_END	0xa20000
+#define GAYLE_PCC_CONFIG		0x3 /* 0x3000 */	
 
-#define GAYLE_PCMCIA_IO_START	0xa20000
-#define GAYLE_PCMCIA_IO_END	0xa40000
+#define GAYLE_PCMCIA_START	0xA00000
+#define GAYLE_PCMCIA_ATTR_START	0xA00000
+#define GAYLE_PCMCIA_ATTR_END	0xA20000
 
-#define GAYLE_PCMCIA_RESET	0xa40000
-#define GAYLE_PCMCIA_END	0xa42000
+#define GAYLE_PCMCIA_IO_START	0xA20000
+#define GAYLE_PCMCIA_IO_END	0xA40000
+
+#define GAYLE_PCMCIA_RESET	0xA40000
+#define GAYLE_PCMCIA_END	0xA42000
 #define NPCMCIAPG		btoc(GAYLE_PCMCIA_END - GAYLE_PCMCIA_START)
 
-extern struct gayle_struct *gayle_base_virtual_address;
-#define gayle (*gayle_base_virtual_address)
-
+/*
+ * Convenience functions for expansions that have Gayle and even those that
+ * don't have real Gayle but have implemented some portions of it for the sake
+ * of compatibility.
+ */
 void gayle_init(void);
+uint8_t gayle_intr_status(void);
+uint8_t gayle_intr_enable_read(void);
+void gayle_intr_enable_write(uint8_t);
+void gayle_intr_enable_set(uint8_t);
+void gayle_intr_ack(uint8_t);
+uint8_t gayle_pcmcia_status_read(void);
+void gayle_pcmcia_status_write(uint8_t);
+uint8_t gayle_pcmcia_config_read(void);
+void gayle_pcmcia_config_write(uint8_t);
 
 #endif /* AMIGA_GAYLE_H_ */

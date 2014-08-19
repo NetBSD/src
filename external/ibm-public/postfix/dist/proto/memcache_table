@@ -4,9 +4,9 @@
 # SUMMARY
 #	Postfix memcache client configuration
 # SYNOPSIS
-#	\fBpostmap -q "\fIstring\fB" memcache:/etc/postfix/filename\fR
+#	\fBpostmap -q "\fIstring\fB" memcache:/etc/postfix/\fIfilename\fR
 #
-#	\fBpostmap -q - memcache:/etc/postfix/\fIfilename\fR <\fIinputfile\fR
+#	\fBpostmap -q - memcache:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
 # DESCRIPTION
 #	The Postfix mail system uses optional tables for address
 #	rewriting or mail routing. These tables are usually in
@@ -66,21 +66,25 @@
 #
 #	Access to remote proxymap servers is under development.
 #
-#	NOTE 1: When using memcache with persistent backup as
-#	\fBpostscreen\fR(8) or \fBverify\fR(8) cache, disable
-#	automatic cache cleanup (*_cache_cleanup_interval = 0) in
-#	all Postfix instances except for one instance that will be
-#	responsible for cache cleanup.
+#	NOTE 1: When sharing a persistent \fBpostscreen\fR(8) or
+#	\fBverify\fR(8) cache, disable automatic cache cleanup (set
+#	*_cache_cleanup_interval = 0) except with one Postfix
+#	instance that will be responsible for cache cleanup.
 #
-#	NOTE 2: In the case of a proxied backup database, the full
-#	backup database
-#	name (including the "proxy:" prefix) must be specified in
-#	the proxymap server's proxy_read_maps or proxy_write_maps
-#	setting (depending on whether the access is read-only or
-#	read-write).
+#	NOTE 2: When multiple tables share the same memcache
+#	database, each table should use the \fBkey_format\fR feature
+#	(see below) to prepend its own unique string to the lookup
+#	key.  Otherwise, automatic \fBpostscreen\fR(8) or \fBverify\fR(8)
+#	cache cleanup may not work.
+#
+#	NOTE 3: When the backup database is accessed with "proxy:"
+#	lookups, the full backup database name (including the
+#	"proxy:" prefix) must be specified in the proxymap server's
+#	proxy_read_maps or proxy_write_maps setting (depending on
+#	whether the access is read-only or read-write).
 # .IP "\fBflags (default: 0)\fR"
 #	Optional flags that should be stored along with a memcache
-#	update.
+#	update. The flags are ignored when looking up information.
 # .IP "\fBttl (default: 3600)\fR"
 #	The expiration time in seconds of memcache updates.
 #
@@ -99,21 +103,26 @@
 # .ad
 # .fi
 # .IP "\fBkey_format (default: %s)\fB"
-#	Format of the lookup and update keys in memcache requests.
+#	Format of the lookup and update keys that the Postfix
+#	memcache client sends to the memcache server.
 #	By default, these are the same as the lookup and update
-#	keys that are given to the Postfix memcache client.
+#	keys that the memcache client receives from Postfix
+#	applications.
 #
-#	NOTE: The \fBkey_format\fR feature is not used for \fBbackup\fR
+#	NOTE 1: The \fBkey_format\fR feature is not used for \fBbackup\fR
 #	database requests.
 #
-#	When the same memcache database is used to cache information
-#	from multiple tables, you can use the \fBkey_format\fR
-#	feature to avoid name collisions by prepending a fixed
-#	string.  Examples:
+#	NOTE 2: When multiple tables share the same memcache
+#	database, each table should prepend its own unique string
+#	to the lookup key.  Otherwise, automatic \fBpostscreen\fR(8)
+#	or \fBverify\fR(8) cache cleanup may not work.
+#
+#	Examples:
 #
 # .nf
 #	    key_format = aliases:%s
-#	    key_format = access:%s
+#	    key_format = verify:%s
+#	    key_format = postscreen:%s
 # .fi
 #
 #	The \fBkey_format\fR parameter supports the following '%'

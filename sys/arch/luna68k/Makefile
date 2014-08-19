@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.3.38.1 2013/02/25 00:28:47 tls Exp $
+#	$NetBSD: Makefile,v 1.3.38.2 2014/08/20 00:03:09 tls Exp $
 
 # Makefile for luna68k tags file
 
-# Find where mips source files are for inclusion in tags
+# Find where m68k source files are for inclusion in tags
 .include <../m68k/Makefile.inc>
 
 TLUNA68K=	../luna68k/tags

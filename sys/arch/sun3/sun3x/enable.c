@@ -1,4 +1,4 @@
-/*	$NetBSD: enable.c,v 1.8 2008/04/28 20:23:38 martin Exp $	*/
+/*	$NetBSD: enable.c,v 1.8.44.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: enable.c,v 1.8 2008/04/28 20:23:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: enable.c,v 1.8.44.1 2014/08/20 00:03:26 tls Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: enable.c,v 1.8 2008/04/28 20:23:38 martin Exp $");
 
 volatile short *enable_reg;
 
-void 
+void
 enable_init(void)
 {
 	vaddr_t va;
@@ -57,7 +57,7 @@ enable_init(void)
  * External interfaces to the system enable register.
  */
 
-void 
+void
 enable_fpu(int on)
 {
 	int s;
@@ -75,7 +75,7 @@ enable_fpu(int on)
 	splx(s);
 }
 
-void 
+void
 enable_video(int on)
 {
 	int s;

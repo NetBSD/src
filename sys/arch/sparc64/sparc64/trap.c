@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.177.2.1 2013/06/23 06:20:13 tls Exp $ */
+/*	$NetBSD: trap.c,v 1.177.2.2 2014/08/20 00:03:25 tls Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.177.2.1 2013/06/23 06:20:13 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.177.2.2 2014/08/20 00:03:25 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -577,7 +577,7 @@ dopanic:
 				printf(" npc=%lx pstate=%s\n",
 				       (long)tf->tf_npc, sb);
 				DEBUGGER(type, tf);
-				panic(type < N_TRAP_TYPES ? trap_type[type] : T);
+				panic("%s", type < N_TRAP_TYPES ? trap_type[type] : T);
 			}
 			/* NOTREACHED */
 		}
@@ -709,12 +709,16 @@ badtrap:
 	case T_LDDF_ALIGN:
 	case T_STDF_ALIGN:
 		{
-		int64_t dsfsr, dsfar=0, isfsr;
-
+		int64_t dsfsr, dsfar=0;
+#ifdef DEBUG
+		int64_t isfsr;
+#endif
 		dsfsr = ldxa(SFSR, ASI_DMMU);
 		if (dsfsr & SFSR_FV)
 			dsfar = ldxa(SFAR, ASI_DMMU);
+#ifdef DEBUG
 		isfsr = ldxa(SFSR, ASI_IMMU);
+#endif
 		/* 
 		 * If we're busy doing copyin/copyout continue
 		 */

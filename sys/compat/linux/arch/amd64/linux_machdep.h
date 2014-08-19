@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.13 2010/07/07 01:30:33 chs Exp $ */
+/*	$NetBSD: linux_machdep.h,v 1.13.18.1 2014/08/20 00:03:31 tls Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -41,6 +41,7 @@
 #include <compat/linux/common/linux_siginfo.h>
 
 /* From <asm/sigcontext.h> */
+/* Matches the cpu's fxsave format */
 struct linux__fpstate {
 	u_int16_t cwd;
 	u_int16_t swd;
@@ -54,6 +55,7 @@ struct linux__fpstate {
 	u_int32_t xmm_space[64];
 	u_int32_t reserved2[24];
 };
+__CTASSERT(sizeof (struct linux__fpstate) == 512);
 
 /* From <asm/sigcontext.h> */
 struct linux_sigcontext {

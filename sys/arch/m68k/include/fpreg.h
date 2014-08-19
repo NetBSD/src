@@ -1,4 +1,4 @@
-/*	$NetBSD: fpreg.h,v 1.1 2009/01/27 20:03:12 martin Exp $	*/
+/*	$NetBSD: fpreg.h,v 1.1.30.1 2014/08/20 00:03:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross
@@ -49,6 +49,7 @@
 # define FPSR_QSG   0x00800000
 # define FPSR_QUO   0x007f0000
 #define FPSR_EXCP   0x0000ff00
+#define FPSR_EXCP2  0x00003e00
 # define FPSR_BSUN  0x00008000
 # define FPSR_SNAN  0x00004000
 # define FPSR_OPERR 0x00002000
@@ -57,7 +58,7 @@
 # define FPSR_DZ    0x00000400
 # define FPSR_INEX2 0x00000200
 # define FPSR_INEX1 0x00000100
-#define FPSR_AEX    0x000000ff
+#define FPSR_AEX    0x000000f8
 # define FPSR_AIOP  0x00000080
 # define FPSR_AOVFL 0x00000040
 # define FPSR_AUNFL 0x00000020
@@ -66,6 +67,7 @@
 
 /* fpcr */
 #define FPCR_EXCP   FPSR_EXCP
+#define FPCR_EXCP2  FPSR_EXCP2
 # define FPCR_BSUN  FPSR_BSUN
 # define FPCR_SNAN  FPSR_SNAN
 # define FPCR_OPERR FPSR_OPERR

@@ -1,8 +1,6 @@
 /* Support routines for decoding "stabs" debugging information format.
 
-   Copyright (C) 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
-   1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-   2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,7 +24,7 @@
    Avoid placing any object file format specific code in this file.  */
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "bfd.h"
 #include "gdb_obstack.h"
 #include "symtab.h"
@@ -41,6 +39,7 @@
 #include "buildsym.h"
 #include "complaints.h"
 #include "demangle.h"
+#include "gdb-demangle.h"
 #include "language.h"
 #include "doublest.h"
 #include "cp-abi.h"
@@ -99,7 +98,7 @@ static void
 patch_block_stabs (struct pending *, struct pending_stabs *,
 		   struct objfile *);
 
-static void fix_common_block (struct symbol *, int);
+static void fix_common_block (struct symbol *, CORE_ADDR);
 
 static int read_type_number (char **, int *);
 
@@ -208,6 +207,23 @@ static int noname_undefs_length;
     if (**(pp) == '\\' || (**(pp) == '?' && (*(pp))[1] == '\0')) \
       *(pp) = next_symbol_text (objfile);	\
   } while (0)
+
+/* Vector of types defined so far, indexed by their type numbers.
+   (In newer sun systems, dbx uses a pair of numbers in parens,
+   as in "(SUBFILENUM,NUMWITHINSUBFILE)".
+   Then these numbers must be translated through the type_translations
+   hash table to get the index into the type vector.)  */
+
+static struct type **type_vector;
+
+/* Number of elements allocated for type_vector currently.  */
+
+static int type_vector_length;
+
+/* Initial size of type vector.  Is realloc'd larger if needed, and
+   realloc'd down to the size actually used, when completed.  */
+
+#define INITIAL_TYPE_VECTOR_LENGTH 160
 
 
 /* Look up a dbx type-number pair.  Return the address of the slot
@@ -380,16 +396,12 @@ patch_block_stabs (struct pending *symbols, struct pending_stabs *stabs,
 	      /* On xcoff, if a global is defined and never referenced,
 	         ld will remove it from the executable.  There is then
 	         a N_GSYM stab for it, but no regular (C_EXT) symbol.  */
-	      sym = (struct symbol *)
-		obstack_alloc (&objfile->objfile_obstack,
-			       sizeof (struct symbol));
-
-	      memset (sym, 0, sizeof (struct symbol));
+	      sym = allocate_symbol (objfile);
 	      SYMBOL_DOMAIN (sym) = VAR_DOMAIN;
-	      SYMBOL_CLASS (sym) = LOC_OPTIMIZED_OUT;
+	      SYMBOL_ACLASS_INDEX (sym) = LOC_OPTIMIZED_OUT;
 	      SYMBOL_SET_LINKAGE_NAME
-		(sym, obsavestring (name, pp - name,
-				    &objfile->objfile_obstack));
+		(sym, obstack_copy0 (&objfile->objfile_obstack,
+				     name, pp - name));
 	      pp += 2;
 	      if (*(pp - 1) == 'F' || *(pp - 1) == 'f')
 		{
@@ -605,6 +617,11 @@ static const struct symbol_register_ops stab_register_funcs = {
   stab_reg_to_regnum
 };
 
+/* The "aclass" indices for computed symbols.  */
+
+static int stab_register_index;
+static int stab_regparm_index;
+
 struct symbol *
 define_symbol (CORE_ADDR valu, char *string, int desc, int type,
 	       struct objfile *objfile)
@@ -648,22 +665,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
      e.g. ":t10=*2" or a nameless enum like " :T16=ered:0,green:1,blue:2,;" */
   nameless = (p == string || ((string[0] == ' ') && (string[1] == ':')));
 
-  current_symbol = sym = (struct symbol *)
-    obstack_alloc (&objfile->objfile_obstack, sizeof (struct symbol));
-  memset (sym, 0, sizeof (struct symbol));
-
-  switch (type & N_TYPE)
-    {
-    case N_TEXT:
-      SYMBOL_SECTION (sym) = SECT_OFF_TEXT (objfile);
-      break;
-    case N_DATA:
-      SYMBOL_SECTION (sym) = SECT_OFF_DATA (objfile);
-      break;
-    case N_BSS:
-      SYMBOL_SECTION (sym) = SECT_OFF_BSS (objfile);
-      break;
-    }
+  current_symbol = sym = allocate_symbol (objfile);
 
   if (processing_gcc_compilation)
     {
@@ -711,7 +713,8 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
   else
     {
     normal:
-      SYMBOL_SET_LANGUAGE (sym, current_subfile->language);
+      SYMBOL_SET_LANGUAGE (sym, current_subfile->language,
+			   &objfile->objfile_obstack);
       if (SYMBOL_LANGUAGE (sym) == language_cplus)
 	{
 	  char *name = alloca (p - string + 1);
@@ -729,7 +732,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
 	SYMBOL_SET_NAMES (sym, string, p - string, 1, objfile);
 
       if (SYMBOL_LANGUAGE (sym) == language_cplus)
-	cp_scan_for_anonymous_namespaces (sym);
+	cp_scan_for_anonymous_namespaces (sym, objfile);
 
     }
   p++;
@@ -762,7 +765,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
          (where type 6 is defined by "blobs:t6=eblob1:0,blob2:1,;").  */
       if (*p != '=')
 	{
-	  SYMBOL_CLASS (sym) = LOC_CONST;
+	  SYMBOL_ACLASS_INDEX (sym) = LOC_CONST;
 	  SYMBOL_TYPE (sym) = error_type (&p, objfile);
 	  SYMBOL_DOMAIN (sym) = VAR_DOMAIN;
 	  add_symbol_to_list (sym, &file_symbols);
@@ -789,7 +792,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
 
 	    SYMBOL_TYPE (sym) = dbl_type;
 	    SYMBOL_VALUE_BYTES (sym) = dbl_valu;
-	    SYMBOL_CLASS (sym) = LOC_CONST_BYTES;
+	    SYMBOL_ACLASS_INDEX (sym) = LOC_CONST_BYTES;
 	  }
 	  break;
 	case 'i':
@@ -803,7 +806,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
 
 	    SYMBOL_TYPE (sym) = objfile_type (objfile)->builtin_long;
 	    SYMBOL_VALUE (sym) = atoi (p);
-	    SYMBOL_CLASS (sym) = LOC_CONST;
+	    SYMBOL_ACLASS_INDEX (sym) = LOC_CONST;
 	  }
 	  break;
 
@@ -811,7 +814,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
 	  {
 	    SYMBOL_TYPE (sym) = objfile_type (objfile)->builtin_char;
 	    SYMBOL_VALUE (sym) = atoi (p);
-	    SYMBOL_CLASS (sym) = LOC_CONST;
+	    SYMBOL_ACLASS_INDEX (sym) = LOC_CONST;
 	  }
 	  break;
 
@@ -825,7 +828,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
 
 	    if (quote != '\'' && quote != '"')
 	      {
-		SYMBOL_CLASS (sym) = LOC_CONST;
+		SYMBOL_ACLASS_INDEX (sym) = LOC_CONST;
 		SYMBOL_TYPE (sym) = error_type (&p, objfile);
 		SYMBOL_DOMAIN (sym) = VAR_DOMAIN;
 		add_symbol_to_list (sym, &file_symbols);
@@ -850,7 +853,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
 	      }
 	    if (*p != quote)
 	      {
-		SYMBOL_CLASS (sym) = LOC_CONST;
+		SYMBOL_ACLASS_INDEX (sym) = LOC_CONST;
 		SYMBOL_TYPE (sym) = error_type (&p, objfile);
 		SYMBOL_DOMAIN (sym) = VAR_DOMAIN;
 		add_symbol_to_list (sym, &file_symbols);
@@ -871,7 +874,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
 	    p++;
 
 	    SYMBOL_VALUE_BYTES (sym) = string_value;
-	    SYMBOL_CLASS (sym) = LOC_CONST_BYTES;
+	    SYMBOL_ACLASS_INDEX (sym) = LOC_CONST_BYTES;
 	  }
 	  break;
 
@@ -881,7 +884,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
 	     e.g. "b:c=e6,0" for "const b = blob1"
 	     (where type 6 is defined by "blobs:t6=eblob1:0,blob2:1,;").  */
 	  {
-	    SYMBOL_CLASS (sym) = LOC_CONST;
+	    SYMBOL_ACLASS_INDEX (sym) = LOC_CONST;
 	    SYMBOL_TYPE (sym) = read_type (&p, objfile);
 
 	    if (*p != ',')
@@ -902,7 +905,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
 	  break;
 	default:
 	  {
-	    SYMBOL_CLASS (sym) = LOC_CONST;
+	    SYMBOL_ACLASS_INDEX (sym) = LOC_CONST;
 	    SYMBOL_TYPE (sym) = error_type (&p, objfile);
 	  }
 	}
@@ -913,7 +916,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
     case 'C':
       /* The name of a caught exception.  */
       SYMBOL_TYPE (sym) = read_type (&p, objfile);
-      SYMBOL_CLASS (sym) = LOC_LABEL;
+      SYMBOL_ACLASS_INDEX (sym) = LOC_LABEL;
       SYMBOL_DOMAIN (sym) = VAR_DOMAIN;
       SYMBOL_VALUE_ADDRESS (sym) = valu;
       add_symbol_to_list (sym, &local_symbols);
@@ -922,7 +925,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
     case 'f':
       /* A static function definition.  */
       SYMBOL_TYPE (sym) = read_type (&p, objfile);
-      SYMBOL_CLASS (sym) = LOC_BLOCK;
+      SYMBOL_ACLASS_INDEX (sym) = LOC_BLOCK;
       SYMBOL_DOMAIN (sym) = VAR_DOMAIN;
       add_symbol_to_list (sym, &file_symbols);
       /* fall into process_function_types.  */
@@ -993,7 +996,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
     case 'F':
       /* A global function definition.  */
       SYMBOL_TYPE (sym) = read_type (&p, objfile);
-      SYMBOL_CLASS (sym) = LOC_BLOCK;
+      SYMBOL_ACLASS_INDEX (sym) = LOC_BLOCK;
       SYMBOL_DOMAIN (sym) = VAR_DOMAIN;
       add_symbol_to_list (sym, &global_symbols);
       goto process_function_types;
@@ -1004,7 +1007,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
          corresponding linker definition to find the value.
          These definitions appear at the end of the namelist.  */
       SYMBOL_TYPE (sym) = read_type (&p, objfile);
-      SYMBOL_CLASS (sym) = LOC_STATIC;
+      SYMBOL_ACLASS_INDEX (sym) = LOC_STATIC;
       SYMBOL_DOMAIN (sym) = VAR_DOMAIN;
       /* Don't add symbol references to global_sym_chain.
          Symbol references don't have valid names and wont't match up with
@@ -1025,7 +1028,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
     case 's':
     case 'l':
       SYMBOL_TYPE (sym) = read_type (&p, objfile);
-      SYMBOL_CLASS (sym) = LOC_LOCAL;
+      SYMBOL_ACLASS_INDEX (sym) = LOC_LOCAL;
       SYMBOL_VALUE (sym) = valu;
       SYMBOL_DOMAIN (sym) = VAR_DOMAIN;
       add_symbol_to_list (sym, &local_symbols);
@@ -1045,7 +1048,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
       else
 	SYMBOL_TYPE (sym) = read_type (&p, objfile);
 
-      SYMBOL_CLASS (sym) = LOC_ARG;
+      SYMBOL_ACLASS_INDEX (sym) = LOC_ARG;
       SYMBOL_VALUE (sym) = valu;
       SYMBOL_DOMAIN (sym) = VAR_DOMAIN;
       SYMBOL_IS_ARGUMENT (sym) = 1;
@@ -1093,8 +1096,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
     case 'R':
       /* Parameter which is in a register.  */
       SYMBOL_TYPE (sym) = read_type (&p, objfile);
-      SYMBOL_CLASS (sym) = LOC_REGISTER;
-      SYMBOL_REGISTER_OPS (sym) = &stab_register_funcs;
+      SYMBOL_ACLASS_INDEX (sym) = stab_register_index;
       SYMBOL_IS_ARGUMENT (sym) = 1;
       SYMBOL_VALUE (sym) = valu;
       SYMBOL_DOMAIN (sym) = VAR_DOMAIN;
@@ -1104,8 +1106,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
     case 'r':
       /* Register variable (either global or local).  */
       SYMBOL_TYPE (sym) = read_type (&p, objfile);
-      SYMBOL_CLASS (sym) = LOC_REGISTER;
-      SYMBOL_REGISTER_OPS (sym) = &stab_register_funcs;
+      SYMBOL_ACLASS_INDEX (sym) = stab_register_index;
       SYMBOL_VALUE (sym) = valu;
       SYMBOL_DOMAIN (sym) = VAR_DOMAIN;
       if (within_function)
@@ -1142,8 +1143,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
 		  && strcmp (SYMBOL_LINKAGE_NAME (prev_sym),
 			     SYMBOL_LINKAGE_NAME (sym)) == 0)
 		{
-		  SYMBOL_CLASS (prev_sym) = LOC_REGISTER;
-		  SYMBOL_REGISTER_OPS (prev_sym) = &stab_register_funcs;
+		  SYMBOL_ACLASS_INDEX (prev_sym) = stab_register_index;
 		  /* Use the type from the LOC_REGISTER; that is the type
 		     that is actually in that register.  */
 		  SYMBOL_TYPE (prev_sym) = SYMBOL_TYPE (sym);
@@ -1161,7 +1161,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
     case 'S':
       /* Static symbol at top level of file.  */
       SYMBOL_TYPE (sym) = read_type (&p, objfile);
-      SYMBOL_CLASS (sym) = LOC_STATIC;
+      SYMBOL_ACLASS_INDEX (sym) = LOC_STATIC;
       SYMBOL_VALUE_ADDRESS (sym) = valu;
       if (gdbarch_static_transform_name_p (gdbarch)
 	  && gdbarch_static_transform_name (gdbarch,
@@ -1174,7 +1174,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
 					NULL, objfile);
 	  if (msym != NULL)
 	    {
-	      char *new_name = gdbarch_static_transform_name
+	      const char *new_name = gdbarch_static_transform_name
 		(gdbarch, SYMBOL_LINKAGE_NAME (sym));
 
 	      SYMBOL_SET_LINKAGE_NAME (sym, new_name);
@@ -1210,7 +1210,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
       if (nameless)
 	return NULL;
 
-      SYMBOL_CLASS (sym) = LOC_TYPEDEF;
+      SYMBOL_ACLASS_INDEX (sym) = LOC_TYPEDEF;
       SYMBOL_VALUE (sym) = valu;
       SYMBOL_DOMAIN (sym) = VAR_DOMAIN;
       /* C++ vagaries: we may have a type which is derived from
@@ -1291,11 +1291,10 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
       if (synonym)
         {
           /* Create the STRUCT_DOMAIN clone.  */
-          struct symbol *struct_sym = (struct symbol *)
-            obstack_alloc (&objfile->objfile_obstack, sizeof (struct symbol));
+          struct symbol *struct_sym = allocate_symbol (objfile);
 
           *struct_sym = *sym;
-          SYMBOL_CLASS (struct_sym) = LOC_TYPEDEF;
+          SYMBOL_ACLASS_INDEX (struct_sym) = LOC_TYPEDEF;
           SYMBOL_VALUE (struct_sym) = valu;
           SYMBOL_DOMAIN (struct_sym) = STRUCT_DOMAIN;
           if (TYPE_NAME (SYMBOL_TYPE (sym)) == 0)
@@ -1323,7 +1322,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
       if (nameless)
 	return NULL;
 
-      SYMBOL_CLASS (sym) = LOC_TYPEDEF;
+      SYMBOL_ACLASS_INDEX (sym) = LOC_TYPEDEF;
       SYMBOL_VALUE (sym) = valu;
       SYMBOL_DOMAIN (sym) = STRUCT_DOMAIN;
       if (TYPE_TAG_NAME (SYMBOL_TYPE (sym)) == 0)
@@ -1336,11 +1335,10 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
       if (synonym)
 	{
 	  /* Clone the sym and then modify it.  */
-	  struct symbol *typedef_sym = (struct symbol *)
-	    obstack_alloc (&objfile->objfile_obstack, sizeof (struct symbol));
+	  struct symbol *typedef_sym = allocate_symbol (objfile);
 
 	  *typedef_sym = *sym;
-	  SYMBOL_CLASS (typedef_sym) = LOC_TYPEDEF;
+	  SYMBOL_ACLASS_INDEX (typedef_sym) = LOC_TYPEDEF;
 	  SYMBOL_VALUE (typedef_sym) = valu;
 	  SYMBOL_DOMAIN (typedef_sym) = VAR_DOMAIN;
 	  if (TYPE_NAME (SYMBOL_TYPE (sym)) == 0)
@@ -1355,7 +1353,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
     case 'V':
       /* Static symbol of local scope.  */
       SYMBOL_TYPE (sym) = read_type (&p, objfile);
-      SYMBOL_CLASS (sym) = LOC_STATIC;
+      SYMBOL_ACLASS_INDEX (sym) = LOC_STATIC;
       SYMBOL_VALUE_ADDRESS (sym) = valu;
       if (gdbarch_static_transform_name_p (gdbarch)
 	  && gdbarch_static_transform_name (gdbarch,
@@ -1368,7 +1366,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
 					NULL, objfile);
 	  if (msym != NULL)
 	    {
-	      char *new_name = gdbarch_static_transform_name
+	      const char *new_name = gdbarch_static_transform_name
 		(gdbarch, SYMBOL_LINKAGE_NAME (sym));
 
 	      SYMBOL_SET_LINKAGE_NAME (sym, new_name);
@@ -1382,7 +1380,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
     case 'v':
       /* Reference parameter */
       SYMBOL_TYPE (sym) = read_type (&p, objfile);
-      SYMBOL_CLASS (sym) = LOC_REF_ARG;
+      SYMBOL_ACLASS_INDEX (sym) = LOC_REF_ARG;
       SYMBOL_IS_ARGUMENT (sym) = 1;
       SYMBOL_VALUE (sym) = valu;
       SYMBOL_DOMAIN (sym) = VAR_DOMAIN;
@@ -1392,8 +1390,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
     case 'a':
       /* Reference parameter which is in a register.  */
       SYMBOL_TYPE (sym) = read_type (&p, objfile);
-      SYMBOL_CLASS (sym) = LOC_REGPARM_ADDR;
-      SYMBOL_REGISTER_OPS (sym) = &stab_register_funcs;
+      SYMBOL_ACLASS_INDEX (sym) = stab_regparm_index;
       SYMBOL_IS_ARGUMENT (sym) = 1;
       SYMBOL_VALUE (sym) = valu;
       SYMBOL_DOMAIN (sym) = VAR_DOMAIN;
@@ -1406,7 +1403,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
          that Pascal uses it too, but when I tried it Pascal used
          "x:3" (local symbol) instead.  */
       SYMBOL_TYPE (sym) = read_type (&p, objfile);
-      SYMBOL_CLASS (sym) = LOC_LOCAL;
+      SYMBOL_ACLASS_INDEX (sym) = LOC_LOCAL;
       SYMBOL_VALUE (sym) = valu;
       SYMBOL_DOMAIN (sym) = VAR_DOMAIN;
       add_symbol_to_list (sym, &local_symbols);
@@ -1414,7 +1411,7 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
 
     default:
       SYMBOL_TYPE (sym) = error_type (&p, objfile);
-      SYMBOL_CLASS (sym) = LOC_CONST;
+      SYMBOL_ACLASS_INDEX (sym) = LOC_CONST;
       SYMBOL_VALUE (sym) = 0;
       SYMBOL_DOMAIN (sym) = VAR_DOMAIN;
       add_symbol_to_list (sym, &file_symbols);
@@ -1431,11 +1428,11 @@ define_symbol (CORE_ADDR valu, char *string, int desc, int type,
       /* We have to convert LOC_REGISTER to LOC_REGPARM_ADDR (for
          variables passed in a register).  */
       if (SYMBOL_CLASS (sym) == LOC_REGISTER)
-	SYMBOL_CLASS (sym) = LOC_REGPARM_ADDR;
+	SYMBOL_ACLASS_INDEX (sym) = LOC_REGPARM_ADDR;
       /* Likewise for converting LOC_ARG to LOC_REF_ARG (for the 7th
 	 and subsequent arguments on SPARC, for example).  */
       else if (SYMBOL_CLASS (sym) == LOC_ARG)
-	SYMBOL_CLASS (sym) = LOC_REF_ARG;
+	SYMBOL_ACLASS_INDEX (sym) = LOC_REF_ARG;
     }
 
   return sym;
@@ -1633,8 +1630,8 @@ again:
 	      new_name = cp_canonicalize_string (name);
 	      if (new_name != NULL)
 		{
-		  type_name = obsavestring (new_name, strlen (new_name),
-					    &objfile->objfile_obstack);
+		  type_name = obstack_copy0 (&objfile->objfile_obstack,
+					     new_name, strlen (new_name));
 		  xfree (new_name);
 		}
 	    }
@@ -2025,11 +2022,9 @@ again:
 	make_vector_type (type);
       break;
 
-    case 'S':			/* Set or bitstring  type */
+    case 'S':			/* Set type */
       type1 = read_type (pp, objfile);
       type = create_set_type ((struct type *) NULL, type1);
-      if (is_string)
-	TYPE_CODE (type) = TYPE_CODE_BITSTRING;
       if (typenums[0] != -1)
 	*dbx_lookup_type (typenums, objfile) = type;
       break;
@@ -2233,10 +2228,11 @@ rs6000_builtin_type (int typenum, struct objfile *objfile)
 
 /* This page contains subroutines of read_type.  */
 
-/* Replace *OLD_NAME with the method name portion of PHYSNAME.  */
+/* Wrapper around method_name_from_physname to flag a complaint
+   if there is an error.  */
 
-static void
-update_method_name_from_physname (char **old_name, char *physname)
+static char *
+stabs_method_name_from_physname (const char *physname)
 {
   char *method_name;
 
@@ -2246,16 +2242,10 @@ update_method_name_from_physname (char **old_name, char *physname)
     {
       complaint (&symfile_complaints,
 		 _("Method has bad physname %s\n"), physname);
-      return;
+      return NULL;
     }
 
-  if (strcmp (*old_name, method_name) != 0)
-    {
-      xfree (*old_name);
-      *old_name = method_name;
-    }
-  else
-    xfree (method_name);
+  return method_name;
 }
 
 /* Read member function stabs info for C++ classes.  The form of each member
@@ -2279,10 +2269,6 @@ read_member_functions (struct field_info *fip, char **pp, struct type *type,
 {
   int nfn_fields = 0;
   int length = 0;
-  /* Total number of member functions defined in this class.  If the class
-     defines two `f' functions, and one `g' function, then this will have
-     the value 3.  */
-  int total_length = 0;
   int i;
   struct next_fnfield
     {
@@ -2682,7 +2668,6 @@ read_member_functions (struct field_info *fip, char **pp, struct type *type,
 	      destr_fnlist->next = fip->fnlist;
 	      fip->fnlist = destr_fnlist;
 	      nfn_fields++;
-	      total_length += has_destructor;
 	      length -= has_destructor;
 	    }
 	  else if (is_v3)
@@ -2693,14 +2678,24 @@ read_member_functions (struct field_info *fip, char **pp, struct type *type,
 		 - in -gstabs instead of -gstabs+
 		 - or for static methods, which are output as a function type
 		   instead of a method type.  */
+	      char *new_method_name =
+		stabs_method_name_from_physname (sublist->fn_field.physname);
 
-	      update_method_name_from_physname (&new_fnlist->fn_fieldlist.name,
-						sublist->fn_field.physname);
+	      if (new_method_name != NULL
+		  && strcmp (new_method_name,
+			     new_fnlist->fn_fieldlist.name) != 0)
+		{
+		  new_fnlist->fn_fieldlist.name = new_method_name;
+		  xfree (main_fn_name);
+		}
+	      else
+		xfree (new_method_name);
 	    }
 	  else if (has_destructor && new_fnlist->fn_fieldlist.name[0] != '~')
 	    {
 	      new_fnlist->fn_fieldlist.name =
-		concat ("~", main_fn_name, (char *)NULL);
+		obconcat (&objfile->objfile_obstack,
+			  "~", main_fn_name, (char *)NULL);
 	      xfree (main_fn_name);
 	    }
 	  else if (!has_stub)
@@ -2715,8 +2710,9 @@ read_member_functions (struct field_info *fip, char **pp, struct type *type,
 					     dem_opname, 0);
 	      if (ret)
 		new_fnlist->fn_fieldlist.name
-		  = obsavestring (dem_opname, strlen (dem_opname),
-				  &objfile->objfile_obstack);
+		  = obstack_copy0 (&objfile->objfile_obstack,
+				   dem_opname, strlen (dem_opname));
+	      xfree (main_fn_name);
 	    }
 
 	  new_fnlist->fn_fieldlist.fn_fields = (struct fn_field *)
@@ -2733,7 +2729,6 @@ read_member_functions (struct field_info *fip, char **pp, struct type *type,
 	  new_fnlist->next = fip->fnlist;
 	  fip->fnlist = new_fnlist;
 	  nfn_fields++;
-	  total_length += length;
 	}
     }
 
@@ -2745,7 +2740,6 @@ read_member_functions (struct field_info *fip, char **pp, struct type *type,
       memset (TYPE_FN_FIELDLISTS (type), 0,
 	      sizeof (struct fn_fieldlist) * nfn_fields);
       TYPE_NFN_FIELDS (type) = nfn_fields;
-      TYPE_NFN_FIELDS_TOTAL (type) = total_length;
     }
 
   return 1;
@@ -2761,7 +2755,7 @@ read_cpp_abbrev (struct field_info *fip, char **pp, struct type *type,
 		 struct objfile *objfile)
 {
   char *p;
-  char *name;
+  const char *name;
   char cpp_abbrev;
   struct type *context;
 
@@ -2832,8 +2826,8 @@ read_cpp_abbrev (struct field_info *fip, char **pp, struct type *type,
       {
 	int nbits;
 
-	FIELD_BITPOS (fip->list->field) = read_huge_number (pp, ';', &nbits,
-                                                            0);
+	SET_FIELD_BITPOS (fip->list->field,
+			  read_huge_number (pp, ';', &nbits, 0));
 	if (nbits != 0)
 	  return 0;
       }
@@ -2859,7 +2853,7 @@ read_one_struct_field (struct field_info *fip, char **pp, char *p,
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
 
   fip->list->field.name =
-    obsavestring (*pp, p - *pp, &objfile->objfile_obstack);
+    obstack_copy0 (&objfile->objfile_obstack, *pp, p - *pp);
   *pp = p + 1;
 
   /* This means we have a visibility for a field coming.  */
@@ -2909,7 +2903,8 @@ read_one_struct_field (struct field_info *fip, char **pp, char *p,
   {
     int nbits;
 
-    FIELD_BITPOS (fip->list->field) = read_huge_number (pp, ',', &nbits, 0);
+    SET_FIELD_BITPOS (fip->list->field,
+		      read_huge_number (pp, ',', &nbits, 0));
     if (nbits != 0)
       {
 	stabs_general_complaint ("bad structure-type format");
@@ -3189,7 +3184,7 @@ read_baseclasses (struct field_info *fip, char **pp, struct type *type,
 	   corresponding to this baseclass.  Always zero in the absence of
 	   multiple inheritance.  */
 
-	FIELD_BITPOS (new->field) = read_huge_number (pp, ',', &nbits, 0);
+	SET_FIELD_BITPOS (new->field, read_huge_number (pp, ',', &nbits, 0));
 	if (nbits != 0)
 	  return 0;
       }
@@ -3274,7 +3269,7 @@ read_tilde_fields (struct field_info *fip, char **pp, struct type *type,
 		   i >= TYPE_N_BASECLASSES (t);
 		   --i)
 		{
-		  char *name = TYPE_FIELD_NAME (t, i);
+		  const char *name = TYPE_FIELD_NAME (t, i);
 
 		  if (!strncmp (name, vptr_name, sizeof (vptr_name) - 2)
 		      && is_cplus_marker (name[sizeof (vptr_name) - 2]))
@@ -3414,8 +3409,8 @@ attach_fields_to_type (struct field_info *fip, struct type *type,
 static void 
 complain_about_struct_wipeout (struct type *type)
 {
-  char *name = "";
-  char *kind = "";
+  const char *name = "";
+  const char *kind = "";
 
   if (TYPE_TAG_NAME (type))
     {
@@ -3537,7 +3532,10 @@ read_struct_type (char **pp, struct type *type, enum type_code type_code,
 
     TYPE_LENGTH (type) = read_huge_number (pp, 0, &nbits, 0);
     if (nbits != 0)
-      return error_type (pp, objfile);
+      {
+	do_cleanups (back_to);
+	return error_type (pp, objfile);
+      }
     set_length_in_type_chain (type);
   }
 
@@ -3677,18 +3675,17 @@ read_enum_type (char **pp, struct type *type,
       p = *pp;
       while (*p != ':')
 	p++;
-      name = obsavestring (*pp, p - *pp, &objfile->objfile_obstack);
+      name = obstack_copy0 (&objfile->objfile_obstack, *pp, p - *pp);
       *pp = p + 1;
       n = read_huge_number (pp, ',', &nbits, 0);
       if (nbits != 0)
 	return error_type (pp, objfile);
 
-      sym = (struct symbol *)
-	obstack_alloc (&objfile->objfile_obstack, sizeof (struct symbol));
-      memset (sym, 0, sizeof (struct symbol));
+      sym = allocate_symbol (objfile);
       SYMBOL_SET_LINKAGE_NAME (sym, name);
-      SYMBOL_SET_LANGUAGE (sym, current_subfile->language);
-      SYMBOL_CLASS (sym) = LOC_CONST;
+      SYMBOL_SET_LANGUAGE (sym, current_subfile->language,
+			   &objfile->objfile_obstack);
+      SYMBOL_ACLASS_INDEX (sym) = LOC_CONST;
       SYMBOL_DOMAIN (sym) = VAR_DOMAIN;
       SYMBOL_VALUE (sym) = n;
       if (n < 0)
@@ -3732,7 +3729,7 @@ read_enum_type (char **pp, struct type *type,
 
 	  SYMBOL_TYPE (xsym) = type;
 	  TYPE_FIELD_NAME (type, n) = SYMBOL_LINKAGE_NAME (xsym);
-	  TYPE_FIELD_BITPOS (type, n) = SYMBOL_VALUE (xsym);
+	  SET_FIELD_ENUMVAL (TYPE_FIELD (type, n), SYMBOL_VALUE (xsym));
 	  TYPE_FIELD_BITSIZE (type, n) = 0;
 	}
       if (syms == osyms)
@@ -4331,8 +4328,8 @@ common_block_start (char *name, struct objfile *objfile)
     }
   common_block = local_symbols;
   common_block_i = local_symbols ? local_symbols->nsyms : 0;
-  common_block_name = obsavestring (name, strlen (name),
-				    &objfile->objfile_obstack);
+  common_block_name = obstack_copy0 (&objfile->objfile_obstack,
+				     name, strlen (name));
 }
 
 /* Process a N_ECOMM symbol.  */
@@ -4357,12 +4354,10 @@ common_block_end (struct objfile *objfile)
       return;
     }
 
-  sym = (struct symbol *)
-    obstack_alloc (&objfile->objfile_obstack, sizeof (struct symbol));
-  memset (sym, 0, sizeof (struct symbol));
+  sym = allocate_symbol (objfile);
   /* Note: common_block_name already saved on objfile_obstack.  */
   SYMBOL_SET_LINKAGE_NAME (sym, common_block_name);
-  SYMBOL_CLASS (sym) = LOC_BLOCK;
+  SYMBOL_ACLASS_INDEX (sym) = LOC_BLOCK;
 
   /* Now we copy all the symbols which have been defined since the BCOMM.  */
 
@@ -4399,7 +4394,7 @@ common_block_end (struct objfile *objfile)
    the common block name).  */
 
 static void
-fix_common_block (struct symbol *sym, int valu)
+fix_common_block (struct symbol *sym, CORE_ADDR valu)
 {
   struct pending *next = (struct pending *) SYMBOL_TYPE (sym);
 
@@ -4553,7 +4548,7 @@ cleanup_undefined_types_1 (void)
 		struct pending *ppt;
 		int i;
 		/* Name of the type, without "struct" or "union".  */
-		char *typename = TYPE_TAG_NAME (*type);
+		const char *typename = TYPE_TAG_NAME (*type);
 
 		if (typename == NULL)
 		  {
@@ -4599,7 +4594,7 @@ cleanup_undefined_types_1 (void)
    this unit.  */
 
 void
-cleanup_undefined_types (struct objfile *objfile)
+cleanup_undefined_stabs_types (struct objfile *objfile)
 {
   cleanup_undefined_types_1 ();
   cleanup_undefined_types_noname (objfile);
@@ -4732,12 +4727,12 @@ scan_file_globals (struct objfile *objfile)
 
 	  /* Complain about unresolved common block symbols.  */
 	  if (SYMBOL_CLASS (prev) == LOC_STATIC)
-	    SYMBOL_CLASS (prev) = LOC_UNRESOLVED;
+	    SYMBOL_ACLASS_INDEX (prev) = LOC_UNRESOLVED;
 	  else
 	    complaint (&symfile_complaints,
 		       _("%s: common block `%s' from "
 			 "global_sym_chain unresolved"),
-		       objfile->name, SYMBOL_PRINT_NAME (prev));
+		       objfile_name (objfile), SYMBOL_PRINT_NAME (prev));
 	}
     }
   memset (global_sym_chain, 0, sizeof (global_sym_chain));
@@ -4847,4 +4842,9 @@ _initialize_stabsread (void)
   noname_undefs_length = 0;
   noname_undefs = (struct nat *)
     xmalloc (noname_undefs_allocated * sizeof (struct nat));
+
+  stab_register_index = register_symbol_register_impl (LOC_REGISTER,
+						       &stab_register_funcs);
+  stab_regparm_index = register_symbol_register_impl (LOC_REGPARM_ADDR,
+						      &stab_register_funcs);
 }

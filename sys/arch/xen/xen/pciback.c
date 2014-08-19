@@ -1,4 +1,4 @@
-/*      $NetBSD: pciback.c,v 1.7 2012/02/02 19:43:01 tls Exp $      */
+/*      $NetBSD: pciback.c,v 1.7.6.1 2014/08/20 00:03:30 tls Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.7 2012/02/02 19:43:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.7.6.1 2014/08/20 00:03:30 tls Exp $");
 
 #include "opt_xen.h"
 
@@ -222,6 +222,7 @@ pciback_pci_attach(device_t parent, device_t self, void *aux)
 	kernfs_entry_t *dkt;
 	kfstype kfst;
 	pcireg_t reg;
+	char buf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_pb = pciback_pci_lookup(pa->pa_bus, pa->pa_device, pa->pa_function);
@@ -263,9 +264,9 @@ pciback_pci_attach(device_t parent, device_t self, void *aux)
 	if (pci_intr_map(pa, &sc->sc_intrhandle) != 0) {
 		aprint_error_dev(self, "couldn't map interrupt\n");
 	} else {
-		intrstr = pci_intr_string(pa->pa_pc, sc->sc_intrhandle);
-		aprint_normal_dev(self, "interrupting at %s\n",
-		    intrstr ? intrstr : "unknown interrupt");
+		intrstr = pci_intr_string(pa->pa_pc, sc->sc_intrhandle,
+		    buf, sizeof(buf));
+		aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 	}
 	unbind_pirq_from_evtch(APIC_IRQ_LEGACY_IRQ(sc->sc_intrhandle.pirq));
 	sc->sc_irq = APIC_IRQ_LEGACY_IRQ(sc->sc_intrhandle.pirq);
@@ -311,23 +312,31 @@ pciback_kernfs_read(void *v)
 
 	off = uio->uio_offset;
 	len = 0;
-	len += snprintf(&buf[len], PCIBACK_KERNFS_SIZE - len,
+	len += snprintf(&buf[len], sizeof(buf) - len,
 	    "vendor: 0x%04x\nproduct: 0x%04x\n",
 	    PCI_VENDOR(sc->sc_id), PCI_PRODUCT(sc->sc_id));
-	len += snprintf(&buf[len], PCIBACK_KERNFS_SIZE - len,
+	if (len > sizeof(buf))
+		return ENOSPC;
+	len += snprintf(&buf[len], sizeof(buf) - len,
 	    "subsys_vendor: 0x%04x\nsubsys_product: 0x%04x\n",
 	    PCI_VENDOR(sc->sc_subid), PCI_PRODUCT(sc->sc_subid));
+	if (len > sizeof(buf))
+		return ENOSPC;
 	for(i = 0; i < PCI_NBARS; i++) {
 		if (sc->sc_bars[i].b_valid) {
-			len += snprintf(&buf[len], PCIBACK_KERNFS_SIZE - len,
+			len += snprintf(&buf[len], sizeof(buf) - len,
 			    "%s: 0x%08jx - 0x%08jx\n",
 			    (sc->sc_bars[i].b_type == PCI_MAPREG_TYPE_IO) ?
 			    "I/O" : "mem",
 			    (uintmax_t)sc->sc_bars[i].b_addr,
 			    (uintmax_t)(sc->sc_bars[i].b_addr + sc->sc_bars[i].b_size));
+			if (len > sizeof(buf))
+				return ENOSPC;
 		}
 	}
-	len += snprintf(&buf[len], PCIBACK_KERNFS_SIZE - len,
+	if (len > sizeof(buf))
+		return ENOSPC;
+	len += snprintf(&buf[len], sizeof(buf) - len,
 	    "irq: %d\n", sc->sc_irq);
 	if (off >= len) {
 		error = uiomove(buf, 0, uio);

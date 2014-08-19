@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.8.12.1 2012/11/20 03:01:05 tls Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.8.12.2 2014/08/20 00:02:46 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,8 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARM32_ISA_MACHDEP_H_
-#define _ARM32_ISA_MACHDEP_H_
+#ifndef _ARM_ISA_MACHDEP_H_
+#define _ARM_ISA_MACHDEP_H_
 
 #include <sys/bus.h>
 #include <dev/isa/isadmavar.h>
@@ -143,4 +143,4 @@ void	isa_intr_init(void);
 void sysbeep(int, int);		/* beep with the system speaker */
 void isa_fillw(u_int val, void *addr, size_t len);
 
-#endif	/* _ARM32_ISA_MACHDEP_H_ XXX */
+#endif	/* _ARM_ISA_MACHDEP_H_ */

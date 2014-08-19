@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwnreg.h,v 1.10.12.1 2013/06/23 06:20:18 tls Exp $	*/
+/*	$NetBSD: if_iwnreg.h,v 1.10.12.2 2014/08/20 00:03:42 tls Exp $	*/
 /*	$OpenBSD: if_iwnreg.h,v 1.43 2011/09/01 18:49:56 kettenis Exp $	*/
 
 /*-
@@ -17,6 +17,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/endian.h>
 
 /* XXX Added for NetBSD */
 #define IEEE80211_TKIP_MICLEN	8
@@ -209,6 +211,7 @@
 #define IWN_HW_REV_TYPE_6000	7
 #define IWN_HW_REV_TYPE_6050	8
 #define IWN_HW_REV_TYPE_6005	11
+/* Types 6030 and 6035 also return 11 */
 
 /* Possible flags for register IWN_GIO_CHICKEN. */
 #define IWN_GIO_CHICKEN_L1A_NO_L0S_RX	(1 << 23)
@@ -423,8 +426,8 @@ struct iwn_tx_cmd {
 #define IWN_CMD_TIMING			 20
 #define IWN_CMD_ADD_NODE		 24
 #define IWN_CMD_TX_DATA			 28
-#define IWN_CMD_LINK_QUALITY		 78
 #define IWN_CMD_SET_LED			 72
+#define IWN_CMD_LINK_QUALITY		 78
 #define IWN5000_CMD_WIMAX_COEX		 90
 #define IWN5000_CMD_CALIB_CONFIG	101
 #define IWN_CMD_SET_POWER_MODE		119
@@ -437,6 +440,7 @@ struct iwn_tx_cmd {
 #define IWN_CMD_SET_CRITICAL_TEMP	164
 #define IWN_CMD_SET_SENSITIVITY		168
 #define IWN_CMD_PHY_CALIB		176
+#define IWN_CMD_BT_COEX_PRIO_TABLE	204
 
 	uint8_t	flags;
 	uint8_t	idx;
@@ -833,22 +837,71 @@ struct iwn5000_cmd_txpower {
 	uint8_t	reserved;
 } __packed;
 
-/* Structure for command IWN_CMD_BLUETOOTH. */
+/* Structure for command IWN_CMD_BT_COEX. */
 struct iwn_bluetooth {
 	uint8_t		flags;
 #define IWN_BT_COEX_CHAN_ANN	(1 << 0)
 #define IWN_BT_COEX_BT_PRIO	(1 << 1)
 #define IWN_BT_COEX_2_WIRE	(1 << 2)
-
+#define IWN_BT_COEX_ENABLE	IWN_BT_COEX_CHAN_ANN | IWN_BT_COEX_BT_PRIO
 	uint8_t		lead_time;
 #define IWN_BT_LEAD_TIME_DEF	30
-
 	uint8_t		max_kill;
 #define IWN_BT_MAX_KILL_DEF	5
+	uint8_t		bt3_timer_t7_value;
+#define IWN_BT_BT3_T7_DEF	1
+	uint32_t	kill_ack_mask;
+#define IWN_BT_KILL_ACK_MASK_DEF	htole32(0xffff0000)
+	uint32_t	kill_cts_mask;
+#define IWN_BT_KILL_CTS_MASK_DEF	htole32(0xffff0000)
+} __packed;
 
+struct iwn_bt_basic {
+	struct iwn_bluetooth bt;
+	uint8_t		bt3_prio_sample_time;
+#define IWN_BT_BT3_PRIO_SAMPLE_DEF	2
+	uint8_t		bt3_timer_t2_value;
+#define IWN_BT_BT3_T2_DEF	12
+	uint16_t	bt4_reaction_time; /* unused */
+	uint32_t	bt3_lookup_table[12];
+	uint8_t		reduce_txpower; /* bit 0 */
 	uint8_t		reserved;
-	uint32_t	kill_ack;
-	uint32_t	kill_cts;
+	uint16_t	valid;
+#define IWN_BT_VALID_ENABLE_FLAGS	htole16(1 << 0)
+#define IWN_BT_VALID_BOOST		htole16(1 << 1)
+#define IWN_BT_VALID_MAX_KILL		htole16(1 << 2)
+#define IWN_BT_VALID_3W_TIMERS		htole16(1 << 3)
+#define IWN_BT_VALID_KILL_ACK_MASK	htole16(1 << 4)
+#define IWN_BT_VALID_KILL_CTS_MASK	htole16(1 << 5)
+#define IWN_BT_VALID_REDUCED_TX_PWR	htole16(1 << 6)
+#define IWN_BT_VALID_3W_LUT		htole16(1 << 7)
+#define IWN_BT_ALL_VALID_MASK		(IWN_BT_VALID_ENABLE_FLAGS | \
+					 IWN_BT_VALID_BOOST | \
+					 IWN_BT_VALID_MAX_KILL | \
+					 IWN_BT_VALID_3W_TIMERS | \
+					 IWN_BT_VALID_KILL_ACK_MASK | \
+					 IWN_BT_VALID_KILL_CTS_MASK | \
+					 IWN_BT_VALID_REDUCED_TX_PWR | \
+					 IWN_BT_VALID_3W_LUT)
+} __packed;
+
+struct iwn_bt_adv1 {
+	struct iwn_bt_basic basic;
+	uint8_t		prio_boost;
+#define IWN_BT_PRIO_BOOST_DEF	0xf0
+	/* set IWLAGN_BT_VALID_BOOST to "1" in "valid" bitmask for */
+	uint8_t		tx_prio_boost;
+	uint16_t	rx_prio_boost;
+} __packed;
+
+struct iwn_bt_adv2 {
+	struct iwn_bt_basic basic;
+	uint32_t	prio_boost;
+#define IWN_BT_PRIO_BOOST_DEF32	0xf0f0f0
+	uint8_t		reserved;
+	/* set IWLAGN_BT_VALID_BOOST to "1" in "valid" bitmask for */
+	uint8_t		tx_prio_boost;
+	uint16_t	rx_prio_boost;
 } __packed;
 
 /* Structure for command IWN_CMD_SET_CRITICAL_TEMP. */

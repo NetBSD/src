@@ -1,3 +1,90 @@
+2013-10-15  Hans-Peter Nilsson  <hp@axis.com>
+
+	* Makefile.in (srcsim): New variable.
+	(version.c): Adjust call to $(srccom)/create-version.sh as per change.
+
+2013-06-28  Tom Tromey  <tromey@redhat.com>
+
+	* Make-common.in (version.c): Use version.in, not
+	common/version.in.
+
+2013-06-24  Joel Brobecker  <brobecker@adacore.com>
+
+	* Makefile.in (srccom): New variable.
+	(version.c): Update rule dependencies, and re-implement using
+	sim/common/create-version.sh.
+
+2013-05-03  Hafiz Abid Qadeer  <abidh@codesourcery.com>
+
+	revert:
+	2013-04-19  Nathan Froyd  <froydnj@codesourcery.com>
+	* ppc-instructions (isel): New instruction.
+
+2013-04-19  Nathan Froyd  <froydnj@codesourcery.com>
+
+	* ppc-instructions (isel): New instruction.
+
+2012-12-19  Joel Brobecker  <brobecker@adacore.com>
+
+	* COPYING: Update to GPL version 3.
+
+2012-06-15  Joel Brobecker  <brobecker@adacore.com>
+
+	* configure: Regenerate.
+
+2012-05-24  Pedro Alves  <palves@redhat.com>
+
+	PR gdb/7205
+
+        Replace TARGET_SIGNAL_ with GDB_SIGNAL_ throughout.
+
+2012-03-14  Michael Haubenwallner  <michael.haubenwallner@salomon.at>
+
+	* emul_unix.c (st_pad1, st_pad2, st_pad3): Undefine.
+
+2012-01-02  Joel Brobecker  <brobecker@adacore.com>
+
+	* dp-bit.c: Reformat copyright header.
+
+2011-02-11  Ben Golding  <ben_golding@yahoo.co.uk>
+
+	* events.c: add #include <stdlib.h> for free(). Fix PR build/13372.
+
+2011-10-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Change include to common/acinclude.m4.
+
+2011-10-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Change AC_PREREQ to 2.64.  Delete AC_CONFIG_HEADER
+	call.  Replace common.m4 include with SIM_AC_COMMON.
+	* configure: Regenerate.
+
+2011-06-09  Joel Brobecker  <brobecker@adacore.com>
+
+	* psim.c (psim_options): Fix length of comparison when checking
+	for --sysroot= option.
+
+2011-06-08  Joel Brobecker  <brobecker@adacore.com>
+
+	* psim.c (psim_options): Add option that cause the error
+	in invalid-option error messages. Print the usage when
+	detecting an invalid long-name option.
+
+2011-06-08  Joel Brobecker  <brobecker@adacore.com>
+
+	* psim.c (psim_options): Accept and ignore `--sysroot=...'.
+
+2011-06-03  Joel Brobecker  <brobecker@adacore.com>  (obvious fix)
+
+	From Stephen Kitt  <steve@sk2.org>
+	* vm.c (vm_synchronize_context): Spelling fix in function
+	documentation.
+
+2011-04-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim_calls.c (sim_complete_command): New stub function.
+
 2011-02-14  Mike Frysinger  <vapier@gentoo.org>
 
 	* cap.c (cap_remove): Change zfree to free.
@@ -2997,7 +3084,7 @@ Wed Jun 19 21:45:28 1996  Andrew Cagney  <cagney@kremvax.highland.com.au>
 	* configure.in: Adjust filter flag so that default includes 32bit
 	and floating point.
 	* ppc-instructions: Clean up filter fields so that only in use
-        entries are specifed (ie delete `be').
+        entries are specified (ie delete `be').
 
 	* misc.c (name2i, i2name): New function.  Map between a string and
         an integer value.

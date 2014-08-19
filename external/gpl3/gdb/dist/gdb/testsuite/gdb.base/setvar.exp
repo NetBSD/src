@@ -1,7 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1988, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999, 2000,
-# 2001, 2004, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 1988-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,32 +20,22 @@
 
 # This file was written by Rob Savoye. (rob@cygnus.com)
 
-if $tracelevel then {
-	strace $tracelevel
-	}
-
 #
 # test running programs
 #
 
-set testfile "setvar"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
-     untested setvar.exp
-     return -1
-}
+standard_testfile
 
 # Create and source the file that provides information about the compiler
 # used to compile the test case.
-if [get_compiler_info ${binfile}] {
-    return -1;
+if [get_compiler_info] {
+    return -1
 }
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load $binfile
+if {[prepare_for_testing $testfile.exp $testfile $srcfile debug]} {
+    untested $testfile.exp
+    return -1
+}
 
 #
 # set it up at a breakpoint so we canplay with the variable values
@@ -75,36 +64,36 @@ gdb_test_multiple "print sizeof (unsigned long)" "sizeof ulong" {
 proc test_set { args } {
     global gdb_prompt
 
-    set length [expr [llength $args] - 1];
-    set message "[lindex $args $length]";
-    set final [expr $length - 2];
-    set count 1;
+    set length [expr [llength $args] - 1]
+    set message "[lindex $args $length]"
+    set final [expr $length - 2]
+    set count 1
 
     # Set up the variables.
-    for {set x 0;} {$x < $length} {incr x;} {
+    for {set x 0} {$x < $length} {incr x} {
 	if { "[lindex $args $x]" != "" } {
-	    set arg [lindex $args $x];
+	    set arg [lindex $args $x]
 	    if { ($x == $final) || ([string first ".*" [lindex $args [expr $x + 1]]] >= 0) } {
-		set match [lindex $args [expr $x + 1]];
+		set match [lindex $args [expr $x + 1]]
 		if { $count == 1 } {
 		    set mess "$message"
 		} else {
-		    set mess "$message (#$count)";
+		    set mess "$message (#$count)"
 		}
-		incr count;
-		incr x;
+		incr count
+		incr x
 	    } else {
-		set mess "";
+		set mess ""
 		set match ""
 	    }
 	    verbose "doing $arg $match"
 	    if [gdb_test "$arg" "$match" "$mess"] {
-		fail "$message -- $match";
-		return 1;
+		fail "$message -- $match"
+		return 1
 	    }
 	}
     }
-    return 0;
+    return 0
 }
 
 #
@@ -386,6 +375,14 @@ test_set "set variable v_struct1 = {'h', 1, 2, 3, 4.0, 5.0}" \
 .*v_int_member = 2,.*\
 v_long_member = 3,.*v_float_member = 4,.*v_double_member = 5.*\\}" \
   "set print structure #3"
+
+#
+# test "set variable" for nested struct
+#
+test_set "set variable v_struct3 = {1, {'h', 1, 2, 3, 4.0, 5.0}, 37}" \
+  "print v_struct3" \
+    ".*.\[0-9\]* = \\{.*v_long_member = 1,.*t = \\{.*v_char_member = 104 \'h\',.*v_short_member = 1,.*v_int_member = 2,.*v_long_member = 3,.*v_float_member = 4,.*v_double_member = 5.*\\},.*v_char_member = 37 \'%\'\\}" \
+  "set print structure #4"
 
 set timeout $prev_timeout
 

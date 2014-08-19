@@ -1,4 +1,4 @@
-/* $NetBSD: auvitekvar.h,v 1.7 2011/10/02 19:15:40 jmcneill Exp $ */
+/* $NetBSD: auvitekvar.h,v 1.7.14.1 2014/08/20 00:03:51 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -95,8 +95,6 @@ struct auvitek_bulk {
 	usbd_pipe_handle	ab_pipe;
 	struct auvitek_bulk_xfer ab_bx[AUVITEK_NBULK_XFERS];
 	bool			ab_running;
-	kmutex_t		ab_lock;
-	kcondvar_t		ab_cv;
 };
 
 struct auvitek_softc {

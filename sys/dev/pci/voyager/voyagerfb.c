@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.22.2.1 2013/06/23 06:20:21 tls Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.22.2.2 2014/08/20 00:03:49 tls Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.22.2.1 2013/06/23 06:20:21 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.22.2.2 2014/08/20 00:03:49 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,7 +321,8 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 			/* do some minimal setup to avoid weirdness later */
 			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
 			    &defattr);
-		}
+		} else
+			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	}
 	glyphcache_init(&sc->sc_gc, sc->sc_height,
 			(sc->sc_fbsize / sc->sc_stride) - sc->sc_height,
@@ -1064,7 +1065,7 @@ voyagerfb_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct voyagerfb_softc *sc = scr->scr_cookie;
 	uint32_t cmd;
-	int fg, bg;
+	int bg;
 	uint8_t *data;
 	int x, y, wi, he;
 	int i, j, r, g, b, aval, pad;
@@ -1082,7 +1083,6 @@ voyagerfb_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
 	he = font->fontheight;
 
 	bg = ri->ri_devcmap[(attr >> 16) & 0x0f];
-	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
 	x = ri->ri_xorigin + col * wi;
 	y = ri->ri_yorigin + row * he;
 	if (c == 0x20) {

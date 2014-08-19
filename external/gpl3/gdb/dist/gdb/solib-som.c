@@ -1,7 +1,6 @@
 /* Handle SOM shared libraries.
 
-   Copyright (C) 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -127,7 +126,9 @@ som_relocate_section_addresses (struct so_list *so,
       sec->endaddr += so->lm_info->data_start;
     }
   else
-    ;
+    {
+      /* Nothing.  */
+    }
 }
 
 
@@ -184,11 +185,11 @@ struct {
 static void
 som_solib_create_inferior_hook (int from_tty)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch);
+  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
   struct minimal_symbol *msymbol;
   unsigned int dld_flags, status, have_endo;
   asection *shlib_info;
-  char buf[4];
+  gdb_byte buf[4];
   CORE_ADDR anaddr;
 
   if (symfile_objfile == NULL)
@@ -219,7 +220,7 @@ som_solib_create_inferior_hook (int from_tty)
     goto keep_going;
 
   anaddr = SYMBOL_VALUE_ADDRESS (msymbol);
-  store_unsigned_integer (buf, 4, byte_order, PIDGET (inferior_ptid));
+  store_unsigned_integer (buf, 4, byte_order, ptid_get_pid (inferior_ptid));
   status = target_write_memory (anaddr, buf, 4);
   if (status != 0)
     {
@@ -287,7 +288,7 @@ Suggest linking with /opt/langtools/lib/end.o.\n\
 GDB will be unable to track shl_load/shl_unload calls"));
       goto keep_going;
     }
-  create_solib_event_breakpoint (target_gdbarch,
+  create_solib_event_breakpoint (target_gdbarch (),
 				 SYMBOL_VALUE_ADDRESS (msymbol));
 
   /* We have all the support usually found in end.o, so we can track
@@ -352,7 +353,7 @@ manpage for methods to privately map shared library text."));
   anaddr = SYMBOL_VALUE_ADDRESS (msymbol);
 
   /* Make the breakpoint at "_start" a shared library event breakpoint.  */
-  create_solib_event_breakpoint (target_gdbarch, anaddr);
+  create_solib_event_breakpoint (target_gdbarch (), anaddr);
 
   clear_symtab_users (0);
 }
@@ -524,10 +525,10 @@ struct dld_list {
 static CORE_ADDR
 link_map_start (void)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch);
+  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
   struct minimal_symbol *sym;
   CORE_ADDR addr;
-  char buf[4];
+  gdb_byte buf[4];
   unsigned int dld_flags;
 
   sym = lookup_minimal_symbol ("__dld_flags", NULL, NULL);
@@ -568,13 +569,13 @@ link_map_start (void)
 static int
 match_main (const char *name)
 {
-  return strcmp (name, symfile_objfile->name) == 0;
+  return strcmp (name, objfile_name (symfile_objfile)) == 0;
 }
 
 static struct so_list *
 som_current_sos (void)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch);
+  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
   CORE_ADDR lm;
   struct so_list *head = 0;
   struct so_list **link_ptr = &head;
@@ -587,7 +588,7 @@ som_current_sos (void)
       struct cleanup *old_chain;
       int errcode;
       struct dld_list dbuf;
-      char tsdbuf[4];
+      gdb_byte tsdbuf[4];
 
       new = (struct so_list *) xmalloc (sizeof (struct so_list));
       old_chain = make_cleanup (xfree, new);
@@ -641,27 +642,27 @@ som_current_sos (void)
 
 #ifdef SOLIB_SOM_DBG
 	    printf ("\n+ library \"%s\" is described at %s\n", new->so_name,
-	    	    paddress (target_gdbarch, lm));
+	    	    paddress (target_gdbarch (), lm));
 	    printf ("  'version' is %d\n", new->lm_info->struct_version);
 	    printf ("  'bind_mode' is %d\n", new->lm_info->bind_mode);
 	    printf ("  'library_version' is %d\n", 
 	    	    new->lm_info->library_version);
 	    printf ("  'text_addr' is %s\n",
-	    	    paddress (target_gdbarch, new->lm_info->text_addr));
+	    	    paddress (target_gdbarch (), new->lm_info->text_addr));
 	    printf ("  'text_link_addr' is %s\n",
-	    	    paddress (target_gdbarch, new->lm_info->text_link_addr));
+	    	    paddress (target_gdbarch (), new->lm_info->text_link_addr));
 	    printf ("  'text_end' is %s\n",
-	    	    paddress (target_gdbarch, new->lm_info->text_end));
+	    	    paddress (target_gdbarch (), new->lm_info->text_end));
 	    printf ("  'data_start' is %s\n",
-	    	    paddress (target_gdbarch, new->lm_info->data_start));
+	    	    paddress (target_gdbarch (), new->lm_info->data_start));
 	    printf ("  'bss_start' is %s\n",
-	    	    paddress (target_gdbarch, new->lm_info->bss_start));
+	    	    paddress (target_gdbarch (), new->lm_info->bss_start));
 	    printf ("  'data_end' is %s\n",
-	    	    paddress (target_gdbarch, new->lm_info->data_end));
+	    	    paddress (target_gdbarch (), new->lm_info->data_end));
 	    printf ("  'got_value' is %s\n",
-	    	    paddress (target_gdbarch, new->lm_info->got_value));
+	    	    paddress (target_gdbarch (), new->lm_info->got_value));
 	    printf ("  'tsd_start_addr' is %s\n",
-	    	    paddress (target_gdbarch, new->lm_info->tsd_start_addr));
+	    	    paddress (target_gdbarch (), new->lm_info->tsd_start_addr));
 #endif
 
 	    new->addr_low = lmi->text_addr;
@@ -691,12 +692,13 @@ som_current_sos (void)
 static int
 som_open_symbol_file_object (void *from_ttyp)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch);
+  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
   CORE_ADDR lm, l_name;
   char *filename;
   int errcode;
   int from_tty = *(int *)from_ttyp;
-  char buf[4];
+  gdb_byte buf[4];
+  struct cleanup *cleanup;
 
   if (symfile_objfile)
     if (!query (_("Attempt to reload symbols from process? ")))
@@ -726,10 +728,11 @@ som_open_symbol_file_object (void *from_ttyp)
       return 0;
     }
 
-  make_cleanup (xfree, filename);
+  cleanup = make_cleanup (xfree, filename);
   /* Have a pathname: read the symbol file.  */
   symbol_file_add_main (filename, from_tty);
 
+  do_cleanups (cleanup);
   return 1;
 }
 
@@ -836,16 +839,15 @@ som_solib_section_offsets (struct objfile *objfile,
     {
       /* Oh what a pain!  We need the offsets before so_list->objfile
          is valid.  The BFDs will never match.  Make a best guess.  */
-      if (strstr (objfile->name, so_list->so_name))
+      if (strstr (objfile_name (objfile), so_list->so_name))
 	{
 	  asection *private_section;
+	  struct obj_section *sect;
 
 	  /* The text offset is easy.  */
 	  offsets->offsets[SECT_OFF_TEXT (objfile)]
 	    = (so_list->lm_info->text_addr
 	       - so_list->lm_info->text_link_addr);
-	  offsets->offsets[SECT_OFF_RODATA (objfile)]
-	    = ANOFFSET (offsets, SECT_OFF_TEXT (objfile));
 
 	  /* We should look at presumed_dp in the SOM header, but
 	     that's not easily available.  This should be OK though.  */
@@ -858,10 +860,28 @@ som_solib_section_offsets (struct objfile *objfile,
 	      offsets->offsets[SECT_OFF_BSS (objfile)] = 0;
 	      return 1;
 	    }
-	  offsets->offsets[SECT_OFF_DATA (objfile)]
-	    = (so_list->lm_info->data_start - private_section->vma);
-	  offsets->offsets[SECT_OFF_BSS (objfile)]
-	    = ANOFFSET (offsets, SECT_OFF_DATA (objfile));
+	  if (objfile->sect_index_data != -1)
+	    {
+	      offsets->offsets[SECT_OFF_DATA (objfile)]
+		= (so_list->lm_info->data_start - private_section->vma);
+	      if (objfile->sect_index_bss != -1)
+		offsets->offsets[SECT_OFF_BSS (objfile)]
+		  = ANOFFSET (offsets, SECT_OFF_DATA (objfile));
+	    }
+
+	  ALL_OBJFILE_OSECTIONS (objfile, sect)
+	    {
+	      flagword flags = bfd_get_section_flags (objfile->obfd,
+						      sect->the_bfd_section);
+
+	      if ((flags & SEC_CODE) != 0)
+		offsets->offsets[sect->the_bfd_section->index]
+		  = offsets->offsets[SECT_OFF_TEXT (objfile)];
+	      else
+		offsets->offsets[sect->the_bfd_section->index]
+		  = offsets->offsets[SECT_OFF_DATA (objfile)];
+	    }
+
 	  return 1;
 	}
       so_list = so_list->next;

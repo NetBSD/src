@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.15 2010/01/19 22:07:02 pooka Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.15.22.1 2014/08/20 00:03:43 tls Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -79,8 +79,7 @@ struct wpi_tx_ring {
 	int			cur;
 };
 
-#define WPI_RBUF_COUNT	(WPI_RX_RING_COUNT + 16)
-#define WPI_RBUF_LOW_LIMIT	8
+#define WPI_RBUF_COUNT	(WPI_RX_RING_COUNT * 2)
 
 struct wpi_softc;
 
@@ -92,7 +91,8 @@ struct wpi_rbuf {
 };
 
 struct wpi_rx_data {
-	struct mbuf	*m;
+	bus_dmamap_t		map;
+	struct mbuf		*m;
 };
 
 struct wpi_rx_ring {
@@ -103,7 +103,6 @@ struct wpi_rx_ring {
 	struct wpi_rbuf		rbuf[WPI_RBUF_COUNT];
 	SLIST_HEAD(, wpi_rbuf)	freelist;
 	kmutex_t		freelist_mtx;
-	int			nb_free_entries;
 	int			cur;
 };
 

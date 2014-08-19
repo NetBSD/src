@@ -1,4 +1,4 @@
-# Copyright 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2008-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,6 +13,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+if { ![support_displaced_stepping] } { 
+    unsupported "displaced stepping"
+    return -1
+}
+
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
@@ -24,11 +29,9 @@ if {[mi_gdb_start]} {
 #
 # Start here
 #
-set testfile "nsmoribund"
-set srcfile "$testfile.c"
-set binfile "$objdir/$subdir/mi-$testfile"
+standard_testfile nsmoribund.c
 
-set options [list debug incdir=$objdir]
+set options [list debug]
 if {[gdb_compile_pthreads "$srcdir/$subdir/$srcfile" $binfile executable $options] != "" } {
     return -1
 }
@@ -36,26 +39,15 @@ if {[gdb_compile_pthreads "$srcdir/$subdir/$srcfile" $binfile executable $option
 mi_gdb_reinitialize_dir $srcdir/$subdir
 mi_gdb_load $binfile
 
-set supported 0
-gdb_test_multiple "-gdb-show non-stop" "" {
-    -re ".*\\^done,value=\"off\",supported=\"(\[^\"\]+)\"\r\n$mi_gdb_prompt$" {
-	if { $expect_out(1,string) == "1" } {
-	    set supported 1
-	}
-    }
-    -re ".*$mi_gdb_prompt$" {
-    }
-}
-
 mi_gdb_test "-gdb-set non-stop 1" ".*"
 mi_gdb_test "-gdb-set target-async 1" ".*"
-detect_async
+mi_detect_async
 
 if { [mi_run_to_main] < 0 } {
     continue
 }
 
-# Keep this in sync with THREADS in the the $srcfile.
+# Keep this in sync with THREADS in the $srcfile.
 set nthreads 10
 
 # Set a breakpoint and let all threads hit it (except the main
@@ -87,21 +79,21 @@ mi_gdb_test "-thread-select 5" "\\^done.*" "select thread 5"
 mi_delete_breakpoints
 
 # Recreate the same breakpoint, but this time, specific to thread 5.
-mi_create_breakpoint "-p 5 $srcfile:$bkpt_line" 3 keep thread_function .* .* .* \
-    "thread specific breakpoint at thread_function"
+mi_gdb_test "234-break-insert -p 5 $srcfile:$bkpt_line" \
+    "234\\^done,bkpt=\{number=\"3\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\".*\",func=\"thread_function\",file=\".*\",fullname=\".*\",line=\".*\",thread-groups=\\\[\".*\"\\\],thread=\"5\",thread=\"5\",times=\"0\",original-location=\".*\"\}" \
+    "thread specific breakpoint at thread_function" 
 
 # Resume all threads.  Only thread 5 should report a stop.
 
 set running_re ""
-for {set i $nthreads} {$i > 0} {incr i -1} {
+for {set i $nthreads} {$i > 1} {incr i -1} {
     set running_re "$running_re\\*running,thread-id=\"$decimal\"\r\n"
 }
+# Don't append \r\n after last line.
+set running_re "$running_re\\*running,thread-id=\"$decimal\""
 
-gdb_test_multiple "-exec-continue --all" "resume all, thread specific breakpoint" {
-    -re ".*$running_re$mi_gdb_prompt" {
-	pass "resume all, thread specific breakpoint"
-    }
-}
+mi_gdb_test "-exec-continue --all" "\[^\n\]*\r\n$running_re" \
+    "resume all, thread specific breakpoint"
 
 mi_expect_stop "breakpoint-hit" "thread_function" "\[^\n\]*" "$srcfile" \
     "\[0-9\]*" {"" "disp=\"keep\""} "hit thread specific breakpoint"
@@ -125,9 +117,9 @@ mi_check_thread_states \
 # we are interested in, so we can't use mi_gdb_test or
 # gdb_test_multiple (or an MI equivalent)
 
-send_gdb "102-break-delete\n"
-send_gdb "print done = 1\n"
-send_gdb "103-exec-continue --all\n"
+mi_gdb_test "102-break-delete" "102\\^done.*"
+mi_gdb_test "print done = 1" { = 1"}
+mi_gdb_test "103-exec-continue --all" "\[^\n\]*\r\n$running_re"
 
 gdb_expect {
     -re "\\*stopped,reason=\"exited-normally\"" {

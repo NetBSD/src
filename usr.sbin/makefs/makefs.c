@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.35.2.1 2013/02/25 00:30:44 tls Exp $	*/
+/*	$NetBSD: makefs.c,v 1.35.2.2 2014/08/20 00:05:09 tls Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.35.2.1 2013/02/25 00:30:44 tls Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.35.2.2 2014/08/20 00:05:09 tls Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -81,6 +81,7 @@ static fstype_t fstypes[] = {
 	ENTRY(chfs),
 	ENTRY(v7fs),
 	ENTRY(msdos),
+	ENTRY(udf),
 	{ .type = NULL	},
 };
 

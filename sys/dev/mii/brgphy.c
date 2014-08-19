@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.59.12.2 2013/06/23 06:20:18 tls Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.59.12.3 2014/08/20 00:03:41 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.59.12.2 2013/06/23 06:20:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.59.12.3 2014/08/20 00:03:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,8 +90,10 @@ struct brgphy_softc {
 	struct mii_softc sc_mii;
 	bool sc_isbge;
 	bool sc_isbnx;
-	uint32_t sc_chipid;    /* parent's chipid */
-	uint32_t sc_phyflags;  /* parent's phyflags */
+	uint32_t sc_chipid;	/* parent's chipid */
+	uint32_t sc_phyflags;	/* parent's phyflags */
+	uint32_t sc_shared_hwcfg; /* shared hw config */
+	uint32_t sc_port_hwcfg;	/* port specific hw config */
 };
 
 CFATTACH_DECL3_NEW(brgphy, sizeof(struct brgphy_softc),
@@ -99,7 +101,10 @@ CFATTACH_DECL3_NEW(brgphy, sizeof(struct brgphy_softc),
     DVF_DETACH_SHUTDOWN);
 
 static int	brgphy_service(struct mii_softc *, struct mii_data *, int);
-static void	brgphy_status(struct mii_softc *);
+static void	brgphy_copper_status(struct mii_softc *);
+static void	brgphy_fiber_status(struct mii_softc *);
+static void	brgphy_5708s_status(struct mii_softc *);
+static void	brgphy_5709s_status(struct mii_softc *);
 static int	brgphy_mii_phy_auto(struct mii_softc *);
 static void	brgphy_loop(struct mii_softc *);
 static void	brgphy_reset(struct mii_softc *);
@@ -116,8 +121,20 @@ static void	brgphy_jumbo_settings(struct mii_softc *);
 static void	brgphy_eth_wirespeed(struct mii_softc *);
 
 
-static const struct mii_phy_funcs brgphy_funcs = {
-	brgphy_service, brgphy_status, brgphy_reset,
+static const struct mii_phy_funcs brgphy_copper_funcs = {
+	brgphy_service, brgphy_copper_status, brgphy_reset,
+};
+
+static const struct mii_phy_funcs brgphy_fiber_funcs = {
+	brgphy_service, brgphy_fiber_status, brgphy_reset,
+};
+
+static const struct mii_phy_funcs brgphy_5708s_funcs = {
+	brgphy_service, brgphy_5708s_status, brgphy_reset,
+};
+
+static const struct mii_phy_funcs brgphy_5709s_funcs = {
+	brgphy_service, brgphy_5709s_status, brgphy_reset,
 };
 
 static const struct mii_phydesc brgphys[] = {
@@ -157,6 +174,9 @@ static const struct mii_phydesc brgphys[] = {
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5705,
 	  MII_STR_BROADCOM_BCM5705 },
 
+	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5706,
+	  MII_STR_BROADCOM_BCM5706 },
+
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5714,
 	  MII_STR_BROADCOM_BCM5714 },
 
@@ -177,6 +197,9 @@ static const struct mii_phydesc brgphys[] = {
 
 	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5482,
 	  MII_STR_BROADCOM2_BCM5482 },
+
+	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5708S,
+	  MII_STR_BROADCOM2_BCM5708S },
 
 	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5709C,
 	  MII_STR_BROADCOM2_BCM5709C },
@@ -264,15 +287,14 @@ brgphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = MII_ANEGTICKS;
-	sc->mii_funcs = &brgphy_funcs;
 
 	if (device_is_a(parent, "bge"))
 		bsc->sc_isbge = true;
 	else if (device_is_a(parent, "bnx"))
 		bsc->sc_isbnx = true;
 
+	dict = device_properties(parent);
 	if (bsc->sc_isbge || bsc->sc_isbnx) {
-		dict = device_properties(parent);
 		if (!prop_dictionary_get_uint32(dict, "phyflags",
 		    &bsc->sc_phyflags))
 			aprint_error_dev(self, "failed to get phyflags\n");
@@ -281,48 +303,73 @@ brgphyattach(device_t parent, device_t self, void *aux)
 			aprint_error_dev(self, "failed to get chipid\n");
 	}
 
+	if (bsc->sc_isbnx) {
+		/* Currently, only bnx use sc_shared_hwcfg and sc_port_hwcfg */
+		if (!prop_dictionary_get_uint32(dict, "shared_hwcfg",
+			&bsc->sc_shared_hwcfg))
+			aprint_error_dev(self, "failed to get shared_hwcfg\n");
+		if (!prop_dictionary_get_uint32(dict, "port_hwcfg",
+			&bsc->sc_port_hwcfg))
+			aprint_error_dev(self, "failed to get port_hwcfg\n");
+	}
+
+	if (sc->mii_flags & MIIF_HAVEFIBER) {
+		if ((sc->mii_mpd_oui == MII_OUI_BROADCOM2)
+		    && sc->mii_mpd_model == MII_MODEL_BROADCOM2_BCM5708S)
+			sc->mii_funcs = &brgphy_5708s_funcs;
+		else if ((sc->mii_mpd_oui == MII_OUI_BROADCOM2)
+		    && (sc->mii_mpd_model ==  MII_MODEL_BROADCOM2_BCM5709S)) {
+			if (bsc->sc_isbnx)
+				sc->mii_funcs = &brgphy_5709s_funcs;
+			else {
+				/*
+				 * XXX
+				 * 5720S and 5709S shares the same PHY id.
+				 * Assume 5720S PHY if parent device is bge(4).
+				 */
+				sc->mii_funcs = &brgphy_5708s_funcs;
+			}
+		} else
+			sc->mii_funcs = &brgphy_fiber_funcs;
+	} else
+		sc->mii_funcs = &brgphy_copper_funcs;
+
 	PHY_RESET(sc);
 
-	sc->mii_capabilities =
-	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
 
 	aprint_normal_dev(self, "");
-	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
-	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
-		aprint_error("no media present");
-	else {
-		if (sc->mii_flags & MIIF_HAVEFIBER) {
-			sc->mii_flags |= MIIF_NOISOLATE | MIIF_NOLOOP;
+	if (sc->mii_flags & MIIF_HAVEFIBER) {
+		sc->mii_flags |= MIIF_NOISOLATE | MIIF_NOLOOP;
 
+		/*
+		 * Set the proper bits for capabilities so that the
+		 * correct media get selected by mii_phy_add_media()
+		 */
+		sc->mii_capabilities |= BMSR_ANEG;
+		sc->mii_capabilities &= ~BMSR_100T4;
+		sc->mii_extcapabilities |= EXTSR_1000XFDX;
+
+		if (bsc->sc_isbnx) {
 			/*
-			 * Set the proper bits for capabilities so that the
-			 * correct media get selected by mii_phy_add_media()
+			 * 2.5Gb support is a software enabled feature
+			 * on the BCM5708S and BCM5709S controllers.
 			 */
-			sc->mii_capabilities |= BMSR_ANEG;
-			sc->mii_capabilities &= ~BMSR_100T4;
-			sc->mii_extcapabilities |= EXTSR_1000XFDX;
-
-			if (bsc->sc_isbnx) {
-				/*
-				 * 2.5Gb support is a software enabled feature
-				 * on the BCM5708S and BCM5709S controllers.
-				 */
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-				if (bsc->sc_phyflags
-				    & BNX_PHY_2_5G_CAPABLE_FLAG) {
-					ADD(IFM_MAKEWORD(IFM_ETHER, IFM_2500_SX,
-					    IFM_FDX, sc->mii_inst), 0);
-					aprint_normal("2500baseSX-FDX, ");
+			if (bsc->sc_phyflags
+			    & BNX_PHY_2_5G_CAPABLE_FLAG) {
+				ADD(IFM_MAKEWORD(IFM_ETHER, IFM_2500_SX,
+					IFM_FDX, sc->mii_inst), 0);
+				aprint_normal("2500baseSX-FDX, ");
 #undef ADD
-				}
 			}
 		}
-		mii_phy_add_media(sc);
 	}
-	aprint_normal("\n");
+	mii_phy_add_media(sc);
 
+	aprint_normal("\n");
 }
 
 static int
@@ -333,9 +380,7 @@ brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	switch (cmd) {
 	case MII_POLLSTAT:
-		/*
-		 * If we're not polling our PHY instance, just return.
-		 */
+		/* If we're not polling our PHY instance, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return (0);
 		break;
@@ -351,9 +396,7 @@ brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			return (0);
 		}
 
-		/*
-		 * If the interface is not up, don't do anything.
-		 */
+		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
@@ -363,6 +406,10 @@ brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		case IFM_AUTO:
 			(void) brgphy_mii_phy_auto(sc);
 			break;
+		case IFM_2500_SX:
+			speed = BRGPHY_5708S_BMCR_2500;
+			goto setit;
+		case IFM_1000_SX:
 		case IFM_1000_T:
 			speed = BMCR_S1000;
 			goto setit;
@@ -376,15 +423,16 @@ setit:
 			if ((ife->ifm_media & IFM_GMASK) == IFM_FDX) {
 				speed |= BMCR_FDX;
 				gig = GTCR_ADV_1000TFDX;
-			} else {
+			} else
 				gig = GTCR_ADV_1000THDX;
-			}
 
 			PHY_WRITE(sc, MII_100T2CR, 0);
 			PHY_WRITE(sc, MII_ANAR, ANAR_CSMA);
 			PHY_WRITE(sc, MII_BMCR, speed);
 
-			if (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)
+			if ((IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T) &&
+			    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_SX) &&
+			    (IFM_SUBTYPE(ife->ifm_media) != IFM_2500_SX))
 				break;
 
 			PHY_WRITE(sc, MII_100T2CR, gig);
@@ -405,21 +453,15 @@ setit:
 		break;
 
 	case MII_TICK:
-		/*
-		 * If we're not currently selected, just return.
-		 */
+		/* If we're not currently selected, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return (0);
 
-		/*
-		 * Is the interface even up?
-		 */
+		/* Is the interface even up? */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			return 0;
 
-		/*
-		 * Only used for autonegotiation.
-		 */
+		/* Only used for autonegotiation. */
 		if ((IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) &&
 		    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)) {
 			sc->mii_ticks = 0;
@@ -444,9 +486,7 @@ setit:
 		if (sc->mii_ticks++ == 0)
 			break;
 
-		/*
-		 * Only retry autonegotiation every mii_anegticks seconds.
-		 */
+		/* Only retry autonegotiation every mii_anegticks seconds. */
 		KASSERT(sc->mii_anegticks != 0);
 		if (sc->mii_ticks <= sc->mii_anegticks)
 			break;
@@ -493,7 +533,7 @@ setit:
 }
 
 static void
-brgphy_status(struct mii_softc *sc)
+brgphy_copper_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -527,90 +567,233 @@ brgphy_status(struct mii_softc *sc)
 			return;
 		}
 
-		if ((sc->mii_mpd_oui == MII_OUI_BROADCOM2)
-		    && (sc->mii_mpd_model == MII_MODEL_BROADCOM2_BCM5709S)) {
-			/*
-			 * 5709S has its own general purpose status registers
-			 */
-			PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
-			    BRGPHY_BLOCK_ADDR_GP_STATUS);
+		auxsts = PHY_READ(sc, BRGPHY_MII_AUXSTS);
 
-			auxsts = PHY_READ(sc, BRGPHY_GP_STATUS_TOP_ANEG_STATUS);
+		switch (auxsts & BRGPHY_AUXSTS_AN_RES) {
+		case BRGPHY_RES_1000FD:
+			mii->mii_media_active |= IFM_1000_T | IFM_FDX;
+			gtsr = PHY_READ(sc, MII_100T2SR);
+			if (gtsr & GTSR_MS_RES)
+				mii->mii_media_active |= IFM_ETH_MASTER;
+			break;
 
-			PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
-			    BRGPHY_BLOCK_ADDR_COMBO_IEEE0);
+		case BRGPHY_RES_1000HD:
+			mii->mii_media_active |= IFM_1000_T | IFM_HDX;
+			gtsr = PHY_READ(sc, MII_100T2SR);
+			if (gtsr & GTSR_MS_RES)
+				mii->mii_media_active |= IFM_ETH_MASTER;
+			break;
 
-			switch (auxsts & BRGPHY_GP_STATUS_TOP_ANEG_SPEED_MASK) {
-			case BRGPHY_GP_STATUS_TOP_ANEG_SPEED_10:
-				mii->mii_media_active |= IFM_10_FL;
-				break;
-			case BRGPHY_GP_STATUS_TOP_ANEG_SPEED_100:
-				mii->mii_media_active |= IFM_100_FX;
-				break;
-			case BRGPHY_GP_STATUS_TOP_ANEG_SPEED_1G:
-				mii->mii_media_active |= IFM_1000_SX;
-				break;
-			case BRGPHY_GP_STATUS_TOP_ANEG_SPEED_25G:
-				mii->mii_media_active |= IFM_2500_SX;
-				break;
-			default:
-				mii->mii_media_active |= IFM_NONE;
-				mii->mii_media_status = 0;
-				break;
-			}
+		case BRGPHY_RES_100FD:
+			mii->mii_media_active |= IFM_100_TX | IFM_FDX;
+			break;
 
-			if (auxsts & BRGPHY_GP_STATUS_TOP_ANEG_FDX)
-				mii->mii_media_active |= IFM_FDX;
-			else
-				mii->mii_media_active |= IFM_HDX;
+		case BRGPHY_RES_100T4:
+			mii->mii_media_active |= IFM_100_T4 | IFM_HDX;
+			break;
 
-		} else {
-			auxsts = PHY_READ(sc, BRGPHY_MII_AUXSTS);
+		case BRGPHY_RES_100HD:
+			mii->mii_media_active |= IFM_100_TX | IFM_HDX;
+			break;
 
-			switch (auxsts & BRGPHY_AUXSTS_AN_RES) {
-			case BRGPHY_RES_1000FD:
-				mii->mii_media_active |= IFM_1000_T | IFM_FDX;
-				gtsr = PHY_READ(sc, MII_100T2SR);
-				if (gtsr & GTSR_MS_RES)
-					mii->mii_media_active |= IFM_ETH_MASTER;
-				break;
+		case BRGPHY_RES_10FD:
+			mii->mii_media_active |= IFM_10_T | IFM_FDX;
+			break;
 
-			case BRGPHY_RES_1000HD:
-				mii->mii_media_active |= IFM_1000_T;
-				gtsr = PHY_READ(sc, MII_100T2SR);
-				if (gtsr & GTSR_MS_RES)
-					mii->mii_media_active |= IFM_ETH_MASTER;
-				break;
+		case BRGPHY_RES_10HD:
+			mii->mii_media_active |= IFM_10_T | IFM_HDX;
+			break;
 
-			case BRGPHY_RES_100FD:
-				mii->mii_media_active |= IFM_100_TX | IFM_FDX;
-				break;
-
-			case BRGPHY_RES_100T4:
-				mii->mii_media_active |= IFM_100_T4;
-				break;
-
-			case BRGPHY_RES_100HD:
-				mii->mii_media_active |= IFM_100_TX;
-				break;
-
-			case BRGPHY_RES_10FD:
-				mii->mii_media_active |= IFM_10_T | IFM_FDX;
-				break;
-
-			case BRGPHY_RES_10HD:
-				mii->mii_media_active |= IFM_10_T;
-				break;
-
-			default:
-				mii->mii_media_active |= IFM_NONE;
-				mii->mii_media_status = 0;
-			}
+		default:
+			mii->mii_media_active |= IFM_NONE;
+			mii->mii_media_status = 0;
 		}
 
 		if (mii->mii_media_active & IFM_FDX)
 			mii->mii_media_active |= mii_phy_flowstatus(sc);
 
+	} else
+		mii->mii_media_active = ife->ifm_media;
+}
+
+void
+brgphy_fiber_status(struct mii_softc *sc)
+{
+	struct mii_data *mii = sc->mii_pdata;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+	int bmcr, bmsr;
+
+	mii->mii_media_status = IFM_AVALID;
+	mii->mii_media_active = IFM_ETHER;
+
+	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+	if (bmsr & BMSR_LINK)
+		mii->mii_media_status |= IFM_ACTIVE;
+
+	bmcr = PHY_READ(sc, MII_BMCR);
+	if (bmcr & BMCR_LOOP)
+		mii->mii_media_active |= IFM_LOOP;
+
+	if (bmcr & BMCR_AUTOEN) {
+		int val;
+
+		if ((bmsr & BMSR_ACOMP) == 0) {
+			/* Erg, still trying, I guess... */
+			mii->mii_media_active |= IFM_NONE;
+			return;
+		}
+
+		mii->mii_media_active |= IFM_1000_SX;
+
+		val = PHY_READ(sc, MII_ANAR) &
+		      PHY_READ(sc, MII_ANLPAR);
+
+		if (val & ANAR_X_FD)
+			mii->mii_media_active |= IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
+
+		if (mii->mii_media_active & IFM_FDX)
+			mii->mii_media_active |= mii_phy_flowstatus(sc);
+	} else
+		mii->mii_media_active = ife->ifm_media;
+}
+
+void
+brgphy_5708s_status(struct mii_softc *sc)
+{
+	struct mii_data *mii = sc->mii_pdata;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+	int bmcr, bmsr;
+
+	mii->mii_media_status = IFM_AVALID;
+	mii->mii_media_active = IFM_ETHER;
+
+	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+	if (bmsr & BMSR_LINK)
+		mii->mii_media_status |= IFM_ACTIVE;
+
+	bmcr = PHY_READ(sc, MII_BMCR);
+	if (bmcr & BMCR_LOOP)
+		mii->mii_media_active |= IFM_LOOP;
+
+	if (bmcr & BMCR_AUTOEN) {
+		int xstat;
+
+		if ((bmsr & BMSR_ACOMP) == 0) {
+			PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR,
+			    BRGPHY_5708S_DIG_PG0);
+			xstat = PHY_READ(sc, BRGPHY_5708S_PG0_1000X_STAT1);
+			if ((xstat & BRGPHY_5708S_PG0_1000X_STAT1_LINK) == 0) {
+				/* Erg, still trying, I guess... */
+				mii->mii_media_active |= IFM_NONE;
+				return;
+			}
+		}
+
+		PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR,
+		    BRGPHY_5708S_DIG_PG0);
+		xstat = PHY_READ(sc, BRGPHY_5708S_PG0_1000X_STAT1);
+
+		switch (xstat & BRGPHY_5708S_PG0_1000X_STAT1_SPEED_MASK) {
+		case BRGPHY_5708S_PG0_1000X_STAT1_SPEED_10:
+			mii->mii_media_active |= IFM_10_FL;
+			break;
+		case BRGPHY_5708S_PG0_1000X_STAT1_SPEED_100:
+			mii->mii_media_active |= IFM_100_FX;
+			break;
+		case BRGPHY_5708S_PG0_1000X_STAT1_SPEED_1G:
+			mii->mii_media_active |= IFM_1000_SX;
+			break;
+		case BRGPHY_5708S_PG0_1000X_STAT1_SPEED_25G:
+			mii->mii_media_active |= IFM_2500_SX;
+			break;
+		}
+
+		if (xstat & BRGPHY_5708S_PG0_1000X_STAT1_FDX)
+			mii->mii_media_active |= IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
+
+		if (mii->mii_media_active & IFM_FDX) {
+			if (xstat & BRGPHY_5708S_PG0_1000X_STAT1_TX_PAUSE)
+				mii->mii_media_active |= IFM_FLOW | IFM_ETH_TXPAUSE;
+			if (xstat & BRGPHY_5708S_PG0_1000X_STAT1_RX_PAUSE)
+				mii->mii_media_active |= IFM_FLOW | IFM_ETH_RXPAUSE;
+		}
+	} else
+		mii->mii_media_active = ife->ifm_media;
+}
+
+static void
+brgphy_5709s_status(struct mii_softc *sc)
+{
+	struct mii_data *mii = sc->mii_pdata;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+	int bmcr, bmsr, auxsts;
+
+	mii->mii_media_status = IFM_AVALID;
+	mii->mii_media_active = IFM_ETHER;
+
+	bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+	if (bmsr & BMSR_LINK)
+		mii->mii_media_status |= IFM_ACTIVE;
+
+	bmcr = PHY_READ(sc, MII_BMCR);
+	if (bmcr & BMCR_ISO) {
+		mii->mii_media_active |= IFM_NONE;
+		mii->mii_media_status = 0;
+		return;
+	}
+
+	if (bmcr & BMCR_LOOP)
+		mii->mii_media_active |= IFM_LOOP;
+
+	if (bmcr & BMCR_AUTOEN) {
+		/*
+		 * The media status bits are only valid of autonegotiation
+		 * has completed (or it's disabled).
+		 */
+		if ((bmsr & BMSR_ACOMP) == 0) {
+			/* Erg, still trying, I guess... */
+			mii->mii_media_active |= IFM_NONE;
+			return;
+		}
+
+		/* 5709S has its own general purpose status registers */
+		PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
+		    BRGPHY_BLOCK_ADDR_GP_STATUS);
+		auxsts = PHY_READ(sc, BRGPHY_GP_STATUS_TOP_ANEG_STATUS);
+
+		PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
+		    BRGPHY_BLOCK_ADDR_COMBO_IEEE0);
+
+		switch (auxsts & BRGPHY_GP_STATUS_TOP_ANEG_SPEED_MASK) {
+		case BRGPHY_GP_STATUS_TOP_ANEG_SPEED_10:
+			mii->mii_media_active |= IFM_10_FL;
+			break;
+		case BRGPHY_GP_STATUS_TOP_ANEG_SPEED_100:
+			mii->mii_media_active |= IFM_100_FX;
+			break;
+		case BRGPHY_GP_STATUS_TOP_ANEG_SPEED_1G:
+			mii->mii_media_active |= IFM_1000_SX;
+			break;
+		case BRGPHY_GP_STATUS_TOP_ANEG_SPEED_25G:
+			mii->mii_media_active |= IFM_2500_SX;
+			break;
+		default:
+			mii->mii_media_active |= IFM_NONE;
+			mii->mii_media_status = 0;
+			break;
+		}
+
+		if (auxsts & BRGPHY_GP_STATUS_TOP_ANEG_FDX)
+			mii->mii_media_active |= IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
+
+		if (mii->mii_media_active & IFM_FDX)
+			mii->mii_media_active |= mii_phy_flowstatus(sc);
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }
@@ -624,29 +807,25 @@ brgphy_mii_phy_auto(struct mii_softc *sc)
 	brgphy_loop(sc);
 	PHY_RESET(sc);
 
-	ktcr = GTCR_ADV_1000TFDX | GTCR_ADV_1000THDX;
-	if ((sc->mii_mpd_oui == MII_OUI_BROADCOM)
-	    && (sc->mii_mpd_model == MII_MODEL_BROADCOM_BCM5701))
-		ktcr |= GTCR_MAN_MS | GTCR_ADV_MS;
-	PHY_WRITE(sc, MII_100T2CR, ktcr);
-	ktcr = PHY_READ(sc, MII_100T2CR);
-	DELAY(1000);
-
 	if (sc->mii_flags & MIIF_HAVEFIBER) {
 		anar = ANAR_X_FD | ANAR_X_HD;
 		if (sc->mii_flags & MIIF_DOPAUSE)
-			anar |= BRGPHY_SERDES_ANAR_BOTH_PAUSE;
+			anar |= ANAR_X_PAUSE_TOWARDS;
 	} else {
 		anar = BMSR_MEDIA_TO_ANAR(sc->mii_capabilities) | ANAR_CSMA;
 		if (sc->mii_flags & MIIF_DOPAUSE)
 			anar |= ANAR_FC | ANAR_PAUSE_ASYM;
+		ktcr = GTCR_ADV_1000TFDX | GTCR_ADV_1000THDX;
+		if ((sc->mii_mpd_oui == MII_OUI_BROADCOM)
+		    && (sc->mii_mpd_model == MII_MODEL_BROADCOM_BCM5701))
+			ktcr |= GTCR_MAN_MS | GTCR_ADV_MS;
+		PHY_WRITE(sc, MII_100T2CR, ktcr);
+		ktcr = PHY_READ(sc, MII_100T2CR);
 	}
 	PHY_WRITE(sc, MII_ANAR, anar);
-	DELAY(1000);
 
 	/* Start autonegotiation */
-	PHY_WRITE(sc, MII_BMCR,
-	    BMCR_AUTOEN | BMCR_STARTNEG);
+	PHY_WRITE(sc, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
 	PHY_WRITE(sc, BRGPHY_MII_IMR, 0xFF00);
 
 	return (EJUSTRETURN);
@@ -655,7 +834,7 @@ brgphy_mii_phy_auto(struct mii_softc *sc)
 void
 brgphy_loop(struct mii_softc *sc)
 {
-	u_int32_t bmsr;
+	uint32_t bmsr;
 	int i;
 
 	PHY_WRITE(sc, MII_BMCR, BMCR_LOOP);
@@ -711,19 +890,19 @@ brgphy_reset(struct mii_softc *sc)
 	if (bsc->sc_isbge) {
 		if (!(sc->mii_flags & MIIF_HAVEFIBER)) {
 
-			if (bsc->sc_phyflags & BGE_PHY_ADC_BUG)
+			if (bsc->sc_phyflags & BGEPHYF_ADC_BUG)
 				brgphy_adc_bug(sc);
-			if (bsc->sc_phyflags & BGE_PHY_5704_A0_BUG)
+			if (bsc->sc_phyflags & BGEPHYF_5704_A0_BUG)
 				brgphy_5704_a0_bug(sc);
-			if (bsc->sc_phyflags & BGE_PHY_BER_BUG)
+			if (bsc->sc_phyflags & BGEPHYF_BER_BUG)
 				brgphy_ber_bug(sc);
-			else if (bsc->sc_phyflags & BGE_PHY_JITTER_BUG) {
+			else if (bsc->sc_phyflags & BGEPHYF_JITTER_BUG) {
 				PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0c00);
 				PHY_WRITE(sc, BRGPHY_MII_DSP_ADDR_REG,
 				    0x000a);
 
 				if (bsc->sc_phyflags 
-				    & BGE_PHY_ADJUST_TRIM) {
+				    & BGEPHYF_ADJUST_TRIM) {
 					PHY_WRITE(sc, BRGPHY_MII_DSP_RW_PORT,
 					    0x110b);
 					PHY_WRITE(sc, BRGPHY_TEST1,
@@ -735,11 +914,11 @@ brgphy_reset(struct mii_softc *sc)
 
 				PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0400);
 			}
-			if (bsc->sc_phyflags & BGE_PHY_CRC_BUG)
+			if (bsc->sc_phyflags & BGEPHYF_CRC_BUG)
 				brgphy_crc_bug(sc);
 
 			/* Set Jumbo frame settings in the PHY. */
-			if (bsc->sc_phyflags & BGE_JUMBO_CAPABLE)
+			if (bsc->sc_phyflags & BGEPHYF_JUMBO_CAPABLE)
 				brgphy_jumbo_settings(sc);
 
 			/* Adjust output voltage */
@@ -748,12 +927,12 @@ brgphy_reset(struct mii_softc *sc)
 				PHY_WRITE(sc, BRGPHY_MII_EPHY_PTEST, 0x12);
 
 			/* Enable Ethernet@Wirespeed */
-			if (!(bsc->sc_phyflags & BGE_PHY_NO_WIRESPEED))
+			if (!(bsc->sc_phyflags & BGEPHYF_NO_WIRESPEED))
 				brgphy_eth_wirespeed(sc);
 
 #if 0
 			/* Enable Link LED on Dell boxes */
-			if (bsc->sc_phyflags & BGE_PHY_NO_3LED) {
+			if (bsc->sc_phyflags & BGEPHYF_NO_3LED) {
 				PHY_WRITE(sc, BRGPHY_MII_PHY_EXTCTL, 
 				PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL)
 					& ~BRGPHY_PHY_EXTCTL_3_LED);
@@ -762,7 +941,6 @@ brgphy_reset(struct mii_softc *sc)
 		}
 	/* Handle any bnx (NetXtreme II) workarounds. */
 	} else if (bsc->sc_isbnx) {
-#if 0 /* not yet */
 		if ((sc->mii_mpd_oui == MII_OUI_BROADCOM2)
 		    && sc->mii_mpd_model == MII_MODEL_BROADCOM2_BCM5708S) {
 			/* Store autoneg capabilities/results in digital block (Page 0) */
@@ -783,15 +961,15 @@ brgphy_reset(struct mii_softc *sc)
 				BRGPHY_5708S_PG0_1000X_CTL2_PAR_DET_EN);
 
 			/* Advertise 2.5G support through next page during autoneg */
-			if (bnx_sc->bnx_phy_flags & BNX_PHY_2_5G_CAPABLE_FLAG)
+			if (bsc->sc_phyflags & BNX_PHY_2_5G_CAPABLE_FLAG)
 				PHY_WRITE(sc, BRGPHY_5708S_ANEG_NXT_PG_XMIT1, 
 					PHY_READ(sc, BRGPHY_5708S_ANEG_NXT_PG_XMIT1) | 
 					BRGPHY_5708S_ANEG_NXT_PG_XMIT1_25G);
 
 			/* Increase TX signal amplitude */
-			if ((BNX_CHIP_ID(bnx_sc) == BNX_CHIP_ID_5708_A0) ||
-			    (BNX_CHIP_ID(bnx_sc) == BNX_CHIP_ID_5708_B0) ||
-			    (BNX_CHIP_ID(bnx_sc) == BNX_CHIP_ID_5708_B1)) {
+			if ((_BNX_CHIP_ID(bsc->sc_chipid) == BNX_CHIP_ID_5708_A0) ||
+			    (_BNX_CHIP_ID(bsc->sc_chipid) == BNX_CHIP_ID_5708_B0) ||
+			    (_BNX_CHIP_ID(bsc->sc_chipid) == BNX_CHIP_ID_5708_B1)) {
 				PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR, 
 					BRGPHY_5708S_TX_MISC_PG5);
 				PHY_WRITE(sc, BRGPHY_5708S_PG5_TXACTL1, 
@@ -802,19 +980,17 @@ brgphy_reset(struct mii_softc *sc)
 			}
 
 			/* Backplanes use special driver/pre-driver/pre-emphasis values. */
-			if ((bnx_sc->bnx_shared_hw_cfg & BNX_SHARED_HW_CFG_PHY_BACKPLANE) &&
-			    (bnx_sc->bnx_port_hw_cfg & BNX_PORT_HW_CFG_CFG_TXCTL3_MASK)) {
+			if ((bsc->sc_shared_hwcfg & BNX_SHARED_HW_CFG_PHY_BACKPLANE) &&
+			    (bsc->sc_port_hwcfg & BNX_PORT_HW_CFG_CFG_TXCTL3_MASK)) {
 					PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR, 
 						BRGPHY_5708S_TX_MISC_PG5);
 					PHY_WRITE(sc, BRGPHY_5708S_PG5_TXACTL3, 
-						bnx_sc->bnx_port_hw_cfg & 
+						bsc->sc_port_hwcfg & 
 						BNX_PORT_HW_CFG_CFG_TXCTL3_MASK);
 					PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR,
 						BRGPHY_5708S_DIG_PG0);
 			}
-		} else
-#endif
-		if ((sc->mii_mpd_oui == MII_OUI_BROADCOM2)
+		} else if ((sc->mii_mpd_oui == MII_OUI_BROADCOM2)
 		    && (sc->mii_mpd_model ==  MII_MODEL_BROADCOM2_BCM5709S)) {
 			/* Select the SerDes Digital block of the AN MMD. */
 			PHY_WRITE(sc, BRGPHY_BLOCK_ADDR,
@@ -1067,7 +1243,7 @@ brgphy_disable_early_dac(struct mii_softc *sc)
 static void
 brgphy_jumbo_settings(struct mii_softc *sc)
 {
-	u_int32_t val;
+	uint32_t val;
 
 	/* Set Jumbo frame settings in the PHY. */
 	if ((sc->mii_mpd_oui == MII_OUI_BROADCOM)
@@ -1089,7 +1265,7 @@ brgphy_jumbo_settings(struct mii_softc *sc)
 static void
 brgphy_eth_wirespeed(struct mii_softc *sc)
 {
-	u_int32_t val;
+	uint32_t val;
 
 	/* Enable Ethernet@Wirespeed */
 	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x7007);

@@ -1,7 +1,6 @@
 /* Target-dependent code for Atmel AVR, for GDB.
 
-   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,7 +34,7 @@
 #include "symfile.h"
 #include "arch-utils.h"
 #include "regcache.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "dis-asm.h"
 
 /* AVR Background:
@@ -68,9 +67,6 @@
    addresses before they are send to the target or received from the target
    via the remote serial protocol.  The extra bits are the MSBs and are used to
    decode which memory space the address is referring to.  */
-
-#undef XMALLOC
-#define XMALLOC(TYPE) ((TYPE*) xmalloc (sizeof (TYPE)))
 
 /* Constants: prefixed with AVR_ to avoid name space clashes */
 
@@ -183,7 +179,7 @@ struct avr_unwind_cache
 struct gdbarch_tdep
 {
   /* Number of bytes stored to the stack by call instructions.
-     2 bytes for avr1-5, 3 bytes for avr6.  */
+     2 bytes for avr1-5 and avrxmega1-5, 3 bytes for avr6 and avrxmega6-7.  */
   int call_length;
 
   /* Type for void.  */
@@ -723,7 +719,7 @@ avr_scan_prologue (struct gdbarch *gdbarch, CORE_ADDR pc_beg, CORE_ADDR pc_end,
           info->size += gdbarch_tdep (gdbarch)->call_length;
           vpc += 2;
         }
-      else if (insn == 0x920f)  /* push r0 */
+      else if (insn == 0x920f || insn == 0x921f)  /* push r0 or push r1 */
         {
           info->size += 1;
           vpc += 2;
@@ -743,7 +739,6 @@ avr_scan_prologue (struct gdbarch *gdbarch, CORE_ADDR pc_beg, CORE_ADDR pc_end,
 	0xcd, 0xb7,		/* in r28,__SP_L__ */
 	0xde, 0xb7		/* in r29,__SP_H__ */
       };
-      unsigned short insn1;
 
       if (vpc + sizeof (img) < len
 	  && memcmp (prologue + vpc, img, sizeof (img)) == 0)
@@ -903,7 +898,7 @@ avr_breakpoint_from_pc (struct gdbarch *gdbarch,
    from WRITEBUF into REGCACHE.  */
 
 static enum return_value_convention
-avr_return_value (struct gdbarch *gdbarch, struct type *func_type,
+avr_return_value (struct gdbarch *gdbarch, struct value *function,
 		  struct type *valtype, struct regcache *regcache,
 		  gdb_byte *readbuf, const gdb_byte *writebuf)
 {
@@ -1105,7 +1100,7 @@ avr_frame_prev_register (struct frame_info *this_frame,
 	     everything else about the avr is little endian.  Ick!  */
 	  ULONGEST pc;
 	  int i;
-	  unsigned char buf[3];
+	  gdb_byte buf[3];
 	  struct gdbarch *gdbarch = get_frame_arch (this_frame);
 	  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
@@ -1247,7 +1242,7 @@ avr_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int i;
-  unsigned char buf[3];
+  gdb_byte buf[3];
   int call_length = gdbarch_tdep (gdbarch)->call_length;
   CORE_ADDR return_pc = avr_convert_iaddr_to_raw (bp_addr);
   int regnum = AVR_ARGN_REGNUM;
@@ -1360,14 +1355,21 @@ avr_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   switch (info.bfd_arch_info->mach)
     {
     case bfd_mach_avr1:
+    case bfd_mach_avrxmega1:
     case bfd_mach_avr2:
+    case bfd_mach_avrxmega2:
     case bfd_mach_avr3:
+    case bfd_mach_avrxmega3:
     case bfd_mach_avr4:
+    case bfd_mach_avrxmega4:
     case bfd_mach_avr5:
+    case bfd_mach_avrxmega5:
     default:
       call_length = 2;
       break;
     case bfd_mach_avr6:
+    case bfd_mach_avrxmega6:
+    case bfd_mach_avrxmega7:
       call_length = 3;
       break;
     }
@@ -1470,8 +1472,9 @@ avr_io_reg_read_command (char *args, int from_tty)
 {
   LONGEST bufsiz = 0;
   gdb_byte *buf;
+  const char *bufstr;
   char query[400];
-  char *p;
+  const char *p;
   unsigned int nreg = 0;
   unsigned int val;
   int i, j, k, step;
@@ -1479,6 +1482,7 @@ avr_io_reg_read_command (char *args, int from_tty)
   /* Find out how many io registers the target has.  */
   bufsiz = target_read_alloc (&current_target, TARGET_OBJECT_AVR,
 			      "avr.io_reg", &buf);
+  bufstr = (const char *) buf;
 
   if (bufsiz <= 0)
     {
@@ -1488,7 +1492,7 @@ avr_io_reg_read_command (char *args, int from_tty)
       return;
     }
 
-  if (sscanf (buf, "%x", &nreg) != 1)
+  if (sscanf (bufstr, "%x", &nreg) != 1)
     {
       fprintf_unfiltered (gdb_stderr,
 			  _("Error fetching number of io registers\n"));
@@ -1516,7 +1520,7 @@ avr_io_reg_read_command (char *args, int from_tty)
       bufsiz = target_read_alloc (&current_target, TARGET_OBJECT_AVR,
 				  query, &buf);
 
-      p = buf;
+      p = (const char *) buf;
       for (k = i; k < (i + j); k++)
 	{
 	  if (sscanf (p, "%[^,],%x;", query, &val) == 2)

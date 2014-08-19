@@ -1,4 +1,4 @@
-/*	$NetBSD: scanc.S,v 1.6 2011/02/08 20:20:27 rmind Exp $	*/
+/*	$NetBSD: scanc.S,v 1.6.14.1 2014/08/20 00:04:30 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,20 +44,29 @@
  *	scanc(count, startc, table, mask)
  */
 ENTRY(scanc)
-	movl	%sp@(4),%d0	| get length
+	movl	4(%sp),%d0	| get length
 	jeq	Lscdone		| nothing to do, return
-	movl	%sp@(8),%a0	| start of scan
-	movl	%sp@(12),%a1	| table to compare with
-	movb	%sp@(19),%d1	| and mask to use
-	movw	%d2,%sp@-	| need a scratch register
-	clrw	%d2		| clear it out
+	movl	8(%sp),%a0	| start of scan
+	movl	12(%sp),%a1	| table to compare with
+	movb	19(%sp),%d1	| and mask to use
+	movl	%d2,-(%sp)	| need a scratch register
+	clrl	%d2		| clear it out
+#ifndef __mcoldfire__
 	subqw	#1,%d0		| adjust for dbra
+#endif
 Lscloop:
-	movb	%a0@+,%d2	| get character
-	movb	%a1@(0,%d2:w),%d2 | get table entry
-	andb	%d1,%d2		| mask it
+	movb	(%a0)+,%d2	| get character
+	movb	(%a1,%d2),%d2	| get table entry
+	andl	%d1,%d2		| mask it
+#ifdef __mcoldfire__
+	jne	1f		| break out if mask matched
+	subql	#1,%d0		| decrement
+	jne	Lscloop		| keep going til no more
+1:
+#else
 	dbne	%d0,Lscloop	| keep going til no more or non-zero
 	addqw	#1,%d0		| overshot by one
-	movw	%sp@+,%d2	| restore scratch
+#endif
+	movl	(%sp)+,%d2	| restore scratch
 Lscdone:
 	rts

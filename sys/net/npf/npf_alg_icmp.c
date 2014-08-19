@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.12.2.3 2013/06/23 06:20:25 tls Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.12.2.4 2014/08/20 00:04:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.12.2.3 2013/06/23 06:20:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.12.2.4 2014/08/20 00:04:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.12.2.3 2013/06/23 06:20:25 tls Ex
 #include <net/pfil.h>
 
 #include "npf_impl.h"
+#include "npf_conn.h"
 
 MODULE(MODULE_CLASS_MISC, npf_alg_icmp, "npf");
 
@@ -65,52 +66,12 @@ MODULE(MODULE_CLASS_MISC, npf_alg_icmp, "npf");
 
 static npf_alg_t *	alg_icmp	__read_mostly;
 
-static bool	npfa_icmp_match(npf_cache_t *, nbuf_t *, npf_nat_t *, int);
-static bool	npfa_icmp_nat(npf_cache_t *, nbuf_t *, npf_nat_t *, int);
-static npf_session_t *npfa_icmp_session(npf_cache_t *, nbuf_t *, int);
-
 /*
- * npf_alg_icmp_{init,fini,modcmd}: ICMP ALG initialization, destruction
- * and module interface.
- */
-
-static int
-npf_alg_icmp_init(void)
-{
-	alg_icmp = npf_alg_register("icmp", npfa_icmp_match,
-	    npfa_icmp_nat, npfa_icmp_session);
-	return alg_icmp ? 0 : ENOMEM;
-}
-
-static int
-npf_alg_icmp_fini(void)
-{
-	KASSERT(alg_icmp != NULL);
-	return npf_alg_unregister(alg_icmp);
-}
-
-static int
-npf_alg_icmp_modcmd(modcmd_t cmd, void *arg)
-{
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-		return npf_alg_icmp_init();
-	case MODULE_CMD_FINI:
-		return npf_alg_icmp_fini();
-	case MODULE_CMD_AUTOUNLOAD:
-		return EBUSY;
-	default:
-		return ENOTTY;
-	}
-	return 0;
-}
-
-/*
- * npfa_icmp_match: ALG matching inspector - determines ALG case and
- * associates ALG with NAT entry.
+ * npfa_icmp_match: matching inspector determines ALG case and associates
+ * our ALG with the NAT entry.
  */
 static bool
-npfa_icmp_match(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
+npfa_icmp_match(npf_cache_t *npc, npf_nat_t *nt, int di)
 {
 	const int proto = npc->npc_proto;
 	const struct ip *ip = npc->npc_ip.v4;
@@ -119,8 +80,8 @@ npfa_icmp_match(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
 	KASSERT(npf_iscached(npc, NPC_IP46));
 	KASSERT(npf_iscached(npc, NPC_LAYER4));
 
-	/* Check for low TTL. */
-	if (ip->ip_ttl > TR_MAX_TTL) {
+	/* Check for low TTL.  Also, we support outbound NAT only. */
+	if (ip->ip_ttl > TR_MAX_TTL || di != PFIL_OUT) {
 		return false;
 	}
 
@@ -160,8 +121,9 @@ npfa_icmp_match(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
  */
 
 static bool
-npfa_icmp4_inspect(const int type, npf_cache_t *npc, nbuf_t *nbuf)
+npfa_icmp4_inspect(const int type, npf_cache_t *npc)
 {
+	nbuf_t *nbuf = npc->npc_nbuf;
 	u_int offby;
 
 	/* Per RFC 792. */
@@ -178,7 +140,7 @@ npfa_icmp4_inspect(const int type, npf_cache_t *npc, nbuf_t *nbuf)
 		if (!nbuf_advance(nbuf, offsetof(struct icmp, icmp_ip), 0)) {
 			return false;
 		}
-		return (npf_cache_all(npc, nbuf) & NPC_LAYER4) != 0;
+		return (npf_cache_all(npc) & NPC_LAYER4) != 0;
 
 	case ICMP_ECHOREPLY:
 	case ICMP_ECHO:
@@ -200,8 +162,9 @@ npfa_icmp4_inspect(const int type, npf_cache_t *npc, nbuf_t *nbuf)
 }
 
 static bool
-npfa_icmp6_inspect(const int type, npf_cache_t *npc, nbuf_t *nbuf)
+npfa_icmp6_inspect(const int type, npf_cache_t *npc)
 {
+	nbuf_t *nbuf = npc->npc_nbuf;
 	u_int offby;
 
 	/* Per RFC 4443. */
@@ -217,7 +180,7 @@ npfa_icmp6_inspect(const int type, npf_cache_t *npc, nbuf_t *nbuf)
 		if (!nbuf_advance(nbuf, sizeof(struct icmp6_hdr), 0)) {
 			return false;
 		}
-		return (npf_cache_all(npc, nbuf) & NPC_LAYER4) != 0;
+		return (npf_cache_all(npc) & NPC_LAYER4) != 0;
 
 	case ICMP6_ECHO_REQUEST:
 	case ICMP6_ECHO_REPLY:
@@ -235,13 +198,14 @@ npfa_icmp6_inspect(const int type, npf_cache_t *npc, nbuf_t *nbuf)
 }
 
 /*
- * npfa_icmp_session: ALG ICMP inspector.
+ * npfa_icmp_inspect: ALG ICMP inspector.
  *
  * => Returns true if "enpc" is filled.
  */
 static bool
-npfa_icmp_inspect(npf_cache_t *npc, nbuf_t *nbuf, npf_cache_t *enpc)
+npfa_icmp_inspect(npf_cache_t *npc, npf_cache_t *enpc)
 {
+	nbuf_t *nbuf = npc->npc_nbuf;
 	bool ret;
 
 	KASSERT(npf_iscached(npc, NPC_IP46));
@@ -252,6 +216,7 @@ npfa_icmp_inspect(npf_cache_t *npc, nbuf_t *nbuf, npf_cache_t *enpc)
 	if (!nbuf_advance(nbuf, npc->npc_hlen, 0)) {
 		return false;
 	}
+	enpc->npc_nbuf = nbuf;
 	enpc->npc_info = 0;
 
 	/*
@@ -260,10 +225,10 @@ npfa_icmp_inspect(npf_cache_t *npc, nbuf_t *nbuf, npf_cache_t *enpc)
 	 */
 	if (npf_iscached(npc, NPC_IP4)) {
 		const struct icmp *ic = npc->npc_l4.icmp;
-		ret = npfa_icmp4_inspect(ic->icmp_type, enpc, nbuf);
+		ret = npfa_icmp4_inspect(ic->icmp_type, enpc);
 	} else if (npf_iscached(npc, NPC_IP6)) {
 		const struct icmp6_hdr *ic6 = npc->npc_l4.icmp6;
-		ret = npfa_icmp6_inspect(ic6->icmp6_type, enpc, nbuf);
+		ret = npfa_icmp6_inspect(ic6->icmp6_type, enpc);
 	} else {
 		ret = false;
 	}
@@ -281,15 +246,15 @@ npfa_icmp_inspect(npf_cache_t *npc, nbuf_t *nbuf, npf_cache_t *enpc)
 	return true;
 }
 
-static npf_session_t *
-npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, int di)
+static npf_conn_t *
+npfa_icmp_conn(npf_cache_t *npc, int di)
 {
 	npf_cache_t enpc;
 
 	/* Inspect ICMP packet for an embedded packet. */
 	if (!npf_iscached(npc, NPC_ICMP))
 		return NULL;
-	if (!npfa_icmp_inspect(npc, nbuf, &enpc))
+	if (!npfa_icmp_inspect(npc, &enpc))
 		return NULL;
 
 	/*
@@ -303,7 +268,7 @@ npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, int di)
 	bool ret, forw;
 
 	#define	SWAP(type, x, y) { type tmp = x; x = y; y = tmp; }
-	SWAP(npf_addr_t *, enpc.npc_srcip, enpc.npc_dstip);
+	SWAP(npf_addr_t *, enpc.npc_ips[NPF_SRC], enpc.npc_ips[NPF_DST]);
 
 	switch (enpc.npc_proto) {
 	case IPPROTO_TCP:
@@ -318,14 +283,14 @@ npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, int di)
 		break;
 	case IPPROTO_ICMP: {
 		const struct icmp *ic = enpc.npc_l4.icmp;
-		ret = npfa_icmp4_inspect(ic->icmp_type, &enpc, nbuf);
+		ret = npfa_icmp4_inspect(ic->icmp_type, &enpc);
 		if (!ret || !npf_iscached(&enpc, NPC_ICMP_ID))
 			return false;
 		break;
 	}
 	case IPPROTO_ICMPV6: {
 		const struct icmp6_hdr *ic6 = enpc.npc_l4.icmp6;
-		ret = npfa_icmp6_inspect(ic6->icmp6_type, &enpc, nbuf);
+		ret = npfa_icmp6_inspect(ic6->icmp6_type, &enpc);
 		if (!ret || !npf_iscached(&enpc, NPC_ICMP_ID))
 			return false;
 		break;
@@ -334,27 +299,31 @@ npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, int di)
 		return false;
 	}
 
-	/* Lookup for a session using embedded packet. */
-	return npf_session_lookup(&enpc, nbuf, di, &forw);
+	/* Lookup a connection using the embedded packet. */
+	return npf_conn_lookup(&enpc, di, &forw);
 }
 
 /*
- * npfa_icmp_nat: ALG inbound translation inspector, rewrite IP address
- * in the IP header, which is embedded in ICMP packet.
+ * npfa_icmp_nat: ALG translator - rewrites IP address in the IP header
+ * which is embedded in ICMP packet.  Note: backwards stream only.
  */
 static bool
-npfa_icmp_nat(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
+npfa_icmp_nat(npf_cache_t *npc, npf_nat_t *nt, bool forw)
 {
+	const u_int which = NPF_SRC;
 	npf_cache_t enpc;
 
-	if (di != PFIL_IN || !npf_iscached(npc, NPC_ICMP))
+	if (forw || !npf_iscached(npc, NPC_ICMP))
 		return false;
-	if (!npfa_icmp_inspect(npc, nbuf, &enpc))
+	if (!npfa_icmp_inspect(npc, &enpc))
 		return false;
 
 	KASSERT(npf_iscached(&enpc, NPC_IP46));
 	KASSERT(npf_iscached(&enpc, NPC_LAYER4));
 
+	/*
+	 * ICMP: fetch the current checksum we are going to fixup.
+	 */
 	struct icmp *ic = npc->npc_l4.icmp;
 	uint16_t cksum = ic->icmp_cksum;
 
@@ -362,9 +331,9 @@ npfa_icmp_nat(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
 	    offsetof(struct icmp6_hdr, icmp6_cksum));
 
 	/*
-	 * Retrieve the original address and port, then calculate ICMP
-	 * checksum for these changes in the embedded packet.  While data
-	 * is not rewritten in the cache, save IP and TCP/UDP checksums.
+	 * Fetch the IP and port in the _embedded_ packet.  Also, fetch
+	 * the IPv4 and TCP/UDP checksums before they are rewritten.
+	 * Calculate the part of the ICMP checksum fixup.
 	 */
 	const int proto = enpc.npc_proto;
 	uint16_t ipcksum = 0, l4cksum = 0;
@@ -377,7 +346,7 @@ npfa_icmp_nat(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
 		const struct ip *eip = enpc.npc_ip.v4;
 		ipcksum = eip->ip_sum;
 	}
-	cksum = npf_addr_cksum(cksum, enpc.npc_alen, enpc.npc_srcip, addr);
+	cksum = npf_addr_cksum(cksum, enpc.npc_alen, enpc.npc_ips[which], addr);
 
 	switch (proto) {
 	case IPPROTO_TCP: {
@@ -400,17 +369,23 @@ npfa_icmp_nat(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
 	}
 
 	/*
-	 * Rewrite the source IP address and port of the embedded IP header,
-	 * which represents the original packet, therefore passing PFIL_OUT.
-	 * This updates the checksums in the embedded packet.
+	 * Translate the embedded packet.  The following changes will
+	 * be performed by npf_napt_rwr():
+	 *
+	 *	1) Rewrite the IP address and, if not ICMP, port.
+	 *	2) Rewrite the TCP/UDP checksum (if not ICMP).
+	 *	3) Rewrite the IPv4 checksum for (1) and (2).
+	 *
+	 * XXX: Assumes NPF_NATOUT (source address/port).  Currently,
+	 * npfa_icmp_match() matches only for the PFIL_OUT traffic.
 	 */
-	if (npf_nat_translate(&enpc, nbuf, nt, false, PFIL_OUT)) {
+	if (npf_napt_rwr(&enpc, which, addr, port)) {
 		return false;
 	}
 
 	/*
-	 * Finish calculation of the ICMP checksum: include the checksum
-	 * change in the embedded packet.
+	 * Finally, finish the ICMP checksum fixup: include the checksum
+	 * changes in the embedded packet.
 	 */
 	if (npf_iscached(&enpc, NPC_IP4)) {
 		const struct ip *eip = enpc.npc_ip.v4;
@@ -431,4 +406,44 @@ npfa_icmp_nat(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
 	}
 	ic->icmp_cksum = cksum;
 	return true;
+}
+
+/*
+ * npf_alg_icmp_{init,fini,modcmd}: ICMP ALG initialization, destruction
+ * and module interface.
+ */
+
+static int
+npf_alg_icmp_init(void)
+{
+	static const npfa_funcs_t icmp = {
+		.match		= npfa_icmp_match,
+		.translate	= npfa_icmp_nat,
+		.inspect	= npfa_icmp_conn,
+	};
+	alg_icmp = npf_alg_register("icmp", &icmp);
+	return alg_icmp ? 0 : ENOMEM;
+}
+
+static int
+npf_alg_icmp_fini(void)
+{
+	KASSERT(alg_icmp != NULL);
+	return npf_alg_unregister(alg_icmp);
+}
+
+static int
+npf_alg_icmp_modcmd(modcmd_t cmd, void *arg)
+{
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return npf_alg_icmp_init();
+	case MODULE_CMD_FINI:
+		return npf_alg_icmp_fini();
+	case MODULE_CMD_AUTOUNLOAD:
+		return EBUSY;
+	default:
+		return ENOTTY;
+	}
+	return 0;
 }

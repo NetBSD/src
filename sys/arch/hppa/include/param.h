@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.19 2012/02/10 17:35:49 para Exp $	*/
+/*	$NetBSD: param.h,v 1.19.6.1 2014/08/20 00:03:05 tls Exp $	*/
 
 /*	$OpenBSD: param.h,v 1.12 2001/07/06 02:07:41 provos Exp $	*/
 
@@ -33,6 +33,8 @@
  * Machine dependent constants for PA-RISC.
  */
 
+#define	_MACHINE	hppa
+#define	MACHINE		"hppa"
 #define	_MACHINE_ARCH	hppa
 #define	MACHINE_ARCH	"hppa"
 #define	MID_MACHINE	MID_HPPA

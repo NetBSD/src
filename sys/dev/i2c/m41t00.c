@@ -1,4 +1,4 @@
-/*	$NetBSD: m41t00.c,v 1.16 2009/12/12 14:44:10 tsutsui Exp $	*/
+/*	$NetBSD: m41t00.c,v 1.16.22.1 2014/08/20 00:03:37 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41t00.c,v 1.16 2009/12/12 14:44:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41t00.c,v 1.16.22.1 2014/08/20 00:03:37 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,8 +76,18 @@ dev_type_read(m41t00_read);
 dev_type_write(m41t00_write);
 
 const struct cdevsw m41t00_cdevsw = {
-	m41t00_open, m41t00_close, m41t00_read, m41t00_write, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = m41t00_open,
+	.d_close = m41t00_close,
+	.d_read = m41t00_read,
+	.d_write = m41t00_write,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 static int m41t00_clock_read(struct m41t00_softc *, struct clock_ymdhms *);

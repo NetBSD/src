@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.144 2012/01/27 19:48:41 para Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.144.6.1 2014/08/20 00:04:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.144 2012/01/27 19:48:41 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.144.6.1 2014/08/20 00:04:45 tls Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -88,6 +88,7 @@ range_test(vaddr_t addr, vsize_t size, bool ismmap)
 	vaddr_t vm_min_address = VM_MIN_ADDRESS;
 	vaddr_t vm_max_address = VM_MAXUSER_ADDRESS;
 	vaddr_t eaddr = addr + size;
+	int res = 0;
 
 	if (addr < vm_min_address)
 		return EINVAL;
@@ -95,7 +96,12 @@ range_test(vaddr_t addr, vsize_t size, bool ismmap)
 		return ismmap ? EFBIG : EINVAL;
 	if (addr > eaddr) /* no wrapping! */
 		return ismmap ? EOVERFLOW : EINVAL;
-	return 0;
+
+#ifdef MD_MMAP_RANGE_TEST
+	res = MD_MMAP_RANGE_TEST(addr, eaddr);
+#endif
+
+	return res;
 }
 
 /*
@@ -328,8 +334,17 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 	 * Fixup the old deprecated MAP_COPY into MAP_PRIVATE, and
 	 * validate the flags.
 	 */
-	if (flags & MAP_COPY)
+	if (flags & MAP_COPY) {
 		flags = (flags & ~MAP_COPY) | MAP_PRIVATE;
+#if defined(COMPAT_10) && defined(__i386__)
+		/*
+		 * Ancient kernel on x86 did not obey PROT_EXEC on i386 at least
+		 * and ld.so did not turn it on. We take care of this on amd64
+		 * in compat32.
+		 */
+		prot |= PROT_EXEC;
+#endif
+	}
 	if ((flags & (MAP_SHARED|MAP_PRIVATE)) == (MAP_SHARED|MAP_PRIVATE))
 		return (EINVAL);
 
@@ -1247,5 +1262,8 @@ vaddr_t
 uvm_default_mapaddr(struct proc *p, vaddr_t base, vsize_t sz)
 {
 
-	return VM_DEFAULT_ADDRESS(base, sz);
+	if (p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN)
+		return VM_DEFAULT_ADDRESS_TOPDOWN(base, sz);
+	else
+		return VM_DEFAULT_ADDRESS_BOTTOMUP(base, sz);
 }

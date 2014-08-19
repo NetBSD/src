@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.43 2012/05/28 14:19:10 christos Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.43.2.1 2014/08/20 00:03:33 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -89,6 +89,24 @@ struct netbsd32_format_op {
 #define DIOCRFORMAT32	_IOWR('d', 105, struct netbsd32_format_op)
 #define DIOCWFORMAT32	_IOWR('d', 106, struct netbsd32_format_op)
 #endif
+
+/* from <sys/ataio.h> */
+struct netbsd32_atareq {
+	netbsd32_u_long		flags;
+	u_char			command;
+	u_char			features;
+	u_char			sec_count;
+	u_char			sec_num;
+	u_char			head;
+	u_short			cylinder;
+	netbsd32_voidp		databuf;
+	netbsd32_u_long		datalen;
+	int			timeout;
+	u_char			retsts;
+	u_char			error;
+};
+#define ATAIOCCOMMAND32		_IOWR('Q', 8, struct netbsd32_atareq)
+
 
 /* from <net/bpf.h> */
 struct netbsd32_bpf_program {

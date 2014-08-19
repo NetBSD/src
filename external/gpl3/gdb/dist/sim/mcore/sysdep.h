@@ -1,6 +1,5 @@
 /* System includes and definitions used by the Motorola MCore simulator.
-   Copyright (C) 1999, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This file is part of GDB, the GNU debugger.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.55.2.1 2013/06/23 06:20:16 tls Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.55.2.2 2014/08/20 00:03:35 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.55.2.1 2013/06/23 06:20:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.55.2.2 2014/08/20 00:03:35 tls Exp $");
 
 #include "sequencer.h"
 
@@ -157,9 +157,18 @@ static dev_type_poll(sequencerpoll);
 static dev_type_kqfilter(sequencerkqfilter);
 
 const struct cdevsw sequencer_cdevsw = {
-	sequenceropen, sequencerclose, sequencerread, sequencerwrite,
-	sequencerioctl, nostop, notty, sequencerpoll, nommap,
-	sequencerkqfilter, D_OTHER | D_MPSAFE
+	.d_open = sequenceropen,
+	.d_close = sequencerclose,
+	.d_read = sequencerread,
+	.d_write = sequencerwrite,
+	.d_ioctl = sequencerioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = sequencerpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = sequencerkqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 static LIST_HEAD(, sequencer_softc) sequencers = LIST_HEAD_INITIALIZER(sequencers);
 static kmutex_t sequencer_lock;
@@ -1427,12 +1436,6 @@ midiseq_open(int unit, int flags)
 static void
 midiseq_close(struct midi_dev *md)
 {
-	int major;
-	dev_t dev;
-	
-	major = devsw_name2chr("midi", NULL, 0);
-	dev = makedev(major, md->unit);
-
 	DPRINTFN(2, ("midiseq_close: %d\n", md->unit));
 	(void)vn_close(md->vp, 0, kauth_cred_get());
 	kmem_free(md, sizeof(*md));
@@ -1593,8 +1596,18 @@ static dev_type_open(midiopen);
 static dev_type_close(midiclose);
 
 const struct cdevsw midi_cdevsw = {
-	midiopen, midiclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER | D_MPSAFE
+	.d_open = midiopen,
+	.d_close = midiclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 /*

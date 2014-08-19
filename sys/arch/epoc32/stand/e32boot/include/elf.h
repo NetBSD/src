@@ -1,4 +1,5 @@
-/*	$NetBSD: elf.h,v 1.1.4.2 2013/06/23 06:20:03 tls Exp $	*/
+/*	$NetBSD: elf.h,v 1.1.4.3 2014/08/20 00:02:52 tls Exp $	*/
+@@
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -29,8 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYS_EXEC_ELF_H_
-#define _SYS_EXEC_ELF_H_
+#ifndef _STAND_E32BOOT_ELF_H_
+#define _STAND_E32BOOT_ELF_H_
 
 /*
  * The current ELF ABI specification is available at:
@@ -70,8 +71,6 @@ typedef uint64_t	Elf64_Addr;
 typedef uint64_t	Elf64_Off;
 typedef int64_t		Elf64_SOff;
 #define ELF64_FSZ_OFF	8
-typedef int32_t		Elf64_Shalf;
-#define ELF64_FSZ_SHALF 4
 
 typedef int32_t		Elf64_Sword;
 #define ELF64_FSZ_SWORD 4
@@ -1151,76 +1150,4 @@ typedef struct {
 } Elf32_Versym;
 typedef Elf32_Versym	Elf64_Versym;
 
-#ifdef _KERNEL
-
-#define ELF_AUX_ENTRIES 15	/* Max size of aux array passed to loader */
-#define ELF32_NO_ADDR	(~(Elf32_Addr)0) /* Indicates addr. not yet filled in */
-#define ELF32_LINK_ADDR ((Elf32_Addr)-2) /* advises to use link address */
-#define ELF64_NO_ADDR	(~(Elf64_Addr)0) /* Indicates addr. not yet filled in */
-#define ELF64_LINK_ADDR ((Elf64_Addr)-2) /* advises to use link address */
-
-#if defined(ELFSIZE) && (ELFSIZE == 64)
-#define ELF_NO_ADDR	ELF64_NO_ADDR
-#define ELF_LINK_ADDR	ELF64_LINK_ADDR
-#elif defined(ELFSIZE) && (ELFSIZE == 32)
-#define ELF_NO_ADDR	ELF32_NO_ADDR
-#define ELF_LINK_ADDR	ELF32_LINK_ADDR
-#endif
-
-#ifndef ELF32_EHDR_FLAGS_OK
-#define ELF32_EHDR_FLAGS_OK(eh) 1
-#endif
-
-#ifndef ELF64_EHDR_FLAGS_OK
-#define ELF64_EHDR_FLAGS_OK(eh) 1
-#endif
-
-#if defined(ELFSIZE) && (ELFSIZE == 64)
-#define ELF_EHDR_FLAGS_OK(eh)	ELF64_EHDR_FLAGS_OK(eh)
-#else
-#define ELF_EHDR_FLAGS_OK(eh)	ELF32_EHDR_FLAGS_OK(eh)
-#endif
-
-#if defined(ELFSIZE)
-struct elf_args {
-	Elf_Addr	arg_entry;	/* program entry point */
-	Elf_Addr	arg_interp;	/* Interpreter load address */
-	Elf_Addr	arg_phaddr;	/* program header address */
-	Elf_Addr	arg_phentsize;	/* Size of program header */
-	Elf_Addr	arg_phnum;	/* Number of program headers */
-};
-#endif
-
-#ifdef _KERNEL_OPT
-#include "opt_execfmt.h"
-#endif
-
-struct ps_strings;
-
-#ifdef EXEC_ELF32
-int	exec_elf32_makecmds(struct lwp *, struct exec_package *);
-int	elf32_copyargs(struct lwp *, struct exec_package *,
-    struct ps_strings *, char **, void *);
-
-int	coredump_elf32(struct lwp *, void *);
-int	coredump_writenote_elf32(struct proc *, void *, Elf32_Nhdr *,
-    const char *, void *);
-
-int	elf32_check_header(Elf32_Ehdr *, int);
-#endif
-
-#ifdef EXEC_ELF64
-int	exec_elf64_makecmds(struct lwp *, struct exec_package *);
-int	elf64_copyargs(struct lwp *, struct exec_package *,
-    struct ps_strings *, char **, void *);
-
-int	coredump_elf64(struct lwp *, void *);
-int	coredump_writenote_elf64(struct proc *, void *, Elf64_Nhdr *,
-    const char *, void *);
-
-int	elf64_check_header(Elf64_Ehdr *, int);
-#endif
-
-#endif /* _KERNEL */
-
-#endif /* !_SYS_EXEC_ELF_H_ */
+#endif /* !_STAND_E32BOOT_ELF_H_ */

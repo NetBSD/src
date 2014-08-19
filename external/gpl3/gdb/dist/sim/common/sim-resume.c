@@ -1,6 +1,5 @@
 /* Generic simulator resume.
-   Copyright (C) 1997, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -83,7 +82,7 @@ sim_resume (SIM_DESC sd,
 #ifdef SIM_CPU_EXCEPTION_RESUME
       {
 	sim_cpu* cpu = STATE_CPU (sd, next_cpu_nr);
-	SIM_CPU_EXCEPTION_RESUME(sd, cpu, sig_to_deliver);
+	SIM_CPU_EXCEPTION_RESUME (sd, cpu, sig_to_deliver);
       }
 #endif
 

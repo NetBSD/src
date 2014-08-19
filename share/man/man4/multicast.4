@@ -24,7 +24,7 @@
 .\" DEALINGS IN THE SOFTWARE.
 .\"
 .\" $FreeBSD: src/share/man/man4/multicast.4,v 1.4 2004/07/09 09:22:36 ru Exp $
-.\" $NetBSD: multicast.4,v 1.6 2012/03/13 19:25:40 njoly Exp $
+.\" $NetBSD: multicast.4,v 1.6.2.1 2014/08/20 00:02:35 tls Exp $
 .\"
 .Dd September 4, 2003
 .Dt MULTICAST 4
@@ -312,7 +312,7 @@ mc.mf6cc_parent = iif_index;
 for (i = 0; i \*[Lt] maxvifs; i++)
     if (oifs_ttl[i] \*[Gt] 0)
         IF_SET(i, \*[Am]mc.mf6cc_ifset);
-setsockopt(mrouter_s4, IPPROTO_IPV6, MRT6_ADD_MFC,
+setsockopt(mrouter_s6, IPPROTO_IPV6, MRT6_ADD_MFC,
            (void *)\*[Am]mc, sizeof(mc));
 .Ed
 .Pp
@@ -351,7 +351,7 @@ struct mf6cctl mc;
 memset(\*[Am]mc, 0, sizeof(mc));
 memcpy(\*[Am]mc.mf6cc_origin, \*[Am]source_addr, sizeof(mc.mf6cc_origin));
 memcpy(\*[Am]mc.mf6cc_mcastgrp, \*[Am]group_addr, sizeof(mf6cc_mcastgrp));
-setsockopt(mrouter_s4, IPPROTO_IPV6, MRT6_DEL_MFC,
+setsockopt(mrouter_s6, IPPROTO_IPV6, MRT6_DEL_MFC,
            (void *)\*[Am]mc, sizeof(mc));
 .Ed
 .Pp

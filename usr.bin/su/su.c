@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.70 2012/04/12 15:35:07 christos Exp $	*/
+/*	$NetBSD: su.c,v 1.70.2.1 2014/08/20 00:05:04 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988\
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.70 2012/04/12 15:35:07 christos Exp $");
+__RCSID("$NetBSD: su.c,v 1.70.2.1 2014/08/20 00:05:04 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,7 +112,10 @@ main(int argc, char **argv)
 	enum { UNSET, YES, NO } iscsh = UNSET;
 	const char *user, *shell, *avshell;
 	char *username, **np;
-	char *userpass, *class;
+#ifdef SU_ROOTAUTH
+	char *userpass;
+#endif
+	char *class;
 	char shellbuf[MAXPATHLEN], avshellbuf[MAXPATHLEN];
 	time_t pw_warntime = _PASSWORD_WARNDAYS * SECSPERDAY;
 #ifdef LOGIN_CAP
@@ -186,7 +189,9 @@ main(int argc, char **argv)
 	if (pwd == NULL)
 		errx(EXIT_FAILURE, "who are you?");
 	username = estrdup(pwd->pw_name);
+#ifdef SU_ROOTAUTH
 	userpass = estrdup(pwd->pw_passwd);
+#endif
 
 	if (asme) {
 		if (pwd->pw_shell && *pwd->pw_shell) {

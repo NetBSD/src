@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.39 2012/01/31 21:17:57 mlelstv Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.39.6.1 2014/08/20 00:03:11 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.39 2012/01/31 21:17:57 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.39.6.1 2014/08/20 00:03:11 tls Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -849,7 +849,7 @@ opcode_0101(dis_buffer_t *dbuf, u_short opc)
 static void
 opcode_branch(dis_buffer_t *dbuf, u_short opc)
 {
-	int disp, sz;
+	int disp;
 
 	if (IS_INST(BRA,opc))
 		addstr(dbuf, "bra");
@@ -863,20 +863,17 @@ opcode_branch(dis_buffer_t *dbuf, u_short opc)
 		/* 16-bit signed displacement */
 		disp = *(dbuf->val + 1);
 		dbuf->used++;
-		sz = SIZE_WORD;
 		addchar('w');
 	} else if (disp == 0xff) {
 		/* 32-bit signed displacement */
 		disp = *(long *)(dbuf->val + 1);
 		dbuf->used += 2;
-		sz = SIZE_LONG;
 		addchar('l');
 	} else {
 		/* 8-bit signed displacement in opcode. */
 		/* Needs to be sign-extended... */
 		if (ISBITSET(disp,7))
 			disp -= 256;
-		sz = SIZE_BYTE;
 		addchar('b');
 	}
 	addchar('\t');

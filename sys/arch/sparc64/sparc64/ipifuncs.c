@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.46.2.1 2012/11/20 03:01:46 tls Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.46.2.2 2014/08/20 00:03:25 tls Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,14 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.46.2.1 2012/11/20 03:01:46 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.46.2.2 2014/08/20 00:03:25 tls Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/xcall.h>
+#include <sys/ipi.h>
 
 #include <machine/db_machdep.h>
 
@@ -53,6 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.46.2.1 2012/11/20 03:01:46 tls Exp $"
 #endif
 #endif
 
+#ifdef SUN4V
+#define SPARC64_IPI_RETRIES	10000
+#endif
+
 /* CPU sets containing halted, paused and resumed cpus */
 static volatile sparc64_cpuset_t cpus_halted;
 static volatile sparc64_cpuset_t cpus_spinning;
@@ -63,6 +67,11 @@ static volatile sparc64_cpuset_t cpus_resumed;
 static int	sparc64_ipi_wait(sparc64_cpuset_t volatile *, sparc64_cpuset_t);
 static void	sparc64_ipi_error(const char *, sparc64_cpuset_t, sparc64_cpuset_t);
 
+/* Send IPI functions for supported platforms */
+static void	sparc64_send_ipi_sun4u(int, ipifunc_t, uint64_t, uint64_t);
+#ifdef SUN4V
+static void	sparc64_send_ipi_sun4v(int, ipifunc_t, uint64_t, uint64_t);
+#endif
  
 /*
  * These are the "function" entry points in locore.s/mp_subr.s to handle IPI's.
@@ -71,6 +80,9 @@ void	sparc64_ipi_halt(void *, void *);
 void	sparc64_ipi_pause(void *, void *);
 void	sparc64_ipi_flush_pte_us(void *, void *);
 void	sparc64_ipi_flush_pte_usiii(void *, void *);
+#ifdef SUN4V
+void	sparc64_ipi_flush_pte_sun4v(void *, void *);
+#endif
 void	sparc64_ipi_dcache_flush_page_us(void *, void *);
 void	sparc64_ipi_dcache_flush_page_usiii(void *, void *);
 void	sparc64_ipi_blast_dcache(void *, void *);
@@ -204,6 +216,21 @@ sparc64_broadcast_ipi(ipifunc_t func, uint64_t arg1, uint64_t arg2)
 void
 sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 {
+#ifdef SUN4V	
+	if (CPU_ISSUN4V)
+		sparc64_send_ipi_sun4v(upaid, func, arg1, arg2);
+	else
+#endif		
+		sparc64_send_ipi_sun4u(upaid, func, arg1, arg2);
+		    
+}
+
+/*
+ * Send an interprocessor interrupt - sun4v.
+ */
+void
+sparc64_send_ipi_sun4u(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
+{
 	int i, ik, shift = 0;
 	uint64_t intr_func;
 
@@ -260,6 +287,33 @@ sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 		panic("cpu%d: ipi_send: couldn't send ipi to UPAID %u"
 			" (tried %d times)", cpu_number(), upaid, i);
 }
+
+#ifdef SUN4V
+/*
+ * Send an interprocessor interrupt - sun4v.
+ */
+void
+sparc64_send_ipi_sun4v(int cpuid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
+{
+	struct cpu_info *ci = curcpu();
+	int err, i;
+	
+	stha(ci->ci_cpuset, ASI_PHYS_CACHED, cpuid);
+	stxa(ci->ci_mondo, ASI_PHYS_CACHED, (vaddr_t)func);
+	stxa(ci->ci_mondo + 8, ASI_PHYS_CACHED, arg1);
+	stxa(ci->ci_mondo + 16, ASI_PHYS_CACHED, arg2);
+	
+	for (i = 0; i < SPARC64_IPI_RETRIES; i++) {
+		err = hv_cpu_mondo_send(1, ci->ci_cpuset, ci->ci_mondo);
+		if (err != H_EWOULDBLOCK)
+			break;
+		delay(10);
+	}
+	if (err != H_EOK)
+		panic("Unable to send mondo %lx to cpu %d: %d",
+		    (long unsigned int)func, cpuid, err);
+}
+#endif
 
 /*
  * Wait for IPI operation to complete.
@@ -394,8 +448,13 @@ smp_tlb_flush_pte(vaddr_t va, struct pmap * pm)
 	int ctx;
 	bool kpm = (pm == pmap_kernel());
 	ipifunc_t func;
-
+#ifdef SUN4V
+	if (CPU_ISSUN4V)
+		func = sparc64_ipi_flush_pte_sun4v;
+	else if (CPU_IS_USIII_UP())
+#else
 	if (CPU_IS_USIII_UP())
+#endif		
 		func = sparc64_ipi_flush_pte_usiii;
 	else
 		func = sparc64_ipi_flush_pte_us;
@@ -506,4 +565,11 @@ xc_send_ipi(struct cpu_info *target)
 {
 
 	sparc64_generic_xcall(target, (ipi_c_call_func_t)xc_ipi_handler, NULL);
+}
+
+void
+cpu_ipi(struct cpu_info *target)
+{
+
+	sparc64_generic_xcall(target, (ipi_c_call_func_t)ipi_cpu_handler, NULL);
 }

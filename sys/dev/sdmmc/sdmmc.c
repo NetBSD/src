@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.15.2.1 2013/02/25 00:29:31 tls Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.15.2.2 2014/08/20 00:03:50 tls Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.15.2.1 2013/02/25 00:29:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.15.2.2 2014/08/20 00:03:50 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.15.2.1 2013/02/25 00:29:31 tls Exp $");
 #include <dev/sdmmc/sdmmcvar.h>
 
 #ifdef SDMMC_DEBUG
-int sdmmcdebug = 1;
+int sdmmcdebug = 0;
 static void sdmmc_dump_command(struct sdmmc_softc *, struct sdmmc_command *);
 #define DPRINTF(n,s)	do { if ((n) <= sdmmcdebug) printf s; } while (0)
 #else
@@ -141,12 +141,6 @@ sdmmc_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	if (ISSET(sc->sc_caps, SMC_CAPS_POLL_CARD_DET)) {
-		callout_init(&sc->sc_card_detect_ch, 0);
-		callout_reset(&sc->sc_card_detect_ch, hz,
-		    sdmmc_polling_card, sc);
-	}
-
 	SIMPLEQ_INIT(&sc->sf_head);
 	TAILQ_INIT(&sc->sc_tskq);
 	TAILQ_INIT(&sc->sc_intrq);
@@ -160,6 +154,12 @@ sdmmc_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_intr_task_mtx, MUTEX_DEFAULT, IPL_SDMMC);
 	cv_init(&sc->sc_tskq_cv, "mmctaskq");
 
+	if (ISSET(sc->sc_caps, SMC_CAPS_POLL_CARD_DET)) {
+		callout_init(&sc->sc_card_detect_ch, 0);
+		callout_reset(&sc->sc_card_detect_ch, hz,
+		    sdmmc_polling_card, sc);
+	}
+
 	if (!pmf_device_register(self, NULL, NULL)) {
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	}
@@ -170,7 +170,7 @@ sdmmc_attach(device_t parent, device_t self, void *aux)
 	 * Create the event thread that will attach and detach cards
 	 * and perform other lengthy operations.
 	 */
-	config_pending_incr();
+	config_pending_incr(self);
 	config_interrupts(self, sdmmc_doattach);
 }
 
@@ -197,6 +197,17 @@ sdmmc_detach(device_t self, int flags)
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_dmap);
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmap);
 	}
+
+	if (ISSET(sc->sc_caps, SMC_CAPS_POLL_CARD_DET)) {
+		callout_stop(&sc->sc_card_detect_ch);
+		callout_destroy(&sc->sc_card_detect_ch);
+	}
+
+	cv_destroy(&sc->sc_tskq_cv);
+	mutex_destroy(&sc->sc_intr_task_mtx);
+	mutex_destroy(&sc->sc_discover_task_mtx);
+	mutex_destroy(&sc->sc_tskq_mtx);
+	mutex_destroy(&sc->sc_mtx);
 
 	return 0;
 }
@@ -252,7 +263,7 @@ sdmmc_task_thread(void *arg)
 	struct sdmmc_task *task;
 
 	sdmmc_discover_task(sc);
-	config_pending_decr();
+	config_pending_decr(sc->sc_dev);
 
 	mutex_enter(&sc->sc_tskq_mtx);
 	for (;;) {
@@ -745,13 +756,8 @@ sdmmc_app_command(struct sdmmc_softc *sc, struct sdmmc_function *sf, struct sdmm
 
 	memset(&acmd, 0, sizeof(acmd));
 	acmd.c_opcode = MMC_APP_CMD;
-	if (sf != NULL) {
-		acmd.c_arg = sf->rca << 16;
-		acmd.c_flags = SCF_CMD_AC | SCF_RSP_R1 | SCF_RSP_SPI_R1;
-	} else {
-		acmd.c_arg = 0;
-		acmd.c_flags = SCF_CMD_BCR | SCF_RSP_R1 | SCF_RSP_SPI_R1;
-	}
+	acmd.c_arg = (sf != NULL) ? (sf->rca << 16) : 0;
+	acmd.c_flags = SCF_CMD_AC | SCF_RSP_R1 | SCF_RSP_SPI_R1;
 
 	error = sdmmc_mmc_command(sc, &acmd);
 	if (error == 0) {

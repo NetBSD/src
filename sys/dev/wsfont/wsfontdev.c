@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontdev.c,v 1.14 2007/03/04 06:02:52 christos Exp $ */
+/* $NetBSD: wsfontdev.c,v 1.14.86.1 2014/08/20 00:03:52 tls Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfontdev.c,v 1.14 2007/03/04 06:02:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfontdev.c,v 1.14.86.1 2014/08/20 00:03:52 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,16 @@ wsfontioctl(dev_t dev, u_long cmd, void *data, int flag,
 }
 
 const struct cdevsw wsfont_cdevsw = {
-	wsfontopen, wsfontclose, noread, nowrite, wsfontioctl,
-	    nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	.d_open = wsfontopen,
+	.d_close = wsfontclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = wsfontioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };

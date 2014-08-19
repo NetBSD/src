@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.92.6.1 2012/11/20 03:02:35 tls Exp $	*/
+/*	$NetBSD: xy.c,v 1.92.6.2 2014/08/20 00:03:52 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.92.6.1 2012/11/20 03:02:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.92.6.2 2014/08/20 00:03:52 tls Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -208,12 +208,29 @@ dev_type_dump(xydump);
 dev_type_size(xysize);
 
 const struct bdevsw xy_bdevsw = {
-	xyopen, xyclose, xystrategy, xyioctl, xydump, xysize, D_DISK
+	.d_open = xyopen,
+	.d_close = xyclose,
+	.d_strategy = xystrategy,
+	.d_ioctl = xyioctl,
+	.d_dump = xydump,
+	.d_psize = xysize,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw xy_cdevsw = {
-	xyopen, xyclose, xyread, xywrite, xyioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = xyopen,
+	.d_close = xyclose,
+	.d_read = xyread,
+	.d_write = xywrite,
+	.d_ioctl = xyioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 struct xyc_attach_args {	/* this is the "aux" args to xyattach */
@@ -1397,7 +1414,10 @@ start:
 int
 xyc_startbuf(struct xyc_softc *xycsc, struct xy_softc *xysc, struct buf *bp)
 {
-	int     partno, error;
+#ifdef XYC_DEBUG
+	int     partno;
+#endif
+	int     error;
 	struct xy_iorq *iorq;
 	struct xy_iopb *iopb;
 	u_long  block;
@@ -1410,8 +1430,8 @@ xyc_startbuf(struct xyc_softc *xycsc, struct xy_softc *xysc, struct buf *bp)
 	if (bp == NULL)
 		panic("xyc_startbuf null buf");
 
-	partno = DISKPART(bp->b_dev);
 #ifdef XYC_DEBUG
+	partno = DISKPART(bp->b_dev);
 	printf("xyc_startbuf: %s%c: %s block %d\n", device_xname(xysc->sc_dev),
 	    'a' + partno, (bp->b_flags & B_READ) ? "read" : "write", bp->b_blkno);
 	printf("xyc_startbuf: b_bcount %d, b_data 0x%x\n",

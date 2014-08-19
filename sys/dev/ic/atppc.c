@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.30 2011/05/26 02:37:25 jakllsch Exp $ */
+/* $NetBSD: atppc.c,v 1.30.14.1 2014/08/20 00:03:37 tls Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.30 2011/05/26 02:37:25 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.30.14.1 2014/08/20 00:03:37 tls Exp $");
 
 #include "opt_atppc.h"
 
@@ -1663,7 +1663,7 @@ atppc_nibble_read(struct atppc_softc *atppc)
 			ctr &= ~HOSTBUSY;
 			atppc_w_ctr(atppc, ctr);
 
-			/* Event 11 - wait ack from peripherial */
+			/* Event 11 - wait ack from peripheral */
 			if (atppc->sc_use & ATPPC_USE_INTR)
 				atppc->sc_inerr = atppc_wait_interrupt(atppc,
 					&atppc->sc_in_cv, ATPPC_IRQ_nACK);
@@ -1962,7 +1962,6 @@ atppc_ecp_read_error(struct atppc_softc *atppc)
 static void
 atppc_std_write(struct atppc_softc * const atppc)
 {
-	unsigned int timecount;
 	unsigned char ctr;
 
 	ctr = atppc_r_ctr(atppc);
@@ -1997,7 +1996,6 @@ atppc_std_write(struct atppc_softc * const atppc)
 		atppc_barrier_w(atppc);
 
 		/* Wait for nACK for MAXBUSYWAIT */
-		timecount = 0;
 		if (atppc->sc_use & ATPPC_USE_INTR) {
 			atppc->sc_outerr = atppc_wait_interrupt(atppc,
 				&atppc->sc_out_cv, ATPPC_IRQ_nACK);

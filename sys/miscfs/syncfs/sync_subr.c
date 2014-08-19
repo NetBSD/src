@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.48 2012/06/02 21:36:46 dsl Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.48.2.1 2014/08/20 00:04:31 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.48 2012/06/02 21:36:46 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.48.2.1 2014/08/20 00:04:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,16 +304,10 @@ sysctl_vfs_syncfs_setup(struct sysctllog **clog)
 
 	sysctl_createv(clog, 0, NULL, &rnode,
 			CTLFLAG_PERMANENT,
-			CTLTYPE_NODE, "vfs", NULL,
-			NULL, 0, NULL, 0,
-			CTL_VFS, CTL_EOL);
-
-	sysctl_createv(clog, 0, &rnode, &rnode,
-			CTLFLAG_PERMANENT,
 			CTLTYPE_NODE, "sync",
 			SYSCTL_DESCR("syncer options"),
 			NULL, 0, NULL, 0,
-			CTL_CREATE, CTL_EOL);
+			CTL_VFS, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, &cnode,
 			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,

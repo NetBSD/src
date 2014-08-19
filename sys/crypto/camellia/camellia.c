@@ -1,4 +1,4 @@
-/* $NetBSD: camellia.c,v 1.1 2011/05/05 17:38:36 drochner Exp $ */
+/* $NetBSD: camellia.c,v 1.1.18.1 2014/08/20 00:03:34 tls Exp $ */
 
 /* camellia.h ver 1.1.0
  *
@@ -35,6 +35,9 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/systm.h>
+#include <sys/errno.h>
+#include <sys/module.h>
+
 #include <crypto/camellia/camellia.h>
 
 
@@ -1320,4 +1323,20 @@ Camellia_DecryptBlock(const int keyBitLength,
     PUTU32(plaintext+4,  tmp[1]);
     PUTU32(plaintext+8,  tmp[2]);
     PUTU32(plaintext+12, tmp[3]);
+}
+
+MODULE(MODULE_CLASS_MISC, camellia, NULL);
+
+static int
+camellia_modcmd(modcmd_t cmd, void *opaque)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return 0;
+	case MODULE_CMD_FINI:
+		return 0;
+	default:
+		return ENOTTY;
+	}
 }

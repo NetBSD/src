@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.161.2.1 2013/06/23 06:20:25 tls Exp $	*/
+/*	$NetBSD: in6.c,v 1.161.2.2 2014/08/20 00:04:36 tls Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,10 +62,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.161.2.1 2013/06/23 06:20:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.161.2.2 2014/08/20 00:04:36 tls Exp $");
 
 #include "opt_inet.h"
-#include "opt_pfil_hooks.h"
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
@@ -87,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.161.2.1 2013/06/23 06:20:25 tls Exp $");
 #include <net/if_types.h>
 #include <net/route.h>
 #include <net/if_dl.h>
+#include <net/pfil.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -102,9 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.161.2.1 2013/06/23 06:20:25 tls Exp $");
 
 #include <net/net_osdep.h>
 
-#ifdef PFIL_HOOKS
-#include <net/pfil.h>
-#endif
 #ifdef COMPAT_50
 #include <compat/netinet6/in6_var.h>
 #endif
@@ -142,7 +139,7 @@ const struct sockaddr_in6 sa6_any = {sizeof(sa6_any), AF_INET6,
 				     0, 0, IN6ADDR_ANY_INIT, 0};
 
 static int in6_lifaddr_ioctl(struct socket *, u_long, void *,
-	struct ifnet *, struct lwp *);
+	struct ifnet *);
 static int in6_ifinit(struct ifnet *, struct in6_ifaddr *,
 	const struct sockaddr_in6 *, int);
 static void in6_unlink_ifa(struct in6_ifaddr *, struct ifnet *);
@@ -154,13 +151,11 @@ static void in6_unlink_ifa(struct in6_ifaddr *, struct ifnet *);
 static void
 in6_ifloop_request(int cmd, struct ifaddr *ifa)
 {
-	struct sockaddr_in6 lo_sa;
 	struct sockaddr_in6 all1_sa;
 	struct rtentry *nrt = NULL;
 	int e;
 
 	sockaddr_in6_init(&all1_sa, &in6mask128, 0, 0, 0);
-	sockaddr_in6_init(&lo_sa, &in6addr_loopback, 0, 0, 0);
 
 	/*
 	 * We specify the address itself as the gateway, and set the
@@ -365,8 +360,7 @@ in6_mask2len(struct in6_addr *mask, u_char *lim0)
 #define ia62ifa(ia6)	(&((ia6)->ia_ifa))
 
 static int
-in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
-    lwp_t *l)
+in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 {
 	struct	in6_ifreq *ifr = (struct in6_ifreq *)data;
 	struct	in6_ifaddr *ia = NULL;
@@ -380,9 +374,8 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	 */
 	case SIOCSIFADDR:
 	case SIOCSIFDSTADDR:
-#ifdef SIOCSIFCONF_X25
-	case SIOCSIFCONF_X25:
-#endif
+	case SIOCSIFBRDADDR:
+	case SIOCSIFNETMASK:
 		return EOPNOTSUPP;
 	case SIOCGETSGCNT_IN6:
 	case SIOCGETMIFCNT_IN6:
@@ -391,7 +384,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	case SIOCSIFADDRPREF:
 		if (ifp == NULL)
 			return EINVAL;
-		return ifaddrpref_ioctl(so, cmd, data, ifp, l);
+		return ifaddrpref_ioctl(so, cmd, data, ifp);
 	}
 
 	if (ifp == NULL)
@@ -434,7 +427,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		/* Privileged. */
 		/* FALLTHROUGH */
 	case SIOCGLIFADDR:
-		return in6_lifaddr_ioctl(so, cmd, data, ifp, l);
+		return in6_lifaddr_ioctl(so, cmd, data, ifp);
 	}
 
 	/*
@@ -754,11 +747,8 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		 */
 		pfxlist_onlink_check();
 
-#ifdef PFIL_HOOKS
-		(void)pfil_run_hooks(&if_pfil, (struct mbuf **)SIOCAIFADDR_IN6,
+		(void)pfil_run_hooks(if_pfil, (struct mbuf **)SIOCAIFADDR_IN6,
 		    ifp, PFIL_IFADDR);
-#endif
-
 		break;
 	}
 
@@ -780,10 +770,8 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		in6_purgeaddr(&ia->ia_ifa);
 		if (pr && pr->ndpr_refcnt == 0)
 			prelist_remove(pr);
-#ifdef PFIL_HOOKS
-		(void)pfil_run_hooks(&if_pfil, (struct mbuf **)SIOCDIFADDR_IN6,
+		(void)pfil_run_hooks(if_pfil, (struct mbuf **)SIOCDIFADDR_IN6,
 		    ifp, PFIL_IFADDR);
-#endif
 		break;
 	}
 
@@ -795,8 +783,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 }
 
 int
-in6_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
-    struct lwp *l)
+in6_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 {
 	int error, s;
 
@@ -816,7 +803,7 @@ in6_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	case OSIOCAIFADDR_IN6:
 #endif
 	case SIOCAIFADDR_IN6:
-		if (kauth_authorize_network(l->l_cred,
+		if (kauth_authorize_network(curlwp->l_cred,
 		    KAUTH_NETWORK_SOCKET,
 		    KAUTH_REQ_NETWORK_SOCKET_SETPRIV,
 		    so, NULL, NULL))
@@ -825,7 +812,7 @@ in6_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	}
 
 	s = splnet();
-	error = in6_control1(so , cmd, data, ifp, l);
+	error = in6_control1(so , cmd, data, ifp);
 	splx(s);
 	return error;
 }
@@ -1179,7 +1166,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			if (memcmp(&mltaddr.sin6_addr,
 			    &satocsin6(rt_getkey(rt))->sin6_addr,
 			    MLTMASK_LEN)) {
-				RTFREE(rt);
+				rtfree(rt);
 				rt = NULL;
 			} else if (rt->rt_ifp != ifp) {
 				IN6_DPRINTF("%s: rt_ifp %p -> %p (%s) "
@@ -1210,7 +1197,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			if (error)
 				goto cleanup;
 		} else {
-			RTFREE(rt);
+			rtfree(rt);
 		}
 		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error, 0);
 		if (!imm) {
@@ -1264,7 +1251,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			if (memcmp(&mltaddr.sin6_addr,
 			    &satocsin6(rt_getkey(rt))->sin6_addr,
 			    32 / NBBY)) {
-				RTFREE(rt);
+				rtfree(rt);
 				rt = NULL;
 			} else if (rt->rt_ifp != ifp) {
 				IN6_DPRINTF("%s: rt_ifp %p -> %p (%s) "
@@ -1295,7 +1282,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 				goto cleanup;
 #undef	MLTMASK_LEN
 		} else {
-			RTFREE(rt);
+			rtfree(rt);
 		}
 		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error, 0);
 		if (!imm) {
@@ -1344,7 +1331,8 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 				    mindelay;
 			}
 		}
-		nd6_dad_start(&ia->ia_ifa, dad_delay);
+		/* +1 ensures callout is always used */
+		nd6_dad_start(&ia->ia_ifa, dad_delay + 1);
 	}
 
 	return error;
@@ -1519,7 +1507,7 @@ in6_purgeif(struct ifnet *ifp)
  */
 static int
 in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data, 
-	struct ifnet *ifp, struct lwp *l)
+	struct ifnet *ifp)
 {
 	struct in6_ifaddr *ia;
 	struct if_laddrreq *iflr = (struct if_laddrreq *)data;
@@ -1629,7 +1617,7 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 		ifra.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;
 		ifra.ifra_lifetime.ia6t_pltime = ND6_INFINITE_LIFETIME;
 		ifra.ifra_flags = iflr->flags & ~IFLR_PREFIX;
-		return in6_control(so, SIOCAIFADDR_IN6, &ifra, ifp, l);
+		return in6_control(so, SIOCAIFADDR_IN6, &ifra, ifp);
 	    }
 	case SIOCGLIFADDR:
 	case SIOCDLIFADDR:
@@ -1740,7 +1728,7 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 			    ia->ia_prefixmask.sin6_len);
 
 			ifra.ifra_flags = ia->ia6_flags;
-			return in6_control(so, SIOCDIFADDR_IN6, &ifra, ifp, l);
+			return in6_control(so, SIOCDIFADDR_IN6, &ifra, ifp);
 		}
 	    }
 	}
@@ -1875,32 +1863,6 @@ bestia(struct in6_ifaddr *best_ia, struct in6_ifaddr *ia)
 	if (best_ia == NULL ||
 	    best_ia->ia_ifa.ifa_preference < ia->ia_ifa.ifa_preference)
 		return ia;
-	return best_ia;
-}
-
-/*
- * find the internet address on a given interface corresponding to a neighbor's
- * address.
- */
-struct in6_ifaddr *
-in6ifa_ifplocaladdr(const struct ifnet *ifp, const struct in6_addr *addr)
-{
-	struct ifaddr *ifa;
-	struct in6_ifaddr *best_ia = NULL, *ia;
-
-	IFADDR_FOREACH(ifa, ifp) {
-		if (ifa->ifa_addr == NULL)
-			continue;	/* just for safety */
-		if (ifa->ifa_addr->sa_family != AF_INET6)
-			continue;
-		ia = (struct in6_ifaddr *)ifa;
-		if (!IN6_ARE_MASKED_ADDR_EQUAL(addr,
-				&ia->ia_addr.sin6_addr,
-				&ia->ia_prefixmask.sin6_addr))
-			continue;
-		best_ia = bestia(best_ia, ia);
-	}
-
 	return best_ia;
 }
 
@@ -2194,15 +2156,17 @@ in6_if_link_up(struct ifnet *ifp)
 		}
 
 		if (ia->ia6_flags & IN6_IFF_TENTATIVE) {
+			int rand_delay;
 			/*
 			 * The TENTATIVE flag was likely set by hand
 			 * beforehand, implicitly indicating the need for DAD.
 			 * We may be able to skip the random delay in this
 			 * case, but we impose delays just in case.
 			 */
-			nd6_dad_start(ifa,
-			    cprng_fast32() %
-				(MAX_RTR_SOLICITATION_DELAY * hz));
+			rand_delay = cprng_fast32() %
+			    (MAX_RTR_SOLICITATION_DELAY * hz);
+			/* +1 ensures callout is always used */
+			nd6_dad_start(ifa, rand_delay + 1);
 		}
 	}
 
@@ -2311,7 +2275,7 @@ in6_setmaxmtu(void)
 	unsigned long maxmtu = 0;
 	struct ifnet *ifp;
 
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	IFNET_FOREACH(ifp) {
 		/* this function can be called during ifnet initialization */
 		if (!ifp->if_afdata[AF_INET6])
 			continue;

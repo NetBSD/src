@@ -1,4 +1,4 @@
-/* $NetBSD: timekeeper.c,v 1.10.12.1 2013/02/25 00:28:47 tls Exp $ */
+/* $NetBSD: timekeeper.c,v 1.10.12.2 2014/08/20 00:03:10 tls Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.10.12.1 2013/02/25 00:28:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.10.12.2 2014/08/20 00:03:10 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,7 @@ struct timekeeper_softc {
 
 static int  clock_match(device_t, cfdata_t, void *);
 static void clock_attach(device_t, device_t, void *);
+static void dsclock_init(struct timekeeper_softc *);
 
 CFATTACH_DECL_NEW(clock, sizeof (struct timekeeper_softc),
     clock_match, clock_attach, NULL, NULL);
@@ -103,6 +104,7 @@ clock_attach(device_t parent, device_t self, void *aux)
 		sc->sc_todr.todr_gettime_ymdhms = dsclock_get;
 		sc->sc_todr.todr_settime_ymdhms = dsclock_set;
 		sc->sc_todr.cookie = sc;
+		dsclock_init(sc);
 		aprint_normal(": ds1287a\n");
 		break;
 	}
@@ -159,6 +161,28 @@ mkclock_set(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 
 	stamp[0] = 'R'; stamp[1] = 'T'; stamp[2] = 'C'; stamp[3] = '\0';
 	return 0;
+}
+
+static void
+dsclock_init(struct timekeeper_softc *sc)
+{
+	volatile uint8_t *chiptime = (void *)sc->sc_clock;
+
+	/*
+	 * It looks the firmware ROM doesn't initialize DS1287 at all
+	 * even after the chip is replaced, so explicitly initialize
+	 * control registers here.
+	 */
+	chiptime = (void *)sc->sc_clock;
+
+	/* No DSE, 24HR, BINARY */
+	chiptime[MC_REGB] =
+	    (chiptime[MC_REGB] & ~MC_REGB_DSE) |
+	    (MC_REGB_24HR | MC_REGB_BINARY);
+
+	/* make sure to start integrated clock OSC */
+	chiptime[MC_REGA] =
+	    (chiptime[MC_REGA] & ~MC_REGA_DVMASK) | MC_BASE_32_KHz;
 }
 
 /*

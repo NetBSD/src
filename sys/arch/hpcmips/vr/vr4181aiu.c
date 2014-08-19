@@ -1,4 +1,4 @@
-/* $NetBSD: vr4181aiu.c,v 1.7.18.1 2012/11/20 03:01:24 tls Exp $ */
+/* $NetBSD: vr4181aiu.c,v 1.7.18.2 2014/08/20 00:03:03 tls Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr4181aiu.c,v 1.7.18.1 2012/11/20 03:01:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr4181aiu.c,v 1.7.18.2 2014/08/20 00:03:03 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -97,8 +97,18 @@ dev_type_read(vr4181aiuread);
 dev_type_write(vr4181aiuwrite);
 
 const struct cdevsw vr4181aiu_cdevsw = {
-	vr4181aiuopen, vr4181aiuclose, vr4181aiuread, vr4181aiuwrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	.d_open = vr4181aiuopen,
+	.d_close = vr4181aiuclose,
+	.d_read = vr4181aiuread,
+	.d_write = vr4181aiuwrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 static int

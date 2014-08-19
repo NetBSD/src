@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_esdhc.c,v 1.1 2012/04/19 09:53:53 bsh Exp $ */
+/*	$NetBSD: imx51_esdhc.c,v 1.1.6.1 2014/08/20 00:02:46 tls Exp $ */
 
 /*-
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -30,7 +30,9 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_esdhc.c,v 1.1 2012/04/19 09:53:53 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_esdhc.c,v 1.1.6.1 2014/08/20 00:02:46 tls Exp $");
+
+#include "opt_imx.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -70,6 +72,8 @@ sdhc_match(device_t parent, cfdata_t cf, void *aux)
 	switch (aa->aa_addr) {
 	case ESDHC1_BASE:
 	case ESDHC2_BASE:
+	case ESDHC3_BASE:
+	case ESDHC4_BASE:
 		return 1;
 	}
 
@@ -83,7 +87,7 @@ sdhc_attach(device_t parent, device_t self, void *aux)
 	struct axi_attach_args *aa = aux;
 	bus_space_tag_t iot = aa->aa_iot;
 	bus_space_handle_t ioh;
-	u_int perclk;
+	u_int perclk = 0;
 
 	sc->sc_sdhc.sc_dev = self;
 
@@ -96,11 +100,22 @@ sdhc_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal(": SD/MMC host controller\n");
 	aprint_naive("\n");
-
-
 	sc->sc_sdhc.sc_host = sc->sc_hosts;
 	/* base clock frequency in kHz */
-	perclk = imx51_get_clock(IMX51CLK_PERCLK_ROOT);
+	switch (aa->aa_addr) {
+	case ESDHC1_BASE:
+		perclk = imx51_get_clock(IMX51CLK_ESDHC1_CLK_ROOT);
+		break;;
+	case ESDHC2_BASE:
+		perclk = imx51_get_clock(IMX51CLK_ESDHC2_CLK_ROOT);
+		break;;
+	case ESDHC3_BASE:
+		perclk = imx51_get_clock(IMX51CLK_ESDHC3_CLK_ROOT);
+		break;;
+	case ESDHC4_BASE:
+		perclk = imx51_get_clock(IMX51CLK_ESDHC4_CLK_ROOT);
+		break;;
+	}
 	sc->sc_sdhc.sc_clkbase = perclk / 1000;
 	sc->sc_sdhc.sc_flags |= SDHC_FLAG_HAVE_DVS |
 		SDHC_FLAG_NO_PWR0 |

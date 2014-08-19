@@ -1,4 +1,4 @@
-/*      $NetBSD: n_log10.c,v 1.6 2003/08/07 16:44:52 agc Exp $ */
+/*      $NetBSD: n_log10.c,v 1.6.60.1 2014/08/20 00:02:18 tls Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -89,6 +89,16 @@ log10(double x)
 {
 #if defined(__vax__)||defined(tahoe)
 	return(log(x)/ln10hi);
+#else	/* defined(__vax__)||defined(tahoe) */
+	return(ivln10*log(x));
+#endif	/* defined(__vax__)||defined(tahoe) */
+}
+
+float
+log10f(float x)
+{
+#if defined(__vax__)||defined(tahoe)
+	return(logf(x)/ln10hi);
 #else	/* defined(__vax__)||defined(tahoe) */
 	return(ivln10*log(x));
 #endif	/* defined(__vax__)||defined(tahoe) */

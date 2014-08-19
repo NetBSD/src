@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.29 2012/04/26 03:04:54 christos Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.29.2.1 2014/08/20 00:03:31 tls Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.29 2012/04/26 03:04:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.29.2.1 2014/08/20 00:03:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.29 2012/04/26 03:04:54 christos Exp
 
 #define DECL_NO_OUT(name)				\
     struct name ## _in *inp;				\
-    struct coda_out_hdr *outp;				\
     int name ## _size = sizeof (struct name ## _in);	\
     int Isize = sizeof (struct name ## _in);		\
     int Osize = sizeof (struct coda_out_hdr);		\
@@ -101,7 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.29 2012/04/26 03:04:54 christos Exp
     if (Osize > name ## _size)				\
     	name ## _size = Osize;				\
     CODA_ALLOC(inp, struct name ## _in *, name ## _size);\
-    outp = (struct coda_out_hdr *) inp
 
 #define STRCPY(struc, name, len) \
     memcpy((char *)inp + (int)inp->struc, name, len); \

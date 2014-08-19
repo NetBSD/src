@@ -1,5 +1,4 @@
-# Copyright (C) 1998, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -70,7 +69,7 @@ proc gdb_delete_tracepoints {} {
     send_gdb "delete tracepoints\n"
     gdb_expect 30 {
 	-re "Delete all tracepoints.*y or n.*$" {
-	    send_gdb "y\n";
+	    send_gdb "y\n"
 	    exp_continue
 	}
 	-re ".*$gdb_prompt $" { # This happens if there were no tracepoints }
@@ -87,83 +86,97 @@ proc gdb_delete_tracepoints {} {
     }
 }
 
-#
-# Procedure: gdb_trace_setactions
 #   Define actions for a tracepoint.
 #   Arguments:
+#       actions_command -- the command used to create the actions.
+#                          either "actions" or "commands".
 #	testname   -- identifying string for pass/fail output
-#	tracepoint -- to which tracepoint do these actions apply? (optional)
+#	tracepoint -- to which tracepoint(s) do these actions apply? (optional)
 #	args       -- list of actions to be defined.
 #   Returns:
 #	zero       -- success
 #	non-zero   -- failure
 
-proc gdb_trace_setactions { testname tracepoint args } {
-    global gdb_prompt;
+proc gdb_trace_setactions_command { actions_command testname tracepoint args } {
+    global gdb_prompt
 
-    set state 0;
-    set passfail "pass";
-    send_gdb "actions $tracepoint\n";
-    set expected_result "";
+    set state 0
+    set passfail "pass"
+    send_gdb "$actions_command $tracepoint\n"
+    set expected_result ""
     gdb_expect 5 {
 	-re "No tracepoint number .*$gdb_prompt $" {
 	    fail $testname
-	    return 1;
+	    return 1
 	}
 	-re "Enter actions for tracepoint $tracepoint.*>" {
 	    if { [llength $args] > 0 } {
-		set lastcommand "[lindex $args $state]";
-		send_gdb "[lindex $args $state]\n";
-		incr state;
-		set expected_result [lindex $args $state];
-		incr state;
+		set lastcommand "[lindex $args $state]"
+		send_gdb "[lindex $args $state]\n"
+		incr state
+		set expected_result [lindex $args $state]
+		incr state
 	    } else {
-		send_gdb "end\n";
+		send_gdb "end\n"
 	    }
-	    exp_continue;
+	    exp_continue
 	}
 	-re "\(.*\)\[\r\n\]+\[ \t]*>$" {
 	    if { $expected_result != "" } {
-		regsub "^\[^\r\n\]+\[\r\n\]+" "$expect_out(1,string)" "" out;
+		regsub "^\[^\r\n\]+\[\r\n\]+" "$expect_out(1,string)" "" out
 		if ![regexp $expected_result $out] {
-		    set passfail "fail";
+		    set passfail "fail"
 		}
-		set expected_result "";
+		set expected_result ""
 	    }
 	    if { $state < [llength $args] } {
-		send_gdb "[lindex $args $state]\n";
-		incr state;
-		set expected_result [lindex $args $state];
-		incr state;
+		send_gdb "[lindex $args $state]\n"
+		incr state
+		set expected_result [lindex $args $state]
+		incr state
 	    } else {
-		send_gdb "end\n";
-		set expected_result "";
+		send_gdb "end\n"
+		set expected_result ""
 	    }
-	    exp_continue;
+	    exp_continue
 	}
 	-re "\(.*\)$gdb_prompt $" {
 	    if { $expected_result != "" } {
 		if ![regexp $expected_result $expect_out(1,string)] {
-		    set passfail "fail";
+		    set passfail "fail"
 		}
-		set expected_result "";
+		set expected_result ""
 	    }
 	    if { [llength $args] < $state } {
-		set passfail "fail";
+		set passfail "fail"
 	    }
 	}
 	default {
-	    set passfail "fail";
+	    set passfail "fail"
 	}
     }
     if { $testname != "" } {
-	$passfail $testname;
+	$passfail $testname
     }
     if { $passfail == "pass" } then { 
-	return 0;
+	return 0
     } else {
-	return 1;
+	return 1
     }
+}
+
+# Define actions for a tracepoint, using the "actions" command.  See
+# gdb_trace_setactions_command.
+#
+proc gdb_trace_setactions { testname tracepoint args } {
+    eval gdb_trace_setactions_command "actions" {$testname} {$tracepoint} $args
+}
+
+# Define actions for a tracepoint, using the "commands" command.  See
+# gdb_trace_setactions_command.
+#
+proc gdb_trace_setcommands { testname tracepoint args } {
+    eval gdb_trace_setactions_command "commands" {$testname} {$tracepoint} $args
 }
 
 #
@@ -180,32 +193,32 @@ proc gdb_trace_setactions { testname tracepoint args } {
 #
 
 proc gdb_tfind_test { testname tfind_arg exp_res args } {
-    global gdb_prompt;
+    global gdb_prompt
 
     if { "$args" != "" } {
-	set expr "$exp_res";
-	set exp_res "$args";
+	set expr "$exp_res"
+	set exp_res "$args"
     } else {
-	set expr "(int) \$trace_frame";
+	set expr "(int) \$trace_frame"
     }
-    set passfail "fail";
+    set passfail "fail"
 
     gdb_test "tfind $tfind_arg" "" ""
-    send_gdb "printf \"x \%d x\\n\", $expr\n";
+    send_gdb "printf \"x \%d x\\n\", $expr\n"
     gdb_expect 10 {
 	-re "x (-*\[0-9\]+) x" {
 	    if { $expect_out(1,string) == $exp_res } {
-		set passfail "pass";
+		set passfail "pass"
 	    }
-	    exp_continue;
+	    exp_continue
 	}
 	-re "$gdb_prompt $" { }
     }
-    $passfail "$testname";
+    $passfail "$testname"
     if { $passfail == "pass" } then { 
-	return 0;
+	return 0
     } else {
-	return 1;
+	return 1
     }
 }
 
@@ -219,18 +232,18 @@ proc gdb_tfind_test { testname tfind_arg exp_res args } {
 #
 
 proc gdb_readexpr { gdb_expr } {
-    global gdb_prompt;
+    global gdb_prompt
 
-    set result -1;
+    set result -1
     send_gdb "print $gdb_expr\n"
     gdb_expect 5 {
 	-re "\[$\].*= (\[0-9\]+).*$gdb_prompt $" {
-	    set result $expect_out(1,string);
+	    set result $expect_out(1,string)
 	}
 	-re "$gdb_prompt $" { }
 	default { }
     }
-    return $result;
+    return $result
 }
 
 #
@@ -242,12 +255,12 @@ proc gdb_readexpr { gdb_expr } {
 #
 
 proc gdb_gettpnum { tracepoint } {
-    global gdb_prompt;
+    global gdb_prompt
 
     if { $tracepoint != "" } {
 	gdb_test "trace $tracepoint" "" ""
     }
-    return [gdb_readexpr "\$tpnum"];
+    return [gdb_readexpr "\$tpnum"]
 }
 
 
@@ -263,9 +276,9 @@ proc gdb_gettpnum { tracepoint } {
 #
 
 proc gdb_find_function_baseline { func_name } {
-    global gdb_prompt;
+    global gdb_prompt
 
-    set baseline -1;
+    set baseline -1
 
     send_gdb "list $func_name\n"
 #    gdb_expect {
@@ -287,18 +300,30 @@ proc gdb_find_function_baseline { func_name } {
 #
 
 proc gdb_find_recursion_test_baseline { filename } {
-    global gdb_prompt;
+    global gdb_prompt
 
-    set baseline -1;
+    set baseline -1
 
     gdb_test "list $filename:1" "" ""
     send_gdb "search gdb_recursion_test line 0\n"
     gdb_expect {
 	-re "(\[0-9\]+)\[\t \]+\{.*line 0.*$gdb_prompt $" {
-	    set baseline $expect_out(1,string);
+	    set baseline $expect_out(1,string)
 	}
 	-re "$gdb_prompt $" { }
 	default { }
     }
-    return $baseline;
+    return $baseline
+}
+
+# Return the location of the IPA library.
+
+proc get_in_proc_agent {} {
+    global objdir
+
+    if [target_info exists in_proc_agent] {
+	return [target_info in_proc_agent]
+    } else {
+	return $objdir/../gdbserver/libinproctrace.so
+    }
 }

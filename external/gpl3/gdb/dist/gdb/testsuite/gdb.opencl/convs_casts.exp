@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,10 +16,6 @@
 # Contributed by Ken Werner <ken.werner@de.ibm.com>.
 #
 # Tests GDBs support for OpenCL type conversions and casts.
-
-if $tracelevel {
-    strace $tracelevel
-}
 
 load_lib opencl.exp
 
@@ -71,11 +67,11 @@ proc vec_casts { name } {
     gdb_test "print/d (${type}8)${name}" " = \\{123, 123, 123, 123, 123, 123, 123, 123\\}"
     gdb_test "print/d (${type}16)${name}" " = \\{123 <repeats 16 times>\\}"
 
-    gdb_test "ptype (${type}2)${name}" "${type} \\\[2\\\]"
-    gdb_test "ptype (${type}3)${name}" "${type} \\\[3\\\]"
-    gdb_test "ptype (${type}4)${name}" "${type} \\\[4\\\]"
-    gdb_test "ptype (${type}8)${name}" "${type} \\\[8\\\]"
-    gdb_test "ptype (${type}16)${name}" "${type} \\\[16\\\]"
+    gdb_test "ptype (${type}2)${name}" "${type}2"
+    gdb_test "ptype (${type}3)${name}" "${type}3"
+    gdb_test "ptype (${type}4)${name}" "${type}4"
+    gdb_test "ptype (${type}8)${name}" "${type}8"
+    gdb_test "ptype (${type}16)${name}" "${type}16"
   }
 }
 

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -93,14 +93,9 @@ AcpiTbVerifyTable (
         }
     }
 
-    /* FACS is the odd table, has no standard ACPI header and no checksum */
+    /* Always calculate checksum, ignore bad checksum if requested */
 
-    if (!ACPI_COMPARE_NAME (&TableDesc->Signature, ACPI_SIG_FACS))
-    {
-        /* Always calculate checksum, ignore bad checksum if requested */
-
-        Status = AcpiTbVerifyChecksum (TableDesc->Pointer, TableDesc->Length);
-    }
+    Status = AcpiTbVerifyChecksum (TableDesc->Pointer, TableDesc->Length);
 
     return_ACPI_STATUS (Status);
 }
@@ -128,7 +123,6 @@ AcpiTbAddTable (
 {
     UINT32                  i;
     ACPI_STATUS             Status = AE_OK;
-    ACPI_TABLE_HEADER       *OverrideTable = NULL;
 
 
     ACPI_FUNCTION_TRACE (TbAddTable);
@@ -158,9 +152,10 @@ AcpiTbAddTable (
        (!ACPI_COMPARE_NAME (TableDesc->Pointer->Signature, ACPI_SIG_SSDT)) &&
        (ACPI_STRNCMP (TableDesc->Pointer->Signature, "OEM", 3)))
     {
-        ACPI_ERROR ((AE_INFO,
-            "Table has invalid signature [%4.4s] (0x%8.8X), must be SSDT or OEMx",
-            AcpiUtValidAcpiName (*(UINT32 *) TableDesc->Pointer->Signature) ?
+        ACPI_BIOS_ERROR ((AE_INFO,
+            "Table has invalid signature [%4.4s] (0x%8.8X), "
+            "must be SSDT or OEMx",
+            AcpiUtValidAcpiName (TableDesc->Pointer->Signature) ?
                 TableDesc->Pointer->Signature : "????",
             *(UINT32 *) TableDesc->Pointer->Signature));
 
@@ -242,26 +237,10 @@ AcpiTbAddTable (
     /*
      * ACPI Table Override:
      * Allow the host to override dynamically loaded tables.
+     * NOTE: the table is fully mapped at this point, and the mapping will
+     * be deleted by TbTableOverride if the table is actually overridden.
      */
-    Status = AcpiOsTableOverride (TableDesc->Pointer, &OverrideTable);
-    if (ACPI_SUCCESS (Status) && OverrideTable)
-    {
-        ACPI_INFO ((AE_INFO,
-            "%4.4s @ 0x%p Table override, replaced with:",
-            TableDesc->Pointer->Signature,
-            ACPI_CAST_PTR (void, TableDesc->Address)));
-
-        /* We can delete the table that was passed as a parameter */
-
-        AcpiTbDeleteTable (TableDesc);
-
-        /* Setup descriptor for the new table */
-
-        TableDesc->Address = ACPI_PTR_TO_PHYSADDR (OverrideTable);
-        TableDesc->Pointer = OverrideTable;
-        TableDesc->Length = OverrideTable->Length;
-        TableDesc->Flags = ACPI_TABLE_ORIGIN_OVERRIDE;
-    }
+    (void) AcpiTbTableOverride (TableDesc->Pointer, TableDesc);
 
     /* Add the table to the global root table list */
 
@@ -283,6 +262,98 @@ Release:
 
 /*******************************************************************************
  *
+ * FUNCTION:    AcpiTbTableOverride
+ *
+ * PARAMETERS:  TableHeader         - Header for the original table
+ *              TableDesc           - Table descriptor initialized for the
+ *                                    original table. May or may not be mapped.
+ *
+ * RETURN:      Pointer to the entire new table. NULL if table not overridden.
+ *              If overridden, installs the new table within the input table
+ *              descriptor.
+ *
+ * DESCRIPTION: Attempt table override by calling the OSL override functions.
+ *              Note: If the table is overridden, then the entire new table
+ *              is mapped and returned by this function.
+ *
+ ******************************************************************************/
+
+ACPI_TABLE_HEADER *
+AcpiTbTableOverride (
+    ACPI_TABLE_HEADER       *TableHeader,
+    ACPI_TABLE_DESC         *TableDesc)
+{
+    ACPI_STATUS             Status;
+    ACPI_TABLE_HEADER       *NewTable = NULL;
+    ACPI_PHYSICAL_ADDRESS   NewAddress = 0;
+    UINT32                  NewTableLength = 0;
+    UINT8                   NewFlags;
+    char                    *OverrideType;
+
+
+    /* (1) Attempt logical override (returns a logical address) */
+
+    Status = AcpiOsTableOverride (TableHeader, &NewTable);
+    if (ACPI_SUCCESS (Status) && NewTable)
+    {
+        NewAddress = ACPI_PTR_TO_PHYSADDR (NewTable);
+        NewTableLength = NewTable->Length;
+        NewFlags = ACPI_TABLE_ORIGIN_OVERRIDE;
+        OverrideType = __UNCONST("Logical");
+        goto FinishOverride;
+    }
+
+    /* (2) Attempt physical override (returns a physical address) */
+
+    Status = AcpiOsPhysicalTableOverride (TableHeader,
+        &NewAddress, &NewTableLength);
+    if (ACPI_SUCCESS (Status) && NewAddress && NewTableLength)
+    {
+        /* Map the entire new table */
+
+        NewTable = AcpiOsMapMemory (NewAddress, NewTableLength);
+        if (!NewTable)
+        {
+            ACPI_EXCEPTION ((AE_INFO, AE_NO_MEMORY,
+                "%4.4s %p Attempted physical table override failed",
+                TableHeader->Signature,
+                ACPI_CAST_PTR (void, TableDesc->Address)));
+            return (NULL);
+        }
+
+        OverrideType = __UNCONST("Physical");
+        NewFlags = ACPI_TABLE_ORIGIN_MAPPED;
+        goto FinishOverride;
+    }
+
+    return (NULL); /* There was no override */
+
+
+FinishOverride:
+
+    ACPI_INFO ((AE_INFO,
+        "%4.4s %p %s table override, new table: %p",
+        TableHeader->Signature,
+        ACPI_CAST_PTR (void, TableDesc->Address),
+        OverrideType, NewTable));
+
+    /* We can now unmap/delete the original table (if fully mapped) */
+
+    AcpiTbDeleteTable (TableDesc);
+
+    /* Setup descriptor for the new table */
+
+    TableDesc->Address = NewAddress;
+    TableDesc->Pointer = NewTable;
+    TableDesc->Length = NewTableLength;
+    TableDesc->Flags = NewFlags;
+
+    return (NewTable);
+}
+
+
+/*******************************************************************************
+ *
  * FUNCTION:    AcpiTbResizeRootTableList
  *
  * PARAMETERS:  None
@@ -298,6 +369,7 @@ AcpiTbResizeRootTableList (
     void)
 {
     ACPI_TABLE_DESC         *Tables;
+    UINT32                  TableCount;
 
 
     ACPI_FUNCTION_TRACE (TbResizeRootTableList);
@@ -313,9 +385,17 @@ AcpiTbResizeRootTableList (
 
     /* Increase the Table Array size */
 
+    if (AcpiGbl_RootTableList.Flags & ACPI_ROOT_ORIGIN_ALLOCATED)
+    {
+        TableCount = AcpiGbl_RootTableList.MaxTableCount;
+    }
+    else
+    {
+        TableCount = AcpiGbl_RootTableList.CurrentTableCount;
+    }
+
     Tables = ACPI_ALLOCATE_ZEROED (
-        ((ACPI_SIZE) AcpiGbl_RootTableList.MaxTableCount +
-            ACPI_ROOT_TABLE_SIZE_INCREMENT) *
+        ((ACPI_SIZE) TableCount + ACPI_ROOT_TABLE_SIZE_INCREMENT) *
         sizeof (ACPI_TABLE_DESC));
     if (!Tables)
     {
@@ -328,7 +408,7 @@ AcpiTbResizeRootTableList (
     if (AcpiGbl_RootTableList.Tables)
     {
         ACPI_MEMCPY (Tables, AcpiGbl_RootTableList.Tables,
-            (ACPI_SIZE) AcpiGbl_RootTableList.MaxTableCount * sizeof (ACPI_TABLE_DESC));
+            (ACPI_SIZE) TableCount * sizeof (ACPI_TABLE_DESC));
 
         if (AcpiGbl_RootTableList.Flags & ACPI_ROOT_ORIGIN_ALLOCATED)
         {
@@ -337,8 +417,9 @@ AcpiTbResizeRootTableList (
     }
 
     AcpiGbl_RootTableList.Tables = Tables;
-    AcpiGbl_RootTableList.MaxTableCount += ACPI_ROOT_TABLE_SIZE_INCREMENT;
-    AcpiGbl_RootTableList.Flags |= (UINT8) ACPI_ROOT_ORIGIN_ALLOCATED;
+    AcpiGbl_RootTableList.MaxTableCount =
+        TableCount + ACPI_ROOT_TABLE_SIZE_INCREMENT;
+    AcpiGbl_RootTableList.Flags |= ACPI_ROOT_ORIGIN_ALLOCATED;
 
     return_ACPI_STATUS (AE_OK);
 }
@@ -428,15 +509,20 @@ AcpiTbDeleteTable (
     switch (TableDesc->Flags & ACPI_TABLE_ORIGIN_MASK)
     {
     case ACPI_TABLE_ORIGIN_MAPPED:
+
         AcpiOsUnmapMemory (TableDesc->Pointer, TableDesc->Length);
         break;
 
     case ACPI_TABLE_ORIGIN_ALLOCATED:
+
         ACPI_FREE (TableDesc->Pointer);
         break;
 
+    /* Not mapped or allocated, there is nothing we can do */
+
     default:
-        break;
+
+        return;
     }
 
     TableDesc->Pointer = NULL;
@@ -489,6 +575,8 @@ AcpiTbTerminate (
 
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "ACPI Tables freed\n"));
     (void) AcpiUtReleaseMutex (ACPI_MTX_TABLES);
+
+    return_VOID;
 }
 
 
@@ -728,4 +816,3 @@ AcpiTbSetTableLoadedFlag (
 
     (void) AcpiUtReleaseMutex (ACPI_MTX_TABLES);
 }
-

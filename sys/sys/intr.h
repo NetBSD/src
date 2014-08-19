@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 2012/07/27 14:05:08 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.2.1 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -32,9 +32,9 @@
 #ifndef _SYS_INTR_H_
 #define	_SYS_INTR_H_
 
-#include <machine/intr.h>
-
 #ifdef _KERNEL
+
+#include <sys/types.h>
 
 struct cpu_info;
 
@@ -42,6 +42,7 @@ struct cpu_info;
 void	*softint_establish(u_int, void (*)(void *), void *);
 void	softint_disestablish(void *);
 void	softint_schedule(void *);
+void	softint_schedule_cpu(void *, struct cpu_info *);
 
 /* MI hooks. */
 void	softint_init(struct cpu_info *);
@@ -51,7 +52,9 @@ void	softint_block(lwp_t *);
 
 /* MD-MI interface. */
 void	softint_init_md(lwp_t *, u_int, uintptr_t *);
+#ifndef __HAVE_MD_SOFTINT_TRIGGER
 void	softint_trigger(uintptr_t);
+#endif
 void	softint_dispatch(lwp_t *, int);
 
 /* Flags for softint_establish(). */
@@ -60,6 +63,7 @@ void	softint_dispatch(lwp_t *, int);
 #define	SOFTINT_SERIAL	0x0002
 #define	SOFTINT_NET	0x0003
 #define	SOFTINT_MPSAFE	0x0100
+#define	SOFTINT_RCPU	0x0200
 
 /* Implementation private flags. */
 #define	SOFTINT_PENDING	0x1000
@@ -88,6 +92,10 @@ extern u_int	softint_timing;
 #define	splclock()	splsched()
 #define	splserial()	splhigh()
 
+#include <machine/intr.h>
+
+#elif defined(_KMEMUSER)
+#define	SOFTINT_COUNT	0x0004
 #endif	/* _KERNEL */
 
 #endif	/* _SYS_INTR_H_ */

@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,10 +18,9 @@ if [target_info exists gdb,nosignals] {
     continue
 }
 
-set testfile siginfo-infcall
-set srcfile ${testfile}.c
-set executable ${testfile}
-if { [prepare_for_testing ${testfile}.exp $executable] } {
+standard_testfile .c
+
+if { [prepare_for_testing ${testfile}.exp $testfile $srcfile] } {
     return -1
 }
 

@@ -1,6 +1,5 @@
 /* Header file for simulator argument handling.
-   Copyright (C) 1997, 1998, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -34,10 +33,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
    argument, NULL if optional and missing; arg#5 is nonzero if a
    command is being interpreted. */
 
-typedef SIM_RC (OPTION_HANDLER) PARAMS ((SIM_DESC, sim_cpu *, int, char *, int));
+typedef SIM_RC (OPTION_HANDLER) (SIM_DESC, sim_cpu *, int, char *, int);
 
 /* Declare option handlers with a macro so it's usable on k&r systems.  */
-#define DECLARE_OPTION_HANDLER(fn) SIM_RC fn PARAMS ((SIM_DESC, sim_cpu *, int, char *, int))
+#define DECLARE_OPTION_HANDLER(fn) SIM_RC fn (SIM_DESC, sim_cpu *, int, char *, int)
 
 typedef struct {
 
@@ -130,20 +129,20 @@ typedef struct option_list {
 /* Add a set of options to the simulator.
    CPU is the cpu the options apply to or NULL for all cpus.
    TABLE is an array of OPTIONS terminated by a NULL `opt.name' entry.  */
-SIM_RC sim_add_option_table PARAMS ((SIM_DESC sd, sim_cpu *cpu, const OPTION *table));
+SIM_RC sim_add_option_table (SIM_DESC sd, sim_cpu *cpu, const OPTION *table);
 
 /* Install handler for the standard options.  */
 MODULE_INSTALL_FN standard_install;
 
 /* Called by sim_open to parse the arguments.  */
-SIM_RC sim_parse_args PARAMS ((SIM_DESC sd, char **argv));
+SIM_RC sim_parse_args (SIM_DESC sd, char **argv);
 
 /* Print help messages for the options.  IS_COMMAND is non-zero when
    this function is called from the command line interpreter. */
-void sim_print_help PARAMS ((SIM_DESC sd, int is_command));
+void sim_print_help (SIM_DESC sd, int is_command);
 
 /* Try to parse the command as if it is an option, Only fail when
    totally unsuccessful */
-SIM_RC sim_args_command PARAMS ((SIM_DESC sd, char *cmd));
+SIM_RC sim_args_command (SIM_DESC sd, char *cmd);
 
 #endif /* SIM_OPTIONS_H */

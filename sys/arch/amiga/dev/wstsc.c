@@ -1,4 +1,4 @@
-/*	$NetBSD: wstsc.c,v 1.32.122.1 2012/11/20 03:00:59 tls Exp $ */
+/*	$NetBSD: wstsc.c,v 1.32.122.2 2014/08/20 00:02:43 tls Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wstsc.c,v 1.32.122.1 2012/11/20 03:00:59 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wstsc.c,v 1.32.122.2 2014/08/20 00:02:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -535,5 +535,6 @@ wstsc_intr(void *arg)
 	if ((*(dev->sci_csr + 0x10) & SCI_CSR_INT) == 0)
 		return (0);
 	stat = *(dev->sci_iack + 0x10);
+	__USE(stat);
 	return (1);
 }

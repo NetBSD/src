@@ -1,6 +1,5 @@
 /* GDB variable objects API.
-   Copyright (C) 1999, 2000, 2001, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -53,16 +52,8 @@ enum varobj_scope_status
 /* String representations of gdb's format codes (defined in varobj.c).  */
 extern char *varobj_format_string[];
 
-/* Languages supported by this variable objects system.  */
-enum varobj_languages
-  {
-    vlang_unknown = 0, vlang_c, vlang_cplus, vlang_java, vlang_end
-  };
-
-/* String representations of gdb's known languages (defined in varobj.c).  */
-extern char *varobj_language_string[];
-
 /* Struct thar describes a variable object instance.  */
+
 struct varobj;
 
 typedef struct varobj *varobj_p;
@@ -89,6 +80,147 @@ typedef struct varobj_update_result_t
 
 DEF_VEC_O (varobj_update_result);
 
+struct varobj_root;
+struct varobj_dynamic;
+
+/* Every variable in the system has a structure of this type defined
+   for it.  This structure holds all information necessary to manipulate
+   a particular object variable.  Members which must be freed are noted.  */
+struct varobj
+{
+  /* Alloc'd name of the variable for this object.  If this variable is a
+     child, then this name will be the child's source name.
+     (bar, not foo.bar).  */
+  /* NOTE: This is the "expression".  */
+  char *name;
+
+  /* Alloc'd expression for this child.  Can be used to create a
+     root variable corresponding to this child.  */
+  char *path_expr;
+
+  /* The alloc'd name for this variable's object.  This is here for
+     convenience when constructing this object's children.  */
+  char *obj_name;
+
+  /* Index of this variable in its parent or -1.  */
+  int index;
+
+  /* The type of this variable.  This can be NULL
+     for artifial variable objects -- currently, the "accessibility" 
+     variable objects in C++.  */
+  struct type *type;
+
+  /* The value of this expression or subexpression.  A NULL value
+     indicates there was an error getting this value.
+     Invariant: if varobj_value_is_changeable_p (this) is non-zero, 
+     the value is either NULL, or not lazy.  */
+  struct value *value;
+
+  /* The number of (immediate) children this variable has.  */
+  int num_children;
+
+  /* If this object is a child, this points to its immediate parent.  */
+  struct varobj *parent;
+
+  /* Children of this object.  */
+  VEC (varobj_p) *children;
+
+  /* Description of the root variable.  Points to root variable for
+     children.  */
+  struct varobj_root *root;
+
+  /* The format of the output for this object.  */
+  enum varobj_display_formats format;
+
+  /* Was this variable updated via a varobj_set_value operation.  */
+  int updated;
+
+  /* Last print value.  */
+  char *print_value;
+
+  /* Is this variable frozen.  Frozen variables are never implicitly
+     updated by -var-update * 
+     or -var-update <direct-or-indirect-parent>.  */
+  int frozen;
+
+  /* Is the value of this variable intentionally not fetched?  It is
+     not fetched if either the variable is frozen, or any parents is
+     frozen.  */
+  int not_fetched;
+
+  /* Sub-range of children which the MI consumer has requested.  If
+     FROM < 0 or TO < 0, means that all children have been
+     requested.  */
+  int from;
+  int to;
+
+  /* Dynamic part of varobj.  */
+  struct varobj_dynamic *dynamic;
+};
+
+/* Is the variable X one of our "fake" children?  */
+#define CPLUS_FAKE_CHILD(x) \
+((x) != NULL && (x)->type == NULL && (x)->value == NULL)
+
+/* The language specific vector */
+
+struct lang_varobj_ops
+{
+  /* The number of children of PARENT.  */
+  int (*number_of_children) (struct varobj *parent);
+
+  /* The name (expression) of a root varobj.  */
+  char *(*name_of_variable) (struct varobj *parent);
+
+  /* The name of the INDEX'th child of PARENT.  */
+  char *(*name_of_child) (struct varobj *parent, int index);
+
+  /* Returns the rooted expression of CHILD, which is a variable
+     obtain that has some parent.  */
+  char *(*path_expr_of_child) (struct varobj *child);
+
+  /* The ``struct value *'' of the INDEX'th child of PARENT.  */
+  struct value *(*value_of_child) (struct varobj *parent, int index);
+
+  /* The type of the INDEX'th child of PARENT.  */
+  struct type *(*type_of_child) (struct varobj *parent, int index);
+
+  /* The current value of VAR.  */
+  char *(*value_of_variable) (struct varobj *var,
+			      enum varobj_display_formats format);
+
+  /* Return non-zero if changes in value of VAR must be detected and
+     reported by -var-update.  Return zero if -var-update should never
+     report changes of such values.  This makes sense for structures
+     (since the changes in children values will be reported separately),
+     or for artifical objects (like 'public' pseudo-field in C++).
+
+     Return value of 0 means that gdb need not call value_fetch_lazy
+     for the value of this variable object.  */
+  int (*value_is_changeable_p) (struct varobj *var);
+
+  /* Return nonzero if the type of VAR has mutated.
+
+     VAR's value is still the varobj's previous value, while NEW_VALUE
+     is VAR's new value and NEW_TYPE is the var's new type.  NEW_VALUE
+     may be NULL indicating that there is no value available (the varobj
+     may be out of scope, of may be the child of a null pointer, for
+     instance).  NEW_TYPE, on the other hand, must never be NULL.
+
+     This function should also be able to assume that var's number of
+     children is set (not < 0).
+
+     Languages where types do not mutate can set this to NULL.  */
+  int (*value_has_mutated) (struct varobj *var, struct value *new_value,
+			    struct type *new_type);
+};
+
+const struct lang_varobj_ops c_varobj_ops;
+const struct lang_varobj_ops cplus_varobj_ops;
+const struct lang_varobj_ops java_varobj_ops;
+const struct lang_varobj_ops ada_varobj_ops;
+
+#define default_varobj_ops c_varobj_ops
 /* API functions */
 
 extern struct varobj *varobj_create (char *objname,
@@ -144,7 +276,7 @@ extern struct type *varobj_get_gdb_type (struct varobj *var);
 
 extern char *varobj_get_path_expr (struct varobj *var);
 
-extern enum varobj_languages varobj_get_language (struct varobj *var);
+extern const struct language_defn *varobj_get_language (struct varobj *var);
 
 extern int varobj_get_attributes (struct varobj *var);
 
@@ -176,4 +308,22 @@ extern int varobj_has_more (struct varobj *var, int to);
 
 extern int varobj_pretty_printed_p (struct varobj *var);
 
+extern int varobj_default_value_is_changeable_p (struct varobj *var);
+extern int varobj_value_is_changeable_p (struct varobj *var);
+
+extern struct type *varobj_get_value_type (struct varobj *var);
+
+extern int varobj_is_anonymous_child (struct varobj *child);
+
+extern struct varobj *varobj_get_path_expr_parent (struct varobj *var);
+
+extern char *varobj_value_get_print_value (struct value *value,
+					   enum varobj_display_formats format,
+					   struct varobj *var);
+
+extern void varobj_formatted_print_options (struct value_print_options *opts,
+					    enum varobj_display_formats format);
+
+extern void varobj_restrict_range (VEC (varobj_p) *children, int *from,
+				   int *to);
 #endif /* VAROBJ_H */

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.26.2.2 2013/06/23 06:28:56 tls Exp $
+# $NetBSD: Makefile,v 1.26.2.3 2014/08/20 00:04:48 tls Exp $
 
 NOMAN=		# defined
 
@@ -14,6 +14,7 @@ TESTS_C+=	t_mqueue
 TESTS_C+=	t_sysv
 TESTS_C+=	t_subr_prf
 TESTS_C+=	t_kauth_pr_47598
+TESTS_C+=	t_sysctl
 
 TESTS_SH=	t_umount
 TESTS_SH+=	t_umountstress
@@ -32,9 +33,11 @@ TESTS_SUBDIRS+=	tty
 TESTS_C+=	t_extattrctl
 TESTS_C+=	t_filedesc
 TESTS_C+=	t_rnd
-LDADD.t_extattrctl+= -lrumpvfs -lrump -lrumpuser -lpthread
+LDADD.t_extattrctl+= -lrumpvfs -lrump -lrumpuser
+LDADD.t_extattrctl+= -lrump -lpthread
 LDADD.t_filedesc+=  ${LDADD.t_rnd}
-LDADD.t_rnd+=  -lrumpvfs -lrumpdev_rnd -lrumpdev -lrump -lrumpuser -lpthread
+LDADD.t_rnd+=  -lrumpvfs -lrumpdev_rnd -lrumpdev -lrump -lrumpuser
+LDADD.t_rnd+=  -lrump -lpthread
 
 .endif
 
@@ -47,6 +50,7 @@ CPPFLAGS.subr_extent.c=	-D_EXTENT_TESTING -D__POOL_EXPOSE
 
 t_subr_prf.c: gen_t_subr_prf ${NETBSDSRCDIR}/sys/kern/subr_prf.c
 	${HOST_SH} ${.ALLSRC} ${.TARGET}
+CPPFLAGS.t_subr_prf.c=	-Wno-pointer-sign	# XXX platform vs kernel SHA2
 
 CLEANFILES+=	t_subr_prf.c
 

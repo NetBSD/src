@@ -1,4 +1,4 @@
-/* $Id: imx23_powerreg.h,v 1.1.6.2 2013/02/25 00:28:27 tls Exp $ */
+/* $Id: imx23_powerreg.h,v 1.1.6.3 2014/08/20 00:02:46 tls Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #include <sys/cdefs.h>
 
 #define HW_POWER_BASE 0x80044000
+#define HW_POWER_SIZE 0x2000
 
 /*
  * Power Control Register.

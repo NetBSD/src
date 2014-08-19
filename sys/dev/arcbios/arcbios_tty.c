@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios_tty.c,v 1.22 2011/04/24 16:26:59 rmind Exp $	*/
+/*	$NetBSD: arcbios_tty.c,v 1.22.14.1 2014/08/20 00:03:35 tls Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.22 2011/04/24 16:26:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.22.14.1 2014/08/20 00:03:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/uio.h>
@@ -64,9 +64,18 @@ dev_type_tty(arcbios_ttytty);
 dev_type_poll(arcbios_ttypoll);
 
 const struct cdevsw arcbios_cdevsw = {
-	arcbios_ttyopen, arcbios_ttyclose, arcbios_ttyread, arcbios_ttywrite,
-	arcbios_ttyioctl, arcbios_ttystop, arcbios_ttytty, arcbios_ttypoll,
-	nommap, ttykqfilter, D_TTY,
+	.d_open = arcbios_ttyopen,
+	.d_close = arcbios_ttyclose,
+	.d_read = arcbios_ttyread,
+	.d_write = arcbios_ttywrite,
+	.d_ioctl = arcbios_ttyioctl,
+	.d_stop = arcbios_ttystop,
+	.d_tty = arcbios_ttytty,
+	.d_poll = arcbios_ttypoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY,
 };
 
 int
@@ -235,11 +244,11 @@ void
 arcbios_tty_poll(void *v)
 {
 	struct tty *tp = v;
-	int c, l_r;
+	int c;
 
 	while (arcbios_tty_getchar(&c)) {
 		if (tp->t_state & TS_ISOPEN)
-			l_r = (*tp->t_linesw->l_rint)(c, tp);
+			(void)(*tp->t_linesw->l_rint)(c, tp);
 	}
 	callout_reset(&arcbios_tty_ch, 1, arcbios_tty_poll, tp);
 }

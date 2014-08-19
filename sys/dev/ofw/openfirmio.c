@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirmio.c,v 1.11 2007/03/04 06:02:15 christos Exp $ */
+/*	$NetBSD: openfirmio.c,v 1.11.86.1 2014/08/20 00:03:41 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirmio.c,v 1.11 2007/03/04 06:02:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirmio.c,v 1.11.86.1 2014/08/20 00:03:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,8 +66,18 @@ void openfirmattach (int);
 dev_type_ioctl(openfirmioctl);
 
 const struct cdevsw openfirm_cdevsw = {
-	nullopen, nullclose, noread, nowrite, openfirmioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	.d_open = nullopen,
+	.d_close = nullclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = openfirmioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 void

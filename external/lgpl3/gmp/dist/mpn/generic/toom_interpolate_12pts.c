@@ -6,7 +6,7 @@
    SAFE TO REACH IT THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
    GUARANTEED THAT IT WILL CHANGE OR DISAPPEAR IN A FUTURE GNU MP RELEASE.
 
-Copyright 2009, 2010 Free Software Foundation, Inc.
+Copyright 2009, 2010, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -240,7 +240,7 @@ mpn_toom_interpolate_12pts (mp_ptr pp, mp_ptr r1, mp_ptr r3, mp_ptr r5,
   mpn_sub_n (r4, r4, r5, n3p1); /* can be negative */
   DO_mpn_sublsh_n (r4, r5, n3p1, 8, wsi); /* can be negative */
 #endif
-  /* A division by 2835x4 followsi. Warning: the operand can be negative! */
+  /* A division by 2835x4 follows. Warning: the operand can be negative! */
   mpn_divexact_by2835x4(r4, r4, n3p1);
   if ((r4[n3] & (GMP_NUMB_MAX << (GMP_NUMB_BITS-3))) != 0)
     r4[n3] |= (GMP_NUMB_MAX << (GMP_NUMB_BITS-2));

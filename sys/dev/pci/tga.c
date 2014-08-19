@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.83 2012/01/11 20:50:00 macallan Exp $ */
+/* $NetBSD: tga.c,v 1.83.6.1 2014/08/20 00:03:48 tls Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.83 2012/01/11 20:50:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.83.6.1 2014/08/20 00:03:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -394,6 +394,7 @@ tgaattach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	uint8_t rev;
 	int console;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 
@@ -422,7 +423,7 @@ tgaattach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map interrupt");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrh);
+	intrstr = pci_intr_string(pa->pa_pc, intrh, intrbuf, sizeof(intrbuf));
 	sc->sc_intr = pci_intr_establish(pa->pa_pc, intrh, IPL_TTY, tga_intr,
 	    sc->sc_dc);
 	if (sc->sc_intr == NULL) {
@@ -1025,7 +1026,7 @@ tga_rop_vtov(struct rasops_info *dst, int dx, int dy, int w, int h, int rop,
 	struct tga_devconfig *dc = dst->ri_hw;
 	int srcb, dstb, tga_srcb, tga_dstb;
 	int x, y, wb;
-	int xstart, xend, xdir;
+	int xstart, xdir;
 	int ystart, yend, ydir, yinc;
 	int xleft, lastx, lastleft;
 	int offset = 1 * dc->dc_tgaconf->tgac_vvbr_units;
@@ -1063,11 +1064,9 @@ tga_rop_vtov(struct rasops_info *dst, int dx, int dy, int w, int h, int rop,
         wb = w * (dst->ri_depth / 8);
 	if (sx >= dx || (sx + w) <= dx) {	/* copy forwards */
 		xstart = 0;
-		xend = wb;
 		xdir = 1;
 	} else {				/* copy backwards */
 		xstart = wb;
-		xend = 0;
 		xdir = -1;
 	}
 

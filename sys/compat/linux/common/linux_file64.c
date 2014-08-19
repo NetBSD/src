@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.53 2011/10/14 09:23:28 hannken Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.53.12.1 2014/08/20 00:03:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.53 2011/10/14 09:23:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.53.12.1 2014/08/20 00:03:32 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,8 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.53 2011/10/14 09:23:28 hannken Ex
 #include <compat/linux/common/linux_sem.h>
 
 #include <compat/linux/linux_syscallargs.h>
-
-#ifndef alpha
 
 static void bsd_to_linux_stat(struct stat *, struct linux_stat64 *);
 
@@ -171,6 +169,34 @@ linux_sys_lstat64(struct lwp *l, const struct linux_sys_lstat64_args *uap, regis
 }
 
 int
+linux_sys_fstatat64(struct lwp *l, const struct linux_sys_fstatat64_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(const char *) path;
+		syscallarg(struct linux_stat64 *) sp;
+		syscallarg(int) flag;
+	} */
+	struct linux_stat64 tmplst;
+	struct stat tmpst;
+	int error, nd_flag;
+
+	if (SCARG(uap, flag) & LINUX_AT_SYMLINK_NOFOLLOW)
+		nd_flag = NOFOLLOW;
+	else
+		nd_flag = FOLLOW;
+
+	error = do_sys_statat(l, SCARG(uap, fd), SCARG(uap, path), nd_flag, &tmpst);
+	if (error != 0)
+		return error;
+
+	bsd_to_linux_stat(&tmpst, &tmplst);
+
+	return copyout(&tmplst, SCARG(uap, sp), sizeof tmplst);
+}
+
+#ifndef __alpha__
+int
 linux_sys_truncate64(struct lwp *l, const struct linux_sys_truncate64_args *uap, register_t *retval)
 {
 	/* {
@@ -203,7 +229,7 @@ linux_sys_ftruncate64(struct lwp *l, const struct linux_sys_ftruncate64_args *ua
 
 	return sys_ftruncate(l, &ta, retval);
 }
-#endif /* !alpha */
+#endif /* __alpha__ */
 
 /*
  * Linux 'readdir' call. This code is mostly taken from the

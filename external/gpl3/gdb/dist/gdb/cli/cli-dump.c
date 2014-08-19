@@ -1,7 +1,6 @@
 /* Dump-to-file commands, for GDB, the GNU debugger.
 
-   Copyright (c) 2002, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -21,23 +20,22 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "cli/cli-decode.h"
 #include "cli/cli-cmds.h"
 #include "value.h"
 #include "completer.h"
-#include "cli/cli-dump.h"
 #include "gdb_assert.h"
 #include <ctype.h>
 #include "target.h"
 #include "readline/readline.h"
 #include "gdbcore.h"
 #include "cli/cli-utils.h"
+#include "gdb_bfd.h"
+#include "filestuff.h"
 
-#define XMALLOC(TYPE) ((TYPE*) xmalloc (sizeof (TYPE)))
 
-
-char *
+static char *
 scan_expression_with_cleanup (char **cmd, const char *def)
 {
   if ((*cmd) == NULL || (**cmd) == '\0')
@@ -61,7 +59,7 @@ scan_expression_with_cleanup (char **cmd, const char *def)
 }
 
 
-char *
+static char *
 scan_filename_with_cleanup (char **cmd, const char *defname)
 {
   char *filename;
@@ -96,10 +94,10 @@ scan_filename_with_cleanup (char **cmd, const char *defname)
   return fullname;
 }
 
-FILE *
+static FILE *
 fopen_with_cleanup (const char *filename, const char *mode)
 {
-  FILE *file = fopen (filename, mode);
+  FILE *file = gdb_fopen_cloexec (filename, mode);
 
   if (file == NULL)
     perror_with_name (filename);
@@ -112,12 +110,12 @@ bfd_openr_with_cleanup (const char *filename, const char *target)
 {
   bfd *ibfd;
 
-  ibfd = bfd_openr (filename, target);
+  ibfd = gdb_bfd_openr (filename, target);
   if (ibfd == NULL)
     error (_("Failed to open %s: %s."), filename, 
 	   bfd_errmsg (bfd_get_error ()));
 
-  make_cleanup_bfd_close (ibfd);
+  make_cleanup_bfd_unref (ibfd);
   if (!bfd_check_format (ibfd, bfd_object))
     error (_("'%s' is not a recognized file format."), filename);
 
@@ -132,11 +130,11 @@ bfd_openw_with_cleanup (const char *filename, const char *target,
 
   if (*mode == 'w')	/* Write: create new file */
     {
-      obfd = bfd_openw (filename, target);
+      obfd = gdb_bfd_openw (filename, target);
       if (obfd == NULL)
 	error (_("Failed to open %s: %s."), filename, 
 	       bfd_errmsg (bfd_get_error ()));
-      make_cleanup_bfd_close (obfd);
+      make_cleanup_bfd_unref (obfd);
       if (!bfd_set_format (obfd, bfd_object))
 	error (_("bfd_openw_with_cleanup: %s."), bfd_errmsg (bfd_get_error ()));
     }
@@ -150,13 +148,13 @@ bfd_openw_with_cleanup (const char *filename, const char *target,
   return obfd;
 }
 
-struct cmd_list_element *dump_cmdlist;
-struct cmd_list_element *append_cmdlist;
-struct cmd_list_element *srec_cmdlist;
-struct cmd_list_element *ihex_cmdlist;
-struct cmd_list_element *tekhex_cmdlist;
-struct cmd_list_element *binary_dump_cmdlist;
-struct cmd_list_element *binary_append_cmdlist;
+static struct cmd_list_element *dump_cmdlist;
+static struct cmd_list_element *append_cmdlist;
+static struct cmd_list_element *srec_cmdlist;
+static struct cmd_list_element *ihex_cmdlist;
+static struct cmd_list_element *tekhex_cmdlist;
+static struct cmd_list_element *binary_dump_cmdlist;
+static struct cmd_list_element *binary_append_cmdlist;
 
 static void
 dump_command (char *cmd, int from_tty)
@@ -174,7 +172,7 @@ append_command (char *cmd, int from_tty)
 
 static void
 dump_binary_file (const char *filename, const char *mode, 
-		  const bfd_byte *buf, int len)
+		  const bfd_byte *buf, ULONGEST len)
 {
   FILE *file;
   int status;
@@ -188,7 +186,7 @@ dump_binary_file (const char *filename, const char *mode,
 static void
 dump_bfd_file (const char *filename, const char *mode, 
 	       const char *target, CORE_ADDR vaddr, 
-	       const bfd_byte *buf, int len)
+	       const bfd_byte *buf, ULONGEST len)
 {
   bfd *obfd;
   asection *osection;
@@ -388,7 +386,7 @@ call_dump_func (struct cmd_list_element *c, char *args, int from_tty)
   d->func (args, d->mode);
 }
 
-void
+static void
 add_dump_command (char *name, void (*func) (char *args, char *mode),
 		  char *descr)
 
@@ -486,10 +484,10 @@ restore_section_callback (bfd *ibfd, asection *isec, void *args)
 
   if (data->load_offset != 0 || data->load_start != 0 || data->load_end != 0)
     printf_filtered (" into memory (%s to %s)\n",
-		     paddress (target_gdbarch,
+		     paddress (target_gdbarch (),
 			       (unsigned long) sec_start
 			       + sec_offset + data->load_offset), 
-		     paddress (target_gdbarch,
+		     paddress (target_gdbarch (),
 			       (unsigned long) sec_start + sec_offset
 				+ data->load_offset + sec_load_count));
   else
@@ -507,6 +505,7 @@ restore_section_callback (bfd *ibfd, asection *isec, void *args)
 static void
 restore_binary_file (char *filename, struct callback_data *data)
 {
+  struct cleanup *cleanup = make_cleanup (null_cleanup, NULL);
   FILE *file = fopen_with_cleanup (filename, FOPEN_RB);
   gdb_byte *buf;
   long len;
@@ -552,7 +551,7 @@ restore_binary_file (char *filename, struct callback_data *data)
   len = target_write_memory (data->load_start + data->load_offset, buf, len);
   if (len != 0)
     warning (_("restore: memory write failed (%s)."), safe_strerror (len));
-  return;
+  do_cleanups (cleanup);
 }
 
 static void
@@ -679,7 +678,7 @@ _initialize_cli_dump (void)
   add_dump_command ("memory", dump_memory_command, "\
 Write contents of memory to a raw binary file.\n\
 Arguments are FILE START STOP.  Writes the contents of memory within the\n\
-range [START .. STOP) to the specifed FILE in raw target ordered bytes.");
+range [START .. STOP) to the specified FILE in raw target ordered bytes.");
 
   add_dump_command ("value", dump_value_command, "\
 Write the value of an expression to a raw binary file.\n\
@@ -719,7 +718,7 @@ the specified FILE in raw target ordered bytes.");
   add_cmd ("memory", all_commands, dump_srec_memory, _("\
 Write contents of memory to an srec file.\n\
 Arguments are FILE START STOP.  Writes the contents of memory\n\
-within the range [START .. STOP) to the specifed FILE in srec format."),
+within the range [START .. STOP) to the specified FILE in srec format."),
 	   &srec_cmdlist);
 
   add_cmd ("value", all_commands, dump_srec_value, _("\
@@ -731,7 +730,7 @@ to the specified FILE in srec format."),
   add_cmd ("memory", all_commands, dump_ihex_memory, _("\
 Write contents of memory to an ihex file.\n\
 Arguments are FILE START STOP.  Writes the contents of memory within\n\
-the range [START .. STOP) to the specifed FILE in intel hex format."),
+the range [START .. STOP) to the specified FILE in intel hex format."),
 	   &ihex_cmdlist);
 
   add_cmd ("value", all_commands, dump_ihex_value, _("\
@@ -743,7 +742,7 @@ to the specified FILE in intel hex format."),
   add_cmd ("memory", all_commands, dump_tekhex_memory, _("\
 Write contents of memory to a tekhex file.\n\
 Arguments are FILE START STOP.  Writes the contents of memory\n\
-within the range [START .. STOP) to the specifed FILE in tekhex format."),
+within the range [START .. STOP) to the specified FILE in tekhex format."),
 	   &tekhex_cmdlist);
 
   add_cmd ("value", all_commands, dump_tekhex_value, _("\
@@ -755,7 +754,7 @@ to the specified FILE in tekhex format."),
   add_cmd ("memory", all_commands, dump_binary_memory, _("\
 Write contents of memory to a raw binary file.\n\
 Arguments are FILE START STOP.  Writes the contents of memory\n\
-within the range [START .. STOP) to the specifed FILE in binary format."),
+within the range [START .. STOP) to the specified FILE in binary format."),
 	   &binary_dump_cmdlist);
 
   add_cmd ("value", all_commands, dump_binary_value, _("\
@@ -767,7 +766,7 @@ to the specified FILE in raw target ordered bytes."),
   add_cmd ("memory", all_commands, append_binary_memory, _("\
 Append contents of memory to a raw binary file.\n\
 Arguments are FILE START STOP.  Writes the contents of memory within the\n\
-range [START .. STOP) to the specifed FILE in raw target ordered bytes."),
+range [START .. STOP) to the specified FILE in raw target ordered bytes."),
 	   &binary_append_cmdlist);
 
   add_cmd ("value", all_commands, append_binary_value, _("\

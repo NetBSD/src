@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.h,v 1.4 2008/05/10 16:12:32 ad Exp $	*/
+/*	$NetBSD: tsc.h,v 1.4.42.1 2014/08/20 00:03:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -26,6 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+bool	tsc_is_invariant(void);
 void	tsc_tc_init(void);
 void	tsc_sync_ap(struct cpu_info *);
 void	tsc_sync_bp(struct cpu_info *);

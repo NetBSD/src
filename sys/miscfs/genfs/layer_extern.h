@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_extern.h,v 1.34 2012/02/01 05:34:42 dholland Exp $	*/
+/*	$NetBSD: layer_extern.h,v 1.34.6.1 2014/08/20 00:04:31 tls Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -76,14 +76,7 @@
 /* Routines to manage nodes. */
 void	layerfs_init(void);
 void	layerfs_done(void);
-int	layer_node_alloc(struct mount *, struct vnode *, struct vnode **);
 int	layer_node_create(struct mount *, struct vnode *, struct vnode **);
-struct vnode *layer_node_find(struct mount *, struct vnode *);
-
-#define LOG2_SIZEVNODE	7		/* log2(sizeof struct vnode) */
-#define LAYER_NHASH(lmp, vp) \
-	(&((lmp)->layerm_node_hashtbl[(((u_long)vp)>>LOG2_SIZEVNODE) & \
-		(lmp)->layerm_node_hash]))
 
 /* VFS routines */
 int	layerfs_start(struct mount *, int);
@@ -91,6 +84,8 @@ int	layerfs_root(struct mount *, struct vnode **);
 int	layerfs_quotactl(struct mount *, struct quotactl_args *);
 int	layerfs_statvfs(struct mount *, struct statvfs *);
 int	layerfs_sync(struct mount *, int, struct kauth_cred *);
+int	layerfs_loadvnode(struct mount *,  struct vnode *,
+	    const void *, size_t, const void **);
 int	layerfs_vget(struct mount *, ino_t, struct vnode **);
 int	layerfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	layerfs_vptofh(struct vnode *, struct fid *, size_t *);
@@ -103,6 +98,7 @@ int	layer_bypass(void *);
 int	layer_getattr(void *);
 int	layer_inactive(void *);
 int	layer_reclaim(void *);
+int	layer_lock(void *);
 int	layer_print(void *);
 int	layer_bmap(void *);
 int	layer_fsync(void *);

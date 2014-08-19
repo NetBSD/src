@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.56 2008/06/28 12:13:38 tsutsui Exp $	*/
+/*	$NetBSD: obio.c,v 1.56.40.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.56 2008/06/28 12:13:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.56.40.1 2014/08/20 00:03:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ static struct sun68k_bus_space_tag obio_space_tag = {
 
 static struct sun68k_bus_dma_tag obio_dma_tag;
 
-static int 
+static int
 obio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
@@ -113,7 +113,7 @@ obio_match(device_t parent, cfdata_t cf, void *aux)
 #define OBIO_INCR	0x020000
 #define OBIO_END	0x200000
 
-static void 
+static void
 obio_attach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux;
@@ -156,7 +156,7 @@ obio_attach(device_t parent, device_t self, void *aux)
  * Print out the confargs.  The (parent) name is non-NULL
  * when there was no match found by config_found().
  */
-static int 
+static int
 obio_print(void *args, const char *name)
 {
 
@@ -168,7 +168,7 @@ obio_print(void *args, const char *name)
 	return bus_print(args, name);
 }
 
-int 
+int
 obio_submatch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct confargs *ca = aux;
@@ -375,7 +375,7 @@ make_required_mappings(void)
  * normal autoconfiguration calls configure().  Warning: this is
  * called before pmap_bootstrap, so no allocation allowed!
  */
-void 
+void
 obio_init(void)
 {
 

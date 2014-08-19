@@ -1,4 +1,4 @@
-/*	$NetBSD: weasel_pci.c,v 1.14 2009/03/18 16:00:19 cegger Exp $	*/
+/*	$NetBSD: weasel_pci.c,v 1.14.22.1 2014/08/20 00:03:48 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: weasel_pci.c,v 1.14 2009/03/18 16:00:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: weasel_pci.c,v 1.14.22.1 2014/08/20 00:03:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,7 +343,6 @@ weasel_pci_wdog_tickle(struct sysmon_wdog *smw)
 static int
 weasel_pci_wdog_arm(struct weasel_softc *sc)
 {
-	u_int8_t reg;
 	int x;
 	int s;
 	int error = 0;
@@ -354,7 +353,7 @@ weasel_pci_wdog_arm(struct weasel_softc *sc)
 			device_xname(sc->sc_dev));
 		error = EIO;
 	}
-	reg = bus_space_read_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_RD);
+	(void)bus_space_read_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_RD);
 	bus_space_write_1(sc->sc_st, sc->sc_sh, WEASEL_STATUS, 0);
 
 	/*
@@ -384,7 +383,6 @@ weasel_pci_wdog_arm(struct weasel_softc *sc)
 static int
 weasel_pci_wdog_disarm(struct weasel_softc *sc)
 {
-	u_int8_t reg;
 	int x;
 	int s;
 	int error = 0;
@@ -396,7 +394,7 @@ weasel_pci_wdog_disarm(struct weasel_softc *sc)
 			device_xname(sc->sc_dev));
 		error = EIO;
 	}
-	reg = bus_space_read_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_RD);
+	(void)bus_space_read_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_RD);
 	bus_space_write_1(sc->sc_st, sc->sc_sh, WEASEL_STATUS, 0);
 
 	/*

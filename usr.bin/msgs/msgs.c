@@ -1,4 +1,4 @@
-/*	$NetBSD: msgs.c,v 1.22 2012/03/20 20:34:58 matt Exp $	*/
+/*	$NetBSD: msgs.c,v 1.22.2.1 2014/08/20 00:05:01 tls Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: msgs.c,v 1.22 2012/03/20 20:34:58 matt Exp $");
+__RCSID("$NetBSD: msgs.c,v 1.22.2.1 2014/08/20 00:05:01 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -143,7 +143,7 @@ void	ask(const char *);
 void	gfrsub(FILE *);
 int	linecnt(FILE *);
 int	main(int, char *[]);
-int	next(char *);
+int	next(char *, size_t);
 char	*nxtfld(char *);
 void	onintr(int);
 void	onsusp(int);
@@ -578,7 +578,8 @@ cmnd:
 					break;
 				}
 				if (isdigit((unsigned char)*in)) {
-					msg = next(in);
+					msg = next(in, sizeof(inbuf) -
+					    (in - inbuf));
 					sep = in;
 					break;
 				}
@@ -726,11 +727,11 @@ linecnt(FILE *f)
 }
 
 int
-next(char *buf)
+next(char *buf, size_t bufsiz)
 {
 	int i;
 	sscanf(buf, "%d", &i);
-	snprintf(buf, sizeof (buf), "Goto %d", i);
+	snprintf(buf, bufsiz, "Goto %d", i);
 	return(--i);
 }
 

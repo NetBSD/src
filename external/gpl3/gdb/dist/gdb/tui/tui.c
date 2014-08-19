@@ -1,7 +1,6 @@
 /* General functions for the WDB TUI.
 
-   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2007, 2008, 2009,
-   2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -241,12 +240,17 @@ tui_rl_command_key (int count, int key)
     {
       if (tui_commands[i].key == key)
         {
-          /* Must save the command because it can be modified by
-             execute_command.  */
-          char *cmd = alloca (strlen (tui_commands[i].cmd) + 1);
+          /* Insert the command in the readline buffer.
+             Avoid calling the gdb command here since it creates
+             a possible recursion on readline if prompt_for_continue
+             is called (See PR 9584).  The command will also appear
+             in the readline history which turns out to be better.  */
+          rl_insert_text (tui_commands[i].cmd);
+          rl_newline (1, '\n');
 
-          strcpy (cmd, tui_commands[i].cmd);
-          execute_command (cmd, TRUE);
+          /* Switch to gdb command mode while executing the command.
+             This way the gdb's continue prompty will be displayed.  */
+          tui_set_key_mode (TUI_ONE_COMMAND_MODE);
           return 0;
         }
     }
@@ -285,7 +289,7 @@ static int
 tui_rl_startup_hook (void)
 {
   rl_already_prompted = 1;
-  if (tui_current_key_mode != TUI_COMMAND_MODE)
+  if (tui_current_key_mode != TUI_COMMAND_MODE && immediate_quit == 0)
     tui_set_key_mode (TUI_SINGLE_KEY_MODE);
   tui_redisplay_readline ();
   return 0;
@@ -528,7 +532,7 @@ tui_reset (void)
 #endif
 
 void
-tui_show_source (const char *file, int line)
+tui_show_source (const char *fullname, int line)
 {
   struct symtab_and_line cursal = get_current_source_symtab_and_line ();
 
@@ -536,7 +540,7 @@ tui_show_source (const char *file, int line)
   tui_add_win_to_layout (SRC_WIN);
 
   tui_update_source_windows_with_line (cursal.symtab, line);
-  tui_update_locator_filename (file);
+  tui_update_locator_fullname (fullname);
 }
 
 void

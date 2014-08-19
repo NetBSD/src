@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.34 2012/01/11 21:17:33 macallan Exp $	*/
+/*	$NetBSD: pvr.c,v 1.34.6.1 2014/08/20 00:02:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.34 2012/01/11 21:17:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.34.6.1 2014/08/20 00:02:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,7 +260,7 @@ pvr_getdevconfig(struct fb_devconfig *dc)
 	dc->dc_wsscrdescr.textops = &dc->dc_rinfo.ri_ops;
 	dc->dc_wsscrdescr.capabilities = dc->dc_rinfo.ri_caps;
 
-	sprintf(dc->dc_wsscrname, "%dx%d",
+	snprintf(dc->dc_wsscrname, sizeof(dc->dc_wsscrname), "%dx%d",
 	    dc->dc_wsscrdescr.ncols, dc->dc_wsscrdescr.nrows);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.39 2010/12/20 00:25:45 matt Exp $	*/
+/*	$NetBSD: clock.c,v 1.39.18.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.39 2010/12/20 00:25:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.39.18.1 2014/08/20 00:03:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ CFATTACH_DECL_NEW(oclock, sizeof(struct intersil7170_softc),
 /*
  * Is there an intersil clock?
  */
-static int 
+static int
 oclock_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
@@ -194,7 +194,7 @@ oclock_match(device_t parent, cfdata_t cf, void *aux)
 /*
  * Attach the intersil clock.
  */
-static void 
+static void
 oclock_attach(device_t parent, device_t self, void *aux)
 {
 	struct intersil7170_softc *sc = device_private(self);
@@ -255,7 +255,7 @@ oclock_attach(device_t parent, device_t self, void *aux)
  * Is there a Mostek clock?  Hard to tell...
  * (See comment at top of this file.)
  */
-static int 
+static int
 clock_match(device_t parent, cfdata_t cf, void *args)
 {
 	struct confargs *ca = args;
@@ -279,7 +279,7 @@ clock_match(device_t parent, cfdata_t cf, void *args)
 /*
  * Attach the mostek clock.
  */
-static void 
+static void
 clock_attach(device_t parent, device_t self, void *aux)
 {
 	struct mk48txx_softc *sc = device_private(self);
@@ -399,7 +399,7 @@ cpu_initclocks(void)
  * This doesn't need to do anything, as we have only one timer and
  * profhz==stathz==hz.
  */
-void 
+void
 setstatclockrate(int newhz)
 {
 

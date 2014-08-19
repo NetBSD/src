@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2010-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -37,13 +37,11 @@ func_cu1:
 .Lcu1_start:
 	.2byte	2				/* DWARF Version */
 	.4byte	.Labbrev1_begin			/* Offset into abbrev section */
-	.byte	4				/* Pointer size */
+	.byte	8				/* Pointer size */
 
 	/* CU die */
 	.uleb128 1				/* Abbrev: DW_TAG_compile_unit */
 	.4byte	.Lline1_begin			/* DW_AT_stmt_list */
-	.4byte	.Lend_text1			/* DW_AT_high_pc */
-	.4byte	.Lbegin_text1			/* DW_AT_low_pc */
 	.ascii	"file1.txt\0"			/* DW_AT_name */
 	.ascii	"GNU C 3.3.3\0"			/* DW_AT_producer */
 	.byte	1				/* DW_AT_language (C) */
@@ -57,6 +55,27 @@ func_cu1:
         .uleb128        0x9                     /* Abbrev: DW_TAG_const_type */
         .4byte           .Ltype_int-.Lcu1_begin /* DW_AT_type */
 
+        .uleb128        0xa                     /* Abbrev: DW_TAG_variable */
+        .ascii          "val8\0"                /* DW_AT_name */
+        .4byte          .Ltype_const8-.Lcu1_begin   /* DW_AT_type */
+        .byte           2f - 1f                 /* DW_AT_location */
+1:      .byte           0x11                    /* DW_OP_consts */
+#if 0 /* gas encodes it explicitly.  */
+        .slab128        0xffffffff00000000
+#endif
+#if 0 /* gas encoded it correctly - formed GDB FAILed.  */
+        .sleb128        -4294967296
+#endif
+#if 1 /* Rather encode sleb128 by hand.  */
+        .byte           0x80, 0x80, 0x80, 0x80, 0x70
+#endif
+        .byte           0x9f                    /* DW_OP_stack_value */
+2:
+
+.Ltype_const8:
+        .uleb128        0x9                     /* Abbrev: DW_TAG_const_type */
+        .4byte           .Ltype_int8-.Lcu1_begin /* DW_AT_type */
+
 	/* func_cu1 */
 	.uleb128	2			/* Abbrev: DW_TAG_subprogram */
 	.byte		1			/* DW_AT_external */
@@ -64,8 +83,6 @@ func_cu1:
 	.byte		2			/* DW_AT_decl_line */
 	.ascii		"func_cu1\0"		/* DW_AT_name */
 	.4byte		.Ltype_int-.Lcu1_begin	/* DW_AT_type */
-	.4byte		.Lbegin_func_cu1	/* DW_AT_low_pc */
-	.4byte		.Lend_func_cu1		/* DW_AT_high_pc */
 	.byte		1			/* DW_AT_frame_base: length */
 	.byte		0x55			/* DW_AT_frame_base: DW_OP_reg5 */
 
@@ -73,6 +90,12 @@ func_cu1:
 	.uleb128	3			/* Abbrev: DW_TAG_base_type */
 	.ascii		"int\0"			/* DW_AT_name */
 	.byte		4			/* DW_AT_byte_size */
+	.byte		5			/* DW_AT_encoding */
+
+.Ltype_int8:
+	.uleb128	3			/* Abbrev: DW_TAG_base_type */
+	.ascii		"int8\0"		/* DW_AT_name */
+	.byte		8			/* DW_AT_byte_size */
 	.byte		5			/* DW_AT_encoding */
 
 	.byte		0			/* End of children of CU */
@@ -87,10 +110,6 @@ func_cu1:
 	.byte		1			/* has_children */
 	.uleb128	0x10			/* DW_AT_stmt_list */
 	.uleb128	0x6			/* DW_FORM_data4 */
-	.uleb128	0x12			/* DW_AT_high_pc */
-	.uleb128	0x1			/* DW_FORM_addr */
-	.uleb128	0x11			/* DW_AT_low_pc */
-	.uleb128	0x1			/* DW_FORM_addr */
 	.uleb128	0x3			/* DW_AT_name */
 	.uleb128	0x8			/* DW_FORM_string */
 	.uleb128	0x25			/* DW_AT_producer */
@@ -113,10 +132,6 @@ func_cu1:
 	.uleb128	0x8			/* DW_FORM_string */
 	.uleb128	0x49			/* DW_AT_type */
 	.uleb128	0x13			/* DW_FORM_ref4 */
-	.uleb128	0x11			/* DW_AT_low_pc */
-	.uleb128	0x1			/* DW_FORM_addr */
-	.uleb128	0x12			/* DW_AT_high_pc */
-	.uleb128	0x1			/* DW_FORM_addr */
 	.uleb128	0x40			/* DW_AT_frame_base */
 	.uleb128	0xa			/* DW_FORM_block1 */
 	.byte		0x0			/* Terminator */
@@ -151,6 +166,18 @@ func_cu1:
         .byte           0x0                     /* DW_children_no */
         .uleb128        0x49                    /* DW_AT_type */
         .uleb128        0x13                    /* DW_FORM_ref4 */
+	.byte		0x0			/* Terminator */
+	.byte		0x0			/* Terminator */
+
+	.uleb128	0xa			/* abbrev code */
+	.uleb128	0x34			/* TAG: DW_TAG_variable */
+	.byte		0x0			/* DW_children_no */
+	.uleb128	0x3			/* DW_AT_name */
+	.uleb128	0x8			/* DW_FORM_string */
+	.uleb128	0x49			/* DW_AT_type */
+	.uleb128	0x13			/* DW_FORM_ref4 */
+	.uleb128	0x02			/* DW_AT_location */
+	.uleb128	0xa			/* DW_FORM_block1 */
 	.byte		0x0			/* Terminator */
 	.byte		0x0			/* Terminator */
 

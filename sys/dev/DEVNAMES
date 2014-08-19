@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.279.2.2 2013/02/25 00:29:10 tls Exp $
+#	$NetBSD: DEVNAMES,v 1.279.2.3 2014/08/20 00:03:35 tls Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -565,6 +565,7 @@ grfrt			amiga
 grfrt			amigappc
 grful			amiga
 grful			amigappc
+gsfb			playstation2
 gsip			MI
 gt			cobalt
 gt			evbmips
@@ -767,6 +768,7 @@ lkms			vax
 lm			MI
 lm700x			MI
 lmc			MI
+lmenv			MI
 lms			bebox
 lms			i386
 lockstat		MI
@@ -900,6 +902,7 @@ mmem			dreamcast
 mms			bebox
 mms			dreamcast
 mms			i386
+motg			MI
 motoi2c			MI		Attribute
 moxa			MI
 mppb			amiga
@@ -1178,6 +1181,7 @@ rtfps			MI
 rtii			MI
 rtk			MI
 rtl80x9			MI		Attribute
+rtsx			MI
 rum			MI
 run			MI
 rx			MI
@@ -1208,6 +1212,7 @@ sbscd			sbmips
 sbscn			sbmips
 sbtimer			sbmips
 sbus			MI
+sbus			playstation2
 sc			MI
 sc			newsmips
 sc			vax
@@ -1222,6 +1227,8 @@ scsi			MI		Attribute
 scsibus			MI
 scsirom			x68k
 sd			MI
+sdhc			MI
+sdmmc			MI
 sdtemp			MI
 se			MI
 sea			MI
@@ -1266,6 +1273,7 @@ skbdif			hpcmips
 slhci			MI
 slide			MI
 sm			MI
+smap			playstation2
 smc93cx6		MI		Attribute
 smg			vax
 smsh			MI
@@ -1275,6 +1283,7 @@ sn			newsmips
 sparcvme		sparc
 spc			MI
 spckbd			shark		Attribute
+spd			playstation2
 spi			MI
 spic			MI
 spif			sparc
@@ -1318,6 +1327,8 @@ tea5757			MI
 tfb			MI
 tga			MI
 ti			MI
+tiotg			arm
+tifb			arm
 timer			news68k
 timer			sparc
 timer			sparc64
@@ -1344,6 +1355,7 @@ tra			MI
 trm			MI
 ts			MI
 tsc			alpha
+tsciic			alpha
 tscs			MI
 tsec			powerpc
 tslcd			evbarm
@@ -1531,6 +1543,8 @@ xge			MI
 xhci			MI
 xi			MI
 xmi			MI
+xsh			amiga
+xsh			amigappc
 xsii			pmax
 xvif			xen
 xy			MI

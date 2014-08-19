@@ -2,8 +2,8 @@ divert(-1)
 dnl
 dnl  m4 macros for gmp assembly code, shared by all CPUs.
 
-dnl  Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006 Free Software
-dnl  Foundation, Inc.
+dnl  Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2011 Free
+dnl  Software Foundation, Inc.
 dnl
 dnl  This file is part of the GNU MP Library.
 dnl
@@ -867,7 +867,7 @@ ifelse(eval($'`#>1 || m4_length('m4_doublequote($`'1)`)!=0),1,($'`@))')')
 dnl  Called: deflit_emptyargcheck(macroname,$#,`$1')
 define(deflit_emptyargcheck,
 `ifelse(eval($2==1 && !m4_dollarhash_1_if_noparen_p && m4_length(`$3')==0),1,
-`m4_error(`dont use a deflit as $1() because it loses the brackets (see deflit in asm-incl.m4 for more information)
+`m4_error(`dont use a deflit as $1() because it loses the brackets (see deflit in asm-defs.m4 for more information)
 ')')')
 
 
@@ -1053,6 +1053,18 @@ m4_not_for_expansion(`DLL_EXPORT')
 dnl  aors_n
 m4_not_for_expansion(`OPERATION_add_n')
 m4_not_for_expansion(`OPERATION_sub_n')
+
+dnl  aors_err1_n
+m4_not_for_expansion(`OPERATION_add_err1_n')
+m4_not_for_expansion(`OPERATION_sub_err1_n')
+
+dnl  aors_err2_n
+m4_not_for_expansion(`OPERATION_add_err2_n')
+m4_not_for_expansion(`OPERATION_sub_err2_n')
+
+dnl  aors_err3_n
+m4_not_for_expansion(`OPERATION_add_err3_n')
+m4_not_for_expansion(`OPERATION_sub_err3_n')
 
 dnl  aorsmul_1
 m4_not_for_expansion(`OPERATION_addmul_1')
@@ -1302,20 +1314,44 @@ dnl  function that might be implemented in assembler is here.
 
 define(define_mpn,
 m4_assert_numargs(1)
-`define(`mpn_$1',`MPN(`$1')')')
+`deflit(`mpn_$1',`MPN(`$1')')')
 
 define_mpn(add)
 define_mpn(add_1)
+define_mpn(add_err1_n)
+define_mpn(add_err2_n)
+define_mpn(add_err3_n)
 define_mpn(add_n)
 define_mpn(add_nc)
+define_mpn(addcnd_n)
 define_mpn(addlsh1_n)
+define_mpn(addlsh1_nc)
 define_mpn(addlsh2_n)
+define_mpn(addlsh2_nc)
 define_mpn(addlsh_n)
+define_mpn(addlsh_nc)
+define_mpn(addlsh1_n_ip1)
+define_mpn(addlsh1_nc_ip1)
+define_mpn(addlsh2_n_ip1)
+define_mpn(addlsh2_nc_ip1)
+define_mpn(addlsh_n_ip1)
+define_mpn(addlsh_nc_ip1)
+define_mpn(addlsh1_n_ip2)
+define_mpn(addlsh1_nc_ip2)
+define_mpn(addlsh2_n_ip2)
+define_mpn(addlsh2_nc_ip2)
+define_mpn(addlsh_n_ip2)
+define_mpn(addlsh_nc_ip2)
 define_mpn(addmul_1)
 define_mpn(addmul_1c)
 define_mpn(addmul_2)
 define_mpn(addmul_3)
 define_mpn(addmul_4)
+define_mpn(addmul_5)
+define_mpn(addmul_6)
+define_mpn(addmul_7)
+define_mpn(addmul_8)
+define_mpn(addmul_2s)
 define_mpn(add_n_sub_n)
 define_mpn(add_n_sub_nc)
 define_mpn(addaddmul_1msb0)
@@ -1330,6 +1366,11 @@ define_mpn(copyd)
 define_mpn(copyi)
 define_mpn(count_leading_zeros)
 define_mpn(count_trailing_zeros)
+define_mpn(div_qr_2)
+define_mpn(div_qr_2n_pi1)
+define_mpn(div_qr_2u_pi1)
+define_mpn(div_qr_2n_pi2)
+define_mpn(div_qr_2u_pi2)
 define_mpn(divexact_1)
 define_mpn(divexact_by3c)
 define_mpn(divrem)
@@ -1345,6 +1386,7 @@ define_mpn(gcdext)
 define_mpn(get_str)
 define_mpn(hamdist)
 define_mpn(invert_limb)
+define_mpn(invert_limb_table)
 define_mpn(ior_n)
 define_mpn(iorn_n)
 define_mpn(lshift)
@@ -1368,9 +1410,12 @@ define_mpn(mul_1c)
 define_mpn(mul_2)
 define_mpn(mul_3)
 define_mpn(mul_4)
+define_mpn(mul_5)
+define_mpn(mul_6)
 define_mpn(mul_basecase)
 define_mpn(mul_n)
 define_mpn(mullo_basecase)
+define_mpn(mulmid_basecase)
 define_mpn(perfect_square_p)
 define_mpn(popcount)
 define_mpn(preinv_divrem_1)
@@ -1385,8 +1430,11 @@ define_mpn(random2)
 define_mpn(redc_1)
 define_mpn(redc_2)
 define_mpn(rsblsh1_n)
+define_mpn(rsblsh1_nc)
 define_mpn(rsblsh2_n)
+define_mpn(rsblsh2_nc)
 define_mpn(rsblsh_n)
+define_mpn(rsblsh_nc)
 define_mpn(rsh1add_n)
 define_mpn(rsh1add_nc)
 define_mpn(rsh1sub_n)
@@ -1398,16 +1446,32 @@ define_mpn(scan1)
 define_mpn(set_str)
 define_mpn(sqr_basecase)
 define_mpn(sqr_diagonal)
+define_mpn(sqr_diag_addlsh1)
 define_mpn(sub_n)
+define_mpn(subcnd_n)
 define_mpn(sublsh1_n)
+define_mpn(sublsh1_nc)
+define_mpn(sublsh1_n_ip1)
+define_mpn(sublsh1_nc_ip1)
 define_mpn(sublsh2_n)
+define_mpn(sublsh2_nc)
+define_mpn(sublsh2_n_ip1)
+define_mpn(sublsh2_nc_ip1)
+define_mpn(sublsh_n)
+define_mpn(sublsh_nc)
+define_mpn(sublsh_n_ip1)
+define_mpn(sublsh_nc_ip1)
 define_mpn(sqrtrem)
 define_mpn(sub)
 define_mpn(sub_1)
+define_mpn(sub_err1_n)
+define_mpn(sub_err2_n)
+define_mpn(sub_err3_n)
 define_mpn(sub_n)
 define_mpn(sub_nc)
 define_mpn(submul_1)
 define_mpn(submul_1c)
+define_mpn(tabselect)
 define_mpn(umul_ppmm)
 define_mpn(umul_ppmm_r)
 define_mpn(udiv_qrnnd)
@@ -1649,6 +1713,22 @@ m4_assert_numargs(1)
 )
 
 
+dnl  Usage: ABI_SUPPORT(abi)
+dnl
+dnl  A dummy macro which is grepped for by ./configure to know what ABIs
+dnl  are supported in an asm file.
+dnl
+dnl  If multiple non-standard ABIs are supported, several ABI_SUPPORT
+dnl  declarations should be used:
+dnl
+dnl         ABI_SUPPORT(FOOABI)
+dnl         ABI_SUPPORT(BARABI)
+
+define(ABI_SUPPORT,
+m4_assert_numargs(1)
+)
+
+
 dnl  Usage: GMP_NUMB_MASK
 dnl
 dnl  A bit mask for the number part of a limb.  Eg. with 6 bit nails in a
@@ -1659,5 +1739,12 @@ m4_assert_numargs(-1)
 m4_assert_defined(`GMP_NUMB_BITS')
 `m4_hex_lowmask(GMP_NUMB_BITS)')
 
+
+dnl  Usage: m4append(`variable',`value-to-append')
+
+define(`m4append',
+`define(`$1',  defn(`$1')`$2')
+'
+)
 
 divert`'dnl

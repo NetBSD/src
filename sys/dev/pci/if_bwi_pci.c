@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwi_pci.c,v 1.12.12.1 2013/06/23 06:20:18 tls Exp $	*/
+/*	$NetBSD: if_bwi_pci.c,v 1.12.12.2 2014/08/20 00:03:42 tls Exp $	*/
 /*	$OpenBSD: if_bwi_pci.c,v 1.6 2008/02/14 22:10:02 brad Exp $ */
 
 /*
@@ -24,7 +24,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.12.12.1 2013/06/23 06:20:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.12.12.2 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -111,6 +111,7 @@ bwi_pci_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t memtype, reg;
 	int error = 0;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	aprint_naive("\n");
 	aprint_normal(": Broadcom Wireless\n");
@@ -146,7 +147,7 @@ bwi_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* establish interrupt */
-	intrstr = pci_intr_string(psc->psc_pc, ih);
+	intrstr = pci_intr_string(psc->psc_pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(psc->psc_pc, ih, IPL_NET, bwi_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "could not establish interrupt");

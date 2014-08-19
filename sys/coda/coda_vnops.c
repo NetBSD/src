@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.90 2012/08/02 16:06:58 christos Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.90.2.1 2014/08/20 00:03:31 tls Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.90 2012/08/02 16:06:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.90.2.1 2014/08/20 00:03:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,8 @@ const struct vnodeopv_entry_desc coda_vnodeop_entries[] = {
     { &vop_setattr_desc, coda_setattr },	/* setattr */
     { &vop_read_desc, coda_read },		/* read */
     { &vop_write_desc, coda_write },		/* write */
+    { &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
+    { &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
     { &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
     { &vop_ioctl_desc, coda_ioctl },		/* ioctl */
     { &vop_mmap_desc, genfs_mmap },		/* mmap */
@@ -229,8 +231,7 @@ coda_open(void *v)
 
     MARK_ENTRY(CODA_OPEN_STATS);
 
-    if (!VOP_ISLOCKED(vp))
-	VOP_LOCK(vp, LK_EXCLUSIVE);
+    KASSERT(VOP_ISLOCKED(vp));
     /* Check for open of control file. */
     if (IS_CTL_VP(vp)) {
 	/* if (WRITABLE(flag)) */
@@ -882,7 +883,7 @@ int
 coda_lookup(void *v)
 {
 /* true args */
-    struct vop_lookup_args *ap = v;
+    struct vop_lookup_v2_args *ap = v;
     /* (locked) vnode of dir in which to do lookup */
     vnode_t *dvp = ap->a_dvp;
     struct cnode *dcp = VTOC(dvp);
@@ -896,8 +897,6 @@ coda_lookup(void *v)
     struct cnode *cp;
     const char *nm = cnp->cn_nameptr;
     int len = cnp->cn_namelen;
-    int flags = cnp->cn_flags;
-    int isdot;
     CodaFid VFid;
     int	vtype;
     int error = 0;
@@ -913,9 +912,7 @@ coda_lookup(void *v)
 
     /*
      * The overall strategy is to switch on the lookup type and get a
-     * result vnode that is vref'd but not locked.  Then, the code at
-     * exit: switches on ., .., and regular lookups and does the right
-     * locking.
+     * result vnode that is vref'd but not locked.
      */
 
     /* Check for lookup of control object. */
@@ -935,13 +932,6 @@ coda_lookup(void *v)
 	error = EINVAL;
 	goto exit;
     }
-
-    /*
-     * XXX Check for DOT lookups, and short circuit all the caches,
-     * just doing an extra vref.  (venus guarantees that lookup of
-     * . returns self.)
-     */
-    isdot = (len == 1 && nm[0] == '.');
 
     /*
      * Try to resolve the lookup in the minicache.  If that fails, ask
@@ -998,32 +988,6 @@ coda_lookup(void *v)
 	*ap->a_vpp = NULL;
     }
 
-    /*
-     * If the lookup succeeded, we must generally lock the returned
-     * vnode.  This could be a ., .., or normal lookup.  See
-     * vnodeops(9) for the details.
-     */
-    /*
-     * XXX LK_RETRY is likely incorrect.  Handle vn_lock failure
-     * somehow, and remove LK_RETRY.
-     */
-    if (!error || (error == EJUSTRETURN)) {
-	/* Lookup has a value and it isn't "."? */
-	if (*ap->a_vpp && (*ap->a_vpp != dvp)) {
-	    if (flags & ISDOTDOT)
-		/* ..: unlock parent */
-		VOP_UNLOCK(dvp);
-	    /* all but .: lock child */
-	    vn_lock(*ap->a_vpp, LK_EXCLUSIVE | LK_RETRY);
-	    if (flags & ISDOTDOT)
-		/* ..: relock parent */
-	        vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
-	}
-	/* else .: leave dvp locked */
-    } else {
-	/* The lookup failed, so return NULL.  Leave dvp locked. */
-	*ap->a_vpp = NULL;
-    }
     return(error);
 }
 
@@ -1032,7 +996,7 @@ int
 coda_create(void *v)
 {
 /* true args */
-    struct vop_create_args *ap = v;
+    struct vop_create_v3_args *ap = v;
     vnode_t *dvp = ap->a_dvp;
     struct cnode *dcp = VTOC(dvp);
     struct vattr *va = ap->a_vap;
@@ -1104,20 +1068,11 @@ coda_create(void *v)
 	    error));)
     }
 
-    /*
-     * vnodeops(9) says that we must unlock the parent and lock the child.
-     * XXX Should we lock the child first?
-     */
-    vput(dvp);
     if (!error) {
 #ifdef CODA_VERBOSE
 	if ((cnp->cn_flags & LOCKLEAF) == 0)
 	    /* This should not happen; flags are for lookup only. */
 	    printf("%s: LOCKLEAF not set!\n", __func__);
-
-	if ((error = vn_lock(*ap->a_vpp, LK_EXCLUSIVE)))
-	    /* XXX Perhaps avoid this panic. */
-	    panic("%s: couldn't lock child", __func__);
 #endif
     }
 
@@ -1365,7 +1320,7 @@ int
 coda_mkdir(void *v)
 {
 /* true args */
-    struct vop_mkdir_args *ap = v;
+    struct vop_mkdir_v3_args *ap = v;
     vnode_t *dvp = ap->a_dvp;
     struct cnode *dcp = VTOC(dvp);
     struct componentname  *cnp = ap->a_cnp;
@@ -1426,19 +1381,6 @@ coda_mkdir(void *v)
     } else {
 	*vpp = (vnode_t *)0;
 	CODADEBUG(CODA_MKDIR, myprintf(("%s error %d\n", __func__, error));)
-    }
-
-    /*
-     * Currently, all mkdirs explicitly vput their dvp's.
-     * It also appears that we *must* lock the vpp, since
-     * lockleaf isn't set, but someone down the road is going
-     * to try to unlock the new directory.
-     */
-    vput(dvp);
-    if (!error) {
-	if ((error = vn_lock(*ap->a_vpp, LK_EXCLUSIVE))) {
-	    panic("%s: couldn't lock child", __func__);
-	}
     }
 
     return(error);
@@ -1515,7 +1457,7 @@ int
 coda_symlink(void *v)
 {
 /* true args */
-    struct vop_symlink_args *ap = v;
+    struct vop_symlink_v3_args *ap = v;
     vnode_t *dvp = ap->a_dvp;
     struct cnode *dcp = VTOC(dvp);
     /* a_vpp is used in place below */
@@ -1585,13 +1527,9 @@ coda_symlink(void *v)
 	cnp->cn_flags |= LOOKUP;
 	error = VOP_LOOKUP(dvp, ap->a_vpp, cnp);
 	cnp->cn_flags = saved_cn_flags;
-	/* Either an error occurs, or ap->a_vpp is locked. */
     }
 
  exit:
-    /* unlock and deference parent */
-    vput(dvp);
-
     CODADEBUG(CODA_SYMLINK, myprintf(("in symlink result %d\n",error)); )
     return(error);
 }
@@ -1808,8 +1746,6 @@ coda_grab_vnode(vnode_t *uvp, dev_t dev, ino_t ino, vnode_t **vpp)
 
     /*
      * Obtain vnode from mount point and inode.
-     * XXX VFS_VGET does not clearly define locked/referenced state of
-     * returned vnode.
      */
     error = VFS_VGET(mp, ino, vpp);
     if (error) {
@@ -1820,8 +1756,7 @@ coda_grab_vnode(vnode_t *uvp, dev_t dev, ino_t ino, vnode_t **vpp)
     /* share the underlying vnode lock with the coda vnode */
     mutex_obj_hold((*vpp)->v_interlock);
     uvm_obj_setlock(&uvp->v_uobj, (*vpp)->v_interlock);
-    if (!VOP_ISLOCKED(*vpp))
-	VOP_LOCK(*vpp, LK_EXCLUSIVE);
+    KASSERT(VOP_ISLOCKED(*vpp));
     return(0);
 }
 
@@ -2003,7 +1938,7 @@ coda_getpages(void *v)
 		 * XXX Perhaps we should not fully open the file, but
 		 * simply obtain a container file.
 		 */
-		/* XXX Is it ok to do this while holding the simplelock? */
+		/* XXX Is it ok to do this while holding the mutex? */
 		cerror = VOP_OPEN(vp, FREAD, cred);
 
 		if (cerror) {

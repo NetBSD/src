@@ -1,4 +1,4 @@
-/*	$NetBSD: intrdefs.h,v 1.17 2011/11/06 11:40:47 cherry Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.17.10.1 2014/08/20 00:03:29 tls Exp $	*/
 
 #ifndef _X86_INTRDEFS_H_
 #define _X86_INTRDEFS_H_
@@ -60,7 +60,7 @@
 
 #define X86_IPI_HALT			0x00000001
 #define X86_IPI_MICROSET		0x00000002
-#define X86_IPI__UNUSED1		0x00000004
+#define X86_IPI_GENERIC			0x00000004
 #define X86_IPI_SYNCH_FPU		0x00000008
 #define X86_IPI_MTRR			0x00000010
 #define X86_IPI_GDT			0x00000020
@@ -70,7 +70,7 @@
 
 #define X86_NIPI		9
 
-#define X86_IPI_NAMES { "halt IPI", "timeset IPI", "unused", \
+#define X86_IPI_NAMES { "halt IPI", "timeset IPI", "generic IPI", \
 			 "FPU synch IPI", "MTRR update IPI", \
 			 "GDT update IPI", "xcall IPI", \
 			 "ACPI CPU sleep IPI", "kpreempt IPI" }

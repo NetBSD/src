@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.12.22.2 2013/06/23 06:18:39 tls Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.12.22.3 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.12.22.2 2013/06/23 06:18:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.12.22.3 2014/08/20 00:04:44 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.12.22.2 2013/06/23 06:18:39 tls Exp $"
 #include <uvm/uvm_pdaemon.h>
 
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_kernel.h>
 #include <ufs/lfs/lfs_extern.h>
 
 #include <miscfs/genfs/genfs.h>

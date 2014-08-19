@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_puffs.c,v 1.10 2011/02/10 16:35:01 njoly Exp $	*/
+/*	$NetBSD: fstest_puffs.c,v 1.10.10.1 2014/08/20 00:04:47 tls Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -385,12 +385,6 @@ puffs_fstest_mount(const atf_tc_t *tc, void *arg, const char *path, int flags)
 	fd = rump_sys_open("/dev/puffs", O_RDWR);
 	if (fd == -1)
 		return fd;
-
-#if 0
-	pa->pa_fd = fd;
-#else
-	assert(fd == 0); /* XXX: FIXME */
-#endif
 
 	if (rump_sys_mkdir(path, 0777) == -1)
 		return -1;

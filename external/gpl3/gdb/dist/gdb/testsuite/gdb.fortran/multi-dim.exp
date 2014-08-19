@@ -1,4 +1,4 @@
-# Copyright 2011 Free Software Foundation, Inc.
+# Copyright 2011-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,9 +18,9 @@
 
 if { [skip_fortran_tests] } { return -1 }
 
-set testfile "multi-dim"
-set srcfile ${testfile}.f90
-if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} {debug f77}] } {
+standard_testfile .f90
+
+if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} {debug f90}] } {
     return -1
 }
 

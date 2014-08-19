@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.6.2 2013/02/25 00:28:49 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.6.3 2014/08/20 00:03:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -87,20 +87,20 @@ int	*nofault = 0;
 int
 badaddr(volatile void *addr)
 {
-	int i;
 	label_t	faultbuf;
 
 #ifdef lint
-	i = *addr; if (i) return(0);
+	int i;
+	i = *addr; if (i) return 0;
 #endif
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
-		return(1);
+		nofault = NULL;
+		return 1;
 	}
-	i = *(volatile short *)addr;
-	nofault = (int *) 0;
-	return(0);
+	(void)*(volatile short *)addr;
+	nofault = NULL;
+	return 0;
 }
 
 void
@@ -114,17 +114,19 @@ regdump(int *rp /* must not be register */, int sbytes)
 		return;
 	s = splhigh();
 	doingdump = 1;
-/*	printf("pid = %d, pc = %s, ", u.u_procp->p_pid, hexstr(rp[PC], 8));	*/
+#if 0
+	printf("pid = %d, pc = %s, ", u.u_procp->p_pid, hexstr(rp[PC], 8));
+#endif
 	printf("pc = %s, ", hexstr(rp[PC], 8));
 	printf("ps = %s, ", hexstr(rp[PS], 4));
 	printf("sfc = %s, ", hexstr(getsfc(), 4));
 	printf("dfc = %s\n", hexstr(getdfc(), 4));
-/*
+#if 0
 	printf("p0 = %x@%s, ",
 	       u.u_pcb.pcb_p0lr, hexstr((int)u.u_pcb.pcb_p0br, 8));
 	printf("p1 = %x@%s\n\n",
 	       u.u_pcb.pcb_p1lr, hexstr((int)u.u_pcb.pcb_p1br, 8));
-*/
+#endif
 	printf("Registers:\n     ");
 	for (i = 0; i < 8; i++)
 		printf("        %d", i);
@@ -135,16 +137,18 @@ regdump(int *rp /* must not be register */, int sbytes)
 	for (i = 0; i < 8; i++)
 		printf(" %s", hexstr(rp[i+8], 8));
 	if (sbytes > 0) {
-/*		if (rp[PS] & PSL_S) {	*/
+#if 0
+		if (rp[PS] & PSL_S) {
+#endif
 			printf("\n\nKernel stack (%s):",
-			       hexstr((int)(((int *)&rp)-1), 8));
-			dumpmem(((int *)&rp)-1, sbytes, 0);
-/*
+			       hexstr((int)(((int *)&rp) - 1), 8));
+			dumpmem(((int *)&rp) - 1, sbytes, 0);
+#if 0
 		} else {
 			printf("\n\nUser stack (%s):", hexstr(rp[SP], 8));
 			dumpmem((int *)rp[SP], sbytes, 1);
 		}
-*/
+#endif
 	}
 	doingdump = 0;
 	splx(s);
@@ -162,16 +166,19 @@ dumpmem(int *ptr, int sz, int ustack)
 			printf("\n%s: ", hexstr((int)ptr, 6));
 		else
 			printf(" ");
-/*
+#if 0
 		if (ustack == 1) {
 			if ((val = fuword(ptr++)) == -1)
 				break;
 		} else {
-			if (ustack == 0 && (ptr < KSADDR || ptr > KSADDR+(NBPG/4-1)))
+			if (ustack == 0 &&
+			    (ptr < KSADDR || ptr > KSADDR+(NBPG/4-1)))
 				break;
-*/
+#endif
 			val = *ptr++;
-/*		}	*/
+#if 0
+		}
+#endif
 		printf("%s", hexstr(val, 8));
 	}
 	printf("\n");
@@ -184,7 +191,7 @@ hexstr(int val, int len)
 	int x, i;
 
 	if (len > 8)
-		return("");
+		return "";
 	nbuf[len] = '\0';
 	for (i = len-1; i >= 0; --i) {
 		x = val & 0xF;
@@ -194,5 +201,5 @@ hexstr(int val, int len)
 			nbuf[i] = x + '0';
 		val >>= 4;
 	}
-	return(nbuf);
+	return nbuf;
 }

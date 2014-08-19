@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.30 2011/10/19 01:49:50 dyoung Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.30.12.1 2014/08/20 00:04:35 tls Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.30 2011/10/19 01:49:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.30.12.1 2014/08/20 00:04:35 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -293,7 +293,6 @@ static void
 agr_vlan_check(struct ifnet *ifp, struct agr_softc *sc)
 {
 	struct ethercom *ec = (void *)ifp;
-	int error;
 
 	/* vlans in sync? */
 	if (sc->sc_nvlans == ec->ec_nvlans) {
@@ -302,11 +301,11 @@ agr_vlan_check(struct ifnet *ifp, struct agr_softc *sc)
 
 	if (sc->sc_nvlans == 0) {
 		/* vlan added */
-		error = agr_port_foreach(sc, agr_vlan_add, NULL);
+		agr_port_foreach(sc, agr_vlan_add, NULL);
 		sc->sc_nvlans = ec->ec_nvlans;
 	} else if (ec->ec_nvlans == 0) {
 		/* vlan removed */
-		error = agr_port_foreach(sc, agr_vlan_del, NULL);
+		agr_port_foreach(sc, agr_vlan_del, NULL);
 		sc->sc_nvlans = 0;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.18 2011/06/20 07:23:36 matt Exp $	*/
+/*	$NetBSD: psl.h,v 1.18.12.1 2014/08/20 00:03:19 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -102,7 +102,8 @@
 #include "opt_ppcarch.h"
 #endif /* _KERNEL_OPT */
 
-#if defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE) || defined(_MODULE)
+#if defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE) || defined (PPC_OEA64) \
+    || defined(_MODULE)
 extern register_t cpu_psluserset, cpu_pslusermod, cpu_pslusermask;
 
 #define	PSL_USERSET		cpu_psluserset

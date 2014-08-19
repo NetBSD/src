@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.15 2006/03/18 21:41:23 dan Exp $	*/
+/*	$NetBSD: if.c,v 1.15.48.1 2014/08/20 00:05:13 tls Exp $	*/
 /*	$KAME: if.c,v 1.18 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -59,18 +59,17 @@
 
 #include "rtsold.h"
 
-extern int rssock;
 static int ifsock;
 
-static int get_llflag __P((const char *));
-static void get_rtaddrs __P((int, struct sockaddr *, struct sockaddr **));
+static int get_llflag(const char *);
+static void get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 
 int
 ifinit(void)
 {
 	ifsock = rssock;
 
-	return(0);
+	return 0;
 }
 
 int
@@ -81,17 +80,17 @@ interface_up(char *name)
 
 	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 
-	if (ioctl(ifsock, SIOCGIFFLAGS, (caddr_t)&ifr) < 0) {
+	if (ioctl(ifsock, SIOCGIFFLAGS, &ifr) < 0) {
 		warnmsg(LOG_WARNING, __func__, "ioctl(SIOCGIFFLAGS): %s",
 		    strerror(errno));
-		return(-1);
+		return -1;
 	}
 	if (!(ifr.ifr_flags & IFF_UP)) {
 		ifr.ifr_flags |= IFF_UP;
-		if (ioctl(ifsock, SIOCSIFFLAGS, (caddr_t)&ifr) < 0)
+		if (ioctl(ifsock, SIOCSIFFLAGS, &ifr) < 0)
 			warnmsg(LOG_ERR, __func__,
 			    "ioctl(SIOCSIFFLAGS): %s", strerror(errno));
-		return(-1);
+		return -1;
 	}
 
 	warnmsg(LOG_DEBUG, __func__, "checking if %s is ready...", name);
@@ -105,7 +104,7 @@ interface_up(char *name)
 
 	if (!(llflag & IN6_IFF_NOTREADY)) {
 		warnmsg(LOG_DEBUG, __func__, "%s is ready", name);
-		return(0);
+		return 0;
 	} else {
 		if (llflag & IN6_IFF_TENTATIVE) {
 			warnmsg(LOG_DEBUG, __func__, "%s is tentative",
@@ -132,7 +131,7 @@ interface_status(struct ifinfo *ifinfo)
 	if (ioctl(ifsock, SIOCGIFFLAGS, &ifr) < 0) {
 		warnmsg(LOG_ERR, __func__, "ioctl(SIOCGIFFLAGS) on %s: %s",
 		    ifname, strerror(errno));
-		return(-1);
+		return -1;
 	}
 	/*
 	 * if one of UP and RUNNING flags is dropped,
@@ -148,12 +147,12 @@ interface_status(struct ifinfo *ifinfo)
 	memset(&ifmr, 0, sizeof(ifmr));
 	strncpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
 
-	if (ioctl(ifsock, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0) {
+	if (ioctl(ifsock, SIOCGIFMEDIA, &ifmr) < 0) {
 		if (errno != EINVAL) {
 			warnmsg(LOG_DEBUG, __func__,
 			    "ioctl(SIOCGIFMEDIA) on %s: %s",
 			    ifname, strerror(errno));
-			return(-1);
+			return -1;
 		}
 		/*
 		 * EINVAL simply means that the interface does not support
@@ -177,21 +176,21 @@ interface_status(struct ifinfo *ifinfo)
 	}
 
   inactive:
-	return(0);
+	return 0;
 
   active:
-	return(1);
+	return 1;
 }
 
 #define ROUNDUP(a, size) \
 	(((a) & ((size)-1)) ? (1 + ((a) | ((size)-1))) : (a))
 
 #define NEXT_SA(ap) (ap) = (struct sockaddr *) \
-	((caddr_t)(ap) + ((ap)->sa_len ? ROUNDUP((ap)->sa_len,\
+	((char *)(ap) + ((ap)->sa_len ? ROUNDUP((ap)->sa_len,\
 	sizeof(u_long)) : sizeof(u_long)))
 #define ROUNDUP8(a) (1 + (((a) - 1) | 7))
 
-int
+size_t
 lladdropt_length(struct sockaddr_dl *sdl)
 {
 	switch (sdl->sdl_type) {
@@ -199,9 +198,9 @@ lladdropt_length(struct sockaddr_dl *sdl)
 #ifdef IFT_IEEE80211
 	case IFT_IEEE80211:
 #endif
-		return(ROUNDUP8(ETHER_ADDR_LEN + 2));
+		return ROUNDUP8(ETHER_ADDR_LEN + 2);
 	default:
-		return(0);
+		return 0;
 	}
 }
 
@@ -241,12 +240,12 @@ if_nametosdl(char *name)
 	struct sockaddr_dl *sdl = NULL, *ret_sdl;
 
 	if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0)
-		return(NULL);
+		return NULL;
 	if ((buf = malloc(len)) == NULL)
-		return(NULL);
+		return NULL;
 	if (sysctl(mib, 6, buf, &len, NULL, 0) < 0) {
 		free(buf);
-		return(NULL);
+		return NULL;
 	}
 
 	lim = buf + len;
@@ -272,14 +271,14 @@ if_nametosdl(char *name)
 	if (next == lim || sdl == NULL) {
 		/* search failed */
 		free(buf);
-		return(NULL);
+		return NULL;
 	}
 
 	if ((ret_sdl = malloc(sdl->sdl_len)) == NULL) {
 		free(buf);
-		return(NULL);
+		return NULL;
 	}
-	memcpy((caddr_t)ret_sdl, (caddr_t)sdl, sdl->sdl_len);
+	memcpy(ret_sdl, sdl, sdl->sdl_len);
 
 	free(buf);
 	return(ret_sdl);

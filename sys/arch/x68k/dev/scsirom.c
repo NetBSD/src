@@ -1,4 +1,4 @@
-/*	$NetBSD: scsirom.c,v 1.19 2008/12/18 05:56:42 isaki Exp $	*/
+/*	$NetBSD: scsirom.c,v 1.19.24.1 2014/08/20 00:03:28 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsirom.c,v 1.19 2008/12/18 05:56:42 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsirom.c,v 1.19.24.1 2014/08/20 00:03:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ scsirom_attach(device_t parent, device_t self, void *aux)
 {
 	struct scsirom_softc *sc = device_private(self);
 	struct intio_attach_args *ia = aux;
-	int r;
+	int r __diagused;
 	cfdata_t cf;
 
 	sc->sc_addr = ia->ia_addr;

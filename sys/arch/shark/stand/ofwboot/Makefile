@@ -1,6 +1,9 @@
-#	$NetBSD: Makefile,v 1.12 2011/01/22 19:19:23 joerg Exp $
+#	$NetBSD: Makefile,v 1.12.14.1 2014/08/20 00:03:24 tls Exp $
+
+NOMAN=		# defined
 
 .include <bsd.own.mk>
+.include <bsd.klinks.mk>
 
 S=		${.CURDIR}/../../../..
 
@@ -18,11 +21,11 @@ SRCS+=		byteorder.c
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
 
-NOMAN=		# defined
 STRIPFLAG=
 BINMODE=	444
 
@@ -36,15 +39,8 @@ CLEANFILES+=	vers.c
 
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR}/../../.. -I${S}
 CPPFLAGS+=	-DRELOC=0x${RELOC}
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
-	@[ -h arm ] || ln -s ${S}/arch/arm/include arm
-.endif
-
-.NOPATH: machine arm
-CLEANFILES+= machine arm
+CFLAGS+=	-fno-unwind-tables
+CPUFLAGS=	-mcpu=strongarm
 
 CLEANFILES+= ${PROG}.aout
 
@@ -70,6 +66,7 @@ vers.c: version
 	    ${.CURDIR}/version "shark" ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${_MKTARGET_LINK}
 	${LD} -s -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${.TARGET}.aout \
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${OBJCOPY} -O binary ${.TARGET}.aout ${.TARGET}

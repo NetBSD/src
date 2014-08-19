@@ -1,5 +1,9 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.35.2.1 2013/06/23 06:20:28 tls Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.35.2.2 2014/08/20 00:04:42 tls Exp $
 #
+
+.include "${RUMPTOP}/Makefile.rump"
+
+.include <bsd.own.mk>
 
 LIB=	rumpvfs
 
@@ -14,9 +18,11 @@ LIB=	rumpvfs
 #
 # Source modules, first the ones specifically implemented for librump.
 # 
-SRCS=	rump_vfs.c devnodes.c devnull.c rumpblk.c rumpfs.c vm_vfs.c
+SRCS+=	rump_vfs.c devnodes.c devnull.c rumpblk.c rumpfs.c vm_vfs.c
 
 SRCS+=	rumpvfs_if_wrappers.c
+
+SRCS+=	rumpvfs_syscalls.c
 
 # sys/kern I/O
 SRCS+=	kern_physio.c
@@ -37,7 +43,7 @@ SRCS+=	uvm_vnode.c
 SRCS+=	sync_subr.c sync_vnops.c
 
 # sys/miscfs/deadfs
-SRCS+=	dead_vnops.c
+SRCS+=	dead_vfsops.c dead_vnops.c
 
 # sys/miscfs
 SRCS+=	genfs_io.c genfs_rename.c genfs_vfsops.c genfs_vnops.c spec_vnops.c
@@ -48,6 +54,11 @@ SRCS+=	subr_bufq.c bufq_disksort.c bufq_fcfs.c bufq_priocscan.c	\
 
 # MFS miniroot support
 SRCS+=	mfs_miniroot.c
+
+# ktrace vfs part
+.if ${RUMP_KTRACE} == "yes"
+SRCS+= kern_ktrace_vfs.c
+.endif
 
 #quota2 plists
 SRCS+= quota1_subr.c vfs_quotactl.c
@@ -66,8 +77,6 @@ SHLIB_MAJOR=    0
 SHLIB_MINOR=    0
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
-
-.include "${RUMPTOP}/Makefile.rump"
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

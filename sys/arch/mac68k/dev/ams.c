@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.20.18.1 2012/11/20 03:01:30 tls Exp $	*/
+/*	$NetBSD: ams.c,v 1.20.18.2 2014/08/20 00:03:11 tls Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.20.18.1 2012/11/20 03:01:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.20.18.2 2014/08/20 00:03:11 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -106,7 +106,7 @@ amsattach(device_t parent, device_t self, void *aux)
 	ADBSetInfoBlock adbinfo;
 	struct ams_softc *sc = device_private(self);
 	struct adb_attach_args * aa_args = (struct adb_attach_args *)aux;
-	int error;
+	int error __unused;
 #if NWSMOUSE > 0
 	struct wsmousedev_attach_args a;
 #endif

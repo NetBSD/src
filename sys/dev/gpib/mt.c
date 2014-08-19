@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.24.14.1 2012/11/20 03:02:00 tls Exp $ */
+/*	$NetBSD: mt.c,v 1.24.14.2 2014/08/20 00:03:37 tls Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.24.14.1 2012/11/20 03:02:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.24.14.2 2014/08/20 00:03:37 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,12 +161,29 @@ dev_type_ioctl(mtioctl);
 dev_type_strategy(mtstrategy);
 
 const struct bdevsw mt_bdevsw = {
-	mtopen, mtclose, mtstrategy, mtioctl, nodump, nosize, D_TAPE
+	.d_open = mtopen,
+	.d_close = mtclose,
+	.d_strategy = mtstrategy,
+	.d_ioctl = mtioctl,
+	.d_dump = nodump,
+	.d_psize = nosize,
+	.d_discard = nodiscard,
+	.d_flag = D_TAPE
 };
 
 const struct cdevsw mt_cdevsw = {
-	mtopen, mtclose, mtread, mtwrite, mtioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
+	.d_open = mtopen,
+	.d_close = mtclose,
+	.d_read = mtread,
+	.d_write = mtwrite,
+	.d_ioctl = mtioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TAPE
 };
 
 
@@ -947,20 +964,12 @@ error:
 int
 mtread(dev_t dev, struct uio *uio, int flags)
 {
-	struct mt_softc *sc;
-
-	sc = device_lookup_private(&mt_cd, MTUNIT(dev));
-
 	return (physio(mtstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
 mtwrite(dev_t dev, struct uio *uio, int flags)
 {
-	struct mt_softc *sc;
-
-	sc = device_lookup_private(&mt_cd, MTUNIT(dev));
-
 	return (physio(mtstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 

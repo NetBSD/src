@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.12 2012/01/18 09:35:48 skrll Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.12.6.1 2014/08/20 00:03:04 tls Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.12 2012/01/18 09:35:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.12.6.1 2014/08/20 00:03:04 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,9 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif, void (*pr)(const char *, ...))
 {
 	register_t *fp, pc, rp;
+#if 0
 	bool kernel_only = true;
+#endif
 	bool trace_thread = false;
 	bool lwpaddr = false;
 	db_sym_t sym;
@@ -66,8 +68,10 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		}
 		if (c == 't')
 			trace_thread = true;
+#if 0
 		if (c == 'u')
 			kernel_only = false;
+#endif
 	}
 
 	if (!have_addr) {

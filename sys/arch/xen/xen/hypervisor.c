@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.62 2012/04/06 03:20:43 riz Exp $ */
+/* $NetBSD: hypervisor.c,v 1.62.2.1 2014/08/20 00:03:30 tls Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.62 2012/04/06 03:20:43 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.62.2.1 2014/08/20 00:03:30 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,11 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.62 2012/04/06 03:20:43 riz Exp $");
 
 #include "xenbus.h"
 #include "xencons.h"
-#ifndef __x86_64__
-#include "npx.h"
-#else
-#define NNPX 0
-#endif /* __x86_64__ */
 #include "isa.h"
 #include "pci.h"
 #include "acpica.h"
@@ -142,9 +137,6 @@ union hypervisor_attach_cookie {
 #endif
 #if NXBD_HYPERVISOR > 0
 	struct xbd_attach_args hac_xbd;
-#endif
-#if NNPX > 0
-	struct xen_npx_attach_args hac_xennpx;
 #endif
 #if NPCI > 0
 	struct pcibus_attach_args hac_pba;
@@ -263,11 +255,6 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	memset(&hac, 0, sizeof(hac));
 	hac.hac_xencons.xa_device = "xencons";
 	config_found_ia(self, "xendevbus", &hac.hac_xencons, hypervisor_print);
-#endif
-#if NNPX > 0
-	memset(&hac, 0, sizeof(hac));
-	hac.hac_xennpx.xa_device = "npx";
-	config_found_ia(self, "xendevbus", &hac.hac_xennpx, hypervisor_print);
 #endif
 #ifdef DOM0OPS
 #if NPCI > 0

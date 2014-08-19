@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.92.2.1 2012/11/20 03:02:40 tls Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.92.2.2 2014/08/20 00:04:27 tls Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.92.2.1 2012/11/20 03:02:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.92.2.2 2014/08/20 00:04:27 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -336,7 +336,6 @@ void
 puffs_msg_enqueue(struct puffs_mount *pmp, struct puffs_msgpark *park)
 {
 	struct lwp *l = curlwp;
-	struct mount *mp;
 	struct puffs_req *preq, *creq;
 	ssize_t delta;
 
@@ -348,7 +347,6 @@ puffs_msg_enqueue(struct puffs_mount *pmp, struct puffs_msgpark *park)
 	park->park_flags &= ~(PARKFLAG_DONE | PARKFLAG_HASERROR);
 	KASSERT((park->park_flags & PARKFLAG_WAITERGONE) == 0);
 
-	mp = PMPTOMP(pmp);
 	preq = park->park_preq;
 
 #if 1
@@ -1218,7 +1216,6 @@ puffs_userdead(struct puffs_mount *pmp)
 
 	/* signal waiters on REQUEST TO file server queue */
 	for (park = TAILQ_FIRST(&pmp->pmp_msg_touser); park; park = park_next) {
-		uint8_t opclass;
 
 		mutex_enter(&park->park_mtx);
 		puffs_msgpark_reference(park);
@@ -1242,7 +1239,6 @@ puffs_userdead(struct puffs_mount *pmp)
 			puffs_msgpark_release(park);
 
 		} else {
-			opclass = park->park_preq->preq_opclass;
 			park->park_preq->preq_rv = ENXIO;
 
 			if (park->park_flags & PARKFLAG_CALL) {

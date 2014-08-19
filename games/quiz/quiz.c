@@ -1,4 +1,4 @@
-/*	$NetBSD: quiz.c,v 1.26 2009/08/27 00:31:12 dholland Exp $	*/
+/*	$NetBSD: quiz.c,v 1.26.12.1 2014/08/20 00:00:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)quiz.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: quiz.c,v 1.26 2009/08/27 00:31:12 dholland Exp $");
+__RCSID("$NetBSD: quiz.c,v 1.26.12.1 2014/08/20 00:00:23 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -226,7 +226,7 @@ quiz(void)
 	int i;
 	size_t len;
 	unsigned guesses, rights, wrongs;
-	int next;
+	unsigned next, j;
 	char *answer, *t, question[LINE_SZ];
 	const char *s;
 
@@ -237,7 +237,7 @@ quiz(void)
 			break;
 		next = random() % qsize;
 		qp = qlist.q_next;
-		for (i = 0; i < next; i++)
+		for (j = 0; j < next; j++)
 			qp = qp->q_next;
 		while (qp && qp->q_answered)
 			qp = qp->q_next;

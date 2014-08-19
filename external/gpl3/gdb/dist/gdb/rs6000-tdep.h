@@ -1,7 +1,4 @@
-/* Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
-Free Software Foundation, Inc.
-
-   Free Software Foundation, Inc.
+/* Copyright (C) 2006-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,10 +14,6 @@ Free Software Foundation, Inc.
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
-
-/* Hook in rs6000-aix-tdep.c for determining the TOC address when
-   calling functions in the inferior.  */
-extern CORE_ADDR (*rs6000_find_toc_address_hook) (CORE_ADDR);
 
 /* Minimum possible text address in AIX.  */
 #define AIX_TEXT_SEGMENT_BASE 0x10000000

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2011/01/24 19:27:18 joerg Exp $
+#	$NetBSD: Makefile,v 1.27.14.1 2014/08/20 00:03:17 tls Exp $
 
 S!=	cd ${.CURDIR}/../../../.. ; pwd
 
@@ -6,7 +6,8 @@ PROG=		ofwboot
 NOMAN=		# defined
 SRCS=		ofwstart.S Locore.c boot.c ofdev.c net.c netif_of.c
 SRCS+=		mbr.c rdb.c vers.c
-CFLAGS+=	-msoft-float -Wno-main -ffreestanding
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -msoft-float :}
+CFLAGS+=	-Wno-main -ffreestanding
 CFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 #CPPFLAGS+=	-g -DALLOC_TRACE -DDEBUG #-DOFW_DEBUG -DNETIF_DEBUG
 #CPPFLAGS+=	-DOFWDUMP
@@ -14,8 +15,9 @@ CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP -I${.CURDIR}
 CPPFLAGS+=	-DHEAP_VARIABLE
 
 .include <bsd.own.mk>
+.include <bsd.klinks.mk>
 
-DBG=		-Os -mmultiple
+DBG=		-Os
 
 SRCS+=		ofwmagic.S
 .PATH:		${S}/arch/powerpc/powerpc
@@ -28,6 +30,7 @@ BINMODE=	444
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
@@ -45,14 +48,6 @@ CPPFLAGS+=	-I. -I${S} -I${S}/../common/include
 CPPFLAGS+=	-DRELOC=0x${RELOC}
 CPPFLAGS+=	-DFIRMWORKSBUGS
 CPPFLAGS+=	-DCOMPAT_386BSD_MBRPART
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
-	@[ -h powerpc ] || ln -s ${S}/arch/powerpc/include powerpc
-.endif
-.NOPATH: machine powerpc
-CLEANFILES+= machine powerpc
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -76,6 +71,7 @@ vers.c: version
 	    ${.CURDIR}/version "ofppc" ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${_MKTARGET_LINK}
 	${LD} -s -N -T ${.CURDIR}/ldscript -Ttext ${RELOC} -Bstatic \
 	    -e ${ENTRY} -o ${PROG}.X ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	mv -f ${PROG}.X ${PROG}

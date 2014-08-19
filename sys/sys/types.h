@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.89.2.1 2013/02/25 00:30:13 tls Exp $	*/
+/*	$NetBSD: types.h,v 1.89.2.2 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -273,6 +273,11 @@ typedef int32_t __devmajor_t, __devminor_t;
 #ifdef	_BSD_CLOCK_T_
 typedef	_BSD_CLOCK_T_		clock_t;
 #undef	_BSD_CLOCK_T_
+#endif
+
+#ifdef	_BSD_PTRDIFF_T_
+typedef	_BSD_PTRDIFF_T_		ptrdiff_t;
+#undef	_BSD_PTRDIFF_T_
 #endif
 
 #ifdef	_BSD_SIZE_T_

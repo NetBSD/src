@@ -1,6 +1,6 @@
 /* mpq_set_num(dest,num) -- Set the numerator of DEST from NUM.
 
-Copyright 1991, 1994, 1995, 2001 Free Software Foundation, Inc.
+Copyright 1991, 1994, 1995, 2001, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -21,14 +21,14 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp-impl.h"
 
 void
-mpq_set_num (MP_RAT *dest, const MP_INT *num)
+mpq_set_num (mpq_ptr dest, mpz_srcptr num)
 {
-  mp_size_t size = num->_mp_size;
+  mp_size_t size = SIZ (num);
   mp_size_t abs_size = ABS (size);
+  mp_ptr dp;
 
-  if (dest->_mp_num._mp_alloc < abs_size)
-    _mpz_realloc (&(dest->_mp_num), abs_size);
+  dp = MPZ_NEWALLOC (NUM(dest), abs_size);
 
-  MPN_COPY (dest->_mp_num._mp_d, num->_mp_d, abs_size);
-  dest->_mp_num._mp_size = size;
+  SIZ(NUM(dest)) = size;
+  MPN_COPY (dp, PTR(num), abs_size);
 }

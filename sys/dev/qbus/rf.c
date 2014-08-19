@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.24.24.1 2012/11/20 03:02:32 tls Exp $	*/
+/*	$NetBSD: rf.c,v 1.24.24.2 2014/08/20 00:03:49 tls Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -32,11 +32,11 @@
 TODO:
 - Better LBN bound checking, block padding for SD disks.
 - Formatting / "Set Density"
-- Better error handling / detailed error reason reportnig.
+- Better error handling / detailed error reason reporting.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.24.24.1 2012/11/20 03:02:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.24.24.2 2014/08/20 00:03:49 tls Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -117,27 +117,29 @@ dev_type_size(rfsize);
 
 /* Entries in block and character major device number switch table. */
 const struct bdevsw rf_bdevsw = {
-	rfopen,
-	rfclose,
-	rfstrategy,
-	rfioctl,
-	rfdump,
-	rfsize,
-	D_DISK
+	.d_open = rfopen,
+	.d_close = rfclose,
+	.d_strategy = rfstrategy,
+	.d_ioctl = rfioctl,
+	.d_dump = rfdump,
+	.d_psize = rfsize,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw rf_cdevsw = {
-	rfopen,
-	rfclose,
-	rfread,
-	rfwrite,
-	rfioctl,
-	nostop,
-	notty,
-	nopoll,
-	nommap,
-	nokqfilter,
-	D_DISK
+	.d_open = rfopen,
+	.d_close = rfclose,
+	.d_read = rfread,
+	.d_write = rfwrite,
+	.d_ioctl = rfioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 

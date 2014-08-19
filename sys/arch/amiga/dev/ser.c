@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.79.14.1 2012/11/20 03:00:59 tls Exp $ */
+/*	$NetBSD: ser.c,v 1.79.14.2 2014/08/20 00:02:43 tls Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.79.14.1 2012/11/20 03:00:59 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.79.14.2 2014/08/20 00:02:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,8 +89,18 @@ dev_type_tty(sertty);
 dev_type_poll(serpoll);
 
 const struct cdevsw ser_cdevsw = {
-	seropen, serclose, serread, serwrite, serioctl,
-	serstop, sertty, serpoll, nommap, ttykqfilter, D_TTY
+	.d_open = seropen,
+	.d_close = serclose,
+	.d_read = serread,
+	.d_write = serwrite,
+	.d_ioctl = serioctl,
+	.d_stop = serstop,
+	.d_tty = sertty,
+	.d_poll = serpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 #ifndef SEROBUF_SIZE
@@ -224,6 +234,7 @@ serattach(device_t parent, device_t self, void *aux)
 	sc = device_private(self);
 
 	ir = custom.intenar;
+	__USE(ir);
 	if (serconsole == 0)
 		DELAY(100000);
 
@@ -422,6 +433,7 @@ ser_shutdown(struct ser_softc *sc)
 	}
 #endif
 	ser_open_speed = tp->t_ispeed;
+	splx(s);
 	return;
 }
 

@@ -1,7 +1,6 @@
 /* Target-dependent code for the ia64.
 
-   Copyright (C) 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +19,11 @@
 
 #ifndef IA64_TDEP_H
 #define IA64_TDEP_H
+
+#ifdef HAVE_LIBUNWIND_IA64_H
+#include "libunwind-ia64.h"
+#include "ia64-libunwind-tdep.h"
+#endif
 
 /* Register numbers of various important registers.  */
 
@@ -250,5 +254,11 @@ struct gdbarch_tdep
 };
 
 extern void ia64_write_pc (struct regcache *, CORE_ADDR);
+
+#ifdef HAVE_LIBUNWIND_IA64_H
+extern unw_accessors_t ia64_unw_accessors;
+extern unw_accessors_t ia64_unw_rse_accessors;
+extern struct libunwind_descr ia64_libunwind_descr;
+#endif
 
 #endif /* ia64-tdep.h */

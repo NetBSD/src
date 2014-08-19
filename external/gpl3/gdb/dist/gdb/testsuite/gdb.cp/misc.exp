@@ -1,5 +1,4 @@
-# Copyright 1992, 1994, 1995, 1996, 1997, 1999, 2002, 2007, 2008, 2009, 2010,
-# 2011 Free Software Foundation, Inc.
+# Copyright 1992-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,18 +15,12 @@
 
 # This file was written by Fred Fish. (fnf@cygnus.com)
 
-if $tracelevel then {
-	strace $tracelevel
-}
-
 if { [skip_cplus_tests] } { continue }
 
-set testfile "misc"
-set srcfile ${testfile}.cc
-set binfile ${objdir}/${subdir}/${testfile}
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
-     untested misc.exp
-     return -1
+standard_testfile .cc
+
+if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
+    return -1
 }
 
 #
@@ -56,34 +49,20 @@ proc test_expr { args } {
     if { [llength $args] % 2 } {
 	warning "an even # of arguments should be passed to test_expr"
     }
-    set last_ent [expr [llength $args] - 1];
-    set testname [lindex $args $last_ent];
+    set last_ent [expr [llength $args] - 1]
+    set testname [lindex $args $last_ent]
     if [gdb_test_no_output [lindex $args 0] "$testname (setup)"] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
     for {set x 1} {$x < $last_ent} {set x [expr $x + 2]} {
 	if [gdb_test [lindex $args $x] [lindex $args [expr $x + 1]] "$testname ([lindex $args $x])"] {
-	    gdb_suppress_tests;
+	    gdb_suppress_tests
 	}
     }
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 proc do_tests {} {
-    global subdir
-    global objdir
-    global srcdir
-    global binfile
-    global gdb_prompt
-
-
-    # Start with a fresh gdb.
-
-    gdb_exit
-    gdb_start
-    gdb_reinitialize_dir $srcdir/$subdir
-    gdb_load $binfile
-
     deduce_language_of_main
     # Check for fixes for PRs 8916 and 8630
     gdb_test "print s.a" ".* = 0" "print s.a for foo struct (known gcc 2.7.2 and earlier bug)"
@@ -128,3 +107,6 @@ gdb_test "print (bool)17.93" "\\$\[0-9\]* = true" "(bool)17.93"
 gdb_test "print (bool)0.0" "\\$\[0-9\]* = false" "(bool)0.0"
 gdb_test "print (int)true" "\\$\[0-9\]* = 1" "(int)true"
 gdb_test "print (int)false" "\\$\[0-9\]* = 0" "(int)false"
+
+gdb_test "print 'misc.cc'::v_bool" " = true" \
+    "expression using block qualifier"

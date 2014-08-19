@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.20 2009/03/14 15:36:20 dsl Exp $	*/
+/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.20.22.1 2014/08/20 00:03:49 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.20 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.20.22.1 2014/08/20 00:03:49 tls Exp $");
 
 #include "rf_archs.h"
 
@@ -103,7 +103,7 @@ rf_RegularONEFunc(RF_DagNode_t *node)
 	int     EpdaIndex = (node->numParams - 1) / 2 - 1;	/* the parameter of node
 								 * where you can find
 								 * e-pda */
-	int     i, k, retcode = 0;
+	int     i, k;
 	int     suoffset, length;
 	RF_RowCol_t scol;
 	char   *srcbuf, *destbuf;
@@ -114,10 +114,10 @@ rf_RegularONEFunc(RF_DagNode_t *node)
 	RF_PhysDiskAddr_t *EPDA =
 	    (RF_PhysDiskAddr_t *) node->params[EpdaIndex].p;
 	int     ESUOffset = rf_StripeUnitOffset(layoutPtr, EPDA->startSector);
-#endif /* RAID_DIAGNOSTIC */
 
 	RF_ASSERT(EPDA->type == RF_PDA_TYPE_Q);
 	RF_ASSERT(ESUOffset == 0);
+#endif /* RAID_DIAGNOSTIC */
 
 	RF_ETIMER_START(timer);
 
@@ -125,7 +125,7 @@ rf_RegularONEFunc(RF_DagNode_t *node)
 	 * new data is stored in Rod buffer */
 	for (k = 0; k < EpdaIndex; k += 2) {
 		length = rf_RaidAddressToByte(raidPtr, ((RF_PhysDiskAddr_t *) node->params[k].p)->numSector);
-		retcode = rf_bxor(node->params[k + EpdaIndex + 3].p, node->params[k + 1].p, length);
+		rf_bxor(node->params[k + EpdaIndex + 3].p, node->params[k + 1].p, length);
 	}
 	/* Start to encoding the buffer storing the difference of old data and
 	 * new data into 'E' buffer  */
@@ -143,7 +143,7 @@ rf_RegularONEFunc(RF_DagNode_t *node)
 	 * function in XorNode */
 	for (k = 0; k < EpdaIndex; k += 2) {
 		length = rf_RaidAddressToByte(raidPtr, ((RF_PhysDiskAddr_t *) node->params[k].p)->numSector);
-		retcode = rf_bxor(node->params[k + EpdaIndex + 3].p, node->params[k + 1].p, length);
+		rf_bxor(node->params[k + EpdaIndex + 3].p, node->params[k + 1].p, length);
 	}
 	RF_ETIMER_STOP(timer);
 	RF_ETIMER_EVAL(timer);
@@ -658,8 +658,8 @@ rf_EvenOddDoubleRecoveryFunc(RF_DagNode_t *node)
 	int     i, prm, sector, nresults = node->numResults;
 	RF_SectorCount_t secPerSU = layoutPtr->sectorsPerStripeUnit;
 	unsigned sosAddr;
-	int     two = 0, mallc_one = 0, mallc_two = 0;	/* flags to indicate if
-							 * memory is allocated */
+	int     mallc_one = 0, mallc_two = 0;	/* flags to indicate if
+						 * memory is allocated */
 	int     bytesPerSector = rf_RaidAddressToByte(raidPtr, 1);
 	RF_PhysDiskAddr_t *ppda, *ppda2, *epda, *epda2, *pda, *pda0, *pda1,
 	        npda;
@@ -695,7 +695,6 @@ rf_EvenOddDoubleRecoveryFunc(RF_DagNode_t *node)
 		epda = node->params[np - 4].p;
 		epda2 = node->params[np - 3].p;
 		RF_ASSERT(epda2->type == RF_PDA_TYPE_Q);
-		two = 1;
 	} else {
 		ppda = node->params[np - 4].p;
 		epda = node->params[np - 3].p;

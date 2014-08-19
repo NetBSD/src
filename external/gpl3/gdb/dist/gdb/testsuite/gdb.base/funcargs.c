@@ -53,6 +53,12 @@ float *fp = &f;
 double d = 5.0;
 double *dp = &d;
 
+#ifdef TEST_COMPLEX
+float _Complex fc = 1.0F + 2.0iF;
+double _Complex dc = 3.0 + 4.0i;
+long double _Complex ldc = 5.0L + 6.0iL;
+#endif /* TEST_COMPLEX */
+
 struct stag {
     int s1;
     int s2;
@@ -310,6 +316,117 @@ float *fp; double *dp;
   fp = 0; dp = 0;
 }
 
+
+
+#ifdef TEST_COMPLEX
+
+/* Test various _Complex type args.  */
+
+#ifdef PROTOTYPES
+void callca (float _Complex f1, float _Complex f2, float _Complex f3)
+#else
+callca (f1, f2, f3)
+float _Complex f1; float _Complex f2; float _Complex f3;
+#endif
+{
+
+}
+
+#ifdef PROTOTYPES
+void callcb (double _Complex d1, double _Complex d2, double _Complex d3)
+#else
+callcb (d1, d2, d3)
+double _Complex d1; double _Complex d2; double _Complex d3;
+#endif
+{
+
+}
+
+#ifdef PROTOTYPES
+void callcc (long double _Complex ld1, long double _Complex ld2, long double _Complex ld3)
+#else
+callcc (ld1, ld2, ld3)
+long double _Complex ld1; long double _Complex ld2; long double _Complex ld3;
+#endif
+{
+
+}
+
+#ifdef PROTOTYPES
+void callcd (float _Complex fc1, double _Complex dc1, long double _Complex ldc1)
+#else
+callcd (fc1, dc1, ldc1)
+float _Complex fc1; double _Complex dc1; long double _Complex ldc1;
+#endif
+{
+}
+
+#ifdef PROTOTYPES
+void callce (double _Complex dc1, long double _Complex ldc1, float _Complex fc1)
+#else
+callce (dc1, ldc1, fc1)
+double _Complex dc1; long double _Complex ldc1; float _Complex fc1;
+#endif
+{
+}
+
+#ifdef PROTOTYPES
+void callcf (long double _Complex ldc1, float _Complex fc1, double _Complex dc1)
+#else
+callcf (ldc1, fc1, dc1)
+long double _Complex ldc1; float _Complex fc1; double _Complex dc1;
+#endif
+{
+}
+
+
+/* Test passing _Complex type and integral.  */
+#ifdef PROTOTYPES
+void callc1a (char c, short s, int i, unsigned int ui, long l,
+	      float _Complex fc1, double _Complex dc1,
+	      long double _Complex ldc1)
+#else
+callc1a (c, s, i, ui, l, fc1, dc1, ldc1)
+char c; short s; int i; unsigned int ui; long l; float _Complex fc1; double _Complex dc1; long double _Complex ldc1;
+#endif
+{}
+
+#ifdef PROTOTYPES
+void callc1b (long double _Complex ldc1, char c, short s, int i,
+	      float _Complex fc1, unsigned int ui, long l,  double _Complex dc1)
+#else
+callc1b (ldc1, c, s, i, fc1, ui, l, dc1)
+char c; short s; int i; unsigned int ui; long l; float _Complex fc1; double _Complex dc1; long double _Complex ldc1;
+#endif
+{}
+
+
+#ifdef PROTOTYPES
+void callc2a (char c, short s, int i, unsigned int ui, long l, float f,
+	      double d, float _Complex fc1, double _Complex dc1,
+	      long double _Complex ldc1)
+#else
+callc2a (c, s, i, ui, l, f, d, fc1, dc1, ldc1)
+     char c; short s; int i; unsigned int ui; long l; float f; double d;
+     float _Complex fc1; double _Complex dc1;
+     long double _Complex ldc1;
+#endif
+{}
+
+#ifdef PROTOTYPES
+void callc2b (float _Complex fc1, char c, short s, int i, unsigned int ui,
+	      long double _Complex ldc1, long l, float f, double d,
+	      double _Complex dc1)
+#else
+callc2b (fc1, c, s, i, ui, ldc1, l, f, d, dc1)
+     char c; short s; int i; unsigned int ui; long l; float f; double d;
+     float _Complex fc1; double _Complex dc1;
+     long double _Complex ldc1;
+#endif
+{}
+
+
+#endif /* TEST_COMPLEX */
 
 /* Test passing structures and unions by reference. */
 
@@ -720,10 +837,6 @@ int main ()
   void (*pointer_to_call0a) (char, short, int, long) = (void (*)(char, short, int, long))call0a;
   double (*pointer_to_call_with_trampolines) (double) = call_with_trampolines;
 
-#ifdef usestubs
-  set_debug_traps();
-  breakpoint();
-#endif
   /* Test calling with basic integer types */
   call0a (c, s, i, l);
   call0b (s, i, l, c);
@@ -748,6 +861,23 @@ int main ()
   call2g (l, d, c, f, s, d, i, f);
   call2h (d, c, f, s, d, i, f, l);
   call2i (c, f, c, c, d, c, c, c, f, s, c, d);
+
+#ifdef TEST_COMPLEX
+  /* Test calling with _Complex types.  */
+  callca (fc, fc, fc);
+  callcb (dc, dc, dc);
+  callcc (ldc, ldc, ldc);
+  callcd (fc, dc, ldc);
+  callce (dc, ldc, fc);
+  callcf (ldc, fc, dc);
+
+
+  callc1a (c, s, i, ui, l, fc, dc, ldc);
+  callc1b (ldc, c, s, i, fc, ui, l, dc);
+
+  callc2a (c, s, i, ui, l, f, d, fc, dc, ldc);
+  callc2b (fc, c, s, i, ui, ldc, l, f, d, dc);
+#endif /* TEST_COMPLEX */
 
   /* Test dereferencing pointers to various integral and floating types */
 

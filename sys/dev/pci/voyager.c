@@ -1,4 +1,4 @@
-/*	$NetBSD: voyager.c,v 1.9 2012/01/30 19:41:23 drochner Exp $	*/
+/*	$NetBSD: voyager.c,v 1.9.6.1 2014/08/20 00:03:48 tls Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.9 2012/01/30 19:41:23 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.9.6.1 2014/08/20 00:03:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,6 +154,7 @@ voyager_attach(device_t parent, device_t self, void *aux)
 	uint32_t reg;
 	const char *intrstr;
 	int i;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -193,7 +194,7 @@ voyager_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	intrstr = pci_intr_string(sc->sc_pc, ih);
+	intrstr = pci_intr_string(sc->sc_pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_AUDIO, voyager_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");

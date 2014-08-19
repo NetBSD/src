@@ -60,10 +60,19 @@ anti-spammer blacklists.  See, for example, the information on
 
 <p> By default, Postfix has a moderately restrictive approach to
 mail relaying. Postfix forwards mail only from clients in trusted
-networks, or to domains that are configured as authorized relay
-destinations. For a description of the default policy, see the
-<a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> parameter in the <a href="postconf.5.html">postconf(5)</a> manual
-page, and the information that is referenced from there.  </p>
+networks, from clients that have authenticated with SASL, or to
+domains that are configured as authorized relay
+destinations. For a description of the default mail relay policy,
+see the <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> parameter in the <a href="postconf.5.html">postconf(5)</a> manual
+page, and the information that is referenced from there. </p>
+
+<blockquote> <p> NOTE: Postfix versions before 2.10 did not have
+<a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>. They combined the mail relay and spam
+blocking policies, under <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a>.  This could
+lead to unexpected results.  For example, a permissive spam blocking
+policy could unexpectedly result in a permissive mail relay policy.
+An example of this is documented under "<a href="#danger">Dangerous
+use of smtpd_recipient_restrictions</a>".  </p> </blockquote>
 
 <p> Most of the Postfix SMTP server access controls are targeted
 at stopping junk email. </p>
@@ -178,8 +187,23 @@ described in the <a href="postconf.5.html">postconf(5)</a> manual page. </p>
     # Don't accept mail from domains that don't exist.
     <a href="postconf.5.html#smtpd_sender_restrictions">smtpd_sender_restrictions</a> = <a href="postconf.5.html#reject_unknown_sender_domain">reject_unknown_sender_domain</a>
 
-    # Whitelisting: local clients may specify any destination domain.
-    <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>, <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
+    # Relay control (Postfix 2.10 and later): local clients and
+    # authenticated clients may specify any destination domain.
+    <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> = <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>, 
+        <a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a>,
+        <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
+
+    # Spam control: exclude local clients and authenticated clients
+    # from DNSBL lookups.
+    <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>, 
+        <a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a>,
+        # <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a> is not needed here if the mail
+        # relay policy is specified under <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>
+        # (available with Postfix 2.10 and later).
+        <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
+        <a href="postconf.5.html#reject_rbl_client">reject_rbl_client</a> zen.spamhaus.org,
+        <a href="postconf.5.html#reject_rhsbl_helo">reject_rhsbl_helo</a> dbl.spamhaus.org,
+        <a href="postconf.5.html#reject_rhsbl_sender">reject_rhsbl_sender</a> dbl.spamhaus.org
 
     # Block clients that speak too early.
     <a href="postconf.5.html#smtpd_data_restrictions">smtpd_data_restrictions</a> = <a href="postconf.5.html#reject_unauth_pipelining">reject_unauth_pipelining</a>
@@ -205,28 +229,47 @@ DEFER result. </p>
 
 <table border="1">
 
-<tr> <th> Restriction list name </th> <th> Status </th> <th> Effect
+<tr> <th> Restriction list name </th> <th> Version </th> <th> Status
+</th> <th> Effect
 of REJECT or DEFER result </th> </tr>
 
-<tr> <td> <a href="postconf.5.html#smtpd_client_restrictions">smtpd_client_restrictions</a> </td> <td> Optional </td> <td>
+<tr> <td> <a href="postconf.5.html#smtpd_client_restrictions">smtpd_client_restrictions</a> </td> <td> All </td> <td>
+Optional </td> <td>
 Reject all client commands </td> </tr>
 
-<tr> <td> <a href="postconf.5.html#smtpd_helo_restrictions">smtpd_helo_restrictions</a> </td> <td> Optional </td> <td>
+<tr> <td> <a href="postconf.5.html#smtpd_helo_restrictions">smtpd_helo_restrictions</a> </td> <td> All </td> <td> Optional
+</td> <td>
 Reject HELO/EHLO information </td> </tr>
 
-<tr> <td> <a href="postconf.5.html#smtpd_sender_restrictions">smtpd_sender_restrictions</a> </td> <td> Optional </td> <td>
+<tr> <td> <a href="postconf.5.html#smtpd_sender_restrictions">smtpd_sender_restrictions</a> </td> <td> All </td> <td>
+Optional </td> <td>
 Reject MAIL FROM information </td> </tr>
 
-<tr> <td> <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> </td> <td> Required </td>
-<td> Reject RCPT TO information </td> </tr>
+<tr> <td rowspan="2"> <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> </td> <td> &ge; 2.10
+</td> <td> Required if <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> does not enforce
+relay policy</td>
+<td rowspan="2"> Reject RCPT TO information </td> </tr>
 
-<tr> <td> <a href="postconf.5.html#smtpd_data_restrictions">smtpd_data_restrictions</a> </td> <td> Optional </td> <td>
+<tr> <td> &lt 2.10</td> <td> Not available </td> 
+</tr>
+
+<tr> <td rowspan="2"> <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> </td> <td> &ge;
+2.10 </td> <td> Required if <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a> does not enforce
+relay policy</td>
+<td rowspan="2"> Reject RCPT TO information </td> </tr>
+
+<tr> <td> &lt 2.10</td> <td> Required </td> </tr>
+
+<tr> <td> <a href="postconf.5.html#smtpd_data_restrictions">smtpd_data_restrictions</a> </td> <td> &ge; 2.0 </td> <td>
+Optional </td> <td>
 Reject DATA command </td> </tr>
 
-<tr> <td> <a href="postconf.5.html#smtpd_end_of_data_restrictions">smtpd_end_of_data_restrictions</a> </td> <td> Optional </td> <td>
+<tr> <td> <a href="postconf.5.html#smtpd_end_of_data_restrictions">smtpd_end_of_data_restrictions</a> </td> <td> &ge; 2.2 </td>
+<td> Optional </td> <td>
 Reject END-OF-DATA command </td> </tr>
 
-<tr> <td> <a href="postconf.5.html#smtpd_etrn_restrictions">smtpd_etrn_restrictions</a> </td> <td> Optional </td> <td>
+<tr> <td> <a href="postconf.5.html#smtpd_etrn_restrictions">smtpd_etrn_restrictions</a> </td> <td> All </td> <td> Optional
+</td> <td>
 Reject ETRN command </td> </tr>
 
 </table>
@@ -248,10 +291,10 @@ and so on. This approach turned out to be difficult to use. </p>
 helo and sender restriction lists until the RCPT TO or ETRN command.
 This behavior is controlled by the <a href="postconf.5.html#smtpd_delay_reject">smtpd_delay_reject</a> parameter.
 Restriction lists are still evaluated in the proper order of (client,
-helo, etrn) or (client, helo, sender, recipient, data, or end-of-data)
-restrictions.
+helo, etrn) or (client, helo, sender, relay, recipient, data, or
+end-of-data) restrictions.
 When a restriction list (example: client) evaluates to REJECT or
-DEFER the other restriction lists (example: helo, sender, etc.)
+DEFER the restriction lists that follow (example: helo, sender, etc.)
 are skipped.  </p>
 
 <p> Around the time that <a href="postconf.5.html#smtpd_delay_reject">smtpd_delay_reject</a> was introduced, Postfix
@@ -300,6 +343,12 @@ list evaluates to REJECT or DEFER, the recipient address is rejected;
 no surprises here. If the result is PERMIT, then the recipient
 address is accepted. And this is where surprises can happen.  </p>
 
+<p> The problem is that Postfix versions before 2.10 did not have
+<a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>. They combined the mail relay and spam
+blocking policies, under <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a>.  The result
+is that a permissive spam blocking policy could unexpectedly result
+in a permissive mail relay policy. </p>
+
 <p> Here is an example that shows when a PERMIT result can result
 in too much access permission: </p>
 
@@ -307,9 +356,9 @@ in too much access permission: </p>
 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
 2     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = 
 3         <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>
-4         <a href="postconf.5.html#check_helo_access">check_helo_access</a> hash:/etc/postfix/helo_access
+4         <a href="postconf.5.html#check_helo_access">check_helo_access</a> <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/helo_access
 5         <a href="postconf.5.html#reject_unknown_helo_hostname">reject_unknown_helo_hostname</a>
-6         <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
+6         <b><a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a></b>
 7 
 8 /etc/postfix/helo_access:
 9     localhost.localdomain PERMIT
@@ -326,13 +375,30 @@ localhost.localdomain".  </p>
 that announces itself as "localhost.localdomain", making Postfix
 an open relay for all such hosts. </p>
 
-<p> In order to avoid surprises like these with
-<a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a>, you should place non-recipient
+<p> With Postfix before version 2.10 you should place non-recipient
 restrictions AFTER the <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a> restriction, not
 before. In the above example, the HELO based restrictions should
 be placed AFTER <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>, or better, the HELO
 based restrictions should be placed under <a href="postconf.5.html#smtpd_helo_restrictions">smtpd_helo_restrictions</a>
 where they can do no harm. </p>
+
+<pre>
+1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
+2     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = 
+3         <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>
+4         <b><a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a></b>
+5         <a href="postconf.5.html#check_helo_access">check_helo_access</a> <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/helo_access
+6         <a href="postconf.5.html#reject_unknown_helo_hostname">reject_unknown_helo_hostname</a>
+7 
+8 /etc/postfix/helo_access:
+9     localhost.localdomain PERMIT
+</pre>
+
+<p> The above mistake will not happen with Postfix 2.10 and later,
+when the relay policy is specified under <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>,
+and the spam blocking policy under <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a>.
+Then, a permissive spam blocking policy will not result in a
+permissive mail relay policy. </p>
 
 <h2> <a name="testing"> SMTP access rule testing </a> </h2>
 
@@ -348,18 +414,21 @@ sender. Specify "<a href="postconf.5.html#soft_bounce">soft_bounce</a> = yes" in
 the Postfix SMTP server from rejecting mail permanently, by changing
 all 5xx SMTP reply codes into 4xx. </p> </dd>
 
-<dt> <a href="postconf.5.html#warn_if_reject">warn_if_reject</a> </dt> <dd> <p> This is a different safety net
-that changes SMTP server REJECT actions into warnings. Instead of
-rejecting a command, Postfix logs what it would reject. Specify
-"<a href="postconf.5.html#warn_if_reject">warn_if_reject</a>" in an SMTP access restriction list, before the
-restriction that you want to test without actually rejecting mail.
-</p> </dd>
+<dt> <a href="postconf.5.html#warn_if_reject">warn_if_reject</a> </dt> <dd> <p> When placed before a reject-type
+restriction, access table query, or <a href="postconf.5.html#check_policy_service">check_policy_service</a> query,
+this logs a "reject_warning" message instead of rejecting a request
+(when a reject-type restriction fails due to a temporary error,
+this logs a "reject_warning" message for any implicit "<a href="postconf.5.html#defer_if_permit">defer_if_permit</a>"
+actions that would normally prevent mail from being accepted by
+some later access restriction).  This feature has no effect on
+<a href="postconf.5.html#defer_if_reject">defer_if_reject</a> restrictions.  </p> </dd>
 
-<dt> XCLIENT </dt> <dd> <p> With this Postfix 2.1 feature, authorized
-SMTP clients can impersonate other systems, so that you can do
-realistic SMTP access rule tests.  Examples of how to impersonate
-other systems for access rule testing are given at the end of the
-<a href="XCLIENT_README.html">XCLIENT_README</a> document.  </p> </dd>
+<dt> XCLIENT </dt> <dd> <p> With this feature, an authorized SMTP
+client can impersonate other systems and perform realistic SMTP
+access rule tests.  Examples of how to impersonate other systems
+for access rule testing are given at the end of the <a href="XCLIENT_README.html">XCLIENT_README</a>
+document. <br> This feature is available in Postfix 2.1.  </p>
+</dd>
 
 </dl>
 

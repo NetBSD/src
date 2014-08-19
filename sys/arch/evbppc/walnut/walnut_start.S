@@ -1,4 +1,4 @@
-/*	$NetBSD: walnut_start.S,v 1.22 2011/06/20 19:56:11 matt Exp $	*/
+/*	$NetBSD: walnut_start.S,v 1.22.12.1 2014/08/20 00:02:59 tls Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ __start_cpu0:
 	addi	%r8,%r8,_C_LABEL(end)@l
 /* zero bss */
 	li	%r4,0
-2:	stwu	%r4,%r4(%r3)
+2:	stwu	%r4,4(%r3)
 	cmpw	%r3,%r8
 	bne+	2b
 

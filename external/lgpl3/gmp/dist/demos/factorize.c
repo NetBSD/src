@@ -1,6 +1,6 @@
 /* Factoring with Pollard's rho method.
 
-Copyright 1995, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2009
+Copyright 1995, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2009, 2012
 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify it under
@@ -19,138 +19,268 @@ this program.  If not, see http://www.gnu.org/licenses/.  */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "gmp.h"
 
+static unsigned char primes_diff[] = {
+#define P(a,b,c) a,
+#include "primes.h"
+#undef P
+};
+#define PRIMES_PTAB_ENTRIES (sizeof(primes_diff) / sizeof(primes_diff[0]))
+
 int flag_verbose = 0;
 
-static unsigned add[] = {4, 2, 4, 2, 4, 6, 2, 6};
+/* Prove primality or run probabilistic tests.  */
+int flag_prove_primality = 1;
+
+/* Number of Miller-Rabin tests to run when not proving primality. */
+#define MR_REPS 25
+
+struct factors
+{
+  mpz_t         *p;
+  unsigned long *e;
+  long nfactors;
+};
+
+void factor (mpz_t, struct factors *);
 
 void
-factor_using_division (mpz_t t, unsigned int limit)
+factor_init (struct factors *factors)
 {
-  mpz_t q, r;
-  unsigned long int f;
-  int ai;
-  unsigned *addv = add;
-  unsigned int failures;
+  factors->p = malloc (1);
+  factors->e = malloc (1);
+  factors->nfactors = 0;
+}
+
+void
+factor_clear (struct factors *factors)
+{
+  int i;
+
+  for (i = 0; i < factors->nfactors; i++)
+    mpz_clear (factors->p[i]);
+
+  free (factors->p);
+  free (factors->e);
+}
+
+void
+factor_insert (struct factors *factors, mpz_t prime)
+{
+  long    nfactors  = factors->nfactors;
+  mpz_t         *p  = factors->p;
+  unsigned long *e  = factors->e;
+  long i, j;
+
+  /* Locate position for insert new or increment e.  */
+  for (i = nfactors - 1; i >= 0; i--)
+    {
+      if (mpz_cmp (p[i], prime) <= 0)
+	break;
+    }
+
+  if (i < 0 || mpz_cmp (p[i], prime) != 0)
+    {
+      p = realloc (p, (nfactors + 1) * sizeof p[0]);
+      e = realloc (e, (nfactors + 1) * sizeof e[0]);
+
+      mpz_init (p[nfactors]);
+      for (j = nfactors - 1; j > i; j--)
+	{
+	  mpz_set (p[j + 1], p[j]);
+	  e[j + 1] = e[j];
+	}
+      mpz_set (p[i + 1], prime);
+      e[i + 1] = 1;
+
+      factors->p = p;
+      factors->e = e;
+      factors->nfactors = nfactors + 1;
+    }
+  else
+    {
+      e[i] += 1;
+    }
+}
+
+void
+factor_insert_ui (struct factors *factors, unsigned long prime)
+{
+  mpz_t pz;
+
+  mpz_init_set_ui (pz, prime);
+  factor_insert (factors, pz);
+  mpz_clear (pz);
+}
+
+
+void
+factor_using_division (mpz_t t, struct factors *factors)
+{
+  mpz_t q;
+  unsigned long int p;
+  int i;
 
   if (flag_verbose > 0)
     {
-      printf ("[trial division (%u)] ", limit);
-      fflush (stdout);
+      printf ("[trial division] ");
     }
 
   mpz_init (q);
-  mpz_init (r);
 
-  f = mpz_scan1 (t, 0);
-  mpz_div_2exp (t, t, f);
-  while (f)
+  p = mpz_scan1 (t, 0);
+  mpz_div_2exp (t, t, p);
+  while (p)
     {
-      printf ("2 ");
-      fflush (stdout);
-      --f;
+      factor_insert_ui (factors, 2);
+      --p;
     }
 
-  for (;;)
+  p = 3;
+  for (i = 1; i <= PRIMES_PTAB_ENTRIES;)
     {
-      mpz_tdiv_qr_ui (q, r, t, 3);
-      if (mpz_cmp_ui (r, 0) != 0)
-	break;
-      mpz_set (t, q);
-      printf ("3 ");
-      fflush (stdout);
-    }
-
-  for (;;)
-    {
-      mpz_tdiv_qr_ui (q, r, t, 5);
-      if (mpz_cmp_ui (r, 0) != 0)
-	break;
-      mpz_set (t, q);
-      printf ("5 ");
-      fflush (stdout);
-    }
-
-  failures = 0;
-  f = 7;
-  ai = 0;
-  while (mpz_cmp_ui (t, 1) != 0)
-    {
-      mpz_tdiv_qr_ui (q, r, t, f);
-      if (mpz_cmp_ui (r, 0) != 0)
+      if (! mpz_divisible_ui_p (t, p))
 	{
-	  f += addv[ai];
-	  if (mpz_cmp_ui (q, f) < 0)
-	    break;
-	  ai = (ai + 1) & 7;
-	  failures++;
-	  if (failures > limit)
+	  p += primes_diff[i++];
+	  if (mpz_cmp_ui (t, p * p) < 0)
 	    break;
 	}
       else
 	{
-	  mpz_swap (t, q);
-	  printf ("%lu ", f);
-	  fflush (stdout);
-	  failures = 0;
+	  mpz_tdiv_q_ui (t, t, p);
+	  factor_insert_ui (factors, p);
 	}
     }
 
-  mpz_clears (q, r, NULL);
+  mpz_clear (q);
 }
 
-void
-factor_using_division_2kp (mpz_t t, unsigned int limit, unsigned long p)
+static int
+mp_millerrabin (mpz_srcptr n, mpz_srcptr nm1, mpz_ptr x, mpz_ptr y,
+		mpz_srcptr q, unsigned long int k)
 {
-  mpz_t r;
-  mpz_t f;
-  unsigned int k;
+  unsigned long int i;
 
-  if (flag_verbose > 0)
+  mpz_powm (y, x, q, n);
+
+  if (mpz_cmp_ui (y, 1) == 0 || mpz_cmp (y, nm1) == 0)
+    return 1;
+
+  for (i = 1; i < k; i++)
     {
-      printf ("[trial division (%u)] ", limit);
-      fflush (stdout);
+      mpz_powm_ui (y, y, 2, n);
+      if (mpz_cmp (y, nm1) == 0)
+	return 1;
+      if (mpz_cmp_ui (y, 1) == 0)
+	return 0;
+    }
+  return 0;
+}
+
+int
+mp_prime_p (mpz_t n)
+{
+  int k, r, is_prime;
+  mpz_t q, a, nm1, tmp;
+  struct factors factors;
+
+  if (mpz_cmp_ui (n, 1) <= 0)
+    return 0;
+
+  /* We have already casted out small primes. */
+  if (mpz_cmp_ui (n, (long) FIRST_OMITTED_PRIME * FIRST_OMITTED_PRIME) < 0)
+    return 1;
+
+  mpz_inits (q, a, nm1, tmp, NULL);
+
+  /* Precomputation for Miller-Rabin.  */
+  mpz_sub_ui (nm1, n, 1);
+
+  /* Find q and k, where q is odd and n = 1 + 2**k * q.  */
+  k = mpz_scan1 (nm1, 0);
+  mpz_tdiv_q_2exp (q, nm1, k);
+
+  mpz_set_ui (a, 2);
+
+  /* Perform a Miller-Rabin test, finds most composites quickly.  */
+  if (!mp_millerrabin (n, nm1, a, tmp, q, k))
+    {
+      is_prime = 0;
+      goto ret2;
     }
 
-  mpz_init (r);
-  mpz_init_set_ui (f, 2 * p);
-  mpz_add_ui (f, f, 1);
-  for (k = 1; k < limit; k++)
+  if (flag_prove_primality)
     {
-      mpz_tdiv_r (r, t, f);
-      while (mpz_cmp_ui (r, 0) == 0)
+      /* Factor n-1 for Lucas.  */
+      mpz_set (tmp, nm1);
+      factor (tmp, &factors);
+    }
+
+  /* Loop until Lucas proves our number prime, or Miller-Rabin proves our
+     number composite.  */
+  for (r = 0; r < PRIMES_PTAB_ENTRIES; r++)
+    {
+      int i;
+
+      if (flag_prove_primality)
 	{
-	  mpz_tdiv_q (t, t, f);
-	  mpz_tdiv_r (r, t, f);
-	  mpz_out_str (stdout, 10, f);
-	  fflush (stdout);
-	  fputc (' ', stdout);
+	  is_prime = 1;
+	  for (i = 0; i < factors.nfactors && is_prime; i++)
+	    {
+	      mpz_divexact (tmp, nm1, factors.p[i]);
+	      mpz_powm (tmp, a, tmp, n);
+	      is_prime = mpz_cmp_ui (tmp, 1) != 0;
+	    }
 	}
-      mpz_add_ui (f, f, 2 * p);
+      else
+	{
+	  /* After enough Miller-Rabin runs, be content. */
+	  is_prime = (r == MR_REPS - 1);
+	}
+
+      if (is_prime)
+	goto ret1;
+
+      mpz_add_ui (a, a, primes_diff[r]);	/* Establish new base.  */
+
+      if (!mp_millerrabin (n, nm1, a, tmp, q, k))
+	{
+	  is_prime = 0;
+	  goto ret1;
+	}
     }
 
-  mpz_clears (f, r, NULL);
+  fprintf (stderr, "Lucas prime test failure.  This should not happen\n");
+  abort ();
+
+ ret1:
+  if (flag_prove_primality)
+    factor_clear (&factors);
+ ret2:
+  mpz_clears (q, a, nm1, tmp, NULL);
+
+  return is_prime;
 }
 
 void
-factor_using_pollard_rho (mpz_t n, unsigned long a, unsigned long p)
+factor_using_pollard_rho (mpz_t n, unsigned long a, struct factors *factors)
 {
-  mpz_t x, x1, y, P;
-  mpz_t t1, t2;
+  mpz_t x, z, y, P;
+  mpz_t t, t2;
   unsigned long long k, l, i;
 
   if (flag_verbose > 0)
     {
       printf ("[pollard-rho (%lu)] ", a);
-      fflush (stdout);
     }
 
-  mpz_inits (t1, t2, NULL);
+  mpz_inits (t, t2, NULL);
   mpz_init_set_si (y, 2);
   mpz_init_set_si (x, 2);
-  mpz_init_set_si (x1, 2);
+  mpz_init_set_si (z, 2);
   mpz_init_set_ui (P, 1);
   k = 1;
   l = 1;
@@ -161,52 +291,32 @@ factor_using_pollard_rho (mpz_t n, unsigned long a, unsigned long p)
 	{
 	  do
 	    {
-	      if (p != 0)
-		{
-		  mpz_powm_ui (x, x, p, n);
-		  mpz_add_ui (x, x, a);
-		}
-	      else
-		{
-		  mpz_mul (t1, x, x);
-		  mpz_mod (x, t1, n);
-		  mpz_add_ui (x, x, a);
-		}
+	      mpz_mul (t, x, x);
+	      mpz_mod (x, t, n);
+	      mpz_add_ui (x, x, a);
 
-	      mpz_sub (t1, x1, x);
-	      mpz_mul (t2, P, t1);
+	      mpz_sub (t, z, x);
+	      mpz_mul (t2, P, t);
 	      mpz_mod (P, t2, n);
 
 	      if (k % 32 == 1)
 		{
-		  mpz_gcd (t1, P, n);
-		  if (mpz_cmp_ui (t1, 1) != 0)
+		  mpz_gcd (t, P, n);
+		  if (mpz_cmp_ui (t, 1) != 0)
 		    goto factor_found;
 		  mpz_set (y, x);
 		}
 	    }
 	  while (--k != 0);
 
-	  mpz_gcd (t1, P, n);
-	  if (mpz_cmp_ui (t1, 1) != 0)
-	    goto factor_found;
-
-	  mpz_set (x1, x);
+	  mpz_set (z, x);
 	  k = l;
 	  l = 2 * l;
 	  for (i = 0; i < k; i++)
 	    {
-	      if (p != 0)
-		{
-		  mpz_powm_ui (x, x, p, n);
-		  mpz_add_ui (x, x, a);
-		}
-	      else
-		{
-		  mpz_mul (t1, x, x);
-		  mpz_mod (x, t1, n);
-		  mpz_add_ui (x, x, a);
-		}
+	      mpz_mul (t, x, x);
+	      mpz_mod (x, t, n);
+	      mpz_add_ui (x, x, a);
 	    }
 	  mpz_set (y, x);
 	}
@@ -214,92 +324,64 @@ factor_using_pollard_rho (mpz_t n, unsigned long a, unsigned long p)
     factor_found:
       do
 	{
-	  if (p != 0)
-	    {
-	      mpz_powm_ui (y, y, p, n); mpz_add_ui (y, y, a);
-	    }
-	  else
-	    {
-	      mpz_mul (t1, y, y);
-	      mpz_mod (y, t1, n);
-	      mpz_add_ui (y, y, a);
-	    }
-	  mpz_sub (t1, x1, y);
-	  mpz_gcd (t1, t1, n);
+	  mpz_mul (t, y, y);
+	  mpz_mod (y, t, n);
+	  mpz_add_ui (y, y, a);
+
+	  mpz_sub (t, z, y);
+	  mpz_gcd (t, t, n);
 	}
-      while (mpz_cmp_ui (t1, 1) == 0);
+      while (mpz_cmp_ui (t, 1) == 0);
 
-      mpz_divexact (n, n, t1);	/* divide by t1, before t1 is overwritten */
+      mpz_divexact (n, n, t);	/* divide by t, before t is overwritten */
 
-      if (!mpz_probab_prime_p (t1, 10))
+      if (!mp_prime_p (t))
 	{
-	  do
-	    {
-	      mp_limb_t a_limb;
-	      mpn_random (&a_limb, (mp_size_t) 1);
-	      a = a_limb;
-	    }
-	  while (a == 0);
-
 	  if (flag_verbose > 0)
 	    {
 	      printf ("[composite factor--restarting pollard-rho] ");
-	      fflush (stdout);
 	    }
-	  factor_using_pollard_rho (t1, a, p);
+	  factor_using_pollard_rho (t, a + 1, factors);
 	}
       else
 	{
-	  mpz_out_str (stdout, 10, t1);
-	  fflush (stdout);
-	  fputc (' ', stdout);
+	  factor_insert (factors, t);
 	}
-      mpz_mod (x, x, n);
-      mpz_mod (x1, x1, n);
-      mpz_mod (y, y, n);
-      if (mpz_probab_prime_p (n, 10))
+
+      if (mp_prime_p (n))
 	{
-	  mpz_out_str (stdout, 10, n);
-	  fflush (stdout);
-	  fputc (' ', stdout);
+	  factor_insert (factors, n);
 	  break;
 	}
+
+      mpz_mod (x, x, n);
+      mpz_mod (z, z, n);
+      mpz_mod (y, y, n);
     }
 
-  mpz_clears (P, t2, t1, x1, x, y, NULL);
+  mpz_clears (P, t2, t, z, x, y, NULL);
 }
 
 void
-factor (mpz_t t, unsigned long p)
+factor (mpz_t t, struct factors *factors)
 {
-  unsigned int division_limit;
+  factor_init (factors);
 
-  if (mpz_sgn (t) == 0)
-    return;
-
-  /* Set the trial division limit according the size of t.  */
-  division_limit = mpz_sizeinbase (t, 2);
-  if (division_limit > 1000)
-    division_limit = 1000 * 1000;
-  else
-    division_limit = division_limit * division_limit;
-
-  if (p != 0)
-    factor_using_division_2kp (t, division_limit / 10, p);
-  else
-    factor_using_division (t, division_limit);
-
-  if (mpz_cmp_ui (t, 1) != 0)
+  if (mpz_sgn (t) != 0)
     {
-      if (flag_verbose > 0)
+      factor_using_division (t, factors);
+
+      if (mpz_cmp_ui (t, 1) != 0)
 	{
-	  printf ("[is number prime?] ");
-	  fflush (stdout);
+	  if (flag_verbose > 0)
+	    {
+	      printf ("[is number prime?] ");
+	    }
+	  if (mp_prime_p (t))
+	    factor_insert (factors, t);
+	  else
+	    factor_using_pollard_rho (t, 1, factors);
 	}
-      if (mpz_probab_prime_p (t, 10))
-	mpz_out_str (stdout, 10, t);
-      else
-	factor_using_pollard_rho (t, 1L, p);
     }
 }
 
@@ -307,18 +389,18 @@ int
 main (int argc, char *argv[])
 {
   mpz_t t;
-  unsigned long p;
-  int i;
+  int i, j, k;
+  struct factors factors;
 
-  if (argc > 1 && !strcmp (argv[1], "-v"))
+  while (argc > 1)
     {
-      flag_verbose = 1;
-      argv++;
-      argc--;
-    }
-  if (argc > 1 && !strcmp (argv[1], "-q"))
-    {
-      flag_verbose = -1;
+      if (!strcmp (argv[1], "-v"))
+	flag_verbose = 1;
+      else if (!strcmp (argv[1], "-w"))
+	flag_prove_primality = 0;
+      else
+	break;
+
       argv++;
       argc--;
     }
@@ -326,33 +408,19 @@ main (int argc, char *argv[])
   mpz_init (t);
   if (argc > 1)
     {
-      p = 0;
       for (i = 1; i < argc; i++)
 	{
-	  if (!strncmp (argv[i], "-Mp", 3))
-	    {
-	      p = atoi (argv[i] + 3);
-	      mpz_set_ui (t, 1);
-	      mpz_mul_2exp (t, t, p);
-	      mpz_sub_ui (t, t, 1);
-	    }
-	  else if (!strncmp (argv[i], "-2kp", 4))
-	    {
-	      p = atoi (argv[i] + 4);
-	      continue;
-	    }
-	  else
-	    {
-	      mpz_set_str (t, argv[i], 0);
-	    }
+	  mpz_set_str (t, argv[i], 0);
 
-	  if (mpz_cmp_ui (t, 0) == 0)
-	    puts ("-");
-	  else
-	    {
-	      factor (t, p);
-	      puts ("");
-	    }
+	  gmp_printf ("%Zd:", t);
+	  factor (t, &factors);
+
+	  for (j = 0; j < factors.nfactors; j++)
+	    for (k = 0; k < factors.e[j]; k++)
+	      gmp_printf (" %Zd", factors.p[j]);
+
+	  puts ("");
+	  factor_clear (&factors);
 	}
     }
   else
@@ -362,12 +430,16 @@ main (int argc, char *argv[])
 	  mpz_inp_str (t, stdin, 0);
 	  if (feof (stdin))
 	    break;
-	  if (flag_verbose >= 0)
-	    {
-	      mpz_out_str (stdout, 10, t); printf (" = ");
-	    }
-	  factor (t, 0);
+
+	  gmp_printf ("%Zd:", t);
+	  factor (t, &factors);
+
+	  for (j = 0; j < factors.nfactors; j++)
+	    for (k = 0; k < factors.e[j]; k++)
+	      gmp_printf (" %Zd", factors.p[j]);
+
 	  puts ("");
+	  factor_clear (&factors);
 	}
     }
 

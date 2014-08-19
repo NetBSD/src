@@ -24,36 +24,35 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 /* 552 MHz PA8600 (gcc61.fsffrance.org) */
 
 #define DIVREM_1_NORM_THRESHOLD              3
-#define DIVREM_1_UNNORM_THRESHOLD            4
+#define DIVREM_1_UNNORM_THRESHOLD            3
 #define MOD_1_NORM_THRESHOLD                 3
 #define MOD_1_UNNORM_THRESHOLD               4
-#define MOD_1N_TO_MOD_1_1_THRESHOLD         14
+#define MOD_1N_TO_MOD_1_1_THRESHOLD         11
 #define MOD_1U_TO_MOD_1_1_THRESHOLD          8
-#define MOD_1_1_TO_MOD_1_2_THRESHOLD         0
-#define MOD_1_2_TO_MOD_1_4_THRESHOLD        18
-#define PREINV_MOD_1_TO_MOD_1_THRESHOLD     22
+#define MOD_1_1_TO_MOD_1_2_THRESHOLD         0  /* never mpn_mod_1_1p */
+#define MOD_1_2_TO_MOD_1_4_THRESHOLD        22
+#define PREINV_MOD_1_TO_MOD_1_THRESHOLD     28
 #define USE_PREINV_DIVREM_1                  1
-#define DIVREM_2_THRESHOLD                   0  /* always */
 #define DIVEXACT_1_THRESHOLD                 0  /* always */
-#define BMOD_1_TO_MOD_1_THRESHOLD           31
+#define BMOD_1_TO_MOD_1_THRESHOLD           36
 
-#define MUL_TOOM22_THRESHOLD                15
-#define MUL_TOOM33_THRESHOLD                91
-#define MUL_TOOM44_THRESHOLD               154
-#define MUL_TOOM6H_THRESHOLD               204
-#define MUL_TOOM8H_THRESHOLD               482
+#define MUL_TOOM22_THRESHOLD                18
+#define MUL_TOOM33_THRESHOLD                65
+#define MUL_TOOM44_THRESHOLD               166
+#define MUL_TOOM6H_THRESHOLD               202
+#define MUL_TOOM8H_THRESHOLD               333
 
-#define MUL_TOOM32_TO_TOOM43_THRESHOLD      97
-#define MUL_TOOM32_TO_TOOM53_THRESHOLD     103
-#define MUL_TOOM42_TO_TOOM53_THRESHOLD     109
-#define MUL_TOOM42_TO_TOOM63_THRESHOLD     103
+#define MUL_TOOM32_TO_TOOM43_THRESHOLD     105
+#define MUL_TOOM32_TO_TOOM53_THRESHOLD     138
+#define MUL_TOOM42_TO_TOOM53_THRESHOLD     105
+#define MUL_TOOM42_TO_TOOM63_THRESHOLD     102
 
-#define SQR_BASECASE_THRESHOLD               6
-#define SQR_TOOM2_THRESHOLD                 47
+#define SQR_BASECASE_THRESHOLD               7
+#define SQR_TOOM2_THRESHOLD                 55
 #define SQR_TOOM3_THRESHOLD                 93
 #define SQR_TOOM4_THRESHOLD                250
-#define SQR_TOOM6_THRESHOLD                278
-#define SQR_TOOM8_THRESHOLD                502
+#define SQR_TOOM6_THRESHOLD                306
+#define SQR_TOOM8_THRESHOLD                527
 
 #define MULMOD_BNM1_THRESHOLD               13
 #define SQRMOD_BNM1_THRESHOLD               15
@@ -124,34 +123,34 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #define SQR_FFT_THRESHOLD                 1600
 
 #define MULLO_BASECASE_THRESHOLD             0  /* always */
-#define MULLO_DC_THRESHOLD                  90
-#define MULLO_MUL_N_THRESHOLD             4167
+#define MULLO_DC_THRESHOLD                 116
+#define MULLO_MUL_N_THRESHOLD             3574
 
 #define DC_DIV_QR_THRESHOLD                100
-#define DC_DIVAPPR_Q_THRESHOLD             342
-#define DC_BDIV_QR_THRESHOLD               119
-#define DC_BDIV_Q_THRESHOLD                246
+#define DC_DIVAPPR_Q_THRESHOLD             348
+#define DC_BDIV_QR_THRESHOLD               109
+#define DC_BDIV_Q_THRESHOLD                254
 
-#define INV_MULMOD_BNM1_THRESHOLD           12
-#define INV_NEWTON_THRESHOLD               274
-#define INV_APPR_THRESHOLD                 268
+#define INV_MULMOD_BNM1_THRESHOLD           34
+#define INV_NEWTON_THRESHOLD               276
+#define INV_APPR_THRESHOLD                 276
 
-#define BINV_NEWTON_THRESHOLD              327
-#define REDC_1_TO_REDC_N_THRESHOLD          70
+#define BINV_NEWTON_THRESHOLD              278
+#define REDC_1_TO_REDC_N_THRESHOLD          78
 
 #define MU_DIV_QR_THRESHOLD                979
-#define MU_DIVAPPR_Q_THRESHOLD            1142
-#define MUPI_DIV_QR_THRESHOLD              100
-#define MU_BDIV_QR_THRESHOLD               667
+#define MU_DIVAPPR_Q_THRESHOLD             263
+#define MUPI_DIV_QR_THRESHOLD              102
+#define MU_BDIV_QR_THRESHOLD               807
 #define MU_BDIV_Q_THRESHOLD               1187
 
-#define MATRIX22_STRASSEN_THRESHOLD         15
-#define HGCD_THRESHOLD                      99
-#define GCD_DC_THRESHOLD                   372
-#define GCDEXT_DC_THRESHOLD                241
+#define MATRIX22_STRASSEN_THRESHOLD         11
+#define HGCD_THRESHOLD                     100
+#define GCD_DC_THRESHOLD                   379
+#define GCDEXT_DC_THRESHOLD                249
 #define JACOBI_BASE_METHOD                   2
 
 #define GET_STR_DC_THRESHOLD                 7
-#define GET_STR_PRECOMPUTE_THRESHOLD        14
-#define SET_STR_DC_THRESHOLD               224
-#define SET_STR_PRECOMPUTE_THRESHOLD       788
+#define GET_STR_PRECOMPUTE_THRESHOLD        16
+#define SET_STR_DC_THRESHOLD               270
+#define SET_STR_PRECOMPUTE_THRESHOLD       782

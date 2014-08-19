@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2009-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -59,9 +59,6 @@ sse_test (void)
   asm ("mulss %xmm1, %xmm0");
   asm ("orpd %xmm2, %xmm0");
   asm ("orps %xmm0, %xmm1");
-  asm ("pabsb %xmm1, %xmm2");
-  asm ("pabsw %xmm2, %xmm1");
-  asm ("pabsd %xmm1, %xmm0");
   asm ("packsswb %xmm0, %xmm2");
   asm ("packssdw %xmm0, %xmm1");
   asm ("ucomisd %xmm1, %xmm2");
@@ -71,6 +68,25 @@ sse_test (void)
   asm ("xorpd %xmm0, %xmm1");
   asm ("xorps %xmm1, %xmm2");
 } /* end sse_test */
+
+void
+ssse3_test (void)
+{
+  char	buf0[] = {0, 1, 2, 3, 4, 5, 6, 7, 8,
+                  9, 10, 11, 12, 13, 14, 15};
+  char	buf1[] = {16, 17, 18, 19, 20, 21, 22, 23,
+                  24, 25, 26, 27, 28, 29, 30, 31};
+  char	buf2[] = {32, 33, 34, 35, 36, 37, 38, 39,
+                  40, 41, 42, 43, 44, 45, 46, 47};
+
+  asm ("movupd %0, %%xmm0":"=m"(buf0));
+  asm ("movupd %0, %%xmm1":"=m"(buf1));
+  asm ("movupd %0, %%xmm2":"=m"(buf2));
+
+  asm ("pabsb %xmm1, %xmm2");
+  asm ("pabsw %xmm2, %xmm1");
+  asm ("pabsd %xmm1, %xmm0");
+} /* end ssse3_test */
 
 void
 sse4_test (void)
@@ -96,6 +112,7 @@ int
 main ()
 {
   sse_test ();
+  ssse3_test ();
   sse4_test ();
   return 0;	/* end of main */
 }

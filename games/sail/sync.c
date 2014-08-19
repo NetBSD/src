@@ -1,4 +1,4 @@
-/*	$NetBSD: sync.c,v 1.33 2009/03/14 23:47:18 dholland Exp $	*/
+/*	$NetBSD: sync.c,v 1.33.12.1 2014/08/20 00:00:23 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sync.c,v 1.33 2009/03/14 23:47:18 dholland Exp $");
+__RCSID("$NetBSD: sync.c,v 1.33.12.1 2014/08/20 00:00:23 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -247,13 +247,12 @@ int
 sync_open(void)
 {
 	const char *sync_file;
-	const char *sync_lock;
 	struct stat tmp;
 
 	if (sync_fp != NULL)
 		fclose(sync_fp);
 	sync_file = get_sync_file(game);
-	sync_lock = get_lock_file(game);
+	(void)get_lock_file(game);
 	setegid(egid);
 	if (stat(sync_file, &tmp) < 0) {
 		mode_t omask = umask(002);

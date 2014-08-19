@@ -64,6 +64,7 @@ spawn.o: ../../include/mail_params.h
 spawn.o: ../../include/mail_server.h
 spawn.o: ../../include/mail_version.h
 spawn.o: ../../include/msg.h
+spawn.o: ../../include/myflock.h
 spawn.o: ../../include/mymalloc.h
 spawn.o: ../../include/set_eugid.h
 spawn.o: ../../include/spawn_command.h

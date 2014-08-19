@@ -1,4 +1,4 @@
-/* $Id: imx23var.h,v 1.1.6.2 2013/02/25 00:28:29 tls Exp $ */
+/* $Id: imx23var.h,v 1.1.6.3 2014/08/20 00:02:46 tls Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
 #define APBH_SIZE 0x00040000	/* 256 kB */
 #define APBX_BASE 0x80040000
 #define APBX_SIZE 0x00040000
+#define AHB_BASE  0x80080000	/* USB and DRAM registers. */
+#define AHB_SIZE  0x00080000	/* 512 kB */
 
 #define IMX23_UART_CLK 24000000
 
@@ -58,6 +60,19 @@ struct apb_attach_args {
 struct apb_softc {
 	device_t	sc_dev;
 	device_t	dmac; /* DMA controller device for this bus. */
+};
+
+struct ahb_attach_args {
+	bus_space_tag_t aa_iot;
+	bus_dma_tag_t aa_dmat;
+	const char *aa_name;
+	bus_addr_t aa_addr;
+	bus_size_t aa_size;
+	int8_t aa_irq;
+};
+
+struct ahb_softc {
+	device_t	sc_dev;
 };
 
 #endif /* !_LOCORE */

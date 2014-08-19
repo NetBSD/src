@@ -1,4 +1,4 @@
-/*	$NetBSD: dmareg.h,v 1.16 2006/07/19 17:21:23 tsutsui Exp $	*/
+/*	$NetBSD: dmareg.h,v 1.16.106.1 2014/08/20 00:03:00 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -108,7 +108,8 @@ struct	dmareg {
 #define	DMA_CLEAR(dc) do {					\
 		v_int dmaclr;					\
 		dmaclr = (int)dc->dm_Bhwaddr->dmaB_addr;	\
-	} while (0);
+		__USE(dmaclr);					\
+	} while (/*CONSTCOND*/0);
 #define	DMA_STAT(dc)	dc->dm_Bhwaddr->dmaB_stat
 
 #if defined(HP320)

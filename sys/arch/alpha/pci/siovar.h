@@ -1,4 +1,4 @@
-/* $NetBSD: siovar.h,v 1.11 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: siovar.h,v 1.11.22.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 void	sio_intr_setup(pci_chipset_tag_t, bus_space_tag_t);
 void	sio_iointr(void *framep, unsigned long vec);
 
-const char *sio_intr_string(void *, int);
+const char *sio_intr_string(void *, int, char *, size_t);
 const struct evcnt *sio_intr_evcnt(void *, int);
 void	*sio_intr_establish(void *, int, int, int, int (*)(void *),
 	    void *);

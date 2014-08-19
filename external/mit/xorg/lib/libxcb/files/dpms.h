@@ -160,10 +160,10 @@ typedef struct xcb_dpms_disable_request_t {
 } xcb_dpms_disable_request_t;
 
 typedef enum xcb_dpms_dpms_mode_t {
-    XCB_DPMS_DPMS_MODE_ON,
-    XCB_DPMS_DPMS_MODE_STANDBY,
-    XCB_DPMS_DPMS_MODE_SUSPEND,
-    XCB_DPMS_DPMS_MODE_OFF
+    XCB_DPMS_DPMS_MODE_ON = 0,
+    XCB_DPMS_DPMS_MODE_STANDBY = 1,
+    XCB_DPMS_DPMS_MODE_SUSPEND = 2,
+    XCB_DPMS_DPMS_MODE_OFF = 3
 } xcb_dpms_dpms_mode_t;
 
 /** Opcode for xcb_dpms_force_level. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmciavar.h,v 1.1 2012/08/25 08:20:03 kiyohara Exp $	*/
+/*	$NetBSD: if_malo_pcmciavar.h,v 1.1.2.1 2014/08/20 00:03:49 tls Exp $	*/
 /*	$OpenBSD: if_malovar.h,v 1.27 2007/10/09 20:37:32 mglocker Exp $ */
 
 /*
@@ -341,8 +341,7 @@ struct malo_tx_desc {
 	uint32_t	control;
 	uint32_t	pkgoffset;
 	uint16_t	pkglen;
-	uint8_t		dstaddrhigh[2];
-	uint8_t		dstaddrlow[4];
+	uint8_t		dstaddr[ETHER_ADDR_LEN];
 	uint8_t		priority;
 	uint8_t		flags;
 	uint8_t		reserved[2];

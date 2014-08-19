@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.24.8.1 2013/06/23 06:21:03 tls Exp $
+#	$NetBSD: Makefile,v 1.24.8.2 2014/08/20 00:02:08 tls Exp $
+
+.include <bsd.own.mk>
 
 # These should always be a MACHINE_CPU value
 ARCHDIRS= alpha arm i386 m68k sparc x86_64
@@ -12,12 +14,14 @@ OBJS+= ${ASM}
 POBJS+=	${ASM:.o=.po}
 CLEANFILES+= ${ASM} ${POBJS}
 
+LIBC_MACHINE_CPU?=	${MACHINE_CPU}
+
 # Build the library if SRCS is now defined ...
 .if defined(SRCS)
-.if defined(MLIBDIR) && ${MLIBDIR} != "none" && ${MACHINE_CPU} != "arm"
+.if defined(MLIBDIR) && ${MLIBDIR} != "none" && ${LIBC_MACHINE_CPU} != "arm"
 LIB=	${MLIBDIR}
 .else
-LIB=	${MACHINE_CPU}
+LIB=	${LIBC_MACHINE_CPU}
 .endif
 SHLIB_VERSION_FILE= ${.CURDIR}/${LIB}/shlib_version
 

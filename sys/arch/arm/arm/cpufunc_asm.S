@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.15 2012/02/16 02:35:52 christos Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.15.2.1 2014/08/20 00:02:44 tls Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -49,6 +49,7 @@
 
 ENTRY(cpufunc_nullop)
 	RET
+END(cpufunc_nullop)
 
 /*
  * Generic functions to read the internal coprocessor registers
@@ -63,22 +64,27 @@ ENTRY(cpufunc_nullop)
 ENTRY(cpufunc_id)
 	mrc	p15, 0, r0, c0, c0, 0
 	RET
-
-ENTRY(cpu_get_control)
-	mrc	p15, 0, r0, c1, c0, 0
-	RET
+END(cpufunc_id)
 
 ENTRY(cpu_read_cache_config)
 	mrc	p15, 0, r0, c0, c0, 1
 	RET
+END(cpu_read_cache_config)
+
+ENTRY(cpu_get_control)
+	mrc	p15, 0, r0, c1, c0, 0
+	RET
+END(cpu_get_control)
 
 ENTRY(cpufunc_faultstatus)
 	mrc	p15, 0, r0, c5, c0, 0
 	RET
+END(cpufunc_faultstatus)
 
 ENTRY(cpufunc_faultaddress)
 	mrc	p15, 0, r0, c6, c0, 0
 	RET
+END(cpufunc_faultaddress)
 
 
 /*
@@ -101,6 +107,7 @@ ENTRY(cpufunc_control)
 ENTRY(cpufunc_domains)
 	mcr	p15, 0, r0, c3, c0, 0
 	RET
+END(cpufunc_domains)
 
 /*
  * Generic functions to read/modify/write the internal coprocessor registers
@@ -114,13 +121,17 @@ ENTRY(cpufunc_domains)
  
 ENTRY(cpufunc_control)
 	mrc	p15, 0, r3, c1, c0, 0	/* Read the control register */
-	bic	r2, r3, r0		/* Clear bits */
-	eor     r2, r2, r1		/* XOR bits */
+	bics	r2, r3, r0		/* Clear bits */
+	eors	r2, r2, r1		/* XOR bits */
 
 	teq	r2, r3			/* Only write if there is a change */
+#ifdef __thumb__
+	it	ne
+#endif
 	mcrne	p15, 0, r2, c1, c0, 0	/* Write new control register */
-	mov	r0, r3			/* Return old value */
+	movs	r0, r3			/* Return old value */
 	RET
+END(cpufunc_control)
 
 /*
  * other potentially useful software functions are:
@@ -135,16 +146,19 @@ ENTRY(cpufunc_control)
  * instruction doing the store.  This offset is defined to be the same
  * for all STRs and STMs on a given implementation.  Code based on
  * section 2.4.3 of the ARM ARM (2nd Ed.), with modifications to work
- * in 26-bit modes as well.
+ * in 26-bit modes as well.  In Thumb mode, the PC can't be directly
+ * stored.
  */
 ENTRY(get_pc_str_offset)
-	mov	ip, sp
-	stmfd	sp!, {fp, ip, lr, pc}
-	sub	fp, ip, #4
-	sub	sp, sp, #4
+#ifdef __thumb__
+	mov	r0, #4
+	RET
+#else
 	mov	r1, pc		/* R1 = addr of following STR */
-	mov	r0, r0
-	str	pc, [sp]	/* [SP] = . + offset */
-	ldr	r0, [sp]
-	sub	r0, r0, r1
-	ldmdb	fp, {fp, sp, pc}
+	mov	r8, r8
+	push	{pc}		/* [SP] = . + offset */
+	pop	{r0}
+	subs	r0, r0, r1
+	RET
+#endif
+END(get_pc_str_offset)

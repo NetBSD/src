@@ -1,7 +1,6 @@
 /* D language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2005, 2006, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,10 +24,10 @@
 
 extern char *d_demangle (const char *mangled, int options);
 
-extern int d_val_print (struct type *type, const gdb_byte *valaddr,
-			int embedded_offset, CORE_ADDR address,
-			struct ui_file *stream, int recurse,
-			const struct value *val,
-			const struct value_print_options *options);
+extern void d_val_print (struct type *type, const gdb_byte *valaddr,
+			 int embedded_offset, CORE_ADDR address,
+			 struct ui_file *stream, int recurse,
+			 const struct value *val,
+			 const struct value_print_options *options);
 
 #endif /* !defined (D_LANG_H) */

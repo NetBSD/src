@@ -1,7 +1,6 @@
 /* GDB hooks for TUI.
 
-   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
-   2011 Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -70,6 +69,13 @@ tui_query_hook (const char *msg, va_list argp)
   int retval;
   int ans2;
   int answer;
+  char *question;
+  struct cleanup *old_chain;
+
+  /* Format the question outside of the loop, to avoid reusing
+     ARGP.  */
+  question = xstrvprintf (msg, argp);
+  old_chain = make_cleanup (xfree, question);
 
   echo ();
   while (1)
@@ -77,7 +83,7 @@ tui_query_hook (const char *msg, va_list argp)
       wrap_here ("");		/* Flush any buffered output.  */
       gdb_flush (gdb_stdout);
 
-      vfprintf_filtered (gdb_stdout, msg, argp);
+      fputs_filtered (question, gdb_stdout);
       printf_filtered (_("(y or n) "));
 
       wrap_here ("");
@@ -114,6 +120,8 @@ tui_query_hook (const char *msg, va_list argp)
       printf_filtered (_("Please answer y or n.\n"));
     }
   noecho ();
+
+  do_cleanups (old_chain);
   return retval;
 }
 
@@ -137,7 +145,7 @@ tui_register_changed_hook (int regno)
 /* Breakpoint creation hook.
    Update the screen to show the new breakpoint.  */
 static void
-tui_event_create_breakpoint (int number)
+tui_event_create_breakpoint (struct breakpoint *b)
 {
   tui_update_all_breakpoint_info ();
 }
@@ -145,25 +153,22 @@ tui_event_create_breakpoint (int number)
 /* Breakpoint deletion hook.
    Refresh the screen to update the breakpoint marks.  */
 static void
-tui_event_delete_breakpoint (int number)
+tui_event_delete_breakpoint (struct breakpoint *b)
 {
   tui_update_all_breakpoint_info ();
 }
 
 static void
-tui_event_modify_breakpoint (int number)
+tui_event_modify_breakpoint (struct breakpoint *b)
 {
   tui_update_all_breakpoint_info ();
 }
 
-/* Called when going to wait for the target.
-   Leave curses mode and setup program mode.  */
-static ptid_t
-tui_target_wait_hook (ptid_t pid, 
-		      struct target_waitstatus *status, int options)
-{
-  ptid_t res;
+/* Called when a command is about to proceed the inferior.  */
 
+static void
+tui_about_to_proceed (void)
+{
   /* Leave tui mode (optional).  */
 #if 0
   if (tui_active)
@@ -174,13 +179,6 @@ tui_target_wait_hook (ptid_t pid,
     }
 #endif
   tui_target_has_run = 1;
-  res = target_wait (pid, status, options);
-
-  if (tui_active)
-    {
-      /* TODO: need to refresh (optional).  */
-    }
-  return res;
 }
 
 /* The selected frame has changed.  This is happens after a target
@@ -237,11 +235,14 @@ tui_print_frame_info_listing_hook (struct symtab *s,
   tui_show_frame_info (get_selected_frame (NULL));
 }
 
-/* Called when the target process died or is detached.
-   Update the status line.  */
+/* Perform all necessary cleanups regarding our module's inferior data
+   that is required after the inferior INF just exited.  */
+
 static void
-tui_detach_hook (void)
+tui_inferior_exit (struct inferior *inf)
 {
+  /* Leave the SingleKey mode to make sure the gdb prompt is visible.  */
+  tui_set_key_mode (TUI_COMMAND_MODE);
   tui_show_frame_info (0);
   tui_display_main ();
 }
@@ -250,12 +251,13 @@ tui_detach_hook (void)
 static struct observer *tui_bp_created_observer;
 static struct observer *tui_bp_deleted_observer;
 static struct observer *tui_bp_modified_observer;
+static struct observer *tui_inferior_exit_observer;
+static struct observer *tui_about_to_proceed_observer;
 
 /* Install the TUI specific hooks.  */
 void
 tui_install_hooks (void)
 {
-  deprecated_target_wait_hook = tui_target_wait_hook;
   deprecated_selected_frame_level_changed_hook
     = tui_selected_frame_level_changed_hook;
   deprecated_print_frame_info_listing_hook
@@ -270,21 +272,22 @@ tui_install_hooks (void)
     = observer_attach_breakpoint_deleted (tui_event_delete_breakpoint);
   tui_bp_modified_observer
     = observer_attach_breakpoint_modified (tui_event_modify_breakpoint);
+  tui_inferior_exit_observer
+    = observer_attach_inferior_exit (tui_inferior_exit);
+  tui_about_to_proceed_observer
+    = observer_attach_about_to_proceed (tui_about_to_proceed);
 
   deprecated_register_changed_hook = tui_register_changed_hook;
-  deprecated_detach_hook = tui_detach_hook;
 }
 
 /* Remove the TUI specific hooks.  */
 void
 tui_remove_hooks (void)
 {
-  deprecated_target_wait_hook = 0;
   deprecated_selected_frame_level_changed_hook = 0;
   deprecated_print_frame_info_listing_hook = 0;
   deprecated_query_hook = 0;
   deprecated_register_changed_hook = 0;
-  deprecated_detach_hook = 0;
 
   /* Remove our observers.  */
   observer_detach_breakpoint_created (tui_bp_created_observer);
@@ -293,6 +296,10 @@ tui_remove_hooks (void)
   tui_bp_deleted_observer = NULL;
   observer_detach_breakpoint_modified (tui_bp_modified_observer);
   tui_bp_modified_observer = NULL;
+  observer_detach_inferior_exit (tui_inferior_exit_observer);
+  tui_inferior_exit_observer = NULL;
+  observer_detach_about_to_proceed (tui_about_to_proceed_observer);
+  tui_about_to_proceed_observer = NULL;
 }
 
 void _initialize_tui_hooks (void);

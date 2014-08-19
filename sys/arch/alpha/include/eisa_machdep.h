@@ -1,4 +1,4 @@
-/* $NetBSD: eisa_machdep.h,v 1.10 2011/06/14 06:47:52 matt Exp $ */
+/* $NetBSD: eisa_machdep.h,v 1.10.12.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -40,7 +40,8 @@ struct alpha_eisa_chipset {
 		    struct eisabus_attach_args *);
 	int	(*ec_maxslots)(void *);
 	int	(*ec_intr_map)(void *, u_int, eisa_intr_handle_t *);
-	const char *(*ec_intr_string)(void *, eisa_intr_handle_t);
+	const char *(*ec_intr_string)(void *, eisa_intr_handle_t, char *,
+		    size_t);
 	const struct evcnt *(*ec_intr_evcnt)(void *, eisa_intr_handle_t);
 	void	*(*ec_intr_establish)(void *, eisa_intr_handle_t,
 		    int, int, int (*)(void *), void *);
@@ -56,8 +57,8 @@ struct alpha_eisa_chipset {
     (*(c)->ec_maxslots)((c)->ec_v)
 #define	eisa_intr_map(c, i, hp)						\
     (*(c)->ec_intr_map)((c)->ec_v, (i), (hp))
-#define	eisa_intr_string(c, h)						\
-    (*(c)->ec_intr_string)((c)->ec_v, (h))
+#define	eisa_intr_string(c, h, buf, len)				\
+    (*(c)->ec_intr_string)((c)->ec_v, (h), (buf), (len))
 #define	eisa_intr_evcnt(c, h)						\
     (*(c)->ec_intr_evcnt)((c)->ec_v, (h))
 #define	eisa_intr_establish(c, h, t, l, f, a)				\

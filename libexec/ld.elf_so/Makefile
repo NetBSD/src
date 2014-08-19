@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.114.2.1 2013/06/23 06:28:49 tls Exp $
+#	$NetBSD: Makefile,v 1.114.2.2 2014/08/20 00:02:22 tls Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -26,13 +26,15 @@ ARCHSUBDIR=	${MACHINE_CPU}
 .endif
 M=		${.CURDIR}/arch/${ARCHSUBDIR}
 
-.if ((${LDELFSO_MACHINE_ARCH} == "alpha") ||				\
+.if ((${MACHINE_CPU} == "aarch64") ||					\
+     (${LDELFSO_MACHINE_ARCH} == "alpha") ||				\
      (${MACHINE_CPU} == "arm") ||					\
+     (${LDELFSO_MACHINE_ARCH} == "coldfire") ||				\
      (${LDELFSO_MACHINE_ARCH} == "hppa") ||				\
      (${LDELFSO_MACHINE_ARCH} == "i386") ||				\
      (${LDELFSO_MACHINE_ARCH} == "m68k") ||				\
      (${MACHINE_CPU} == "mips") ||					\
-     (${LDELFSO_MACHINE_ARCH} == "powerpc") ||				\
+     (${MACHINE_CPU} == "powerpc") ||					\
      (${MACHINE_CPU} == "sh3") ||					\
      (${LDELFSO_MACHINE_ARCH} == "sparc") ||				\
      (${LDELFSO_MACHINE_ARCH} == "sparc64") ||				\
@@ -44,6 +46,7 @@ LDFLAGS+=	${${ACTIVE_CC} == "clang":? -Wl,-Bsymbolic : -symbolic} \
 		-shared -nostartfiles -nodefaultlibs
 LDFLAGS+=	-Wl,-static
 LDFLAGS+=	-Wl,--warn-shared-textrel
+LDFLAGS+=	-Wl,-Map=${.TARGET}.map
 
 COPTS+=		-fvisibility=hidden
 
@@ -81,7 +84,7 @@ errlist_concat.h: ${NETBSDSRCDIR}/lib/libc/gen/errlist.awk ${NETBSDSRCDIR}/sys/s
 
 xprintf.c: errlist_concat.h
 
-CLEANFILES+=	errlist_concat.h
+CLEANFILES+=	errlist_concat.h ${PROG}.map
 
 BINDIR=		${SHLINKINSTALLDIR}
 
@@ -97,7 +100,11 @@ CPPFLAGS+=	-DCOMBRELOC
 CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libexecinfo
 .endif
 #DBG=		-g
-COPTS+=		-O3 -fomit-frame-pointer
+COPTS+=		-O3
+
+.if ${MACHINE_CPU} != "m68k" && ${MACHINE_CPU} != "sh3" && ${MACHINE_ARCH} != "vax"
+COPTS+=		-fomit-frame-pointer
+.endif
 
 .if ${LDELFSO_MACHINE_ARCH} == "i386" || ${LDELFSO_MACHINE_ARCH} == "x86_64"
 COPTS+=		-mno-3dnow -mno-mmx -mno-sse -mno-sse2 -mno-sse3

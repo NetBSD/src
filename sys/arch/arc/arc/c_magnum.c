@@ -1,4 +1,4 @@
-/*	$NetBSD: c_magnum.c,v 1.22 2011/07/01 19:28:00 dyoung Exp $	*/
+/*	$NetBSD: c_magnum.c,v 1.22.12.1 2014/08/20 00:02:44 tls Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.22 2011/07/01 19:28:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.22.12.1 2014/08/20 00:02:44 tls Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -105,9 +105,8 @@ static const struct ipl_sr_map magnum_ipl_sr_map = {
 uint32_t
 timer_magnum_intr(uint32_t mask, struct clockframe *cf)
 {
-	int temp;
 
-	temp = inw(R4030_SYS_IT_STAT);
+	(void)inw(R4030_SYS_IT_STAT);
 	last_cp0_count = mips3_cp0_count_read();
 	hardclock(cf);
 	timer_jazzio_ev.ev_count++;

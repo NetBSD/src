@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.151 2011/11/18 04:07:44 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.151.10.1 2014/08/20 00:03:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.151 2011/11/18 04:07:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.151.10.1 2014/08/20 00:03:32 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -86,6 +86,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.151 2011/11/18 04:07:44 christos
 #include <machine/vm86.h>
 #include <machine/vmparam.h>
 
+#include <x86/fpu.h>
+
 /*
  * To see whether wscons is configured (for virtual console ioctl calls).
  */
@@ -126,26 +128,13 @@ extern char linux_sigcode[], linux_rt_sigcode[];
 void
 linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
-	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
-
-#if NNPX > 0
-	/* If we were using the FPU, forget about it. */
-	if (npxproc == l)
-		npxdrop();
-#endif
 
 #ifdef USER_LDT
 	pmap_ldt_cleanup(l);
 #endif
 
-	l->l_md.md_flags &= ~MDL_USEDFPU;
-
-	if (i386_use_fxsave) {
-		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __Linux_NPXCW__;
-		pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr = __INITIAL_MXCSR__;
-	} else
-		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __Linux_NPXCW__;
+	fpu_save_area_clear(l, __Linux_NPXCW__);
 
 	tf = l->l_md.md_regs;
 	tf->tf_gs = 0;

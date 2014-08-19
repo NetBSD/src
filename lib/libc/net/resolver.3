@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolver.3,v 1.23.12.2 2013/06/23 06:21:05 tls Exp $
+.\"	$NetBSD: resolver.3,v 1.23.12.3 2014/08/20 00:02:15 tls Exp $
 .\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -33,7 +33,7 @@
 .\"	@(#)resolver.3	6.5 (Berkeley) 6/23/90
 .\"	Id: resolver.man3,v 1.2 2009/01/21 00:12:34 each Exp
 .\"
-.Dd May 8, 2013
+.Dd November 13, 2013
 .Dt RESOLVER 3
 .Os
 .Sh NAME
@@ -363,6 +363,26 @@ environment variable is explained in
 .Xr resolv.conf 5 .
 Initialization normally occurs on the first call
 to one of the other resolver routines.
+.Pp
+In
+.Nx
+the initialization code also sets up a
+.Xr kqueue 2
+and creates a
+.Xr kevent 2
+watching a file descriptor that points to the resolver file.
+Every resolver function calls the internal function
+.Fn __res_check
+which checks for a new
+.Xr kevent 2
+related to the
+.Xr resolv.conf 5
+file, and reloads the file if necessary.
+This does not work if the file is accessed through a symlink and the symlink
+changes to point to a different file.
+To fix the symlink issue one could add a system call per resolver call to
+get the current time, and reload every so often.
+This is not done currently, but it is under consideration.
 .Pp
 The memory referred to by
 .Ft statp
@@ -713,11 +733,11 @@ The configuration file, see
 .El
 .Sh SEE ALSO
 .Xr getaddrinfo 3 ,
-.Xr getnameinfo 3 ,
 .Xr gethostbyaddr 3 ,
 .Xr gethostbyname 3 ,
-.Xr hostname 7 ,
+.Xr getnameinfo 3 ,
 .Xr resolv.conf 5 ,
+.Xr hostname 7 ,
 .Xr named 8
 .Pp
 .%T RFC 974 ,

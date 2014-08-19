@@ -1,8 +1,8 @@
-.\" $NetBSD: ctime.3,v 1.46.6.1 2013/02/25 00:27:55 tls Exp $
+.\" $NetBSD: ctime.3,v 1.46.6.2 2014/08/20 00:02:16 tls Exp $
 .\"
 .\" XXX: License missing?
 .\"
-.Dd January 19, 2013
+.Dd December 26, 2013
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -96,7 +96,6 @@ function converts a
 .Vt time_t ,
 pointed to by
 .Fa clock ,
-representing the time in seconds since 00:00:00 UTC, 1970-01-01,
 and returns a pointer to a string with the format described above.
 Years requiring fewer than four characters are padded with leading zeroes.
 For years longer than four characters, the string is of the form
@@ -108,6 +107,17 @@ with five spaces before the year.
 These unusual formats are designed to make it less likely that older
 software that expects exactly 26 bytes of output will mistakenly output
 misleading values for out-of-range years.
+.Pp
+The
+.Fa clock
+time stamp represents the time in seconds since 1970-01-01 00:00:00
+Coordinated Universal Time (UTC).
+The POSIX standard says that time stamps must be nonnegative
+and must ignore leap seconds.
+Many implementations extend POSIX by allowing negative time stamps,
+and can therefore represent time stamps that predate the
+introduction of UTC and are some other flavor of Universal Time (UT).
+Some implementations support leap seconds, in contradiction to POSIX.
 .It Fn ctime_r "clock" "buf"
 The
 .Fn ctime_r
@@ -329,6 +339,48 @@ is set to
 the call is equivalent to
 .Va tzname[1] .
 .El
+.Pp
+Declarations of all the functions and externals, and the 
+.Ft tm
+structure, are in the
+.In time.h
+header file.
+The structure (of type)
+.Ft struct tm
+includes the following fields:
+.Bd -literal
+       int tm_sec;      /* seconds (0 - 60) */
+       int tm_min;      /* minutes (0 - 59) */
+       int tm_hour;     /* hours (0 - 23) */
+       int tm_mday;     /* day of month (1 - 31) */
+       int tm_mon;      /* month of year (0 - 11) */
+       int tm_year;     /* year - 1900 */
+       int tm_wday;     /* day of week (Sunday = 0) */
+       int tm_yday;     /* day of year (0 - 365) */
+       int tm_isdst;    /* is summer time in effect? */
+       char *tm_zone;   /* abbreviation of timezone name */
+       long tm_gmtoff;  /* offset from UT in seconds */
+.Ed
+.Pp
+The
+.Fa tm_zone
+and
+.Fa tm_gmtoff
+fields exist, and are filled in, only if
+arrangements to do so were made when the library containing these functions
+was created.
+There is no guarantee that these fields  will  continue to exist in this form
+in future releases of this code.
+.Bl -bullet
+.It
+.Va tm_isdst
+is non-zero if summer time is in effect.
+.It
+.Va tm_gmtoff
+is the offset (in seconds) of the time represented from UT,
+with positive values indicating east of the Prime Meridian.
+The field's name is derived from Greenwich Mean Time, a precursor of UT.
+.El
 .Sh RETURN VALUES
 .Bl -bullet
 .It
@@ -499,10 +551,6 @@ restricted to years in the range 1900 through 2099.
 To avoid this portability mess, new programs should use
 .Fn strftime
 instead.
-.Pp
-Avoid using out-of-range values with
-.Fn mktime
-when setting up lunch with promptness sticklers in Riyadh.
 .\" @(#)newctime.3	8.3
 .\" This file is in the public domain, so clarified as of
 .\" 2009-05-17 by Arthur David Olson.

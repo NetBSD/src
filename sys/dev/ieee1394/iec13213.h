@@ -1,4 +1,4 @@
-/*	$NetBSD: iec13213.h,v 1.5 2010/08/26 07:36:53 cegger Exp $	*/
+/*	$NetBSD: iec13213.h,v 1.5.18.1 2014/08/20 00:03:38 tls Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -224,7 +224,7 @@ struct csrreg *crom_search_key(struct crom_context *, uint8_t);
 int crom_has_specver(uint32_t *, uint32_t, uint32_t);
 
 #ifndef _KERNEL
-const char *crom_desc(struct crom_context *, char *, int);
+const char *crom_desc(struct crom_context *, char *, size_t);
 #endif
 
 /* For CROM build */

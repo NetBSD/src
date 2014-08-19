@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: remove.c,v 1.6.8.1 2013/06/23 06:28:51 tls Exp $");
+__RCSID("$NetBSD: remove.c,v 1.6.8.2 2014/08/20 00:02:25 tls Exp $");
 #endif
 
 #include <sys/types.h>
@@ -50,7 +50,7 @@ static off_t block, size;
 static unsigned int entry;
 
 const char removemsg1[] = "remove -a device ...";
-const char removemsg2[] = "remove [-b lba] [-i index] [-s lba] "
+const char removemsg2[] = "remove [-b blocknr] [-i index] [-s sectors] "
 	"[-t type] device ...";
 
 __dead static void
@@ -143,13 +143,8 @@ rem(int fd)
 
 		gpt_write(fd, lbt);
 		gpt_write(fd, tpg);
-#ifdef __FreeBSD__
-		printf("%sp%u removed\n", device_name, m->map_index);
-#endif
-#ifdef __NetBSD__
 		printf("partition %d removed from %s\n", m->map_index,
 		    device_name);
-#endif
 	}
 }
 
@@ -158,6 +153,7 @@ cmd_remove(int argc, char *argv[])
 {
 	char *p;
 	int ch, fd;
+	int64_t human_num;
 
 	/* Get the remove options */
 	while ((ch = getopt(argc, argv, "ab:i:s:t:")) != -1) {
@@ -170,8 +166,10 @@ cmd_remove(int argc, char *argv[])
 		case 'b':
 			if (block > 0)
 				usage_remove();
-			block = strtoll(optarg, &p, 10);
-			if (*p != 0 || block < 1)
+			if (dehumanize_number(optarg, &human_num) < 0)
+				usage_remove();
+			block = human_num;
+			if (block < 1)
 				usage_remove();
 			break;
 		case 'i':

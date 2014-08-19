@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pset.c,v 1.17 2011/08/07 21:13:05 rmind Exp $	*/
+/*	$NetBSD: sys_pset.c,v 1.17.12.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.17 2011/08/07 21:13:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.17.12.1 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 
@@ -598,11 +598,6 @@ SYSCTL_SETUP(sysctl_pset_setup, "sysctl kern.pset subtree setup")
 {
 	const struct sysctlnode *node = NULL;
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, &node,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "pset",

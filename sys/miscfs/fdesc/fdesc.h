@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc.h,v 1.21 2011/09/27 01:22:12 christos Exp $	*/
+/*	$NetBSD: fdesc.h,v 1.21.12.1 2014/08/20 00:04:30 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,11 +56,10 @@ typedef enum {
 } fdntype;
 
 struct fdescnode {
-	LIST_ENTRY(fdescnode) fd_hash;	/* Hash list */
 	struct vnode	*fd_vnode;	/* Back ptr to vnode */
 	fdntype		fd_type;	/* Type of this node */
 	unsigned	fd_fd;		/* Fd to be dup'ed */
-	char		*fd_link;	/* Link to fd/n */
+	const char	*fd_link;	/* Link to fd/n */
 	int		fd_ix;		/* filesystem index */
 };
 

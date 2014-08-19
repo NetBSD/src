@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.22 2012/03/02 16:20:55 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.22.2.1 2014/08/20 00:02:58 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2012/03/02 16:20:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.2.1 2014/08/20 00:02:58 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2012/03/02 16:20:55 matt Exp $");
 #include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/termios.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -278,7 +279,7 @@ mach_init(int argc, char **argv, void *a2, void *a3)
 	memset(edata, 0, kernend - (vaddr_t)edata);
 
 	/* set CPU model info for sysctl_hw */
-	strcpy(cpu_model, "Infineon ADM5120");
+	cpu_setmodel("Infineon ADM5120");
 
 	/*
 	 * Set up the exception vectors and CPU-specific function
@@ -434,7 +435,7 @@ cpu_startup(void)
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s%s", copyright, version);
-	printf("%s\n", cpu_model);
+	printf("%s\n", cpu_getmodel());
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 

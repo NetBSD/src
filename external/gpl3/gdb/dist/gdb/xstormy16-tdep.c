@@ -1,7 +1,6 @@
 /* Target-dependent code for the Sanyo Xstormy16a (LC590000) processor.
 
-   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,7 +29,7 @@
 #include "value.h"
 #include "dis-asm.h"
 #include "inferior.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdb_assert.h"
 #include "arch-utils.h"
 #include "floatformat.h"
@@ -161,13 +160,13 @@ xstormy16_use_struct_convention (struct type *type)
 
 static void
 xstormy16_extract_return_value (struct type *type, struct regcache *regcache,
-				void *valbuf)
+				gdb_byte *valbuf)
 {
   int len = TYPE_LENGTH (type);
   int i, regnum = E_1ST_ARG_REGNUM;
 
   for (i = 0; i < len; i += xstormy16_reg_size)
-    regcache_raw_read (regcache, regnum++, (char *) valbuf + i);
+    regcache_raw_read (regcache, regnum++, valbuf + i);
 }
 
 /* Function: xstormy16_store_return_value
@@ -177,12 +176,12 @@ xstormy16_extract_return_value (struct type *type, struct regcache *regcache,
 
 static void 
 xstormy16_store_return_value (struct type *type, struct regcache *regcache,
-			      const void *valbuf)
+			      const gdb_byte *valbuf)
 {
   if (TYPE_LENGTH (type) == 1)
     {    
       /* Add leading zeros to the value.  */
-      char buf[xstormy16_reg_size];
+      gdb_byte buf[xstormy16_reg_size];
       memset (buf, 0, xstormy16_reg_size);
       memcpy (buf, valbuf, 1);
       regcache_raw_write (regcache, E_1ST_ARG_REGNUM, buf);
@@ -193,12 +192,12 @@ xstormy16_store_return_value (struct type *type, struct regcache *regcache,
       int i, regnum = E_1ST_ARG_REGNUM;
 
       for (i = 0; i < len; i += xstormy16_reg_size)
-        regcache_raw_write (regcache, regnum++, (char *) valbuf + i);
+        regcache_raw_write (regcache, regnum++, valbuf + i);
     }
 }
 
 static enum return_value_convention
-xstormy16_return_value (struct gdbarch *gdbarch, struct type *func_type,
+xstormy16_return_value (struct gdbarch *gdbarch, struct value *function,
 			struct type *type, struct regcache *regcache,
 			gdb_byte *readbuf, const gdb_byte *writebuf)
 {
@@ -239,7 +238,7 @@ xstormy16_push_dummy_call (struct gdbarch *gdbarch,
   int i, j;
   int typelen, slacklen;
   const gdb_byte *val;
-  char buf[xstormy16_pc_size];
+  gdb_byte buf[xstormy16_pc_size];
 
   /* If struct_return is true, then the struct return address will
      consume one argument-passing register.  */
@@ -263,12 +262,13 @@ xstormy16_push_dummy_call (struct gdbarch *gdbarch,
       /* Put argument into registers wordwise.  */
       val = value_contents (args[i]);
       for (j = 0; j < typelen; j += xstormy16_reg_size)
-	regcache_cooked_write_unsigned (regcache, argreg++,
-			extract_unsigned_integer (val + j,
-						  typelen - j ==
-						  1 ? 1 :
-						  xstormy16_reg_size,
-						  byte_order));
+	{
+	  ULONGEST regval;
+	  int size = (typelen - j == 1) ? 1 : xstormy16_reg_size;
+
+	  regval = extract_unsigned_integer (val + j, size, byte_order);
+	  regcache_cooked_write_unsigned (regcache, argreg++, regval);
+	}
     }
 
   /* Align SP */
@@ -278,17 +278,21 @@ xstormy16_push_dummy_call (struct gdbarch *gdbarch,
      wordaligned.  */
   for (j = nargs - 1; j >= i; j--)
     {
-      char *val;
+      gdb_byte *val;
+      struct cleanup *back_to;
+      const gdb_byte *bytes = value_contents (args[j]);
 
       typelen = TYPE_LENGTH (value_enclosing_type (args[j]));
       slacklen = typelen & 1;
-      val = alloca (typelen + slacklen);
-      memcpy (val, value_contents (args[j]), typelen);
+      val = xmalloc (typelen + slacklen);
+      back_to = make_cleanup (xfree, val);
+      memcpy (val, bytes, typelen);
       memset (val + typelen, 0, slacklen);
 
       /* Now write this data to the stack.  The stack grows upwards.  */
       write_memory (stack_dest, val, typelen + slacklen);
       stack_dest += typelen + slacklen;
+      do_cleanups (back_to);
     }
 
   store_unsigned_integer (buf, xstormy16_pc_size, byte_order, bp_addr);
@@ -413,7 +417,7 @@ static CORE_ADDR
 xstormy16_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   CORE_ADDR func_addr = 0, func_end = 0;
-  char *func_name;
+  const char *func_name;
 
   if (find_pc_partial_function (pc, &func_name, &func_addr, &func_end))
     {
@@ -501,7 +505,7 @@ xstormy16_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
   return 0;
 }
 
-const static unsigned char *
+static const unsigned char *
 xstormy16_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr,
 			      int *lenptr)
 {
@@ -521,7 +525,7 @@ xstormy16_resolve_jmp_table_entry (struct gdbarch *gdbarch, CORE_ADDR faddr)
   if (faddr_sect)
     {
       LONGEST inst, inst2, addr;
-      char buf[2 * xstormy16_inst_size];
+      gdb_byte buf[2 * xstormy16_inst_size];
 
       /* Return faddr if it's not pointing into the jump table.  */
       if (strcmp (faddr_sect->the_bfd_section->name, ".plt"))
@@ -573,7 +577,7 @@ xstormy16_find_jmp_table_entry (struct gdbarch *gdbarch, CORE_ADDR faddr)
 	  for (; addr < endaddr; addr += 2 * xstormy16_inst_size)
 	    {
 	      LONGEST inst, inst2, faddr2;
-	      char buf[2 * xstormy16_inst_size];
+	      gdb_byte buf[2 * xstormy16_inst_size];
 
 	      if (target_read_memory (addr, buf, sizeof buf))
 		return 0;

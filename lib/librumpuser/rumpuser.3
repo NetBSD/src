@@ -1,4 +1,4 @@
-.\"     $NetBSD: rumpuser.3,v 1.2.12.1 2013/06/23 06:21:08 tls Exp $
+.\"     $NetBSD: rumpuser.3,v 1.2.12.2 2014/08/20 00:02:21 tls Exp $
 .\"
 .\" Copyright (c) 2013 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 15, 2013
+.Dd February 19, 2014
 .Dt RUMPUSER 3
 .Os
 .Sh NAME
@@ -428,6 +428,51 @@ on the console.
 .Fn rumpuser_dprintf "const char *fmt" "..."
 .Pp
 Do output based on printf-like parameters.
+.Ss Signals
+.Pp
+A rump kernel should be able to send signals to client programs
+due to some standard interfaces including signal delivery in their
+specifications.
+Examples of these interfaces include
+.Xr setitimer 2
+and
+.Xr write 2 .
+The
+.Fn rumpuser_kill
+function advises the hypercall implementation to raise a signal for the
+process containing the rump kernel.
+.Pp
+.Ft int
+.Fn rumpuser_kill "int64_t pid" "int sig"
+.Pp
+.Bl -tag -width "xenum_rumpclock"
+.It Fa pid
+The pid of the rump kernel process that the signal is directed to.
+This value may be used as the hypervisor as a hint on how to deliver
+the signal.
+The value
+.Dv RUMPUSER_PID_SELF
+may also be specified to indicate no hint.
+This value will be removed in a future version of the hypercall interface.
+.It Fa sig
+Number of signal to raise.
+The value is in NetBSD signal number namespace.
+In case the host has a native representation for signals, the
+value should be translated before the signal is raised.
+In case there is no mapping between
+.Fa sig
+and native signals (if any), the behavior is implementation-defined.
+.El
+.Pp
+A rump kernel will ignore the return value of this hypercall.
+The only implication of not implementing
+.Fn rumpuser_kill
+is that some application programs may not experience expected behavior
+for standard interfaces.
+.Pp
+As an aside,the
+.Xr rump_sp 7
+protocol provides equivalent functionality for remote clients.
 .Ss Random pool
 .Ft int
 .Fn rumpuser_getrandom "void *buf" "size_t buflen" "int flags" "size_t *retp"
@@ -455,7 +500,9 @@ The number of random bytes written into
 .Fa "int priority" "int cpuidx" "void **cookie"
 .Fc
 .Pp
-Create a thread.
+Create a schedulable host thread context.
+The rump kernel will call this interface when it creates a kernel thread.
+The scheduling policy for the new thread is defined by the hypervisor.
 In case the hypervisor wants to optimize the scheduling of the
 threads, it can perform heuristics on the
 .Fa thrname ,
@@ -465,7 +512,8 @@ and
 parameters.
 .Bl -tag -width "xenum_rumpclock"
 .It Fa fun
-function that the new thread must call
+function that the new thread must call.
+This call will never return.
 .It Fa arg
 argument to be passed to
 .Fa fun
@@ -724,6 +772,6 @@ Routines which do not return an integer may never fail.
 .Re
 .Sh HISTORY
 The rump kernel hypercall API was first introduced in
-.Nx 5 .
+.Nx 5.0 .
 The API described above first appeared in
-.Nx 7 .
+.Nx 7.0 .

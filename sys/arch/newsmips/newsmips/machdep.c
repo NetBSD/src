@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.114 2012/07/28 23:08:57 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.114.2.1 2014/08/20 00:03:16 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 2012/07/28 23:08:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114.2.1 2014/08/20 00:03:16 tls Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -148,6 +148,7 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 {
 	u_long first, last;
 	char *kernend;
+	const char *model;
 	struct btinfo_magic *bi_magic;
 	struct btinfo_bootarg *bi_arg;
 	struct btinfo_systype *bi_systype;
@@ -314,18 +315,18 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 #ifdef news3400
 	case NEWS3400:
 		news3400_init();
-		strcpy(cpu_model, idrom.id_machine);
-		if (strcmp(cpu_model, "news3400") == 0 ||
-		    strcmp(cpu_model, "news3200") == 0 ||
-		    strcmp(cpu_model, "news3700") == 0) {
+		cpu_setmodel("%s", idrom.id_machine);
+		model = cpu_getmodel();
+		if (strcmp(model, "news3400") == 0 ||
+		    strcmp(model, "news3200") == 0 ||
+		    strcmp(model, "news3700") == 0) {
 			/*
 			 * Set up interrupt handling and I/O addresses.
 			 */
 			hardware_intr = news3400_intr;
 			cpuspeed = 10;
 		} else {
-			printf("kernel not configured for machine %s\n",
-			    cpu_model);
+			printf("kernel not configured for machine %s\n", model);
 		}
 		break;
 #endif
@@ -333,17 +334,17 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 #ifdef news5000
 	case NEWS5000:
 		news5000_init();
-		strcpy(cpu_model, idrom.id_machine);
-		if (strcmp(cpu_model, "news5000") == 0 ||
-		    strcmp(cpu_model, "news5900") == 0) {
+		cpu_setmodel("%s", idrom.id_machine);
+		model = cpu_getmodel();
+		if (strcmp(model, "news5000") == 0 ||
+		    strcmp(model, "news5900") == 0) {
 			/*
 			 * Set up interrupt handling and I/O addresses.
 			 */
 			hardware_intr = news5000_intr;
 			cpuspeed = 50;	/* ??? XXX */
 		} else {
-			printf("kernel not configured for machine %s\n",
-			    cpu_model);
+			printf("kernel not configured for machine %s\n", model);
 		}
 		break;
 #endif

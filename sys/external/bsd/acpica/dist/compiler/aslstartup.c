@@ -1,4 +1,3 @@
-
 /******************************************************************************
  *
  * Module Name: aslstartup - Compiler startup routines, called from main
@@ -6,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,27 +44,27 @@
 
 #include "aslcompiler.h"
 #include "actables.h"
+#include "acdisasm.h"
 #include "acapps.h"
 
 #define _COMPONENT          ACPI_COMPILER
         ACPI_MODULE_NAME    ("aslstartup")
 
 
-#define ASL_MAX_FILES   256
-static char             *FileList[ASL_MAX_FILES];
-static BOOLEAN          AslToFile = TRUE;
-
-
 /* Local prototypes */
-
-static char **
-AsDoWildcard (
-    char                    *DirectoryPathname,
-    char                    *FileSpecifier);
 
 static UINT8
 AslDetectSourceFileType (
     ASL_FILE_INFO           *Info);
+
+static ACPI_STATUS
+AslDoDisassembly (
+    void);
+
+
+/* Globals */
+
+static BOOLEAN          AslToFile = TRUE;
 
 
 /*******************************************************************************
@@ -95,6 +94,8 @@ AslInitializeGlobals (
     Gbl_LogicalLineNumber = 1;
     Gbl_CurrentLineOffset = 0;
     Gbl_InputFieldCount = 0;
+    Gbl_InputByteCount = 0;
+    Gbl_NsLookupCount = 0;
     Gbl_LineBufPtr = Gbl_CurrentLineBuffer;
 
     Gbl_ErrorLog = NULL;
@@ -102,93 +103,26 @@ AslInitializeGlobals (
     Gbl_Signature = NULL;
     Gbl_FileType = 0;
 
+    TotalExecutableOpcodes = 0;
+    TotalNamedObjects = 0;
+    TotalKeywords = 0;
+    TotalParseNodes = 0;
+    TotalMethods = 0;
+    TotalAllocations = 0;
+    TotalAllocated = 0;
+    TotalFolds = 0;
+
     AslGbl_NextEvent = 0;
     for (i = 0; i < ASL_NUM_REPORT_LEVELS; i++)
     {
         Gbl_ExceptionCount[i] = 0;
     }
 
-    Gbl_Files[ASL_FILE_AML_OUTPUT].Filename = NULL;
-    Gbl_Files[ASL_FILE_AML_OUTPUT].Handle = NULL;
-
-    Gbl_Files[ASL_FILE_SOURCE_OUTPUT].Filename = NULL;
-    Gbl_Files[ASL_FILE_SOURCE_OUTPUT].Handle = NULL;
-}
-
-
-/******************************************************************************
- *
- * FUNCTION:    AsDoWildcard
- *
- * PARAMETERS:  None
- *
- * RETURN:      None
- *
- * DESCRIPTION: Process files via wildcards. This function is for the Windows
- *              case only.
- *
- ******************************************************************************/
-
-static char **
-AsDoWildcard (
-    char                    *DirectoryPathname,
-    char                    *FileSpecifier)
-{
-#ifdef WIN32
-    void                    *DirInfo;
-    char                    *Filename;
-    int                     FileCount;
-
-
-    FileCount = 0;
-
-    /* Open parent directory */
-
-    DirInfo = AcpiOsOpenDirectory (DirectoryPathname, FileSpecifier, REQUEST_FILE_ONLY);
-    if (!DirInfo)
+    for (i = ASL_FILE_INPUT; i <= ASL_MAX_FILE_TYPE; i++)
     {
-        /* Either the directory of file does not exist */
-
-        Gbl_Files[ASL_FILE_INPUT].Filename = FileSpecifier;
-        FlFileError (ASL_FILE_INPUT, ASL_MSG_OPEN);
-        AslAbort ();
+        Gbl_Files[i].Handle = NULL;
+        Gbl_Files[i].Filename = NULL;
     }
-
-    /* Process each file that matches the wildcard specification */
-
-    while ((Filename = AcpiOsGetNextFilename (DirInfo)))
-    {
-        /* Add the filename to the file list */
-
-        FileList[FileCount] = AcpiOsAllocate (strlen (Filename) + 1);
-        strcpy (FileList[FileCount], Filename);
-        FileCount++;
-
-        if (FileCount >= ASL_MAX_FILES)
-        {
-            printf ("Max files reached\n");
-            FileList[0] = NULL;
-            return (FileList);
-        }
-    }
-
-    /* Cleanup */
-
-    AcpiOsCloseDirectory (DirInfo);
-    FileList[FileCount] = NULL;
-    return (FileList);
-
-#else
-    /*
-     * Linux/Unix cases - Wildcards are expanded by the shell automatically.
-     * Just return the filename in a null terminated list
-     */
-    FileList[0] = AcpiOsAllocate (strlen (FileSpecifier) + 1);
-    strcpy (FileList[0], FileSpecifier);
-    FileList[1] = NULL;
-
-    return (FileList);
-#endif
 }
 
 
@@ -214,21 +148,34 @@ AslDetectSourceFileType (
     ACPI_STATUS             Status;
 
 
+    /* Check for a valid binary ACPI table */
+
+    Status = FlCheckForAcpiTable (Info->Handle);
+    if (ACPI_SUCCESS (Status))
+    {
+        Type = ASL_INPUT_TYPE_ACPI_TABLE;
+        goto Cleanup;
+    }
+
     /* Check for 100% ASCII source file (comments are ignored) */
 
-    Status = FlCheckForAscii (Info);
+    Status = FlCheckForAscii (Info->Handle, Info->Filename, TRUE);
     if (ACPI_FAILURE (Status))
     {
         printf ("Non-ascii input file - %s\n", Info->Filename);
-        Type = ASL_INPUT_TYPE_BINARY;
-        goto Cleanup;
+
+        if (!Gbl_IgnoreErrors)
+        {
+            Type = ASL_INPUT_TYPE_BINARY;
+            goto Cleanup;
+        }
     }
 
     /*
      * File is ASCII. Determine if this is an ASL file or an ACPI data
      * table file.
      */
-    while (fgets (Gbl_CurrentLineBuffer, ASL_LINE_BUFFER_SIZE, Info->Handle))
+    while (fgets (Gbl_CurrentLineBuffer, Gbl_LineBufferSize, Info->Handle))
     {
         /* Uppercase the buffer for caseless compare */
 
@@ -265,6 +212,86 @@ Cleanup:
 
 /*******************************************************************************
  *
+ * FUNCTION:    AslDoDisassembly
+ *
+ * PARAMETERS:  None
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Initiate AML file disassembly. Uses ACPICA subsystem to build
+ *              namespace.
+ *
+ ******************************************************************************/
+
+static ACPI_STATUS
+AslDoDisassembly (
+    void)
+{
+    ACPI_STATUS             Status;
+
+
+    /* ACPICA subsystem initialization */
+
+    Status = AdInitialize ();
+    if (ACPI_FAILURE (Status))
+    {
+        return (Status);
+    }
+
+    Status = AcpiAllocateRootTable (4);
+    if (ACPI_FAILURE (Status))
+    {
+        AcpiOsPrintf ("Could not initialize ACPI Table Manager, %s\n",
+            AcpiFormatException (Status));
+        return (Status);
+    }
+
+    /* This is where the disassembly happens */
+
+    AcpiGbl_DbOpt_disasm = TRUE;
+    Status = AdAmlDisassemble (AslToFile,
+        Gbl_Files[ASL_FILE_INPUT].Filename, Gbl_OutputFilenamePrefix,
+        &Gbl_Files[ASL_FILE_INPUT].Filename, Gbl_GetAllTables);
+    if (ACPI_FAILURE (Status))
+    {
+        return (Status);
+    }
+
+    /* Check if any control methods were unresolved */
+
+    AcpiDmUnresolvedWarning (0);
+
+#if 0
+    /* TBD: Handle additional output files for disassembler */
+
+    Status = FlOpenMiscOutputFiles (Gbl_OutputFilenamePrefix);
+    NsDisplayNamespace ();
+#endif
+
+    /* Shutdown compiler and ACPICA subsystem */
+
+    AeClearErrorLog ();
+    (void) AcpiTerminate ();
+
+    /*
+     * Gbl_Files[ASL_FILE_INPUT].Filename was replaced with the
+     * .DSL disassembly file, which can now be compiled if requested
+     */
+    if (Gbl_DoCompile)
+    {
+        AcpiOsPrintf ("\nCompiling \"%s\"\n",
+            Gbl_Files[ASL_FILE_INPUT].Filename);
+        return (AE_CTRL_CONTINUE);
+    }
+
+    ACPI_FREE (Gbl_Files[ASL_FILE_INPUT].Filename);
+    Gbl_Files[ASL_FILE_INPUT].Filename = NULL;
+    return (AE_OK);
+}
+
+
+/*******************************************************************************
+ *
  * FUNCTION:    AslDoOneFile
  *
  * PARAMETERS:  Filename        - Name of the file
@@ -282,64 +309,34 @@ AslDoOneFile (
     ACPI_STATUS             Status;
 
 
-    Gbl_Files[ASL_FILE_INPUT].Filename = Filename;
-
-    /* Re-initialize "some" compiler globals */
+    /* Re-initialize "some" compiler/preprocessor globals */
 
     AslInitializeGlobals ();
+    PrInitializeGlobals ();
+
+    /*
+     * Extract the directory path. This path is used for possible include
+     * files and the optional AML filename embedded in the input file
+     * DefinitionBlock declaration.
+     */
+    Status = FlSplitInputPathname (Filename, &Gbl_DirectoryPath, NULL);
+    if (ACPI_FAILURE (Status))
+    {
+        return (Status);
+    }
+
+    Gbl_Files[ASL_FILE_INPUT].Filename = Filename;
+    UtConvertBackslashes (Filename);
 
     /*
      * AML Disassembly (Optional)
      */
     if (Gbl_DisasmFlag || Gbl_GetAllTables)
     {
-        /* ACPICA subsystem initialization */
-
-        Status = AdInitialize ();
-        if (ACPI_FAILURE (Status))
+        Status = AslDoDisassembly ();
+        if (Status != AE_CTRL_CONTINUE)
         {
             return (Status);
-        }
-
-        Status = AcpiAllocateRootTable (4);
-        if (ACPI_FAILURE (Status))
-        {
-            AcpiOsPrintf ("Could not initialize ACPI Table Manager, %s\n",
-                AcpiFormatException (Status));
-            return (Status);
-        }
-
-        /* This is where the disassembly happens */
-
-        AcpiGbl_DbOpt_disasm = TRUE;
-        Status = AdAmlDisassemble (AslToFile,
-                    Gbl_Files[ASL_FILE_INPUT].Filename,
-                    Gbl_OutputFilenamePrefix,
-                    &Gbl_Files[ASL_FILE_INPUT].Filename,
-                    Gbl_GetAllTables);
-        if (ACPI_FAILURE (Status))
-        {
-            return (Status);
-        }
-
-        /* Shutdown compiler and ACPICA subsystem */
-
-        AeClearErrorLog ();
-        (void) AcpiTerminate ();
-
-        /*
-         * Gbl_Files[ASL_FILE_INPUT].Filename was replaced with the
-         * .DSL disassembly file, which can now be compiled if requested
-         */
-        if (Gbl_DoCompile)
-        {
-            AcpiOsPrintf ("\nCompiling \"%s\"\n",
-                Gbl_Files[ASL_FILE_INPUT].Filename);
-        }
-        else
-        {
-            Gbl_Files[ASL_FILE_INPUT].Filename = NULL;
-            return (AE_OK);
         }
     }
 
@@ -392,17 +389,33 @@ AslDoOneFile (
     case ASL_INPUT_TYPE_ASCII_DATA:
 
         Status = DtDoCompile ();
+        if (ACPI_FAILURE (Status))
+        {
+            return (Status);
+        }
 
         if (Gbl_Signature)
         {
             ACPI_FREE (Gbl_Signature);
             Gbl_Signature = NULL;
         }
+
+        /* Check if any errors occurred during compile */
+
+        Status = AslCheckForErrorExit ();
+        if (ACPI_FAILURE (Status))
+        {
+            return (Status);
+        }
+
+        /* Cleanup (for next source file) and exit */
+
         AeClearErrorLog ();
+        PrTerminatePreprocessor ();
         return (Status);
 
     /*
-     * ASL Compilation (Optional)
+     * ASL Compilation
      */
     case ASL_INPUT_TYPE_ASCII_ASL:
 
@@ -414,20 +427,37 @@ AslDoOneFile (
             return (Status);
         }
 
-        Status = CmDoCompile ();
+        (void) CmDoCompile ();
         (void) AcpiTerminate ();
 
-        /*
-         * Return non-zero exit code if there have been errors, unless the
-         * global ignore error flag has been set
-         */
-        if ((Gbl_ExceptionCount[ASL_ERROR] > 0) && (!Gbl_IgnoreErrors))
+        /* Check if any errors occurred during compile */
+
+        Status = AslCheckForErrorExit ();
+        if (ACPI_FAILURE (Status))
         {
-            return (AE_ERROR);
+            return (Status);
         }
 
+        /* Cleanup (for next source file) and exit */
+
         AeClearErrorLog ();
+        PrTerminatePreprocessor ();
         return (AE_OK);
+
+    /*
+     * Binary ACPI table was auto-detected, disassemble it
+     */
+    case ASL_INPUT_TYPE_ACPI_TABLE:
+
+        /* We have what appears to be an ACPI table, disassemble it */
+
+        FlCloseFile (ASL_FILE_INPUT);
+        Gbl_DoCompile = FALSE;
+        Gbl_DisasmFlag = TRUE;
+        Status = AslDoDisassembly ();
+        return (Status);
+
+    /* Unknown binary table */
 
     case ASL_INPUT_TYPE_BINARY:
 
@@ -435,6 +465,7 @@ AslDoOneFile (
         return (AE_ERROR);
 
     default:
+
         printf ("Unknown file type %X\n", Gbl_FileType);
         return (AE_ERROR);
     }
@@ -443,71 +474,44 @@ AslDoOneFile (
 
 /*******************************************************************************
  *
- * FUNCTION:    AslDoOnePathname
+ * FUNCTION:    AslCheckForErrorExit
  *
- * PARAMETERS:  Pathname            - Full pathname, possibly with wildcards
+ * PARAMETERS:  None. Examines global exception count array
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Process one pathname, possible terminated with a wildcard
- *              specification. If a wildcard, it is expanded and the multiple
- *              files are processed.
+ * DESCRIPTION: Determine if compiler should abort with error status
  *
  ******************************************************************************/
 
 ACPI_STATUS
-AslDoOnePathname (
-    char                    *Pathname,
-    ASL_PATHNAME_CALLBACK   PathCallback)
+AslCheckForErrorExit (
+    void)
 {
-    ACPI_STATUS             Status = AE_OK;
-    char                    **WildcardList;
-    char                    *Filename;
-    char                    *FullPathname;
 
-
-    /* Split incoming path into a directory/filename combo */
-
-    Status = FlSplitInputPathname (Pathname, &Gbl_DirectoryPath, &Filename);
-    if (ACPI_FAILURE (Status))
+    /*
+     * Return non-zero exit code if there have been errors, unless the
+     * global ignore error flag has been set
+     */
+    if (!Gbl_IgnoreErrors)
     {
-        return (Status);
-    }
-
-    /* Expand possible wildcard into a file list (Windows/DOS only) */
-
-    WildcardList = AsDoWildcard (Gbl_DirectoryPath, Filename);
-    while (*WildcardList)
-    {
-        FullPathname = ACPI_ALLOCATE (
-            strlen (Gbl_DirectoryPath) + strlen (*WildcardList) + 1);
-
-        /* Construct a full path to the file */
-
-        strcpy (FullPathname, Gbl_DirectoryPath);
-        strcat (FullPathname, *WildcardList);
-
-        /*
-         * If -p not specified, we will use the input filename as the
-         * output filename prefix
-         */
-        if (Gbl_UseDefaultAmlFilename)
+        if (Gbl_ExceptionCount[ASL_ERROR] > 0)
         {
-            Gbl_OutputFilenamePrefix = FullPathname;
+            return (AE_ERROR);
         }
 
-        /* Save status from all compiles */
+        /* Optionally treat warnings as errors */
 
-        Status |= (*PathCallback) (FullPathname);
-
-        ACPI_FREE (FullPathname);
-        ACPI_FREE (*WildcardList);
-        *WildcardList = NULL;
-        WildcardList++;
+        if (Gbl_WarningsAsErrors)
+        {
+            if ((Gbl_ExceptionCount[ASL_WARNING] > 0)  ||
+                (Gbl_ExceptionCount[ASL_WARNING2] > 0) ||
+                (Gbl_ExceptionCount[ASL_WARNING3] > 0))
+            {
+                return (AE_ERROR);
+            }
+        }
     }
 
-    ACPI_FREE (Gbl_DirectoryPath);
-    ACPI_FREE (Filename);
-    return (Status);
+    return (AE_OK);
 }
-

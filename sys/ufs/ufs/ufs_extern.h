@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.72.2.2 2013/06/23 06:18:40 tls Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.72.2.3 2014/08/20 00:04:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -109,15 +109,6 @@ int	ufs_bmaparray(struct vnode *, daddr_t, daddr_t *, struct indir *,
 		      int *, int *, ufs_issequential_callback_t);
 int	ufs_getlbns(struct vnode *, daddr_t, struct indir *, int *);
 
-/* ufs_ihash.c */
-void	ufs_ihashinit(void);
-void	ufs_ihashreinit(void);
-void	ufs_ihashdone(void);
-struct vnode *ufs_ihashlookup(dev_t, ino_t);
-struct vnode *ufs_ihashget(dev_t, ino_t, int);
-void	ufs_ihashins(struct inode *);
-void	ufs_ihashrem(struct inode *);
-
 /* ufs_inode.c */
 int	ufs_reclaim(struct vnode *);
 int	ufs_balloc_range(struct vnode *, off_t, off_t, kauth_cred_t, int);
@@ -135,9 +126,6 @@ int	ufs_dirremove(struct vnode *, const struct ufs_lookup_results *,
 int	ufs_dirrewrite(struct inode *, off_t,
 		       struct inode *, ino_t, int, int, int);
 int	ufs_dirempty(struct inode *, ino_t, kauth_cred_t);
-int	ufs_checkpath(struct inode *, struct inode *, kauth_cred_t);
-int	ufs_parentcheck(struct vnode *, struct vnode *, kauth_cred_t,
-			int *, struct vnode **);
 int	ufs_blkatoff(struct vnode *, off_t, char **, struct buf **, bool);
 
 /* ufs_rename.c -- for lfs */
@@ -190,6 +178,7 @@ void	ufs_done(void);
 int	ufs_start(struct mount *, int);
 int	ufs_root(struct mount *, struct vnode **);
 void	ufs_update_maxphys(struct mount *);
+int	ufs_vget(struct mount *, ino_t, struct vnode **);
 int	ufs_quotactl(struct mount *, struct quotactl_args *);
 int	ufs_fhtovp(struct mount *, struct ufid *, struct vnode **);
 
@@ -213,7 +202,6 @@ void	ufs_gop_markupdate(struct vnode *, int);
 
 __END_DECLS
 
-extern kmutex_t ufs_ihash_lock;
 extern kmutex_t ufs_hashlock;
 
 #endif /* !_UFS_UFS_EXTERN_H_ */

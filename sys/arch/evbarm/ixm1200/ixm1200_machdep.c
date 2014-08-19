@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.51.2.1 2012/11/20 03:01:15 tls Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.51.2.2 2014/08/20 00:02:55 tls Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.51.2.1 2012/11/20 03:01:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.51.2.2 2014/08/20 00:02:55 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -77,6 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.51.2.1 2012/11/20 03:01:15 tls
 #include <sys/reboot.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -96,9 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.51.2.1 2012/11/20 03:01:15 tls
 #endif
 
 #include <machine/bootconfig.h>
-#include <sys/bus.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
+#include <arm/locore.h>
 #include <arm/undefined.h>
 
 #include <arm/arm32/machdep.h>
@@ -761,14 +761,14 @@ ixdp_ixp12x0_cc_setup(void)
 {
 	int loop;
 	paddr_t kaddr;
-	pt_entry_t *pte;
 
 	(void) pmap_extract(pmap_kernel(), KERNEL_TEXT_BASE, &kaddr);
 	for (loop = 0; loop < CPU_IXP12X0_CACHE_CLEAN_SIZE; loop += PAGE_SIZE) {
-                pte = vtopte(ixp12x0_cc_base + loop);
-                *pte = L2_S_PROTO | kaddr |
+		pt_entry_t * const ptep = vtopte(ixp12x0_cc_base + loop);
+		const pt_entry_t npte = L2_S_PROTO | kaddr |
                     L2_S_PROT(PTE_KERNEL, VM_PROT_READ) | pte_l2_s_cache_mode;
-		PTE_SYNC(pte);
+		l2pte_set(ptep, npte, 0);
+		PTE_SYNC(ptep);
         }
 	ixp12x0_cache_clean_addr = ixp12x0_cc_base;
 	ixp12x0_cache_clean_size = CPU_IXP12X0_CACHE_CLEAN_SIZE / 2;

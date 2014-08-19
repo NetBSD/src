@@ -1,6 +1,5 @@
 /* Simulator signal support
-   Copyright (C) 1997, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Support
 
 This file is part of the GNU Simulators.
@@ -95,41 +94,41 @@ sim_signal_to_host (SIM_DESC sd, SIM_SIGNAL sig)
 #endif
 }
 
-enum target_signal
-sim_signal_to_target (SIM_DESC sd, SIM_SIGNAL sig)
+enum gdb_signal
+sim_signal_to_gdb_signal (SIM_DESC sd, SIM_SIGNAL sig)
 {
   switch (sig)
     {
     case SIM_SIGINT :
-      return TARGET_SIGNAL_INT;
+      return GDB_SIGNAL_INT;
 
     case SIM_SIGABRT :
-      return TARGET_SIGNAL_ABRT;
+      return GDB_SIGNAL_ABRT;
 
     case SIM_SIGILL :
-      return TARGET_SIGNAL_ILL;
+      return GDB_SIGNAL_ILL;
 
     case SIM_SIGTRAP :
-      return TARGET_SIGNAL_TRAP;
+      return GDB_SIGNAL_TRAP;
 
     case SIM_SIGBUS :
-      return TARGET_SIGNAL_BUS;
+      return GDB_SIGNAL_BUS;
 
     case SIM_SIGSEGV :
-      return TARGET_SIGNAL_SEGV;
+      return GDB_SIGNAL_SEGV;
 
     case SIM_SIGXCPU :
-      return TARGET_SIGNAL_XCPU;
+      return GDB_SIGNAL_XCPU;
 
     case SIM_SIGFPE:
-      return TARGET_SIGNAL_FPE;
+      return GDB_SIGNAL_FPE;
       break;
 
     case SIM_SIGNONE:
-      return TARGET_SIGNAL_0;
+      return GDB_SIGNAL_0;
       break;
     }
 
   sim_io_eprintf (sd, "sim_signal_to_host: unknown signal: %d\n", sig);
-  return TARGET_SIGNAL_HUP;
+  return GDB_SIGNAL_HUP;
 }

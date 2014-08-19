@@ -1,4 +1,4 @@
-/* $NetBSD: mmcformat.c,v 1.3 2009/01/18 09:58:41 lukem Exp $ */
+/* $NetBSD: mmcformat.c,v 1.3.14.1 2014/08/20 00:05:10 tls Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -510,11 +510,8 @@ uscsi_format_cdrw_mode7(struct uscsi_dev *mydev, uint32_t blocks)
 {
 	scsicmd cmd;
 	struct uscsi_sense sense;
-	uint32_t param;
 	uint8_t  buffer[16];
-	int cnt, error;
-
-	param = cnt = 0;
+	int error;
 
 	if (blocks % 32) {
 		blocks -= blocks % 32;

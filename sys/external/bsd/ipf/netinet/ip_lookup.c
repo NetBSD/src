@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: ip_lookup.c,v 1.3.2.1 2014/08/20 00:04:24 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -68,7 +68,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_lookup.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_lookup.c,v 1.3.2.1 2014/08/20 00:04:24 tls Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_lookup.c,v 1.1.1.2 2012/07/22 13:45:21 darrenr Exp";
 #endif
@@ -818,11 +818,7 @@ ipf_lookup_res_num(ipf_main_softc_t *softc, int unit, u_int type, u_int number,
 {
 	char name[FR_GROUPLEN];
 
-#if defined(SNPRINTF) && defined(_KERNEL)
-	SNPRINTF(name, sizeof(name), "%u", number);
-#else
-	(void) sprintf(name, "%u", number);
-#endif
+	snprintf(name, sizeof(name), "%u", number);
 
 	return ipf_lookup_res_name(softc, unit, type, name, funcptr);
 }

@@ -1,0 +1,3 @@
+# $NetBSD: GENERIC64,v 1.1.10.2 2014/08/20 00:03:17 tls Exp $
+include "arch/ofppc/conf/GENERIC"
+include "arch/ofppc/conf/std.ofppc64"

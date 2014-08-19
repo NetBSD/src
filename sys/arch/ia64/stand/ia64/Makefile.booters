@@ -1,11 +1,13 @@
-#	$NetBSD: Makefile.booters,v 1.4 2010/05/27 06:58:14 dholland Exp $
+#	$NetBSD: Makefile.booters,v 1.4.18.1 2014/08/20 00:03:08 tls Exp $
 
 .include <bsd.own.mk>
+.include <bsd.klinks.mk>
 
 STRIPFLAG=
 BINMODE=444
 
 LIBCRT0=	# nothing
+LIBCRTI=	# nothing
 LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing
@@ -22,29 +24,6 @@ CPPFLAGS += -nostdlib -nostdinc -I${.OBJDIR} -I${IA64_STAND_DIR} -I${IA64_STAND_
 CFLAGS+=	-ffreestanding -fshort-wchar -Wformat -D_STANDALONE
 LDFLAGS+=	#-nostdlib
 CPPFLAGS+=	-D_STANDALONE
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN: machine
-.NOPATH: machine
-.endif
-
-realdepend realall: machine lib
-CLEANFILES= machine
-
-machine:
-	-rm -f $@
-	ln -s $S/arch/${MACHINE_ARCH}/include $@
-
-${OBJS}: machine lib
-
-lib:
-.ifdef LIBOBJ
-	-rm -f $@
-	ln -s ${LIBOBJ}/lib .
-	[ -d ${LIBOBJ}/lib ] || mkdir ${LIBOBJ}/lib
-.else
-	mkdir lib
-.endif
 
 ### find out what to use for libkern
 KERN_AS=	library

@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.16 2012/07/25 03:07:37 matt Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.16.2.1 2014/08/20 00:03:37 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.16 2012/07/25 03:07:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.16.2.1 2014/08/20 00:03:37 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,8 +117,18 @@ dev_type_read(dsrtc_read);
 dev_type_write(dsrtc_write);
 
 const struct cdevsw dsrtc_cdevsw = {
-	dsrtc_open, dsrtc_close, dsrtc_read, dsrtc_write, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = dsrtc_open,
+	.d_close = dsrtc_close,
+	.d_read = dsrtc_read,
+	.d_write = dsrtc_write,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 static int dsrtc_gettime_ymdhms(struct todr_chip_handle *, struct clock_ymdhms *);

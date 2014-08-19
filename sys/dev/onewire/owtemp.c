@@ -1,4 +1,4 @@
-/*	$NetBSD: owtemp.c,v 1.16 2011/06/20 17:24:16 pgoyette Exp $ */
+/*	$NetBSD: owtemp.c,v 1.16.12.1 2014/08/20 00:03:41 tls Exp $ */
 /*	$OpenBSD: owtemp.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.16 2011/06/20 17:24:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.16.12.1 2014/08/20 00:03:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ CFATTACH_DECL_NEW(owtemp, sizeof(struct owtemp_softc),
 extern struct cfdriver owtemp_cd;
 
 static const struct onewire_matchfam owtemp_fams[] = {
-	{ ONEWIRE_FAMILY_DS1920 },
+	{ ONEWIRE_FAMILY_DS1920 }, /* also DS1820 */
 	{ ONEWIRE_FAMILY_DS18B20 },
 	{ ONEWIRE_FAMILY_DS1822 },
 };
@@ -235,6 +235,21 @@ owtemp_decode_ds1920(const uint8_t *buf)
 	temp = (int8_t)buf[1];
 	temp = (temp << 8) | buf[0];
 
-	/* Convert to uK */
-	return (temp * 500000 + 273150000);
+	if (buf[7] != 0) {
+		/*
+	 	 * interpolate for higher precision using the count registers
+	 	 *
+	 	 * buf[7]: COUNT_PER_C(elsius)
+	 	 * buf[6]: COUNT_REMAIN
+	 	 *
+	 	 * T = TEMP - 0.25 + (COUNT_PER_C - COUNT_REMAIN) / COUNT_PER_C
+	 	 */
+		temp &= ~1;
+        	temp += 500000 * temp + (500000 * (buf[7] - buf[6])) / buf[7] - 250000;
+	} else {
+		temp *= 500000;
+	}
+
+	/* convert to uK */
+	return (temp + 273150000);
 }

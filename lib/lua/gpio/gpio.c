@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio.c,v 1.7 2012/03/15 02:02:21 joerg Exp $ */
+/*	$NetBSD: gpio.c,v 1.7.2.1 2014/08/20 00:02:21 tls Exp $ */
 
 /*
  * Copyright (c) 2011 Marc Balmer <marc@msys.ch>
@@ -255,13 +255,14 @@ static void
 gpio_set_info(lua_State *L)
 {
 	lua_pushliteral(L, "_COPYRIGHT");
-	lua_pushliteral(L, "Copyright (C) 2011 Marc Balmer <marc@msys.ch>");
+	lua_pushliteral(L, "Copyright (C) 2011, 2013 Marc Balmer "
+	    "<marc@msys.ch>");
 	lua_settable(L, -3);
 	lua_pushliteral(L, "_DESCRIPTION");
 	lua_pushliteral(L, "GPIO interface for Lua");
 	lua_settable(L, -3);
 	lua_pushliteral(L, "_VERSION");
-	lua_pushliteral(L, "gpio 1.0.1");
+	lua_pushliteral(L, "gpio 1.0.2");
 	lua_settable(L, -3);
 }
 
@@ -287,12 +288,13 @@ luaopen_gpio(lua_State* L)
 	};
 	int n;
 
-	luaL_register(L, "gpio", methods);
+	luaL_newlib(L, methods);
+	luaL_setfuncs(L, gpio_methods, 0);
 	gpio_set_info(L);
 
 	/* The gpio metatable */
 	if (luaL_newmetatable(L, GPIO_METATABLE)) {
-		luaL_register(L, NULL, gpio_methods);
+		luaL_setfuncs(L, gpio_methods, 0);
 
 		lua_pushliteral(L, "__gc");
 		lua_pushcfunction(L, gpio_close);

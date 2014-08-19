@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.30.2.2 2012/11/20 03:02:13 tls Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.30.2.3 2014/08/20 00:03:41 tls Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.30.2.2 2012/11/20 03:02:13 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.30.2.3 2014/08/20 00:03:41 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -167,7 +167,7 @@ static const struct ahci_pci_quirk ahci_pci_quirks[] = {
 	    AHCI_PCI_QUIRK_FORCE | AHCI_QUIRK_BADPMP },
 	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SE6145,
 	    AHCI_QUIRK_BADPMP },
-	{ PCI_VENDOR_MARVELL2, PCI_PRODUCT_MARVELL2_88SE9128,
+	{ PCI_VENDOR_MARVELL2, PCI_PRODUCT_MARVELL2_88SE91XX,
 	    AHCI_PCI_QUIRK_FORCE },
 	/* ATI SB600 AHCI 64-bit DMA only works on some boards/BIOSes */
 	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_SATA_1,
@@ -271,6 +271,7 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 	bool ahci_cap_64bit;
 	bool ahci_bad_64bit;
 	pci_intr_handle_t intrhandle;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	self->dv_maxphys = MIN(parent->dv_maxphys, MACHINE_MAXPHYS);
 
@@ -291,14 +292,14 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+	intrstr = pci_intr_string(pa->pa_pc, intrhandle,
+	    intrbuf, sizeof(intrbuf));
 	psc->sc_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_BIO, ahci_intr, sc);
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		return;
 	}
-	aprint_normal_dev(self, "interrupting at %s\n",
-	    intrstr ? intrstr : "unknown interrupt");
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	sc->sc_dmat = pa->pa_dmat;
 

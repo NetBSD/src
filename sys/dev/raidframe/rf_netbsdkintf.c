@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.298.2.3 2013/06/23 06:20:21 tls Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.298.2.4 2014/08/20 00:03:49 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.298.2.3 2013/06/23 06:20:21 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.298.2.4 2014/08/20 00:03:49 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -205,13 +205,29 @@ dev_type_dump(raiddump);
 dev_type_size(raidsize);
 
 const struct bdevsw raid_bdevsw = {
-	raidopen, raidclose, raidstrategy, raidioctl,
-	raiddump, raidsize, D_DISK
+	.d_open = raidopen,
+	.d_close = raidclose,
+	.d_strategy = raidstrategy,
+	.d_ioctl = raidioctl,
+	.d_dump = raiddump,
+	.d_psize = raidsize,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw raid_cdevsw = {
-	raidopen, raidclose, raidread, raidwrite, raidioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = raidopen,
+	.d_close = raidclose,
+	.d_read = raidread,
+	.d_write = raidwrite,
+	.d_ioctl = raidioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 static void	raidminphys(struct buf *);
@@ -331,7 +347,7 @@ raidcreate(int unit) {
 		return NULL;
 	}
 	sc->sc_unit = unit;
-	bufq_alloc(&sc->buf_queue, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&sc->buf_queue, "fcfs", BUFQ_SORT_RAWBLOCK);
 	return sc;
 }
 
@@ -419,6 +435,16 @@ rf_autoconfig(device_t self)
 	/* XXX This code can only be run once. */
 	raidautoconfigdone = true;
 
+#ifdef __HAVE_CPU_BOOTCONF
+	/*
+	 * 0. find the boot device if needed first so we can use it later
+	 * this needs to be done before we autoconfigure any raid sets,
+	 * because if we use wedges we are not going to be able to open
+	 * the boot device later
+	 */
+	if (booted_device == NULL)
+		cpu_bootconf();
+#endif
 	/* 1. locate all RAID components on the system */
 	aprint_debug("Searching for RAID components...\n");
 	ac_list = rf_find_raid_components();
@@ -435,14 +461,36 @@ rf_autoconfig(device_t self)
 	return 1;
 }
 
+static int
+rf_containsboot(RF_Raid_t *r, device_t bdv) {
+	const char *bootname = device_xname(bdv);
+	size_t len = strlen(bootname);
+
+	for (int col = 0; col < r->numCol; col++) {
+		const char *devname = r->Disks[col].devname;
+		devname += sizeof("/dev/") - 1;
+		if (strncmp(devname, "dk", 2) == 0) {
+			const char *parent =
+			    dkwedge_get_parent_name(r->Disks[col].dev);
+			if (parent != NULL)
+				devname = parent;
+		}
+		if (strncmp(devname, bootname, len) == 0) {
+			struct raid_softc *sc = r->softc;
+			aprint_debug("raid%d includes boot device %s\n",
+			    sc->sc_unit, devname);
+			return 1;
+		}
+	}
+	return 0;
+}
+
 void
 rf_buildroothack(RF_ConfigSet_t *config_sets)
 {
 	RF_ConfigSet_t *cset;
 	RF_ConfigSet_t *next_cset;
-	int col;
 	int num_root;
-	char *devname;
 	struct raid_softc *sc, *rsc;
 
 	sc = rsc = NULL;
@@ -483,15 +531,33 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 
 	/* we found something bootable... */
 
+	/*
+	 * XXX: The following code assumes that the root raid
+	 * is the first ('a') partition. This is about the best
+	 * we can do with a BSD disklabel, but we might be able
+	 * to do better with a GPT label, by setting a specified
+	 * attribute to indicate the root partition. We can then
+	 * stash the partition number in the r->root_partition
+	 * high bits (the bottom 2 bits are already used). For
+	 * now we just set booted_partition to 0 when we override
+	 * root.
+	 */
 	if (num_root == 1) {
+		device_t candidate_root;
 		if (rsc->sc_dkdev.dk_nwedges != 0) {
-			/* XXX: How do we find the real root partition? */
 			char cname[sizeof(cset->ac->devname)];
+			/* XXX: assume 'a' */
 			snprintf(cname, sizeof(cname), "%s%c",
 			    device_xname(rsc->sc_dev), 'a');
-			booted_device = dkwedge_find_by_wname(cname);
+			candidate_root = dkwedge_find_by_wname(cname);
 		} else
-			booted_device = rsc->sc_dev;
+			candidate_root = rsc->sc_dev;
+		if (booted_device == NULL ||
+		    rsc->sc_r.root_partition == 1 ||
+		    rf_containsboot(&rsc->sc_r, booted_device)) {
+			booted_device = candidate_root;
+			booted_partition = 0;	/* XXX assume 'a' */
+		}
 	} else if (num_root > 1) {
 
 		/* 
@@ -500,9 +566,6 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 		 * booted_device and will ask the user if nothing was
 		 * hardwired in the kernel config file 
 		 */
-
-		if (booted_device == NULL)
-			cpu_rootconf();
 		if (booted_device == NULL) 
 			return;
 
@@ -516,14 +579,7 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 			if (r->root_partition == 0)
 				continue;
 
-			for (col = 0; col < r->numCol; col++) {
-				devname = r->Disks[col].devname;
-				devname += sizeof("/dev/") - 1;
-				if (strncmp(devname, device_xname(booted_device), 
-					    strlen(device_xname(booted_device))) != 0)
-					continue;
-				aprint_debug("raid%d includes boot device %s\n",
-				       sc->sc_unit, devname);
+			if (rf_containsboot(r, booted_device)) {
 				num_root++;
 				rsc = sc;
 			}
@@ -532,6 +588,7 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 
 		if (num_root == 1) {
 			booted_device = rsc->sc_dev;
+			booted_partition = 0;	/* XXX assume 'a' */
 		} else {
 			/* we can't guess.. require the user to answer... */
 			boothowto |= RB_ASKNAME;
@@ -3287,6 +3344,10 @@ void
 rf_print_component_label(RF_ComponentLabel_t *clabel)
 {
 	uint64_t numBlocks;
+	static const char *rp[] = {
+	    "No", "Force", "Soft", "*invalid*"
+	};
+
 
 	numBlocks = rf_component_label_numblocks(clabel);
 
@@ -3303,8 +3364,7 @@ rf_print_component_label(RF_ComponentLabel_t *clabel)
 	printf("   RAID Level: %c  blocksize: %d numBlocks: %"PRIu64"\n",
 	       (char) clabel->parityConfig, clabel->blockSize, numBlocks);
 	printf("   Autoconfig: %s\n", clabel->autoconfigure ? "Yes" : "No");
-	printf("   Contains root partition: %s\n",
-	       clabel->root_partition ? "Yes" : "No");
+	printf("   Root partition: %s\n", rp[clabel->root_partition & 3]);
 	printf("   Last configured as: raid%d\n", clabel->last_unit);
 #if 0
 	   printf("   Config order: %d\n", clabel->config_order);
@@ -3750,12 +3810,20 @@ rf_auto_config_set(RF_ConfigSet_t *cset)
 
 		rf_markalldirty(raidPtr);
 		raidPtr->autoconfigure = 1; /* XXX do this here? */
-		if (cset->ac->clabel->root_partition==1) {
-			/* everything configured just fine.  Make a note
-			   that this set is eligible to be root. */
-			cset->rootable = 1;
+		switch (cset->ac->clabel->root_partition) {
+		case 1:	/* Force Root */
+		case 2:	/* Soft Root: root when boot partition part of raid */
+			/*
+			 * everything configured just fine.  Make a note
+			 * that this set is eligible to be root,
+			 * or forced to be root
+			 */
+			cset->rootable = cset->ac->clabel->root_partition;
 			/* XXX do this here? */
-			raidPtr->root_partition = 1;
+			raidPtr->root_partition = cset->rootable;
+			break;
+		default:
+			break;
 		}
 	} else {
 		raidput(sc);

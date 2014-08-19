@@ -1,4 +1,4 @@
-/* $NetBSD: tps65950.c,v 1.3.6.2 2013/02/25 00:29:13 tls Exp $ */
+/* $NetBSD: tps65950.c,v 1.3.6.3 2014/08/20 00:03:37 tls Exp $ */
 
 /*-
  * Copyright (c) 2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.3.6.2 2013/02/25 00:29:13 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65950.c,v 1.3.6.3 2014/08/20 00:03:37 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,13 +273,8 @@ tps65950_sysctl_attach(struct tps65950_softc *sc)
 	int error;
 
 	error = sysctl_createv(log, 0, NULL, &rnode, CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "hw", NULL, NULL, 0, NULL, 0, CTL_HW, CTL_EOL);
-	if (error)
-		return;
-
-	error = sysctl_createv(log, 0, &rnode, &rnode, CTLFLAG_PERMANENT,
 	    CTLTYPE_NODE, "tps65950", SYSCTL_DESCR("tps65950 control"),
-	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
 	if (error)
 		return;
 

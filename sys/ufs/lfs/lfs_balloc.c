@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.70.12.2 2013/06/23 06:18:39 tls Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.70.12.3 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.70.12.2 2013/06/23 06:18:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.70.12.3 2014/08/20 00:04:44 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.70.12.2 2013/06/23 06:18:39 tls Exp
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
+#include <ufs/lfs/lfs_kernel.h>
 
 #include <uvm/uvm.h>
 
@@ -224,7 +225,7 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 	 * Do byte accounting all at once, so we can gracefully fail *before*
 	 * we start assigning blocks.
 	 */
-	frags = VFSTOULFS(vp->v_mount)->um_seqinc;
+	frags = fs->um_seqinc;
 	bcount = 0;
 	if (daddr == UNASSIGNED) {
 		bcount = frags;
@@ -411,7 +412,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 	if (bpp && (error = bread(vp, lbn, osize, NOCRED, 0, bpp))) {
 		goto out;
 	}
-#ifdef LFS_QUOTA
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	if ((error = lfs_chkdq(ip, frags, cred, 0))) {
 		if (bpp)
 			brelse(*bpp, 0);
@@ -429,7 +430,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 		if (!lfs_fits(fs, frags)) {
 			if (bpp)
 				brelse(*bpp, 0);
-#ifdef LFS_QUOTA
+#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 			lfs_chkdq(ip, -frags, cred, 0);
 #endif
 			rw_exit(&fs->lfs_fraglock);

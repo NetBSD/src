@@ -1,4 +1,4 @@
-/*	$NetBSD: arn9003.c,v 1.3.4.2 2013/06/23 06:20:17 tls Exp $	*/
+/*	$NetBSD: arn9003.c,v 1.3.4.3 2014/08/20 00:03:37 tls Exp $	*/
 /*	$OpenBSD: ar9003.c,v 1.25 2012/10/20 09:53:32 stsp Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn9003.c,v 1.3.4.2 2013/06/23 06:20:17 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn9003.c,v 1.3.4.3 2014/08/20 00:03:37 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -228,12 +228,12 @@ ar9003_attach(struct athn_softc *sc)
 
 	/* Determine ROM type and location. */
 	if ((error = ar9003_find_rom(sc)) != 0) {
-		printf("%s: could not find ROM\n", device_xname(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "could not find ROM\n");
 		return error;
 	}
 	/* Read entire ROM content in memory. */
 	if ((error = ar9003_read_rom(sc)) != 0) {
-		printf("%s: could not read ROM\n", device_xname(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "could not read ROM\n");
 		return error;
 	}
 
@@ -694,8 +694,8 @@ ar9003_tx_alloc(struct athn_softc *sc)
 		    AR9003_MAX_SCATTER, ATHN_TXBUFSZ, 0, BUS_DMA_NOWAIT,
 		    &bf->bf_map);
 		if (error != 0) {
-			printf("%s: could not create Tx buf DMA map\n",
-			    device_xname(sc->sc_dev));
+			aprint_error_dev(sc->sc_dev,
+			    "could not create Tx buf DMA map\n");
 			goto fail;
 		}
 
@@ -766,8 +766,8 @@ ar9003_rx_alloc(struct athn_softc *sc, int qid, int count)
 		    ATHN_RXBUFSZ, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &bf->bf_map);
 		if (error != 0) {
-			printf("%s: could not create Rx buf DMA map\n",
-			    device_xname(sc->sc_dev));
+			aprint_error_dev(sc->sc_dev,
+			    "could not create Rx buf DMA map\n");
 			goto fail;
 		}
 		/*
@@ -775,8 +775,8 @@ ar9003_rx_alloc(struct athn_softc *sc, int qid, int count)
 		 */
 		bf->bf_m = MCLGETI(NULL, M_DONTWAIT, NULL, ATHN_RXBUFSZ);
 		if (bf->bf_m == NULL) {
-			printf("%s: could not allocate Rx mbuf\n",
-			    device_xname(sc->sc_dev));
+			aprint_error_dev(sc->sc_dev,
+			    "could not allocate Rx mbuf\n");
 			error = ENOBUFS;
 			goto fail;
 		}
@@ -785,8 +785,8 @@ ar9003_rx_alloc(struct athn_softc *sc, int qid, int count)
 		    mtod(bf->bf_m, void *), ATHN_RXBUFSZ, NULL,
 		    BUS_DMA_NOWAIT);
 		if (error != 0) {
-			printf("%s: could not DMA map Rx buffer\n",
-			    device_xname(sc->sc_dev));
+			aprint_error_dev(sc->sc_dev,
+			    "could not DMA map Rx buffer\n");
 			goto fail;
 		}
 
@@ -953,7 +953,7 @@ ar9003_rx_process(struct athn_softc *sc, int qid)
 
 	bf = SIMPLEQ_FIRST(&rxq->head);
 	if (__predict_false(bf == NULL)) {	/* Should not happen. */
-		printf("%s: Rx queue is empty!\n", device_xname(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "Rx queue is empty!\n");
 		return ENOENT;
 	}
 	bus_dmamap_sync(sc->sc_dmat, bf->bf_map, 0, ATHN_RXBUFSZ,
@@ -1339,7 +1339,7 @@ ar9003_swba_intr(struct athn_softc *sc)
 Static int
 ar9003_intr(struct athn_softc *sc)
 {
-	uint32_t intr, intr2, intr5, sync;
+	uint32_t intr, sync;
 
 	/* Get pending interrupts. */
 	intr = AR_READ(sc, AR_INTR_ASYNC_CAUSE);
@@ -1360,7 +1360,7 @@ ar9003_intr(struct athn_softc *sc)
 
 	if (intr != 0) {
 		if (intr & AR_ISR_BCNMISC) {
-			intr2 = AR_READ(sc, AR_ISR_S2);
+			uint32_t intr2 = AR_READ(sc, AR_ISR_S2);
 #ifdef notyet
 			if (intr2 & AR_ISR_S2_TIM)
 				/* TBD */;
@@ -1368,6 +1368,8 @@ ar9003_intr(struct athn_softc *sc)
 				/* TBD */;
 			if (intr2 & AR_ISR_S2_BB_WATCHDOG)
 				/* TBD */;
+#else
+			__USE(intr2);
 #endif
 		}
 		intr = AR_READ(sc, AR_ISR_RAC);
@@ -1391,11 +1393,15 @@ ar9003_intr(struct athn_softc *sc)
 			ar9003_tx_intr(sc);
 
 		if (intr & AR_ISR_GENTMR) {
-			intr5 = AR_READ(sc, AR_ISR_S5_S);
+			uint32_t intr5 = AR_READ(sc, AR_ISR_S5_S);
+#ifdef ATHN_DEBUG
 			DPRINTFN(DBG_INTR, sc,
 			    "GENTMR trigger=%d thresh=%d\n",
 			    MS(intr5, AR_ISR_S5_GENTIMER_TRIG),
 			    MS(intr5, AR_ISR_S5_GENTIMER_THRESH));
+#else
+			__USE(intr5);
+#endif
 		}
 	}
 	if (sync != 0) {
@@ -1542,8 +1548,8 @@ ar9003_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 	if (__predict_false(error != 0)) {
 		if (error != EFBIG) {
-			printf("%s: can't map mbuf (error %d)\n",
-			    device_xname(sc->sc_dev), error);
+			aprint_error_dev(sc->sc_dev,
+			    "can't map mbuf (error %d)\n", error);
 			m_freem(m);
 			return error;
 		}
@@ -1572,8 +1578,8 @@ ar9003_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, bf->bf_map, m,
 		    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 		if (error != 0) {
-			printf("%s: can't map mbuf (error %d)\n",
-			    device_xname(sc->sc_dev), error);
+			aprint_error_dev(sc->sc_dev,
+			    "can't map mbuf (error %d)\n", error);
 			m_freem(m);
 			return error;
 		}
@@ -1834,14 +1840,14 @@ ar9003_set_rf_mode(struct athn_softc *sc, struct ieee80211_channel *c)
 static __inline uint32_t
 ar9003_synth_delay(struct athn_softc *sc)
 {
-	uint32_t delay;
+	uint32_t synth_delay;
 
-	delay = MS(AR_READ(sc, AR_PHY_RX_DELAY), AR_PHY_RX_DELAY_DELAY);
+	synth_delay = MS(AR_READ(sc, AR_PHY_RX_DELAY), AR_PHY_RX_DELAY_DELAY);
 	if (sc->sc_ic.ic_curmode == IEEE80211_MODE_11B)
-		delay = (delay * 4) / 22;
+		synth_delay = (synth_delay * 4) / 22;
 	else
-		delay = delay / 10;	/* in 100ns steps */
-	return delay;
+		synth_delay = synth_delay / 10;	/* in 100ns steps */
+	return synth_delay;
 }
 
 Static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.34.22.1 2013/02/25 00:30:13 tls Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.34.22.2 2014/08/20 00:04:44 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.34.22.1 2013/02/25 00:30:13 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.34.22.2 2014/08/20 00:04:44 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
@@ -155,7 +155,7 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		if (bpp != NULL) {
 			bp = getblk(vp, bn, fs->e2fs_bsize, 0, 0);
-			bp->b_blkno = fsbtodb(fs, newb);
+			bp->b_blkno = EXT2_FSBTODB(fs, newb);
 			if (flags & B_CLRBUF)
 				clrbuf(bp);
 			*bpp = bp;
@@ -189,7 +189,7 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 		*allocblk++ = nb;
 		ip->i_e2fs_last_blk = newb;
 		bp = getblk(vp, indirs[1].in_lbn, fs->e2fs_bsize, 0, 0);
-		bp->b_blkno = fsbtodb(fs, newb);
+		bp->b_blkno = EXT2_FSBTODB(fs, newb);
 		clrbuf(bp);
 		/*
 		 * Write synchronously so that indirect blocks
@@ -231,7 +231,7 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 		*allocblk++ = nb;
 		ip->i_e2fs_last_blk = newb;
 		nbp = getblk(vp, indirs[i].in_lbn, fs->e2fs_bsize, 0, 0);
-		nbp->b_blkno = fsbtodb(fs, nb);
+		nbp->b_blkno = EXT2_FSBTODB(fs, nb);
 		clrbuf(nbp);
 		/*
 		 * Write synchronously so that indirect blocks
@@ -282,7 +282,7 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 		}
 		if (bpp != NULL) {
 			nbp = getblk(vp, lbn, fs->e2fs_bsize, 0, 0);
-			nbp->b_blkno = fsbtodb(fs, nb);
+			nbp->b_blkno = EXT2_FSBTODB(fs, nb);
 			if (flags & B_CLRBUF)
 				clrbuf(nbp);
 			*bpp = nbp;
@@ -299,7 +299,7 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 			}
 		} else {
 			nbp = getblk(vp, lbn, fs->e2fs_bsize, 0, 0);
-			nbp->b_blkno = fsbtodb(fs, nb);
+			nbp->b_blkno = EXT2_FSBTODB(fs, nb);
 		}
 		*bpp = nbp;
 	}
@@ -366,7 +366,7 @@ ext2fs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
 		UVMHIST_LOG(ubchist, "off 0x%x len 0x%x bsize 0x%x",
 			    off, len, bsize, 0);
 
-		error = ext2fs_balloc(ip, lblkno(fs, off), bsize, cred,
+		error = ext2fs_balloc(ip, ext2_lblkno(fs, off), bsize, cred,
 		    NULL, flags);
 		if (error) {
 			UVMHIST_LOG(ubchist, "error %d", error, 0,0,0);

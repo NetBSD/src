@@ -1,4 +1,4 @@
-/*	$NetBSD: def.h,v 1.6 2003/08/07 09:36:53 agc Exp $	*/
+/*	$NetBSD: def.h,v 1.6.60.1 2014/08/20 00:00:21 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -64,11 +64,6 @@
 #define D_RIGHT		2
 #define D_UP		3
 #define D_DOWN		4
-
-#define T_NODEST	0
-#define T_BEACON	1
-#define T_EXIT		2
-#define T_AIRPORT	3
 
 #undef S_NONE
 #undef S_GONE

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.38 2010/06/24 13:03:11 hannken Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.38.18.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.38 2010/06/24 13:03:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.38.18.1 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,6 +157,16 @@ cttykqfilter(dev_t dev, struct knote *kn)
 }
 
 const struct cdevsw ctty_cdevsw = {
-	cttyopen, nullclose, cttyread, cttywrite, cttyioctl,
-	nullstop, notty, cttypoll, nommap, cttykqfilter, D_TTY
+	.d_open = cttyopen,
+	.d_close = nullclose,
+	.d_read = cttyread,
+	.d_write = cttywrite,
+	.d_ioctl = cttyioctl,
+	.d_stop = nullstop,
+	.d_tty = notty,
+	.d_poll = cttypoll,
+	.d_mmap = nommap,
+	.d_kqfilter = cttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };

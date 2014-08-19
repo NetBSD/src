@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.2 2011/03/10 18:18:00 pooka Exp $	*/
+/*	$NetBSD: start.S,v 1.2.16.1 2014/08/20 00:02:52 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -522,10 +522,8 @@ END(PutChar)
 LEAF(switch_stack_and_call)
     /* Get a stack and jump. It would be a very bad idea to return but..
      */
-#ifdef __GP_SUPPORT__
-    la      gp, _C_LABEL (_gp)
-#endif
-    la    sp,_end
+    lui   sp,%hi(_end)
+    addiu sp,%lo(_end)
     jr    a1
 	addiu sp,sp,(2*1024)          /* BUGBUG arbitrary */
 

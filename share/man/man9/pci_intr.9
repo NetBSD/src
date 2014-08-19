@@ -1,4 +1,4 @@
-.\" $NetBSD: pci_intr.9,v 1.15 2011/04/05 14:57:33 dyoung Exp $
+.\" $NetBSD: pci_intr.9,v 1.15.10.1 2014/08/20 00:02:37 tls Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 5, 2011
+.Dd March 30, 2014
 .Dt PCI_INTR 9
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@
 .Ft int
 .Fn pci_intr_map "const struct pci_attach_args *pa" "pci_intr_handle_t *ih"
 .Ft const char *
-.Fn pci_intr_string "pci_chipset_t *pc" "pci_intr_handle_t ih"
+.Fn pci_intr_string "pci_chipset_t *pc" "pci_intr_handle_t ih" "char *buf" "size_t len"
 .Ft void *
 .Fn pci_intr_establish "pci_chipset_t *pc" "pci_intr_handle_t ih" \
 "int ipl" "int (*intrhand)(void *)" "void *intrarg"
@@ -84,6 +84,11 @@ identifies a particular interrupt source.
 If the driver wishes to refer to the interrupt source in an attach or
 error message, it should use the value returned by
 .Fn pci_intr_string .
+The buffer passed to
+.Fn pci_intr_string
+should be at least
+.Dv PCI_INTRSTR_LEN
+bytes.
 .Pp
 Subsequently, when the driver is prepared to receive interrupts, it
 should call

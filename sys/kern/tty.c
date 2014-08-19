@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.253.2.2 2013/02/25 00:29:55 tls Exp $	*/
+/*	$NetBSD: tty.c,v 1.253.2.3 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,9 +63,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.253.2.2 2013/02/25 00:29:55 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.253.2.3 2014/08/20 00:04:29 tls Exp $");
 
 #include "opt_compat_netbsd.h"
+
+#define TTY_ALLOW_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,11 +297,6 @@ sysctl_kern_tty_setup(void)
 	struct sysctllog *kern_tkstat_sysctllog, *kern_tty_sysctllog;
 
 	kern_tkstat_sysctllog = NULL;
-	sysctl_createv(&kern_tkstat_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, CTL_EOL);
 	sysctl_createv(&kern_tkstat_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "tkstat",
@@ -927,12 +924,15 @@ int
 ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	extern struct tty *constty;	/* Temporary virtual console. */
-	struct proc *p = l ? l->l_proc : NULL;
+	struct proc *p;
 	struct linesw	*lp;
 	int		s, error;
 	struct pathbuf *pb;
 	struct nameidata nd;
 	char		infobuf[200];
+
+	KASSERT(l != NULL);
+	p = l->l_proc;
 
 	/* If the ioctl involves modification, hang if in the background. */
 	switch (cmd) {
@@ -2966,4 +2966,46 @@ ttysigintr(void *cookie)
 	}
 	mutex_spin_exit(&tty_lock);
 	mutex_exit(proc_lock);
+}
+
+unsigned char
+tty_getctrlchar(struct tty *tp, unsigned which)
+{
+	KASSERT(which < NCCS);
+	return tp->t_cc[which];
+}
+
+void
+tty_setctrlchar(struct tty *tp, unsigned which, unsigned char val)
+{
+	KASSERT(which < NCCS);
+	tp->t_cc[which] = val;
+}
+
+int
+tty_try_xonxoff(struct tty *tp, unsigned char c)
+{
+    const struct cdevsw *cdev;
+
+    if (tp->t_iflag & IXON) {
+	if (c == tp->t_cc[VSTOP] && tp->t_cc[VSTOP] != _POSIX_VDISABLE) {
+	    if ((tp->t_state & TS_TTSTOP) == 0) {
+		tp->t_state |= TS_TTSTOP;
+		cdev = cdevsw_lookup(tp->t_dev);
+		if (cdev != NULL)
+			(*cdev->d_stop)(tp, 0);
+	    }
+	    return 0;
+	}
+	if (c == tp->t_cc[VSTART] && tp->t_cc[VSTART] != _POSIX_VDISABLE) {
+	    tp->t_state &= ~TS_TTSTOP;
+	    if (tp->t_oproc != NULL) {
+	        mutex_spin_enter(&tty_lock);	/* XXX */
+		(*tp->t_oproc)(tp);
+	        mutex_spin_exit(&tty_lock);	/* XXX */
+	    }
+	    return 0;
+	}
+    }
+    return EAGAIN;
 }

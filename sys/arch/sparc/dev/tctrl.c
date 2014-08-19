@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.55.2.1 2012/11/20 03:01:43 tls Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.55.2.2 2014/08/20 00:03:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.55.2.1 2012/11/20 03:01:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.55.2.2 2014/08/20 00:03:24 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,8 +88,18 @@ dev_type_poll(tctrlpoll);
 dev_type_kqfilter(tctrlkqfilter);
 
 const struct cdevsw tctrl_cdevsw = {
-	tctrlopen, tctrlclose, noread, nowrite, tctrlioctl,
-	nostop, notty, tctrlpoll, nommap, tctrlkqfilter,
+	.d_open = tctrlopen,
+	.d_close = tctrlclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = tctrlioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = tctrlpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = tctrlkqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 static const char *tctrl_ext_statuses[16] = {
@@ -747,7 +757,7 @@ static void
 tctrl_read_event_status(struct tctrl_softc *sc)
 {
 	struct tctrl_req req;
-	int s, lid;
+	int s;
 	uint32_t v;
 
 	req.cmdbuf[0] = TS102_OP_RD_EVENT_STATUS;
@@ -800,7 +810,6 @@ tctrl_read_event_status(struct tctrl_softc *sc)
 		    (sc->sc_ext_status & TS102_EXT_STATUS_LID_DOWN)
 		    ? "closed" : "opened");
 #endif
-		lid = (sc->sc_ext_status & TS102_EXT_STATUS_LID_DOWN) == 0;
 	}
 	if (v & TS102_EVENT_STATUS_EXTERNAL_VGA_STATUS_CHANGE) {
 		int vga;

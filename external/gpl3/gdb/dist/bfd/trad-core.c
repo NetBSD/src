@@ -1,6 +1,6 @@
 /* BFD back end for traditional Unix core files (U-area and raw sections)
    Copyright 1988, 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007
+   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2011, 2012
    Free Software Foundation, Inc.
    Written by John Gilmore of Cygnus Support.
 
@@ -60,26 +60,21 @@ struct trad_core_struct
   struct user u;
 };
 
-#define core_upage(bfd) (&((bfd)->tdata.trad_core_data->u))
-#define core_datasec(bfd) ((bfd)->tdata.trad_core_data->data_section)
+#define core_upage(bfd)  (&((bfd)->tdata.trad_core_data->u))
+#define core_datasec(bfd)  ((bfd)->tdata.trad_core_data->data_section)
 #define core_stacksec(bfd) ((bfd)->tdata.trad_core_data->stack_section)
-#define core_regsec(bfd) ((bfd)->tdata.trad_core_data->reg_section)
+#define core_regsec(bfd)   ((bfd)->tdata.trad_core_data->reg_section)
 
 /* forward declarations */
 
-const bfd_target *trad_unix_core_file_p PARAMS ((bfd *abfd));
-char * trad_unix_core_file_failing_command PARAMS ((bfd *abfd));
-int trad_unix_core_file_failing_signal PARAMS ((bfd *abfd));
 #define trad_unix_core_file_matches_executable_p generic_core_file_matches_executable_p
 #define trad_unix_core_file_pid _bfd_nocore_core_file_pid
-static void swap_abort PARAMS ((void));
+
 
 /* Handle 4.2-style (and perhaps also sysV-style) core dump file.  */
 
-const bfd_target *
-trad_unix_core_file_p (abfd)
-     bfd *abfd;
-
+static const bfd_target *
+trad_unix_core_file_p (bfd *abfd)
 {
   int val;
   struct user u;
@@ -236,9 +231,8 @@ trad_unix_core_file_p (abfd)
   return NULL;
 }
 
-char *
-trad_unix_core_file_failing_command (abfd)
-     bfd *abfd;
+static char *
+trad_unix_core_file_failing_command (bfd *abfd)
 {
 #ifndef NO_CORE_COMMAND
   char *com = abfd->tdata.trad_core_data->u.u_comm;
@@ -249,9 +243,8 @@ trad_unix_core_file_failing_command (abfd)
     return 0;
 }
 
-int
-trad_unix_core_file_failing_signal (ignore_abfd)
-     bfd *ignore_abfd ATTRIBUTE_UNUSED;
+static int
+trad_unix_core_file_failing_signal (bfd *ignore_abfd ATTRIBUTE_UNUSED)
 {
 #ifdef TRAD_UNIX_CORE_FILE_FAILING_SIGNAL
   return TRAD_UNIX_CORE_FILE_FAILING_SIGNAL(ignore_abfd);
@@ -262,7 +255,7 @@ trad_unix_core_file_failing_signal (ignore_abfd)
 
 /* If somebody calls any byte-swapping routines, shoot them.  */
 static void
-swap_abort ()
+swap_abort (void)
 {
   abort (); /* This way doesn't require any declaration for ANSI to fuck up */
 }
@@ -284,9 +277,10 @@ const bfd_target trad_core_vec =
      HAS_LINENO | HAS_DEBUG |
      HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
     (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC), /* section flags */
-    0,			                                   /* symbol prefix */
-    ' ',						   /* ar_pad_char */
-    16,							   /* ar_max_namelen */
+    0,				/* symbol prefix */
+    ' ',			/* ar_pad_char */
+    16,				/* ar_max_namelen */
+    0,				/* match priority.  */
     NO_GET64, NO_GETS64, NO_PUT64,	/* 64 bit data */
     NO_GET, NO_GETS, NO_PUT,		/* 32 bit data */
     NO_GET, NO_GETS, NO_PUT,		/* 16 bit data */
@@ -321,5 +315,5 @@ const bfd_target trad_core_vec =
 
     NULL,
 
-    (PTR) 0			/* backend_data */
+    NULL			/* backend_data */
   };

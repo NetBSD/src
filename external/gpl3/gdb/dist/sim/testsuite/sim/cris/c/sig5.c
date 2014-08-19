@@ -1,7 +1,7 @@
 /* Check that TRT happens for an uncaught non-abort signal, single thread.
 #xerror:
 #output: Unimplemented signal: 7\n
-#output: program stopped with signal 4.\n
+#output: program stopped with signal 4 (*).\n
 */
 
 #include <stdlib.h>

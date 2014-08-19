@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_masquerade.c,v 1.1.1.1.16.1 2013/02/25 00:27:16 tls Exp $	*/
+/*	$NetBSD: cleanup_masquerade.c,v 1.1.1.1.16.2 2014/08/19 23:59:42 tls Exp $	*/
 
 /*++
 /* NAME
@@ -112,7 +112,8 @@ int     cleanup_masquerade_external(CLEANUP_STATE *state, VSTRING *addr,
 	excluded = (string_list_match(cleanup_masq_exceptions, lowercase(name)) != 0);
 	myfree(name);
 	if (cleanup_masq_exceptions->error) {
-	    msg_info("%s: %s lookup error -- deferring delivery",
+	    msg_info("%s: %s map lookup problem -- "
+		     "message not accepted, try again later",
 		     state->queue_id, VAR_MASQ_EXCEPTIONS);
 	    state->errs |= CLEANUP_STAT_WRITE;
 	}

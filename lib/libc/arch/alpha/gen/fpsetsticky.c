@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetsticky.c,v 1.4 2005/06/12 05:21:25 lukem Exp $	*/
+/*	$NetBSD: fpsetsticky.c,v 1.4.50.1 2014/08/20 00:02:09 tls Exp $	*/
 
 /*
  * Copyright (c) 1999 Ross Harvey
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpsetsticky.c,v 1.4 2005/06/12 05:21:25 lukem Exp $");
+__RCSID("$NetBSD: fpsetsticky.c,v 1.4.50.1 2014/08/20 00:02:09 tls Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -46,8 +46,7 @@ __weak_alias(fpsetsticky,_fpsetsticky)
 #endif
 
 fp_except
-fpsetsticky(sticky)
-	fp_except sticky;
+fpsetsticky(fp_except sticky)
 {
 	struct alpha_fp_except_args a;
 

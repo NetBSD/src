@@ -1,5 +1,4 @@
-#   Copyright 1998, 2007, 2008, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright 1998-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,19 +15,13 @@
 
 # This file was written by Michael Snyder (msnyder@cygnus.com)
 
-load_lib "trace-support.exp";
-
-if $tracelevel then {
-    strace $tracelevel
-}
+load_lib "trace-support.exp"
 
 
 gdb_exit
 gdb_start
 
-set testfile "actions"
-set srcfile ${testfile}.c
-set binfile $objdir/$subdir/report
+standard_testfile actions.c
 if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
 	  executable {debug nowarnings}] != "" } {
     untested report.exp
@@ -40,11 +33,9 @@ gdb_test "tfind none"  ".*" ""
 runto_main
 gdb_reinitialize_dir $srcdir/$subdir
 
-# We generously give ourselves one "pass" if we successfully 
-# detect that this test cannot be run on this target!
 if { ![gdb_target_supports_trace] } then {
-    pass "Current target does not support trace"
-    return 1;
+    unsupported "Current target does not support trace"
+    return 1
 
 }
 
@@ -71,10 +62,10 @@ set arg4 4
 set arg5 5
 set arg6 6
 
-set gdb_recursion_test_baseline [gdb_find_recursion_test_baseline $srcfile];
+set gdb_recursion_test_baseline [gdb_find_recursion_test_baseline $srcfile]
 if { $gdb_recursion_test_baseline == -1 } {
     fail "Could not find gdb_recursion_test function"
-    return;
+    return
 }
 
 set return_me 0
@@ -119,7 +110,7 @@ all tests in this module will fail."
 }
 
 if { $return_me == 1 } then {
-    return -1;
+    return -1
 }
 
 #
@@ -143,7 +134,7 @@ set tdp6 [gdb_gettpnum $testline6]
 if {    $tdp1 <= 0 || $tdp2 <= 0 || $tdp3 <= 0 || \
 	$tdp4 <= 0 || $tdp5 <= 0 || $tdp6 <= 0 } then {
     fail "setting tracepoints failed"
-    return;
+    return
 }
 
 gdb_trace_setactions "9.x: setup TP to collect regs" \
@@ -159,11 +150,11 @@ gdb_trace_setactions "9.x: setup TP to collect locals" \
 	"$tdp4" \
 	"collect \$locs" "^$"
 
-if [istarget "x86_64-*"] then {
+if [is_amd64_regs_target] {
     set fpreg "rbp"
     set spreg "rsp"
     set pcreg "rip"
-} elseif [istarget "i?86-*"] then {
+} elseif [is_x86_like_target] {
     set fpreg "ebp"
     set spreg "esp"
     set pcreg "eip"
@@ -190,210 +181,266 @@ gdb_test "continue" \
 
 gdb_test "tstop" ".*" ""
 
-#
-# 9.1 test the tdump command
-#
-
-set timeout 60
-
-gdb_tfind_test "9.1: init: make sure not debugging any trace frame" "none" "-1"
-
-gdb_tfind_test "9.1: find frame for TP $tdp1" "tracepoint $tdp1" \
-	"\$tracepoint" "$tdp1"
-
-# Nothing was collected at tdp1, so this tdump should be empty.
-gdb_test "tdump" \
-	"Data collected at tracepoint $tdp1, trace frame $decimal:" \
-	"9.1: tdump, nothing collected"
-
-gdb_tfind_test "9.1: find frame for TP $tdp2" "tracepoint $tdp2" \
-	"\$tracepoint" "$tdp2"
-
-# regs were collected at tdp2.
-# How to match for the output of "info registers" on an unknown architecture?
-# For now, assume that most architectures have a register called "pc".
-
-gdb_test "tdump" \
-       "\[\r\n\]$pcreg .*" \
-       "9.1: tdump, regs collected"
-
-gdb_tfind_test "9.1: find frame for TP $tdp3" "tracepoint $tdp3" \
-	"\$tracepoint" "$tdp3"
-
-# args were collected at tdp3
-gdb_test "tdump" \
-	"depth = 3.*q1 = 2.*q2 = 2.*q3 = 3.*q4 = 4.*q5 = 5.*q6 = 6" \
-	"9.1: tdump, args collected"
-
-gdb_tfind_test "9.1: find frame for TP $tdp4" "tracepoint $tdp4" \
-	"\$tracepoint" "$tdp4"
-
-# locals were collected at tdp4
-gdb_test "tdump" \
-	"q = 1" \
-	"9.1: tdump, locals collected"
-
-gdb_tfind_test "9.1: find frame for TP $tdp5" "tracepoint $tdp5" \
-	"\$tracepoint" "$tdp5"
-
-# stack was collected at tdp5, plus the frame pointer
-gdb_test "tdump" \
-       ".$fpreg = .*$spreg @ 64 = .*" \
-       "9.1: tdump, memrange collected"
-
-gdb_tfind_test "9.1: find frame for TP $tdp6" "tracepoint $tdp6" \
-	"\$tracepoint" "$tdp6"
-
-# globals were collected at tdp6
-gdb_test "tdump" \
-	"gdb_char_test = 1.*gdb_short_test = 2.*gdb_long_test = 3" \
-	"9.1: tdump, global variables collected"
-
-# 9.2 test tdump with arguments
-#     [no go, tdump doesn't have any arguments]
+gdb_tfind_test "9.1: init: make sure not debugging any trace frame" \
+    "none" "-1"
 
 # 9.3 help tdump
 
 gdb_test "help tdump" "Print everything collected at the current.*" \
 	"9.3: help tdump"
 
-set linecount1 0
-set linecount2 0
-set linecount3 0
-set linecount4 0
-set linecount5 0
-set linecount6 0
+# Check the collected trace data from different sources, such as live
+# inferior and tfile.
 
-gdb_tfind_test "11.x, 12.1: find start frame" "start" "0"
+proc use_collected_data { data_source } {
+    with_test_prefix "${data_source}" {
+	global tdp1 tdp2 tdp3 tdp4 tdp5 tdp6
+	global testline1 testline2 testline3 testline4 testline5 testline6
+	global pcreg fpreg spreg
+	global srcfile srcdir subdir binfile
+	global arg1 arg3
+	global decimal hex gdb_prompt
+	#
+	# 9.1 test the tdump command
+	#
 
-#
-# 11.x test built-in trace variables $trace_frame, $trace_line etc.
-#
+	set timeout 60
 
-gdb_test "printf \"x %d x\\n\", \$trace_frame" "x 0 x" \
-	"11.1: test \$trace_frame"
+	gdb_tfind_test "9.1: find frame for TP $tdp1" "tracepoint $tdp1" \
+	    "\$tracepoint" "$tdp1"
 
-gdb_test "printf \"x %d x\\n\", \$tracepoint" "x $tdp1 x" \
-	"11.2: test \$tracepoint"
+	# Nothing was collected at tdp1, so this tdump should be empty.
+	gdb_test "tdump" \
+	    "Data collected at tracepoint $tdp1, trace frame $decimal:" \
+	    "9.1: tdump, nothing collected"
 
-gdb_test "printf \"x %d x\\n\", \$trace_line" "x $testline1 x" \
-	"11.3: test \$trace_line"
+	gdb_tfind_test "9.1: find frame for TP $tdp2" "tracepoint $tdp2" \
+	    "\$tracepoint" "$tdp2"
 
-gdb_test_multiple "print \$trace_file" "11.4: test \$trace_file" {
-    -re "\\$\[0-9\]+ = \"$srcfile\"\[\r\n\]+$gdb_prompt $" {
-	pass "11.4: test \$trace_file"
-    }
-    -re "\\$\[0-9\]+ = \"$srcdir/$subdir/$srcfile\"\[\r\n\]+$gdb_prompt $" {
-	pass "11.4: test \$trace_file"
-    }
-}
+	# regs were collected at tdp2.
+	# How to match for the output of "info registers" on an unknown architecture?
+	# For now, assume that most architectures have a register called "pc".
 
-#gdb_test "print \$trace_file" "\"$srcdir/$subdir/$srcfile\"" \
-#	"11.4: test \$trace_file"
+	gdb_test "tdump" \
+	    "\[\r\n\]$pcreg .*" \
+	    "9.1: tdump, regs collected"
 
-#
-# 12.x test report generation using arbitrary GDB commands, loops etc.
-#
+	gdb_tfind_test "9.1: find frame for TP $tdp3" "tracepoint $tdp3" \
+	    "\$tracepoint" "$tdp3"
 
-gdb_test_multiple "while \$trace_frame != -1\n  output \$trace_file\n  printf \", line \%d \(tracepoint #\%d\)\\n\", \$trace_line, \$tracepoint\n  tfind\n  end" "12.1: trace report #1" {
-    -re ">  end\r\n" {
-	exp_continue
-    }
-    -re "^Found trace frame \[0-9\]+, tracepoint \[0-9\]+\r\n" {
-	exp_continue
-    }
-    -re "^\[^\r\n\]* line $testline1 .tracepoint .$tdp1\\)\r\n" {
-	set linecount1 [expr $linecount1 + 1]
-	exp_continue
-    }
-    -re "^\[^\r\n\]* line $testline2 .tracepoint .$tdp2\\)\r\n" {
-	set linecount2 [expr $linecount2 + 1]
-	exp_continue
-    }
-    -re "^\[^\r\n\]* line $testline3 .tracepoint .$tdp3\\)\r\n" {
-	set linecount3 [expr $linecount3 + 1]
-	exp_continue
-    }
-    -re "^\[^\r\n\]* line $testline4 .tracepoint .$tdp4\\)\r\n" {
-	set linecount4 [expr $linecount4 + 1]
-	exp_continue
-    }
-    -re "^\[^\r\n\]* line $testline5 .tracepoint .$tdp5\\)\r\n" {
-	set linecount5 [expr $linecount5 + 1]
-	exp_continue
-    }
-    -re "^\[^\r\n\]* line $testline6 .tracepoint .$tdp6\\)\r\n" {
-	set linecount6 [expr $linecount6 + 1]
-	exp_continue
-    }
-    -re "^No trace frame found\r\n$gdb_prompt $" {
-	if { ($linecount1 < 4) || ($linecount2 < 4) || ($linecount3 < 4) || ($linecount4 < 4) || ($linecount5 < 4) || ($linecount6 < 4) } {
-	    fail "12.1: trace report #1"
-	} else {
-	    pass "12.1: trace report #1"
+	# args were collected at tdp3
+	gdb_test "tdump" \
+	    "depth = 3.*q1 = 2.*q2 = 2.*q3 = 3.*q4 = 4.*q5 = 5.*q6 = 6" \
+	    "9.1: tdump, args collected"
+
+	gdb_tfind_test "9.1: find frame for TP $tdp4" "tracepoint $tdp4" \
+	    "\$tracepoint" "$tdp4"
+
+	# locals were collected at tdp4
+	gdb_test "tdump" \
+	    "q = 1" \
+	    "9.1: tdump, locals collected"
+
+	gdb_tfind_test "9.1: find frame for TP $tdp5" "tracepoint $tdp5" \
+	    "\$tracepoint" "$tdp5"
+
+	# stack was collected at tdp5, plus the frame pointer
+	gdb_test "tdump" \
+	    ".$fpreg = .*$spreg @ 64 = .*" \
+	    "9.1: tdump, memrange collected"
+
+	gdb_tfind_test "9.1: find frame for TP $tdp6" "tracepoint $tdp6" \
+	    "\$tracepoint" "$tdp6"
+
+	# globals were collected at tdp6
+	gdb_test "tdump" \
+	    "gdb_char_test = 1.*gdb_short_test = 2.*gdb_long_test = 3" \
+	    "9.1: tdump, global variables collected"
+
+	# 9.2 test tdump with arguments
+	#     [no go, tdump doesn't have any arguments]
+
+	set linecount1 0
+	set linecount2 0
+	set linecount3 0
+	set linecount4 0
+	set linecount5 0
+	set linecount6 0
+
+	gdb_tfind_test "11.x, 12.1: find start frame" "start" "0"
+
+	#
+	# 11.x test built-in trace variables $trace_frame, $trace_line etc.
+	#
+
+	gdb_test "printf \"x %d x\\n\", \$trace_frame" "x 0 x" \
+	    "11.1: test \$trace_frame"
+
+	gdb_test "printf \"x %d x\\n\", \$tracepoint" "x $tdp1 x" \
+	    "11.2: test \$tracepoint"
+
+	gdb_test "printf \"x %d x\\n\", \$trace_line" "x $testline1 x" \
+	    "11.3: test \$trace_line"
+
+	gdb_test_multiple "print \$trace_file" "11.4: test \$trace_file" {
+	    -re "\\$\[0-9\]+ = \"$srcfile\"\[\r\n\]+$gdb_prompt $" {
+		pass "11.4: test \$trace_file"
+	    }
+	    -re "\\$\[0-9\]+ = \"$srcdir/$subdir/$srcfile\"\[\r\n\]+$gdb_prompt $" {
+		pass "11.4: test \$trace_file"
+	    }
 	}
-    }
-}
 
-gdb_tfind_test "12.2: tfind end, selects no frame" "end" "-1"
-gdb_tfind_test "12.2: find first TDP #2 frame" "tracepoint $tdp2" \
-	"\$tracepoint" "$tdp2"
+	#gdb_test "print \$trace_file" "\"$srcdir/$subdir/$srcfile\"" \
+	    #	"11.4: test \$trace_file"
 
-set linecount2 0
+	#
+	# 12.x test report generation using arbitrary GDB commands, loops etc.
+	#
 
-gdb_test_multiple "while \$trace_frame != -1\n printf \"tracepoint #\%d, FP 0x\%08x, SP 0x\%08x, PC 0x%08x\\n\", \$tracepoint, \$fp, \$sp, \$pc\n tfind tracepoint\n end" "12.2: trace report #2" {
-    -re "tracepoint #$tdp2, FP $hex, SP $hex, PC $hex" {
-	set linecount2 [expr $linecount2 + 1]
-	exp_continue
-    }
-    -re ".*$gdb_prompt $" {
-	if { ($linecount2 < 4) } {
-	    fail "12.2: trace report #2"
-	} else {
-	    pass "12.2: trace report #2"
+	gdb_test_multiple "while \$trace_frame != -1\n  output \$trace_file\n  printf \", line \%d \(tracepoint #\%d\)\\n\", \$trace_line, \$tracepoint\n  tfind\n  end" "12.1: trace report #1" {
+	    -re ">  end\r\n" {
+		exp_continue
+	    }
+	    -re "^Found trace frame \[0-9\]+, tracepoint \[0-9\]+\r\n" {
+		exp_continue
+	    }
+	    -re "^\[^\r\n\]* line $testline1 .tracepoint .$tdp1\\)\r\n" {
+		set linecount1 [expr $linecount1 + 1]
+		exp_continue
+	    }
+	    -re "^\[^\r\n\]* line $testline2 .tracepoint .$tdp2\\)\r\n" {
+		set linecount2 [expr $linecount2 + 1]
+		exp_continue
+	    }
+	    -re "^\[^\r\n\]* line $testline3 .tracepoint .$tdp3\\)\r\n" {
+		set linecount3 [expr $linecount3 + 1]
+		exp_continue
+	    }
+	    -re "^\[^\r\n\]* line $testline4 .tracepoint .$tdp4\\)\r\n" {
+		set linecount4 [expr $linecount4 + 1]
+		exp_continue
+	    }
+	    -re "^\[^\r\n\]* line $testline5 .tracepoint .$tdp5\\)\r\n" {
+		set linecount5 [expr $linecount5 + 1]
+		exp_continue
+	    }
+	    -re "^\[^\r\n\]* line $testline6 .tracepoint .$tdp6\\)\r\n" {
+		set linecount6 [expr $linecount6 + 1]
+		exp_continue
+	    }
+	    -re "^No trace frame found\r\n$gdb_prompt $" {
+		if { ($linecount1 < 4) || ($linecount2 < 4) || ($linecount3 < 4) || ($linecount4 < 4) || ($linecount5 < 4) || ($linecount6 < 4) } {
+		    fail "12.1: trace report #1"
+		} else {
+		    pass "12.1: trace report #1"
+		}
+	    }
 	}
-    }
-}
 
-gdb_tfind_test "12.3: tfind end, selects no frame" "end" "-1"
-gdb_tfind_test "12.3: find first TDP #3 frame" "tracepoint $tdp3" \
-	"\$tracepoint" "$tdp3"
+	gdb_tfind_test "12.2: tfind end, selects no frame" "end" "-1"
+	gdb_tfind_test "12.2: find first TDP #2 frame" "tracepoint $tdp2" \
+	    "\$tracepoint" "$tdp2"
 
-set linecount3 0
+	set linecount2 0
 
-gdb_test_multiple "while \$trace_frame != -1\n printf \"TDP #\%d, frame \%d: depth = \%d, q1 = \%d\\n\", \$tracepoint, \$trace_frame, depth, q1\n tfind tracepoint\n end" "12.3: trace report #3" {
-    -re "TDP #$tdp3, frame $decimal: depth = $decimal, q1 = $decimal" {
-	set linecount3 [expr $linecount3 + 1]
-	exp_continue
-    }
-    -re ".*$gdb_prompt $" {
-	if { ($linecount3 < 4) } {
-	    fail "12.3: trace report #3"
-	} else {
-	    pass "12.3: trace report #3"
+	gdb_test_multiple "while \$trace_frame != -1\n printf \"tracepoint #\%d, FP 0x\%08x, SP 0x\%08x, PC 0x%08x\\n\", \$tracepoint, \$fp, \$sp, \$pc\n tfind tracepoint\n end" "12.2: trace report #2" {
+	    -re "tracepoint #$tdp2, FP $hex, SP $hex, PC $hex" {
+		set linecount2 [expr $linecount2 + 1]
+		exp_continue
+	    }
+	    -re ".*$gdb_prompt $" {
+		if { ($linecount2 < 4) } {
+		    fail "12.2: trace report #2"
+		} else {
+		    pass "12.2: trace report #2"
+		}
+	    }
 	}
-    }
-}
 
-gdb_tfind_test "12.4: tfind end, selects no frame" "end" "-1"
-gdb_tfind_test "12.4: find first TDP #6 frame" "tracepoint $tdp6" \
-	"\$tracepoint" "$tdp6"
+	gdb_tfind_test "12.3: tfind end, selects no frame" "end" "-1"
+	gdb_tfind_test "12.3: find first TDP #3 frame" "tracepoint $tdp3" \
+	    "\$tracepoint" "$tdp3"
 
-set linecount6 0
+	set linecount3 0
 
-gdb_test_multiple "while \$trace_frame != -1\n printf \"TDP #\%d, frame %d: char_test = \%d, long_test = \%d\\n\", \$tracepoint, \$trace_frame, gdb_char_test, gdb_long_test\n tfind tracepoint\n end" "12.4: trace report #4" {
-    -re "TDP #$tdp6, frame $decimal: char_test = $arg1, long_test = $arg3" {
-	set linecount6 [expr $linecount6 + 1]
-	exp_continue
-    }
-    -re ".*$gdb_prompt $" {
-	if { ($linecount6 < 4) } {
-	    fail "12.4: trace report #4"
-	} else {
-	    pass "12.4: trace report #4"
+	gdb_test_multiple "while \$trace_frame != -1\n printf \"TDP #\%d, frame \%d: depth = \%d, q1 = \%d\\n\", \$tracepoint, \$trace_frame, depth, q1\n tfind tracepoint\n end" "12.3: trace report #3" {
+	    -re "TDP #$tdp3, frame $decimal: depth = $decimal, q1 = $decimal" {
+		set linecount3 [expr $linecount3 + 1]
+		exp_continue
+	    }
+	    -re ".*$gdb_prompt $" {
+		if { ($linecount3 < 4) } {
+		    fail "12.3: trace report #3"
+		} else {
+		    pass "12.3: trace report #3"
+		}
+	    }
 	}
+
+	gdb_tfind_test "12.4: tfind end, selects no frame" "end" "-1"
+	gdb_tfind_test "12.4: find first TDP #6 frame" "tracepoint $tdp6" \
+	    "\$tracepoint" "$tdp6"
+
+	set linecount6 0
+
+	gdb_test_multiple "while \$trace_frame != -1\n printf \"TDP #\%d, frame %d: char_test = \%d, long_test = \%d\\n\", \$tracepoint, \$trace_frame, gdb_char_test, gdb_long_test\n tfind tracepoint\n end" "12.4: trace report #4" {
+	    -re "TDP #$tdp6, frame $decimal: char_test = $arg1, long_test = $arg3" {
+		set linecount6 [expr $linecount6 + 1]
+		exp_continue
+	    }
+	    -re ".*$gdb_prompt $" {
+		if { ($linecount6 < 4) } {
+		    fail "12.4: trace report #4"
+		} else {
+		    pass "12.4: trace report #4"
+		}
+	    }
+	}
+
+	# There is always a thread of an inferior, either a live one or
+	# a faked one.
+	gdb_test "info threads" "\\* ${decimal}    (process|Thread) ${decimal}\[ \t\].*"
+	gdb_test "info inferiors" "\\* 1    process ${decimal} \[ \t\]+${binfile}.*"
     }
 }
+
+use_collected_data "live"
 
 # Finished!
-gdb_tfind_test "finished: make sure not debugging any trace frame" "none" "-1"
+gdb_tfind_test "finished: make sure not debugging any trace frame" \
+    "none" "-1"
+
+# Save trace frames to tfile.
+set tracefile [standard_output_file ${testfile}]
+gdb_test "tsave ${tracefile}.tf" \
+    "Trace data saved to file '${tracefile}.tf'.*" \
+    "save tfile trace file"
+
+# Save trace frames to ctf.
+gdb_test "tsave -ctf ${tracefile}.ctf" \
+    "Trace data saved to directory '${tracefile}.ctf'.*" \
+    "save ctf trace file"
+
+# Change target to tfile.
+set test "change to tfile target"
+gdb_test_multiple "target tfile ${tracefile}.tf" "$test" {
+    -re "A program is being debugged already.  Kill it. .y or n. " {
+	send_gdb "y\n"
+	exp_continue
+    }
+    -re "$gdb_prompt $" {
+	pass "$test"
+    }
+}
+# Test the collected trace frames from tfile.
+use_collected_data "tfile"
+
+# Try to read ctf data if GDB supports.
+gdb_test_multiple "target ctf ${tracefile}.ctf" "" {
+    -re "Undefined target command: \"ctf ${tracefile}.ctf\"\.  Try \"help target\"\.\r\n$gdb_prompt $" {
+    }
+    -re ".*\r\n$gdb_prompt $" {
+	use_collected_data "ctf"
+    }
+}

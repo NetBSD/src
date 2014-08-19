@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.26 2011/06/03 07:35:37 matt Exp $ */
+/* $NetBSD: podulebus.c,v 1.26.12.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.26 2011/06/03 07:35:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.26.12.1 2014/08/20 00:02:41 tls Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -461,7 +461,7 @@ podulebusattach(device_t parent, device_t self, void *aux)
 	for (loop = 0; loop < MAX_PODULES+MAX_NETSLOTS; ++loop) {
 #if 1
 		/* Provide backwards compat for a while */
-		sprintf(argstring, "podule%d.disable", loop);
+		snprintf(argstring, sizeof(argstring), "podule%d.disable", loop);
 		if (get_bootconf_option(boot_args, argstring,
 		    BOOTOPT_TYPE_BOOLEAN, &value)) {
 			if (value) {
@@ -471,7 +471,7 @@ podulebusattach(device_t parent, device_t self, void *aux)
 			}
  		}
 #endif
- 		sprintf(argstring, "podule%d=", loop);
+ 		snprintf(argstring, sizeof(argstring), "podule%d=", loop);
  		if (get_bootconf_option(boot_args, argstring,
  		    BOOTOPT_TYPE_HEXINT, &value)) {
 			/* Override the ID */

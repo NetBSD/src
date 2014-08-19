@@ -1,7 +1,7 @@
 /* Functions that provide the mechanism to parse a syscall XML file
    and get its values.
 
-   Copyright (C) 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -151,7 +151,7 @@ free_syscalls_info (void *arg)
   xfree (sysinfo);
 }
 
-struct cleanup *
+static struct cleanup *
 make_cleanup_free_syscalls_info (struct syscalls_info *sysinfo)
 {
   return make_cleanup (free_syscalls_info, sysinfo);

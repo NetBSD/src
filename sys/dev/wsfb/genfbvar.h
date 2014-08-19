@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.21 2011/07/13 22:47:29 macallan Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.21.12.1 2014/08/20 00:03:52 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -26,13 +26,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.21 2011/07/13 22:47:29 macallan Exp $");
-
 #ifndef GENFBVAR_H
 #define GENFBVAR_H
 
+#ifdef _KERNEL_OPT
 #include "opt_splash.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -46,7 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.21 2011/07/13 22:47:29 macallan Exp $
 #include <dev/rasops/rasops.h>
 
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#ifdef _KERNEL_OPT
 #include "opt_genfb.h"
+#endif
 
 #ifdef SPLASHSCREEN
 #define GENFB_DISABLE_TEXT
@@ -59,6 +60,8 @@ struct genfb_ops {
 	int (*genfb_ioctl)(void *, void *, u_long, void *, int, struct lwp *);
 	paddr_t	(*genfb_mmap)(void *, void *, off_t, int);
 	int (*genfb_borrow)(void *, bus_addr_t, bus_space_handle_t *);
+	int (*genfb_enable_polling)(void *);
+	int (*genfb_disable_polling)(void *);
 };
 
 struct genfb_colormap_callback {

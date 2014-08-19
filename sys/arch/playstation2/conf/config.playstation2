@@ -1,0 +1,88 @@
+#
+# deafult config file.
+#
+# 	$NetBSD: config.playstation2,v 1.25.6.2 2014/08/20 00:03:17 tls Exp $
+#
+
+maxusers	16
+
+options 	NTP		# NTP phase/frequency locked loop
+
+# Filesystem options
+file-system 	FFS		# fast filesystem with user and group quotas
+file-system 	NFS		# Sun NFS-compatible filesystem (client)
+file-system 	MFS		# memory-based filesystem
+file-system 	NULLFS
+file-system 	UNION		# union file system
+file-system 	KERNFS		# /kern
+file-system 	PROCFS		# /proc
+file-system	PTYFS		# /dev/pts/N support
+
+options 	WAPBL		# File system journaling support - Experimental
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+
+# Networking options
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+
+options 	NFS_BOOT_DHCP
+
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	FONT_SONY8x16
+options 	WS_KERNEL_FG=WSCOL_BROWN
+options 	WS_KERNEL_BG=WSCOL_BLUE
+
+mainbus0	at root
+
+cpu0	at mainbus?
+
+gsfb*	at mainbus?
+sbus*	at mainbus?
+
+spd*	at sbus?	# HDD and Ethernet I/F for PS2
+ohci*	at sbus?
+
+wdc*	at spd?
+smap*	at spd?
+
+atabus* at ata?
+wd*	at atabus? drive ? flags 0x0ff0	# disable DMA/UDMA
+ukphy*	at mii? phy ?	# generic unknown PHYs (IEEE Std. 802.3u)
+
+wsdisplay* at gsfb? console?
+
+# USB bus support
+usb*	at ohci?
+
+# USB Hubs
+uhub*	at usb?
+uhub*	at uhub? port ?
+
+# USB HID device
+uhidev*	at uhub? port ? configuration ? interface ?
+
+# USB Mice
+ums*	at uhidev? reportid ?
+wsmouse*	at ums? mux 0
+
+# USB Keyboards
+ukbd*	at uhidev? reportid ?
+wskbd*	at ukbd? console ? mux 1
+
+# USB Generic driver
+ugen*	at uhub? port ?
+
+pseudo-device	loop		1	# network loopback
+pseudo-device	pty			# pseudo-terminals
+
+pseudo-device	bpfilter		# packet filter ports
+pseudo-device	ipfilter		# IP filter, NAT
+
+pseudo-device	vnd			# virtual disk ick
+pseudo-device	clockctl		# user control of clock subsystem
+
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	ksyms			# /dev/ksyms

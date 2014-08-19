@@ -1,4 +1,4 @@
-/*	$NetBSD: glxsb.c,v 1.10 2011/11/19 22:51:20 tls Exp $	*/
+/*	$NetBSD: glxsb.c,v 1.10.8.1 2014/08/20 00:03:06 tls Exp $	*/
 /* $OpenBSD: glxsb.c,v 1.7 2007/02/12 14:31:45 tom Exp $ */
 
 /*
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.10 2011/11/19 22:51:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.10.8.1 2014/08/20 00:03:06 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,13 +247,13 @@ glxsb_attach(device_t parent, device_t self, void *aux)
 	wrmsr(SB_GLD_MSR_CTRL, msr);
 
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(self),
-			  RND_TYPE_RNG, RND_FLAG_NO_ESTIMATE);
+			  RND_TYPE_RNG, RND_FLAG_COLLECT_VALUE);
 
 	/* Install a periodic collector for the "true" (AMD's word) RNG */
 	callout_init(&sc->sc_co, 0);
 	callout_setfunc(&sc->sc_co, glxsb_rnd, sc);
 	glxsb_rnd(sc);
-	printf(": RNG");
+	aprint_normal(": RNG");
 
 	/* We don't have an interrupt handler, so disable completion INTs */
 	intr = SB_AI_DISABLE_AES_A | SB_AI_DISABLE_AES_B |
@@ -264,9 +264,9 @@ glxsb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 
 	if (glxsb_crypto_setup(sc))
-		printf(" AES");
+		aprint_normal(" AES");
 
-	printf("\n");
+	aprint_normal("\n");
 }
 
 void
@@ -279,7 +279,8 @@ glxsb_rnd(void *v)
 	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SB_RANDOM_NUM_STATUS);
 	if (status & SB_RNS_TRNG_VALID) {
 		value = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SB_RANDOM_NUM);
-		rnd_add_uint32(&sc->sc_rnd_source, value);
+		rnd_add_data(&sc->sc_rnd_source, &value, sizeof(value),
+			     sizeof(value) * NBBY);
 	}
 
 	callout_schedule(&sc->sc_co, (hz > 100) ? (hz / 100) : 1);

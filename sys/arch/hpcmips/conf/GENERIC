@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.216.2.2 2013/06/23 06:20:06 tls Exp $
+# $NetBSD: GENERIC,v 1.216.2.3 2014/08/20 00:03:03 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.216.2.2 $"
+#ident 		"GENERIC-$Revision: 1.216.2.3 $"
 
 maxusers	16
 
@@ -105,7 +105,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# Multicast routing support
 #options 	PIM		# Protocol Independent Multicast
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
@@ -123,6 +122,10 @@ options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	ALTQ_RED	# Random Early Detection
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 # NetBSD backwards compatibility
 options 	COMPAT_43

@@ -1,5 +1,4 @@
-#   Copyright 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright 2003-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,10 +14,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # This file was created by Jeff Johnston. (jjohnstn@redhat.com)
-
-if $tracelevel then {
-    strace $tracelevel
-}
 
 #
 # test running programs
@@ -36,23 +31,23 @@ set libname2 "${libfile2}.sl"
 set libsrcfile ${libfile}.c
 set libsrcfile2 ${libfile2}.c
 set srcfile $srcdir/$subdir/$testfile.c
-set binfile $objdir/$subdir/$testfile
-set shlibdir ${objdir}/${subdir}
+set binfile [standard_output_file $testfile]
+set shlibdir [standard_output_file {}]
 set libsrc  $srcdir/$subdir/$libfile.c
 set libsrc2  $srcdir/$subdir/$libfile2.c
-set lib_sl  $objdir/$subdir/$libname
-set lib_sl2  $objdir/$subdir/$libname2
+set lib_sl  [standard_output_file $libname]
+set lib_sl2  [standard_output_file $libname2]
 set lib_dlopen [shlib_target_file ${libname}]
 set lib_dlopen2 [shlib_target_file ${libname2}]
 set lib_syms [shlib_symbol_file ${libname}]
 set lib_syms2 [shlib_symbol_file ${libname2}]
 
-if [get_compiler_info ${binfile}] {
+if [get_compiler_info] {
     return -1
 }
 
 set lib_opts debug
-set exec_opts [list debug shlib_load additional_flags=-DSHLIB_NAME\=\"${lib_dlopen}\" additional_flags=-DSHLIB_NAME2\=\"${lib_dlopen2}\"]
+set exec_opts [list debug shlib_load additional_flags=-DSHLIB_NAME=\"${lib_dlopen}\" additional_flags=-DSHLIB_NAME2=\"${lib_dlopen2}\"]
 
 if { [gdb_compile_shlib $libsrc $lib_sl $lib_opts] != ""
      || [gdb_compile_shlib $libsrc2 $lib_sl2 $lib_opts] != ""
@@ -68,10 +63,6 @@ gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 gdb_load ${binfile}
 gdb_load_shlibs $lib_sl $lib_sl2
-
-if [target_info exists gdb_stub] {
-    gdb_step_for_stub;
-}
 
 #
 # Test setting a breakpoint in a dynamically loaded library which is

@@ -1,4 +1,4 @@
-/*	$NetBSD: getline.c,v 1.2.6.2 2013/02/25 00:28:49 tls Exp $	*/
+/*	$NetBSD: getline.c,v 1.2.6.3 2014/08/20 00:03:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -72,47 +72,61 @@
 
 /*
  * getline -- simple getline function
- * 	by A.Fujita, Dec-11-1992
+ *	by A.Fujita, Dec-11-1992
  */
 
 #include <lib/libkern/libkern.h>
 #include <luna68k/stand/boot/samachdep.h>
 
 int
-getline(char *prompt, char *buff)
+getline(const char *prompt, char *buff)
 {
 	int c;
-	char *p = buff;
+	char *p, *lp = buff;
 
 	printf("%s", prompt);
 
-	for(;;) {
-		c = getchar() & 0x7F;
+	for (;;) {
+		c = getchar() & 0x7f;
 
 		switch (c) {
-		case 0x0a:
-		case 0x0d:
+		case '\n':
+		case '\r':
+			*lp = '\0';
 			putchar('\n');
-			*p = '\0';
 			goto outloop;
 
-		case 0x08:
+		case '\b':
 		case 0x7f:
-			if (p > buff) {
-				putchar(0x08);
+			if (lp > buff) {
+				lp--;
+				putchar('\b');
 				putchar(' ');
-				putchar(0x08);
-				p--;
+				putchar('\b');
 			}
 			break;
 
+		case 'r' & 0x1f:
+			putchar('\n');
+			printf("%s", prompt);
+			for (p = buff; p < lp; ++p)
+				putchar(*p);
+			break;
+
+		case 'u' & 0x1f:
+		case 'w' & 0x1f:
+			lp = buff;
+			printf("\n%s", prompt);
+			break;
+
 		default:
-			*p++ = c;
+			*lp++ = c;
 			putchar(c);
 			break;
 		}
 	}
 
  outloop:
-	return(strlen(buff));
+	*lp = '\0';
+	return lp - buff;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.24 2011/06/10 09:27:51 tsutsui Exp $	*/
+/*	$NetBSD: et4000.c,v 1.24.12.1 2014/08/20 00:02:49 tls Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.24 2011/06/10 09:27:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.24.12.1 2014/08/20 00:02:49 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -138,8 +138,18 @@ dev_type_ioctl(et4kioctl);
 dev_type_mmap(et4kmmap);
 
 const struct cdevsw et4k_cdevsw = {
-	et4kopen, et4kclose, et4kread, et4kwrite, et4kioctl,
-	nostop, notty, nopoll, et4kmmap, nokqfilter,
+	.d_open = et4kopen,
+	.d_close = et4kclose,
+	.d_read = et4kread,
+	.d_write = et4kwrite,
+	.d_ioctl = et4kioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = et4kmmap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 /*

@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.5.2.1 2012/11/20 03:01:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.5.2.2 2014/08/20 00:02:55 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -176,6 +176,7 @@ __KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.5.2.1 2012/11/20 03:01:16 tls
 
 #include <machine/autoconf.h>
 
+#include <arm/locore.h>
 #include <arm/arm32/machdep.h>
 
 #include <arm/s3c2xx0/s3c2440reg.h>
@@ -247,8 +248,6 @@ extern int pmap_debug_level;
 #define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
-
-struct user *proc0paddr;
 
 /* Prototypes */
 

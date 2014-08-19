@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_bmap.c,v 1.4.2.2 2013/06/23 06:18:39 tls Exp $	*/
+/*	$NetBSD: ulfs_bmap.c,v 1.4.2.3 2014/08/20 00:04:45 tls Exp $	*/
 /*  from NetBSD: ufs_bmap.c,v 1.50 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_bmap.c,v 1.4.2.2 2013/06/23 06:18:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_bmap.c,v 1.4.2.3 2014/08/20 00:04:45 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,14 +59,14 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_bmap.c,v 1.4.2.2 2013/06/23 06:18:39 tls Exp $"
 #include <ufs/lfs/ulfs_bswap.h>
 
 static bool
-ulfs_issequential(const struct ulfsmount *ump, daddr_t daddr0, daddr_t daddr1)
+ulfs_issequential(const struct lfs *fs, daddr_t daddr0, daddr_t daddr1)
 {
 
 	/* for ulfs, blocks in a hole is not 'contiguous'. */
 	if (daddr0 == 0)
 		return false;
 
-	return (daddr0 + ump->um_seqinc == daddr1);
+	return (daddr0 + fs->um_seqinc == daddr1);
 }
 
 /*
@@ -123,6 +123,7 @@ ulfs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 	struct inode *ip;
 	struct buf *bp, *cbp;
 	struct ulfsmount *ump;
+	struct lfs *fs;
 	struct mount *mp;
 	struct indir a[ULFS_NIADDR + 1], *xap;
 	daddr_t daddr;
@@ -132,6 +133,7 @@ ulfs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 	ip = VTOI(vp);
 	mp = vp->v_mount;
 	ump = ip->i_ump;
+	fs = ip->i_lfs;
 #ifdef DIAGNOSTIC
 	if ((ap != NULL && nump == NULL) || (ap == NULL && nump != NULL))
 		panic("ulfs_bmaparray: invalid arguments");
@@ -153,11 +155,11 @@ ulfs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 			*nump = 0;
 		if (ump->um_fstype == ULFS1)
 			daddr = ulfs_rw32(ip->i_ffs1_db[bn],
-			    ULFS_MPNEEDSWAP(ump));
+			    ULFS_MPNEEDSWAP(fs));
 		else
 			daddr = ulfs_rw64(ip->i_ffs2_db[bn],
-			    ULFS_MPNEEDSWAP(ump));
-		*bnp = blkptrtodb(ump, daddr);
+			    ULFS_MPNEEDSWAP(fs));
+		*bnp = blkptrtodb(fs, daddr);
 		/*
 		 * Since this is FFS independent code, we are out of
 		 * scope for the definitions of BLK_NOCOPY and
@@ -168,31 +170,31 @@ ulfs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 		 */
 		if ((ip->i_flags & (SF_SNAPSHOT | SF_SNAPINVAL)) == SF_SNAPSHOT
 		    && daddr > 0 &&
-		    daddr < ump->um_seqinc) {
+		    daddr < fs->um_seqinc) {
 			*bnp = -1;
 		} else if (*bnp == 0) {
 			if ((ip->i_flags & (SF_SNAPSHOT | SF_SNAPINVAL))
 			    == SF_SNAPSHOT) {
-				*bnp = blkptrtodb(ump, bn * ump->um_seqinc);
+				*bnp = blkptrtodb(fs, bn * fs->um_seqinc);
 			} else {
 				*bnp = -1;
 			}
 		} else if (runp) {
 			if (ump->um_fstype == ULFS1) {
 				for (++bn; bn < ULFS_NDADDR && *runp < maxrun &&
-				    is_sequential(ump,
+				    is_sequential(fs,
 				        ulfs_rw32(ip->i_ffs1_db[bn - 1],
-				            ULFS_MPNEEDSWAP(ump)),
+				            ULFS_MPNEEDSWAP(fs)),
 				        ulfs_rw32(ip->i_ffs1_db[bn],
-				            ULFS_MPNEEDSWAP(ump)));
+				            ULFS_MPNEEDSWAP(fs)));
 				    ++bn, ++*runp);
 			} else {
 				for (++bn; bn < ULFS_NDADDR && *runp < maxrun &&
-				    is_sequential(ump,
+				    is_sequential(fs,
 				        ulfs_rw64(ip->i_ffs2_db[bn - 1],
-				            ULFS_MPNEEDSWAP(ump)),
+				            ULFS_MPNEEDSWAP(fs)),
 				        ulfs_rw64(ip->i_ffs2_db[bn],
-				            ULFS_MPNEEDSWAP(ump)));
+				            ULFS_MPNEEDSWAP(fs)));
 				    ++bn, ++*runp);
 			}
 		}
@@ -210,10 +212,10 @@ ulfs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 	/* Get disk address out of indirect block array */
 	if (ump->um_fstype == ULFS1)
 		daddr = ulfs_rw32(ip->i_ffs1_ib[xap->in_off],
-		    ULFS_MPNEEDSWAP(ump));
+		    ULFS_MPNEEDSWAP(fs));
 	else
 		daddr = ulfs_rw64(ip->i_ffs2_ib[xap->in_off],
-		    ULFS_MPNEEDSWAP(ump));
+		    ULFS_MPNEEDSWAP(fs));
 
 	for (bp = NULL, ++xap; --num; ++xap) {
 		/*
@@ -261,7 +263,7 @@ ulfs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 #endif
 		else {
 			trace(TR_BREADMISS, pack(vp, size), metalbn);
-			bp->b_blkno = blkptrtodb(ump, daddr);
+			bp->b_blkno = blkptrtodb(fs, daddr);
 			bp->b_flags |= B_READ;
 			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 			VOP_STRATEGY(vp, bp);
@@ -273,28 +275,28 @@ ulfs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 		}
 		if (ump->um_fstype == ULFS1) {
 			daddr = ulfs_rw32(((u_int32_t *)bp->b_data)[xap->in_off],
-			    ULFS_MPNEEDSWAP(ump));
+			    ULFS_MPNEEDSWAP(fs));
 			if (num == 1 && daddr && runp) {
 				for (bn = xap->in_off + 1;
-				    bn < MNINDIR(ump) && *runp < maxrun &&
-				    is_sequential(ump,
+				    bn < MNINDIR(fs) && *runp < maxrun &&
+				    is_sequential(fs,
 				        ulfs_rw32(((int32_t *)bp->b_data)[bn-1],
-				            ULFS_MPNEEDSWAP(ump)),
+				            ULFS_MPNEEDSWAP(fs)),
 				        ulfs_rw32(((int32_t *)bp->b_data)[bn],
-				            ULFS_MPNEEDSWAP(ump)));
+				            ULFS_MPNEEDSWAP(fs)));
 				    ++bn, ++*runp);
 			}
 		} else {
 			daddr = ulfs_rw64(((u_int64_t *)bp->b_data)[xap->in_off],
-			    ULFS_MPNEEDSWAP(ump));
+			    ULFS_MPNEEDSWAP(fs));
 			if (num == 1 && daddr && runp) {
 				for (bn = xap->in_off + 1;
-				    bn < MNINDIR(ump) && *runp < maxrun &&
-				    is_sequential(ump,
+				    bn < MNINDIR(fs) && *runp < maxrun &&
+				    is_sequential(fs,
 				        ulfs_rw64(((int64_t *)bp->b_data)[bn-1],
-				            ULFS_MPNEEDSWAP(ump)),
+				            ULFS_MPNEEDSWAP(fs)),
 				        ulfs_rw64(((int64_t *)bp->b_data)[bn],
-				            ULFS_MPNEEDSWAP(ump)));
+				            ULFS_MPNEEDSWAP(fs)));
 				    ++bn, ++*runp);
 			}
 		}
@@ -310,15 +312,15 @@ ulfs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 	 * to read a BLK_NOCOPY or BLK_SNAP block.
 	 */
 	if ((ip->i_flags & (SF_SNAPSHOT | SF_SNAPINVAL)) == SF_SNAPSHOT
-	    && daddr > 0 && daddr < ump->um_seqinc) {
+	    && daddr > 0 && daddr < fs->um_seqinc) {
 		*bnp = -1;
 		return (0);
 	}
-	*bnp = blkptrtodb(ump, daddr);
+	*bnp = blkptrtodb(fs, daddr);
 	if (*bnp == 0) {
 		if ((ip->i_flags & (SF_SNAPSHOT | SF_SNAPINVAL))
 		    == SF_SNAPSHOT) {
-			*bnp = blkptrtodb(ump, bn * ump->um_seqinc);
+			*bnp = blkptrtodb(fs, bn * fs->um_seqinc);
 		} else {
 			*bnp = -1;
 		}
@@ -340,11 +342,13 @@ ulfs_getlbns(struct vnode *vp, daddr_t bn, struct indir *ap, int *nump)
 {
 	daddr_t metalbn, realbn;
 	struct ulfsmount *ump;
+	struct lfs *fs;
 	int64_t blockcnt;
 	int lbc;
 	int i, numlevels, off;
 
 	ump = VFSTOULFS(vp->v_mount);
+	fs = ump->um_lfs;
 	if (nump)
 		*nump = 0;
 	numlevels = 0;
@@ -365,7 +369,7 @@ ulfs_getlbns(struct vnode *vp, daddr_t bn, struct indir *ap, int *nump)
 		if (i == 0)
 			return (EFBIG);
 
-		lbc += ump->um_lognindir;
+		lbc += fs->um_lognindir;
 		blockcnt = (int64_t)1 << lbc;
 
 		if (bn < blockcnt)
@@ -390,8 +394,8 @@ ulfs_getlbns(struct vnode *vp, daddr_t bn, struct indir *ap, int *nump)
 		if (metalbn == realbn)
 			break;
 
-		lbc -= ump->um_lognindir;
-		off = (bn >> lbc) & (MNINDIR(ump) - 1);
+		lbc -= fs->um_lognindir;
+		off = (bn >> lbc) & (MNINDIR(fs) - 1);
 
 		++numlevels;
 		ap->in_lbn = metalbn;

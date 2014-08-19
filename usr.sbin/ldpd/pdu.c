@@ -1,4 +1,4 @@
-/* $NetBSD: pdu.c,v 1.1.12.1 2013/02/25 00:30:43 tls Exp $ */
+/* $NetBSD: pdu.c,v 1.1.12.2 2014/08/20 00:05:09 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -43,10 +43,9 @@
 #include "pdu.h"
 
 uint
-get_pdu(unsigned char *s, struct ldp_pdu * p)
+get_pdu(const unsigned char *s, struct ldp_pdu * p)
 {
-	struct ldp_pdu *p1;
-	p1 = (struct ldp_pdu *) s;
+	const struct ldp_pdu *p1 = (const struct ldp_pdu *) s;
 
 	p->version = ntohs(p1->version);
 	p->length = ntohs(p1->length);
@@ -58,7 +57,7 @@ get_pdu(unsigned char *s, struct ldp_pdu * p)
 
 /* Checks an incoming PDU for size and version */
 int 
-check_recv_pdu(struct ldp_peer * p, struct ldp_pdu * rpdu, int c)
+check_recv_pdu(const struct ldp_peer * p, const struct ldp_pdu * rpdu, int c)
 {
 	struct notification_tlv *notiftlv;
 

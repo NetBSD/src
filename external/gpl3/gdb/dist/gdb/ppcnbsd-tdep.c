@@ -1,7 +1,6 @@
 /* Target-dependent code for NetBSD/powerpc.
 
-   Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -29,7 +28,7 @@
 #include "tramp-frame.h"
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 
 #include "ppc-tdep.h"
 #include "ppcnbsd-tdep.h"
@@ -77,7 +76,7 @@ ppcnbsd_regset_from_core_section (struct gdbarch *gdbarch,
    the moment use the broken convention.  Ulgh!  */
 
 static enum return_value_convention
-ppcnbsd_return_value (struct gdbarch *gdbarch, struct type *func_type,
+ppcnbsd_return_value (struct gdbarch *gdbarch, struct value *function,
 		      struct type *valtype, struct regcache *regcache,
 		      gdb_byte *readbuf, const gdb_byte *writebuf)
 {
@@ -93,7 +92,7 @@ ppcnbsd_return_value (struct gdbarch *gdbarch, struct type *func_type,
     return RETURN_VALUE_STRUCT_CONVENTION;
   else
 #endif
-    return ppc_sysv_abi_broken_return_value (gdbarch, func_type, valtype,
+    return ppc_sysv_abi_broken_return_value (gdbarch, function, valtype,
 					     regcache, readbuf, writebuf);
 }
 

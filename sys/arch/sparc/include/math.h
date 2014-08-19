@@ -1,7 +1,7 @@
-/*	$NetBSD: math.h,v 1.5 2008/12/15 00:25:05 mrg Exp $	*/
+/*	$NetBSD: math.h,v 1.5.24.1 2014/08/20 00:03:24 tls Exp $	*/
 
 #define	__HAVE_NANF
 
-#ifdef _LP64
-#define	__HAVE_LONG_DOUBLE
+#if defined(_LP64) || defined(_KERNEL)
+#define	__HAVE_LONG_DOUBLE	128
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmac.c,v 1.9 2012/09/10 13:36:40 msaitoh Exp $	*/
+/*	$NetBSD: gtidmac.c,v 1.9.2.1 2014/08/20 00:03:39 tls Exp $	*/
 /*
  * Copyright (c) 2008, 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.9 2012/09/10 13:36:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.9.2.1 2014/08/20 00:03:39 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -162,8 +162,8 @@ static __inline void gtidmac_dmmap_unload(struct gtidmac_softc *, bus_dmamap_t, 
 static uint32_t gtidmac_finish(void *, int, int);
 static uint32_t mvxore_finish(void *, int, int);
 
-static void gtidmac_wininit(struct gtidmac_softc *);
-static void mvxore_wininit(struct gtidmac_softc *);
+static void gtidmac_wininit(struct gtidmac_softc *, enum marvell_tags *);
+static void mvxore_wininit(struct gtidmac_softc *, enum marvell_tags *);
 
 static int gtidmac_buffer_setup(struct gtidmac_softc *);
 static int mvxore_buffer_setup(struct gtidmac_softc *);
@@ -313,7 +313,20 @@ static struct {
 	{ MARVELL_KIRKWOOD_88F6192,	0, -1, 4, 5 },
 	{ MARVELL_KIRKWOOD_88F6281,	0, -1, 4, 5 },
 	{ MARVELL_KIRKWOOD_88F6282,	0, -1, 4, 5 },
+	{ MARVELL_ARMADAXP_MV78130,	4, 33, 2, 51 },
+	{ MARVELL_ARMADAXP_MV78130,	0, -1, 2, 94 },
+	{ MARVELL_ARMADAXP_MV78160,	4, 33, 2, 51 },
+	{ MARVELL_ARMADAXP_MV78160,	0, -1, 2, 94 },
+	{ MARVELL_ARMADAXP_MV78230,	4, 33, 2, 51 },
+	{ MARVELL_ARMADAXP_MV78230,	0, -1, 2, 94 },
+	{ MARVELL_ARMADAXP_MV78260,	4, 33, 2, 51 },
+	{ MARVELL_ARMADAXP_MV78260,	0, -1, 2, 94 },
+	{ MARVELL_ARMADAXP_MV78460,	4, 33, 2, 51 },
+	{ MARVELL_ARMADAXP_MV78460,	0, -1, 2, 94 },
 };
+
+struct gtidmac_winacctbl *gtidmac_winacctbl;
+struct gtidmac_winacctbl *mvxore_winacctbl;
 
 CFATTACH_DECL_NEW(gtidmac_gt, sizeof(struct gtidmac_softc),
     gtidmac_match, gtidmac_attach, NULL, NULL);
@@ -326,16 +339,20 @@ static int
 gtidmac_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct marvell_attach_args *mva = aux;
-	int i;
+	int unit, i;
 
 	if (strcmp(mva->mva_name, match->cf_name) != 0)
 		return 0;
 	if (mva->mva_offset == MVA_OFFSET_DEFAULT)
 		return 0;
+	unit = 0;
 	for (i = 0; i < __arraycount(channels); i++)
 		if (mva->mva_model == channels[i].model) {
-			mva->mva_size = GTIDMAC_SIZE;
-			return 1;
+			if (mva->mva_unit == unit) {
+				mva->mva_size = GTIDMAC_SIZE;
+				return 1;
+			}
+			unit++;
 		}
 	return 0;
 }
@@ -348,11 +365,15 @@ gtidmac_attach(device_t parent, device_t self, void *aux)
 	struct marvell_attach_args *mva = aux;
 	prop_dictionary_t dict = device_properties(self);
 	uint32_t idmac_irq, xore_irq, dmb_speed;
-	int idmac_nchan, xore_nchan, nsegs, i, j, n;
+	int unit, idmac_nchan, xore_nchan, nsegs, i, j, n;
 
+	unit = 0;
 	for (i = 0; i < __arraycount(channels); i++)
-		if (mva->mva_model == channels[i].model)
-			break;
+		if (mva->mva_model == channels[i].model) {
+			if (mva->mva_unit == unit)
+				break;
+			unit++;
+		}
 	idmac_nchan = channels[i].idmac_nchan;
 	idmac_irq = channels[i].idmac_irq;
 	if (idmac_nchan != 0) {
@@ -442,7 +463,7 @@ gtidmac_attach(device_t parent, device_t self, void *aux)
 			goto fail4;
 
 		if (mva->mva_model != MARVELL_DISCOVERY)
-			gtidmac_wininit(sc);
+			gtidmac_wininit(sc, mva->mva_tags);
 
 		/* Setup interrupt */
 		for (i = 0; i < GTIDMAC_NINTRRUPT; i++) {
@@ -479,7 +500,7 @@ gtidmac_attach(device_t parent, device_t self, void *aux)
 			    (i & 0x2) ? mvxore_port1_intr : mvxore_port0_intr,
 			    sc);
 
-		mvxore_wininit(sc);
+		mvxore_wininit(sc, mva->mva_tags);
 
 		/* Register us with dmover. */
 		sc->sc_dmb_xore.dmb_name = device_xname(sc->sc_dev);
@@ -1459,36 +1480,18 @@ mvxore_finish(void *tag, int chan, int error)
 }
 
 static void
-gtidmac_wininit(struct gtidmac_softc *sc)
+gtidmac_wininit(struct gtidmac_softc *sc, enum marvell_tags *tags)
 {
 	device_t pdev = device_parent(sc->sc_dev);
 	uint64_t base;
-	uint32_t size, cxap, en;
-	int window, target, attr, rv, i;
-	struct {
-		int tag;
-		int winacc;
-	} targets[] = {
-		{ MARVELL_TAG_SDRAM_CS0,	GTIDMAC_CXAPR_WINACC_FA },
-		{ MARVELL_TAG_SDRAM_CS1,	GTIDMAC_CXAPR_WINACC_FA },
-		{ MARVELL_TAG_SDRAM_CS2,	GTIDMAC_CXAPR_WINACC_FA },
-		{ MARVELL_TAG_SDRAM_CS3,	GTIDMAC_CXAPR_WINACC_FA },
-
-		/* Also can set following targets. */
-		/*   Devices       = 0x1(ORION_TARGETID_DEVICE_*) */
-		/*   PCI           = 0x3(ORION_TARGETID_PCI0_*) */
-		/*   PCI Express   = 0x4(ORION_TARGETID_PEX?_*) */
-		/*   Tunit SRAM(?) = 0x5(???) */
-
-		{ MARVELL_TAG_UNDEFINED,	GTIDMAC_CXAPR_WINACC_NOAA }
-	};
+	uint32_t size, cxap, en, winacc;
+	int window, target, attr, rv, i, j;
 
 	en = 0xff;
 	cxap = 0;
 	for (window = 0, i = 0;
-	    targets[i].tag != MARVELL_TAG_UNDEFINED && window < GTIDMAC_NWINDOW;
-	    i++) {
-		rv = marvell_winparams_by_tag(pdev, targets[i].tag,
+	    tags[i] != MARVELL_TAG_UNDEFINED && window < GTIDMAC_NWINDOW; i++) {
+		rv = marvell_winparams_by_tag(pdev, tags[i],
 		    &target, &attr, &base, &size);
 		if (rv != 0 || size == 0)
 			continue;
@@ -1509,7 +1512,30 @@ gtidmac_wininit(struct gtidmac_softc *sc)
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, GTIDMAC_SRX(window),
 		    GTIDMAC_SRX_SIZE(size));
 		en &= ~GTIDMAC_BAER_EN(window);
-		cxap |= GTIDMAC_CXAPR_WINACC(window, targets[i].winacc);
+
+		winacc = GTIDMAC_CXAPR_WINACC_FA;
+		if (gtidmac_winacctbl != NULL)
+			for (j = 0;
+			    gtidmac_winacctbl[j].tag != MARVELL_TAG_UNDEFINED;
+			    j++) {
+				if (gtidmac_winacctbl[j].tag != tags[i])
+					continue;
+
+				switch (gtidmac_winacctbl[j].winacc) {
+				case GTIDMAC_WINACC_NOACCESSALLOWED:
+					winacc = GTIDMAC_CXAPR_WINACC_NOAA;
+					break;
+				case GTIDMAC_WINACC_READONLY:
+					winacc = GTIDMAC_CXAPR_WINACC_RO;
+					break;
+				case GTIDMAC_WINACC_FULLACCESS:
+				default: /* XXXX: default is full access */
+					break;
+				}
+				break;
+			}
+		cxap |= GTIDMAC_CXAPR_WINACC(window, winacc);
+
 		window++;
 	}
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GTIDMAC_BAER, en);
@@ -1520,29 +1546,17 @@ gtidmac_wininit(struct gtidmac_softc *sc)
 }
 
 static void
-mvxore_wininit(struct gtidmac_softc *sc)
+mvxore_wininit(struct gtidmac_softc *sc, enum marvell_tags *tags)
 {
 	device_t pdev = device_parent(sc->sc_dev);
 	uint64_t base;
-	uint32_t target, attr, size, xexwc;
-	int window, rv, i, p;
-	struct {
-		int tag;
-		int winacc;
-	} targets[] = {
-		{ MARVELL_TAG_SDRAM_CS0,	MVXORE_XEXWCR_WINACC_FA },
-		{ MARVELL_TAG_SDRAM_CS1,	MVXORE_XEXWCR_WINACC_FA },
-		{ MARVELL_TAG_SDRAM_CS2,	MVXORE_XEXWCR_WINACC_FA },
-		{ MARVELL_TAG_SDRAM_CS3,	MVXORE_XEXWCR_WINACC_FA },
-
-		{ MARVELL_TAG_UNDEFINED,	MVXORE_XEXWCR_WINACC_NOAA }
-	};
+	uint32_t target, attr, size, xexwc, winacc;
+	int window, rv, i, j, p;
 
 	xexwc = 0;
 	for (window = 0, i = 0;
-	    targets[i].tag != MARVELL_TAG_UNDEFINED && window < MVXORE_NWINDOW;
-	    i++) {
-		rv = marvell_winparams_by_tag(pdev, targets[i].tag,
+	    tags[i] != MARVELL_TAG_UNDEFINED && window < MVXORE_NWINDOW; i++) {
+		rv = marvell_winparams_by_tag(pdev, tags[i],
 		    &target, &attr, &base, &size);
 		if (rv != 0 || size == 0)
 			continue;
@@ -1569,8 +1583,30 @@ mvxore_wininit(struct gtidmac_softc *sc)
 			    MVXORE_XESMRX(sc, p, window),
 			    MVXORE_XESMRX_SIZE(size));
 		}
+
+		winacc = MVXORE_XEXWCR_WINACC_FA;
+		if (mvxore_winacctbl != NULL)
+			for (j = 0;
+			    mvxore_winacctbl[j].tag != MARVELL_TAG_UNDEFINED;
+			    j++) {
+				if (gtidmac_winacctbl[j].tag != tags[i])
+					continue;
+
+				switch (gtidmac_winacctbl[j].winacc) {
+				case GTIDMAC_WINACC_NOACCESSALLOWED:
+					winacc = MVXORE_XEXWCR_WINACC_NOAA;
+					break;
+				case GTIDMAC_WINACC_READONLY:
+					winacc = MVXORE_XEXWCR_WINACC_RO;
+					break;
+				case GTIDMAC_WINACC_FULLACCESS:
+				default: /* XXXX: default is full access */
+					break;
+				}
+				break;
+			}
 		xexwc |= (MVXORE_XEXWCR_WINEN(window) |
-		    MVXORE_XEXWCR_WINACC(window, targets[i].winacc));
+		    MVXORE_XEXWCR_WINACC(window, winacc));
 		window++;
 	}
 

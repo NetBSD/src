@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_eisa.c,v 1.24 2010/01/18 19:00:58 pooka Exp $	*/
+/*	$NetBSD: if_tlp_eisa.c,v 1.24.22.1 2014/08/20 00:03:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.24 2010/01/18 19:00:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.24.22.1 2014/08/20 00:03:36 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -162,6 +162,7 @@ tlp_eisa_attach(device_t parent, device_t self, void *aux)
 	u_int8_t enaddr[ETHER_ADDR_LEN], tmpbuf[sizeof(testpat)];
 	u_int32_t val;
 	int irq, i, cnt;
+	char intrbuf[EISA_INTRSTR_LEN];
 
 	/*
 	 * Map the device.
@@ -264,7 +265,7 @@ tlp_eisa_attach(device_t parent, device_t self, void *aux)
 		    irq);
 		return;
 	}
-	intrstr = eisa_intr_string(ec, ih);
+	intrstr = eisa_intr_string(ec, ih, intrbuf, sizeof(intrbuf));
 	esc->sc_ih = eisa_intr_establish(ec, ih,
 	    (val & 0x01) ? IST_EDGE : IST_LEVEL, IPL_NET, tlp_intr, sc);
 	if (esc->sc_ih == NULL) {

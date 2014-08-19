@@ -1,0 +1,25 @@
+# $NetBSD: std.hawk,v 1.1.10.2 2014/08/20 00:02:53 tls Exp $
+#
+# standard NetBSD/evbarm for hawk options
+
+machine	evbarm arm
+include		"conf/std"	# MI standard options
+include		"arch/arm/conf/std.arm"	# arch standard options
+
+# Pull in omapl1x config definitions.
+include "arch/evbarm/conf/files.hawk"
+
+options 	EXEC_ELF32
+options 	EXEC_SCRIPT
+
+# To support easy transit to ../arch/arm/arm32
+options 	ARM32
+
+options 	KERNEL_BASE_EXT=0xc0000000
+makeoptions	KERNEL_BASE_PHYS=0xc0200000
+makeoptions	KERNEL_BASE_VIRT=0xc0200000
+makeoptions	LOADADDRESS="0xc0200000"
+makeoptions	BOARDTYPE="hawk"
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.hawk"
+
+options 	ARM_INTR_IMPL="<arch/arm/omap/omapl1x_intr.h>"

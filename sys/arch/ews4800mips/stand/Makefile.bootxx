@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootxx,v 1.5 2010/05/27 06:58:13 dholland Exp $
+#	$NetBSD: Makefile.bootxx,v 1.5.18.1 2014/08/20 00:03:00 tls Exp $
 
 NOMAN		=
 
@@ -20,7 +20,7 @@ MIPSFLAGS	= -mips1 -G 0 -mno-abicalls
 DEBUGFLAGS	= -Wall -Werror
 DEBUGFLAGS	+= -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 DEBUGFLAGS	+= -Wno-format-zero-length -Wno-sign-compare
-OPTFLAGS	= -Os -mmemcpy
+OPTFLAGS	= -Os -mmemcpy -fno-unwind-tables
 FLAGS		= ${MIPSFLAGS} ${DEBUGFLAGS} ${OPTFLAGS}
 AFLAGS		= -xassembler-with-cpp -D_LOCORE ${FLAGS}
 CFLAGS		= ${FLAGS} -ffreestanding
@@ -39,6 +39,7 @@ LIBS		= ${LIBKERN}
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
@@ -53,7 +54,7 @@ ${PROG}: ${OBJS} ${LIBS}
 	ls -al ${PROG}
 #	-rm -f ${BASE}.tmp
 
-clean cleandir distclean: .WAIT cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib

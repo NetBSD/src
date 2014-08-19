@@ -1,4 +1,4 @@
-/* $NetBSD: elantech.c,v 1.5 2012/01/07 10:27:58 jmcneill Exp $ */
+/* $NetBSD: elantech.c,v 1.5.6.1 2014/08/20 00:03:49 tls Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elantech.c,v 1.5 2012/01/07 10:27:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elantech.c,v 1.5.6.1 2014/08/20 00:03:49 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,11 +91,6 @@ pms_sysctl_elantech(struct sysctllog **clog)
 {
 	const struct sysctlnode *node;
 	int rc, root_num;
-
-	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
-		goto err;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "elantech",

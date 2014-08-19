@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.48 2010/07/07 01:30:35 chs Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.48.18.1 2014/08/20 00:03:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,8 @@
 #define LINUX_N_BSSADDR(x,m) (LINUX_N_DATADDR(x,m) + (x).a_data)
 
 #ifndef LINUX_MACHDEP_ELF_COPYARGS
-#define LINUX_ELF_AUX_ENTRIES	13	/* we push 13 parameters */
+/* Counted from linux_exec_elf32.c */
+#define LINUX_ELF_AUX_ENTRIES	14
 #endif
 
 /*
@@ -96,8 +97,11 @@
 #define LINUX_AT_HWCAP		16	/* arch dependent CPU capabilities */
 #define LINUX_AT_CLKTCK		17	/* frequency times() increments */
 #define LINUX_AT_SECURE		23	/* secure mode boolean */
+#define LINUX_AT_RANDOM		25	/* address of 16 random bytes */
 #define LINUX_AT_SYSINFO	32	/* pointer to __kernel_vsyscall */
 #define LINUX_AT_SYSINFO_EHDR	33	/* pointer to ELF header */
+
+#define LINUX_RANDOM_BYTES	16	/* 16 bytes for AT_RANDOM */
 
 /*
  * Emulation specific sysctls.

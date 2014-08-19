@@ -1,4 +1,4 @@
-# Copyright 2011 Free Software Foundation, Inc.
+# Copyright 2011-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
 
 load_lib dwarf.exp
 
+standard_testfile .S
 set test "clztest"
 
 # This test can only be run on targets which support DWARF-2 and use gas.
@@ -35,9 +36,9 @@ if ![runto_main] {
     return -1
 }
 
-global tests
-set tests(_) -
-unset tests(_)
+# Initialize tests to be an empty array.
+unset -nocomplain tests
+array set tests {}
 
 proc gdb-test {line var value} {
     global tests

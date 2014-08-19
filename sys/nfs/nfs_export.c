@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.51 2011/09/27 01:07:38 christos Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.51.12.1 2014/08/20 00:04:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.51 2011/09/27 01:07:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.51.12.1 2014/08/20 00:04:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,13 +118,13 @@ struct netcred {
  * Network export information.
  */
 struct netexport {
-	CIRCLEQ_ENTRY(netexport) ne_list;
+	TAILQ_ENTRY(netexport) ne_list;
 	struct mount *ne_mount;
 	struct netcred ne_defexported;		      /* Default export */
 	struct radix_node_head *ne_rtable[AF_MAX+1]; /* Individual exports */
 };
-CIRCLEQ_HEAD(, netexport) netexport_list =
-    CIRCLEQ_HEAD_INITIALIZER(netexport_list);
+TAILQ_HEAD(, netexport) netexport_list =
+    TAILQ_HEAD_INITIALIZER(netexport_list);
 
 /* Publicly exported file system. */
 struct nfs_public nfs_pub;
@@ -171,8 +171,8 @@ struct vfs_hooks nfs_export_hooks = {
  * VFS unmount hook for NFS exports.
  *
  * Releases NFS exports list resources if the given mount point has some.
- * As allocation happens lazily, it may be that it doesn't has this
- * information, although it theorically should.
+ * As allocation happens lazily, it may be that it doesn't have this
+ * information, although it theoretically should.
  */
 static void
 netexport_unmount(struct mount *mp)
@@ -207,9 +207,9 @@ netexport_fini(void)
 	struct mount *mp;
 	int error;
 
-	while (!CIRCLEQ_EMPTY(&netexport_list)) {
+	while (!TAILQ_EMPTY(&netexport_list)) {
 		netexport_wrlock();
-		ne = CIRCLEQ_FIRST(&netexport_list);
+		ne = TAILQ_FIRST(&netexport_list);
 		mp = ne->ne_mount;
 		error = vfs_busy(mp, NULL);
 		netexport_wrunlock();
@@ -255,7 +255,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l,
 	    KAUTH_REQ_NETWORK_NFS_EXPORT, NULL, NULL, NULL) != 0)
 		return EPERM;
 
-	/* Lookup the file system path. */
+	/* Look up the file system path. */
 	error = pathbuf_copyin(mel->mel_path, &pb);
 	if (error) {
 		return error;
@@ -340,14 +340,14 @@ static void
 netexport_insert(struct netexport *ne)
 {
 
-	CIRCLEQ_INSERT_HEAD(&netexport_list, ne, ne_list);
+	TAILQ_INSERT_HEAD(&netexport_list, ne, ne_list);
 }
 
 static void
 netexport_remove(struct netexport *ne)
 {
 
-	CIRCLEQ_REMOVE(&netexport_list, ne, ne_list);
+	TAILQ_REMOVE(&netexport_list, ne, ne_list);
 }
 
 static struct netexport *
@@ -355,7 +355,7 @@ netexport_lookup(const struct mount *mp)
 {
 	struct netexport *ne;
 
-	CIRCLEQ_FOREACH(ne, &netexport_list, ne_list) {
+	TAILQ_FOREACH(ne, &netexport_list, ne_list) {
 		if (ne->ne_mount == mp) {
 			goto done;
 		}
@@ -370,7 +370,7 @@ netexport_lookup_byfsid(const fsid_t *fsid)
 {
 	struct netexport *ne;
 
-	CIRCLEQ_FOREACH(ne, &netexport_list, ne_list) {
+	TAILQ_FOREACH(ne, &netexport_list, ne_list) {
 		const struct mount *mp = ne->ne_mount;
 
 		if (mp->mnt_stat.f_fsidx.__fsid_val[0] == fsid->__fsid_val[0] &&
@@ -392,7 +392,7 @@ done:
  * in the address specified by 'wh'.
  *
  * This function is used exclusively by the NFS server.  It is generally
- * invoked before VFS_FHTOVP to validate that client has access to the
+ * invoked before VFS_FHTOVP to validate that a client has access to the
  * file system.
  */
 
@@ -445,9 +445,11 @@ nfs_export_update_30(struct mount *mp, const char *path, void *data)
 		 * value that used to be in MNT_DELEXPORT. */
 		mel.mel_nexports = 0;
 	} else {
-		/* The following assumes export_args has not changed since
-		 * export_args30 - typedef checks sizes. */
-		typedef char x[sizeof args->eargs == sizeof *mel.mel_exports ? 1 : -1];
+		/*
+		 * The following code assumes export_args has not
+		 * changed since export_args30, so check that.
+		 */
+		__CTASSERT(sizeof(args->eargs) == sizeof(*mel.mel_exports));
 
 		mel.mel_nexports = 1;
 		mel.mel_exports = (void *)&args->eargs;
@@ -557,7 +559,7 @@ hang_addrlist(struct mount *mp, struct netexport *nep,
 	if ((rnh = nep->ne_rtable[i]) == 0) {
 		/*
 		 * Seems silly to initialize every AF when most are not
-		 * used, do so on demand here
+		 * used, do so on demand here.
 		 */
 		DOMAIN_FOREACH(dom) {
 			if (dom->dom_family == i && dom->dom_rtattach) {
@@ -734,7 +736,7 @@ setpublicfs(struct mount *mp, struct netexport *nep,
 	size_t fhsize;
 
 	/*
-	 * mp == NULL -> invalidate the current info, the FS is
+	 * mp == NULL --> invalidate the current info; the FS is
 	 * no longer exported. May be called from either export
 	 * or unmount, so check if it hasn't already been done.
 	 */
@@ -809,7 +811,7 @@ setpublicfs(struct mount *mp, struct netexport *nep,
 }
 
 /*
- * Lookup an export entry in the exports list that matches the address
+ * Look up an export entry in the exports list that matches the address
  * stored in 'nam'.  If no entry is found, the default one is used instead
  * (if available).
  */
@@ -825,7 +827,7 @@ netcred_lookup(struct netexport *ne, struct mbuf *nam)
 	}
 
 	/*
-	 * Lookup in the export list first.
+	 * Look in the export list first.
 	 */
 	np = NULL;
 	if (nam != NULL) {
@@ -874,4 +876,11 @@ netexport_wrunlock(void)
 {
 
 	rw_exit(&netexport_lock);
+}
+
+bool
+netexport_hasexports(void)
+{
+	
+	return nfs_pub.np_valid || !TAILQ_EMPTY(&netexport_list);
 }

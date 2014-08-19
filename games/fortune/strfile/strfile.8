@@ -1,4 +1,4 @@
-.\"	$NetBSD: strfile.8,v 1.14 2012/08/04 22:29:59 jdf Exp $
+.\"	$NetBSD: strfile.8,v 1.14.2.1 2014/08/20 00:00:22 tls Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -74,7 +74,7 @@ Any initial non-alphanumeric characters are ignored.
 This option causes the
 .Dv STR_ORDERED
 bit in the header
-.Ar str_flags
+.Fa str_flags
 field to be set.
 .It Fl r
 Randomize access to the strings.
@@ -82,7 +82,7 @@ Entries in the offset table will be randomly ordered.
 This option causes the
 .Dv STR_RANDOM
 bit in the header
-.Ar str_flags
+.Fa str_flags
 field to be set.
 .It Fl s
 Run silently; don't give a summary message when finished.
@@ -92,22 +92,22 @@ Note that each alphabetic character in the groups of lines is rotated
 This option causes the
 .Dv STR_ROTATED
 bit in the header
-.Ar str_flags
+.Fa str_flags
 field to be set.
 .El
 .Pp
 The format of the header is:
 .Bd -literal -offset indent
-#define	VERSION	1
-unsigned long	str_version;	/* version number */
-unsigned long	str_numstr;	/* # of strings in the file */
-unsigned long	str_longlen;	/* length of longest string */
-unsigned long	str_shortlen;	/* length of shortest string */
-#define	STR_RANDOM	0x1	/* randomized pointers */
-#define	STR_ORDERED	0x2	/* ordered pointers */
-#define	STR_ROTATED	0x4	/* rot-13'd text */
-unsigned long	str_flags;	/* bit field for flags */
-char str_delim;			/* delimiting character */
+#define VERSION 1
+unsigned long   str_version;    /* version number */
+unsigned long   str_numstr;     /* # of strings in the file */
+unsigned long   str_longlen;    /* length of longest string */
+unsigned long   str_shortlen;   /* length of shortest string */
+#define STR_RANDOM      0x1     /* randomized pointers */
+#define STR_ORDERED     0x2     /* ordered pointers */
+#define STR_ROTATED     0x4     /* rot-13'd text */
+unsigned long   str_flags;      /* bit field for flags */
+char str_delim;                 /* delimiting character */
 .Ed
 .Pp
 All fields are written in big-endian byte order.

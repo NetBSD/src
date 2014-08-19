@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.63.2.2 2013/06/23 06:20:13 tls Exp $
+#	$NetBSD: INSTALL,v 1.63.2.3 2014/08/20 00:03:27 tls Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -33,7 +33,7 @@ maxusers	8
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=3328	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=4100	# size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # Kernel compiled-in symbolic debugger & system call tracer

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.34 2011/02/08 20:20:27 rmind Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.34.14.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.34 2011/02/08 20:20:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.34.14.1 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.34 2011/02/08 20:20:27 rmind Exp $")
 #include <sys/device.h>
 #include <sys/timetc.h>
 #include <sys/intr.h>
+#include <sys/rnd.h>
 
 #include <dev/clock_subr.h>	/* hmm.. this should probably move to sys */
 
@@ -81,6 +82,8 @@ inittodr(time_t base)
 	int s;
 	struct timespec ts;
 	struct timeval tv;
+
+	rnd_add_data(NULL, &base, sizeof(base), 0);
 
 	if (base < 5 * SECYR) {
 		struct clock_ymdhms basedate;
@@ -143,6 +146,8 @@ inittodr(time_t base)
 		} else {
 			goodtime = true;
 		}
+
+		rnd_add_data(NULL, &tv, sizeof(tv), 0);
 	}
 
 	/* if the rtc time is bad, use the filesystem time */

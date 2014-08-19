@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.50 2012/02/02 19:42:58 tls Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.50.6.1 2014/08/20 00:02:47 tls Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.50 2012/02/02 19:42:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.50.6.1 2014/08/20 00:02:47 tls Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -117,8 +117,18 @@ dev_type_tty(sacomtty);
 dev_type_poll(sacompoll);
 
 const struct cdevsw sacom_cdevsw = {
-	sacomopen, sacomclose, sacomread, sacomwrite, sacomioctl,
-	sacomstop, sacomtty, sacompoll, nommap, ttykqfilter, D_TTY
+	.d_open = sacomopen,
+	.d_close = sacomclose,
+	.d_read = sacomread,
+	.d_write = sacomwrite,
+	.d_ioctl = sacomioctl,
+	.d_stop = sacomstop,
+	.d_tty = sacomtty,
+	.d_poll = sacompoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 static	int	sacom_match(device_t, cfdata_t, void *);
@@ -332,7 +342,8 @@ sacom_attach_subr(struct sacom_softc *sc)
 
 #ifdef RND_COM
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_TTY, 0);
+			  RND_TYPE_TTY, RND_FLAG_COLLECT_TIME|
+					RND_FLAG_ESTIMATE_TIME);
 #endif
 
 	/* if there are no enable/disable functions, assume the device

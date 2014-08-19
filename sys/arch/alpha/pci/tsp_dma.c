@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_dma.c,v 1.12 2012/02/06 02:14:15 matt Exp $ */
+/* $NetBSD: tsp_dma.c,v 1.12.6.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.12 2012/02/06 02:14:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.12.6.1 2014/08/20 00:02:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,10 +118,10 @@ tsp_dma_init(struct tsp_config *pcp)
 	static struct map_expected {
 		uint32_t base, mask, enables;
 	} premap[4] = {
-		{ 0x800000, 		   0x700000, WSBA_ENA | WSBA_SG },
-		{ 0x80000000 | WSBA_ENA, 0x3ff00000, WSBA_ENA           },
-		{ 0, 0 },
-		{ 0, 0 }
+		{ 0x00800000, 0x00700000, WSBA_ENA | WSBA_SG },
+		{ 0x80000000, 0x3ff00000, WSBA_ENA           },
+		{ 0, 0, 0 },
+		{ 0, 0, 0 }
 	};
 
 	alpha_mb();
@@ -204,6 +204,14 @@ tsp_dma_init(struct tsp_config *pcp)
 	 */
 	alpha_mb();
 	pccsr->tsp_wsba[0].tsg_r |= WSBA_SG | WSBA_ENA;
+	alpha_mb();
+
+	/*
+	 * Enable window 1 in direct mode.
+	 */
+	alpha_mb();
+	pccsr->tsp_wsba[1].tsg_r =
+	    (pccsr->tsp_wsba[1].tsg_r & ~WSBA_SG) | WSBA_ENA;
 	alpha_mb();
 
 	/*
@@ -354,6 +362,6 @@ tsp_tlb_invalidate(struct tsp_config *pcp)
 {
 
 	alpha_mb();
-	pcp->pc_csr->tsp_tlbia.tsg_r = 0;
+	*pcp->pc_tlbia = 0;
 	alpha_mb();
 }

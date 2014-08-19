@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.67.2.2 2013/02/25 00:30:01 tls Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.67.2.3 2014/08/20 00:04:34 tls Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.67.2.2 2013/02/25 00:30:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.67.2.3 2014/08/20 00:04:34 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.67.2.2 2013/02/25 00:30:01 tls Exp $");
 #endif
 #include <sys/kauth.h>
 #include <sys/mutex.h>
-#include <sys/simplelock.h>
 #include <sys/intr.h>
 #include <sys/stat.h>
 
@@ -112,7 +111,7 @@ struct tap_softc {
 	struct selinfo	sc_rsel;
 	pid_t		sc_pgid; /* For async. IO */
 	kmutex_t	sc_rdlock;
-	struct simplelock	sc_kqlock;
+	kmutex_t	sc_kqlock;
 	void		*sc_sih;
 	struct timespec sc_atime;
 	struct timespec sc_mtime;
@@ -175,12 +174,18 @@ static int	tap_cdev_poll(dev_t, int, struct lwp *);
 static int	tap_cdev_kqfilter(dev_t, struct knote *);
 
 const struct cdevsw tap_cdevsw = {
-	tap_cdev_open, tap_cdev_close,
-	tap_cdev_read, tap_cdev_write,
-	tap_cdev_ioctl, nostop, notty,
-	tap_cdev_poll, nommap,
-	tap_cdev_kqfilter,
-	D_OTHER,
+	.d_open = tap_cdev_open,
+	.d_close = tap_cdev_close,
+	.d_read = tap_cdev_read,
+	.d_write = tap_cdev_write,
+	.d_ioctl = tap_cdev_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = tap_cdev_poll,
+	.d_mmap = nommap,
+	.d_kqfilter = tap_cdev_kqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 #define TAP_CLONER	0xfffff		/* Maximal minor value */
@@ -268,7 +273,7 @@ tap_attach(device_t parent, device_t self, void *aux)
 	char enaddrstr[3 * ETHER_ADDR_LEN];
 
 	sc->sc_dev = self;
-	sc->sc_sih = softint_establish(SOFTINT_CLOCK, tap_softintr, sc);
+	sc->sc_sih = NULL;
 	getnanotime(&sc->sc_btime);
 	sc->sc_atime = sc->sc_mtime = sc->sc_btime;
 
@@ -362,11 +367,10 @@ tap_attach(device_t parent, device_t self, void *aux)
 	 * the same moment and both try and dequeue a single packet.
 	 *
 	 * The queue for event listeners (used by kqueue(9), see below) has
-	 * to be protected, too, but we don't need the same level of
-	 * complexity for that lock, so a simple spinning lock is fine.
+	 * to be protected too, so use a spin lock.
 	 */
 	mutex_init(&sc->sc_rdlock, MUTEX_DEFAULT, IPL_NONE);
-	simple_lock_init(&sc->sc_kqlock);
+	mutex_init(&sc->sc_kqlock, MUTEX_DEFAULT, IPL_VM);
 
 	selinit(&sc->sc_rsel);
 }
@@ -391,7 +395,10 @@ tap_detach(device_t self, int flags)
 	if_down(ifp);
 	splx(s);
 
-	softint_disestablish(sc->sc_sih);
+	if (sc->sc_sih != NULL) {
+		softint_disestablish(sc->sc_sih);
+		sc->sc_sih = NULL;
+	}
 
 #if defined(COMPAT_40) || defined(MODULAR)
 	/*
@@ -409,6 +416,7 @@ tap_detach(device_t self, int flags)
 	ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
 	seldestroy(&sc->sc_rsel);
 	mutex_destroy(&sc->sc_rdlock);
+	mutex_destroy(&sc->sc_kqlock);
 
 	pmf_device_deregister(self);
 
@@ -852,6 +860,10 @@ tap_dev_close(struct tap_softc *sc)
 	}
 	splx(s);
 
+	if (sc->sc_sih != NULL) {
+		softint_disestablish(sc->sc_sih);
+		sc->sc_sih = NULL;
+	}
 	sc->sc_flags &= ~(TAP_INUSE | TAP_ASYNCIO);
 
 	return (0);
@@ -1104,10 +1116,21 @@ tap_dev_ioctl(int unit, u_long cmd, void *data, struct lwp *l)
 	case FIOGETOWN:
 		return fgetown(sc->sc_pgid, cmd, data);
 	case FIOASYNC:
-		if (*(int *)data)
+		if (*(int *)data) {
+			if (sc->sc_sih == NULL) {
+				sc->sc_sih = softint_establish(SOFTINT_CLOCK,
+				    tap_softintr, sc);
+				if (sc->sc_sih == NULL)
+					return EBUSY; /* XXX */
+			}
 			sc->sc_flags |= TAP_ASYNCIO;
-		else
+		} else {
 			sc->sc_flags &= ~TAP_ASYNCIO;
+			if (sc->sc_sih != NULL) {
+				softint_disestablish(sc->sc_sih);
+				sc->sc_sih = NULL;
+			}
+		}
 		return 0;
 	case FIONBIO:
 		if (*(int *)data)
@@ -1160,15 +1183,15 @@ tap_dev_poll(int unit, int events, struct lwp *l)
 
 		s = splnet();
 		IFQ_POLL(&ifp->if_snd, m);
-		splx(s);
 
 		if (m != NULL)
 			revents |= events & (POLLIN|POLLRDNORM);
 		else {
-			simple_lock(&sc->sc_kqlock);
+			mutex_spin_enter(&sc->sc_kqlock);
 			selrecord(l, &sc->sc_rsel);
-			simple_unlock(&sc->sc_kqlock);
+			mutex_spin_exit(&sc->sc_kqlock);
 		}
+		splx(s);
 	}
 	revents |= events & (POLLOUT|POLLWRNORM);
 
@@ -1215,9 +1238,9 @@ tap_dev_kqfilter(int unit, struct knote *kn)
 	}
 
 	kn->kn_hook = sc;
-	simple_lock(&sc->sc_kqlock);
+	mutex_spin_enter(&sc->sc_kqlock);
 	SLIST_INSERT_HEAD(&sc->sc_rsel.sel_klist, kn, kn_selnext);
-	simple_unlock(&sc->sc_kqlock);
+	mutex_spin_exit(&sc->sc_kqlock);
 	KERNEL_UNLOCK_ONE(NULL);
 	return (0);
 }
@@ -1228,9 +1251,9 @@ tap_kqdetach(struct knote *kn)
 	struct tap_softc *sc = (struct tap_softc *)kn->kn_hook;
 
 	KERNEL_LOCK(1, NULL);
-	simple_lock(&sc->sc_kqlock);
+	mutex_spin_enter(&sc->sc_kqlock);
 	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
-	simple_unlock(&sc->sc_kqlock);
+	mutex_spin_exit(&sc->sc_kqlock);
 	KERNEL_UNLOCK_ONE(NULL);
 }
 
@@ -1289,13 +1312,6 @@ SYSCTL_SETUP(sysctl_tap_setup, "sysctl net.link.tap subtree setup")
 {
 	const struct sysctlnode *node;
 	int error = 0;
-
-	if ((error = sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "net", NULL,
-	    NULL, 0, NULL, 0,
-	    CTL_NET, CTL_EOL)) != 0)
-		return;
 
 	if ((error = sysctl_createv(clog, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT,

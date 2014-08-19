@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: n8_system.c,v 1.1 2008/10/30 12:02:15 darran Exp $";
+static char const n8_id[] = "$Id: n8_system.c,v 1.1.42.1 2014/08/20 00:03:48 tls Exp $";
 /*****************************************************************************/
 /** @file n8_system.c
  *  @brief Implements the API call N8_GetSystemParameter, which allows users to
@@ -71,7 +71,7 @@ static N8_Status_t setHWrevision(N8_Buffer_t *value_p);
 static N8_Status_t setSWversion(N8_Buffer_t *value_p);
 static N8_Status_t setContextSize(N8_Buffer_t *value_p);
 static N8_Status_t setSKSsize(N8_Buffer_t *value_p);
-static N8_Status_t setSWversionText(N8_Buffer_t *value_p);
+static N8_Status_t setSWversionText(N8_Buffer_t *value_p, size_t value_l);
 static N8_Status_t setFD(N8_Buffer_t *value_p);
 static N8_Status_t setInitInfo(N8_Buffer_t *value_p);
 
@@ -104,7 +104,8 @@ extern NSPdriverInfo_t  nspDriverInfo;
  * @par Assumptions
  *    None<br>
  *****************************************************************************/
-N8_Status_t N8_GetSystemParameter(N8_Parameter_t parameter, void *value_p)
+N8_Status_t N8_GetSystemParameter(N8_Parameter_t parameter, void *value_p,
+    size_t value_l)
 {
    N8_Status_t ret = N8_STATUS_OK;
 
@@ -156,7 +157,7 @@ N8_Status_t N8_GetSystemParameter(N8_Parameter_t parameter, void *value_p)
               ret = setNumberOfChips(value_p);
               break;
            case N8_SWVERSIONTEXT:
-              ret = setSWversionText(value_p);
+              ret = setSWversionText(value_p, value_l);
               break;
            case N8_INITIALIZE_INFO:
               ret = setInitInfo(value_p);
@@ -685,9 +686,9 @@ static N8_Status_t setNumberOfChips(N8_Buffer_t *value_p)
  * @par Assumptions
  *    None<br>
  *****************************************************************************/
-N8_Status_t setSWversionText(N8_Buffer_t *value_p)
+N8_Status_t setSWversionText(N8_Buffer_t *value_p, size_t value_l)
 {
-   sprintf(value_p, N8_VERSION_STRING);
+   snprintf(value_p, value_l, N8_VERSION_STRING);
    return N8_STATUS_OK;
 } /* setSWversionText */
 

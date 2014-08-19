@@ -1,6 +1,7 @@
 /* bfd back-end for mips support
    Copyright 1990, 1991, 1993, 1994, 1995, 1996, 1997, 1998, 2000, 2001,
-   2002, 2003, 2004, 2005, 2007, 2008, 2009 Free Software Foundation, Inc.
+   2002, 2003, 2004, 2005, 2007, 2008, 2009, 2013
+   Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -55,6 +56,7 @@ mips_compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
     DEFAULT,						\
     mips_compatible,					\
     bfd_default_scan,					\
+    bfd_arch_default_fill,				\
     NEXT,						\
   }
 
@@ -74,6 +76,7 @@ enum
   I_mips5000,
   I_mips5400,
   I_mips5500,
+  I_mips5900,
   I_mips6000,
   I_mips7000,
   I_mips8000,
@@ -93,7 +96,10 @@ enum
   I_loongson_2f,
   I_loongson_3a,
   I_mipsocteon,
-  I_xlr
+  I_mipsocteonp,
+  I_mipsocteon2,
+  I_xlr,
+  I_micromips
 };
 
 #define NN(index) (&arch_info_struct[(index) + 1])
@@ -114,6 +120,7 @@ static const bfd_arch_info_type arch_info_struct[] =
   N (64, 64, bfd_mach_mips5000, "mips:5000",      FALSE, NN(I_mips5000)),
   N (64, 64, bfd_mach_mips5400, "mips:5400",      FALSE, NN(I_mips5400)),
   N (64, 64, bfd_mach_mips5500, "mips:5500",      FALSE, NN(I_mips5500)),
+  N (64, 32, bfd_mach_mips5900, "mips:5900",      FALSE, NN(I_mips5900)),
   N (32, 32, bfd_mach_mips6000, "mips:6000",      FALSE, NN(I_mips6000)),
   N (64, 64, bfd_mach_mips7000, "mips:7000",      FALSE, NN(I_mips7000)),
   N (64, 64, bfd_mach_mips8000, "mips:8000",      FALSE, NN(I_mips8000)),
@@ -133,7 +140,10 @@ static const bfd_arch_info_type arch_info_struct[] =
   N (64, 64, bfd_mach_mips_loongson_2f, "mips:loongson_2f",       FALSE, NN(I_loongson_2f)),
   N (64, 64, bfd_mach_mips_loongson_3a, "mips:loongson_3a",       FALSE, NN(I_loongson_3a)),
   N (64, 64, bfd_mach_mips_octeon,"mips:octeon",  FALSE, NN(I_mipsocteon)),
-  N (64, 64, bfd_mach_mips_xlr, "mips:xlr",       FALSE, 0)
+  N (64, 64, bfd_mach_mips_octeonp,"mips:octeon+",  FALSE, NN(I_mipsocteonp)),
+  N (64, 64, bfd_mach_mips_octeon2,"mips:octeon2",  FALSE, NN(I_mipsocteon2)),
+  N (64, 64, bfd_mach_mips_xlr, "mips:xlr",       FALSE, NN(I_xlr)),
+  N (64, 64, bfd_mach_mips_micromips,"mips:micromips",FALSE,0)
 };
 
 /* The default architecture is mips:3000, but with a machine number of

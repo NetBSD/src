@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56 2012/05/30 21:54:23 sjg Exp $
+#	$NetBSD: Makefile,v 1.56.2.1 2014/08/20 00:05:00 tls Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -25,9 +25,7 @@ COPTS.meta.c += -DHAVE_FILEMON_H -I${FILEMON_H:H}
 .endif
 
 .PATH:	${.CURDIR}/lst.lib
-.if make(install)
 SUBDIR=	PSD.doc
-.endif
 .if make(obj) || make(clean)
 SUBDIR+= unit-tests
 .endif

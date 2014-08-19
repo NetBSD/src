@@ -1,5 +1,5 @@
 /* BFD library support routines for the MSP architecture.
-   Copyright (C) 2002, 2003, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
    Contributed by Dmitry Diky <diwil@mail.ru>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -23,8 +23,23 @@
 #include "bfd.h"
 #include "libbfd.h"
 
-static const bfd_arch_info_type *compatible
-  PARAMS ((const bfd_arch_info_type *, const bfd_arch_info_type *));
+/* This routine is provided two arch_infos and works out which MSP
+   machine which would be compatible with both and returns a pointer
+   to its info structure.  */
+
+static const bfd_arch_info_type *
+compatible (const bfd_arch_info_type * a,
+	    const bfd_arch_info_type * b)
+{
+  /* If a & b are for different architectures we can do nothing.  */
+  if (a->arch != b->arch)
+    return NULL;
+
+  if (a->mach <= b->mach)
+    return b;
+
+  return a;
+}
 
 #define N(addr_bits, machine, print, default, next)		\
 {								\
@@ -39,75 +54,85 @@ static const bfd_arch_info_type *compatible
   default,			/* The default machine.  */	\
   compatible,							\
   bfd_default_scan,						\
+  bfd_arch_default_fill,					\
   next								\
 }
 
 static const bfd_arch_info_type arch_info_struct[] =
 {
   /* msp430x11x.  */
-  N (16, bfd_mach_msp11, "msp:11", FALSE, & arch_info_struct[1]),
+  N (16, bfd_mach_msp11, "MSP430", FALSE, & arch_info_struct[1]),
 
   /* msp430x11x1.  */
-  N (16, bfd_mach_msp110, "msp:110", FALSE, & arch_info_struct[2]),
+  N (16, bfd_mach_msp110, "MSP430x11x1", FALSE, & arch_info_struct[2]),
 
   /* msp430x12x.  */
-  N (16, bfd_mach_msp12, "msp:12", FALSE, & arch_info_struct[3]),
+  N (16, bfd_mach_msp12, "MSP430x12", FALSE, & arch_info_struct[3]),
 
   /* msp430x13x.  */
-  N (16, bfd_mach_msp13, "msp:13", FALSE, & arch_info_struct[4]),
+  N (16, bfd_mach_msp13, "MSP430x13", FALSE, & arch_info_struct[4]),
 
   /* msp430x14x.  */
-  N (16, bfd_mach_msp14, "msp:14", FALSE, & arch_info_struct[5]),
+  N (16, bfd_mach_msp14, "MSP430x14", FALSE, & arch_info_struct[5]),
 
   /* msp430x15x.  */
-  N (16, bfd_mach_msp15, "msp:15", FALSE, & arch_info_struct[6]),
-  
+  N (16, bfd_mach_msp15, "MSP430x15", FALSE, & arch_info_struct[6]),
+
   /* msp430x16x.  */
-  N (16, bfd_mach_msp16, "msp:16", FALSE, & arch_info_struct[7]),
+  N (16, bfd_mach_msp16, "MSP430x16", FALSE, & arch_info_struct[7]),
+
+  /* msp430x20x.  */
+  N (16, bfd_mach_msp20, "MSP430x20", FALSE, & arch_info_struct[8]),
 
   /* msp430x21x.  */
-  N (16, bfd_mach_msp21, "msp:21", FALSE, & arch_info_struct[8]),
+  N (16, bfd_mach_msp21, "MSP430x21", FALSE, & arch_info_struct[9]),
+
+  /* msp430x22x.  */
+  N (16, bfd_mach_msp22, "MSP430x22", FALSE, & arch_info_struct[10]),
+
+  /* msp430x23x.  */
+  N (16, bfd_mach_msp23, "MSP430x23", FALSE, & arch_info_struct[11]),
+
+  /* msp430x24x.  */
+  N (16, bfd_mach_msp24, "MSP430x24", FALSE, & arch_info_struct[12]),
+
+  /* msp430x26x.  */
+  N (16, bfd_mach_msp26, "MSP430x26", FALSE, & arch_info_struct[13]),
 
   /* msp430x31x.  */
-  N (16, bfd_mach_msp31, "msp:31", FALSE, & arch_info_struct[9]), 
+  N (16, bfd_mach_msp31, "MSP430x31", FALSE, & arch_info_struct[14]),
 
   /* msp430x32x.  */
-  N (16, bfd_mach_msp32, "msp:32", FALSE, & arch_info_struct[10]), 
+  N (16, bfd_mach_msp32, "MSP430x32", FALSE, & arch_info_struct[15]),
 
   /* msp430x33x.  */
-  N (16, bfd_mach_msp33, "msp:33", FALSE, & arch_info_struct[11]),
-  
+  N (16, bfd_mach_msp33, "MSP430x33", FALSE, & arch_info_struct[16]),
+
   /* msp430x41x.  */
-  N (16, bfd_mach_msp41, "msp:41", FALSE, & arch_info_struct[12]),
+  N (16, bfd_mach_msp41, "MSP430x41", FALSE, & arch_info_struct[17]),
 
   /* msp430x42x.  */
-  N (16, bfd_mach_msp42, "msp:42", FALSE, & arch_info_struct[13]),
+  N (16, bfd_mach_msp42, "MSP430x42", FALSE, & arch_info_struct[18]),
 
   /* msp430x43x.  */
-  N (16, bfd_mach_msp43, "msp:43", FALSE, & arch_info_struct[14]),
+  N (16, bfd_mach_msp43, "MSP430x43", FALSE, & arch_info_struct[19]),
 
   /* msp430x44x.  */
-  N (16, bfd_mach_msp43, "msp:44", FALSE, NULL)
+  N (16, bfd_mach_msp43, "MSP430x44", FALSE, & arch_info_struct[20]),
+
+  /* msp430x46x.  */
+  N (16, bfd_mach_msp46, "MSP430x46", FALSE, & arch_info_struct[21]),
+
+  /* msp430x47x.  */
+  N (16, bfd_mach_msp47, "MSP430x47", FALSE, & arch_info_struct[22]),
+
+  /* msp430x54x.  */
+  N (16, bfd_mach_msp54, "MSP430x54", FALSE, & arch_info_struct[23]),
+
+  N (32, bfd_mach_msp430x, "MSP430X", FALSE, NULL)
+
 };
 
 const bfd_arch_info_type bfd_msp430_arch =
   N (16, bfd_mach_msp14, "msp:14", TRUE, & arch_info_struct[0]);
 
-/* This routine is provided two arch_infos and works out which MSP
-   machine which would be compatible with both and returns a pointer
-   to its info structure.  */
-
-static const bfd_arch_info_type *
-compatible (a,b)
-     const bfd_arch_info_type * a;
-     const bfd_arch_info_type * b;
-{
-  /* If a & b are for different architectures we can do nothing.  */
-  if (a->arch != b->arch)
-    return NULL;
-
-  if (a->mach <= b->mach)
-    return b;
-
-  return a;
-}

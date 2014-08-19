@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_axi.c,v 1.3 2012/04/17 09:33:31 bsh Exp $	*/
+/*	$NetBSD: imx51_axi.c,v 1.3.2.1 2014/08/20 00:02:46 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_axi.c,v 1.3 2012/04/17 09:33:31 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_axi.c,v 1.3.2.1 2014/08/20 00:02:46 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -95,10 +95,8 @@ static int
 axi_critical_search(device_t parent, struct cfdata *cf,
     const int *ldesc __unused, void *aux)
 {
-	struct axi_softc *sc;
 	struct axi_attach_args *aa;
 
-	sc = device_private(parent);
 	aa = aux;
 
 	if ((strcmp(cf->cf_name, "tzic") != 0) &&
@@ -125,10 +123,8 @@ static int
 axi_search(device_t parent, struct cfdata *cf, const int *ldesc __unused,
     void *aux)
 {
-	struct axi_softc *sc;
 	struct axi_attach_args *aa;
 
-	sc = device_private(parent);
 	aa = aux;
 
 	aa->aa_addr = cf->cf_loc[AXICF_ADDR];

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp-source.c,v 1.1.1.2.10.1 2013/02/25 00:27:29 tls Exp $	*/
+/*	$NetBSD: smtp-source.c,v 1.1.1.2.10.2 2014/08/19 23:59:44 tls Exp $	*/
 
 /*++
 /* NAME
@@ -145,6 +145,7 @@
 #include <inet_proto.h>
 #include <valid_hostname.h>
 #include <valid_mailhost_addr.h>
+#include <compat_va_copy.h>
 
 /* Global library. */
 
@@ -245,22 +246,21 @@ static int random_interval(int interval)
 
 static void command(VSTREAM *stream, char *fmt,...)
 {
-    VSTRING *buf;
     va_list ap;
+
+    va_start(ap, fmt);
 
     /*
      * Optionally, log the command before actually sending, so we can see
      * what the program is trying to do.
      */
     if (msg_verbose) {
-	buf = vstring_alloc(100);
-	va_start(ap, fmt);
-	vstring_vsprintf(buf, fmt, ap);
-	va_end(ap);
-	msg_info("%s", vstring_str(buf));
-	vstring_free(buf);
+	va_list ap2;
+
+	VA_COPY(ap2, ap);
+	vmsg_info(fmt, ap2);
+	va_end(ap2);
     }
-    va_start(ap, fmt);
     smtp_vprintf(stream, fmt, ap);
     va_end(ap);
     smtp_flush(stream);

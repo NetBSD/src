@@ -1,4 +1,4 @@
-# Copyright 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2007-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -86,7 +86,7 @@ proc gpc_compile {source dest type options} {
     foreach i $options {
 	if { $i == "debug" } {
 	    if [board_info $dest exists debug_flags] {
-		append add_flags " [board_info $dest debug_flags]";
+		append add_flags " [board_info $dest debug_flags]"
 	    } else {
 		append add_flags " -g"
 	    }
@@ -115,7 +115,7 @@ proc fpc_compile {source dest type options} {
     foreach i $options {
 	if { $i == "debug" } {
 	    if [board_info $dest exists debug_flags] {
-		append add_flags " [board_info $dest debug_flags]";
+		append add_flags " [board_info $dest debug_flags]"
 	    } else {
 		append add_flags " -g"
 	    }
@@ -161,5 +161,5 @@ proc set_lang_pascal {} {
 	   "set language to \"pascal\""] {
 	return 0
     }
-    return 1;
+    return 1
 }

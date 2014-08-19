@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.54.12.1 2013/06/23 06:20:18 tls Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.54.12.2 2014/08/20 00:03:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.54.12.1 2013/06/23 06:20:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.54.12.2 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,6 +211,7 @@ ex_pci_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr = NULL;
 	int rev;
 	int error;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	aprint_naive(": Ethernet controller\n");
 
@@ -286,7 +287,7 @@ ex_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ex_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
@@ -327,7 +328,6 @@ ex_d3tod0(pci_chipset_tag_t pc, pcitag_t tag, device_t self, pcireg_t state)
 	uint32_t base0;
 	uint32_t base1;
 	uint32_t romaddr;
-	uint32_t pci_command;
 	uint32_t pci_int_lat;
 	uint32_t pci_cache_lat;
 
@@ -336,7 +336,8 @@ ex_d3tod0(pci_chipset_tag_t pc, pcitag_t tag, device_t self, pcireg_t state)
 
 	aprint_normal_dev(self, "found in power state D%d, "
 	    "attempting to recover.\n", state);
-	pci_command = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	/* XXX is this needed? */
+	(void)pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	base0 = pci_conf_read(pc, tag, PCI_BAR0);
 	base1 = pci_conf_read(pc, tag, PCI_BAR1);
 	romaddr	= pci_conf_read(pc, tag, PCI_EXP_ROM_BAR);

@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2xx0reg.h,v 1.6 2010/02/21 06:08:53 bsh Exp $ */
+/* $NetBSD: s3c2xx0reg.h,v 1.6.20.1 2014/08/20 00:02:47 tls Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -43,7 +43,7 @@
 /*
  * S3C2800, 2410 and 2400 have a common built-in UART block. However,
  * there are small diffs in bit position of some registers.
- * Following definitions can be foune in s3c{2800,24x0}reg.h for
+ * Following definitions can be found in s3c{2800,24x0}reg.h for
  * that reason.
  *
  *  UMCON_AFC                (Auto flow control)

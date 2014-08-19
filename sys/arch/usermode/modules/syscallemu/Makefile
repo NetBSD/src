@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2012/07/03 21:07:41 christos Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2014/08/20 00:03:27 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -11,10 +11,12 @@ M?=	${S}/modules
 KMOD=	syscallemu
 
 SRCS=	syscallemu.c
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+.if ${MACHINE_CPU} == "i386" || ${MACHINE_CPU} == "x86_64"
 SRCS+=	syscallemu_x86.c
+.elif ${MACHINE_CPU} == "arm"
+SRCS+=	syscallemu_arm.c
 .else
-.error ${MACHINE_ARCH} not implemented
+.error ${MACHINE_CPU} not implemented
 .endif
 
 .include <bsd.kmodule.mk>

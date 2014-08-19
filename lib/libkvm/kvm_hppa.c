@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_hppa.c,v 1.6 2010/09/20 23:23:16 jym Exp $	*/
+/*	$NetBSD: kvm_hppa.c,v 1.6.12.1 2014/08/20 00:02:17 tls Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_hppa.c,v 1.6 2010/09/20 23:23:16 jym Exp $");
+__RCSID("$NetBSD: kvm_hppa.c,v 1.6.12.1 2014/08/20 00:02:17 tls Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,7 +49,6 @@ __RCSID("$NetBSD: kvm_hppa.c,v 1.6 2010/09/20 23:23:16 jym Exp $");
  */
 
 #include <sys/param.h>
-#include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/kcore.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.28 2010/08/14 20:52:05 jym Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.28.18.1 2014/08/20 00:03:50 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.28 2010/08/14 20:52:05 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.28.18.1 2014/08/20 00:03:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,10 +239,7 @@ int
 sunkbdinput(int c, struct tty *tp)
 {
 	struct kbd_sun_softc *k = tp->t_sc;
-	u_char *cc;
 	int error;
-
-	cc = tp->t_cc;
 
 	/*
 	 * Handle exceptional conditions (break, parity, framing).

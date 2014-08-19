@@ -1,5 +1,4 @@
-# Copyright (C) 1996, 1997, 2002, 2003, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,19 +18,13 @@
 #
 # This test covers the various forms of "set scheduler-locking".
 
-if $tracelevel then {
-	strace $tracelevel
-}
 
-
-set testfile "schedlock"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile
 
 # The number of threads, including the main thread.
 set NUM 2
 
-if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list debug "incdir=${objdir}"]] != "" } {
+if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable debug] != "" } {
     return -1
 }
 

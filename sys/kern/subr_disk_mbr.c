@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.44.2.1 2012/11/20 03:02:43 tls Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.44.2.2 2014/08/20 00:04:29 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.44.2.1 2012/11/20 03:02:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.44.2.2 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,6 +158,15 @@ scan_mbr(mbr_args_t *a, int (*actn)(mbr_args_t *, mbr_partition_t *, int, uint))
 		/* Note: Magic number is little-endian. */
 		mbr = (void *)a->bp->b_data;
 		if (mbr->mbr_magic != htole16(MBR_MAGIC))
+			return SCAN_CONTINUE;
+
+		/*
+		 * If this is a protective MBR, bail now.
+		 */
+		if (mbr->mbr_parts[0].mbrp_type == MBR_PTYPE_PMBR
+		    && mbr->mbr_parts[1].mbrp_type == MBR_PTYPE_UNUSED
+		    && mbr->mbr_parts[2].mbrp_type == MBR_PTYPE_UNUSED
+		    && mbr->mbr_parts[3].mbrp_type == MBR_PTYPE_UNUSED)
 			return SCAN_CONTINUE;
 
 		/* Copy data out of buffer so action can use bp */

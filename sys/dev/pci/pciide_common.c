@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.57.2.2 2012/11/20 03:02:28 tls Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.57.2.3 2014/08/20 00:03:48 tls Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.57.2.2 2012/11/20 03:02:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.57.2.3 2014/08/20 00:03:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -341,6 +341,7 @@ pciide_mapregs_native(const struct pci_attach_args *pa,
 	const char *intrstr;
 	pci_intr_handle_t intrhandle;
 	int i;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	cp->compat = 0;
 
@@ -350,7 +351,7 @@ pciide_mapregs_native(const struct pci_attach_args *pa,
 			    "couldn't map native-PCI interrupt\n");
 			goto bad;
 		}
-		intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+		intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
 		sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
 		    intrhandle, IPL_BIO, pci_intr, sc);
 		if (sc->sc_pci_ih != NULL) {
@@ -874,7 +875,7 @@ pciide_chansetup(struct pciide_softc *sc, int channel, pcireg_t interface)
 	cp->ata_channel.ch_channel = channel;
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	cp->ata_channel.ch_queue =
-	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
+	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error("%s %s channel: "
 		    "can't allocate memory for command queue",

@@ -1,8 +1,6 @@
 /* Top level stuff for GDB, the GNU debugger.
 
-   Copyright (C) 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1996,
-   1997, 1998, 1999, 2000, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,41 +21,41 @@
 #define TOP_H
 
 /* From top.c.  */
-extern char *line;
-extern int linesize;
+extern char *saved_command_line;
+extern int saved_command_line_size;
 extern FILE *instream;
 extern int in_user_command;
-extern int caution;
+extern int confirm;
 extern char gdb_dirbuf[1024];
 extern int inhibit_gdbinit;
-extern int epoch_interface;
-extern char gdbinit[];
+extern const char gdbinit[];
 
 extern void print_gdb_version (struct ui_file *);
+extern void print_gdb_configuration (struct ui_file *);
 
 extern void read_command_file (FILE *);
 extern void init_history (void);
 extern void command_loop (void);
-extern void simplified_command_loop (char *(*read_input_func) (char *),
-				     void (*execute_command_func) (char *,
-								   int));
 extern int quit_confirm (void);
 extern void quit_force (char *, int);
 extern void quit_command (char *, int);
-extern int quit_cover (void *);
+extern void quit_cover (void);
 extern void execute_command (char *, int);
 
+extern void check_frame_language_change (void);
+
 /* Prepare for execution of a command.
-   Call this before every command, CLI or MI.  */
-extern void prepare_execute_command (void);
+   Call this before every command, CLI or MI.
+   Returns a cleanup to be run after the command is completed.  */
+extern struct cleanup *prepare_execute_command (void);
 
 /* This function returns a pointer to the string that is used
    by gdb for its command prompt.  */
 extern char *get_prompt (void);
 
-/* This function copies the specified string into the string that
-   is used by gdb for its command prompt.  */
-extern void set_prompt (char *);
+/* This function returns a pointer to the string that is used
+   by gdb for its command prompt.  */
+extern void set_prompt (const char *s);
 
 /* From random places.  */
 extern int readnow_symbol_files;

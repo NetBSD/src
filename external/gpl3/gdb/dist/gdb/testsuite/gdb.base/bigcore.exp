@@ -1,5 +1,4 @@
-# Copyright 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2004, 2005,
-# 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 1992-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,10 +16,6 @@
 # This file is based on corefile.exp which was written by Fred
 # Fish. (fnf@cygnus.com)
 
-if $tracelevel then {
-	strace $tracelevel
-}
-
 
 # Are we on a target board?  As of 2004-02-12, GDB didn't have a
 # mechanism that would let it efficiently access a remote corefile.
@@ -32,7 +27,7 @@ if ![isnative] then {
 
 # Can the system run this test (in particular support sparse
 # corefiles)?  On systems that lack sparse corefile support this test
-# consumes too many resources - gigabytes worth of disk space and and
+# consumes too many resources - gigabytes worth of disk space and
 # I/O bandwith.
 
 if { [istarget "*-*-*bsd*"]
@@ -51,10 +46,8 @@ if { [istarget "*-*-*irix*"] } {
     return
 }
 
-set testfile "bigcore"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
-set corefile ${objdir}/${subdir}/${testfile}.corefile
+standard_testfile .c
+set corefile [standard_output_file ${binfile}.corefile]
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
      untested bigcore.exp
@@ -63,15 +56,18 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
 
 # Run GDB on the bigcore program up-to where it will dump core.
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart ${binfile}
 gdb_test_no_output "set print sevenbit-strings"
 gdb_test_no_output "set width 0"
 
+# Get the core into the output directory.
+if {![is_remote host]} {
+    gdb_test "cd [file dirname $corefile]" "Working directory .*" \
+	"cd to test directory"
+}
+
 if { ![runto_main] } then {
-    gdb_suppress_tests;
+    gdb_suppress_tests
 }
 set print_core_line [gdb_get_line_number "Dump core"]
 gdb_test "tbreak $print_core_line"
@@ -108,7 +104,7 @@ proc extract_heap { dir } {
 	    fail "$test (timeout)"
 	}
     }
-    return $heap;
+    return $heap
 }
 set next_heap [extract_heap next]
 set prev_heap [extract_heap prev]
@@ -149,7 +145,7 @@ set timeout $oldtimeout
 # Find the corefile
 set file ""
 foreach pat [list core.${inferior_pid} ${testfile}.core core] {
-    set names [glob -nocomplain $pat]
+    set names [glob -nocomplain [standard_output_file $pat]]
     if {[llength $names] == 1} {
 	set file [lindex $names 0]
 	remote_exec build "mv $file $corefile"
@@ -198,7 +194,9 @@ if {! $core_ok} {
 # Now load up that core file
 
 set test "load corefile"
-gdb_test_multiple "core $corefile" "$test" {
+# We use [file tail] because gdb is still "cd"d to the
+# output directory.
+gdb_test_multiple "core [file tail $corefile]" "$test" {
     -re "A program is being debugged already.  Kill it. .y or n. " {
 	send_gdb "y\n"
 	exp_continue

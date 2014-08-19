@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.63 2011/10/14 09:23:31 hannken Exp $
+#	$NetBSD: vnode_if.src,v 1.63.12.1 2014/08/20 00:04:29 tls Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -61,53 +61,45 @@ vop_bwrite {
  
 #
 #% lookup     dvp     L L L
-#% lookup     vpp     - L -
+#% lookup     vpp     - U -
 #
-# XXX - the lookup locking protocol defies simple description.
 #    Note especially that *vpp may equal dvp.
 #
 #    More details:
-#     There are three types of lookups: ".", ".." (ISDOTDOT), and other.
-#     On successful lookup of ".", a reference is added to dvp, and it
-#          is returned in *vpp.
-#     To look up ISDOTDOT, dvp is unlocked, the ".." node is locked, and
-#          then dvp is relocked.  This preserves the protocol of always
-#          locking nodes from root ("/") downward and prevents deadlock.
-#     Other lookups find the named node (creating the vnode if needed) and
-#          return it, locked, in *vpp.
+#     All lookups find the named node (creating the vnode if needed) and
+#          return it, referenced and unlocked, in *vpp.
 #     On failure, *vpp is NULL, and *dvp is left locked.
-#	
-#     *vpp is always locked on return if the operation succeeds.
-#          Typically, if *vpp == dvp, you need to release twice, but
-#          unlock only once.
 #
 vop_lookup {
+	VERSION 2
 	IN struct vnode *dvp;
 	OUT WILLMAKE struct vnode **vpp;
 	IN struct componentname *cnp;
 };
 
 #
-#% create     dvp     L U U
-#% create     vpp     - L -
+#% create     dvp     L L L
+#% create     vpp     - U -
 #
 #! create cnp	CREATE, LOCKPARENT
 #
 vop_create {
-	IN LOCKED=YES WILLPUT struct vnode *dvp;
+	VERSION 3
+	IN LOCKED=YES struct vnode *dvp;
 	OUT WILLMAKE struct vnode **vpp;
 	IN struct componentname *cnp;
 	IN struct vattr *vap;
 };
 
 #
-#% mknod      dvp     L U U
-#% mknod      vpp     - L -
+#% mknod      dvp     L L L
+#% mknod      vpp     - U -
 #
 #! mknod cnp	CREATE, LOCKPARENT
 #
 vop_mknod {
-	IN LOCKED=YES WILLPUT struct vnode *dvp;
+	VERSION 3
+	IN LOCKED=YES struct vnode *dvp;
 	OUT WILLMAKE struct vnode **vpp;
 	IN struct componentname *cnp;
 	IN struct vattr *vap;
@@ -176,6 +168,24 @@ vop_write {
 	INOUT struct uio *uio;
 	IN int ioflag;
 	IN kauth_cred_t cred;
+};
+
+#
+#% fallocate  vp      L L L
+#
+vop_fallocate {
+	IN LOCKED=YES struct vnode *vp;
+	IN off_t pos;
+	IN off_t len;
+};
+
+#
+#% fdiscard   vp      L L L
+#
+vop_fdiscard {
+	IN LOCKED=YES struct vnode *vp;
+	IN off_t pos;
+	IN off_t len;
 };
 
 #
@@ -298,13 +308,14 @@ vop_rename {
 };
 
 #
-#% mkdir      dvp     L U U
-#% mkdir      vpp     - L - 
+#% mkdir      dvp     L L L
+#% mkdir      vpp     - U - 
 #
 #! mkdir cnp	CREATE, LOCKPARENT
 #
 vop_mkdir {
-	IN LOCKED=YES WILLPUT struct vnode *dvp;
+	VERSION 3
+	IN LOCKED=YES struct vnode *dvp;
 	OUT WILLMAKE struct vnode **vpp;
 	IN struct componentname *cnp;
 	IN struct vattr *vap;
@@ -323,13 +334,14 @@ vop_rmdir {
 };
 
 #
-#% symlink    dvp     L U U
-#% symlink    vpp     - L -
+#% symlink    dvp     L L L
+#% symlink    vpp     - U -
 #
 #! symlink cnp	CREATE, LOCKPARENT
 #
 vop_symlink {
-	IN LOCKED=YES WILLPUT struct vnode *dvp;
+	VERSION 3
+	IN LOCKED=YES struct vnode *dvp;
 	OUT WILLMAKE struct vnode **vpp;
 	IN struct componentname *cnp;
 	IN struct vattr *vap;

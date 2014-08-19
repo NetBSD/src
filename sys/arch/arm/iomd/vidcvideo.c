@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.43 2012/05/14 10:38:08 skrll Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.43.2.1 2014/08/20 00:02:46 tls Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.43 2012/05/14 10:38:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.43.2.1 2014/08/20 00:02:46 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -784,24 +784,23 @@ set_curpos(struct vidcvideo_softc *sc, struct wsdisplay_curpos *curpos)
 static void vv_copyrows(void *id, int srcrow, int dstrow, int nrows)
 {
 	struct rasops_info *ri = id;
-	int height, offset, size;
-	int scrollup, scrolldown;
+	int height, size;
 	unsigned char *src, *dst;
 	struct vcons_screen *scr = ri->ri_hw;
 	struct fb_devconfig *dc = (struct fb_devconfig *) (scr->scr_cookie);
 
 	/* All movements are done in multiples of character heigths */
 	height = ri->ri_font->fontheight * nrows;
-	offset = (srcrow - dstrow) * ri->ri_yscale;
 	size   = height * ri->ri_stride;
 
 	/* check if we are full screen scrolling */
-	scrollup   = (srcrow + nrows >= ri->ri_rows);
-	scrolldown = (dstrow + nrows >= ri->ri_rows);
 
 #if 0
+	int scrollup   = (srcrow + nrows >= ri->ri_rows);
+	int scrolldown = (dstrow + nrows >= ri->ri_rows);
 	if ((scrollup || scrolldown) &&
 	    (videomemory.vidm_type == VIDEOMEM_TYPE_VRAM)) {
+		int offset = (srcrow - dstrow) * ri->ri_yscale;
 		ri->ri_bits = vidcvideo_hwscroll(offset);
 		vidcvideo_progr_scroll();	/* sadistic ; shouldnt this be on vsync? */
 

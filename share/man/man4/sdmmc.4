@@ -1,9 +1,9 @@
-.\"	$NetBSD: sdmmc.4,v 1.4 2009/10/01 05:42:22 wiz Exp $
+.\"	$NetBSD: sdmmc.4,v 1.4.18.1 2014/08/20 00:02:35 tls Exp $
 .\"	$OpenBSD: sdmmc.4,v 1.8 2009/03/25 19:33:06 mk Exp $
 .\"
 .\" Theo de Raadt, 2006. Public Domain.
 .\"
-.Dd October 1, 2009
+.Dd March 19, 2014
 .Dt SDMMC 4
 .Os
 .Sh NAME
@@ -13,6 +13,7 @@
 .Cd "# pxa2x0 specific"
 .Cd "sdmmc* at pxamci?"
 .Cd "# all architectures"
+.Cd "sdmmc* at rtsx?"
 .Cd "sdmmc* at sdhc?"
 .Cd "sdmmc* at wb?"
 .Cd "ld* at sdmmc?"
@@ -27,6 +28,7 @@ Standard SD/SDHC memory devices will show up as a logical disk, using
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr ld 4 ,
+.Xr rtsx 4 ,
 .Xr sbt 4 ,
 .Xr sdhc 4 ,
 .Xr wb 4

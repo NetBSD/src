@@ -1,4 +1,4 @@
-/* $Id: imx23_space.c,v 1.1.6.2 2013/02/25 00:28:28 tls Exp $ */
+/* $Id: imx23_space.c,v 1.1.6.3 2014/08/20 00:02:46 tls Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
 /*
  * bus_space(9) support for Freescale i.MX23 processor.
  */
+
+#include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/mutex.h>
 #include <uvm/uvm_prot.h>
@@ -39,6 +41,7 @@
 #include <uvm/uvm_pmap.h>
 #include <machine/bus_defs.h>
 #include <machine/pmap.h>
+
 
 int	imx23_bs_map(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
 void	imx23_bs_unmap(void *, bus_space_handle_t, bus_size_t);

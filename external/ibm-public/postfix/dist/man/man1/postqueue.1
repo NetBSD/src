@@ -1,4 +1,4 @@
-.\"	$NetBSD: postqueue.1,v 1.1.1.2 2010/06/17 18:06:24 tron Exp $
+.\"	$NetBSD: postqueue.1,v 1.1.1.2.12.1 2014/08/19 23:59:41 tls Exp $
 .\"
 .TH POSTQUEUE 1 
 .ad
@@ -68,7 +68,7 @@ attempt will be made until the mail is taken off hold.
 .RE
 .IP "\fB-s \fIsite\fR"
 Schedule immediate delivery of all mail that is queued for the named
-\fIsite\fR. A numerical site must be specified as a valid RFC 2821
+\fIsite\fR. A numerical site must be specified as a valid RFC 5321
 address literal enclosed in [], just like in email addresses.
 The site must be eligible for the "fast flush" service.
 See \fBflush\fR(8) for more information about the "fast flush"

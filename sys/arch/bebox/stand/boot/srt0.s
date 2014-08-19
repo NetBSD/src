@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.3 1999/06/28 01:20:45 sakamoto Exp $	*/
+/*	$NetBSD: srt0.s,v 1.3.186.1 2014/08/20 00:02:50 tls Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -49,7 +49,7 @@ _start:
 	andc	3,3,4
 	mtmsr	3
 	bl	whichCPU
-	cmpi	0,3,0
+	cmpwi	%r3,0
 	bne	90f
 /* CPU 0 runs here */
 /* Relocate code to final resting spot */
@@ -81,7 +81,7 @@ start_ldr:
 	subi	4,4,4
 	li	0,0
 50:	stwu	0,4(3)
-	cmp	0,3,4
+	cmpw	%r3,%r4
 	bne	50b
 90:
 	bl	main

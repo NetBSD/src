@@ -1,4 +1,4 @@
-/*	$NetBSD: uniq.c,v 1.5 2010/04/25 00:54:46 joerg Exp $	*/
+/*	$NetBSD: uniq.c,v 1.5.12.1 2014/08/20 00:05:13 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: uniq.c,v 1.5 2010/04/25 00:54:46 joerg Exp $");
+__RCSID("$NetBSD: uniq.c,v 1.5.12.1 2014/08/20 00:05:13 tls Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -96,6 +96,7 @@ uniq(const char *fname)
 			break;
 		case -1:
 			err(1, "put");
+			/*NOTREACHED*/
 		default:
 			abort();
 			break;

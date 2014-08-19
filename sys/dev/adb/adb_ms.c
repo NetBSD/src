@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ms.c,v 1.13.2.1 2012/11/20 03:01:58 tls Exp $	*/
+/*	$NetBSD: adb_ms.c,v 1.13.2.2 2014/08/20 00:03:35 tls Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.13.2.1 2012/11/20 03:01:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.13.2.2 2014/08/20 00:03:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -743,6 +743,8 @@ init_trackpad(struct adbms_softc *sc)
 	    CTLTYPE_INT, "tapping", "tapping the pad causes button events",
 	    sysctl_adbms_tap, 1, (void *)sc, 0,
 	    CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
+
+	(void)ret;
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: at91bus.c,v 1.14.2.1 2012/11/20 03:01:03 tls Exp $	*/
+/*	$NetBSD: at91bus.c,v 1.14.2.2 2014/08/20 00:02:45 tls Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.14.2.1 2012/11/20 03:01:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.14.2.2 2014/08/20 00:02:45 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"
+#include "locators.h"
 
 /* Define various stack sizes in pages */
 #define IRQ_STACK_SIZE	8
@@ -52,8 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.14.2.1 2012/11/20 03:01:03 tls Exp $")
 #include <sys/reboot.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/termios.h>
 
-#include <machine/bootconfig.h>
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
@@ -62,22 +65,16 @@ __KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.14.2.1 2012/11/20 03:01:03 tls Exp $")
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
-#include <sys/bus.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
+#include <arm/locore.h>
 #include <arm/undefined.h>
 
 #include <arm/arm32/machdep.h>
-#include <arm/cpufunc.h>
 
 #include <arm/at91/at91var.h>
 #include <arm/at91/at91busvar.h>
 #include <arm/at91/at91dbgureg.h>
 
-//#include <dev/cons.h>
-#include <sys/termios.h>
-
-#include "locators.h"
+#include <machine/bootconfig.h>
 
 /* console stuff: */
 #ifndef	CONSPEED

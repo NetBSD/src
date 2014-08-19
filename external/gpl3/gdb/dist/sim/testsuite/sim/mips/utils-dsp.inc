@@ -1,6 +1,5 @@
 # MIPS DSP ASE simulator testsuite utility functions.
-# Copyright (C) 2005, 2007, 2008, 2009, 2010,
-# 2011 Free Software Foundation, Inc.
+# Copyright (C) 2005-2014 Free Software Foundation, Inc.
 # Contributed by MIPS Technologies, Inc.  Written by Chao-ying Fu.
 #
 # This file is part of the GNU simulators.

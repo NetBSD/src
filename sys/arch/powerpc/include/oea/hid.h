@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.h,v 1.9 2008/05/25 10:52:08 phx Exp $	*/
+/*	$NetBSD: hid.h,v 1.9.42.1 2014/08/20 00:03:20 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -139,5 +139,7 @@
 #define	HID1_PAR	0x01000000	/* Disable Precharge for ... */
 #define	HID1_DFS4	0x00800000	/* Dynamic Freq Switch / 4 (7448) */
 #define	HID1_DFS2	0x00400000	/* Dynamic Freq Switch / 2 (7447A) */
+#define	HID1_SYNCBE	0x00000800	/* Enable sync/eieio broadcast */
+#define	HID1_ABE	0x00000400	/* Enable address broadcast */
 
 #endif /* _POWERPC_OEA_HID_H_ */

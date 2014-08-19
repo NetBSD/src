@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.24 2011/08/31 16:24:56 plunky Exp $	*/
+/*	$NetBSD: tetris.c,v 1.24.8.1 2014/08/20 00:00:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -73,6 +73,7 @@ gid_t	gid, egid;
 
 char	key_msg[100];
 int	showpreview;
+int	nocolor;
 
 static void elide(void);
 static void setup_board(void);
@@ -92,7 +93,7 @@ setup_board(void)
 
 	p = board;
 	for (i = B_SIZE; i; i--)
-		*p++ = i <= (2 * B_COLS) || (i % B_COLS) < 2;
+		*p++ = (i <= (2 * B_COLS) || (i % B_COLS) < 2) ? 7 : 0;
 }
 
 /*
@@ -144,8 +145,11 @@ main(int argc, char *argv[])
 
 	keys = "jkl pq";
 
-	while ((ch = getopt(argc, argv, "k:l:ps")) != -1)
+	while ((ch = getopt(argc, argv, "bk:l:ps")) != -1)
 		switch(ch) {
+		case 'b':
+			nocolor = 1;
+			break;
 		case 'k':
 			if (strlen(keys = optarg) != 6)
 				usage();

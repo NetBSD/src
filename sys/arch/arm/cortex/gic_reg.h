@@ -1,4 +1,4 @@
-/*	$NetBSD: gic_reg.h,v 1.1 2012/09/01 00:03:14 matt Exp $	*/
+/*	$NetBSD: gic_reg.h,v 1.1.2.1 2014/08/20 00:02:45 tls Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -90,6 +90,8 @@
 
 #define	GICC_PMR_PRIORITY		__BITS(7,0)
 #define	GICC_PMR_PRIORITIES		256
+#define	GICC_PMR_NS_PRIORITIES		128
+#define	GICC_PMR_NONSECURE		0x80
 #define	GICC_PMR_8_LEVELS		0x1f
 #define	GICC_PMR_16_LEVELS		0x0f
 #define	GICC_PMR_32_LEVELS		0x07
@@ -198,5 +200,15 @@
 #define	GICv1_ICCABPR		GICC_ABPR
 #define	GICv1_ICCHPIR		GICC_HPPIR
 #define	GICv1_ICCIIDR		GICC_IIDR
+
+/* GICv2m (MSI) */
+
+#define GIC_MSI_TYPER		0x0008
+#define GIC_MSI_SETSPI		0x0040
+#define GIC_MSI_PIDR2		0x0fe8
+#define GIC_MSI_IIDR		0x0ffc
+
+#define GIC_MSI_TYPER_BASE	__BITS(25,16)	// Starting SPI of MSIs
+#define GIC_MSI_TYPER_NUMBER	__BITS(9,0)	// Count of MSIs
 
 #endif /* !_ARM_CORTEX_GICREG_H_ */

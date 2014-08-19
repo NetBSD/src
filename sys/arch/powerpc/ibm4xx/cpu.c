@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.32 2011/06/21 04:21:16 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.32.12.1 2014/08/20 00:03:19 tls Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.32 2011/06/21 04:21:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.32.12.1 2014/08/20 00:03:19 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,8 +223,6 @@ struct cpu_info cpu_info[1] = {
 	}
 };
 
-char cpu_model[80];
-
 bool cpufound;
 
 static int
@@ -257,16 +255,16 @@ cpuattach(device_t parent, device_t self, void *aux)
 	const u_int pvr = mfpvr();
 	for (cp = models; cp->name != NULL; cp++) {
 		if ((pvr & cp->mask) == cp->version) {
-			strcpy(cpu_model, cp->name);
+			cpu_setmodel("%s", cp->name);
 			break;
 		}
 	}
 	if (__predict_false(cp->name == NULL))
-		sprintf(cpu_model, "Version 0x%x", pvr);
+		cpu_setmodel("Version 0x%x", pvr);
 
 	aprint_normal(": %uMHz %s (PVR 0x%x)\n",
 	    (processor_freq + 500000) / 1000000,
-	    (cp->name != NULL ? cpu_model : "unknown model"),
+	    (cp->name != NULL ? cpu_getmodel() : "unknown model"),
 	    pvr);
 
 	cpu_probe_cache();

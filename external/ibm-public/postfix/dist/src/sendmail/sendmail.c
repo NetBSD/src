@@ -1,4 +1,4 @@
-/*	$NetBSD: sendmail.c,v 1.1.1.1.16.1 2013/02/25 00:27:27 tls Exp $	*/
+/*	$NetBSD: sendmail.c,v 1.1.1.1.16.2 2014/08/19 23:59:44 tls Exp $	*/
 
 /*++
 /* NAME
@@ -78,6 +78,11 @@
 /* .IP \fB-bi\fR
 /*	Initialize alias database. See the \fBnewaliases\fR
 /*	command above.
+/* .IP \fB-bl\fR
+/*	Go into daemon mode. To accept only local connections as
+/*	with Sendmail\'s \fB-bl\fR option, specify "\fBinet_interfaces
+/*	= loopback\fR" in the Postfix \fBmain.cf\fR configuration
+/*	file.
 /* .IP \fB-bm\fR
 /*	Read mail from standard input and arrange for delivery.
 /*	This is the default mode of operation.
@@ -152,7 +157,8 @@
 /*	\fItype\fR:\fIpathname\fR. See \fBpostalias\fR(1) for
 /*	details.
 /* .IP "\fB-O \fIoption=value\fR (ignored)"
-/*	Backwards compatibility.
+/*	Set the named \fIoption\fR to \fIvalue\fR. Use the equivalent
+/*	configuration parameter in \fBmain.cf\fR instead.
 /* .IP "\fB-o7\fR (ignored)"
 /* .IP "\fB-o8\fR (ignored)"
 /*	To send 8-bit or binary content, use an appropriate MIME encapsulation
@@ -169,9 +175,16 @@
 /*	Set the envelope sender address. This is the address where
 /*	delivery problems are sent to. With Postfix versions before 2.1, the
 /*	\fBErrors-To:\fR message header overrides the error return address.
-/* .IP "\fB-R \fIreturn_limit\fR (ignored)"
-/*	Limit the size of bounced mail. Use the \fBbounce_size_limit\fR
-/*	configuration parameter instead.
+/* .IP "\fB-R \fIreturn\fR"
+/*	Delivery status notification control.  Specify "hdrs" to
+/*	return only the header when a message bounces, "full" to
+/*	return a full copy (the default behavior).
+/*
+/*	The \fB-R\fR option specifies an upper bound; Postfix will
+/*	return only the header, when a full copy would exceed the
+/*	bounce_size_limit setting.
+/*
+/*	This option is ignored before Postfix version 2.10.
 /* .IP \fB-q\fR
 /*	Attempt to deliver all queued mail. This is implemented by
 /*	executing the \fBpostqueue\fR(1) command.
@@ -347,8 +360,8 @@
 /*	The default database type for use in \fBnewaliases\fR(1), \fBpostalias\fR(1)
 /*	and \fBpostmap\fR(1) commands.
 /* .IP "\fBdelay_warning_time (0h)\fR"
-/*	The time after which the sender receives the message headers of
-/*	mail that is still queued.
+/*	The time after which the sender receives a copy of the message
+/*	headers of mail that is still queued.
 /* .IP "\fBenable_errors_to (no)\fR"
 /*	Report mail delivery errors to the address specified with the
 /*	non-standard Errors-To: message header, instead of the envelope
@@ -601,7 +614,7 @@ static void output_header(void *context, int header_class,
 /* enqueue - post one message */
 
 static void enqueue(const int flags, const char *encoding,
-		            const char *dsn_envid, int dsn_notify,
+		         const char *dsn_envid, int dsn_ret, int dsn_notify,
 		            const char *rewrite_context, const char *sender,
 		            const char *full_name, char **recipients)
 {
@@ -715,6 +728,9 @@ static void enqueue(const int flags, const char *encoding,
     if (dsn_envid)
 	rec_fprintf(dst, REC_TYPE_ATTR, "%s=%s",
 		    MAIL_ATTR_DSN_ENVID, dsn_envid);
+    if (dsn_ret)
+	rec_fprintf(dst, REC_TYPE_ATTR, "%s=%d",
+		    MAIL_ATTR_DSN_RET, dsn_ret);
     rec_fprintf(dst, REC_TYPE_ATTR, "%s=%s",
 		MAIL_ATTR_RWR_CONTEXT, rewrite_context);
     if (full_name || (full_name = fullname()) != 0)
@@ -966,6 +982,7 @@ int     main(int argc, char **argv)
     uid_t   uid;
     const char *rewrite_context = MAIL_ATTR_RWR_LOCAL;
     int     dsn_notify = 0;
+    int     dsn_ret = 0;
     const char *dsn_envid = 0;
     int     saved_optind;
 
@@ -1158,6 +1175,10 @@ int     main(int argc, char **argv)
 	    if ((dsn_notify = dsn_notify_mask(optarg)) == 0)
 		msg_warn("bad -N option value -- ignored");
 	    break;
+	case 'R':
+	    if ((dsn_ret = dsn_ret_code(optarg)) == 0)
+		msg_warn("bad -R option value -- ignored");
+	    break;
 	case 'V':				/* DSN, was: VERP */
 	    if (strlen(optarg) > 100)
 		msg_warn("too long -V option value -- ignored");
@@ -1183,6 +1204,7 @@ int     main(int argc, char **argv)
 	    default:
 		msg_fatal_status(EX_USAGE, "unsupported: -%c%c", c, *optarg);
 	    case 'd':				/* daemon mode */
+	    case 'l':				/* daemon mode */
 		if (mode == SM_MODE_FLUSHQ)
 		    msg_warn("ignoring -q option in daemon mode");
 		mode = SM_MODE_DAEMON;
@@ -1284,6 +1306,8 @@ int     main(int argc, char **argv)
 	    msg_fatal_status(EX_USAGE, "-t option cannot be used with -bv");
 	if (dsn_notify)
 	    msg_fatal_status(EX_USAGE, "-N option cannot be used with -bv");
+	if (dsn_ret)
+	    msg_fatal_status(EX_USAGE, "-R option cannot be used with -bv");
 	if (msg_verbose == 1)
 	    msg_fatal_status(EX_USAGE, "-v option cannot be used with -bv");
     }
@@ -1328,7 +1352,7 @@ int     main(int argc, char **argv)
 	    mail_run_replace(var_command_dir, ext_argv->argv);
 	    /* NOTREACHED */
 	} else {
-	    enqueue(flags, encoding, dsn_envid, dsn_notify,
+	    enqueue(flags, encoding, dsn_envid, dsn_ret, dsn_notify,
 		    rewrite_context, sender, full_name, argv + OPTIND);
 	    exit(0);
 	    /* NOTREACHED */

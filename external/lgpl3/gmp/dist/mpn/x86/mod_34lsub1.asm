@@ -21,11 +21,11 @@ include(`../config.m4')
 
 
 C      cycles/limb
-C P5:     3.0
-C P6:     3.66
-C K6:     3.0
-C K7:     1.3
-C P4:     9
+C P5	  3.0
+C P6	  3.66
+C K6	  3.0
+C K7	  1.3
+C P4	  9
 
 
 C mp_limb_t mpn_mod_34lsub1 (mp_srcptr src, mp_size_t size)

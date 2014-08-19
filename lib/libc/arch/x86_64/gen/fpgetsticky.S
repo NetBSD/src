@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetsticky.S,v 1.3 2002/06/12 19:17:22 fvdl Exp $	*/
+/*	$NetBSD: fpgetsticky.S,v 1.3.62.1 2014/08/20 00:02:12 tls Exp $	*/
 
 /*
  * Written by Frank van der Linden at Wasabi Systems for NetBSD.
@@ -25,3 +25,8 @@ ENTRY(fpgetsticky)
 	orl	-8(%rsp),%eax
 	andl	$63,%eax
 	ret
+#ifdef WEAK_ALIAS
+END(_fpgetsticky)
+#else
+END(fpgetsticky)
+#endif

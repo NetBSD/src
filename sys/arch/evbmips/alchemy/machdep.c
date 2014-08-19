@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.52 2012/03/02 16:20:55 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.52.2.1 2014/08/20 00:02:58 tls Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2012/03/02 16:20:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52.2.1 2014/08/20 00:02:58 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2012/03/02 16:20:55 matt Exp $");
 #include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/termios.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -159,7 +160,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	memset(edata, 0, (char *)kernend - edata);
 
 	/* set CPU model info for sysctl_hw */
-	strcpy(cpu_model, board->ab_name);
+	cpu_setmodel("%s", board->ab_name);
 
 	/* save the yamon environment pointer */
 	yamon_envp = envp;
@@ -355,7 +356,7 @@ cpu_startup(void)
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s%s", copyright, version);
-	printf("%s\n", cpu_model);
+	printf("%s\n", cpu_getmodel());
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 

@@ -1,4 +1,4 @@
-# Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2009-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,23 +17,15 @@
 
 if { [skip_cplus_tests] } { continue }
 
-set testfile "pr9631"
-set srcfile ${testfile}.cc
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .cc
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
-     untested pr9631.exp
-     return -1
-}
-
-if [get_compiler_info ${binfile} "c++"] {
+if [get_compiler_info "c++"] {
     return -1
 }
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
+    return -1
+}
 
 if ![runto_main] then {
     perror "couldn't run to breakpoint"
@@ -45,4 +37,4 @@ gdb_continue_to_breakpoint "after bar tender is initialized"
 
 gdb_test \
   "print tender" \
-  "\\\$1 = {<foo::vbase> = {_vptr.vbase = $hex}, <empty_base> = {<No data fields>}, <No data fields>}"
+  "\\\$1 = {<foo::vbase> = {_vptr.vbase = ${hex}( <vtable for bar.*>)?}, <empty_base> = {<No data fields>}, <No data fields>}"

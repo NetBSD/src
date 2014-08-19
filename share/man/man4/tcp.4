@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcp.4,v 1.25 2010/03/22 18:58:31 joerg Exp $
+.\"	$NetBSD: tcp.4,v 1.25.14.1 2014/08/20 00:02:35 tls Exp $
 .\"	$FreeBSD: tcp.4,v 1.11.2.16 2004/02/16 22:21:47 bms Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tcp.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd June 19, 2007
+.Dd October 10, 2013
 .Dt TCP 4
 .Os
 .Sh NAME
@@ -297,8 +297,6 @@ Default maximum segment size (MSS)
 .It
 SYN cache parameters
 .It
-Initial window size
-.It
 Hughes/Touch/Heidemann Congestion Window Monitoring algorithm
 .It
 Keepalive parameters
@@ -315,6 +313,8 @@ ECN (Explicit Congestion Notification)
 .It
 Congestion window increase methods; the traditional packet counting or
 RFC 3465 Appropriate Byte Counting
+.It
+RFC 3390: Increased initial window size
 .El
 .Sh DIAGNOSTICS
 A socket operation may fail with one of the following errors returned:

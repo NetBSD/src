@@ -99,7 +99,7 @@
 #include <arm/cortex/a9tmr_reg.h>
 #endif
 
-RCSID("$NetBSD: beagle_start.S,v 1.11.2.2 2013/06/23 06:20:03 tls Exp $")
+RCSID("$NetBSD: beagle_start.S,v 1.11.2.3 2014/08/20 00:02:53 tls Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -111,6 +111,12 @@ RCSID("$NetBSD: beagle_start.S,v 1.11.2.2 2013/06/23 06:20:03 tls Exp $")
 
 #define INIT_MEMSIZE	128
 #define	TEMP_L1_TABLE	(0x80000000 + INIT_MEMSIZE * 0x100000 - L1_TABLE_SIZE)
+#if defined(CPU_CORTEXA9)
+#define	MD_CPU_HATCH	_C_LABEL(a9tmr_init_cpu_clock)
+#endif
+#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15)
+#define	MD_CPU_HATCH	_C_LABEL(gtmr_init_cpu_clock)
+#endif
 
 /*
  * Kernel start routine for BEAGLEBOARD boards.
@@ -131,13 +137,11 @@ _C_LABEL(beagle_start):
 	movt	r4, #:upper16:uboot_args
 	stmia	r4, {r0-r3}
 
-#ifdef CPU_CORTEXA9
 	/*
-	 * Turn on the SCU if we are on a Cortex-A9
+	 * bring the CPU into a known state (turn on SMP, caches, etc).
 	 */
-	bl	a9_start
+	bl	cortex_init
 	XPUTC(#67)
-#endif
 
 	/*
 	 * Set up a preliminary mapping in the MMU to allow us to run
@@ -157,6 +161,18 @@ _C_LABEL(beagle_start):
 	movt	r0, #:upper16:TEMP_L1_TABLE
 	bl	arm_cpuinit
 	XPUTC(#90)
+
+#ifdef MULTIPROCESSOR
+	// Now spin up the second processors into the same state we are now.
+	XPUTC(#77)
+	XPUTC(#80)
+	XPUTC(#60)
+	// Make sure the contents of the data cache are in memory
+	// for the secondary CPUs
+	bl	_C_LABEL(armv7_dcache_wbinv_all)
+	bl	omap_mpinit
+	XPUTC(#62)
+#endif
 	XPUTC(#13)
 	XPUTC(#10)
 
@@ -173,72 +189,118 @@ _C_LABEL(beagle_start):
 
 #include <arm/cortex/a9_mpsubr.S>
 
+#ifdef MULTIPROCESSOR
+omap_mpinit:
+	mrc	p15, 0, r0, c0, c0, 5		// MPIDR read
+	ubfx	r1, r0, #30, #2			// get top 2 bits
+	cmp	r1, #2				// =2?
+	bxne	lr				//   no, not MP
+
+	movw	r3, #:lower16:OMAP4_WUGEN_BASE
+	movt	r3, #:upper16:OMAP4_WUGEN_BASE
+
+	// First we setup the address for the secondaries to jump to.
+	adr	r0, cortex_mpstart
+	str	r0, [r3, #OMAP4_AUX_CORE_BOOT1]
+	dsb
+
+	// tell the secondary boot rom(s) to exit their loop
+	ldr	r1, [r3, #OMAP4_AUX_CORE_BOOT0]	// load AUX_CORE_BOOT_0
+	orr	r1, r1, #0xf0			// add mask for cpu #1
+	str	r1, [r3, #OMAP4_AUX_CORE_BOOT0]	// store AUX_CORE_BOOT_0
+	dsb
+
+	// Now we kick it and return.
+	sev
+	movw	r3, #:lower16:arm_cpu_hatched
+	movt	r3, #:upper16:arm_cpu_hatched
+
+	// Let's wait for the secondary to hatch.
+	mov	r1, #0x1000000
+1:	dmb
+	ldr	r0, [r3]
+	cmp	r0, #0
+	bxne	lr
+	subs	r1, r1, #1	
+	bne	1b
+
+	XPUTC(#84)
+
+	bx	lr
+END(omap_mpinit)
+#endif
+
 .Lmmu_init_table:
 	/* Map KERNEL_BASE VA to SDRAM PA, write-back cacheable, shareable */
 	MMU_INIT(KERNEL_BASE, KERNEL_BASE,
 		(INIT_MEMSIZE * L1_S_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
-		L1_S_PROTO | L1_S_APv7_KRW | L1_S_B | L1_S_C | L1_S_V6_S)
+#ifdef MULTIPROCESSOR
+		L1_S_V6_S |
+#endif
+		L1_S_PROTO | L1_S_APv7_KRW | L1_S_B | L1_S_C)
 
 	/* Map first 1MB of L4 CORE (so console will work) */
 	MMU_INIT(OMAP_L4_CORE_VBASE, OMAP_L4_CORE_BASE,
 		(OMAP_L4_CORE_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
-		L1_S_PROTO | L1_S_APv7_KRW)
+		L1_S_PROTO | L1_S_APv7_KRW | L1_S_V6_XN)
 
 #if OMAP_L4_CORE_BASE <= CONSADDR \
 	&& CONSADDR < OMAP_L4_CORE_BASE + OMAP_L4_CORE_SIZE
 	/* Map first 1MB of L4 CORE 1:1 (so console will work) */
 	MMU_INIT(OMAP_L4_CORE_BASE, OMAP_L4_CORE_BASE,
 		(OMAP_L4_CORE_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
-		L1_S_PROTO | L1_S_APv7_KRW)
+		L1_S_PROTO | L1_S_APv7_KRW | L1_S_V6_XN)
 #endif
 
 	/* Map first 4MB of L4 PERIPHERAL (so console will work) */
 	MMU_INIT(OMAP_L4_PERIPHERAL_VBASE, OMAP_L4_PERIPHERAL_BASE,
 		(OMAP_L4_PERIPHERAL_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
-		L1_S_PROTO | L1_S_APv7_KRW)
+		L1_S_PROTO | L1_S_APv7_KRW | L1_S_V6_XN)
 
 #if OMAP_L4_PERIPHERAL_BASE <= CONSADDR \
 	&& CONSADDR < OMAP_L4_PERIPHERAL_BASE + OMAP_L4_PERIPHERAL_SIZE
 	/* Map first 1MB of L4 PERIPHERAL 1:1 (so console will work) */
 	MMU_INIT(OMAP_L4_PERIPHERAL_BASE, OMAP_L4_PERIPHERAL_BASE,
 		(OMAP_L4_PERIPHERAL_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
-		L1_S_PROTO | L1_S_APv7_KRW)
+		L1_S_PROTO | L1_S_APv7_KRW | L1_S_V6_XN)
 #endif
 
 #if defined(OMAP_L4_WAKEUP_BASE) && defined(OMAP_L4_WAKEUP_VBASE)
 	/* Map all 4MB of L4 WAKEUP (so console will work) */
 	MMU_INIT(OMAP_L4_WAKEUP_VBASE, OMAP_L4_WAKEUP_BASE,
 		(OMAP_L4_WAKEUP_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
-		L1_S_PROTO | L1_S_APv7_KRW)
+		L1_S_PROTO | L1_S_APv7_KRW | L1_S_V6_XN)
 #endif
 
 #ifdef OMAP_L4_FAST_BASE
 	/* Map first 1MB of L4 FAST (so console will work) */
 	MMU_INIT(OMAP_L4_FAST_VBASE, OMAP_L4_FAST_BASE,
 		(OMAP_L4_FAST_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
-		L1_S_PROTO | L1_S_APv7_KRW)
+		L1_S_PROTO | L1_S_APv7_KRW | L1_S_V6_XN)
 #endif
 
 #ifdef OMAP_EMIF1_BASE
 	/* Map first 1MB of EMIF1 (so we can probe memory size) */
 	MMU_INIT(OMAP_EMIF1_VBASE, OMAP_EMIF1_BASE,
 		(OMAP_EMIF1_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
-		L1_S_PROTO | L1_S_APv7_KRW)
+		L1_S_PROTO | L1_S_APv7_KRW | L1_S_V6_XN)
 #endif
 
 #ifdef OMAP_EMIF2_BASE
 	/* Map first 1MB of EMIF2 (so we can probe memory size) */
 	MMU_INIT(OMAP_EMIF2_VBASE, OMAP_EMIF2_BASE,
 		(OMAP_EMIF2_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
-		L1_S_PROTO | L1_S_APv7_KRW)
+		L1_S_PROTO | L1_S_APv7_KRW | L1_S_V6_XN)
 #endif
 
 #ifdef OMAP_SDRC_BASE
 	/* Map 64KB SDRAM Controller (SDRC) */
 	MMU_INIT(OMAP_SDRC_VBASE, OMAP_SDRC_BASE,
 		(OMAP_SDRC_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
-		L1_S_PROTO | L1_S_APv7_KRW)
+		L1_S_PROTO | L1_S_APv7_KRW | L1_S_V6_XN)
 #endif
 
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)
+
+END(_C_LABEL(beagle_start))

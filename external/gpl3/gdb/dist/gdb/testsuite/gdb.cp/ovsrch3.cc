@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2011 Free Software Foundation, Inc.
+   Copyright 2011-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,11 +18,21 @@
 #include "ovsrch.h"
 
 void
-A::outer::foo (int a) const
+A::outer::foo (int a_param) const
 {
 }
 
 void
-A::B::inner::foo (int a) const
+A::B::inner::foo (int a_param) const
+{
+}
+
+void
+A::outer::hibob (int a_param) const
+{
+}
+
+void
+A::B::inner::hibob (int a_param) const
 {
 }

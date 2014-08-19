@@ -1,1 +1,1 @@
-load_lib "../config/monitor.exp";
+load_lib "../config/monitor.exp"

@@ -26,16 +26,18 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ceil.3	5.1 (Berkeley) 5/2/91
-.\"	$NetBSD: ceil.3,v 1.19 2011/09/18 05:33:13 jruoho Exp $
+.\"	$NetBSD: ceil.3,v 1.19.8.1 2014/08/20 00:02:18 tls Exp $
 .\"
-.Dd September 18, 2011
+.Dd November 12, 2013
 .Dt CEIL 3
 .Os
 .Sh NAME
 .Nm ceil ,
 .Nm ceilf ,
+.Nm ceill ,
 .Nm floor ,
 .Nm floorf
+.Nm floorl
 .Nd ceiling and floor
 .Sh LIBRARY
 .Lb libm
@@ -45,22 +47,28 @@
 .Fn ceil "double x"
 .Ft float
 .Fn ceilf "float x"
+.Ft long double
+.Fn ceill "long double x"
 .Ft double
 .Fn floor "double x"
 .Ft float
 .Fn floorf "float x"
+.Ft long double
+.Fn floorl "long double x"
 .Sh DESCRIPTION
 The
-.Fn ceil
+.Fn ceil ,
+.Fn ceilf ,
 and
-.Fn ceilf
+.Fn ceill
 functions return the smallest integral value
 greater than or equal to
 .Fa x .
 Conversely, the
-.Fn floor
+.Fn floor ,
+.Fn floorf ,
 and
-.Fn floorf
+.Fn floorl
 functions return the largest integral value
 less than or equal to
 .Fa x .

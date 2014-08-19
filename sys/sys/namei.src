@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.25.8.1 2012/11/20 03:02:51 tls Exp $	*/
+/*	$NetBSD: namei.src,v 1.25.8.2 2014/08/20 00:04:44 tls Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -278,6 +278,8 @@ void	cache_enter(struct vnode *, struct vnode *,
 			const char *, size_t, uint32_t);
 void	nchinit(void);
 void	nchreinit(void);
+void	namecache_count_pass2(void);
+void	namecache_count_2passes(void);
 void	cache_cpu_init(struct cpu_info *);
 void	cache_purgevfs(struct mount *);
 void	namecache_print(struct vnode *, void (*)(const char *, ...)
@@ -300,6 +302,19 @@ struct	nchstats {
 	long	ncs_2passes;		/* number of times we attempt it */
 	long	ncs_revhits;		/* reverse-cache hits */
 	long	ncs_revmiss;		/* reverse-cache misses */
+};
+
+struct	nchstats_sysctl {
+	uint64_t ncs_goodhits;		/* hits that we can really use */
+	uint64_t ncs_neghits;		/* negative hits that we can use */
+	uint64_t ncs_badhits;		/* hits we must drop */
+	uint64_t ncs_falsehits;		/* hits with id mismatch */
+	uint64_t ncs_miss;		/* misses */
+	uint64_t ncs_long;		/* long names that ignore cache */
+	uint64_t ncs_pass2;		/* names found with passes == 2 */
+	uint64_t ncs_2passes;		/* number of times we attempt it */
+	uint64_t ncs_revhits;		/* reverse-cache hits */
+	uint64_t ncs_revmiss;		/* reverse-cache misses */
 };
 
 #ifdef _KERNEL

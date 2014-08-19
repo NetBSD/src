@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.5 2011/01/14 02:06:31 rmind Exp $ */
+/*	$NetBSD: core_machdep.c,v 1.5.18.1 2014/08/20 00:03:24 tls Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.5 2011/01/14 02:06:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.5.18.1 2014/08/20 00:03:24 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.5 2011/01/14 02:06:31 rmind Exp $
 #include <sys/buf.h>
 #include <sys/exec.h>
 #include <sys/vnode.h>
-#include <sys/simplelock.h>
 
 #include <sys/exec_aout.h>
 
@@ -76,7 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.5 2011/01/14 02:06:31 rmind Exp $
  * cpu_coredump is called to write a core dump header.
  */
 int
-cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
+cpu_coredump(struct lwp *l, struct coredump_iostate *iocookie,
+    struct core *chdr)
 {
 	int error;
 	struct md_coredump md_core;

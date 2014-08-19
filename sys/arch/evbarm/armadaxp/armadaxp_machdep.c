@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp_machdep.c,v 1.2.2.2 2013/06/23 06:20:03 tls Exp $	*/
+/*	$NetBSD: armadaxp_machdep.c,v 1.2.2.3 2014/08/20 00:02:52 tls Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.2.2.2 2013/06/23 06:20:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.2.2.3 2014/08/20 00:02:52 tls Exp $");
 
 #include "opt_machdep.h"
 #include "opt_mvsoc.h"
@@ -88,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.2.2.2 2013/06/23 06:20:03 tls
 
 #include <arm/marvell/mvsocreg.h>
 #include <arm/marvell/mvsocvar.h>
-#include <evbarm/armadaxp/armadaxpreg.h>
+#include <arm/marvell/armadaxpreg.h>
 
 #include <evbarm/marvell/marvellreg.h>
 #include <evbarm/marvell/marvellvar.h>
@@ -106,25 +106,11 @@ __KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.2.2.2 2013/06/23 06:20:03 tls
  * on where the ROM appears when you turn the MMU off.
  */
 
-
-/* Define various stack sizes in pages */
-#define IRQ_STACK_SIZE	1
-#define ABT_STACK_SIZE	1
-#ifdef IPKDB
-#define UND_STACK_SIZE	2
-#else
-#define UND_STACK_SIZE	1
-#endif
-
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
 char *boot_file = NULL;
 
 extern int KERNEL_BASE_phys[];
-
-/*extern char KERNEL_BASE_phys[];*/
-extern char etext[], __data_start[], _edata[], __bss_start[], __bss_end__[];
-extern char _end[];
 
 /*
  * Put some bogus settings of the MEMSTART and MEMSIZE
@@ -146,11 +132,11 @@ extern char _end[];
 /* Kernel base virtual address */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + KERNEL_OFFSET)
 
-#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
-#define KERNEL_VM_SIZE		0x10000000
+#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x40000000)
+#define KERNEL_VM_SIZE		0x14000000
 
 /* Prototypes */
-extern int armadaxp_l2_init(void);
+extern int armadaxp_l2_init(bus_addr_t);
 extern void armadaxp_io_coherency_init(void);
 
 void consinit(void);
@@ -163,13 +149,17 @@ static void axp_device_register(device_t dev, void *aux);
 static void
 axp_system_reset(void)
 {
+	extern vaddr_t misc_base;
+
+#define write_miscreg(r, v)	(*(volatile uint32_t *)(misc_base + (r)) = (v))
+
 	cpu_reset_address = 0;
 
 	/* Unmask soft reset */
-	write_miscreg(MVSOC_MLMB_RSTOUTNMASKR,
-	    MVSOC_MLMB_RSTOUTNMASKR_SOFTRSTOUTEN);
+	write_miscreg(ARMADAXP_MISC_RSTOUTNMASKR,
+	    ARMADAXP_MISC_RSTOUTNMASKR_GLOBALSOFTRSTOUTEN);
 	/* Assert soft reset */
-	write_miscreg(MVSOC_MLMB_SSRR, MVSOC_MLMB_SSRR_SYSTEMSOFTRST);
+	write_miscreg(ARMADAXP_MISC_SSRR, ARMADAXP_MISC_SSRR_GLOBALSOFTRST);
 
 	while (1);
 }
@@ -207,23 +197,17 @@ static const struct pmap_devmap devmap[] = {
 #undef	_A
 #undef	_S
 
-static inline
-pd_entry_t *
+static inline pd_entry_t *
 read_ttb(void)
 {
-	long ttb;
-
-	__asm volatile("mrc	p15, 0, %0, c2, c0, 0" : "=r" (ttb));
-
-	return (pd_entry_t *)(ttb & ~((1<<14)-1));
+	return (pd_entry_t *)(armreg_ttbr_read() & ~((1<<14)-1));
 }
 
 static int
 axp_pcie_free_win(void)
 {
-	int i;
 	/* Find first disabled window */
-	for (i = 0; i < ARMADAXP_MLMB_NWINDOW; i++) {
+	for (size_t i = 0; i < ARMADAXP_MLMB_NWINDOW; i++) {
 		if ((read_mlmbreg(MVSOC_MLMB_WCR(i)) &
 		    MVSOC_MLMB_WCR_WINEN) == 0) {
 			return i;
@@ -349,14 +333,17 @@ initarm(void *arg)
 	reset_axp_pcie_win();
 
 	/* Get CPU, system and timebase frequencies */
+	extern vaddr_t misc_base;
+	misc_base = MARVELL_INTERREGS_VBASE + ARMADAXP_MISC_BASE;
 	armadaxp_getclks();
+	mvsoc_clkgating = armadaxp_clkgating;
 
 	/* Preconfigure interrupts */
-	armadaxp_intr_bootstrap();
+	armadaxp_intr_bootstrap(MARVELL_INTERREGS_PBASE);
 
 #ifdef L2CACHE_ENABLE
 	/* Initialize L2 Cache */
-	(void)armadaxp_l2_init();
+	(void)armadaxp_l2_init(MARVELL_INTERREGS_PBASE);
 #endif
 
 #ifdef AURORA_IO_CACHE_COHERENCY
@@ -375,21 +362,33 @@ initarm(void *arg)
 	printf("\nNetBSD/evbarm (" BDSTR(EVBARM_BOARDTYPE) ") booting ...\n");
 #endif
 
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	const bool mapallmem_p = true;
+#else
+	const bool mapallmem_p = false;
+#endif
 
 #ifdef VERBOSE_INIT_ARM
 	printf("initarm: Configuring system ...\n");
 #endif
+	psize_t memsize = MEMSIZE;
+	if (mapallmem_p && memsize > KERNEL_VM_BASE - KERNEL_BASE) {
+		printf("%s: dropping RAM size from %luMB to %uMB\n",
+		    __func__, (unsigned long) (memsize >> 20),
+		    (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
+		memsize = KERNEL_VM_BASE - KERNEL_BASE;
+	}
 	/* Fake bootconfig structure for the benefit of pmap.c. */
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = MEMSTART;
-	bootconfig.dram[0].pages = MEMSIZE / PAGE_SIZE;
+	bootconfig.dram[0].pages = memsize / PAGE_SIZE;
 
         physical_start = bootconfig.dram[0].address;
         physical_end = physical_start + (bootconfig.dram[0].pages * PAGE_SIZE);
 
 	arm32_bootmem_init(0, physical_end, (uintptr_t) KERNEL_BASE_phys);
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_LOW, 0,
-	    devmap, false);
+	    devmap, mapallmem_p);
 
 	/* we've a specific device_register routine */
 	evbarm_device_register = axp_device_register;
@@ -407,7 +406,7 @@ initarm(void *arg)
 #define	CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
 #ifndef CONSFREQ
-#define	CONSFREQ 250000000
+#define	CONSFREQ 0
 #endif
 static const int	comcnspeed = CONSPEED;
 static const int	comcnfreq  = CONSFREQ;
@@ -428,7 +427,7 @@ consinit(void)
 	    uint32_t, int);
 
 	if (mvuart_cnattach(&mvsoc_bs_tag, comcnaddr, comcnspeed,
-			comcnfreq, comcnmode))
+			comcnfreq ? comcnfreq : mvTclk , comcnmode))
 		panic("Serial console can not be initialized.");
 #endif
 }

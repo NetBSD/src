@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_mod.c,v 1.3 2010/07/07 01:30:35 chs Exp $	*/
+/*	$NetBSD: linux32_mod.c,v 1.3.18.1 2014/08/20 00:03:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.3 2010/07/07 01:30:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.3.18.1 2014/08/20 00:03:33 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -56,20 +56,24 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.3 2010/07/07 01:30:35 chs Exp $");
 # define	MD1	""
 #endif
 
-MODULE(MODULE_CLASS_MISC, compat_linux32, "compat_linux" MD1);
+MODULE(MODULE_CLASS_EXEC, compat_linux32, "compat_linux" MD1);
 
 static struct execsw linux32_execsw[] = {
 #if defined(EXEC_ELF32)
-        { sizeof (Elf32_Ehdr),
-          exec_elf32_makecmds,
-          { linux32_elf32_probe },
-          &emul_linux32,
-          EXECSW_PRIO_FIRST, 
-	  LINUX32_ELF_AUX_ARGSIZ,
-          linux32_elf32_copyargs,
-          NULL,
-          coredump_elf32,
-          linux_exec_setup_stack },
+	{
+		.es_hdrsz = sizeof (Elf32_Ehdr),
+		.es_makecmds = exec_elf32_makecmds,
+		.u = {
+			.elf_probe_func = linux32_elf32_probe, 
+		},
+		.es_emul = &emul_linux32,
+		.es_prio = EXECSW_PRIO_ANY, 
+		.es_arglen = LINUX32_ELF_AUX_ARGSIZ,
+		.es_copyargs = linux32_elf32_copyargs,
+		.es_setregs = NULL,
+		.es_coredump = coredump_elf32,
+		.es_setup_stack = linux_exec_setup_stack,
+	},
 #endif
 };
 

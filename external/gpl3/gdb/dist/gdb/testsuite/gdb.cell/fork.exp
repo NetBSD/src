@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -47,7 +47,7 @@ if { [gdb_compile_cell_ppu [list $ppu_src $spu_bin-embed.o] $ppu_bin executable 
   return -1
 }
 
-if [get_compiler_info ${ppu_bin}] {
+if [get_compiler_info] {
   return -1
 }
 
@@ -60,6 +60,8 @@ if ![runto_main] then {
   fail "Can't run to main"
   return 0
 }
+
+delete_breakpoints
 
 gdb_test_no_output "set spu stop-on-load" "set spu stop-on-load"
 

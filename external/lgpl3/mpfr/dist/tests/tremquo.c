@@ -1,7 +1,7 @@
 /* tremquo -- test file for mpfr_remquo and mpfr_remainder
 
-Copyright 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -29,7 +29,6 @@ static void
 bug20090227 (void)
 {
   mpfr_t x, y, r1, r2;
-  int inex1, inex2;
 
   mpfr_init2 (x, 118);
   mpfr_init2 (y, 181);
@@ -37,9 +36,9 @@ bug20090227 (void)
   mpfr_init2 (r2, 140);
   mpfr_set_si (x, -1, MPFR_RNDN);
   mpfr_set_str_binary (y, "1.100100100001111110110101010001000100001011010001100001000110100110001001100011001100010100010111000000011011100000111001101000100101001000000100100111000001000100010100110011111010");
-  inex1 = mpfr_remainder (r1, x, y, MPFR_RNDU);
+  mpfr_remainder (r1, x, y, MPFR_RNDU);
   /* since the quotient is -1, r1 is the rounding of x+y */
-  inex2 = mpfr_add (r2, x, y, MPFR_RNDU);
+  mpfr_add (r2, x, y, MPFR_RNDU);
   if (mpfr_cmp (r1, r2))
     {
       printf ("Error in mpfr_remainder (bug20090227)\n");

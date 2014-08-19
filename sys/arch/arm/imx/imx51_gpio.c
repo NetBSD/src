@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_gpio.c,v 1.2 2011/07/01 20:27:50 dyoung Exp $ */
+/*	$NetBSD: imx51_gpio.c,v 1.2.12.1 2014/08/20 00:02:46 tls Exp $ */
 
 /* derived from imx31_gpio.c */
 /*-
@@ -30,7 +30,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_gpio.c,v 1.2 2011/07/01 20:27:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_gpio.c,v 1.2.12.1 2014/08/20 00:02:46 tls Exp $");
+
+#include "opt_imx.h"
 
 #include "locators.h"
 #include "gpio.h"
@@ -71,6 +73,10 @@ imxgpio_match(device_t parent, cfdata_t cfdata, void *aux)
 	case GPIO2_BASE:
 	case GPIO3_BASE:
 	case GPIO4_BASE:
+#ifdef IMX50
+	case GPIO5_BASE:
+	case GPIO6_BASE:
+#endif
 		return 1;
 	}
 

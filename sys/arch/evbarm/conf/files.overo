@@ -1,7 +1,11 @@
-#	$NetBSD: files.overo,v 1.4 2011/03/06 02:22:27 jakllsch Exp $
+#	$NetBSD: files.overo,v 1.4.14.1 2014/08/20 00:02:53 tls Exp $
 #
 # Gumstix. Inc. Overo boards configuration info
 #
+
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
 
 file	arch/evbarm/gumstix/gumstix_machdep.c
 defflag opt_gumstix.h				OVERO

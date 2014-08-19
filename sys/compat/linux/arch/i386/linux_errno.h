@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_errno.h,v 1.10 2008/04/28 20:23:42 martin Exp $	*/
+/* 	$NetBSD: linux_errno.h,v 1.10.44.1 2014/08/20 00:03:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -32,99 +32,12 @@
 #ifndef _I386_LINUX_ERRNO_H
 #define _I386_LINUX_ERRNO_H
 
+#include <compat/linux/common/linux_errno_generic.h>
+
 /*
  * Linux/i386 returns negative errors to userland
  * The libc makes the errno positive.
  */
 #define LINUX_SCERR_SIGN -
-
-/* Use common/linux_errno.h for #1-35 */
-
-#define LINUX_ENAMETOOLONG	36
-#define LINUX_ENOLCK		37
-#define LINUX_ENOSYS		38
-#define LINUX_ENOTEMPTY		39
-#define LINUX_ELOOP		40
-#define LINUX_ENOMSG		42
-#define LINUX_EIDRM		43
-#define LINUX_ECHRNG		44
-#define LINUX_EL2NSYNC		45
-#define LINUX_EL3HLT		46
-#define LINUX_EL3RST		47
-#define LINUX_ELNRNG		48
-#define LINUX_EUNATCH		49
-#define LINUX_ENOCSI		50
-#define LINUX_EL2HLT		51
-#define LINUX_EBADE		52
-#define LINUX_EBADR		53
-#define LINUX_EXFULL		54
-#define LINUX_ENOANO		55
-#define LINUX_EBADRQC		56
-#define LINUX_EBADSLT		57
-#define LINUX_EDEADLOCK		58
-#define LINUX_EBFONT		59
-#define LINUX_ENOSTR		60
-#define LINUX_ENODATA		61
-#define LINUX_ETIME		62
-#define LINUX_ENOSR		63
-#define LINUX_ENONET		64
-#define LINUX_ENOPKG		65
-#define LINUX_EREMOTE		66
-#define LINUX_ENOLINK		67
-#define LINUX_EADV		68
-#define LINUX_ESRMNT		69
-#define LINUX_ECOMM		70
-#define LINUX_EPROTO		71
-#define LINUX_EMULTIHOP		72
-#define LINUX_EDOTDOT		73
-#define LINUX_EBADMSG		74
-#define LINUX_EOVERFLOW		75
-#define LINUX_ENOTUNIQ		76
-#define LINUX_EBADFD		77
-#define LINUX_EREMCHG		78
-#define LINUX_ELIBACC		79
-#define LINUX_ELIBBAD		80
-#define LINUX_ELIBSCN		81
-#define LINUX_ELIBMAX		82
-#define LINUX_ELIBEXEC		83
-#define LINUX_EILSEQ		84
-#define LINUX_ERESTART		85
-#define LINUX_ESTRPIPE		86
-#define LINUX_EUSERS		87
-#define LINUX_ENOTSOCK		88
-#define LINUX_EDESTADDRREQ	89
-#define LINUX_EMSGSIZE		90
-#define LINUX_EPROTOTYPE	91
-#define LINUX_ENOPROTOOPT	92
-#define LINUX_EPROTONOSUPPORT	93
-#define LINUX_ESOCKTNOSUPPORT	94
-#define LINUX_EOPNOTSUPP	95
-#define LINUX_EPFNOSUPPORT	96
-#define LINUX_EAFNOSUPPORT	97
-#define LINUX_EADDRINUSE	98
-#define LINUX_EADDRNOTAVAIL	99
-#define LINUX_ENETDOWN		100
-#define LINUX_ENETUNREACH	101
-#define LINUX_ENETRESET		102
-#define LINUX_ECONNABORTED	103
-#define LINUX_ECONNRESET	104
-#define LINUX_ENOBUFS		105
-#define LINUX_EISCONN		106
-#define LINUX_ENOTCONN		107
-#define LINUX_ESHUTDOWN		108
-#define LINUX_ETOOMANYREFS	109
-#define LINUX_ETIMEDOUT		110
-#define LINUX_ECONNREFUSED	111
-#define LINUX_EHOSTDOWN		112
-#define LINUX_EHOSTUNREACH	113
-#define LINUX_EALREADY		114
-#define LINUX_EINPROGRESS	115
-#define LINUX_ESTALE		116
-#define LINUX_EUCLEAN		117
-#define LINUX_ENOTNAM		118
-#define LINUX_ENAVAIL		119
-#define LINUX_EISNAM		120
-#define LINUX_EREMOTEIO		121
-#define LINUX_EDQUOT		122
 
 #endif /* !_I386_LINUX_ERRNO_H */

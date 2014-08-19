@@ -1,4 +1,4 @@
-.\"	$NetBSD: ethersubr.9,v 1.24 2010/12/02 12:54:13 wiz Exp $
+.\"	$NetBSD: ethersubr.9,v 1.24.12.1 2014/08/20 00:02:37 tls Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -170,15 +170,6 @@ A macro that returns 1, if
 .Fa addr
 points to an Ethernet/FDDI multicast (or broadcast) address.
 .El
-.Sh SEE ALSO
-.Xr arp 9
-.Sh HISTORY
-Rewritten to attach to the new ARP system in
-.Nx 1.3 .
-.Sh AUTHORS
-UCB CSRG (original implementation)
-.Pp
-Ignatios Souvatzis (support for new ARP system)
 .Sh CODE REFERENCES
 Ethernet support functions are declared in
 .In net/if_ether.h
@@ -189,3 +180,12 @@ FDDI support functions are declared in
 .In net/if_fddi.h
 and defined (if not implemented as macro) in
 .Pa sys/net/if_fddisubr.c .
+.Sh SEE ALSO
+.Xr arp 9
+.Sh HISTORY
+Rewritten to attach to the new ARP system in
+.Nx 1.3 .
+.Sh AUTHORS
+UCB CSRG (original implementation)
+.Pp
+Ignatios Souvatzis (support for new ARP system)

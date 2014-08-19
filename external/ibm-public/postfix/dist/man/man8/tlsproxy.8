@@ -1,4 +1,4 @@
-.\"	$NetBSD: tlsproxy.8,v 1.1.1.1.12.1 2013/02/25 00:27:12 tls Exp $
+.\"	$NetBSD: tlsproxy.8,v 1.1.1.1.12.2 2014/08/19 23:59:42 tls Exp $
 .\"
 .TH TLSPROXY 8 
 .ad
@@ -16,7 +16,8 @@ Postfix TLS proxy
 .fi
 The \fBtlsproxy\fR(8) server implements a server-side TLS
 proxy. It is used by \fBpostscreen\fR(8) to talk SMTP-over-TLS
-with remote SMTP clients whose whitelist status has expired,
+with remote SMTP clients that are not whitelisted (including
+clients whose whitelist status has expired),
 but it should also work for non-SMTP protocols.
 
 Although one \fBtlsproxy\fR(8) process can serve multiple
@@ -33,7 +34,8 @@ the \fBtlsproxy\fR(8) server is agnostic of the application
 protocol, and the example is easily adapted to other
 applications.
 
-The \fBpostscreen\fR(8) server sends the remote SMTP client
+After receiving a valid remote SMTP client STARTTLS command,
+the \fBpostscreen\fR(8) server sends the remote SMTP client
 endpoint string, the requested role (server), and the
 requested timeout to \fBtlsproxy\fR(8).  \fBpostscreen\fR(8)
 then receives a "TLS available" indication from \fBtlsproxy\fR(8).
@@ -100,10 +102,10 @@ File with the Postfix \fBtlsproxy\fR(8) server DSA certificate in PEM
 format.
 .IP "\fBtlsproxy_tls_dh1024_param_file ($smtpd_tls_dh1024_param_file)\fR"
 File with DH parameters that the Postfix \fBtlsproxy\fR(8) server
-should use with EDH ciphers.
+should use with non-export EDH ciphers.
 .IP "\fBtlsproxy_tls_dh512_param_file ($smtpd_tls_dh512_param_file)\fR"
 File with DH parameters that the Postfix \fBtlsproxy\fR(8) server
-should use with EDH ciphers.
+should use with export-grade EDH ciphers.
 .IP "\fBtlsproxy_tls_dkey_file ($smtpd_tls_dkey_file)\fR"
 File with the Postfix \fBtlsproxy\fR(8) server DSA private key in PEM
 format.
@@ -148,9 +150,10 @@ client certificate in order to allow TLS connections to proceed.
 The SMTP TLS security level for the Postfix \fBtlsproxy\fR(8) server;
 when a non-empty value is specified, this overrides the obsolete
 parameters smtpd_use_tls and smtpd_enforce_tls.
-.IP "\fBtlsproxy_tls_session_cache_timeout ($smtpd_tls_session_cache_timeout)\fR"
-The expiration time of Postfix \fBtlsproxy\fR(8) server TLS session
-cache information.
+.PP
+Available in Postfix version 2.11 and later:
+.IP "\fBtlsmgr_service_name (tlsmgr)\fR"
+The name of the \fBtlsmgr\fR(8) service entry in master.cf.
 .SH "OBSOLETE STARTTLS SUPPORT CONTROLS"
 .na
 .nf

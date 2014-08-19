@@ -1,4 +1,4 @@
-/*	$NetBSD: strip_addr.h,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: strip_addr.h,v 1.1.1.1.16.1 2014/08/19 23:59:42 tls Exp $	*/
 
 #ifndef _STRIP_ADDR_H_INCLUDED_
 #define _STRIP_ADDR_H_INCLUDED_
@@ -15,7 +15,7 @@
 
  /* External interface. */
 
-extern char *strip_addr(const char *, char **, int);
+extern char *strip_addr(const char *, char **, const char *);
 
 /* LICENSE
 /* .ad

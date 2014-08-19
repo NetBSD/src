@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.41.2.1 2013/06/23 06:20:26 tls Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.41.2.2 2014/08/20 00:04:36 tls Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.41.2.1 2013/06/23 06:20:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.41.2.2 2014/08/20 00:04:36 tls Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -503,9 +503,8 @@ esp_input_cb(struct cryptop *crp)
 	u_int8_t lastthree[3], aalg[AH_ALEN_MAX];
 	int s, hlen, skip, protoff, error;
 	struct mbuf *m;
-	struct cryptodesc *crd;
+	struct cryptodesc *crd __diagused;
 	const struct auth_hash *esph;
-	const struct enc_xform *espx;
 	struct tdb_crypto *tc;
 	struct m_tag *mtag;
 	struct secasvar *sav;
@@ -547,7 +546,6 @@ esp_input_cb(struct cryptop *crp)
 		 saidx->dst.sa.sa_family));
 
 	esph = sav->tdb_authalgxform;
-	espx = sav->tdb_encalgxform;
 
 	/* Check for crypto errors */
 	if (crp->crp_etype) {
@@ -593,7 +591,7 @@ esp_input_cb(struct cryptop *crp)
 			ptr = (tc + 1);
 
 			/* Verify authenticator */
-			if (consttime_bcmp(ptr, aalg, esph->authsize) != 0) {
+			if (!consttime_memequal(ptr, aalg, esph->authsize)) {
 				DPRINTF(("esp_input_cb: "
 		    "authentication hash mismatch for packet in SA %s/%08lx\n",
 				    ipsec_address(&saidx->dst),
@@ -719,7 +717,7 @@ esp_output(
 {
 	const struct enc_xform *espx;
 	const struct auth_hash *esph;
-	int hlen, rlen, plen, padding, blks, alen, i, roff;
+	int hlen, rlen, padding, blks, alen, i, roff;
 	struct mbuf *mo = NULL;
 	struct tdb_crypto *tc;
 	const struct secasvar *sav;
@@ -753,7 +751,6 @@ esp_output(
 
 	/* XXX clamp padding length a la KAME??? */
 	padding = ((blks - ((rlen + 2) % blks)) % blks) + 2;
-	plen = rlen + padding;		/* Padded payload length. */
 
 	if (esph)
 		alen = esph->authsize;

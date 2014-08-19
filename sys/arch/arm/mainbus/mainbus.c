@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.20 2012/08/29 23:16:35 matt Exp $ */
+/* $NetBSD: mainbus.c,v 1.20.2.1 2014/08/20 00:02:47 tls Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20 2012/08/29 23:16:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20.2.1 2014/08/20 00:02:47 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,9 @@ mainbussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		tryagain = 0;
 		if (config_match(parent, cf, &mb) > 0) {
 			config_attach(parent, cf, &mb, mainbusprint);
-/*			tryagain = (cf->cf_fstate == FSTATE_STAR);*/
+#ifdef MULTIPROCESSOR
+			tryagain = (cf->cf_fstate == FSTATE_STAR);
+#endif
 		}
 	} while (tryagain);
 

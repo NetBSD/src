@@ -1,4 +1,4 @@
-.\"	$NetBSD: netintro.4,v 1.23.14.2 2013/06/23 06:28:53 tls Exp $
+.\"	$NetBSD: netintro.4,v 1.23.14.3 2014/08/20 00:02:35 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)netintro.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd February 5, 2013
+.Dd July 13, 2014
 .Dt NETINTRO 4
 .Os
 .Sh NAME
@@ -197,9 +197,17 @@ struct	ifreq {
 #define ifr_addr      ifr_ifru.ifru_addr    /* address */
 #define ifr_dstaddr   ifr_ifru.ifru_dstaddr /* other end of p-to-p link */
 #define ifr_broadaddr ifr_ifru.ifru_broadaddr /* broadcast address */
+#define ifr_space     ifr_ifru.ifru_space     /* sockaddr_storage */
 #define ifr_flags     ifr_ifru.ifru_flags   /* flags */
 #define ifr_metric    ifr_ifru.ifru_metric  /* metric */
+#define ifr_mtu       ifr_ifru.ifru_mtu       /* mtu */
+#define ifr_dlt       ifr_ifru.ifru_dlt       /* data link type (DLT_*) */
+#define ifr_value     ifr_ifru.ifru_value     /* generic value */
+#define ifr_media     ifr_ifru.ifru_metric    /* media options (overload) */
 #define ifr_data      ifr_ifru.ifru_data    /* for use by interface */
+#define ifr_buf       ifr_ifru.ifru_b.b_buf   /* new interface ioctls */
+#define ifr_buflen    ifr_ifru.ifru_b.b_buflen
+#define ifr_index     ifr_ifru.ifru_value     /* interface index */
 };
 .Ed
 .Pp
@@ -241,6 +249,8 @@ Set interface routing metric.
 The metric is used only by user-level routers.
 .It Dv SIOCGIFMETRIC
 Get interface metric.
+.It Dv SIOCGIFINDEX
+Get the interface index and populate ifr_index.
 .El
 .Pp
 There are two requests that make use of a new structure:
@@ -275,6 +285,12 @@ multiple masks or destination addresses, and also adopts the
 convention that specification of the default address means
 to delete the first address for the interface belonging to
 the address family in which the original socket was opened.
+.It Dv SIOCGIFALIAS
+This request provides means to get additional addresses together
+with netmask and broadcast/destination from an interface.
+It also uses the
+.Ar ifaliasreq
+structure.
 .El
 .Pp
 Request making use of the

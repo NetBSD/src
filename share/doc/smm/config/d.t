@@ -1,4 +1,4 @@
-.\" $NetBSD: d.t,v 1.1 2007/12/18 03:35:54 garbled Exp $
+.\" $NetBSD: d.t,v 1.1.34.1 2014/08/20 00:02:29 tls Exp $
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -45,14 +45,16 @@ APPENDIX D. VAX KERNEL DATA STRUCTURE SIZING RULES
 Certain system data structures are sized at compile time
 according to the maximum number of simultaneous users expected,
 while others are calculated at boot time based on the
-physical resources present, e.g. memory.  This appendix lists
+physical resources present, e.g. memory.
+This appendix lists
 both sets of rules and also includes some hints on changing
 built-in limitations on certain data structures.
 .SH
 Compile time rules
 .PP
 The file \fI/sys/conf\|/param.c\fP contains the definitions of
-almost all data structures sized at compile time.  This file
+almost all data structures sized at compile time.
+This file
 is copied into the directory of each configured system to allow
 configuration-dependent rules and values to be maintained.
 (Each copy normally depends on the copy in /sys/conf,
@@ -83,7 +85,8 @@ It is defined as
 .IP \fBninode\fP
 .br
 The maximum number of files in the file system which may be
-active at any time.  This includes files in use by users, as 
+active at any time.
+This includes files in use by users, as 
 well as directory files being read or written by the system
 and files associated with bound sockets in the UNIX IPC domain.
 It is defined as
@@ -92,17 +95,20 @@ It is defined as
 .DE
 .IP \fBnfile\fP
 .br
-The number of ``file table'' structures.  One file
+The number of ``file table'' structures.
+One file
 table structure is used for each open, unshared, file descriptor.
 Multiple file descriptors may reference a single file table
 entry when they are created through a \fIdup\fP call, or as the
-result of a \fIfork\fP.  This is defined to be
+result of a \fIfork\fP.
+This is defined to be
 .DS
 16 * (NPROC + 16 + MAXUSERS) / 10 + 32
 .DE
 .IP \fBncallout\fP
 .br
-The number of ``callout'' structures.  One callout
+The number of ``callout'' structures.
+One callout
 structure is used per internal system event handled with
 a timeout.  Timeouts are used for terminal delays,
 watchdog routines in device drivers, protocol timeout processing, etc.
@@ -112,7 +118,8 @@ This is defined as
 .DE
 .IP \fBnclist\fP
 .br
-The number of ``c-list'' structures.  C-list structures are
+The number of ``c-list'' structures.
+C-list structures are
 used in terminal I/O, and currently each holds 60 characters.
 Their number is defined as
 .DS
@@ -122,25 +129,32 @@ Their number is defined as
 .br
 The maximum number of pages which may be allocated by the network.  
 This is defined as 256 (a quarter megabyte of memory) in /sys/h/mbuf.h.
-In practice, the network rarely uses this much memory.  It starts off
+In practice, the network rarely uses this much memory.
+It starts off
 by allocating 8 kilobytes of memory, then requesting more as 
-required.  This value represents an upper bound.
+required.
+This value represents an upper bound.
 .IP \fBnquota\fP
 .br
-The number of ``quota'' structures allocated.  Quota structures
-are present only when disc quotas are configured in the system.  One
-quota structure is kept per user.  This is defined to be
+The number of ``quota'' structures allocated.
+Quota structures
+are present only when disc quotas are configured in the system.
+One
+quota structure is kept per user.
+This is defined to be
 .DS
 (MAXUSERS * 9) / 7 + 3
 .DE
 .IP \fBndquot\fP
 .br
-The number of ``dquot'' structures allocated.  Dquot structures
+The number of ``dquot'' structures allocated.
+Dquot structures
 are present only when disc quotas are configured in the system.
 One dquot structure is required per user, per active file system quota.
 That is, when a user manipulates a file on a file system on which
 quotas are enabled, the information regarding the user's quotas on
-that file system must be in-core.  This information is cached, so
+that file system must be in-core.
+This information is cached, so
 that not all information must be present in-core all the time.
 This is defined as
 .DS
@@ -159,19 +173,22 @@ pages of page tables.
 Its definition affects
 the size of many data structures allocated at boot time because
 it constrains the amount of virtual memory which may be addressed
-by the running system.  This is often the limiting factor
+by the running system.
+This is often the limiting factor
 in the size of the buffer cache, in which case a message is printed
 when the system configures at boot time.
 .SH
 Run-time calculations
 .PP
 The most important data structures sized at run-time are those used in
-the buffer cache.  Allocation is done by allocating physical memory
+the buffer cache.
+Allocation is done by allocating physical memory
 (and system virtual memory) immediately after the system
 has been started up; look in the file /sys/vax/machdep.c.
 The amount of physical memory which may be allocated to the buffer
 cache is constrained by the size of the system page tables, among
-other things.  While the system may calculate
+other things.
+While the system may calculate
 a large amount of memory to be allocated to the buffer cache,
 if the system page
 table is too small to map this physical
@@ -179,13 +196,16 @@ memory into the virtual address space
 of the system, only as much as can be mapped will be used.
 .PP
 The buffer cache is comprised of a number of ``buffer headers''
-and a pool of pages attached to these headers.  Buffer headers
+and a pool of pages attached to these headers.
+Buffer headers
 are divided into two categories: those used for swapping and
-paging, and those used for normal file I/O.  The system tries
+paging, and those used for normal file I/O.
+The system tries
 to allocate 10% of the first two megabytes and 5% of the remaining
 available physical memory for the buffer
 cache (where \fIavailable\fP does not count that space occupied by
-the system's text and data segments).  If this results in fewer
+the system's text and data segments).
+If this results in fewer
 than 16 pages of memory allocated, then 16 pages are allocated.
 This value is kept in the initialized variable \fIbufpages\fP
 so that it may be patched in the binary image (to allow tuning
@@ -210,7 +230,8 @@ but no more than 256.
 System size limitations
 .PP
 As distributed, the sum of the virtual sizes of the core-resident
-processes is limited to 256M bytes.  The size of the text
+processes is limited to 256M bytes.
+The size of the text
 segment of a single process is currently limited to 6M bytes.
 It may be increased to no greater than the data segment size limit
 (see below) by redefining MAXTSIZ.
@@ -252,7 +273,8 @@ Each page of system page tables allows 8 megabytes of user virtual memory.
 Because the file system block numbers are stored in
 page table \fIpg_blkno\fP
 entries, the maximum size of a file system is limited to
-2^24 1024 byte blocks.  Thus no file system can be larger than 8 gigabytes.
+2^24 1024 byte blocks.
+Thus no file system can be larger than 8 gigabytes.
 .PP
 The number of mountable file systems is set at 20 by the definition
 of NMOUNT in /sys/h/param.h.

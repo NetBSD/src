@@ -1,4 +1,4 @@
-/*	$NetBSD: kirkwoodreg.h,v 1.4 2012/08/01 10:34:42 kiyohara Exp $	*/
+/*	$NetBSD: kirkwoodreg.h,v 1.4.2.1 2014/08/20 00:02:47 tls Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -127,7 +127,6 @@
  * Pin Multiplexing Interface Registers
  */
 #define KIRKWOOD_MPP_BASE		(MVSOC_DEVBUS_BASE + 0x0000)
-#define KIRKWOOD_MPP_SIZE		   0x40		/* XXXX */
 #define KIRKWOOD_MPP_MPPC0R		   0x00
 #define KIRKWOOD_MPP_MPPC1R		   0x04
 #define KIRKWOOD_MPP_MPPC2R		   0x08
@@ -136,6 +135,18 @@
 #define KIRKWOOD_MPP_MPPC5R		   0x14
 #define KIRKWOOD_MPP_MPPC6R		   0x18
 #define KIRKWOOD_MPP_SAMPLE_AT_RESET	   0x30
+
+/*
+ * Miscellaneous Registers
+ */
+#define KIRKWOOD_MISC_BASE		(MVSOC_DEVBUS_BASE + 0x0000)
+#define KIRKWOOD_MISC_DEVICEID		   0x34
+#define KIRKWOOD_MISC_CLOCKCONTROL	   0x4c
+#define KIRKWOOD_MISC_SYSRSTLC		   0x50	/* SYSRSTn Length Counter */
+#define KIRKWOOD_MISC_AGC		   0x7c	/* Analog Group Configuration */
+#define KIRKWOOD_MISC_SSCGC		   0xd8	/* SSCG Configuration */
+#define KIRKWOOD_MISC_PTPCC		   0xdc	/* PTP Clock Configuration */
+#define KIRKWOOD_MISC_IOC0		   0xe0	/* IO Configuration 0 */
 
 /*
  * Real-Time Clock Unit Registers
@@ -182,8 +193,8 @@
 
 /*
  * Cryptographic Engine and Security Accelerator Registers
- */
-#define KIRKWOOD_CESA_BASE	(KIRKWOOD_UNITID2PHYS(CRYPT))	/* 0x30000 */
+ */								/* 0x3d000 */
+#define KIRKWOOD_CESA_BASE	(KIRKWOOD_UNITID2PHYS(CRYPT) + 0xd000)
 
 /*
  * USB 2.0 Interface Registers
@@ -214,7 +225,7 @@
 /*
  * Audio (I2S/S/PDIF) Interface Registers
  */
-#define KIRKWOOD_AUDIO_BASE	(KIRKWOOD_UNITID2PHYS(AUDIOSDIO))/* 0xa0000 */
+#define KIRKWOOD_AUDIO_BASE	(KIRKWOOD_UNITID2PHYS(AUDIO))	/* 0xa0000 */
 
 /*
  * MPEG-2 Transport Stream (TS) Interface Registers

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.33 2006/11/16 04:31:24 christos Exp $	*/
+/*	$NetBSD: subr.c,v 1.33.46.1 2014/08/20 00:02:22 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: subr.c,v 1.33 2006/11/16 04:31:24 christos Exp $");
+__RCSID("$NetBSD: subr.c,v 1.33.46.1 2014/08/20 00:02:22 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: subr.c,v 1.33 2006/11/16 04:31:24 christos Exp $");
 #include <termios.h>
 #include <unistd.h>
 #include <poll.h>
+#include <util.h>
 
 #include "extern.h"
 #include "gettytab.h"
@@ -63,7 +64,7 @@ static void	compatflags(long);
  * Get a table entry.
  */
 void
-gettable(char *name, char *buf)
+gettable(const char *name, char *buf)
 {
 	struct gettystrs *sp;
 	struct gettynums *np;
@@ -71,7 +72,7 @@ gettable(char *name, char *buf)
 	long n;
 	const char *dba[2];
 	dba[0] = _PATH_GETTYTAB;
-	dba[1] = 0;
+	dba[1] = NULL;
 
 	if (cgetent(&buf, dba, name) != 0)
 		return;
@@ -136,7 +137,7 @@ setdefaults(void)
 
 	for (sp = gettystrs; sp->field; sp++)
 		if (!sp->value)
-			sp->value = sp->defalt;
+			sp->value = sp->defalt ? estrdup(sp->defalt) : NULL;
 	for (np = gettynums; np->field; np++)
 		if (!np->set)
 			np->value = np->defalt;
@@ -556,7 +557,7 @@ adelay(int ms, struct delayval *dp)
 char	editedhost[MAXHOSTNAMELEN];
 
 void
-edithost(char *pat)
+edithost(const char *pat)
 {
 	char *host = HN;
 	char *res = editedhost;
@@ -627,8 +628,8 @@ makeenv(char *env[])
  * The routine below returns the terminal type mapped from derived speed.
  */
 struct	portselect {
-	char	*ps_baud;
-	char	*ps_type;
+	const char *ps_baud;
+	const char *ps_type;
 } portspeeds[] = {
 	{ "B110",	"std.110" },
 	{ "B134",	"std.134" },
@@ -640,15 +641,16 @@ struct	portselect {
 	{ "B4800",	"std.4800" },
 	{ "B9600",	"std.9600" },
 	{ "B19200",	"std.19200" },
-	{ 0 }
+	{ NULL, NULL }
 };
 
-char *
+const char *
 portselector(void)
 {
-	char c, baud[20], *type = "default";
+	char c, baud[20];
+	const char *type = "default";
 	struct portselect *ps;
-	int len;
+	size_t len;
 
 	(void)alarm(5*60);
 	for (len = 0; len < sizeof (baud) - 1; len++) {
@@ -678,12 +680,13 @@ portselector(void)
  */
 #include <sys/time.h>
 
-char *
+const char *
 autobaud(void)
 {
 	struct pollfd set[1];
 	struct timespec timeout;
-	char c, *type = "9600-baud";
+	char c;
+	const char *type = "9600-baud";
 
 	(void)tcflush(0, TCIOFLUSH);
 	set[0].fd = STDIN_FILENO;

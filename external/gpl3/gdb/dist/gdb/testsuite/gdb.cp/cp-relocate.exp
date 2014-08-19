@@ -1,4 +1,4 @@
-# Copyright 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2007-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,9 +15,8 @@
 
 # Test loading symbols from unrelocated C++ object files.
 
-set testfile cp-relocate
-set srcfile ${testfile}.cc
-set binfile ${objdir}/${subdir}/${testfile}.o
+standard_testfile .cc
+append binfile .o
 
 if { [skip_cplus_tests] } { continue }
 
@@ -31,11 +30,11 @@ proc get_func_address { func } {
 
     set rfunc [string_to_regexp $func]
     gdb_test_multiple "print ${func}" "get address of ${func}" {
-	-re "\\\$\[0-9\]+ = \\{.*\\} (0|($hex) <${rfunc}>)\[\r\n\]+${gdb_prompt} $" {
+	-re "\\\$\[0-9\]+ = \\{.*\\} (($hex) <${rfunc}.*>)\[\r\n\]+${gdb_prompt} $" {
 	    # $1 = {int ()} 0x24 <function_bar>
 	    # But if the function is at zero, the name may be omitted.
 	    pass "get address of ${func}"
-	    if { $expect_out(1,string) == "0" } {
+	    if { $expect_out(1,string) == "0x0" } {
 		return "0x0"
 	    } else {
 		return $expect_out(2,string)

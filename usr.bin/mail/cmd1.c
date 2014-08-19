@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.33 2012/06/12 19:03:26 christos Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.33.2.1 2014/08/20 00:05:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd1.c,v 1.33 2012/06/12 19:03:26 christos Exp $");
+__RCSID("$NetBSD: cmd1.c,v 1.33.2.1 2014/08/20 00:05:00 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -325,6 +325,7 @@ type1(int *msgvec, int doign, int mime_decode)
 	 * not what it is pointing at!
 	 */
 	FILE *volatile obuf;		/* avoid longjmp clobbering */
+	int * volatile mvec;
 	sig_t volatile oldsigpipe;	/* avoid longjmp clobbering? */
 #ifdef MIME_SUPPORT
 	struct mime_info *volatile mip;	/* avoid longjmp clobbering? */
@@ -332,6 +333,7 @@ type1(int *msgvec, int doign, int mime_decode)
 	mip = NULL;
 #endif
 
+	mvec = msgvec;
 	if ((obuf = last_registered_file(0)) == NULL)
 		obuf = stdout;
 
@@ -348,7 +350,7 @@ type1(int *msgvec, int doign, int mime_decode)
 	msgCount = get_msgCount();
 
 	recursive = do_recursion();
-	for (ip = msgvec; *ip && ip - msgvec < msgCount; ip++) {
+	for (ip = mvec; *ip && ip - mvec < msgCount; ip++) {
 		struct type1_core_args_s args;
 		struct message *mp;
 

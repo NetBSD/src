@@ -1,6 +1,6 @@
 /* Blackfin Phase Lock Loop (PLL) model.
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -20,8 +20,5 @@
 
 #ifndef DV_BFIN_PLL_H
 #define DV_BFIN_PLL_H
-
-#define BFIN_MMR_PLL_BASE	0xFFC00000
-#define BFIN_MMR_PLL_SIZE	(4 * 6)
 
 #endif

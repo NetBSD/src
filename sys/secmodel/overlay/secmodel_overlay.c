@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_overlay.c,v 1.12 2011/12/04 19:25:00 jym Exp $ */
+/* $NetBSD: secmodel_overlay.c,v 1.12.6.1 2014/08/20 00:04:43 tls Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_overlay.c,v 1.12 2011/12/04 19:25:00 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_overlay.c,v 1.12.6.1 2014/08/20 00:04:43 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -134,15 +134,9 @@ sysctl_security_overlay_setup(struct sysctllog **clog)
 
 	sysctl_createv(clog, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "security", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_SECURITY, CTL_EOL);
-
-	sysctl_createv(clog, 0, &rnode, &rnode,
-		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "models", NULL,
 		       NULL, 0, NULL, 0,
-		       CTL_CREATE, CTL_EOL);
+		       CTL_SECURITY, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, &rnode,
 		       CTLFLAG_PERMANENT,

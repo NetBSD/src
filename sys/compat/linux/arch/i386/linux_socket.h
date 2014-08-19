@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.h,v 1.8 2008/04/28 20:23:42 martin Exp $	*/
+/*	$NetBSD: linux_socket.h,v 1.8.44.1 2014/08/20 00:03:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -32,47 +32,6 @@
 #ifndef _I386_LINUX_SOCKET_H
 #define _I386_LINUX_SOCKET_H
 
-/*
- * Option levels for [gs]etsockopt(2).  Only SOL_SOCKET is different,
- * the rest matches IPPROTO_XXX
- */
-#define LINUX_SOL_SOCKET	1
-
-/*
- * Options for [gs]etsockopt(2), socket level.  For Linux, thay
- * are not masks, but just increasing numbers.
- */
-
-#define LINUX_SO_DEBUG		1
-#define LINUX_SO_REUSEADDR	2
-#define LINUX_SO_TYPE		3
-#define LINUX_SO_ERROR		4
-#define LINUX_SO_DONTROUTE	5
-#define LINUX_SO_BROADCAST	6
-#define LINUX_SO_SNDBUF		7
-#define LINUX_SO_RCVBUF		8
-#define LINUX_SO_KEEPALIVE	9
-#define LINUX_SO_OOBINLINE	10
-#define LINUX_SO_NO_CHECK	11
-#define LINUX_SO_PRIORITY	12
-#define LINUX_SO_LINGER		13
-
-/* unused: */
-#define LINUX_SO_BSDCOMPAT	14
-#define LINUX_SO_REUSEPORT	15	/* undef in Linux */
-#define LINUX_SO_PASSCRED	16
-#define LINUX_SO_PEERCRED	17
-#define LINUX_SO_RCVLOWAT	18
-#define LINUX_SO_SNDLOWAT	19
-#define LINUX_SO_RCVTIMEO	20
-#define LINUX_SO_SNDTIMEO	21
-#define LINUX_SO_SECURITY_AUTHENTICATION	22
-#define LINUX_SO_SECURITY_ENCRYPTION_TRANSPORT	23
-#define LINUX_SO_SECURITY_ENCRYPTION_NETWORK	24
-#define LINUX_SO_BINDTODEVICE	25
-#define LINUX_SO_ATTACH_FILTER	26
-#define LINUX_SO_DETACH_FILTER	27
-#define LINUX_SO_PEERNAME	28
-#define LINUX_SO_TIMESTAMP	29
+#include <compat/linux/common/linux_socket_generic.h>
 
 #endif /* !_I386_LINUX_SOCKET_H */

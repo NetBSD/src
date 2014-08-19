@@ -48,13 +48,17 @@ care about these low-level details. </p>
     permissive = permit
 
     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = 
-	<a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>
-	<a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
-	<a href="postconf.5.html#check_recipient_access">check_recipient_access</a> hash:/etc/postfix/recipient_access
+        <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a>
+        # <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a> is not needed here if the mail
+        # relay policy is specified with <a href="postconf.5.html#smtpd_relay_restrictions">smtpd_relay_restrictions</a>
+        # (available with Postfix 2.10 and later).
+        <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
+        <a href="postconf.5.html#check_recipient_access">check_recipient_access</a> <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/recipient_access
+        ...
 
 /etc/postfix/recipient_access:
-    joe@my.domain	permissive
-    jane@my.domain	restrictive
+    joe@my.domain       permissive
+    jane@my.domain      restrictive
 </pre>
 </blockquote>
 
@@ -102,7 +106,8 @@ to IP spoofing. </p>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> =
-        <a href="postconf.5.html#check_recipient_access">check_recipient_access</a> hash:/etc/postfix/access
+        ...
+        <a href="postconf.5.html#check_recipient_access">check_recipient_access</a> <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/access
         <i>...the usual stuff...</i>
 
 /etc/postfix/access:
@@ -133,11 +138,12 @@ therefore is subject to SMTP sender spoofing. </p>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> =
-        <a href="postconf.5.html#check_recipient_access">check_recipient_access</a> hash:/etc/postfix/protected_destinations
+        ...
+        <a href="postconf.5.html#check_recipient_access">check_recipient_access</a> <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/protected_destinations
         <i>...the usual stuff...</i>
 
     <a href="postconf.5.html#smtpd_restriction_classes">smtpd_restriction_classes</a> = insiders_only
-    insiders_only = <a href="postconf.5.html#check_sender_access">check_sender_access</a> hash:/etc/postfix/insiders, reject
+    insiders_only = <a href="postconf.5.html#check_sender_access">check_sender_access</a> <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/insiders, reject
 
 /etc/postfix/protected_destinations:
     all@my.domain   insiders_only
@@ -193,12 +199,13 @@ with LDAP or SQL. </p>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> =
-        <a href="postconf.5.html#check_sender_access">check_sender_access</a> hash:/etc/postfix/restricted_senders
+        ...
+        <a href="postconf.5.html#check_sender_access">check_sender_access</a> <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/restricted_senders
         <i>...other stuff...</i>
 
     <a href="postconf.5.html#smtpd_restriction_classes">smtpd_restriction_classes</a> = local_only
     local_only = 
-        <a href="postconf.5.html#check_recipient_access">check_recipient_access</a> hash:/etc/postfix/local_domains, reject
+        <a href="postconf.5.html#check_recipient_access">check_recipient_access</a> <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/local_domains, reject
 
 /etc/postfix/restricted_senders:
     foo@domain      local_only

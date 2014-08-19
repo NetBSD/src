@@ -1823,7 +1823,7 @@ sim_common=yes
 sim_igen=no
 sim_arch=
 case "${target}" in
-   arm*-*-* | thumb*-*-* | strongarm*-*-* | xscale-*-*)
+   arm*-*-*)
        sim_arch=arm
        sim_testsuite=yes
        ;;
@@ -1832,6 +1832,7 @@ case "${target}" in
        ;;
    bfin-*-*)
        sim_arch=bfin
+       sim_testsuite=yes
        ;;
    cr16*-*-*)
        sim_arch=cr16
@@ -1891,6 +1892,12 @@ case "${target}" in
    moxie-*-*)
        sim_arch=moxie
        sim_testsuite=yes
+       ;;
+   msp430*-*-*)
+       sim_arch=msp430
+       ;;
+   rl78-*-*)
+       sim_arch=rl78
        ;;
    rx-*-*)
        sim_arch=rx

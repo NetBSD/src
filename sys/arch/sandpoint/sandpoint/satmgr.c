@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.23.2.1 2013/02/25 00:28:55 tls Exp $ */
+/* $NetBSD: satmgr.c,v 1.23.2.2 2014/08/20 00:03:21 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -106,8 +106,18 @@ static dev_type_poll(satpoll);
 static dev_type_kqfilter(satkqfilter);
 
 const struct cdevsw satmgr_cdevsw = {
-	satopen, satclose, satread, satwrite, noioctl,
-	nostop, notty, satpoll, nommap, satkqfilter, D_OTHER
+	.d_open = satopen,
+	.d_close = satclose,
+	.d_read = satread,
+	.d_write = satwrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = satpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = satkqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 static void satmgr_reboot(int);

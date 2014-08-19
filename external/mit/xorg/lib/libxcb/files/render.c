@@ -330,11 +330,13 @@ xcb_render_pictdepth_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_render_pictdepth_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* visuals */
     xcb_block_len += _aux->num_visuals * sizeof(xcb_render_pictvisual_t);
     xcb_tmp += xcb_block_len;
@@ -454,13 +456,15 @@ xcb_render_pictscreen_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
     unsigned int i;
     unsigned int xcb_tmp_len;
 
     xcb_block_len += sizeof(xcb_render_pictscreen_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* depths */
     for(i=0; i<_aux->num_depths; i++) {
         xcb_tmp_len = xcb_render_pictdepth_sizeof(xcb_tmp);
@@ -933,13 +937,15 @@ xcb_render_query_pict_formats_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
     unsigned int i;
     unsigned int xcb_tmp_len;
 
     xcb_block_len += sizeof(xcb_render_query_pict_formats_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* formats */
     xcb_block_len += _aux->num_formats * sizeof(xcb_render_pictforminfo_t);
     xcb_tmp += xcb_block_len;
@@ -1222,11 +1228,13 @@ xcb_render_query_pict_index_values_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_render_query_pict_index_values_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* values */
     xcb_block_len += _aux->num_values * sizeof(xcb_render_indexvalue_t);
     xcb_tmp += xcb_block_len;
@@ -1397,11 +1405,13 @@ xcb_render_create_picture_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_render_create_picture_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* value_list */
     xcb_block_len += xcb_popcount(_aux->value_mask) * sizeof(uint32_t);
     xcb_tmp += xcb_block_len;
@@ -1532,11 +1542,13 @@ xcb_render_change_picture_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_render_change_picture_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* value_list */
     xcb_block_len += xcb_popcount(_aux->value_mask) * sizeof(uint32_t);
     xcb_tmp += xcb_block_len;
@@ -1655,11 +1667,13 @@ xcb_render_set_picture_clip_rectangles_sizeof (const void  *_buffer  /**< */,
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_render_set_picture_clip_rectangles_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* rectangles */
     xcb_block_len += rectangles_len * sizeof(xcb_rectangle_t);
     xcb_tmp += xcb_block_len;
@@ -2004,11 +2018,13 @@ xcb_render_trapezoids_sizeof (const void  *_buffer  /**< */,
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_render_trapezoids_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* traps */
     xcb_block_len += traps_len * sizeof(xcb_render_trapezoid_t);
     xcb_tmp += xcb_block_len;
@@ -2157,11 +2173,13 @@ xcb_render_triangles_sizeof (const void  *_buffer  /**< */,
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_render_triangles_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* triangles */
     xcb_block_len += triangles_len * sizeof(xcb_render_triangle_t);
     xcb_tmp += xcb_block_len;
@@ -2310,11 +2328,13 @@ xcb_render_tri_strip_sizeof (const void  *_buffer  /**< */,
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_render_tri_strip_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* points */
     xcb_block_len += points_len * sizeof(xcb_render_pointfix_t);
     xcb_tmp += xcb_block_len;
@@ -2463,11 +2483,13 @@ xcb_render_tri_fan_sizeof (const void  *_buffer  /**< */,
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_render_tri_fan_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* points */
     xcb_block_len += points_len * sizeof(xcb_render_pointfix_t);
     xcb_tmp += xcb_block_len;
@@ -2851,11 +2873,13 @@ xcb_render_add_glyphs_sizeof (const void  *_buffer  /**< */,
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_render_add_glyphs_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* glyphids */
     xcb_block_len += _aux->glyphs_len * sizeof(uint32_t);
     xcb_tmp += xcb_block_len;
@@ -3030,11 +3054,13 @@ xcb_render_free_glyphs_sizeof (const void  *_buffer  /**< */,
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_render_free_glyphs_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* glyphs */
     xcb_block_len += glyphs_len * sizeof(xcb_render_glyph_t);
     xcb_tmp += xcb_block_len;
@@ -3151,11 +3177,13 @@ xcb_render_composite_glyphs_8_sizeof (const void  *_buffer  /**< */,
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_render_composite_glyphs_8_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* glyphcmds */
     xcb_block_len += glyphcmds_len * sizeof(uint8_t);
     xcb_tmp += xcb_block_len;
@@ -3310,11 +3338,13 @@ xcb_render_composite_glyphs_16_sizeof (const void  *_buffer  /**< */,
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_render_composite_glyphs_16_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* glyphcmds */
     xcb_block_len += glyphcmds_len * sizeof(uint8_t);
     xcb_tmp += xcb_block_len;
@@ -3469,11 +3499,13 @@ xcb_render_composite_glyphs_32_sizeof (const void  *_buffer  /**< */,
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_render_composite_glyphs_32_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* glyphcmds */
     xcb_block_len += glyphcmds_len * sizeof(uint8_t);
     xcb_tmp += xcb_block_len;
@@ -3628,11 +3660,13 @@ xcb_render_fill_rectangles_sizeof (const void  *_buffer  /**< */,
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_render_fill_rectangles_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* rects */
     xcb_block_len += rects_len * sizeof(xcb_rectangle_t);
     xcb_tmp += xcb_block_len;
@@ -3973,13 +4007,15 @@ xcb_render_query_filters_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
     unsigned int i;
     unsigned int xcb_tmp_len;
 
     xcb_block_len += sizeof(xcb_render_query_filters_reply_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* aliases */
     xcb_block_len += _aux->num_aliases * sizeof(uint16_t);
     xcb_tmp += xcb_block_len;
@@ -4203,11 +4239,13 @@ xcb_render_set_picture_filter_sizeof (const void  *_buffer  /**< */,
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_render_set_picture_filter_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* filter */
     xcb_block_len += _aux->filter_len * sizeof(char);
     xcb_tmp += xcb_block_len;
@@ -4396,11 +4434,13 @@ xcb_render_create_anim_cursor_sizeof (const void  *_buffer  /**< */,
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_render_create_anim_cursor_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* cursors */
     xcb_block_len += cursors_len * sizeof(xcb_render_animcursorelt_t);
     xcb_tmp += xcb_block_len;
@@ -4593,11 +4633,13 @@ xcb_render_add_traps_sizeof (const void  *_buffer  /**< */,
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_render_add_traps_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* traps */
     xcb_block_len += traps_len * sizeof(xcb_render_trap_t);
     xcb_tmp += xcb_block_len;
@@ -4806,11 +4848,13 @@ xcb_render_create_linear_gradient_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_render_create_linear_gradient_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* stops */
     xcb_block_len += _aux->num_stops * sizeof(xcb_render_fixed_t);
     xcb_tmp += xcb_block_len;
@@ -4967,11 +5011,13 @@ xcb_render_create_radial_gradient_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_render_create_radial_gradient_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* stops */
     xcb_block_len += _aux->num_stops * sizeof(xcb_render_fixed_t);
     xcb_tmp += xcb_block_len;
@@ -5140,11 +5186,13 @@ xcb_render_create_conical_gradient_sizeof (const void  *_buffer  /**< */)
     unsigned int xcb_buffer_len = 0;
     unsigned int xcb_block_len = 0;
     unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to;
+    unsigned int xcb_align_to = 0;
 
 
     xcb_block_len += sizeof(xcb_render_create_conical_gradient_request_t);
     xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
     /* stops */
     xcb_block_len += _aux->num_stops * sizeof(xcb_render_fixed_t);
     xcb_tmp += xcb_block_len;

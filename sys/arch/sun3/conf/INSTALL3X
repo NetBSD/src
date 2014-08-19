@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL3X,v 1.50.6.2 2013/06/23 06:20:13 tls Exp $
+# $NetBSD: INSTALL3X,v 1.50.6.3 2014/08/20 00:03:26 tls Exp $
 #
 # INSTALL3X - Installation kernel for the Sun3X
 #
@@ -89,7 +89,6 @@ options 	WAPBL		# File system journaling support
 # Networking options
 options 	INET		# IP protocol stack support
 #options 	GATEWAY		# IP packet forwarding
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks.
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # Work-around for root on slow servers (insurance...)

@@ -1,4 +1,4 @@
-/*	$NetBSD: resumecontext.S,v 1.6 2008/04/28 20:22:56 martin Exp $	*/
+/*	$NetBSD: resumecontext.S,v 1.6.28.1 2014/08/20 00:02:10 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: resumecontext.S,v 1.6 2008/04/28 20:22:56 martin Exp $")
+	RCSID("$NetBSD: resumecontext.S,v 1.6.28.1 2014/08/20 00:02:10 tls Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 /*
@@ -48,7 +48,7 @@ NENTRY(_resumecontext)	/* profiling prologue would clobber TOS */
 	movl	%ecx,%esp
 	PIC_PROLOGUE
 	pushl	%ecx
-#ifdef PIC
+#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(_getcontext))
 #else
 	call	_C_LABEL(_getcontext)
@@ -62,7 +62,7 @@ NENTRY(_resumecontext)	/* profiling prologue would clobber TOS */
 	jnz	9f	/* watch out for local label use in PIC_* */
 
 	/* normal exit */
-#ifdef PIC
+#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(exit))
 #else
 	call	_C_LABEL(exit)
@@ -70,7 +70,7 @@ NENTRY(_resumecontext)	/* profiling prologue would clobber TOS */
 	/* NOTREACHED */
 
 9:
-#ifdef PIC
+#ifdef __PIC__
 	call	PIC_PLT(_C_LABEL(setcontext))
 #else
 	call	_C_LABEL(setcontext)
@@ -81,3 +81,4 @@ NENTRY(_resumecontext)	/* profiling prologue would clobber TOS */
 	pushl	$-1
 	pushl	%eax	/* unused return address */
 	SYSTRAP(exit)
+END(_resumecontext)

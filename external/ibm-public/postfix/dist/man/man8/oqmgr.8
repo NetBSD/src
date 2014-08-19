@@ -1,4 +1,4 @@
-.\"	$NetBSD: oqmgr.8,v 1.1.1.3 2011/03/02 19:31:54 tron Exp $
+.\"	$NetBSD: oqmgr.8,v 1.1.1.3.10.1 2014/08/19 23:59:42 tls Exp $
 .\"
 .TH OQMGR 8 
 .ad
@@ -203,7 +203,7 @@ clogging up the Postfix active queue.
 The maximal number of messages in the active queue.
 .IP "\fBqmgr_message_recipient_limit (20000)\fR"
 The maximal number of recipients held in memory by the Postfix
-queue manager, and the maximal size of the size of the short-term,
+queue manager, and the maximal size of the short-term,
 in-memory "dead" destination status cache.
 .SH "DELIVERY CONCURRENCY CONTROLS"
 .na
@@ -268,8 +268,9 @@ prior to Postfix 2.4 the default value was 1000s.
 .IP "\fBmaximal_backoff_time (4000s)\fR"
 The maximal time between attempts to deliver a deferred message.
 .IP "\fBmaximal_queue_lifetime (5d)\fR"
-The maximal time a message is queued before it is sent back as
-undeliverable.
+Consider a message as undeliverable, when delivery fails with a
+temporary error, and the time in the queue has reached the
+maximal_queue_lifetime limit.
 .IP "\fBqueue_run_delay (300s)\fR"
 The time between deferred queue scans by the queue manager;
 prior to Postfix 2.4 the default value was 1000s.
@@ -279,14 +280,15 @@ a malfunctioning message delivery transport.
 .PP
 Available in Postfix version 2.1 and later:
 .IP "\fBbounce_queue_lifetime (5d)\fR"
-The maximal time a bounce message is queued before it is considered
-undeliverable.
+Consider a bounce message as undeliverable, when delivery fails
+with a temporary error, and the time in the queue has reached the
+bounce_queue_lifetime limit.
 .PP
 Available in Postfix version 2.5 and later:
 .IP "\fBdefault_destination_rate_delay (0s)\fR"
 The default amount of delay that is inserted between individual
-deliveries to the same destination; with per-destination recipient
-limit > 1, a destination is a domain, otherwise it is a recipient.
+deliveries to the same destination; the resulting behavior depends
+on the value of the corresponding per-destination recipient limit.
 .IP "\fItransport\fB_destination_rate_delay $default_destination_rate_delay
 Idem, for delivery via the named message \fItransport\fR.
 .SH "SAFETY CONTROLS"

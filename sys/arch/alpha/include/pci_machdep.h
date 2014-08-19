@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.15 2012/02/06 02:14:13 matt Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.15.6.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -62,7 +62,8 @@ struct alpha_pci_chipset {
 	void		*pc_intr_v;
 	int		(*pc_intr_map)(const struct pci_attach_args *,
 			    pci_intr_handle_t *);
-	const char	*(*pc_intr_string)(void *, pci_intr_handle_t);
+	const char	*(*pc_intr_string)(void *, pci_intr_handle_t,
+			    char *, size_t);
 	const struct evcnt *(*pc_intr_evcnt)(void *, pci_intr_handle_t);
 	void		*(*pc_intr_establish)(void *, pci_intr_handle_t,
 			    int, int (*)(void *), void *);
@@ -90,8 +91,8 @@ struct alpha_pci_chipset {
     (*(c)->pc_conf_write)((c)->pc_conf_v, (t), (r), (v))
 #define	pci_intr_map(pa, ihp)						\
     (*(pa)->pa_pc->pc_intr_map)((pa), (ihp))
-#define	pci_intr_string(c, ih)						\
-    (*(c)->pc_intr_string)((c)->pc_intr_v, (ih))
+#define	pci_intr_string(c, ih, buf, len)				\
+    (*(c)->pc_intr_string)((c)->pc_intr_v, (ih), (buf), (len))
 #define	pci_intr_evcnt(c, ih)						\
     (*(c)->pc_intr_evcnt)((c)->pc_intr_v, (ih))
 #define	pci_intr_establish(c, ih, l, h, a)				\
@@ -109,3 +110,4 @@ void	pci_display_console(bus_space_tag_t, bus_space_tag_t,
     ((c)->pc_pciide_compat_intr_establish == NULL ? NULL :		\
      (*(c)->pc_pciide_compat_intr_establish)((c)->pc_conf_v, (d), (p),	\
 	(ch), (f), (a)))
+void	device_pci_register(device_t, void *);

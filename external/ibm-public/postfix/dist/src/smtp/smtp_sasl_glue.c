@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_sasl_glue.c,v 1.1.1.1.16.1 2013/02/25 00:27:28 tls Exp $	*/
+/*	$NetBSD: smtp_sasl_glue.c,v 1.1.1.1.16.2 2014/08/19 23:59:44 tls Exp $	*/
 
 /*++
 /* NAME
@@ -160,6 +160,7 @@ int     smtp_sasl_passwd_lookup(SMTP_SESSION *session)
 {
     const char *myname = "smtp_sasl_passwd_lookup";
     SMTP_STATE *state = session->state;
+    SMTP_ITERATOR *iter = session->iterator;
     const char *value;
     char   *passwd;
 
@@ -183,16 +184,16 @@ int     smtp_sasl_passwd_lookup(SMTP_SESSION *session)
      * the MX hostname.
      */
     smtp_sasl_passwd_map->error = 0;
-    if (((state->misc_flags & SMTP_MISC_FLAG_USE_LMTP) == 0
+    if ((smtp_mode
 	 && var_smtp_sender_auth && state->request->sender[0]
 	 && (value = mail_addr_find(smtp_sasl_passwd_map,
 				 state->request->sender, (char **) 0)) != 0)
 	|| (smtp_sasl_passwd_map->error == 0
 	    && (value = maps_find(smtp_sasl_passwd_map,
-				  session->host, 0)) != 0)
+				  STR(iter->host), 0)) != 0)
 	|| (smtp_sasl_passwd_map->error == 0
 	    && (value = maps_find(smtp_sasl_passwd_map,
-				  session->dest, 0)) != 0)) {
+				  STR(iter->dest), 0)) != 0)) {
 	if (session->sasl_username)
 	    myfree(session->sasl_username);
 	session->sasl_username = mystrdup(value);
@@ -202,17 +203,17 @@ int     smtp_sasl_passwd_lookup(SMTP_SESSION *session)
 	session->sasl_passwd = mystrdup(passwd ? passwd : "");
 	if (msg_verbose)
 	    msg_info("%s: host `%s' user `%s' pass `%s'",
-		     myname, session->host,
+		     myname, STR(iter->host),
 		     session->sasl_username, session->sasl_passwd);
 	return (1);
     } else if (smtp_sasl_passwd_map->error) {
 	msg_warn("%s: %s lookup error",
-		  state->request->queue_id, smtp_sasl_passwd_map->title);
+		 state->request->queue_id, smtp_sasl_passwd_map->title);
 	vstream_longjmp(session->stream, SMTP_ERR_DATA);
     } else {
 	if (msg_verbose)
 	    msg_info("%s: no auth info found (sender=`%s', host=`%s')",
-		     myname, state->request->sender, session->host);
+		     myname, state->request->sender, STR(iter->host));
 	return (0);
     }
 }
@@ -229,7 +230,7 @@ void    smtp_sasl_initialize(void)
 	msg_panic("smtp_sasl_initialize: repeated call");
     if (*var_smtp_sasl_passwd == 0)
 	msg_fatal("specify a password table via the `%s' configuration parameter",
-		  VAR_SMTP_SASL_PASSWD);
+		  SMTP_X(SASL_PASSWD));
 
     /*
      * Open the per-host password table and initialize the SASL library. Use
@@ -259,7 +260,7 @@ void    smtp_sasl_initialize(void)
 				      var_smtp_sasl_auth_cache_time);
 #else
 	msg_warn("not compiled with TLS support -- "
-		 "ignoring the " VAR_SMTP_SASL_AUTH_CACHE_NAME " setting");
+		 "ignoring the %s setting", SMTP_X(SASL_AUTH_CACHE_NAME));
 #endif
     }
 }
@@ -286,6 +287,7 @@ void    smtp_sasl_start(SMTP_SESSION *session, const char *sasl_opts_name,
 			        const char *sasl_opts_val)
 {
     XSASL_CLIENT_CREATE_ARGS create_args;
+    SMTP_ITERATOR *iter = session->iterator;
 
     if (msg_verbose)
 	msg_info("starting new SASL client");
@@ -293,7 +295,7 @@ void    smtp_sasl_start(SMTP_SESSION *session, const char *sasl_opts_name,
 	 XSASL_CLIENT_CREATE(smtp_sasl_impl, &create_args,
 			     stream = session->stream,
 			     service = var_procname,
-			     server_name = session->host,
+			     server_name = STR(iter->host),
 			     security_options = sasl_opts_val)) == 0)
 	msg_fatal("SASL per-connection initialization failed");
     session->sasl_reply = vstring_alloc(20);
@@ -304,6 +306,7 @@ void    smtp_sasl_start(SMTP_SESSION *session, const char *sasl_opts_name,
 int     smtp_sasl_authenticate(SMTP_SESSION *session, DSN_BUF *why)
 {
     const char *myname = "smtp_sasl_authenticate";
+    SMTP_ITERATOR *iter = session->iterator;
     SMTP_RESP *resp;
     const char *mechanism;
     int     result;
@@ -332,9 +335,9 @@ int     smtp_sasl_authenticate(SMTP_SESSION *session, DSN_BUF *why)
 	if (var_smtp_sasl_auth_soft_bounce && resp_dsn[0] == '5')
 	    resp_dsn[0] = '4';
 	dsb_update(why, resp_dsn, DSB_DEF_ACTION, DSB_MTYPE_DNS,
-		   session->host, var_procname, resp_str,
+		   STR(iter->host), var_procname, resp_str,
 		   "SASL [CACHED] authentication failed; server %s said: %s",
-		   session->host, resp_str);
+		   STR(iter->host), resp_str);
 	return (0);
     }
 #endif
@@ -418,7 +421,7 @@ int     smtp_sasl_authenticate(SMTP_SESSION *session, DSN_BUF *why)
 	if (var_smtp_sasl_auth_soft_bounce && resp->code / 100 == 5)
 	    STR(resp->dsn_buf)[0] = '4';
 	dsb_update(why, resp->dsn, DSB_DEF_ACTION,
-		   DSB_MTYPE_DNS, session->host,
+		   DSB_MTYPE_DNS, STR(iter->host),
 		   var_procname, resp->str,
 		   "SASL authentication failed; server %s said: %s",
 		   session->namaddr, resp->str);

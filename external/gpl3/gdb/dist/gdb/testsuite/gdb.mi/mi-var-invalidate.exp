@@ -1,4 +1,4 @@
-# Copyright 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2007-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,24 +28,23 @@ if [mi_gdb_start] {
     continue
 }
 
-set testfile "var-cmd"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/mi-var-invalidate
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-DFAKEARGV}] != "" } {
+standard_testfile var-cmd.c
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
     untested mi-var-invalidate.exp
     return -1
 }
 # Just change the output binary.
-set binfile_bis ${objdir}/${subdir}/mi-var-invalidate_bis
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile_bis}" executable {debug additional_flags=-DFAKEARGV}] != "" } {
+set binfile_bis [standard_output_file mi-var-invalidate_bis]
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile_bis}" executable {debug}] != "" } {
     untested mi-var-invalidate.exp
     return -1
 }
 
 set testfile2 "basics"
 set srcfile2 ${testfile2}.c
-set binfile2 ${objdir}/${subdir}/${testfile2}
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile2}" "${binfile2}" executable {debug additional_flags=-DFAKEARGV}] != "" } {
+set binfile2 [standard_output_file ${testfile2}]
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile2}" "${binfile2}" executable {debug}] != "" } {
     untested mi-var-invalidate.exp
     return -1
 }
@@ -62,6 +61,9 @@ mi_runto do_locals_tests
 # Desc: create local variables
 mi_create_varobj linteger linteger "create local variable linteger"
 
+# Desc: create floating variable
+mi_create_floating_varobj float_simple array "create floating variable"
+
 #
 # Reload the same binary.
 # Global variable should remain, local should be invalidated.
@@ -69,6 +71,12 @@ mi_create_varobj linteger linteger "create local variable linteger"
 mi_delete_breakpoints
 mi_gdb_load ${binfile_bis}
 mi_runto main
+
+# Change format of floating variable immediately after reload reveals a
+# bug where gdb still uses a free'd pointer.
+mi_gdb_test "-var-set-format float_simple hexadecimal" \
+        "\\^done,format=\"hexadecimal\",value=\"\\\[-1\\\]\"" \
+       "set format variable float_simple"
 
 # Check local variable is "invalid".
 mi_gdb_test "-var-update linteger" \

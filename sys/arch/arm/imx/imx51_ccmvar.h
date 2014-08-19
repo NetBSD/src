@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_ccmvar.h,v 1.1 2012/04/17 09:33:31 bsh Exp $	*/
+/*	$NetBSD: imx51_ccmvar.h,v 1.1.6.1 2014/08/20 00:02:46 tls Exp $	*/
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -56,6 +56,7 @@ enum imx51_clock {
 	IMX51CLK_ESDHC1_CLK_ROOT,
 	IMX51CLK_ESDHC2_CLK_ROOT,
 	IMX51CLK_ESDHC3_CLK_ROOT,
+	IMX51CLK_ESDHC4_CLK_ROOT,
 	IMX51CLK_UART_CLK_ROOT,
 	IMX51CLK_SSI1_CLK_ROOT,
 	IMX51CLK_SSI2_CLK_ROOT,
@@ -69,10 +70,21 @@ enum imx51_clock {
 	IMX51CLK_CSPI_CLK_ROOT,
 	IMX51CLK_WRCK_CLK_ROOT,
 	IMX51CLK_LPSR_CLK_ROOT,
-	IMX51CLK_PGC_CLK_ROOT
+	IMX51CLK_PGC_CLK_ROOT,
+#if IMX50
+	IMX50CLK_PFD0_CLK_ROOT,
+	IMX50CLK_PFD1_CLK_ROOT,
+	IMX50CLK_PFD2_CLK_ROOT,
+	IMX50CLK_PFD3_CLK_ROOT,
+	IMX50CLK_PFD4_CLK_ROOT,
+	IMX50CLK_PFD5_CLK_ROOT,
+	IMX50CLK_PFD6_CLK_ROOT,
+	IMX50CLK_PFD7_CLK_ROOT,
+#endif
 };
 
 u_int imx51_get_clock(enum imx51_clock);
 void imx51_clk_gating(int, int);
+void imx51_clk_rate(int, int, int);
 
 #endif	/* _ARM_IMX_IMX51_CCMVAR_H_ */

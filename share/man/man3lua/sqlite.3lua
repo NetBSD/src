@@ -1,0 +1,334 @@
+.\"	$NetBSD: sqlite.3lua,v 1.4.8.2 2014/08/20 00:02:34 tls Exp $
+.\"
+.\" Copyright (c) 2013 Marc Balmer <mbalmer@NetBSD.org>. All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"
+.Dd October 28, 2013
+.Dt SQLITE 3lua
+.Os
+.Sh NAME
+.Nm sqlite
+.Nd access
+SQLite3 files from Lua
+.Sh SYNOPSIS
+.Cd "local sqlite = require 'sqlite'"
+.Pp
+.Bl -tag -width XXXX -compact
+.\"
+.\" GENERAL FUNCTIONS
+.\"
+.It Dv err = sqlite.initialize()
+.It Dv sqlite.shutdown()
+.It Dv db, err = sqlite.open(file [, flags])
+.It Dv version = sqlite.libversion()
+.It Dv version = sqlite.libversion_number()
+.It Dv id = sqlite.sourceid()
+.\"
+.\" DATABASE FUNCTIONS
+.\"
+.Pp
+.It Dv err = sqlite.close(db)
+.It Dv stmt, err = sqlite.prepare(db, sql)
+.It Dv err = sqlite.exec(db, sql)
+.It Dv err = sqlite.errcode(db)
+.It Dv msg = sqlite.errmsg(db)
+.It Dv res = sqlite.get_autocommit(db)
+.It Dv res = sqlite.changes(db)
+.\"
+.\" STATEMENT FUNCTIONS
+.\"
+.Pp
+.It Dv err = sqlite.bind(stmt, pidx, value)
+.It Dv count = sqlite.bind_parameter_count(stmt)
+.It Dv pidx = sqlite.bind_parameter_index(stmt, name)
+.It Dv name = sqlite.bind_parameter_name(stmt, pidx)
+.It Dv err = sqlite.step(stmt)
+.It Dv value = sqlite.column(stmt, cidx)
+.It Dv sqlite.reset(stmt)
+.It Dv sqlite.clear_bindings(stmt)
+.It Dv sqlite.finalize(stmt)
+.It Dv name = sqlite.column_name(stmt, cidx)
+.It Dv count = sqlite.column_count(stmt)
+.El
+.Sh DESCRIPTION
+The
+.Nm
+Lua binding provides access to SQLite3 files.
+.Sh GENERAL FUNCTIONS
+.Bl -tag -width XXXX -compact
+.It Dv err = sqlite.initialize()
+Initialize the SQLite3 library.
+Workstation applications using SQLite normally do not need to invoke this
+function.
+.Pp
+.It Dv sqlite.shutdown()
+Deallocate any resources that were allocated by
+.Fn sqlite.initialize .
+Workstation applications using SQLite normally do not need to invoke this
+function.
+.Pp
+.It Dv db, err = sqlite.open(file [, flags])
+Open a database, optionally passing flags.
+When called without flags, the database will be opened for reading and
+writing and it will be created if it does not yet exist.
+The following flags are defined:
+.Pp
+.Bl -tag -width XXXX -compact
+.It Dv sqlite.OPEN_READONLY
+The database is opened in read-only mode.
+If the database does not already exist, an error is returned.
+.Pp
+.It Dv sqlite.OPEN_READWRITE
+The database is opened for reading and writing if possible, or reading only if
+the file is write protected by the operating system.
+In either case the database must already exist, otherwise an error is returned.
+.Pp
+.It Dv sqlite.OPEN_CREATE
+The database is opened for reading and writing, and is created if it does not
+already exist.
+.El
+.Pp
+.It Dv version = sqlite.libversion()
+Return the SQLite3 library version number as a string.
+.Pp
+.It Dv version = sqlite.libversion_number()
+Return the SQLite3 library version number as a number.
+.Pp
+.It Dv id = sqlite.sourceid()
+Return the SQLite3 library source id as a string.
+.El
+.Sh DATABASE FUNCTIONS
+Database functions operate on database objects returned by
+.Fn sqlite.open .
+.Pp
+.Bl -tag -width XXXX -compact
+.It Dv err = sqlite.close(db)
+Close an open database.
+Like with all remaining database functions, this function can also be called
+using the Lua "colon" syntactic sugar as
+.Em db:close() .
+.Pp
+.It Dv stmt, err = sqlite.prepare(db, sql)
+Return a prepared statement.
+.Pp
+.It Dv err = sqlite.exec(db, sql)
+Directly execute an SQL statement.
+Be careful when creating SQL on the fly (SQL injection attacks).
+.Pp
+.It Dv err = sqlite.errcode(db)
+Return the numeric error code.
+.Pp
+.It Dv msg = sqlite.errmsg(db)
+Return the error message as a string.
+.Pp
+.It Dv res = sqlite.get_autocommit(db)
+Return the autocommit flag.
+.Pp
+.It Dv res = sqlite.changes(db)
+This function returns the number of database rows that were changed or inserted
+or deleted by the most recently completed SQL statement on the database.
+.El
+.Sh STATEMENT FUNCTIONS
+.Bl -tag -width XXXX -compact
+.It Dv err = sqlite.bind(stmt, pidx, value)
+Bind
+.Ar value
+to the parameter
+.Ar pidx
+in the prepared statement
+.Ar stmt .
+.Pp
+.It Dv count = sqlite.bind_parameter_count(stmt)
+Return the number of parameters in the prepared statement
+.Ar stmt .
+.Pp
+.It Dv pidx = sqlite.bind_parameter_index(stmt, name)
+Return the parameter index for
+.Ar name
+in the prepared statement
+.Ar stmt .
+.Pp
+.It Dv name = sqlite.bind_parameter_name(stmt, pidx)
+Return the parameter name for the parameter index
+.Ar pidx
+in the prepared statement
+.Ar stmt .
+.Pp
+.It Dv err = sqlite.step(stmt)
+Execute prepared statement
+.Ar stmt .
+.Pp
+.It Dv value = sqlite.column(stmt, cidx)
+Return the value at column
+.Ar cidx
+in the prepared statement
+.Ar stmt .
+.Pp
+.It Dv sqlite.reset(stmt)
+The
+.Fn sqlite.reset
+function is called to reset a prepared statement object back
+to its initial state, ready to be re-executed.
+.Pp
+.It Dv sqlite.clear_bindings(stmt)
+Contrary to the intuition of many,
+.Fn sqlite.reset
+does not reset the bindings on a prepared statement.
+Use this routine to reset all host parameters to
+.Dv NULL .
+.Pp
+.It Dv sqlite.finalize(stmt)
+The
+.Fn sqlite.finalize
+function is called to delete a prepared statement.
+.Pp
+.It Dv name = sqlite.column_name(stmt, cidx)
+Return the name assigned to a particular column in the result set of a SELECT
+statement.
+.Pp
+.It Dv count = sqlite.column_count(stmt)
+Return the number of columns in the result set returned by the prepared
+statement
+.Ar stmt .
+This routine returns 0 if
+.Ar stmt
+is an SQL statement that does not return data (for example an UPDATE).
+.El
+.Sh ERROR CODES
+Most functions return an error code, the following error codes
+are defined:
+.Pp
+.Bl -tag -width XXXX -compact
+.It Dv sqlite.OK
+Successful result.
+.Pp
+.It Dv sqlite.ERROR
+SQL error or missing database.
+.Pp
+.It Dv sqlite.INTERNAL
+Internal logic error in SQLite.
+.Pp
+.It Dv sqlite.PERM
+Access permission denied.
+.Pp
+.It Dv sqlite.ABORT
+Callback routine requested an abort.
+.Pp
+.It Dv sqlite.BUSY
+The database file is locked.
+.Pp
+.It Dv sqlite.LOCKED
+A table in the database is locked.
+.Pp
+.It Dv sqlite.NOMEM
+Out of memory.
+.Pp
+.It Dv sqlite.READONLY
+Attempt to write a readonly database.
+.Pp
+.It Dv sqlite.INTERRUPT
+Operation terminated by
+.Fn sqlite3_interrupt .
+.Pp
+.It Dv sqlite.IOERR
+Some kind of disk I/O error occurred.
+.Pp
+.It Dv sqlite.CORRUPT
+The database disk image is malformed.
+.Pp
+.It Dv sqlite.NOTFOUND
+Unknown opcode in
+.Fn sqlite3_file_control .
+.Pp
+.It Dv sqlite.FULL
+Insertion failed because database is full.
+.Pp
+.It Dv sqlite.CANTOPEN
+Unable to open the database file.
+.Pp
+.It Dv sqlite.PROTOCOL
+Database lock protocol error.
+.Pp
+.It Dv sqlite.EMPTY
+Database is empty.
+.Pp
+.It Dv sqlite.SCHEMA
+The database schema changed.
+.Pp
+.It Dv sqlite.TOOBIG
+String or BLOB exceeds size limit.
+.Pp
+.It Dv sqlite.CONSTRAINT
+Abort due to constraint violation.
+.Pp
+.It Dv sqlite.MISMATCH
+Data type mismatch.
+.Pp
+.It Dv sqlite.MISUSE
+Library used incorrectly.
+.Pp
+.It Dv sqlite.NOLFS
+Uses OS features not supported on host.
+.Pp
+.It Dv sqlite.AUTH
+Authorization denied.
+.Pp
+.It Dv sqlite.FORMAT
+Auxiliary database format error.
+.Pp
+.It Dv sqlite.RANGE
+2nd parameter to
+.Fn sqlite.bind
+out of range.
+.Pp
+.It Dv sqlite.NOTADB
+File opened that is not a database file.
+.Pp
+.It Dv sqlite.ROW
+.Fn sqlite.step
+has another row ready.
+.Pp
+.It Dv sqlite.DONE
+.Fn sqlite.step
+has finished executing.
+.El
+.Sh SEE ALSO
+.Xr lua 1 ,
+.Xr luac 1 ,
+.Xr sqlite3 1 ,
+.Xr intro 3lua
+.Sh HISTORY
+An
+.Nm
+manual appeared in
+.Nx 7.0 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+Lua binding was written by
+.An Marc Balmer Aq Mt mbalmer@NetBSD.org .

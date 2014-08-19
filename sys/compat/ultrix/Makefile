@@ -1,13 +1,5 @@
-#	$NetBSD: Makefile,v 1.5 2005/12/11 12:20:30 christos Exp $
+#	$NetBSD: Makefile,v 1.5.120.1 2014/08/20 00:03:34 tls Exp $
 
-.include <bsd.sys.mk>		# for HOST_SH
+SYSCALL_PREFIX=ultrix
 
-DEP=	syscalls.conf syscalls.master ../../kern/makesyscalls.sh
-OBJS=	ultrix_sysent.c ultrix_syscalls.c ultrix_syscall.h ultrix_syscallargs.h
-
-${OBJS}: ${DEP}
-	${HOST_SH} ../../kern/makesyscalls.sh syscalls.conf syscalls.master
-
-all: ${OBJS}
-
-.include <bsd.kinc.mk>
+.include <bsd.syscall.mk>

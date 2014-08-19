@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.c,v 1.17 2009/12/13 23:01:42 jakllsch Exp $	*/
+/*	$NetBSD: pxe.c,v 1.17.22.1 2014/08/20 00:03:07 tls Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -107,7 +107,7 @@ void	(*pxe_call)(uint16_t);
 void	pxecall_bangpxe(uint16_t);	/* pxe_call.S */
 void	pxecall_pxenv(uint16_t);	/* pxe_call.S */
 
-char pxe_command_buf[256];
+extern char pxe_command_buf[256];
 
 BOOTPLAYER bootplayer;
 

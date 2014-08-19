@@ -1,7 +1,6 @@
 /* Target description support for GDB.
 
-   Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -35,6 +34,7 @@
 #include "gdb_assert.h"
 #include "gdb_obstack.h"
 #include "hashtab.h"
+#include "inferior.h"
 
 /* Types.  */
 
@@ -232,33 +232,91 @@ struct tdesc_arch_data
   gdbarch_register_reggroup_p_ftype *pseudo_register_reggroup_p;
 };
 
-/* Global state.  These variables are associated with the current
-   target; if GDB adds support for multiple simultaneous targets, then
-   these variables should become target-specific data.  */
+/* Info about an inferior's target description.  There's one of these
+   for each inferior.  */
 
-/* A flag indicating that a description has already been fetched from
-   the current target, so it should not be queried again.  */
+struct target_desc_info
+{
+  /* A flag indicating that a description has already been fetched
+     from the target, so it should not be queried again.  */
 
-static int target_desc_fetched;
+  int fetched;
 
-/* The description fetched from the current target, or NULL if the
-   current target did not supply any description.  Only valid when
-   target_desc_fetched is set.  Only the description initialization
-   code should access this; normally, the description should be
-   accessed through the gdbarch object.  */
+  /* The description fetched from the target, or NULL if the target
+     did not supply any description.  Only valid when
+     target_desc_fetched is set.  Only the description initialization
+     code should access this; normally, the description should be
+     accessed through the gdbarch object.  */
 
-static const struct target_desc *current_target_desc;
+  const struct target_desc *tdesc;
 
-/* Other global variables.  */
+  /* The filename to read a target description from, as set by "set
+     tdesc filename ..."  */
 
-/* The filename to read a target description from.  */
+  char *filename;
+};
 
-static char *target_description_filename;
+/* Get the inferior INF's target description info, allocating one on
+   the stop if necessary.  */
+
+static struct target_desc_info *
+get_tdesc_info (struct inferior *inf)
+{
+  if (inf->tdesc_info == NULL)
+    inf->tdesc_info = XCNEW (struct target_desc_info);
+  return inf->tdesc_info;
+}
 
 /* A handle for architecture-specific data associated with the
    target description (see struct tdesc_arch_data).  */
 
 static struct gdbarch_data *tdesc_data;
+
+/* See target-descriptions.h.  */
+
+int
+target_desc_info_from_user_p (struct target_desc_info *info)
+{
+  return info != NULL && info->filename != NULL;
+}
+
+/* See target-descriptions.h.  */
+
+void
+copy_inferior_target_desc_info (struct inferior *destinf, struct inferior *srcinf)
+{
+  struct target_desc_info *src = get_tdesc_info (srcinf);
+  struct target_desc_info *dest = get_tdesc_info (destinf);
+
+  dest->fetched = src->fetched;
+  dest->tdesc = src->tdesc;
+  dest->filename = src->filename != NULL ? xstrdup (src->filename) : NULL;
+}
+
+/* See target-descriptions.h.  */
+
+void
+target_desc_info_free (struct target_desc_info *tdesc_info)
+{
+  if (tdesc_info != NULL)
+    {
+      xfree (tdesc_info->filename);
+      xfree (tdesc_info);
+    }
+}
+
+/* Convenience helper macros.  */
+
+#define target_desc_fetched \
+  get_tdesc_info (current_inferior ())->fetched
+#define current_target_desc \
+  get_tdesc_info (current_inferior ())->tdesc
+#define target_description_filename \
+  get_tdesc_info (current_inferior ())->filename
+
+/* The string manipulated by the "set tdesc filename ..." command.  */
+
+static char *tdesc_filename_cmd_string;
 
 /* Fetch the current target's description, and switch the current
    architecture to one which incorporates that description.  */
@@ -276,7 +334,7 @@ target_find_description (void)
   /* The current architecture should not have any target description
      specified.  It should have been cleared, e.g. when we
      disconnected from the previous target.  */
-  gdb_assert (gdbarch_target_desc (target_gdbarch) == NULL);
+  gdb_assert (gdbarch_target_desc (target_gdbarch ()) == NULL);
 
   /* First try to fetch an XML description from the user-specified
      file.  */
@@ -309,7 +367,7 @@ target_find_description (void)
 	{
 	  struct tdesc_arch_data *data;
 
-	  data = gdbarch_data (target_gdbarch, tdesc_data);
+	  data = gdbarch_data (target_gdbarch (), tdesc_data);
 	  if (tdesc_has_registers (current_target_desc)
 	      && data->arch_regs == NULL)
 	    warning (_("Target-supplied registers are not supported "
@@ -658,9 +716,9 @@ tdesc_gdb_type (struct gdbarch *gdbarch, struct tdesc_type *tdesc_type)
 		bitsize = f->end - f->start + 1;
 		total_size = tdesc_type->u.u.size * TARGET_CHAR_BIT;
 		if (gdbarch_bits_big_endian (gdbarch))
-		  FIELD_BITPOS (fld[0]) = total_size - f->start - bitsize;
+		  SET_FIELD_BITPOS (fld[0], total_size - f->start - bitsize);
 		else
-		  FIELD_BITPOS (fld[0]) = f->start;
+		  SET_FIELD_BITPOS (fld[0], f->start);
 		FIELD_BITSIZE (fld[0]) = bitsize;
 	      }
 	    else
@@ -1511,6 +1569,9 @@ static void
 set_tdesc_filename_cmd (char *args, int from_tty,
 			struct cmd_list_element *c)
 {
+  xfree (target_description_filename);
+  target_description_filename = xstrdup (tdesc_filename_cmd_string);
+
   target_clear_description ();
   target_find_description ();
 }
@@ -1520,6 +1581,8 @@ show_tdesc_filename_cmd (struct ui_file *file, int from_tty,
 			 struct cmd_list_element *c,
 			 const char *value)
 {
+  value = target_description_filename;
+
   if (value != NULL && *value != '\0')
     printf_filtered (_("The target description will be read from \"%s\".\n"),
 		     value);
@@ -1551,6 +1614,7 @@ maint_print_c_tdesc_cmd (char *args, int from_tty)
   struct tdesc_type_field *f;
   struct tdesc_type_flag *flag;
   int ix, ix2, ix3;
+  int printed_field_type = 0;
 
   /* Use the global target-supplied description, not the current
      architecture's.  This lets a GDB for one architecture generate C
@@ -1575,8 +1639,10 @@ maint_print_c_tdesc_cmd (char *args, int from_tty)
   *outp = '\0';
 
   /* Standard boilerplate.  */
-  printf_unfiltered ("/* THIS FILE IS GENERATED.  Original: %s */\n\n",
-		     filename);
+  printf_unfiltered ("/* THIS FILE IS GENERATED.  "
+		     "-*- buffer-read-only: t -*- vi"
+		     ":set ro:\n");
+  printf_unfiltered ("  Original: %s */\n\n", filename);
   printf_unfiltered ("#include \"defs.h\"\n");
   printf_unfiltered ("#include \"osabi.h\"\n");
   printf_unfiltered ("#include \"target-descriptions.h\"\n");
@@ -1589,7 +1655,40 @@ maint_print_c_tdesc_cmd (char *args, int from_tty)
   printf_unfiltered
     ("  struct target_desc *result = allocate_target_description ();\n");
   printf_unfiltered ("  struct tdesc_feature *feature;\n");
-  printf_unfiltered ("  struct tdesc_type *field_type, *type;\n");
+
+  /* Now we do some "filtering" in order to know which variables to
+     declare.  This is needed because otherwise we would declare unused
+     variables `field_type' and `type'.  */
+  for (ix = 0;
+       VEC_iterate (tdesc_feature_p, tdesc->features, ix, feature);
+       ix++)
+    {
+      int printed_desc_type = 0;
+
+      for (ix2 = 0;
+	   VEC_iterate (tdesc_type_p, feature->types, ix2, type);
+	   ix2++)
+	{
+	  if (!printed_field_type)
+	    {
+	      printf_unfiltered ("  struct tdesc_type *field_type;\n");
+	      printed_field_type = 1;
+	    }
+
+	  if ((type->kind == TDESC_TYPE_UNION
+	      || type->kind == TDESC_TYPE_STRUCT)
+	      && VEC_length (tdesc_type_field, type->u.u.fields) > 0)
+	    {
+	      printf_unfiltered ("  struct tdesc_type *type;\n");
+	      printed_desc_type = 1;
+	      break;
+	    }
+	}
+
+      if (printed_desc_type)
+	break;
+    }
+
   printf_unfiltered ("\n");
 
   if (tdesc_architecture (tdesc) != NULL)
@@ -1647,6 +1746,36 @@ feature = tdesc_create_feature (result, \"%s\");\n",
 	      printf_unfiltered
 		("  tdesc_create_vector (feature, \"%s\", field_type, %d);\n",
 		 type->name, type->u.v.count);
+	      break;
+	    case TDESC_TYPE_STRUCT:
+	      printf_unfiltered
+		("  type = tdesc_create_struct (feature, \"%s\");\n",
+		 type->name);
+	      if (type->u.u.size != 0)
+		printf_unfiltered
+		  ("  tdesc_set_struct_size (type, %s);\n",
+		   plongest (type->u.u.size));
+	      for (ix3 = 0;
+		   VEC_iterate (tdesc_type_field, type->u.u.fields, ix3, f);
+		   ix3++)
+		{
+		  /* Going first for implicitly sized types, else part handles
+		     bitfields.  As reported on xml-tdesc.c implicitly sized types
+		     cannot contain a bitfield.  */
+		  if (f->type != NULL)
+		    {
+		      printf_unfiltered
+			("  field_type = tdesc_named_type (feature, \"%s\");\n",
+			 f->type->name);
+		      printf_unfiltered
+			("  tdesc_add_field (type, \"%s\", field_type);\n",
+			 f->name);
+		    }
+		  else
+		    printf_unfiltered
+		      ("  tdesc_add_bitfield (type, \"%s\", %d, %d);\n",
+		       f->name, f->start, f->end);
+		}
 	      break;
 	    case TDESC_TYPE_UNION:
 	      printf_unfiltered
@@ -1724,7 +1853,7 @@ Unset target description specific variables."),
 		  0 /* allow-unknown */, &unsetlist);
 
   add_setshow_filename_cmd ("filename", class_obscure,
-			    &target_description_filename,
+			    &tdesc_filename_cmd_string,
 			    _("\
 Set the file to read for an XML target description"), _("\
 Show the file to read for an XML target description"), _("\

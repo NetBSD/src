@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.47.6.1 2012/11/20 03:02:14 tls Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.47.6.2 2014/08/20 00:03:42 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.47.6.1 2012/11/20 03:02:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.47.6.2 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,6 +190,7 @@ cs4281_attach(device_t parent, device_t self, void *aux)
 	char const *intrstr;
 	pcireg_t reg;
 	int error;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -244,7 +245,7 @@ cs4281_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, sc->intrh);
+	intrstr = pci_intr_string(pc, sc->intrh, intrbuf, sizeof(intrbuf));
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
@@ -335,8 +336,13 @@ cs4281_intr(void *p)
 	/* clear the interrupt register */
 	BA0WRITE4(sc, CS4281_HICR, HICR_CHGM | HICR_IEV);
 
+#ifdef CS4280_DEBUG
 	DPRINTF(("intr = 0x%08x, hdsr0 = 0x%08x hdsr1 = 0x%08x\n",
 		 intr, hdsr0, hdsr1));
+#else
+	__USE(hdsr0);
+	__USE(hdsr1);
+#endif
 
 	/* Playback Interrupt */
 	if (intr & HISR_DMA0) {

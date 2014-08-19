@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.182 2012/02/16 11:46:14 matt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.182.2.1 2014/08/20 00:04:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.182 2012/02/16 11:46:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.182.2.1 2014/08/20 00:04:45 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -239,7 +239,7 @@ uvm_pageinsert_list(struct uvm_object *uobj, struct vm_page *pg,
 static inline void
 uvm_pageinsert_tree(struct uvm_object *uobj, struct vm_page *pg)
 {
-	struct vm_page *ret;
+	struct vm_page *ret __diagused;
 
 	KASSERT(uobj == pg->uobject);
 	ret = rb_tree_insert_node(&uobj->rb_tree, pg);
@@ -1100,7 +1100,9 @@ attachrnd:
 	 * Attach RNG source for this CPU's VM events
 	 */
         rnd_attach_source(&uvm.cpus[cpu_index(ci)]->rs,
-			  ci->ci_data.cpu_name, RND_TYPE_VM, 0);
+			  ci->ci_data.cpu_name, RND_TYPE_VM,
+			  RND_FLAG_COLLECT_TIME|RND_FLAG_COLLECT_VALUE|
+			  RND_FLAG_ESTIMATE_VALUE);
 
 }
 
@@ -1684,15 +1686,10 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 void
 uvm_page_own(struct vm_page *pg, const char *tag)
 {
-	struct uvm_object *uobj;
-	struct vm_anon *anon;
 
 	KASSERT((pg->flags & (PG_PAGEOUT|PG_RELEASED)) == 0);
-
-	uobj = pg->uobject;
-	anon = pg->uanon;
-	KASSERT(uvm_page_locked_p(pg));
 	KASSERT((pg->flags & PG_WANTED) == 0);
+	KASSERT(uvm_page_locked_p(pg));
 
 	/* gain ownership? */
 	if (tag) {
@@ -1703,8 +1700,8 @@ uvm_page_own(struct vm_page *pg, const char *tag)
 			    pg->owner, pg->owner_tag);
 			panic("uvm_page_own");
 		}
-		pg->owner = (curproc) ? curproc->p_pid :  (pid_t) -1;
-		pg->lowner = (curlwp) ? curlwp->l_lid :  (lwpid_t) -1;
+		pg->owner = curproc->p_pid;
+		pg->lowner = curlwp->l_lid;
 		pg->owner_tag = tag;
 		return;
 	}

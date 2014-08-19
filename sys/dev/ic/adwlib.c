@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.40 2010/11/13 13:52:00 uebayasi Exp $        */
+/* $NetBSD: adwlib.c,v 1.40.18.1 2014/08/20 00:03:37 tls Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.40 2010/11/13 13:52:00 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.40.18.1 2014/08/20 00:03:37 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -551,7 +551,7 @@ AdwInitDriver(ADW_SOFTC *sc)
 	int		i;
 	u_int16_t	bios_mem[ADW_MC_BIOSLEN/2];	/* BIOS RISC Memory
 								0x40-0x8F. */
-	u_int16_t	wdtr_able = 0, sdtr_able, ppr_able, tagqng_able;
+	u_int16_t	wdtr_able = 0, sdtr_able, /* ppr_able, */ tagqng_able;
 	u_int8_t	max_cmd[ADW_MAX_TID + 1];
 	u_int8_t	tid;
 
@@ -597,7 +597,7 @@ AdwInitDriver(ADW_SOFTC *sc)
 		break;
 
 	case ADW_CHIP_ASC38C1600:
-		ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_PPR_ABLE, ppr_able);
+		/* ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_PPR_ABLE, ppr_able); */
 		/* FALLTHROUGH */
 	case ADW_CHIP_ASC38C0800:
 		ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_WDTR_ABLE, wdtr_able);

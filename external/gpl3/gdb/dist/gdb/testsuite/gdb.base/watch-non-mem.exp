@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,9 +17,7 @@
 # Tests watchpoints that watch expressions that don't involve memory.
 #
 
-set testfile "watch-non-mem"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile
 
 if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile}] } {
     untested ${testfile}.exp

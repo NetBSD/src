@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2010/11/23 08:22:32 mrg Exp $
+# $NetBSD: Makefile,v 1.6.12.1 2014/08/20 00:00:15 tls Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/extensions
 
@@ -33,6 +33,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xorg-server}/../include
 
 CPPFLAGS+=	-DXF86DRI \
+		-DCOMPOSITE \
 		${X11FLAGS.DIX}
 
 LIBDPLIBS=	drm ${.CURDIR}/../../../../../lib/libdrm

@@ -1,0 +1,11 @@
+#	$NetBSD: Makefile.arch_bits,v 1.1.8.2 2014/08/19 23:56:55 tls Exp $
+
+# define GCC_MACHINE_ARCH before including this.
+
+INCS+=		c++config.h
+INCSDIR=	/usr/include/g++/bits/${GCC_MACHINE_ARCH}
+
+.PATH: ${.CURDIR}/../../../../arch/${GCC_MACHINE_ARCH}
+
+# Get default targets including <bsd.inc.mk>.
+.include <bsd.prog.mk>

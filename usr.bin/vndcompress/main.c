@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.2.2 2013/06/23 06:29:02 tls Exp $	*/
+/*	$NetBSD: main.c,v 1.1.2.3 2014/08/20 00:05:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.1.2.2 2013/06/23 06:29:02 tls Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.2.3 2014/08/20 00:05:05 tls Exp $");
 
 #include <assert.h>
 #include <err.h>
@@ -60,8 +60,20 @@ main(int argc, char **argv)
 		warnx("unknown program name, defaulting to vndcompress: %s",
 		    getprogname());
 
-	while ((ch = getopt(argc, argv, "cdk:l:p:rRs:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:cdk:l:p:rRw:")) != -1) {
 		switch (ch) {
+		case 'b':
+			if (ISSET(O->flags, FLAG_b)) {
+				warnx("-b may be supplied only once");
+				usage();
+			}
+			O->flags |= FLAG_b;
+			__CTASSERT(MIN_BLOCKSIZE <= MAX_BLOCKSIZE);
+			__CTASSERT(MAX_BLOCKSIZE <= LLONG_MAX);
+			O->blocksize = strsuftoll("block size", optarg,
+			    MIN_BLOCKSIZE, MAX_BLOCKSIZE);
+			break;
+
 		case 'c':
 			if (ISSET(O->flags, FLAG_d)) {
 				warnx("-c and -d are mutually exclusive");
@@ -116,16 +128,14 @@ main(int argc, char **argv)
 			O->flags |= FLAG_R;
 			break;
 
-		case 's':
-			if (ISSET(O->flags, FLAG_s)) {
-				warnx("-s may be supplied only once");
+		case 'w':
+			if (ISSET(O->flags, FLAG_w)) {
+				warnx("-w may be supplied only once");
 				usage();
 			}
-			O->flags |= FLAG_s;
-			__CTASSERT(MIN_BLOCKSIZE <= MAX_BLOCKSIZE);
-			__CTASSERT(MAX_BLOCKSIZE <= LLONG_MAX);
-			O->blocksize = strsuftoll("block size", optarg,
-			    MIN_BLOCKSIZE, MAX_BLOCKSIZE);
+			O->flags |= FLAG_w;
+			O->window_size = strsuftoll("window size", optarg,
+			    0, MAX_WINDOW_SIZE);
 			break;
 
 		case '?':
@@ -138,12 +148,12 @@ main(int argc, char **argv)
 	argv += optind;
 
 	if (operation == &vnduncompress) {
-		if (ISSET(O->flags, ~FLAG_d))
+		if (ISSET(O->flags, ~(FLAG_d | FLAG_w)))
 			usage();
 	} else {
 		assert(operation == &vndcompress);
-		if (ISSET(O->flags, ~(FLAG_c | FLAG_k | FLAG_l | FLAG_p |
-			    FLAG_r | FLAG_s | FLAG_R)))
+		if (ISSET(O->flags, ~(FLAG_b | FLAG_c | FLAG_k | FLAG_l |
+			    FLAG_p | FLAG_r | FLAG_R | FLAG_w)))
 			usage();
 		if (ISSET(O->flags, FLAG_R) && !ISSET(O->flags, FLAG_r)) {
 			warnx("-R makes no sense without -r");
@@ -159,8 +169,8 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "Usage: %s -c [-rR] [-k <checkpoint-blocks>] [-l <length>]\n"
-	    "          [-p <partial-offset>] [-s <blocksize>]\n"
+	    "Usage: %s -c [-rR] [-b <blocksize>] [-k <checkpoint-blocks>]\n"
+	    "          [-l <length>] [-p <partial-offset>] [-w <winsize>]\n"
 	    "          <image> <compressed-image> [<blocksize>]\n"
 	    "       %s -d <compressed-image> <image>\n",
 	    getprogname(), getprogname());

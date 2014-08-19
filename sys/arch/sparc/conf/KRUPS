@@ -1,4 +1,4 @@
-# $NetBSD: KRUPS,v 1.60.2.1 2013/06/23 06:20:12 tls Exp $
+# $NetBSD: KRUPS,v 1.60.2.2 2014/08/20 00:03:24 tls Exp $
 # From: NetBSD: GENERIC,v 1.197 2006/12/04 23:43:35 elad Exp
 #
 # Krups (JavaStation-NC) machine description file
@@ -8,7 +8,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"KRUPS-$Revision: 1.60.2.1 $"
+#ident 		"KRUPS-$Revision: 1.60.2.2 $"
 
 maxusers	32
 
@@ -116,7 +116,7 @@ options 	FONT_GALLANT12x22		# PROM font look-alike
 ## intercept.  DDB_HISTORY_SIZE adds up/down arrow command history.
 options 	DDB			# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-#options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
+#options 	DDB_ONPANIC=1		# see also sysctl(7): `ddb.onpanic'
 
 ## You may also use gdb, on another computer connected to this machine over
 ## a serial port.  Both KGDB_DEV and KGDB_DEVRATE should be specified;
@@ -223,7 +223,6 @@ options 	INET6		# IPV6
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
-options 	PFIL_HOOKS	# Add pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default

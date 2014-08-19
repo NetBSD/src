@@ -1,4 +1,4 @@
-/*	$NetBSD: tsarm_machdep.c,v 1.18.2.1 2012/11/20 03:01:17 tls Exp $ */
+/*	$NetBSD: tsarm_machdep.c,v 1.18.2.2 2014/08/20 00:02:56 tls Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.18.2.1 2012/11/20 03:01:17 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.18.2.2 2014/08/20 00:02:56 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -89,6 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.18.2.1 2012/11/20 03:01:17 tls E
 #include <sys/reboot.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -99,9 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.18.2.1 2012/11/20 03:01:17 tls E
 #include <ddb/db_extern.h>
 
 #include <acorn32/include/bootconfig.h>
-#include <sys/bus.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
+#include <arm/locore.h>
 #include <arm/undefined.h>
 
 /* Define various stack sizes in pages */
@@ -378,10 +378,11 @@ initarm(void *arg)
 	int loop;
 	int loop1;
 	u_int l1pagetable;
+
+#ifdef FIXME
 	paddr_t memstart;
 	psize_t memsize;
 
-#ifdef FIXME
 	/* Calibrate the delay loop. */
 	i80321_calibrate_delay();
 #endif
@@ -415,7 +416,7 @@ initarm(void *arg)
 	 */
 	i80321_sdram_bounds(&obio_bs_tag, VERDE_PMMR_BASE + VERDE_MCU_BASE,
 	    &memstart, &memsize);
-#else
+
 	memstart = 0x0;
 	memsize = 0x2000000;
 #endif

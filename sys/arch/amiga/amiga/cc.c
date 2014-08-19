@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.22 2010/12/20 00:25:25 matt Exp $	*/
+/*	$NetBSD: cc.c,v 1.22.18.1 2014/08/20 00:02:42 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.22 2010/12/20 00:25:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.22.18.1 2014/08/20 00:02:42 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,7 +91,7 @@ add_vbl_function(struct vbl_node *add, short priority, void *data)
 
 	s = spl3();
 	prev = NULL;
-	for (n = vbl_list.lh_first; n != NULL; n = n->link.le_next) {
+	LIST_FOREACH(n, &vbl_list, link) {
 		if (add->priority > n->priority) {
 			/* insert add_node before. */
 			if (prev == NULL) {
@@ -104,7 +104,7 @@ add_vbl_function(struct vbl_node *add, short priority, void *data)
 		}
 		prev = n;
 	}
-	if (add) {
+	if (add != NULL) {
 		if (prev == NULL) {
 			LIST_INSERT_HEAD(&vbl_list, add, link);
 		} else {
@@ -131,7 +131,7 @@ vbl_handler(void)
 	struct vbl_node *n;
 
 	/* handle all vbl functions */
-	for (n = vbl_list.lh_first; n != NULL; n = n->link.le_next) {
+	LIST_FOREACH(n, &vbl_list, link) {
 		if (n->flags & VBLNF_TURNOFF) {
 			n->flags |= VBLNF_OFF;
 			n->flags &= ~(VBLNF_TURNOFF);
@@ -334,10 +334,10 @@ cc_init_audio(void)
 	/*
 	 * initialize audio channels to off.
 	 */
-	for (i=0; i < 4; i++) {
+	for (i = 0; i < 4; i++) {
 		channel[i].play_count = 0;
-		channel[i].isaudio=0;
-		channel[i].handler=NULL;
+		channel[i].isaudio = 0;
+		channel[i].handler = NULL;
 	}
 }
 
@@ -348,11 +348,10 @@ cc_init_audio(void)
 void
 audio_handler(void)
 {
-	u_short audio_dma, disable_dma, flag, ir;
+	u_short audio_dma, flag, ir;
 	int i;
 
 	audio_dma = custom.dmaconr;
-	disable_dma = 0;
 
 	/*
 	 * only check channels who have DMA enabled.
@@ -458,8 +457,8 @@ play_sample(u_short len, u_short *data, u_short period, u_short volume, u_short 
  * Chipmem allocator.
  */
 
-static CIRCLEQ_HEAD(chiplist, mem_node) chip_list;
-static CIRCLEQ_HEAD(freelist, mem_node) free_list;
+static TAILQ_HEAD(chiplist, mem_node) chip_list;
+static TAILQ_HEAD(freelist, mem_node) free_list;
 static u_long   chip_total;		/* total free. */
 static u_long   chip_size;		/* size of it all. */
 
@@ -475,11 +474,11 @@ cc_init_chipmem(void)
 	mem = (struct mem_node *)chipmem_steal(chip_size);
 	mem->size = chip_total;
 
-	CIRCLEQ_INIT(&chip_list);
-	CIRCLEQ_INIT(&free_list);
+	TAILQ_INIT(&chip_list);
+	TAILQ_INIT(&free_list);
 
-	CIRCLEQ_INSERT_HEAD(&chip_list, mem, link);
-	CIRCLEQ_INSERT_HEAD(&free_list, mem, free_link);
+	TAILQ_INSERT_HEAD(&chip_list, mem, link);
+	TAILQ_INSERT_HEAD(&free_list, mem, free_link);
 	splx(s);
 }
 
@@ -500,20 +499,20 @@ alloc_chipmem(u_long size)
 	/*
 	 * walk list of available nodes.
 	 */
-	mn = free_list.cqh_first;
-	while (size > mn->size && mn != (void *)&free_list)
-		mn = mn->free_link.cqe_next;
+	TAILQ_FOREACH(mn, &free_list, free_link)
+		if (size <= mn->size)
+			break;
 
-	if (mn == (void *)&free_list)
-		return(NULL);
+	if (mn == NULL)
+		return NULL;
 
 	if ((mn->size - size) <= sizeof (*mn)) {
 		/*
 		 * our allocation would not leave room
 		 * for a new node in between.
 		 */
-		CIRCLEQ_REMOVE(&free_list, mn, free_link);
-		mn->free_link.cqe_next = NULL;
+		TAILQ_REMOVE(&free_list, mn, free_link);
+		mn->type = MNODE_USED;
 		size = mn->size;	 /* increase size. (or same) */
 		chip_total -= mn->size;
 		splx(s);
@@ -532,8 +531,8 @@ alloc_chipmem(u_long size)
 	 * add split node to node list
 	 * and mark as not on free list
 	 */
-	CIRCLEQ_INSERT_AFTER(&chip_list, new, mn, link);
-	mn->free_link.cqe_next = NULL;
+	TAILQ_INSERT_AFTER(&chip_list, new, mn, link);
+	mn->type = MNODE_USED;
 
 	chip_total -= size + sizeof(struct mem_node);
 	splx(s);
@@ -551,67 +550,68 @@ free_chipmem(void *mem)
 
 	s = splhigh();
 	mn = (struct mem_node *)mem - 1;
-	next = mn->link.cqe_next;
-	prev = mn->link.cqe_prev;
+	next = TAILQ_NEXT(mn, link);
+	prev = TAILQ_PREV(mn, chiplist, link);
 
 	/*
 	 * check ahead of us.
 	 */
-	if (next->link.cqe_next != (void *)&chip_list &&
-	    next->free_link.cqe_next) {
+	if (next->type == MNODE_FREE) {
 		/*
 		 * if next is: a valid node and a free node. ==> merge
 		 */
-		CIRCLEQ_INSERT_BEFORE(&free_list, next, mn, free_link);
-		CIRCLEQ_REMOVE(&chip_list, next, link);
-		CIRCLEQ_REMOVE(&chip_list, next, free_link);
+		TAILQ_INSERT_BEFORE(next, mn, free_link);
+		mn->type = MNODE_FREE;
+		TAILQ_REMOVE(&chip_list, next, link);
+		TAILQ_REMOVE(&free_list, next, free_link);
 		chip_total += mn->size + sizeof(struct mem_node);
 		mn->size += next->size + sizeof(struct mem_node);
 	}
-	if (prev->link.cqe_prev != (void *)&chip_list &&
-	    prev->free_link.cqe_prev) {
+	if (prev->type == MNODE_FREE) {
 		/*
 		 * if prev is: a valid node and a free node. ==> merge
 		 */
-		if (mn->free_link.cqe_next == NULL)
+		if (mn->type != MNODE_FREE)
 			chip_total += mn->size + sizeof(struct mem_node);
 		else {
 			/* already on free list */
-			CIRCLEQ_REMOVE(&free_list, mn, free_link);
+			TAILQ_REMOVE(&free_list, mn, free_link);
+			mn->type = MNODE_USED;
 			chip_total += sizeof(struct mem_node);
 		}
-		CIRCLEQ_REMOVE(&chip_list, mn, link);
+		TAILQ_REMOVE(&chip_list, mn, link);
 		prev->size += mn->size + sizeof(struct mem_node);
-	} else if (mn->free_link.cqe_next == NULL) {
+	} else if (mn->type != MNODE_FREE) {
 		/*
 		 * we still are not on free list and we need to be.
 		 * <-- | -->
 		 */
-		while (next->link.cqe_next != (void *)&chip_list &&
-		    prev->link.cqe_prev != (void *)&chip_list) {
-			if (next->free_link.cqe_next) {
-				CIRCLEQ_INSERT_BEFORE(&free_list, next, mn,
-				    free_link);
+		while (next != NULL && prev != NULL) {
+			if (next->type == MNODE_FREE) {
+				TAILQ_INSERT_BEFORE(next, mn, free_link);
+				mn->type = MNODE_FREE;
 				break;
 			}
-			if (prev->free_link.cqe_next) {
-				CIRCLEQ_INSERT_AFTER(&free_list, prev, mn,
+			if (prev->type == MNODE_FREE) {
+				TAILQ_INSERT_AFTER(&free_list, prev, mn,
 				    free_link);
+				mn->type = MNODE_FREE;
 				break;
 			}
-			prev = prev->link.cqe_prev;
-			next = next->link.cqe_next;
+			prev = TAILQ_PREV(prev, chiplist, link);
+			next = TAILQ_NEXT(next, link);
 		}
-		if (mn->free_link.cqe_next == NULL) {
-			if (next->link.cqe_next == (void *)&chip_list) {
+		if (mn->type != MNODE_FREE) {
+			if (next == NULL) {
 				/*
 				 * we are not on list so we can add
 				 * ourselves to the tail. (we walked to it.)
 				 */
-				CIRCLEQ_INSERT_TAIL(&free_list,mn,free_link);
+				TAILQ_INSERT_TAIL(&free_list,mn,free_link);
 			} else {
-				CIRCLEQ_INSERT_HEAD(&free_list,mn,free_link);
+				TAILQ_INSERT_HEAD(&free_list,mn,free_link);
 			}
+			mn->type = MNODE_FREE;
 		}
 		chip_total += mn->size;	/* add our helpings to the pool. */
 	}
@@ -642,8 +642,7 @@ avail_chipmem(int largest)
 		val = chip_total;
 	else {
 		s = splhigh();
-		for (mn = free_list.cqh_first; mn != (void *)&free_list;
-		     mn = mn->free_link.cqe_next) {
+		TAILQ_FOREACH(mn, &free_list, free_link) {
 			if (mn->size > val)
 				val = mn->size;
 		}

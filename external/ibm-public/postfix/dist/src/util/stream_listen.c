@@ -1,4 +1,4 @@
-/*	$NetBSD: stream_listen.c,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: stream_listen.c,v 1.1.1.1.16.1 2014/08/19 23:59:45 tls Exp $	*/
 
 /*++
 /* NAME
@@ -99,6 +99,6 @@ int     stream_accept(int fd)
 	return (-1);
     return (fdinfo.fd);
 #else
-    msg_fatal("stream connections are not implemented");
+            msg_fatal("stream connections are not implemented");
 #endif
 }

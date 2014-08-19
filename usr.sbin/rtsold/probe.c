@@ -1,4 +1,4 @@
-/*	$NetBSD: probe.c,v 1.11 2010/01/18 04:53:10 christos Exp $	*/
+/*	$NetBSD: probe.c,v 1.11.12.1 2014/08/20 00:05:13 tls Exp $	*/
 /*	$KAME: probe.c,v 1.15 2002/05/31 21:22:08 itojun Exp $	*/
 
 /*
@@ -58,39 +58,39 @@
 static struct msghdr sndmhdr;
 static struct iovec sndiov[2];
 static int probesock;
-static void sendprobe __P((struct in6_addr *, struct ifinfo *));
+static void sendprobe(struct in6_addr *, struct ifinfo *);
 
 int
 probe_init(void)
 {
-	int scmsglen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
+	size_t scmsglen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
 	    CMSG_SPACE(sizeof(int));
 	static u_char *sndcmsgbuf = NULL;
 
 	if (sndcmsgbuf == NULL &&
-	    (sndcmsgbuf = (u_char *)malloc(scmsglen)) == NULL) {
+	    (sndcmsgbuf = malloc(scmsglen)) == NULL) {
 		warnmsg(LOG_ERR, __func__, "malloc failed");
-		return(-1);
+		return -1;
 	}
 
 	if ((probesock = socket(AF_INET6, SOCK_RAW, IPPROTO_NONE)) < 0) {
 		warnmsg(LOG_ERR, __func__, "socket: %s", strerror(errno));
-		return(-1);
+		return -1;
 	}
 
 	/* make the socket send-only */
 	if (shutdown(probesock, 0)) {
 		warnmsg(LOG_ERR, __func__, "shutdown: %s", strerror(errno));
-		return(-1);
+		return -1;
 	}
 
 	/* initialize msghdr for sending packets */
 	sndmhdr.msg_namelen = sizeof(struct sockaddr_in6);
 	sndmhdr.msg_iov = sndiov;
 	sndmhdr.msg_iovlen = 1;
-	sndmhdr.msg_control = (caddr_t)sndcmsgbuf;
-	sndmhdr.msg_controllen = scmsglen;
-	return(0);
+	sndmhdr.msg_control = sndcmsgbuf;
+	sndmhdr.msg_controllen = (socklen_t)scmsglen;
+	return 0;
 }
 
 /*
@@ -110,7 +110,7 @@ defrouter_probe(struct ifinfo *ifinfo)
 	}
 	memset(&dr, 0, sizeof(dr));
 	strlcpy(dr.ifname, "lo0", sizeof dr.ifname); /* dummy interface */
-	if (ioctl(s, SIOCGDRLST_IN6, (caddr_t)&dr) < 0) {
+	if (ioctl(s, SIOCGDRLST_IN6, &dr) < 0) {
 		warnmsg(LOG_ERR, __func__, "ioctl(SIOCGDRLST_IN6): %s",
 		    strerror(errno));
 		goto closeandend;
@@ -152,7 +152,7 @@ sendprobe(struct in6_addr *addr, struct ifinfo *ifinfo)
 	sa6_probe.sin6_addr = *addr;
 	sa6_probe.sin6_scope_id = ifinfo->linkid;
 
-	sndmhdr.msg_name = (caddr_t)&sa6_probe;
+	sndmhdr.msg_name = &sa6_probe;
 	sndmhdr.msg_iov[0].iov_base = NULL;
 	sndmhdr.msg_iov[0].iov_len = 0;
 

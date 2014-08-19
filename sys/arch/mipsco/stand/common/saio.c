@@ -1,4 +1,4 @@
-/*	$NetBSD: saio.c,v 1.13 2011/07/17 20:54:44 joerg Exp $	*/
+/*	$NetBSD: saio.c,v 1.13.12.1 2014/08/20 00:03:13 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -150,7 +150,7 @@ saioopen(struct open_file *f, ...)
 	int i;
 	char *msg;
 	char buf[DEV_BSIZE];
-	int cnt;
+	size_t cnt;
 	static char device[] = "dksd(0,0,10)";
 
 	va_list ap;

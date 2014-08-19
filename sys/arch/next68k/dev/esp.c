@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.59.22.1 2012/11/20 03:01:37 tls Exp $	*/
+/*	$NetBSD: esp.c,v 1.59.22.2 2014/08/20 00:03:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.59.22.1 2012/11/20 03:01:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.59.22.2 2014/08/20 00:03:16 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -118,10 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.59.22.1 2012/11/20 03:01:37 tls Exp $");
 #ifdef ESP_DEBUG
 int esp_debug = 0;
 #define DPRINTF(x) if (esp_debug) printf x;
-extern char *ndtracep;
-extern char ndtrace[];
-extern int ndtraceshow;
-#define NDTRACEIF(x) if (10 && ndtracep < (ndtrace + 8192)) do {x;} while (0)
+#define NDTRACEIF(x) if (10) do {x;} while (0)
 #else
 #define DPRINTF(x)
 #define NDTRACEIF(x)
@@ -145,6 +142,7 @@ struct ncr53c9x_softc *esp_debug_sc = 0;
 void esp_dma_store(struct ncr53c9x_softc *);
 void esp_dma_print(struct ncr53c9x_softc *);
 int esp_dma_nest = 0;
+int esptraceshow;
 #endif
 
 
@@ -461,7 +459,7 @@ esp_dma_isintr(struct ncr53c9x_softc *sc)
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
 	if (INTR_OCCURRED(NEXT_I_SCSI)) {
-		NDTRACEIF (*ndtracep++ = 'i');
+		NDTRACEIF (ndtrace_addc('i'));
 		NCR_WRITE_REG(sc, ESP_DCTL,
 		    ESPDCTL_16MHZ | ESPDCTL_INTENB |
 		    (esc->sc_datain ? ESPDCTL_DMARD : 0));
@@ -487,7 +485,7 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 
 	r = 1;
 
-	NDTRACEIF (*ndtracep++ = 'I');
+	NDTRACEIF (ndtrace_addc('I'));
 	if (r) {
 		/* printf ("esp_dma_isintr start\n"); */
 		{
@@ -513,14 +511,13 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 
 			while (!nextdma_finished(nsc)) {
 			/* esp_dma_isactive(sc)) { */
-				NDTRACEIF (*ndtracep++ = 'w');
+				NDTRACEIF (ndtrace_addc('w'));
 				NDTRACEIF (
-					sprintf(ndtracep, "f%dm%dl%dw",
+					ndtrace_printf("f%dm%dl%dw",
 					    NCR_READ_REG(sc, NCR_FFLAG) &
 					    NCRFIFO_FF,
 					    NCR_READ_REG((sc), NCR_TCM),
 					    NCR_READ_REG((sc), NCR_TCL));
-					ndtracep += strlen(ndtracep);
 				);
 				if (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF)
 					flushcount = 5;
@@ -535,7 +532,7 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 				    (nd_bsr4 (DD_CSR) & 0x08000000) == 0&&
 				       ++flushcount < 5) {
 					splx(s);
-					NDTRACEIF (*ndtracep++ = 'F');
+					NDTRACEIF (ndtrace_addc('F'));
 					NCR_WRITE_REG(sc, ESP_DCTL,
 					    ESPDCTL_FLUSH | ESPDCTL_16MHZ |
 					    ESPDCTL_INTENB | ESPDCTL_DMAMOD |
@@ -550,7 +547,7 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 					doze(0x32);
 					s = spldma();
 				}
-				NDTRACEIF (*ndtracep++ = '0' + flushcount);
+				NDTRACEIF (ndtrace_addc('0' + flushcount));
 				if (flushcount > 4) {
 					int next;
 					int onext = 0;
@@ -563,18 +560,17 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 						onext = next;
 						DELAY(50);
 					}
-					NDTRACEIF (*ndtracep++ = 'R');
+					NDTRACEIF (ndtrace_addc('R'));
 					NCR_WRITE_REG(sc, ESP_DCTL,
 					    ESPDCTL_16MHZ | ESPDCTL_INTENB);
 					NDTRACEIF (
-						sprintf(ndtracep,
+						ndtrace_printf(
 						    "ff:%d tcm:%d tcl:%d ",
 						    NCR_READ_REG(sc, NCR_FFLAG)
 						    & NCRFIFO_FF,
 						    NCR_READ_REG((sc), NCR_TCM),
 						    NCR_READ_REG((sc),
 						    NCR_TCL));
-						ndtracep += strlen (ndtracep);
 						);
 					s = spldma();
 					nextdma_reset (nsc);
@@ -585,7 +581,7 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 
 #ifdef DIAGNOSTIC
 				if (flushcount > 4) {
-					NDTRACEIF (*ndtracep++ = '+');
+					NDTRACEIF (ndtrace_addc('+'));
 					printf("%s: unexpected flushcount"
 					    " %d on %s\n",
 					    device_xname(sc->sc_dev),
@@ -596,7 +592,7 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 
 				if (!nextdma_finished(nsc)) {
 				/* esp_dma_isactive(sc)) { */
-					NDTRACEIF (*ndtracep++ = '1');
+					NDTRACEIF (ndtrace_addc('1'));
 				}
 				flushcount = 0;
 				s = spldma();
@@ -618,7 +614,7 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 		NCR_WRITE_REG(sc, ESP_DCTL,
 		    ESPDCTL_16MHZ | ESPDCTL_INTENB |
 		    (esc->sc_datain ? ESPDCTL_DMARD : 0));
-		NDTRACEIF (*ndtracep++ = 'b');
+		NDTRACEIF (ndtrace_addc('b'));
 
 		while (esc->sc_datain != -1)
 			DELAY(50);
@@ -643,7 +639,7 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 						    16 ||
 						    NCR_READ_REG((sc),
 						    NCR_TCL) != 240)
-							ndtraceshow++;
+							esptraceshow++;
 #endif
 				}
 				xfer_len = esc->sc_dmasize - resid;
@@ -709,12 +705,11 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 			}
 			
 			NDTRACEIF(
-				sprintf(ndtracep, "f%dm%dl%ds%dx%dr%dS",
+				ndtrace_printf("f%dm%dl%ds%dx%dr%dS",
 				    NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF,
 				    NCR_READ_REG((sc), NCR_TCM),
 				    NCR_READ_REG((sc), NCR_TCL),
 				    esc->sc_dmasize, (int)xfer_len, resid);
-				ndtracep += strlen(ndtracep);
 			);
 
 			*esc->sc_dmaaddr += xfer_len;
@@ -724,7 +719,7 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 			esc->sc_dmasize = 0;
 		}
 
-		NDTRACEIF (*ndtracep++ = 'B');
+		NDTRACEIF (ndtrace_addc('B'));
 		sc->sc_espstat = NCR_READ_REG(sc, NCR_STAT) |
 		    (sc->sc_espstat & NCRSTAT_INT);
 
@@ -803,7 +798,7 @@ esp_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	NDTRACEIF (*ndtracep++ = 'h');
+	NDTRACEIF (ndtrace_addc('h'));
 #ifdef DIAGNOSTIC
 #ifdef ESP_DEBUG
 	/* if this is a read DMA, pre-fill the buffer with 0xdeadbeef
@@ -972,10 +967,12 @@ esp_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
 					    "_dm_segcnt = %d\n",
 					    device_xname(sc->sc_dev),
 					    esc->sc_main_dmamap->_dm_segcnt);
+#ifdef notdef
 					printf("%s: esc->sc_main_dmamap->"
 					    "_dm_maxsegsz = %ld\n",
 					    device_xname(sc->sc_dev),
 					    esc->sc_main_dmamap->_dm_maxsegsz);
+#endif
 					printf("%s: esc->sc_main_dmamap->"
 					    "_dm_boundary = %ld\n",
 					    device_xname(sc->sc_dev),
@@ -1152,64 +1149,90 @@ void
 esp_dma_store(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
-	char *p = &esp_dma_dump[0];
+	char *p = esp_dma_dump;
+	size_t l = 0;
+	size_t len = sizeof(esp_dma_dump);
 	
-	p += sprintf(p, "%s: sc_datain=%d\n",
+	l += snprintf(p + l, len - l, "%s: sc_datain=%d\n",
 	    device_xname(sc->sc_dev), esc->sc_datain);
-	p += sprintf(p, "%s: sc_loaded=0x%08x\n",
+	if (l > len)
+		return;
+	l += snprintf(p + l, len - l, "%s: sc_loaded=0x%08x\n",
 	    device_xname(sc->sc_dev), esc->sc_loaded);
+	if (l > len)
+		return;
 
 	if (esc->sc_dmaaddr) {
-		p += sprintf(p, "%s: sc_dmaaddr=%p\n",
+		l += snprintf(p + l, len - l, "%s: sc_dmaaddr=%p\n",
 		    device_xname(sc->sc_dev), *esc->sc_dmaaddr);
 	} else {
-		p += sprintf(p, "%s: sc_dmaaddr=NULL\n",
+		l += snprintf(p + l, len - l, "%s: sc_dmaaddr=NULL\n",
 		    device_xname(sc->sc_dev));
 	}
+	if (l > len)
+		return;
 	if (esc->sc_dmalen) {
-		p += sprintf(p, "%s: sc_dmalen=0x%08x\n", 
+		l += snprintf(p + l, len - l, "%s: sc_dmalen=0x%08x\n", 
 		    device_xname(sc->sc_dev), *esc->sc_dmalen);
 	} else {
-		p += sprintf(p, "%s: sc_dmalen=NULL\n",
+		l += snprintf(p + l, len - l, "%s: sc_dmalen=NULL\n",
 		    device_xname(sc->sc_dev));
 	}
-	p += sprintf(p, "%s: sc_dmasize=0x%08x\n",
+	if (l > len)
+		return;
+	l += snprintf(p + l, len - l, "%s: sc_dmasize=0x%08x\n",
 	    device_xname(sc->sc_dev), esc->sc_dmasize);
+	if (l > len)
+		return;
 
-	p += sprintf(p, "%s: sc_begin = %p, sc_begin_size = 0x%08x\n",
+	l += snprintf(p + l, len - l, "%s: sc_begin = %p, sc_begin_size = 0x%08x\n",
 	    device_xname(sc->sc_dev), esc->sc_begin, esc->sc_begin_size);
-	p += sprintf(p, "%s: sc_main = %p, sc_main_size = 0x%08x\n",
+	if (l > len)
+		return;
+	l += snprintf(p + l, len - l, "%s: sc_main = %p, sc_main_size = 0x%08x\n",
 	    device_xname(sc->sc_dev), esc->sc_main, esc->sc_main_size);
+	if (l > len)
+		return;
 	/* if (esc->sc_main) */ {
 		int i;
 		bus_dmamap_t map = esc->sc_main_dmamap;
-		p += sprintf(p, "%s: sc_main_dmamap."
+		l += snprintf(p + l, len - l, "%s: sc_main_dmamap."
 		    " mapsize = 0x%08lx, nsegs = %d\n",
 		    device_xname(sc->sc_dev), map->dm_mapsize, map->dm_nsegs);
+		if (l > len)
+			return;
 		for(i = 0; i < map->dm_nsegs; i++) {
-			p += sprintf(p, "%s:"
+			l += snprintf(p + l, len - l, "%s:"
 			    " map->dm_segs[%d].ds_addr = 0x%08lx,"
 			    " len = 0x%08lx\n",
 			    device_xname(sc->sc_dev),
 			    i, map->dm_segs[i].ds_addr,
 			    map->dm_segs[i].ds_len);
+			    if (l > len)
+				    return;
 		}
 	}
-	p += sprintf(p, "%s: sc_tail = %p, sc_tail_size = 0x%08x\n",
+	l += snprintf(p + l, len - l, "%s: sc_tail = %p, sc_tail_size = 0x%08x\n",
 	    device_xname(sc->sc_dev), esc->sc_tail, esc->sc_tail_size);
+	if (l > len)
+		return;
 	/* if (esc->sc_tail) */ {
 		int i;
 		bus_dmamap_t map = esc->sc_tail_dmamap;
-		p += sprintf(p, "%s: sc_tail_dmamap."
+		l += snprintf(p + l, len - l, "%s: sc_tail_dmamap."
 		    " mapsize = 0x%08lx, nsegs = %d\n",
 		    device_xname(sc->sc_dev), map->dm_mapsize, map->dm_nsegs);
+		if (l > len)
+			return;
 		for (i = 0; i < map->dm_nsegs; i++) {
-			p += sprintf(p, "%s:"
+			l += snprintf(p + l, len - l, "%s:"
 			    " map->dm_segs[%d].ds_addr = 0x%08lx,"
 			    " len = 0x%08lx\n",
 			    device_xname(sc->sc_dev),
 			    i, map->dm_segs[i].ds_addr,
 			     map->dm_segs[i].ds_len);
+			if (l > len)
+				return;
 		}
 	}
 }
@@ -1232,15 +1255,14 @@ esp_dma_go(struct ncr53c9x_softc *sc)
 /* 	int s = spldma(); */
 
 #ifdef ESP_DEBUG
-	if (ndtracep != ndtrace) {
-		if (ndtraceshow) {
-			*ndtracep = '\0';
-			printf("esp ndtrace: %s\n", ndtrace);
-			ndtraceshow = 0;
+	if (!ndtrace_empty()) {
+		if (esptraceshow) {
+			printf("esp ndtrace: %s\n", ndtrace_get());
+			esptraceshow = 0;
 		} else {
 			DPRINTF(("X"));
 		}
-		ndtracep = ndtrace;
+		ndtrace_reset();
 	}
 #endif
 
@@ -1339,20 +1361,20 @@ esp_dma_go(struct ncr53c9x_softc *sc)
 
 	NDTRACEIF(
 		if (esc->sc_begin_size) {
-			*ndtracep++ = '1';
-			*ndtracep++ = 'A' + esc->sc_begin_size;
+			ndtrace_addc('1');
+			ndtrace_addc('A' + esc->sc_begin_size);
 		}
 	);
 	NDTRACEIF(
 		if (esc->sc_main_size) {
-			*ndtracep++ = '2';
-			*ndtracep++ = '0' + esc->sc_main_dmamap->dm_nsegs;
+			ndtrace_addc('2');
+			ndtrace_addc('0' + esc->sc_main_dmamap->dm_nsegs);
 		}
 	);
 	NDTRACEIF(
 		if (esc->sc_tail_size) {
-			*ndtracep++ = '3';
-			*ndtracep++ = 'A' + esc->sc_tail_size;
+			ndtrace_addc('3');
+			ndtrace_addc('A' + esc->sc_tail_size);
 		}
 	);
 
@@ -1399,33 +1421,33 @@ int esp_dma_int(void *arg)
 	struct nextdma_status *stat = &nsc->sc_stat;
 	unsigned int state;
 
-	NDTRACEIF (*ndtracep++ = 'E');
+	NDTRACEIF (ndtrace_addc('E'));
 
 	state = nd_bsr4 (DD_CSR);
 
 #if 1
 	NDTRACEIF (
 		if (state & DMACSR_COMPLETE)
-			*ndtracep++ = 'c';
+			ndtrace_addc('c');
 		if (state & DMACSR_ENABLE)
-			*ndtracep++ = 'e';
+			ndtrace_addc('e');
 		if (state & DMACSR_BUSEXC)
-			*ndtracep++ = 'b';
+			ndtrace_addc('b');
 		if (state & DMACSR_READ)
-			*ndtracep++ = 'r';
+			ndtrace_addc('r');
 		if (state & DMACSR_SUPDATE)
-			*ndtracep++ = 's';
+			ndtrace_addc('s');
 		);
 
-	NDTRACEIF (*ndtracep++ = 'E');
+	NDTRACEIF (ndtrace_addc('E'));
 
 #ifdef ESP_DEBUG
 	if (0)
 		if ((state & DMACSR_BUSEXC) && (state & DMACSR_ENABLE))
-			ndtraceshow++;
+			esptraceshow++;
 	if (0)
 		if ((state & DMACSR_SUPDATE))
-			ndtraceshow++;
+			esptraceshow++;
 #endif
 #endif
 
@@ -1465,11 +1487,10 @@ int esp_dma_int(void *arg)
 #if 0
 #ifdef ESP_DEBUG
 		if (state & DMACSR_BUSEXC) {
-			sprintf(ndtracep, "CE/BUSEXC: %08lX %08X %08X\n", 
+			ndtrace_printf("CE/BUSEXC: %08lX %08X %08X\n", 
 			    (stat->nd_map->dm_segs[stat->nd_idx].ds_addr +
 			     stat->nd_map->dm_segs[stat->nd_idx].ds_len),
 			    l, s);
-			ndtracep += strlen(ndtracep);
 		}
 #endif
 #endif
@@ -1514,14 +1535,12 @@ int esp_dma_int(void *arg)
 			    (stat->nd_map_cont ? DMACSR_SETSUPDATE : 0));
 #if 1
 #ifdef ESP_DEBUG
-				sprintf(ndtracep, "supdate ");
-				ndtracep += strlen(ndtracep);
-				sprintf(ndtracep, "%08X %08X %08X %08X ",
+				ndtrace_printf("supdate ");
+				ndtrace_printf("%08X %08X %08X %08X ",
 				    nd_bsr4(DD_NEXT),
 				    nd_bsr4(DD_LIMIT) & 0x7FFFFFFF,
 				    nd_bsr4 (DD_START),
 				    nd_bsr4 (DD_STOP) & 0x7FFFFFFF);
-				ndtracep += strlen(ndtracep);
 #endif
 #endif
 			stat->nd_exception++; 
@@ -1533,12 +1552,11 @@ int esp_dma_int(void *arg)
 		if (stat->nd_map) {
 #if 1
 #ifdef ESP_DEBUG
-			sprintf(ndtracep, "%08X %08X %08X %08X ",
+			ndtrace_printf("%08X %08X %08X %08X ",
 			    nd_bsr4 (DD_NEXT),
 			    nd_bsr4 (DD_LIMIT) & 0x7FFFFFFF,
 			    nd_bsr4 (DD_START),
 			    nd_bsr4 (DD_STOP) & 0x7FFFFFFF);
-			ndtracep += strlen(ndtracep);
 #endif
 #endif
 
@@ -1579,7 +1597,7 @@ int esp_dma_int(void *arg)
 			    (state & DMACSR_READ ?
 			     DMACSR_SETREAD : DMACSR_SETWRITE));
 #ifdef ESP_DEBUG
-			/* ndtraceshow++; */
+			/* esptraceshow++; */
 #endif
 			stat->nd_exception++; 
 			return 1;
@@ -1589,13 +1607,12 @@ int esp_dma_int(void *arg)
 		restart:
 #if 1
 #ifdef ESP_DEBUG
-			sprintf(ndtracep, "restart %08lX %08lX\n",
+			ndtrace_printf("restart %08lX %08lX\n",
 			    stat->nd_map->dm_segs[stat->nd_idx].ds_addr, 
 			    stat->nd_map->dm_segs[stat->nd_idx].ds_addr +
 			    stat->nd_map->dm_segs[stat->nd_idx].ds_len);
 			if (stat->nd_map_cont) {
-				sprintf(ndtracep + strlen(ndtracep) - 1,
-				    " %08lX %08lX\n",
+				ndtrace_printf(" %08lX %08lX\n",
 				    stat->nd_map_cont->dm_segs[
 				    stat->nd_idx_cont].ds_addr,
 				    stat->nd_map_cont->dm_segs[
@@ -1603,7 +1620,6 @@ int esp_dma_int(void *arg)
 				    stat->nd_map_cont->dm_segs[
 				    stat->nd_idx_cont].ds_len);
 			}
-			ndtracep += strlen(ndtracep);
 #endif
 #endif
 			nextdma_print(nsc);
@@ -1619,14 +1635,13 @@ int esp_dma_int(void *arg)
 			    NCR_READ_REG(sc, NCR_STEP),
 			    NCR_READ_REG(sc, NCR_INTR), state);
 #ifdef ESP_DEBUG
-			*ndtracep = '\0';
-			printf("ndtrace: %s\n", ndtrace);
+			printf("ndtrace: %s\n", ndtrace_get());
 #endif
 			panic("%s: busexc/supdate occurred."
 			    "  Please email this output to chris@pin.lu.",
 			    device_xname(sc->sc_dev));
 #ifdef ESP_DEBUG
-			ndtraceshow++;
+			esptraceshow++;
 #endif
 		} else {
 			nd_bsw4(DD_CSR, DMACSR_CLRCOMPLETE | DMACSR_RESET);
@@ -1644,7 +1659,7 @@ esp_dmacb_continue(void *arg)
 	struct ncr53c9x_softc *sc = arg;
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	NDTRACEIF (*ndtracep++ = 'x');
+	NDTRACEIF (ndtrace_addc('x'));
 	DPRINTF(("%s: DMA continue\n", device_xname(sc->sc_dev)));
 
 #ifdef DIAGNOSTIC
@@ -1694,7 +1709,7 @@ esp_dmacb_completed(bus_dmamap_t map, void *arg)
 	struct ncr53c9x_softc *sc = (struct ncr53c9x_softc *)arg;
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	NDTRACEIF (*ndtracep++ = 'X');
+	NDTRACEIF (ndtrace_addc('X'));
 	DPRINTF(("%s: DMA completed\n", device_xname(sc->sc_dev)));
 
 #ifdef DIAGNOSTIC
@@ -1804,7 +1819,7 @@ esp_dmacb_shutdown(void *arg)
 	struct ncr53c9x_softc *sc = (struct ncr53c9x_softc *)arg;
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	NDTRACEIF (*ndtracep++ = 'S');
+	NDTRACEIF (ndtrace_addc('S'));
 	DPRINTF(("%s: DMA shutdown\n", device_xname(sc->sc_dev)));
 
 	if (esc->sc_loaded == 0)
@@ -1855,9 +1870,8 @@ esp_dmacb_shutdown(void *arg)
 		     BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
 		bus_dmamap_unload(esc->sc_dma->sc_dmat, esc->sc_main_dmamap);
 		NDTRACEIF (
-			sprintf(ndtracep, "m%ld",
+			ndtrace_printf("m%ld",
 			    esc->sc_main_dmamap->dm_xfer_len);
-			ndtracep += strlen(ndtracep);
 		);
 	}
 
@@ -1875,9 +1889,8 @@ esp_dmacb_shutdown(void *arg)
 			    (esc->sc_begin_size + esc->sc_main_size));
 		}
 		NDTRACEIF (
-			sprintf(ndtracep, "t%ld",
+			ndtrace_printf("t%ld",
 			    esc->sc_tail_dmamap->dm_xfer_len);
-			ndtracep += strlen(ndtracep);
 		);
 	}
 

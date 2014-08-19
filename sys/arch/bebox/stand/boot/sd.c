@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.2.12.1 2013/02/25 00:28:33 tls Exp $	*/
+/*	$NetBSD: sd.c,v 1.2.12.2 2014/08/20 00:02:50 tls Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -713,7 +713,7 @@ sdstrategy(void *f, int rw, daddr_t dblk, size_t size, void *p, size_t *rsize)
 		} else if ((blkno & 0xffffffff) == blkno) {
 			/* 10-byte CDB */
 			memset(&cmd_big, 0, sizeof(cmd_big));
-			cmd_small.opcode = READ_10;
+			cmd_big.opcode = READ_10;
 			_lto4b(blkno, cmd_big.addr);
 			_lto2b(1, cmd_big.length);
 			cmdlen = sizeof(cmd_big);
@@ -721,7 +721,7 @@ sdstrategy(void *f, int rw, daddr_t dblk, size_t size, void *p, size_t *rsize)
 		} else {
 			/* 16-byte CDB */
 			memset(&cmd16, 0, sizeof(cmd16));
-			cmd_small.opcode = READ_16;
+			cmd16.opcode = READ_16;
 			_lto8b(blkno, cmd16.addr);
 			_lto4b(1, cmd16.length);
 			cmdlen = sizeof(cmd16);

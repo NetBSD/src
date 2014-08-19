@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphy.c,v 1.15 2009/10/19 23:19:39 rmind Exp $ */
+/* $NetBSD: rtwphy.c,v 1.15.22.1 2014/08/20 00:03:38 tls Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.15 2009/10/19 23:19:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.15.22.1 2014/08/20 00:03:38 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,6 +127,7 @@ rtw_sa2400_txpower(struct rtw_rf *rf, uint8_t opaque_txpower)
 static void
 verify_syna(u_int freq, uint32_t val)
 {
+#ifdef DIAGNOSTIC
 	uint32_t expected_val = ~val;
 
 	switch (freq) {
@@ -174,6 +175,7 @@ verify_syna(u_int freq, uint32_t val)
 		break;
 	}
 	KASSERT(val == expected_val);
+#endif
 }
 
 /* freq is in MHz */

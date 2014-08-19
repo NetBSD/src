@@ -1,9 +1,29 @@
 /* -*- c -*- */
+/* Copyright 2012 Free Software Foundation, Inc.
+   Contributed by Red Hat.
+   Written by DJ Delorie.
+
+   This file is part of the GNU opcodes library.
+
+   This library is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3, or (at your option)
+   any later version.
+
+   It is distributed in the hope that it will be useful, but WITHOUT
+   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
+   License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
+   MA 02110-1301, USA.  */
+
+#include "sysdep.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "config.h"
 #include "ansidecl.h"
 #include "opcode/rx.h"
 
@@ -262,7 +282,20 @@ rx_decode_opcode (unsigned long pc AU,
   ID(mov); DR(rdst); SC(IMM (1)); F_____;
 
 /** 1111 10sd rdst im sz	mov%s	#%1, %0 */
-  ID(mov); sBWL (sz); DD(sd, rdst, sz); SC(IMMex(im)); F_____;
+  ID(mov); DD(sd, rdst, sz);
+  if ((im == 1 && sz == 0)
+      || (im == 2 && sz == 1)
+      || (im == 0 && sz == 2))
+    {
+      BWL (sz);
+      SC(IMM(im));
+    }
+  else
+    {
+      sBWL (sz);
+      SC(IMMex(im));
+    }
+   F_____;
 
 /** 0110 0110 immm rdst		mov%s	#%1, %0 */
   ID(mov); DR(rdst); SC(immm); F_____;
@@ -271,9 +304,10 @@ rx_decode_opcode (unsigned long pc AU,
   ID(mov); sBWL (sz); DIs(dst, d*16+sppp, sz); SC(IMM(1)); F_____;
 
 /** 11sz sd ss rsrc rdst	mov%s	%1, %0 */
-  if (ss == 3 && sz == 2 && rsrc == 0 && rdst == 0)
+  if (sd == 3 && ss == 3 && sz == 2 && rsrc == 0 && rdst == 0)
     {
       ID(nop2);
+      rx->syntax = "nop";
     }
   else
     {
@@ -536,6 +570,7 @@ rx_decode_opcode (unsigned long pc AU,
   if (ss == 3 && rsrc == 0 && rdst == 0)
     {
       ID(nop3);
+      rx->syntax = "nop";
     }
   else
     {
@@ -860,6 +895,8 @@ rx_decode_opcode (unsigned long pc AU,
 
 /** 1111 1100 0110 00sd rdst rsrc	bset	%1, %0%S0 */
   ID(bset); BWL(BSIZE); SR(rsrc); DD(sd, rdst, BSIZE); F_____;
+  if (sd == 3) /* bset reg,reg */
+    BWL(LSIZE);
 
 /** 0111 100b ittt rdst			bset	#%1, %0 */
   ID(bset); BWL(LSIZE); SC(b*16+ittt); DR(rdst); F_____;
@@ -870,6 +907,8 @@ rx_decode_opcode (unsigned long pc AU,
 
 /** 1111 1100 0110 01sd rdst rsrc	bclr	%1, %0%S0 */
   ID(bclr); BWL(BSIZE); SR(rsrc); DD(sd, rdst, BSIZE); F_____;
+  if (sd == 3) /* bset reg,reg */
+    BWL(LSIZE);
 
 /** 0111 101b ittt rdst			bclr	#%1, %0 */
   ID(bclr); BWL(LSIZE); SC(b*16+ittt); DR(rdst); F_____;
@@ -880,6 +919,8 @@ rx_decode_opcode (unsigned long pc AU,
 
 /** 1111 1100 0110 10sd rdst rsrc	btst	%2, %1%S1 */
   ID(btst); BWL(BSIZE); S2R(rsrc); SD(sd, rdst, BSIZE); F___ZC;
+  if (sd == 3) /* bset reg,reg */
+    BWL(LSIZE);
 
 /** 0111 110b ittt rdst			btst	#%2, %1 */
   ID(btst); BWL(LSIZE); S2C(b*16+ittt); SR(rdst); F___ZC;
@@ -890,6 +931,8 @@ rx_decode_opcode (unsigned long pc AU,
 
 /** 1111 1100 0110 11sd rdst rsrc	bnot	%1, %0%S0 */
   ID(bnot); BWL(BSIZE); SR(rsrc); DD(sd, rdst, BSIZE);
+  if (sd == 3) /* bset reg,reg */
+    BWL(LSIZE);
 
 /** 1111 1101 111bittt 1111 rdst	bnot	#%1, %0 */
   ID(bnot); BWL(LSIZE); SC(bittt); DR(rdst);

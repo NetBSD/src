@@ -1,4 +1,4 @@
-/*	$NetBSD: ecc_plb.c,v 1.14 2011/06/18 06:41:42 matt Exp $	*/
+/*	$NetBSD: ecc_plb.c,v 1.14.12.1 2014/08/20 00:03:19 tls Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ecc_plb.c,v 1.14 2011/06/18 06:41:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ecc_plb.c,v 1.14.12.1 2014/08/20 00:03:19 tls Exp $");
 
 #include "locators.h"
 
@@ -138,7 +138,7 @@ ecc_plb_intr(void *arg)
 {
 	struct ecc_plb_softc *sc = arg;
 	u_int32_t		esr, ear;
-	int			ce, ue;
+	int			ue;
 	u_quad_t		tb;
 	u_long			tmp, msr, dat;
 
@@ -174,7 +174,6 @@ ecc_plb_intr(void *arg)
 	if ((tb - sc->sc_ecc_tb) < sc->sc_ecc_iv)
 		return(1);
 
-	ce = (esr & SDRAM0_ECCESR_CE) != 0x00;
 	ue = (esr & SDRAM0_ECCESR_UE) != 0x00;
 
 	printf("ECC: Error CNT=%d ESR=%x EAR=%x %s BKNE=%d%d%d%d "

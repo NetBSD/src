@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypto.4,v 1.23 2011/02/25 21:10:33 wiz Exp $
+.\"	$NetBSD: crypto.4,v 1.23.10.1 2014/08/20 00:02:35 tls Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 25, 2011
+.Dd January 27, 2014
 .Dt CRYPTO 4
 .Os
 .Sh NAME
@@ -425,7 +425,7 @@ fields of the
 operation structure are currently unused.
 They are intended for use to
 immediately rekey an existing session before processing a new request.
-.It Dv CIOCFSESSION Fa void
+.It Dv CIOCFSESSION Fa u_int32_t ses_id
 Destroys the /dev/crypto session associated with the file-descriptor
 argument.
 .It Dv CIOCNFSESSION Fa struct crypt_sfop *sfop ;

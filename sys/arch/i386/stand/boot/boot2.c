@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.58 2012/08/04 03:51:27 riastradh Exp $	*/
+/*	$NetBSD: boot2.c,v 1.58.2.1 2014/08/20 00:03:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@
 #include <sys/bootblock.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/bootcfg.h>
 #include <lib/libsa/ufs.h>
 #include <lib/libkern/libkern.h>
 
@@ -115,28 +116,39 @@ void print_banner(void);
 void boot2(int, uint64_t);
 
 void	command_help(char *);
+#if LIBSA_ENABLE_LS_OP
 void	command_ls(char *);
+#endif
 void	command_quit(char *);
 void	command_boot(char *);
 void	command_dev(char *);
 void	command_consdev(char *);
+#ifndef SMALL
+void	command_menu(char *);
+#endif
 void	command_modules(char *);
 void	command_multiboot(char *);
 
 const struct bootblk_command commands[] = {
 	{ "help",	command_help },
 	{ "?",		command_help },
+#if LIBSA_ENABLE_LS_OP
 	{ "ls",		command_ls },
+#endif
 	{ "quit",	command_quit },
 	{ "boot",	command_boot },
 	{ "dev",	command_dev },
 	{ "consdev",	command_consdev },
+#ifndef SMALL
+	{ "menu",	command_menu },
+#endif
 	{ "modules",	command_modules },
 	{ "load",	module_add },
 	{ "multiboot",	command_multiboot },
 	{ "vesa",	command_vesa },
 	{ "splash",	splash_add },
 	{ "rndseed",	rnd_add },
+	{ "fs",		fs_add },
 	{ "userconf",	userconf_add },
 	{ NULL,		NULL },
 };
@@ -217,7 +229,8 @@ sprint_bootsel(const char *filename)
 
 	if (parsebootfile(filename, &fsname, &devname, &unit,
 			  &partition, &file) == 0) {
-		sprintf(buf, "%s%d%c:%s", devname, unit, 'a' + partition, file);
+		snprintf(buf, sizeof(buf), "%s%d%c:%s", devname, unit,
+		    'a' + partition, file);
 		return buf;
 	}
 	return "(invalid)";
@@ -227,7 +240,7 @@ static void
 clearit(void)
 {
 
-	if (bootconf.clear)
+	if (bootcfg_info.clear)
 		clear_pc_screen();
 }
 
@@ -256,9 +269,10 @@ print_banner(void)
 	clearit();
 #ifndef SMALL
 	int n;
-	if (bootconf.banner[0]) {
-		for (n = 0; bootconf.banner[n] && n < MAXBANNER; n++) 
-			printf("%s\n", bootconf.banner[n]);
+	if (bootcfg_info.banner[0]) {
+		for (n = 0; bootcfg_info.banner[n]
+		    && n < BOOTCFG_MAXBANNER; n++) 
+			printf("%s\n", bootcfg_info.banner[n]);
 	} else {
 #endif /* !SMALL */
 		printf("\n"
@@ -314,9 +328,9 @@ boot2(int biosdev, uint64_t biossector)
 
 #ifndef SMALL
 	if (!(boot_params.bp_flags & X86_BP_FLAGS_NOBOOTCONF)) {
-		parsebootconf(BOOTCONF);
+		parsebootconf(BOOTCFG_FILENAME);
 	} else {
-		bootconf.timeout = boot_params.bp_timeout;
+		bootcfg_info.timeout = boot_params.bp_timeout;
 	}
 	
 
@@ -324,14 +338,14 @@ boot2(int biosdev, uint64_t biossector)
 	 * If console set in boot.cfg, switch to it.
 	 * This will print the banner, so we don't need to explicitly do it
 	 */
-	if (bootconf.consdev)
-		command_consdev(bootconf.consdev);
+	if (bootcfg_info.consdev)
+		command_consdev(bootcfg_info.consdev);
 	else 
 		print_banner();
 
 	/* Display the menu, if applicable */
 	twiddle_toggle = 0;
-	if (bootconf.nummenu > 0) {
+	if (bootcfg_info.nummenu > 0) {
 		/* Does not return */
 		doboottypemenu();
 	}
@@ -349,7 +363,8 @@ boot2(int biosdev, uint64_t biossector)
 #ifdef SMALL
 		c = awaitkey(boot_params.bp_timeout, 1);
 #else
-		c = awaitkey((bootconf.timeout < 0) ? 0 : bootconf.timeout, 1);
+		c = awaitkey((bootcfg_info.timeout < 0) ? 0
+		    : bootcfg_info.timeout, 1);
 #endif
 		if ((c != '\r') && (c != '\n') && (c != '\0')) {
 		    if ((boot_params.bp_flags & X86_BP_FLAGS_PASSWORD) == 0) {
@@ -390,10 +405,15 @@ command_help(char *arg)
 	printf("commands are:\n"
 	       "boot [xdNx:][filename] [-12acdqsvxz]\n"
 	       "     (ex. \"hd0a:netbsd.old -s\"\n"
+#if LIBSA_ENABLE_LS_OP
 	       "ls [path]\n"
+#endif
 	       "dev xd[N[x]]:\n"
 	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
 	       "vesa {modenum|on|off|enabled|disabled|list}\n"
+#ifndef SMALL
+	       "menu (reenters boot menu, if defined in boot.cfg)\n"
+#endif
 	       "modules {on|off|enabled|disabled}\n"
 	       "load {path_to_module}\n"
 	       "multiboot [xdNx:][filename] [<args>]\n"
@@ -403,6 +423,7 @@ command_help(char *arg)
 	       "quit\n");
 }
 
+#if LIBSA_ENABLE_LS_OP
 void
 command_ls(char *arg)
 {
@@ -412,6 +433,7 @@ command_ls(char *arg)
 	ls(arg);
 	default_filename = save;
 }
+#endif
 
 /* ARGSUSED */
 void
@@ -439,6 +461,10 @@ command_boot(char *arg)
 		bootit(filename, howto, tell);
 	} else {
 		int i;
+
+#ifndef SMALL
+		bootdefault();
+#endif
 		for (i = 0; i < NUMNAMES; i++) {
 			bootit(names[i][0], howto, tell);
 			bootit(names[i][1], howto, tell);
@@ -503,6 +529,21 @@ command_consdev(char *arg)
 	}
 	printf("invalid console device.\n");
 }
+
+#ifndef SMALL
+/* ARGSUSED */
+void
+command_menu(char *arg)
+{
+
+	if (bootcfg_info.nummenu > 0) {
+		/* Does not return */
+		doboottypemenu();
+	} else {
+		printf("No menu defined in boot.cfg\n");
+	}
+}
+#endif /* !SMALL */
 
 void
 command_modules(char *arg)

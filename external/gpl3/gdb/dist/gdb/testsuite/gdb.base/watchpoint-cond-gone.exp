@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,23 +13,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-set testfile "watchpoint-cond-gone"
-set srcfile ${testfile}.c
-set srcfilestripped ${testfile}-stripped.c
-set objfilestripped ${objdir}/${subdir}/${testfile}-stripped.o
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .c watchpoint-cond-gone-stripped.c
 
 # We need to generate a function without DWARF to crash older GDB.
 # Stepping into a dynamic function trampoline or stepping out of MAIN may work
 # but it is not a reliable FAIL case.
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfilestripped}" "${objfilestripped}" object {}] != ""
-      || [gdb_compile "${srcdir}/${subdir}/${srcfile} ${objfilestripped}" "${binfile}" executable {debug}] != "" } {
-    untested watchpoint-cond-gone.exp
+if {[prepare_for_testing_full $testfile.exp \
+	 [list $testfile debug $srcfile debug $srcfile2 {}]]} {
+    untested $testfile.exp
     return -1
 }
-
-clean_restart ${testfile}
 
 # Problem does not occur otherwise.
 gdb_test_no_output "set can-use-hw-watchpoints 0"

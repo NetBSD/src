@@ -1,5 +1,5 @@
-/*	$Id: at91dbgu.c,v 1.8.6.1 2012/11/20 03:01:03 tls Exp $	*/
-/*	$NetBSD: at91dbgu.c,v 1.8.6.1 2012/11/20 03:01:03 tls Exp $ */
+/*	$Id: at91dbgu.c,v 1.8.6.2 2014/08/20 00:02:45 tls Exp $	*/
+/*	$NetBSD: at91dbgu.c,v 1.8.6.2 2014/08/20 00:02:45 tls Exp $ */
 
 /*
  *
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.8.6.1 2012/11/20 03:01:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.8.6.2 2014/08/20 00:02:45 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -182,8 +182,18 @@ dev_type_tty(at91dbgu_tty);
 dev_type_poll(at91dbgu_poll);
 
 const struct cdevsw at91dbgu_cdevsw = {
-	at91dbgu_open, at91dbgu_close, at91dbgu_read, at91dbgu_write, at91dbgu_ioctl,
-	at91dbgu_stop, at91dbgu_tty, at91dbgu_poll, nommap, ttykqfilter, D_TTY
+	.d_open = at91dbgu_open,
+	.d_close = at91dbgu_close,
+	.d_read = at91dbgu_read,
+	.d_write = at91dbgu_write,
+	.d_ioctl = at91dbgu_ioctl,
+	.d_stop = at91dbgu_stop,
+	.d_tty = at91dbgu_tty,
+	.d_poll = at91dbgu_poll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 struct consdev at91dbgu_cons = {
@@ -279,7 +289,7 @@ at91dbgu_attach(device_t parent, device_t self, void *aux)
 
 #ifdef RND_COM
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_TTY, 0);
+			  RND_TYPE_TTY, RND_FLAG_DEFAULT);
 #endif
 
 	/* if there are no enable/disable functions, assume the device

@@ -1,4 +1,4 @@
-#       $NetBSD: t_tcpip.sh,v 1.12 2012/08/16 12:57:24 pgoyette Exp $
+#       $NetBSD: t_tcpip.sh,v 1.12.2.1 2014/08/20 00:04:51 tls Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,7 +37,7 @@ http_head()
 http_body()
 {
 
-	atf_check -s exit:0 ${rumpnetsrv} ${RUMP_SERVER}
+	atf_check -s exit:0 ${rumpnetsrv} -lrumpnet_netinet6 ${RUMP_SERVER}
 
 	# start bozo in daemon mode
 	atf_check -s exit:0 env LD_PRELOAD=/usr/lib/librumphijack.so \

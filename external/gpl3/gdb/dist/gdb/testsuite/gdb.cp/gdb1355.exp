@@ -1,4 +1,4 @@
-# Copyright 2003, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2003-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,33 +21,21 @@
 set ws "\[\r\n\t \]*"
 set nl "\[\r\n\]+"
 
-if $tracelevel then {
-    strace $tracelevel
-    }
-
 if { [skip_cplus_tests] } { continue }
 
 #
 # test running programs
 #
 
-set testfile "gdb1355"
-set srcfile ${testfile}.cc
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .cc
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
-     untested gdb1355.exp
-     return -1
-}
-
-if [get_compiler_info ${binfile} "c++"] {
+if [get_compiler_info "c++"] {
     return -1
 }
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
+    return -1
+}
 
 if ![runto_main] then {
     perror "couldn't run to main"
@@ -78,7 +66,7 @@ set f_ld    "${ws}long double m_long_double;"
 set f_b     "${ws}bool m_bool;"
 
 set itc     "<invalid type code ${decimal}>"
-set bad_i   "${ws}(${itc}|int) m_int;";
+set bad_i   "${ws}(${itc}|int) m_int;"
 set bad_c   "${ws}(${itc}|char) m_char;"
 set bad_li  "${ws}(${itc}|long int) m_long_int;"
 set bad_ui  "${ws}(${itc}|unsigned int) m_unsigned_int;"

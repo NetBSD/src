@@ -1,7 +1,6 @@
 /* Target-dependent code for GNU/Linux UltraSPARC.
 
-   Copyright (C) 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -175,7 +174,7 @@ sparc64_linux_supply_core_fpregset (const struct regset *regset,
 				    struct regcache *regcache,
 				    int regnum, const void *fpregs, size_t len)
 {
-  sparc64_supply_fpregset (regcache, regnum, fpregs);
+  sparc64_supply_fpregset (&sparc64_bsd_fpregset, regcache, regnum, fpregs);
 }
 
 static void
@@ -183,7 +182,7 @@ sparc64_linux_collect_core_fpregset (const struct regset *regset,
 				     const struct regcache *regcache,
 				     int regnum, void *fpregs, size_t len)
 {
-  sparc64_collect_fpregset (regcache, regnum, fpregs);
+  sparc64_collect_fpregset (&sparc64_bsd_fpregset, regcache, regnum, fpregs);
 }
 
 /* Set the program counter for process PTID to PC.  */
@@ -234,6 +233,50 @@ sparc64_linux_get_syscall_number (struct gdbarch *gdbarch,
 }
 
 
+/* Implement the "get_longjmp_target" gdbarch method.  */
+
+static int
+sparc64_linux_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
+{
+  struct gdbarch *gdbarch = get_frame_arch (frame);
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  CORE_ADDR jb_addr;
+  gdb_byte buf[8];
+
+  jb_addr = get_frame_register_unsigned (frame, SPARC_O0_REGNUM);
+
+  /* setjmp and longjmp in SPARC64 are implemented in glibc using the
+     setcontext and getcontext system calls respectively.  These
+     system calls operate on ucontext_t structures, which happen to
+     partially have the same structure than jmp_buf.  However the
+     ucontext returned by getcontext, and thus the jmp_buf structure
+     returned by setjmp, contains the context of the trap instruction
+     in the glibc __[sig]setjmp wrapper, not the context of the user
+     code calling setjmp.
+
+     %o7 in the jmp_buf structure is stored at offset 18*8 in the
+     mc_gregs array, which is itself located at offset 32 into
+     jmp_buf.  See bits/setjmp.h.  This register contains the address
+     of the 'call setjmp' instruction in user code.
+
+     In order to determine the longjmp target address in the
+     initiating frame we need to examine the call instruction itself,
+     in particular whether the annul bit is set.  If it is not set
+     then we need to jump over the instruction at the delay slot.  */
+
+  if (target_read_memory (jb_addr + 32 + (18 * 8), buf, 8))
+    return 0;
+
+  *pc = extract_unsigned_integer (buf, 8, gdbarch_byte_order (gdbarch));
+
+  if (!sparc_is_annulled_branch_insn (*pc))
+      *pc += 4; /* delay slot insn  */
+  *pc += 4; /* call insn  */
+
+  return 1;
+}
+
+
 
 static void
 sparc64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
@@ -272,6 +315,9 @@ sparc64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* Make sure we can single-step over signal return system calls.  */
   tdep->step_trap = sparc64_linux_step_trap;
+
+  /* Make sure we can single-step over longjmp calls.  */
+  set_gdbarch_get_longjmp_target (gdbarch, sparc64_linux_get_longjmp_target);
 
   set_gdbarch_write_pc (gdbarch, sparc64_linux_write_pc);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.29 2012/07/23 00:49:20 mhitch Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.29.2.1 2014/08/20 00:04:30 tls Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -401,10 +401,10 @@ cd9660_stat(struct open_file *f, struct stat *sb)
 }
 
 #if defined(LIBSA_ENABLE_LS_OP)
+#include "ls.h"
 __compactcall void
 cd9660_ls(struct open_file *f, const char *pattern)
 {
-	printf("Currently ls command is unsupported by cd9660\n");
-	return;
+	lsunsup("cd9660");
 }
 #endif

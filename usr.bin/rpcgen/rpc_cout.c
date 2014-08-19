@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_cout.c,v 1.30 2011/08/31 16:24:58 plunky Exp $	*/
+/*	$NetBSD: rpc_cout.c,v 1.30.8.1 2014/08/20 00:05:03 tls Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_cout.c 1.13 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_cout.c,v 1.30 2011/08/31 16:24:58 plunky Exp $");
+__RCSID("$NetBSD: rpc_cout.c,v 1.30.8.1 2014/08/20 00:05:03 tls Exp $");
 #endif
 #endif
 
@@ -54,30 +54,30 @@ __RCSID("$NetBSD: rpc_cout.c,v 1.30 2011/08/31 16:24:58 plunky Exp $");
 #include "rpc_parse.h"
 #include "rpc_util.h"
 
-static int findtype __P((definition *, char *));
-static int undefined __P((char *));
-static void print_generic_header __P((char *, int));
-static void print_header __P((definition *));
-static void print_prog_header __P((proc_list *));
-static void print_trailer __P((void));
-static void print_ifopen __P((int, char *));
-static void print_ifarg __P((char *));
-static void print_ifsizeof __P((char *, char *));
-static void print_ifclose __P((int));
-static void print_ifstat __P((int, char *, char *, relation, char *, char *, char *));
-static void emit_enum __P((definition *));
-static void emit_program __P((definition *));
-static void emit_union __P((definition *));
-static void emit_struct __P((definition *));
-static void emit_typedef __P((definition *));
-static void print_stat __P((int, declaration *));
+static int findtype(definition *, const char *);
+static int undefined(const char *);
+static void print_generic_header(const char *, int);
+static void print_header(definition *);
+static void print_prog_header(proc_list *);
+static void print_trailer(void);
+static void print_ifopen(int, const char *);
+static void print_ifarg(const char *);
+static void print_ifsizeof(const char *, const char *);
+static void print_ifclose(int);
+static void print_ifstat(int, const char *, const char *, relation,
+    const char *, const char *, const char *);
+static void emit_enum(definition *);
+static void emit_program(definition *);
+static void emit_union(definition *);
+static void emit_struct(definition *);
+static void emit_typedef(definition *);
+static void print_stat(int, declaration *);
 
 /*
  * Emit the C-routine for the given definition
  */
 void
-emit(def)
-	definition *def;
+emit(definition *def)
 {
 	if (def->def_kind == DEF_CONST) {
 		return;
@@ -120,9 +120,7 @@ emit(def)
 }
 
 static int
-findtype(def, type)
-	definition *def;
-	char   *type;
+findtype(definition *def, const char *type)
 {
 
 	if (def->def_kind == DEF_PROGRAM || def->def_kind == DEF_CONST) {
@@ -133,8 +131,7 @@ findtype(def, type)
 }
 
 static int
-undefined(type)
-	char   *type;
+undefined(const char *type)
 {
 	definition *def;
 
@@ -145,32 +142,20 @@ undefined(type)
 }
 
 static void
-print_generic_header(procname, pointerp)
-	char   *procname;
-	int     pointerp;
+print_generic_header(const char *procname, int pointerp)
 {
 	f_print(fout, "\n");
 	f_print(fout, "bool_t\n");
-	if (Cflag) {
-		f_print(fout, "xdr_%s(", procname);
-		f_print(fout, "XDR *xdrs, ");
-		f_print(fout, "%s ", procname);
-		if (pointerp)
-			f_print(fout, "*");
-		f_print(fout, "objp)\n{\n");
-	} else {
-		f_print(fout, "xdr_%s(xdrs, objp)\n", procname);
-		f_print(fout, "\tXDR *xdrs;\n");
-		f_print(fout, "\t%s ", procname);
-		if (pointerp)
-			f_print(fout, "*");
-		f_print(fout, "objp;\n{\n");
-	}
+	f_print(fout, "xdr_%s(", procname);
+	f_print(fout, "XDR *xdrs, ");
+	f_print(fout, "%s ", procname);
+	if (pointerp)
+		f_print(fout, "*");
+	f_print(fout, "objp)\n{\n");
 }
 
 static void
-print_header(def)
-	definition *def;
+print_header(definition *def)
 {
 	print_generic_header(def->def_name,
 	    def->def_kind != DEF_TYPEDEF ||
@@ -178,14 +163,13 @@ print_header(def)
 }
 
 static void
-print_prog_header(plist)
-	proc_list *plist;
+print_prog_header(proc_list *plist)
 {
 	print_generic_header(plist->args.argname, 1);
 }
 
 static void
-print_trailer()
+print_trailer(void)
 {
 	f_print(fout, "\treturn (TRUE);\n");
 	f_print(fout, "}\n");
@@ -193,9 +177,7 @@ print_trailer()
 
 
 static void
-print_ifopen(indent, name)
-	int     indent;
-	char   *name;
+print_ifopen(int indent, const char *name)
 {
 	char _t_kludge[32];
 	/*
@@ -212,16 +194,13 @@ print_ifopen(indent, name)
 }
 
 static void
-print_ifarg(arg)
-	char   *arg;
+print_ifarg(const char *arg)
 {
 	f_print(fout, ", %s", arg);
 }
 
 static void
-print_ifsizeof(prefix, type)
-	char   *prefix;
-	char   *type;
+print_ifsizeof(const char *prefix, const char *type)
 {
 	if (streq(type, "bool")) {
 		f_print(fout, ", (u_int)sizeof(bool_t), (xdrproc_t)xdr_bool");
@@ -235,8 +214,7 @@ print_ifsizeof(prefix, type)
 }
 
 static void
-print_ifclose(indent)
-	int     indent;
+print_ifclose(int indent)
 {
 	f_print(fout, "))\n");
 	tabify(fout, indent);
@@ -244,16 +222,10 @@ print_ifclose(indent)
 }
 
 static void
-print_ifstat(indent, prefix, type, rel, amax, objname, name)
-	int     indent;
-	char   *prefix;
-	char   *type;
-	relation rel;
-	char   *amax;
-	char   *objname;
-	char   *name;
+print_ifstat(int indent, const char *prefix, const char *type, relation rel,
+	     const char *amax, const char *objname, const char *name)
 {
-	char   *alt = NULL;
+	const char *alt = NULL;
 
 	switch (rel) {
 	case REL_POINTER:
@@ -321,8 +293,7 @@ print_ifstat(indent, prefix, type, rel, amax, objname, name)
 }
 /* ARGSUSED */
 static void
-emit_enum(def)
-	definition *def;
+emit_enum(definition *def)
 {
 	tabify(fout, 1);
 	f_print(fout, "{\n");
@@ -338,8 +309,7 @@ emit_enum(def)
 }
 
 static void
-emit_program(def)
-	definition *def;
+emit_program(definition *def)
 {
 	decl_list *dl;
 	version_list *vlist;
@@ -360,8 +330,7 @@ emit_program(def)
 
 
 static void
-emit_union(def)
-	definition *def;
+emit_union(definition *def)
 {
 	declaration *dflt;
 	case_list *cl;
@@ -420,14 +389,14 @@ emit_union(def)
 }
 
 static void
-emit_struct(def)
-	definition *def;
+emit_struct(definition *def)
 {
 	decl_list *dl;
 	int     i, j, size, flag;
 	decl_list *cur = NULL, *psav;
 	bas_type *ptr;
-	char   *sizestr, *plus;
+	char   *sizestr;
+	const char *plus;
 	char    ptemp[256];
 	int     can_inline;
 
@@ -638,12 +607,11 @@ emit_struct(def)
 }
 
 static void
-emit_typedef(def)
-	definition *def;
+emit_typedef(definition *def)
 {
-	char   *prefix = def->def.ty.old_prefix;
-	char   *type = def->def.ty.old_type;
-	char   *amax = def->def.ty.array_max;
+	const char *prefix = def->def.ty.old_prefix;
+	const char *type = def->def.ty.old_type;
+	const char *amax = def->def.ty.array_max;
 	relation rel = def->def.ty.rel;
 
 	f_print(fout, "\n");
@@ -651,13 +619,11 @@ emit_typedef(def)
 }
 
 static void
-print_stat(indent, dec)
-	declaration *dec;
-	int     indent;
+print_stat(int indent, declaration *dec)
 {
-	char   *prefix = dec->prefix;
-	char   *type = dec->type;
-	char   *amax = dec->array_max;
+	const char *prefix = dec->prefix;
+	const char *type = dec->type;
+	const char *amax = dec->array_max;
 	relation rel = dec->rel;
 	char    name[256];
 
@@ -671,9 +637,7 @@ print_stat(indent, dec)
 
 
 void
-emit_inline(decl, flag)
-	declaration *decl;
-	int     flag;
+emit_inline(declaration *decl, int flag)
 {
 
 /*check whether an array or not */
@@ -702,12 +666,10 @@ emit_inline(decl, flag)
 }
 
 void
-emit_single_in_line(decl, flag, rel)
-	declaration *decl;
-	int     flag;
-	relation rel;
+emit_single_in_line(declaration *decl, int flag, relation rel)
 {
-	char   *upp_case;
+	const char *upp_case;
+	char *freeable;
 	int     freed = 0;
 
 	if (flag == PUT)
@@ -718,16 +680,15 @@ emit_single_in_line(decl, flag, rel)
 		else
 			f_print(fout, "\t\t\t*genp++ = IXDR_GET_");
 
-	upp_case = upcase(decl->type);
+	upp_case = freeable = upcase(decl->type);
 
 	/* hack  - XX */
 	if (strcmp(upp_case, "INT") == 0) {
-		free(upp_case);
+		free(freeable);
 		freed = 1;
 		upp_case = "INT32";
-	}
-	if (strcmp(upp_case, "U_INT") == 0) {
-		free(upp_case);
+	} else if (strcmp(upp_case, "U_INT") == 0) {
+		free(freeable);
 		freed = 1;
 		upp_case = "U_INT32";
 	}
@@ -740,14 +701,13 @@ emit_single_in_line(decl, flag, rel)
 	} else
 		f_print(fout, "%s(buf);\n", upp_case);
 	if (!freed)
-		free(upp_case);
+		free(freeable);
 
 }
 
 
 char   *
-upcase(str)
-	char   *str;
+upcase(const char *str)
 {
 	char   *ptr, *hptr;
 

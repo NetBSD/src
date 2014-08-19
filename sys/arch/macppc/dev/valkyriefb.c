@@ -1,4 +1,4 @@
-/*	$NetBSD: valkyriefb.c,v 1.2 2012/05/23 21:46:17 macallan Exp $	*/
+/*	$NetBSD: valkyriefb.c,v 1.2.2.1 2014/08/20 00:03:11 tls Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: valkyriefb.c,v 1.2 2012/05/23 21:46:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: valkyriefb.c,v 1.2.2.1 2014/08/20 00:03:11 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,8 @@ const struct wsscreen_descr *_valkyriefb_scrlist[] = {
 };
 
 struct wsscreen_list valkyriefb_screenlist = {
-	sizeof(_valkyriefb_scrlist) / sizeof(struct wsscreen_descr *), _valkyriefb_scrlist
+	sizeof(_valkyriefb_scrlist) / sizeof(struct wsscreen_descr *),
+	_valkyriefb_scrlist
 };
 
 static int	valkyriefb_ioctl(void *, void *, u_long, void *, int,
@@ -204,7 +205,8 @@ valkyriefb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_base = (uint8_t *)ca->ca_reg[0];
 #ifdef VALKYRIEFB_DEBUG
 	for (i = 0; i < 0x40; i += 8) {
-		aprint_error_dev(sc->sc_dev, "%02x: %02x\n", i, valkyriefb_read_reg(sc, i));
+		aprint_error_dev(sc->sc_dev, "%02x: %02x\n", i,
+		    valkyriefb_read_reg(sc, i));
 	}
 #endif
 	config_finalize_register(sc->sc_dev, valkyriefb_init);
@@ -228,7 +230,8 @@ valkyriefb_init(device_t self)
 
 	valkyriefb_set_mode(sc, mode, 8);
 
-	vcons_init(&sc->vd, sc, &valkyriefb_defaultscreen, &valkyriefb_accessops);
+	vcons_init(&sc->vd, sc, &valkyriefb_defaultscreen,
+	    &valkyriefb_accessops);
 	sc->vd.init_screen = valkyriefb_init_screen;
 
 	dict = device_properties(sc->sc_dev);
@@ -245,7 +248,8 @@ valkyriefb_init(device_t self)
 	valkyriefb_defaultscreen.nrows = ri->ri_rows;
 	valkyriefb_defaultscreen.ncols = ri->ri_cols;
 	if (console) {
-		wsdisplay_cnattach(&valkyriefb_defaultscreen, ri, 0, 0, defattr);
+		wsdisplay_cnattach(&valkyriefb_defaultscreen, ri, 0, 0,
+		    defattr);
 		vcons_replay_msgbuf(&valkyriefb_console_screen);
 	}
 	aa.console = console;
@@ -271,23 +275,24 @@ valkyriefb_set_mode(struct valkyriefb_softc *sc,
 	       (modetab[i].width != mode->hdisplay) &&
 	       (modetab[i].height != mode->vdisplay))
 		i++;
-	if ((modetab[i].width == mode->hdisplay) &&
-	       (modetab[i].height == mode->vdisplay)) {
-		modereg = modetab[i].mode;
-	} else {
-		aprint_error_dev(sc->sc_dev, "Can't find a mode register value for %s\n", mode->name);
+	if (i >= __arraycount(modetab)) {
+		aprint_error_dev(sc->sc_dev,
+		    "Can't find a mode register value for %s\n", mode->name);
 		return EINVAL;
-	}
+	} else
+		modereg = modetab[i].mode;
 
 	/* check if we have enough video memory */
 	if ((mode->hdisplay * mode->vdisplay * (depth >> 3)) > 0x100000) {
-		aprint_error_dev(sc->sc_dev, "Not enough video RAM for %s\n", mode->name);
+		aprint_error_dev(sc->sc_dev, "Not enough video RAM for %s\n",
+		    mode->name);
 		return EINVAL;
 	}
 
 	/* reject depths other than 8 or 16 */
 	if ((depth != 8) && (depth != 16)) {
-		aprint_error_dev(sc->sc_dev, "Depth [%d] is unsupported for %s\n", depth, mode->name);
+		aprint_error_dev(sc->sc_dev,
+		    "Depth [%d] is unsupported for %s\n", depth, mode->name);
 		return EINVAL;
 	}
 
@@ -415,11 +420,6 @@ valkyriefb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_flg = RI_CENTER | RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
 	ri->ri_bits = sc->sc_fbaddr;
 
-	/*
-	 * We probably shouldn't set this flag together with RI_ENABLE_ALPHA
-	 * since the CPU is likely slow enough to make scrolling using
-	 * framebuffer reads faster than redrawing
-	 */
 	scr->scr_flags |= VCONS_DONT_READ;
 	
 	rasops_init(ri, 0, 0);

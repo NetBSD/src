@@ -5,28 +5,26 @@ dnl report bugs to chet@po.cwru.edu
 dnl
 dnl Process this file with autoconf to produce a configure script.
 
-# Copyright (C) 1987-2005 Free Software Foundation, Inc.
+# Copyright (C) 1987-2009 Free Software Foundation, Inc.
 
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2, or (at your option)
-# any later version.
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
 
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
 
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-# 02111-1307, USA.
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-AC_REVISION([for Readline 5.1, version 2.59])
+AC_REVISION([for Readline 6.2, version 2.67])
 
 m4_include([../config/override.m4])
 
-AC_INIT(readline, 5.1-release, bug-readline@gnu.org)
+AC_INIT(readline, 6.2, bug-readline@gnu.org)
 
 dnl make sure we are using a recent autoconf version
 AC_PREREQ(2.50)
@@ -38,9 +36,10 @@ AC_CONFIG_AUX_DIR(`cd $srcdir;pwd`/..)
 AC_CONFIG_HEADERS(config.h)
 
 dnl update the value of RL_READLINE_VERSION in readline.h when this changes
-LIBVERSION=5.1
+LIBVERSION=6.2
 
 AC_CANONICAL_HOST
+AC_CANONICAL_BUILD
 
 dnl configure defaults
 opt_curses=no
@@ -115,44 +114,6 @@ AC_PROG_CC
 dnl AC_AIX
 AC_MINIX
 
-dnl BEGIN changes for CYGNUS cross-building for Cygwin
-dnl NOTE: Some of these changes may no longer be necessary.
-
-dnl load up the cross-building cache file -- add more cases and cache
-dnl files as necessary
-if test "x$cross_compiling" = "xyes"; then
-    case "${host}" in
-    *-cygwin*)
-	cross_cache=${srcdir}/cross-build/cygwin.cache
-	LOCAL_CFLAGS="$LOCAL_CFLAGS -I${srcdir}/../libtermcap"
-	;;
-   *-mingw32*)	
-	cross_cache=${srcdir}/cross-build/mingw.cache
-        ;;
-    *)  echo "configure: cross-compiling for a non-cygwin target is not supported" >&2
-	;;
-    esac
-
-    if test "x$cross_cache" != "x"; then
-	if test -r "${cross_cache}"; then
-	    echo "loading cross-build cache file ${cross_cache}"
-	    . ${cross_cache}
-	fi
-	unset cross_cache
-    fi
-fi
-
-if test -z "$CC_FOR_BUILD"; then
-    if test "x$cross_compiling" = "xno"; then
-        CC_FOR_BUILD='$(CC)'
-    else
-        CC_FOR_BUILD=gcc
-    fi
-fi
-AC_SUBST(CC_FOR_BUILD)
- 
-dnl END changes for CYGNUS cross-building for Cygwin
-
 # If we're using gcc and the user hasn't specified CFLAGS, add -O to CFLAGS.
 test -n "$GCC" && test -n "$auto_cflags" && CFLAGS="$CFLAGS -O"
 
@@ -170,6 +131,7 @@ AC_SUBST(MAKE_SHELL)
 AC_C_CONST
 AC_C_PROTOTYPES
 AC_C_CHAR_UNSIGNED
+AC_C_VOLATILE
 
 AC_TYPE_SIGNAL
 
@@ -200,6 +162,8 @@ AC_CHECK_HEADERS(sys/ptem.h,,,
 #endif
 ]])
 
+AC_SYS_LARGEFILE
+
 BASH_SYS_SIGNAL_VINTAGE
 BASH_SYS_REINSTALL_SIGHANDLERS
 
@@ -212,7 +176,9 @@ BASH_CHECK_GETPW_FUNCS
 
 AC_HEADER_TIOCGWINSZ
 
+BASH_TYPE_SIG_ATOMIC_T
 BASH_TYPE_SIGHANDLER
+
 BASH_HAVE_TIOCSTAT
 BASH_HAVE_FIONREAD
 BASH_CHECK_SPEED_T
@@ -303,7 +269,7 @@ AC_SUBST(SHARED_TARGET)
 AC_SUBST(STATIC_INSTALL_TARGET)
 AC_SUBST(SHARED_INSTALL_TARGET)
 
-case "$host_os" in
+case "$build_os" in
 msdosdjgpp*)	BUILD_DIR=`pwd.exe` ;;	# to prevent //d/path/file
 *)		BUILD_DIR=`pwd` ;;
 esac

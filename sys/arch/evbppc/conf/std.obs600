@@ -1,9 +1,11 @@
-#	$NetBSD: std.obs600,v 1.1 2010/03/18 14:15:38 kiyohara Exp $
+#	$NetBSD: std.obs600,v 1.1.24.1 2014/08/20 00:02:59 tls Exp $
 #
 # Standard/required options for obs600.
 
 include		"arch/evbppc/conf/std.obs405"
 options 	MULTIUIC
+
+options 	EVBPPC_HAS_MBR
 
 makeoptions	PRDCTTYPE="obs600"
 makeoptions	TEXTADDR=0x25000

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpi_nubus.c,v 1.6.6.1 2012/11/20 03:01:30 tls Exp $	*/
+/*	$NetBSD: cpi_nubus.c,v 1.6.6.2 2014/08/20 00:03:11 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 Hauke Fath
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpi_nubus.c,v 1.6.6.1 2012/11/20 03:01:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpi_nubus.c,v 1.6.6.2 2014/08/20 00:03:11 tls Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -115,8 +115,18 @@ dev_type_write(cpi_write);
 dev_type_ioctl(cpi_ioctl);
 
 const struct cdevsw cpi_cdevsw = {
-	cpi_open, cpi_close, noread, cpi_write, cpi_ioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = cpi_open,
+	.d_close = cpi_close,
+	.d_read = noread,
+	.d_write = cpi_write,
+	.d_ioctl = cpi_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 /* prototypes */

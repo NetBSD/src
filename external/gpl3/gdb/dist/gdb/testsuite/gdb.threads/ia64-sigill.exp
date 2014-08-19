@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,9 +20,7 @@
 # breakpoint has been already deleted.  moribund locations are not active in
 # the default all-stop mode.
 
-set testfile "ia64-sigill"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile
 if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" ${binfile} executable [list debug additional_flags=-lrt]] != "" } {
     return -1
 }
@@ -58,7 +56,6 @@ gdb_breakpoint [gdb_get_line_number "break-at-exit"]
 gdb_test_no_output "set debug infrun 1"
 
 # The ia64 SIGILL signal is visible only in the lin-lwp debug.
-gdb_test_no_output "set debug lin-lwp 1"
 
 gdb_test "continue" "Breakpoint \[0-9\]+,( .* in)? thread_func .*"
 

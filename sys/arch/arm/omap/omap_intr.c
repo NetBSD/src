@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_intr.c,v 1.9 2011/07/01 20:30:21 dyoung Exp $	*/
+/*	$NetBSD: omap_intr.c,v 1.9.12.1 2014/08/20 00:02:47 tls Exp $	*/
 
 /*
  * Based on arch/arm/xscale/pxa2x0_intr.c
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_intr.c,v 1.9 2011/07/01 20:30:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_intr.c,v 1.9.12.1 2014/08/20 00:02:47 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,8 @@ omapintc_attach(device_t parent, device_t self, void *args)
 		handler[i].func = stray_interrupt;
 		handler[i].cookie = (void *)(intptr_t) i;
 		extirq_level[i] = IPL_SERIAL;
-		sprintf(handler[i].irq_num_str, "#%d", i);
+		snprintf(handler[i].irq_num_str,
+		    sizeof(handler[i].irq_num_str), "#%d", i);
 		if (handler[i].name == NULL)
 			omapintc_set_name(i, handler[i].irq_num_str, false);
 	}
@@ -427,16 +428,6 @@ _spllower(int ipl)
 
 	return omap_spllower(ipl);
 }
-
-#ifdef __HAVE_FAST_SOFTINTS
-#undef _setsoftintr
-void
-_setsoftintr(int si)
-{
-
-	return omap_setsoftintr(si);
-}
-#endif
 
 void *
 omap_intr_establish(int irqno, int level, const char *name,

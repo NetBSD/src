@@ -1,4 +1,4 @@
-/*	$NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
+/*	$NetBSD: viomb.c,v 1.1.14.1 2014/08/20 00:03:48 tls Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.1.14.1 2014/08/20 00:03:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +140,7 @@ viomb_attach(device_t parent, device_t self, void *aux)
 	vsc->sc_nvqs = 2;
 	vsc->sc_config_change = viomb_config_change;
 	vsc->sc_intrhand = virtio_vq_intr;
+	vsc->sc_flags = 0;
 
 	virtio_negotiate_features(vsc,
 				  VIRTIO_CONFIG_DEVICE_FEATURES);
@@ -438,7 +439,7 @@ deflate_done(struct viomb_softc *sc)
 	struct virtqueue *vq = &sc->sc_vq[1];
 	struct balloon_req *b;
 	int r, slot;
-	uint64_t nvpages, nhpages;
+	uint64_t nvpages;
 
 	r = virtio_dequeue(vsc, vq, &slot, NULL);
 	if (r != 0) {
@@ -450,7 +451,6 @@ deflate_done(struct viomb_softc *sc)
 
 	b = &sc->sc_req;
 	nvpages = b->bl_nentries;
-	nhpages = nvpages * VIRTIO_PAGE_SIZE / PAGE_SIZE;
 	bus_dmamap_sync(vsc->sc_dmat, b->bl_dmamap,
 			offsetof(struct balloon_req, bl_pages),
 			sizeof(uint32_t)*nvpages,

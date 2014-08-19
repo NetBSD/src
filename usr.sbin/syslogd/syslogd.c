@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.112.2.2 2013/06/23 06:29:06 tls Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.112.2.3 2014/08/20 00:05:18 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.112.2.2 2013/06/23 06:29:06 tls Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.112.2.3 2014/08/20 00:05:18 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,7 @@ __RCSID("$NetBSD: syslogd.c,v 1.112.2.2 2013/06/23 06:29:06 tls Exp $");
  * TLS, syslog-protocol, and syslog-sign code by Martin Schuette.
  */
 #define SYSLOG_NAMES
+#include <sys/stat.h>
 #include <poll.h>
 #include "syslogd.h"
 #include "extern.h"
@@ -133,7 +134,8 @@ int	repeatinterval[] = { 30, 120, 600 };	/* # of secs before flush */
 #define F_USERS		5		/* list of users */
 #define F_WALL		6		/* everyone logged on */
 #define F_PIPE		7		/* pipe to program */
-#define F_TLS		8
+#define F_FIFO		8		/* mkfifo(2) file */
+#define F_TLS		9
 
 struct TypeInfo {
 	const char *name;
@@ -155,6 +157,7 @@ struct TypeInfo {
 	{"USERS",   NULL,    "0", NULL,	  "0", 0, 0,  1024},
 	{"WALL",    NULL,    "0", NULL,	  "0", 0, 0,  1024},
 	{"PIPE",    NULL, "1024", NULL,	 "1M", 0, 0, 16384},
+	{"FIFO",    NULL, "1024", NULL,	 "1M", 0, 0, 16384},
 #ifndef DISABLE_TLS
 	{"TLS",	    NULL,   "-1", NULL, "16M", 0, 0, 16384}
 #endif /* !DISABLE_TLS */
@@ -2187,7 +2190,8 @@ fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentr
 	    || (f->f_type == F_TTY)
 	    || (f->f_type == F_CONSOLE)
 	    || (f->f_type == F_USERS)
-	    || (f->f_type == F_WALL))) {
+	    || (f->f_type == F_WALL)
+	    || (f->f_type == F_FIFO))) {
 		DELREF(buffer);
 		return;
 	}
@@ -2196,7 +2200,8 @@ fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentr
 	if (qentry
 	    && (f->f_type != F_TLS)
 	    && (f->f_type != F_PIPE)
-	    && (f->f_type != F_FILE)) {
+	    && (f->f_type != F_FILE)
+	    && (f->f_type != F_FIFO)) {
 		errno = 0;
 		logerror("Warning: unexpected message type %d in buffer",
 		    f->f_type);
@@ -2253,6 +2258,7 @@ fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentr
 		len = linelen - tlsprefixlen;
 		break;
 	case F_PIPE:
+	case F_FIFO:
 	case F_FILE:  /* fallthrough */
 		if (f->f_flags & FFLAG_FULL) {
 			v->iov_base = line + tlsprefixlen;
@@ -2451,6 +2457,60 @@ fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentr
 			else if (qentry) /* sent buffered msg */
 				message_queue_remove(f, qentry);
 		}
+		break;
+
+	case F_FIFO:
+		DPRINTF(D_MISC, "Logging to %s %s\n",
+			TypeInfo[f->f_type].name, f->f_un.f_fname);
+		if (f->f_file < 0) {
+			f->f_file =
+			  open(f->f_un.f_fname, O_WRONLY|O_NONBLOCK, 0);
+			e = errno;
+			if (f->f_file < 0 && e == ENXIO) {
+				/* Drop messages with no reader */
+				if (qentry)
+					message_queue_remove(f, qentry);
+				break;
+			}
+		}
+
+		if (f->f_file >= 0 && writev(f->f_file, iov, v - iov) < 0) {
+			e = errno;
+
+			/* Enqueue if the fifo buffer is full */
+			if (e == EAGAIN) {
+				if (f->f_lasterror != e)
+					logerror("%s", f->f_un.f_fname);
+				f->f_lasterror = e;
+				error = true;	/* enqueue on return */
+				break;
+			}
+
+			close(f->f_file);
+			f->f_file = -1;
+
+			/* Drop messages with no reader */
+			if (e == EPIPE) {
+				if (qentry)
+					message_queue_remove(f, qentry);
+				break;
+			}
+		}
+
+		if (f->f_file < 0) {
+			f->f_type = F_UNUSED;
+			errno = e;
+			f->f_lasterror = e;
+			logerror("%s", f->f_un.f_fname);
+			message_queue_freeall(f);
+			break;
+		}
+
+		f->f_lasterror = 0;
+		if (!qentry) /* prevent recursion (see comment for F_FILE) */
+			SEND_QUEUE(f);
+		if (qentry) /* sent buffered msg */
+			message_queue_remove(f, qentry);
 		break;
 
 	case F_USERS:
@@ -2879,7 +2939,9 @@ die(int fd, short event, void *ev)
 		case F_FILE:
 		case F_TTY:
 		case F_CONSOLE:
-			(void)close(f->f_file);
+		case F_FIFO:
+			if (f->f_file >= 0)
+				(void)close(f->f_file);
 			break;
 		case F_PIPE:
 			if (f->f_un.f_pipe.f_pid > 0) {
@@ -3052,8 +3114,10 @@ read_config_file(FILE *cf, struct filed **f_ptr)
 #endif /* !DISABLE_TLS */
 		{"file_queue_length",	  &TypeInfo[F_FILE].queue_length_string},
 		{"pipe_queue_length",	  &TypeInfo[F_PIPE].queue_length_string},
+		{"fifo_queue_length",	  &TypeInfo[F_FIFO].queue_length_string},
 		{"file_queue_size",	  &TypeInfo[F_FILE].queue_size_string},
 		{"pipe_queue_size",	  &TypeInfo[F_PIPE].queue_size_string},
+		{"fifo_queue_size",	  &TypeInfo[F_FIFO].queue_size_string},
 #ifndef DISABLE_SIGN
 		/* syslog-sign setting */
 		{"sign_sg",		  &sign_sg_str},
@@ -3143,13 +3207,15 @@ read_config_file(FILE *cf, struct filed **f_ptr)
 		if (!TypeInfo[i].queue_length_string
 		    || dehumanize_number(TypeInfo[i].queue_length_string,
 		    &TypeInfo[i].queue_length) == -1)
-			TypeInfo[i].queue_length = strtol(
-			    TypeInfo[i].default_length_string, NULL, 10);
+			if (dehumanize_number(TypeInfo[i].default_length_string,
+			    &TypeInfo[i].queue_length) == -1)
+				abort();
 		if (!TypeInfo[i].queue_size_string
 		    || dehumanize_number(TypeInfo[i].queue_size_string,
 		    &TypeInfo[i].queue_size) == -1)
-			TypeInfo[i].queue_size = strtol(
-			    TypeInfo[i].default_size_string, NULL, 10);
+			if (dehumanize_number(TypeInfo[i].default_size_string,
+			    &TypeInfo[i].queue_size) == -1)
+				abort();
 	}
 
 #ifndef DISABLE_SIGN
@@ -3473,6 +3539,7 @@ init(int fd, short event, void *ev)
 			case F_FILE:
 			case F_TTY:
 			case F_CONSOLE:
+			case F_FIFO:
 				printf("%s", f->f_un.f_fname);
 				break;
 
@@ -3622,6 +3689,7 @@ cfline(size_t linenum, const char *line, struct filed *f, const char *prog,
 	const char   *p, *q;
 	char *bp;
 	char   buf[MAXLINE];
+	struct stat sb;
 
 	DPRINTF((D_CALL|D_PARSE),
 		"cfline(%zu, \"%s\", f, \"%s\", \"%s\")\n",
@@ -3832,20 +3900,25 @@ cfline(size_t linenum, const char *line, struct filed *f, const char *prog,
 			f->f_flags |= FFLAG_SIGN;
 #endif /* !DISABLE_SIGN */
 		(void)strlcpy(f->f_un.f_fname, p, sizeof(f->f_un.f_fname));
-		if ((f->f_file = open(p, O_WRONLY|O_APPEND, 0)) < 0) {
+		if ((f->f_file = open(p, O_WRONLY|O_APPEND|O_NONBLOCK, 0)) < 0)
+		{
 			f->f_type = F_UNUSED;
 			logerror("%s", p);
 			break;
 		}
+		if (!fstat(f->f_file, &sb) && S_ISFIFO(sb.st_mode)) {
+			f->f_file = -1;
+			f->f_type = F_FIFO;
+			break;
+		}
+
 		if (isatty(f->f_file)) {
 			f->f_type = F_TTY;
 			if (strcmp(p, ctty) == 0)
 				f->f_type = F_CONSOLE;
-			if (fcntl(f->f_file, F_SETFL, O_NONBLOCK) == -1)
-				logerror("Warning: cannot change tty fd for"
-				    " `%s' to non-blocking.", p);
 		} else
 			f->f_type = F_FILE;
+
 		if (syncfile)
 			f->f_flags |= FFLAG_SYNC;
 		break;
@@ -4312,6 +4385,7 @@ find_qentry_to_delete(const struct buf_queue_head *head, int strategy,
 	/* find elements to delete */
 	if (strategy == PURGE_BY_PRIORITY) {
 		qentry_tmp = qentry_static;
+		if (!qentry_tmp) return NULL;
 		while ((qentry_tmp = STAILQ_NEXT(qentry_tmp, entries)) != NULL)
 		{
 			if (LOG_PRI(qentry_tmp->msg->pri) == pri) {
@@ -4366,9 +4440,9 @@ message_queue_purge(struct filed *f, size_t del_entries, int strategy)
 
 	while (removed < del_entries
 	    || (TypeInfo[f->f_type].queue_length != -1
-	    && (size_t)TypeInfo[f->f_type].queue_length > f->f_qelements)
+	    && (size_t)TypeInfo[f->f_type].queue_length <= f->f_qelements)
 	    || (TypeInfo[f->f_type].queue_size != -1
-	    && (size_t)TypeInfo[f->f_type].queue_size > f->f_qsize)) {
+	    && (size_t)TypeInfo[f->f_type].queue_size <= f->f_qsize)) {
 		qentry = find_qentry_to_delete(&f->f_qhead, strategy, 0);
 		if (message_queue_remove(f, qentry))
 			removed++;

@@ -1,7 +1,7 @@
 /* Create tuned thresholds for various algorithms.
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2005, 2006, 2008, 2009, 2010 Free
-Software Foundation, Inc.
+Copyright 1999, 2000, 2001, 2002, 2003, 2005, 2006, 2008, 2009, 2010,
+2011, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -156,6 +156,7 @@ mp_size_t  mul_toom32_to_toom43_threshold = MP_SIZE_T_MAX;
 mp_size_t  mul_toom32_to_toom53_threshold = MP_SIZE_T_MAX;
 mp_size_t  mul_toom42_to_toom53_threshold = MP_SIZE_T_MAX;
 mp_size_t  mul_toom42_to_toom63_threshold = MP_SIZE_T_MAX;
+mp_size_t  mul_toom43_to_toom54_threshold = MP_SIZE_T_MAX;
 mp_size_t  mul_fft_threshold            = MP_SIZE_T_MAX;
 mp_size_t  mul_fft_modf_threshold       = MP_SIZE_T_MAX;
 mp_size_t  sqr_basecase_threshold       = MP_SIZE_T_MAX;
@@ -170,9 +171,10 @@ mp_size_t  sqr_fft_modf_threshold       = MP_SIZE_T_MAX;
 mp_size_t  mullo_basecase_threshold     = MP_SIZE_T_MAX;
 mp_size_t  mullo_dc_threshold           = MP_SIZE_T_MAX;
 mp_size_t  mullo_mul_n_threshold        = MP_SIZE_T_MAX;
+mp_size_t  mulmid_toom42_threshold      = MP_SIZE_T_MAX;
 mp_size_t  mulmod_bnm1_threshold        = MP_SIZE_T_MAX;
 mp_size_t  sqrmod_bnm1_threshold        = MP_SIZE_T_MAX;
-mp_size_t  div_sb_preinv_threshold      = MP_SIZE_T_MAX;
+mp_size_t  div_qr_2_pi2_threshold       = MP_SIZE_T_MAX;
 mp_size_t  dc_div_qr_threshold          = MP_SIZE_T_MAX;
 mp_size_t  dc_divappr_q_threshold       = MP_SIZE_T_MAX;
 mp_size_t  mu_div_qr_threshold          = MP_SIZE_T_MAX;
@@ -190,16 +192,17 @@ mp_size_t  binv_newton_threshold        = MP_SIZE_T_MAX;
 mp_size_t  redc_1_to_redc_2_threshold   = MP_SIZE_T_MAX;
 mp_size_t  redc_1_to_redc_n_threshold   = MP_SIZE_T_MAX;
 mp_size_t  redc_2_to_redc_n_threshold   = MP_SIZE_T_MAX;
-mp_size_t  powm_threshold               = MP_SIZE_T_MAX;
 mp_size_t  matrix22_strassen_threshold  = MP_SIZE_T_MAX;
 mp_size_t  hgcd_threshold               = MP_SIZE_T_MAX;
-mp_size_t  gcd_accel_threshold          = MP_SIZE_T_MAX;
+mp_size_t  hgcd_appr_threshold          = MP_SIZE_T_MAX;
+mp_size_t  hgcd_reduce_threshold        = MP_SIZE_T_MAX;
 mp_size_t  gcd_dc_threshold             = MP_SIZE_T_MAX;
 mp_size_t  gcdext_dc_threshold          = MP_SIZE_T_MAX;
 mp_size_t  divrem_1_norm_threshold      = MP_SIZE_T_MAX;
 mp_size_t  divrem_1_unnorm_threshold    = MP_SIZE_T_MAX;
 mp_size_t  mod_1_norm_threshold         = MP_SIZE_T_MAX;
 mp_size_t  mod_1_unnorm_threshold       = MP_SIZE_T_MAX;
+int	   mod_1_1p_method		= 0;
 mp_size_t  mod_1n_to_mod_1_1_threshold  = MP_SIZE_T_MAX;
 mp_size_t  mod_1u_to_mod_1_1_threshold  = MP_SIZE_T_MAX;
 mp_size_t  mod_1_1_to_mod_1_2_threshold = MP_SIZE_T_MAX;
@@ -210,6 +213,8 @@ mp_size_t  get_str_dc_threshold         = MP_SIZE_T_MAX;
 mp_size_t  get_str_precompute_threshold = MP_SIZE_T_MAX;
 mp_size_t  set_str_dc_threshold         = MP_SIZE_T_MAX;
 mp_size_t  set_str_precompute_threshold = MP_SIZE_T_MAX;
+mp_size_t  fac_odd_threshold            = 0;
+mp_size_t  fac_dsc_threshold            = FAC_DSC_THRESHOLD_LIMIT;
 
 mp_size_t  fft_modf_sqr_threshold = MP_SIZE_T_MAX;
 mp_size_t  fft_modf_mul_threshold = MP_SIZE_T_MAX;
@@ -253,6 +258,9 @@ struct param_t {
 #endif
 #ifndef HAVE_NATIVE_mpn_mod_1
 #define HAVE_NATIVE_mpn_mod_1 0
+#endif
+#ifndef HAVE_NATIVE_mpn_mod_1_1p
+#define HAVE_NATIVE_mpn_mod_1_1p 0
 #endif
 #ifndef HAVE_NATIVE_mpn_modexact_1_odd
 #define HAVE_NATIVE_mpn_modexact_1_odd 0
@@ -359,12 +367,12 @@ analyze_dat (int final)
 }
 
 
-/* Measuring for recompiled mpn/generic/divrem_1.c and mpn/generic/mod_1.c */
+/* Measuring for recompiled mpn/generic/divrem_1.c, mpn/generic/mod_1.c
+ * and mpz/fac_ui.c */
 
-mp_limb_t mpn_divrem_1_tune
-  __GMP_PROTO ((mp_ptr, mp_size_t, mp_srcptr, mp_size_t, mp_limb_t));
-mp_limb_t mpn_mod_1_tune
-   __GMP_PROTO ((mp_srcptr, mp_size_t, mp_limb_t));
+mp_limb_t mpn_divrem_1_tune (mp_ptr, mp_size_t, mp_srcptr, mp_size_t, mp_limb_t);
+mp_limb_t mpn_mod_1_tune (mp_srcptr, mp_size_t, mp_limb_t);
+void mpz_fac_ui_tune (mpz_ptr, unsigned long);
 
 double
 speed_mpn_mod_1_tune (struct speed_params *s)
@@ -375,6 +383,11 @@ double
 speed_mpn_divrem_1_tune (struct speed_params *s)
 {
   SPEED_ROUTINE_MPN_DIVREM_1 (mpn_divrem_1_tune);
+}
+double
+speed_mpz_fac_ui_tune (struct speed_params *s)
+{
+  SPEED_ROUTINE_MPZ_FAC_UI (mpz_fac_ui_tune);
 }
 
 
@@ -1159,6 +1172,8 @@ void
 tune_mul_n (void)
 {
   static struct param_t  param;
+  mp_size_t next_toom_start;
+  int something_changed;
 
   param.function = speed_mpn_mul_n;
 
@@ -1167,25 +1182,84 @@ tune_mul_n (void)
   param.max_size = MUL_TOOM22_THRESHOLD_LIMIT-1;
   one (&mul_toom22_threshold, &param);
 
-  param.name = "MUL_TOOM33_THRESHOLD";
-  param.min_size = MAX (mul_toom22_threshold, MPN_TOOM33_MUL_MINSIZE);
-  param.max_size = MUL_TOOM33_THRESHOLD_LIMIT-1;
-  one (&mul_toom33_threshold, &param);
+  param.noprint = 1;
 
-  param.name = "MUL_TOOM44_THRESHOLD";
-  param.min_size = MAX (mul_toom33_threshold, MPN_TOOM44_MUL_MINSIZE);
-  param.max_size = MUL_TOOM44_THRESHOLD_LIMIT-1;
-  one (&mul_toom44_threshold, &param);
+  /* Threshold sequence loop.  Disable functions that would be used in a very
+     narrow range, re-measuring things when that happens.  */
+  something_changed = 1;
+  while (something_changed)
+    {
+      something_changed = 0;
 
-  param.name = "MUL_TOOM6H_THRESHOLD";
-  param.min_size = MAX (mul_toom44_threshold, MPN_TOOM6H_MUL_MINSIZE);
-  param.max_size = MUL_TOOM6H_THRESHOLD_LIMIT-1;
-  one (&mul_toom6h_threshold, &param);
+	next_toom_start = mul_toom22_threshold;
 
-  param.name = "MUL_TOOM8H_THRESHOLD";
-  param.min_size = MAX (mul_toom6h_threshold, MPN_TOOM8H_MUL_MINSIZE);
-  param.max_size = MUL_TOOM8H_THRESHOLD_LIMIT-1;
-  one (&mul_toom8h_threshold, &param);
+	if (mul_toom33_threshold != 0)
+	  {
+	    param.name = "MUL_TOOM33_THRESHOLD";
+	    param.min_size = MAX (next_toom_start, MPN_TOOM33_MUL_MINSIZE);
+	    param.max_size = MUL_TOOM33_THRESHOLD_LIMIT-1;
+	    one (&mul_toom33_threshold, &param);
+
+	    if (next_toom_start * 1.05 >= mul_toom33_threshold)
+	      {
+		mul_toom33_threshold = 0;
+		something_changed = 1;
+	      }
+	  }
+
+	next_toom_start = MAX (next_toom_start, mul_toom33_threshold);
+
+	if (mul_toom44_threshold != 0)
+	  {
+	    param.name = "MUL_TOOM44_THRESHOLD";
+	    param.min_size = MAX (next_toom_start, MPN_TOOM44_MUL_MINSIZE);
+	    param.max_size = MUL_TOOM44_THRESHOLD_LIMIT-1;
+	    one (&mul_toom44_threshold, &param);
+
+	    if (next_toom_start * 1.05 >= mul_toom44_threshold)
+	      {
+		mul_toom44_threshold = 0;
+		something_changed = 1;
+	      }
+	  }
+
+	next_toom_start = MAX (next_toom_start, mul_toom44_threshold);
+
+	if (mul_toom6h_threshold != 0)
+	  {
+	    param.name = "MUL_TOOM6H_THRESHOLD";
+	    param.min_size = MAX (next_toom_start, MPN_TOOM6H_MUL_MINSIZE);
+	    param.max_size = MUL_TOOM6H_THRESHOLD_LIMIT-1;
+	    one (&mul_toom6h_threshold, &param);
+
+	    if (next_toom_start * 1.05 >= mul_toom6h_threshold)
+	      {
+		mul_toom6h_threshold = 0;
+		something_changed = 1;
+	      }
+	  }
+
+	next_toom_start = MAX (next_toom_start, mul_toom6h_threshold);
+
+	if (mul_toom8h_threshold != 0)
+	  {
+	    param.name = "MUL_TOOM8H_THRESHOLD";
+	    param.min_size = MAX (next_toom_start, MPN_TOOM8H_MUL_MINSIZE);
+	    param.max_size = MUL_TOOM8H_THRESHOLD_LIMIT-1;
+	    one (&mul_toom8h_threshold, &param);
+
+	    if (next_toom_start * 1.05 >= mul_toom8h_threshold)
+	      {
+		mul_toom8h_threshold = 0;
+		something_changed = 1;
+	      }
+	  }
+    }
+
+    print_define ("MUL_TOOM33_THRESHOLD", MUL_TOOM33_THRESHOLD);
+    print_define ("MUL_TOOM44_THRESHOLD", MUL_TOOM44_THRESHOLD);
+    print_define ("MUL_TOOM6H_THRESHOLD", MUL_TOOM6H_THRESHOLD);
+    print_define ("MUL_TOOM8H_THRESHOLD", MUL_TOOM8H_THRESHOLD);
 
   /* disabled until tuned */
   MUL_FFT_THRESHOLD = MP_SIZE_T_MAX;
@@ -1202,34 +1276,43 @@ tune_mul (void)
   param.function = speed_mpn_toom32_for_toom43_mul;
   param.function2 = speed_mpn_toom43_for_toom32_mul;
   param.name = "MUL_TOOM32_TO_TOOM43_THRESHOLD";
-  param.min_size = MPN_TOOM43_MUL_MINSIZE;
+  param.min_size = MPN_TOOM43_MUL_MINSIZE * 24 / 17;
   one (&thres, &param);
-  mul_toom32_to_toom43_threshold = 17*thres/24;
+  mul_toom32_to_toom43_threshold = thres * 17 / 24;
   print_define ("MUL_TOOM32_TO_TOOM43_THRESHOLD", mul_toom32_to_toom43_threshold);
 
   param.function = speed_mpn_toom32_for_toom53_mul;
   param.function2 = speed_mpn_toom53_for_toom32_mul;
   param.name = "MUL_TOOM32_TO_TOOM53_THRESHOLD";
-  param.min_size = MPN_TOOM53_MUL_MINSIZE;
+  param.min_size = MPN_TOOM53_MUL_MINSIZE * 30 / 19;
   one (&thres, &param);
-  mul_toom32_to_toom53_threshold = 19*thres/30;
+  mul_toom32_to_toom53_threshold = thres * 19 / 30;
   print_define ("MUL_TOOM32_TO_TOOM53_THRESHOLD", mul_toom32_to_toom53_threshold);
 
   param.function = speed_mpn_toom42_for_toom53_mul;
   param.function2 = speed_mpn_toom53_for_toom42_mul;
   param.name = "MUL_TOOM42_TO_TOOM53_THRESHOLD";
-  param.min_size = MPN_TOOM53_MUL_MINSIZE;
+  param.min_size = MPN_TOOM53_MUL_MINSIZE * 20 / 11;
   one (&thres, &param);
-  mul_toom42_to_toom53_threshold = 11*thres/20;
+  mul_toom42_to_toom53_threshold = thres * 11 / 20;
   print_define ("MUL_TOOM42_TO_TOOM53_THRESHOLD", mul_toom42_to_toom53_threshold);
 
   param.function = speed_mpn_toom42_mul;
   param.function2 = speed_mpn_toom63_mul;
   param.name = "MUL_TOOM42_TO_TOOM63_THRESHOLD";
-  param.min_size = MPN_TOOM63_MUL_MINSIZE;
+  param.min_size = MPN_TOOM63_MUL_MINSIZE * 2;
   one (&thres, &param);
-  mul_toom42_to_toom63_threshold = thres/2;
+  mul_toom42_to_toom63_threshold = thres / 2;
   print_define ("MUL_TOOM42_TO_TOOM63_THRESHOLD", mul_toom42_to_toom63_threshold);
+
+  /* Use ratio 5/6 when measuring, the middle of the range 2/3 to 1. */
+  param.function = speed_mpn_toom43_for_toom54_mul;
+  param.function2 = speed_mpn_toom54_for_toom43_mul;
+  param.name = "MUL_TOOM43_TO_TOOM54_THRESHOLD";
+  param.min_size = MPN_TOOM54_MUL_MINSIZE * 6 / 5;
+  one (&thres, &param);
+  mul_toom43_to_toom54_threshold = thres * 5 / 6;
+  print_define ("MUL_TOOM43_TO_TOOM54_THRESHOLD", mul_toom43_to_toom54_threshold);
 }
 
 
@@ -1276,6 +1359,18 @@ tune_mullo (void)
   print_define_remark ("MULLO_MUL_N_THRESHOLD", MP_SIZE_T_MAX,
                            "without FFT use mullo forever");
 #endif
+}
+
+void
+tune_mulmid (void)
+{
+  static struct param_t  param;
+
+  param.name = "MULMID_TOOM42_THRESHOLD";
+  param.function = speed_mpn_mulmid_n;
+  param.min_size = 4;
+  param.max_size = 100;
+  one (&mulmid_toom42_threshold, &param);
 }
 
 void
@@ -1367,29 +1462,83 @@ tune_sqr (void)
 
   {
     static struct param_t  param;
-    mp_size_t toom3_start = MAX (sqr_toom2_threshold, sqr_basecase_threshold);
+    mp_size_t next_toom_start;
+    int something_changed;
 
     param.function = speed_mpn_sqr;
+    param.noprint = 1;
 
-    param.name = "SQR_TOOM3_THRESHOLD";
-    param.min_size = MAX (toom3_start, MPN_TOOM3_SQR_MINSIZE);
-    param.max_size = SQR_TOOM3_THRESHOLD_LIMIT-1;
-    one (&sqr_toom3_threshold, &param);
+  /* Threshold sequence loop.  Disable functions that would be used in a very
+     narrow range, re-measuring things when that happens.  */
+    something_changed = 1;
+    while (something_changed)
+      {
+	something_changed = 0;
 
-    param.name = "SQR_TOOM4_THRESHOLD";
-    param.min_size = MAX (sqr_toom3_threshold, MPN_TOOM4_SQR_MINSIZE);
-    param.max_size = SQR_TOOM4_THRESHOLD_LIMIT-1;
-    one (&sqr_toom4_threshold, &param);
+	next_toom_start = MAX (sqr_toom2_threshold, sqr_basecase_threshold);
 
-    param.name = "SQR_TOOM6_THRESHOLD";
-    param.min_size = MAX (sqr_toom4_threshold, MPN_TOOM6_SQR_MINSIZE);
-    param.max_size = SQR_TOOM6_THRESHOLD_LIMIT-1;
-    one (&sqr_toom6_threshold, &param);
+	sqr_toom3_threshold = SQR_TOOM3_THRESHOLD_LIMIT;
+	param.name = "SQR_TOOM3_THRESHOLD";
+	param.min_size = MAX (next_toom_start, MPN_TOOM3_SQR_MINSIZE);
+	param.max_size = SQR_TOOM3_THRESHOLD_LIMIT-1;
+	one (&sqr_toom3_threshold, &param);
 
-    param.name = "SQR_TOOM8_THRESHOLD";
-    param.min_size = MAX (sqr_toom6_threshold, MPN_TOOM8_SQR_MINSIZE);
-    param.max_size = SQR_TOOM8_THRESHOLD_LIMIT-1;
-    one (&sqr_toom8_threshold, &param);
+	next_toom_start = MAX (next_toom_start, sqr_toom3_threshold);
+
+	if (sqr_toom4_threshold != 0)
+	  {
+	    param.name = "SQR_TOOM4_THRESHOLD";
+	    sqr_toom4_threshold = SQR_TOOM4_THRESHOLD_LIMIT;
+	    param.min_size = MAX (next_toom_start, MPN_TOOM4_SQR_MINSIZE);
+	    param.max_size = SQR_TOOM4_THRESHOLD_LIMIT-1;
+	    one (&sqr_toom4_threshold, &param);
+
+	    if (next_toom_start * 1.05 >= sqr_toom4_threshold)
+	      {
+		sqr_toom4_threshold = 0;
+		something_changed = 1;
+	      }
+	  }
+
+	next_toom_start = MAX (next_toom_start, sqr_toom4_threshold);
+
+	if (sqr_toom6_threshold != 0)
+	  {
+	    param.name = "SQR_TOOM6_THRESHOLD";
+	    sqr_toom6_threshold = SQR_TOOM6_THRESHOLD_LIMIT;
+	    param.min_size = MAX (next_toom_start, MPN_TOOM6_SQR_MINSIZE);
+	    param.max_size = SQR_TOOM6_THRESHOLD_LIMIT-1;
+	    one (&sqr_toom6_threshold, &param);
+
+	    if (next_toom_start * 1.05 >= sqr_toom6_threshold)
+	      {
+		sqr_toom6_threshold = 0;
+		something_changed = 1;
+	      }
+	  }
+
+	next_toom_start = MAX (next_toom_start, sqr_toom6_threshold);
+
+	if (sqr_toom8_threshold != 0)
+	  {
+	    param.name = "SQR_TOOM8_THRESHOLD";
+	    sqr_toom8_threshold = SQR_TOOM8_THRESHOLD_LIMIT;
+	    param.min_size = MAX (next_toom_start, MPN_TOOM8_SQR_MINSIZE);
+	    param.max_size = SQR_TOOM8_THRESHOLD_LIMIT-1;
+	    one (&sqr_toom8_threshold, &param);
+
+	    if (next_toom_start * 1.05 >= sqr_toom8_threshold)
+	      {
+		sqr_toom8_threshold = 0;
+		something_changed = 1;
+	      }
+	  }
+      }
+
+    print_define ("SQR_TOOM3_THRESHOLD", SQR_TOOM3_THRESHOLD);
+    print_define ("SQR_TOOM4_THRESHOLD", SQR_TOOM4_THRESHOLD);
+    print_define ("SQR_TOOM6_THRESHOLD", SQR_TOOM6_THRESHOLD);
+    print_define ("SQR_TOOM8_THRESHOLD", SQR_TOOM8_THRESHOLD);
   }
 }
 
@@ -1434,7 +1583,7 @@ tune_mu_div (void)
     param.name = "MU_DIV_QR_THRESHOLD";
     param.function = speed_mpn_dcpi1_div_qr;
     param.function2 = speed_mpn_mu_div_qr;
-    param.min_size = 6;
+    param.min_size = mul_toom22_threshold;
     param.max_size = 5000;
     param.step_factor = 0.02;
     one (&mu_div_qr_threshold, &param);
@@ -1444,7 +1593,7 @@ tune_mu_div (void)
     param.name = "MU_DIVAPPR_Q_THRESHOLD";
     param.function = speed_mpn_dcpi1_divappr_q;
     param.function2 = speed_mpn_mu_divappr_q;
-    param.min_size = 6;
+    param.min_size = mul_toom22_threshold;
     param.max_size = 5000;
     param.step_factor = 0.02;
     one (&mu_divappr_q_threshold, &param);
@@ -1493,7 +1642,7 @@ tune_mu_bdiv (void)
     param.name = "MU_BDIV_QR_THRESHOLD";
     param.function = speed_mpn_dcpi1_bdiv_qr;
     param.function2 = speed_mpn_mu_bdiv_qr;
-    param.min_size = 4;
+    param.min_size = mul_toom22_threshold;
     param.max_size = 5000;
     param.step_factor = 0.02;
     one (&mu_bdiv_qr_threshold, &param);
@@ -1503,7 +1652,7 @@ tune_mu_bdiv (void)
     param.name = "MU_BDIV_Q_THRESHOLD";
     param.function = speed_mpn_dcpi1_bdiv_q;
     param.function2 = speed_mpn_mu_bdiv_q;
-    param.min_size = 4;
+    param.min_size = mul_toom22_threshold;
     param.max_size = 5000;
     param.step_factor = 0.02;
     one (&mu_bdiv_q_threshold, &param);
@@ -1566,6 +1715,7 @@ tune_redc (void)
     param.min_is_always = 1;
     param.max_size = TUNE_REDC_2_MAX;
     param.noprint = 1;
+    param.stop_factor = 1.5;
     one (&redc_1_to_redc_2_threshold, &param);
   }
   {
@@ -1577,17 +1727,24 @@ tune_redc (void)
     param.noprint = 1;
     one (&redc_2_to_redc_n_threshold, &param);
   }
-  if (redc_1_to_redc_2_threshold >= TUNE_REDC_2_MAX - 1)
+  if (redc_1_to_redc_2_threshold >= redc_2_to_redc_n_threshold)
     {
-      /* Disable REDC_2.  This is not supposed to happen.  */
-      print_define ("REDC_1_TO_REDC_2_THRESHOLD", REDC_2_TO_REDC_N_THRESHOLD);
-      print_define_remark ("REDC_2_TO_REDC_N_THRESHOLD", 0, "anomaly: never REDC_2");
+      redc_2_to_redc_n_threshold = 0;	/* disable redc_2 */
+
+      /* Never use redc2, measure redc_1 -> redc_n cutoff, store result as
+	 REDC_1_TO_REDC_2_THRESHOLD.  */
+      {
+	static struct param_t  param;
+	param.name = "REDC_1_TO_REDC_2_THRESHOLD";
+	param.function = speed_mpn_redc_1;
+	param.function2 = speed_mpn_redc_n;
+	param.min_size = 16;
+	param.noprint = 1;
+	one (&redc_1_to_redc_2_threshold, &param);
+      }
     }
-  else
-    {
-      print_define ("REDC_1_TO_REDC_2_THRESHOLD", REDC_1_TO_REDC_2_THRESHOLD);
-      print_define ("REDC_2_TO_REDC_N_THRESHOLD", REDC_2_TO_REDC_N_THRESHOLD);
-    }
+  print_define ("REDC_1_TO_REDC_2_THRESHOLD", REDC_1_TO_REDC_2_THRESHOLD);
+  print_define ("REDC_2_TO_REDC_N_THRESHOLD", REDC_2_TO_REDC_N_THRESHOLD);
 #else
   {
     static struct param_t  param;
@@ -1622,6 +1779,30 @@ tune_hgcd (void)
 }
 
 void
+tune_hgcd_appr (void)
+{
+  static struct param_t  param;
+  param.name = "HGCD_APPR_THRESHOLD";
+  param.function = speed_mpn_hgcd_appr;
+  /* We seem to get strange results for small sizes */
+  param.min_size = 50;
+  param.stop_since_change = 150;
+  one (&hgcd_appr_threshold, &param);
+}
+
+void
+tune_hgcd_reduce (void)
+{
+  static struct param_t  param;
+  param.name = "HGCD_REDUCE_THRESHOLD";
+  param.function = speed_mpn_hgcd_reduce;
+  param.min_size = 30;
+  param.max_size = 7000;
+  param.step_factor = 0.04;
+  one (&hgcd_reduce_threshold, &param);
+}
+
+void
 tune_gcd_dc (void)
 {
   static struct param_t  param;
@@ -1645,6 +1826,134 @@ tune_gcdext_dc (void)
   one (&gcdext_dc_threshold, &param);
 }
 
+/* In tune_powm_sec we compute the table used by the win_size function.  The
+   cutoff points are in exponent bits, disregarding other operand sizes.  It is
+   not possible to use the one framework since it currently uses a granilarity
+   of full limbs.
+*/
+
+/* This win_size replaces the variant in the powm code, allowing us to
+   control k in the k-ary algorithms.  */
+int winsize;
+int
+win_size (mp_bitcnt_t eb)
+{
+  return winsize;
+}
+
+void
+tune_powm_sec (void)
+{
+  mp_size_t n;
+  int k, i;
+  mp_size_t itch;
+  mp_bitcnt_t nbits, nbits_next, possible_nbits_cutoff;
+  const int n_max = 3000 / GMP_NUMB_BITS;
+  const int n_measurements = 5;
+  mp_ptr rp, bp, ep, mp, tp;
+  double ttab[n_measurements], tk, tkp1;
+  TMP_DECL;
+  TMP_MARK;
+
+  possible_nbits_cutoff = 0;
+
+  k = 1;
+
+  winsize = 10;			/* the itch function needs this */
+  itch = mpn_powm_sec_itch (n_max, n_max, n_max);
+
+  rp = TMP_ALLOC_LIMBS (n_max);
+  bp = TMP_ALLOC_LIMBS (n_max);
+  ep = TMP_ALLOC_LIMBS (n_max);
+  mp = TMP_ALLOC_LIMBS (n_max);
+  tp = TMP_ALLOC_LIMBS (itch);
+
+  mpn_random (bp, n_max);
+  mpn_random (mp, n_max);
+  mp[0] |= 1;
+
+/* How about taking the M operand size into account?
+
+   An operation R=powm(B,E,N) will take time O(log(E)*M(log(N))) (assuming
+   B = O(M)).
+
+   Using k-ary and no sliding window, the precomputation will need time
+   O(2^(k-1)*M(log(N))) and the main computation will need O(log(E)*S(N)) +
+   O(log(E)/k*M(N)), for the squarings, multiplications, respectively.
+
+   An operation R=powm_sec(B,E,N) will take time like powm.
+
+   Using k-ary, the precomputation will need time O(2^k*M(log(N))) and the
+   main computation will need O(log(E)*S(N)) + O(log(E)/k*M(N)) +
+   O(log(E)/k*2^k*log(N)), for the squarings, multiplications, and full
+   table reads, respectively.  */
+
+  printf ("#define POWM_SEC_TABLE  ");
+
+  for (nbits = 1; nbits <= n_max * GMP_NUMB_BITS; )
+    {
+      n = (nbits - 1) / GMP_NUMB_BITS + 1;
+
+      /* Generate E such that sliding-window for k and k+1 works equally
+	 well/poorly (but sliding is not used in powm_sec, of course). */
+      for (i = 0; i < n; i++)
+	ep[i] = ~CNST_LIMB(0);
+
+      /* Truncate E to be exactly nbits large.  */
+      if (nbits % GMP_NUMB_BITS != 0)
+	mpn_rshift (ep, ep, n, GMP_NUMB_BITS - nbits % GMP_NUMB_BITS);
+      ep[n - 1] |= CNST_LIMB(1) << (nbits - 1) % GMP_NUMB_BITS;
+
+      winsize = k;
+      for (i = 0; i < n_measurements; i++)
+	{
+	  speed_starttime ();
+	  mpn_powm_sec (rp, bp, n, ep, n, mp, n, tp);
+	  ttab[i] = speed_endtime ();
+	}
+      tk = median (ttab, n_measurements);
+
+      winsize = k + 1;
+      speed_starttime ();
+      for (i = 0; i < n_measurements; i++)
+	{
+	  speed_starttime ();
+	  mpn_powm_sec (rp, bp, n, ep, n, mp, n, tp);
+	  ttab[i] = speed_endtime ();
+	}
+      tkp1 = median (ttab, n_measurements);
+/*
+      printf ("testing: %ld, %d", nbits, k, ep[n-1]);
+      printf ("   %10.5f  %10.5f\n", tk, tkp1);
+*/
+      if (tkp1 < tk)
+	{
+	  if (possible_nbits_cutoff)
+	    {
+	      /* Two consecutive sizes indicate k increase, obey.  */
+	      if (k > 1)
+		printf (",");
+	      printf ("%ld", (long) possible_nbits_cutoff);
+	      k++;
+	      possible_nbits_cutoff = 0;
+	    }
+	  else
+	    {
+	      /* One measurement indicate k increase, save nbits for further
+		 consideration.  */
+	      possible_nbits_cutoff = nbits;
+	    }
+	}
+      else
+	possible_nbits_cutoff = 0;
+
+      nbits_next = nbits * 65 / 64;
+      nbits = nbits_next + (nbits_next == nbits);
+    }
+  printf ("\n");
+  TMP_FREE;
+}
+
 
 /* size_extra==1 reflects the fact that with high<divisor one division is
    always skipped.  Forcing high<divisor while testing ensures consistency
@@ -1664,7 +1973,7 @@ tune_gcdext_dc (void)
   param.stop_factor = 2.0;
 
 
-double (*tuned_speed_mpn_divrem_1) __GMP_PROTO ((struct speed_params *));
+double (*tuned_speed_mpn_divrem_1) (struct speed_params *);
 
 void
 tune_divrem_1 (void)
@@ -1736,6 +2045,27 @@ tune_mod_1 (void)
       return;
     }
 
+  if (!HAVE_NATIVE_mpn_mod_1_1p)
+    {
+      static struct param_t  param;
+      double   t1, t2;
+
+      s.size = 10;
+      s.r = randlimb_half ();
+
+      t1 = tuneup_measure (speed_mpn_mod_1_1_1, &param, &s);
+      t2 = tuneup_measure (speed_mpn_mod_1_1_2, &param, &s);
+
+      if (t1 == -1.0 || t2 == -1.0)
+	{
+	  printf ("Oops, can't measure all mpn_mod_1_1 methods at %ld\n",
+		  (long) s.size);
+	  abort ();
+	}
+      mod_1_1p_method = (t1 < t2) ? 1 : 2;
+      print_define ("MOD_1_1P_METHOD", mod_1_1p_method);
+    }
+
   if (UDIV_PREINV_ALWAYS)
     {
       print_define ("MOD_1_NORM_THRESHOLD", 0L);
@@ -1772,50 +2102,58 @@ tune_mod_1 (void)
     param.min_size = 2;
     one (&mod_1n_to_mod_1_1_threshold, &param);
   }
+
   {
     static struct param_t  param;
 
     param.check_size = 256;
-
-    s.r = randlimb_norm () / 5;
-    param.function = speed_mpn_mod_1_tune;
+    s.r = randlimb_half ();
     param.noprint = 1;
 
-    param.name = "MOD_1U_TO_MOD_1_1_THRESHOLD";
-    param.min_size = 2;
-    one (&mod_1u_to_mod_1_1_threshold, &param);
-
+    param.function = speed_mpn_mod_1_1;
+    param.function2 = speed_mpn_mod_1_2;
+    param.min_is_always = 1;
     param.name = "MOD_1_1_TO_MOD_1_2_THRESHOLD";
-    param.min_size = mod_1u_to_mod_1_1_threshold;
+    param.min_size = 2;
     one (&mod_1_1_to_mod_1_2_threshold, &param);
 
-    if (mod_1u_to_mod_1_1_threshold + 2 >= mod_1_1_to_mod_1_2_threshold)
-      {
-	/* Disable mod_1_1, mod_1_2 is always faster.  Measure when to switch
-	   (from mod_1_unnorm) to mod_1_2.  */
-	mod_1_1_to_mod_1_2_threshold = 0;
-
-	/* This really measures mod_1u -> mod_1_2 */
-	param.min_size = 1;
-	one (&mod_1u_to_mod_1_1_threshold, &param);
-      }
-    print_define_remark ("MOD_1U_TO_MOD_1_1_THRESHOLD", mod_1u_to_mod_1_1_threshold, NULL);
-
+    param.function = speed_mpn_mod_1_2;
+    param.function2 = speed_mpn_mod_1_4;
+    param.min_is_always = 1;
     param.name = "MOD_1_2_TO_MOD_1_4_THRESHOLD";
-    param.min_size = mod_1_1_to_mod_1_2_threshold;
+    param.min_size = 1;
     one (&mod_1_2_to_mod_1_4_threshold, &param);
 
-    if (mod_1_1_to_mod_1_2_threshold + 2 >= mod_1_2_to_mod_1_4_threshold)
+    if (mod_1_1_to_mod_1_2_threshold >= mod_1_2_to_mod_1_4_threshold)
       {
-	/* Disable mod_1_2, mod_1_4 is always faster.  Measure when to switch
-	   (from mod_1_unnorm or mod_1_1) to mod_1_4.  */
+	/* Never use mod_1_2, measure mod_1_1 -> mod_1_4 */
 	mod_1_2_to_mod_1_4_threshold = 0;
 
-	param.min_size = 1;
+	param.function = speed_mpn_mod_1_1;
+	param.function2 = speed_mpn_mod_1_4;
+	param.min_is_always = 1;
+	param.name = "MOD_1_1_TO_MOD_1_4_THRESHOLD fake";
+	param.min_size = 2;
 	one (&mod_1_1_to_mod_1_2_threshold, &param);
       }
-    print_define_remark ("MOD_1_1_TO_MOD_1_2_THRESHOLD", mod_1_1_to_mod_1_2_threshold, NULL);
-    print_define_remark ("MOD_1_2_TO_MOD_1_4_THRESHOLD", mod_1_2_to_mod_1_4_threshold, NULL);
+
+    param.function = speed_mpn_mod_1_tune;
+    param.function2 = NULL;
+    param.name = "MOD_1U_TO_MOD_1_1_THRESHOLD";
+    param.min_size = 2;
+    param.min_is_always = 0;
+    one (&mod_1u_to_mod_1_1_threshold, &param);
+
+    if (mod_1u_to_mod_1_1_threshold >= mod_1_1_to_mod_1_2_threshold)
+      mod_1_1_to_mod_1_2_threshold = 0;
+    if (mod_1u_to_mod_1_1_threshold >= mod_1_2_to_mod_1_4_threshold)
+      mod_1_2_to_mod_1_4_threshold = 0;
+
+    print_define_remark ("MOD_1U_TO_MOD_1_1_THRESHOLD", mod_1u_to_mod_1_1_threshold, NULL);
+    print_define_remark ("MOD_1_1_TO_MOD_1_2_THRESHOLD", mod_1_1_to_mod_1_2_threshold,
+			 mod_1_1_to_mod_1_2_threshold == 0 ? "never mpn_mod_1_1p" : NULL);
+    print_define_remark ("MOD_1_2_TO_MOD_1_4_THRESHOLD", mod_1_2_to_mod_1_4_threshold,
+			 mod_1_2_to_mod_1_4_threshold == 0 ? "never mpn_mod_1s_2p" : NULL);
   }
 
   {
@@ -1948,6 +2286,16 @@ tune_divrem_2 (void)
   one (&divrem_2_threshold, &param);
 }
 
+void
+tune_div_qr_2 (void)
+{
+  static struct param_t  param;
+  param.name = "DIV_QR_2_PI2_THRESHOLD";
+  param.function = speed_mpn_div_qr_2n;
+  param.check_size = 500;
+  param.min_size = 4;
+  one (&div_qr_2_pi2_threshold, &param);
+}
 
 /* mpn_divexact_1 is vaguely expected to be used on smallish divisors, so
    tune for that.  Its speed can differ on odd or even divisor, so take an
@@ -2091,7 +2439,7 @@ void
 tune_jacobi_base (void)
 {
   static struct param_t  param;
-  double   t1, t2, t3;
+  double   t1, t2, t3, t4;
   int      method;
 
   s.size = GMP_LIMB_BITS * 3 / 4;
@@ -2108,19 +2456,25 @@ tune_jacobi_base (void)
   if (option_trace >= 1)
     printf ("size=%ld, mpn_jacobi_base_3 %.9f\n", (long) s.size, t3);
 
-  if (t1 == -1.0 || t2 == -1.0 || t3 == -1.0)
+  t4 = tuneup_measure (speed_mpn_jacobi_base_4, &param, &s);
+  if (option_trace >= 1)
+    printf ("size=%ld, mpn_jacobi_base_4 %.9f\n", (long) s.size, t4);
+
+  if (t1 == -1.0 || t2 == -1.0 || t3 == -1.0 || t4 == -1.0)
     {
       printf ("Oops, can't measure all mpn_jacobi_base methods at %ld\n",
               (long) s.size);
       abort ();
     }
 
-  if (t1 < t2 && t1 < t3)
+  if (t1 < t2 && t1 < t3 && t1 < t4)
     method = 1;
-  else if (t2 < t3)
+  else if (t2 < t3 && t2 < t4)
     method = 2;
-  else
+  else if (t3 < t4)
     method = 3;
+  else
+    method = 4;
 
   print_define ("JACOBI_BASE_METHOD", method);
 }
@@ -2178,8 +2532,7 @@ speed_mpn_pre_set_str (struct speed_params *s)
   for (i = 0; i < s->size; i++)
     str[i] = s->xp[i] % base;
 
-  wn = ((mp_size_t) (s->size / mp_bases[base].chars_per_bit_exactly))
-    / GMP_LIMB_BITS + 2;
+  LIMBS_PER_DIGIT_IN_BASE (wn, s->size, base);
   SPEED_TMP_ALLOC_LIMBS (wp, wn, s->align_wp);
 
   /* use this during development to check wn is big enough */
@@ -2282,6 +2635,25 @@ tune_fft_sqr (void)
 }
 
 void
+tune_fac_ui (void)
+{
+  static struct param_t  param;
+
+  param.function = speed_mpz_fac_ui_tune;
+
+  param.name = "FAC_DSC_THRESHOLD";
+  param.min_size = 70;
+  param.max_size = FAC_DSC_THRESHOLD_LIMIT;
+  one (&fac_dsc_threshold, &param);
+
+  param.name = "FAC_ODD_THRESHOLD";
+  param.min_size = 22;
+  param.stop_factor = 1.7;
+  param.min_is_always = 1;
+  one (&fac_odd_threshold, &param);
+}
+
+void
 all (void)
 {
   time_t  start_time, end_time;
@@ -2350,7 +2722,10 @@ all (void)
   tune_divrem_1 ();
   tune_mod_1 ();
   tune_preinv_divrem_1 ();
+#if 0
   tune_divrem_2 ();
+#endif
+  tune_div_qr_2 ();
   tune_divexact_1 ();
   tune_modexact_1_odd ();
   printf("\n");
@@ -2362,6 +2737,9 @@ all (void)
   printf("\n");
 
   tune_sqr ();
+  printf("\n");
+
+  tune_mulmid ();
   printf("\n");
 
   tune_mulmod_bnm1 ();
@@ -2393,8 +2771,13 @@ all (void)
   tune_mu_bdiv ();
   printf("\n");
 
+  tune_powm_sec ();
+  printf("\n");
+
   tune_matrix22_mul ();
   tune_hgcd ();
+  tune_hgcd_appr ();
+  tune_hgcd_reduce();
   tune_gcd_dc ();
   tune_gcdext_dc ();
   tune_jacobi_base ();
@@ -2402,6 +2785,9 @@ all (void)
 
   tune_get_str ();
   tune_set_str ();
+  printf("\n");
+
+  tune_fac_ui ();
   printf("\n");
 
   time (&end_time);

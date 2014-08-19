@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.23 2012/07/22 14:32:50 matt Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.23.2.1 2014/08/20 00:02:48 tls Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.23 2012/07/22 14:32:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.23.2.1 2014/08/20 00:02:48 tls Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -334,7 +334,7 @@ npe_attach(device_t parent, device_t self, void *arg)
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	/* callback function to reset MAC */
 	isc->macresetcbfunc = npeinit_resetcb;

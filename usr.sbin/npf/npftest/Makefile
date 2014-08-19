@@ -4,6 +4,10 @@
 #
 
 PROG=		npftest
+NOMAN=		# no man page
+
+WARNS=		5
+NOLINT=		# disabled (note: deliberately)
 
 SRCS=		npftest.c npfstream.c
 CPPFLAGS+=	-I${.CURDIR}
@@ -12,14 +16,18 @@ LIBNPFTEST!=	cd ${.CURDIR}/libnpftest && ${MAKE} -V .OBJDIR
 DPADD+=		${LIBNPFTEST}/libnpftest.a
 LDADD+=		-L${LIBNPFTEST} -lnpftest
 
-LDADD+=		-lrump -lrumpvfs -lrumpnet -lrumpnet_net -lrumpnet_npf
+LDADD+=		-lrump -lrumpvfs -lrumpnet -lrumpnet_net
 LDADD+=		-lrumpdev_bpf
 
-LDADD+=		-lpcap -lprop -lpthread
+.include <bsd.own.mk>
 
-WARNS=		4
-NOMAN=		# no man page
-NOLINT=		# disabled (note: deliberately)
+.if ${MKSLJIT} != "no"
+LDADD+=		-lrumpkern_sljit -lrumpnet_bpfjit
+.endif
+
+LDADD+=		-lrumpnet_npf
+
+LDADD+=		-lpcap -lprop -lpthread
 
 SUBDIR+=	libnpftest
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.6.2.1 2013/02/25 00:29:45 tls Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.6.2.2 2014/08/20 00:04:24 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -113,7 +113,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.6.2.1 2013/02/25 00:29:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.6.2.2 2014/08/20 00:04:24 tls Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 1.1.1.2 2012/07/22 13:45:27 darrenr Exp";
@@ -2894,10 +2894,11 @@ ipf_nat_newrdr(fr_info_t *fin, nat_t *nat, natinfo_t *ni)
 	 */
 	if (np->in_flags & IPN_SPLIT) {
 		in.s_addr = np->in_dnip;
+		inb.s_addr = htonl(in.s_addr);
 
 		if ((np->in_flags & (IPN_ROUNDR|IPN_STICKY)) == IPN_STICKY) {
 			hm = ipf_nat_hostmap(softn, NULL, fin->fin_src,
-					     fin->fin_dst, in, (u_32_t)dport);
+					     fin->fin_dst, inb, (u_32_t)dport);
 			if (hm != NULL) {
 				in.s_addr = hm->hm_ndstip.s_addr;
 				move = 0;
@@ -3004,7 +3005,7 @@ ipf_nat_newrdr(fr_info_t *fin, nat_t *nat, natinfo_t *ni)
 	nat->nat_osrcip = fin->fin_src;
 	if ((nat->nat_hm == NULL) && ((np->in_flags & IPN_STICKY) != 0))
 		nat->nat_hm = ipf_nat_hostmap(softn, np, fin->fin_src,
-					      fin->fin_dst, in, (u_32_t)dport);
+					      fin->fin_dst, inb, (u_32_t)dport);
 
 	if (flags & IPN_TCPUDP) {
 		nat->nat_odport = dport;
@@ -3244,12 +3245,9 @@ ipf_nat_finalise(fr_info_t *fin, nat_t *nat)
 	ipf_nat_softc_t *softn = softc->ipf_nat_soft;
 	u_32_t sum1, sum2, sumd;
 	frentry_t *fr;
-	u_32_t flags;
 #if SOLARIS && defined(_KERNEL) && (SOLARIS2 >= 6) && defined(ICK_M_CTL_MAGIC)
 	qpktinfo_t *qpi = fin->fin_qpi;
 #endif
-
-	flags = nat->nat_flags;
 
 	switch (nat->nat_pr[0])
 	{
@@ -3445,7 +3443,7 @@ ipf_nat_insert(ipf_main_softc_t *softc, ipf_nat_softc_t *softn, nat_t *nat)
 	}
 
 	ret = ipf_nat_hashtab_add(softc, softn, nat);
-	if (ret == -1)
+	if (ret != 0)
 		MUTEX_DESTROY(&nat->nat_lock);
 	return ret;
 }
@@ -3557,8 +3555,8 @@ ipf_nat_icmperrorlookup(fr_info_t *fin, int dir)
 {
 	ipf_main_softc_t *softc = fin->fin_main_soft;
 	ipf_nat_softc_t *softn = softc->ipf_nat_soft;
-	int flags = 0, type, minlen;
-	icmphdr_t *icmp, *orgicmp;
+	int flags = 0, minlen;
+	icmphdr_t *orgicmp;
 	nat_stat_side_t *nside;
 	tcphdr_t *tcp = NULL;
 	u_short data[2];
@@ -3566,8 +3564,6 @@ ipf_nat_icmperrorlookup(fr_info_t *fin, int dir)
 	ip_t *oip;
 	u_int p;
 
-	icmp = fin->fin_dp;
-	type = icmp->icmp_type;
 	nside = &softn->ipf_nat_stats.ns_side[fin->fin_out];
 	/*
 	 * Does it at least have the return (basic) IP header ?
@@ -4018,9 +4014,7 @@ ipf_nat_inlookup(fr_info_t *fin, u_int flags, u_int p, struct in_addr src,
 	ipf_main_softc_t *softc = fin->fin_main_soft;
 	ipf_nat_softc_t *softn = softc->ipf_nat_soft;
 	u_short sport, dport;
-	grehdr_t *gre;
 	ipnat_t *ipn;
-	u_int sflags;
 	nat_t *nat;
 	int nflags;
 	u_32_t dst;
@@ -4028,9 +4022,7 @@ ipf_nat_inlookup(fr_info_t *fin, u_int flags, u_int p, struct in_addr src,
 	u_int hv, rhv;
 
 	ifp = fin->fin_ifp;
-	gre = NULL;
 	dst = mapdst.s_addr;
-	sflags = flags & NAT_TCPUDPICMP;
 
 	switch (p)
 	{
@@ -4089,7 +4081,7 @@ ipf_nat_inlookup(fr_info_t *fin, u_int flags, u_int p, struct in_addr src,
 					continue;
 
 			} else if (p == IPPROTO_ICMP) {
-				if (nat->nat_osport != dport) {
+				if (nat->nat_oicmpid != dport) {
 					continue;
 				}
 			}
@@ -4114,7 +4106,7 @@ ipf_nat_inlookup(fr_info_t *fin, u_int flags, u_int p, struct in_addr src,
 					continue;
 
 			} else if (p == IPPROTO_ICMP) {
-				if (nat->nat_osport != dport) {
+				if (nat->nat_nicmpid != dport) {
 					continue;
 				}
 			}
@@ -4355,14 +4347,12 @@ ipf_nat_outlookup(fr_info_t *fin, u_int flags, u_int p, struct in_addr src,
 	ipf_main_softc_t *softc = fin->fin_main_soft;
 	ipf_nat_softc_t *softn = softc->ipf_nat_soft;
 	u_short sport, dport;
-	u_int sflags;
 	ipnat_t *ipn;
 	nat_t *nat;
 	void *ifp;
 	u_int hv;
 
 	ifp = fin->fin_ifp;
-	sflags = flags & IPN_TCPUDPICMP;
 	sport = 0;
 	dport = 0;
 
@@ -4418,7 +4408,7 @@ ipf_nat_outlookup(fr_info_t *fin, u_int flags, u_int p, struct in_addr src,
 					continue;
 
 			} else if (p == IPPROTO_ICMP) {
-				if (nat->nat_osport != dport) {
+				if (nat->nat_nicmpid != dport) {
 					continue;
 				}
 			}
@@ -4438,7 +4428,7 @@ ipf_nat_outlookup(fr_info_t *fin, u_int flags, u_int p, struct in_addr src,
 					continue;
 
 			} else if (p == IPPROTO_ICMP) {
-				if (nat->nat_osport != dport) {
+				if (nat->nat_oicmpid != dport) {
 					continue;
 				}
 			}
@@ -4783,7 +4773,6 @@ ipf_nat_checkout(fr_info_t *fin, u_32_t *passp)
 	struct ifnet *ifp, *sifp;
 	ipf_main_softc_t *softc;
 	ipf_nat_softc_t *softn;
-	icmphdr_t *icmp = NULL;
 	tcphdr_t *tcp = NULL;
 	int rval, natfailed;
 	u_int nflags = 0;
@@ -4829,8 +4818,6 @@ ipf_nat_checkout(fr_info_t *fin, u_32_t *passp)
 			nflags = IPN_UDP;
 			break;
 		case IPPROTO_ICMP :
-			icmp = fin->fin_dp;
-
 			/*
 			 * This is an incoming packet, so the destination is
 			 * the icmp_id and the source port equals 0
@@ -5197,9 +5184,18 @@ ipf_nat_out(fr_info_t *fin, nat_t *nat, int natadd, u_32_t nflags)
 			}
 		}
 
-		if ((nat->nat_nsport != 0) && (nflags & IPN_ICMPQUERY)) {
+		if ((nat->nat_oicmpid != 0) && (nflags & IPN_ICMPQUERY)) {
 			icmp = fin->fin_dp;
-			icmp->icmp_id = nat->nat_nicmpid;
+
+			switch (nat->nat_dir)
+			{
+			case NAT_OUTBOUND :
+				icmp->icmp_id = nat->nat_nicmpid;
+				break;
+			case NAT_INBOUND :
+				icmp->icmp_id = nat->nat_oicmpid;
+				break;
+			}
 		}
 
 		csump = ipf_nat_proto(fin, nat, nflags);
@@ -5665,10 +5661,18 @@ ipf_nat_in(fr_info_t *fin, nat_t *nat, int natadd, u_32_t nflags)
 		}
 
 
-		if ((nat->nat_odport != 0) && (nflags & IPN_ICMPQUERY)) {
+		if ((nat->nat_oicmpid != 0) && (nflags & IPN_ICMPQUERY)) {
 			icmp = fin->fin_dp;
 
-			icmp->icmp_id = nat->nat_nicmpid;
+			switch (nat->nat_dir)
+			{
+			case NAT_INBOUND :
+				icmp->icmp_id = nat->nat_nicmpid;
+				break;
+			case NAT_OUTBOUND :
+				icmp->icmp_id = nat->nat_oicmpid;
+				break;
+			}
 		}
 
 		csump = ipf_nat_proto(fin, nat, nflags);
@@ -7917,13 +7921,13 @@ ipf_nat_rehash(ipf_main_softc_t *softc, ipftuneable_t *t, ipftuneval_t *p)
 	 * the outbound lookup table and the hash chain length for each.
 	 */
 	KMALLOCS(newtab[0], nat_t **, newsize * sizeof(nat_t *));
-	if (newtab == NULL) {
+	if (newtab[0] == NULL) {
 		error = 60063;
 		goto badrehash;
 	}
 
 	KMALLOCS(newtab[1], nat_t **, newsize * sizeof(nat_t *));
-	if (newtab == NULL) {
+	if (newtab[1] == NULL) {
 		error = 60064;
 		goto badrehash;
 	}

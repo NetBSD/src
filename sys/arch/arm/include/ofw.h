@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.h,v 1.3 2009/03/14 14:45:55 dsl Exp $	*/
+/*	$NetBSD: ofw.h,v 1.3.22.1 2014/08/20 00:02:46 tls Exp $	*/
 
 /*
  * Copyright 1997
@@ -33,8 +33,8 @@
  *    even if advised of the possibility of such damage.
  */
 
-#ifndef _MACHINE_OFW_H_
-#define _MACHINE_OFW_H_
+#ifndef _ARM_OFW_H_
+#define _ARM_OFW_H_
 
 
 /* Virtual address range reserved for OFW. */
@@ -67,4 +67,4 @@ extern void cpu_reboot(int, char *);
 extern void ofrootfound(void);
 #endif
 
-#endif /* !_MACHINE_OFW_H_ */
+#endif /* !_ARM_OFW_H_ */

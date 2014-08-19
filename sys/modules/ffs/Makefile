@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2012/05/10 07:51:34 riastradh Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 2014/08/20 00:04:33 tls Exp $
 
 .include "../Makefile.inc"
 
@@ -10,7 +10,7 @@ CPPFLAGS+=      -DUFS_DIRHASH -DFFS_EI -DWAPBL -DAPPLE_UFS -DQUOTA -DQUOTA2
 CWARNFLAGS.clang=	-Wno-conversion
 
 .PATH:	${S}/ufs/ufs
-SRCS=	ufs_bmap.c ufs_dirhash.c ufs_extattr.c ufs_ihash.c ufs_inode.c \
+SRCS=	ufs_bmap.c ufs_dirhash.c ufs_extattr.c ufs_inode.c \
 	ufs_lookup.c ufs_quota.c ufs_quota1.c ufs_quota2.c ufs_rename.c \
 	ufs_vfsops.c ufs_vnops.c ufs_wapbl.c quota2_subr.c
 

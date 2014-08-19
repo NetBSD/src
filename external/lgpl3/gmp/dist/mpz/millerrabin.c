@@ -30,9 +30,9 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp.h"
 #include "gmp-impl.h"
 
-static int millerrabin __GMP_PROTO ((mpz_srcptr, mpz_srcptr,
-				     mpz_ptr, mpz_ptr,
-				     mpz_srcptr, unsigned long int));
+static int millerrabin (mpz_srcptr, mpz_srcptr,
+			mpz_ptr, mpz_ptr,
+			mpz_srcptr, unsigned long int);
 
 int
 mpz_millerrabin (mpz_srcptr n, int reps)
@@ -91,7 +91,7 @@ mpz_millerrabin (mpz_srcptr n, int reps)
 
 static int
 millerrabin (mpz_srcptr n, mpz_srcptr nm1, mpz_ptr x, mpz_ptr y,
-             mpz_srcptr q, unsigned long int k)
+	     mpz_srcptr q, unsigned long int k)
 {
   unsigned long int i;
 

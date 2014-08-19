@@ -1,6 +1,6 @@
 /* Python interface to inferior thread event registries.
 
-   Copyright (C) 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,10 @@
 #include "command.h"
 #include "py-events.h"
 
-static PyTypeObject eventregistry_object_type;
+events_object gdb_py_events;
+
+static PyTypeObject eventregistry_object_type
+    CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("eventregistry_object");
 
 /* Implementation of EventRegistry.connect () -> NULL.
    Add FUNCTION to the list of listeners.  */
@@ -86,7 +89,10 @@ create_eventregistry_object (void)
 
   eventregistry_obj->callbacks = PyList_New (0);
   if (!eventregistry_obj->callbacks)
-    return NULL;
+    {
+      Py_DECREF (eventregistry_obj);
+      return NULL;
+    }
 
   return eventregistry_obj;
 }
@@ -95,20 +101,19 @@ static void
 evregpy_dealloc (PyObject *self)
 {
   Py_XDECREF (((eventregistry_object *) self)->callbacks);
-  self->ob_type->tp_free (self);
+  Py_TYPE (self)->tp_free (self);
 }
 
 /* Initialize the Python event registry code.  */
 
-void
+int
 gdbpy_initialize_eventregistry (void)
 {
   if (PyType_Ready (&eventregistry_object_type) < 0)
-    return;
+    return -1;
 
-  Py_INCREF (&eventregistry_object_type);
-  PyModule_AddObject (gdb_module, "EventRegistry",
-                      (PyObject *) &eventregistry_object_type);
+  return gdb_pymodule_addobject (gdb_module, "EventRegistry",
+				 (PyObject *) &eventregistry_object_type);
 }
 
 /* Retern the number of listeners currently connected to this
@@ -129,8 +134,7 @@ static PyMethodDef eventregistry_object_methods[] =
 
 static PyTypeObject eventregistry_object_type =
 {
-  PyObject_HEAD_INIT (NULL)
-  0,                                          /* ob_size */
+  PyVarObject_HEAD_INIT (NULL, 0)
   "gdb.EventRegistry",                        /* tp_name */
   sizeof (eventregistry_object),              /* tp_basicsize */
   0,                                          /* tp_itemsize */

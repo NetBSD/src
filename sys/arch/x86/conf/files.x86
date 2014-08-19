@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.79 2012/08/29 17:13:21 drochner Exp $
+#	$NetBSD: files.x86,v 1.79.2.1 2014/08/20 00:03:29 tls Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -89,6 +89,7 @@ file 	arch/x86/x86/pmap_tlb.c
 file	arch/x86/x86/procfs_machdep.c	procfs
 file	arch/x86/x86/sys_machdep.c
 file	arch/x86/x86/syscall.c
+file	arch/x86/x86/tsc.c
 file	arch/x86/x86/vm_machdep.c
 file	arch/x86/x86/x86_autoconf.c
 file	arch/x86/x86/x86_userconf.c		userconf
@@ -118,7 +119,11 @@ file	arch/x86/acpi/acpi_pdc.c	acpi
 file	arch/x86/acpi/acpi_wakeup.c	acpi
 file	arch/x86/acpi/acpi_machdep.c	acpi
 
-file	arch/x86/isa/isa_machdep.c	isa
+file	arch/x86/isa/isa_machdep.c
+
+# PC clock
+file 	arch/x86/isa/clock.c
+file	arch/x86/isa/rtc.c
 
 # Stubs for x86 routines not included in the system
 file	arch/x86/x86/x86_stub.c

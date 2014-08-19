@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.38.6.1 2013/06/23 06:20:26 tls Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.38.6.2 2014/08/20 00:04:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.38.6.1 2013/06/23 06:20:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.38.6.2 2014/08/20 00:04:36 tls Exp $");
 
 /*
  * IPsec output processing.
@@ -119,7 +119,9 @@ static int
 ipsec_reinject_ipstack(struct mbuf *m, int af)
 {
 #ifdef INET
-	struct ip * ip;
+#ifdef __FreeBSD__
+	struct ip *ip;
+#endif /* __FreeBSD_ */
 #endif /* INET */
 #if defined(INET) || defined(INET6)
 	int rv;
@@ -128,8 +130,8 @@ ipsec_reinject_ipstack(struct mbuf *m, int af)
 	switch (af) {
 #ifdef INET
 	case AF_INET:
-		ip = mtod(m, struct ip *);
 #ifdef __FreeBSD__
+		ip = mtod(m, struct ip *);
 		/* FreeBSD ip_output() expects ip_len, ip_off in host endian */
 		ip->ip_len = ntohs(ip->ip_len);
 		ip->ip_off = ntohs(ip->ip_off);

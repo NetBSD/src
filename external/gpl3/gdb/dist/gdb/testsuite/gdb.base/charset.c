@@ -1,7 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2001, 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright 2001-2014 Free Software Foundation, Inc.
 
    Contributed by Red Hat, originally written by Jim Blandy.
 
@@ -124,10 +123,6 @@ extern void malloc_stub (void);
 
 int main ()
 {
-#ifdef usestubs
-  set_debug_traps();
-  breakpoint();
-#endif
 
   malloc_stub ();
 

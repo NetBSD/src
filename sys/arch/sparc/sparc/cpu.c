@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.238.2.1 2012/11/20 03:01:44 tls Exp $ */
+/*	$NetBSD: cpu.c,v 1.238.2.2 2014/08/20 00:03:24 tls Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.238.2.1 2012/11/20 03:01:44 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.238.2.2 2014/08/20 00:03:24 tls Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.238.2.1 2012/11/20 03:01:44 tls Exp $");
 #include <sys/kernel.h>
 #include <sys/evcnt.h>
 #include <sys/xcall.h>
+#include <sys/ipi.h>
 #include <sys/cpu.h>
 
 #include <uvm/uvm.h>
@@ -110,7 +111,6 @@ struct cpu_softc {
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 int	cpu_arch;			/* sparc architecture version */
-char	cpu_model[100];			/* machine model (primary CPU) */
 extern char machine_model[];
 
 int	sparc_ncpus;			/* # of CPUs detected by PROM */
@@ -438,8 +438,7 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 	cpu_setup();
 	snprintf(buf, sizeof buf, "%s @ %s MHz, %s FPU",
 		cpi->cpu_longname, clockfreq(cpi->hz), cpi->fpu_name);
-	snprintf(cpu_model, sizeof cpu_model, "%s (%s)",
-		machine_model, buf);
+	cpu_setmodel("%s (%s)", machine_model, buf);
 	printf(": %s\n", buf);
 	cache_print(sc);
 
@@ -746,6 +745,8 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 			    "xcall(cpu%d,%p) from %p: couldn't ping cpus:",
 			    cpu_number(), fasttrap ? trap : func,
 			    __builtin_return_address(0));
+			if (wrsz > bufsz)
+				break;
 			bufsz -= wrsz;
 			bufp += wrsz;
 		}
@@ -759,11 +760,10 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 				if (i < 0) {
 					wrsz = snprintf(bufp, bufsz,
 							" cpu%d", cpi->ci_cpuid);
+					if (wrsz > bufsz)
+						break;
 					bufsz -= wrsz;
 					bufp += wrsz;
-					/* insanity */
-					if (bufsz < 0)
-						break;
 				} else {
 					done = 0;
 					break;
@@ -813,6 +813,21 @@ xc_send_ipi(struct cpu_info *target)
 	else
 		cpuset = CPUSET_ALL & ~(1 << cpuinfo.ci_cpuid);
 	XCALL0(xc_ipi_handler, cpuset);
+}
+
+void
+cpu_ipi(struct cpu_info *target)
+{
+	u_int cpuset;
+
+	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu() != target);
+
+	if (target)
+		cpuset = 1 << target->ci_cpuid;
+	else
+		cpuset = CPUSET_ALL & ~(1 << cpuinfo.ci_cpuid);
+	XCALL0(ipi_cpu_handler, cpuset);
 }
 
 /*
@@ -956,7 +971,8 @@ fpu_init(struct cpu_info *sc)
 	sc->fpupresent = 1;
 	sc->fpu_name = fsrtoname(sc->cpu_impl, sc->cpu_vers, fpuvers);
 	if (sc->fpu_name == NULL) {
-		sprintf(sc->fpu_namebuf, "version 0x%x", fpuvers);
+		snprintf(sc->fpu_namebuf, sizeof(sc->fpu_namebuf),
+		    "version 0x%x", fpuvers);
 		sc->fpu_name = sc->fpu_namebuf;
 	}
 }
@@ -1823,7 +1839,8 @@ int
 viking_module_error(void)
 {
 	uint64_t v;
-	int n = 0, fatal = 0;
+	int fatal = 0;
+	CPU_INFO_ITERATOR n;
 	struct cpu_info *cpi;
 
 	/* Report on MXCC error registers in each module */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.72.2.1 2013/06/23 06:20:18 tls Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.72.2.2 2014/08/20 00:03:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.72.2.1 2013/06/23 06:20:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.72.2.2 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1462,7 +1462,7 @@ sk_attach(device_t parent, device_t self, void *aux)
 	ether_ifattach(ifp, sc_if->sk_enaddr);
 
         rnd_attach_source(&sc->rnd_source, device_xname(sc->sk_dev),
-            RND_TYPE_NET, 0);
+            RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	if (pmf_device_register(self, NULL, sk_resume))
 		pmf_class_network_register(self, ifp);
@@ -1513,6 +1513,7 @@ skc_attach(device_t parent, device_t self, void *aux)
 	u_int32_t command;
 	const char *revstr;
 	const struct sysctlnode *node;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sk_dev = self;
 	aprint_naive("\n");
@@ -1626,7 +1627,7 @@ skc_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sk_intrhand = pci_intr_establish(pc, ih, IPL_NET, sk_intr, sc);
 	if (sc->sk_intrhand == NULL) {
 		aprint_error(": couldn't establish interrupt");
@@ -2304,9 +2305,12 @@ sk_intr_xmac(struct sk_if_softc	*sc_if)
 void
 sk_intr_yukon(struct sk_if_softc *sc_if)
 {
+#ifdef SK_DEBUG
 	int status;
 
-	status = SK_IF_READ_2(sc_if, 0, SK_GMAC_ISR);
+	status = 
+#endif
+		SK_IF_READ_2(sc_if, 0, SK_GMAC_ISR);
 
 	DPRINTFN(3, ("sk_intr_yukon status=%#x\n", status));
 }
@@ -3101,12 +3105,6 @@ SYSCTL_SETUP(sysctl_sk, "sysctl sk subtree setup")
 {
 	int rc;
 	const struct sysctlnode *node;
-
-	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
-	    0, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
-		goto err;
-	}
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    0, CTLTYPE_NODE, "sk",

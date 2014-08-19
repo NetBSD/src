@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.63 2011/02/11 23:47:49 christos Exp $
+.\" $NetBSD: doc2html,v 1.63.10.1 2014/08/20 00:02:38 tls Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1137,6 +1137,11 @@ AT&T UNIX\\$*
 .			ds std-tmp1 \&ISO/IEC 9899:1999
 .			as std-tmp1 " \"exactly one space
 .			as std-tmp1 (``ISO C99'')
+.		\}
+.		if "\\$1"-isoC-2011" \{\
+.			ds std-tmp1 \&ISO/IEC 9899:2011
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``ISO C11'')
 .		\}
 .\" POSIX Part 1: System API
 .		if "\\$1"-p1003.1" \{\

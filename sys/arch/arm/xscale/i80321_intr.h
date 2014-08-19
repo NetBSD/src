@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_intr.h,v 1.10 2008/04/27 18:58:45 matt Exp $	*/
+/*	$NetBSD: i80321_intr.h,v 1.10.44.1 2014/08/20 00:02:48 tls Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2006 Wasabi Systems, Inc.
@@ -119,14 +119,12 @@ i80321_spllower(int ipl)
 #define splx(new)		i80321_splx(new)
 #define	_spllower(ipl)		i80321_spllower(ipl)
 #define	_splraise(ipl)		i80321_splraise(ipl)
-void	_setsoftintr(int);
 
 #else
 
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
-void	_setsoftintr(int);
 
 #endif /* ! EVBARM_SPL_NOINLINE */
 

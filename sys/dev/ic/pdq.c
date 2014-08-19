@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.39 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: pdq.c,v 1.39.120.1 2014/08/20 00:03:38 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq.c,v 1.39 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq.c,v 1.39.120.1 2014/08/20 00:03:38 tls Exp $");
 
 #define	PDQ_HWSUPPORT	/* for pdq.h */
 
@@ -626,7 +626,7 @@ pdq_process_command_responses(
     pdq_descriptor_block_t * const dbp = pdq->pdq_dbp;
     const pdq_response_generic_t *rspgen;
     pdq_cmd_code_t op;
-    pdq_response_code_t status;
+    pdq_response_code_t status __unused;
 
     /*
      * We have to process the command and response in tandem so

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.48.2.2 2013/06/23 06:20:18 tls Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.48.2.3 2014/08/20 00:03:42 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -209,8 +209,8 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_FD		(1U << 0)	/* full duplex */
 #define	CTRL_BEM	(1U << 1)	/* big-endian mode */
 #define	CTRL_PRIOR	(1U << 2)	/* 0 = receive, 1 = fair */
+#define	CTRL_GIO_M_DIS	(1U << 2)	/* disabl PCI master access */
 #define	CTRL_LRST	(1U << 3)	/* link reset */
-#define	CTRL_GIO_M_DIS	(1U << 3)	/* disabl PCI master access */
 #define	CTRL_ASDE	(1U << 5)	/* auto speed detect enable */
 #define	CTRL_SLU	(1U << 6)	/* set link up */
 #define	CTRL_ILOS	(1U << 7)	/* invert loss of signal */
@@ -291,89 +291,6 @@ struct livengood_tcpip_ctxdesc {
 #define EECD_SEC1VAL	(1U << 22)	/* Sector One Valid */
 #define EECD_SEC1VAL_VALMASK (EECD_EE_AUTORD | EECD_EE_PRES) /* Valid Mask */
 
-#define	UWIRE_OPC_ERASE	0x04		/* MicroWire "erase" opcode */
-#define	UWIRE_OPC_WRITE	0x05		/* MicroWire "write" opcode */
-#define	UWIRE_OPC_READ	0x06		/* MicroWire "read" opcode */
-
-#define	SPI_OPC_WRITE	0x02		/* SPI "write" opcode */
-#define	SPI_OPC_READ	0x03		/* SPI "read" opcode */
-#define	SPI_OPC_A8	0x08		/* opcode bit 3 == address bit 8 */
-#define	SPI_OPC_WREN	0x06		/* SPI "set write enable" opcode */
-#define	SPI_OPC_WRDI	0x04		/* SPI "clear write enable" opcode */
-#define	SPI_OPC_RDSR	0x05		/* SPI "read status" opcode */
-#define	SPI_OPC_WRSR	0x01		/* SPI "write status" opcode */
-#define	SPI_MAX_RETRIES	5000		/* max wait of 5ms for RDY signal */
-
-#define	SPI_SR_RDY	0x01
-#define	SPI_SR_WEN	0x02
-#define	SPI_SR_BP0	0x04
-#define	SPI_SR_BP1	0x08
-#define	SPI_SR_WPEN	0x80
-
-#define	EEPROM_OFF_MACADDR	0x00	/* MAC address offset */
-#define	EEPROM_OFF_CFG1		0x0a	/* config word 1 */
-#define	EEPROM_OFF_CFG2		0x0f	/* config word 2 */
-#define	EEPROM_OFF_CFG3_PORTB	0x14	/* config word 3 */
-#define	EEPROM_INIT_3GIO_3	0x1a	/* PCIe Initial Configuration Word 3 */
-#define	EEPROM_OFF_K1_CONFIG	0x1b	/* NVM K1 Config */
-#define	EEPROM_OFF_SWDPIN	0x20	/* SWD Pins (Cordova) */
-#define	EEPROM_OFF_CFG3_PORTA	0x24	/* config word 3 */
-#define EEPROM_ALT_MAC_ADDR_PTR	0x37	/* to the alternative MAC addresses */
-
-#define	EEPROM_CFG1_LVDID	(1U << 0)
-#define	EEPROM_CFG1_LSSID	(1U << 1)
-#define	EEPROM_CFG1_PME_CLOCK	(1U << 2)
-#define	EEPROM_CFG1_PM		(1U << 3)
-#define	EEPROM_CFG1_ILOS	(1U << 4)
-#define	EEPROM_CFG1_SWDPIO_SHIFT 5
-#define	EEPROM_CFG1_SWDPIO_MASK	(0xf << EEPROM_CFG1_SWDPIO_SHIFT)
-#define	EEPROM_CFG1_IPS1	(1U << 8)
-#define	EEPROM_CFG1_LRST	(1U << 9)
-#define	EEPROM_CFG1_FD		(1U << 10)
-#define	EEPROM_CFG1_FRCSPD	(1U << 11)
-#define	EEPROM_CFG1_IPS0	(1U << 12)
-#define	EEPROM_CFG1_64_32_BAR	(1U << 13)
-
-#define	EEPROM_CFG2_CSR_RD_SPLIT (1U << 1)
-#define	EEPROM_CFG2_82544_APM_EN (1U << 2)
-#define	EEPROM_CFG2_64_BIT	(1U << 3)
-#define	EEPROM_CFG2_MAX_READ	(1U << 4)
-#define	EEPROM_CFG2_DMCR_MAP	(1U << 5)
-#define	EEPROM_CFG2_133_CAP	(1U << 6)
-#define	EEPROM_CFG2_MSI_DIS	(1U << 7)
-#define	EEPROM_CFG2_FLASH_DIS	(1U << 8)
-#define	EEPROM_CFG2_FLASH_SIZE(x) (((x) & 3) >> 9)
-#define	EEPROM_CFG2_APM_EN (1U << 10)
-#define	EEPROM_CFG2_ANE		(1U << 11)
-#define	EEPROM_CFG2_PAUSE(x)	(((x) & 3) >> 12)
-#define	EEPROM_CFG2_ASDE	(1U << 14)
-#define	EEPROM_CFG2_APM_PME	(1U << 15)
-#define	EEPROM_CFG2_SWDPIO_SHIFT 4
-#define	EEPROM_CFG2_SWDPIO_MASK	(0xf << EEPROM_CFG2_SWDPIO_SHIFT)
-#define	EEPROM_CFG2_MNGM_MASK	(3U << 13) /* Manageability Operation mode */
-
-#define	EEPROM_K1_CONFIG_ENABLE	0x01
-
-#define	EEPROM_SWDPIN_MASK	0xdf
-#define	EEPROM_SWDPIN_SWDPIN_SHIFT 0
-#define	EEPROM_SWDPIN_SWDPIO_SHIFT 8
-
-#define EEPROM_3GIO_3_ASPM_MASK	(0x3 << 2)	/* Active State PM Support */
-
-#define EEPROM_CFG3_APME	(1U << 10)	
-
-#define	EEPROM_OFF_MACADDR_LAN1	3	/* macaddr offset from PTR (port 1) */
-#define	EEPROM_OFF_MACADDR_LAN2	6	/* macaddr offset from PTR (port 2) */
-#define	EEPROM_OFF_MACADDR_LAN3	9	/* macaddr offset from PTR (port 3) */
-
-/*
- * EEPROM Partitioning. See Table 6-1, "EEPROM Top Level Partitioning"
- * in 82580's datasheet.
- */
-#define EEPROM_OFF_LAN1	0x0080	/* Offset for LAN1 (82580)*/
-#define EEPROM_OFF_LAN2	0x00c0	/* Offset for LAN2 (82580)*/
-#define EEPROM_OFF_LAN3	0x0100	/* Offset for LAN3 (82580)*/
-
 #define	WMREG_EERD	0x0014	/* EEPROM read */
 #define	EERD_DONE	0x02    /* done bit */
 #define	EERD_START	0x01	/* First bit for telling part to start operation */
@@ -409,16 +326,18 @@ struct livengood_tcpip_ctxdesc {
 #define CTRL_EXT_I2C_ENA	0x02000000  /* I2C enable */
 #define	CTRL_EXT_DRV_LOAD	0x10000000
 
-
 #define	WMREG_MDIC	0x0020	/* MDI Control Register */
 #define	MDIC_DATA(x)	((x) & 0xffff)
 #define	MDIC_REGADD(x)	((x) << 16)
+#define	MDIC_PHY_SHIFT	21
+#define	MDIC_PHY_MASK	__BITS(25, 21)
 #define	MDIC_PHYADD(x)	((x) << 21)
 #define	MDIC_OP_WRITE	(1U << 26)
 #define	MDIC_OP_READ	(2U << 26)
 #define	MDIC_READY	(1U << 28)
 #define	MDIC_I		(1U << 29)	/* interrupt on MDI complete */
 #define	MDIC_E		(1U << 30)	/* MDI error */
+#define	MDIC_DEST	(1U << 31)	/* Destination */
 
 #define WMREG_SCTL	0x0024	/* SerDes Control - RW */
 /*
@@ -429,6 +348,7 @@ struct livengood_tcpip_ctxdesc {
 #define SCTL_CTL_DATA_MASK 0x000000ff
 #define SCTL_CTL_ADDR_SHIFT 8
 #define SCTL_CTL_POLL_TIMEOUT 640
+#define SCTL_DISABLE_SERDES_LOOPBACK 0x0400
 
 #define	WMREG_FCAL	0x0028	/* Flow Control Address Low */
 #define	FCAL_CONST	0x00c28001	/* Flow Control MAC addr low */
@@ -438,8 +358,43 @@ struct livengood_tcpip_ctxdesc {
 
 #define	WMREG_FCT	0x0030	/* Flow Control Type */
 
-#define	WMREG_VET	0x0038	/* VLAN Ethertype */
+#define	WMREG_KUMCTRLSTA 0x0034	/* MAC-PHY interface - RW */
+#define	KUMCTRLSTA_MASK			0x0000FFFF
+#define	KUMCTRLSTA_OFFSET		0x001F0000
+#define	KUMCTRLSTA_OFFSET_SHIFT		16
+#define	KUMCTRLSTA_REN			0x00200000
 
+#define	KUMCTRLSTA_OFFSET_FIFO_CTRL	0x00000000
+#define	KUMCTRLSTA_OFFSET_CTRL		0x00000001
+#define	KUMCTRLSTA_OFFSET_INB_CTRL	0x00000002
+#define	KUMCTRLSTA_OFFSET_DIAG		0x00000003
+#define	KUMCTRLSTA_OFFSET_TIMEOUTS	0x00000004
+#define	KUMCTRLSTA_OFFSET_K1_CONFIG	0x00000007
+#define	KUMCTRLSTA_OFFSET_INB_PARAM	0x00000009
+#define	KUMCTRLSTA_OFFSET_HD_CTRL	0x00000010
+#define	KUMCTRLSTA_OFFSET_M2P_SERDES	0x0000001E
+#define	KUMCTRLSTA_OFFSET_M2P_MODES	0x0000001F
+
+/* FIFO Control */
+#define	KUMCTRLSTA_FIFO_CTRL_RX_BYPASS	0x00000008
+#define	KUMCTRLSTA_FIFO_CTRL_TX_BYPASS	0x00000800
+
+/* In-Band Control */
+#define	KUMCTRLSTA_INB_CTRL_LINK_TMOUT_DFLT 0x00000500
+#define	KUMCTRLSTA_INB_CTRL_DIS_PADDING	0x00000010
+
+/* Diag */
+#define	KUMCTRLSTA_DIAG_NELPBK	0x1000
+
+/* K1 Config */
+#define	KUMCTRLSTA_K1_ENABLE	0x0002
+
+/* Half-Duplex Control */
+#define	KUMCTRLSTA_HD_CTRL_10_100_DEFAULT 0x00000004
+#define	KUMCTRLSTA_HD_CTRL_1000_DEFAULT	0x00000000
+
+#define	WMREG_VET	0x0038	/* VLAN Ethertype */
+#define	WMREG_MDPHYA	0x003C	/* PHY address - RW */
 #define	WMREG_RAL_BASE	0x0040	/* Receive Address List */
 #define	WMREG_CORDOVA_RAL_BASE 0x5400
 #define	WMREG_RAL_LO(b, x) ((b) + ((x) << 3))
@@ -519,7 +474,7 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_RDTR	0x2820
 #define	RDTR_FPD	(1U << 31)	/* flush partial descriptor */
 
-#define	WMREG_RADV	0x282c	/* Receive Interrupt Absolute Delay Timer */
+#define WMREG_LTRC	0x01a0	/* Latency Tolerance Reportiong Control */
 
 #define	WMREG_OLD_RDBAL0 0x0110	/* Receive Descriptor Base Low (ring 0) */
 #define	WMREG_RDBAL	0x2800
@@ -533,20 +488,20 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_RDLEN	0x2808
 #define	WMREG_RDLEN_2	0x0c08	/* for 82576 ... */
 
-#define WMREG_SRRCTL	0x280c	/* additional recieve control used in 82575 ... */
+#define WMREG_SRRCTL	0x280c	/* additional recv control used in 82575 ... */
 #define WMREG_SRRCTL_2	0x0c0c	/* for 82576 ... */
-#define SRRCTL_BSIZEPKT_MASK				0x0000007f
+#define SRRCTL_BSIZEPKT_MASK		0x0000007f
 #define SRRCTL_BSIZEPKT_SHIFT		10	/* Shift _right_ */
-#define SRRCTL_BSIZEHDRSIZE_MASK			0x00000f00
+#define SRRCTL_BSIZEHDRSIZE_MASK	0x00000f00
 #define SRRCTL_BSIZEHDRSIZE_SHIFT	2	/* Shift _left_ */
-#define SRRCTL_DESCTYPE_LEGACY				0x00000000
-#define SRRCTL_DESCTYPE_ADV_ONEBUF			(1U << 25)
-#define SRRCTL_DESCTYPE_HDR_SPLIT			(2U << 25)
-#define SRRCTL_DESCTYPE_HDR_REPLICATION			(3U << 25)
-#define SRRCTL_DESCTYPE_HDR_REPLICATION_LARGE_PKT	(4U << 25)
-#define SRRCTL_DESCTYPE_HDR_SPLIT_ALWAYS		(5U << 25) /* 82575 only */
-#define SRRCTL_DESCTYPE_MASK				(7U << 25)
-#define SRRCTL_DROP_EN					0x80000000
+#define SRRCTL_DESCTYPE_LEGACY		0x00000000
+#define SRRCTL_DESCTYPE_ADV_ONEBUF	(1U << 25)
+#define SRRCTL_DESCTYPE_HDR_SPLIT	(2U << 25)
+#define SRRCTL_DESCTYPE_HDR_REPLICATION	(3U << 25)
+#define SRRCTL_DESCTYPE_HDR_REPLICATION_LARGE_PKT (4U << 25)
+#define SRRCTL_DESCTYPE_HDR_SPLIT_ALWAYS (5U << 25) /* 82575 only */
+#define SRRCTL_DESCTYPE_MASK		(7U << 25)
+#define SRRCTL_DROP_EN			0x80000000
 
 #define	WMREG_OLD_RDH0	0x0120	/* Receive Descriptor Head (ring 0) */
 #define	WMREG_RDH	0x2810
@@ -567,17 +522,11 @@ struct livengood_tcpip_ctxdesc {
 #define RXDCTL_SWFLSH        0x04000000 /* Rx Desc. write-back flushing */
 
 #define	WMREG_OLD_RDTR1	0x0130	/* Receive Delay Timer (ring 1) */
-
 #define	WMREG_OLD_RDBA1_LO 0x0138 /* Receive Descriptor Base Low (ring 1) */
-
 #define	WMREG_OLD_RDBA1_HI 0x013c /* Receive Descriptor Base High (ring 1) */
-
 #define	WMREG_OLD_RDLEN1 0x0140	/* Receive Drscriptor Length (ring 1) */
-
 #define	WMREG_OLD_RDH1	0x0148
-
 #define	WMREG_OLD_RDT1	0x0150
-
 #define	WMREG_OLD_FCRTH 0x0160	/* Flow Control Rx Threshold Hi (OLD) */
 #define	WMREG_FCRTL	0x2160	/* Flow Control Rx Threshold Lo */
 #define	FCRTH_DFLT	0x00008000
@@ -592,6 +541,8 @@ struct livengood_tcpip_ctxdesc {
 
 #define	WMREG_TXCW	0x0178	/* Transmit Configuration Word (TBI mode) */
 	/* See MII ANAR_X bits. */
+#define	TXCW_FD		(1U << 5)	/* Full Duplex */
+#define	TXCW_HD		(1U << 6)	/* Half Duplex */
 #define	TXCW_SYM_PAUSE	(1U << 7)	/* sym pause request */
 #define	TXCW_ASYM_PAUSE	(1U << 8)	/* asym pause request */
 #define	TXCW_TxConfig	(1U << 30)	/* Tx Config */
@@ -630,14 +581,12 @@ struct livengood_tcpip_ctxdesc {
 #define	DEFAULT_80003ES2LAN_TCTL_EXT_GCEX 0x00010000
 
 #define	WMREG_TQSA_LO	0x0408
-
 #define	WMREG_TQSA_HI	0x040c
 
 #define	WMREG_TIPG	0x0410	/* Transmit IPG Register */
 #define	TIPG_IPGT(x)	(x)		/* IPG transmit time */
 #define	TIPG_IPGR1(x)	((x) << 10)	/* IPG receive time 1 */
 #define	TIPG_IPGR2(x)	((x) << 20)	/* IPG receive time 2 */
-
 #define	TIPG_WM_DFLT	(TIPG_IPGT(0x0a) | TIPG_IPGR1(0x02) | TIPG_IPGR2(0x0a))
 #define	TIPG_LG_DFLT	(TIPG_IPGT(0x06) | TIPG_IPGR1(0x08) | TIPG_IPGR2(0x06))
 #define	TIPG_1000T_DFLT	(TIPG_IPGT(0x08) | TIPG_IPGR1(0x08) | TIPG_IPGR2(0x06))
@@ -647,26 +596,6 @@ struct livengood_tcpip_ctxdesc {
     (TIPG_IPGT(0x09) | TIPG_IPGR1(0x02) | TIPG_IPGR2(0x07))
 
 #define	WMREG_TQC	0x0418
-
-#define	WMREG_EEWR	0x102c	/* EEPROM write */
-
-#define	WMREG_RDFH	0x2410	/* Receive Data FIFO Head */
-
-#define	WMREG_RDFT	0x2418	/* Receive Data FIFO Tail */
-
-#define	WMREG_RDFHS	0x2420	/* Receive Data FIFO Head Saved */
-
-#define	WMREG_RDFTS	0x2428	/* Receive Data FIFO Tail Saved */
-
-#define	WMREG_TDFH	0x3410	/* Transmit Data FIFO Head */
-
-#define	WMREG_TDFT	0x3418	/* Transmit Data FIFO Tail */
-
-#define	WMREG_TDFHS	0x3420	/* Transmit Data FIFO Head Saved */
-
-#define	WMREG_TDFTS	0x3428	/* Transmit Data FIFO Tail Saved */
-
-#define	WMREG_TDFPC	0x3430	/* Transmit Data FIFO Packet Count */
 
 #define	WMREG_OLD_TDBAL	0x0420	/* Transmit Descriptor Base Lo */
 #define	WMREG_TDBAL	0x3800
@@ -686,24 +615,52 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_OLD_TIDV	0x0440	/* Transmit Delay Interrupt Value */
 #define	WMREG_TIDV	0x3820
 
-#define	WMREG_TXDCTL	0x3828	/* Trandmit Descriptor Control */
-#define	TXDCTL_PTHRESH(x) ((x) << 0)	/* prefetch threshold */
-#define	TXDCTL_HTHRESH(x) ((x) << 8)	/* host threshold */
-#define	TXDCTL_WTHRESH(x) ((x) << 16)	/* write back threshold */
-/* flags used starting with 82575 ... */
-#define TXDCTL_QUEUE_ENABLE  0x02000000 /* Enable specific Tx Queue */
-#define TXDCTL_SWFLSH        0x04000000 /* Tx Desc. write-back flushing */
-#define TXDCTL_PRIORITY      0x08000000
-
-#define	WMREG_TADV	0x382c	/* Transmit Absolute Interrupt Delay Timer */
-
 #define	WMREG_AIT	0x0458	/* Adaptive IFS Throttle */
-
 #define	WMREG_VFTA	0x0600
+
+#define	WMREG_MDICNFG	0x0e04	/* MDC/MDIO Configuration Register */
+#define MDICNFG_PHY_SHIFT	21
+#define MDICNFG_PHY_MASK	__BITS(25, 21)
+#define MDICNFG_COM_MDIO	__BIT(30)
+#define MDICNFG_DEST		__BIT(31)
 
 #define	WM_MC_TABSIZE	128
 #define	WM_ICH8_MC_TABSIZE 32
 #define	WM_VLAN_TABSIZE	128
+
+#define	WMREG_PHPM	0x0e14	/* PHY Power Management */
+#define	PHPM_GO_LINK_D		__BIT(5)	/* Go Link Disconnect */
+
+#define WMREG_EEER	0x0e30	/* Energy Efficiency Ethernet "EEE" */
+#define EEER_TX_LPI_EN		0x00010000 /* EEER Tx LPI Enable */
+#define EEER_RX_LPI_EN		0x00020000 /* EEER Rx LPI Enable */
+#define EEER_LPI_FC		0x00040000 /* EEER Ena on Flow Cntrl */
+#define EEER_EEER_NEG		0x20000000 /* EEER capability nego */
+#define EEER_EEER_RX_LPI_STATUS	0x40000000 /* EEER Rx in LPI state */
+#define EEER_EEER_TX_LPI_STATUS	0x80000000 /* EEER Tx in LPI state */
+#define WMREG_EEE_SU	0x0e34	/* EEE Setup */
+#define WMREG_IPCNFG	0x0e38	/* Internal PHY Configuration */
+#define IPCNFG_EEE_100M_AN	0x00000004 /* IPCNFG EEE Ena 100M AN */
+#define IPCNFG_EEE_1G_AN	0x00000008 /* IPCNFG EEE Ena 1G AN */
+
+#define WMREG_EXTCNFCTR	0x0f00  /* Extended Configuration Control */
+#define EXTCNFCTR_PCIE_WRITE_ENABLE	0x00000001
+#define EXTCNFCTR_PHY_WRITE_ENABLE	0x00000002
+#define EXTCNFCTR_D_UD_ENABLE		0x00000004
+#define EXTCNFCTR_D_UD_LATENCY		0x00000008
+#define EXTCNFCTR_D_UD_OWNER		0x00000010
+#define EXTCNFCTR_MDIO_SW_OWNERSHIP	0x00000020
+#define EXTCNFCTR_MDIO_HW_OWNERSHIP	0x00000040
+#define EXTCNFCTR_GATE_PHY_CFG		0x00000080
+#define EXTCNFCTR_EXT_CNF_POINTER	0x0FFF0000
+#define E1000_EXTCNF_CTRL_SWFLAG	EXTCNFCTR_MDIO_SW_OWNERSHIP
+
+#define	WMREG_PHY_CTRL	0x0f10	/* PHY control */
+#define	PHY_CTRL_SPD_EN		(1 << 0)
+#define	PHY_CTRL_D0A_LPLU	(1 << 1)
+#define	PHY_CTRL_NOND0A_LPLU	(1 << 2)
+#define	PHY_CTRL_NOND0A_GBE_DIS	(1 << 3)
+#define	PHY_CTRL_GBE_DIS	(1 << 4)
 
 #define	WMREG_PBA	0x1000	/* Packet Buffer Allocation */
 #define	PBA_BYTE_SHIFT	10		/* KB -> bytes */
@@ -749,6 +706,8 @@ struct livengood_tcpip_ctxdesc {
 #define MAX_SGMII_PHY_REG_ADDR	255
 #define I2CCMD_PHY_TIMEOUT	200
 
+#define	WMREG_EEWR	0x102c	/* EEPROM write */
+
 #define WMREG_PBA_ECC	0x01100	/* PBA ECC */
 #define PBA_ECC_COUNTER_MASK	0xfff00000 /* ECC counter mask */
 #define PBA_ECC_COUNTER_SHIFT	20	   /* ECC counter shift value */
@@ -778,15 +737,36 @@ struct livengood_tcpip_ctxdesc {
 #define WMREG_EITR(x)	(0x01680 + (0x4 * (x)))
 #define EITR_ITR_INT_MASK	0x0000ffff
 
+#define	WMREG_RDFH	0x2410	/* Receive Data FIFO Head */
+#define	WMREG_RDFT	0x2418	/* Receive Data FIFO Tail */
+#define	WMREG_RDFHS	0x2420	/* Receive Data FIFO Head Saved */
+#define	WMREG_RDFTS	0x2428	/* Receive Data FIFO Tail Saved */
+#define	WMREG_RADV	0x282c	/* Receive Interrupt Absolute Delay Timer */
+
 #define	WMREG_TXDMAC	0x3000	/* Transfer DMA Control */
 #define	TXDMAC_DPP	(1U << 0)	/* disable packet prefetch */
 
 #define WMREG_KABGTXD	0x3004	/* AFE and Gap Transmit Ref Data */
 #define	KABGTXD_BGSQLBIAS 0x00050000
 
+#define	WMREG_TDFH	0x3410	/* Transmit Data FIFO Head */
+#define	WMREG_TDFT	0x3418	/* Transmit Data FIFO Tail */
+#define	WMREG_TDFHS	0x3420	/* Transmit Data FIFO Head Saved */
+#define	WMREG_TDFTS	0x3428	/* Transmit Data FIFO Tail Saved */
+#define	WMREG_TDFPC	0x3430	/* Transmit Data FIFO Packet Count */
+
+#define	WMREG_TXDCTL	0x3828	/* Trandmit Descriptor Control */
+#define	TXDCTL_PTHRESH(x) ((x) << 0)	/* prefetch threshold */
+#define	TXDCTL_HTHRESH(x) ((x) << 8)	/* host threshold */
+#define	TXDCTL_WTHRESH(x) ((x) << 16)	/* write back threshold */
+/* flags used starting with 82575 ... */
+#define TXDCTL_QUEUE_ENABLE  0x02000000 /* Enable specific Tx Queue */
+#define TXDCTL_SWFLSH        0x04000000 /* Tx Desc. write-back flushing */
+#define TXDCTL_PRIORITY      0x08000000
+
+#define	WMREG_TADV	0x382c	/* Transmit Absolute Interrupt Delay Timer */
 #define	WMREG_TSPMT	0x3830	/* TCP Segmentation Pad and Minimum
 				   Threshold (Cordova) */
-
 #define	WMREG_TARC0	0x3840	/* Tx arbitration count */
 
 #define	TSPMT_TSMT(x)	(x)		/* TCP seg min transfer */
@@ -807,43 +787,8 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_XOFFTXC	0x4054	/* XOFF Tx Count - R/clr */
 #define	WMREG_FCRUC	0x4058	/* Flow Control Rx Unsupported Count - R/clr */
 #define WMREG_RNBC	0x40a0	/* Receive No Buffers Count */
-
-#define	WMREG_KUMCTRLSTA 0x0034	/* MAC-PHY interface - RW */
-#define	KUMCTRLSTA_MASK			0x0000FFFF
-#define	KUMCTRLSTA_OFFSET		0x001F0000
-#define	KUMCTRLSTA_OFFSET_SHIFT		16
-#define	KUMCTRLSTA_REN			0x00200000
-
-#define	KUMCTRLSTA_OFFSET_FIFO_CTRL	0x00000000
-#define	KUMCTRLSTA_OFFSET_CTRL		0x00000001
-#define	KUMCTRLSTA_OFFSET_INB_CTRL	0x00000002
-#define	KUMCTRLSTA_OFFSET_DIAG		0x00000003
-#define	KUMCTRLSTA_OFFSET_TIMEOUTS	0x00000004
-#define	KUMCTRLSTA_OFFSET_K1_CONFIG	0x00000007
-#define	KUMCTRLSTA_OFFSET_INB_PARAM	0x00000009
-#define	KUMCTRLSTA_OFFSET_HD_CTRL	0x00000010
-#define	KUMCTRLSTA_OFFSET_M2P_SERDES	0x0000001E
-#define	KUMCTRLSTA_OFFSET_M2P_MODES	0x0000001F
-
-/* FIFO Control */
-#define	KUMCTRLSTA_FIFO_CTRL_RX_BYPASS	0x00000008
-#define	KUMCTRLSTA_FIFO_CTRL_TX_BYPASS	0x00000800
-
-/* In-Band Control */
-#define	KUMCTRLSTA_INB_CTRL_LINK_TMOUT_DFLT 0x00000500
-#define	KUMCTRLSTA_INB_CTRL_DIS_PADDING	0x00000010
-
-/* Diag */
-#define	KUMCTRLSTA_DIAG_NELPBK	0x1000
-
-/* K1 Config */
-#define	KUMCTRLSTA_K1_ENABLE	0x0002
-
-/* Half-Duplex Control */
-#define	KUMCTRLSTA_HD_CTRL_10_100_DEFAULT 0x00000004
-#define	KUMCTRLSTA_HD_CTRL_1000_DEFAULT	0x00000000
-
-#define	WMREG_MDPHYA	0x003C	/* PHY address - RW */
+#define WMREG_TLPIC	0x4148	/* EEE Tx LPI Count */
+#define WMREG_RLPIC	0x414c	/* EEE Rx LPI Count */
 
 #define	WMREG_RXCSUM	0x5000	/* Receive Checksum register */
 #define	RXCSUM_PCSS	0x000000ff	/* Packet Checksum Start */
@@ -870,8 +815,10 @@ struct livengood_tcpip_ctxdesc {
 #define	MANC_SMBUS_EN		0x00000001
 #define	MANC_ASF_EN		0x00000002
 #define	MANC_ARP_EN		0x00002000
+#define	MANC_RECV_TCO_RESET	0x00010000
 #define	MANC_RECV_TCO_EN	0x00020000
 #define	MANC_BLK_PHY_RST_ON_IDE	0x00040000
+#define	MANC_RECV_ALL		0x00080000
 #define	MANC_EN_MAC_ADDR_FILTER	0x00100000
 #define	MANC_EN_MNG2HOST	0x00200000
 
@@ -913,6 +860,9 @@ struct livengood_tcpip_ctxdesc {
 #define FWSM_RSPCIPHY		0x00000040	/* Reset PHY on PCI reset */
 #define FWSM_FW_VALID		0x00008000 /* FW established a valid mode */
 
+#define	WMREG_SWSM2	0x5b58	/* SW Semaphore 2 */
+#define SWSM2_LOCK		0x00000002 /* Secondary driver semaphore bit */
+
 #define	WMREG_SW_FW_SYNC 0x5b5c	/* software-firmware semaphore */
 #define	SWFW_EEP_SM		0x0001 /* eeprom access */
 #define	SWFW_PHY0_SM		0x0002 /* first ctrl phy access */
@@ -923,42 +873,98 @@ struct livengood_tcpip_ctxdesc {
 #define	SWFW_SOFT_SHIFT		0	/* software semaphores */
 #define	SWFW_FIRM_SHIFT		16	/* firmware semaphores */
 
-#define WMREG_CRC_OFFSET	0x5f50
+#define WMREG_CRC_OFFSET 0x5f50
 
-#define WMREG_EXTCNFCTR		0x0f00  /* Extended Configuration Control */
-#define EXTCNFCTR_PCIE_WRITE_ENABLE	0x00000001
-#define EXTCNFCTR_PHY_WRITE_ENABLE	0x00000002
-#define EXTCNFCTR_D_UD_ENABLE		0x00000004
-#define EXTCNFCTR_D_UD_LATENCY		0x00000008
-#define EXTCNFCTR_D_UD_OWNER		0x00000010
-#define EXTCNFCTR_MDIO_SW_OWNERSHIP	0x00000020
-#define EXTCNFCTR_MDIO_HW_OWNERSHIP	0x00000040
-#define EXTCNFCTR_GATE_PHY_CFG		0x00000080
-#define EXTCNFCTR_EXT_CNF_POINTER	0x0FFF0000
-#define E1000_EXTCNF_CTRL_SWFLAG	EXTCNFCTR_MDIO_SW_OWNERSHIP
+/*
+ * NVM related values.
+ *  Microwire, SPI, and flash
+ */
+#define	UWIRE_OPC_ERASE	0x04		/* MicroWire "erase" opcode */
+#define	UWIRE_OPC_WRITE	0x05		/* MicroWire "write" opcode */
+#define	UWIRE_OPC_READ	0x06		/* MicroWire "read" opcode */
 
-#define	WMREG_PHY_CTRL	0x0f10	/* PHY control */
-#define	PHY_CTRL_SPD_EN		(1 << 0)
-#define	PHY_CTRL_D0A_LPLU	(1 << 1)
-#define	PHY_CTRL_NOND0A_LPLU	(1 << 2)
-#define	PHY_CTRL_NOND0A_GBE_DIS	(1 << 3)
-#define	PHY_CTRL_GBE_DIS	(1 << 4)
+#define	SPI_OPC_WRITE	0x02		/* SPI "write" opcode */
+#define	SPI_OPC_READ	0x03		/* SPI "read" opcode */
+#define	SPI_OPC_A8	0x08		/* opcode bit 3 == address bit 8 */
+#define	SPI_OPC_WREN	0x06		/* SPI "set write enable" opcode */
+#define	SPI_OPC_WRDI	0x04		/* SPI "clear write enable" opcode */
+#define	SPI_OPC_RDSR	0x05		/* SPI "read status" opcode */
+#define	SPI_OPC_WRSR	0x01		/* SPI "write status" opcode */
+#define	SPI_MAX_RETRIES	5000		/* max wait of 5ms for RDY signal */
 
-/* Energy Efficient Ethernet "EEE" registers */
-#define WMREG_LTRC	0x01a0	/* Latency Tolerance Reportiong Control */
-#define WMREG_EEER	0x0e30	/* Energy Efficiency Ethernet "EEE" */
-#define EEER_TX_LPI_EN		0x00010000 /* EEER Tx LPI Enable */
-#define EEER_RX_LPI_EN		0x00020000 /* EEER Rx LPI Enable */
-#define EEER_LPI_FC		0x00040000 /* EEER Ena on Flow Cntrl */
-#define EEER_EEER_NEG		0x20000000 /* EEER capability nego */
-#define EEER_EEER_RX_LPI_STATUS	0x40000000 /* EEER Rx in LPI state */
-#define EEER_EEER_TX_LPI_STATUS	0x80000000 /* EEER Tx in LPI state */
-#define WMREG_EEE_SU	0x0e34	/* EEE Setup */
-#define WMREG_IPCNFG	0x0e38	/* Internal PHY Configuration */
-#define IPCNFG_EEE_100M_AN	0x00000004 /* IPCNFG EEE Ena 100M AN */
-#define IPCNFG_EEE_1G_AN	0x00000008 /* IPCNFG EEE Ena 1G AN */
-#define WMREG_TLPIC	0x4148	/* EEE Tx LPI Count */
-#define WMREG_RLPIC	0x414c	/* EEE Rx LPI Count */
+#define	SPI_SR_RDY	0x01
+#define	SPI_SR_WEN	0x02
+#define	SPI_SR_BP0	0x04
+#define	SPI_SR_BP1	0x08
+#define	SPI_SR_WPEN	0x80
+
+#define	EEPROM_OFF_MACADDR	0x00	/* MAC address offset */
+#define	EEPROM_OFF_CFG1		0x0a	/* config word 1 */
+#define	EEPROM_OFF_CFG2		0x0f	/* config word 2 */
+#define	EEPROM_OFF_CFG3_PORTB	0x14	/* config word 3 */
+#define	EEPROM_INIT_3GIO_3	0x1a	/* PCIe Initial Configuration Word 3 */
+#define	EEPROM_OFF_K1_CONFIG	0x1b	/* NVM K1 Config */
+#define	EEPROM_OFF_SWDPIN	0x20	/* SWD Pins (Cordova) */
+#define	EEPROM_OFF_CFG3_PORTA	0x24	/* config word 3 */
+#define EEPROM_ALT_MAC_ADDR_PTR	0x37	/* to the alternative MAC addresses */
+
+#define	EEPROM_CFG1_LVDID	(1U << 0)
+#define	EEPROM_CFG1_LSSID	(1U << 1)
+#define	EEPROM_CFG1_PME_CLOCK	(1U << 2)
+#define	EEPROM_CFG1_PM		(1U << 3)
+#define	EEPROM_CFG1_ILOS	(1U << 4)
+#define	EEPROM_CFG1_SWDPIO_SHIFT 5
+#define	EEPROM_CFG1_SWDPIO_MASK	(0xf << EEPROM_CFG1_SWDPIO_SHIFT)
+#define	EEPROM_CFG1_IPS1	(1U << 8)
+#define	EEPROM_CFG1_LRST	(1U << 9)
+#define	EEPROM_CFG1_FD		(1U << 10)
+#define	EEPROM_CFG1_FRCSPD	(1U << 11)
+#define	EEPROM_CFG1_IPS0	(1U << 12)
+#define	EEPROM_CFG1_64_32_BAR	(1U << 13)
+
+#define	EEPROM_CFG2_CSR_RD_SPLIT (1U << 1)
+#define	EEPROM_CFG2_82544_APM_EN (1U << 2)
+#define	EEPROM_CFG2_64_BIT	(1U << 3)
+#define	EEPROM_CFG2_MAX_READ	(1U << 4)
+#define	EEPROM_CFG2_DMCR_MAP	(1U << 5)
+#define	EEPROM_CFG2_133_CAP	(1U << 6)
+#define	EEPROM_CFG2_MSI_DIS	(1U << 7)
+#define	EEPROM_CFG2_FLASH_DIS	(1U << 8)
+#define	EEPROM_CFG2_FLASH_SIZE(x) (((x) & 3) >> 9)
+#define	EEPROM_CFG2_APM_EN (1U << 10)
+#define	EEPROM_CFG2_ANE		(1U << 11)
+#define	EEPROM_CFG2_PAUSE(x)	(((x) & 3) >> 12)
+#define	EEPROM_CFG2_ASDE	(1U << 14)
+#define	EEPROM_CFG2_APM_PME	(1U << 15)
+#define	EEPROM_CFG2_SWDPIO_SHIFT 4
+#define	EEPROM_CFG2_SWDPIO_MASK	(0xf << EEPROM_CFG2_SWDPIO_SHIFT)
+#define	EEPROM_CFG2_MNGM_SHIFT	13	/* Manageability Operation mode */
+#define	EEPROM_CFG2_MNGM_MASK	(3U << EEPROM_CFG2_MNGM_SHIFT)
+#define	EEPROM_CFG2_MNGM_DIS	0
+#define	EEPROM_CFG2_MNGM_NCSI	1
+#define	EEPROM_CFG2_MNGM_PT	2
+
+#define	EEPROM_K1_CONFIG_ENABLE	0x01
+
+#define	EEPROM_SWDPIN_MASK	0xdf
+#define	EEPROM_SWDPIN_SWDPIN_SHIFT 0
+#define	EEPROM_SWDPIN_SWDPIO_SHIFT 8
+
+#define EEPROM_3GIO_3_ASPM_MASK	(0x3 << 2)	/* Active State PM Support */
+
+#define EEPROM_CFG3_APME	(1U << 10)	
+
+#define	EEPROM_OFF_MACADDR_LAN1	3	/* macaddr offset from PTR (port 1) */
+#define	EEPROM_OFF_MACADDR_LAN2	6	/* macaddr offset from PTR (port 2) */
+#define	EEPROM_OFF_MACADDR_LAN3	9	/* macaddr offset from PTR (port 3) */
+
+/*
+ * EEPROM Partitioning. See Table 6-1, "EEPROM Top Level Partitioning"
+ * in 82580's datasheet.
+ */
+#define EEPROM_OFF_LAN1	0x0080	/* Offset for LAN1 (82580)*/
+#define EEPROM_OFF_LAN2	0x00c0	/* Offset for LAN2 (82580)*/
+#define EEPROM_OFF_LAN3	0x0100	/* Offset for LAN3 (82580)*/
 
 /* ich8 flash control */
 #define ICH_FLASH_COMMAND_TIMEOUT            5000    /* 5000 uSecs - adjusted */

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.21 2011/07/09 16:59:40 matt Exp $ */
+/* $NetBSD: cpu.c,v 1.21.12.1 2014/08/20 00:03:22 tls Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21 2011/07/09 16:59:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21.12.1 2014/08/20 00:03:22 tls Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -94,6 +94,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 
 	/* XXX this code must run on the target CPU */
 	config = mips3_cp0_config_read();
+	__USE(config);
 	KASSERT((config & MIPS3_CONFIG_K0_MASK) == 5);
 
 	/* Determine CPU frequency */

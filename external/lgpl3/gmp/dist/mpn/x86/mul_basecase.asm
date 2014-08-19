@@ -23,11 +23,11 @@ include(`../config.m4')
 
 
 C     cycles/crossproduct
-C P5:     15
-C P6:      7.5
-C K6:     12.5
-C K7:      5.5
-C P4:     24
+C P5	  15
+C P6	   7.5
+C K6	  12.5
+C K7	   5.5
+C P4	  24
 
 
 C void mpn_mul_basecase (mp_ptr wp,

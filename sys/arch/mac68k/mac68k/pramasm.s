@@ -1,4 +1,4 @@
-/*	$NetBSD: pramasm.s,v 1.8 2001/11/20 03:19:43 chs Exp $	*/
+/*	$NetBSD: pramasm.s,v 1.8.166.1 2014/08/20 00:03:11 tls Exp $	*/
 
 /*
  * RTC toolkit version 1.08b, copyright 1995, erik vogan
@@ -223,7 +223,7 @@ ENTRY(setPramTimeII)
  * routines, above.
  */
 
-ENTRY(readClock)
+ENTRY_NOPROFILE(readClock)
 	moveml	#0x7cc0,%sp@-	| store off the regs we need
 	moveq	#00,%d0		| zero out our result reg
 readagan:
@@ -251,7 +251,7 @@ gotTime:
 	moveml	%sp@+,#0x033e	| restore our regs
 	rts			| and return to caller
 
-ENTRY(writeClock)
+ENTRY_NOPROFILE(writeClock)
 	moveml	#0x78c0,%sp@-	| store off the regs we need
 	moveq	#03,%d4		| set our count down reg to 4
 	movel	#0x00550035,%d1	| de-write-protect the PRAM
@@ -271,7 +271,7 @@ putSecb:
 	moveml	%sp@+,#0x031e	| restore our regs
 	rts			| and return to caller
 
-ENTRY(PRAMacc)
+ENTRY_NOPROFILE(PRAMacc)
 	moveml	#0xf8c0,%sp@-	| store off the regs we'll use
 	moveq	#00,%d3		| zero out our command reg
 	moveq	#00,%d4		| zero out our count reg too
@@ -348,7 +348,7 @@ tagain:
 	moveml	%sp@+,#0x031f	| restore all our registers
 	rts			| and return to our gracious caller
 
-ENTRY(Transfer)
+ENTRY_NOPROFILE(Transfer)
 	movew	%sr,%sp@-	| store the SR (we'll change it!)
 	oriw	#0x0700,%sr	| disable all interrupts
 	moveal	_C_LABEL(Via1Base),%a1	| move VIA1 addr in reference reg

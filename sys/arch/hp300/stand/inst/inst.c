@@ -1,4 +1,4 @@
-/*	$NetBSD: inst.c,v 1.18 2008/07/16 13:44:51 tsutsui Exp $	*/
+/*	$NetBSD: inst.c,v 1.18.38.1 2014/08/20 00:03:01 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -485,8 +485,8 @@ disklabel_show(struct disklabel *lp)
 	printf("     size   offset\n");
 	pp = lp->d_partitions;
 	for (i = 0; i < lp->d_npartitions; i++) {
-		printf("%c:   %d,    %d\n", 97 + i, lp->d_partitions[i].p_size,
-		    lp->d_partitions[i].p_offset);
+		printf("%c:   %d,    %d\n", 'a' + i, pp[i].p_size,
+		    pp[i].p_offset);
 	}
 	printf("\n");
 }
@@ -760,18 +760,11 @@ resetsys(void)
 	__asm("stop #0x2700");
 }
 
-/*
- * XXX Should have a generic atoi for libkern/libsa.
- */
 int
 a2int(char *cp)
 {
-	int i = 0;
-
 	if (*cp == '\0')
-		return (-1);
+		return -1;
 
-	while (*cp != '\0')
-		i = i * 10 + *cp++ - '0';
-	return (i);
+	return atoi(cp);
 }

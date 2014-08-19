@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.28 2012/01/30 23:31:27 matt Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.28.6.1 2014/08/20 00:04:35 tls Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.28 2012/01/30 23:31:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.28.6.1 2014/08/20 00:04:35 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -440,69 +440,6 @@ tcp_free_sackholes(struct tcpcb *tp)
 		sack_removehole(tp, sack);
 	}
 	KASSERT(tp->snd_numholes == 0);
-}
-
-/*
- * Implements the SACK response to a new ack, checking for partial acks
- * in fast recovery.
- */
-void
-tcp_sack_newack(struct tcpcb *tp, const struct tcphdr *th)
-{
-	if (tp->t_partialacks < 0) {
-		/*
-		 * Not in fast recovery.  Reset the duplicate ack
-		 * counter.
-		 */
-		tp->t_dupacks = 0;
-	} else if (SEQ_LT(th->th_ack, tp->snd_recover)) {
-		/*
-		 * Partial ack handling within a sack recovery episode. 
-		 * Keeping this very simple for now. When a partial ack
-		 * is received, force snd_cwnd to a value that will allow
-		 * the sender to transmit no more than 2 segments.
-		 * If necessary, a fancier scheme can be adopted at a 
-		 * later point, but for now, the goal is to prevent the
-		 * sender from bursting a large amount of data in the midst
-		 * of sack recovery.
-		 */
-		int num_segs = 1;
-		int sack_bytes_rxmt = 0;
-
-		tp->t_partialacks++;
-		TCP_TIMER_DISARM(tp, TCPT_REXMT);
-		tp->t_rtttime = 0;
-
-	 	/*
-		 * send one or 2 segments based on how much new data was acked
-		 */
- 		if (((th->th_ack - tp->snd_una) / tp->t_segsz) > 2)
- 			num_segs = 2;
-	 	(void)tcp_sack_output(tp, &sack_bytes_rxmt);
- 		tp->snd_cwnd = sack_bytes_rxmt +
-		    (tp->snd_nxt - tp->sack_newdata) + num_segs * tp->t_segsz;
-  		tp->t_flags |= TF_ACKNOW;
-	  	(void) tcp_output(tp);
-	} else {
-		/*
-		 * Complete ack, inflate the congestion window to
-                 * ssthresh and exit fast recovery.
-		 *
-		 * Window inflation should have left us with approx.
-		 * snd_ssthresh outstanding data.  But in case we
-		 * would be inclined to send a burst, better to do
-		 * it via the slow start mechanism.
-		 */
-		if (SEQ_SUB(tp->snd_max, th->th_ack) < tp->snd_ssthresh)
-			tp->snd_cwnd = SEQ_SUB(tp->snd_max, th->th_ack)
-			    + tp->t_segsz;
-		else
-			tp->snd_cwnd = tp->snd_ssthresh;
-		tp->t_partialacks = -1;
-		tp->t_dupacks = 0;
-		if (SEQ_GT(th->th_ack, tp->snd_fack))
-			tp->snd_fack = th->th_ack;
-	}
 }
 
 /*

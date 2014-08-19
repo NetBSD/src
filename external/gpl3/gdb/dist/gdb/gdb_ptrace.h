@@ -1,7 +1,6 @@
 /* Portable <sys/ptrace.h>
 
-   Copyright (C) 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -136,7 +135,15 @@ extern PTRACE_TYPE_RET ptrace();
    zero.  */
 
 #ifdef PTRACE_TYPE_ARG5
-# define ptrace(request, pid, addr, data) ptrace (request, pid, addr, data, 0)
+# ifdef HAVE_PTRACE64
+#  define ptrace(request, pid, addr, data) \
+          ptrace64 (request, pid, addr, data, 0)
+#  undef PTRACE_TYPE_ARG3
+#  define PTRACE_TYPE_ARG3 long long
+# else
+#  define ptrace(request, pid, addr, data) \
+          ptrace (request, pid, addr, data, 0)
+# endif
 #endif
 
 #endif /* gdb_ptrace.h */

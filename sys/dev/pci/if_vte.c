@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.7.2.1 2013/06/23 06:20:18 tls Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.7.2.2 2014/08/20 00:03:42 tls Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.7.2.1 2013/06/23 06:20:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.7.2.2 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,6 +174,7 @@ vte_attach(device_t parent, device_t self, void *aux)
 	int error;
 	const struct sysctlnode *node;
 	int vte_nodenum;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->vte_dev = self;
 
@@ -224,7 +225,7 @@ vte_attach(device_t parent, device_t self, void *aux)
 	    aprint_error_dev(self, "couldn't map interrupt\n");
 	    return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
 	sc->vte_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
 	    vte_intr, sc);
 	if (sc->vte_ih == NULL) {
@@ -275,7 +276,7 @@ vte_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
         rnd_attach_source(&sc->rnd_source, device_xname(self),
-            RND_TYPE_NET, 0);
+            RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	if (sysctl_createv(&sc->vte_clog, 0, NULL, &node,
 	    0, CTLTYPE_NODE, device_xname(sc->vte_dev),
@@ -1656,12 +1657,6 @@ SYSCTL_SETUP(sysctl_vte, "sysctl vte subtree setup")
 {
 	int rc;
 	const struct sysctlnode *node;
-
-	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
-	    0, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
-		goto err;
-	}
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    0, CTLTYPE_NODE, "vte",

@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.c,v 1.30 2011/10/26 20:24:41 martin Exp $	*/
+/*	$NetBSD: crl.c,v 1.30.12.1 2014/08/20 00:03:27 tls Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crl.c,v 1.30 2011/10/26 20:24:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crl.c,v 1.30.12.1 2014/08/20 00:03:27 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,8 +77,18 @@ static dev_type_close(crlclose);
 static dev_type_read(crlrw);
 
 const struct cdevsw crl_cdevsw = {
-	crlopen, crlclose, crlrw, crlrw, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	.d_open = crlopen,
+	.d_close = crlclose,
+	.d_read = crlrw,
+	.d_write = crlrw,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 struct evcnt crl_ev = EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "crl", "intr");

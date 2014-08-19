@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.63.2.3 2013/06/23 06:20:21 tls Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.63.2.4 2014/08/20 00:03:48 tls Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.63.2.3 2013/06/23 06:20:21 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.63.2.4 2014/08/20 00:03:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +140,9 @@ static int radeonfb_set_cursor(struct radeonfb_display *,
     struct wsdisplay_cursor *);
 static int radeonfb_set_curpos(struct radeonfb_display *,
     struct wsdisplay_curpos *);
+static void radeonfb_putpal(struct radeonfb_display *, int, int, int, int);
+static int radeonfb_putcmap(struct radeonfb_display *, struct wsdisplay_cmap *);
+static int radeonfb_getcmap(struct radeonfb_display *, struct wsdisplay_cmap *);
 
 /* acceleration support */
 static void  radeonfb_rectfill(struct radeonfb_display *, int dstx, int dsty,
@@ -160,7 +163,7 @@ static void radeonfb_engine_idle(struct radeonfb_softc *);
 static void radeonfb_engine_flush(struct radeonfb_softc *);
 static void radeonfb_engine_reset(struct radeonfb_softc *);
 static void radeonfb_engine_init(struct radeonfb_display *);
-static inline void radeonfb_unclip(struct radeonfb_softc *);
+static inline void radeonfb_unclip(struct radeonfb_softc *) __unused;
 
 static void radeonfb_eraserows(void *, int, int, long);
 static void radeonfb_erasecols(void *, int, int, int, long);
@@ -461,7 +464,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 
 	pci_aprint_devinfo(pa, NULL);
 
-	DPRINTF((prop_dictionary_externalize(device_properties(dev))));
+	DPRINTF(("%s", prop_dictionary_externalize(device_properties(dev))));
 
 	KASSERT(radeonfb_devices[i].devid != 0);
 	sc->sc_pt = pa->pa_tag;
@@ -627,6 +630,10 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 
 	radeonfb_set_fbloc(sc);
 
+	/* 64 MB should be enough -- more just wastes map entries */
+	if (sc->sc_memsz > (64 << 20))
+		sc->sc_memsz = (64 << 20);
+
 	for (i = 0; radeonfb_limits[i].size; i++) {
 		if (sc->sc_memsz >= radeonfb_limits[i].size) {
 			sc->sc_maxx = radeonfb_limits[i].maxx;
@@ -748,10 +755,6 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		goto error;
 	}
 
-	/* 64 MB should be enough -- more just wastes map entries */
-	if (sc->sc_memsz > (64 << 20))
-		sc->sc_memsz = (64 << 20);
-
 	sc->sc_memt = pa->pa_memt;
 	if (bus_space_map(sc->sc_memt, sc->sc_memaddr, sc->sc_memsz,
 		BUS_SPACE_MAP_LINEAR, &sc->sc_memh) != 0) {
@@ -816,7 +819,8 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		aprint_normal("%s: display %d: "
 		    "initial virtual resolution %dx%d at %d bpp\n",
 		    XNAME(sc), i, dp->rd_virtx, dp->rd_virty, dp->rd_bpp);
-
+		aprint_normal_dev(sc->sc_dev, "using %d MB per display\n",
+		    sc->sc_fboffset >> 20);
 		/* now select the *video mode* that we will use */
 		for (j = 0; j < dp->rd_ncrtcs; j++) {
 			const struct videomode *vmp;
@@ -848,7 +852,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		dp->rd_offset = sc->sc_fboffset * i;
 		dp->rd_fbptr = (vaddr_t)bus_space_vaddr(sc->sc_memt,
 		    sc->sc_memh) + dp->rd_offset;
-		dp->rd_curoff = sc->sc_fbsize;
+		dp->rd_curoff = sc->sc_fboffset - 4096;	/* 4KB cursor space */
 		dp->rd_curptr = dp->rd_fbptr + dp->rd_curoff;
 
 		DPRINTF(("fpbtr = %p\n", (void *)dp->rd_fbptr));
@@ -924,8 +928,13 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		dp->rd_gc.gc_rectfill = radeonfb_rectfill_a;
 		dp->rd_gc.gc_rop = RADEON_ROP3_S;
 		dp->rd_gc.gc_blitcookie = dp;
+		/*
+		 * use memory between framebuffer and cursor area as glyph
+		 * cache, cap at 4096 lines
+		 */
 		glyphcache_init(&dp->rd_gc, dp->rd_virty + 4,
-		    (0x800000 / dp->rd_stride) - (dp->rd_virty + 4),
+		    min(4096, 
+		        (dp->rd_curoff / dp->rd_stride) - (dp->rd_virty + 4)),
 		    dp->rd_virtx,
 		    ri->ri_font->fontwidth,
 		    ri->ri_font->fontheight,
@@ -1062,10 +1071,27 @@ radeonfb_ioctl(void *v, void *vs,
 	struct radeonfb_display	*dp;
 	struct radeonfb_softc	*sc;
 	struct wsdisplay_param  *param;
+	struct vcons_screen 	*ms;
 
 	vd = (struct vcons_data *)v;
+	ms = vd->active;
 	dp = (struct radeonfb_display *)vd->cookie;
 	sc = dp->rd_softc;
+
+	/* can't do these without registers being mapped */
+	if (!sc->sc_mapped) {
+		switch (cmd) {
+			case WSDISPLAYIO_GVIDEO:
+			case WSDISPLAYIO_SVIDEO:
+			case WSDISPLAYIO_GETCMAP:
+			case WSDISPLAYIO_PUTCMAP:
+			case WSDISPLAYIO_SCURSOR:
+			case WSDISPLAYIO_GCURPOS:
+			case WSDISPLAYIO_SCURPOS:
+			case WSDISPLAYIO_SETPARAM:
+				return EINVAL;
+		}
+	}
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -1096,19 +1122,15 @@ radeonfb_ioctl(void *v, void *vs,
 		return 0;
 
 	case WSDISPLAYIO_GETCMAP:
-#if 0
 		if (dp->rd_bpp == 8)
-			return radeonfb_getcmap(sc,
+			return radeonfb_getcmap(dp,
 			    (struct wsdisplay_cmap *)d);
-#endif
 		return EINVAL;
 		
 	case WSDISPLAYIO_PUTCMAP:
-#if 0
 		if (dp->rd_bpp == 8)
-			return radeonfb_putcmap(sc,
+			return radeonfb_putcmap(dp,
 			    (struct wsdisplay_cmap *)d);
-#endif
 		return EINVAL;
 		
 	case WSDISPLAYIO_LINEBYTES:
@@ -1118,9 +1140,12 @@ radeonfb_ioctl(void *v, void *vs,
 	case WSDISPLAYIO_SMODE:
 		if (*(int *)d != dp->rd_wsmode) {
 			dp->rd_wsmode = *(int *)d;
+			if ((dp->rd_wsmode == WSDISPLAYIO_MODE_EMUL) ||
+			    (dp->rd_wsmode == WSDISPLAYIO_MODE_DUMBFB))
+				radeonfb_map(sc);
+			
 			if ((dp->rd_wsmode == WSDISPLAYIO_MODE_EMUL) &&
 			    (dp->rd_vd.active)) {
-			    	radeonfb_map(sc);
 				radeonfb_engine_init(dp);
 				glyphcache_wipe(&dp->rd_gc);
 				radeonfb_init_palette(dp);
@@ -1128,9 +1153,9 @@ radeonfb_ioctl(void *v, void *vs,
 				radeonfb_rectfill(dp, 0, 0, dp->rd_virtx,
 				    dp->rd_virty, dp->rd_bg);
 				vcons_redraw_screen(dp->rd_vd.active);
-			} else {
-				radeonfb_unmap(sc);
 			}
+			if (dp->rd_wsmode == WSDISPLAYIO_MODE_MAPPED)
+				radeonfb_unmap(sc);
 		}
 		return 0;
 
@@ -1205,6 +1230,11 @@ radeonfb_ioctl(void *v, void *vs,
 	case WSDISPLAYIO_GET_EDID: {
 		struct wsdisplayio_edid_info *ei = d;
 		return wsdisplayio_get_edid(sc->sc_dev, ei);
+	}
+
+	case WSDISPLAYIO_GET_FBINFO: {
+		struct wsdisplayio_fbinfo *fbi = d;
+		return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
 	}
 
 	default:
@@ -2536,20 +2566,12 @@ radeonfb_init_misc(struct radeonfb_softc *sc)
 	PUT32(sc, RADEON_GEN_INT_STATUS, GET32(sc, RADEON_GEN_INT_STATUS));
 }
 
-/*
- * This loads a linear color map for true color.
- */
-void
-radeonfb_init_palette(struct radeonfb_display *dp)
+static void
+radeonfb_putpal(struct radeonfb_display *dp, int idx, int r, int g, int b)
 {
 	struct radeonfb_softc *sc = dp->rd_softc;
-	int		i, cc;
+	int		crtc, cc;
 	uint32_t	vclk;
-	int		crtc;
-
-#define	DAC_WIDTH ((1 << 10) - 1)
-#define	CLUT_WIDTH ((1 << 8) - 1)
-#define	CLUT_COLOR(i)      ((i * DAC_WIDTH * 2 / CLUT_WIDTH + 1) / 2)
 
 	vclk = GETPLL(sc, RADEON_VCLK_ECP_CNTL);
 	PUTPLL(sc, RADEON_VCLK_ECP_CNTL, vclk & ~RADEON_PIXCLK_DAC_ALWAYS_ONb);
@@ -2564,53 +2586,122 @@ radeonfb_init_palette(struct radeonfb_display *dp)
 		else
 			CLR32(sc, RADEON_DAC_CNTL2, RADEON_DAC2_PALETTE_ACC_CTL);
 
-		PUT32(sc, RADEON_PALETTE_INDEX, 0);
-
-		if (dp->rd_bpp == 8) {
-
-			/* R3G3B2 palette */
-			int j = 0;
-			uint32_t tmp, r, g, b;
-
-        	        for (i = 0; i <= CLUT_WIDTH; ++i) {
-    				tmp = i & 0xe0;
-				/*
-				 * replicate bits so 0xe0 maps to a red value of 0xff
-				 * in order to make white look actually white
-				 */
-				tmp |= (tmp >> 3) | (tmp >> 6);
-				r = tmp;
-
-				tmp = (i & 0x1c) << 3;
-				tmp |= (tmp >> 3) | (tmp >> 6);
-				g = tmp;
-
-				tmp = (i & 0x03) << 6;
-				tmp |= tmp >> 2;
-				tmp |= tmp >> 4;
-				b = tmp;
-
-		            	PUT32(sc, RADEON_PALETTE_30_DATA,
-					(r << 22) |
-					(g << 12) |
-					(b << 2));
-				j += 3;
-			}
-		} else {
-			/* linear ramp */
-			for (i = 0; i <= CLUT_WIDTH; ++i) {
-				PUT32(sc, RADEON_PALETTE_30_DATA,
-				    (CLUT_COLOR(i) << 10) |
-				    (CLUT_COLOR(i) << 20) |
-				    (CLUT_COLOR(i)));
-			}
-		}
+		PUT32(sc, RADEON_PALETTE_INDEX, idx);
+            	PUT32(sc, RADEON_PALETTE_30_DATA,
+            	    (r << 22) | (g << 12) | (b << 2));
 	}
 
-	CLR32(sc, RADEON_DAC_CNTL2, RADEON_DAC2_PALETTE_ACC_CTL);
-	PRINTREG(RADEON_DAC_CNTL2);
-
 	PUTPLL(sc, RADEON_VCLK_ECP_CNTL, vclk);
+}
+
+/*
+ * This loads a linear color map for true color.
+ */
+void
+radeonfb_init_palette(struct radeonfb_display *dp)
+{
+	int		i;
+
+#define	DAC_WIDTH ((1 << 10) - 1)
+#define	CLUT_WIDTH ((1 << 8) - 1)
+#define	CLUT_COLOR(i)      ((i * DAC_WIDTH * 2 / CLUT_WIDTH + 1) / 2)
+
+	if (dp->rd_bpp == 8) {
+
+		/* R3G3B2 palette */
+		uint32_t tmp, r, g, b;
+ 
+	        for (i = 0; i <= CLUT_WIDTH; ++i) {
+			tmp = i & 0xe0;
+
+			/*
+			 * replicate bits so 0xe0 maps to a red value of 0xff
+			 * in order to make white look actually white
+			 */
+			tmp |= (tmp >> 3) | (tmp >> 6);
+			r = tmp;
+
+			tmp = (i & 0x1c) << 3;
+			tmp |= (tmp >> 3) | (tmp >> 6);
+			g = tmp;
+
+			tmp = (i & 0x03) << 6;
+			tmp |= tmp >> 2;
+			tmp |= tmp >> 4;
+			b = tmp;
+
+			radeonfb_putpal(dp, i, r, g, b);
+		}
+	} else {
+		/* linear ramp */
+		for (i = 0; i <= CLUT_WIDTH; ++i) {
+			radeonfb_putpal(dp, i, i, i, i);
+		}
+	}
+}
+
+static int
+radeonfb_putcmap(struct radeonfb_display *dp, struct wsdisplay_cmap *cm)
+{
+	u_char *r, *g, *b;
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int i, error;
+	u_char rbuf[256], gbuf[256], bbuf[256];
+
+#ifdef GENFB_DEBUG
+	aprint_debug("putcmap: %d %d\n",index, count);
+#endif
+	if (cm->index >= 256 || cm->count > 256 ||
+	    (cm->index + cm->count) > 256)
+		return EINVAL;
+	error = copyin(cm->red, &rbuf[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->green, &gbuf[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->blue, &bbuf[index], count);
+	if (error)
+		return error;
+
+	memcpy(&dp->rd_cmap_red[index], &rbuf[index], count);
+	memcpy(&dp->rd_cmap_green[index], &gbuf[index], count);
+	memcpy(&dp->rd_cmap_blue[index], &bbuf[index], count);
+
+	r = &dp->rd_cmap_red[index];
+	g = &dp->rd_cmap_green[index];
+	b = &dp->rd_cmap_blue[index];
+
+	for (i = 0; i < count; i++) {
+		radeonfb_putpal(dp, index, *r, *g, *b);
+		index++;
+		r++, g++, b++;
+	}
+	return 0;
+}
+
+static int
+radeonfb_getcmap(struct radeonfb_display *dp, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int error;
+
+	if (index >= 255 || count > 256 || index + count > 256)
+		return EINVAL;
+
+	error = copyout(&dp->rd_cmap_red[index],   cm->red,   count);
+	if (error)
+		return error;
+	error = copyout(&dp->rd_cmap_green[index], cm->green, count);
+	if (error)
+		return error;
+	error = copyout(&dp->rd_cmap_blue[index],  cm->blue,  count);
+	if (error)
+		return error;
+
+	return 0;
 }
 
 /*
@@ -3246,7 +3337,6 @@ radeonfb_engine_init(struct radeonfb_display *dp)
 {
 	struct radeonfb_softc	*sc = dp->rd_softc;
 	uint32_t		pitch;
-	volatile uint32_t	junk;
 
 	/* no 3D */
 	PUT32(sc, RADEON_RB3D_CNTL, 0);
@@ -3268,7 +3358,7 @@ radeonfb_engine_init(struct radeonfb_display *dp)
 	PUT32(sc, RADEON_SRC_PITCH_OFFSET,
 	    (pitch << 22) | (sc->sc_aperbase >> 10));
 
-	junk = GET32(sc, RADEON_DP_DATATYPE);
+	(void)GET32(sc, RADEON_DP_DATATYPE);
 
 	/* default scissors -- no clipping */
 	radeonfb_wait_fifo(sc, 1);
@@ -3486,6 +3576,22 @@ radeonfb_set_cursor(struct radeonfb_display *dp, struct wsdisplay_cursor *wc)
 	return 0;
 }
 
+static uint8_t
+radeonfb_backwards(uint8_t d)
+{
+	uint8_t l;
+
+	l = d << 7;
+	l |= ((d & 0x02) << 5); 
+	l |= ((d & 0x04) << 3); 
+	l |= ((d & 0x08) << 1);
+	l |= ((d & 0x10) >> 1); 
+	l |= ((d & 0x20) >> 3); 
+	l |= ((d & 0x40) >> 5); 
+	l |= ((d & 0x80) >> 7);
+	return l;
+} 
+ 
 /*
  * Change the cursor shape.  Call this with the cursor locked to avoid
  * flickering/tearing.
@@ -3494,7 +3600,7 @@ static void
 radeonfb_cursor_shape(struct radeonfb_display *dp)
 {
 	uint8_t	and[512], xor[512];
-	int	i, j, src, dst, pitch;
+	int	i, j, src, dst /* , pitch */;
 	const uint8_t	*msk = dp->rd_cursor.rc_mask;
 	const uint8_t	*img = dp->rd_cursor.rc_image;
 
@@ -3529,7 +3635,7 @@ radeonfb_cursor_shape(struct radeonfb_display *dp)
 	 * hence:	AND = ~(mask);	XOR = color & ~(mask);
 	 */
 
-	pitch = ((dp->rd_cursor.rc_size.x + 7) / 8);
+	/* pitch = ((dp->rd_cursor.rc_size.x + 7) / 8); */
 
 	/* start by assuming all bits are transparent */
 	memset(and, 0xff, 512);
@@ -3549,6 +3655,11 @@ radeonfb_cursor_shape(struct radeonfb_display *dp)
 			}
 			dst++;
 		}
+	}
+
+	for (i = 0; i < 512; i++) {
+		and[i] = radeonfb_backwards(and[i]);
+		xor[i] = radeonfb_backwards(xor[i]);
 	}
 
 	/* copy the image into place */

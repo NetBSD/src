@@ -1,7 +1,6 @@
 /* Command-line output logging for GDB, the GNU debugger.
 
-   Copyright (c) 2003, 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,9 +20,10 @@
 #include "defs.h"
 #include "gdbcmd.h"
 #include "ui-out.h"
+#include "interps.h"
 #include "gdb_assert.h"
 
-#include "gdb_string.h"
+#include <string.h>
 
 /* These hold the pushed copies of the gdb output files.
    If NULL then nothing has yet been pushed.  */
@@ -79,13 +79,16 @@ static struct ui_file *logging_no_redirect_file;
 static void
 set_logging_redirect (char *args, int from_tty, struct cmd_list_element *c)
 {
-  struct cleanup *cleanups = NULL;
+  struct cleanup *cleanups;
   struct ui_file *output, *new_logging_no_redirect_file;
+  struct ui_out *uiout = current_uiout;
 
   if (saved_filename == NULL
       || (logging_redirect != 0 && logging_no_redirect_file == NULL)
       || (logging_redirect == 0 && logging_no_redirect_file != NULL))
     return;
+
+  cleanups = make_cleanup (null_cleanup, NULL);
 
   if (logging_redirect != 0)
     {
@@ -93,7 +96,7 @@ set_logging_redirect (char *args, int from_tty, struct cmd_list_element *c)
 
       /* ui_out_redirect still has not been called for next
 	 gdb_stdout.  */
-      cleanups = make_cleanup_ui_file_delete (gdb_stdout);
+      make_cleanup_ui_file_delete (gdb_stdout);
 
       output = logging_no_redirect_file;
       new_logging_no_redirect_file = NULL;
@@ -115,11 +118,17 @@ set_logging_redirect (char *args, int from_tty, struct cmd_list_element *c)
 			    logging_filename);
     }
 
-  gdb_stdout = output;
-  gdb_stderr = output;
-  gdb_stdlog = output;
-  gdb_stdtarg = output;
-  gdb_stdtargerr = output;
+  /* Give the current interpreter a chance to do anything special that
+     it might need for logging, such as updating other channels.  */
+  if (current_interp_set_logging (1, output, NULL) == 0)
+    {
+      gdb_stdout = output;
+      gdb_stdlog = output;
+      gdb_stderr = output;
+      gdb_stdtarg = output;
+      gdb_stdtargerr = output;
+    }
+
   logging_no_redirect_file = new_logging_no_redirect_file;
 
   /* There is a former output pushed on the ui_out_redirect stack.  We
@@ -132,8 +141,7 @@ set_logging_redirect (char *args, int from_tty, struct cmd_list_element *c)
       || ui_out_redirect (uiout, output) < 0)
     warning (_("Current output protocol does not support redirection"));
 
-  if (logging_redirect != 0)
-    do_cleanups (cleanups);
+  do_cleanups (cleanups);
 }
 
 static void
@@ -147,26 +155,32 @@ show_logging_redirect (struct ui_file *file, int from_tty,
 static void
 pop_output_files (void)
 {
-  /* Only delete one of the files -- they are all set to the same
-     value.  */
-  ui_file_delete (gdb_stdout);
   if (logging_no_redirect_file)
     {
       ui_file_delete (logging_no_redirect_file);
       logging_no_redirect_file = NULL;
     }
-  gdb_stdout = saved_output.out;
-  gdb_stderr = saved_output.err;
-  gdb_stdlog = saved_output.log;
-  gdb_stdtarg = saved_output.targ;
-  gdb_stdtargerr = saved_output.targ;
+
+  if (current_interp_set_logging (0, NULL, NULL) == 0)
+    {
+      /* Only delete one of the files -- they are all set to the same
+	 value.  */
+      ui_file_delete (gdb_stdout);
+
+      gdb_stdout = saved_output.out;
+      gdb_stderr = saved_output.err;
+      gdb_stdlog = saved_output.log;
+      gdb_stdtarg = saved_output.targ;
+      gdb_stdtargerr = saved_output.targ;
+    }
+
   saved_output.out = NULL;
   saved_output.err = NULL;
   saved_output.log = NULL;
   saved_output.targ = NULL;
   saved_output.targerr = NULL;
 
-  ui_out_redirect (uiout, NULL);
+  ui_out_redirect (current_uiout, NULL);
 }
 
 /* This is a helper for the `set logging' command.  */
@@ -175,6 +189,7 @@ handle_redirections (int from_tty)
 {
   struct cleanup *cleanups;
   struct ui_file *output;
+  struct ui_file *no_redirect_file = NULL;
 
   if (saved_filename != NULL)
     {
@@ -191,7 +206,7 @@ handle_redirections (int from_tty)
   /* Redirects everything to gdb_stdout while this is running.  */
   if (!logging_redirect)
     {
-      struct ui_file *no_redirect_file = output;
+      no_redirect_file = output;
 
       output = tee_file_new (gdb_stdout, 0, no_redirect_file, 0);
       if (output == NULL)
@@ -220,14 +235,22 @@ handle_redirections (int from_tty)
   saved_output.targ = gdb_stdtarg;
   saved_output.targerr = gdb_stdtargerr;
 
-  gdb_stdout = output;
-  gdb_stderr = output;
-  gdb_stdlog = output;
-  gdb_stdtarg = output;
-  gdb_stdtargerr = output;
+  /* Let the interpreter do anything it needs.  */
+  if (current_interp_set_logging (1, output, no_redirect_file) == 0)
+    {
+      gdb_stdout = output;
+      gdb_stdlog = output;
+      gdb_stderr = output;
+      gdb_stdtarg = output;
+      gdb_stdtargerr = output;
+    }
 
-  if (ui_out_redirect (uiout, output) < 0)
-    warning (_("Current output protocol does not support redirection"));
+  /* Don't do the redirect for MI, it confuses MI's ui-out scheme.  */
+  if (!ui_out_is_mi_like_p (current_uiout))
+    {
+      if (ui_out_redirect (current_uiout, output) < 0)
+	warning (_("Current output protocol does not support redirection"));
+    }
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.21 2011/07/09 17:32:31 matt Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.21.12.1 2014/08/20 00:03:19 tls Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.21 2011/07/09 17:32:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.21.12.1 2014/08/20 00:03:19 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,6 +179,8 @@ ioasicattach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < ioasic_ndevs; i++)
 		imsk &= ~ioasic_devs[i].iad_intrbits;
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK, imsk);
+#else
+	__USE(ioasic_ndevs);
 #endif
 
 	/*

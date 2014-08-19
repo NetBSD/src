@@ -29,7 +29,7 @@
 
 #include <arm/asm.h>
 
-RCSID("$NetBSD: vfpdf.S,v 1.1.4.2 2013/02/25 00:27:55 tls Exp $")
+RCSID("$NetBSD: vfpdf.S,v 1.1.4.3 2014/08/20 00:02:16 tls Exp $")
 
 /*
  * This file provides softfloat compatible routines which use VFP instructions
@@ -50,6 +50,19 @@ RCSID("$NetBSD: vfpdf.S,v 1.1.4.2 2013/02/25 00:27:55 tls Exp $")
 #endif
 #define	vmov_args	vmov_arg0; vmov_arg1
 
+#ifdef __ARM_EABI__
+#define	__adddf3	__aeabi_dadd
+#define	__divdf3	__aeabi_ddiv
+#define	__muldf3	__aeabi_dmul
+#define	__subdf3	__aeabi_dsub
+#define	__negdf2	__aeabi_dneg
+#define	__extendsfdf2	__aeabi_f2d
+#define	__fixdfsi	__aeabi_d2iz
+#define	__fixunsdfsi	__aeabi_d2uiz
+#define	__floatsidf	__aeabi_i2d
+#define	__floatunsidf	__aeabi_ui2d
+#endif
+
 ENTRY(__adddf3)
 	vmov_args
 	vadd.f64	d0, d0, d1
@@ -63,6 +76,15 @@ ENTRY(__subdf3)
 	vmov_ret
 	RET
 END(__subdf3)
+
+#ifdef __ARM_EABI__
+ENTRY(__aeabi_drsub)
+	vmov_args
+	vsub.f64	d0, d1, d0
+	vmov_ret
+	RET
+END(__aeabi_drsub)
+#endif
 
 ENTRY(__muldf3)
 	vmov_args
@@ -120,6 +142,91 @@ ENTRY(__floatunsidf)
 	RET
 END(__floatunsidf)
 
+/*
+ * Effect of a floating point comparision on the condition flags.
+ *      N Z C V
+ * EQ = 0 1 1 0
+ * LT = 1 0 0 0
+ * GT = 0 0 1 0
+ * UN = 0 0 1 1
+ */
+#ifdef __ARM_EABI__
+ENTRY(__aeabi_cdcmpeq)
+	vmov_args
+	vcmp.f64	d0, d1
+	vmrs		APSR_nzcv, fpscr
+	RET
+END(__aeabi_cdcmpeq)
+
+ENTRY(__aeabi_cdcmple)
+	vmov_args
+	vcmpe.f64	d0, d1
+	vmrs		APSR_nzcv, fpscr
+	RET
+END(__aeabi_cdcmple)
+
+ENTRY(__aeabi_cdrcmple)
+	vmov_args
+	vcmpe.f64	d1, d0
+	vmrs		APSR_nzcv, fpscr
+	RET
+END(__aeabi_cdrcmple)
+
+ENTRY(__aeabi_dcmpeq)
+	vmov_args
+	vcmp.f64	d0, d1
+	vmrs		APSR_nzcv, fpscr
+	moveq		r0, #1		/* (a == b) */
+	movne		r0, #0		/* (a != b) or unordered */
+	RET
+END(__aeabi_dcmpeq)
+
+ENTRY(__aeabi_dcmplt)
+	vmov_args
+	vcmp.f64	d0, d1
+	vmrs		APSR_nzcv, fpscr
+	movlt		r0, #1		/* (a < b) */
+	movcs		r0, #0		/* (a >= b) or unordered */
+	RET
+END(__aeabi_dcmplt)
+
+ENTRY(__aeabi_dcmple)
+	vmov_args
+	vcmp.f64	d0, d1
+	vmrs		APSR_nzcv, fpscr
+	movls		r0, #1		/* (a <= b) */
+	movhi		r0, #0		/* (a > b) or unordered */
+	RET
+END(__aeabi_dcmple)
+
+ENTRY(__aeabi_dcmpge)
+	vmov_args
+	vcmp.f64	d0, d1
+	vmrs		APSR_nzcv, fpscr
+	movge		r0, #1		/* (a >= b) */
+	movlt		r0, #0		/* (a < b) or unordered */
+	RET
+END(__aeabi_dcmpge)
+
+ENTRY(__aeabi_dcmpgt)
+	vmov_args
+	vcmp.f64	d0, d1
+	vmrs		APSR_nzcv, fpscr
+	movgt		r0, #1		/* (a > b) */
+	movle		r0, #0		/* (a <= b) or unordered */
+	RET
+END(__aeabi_dcmpgt)
+
+ENTRY(__aeabi_dcmpun)
+	vmov_args
+	vcmp.f64	d0, d1
+	vmrs		APSR_nzcv, fpscr
+	movvs		r0, #1		/* (isnan(a) || isnan(b)) */
+	movvc		r0, #0		/* !isnan(a) && !isnan(b) */
+	RET
+END(__aeabi_dcmpun)
+
+#else
 /* N set if compare <= result */
 /* Z set if compare = result */
 /* C set if compare (=,>=,UNORD) result */
@@ -163,3 +270,4 @@ ENTRY(__unorddf2)
 	movvc		r0, #0		/* isnan(a) || isnan(b) */
 	RET
 END(__unorddf2)
+#endif /* !__ARM_EABI__ */

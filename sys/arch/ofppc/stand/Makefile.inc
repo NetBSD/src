@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.3 1998/05/22 12:56:35 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.3.198.1 2014/08/20 00:03:17 tls Exp $
 
 BINDIR=		/usr/mdec
 
 CPPFLAGS+=	-D_STANDALONE
 
-CFLAGS+=	-msoft-float
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -msoft-float :}

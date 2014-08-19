@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.222 2011/11/19 22:51:30 tls Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.222.8.1 2014/08/20 00:04:36 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.222 2011/11/19 22:51:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.222.8.1 2014/08/20 00:04:36 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1489,7 +1489,6 @@ nfs_init0(void)
 	nfs_ticks = (hz * NFS_TICKINTVL + 500) / 1000;
 	if (nfs_ticks < 1)
 		nfs_ticks = 1;
-	nfs_xid = cprng_fast32();
 	nfsdreq_init();
 
 	/*
@@ -1502,27 +1501,42 @@ nfs_init0(void)
 	return 0;
 }
 
+static volatile uint32_t nfs_mutex;
+static uint32_t nfs_refcount;
+
+#define nfs_p()	while (atomic_cas_32(&nfs_mutex, 0, 1) == 0) continue;
+#define nfs_v()	while (atomic_cas_32(&nfs_mutex, 1, 0) == 1) continue;
+
 /*
  * This is disgusting, but it must support both modular and monolothic
- * configurations.  For monolithic builds NFSSERVER may not imply NFS.
+ * configurations, plus the code is shared between server and client.
+ * For monolithic builds NFSSERVER may not imply NFS. Unfortunately we
+ * can't use regular mutexes here that would require static initialization
+ * and we can get initialized from multiple places, so we improvise.
  *
  * Yuck.
  */
 void
 nfs_init(void)
 {
-	static ONCE_DECL(nfs_init_once);
 
-	RUN_ONCE(&nfs_init_once, nfs_init0);
+	nfs_p();
+	if (nfs_refcount++ == 0)
+		nfs_init0();
+	nfs_v();
 }
 
 void
 nfs_fini(void)
 {
 
-	nfsdreq_fini();
-	nfs_timer_fini();
-	MOWNER_DETACH(&nfs_mowner);
+	nfs_p();
+	if (--nfs_refcount == 0) {
+		MOWNER_DETACH(&nfs_mowner);
+		nfs_timer_fini();
+		nfsdreq_fini();
+	}
+	nfs_v();
 }
 
 /*
@@ -1728,6 +1742,30 @@ netaddr_match(int family, union nethostaddr *haddr, struct mbuf *nam)
 	return (0);
 }
 
+struct nfs_clearcommit_ctx {
+	struct mount *mp;
+};
+
+static bool
+nfs_clearcommit_selector(void *cl, struct vnode *vp)
+{
+	struct nfs_clearcommit_ctx *c = cl;
+	struct nfsnode *np;
+	struct vm_page *pg;
+
+	np = VTONFS(vp);
+	if (vp->v_type != VREG || vp->v_mount != c->mp || np == NULL)
+		return false;
+	np->n_pushlo = np->n_pushhi = np->n_pushedlo =
+	    np->n_pushedhi = 0;
+	np->n_commitflags &=
+	    ~(NFS_COMMIT_PUSH_VALID | NFS_COMMIT_PUSHED_VALID);
+	TAILQ_FOREACH(pg, &vp->v_uobj.memq, listq.queue) {
+		pg->flags &= ~PG_NEEDCOMMIT;
+	}
+	return false;
+}
+
 /*
  * The write verifier has changed (probably due to a server reboot), so all
  * PG_NEEDCOMMIT pages will have to be written again. Since they are marked
@@ -1738,33 +1776,17 @@ netaddr_match(int family, union nethostaddr *haddr, struct mbuf *nam)
 void
 nfs_clearcommit(struct mount *mp)
 {
-	struct vnode *vp;
-	struct nfsnode *np;
-	struct vm_page *pg;
+	struct vnode *vp __diagused;
+	struct vnode_iterator *marker;
 	struct nfsmount *nmp = VFSTONFS(mp);
+	struct nfs_clearcommit_ctx ctx;
 
 	rw_enter(&nmp->nm_writeverflock, RW_WRITER);
-	mutex_enter(&mntvnode_lock);
-	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
-		KASSERT(vp->v_mount == mp);
-		if (vp->v_type != VREG)
-			continue;
-		mutex_enter(vp->v_interlock);
-		if (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) {
-			mutex_exit(vp->v_interlock);
-			continue;
-		}
-		np = VTONFS(vp);
-		np->n_pushlo = np->n_pushhi = np->n_pushedlo =
-		    np->n_pushedhi = 0;
-		np->n_commitflags &=
-		    ~(NFS_COMMIT_PUSH_VALID | NFS_COMMIT_PUSHED_VALID);
-		TAILQ_FOREACH(pg, &vp->v_uobj.memq, listq.queue) {
-			pg->flags &= ~PG_NEEDCOMMIT;
-		}
-		mutex_exit(vp->v_interlock);
-	}
-	mutex_exit(&mntvnode_lock);
+	vfs_vnode_iterator_init(mp, &marker);
+	ctx.mp = mp;
+	vp = vfs_vnode_iterator_next(marker, nfs_clearcommit_selector, &ctx);
+	KASSERT(vp == NULL);
+	vfs_vnode_iterator_destroy(marker);
 	mutex_enter(&nmp->nm_lock);
 	nmp->nm_iflag &= ~NFSMNT_STALEWRITEVERF;
 	mutex_exit(&nmp->nm_lock);
@@ -1978,6 +2000,10 @@ u_int32_t
 nfs_getxid(void)
 {
 	u_int32_t newxid;
+
+	if (__predict_false(nfs_xid == 0)) {
+		nfs_xid = cprng_fast32();
+	}
 
 	/* get next xid.  skip 0 */
 	do {

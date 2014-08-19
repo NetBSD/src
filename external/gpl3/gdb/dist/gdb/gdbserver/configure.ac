@@ -1,6 +1,5 @@
 dnl Autoconf configure script for GDB server.
-dnl Copyright (C) 2000, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-dnl 2010, 2011 Free Software Foundation, Inc.
+dnl Copyright (C) 2000-2014 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
 dnl
@@ -23,28 +22,70 @@ AC_PREREQ(2.59)dnl
 
 AC_INIT(server.c)
 AC_CONFIG_HEADER(config.h:config.in)
-AC_CONFIG_LIBOBJ_DIR(../gnulib)
+
+AM_MAINTAINER_MODE
 
 AC_PROG_CC
 AC_GNU_SOURCE
+AC_SYS_LARGEFILE
 
 AC_CANONICAL_SYSTEM
 
 AC_PROG_INSTALL
+AC_PROG_RANLIB
 
 AC_ARG_PROGRAM
 
 AC_HEADER_STDC
 
 AC_FUNC_ALLOCA
+
+# Set the 'development' global.
+. $srcdir/../development.sh
+
+# Enable -lmcheck by default (it provides cheap-enough memory
+# mangling), but turn it off for releases.
+if $development; then
+  libmcheck_default=yes
+else
+  libmcheck_default=no
+fi
+GDB_AC_LIBMCHECK(${libmcheck_default})
+
+ACX_NONCANONICAL_TARGET
+ACX_NONCANONICAL_HOST
+
+# Dependency checking.
+ZW_CREATE_DEPDIR
+ZW_PROG_COMPILER_DEPENDENCIES([CC])
+
+# Check for the 'make' the user wants to use.
+AC_CHECK_PROGS(MAKE, make)
+MAKE_IS_GNU=
+case "`$MAKE --version 2>&1 | sed 1q`" in
+  *GNU*)
+    MAKE_IS_GNU=yes
+    ;;
+esac
+AM_CONDITIONAL(GMAKE, test "$MAKE_IS_GNU" = yes)
+AC_PROG_MAKE_SET
+
+# Configure gnulib.  We can't use AC_CONFIG_SUBDIRS as that'd expect
+# to find the the source subdir to be configured directly under
+# gdbserver/.  We need to build gnulib under some other directory not
+# "gnulib", to avoid the problem of both GDB and GDBserver wanting to
+# build it in the same directory, when building in the source dir.
+ACX_CONFIGURE_DIR(["../gnulib"], ["build-gnulib-gdbserver"])
+
 AC_CHECK_HEADERS(sgtty.h termio.h termios.h sys/reg.h string.h dnl
-		 proc_service.h sys/procfs.h thread_db.h linux/elf.h dnl
-		 stdlib.h unistd.h dnl
+		 proc_service.h sys/procfs.h linux/elf.h dnl
 		 errno.h fcntl.h signal.h sys/file.h malloc.h dnl
 		 sys/ioctl.h netinet/in.h sys/socket.h netdb.h dnl
-		 netinet/tcp.h arpa/inet.h sys/wait.h)
-AC_CHECK_FUNCS(pread pwrite pread64)
-AC_REPLACE_FUNCS(memmem vasprintf vsnprintf)
+		 netinet/tcp.h arpa/inet.h)
+AC_CHECK_FUNCS(pread pwrite pread64 readlink)
+AC_REPLACE_FUNCS(vasprintf vsnprintf)
+
+GDB_AC_COMMON
 
 # Check for UST
 ustlibs=""
@@ -113,7 +154,7 @@ if test "${ERROR_ON_WARNING}" = yes ; then
 fi
 
 build_warnings="-Wall -Wdeclaration-after-statement -Wpointer-arith \
--Wformat-nonliteral -Wno-char-subscripts"
+-Wformat-nonliteral -Wno-char-subscripts -Wempty-body"
 
 WARN_CFLAGS=""
 if test "x$GCC" = xyes
@@ -145,28 +186,16 @@ LIBS="$LIBS -ldl"
 AC_CHECK_FUNCS(dladdr)
 LIBS="$old_LIBS"
 
-have_errno=no
-AC_MSG_CHECKING(for errno)
-AC_TRY_LINK([
-#if HAVE_ERRNO_H
-#include <errno.h>
-#endif], [static int x; x = errno;],
-  [AC_MSG_RESULT(yes - in errno.h); AC_DEFINE(HAVE_ERRNO, 1, [Define if errno is available]) have_errno=yes])
-if test $have_errno = no; then
-AC_TRY_LINK([
-#if HAVE_ERRNO_H
-#include <errno.h>
-#endif], [extern int errno; static int x; x = errno;],
-  [AC_MSG_RESULT(yes - must define); AC_DEFINE(HAVE_ERRNO, 1, [Define if errno is available]) AC_DEFINE(MUST_DEFINE_ERRNO, 1, [Checking if errno must be defined])],
-  [AC_MSG_RESULT(no)])
-fi
-
-AC_CHECK_DECLS([strerror, perror, memmem, vasprintf, vsnprintf])
+AC_CHECK_DECLS([strerror, perror, vasprintf, vsnprintf])
 
 AC_CHECK_TYPES(socklen_t, [], [],
 [#include <sys/types.h>
 #include <sys/socket.h>
 ])
+
+AC_CHECK_TYPES([Elf32_auxv_t, Elf64_auxv_t], [], [],
+#include <elf.h>
+)
 
 ACX_PKGVERSION([GDB])
 ACX_BUGURL([http://www.gnu.org/software/gdb/bugs/])
@@ -261,11 +290,26 @@ if test "${srv_linux_regsets}" = "yes"; then
   fi
 fi
 
+if test "${srv_linux_btrace}" = "yes"; then
+  AC_DEFINE(HAVE_LINUX_BTRACE, 1,
+	    [Define if the target supports branch tracing.])
+fi
+
 if test "$ac_cv_header_sys_procfs_h" = yes; then
   BFD_HAVE_SYS_PROCFS_TYPE(lwpid_t)
   BFD_HAVE_SYS_PROCFS_TYPE(psaddr_t)
   BFD_HAVE_SYS_PROCFS_TYPE(prgregset_t)
   BFD_HAVE_SYS_PROCFS_TYPE(elf_fpregset_t)
+fi
+
+dnl Some systems (e.g., Android) have lwpid_t defined in libthread_db.h.
+if test "$bfd_cv_have_sys_procfs_type_lwpid_t" != yes; then
+  GDBSERVER_HAVE_THREAD_DB_TYPE(lwpid_t)
+fi
+
+dnl Some systems (e.g., Android) have psaddr_t defined in libthread_db.h.
+if test "$bfd_cv_have_sys_procfs_type_psaddr_t" != yes; then
+  GDBSERVER_HAVE_THREAD_DB_TYPE(psaddr_t)
 fi
 
 dnl Check for libdl, but do not add it to LIBS as only gdbserver
@@ -276,7 +320,6 @@ LIBS="$old_LIBS"
 
 srv_thread_depfiles=
 srv_libs=
-USE_THREAD_DB=
 
 if test "$srv_linux_thread_db" = "yes"; then
   if test "$ac_cv_lib_dl_dlopen" = "yes"; then
@@ -304,7 +347,7 @@ if test "$srv_linux_thread_db" = "yes"; then
   fi
 
   srv_thread_depfiles="thread-db.o proc-service.o"
-  USE_THREAD_DB="-DUSE_THREAD_DB"
+  AC_DEFINE(USE_THREAD_DB, 1, [Define if we should use libthread_db.])
   AC_CACHE_CHECK([for TD_VERSION], gdbsrv_cv_have_td_version,
   [AC_TRY_COMPILE([#include <thread_db.h>], [TD_VERSION;],
 		  [gdbsrv_cv_have_td_version=yes],
@@ -357,6 +400,29 @@ AC_COMPILE_IFELSE(AC_LANG_PROGRAM([]),
 	        	[gdbsrv_cv_have_visibility_hidden=no])
 CFLAGS="$saved_cflags"
 
+dnl Check if we can disable the virtual address space randomization.
+dnl The functionality of setarch -R.
+AC_CHECK_DECLS([ADDR_NO_RANDOMIZE],,, [#include <sys/personality.h>])
+define([PERSONALITY_TEST], [AC_LANG_PROGRAM([#include <sys/personality.h>], [
+#      if !HAVE_DECL_ADDR_NO_RANDOMIZE
+#       define ADDR_NO_RANDOMIZE 0x0040000
+#      endif
+       /* Test the flag could be set and stays set.  */
+       personality (personality (0xffffffff) | ADDR_NO_RANDOMIZE);
+       if (!(personality (personality (0xffffffff)) & ADDR_NO_RANDOMIZE))
+           return 1])])
+AC_RUN_IFELSE([PERSONALITY_TEST],
+              [gdbsrv_cv_have_personality=true],
+              [gdbsrv_cv_have_personality=false],
+              [AC_LINK_IFELSE([PERSONALITY_TEST],
+                              [gdbsrv_cv_have_personality=true],
+                              [gdbsrv_cv_have_personality=false])])
+if $gdbsrv_cv_have_personality
+then
+    AC_DEFINE([HAVE_PERSONALITY], 1,
+              [Define if you support the personality syscall.])
+fi
+
 
 IPA_DEPFILES=""
 extra_libraries=""
@@ -390,11 +456,18 @@ fi
 
 AC_SUBST(GDBSERVER_DEPFILES)
 AC_SUBST(GDBSERVER_LIBS)
-AC_SUBST(USE_THREAD_DB)
 AC_SUBST(srv_xmlbuiltin)
 AC_SUBST(srv_xmlfiles)
 AC_SUBST(IPA_DEPFILES)
 AC_SUBST(extra_libraries)
+
+GNULIB=build-gnulib-gdbserver/import
+
+GNULIB_STDINT_H=
+if test x"$STDINT_H" != x; then
+  GNULIB_STDINT_H=$GNULIB/$STDINT_H
+fi
+AC_SUBST(GNULIB_STDINT_H)
 
 AC_OUTPUT(Makefile,
 [case x$CONFIG_HEADERS in

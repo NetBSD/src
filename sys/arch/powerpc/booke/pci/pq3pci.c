@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.15 2012/08/14 13:02:19 he Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.15.2.1 2014/08/20 00:03:19 tls Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.15 2012/08/14 13:02:19 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.15.2.1 2014/08/20 00:03:19 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -663,13 +663,14 @@ static void
 pq3pci_intr_source_setup(struct pq3pci_softc *sc,
 	struct pq3pci_intrsource *pis, pci_intr_handle_t handle)
 {
+	char buf[PCI_INTRSTR_LEN];
 	SIMPLEQ_INIT(&pis->pis_ihands);
 	pis->pis_handle = handle;
 	pis->pis_ih = intr_establish(PIH_IRQ(handle), IPL_VM, PIH_IST(handle),
 	    pq3pci_pis_intr, pis);
 	pis->pis_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_VM);
 	const char * const intrstr
-	    = intr_string(PIH_IRQ(handle), PIH_IST(handle));
+	    = intr_string(PIH_IRQ(handle), PIH_IST(handle), buf, sizeof(buf));
 	evcnt_attach_dynamic(&pis->pis_ev, EVCNT_TYPE_INTR,
 	    NULL, intrstr, "intr");
 	evcnt_attach_dynamic(&pis->pis_ev_spurious, EVCNT_TYPE_INTR,
@@ -997,6 +998,7 @@ pq3pci_make_tag(void *v, int bus, int dev, int func)
 	return (bus << 16) | (dev << 11) | (func << 8);
 }
 
+#if 0
 static inline pcitag_t
 pq3pci_config_addr_read(pci_chipset_tag_t pc)
 {
@@ -1005,6 +1007,7 @@ pq3pci_config_addr_read(pci_chipset_tag_t pc)
         __asm volatile("mbar\n\tmsync");
 	return v;
 }
+#endif
 
 static inline void
 pq3pci_config_addr_write(pci_chipset_tag_t pc, pcitag_t v)
@@ -1291,14 +1294,15 @@ pq3pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *handlep)
 }
 
 static const char *
-pq3pci_intr_string(void *v, pci_intr_handle_t handle)
+pq3pci_intr_string(void *v, pci_intr_handle_t handle, char *buf, size_t len)
 {
 	if (PIH_IST(handle) == IST_MSI) {
 		const char (*intr_names)[8] = msi_intr_names[0];
-		return intr_names[PIH_IRQ(handle)];
+		strlcpy(buf, intr_names[PIH_IRQ(handle)], len);
+		return buf;
 	}
 
-	return intr_string(PIH_IRQ(handle), PIH_IST(handle));
+	return intr_string(PIH_IRQ(handle), PIH_IST(handle), buf, len);
 }
 
 static const struct evcnt *

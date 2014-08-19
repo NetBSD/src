@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.26.2.1 2012/11/20 03:02:07 tls Exp $ */
+/* $NetBSD: mtd803.c,v 1.26.2.2 2014/08/20 00:03:38 tls Exp $ */
 
 /*-
  *
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.26.2.1 2012/11/20 03:02:07 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.26.2.2 2014/08/20 00:03:38 tls Exp $");
 
 
 #include <sys/param.h>
@@ -177,7 +177,7 @@ mtd_config(struct mtd_softc *sc)
 
 	/* Initialise random source */
 	rnd_attach_source(&sc->rnd_src, device_xname(sc->dev),
-			  RND_TYPE_NET, 0);
+			  RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	/* Add shutdown hook to reset card when we reboot */
 	sc->sd_hook = shutdownhook_establish(mtd_shutdown, sc);
@@ -460,7 +460,6 @@ mtd_start(struct ifnet *ifp)
 {
 	struct mtd_softc *sc = ifp->if_softc;
 	struct mbuf *m;
-	int len;
 	int first_tx = sc->cur_tx;
 
 	/* Don't transmit when the interface is busy or inactive */
@@ -476,7 +475,7 @@ mtd_start(struct ifnet *ifp)
 		bpf_mtap(ifp, m);
 
 		/* Copy mbuf chain into tx buffer */
-		len = mtd_put(sc, sc->cur_tx, m);
+		(void)mtd_put(sc, sc->cur_tx, m);
 
 		if (sc->cur_tx != first_tx)
 			sc->desc[MTD_NUM_RXD + sc->cur_tx].stat = MTD_TXD_OWNER;

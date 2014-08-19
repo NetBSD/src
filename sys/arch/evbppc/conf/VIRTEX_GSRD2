@@ -1,4 +1,4 @@
-#	$NetBSD: VIRTEX_GSRD2,v 1.16.2.2 2013/06/23 06:20:05 tls Exp $
+#	$NetBSD: VIRTEX_GSRD2,v 1.16.2.3 2014/08/20 00:02:59 tls Exp $
 #
 # VIRTEX_GSRD2
 #
@@ -120,7 +120,6 @@ options 	INET6		# IPV6
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 

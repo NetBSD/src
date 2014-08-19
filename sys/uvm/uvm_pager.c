@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.108.6.1 2012/10/10 16:31:54 bouyer Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.108.6.2 2014/08/20 00:04:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.108.6.1 2012/10/10 16:31:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.108.6.2 2014/08/20 00:04:45 tls Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -396,7 +396,7 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 #if defined(VMSWAP)
 			if (swap) {
 				if (pg->uobject != NULL) {
-					int oldslot;
+					int oldslot __diagused;
 					oldslot = uao_set_swslot(pg->uobject,
 						pg->offset >> PAGE_SHIFT, slot);
 					KASSERT(oldslot == swslot + i);
@@ -468,9 +468,10 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 
 		/* these pages are now only in swap. */
 		mutex_enter(&uvm_swap_data_lock);
-		KASSERT(uvmexp.swpgonly + npages <= uvmexp.swpginuse);
-		if (error != ENOMEM)
+		if (error != ENOMEM) {
+			KASSERT(uvmexp.swpgonly + npages <= uvmexp.swpginuse);
 			uvmexp.swpgonly += npages;
+		}
 		mutex_exit(&uvm_swap_data_lock);
 		if (error) {
 			if (error != ENOMEM)
@@ -527,7 +528,7 @@ uvm_pageratop(vaddr_t kva)
 {
 	struct vm_page *pg;
 	paddr_t pa;
-	bool rv;
+	bool rv __diagused;
 
 	rv = pmap_extract(pmap_kernel(), kva, &pa);
 	KASSERT(rv);

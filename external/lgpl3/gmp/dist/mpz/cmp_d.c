@@ -71,13 +71,13 @@ mpz_cmp_d (mpz_srcptr z, double d)
   if (zsize >= 0)
     {
       if (d < 0.0)
-        return 1;    /* >=0 cmp <0 */
+	return 1;    /* >=0 cmp <0 */
       ret = 1;
     }
   else
     {
       if (d >= 0.0)
-        return -1;   /* <0 cmp >=0 */
+	return -1;   /* <0 cmp >=0 */
       ret = -1;
       d = -d;
       zsize = -zsize;

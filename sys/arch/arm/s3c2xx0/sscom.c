@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.37.6.2 2013/06/23 06:20:01 tls Exp $ */
+/*	$NetBSD: sscom.c,v 1.37.6.3 2014/08/20 00:02:47 tls Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.37.6.2 2013/06/23 06:20:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.37.6.3 2014/08/20 00:02:47 tls Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -142,14 +142,9 @@ __KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.37.6.2 2013/06/23 06:20:01 tls Exp $");
 #include <sys/kauth.h>
 #include <sys/intr.h>
 #include <sys/bus.h>
+#include <sys/mutex.h>
 
 #include <arm/s3c2xx0/s3c2xx0reg.h>
-#include <arm/s3c2xx0/s3c2xx0var.h>
-#if defined(SSCOM_S3C2410) || defined(SSCOM_S3C2400) || defined(SSCOM_S3C2440)
-#include <arm/s3c2xx0/s3c24x0reg.h>
-#elif defined(SSCOM_S3C2800)
-#include <arm/s3c2xx0/s3c2800reg.h>
-#endif
 #include <arm/s3c2xx0/sscom_var.h>
 #include <dev/cons.h>
 
@@ -185,14 +180,26 @@ static int	sscom_to_tiocm(struct sscom_softc *);
 static void	sscom_iflush(struct sscom_softc *);
 
 static int	sscomhwiflow(struct tty *tp, int block);
+#if defined(KGDB) || defined(SSCOM0CONSOLE) || defined(SSCOM1CONSOLE)
 static int	sscom_init(bus_space_tag_t, const struct sscom_uart_info *,
 		    int, int, tcflag_t, bus_space_handle_t *);
+#endif
 
 extern struct cfdriver sscom_cd;
 
 const struct cdevsw sscom_cdevsw = {
-	sscomopen, sscomclose, sscomread, sscomwrite, sscomioctl,
-	sscomstop, sscomtty, sscompoll, nommap, ttykqfilter, D_TTY
+	.d_open = sscomopen,
+	.d_close = sscomclose,
+	.d_read = sscomread,
+	.d_write = sscomwrite,
+	.d_ioctl = sscomioctl,
+	.d_stop = sscomstop,
+	.d_tty = sscomtty,
+	.d_poll = sscompoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 /*
@@ -244,8 +251,8 @@ void	sscom_kgdb_putc (void *, int);
 
 #if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(SSCOM_MPLOCK)
 
-#define SSCOM_LOCK(sc) simple_lock((sc)->sc_lock)
-#define SSCOM_UNLOCK(sc) simple_unlock((sc)->sc_lock)
+#define SSCOM_LOCK(sc) mutex_enter((sc)->sc_lock)
+#define SSCOM_UNLOCK(sc) mutex_exit((sc)->sc_lock)
 
 #else
 
@@ -365,7 +372,7 @@ sscom_enable_debugport(struct sscom_softc *sc)
 	sc->sc_ucon = UCON_DEBUGPORT;
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SSCOM_UCON, sc->sc_ucon);
 	sc->sc_umcon = UMCON_RTS|UMCON_DTR;
-	sc->set_modem_control(sc);
+	sc->sc_set_modem_control(sc);
 	sscom_enable_rxint(sc);
 	sscom_disable_txint(sc);
 	SSCOM_UNLOCK(sc);
@@ -402,7 +409,7 @@ sscom_attach_subr(struct sscom_softc *sc)
 
 	callout_init(&sc->sc_diag_callout, 0);
 #if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(SSCOM_MPLOCK)
-	simple_lock_init(&sc->sc_lock);
+	sc->sc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SERIAL);
 #endif
 
 	sc->sc_ucon = UCON_RXINT_ENABLE|UCON_TXINT_ENABLE;
@@ -410,12 +417,13 @@ sscom_attach_subr(struct sscom_softc *sc)
 	/*
 	 * set default for modem control hook
 	 */
-	if (sc->set_modem_control == NULL)
-		sc->set_modem_control = sscom_set_modem_control;
-	if (sc->read_modem_status == NULL)
-		sc->read_modem_status = sscom_read_modem_status;
+	if (sc->sc_set_modem_control == NULL)
+		sc->sc_set_modem_control = sscom_set_modem_control;
+	if (sc->sc_read_modem_status == NULL)
+		sc->sc_read_modem_status = sscom_read_modem_status;
 
 	/* Disable interrupts before configuring the device. */
+	KASSERT(sc->sc_change_txrx_interrupts != NULL);
 	sscom_disable_txrxint(sc);
 
 #ifdef KGDB
@@ -502,7 +510,8 @@ sscom_attach_subr(struct sscom_softc *sc)
 
 #ifdef RND_COM
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_TTY, 0);
+			  RND_TYPE_TTY, RND_FLAG_COLLECT_TIME|
+					RND_FLAG_ESTIMATE_TIME);
 #endif
 
 	/* if there are no enable/disable functions, assume the device
@@ -640,7 +649,7 @@ sscomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sscom_enable_txrxint(sc);
 
 		/* Fetch the current modem control status, needed later. */
-		sc->sc_msts = sc->read_modem_status(sc);
+		sc->sc_msts = sc->sc_read_modem_status(sc);
 
 #if 0
 		/* Clear PPS capture state on first open. */
@@ -1206,7 +1215,7 @@ sscom_loadchannelregs(struct sscom_softc *sc)
 
 	bus_space_write_2(iot, ioh, SSCOM_UBRDIV, sc->sc_ubrdiv);
 	bus_space_write_1(iot, ioh, SSCOM_ULCON, sc->sc_ulcon);
-	sc->set_modem_control(sc);
+	sc->sc_set_modem_control(sc);
 	bus_space_write_2(iot, ioh, SSCOM_UCON, sc->sc_ucon);
 }
 
@@ -1262,7 +1271,7 @@ sscom_hwiflow(struct sscom_softc *sc)
 		SET(sc->sc_umcon, sc->sc_mcr_rts);
 		SET(sc->sc_mcr_active, sc->sc_mcr_rts);
 	}
-	sc->set_modem_control(sc);
+	sc->sc_set_modem_control(sc);
 }
 
 
@@ -1634,7 +1643,7 @@ sscomrxintr(void *arg)
 		}
 
 
-		msts = sc->read_modem_status(sc);
+		msts = sc->sc_read_modem_status(sc);
 		delta = msts ^ sc->sc_msts;
 		sc->sc_msts = msts;
 
@@ -1901,7 +1910,8 @@ int
 sscomcngetc(dev_t dev)
 {
 	int s = splserial();
-	u_char stat, c;
+	u_char __attribute__((__unused__)) stat;
+	u_char c;
 
 	/* got a character from reading things earlier */
 	if (sscom_readaheadcount > 0) {
@@ -1923,7 +1933,7 @@ sscomcngetc(dev_t dev)
 	c = sscom_getc(sscomconstag, sscomconsioh);
 	stat = sscom_geterr(sscomconstag, sscomconsioh);
 	{
-		int cn_trapped = 0; /* unused */
+		int __attribute__((__unused__))cn_trapped = 0;
 #ifdef DDB
 		extern int db_active;
 		if (!db_active)
@@ -1943,11 +1953,12 @@ sscomcnputc(dev_t dev, int c)
 	int s = splserial();
 	int timo;
 
-	int cin, stat;
+	int cin;
+	int __attribute__((__unused__)) stat;
 	if (sscom_readaheadcount < MAX_READAHEAD && 
 	    sscom_rxrdy(sscomconstag, sscomconsioh)) {
 	    
-		int cn_trapped = 0;
+		int __attribute__((__unused__))cn_trapped = 0;
 		cin = sscom_getc(sscomconstag, sscomconsioh);
 		stat = sscom_geterr(sscomconstag, sscomconsioh);
 		cn_check_magic(dev, cin, sscom_cnm_state);

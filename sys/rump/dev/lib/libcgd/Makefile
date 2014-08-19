@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/02/16 20:42:44 pooka Exp $
+#	$NetBSD: Makefile,v 1.3.20.1 2014/08/20 00:04:37 tls Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev
@@ -7,7 +7,7 @@ LIB=	rumpdev_cgd
 
 SRCS=   cgd.c cgd_crypto.c
 
-SRCS+=	component.c
+SRCS+=	cgd_component.c
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
 

@@ -1,7 +1,6 @@
 /* Native-dependent code for modern i386 BSD's.
 
-   Copyright (C) 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,14 +31,14 @@ extern void i386bsd_dr_set_control (unsigned long control);
 
 extern void i386bsd_dr_set_addr (int regnum, CORE_ADDR addr);
 
-extern void i386bsd_dr_reset_addr (int regnum);
+extern CORE_ADDR i386bsd_dr_get_addr (int regnum);
 
 extern unsigned long i386bsd_dr_get_status (void);
 
-extern void i386bsd_supply_gregset (struct regcache *regcache,
-				    const void *gregs);
+extern unsigned long i386bsd_dr_get_control (void);
 
-extern void i386bsd_collect_gregset (const struct regcache *regcache,
-				     void *gregs, int regnum);
+extern void i386bsd_supply_gregset (struct regcache *, const void *);
+
+extern void i386bsd_collect_gregset (const struct regcache *, void *, int);
 
 #endif /* i386bsd-nat.h */

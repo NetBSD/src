@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.13.2.1 2013/06/23 06:19:58 tls Exp $
+#	$NetBSD: Makefile.buildboot,v 1.13.2.2 2014/08/20 00:02:40 tls Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -13,6 +13,7 @@ FILESDIR=/usr/mdec
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
@@ -33,19 +34,15 @@ CPUFLAGS=
 CPPFLAGS+=	-D_STANDALONE -DHIMEM=0x28000
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-I${.CURDIR}/../lib
-CPPFLAGS+=	-mabi=apcs-gnu -mfloat-abi=soft -march=armv2
-CFLAGS=		-O2
-CFLAGS+=	-ffreestanding
-CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	-rm -f machine ${MACHINE_ARCH}
-	ln -s $S/arch/${MACHINE}/include machine
-	ln -s $S/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
+CPPFLAGS+=	${ARM_APCS_FLAGS} -march=armv2
+.if ${HAVE_GCC} < 48
+CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
+.else
+CPPFLAGS+=	-marm
 .endif
-
-CLEANFILES+= machine ${MACHINE_ARCH}
+CFLAGS=		-O2
+CFLAGS+=	-ffreestanding -fno-unwind-tables
+CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
 
 ### find out what to use for libkern
 KERN_AS=	library

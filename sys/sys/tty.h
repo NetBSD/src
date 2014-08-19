@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.90.12.1 2013/06/23 06:20:29 tls Exp $	*/
+/*	$NetBSD: tty.h,v 1.90.12.2 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -151,7 +151,9 @@ struct tty {
 	void	*t_softc;		/* pointer to driver's softc. */
 };
 
+#ifdef TTY_ALLOW_PRIVATE
 #define	t_cc		t_termios.c_cc
+#endif
 #define	t_cflag		t_termios.c_cflag
 #define	t_iflag		t_termios.c_iflag
 #define	t_ispeed	t_termios.c_ispeed
@@ -302,6 +304,10 @@ int	clalloc(struct clist *, int, int);
 void	clfree(struct clist *);
 
 extern int (*ttcompatvec)(struct tty *, u_long, void *, int, struct lwp *);
+
+unsigned char tty_getctrlchar(struct tty *, unsigned /*which*/);
+void tty_setctrlchar(struct tty *, unsigned /*which*/, unsigned char /*val*/);
+int tty_try_xonxoff(struct tty *, unsigned char /*c*/);
 
 #endif /* _KERNEL */
 

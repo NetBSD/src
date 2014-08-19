@@ -1,5 +1,5 @@
 /* Main simulator entry points specific to the SH5.
-   Copyright (C) 2000, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This file is part of the GNU simulators.
@@ -17,6 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include "config.h"
 #include "libiberty.h"
 #include "bfd.h"
 #include "sim-main.h"
@@ -193,16 +194,6 @@ sim_create_inferior (sd, abfd, argv, envp)
 
   return SIM_RC_OK;
 }
-
-void
-sim_do_command (sd, cmd)
-     SIM_DESC sd;
-     char *cmd;
-{ 
-  if (sim_args_command (sd, cmd) != SIM_RC_OK)
-    sim_io_eprintf (sd, "Unknown command `%s'\n", cmd);
-}
-
 
 /* Disassemble an instruction.  */
 

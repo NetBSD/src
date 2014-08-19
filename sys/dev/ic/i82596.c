@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.29 2010/04/05 07:19:35 joerg Exp $ */
+/* $NetBSD: i82596.c,v 1.29.18.1 2014/08/20 00:03:38 tls Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.29 2010/04/05 07:19:35 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.29.18.1 2014/08/20 00:03:38 tls Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -146,7 +146,7 @@ static void iee_cb_setup(struct iee_softc *, uint32_t);
  * sc->sc_cl_align must be set to 1 or to the cache line size. When set to
  * 1 no special alignment of DMA descriptors is done. If sc->sc_cl_align != 1
  * it forces alignment of the data structures in the shared memory to a multiple
- * of sc->sc_cl_align. This is needed on archs like hp700 that have non DMA
+ * of sc->sc_cl_align. This is needed on some hppa machines that have non DMA
  * I/O coherent caches and are unable to map the shared memory uncachable.
  * (At least pre PA7100LC CPUs are unable to map memory uncachable.)
  * 
@@ -172,7 +172,7 @@ static void iee_cb_setup(struct iee_softc *, uint32_t);
  * 
  * The MD backend may call iee_detach() to detach the device.
  * 
- * See sys/arch/hp700/gsc/if_iee_gsc.c for an example.
+ * See sys/arch/hppa/gsc/if_iee_gsc.c for an example.
  */
 
 
@@ -435,7 +435,7 @@ iee_intr(void *intarg)
  * suspend the Command Unit to avoid race conditions. After a suspend
  * is sent we have to wait for an interrupt that ACKs the suspend. Then
  * we can manipulate the CBL and resume operation. I am not sure that this
- * is more effective then the current, much simpler approach. => KISS
+ * is more effective than the current, much simpler approach. => KISS
  * See i82596CA data sheet page 26.
  * 
  * A CBL is running or on the way to be set up when (sc->sc_next_cb != 0).
@@ -526,7 +526,7 @@ iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 			/* disable ALLMULTI and load mcast list */
 			ifp->if_flags &= ~IFF_ALLMULTI;
 			sc->sc_cf[11] |= IEE_CF_11_MCALL;
-			/* Mcast setup may need more then sc->sc_cb_sz bytes. */
+			/* Mcast setup may need more than sc->sc_cb_sz bytes. */
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map,
 			    sc->sc_cb_off,
 			    sc->sc_cb_sz * IEE_NCB +
@@ -744,7 +744,7 @@ iee_start(struct ifnet *ifp)
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, sc->sc_tx_map[t],
 		    sc->sc_tx_mbuf[t], BUS_DMA_WRITE | BUS_DMA_NOWAIT) != 0) {
 			/*
-			 * The packet needs more TBD then we support.
+			 * The packet needs more TBD than we support.
 			 * Copy the packet into a mbuf cluster to get it out.
 			 */
 			printf("%s: iee_start: failed to load DMA map\n",

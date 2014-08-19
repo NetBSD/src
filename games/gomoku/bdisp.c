@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.16 2012/02/18 06:57:23 matt Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.16.2.1 2014/08/20 00:00:23 tls Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.16 2012/02/18 06:57:23 matt Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.16.2.1 2014/08/20 00:00:23 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,9 +52,6 @@ __RCSID("$NetBSD: bdisp.c,v 1.16 2012/02/18 06:57:23 matt Exp $");
 
 static	int	lastline;
 static	char	pcolor[] = "*O.?";
-
-extern int interactive;
-extern const char *plyr[];
 
 /*
  * Initialize screen display.

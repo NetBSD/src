@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.1.6.2 2013/02/25 00:28:49 tls Exp $	*/
+/*	$NetBSD: kbd.c,v 1.1.6.3 2014/08/20 00:03:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -227,13 +227,13 @@ kbd_decode(u_char code)
 	c = kbd_keymap[code].km_type;
 
 	if (c == KC_IGNORE)
-		return(KC_IGNORE);
+		return KC_IGNORE;
 
 	if ((c == KC_CODE) && updown)
-		return(KC_IGNORE);
+		return KC_IGNORE;
 
 	if (c == KC_SHIFT) {
-		switch(kbd_keymap[code].km_code[0]) {
+		switch (kbd_keymap[code].km_code[0]) {
 
 		case KS_SHIFT:
 			shift_flag = 1 - updown;
@@ -248,7 +248,7 @@ kbd_decode(u_char code)
 			break;
 		}
 
-		return(KC_IGNORE);
+		return KC_IGNORE;
 	}
 
 	if (shift_flag)
@@ -262,5 +262,5 @@ kbd_decode(u_char code)
 	if (ctrl_flag)
 		c &= 0x1F;
 
-	return(c);
+	return c;
 }

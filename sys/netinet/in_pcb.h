@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.50 2012/06/25 15:28:39 christos Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.50.2.1 2014/08/20 00:04:35 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,28 +100,31 @@ struct inpcb {
 #define	inp_laddr	inp_ip.ip_src
 
 /* flags in inp_flags: */
-#define	INP_RECVOPTS		0x01	/* receive incoming IP options */
-#define	INP_RECVRETOPTS		0x02	/* receive IP options for reply */
-#define	INP_RECVDSTADDR		0x04	/* receive IP dst address */
-#define	INP_HDRINCL		0x08	/* user supplies entire IP header */
-#define	INP_HIGHPORT		0x10	/* (unused; FreeBSD compat) */
-#define	INP_LOWPORT		0x20	/* user wants "low" port binding */
-#define	INP_ANONPORT		0x40	/* port chosen for user */
-#define	INP_RECVIF		0x80	/* receive incoming interface */
+#define	INP_RECVOPTS		0x0001	/* receive incoming IP options */
+#define	INP_RECVRETOPTS		0x0002	/* receive IP options for reply */
+#define	INP_RECVDSTADDR		0x0004	/* receive IP dst address */
+#define	INP_HDRINCL		0x0008	/* user supplies entire IP header */
+#define	INP_HIGHPORT		0x0010	/* (unused; FreeBSD compat) */
+#define	INP_LOWPORT		0x0020	/* user wants "low" port binding */
+#define	INP_ANONPORT		0x0040	/* port chosen for user */
+#define	INP_RECVIF		0x0080	/* receive incoming interface */
 /* XXX should move to an UDP control block */
-#define INP_ESPINUDP		0x100	/* ESP over UDP for NAT-T */
-#define INP_ESPINUDP_NON_IKE	0x200	/* ESP over UDP for NAT-T */
+#define INP_ESPINUDP		0x0100	/* ESP over UDP for NAT-T */
+#define INP_ESPINUDP_NON_IKE	0x0200	/* ESP over UDP for NAT-T */
 #define INP_ESPINUDP_ALL	(INP_ESPINUDP|INP_ESPINUDP_NON_IKE)
-#define INP_NOHEADER		0x400	/* Kernel removes IP header
+#define INP_NOHEADER		0x0400	/* Kernel removes IP header
 					 * before feeding a packet
 					 * to the raw socket user.
 					 * The socket user will
 					 * not supply an IP header.
 					 * Cancels INP_HDRINCL.
 					 */
-#define	INP_RECVTTL		0x800	/* receive incoming IP TTL */
+#define	INP_RECVTTL		0x0800	/* receive incoming IP TTL */
+#define	INP_PKTINFO		0x1000	/* receive dst packet info */
+#define	INP_RECVPKTINFO		0x2000	/* receive dst packet info */
 #define	INP_CONTROLOPTS		(INP_RECVOPTS|INP_RECVRETOPTS|INP_RECVDSTADDR|\
-				INP_RECVIF|INP_RECVTTL)
+				INP_RECVIF|INP_RECVTTL|INP_RECVPKTINFO|\
+				INP_PKTINFO)
 
 #define	sotoinpcb(so)		((struct inpcb *)(so)->so_pcb)
 
@@ -155,8 +158,6 @@ void	in_setpeeraddr(struct inpcb *, struct mbuf *);
 void	in_setsockaddr(struct inpcb *, struct mbuf *);
 struct rtentry *
 	in_pcbrtentry(struct inpcb *);
-extern struct sockaddr_in *in_selectsrc(struct sockaddr_in *,
-	struct route *, int, struct ip_moptions *, int *);
 #endif
 
 #endif /* !_NETINET_IN_PCB_H_ */

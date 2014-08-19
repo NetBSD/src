@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.68 2011/07/04 16:06:17 joerg Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.68.12.1 2014/08/20 00:04:36 tls Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.68 2011/07/04 16:06:17 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.68.12.1 2014/08/20 00:04:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +85,13 @@ __KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.68 2011/07/04 16:06:17 joerg Exp $")
 #include <sys/poll.h>
 #include <sys/atomic.h>
 #include <sys/stat.h>
+#include <sys/module.h>
 
+#ifdef _KERNEL_OPT
 #include "opt_ocf.h"
 #include "opt_compat_netbsd.h"
+#endif
+
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/cryptodev_internal.h>
 #include <opencrypto/xform.h>
@@ -138,6 +142,8 @@ static int	cryptoopen(dev_t dev, int flag, int mode, struct lwp *l);
 static int	cryptoread(dev_t dev, struct uio *uio, int ioflag);
 static int	cryptowrite(dev_t dev, struct uio *uio, int ioflag);
 static int	cryptoselect(dev_t dev, int rw, struct lwp *l);
+
+static int	crypto_refcount = 0;	/* Prevent detaching while in use */
 
 /* Declaration of cloned-device (per-ctxt) entrypoints */
 static int	cryptof_read(struct file *, off_t *, struct uio *,
@@ -258,6 +264,7 @@ cryptof_ioctl(struct file *fp, u_long cmd, void *data)
                  */
 		criofcr->sesn = 1;
 		criofcr->requestid = 1;
+		crypto_refcount++;
 		mutex_exit(&crypto_mtx);
 		(void)fd_clone(criofp, criofd, (FREAD|FWRITE),
 			      &cryptofops, criofcr);
@@ -947,6 +954,7 @@ cryptof_close(struct file *fp)
 	}
 	seldestroy(&fcr->sinfo);
 	fp->f_data = NULL;
+	crypto_refcount--;
 	mutex_exit(&crypto_mtx);
 
 	pool_put(&fcrpl, fcr);
@@ -1076,6 +1084,7 @@ cryptoopen(dev_t dev, int flag, int mode,
 	 */
 	fcr->sesn = 1;
 	fcr->requestid = 1;
+	crypto_refcount++;
 	mutex_exit(&crypto_mtx);
 	return fd_clone(fp, fd, flag, &cryptofops, fcr);
 }
@@ -1100,17 +1109,18 @@ cryptoselect(dev_t dev, int rw, struct lwp *l)
 
 /*static*/
 struct cdevsw crypto_cdevsw = {
-	/* open */	cryptoopen,
-	/* close */	noclose,
-	/* read */	cryptoread,
-	/* write */	cryptowrite,
-	/* ioctl */	noioctl,
-	/* ttstop?*/	nostop,
-	/* ??*/		notty,
-	/* poll */	cryptoselect /*nopoll*/,
-	/* mmap */	nommap,
-	/* kqfilter */	nokqfilter,
-	/* type */	D_OTHER,
+	.d_open = cryptoopen,
+	.d_close = noclose,
+	.d_read = cryptoread,
+	.d_write = cryptowrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = cryptoselect /*nopoll*/,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 int 
@@ -1767,7 +1777,7 @@ cryptodev_msessionfin(struct fcrypt *fcr, int count, u_int32_t *sesid)
 		mutex_enter(&crypto_mtx);
 	}
 	mutex_exit(&crypto_mtx);
-	return 0;
+	return error;
 }
 
 /*
@@ -2075,6 +2085,8 @@ void	cryptoattach(int);
 void
 cryptoattach(int num)
 {
+	crypto_init();
+
 	pool_init(&fcrpl, sizeof(struct fcrypt), 0, 0, 0, "fcrpl",
 	    NULL, IPL_NET);	/* XXX IPL_NET ("splcrypto") */
 	pool_init(&csepl, sizeof(struct csession), 0, 0, 0, "csepl",
@@ -2089,4 +2101,142 @@ cryptoattach(int num)
 	 */
 	pool_prime(&fcrpl, 64);
 	pool_prime(&csepl, 64 * 5);
+}
+
+void	crypto_attach(device_t, device_t, void *);
+
+void
+crypto_attach(device_t parent, device_t self, void * opaque)
+{
+
+	cryptoattach(0);
+}
+
+int	crypto_detach(device_t, int);
+
+int
+crypto_detach(device_t self, int num)
+{
+
+	pool_destroy(&fcrpl);
+	pool_destroy(&csepl);
+
+	return 0;
+}
+
+int crypto_match(device_t, cfdata_t, void *);
+ 
+int
+crypto_match(device_t parent, cfdata_t data, void *opaque) 
+{   
+ 
+	return 1;
+}
+
+MODULE(MODULE_CLASS_DRIVER, crypto, "opencrypto");
+
+CFDRIVER_DECL(crypto, DV_DULL, NULL);
+
+CFATTACH_DECL2_NEW(crypto, 0, crypto_match, crypto_attach, crypto_detach,
+    NULL, NULL, NULL);
+
+#ifdef _MODULE
+static int cryptoloc[] = { -1, -1 };
+
+static struct cfdata crypto_cfdata[] = {
+	{
+		.cf_name = "crypto",
+		.cf_atname = "crypto",
+		.cf_unit = 0,
+		.cf_fstate = 0,
+		.cf_loc = cryptoloc,
+		.cf_flags = 0,
+		.cf_pspec = NULL,
+	},
+	{ NULL, NULL, 0, 0, NULL, 0, NULL }
+};
+#endif
+
+static int
+crypto_modcmd(modcmd_t cmd, void *arg)
+{
+	int error = 0;
+#ifdef _MODULE
+	devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
+#endif
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+
+		error = config_cfdriver_attach(&crypto_cd);
+		if (error) {
+			return error;
+		}
+
+		error = config_cfattach_attach(crypto_cd.cd_name, &crypto_ca);
+		if (error) {
+			config_cfdriver_detach(&crypto_cd);
+			aprint_error("%s: unable to register cfattach\n",
+				crypto_cd.cd_name);
+
+			return error;
+		}
+
+		error = config_cfdata_attach(crypto_cfdata, 1);
+		if (error) {
+			config_cfattach_detach(crypto_cd.cd_name, &crypto_ca);
+			config_cfdriver_detach(&crypto_cd);
+			aprint_error("%s: unable to register cfdata\n",
+				crypto_cd.cd_name);
+
+			return error;
+		}
+
+		error = devsw_attach(crypto_cd.cd_name, NULL, &bmajor,
+		    &crypto_cdevsw, &cmajor);
+		if (error) {
+			error = config_cfdata_detach(crypto_cfdata);
+			if (error) {
+				return error;
+			}
+			config_cfattach_detach(crypto_cd.cd_name, &crypto_ca);
+			config_cfdriver_detach(&crypto_cd);
+			aprint_error("%s: unable to register devsw\n",
+				crypto_cd.cd_name);
+
+			return error;
+		}
+
+		(void)config_attach_pseudo(crypto_cfdata);
+#endif
+
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_cfdata_detach(crypto_cfdata);
+		if (error) {
+			return error;
+		}
+
+		config_cfattach_detach(crypto_cd.cd_name, &crypto_ca);
+		config_cfdriver_detach(&crypto_cd);
+		devsw_detach(NULL, &crypto_cdevsw);
+#endif
+
+		return error;
+#ifdef _MODULE
+	case MODULE_CMD_AUTOUNLOAD:
+#if 0	/*
+	 * XXX Completely disable auto-unload for now, since there is still
+	 * XXX a (small) window where in-module ref-counting doesn't help
+	 */
+		if (crypto_refcount != 0)
+#endif
+			return EBUSY;
+	/* FALLTHROUGH */
+#endif
+	default:
+		return ENOTTY;
+	}
 }

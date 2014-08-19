@@ -1,4 +1,4 @@
-/*	$NetBSD: romcons.c,v 1.1.6.2 2013/02/25 00:28:49 tls Exp $	*/
+/*	$NetBSD: romcons.c,v 1.1.6.3 2014/08/20 00:03:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -80,6 +80,7 @@
 void
 romcnprobe(struct consdev *cp)
 {
+
 	cp->cn_dev = 0;
 	cp->cn_pri = CN_NORMAL;
 }
@@ -98,11 +99,12 @@ romcngetc(dev_t dev)
 		if ((c = ROM_getchar()) != -1)
 			break;
 
-	return(c);
+	return c;
 }
 
 void
 romcnputc(dev_t dev, int c)
 {
+
 	ROM_putchar(c);
 }

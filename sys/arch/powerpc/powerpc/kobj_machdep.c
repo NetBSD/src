@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.5 2011/06/08 17:19:20 matt Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.5.12.1 2014/08/20 00:03:20 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.5 2011/06/08 17:19:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.5.12.1 2014/08/20 00:03:20 tls Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -66,6 +66,9 @@ int
 kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	   bool isrela, bool local)
 {
+#ifdef _LP64
+	Elf64_Half *wwhere;
+#endif
 	Elf_Addr *where;
 	Elf32_Half *hwhere;
 	Elf_Addr addr;
@@ -80,12 +83,15 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	rela = (const Elf_Rela *)data;
 	where = (Elf_Addr *) (relocbase + rela->r_offset);
 	hwhere = (Elf32_Half *) (relocbase + rela->r_offset);
+#ifdef _LP64
+	wwhere = (Elf64_Half *) (relocbase + rela->r_offset);
+#endif
 	addend = rela->r_addend;
 	rtype = ELF_R_TYPE(rela->r_info);
 	symidx = ELF_R_SYM(rela->r_info);
 
 	switch (rtype) {
-       	case R_PPC_NONE:
+	case R_PPC_NONE:
 	       	break;
 
 	case R_PPC_RELATIVE:	/* word32 B + A */
@@ -100,12 +106,15 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		addend -= relocbase + rela->r_offset;	/* A -= P */
 		/* FALLTHROUGH */
 
-	case R_PPC_32:		/* word32 S + A */
-	case R_PPC_16:		/* half16* S + A */
-       	case R_PPC_16_LO:	/* half16 #lo(S + A) */
-	case R_PPC_16_HA:	/* half16 #ha(S + A) */
-	case R_PPC_16_HI:	/* half16 #hi(S + A) */
-       		addr = kobj_sym_lookup(ko, symidx);
+#ifdef _LP64
+	case R_PPC_ADDR64:	/* doubleword64 S + A */
+#endif
+	case R_PPC_ADDR32:	/* word32 S + A */
+	case R_PPC_ADDR16:	/* half16* S + A */
+	case R_PPC_ADDR16_LO:	/* half16 #lo(S + A) */
+	case R_PPC_ADDR16_HA:	/* half16 #ha(S + A) */
+	case R_PPC_ADDR16_HI:	/* half16 #hi(S + A) */
+		addr = kobj_sym_lookup(ko, symidx);
 	       	if (addr == 0)
 	       		return -1;
 
@@ -123,34 +132,38 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		break;
 
 	default:
-       		printf("kobj_reloc: unexpected relocation type %u\n", rtype);
+		printf("kobj_reloc: unexpected relocation type %u\n", rtype);
 		return -1;
 	}
 
 
 	switch (rtype) {
-	case R_PPC_RELATIVE:	/* word32 B + A */
 	case R_PPC_REL32:	/* word32 S + A - P */
-	case R_PPC_32:		/* word32 S + A */
+#ifdef _LP64
+		*wwhere = addend;
+		break;
+#endif
+	case R_PPC_RELATIVE:	/* doubleword64/word32 B + A */
+	case R_PPC_ADDR32:	/* doubleword64/word32 S + A */
 	       	*where = addend;
 	       	break;
 
 	case R_PPC_REL16:	/* half16* (S + A - P) */
-	case R_PPC_16:		/* half16* S + A */
+	case R_PPC_ADDR16:	/* half16* S + A */
 		if ((int16_t) addend != addend)
 			return -1;
 		/* FALLTHROUGH */
 	case R_PPC_REL16_LO:	/* half16 #lo(S + A - P) */
-       	case R_PPC_16_LO:	/* half16 #lo(S + A) */
+	case R_PPC_ADDR16_LO:	/* half16 #lo(S + A) */
 		*hwhere = addend & 0xffff;
 		break;
 
 	case R_PPC_REL16_HA:	/* half16 #ha(S + A - P) */
-	case R_PPC_16_HA:	/* half16 #ha(S + A) */
+	case R_PPC_ADDR16_HA:	/* half16 #ha(S + A) */
 		addend += 0x8000;
 		/* FALLTHROUGH */
 	case R_PPC_REL16_HI:	/* half16 #hi(S + A - P) */
-	case R_PPC_16_HI:	/* half16 #hi(S + A) */
+	case R_PPC_ADDR16_HI:	/* half16 #hi(S + A) */
 		*hwhere = (addend >> 16) & 0xffff;
 		break;
 	}

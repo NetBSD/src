@@ -1,7 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 1998, 1999, 2004, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright 1998-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,10 +13,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-   */
-
-
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 extern "C" {
 #include <stdio.h>
@@ -138,11 +134,18 @@ class Diamond : public Padding, public Left, public Right
 {
 public:
   virtual int vget_base ();
+  int (*func_ptr) (int);
 };
 
 int Diamond::vget_base ()
 {
   return this->Left::x + 2000;
+}
+
+int
+func (int x)
+{
+  return 19 + x;
 }
 
 int main ()
@@ -162,6 +165,7 @@ int main ()
   int (Diamond::*right_vpmf) ();
   int (Base::*base_vpmf) ();
   int Diamond::*diamond_pmi;
+  int (* Diamond::*diamond_pfunc_ptr) (int);
 
   PMI null_pmi;
   PMF null_pmf;
@@ -179,6 +183,7 @@ int main ()
 
   diamond.Left::x = 77;
   diamond.Right::x = 88;
+  diamond.func_ptr = func;
 
   /* Some valid pointer to members from a base class.  */
   left_pmf = (int (Diamond::*) ()) (int (Left::*) ()) (&Base::get_x);
@@ -193,10 +198,16 @@ int main ()
   /* A pointer to data member from a base class.  */
   diamond_pmi = (int Diamond::*) (int Left::*) &Base::x;
 
+  /* A pointer to data member, where the member is itself a pointer to
+     a function.  */
+  diamond_pfunc_ptr = (int (* Diamond::*) (int)) &Diamond::func_ptr;
+
   null_pmi = NULL;
   null_pmf = NULL;
 
   pmi = NULL; /* Breakpoint 1 here.  */
+
+  (diamond.*diamond_pfunc_ptr) (20);
 
   k = (a.*pmf)(3);
 

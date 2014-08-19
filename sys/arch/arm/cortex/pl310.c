@@ -1,4 +1,4 @@
-/*	$NetBSD: pl310.c,v 1.4.2.3 2013/06/23 06:20:00 tls Exp $	*/
+/*	$NetBSD: pl310.c,v 1.4.2.4 2014/08/20 00:02:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,13 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.4.2.3 2013/06/23 06:20:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.4.2.4 2014/08/20 00:02:45 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/atomic.h>
+
+#include <arm/locore.h>
 
 #include <arm/cortex/mpcore_var.h>
 #include <arm/cortex/pl310_reg.h>
@@ -122,6 +124,7 @@ static const struct {
 	{ 4, " r2p0" },
 	{ 5, " r3p0" },
 	{ 6, " r3p1" },
+	{ 7, " r3p1a" },
 	{ 8, " r3p2" },
 	{ 9, " r3p3" },
 };
@@ -132,6 +135,12 @@ arml2cc_attach(device_t parent, device_t self, void *aux)
         struct arml2cc_softc * const sc = device_private(self);
 	struct mpcore_attach_args * const mpcaa = aux;
 	const char * const xname = device_xname(self);
+	prop_dictionary_t dict = device_properties(self);
+	uint32_t off;
+
+	if (!prop_dictionary_get_uint32(dict, "offset", &off)) {
+		off = L2CC_BASE;
+	}
 
 	arml2cc_sc = sc;
 	sc->sc_dev = self;
@@ -148,7 +157,7 @@ arml2cc_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	bus_space_subregion(sc->sc_memt, mpcaa->mpcaa_memh, 
-	    L2CC_BASE, L2CC_SIZE, &sc->sc_memh);
+	    off, L2CC_SIZE, &sc->sc_memh);
 
 	uint32_t id = arml2cc_read_4(sc, L2C_CACHE_ID);
 	u_int rev = __SHIFTOUT(id, CACHE_ID_REV);
@@ -263,6 +272,8 @@ arml2cc_init(bus_space_tag_t bst, bus_space_handle_t bsh, bus_size_t o)
 	info->dcache_ways = 8 << __SHIFTOUT(cfg_dsize, CACHE_TYPE_xASSOC);
 	info->dcache_line_size = 32 << __SHIFTOUT(cfg_dsize, CACHE_TYPE_xLINESIZE);
 	info->dcache_size = info->dcache_ways * d_waysize;
+	info->dcache_type = CACHE_TYPE_PIPT;
+	info->icache_type = CACHE_TYPE_PIPT;
 
 	if (info->cache_unified) {
 		info->icache_ways = info->dcache_ways;

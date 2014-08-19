@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.36.2.1 2013/02/25 00:29:08 tls Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.36.2.2 2014/08/20 00:03:33 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.36.2.1 2013/02/25 00:29:08 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.36.2.2 2014/08/20 00:03:33 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ netbsd32_fexecve(struct lwp *l, const struct netbsd32_fexecve_args *uap,
 
 static int
 netbsd32_posix_spawn_fa_alloc(struct posix_spawn_file_actions **fap,
-    const struct netbsd32_posix_spawn_file_actions *ufa)
+    const struct netbsd32_posix_spawn_file_actions *ufa, rlim_t lim)
 {
 	struct posix_spawn_file_actions *fa;
 	struct netbsd32_posix_spawn_file_actions fa32;
@@ -116,6 +116,11 @@ netbsd32_posix_spawn_fa_alloc(struct posix_spawn_file_actions **fap,
 
 	fa = kmem_alloc(sizeof(*fa), KM_SLEEP);
 	fa->len = fa->size = fa32.len;
+
+	if (fa->len > lim) {
+		kmem_free(fa, sizeof(*fa));
+		return EINVAL;
+	}
 
 	fal = fa->len * sizeof(*fae);
 	fal32 = fa->len * sizeof(*fae32);
@@ -179,6 +184,8 @@ netbsd32_posix_spawn(struct lwp *l,
 	struct posix_spawnattr *sa = NULL;
 	pid_t pid;
 	bool child_ok = false;
+	rlim_t max_fileactions;
+	proc_t *p = l->l_proc;
 
 	error = check_posix_spawn(l);
 	if (error) {
@@ -188,8 +195,10 @@ netbsd32_posix_spawn(struct lwp *l,
 
 	/* copy in file_actions struct */
 	if (SCARG_P32(uap, file_actions) != NULL) {
+		max_fileactions = 2 * min(p->p_rlimit[RLIMIT_NOFILE].rlim_cur,
+		    maxfiles);
 		error = netbsd32_posix_spawn_fa_alloc(&fa,
-		    SCARG_P32(uap, file_actions));
+		    SCARG_P32(uap, file_actions), max_fileactions);
 		if (error)
 			goto error_exit;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: amrctl.c,v 1.9 2012/05/18 14:01:34 jakllsch Exp $	*/
+/*	$NetBSD: amrctl.c,v 1.9.2.1 2014/08/20 00:02:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002, Pierre David <Pierre.David@crc.u-strasbg.fr>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: amrctl.c,v 1.9 2012/05/18 14:01:34 jakllsch Exp $");
+__RCSID("$NetBSD: amrctl.c,v 1.9.2.1 2014/08/20 00:02:24 tls Exp $");
 #endif
 
 #include <stdio.h>
@@ -311,18 +311,21 @@ describe_card(int fd, int verbosity, int globalparam)
 					 */
 					product = "HP NetRaid 3si";
 				}
-				sprintf(firmware, "%c.%02d.%02d",
+				snprintf(firmware, sizeof(firmware),
+					"%c.%02d.%02d",
 					ae->ae_adapter.aa_firmware[2],
 					ae->ae_adapter.aa_firmware[1],
 					ae->ae_adapter.aa_firmware[0]);
-				sprintf(bios, "%c.%02d.%02d",
+				snprintf(bios, sizeof(bios),
+					"%c.%02d.%02d",
 					ae->ae_adapter.aa_bios[2],
 					ae->ae_adapter.aa_bios[1],
 					ae->ae_adapter.aa_bios[0]);
 			} else {
-				sprintf(firmware, "%.4s",
+				snprintf(firmware, sizeof(firmware), "%.4s",
 					ae->ae_adapter.aa_firmware);
-				sprintf(bios, "%.4s", ae->ae_adapter.aa_bios);
+				snprintf(bios, sizeof(bios), "%.4s",
+					ae->ae_adapter.aa_bios);
 			}
 
 			printf("Ioctl = %d (%s)\n", FIRMWARE_8LD, "8LD");

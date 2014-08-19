@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.h,v 1.21.14.1 2012/11/20 03:02:53 tls Exp $	*/
+/*	$NetBSD: uvm_aobj.h,v 1.21.14.2 2014/08/20 00:04:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -61,7 +61,7 @@ void	uao_dropswap(struct uvm_object *, int);
 bool	uao_swap_off(int, int);
 void	uao_dropswap_range(struct uvm_object *, voff_t, voff_t);
 #else
-#define	uao_find_swslot(obj, off)	0
+#define	uao_find_swslot(obj, off)	(__USE(off), 0)
 #define	uao_dropswap(obj, off)		/* nothing */
 #define	uao_dropswap_range(obj, lo, hi)	/* nothing */
 #endif

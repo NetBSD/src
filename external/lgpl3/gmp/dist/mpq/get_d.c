@@ -96,8 +96,8 @@ mpq_get_d (const MP_RAT *src)
   double res;
   mp_srcptr np, dp;
   mp_ptr remp, tp;
-  mp_size_t nsize = src->_mp_num._mp_size;
-  mp_size_t dsize = src->_mp_den._mp_size;
+  mp_size_t nsize = SIZ(NUM(src));
+  mp_size_t dsize = SIZ(DEN(src));
   mp_size_t qsize, prospective_qsize, zeros, chop, tsize;
   mp_size_t sign_quotient = nsize;
   long exp;
@@ -115,8 +115,8 @@ mpq_get_d (const MP_RAT *src)
   TMP_MARK;
   nsize = ABS (nsize);
   dsize = ABS (dsize);
-  np = src->_mp_num._mp_d;
-  dp = src->_mp_den._mp_d;
+  np = PTR(NUM(src));
+  dp = PTR(DEN(src));
 
   prospective_qsize = nsize - dsize + 1;   /* from using given n,d */
   qsize = N_QLIMBS + 1;                    /* desired qsize */

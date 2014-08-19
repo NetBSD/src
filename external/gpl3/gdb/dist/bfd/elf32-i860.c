@@ -1,5 +1,6 @@
 /* Intel i860 specific support for 32-bit ELF.
-   Copyright 1993, 1995, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007
+   Copyright 1993, 1995, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008,
+   2010, 2011, 2012
    Free Software Foundation, Inc.
 
    Full i860 support contributed by Jason Eckhardt <jle@cygnus.com>.
@@ -1014,7 +1015,7 @@ elf32_i860_relocate_highadj (bfd *input_bfd,
   insn = bfd_get_32 (input_bfd, contents + rel->r_offset);
 
   value += rel->r_addend;
-  value += 0x8000; 
+  value += 0x8000;
   value = ((value >> 16) & 0xffff);
 
   insn = (insn & 0xffff0000) | value;
@@ -1120,17 +1121,17 @@ elf32_i860_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 	}
       else
 	{
-	  bfd_boolean unresolved_reloc, warned;
+	  bfd_boolean unresolved_reloc, warned, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
 				   r_symndx, symtab_hdr, sym_hashes,
 				   h, sec, relocation,
-				   unresolved_reloc, warned);
+				   unresolved_reloc, warned, ignored);
 	}
 
-      if (sec != NULL && elf_discarded_section (sec))
+      if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, relend, howto, contents);
+					 rel, 1, relend, howto, 0, contents);
 
       if (info->relocatable)
 	continue;

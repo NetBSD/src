@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_ni.c,v 1.1.1.1.16.1 2013/02/25 00:27:31 tls Exp $	*/
+/*	$NetBSD: dict_ni.c,v 1.1.1.1.16.2 2014/08/19 23:59:45 tls Exp $	*/
 
 /*++
 /* NAME
@@ -90,7 +90,7 @@ static const char *dict_ni_do_lookup(char *path, char *key_prop,
 	msg_warn("ni_open `.': %d", r);
 	return NULL;
     }
-    query = alloca(strlen(path) + strlen(key_prop) + 3 + strlen(key_value));
+    query = mymalloc(strlen(path) + strlen(key_prop) + 3 + strlen(key_value));
     sprintf(query, "%s/%s=%s", path, key_prop, key_value);
 
     for (;;) {
@@ -140,6 +140,7 @@ static const char *dict_ni_do_lookup(char *path, char *key_prop,
     }
 
     ni_free(domain);
+    myfree(query);
 
     return return_val;
 }

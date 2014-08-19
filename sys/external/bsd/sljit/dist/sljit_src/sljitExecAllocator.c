@@ -1,3 +1,5 @@
+/*	$NetBSD: sljitExecAllocator.c,v 1.1.1.1.4.3 2014/08/20 00:04:25 tls Exp $	*/
+
 /*
  *    Stack-less Just-In-Time compiler
  *
@@ -52,7 +54,7 @@
    The unused blocks are stored in a chain list pointed by free_blocks. This
    list is useful if we need to find a suitable memory area when the allocator
    is called.
- 
+
    When a block is freed, the new free block is connected to its adjacent free
    blocks if possible.
 
@@ -83,7 +85,7 @@
 
 static SLJIT_INLINE void* alloc_chunk(sljit_uw size)
 {
-	return VirtualAlloc(0, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	return VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 }
 
 static SLJIT_INLINE void free_chunk(void* chunk, sljit_uw size)
@@ -94,17 +96,32 @@ static SLJIT_INLINE void free_chunk(void* chunk, sljit_uw size)
 
 #else
 
+#ifdef _KERNEL
+#include <sys/param.h>
+#include <sys/module.h> /* for module_map */
+#include <uvm/uvm.h>
+#else
 #include <sys/mman.h>
+#endif
 
 static SLJIT_INLINE void* alloc_chunk(sljit_uw size)
 {
-	void* retval = mmap(0, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANON, -1, 0);
+#ifdef _KERNEL
+	return (void *)uvm_km_alloc(module_map, size,
+	    PAGE_SIZE, UVM_KMF_WIRED | UVM_KMF_ZERO | UVM_KMF_EXEC);
+#else
+	void* retval = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANON, -1, 0);
 	return (retval != MAP_FAILED) ? retval : NULL;
+#endif
 }
 
 static SLJIT_INLINE void free_chunk(void* chunk, sljit_uw size)
 {
+#ifdef _KERNEL
+	uvm_km_free(module_map, (vaddr_t)chunk, size, UVM_KMF_WIRED);
+#else
 	munmap(chunk, size);
+#endif
 }
 
 #endif
@@ -202,7 +219,10 @@ SLJIT_API_FUNC_ATTRIBUTE void* sljit_malloc_exec(sljit_uw size)
 
 	chunk_size = (size + sizeof(struct block_header) + CHUNK_SIZE - 1) & CHUNK_MASK;
 	header = (struct block_header*)alloc_chunk(chunk_size);
-	PTR_FAIL_IF(!header);
+	if (!header) {
+		allocator_release_lock();
+		return NULL;
+	}
 
 	chunk_size -= sizeof(struct block_header);
 	total_size += chunk_size;
@@ -237,14 +257,14 @@ SLJIT_API_FUNC_ATTRIBUTE void sljit_free_exec(void* ptr)
 	struct free_block* free_block;
 
 	allocator_grab_lock();
-	header = AS_BLOCK_HEADER(ptr, -(sljit_w)sizeof(struct block_header));
+	header = AS_BLOCK_HEADER(ptr, -(sljit_sw)sizeof(struct block_header));
 	allocated_size -= header->size;
 
 	/* Connecting free blocks together if possible. */
 
 	/* If header->prev_size == 0, free_block will equal to header.
 	   In this case, free_block->header.size will be > 0. */
-	free_block = AS_FREE_BLOCK(header, -(sljit_w)header->prev_size);
+	free_block = AS_FREE_BLOCK(header, -(sljit_sw)header->prev_size);
 	if (SLJIT_UNLIKELY(!free_block->header.size)) {
 		free_block->size += header->size;
 		header = AS_BLOCK_HEADER(free_block, free_block->size);
@@ -273,5 +293,28 @@ SLJIT_API_FUNC_ATTRIBUTE void sljit_free_exec(void* ptr)
 		}
 	}
 
+	allocator_release_lock();
+}
+
+SLJIT_API_FUNC_ATTRIBUTE void sljit_free_unused_memory_exec(void)
+{
+	struct free_block* free_block;
+	struct free_block* next_free_block;
+
+	allocator_grab_lock();
+
+	free_block = free_blocks;
+	while (free_block) {
+		next_free_block = free_block->next;
+		if (!free_block->header.prev_size && 
+				AS_BLOCK_HEADER(free_block, free_block->size)->size == 1) {
+			total_size -= free_block->size;
+			sljit_remove_free_block(free_block);
+			free_chunk(free_block, free_block->size + sizeof(struct block_header));
+		}
+		free_block = next_free_block;
+	}
+
+	SLJIT_ASSERT((total_size && free_blocks) || (!total_size && !free_blocks));
 	allocator_release_lock();
 }

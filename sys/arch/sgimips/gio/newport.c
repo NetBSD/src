@@ -1,4 +1,4 @@
-/*	$NetBSD: newport.c,v 1.17 2012/01/11 21:23:38 macallan Exp $	*/
+/*	$NetBSD: newport.c,v 1.17.6.1 2014/08/20 00:03:22 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.17 2012/01/11 21:23:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.17.6.1 2014/08/20 00:03:22 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -433,7 +433,7 @@ newport_get_resolution(struct newport_devconfig *dc)
 static void
 newport_setup_hw(struct newport_devconfig *dc)
 {
-	uint16_t curp,tmp;
+	uint16_t __unused(curp), tmp;
 	int i;
 	uint32_t scratch;
 
@@ -882,7 +882,7 @@ newport_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 {
 	struct vcons_data *vd;
 	struct newport_devconfig *dc;
-	struct vcons_screen *ms;
+	struct vcons_screen *__unused(ms);
 	int nmode;
 
 	vd = (struct vcons_data *)v;

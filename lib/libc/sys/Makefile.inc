@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.216.2.2 2013/06/23 06:21:06 tls Exp $
+#	$NetBSD: Makefile.inc,v 1.216.2.3 2014/08/20 00:02:16 tls Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -31,7 +31,7 @@ SRCS+=	posix_fadvise.c posix_madvise.c sched.c sigqueue.c sigtimedwait.c \
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
 GLUE+= ftruncate.c lseek.c mmap.c pread.c preadv.c pwrite.c \
-	pwritev.c truncate.c ntp_adjtime.c
+	pwritev.c truncate.c ntp_adjtime.c mknodat.c
 
 GLUE50+= adjtime.c clock_settime.c settimeofday.c
 
@@ -69,9 +69,6 @@ ASM_GLUE+= tmp___${glue:.c=}50.S
 . endif
 .endfor
 
-# namespace purity wrappers
-SRCS+=	_brk.c _fork.c _getcontext.c _pipe.c _sbrk.c
-
 # modules with default implementations on all architectures:
 ASM=	access.S acct.S \
 	bind.S \
@@ -103,12 +100,12 @@ ASM=	access.S acct.S \
 	lchflags.S lchmod.S lchown.S lfs_bmapv.S lfs_markv.S lfs_segclean.S \
 		__lfs_segwait50.S link.S linkat.S listen.S __lstat50.S \
 		__lutimes50.S _lwp_create.S _lwp_exit.S _lwp_kill.S \
-		_lwp_self.S _lwp_wait.S _lwp_unpark.S \
+		___lwp_park60.S _lwp_self.S _lwp_wait.S _lwp_unpark.S \
 		_lwp_unpark_all.S _lwp_suspend.S _lwp_continue.S \
 		_lwp_wakeup.S _lwp_detach.S _lwp_setprivate.S \
 		_lwp_setname.S _lwp_getname.S _lwp_ctl.S \
 	madvise.S mincore.S minherit.S mkdir.S mkdirat.S mkfifo.S mkfifoat.S \
-		__mknod50.S mknodat.S mlock.S mlockall.S modctl.S __mount50.S \
+		__mknod50.S mlock.S mlockall.S modctl.S __mount50.S \
 		mprotect.S __msgctl50.S msgget.S munlock.S munlockall.S \
 		munmap.S \
 	nfssvc.S __ntp_gettime50.S \
@@ -150,10 +147,11 @@ ASM_MD=	_lwp_getprivate.S mremap.S
 .endfor
 
 WEAKASM= accept.S __aio_suspend50.S close.S connect.S execve.S \
-	fcntl.S fdatasync.S fsync.S fsync_range.S __kevent50.S \
+	fcntl.S fdatasync.S fdiscard.S fsync.S \
+	fsync_range.S __kevent50.S \
 	kill.S mq_receive.S mq_send.S __mq_timedreceive50.S __mq_timedsend50.S \
 	msgrcv.S msgsnd.S __msync13.S  __nanosleep50.S open.S poll.S \
-	__pollts50.S __pselect50.S read.S readlink.S \
+	__pollts50.S posix_fallocate.S __pselect50.S read.S readlink.S \
 	readv.S _sched_setparam.S _sched_getparam.S _sched_setaffinity.S \
 	_sched_getaffinity.S sched_yield.S \
 	__select50.S setcontext.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
@@ -219,7 +217,7 @@ LintSysPseudoNoerr.c: ${LIBCDIR}/sys/makelintstub \
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	chflags.2 chmod.2 chown.2 chroot.2 clock_settime.2 clone.2 close.2 \
 	connect.2 dup.2 execve.2 _exit.2 extattr_get_file.2 \
-	fcntl.2 fdatasync.2 fhopen.2 \
+	fcntl.2 fdatasync.2 fdiscard.2 fhopen.2 \
 	flock.2 fork.2 fsync.2 getcontext.2 getdents.2 \
 	getfh.2 getvfsstat.2 getgid.2 getgroups.2 \
 	getitimer.2 getlogin.2 getpeername.2 getpgrp.2 getpid.2 \
@@ -238,7 +236,8 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	mount.2 \
 	mprotect.2 mremap.2 msgctl.2 msgget.2 msgrcv.2 msgsnd.2 msync.2 \
 	munmap.2 nanosleep.2 nfssvc.2 ntp_adjtime.2 open.2 pathconf.2 pipe.2 \
-	pmc_control.2 poll.2 posix_fadvise.2 profil.2 ptrace.2 __quotactl.2 \
+	pmc_control.2 poll.2 posix_fadvise.2 \
+	profil.2 ptrace.2 __quotactl.2 \
 	rasctl.2 read.2 readlink.2 \
 	reboot.2 recv.2 rename.2 revoke.2 rmdir.2 \
 	select.2 semctl.2 \
@@ -278,6 +277,7 @@ MLINKS+=extattr_get_file.2 extattr_set_file.2 \
 MLINKS+=access.2 faccessat.2
 MLINKS+=chmod.2 fchmodat.2
 MLINKS+=chown.2 fchownat.2
+MLINKS+=fdiscard.2 posix_fallocate.2 
 MLINKS+=fhopen.2 fhstat.2 fhopen.2 fhstatvfs.2 fhopen.2 fhstatvfs1.2
 MLINKS+=stat.2 fstatat.2
 MLINKS+=fsync.2 fsync_range.2
@@ -334,7 +334,8 @@ MLINKS+=syscall.2 __syscall.2
 MLINKS+=truncate.2 ftruncate.2
 MLINKS+=unlink.2 unlinkat.2
 MLINKS+=utimes.2 futimes.2 utimes.2 lutimes.2
-MLINKS+=utimes.2 futimens.2 utimes.2 utimensat.2
+MLINKS+=utimes.2 utimens.2 utimes.2 futimens.2 utimes.2 lutimens.2
+MLINKS+=utimes.2 utimensat.2
 MLINKS+=wait.2 wait3.2 wait.2 wait4.2 wait.2 waitpid.2
 MLINKS+=write.2 writev.2 write.2 pwrite.2 write.2 pwritev.2
 MLINKS+=pipe.2 pipe2.2

@@ -1,4 +1,4 @@
-/* Copyright (C) 2009, 2010, 2011 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,13 +15,17 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include "defs.h"
 #include "py-event.h"
 
 /* thread events can either be thread specific or process wide.  If gdb is
    running in non-stop mode then the event is thread specific, otherwise
    it is process wide.
    This function returns the currently stopped thread in non-stop mode and
-   Py_None otherwise.  */
+   Py_None otherwise.  In each case it returns a borrowed reference.  */
+
+static PyObject *get_event_thread (void)
+  CPYCHECKER_RETURNS_BORROWED_REF;
 
 static PyObject *
 get_event_thread (void)
@@ -38,8 +42,6 @@ get_event_thread (void)
       PyErr_SetString (PyExc_RuntimeError, "Could not find event thread");
       return NULL;
     }
-
-  Py_INCREF (thread);
 
   return thread;
 }

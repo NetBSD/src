@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2005, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2005-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -200,7 +200,7 @@ func_cu1:
 
 .Lline1_end:
 
-	.section	.debug_macinfo,"",@progbits
+	.section	.debug_macinfo,"",%progbits
 .Ldebug_macinfo0:
 	.byte	0x3	/* Start new file */
 	.uleb128 0x0	/* Included from line number 0 */

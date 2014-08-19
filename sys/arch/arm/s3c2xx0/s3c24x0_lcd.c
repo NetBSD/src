@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0_lcd.c,v 1.9.6.1 2012/11/20 03:01:07 tls Exp $ */
+/* $NetBSD: s3c24x0_lcd.c,v 1.9.6.2 2014/08/20 00:02:47 tls Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.9.6.1 2012/11/20 03:01:07 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.9.6.2 2014/08/20 00:02:47 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,14 +310,11 @@ s3c24x0_lcd_new_screen(struct s3c24x0_lcd_softc *sc,
     int virtual_width, int virtual_height, int depth)
 {
 	struct s3c24x0_lcd_screen *scr = NULL;
-	int width, height;
 	bus_size_t size;
-        int error, pallet_size;
+        int error;
 	int busdma_flag = (cold ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK) |
 	    BUS_DMA_WRITE;
 	paddr_t align;
-	const struct s3c24x0_lcd_panel_info *panel_info = sc->panel_info;
-
 
 #if 0 /* Does this make any sense? */
 #ifdef DIAGNOSTIC
@@ -327,10 +324,6 @@ s3c24x0_lcd_new_screen(struct s3c24x0_lcd_softc *sc,
 	}
 #endif
 #endif
-
-	width = panel_info->panel_width;
-	height = panel_info->panel_height;
-	pallet_size = 0;
 
 	switch (depth) {
 	case 1: case 2: case 4: case 8:

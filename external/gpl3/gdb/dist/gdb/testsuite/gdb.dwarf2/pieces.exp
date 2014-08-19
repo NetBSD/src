@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,16 +20,14 @@ if {![dwarf2_support]} {
     return 0  
 }
 # This test can only be run on x86 targets.
-if {![istarget i?86-*]} {
+if {![is_x86_like_target]} {
     return 0  
 }
 
-set testfile "pieces"
-set srcfile ${testfile}.S
+standard_testfile .S
 set csrcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}.x
 
-if {[prepare_for_testing ${testfile}.exp ${testfile}.x $srcfile]} {
+if {[prepare_for_testing ${testfile}.exp ${testfile} $srcfile]} {
     return -1
 }
 

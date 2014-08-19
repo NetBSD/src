@@ -3792,6 +3792,15 @@ Fri Aug 28 15:38:03 1992  Ken Raeburn  (raeburn@cygnus.com)
 	* Makefile.in: Updated to reflect change.
 
 
+Copyright (C) 1992-1997 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
+mode: change-log
+left-margin: 8
+fill-column: 74
 version-control: never
 End:

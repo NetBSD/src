@@ -1,4 +1,4 @@
-.\"	$NetBSD: cpuctl.8,v 1.9 2012/03/15 22:35:03 njoly Exp $
+.\"	$NetBSD: cpuctl.8,v 1.9.2.1 2014/08/20 00:05:07 tls Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 13, 2012
+.Dd December 23, 2013
 .Dt CPUCTL 8
 .Os
 .Sh NAME
@@ -35,6 +35,7 @@
 .Nd program to control CPUs
 .Sh SYNOPSIS
 .Nm cpuctl
+.Op Fl v
 .Ar command
 .Op Ar arguments
 .Sh DESCRIPTION
@@ -76,6 +77,12 @@ On success the
 .Cm identify
 command show different ucode versions before and after this command.
 .El
+.Pp
+Valid flags are:
+.Bl -tag -width indent
+.It Fl v
+Be more verbose.
+.El
 .Sh FILES
 .Bl -tag -width /dev/cpuctl -compact
 .It Pa /dev/cpuctl
@@ -91,7 +98,7 @@ where
 .Dv XX
 is the CPU family starting with 15 (hex).
 Get it from
-.Lk http://www.amd64.org/support/microcode.html
+.Lk http://www.amd64.org/microcode.html
 .El
 .Sh EXAMPLES
 Run

@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.47 2011/06/14 15:34:22 matt Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.47.12.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.47 2011/06/14 15:34:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.47.12.1 2014/08/20 00:02:41 tls Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.47 2011/06/14 15:34:22 matt Exp $");
 #include <sys/reboot.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
+#include <sys/ipi.h>
 #include <sys/intr.h>
 #include <sys/xcall.h>
 #include <sys/bitops.h>
@@ -59,12 +60,13 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.47 2011/06/14 15:34:22 matt Exp $");
 
 typedef void (*ipifunc_t)(struct cpu_info *, struct trapframe *);
 
-void	alpha_ipi_halt(struct cpu_info *, struct trapframe *);
-void	alpha_ipi_microset(struct cpu_info *, struct trapframe *);
-void	alpha_ipi_imb(struct cpu_info *, struct trapframe *);
-void	alpha_ipi_ast(struct cpu_info *, struct trapframe *);
-void	alpha_ipi_pause(struct cpu_info *, struct trapframe *);
-void	alpha_ipi_xcall(struct cpu_info *, struct trapframe *);
+static void	alpha_ipi_halt(struct cpu_info *, struct trapframe *);
+static void	alpha_ipi_microset(struct cpu_info *, struct trapframe *);
+static void	alpha_ipi_imb(struct cpu_info *, struct trapframe *);
+static void	alpha_ipi_ast(struct cpu_info *, struct trapframe *);
+static void	alpha_ipi_pause(struct cpu_info *, struct trapframe *);
+static void	alpha_ipi_xcall(struct cpu_info *, struct trapframe *);
+static void	alpha_ipi_generic(struct cpu_info *, struct trapframe *);
 
 /*
  * NOTE: This table must be kept in order with the bit definitions
@@ -77,7 +79,8 @@ const ipifunc_t ipifuncs[ALPHA_NIPIS] = {
 	[ilog2(ALPHA_IPI_IMB)] =	alpha_ipi_imb,
 	[ilog2(ALPHA_IPI_AST)] =	alpha_ipi_ast,
 	[ilog2(ALPHA_IPI_PAUSE)] =	alpha_ipi_pause,
-	[ilog2(ALPHA_IPI_XCALL)] =	alpha_ipi_xcall
+	[ilog2(ALPHA_IPI_XCALL)] =	alpha_ipi_xcall,
+	[ilog2(ALPHA_IPI_GENERIC)] =	alpha_ipi_generic
 };
 
 const char * const ipinames[ALPHA_NIPIS] = {
@@ -87,7 +90,8 @@ const char * const ipinames[ALPHA_NIPIS] = {
 	[ilog2(ALPHA_IPI_IMB)] =	"imb ipi",
 	[ilog2(ALPHA_IPI_AST)] =	"ast ipi",
 	[ilog2(ALPHA_IPI_PAUSE)] =	"pause ipi",
-	[ilog2(ALPHA_IPI_XCALL)] =	"xcall ipi"
+	[ilog2(ALPHA_IPI_XCALL)] =	"xcall ipi",
+	[ilog2(ALPHA_IPI_GENERIC)] =	"generic ipi",
 };
 
 /*
@@ -208,7 +212,7 @@ alpha_multicast_ipi(u_long cpumask, u_long ipimask)
 	}
 }
 
-void
+static void
 alpha_ipi_halt(struct cpu_info *ci, struct trapframe *framep)
 {
 	u_long cpu_id = ci->ci_cpuid;
@@ -241,21 +245,21 @@ alpha_ipi_halt(struct cpu_info *ci, struct trapframe *framep)
 	/* NOTREACHED */
 }
 
-void
+static void
 alpha_ipi_microset(struct cpu_info *ci, struct trapframe *framep)
 {
 
 	cc_calibrate_cpu(ci);
 }
 
-void
+static void
 alpha_ipi_imb(struct cpu_info *ci, struct trapframe *framep)
 {
 
 	alpha_pal_imb();
 }
 
-void
+static void
 alpha_ipi_ast(struct cpu_info *ci, struct trapframe *framep)
 {
 
@@ -263,7 +267,7 @@ alpha_ipi_ast(struct cpu_info *ci, struct trapframe *framep)
 		aston(ci->ci_curlwp);
 }
 
-void
+static void
 alpha_ipi_pause(struct cpu_info *ci, struct trapframe *framep)
 {
 	u_long cpumask = (1UL << ci->ci_cpuid);
@@ -295,17 +299,15 @@ alpha_ipi_pause(struct cpu_info *ci, struct trapframe *framep)
  * MD support for xcall(9) interface.
  */
 
-void
+static void
 alpha_ipi_xcall(struct cpu_info *ci, struct trapframe *framep)
 {
-
 	xc_ipi_handler();
 }
 
 void
 xc_send_ipi(struct cpu_info *ci)
 {
-
 	KASSERT(kpreempt_disabled());
 	KASSERT(curcpu() != ci);
 
@@ -315,5 +317,26 @@ xc_send_ipi(struct cpu_info *ci)
 	} else {
 		/* Broadcast: all, but local CPU (caller will handle it). */
 		alpha_broadcast_ipi(ALPHA_IPI_XCALL);
+	}
+}
+
+static void
+alpha_ipi_generic(struct cpu_info *ci, struct trapframe *framep)
+{
+	ipi_cpu_handler();
+}
+
+void
+cpu_ipi(struct cpu_info *ci)
+{
+	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu() != ci);
+
+	if (ci) {
+		/* Unicast: remote CPU. */
+		alpha_send_ipi(ci->ci_cpuid, ALPHA_IPI_GENERIC);
+	} else {
+		/* Broadcast: all, but local CPU (caller will handle it). */
+		alpha_broadcast_ipi(ALPHA_IPI_GENERIC);
 	}
 }

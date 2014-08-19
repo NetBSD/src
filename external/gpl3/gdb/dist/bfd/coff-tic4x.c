@@ -1,6 +1,6 @@
 /* BFD back-end for TMS320C4X coff binaries.
    Copyright 1996, 1997, 1998, 1999, 2000, 2002, 2003, 2005, 2007,
-   2008  Free Software Foundation, Inc.
+   2008, 2012  Free Software Foundation, Inc.
 
    Contributed by Michael Hayes (m.hayes@elec.canterbury.ac.nz)
 
@@ -32,26 +32,19 @@
 #undef  F_LSYMS
 #define	F_LSYMS		F_LSYMS_TICOFF
 
-static bfd_boolean ticoff_bfd_is_local_label_name
-    PARAMS ((bfd *, const char *));
-static bfd_reloc_status_type tic4x_relocation
-    PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char ** ));
-static reloc_howto_type *tic4x_coff_reloc_type_lookup
-    PARAMS ((bfd *, bfd_reloc_code_real_type ));
-static void tic4x_lookup_howto
-    PARAMS ((arelent *, struct internal_reloc * ));
-static reloc_howto_type *coff_tic4x_rtype_to_howto
-    PARAMS ((bfd *, asection *, struct internal_reloc *, struct coff_link_hash_entry *, struct internal_syment *, bfd_vma * ));
-static void tic4x_reloc_processing
-    PARAMS ((arelent *, struct internal_reloc *, asymbol **, bfd *, asection * ));
-
+static reloc_howto_type *
+coff_tic4x_rtype_to_howto (bfd *, asection *, struct internal_reloc *,
+			   struct coff_link_hash_entry *,
+			   struct internal_syment *,  bfd_vma *);
+static void
+tic4x_reloc_processing (arelent *, struct internal_reloc *,
+			asymbol **, bfd *, asection *);
 
 /* Replace the stock _bfd_coff_is_local_label_name to recognize TI COFF local
    labels.  */
 static bfd_boolean
-ticoff_bfd_is_local_label_name (abfd, name)
-  bfd *abfd ATTRIBUTE_UNUSED;
-  const char *name;
+ticoff_bfd_is_local_label_name (bfd *abfd ATTRIBUTE_UNUSED,
+				const char *name)
 {
   if (TICOFF_LOCAL_LABEL_P(name))
     return TRUE;
@@ -79,15 +72,13 @@ ticoff_bfd_is_local_label_name (abfd, name)
 #include "coffcode.h"
 
 static bfd_reloc_status_type
-tic4x_relocation (abfd, reloc_entry, symbol, data, input_section,
-		  output_bfd, error_message)
-  bfd *abfd ATTRIBUTE_UNUSED;
-  arelent *reloc_entry;
-  asymbol *symbol ATTRIBUTE_UNUSED;
-  PTR data ATTRIBUTE_UNUSED;
-  asection *input_section;
-  bfd *output_bfd;
-  char **error_message ATTRIBUTE_UNUSED;
+tic4x_relocation (bfd *abfd ATTRIBUTE_UNUSED,
+		  arelent *reloc_entry,
+		  asymbol *symbol ATTRIBUTE_UNUSED,
+		  void * data ATTRIBUTE_UNUSED,
+		  asection *input_section,
+		  bfd *output_bfd,
+		  char **error_message ATTRIBUTE_UNUSED)
 {
   if (output_bfd != (bfd *) NULL)
     {
@@ -128,9 +119,8 @@ reloc_howto_type tic4x_howto_table[] =
    bfd/reloc.c) to map to the howto table entries.  */
 
 static reloc_howto_type *
-tic4x_coff_reloc_type_lookup (abfd, code)
-    bfd *abfd ATTRIBUTE_UNUSED;
-    bfd_reloc_code_real_type code;
+tic4x_coff_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
+			      bfd_reloc_code_real_type code)
 {
   unsigned int type;
   unsigned int i;
@@ -176,9 +166,8 @@ tic4x_coff_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
    Called after some initial checking by the tic4x_rtype_to_howto fn
    below.  */
 static void
-tic4x_lookup_howto (internal, dst)
-     arelent *internal;
-     struct internal_reloc *dst;
+tic4x_lookup_howto (arelent *internal,
+		    struct internal_reloc *dst)
 {
   unsigned int i;
   int bank = (dst->r_symndx == -1) ? HOWTO_BANK : 0;
@@ -198,13 +187,12 @@ tic4x_lookup_howto (internal, dst)
 }
 
 static reloc_howto_type *
-coff_tic4x_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     asection *sec;
-     struct internal_reloc *rel;
-     struct coff_link_hash_entry *h ATTRIBUTE_UNUSED;
-     struct internal_syment *sym ATTRIBUTE_UNUSED;
-     bfd_vma *addendp;
+coff_tic4x_rtype_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
+			   asection *sec,
+			   struct internal_reloc *rel,
+			   struct coff_link_hash_entry *h ATTRIBUTE_UNUSED,
+			   struct internal_syment *sym ATTRIBUTE_UNUSED,
+			   bfd_vma *addendp)
 {
   arelent genrel;
 
@@ -221,12 +209,11 @@ coff_tic4x_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
 
 
 static void
-tic4x_reloc_processing (relent, reloc, symbols, abfd, section)
-     arelent *relent;
-     struct internal_reloc *reloc;
-     asymbol **symbols;
-     bfd *abfd;
-     asection *section;
+tic4x_reloc_processing (arelent *relent,
+			struct internal_reloc *reloc,
+			asymbol **symbols,
+			bfd *abfd,
+			asection *section)
 {
   asymbol *ptr;
 
@@ -274,19 +261,31 @@ tic4x_reloc_processing (relent, reloc, symbols, abfd, section)
 
 
 /* TI COFF v0, DOS tools (little-endian headers).  */
-CREATE_LITTLE_COFF_TARGET_VEC(tic4x_coff0_vec, "coff0-tic4x", HAS_LOAD_PAGE, 0, '_', NULL, (PTR)&ticoff0_swap_table);
+CREATE_LITTLE_COFF_TARGET_VEC(tic4x_coff0_vec, "coff0-tic4x",
+			      HAS_LOAD_PAGE, SEC_CODE | SEC_READONLY, '_',
+			      NULL, &ticoff0_swap_table);
 
 /* TI COFF v0, SPARC tools (big-endian headers).  */
-CREATE_BIGHDR_COFF_TARGET_VEC(tic4x_coff0_beh_vec, "coff0-beh-tic4x", HAS_LOAD_PAGE, 0, '_', &tic4x_coff0_vec, (PTR)&ticoff0_swap_table);
+CREATE_BIGHDR_COFF_TARGET_VEC(tic4x_coff0_beh_vec, "coff0-beh-tic4x",
+			      HAS_LOAD_PAGE, SEC_CODE | SEC_READONLY, '_',
+			      &tic4x_coff0_vec, &ticoff0_swap_table);
 
 /* TI COFF v1, DOS tools (little-endian headers).  */
-CREATE_LITTLE_COFF_TARGET_VEC(tic4x_coff1_vec, "coff1-tic4x", HAS_LOAD_PAGE, 0, '_', &tic4x_coff0_beh_vec, (PTR)&ticoff1_swap_table);
+CREATE_LITTLE_COFF_TARGET_VEC(tic4x_coff1_vec, "coff1-tic4x",
+			      HAS_LOAD_PAGE, SEC_CODE | SEC_READONLY, '_',
+			      &tic4x_coff0_beh_vec, &ticoff1_swap_table);
 
 /* TI COFF v1, SPARC tools (big-endian headers).  */
-CREATE_BIGHDR_COFF_TARGET_VEC(tic4x_coff1_beh_vec, "coff1-beh-tic4x", HAS_LOAD_PAGE, 0, '_', &tic4x_coff1_vec, (PTR)&ticoff1_swap_table);
+CREATE_BIGHDR_COFF_TARGET_VEC(tic4x_coff1_beh_vec, "coff1-beh-tic4x",
+			      HAS_LOAD_PAGE, SEC_CODE | SEC_READONLY, '_',
+			      &tic4x_coff1_vec, &ticoff1_swap_table);
 
 /* TI COFF v2, TI DOS tools output (little-endian headers).  */
-CREATE_LITTLE_COFF_TARGET_VEC(tic4x_coff2_vec, "coff2-tic4x", HAS_LOAD_PAGE, 0, '_', &tic4x_coff1_beh_vec, COFF_SWAP_TABLE);
+CREATE_LITTLE_COFF_TARGET_VEC(tic4x_coff2_vec, "coff2-tic4x",
+			      HAS_LOAD_PAGE, SEC_CODE | SEC_READONLY, '_',
+			      &tic4x_coff1_beh_vec, COFF_SWAP_TABLE);
 
 /* TI COFF v2, TI SPARC tools output (big-endian headers).  */
-CREATE_BIGHDR_COFF_TARGET_VEC(tic4x_coff2_beh_vec, "coff2-beh-tic4x", HAS_LOAD_PAGE, 0, '_', &tic4x_coff2_vec, COFF_SWAP_TABLE);
+CREATE_BIGHDR_COFF_TARGET_VEC(tic4x_coff2_beh_vec, "coff2-beh-tic4x",
+			      HAS_LOAD_PAGE, SEC_CODE | SEC_READONLY, '_',
+			      &tic4x_coff2_vec, COFF_SWAP_TABLE);

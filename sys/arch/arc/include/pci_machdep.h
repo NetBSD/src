@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.9.14.1 2012/11/20 03:01:01 tls Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.9.14.2 2014/08/20 00:02:44 tls Exp $ */
 /* NetBSD: pci_machdep.h,v 1.3 1999/03/19 03:40:46 cgd Exp  */
 
 /*
@@ -62,7 +62,7 @@ struct arc_pci_chipset {
 	int		(*pc_intr_map)(const struct pci_attach_args *,
 			    pci_intr_handle_t *);
 	const char	*(*pc_intr_string)(pci_chipset_tag_t,
-			    pci_intr_handle_t);
+			    pci_intr_handle_t, char *, size_t);
 	void		*(*pc_intr_establish)(pci_chipset_tag_t,
 			    pci_intr_handle_t, int, int (*)(void *), void *);
 	void		(*pc_intr_disestablish)(pci_chipset_tag_t, void *);
@@ -92,8 +92,8 @@ struct arc_pci_chipset {
     (*(c)->pc_conf_write)((c), (t), (r), (v))
 #define	pci_intr_map(pa, ihp)						\
     (*(pa)->pa_pc->pc_intr_map)((pa), (ihp))
-#define	pci_intr_string(c, ih)						\
-    (*(c)->pc_intr_string)((c), (ih))
+#define	pci_intr_string(c, ih, buf, len)				\
+    (*(c)->pc_intr_string)((c), (ih), (buf), (len))
 #define	pci_intr_establish(c, ih, l, h, a)				\
     (*(c)->pc_intr_establish)((c), (ih), (l), (h), (a))
 #define	pci_intr_disestablish(c, iv)					\

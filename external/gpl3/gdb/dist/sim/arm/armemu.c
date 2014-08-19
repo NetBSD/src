@@ -4,7 +4,7 @@
  
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
+    the Free Software Foundation; either version 3 of the License, or
     (at your option) any later version.
  
     This program is distributed in the hope that it will be useful,
@@ -13,8 +13,7 @@
     GNU General Public License for more details.
  
     You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
+    along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #include "armdefs.h"
 #include "armemu.h"
@@ -2316,8 +2315,10 @@ check_PMUintr:
 	      WRITESDEST (dest);
 	      break;
 
-	    case 0x30:		/* TST immed */
-	      UNDEF_Test;
+	    case 0x30:		/* MOVW immed */
+	      dest = BITS (0, 11);
+	      dest |= (BITS (16, 19) << 12);
+	      WRITEDEST (dest);
 	      break;
 
 	    case 0x31:		/* TSTP immed */
@@ -2369,8 +2370,10 @@ check_PMUintr:
 		}
 	      break;
 
-	    case 0x34:		/* CMP immed */
-	      UNDEF_Test;
+	    case 0x34:		/* MOVT immed */
+	      dest  = BITS (0, 11);
+	      dest |= (BITS (16, 19) << 12);
+	      DEST |= (dest << 16);
 	      break;
 
 	    case 0x35:		/* CMPP immed */

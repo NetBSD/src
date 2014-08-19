@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.33 2009/03/18 10:22:42 cegger Exp $	*/
+/*	$NetBSD: zlib.c,v 1.33.22.1 2014/08/20 00:04:35 tls Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -11,7 +11,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: zlib.c,v 1.33 2009/03/18 10:22:42 cegger Exp $
+ * $Id: zlib.c,v 1.33.22.1 2014/08/20 00:04:35 tls Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.33 2009/03/18 10:22:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.33.22.1 2014/08/20 00:04:35 tls Exp $");
 
 #define NO_DUMMY_DECL
 #define NO_ZCFUNCS
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.33 2009/03/18 10:22:42 cegger Exp $");
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.33 2009/03/18 10:22:42 cegger Exp $ */
+/* @(#) $Id: zlib.c,v 1.33.22.1 2014/08/20 00:04:35 tls Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
@@ -294,7 +294,7 @@ void   zcfree(voidpf opaque, voidpf ptr);
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.33 2009/03/18 10:22:42 cegger Exp $ */
+/* @(#) $Id: zlib.c,v 1.33.22.1 2014/08/20 00:04:35 tls Exp $ */
 
 #ifndef _DEFLATE_H
 #define _DEFLATE_H
@@ -656,7 +656,7 @@ void _tr_stored_type_only(deflate_state *);
  *
  */
 
-/* @(#) $Id: zlib.c,v 1.33 2009/03/18 10:22:42 cegger Exp $ */
+/* @(#) $Id: zlib.c,v 1.33.22.1 2014/08/20 00:04:35 tls Exp $ */
 
 /* #include "deflate.h" */
 
@@ -1999,7 +1999,7 @@ local block_state deflate_slow(deflate_state *s, int flush)
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: zlib.c,v 1.33 2009/03/18 10:22:42 cegger Exp $ */
+/* @(#) $Id: zlib.c,v 1.33.22.1 2014/08/20 00:04:35 tls Exp $ */
 
 /* #define GEN_TREES_H */
 
@@ -5813,7 +5813,7 @@ void  zcfree (opaque, ptr)
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zlib.c,v 1.33 2009/03/18 10:22:42 cegger Exp $ */
+/* @(#) $Id: zlib.c,v 1.33.22.1 2014/08/20 00:04:35 tls Exp $ */
 
 /* #include "zlib.h" */
 
@@ -5855,3 +5855,31 @@ uLong ZEXPORT adler32(uLong adler, const Bytef *buf, uInt len)
 }
 /* --- adler32.c */
 
+#if defined(_KERNEL)
+
+/*
+ * NetBSD module glue - this code is required for the vnd and swcrypto
+ * pseudo-devices.
+ */
+#include <sys/module.h>
+
+static int zlib_modcmd(modcmd_t, void *);
+
+MODULE(MODULE_CLASS_MISC, zlib, NULL);
+ 
+static int
+zlib_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+	case MODULE_CMD_FINI:
+		return 0;
+	case MODULE_CMD_STAT:
+	case MODULE_CMD_AUTOUNLOAD:
+	default:
+		return ENOTTY;
+	}
+}
+
+#endif	/* defined(_KERNEL) */

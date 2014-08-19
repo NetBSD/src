@@ -1,4 +1,4 @@
-/*	$NetBSD: clri.c,v 1.22 2009/07/26 03:22:01 dholland Exp $	*/
+/*	$NetBSD: clri.c,v 1.22.12.1 2014/08/20 00:02:24 tls Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)clri.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: clri.c,v 1.22 2009/07/26 03:22:01 dholland Exp $");
+__RCSID("$NetBSD: clri.c,v 1.22.12.1 2014/08/20 00:02:24 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -165,7 +165,7 @@ main(int argc, char *argv[])
 
 		/* read in the appropriate block. */
 		offset = ino_to_fsba(sbp, inonum);	/* inode to fs blk */
-		offset = fsbtodb(sbp, offset);		/* fs blk disk blk */
+		offset = FFS_FSBTODB(sbp, offset);	/* fs blk disk blk */
 		offset *= DEV_BSIZE;			/* disk blk to bytes */
 
 		/* seek and read the block */

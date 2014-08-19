@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.93.6.1 2012/11/20 03:00:58 tls Exp $ */
+/*	$NetBSD: ite.c,v 1.93.6.2 2014/08/20 00:02:43 tls Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.93.6.1 2012/11/20 03:00:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.93.6.2 2014/08/20 00:02:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -162,8 +162,18 @@ dev_type_tty(itetty);
 dev_type_poll(itepoll);
 
 const struct cdevsw ite_cdevsw = {
-	iteopen, iteclose, iteread, itewrite, iteioctl,
-	nostop, itetty, itepoll, nommap, ttykqfilter, D_TTY
+	.d_open = iteopen,
+	.d_close = iteclose,
+	.d_read = iteread,
+	.d_write = itewrite,
+	.d_ioctl = iteioctl,
+	.d_stop = nostop,
+	.d_tty = itetty,
+	.d_poll = itepoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 int
@@ -593,11 +603,10 @@ void
 itestart(struct tty *tp)
 {
 	struct clist *rbp;
-	struct ite_softc *ip;
 	u_char buf[ITEBURST];
 	int s, len;
 
-	ip = getitesp(tp->t_dev);
+	(void)getitesp(tp->t_dev);
 
 	KDASSERT(tp);
 
@@ -630,9 +639,7 @@ void
 ite_on(dev_t dev, int flag)
 {
 	struct ite_softc *ip;
-	int unit;
 
-	unit = ITEUNIT(dev);
 	ip = getitesp(dev);
 
 	/* force ite active, overriding graphics mode */
@@ -1636,7 +1643,8 @@ iteputchar(register int c, struct ite_softc *ip)
 					break;
 				case 6:
 					/* cursor position report */
-					sprintf(ip->argbuf, "\033[%d;%dR",
+					snprintf(ip->argbuf, sizeof(ip->argbuf),
+					    "\033[%d;%dR",
 					    ip->cury + 1, ip->curx + 1);
 					ite_sendstr(ip->argbuf);
 					break;

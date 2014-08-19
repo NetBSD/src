@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.39.2.2 2013/06/23 06:18:27 tls Exp $	*/
+/*	$NetBSD: advnops.c,v 1.39.2.3 2014/08/20 00:04:26 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.39.2.2 2013/06/23 06:18:27 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.39.2.3 2014/08/20 00:04:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,6 +105,8 @@ const struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, adosfs_setattr },		/* setattr */
 	{ &vop_read_desc, adosfs_read },		/* read */
 	{ &vop_write_desc, adosfs_write },		/* write */
+	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
+	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_fcntl_desc, adosfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, adosfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, adosfs_poll },		/* poll */
@@ -421,7 +423,7 @@ adosfs_link(void *v)
 int
 adosfs_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -430,7 +432,6 @@ adosfs_symlink(void *v)
 	} */ *ap = v;
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	vput(ap->a_dvp);
 	return (EROFS);
 }
 
@@ -879,7 +880,7 @@ adosfs_reclaim(void *v)
 #endif
 	vp = sp->a_vp;
 	ap = VTOA(vp);
-	LIST_REMOVE(ap, link);
+	vcache_remove(vp->v_mount, &ap->block, sizeof(ap->block));
 	if (vp->v_type == VDIR && ap->tab)
 		free(ap->tab, M_ANODE);
 	else if (vp->v_type == VLNK && ap->slinkto)

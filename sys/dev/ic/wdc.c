@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.274.2.2 2013/06/23 06:20:17 tls Exp $ */
+/*	$NetBSD: wdc.c,v 1.274.2.3 2014/08/20 00:03:38 tls Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.274.2.2 2013/06/23 06:20:17 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.274.2.3 2014/08/20 00:03:38 tls Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -204,7 +204,7 @@ void
 wdc_sataprobe(struct ata_channel *chp)
 {
 	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
-	uint8_t st = 0, sc, sn, cl, ch;
+	uint8_t st = 0, sc __unused, sn __unused, cl, ch;
 	int i, s;
 
 	KASSERT(chp->ch_ndrives == 0 || chp->ch_drive != NULL);
@@ -487,7 +487,7 @@ wdcprobe1(struct ata_channel *chp, int poll)
 {
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
-	u_int8_t st0 = 0, st1 = 0, sc, sn, cl, ch;
+	u_int8_t st0 = 0, st1 = 0, sc __unused, sn __unused, cl, ch;
 	u_int8_t ret_value = 0x03;
 	u_int8_t drive;
 	int s;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xxboot,v 1.1 2012/03/20 13:01:32 minoura Exp $
+#	$NetBSD: Makefile.xxboot,v 1.1.4.1 2014/08/20 00:03:29 tls Exp $
 
 NOMAN=		# defined
 
@@ -32,7 +32,7 @@ vers.c:	${VERSIONFILE}
 	${_MKTARGET_CREATE}
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
-CFLAGS=	-Os -fomit-frame-pointer
+CFLAGS=	-Os -fomit-frame-pointer -fno-unwind-tables
 #CFLAGS+= -Wall
 CPPFLAGS+= -D_STANDALONE
 CPPFLAGS+= -DTEXTADDR="0x$(TEXT)" -DBOOT_TEXTADDR="0x$(BOOT_TEXT)"
@@ -47,7 +47,6 @@ LINKFLAGS=   -n -Bstatic -T ${.CURDIR}/../xxboot.ldscript -M
 LINKFLAGS+=  -noinhibit-exec	# XXX
 .else
 LINKFLAGS=   -n -Bstatic -Ttext ${TEXT} -M
-OBJCOPY?=  objcopy
 .endif
 LIBIOCS!= cd $M/stand/libiocs && ${PRINTOBJDIR}
 LIBSA!=	  cd $M/stand/libsa && ${PRINTOBJDIR}

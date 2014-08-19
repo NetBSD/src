@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.40.6.1 2013/02/25 00:28:20 tls Exp $
+#	$NetBSD: Makefile.amd64,v 1.40.6.2 2014/08/20 00:02:42 tls Exp $
 
 # Makefile for NetBSD
 #
@@ -33,10 +33,15 @@ GENASSYM_CONF=	${AMD64}/amd64/genassym.cf
 ##
 ## (2) compile settings
 ##
-DEFCOPTS=	-O2
+DEFCOPTS=	-O2 -fno-omit-frame-pointer
 CPPFLAGS+=	-Damd64 -Dx86_64
 CFLAGS+=	-mcmodel=kernel
-CFLAGS+=	-mno-red-zone -mno-sse -mno-sse2 -mno-sse3
+# -mno-sse implies -mno-sse2 (etc), explicitly disable avx to be extra sure
+CFLAGS+=	-mno-red-zone -mno-mmx -mno-sse -mno-avx
+# make absolutely sure we don't get x87 registers used as well
+CFLAGS+=	-msoft-float
+# For gcc we might need this, but other compilers barf
+# CFLAGS+=	-mno-fp-ret-in-387
 
 ##
 ## (3) libkern and compat
@@ -67,10 +72,6 @@ copy.o: ${AMD64}/amd64/copy.S assym.h
 
 spl.o: ${AMD64}/amd64/spl.S assym.h
 	${NORMAL_S}
-
-AFLAGS.locore.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
-AFLAGS.mptramp.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
-AFLAGS.spl.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 ##
 ## (5) link settings

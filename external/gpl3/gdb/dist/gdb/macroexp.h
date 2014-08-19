@@ -1,6 +1,5 @@
 /* Interface to C preprocessor macro expansion for GDB.
-   Copyright (C) 2002, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -81,7 +80,7 @@ char *macro_expand_once (const char *source,
    much have to do tokenization to find the end of the string that
    needs to be macro-expanded.  Our C/C++ tokenizer isn't really
    designed to be called by anything but the yacc parser engine.  */
-char *macro_expand_next (char **lexptr,
+char *macro_expand_next (const char **lexptr,
                          macro_lookup_ftype *lookup_func,
                          void *lookup_baton);
 
@@ -91,5 +90,10 @@ int macro_is_whitespace (int c);
 int macro_is_identifier_nondigit (int c);
 int macro_is_digit (int c);
 
+
+/* Stringify STR according to C rules and return an xmalloc'd pointer
+   to the result.  */
+
+char *macro_stringify (const char *str);
 
 #endif /* MACROEXP_H */

@@ -1,6 +1,6 @@
 /* Target-dependent code for Darwin x86-64.
 
-   Copyright (C) 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

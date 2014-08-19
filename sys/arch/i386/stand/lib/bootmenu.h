@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.h,v 1.2 2008/12/13 23:30:54 christos Exp $	*/
+/*	$NetBSD: bootmenu.h,v 1.2.30.1 2014/08/20 00:03:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,25 +29,10 @@
 #ifndef _BOOTMENU_H
 #define _BOOTMENU_H
 
-#define BOOTCONF "boot.cfg"
-#define MAXMENU 20
-#define MAXBANNER 12
 #define COMMAND_SEPARATOR ';'
 
 void parsebootconf(const char *);
 void doboottypemenu(void);
-int atoi(const char *);
-
-struct bootconf_def {
-	char *banner[MAXBANNER];	/* Banner text */
-	char *command[MAXMENU];		/* Menu commands per entry*/
-	char *consdev;			/* Console device */
-	int def;			/* Default menu option */
-	char *desc[MAXMENU];		/* Menu text per entry */
-	int nummenu;			/* Number of menu items */
-	int timeout;		 	/* Timeout in seconds */
-	int menuformat;			/* Print letters instead of numbers? */
-	int clear;			/* Clear the screen? */
-} extern bootconf;
+void bootdefault(void);
 
 #endif /* !_BOOTMENU_H */

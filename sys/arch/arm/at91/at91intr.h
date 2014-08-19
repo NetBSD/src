@@ -1,5 +1,5 @@
-/*	$Id: at91intr.h,v 1.3 2009/10/23 06:53:13 snj Exp $	*/
-/*	$NetBSD: at91intr.h,v 1.3 2009/10/23 06:53:13 snj Exp $	*/
+/*	$Id: at91intr.h,v 1.3.22.1 2014/08/20 00:02:45 tls Exp $	*/
+/*	$NetBSD: at91intr.h,v 1.3.22.1 2014/08/20 00:02:45 tls Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy.
@@ -41,7 +41,6 @@
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
-void	_setsoftintr(int);
 
 #endif /* ! _LOCORE */
 

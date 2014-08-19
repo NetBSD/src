@@ -29,10 +29,11 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: create.c,v 1.5.8.1 2013/06/23 06:28:51 tls Exp $");
+__RCSID("$NetBSD: create.c,v 1.5.8.2 2014/08/20 00:02:25 tls Exp $");
 #endif
 
 #include <sys/types.h>
+#include <sys/bootblock.h>
 
 #include <err.h>
 #include <stddef.h>
@@ -103,7 +104,7 @@ create(int fd)
 		mbr->mbr_part[0].part_shd = 0x00;
 		mbr->mbr_part[0].part_ssect = 0x02;
 		mbr->mbr_part[0].part_scyl = 0x00;
-		mbr->mbr_part[0].part_typ = 0xee;
+		mbr->mbr_part[0].part_typ = MBR_PTYPE_PMBR;
 		mbr->mbr_part[0].part_ehd = 0xfe;
 		mbr->mbr_part[0].part_esect = 0xff;
 		mbr->mbr_part[0].part_ecyl = 0xff;

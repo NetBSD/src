@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6.20.1 2012/11/20 03:02:50 tls Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6.20.2 2014/08/20 00:04:40 tls Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6.20.1 2012/11/20 03:02:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6.20.2 2014/08/20 00:04:40 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,29 +41,21 @@ struct mainbus_softc {
 };
 
 /*
- * Initial lists.  Should ingrate with config better.
+ * Initial lists as required by autoconf(9).  The data from ioconf.c
+ * is patched in by rump_mainbus_init().
  */
 const struct cfattachinit cfattachinit[] = {
 	{ NULL, NULL },
 };
 struct cfdata cfdata[] = {
-	{ "mainbus", "mainbus", 0, FSTATE_NOTFOUND, NULL, 0, NULL},
+	{ NULL, NULL, 0, FSTATE_NOTFOUND, NULL, 0, NULL}, /* replaced by init */
 	{ NULL, NULL, 0, FSTATE_NOTFOUND, NULL, 0, NULL},
 };
 struct cfdriver * const cfdriver_list_initial[] = {
-	NULL
+	NULL,
 };
 
-static const struct cfiattrdata mainbuscf_iattrdata = {
-	"mainbus", 0, {
-		{ NULL, NULL, 0 },
-	}
-};
-static const struct cfiattrdata * const mainbus_attrs[] = {
-	&mainbuscf_iattrdata,
-	NULL
-};
-CFDRIVER_DECL(mainbus, DV_DULL, mainbus_attrs);
+#include "ioconf.c"
 
 CFATTACH_DECL_NEW(mainbus, sizeof(struct mainbus_softc),
 	mainbus_match, mainbus_attach, NULL, NULL);
@@ -102,14 +94,14 @@ rump_pdev_finalize()
 	rump_pdev_add(NULL, 0);
 }
 
-int
+static int
 mainbus_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 1;
 }
 
-void
+static void
 mainbus_attach(device_t parent, device_t self, void *aux)
 {
 
@@ -127,4 +119,22 @@ mainbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		config_attach(parent, cf, &maa, NULL);
 
 	return 0;
+}
+
+void
+rump_mainbus_init(void)
+{
+
+	/* replace cfdata[0] to a state expected by autoconf(9) */
+	memcpy(&cfdata[0], &cfdata_ioconf_mainbus[0], sizeof(cfdata[0]));
+}
+
+void
+rump_mainbus_attach(void)
+{
+	const struct cfattachinit *cfai = &cfattach_ioconf_mainbus[0];
+
+	config_cfdata_attach(cfdata, 0);
+	config_cfdriver_attach(cfdriver_ioconf_mainbus[0]);
+	config_cfattach_attach(cfai->cfai_name, cfai->cfai_list[0]);
 }

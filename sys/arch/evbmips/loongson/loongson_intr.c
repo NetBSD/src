@@ -1,4 +1,4 @@
-/*      $NetBSD: loongson_intr.c,v 1.1.12.1 2012/11/20 03:01:18 tls Exp $      */
+/*      $NetBSD: loongson_intr.c,v 1.1.12.2 2014/08/20 00:02:58 tls Exp $      */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: loongson_intr.c,v 1.1.12.1 2012/11/20 03:01:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: loongson_intr.c,v 1.1.12.2 2014/08/20 00:02:58 tls Exp $");
 
 #define __INTR_PRIVATE
 
@@ -126,7 +126,7 @@ evbmips_intr_init(void)
 		static char irqstr[8];
 		for (irq = 0; irq < BONITO_NISA; irq++) {
 			i = BONITO_ISA_IRQ(irq);
-			sprintf(irqstr, "irq %d", irq);
+			snprintf(irqstr, sizeof(irqstr), "irq %d", irq);
 			DPRINTF(("attach %d %d %s\n", i, irq, irqstr));
 			evcnt_attach_dynamic(&bonito_intrhead[i].intr_count,
 			    EVCNT_TYPE_INTR, NULL, "isa", irqstr);
@@ -179,6 +179,7 @@ loongson_pciide_compat_intr_establish(void *v, device_t dev,
 	pci_chipset_tag_t pc = pa->pa_pc; 
 	void *cookie;
 	int bus, irq;
+	char buf[PCI_INTRSTR_LEN];
 
 	pci_decompose_tag(pc, pa->pa_tag, &bus, NULL, NULL);
 
@@ -200,7 +201,7 @@ loongson_pciide_compat_intr_establish(void *v, device_t dev,
 		return (NULL);
 	printf("%s: %s channel interrupting at %s\n", device_xname(dev),
 	    PCIIDE_CHANNEL_NAME(chan),
-	    isa_intr_string(sys_platform->isa_chipset, irq));
+	    isa_intr_string(sys_platform->isa_chipset, irq, buf, sizeof(buf)));
 	return (cookie);
 }
 
@@ -229,11 +230,11 @@ loongson_pci_intr_map(const struct pci_attach_args *pa,
 }
 
 const char *
-loongson_pci_intr_string(void *v, pci_intr_handle_t ih)
+loongson_pci_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
 	
 	const struct bonito_config *bc = v;
-	return loongson_intr_string(bc, ih);
+	return loongson_intr_string(bc, ih, buf, len);
 }
 
 const struct evcnt *
@@ -330,12 +331,11 @@ evbmips_intr_disestablish(void *cookie)
 }
 
 const char *
-loongson_intr_string(const struct bonito_config *bc, int irq)
+loongson_intr_string(const struct bonito_config *bc, int irq, char *buf, size_t len)
 {
-	static char irqstr[12]; /* 8 + 2 + NULL + sanity */
-	if (BONITO_IRQ_IS_ISA(irq)) {
-		sprintf(irqstr, "isa irq %d", BONITO_IRQ_TO_ISA(irq));
-		return irqstr;
-	}
-	return sys_platform->irq_map[irq].name;
+	if (BONITO_IRQ_IS_ISA(irq))
+		snprintf(buf, len, "isa irq %d", BONITO_IRQ_TO_ISA(irq));
+	else
+		strlcpy(buf, sys_platform->irq_map[irq].name, len);
+	return buf;
 }

@@ -1,4 +1,4 @@
-# Copyright 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2008-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,6 +13,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+if { ![support_displaced_stepping] } { 
+    unsupported "displaced stepping"
+    return -1
+}
+
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
@@ -24,11 +29,9 @@ if {[mi_gdb_start]} {
 #
 # Start here
 #
-set testfile "nsintrall"
-set srcfile "$testfile.c"
-set binfile "$objdir/$subdir/mi-$testfile"
+standard_testfile nsintrall.c
 
-set options [list debug incdir=$objdir]
+set options [list debug]
 if {[gdb_compile_pthreads "$srcdir/$subdir/$srcfile" $binfile executable $options] != "" } {
     return -1
 }
@@ -36,20 +39,9 @@ if {[gdb_compile_pthreads "$srcdir/$subdir/$srcfile" $binfile executable $option
 mi_gdb_reinitialize_dir $srcdir/$subdir
 mi_gdb_load $binfile
 
-set supported 0
-gdb_test_multiple "-gdb-show non-stop" "" {
-    -re ".*\\^done,value=\"off\",supported=\"(\[^\"\]+)\"\r\n$mi_gdb_prompt$" {
-	if { $expect_out(1,string) == "1" } {
-	    set supported 1
-	}
-    }
-    -re ".*$mi_gdb_prompt$" {
-    }
-}
-
 mi_gdb_test "-gdb-set non-stop 1" ".*"
 mi_gdb_test "-gdb-set target-async 1" ".*"
-detect_async
+mi_detect_async
 
 if { [mi_run_to_main] < 0 } {
     continue
@@ -71,16 +63,17 @@ mi_check_thread_states \
 # now that we know about all the threads, we can get rid of the breakpoints
 mi_delete_breakpoints
 
+# Here we create a response string.  Note we don't want \r\n at the end,
+# since mi_gdb_test will append this itself.
 set running_re ""
-for {set i 6} {$i > 0} {incr i -1} {
+for {set i 6} {$i > 1} {incr i -1} {
     set running_re "$running_re\\*running,thread-id=\"$i\"\r\n"
 }
+set running_re "$running_re\\*running,thread-id=\"1\""
 
-gdb_test_multiple "-exec-continue --all" "resume all, no breakpoint" {
-    -re ".*$running_re$mi_gdb_prompt" {
-	pass "resume all, no breakpoint"
-    }
-}
+mi_gdb_test "-exec-continue --all" "\[^\n\]*\r\n$running_re" \
+    "resume all, no breakpoint"
+
 mi_check_thread_states \
     {"running" "running" "running" "running" "running" "running"} \
     "thread state, resume all"
@@ -95,11 +88,8 @@ mi_check_thread_states \
     "thread state, all interrupted"
 
 # resume all threads, and check that no thread is spuriously left interrupted
-gdb_test_multiple "-exec-continue --all" "resume all after interrupting" {
-    -re ".*$running_re$mi_gdb_prompt" {
-	pass "resume all after interrupting"
-    }
-}
+mi_gdb_test "-exec-continue --all" "\[^\n\]*\r\n$running_re" \
+    "resume all after interrupting"
 
 sleep 1
 mi_check_thread_states \

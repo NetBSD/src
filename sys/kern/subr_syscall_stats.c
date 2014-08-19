@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_syscall_stats.c,v 1.2 2008/04/29 06:53:03 martin Exp $	*/
+/*	$NetBSD: subr_syscall_stats.c,v 1.2.44.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: subr_syscall_stats.c,v 1.2 2008/04/29 06:53:03 martin Exp $");
+__RCSID("$NetBSD: subr_syscall_stats.c,v 1.2.44.1 2014/08/20 00:04:29 tls Exp $");
 
 #include "opt_syscall_stats.h"
 
@@ -53,11 +53,6 @@ SYSCTL_SETUP(sysctl_syscall_setup, "sysctl system call stats")
 	const struct sysctlnode *cnode;
 	int kern_syscalls;
 
-        sysctl_createv(clog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT,  
-			CTLTYPE_NODE, "kern", NULL,
-			NULL, 0, NULL, 0,
-			CTL_KERN, CTL_EOL);
         sysctl_createv(clog, 0, NULL, &cnode,
 			CTLFLAG_PERMANENT,  
 			CTLTYPE_NODE, "syscalls",

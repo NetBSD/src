@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.45 2009/12/17 01:25:10 rmind Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.45.22.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.45 2009/12/17 01:25:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.45.22.1 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ kmstartup(void)
 	else if (p->tolimit > MAXARCS)
 		p->tolimit = MAXARCS;
 	p->tossize = p->tolimit * sizeof(struct tostruct);
-	cp = (char *)malloc(p->kcountsize + p->fromssize + p->tossize,
+	cp = malloc(p->kcountsize + p->fromssize + p->tossize,
 	    M_GPROF, M_NOWAIT | M_ZERO);
 	if (cp == 0) {
 		printf("No memory for profiling.\n");
@@ -158,11 +158,6 @@ sysctl_kern_profiling(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_kern_gprof_setup, "sysctl kern.profiling subtree setup")
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "profiling",

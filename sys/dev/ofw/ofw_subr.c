@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.18.20.2 2013/02/25 00:29:17 tls Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.18.20.3 2014/08/20 00:03:41 tls Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.18.20.2 2013/02/25 00:29:17 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.18.20.3 2014/08/20 00:03:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -384,6 +384,8 @@ of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size)
 			/* Set size for EEPROM's that we know about */
 			if (strcmp(compatible, "i2c-at24c64") == 0)
 				prop_dictionary_set_uint32(dev, "size", 8192);
+			if (strcmp(compatible, "i2c-at34c02") == 0)
+				prop_dictionary_set_uint32(dev, "size", 256);
 		}
 		prop_array_add(array, dev);
 		prop_object_release(dev);
@@ -393,4 +395,6 @@ of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size)
 		prop_dictionary_set(props, "i2c-child-devices", array);
 		prop_object_release(array);
 	}
+
+	prop_dictionary_set_bool(props, "i2c-indirect-config", false);
 }

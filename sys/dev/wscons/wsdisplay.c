@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.135 2012/02/02 13:11:25 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.135.6.1 2014/08/20 00:03:52 tls Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.135 2012/02/02 13:11:25 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.135.6.1 2014/08/20 00:03:52 tls Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -189,9 +189,18 @@ dev_type_mmap(wsdisplaymmap);
 dev_type_kqfilter(wsdisplaykqfilter);
 
 const struct cdevsw wsdisplay_cdevsw = {
-	wsdisplayopen, wsdisplayclose, wsdisplayread, wsdisplaywrite,
-	wsdisplayioctl, wsdisplaystop, wsdisplaytty, wsdisplaypoll,
-	wsdisplaymmap, wsdisplaykqfilter, D_TTY
+	.d_open = wsdisplayopen,
+	.d_close = wsdisplayclose,
+	.d_read = wsdisplayread,
+	.d_write = wsdisplaywrite,
+	.d_ioctl = wsdisplayioctl,
+	.d_stop = wsdisplaystop,
+	.d_tty = wsdisplaytty,
+	.d_poll = wsdisplaypoll,
+	.d_mmap = wsdisplaymmap,
+	.d_kqfilter = wsdisplaykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 static void wsdisplaystart(struct tty *);
@@ -882,6 +891,15 @@ wsdisplay_preattach(const struct wsscreen_descr *type, void *cookie,
 
 	cn_tab = &wsdisplay_cons;
 	wsdisplay_console_initted = 1;
+}
+
+void
+wsdisplay_cndetach(void)
+{
+	KASSERT(wsdisplay_console_initted == 2);
+
+	cn_tab = NULL;
+	wsdisplay_console_initted = 0;
 }
 
 /*

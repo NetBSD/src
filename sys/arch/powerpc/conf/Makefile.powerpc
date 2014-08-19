@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.50.2.1 2013/06/23 06:20:10 tls Exp $
+#	$NetBSD: Makefile.powerpc,v 1.50.2.2 2014/08/20 00:03:19 tls Exp $
 #
 # Makefile for NetBSD
 #
@@ -17,7 +17,7 @@
 #
 #	makeoptions DEBUGLIST="uvm* trap if_*"
 
-MACHINE_ARCH=powerpc
+MACHINE_ARCH?=powerpc
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
@@ -40,16 +40,17 @@ GENASSYM_CONF+=	${THISPPC}/${MACHINE}/genassym.cf
 CPPFLAGS+=	-D${MACHINE}=${MACHINE}
 CWARNFLAGS+=	-Wreturn-type
 .if ${PPCDIR} == "oea"
-CFLAGS+=	-mno-strict-align
-CFLAGS+=	-Wa,-maltivec
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -mno-strict-align :}
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -Wa,-maltivec :}
 .endif
 .if ${PPCDIR} == "booke"
 DEFCOPTS=	-O2
 CFLAGS+=	-fstack-protector
-CFLAGS+=	-mmultiple -misel
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -misel :}
 .endif
-CFLAGS+=	-msdata=none
-CFLAGS+=	-msoft-float ${CCPUOPTS}
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -msdata=none -msoft-float :}
+CFLAGS+=	${${ACTIVE_CC} == "clang":? -mllvm -disable-ppc-float-in-variadic=true :}
+CFLAGS+=	${CCPUOPTS}
 AFLAGS+=	${AOPTS} -D_NOREGNAMES
 
 ##
@@ -89,9 +90,15 @@ ENTRYPOINT=	__start
 
 .if defined(NEED_MDSETIMAGE) && $(NEED_MDSETIMAGE) != "no" \
     && defined(RAMDISKDIR) && exists(${RAMDISKDIR}/ramdisk.fs)
+SYSTEM_DEP+=	${RAMDISKDIR}/ramdisk.fs
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/ramdisk.fs; \
 	${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/ramdisk.fs
+.if !empty(DEBUG:M-g*)
+SYSTEM_LD_TAIL_EXTRA+=; \
+	echo ${TOOL_MDSETIMAGE} -s $@.gdb ${RAMDISKDIR}/ramdisk.fs; \
+	${TOOL_MDSETIMAGE} -s $@.gdb ${RAMDISKDIR}/ramdisk.fs
+.endif
 .endif
 
 .if defined(NEED_SREC) && ${NEED_SREC} != "no"
@@ -114,8 +121,8 @@ MKUBOOTIMAGEARGS+=      -a ${TEXTADDR:C/....$/0000/} -e $(TEXTADDR)
 MKUBOOTIMAGEARGS+=      -n "NetBSD/$(MACHINE) ${_OSRELEASE} ($(KERNEL_BUILD:T))"
 
 SYSTEM_LD_TAIL_EXTRA+=; \
-	echo ${TOOL_GZIP} -9cn $@.bin '>' $@.bin.gz; \
-	${TOOL_GZIP} -9cn $@.bin > $@.bin.gz; \
+	echo ${TOOL_GZIP_N} -9c $@.bin '>' $@.bin.gz; \
+	${TOOL_GZIP_N} -9c $@.bin > $@.bin.gz; \
 	echo ${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS} $@.bin.gz $@.ub; \
 	${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS} $@.bin.gz $@.ub
 

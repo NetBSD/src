@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584.c,v 1.9 2010/04/16 18:58:39 dyoung Exp $	*/
+/*	$NetBSD: pcf8584.c,v 1.9.18.1 2014/08/20 00:03:38 tls Exp $	*/
 /*	$OpenBSD: pcf8584.c,v 1.9 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -175,9 +175,8 @@ pcfiic_i2c_exec(void *arg, i2c_op_t op, i2c_addr_t addr,
 	if (sc->sc_master)
 		pcfiic_choose_bus(sc, addr >> 7);
 
-	if (cmdlen > 0)
-		if (pcfiic_xmit(sc, addr & 0x7f, cmdbuf, cmdlen) != 0)
-			return (1);
+	if (pcfiic_xmit(sc, addr & 0x7f, cmdbuf, cmdlen) != 0)
+		return (1);
 
 	if (len > 0) {
 		if (I2C_OP_WRITE_P(op))
@@ -266,9 +265,8 @@ pcfiic_read(struct pcfiic_softc *sc, bus_size_t r)
 void
 pcfiic_write(struct pcfiic_softc *sc, bus_size_t r, u_int8_t v)
 {
-	volatile uint8_t junk;
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->sc_regmap[r], v);
-	junk = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PCF_S1);
+	(void)bus_space_read_1(sc->sc_iot, sc->sc_ioh, PCF_S1);
 }
 
 void

@@ -1,4 +1,4 @@
-.\"     $NetBSD: ukfs.3,v 1.11 2012/02/10 15:21:53 njoly Exp $
+.\"     $NetBSD: ukfs.3,v 1.11.6.1 2014/08/20 00:02:21 tls Exp $
 .\"
 .\" Copyright (c) 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 22, 2009
+.Dd February 13, 2014
 .Dt UKFS 3
 .Os
 .Sh NAME
@@ -44,17 +44,18 @@ requires no special kernel support apart from standard POSIX functionality.
 As
 .Nm
 is built upon
-.Xr rump 3 ,
-all kernel file systems which are supported by rump are available.
-It allows to write utilities for accessing file systems without having
-to duplicate file system internals knowledge already present in kernel
-file system drivers.
+.Xr rump 3
+kernels, all kernel file systems which are supported by rump kernels
+are available.
+It allows to write utilities for accessing file systems
+without having to duplicate file system internals knowledge already
+present in kernel file system drivers.
 .Pp
 .Nm
 provides a high-level pathname based interface for accessing file systems.
 If a lower level interface it desired,
 .Xr rump 3
-should be used directly.
+kernels should be used directly.
 However, much like system calls, the interfaces of
 .Nm ,
 are self-contained and require no tracking and release of resources.
@@ -91,7 +92,7 @@ is used at runtime to dynamically load a library which contains a
 file system module.
 For this to succeed, the
 .Xr rump 3
-library and the module targetted must be compiled with compatible kernel
+kernel and the module targetted must be compiled with compatible kernel
 versions and the application must be dynamically linked.
 Additionally, since this routine does not handle dependencies, all the
 dependencies of the library must be loaded beforehand.
@@ -101,7 +102,7 @@ for success.
 .Fn ukfs_modload_dir
 loads all
 .Xr rump 3
-file system modules in directory
+kernel file system components in directory
 .Fa dirname .
 It looks for libraries which begin with
 .Pa librumpfs_
@@ -313,16 +314,8 @@ already.
 first appeared in
 .Nx 5.0 .
 .Sh AUTHORS
-.An Antti Kantee Aq pooka@cs.hut.fi
+.An Antti Kantee Aq Mt pooka@cs.hut.fi
 .Sh NOTES
 .Nm
-should be considered experimental technology and may change without warning.
-.Sh BUGS
-On Linux, dynamically linked binaries can include support for only
-one file system due to restrictions with the dynamic linker.
-If more are desired, they must be loaded at runtime using
-.Fn ukfs_modload .
-Even though
-.Nx
-does not have this restriction, portable programs should load all
-file system drivers dynamically.
+was an early attempt at an interface for kernel file systems
+running in userspace.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31.12.1 2012/11/20 03:01:43 tls Exp $
+#	$NetBSD: Makefile,v 1.31.12.2 2014/08/20 00:03:24 tls Exp $
 
 INCSDIR= /usr/include/sparc
 
@@ -16,7 +16,7 @@ INCS=	ansi.h aout_machdep.h apmvar.h asm.h autoconf.h \
 	oldmon.h openpromio.h \
 	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h reloc.h rwlock.h \
-	setjmp.h signal.h sljitarch.h \
+	setjmp.h signal.h sljit_machdep.h \
 	tctrl.h trap.h types.h \
 	vmparam.h vuid_event.h \
 	wchar_limits.h

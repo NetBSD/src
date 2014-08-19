@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.52.6.2 2013/06/23 06:20:09 tls Exp $
+# 	$NetBSD: NEWS1200,v 1.52.6.3 2014/08/20 00:03:15 tls Exp $
 
 #	news1200 config file
 #
@@ -28,7 +28,7 @@ options 	DIAGNOSTIC		# extra kernel sanity checking
 #options 	KMEMSTATS		# kernel memory statistics (vmstat -m)
 options 	DDB			# kernel dynamic debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-#options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
+#options 	DDB_ONPANIC=1		# see also sysctl(7): `ddb.onpanic'
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	SCSIDEBUG		# extra SCSI debugging support
 #makeoptions	DEBUG="-g"		# compile full symbol table
@@ -90,7 +90,6 @@ options 	INET6		# IPV6
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG

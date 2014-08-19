@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.19.22.1 2012/11/20 03:02:00 tls Exp $	*/
+/*	$NetBSD: gpib.c,v 1.19.22.2 2014/08/20 00:03:37 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.19.22.1 2012/11/20 03:02:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.19.22.2 2014/08/20 00:03:37 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,18 @@ dev_type_ioctl(gpibioctl);
 dev_type_poll(gpibpoll);
 
 const struct cdevsw gpib_cdevsw = {
-	gpibopen, gpibclose, gpibread, gpibwrite, gpibioctl,
-	nostop, notty, gpibpoll, nommap, nokqfilter, D_OTHER
+	.d_open = gpibopen,
+	.d_close = gpibclose,
+	.d_read = gpibread,
+	.d_write = gpibwrite,
+	.d_ioctl = gpibioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = gpibpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 extern struct cfdriver gpib_cd;

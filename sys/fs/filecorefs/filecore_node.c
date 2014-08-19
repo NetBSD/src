@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.25 2011/06/12 03:35:52 rmind Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.25.12.1 2014/08/20 00:04:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.25 2011/06/12 03:35:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.25.12.1 2014/08/20 00:04:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,13 +188,15 @@ void
 filecore_ihashins(struct filecore_node *ip)
 {
 	struct ihashhead *ipp;
+	int error __diagused;
 
 	mutex_enter(&filecore_ihash_lock);
 	ipp = &filecorehashtbl[INOHASH(ip->i_dev, ip->i_number)];
 	LIST_INSERT_HEAD(ipp, ip, i_hash);
 	mutex_exit(&filecore_ihash_lock);
 
-	VOP_LOCK(ITOV(ip), LK_EXCLUSIVE);
+	error = VOP_LOCK(ITOV(ip), LK_EXCLUSIVE);
+	KASSERT(error == 0);
 }
 
 /*

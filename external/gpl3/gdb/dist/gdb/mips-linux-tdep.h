@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on MIPS processors.
 
-   Copyright 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,6 +36,8 @@ typedef mips_elf_fpreg_t mips_elf_fpregset_t[ELF_NFPREG];
 #define MMLO		68
 #define FPC_CSR		69
 #define FPC_EIR		70
+#define DSP_BASE	71
+#define DSP_CONTROL	77
 
 #define EF_REG0			6
 #define EF_REG31		37
@@ -97,7 +99,7 @@ void mips64_fill_fpregset (const struct regcache *,
 enum {
   /* The Linux kernel stores an error code from any interrupted
      syscall in a "register" (in $0's save slot).  */
-  MIPS_RESTART_REGNUM = MIPS_LAST_EMBED_REGNUM + 1
+  MIPS_RESTART_REGNUM = 79
 };
 
 /* Return 1 if MIPS_RESTART_REGNUM is usable.  */

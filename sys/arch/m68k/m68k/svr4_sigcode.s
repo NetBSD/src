@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode.s,v 1.7 2011/02/08 20:20:16 rmind Exp $	*/
+/*	$NetBSD: svr4_sigcode.s,v 1.7.14.1 2014/08/20 00:03:11 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -88,15 +88,15 @@
 	.data
 	.align	2
 GLOBAL(svr4_sigcode)
-	movl	%sp@(SVR4_SIGF_HANDLER),%a0	| signal handler addr
-	jsr	%a0@				| call signal handler
-	lea	%sp@(SVR4_SIGF_UC),%a0		| ucontext to resume addr
-	movl	%a0,%sp@-			| push pointer to ucontext
-	movl	#SVR4_SETCONTEXT,%sp@-		| push context() subcode
+	movl	SVR4_SIGF_HANDLER(%sp),%a0	| signal handler addr
+	jsr	(%a0)				| call signal handler
+	lea	SVR4_SIGF_UC(%sp),%a0		| ucontext to resume addr
+	movl	%a0,-(%sp)			| push pointer to ucontext
+	movl	#SVR4_SETCONTEXT,-(%sp)		| push context() subcode
 	subql	#4,%sp				| padding for call frame layout
 	movql	#SVR4_SYS_context,%d0		| setcontext(&sf.sf_uc)
 	trap	#0				|  shouldn't return
-	movl	%d0,%sp@(4)			|  so save `errno'
+	movl	%d0,4(%sp)			|  so save `errno'
 	moveq	#SVR4_SYS_exit,%d0		|  and exit hard
 	trap	#0				| _exit(errno)
 	.align	2

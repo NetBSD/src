@@ -1,4 +1,4 @@
-/*      $NetBSD: clpscom.c,v 1.1.4.2 2013/06/23 06:20:00 tls Exp $      */
+/*      $NetBSD: clpscom.c,v 1.1.4.3 2014/08/20 00:02:45 tls Exp $      */
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clpscom.c,v 1.1.4.2 2013/06/23 06:20:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clpscom.c,v 1.1.4.3 2014/08/20 00:02:45 tls Exp $");
 
 #include "rnd.h"
 
@@ -169,8 +169,18 @@ CFATTACH_DECL_NEW(clpscom, sizeof(struct clpscom_softc),
     clpscom_match, clpscom_attach, NULL, NULL);
 
 const struct cdevsw clpscom_cdevsw = {
-	clpscomopen, clpscomclose, clpscomread, clpscomwrite, clpscomioctl,
-	clpscomstop, clpscomtty, clpscompoll, nommap, ttykqfilter, D_TTY
+	.d_open = clpscomopen,
+	.d_close = clpscomclose,
+	.d_read = clpscomread,
+	.d_write = clpscomwrite,
+	.d_ioctl = clpscomioctl,
+	.d_stop = clpscomstop,
+	.d_tty = clpscomtty,
+	.d_poll = clpscompoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 static struct cnm_state clpscom_cnm_state;
@@ -238,7 +248,7 @@ clpscom_attach(device_t parent, device_t self, void *aux)
 
 #ifdef RND_COM
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-	    RND_TYPE_TTY, 0);
+	    RND_TYPE_TTY, RND_FLAG_DEFAULT);
 #endif
 
 	SET(sc->sc_hwflags, COM_HW_DEV_OK);

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.23.22.1 2013/06/23 06:19:59 tls Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.23.22.2 2014/08/20 00:02:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.23.22.1 2013/06/23 06:19:59 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.23.22.2 2014/08/20 00:02:45 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,6 +149,12 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 		lp->d_partitions[RAW_PART].p_offset = 0; 
 		lp->d_partitions[RAW_PART].p_size = 0x1fffffff;
 	}
+	/*
+	 * Set partition 'a' to be the whole disk.
+	 * Cleared if we find a netbsd label.
+	 */
+	lp->d_partitions[0].p_size = lp->d_partitions[RAW_PART].p_size;
+	lp->d_partitions[0].p_fstype = FS_BSDFFS;
 
 	/* obtain buffer to probe drive with */
     

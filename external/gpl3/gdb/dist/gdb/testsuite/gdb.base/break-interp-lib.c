@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2009, 2011 Free Software Foundation, Inc.
+   Copyright 2009-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,6 +19,10 @@
 #include <unistd.h>
 #include <assert.h>
 #include <stdio.h>
+
+/* Force REL->RELA conversion on i386, see "Prelink", March 4, 2004.  */
+volatile int v[2];
+volatile int *vptr = &v[1];
 
 void
 libfunc (const char *action)

@@ -1,5 +1,4 @@
-# Copyright 2004, 2005, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 2004-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,11 +15,11 @@
 
 # interp.exp   Test interpreter-exec command
 
-if $tracelevel then {
-    strace $tracelevel
-}
+standard_testfile
 
-gdb_start
+if { [prepare_for_testing ${testfile}.exp ${testfile} $srcfile {debug}] } {
+    return -1
+}
 
 # Do not use gdb_test for this test, since it has two prompts.
 set cmd "interpreter-exec mi \"-var-update *\""
@@ -45,4 +44,50 @@ gdb_test_multiple "interpreter-exec mi \"-break-insert --thread a\"" \
 	}
     }
 
+set cmd "interpreter-exec mi \"-stack-info-frame\""
+gdb_test_multiple $cmd $cmd {
+    -re ".error,msg=.No registers\..\r\n$gdb_prompt " {
+	pass "$cmd"
+	gdb_expect 1 {
+	    -re "\r\n$gdb_prompt $" { }
+	}
+    }
+}
+
+set cmd "interpreter-exec mi1 \"-break-insert main\""
+gdb_test_multiple $cmd $cmd {
+    -re ".done.bkpt=.number=.\[0-9\]\[^\n\]+\r\n$gdb_prompt " {
+	pass "$cmd"
+	gdb_expect 1 {
+	    -re "\r\n$gdb_prompt $" { }
+	}
+    }
+}
+
+set cmd "interpreter-exec mi2 \"-break-insert main\""
+gdb_test_multiple $cmd $cmd {
+    -re ".done.bkpt=.number=.\[0-9\]\[^\n\]+\r\n$gdb_prompt " {
+	pass "$cmd"
+	gdb_expect 1 {
+	    -re "\r\n$gdb_prompt $" { }
+	}
+    }
+}
+
+set cmd "interpreter-exec mi3 \"-break-insert main\""
+gdb_test_multiple $cmd $cmd {
+    -re ".done.bkpt=.number=.\[0-9\]\[^\n\]+\r\n$gdb_prompt " {
+	pass "$cmd"
+	gdb_expect 1 {
+	    -re "\r\n$gdb_prompt $" { }
+	}
+    }
+}
+
+if ![runto_main] then {
+  fail "run to main"
+  return -1
+}
+
+gdb_test "list" ".*\[0-9\].*main \\(int argc.*" "can list sources"
 gdb_exit

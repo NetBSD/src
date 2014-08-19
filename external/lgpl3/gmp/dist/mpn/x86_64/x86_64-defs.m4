@@ -2,8 +2,8 @@ divert(-1)
 
 dnl  m4 macros for amd64 assembler.
 
-dnl  Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2008, 2009 Free
-dnl  Software Foundation, Inc.
+dnl  Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2008, 2009, 2011,
+dnl  2012, 2013 Free Software Foundation, Inc.
 dnl
 dnl  This file is part of the GNU MP Library.
 dnl
@@ -28,24 +28,39 @@ dnl  order they appear in that structure.
 
 define(CPUVEC_FUNCS_LIST,
 ``add_n',
+`addlsh1_n',
+`addlsh2_n',
 `addmul_1',
+`addmul_2',
+`bdiv_dbm1c',
+`com',
 `copyd',
 `copyi',
 `divexact_1',
-`divexact_by3c',
 `divrem_1',
 `gcd_1',
 `lshift',
+`lshiftc',
 `mod_1',
+`mod_1_1p',
+`mod_1_1p_cps',
+`mod_1s_2p',
+`mod_1s_2p_cps',
+`mod_1s_4p',
+`mod_1s_4p_cps',
 `mod_34lsub1',
 `modexact_1c_odd',
 `mul_1',
 `mul_basecase',
+`mullo_basecase',
 `preinv_divrem_1',
 `preinv_mod_1',
+`redc_1',
+`redc_2',
 `rshift',
 `sqr_basecase',
 `sub_n',
+`sublsh1_n',
 `submul_1'')
 
 
@@ -108,8 +123,11 @@ define(`ASSERT_counter',incr(ASSERT_counter))')')')
 
 define(ASSERT_counter,1)
 
-define(`LEA',`
-	mov	$1@GOTPCREL(%rip), $2
+define(`LEA',`dnl
+ifdef(`PIC',
+	`mov	$1@GOTPCREL(%rip), $2'
+,
+	`movabs	`$'$1, $2')
 ')
 
 
@@ -168,5 +186,96 @@ ifdef(`PIC',
 
 
 define(`JUMPTABSECT', `.section	.data.rel.ro.local,"aw",@progbits')
+
+
+dnl  Usage: JMPENT(targlabel,tablabel)
+
+define(`JMPENT',`dnl
+ifdef(`PIC',
+	`.long	$1-$2'
+,
+	`.quad	$1'
+)')
+
+
+dnl  These macros are defined just for DOS64, where they provide calling
+dnl  sequence glue code.
+
+define(`FUNC_ENTRY',`')
+define(`FUNC_EXIT',`')
+
+
+dnl  Target ABI macros.
+
+define(`IFDOS',   `')
+define(`IFSTD',   `$1')
+define(`IFELF',   `$1')
+
+
+dnl  Usage: PROTECT(symbol)
+dnl
+dnl  Used for private GMP symbols that should never be overridden by users.
+dnl  This can save reloc entries and improve shlib sharing as well as
+dnl  application startup times
+
+define(`PROTECT',  `.hidden $1')
+
+
+dnl  Usage: x86_lookup(target, key,value, key,value, ...)
+dnl
+dnl  Look for `target' among the `key' parameters.
+dnl
+dnl  x86_lookup expands to the corresponding `value', or generates an error
+dnl  if `target' isn't found.
+
+define(x86_lookup,
+m4_assert_numargs_range(1,999)
+`ifelse(eval($#<3),1,
+`m4_error(`unrecognised part of x86 instruction: $1
+')',
+`ifelse(`$1',`$2', `$3',
+`x86_lookup(`$1',shift(shift(shift($@))))')')')
+
+
+dnl  Usage: x86_opcode_regxmm(reg)
+dnl
+dnl  Validate the given xmm register, and return its number, 0 to 7.
+
+define(x86_opcode_regxmm,
+m4_assert_numargs(1)
+`x86_lookup(`$1',x86_opcode_regxmm_list)')
+
+define(x86_opcode_regxmm_list,
+``%xmm0',0,
+`%xmm1',1,
+`%xmm2',2,
+`%xmm3',3,
+`%xmm4',4,
+`%xmm5',5,
+`%xmm6',6,
+`%xmm7',7,
+`%xmm8',8,
+`%xmm9',9,
+`%xmm10',10,
+`%xmm11',11,
+`%xmm12',12,
+`%xmm13',13,
+`%xmm14',14,
+`%xmm15',15')
+
+dnl  Usage: palignr($imm,%srcreg,%dstreg)
+dnl
+dnl  Emit a palignr instruction, using a .byte sequence, since obsolete but
+dnl  still distributed versions of gas don't know SSSE3 instructions.
+
+define(`palignr',
+m4_assert_numargs(3)
+`.byte	0x66,dnl
+ifelse(eval(x86_opcode_regxmm($3) >= 8 || x86_opcode_regxmm($2) >= 8),1,
+       `eval(0x40+x86_opcode_regxmm($3)/8*4+x86_opcode_regxmm($2)/8),')dnl
+0x0f,0x3a,0x0f,dnl
+eval(0xc0+x86_opcode_regxmm($3)%8*8+x86_opcode_regxmm($2)%8),dnl
+substr($1,1)')
+
 
 divert`'dnl

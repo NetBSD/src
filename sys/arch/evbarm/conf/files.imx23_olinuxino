@@ -1,4 +1,4 @@
-# $Id: files.imx23_olinuxino,v 1.1.6.2 2013/02/25 00:28:34 tls Exp $
+# $Id: files.imx23_olinuxino,v 1.1.6.3 2014/08/20 00:02:53 tls Exp $
 #
 # Olimex i.MX23 OLinuXino board configuration info.
 #
@@ -7,4 +7,5 @@
 include "arch/arm/imx/files.imx23"
 
 file	arch/evbarm/imx23_olinuxino/imx23_olinuxino_machdep.c
-
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_boot.c

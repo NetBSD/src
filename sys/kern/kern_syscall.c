@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_syscall.c,v 1.7 2012/05/05 19:37:37 christos Exp $	*/
+/*	$NetBSD: kern_syscall.c,v 1.7.2.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,9 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.7 2012/05/05 19:37:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.7.2.1 2014/08/20 00:04:29 tls Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_modular.h"
+#include "opt_syscall_debug.h"
+#include "opt_ktrace.h"
+#include "opt_ptrace.h"
+#endif
 
 /* XXX To get syscall prototypes. */
 #define SYSVSHM
@@ -47,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.7 2012/05/05 19:37:37 christos Ex
 #include <sys/syscallvar.h>
 #include <sys/systm.h>
 #include <sys/xcall.h>
+#include <sys/ktrace.h>
+#include <sys/ptrace.h>
 
 int
 sys_nomodule(struct lwp *l, const void *v, register_t *retval)
@@ -183,6 +190,7 @@ sys_nomodule(struct lwp *l, const void *v, register_t *retval)
 	    { SYS_compat_50___ntp_gettime30, "compat" },
 	    { SYS_compat_50___fhstat40, "compat" },
 	    { SYS_compat_50_aio_suspend, "compat" },
+	    { SYS_compat_60__lwp_park, "compat" },
 	    { SYS__ksem_init, "ksem" },
 	    { SYS__ksem_open, "ksem" },
 	    { SYS__ksem_unlink, "ksem" },
@@ -333,4 +341,82 @@ syscall_disestablish(const struct emul *em, const struct syscall_package *sp)
 	}
 
 	return 0;
+}
+
+/*
+ * Return true if system call tracing is enabled for the specified process.
+ */
+bool
+trace_is_enabled(struct proc *p)
+{
+#ifdef SYSCALL_DEBUG
+	return (true);
+#endif
+#ifdef KTRACE
+	if (ISSET(p->p_traceflag, (KTRFAC_SYSCALL | KTRFAC_SYSRET)))
+		return (true);
+#endif
+#ifdef PTRACE
+	if (ISSET(p->p_slflag, PSL_SYSCALL))
+		return (true);
+#endif
+
+	return (false);
+}
+
+/*
+ * Start trace of particular system call. If process is being traced,
+ * this routine is called by MD syscall dispatch code just before
+ * a system call is actually executed.
+ */
+int
+trace_enter(register_t code, const register_t *args, int narg)
+{
+	int error = 0;
+
+#ifdef SYSCALL_DEBUG
+	scdebug_call(code, args);
+#endif /* SYSCALL_DEBUG */
+
+	ktrsyscall(code, args, narg);
+
+#ifdef PTRACE
+	if ((curlwp->l_proc->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
+	    (PSL_SYSCALL|PSL_TRACED)) {
+		process_stoptrace();
+		if (curlwp->l_proc->p_slflag & PSL_SYSCALLEMU) {
+			/* tracer will emulate syscall for us */
+			error = EJUSTRETURN;
+		}
+	}
+#endif
+	return error;
+}
+
+/*
+ * End trace of particular system call. If process is being traced,
+ * this routine is called by MD syscall dispatch code just after
+ * a system call finishes.
+ * MD caller guarantees the passed 'code' is within the supported
+ * system call number range for emulation the process runs under.
+ */
+void
+trace_exit(register_t code, register_t rval[], int error)
+{
+#ifdef PTRACE
+	struct proc *p = curlwp->l_proc;
+#endif
+
+#ifdef SYSCALL_DEBUG
+	scdebug_ret(code, error, rval);
+#endif /* SYSCALL_DEBUG */
+
+	ktrsysret(code, error, rval);
+	
+#ifdef PTRACE
+	if ((p->p_slflag & (PSL_SYSCALL|PSL_TRACED|PSL_SYSCALLEMU)) ==
+	    (PSL_SYSCALL|PSL_TRACED))
+		process_stoptrace();
+	CLR(p->p_slflag, PSL_SYSCALLEMU);
+#endif
 }

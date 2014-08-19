@@ -1,6 +1,5 @@
 /* Remote debugging interface to dBUG ROM monitor for GDB, the GNU debugger.
-   Copyright (C) 1996, 1998, 1999, 2000, 2001, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
    Written by Stan Shebs of Cygnus Support.
 
@@ -143,7 +142,6 @@ init_dbug_cmds (void)
 					/* register_pattern */
   dbug_cmds.register_pattern = "\\(\\w+\\) +:\\([0-9a-fA-F]+\\b\\)";
   dbug_cmds.supply_register = dbug_supply_register;
-  dbug_cmds.load_routine = NULL;	/* load_routine (defaults to SRECs) */
   dbug_cmds.load = "dl\r";	/* download command */
   dbug_cmds.loadresp = "\n";	/* load response */
   dbug_cmds.prompt = "dBUG>";	/* monitor command prompt */

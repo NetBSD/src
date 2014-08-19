@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.35.2.1 2013/02/25 00:29:42 tls Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.35.2.2 2014/08/20 00:03:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.35.2.1 2013/02/25 00:29:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.35.2.2 2014/08/20 00:03:51 tls Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -700,7 +700,6 @@ Static void
 usscanner_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 {
 	struct scsipi_xfer *xs;
-	struct scsipi_periph *periph;
 	struct usscanner_softc *sc =
 	    device_private(chan->chan_adapter->adapt_dev);
 	usbd_status err;
@@ -708,14 +707,14 @@ usscanner_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
 		xs = arg;
-		periph = xs->xs_periph;
 
 		DPRINTFN(8, ("%s: usscanner_scsipi_request: %d:%d "
 		    "xs=%p cmd=0x%02x datalen=%d (quirks=0x%x, poll=%d)\n",
 		    device_xname(sc->sc_dev),
-		    periph->periph_target, periph->periph_lun,
+		    xs->xs_periph->periph_target, xs->xs_periph->periph_lun,
 		    xs, xs->cmd->opcode, xs->datalen,
-		    periph->periph_quirks, xs->xs_control & XS_CTL_POLL));
+		    xs->xs_periph->periph_quirks,
+		    xs->xs_control & XS_CTL_POLL));
 
 		if (sc->sc_dying) {
 			xs->error = XS_DRIVER_STUFFUP;
@@ -723,9 +722,10 @@ usscanner_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, 
 		}
 
 #ifdef USSCANNER_DEBUG
-		if (periph->periph_target != USSCANNER_SCSIID_DEVICE) {
+		if (xs->xs_periph->periph_target != USSCANNER_SCSIID_DEVICE) {
 			DPRINTF(("%s: wrong SCSI ID %d\n",
-			    device_xname(sc->sc_dev), periph->periph_target));
+			    device_xname(sc->sc_dev),
+			    xs->xs_periph->periph_target));
 			xs->error = XS_DRIVER_STUFFUP;
 			goto done;
 		}

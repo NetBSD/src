@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd.c,v 1.20 2011/05/05 04:20:51 mrg Exp $	*/
+/*	$NetBSD: rf_evenodd.c,v 1.20.14.1 2014/08/20 00:03:49 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.20 2011/05/05 04:20:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.20.14.1 2014/08/20 00:03:49 tls Exp $");
 
 #include "rf_archs.h"
 
@@ -337,7 +337,7 @@ rf_VerifyParityEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 	int     numbytes = rf_RaidAddressToByte(raidPtr, numsector);
 	int     bytesPerStripe = numbytes * layoutPtr->numDataCol;
 	RF_DagHeader_t *rd_dag_h, *wr_dag_h;	/* read, write dag */
-	RF_DagNode_t *blockNode, *unblockNode, *wrBlock, *wrUnblock;
+	RF_DagNode_t *blockNode, *wrBlock;
 	RF_AccessStripeMapHeader_t *asm_h;
 	RF_AccessStripeMap_t *asmap;
 	RF_AllocListElem_t *alloclist;
@@ -366,7 +366,6 @@ rf_VerifyParityEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 	rd_dag_h = rf_MakeSimpleDAG(raidPtr, stripeWidth, numbytes, buf, rf_DiskReadFunc, rf_DiskReadUndoFunc,
 	    "Rod", alloclist, flags, RF_IO_NORMAL_PRIORITY);
 	blockNode = rd_dag_h->succedents[0];
-	unblockNode = blockNode->succedents[0]->succedents[0];
 
 	/* map the stripe and fill in the PDAs in the dag */
 	asm_h = rf_MapAccess(raidPtr, startAddr, layoutPtr->dataSectorsPerStripe, buf, RF_DONT_REMAP);
@@ -461,7 +460,6 @@ rf_VerifyParityEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 		wr_dag_h = rf_MakeSimpleDAG(raidPtr, 1, numbytes, pbuf, rf_DiskWriteFunc, rf_DiskWriteUndoFunc,
 		    "Wnp", alloclist, flags, RF_IO_NORMAL_PRIORITY);
 		wrBlock = wr_dag_h->succedents[0];
-		wrUnblock = wrBlock->succedents[0]->succedents[0];
 		wrBlock->succedents[0]->params[0].p = asmap->parityInfo;
 		wrBlock->succedents[0]->params[2].v = psID;
 		wrBlock->succedents[0]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
@@ -492,7 +490,6 @@ rf_VerifyParityEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 		wr_dag_h = rf_MakeSimpleDAG(raidPtr, 1, numbytes, redundantbuf2, rf_DiskWriteFunc, rf_DiskWriteUndoFunc,
 		    "Wnred2", alloclist, flags, RF_IO_NORMAL_PRIORITY);
 		wrBlock = wr_dag_h->succedents[0];
-		wrUnblock = wrBlock->succedents[0]->succedents[0];
 		wrBlock->succedents[0]->params[0].p = asmap->qInfo;
 		wrBlock->succedents[0]->params[2].v = psID;
 		wrBlock->succedents[0]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);

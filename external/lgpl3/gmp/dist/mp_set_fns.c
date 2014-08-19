@@ -24,7 +24,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 void
 mp_set_memory_functions (void *(*alloc_func) (size_t),
 			 void *(*realloc_func) (void *, size_t, size_t),
-			 void (*free_func) (void *, size_t))
+			 void (*free_func) (void *, size_t)) __GMP_NOTHROW
 {
   if (alloc_func == 0)
     alloc_func = __gmp_default_allocate;

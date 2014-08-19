@@ -1,3 +1,79 @@
+2013-09-23  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2013-06-25  Nick Clifton  <nickc@redhat.com>
+
+	* rx.c (SHIFT_OP): A shift by zero still sets the condition
+	codes.
+
+2013-06-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4, configure: Regenerate.
+
+2013-01-16  Nick Clifton  <nickc@redhat.com>
+
+	* rx.c (decode_opcode): Handle RXO_satr.
+
+2012-06-15  Joel Brobecker  <brobecker@adacore.com>
+
+	* config.in, configure: Regenerate.
+
+2012-05-24  Pedro Alves  <palves@redhat.com>
+
+	PR gdb/7205
+
+        Replace TARGET_SIGNAL_ with GDB_SIGNAL_ throughout.
+
+2012-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4, config.in, configure: Regenerate.
+
+2012-03-22  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (CYCLE_ACCURATE): Add template with AC_DEFINE call.
+	(CYCLE_STATS): Likewise.
+
+2012-03-02  Kevin Buettner  <kevinb@redhat.com>
+
+	* load.h (rx_load): Add `callback' parameter to function prototype.
+	(gdb/callback.h): Include.
+	* load.c (load.h): Include.
+	(xprintf, find_section_name_by_offset): New functions.
+	(rx_load): Add `callback' parameter.  Add code for printing
+	section loaded using GDB's printf facilities.
+	* gdb-if.c (sim_load, sim_create_inferior): Update calls to
+	rx_load().
+	* main.c (main): Likewise.
+	* syscalls.c, syscalls.h (get_callbacks): New function.
+
+2011-12-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* aclocal.m4: New file.
+	* configure: Regenerate.
+
+2011-10-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Change include to common/acinclude.m4.
+
+2011-10-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Change AC_PREREQ to 2.64.  Delete AC_CONFIG_HEADER
+	call.  Replace common.m4 include with SIM_AC_COMMON.
+	* configure: Regenerate.
+
+2011-07-11  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Rename from configure.in.
+
+2011-07-11  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.in: Add "dnl" before copyright notice.
+
+2011-04-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* gdb-if.c (sim_complete_command): New stub function.
+
 2011-01-11  Andrew Burgess  <aburgess@broadcom.com>
 
 	* gdb-if.c (sim_store_register): Update return value to

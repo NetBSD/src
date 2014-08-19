@@ -1,4 +1,4 @@
-/*      $NetBSD: vfpreg.h,v 1.4.2.3 2013/06/23 06:20:00 tls Exp $ */
+/*      $NetBSD: vfpreg.h,v 1.4.2.4 2014/08/20 00:02:46 tls Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -29,10 +29,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _VFPREG_H
-#define _VFPREG_H
+#ifndef _ARM_VFPREG_H_
+#define _ARM_VFPREG_H_
 
-/* FPSID regsiter */
+/* FPSID register */
 
 #define VFP_FPSID_IMP_MSK	0xff000000	/* Implementer */
 #define VFP_FPSID_IMP_ARM	0x41000000	/* Implementer: ARM */
@@ -64,6 +64,7 @@
 #define FPU_VFP_CORTEXA8	0x410330c0
 #define FPU_VFP_CORTEXA9	0x41033090
 #define FPU_VFP_CORTEXA15	0x410330f0
+#define FPU_VFP_MV88SV58XX	0x56022090
 
 #define VFP_FPEXC_EX		0x80000000	/* EXception status bit */
 #define VFP_FPEXC_EN		0x40000000	/* VFP Enable bit */
@@ -78,12 +79,14 @@
 #define VFP_FPEXC_OFF		0x00000004	/* Potential overflow flag */
 #define VFP_FPEXC_DZF		0x00000002	/* Potential DivByZero flag */
 #define VFP_FPEXC_IOF		0x00000001	/* Potential inv. op. flag */
-#define VFP_FPEXE_FSUM		0x000000ff	/* all flag bits */
+#define VFP_FPEXC_FSUM		0x000000ff	/* all flag bits */
 
 #define VFP_FPSCR_N	0x80000000	/* set if compare <= result */
 #define VFP_FPSCR_Z	0x40000000	/* set if compare = result */
 #define VFP_FPSCR_C	0x20000000	/* set if compare (=,>=,UNORD) result */
 #define VFP_FPSCR_V	0x10000000	/* set if compare UNORD result */
+#define VFP_FPSCR_QC	0x08000000	/* Cumulative saturation (SIMD) */
+#define VFP_FPSCR_AHP	0x04000000	/* Alternative Half-Precision */
 #define VFP_FPSCR_DN	0x02000000	/* Default NaN mode */
 #define VFP_FPSCR_FZ	0x01000000	/* Flush-to-zero mode */
 #define VFP_FPSCR_RMODE	0x00c00000	/* Rounding Mode */
@@ -108,4 +111,4 @@
 #define VFP_FPSCR_DZC	0x00000002	/* DivByZero Cumulative Flag */
 #define VFP_FPSCR_IOC	0x00000001	/* Invalid Operation Cumulative Flag */
 
-#endif /* _VFPREG_H */
+#endif /* _ARM_VFPREG_H_ */

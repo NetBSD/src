@@ -1,0 +1,33 @@
+#	$NetBSD: std.odroid,v 1.3.2.2 2014/08/20 00:02:53 tls Exp $
+#
+# standard NetBSD/evbarm for ODROID options
+
+machine	evbarm arm
+include 	"arch/evbarm/conf/std.evbarm"
+
+# Pull in ODROID config definitions
+include 	"arch/evbarm/conf/files.odroid"
+
+#makeoptions	CPUFLAGS="-mcpu=cortex-a9 -mfpu=neon"
+
+# To support easy transit to ../arch/arm/arm32
+options 	MODULAR
+options 	ARM_HAS_VBAR
+options 	CORTEX_PMC
+options 	__HAVE_CPU_COUNTER
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+#options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+options 	TPIDRPRW_IS_CURCPU
+options 	KERNEL_BASE_EXT=0x80000000
+options 	FPU_VFP
+
+# All shipped Samsung SoC's that are not Samsung products have this
+options 	ARM_TRUSTZONE_FIRMWARE
+
+makeoptions	KERNEL_BASE_PHYS="0x80000000"
+makeoptions	KERNEL_BASE_VIRT="0x80000000"
+makeoptions	BOARDTYPE="odroid"
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.odroid"
+
+options 	ARM_INTR_IMPL="<arch/arm/samsung/exynos_intr.h>"
+options		ARM_GENERIC_TODR

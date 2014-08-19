@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_subr.c,v 1.7.2.1 2012/11/20 03:02:52 tls Exp $	*/
+/*	$NetBSD: chfs_subr.c,v 1.7.2.2 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -253,14 +253,12 @@ chfs_chsize(struct vnode *vp, u_quad_t size, kauth_cred_t cred)
 int
 chfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred)
 {
-	struct chfs_mount *chmp;
 	struct chfs_inode *ip;
 	int error = 0;
 	kauth_action_t action = KAUTH_VNODE_WRITE_FLAGS;
 	bool changing_sysflags = false;
 
 	ip = VTOI(vp);
-	chmp = ip->chmp;
 
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		return EROFS;

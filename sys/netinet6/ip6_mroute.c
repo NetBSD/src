@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.103 2011/12/31 20:41:59 christos Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.103.6.1 2014/08/20 00:04:36 tls Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.103 2011/12/31 20:41:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.103.6.1 2014/08/20 00:04:36 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -188,6 +188,9 @@ u_int		mrt6debug = 0;	  /* debug level 	*/
 #define DEBUG_XMIT	0x10
 #define DEBUG_REG	0x20
 #define DEBUG_PIM	0x40
+#define __mrt6debugused     /* empty */
+#else
+#define __mrt6debugused     __unused
 #endif
 
 static void	expire_upcalls(void *);
@@ -655,13 +658,7 @@ add_m6if(struct mif6ctl *mifcp)
 	mifp = mif6table + mifcp->mif6c_mifi;
 	if (mifp->m6_ifp)
 		return EADDRINUSE; /* XXX: is it appropriate? */
-	if (mifcp->mif6c_pifi == 0 || mifcp->mif6c_pifi >= if_indexlim)
-		return ENXIO;
-	/*
-	 * XXX: some OSes can remove ifp and clear ifindex2ifnet[id]
-	 * even for id between 0 and if_index.
-	 */
-	if ((ifp = ifindex2ifnet[mifcp->mif6c_pifi]) == NULL)
+	if (!mifcp->mif6c_pifi || (ifp = if_byindex(mifcp->mif6c_pifi)) == NULL)
 		return ENXIO;
 
 	if (mifcp->mif6c_flags & MIFF_REGISTER) {
@@ -1531,7 +1528,7 @@ phyint_send(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 {
 	struct mbuf *mb_copy;
 	struct ifnet *ifp = mifp->m6_ifp;
-	int error = 0;
+	int error __mrt6debugused = 0;
 	int s;
 	static struct route ro;
 	struct in6_multi *in6m;
@@ -1712,7 +1709,7 @@ int
 pim6_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct pim *pim; /* pointer to a pim struct */
-	struct ip6_hdr *ip6;
+	struct ip6_hdr *ip6 __mrt6debugused;
 	int pimlen;
 	struct mbuf *m = *mp;
 	int minlen;
@@ -1938,11 +1935,7 @@ sysctl_net_inet6_pim6_stats(SYSCTLFN_ARGS)
 static void
 sysctl_net_inet6_pim6_setup(struct sysctllog **clog)
 {
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet6", NULL,

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,6 +48,8 @@
 
 #define _COMPONENT          ACPI_EVENTS
         ACPI_MODULE_NAME    ("evgpeblk")
+
+#if (!ACPI_REDUCED_HARDWARE) /* Entire module */
 
 /* Local prototypes */
 
@@ -95,10 +97,9 @@ AcpiEvInstallGpeBlock (
         return_ACPI_STATUS (Status);
     }
 
-    GpeXruptBlock = AcpiEvGetGpeXruptBlock (InterruptNumber);
-    if (!GpeXruptBlock)
+    Status = AcpiEvGetGpeXruptBlock (InterruptNumber, &GpeXruptBlock);
+    if (ACPI_FAILURE (Status))
     {
-        Status = AE_NO_MEMORY;
         goto UnlockAndExit;
     }
 
@@ -126,7 +127,7 @@ AcpiEvInstallGpeBlock (
 
 
 UnlockAndExit:
-    Status = AcpiUtReleaseMutex (ACPI_MTX_EVENTS);
+    (void) AcpiUtReleaseMutex (ACPI_MTX_EVENTS);
     return_ACPI_STATUS (Status);
 }
 
@@ -418,6 +419,8 @@ AcpiEvCreateGpeBlock (
     Status = AcpiEvInstallGpeBlock (GpeBlock, InterruptNumber);
     if (ACPI_FAILURE (Status))
     {
+        ACPI_FREE (GpeBlock->RegisterInfo);
+        ACPI_FREE (GpeBlock->EventInfo);
         ACPI_FREE (GpeBlock);
         return_ACPI_STATUS (Status);
     }
@@ -441,8 +444,8 @@ AcpiEvCreateGpeBlock (
         (*ReturnGpeBlock) = GpeBlock;
     }
 
-    ACPI_DEBUG_PRINT ((ACPI_DB_INIT,
-        "GPE %02X to %02X [%4.4s] %u regs on int 0x%X\n",
+    ACPI_DEBUG_PRINT_RAW ((ACPI_DB_INIT,
+        "    Initialized GPE %02X to %02X [%4.4s] %u regs on interrupt 0x%X\n",
         (UINT32) GpeBlock->BlockBaseNumber,
         (UINT32) (GpeBlock->BlockBaseNumber + (GpeBlock->GpeCount - 1)),
         GpeDevice->Name.Ascii, GpeBlock->RegisterCount,
@@ -537,11 +540,14 @@ AcpiEvInitializeGpeBlock (
 
     if (GpeEnabledCount)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_INIT,
-            "Enabled %u GPEs in this block\n", GpeEnabledCount));
+        ACPI_INFO ((AE_INFO,
+            "Enabled %u GPEs in block %02X to %02X", GpeEnabledCount,
+            (UINT32) GpeBlock->BlockBaseNumber,
+            (UINT32) (GpeBlock->BlockBaseNumber + (GpeBlock->GpeCount - 1))));
     }
 
     GpeBlock->Initialized = TRUE;
     return_ACPI_STATUS (AE_OK);
 }
 
+#endif /* !ACPI_REDUCED_HARDWARE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.18 2010/06/22 18:29:03 rmind Exp $	*/
+/*	$NetBSD: ipi.c,v 1.18.18.1 2014/08/20 00:03:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -32,18 +32,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.18 2010/06/22 18:29:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.18.18.1 2014/08/20 00:03:29 tls Exp $");
 
 #include "opt_mtrr.h"
 
-#include <sys/param.h> 
+#include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/atomic.h>
 #include <sys/intr.h>
+#include <sys/ipi.h>
 #include <sys/cpu.h>
 #include <sys/xcall.h>
- 
+
 #ifdef MULTIPROCESSOR
 
 #include <machine/cpufunc.h>
@@ -56,23 +57,12 @@ __KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.18 2010/06/22 18:29:03 rmind Exp $");
 
 #include "acpica.h"
 
-#ifdef __x86_64__
-#include <machine/fpu.h>
-static void	x86_ipi_synch_fpu(struct cpu_info *);
-#else
-/* XXXfpu */
-#include "npx.h"
-#if NNPX > 0
-static void	x86_ipi_synch_fpu(struct cpu_info *);
-#define		fpusave_cpu(x)		npxsave_cpu(x)
-#else
-#define		x86_ipi_synch_fpu	NULL
-#endif
-#endif
+#include <x86/fpu.h>
 
 static void	x86_ipi_halt(struct cpu_info *);
 static void	x86_ipi_kpreempt(struct cpu_info *);
 static void	x86_ipi_xcall(struct cpu_info *);
+static void	x86_ipi_generic(struct cpu_info *);
 
 #ifdef MTRR
 static void	x86_ipi_reload_mtrr(struct cpu_info *);
@@ -86,17 +76,19 @@ void	acpi_cpu_sleep(struct cpu_info *);
 #define	acpi_cpu_sleep	NULL
 #endif
 
-void (*ipifunc[X86_NIPI])(struct cpu_info *) =
+static void	x86_ipi_synch_fpu(struct cpu_info *);
+
+void (* const ipifunc[X86_NIPI])(struct cpu_info *) =
 {
-	x86_ipi_halt,
-	NULL,
-	NULL,
-	x86_ipi_synch_fpu,
-	x86_ipi_reload_mtrr,
-	gdt_reload_cpu,
-	x86_ipi_xcall,
-	acpi_cpu_sleep,
-	x86_ipi_kpreempt
+	x86_ipi_halt,		/* X86_IPI_HALT */
+	NULL,			/* X86_IPI_MICROSET */
+	x86_ipi_generic,	/* X86_IPI_GENERIC */
+	x86_ipi_synch_fpu,	/* X86_IPI_SYNCH_FPU */
+	x86_ipi_reload_mtrr,	/* X86_IPI_MTRR */
+	gdt_reload_cpu,		/* X86_IPI_GDT */
+	x86_ipi_xcall,		/* X86_IPI_XCALL */
+	acpi_cpu_sleep,		/* X86_IPI_ACPI_CPU_SLEEP */
+	x86_ipi_kpreempt	/* X86_IPI_KPREEMPT */
 };
 
 /*
@@ -158,7 +150,7 @@ x86_ipi_handler(void)
 	KDASSERT((pending >> X86_NIPI) == 0);
 	while ((bit = ffs(pending)) != 0) {
 		bit--;
-		pending &= ~(1<<bit);
+		pending &= ~(1 << bit);
 		ci->ci_ipi_events[bit].ev_count++;
 		(*ipifunc[bit])(ci);
 	}
@@ -175,19 +167,17 @@ x86_ipi_halt(struct cpu_info *ci)
 	x86_disable_intr();
 	atomic_and_32(&ci->ci_flags, ~CPUF_RUNNING);
 
-	for(;;) {
+	for (;;) {
 		x86_hlt();
 	}
 }
 
-#if defined(__x86_64__) || NNPX > 0	/* XXXfpu */
 static void
 x86_ipi_synch_fpu(struct cpu_info *ci)
 {
 
 	fpusave_cpu(true);
 }
-#endif
 
 #ifdef MTRR
 static void
@@ -218,8 +208,13 @@ x86_ipi_kpreempt(struct cpu_info *ci)
 static void
 x86_ipi_xcall(struct cpu_info *ci)
 {
-
 	xc_ipi_handler();
+}
+
+static void
+x86_ipi_generic(struct cpu_info *ci)
+{
+	ipi_cpu_handler();
 }
 
 void
@@ -238,6 +233,21 @@ xc_send_ipi(struct cpu_info *ci)
 	}
 }
 
+void
+cpu_ipi(struct cpu_info *ci)
+{
+	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu() != ci);
+
+	if (ci) {
+		/* Unicast: remote CPU. */
+		x86_send_ipi(ci, X86_IPI_GENERIC);
+	} else {
+		/* Broadcast: all, but local CPU (caller will handle it). */
+		x86_broadcast_ipi(X86_IPI_GENERIC);
+	}
+}
+
 #else
 
 int
@@ -251,6 +261,11 @@ void
 x86_broadcast_ipi(int ipimask)
 {
 
+}
+
+void
+cpu_ipi(struct cpu_info *ci)
+{
 }
 
 #endif

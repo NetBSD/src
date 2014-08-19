@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 2011/01/22 19:19:22 joerg Exp $
+#	$NetBSD: Makefile,v 1.4.14.1 2014/08/20 00:03:21 tls Exp $
 
 NOMAN= # defined
 
 .include <bsd.own.mk>
+.include <bsd.klinks.mk>
 
 COMMON= ${.CURDIR}/../common
 COMMONOBJ!=	cd ${COMMON} && ${PRINTOBJDIR}
@@ -24,7 +25,7 @@ SRCS+= filesystem.c inkernel.c io.c tgets.c prf.c monitor.c
 SRCS+= ns16550.c vers.c
 SRCS+= iplcb.c
 
-CFLAGS= -Os -mmultiple -ffreestanding
+CFLAGS= -Os -ffreestanding
 CFLAGS+= -Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
 AFLAGS= -x assembler-with-cpp
 
@@ -39,6 +40,7 @@ BINMODE= 444
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
@@ -46,28 +48,16 @@ LIBCRTEND=
 RELOC= 0x800000
 #RELOC= 0x0
 
-CLEANFILES+= vers.c machine powerpc
+CLEANFILES+= vers.c
 
 LIBS= ${L}/sa/libsa.a ${L}/kern/libkern.a ${L}/z/libz.a
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN: machine powerpc
-.NOPATH: machine powerpc
-
-machine::
-	-rm -f $@
-	ln -s ${S}/arch/${MACHINE}/include $@
-
-powerpc::
-	-rm -f $@
-	ln -s ${S}/arch/powerpc/include $@
-.endif
 
 vers.c: ${.CURDIR}/../boot/version
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
 	    ${.CURDIR}/../boot/version "rs6000" ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} ${LIBS}
+	${_MKTARGET_LINK}
 	${LD} -o ${PROG} -s -N -T ${.CURDIR}/../boot/ld.script \
 		-Ttext ${RELOC} ${OBJS} ${LIBS}
 

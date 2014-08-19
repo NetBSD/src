@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_pool.c,v 1.198.2.2 2013/06/23 06:18:58 tls Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.198.2.3 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010
+ * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014
  *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -32,13 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.198.2.2 2013/06/23 06:18:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.198.2.3 2014/08/20 00:04:29 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/bitops.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
@@ -67,8 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.198.2.2 2013/06/23 06:18:58 tls Exp 
  * an internal pool of page headers (`phpool').
  */
 
-/* List of all pools */
-static TAILQ_HEAD(, pool) pool_head = TAILQ_HEAD_INITIALIZER(pool_head);
+/* List of all pools. Non static as needed by 'vmstat -i' */
+TAILQ_HEAD(, pool) pool_head = TAILQ_HEAD_INITIALIZER(pool_head);
 
 /* Private pool for page header structures */
 #define	PHPOOL_MAX	8
@@ -561,9 +562,10 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	/* See the comment below about reserved bytes. */
 	trysize = palloc->pa_pagesz - ((align - ioff) % align);
 	phsize = ALIGN(sizeof(struct pool_item_header));
-	if ((pp->pr_roflags & (PR_NOTOUCH | PR_NOALIGN)) == 0 &&
+	if (pp->pr_roflags & PR_PHINPAGE ||
+	    ((pp->pr_roflags & (PR_NOTOUCH | PR_NOALIGN)) == 0 &&
 	    (pp->pr_size < MIN(palloc->pa_pagesz / 16, phsize << 3) ||
-	    trysize / pp->pr_size == (trysize - phsize) / pp->pr_size)) {
+	    trysize / pp->pr_size == (trysize - phsize) / pp->pr_size))) {
 		/* Use the end of the page for the page header */
 		pp->pr_roflags |= PR_PHINPAGE;
 		pp->pr_phoffset = off = palloc->pa_pagesz - phsize;
@@ -2750,3 +2752,100 @@ print:
 	}
 }
 #endif /* defined(DDB) */
+
+static int
+pool_sysctl(SYSCTLFN_ARGS)
+{
+	struct pool_sysctl data;
+	struct pool *pp;
+	struct pool_cache *pc;
+	pool_cache_cpu_t *cc;
+	int error;
+	size_t i, written;
+
+	if (oldp == NULL) {
+		*oldlenp = 0;
+		TAILQ_FOREACH(pp, &pool_head, pr_poollist)
+			*oldlenp += sizeof(data);
+		return 0;
+	}
+
+	memset(&data, 0, sizeof(data));
+	error = 0;
+	written = 0;
+	TAILQ_FOREACH(pp, &pool_head, pr_poollist) {
+		if (written + sizeof(data) > *oldlenp)
+			break;
+		strlcpy(data.pr_wchan, pp->pr_wchan, sizeof(data.pr_wchan));
+		data.pr_pagesize = pp->pr_alloc->pa_pagesz;
+		data.pr_flags = pp->pr_roflags | pp->pr_flags;
+#define COPY(field) data.field = pp->field
+		COPY(pr_size);
+
+		COPY(pr_itemsperpage);
+		COPY(pr_nitems);
+		COPY(pr_nout);
+		COPY(pr_hardlimit);
+		COPY(pr_npages);
+		COPY(pr_minpages);
+		COPY(pr_maxpages);
+
+		COPY(pr_nget);
+		COPY(pr_nfail);
+		COPY(pr_nput);
+		COPY(pr_npagealloc);
+		COPY(pr_npagefree);
+		COPY(pr_hiwat);
+		COPY(pr_nidle);
+#undef COPY
+
+		data.pr_cache_nmiss_pcpu = 0;
+		data.pr_cache_nhit_pcpu = 0;
+		if (pp->pr_cache) {
+			pc = pp->pr_cache;
+			data.pr_cache_meta_size = pc->pc_pcgsize;
+			data.pr_cache_nfull = pc->pc_nfull;
+			data.pr_cache_npartial = pc->pc_npart;
+			data.pr_cache_nempty = pc->pc_nempty;
+			data.pr_cache_ncontended = pc->pc_contended;
+			data.pr_cache_nmiss_global = pc->pc_misses;
+			data.pr_cache_nhit_global = pc->pc_hits;
+			for (i = 0; i < pc->pc_ncpu; ++i) {
+				cc = pc->pc_cpus[i];
+				if (cc == NULL)
+					continue;
+				data.pr_cache_nmiss_pcpu = cc->cc_misses;
+				data.pr_cache_nhit_pcpu = cc->cc_hits;
+			}
+		} else {
+			data.pr_cache_meta_size = 0;
+			data.pr_cache_nfull = 0;
+			data.pr_cache_npartial = 0;
+			data.pr_cache_nempty = 0;
+			data.pr_cache_ncontended = 0;
+			data.pr_cache_nmiss_global = 0;
+			data.pr_cache_nhit_global = 0;
+		}
+
+		error = sysctl_copyout(l, &data, oldp, sizeof(data));
+		if (error)
+			break;
+		written += sizeof(data);
+		oldp = (char *)oldp + sizeof(data);
+	}
+
+	*oldlenp = written;
+	return error;
+}
+
+SYSCTL_SETUP(sysctl_pool_setup, "sysctl kern.pool setup")
+{
+	const struct sysctlnode *rnode = NULL;
+
+	sysctl_createv(clog, 0, NULL, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "pool",
+		       SYSCTL_DESCR("Get pool statistics"),
+		       pool_sysctl, 0, NULL, 0,
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
+}

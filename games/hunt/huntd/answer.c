@@ -1,4 +1,4 @@
-/*	$NetBSD: answer.c,v 1.16 2009/08/27 00:36:32 dholland Exp $	*/
+/*	$NetBSD: answer.c,v 1.16.12.1 2014/08/20 00:00:23 tls Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,77 +32,92 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: answer.c,v 1.16 2009/08/27 00:36:32 dholland Exp $");
+__RCSID("$NetBSD: answer.c,v 1.16.12.1 2014/08/20 00:00:23 tls Exp $");
 #endif /* not lint */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <assert.h>
 #include "hunt.h"
 
 #define SCOREDECAY	15
 
-static char Ttyname[NAMELEN];
+static char Ttyname[WIRE_NAMELEN];
 
-static IDENT *get_ident(uint32_t, uint32_t, char *, char);
+static IDENT *get_ident(uint32_t, uint32_t, const char *, char);
 static void stmonitor(PLAYER *);
 static void stplayer(PLAYER *, int);
 
-int
+bool
 answer(void)
 {
 	PLAYER *pp;
 	int newsock;
-	static u_long mode;
-	static char name[NAMELEN];
+	static uint32_t mode;
+	static char name[WIRE_NAMELEN];
 	static char team;
-	static int enter_status;
+	static int32_t enter_status;
 	static socklen_t socklen;
 	static uint32_t machine;
 	static uint32_t uid;
-	static SOCKET sockstruct;
+	static struct sockaddr_storage newaddr;
 	char *cp1, *cp2;
 	int flags;
 	uint32_t version;
 	int i;
 
-#ifdef INTERNET
-	socklen = sizeof sockstruct;
-#else
-	socklen = sizeof sockstruct - 1;
-#endif
-	errno = 0;
-	newsock = accept(Socket, (struct sockaddr *) &sockstruct, &socklen);
-	if (newsock < 0)
-	{
+	socklen = sizeof(newaddr);
+	newsock = accept(huntsock, (struct sockaddr *)&newaddr, &socklen);
+	if (newsock < 0) {
 		if (errno == EINTR)
-			return FALSE;
-#ifdef LOG
-		syslog(LOG_ERR, "accept: %m");
-#else
-		perror("accept");
-#endif
+			return false;
+		complain(LOG_ERR, "accept");
 		cleanup(1);
 	}
 
-#ifdef INTERNET
-	machine = ntohl(((struct sockaddr_in *) &sockstruct)->sin_addr.s_addr);
-#else
-	if (machine == 0)
+	/*
+	 * XXX this is pretty bollocks
+	 */
+	switch (newaddr.ss_family) {
+	    case AF_INET:
+		machine = ((struct sockaddr_in *)&newaddr)->sin_addr.s_addr;
+		machine = ntohl(machine);
+		break;
+	    case AF_INET6: 
+		{
+			struct sockaddr_in6 *sin6;
+
+			sin6 = (struct sockaddr_in6 *)&newaddr;
+			assert(sizeof(sin6->sin6_addr.s6_addr) >
+			       sizeof(machine));
+			memcpy(&machine, sin6->sin6_addr.s6_addr,
+			       sizeof(machine));
+		}
+		break;
+	    case AF_UNIX:
 		machine = gethostid();
-#endif
+		break;
+	    default:
+		machine = 0; /* ? */
+		break;
+	}
+
 	version = htonl((uint32_t) HUNT_VERSION);
-	(void) write(newsock, &version, LONGLEN);
-	(void) read(newsock, &uid, LONGLEN);
+	(void) write(newsock, &version, sizeof(version));
+	(void) read(newsock, &uid, sizeof(uid));
 	uid = ntohl(uid);
-	(void) read(newsock, name, NAMELEN);
+	(void) read(newsock, name, sizeof(name));
 	(void) read(newsock, &team, 1);
-	(void) read(newsock, &enter_status, LONGLEN);
-	enter_status = ntohl((unsigned long) enter_status);
-	(void) read(newsock, Ttyname, NAMELEN);
-	(void) read(newsock, &mode, sizeof mode);
+	(void) read(newsock, &enter_status, sizeof(enter_status));
+	enter_status = ntohl(enter_status);
+	(void) read(newsock, Ttyname, sizeof(Ttyname));
+	(void) read(newsock, &mode, sizeof(mode));
 	mode = ntohl(mode);
 
 	/*
@@ -129,7 +144,6 @@ answer(void)
 			*cp2++ = *cp1;
 	*cp2 = '\0';
 
-#ifdef INTERNET
 	if (mode == C_MESSAGE) {
 		char	buf[BUFSIZ + 1];
 		int	n;
@@ -154,10 +168,9 @@ answer(void)
 			(void) fflush(pp->p_output);
 		}
 		(void) close(newsock);
-		return FALSE;
+		return false;
 	}
 	else
-#endif
 #ifdef MONITOR
 	if (mode == C_MONITOR)
 		if (End_monitor < &Monitor[MAXMON]) {
@@ -168,7 +181,7 @@ answer(void)
 			(void) write(newsock, &socklen,
 				sizeof socklen);
 			(void) close(newsock);
-			return FALSE;
+			return false;
 		}
 	else
 #endif
@@ -180,7 +193,7 @@ answer(void)
 			(void) write(newsock, &socklen,
 				sizeof socklen);
 			(void) close(newsock);
-			return FALSE;
+			return false;
 		}
 
 #ifdef MONITOR
@@ -203,7 +216,7 @@ answer(void)
 	else
 #endif
 		stplayer(pp, enter_status);
-	return TRUE;
+	return true;
 }
 
 #ifdef MONITOR
@@ -266,7 +279,7 @@ stplayer(PLAYER *newpp, int enter_status)
 	newpp->p_over = SPACE;
 	newpp->p_x = x;
 	newpp->p_y = y;
-	newpp->p_undershot = FALSE;
+	newpp->p_undershot = false;
 
 #ifdef FLY
 	if (enter_status == Q_FLY) {
@@ -347,7 +360,7 @@ stplayer(PLAYER *newpp, int enter_status)
 #endif
 
 	drawmaze(newpp);
-	drawplayer(newpp, TRUE);
+	drawplayer(newpp, true);
 	look(newpp);
 #ifdef FLY
 	if (enter_status == Q_FLY)
@@ -385,7 +398,7 @@ rand_dir(void)
  *	Get the score structure of a player
  */
 static IDENT *
-get_ident(uint32_t machine, uint32_t uid, char *name, char team)
+get_ident(uint32_t machine, uint32_t uid, const char *name, char team)
 {
 	IDENT *ip;
 	static IDENT punt;
@@ -394,7 +407,7 @@ get_ident(uint32_t machine, uint32_t uid, char *name, char team)
 		if (ip->i_machine == machine
 		&&  ip->i_uid == uid
 		&&  ip->i_team == team
-		&&  strncmp(ip->i_name, name, NAMELEN) == 0)
+		&&  strncmp(ip->i_name, name, WIRE_NAMELEN) == 0)
 			break;
 
 	if (ip != NULL) {
@@ -414,7 +427,7 @@ get_ident(uint32_t machine, uint32_t uid, char *name, char team)
 		ip->i_machine = machine;
 		ip->i_team = team;
 		ip->i_uid = uid;
-		strncpy(ip->i_name, name, NAMELEN);
+		strncpy(ip->i_name, name, sizeof(ip->i_name));
 		ip->i_kills = 0;
 		ip->i_entries = 1;
 		ip->i_score = 0;

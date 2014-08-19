@@ -1,4 +1,4 @@
-/*	$NetBSD: master_vars.c,v 1.1.1.1.16.1 2013/02/25 00:27:21 tls Exp $	*/
+/*	$NetBSD: master_vars.c,v 1.1.1.1.16.2 2014/08/19 23:59:43 tls Exp $	*/
 
 /*++
 /* NAME
@@ -49,7 +49,6 @@
   * Tunable parameters.
   */
 char   *var_inet_protocols;
-int     var_proc_limit;
 int     var_throttle_time;
 char   *var_master_disable;
 
@@ -60,10 +59,6 @@ void    master_vars_init(void)
     char   *path;
     static const CONFIG_STR_TABLE str_table[] = {
 	VAR_MASTER_DISABLE, DEF_MASTER_DISABLE, &var_master_disable, 0, 0,
-	0,
-    };
-    static const CONFIG_INT_TABLE int_table[] = {
-	VAR_PROC_LIMIT, DEF_PROC_LIMIT, &var_proc_limit, 1, 0,
 	0,
     };
     static const CONFIG_TIME_TABLE time_table[] = {
@@ -89,7 +84,6 @@ void    master_vars_init(void)
     set_mail_conf_str(VAR_PROCNAME, var_procname);
     mail_conf_read();
     get_mail_conf_str_table(str_table);
-    get_mail_conf_int_table(int_table);
     get_mail_conf_time_table(time_table);
     path = concatenate(var_config_dir, "/", MASTER_CONF_FILE, (char *) 0);
     fset_master_ent(path);

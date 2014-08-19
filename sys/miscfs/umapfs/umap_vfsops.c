@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.88 2012/04/30 22:51:28 rmind Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.88.2.1 2014/08/20 00:04:31 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.88 2012/04/30 22:51:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.88.2.1 2014/08/20 00:04:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,8 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	int i;
 #endif
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
@@ -151,9 +153,10 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/*
 	 * Now copy in the number of entries and maps for umap mapping.
 	 */
-	if (args->nentries > MAPFILEENTRIES || args->gnentries > GMAPFILEENTRIES) {
+	if (args->nentries < 0 || args->nentries > MAPFILEENTRIES ||
+	    args->gnentries < 0 || args->gnentries > GMAPFILEENTRIES) {
 		vput(lowerrootvp);
-		return (error);
+		return (EINVAL);
 	}
 
 	amp->info_nentries = args->nentries;
@@ -195,38 +198,30 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	amp->umapm_size = sizeof(struct umap_node);
 	amp->umapm_tag = VT_UMAP;
 	amp->umapm_bypass = umap_bypass;
-	amp->umapm_alloc = layer_node_alloc;	/* the default alloc is fine */
 	amp->umapm_vnodeop_p = umap_vnodeop_p;
-	mutex_init(&amp->umapm_hashlock, MUTEX_DEFAULT, IPL_NONE);
-	amp->umapm_node_hashtbl = hashinit(NUMAPNODECACHE, HASH_LIST, true,
-	    &amp->umapm_node_hash);
-
 
 	/*
 	 * fix up umap node for root vnode.
 	 */
+	VOP_UNLOCK(lowerrootvp);
 	error = layer_node_create(mp, lowerrootvp, &vp);
 	/*
 	 * Make sure the node alias worked
 	 */
 	if (error) {
-		vput(lowerrootvp);
-		hashdone(amp->umapm_node_hashtbl, HASH_LIST,
-		    amp->umapm_node_hash);
+		vrele(lowerrootvp);
 		kmem_free(amp, sizeof(struct umap_mount));
 		return error;
 	}
-	/*
-	 * Unlock the node (either the lower or the alias)
-	 */
-	vp->v_vflag |= VV_ROOT;
-	VOP_UNLOCK(vp);
 
 	/*
 	 * Keep a held reference to the root vnode.
 	 * It is vrele'd in umapfs_unmount.
 	 */
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vp->v_vflag |= VV_ROOT;
 	amp->umapm_rootvp = vp;
+	VOP_UNLOCK(vp);
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->umap_target,
 	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
@@ -270,8 +265,6 @@ umapfs_unmount(struct mount *mp, int mntflags)
 	/*
 	 * Finally, throw away the umap_mount structure
 	 */
-	mutex_destroy(&amp->umapm_hashlock);
-	hashdone(amp->umapm_node_hashtbl, HASH_LIST, amp->umapm_node_hash);
 	kmem_free(amp, sizeof(struct umap_mount));
 	mp->mnt_data = NULL;
 	return 0;
@@ -285,31 +278,28 @@ const struct vnodeopv_desc * const umapfs_vnodeopv_descs[] = {
 };
 
 struct vfsops umapfs_vfsops = {
-	MOUNT_UMAP,
-	sizeof (struct umap_args),
-	umapfs_mount,
-	layerfs_start,
-	umapfs_unmount,
-	layerfs_root,
-	layerfs_quotactl,
-	layerfs_statvfs,
-	layerfs_sync,
-	layerfs_vget,
-	layerfs_fhtovp,
-	layerfs_vptofh,
-	layerfs_init,
-	NULL,
-	layerfs_done,
-	NULL,				/* vfs_mountroot */
-	layerfs_snapshot,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	layerfs_renamelock_enter,
-	layerfs_renamelock_exit,
-	(void *)eopnotsupp,
-	umapfs_vnodeopv_descs,
-	0,				/* vfs_refcount */
-	{ NULL, NULL },
+	.vfs_name = MOUNT_UMAP,
+	.vfs_min_mount_data = sizeof (struct umap_args),
+	.vfs_mount = umapfs_mount,
+	.vfs_start = layerfs_start,
+	.vfs_unmount = umapfs_unmount,
+	.vfs_root = layerfs_root,
+	.vfs_quotactl = layerfs_quotactl,
+	.vfs_statvfs = layerfs_statvfs,
+	.vfs_sync = layerfs_sync,
+	.vfs_loadvnode = layerfs_loadvnode,
+	.vfs_vget = layerfs_vget,
+	.vfs_fhtovp = layerfs_fhtovp,
+	.vfs_vptofh = layerfs_vptofh,
+	.vfs_init = layerfs_init,
+	.vfs_done = layerfs_done,
+	.vfs_snapshot = layerfs_snapshot,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = layerfs_renamelock_enter,
+	.vfs_renamelock_exit = layerfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = umapfs_vnodeopv_descs
 };
 
 static int
@@ -322,11 +312,6 @@ umap_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&umapfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&umapfs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&umapfs_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "umap",

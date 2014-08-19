@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_160x.c,v 1.8 2011/06/18 08:08:29 matt Exp $	*/
+/*	$NetBSD: platform_160x.c,v 1.8.12.1 2014/08/20 00:03:15 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform_160x.c,v 1.8 2011/06/18 08:08:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform_160x.c,v 1.8.12.1 2014/08/20 00:03:15 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -104,8 +104,8 @@ p160x_match(struct platform *p)
 	for (cp = &bid.pwa[sizeof(bid.pwa) - 1]; *cp == ' '; cp--)
 		*cp = '\0';
 
-	sprintf(p160x_model, "%s, Serial: %s, PWA: %s", bid.id,
-	    bid.serial, bid.pwa);
+	snprintf(p160x_model, sizeof(p160x_model),
+	    "%s, Serial: %s, PWA: %s", bid.id, bid.serial, bid.pwa);
 	p->model = p160x_model;
 
 	speed[3] = '\0';

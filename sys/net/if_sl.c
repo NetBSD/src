@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.118 2011/09/23 15:29:09 christos Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.118.12.1 2014/08/20 00:04:34 tls Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.118 2011/09/23 15:29:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.118.12.1 2014/08/20 00:04:34 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -935,14 +935,10 @@ slintr(void *arg)
 
 #ifdef INET
 		s = splnet();
-		if (IF_QFULL(&ipintrq)) {
-			IF_DROP(&ipintrq);
+		if (__predict_false(!pktq_enqueue(ip_pktq, m, 0))) {
 			sc->sc_if.if_ierrors++;
 			sc->sc_if.if_iqdrops++;
 			m_freem(m);
-		} else {
-			IF_ENQUEUE(&ipintrq, m);
-			schednetisr(NETISR_IP);
 		}
 		splx(s);
 #endif

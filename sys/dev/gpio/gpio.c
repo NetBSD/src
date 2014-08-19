@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.50.8.2 2013/06/23 06:20:17 tls Exp $ */
+/* $NetBSD: gpio.c,v 1.50.8.3 2014/08/20 00:03:37 tls Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.50.8.2 2013/06/23 06:20:17 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.50.8.3 2014/08/20 00:03:37 tls Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -100,8 +100,18 @@ dev_type_ioctl(gpioioctl);
 dev_type_ioctl(gpioioctl_locked);
 
 const struct cdevsw gpio_cdevsw = {
-	gpioopen, gpioclose, noread, nowrite, gpioioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER | D_MPSAFE
+	.d_open = gpioopen,
+	.d_close = gpioclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = gpioioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 extern struct cfdriver gpio_cd;
@@ -199,6 +209,7 @@ gpio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_npins = gba->gba_npins;
 
 	aprint_normal(": %d pins\n", sc->sc_npins);
+	aprint_naive("\n");
 
 	if (!pmf_device_register(self, NULL, gpio_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -267,10 +278,10 @@ gpio_print(void *aux, const char *pnp)
 	struct gpio_attach_args *ga = aux;
 	int i;
 
-	printf(" pins");
+	aprint_normal(" pins");
 	for (i = 0; i < 32; i++)
 		if (ga->ga_mask & (1 << i))
-			printf(" %d", ga->ga_offset + i);
+			aprint_normal(" %d", ga->ga_offset + i);
 
 	return UNCONF;
 }
@@ -689,12 +700,14 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		/* check that the controller supports all requested flags */
 		if ((flags & sc->sc_pins[pin].pin_caps) != flags)
 			return ENODEV;
-		flags = set->gp_flags | GPIO_PIN_SET;
+		flags = set->gp_flags;
 
 		set->gp_caps = sc->sc_pins[pin].pin_caps;
 		/* return old value */
 		set->gp_flags = sc->sc_pins[pin].pin_flags;
+
 		if (flags > 0) {
+			flags |= GPIO_PIN_SET;
 			gpiobus_pin_ctl(gc, pin, flags);
 			/* update current value */
 			sc->sc_pins[pin].pin_flags = flags;

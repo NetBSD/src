@@ -1,4 +1,4 @@
-/*	$NetBSD: gic_intr.h,v 1.1 2012/09/01 00:03:14 matt Exp $	*/
+/*	$NetBSD: gic_intr.h,v 1.1.2.1 2014/08/20 00:02:45 tls Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -46,6 +46,11 @@
 #ifndef PIC_MAXMAXSOURCES
 #error PIC_MAXMAXSOURCES needs to be defined
 #endif
+
+#define IRQ_SGI(n)		( 0 + ((n) & 15))
+#define IRQ_PPI(n)		(16 + ((n) & 15))
+#define IRQ_SPI(n)		(32 + (n))
+#define GIC_MAXSOURCES(n)	IRQ_SPI(n)
 
 void armgic_irq_handler(void *);
 

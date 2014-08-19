@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.38.18.1 2012/11/20 03:01:30 tls Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.38.18.2 2014/08/20 00:03:11 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.38.18.1 2012/11/20 03:01:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.38.18.2 2014/08/20 00:03:11 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -471,9 +471,9 @@ struct mc_softc *sc = arg;
 integrate void
 mc_tint(struct mc_softc *sc)
 {
-	u_int8_t xmtrc, xmtfs;
+	u_int8_t /* xmtrc,*/ xmtfs;
 
-	xmtrc = NIC_GET(sc, MACE_XMTRC);
+	/* xmtrc = */ NIC_GET(sc, MACE_XMTRC);
 	xmtfs = NIC_GET(sc, MACE_XMTFS);
 
 	if ((xmtfs & XMTSV) == 0)

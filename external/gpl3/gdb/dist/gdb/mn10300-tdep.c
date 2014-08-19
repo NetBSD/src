@@ -1,7 +1,6 @@
 /* Target-dependent code for the Matsushita MN10300 for GDB, the GNU debugger.
 
-   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,11 +22,10 @@
 #include "dis-asm.h"
 #include "gdbtypes.h"
 #include "regcache.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdb_assert.h"
 #include "gdbcore.h"	/* For write_memory_unsigned_integer.  */
 #include "value.h"
-#include "gdbtypes.h"
 #include "frame.h"
 #include "frame-unwind.h"
 #include "frame-base.h"
@@ -169,7 +167,7 @@ mn10300_use_struct_convention (struct type *type)
 
 static void
 mn10300_store_return_value (struct gdbarch *gdbarch, struct type *type,
-			    struct regcache *regcache, const void *valbuf)
+			    struct regcache *regcache, const gdb_byte *valbuf)
 {
   int len = TYPE_LENGTH (type);
   int reg, regsz;
@@ -188,7 +186,7 @@ mn10300_store_return_value (struct gdbarch *gdbarch, struct type *type,
       regcache_raw_write (regcache, reg, valbuf);
       gdb_assert (regsz == register_size (gdbarch, reg + 1));
       regcache_raw_write_part (regcache, reg+1, 0,
-			       len - regsz, (char *) valbuf + regsz);
+			       len - regsz, valbuf + regsz);
     }
   else
     internal_error (__FILE__, __LINE__,
@@ -199,7 +197,7 @@ static void
 mn10300_extract_return_value (struct gdbarch *gdbarch, struct type *type,
 			      struct regcache *regcache, void *valbuf)
 {
-  char buf[MAX_REGISTER_SIZE];
+  gdb_byte buf[MAX_REGISTER_SIZE];
   int len = TYPE_LENGTH (type);
   int reg, regsz;
 
@@ -234,7 +232,7 @@ mn10300_extract_return_value (struct gdbarch *gdbarch, struct type *type,
    from WRITEBUF into REGCACHE.  */
 
 static enum return_value_convention
-mn10300_return_value (struct gdbarch *gdbarch, struct type *func_type,
+mn10300_return_value (struct gdbarch *gdbarch, struct value *function,
 		      struct type *type, struct regcache *regcache,
 		      gdb_byte *readbuf, const gdb_byte *writebuf)
 {
@@ -327,11 +325,11 @@ mn10300_write_pc (struct regcache *regcache, CORE_ADDR val)
    so we need a single byte breakpoint.  Matsushita hasn't defined
    one, so we defined it ourselves.  */
 
-const static unsigned char *
+static const unsigned char *
 mn10300_breakpoint_from_pc (struct gdbarch *gdbarch, CORE_ADDR *bp_addr,
 			    int *bp_size)
 {
-  static char breakpoint[] = {0xff};
+  static gdb_byte breakpoint[] = {0xff};
   *bp_size = 1;
   return breakpoint;
 }
@@ -388,7 +386,7 @@ mn10300_analyze_prologue (struct gdbarch *gdbarch,
                           struct mn10300_prologue *result)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  CORE_ADDR pc, next_pc;
+  CORE_ADDR pc;
   int rn;
   pv_t regs[MN10300_MAX_NUM_REGS];
   struct pv_area *stack;
@@ -1062,7 +1060,7 @@ mn10300_analyze_prologue (struct gdbarch *gdbarch,
 static CORE_ADDR
 mn10300_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
-  char *name;
+  const char *name;
   CORE_ADDR func_addr, func_end;
   struct mn10300_prologue p;
 
@@ -1232,7 +1230,8 @@ mn10300_push_dummy_call (struct gdbarch *gdbarch,
   int len, arg_len; 
   int stack_offset = 0;
   int argnum;
-  char *val, valbuf[MAX_REGISTER_SIZE];
+  const gdb_byte *val;
+  gdb_byte valbuf[MAX_REGISTER_SIZE];
 
   /* This should be a nop, but align the stack just in case something
      went wrong.  Stacks are four byte aligned on the mn10300.  */
@@ -1281,7 +1280,7 @@ mn10300_push_dummy_call (struct gdbarch *gdbarch,
       else
 	{
 	  arg_len = TYPE_LENGTH (value_type (*args));
-	  val = (char *) value_contents (*args);
+	  val = value_contents (*args);
 	}
 
       while (regs_used < 2 && arg_len > 0)

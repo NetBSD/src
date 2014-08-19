@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.64 2011/03/18 15:31:38 tsutsui Exp $	*/
+/*	$NetBSD: vr.c,v 1.64.14.1 2014/08/20 00:03:03 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.64 2011/03/18 15:31:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.64.14.1 2014/08/20 00:03:03 tls Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -303,14 +303,14 @@ vr_init(void)
 	platform.reboot		= vr_reboot;
 
 #if NVRBCU > 0
-	sprintf(hpcmips_cpuname, "NEC %s rev%d.%d %d.%03dMHz", 
+	cpuname_printf("NEC %s rev%d.%d %d.%03dMHz", 
 		vrbcu_vrip_getcpuname(),
 		vrbcu_vrip_getcpumajor(),
 		vrbcu_vrip_getcpuminor(),
 		vrbcu_vrip_getcpuclock() / 1000000,
 		(vrbcu_vrip_getcpuclock() % 1000000) / 1000);
 #else
-	sprintf(hpcmips_cpuname, "NEC VR41xx");
+	cpuname_printf("NEC VR41xx");
 #endif
 }
 

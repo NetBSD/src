@@ -1,4 +1,4 @@
-.\"	$NetBSD: ltsleep.9,v 1.14 2012/01/28 13:26:12 wiz Exp $
+.\"	$NetBSD: ltsleep.9,v 1.14.6.1 2014/08/20 00:02:37 tls Exp $
 .\"
 .\" Copyright (c) 1996, 2002, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,16 +27,19 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 28, 2012
+.Dd March 22, 2014
 .Dt LTSLEEP 9
 .Os
 .Sh NAME
 .Nm ltsleep ,
+.Nm mtsleep ,
 .Nm tsleep ,
 .Nm wakeup
 .Nd process context sleep and wakeup
 .Sh SYNOPSIS
 .In sys/proc.h
+.Ft int
+.Fn "mtsleep" "wchan_t ident" "pri_t priority" "const char *wmesg" "int timo" "kmutex_t *mtx"
 .Ft int
 .Fn "tsleep" "wchan_t ident" "pri_t priority" "const char *wmesg" "int timo"
 .Ft void
@@ -58,7 +61,9 @@
 .Pp
 These functions implement voluntary context switching.
 .Fn tsleep
-is used throughout the kernel whenever processing in the current context
+and
+.Fn mtsleep
+are used throughout the kernel whenever processing in the current context
 can not continue for any of the following reasons:
 .Bl -bullet -offset indent
 .It
@@ -67,9 +72,6 @@ The current process needs to await the results of a pending I/O operation.
 The current process needs resources
 .Pq e.g., memory
 which are temporarily unavailable.
-.It
-The current process wants access to data-structures which are locked by
-other processes.
 .El
 .Pp
 The function
@@ -83,7 +85,9 @@ condition has cleared.
 .Pp
 The
 .Fn tsleep
-function takes the following arguments:
+and
+.Fn mtsleep
+functions take the following arguments:
 .Bl -tag -width priority
 .It Fa ident
 An identifier of the
@@ -129,31 +133,53 @@ will return
 .El
 .Pp
 The
+.Fn mtsleep
+function takes an additional argument and flag:
+.Bl -tag -width priority
+.It Fa mtx
+A
+.Xr mutex 9
+representing the lock protecting the data-structures.
+On entry
+.Fn mtsleep
+will release the lock and re-acquire the lock on return.
+.It Fa priority
+If the flag
+.Dv PNORELOCK
+is OR'ed into
+.Fa priority
+then
+.Fn mtsleep
+will not re-acquire the lock.
+.El
+.Pp
+The
 .Fn wakeup
 function will mark all processes which are currently sleeping on the identifier
 .Fa ident
 as runnable.
 Eventually, each of the processes will resume execution in the kernel
 context, causing a return from
-.Fn tsleep .
+.Fn tsleep
+or
+.Fn mtsleep .
 Note that processes returning from sleep should always re-evaluate the
 conditions that blocked them, since a call to
 .Fn wakeup
 merely signals a
 .Em possible
 change to the blocking conditions.
-For example, when two or more processes are waiting for an exclusive-access
-lock
-.Pq see Xr lock 9 ,
-only one of them will succeed in acquiring the lock when it is released.
-All others will have to go back to sleep and wait for the next opportunity.
 .Sh RETURN VALUES
 .Fn tsleep
-returns 0 if it returns as a result of a
+and
+.Fn mtsleep
+return 0 if they return as a result of a
 .Fn wakeup .
 If a
 .Fn tsleep
-returns as a result of a signal, the return value is
+and
+.Fn mtsleep
+return as a result of a signal, the return value is
 .Er ERESTART
 if the signal has the
 .Dv SA_RESTART
@@ -164,13 +190,85 @@ and
 otherwise.
 If
 .Fn tsleep
-returns because of a timeout it returns
+and
+.Fn mtsleep
+return because of a timeout, the return value is
 .Er EWOULDBLOCK .
+.Sh MIGRATING TO CONDVAR
+Note the conversion from tsleep/wakeup into
+.Xr condvar 9
+should not be done mechanically i.e.
+.Dq blindly .
+Code logic should be understood before changing, and it may also need to be
+revisited for the change.
+Please also read the
+.Xr condvar 9
+man page.
+.Pp
+The
+.Fn tsleep
+and
+.Fn mtsleep ,
+and
+.Fn wakeup
+pairs should generally be replaced by
+.Xr cv_wait 9 /
+.Xr cv_wait_sig 9 /
+.Xr cv_timedwait 9 /
+.Xr cv_timedwait_sig 9
+and
+.Xr cv_signal 9 /
+.Xr cv_broadcast 9
+pairs.
+The
+.Fn cv_wait*
+variant to use can be determinded from looking at the corresponding
+.Fn tsleep
+usage.
+.Pp
+There are two arguments of interest:
+.Ar timo
+and
+.Ar priority .
+The
+.Ar priority
+value may have OR'ed the flag
+.Dv PCATCH .
+.Pp
+The
+.Dv PCATCH
+flag means that the blocking thread should be awoken on signal, and
+the sleep call should be replaced with
+.Xr cv_wait_sig 9 .
+.Pp
+The
+.Ar timo
+value, if it is not zero, indicates how long to sleep, and
+the sleep call should be replaced with
+.Xr cv_timedwait 9 .
+.Pp
+If both the
+.Dv PCATCH
+flag and a non-zero
+.Ar timo
+value are specified, then
+.Xr cv_timedwait_sig 9
+should be used.
+.Pp
+A
+.Xr mutex 9
+(interlock) must be held across
+.Fn cv_wait
+and
+.Fn cv_broadcast
+calls, in order to protect state.
+Most old code will require the addition of locking, whereas some will
+require amending to remove
+.Dv PNORELOCK .
 .Sh SEE ALSO
 .Xr sigaction 2 ,
 .Xr condvar 9 ,
 .Xr hz 9 ,
-.Xr lock 9 ,
 .Xr mutex 9 ,
 .Xr rwlock 9
 .Sh HISTORY

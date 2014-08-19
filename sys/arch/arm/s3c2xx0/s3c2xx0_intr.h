@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2xx0_intr.h,v 1.14 2012/01/30 03:28:33 nisimura Exp $ */
+/*	$NetBSD: s3c2xx0_intr.h,v 1.14.6.1 2014/08/20 00:02:47 tls Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -72,7 +72,7 @@
 #ifndef _S3C2XX0_INTR_H_
 #define _S3C2XX0_INTR_H_
 
-
+#include <sys/evcnt.h>
 
 #include <arm/cpu.h>
 #include <arm/armreg.h>

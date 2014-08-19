@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.245 2012/07/28 23:08:57 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.245.2.1 2014/08/20 00:03:18 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245 2012/07/28 23:08:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245.2.1 2014/08/20 00:03:18 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245 2012/07/28 23:08:57 matt Exp $");
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -140,7 +141,6 @@ mach_init(int argc, int32_t *argv32, int code, intptr_t cv, u_int bim, char *bip
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	void *ssym = 0;
 	struct btinfo_symtab *bi_syms;
-	struct exec *aout;		/* XXX backwards compatilbity for DDB */
 #endif
 	extern char edata[], end[];	/* XXX */
 
@@ -162,7 +162,9 @@ mach_init(int argc, int32_t *argv32, int code, intptr_t cv, u_int bim, char *bip
 	/* clear the BSS segment */
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
-	aout = (struct exec *)edata;
+#ifdef EXEC_AOUT
+	struct exec *aout = (struct exec *)edata;
+#endif
 
 	/* Was it a valid bootinfo symtab info? */
 	if (bi_syms != NULL) {
@@ -215,6 +217,8 @@ mach_init(int argc, int32_t *argv32, int code, intptr_t cv, u_int bim, char *bip
 #if 0
 	if (bootinfo_msg != NULL)
 		printf(bootinfo_msg);
+#else
+	__USE(bootinfo_msg);
 #endif
 	/*
 	 * Set the VM page size.
@@ -383,7 +387,7 @@ cpu_startup(void)
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s%s", copyright, version);
-	printf("%s\n", cpu_model);
+	printf("%s\n", cpu_getmodel());
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 

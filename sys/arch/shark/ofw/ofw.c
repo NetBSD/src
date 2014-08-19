@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.59.2.1 2012/11/20 03:01:42 tls Exp $	*/
+/*	$NetBSD: ofw.c,v 1.59.2.2 2014/08/20 00:03:23 tls Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.59.2.1 2012/11/20 03:01:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.59.2.2 2014/08/20 00:03:23 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.59.2.1 2012/11/20 03:01:42 tls Exp $");
 #include <sys/kernel.h>
 #include <sys/reboot.h>
 #include <sys/mbuf.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm.h>
 
@@ -56,10 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.59.2.1 2012/11/20 03:01:42 tls Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/bus.h>
-#include <machine/frame.h>
+
+#include <arm/locore.h>
+
 #include <machine/bootconfig.h>
-#include <machine/cpu.h>
-#include <machine/intr.h>
 #include <machine/irqhandler.h>
 
 #include <dev/ofw/openfirm.h>
@@ -1045,14 +1047,18 @@ ofw_callbackhandler(void *v)
 
 		/* Install new mappings. */
 		{
-			pt_entry_t *pte = vtopte(va);
-			int npages = size >> PGSHIFT;
-
+			pt_entry_t *ptep = vtopte(va);
+			KASSERT(ptep + size / L2_S_SIZE == vtopte(va + size));
+			pt_entry_t npte = pa | L2_TYPE_S | L2_AP(ap_bits)
+			    | cb_bits;
+			
 			ap_bits >>= 10;
-			for (; npages > 0; pte++, pa += PAGE_SIZE, npages--)
-				*pte = (pa | L2_AP(ap_bits) | L2_TYPE_S |
-				    cb_bits);
-			PTE_SYNC_RANGE(vtopte(va), size >> PGSHIFT);
+			for (size_t npages = size >> PGSHIFT;
+			     npages-- > 0;
+			     ptep += PAGE_SIZE / L2_S_SIZE, npte += PAGE_SIZE) {
+				l2pte_set(ptep, npte, 0);
+			}
+			PTE_SYNC_RANGE(vtopte(va), size >> L2_S_SHIFT);
 		}
 
 		/* Clean out tlb. */
@@ -1089,12 +1095,14 @@ ofw_callbackhandler(void *v)
 
 		/* Zero the mappings. */
 		{
-			pt_entry_t *pte = vtopte(va);
-			int npages = size >> PGSHIFT;
-
-			for (; npages > 0; pte++, npages--)
-				*pte = 0;
-			PTE_SYNC_RANGE(vtopte(va), size >> PGSHIFT);
+			pt_entry_t *ptep = vtopte(va);
+			
+			for (size_t npages = size >> PGSHIFT;
+			     npages-- > 0;
+			     ptep += PAGE_SIZE / L2_S_SIZE) {
+				l2pte_reset(ptep);
+			}
+			PTE_SYNC_RANGE(vtopte(va), size >> L2_S_SHIFT);
 		}
 
 		/* Clean out tlb. */
@@ -1200,7 +1208,6 @@ ofw_callbackhandler(void *v)
 		args->nreturns = 1;
 	} else if (strcmp(name, "claim-virt") == 0) {
 		vaddr_t va;
-		vsize_t size;
 		vaddr_t align;
 
 		/* XXX - notyet */
@@ -1218,7 +1225,6 @@ ofw_callbackhandler(void *v)
 		args_n_results[nargs] =	0;	/* properly formatted request */
 
 		/* Allocate size bytes with specified alignment. */
-		size = (vsize_t)args_n_results[0];
 		align = (vaddr_t)args_n_results[1];
 		if (align % PAGE_SIZE != 0) {
 			args_n_results[nargs + 1] = -1;
@@ -1237,8 +1243,6 @@ ofw_callbackhandler(void *v)
 			args->nreturns = 3;
 		}
 	} else if (strcmp(name, "release-virt") == 0) {
-		vaddr_t va;
-		vsize_t size;
 
 		/* XXX - notyet */
 		printf("unimplemented ofw callback - %s\n", name);
@@ -1253,10 +1257,6 @@ ofw_callbackhandler(void *v)
 			return;
 		}
 		args_n_results[nargs] =	0;	/* properly formatted request */
-
-		/* Release bytes. */
-		va = (vaddr_t)args_n_results[0];
-		size = (vsize_t)args_n_results[1];
 
 		args->nreturns = 1;
 	} else {

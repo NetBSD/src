@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.10 2011/07/09 17:32:30 matt Exp $	*/
+/*	$NetBSD: sii.c,v 1.10.12.1 2014/08/20 00:03:18 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.10 2011/07/09 17:32:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.10.12.1 2014/08/20 00:03:18 tls Exp $");
 
 #include "sii.h"
 /*
@@ -1757,11 +1757,10 @@ sii_CmdDone(struct siisoftc *sc, int target, int error)
 	/* target:			 which device is done */
 	/* error:			 error code if any errors */
 {
-	ScsiCmd *scsicmd;
 	int i;
 
-	scsicmd = sc->sc_cmd[target];
 #ifdef DIAGNOSTIC
+	ScsiCmd *scsicmd = sc->sc_cmd[target];
 	if (target < 0 || !scsicmd)
 		panic("sii_CmdDone");
 #endif

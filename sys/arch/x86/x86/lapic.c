@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.46 2011/06/12 03:35:50 rmind Exp $	*/
+/*	$NetBSD: lapic.c,v 1.46.12.1 2014/08/20 00:03:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.46 2011/06/12 03:35:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.46.12.1 2014/08/20 00:03:29 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -101,7 +101,7 @@ lapic_map(paddr_t lapic_base)
 	 * to using it at this point.  Be conservative and assume that the MSR
 	 * is not present on the Pentium (is it?).
 	 */
-	if (CPUID2FAMILY(curcpu()->ci_signature) >= 6) {
+	if (CPUID_TO_FAMILY(curcpu()->ci_signature) >= 6) {
 		lapic_base = (paddr_t)rdmsr(LAPIC_MSR);
 		if ((lapic_base & LAPIC_MSR_ADDR) == 0) {
 			lapic_base |= LAPIC_BASE;

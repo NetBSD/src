@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_sigcode.s,v 1.5 2011/02/08 20:20:16 rmind Exp $	*/
+/*	$NetBSD: sunos_sigcode.s,v 1.5.14.1 2014/08/20 00:03:11 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,11 +51,11 @@
  	.data
  	.align	2
 GLOBAL(sunos_sigcode)
-	movl	%sp@(12),%a0	| signal handler addr	(4 bytes)
-	jsr	%a0@		| call signal handler	(2 bytes)
+	movl	12(%sp),%a0	| signal handler addr	(4 bytes)
+	jsr	(%a0)		| call signal handler	(2 bytes)
 	addql	#4,%sp		| pop signal number	(2 bytes)
 	trap	#1		| special syscall entry	(2 bytes)
-	movl	%d0,%sp@(4)	| save errno		(4 bytes)
+	movl	%d0,4(%sp)	| save errno		(4 bytes)
 	moveq	#1,%d0		| syscall == exit	(2 bytes)
 	trap	#0		| exit(errno)		(2 bytes)
 	.align	2

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.118.2.2 2013/02/25 00:29:39 tls Exp $	*/
+/*	$NetBSD: uhub.c,v 1.118.2.3 2014/08/20 00:03:51 tls Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.118.2.2 2013/02/25 00:29:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.118.2.3 2014/08/20 00:03:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,7 +274,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 
 	/*
 	 * To have the best chance of success we do things in the exact same
-	 * order as Windoze98.  This should not be necessary, but some
+	 * order as Windows 98.  This should not be necessary, but some
 	 * devices do not follow the USB specs to the letter.
 	 *
 	 * These are the events on the bus when a hub is attached:
@@ -641,13 +641,13 @@ uhub_rescan(device_t self, const char *ifattr, const int *locators)
 	struct uhub_softc *sc = device_private(self);
 	struct usbd_hub *hub = sc->sc_hub->hub;
 	usbd_device_handle dev;
-	int port, err;
+	int port;
 
 	for (port = 0; port < hub->hubdesc.bNbrPorts; port++) {
 		dev = hub->ports[port].device;
 		if (dev == NULL)
 			continue;
-		err = usbd_reattach_device(sc->sc_dev, dev, port, locators);
+		usbd_reattach_device(sc->sc_dev, dev, port, locators);
 	}
 	return 0;
 }

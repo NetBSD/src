@@ -1,4 +1,4 @@
-/*	$NetBSD: irq_dispatch.S,v 1.12.2.1 2012/11/20 03:01:02 tls Exp $	*/
+/*	$NetBSD: irq_dispatch.S,v 1.12.2.2 2014/08/20 00:02:45 tls Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -70,8 +70,8 @@
 #include "assym.h"
 
 #include <machine/asm.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
+
+#include <arm/locore.h>
 
 #include "opt_arm_intr_impl.h"
 #ifdef ARM_INTR_IMPL
@@ -90,9 +90,8 @@
  *	which can be used by different platforms.
  */
 	.text
-
 	.p2align	5
-ASENTRY_NP(irq_entry)
+ARM_ASENTRY_NP(irq_entry)
 	sub	lr, lr, #0x00000004	/* Adjust the lr */
 
 	PUSHFRAMEINSVC			/* Push an interrupt frame */
@@ -124,16 +123,20 @@ ASENTRY_NP(irq_entry)
 
 	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
 	PULLFRAMEFROMSVCANDEXIT
+#ifdef __thumb__
+	subs	pc, lr, #0		/* Exit */
+#else
 	movs	pc, lr			/* Exit */
+#endif
 
 	.align	0
-
 LOCK_CAS_CHECK_LOCALS
 
 AST_ALIGNMENT_FAULT_LOCALS
+ASEND(irq_entry)
 
 	.p2align	5
-ASENTRY_NP(irq_idle_entry)
+ARM_ASENTRY_NP(irq_idle_entry)
 	PUSHIDLEFRAME
 
 	/*
@@ -171,3 +174,4 @@ ASENTRY_NP(irq_idle_entry)
 	bne	_C_LABEL(dosoftints)	/* dosoftints(void) */
 #endif
 	RET
+ASEND(irq_idle_entry)

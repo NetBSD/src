@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.16 2012/09/07 18:05:11 matt Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.16.2.1 2014/08/20 00:03:19 tls Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.16 2012/09/07 18:05:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.16.2.1 2014/08/20 00:03:19 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.16 2012/09/07 18:05:11 matt Exp $")
  * Initialize the kernel pmap.
  */
 #ifdef MULTIPROCESSOR
-#define	PMAP_SIZE	offsetof(struct pmap, pm_pai[MAXCPUS])
+#define	PMAP_SIZE	offsetof(struct pmap, pm_pai[PMAP_TLB_MAX])
 #else
 #define	PMAP_SIZE	sizeof(struct pmap)
 #endif
@@ -90,7 +90,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 }
 
 void
-pmap_md_page_syncicache(struct vm_page *pg, __cpuset_t onproc)
+pmap_md_page_syncicache(struct vm_page *pg, const kcpuset_t *onproc)
 {
 	/*
 	 * If onproc is empty, we could do a
@@ -160,6 +160,10 @@ pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
 	 */
 	pmap_kernel()->pm_segtab = stp;
 	curcpu()->ci_pmap_kern_segtab = stp;
+#ifdef MULTIPROCESSOR
+	pmap_kernel()->pm_active = kcpuset_running;
+	pmap_kernel()->pm_onproc = kcpuset_running;
+#endif
 
 	KASSERT(endkernel == trunc_page(endkernel));
 

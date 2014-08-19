@@ -1,6 +1,5 @@
 /* Machine independent support for SVR4 /proc (process file system) for GDB.
-   Copyright (C) 1999, 2000, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,7 +29,16 @@ extern void proc_prettyprint_syscalls (sysset_t *sysset, int verbose);
 
 extern void proc_prettyprint_syscall (int num, int verbose);
 
-extern void proc_prettyprint_flags (unsigned long flags, int verbose);
+extern void proc_prettyprint_signalset (sigset_t *sigset, int verbose);
+
+extern void proc_prettyprint_signal (int signo, int verbose);
+
+extern void proc_prettyprint_faultset (fltset_t *fltset, int verbose);
+
+extern void proc_prettyprint_fault (int faultno, int verbose);
+
+extern void proc_prettyprint_actionset (struct sigaction *actions,
+					int verbose);
 
 extern void proc_prettyfprint_signalset (FILE *file, sigset_t *sigset,
 					 int verbose);
@@ -54,6 +62,18 @@ extern void proc_prettyfprint_syscalls (FILE *file, sysset_t *sysset,
 					int verbose);
 
 extern void proc_prettyfprint_status (long, int, int, int);
+
+
+/* From proc-flags.c */
+
+/*
+ * Pretty-print the prstatus flags.
+ */
+
+extern void proc_prettyprint_flags (unsigned long flags, int verbose);
+
+extern void proc_prettyfprint_flags (FILE *file, unsigned long flags,
+				     int verbose);
 
 
 /* From proc-api.c */

@@ -1,4 +1,4 @@
-.\"	$NetBSD: 2.5.t,v 1.3 2003/08/07 10:30:49 agc Exp $
+.\"	$NetBSD: 2.5.t,v 1.3.60.1 2014/08/20 00:02:29 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,8 +29,8 @@
 .\"
 .\"	@(#)2.5.t	8.6 (Berkeley) 5/29/94
 .\"
-.Sh 2 "Process debugging
-.Sh 3 "Traditional debugging
+.Sh 2 38 "Process debugging
+.Sh 3 38 "Traditional debugging
 .LP
 Debuggers traditionally use the
 .Fn ptrace
@@ -73,7 +73,7 @@ The debugger finds (or creates) the process that it wants to
 debug and then issues an attach command via the \fIctl\fP file.
 Further interaction can then be done with the process through
 the other files provided by the \fI/proc\fP filesystem.
-.Sh 3 "Kernel tracing
+.Sh 3 38 "Kernel tracing
 .LP
 Another facility for debugging programs is provided by the
 .Fn ktrace

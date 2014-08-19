@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rproc.c,v 1.2.4.3 2013/06/23 06:20:25 tls Exp $	*/
+/*	$NetBSD: npf_rproc.c,v 1.2.4.4 2014/08/20 00:04:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -261,6 +261,22 @@ npf_rprocset_insert(npf_rprocset_t *rpset, npf_rproc_t *rp)
 	LIST_INSERT_HEAD(&rpset->rps_list, rp, rp_entry);
 }
 
+int
+npf_rprocset_export(const npf_rprocset_t *rpset, prop_array_t rprocs)
+{
+	prop_dictionary_t rpdict;
+	const npf_rproc_t *rp;
+
+	LIST_FOREACH(rp, &rpset->rps_list, rp_entry) {
+		rpdict = prop_dictionary_create();
+		prop_dictionary_set_cstring(rpdict, "name", rp->rp_name);
+		prop_dictionary_set_uint32(rpdict, "flags", rp->rp_flags);
+		prop_array_add(rprocs, rpdict);
+		prop_object_release(rpdict);
+	}
+	return 0;
+}
+
 /*
  * npf_rproc_create: construct a new rule procedure, lookup and associate
  * the extension calls with it.
@@ -330,12 +346,12 @@ npf_rproc_assign(npf_rproc_t *rp, void *params)
  *
  * => Reference on the rule procedure must be held.
  */
-void
-npf_rproc_run(npf_cache_t *npc, nbuf_t *nbuf, npf_rproc_t *rp, int *decision)
+bool
+npf_rproc_run(npf_cache_t *npc, npf_rproc_t *rp, int *decision)
 {
 	const unsigned extcount = rp->rp_ext_count;
 
-	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
+	KASSERT(!nbuf_flag_p(npc->npc_nbuf, NBUF_DATAREF_RESET));
 	KASSERT(rp->rp_refcnt > 0);
 
 	for (unsigned i = 0; i < extcount; i++) {
@@ -343,10 +359,14 @@ npf_rproc_run(npf_cache_t *npc, nbuf_t *nbuf, npf_rproc_t *rp, int *decision)
 		const npf_ext_ops_t *extops = ext->ext_ops;
 
 		KASSERT(ext->ext_refcnt > 0);
-		extops->proc(npc, nbuf, rp->rp_ext_meta[i], decision);
+		if (!extops->proc(npc, rp->rp_ext_meta[i], decision)) {
+			return false;
+		}
 
-		if (nbuf_flag_p(nbuf, NBUF_DATAREF_RESET)) {
-			npf_recache(npc, nbuf);
+		if (nbuf_flag_p(npc->npc_nbuf, NBUF_DATAREF_RESET)) {
+			npf_recache(npc);
 		}
 	}
+
+	return true;
 }

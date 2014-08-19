@@ -1,4 +1,4 @@
-# Copyright 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2007-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,18 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 load_lib "ada.exp"
 
-set testdir "catch_ex"
-set testfile "${testdir}/foo"
-set srcfile ${srcdir}/${subdir}/${testfile}.adb
-set binfile ${objdir}/${subdir}/${testfile}
+standard_ada_testfile foo
 
-file mkdir ${objdir}/${subdir}/${testdir}
 if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug additional_flags=-gnata ]] != "" } {
   return -1
 }
@@ -56,7 +48,7 @@ gdb_test_multiple "catch exception" $msg {
     -re "Catchpoint $any_nb: all Ada exceptions$eol$gdb_prompt $" {
 	pass $msg
     }
-    -re "Cannot break on __gnat_raise_nodefer_with_msg in this configuration\.$eol$gdb_prompt $" {
+    -re "Your Ada runtime appears to be missing some debugging information.*$eol$gdb_prompt $" {
 	# If the runtime was not built with enough debug information,
 	# or if it was stripped, we can not test exception
 	# catchpoints.
@@ -144,5 +136,35 @@ gdb_test "continue" \
 gdb_test "continue" \
          "Continuing\..*$inferior_exited_re.*" \
          "continuing to program completion"
+
+#################################
+# 3. Try temporary catchpoints. #
+#################################
+
+# Scenario:
+#   - Insert a temporary catchpoint on all exceptions.
+#   - Run to that catchpoint
+#   - Continue; we should reach the program's exit, not stopping
+#     at any of the other exceptions that are being raised inside
+#     the program.
+
+if ![runto_main] then {
+   fail "Cannot run to main, testcase aborted"
+   return 0
+}
+
+gdb_test "tcatch exception" \
+         "Temporary catchpoint $any_nb: all Ada exceptions"
+
+set temp_catchpoint_msg \
+  "Temporary catchpoint $any_nb, CONSTRAINT_ERROR at $any_addr in foo \\\(\\\).*at .*foo.adb:$any_nb"
+gdb_test "continue" \
+         "Continuing\.$eol$temp_catchpoint_msg$eol.*SPOT1" \
+         "continuing to temporary catchpoint"
+
+gdb_test "continue" \
+         "Continuing\..*$inferior_exited_re.*" \
+         "continuing to program completion"
+
 
 

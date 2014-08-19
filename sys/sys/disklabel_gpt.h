@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_gpt.h,v 1.9.12.1 2013/02/25 00:30:11 tls Exp $	*/
+/*	$NetBSD: disklabel_gpt.h,v 1.9.12.2 2014/08/20 00:04:44 tls Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -88,6 +88,13 @@ struct gpt_ent {
 					/* UEFI won't recognize file system */
 #define	GPT_ENT_ATTR_LEGACY_BIOS_BOOTABLE	(1ULL << 2)
 					/* legacy BIOS boot partition */
+/* The following three entries are from FreeBSD. */
+#define GPT_ENT_ATTR_BOOTME			(1ULL << 59)
+					/* indicates a bootable partition */
+#define GPT_ENT_ATTR_BOOTONCE			(1ULL << 58)
+				/* attempt to boot this partition only once */
+#define GPT_ENT_ATTR_BOOTFAILED			(1ULL << 57)
+		/* partition that was marked bootonce but failed to boot */
 
 /*
  * Partition types defined by the EFI specification:
@@ -127,6 +134,8 @@ struct gpt_ent {
 	{0x516e7cb6,0x6ecf,0x11d6,0x8f,0xf8,{0x00,0x02,0x2d,0x09,0x71,0x2b}}
 #define	GPT_ENT_TYPE_FREEBSD_VINUM	\
 	{0x516e7cb8,0x6ecf,0x11d6,0x8f,0xf8,{0x00,0x02,0x2d,0x09,0x71,0x2b}}
+#define GPT_ENT_TYPE_FREEBSD_ZFS	\
+	{0x516e7cba,0x6ecf,0x11d6,0x8f,0xf8,{0x00,0x02,0x2d,0x09,0x71,0x2b}}
 /*
  * The following are unused but documented here to avoid reuse.
  *

@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.8.2.2 2013/06/23 06:21:08 tls Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.8.2.3 2014/08/20 00:02:21 tls Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -40,7 +40,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.8.2.2 2013/06/23 06:21:08 tls Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.8.2.3 2014/08/20 00:02:21 tls Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -48,9 +48,9 @@ __RCSID("$NetBSD: rumpuser_dl.c,v 1.8.2.2 2013/06/23 06:21:08 tls Exp $");
 #include <assert.h>
 
 #include <dlfcn.h>
-#include <elf.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,8 +59,9 @@ __RCSID("$NetBSD: rumpuser_dl.c,v 1.8.2.2 2013/06/23 06:21:08 tls Exp $");
 #include <rump/rumpuser.h>
 
 #if defined(__ELF__) && (defined(__NetBSD__) || defined(__FreeBSD__)	\
-    || (defined(__sun__) && defined(__svr4__))) || defined(__linux__)	\
-    || defined(__DragonFly__)
+    || (defined(__sun__) && defined(__svr4__))) || defined(__DragonFly__)	\
+    || (defined(__linux__) && !defined(__ANDROID__))
+#include <elf.h>
 #include <link.h>
 
 static size_t symtabsize = 0, strtabsize = 0;
@@ -144,17 +145,19 @@ do {									\
 
 /*
  * On NetBSD, the dynamic section pointer values seem to be relative to
- * the address the dso is mapped at.  On Linux, they seem to contain
+ * the address the dso is mapped at.  On glibc, they seem to contain
  * the absolute address.  I couldn't find anything definite from a quick
  * read of the standard and therefore I will not go and figure beyond ifdef.
- * On Solaris and DragonFly, the main object works differently ... uuuuh.
+ * On Solaris and DragonFly / FreeBSD, the main object works differently
+ * ... uuuuh.
  */
-#if defined(__linux__)
+#if defined(__GLIBC__) && !defined(__mips__)
 #define adjptr(_map_, _ptr_) ((void *)(_ptr_))
 #elif defined(__sun__) || defined(__DragonFly__) || defined(__FreeBSD__)
 #define adjptr(_map_, _ptr_) \
     (ismainobj ? (void *)(_ptr_) : (void *)(_map_->l_addr + (_ptr_)))
 #else
+/* NetBSD and some others, e.g. Linux + musl */
 #define adjptr(_map_, _ptr_) ((void *)(_map_->l_addr + (_ptr_)))
 #endif
 
@@ -379,12 +382,31 @@ rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
 	int error;
 
 	mainhandle = dlopen(NULL, RTLD_NOW);
+	/* Will be null if statically linked so just return */
+	if (mainhandle == NULL)
+		return;
 	if (dlinfo(mainhandle, RTLD_DI_LINKMAP, &mainmap) == -1) {
 		fprintf(stderr, "warning: rumpuser module bootstrap "
 		    "failed: %s\n", dlerror());
 		return;
 	}
 	origmap = mainmap;
+
+	/*
+	 * Use a heuristic to determine if we are static linked.
+	 * A dynamically linked binary should always have at least
+	 * two objects: itself and ld.so.
+	 *
+	 * In a statically linked binary with glibc the linkmap
+	 * contains some "info" that leads to a segfault.  Since we
+	 * can't really do anything useful in here without ld.so, just
+	 * simply bail and let the symbol references in librump do the
+	 * right things.
+	 */
+	if (origmap->l_next == NULL && origmap->l_prev == NULL) {
+		dlclose(mainhandle);
+		return;
+	}
 
 	/*
 	 * Process last->first because that's the most probable
@@ -465,10 +487,3 @@ rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
 	return;
 }
 #endif
-
-void *
-rumpuser_dl_globalsym(const char *symname)
-{
-
-	return dlsym(RTLD_DEFAULT, symname);
-}

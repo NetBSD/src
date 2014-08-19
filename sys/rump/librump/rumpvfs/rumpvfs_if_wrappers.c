@@ -1,9 +1,9 @@
-/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.9.18.1 2012/11/20 03:02:50 tls Exp $	*/
+/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.9.18.2 2014/08/20 00:04:42 tls Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpvfs.ifspec,v 1.8 2012/11/18 18:39:23 pooka Exp 
- * by:   NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp 
+ * from: NetBSD: rumpvfs.ifspec,v 1.9 2014/04/25 13:10:42 pooka Exp 
+ * by:   NetBSD: makerumpif.sh,v 1.8 2014/04/25 17:50:01 pooka Exp 
  */
 
 #include <sys/cdefs.h>
@@ -141,42 +141,6 @@ rump_pub_vp_interlock(struct vnode *arg1)
 	rump_schedule();
 	rump_vp_interlock(arg1);
 	rump_unschedule();
-}
-
-int
-rump_pub_etfs_register(const char *arg1, const char *arg2, enum rump_etfs_type arg3)
-{
-	int rv;
-
-	rump_schedule();
-	rv = rump_etfs_register(arg1, arg2, arg3);
-	rump_unschedule();
-
-	return rv;
-}
-
-int
-rump_pub_etfs_register_withsize(const char *arg1, const char *arg2, enum rump_etfs_type arg3, uint64_t arg4, uint64_t arg5)
-{
-	int rv;
-
-	rump_schedule();
-	rv = rump_etfs_register_withsize(arg1, arg2, arg3, arg4, arg5);
-	rump_unschedule();
-
-	return rv;
-}
-
-int
-rump_pub_etfs_remove(const char *arg1)
-{
-	int rv;
-
-	rump_schedule();
-	rv = rump_etfs_remove(arg1);
-	rump_unschedule();
-
-	return rv;
 }
 
 void

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: MILAN.in,v 1.26 2012/06/05 08:44:07 abs Exp $
+#	$NetBSD: MILAN.in,v 1.26.2.1 2014/08/20 00:02:48 tls Exp $
 #
 # Milan
 #
@@ -23,7 +23,7 @@ options 	WS_KERNEL_FG=WSCOL_WHITE
 options 	WS_KERNEL_BG=WSCOL_BLACK
 
 # compatibility to other console drivers
-#options 	WSDISPLAY_COMPAT_USL	# wsconscfg VT handling
+options 	WSDISPLAY_COMPAT_USL	# wsconscfg VT handling
 #options 	WSDISPLAY_COMPAT_RAWKBD	# can get raw scancodes
 
 # see dev/pckbport/wskbdmap_mfii.c for implemented layouts

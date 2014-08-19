@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_demux.c,v 1.4 2011/07/16 12:20:01 jmcneill Exp $ */
+/* $NetBSD: dtv_demux.c,v 1.4.12.1 2014/08/20 00:03:36 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -52,7 +52,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.4 2011/07/16 12:20:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.4.12.1 2014/08/20 00:03:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -305,7 +305,7 @@ dtv_demux_open(struct dtv_softc *sc, int flags, int mode, lwp_t *l)
 	/* Default operation mode is unconfigured */
 	demux->dd_mode = DTV_DEMUX_MODE_NONE;
 	selinit(&demux->dd_sel);
-	mutex_init(&demux->dd_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&demux->dd_lock, MUTEX_DEFAULT, IPL_SCHED);
 	cv_init(&demux->dd_section_cv, "dtvsec");
 
 	error = fd_allocfile(&fp, &fd);
@@ -368,7 +368,6 @@ static int
 dtv_demux_ioctl(struct file *fp, u_long cmd, void *data)
 {
 	struct dtv_demux *demux = fp->f_data;
-	struct dtv_softc *sc;
 	struct dmx_pes_filter_params *pesfilt;
 	struct dmx_sct_filter_params *sctfilt;
 	uint16_t pid;
@@ -376,7 +375,6 @@ dtv_demux_ioctl(struct file *fp, u_long cmd, void *data)
 
 	if (demux == NULL)
 		return ENXIO;
-	sc = demux->dd_sc;
 
 	switch (cmd) {
 	case DMX_START:

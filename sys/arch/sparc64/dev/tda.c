@@ -1,4 +1,4 @@
-/*	$NetBSD: tda.c,v 1.5.2.2 2013/02/25 00:28:59 tls Exp $	*/
+/*	$NetBSD: tda.c,v 1.5.2.3 2014/08/20 00:03:25 tls Exp $	*/
 /*	$OpenBSD: tda.c,v 1.4 2008/02/27 17:25:00 robert Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tda.c,v 1.5.2.2 2013/02/25 00:28:59 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tda.c,v 1.5.2.3 2014/08/20 00:03:25 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,12 +89,9 @@ int
 tda_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
-	char name[32];
 
 	/* Only attach on the Sun Blade 1000/2000. */
-	if (OF_getprop(findroot(), "name", name, sizeof(name)) <= 0)
-		return (0);
-	if (strcmp(name, "SUNW,Sun-Blade-1000") != 0)
+	if (strcmp(machine_model, "SUNW,Sun-Blade-1000") != 0)
 		return (0);
 
 	/*

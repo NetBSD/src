@@ -1,6 +1,5 @@
 /* Generic simulator abort.
-   Copyright (C) 1997, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -43,17 +42,17 @@ sim_engine_abort (SIM_DESC sd,
   if (sd != NULL)
     {
       va_list ap;
-      va_start(ap, fmt);
+      va_start (ap, fmt);
       sim_io_evprintf (sd, fmt, ap);
-      va_end(ap);
+      va_end (ap);
       sim_io_error (sd, "\n");
     }
   else
     {
       va_list ap;
-      va_start(ap, fmt);
+      va_start (ap, fmt);
       vfprintf (stderr, fmt, ap);
-      va_end(ap);
+      va_end (ap);
       fprintf (stderr, "\n");
       abort ();
     }

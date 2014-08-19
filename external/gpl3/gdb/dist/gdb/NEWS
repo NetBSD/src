@@ -1,6 +1,1080 @@
 		What has changed in GDB?
 	     (Organized release by release)
 
+*** Changes in GDB 7.7
+
+* GDB now supports SystemTap SDT probes on AArch64 GNU/Linux.
+
+* GDB now supports Fission DWP file format version 2.
+  http://gcc.gnu.org/wiki/DebugFission
+
+* New convenience function "$_isvoid", to check whether an expression
+  is void.  A void expression is an expression where the type of the
+  result is "void".  For example, some convenience variables may be
+  "void" when evaluated (e.g., "$_exitcode" before the execution of
+  the program being debugged; or an undefined convenience variable).
+  Another example, when calling a function whose return type is
+  "void".
+
+* The "maintenance print objfiles" command now takes an optional regexp.
+
+* The "catch syscall" command now works on arm*-linux* targets.
+
+* GDB now consistently shows "<not saved>" when printing values of
+  registers the debug info indicates have not been saved in the frame
+  and there's nowhere to retrieve them from
+  (callee-saved/call-clobbered registers):
+
+    (gdb) p $rax
+    $1 = <not saved>
+
+    (gdb) info registers rax
+    rax            <not saved>
+
+  Before, the former would print "<optimized out>", and the latter
+  "*value not available*".
+
+* New script contrib/gdb-add-index.sh for adding .gdb_index sections
+  to binaries.
+
+* Python scripting
+
+  ** Frame filters and frame decorators have been added.
+  ** Temporary breakpoints are now supported.
+  ** Line tables representation has been added.
+  ** New attribute 'parent_type' for gdb.Field objects.
+  ** gdb.Field objects can be used as subscripts on gdb.Value objects.
+  ** New attribute 'name' for gdb.Type objects.
+
+* New targets
+
+Nios II ELF 			nios2*-*-elf
+Nios II GNU/Linux		nios2*-*-linux
+Texas Instruments MSP430	msp430*-*-elf
+
+* Removed native configurations
+
+Support for these a.out NetBSD and OpenBSD obsolete configurations has
+been removed.  ELF variants of these configurations are kept supported.
+
+arm*-*-netbsd*              but arm*-*-netbsdelf*       is kept supported.
+i[34567]86-*-netbsd*        but i[34567]86-*-netbsdelf* is kept supported.
+i[34567]86-*-openbsd[0-2].* but i[34567]86-*-openbsd*   is kept supported.
+i[34567]86-*-openbsd3.[0-3]
+m68*-*-netbsd*              but m68*-*-netbsdelf*       is kept supported.
+sparc-*-netbsd*             but sparc-*-netbsdelf*      is kept supported.
+vax-*-netbsd*               but vax-*-netbsdelf*        is kept supported.
+
+* New commands:
+catch rethrow
+  Like "catch throw", but catches a re-thrown exception.
+maint check-psymtabs
+  Renamed from old "maint check-symtabs".
+maint check-symtabs
+  Perform consistency checks on symtabs.
+maint expand-symtabs
+  Expand symtabs matching an optional regexp.
+
+show configuration
+  Display the details of GDB configure-time options.
+
+maint set|show per-command
+maint set|show per-command space
+maint set|show per-command time
+maint set|show per-command symtab
+  Enable display of per-command gdb resource usage.
+
+remove-symbol-file FILENAME
+remove-symbol-file -a ADDRESS
+  Remove a symbol file added via add-symbol-file.  The file to remove
+  can be identified by its filename or by an address that lies within
+  the boundaries of this symbol file in memory.
+
+info exceptions
+info exceptions REGEXP
+  Display the list of Ada exceptions defined in the program being
+  debugged.  If provided, only the exceptions whose names match REGEXP
+  are listed.
+
+* New options
+
+set debug symfile off|on
+show debug symfile
+  Control display of debugging info regarding reading symbol files and
+  symbol tables within those files
+
+set print raw frame-arguments
+show print raw frame-arguments
+  Set/show whether to print frame arguments in raw mode,
+  disregarding any defined pretty-printers.
+
+set remote trace-status-packet
+show remote trace-status-packet
+  Set/show the use of remote protocol qTStatus packet.
+
+set debug nios2
+show debug nios2
+  Control display of debugging messages related to Nios II targets.
+
+set range-stepping
+show range-stepping
+  Control whether target-assisted range stepping is enabled.
+
+set startup-with-shell
+show startup-with-shell
+  Specifies whether Unix child processes are started via a shell or
+  directly.
+
+set code-cache
+show code-cache
+  Use the target memory cache for accesses to the code segment.  This
+  improves performance of remote debugging (particularly disassembly).
+
+* You can now use a literal value 'unlimited' for options that
+  interpret 0 or -1 as meaning "unlimited".  E.g., "set
+  trace-buffer-size unlimited" is now an alias for "set
+  trace-buffer-size -1" and "set height unlimited" is now an alias for
+  "set height 0".
+
+* The "set debug symtab-create" debugging option of GDB has been changed to
+  accept a verbosity level.  0 means "off", 1 provides basic debugging
+  output, and values of 2 or greater provides more verbose output.
+
+* New command-line options
+--configuration
+  Display the details of GDB configure-time options.
+
+* The command 'tsave' can now support new option '-ctf' to save trace
+  buffer in Common Trace Format.
+
+* Newly installed $prefix/bin/gcore acts as a shell interface for the
+  GDB command gcore.
+
+* GDB now implements the the C++ 'typeid' operator.
+
+* The new convenience variable $_exception holds the exception being
+  thrown or caught at an exception-related catchpoint.
+
+* The exception-related catchpoints, like "catch throw", now accept a
+  regular expression which can be used to filter exceptions by type.
+
+* The new convenience variable $_exitsignal is automatically set to
+  the terminating signal number when the program being debugged dies
+  due to an uncaught signal.
+
+* MI changes
+
+  ** All MI commands now accept an optional "--language" option.
+     Support for this feature can be verified by using the "-list-features"
+     command, which should contain "language-option".
+
+  ** The new command -info-gdb-mi-command allows the user to determine
+     whether a GDB/MI command is supported or not.
+
+  ** The "^error" result record returned when trying to execute an undefined
+     GDB/MI command now provides a variable named "code" whose content is the
+     "undefined-command" error code.  Support for this feature can be verified
+     by using the "-list-features" command, which should contain
+     "undefined-command-error-code".
+
+  ** The -trace-save MI command can optionally save trace buffer in Common
+     Trace Format now.
+
+  ** The new command -dprintf-insert sets a dynamic printf breakpoint.
+
+  ** The command -data-list-register-values now accepts an optional
+     "--skip-unavailable" option.  When used, only the available registers
+     are displayed.
+
+  ** The new command -trace-frame-collected dumps collected variables,
+     computed expressions, tvars, memory and registers in a traceframe.
+
+  ** The commands -stack-list-locals, -stack-list-arguments and
+     -stack-list-variables now accept an option "--skip-unavailable".
+     When used, only the available locals or arguments are displayed.
+
+  ** The -exec-run command now accepts an optional "--start" option.
+     When used, the command follows the same semantics as the "start"
+     command, stopping the program's execution at the start of its
+     main subprogram.  Support for this feature can be verified using
+     the "-list-features" command, which should contain
+     "exec-run-start-option".
+
+  ** The new commands -catch-assert and -catch-exceptions insert
+     catchpoints stopping the program when Ada exceptions are raised.
+
+  ** The new command -info-ada-exceptions provides the equivalent of
+     the new "info exceptions" command.
+
+* New system-wide configuration scripts
+  A GDB installation now provides scripts suitable for use as system-wide
+  configuration scripts for the following systems:
+    ** ElinOS
+    ** Wind River Linux
+
+* GDB now supports target-assigned range stepping with remote targets.
+  This improves the performance of stepping source lines by reducing
+  the number of control packets from/to GDB.  See "New remote packets"
+  below.
+
+* GDB now understands the element 'tvar' in the XML traceframe info.
+  It has the id of the collected trace state variables.
+
+* On S/390 targets that provide the transactional-execution feature,
+  the program interruption transaction diagnostic block (TDB) is now
+  represented as a number of additional "registers" in GDB.
+
+* New remote packets
+
+vCont;r
+
+  The vCont packet supports a new 'r' action, that tells the remote
+  stub to step through an address range itself, without GDB
+  involvemement at each single-step.
+
+qXfer:libraries-svr4:read's annex
+  The previously unused annex of the qXfer:libraries-svr4:read packet
+  is now used to support passing an argument list.  The remote stub
+  reports support for this argument list to GDB's qSupported query.
+  The defined arguments are "start" and "prev", used to reduce work
+  necessary for library list updating, resulting in significant
+  speedup.
+
+* New features in the GDB remote stub, GDBserver
+
+  ** GDBserver now supports target-assisted range stepping.  Currently
+     enabled on x86/x86_64 GNU/Linux targets.
+
+  ** GDBserver now adds element 'tvar' in the XML in the reply to
+     'qXfer:traceframe-info:read'.  It has the id of the collected
+     trace state variables.
+
+  ** GDBserver now supports hardware watchpoints on the MIPS GNU/Linux
+     target.
+
+* New 'z' formatter for printing and examining memory, this displays the
+  value as hexadecimal zero padded on the left to the size of the type.
+
+* GDB can now use Windows x64 unwinding data.
+
+* The "set remotebaud" command has been replaced by "set serial baud".
+  Similarly, "show remotebaud" has been replaced by "show serial baud".
+  The "set remotebaud" and "show remotebaud" commands are still available
+  to provide backward compatibility with older versions of GDB.
+
+*** Changes in GDB 7.6
+
+* Target record has been renamed to record-full.
+  Record/replay is now enabled with the "record full" command.
+  This also affects settings that are associated with full record/replay
+  that have been moved from "set/show record" to "set/show record full":
+
+set|show record full insn-number-max
+set|show record full stop-at-limit
+set|show record full memory-query
+
+* A new record target "record-btrace" has been added.  The new target
+  uses hardware support to record the control-flow of a process.  It
+  does not support replaying the execution, but it implements the
+  below new commands for investigating the recorded execution log.
+  This new recording method can be enabled using:
+
+record btrace
+
+  The "record-btrace" target is only available on Intel Atom processors
+  and requires a Linux kernel 2.6.32 or later.
+
+* Two new commands have been added for record/replay to give information
+  about the recorded execution without having to replay the execution.
+  The commands are only supported by "record btrace".
+
+record instruction-history      prints the execution history at
+                                instruction granularity
+
+record function-call-history    prints the execution history at
+                                function granularity
+
+* New native configurations
+
+ARM AArch64 GNU/Linux		aarch64*-*-linux-gnu
+FreeBSD/powerpc			powerpc*-*-freebsd
+x86_64/Cygwin			x86_64-*-cygwin*
+Tilera TILE-Gx GNU/Linux	tilegx*-*-linux-gnu
+
+* New targets
+
+ARM AArch64			aarch64*-*-elf
+ARM AArch64 GNU/Linux		aarch64*-*-linux
+Lynx 178 PowerPC		powerpc-*-lynx*178
+x86_64/Cygwin			x86_64-*-cygwin*
+Tilera TILE-Gx GNU/Linux	tilegx*-*-linux
+
+* If the configured location of system.gdbinit file (as given by the
+  --with-system-gdbinit option at configure time) is in the
+  data-directory (as specified by --with-gdb-datadir at configure
+  time) or in one of its subdirectories, then GDB will look for the
+  system-wide init file in the directory specified by the
+  --data-directory command-line option.
+
+* New command line options:
+
+-nh   Disables auto-loading of ~/.gdbinit, but still executes all the
+      other initialization files, unlike -nx which disables all of them.
+
+* Removed command line options
+
+-epoch  This was used by the gdb mode in Epoch, an ancient fork of
+        Emacs.
+
+* The 'ptype' and 'whatis' commands now accept an argument to control
+  type formatting.
+
+* 'info proc' now works on some core files.
+
+* Python scripting
+
+  ** Vectors can be created with gdb.Type.vector.
+
+  ** Python's atexit.register now works in GDB.
+
+  ** Types can be pretty-printed via a Python API.
+
+  ** Python 3 is now supported (in addition to Python 2.4 or later)
+
+  ** New class gdb.Architecture exposes GDB's internal representation
+     of architecture in the Python API.
+
+  ** New method Frame.architecture returns the gdb.Architecture object
+     corresponding to the frame's architecture.
+
+* New Python-based convenience functions:
+
+  ** $_memeq(buf1, buf2, length)
+  ** $_streq(str1, str2)
+  ** $_strlen(str)
+  ** $_regex(str, regex)
+
+* The 'cd' command now defaults to using '~' (the home directory) if not
+  given an argument.
+
+* The C++ ABI now defaults to the GNU v3 ABI.  This has been the
+  default for GCC since November 2000.
+
+* The command 'forward-search' can now be abbreviated as 'fo'.
+
+* The command 'info tracepoints' can now display 'installed on target'
+  or 'not installed on target' for each non-pending location of tracepoint.
+
+* New configure options
+
+--enable-libmcheck/--disable-libmcheck
+  By default, development versions are built with -lmcheck on hosts
+  that support it, in order to help track memory corruption issues.
+  Release versions, on the other hand, are built without -lmcheck
+  by default.  The --enable-libmcheck/--disable-libmcheck configure
+  options allow the user to override that default.
+--with-babeltrace/--with-babeltrace-include/--with-babeltrace-lib
+  This configure option allows the user to build GDB with
+  libbabeltrace using which GDB can read Common Trace Format data.
+
+* New commands (for set/show, see "New options" below)
+
+catch signal 
+  Catch signals.  This is similar to "handle", but allows commands and
+  conditions to be attached.
+
+maint info bfds
+  List the BFDs known to GDB.
+
+python-interactive [command]
+pi [command]
+  Start a Python interactive prompt, or evaluate the optional command
+  and print the result of expressions.
+
+py [command]
+  "py" is a new alias for "python".
+
+enable type-printer [name]...
+disable type-printer [name]...
+  Enable or disable type printers.
+
+* Removed commands
+
+  ** For the Renesas Super-H architecture, the "regs" command has been removed
+     (has been deprecated in GDB 7.5), and "info all-registers" should be used
+     instead.
+
+* New options
+
+set print type methods (on|off)
+show print type methods
+  Control whether method declarations are displayed by "ptype".
+  The default is to show them.
+
+set print type typedefs (on|off)
+show print type typedefs
+  Control whether typedef definitions are displayed by "ptype".
+  The default is to show them.
+
+set filename-display basename|relative|absolute
+show filename-display
+  Control the way in which filenames is displayed.
+  The default is "relative", which preserves previous behavior.
+
+set trace-buffer-size
+show trace-buffer-size
+  Request target to change the size of trace buffer.
+
+set remote trace-buffer-size-packet auto|on|off
+show remote trace-buffer-size-packet
+  Control the use of the remote protocol `QTBuffer:size' packet.
+
+set debug aarch64
+show debug aarch64
+  Control display of debugging messages related to ARM AArch64.
+  The default is off.
+
+set debug coff-pe-read
+show debug coff-pe-read
+  Control display of debugging messages related to reading of COFF/PE
+  exported symbols.
+
+set debug mach-o
+show debug mach-o
+  Control display of debugging messages related to Mach-O symbols
+  processing.
+
+set debug notification
+show debug notification
+  Control display of debugging info for async remote notification.
+
+* MI changes
+
+  ** Command parameter changes are now notified using new async record
+     "=cmd-param-changed".
+  ** Trace frame changes caused by command "tfind" are now notified using
+     new async record "=traceframe-changed".
+  ** The creation, deletion and modification of trace state variables
+     are now notified using new async records "=tsv-created",
+     "=tsv-deleted" and "=tsv-modified".
+  ** The start and stop of process record are now notified using new
+     async record "=record-started" and "=record-stopped".
+  ** Memory changes are now notified using new async record
+     "=memory-changed".
+  ** The data-disassemble command response will include a "fullname" field
+     containing the absolute file name when source has been requested.
+  ** New optional parameter COUNT added to the "-data-write-memory-bytes" 
+     command, to allow pattern filling of memory areas.
+  ** New commands "-catch-load"/"-catch-unload" added for intercepting
+     library load/unload events.
+  ** The response to breakpoint commands and breakpoint async records
+     includes an "installed" field containing a boolean state about each
+     non-pending tracepoint location is whether installed on target or not.
+  ** Output of the "-trace-status" command includes a "trace-file" field 
+     containing the name of the trace file being examined.  This field is
+     optional, and only present when examining a trace file.
+  ** The "fullname" field is now always present along with the "file" field,
+     even if the file cannot be found by GDB.
+
+* GDB now supports the "mini debuginfo" section, .gnu_debugdata.
+  You must have the LZMA library available when configuring GDB for this
+  feature to be enabled.  For more information, see:
+      http://fedoraproject.org/wiki/Features/MiniDebugInfo
+
+* New remote packets
+
+QTBuffer:size
+   Set the size of trace buffer.  The remote stub reports support for this
+   packet to gdb's qSupported query.
+
+Qbtrace:bts
+  Enable Branch Trace Store (BTS)-based branch tracing for the current
+  thread.  The remote stub reports support for this packet to gdb's
+  qSupported query.
+
+Qbtrace:off
+  Disable branch tracing for the current thread.  The remote stub reports
+  support for this packet to gdb's qSupported query.
+
+qXfer:btrace:read
+  Read the traced branches for the current thread.  The remote stub
+  reports support for this packet to gdb's qSupported query.
+
+*** Changes in GDB 7.5
+
+* GDB now supports x32 ABI.  Visit <http://sites.google.com/site/x32abi/>
+  for more x32 ABI info.
+
+* GDB now supports access to MIPS DSP registers on Linux targets.
+
+* GDB now supports debugging microMIPS binaries.
+
+* The "info os" command on GNU/Linux can now display information on
+  several new classes of objects managed by the operating system:
+    "info os procgroups" lists process groups
+    "info os files" lists file descriptors
+    "info os sockets" lists internet-domain sockets
+    "info os shm" lists shared-memory regions
+    "info os semaphores" lists semaphores
+    "info os msg" lists message queues
+    "info os modules" lists loaded kernel modules
+
+* GDB now has support for SDT (Static Defined Tracing) probes.  Currently,
+  the only implemented backend is for SystemTap probes (<sys/sdt.h>).  You
+  can set a breakpoint using the new "-probe, "-pstap" or "-probe-stap"
+  options and inspect the probe arguments using the new $_probe_arg family
+  of convenience variables.  You can obtain more information about SystemTap
+  in <http://sourceware.org/systemtap/>.
+
+* GDB now supports reversible debugging on ARM, it allows you to
+  debug basic ARM and THUMB instructions, and provides 
+  record/replay support.  
+
+* The option "symbol-reloading" has been deleted as it is no longer used.
+
+* Python scripting
+
+  ** GDB commands implemented in Python can now be put in command class
+     "gdb.COMMAND_USER".
+
+  ** The "maint set python print-stack on|off" is now deleted.
+
+  ** A new class, gdb.printing.FlagEnumerationPrinter, can be used to
+     apply "flag enum"-style pretty-printing to any enum.
+
+  ** gdb.lookup_symbol can now work when there is no current frame.
+
+  ** gdb.Symbol now has a 'line' attribute, holding the line number in
+     the source at which the symbol was defined.
+
+  ** gdb.Symbol now has the new attribute 'needs_frame' and the new
+     method 'value'.  The former indicates whether the symbol needs a
+     frame in order to compute its value, and the latter computes the
+     symbol's value.
+
+  ** A new method 'referenced_value' on gdb.Value objects which can
+     dereference pointer as well as C++ reference values.
+
+  ** New methods 'global_block' and 'static_block' on gdb.Symtab objects
+     which return the global and static blocks (as gdb.Block objects),
+     of the underlying symbol table, respectively.
+
+  ** New function gdb.find_pc_line which returns the gdb.Symtab_and_line
+     object associated with a PC value.
+
+  ** gdb.Symtab_and_line has new attribute 'last' which holds the end
+     of the address range occupied by code for the current source line.
+
+* Go language support.
+  GDB now supports debugging programs written in the Go programming
+  language.
+
+* GDBserver now supports stdio connections.
+  E.g. (gdb) target remote | ssh myhost gdbserver - hello
+
+* The binary "gdbtui" can no longer be built or installed.
+  Use "gdb -tui" instead.
+
+* GDB will now print "flag" enums specially.  A flag enum is one where
+  all the enumerator values have no bits in common when pairwise
+  "and"ed.  When printing a value whose type is a flag enum, GDB will
+  show all the constants, e.g., for enum E { ONE = 1, TWO = 2}:
+  (gdb) print (enum E) 3
+  $1 = (ONE | TWO)
+
+* The filename part of a linespec will now match trailing components
+  of a source file name.  For example, "break gcc/expr.c:1000" will
+  now set a breakpoint in build/gcc/expr.c, but not
+  build/libcpp/expr.c.
+
+* The "info proc" and "generate-core-file" commands will now also
+  work on remote targets connected to GDBserver on Linux.
+
+* The command "info catch" has been removed.  It has been disabled
+  since December 2007.
+
+* The "catch exception" and "catch assert" commands now accept
+  a condition at the end of the command, much like the "break"
+  command does. For instance:
+
+        (gdb) catch exception Constraint_Error if Barrier = True
+
+  Previously, it was possible to add a condition to such catchpoints,
+  but it had to be done as a second step, after the catchpoint had been
+  created, using the "condition" command.
+
+* The "info static-tracepoint-marker" command will now also work on
+  native Linux targets with in-process agent.
+
+* GDB can now set breakpoints on inlined functions.
+
+* The .gdb_index section has been updated to include symbols for
+  inlined functions.  GDB will ignore older .gdb_index sections by
+  default, which could cause symbol files to be loaded more slowly
+  until their .gdb_index sections can be recreated.  The new command
+  "set use-deprecated-index-sections on" will cause GDB to use any older
+  .gdb_index sections it finds.  This will restore performance, but the
+  ability to set breakpoints on inlined functions will be lost in symbol
+  files with older .gdb_index sections.
+
+  The .gdb_index section has also been updated to record more information
+  about each symbol.  This speeds up the "info variables", "info functions"
+  and "info types" commands when used with programs having the .gdb_index
+  section, as well as speeding up debugging with shared libraries using
+  the .gdb_index section.
+
+* Ada support for GDB/MI Variable Objects has been added.
+
+* GDB can now support 'breakpoint always-inserted mode' in 'record'
+  target.
+
+* MI changes
+
+  ** New command -info-os is the MI equivalent of "info os".
+
+  ** Output logs ("set logging" and related) now include MI output.
+
+* New commands
+
+  ** "set use-deprecated-index-sections on|off"
+     "show use-deprecated-index-sections on|off"
+     Controls the use of deprecated .gdb_index sections.
+
+  ** "catch load" and "catch unload" can be used to stop when a shared
+     library is loaded or unloaded, respectively.
+
+  ** "enable count" can be used to auto-disable a breakpoint after
+     several hits.
+
+  ** "info vtbl" can be used to show the virtual method tables for
+     C++ and Java objects.
+
+  ** "explore" and its sub commands "explore value" and "explore type"
+     can be used to recursively explore values and types of
+     expressions.  These commands are available only if GDB is
+     configured with '--with-python'.
+
+  ** "info auto-load" shows status of all kinds of auto-loaded files,
+     "info auto-load gdb-scripts" shows status of auto-loading GDB canned
+     sequences of commands files, "info auto-load python-scripts"
+     shows status of auto-loading Python script files,
+     "info auto-load local-gdbinit" shows status of loading init file
+     (.gdbinit) from current directory and "info auto-load libthread-db" shows
+     status of inferior specific thread debugging shared library loading.
+
+  ** "info auto-load-scripts", "set auto-load-scripts on|off"
+     and "show auto-load-scripts" commands have been deprecated, use their
+     "info auto-load python-scripts", "set auto-load python-scripts on|off"
+     and "show auto-load python-scripts" counterparts instead.
+
+  ** "dprintf location,format,args..." creates a dynamic printf, which
+     is basically a breakpoint that does a printf and immediately
+     resumes your program's execution, so it is like a printf that you
+     can insert dynamically at runtime instead of at compiletime.
+
+  ** "set print symbol"
+     "show print symbol"
+     Controls whether GDB attempts to display the symbol, if any,
+     corresponding to addresses it prints.  This defaults to "on", but
+     you can set it to "off" to restore GDB's previous behavior.
+
+* Deprecated commands
+
+  ** For the Renesas Super-H architecture, the "regs" command has been
+     deprecated, and "info all-registers" should be used instead.
+
+* New targets
+
+Renesas RL78			rl78-*-elf
+HP OpenVMS ia64			ia64-hp-openvms*
+
+* GDBserver supports evaluation of breakpoint conditions.  When
+  support is advertised by GDBserver, GDB may be told to send the
+  breakpoint conditions in bytecode form to GDBserver.  GDBserver
+  will only report the breakpoint trigger to GDB when its condition
+  evaluates to true.
+
+* New options
+
+set mips compression
+show mips compression
+  Select the compressed ISA encoding used in functions that have no symbol
+  information available.  The encoding can be set to either of:
+    mips16
+    micromips
+  and is updated automatically from ELF file flags if available.
+
+set breakpoint condition-evaluation
+show breakpoint condition-evaluation
+  Control whether breakpoint conditions are evaluated by GDB ("host") or by
+  GDBserver ("target").  Default option "auto" chooses the most efficient
+  available mode.
+  This option can improve debugger efficiency depending on the speed of the
+  target.
+
+set auto-load off
+  Disable auto-loading globally.
+
+show auto-load
+  Show auto-loading setting of all kinds of auto-loaded files.
+
+set auto-load gdb-scripts on|off
+show auto-load gdb-scripts
+  Control auto-loading of GDB canned sequences of commands files.
+
+set auto-load python-scripts on|off
+show auto-load python-scripts
+  Control auto-loading of Python script files.
+
+set auto-load local-gdbinit on|off
+show auto-load local-gdbinit
+  Control loading of init file (.gdbinit) from current directory.
+
+set auto-load libthread-db on|off
+show auto-load libthread-db
+  Control auto-loading of inferior specific thread debugging shared library.
+
+set auto-load scripts-directory <dir1>[:<dir2>...]
+show auto-load scripts-directory
+  Set a list of directories from which to load auto-loaded scripts.
+  Automatically loaded Python scripts and GDB scripts are located in one
+  of the directories listed by this option.
+  The delimiter (':' above) may differ according to the host platform.
+
+set auto-load safe-path <dir1>[:<dir2>...]
+show auto-load safe-path
+  Set a list of directories from which it is safe to auto-load files.
+  The delimiter (':' above) may differ according to the host platform.
+
+set debug auto-load on|off
+show debug auto-load
+  Control display of debugging info for auto-loading the files above.
+
+set dprintf-style gdb|call|agent
+show dprintf-style
+  Control the way in which a dynamic printf is performed; "gdb"
+  requests a GDB printf command, while "call" causes dprintf to call a
+  function in the inferior.  "agent" requests that the target agent
+  (such as GDBserver) do the printing.
+
+set dprintf-function <expr>
+show dprintf-function
+set dprintf-channel <expr>
+show dprintf-channel
+  Set the function and optional first argument to the call when using
+  the "call" style of dynamic printf.
+
+set disconnected-dprintf on|off
+show disconnected-dprintf
+  Control whether agent-style dynamic printfs continue to be in effect
+  after GDB disconnects.
+
+* New configure options
+
+--with-auto-load-dir
+  Configure default value for the 'set auto-load scripts-directory'
+  setting above.  It defaults to '$debugdir:$datadir/auto-load',
+  $debugdir representing global debugging info directories (available
+  via 'show debug-file-directory') and $datadir representing GDB's data
+  directory (available via 'show data-directory').
+
+--with-auto-load-safe-path
+  Configure default value for the 'set auto-load safe-path' setting
+  above.  It defaults to the --with-auto-load-dir setting.
+
+--without-auto-load-safe-path
+  Set 'set auto-load safe-path' to '/', effectively disabling this
+  security feature.
+
+* New remote packets
+
+z0/z1 conditional breakpoints extension
+
+  The z0/z1 breakpoint insertion packets have been extended to carry
+  a list of conditional expressions over to the remote stub depending on the
+  condition evaluation mode.  The use of this extension can be controlled
+  via the "set remote conditional-breakpoints-packet" command.
+
+QProgramSignals:
+
+  Specify the signals which the remote stub may pass to the debugged
+  program without GDB involvement.
+
+* New command line options
+
+--init-command=FILE, -ix          Like --command, -x but execute it
+                                  before loading inferior.
+--init-eval-command=COMMAND, -iex Like --eval-command=COMMAND, -ex but
+                                  execute it before loading inferior.
+
+*** Changes in GDB 7.4
+
+* GDB now handles ambiguous linespecs more consistently; the existing
+  FILE:LINE support has been expanded to other types of linespecs.  A
+  breakpoint will now be set on all matching locations in all
+  inferiors, and locations will be added or removed according to
+  inferior changes.
+
+* GDB now allows you to skip uninteresting functions and files when
+  stepping with the "skip function" and "skip file" commands.
+
+* GDB has two new commands: "set remote hardware-watchpoint-length-limit"
+  and "show remote hardware-watchpoint-length-limit".  These allows to
+  set or show the maximum length limit (in bytes) of a remote
+  target hardware watchpoint.
+
+  This allows e.g. to use "unlimited" hardware watchpoints with the
+  gdbserver integrated in Valgrind version >= 3.7.0.  Such Valgrind
+  watchpoints are slower than real hardware watchpoints but are
+  significantly faster than gdb software watchpoints.
+
+* Python scripting
+
+  ** The register_pretty_printer function in module gdb.printing now takes
+     an optional `replace' argument.  If True, the new printer replaces any
+     existing one.
+
+  ** The "maint set python print-stack on|off" command has been
+     deprecated and will be deleted in GDB 7.5.
+     A new command: "set python print-stack none|full|message" has
+     replaced it.  Additionally, the default for "print-stack" is
+     now "message", which just prints the error message without
+     the stack trace.
+   
+  ** A prompt substitution hook (prompt_hook) is now available to the
+     Python API.
+
+  ** A new Python module, gdb.prompt has been added to the GDB Python
+     modules library.  This module provides functionality for
+     escape sequences in prompts (used by set/show
+     extended-prompt).  These escape sequences are replaced by their
+     corresponding value.
+
+  ** Python commands and convenience-functions located in
+    'data-directory'/python/gdb/command and
+    'data-directory'/python/gdb/function are now automatically loaded
+     on GDB start-up.
+
+  ** Blocks now provide four new attributes.  global_block and
+     static_block will return the global and static blocks
+     respectively.  is_static and is_global are boolean attributes
+     that indicate if the block is one of those two types.
+
+  ** Symbols now provide the "type" attribute, the type of the symbol.
+
+  ** The "gdb.breakpoint" function has been deprecated in favor of
+     "gdb.breakpoints".
+
+  ** A new class "gdb.FinishBreakpoint" is provided to catch the return
+     of a function.  This class is based on the "finish" command
+     available in the CLI. 
+
+  ** Type objects for struct and union types now allow access to
+     the fields using standard Python dictionary (mapping) methods.
+     For example, "some_type['myfield']" now works, as does
+     "some_type.items()".
+
+  ** A new event "gdb.new_objfile" has been added, triggered by loading a
+     new object file.
+
+  ** A new function, "deep_items" has been added to the gdb.types
+     module in the GDB Python modules library.  This function returns
+     an iterator over the fields of a struct or union type.  Unlike
+     the standard Python "iteritems" method, it will recursively traverse
+     any anonymous fields.
+
+* MI changes
+
+  ** "*stopped" events can report several new "reason"s, such as
+     "solib-event".
+
+  ** Breakpoint changes are now notified using new async records, like
+     "=breakpoint-modified".
+
+  ** New command -ada-task-info.
+
+* libthread-db-search-path now supports two special values: $sdir and $pdir.
+  $sdir specifies the default system locations of shared libraries.
+  $pdir specifies the directory where the libpthread used by the application
+  lives.
+
+  GDB no longer looks in $sdir and $pdir after it has searched the directories
+  mentioned in libthread-db-search-path.  If you want to search those
+  directories, they must be specified in libthread-db-search-path.
+  The default value of libthread-db-search-path on GNU/Linux and Solaris
+  systems is now "$sdir:$pdir".
+
+  $pdir is not supported by gdbserver, it is currently ignored.
+  $sdir is supported by gdbserver.
+
+* New configure option --with-iconv-bin.
+  When using the internationalization support like the one in the GNU C
+  library, GDB will invoke the "iconv" program to get a list of supported
+  character sets.  If this program lives in a non-standard location, one can
+  use this option to specify where to find it.
+
+* When natively debugging programs on PowerPC BookE processors running
+  a Linux kernel version 2.6.34 or later, GDB supports masked hardware
+  watchpoints, which specify a mask in addition to an address to watch.
+  The mask specifies that some bits of an address (the bits which are
+  reset in the mask) should be ignored when matching the address accessed
+  by the inferior against the watchpoint address.  See the "PowerPC Embedded"
+  section in the user manual for more details.
+
+* The new option --once causes GDBserver to stop listening for connections once
+  the first connection is made.  The listening port used by GDBserver will
+  become available after that.
+
+* New commands "info macros" and "alias" have been added.
+
+* New function parameters suffix @entry specifies value of function parameter
+  at the time the function got called.  Entry values are available only since
+  gcc version 4.7.
+
+* New commands
+
+!SHELL COMMAND
+  "!" is now an alias of the "shell" command.
+  Note that no space is needed between "!" and SHELL COMMAND.
+
+* Changed commands
+
+watch EXPRESSION mask MASK_VALUE
+  The watch command now supports the mask argument which allows creation
+  of masked watchpoints, if the current architecture supports this feature.
+
+info auto-load-scripts [REGEXP]
+  This command was formerly named "maintenance print section-scripts".
+  It is now generally useful and is no longer a maintenance-only command.
+
+info macro [-all] [--] MACRO
+  The info macro command has new options `-all' and `--'.  The first for
+  printing all definitions of a macro.  The second for explicitly specifying
+  the end of arguments and the beginning of the macro name in case the macro
+  name starts with a hyphen.
+
+collect[/s] EXPRESSIONS
+  The tracepoint collect command now takes an optional modifier "/s"
+  that directs it to dereference pointer-to-character types and
+  collect the bytes of memory up to a zero byte.  The behavior is
+  similar to what you see when you use the regular print command on a
+  string.  An optional integer following the "/s" sets a bound on the
+  number of bytes that will be collected.
+
+tstart [NOTES]
+  The trace start command now interprets any supplied arguments as a
+  note to be recorded with the trace run, with an effect similar to
+  setting the variable trace-notes.
+
+tstop [NOTES]
+  The trace stop command now interprets any arguments as a note to be
+  mentioned along with the tstatus report that the trace was stopped
+  with a command.  The effect is similar to setting the variable
+  trace-stop-notes.
+
+* Tracepoints can now be enabled and disabled at any time after a trace
+  experiment has been started using the standard "enable" and "disable"
+  commands.  It is now possible to start a trace experiment with no enabled
+  tracepoints; GDB will display a warning, but will allow the experiment to
+  begin, assuming that tracepoints will be enabled as needed while the trace
+  is running.
+
+* Fast tracepoints on 32-bit x86-architectures can now be placed at
+  locations with 4-byte instructions, when they were previously
+  limited to locations with instructions of 5 bytes or longer.
+
+* New options
+
+set debug dwarf2-read
+show debug dwarf2-read
+  Turns on or off display of debugging messages related to reading
+  DWARF debug info.  The default is off.
+
+set debug symtab-create
+show debug symtab-create
+  Turns on or off display of debugging messages related to symbol table
+  creation.  The default is off.
+
+set extended-prompt
+show extended-prompt
+  Set the GDB prompt, and allow escape sequences to be inserted to
+  display miscellaneous information (see 'help set extended-prompt'
+  for the list of sequences).  This prompt (and any information
+  accessed through the escape sequences) is updated every time the
+  prompt is displayed.
+
+set print entry-values (both|compact|default|if-needed|no|only|preferred)
+show print entry-values
+  Set printing of frame argument values at function entry.  In some cases
+  GDB can determine the value of function argument which was passed by the
+  function caller, even if the value was modified inside the called function.
+
+set debug entry-values
+show debug entry-values
+  Control display of debugging info for determining frame argument values at
+  function entry and virtual tail call frames.
+
+set basenames-may-differ
+show basenames-may-differ
+  Set whether a source file may have multiple base names.
+  (A "base name" is the name of a file with the directory part removed.
+  Example: The base name of "/home/user/hello.c" is "hello.c".)
+  If set, GDB will canonicalize file names (e.g., expand symlinks)
+  before comparing them.  Canonicalization is an expensive operation,
+  but it allows the same file be known by more than one base name.
+  If not set (the default), all source files are assumed to have just
+  one base name, and gdb will do file name comparisons more efficiently.
+
+set trace-user
+show trace-user
+set trace-notes
+show trace-notes
+  Set a user name and notes for the current and any future trace runs.
+  This is useful for long-running and/or disconnected traces, to
+  inform others (or yourself) as to who is running the trace, supply
+  contact information, or otherwise explain what is going on.
+
+set trace-stop-notes
+show trace-stop-notes
+  Set a note attached to the trace run, that is displayed when the
+  trace has been stopped by a tstop command.  This is useful for
+  instance as an explanation, if you are stopping a trace run that was
+  started by someone else.
+
+* New remote packets
+
+QTEnable
+  
+  Dynamically enable a tracepoint in a started trace experiment.
+
+QTDisable
+
+  Dynamically disable a tracepoint in a started trace experiment.
+
+QTNotes
+
+  Set the user and notes of the trace run.
+
+qTP
+
+  Query the current status of a tracepoint.
+
+qTMinFTPILen
+
+  Query the minimum length of instruction at which a fast tracepoint may
+  be placed.
+
+* Dcache size (number of lines) and line-size are now runtime-configurable
+  via "set dcache line" and "set dcache line-size" commands.
+
+* New targets
+
+Texas Instruments TMS320C6x		tic6x-*-*
+
+* New Simulators
+
+Renesas RL78				rl78-*-elf
+
 *** Changes in GDB 7.3.1
 
 * The build failure for NetBSD and OpenBSD targets have now been fixed.
@@ -4510,3 +5584,5 @@ GDB now handles cross debugging.  If you are remotely debugging between
 two different machines, type ``./configure host -target=targ''.
 Host is the machine where GDB will run; targ is the machine
 where the program that you are debugging will run.
+
+ *  GDB now supports access to Intel(R) MPX registers on GNU/Linux.

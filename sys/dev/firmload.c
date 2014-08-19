@@ -1,4 +1,4 @@
-/*	$NetBSD: firmload.c,v 1.17 2012/04/29 20:27:31 dsl Exp $	*/
+/*	$NetBSD: firmload.c,v 1.17.2.1 2014/08/20 00:03:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.17 2012/04/29 20:27:31 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.17.2.1 2014/08/20 00:03:35 tls Exp $");
 
 /*
  * The firmload API provides an interface for device drivers to access
@@ -122,13 +122,6 @@ SYSCTL_SETUP_PROTO(sysctl_hw_firmware_setup);
 SYSCTL_SETUP(sysctl_hw_firmware_setup, "sysctl hw.firmware subtree setup")
 {
 	const struct sysctlnode *firmware_node;
-
-	if (sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0,
-	    CTL_HW, CTL_EOL) != 0)
-	    	return;
 	
 	if (sysctl_createv(clog, 0, NULL, &firmware_node,
 	    CTLFLAG_PERMANENT,
@@ -192,11 +185,8 @@ firmware_path_next(const char *drvname, const char *imgname, char *pnbuf,
 		prefix++;
 	*prefixp = prefix;
 
-	/*
-	 * This sprintf() is safe because of the maxprefix calculation
-	 * performed above.
-	 */
-	sprintf(&pnbuf[i], "/%s/%s", drvname, imgname);
+	KASSERT(MAXPATHLEN >= i);
+	snprintf(pnbuf + i, MAXPATHLEN - i, "/%s/%s", drvname, imgname);
 
 	return (pnbuf);
 }

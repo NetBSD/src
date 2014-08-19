@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.43.2.1 2013/06/23 06:28:49 tls Exp $	 */
+/*	$NetBSD: headers.c,v 1.43.2.2 2014/08/20 00:02:22 tls Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.43.2.1 2013/06/23 06:28:49 tls Exp $");
+__RCSID("$NetBSD: headers.c,v 1.43.2.2 2014/08/20 00:02:22 tls Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -298,9 +298,15 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 			break;
 #endif
 #ifdef __powerpc__
+#ifdef _LP64
+		case DT_PPC64_GLINK:
+			obj->glink = (Elf_Addr)(uintptr_t)obj->relocbase + dynp->d_un.d_ptr;
+			break;
+#else
 		case DT_PPC_GOT:
 			obj->gotptr = (Elf_Addr *)(obj->relocbase + dynp->d_un.d_ptr);
 			break;
+#endif
 #endif
 		case DT_FLAGS_1:
 			obj->z_now =
@@ -400,7 +406,7 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 
 		case PT_INTERP:
 			obj->interp = (const char *)(uintptr_t)vaddr;
-			dbg(("headers: %s %p phsize %zu",
+			dbg(("headers: %s %p phsize %" PRImemsz,
 			    "PT_INTERP", (void *)(uintptr_t)vaddr,
 			     ph->p_memsz));
 			break;
@@ -417,14 +423,14 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 				    obj->vaddrbase;
 			}
 			++nsegs;
-			dbg(("headers: %s %p phsize %zu",
+			dbg(("headers: %s %p phsize %" PRImemsz,
 			    "PT_LOAD", (void *)(uintptr_t)vaddr,
 			     ph->p_memsz));
 			break;
 
 		case PT_DYNAMIC:
 			obj->dynamic = (Elf_Dyn *)(uintptr_t)vaddr;
-			dbg(("headers: %s %p phsize %zu",
+			dbg(("headers: %s %p phsize %" PRImemsz,
 			    "PT_DYNAMIC", (void *)(uintptr_t)vaddr,
 			     ph->p_memsz));
 			break;
@@ -436,7 +442,7 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 			obj->tlsalign = ph->p_align;
 			obj->tlsinitsize = ph->p_filesz;
 			obj->tlsinit = (void *)(uintptr_t)ph->p_vaddr;
-			dbg(("headers: %s %p phsize %zu",
+			dbg(("headers: %s %p phsize %" PRImemsz,
 			    "PT_TLS", (void *)(uintptr_t)vaddr,
 			     ph->p_memsz));
 			break;
@@ -445,7 +451,7 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 		case PT_ARM_EXIDX:
 			obj->exidx_start = (void *)(uintptr_t)vaddr;
 			obj->exidx_sz = ph->p_memsz;
-			dbg(("headers: %s %p phsize %zu",
+			dbg(("headers: %s %p phsize %" PRImemsz,
 			    "PT_ARM_EXIDX", (void *)(uintptr_t)vaddr,
 			     ph->p_memsz));
 			break;

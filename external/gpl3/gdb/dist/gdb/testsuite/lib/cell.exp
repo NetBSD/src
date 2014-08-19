@@ -1,4 +1,4 @@
-# Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2009-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -70,24 +70,18 @@ proc gdb_cell_embedspu {source dest options} {
 
 # Run a test on the target to see if it supports Cell/B.E. hardware.
 # Return 0 if so, 1 if it does not.
-proc skip_cell_tests {} {
-    global skip_cell_tests_saved
+gdb_caching_proc skip_cell_tests {
     global srcdir subdir gdb_prompt inferior_exited_re
 
-    # Use the cached value, if it exists.
     set me "skip_cell_tests"
-    if [info exists skip_cell_tests_saved] {
-        verbose "$me:  returning saved $skip_cell_tests_saved" 2
-        return $skip_cell_tests_saved
-    }
 
     # Set up, compile, and execute a combined Cell/B.E. test program.
     # Include the current process ID in the file names to prevent conflicts
     # with invocations for multiple testsuites.
-    set src cell[pid].c
-    set exe cell[pid].x
-    set src_spu cell[pid]-spu.c
-    set exe_spu cell[pid]-spu.x
+    set src [standard_temp_file cell[pid].c]
+    set exe [standard_temp_file cell[pid].x]
+    set src_spu [standard_temp_file cell[pid]-spu.c]
+    set exe_spu [standard_temp_file cell[pid]-spu.x]
 
     set f [open $src "w"]
     puts $f "#include <libspe2.h>"
@@ -125,7 +119,7 @@ proc skip_cell_tests {} {
     file delete $exe_spu-embed.o
 
     if { $skip } {
-        return [set skip_cell_tests_saved 1]
+        return 1
     }
 
     # Compilation succeeded so now run it via gdb.
@@ -138,22 +132,22 @@ proc skip_cell_tests {} {
     gdb_expect {
         -re ".*$inferior_exited_re normally.*${gdb_prompt} $" {
             verbose -log "\n$me: Cell/B.E. hardware detected"
-            set skip_cell_tests_saved 0
+            set result 0
         }
         -re ".*$inferior_exited_re with code.*${gdb_prompt} $" {
             verbose -log "\n$me: Cell/B.E. hardware not detected"
-            set skip_cell_tests_saved 1
+            set result 1
         }
         default {
             verbose -log "\n$me Cell/B.E. hardware not detected (default case)"
-            set skip_cell_tests_saved 1
+            set result 1
         }
     }
     gdb_exit
     remote_file build delete $exe
 
-    verbose "$me:  returning $skip_cell_tests_saved" 2
-    return $skip_cell_tests_saved
+    verbose "$me:  returning $result" 2
+    return $result
 }
 
 # Delete all breakpoints and stop on the next new SPU thread

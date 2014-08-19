@@ -1,4 +1,4 @@
-/* $Id: imx23_ssp.c,v 1.2.6.3 2013/06/23 06:20:00 tls Exp $ */
+/* $Id: imx23_ssp.c,v 1.2.6.4 2014/08/20 00:02:46 tls Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@
  * TODO:
  *
  * - Add support for SMC_CAPS_AUTO_STOP. 
+ * - Uset GPIO for SD card detection.
  */
 
 #define DMA_MAXNSEGS ((MAXPHYS / PAGE_SIZE) + 1)
@@ -145,12 +146,12 @@ CFATTACH_DECL3_NEW(ssp,
 #define SSP_WR(sc, reg, val)						\
 	bus_space_write_4(sc->sc_iot, sc->sc_hdl, (reg), (val))
 
-#define SSP_CLK		96000000	/* CLK_SSP from PLL is 96 MHz */
+#define SSP_CLK		160000000	/* CLK_SSP from PLL in Hz */
 #define SSP_CLK_MIN	400		/* 400 kHz */
 #define SSP_CLK_MAX	48000		/* 48 MHz */
 
 /* DATA_TIMEOUT is calculated as: * (1 / SSP_CLK) * (DATA_TIMEOUT * 4096) */
-#define DATA_TIMEOUT 0x4240	/* 723ms */
+#define DATA_TIMEOUT 0x4240
 
 #define BUS_WIDTH_1_BIT 0x0
 #define BUS_WIDTH_4_BIT 0x1

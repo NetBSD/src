@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.17 2008/06/28 12:13:38 tsutsui Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.17.40.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17 2008/06/28 12:13:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17.40.1 2014/08/20 00:03:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17 2008/06/28 12:13:38 tsutsui Exp $")
 
 #include <machine/autoconf.h>
 
-static int 	main_match(device_t, cfdata_t, void *);
+static int	main_match(device_t, cfdata_t, void *);
 static void	main_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(mainbus, 0,
@@ -47,7 +47,7 @@ CFATTACH_DECL_NEW(mainbus, 0,
 /*
  * Probe for the mainbus; always succeeds.
  */
-static int 
+static int
 main_match(device_t parent, cfdata_t cf, void *aux)
 {
 
@@ -59,7 +59,7 @@ main_match(device_t parent, cfdata_t cf, void *aux)
  * This controls the order of autoconfig for important things
  * used early.  For example, idprom is used by Ether drivers.
  */
-static void 
+static void
 main_attach(device_t parent, device_t self, void *args)
 {
 	struct confargs ca;

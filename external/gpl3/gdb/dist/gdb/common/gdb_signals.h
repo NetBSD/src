@@ -1,7 +1,5 @@
 /* Target signal translation functions for GDB.
-   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1990-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
    This file is part of GDB.
@@ -24,33 +22,37 @@
 
 #include "gdb/signals.h"
 
-/* Predicate to target_signal_to_host(). Return non-zero if the enum
+/* Predicate to gdb_signal_to_host(). Return non-zero if the enum
    targ_signal SIGNO has an equivalent ``host'' representation.  */
 /* FIXME: cagney/1999-11-22: The name below was chosen in preference
-   to the shorter target_signal_p() because it is far less ambigious.
-   In this context ``target_signal'' refers to GDB's internal
+   to the shorter gdb_signal_p() because it is far less ambigious.
+   In this context ``gdb_signal'' refers to GDB's internal
    representation of the target's set of signals while ``host signal''
    refers to the target operating system's signal.  Confused?  */
-extern int target_signal_to_host_p (enum target_signal signo);
+extern int gdb_signal_to_host_p (enum gdb_signal signo);
 
-/* Convert between host signal numbers and enum target_signal's.
-   target_signal_to_host() returns 0 and prints a warning() on GDB's
+/* Convert between host signal numbers and enum gdb_signal's.
+   gdb_signal_to_host() returns 0 and prints a warning() on GDB's
    console if SIGNO has no equivalent host representation.  */
 /* FIXME: cagney/1999-11-22: Here ``host'' is used incorrectly, it is
    refering to the target operating system's signal numbering.
-   Similarly, ``enum target_signal'' is named incorrectly, ``enum
+   Similarly, ``enum gdb_signal'' is named incorrectly, ``enum
    gdb_signal'' would probably be better as it is refering to GDB's
    internal representation of a target operating system's signal.  */
-extern enum target_signal target_signal_from_host (int);
-extern int target_signal_to_host (enum target_signal);
+extern enum gdb_signal gdb_signal_from_host (int);
+extern int gdb_signal_to_host (enum gdb_signal);
+
+/* Return the enum symbol name of SIG as a string, to use in debug
+   output.  */
+extern const char *gdb_signal_to_symbol_string (enum gdb_signal sig);
 
 /* Return the string for a signal.  */
-extern const char *target_signal_to_string (enum target_signal);
+extern const char *gdb_signal_to_string (enum gdb_signal);
 
 /* Return the name (SIGHUP, etc.) for a signal.  */
-extern const char *target_signal_to_name (enum target_signal);
+extern const char *gdb_signal_to_name (enum gdb_signal);
 
 /* Given a name (SIGHUP, etc.), return its signal.  */
-enum target_signal target_signal_from_name (const char *);
+enum gdb_signal gdb_signal_from_name (const char *);
 
 #endif /* COMMON_GDB_SIGNALS_H */

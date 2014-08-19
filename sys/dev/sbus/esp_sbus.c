@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.51 2009/09/17 16:28:12 tsutsui Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.51.22.1 2014/08/20 00:03:50 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.51 2009/09/17 16:28:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.51.22.1 2014/08/20 00:03:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,7 +408,6 @@ void
 espattach(struct esp_softc *esc, struct ncr53c9x_glue *gluep)
 {
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
-	void *icookie;
 	unsigned int uid = 0;
 
 	/*
@@ -512,7 +511,7 @@ espattach(struct esp_softc *esc, struct ncr53c9x_glue *gluep)
 	}
 
 	/* Establish interrupt channel */
-	icookie = bus_intr_establish(esc->sc_bustag, esc->sc_pri, IPL_BIO,
+	bus_intr_establish(esc->sc_bustag, esc->sc_pri, IPL_BIO,
 	    ncr53c9x_intr, sc);
 
 	/* register interrupt stats */

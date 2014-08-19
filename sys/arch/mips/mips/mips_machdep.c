@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.255.2.1 2013/06/23 06:20:08 tls Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.255.2.2 2014/08/20 00:03:12 tls Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.255.2.1 2013/06/23 06:20:08 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.255.2.2 2014/08/20 00:03:12 tls Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -260,14 +260,11 @@ struct mips_options mips_options = {
 	.mips_fpu_id = 0xffffffff,
 };
 
-struct	user *proc0paddr;
-
 void *	msgbufaddr;
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[128];
 
 
 /*
@@ -2176,7 +2173,7 @@ startlwp(void *arg)
 {
 	ucontext_t * const uc = arg;
 	lwp_t * const l = curlwp;
-	int error;
+	int error __diagused;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);
@@ -2194,7 +2191,7 @@ startlwp32(void *arg)
 {
 	ucontext32_t * const uc = arg;
 	lwp_t * const l = curlwp;
-	int error;
+	int error __diagused;
 
 	error = cpu_setmcontext32(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: __CONCAT.3,v 1.6 2010/12/16 10:40:04 jruoho Exp $ $
+.\"	$NetBSD: __CONCAT.3,v 1.6.12.1 2014/08/20 00:02:34 tls Exp $ $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 16, 2010
+.Dd October 17, 2013
 .Dt __CONCAT 3
 .Os
 .Sh NAME
@@ -101,3 +101,8 @@ is used.
 It can be also noted that the C preprocessor converts all
 comments to whitespace before any macros are even considered.
 The use of either macro is discouraged in complex constructs.
+.Pp
+Use of this macro is non-portable; this is part of the implementation
+namespace and should only be used in
+.Nx
+code.

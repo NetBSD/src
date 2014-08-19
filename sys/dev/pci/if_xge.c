@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.16.6.2 2013/06/23 06:20:18 tls Exp $ */
+/*      $NetBSD: if_xge.c,v 1.16.6.3 2014/08/20 00:03:43 tls Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.16.6.2 2013/06/23 06:20:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.16.6.3 2014/08/20 00:03:43 tls Exp $");
 
 
 #include <sys/param.h>
@@ -287,6 +287,7 @@ xge_attach(device_t parent, device_t self, void *aux)
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	uint64_t val;
 	int i;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -549,7 +550,7 @@ xge_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (pci_intr_map(pa, &ih))
 		return aprint_error_dev(sc->sc_dev, "unable to map interrupt\n");
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	if ((sc->sc_ih =
 	    pci_intr_establish(pc, ih, IPL_NET, xge_intr, sc)) == NULL)
 		return aprint_error_dev(sc->sc_dev, "unable to establish interrupt at %s\n",

@@ -1,4 +1,4 @@
-/* $NetBSD: wlanctl.c,v 1.13 2011/08/31 13:32:41 joerg Exp $ */
+/* $NetBSD: wlanctl.c,v 1.13.8.1 2014/08/20 00:05:18 tls Exp $ */
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
  *
@@ -56,7 +56,6 @@ struct flagname {
 };
 
 struct cmdflags {
-	int	cf_v;	/* verbose */
 	int	cf_a;	/* all 802.11 interfaces */
   	int     cf_p;   /* public (i.e. non-private) dests */
 };
@@ -179,7 +178,8 @@ print_channel(u_int16_t chanidx, u_int16_t freq, u_int16_t flags)
  * hdr_type: header type: IEEE80211_SYSCTL_T_NODE -> generic node,
  *                        IEEE80211_SYSCTL_T_RSSADAPT -> rssadapt(9) info,
  *                        IEEE80211_SYSCTL_T_DRVSPEC -> driver specific.
- * cf:       command flags, cf_v != 0 -> verbose
+ * cf:       command flags: cf_a != 0 -> all 802.11 interfaces
+ *                          cf_p != 0 -> public dests
  */
 static int
 dump_nodes(const char *ifname_arg, int hdr_type, struct cmdflags *cf)
@@ -287,8 +287,10 @@ dump_nodes(const char *ifname_arg, int hdr_type, struct cmdflags *cf)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [ -p ] [ -v ] -a\n"
-	    "\t[ -v ] interface [ interface ... ]\n", getprogname());
+	fprintf(stderr,
+	    "Usage: %s [ -p ] -a\n"
+	    "       %s [ -p ] interface [ interface ... ]\n",
+	    getprogname(), getprogname());
 	exit(EXIT_FAILURE);
 }
 
@@ -299,16 +301,13 @@ parse_args(int *argcp, char ***argvp, struct cmdflags *cf)
 
 	(void)memset(cf, 0, sizeof(*cf));
 
-	while ((ch = getopt(*argcp, *argvp, "apv")) != -1) {
+	while ((ch = getopt(*argcp, *argvp, "ap")) != -1) {
 		switch (ch) {
 		case 'a':
 			cf->cf_a = 1;
 			break;
 		case 'p':
 			cf->cf_p = 1;
-			break;
-		case 'v':
-			cf->cf_v = 1;
 			break;
 		default:
 			warnx("unknown option -%c", ch);

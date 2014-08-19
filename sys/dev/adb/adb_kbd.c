@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.20.2.1 2012/11/20 03:01:58 tls Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.20.2.2 2014/08/20 00:03:35 tls Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.20.2.1 2012/11/20 03:01:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.20.2.2 2014/08/20 00:03:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -814,6 +814,8 @@ adbkbd_setup_sysctl(struct adbkbd_softc *sc)
 		    me->sysctl_num, CTL_CREATE, CTL_EOL);
 	}
 #endif /* NWSMOUSE > 0 */
+
+	(void)ret;
 }
 
 SYSCTL_SETUP(sysctl_adbkbdtrans_setup, "adbkbd translator setup")

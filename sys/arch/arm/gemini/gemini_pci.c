@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_pci.c,v 1.13.2.1 2012/11/20 03:01:05 tls Exp $	*/
+/*	$NetBSD: gemini_pci.c,v 1.13.2.2 2014/08/20 00:02:46 tls Exp $	*/
 
 /* adapted from:
  *	NetBSD: i80312_pci.c,v 1.9 2005/12/11 12:16:51 christos Exp
@@ -44,36 +44,33 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.13.2.1 2012/11/20 03:01:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.13.2.2 2014/08/20 00:02:46 tls Exp $");
 
-#include <sys/cdefs.h>
+#include "opt_gemini.h"
+#include "opt_pci.h"
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <sys/bus.h>
-#include <machine/intr.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
+#include <dev/pci/pciconf.h>
+
+#include <arm/locore.h>
 
 #include <arm/pic/picvar.h>
 
 #include <arm/gemini/gemini_reg.h>
 #include <arm/gemini/gemini_pcivar.h>
 #include <arm/gemini/gemini_obiovar.h>
-
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
-#include <dev/pci/pciconf.h>
-
-#include <machine/pci_machdep.h>
-
-#include "opt_gemini.h"
-#include "opt_pci.h"
-#include "pci.h"
 
 void		gemini_pci_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
@@ -88,7 +85,8 @@ void		gemini_pci_conf_interrupt(void *, int, int, int, int, int *);
 
 int		gemini_pci_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
-const char	*gemini_pci_intr_string(void *, pci_intr_handle_t);
+const char	*gemini_pci_intr_string(void *, pci_intr_handle_t,
+		    char *, size_t);
 const struct evcnt *gemini_pci_intr_evcnt(void *, pci_intr_handle_t);
 void		*gemini_pci_intr_establish(void *, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
@@ -372,11 +370,10 @@ gemini_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 const char *
-gemini_pci_intr_string(void *v, pci_intr_handle_t ih)
+gemini_pci_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
-	const char *name = "pci";
-
-	return (name);
+	strlcpy(buf, "pci", len);
+	return buf;
 }
 
 const struct evcnt *

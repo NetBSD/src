@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.4.2.2 2013/06/23 06:20:22 tls Exp $	*/
+/*	$NetBSD: if_run.c,v 1.4.2.3 2014/08/20 00:03:51 tls Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.4.2.2 2013/06/23 06:20:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.4.2.3 2014/08/20 00:03:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -822,8 +822,8 @@ run_load_microcode(struct run_softc *sc)
 {
 	usb_device_request_t req;
 	const char *fwname;
-	u_char *ucode;
-	size_t size;
+	u_char *ucode = NULL;	/* XXX gcc 4.8.3: maybe-uninitialized */
+	size_t size = 0;	/* XXX gcc 4.8.3: maybe-uninitialized */
 	uint32_t tmp;
 	int ntries, error;
 

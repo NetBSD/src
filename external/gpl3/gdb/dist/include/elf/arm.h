@@ -46,6 +46,11 @@
 #define EF_ARM_MAPSYMSFIRST 0x10	/* NB conflicts with EF_APCS_FLOAT.  */
 #define EF_ARM_EABIMASK      0xFF000000
 
+/* New constants defined in the ARM ELF spec. version XXX.
+   Only valid in conjunction with EF_ARM_EABI_VER5. */
+#define EF_ARM_ABI_FLOAT_SOFT 0x200	/* NB conflicts with EF_ARM_SOFT_FLOAT.  */
+#define EF_ARM_ABI_FLOAT_HARD 0x400	/* NB conflicts with EF_ARM_VFP_FLOAT.  */
+
 /* Constants defined in AAELF.  */
 #define EF_ARM_BE8	    0x00800000
 #define EF_ARM_LE8	    0x00400000
@@ -101,7 +106,8 @@
 #define TAG_CPU_ARCH_V6_M	11
 #define TAG_CPU_ARCH_V6S_M	12
 #define TAG_CPU_ARCH_V7E_M	13
-#define MAX_TAG_CPU_ARCH	13
+#define TAG_CPU_ARCH_V8		14
+#define MAX_TAG_CPU_ARCH	14
 /* Pseudo-architecture to allow objects to be compatible with the subset of
    armv4t and armv6-m.  This value should never be stored in object files.  */
 #define TAG_CPU_ARCH_V4T_PLUS_V6_M (MAX_TAG_CPU_ARCH + 1)
@@ -328,7 +334,8 @@ enum
 enum arm_st_branch_type {
   ST_BRANCH_TO_ARM,
   ST_BRANCH_TO_THUMB,
-  ST_BRANCH_LONG
+  ST_BRANCH_LONG,
+  ST_BRANCH_UNKNOWN
 };
 
 #define ARM_SYM_BRANCH_TYPE(SYM) \

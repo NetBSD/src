@@ -1,4 +1,4 @@
-/*	$NetBSD: sunmon.c,v 1.19 2008/04/28 20:23:38 martin Exp $	*/
+/*	$NetBSD: sunmon.c,v 1.19.44.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunmon.c,v 1.19 2008/04/28 20:23:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunmon.c,v 1.19.44.1 2014/08/20 00:03:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ _mode_kernel(void)
  * also put our hardware state back into place after
  * the PROM "c" (continue) command is given.
  */
-void 
+void
 sunmon_abort(void)
 {
 	int s = splhigh();
@@ -118,7 +118,7 @@ sunmon_abort(void)
 	splx(s);
 }
 
-void 
+void
 sunmon_halt(void)
 {
 	(void) splhigh();
@@ -140,7 +140,7 @@ sunmon_halt(void)
 /*
  * Caller must pass a string that is in our data segment.
  */
-void 
+void
 sunmon_reboot(const char *bs)
 {
 
@@ -168,7 +168,7 @@ struct funcall_frame {
 	int fr_arg[1];
 };
 /*VARARGS0*/
-static void 
+static void
 tracedump(int x1)
 {
 	struct funcall_frame *fp = (struct funcall_frame *)(&x1 - 2);
@@ -194,7 +194,7 @@ tracedump(int x1)
  * commands and a printf hack.
  * [lifted from freed cmu mach3 sun3 port]
  */
-static void 
+static void
 v_handler(int addr, char *str)
 {
 
@@ -255,7 +255,7 @@ v_handler(int addr, char *str)
  * argv[1] = options	(i.e. "-ds" or NULL)
  * argv[2] = NULL
  */
-void 
+void
 sunmon_init(void)
 {
 	struct sunromvec *rvec;

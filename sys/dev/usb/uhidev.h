@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.13 2012/06/10 06:15:54 mrg Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.13.2.1 2014/08/20 00:03:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@ struct uhidev_softc {
 	u_int sc_nrepid;
 	device_t *sc_subdevs;
 
+	int sc_refcnt;
 	u_char sc_dying;
 
 	kmutex_t sc_lock;		/* protects writes to sc_state */
@@ -79,7 +80,6 @@ struct uhidev_attach_arg {
 void uhidev_get_report_desc(struct uhidev_softc *, void **, int *);
 int uhidev_open(struct uhidev *);
 void uhidev_close(struct uhidev *);
-usbd_status uhidev_set_report(struct uhidev *scd, int type, void *data,int len);
-void uhidev_set_report_async(struct uhidev *scd, int type, void *data, int len);
-usbd_status uhidev_get_report(struct uhidev *scd, int type, void *data,int len);
+usbd_status uhidev_set_report(struct uhidev *, int, void *, int);
+usbd_status uhidev_get_report(struct uhidev *, int, void *, int);
 usbd_status uhidev_write(struct uhidev_softc *, void *, int);

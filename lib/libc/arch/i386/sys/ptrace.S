@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.17 2011/11/18 20:21:41 joerg Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.17.6.1 2014/08/20 00:02:10 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: ptrace.S,v 1.17 2011/11/18 20:21:41 joerg Exp $")
+	RCSID("$NetBSD: ptrace.S,v 1.17.6.1 2014/08/20 00:02:10 tls Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -44,13 +44,13 @@
 	.globl	_C_LABEL(__errno)
 
 ENTRY(ptrace)
-#ifdef PIC
+#ifdef __PIC__
 	PIC_PROLOGUE
 	call	PIC_PLT(_C_LABEL(__errno))
 	PIC_EPILOGUE
 #else
 	call	_C_LABEL(__errno)
-#endif /* PIC */
+#endif /* __PIC__ */
 	xorl	%edx,%edx
 	movl	%edx,(%eax)
 	SYSTRAP(ptrace)
@@ -58,3 +58,4 @@ ENTRY(ptrace)
 	ret
 err:
 	jmp	CERROR
+END(ptrace)

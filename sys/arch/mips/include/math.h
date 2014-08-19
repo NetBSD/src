@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.5.16.1 2013/06/23 06:20:08 tls Exp $	*/
+/*	$NetBSD: math.h,v 1.5.16.2 2014/08/20 00:03:12 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -27,5 +27,5 @@
  */
 #define	__HAVE_NANF
 #if defined(__mips_n32) || defined(__mips_n64)
-#define __HAVE_LONG_DOUBLE
+#define __HAVE_LONG_DOUBLE	128
 #endif

@@ -1,7 +1,6 @@
 /* Helper routines for parsing XML using Expat.
 
-   Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,6 +23,7 @@
 
 #include "gdb_obstack.h"
 #include "vec.h"
+#include "xml-utils.h"
 
 struct gdb_xml_parser;
 struct gdb_xml_element;
@@ -47,11 +47,6 @@ LONGEST xml_builtin_xfer_partial (const char *filename,
    (generated).  */
 
 extern const char *xml_builtin[][2];
-
-/* Return a malloc allocated string with special characters from TEXT
-   replaced by entity references.  */
-
-char *xml_escape_text (const char *text);
 
 /* Support for XInclude.  */
 
@@ -175,13 +170,6 @@ struct gdb_xml_element
   gdb_xml_element_start_handler *start_handler;
   gdb_xml_element_end_handler *end_handler;
 };
-
-/* Initialize and return a parser.  Register a cleanup to destroy the
-   parser.  */
-
-struct gdb_xml_parser *gdb_xml_create_parser_and_cleanup
-  (const char *name, const struct gdb_xml_element *elements,
-   void *user_data);
 
 /* Associate DTD_NAME, which must be the name of a compiled-in DTD,
    with PARSER.  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.h,v 1.6 2011/04/14 15:57:02 yamt Exp $	*/
+/*	$NetBSD: tcp_congctl.h,v 1.6.14.1 2014/08/20 00:04:35 tls Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@ struct tcp_congctl {
 
 extern const struct tcp_congctl tcp_reno_ctl;
 extern const struct tcp_congctl tcp_newreno_ctl;
+extern const struct tcp_congctl tcp_cubic_ctl;
 
 /* currently selected global congestion control */
 extern char tcp_congctl_global_name[TCPCC_MAXLEN];

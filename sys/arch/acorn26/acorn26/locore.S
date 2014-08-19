@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.22 2009/12/10 05:10:00 rmind Exp $ */
+/* $NetBSD: locore.S,v 1.22.22.1 2014/08/20 00:02:40 tls Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -353,7 +353,7 @@ ENTRY_NP(int_off_save)
 /* LINTSTUB: Func: void int_restore(int i) */
 ENTRY_NP(int_restore)
 	tst	r0, #(R15_IRQ_DISABLE)	/* Were IRQs already disabled? */
-	biceqs	r15, r14, #(R15_IRQ_DISABLE)	/* No, enable again */
+	bicseq	r15, r14, #(R15_IRQ_DISABLE)	/* No, enable again */
 	movs	r15, r14			/* Yes, just return */
 /* LINTSTUB: Func: void fiq_off(void) */
 ENTRY(fiq_off)
@@ -452,4 +452,4 @@ ENTRY(cpu_Debugger)
 	ldmfd	r13!, {pc}
 #endif
 
-RCSID("$NetBSD: locore.S,v 1.22 2009/12/10 05:10:00 rmind Exp $")
+RCSID("$NetBSD: locore.S,v 1.22.22.1 2014/08/20 00:02:40 tls Exp $")

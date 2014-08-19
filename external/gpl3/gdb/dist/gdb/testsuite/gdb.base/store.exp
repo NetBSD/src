@@ -1,7 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2002, 2003, 2004, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 2002-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,30 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if $tracelevel {
-    strace $tracelevel
-}
+standard_testfile
+set executable $testfile
 
-#
-# test running programs
-#
-
-set testfile "store"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
-    untested store.exp
+if { [prepare_for_testing $testfile.exp $executable $srcfile] } {
     return -1
 }
 
-if [get_compiler_info ${binfile}] {
-    return -1;
+if [get_compiler_info] {
+    return -1
 }
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 
 #
 # set it up at a breakpoint so we can play with the variable values
@@ -53,12 +38,23 @@ if ![runto_main] then {
 #
 
 proc check_set { t l r new add } {
+    global gdb_prompt
+
     set prefix "var ${t} l"
     gdb_test "tbreak wack_${t}"
-    gdb_test "continue" "register ${t} l = u, r = v;" \
-	"continue to wack_${t}"
-    gdb_test "next" "l = add_${t} .l, r.;" \
-	"${prefix}; next ${t}"
+
+    set test "continue to wack_${t}"
+    gdb_test_multiple "continue" $test {
+	-re "register ${t} l = u, r = v;\r\n$gdb_prompt $" {
+	    # See GCC PR debug/53948.
+	    send_gdb "next\n"
+	    exp_continue
+	}
+	-re "l = add_${t} .l, r.;\r\n$gdb_prompt $" {
+	    pass $test
+	}
+    }
+
     gdb_test "print l" " = ${l}" \
 	"${prefix}; print old l, expecting ${l}"
     gdb_test "print r" " = ${r}" \

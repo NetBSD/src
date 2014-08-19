@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.3.6.2 2013/02/25 00:28:48 tls Exp $	*/
+/*	$NetBSD: devopen.c,v 1.3.6.3 2014/08/20 00:03:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -74,7 +74,7 @@
 #include <luna68k/stand/boot/samachdep.h>
 #include <machine/disklabel.h>
 
-static int make_device(const char *, int *, int *, int *, char **);
+#define MAXDEVNAME	16
 
 int
 devopen(struct open_file *f, const char *fname, char **file)
@@ -123,21 +123,25 @@ make_device(const char *str, int *devp, int *unitp, int *partp, char **fname)
 {
 	const char *cp;
 	struct devsw *dp;
-	int major, unit, part;
+	int dev, unit, part;
 	int i;
 	char devname[MAXDEVNAME + 1];
+	bool haveunit;
+
+	unit = 0;
+	part = 0;
 
 	/*
 	 * parse path strings
 	 */
-							/* find end of dev type name */
+	/* find end of dev type name */
 	for (cp = str, i = 0; *cp != '\0' && *cp != '(' && i < MAXDEVNAME; i++)
 			devname[i] = *cp++;
 	if (*cp != '(') {
 		return (-1);
 	}
 	devname[i] = '\0';
-							/* compare dev type name */
+	/* compare dev type name */
 	for (dp = devsw; dp->dv_name; dp++)
 		if (!strcmp(devname, dp->dv_name))
 			break;
@@ -145,44 +149,55 @@ make_device(const char *str, int *devp, int *unitp, int *partp, char **fname)
 	if (dp->dv_name == NULL) {
 		return (-1);
 	}
-	major = dp - devsw;
-							/* get unit number */
-	unit = *cp++ - '0';
-	if (*cp >= '0' && *cp <= '9')
-		unit = unit * 10 + *cp++ - '0';
-	if (unit < 0 || unit > 63) {
+	dev = dp - devsw;
+	/* get mixed controller and unit number */
+	haveunit = false;
+	for (; *cp != ',' && *cp != ')'; cp++) {
+		if (*cp == '\0')
+			return -1;
+		if (*cp >= '0' && *cp <= '9') {
+			unit = unit * 10 + *cp - '0';
+			haveunit = true;
+		}
+	}
+	if (unit < 0 || CTLR(unit) >= 2 || TARGET(unit) > 7) {
 #ifdef DEBUG
 		printf("%s: invalid unit number (%d)\n", __func__, unit);
 #endif
 		return (-1);
 	}
-							/* get partition offset */
-	if (*cp++ != ',') {
-		return (-1);
+	if (!haveunit && strcmp(devname, default_bootdev) == 0)
+		unit = default_unit;
+	/* get optional partition number */
+	if (*cp == ',')
+		cp++;
+
+	for (; /* *cp != ',' && */ *cp != ')'; cp++) {
+		if (*cp == '\0')
+			return -1;
+		if (*cp >= '0' && *cp <= '9')
+			part = part * 10 + *cp - '0';
 	}
-	part = *cp - '0';
-							/* check out end of dev spec */
-	for (;;) {
-		if (*cp == ')')
-			break;
-		if (*cp++)
-			continue;
-		return (-1);
-	}
-	if (part < 0 || part > MAXPARTITIONS) {
+	if (part < 0 || part >= MAXPARTITIONS) {
 #ifdef DEBUG
 		printf("%s: invalid partition number (%d)\n", __func__, part);
 #endif
 		return (-1);
 	}
-
-	*devp  = major;
+	/* check out end of dev spec */
+	*devp  = dev;
 	*unitp = unit;
 	*partp = part;
-	*fname = __UNCONST(cp + 1);
+	if (fname != NULL) {
+		cp++;
+		if (*cp == '\0')
+			*fname = "netbsd";
+		else
+			*fname = __UNCONST(cp);	/* XXX */
+	}
 #ifdef DEBUG
-	printf("%s: major = %d, unit = %d, part = %d, fname = %s\n",
-	    __func__, major, unit, part, *fname);
+	printf("%s: dev = %d, unit = %d, part = %d, fname = %s\n",
+	    __func__, dev, unit, part, fname != NULL ? *fname : "");
 #endif
 
 	return 0;

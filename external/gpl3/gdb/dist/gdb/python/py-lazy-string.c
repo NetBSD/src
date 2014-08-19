@@ -1,6 +1,6 @@
 /* Python interface to lazy strings.
 
-   Copyright (C) 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -47,7 +47,8 @@ typedef struct {
   struct type *type;
 } lazy_string_object;
 
-static PyTypeObject lazy_string_object_type;
+static PyTypeObject lazy_string_object_type
+    CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("lazy_string_object");
 
 static PyObject *
 stpy_get_address (PyObject *self, void *closure)
@@ -84,7 +85,7 @@ stpy_get_length (PyObject *self, void *closure)
   return PyLong_FromLong (self_string->length);
 }
 
-PyObject *
+static PyObject *
 stpy_get_type (PyObject *self, void *closure)
 {
   lazy_string_object *str_obj = (lazy_string_object *) self;
@@ -96,7 +97,8 @@ static PyObject *
 stpy_convert_to_value  (PyObject *self, PyObject *args)
 {
   lazy_string_object *self_string = (lazy_string_object *) self;
-  struct value *val;
+  struct value *val = NULL;
+  volatile struct gdb_exception except;
 
   if (self_string->address == 0)
     {
@@ -105,7 +107,12 @@ stpy_convert_to_value  (PyObject *self, PyObject *args)
       return NULL;
     }
 
-  val = value_at_lazy (self_string->type, self_string->address);
+  TRY_CATCH (except, RETURN_MASK_ALL)
+    {
+      val = value_at_lazy (self_string->type, self_string->address);
+    }
+  GDB_PY_HANDLE_EXCEPTION (except);
+
   return value_to_value_object (val);
 }
 
@@ -153,13 +160,14 @@ gdbpy_create_lazy_string_object (CORE_ADDR address, long length,
   return (PyObject *) str_obj;
 }
 
-void
+int
 gdbpy_initialize_lazy_string (void)
 {
   if (PyType_Ready (&lazy_string_object_type) < 0)
-    return;
+    return -1;
 
   Py_INCREF (&lazy_string_object_type);
+  return 0;
 }
 
 /* Determine whether the printer object pointed to by OBJ is a
@@ -210,8 +218,7 @@ static PyGetSetDef lazy_string_object_getset[] = {
 };
 
 static PyTypeObject lazy_string_object_type = {
-  PyObject_HEAD_INIT (NULL)
-  0,				  /*ob_size*/
+  PyVarObject_HEAD_INIT (NULL, 0)
   "gdb.LazyString",	          /*tp_name*/
   sizeof (lazy_string_object),	  /*tp_basicsize*/
   0,				  /*tp_itemsize*/

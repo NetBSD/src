@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.58 2011/04/24 16:27:00 rmind Exp $	*/
+/*	$NetBSD: cy.c,v 1.58.14.1 2014/08/20 00:03:38 tls Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.58 2011/04/24 16:27:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.58.14.1 2014/08/20 00:03:38 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -68,6 +68,7 @@ const struct cdevsw cy_cdevsw = {
 	.d_poll = cypoll,
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
 

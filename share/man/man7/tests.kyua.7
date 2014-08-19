@@ -1,4 +1,4 @@
-.\"	$NetBSD: tests.kyua.7,v 1.1.4.2 2013/06/23 06:28:54 tls Exp $
+.\"	$NetBSD: tests.kyua.7,v 1.1.4.3 2014/08/20 00:02:36 tls Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 24, 2013
+.Dd June 2, 2014
 .Dt TESTS 7
 .Os
 .Sh NAME
@@ -138,6 +138,21 @@ $ kyua report-html --output ~/public_html/tests
 For further details on the command-line interface of Kyua, please refer
 to its manual page
 .Xr kyua 1 .
+.Ss Test environment considerations
+Tests can be invoked as an unprivileged user, in which case tests that
+require privileges will be skipped.
+If run as root, an unprivileged user will be used for tests that
+require privileges.
+For maximal coverage, the standard approach is to invoke tests as root.
+.Pp
+Ideally, tests are self-contained and do not either depend on or
+perturb the host environment, aside from skipping tests when optional
+facilities are not available.
+In reality, tests load and unload modules, and do other things that
+might cause problems.
+While it is not entirely safe to run tests on a multi-user system,
+permanent problems or crashes from doing so are viewed as bugs and
+should be reported.
 .Ss Configuring the tests
 Some test cases in the
 .Nx
@@ -229,4 +244,4 @@ tools were replaced as part of this import to be backwards-compatibility
 wrappers around
 .Xr kyua 1 .
 .Sh AUTHORS
-.An Julio Merino Aq jmmv@NetBSD.org
+.An Julio Merino Aq Mt jmmv@NetBSD.org

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.55 2010/12/22 03:22:43 nisimura Exp $	*/
+/*	$NetBSD: cpu.h,v 1.55.18.1 2014/08/20 00:03:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -101,6 +101,7 @@ struct clockframe {
  */
 #define	cpu_need_resched(ci, flags)					\
 do {									\
+	__USE(flags); 							\
 	ci->ci_want_resched = 1;					\
 	if (curlwp != ci->ci_data.cpu_idlelwp)				\
 		aston(curlwp);						\

@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.51.8.1 2013/06/23 06:29:02 tls Exp $	*/
+/*	$NetBSD: tip.c,v 1.51.8.2 2014/08/20 00:05:04 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.51.8.1 2013/06/23 06:29:02 tls Exp $");
+__RCSID("$NetBSD: tip.c,v 1.51.8.2 2014/08/20 00:05:04 tls Exp $");
 #endif /* not lint */
 
 /*
@@ -73,14 +73,15 @@ main(int argc, char *argv[])
 	char *p;
 	const char *q;
 	char sbuf[12];
-	static char brbuf[16];
+	int cmdlineBR;
 	int fcarg;
 
+	setprogname(argv[0]);
 	gid = getgid();
 	egid = getegid();
 	uid = getuid();
 	euid = geteuid();
-	if (equal(basename(argv[0]), "cu")) {
+	if (strcmp(getprogname(), "cu") == 0) {
 		cumode = 1;
 		cumain(argc, argv);
 		goto cucommon;
@@ -94,6 +95,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	cmdlineBR = 0;
 	while((c = getopt(argc, argv, "v0123456789")) != -1) {
 		switch(c) {
 
@@ -103,8 +105,8 @@ main(int argc, char *argv[])
 
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
-			(void)snprintf(brbuf, sizeof(brbuf) -1, "%s%c", brbuf, c);
-			BR = atoi(brbuf);
+			cmdlineBR = cmdlineBR * 10 + (c - '0');
+			BR = cmdlineBR;
 			break;
 
 		default:
@@ -496,9 +498,9 @@ ttysetup(speed_t spd)
 	cntrl.c_cc[VMIN] = 1;
 	cntrl.c_cc[VTIME] = 0;
 	if (boolean(value(TAND)))
-		cntrl.c_iflag |= IXOFF|IXON|IXANY;
+		cntrl.c_iflag |= IXOFF|IXON;
 	else
-		cntrl.c_iflag &= ~(IXOFF|IXON|IXANY);
+		cntrl.c_iflag &= ~(IXOFF|IXON);
 	return tcsetattr(FD, TCSAFLUSH, &cntrl);
 }
 
@@ -545,7 +547,7 @@ setparity(const char *defparity)
 		value(PARITY) = curpar = strdup(defparity);
 	}
 	parity = value(PARITY);
-	if (equal(parity, "none")) {
+	if (strcmp(parity, "none") == 0) {
 		bits8 = 1;
 		return;
 	}
@@ -553,13 +555,13 @@ setparity(const char *defparity)
 	flip = 0;
 	clr = 0377;
 	set = 0;
-	if (equal(parity, "odd"))
+	if (strcmp(parity, "odd") == 0)
 		flip = 0200;			/* reverse bit 7 */
-	else if (equal(parity, "zero"))
+	else if (strcmp(parity, "zero") == 0)
 		clr = 0177;			/* turn off bit 7 */
-	else if (equal(parity, "one"))
+	else if (strcmp(parity, "one") == 0)
 		set = 0200;			/* turn on bit 7 */
-	else if (!equal(parity, "even")) {
+	else if (strcmp(parity, "even") != 0) {
 		(void)fprintf(stderr, "%s: unknown parity value\r\n", parity);
 		(void)fflush(stderr);
 	}

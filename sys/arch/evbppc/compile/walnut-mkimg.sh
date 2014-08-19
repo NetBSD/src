@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: walnut-mkimg.sh,v 1.4 2010/11/06 16:23:35 uebayasi Exp $
+# $NetBSD: walnut-mkimg.sh,v 1.4.18.1 2014/08/20 00:02:59 tls Exp $
 
 # Convert an input to a TFTP image loadable by the IBM PowerPC OpenBIOS.
 
@@ -18,6 +18,7 @@ output=$1; shift
 
 : ${OBJDUMP=objdump}
 : ${OBJCOPY=objcopy}
+: ${STAT=stat}
 
 file=$( file $input )
 case $file in
@@ -36,7 +37,7 @@ case $file in
 	;;
 esac
 
-size=`stat -f '%z' ${input}.bin.$$`
+size=$(${STAT} -f '%z' ${input}.bin.$$)
 size=$(( ( $size + 511 ) / 512 ))
 
 enc()

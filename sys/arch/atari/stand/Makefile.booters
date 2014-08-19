@@ -1,9 +1,9 @@
-# $NetBSD: Makefile.booters,v 1.3 2011/12/18 04:51:12 tsutsui Exp $
+# $NetBSD: Makefile.booters,v 1.3.6.1 2014/08/20 00:02:48 tls Exp $
 
 BINDIR=		/usr/mdec/${BTYPE:tl}
 
 DBG=
-COPTS=		-Os -fomit-frame-pointer -fno-function-cse -fstrength-reduce
+COPTS=		-Os -fomit-frame-pointer -fno-function-cse -fstrength-reduce -fno-unwind-tables
 
 CPPFLAGS+=	-D_STANDALONE -DHEAP_VARIABLE
 CPPFLAGS+=	 -D__daddr_t=int32_t

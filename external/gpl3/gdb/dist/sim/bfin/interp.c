@@ -1,6 +1,6 @@
 /* Simulator for Analog Devices Blackfin processors.
 
-   Copyright (C) 2005-2011 Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -89,7 +89,7 @@
 # define setgid(gid) -1
 #endif
 
-static const char stat_map_32[] =
+static const char cb_linux_stat_map_32[] =
 /* Linux kernel 32bit layout:  */
 "st_dev,2:space,2:st_ino,4:st_mode,2:st_nlink,2:st_uid,2:st_gid,2:st_rdev,2:"
 "space,2:st_size,4:st_blksize,4:st_blocks,4:st_atime,4:st_atimensec,4:"
@@ -99,10 +99,15 @@ static const char stat_map_32[] =
 "st_rdev,8:space,2:space,2:st_size,4:st_blksiez,4:st_blocks,4:st_atime,4:"
 "st_atimensec,4:st_mtime,4:st_mtimensec,4:st_ctime,4:st_ctimensec,4:space,4:"
 "space,4";  */
-static const char stat_map_64[] =
+static const char cb_linux_stat_map_64[] =
 "st_dev,8:space,4:space,4:st_mode,4:st_nlink,4:st_uid,4:st_gid,4:st_rdev,8:"
 "space,4:st_size,8:st_blksize,4:st_blocks,8:st_atime,4:st_atimensec,4:"
 "st_mtime,4:st_mtimensec,4:st_ctime,4:st_ctimensec,4:st_ino,8";
+static const char cb_libgloss_stat_map_32[] =
+"st_dev,2:st_ino,2:st_mode,4:st_nlink,2:st_uid,2:st_gid,2:st_rdev,2:"
+"st_size,4:st_atime,4:space,4:st_mtime,4:space,4:st_ctime,4:"
+"space,4:st_blksize,4:st_blocks,4:space,8";
+static const char *stat_map_32, *stat_map_64;
 
 /* Count the number of arguments in an argv.  */
 static int
@@ -156,7 +161,7 @@ bfin_syscall (SIM_CPU *cpu)
   bu32 args[6];
   CB_SYSCALL sc;
   char *p;
-  char _tbuf[512], *tbuf = _tbuf;
+  char _tbuf[1024 * 3], *tbuf = _tbuf, tstr[1024];
   int fmt_ret_hex = 0;
 
   CB_SYSCALL_INIT (&sc);
@@ -435,14 +440,18 @@ bfin_syscall (SIM_CPU *cpu)
       break;
 
     case CB_SYS_stat64:
-      tbuf += sprintf (tbuf, "stat64(%#x, %u)", args[0], args[1]);
+      if (cb_get_string (cb, &sc, tstr, sizeof (tstr), args[0]))
+	strcpy (tstr, "???");
+      tbuf += sprintf (tbuf, "stat64(%#x:\"%s\", %u)", args[0], tstr, args[1]);
       cb->stat_map = stat_map_64;
       sc.func = TARGET_LINUX_SYS_stat;
       cb_syscall (cb, &sc);
       cb->stat_map = stat_map_32;
       break;
     case CB_SYS_lstat64:
-      tbuf += sprintf (tbuf, "lstat64(%#x, %u)", args[0], args[1]);
+      if (cb_get_string (cb, &sc, tstr, sizeof (tstr), args[0]))
+	strcpy (tstr, "???");
+      tbuf += sprintf (tbuf, "lstat64(%#x:\"%s\", %u)", args[0], tstr, args[1]);
       cb->stat_map = stat_map_64;
       sc.func = TARGET_LINUX_SYS_lstat;
       cb_syscall (cb, &sc);
@@ -510,7 +519,10 @@ bfin_syscall (SIM_CPU *cpu)
       break;
 
     case CB_SYS_open:
-      tbuf += sprintf (tbuf, "open(%#x, %#x, %o)", args[0], args[1], args[2]);
+      if (cb_get_string (cb, &sc, tstr, sizeof (tstr), args[0]))
+	strcpy (tstr, "???");
+      tbuf += sprintf (tbuf, "open(%#x:\"%s\", %#x, %o)",
+		       args[0], tstr, args[1], args[2]);
       goto case_default;
     case CB_SYS_close:
       tbuf += sprintf (tbuf, "close(%i)", args[0]);
@@ -519,31 +531,47 @@ bfin_syscall (SIM_CPU *cpu)
       tbuf += sprintf (tbuf, "read(%i, %#x, %u)", args[0], args[1], args[2]);
       goto case_default;
     case CB_SYS_write:
-      tbuf += sprintf (tbuf, "write(%i, %#x, %u)", args[0], args[1], args[2]);
+      if (cb_get_string (cb, &sc, tstr, sizeof (tstr), args[1]))
+	strcpy (tstr, "???");
+      tbuf += sprintf (tbuf, "write(%i, %#x:\"%s\", %u)",
+		       args[0], args[1], tstr, args[2]);
       goto case_default;
     case CB_SYS_lseek:
       tbuf += sprintf (tbuf, "lseek(%i, %i, %i)", args[0], args[1], args[2]);
       goto case_default;
     case CB_SYS_unlink:
-      tbuf += sprintf (tbuf, "unlink(%#x)", args[0]);
+      if (cb_get_string (cb, &sc, tstr, sizeof (tstr), args[0]))
+	strcpy (tstr, "???");
+      tbuf += sprintf (tbuf, "unlink(%#x:\"%s\")", args[0], tstr);
       goto case_default;
     case CB_SYS_truncate:
-      tbuf += sprintf (tbuf, "truncate(%#x, %i)", args[0], args[1]);
+      if (cb_get_string (cb, &sc, tstr, sizeof (tstr), args[0]))
+	strcpy (tstr, "???");
+      tbuf += sprintf (tbuf, "truncate(%#x:\"%s\", %i)", args[0], tstr, args[1]);
       goto case_default;
     case CB_SYS_ftruncate:
       tbuf += sprintf (tbuf, "ftruncate(%i, %i)", args[0], args[1]);
       goto case_default;
     case CB_SYS_rename:
-      tbuf += sprintf (tbuf, "rename(%#x, %#x)", args[0], args[1]);
+      if (cb_get_string (cb, &sc, tstr, sizeof (tstr), args[0]))
+	strcpy (tstr, "???");
+      tbuf += sprintf (tbuf, "rename(%#x:\"%s\", ", args[0], tstr);
+      if (cb_get_string (cb, &sc, tstr, sizeof (tstr), args[1]))
+	strcpy (tstr, "???");
+      tbuf += sprintf (tbuf, "%#x:\"%s\")", args[1], tstr);
       goto case_default;
     case CB_SYS_stat:
-      tbuf += sprintf (tbuf, "stat(%#x, %#x)", args[0], args[1]);
+      if (cb_get_string (cb, &sc, tstr, sizeof (tstr), args[0]))
+	strcpy (tstr, "???");
+      tbuf += sprintf (tbuf, "stat(%#x:\"%s\", %#x)", args[0], tstr, args[1]);
       goto case_default;
     case CB_SYS_fstat:
       tbuf += sprintf (tbuf, "fstat(%i, %#x)", args[0], args[1]);
       goto case_default;
     case CB_SYS_lstat:
-      tbuf += sprintf (tbuf, "lstat(%i, %#x)", args[0], args[1]);
+      if (cb_get_string (cb, &sc, tstr, sizeof (tstr), args[0]))
+	strcpy (tstr, "???");
+      tbuf += sprintf (tbuf, "lstat(%#x:\"%s\", %#x)", args[0], tstr, args[1]);
       goto case_default;
     case CB_SYS_pipe:
       tbuf += sprintf (tbuf, "pipe(%#x, %#x)", args[0], args[1]);
@@ -594,8 +622,8 @@ bfin_syscall (SIM_CPU *cpu)
     {
       tbuf += sprintf (tbuf, "%lu (error = %i)", sc.result, sc.errcode);
       SET_DREG (0, sc.result);
-      /* Blackfin libgloss only expects R0 to be updated, not R1.  */
-      /*SET_DREG (1, sc.errcode);*/
+      SET_DREG (1, sc.result2);
+      SET_DREG (2, sc.errcode);
     }
 
   TRACE_SYSCALL (cpu, "%s", _tbuf);
@@ -1023,7 +1051,7 @@ bfin_user_init (SIM_DESC sd, SIM_CPU *cpu, struct bfd *abfd,
 
   /* start, at_phdr, at_phnum, at_base, at_entry, pt_dynamic  */
   bu32 elf_addrs[6];
-  bu32 auxvt, auxvt_size;
+  bu32 auxvt;
   bu32 exec_loadmap, ldso_loadmap;
   char *ldso_path;
 
@@ -1116,9 +1144,9 @@ bfin_user_init (SIM_DESC sd, SIM_CPU *cpu, struct bfd *abfd,
   sp -= 4; \
   auxvt = (at); \
   sim_write (sd, sp, (void *)&auxvt, 4)
-  auxvt_size = 0;
       unsigned int egid = getegid (), gid = getgid ();
       unsigned int euid = geteuid (), uid = getuid ();
+      bu32 auxvt_size = 0;
       AT_PUSH (AT_NULL, 0);
       AT_PUSH (AT_SECURE, egid != gid || euid != uid);
       AT_PUSH (AT_EGID, egid);
@@ -1173,7 +1201,8 @@ bfin_user_init (SIM_DESC sd, SIM_CPU *cpu, struct bfd *abfd,
   cb->errno_map = cb_linux_errno_map;
   cb->open_map = cb_linux_open_map;
   cb->signal_map = cb_linux_signal_map;
-  cb->stat_map = stat_map_32;
+  cb->stat_map = stat_map_32 = cb_linux_stat_map_32;
+  stat_map_64 = cb_linux_stat_map_64;
 }
 
 static void
@@ -1203,6 +1232,15 @@ bfin_os_init (SIM_DESC sd, SIM_CPU *cpu, const char * const *argv)
   sim_write (sd, cmdline, &byte, 1);
 }
 
+static void
+bfin_virtual_init (SIM_DESC sd, SIM_CPU *cpu)
+{
+  host_callback *cb = STATE_CALLBACK (sd);
+
+  cb->stat_map = stat_map_32 = cb_libgloss_stat_map_32;
+  stat_map_64 = NULL;
+}
+
 SIM_RC
 sim_create_inferior (SIM_DESC sd, struct bfd *abfd,
 		     char **argv, char **env)
@@ -1222,7 +1260,7 @@ sim_create_inferior (SIM_DESC sd, struct bfd *abfd,
      'target sim' with `bfin-...-gdb`), we need to handle it.  */
   if (STATE_OPEN_KIND (sd) == SIM_OPEN_DEBUG)
     {
-      free (STATE_PROG_ARGV (sd));
+      freeargv (STATE_PROG_ARGV (sd));
       STATE_PROG_ARGV (sd) = dupargv (argv);
     }
 
@@ -1235,16 +1273,9 @@ sim_create_inferior (SIM_DESC sd, struct bfd *abfd,
       bfin_os_init (sd, cpu, (void *)argv);
       break;
     default:
-      /* Nothing to do for virtual/all envs.  */
+      bfin_virtual_init (sd, cpu);
       break;
     }
 
   return SIM_RC_OK;
-}
-
-void
-sim_do_command (SIM_DESC sd, char *cmd)
-{
-  if (sim_args_command (sd, cmd) != SIM_RC_OK)
-    sim_io_eprintf (sd, "Unknown command `%s'\n", cmd);
 }

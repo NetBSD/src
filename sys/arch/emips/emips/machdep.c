@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7.2.1 2012/11/20 03:01:12 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7.2.2 2014/08/20 00:02:51 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7.2.1 2012/11/20 03:01:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7.2.2 2014/08/20 00:02:51 tls Exp $");
 
 #include "opt_ddb.h"
 
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7.2.1 2012/11/20 03:01:12 tls Exp $");
 #include <sys/ksyms.h>
 #include <sys/proc.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -436,7 +437,7 @@ cpu_startup(void)
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s%s", copyright, version);
-	printf("%s\n", cpu_model);
+	printf("%s\n", cpu_getmodel());
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 
@@ -491,7 +492,6 @@ void
 cpu_reboot(volatile int howto,	/* XXX volatile to keep gcc happy */
            char *bootstr)
 {
-	int s = 0;
 
 	/* take a snap shot before clobbering any registers */
 	if (curlwp)
@@ -527,7 +527,7 @@ cpu_reboot(volatile int howto,	/* XXX volatile to keep gcc happy */
 	}
 
 	/* Disable interrupts. */
-	s = splhigh();
+	splhigh();
 
 	/* If rebooting and a dump is requested do it. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)

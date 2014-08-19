@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.14 2012/09/11 00:15:19 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.14.2.1 2014/08/20 00:03:19 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -112,6 +112,17 @@ typedef struct {
 	__vrf_t		__vrf;		/* Vector Register File */
 } mcontext_t;
 
+#if defined(_LP64)
+typedef	int		__greg32_t;
+typedef	__greg32_t	__gregset32_t[_NGREG];
+
+typedef struct {
+	__gregset32_t	__gregs;	/* General Purpose Register set */
+	__fpregset_t	__fpregs;	/* Floating Point Register set */
+	__vrf_t		__vrf;		/* Vector Register File */
+} mcontext32_t;
+#endif
+
 /* Machine-dependent uc_flags */
 #define	_UC_POWERPC_VEC	0x00010000	/* Vector Register File valid */
 #define	_UC_POWERPC_SPE	0x00020000	/* Vector Register File valid */
@@ -141,7 +152,7 @@ __lwp_gettcb_fast(void)
 	void *__tcb;
 
 	__asm __volatile(
-		"addi %[__tcb],%%r2,%[__offset]@l"
+		"addi %[__tcb],%%r2,%[__offset]"
 	    :	[__tcb] "=r" (__tcb)
 	    :	[__offset] "n" (-(TLS_TP_OFFSET + sizeof(struct tls_tcb))));
 
@@ -152,7 +163,7 @@ static __inline void
 __lwp_settcb(void *__tcb)
 {
 	__asm __volatile(
-		"addi %%r2,%[__tcb],%[__offset]@l"
+		"addi %%r2,%[__tcb],%[__offset]"
 	    :
 	    :	[__tcb] "r" (__tcb),
 		[__offset] "n" (TLS_TP_OFFSET + sizeof(struct tls_tcb)));

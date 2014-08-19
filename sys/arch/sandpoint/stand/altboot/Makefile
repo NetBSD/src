@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2011/10/30 20:42:09 phx Exp $
+#	$NetBSD: Makefile,v 1.12.12.1 2014/08/20 00:03:22 tls Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -10,7 +10,8 @@ SRCS+=		nif.c fxp.c tlp.c rge.c skg.c stg.c
 SRCS+=		dsk.c pciide.c siisata.c
 SRCS+=		exception.c vers.c
 CLEANFILES+=	vers.c ${PROG} ${PROG}.bin ${PROG}.img
-CFLAGS+=	-Wall -Wno-main -ffreestanding -msoft-float -mmultiple
+CFLAGS+=	-Wall -Wno-main -ffreestanding
+CFLAGS+=	${${ACTIVE_CC} == "gcc":? -msoft-float :}
 CFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP -DLIBSA_PRINTF_WIDTH_SUPPORT
 #CPPFLAGS+=	-DCONSNAME=\"com\" -DCONSPORT=0x3f8 -DCONSSPEED=115200
@@ -19,9 +20,11 @@ CPPFLAGS+=	-nostdinc -I. -I${.OBJDIR} -I${S}
 DBG=		-Os
 
 .include <bsd.own.mk>
+.include <bsd.klinks.mk>
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
@@ -31,14 +34,6 @@ BINMODE=	444
 
 RELOC=		1000000
 ENTRY=		_start
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
-	@[ -h powerpc ] || ln -s ${S}/arch/powerpc/include powerpc
-.NOPATH: machine powerpc
-.endif
-CLEANFILES+= machine powerpc
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -62,6 +57,7 @@ vers.c: version
 	    ${${MKREPRO} == "yes" :?:-D} ${.CURDIR}/version "sandpoint"
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${_MKTARGET_LINK}
 	${LD} -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${PROG} \
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${OBJCOPY} -S -O binary ${PROG} ${PROG}.bin

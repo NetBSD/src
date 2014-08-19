@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.48.18.1 2012/12/02 05:46:39 tls Exp $ */
+/*	$NetBSD: hp.c,v 1.48.18.2 2014/08/20 00:03:27 tls Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.48.18.1 2012/12/02 05:46:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.48.18.2 2014/08/20 00:03:27 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,7 @@ const struct bdevsw hp_bdevsw = {
 	.d_ioctl = hpioctl,
 	.d_dump = nulldump,
 	.d_psize = hppsize,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 
@@ -115,6 +116,7 @@ const struct cdevsw hp_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.10 2007/10/08 13:06:00 uwe Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.10.36.1 2014/08/20 00:02:12 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)sbrk.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: sbrk.S,v 1.10 2007/10/08 13:06:00 uwe Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.10.36.1 2014/08/20 00:02:12 tls Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
@@ -58,7 +58,7 @@ CURBRK:	.long	_end
 	.text
 
 ENTRY(_sbrk)
-#ifdef PIC
+#ifdef __PIC__
 	PIC_PROLOGUE(%o5,%o4)
 	set	CURBRK, %o2
 	ld	[%o5 + %o2], %o2

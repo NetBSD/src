@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.15 2011/07/17 20:54:38 joerg Exp $	*/
+/*	$NetBSD: wd.c,v 1.15.12.1 2014/08/20 00:02:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -157,6 +157,7 @@ wdgetdisklabel(struct wd_softc *wd)
 	size_t rsize;
 	struct disklabel *lp;
 	uint8_t buf[DEV_BSIZE];
+	uint16_t magic;
 
 	wdgetdefaultlabel(wd, &wd->sc_label);
 
@@ -167,7 +168,8 @@ wdgetdisklabel(struct wd_softc *wd)
 	if (wdstrategy(wd, F_READ, MBR_BBSECTOR, DEV_BSIZE, buf, &rsize))
 		return EOFFSET;
 
-	if (*(uint16_t *)&buf[MBR_MAGIC_OFFSET] == MBR_MAGIC) {
+	memcpy(&magic, &buf[MBR_MAGIC_OFFSET], sizeof(magic));
+	if (magic == MBR_MAGIC) {
 		int i;
 		struct mbr_partition *mp;
 

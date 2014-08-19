@@ -1,4 +1,4 @@
-.\"	$NetBSD: arp.8,v 1.21.10.1 2013/06/23 06:29:03 tls Exp $
+.\"	$NetBSD: arp.8,v 1.21.10.2 2014/08/20 00:05:06 tls Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)arp.8	8.2 (Berkeley) 4/27/95
 .\"
-.Dd January 31, 2006
+.Dd July 8, 2013
 .Dt ARP 8
 .Os
 .Sh NAME
@@ -49,11 +49,11 @@
 .Nm
 .Op Fl v
 .Fl d Ar hostname
-.Op proxy
+.Op Cm proxy
 .Nm
 .Fl s Ar hostname ether_addr
-.Op temp
-.Op pub Op proxy
+.Op Cm temp
+.Op Cm pub Op Cm proxy
 .Nm
 .Fl f Ar filename
 .Sh DESCRIPTION
@@ -82,7 +82,7 @@ with the
 .Fl d
 flag.
 If the
-.Dq proxy
+.Cm proxy
 keyword is specified, only the published
 .Dq proxy only
 .Tn ARP
@@ -103,8 +103,8 @@ Entries in the file should be of the form
 .Pp
 .Bd -filled -offset indent -compact
 .Ar hostname ether_addr
-.Op temp
-.Op pub
+.Op Cm temp
+.Op Cm pub
 .Ed
 .Pp
 with argument meanings as described below.
@@ -121,10 +121,10 @@ with the Ethernet address
 .Ar ether_addr .
 The Ethernet address is given as six hex bytes separated by colons.
 The entry will be permanent unless the word
-.Dq temp
+.Cm temp
 is given in the command.
 If the word
-.Dq pub
+.Cm pub
 is given, the entry will be "published"; i.e., this system will
 act as an
 .Tn ARP
@@ -133,7 +133,7 @@ responding to requests for
 .Ar hostname
 even though the host address is not its own.
 If the word
-.Dq proxy
+.Cm proxy
 is also given, the published entry will be a
 .Dq proxy only
 entry.

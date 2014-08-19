@@ -4,7 +4,7 @@
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
+    the Free Software Foundation; either version 3 of the License, or
     (at your option) any later version.
 
     This program is distributed in the hope that it will be useful,
@@ -13,8 +13,7 @@
     GNU General Public License for more details.
  
     You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+    along with this program; if not, see <http://www.gnu.org/licenses/>.
  
     */
 
@@ -198,13 +197,13 @@ sim_stop_reason (SIM_DESC sd, enum sim_stop *reason, int *sigrc)
   case was_continuing:
     *reason = sim_stopped;
     if (status.signal == 0)
-      *sigrc = TARGET_SIGNAL_TRAP;
+      *sigrc = GDB_SIGNAL_TRAP;
     else
       *sigrc = status.signal;
     break;
   case was_trap:
     *reason = sim_stopped;
-    *sigrc = TARGET_SIGNAL_TRAP;
+    *sigrc = GDB_SIGNAL_TRAP;
     break;
   case was_exited:
     *reason = sim_exited;
@@ -259,6 +258,11 @@ sim_do_command (SIM_DESC sd, char *cmd)
   }
 }
 
+char **
+sim_complete_command (SIM_DESC sd, const char *text, const char *word)
+{
+  return NULL;
+}
 
 /* Polling, if required */
 

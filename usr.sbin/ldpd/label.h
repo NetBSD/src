@@ -1,4 +1,4 @@
-/* $NetBSD: label.h,v 1.1.12.1 2013/02/25 00:30:43 tls Exp $ */
+/* $NetBSD: label.h,v 1.1.12.2 2014/08/20 00:05:09 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,14 +32,14 @@
 #ifndef _LABEL_H_
 #define _LABEL_H_
 
-#include <sys/queue.h>
+#include <sys/rbtree.h>
 
 #include "mpls_routes.h"
 #include "ldp_peer.h"
 
-#define	LDP_READD_NODEL		0
-#define	LDP_READD_CHANGE	1
-#define	LDP_READD_NOCHANGE	2
+#define	REATT_INET_CHANGE	0
+#define	REATT_INET_DEL		1
+#define	REATT_INET_NODEL	2
 
 /*
  * MPLS label descriptor
@@ -51,22 +51,26 @@
 struct label {
 	union sockunion so_dest, so_pref, so_gate;
 	int binding, label;
-	struct ldp_peer *p;
-	SLIST_ENTRY(label) labels;
+	bool host;	/* change routes using RTF_HOST */
+	const struct ldp_peer *p;
+	rb_node_t lbtree;
 };
-SLIST_HEAD(,label) label_head;
 
 void            label_init(void);
-struct label *	label_add(union sockunion *, union sockunion *,
-	  union sockunion *, uint32_t, struct ldp_peer *, uint32_t);
+struct label *	label_add(const union sockunion *, const union sockunion *,
+	  const union sockunion *, uint32_t, const struct ldp_peer *, uint32_t,
+	  bool);
 void            label_del(struct label *);
-void            del_all_peer_labels(struct ldp_peer*, int);
-void		label_reattach_all_peer_labels(struct ldp_peer*, int);
+void            del_all_peer_labels(const struct ldp_peer*, int);
+void		label_reattach_all_peer_labels(const struct ldp_peer*, int);
 void            label_del_by_binding(uint32_t, int);
-struct label *	label_get(union sockunion *sodest, union sockunion *sopref);
+struct label *	label_get(const union sockunion *sodest,
+	const union sockunion *sopref);
 struct label *	label_get_by_prefix(const struct sockaddr *, int);
 uint32_t	get_free_local_label(void);
-void		change_local_label(struct label*, uint32_t);
+void		announce_label_change(struct label *);
 void		label_reattach_route(struct label*, int);
+void		label_check_assoc(struct ldp_peer *p);
+struct label *	label_get_right(struct label *);
 
 #endif /* !_LABEL_H_ */

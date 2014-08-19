@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.95 2011/12/22 15:33:30 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.95.6.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -257,7 +257,7 @@ sun3_mmu_specific:
 	movsb BUSERR_REG,%d0		| get value of bus error register
 	movc %d1,%sfc			| restore %sfc
 	movl %sp@+,%d1			| restore %d1
-	andb #BUSERR_MMU,%d0 		| is this an MMU fault?
+	andb #BUSERR_MMU,%d0		| is this an MMU fault?
 	jeq Lisberr			| non-MMU bus error
 /* End of sun3 specific code. */
 
@@ -403,7 +403,7 @@ ASLOCAL(kbrkpt)
 	| (so debugger can change the stack pointer)
 	movl	%a6,%d1
 	cmpl	#_ASM_LABEL(tmpstk),%d1
-	jls	Lbrkpt2 		| already on tmpstk
+	jls	Lbrkpt2			| already on tmpstk
 	| Copy frame to the temporary stack
 	movl	%sp,%a0			| %a0=src
 	lea	_ASM_LABEL(tmpstk)-96,%a1	| %a1=dst
@@ -446,12 +446,6 @@ Lbrkpt2:
  *   %d0,%d1,%a0,%a1, sr, pc, vo
  */
 
-#define INTERRUPT_SAVEREG \
-	moveml	#0xC0C0,%sp@-
-
-#define INTERRUPT_RESTORE \
-	moveml	%sp@+,#0x0303
-
 /*
  * This is the common auto-vector interrupt handler,
  * for which the CPU provides the vector=0x18+level.
@@ -465,7 +459,7 @@ Lbrkpt2:
 GLOBAL(_isr_autovec)
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(isr_autovec)
-	INTERRUPT_RESTORE
+	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)
 
 /* clock: see clock.c */
@@ -477,7 +471,7 @@ GLOBAL(_isr_autovec)
 GLOBAL(_isr_clock)
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(clock_intr)
-	INTERRUPT_RESTORE
+	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)
 
 | Handler for all vectored interrupts (i.e. VME interrupts)
@@ -489,11 +483,8 @@ GLOBAL(_isr_clock)
 GLOBAL(_isr_vectored)
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(isr_vectored)
-	INTERRUPT_RESTORE
+	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)
-
-#undef	INTERRUPT_SAVEREG
-#undef	INTERRUPT_RESTORE
 
 /* interrupt counters (needed by vmstat) */
 GLOBAL(intrnames)
@@ -681,7 +672,7 @@ ENTRY(_splraise)
 	clrl	%d0
 	movw	%sr,%d0
 	movl	%d0,%d1
-	andl	#PSL_HIGHIPL,%d1 	| old &= PSL_HIGHIPL
+	andl	#PSL_HIGHIPL,%d1	| old &= PSL_HIGHIPL
 	cmpl	%sp@(4),%d1		| (old - new)
 	bge	Lsplr
 	movl	%sp@(4),%d1

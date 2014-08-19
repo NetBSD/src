@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.40 2012/04/29 20:27:31 dsl Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.40.2.1 2014/08/20 00:04:36 tls Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.40 2012/04/29 20:27:31 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.40.2.1 2014/08/20 00:04:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -85,8 +85,18 @@ dev_type_close(nsmb_dev_close);
 dev_type_ioctl(nsmb_dev_ioctl);
 
 const struct cdevsw nsmb_cdevsw = {
-	nsmb_dev_open, nsmb_dev_close, noread, nowrite,
-	nsmb_dev_ioctl, nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	.d_open = nsmb_dev_open,
+	.d_close = nsmb_dev_close,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = nsmb_dev_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER,
 };
 
 

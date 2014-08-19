@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.37 2012/02/19 21:06:41 rmind Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.37.2.1 2014/08/20 00:03:33 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.37 2012/02/19 21:06:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.37.2.1 2014/08/20 00:03:33 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ netbsd32_sigaction(struct lwp *l, const struct netbsd32_sigaction_args *uap, reg
 		syscallarg(netbsd32_sigactionp_t) osa;
 	} */
 	struct sigaction nsa, osa;
-	struct netbsd32_sigaction *sa32p, sa32;
+	struct netbsd32_sigaction13 *sa32p, sa32;
 	int error;
 
 	if (SCARG_P32(uap, nsa)) {
@@ -73,7 +73,8 @@ netbsd32_sigaction(struct lwp *l, const struct netbsd32_sigaction_args *uap, reg
 		if (copyin(sa32p, &sa32, sizeof(sa32)))
 			return EFAULT;
 		nsa.sa_handler = (void *)NETBSD32PTR64(sa32.netbsd32_sa_handler);
-		nsa.sa_mask = sa32.netbsd32_sa_mask;
+		memset(&nsa.sa_mask, 0, sizeof(nsa.sa_mask));
+		nsa.sa_mask.__bits[0] = sa32.netbsd32_sa_mask;
 		nsa.sa_flags = sa32.netbsd32_sa_flags;
 	}
 	error = sigaction1(l, SCARG(uap, signum),
@@ -86,7 +87,7 @@ netbsd32_sigaction(struct lwp *l, const struct netbsd32_sigaction_args *uap, reg
 
 	if (SCARG_P32(uap, osa)) {
 		NETBSD32PTR32(sa32.netbsd32_sa_handler, osa.sa_handler);
-		sa32.netbsd32_sa_mask = osa.sa_mask;
+		sa32.netbsd32_sa_mask = osa.sa_mask.__bits[0];
 		sa32.netbsd32_sa_flags = osa.sa_flags;
 		sa32p = SCARG_P32(uap, osa);
 		if (copyout(&sa32, sa32p, sizeof(sa32)))

@@ -75,7 +75,7 @@
 
 #ifdef VX_BUILD
 /* This is defined here for VxWorks since the Windows based compiler */
-/* will not accept the defintion on the command line in the Makefile */
+/* will not accept the definition on the command line in the Makefile */
 #undef  SKS_KEY_NODE_PATH
 #define SKS_KEY_NODE_PATH               "/opt/NetOctave/sks/"
 #endif

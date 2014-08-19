@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.h,v 1.8 2009/02/14 12:44:20 he Exp $	*/
+/*	$NetBSD: iq80310_intr.h,v 1.8.22.1 2014/08/20 00:02:54 tls Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -90,12 +90,10 @@ static inline void __attribute__((__unused__))
 iq80310_splx(int new)
 {
 	extern volatile int iq80310_ipending;
-	int old;
 
 	/* Don't let the compiler re-order this code with preceding code */
 	__insn_barrier();
 
-	old = curcpl();
 	set_curcpl(new);
 
 #ifdef __HAVE_FAST_SOFTINTS

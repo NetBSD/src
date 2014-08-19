@@ -1,5 +1,4 @@
-# Copyright 1997, 1998, 1999, 2000, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 1997-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,21 +28,19 @@
 #quit
 
 
-if $tracelevel then {
-        strace $tracelevel
-}
-
 
 set prototypes 0
-set testfile "varargs"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
 
-if [get_compiler_info ${binfile}] {
+standard_testfile .c
+
+if [get_compiler_info] {
     return -1
 }
 
 set additional_flags {debug}
+if [support_complex_tests] {
+    lappend additional_flags "additional_flags=-DTEST_COMPLEX"
+}
 
 if {$hp_cc_compiler} {
     lappend additional_flags "additional_flags=-Ae"
@@ -58,10 +55,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
 
 # Start with a fresh gdb.
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart ${binfile}
 gdb_test_no_output "set print sevenbit-strings"
 gdb_test_no_output "set print address off"
 gdb_test_no_output "set width 0"
@@ -69,7 +63,7 @@ gdb_test_no_output "set width 0"
 
 if [gdb_skip_stdio_test "varargs.exp"] {
     # Nothing in this module is testable without printf.
-    return;
+    return
 }
 
 if ![runto_main] then {
@@ -112,3 +106,21 @@ if {![target_info exists gdb,skip_float_tests]} {
 	"print find_max_double(5,1.0,17.0,2.0,3.0,4.0)"
 }
 
+
+# Test _Complex type here if supported.
+if [support_complex_tests] {
+    global gdb_prompt
+
+    set test "print find_max_float_real(4, fc1, fc2, fc3, fc4)"
+    setup_kfail gdb/12791 "arm*-*-*"
+    gdb_test $test ".*= 4 \\+ 4 \\* I" $test
+
+    set test "print find_max_double_real(4, dc1, dc2, dc3, dc4)"
+    setup_kfail gdb/12791 "arm*-*-*"
+    gdb_test $test ".*= 4 \\+ 4 \\* I" $test
+
+    set test "print find_max_long_double_real(4, ldc1, ldc2, ldc3, ldc4)"
+    setup_kfail gdb/12791 "arm*-*-*"
+    gdb_test $test ".*= 4 \\+ 4 \\* I" $test
+
+}

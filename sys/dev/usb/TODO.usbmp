@@ -1,4 +1,4 @@
-$NetBSD: TODO.usbmp,v 1.2.2.1 2013/02/25 00:29:33 tls Exp $
+$NetBSD: TODO.usbmp,v 1.2.2.2 2014/08/20 00:03:51 tls Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
@@ -6,35 +6,22 @@ the majority of the USB MP device interface is documented in usbdivar.h.
 
 flesh out most of usbdi(9).
 
-
-host controllers needing to be ported:
-  - dev/ic/slhci.c
-  - arch/mips/adm5120/dev/ahci.c
-  - rump/dev/lib/libugenhc/ugenhc.c
-
-
-use /* XXXSMP ok */ markers for non-SMP-safe host controller driver uses.
-eg, "if (lock_ptr) mutex_enter(lock_ptr); else s = splusb();"
-
-
-add lots more asserts
-
-
 usb_event_thread() startup should use something to sync companions
 
 
-wake/wakeup conversion:
-  - usb_detach_waitold/wakeupold() -> usb_detach_wait/broadcast()
+usb_detach_{waitold,wakeup} to usb_detach_{wait,broadcast} conversion:
   - drivers:
       if_aue.c
       if_axe.c
+      if_axen.c
+      if_smsc.c
       if_udav.c
       if_url.c
+      stuirda.c
       ubt.c
       ucom.c
       ucycom.c
-      ugen.c		- done
-      uhid.c		- done
+      udsir.c
       uhso.c
       uirda.c
       ulpt.c
@@ -50,7 +37,7 @@ use usb_delay_ms_locked() in places
 
 
 convert uhidev users to MPSAFE:
-  ucycom(4) 
+  ucycom(4)
   - own cdevsw that isn't D_MPSAFE; need to check intr handlers
 
   uhid(4)
@@ -68,21 +55,22 @@ convert uhidev users to MPSAFE:
 
 
 wakeup/tsleep drivers:
+  - if_athn_usb.c
   - if_otus.c
+  - if_run.c
   - if_upgt.c
+  - if_urtwn.c
   - if_zyd.c
   - ucom.c
   - ucycom.c
-  - ugen.c		- done
+  - udsir.c
   - uirda.c
   - ulpt.c
   - umass_isdata.c
   - ustir.c
   - uthum.c
-  - utoppy.c
   - uvscom.c
   - uyurex.c
-
 
 missing D_MPSAFE drivers:
   - ucom
@@ -95,25 +83,25 @@ missing D_MPSAFE drivers:
   - uscanner
   - utoppy
 
-
 missing CALLOUT_MPSAFE drivers:
-  - if_aue
-  - if_axe
-  - if_cue
-  - if_otus
-  - if_rum
-  - if_run
-  - if_udav
-  - if_upgt
-  - if_ural
-  - if_url
-  - if_urtw
-  - if_urtwn
-  - if_zyd
-  - ukbd
-  - ulpt
-  - uyurex
-
+  - if_aue.c
+  - if_axe.c
+  - if_axen.c
+  - if_cue.c
+  - if_otus.c
+  - if_rum.c
+  - if_run.c
+  - if_smsc.c
+  - if_udav.c
+  - if_upgt.c
+  - if_ural.c
+  - if_url.c
+  - if_urtw.c
+  - if_urtwn.c
+  - if_zyd.c
+  - ukbd.c
+  - ulpt.c
+  - uyurex.c
 
 driver testing:		STATUS
   - uhub		working

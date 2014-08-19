@@ -1,7 +1,6 @@
 /* Serial interface for local (hardwired) serial ports on Windows systems
 
-   Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,7 +30,7 @@
 #include <sys/types.h>
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 
 #include "command.h"
 
@@ -429,7 +428,7 @@ typedef DWORD WINAPI (*thread_fn_type)(void *);
 
 /* Create a new select thread for SCB executing THREAD_FN.  The STATE
    will be filled in by this function before return.  */
-void
+static void
 create_select_thread (thread_fn_type thread_fn,
 		      struct serial *scb,
 		      struct ser_console_state *state)
@@ -1211,6 +1210,128 @@ net_windows_close (struct serial *scb)
   net_close (scb);
 }
 
+/* The serial port driver.  */
+
+static const struct serial_ops hardwire_ops =
+{
+  "hardwire",
+  ser_windows_open,
+  ser_windows_close,
+  NULL,
+  ser_base_readchar,
+  ser_base_write,
+  ser_windows_flush_output,
+  ser_windows_flush_input,
+  ser_windows_send_break,
+  ser_windows_raw,
+  /* These are only used for stdin; we do not need them for serial
+     ports, so supply the standard dummies.  */
+  ser_base_get_tty_state,
+  ser_base_copy_tty_state,
+  ser_base_set_tty_state,
+  ser_base_print_tty_state,
+  ser_base_noflush_set_tty_state,
+  ser_windows_setbaudrate,
+  ser_windows_setstopbits,
+  ser_windows_drain_output,
+  ser_base_async,
+  ser_windows_read_prim,
+  ser_windows_write_prim,
+  NULL,
+  ser_windows_wait_handle
+};
+
+/* The dummy serial driver used for terminals.  We only provide the
+   TTY-related methods.  */
+
+static const struct serial_ops tty_ops =
+{
+  "terminal",
+  NULL,
+  ser_console_close,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  ser_console_get_tty_state,
+  ser_base_copy_tty_state,
+  ser_base_set_tty_state,
+  ser_base_print_tty_state,
+  ser_base_noflush_set_tty_state,
+  NULL,
+  NULL,
+  ser_base_drain_output,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  ser_console_wait_handle,
+  ser_console_done_wait_handle
+};
+
+/* The pipe interface.  */
+
+static const struct serial_ops pipe_ops =
+{
+  "pipe",
+  pipe_windows_open,
+  pipe_windows_close,
+  pipe_windows_fdopen,
+  ser_base_readchar,
+  ser_base_write,
+  ser_base_flush_output,
+  ser_base_flush_input,
+  ser_base_send_break,
+  ser_base_raw,
+  ser_base_get_tty_state,
+  ser_base_copy_tty_state,
+  ser_base_set_tty_state,
+  ser_base_print_tty_state,
+  ser_base_noflush_set_tty_state,
+  ser_base_setbaudrate,
+  ser_base_setstopbits,
+  ser_base_drain_output,
+  ser_base_async,
+  pipe_windows_read,
+  pipe_windows_write,
+  pipe_avail,
+  pipe_wait_handle,
+  pipe_done_wait_handle
+};
+
+/* The TCP/UDP socket driver.  */
+
+static const struct serial_ops tcp_ops =
+{
+  "tcp",
+  net_windows_open,
+  net_windows_close,
+  NULL,
+  ser_base_readchar,
+  ser_base_write,
+  ser_base_flush_output,
+  ser_base_flush_input,
+  ser_tcp_send_break,
+  ser_base_raw,
+  ser_base_get_tty_state,
+  ser_base_copy_tty_state,
+  ser_base_set_tty_state,
+  ser_base_print_tty_state,
+  ser_base_noflush_set_tty_state,
+  ser_base_setbaudrate,
+  ser_base_setstopbits,
+  ser_base_drain_output,
+  ser_base_async,
+  net_read_prim,
+  net_write_prim,
+  NULL,
+  net_windows_wait_handle,
+  net_windows_done_wait_handle
+};
+
 void
 _initialize_ser_windows (void)
 {
@@ -1229,91 +1350,9 @@ _initialize_ser_windows (void)
   else
     CancelIo = NULL;
 
-  /* Now register the serial port driver.  */
-  ops = XMALLOC (struct serial_ops);
-  memset (ops, 0, sizeof (struct serial_ops));
-  ops->name = "hardwire";
-  ops->next = 0;
-  ops->open = ser_windows_open;
-  ops->close = ser_windows_close;
-
-  ops->flush_output = ser_windows_flush_output;
-  ops->flush_input = ser_windows_flush_input;
-  ops->send_break = ser_windows_send_break;
-
-  /* These are only used for stdin; we do not need them for serial
-     ports, so supply the standard dummies.  */
-  ops->get_tty_state = ser_base_get_tty_state;
-  ops->copy_tty_state = ser_base_copy_tty_state;
-  ops->set_tty_state = ser_base_set_tty_state;
-  ops->print_tty_state = ser_base_print_tty_state;
-  ops->noflush_set_tty_state = ser_base_noflush_set_tty_state;
-
-  ops->go_raw = ser_windows_raw;
-  ops->setbaudrate = ser_windows_setbaudrate;
-  ops->setstopbits = ser_windows_setstopbits;
-  ops->drain_output = ser_windows_drain_output;
-  ops->readchar = ser_base_readchar;
-  ops->write = ser_base_write;
-  ops->async = ser_base_async;
-  ops->read_prim = ser_windows_read_prim;
-  ops->write_prim = ser_windows_write_prim;
-  ops->wait_handle = ser_windows_wait_handle;
-
-  serial_add_interface (ops);
-
-  /* Next create the dummy serial driver used for terminals.  We only
-     provide the TTY-related methods.  */
-
-  ops = XMALLOC (struct serial_ops);
-  memset (ops, 0, sizeof (struct serial_ops));
-
-  ops->name = "terminal";
-  ops->next = 0;
-
-  ops->close = ser_console_close;
-  ops->get_tty_state = ser_console_get_tty_state;
-  ops->copy_tty_state = ser_base_copy_tty_state;
-  ops->set_tty_state = ser_base_set_tty_state;
-  ops->print_tty_state = ser_base_print_tty_state;
-  ops->noflush_set_tty_state = ser_base_noflush_set_tty_state;
-  ops->drain_output = ser_base_drain_output;
-  ops->wait_handle = ser_console_wait_handle;
-  ops->done_wait_handle = ser_console_done_wait_handle;
-
-  serial_add_interface (ops);
-
-  /* The pipe interface.  */
-
-  ops = XMALLOC (struct serial_ops);
-  memset (ops, 0, sizeof (struct serial_ops));
-  ops->name = "pipe";
-  ops->next = 0;
-  ops->open = pipe_windows_open;
-  ops->close = pipe_windows_close;
-  ops->fdopen = pipe_windows_fdopen;
-  ops->readchar = ser_base_readchar;
-  ops->write = ser_base_write;
-  ops->flush_output = ser_base_flush_output;
-  ops->flush_input = ser_base_flush_input;
-  ops->send_break = ser_base_send_break;
-  ops->go_raw = ser_base_raw;
-  ops->get_tty_state = ser_base_get_tty_state;
-  ops->copy_tty_state = ser_base_copy_tty_state;
-  ops->set_tty_state = ser_base_set_tty_state;
-  ops->print_tty_state = ser_base_print_tty_state;
-  ops->noflush_set_tty_state = ser_base_noflush_set_tty_state;
-  ops->setbaudrate = ser_base_setbaudrate;
-  ops->setstopbits = ser_base_setstopbits;
-  ops->drain_output = ser_base_drain_output;
-  ops->async = ser_base_async;
-  ops->read_prim = pipe_windows_read;
-  ops->write_prim = pipe_windows_write;
-  ops->wait_handle = pipe_wait_handle;
-  ops->done_wait_handle = pipe_done_wait_handle;
-  ops->avail = pipe_avail;
-
-  serial_add_interface (ops);
+  serial_add_interface (&hardwire_ops);
+  serial_add_interface (&tty_ops);
+  serial_add_interface (&pipe_ops);
 
   /* If WinSock works, register the TCP/UDP socket driver.  */
 
@@ -1321,30 +1360,5 @@ _initialize_ser_windows (void)
     /* WinSock is unavailable.  */
     return;
 
-  ops = XMALLOC (struct serial_ops);
-  memset (ops, 0, sizeof (struct serial_ops));
-  ops->name = "tcp";
-  ops->next = 0;
-  ops->open = net_windows_open;
-  ops->close = net_windows_close;
-  ops->readchar = ser_base_readchar;
-  ops->write = ser_base_write;
-  ops->flush_output = ser_base_flush_output;
-  ops->flush_input = ser_base_flush_input;
-  ops->send_break = ser_tcp_send_break;
-  ops->go_raw = ser_base_raw;
-  ops->get_tty_state = ser_base_get_tty_state;
-  ops->copy_tty_state = ser_base_copy_tty_state;
-  ops->set_tty_state = ser_base_set_tty_state;
-  ops->print_tty_state = ser_base_print_tty_state;
-  ops->noflush_set_tty_state = ser_base_noflush_set_tty_state;
-  ops->setbaudrate = ser_base_setbaudrate;
-  ops->setstopbits = ser_base_setstopbits;
-  ops->drain_output = ser_base_drain_output;
-  ops->async = ser_base_async;
-  ops->read_prim = net_read_prim;
-  ops->write_prim = net_write_prim;
-  ops->wait_handle = net_windows_wait_handle;
-  ops->done_wait_handle = net_windows_done_wait_handle;
-  serial_add_interface (ops);
+  serial_add_interface (&tcp_ops);
 }

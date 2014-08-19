@@ -1,7 +1,6 @@
 /* Work with executable files, for GDB, the GNU debugger.
 
-   Copyright (C) 2003, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,11 +27,13 @@
 struct target_section;
 struct target_ops;
 struct bfd;
+struct objfile;
 
 extern struct target_ops exec_ops;
 
 #define exec_bfd current_program_space->ebfd
 #define exec_bfd_mtime current_program_space->ebfd_mtime
+#define exec_filename current_program_space->pspace_exec_filename
 
 /* Builds a section table, given args BFD, SECTABLE_PTR, SECEND_PTR.
    Returns 0 if OK, 1 on error.  */
@@ -82,15 +83,21 @@ extern int section_table_xfer_memory_partial (gdb_byte *, const gdb_byte *,
 /* Set the loaded address of a section.  */
 extern void exec_set_section_address (const char *, int, CORE_ADDR);
 
-/* Remove all target sections taken from ABFD.  */
+/* Remove all target sections owned by OWNER.  */
 
-extern void remove_target_sections (bfd *abfd);
+extern void remove_target_sections (void *owner);
 
 /* Add the sections array defined by [SECTIONS..SECTIONS_END[ to the
    current set of target sections.  */
 
-extern void add_target_sections (struct target_section *sections,
+extern void add_target_sections (void *owner,
+				 struct target_section *sections,
 				 struct target_section *sections_end);
+
+/* Add the sections of OBJFILE to the current set of target sections.
+ * OBJFILE owns the new target sections.  */
+
+extern void add_target_sections_of_objfile (struct objfile *objfile);
 
 /* Prints info about all sections defined in the TABLE.  ABFD is
    special cased --- it's filename is omitted; if it is the executable

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_write.c,v 1.15.6.1 2013/02/25 00:30:44 tls Exp $	*/
+/*	$NetBSD: cd9660_write.c,v 1.15.6.2 2014/08/20 00:05:09 tls Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_write.c,v 1.15.6.1 2013/02/25 00:30:44 tls Exp $");
+__RCSID("$NetBSD: cd9660_write.c,v 1.15.6.2 2014/08/20 00:05:09 tls Exp $");
 #endif  /* !__lint */
 
 #include <util.h>
@@ -145,10 +145,7 @@ static int
 cd9660_write_volume_descriptors(iso9660_disk *diskStructure, FILE *fd)
 {
 	volume_descriptor *vd_temp = diskStructure->firstVolumeDescriptor;
-	int pos;
-
 	while (vd_temp != NULL) {
-		pos = vd_temp->sector * diskStructure->sectorSize;
 		cd9660_write_filedata(diskStructure, fd, vd_temp->sector,
 		    vd_temp->volumeDescriptorData, 1);
 		vd_temp = vd_temp->next;
@@ -267,7 +264,6 @@ cd9660_write_file(iso9660_disk *diskStructure, FILE *fd, cd9660node *writenode)
 	int ret;
 	off_t working_sector;
 	int cur_sector_offset;
-	int written;
 	iso_directory_record_cd9660 temp_record;
 	cd9660node *temp;
 	int rv = 0;
@@ -337,7 +333,7 @@ cd9660_write_file(iso9660_disk *diskStructure, FILE *fd, cd9660node *writenode)
 					err(1, "fseeko");
 			}
 			/* Write out the basic ISO directory record */
-			written = fwrite(&temp_record, 1,
+			(void)fwrite(&temp_record, 1,
 			    temp->isoDirRecord->length[0], fd);
 			if (diskStructure->rock_ridge_enabled) {
 				cd9660_write_rr(diskStructure, fd, temp,

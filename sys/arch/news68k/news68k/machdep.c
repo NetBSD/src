@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.100 2012/08/10 12:17:51 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.100.2.1 2014/08/20 00:03:15 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100 2012/08/10 12:17:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100.2.1 2014/08/20 00:03:15 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100 2012/08/10 12:17:51 tsutsui Exp $"
 #include <sys/kcore.h>
 #include <sys/ksyms.h>
 #include <sys/module.h>
+#include <sys/cpu.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -245,18 +246,13 @@ cpu_startup(void)
 	initcpu();
 }
 
-/*
- * Info for CTL_HW
- */
-char cpu_model[124];
-
 int news_machine_id;
 
 static void
 identifycpu(void)
 {
 
-	printf("SONY NET WORK STATION, Model %s, ", cpu_model);
+	printf("SONY NET WORK STATION, Model %s, ", cpu_getmodel());
 	printf("Machine ID #%d\n", news_machine_id);
 
 	delay_divisor = (20480 / cpuspeed + 5) / 10; /* XXX */
@@ -645,6 +641,7 @@ badaddr(void *addr, int nbytes)
 	default:
 		panic("badaddr: bad request");
 	}
+	__USE(i);
 	nofault = (int *) 0;
 	return 0;
 }
@@ -661,6 +658,7 @@ badbaddr(void *addr)
 		return 1;
 	}
 	i = *(volatile char *)addr;
+	__USE(i);
 	nofault = (int *) 0;
 	return 0;
 }
@@ -808,7 +806,7 @@ news1700_init(void)
 	if (t == NULL)
 		panic("unexpected system model.");
 
-	strcat(cpu_model, t);
+	cpu_setmodel("%s", t);
 	news_machine_id = (idrom.id_serial[0] << 8) + idrom.id_serial[1];
 
 	ctrl_parity	= (uint8_t *)(0xe1080000);
@@ -890,7 +888,7 @@ news1200_init(void)
 	for (i = 0; i < sizeof(idrom); i++, p += 2)
 		*q++ = ((*p & 0x0f) << 4) | (*(p + 1) & 0x0f);
 
-	strcat(cpu_model, idrom.id_model);
+	cpu_setmodel("%s", idrom.id_model);
 	news_machine_id = idrom.id_serial;
 
 	cpuspeed = 25;

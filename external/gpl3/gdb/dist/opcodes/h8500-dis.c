@@ -1,5 +1,5 @@
 /* Disassemble h8500 instructions.
-   Copyright 1993, 1998, 2000, 2001, 2002, 2004, 2005, 2007
+   Copyright 1993, 1998, 2000, 2001, 2002, 2004, 2005, 2007, 2012
    Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
@@ -19,12 +19,12 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
+#include "sysdep.h"
 #include <stdio.h>
 
 #define DISASSEMBLER_TABLE
 #define DEFINE_TABLE
 
-#include "sysdep.h"
 #include "h8500-opc.h"
 #include "dis-asm.h"
 #include "opintl.h"

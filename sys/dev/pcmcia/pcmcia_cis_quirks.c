@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.34 2009/03/14 15:36:20 dsl Exp $	*/
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.34.22.1 2014/08/20 00:03:49 tls Exp $	*/
 
 /*
  * Copyright (c) 1998 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.34 2009/03/14 15:36:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.34.22.1 2014/08/20 00:03:49 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,24 +214,6 @@ static const struct pcmcia_config_entry pcmcia_necinfrontia_ax420n_func0_cfe0 = 
 	.iomask = 10,			/* iomask */
 	.iospace = { { .length = 0x8, .start = 0x3f8 } },	/* iospace */
 	.irqmask = 0x86bc,		/* irqmask */
-};
-
-static const struct pcmcia_function pcmcia_sierra_ac850_func0 = {
-	.number = 0,			/* function number */
-	.function = PCMCIA_FUNCTION_SERIAL,
-	.last_config_index = 0x24,	/* last cfe number */
-	.ccr_base = 0x700,		/* ccr_base */
-	.ccr_mask = 0x73,		/* ccr_mask */
-};
-
-static const struct pcmcia_config_entry pcmcia_sierra_ac850_cfe0 = {
-	.number = 0x22,			/* cfe number */
-	.flags = PCMCIA_CFE_IO8 | PCMCIA_CFE_IRQLEVEL,
-	.iftype = PCMCIA_IFTYPE_IO,
-	.num_iospace = 1,		/* num_iospace */
-	.iomask = 0,			/* iomask */
-	.iospace = { { .length = 0x0008, .start = 0x3e8 } },	/* iospace */
-	.irqmask = 0x3fbc,		/* irqmask */
 };
 
 static const struct pcmcia_cis_quirk pcmcia_cis_quirks[] = {

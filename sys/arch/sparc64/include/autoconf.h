@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.30.12.1 2012/11/20 03:01:45 tls Exp $ */
+/*	$NetBSD: autoconf.h,v 1.30.12.2 2014/08/20 00:03:25 tls Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,6 +75,10 @@
 
 #include <sys/bus.h>
 #include <machine/promlib.h>
+
+/* Machine banner name and model name */
+extern char machine_banner[100];
+extern char machine_model[100];
 
 /* This is used to map device classes to IPLs */
 struct intrmap {

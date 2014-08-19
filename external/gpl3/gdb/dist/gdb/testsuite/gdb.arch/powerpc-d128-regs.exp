@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2008-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,10 +19,6 @@
 # bug-gdb@gnu.org
 
 # Testcase for ppc decimal128 pseudo-registers.
-
-if $tracelevel then {
-        strace $tracelevel
-}
 
 if ![istarget "powerpc64-*"] then {
     verbose "Skipping powerpc Decimal128 pseudo-registers testcase."
@@ -51,7 +47,7 @@ if { ![runto main] } then {
 }
 
 if [gdb_test "show arch" ".*currently powerpc:common.*" "Checking for PPC arch"] {
-    return -1;
+    return -1
 }
 
 gdb_test "next" ""

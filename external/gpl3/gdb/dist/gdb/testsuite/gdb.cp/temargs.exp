@@ -1,6 +1,6 @@
 # temargs.exp - Template argument tests
 #
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,16 +17,11 @@
 
 # This file is part of the gdb testsuite.
 
-if {$tracelevel} {
-    strace $tracelevel
-}
-
 if {[skip_cplus_tests]} {
     continue
 }
 
-set testfile "temargs"
-set srcfile "${testfile}.cc"
+standard_testfile .cc
 
 if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
     return -1
@@ -41,9 +36,16 @@ if {![runto_main]} {
 # gcc 4.4 and earlier don't emit enough info for some of our template tests.
 verbose -log "compiler_info: $compiler_info"
 set have_older_template_gcc 0
+set have_pr_41736_fixed 1
+set have_pr_45024_fixed 1
 if {[test_compiler_info {gcc-[0-3]-*}]
     || [test_compiler_info {gcc-4-[0-4]-*}]} {
     set have_older_template_gcc 1
+    set have_pr_41736_fixed 0
+    set have_pr_45024_fixed 0
+} elseif {[test_compiler_info {gcc-4-5-*}]} {
+    set have_pr_41736_fixed 0
+    set have_pr_45024_fixed 0
 }
 
 set line [gdb_get_line_number "Breakpoint 1" $srcfile]
@@ -62,8 +64,12 @@ set line [gdb_get_line_number "Breakpoint 4" $srcfile]
 gdb_test "break $srcfile:$line" "Breakpoint 5.*" \
     "set fourth breakpoint for temargs"
 
-set line [gdb_get_line_number "Breakpoint 6" $srcfile]
+set line [gdb_get_line_number "Breakpoint 5" $srcfile]
 gdb_test "break $srcfile:$line" "Breakpoint 6.*" \
+    "set fifth breakpoint for temargs"
+
+set line [gdb_get_line_number "Breakpoint 6" $srcfile]
+gdb_test "break $srcfile:$line" "Breakpoint 7.*" \
     "set sixth breakpoint for temargs"
 
 #
@@ -81,7 +87,7 @@ gdb_test "print I" " = 23" "test value of I in base_m"
 if $have_older_template_gcc { setup_xfail "*-*-*" }
 gdb_test "print P == &a_global" " = true" "test value of P in base_m"
 
-setup_kfail "gcc/41736" *-*-*
+if {!$have_pr_41736_fixed} { setup_xfail *-*-* }
 gdb_test "print MP" "&S::f" "test value of MP in base_m"
 
 #
@@ -90,10 +96,11 @@ gdb_test "print MP" "&S::f" "test value of MP in base_m"
 
 gdb_continue_to_breakpoint "continue to second breakpoint for temargs"
 
-setup_kfail "gcc/45024" *-*-*
+
+if {!$have_pr_45024_fixed} { setup_xfail *-*-* }
 gdb_test "ptype T" "long" "test type of T in inner_m"
 
-setup_kfail "gcc/45024" *-*-*
+if {!$have_pr_45024_fixed} { setup_xfail *-*-* }
 gdb_test "print I" " = 47" "test value of I in inner_m"
 
 if $have_older_template_gcc { setup_xfail "*-*-*"
@@ -104,7 +111,7 @@ if $have_older_template_gcc { setup_xfail "*-*-*"
 }
 gdb_test "print P == &a_global" " = true" "test value of P in inner_m"
 
-setup_kfail "gcc/41736" *-*-*
+if {!$have_pr_41736_fixed} { setup_xfail *-*-* }
 gdb_test "print MP" "&S::f" "test value of MP in inner_m"
 
 if $have_older_template_gcc { setup_xfail "*-*-*"
@@ -130,7 +137,7 @@ gdb_test "print I" " = 91" "test value of I in func"
 if $have_older_template_gcc { setup_xfail "*-*-*" }
 gdb_test "print P == &a_global" " = true" "test value of P in func"
 
-setup_kfail "gcc/41736" *-*-*
+if {!$have_pr_41736_fixed} { setup_xfail *-*-* }
 gdb_test "print MP" "&S::f" "test value of MP in func"
 
 #
@@ -148,11 +155,24 @@ gdb_test "print I" " = 23" "test value of I in templ_m"
 if $have_older_template_gcc { setup_xfail "*-*-*" }
 gdb_test "print P == &a_global" " = true" "test value of P in templ_m"
 
-setup_kfail "gcc/41736" *-*-*
+if {!$have_pr_41736_fixed} { setup_xfail *-*-* }
 gdb_test "print MP" "&S::f" "test value of MP in templ_m"
 
 if $have_older_template_gcc { setup_xfail "*-*-*" }
 gdb_test "whatis Q" "short" "test type of Q in templ_m"
+
+#
+# Tests in K2::k2_m.
+#
+
+gdb_continue_to_breakpoint "continue to fifth breakpoint for temargs"
+
+if $have_older_template_gcc { setup_xfail "*-*-*" }
+gdb_test "ptype F" "type = void \\\(S::\\\*\\\)\\\(S \\\* const\\\)" \
+    "test type of F in k2_m"
+
+setup_xfail gcc/49366 "*-*-*"
+gdb_test "print F" "&S::somefunc" "test value of F in k2_m"
 
 #
 # Tests in K3::k3_m, GCC PR debug/49546.
@@ -164,10 +184,10 @@ gdb_test "whatis Q" "short" "test type of Q in templ_m"
 gdb_continue_to_breakpoint "continue to sixth breakpoint for temargs"
 
 if $have_older_template_gcc { setup_xfail "*-*-*"
-} else { setup_kfail gcc/49546 "*-*-*" }
+} else { setup_xfail gcc/49546 "*-*-*" }
 gdb_test "ptype F" {type = void \(\*\)\(int\)} "test type of F in k3_m"
 
 if $have_older_template_gcc { setup_xfail "*-*-*"
-} else { setup_kfail gcc/49546 "*-*-*" }
+} else { setup_xfail gcc/49546 "*-*-*" }
 gdb_test "print F" { = \(void \(\*\)\(int\)\) 0x[0-9a-f]+ <S3::m\(int\)>} \
 	 "test value of F in k3_m"

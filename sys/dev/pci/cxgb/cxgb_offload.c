@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_offload.c,v 1.2 2011/05/18 01:01:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_offload.c,v 1.2.14.1 2014/08/20 00:03:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1565,7 +1565,7 @@ offload_info_read_proc(char *buf, char **start, off_t offset,
     struct tid_info *t = &d->tid_maps;
     int len;
 
-    len = sprintf(buf, "TID range: 0..%d, in use: %u\n"
+    len = snprintf(buf, length, "TID range: 0..%d, in use: %u\n"
               "STID range: %d..%d, in use: %u\n"
               "ATID range: %d..%d, in use: %u\n"
               "MSS: %u\n",
@@ -1605,20 +1605,25 @@ offload_devices_read_proc(char *buf, char **start, off_t offset,
     struct toedev *dev;
     struct net_device *ndev;
 
-    len = sprintf(buf, "Device           Interfaces\n");
+    len = snprintf(buf, length, "Device           Interfaces\n");
 
     mtx_lock(&cxgb_db_lock);
     TAILQ_FOREACH(dev, &ofld_dev_list, ofld_entry) {
-        len += sprintf(buf + len, "%-16s", dev->name);
+	if (len >= length)
+	    break;
+        len += snprintf(buf + len, length - len, "%-16s", dev->name);
         read_lock(&dev_base_lock);
         for (ndev = dev_base; ndev; ndev = ndev->next) {
-            if (TOEDEV(ndev) == dev)
-                len += sprintf(buf + len, " %s", ndev->name);
+            if (TOEDEV(ndev) == dev) {
+		if (len >= length)
+		    break;
+                len += snprintf(buf + len, length - len, " %s", ndev->name);
+	    }
         }
         read_unlock(&dev_base_lock);
-        len += sprintf(buf + len, "\n");
         if (len >= length)
             break;
+        len += snprintf(buf + len, length - len, "\n");
     }
     mtx_unlock(&cxgb_db_lock);
 

@@ -27,7 +27,7 @@
  *	i4b_ctl.c - i4b system control port driver
  *	------------------------------------------
  *
- *	$Id: i4b_ctl.c,v 1.21.22.1 2012/11/20 03:02:48 tls Exp $
+ *	$Id: i4b_ctl.c,v 1.21.22.2 2014/08/20 00:04:36 tls Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ctl.c,v 1.21.22.1 2012/11/20 03:02:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ctl.c,v 1.21.22.2 2014/08/20 00:04:36 tls Exp $");
 
 #include "isdnctl.h"
 
@@ -154,8 +154,18 @@ int isdnctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l);
 
 #ifdef __NetBSD__
 const struct cdevsw isdnctl_cdevsw = {
-	isdnctlopen, isdnctlclose, noread, nowrite, isdnctlioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = isdnctlopen,
+	.d_close = isdnctlclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = isdnctlioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 #endif /* __NetBSD__ */
 

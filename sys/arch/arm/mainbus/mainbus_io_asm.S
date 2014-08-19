@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io_asm.S,v 1.1 2001/02/24 19:38:02 reinoud Exp $	*/
+/*	$NetBSD: mainbus_io_asm.S,v 1.1.180.1 2014/08/20 00:02:47 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -45,17 +45,20 @@
 
 ENTRY(mainbus_bs_r_1)
 	ldrb	r0, [r1, r2, lsl #2]
-	mov	pc, lr
+	RET
+END(mainbus_bs_r_1)
 
 ENTRY(mainbus_bs_r_2)
 	ldr	r0, [r1, r2, lsl #2]
 	bic	r0, r0, #0xff000000
 	bic	r0, r0, #0x00ff0000
-	mov	pc, lr
+	RET
+END(mainbus_bs_r_2)
 
 ENTRY(mainbus_bs_r_4)
 	ldr	r0, [r1, r2, lsl #2]
-	mov	pc, lr
+	RET
+END(mainbus_bs_r_4)
 
 /*
  * write single
@@ -63,17 +66,20 @@ ENTRY(mainbus_bs_r_4)
 
 ENTRY(mainbus_bs_w_1)
 	strb	r3, [r1, r2, lsl #2]
-	mov	pc, lr
+	RET
+END(mainbus_bs_w_1)
 
 ENTRY(mainbus_bs_w_2)
 	mov	r3, r3, lsl #16
 	orr	r3, r3, r3, lsr #16
 	str	r3, [r1, r2, lsl #2]
-	mov	pc, lr
+	RET
+END(mainbus_bs_w_2)
 
 ENTRY(mainbus_bs_w_4)
 	str	r3, [r1, r2, lsl #2]
-	mov	pc, lr
+	RET
+END(mainbus_bs_w_4)
 
 /*
  * read multiple
@@ -84,6 +90,7 @@ ENTRY(mainbus_bs_rm_2)
 	mov	r1, r3
 	ldr	r2, [sp, #0]
 	b	_C_LABEL(insw16)
+END(mainbus_bs_rm_2)
 
 /*
  * write multiple
@@ -95,18 +102,20 @@ ENTRY(mainbus_bs_wm_1)
 
 	/* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
-	movle	pc, lr
+	RETc(le)
 
-mainbus_wm_1_loop:
+.Lmainbus_wm_1_loop:
 	ldrb	r1, [r3], #0x0001
 	str	r1, [r0]
 	subs	r2, r2, #0x00000001
-	bgt	mainbus_wm_1_loop
+	bgt	.Lmainbus_wm_1_loop
 
-	mov	pc, lr
+	RET
+END(mainbus_bs_wm_1)
 
 ENTRY(mainbus_bs_wm_2)
 	add	r0, r1, r2, lsl #2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
 	b	_C_LABEL(outsw16)
+END(mainbus_bs_wm_2)

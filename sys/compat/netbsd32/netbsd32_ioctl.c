@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.67 2012/08/06 08:27:49 skrll Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.67.2.1 2014/08/20 00:03:33 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.67 2012/08/06 08:27:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.67.2.1 2014/08/20 00:03:33 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.67 2012/08/06 08:27:49 skrll Ex
 #include <sys/audioio.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
+#include <sys/ataio.h>
 #include <sys/sockio.h>
 #include <sys/socket.h>
 #include <sys/ttycom.h>
@@ -187,6 +188,23 @@ netbsd32_to_sioc_sg_req(struct netbsd32_sioc_sg_req *s32p, struct sioc_sg_req *p
 }
 
 static inline void
+netbsd32_to_atareq(struct netbsd32_atareq *s32p, struct atareq *p, u_long cmd)
+{
+	p->flags = (u_long)s32p->flags;
+	p->command = s32p->command;
+	p->features = s32p->features;
+	p->sec_count = s32p->sec_count;
+	p->sec_num = s32p->sec_num;
+	p->head = s32p->head;
+	p->cylinder = s32p->cylinder;
+	p->databuf =  (char *)NETBSD32PTR64(s32p->databuf);
+	p->datalen = (u_long)s32p->datalen;
+	p->timeout = s32p->timeout;
+	p->retsts = s32p->retsts;
+	p->error = s32p->error;
+}
+
+static inline void
 netbsd32_to_vnd_ioctl(struct netbsd32_vnd_ioctl *s32p, struct vnd_ioctl *p, u_long cmd)
 {
 
@@ -314,6 +332,18 @@ netbsd32_to_wsdisplay_cursor(struct netbsd32_wsdisplay_cursor *c32,
 	c->cmap.blue = NETBSD32PTR64(c32->cmap.blue);
 	c->image = NETBSD32PTR64(c32->image);
 	c->mask = NETBSD32PTR64(c32->mask);
+}
+
+static inline void
+netbsd32_to_wsdisplay_cmap(struct netbsd32_wsdisplay_cmap *c32,
+					       struct wsdisplay_cmap *c,
+					       u_long cmd)
+{
+	c->index = c32->index;
+	c->count = c32->count;
+	c->red   = NETBSD32PTR64(c32->red);
+	c->green = NETBSD32PTR64(c32->green);
+	c->blue  = NETBSD32PTR64(c32->blue);
 }
 
 static inline void
@@ -481,6 +511,23 @@ netbsd32_from_sioc_sg_req(struct sioc_sg_req *p, struct netbsd32_sioc_sg_req *s3
 }
 
 static inline void
+netbsd32_from_atareq(struct atareq *p, struct netbsd32_atareq *s32p, u_long cmd)
+{
+	s32p->flags = (netbsd32_u_long)p->flags;
+	s32p->command = p->command;
+	s32p->features = p->features;
+	s32p->sec_count = p->sec_count;
+	s32p->sec_num = p->sec_num;
+	s32p->head = p->head;
+	s32p->cylinder = p->cylinder;
+	NETBSD32PTR32(s32p->databuf, p->databuf);
+	s32p->datalen = (netbsd32_u_long)p->datalen;
+	s32p->timeout = p->timeout;
+	s32p->retsts = p->retsts;
+	s32p->error = p->error;
+}
+
+static inline void
 netbsd32_from_vnd_ioctl(struct vnd_ioctl *p, struct netbsd32_vnd_ioctl *s32p, u_long cmd)
 {
 
@@ -555,6 +602,18 @@ netbsd32_from_wsdisplay_cursor(struct wsdisplay_cursor *c,
 	NETBSD32PTR32(c32->cmap.blue, c->cmap.blue);
 	NETBSD32PTR32(c32->image, c->image);
 	NETBSD32PTR32(c32->mask, c->mask);
+}
+
+static inline void
+netbsd32_from_wsdisplay_cmap(struct wsdisplay_cmap *c,
+					   struct netbsd32_wsdisplay_cmap *c32,
+					   u_long cmd)
+{
+	c32->index = c->index;
+	c32->count = c->count;
+	NETBSD32PTR32(c32->red, c->red);
+	NETBSD32PTR32(c32->green, c->green);
+	NETBSD32PTR32(c32->blue, c->blue);
 }
 
 static inline void
@@ -837,6 +896,9 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 		IOCTL_STRUCT_CONV_TO(DIOCWFORMAT, format_op);
 #endif
 
+	case ATAIOCCOMMAND32:
+		IOCTL_STRUCT_CONV_TO(ATAIOCCOMMAND, atareq);
+
 /*
  * only a few ifreq syscalls need conversion and those are
  * all driver specific... XXX
@@ -972,6 +1034,11 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 		IOCTL_STRUCT_CONV_TO(WSDISPLAYIO_GCURSOR, wsdisplay_cursor);
 	case WSDISPLAYIO_SCURSOR32:
 		IOCTL_STRUCT_CONV_TO(WSDISPLAYIO_SCURSOR, wsdisplay_cursor);
+
+	case WSDISPLAYIO_GETCMAP32:
+		IOCTL_STRUCT_CONV_TO(WSDISPLAYIO_GETCMAP, wsdisplay_cmap);
+	case WSDISPLAYIO_PUTCMAP32:
+		IOCTL_STRUCT_CONV_TO(WSDISPLAYIO_PUTCMAP, wsdisplay_cmap);
 
 	case SIOCS8021132:
 		IOCTL_STRUCT_CONV_TO(SIOCS80211, ieee80211req);

@@ -10,10 +10,6 @@ main (argc, argv, envp)
 #endif
 {
     extern void dummy();
-#ifdef usestubs
-    set_debug_traps();
-    breakpoint();
-#endif
     dummy();
     return 0;
 }
@@ -119,6 +115,13 @@ struct {
     double	v_double_member;
 } v_struct2;
 
+struct
+{
+  long v_long_member;
+  struct t_struct t;
+  char v_char_member;
+} v_struct3;
+
 /**** unions *******/
 
 union t_union {
@@ -201,7 +204,7 @@ dummy ()
 {
   /* setvar.exp wants to allocate memory for constants.  So make sure malloc
      gets linked into the program.  */
-  malloc (1);
+  void *p = malloc (1);
 
   /* Some linkers (e.g. on AIX) remove unreferenced variables,
      so make sure to reference them. */
@@ -275,4 +278,5 @@ dummy ()
   sef.field = s1;
   uef.field = u1;
 #endif
+  free (p);
 }

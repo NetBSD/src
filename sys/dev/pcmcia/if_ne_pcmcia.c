@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.159 2011/11/26 02:20:29 nonaka Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.159.8.1 2014/08/20 00:03:49 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.159 2011/11/26 02:20:29 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.159.8.1 2014/08/20 00:03:49 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -583,7 +583,6 @@ ne_pcmcia_attach(device_t parent, device_t self, void *aux)
 	const struct ne2000dev *ne_dev;
 	int i;
 	u_int8_t myea[6], *enaddr;
-	const char *typestr = "";
 	int error;
 
 	aprint_naive("\n");
@@ -628,7 +627,6 @@ ne_pcmcia_attach(device_t parent, device_t self, void *aux)
 	i = 0;
 again:
 	enaddr = NULL;			/* Ask ASIC by default */
-	typestr = "";			/* clear previous card-type */
 	for (; i < NE2000_NDEVS; i++) {
 		ne_dev = ne2000_match(pa->card, pa->pf->number, i);
 		if (ne_dev != NULL) {
@@ -669,10 +667,8 @@ found:
 		type = bus_space_read_1(nsc->sc_asict, nsc->sc_asich, 0x0f);
 		if (type == 0x91 || type == 0x99) {
 			nsc->sc_type = NE2000_TYPE_DL10022;
-			typestr = " (DL10022)";
 		} else {
 			nsc->sc_type = NE2000_TYPE_DL10019;
-			typestr = " (DL10019)";
 		}
 	}
 
@@ -695,10 +691,8 @@ found:
 		test = bus_space_read_1(nsc->sc_asict, nsc->sc_asich, 0x05);
 		if (test != 0) {
 			nsc->sc_type = NE2000_TYPE_AX88790;
-			typestr = " (AX88790)";
 		} else {
 			nsc->sc_type = NE2000_TYPE_AX88190;
-			typestr = " (AX88190)";
 		}
 	}
 
@@ -725,7 +719,6 @@ found:
 		    NERTL_RTL0_8019ID0) == RTL0_8019ID0 &&
 		    bus_space_read_1(dsc->sc_regt, dsc->sc_regh,
 		    NERTL_RTL0_8019ID1) == RTL0_8019ID1) {
-			typestr = " (RTL8019)";
 			dsc->sc_mediachange = rtl80x9_mediachange;
 			dsc->sc_mediastatus = rtl80x9_mediastatus;
 			dsc->init_card = rtl80x9_init_card;

@@ -1,7 +1,7 @@
 /* tinternals -- Test for internals.
 
-Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -123,6 +123,25 @@ test_round_near_x (void)
   mpfr_clears (x, y, z, eps, (mpfr_ptr) 0);
 }
 
+static void
+test_set_prec_raw (void)
+{
+  mpfr_t x;
+  int i;
+
+  mpfr_init2 (x, 53);
+  for (i = 2; i < 11; i++)
+    {
+      mpfr_set_prec_raw (x, i);
+      if (MPFR_PREC (x) != i)
+        {
+          printf ("[ERROR]: mpfr_set_prec_raw %d\n", i);
+          exit (1);
+        }
+    }
+  mpfr_clear (x);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -135,6 +154,7 @@ main (int argc, char **argv)
 #endif
 
   test_round_near_x ();
+  test_set_prec_raw ();
 
   tests_end_mpfr ();
   return 0;

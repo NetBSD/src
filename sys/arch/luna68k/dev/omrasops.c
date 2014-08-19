@@ -1,4 +1,4 @@
-/* $NetBSD: omrasops.c,v 1.13 2012/07/20 19:31:53 tsutsui Exp $ */
+/* $NetBSD: omrasops.c,v 1.13.2.1 2014/08/20 00:03:10 tls Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,14 +31,14 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.13 2012/07/20 19:31:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.13.2.1 2014/08/20 00:03:10 tls Exp $");
 
 /*
  * Designed speficically for 'm68k bitorder';
  *	- most significant byte is stored at lower address,
  *	- most significant bit is displayed at left most on screen.
  * Implementation relies on;
- *	- every memory references is done in aligned 32bit chunk,
+ *	- first column is at 32bit aligned address,
  *	- font glyphs are stored in 32bit padded.
  */
 
@@ -53,14 +53,23 @@ __KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.13 2012/07/20 19:31:53 tsutsui Exp $"
 #include <arch/luna68k/dev/omrasopsvar.h>
 
 /* wscons emulator operations */
-static void	om_cursor(void *, int, int, int);
+static void	om1_cursor(void *, int, int, int);
+static void	om4_cursor(void *, int, int, int);
 static int	om_mapchar(void *, int, unsigned int *);
-static void	om_putchar(void *, int, int, u_int, long);
-static void	om_copycols(void *, int, int, int, int);
-static void	om_copyrows(void *, int, int, int num);
-static void	om_erasecols(void *, int, int, int, long);
-static void	om_eraserows(void *, int, int, long);
-static int	om_allocattr(void *, int, int, int, long *);
+static void	om1_putchar(void *, int, int, u_int, long);
+static void	om4_putchar(void *, int, int, u_int, long);
+static void	om1_copycols(void *, int, int, int, int);
+static void	om4_copycols(void *, int, int, int, int);
+static void	om1_copyrows(void *, int, int, int num);
+static void	om4_copyrows(void *, int, int, int num);
+static void	om1_erasecols(void *, int, int, int, long);
+static void	om4_erasecols(void *, int, int, int, long);
+static void	om1_eraserows(void *, int, int, long);
+static void	om4_eraserows(void *, int, int, long);
+static int	om1_allocattr(void *, int, int, int, long *);
+static int	om4_allocattr(void *, int, int, int, long *);
+
+static int	omrasops_init(struct rasops_info *, int, int);
 
 #define	ALL1BITS	(~0U)
 #define	ALL0BITS	(0U)
@@ -70,12 +79,40 @@ static int	om_allocattr(void *, int, int, int, long *);
 
 #define	W(p) (*(uint32_t *)(p))
 #define	R(p) (*(uint32_t *)((uint8_t *)(p) + 0x40000))
+#define	P0(p) (*(uint32_t *)((uint8_t *)(p) + 0x40000))
+#define	P1(p) (*(uint32_t *)((uint8_t *)(p) + 0x80000))
+#define	P2(p) (*(uint32_t *)((uint8_t *)(p) + 0xc0000))
+#define	P3(p) (*(uint32_t *)((uint8_t *)(p) + 0x100000))
+
+/*
+ * macros to handle unaligned bit copy ops.
+ * See src/sys/dev/rasops/rasops_mask.h for MI version.
+ * Also refer src/sys/arch/hp300/dev/maskbits.h.
+ * (which was implemented for ancient src/sys/arch/hp300/dev/grf_hy.c)
+ */
+
+/* luna68k version GETBITS() that gets w bits from bit x at psrc memory */
+#define	FASTGETBITS(psrc, x, w, dst)					\
+	asm("bfextu %3{%1:%2},%0"					\
+	    : "=d" (dst) 						\
+	    : "di" (x), "di" (w), "o" ((uint32_t *)(psrc)))
+
+/* luna68k version PUTBITS() that puts w bits from bit x at pdst memory */
+/* XXX this macro assumes (x + w) <= 32 to handle unaligned residual bits */
+#define	FASTPUTBITS(src, x, w, pdst)					\
+	asm("bfins %3,%0{%1:%2}"					\
+	    : "+o" ((uint32_t *)(pdst))					\
+	    : "di" (x), "di" (w), "d" (src)				\
+	    : "memory" );
+
+#define	GETBITS(psrc, x, w, dst)	FASTGETBITS(psrc, x, w, dst)
+#define	PUTBITS(src, x, w, pdst)	FASTPUTBITS(src, x, w, pdst)
 
 /*
  * Blit a character at the specified co-ordinates.
  */
 static void
-om_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
+om1_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
 {
 	struct rasops_info *ri = cookie;
 	uint8_t *p;
@@ -90,7 +127,7 @@ om_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
 	height = ri->ri_font->fontheight;
 	fb = (uint8_t *)ri->ri_font->data +
 	    (uc - ri->ri_font->firstchar) * ri->ri_fontscale;
-	inverse = (attr != 0) ? ALL1BITS : ALL0BITS;
+	inverse = ((attr & 0x00000001) != 0) ? ALL1BITS : ALL0BITS;
 
 	p = (uint8_t *)ri->ri_bits + y * scanspan + ((startx / 32) * 4);
 	align = startx & ALIGNMASK;
@@ -105,7 +142,7 @@ om_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
 				glyph = (glyph << 8) | *fb++;
 			glyph <<= (4 - ri->ri_font->stride) * NBBY;
 			glyph = (glyph >> align) ^ inverse;
-			W(p) = (R(p) & ~lmask) | (glyph & lmask);
+			P0(p) = (P0(p) & ~lmask) | (glyph & lmask);
 			p += scanspan;
 			height--;
 		}
@@ -119,10 +156,10 @@ om_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
 				glyph = (glyph << 8) | *fb++;
 			glyph <<= (4 - ri->ri_font->stride) * NBBY;
 			lhalf = (glyph >> align) ^ inverse;
-			W(p) = (R(p) & ~lmask) | (lhalf & lmask);
+			P0(p) = (P0(p) & ~lmask) | (lhalf & lmask);
 			p += BYTESDONE;
 			rhalf = (glyph << (BLITWIDTH - align)) ^ inverse;
-			W(p) = (rhalf & rmask) | (R(p) & ~rmask);
+			P0(p) = (rhalf & rmask) | (P0(p) & ~rmask);
 
 			p = (q += scanspan);
 			height--;
@@ -131,7 +168,100 @@ om_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
 }
 
 static void
-om_erasecols(void *cookie, int row, int startcol, int ncols, long attr)
+om4_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
+{
+	struct rasops_info *ri = cookie;
+	uint8_t *p;
+	int scanspan, startx, height, width, align, y;
+	uint32_t lmask, rmask, glyph;
+	uint32_t glyphbg, fg, bg;
+	int i;
+	uint8_t *fb;
+
+	scanspan = ri->ri_stride;
+	y = ri->ri_font->fontheight * row;
+	startx = ri->ri_font->fontwidth * startcol;
+	height = ri->ri_font->fontheight;
+	fb = (uint8_t *)ri->ri_font->data +
+	    (uc - ri->ri_font->firstchar) * ri->ri_fontscale;
+
+	p = (uint8_t *)ri->ri_bits + y * scanspan + ((startx / 32) * 4);
+	align = startx & ALIGNMASK;
+	width = ri->ri_font->fontwidth + align;
+	lmask = ALL1BITS >> align;
+	rmask = ALL1BITS << (-width & ALIGNMASK);
+	if (width <= BLITWIDTH) {
+		lmask &= rmask;
+		while (height > 0) {
+			glyph = 0;
+			for (i = ri->ri_font->stride; i != 0; i--)
+				glyph = (glyph << 8) | *fb++;
+			glyph <<= (4 - ri->ri_font->stride) * NBBY;
+			glyph = (glyph >> align);
+			glyphbg = glyph ^ ALL1BITS;
+			fg = (attr & 0x01000000) ? glyph : 0;
+			bg = (attr & 0x00010000) ? glyphbg : 0;
+			P0(p) = (P0(p) & ~lmask) | ((fg | bg) & lmask);
+			fg = (attr & 0x02000000) ? glyph : 0;
+			bg = (attr & 0x00020000) ? glyphbg : 0;
+			P1(p) = (P1(p) & ~lmask) | ((fg | bg) & lmask);
+			fg = (attr & 0x04000000) ? glyph : 0;
+			bg = (attr & 0x00040000) ? glyphbg : 0;
+			P2(p) = (P2(p) & ~lmask) | ((fg | bg) & lmask);
+			fg = (attr & 0x08000000) ? glyph : 0;
+			bg = (attr & 0x00080000) ? glyphbg : 0;
+			P3(p) = (P3(p) & ~lmask) | ((fg | bg) & lmask);
+			p += scanspan;
+			height--;
+		}
+	} else {
+		uint8_t *q = p;
+		uint32_t lhalf, rhalf;
+		uint32_t lhalfbg, rhalfbg;
+
+		while (height > 0) {
+			glyph = 0;
+			for (i = ri->ri_font->stride; i != 0; i--)
+				glyph = (glyph << 8) | *fb++;
+			glyph <<= (4 - ri->ri_font->stride) * NBBY;
+			lhalf = (glyph >> align);
+			lhalfbg = lhalf ^ ALL1BITS;
+			fg = (attr & 0x01000000) ? lhalf : 0;
+			bg = (attr & 0x00010000) ? lhalfbg : 0;
+			P0(p) = (P0(p) & ~lmask) | ((fg | bg) & lmask);
+			fg = (attr & 0x02000000) ? lhalf : 0;
+			bg = (attr & 0x00020000) ? lhalfbg : 0;
+			P1(p) = (P1(p) & ~lmask) | ((fg | bg) & lmask);
+			fg = (attr & 0x04000000) ? lhalf : 0;
+			bg = (attr & 0x00040000) ? lhalfbg : 0;
+			P2(p) = (P2(p) & ~lmask) | ((fg | bg) & lmask);
+			fg = (attr & 0x08000000) ? lhalf : 0;
+			bg = (attr & 0x00080000) ? lhalfbg : 0;
+			P3(p) = (P3(p) & ~lmask) | ((fg | bg) & lmask);
+			p += BYTESDONE;
+			rhalf = (glyph << (BLITWIDTH - align));
+			rhalfbg = rhalf ^ ALL1BITS;
+			fg = (attr & 0x01000000) ? rhalf : 0;
+			bg = (attr & 0x00010000) ? rhalfbg : 0;
+			P0(p) = ((fg | bg) & rmask) | (P0(p) & ~rmask);
+			fg = (attr & 0x02000000) ? rhalf : 0;
+			bg = (attr & 0x00020000) ? rhalfbg : 0;
+			P1(p) = ((fg | bg) & rmask) | (P1(p) & ~rmask);
+			fg = (attr & 0x04000000) ? rhalf : 0;
+			bg = (attr & 0x00040000) ? rhalfbg : 0;
+			P2(p) = ((fg | bg) & rmask) | (P2(p) & ~rmask);
+			fg = (attr & 0x08000000) ? rhalf : 0;
+			bg = (attr & 0x00080000) ? rhalfbg : 0;
+			P3(p) = ((fg | bg) & rmask) | (P3(p) & ~rmask);
+
+			p = (q += scanspan);
+			height--;
+		}
+	}
+}
+
+static void
+om1_erasecols(void *cookie, int row, int startcol, int ncols, long attr)
 {
 	struct rasops_info *ri = cookie;
 	uint8_t *p;
@@ -139,12 +269,11 @@ om_erasecols(void *cookie, int row, int startcol, int ncols, long attr)
 	uint32_t lmask, rmask, fill;
 
 	scanspan = ri->ri_stride;;
-	fill = (attr != 0) ? ALL1BITS : ALL0BITS;
 	y = ri->ri_font->fontheight * row;
 	startx = ri->ri_font->fontwidth * startcol;
 	height = ri->ri_font->fontheight;
 	w = ri->ri_font->fontwidth * ncols;
-	fill = (attr != 0) ? ALL1BITS : ALL0BITS;
+	fill = ((attr & 0x00000001) != 0) ? ALL1BITS : ALL0BITS;
 
 	p = (uint8_t *)ri->ri_bits + y * scanspan + ((startx / 32) * 4);
 	align = startx & ALIGNMASK;
@@ -153,24 +282,24 @@ om_erasecols(void *cookie, int row, int startcol, int ncols, long attr)
 	rmask = ALL1BITS << (-width & ALIGNMASK);
 	if (width <= BLITWIDTH) {
 		lmask &= rmask;
-		fill &= lmask;
+		fill  &= lmask;
 		while (height > 0) {
-			W(p) = (R(p) & ~lmask) | fill;
+			P0(p) = (P0(p) & ~lmask) | fill;
 			p += scanspan;
 			height--;
 		}
 	} else {
 		uint8_t *q = p;
 		while (height > 0) {
-			W(p) = (R(p) & ~lmask) | (fill & lmask);
+			P0(p) = (P0(p) & ~lmask) | (fill & lmask);
 			width -= 2 * BLITWIDTH;
 			while (width > 0) {
 				p += BYTESDONE;
-				W(p) = fill;
+				P0(p) = fill;
 				width -= BLITWIDTH;
 			}
 			p += BYTESDONE;
-			W(p) = (fill & rmask) | (R(p) & ~rmask);
+			P0(p) = (fill & rmask) | (P0(p) & ~rmask);
 
 			p = (q += scanspan);
 			width = w + align;
@@ -180,7 +309,73 @@ om_erasecols(void *cookie, int row, int startcol, int ncols, long attr)
 }
 
 static void
-om_eraserows(void *cookie, int startrow, int nrows, long attr)
+om4_erasecols(void *cookie, int row, int startcol, int ncols, long attr)
+{
+	struct rasops_info *ri = cookie;
+	uint8_t *p;
+	int scanspan, startx, height, width, align, w, y;
+	uint32_t lmask, rmask, fill0, fill1, fill2, fill3;
+
+	scanspan = ri->ri_stride;;
+	y = ri->ri_font->fontheight * row;
+	startx = ri->ri_font->fontwidth * startcol;
+	height = ri->ri_font->fontheight;
+	w = ri->ri_font->fontwidth * ncols;
+	fill0 = ((attr & 0x00010000) != 0) ? ALL1BITS : ALL0BITS;
+	fill1 = ((attr & 0x00020000) != 0) ? ALL1BITS : ALL0BITS;
+	fill2 = ((attr & 0x00040000) != 0) ? ALL1BITS : ALL0BITS;
+	fill3 = ((attr & 0x00080000) != 0) ? ALL1BITS : ALL0BITS;
+
+	p = (uint8_t *)ri->ri_bits + y * scanspan + ((startx / 32) * 4);
+	align = startx & ALIGNMASK;
+	width = w + align;
+	lmask = ALL1BITS >> align;
+	rmask = ALL1BITS << (-width & ALIGNMASK);
+	if (width <= BLITWIDTH) {
+		lmask &= rmask;
+		fill0 &= lmask;
+		fill1 &= lmask;
+		fill2 &= lmask;
+		fill3 &= lmask;
+		while (height > 0) {
+			P0(p) = (P0(p) & ~lmask) | fill0;
+			P1(p) = (P1(p) & ~lmask) | fill1;
+			P2(p) = (P2(p) & ~lmask) | fill2;
+			P3(p) = (P3(p) & ~lmask) | fill3;
+			p += scanspan;
+			height--;
+		}
+	} else {
+		uint8_t *q = p;
+		while (height > 0) {
+			P0(p) = (P0(p) & ~lmask) | (fill0 & lmask);
+			P1(p) = (P1(p) & ~lmask) | (fill1 & lmask);
+			P2(p) = (P2(p) & ~lmask) | (fill2 & lmask);
+			P3(p) = (P3(p) & ~lmask) | (fill3 & lmask);
+			width -= 2 * BLITWIDTH;
+			while (width > 0) {
+				p += BYTESDONE;
+				P0(p) = fill0;
+				P1(p) = fill1;
+				P2(p) = fill2;
+				P3(p) = fill3;
+				width -= BLITWIDTH;
+			}
+			p += BYTESDONE;
+			P0(p) = (fill0 & rmask) | (P0(p) & ~rmask);
+			P1(p) = (fill1 & rmask) | (P1(p) & ~rmask);
+			P2(p) = (fill2 & rmask) | (P2(p) & ~rmask);
+			P3(p) = (fill3 & rmask) | (P3(p) & ~rmask);
+
+			p = (q += scanspan);
+			width = w + align;
+			height--;
+		}
+	}
+}
+
+static void
+om1_eraserows(void *cookie, int startrow, int nrows, long attr)
 {
 	struct rasops_info *ri = cookie;
 	uint8_t *p, *q;
@@ -191,22 +386,22 @@ om_eraserows(void *cookie, int startrow, int nrows, long attr)
 	starty = ri->ri_font->fontheight * startrow;
 	height = ri->ri_font->fontheight * nrows;
 	w = ri->ri_emuwidth;
-	fill = (attr != 0) ? ALL1BITS : ALL0BITS;
+	fill = ((attr & 0x00000001) != 0) ? ALL1BITS : ALL0BITS;
 
 	p = (uint8_t *)ri->ri_bits + starty * scanspan;
 	width = w;
 	rmask = ALL1BITS << (-width & ALIGNMASK);
 	q = p;
 	while (height > 0) {
-		W(p) = fill;				/* always aligned */
+		P0(p) = fill;				/* always aligned */
 		width -= 2 * BLITWIDTH;
 		while (width > 0) {
 			p += BYTESDONE;
-			W(p) = fill;
+			P0(p) = fill;
 			width -= BLITWIDTH;
 		}
 		p += BYTESDONE;
-		W(p) = (fill & rmask) | (R(p) & ~rmask);
+		P0(p) = (fill & rmask) | (P0(p) & ~rmask);
 		p = (q += scanspan);
 		width = w;
 		height--;
@@ -214,7 +409,53 @@ om_eraserows(void *cookie, int startrow, int nrows, long attr)
 }
 
 static void
-om_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
+om4_eraserows(void *cookie, int startrow, int nrows, long attr)
+{
+	struct rasops_info *ri = cookie;
+	uint8_t *p, *q;
+	int scanspan, starty, height, width, w;
+	uint32_t rmask, fill0, fill1, fill2, fill3;
+
+	scanspan = ri->ri_stride;
+	starty = ri->ri_font->fontheight * startrow;
+	height = ri->ri_font->fontheight * nrows;
+	w = ri->ri_emuwidth;
+	fill0 = ((attr & 0x00010000) != 0) ? ALL1BITS : ALL0BITS;
+	fill1 = ((attr & 0x00020000) != 0) ? ALL1BITS : ALL0BITS;
+	fill2 = ((attr & 0x00040000) != 0) ? ALL1BITS : ALL0BITS;
+	fill3 = ((attr & 0x00080000) != 0) ? ALL1BITS : ALL0BITS;
+
+	p = (uint8_t *)ri->ri_bits + starty * scanspan;
+	width = w;
+	rmask = ALL1BITS << (-width & ALIGNMASK);
+	q = p;
+	while (height > 0) {
+		P0(p) = fill0;				/* always aligned */
+		P1(p) = fill1;
+		P2(p) = fill2;
+		P3(p) = fill3;
+		width -= 2 * BLITWIDTH;
+		while (width > 0) {
+			p += BYTESDONE;
+			P0(p) = fill0;
+			P1(p) = fill1;
+			P2(p) = fill2;
+			P3(p) = fill3;
+			width -= BLITWIDTH;
+		}
+		p += BYTESDONE;
+		P0(p) = (fill0 & rmask) | (P0(p) & ~rmask);
+		P1(p) = (fill1 & rmask) | (P1(p) & ~rmask);
+		P2(p) = (fill2 & rmask) | (P2(p) & ~rmask);
+		P3(p) = (fill3 & rmask) | (P3(p) & ~rmask);
+		p = (q += scanspan);
+		width = w;
+		height--;
+	}
+}
+
+static void
+om1_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 {
 	struct rasops_info *ri = cookie;
 	uint8_t *p, *q;
@@ -227,7 +468,7 @@ om_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 	srcy = ri->ri_font->fontheight * srcrow;
 	if (srcrow < dstrow && srcrow + nrows > dstrow) {
 		scanspan = -scanspan;
-		srcy += height;
+		srcy = srcy + height - 1;
 	}
 
 	p = (uint8_t *)ri->ri_bits + srcy * ri->ri_stride;
@@ -236,15 +477,15 @@ om_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 	rmask = ALL1BITS << (-width & ALIGNMASK);
 	q = p;
 	while (height > 0) {
-		W(p + offset) = R(p);			/* always aligned */
+		P0(p + offset) = P0(p);			/* always aligned */
 		width -= 2 * BLITWIDTH;
 		while (width > 0) {
 			p += BYTESDONE;
-			W(p + offset) = R(p);
+			P0(p + offset) = P0(p);
 			width -= BLITWIDTH;
 		}
 		p += BYTESDONE;
-		W(p + offset) = (R(p) & rmask) | (R(p + offset) & ~rmask);
+		P0(p + offset) = (P0(p) & rmask) | (P0(p + offset) & ~rmask);
 
 		p = (q += scanspan);
 		width = w;
@@ -253,12 +494,62 @@ om_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 }
 
 static void
-om_copycols(void *cookie, int startrow, int srccol, int dstcol, int ncols)
+om4_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 {
 	struct rasops_info *ri = cookie;
-	uint8_t *sp, *dp, *basep;
-	int scanspan, height, width, align, shift, w, y, srcx, dstx;
-	uint32_t lmask, rmask;
+	uint8_t *p, *q;
+	int scanspan, offset, srcy, height, width, w;
+	uint32_t rmask;
+
+	scanspan = ri->ri_stride;
+	height = ri->ri_font->fontheight * nrows;
+	offset = (dstrow - srcrow) * scanspan * ri->ri_font->fontheight;
+	srcy = ri->ri_font->fontheight * srcrow;
+	if (srcrow < dstrow && srcrow + nrows > dstrow) {
+		scanspan = -scanspan;
+		srcy = srcy + height - 1;
+	}
+
+	p = (uint8_t *)ri->ri_bits + srcy * ri->ri_stride;
+	w = ri->ri_emuwidth;
+	width = w;
+	rmask = ALL1BITS << (-width & ALIGNMASK);
+	q = p;
+	while (height > 0) {
+		P0(p + offset) = P0(p);			/* always aligned */
+		P1(p + offset) = P1(p);
+		P2(p + offset) = P2(p);
+		P3(p + offset) = P3(p);
+		width -= 2 * BLITWIDTH;
+		while (width > 0) {
+			p += BYTESDONE;
+			P0(p + offset) = P0(p);
+			P1(p + offset) = P1(p);
+			P2(p + offset) = P2(p);
+			P3(p + offset) = P3(p);
+			width -= BLITWIDTH;
+		}
+		p += BYTESDONE;
+		P0(p + offset) = (P0(p) & rmask) | (P0(p + offset) & ~rmask);
+		P1(p + offset) = (P1(p) & rmask) | (P1(p + offset) & ~rmask);
+		P2(p + offset) = (P2(p) & rmask) | (P2(p + offset) & ~rmask);
+		P3(p + offset) = (P3(p) & rmask) | (P3(p + offset) & ~rmask);
+
+		p = (q += scanspan);
+		width = w;
+		height--;
+	}
+}
+
+static void
+om1_copycols(void *cookie, int startrow, int srccol, int dstcol, int ncols)
+{
+	struct rasops_info *ri = cookie;
+	uint8_t *sp, *dp, *sq, *dq, *basep;
+	int scanspan, height, w, y, srcx, dstx;
+	int sb, eb, db, sboff, full, cnt, lnum, rnum;
+	uint32_t lmask, rmask, tmp;
+	bool sbover;
 
 	scanspan = ri->ri_stride;
 	y = ri->ri_font->fontheight * startrow;
@@ -268,82 +559,288 @@ om_copycols(void *cookie, int startrow, int srccol, int dstcol, int ncols)
 	w = ri->ri_font->fontwidth * ncols;
 	basep = (uint8_t *)ri->ri_bits + y * scanspan;
 
-	align = shift = srcx & ALIGNMASK;
-	width = w + align;
-	align = dstx & ALIGNMASK;
-	lmask = ALL1BITS >> align;
-	rmask = ALL1BITS << (-(w + align) & ALIGNMASK);
-	shift = align - shift;
-	sp = basep + (srcx / 32) * 4;
-	dp = basep + (dstx / 32) * 4;
+	sb = srcx & ALIGNMASK;
+	db = dstx & ALIGNMASK;
 
-	if (shift != 0)
-		goto hardluckalignment;
+	if (db + w <= BLITWIDTH) {
+		/* Destination is contained within a single word */
+		sp = basep + (srcx / 32) * 4;
+		dp = basep + (dstx / 32) * 4;
 
-	/* alignments comfortably match */
-	if (width <= BLITWIDTH) {
-		lmask &= rmask;
 		while (height > 0) {
-			W(dp) = (R(dp) & ~lmask) | (R(sp) & lmask);
+			GETBITS(P0(sp), sb, w, tmp);
+			PUTBITS(tmp, db, w, P0(dp));
 			dp += scanspan;
 			sp += scanspan;
 			height--;
 		}
+		return;
 	}
-	/* copy forward (left-to-right) */
-	else if (dstcol < srccol || srccol + ncols < dstcol) {
-		uint8_t *sq = sp, *dq = dp;
 
-		w = width;
+	lmask = (db == 0) ? 0 : ALL1BITS >> db;
+	eb = (db + w) & ALIGNMASK;
+	rmask = (eb == 0) ? 0 : ALL1BITS << (32 - eb); 
+	lnum = (32 - db) & ALIGNMASK;
+	rnum = (dstx + w) & ALIGNMASK;
+
+	if (lmask != 0)
+		full = (w - (32 - db)) / 32;
+	else
+		full = w / 32;
+
+	sbover = (sb + lnum) >= 32;
+
+	if (dstcol < srccol || srccol + ncols < dstcol) {
+		/* copy forward (left-to-right) */
+		sp = basep + (srcx / 32) * 4;
+		dp = basep + (dstx / 32) * 4;
+
+		if (lmask != 0) {
+			sboff = sb + lnum;
+			if (sboff >= 32)
+				sboff -= 32;
+		} else
+			sboff = sb;
+
+		sq = sp;
+		dq = dp;
 		while (height > 0) {
-			W(dp) = (R(dp) & ~lmask) | (R(sp) & lmask);
-			width -= 2 * BLITWIDTH;
-			while (width > 0) {
+			if (lmask != 0) {
+				GETBITS(P0(sp), sb, lnum, tmp);
+				PUTBITS(tmp, db, lnum, P0(dp));
+				dp += BYTESDONE;
+				if (sbover)
+					sp += BYTESDONE;
+			}
+
+			for (cnt = full; cnt; cnt--) {
+				GETBITS(P0(sp), sboff, 32, tmp);
+				P0(dp) = tmp;
 				sp += BYTESDONE;
 				dp += BYTESDONE;
-				W(dp) = R(sp);
-				width -= BLITWIDTH;
 			}
-			sp += BYTESDONE;
-			dp += BYTESDONE;
-			W(dp) = (R(sp) & rmask) | (R(dp) & ~rmask);
+
+			if (rmask != 0) {
+				GETBITS(P0(sp), sboff, rnum, tmp);
+				PUTBITS(tmp, 0, rnum, P0(dp));
+			}
+
 			sp = (sq += scanspan);
 			dp = (dq += scanspan);
-			width = w;
 			height--;
 		}
-	}
-	/* copy backward (right-to-left) */
-	else {
-		uint8_t *sq, *dq;
+	} else {
+		/* copy backward (right-to-left) */
+		sp = basep + ((srcx + w) / 32) * 4;
+		dp = basep + ((dstx + w) / 32) * 4;
 
-		sq = (sp += width / 32 * 4);
-		dq = (dp += width / 32 * 4);
-		w = width;
+		sboff = (srcx + w) & ALIGNMASK;
+		sboff -= rnum;
+		if (sboff < 0) {
+			sp -= BYTESDONE;
+			sboff += 32;
+		}
+
+		sq = sp;
+		dq = dp;
 		while (height > 0) {
-			W(dp) = (R(sp) & rmask) | (R(dp) & ~rmask);
-			width -= 2 * BLITWIDTH;
-			while (width > 0) {
+			if (rnum != 0) {
+				GETBITS(P0(sp), sboff, rnum, tmp);
+				PUTBITS(tmp, 0, rnum, P0(dp));
+			}
+
+			for (cnt = full; cnt; cnt--) {
 				sp -= BYTESDONE;
 				dp -= BYTESDONE;
-				W(dp) = R(sp);
-				width -= BLITWIDTH;
+				GETBITS(P0(sp), sboff, 32, tmp);
+				P0(dp) = tmp;
 			}
-			sp -= BYTESDONE;
-			dp -= BYTESDONE;
-			W(dp) = (R(dp) & ~lmask) | (R(sp) & lmask);
+
+			if (lmask != 0) {
+				if (sbover)
+					sp -= BYTESDONE;
+				dp -= BYTESDONE;
+				GETBITS(P0(sp), sb, lnum, tmp);
+				PUTBITS(tmp, db, lnum, P0(dp));
+			}
 
 			sp = (sq += scanspan);
 			dp = (dq += scanspan);
-			width = w;
 			height--;
 		}
 	}
-	return;
+}
 
-    hardluckalignment:
-	/* alignments painfully disagree */
-	return;
+static void
+om4_copycols(void *cookie, int startrow, int srccol, int dstcol, int ncols)
+{
+	struct rasops_info *ri = cookie;
+	uint8_t *sp, *dp, *sq, *dq, *basep;
+	int scanspan, height, w, y, srcx, dstx;
+	int sb, eb, db, sboff, full, cnt, lnum, rnum;
+	uint32_t lmask, rmask, tmp;
+	bool sbover;
+
+	scanspan = ri->ri_stride;
+	y = ri->ri_font->fontheight * startrow;
+	srcx = ri->ri_font->fontwidth * srccol;
+	dstx = ri->ri_font->fontwidth * dstcol;
+	height = ri->ri_font->fontheight;
+	w = ri->ri_font->fontwidth * ncols;
+	basep = (uint8_t *)ri->ri_bits + y * scanspan;
+
+	sb = srcx & ALIGNMASK;
+	db = dstx & ALIGNMASK;
+
+	if (db + w <= BLITWIDTH) {
+		/* Destination is contained within a single word */
+		sp = basep + (srcx / 32) * 4;
+		dp = basep + (dstx / 32) * 4;
+
+		while (height > 0) {
+			GETBITS(P0(sp), sb, w, tmp);
+			PUTBITS(tmp, db, w, P0(dp));
+			GETBITS(P1(sp), sb, w, tmp);
+			PUTBITS(tmp, db, w, P1(dp));
+			GETBITS(P2(sp), sb, w, tmp);
+			PUTBITS(tmp, db, w, P2(dp));
+			GETBITS(P3(sp), sb, w, tmp);
+			PUTBITS(tmp, db, w, P3(dp));
+			dp += scanspan;
+			sp += scanspan;
+			height--;
+		}
+		return;
+	}
+
+	lmask = (db == 0) ? 0 : ALL1BITS >> db;
+	eb = (db + w) & ALIGNMASK;
+	rmask = (eb == 0) ? 0 : ALL1BITS << (32 - eb); 
+	lnum = (32 - db) & ALIGNMASK;
+	rnum = (dstx + w) & ALIGNMASK;
+
+	if (lmask != 0)
+		full = (w - (32 - db)) / 32;
+	else
+		full = w / 32;
+
+	sbover = (sb + lnum) >= 32;
+
+	if (dstcol < srccol || srccol + ncols < dstcol) {
+		/* copy forward (left-to-right) */
+		sp = basep + (srcx / 32) * 4;
+		dp = basep + (dstx / 32) * 4;
+
+		if (lmask != 0) {
+			sboff = sb + lnum;
+			if (sboff >= 32)
+				sboff -= 32;
+		} else
+			sboff = sb;
+
+		sq = sp;
+		dq = dp;
+		while (height > 0) {
+			if (lmask != 0) {
+				GETBITS(P0(sp), sb, lnum, tmp);
+				PUTBITS(tmp, db, lnum, P0(dp));
+				GETBITS(P1(sp), sb, lnum, tmp);
+				PUTBITS(tmp, db, lnum, P1(dp));
+				GETBITS(P2(sp), sb, lnum, tmp);
+				PUTBITS(tmp, db, lnum, P2(dp));
+				GETBITS(P3(sp), sb, lnum, tmp);
+				PUTBITS(tmp, db, lnum, P3(dp));
+				dp += BYTESDONE;
+				if (sbover)
+					sp += BYTESDONE;
+			}
+
+			for (cnt = full; cnt; cnt--) {
+				GETBITS(P0(sp), sboff, 32, tmp);
+				P0(dp) = tmp;
+				GETBITS(P1(sp), sboff, 32, tmp);
+				P1(dp) = tmp;
+				GETBITS(P2(sp), sboff, 32, tmp);
+				P2(dp) = tmp;
+				GETBITS(P3(sp), sboff, 32, tmp);
+				P3(dp) = tmp;
+				sp += BYTESDONE;
+				dp += BYTESDONE;
+			}
+
+			if (rmask != 0) {
+				GETBITS(P0(sp), sboff, rnum, tmp);
+				PUTBITS(tmp, 0, rnum, P0(dp));
+				GETBITS(P1(sp), sboff, rnum, tmp);
+				PUTBITS(tmp, 0, rnum, P1(dp));
+				GETBITS(P2(sp), sboff, rnum, tmp);
+				PUTBITS(tmp, 0, rnum, P2(dp));
+				GETBITS(P3(sp), sboff, rnum, tmp);
+				PUTBITS(tmp, 0, rnum, P3(dp));
+			}
+
+			sp = (sq += scanspan);
+			dp = (dq += scanspan);
+			height--;
+		}
+	} else {
+		/* copy backward (right-to-left) */
+		sp = basep + ((srcx + w) / 32) * 4;
+		dp = basep + ((dstx + w) / 32) * 4;
+
+		sboff = (srcx + w) & ALIGNMASK;
+		sboff -= rnum;
+		if (sboff < 0) {
+			sp -= BYTESDONE;
+			sboff += 32;
+		}
+
+		sq = sp;
+		dq = dp;
+		while (height > 0) {
+			if (rnum != 0) {
+				GETBITS(P0(sp), sboff, rnum, tmp);
+				PUTBITS(tmp, 0, rnum, P0(dp));
+				GETBITS(P1(sp), sboff, rnum, tmp);
+				PUTBITS(tmp, 0, rnum, P1(dp));
+				GETBITS(P2(sp), sboff, rnum, tmp);
+				PUTBITS(tmp, 0, rnum, P2(dp));
+				GETBITS(P3(sp), sboff, rnum, tmp);
+				PUTBITS(tmp, 0, rnum, P3(dp));
+			}
+
+			for (cnt = full; cnt; cnt--) {
+				sp -= BYTESDONE;
+				dp -= BYTESDONE;
+				GETBITS(P0(sp), sboff, 32, tmp);
+				P0(dp) = tmp;
+				GETBITS(P1(sp), sboff, 32, tmp);
+				P1(dp) = tmp;
+				GETBITS(P2(sp), sboff, 32, tmp);
+				P2(dp) = tmp;
+				GETBITS(P3(sp), sboff, 32, tmp);
+				P3(dp) = tmp;
+			}
+
+			if (lmask != 0) {
+				if (sbover)
+					sp -= BYTESDONE;
+				dp -= BYTESDONE;
+				GETBITS(P0(sp), sb, lnum, tmp);
+				PUTBITS(tmp, db, lnum, P0(dp));
+				GETBITS(P1(sp), sb, lnum, tmp);
+				PUTBITS(tmp, db, lnum, P1(dp));
+				GETBITS(P2(sp), sb, lnum, tmp);
+				PUTBITS(tmp, db, lnum, P2(dp));
+				GETBITS(P3(sp), sb, lnum, tmp);
+				PUTBITS(tmp, db, lnum, P3(dp));
+			}
+
+			sp = (sq += scanspan);
+			dp = (dq += scanspan);
+			height--;
+		}
+	}
 }
 
 /*
@@ -376,7 +873,7 @@ om_mapchar(void *cookie, int c, u_int *cp)
  * Position|{enable|disable} the cursor at the specified location.
  */
 static void
-om_cursor(void *cookie, int on, int row, int col)
+om1_cursor(void *cookie, int on, int row, int col)
 {
 	struct rasops_info *ri = cookie;
 	uint8_t *p;
@@ -409,8 +906,8 @@ om_cursor(void *cookie, int on, int row, int col)
 	if (width <= BLITWIDTH) {
 		lmask &= rmask;
 		while (height > 0) {
-			image = R(p);
-			W(p) = (image & ~lmask) | ((image ^ ALL1BITS) & lmask);
+			image = P0(p);
+			P0(p) = (image & ~lmask) | ((image ^ ALL1BITS) & lmask);
 			p += scanspan;
 			height--;
 		}
@@ -418,11 +915,85 @@ om_cursor(void *cookie, int on, int row, int col)
 		uint8_t *q = p;
 
 		while (height > 0) {
-			image = R(p);
-			W(p) = (image & ~lmask) | ((image ^ ALL1BITS) & lmask);
+			image = P0(p);
+			P0(p) = (image & ~lmask) | ((image ^ ALL1BITS) & lmask);
 			p += BYTESDONE;
-			image = R(p);
-			W(p) = ((image ^ ALL1BITS) & rmask) | (image & ~rmask);
+			image = P0(p);
+			P0(p) = ((image ^ ALL1BITS) & rmask) | (image & ~rmask);
+
+			p = (q += scanspan);
+			height--;
+		}
+	}
+	ri->ri_flg ^= RI_CURSOR;
+}
+
+static void
+om4_cursor(void *cookie, int on, int row, int col)
+{
+	struct rasops_info *ri = cookie;
+	uint8_t *p;
+	int scanspan, startx, height, width, align, y;
+	uint32_t lmask, rmask, image;
+
+	if (!on) {
+		/* make sure it's on */
+		if ((ri->ri_flg & RI_CURSOR) == 0)
+			return;
+
+		row = ri->ri_crow;
+		col = ri->ri_ccol;
+	} else {
+		/* unpaint the old copy. */
+		ri->ri_crow = row;
+		ri->ri_ccol = col;
+	}
+
+	scanspan = ri->ri_stride;
+	y = ri->ri_font->fontheight * row;
+	startx = ri->ri_font->fontwidth * col;
+	height = ri->ri_font->fontheight;
+
+	p = (uint8_t *)ri->ri_bits + y * scanspan + ((startx / 32) * 4);
+	align = startx & ALIGNMASK;
+	width = ri->ri_font->fontwidth + align;
+	lmask = ALL1BITS >> align;
+	rmask = ALL1BITS << (-width & ALIGNMASK);
+	if (width <= BLITWIDTH) {
+		lmask &= rmask;
+		while (height > 0) {
+			image = P0(p);
+			P0(p) = (image & ~lmask) | ((image ^ ALL1BITS) & lmask);
+			image = P1(p);
+			P1(p) = (image & ~lmask) | ((image ^ ALL1BITS) & lmask);
+			image = P2(p);
+			P2(p) = (image & ~lmask) | ((image ^ ALL1BITS) & lmask);
+			image = P3(p);
+			P3(p) = (image & ~lmask) | ((image ^ ALL1BITS) & lmask);
+			p += scanspan;
+			height--;
+		}
+	} else {
+		uint8_t *q = p;
+
+		while (height > 0) {
+			image = P0(p);
+			P0(p) = (image & ~lmask) | ((image ^ ALL1BITS) & lmask);
+			image = P1(p);
+			P1(p) = (image & ~lmask) | ((image ^ ALL1BITS) & lmask);
+			image = P2(p);
+			P2(p) = (image & ~lmask) | ((image ^ ALL1BITS) & lmask);
+			image = P3(p);
+			P3(p) = (image & ~lmask) | ((image ^ ALL1BITS) & lmask);
+			p += BYTESDONE;
+			image = P0(p);
+			P0(p) = ((image ^ ALL1BITS) & rmask) | (image & ~rmask);
+			image = P1(p);
+			P1(p) = ((image ^ ALL1BITS) & rmask) | (image & ~rmask);
+			image = P2(p);
+			P2(p) = ((image ^ ALL1BITS) & rmask) | (image & ~rmask);
+			image = P3(p);
+			P3(p) = ((image ^ ALL1BITS) & rmask) | (image & ~rmask);
 
 			p = (q += scanspan);
 			height--;
@@ -435,16 +1006,41 @@ om_cursor(void *cookie, int on, int row, int col)
  * Allocate attribute. We just pack these into an integer.
  */
 static int
-om_allocattr(void *id, int fg, int bg, int flags, long *attrp)
+om1_allocattr(void *id, int fg, int bg, int flags, long *attrp)
 {
 
-	if (flags & (WSATTR_HILIT | WSATTR_BLINK |
-	    WSATTR_UNDERLINE | WSATTR_WSCOLORS))
+	if ((flags & (WSATTR_HILIT | WSATTR_BLINK |
+	    WSATTR_UNDERLINE | WSATTR_WSCOLORS)) != 0)
 		return EINVAL;
-	if (flags & WSATTR_REVERSE)
+	if ((flags & WSATTR_REVERSE) != 0)
 		*attrp = 1;
 	else
 		*attrp = 0;
+	return 0;
+}
+
+static int
+om4_allocattr(void *id, int fg, int bg, int flags, long *attrp)
+{
+
+	if ((flags & (WSATTR_BLINK | WSATTR_UNDERLINE)) != 0)
+		return EINVAL;
+	if ((flags & WSATTR_WSCOLORS) == 0) {
+		fg = WSCOL_WHITE;
+		bg = WSCOL_BLACK;
+	}
+
+	if ((flags & WSATTR_REVERSE) != 0) {
+		int swap;
+		swap = fg;
+		fg = bg;
+		bg = swap;
+	}
+
+	if ((flags & WSATTR_HILIT) != 0)
+		fg += 8;
+
+	*attrp = (fg << 24) | (bg << 16);
 	return 0;
 }
 
@@ -452,6 +1048,50 @@ om_allocattr(void *id, int fg, int bg, int flags, long *attrp)
  * Init subset of rasops(9) for omrasops.
  */
 int
+omrasops1_init(struct rasops_info *ri, int wantrows, int wantcols)
+{
+
+	omrasops_init(ri, wantrows, wantcols);
+
+	/* fill our own emulops */
+	ri->ri_ops.cursor    = om1_cursor;
+	ri->ri_ops.mapchar   = om_mapchar;
+	ri->ri_ops.putchar   = om1_putchar;
+	ri->ri_ops.copycols  = om1_copycols;
+	ri->ri_ops.erasecols = om1_erasecols;
+	ri->ri_ops.copyrows  = om1_copyrows;
+	ri->ri_ops.eraserows = om1_eraserows;
+	ri->ri_ops.allocattr = om1_allocattr;
+	ri->ri_caps = WSSCREEN_REVERSE;
+
+	ri->ri_flg |= RI_CFGDONE;
+
+	return 0;
+}
+
+int
+omrasops4_init(struct rasops_info *ri, int wantrows, int wantcols)
+{
+
+	omrasops_init(ri, wantrows, wantcols);
+
+	/* fill our own emulops */
+	ri->ri_ops.cursor    = om4_cursor;
+	ri->ri_ops.mapchar   = om_mapchar;
+	ri->ri_ops.putchar   = om4_putchar;
+	ri->ri_ops.copycols  = om4_copycols;
+	ri->ri_ops.erasecols = om4_erasecols;
+	ri->ri_ops.copyrows  = om4_copyrows;
+	ri->ri_ops.eraserows = om4_eraserows;
+	ri->ri_ops.allocattr = om4_allocattr;
+	ri->ri_caps = WSSCREEN_HILIT | WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
+
+	ri->ri_flg |= RI_CFGDONE;
+
+	return 0;
+}
+
+static int
 omrasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 {
 	int wsfcookie, bpp;
@@ -477,7 +1117,8 @@ omrasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 
 	KASSERT(ri->ri_font->fontwidth > 4 && ri->ri_font->fontwidth <= 32);
 
-	bpp = ri->ri_depth;
+	/* all planes are independently addressed */
+	bpp = 1;
 
 	/* Now constrain what they get */
 	ri->ri_emuwidth = ri->ri_font->fontwidth * wantcols;
@@ -521,19 +1162,6 @@ omrasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 		   % ri->ri_stride) * 8 / bpp);
 	} else
 		ri->ri_xorigin = ri->ri_yorigin = 0;
-
-	/* fill our own emulops */
-	ri->ri_ops.cursor    = om_cursor;
-	ri->ri_ops.mapchar   = om_mapchar;
-	ri->ri_ops.putchar   = om_putchar;
-	ri->ri_ops.copycols  = om_copycols;
-	ri->ri_ops.erasecols = om_erasecols;
-	ri->ri_ops.copyrows  = om_copyrows;
-	ri->ri_ops.eraserows = om_eraserows;
-	ri->ri_ops.allocattr = om_allocattr;
-	ri->ri_caps = WSSCREEN_REVERSE;
-
-	ri->ri_flg |= RI_CFGDONE;
 
 	return 0;
 }

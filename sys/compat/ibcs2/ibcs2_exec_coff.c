@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_coff.c,v 1.25 2010/07/22 03:19:02 christos Exp $	*/
+/*	$NetBSD: ibcs2_exec_coff.c,v 1.25.18.1 2014/08/20 00:03:31 tls Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.25 2010/07/22 03:19:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.25.18.1 2014/08/20 00:03:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -431,7 +431,7 @@ exec_ibcs2_coff_prep_zmagic(struct lwp *l, struct exec_package *epp, struct coff
 		size_t resid;
 		struct coff_slhdr *slhdr;
 		char *tbuf, *bufp;
-		size_t len = sh.s_size, path_index, entry_len;
+		size_t len = sh.s_size, /* path_index, */ entry_len;
 
 		if (len > 64 * 1024)
 			return ENOEXEC;
@@ -462,7 +462,7 @@ exec_ibcs2_coff_prep_zmagic(struct lwp *l, struct exec_package *epp, struct coff
 				return ENOEXEC;
 			}
 
-			path_index = slhdr->path_index * sizeof(long);
+			/* path_index = slhdr->path_index * sizeof(long); */
 			entry_len = slhdr->entry_len * sizeof(long);
 
 			if (entry_len > len) {

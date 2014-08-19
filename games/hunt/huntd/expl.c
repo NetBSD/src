@@ -1,4 +1,4 @@
-/*	$NetBSD: expl.c,v 1.7 2009/07/04 04:29:54 dholland Exp $	*/
+/*	$NetBSD: expl.c,v 1.7.12.1 2014/08/20 00:00:23 tls Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,11 +32,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expl.c,v 1.7 2009/07/04 04:29:54 dholland Exp $");
+__RCSID("$NetBSD: expl.c,v 1.7.12.1 2014/08/20 00:00:23 tls Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
 #include "hunt.h"
+
+
+static EXPL *Expl[EXPLEN];		/* explosion lists */
+static EXPL *Last_expl;			/* last explosion on Expl[0] */
 
 static void remove_wall(int, int);
 

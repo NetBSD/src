@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.16 2011/07/11 02:30:49 matt Exp $	*/
+/*	$NetBSD: sti.c,v 1.16.12.1 2014/08/20 00:03:38 tls Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.16 2011/07/11 02:30:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.16.12.1 2014/08/20 00:03:38 tls Exp $");
 
 #include "wsdisplay.h"
 
@@ -89,14 +89,6 @@ struct wsdisplay_emulops sti_emulops = {
 	sti_eraserows,
 	sti_alloc_attr
 };
-
-int sti_ioctl(void *, void *, u_long, void *, int, struct lwp *);
-paddr_t sti_mmap(void *, void *, off_t, int);
-int sti_alloc_screen(void *, const struct wsscreen_descr *,
-	void **, int *, int *, long *);
-	void sti_free_screen(void *, void *);
-int sti_show_screen(void *, void *, int, void (*cb)(void *, int, int), void *);
-int sti_load_font(void *, void *, struct wsdisplay_font *);
 
 const struct wsdisplay_accessops sti_accessops = {
 	sti_ioctl,
@@ -1315,3 +1307,43 @@ sti_alloc_attr(void *v, int fg, int bg, int flags, long *pattr)
 
 	return 0;
 }
+
+#ifdef hp300	/* XXX */
+/*
+ * Early console support.  Only used on hp300.
+ */
+int
+sti_cnattach(struct sti_rom *rom, struct sti_screen *scr, bus_space_tag_t memt,
+    bus_addr_t *bases, u_int codebase)
+{
+	bus_space_handle_t romh;
+	u_int romend;
+	int error;
+	long defattr;
+
+	if ((error = bus_space_map(memt, bases[0], PAGE_SIZE, 0, &romh)) != 0)
+		return error;
+
+	/*
+	 * Compute real PROM size
+	 */
+	romend = sti_rom_size(memt, romh);
+
+	bus_space_unmap(memt, romh, PAGE_SIZE);
+
+	if ((error = bus_space_map(memt, bases[0], romend, 0, &romh)) != 0)
+		return error;
+
+	bases[0] = romh;
+	if (sti_rom_setup(rom, memt, memt, romh, bases, codebase) != 0)
+		return -1;
+	scr->scr_rom = rom;
+	if (sti_screen_setup(scr, STI_CLEARSCR) != 0)
+		return -1;
+
+	sti_alloc_attr(scr, 0, 0, 0, &defattr);
+	wsdisplay_cnattach(&scr->scr_wsd, scr, 0, 0, defattr);
+
+	return 0;
+}
+#endif

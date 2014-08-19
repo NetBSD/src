@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.4 2012/07/30 19:27:46 pgoyette Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.4.2.1 2014/08/20 00:04:24 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -12,7 +12,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.4 2012/07/30 19:27:46 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.4.2.1 2014/08/20 00:04:24 tls Exp $");
 
 #define	IPF_FTP_PROXY
 
@@ -391,14 +391,8 @@ ipf_p_ftp_port(ipf_ftp_softc_t *softf, fr_info_t *fin, ip_t *ip, nat_t *nat,
 	a4 = a1 & 0xff;
 	a1 >>= 24;
 	olen = s - f->ftps_rptr;
-	/* DO NOT change this to snprintf! */
-#if defined(SNPRINTF) && defined(_KERNEL)
-	SNPRINTF(newbuf, sizeof(newbuf), "%s %u,%u,%u,%u,%u,%u\r\n",
+	snprintf(newbuf, sizeof(newbuf), "%s %u,%u,%u,%u,%u,%u\r\n",
 		 "PORT", a1, a2, a3, a4, a5, a6);
-#else
-	(void) sprintf(newbuf, "%s %u,%u,%u,%u,%u,%u\r\n",
-		       "PORT", a1, a2, a3, a4, a5, a6);
-#endif
 
 	nlen = strlen(newbuf);
 	inc = nlen - olen;
@@ -806,15 +800,9 @@ ipf_p_ftp_pasv(ipf_ftp_softc_t *softf, fr_info_t *fin, ip_t *ip, nat_t *nat,
 	a4 = a1 & 0xff;
 	a1 >>= 24;
 
-#if defined(SNPRINTF) && defined(_KERNEL)
-	SNPRINTF(newbuf, sizeof(newbuf), "%s %s%u,%u,%u,%u,%u,%u%s\r\n",
+	snprintf(newbuf, sizeof(newbuf), "%s %s%u,%u,%u,%u,%u,%u%s\r\n",
 		"227 Entering Passive Mode", brackets[0], a1, a2, a3, a4,
 		a5, a6, brackets[1]);
-#else
-	(void) sprintf(newbuf, "%s %s%u,%u,%u,%u,%u,%u%s\r\n",
-		"227 Entering Passive Mode", brackets[0], a1, a2, a3, a4,
-		a5, a6, brackets[1]);
-#endif
 	return ipf_p_ftp_pasvreply(softf, fin, ip, nat, ftp, (a5 << 8 | a6),
 				   newbuf, s);
 }
@@ -1781,20 +1769,13 @@ ipf_p_ftp_eprt4(ipf_ftp_softc_t *softf, fr_info_t *fin, ip_t *ip, nat_t *nat,
 	a4 = a1 & 0xff;
 	a1 >>= 24;
 	olen = s - f->ftps_rptr;
-	/* DO NOT change this to snprintf! */
 	/*
 	 * While we could force the use of | as a delimiter here, it makes
 	 * sense to preserve whatever character is being used by the systems
 	 * involved in the communication.
 	 */
-#if defined(SNPRINTF) && defined(_KERNEL)
-	SNPRINTF(newbuf, sizeof(newbuf), "%s %c1%c%u.%u.%u.%u%c%u%c\r\n",
+	snprintf(newbuf, sizeof(newbuf), "%s %c1%c%u.%u.%u.%u%c%u%c\r\n",
 		 "EPRT", delim, delim, a1, a2, a3, a4, delim, port, delim);
-#else
-	(void) sprintf(newbuf, "%s %c1%c%u.%u.%u.%u%c%u%c\r\n",
-		       "EPRT", delim, delim, a1, a2, a3, a4, delim, port,
-			delim);
-#endif
 
 	nlen = strlen(newbuf);
 	inc = nlen - olen;
@@ -1892,13 +1873,8 @@ ipf_p_ftp_epsv(ipf_ftp_softc_t *softf, fr_info_t *fin, ip_t *ip, nat_t *nat,
 	}
 	s += 2;
 
-#if defined(SNPRINTF) && defined(_KERNEL)
-	SNPRINTF(newbuf, sizeof(newbuf), "%s (|||%u|)\r\n",
+	snprintf(newbuf, sizeof(newbuf), "%s (|||%u|)\r\n",
 		 "229 Entering Extended Passive Mode", ap);
-#else
-	(void) sprintf(newbuf, "%s (|||%u|)\r\n",
-		       "229 Entering Extended Passive Mode", ap);
-#endif
 
 	return ipf_p_ftp_pasvreply(softf, fin, ip, nat, ftp, (u_int)ap,
 				   newbuf, s);
@@ -2038,47 +2014,26 @@ ipf_p_ftp_eprt6(ipf_ftp_softc_t *softf, fr_info_t *fin, ip_t *ip,
 	 */
 	s = newbuf;
 	left = sizeof(newbuf);
-#if defined(SNPRINTF) && defined(_KERNEL)
-	SNPRINTF(newbuf, left, "EPRT %c2%c", delim, delim);
+	snprintf(newbuf, left, "EPRT %c2%c", delim, delim);
 	left -= strlen(s) + 1;
 	s += strlen(s);
 	a = ntohl(a6->i6[0]);
-	SNPRINTF(s, left, "%x:%x:", a >> 16, a & 0xffff);
+	snprintf(s, left, "%x:%x:", a >> 16, a & 0xffff);
 	left -= strlen(s);
 	s += strlen(s);
 	a = ntohl(a6->i6[1]);
-	SNPRINTF(s, left, "%x:%x:", a >> 16, a & 0xffff);
+	snprintf(s, left, "%x:%x:", a >> 16, a & 0xffff);
 	left -= strlen(s);
 	s += strlen(s);
 	a = ntohl(a6->i6[2]);
-	SNPRINTF(s, left, "%x:%x:", a >> 16, a & 0xffff);
+	snprintf(s, left, "%x:%x:", a >> 16, a & 0xffff);
 	left -= strlen(s);
 	s += strlen(s);
 	a = ntohl(a6->i6[3]);
-	SNPRINTF(s, left, "%x:%x", a >> 16, a & 0xffff);
+	snprintf(s, left, "%x:%x", a >> 16, a & 0xffff);
 	left -= strlen(s);
 	s += strlen(s);
-	sprintf(s, "|%d|\r\n", port);
-#else
-	(void) sprintf(s, "EPRT %c2%c", delim, delim);
-	s += strlen(s);
-	a = ntohl(a6->i6[0]);
-	sprintf(s, "%x:%x:", a >> 16, a & 0xffff);
-	s += strlen(s);
-	a = ntohl(a6->i6[1]);
-	sprintf(s, "%x:%x:", a >> 16, a & 0xffff);
-	left -= strlen(s);
-	s += strlen(s);
-	a = ntohl(a6->i6[2]);
-	sprintf(s, "%x:%x:", a >> 16, a & 0xffff);
-	left -= strlen(s);
-	s += strlen(s);
-	a = ntohl(a6->i6[3]);
-	sprintf(s, "%x:%x", a >> 16, a & 0xffff);
-	left -= strlen(s);
-	s += strlen(s);
-	sprintf(s, "|%d|\r\n", port);
-#endif
+	snprintf(s, left, "|%d|\r\n", port);
 	nlen = strlen(newbuf);
 	inc = nlen - olen;
 	if ((inc + fin->fin_plen) > 65535) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.47 2012/02/19 21:06:19 rmind Exp $	*/
+/*	$NetBSD: syscall.c,v 1.47.2.1 2014/08/20 00:03:12 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.47 2012/02/19 21:06:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.47.2.1 2014/08/20 00:03:12 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -122,7 +122,6 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t pc)
 	mips_reg_t *fargs = &reg->r_regs[_R_A0];
 	register_t *args = NULL;
 	register_t copyargs[2+SYS_MAXSYSARGS];
-	mips_reg_t saved_v0;
 	vaddr_t usp;
 	size_t nargs;
 	const struct sysent *callp;
@@ -149,9 +148,8 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t pc)
 		reg->r_regs[_R_PC] = pc + sizeof(uint32_t);
 
 	callp = p->p_emul->e_sysent;
-	saved_v0 = code = reg->r_regs[_R_V0];
-
-	code -= SYSCALL_SHIFT;
+	const mips_reg_t saved_v0 = reg->r_regs[_R_V0];
+	code = saved_v0 - SYSCALL_SHIFT;
 
 	if (code == SYS_syscall
 	    || (code == SYS___syscall && abi != _MIPS_BSD_API_O32)) {
@@ -176,7 +174,6 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t pc)
 		callp += code;
 
 	nargs = callp->sy_narg;
-	reg->r_regs[_R_V0] = 0;
 #if !defined(__mips_o32)
 	if (abi != _MIPS_BSD_API_O32) {
 #endif
@@ -316,13 +313,8 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t pc)
 	printf("\n");
 #endif
 
-	if (__predict_false(p->p_trace_enabled)
-	    && (error = trace_enter(code, args, nargs)) != 0)
-		goto out;
+	error = sy_invoke(callp, l, args, &reg->r_regs[_R_V0], code);
 
-	error = (*callp->sy_call)(l, args, &reg->r_regs[_R_V0]);
-
-    out:
 	switch (error) {
 	case 0:
 #if !defined(__mips_o32)
@@ -367,9 +359,6 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t pc)
 #endif
 		break;
 	}
-
-	if (__predict_false(p->p_trace_enabled))
-		trace_exit(code, &reg->r_regs[_R_V0], error);
 
 	KASSERT(l->l_blcnt == 0);
 	KASSERT(curcpu()->ci_biglock_count == 0);

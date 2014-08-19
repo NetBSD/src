@@ -1,7 +1,6 @@
 /* syscalls.c --- implement system calls for the RX simulator.
 
-Copyright (C) 2005, 2007, 2008, 2009, 2010, 2011
-Free Software Foundation, Inc.
+Copyright (C) 2005-2014 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -42,6 +41,12 @@ void
 set_callbacks (struct host_callback_struct *cb)
 {
   callbacks = cb;
+}
+
+struct host_callback_struct *
+get_callbacks (void)
+{
+  return callbacks;
 }
 
 

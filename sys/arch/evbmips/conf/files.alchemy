@@ -1,4 +1,4 @@
-#	$NetBSD: files.alchemy,v 1.11 2011/02/20 07:48:34 matt Exp $
+#	$NetBSD: files.alchemy,v 1.11.14.1 2014/08/20 00:02:58 tls Exp $
 
 # Platform support - select just one, please
 defflag		opt_alchemy.h	ALCHEMY_GENERIC
@@ -40,6 +40,9 @@ file	arch/evbmips/evbmips/cpu.c		cpu
 device	obio { [addr=-1] }
 attach	obio at mainbus
 file	arch/evbmips/alchemy/obio.c		obio
+
+# Stack-less Just-In-Time compiler
+include	"external/bsd/sljit/conf/files.sljit"
 
 # Machine-independent SCSI drivers
 include "dev/scsipi/files.scsipi"

@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.1 2012/05/26 22:02:29 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.1.2.1 2014/08/20 00:02:17 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,11 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: symtab.c,v 1.1 2012/05/26 22:02:29 christos Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.1.2.1 2014/08/20 00:02:17 tls Exp $");
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 #include <err.h>
 #include <dlfcn.h>
 
@@ -138,8 +139,10 @@ symtab_create(int fd, int bind, int type)
 			s->st_info = sym.st_info;
 			s->st_name = strdup(
 			    elf_strptr(elf, shdr.sh_link, sym.st_name));
-			if (s->st_name == NULL)
+			if (s->st_name == NULL) {
+				warn("Cannot allocate symbol");
 				goto out;
+			}
 			s++;
                 }
 		st->nsymbols = s - st->symbols;

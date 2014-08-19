@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_command.c,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: exec_command.c,v 1.1.1.1.16.1 2014/08/19 23:59:45 tls Exp $	*/
 
 /*++
 /* NAME
@@ -65,7 +65,8 @@ ABCDEFGHIJKLMNOPQRSTUVWXYZ" SPACE_TAB;
     /*
      * See if this command contains any shell magic characters.
      */
-    if (command[strspn(command, ok_chars)] == 0) {
+    if (command[strspn(command, ok_chars)] == 0
+	&& command[strspn(command, SPACE_TAB)] != 0) {
 
 	/*
 	 * No shell meta characters found, so we can try to avoid the overhead

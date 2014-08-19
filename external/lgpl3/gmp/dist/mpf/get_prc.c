@@ -21,7 +21,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp-impl.h"
 
 mp_bitcnt_t
-mpf_get_prec (mpf_srcptr x)
+mpf_get_prec (mpf_srcptr x) __GMP_NOTHROW
 {
   return __GMPF_PREC_TO_BITS (x->_mp_prec);
 }

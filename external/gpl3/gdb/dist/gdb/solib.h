@@ -1,7 +1,6 @@
 /* Shared library declarations for GDB, the GNU Debugger.
    
-   Copyright (C) 1992, 1993, 1995, 1998, 1999, 2000, 2001, 2003, 2005, 2007,
-   2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1992-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -72,10 +71,31 @@ extern void no_shared_libraries (char *ignored, int from_tty);
 /* Set the solib operations for GDBARCH to NEW_OPS.  */
 
 extern void set_solib_ops (struct gdbarch *gdbarch,
-			   struct target_so_ops *new_ops);
+			   const struct target_so_ops *new_ops);
 
 /* Return non-zero if NAME is the libpthread shared library.  */
 
 extern int libpthread_name_p (const char *name);
+
+/* Look up symbol from both symbol table and dynamic string table.  */
+
+extern CORE_ADDR gdb_bfd_lookup_symbol (bfd *abfd,
+					int (*match_sym) (asymbol *, void *),
+					void *data);
+
+/* Look up symbol from symbol table.  */
+
+extern CORE_ADDR gdb_bfd_lookup_symbol_from_symtab (bfd *abfd,
+						    int (*match_sym) (asymbol *,
+								      void *),
+						    void *data);
+
+/* Enable or disable optional solib event breakpoints as appropriate.  */
+
+extern void update_solib_breakpoints (void);
+
+/* Handle an solib event by calling solib_add.  */
+
+extern void handle_solib_event (void);
 
 #endif /* SOLIB_H */

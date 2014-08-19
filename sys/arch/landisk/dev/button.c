@@ -1,4 +1,4 @@
-/*	$NetBSD: button.c,v 1.6 2011/05/14 02:27:35 rmind Exp $	*/
+/*	$NetBSD: button.c,v 1.6.14.1 2014/08/20 00:03:09 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.6 2011/05/14 02:27:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.6.14.1 2014/08/20 00:03:09 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -91,8 +91,18 @@ dev_type_poll(btnpoll);
 dev_type_kqfilter(btnkqfilter);
 
 const struct cdevsw button_cdevsw = {
-	btnopen, btnclose, btnread, nowrite, btnioctl,
-	nostop, notty, btnpoll, nommap, btnkqfilter,
+	.d_open = btnopen,
+	.d_close = btnclose,
+	.d_read = btnread,
+	.d_write = nowrite,
+	.d_ioctl = btnioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = btnpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = btnkqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_flush.c,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
+/*	$NetBSD: mail_flush.c,v 1.1.1.1.16.1 2014/08/19 23:59:42 tls Exp $	*/
 
 /*++
 /* NAME
@@ -22,6 +22,11 @@
 /*	service.
 /* DIAGNOSTICS
 /*	The result is 0 in case of success, -1 in case of failure.
+/* FILES
+/*	$queue_directory/public/pickup, server endpoint
+/*	$queue_directory/public/qmgr, server endpoint
+/* SEE ALSO
+/*	mail_trigger(3), see note about event_drain() usage
 /* LICENSE
 /* .ad
 /* .fi

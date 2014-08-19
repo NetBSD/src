@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 2009/04/28 10:57:24 nonaka Exp $	*/
+/*	$NetBSD: main.c,v 1.5.12.1 2014/08/20 00:05:18 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMRUA Shin
@@ -49,7 +49,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.5 2009/04/28 10:57:24 nonaka Exp $");
+__RCSID("$NetBSD: main.c,v 1.5.12.1 2014/08/20 00:05:18 tls Exp $");
 #endif /* not lint */
 
 void load_data(const char *, struct tpctl_data *);
@@ -62,7 +62,7 @@ int opt_verbose;
 int opt_noupdate;
 int opt_forceupdate;
 
-static void
+static __dead void
 usage(void)
 {
 

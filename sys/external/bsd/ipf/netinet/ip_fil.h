@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.3.2.1 2012/11/20 03:02:39 tls Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.3.2.2 2014/08/20 00:04:24 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -1455,7 +1455,7 @@ typedef	struct	ipftune	{
 #if (defined(NetBSD) && (NetBSD > 199609) && (NetBSD <= 1991011)) || \
     (defined(NetBSD1_2) && NetBSD1_2 > 1) || \
     (defined(__FreeBSD__) && (__FreeBSD_version >= 500043))
-# if (NetBSD >= 199905)
+# if (NetBSD >= 199905) && !defined(PFIL_HOOKS)
 #  define PFIL_HOOKS
 # endif
 # ifdef PFIL_HOOKS

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.72 2009/11/21 03:11:00 rmind Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.72.22.1 2014/08/20 00:03:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -52,11 +52,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.72 2009/11/21 03:11:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.72.22.1 2014/08/20 00:03:06 tls Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ptrace.h"
-#include "npx.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.72 2009/11/21 03:11:00 rmind E
 #include <machine/reg.h>
 #include <machine/segments.h>
 
+#include <x86/fpu.h>
+
 #ifdef VM86
 #include <machine/vm86.h>
 #endif
@@ -81,128 +82,6 @@ process_frame(struct lwp *l)
 {
 
 	return (l->l_md.md_regs);
-}
-
-static inline union savefpu *
-process_fpframe(struct lwp *l)
-{
-	struct pcb *pcb = lwp_getpcb(l);
-
-	return &pcb->pcb_savefpu;
-}
-
-static int
-xmm_to_s87_tag(const uint8_t *fpac, int regno, uint8_t tw)
-{
-	static const uint8_t empty_significand[8] = { 0 };
-	int tag;
-	uint16_t exponent;
-
-	if (tw & (1U << regno)) {
-		exponent = fpac[8] | (fpac[9] << 8);
-		switch (exponent) {
-		case 0x7fff:
-			tag = 2;
-			break;
-
-		case 0x0000:
-			if (memcmp(empty_significand, fpac,
-				   sizeof(empty_significand)) == 0)
-				tag = 1;
-			else
-				tag = 2;
-			break;
-
-		default:
-			if ((fpac[7] & 0x80) == 0)
-				tag = 2;
-			else
-				tag = 0;
-			break;
-		}
-	} else
-		tag = 3;
-
-	return (tag);
-}
-
-void
-process_xmm_to_s87(const struct savexmm *sxmm, struct save87 *s87)
-{
-	int i;
-
-	/* FPU control/status */
-	s87->sv_env.en_cw = sxmm->sv_env.en_cw;
-	s87->sv_env.en_sw = sxmm->sv_env.en_sw;
-	/* tag word handled below */
-	s87->sv_env.en_fip = sxmm->sv_env.en_fip;
-	s87->sv_env.en_fcs = sxmm->sv_env.en_fcs;
-	s87->sv_env.en_opcode = sxmm->sv_env.en_opcode;
-	s87->sv_env.en_foo = sxmm->sv_env.en_foo;
-	s87->sv_env.en_fos = sxmm->sv_env.en_fos;
-
-	/* Tag word and registers. */
-	s87->sv_env.en_tw = 0;
-	s87->sv_ex_tw = 0;
-	for (i = 0; i < 8; i++) {
-		s87->sv_env.en_tw |=
-		    (xmm_to_s87_tag(sxmm->sv_ac[i].fp_bytes, i,
-		     sxmm->sv_env.en_tw) << (i * 2));
-
-		s87->sv_ex_tw |=
-		    (xmm_to_s87_tag(sxmm->sv_ac[i].fp_bytes, i,
-		     sxmm->sv_ex_tw) << (i * 2));
-
-		memcpy(&s87->sv_ac[i].fp_bytes, &sxmm->sv_ac[i].fp_bytes,
-		    sizeof(s87->sv_ac[i].fp_bytes));
-	}
-
-	s87->sv_ex_sw = sxmm->sv_ex_sw;
-}
-
-void
-process_s87_to_xmm(const struct save87 *s87, struct savexmm *sxmm)
-{
-	int i;
-
-	/* FPU control/status */
-	sxmm->sv_env.en_cw = s87->sv_env.en_cw;
-	sxmm->sv_env.en_sw = s87->sv_env.en_sw;
-	/* tag word handled below */
-	sxmm->sv_env.en_fip = s87->sv_env.en_fip;
-	sxmm->sv_env.en_fcs = s87->sv_env.en_fcs;
-	sxmm->sv_env.en_opcode = s87->sv_env.en_opcode;
-	sxmm->sv_env.en_foo = s87->sv_env.en_foo;
-	sxmm->sv_env.en_fos = s87->sv_env.en_fos;
-
-	/* Tag word and registers. */
-	for (i = 0; i < 8; i++) {
-		if (((s87->sv_env.en_tw >> (i * 2)) & 3) == 3)
-			sxmm->sv_env.en_tw &= ~(1U << i);
-		else
-			sxmm->sv_env.en_tw |= (1U << i);
-
-#if 0
-		/*
-		 * Software-only word not provided by the userland fpreg
-		 * structure.
-		 */
-		if (((s87->sv_ex_tw >> (i * 2)) & 3) == 3)
-			sxmm->sv_ex_tw &= ~(1U << i);
-		else
-			sxmm->sv_ex_tw |= (1U << i);
-#endif
-
-		memcpy(&sxmm->sv_ac[i].fp_bytes, &s87->sv_ac[i].fp_bytes,
-		    sizeof(sxmm->sv_ac[i].fp_bytes));
-	}
-#if 0
-	/*
-	 * Software-only word not provided by the userland fpreg
-	 * structure.
-	 */
-	sxmm->sv_ex_sw = s87->sv_ex_sw;
-#endif
 }
 
 int
@@ -242,50 +121,12 @@ process_read_regs(struct lwp *l, struct reg *regs)
 }
 
 int
-process_read_fpregs(struct lwp *l, struct fpreg *regs)
+process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 {
-	union savefpu *frame = process_fpframe(l);
 
-	if (l->l_md.md_flags & MDL_USEDFPU) {
-#if NNPX > 0
-		npxsave_lwp(l, true);
-#endif
-	} else {
-		/*
-		 * Fake a FNINIT.
-		 * The initial control word was already set by setregs(), so
-		 * save it temporarily.
-		 */
-		if (i386_use_fxsave) {
-			uint32_t mxcsr = frame->sv_xmm.sv_env.en_mxcsr;
-			uint16_t cw = frame->sv_xmm.sv_env.en_cw;
-
-			/* XXX Don't zero XMM regs? */
-			memset(&frame->sv_xmm, 0, sizeof(frame->sv_xmm));
-			frame->sv_xmm.sv_env.en_cw = cw;
-			frame->sv_xmm.sv_env.en_mxcsr = mxcsr;
-			frame->sv_xmm.sv_env.en_sw = 0x0000;
-			frame->sv_xmm.sv_env.en_tw = 0x00;
-		} else {
-			uint16_t cw = frame->sv_87.sv_env.en_cw;
-
-			memset(&frame->sv_87, 0, sizeof(frame->sv_87));
-			frame->sv_87.sv_env.en_cw = cw;
-			frame->sv_87.sv_env.en_sw = 0x0000;
-			frame->sv_87.sv_env.en_tw = 0xffff;
-		}
-		l->l_md.md_flags |= MDL_USEDFPU;
-	}
-
-	if (i386_use_fxsave) {
-		struct save87 s87;
-
-		/* XXX Yuck */
-		process_xmm_to_s87(&frame->sv_xmm, &s87);
-		memcpy(regs, &s87, sizeof(*regs));
-	} else
-		memcpy(regs, &frame->sv_87, sizeof(*regs));
-	return (0);
+	__CTASSERT(sizeof *regs == sizeof (struct save87));
+	process_read_fpregs_s87(l, (struct save87 *)regs);
+	return 0;
 }
 
 #ifdef PTRACE
@@ -345,28 +186,14 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 }
 
 int
-process_write_fpregs(struct lwp *l, const struct fpreg *regs)
+process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 {
-	union savefpu *frame = process_fpframe(l);
 
-	if (l->l_md.md_flags & MDL_USEDFPU) {
-#if NNPX > 0
-		npxsave_lwp(l, false);
-#endif
-	} else {
-		l->l_md.md_flags |= MDL_USEDFPU;
-	}
-
-	if (i386_use_fxsave) {
-		struct save87 s87;
-
-		/* XXX Yuck. */
-		memcpy(&s87, regs, sizeof(*regs));
-		process_s87_to_xmm(&s87, &frame->sv_xmm);
-	} else
-		memcpy(&frame->sv_87, regs, sizeof(*regs));
-	return (0);
+	__CTASSERT(sizeof *regs == sizeof (struct save87));
+	process_write_fpregs_s87(l, (const struct save87 *)regs);
+	return 0;
 }
+
 
 int
 process_sstep(struct lwp *l, int sstep)
@@ -395,65 +222,19 @@ process_set_pc(struct lwp *l, void *addr)
 static int
 process_machdep_read_xmmregs(struct lwp *l, struct xmmregs *regs)
 {
-	union savefpu *frame = process_fpframe(l);
 
-	if (i386_use_fxsave == 0)
-		return (EINVAL);
-
-	if (l->l_md.md_flags & MDL_USEDFPU) {
-#if NNPX > 0
-		struct pcb *pcb = lwp_getpcb(l);
-
-		if (pcb->pcb_fpcpu != NULL) {
-			npxsave_lwp(l, true);
-		}
-#endif
-	} else {
-		/*
-		 * Fake a FNINIT.
-		 * The initial control word was already set by setregs(),
-		 * so save it temporarily.
-		 */
-		uint32_t mxcsr = frame->sv_xmm.sv_env.en_mxcsr;
-		uint16_t cw = frame->sv_xmm.sv_env.en_cw;
-
-		/* XXX Don't zero XMM regs? */
-		memset(&frame->sv_xmm, 0, sizeof(frame->sv_xmm));
-		frame->sv_xmm.sv_env.en_cw = cw;
-		frame->sv_xmm.sv_env.en_mxcsr = mxcsr;
-		frame->sv_xmm.sv_env.en_sw = 0x0000;
-		frame->sv_xmm.sv_env.en_tw = 0x00;
-
-		l->l_md.md_flags |= MDL_USEDFPU;  
-	}
-
-	memcpy(regs, &frame->sv_xmm, sizeof(*regs));
-	return (0);
+	__CTASSERT(sizeof *regs == sizeof (struct fxsave));
+	process_read_fpregs_xmm(l, (struct fxsave *)regs);
+	return 0;
 }
 
 static int
 process_machdep_write_xmmregs(struct lwp *l, struct xmmregs *regs)
 {
-	union savefpu *frame = process_fpframe(l);
 
-	if (i386_use_fxsave == 0)
-		return (EINVAL);
-
-	if (l->l_md.md_flags & MDL_USEDFPU) {
-#if NNPX > 0
-		struct pcb *pcb = lwp_getpcb(l);
-
-		/* If we were using the FPU, drop it. */
-		if (pcb->pcb_fpcpu != NULL) {
-			npxsave_lwp(l, false);
-		}
-#endif
-	} else {
-		l->l_md.md_flags |= MDL_USEDFPU;
-	}
-
-	memcpy(&frame->sv_xmm, regs, sizeof(*regs));
-	return (0);
+	__CTASSERT(sizeof *regs == sizeof (struct fxsave));
+	process_write_fpregs_xmm(l, (const struct fxsave *)regs);
+	return 0;
 }
 
 int

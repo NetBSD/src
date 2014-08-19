@@ -1,4 +1,4 @@
-# $Id: IMX23_OLINUXINO,v 1.2.6.3 2013/06/23 06:20:04 tls Exp $
+# $Id: IMX23_OLINUXINO,v 1.2.6.4 2014/08/20 00:02:53 tls Exp $
 #
 # IMX23_OLINUXINO -- Olimex i.MX23 OLinuXino kernel configuration file.
 #
@@ -15,6 +15,12 @@ mainbus0	at root
 # The boot CPU
 cpu0		at mainbus?
 
+# AHB bus
+ahb0		at mainbus? base 0x80080000 size 0x80000
+
+# USB host controller
+imxusbc0	at ahb? addr 0x80080000 size 0x40000 irq -1
+
 # APBH bus
 apbh0		at mainbus? base 0x80000000 size 0x40000
 
@@ -29,8 +35,18 @@ ssp0		at apbh? addr 0x80010000 size 0x2000 irq 15
 sdmmc*		at ssp?
 ld*		at sdmmc?
 
+# Digital control
+digctl0		at apbh? addr 0x8001C000 size 0x2000 irq -1
+
+# PIN control
+pinctrl0	at apbh? addr 0x80018000 size 0x2000 irq -1
+gpio*           at pinctrl?
+
 # APBX bus
 apbx0		at mainbus? base 0x80040000 size 0x40000
+
+# Power control
+#power0		at apbx? addr 0x80044000 size 0x2000 irq -1
 
 # APBX DMA
 apbdma1		at apbx? addr 0x80024000 size 0x2000 irq -1
@@ -41,17 +57,60 @@ timrot1		at apbx? addr 0x80068040 size 0x20 irq 29
 #timrot2	at apbx? addr 0x80068060 size 0x20 irq 30
 #timrot3	at apbx? addr 0x80068080 size 0x20 irq 31
 
+# Debug UART
 plcom0		at apbx? addr 0x80070000 size 0x1000 irq 0
+
+# USB PHY
+usbphy0		at apbx? addr 0x8007C000 size 0x2000 irq -1
+
+# Clock control
+clkctrl0	at apbx? addr 0x80040000 size 0x2000 irq -1
+
+# USB host
+ehci0		at imxusbc0 unit 0 irq 11
+# USB OTG
+# ehci0		at imxusbc0   unit 0 irq 18
+
+usb*		at ehci?
+uhub*		at usb?
+uhub*		at uhub? port ?
+ugen*		at uhub? port ?
+
+include "dev/usb/usbdevices.config"
+
+ukphy*		at mii? phy ?
 
 options		MEMSIZE=64
 options		DDB
 options		HZ=100
+options		INET		# IP + ICMP + TCP + UDP
+options		INET6		# IPv6
+options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
+options		COMPAT_60	# NetBSD 6.0 compatibility
+
+makeoptions     DEBUG="-g"      # compile full symbol table
+options         SYMTAB_SPACE=800000
+
+options		SYSVMSG		# System V-like message queues
+options		SYSVSEM		# System V-like semaphores
+options		SYSVSHM		# System V-like memory sharing
+
+#options		MODULAR
+options		KTRACE
+#options		DEBUG
+#options		DIAGNOSTIC
 
 file-system	FFS
+file-system	MFS
 file-system	EXT2FS
 file-system	MSDOSFS
 file-system	KERNFS
 file-system	PROCFS
 file-system	PTYFS
+file-system	NFS
 
-pseudo-device	pty	# pseudo-terminals
+options		WAPBL
+
+pseudo-device	pty		# pseudo-terminals
+pseudo-device	loop		# network loopback
+pseudo-device	bpfilter	# Berkeley packet filter

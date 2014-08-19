@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_ihash.c,v 1.1.10.1 2012/11/20 03:02:52 tls Exp $	*/
+/*	$NetBSD: chfs_ihash.c,v 1.1.10.2 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -183,13 +183,15 @@ void
 chfs_ihashins(struct chfs_inode *ip)
 {
 	struct ihashhead *ipp;
+	int error __diagused;
 
 	dbg("ip: %p\n", ip);
 
 	KASSERT(mutex_owned(&chfs_hashlock));
 
 	/* lock the inode, then put it on the appropriate hash list */
-	VOP_LOCK(ITOV(ip), LK_EXCLUSIVE);
+	error = VOP_LOCK(ITOV(ip), LK_EXCLUSIVE);
+	KASSERT(error == 0);
 
 	mutex_enter(&chfs_ihash_lock);
 	ipp = &chfs_ihashtbl[INOHASH(ip->dev, ip->ino)];

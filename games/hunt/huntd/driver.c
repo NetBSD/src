@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.21 2011/08/31 16:24:56 plunky Exp $	*/
+/*	$NetBSD: driver.c,v 1.21.8.1 2014/08/20 00:00:23 tls Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,98 +32,211 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.21 2011/08/31 16:24:56 plunky Exp $");
+__RCSID("$NetBSD: driver.c,v 1.21.8.1 2014/08/20 00:00:23 tls Exp $");
 #endif /* not lint */
 
-#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <err.h>
-#include <errno.h>
-#include <signal.h>
+#include <sys/un.h>
+
+#include <netinet/in.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <net/if.h>
+
 #include <stdlib.h>
 #include <unistd.h>
-#include"hunt.h"
+#include <signal.h>
+#include <errno.h>
+#include <err.h>
 
-#ifndef pdp11
-#define RN	(((Seed = Seed * 11109 + 13849) >> 16) & 0xffff)
-#else
-#define RN	((Seed = Seed * 11109 + 13849) & 0x7fff)
-#endif
+#include "hunt.h"
+#include "pathnames.h"
 
-static int Seed = 0;
+/*
+ * There are three listening sockets in this daemon:
+ *    - a datagram socket that listens on a well known port
+ *    - a stream socket for general player connections
+ *    - a second stream socket that prints the stats/scores
+ *
+ * These are (now) named as follows:
+ *    - contact (contactsock, contactaddr, etc.)
+ *    - hunt (huntsock, huntaddr, etc.)
+ *    - stat (statsock, stataddr, etc.)
+ *
+ * Until being cleaned up in 2014 the code used an assortment of
+ * inconsistent and confusing names to refer to the pieces of these:
+ *
+ *    test_port -> contactaddr
+ *    Test_port -> contactport
+ *    Test_socket -> contactsock
+ *
+ *    sock_port -> huntport
+ *    Socket -> huntsock
+ *
+ *    Daemon -> both stataddr and huntaddr
+ *    stat_port -> statport
+ *    status -> statsock
+ *
+ * It isn't clear to me what purpose contactsocket is supposed to
+ * serve; maybe it was supposed to avoid asking inetd to support
+ * tcp/wait sockets? Anyway, we can't really change the protocol at
+ * this point. (To complicate matters, contactsocket doesn't exist if
+ * using AF_UNIX sockets; you just connect to the game socket.)
+ *
+ * When using internet sockets:
+ *    - the contact socket listens on INADDR_ANY using the game port
+ *      (either specified or the default: CONTACT_PORT, currently
+ *      spelled TEST_PORT)
+ *    - the hunt socket listens on INADDR_ANY using whatever port
+ *    - the stat socket listens on INADDR_ANY using whatever port
+ *
+ * When using AF_UNIX sockets:
+ *    - the contact socket isn't used
+ *    - the hunt socket listens on the game socket (either a specified path
+ *      or /tmp/hunt)
+ *    - the stat socket listens on its own socket (huntsocket's path +
+ *      ".stats")
+ */
 
+static bool localmode;			/* true -> AF_UNIX; false -> AF_INET */
+static bool inetd_spawned;		/* invoked via inetd? */
+static bool standard_port = true;	/* listening on standard port? */
 
-static SOCKET Daemon;
-static char *First_arg;			/* pointer to argv[0] */
-static char *Last_arg;			/* pointer to end of argv/environ */
+static struct sockaddr_storage huntaddr;
+static struct sockaddr_storage stataddr;
+static socklen_t huntaddrlen;
+static socklen_t stataddrlen;
 
-#ifdef INTERNET
-static int Test_socket;			/* test socket to answer datagrams */
-static FLAG inetd_spawned;		/* invoked via inetd */
-static FLAG standard_port = TRUE;	/* true if listening on standard port */
-static u_short	sock_port;		/* port # of tcp listen socket */
-static u_short	stat_port;		/* port # of statistics tcp socket */
-#define DAEMON_SIZE	(sizeof Daemon)
-#else
-#define DAEMON_SIZE	(sizeof Daemon - 1)
+static uint16_t contactport = TEST_PORT;
+static uint16_t	huntport;		/* port # of tcp listen socket */
+static uint16_t	statport;		/* port # of statistics tcp socket */
+
+static const char *huntsockpath = PATH_HUNTSOCKET;
+static char *statsockpath;
+
+static int contactsock;			/* socket to answer datagrams */
+int huntsock;				/* main socket */
+static int statsock;			/* stat socket */
+
+#ifdef VOLCANO
+static int volcano = 0;			/* Explosion size */
 #endif
 
 static void clear_scores(void);
-static int havechar(PLAYER *, int);
+static bool havechar(PLAYER *, int);
 static void init(void);
-int main(int, char *[], char *[]);
 static void makeboots(void);
 static void send_stats(void);
-static void zap(PLAYER *, FLAG, int);
+static void zap(PLAYER *, bool, int);
 
+static int
+getnum(const char *s, unsigned long *ret)
+{
+	char *t;
+
+	errno = 0;
+	*ret = strtoul(s, &t, 0);
+	if (errno || *t != '\0') {
+		return -1;
+	}
+	return 0;
+}
+
+static __dead void
+usage(const char *av0)
+{
+	fprintf(stderr, "Usage: %s [-s] [-p portnumber|socketpath]\n", av0);
+	exit(1);
+}
+
+static void
+makeaddr(const char *path, uint16_t port,
+	 struct sockaddr_storage *ss, socklen_t *len)
+{
+	struct sockaddr_in *sin;
+	struct sockaddr_un *sun;
+
+	if (path == NULL) {
+		sin = (struct sockaddr_in *)ss;
+		sin->sin_family = AF_INET;
+		sin->sin_addr.s_addr = INADDR_ANY;
+		sin->sin_port = htons(port);
+		*len = sizeof(*sin);
+	} else {
+		sun = (struct sockaddr_un *)ss;
+		sun->sun_family = AF_UNIX;
+		strlcpy(sun->sun_path, path, sizeof(sun->sun_path));
+		*len = SUN_LEN(sun);
+	}
+}
+
+static uint16_t
+getsockport(int sock)
+{
+	struct sockaddr_storage addr;
+	socklen_t len;
+
+	len = sizeof(addr);
+	if (getsockname(sock, (struct sockaddr *)&addr, &len) < 0)  {
+		complain(LOG_ERR, "getsockname");
+		exit(1);
+	}
+	switch (addr.ss_family) {
+	    case AF_INET:
+		return ntohs(((struct sockaddr_in *)&addr)->sin_port);
+	    case AF_INET6:
+		return ntohs(((struct sockaddr_in6 *)&addr)->sin6_port);
+	    default:
+		break;
+	}
+	return 0;
+}
 
 /*
  * main:
  *	The main program.
  */
 int
-main(int ac, char **av, char **ep)
+main(int ac, char **av)
 {
 	PLAYER *pp;
-#ifdef INTERNET
-	u_short msg;
-	short port_num, reply;
-	socklen_t namelen;
-	SOCKET test;
-#endif
-	static FLAG first = TRUE;
-	static FLAG server = FALSE;
+	unsigned long optargnum;
+	uint16_t msg, reply;
+	struct sockaddr_storage msgaddr;
+	socklen_t msgaddrlen;
+	static bool first = true;
+	static bool server = false;
 	int c, i;
 	const int linger = 90 * 1000;
-
-	First_arg = av[0];
-	if (ep == NULL || *ep == NULL)
-		ep = av + ac;
-	while (*ep)
-		ep++;
-	Last_arg = ep[-1] + strlen(ep[-1]);
 
 	while ((c = getopt(ac, av, "sp:")) != -1) {
 		switch (c) {
 		  case 's':
-			server = TRUE;
+			server = true;
 			break;
-#ifdef INTERNET
 		  case 'p':
-			standard_port = FALSE;
-			Test_port = atoi(optarg);
+			standard_port = false;
+			if (getnum(optarg, &optargnum) < 0) {
+				localmode = true;
+				huntsockpath = optarg;
+			} else if (optargnum < 0xffff) {
+				localmode = false;
+				contactport = optargnum;
+			} else {
+				usage(av[0]);
+			}
 			break;
-#endif
 		  default:
-erred:
-			fprintf(stderr, "Usage: %s [-s] [-p port]\n", av[0]);
-			exit(1);
+			usage(av[0]);
 		}
 	}
 	if (optind < ac)
-		goto erred;
+		usage(av[0]);
 
+	asprintf(&statsockpath, "%s.stats", huntsockpath);
 	init();
 
 
@@ -133,46 +246,43 @@ again:
 		while (poll(fdset, 3+MAXPL+MAXMON, INFTIM) < 0)
 		{
 			if (errno != EINTR)
-#ifdef LOG
-				syslog(LOG_WARNING, "poll: %m");
-#else
-				warn("poll");
-#endif
+				complain(LOG_WARNING, "poll");
 			errno = 0;
 		}
-#ifdef INTERNET
-		if (fdset[2].revents & POLLIN) {
-			namelen = DAEMON_SIZE;
-			port_num = htons(sock_port);
-			(void) recvfrom(Test_socket, &msg, sizeof msg,
-				0, (struct sockaddr *) &test, &namelen);
+		if (!localmode && fdset[2].revents & POLLIN) {
+			msgaddrlen = sizeof(msgaddr);
+			(void) recvfrom(contactsock, &msg, sizeof msg,
+				0, (struct sockaddr *)&msgaddr, &msgaddrlen);
 			switch (ntohs(msg)) {
 			  case C_MESSAGE:
 				if (Nplayer <= 0)
 					break;
 				reply = htons((u_short) Nplayer);
-				(void) sendto(Test_socket, &reply,
+				(void) sendto(contactsock, &reply,
 					sizeof reply, 0,
-					(struct sockaddr *) &test, DAEMON_SIZE);
+					(struct sockaddr *)&msgaddr,
+					msgaddrlen);
 				break;
 			  case C_SCORES:
-				reply = htons(stat_port);
-				(void) sendto(Test_socket, &reply,
+				reply = htons(statport);
+				(void) sendto(contactsock, &reply,
 					sizeof reply, 0,
-					(struct sockaddr *) &test, DAEMON_SIZE);
+					(struct sockaddr *)&msgaddr,
+					msgaddrlen);
 				break;
 			  case C_PLAYER:
 			  case C_MONITOR:
 				if (msg == C_MONITOR && Nplayer <= 0)
 					break;
-				reply = htons(sock_port);
-				(void) sendto(Test_socket, &reply,
+				reply = htons(huntport);
+				(void) sendto(contactsock, &reply,
 					sizeof reply, 0,
-					(struct sockaddr *) &test, DAEMON_SIZE);
+					(struct sockaddr *)&msgaddr,
+					msgaddrlen);
 				break;
 			}
 		}
-#endif
+
 		{
 			for (pp = Player, i = 0; pp < End_player; pp++, i++)
 				if (havechar(pp, i + 3)) {
@@ -189,24 +299,23 @@ again:
 			moveshots();
 			for (pp = Player, i = 0; pp < End_player; )
 				if (pp->p_death[0] != '\0')
-					zap(pp, TRUE, i + 3);
+					zap(pp, true, i + 3);
 				else
 					pp++, i++;
 #ifdef MONITOR
 			for (pp = Monitor, i = 0; pp < End_monitor; )
 				if (pp->p_death[0] != '\0')
-					zap(pp, FALSE, i + MAXPL + 3);
+					zap(pp, false, i + MAXPL + 3);
 				else
 					pp++, i++;
 #endif
 		}
 		if (fdset[0].revents & POLLIN)
 			if (answer()) {
-#ifdef INTERNET
-				if (first && standard_port)
-					faketalk();
-#endif
-				first = FALSE;
+				if (first) {
+					/* announce start of game? */
+				}
+				first = false;
 			}
 		if (fdset[1].revents & POLLIN)
 			send_stats();
@@ -236,13 +345,13 @@ again:
 #ifdef BOOTS
 		makeboots();
 #endif
-		first = TRUE;
+		first = true;
 		goto again;
 	}
 
 #ifdef MONITOR
 	for (pp = Monitor, i = 0; pp < End_monitor; i++)
-		zap(pp, FALSE, i + MAXPL + 3);
+		zap(pp, false, i + MAXPL + 3);
 #endif
 	cleanup(0);
 	/* NOTREACHED */
@@ -257,11 +366,10 @@ static void
 init(void)
 {
 	int i;
-#ifdef INTERNET
-	SOCKET test_port;
-	int msg;
+	struct sockaddr_storage stdinaddr;
+	struct sockaddr_storage contactaddr;
+	socklen_t contactaddrlen;
 	socklen_t len;
-#endif
 
 #ifndef DEBUG
 #ifdef TIOCNOTTY
@@ -283,150 +391,116 @@ init(void)
 #endif
 
 	/*
-	 * Initialize statistics socket
+	 * check for inetd
 	 */
-#ifdef INTERNET
-	Daemon.sin_family = SOCK_FAMILY;
-	Daemon.sin_addr.s_addr = INADDR_ANY;
-	Daemon.sin_port = 0;
-#else
-	Daemon.sun_family = SOCK_FAMILY;
-	(void) strcpy(Daemon.sun_path, Stat_name);
-#endif
-
-	Status = socket(SOCK_FAMILY, SOCK_STREAM, 0);
-	if (bind(Status, (struct sockaddr *) &Daemon, DAEMON_SIZE) < 0) {
-		if (errno == EADDRINUSE)
-			exit(0);
-		else {
-#ifdef LOG
-			syslog(LOG_ERR, "bind: %m");
-#else
-			warn("bind");
-#endif
-			cleanup(1);
+	len = sizeof(stdinaddr);
+	if (getsockname(STDIN_FILENO, (struct sockaddr *)&stdinaddr,
+			&len) >= 0) {
+		inetd_spawned = true;
+		/* force localmode, assimilate stdin as appropriate */
+		if (stdinaddr.ss_family == AF_UNIX) {
+			localmode = true;
+			contactsock = -1;
+			huntsock = STDIN_FILENO;
 		}
+		else {
+			localmode = false;
+			contactsock = STDIN_FILENO;
+			huntsock = -1;
+		}
+	} else {
+		/* keep value of localmode; no sockets yet */
+		contactsock = -1;
+		huntsock = -1;
 	}
-	(void) listen(Status, 5);
 
-#ifdef INTERNET
-	len = sizeof (SOCKET);
-	if (getsockname(Status, (struct sockaddr *) &Daemon, &len) < 0)  {
-#ifdef LOG
-		syslog(LOG_ERR, "getsockname: %m");
-#else
-		warn("getsockname");
-#endif
-		exit(1);
+	/*
+	 * initialize contact socket
+	 */
+	if (!localmode && contactsock < 0) {
+		makeaddr(NULL, contactport, &contactaddr, &contactaddrlen);
+		contactsock = socket(AF_INET, SOCK_DGRAM, 0);
+		if (bind(contactsock, (struct sockaddr *) &contactaddr,
+			 contactaddrlen) < 0) {
+			complain(LOG_ERR, "bind");
+			exit(1);
+		}
+		(void) listen(contactsock, 5);
 	}
-	stat_port = ntohs(Daemon.sin_port);
-#endif
 
 	/*
 	 * Initialize main socket
 	 */
-#ifdef INTERNET
-	Daemon.sin_family = SOCK_FAMILY;
-	Daemon.sin_addr.s_addr = INADDR_ANY;
-	Daemon.sin_port = 0;
-#else
-	Daemon.sun_family = SOCK_FAMILY;
-	(void) strcpy(Daemon.sun_path, Sock_name);
-#endif
+	if (huntsock < 0) {
+		makeaddr(localmode ? huntsockpath : NULL, 0, &huntaddr,
+			 &huntaddrlen);
+		huntsock = socket(huntaddr.ss_family, SOCK_STREAM, 0);
+		if (bind(huntsock, (struct sockaddr *)&huntaddr,
+			 huntaddrlen) < 0) {
+			if (errno == EADDRINUSE)
+				exit(0);
+			else {
+				complain(LOG_ERR, "bind");
+				cleanup(1);
+			}
+		}
+		(void) listen(huntsock, 5);
+	}
 
-	Socket = socket(SOCK_FAMILY, SOCK_STREAM, 0);
-#if defined(INTERNET)
-	msg = 1;
-	if (setsockopt(Socket, SOL_SOCKET, SO_USELOOPBACK, &msg, sizeof msg)<0)
-#ifdef LOG
-		syslog(LOG_WARNING, "setsockopt loopback %m");
-#else
-		warn("setsockopt loopback");
-#endif
-#endif
-	if (bind(Socket, (struct sockaddr *) &Daemon, DAEMON_SIZE) < 0) {
+	/*
+	 * Initialize statistics socket
+	 */
+	makeaddr(localmode ? statsockpath : NULL, 0, &stataddr, &stataddrlen);
+	statsock = socket(stataddr.ss_family, SOCK_STREAM, 0);
+	if (bind(statsock, (struct sockaddr *)&stataddr, stataddrlen) < 0) {
 		if (errno == EADDRINUSE)
 			exit(0);
 		else {
-#ifdef LOG
-			syslog(LOG_ERR, "bind: %m");
-#else
-			warn("bind");
-#endif
+			complain(LOG_ERR, "bind");
 			cleanup(1);
 		}
 	}
-	(void) listen(Socket, 5);
+	(void) listen(statsock, 5);
 
-#ifdef INTERNET
-	len = sizeof (SOCKET);
-	if (getsockname(Socket, (struct sockaddr *) &Daemon, &len) < 0)  {
-#ifdef LOG
-		syslog(LOG_ERR, "getsockname: %m");
-#else
-		warn("getsockname");
-#endif
-		exit(1);
+	if (!localmode) {
+		contactport = getsockport(contactsock);
+		statport = getsockport(statsock);
+		huntport = getsockport(huntsock);
+		if (contactport != TEST_PORT) {
+			standard_port = false;
+		}
 	}
-	sock_port = ntohs(Daemon.sin_port);
-#endif
 
 	/*
 	 * Initialize minimal poll mask
 	 */
-	fdset[0].fd = Socket;
+	fdset[0].fd = huntsock;
 	fdset[0].events = POLLIN;
-	fdset[1].fd = Status;
+	fdset[1].fd = statsock;
 	fdset[1].events = POLLIN;
-
-#ifdef INTERNET
-	len = sizeof (SOCKET);
-	if (getsockname(0, (struct sockaddr *) &test_port, &len) >= 0
-	&& test_port.sin_family == AF_INET) {
-		inetd_spawned = TRUE;
-		Test_socket = 0;
-		if (test_port.sin_port != htons((u_short) Test_port)) {
-			standard_port = FALSE;
-			Test_port = ntohs(test_port.sin_port);
-		}
+	if (localmode) {
+		fdset[2].fd = -1;
+		fdset[2].events = 0;
 	} else {
-		test_port = Daemon;
-		test_port.sin_port = htons((u_short) Test_port);
-
-		Test_socket = socket(SOCK_FAMILY, SOCK_DGRAM, 0);
-		if (bind(Test_socket, (struct sockaddr *) &test_port,
-		    DAEMON_SIZE) < 0) {
-#ifdef LOG
-			syslog(LOG_ERR, "bind: %m");
-#else
-			warn("bind");
-#endif
-			exit(1);
-		}
-		(void) listen(Test_socket, 5);
+		fdset[2].fd = contactsock;
+		fdset[2].events = POLLIN;
 	}
 
-	fdset[2].fd = Test_socket;
-	fdset[2].events = POLLIN;
-#else
-	fdset[2].fd = -1;
-#endif
-
-	Seed = getpid() + time(NULL);
+	srandom(time(NULL));
 	makemaze();
 #ifdef BOOTS
 	makeboots();
 #endif
 
 	for (i = 0; i < NASCII; i++)
-		See_over[i] = TRUE;
-	See_over[DOOR] = FALSE;
-	See_over[WALL1] = FALSE;
-	See_over[WALL2] = FALSE;
-	See_over[WALL3] = FALSE;
+		See_over[i] = true;
+	See_over[DOOR] = false;
+	See_over[WALL1] = false;
+	See_over[WALL2] = false;
+	See_over[WALL3] = false;
 #ifdef REFLECT
-	See_over[WALL4] = FALSE;
-	See_over[WALL5] = FALSE;
+	See_over[WALL4] = false;
+	See_over[WALL5] = false;
 #endif
 
 }
@@ -593,18 +667,17 @@ checkdam(PLAYER *ouch, PLAYER *gotcha, IDENT *credit, int amt,
  *	Kill off a player and take him out of the game.
  */
 static void
-zap(PLAYER *pp, FLAG was_player, int i)
+zap(PLAYER *pp, bool was_player, int i)
 {
 	int n, len;
 	BULLET *bp;
 	PLAYER *np;
 	int x, y;
-	int savefd;
 
 	if (was_player) {
 		if (pp->p_undershot)
 			fixshots(pp->p_y, pp->p_x, pp->p_over);
-		drawplayer(pp, FALSE);
+		drawplayer(pp, false);
 		Nplayer--;
 	}
 
@@ -621,8 +694,6 @@ zap(PLAYER *pp, FLAG was_player, int i)
 	cgoto(pp, HEIGHT / 2 + 1, x);
 	outstr(pp, pp->p_death, len);
 	cgoto(pp, HEIGHT, 0);
-
-	savefd = pp->p_fd;
 
 #ifdef MONITOR
 	if (was_player) {
@@ -662,7 +733,7 @@ zap(PLAYER *pp, FLAG was_player, int i)
 		}
 		if (x > 0) {
 			(void) add_shot(len, pp->p_y, pp->p_x, pp->p_face, x,
-				NULL, TRUE, SPACE);
+				NULL, true, SPACE);
 			(void) snprintf(Buf, sizeof(Buf), "%s detonated.",
 				pp->p_ident->i_name);
 			for (np = Player; np < End_player; np++)
@@ -678,7 +749,7 @@ zap(PLAYER *pp, FLAG was_player, int i)
 						break;
 				if (np >= &Boot[NBOOTS])
 					err(1, "Too many boots");
-				np->p_undershot = FALSE;
+				np->p_undershot = false;
 				np->p_x = pp->p_x;
 				np->p_y = pp->p_y;
 				np->p_flying = rand_num(20);
@@ -710,7 +781,7 @@ zap(PLAYER *pp, FLAG was_player, int i)
 				y = rand_num(HEIGHT / 2) + HEIGHT / 4;
 			} while (Maze[y][x] != SPACE);
 			(void) add_shot(LAVA, y, x, LEFTS, volcano,
-				NULL, TRUE, SPACE);
+				NULL, true, SPACE);
 			for (np = Player; np < End_player; np++)
 				message(np, "Volcano eruption.");
 			volcano = 0;
@@ -726,7 +797,7 @@ zap(PLAYER *pp, FLAG was_player, int i)
 			add_shot(DSHOT, y, x, rand_dir(),
 				shot_req[MINDSHOT +
 				rand_num(MAXBOMB - MINDSHOT)],
-				NULL, FALSE, SPACE);
+				NULL, false, SPACE);
 		}
 #endif
 
@@ -814,33 +885,33 @@ zap(PLAYER *pp, FLAG was_player, int i)
 int
 rand_num(int range)
 {
-	return (range == 0 ? 0 : RN % range);
+	return (range == 0 ? 0 : random() % range);
 }
 
 /*
  * havechar:
  *	Check to see if we have any characters in the input queue; if
- *	we do, read them, stash them away, and return TRUE; else return
- *	FALSE.
+ *	we do, read them, stash them away, and return true; else return
+ *	false.
  */
-static int
+static bool
 havechar(PLAYER *pp, int i)
 {
 
 	if (pp->p_ncount < pp->p_nchar)
-		return TRUE;
+		return true;
 	if (!(fdset[i].revents & POLLIN))
-		return FALSE;
+		return false;
 check_again:
-	errno = 0;
-	if ((pp->p_nchar = read(pp->p_fd, pp->p_cbuf, sizeof pp->p_cbuf)) <= 0)
-	{
+	pp->p_nchar = read(pp->p_fd, pp->p_cbuf, sizeof pp->p_cbuf);
+	if (pp->p_nchar < 0 && errno == EINTR) {
+		goto check_again;
+	} else if (pp->p_nchar <= 0) {
 		if (errno == EINTR)
-			goto check_again;
 		pp->p_cbuf[0] = 'q';
 	}
 	pp->p_ncount = 0;
-	return TRUE;
+	return true;
 }
 
 /*
@@ -848,7 +919,7 @@ check_again:
  *	Exit with the given value, cleaning up any droppings lying around
  */
 void
-cleanup(int eval)
+cleanup(int exitval)
 {
 	PLAYER *pp;
 
@@ -866,12 +937,12 @@ cleanup(int eval)
 		(void) fclose(pp->p_output);
 	}
 #endif
-	(void) close(Socket);
+	(void) close(huntsock);
 #ifdef AF_UNIX_HACK
-	(void) unlink(Sock_name);
+	(void) unlink(huntsockpath);
 #endif
 
-	exit(eval);
+	exit(exitval);
 }
 
 /*
@@ -884,35 +955,23 @@ send_stats(void)
 	IDENT *ip;
 	FILE *fp;
 	int s;
-	SOCKET sockstruct;
+	struct sockaddr_storage newaddr;
 	socklen_t socklen;
 
 	/*
 	 * Get the output stream ready
 	 */
-#ifdef INTERNET
-	socklen = sizeof sockstruct;
-#else
-	socklen = sizeof sockstruct - 1;
-#endif
-	s = accept(Status, (struct sockaddr *) &sockstruct, &socklen);
+	socklen = sizeof(newaddr);
+	s = accept(statsock, (struct sockaddr *)&newaddr, &socklen);
 	if (s < 0) {
 		if (errno == EINTR)
 			return;
-#ifdef LOG
-		syslog(LOG_WARNING, "accept: %m");
-#else
-		warn("accept");
-#endif
+		complain(LOG_WARNING, "accept");
 		return;
 	}
 	fp = fdopen(s, "w");
 	if (fp == NULL) {
-#ifdef LOG
-		syslog(LOG_WARNING, "fdopen: %m");
-#else
-		warn("fdopen");
-#endif
+		complain(LOG_WARNING, "fdopen");
 		(void) close(s);
 		return;
 	}

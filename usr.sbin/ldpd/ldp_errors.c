@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_errors.c,v 1.2.2.1 2013/02/25 00:30:43 tls Exp $ */
+/* $NetBSD: ldp_errors.c,v 1.2.2.2 2014/08/20 00:05:09 tls Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,10 +30,12 @@
  */
 
 #include <arpa/inet.h>
+#include <netmpls/mpls.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 #include <syslog.h>
 #include <unistd.h>
 
@@ -45,6 +47,7 @@ int	debug_f = 0, warn_f = 0, syslog_f = 0;
 static void do_syslog(int, const char*, va_list) __printflike(2, 0);
 static char satos_str[INET6_ADDRSTRLEN > INET_ADDRSTRLEN ? INET6_ADDRSTRLEN :
 		INET_ADDRSTRLEN];
+static char *mpls_ntoa(const struct sockaddr_mpls *smpls);
 
 void 
 debugp(const char *fmt, ...)
@@ -134,8 +137,33 @@ satos(const struct sockaddr *sa)
 				return "INET6 ERROR";
 			break;
 		}
+		case AF_LINK:
+		{
+			strlcpy(satos_str,
+			    link_ntoa((const struct sockaddr_dl *)sa),
+			    sizeof(satos_str));
+			break;
+		}
+		case AF_MPLS:
+		{
+			strlcpy(satos_str,
+			    mpls_ntoa((const struct sockaddr_mpls *)sa),
+			    sizeof(satos_str));
+			break;
+		}
 		default:
 			return "UNKNOWN AF";
 	}
 	return satos_str;
+}
+
+static char *
+mpls_ntoa(const struct sockaddr_mpls *smpls)
+{
+	static char ret[10];
+	union mpls_shim ms2;
+
+	ms2.s_addr = ntohl(smpls->smpls_addr.s_addr);
+	snprintf(ret, sizeof(ret), "%d", ms2.shim.label);
+	return ret;
 }

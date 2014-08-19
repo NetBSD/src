@@ -1,4 +1,4 @@
-/*      $NetBSD: n_log1p.c,v 1.7 2008/04/29 15:10:02 uwe Exp $ */
+/*      $NetBSD: n_log1p.c,v 1.7.26.1 2014/08/20 00:02:18 tls Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -167,4 +167,10 @@ log1p(double x)
 
     /* log(+INF) is INF */
 	else return(x);
+}
+
+float
+log1pf(float x)
+{
+	return log1p(x);
 }

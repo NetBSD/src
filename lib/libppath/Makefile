@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2012/03/21 05:37:43 matt Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2014/08/20 00:02:20 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,8 @@ PPATHLIBDIR=${NETBSDSRCDIR}/common/lib/libppath
 #CPPFLAGS+=-D_REENTRANT -I${NETBSDSRCDIR}/lib/libc/include
 
 SRCS+=ppath_malloc.c
+
+LIBDPLIBS+=	prop		${NETBSDSRCDIR}/lib/libprop
 
 LINTFLAGS+=-w
 LIB=	ppath

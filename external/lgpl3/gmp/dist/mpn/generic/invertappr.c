@@ -12,7 +12,7 @@
    SAFE TO REACH THEM THROUGH DOCUMENTED INTERFACES.  IN FACT, IT IS ALMOST
    GUARANTEED THAT THEY WILL CHANGE OR DISAPPEAR IN A FUTURE GMP RELEASE.
 
-Copyright (C) 2007, 2009, 2010 Free Software Foundation, Inc.
+Copyright (C) 2007, 2009, 2010, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -40,14 +40,6 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 /* FIXME: The iterative version splits the operand in two slighty unbalanced
    parts, the use of log_2 (or counting the bits) underestimate the maximum
    number of iterations.  */
-
-/* This is intended for constant THRESHOLDs only, where the compiler
-   can completely fold the result.  */
-#define LOG2C(n) \
- (((n) >=    0x1) + ((n) >=    0x2) + ((n) >=    0x4) + ((n) >=    0x8) + \
-  ((n) >=   0x10) + ((n) >=   0x20) + ((n) >=   0x40) + ((n) >=   0x80) + \
-  ((n) >=  0x100) + ((n) >=  0x200) + ((n) >=  0x400) + ((n) >=  0x800) + \
-  ((n) >= 0x1000) + ((n) >= 0x2000) + ((n) >= 0x4000) + ((n) >= 0x8000))
 
 #if TUNE_PROGRAM_BUILD
 #define NPOWS \

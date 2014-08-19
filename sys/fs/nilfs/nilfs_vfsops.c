@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.9.2.1 2013/02/25 00:29:48 tls Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.9.2.2 2014/08/20 00:04:27 tls Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.9.2.1 2013/02/25 00:29:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.9.2.2 2014/08/20 00:04:27 tls Exp $");
 #endif /* not lint */
 
 
@@ -111,31 +111,29 @@ const struct vnodeopv_desc * const nilfs_vnodeopv_descs[] = {
 
 /* vfsops descriptor linked in as anchor point for the filingsystem */
 struct vfsops nilfs_vfsops = {
-	MOUNT_NILFS,			/* vfs_name */
-	sizeof (struct nilfs_args),
-	nilfs_mount,
-	nilfs_start,
-	nilfs_unmount,
-	nilfs_root,
-	(void *)eopnotsupp,		/* vfs_quotactl */
-	nilfs_statvfs,
-	nilfs_sync,
-	nilfs_vget,
-	nilfs_fhtovp,
-	nilfs_vptofh,
-	nilfs_init,
-	nilfs_reinit,
-	nilfs_done,
-	nilfs_mountroot,
-	nilfs_snapshot,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,		/* vfs_full_fsync */
-	nilfs_vnodeopv_descs,
-	0, /* int vfs_refcount   */
-	{ NULL, NULL, }, /* LIST_ENTRY(vfsops) */
+	.vfs_name = MOUNT_NILFS,
+	.vfs_min_mount_data = sizeof (struct nilfs_args),
+	.vfs_mount = nilfs_mount,
+	.vfs_start = nilfs_start,
+	.vfs_unmount = nilfs_unmount,
+	.vfs_root = nilfs_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = nilfs_statvfs,
+	.vfs_sync = nilfs_sync,
+	.vfs_vget = nilfs_vget,
+	.vfs_fhtovp = nilfs_fhtovp,
+	.vfs_vptofh = nilfs_vptofh,
+	.vfs_init = nilfs_init,
+	.vfs_reinit = nilfs_reinit,
+	.vfs_done = nilfs_done,
+	.vfs_mountroot = nilfs_mountroot,
+	.vfs_snapshot = nilfs_snapshot,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = nilfs_vnodeopv_descs
 };
 
 /* --------------------------------------------------------------------- */
@@ -199,11 +197,6 @@ nilfs_modcmd(modcmd_t cmd, void *arg)
 		 * more instance of the "number to vfs" mapping problem, but
 		 * "30" is the order as taken from sys/mount.h
 		 */
-		sysctl_createv(&nilfs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&nilfs_sysctl_log, 0, NULL, &node,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "nilfs",
@@ -399,7 +392,7 @@ nilfs_read_superblock(struct nilfs_device *nilfsdev)
 static void
 nilfs_unmount_base(struct nilfs_device *nilfsdev)
 {
-	int error;
+	int error __diagused;
 
 	if (!nilfsdev)
 		return;
@@ -506,7 +499,7 @@ nilfs_unmount_device(struct nilfs_device *nilfsdev)
 	DPRINTF(VOLUMES, ("closing device\n"));
 
 	/* remove our mount reference before closing device */
-	nilfsdev->devvp->v_specmountpoint = NULL;
+	spec_node_setmountedfs(nilfsdev->devvp, NULL);
 
 	/* devvp is still locked by us */
 	vn_lock(nilfsdev->devvp, LK_EXCLUSIVE | LK_RETRY);
@@ -693,6 +686,10 @@ nilfs_mount_checkpoint(struct nilfs_mount *ump)
 	DPRINTF(VOLUMES, ("mount_nilfs: checkpoint header read in\n"));
 	DPRINTF(VOLUMES, ("\tNumber of checkpoints %"PRIu64"\n", ncp));
 	DPRINTF(VOLUMES, ("\tNumber of snapshots   %"PRIu64"\n", nsn));
+#ifndef NILFS_DEBUG
+	__USE(ncp);
+	__USE(nsn);
+#endif
 
 	/* read in our specified checkpoint */
 	dlen = nilfs_rw16(ump->nilfsdev->super.s_checkpoint_size);
@@ -803,6 +800,8 @@ nilfs_mount(struct mount *mp, const char *path,
 
 	DPRINTF(VFSCALL, ("nilfs_mount called\n"));
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
@@ -895,12 +894,12 @@ nilfs_mount(struct mount *mp, const char *path,
 #endif
 
 	/* DONT register our nilfs mountpoint on our vfs mountpoint */
-	devvp->v_specmountpoint = NULL;
+	spec_node_setmountedfs(devvp, NULL);
 #if 0
-	if (devvp->v_specmountpoint == NULL)
-		devvp->v_specmountpoint = mp;
+	if (spec_node_getmountedfs(devvp) == NULL)
+		spec_node_setmountedfs(devvp, mp);
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
-		devvp->v_specmountpoint = mp;
+		spec_node_setmountedfs(devvp, mp);
 #endif
 
 	/* add our mountpoint */

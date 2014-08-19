@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.112 2011/06/03 17:03:53 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.112.12.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,14 +37,14 @@
  * it maps.  The number of levels of lookup is configurable from one
  * to four.  In this implementation, we use three, named 'A' through 'C'.
  *
- * The MMU translates virtual addresses into physical addresses by 
- * traversing these tables in a process called a 'table walk'.  The most 
- * significant 7 bits of the Virtual Address ('VA') being translated are 
- * used as an index into the level A table, whose base in physical memory 
- * is stored in a special MMU register, the 'CPU Root Pointer' or CRP.  The 
+ * The MMU translates virtual addresses into physical addresses by
+ * traversing these tables in a process called a 'table walk'.  The most
+ * significant 7 bits of the Virtual Address ('VA') being translated are
+ * used as an index into the level A table, whose base in physical memory
+ * is stored in a special MMU register, the 'CPU Root Pointer' or CRP.  The
  * address found at that index in the A table is used as the base
- * address for the next table, the B table.  The next six bits of the VA are 
- * used as an index into the B table, which in turn gives the base address 
+ * address for the next table, the B table.  The next six bits of the VA are
+ * used as an index into the B table, which in turn gives the base address
  * of the third and final C table.
  *
  * The next six bits of the VA are used as an index into the C table to
@@ -52,25 +52,25 @@
  * to which the remaining 13 bits of the VA are added, producing the
  * mapped physical address.
  *
- * To map the entire memory space in this manner would require 2114296 bytes 
- * of page tables per process - quite expensive.  Instead we will 
- * allocate a fixed but considerably smaller space for the page tables at 
+ * To map the entire memory space in this manner would require 2114296 bytes
+ * of page tables per process - quite expensive.  Instead we will
+ * allocate a fixed but considerably smaller space for the page tables at
  * the time the VM system is initialized.  When the pmap code is asked by
  * the kernel to map a VA to a PA, it allocates tables as needed from this
  * pool.  When there are no more tables in the pool, tables are stolen
- * from the oldest mapped entries in the tree.  This is only possible 
+ * from the oldest mapped entries in the tree.  This is only possible
  * because all memory mappings are stored in the kernel memory map
  * structures, independent of the pmap structures.  A VA which references
  * one of these invalidated maps will cause a page fault.  The kernel
- * will determine that the page fault was caused by a task using a valid 
+ * will determine that the page fault was caused by a task using a valid
  * VA, but for some reason (which does not concern it), that address was
  * not mapped.  It will ask the pmap code to re-map the entry and then
  * it will resume executing the faulting task.
  *
  * In this manner the most efficient use of the page table space is
- * achieved.  Tasks which do not execute often will have their tables 
+ * achieved.  Tasks which do not execute often will have their tables
  * stolen and reused by tasks which execute more frequently.  The best
- * size for the page table pool will probably be determined by 
+ * size for the page table pool will probably be determined by
  * experimentation.
  *
  * You read all of the comments so far.  Good for you.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.112 2011/06/03 17:03:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.112.12.1 2014/08/20 00:03:26 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -391,7 +391,7 @@ mmu_ptov(paddr_t pa)
 	return (void *)va;
 }
 
-static INLINE paddr_t 
+static INLINE paddr_t
 mmu_vtop(void *vva)
 {
 	vaddr_t va;
@@ -516,7 +516,7 @@ pteidx(mmu_short_pte_t *pte)
  * This just offers a place to put some debugging checks,
  * and reduces the number of places "curlwp" appears...
  */
-static INLINE pmap_t 
+static INLINE pmap_t
 current_pmap(void)
 {
 	struct vmspace *vm;
@@ -595,7 +595,7 @@ static INLINE void pmap_release(pmap_t);
  * within the pmap module are labeled as 'INTERNAL' functions.          *
  * Functions that are internal, but are not (currently) used at all are *
  * labeled 'INTERNAL_X'.                                                *
- ************************************************************************/ 
+ ************************************************************************/
 
 /* pmap_bootstrap			INTERNAL
  **
@@ -606,7 +606,7 @@ static INLINE void pmap_release(pmap_t);
  *           system implement pmap_steal_memory() is redundant.
  *           Don't release this code without removing one or the other!
  */
-void 
+void
 pmap_bootstrap(vaddr_t nextva)
 {
 	struct physmemory *membank;
@@ -714,7 +714,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 * mmuCbase below.  XXX: Should do this as one allocation, and
 	 * then compute a pointer for mmuCbase instead of this...
 	 *
-	 * Allocate user MMU tables. 
+	 * Allocate user MMU tables.
 	 * These must be contiguous with the preceding.
 	 */
 
@@ -745,7 +745,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 * For simplicity, the kernel's mappings will be editable as a
 	 * flat array of page table entries at kernCbase.  The
 	 * higher level 'A' and 'B' tables must be initialized to point
-	 * to this lower one. 
+	 * to this lower one.
 	 */
 	b = c = 0;
 
@@ -904,7 +904,7 @@ pmap_bootstrap(vaddr_t nextva)
  * Called from pmap_bootstrap() to allocate MMU tables that will
  * eventually be used for user mappings.
  */
-void 
+void
 pmap_alloc_usermmu(void)
 {
 
@@ -917,7 +917,7 @@ pmap_alloc_usermmu(void)
  * to virtual mapping list.  Each physical page of memory
  * in the system has a corresponding element in this list.
  */
-void 
+void
 pmap_alloc_pv(void)
 {
 	int	i;
@@ -954,7 +954,7 @@ pmap_alloc_pv(void)
  * facilitate management of user MMU tables.  Each user MMU table
  * in the system has one such structure associated with it.
  */
-void 
+void
 pmap_alloc_usertmgr(void)
 {
 	/* Allocate user MMU table managers */
@@ -980,7 +980,7 @@ pmap_alloc_usertmgr(void)
  * Copy the PROM mappings into our own tables.  Note, we
  * can use physical addresses until __bootstrap returns.
  */
-void 
+void
 pmap_bootstrap_copyprom(void)
 {
 	struct sunromvec *romp;
@@ -1021,14 +1021,14 @@ pmap_bootstrap_copyprom(void)
 		kpte[i].attr.raw = mon_ctbl[i];
 	}
 }
-		
+
 /* pmap_takeover_mmu			INTERNAL
  **
  * Called from pmap_bootstrap() after it has copied enough of the
  * PROM mappings into the kernel map so that we can use our own
  * MMU table.
  */
-void 
+void
 pmap_takeover_mmu(void)
 {
 
@@ -1042,7 +1042,7 @@ pmap_takeover_mmu(void)
  * we can get away with because this runs with the
  * low 1GB set for transparent translation.
  */
-void 
+void
 pmap_bootstrap_setprom(void)
 {
 	mmu_long_dte_t *mon_dte;
@@ -1064,7 +1064,7 @@ pmap_bootstrap_setprom(void)
  * should be already done by now, so this should just do things
  * needed for user-level pmaps to work.
  */
-void 
+void
 pmap_init(void)
 {
 
@@ -1093,7 +1093,7 @@ pmap_init(void)
  * Initializes all A managers, their MMU A tables, and inserts
  * them into the A manager pool for use by the system.
  */
-void 
+void
 pmap_init_a_tables(void)
 {
 	int i;
@@ -1126,7 +1126,7 @@ pmap_init_a_tables(void)
 		 * making it ready to be used by the system.
 		 */
 		TAILQ_INSERT_TAIL(&a_pool, a_tbl, at_link);
-    }
+	}
 }
 
 /* pmap_init_b_tables()			INTERNAL
@@ -1134,7 +1134,7 @@ pmap_init_a_tables(void)
  * Initializes all B table managers, their MMU B tables, and
  * inserts them into the B manager pool for use by the system.
  */
-void 
+void
 pmap_init_b_tables(void)
 {
 	int i, j;
@@ -1166,7 +1166,7 @@ pmap_init_b_tables(void)
  * Initializes all C table managers, their MMU C tables, and
  * inserts them into the C manager pool for use by the system.
  */
-void 
+void
 pmap_init_c_tables(void)
 {
 	int i, j;
@@ -1183,7 +1183,7 @@ pmap_init_c_tables(void)
 		c_tbl->ct_pmap = NULL;		/* parent pmap,       */
 		c_tbl->ct_va = 0;		/* base of managed range */
 
-		/* Assign it the next available MMU C table from the pool */ 
+		/* Assign it the next available MMU C table from the pool */
 		c_tbl->ct_dtbl = &mmuCbase[i * MMU_C_TBL_SIZE];
 
 		for (j = 0; j < MMU_C_TBL_SIZE; j++)
@@ -1197,7 +1197,7 @@ pmap_init_c_tables(void)
  **
  * Initializes the Physical to Virtual mapping system.
  */
-void 
+void
 pmap_init_pv(void)
 {
 	int i;
@@ -1216,15 +1216,15 @@ pmap_init_pv(void)
  * addresses which lie in-between the memory banks on the 3/80.  If they
  * do so, it will falsely report that it is managed.
  *
- * Note: A "managed" address is one that was reported to the VM system as 
+ * Note: A "managed" address is one that was reported to the VM system as
  * a "usable page" during system startup.  As such, the VM system expects the
  * pmap module to keep an accurate track of the useage of those pages.
- * Any page not given to the VM system at startup does not exist (as far as 
+ * Any page not given to the VM system at startup does not exist (as far as
  * the VM system is concerned) and is therefore "unmanaged."  Examples are
  * those pages which belong to the ROM monitor and the memory allocated before
  * the VM system was started.
  */
-static INLINE bool 
+static INLINE bool
 is_managed(paddr_t pa)
 {
 	if (pa >= avail_start && pa < avail_end)
@@ -1356,7 +1356,7 @@ get_c_table(void)
  * Note note: We are using an MC68030 - there is no
  * PFLUSHR.
  */
-int 
+int
 free_a_table(a_tmgr_t *a_tbl, bool relink)
 {
 	int i, removed_cnt;
@@ -1441,7 +1441,7 @@ free_a_table(a_tmgr_t *a_tbl, bool relink)
  * mappings.  Returns the number of pages that were invalidated.
  * (For comments, see 'free_a_table()').
  */
-int 
+int
 free_b_table(b_tmgr_t *b_tbl, bool relink)
 {
 	int i, removed_cnt;
@@ -1483,11 +1483,11 @@ free_b_table(b_tmgr_t *b_tbl, bool relink)
  * Unmaps the given C table from use and returns it to the pool for
  * re-use.  Returns the number of pages that were invalidated.
  *
- * This function preserves any physical page modification information 
+ * This function preserves any physical page modification information
  * contained in the page descriptors within the C table by calling
  * 'pmap_remove_pte().'
  */
-int 
+int
 free_c_table(c_tmgr_t *c_tbl, bool relink)
 {
 	mmu_short_pte_t *c_pte;
@@ -1544,7 +1544,7 @@ pmap_remove_pte(mmu_short_pte_t *pte)
 		 * If the PTE being removed is the first (or only) PTE in
 		 * the list of PTEs currently mapped to this page, remove the
 		 * PTE by changing the index found on the PV head.  Otherwise
-		 * a linear search through the list will have to be executed 
+		 * a linear search through the list will have to be executed
 		 * in order to find the PVE which points to the PTE being
 		 * removed, so that it may be modified to point to its new
 		 * neighbor.
@@ -1639,21 +1639,21 @@ pmap_stroll(pmap_t pmap, vaddr_t va, a_tmgr_t **a_tbl, b_tmgr_t **b_tbl,
 	*c_tbl = mmuC2tmgr(mmu_ptov(MMU_DTE_PA(*b_dte)));
 	*pte_idx = MMU_TIC(va);
 	*pte = &((*c_tbl)->ct_dtbl[*pte_idx]);
-	
+
 	return true;
 }
-	
+
 /* pmap_enter			INTERFACE
  **
  * Called by the kernel to map a virtual address
- * to a physical address in the given process map. 
+ * to a physical address in the given process map.
  *
  * Note: this function should apply an exclusive lock
  * on the pmap system for its duration.  (it certainly
  * would save my hair!!)
  * This function ought to be easier to read.
  */
-int 
+int
 pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	bool insert, managed; /* Marks the need for PV insertion.*/
@@ -1697,7 +1697,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * extracted and stored in the temporary variable 'mapflags'.
 	 *
 	 * Extract sun3x specific flags from the physical address.
-	 */ 
+	 */
 	mapflags = (pa & ~MMU_PAGE_MASK);
 	pa &= MMU_PAGE_MASK;
 
@@ -2035,7 +2035,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	}
 
 	/* Move any allocated or unwired tables back into the active pool. */
-	
+
 	switch (llevel) {
 		case NEWA:
 			TAILQ_INSERT_TAIL(&a_pool, a_tbl, at_link);
@@ -2059,14 +2059,14 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
  * kernel address space.  This function exists because the kernel map does
  * not do dynamic table allocation.  It consists of a contiguous array of ptes
  * and can be edited directly without the need to walk through any tables.
- * 
+ *
  * XXX: "Danger, Will Robinson!"
  * Note that the kernel should never take a fault on any page
  * between [ KERNBASE .. virtual_avail ] and this is checked in
  * trap.c for kernel-mode MMU faults.  This means that mappings
  * created in that range must be implicily wired. -gwr
  */
-void 
+void
 pmap_enter_kernel(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	bool       was_valid, insert;
@@ -2080,7 +2080,7 @@ pmap_enter_kernel(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	pa &= MMU_PAGE_MASK;
 
 	if (is_managed(pa))
-		insert = true; 
+		insert = true;
 	else
 		insert = false;
 
@@ -2141,7 +2141,7 @@ pmap_enter_kernel(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	}
 }
 
-void 
+void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	mmu_short_pte_t	*pte;
@@ -2155,7 +2155,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		pte->attr.raw |= MMU_SHORT_PTE_WP;
 }
 
-void 
+void
 pmap_kremove(vaddr_t va, vsize_t len)
 {
 	int idx, eidx;
@@ -2183,7 +2183,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
  * Used for device mappings and early mapping of the kernel text/data/bss.
  * Returns the first virtual address beyond the end of the range.
  */
-vaddr_t 
+vaddr_t
 pmap_map(vaddr_t va, paddr_t pa, paddr_t endpa, int prot)
 {
 	int sz;
@@ -2203,7 +2203,7 @@ pmap_map(vaddr_t va, paddr_t pa, paddr_t endpa, int prot)
  **
  * Apply the given protection code to a kernel address range.
  */
-static INLINE void 
+static INLINE void
 pmap_protect_kernel(vaddr_t startva, vaddr_t endva, vm_prot_t prot)
 {
 	vaddr_t va;
@@ -2251,7 +2251,7 @@ pmap_protect_kernel(vaddr_t startva, vaddr_t endva, vm_prot_t prot)
  * XXX - This function could be speeded up by using pmap_stroll() for inital
  *       setup, and then manual scrolling in the for() loop.
  */
-void 
+void
 pmap_protect(pmap_t pmap, vaddr_t startva, vaddr_t endva, vm_prot_t prot)
 {
 	bool iscurpmap;
@@ -2371,7 +2371,7 @@ pmap_protect(pmap_t pmap, vaddr_t startva, vaddr_t endva, vm_prot_t prot)
  * This function is called from vm_fault.c to unwire
  * a mapping.
  */
-void 
+void
 pmap_unwire(pmap_t pmap, vaddr_t va)
 {
 	int a_idx, b_idx, c_idx;
@@ -2379,7 +2379,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	b_tmgr_t *b_tbl;
 	c_tmgr_t *c_tbl;
 	mmu_short_pte_t *pte;
-	
+
 	/* Kernel mappings always remain wired. */
 	if (pmap == pmap_kernel())
 		return;
@@ -2404,7 +2404,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	/*
 	 * Decrement the wired entry count in the C table.
 	 * If it reaches zero the following things happen:
-	 * 1. The table no longer has any wired entries and is considered 
+	 * 1. The table no longer has any wired entries and is considered
 	 *    unwired.
 	 * 2. It is placed on the available queue.
 	 * 3. The parent table's wired entry count is decremented.
@@ -2448,7 +2448,7 @@ pmap_copy(pmap_t pmap_a, pmap_t pmap_b, vaddr_t dst, vsize_t len, vaddr_t src)
  * Note: We could use the transparent translation registers to make the
  * mappings.  If we do so, be sure to disable interrupts before using them.
  */
-void 
+void
 pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 {
 	vaddr_t srcva, dstva;
@@ -2486,7 +2486,7 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
  * Uses one of the virtual pages allocated in pmap_boostrap()
  * to map the specified page into the kernel address space.
  */
-void 
+void
 pmap_zero_page(paddr_t dstpa)
 {
 	vaddr_t dstva;
@@ -2516,7 +2516,7 @@ pmap_zero_page(paddr_t dstpa)
  **
  * Initialize a pmap structure.
  */
-static INLINE void 
+static INLINE void
 pmap_pinit(pmap_t pmap)
 {
 
@@ -2530,7 +2530,7 @@ pmap_pinit(pmap_t pmap)
  **
  * Create and return a pmap structure.
  */
-pmap_t 
+pmap_t
 pmap_create(void)
 {
 	pmap_t	pmap;
@@ -2548,7 +2548,7 @@ pmap_create(void)
  * necessarily mean for the pmap structure to be deallocated,
  * as in pmap_destroy.
  */
-static INLINE void 
+static INLINE void
 pmap_release(pmap_t pmap)
 {
 
@@ -2591,7 +2591,7 @@ pmap_release(pmap_t pmap)
  **
  * Increment the reference count of a pmap.
  */
-void 
+void
 pmap_reference(pmap_t pmap)
 {
 
@@ -2603,7 +2603,7 @@ pmap_reference(pmap_t pmap)
  * Decrease the reference count on the given pmap
  * by one and return the current count.
  */
-static INLINE int 
+static INLINE int
 pmap_dereference(pmap_t pmap)
 {
 	int rtn;
@@ -2612,14 +2612,14 @@ pmap_dereference(pmap_t pmap)
 
 	return rtn;
 }
-	
+
 /* pmap_destroy			INTERFACE
  **
  * Decrement a pmap's reference count and delete
  * the pmap if it becomes zero.  Will be called
  * only after all mappings have been removed.
  */
-void 
+void
 pmap_destroy(pmap_t pmap)
 {
 
@@ -2697,7 +2697,7 @@ pmap_is_modified(struct vm_page *pg)
  * Applies the given protection to all mappings to the given
  * physical page.
  */
-void 
+void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	paddr_t   pa = VM_PAGE_TO_PHYS(pg);
@@ -2782,7 +2782,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
  * Returns the pmap in the argument provided, and the virtual address
  * by return value.
  */
-vaddr_t 
+vaddr_t
 pmap_get_pteinfo(u_int idx, pmap_t *pmap, c_tmgr_t **tbl)
 {
 	vaddr_t     va = 0;
@@ -2815,7 +2815,7 @@ pmap_get_pteinfo(u_int idx, pmap_t *pmap, c_tmgr_t **tbl)
 		va = m68k_ptob(idx);
 		va += KERNBASE3X;
 	}
-		
+
 	return va;
 }
 
@@ -2851,7 +2851,7 @@ pmap_clear_reference(struct vm_page *pg)
 	pmap_clear_pv(pa, PV_FLAGS_USED);
 	return rv;
 }
-	
+
 /* pmap_clear_pv			INTERNAL
  **
  * Clears the specified flag from the specified physical address.
@@ -2865,7 +2865,7 @@ pmap_clear_reference(struct vm_page *pg)
  * head.  It must also clear the bit on every pte in the pv
  * list associated with the address.
  */
-void 
+void
 pmap_clear_pv(paddr_t pa, int flag)
 {
 	pv_t      *pv;
@@ -2906,7 +2906,7 @@ pmap_clear_pv(paddr_t pa, int flag)
  **
  * Extract a translation from the kernel address space.
  */
-static INLINE bool 
+static INLINE bool
 pmap_extract_kernel(vaddr_t va, paddr_t *pap)
 {
 	mmu_short_pte_t *pte;
@@ -2927,7 +2927,7 @@ pmap_extract_kernel(vaddr_t va, paddr_t *pap)
  * Note: this function should also apply an exclusive lock
  * on the pmap system during its duration.
  */
-bool 
+bool
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
 	int a_idx, b_idx, pte_idx;
@@ -2956,7 +2956,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
  * Remove the mapping of a range of virtual addresses from the kernel map.
  * The arguments are already page-aligned.
  */
-static INLINE void 
+static INLINE void
 pmap_remove_kernel(vaddr_t sva, vaddr_t eva)
 {
 	int idx, eidx;
@@ -2981,7 +2981,7 @@ pmap_remove_kernel(vaddr_t sva, vaddr_t eva)
  * Remove the mapping of a range of virtual addresses from the given pmap.
  *
  */
-void 
+void
 pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 
@@ -3003,7 +3003,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	 * in the pmap and freed its A table.  If this happened to the
 	 * currently loaded pmap, the MMU root pointer must be reloaded
 	 * with the default 'kernel' map.
-	 */ 
+	 */
 	if (pmap_remove_a(pmap->pm_a_tmgr, sva, eva)) {
 		if (kernel_crp.rp_addr == pmap->pm_a_phys) {
 			kernel_crp.rp_addr = kernAphys;
@@ -3039,7 +3039,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
  *
  * It's ugly but will do for now.
  */
-bool 
+bool
 pmap_remove_a(a_tmgr_t *a_tbl, vaddr_t sva, vaddr_t eva)
 {
 	bool empty;
@@ -3068,7 +3068,7 @@ pmap_remove_a(a_tmgr_t *a_tbl, vaddr_t sva, vaddr_t eva)
 	 * range between 1 and 2, the nearest granularity boundary.  This
 	 * job is handled by the section of code governed by the
 	 * 'if (start < nstart)' statement.
-	 * 
+	 *
 	 * A range will always encompass zero or more intergral granules,
 	 * illustrated by points 2 and 3.  Integral granules are easy to
 	 * remove.  The removal of these granules is the second step, and
@@ -3263,7 +3263,7 @@ pmap_remove_a(a_tmgr_t *a_tbl, vaddr_t sva, vaddr_t eva)
  *
  * If the operation results in an empty B table, the function returns true.
  */
-bool 
+bool
 pmap_remove_b(b_tmgr_t *b_tbl, vaddr_t sva, vaddr_t eva)
 {
 	bool empty;
@@ -3273,7 +3273,7 @@ pmap_remove_b(b_tmgr_t *b_tbl, vaddr_t sva, vaddr_t eva)
 	mmu_short_dte_t  *b_dte;
 	mmu_short_pte_t  *c_dte;
 	uint8_t bt_wired, ct_wired;
-	
+
 	nstart = MMU_ROUND_UP_B(sva);
 	nend = MMU_ROUND_B(eva);
 
@@ -3381,14 +3381,14 @@ pmap_remove_b(b_tmgr_t *b_tbl, vaddr_t sva, vaddr_t eva)
  **
  * Remove a range of addresses from the given C table.
  */
-bool 
+bool
 pmap_remove_c(c_tmgr_t *c_tbl, vaddr_t sva, vaddr_t eva)
 {
 	bool empty;
 	int idx;
 	mmu_short_pte_t *c_pte;
 	uint8_t ct_wired;
-	
+
 	ct_wired = c_tbl->ct_wcnt;
 
 	idx = MMU_TIC(sva);
@@ -3463,7 +3463,7 @@ pmap_bootstrap_alloc(int size)
  * Note: This function will only support alignment sizes that are powers
  * of two.
  */
-void 
+void
 pmap_bootstrap_aalign(int size)
 {
 	int off;
@@ -3479,7 +3479,7 @@ pmap_bootstrap_aalign(int size)
  * Used by the /dev/mem driver to see if a given PA is memory
  * that can be mapped.  (The PA is not in a hole.)
  */
-int 
+int
 pmap_pa_exists(paddr_t pa)
 {
 	int i;
@@ -3509,7 +3509,7 @@ void	_pmap_switch(pmap_t pmap);
  * need our own context for user-space mappings in
  * pmap_enter_user().  [ s/context/mmu A table/ ]
  */
-void 
+void
 _pmap_switch(pmap_t pmap)
 {
 	u_long rootpa;
@@ -3535,7 +3535,7 @@ _pmap_switch(pmap_t pmap)
  * If (p == curlwp) do like cpu_switch would do; otherwise just
  * take this as notification that the process has a new pmap.
  */
-void 
+void
 pmap_activate(struct lwp *l)
 {
 
@@ -3549,7 +3549,7 @@ pmap_activate(struct lwp *l)
  **
  * This is called to deactivate the specified process's address space.
  */
-void 
+void
 pmap_deactivate(struct lwp *l)
 {
 
@@ -3560,7 +3560,7 @@ pmap_deactivate(struct lwp *l)
  * Fill in the sun3x-specific part of the kernel core header
  * for dumpsys().  (See machdep.c for the rest.)
  */
-void 
+void
 pmap_kcore_hdr(struct sun3x_kcore_hdr *sh)
 {
 	u_long spa, len;
@@ -3586,7 +3586,7 @@ pmap_kcore_hdr(struct sun3x_kcore_hdr *sh)
  * Return the current available range of virtual addresses in the
  * arguuments provided.  Only really called once.
  */
-void 
+void
 pmap_virtual_space(vaddr_t *vstart, vaddr_t *vend)
 {
 
@@ -3600,7 +3600,7 @@ pmap_virtual_space(vaddr_t *vstart, vaddr_t *vend)
  * Assume avail_start is always in the
  * first segment as pmap_bootstrap does.
  */
-static void 
+static void
 pmap_page_upload(void)
 {
 	paddr_t	a, b;	/* memory range */
@@ -3630,7 +3630,7 @@ pmap_page_upload(void)
  * that it has no mappings.  Hopefully the VM system won't ask for kernel
  * map statistics.
  */
-segsz_t 
+segsz_t
 pmap_count(pmap_t pmap, int type)
 {
 	u_int     count;
@@ -3685,7 +3685,7 @@ pmap_count(pmap_t pmap, int type)
  * of the given virtual address.
  */
 extern u_long ptest_addr(u_long);	/* XXX: locore.s */
-u_int 
+u_int
 get_pte(vaddr_t va)
 {
 	u_long pte_pa;
@@ -3712,7 +3712,7 @@ get_pte(vaddr_t va)
  * Set the page descriptor that describes the kernel mapping
  * of the given virtual address.
  */
-void 
+void
 set_pte(vaddr_t va, u_int pte)
 {
 	u_long idx;
@@ -3727,11 +3727,11 @@ set_pte(vaddr_t va, u_int pte)
 
 /*
  *	Routine:        pmap_procwr
- * 
+ *
  *	Function:
  *		Synchronize caches corresponding to [addr, addr+len) in p.
- */   
-void 
+ */
+void
 pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 {
 
@@ -3752,7 +3752,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
  * To avoid endless loops, the listing will stop at the end of the list
  * or after 'n' entries - whichever comes first.
  */
-void 
+void
 pv_list(paddr_t pa, int n)
 {
 	int  idx;
@@ -3760,7 +3760,7 @@ pv_list(paddr_t pa, int n)
 	pv_t *pv;
 	c_tmgr_t *c_tbl;
 	pmap_t pmap;
-	
+
 	pv = pa2pv(pa);
 	idx = pv->pv_idx;
 	for (; idx != PVE_EOL && n > 0; idx = pvebase[idx].pve_next, n--) {
@@ -3784,7 +3784,7 @@ pv_list(paddr_t pa, int n)
  * (CRP), or 'A' table as it is known here, from the 68851's automatic
  * cache.
  */
-void 
+void
 flush_atc_crp(int a_tbl)
 {
 	mmu_long_rp_t rp;

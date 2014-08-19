@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.13 2010/01/25 15:55:36 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.13.12.1 2014/08/20 00:05:12 tls Exp $
 
 WARNS?=	4
 
 .include <bsd.own.mk>
-.include <bsd.sys.mk>
 
 USE_FORT?= yes	# network client
 

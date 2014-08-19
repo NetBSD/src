@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.42 2012/07/22 14:32:51 matt Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.42.2.1 2014/08/20 00:03:11 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.42 2012/07/22 14:32:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.42.2.1 2014/08/20 00:03:11 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -152,6 +152,7 @@ gmac_attach(device_t parent, device_t self, void *aux)
 	struct gmac_dma *dp;
 	u_int32_t reg[10];
 	u_char laddr[6];
+	char buf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 
@@ -171,7 +172,7 @@ gmac_attach(device_t parent, device_t self, void *aux)
 		printf(": unable to map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, buf, sizeof(buf));
 
 	if (pci_intr_establish(pa->pa_pc, ih, IPL_NET, gmac_intr, sc) == NULL) {
 		printf(": unable to establish interrupt");
@@ -247,7 +248,8 @@ gmac_attach(device_t parent, device_t self, void *aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp, laddr);
-	rnd_attach_source(&sc->sc_rnd_source, xname, RND_TYPE_NET, 0); 
+	rnd_attach_source(&sc->sc_rnd_source, xname, RND_TYPE_NET,
+			  RND_FLAG_DEFAULT); 
 }
 
 u_int

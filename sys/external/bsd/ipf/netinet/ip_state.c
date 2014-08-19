@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.3.2.1 2013/02/25 00:29:45 tls Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.3.2.2 2014/08/20 00:04:24 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -100,7 +100,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.3.2.1 2013/02/25 00:29:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.3.2.2 2014/08/20 00:04:24 tls Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 1.1.1.2 2012/07/22 13:45:37 darrenr Exp";
@@ -895,7 +895,7 @@ ipf_state_putent(ipf_main_softc_t *softc, ipf_state_softc_t *softs, void *data)
 {
 	ipstate_t *is, *isn;
 	ipstate_save_t ips;
-	int error, out, i;
+	int error, i;
 	frentry_t *fr;
 	char *name;
 
@@ -941,7 +941,6 @@ ipf_state_putent(ipf_main_softc_t *softc, ipf_state_softc_t *softs, void *data)
 			return ENOMEM;
 		}
 		bcopy((char *)&ips.ips_fr, (char *)fr, sizeof(*fr));
-		out = fr->fr_flags & FR_OUTQUE ? 1 : 0;
 		isn->is_rule = fr;
 		ips.ips_is.is_rule = fr;
 		MUTEX_NUKE(&fr->fr_lock);
@@ -2213,11 +2212,11 @@ ipf_state_tcpinwindow(fr_info_t *fin, tcpdata_t  *fdata, tcpdata_t *tdata,
 		   (ackskew >= -1) && (ackskew <= 1)) {
 		inseq = 1;
 	} else if (!(flags & IS_TCPFSM)) {
+#if 0
 		int i;
 
 		i = (fin->fin_rev << 1) + fin->fin_out;
 
-#if 0
 		if (is_pkts[i]0 == 0) {
 			/*
 			 * Picking up a connection in the middle, the "next"
@@ -2622,7 +2621,7 @@ ipf_checkicmpmatchingstate(fr_info_t *fin)
 	icmphdr_t *icmp;
 	fr_info_t ofin;
 	tcphdr_t *tcp;
-	int type, len;
+	int len;
 	u_char	pr;
 	ip_t *oip;
 	u_int hv;
@@ -2640,7 +2639,6 @@ ipf_checkicmpmatchingstate(fr_info_t *fin)
 		return NULL;
 	}
 	ic = fin->fin_dp;
-	type = ic->icmp_type;
 
 	oip = (ip_t *)((char *)ic + ICMPERR_ICMPHLEN);
 	/*
@@ -4367,7 +4365,6 @@ ipf_checkicmp6matchingstate(fr_info_t *fin)
 	ip6_t *oip6;
 	u_char pr;
 	u_int hv;
-	int type;
 
 	/*
 	 * Does it at least have the return (basic) IP header ?
@@ -4382,7 +4379,6 @@ ipf_checkicmp6matchingstate(fr_info_t *fin)
 	}
 
 	ic6 = fin->fin_dp;
-	type = ic6->icmp6_type;
 
 	oip6 = (ip6_t *)((char *)ic6 + ICMPERR_ICMPHLEN);
 	if (fin->fin_plen < sizeof(*oip6)) {

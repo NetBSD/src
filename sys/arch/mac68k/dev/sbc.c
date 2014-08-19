@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.54.22.1 2013/02/25 00:28:50 tls Exp $	*/
+/*	$NetBSD: sbc.c,v 1.54.22.2 2014/08/20 00:03:11 tls Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.54.22.1 2013/02/25 00:28:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.54.22.2 2014/08/20 00:03:11 tls Exp $");
 
 #include "opt_ddb.h"
 
@@ -426,7 +426,6 @@ sbc_drq_intr(void *p)
 	volatile u_int8_t *drq = 0;	/* XXX gcc4 -Wuninitialized */
 	u_int8_t *data;
 	int count, dcount, resid;
-	u_int8_t tmp;
 
 	/*
 	 * If we're not ready to xfer data, or have no more, just return.
@@ -534,7 +533,7 @@ sbc_drq_intr(void *p)
 		 */
 		if (dcount >= MAX_DMA_LEN)
 			drq = (volatile u_int8_t *)sc->sc_drq_addr;
-		tmp = *drq;
+		(void)*drq;
 	} else {	/* Data In */
 		/*
 		 * Get the dest address aligned.

@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.39 2010/11/13 13:52:02 uebayasi Exp $ */
+/*      $NetBSD: sgec.c,v 1.39.18.1 2014/08/20 00:03:38 tls Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.39 2010/11/13 13:52:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.39.18.1 2014/08/20 00:03:38 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -241,17 +241,17 @@ sgec_attach(struct ze_softc *sc)
  fail_6:
 	for (i = 0; i < RXDESCS; i++) {
 		if (sc->sc_rxmbuf[i] != NULL) {
-			bus_dmamap_unload(sc->sc_dmat, sc->sc_xmtmap[i]);
+			bus_dmamap_unload(sc->sc_dmat, sc->sc_rcvmap[i]);
 			m_freem(sc->sc_rxmbuf[i]);
 		}
 	}
  fail_5:
-	for (i = 0; i < RXDESCS; i++) {
+	for (i = 0; i < TXDESCS; i++) {
 		if (sc->sc_xmtmap[i] != NULL)
 			bus_dmamap_destroy(sc->sc_dmat, sc->sc_xmtmap[i]);
 	}
  fail_4:
-	for (i = 0; i < TXDESCS; i++) {
+	for (i = 0; i < RXDESCS; i++) {
 		if (sc->sc_rcvmap[i] != NULL)
 			bus_dmamap_destroy(sc->sc_dmat, sc->sc_rcvmap[i]);
 	}

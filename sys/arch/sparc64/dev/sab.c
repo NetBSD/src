@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.48.12.1 2012/11/20 03:01:45 tls Exp $	*/
+/*	$NetBSD: sab.c,v 1.48.12.2 2014/08/20 00:03:25 tls Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.48.12.1 2012/11/20 03:01:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.48.12.2 2014/08/20 00:03:25 tls Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/types.h>
@@ -185,8 +185,18 @@ dev_type_poll(sabpoll);
 static struct cnm_state sabtty_cnm_state;
 
 const struct cdevsw sabtty_cdevsw = {
-	sabopen, sabclose, sabread, sabwrite, sabioctl,
-	sabstop, sabtty, sabpoll, nommap, ttykqfilter, D_TTY
+	.d_open = sabopen,
+	.d_close = sabclose,
+	.d_read = sabread,
+	.d_write = sabwrite,
+	.d_ioctl = sabioctl,
+	.d_stop = sabstop,
+	.d_tty = sabtty,
+	.d_poll = sabpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 struct sabtty_rate {
@@ -662,7 +672,6 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct sabtty_softc *sc;
 	struct tty *tp;
-	struct proc *p;
 	int s, s1;
 
 	sc = device_lookup_private(&sabtty_cd, SABUNIT(dev));
@@ -671,7 +680,6 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	tp = sc->sc_tty;
 	tp->t_dev = dev;
-	p = l->l_proc;
 
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);

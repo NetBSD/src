@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.c,v 1.8 2008/04/28 20:23:36 martin Exp $	*/
+/*	$NetBSD: mmu.c,v 1.8.44.1 2014/08/20 00:03:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ int mmu_init(void)
 		char buf[32];
 		pmap_map = pmap_map_srmmu;
 		pmap_extract = pmap_extract_srmmu;
-		sprintf(buf, "obmem %lx L!", (u_long)&obmem);
+		snprintf(buf, sizeof(buf), "obmem %lx L!", (u_long)&obmem);
 		prom_interpret(buf);
 	} else
 		return (ENOTSUP);
@@ -143,7 +143,8 @@ int pmap_map_srmmu(vaddr_t va, paddr_t pa, psize_t size)
 {
 	char buf[64];
 
-	sprintf(buf, "%lx %x %lx %lx map-pages", pa, obmem, va, size);
+	snprintf(buf, sizeof(buf), "%lx %x %lx %lx map-pages",
+	    pa, obmem, va, size);
 
 	if (boothowto & AB_VERBOSE)
 		printf("Mapping kernel: %s\n", buf);
@@ -158,7 +159,7 @@ int pmap_extract_srmmu(vaddr_t va, paddr_t *ppa)
 	u_int pte;
 
 	va &= -NBPG;
-	sprintf(buf, "%lx pgmap@ %lx L!", va, (u_long)&pte);
+	snprintf(buf, sizeof(buf), "%lx pgmap@ %lx L!", va, (u_long)&pte);
 	prom_interpret(buf);
 	if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE)
 		return (EFAULT);

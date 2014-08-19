@@ -1,4 +1,4 @@
-/*	$NetBSD: cast128.c,v 1.9 2006/05/10 21:53:15 mrg Exp $	*/
+/*	$NetBSD: cast128.c,v 1.9.108.1 2014/08/20 00:03:34 tls Exp $	*/
 /*      $OpenBSD: cast.c,v 1.2 2000/06/06 06:49:47 deraadt Exp $       */
 
 /*
@@ -9,9 +9,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cast128.c,v 1.9 2006/05/10 21:53:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cast128.c,v 1.9.108.1 2014/08/20 00:03:34 tls Exp $");
 
 #include <sys/types.h>
+#include <sys/errno.h>
+#include <sys/module.h>
+
 #include <crypto/cast128/cast128.h>
 #include <crypto/cast128/cast128sb.h>
 
@@ -246,3 +249,23 @@ void cast128_setkey(cast128_key* key, const u_int8_t* rawkey, int keybytes)
 }
 
 /* Made in Canada */
+
+#if defined(_KERNEL)
+
+MODULE(MODULE_CLASS_MISC, cast128, NULL);
+
+static int
+cast128_modcmd(modcmd_t cmd, void *opaque)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return 0;
+	case MODULE_CMD_FINI:
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
+
+#endif /* defined(KERNEL) */

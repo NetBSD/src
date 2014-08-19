@@ -1,4 +1,4 @@
-/*	$NetBSD: qop_priq.c,v 1.5 2002/03/05 04:11:53 itojun Exp $	*/
+/*	$NetBSD: qop_priq.c,v 1.5.64.1 2014/08/20 00:05:06 tls Exp $	*/
 /*	$KAME: qop_priq.c,v 1.4 2001/12/03 08:20:55 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -305,13 +305,12 @@ int
 qop_priq_modify_class(struct classinfo *clinfo, 
 		      int pri, int qlimit, int flags)
 {
-	struct priq_classinfo *priq_clinfo, *parent_clinfo;
+	struct priq_classinfo *priq_clinfo;
 	int error;
 
 	priq_clinfo = clinfo->private;
 	if (clinfo->parent == NULL)
 		return (QOPERR_CLASS_INVAL);
-	parent_clinfo = clinfo->parent->private;
 
 	priq_clinfo->pri = pri;
 	priq_clinfo->qlimit = qlimit;
@@ -431,9 +430,7 @@ priq_add_class(struct classinfo *clinfo)
 {
 	struct priq_add_class class_add;
 	struct priq_classinfo *priq_clinfo;
-	struct priq_ifinfo *priq_ifinfo;
 
-	priq_ifinfo = clinfo->ifinfo->private;
 	priq_clinfo = clinfo->private;
 	
 	memset(&class_add, 0, sizeof(class_add));

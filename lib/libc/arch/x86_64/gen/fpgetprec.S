@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetprec.S,v 1.1 2011/03/26 19:51:42 christos Exp $	*/
+/*	$NetBSD: fpgetprec.S,v 1.1.10.1 2014/08/20 00:02:12 tls Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 4, 1995
@@ -23,3 +23,8 @@ ENTRY(fpgetprec)
 	rorl $8,%eax
 	andl $3,%eax
 	ret
+#ifdef WEAK_ALIAS
+END(_fpgetprec)
+#else
+END(fpgetprec)
+#endif

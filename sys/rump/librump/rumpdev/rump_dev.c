@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev.c,v 1.19.14.2 2013/02/25 00:30:08 tls Exp $	*/
+/*	$NetBSD: rump_dev.c,v 1.19.14.3 2014/08/20 00:04:40 tls Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.19.14.2 2013/02/25 00:30:08 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.19.14.3 2014/08/20 00:04:40 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -48,6 +48,7 @@ RUMP_COMPONENT(RUMP__FACTION_DEV)
 
 	KERNEL_LOCK(1, curlwp);
 
+	rump_mainbus_init();
 	config_init_mi();
 
 	rump_component_init(RUMP_COMPONENT_DEV);
@@ -55,21 +56,28 @@ RUMP_COMPONENT(RUMP__FACTION_DEV)
 	rump_pdev_finalize();
 
 	cold = 0;
-	if (rump_component_count(RUMP_COMPONENT_DEV) > 0) {
-		extern struct cfdriver mainbus_cd;
-		extern struct cfattach mainbus_ca;
-		extern struct cfdata cfdata[];
 
-		config_cfdata_attach(cfdata, 0);
-		config_cfdriver_attach(&mainbus_cd);
-		config_cfattach_attach("mainbus", &mainbus_ca);
+	/*
+	 * XXX: does the "if" make any sense?  What if someone wants
+	 * to dynamically load a driver later on?
+	 */
+	if (rump_component_count(RUMP_COMPONENT_DEV) > 0
+	    || rump_component_count(RUMP_COMPONENT_DEV_AFTERMAINBUS) > 0) {
+		rump_mainbus_attach();
 		if (config_rootfound("mainbus", NULL) == NULL)
 			panic("no mainbus");
 
+		rump_component_init(RUMP_COMPONENT_DEV_AFTERMAINBUS);
 	}
 	config_finalize();
 
 	KERNEL_UNLOCK_LAST(curlwp);
+
+	/* if there is a vfs, perform activity deferred until mountroot */
+	if (rump_component_count(RUMP__FACTION_VFS)) {
+		config_create_mountrootthreads();
+		yield();
+	}
 }
 
 void
@@ -77,6 +85,11 @@ cpu_rootconf(void)
 {
 
 	panic("%s: unimplemented", __func__);
+}
+
+void
+cpu_bootconf(void)
+{
 }
 
 void

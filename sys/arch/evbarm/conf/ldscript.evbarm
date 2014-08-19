@@ -1,4 +1,4 @@
-/*	$NetBSD: ldscript.evbarm,v 1.6 2011/03/06 02:22:27 jakllsch Exp $	*/
+/*	$NetBSD: ldscript.evbarm,v 1.6.14.1 2014/08/20 00:02:53 tls Exp $	*/
 
 OUTPUT_ARCH(arm)
 ENTRY(KERNEL_BASE_phys)
@@ -23,6 +23,10 @@ SECTIONS
     *(.glue_7t) *(.glue_7)
     *(.rodata) *(.rodata.*)
   } =0
+  .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) }
+  PROVIDE (__exidx_start = .);
+  .ARM.exidx   : { *(.ARM.exidx* .gnu.linkonce.armexidx.*) }
+  PROVIDE (__exidx_end = .);
   PROVIDE (__etext = .);
   PROVIDE (_etext = .);
   PROVIDE (etext = .);
@@ -42,6 +46,7 @@ SECTIONS
     *(.sdata)
     *(.sdata.*)
   }
+  . = ALIGN(8);
   _edata = .;
   PROVIDE (edata = .);
   __bss_start = .;

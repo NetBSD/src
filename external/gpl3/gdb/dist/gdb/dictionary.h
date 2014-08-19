@@ -1,7 +1,6 @@
 /* Routines for name->symbol lookups in GDB.
    
-   Copyright (C) 2003, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    Contributed by David Carlton <carlton@bactrian.org> and by Kealia,
    Inc.
@@ -85,6 +84,11 @@ extern void dict_free (struct dictionary *dict);
 /* Add a symbol to an expandable dictionary.  */
 
 extern void dict_add_symbol (struct dictionary *dict, struct symbol *sym);
+
+/* Utility to add a list of symbols to a dictionary.  */
+
+extern void dict_add_pending (struct dictionary *dict,
+			      const struct pending *symbol_list);
 
 /* Is the dictionary empty?  */
 

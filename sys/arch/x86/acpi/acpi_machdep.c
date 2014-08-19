@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.3.6.2 2013/06/23 06:20:14 tls Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.3.6.3 2014/08/20 00:03:29 tls Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.3.6.2 2013/06/23 06:20:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.3.6.3 2014/08/20 00:03:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,7 @@ struct acpi_md_override {
 	int flags;
 };
 
+#if NIOAPIC > 0
 static ACPI_STATUS
 acpi_md_findoverride(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 {
@@ -117,6 +118,7 @@ acpi_md_findoverride(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 	}
 	return AE_OK;
 }
+#endif
 
 ACPI_STATUS
 acpi_md_OsInstallInterruptHandler(uint32_t InterruptNumber,
@@ -297,7 +299,7 @@ acpi_md_OsReadable(void *Pointer, uint32_t Length)
 BOOLEAN
 acpi_md_OsWritable(void *Pointer, uint32_t Length)
 {
-	BOOLEAN rv = FALSE;
+	BOOLEAN rv = TRUE;
 	vaddr_t sva, eva;
 	pt_entry_t *pte;
 

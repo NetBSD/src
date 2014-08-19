@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2004, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2004-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -45,11 +45,25 @@ catcher (int sig)
 static void
 thrower (void)
 {
+  /* Trigger a SIGSEGV.  */
   *(char *)0 = 0;
+
+  /* On MMU-less system, previous memory access to address zero doesn't
+     trigger a SIGSEGV.  Trigger a SIGILL.  Each arch should define its
+     own illegal instruction here.  */
+
+#if defined(__arm__)
+  asm(".word 0xf8f00000");
+#elif defined(__TMS320C6X__)
+  asm(".word 0x56454313");
+#else
+#endif
+
 }
 
 main ()
 {
+  signal (SIGILL, catcher);
   signal (SIGSEGV, catcher);
   thrower ();
 }

@@ -1,6 +1,5 @@
 /* Low level Alpha interface, for GDB when running native.
-   Copyright (C) 1993, 1995, 1996, 1998, 1999, 2000, 2001, 2003, 2007, 2008,
-   2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1993-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +17,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "inferior.h"
 #include "gdbcore.h"
 #include "target.h"

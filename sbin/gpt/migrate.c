@@ -29,11 +29,12 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: migrate.c,v 1.5.8.1 2013/06/23 06:28:51 tls Exp $");
+__RCSID("$NetBSD: migrate.c,v 1.5.8.2 2014/08/20 00:02:25 tls Exp $");
 #endif
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/bootblock.h>
 #include <sys/disklabel.h>
 
 #include <err.h>
@@ -56,6 +57,10 @@ __RCSID("$NetBSD: migrate.c,v 1.5.8.1 2013/06/23 06:28:51 tls Exp $");
 #ifndef LABELSECTOR
 #define	LABELSECTOR	1
 #endif
+
+/* FreeBSD filesystem types that don't match corresponding NetBSD types */
+#define	FREEBSD_FS_VINUM	14
+#define	FREEBSD_FS_ZFS		27
 
 static int force;
 static int slice;
@@ -86,6 +91,7 @@ migrate_disklabel(int fd, off_t start, struct gpt_ent *ent)
 	    le32toh(dl->d_magic2) != DISKMAGIC) {
 		warnx("%s: warning: FreeBSD slice without disklabel",
 		    device_name);
+		free(buf);
 		return (ent);
 	}
 
@@ -119,10 +125,17 @@ migrate_disklabel(int fd, off_t start, struct gpt_ent *ent)
 			    ent->ent_name, 36);
 			break;
 		}
-		case FS_VINUM: {
+		case FREEBSD_FS_VINUM: {
 			static const uuid_t vinum = GPT_ENT_TYPE_FREEBSD_VINUM;
 			le_uuid_enc(ent->ent_type, &vinum);
 			utf8_to_utf16((const uint8_t *)"FreeBSD vinum partition",
+			    ent->ent_name, 36);
+			break;
+		}
+		case FREEBSD_FS_ZFS: {
+			static const uuid_t zfs = GPT_ENT_TYPE_FREEBSD_ZFS;
+			le_uuid_enc(ent->ent_type, &zfs);
+			utf8_to_utf16((const uint8_t *)"FreeBSD ZFS partition",
 			    ent->ent_name, 36);
 			break;
 		}
@@ -141,6 +154,103 @@ migrate_disklabel(int fd, off_t start, struct gpt_ent *ent)
 		ent++;
 	}
 
+	free(buf);
+	return (ent);
+}
+
+static struct gpt_ent*
+migrate_netbsd_disklabel(int fd, off_t start, struct gpt_ent *ent)
+{
+	char *buf;
+	struct disklabel *dl;
+	off_t ofs, rawofs;
+	int i;
+
+	buf = gpt_read(fd, start + LABELSECTOR, 1);
+	dl = (void*)(buf + LABELOFFSET);
+
+	if (le32toh(dl->d_magic) != DISKMAGIC ||
+	    le32toh(dl->d_magic2) != DISKMAGIC) {
+		warnx("%s: warning: NetBSD slice without disklabel",
+		    device_name);
+		free(buf);
+		return (ent);
+	}
+
+	rawofs = le32toh(dl->d_partitions[RAW_PART].p_offset) *
+	    le32toh(dl->d_secsize);
+	for (i = 0; i < le16toh(dl->d_npartitions); i++) {
+		if (dl->d_partitions[i].p_fstype == FS_UNUSED)
+			continue;
+		ofs = le32toh(dl->d_partitions[i].p_offset) *
+		    le32toh(dl->d_secsize);
+		if (ofs < rawofs)
+			rawofs = 0;
+	}
+	rawofs /= secsz;
+
+	for (i = 0; i < le16toh(dl->d_npartitions); i++) {
+		switch (dl->d_partitions[i].p_fstype) {
+		case FS_UNUSED:
+			continue;
+		case FS_SWAP: {
+			static const uuid_t swap = GPT_ENT_TYPE_NETBSD_SWAP;
+			le_uuid_enc(ent->ent_type, &swap);
+			utf8_to_utf16((const uint8_t *)"NetBSD swap partition",
+			    ent->ent_name, 36);
+			break;
+		}
+		case FS_BSDFFS: {
+			static const uuid_t ufs = GPT_ENT_TYPE_NETBSD_FFS;
+			le_uuid_enc(ent->ent_type, &ufs);
+			utf8_to_utf16((const uint8_t *)"NetBSD FFS partition",
+			    ent->ent_name, 36);
+			break;
+		}
+		case FS_BSDLFS: {
+			static const uuid_t zfs = GPT_ENT_TYPE_NETBSD_LFS;
+			le_uuid_enc(ent->ent_type, &zfs);
+			utf8_to_utf16((const uint8_t *)"NetBSD LFS partition",
+			    ent->ent_name, 36);
+			break;
+		}
+		case FS_RAID: {
+			static const uuid_t zfs = GPT_ENT_TYPE_NETBSD_RAIDFRAME;
+			le_uuid_enc(ent->ent_type, &zfs);
+			utf8_to_utf16((const uint8_t *)"NetBSD RAIDframe partition",
+			    ent->ent_name, 36);
+			break;
+		}
+		case FS_CCD: {
+			static const uuid_t zfs = GPT_ENT_TYPE_NETBSD_CCD;
+			le_uuid_enc(ent->ent_type, &zfs);
+			utf8_to_utf16((const uint8_t *)"NetBSD CCD partition",
+			    ent->ent_name, 36);
+			break;
+		}
+		case FS_CGD: {
+			static const uuid_t zfs = GPT_ENT_TYPE_NETBSD_CGD;
+			le_uuid_enc(ent->ent_type, &zfs);
+			utf8_to_utf16((const uint8_t *)"NetBSD CGD partition",
+			    ent->ent_name, 36);
+			break;
+		}
+		default:
+			warnx("%s: warning: unknown NetBSD partition (%d)",
+			    device_name, dl->d_partitions[i].p_fstype);
+			continue;
+		}
+
+		ofs = (le32toh(dl->d_partitions[i].p_offset) *
+		    le32toh(dl->d_secsize)) / secsz;
+		ofs = (ofs > 0) ? ofs - rawofs : 0;
+		ent->ent_lba_start = htole64(ofs);
+		ent->ent_lba_end = htole64(ofs +
+		    le32toh(dl->d_partitions[i].p_size) - 1LL);
+		ent++;
+	}
+
+	free(buf);
 	return (ent);
 }
 
@@ -255,9 +365,9 @@ migrate(int fd)
 		size = (size << 16) + le16toh(mbr->mbr_part[i].part_size_lo);
 
 		switch (mbr->mbr_part[i].part_typ) {
-		case 0:
+		case MBR_PTYPE_UNUSED:
 			continue;
-		case 165: {	/* FreeBSD */
+		case MBR_PTYPE_386BSD: {	/* FreeBSD */
 			if (slice) {
 				static const uuid_t freebsd = GPT_ENT_TYPE_FREEBSD;
 				le_uuid_enc(ent->ent_type, &freebsd);
@@ -270,7 +380,10 @@ migrate(int fd)
 				ent = migrate_disklabel(fd, start, ent);
 			break;
 		}
-		case 239: {	/* EFI */
+		case MBR_PTYPE_NETBSD:
+			ent = migrate_netbsd_disklabel(fd, start, ent);
+			break;
+		case MBR_PTYPE_EFI: {
 			static const uuid_t efi_slice = GPT_ENT_TYPE_EFI;
 			le_uuid_enc(ent->ent_type, &efi_slice);
 			ent->ent_lba_start = htole64((uint64_t)start);
@@ -317,11 +430,11 @@ migrate(int fd)
 	 * Turn the MBR into a Protective MBR.
 	 */
 	bzero(mbr->mbr_part, sizeof(mbr->mbr_part));
-	mbr->mbr_part[0].part_shd = 0xff;
-	mbr->mbr_part[0].part_ssect = 0xff;
-	mbr->mbr_part[0].part_scyl = 0xff;
-	mbr->mbr_part[0].part_typ = 0xee;
-	mbr->mbr_part[0].part_ehd = 0xff;
+	mbr->mbr_part[0].part_shd = 0x00;
+	mbr->mbr_part[0].part_ssect = 0x02;
+	mbr->mbr_part[0].part_scyl = 0x00;
+	mbr->mbr_part[0].part_typ = MBR_PTYPE_PMBR;
+	mbr->mbr_part[0].part_ehd = 0xfe;
 	mbr->mbr_part[0].part_esect = 0xff;
 	mbr->mbr_part[0].part_ecyl = 0xff;
 	mbr->mbr_part[0].part_start_lo = htole16(1);

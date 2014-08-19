@@ -1,7 +1,6 @@
 /* syscalls.h --- interface to syscalls for the RX sim.
 
-Copyright (C) 2005, 2007, 2008, 2009, 2010, 2011
-Free Software Foundation, Inc.
+Copyright (C) 2005-2014 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -22,4 +21,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 struct host_callback_struct;
 extern void set_callbacks (struct host_callback_struct *);
+extern struct host_callback_struct * get_callbacks (void);
 extern int rx_syscall (int id);

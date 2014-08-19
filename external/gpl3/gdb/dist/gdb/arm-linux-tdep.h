@@ -1,7 +1,6 @@
 /* GNU/Linux on ARM target support, prototypes.
 
-   Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -59,3 +58,12 @@ void arm_linux_supply_nwfpe (const struct regset *regset,
 void arm_linux_collect_nwfpe (const struct regset *regset,
 			      const struct regcache *regcache,
 			      int regnum, void *regs_buf, size_t len);
+
+/* ARM GNU/Linux HWCAP values.  These are in defined in
+   <asm/elf.h> in current kernels.  */
+#define HWCAP_VFP       64
+#define HWCAP_IWMMXT    512
+#define HWCAP_NEON      4096
+#define HWCAP_VFPv3     8192
+#define HWCAP_VFPv3D16  16384
+

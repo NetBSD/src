@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_rename.c,v 1.5.2.2 2013/06/23 06:18:40 tls Exp $	*/
+/*	$NetBSD: ufs_rename.c,v 1.5.2.3 2014/08/20 00:04:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,12 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.5.2.2 2013/06/23 06:18:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.5.2.3 2014/08/20 00:04:45 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/errno.h>
-#include <sys/fstrans.h>
 #include <sys/kauth.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
@@ -334,7 +333,6 @@ ufs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	 * Commence hacking of the data on disk.
 	 */
 
-	fstrans_start(mp, FSTRANS_SHARED);
 	error = UFS_WAPBL_BEGIN(mp);
 	if (error)
 		goto ihateyou;
@@ -555,7 +553,6 @@ arghmybrainhurts:
 	UFS_WAPBL_END(mp);
 
 ihateyou:
-	fstrans_done(mp);
 	return error;
 }
 
@@ -786,7 +783,6 @@ ufs_gro_remove(struct mount *mp, kauth_cred_t cred,
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 	KASSERT(cnp->cn_nameiop == DELETE);
 
-	fstrans_start(mp, FSTRANS_SHARED);
 	error = UFS_WAPBL_BEGIN(mp);
 	if (error)
 		goto out0;
@@ -800,7 +796,7 @@ ufs_gro_remove(struct mount *mp, kauth_cred_t cred,
 	VN_KNOTE(vp, (VTOI(vp)->i_nlink? NOTE_LINK : NOTE_DELETE));
 
 out1:	UFS_WAPBL_END(mp);
-out0:	fstrans_done(mp);
+out0:
 	return error;
 }
 
@@ -930,7 +926,7 @@ ufs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
     struct vnode **intermediate_node_ret)
 {
 	struct vnode *vp, *dvp;
-	ino_t dotdot_ino;
+	ino_t dotdot_ino = 0;	/* XXX: gcc */
 	int error;
 
 	KASSERT(mp != NULL);
@@ -983,20 +979,15 @@ ufs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
 		}
 
 		/* Neither -- keep ascending the family tree.  */
-
-		/*
-		 * Unlock vp so that we can lock the parent, but keep
-		 * vp referenced until after we have found the parent,
-		 * so that dotdot_ino will not be recycled.
-		 *
-		 * XXX This guarantees that vp's inode number will not
-		 * be recycled, but why can't dotdot_ino be recycled?
-		 */
-		VOP_UNLOCK(vp);
-		error = VFS_VGET(mp, dotdot_ino, &dvp);
-		vrele(vp);
+		error = vcache_get(mp, &dotdot_ino, sizeof(dotdot_ino), &dvp);
+		vput(vp);
 		if (error)
 			return error;
+		error = vn_lock(dvp, LK_EXCLUSIVE);
+		if (error) {
+			vrele(dvp);
+			return error;
+		}
 
 		KASSERT(dvp != NULL);
 		KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);

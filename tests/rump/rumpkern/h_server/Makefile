@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/01/14 13:23:15 pooka Exp $
+#	$NetBSD: Makefile,v 1.3.12.1 2014/08/20 00:04:52 tls Exp $
 #
 
 .include <bsd.own.mk>
@@ -9,7 +9,7 @@ TESTS_C=	h_simpleserver
 
 ATFFILE=	no
 
-LDADD+=	-lrump -lrumpuser -lpthread
+LDADD+=	-lrump -lrumpuser -lrump -lpthread
 
 WARNS=	4
 NOMAN=

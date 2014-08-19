@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.89 2011/07/09 15:02:49 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.89.12.1 2014/08/20 00:03:24 tls Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.89 2011/07/09 15:02:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.89.12.1 2014/08/20 00:03:24 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.89 2011/07/09 15:02:49 mrg Exp $"
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
-#include <sys/simplelock.h>
 
 #include <dev/cons.h>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: piixpmreg.h,v 1.5 2011/02/13 11:20:12 hannken Exp $ */
+/* $NetBSD: piixpmreg.h,v 1.5.14.1 2014/08/20 00:03:48 tls Exp $ */
 /*	$OpenBSD: piixreg.h,v 1.3 2006/01/03 22:39:03 grange Exp $	*/
 
 /*
@@ -74,5 +74,18 @@
 /* Misc */
 #define PIIX_PM_SIZE	0x38		/* Power management I/O space size */
 #define PIIX_SMB_SIZE	0x10		/* SMBus I/O space size */
+
+#define PIIXPM_INDIRECTIO_BASE	0xcd6
+#define PIIXPM_INDIRECTIO_SIZE	2 
+#define PIIXPM_INDIRECTIO_INDEX	0
+#define PIIXPM_INDIRECTIO_DATA	1
+ 
+#define SB800_PM_SMBUS0EN_LO	0x2c
+#define SB800_PM_SMBUS0EN_HI	0x2d
+#define SB800_PM_SMBUS0SEL	0x2e 
+#define SB800_PM_SMBUS0SELEN	0x2f 
+                                      
+#define SB800_PM_SMBUS0EN_ENABLE 0x0001
+#define SB800_PM_SMBUS0EN_BADDR	0xffe0
 
 #endif	/* !_DEV_PCI_PIIXREG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pass4.c,v 1.26.10.1 2013/02/25 00:28:06 tls Exp $	*/
+/*	$NetBSD: pass4.c,v 1.26.10.2 2014/08/20 00:02:24 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass4.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass4.c,v 1.26.10.1 2013/02/25 00:28:06 tls Exp $");
+__RCSID("$NetBSD: pass4.c,v 1.26.10.2 2014/08/20 00:02:24 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -211,7 +211,7 @@ pass4check(struct inodesc *idesc)
 		sblock->fs_cstotal.cs_nbfree++;
 		sblock->fs_cs(fs, cg).cs_nbfree++;
 		ffs_clusteracct(sblock, cgp,
-		    fragstoblks(sblock, dtogd(sblock, idesc->id_blkno)), 1);
+		    ffs_fragstoblks(sblock, dtogd(sblock, idesc->id_blkno)), 1);
 	}
 	sbdirty();
 	cgdirty();

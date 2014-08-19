@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.57.8.1 2013/06/23 06:20:14 tls Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.57.8.2 2014/08/20 00:03:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.57.8.1 2013/06/23 06:20:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.57.8.2 2014/08/20 00:03:29 tls Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -73,9 +73,21 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.57.8.1 2013/06/23 06:20:14 tls Exp
 #include <dev/acpi/acpivar.h>
 #endif
 
+#include "opt_md.h"
+#if defined(MEMORY_DISK_HOOKS) && defined(MEMORY_DISK_DYNAMIC)
+#include <dev/md.h>
+#endif
+
 void (*x86_cpu_idle)(void);
 static bool x86_cpu_idle_ipi;
 static char x86_cpu_idle_text[16];
+
+#ifdef XEN
+char module_machine_amd64_xen[] = "amd64-xen";
+char module_machine_i386_xen[] = "i386-xen";
+char module_machine_i386pae_xen[] = "i386pae-xen";
+#endif
+
 
 /* --------------------------------------------------------------------- */
 
@@ -147,6 +159,19 @@ module_init_md(void)
 	struct btinfo_modulelist *biml;
 	struct bi_modulelist_entry *bi, *bimax;
 
+	/* setup module path for XEN kernels */
+#ifdef XEN
+#if defined(amd64)
+	module_machine = module_machine_amd64_xen;
+#elif defined(i386)
+#ifdef PAE
+	module_machine = module_machine_i386pae_xen;
+#else
+	module_machine = module_machine_i386_xen;
+#endif
+#endif
+#endif
+
 	biml = lookup_bootinfo(BTINFO_MODULELIST);
 	if (biml == NULL) {
 		aprint_debug("No module info at boot\n");
@@ -182,6 +207,15 @@ module_init_md(void)
 			    (void *)((uintptr_t)bi->base + KERNBASE),
 			     bi->len);
 			break;
+		case BI_MODULE_FS:
+			aprint_debug("File-system image path=%s len=%d pa=%x\n",
+			    bi->path, bi->len, bi->base);
+			KASSERT(trunc_page(bi->base) == bi->base);
+#if defined(MEMORY_DISK_HOOKS) && defined(MEMORY_DISK_DYNAMIC)
+			md_root_setconf((void *)((uintptr_t)bi->base + KERNBASE),
+			    bi->len);
+#endif
+			break;		
 		default:
 			aprint_debug("Skipping non-ELF module\n");
 			break;
@@ -281,14 +315,11 @@ cpu_intr_p(void)
 bool
 cpu_kpreempt_enter(uintptr_t where, int s)
 {
-	struct cpu_info *ci;
 	struct pcb *pcb;
 	lwp_t *l;
 
 	KASSERT(kpreempt_disabled());
-
 	l = curlwp;
-	ci = curcpu();
 
 	/*
 	 * If SPL raised, can't go.  Note this implies that spin
@@ -675,44 +706,57 @@ extern vaddr_t kern_end;
 extern vaddr_t module_start, module_end;
 #endif
 
+static struct {
+	int freelist;
+	uint64_t limit;
+} x86_freelists[VM_NFREELIST] = {
+	{ VM_FREELIST_DEFAULT, 0 },
+#ifdef VM_FREELIST_FIRST1T
+	/* 40-bit addresses needed for modern graphics.  */
+	{ VM_FREELIST_FIRST1T,	1ULL * 1024 * 1024 * 1024 * 1024 },
+#endif
+#ifdef VM_FREELIST_FIRST64G
+	/* 36-bit addresses needed for oldish graphics.  */
+	{ VM_FREELIST_FIRST64G,	64ULL * 1024 * 1024 * 1024 },
+#endif
+#ifdef VM_FREELIST_FIRST4G
+	/* 32-bit addresses needed for PCI 32-bit DMA and old graphics.  */
+	{ VM_FREELIST_FIRST4G,	4ULL * 1024 * 1024 * 1024 },
+#endif
+	/* 30-bit addresses needed for ancient graphics.  */
+	{ VM_FREELIST_FIRST1G,	1ULL * 1024 * 1024 * 1024 },
+	/* 24-bit addresses needed for ISA DMA.  */
+	{ VM_FREELIST_FIRST16,	16 * 1024 * 1024 },
+};
+
+int
+x86_select_freelist(uint64_t maxaddr)
+{
+	unsigned int i;
+
+	if (avail_end <= maxaddr)
+		return VM_NFREELIST;
+
+	for (i = 0; i < __arraycount(x86_freelists); i++) {
+		if ((x86_freelists[i].limit - 1) <= maxaddr)
+			return x86_freelists[i].freelist;
+	}
+
+	panic("no freelist for maximum address %"PRIx64, maxaddr);
+}
+
 int
 initx86_load_memmap(paddr_t first_avail)
 {
 	uint64_t seg_start, seg_end;
 	uint64_t seg_start1, seg_end1;
-	int first16q, x;
-#ifdef VM_FREELIST_FIRST4G
-	int first4gq;
-#endif
+	int x;
+	unsigned i;
 
-	/*
-	 * If we have 16M of RAM or less, just put it all on
-	 * the default free list.  Otherwise, put the first
-	 * 16M of RAM on a lower priority free list (so that
-	 * all of the ISA DMA'able memory won't be eaten up
-	 * first-off).
-	 */
-#define ADDR_16M (16 * 1024 * 1024)
-
-	if (avail_end <= ADDR_16M)
-		first16q = VM_FREELIST_DEFAULT;
-	else
-		first16q = VM_FREELIST_FIRST16;
-
-#ifdef VM_FREELIST_FIRST4G
-	/*
-	 * If we have 4G of RAM or less, just put it all on
-	 * the default free list.  Otherwise, put the first
-	 * 4G of RAM on a lower priority free list (so that
-	 * all of the 32bit PCI DMA'able memory won't be eaten up
-	 * first-off).
-	 */
-#define ADDR_4G (4ULL * 1024 * 1024 * 1024)
-	if (avail_end <= ADDR_4G)
-		first4gq = VM_FREELIST_DEFAULT;
-	else
-		first4gq = VM_FREELIST_FIRST4G;
-#endif /* defined(VM_FREELIST_FIRST4G) */
+	for (i = 0; i < __arraycount(x86_freelists); i++) {
+		if (avail_end < x86_freelists[i].limit)
+			x86_freelists[i].freelist = VM_FREELIST_DEFAULT;
+	}
 
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
@@ -765,57 +809,31 @@ initx86_load_memmap(paddr_t first_avail)
 
 		/* First hunk */
 		if (seg_start != seg_end) {
-			if (seg_start < ADDR_16M &&
-			    first16q != VM_FREELIST_DEFAULT) {
+			i = __arraycount(x86_freelists);
+			while (i--) {
 				uint64_t tmp;
 
-				if (seg_end > ADDR_16M)
-					tmp = ADDR_16M;
-				else
-					tmp = seg_end;
-
-				if (tmp != seg_start) {
+				if (x86_freelists[i].limit <= seg_start)
+					continue;
+				if (x86_freelists[i].freelist ==
+				    VM_FREELIST_DEFAULT)
+					continue;
+				tmp = MIN(x86_freelists[i].limit, seg_end);
+				if (tmp == seg_start)
+					continue;
 #ifdef DEBUG_MEMLOAD
-					printf("loading first16q 0x%"PRIx64
-					    "-0x%"PRIx64
-					    " (0x%"PRIx64"-0x%"PRIx64")\n",
-					    seg_start, tmp,
-					    (uint64_t)atop(seg_start),
-					    (uint64_t)atop(tmp));
+				printf("loading freelist %d"
+				    " 0x%"PRIx64"-0x%"PRIx64
+				    " (0x%"PRIx64"-0x%"PRIx64")\n",
+				    x86_freelists[i].freelist, seg_start, tmp,
+				    (uint64_t)atop(seg_start),
+				    (uint64_t)atop(tmp));
 #endif
-					uvm_page_physload(atop(seg_start),
-					    atop(tmp), atop(seg_start),
-					    atop(tmp), first16q);
-				}
+				uvm_page_physload(atop(seg_start), atop(tmp),
+				    atop(seg_start), atop(tmp),
+				    x86_freelists[i].freelist);
 				seg_start = tmp;
 			}
-
-#ifdef VM_FREELIST_FIRST4G
-			if (seg_start < ADDR_4G &&
-			    first4gq != VM_FREELIST_DEFAULT) {
-				uint64_t tmp;
-
-				if (seg_end > ADDR_4G)
-					tmp = ADDR_4G;
-				else
-					tmp = seg_end;
-
-				if (tmp != seg_start) {
-#ifdef DEBUG_MEMLOAD
-					printf("loading first4gq 0x%"PRIx64
-					    "-0x%"PRIx64
-					    " (0x%"PRIx64"-0x%"PRIx64")\n",
-					    seg_start, tmp,
-					    (uint64_t)atop(seg_start),
-					    (uint64_t)atop(tmp));
-#endif
-					uvm_page_physload(atop(seg_start),
-					    atop(tmp), atop(seg_start),
-					    atop(tmp), first4gq);
-				}
-				seg_start = tmp;
-			}
-#endif /* defined(VM_FREELIST_FIRST4G) */
 
 			if (seg_start != seg_end) {
 #ifdef DEBUG_MEMLOAD
@@ -833,57 +851,31 @@ initx86_load_memmap(paddr_t first_avail)
 
 		/* Second hunk */
 		if (seg_start1 != seg_end1) {
-			if (seg_start1 < ADDR_16M &&
-			    first16q != VM_FREELIST_DEFAULT) {
+			i = __arraycount(x86_freelists);
+			while (i--) {
 				uint64_t tmp;
 
-				if (seg_end1 > ADDR_16M)
-					tmp = ADDR_16M;
-				else
-					tmp = seg_end1;
-
-				if (tmp != seg_start1) {
+				if (x86_freelists[i].limit <= seg_start1)
+					continue;
+				if (x86_freelists[i].freelist ==
+				    VM_FREELIST_DEFAULT)
+					continue;
+				tmp = MIN(x86_freelists[i].limit, seg_end1);
+				if (tmp == seg_start1)
+					continue;
 #ifdef DEBUG_MEMLOAD
-					printf("loading first16q 0x%"PRIx64
-					    "-0x%"PRIx64
-					    " (0x%"PRIx64"-0x%"PRIx64")\n",
-					    seg_start1, tmp,
-					    (uint64_t)atop(seg_start1),
-					    (uint64_t)atop(tmp));
+				printf("loading freelist %u"
+				    " 0x%"PRIx64"-0x%"PRIx64
+				    " (0x%"PRIx64"-0x%"PRIx64")\n",
+				    x86_freelists[i].freelist, seg_start1, tmp,
+				    (uint64_t)atop(seg_start1),
+				    (uint64_t)atop(tmp));
 #endif
-					uvm_page_physload(atop(seg_start1),
-					    atop(tmp), atop(seg_start1),
-					    atop(tmp), first16q);
-				}
+				uvm_page_physload(atop(seg_start1), atop(tmp),
+				    atop(seg_start1), atop(tmp),
+				    x86_freelists[i].freelist);
 				seg_start1 = tmp;
 			}
-
-#ifdef VM_FREELIST_FIRST4G
-			if (seg_start1 < ADDR_4G &&
-			    first4gq != VM_FREELIST_DEFAULT) {
-				uint64_t tmp;
-
-				if (seg_end1 > ADDR_4G)
-					tmp = ADDR_4G;
-				else
-					tmp = seg_end1;
-
-				if (tmp != seg_start1) {
-#ifdef DEBUG_MEMLOAD
-					printf("loading first4gq 0x%"PRIx64
-					    "-0x%"PRIx64
-					    " (0x%"PRIx64"-0x%"PRIx64")\n",
-					    seg_start1, tmp,
-					    (uint64_t)atop(seg_start1),
-					    (uint64_t)atop(tmp));
-#endif
-					uvm_page_physload(atop(seg_start1),
-					    atop(tmp), atop(seg_start1),
-					    atop(tmp), first4gq);
-				}
-				seg_start1 = tmp;
-			}
-#endif /* defined(VM_FREELIST_FIRST4G) */
 
 			if (seg_start1 != seg_end1) {
 #ifdef DEBUG_MEMLOAD
@@ -1044,8 +1036,18 @@ sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
         return sysctl_lookup(SYSCTLFN_CALL(&node));
 }
 
-void
-x86_sysctl_machdep_setup(struct sysctllog **clog) {
+static void
+const_sysctl(struct sysctllog **clog, const char *name, int type,
+    u_quad_t value, int tag)
+{
+	(sysctl_createv)(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
+		       type, name, NULL, NULL, value, NULL, 0,
+		       CTL_MACHDEP, tag, CTL_EOL);
+}
+
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
+{
 	extern uint64_t tsc_freq;
 	extern int sparse_dump;
 
@@ -1070,6 +1072,7 @@ x86_sysctl_machdep_setup(struct sysctllog **clog) {
 		       CTLTYPE_STRUCT, "diskinfo", NULL,
 		       sysctl_machdep_diskinfo, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_DISKINFO, CTL_EOL);
+
 	sysctl_createv(clog, 0, NULL, NULL, 
 	    	       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "cpu_brand", NULL,
@@ -1091,4 +1094,28 @@ x86_sysctl_machdep_setup(struct sysctllog **clog) {
 		       SYSCTL_DESCR("Whether the kernel uses PAE"),
 		       NULL, 0, &use_pae, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+	/* None of these can ever change once the system has booted */
+	const_sysctl(clog, "fpu_present", CTLTYPE_INT, i386_fpu_present,
+	    CPU_FPU_PRESENT);
+	const_sysctl(clog, "osfxsr", CTLTYPE_INT, i386_use_fxsave,
+	    CPU_OSFXSR);
+	const_sysctl(clog, "sse", CTLTYPE_INT, i386_has_sse,
+	    CPU_SSE);
+	const_sysctl(clog, "sse2", CTLTYPE_INT, i386_has_sse2,
+	    CPU_SSE2);
+
+	const_sysctl(clog, "fpu_save", CTLTYPE_INT, x86_fpu_save,
+	    CTL_CREATE);
+	const_sysctl(clog, "fpu_save_size", CTLTYPE_INT, x86_fpu_save_size,
+	    CTL_CREATE);
+	const_sysctl(clog, "xsave_features", CTLTYPE_QUAD, x86_xsave_features,
+	    CTL_CREATE);
+
+#ifndef XEN
+	const_sysctl(clog, "biosbasemem", CTLTYPE_INT, biosbasemem,
+	    CPU_BIOSBASEMEM);
+	const_sysctl(clog, "biosextmem", CTLTYPE_INT, biosextmem,
+	    CPU_BIOSEXTMEM);
+#endif
 }

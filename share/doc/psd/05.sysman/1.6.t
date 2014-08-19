@@ -1,4 +1,4 @@
-.\"	$NetBSD: 1.6.t,v 1.4 2003/08/07 10:30:49 agc Exp $
+.\"	$NetBSD: 1.6.t,v 1.4.60.1 2014/08/20 00:02:29 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,8 +29,8 @@
 .\"
 .\"	@(#)1.6.t	8.5 (Berkeley) 6/1/94
 .\"
-.Sh 2 "Resource controls
-.Sh 3 "Process priorities
+.Sh 2 18 "Resource controls
+.Sh 3 18 "Process priorities
 .PP
 The system gives CPU scheduling priority to processes that have not used
 CPU time recently.  This tends to favor interactive processes and
@@ -65,7 +65,7 @@ The
 call sets the priorities of all the
 specified processes to the specified value.
 Only the super-user may lower priorities.
-.Sh 3 "Resource utilization
+.Sh 3 18 "Resource utilization
 .PP
 The
 .Fn getrusage
@@ -102,7 +102,7 @@ struct rusage {
 };
 .TE
 .DE
-.Sh 3 "Resource limits
+.Sh 3 19 "Resource limits
 .PP
 The resources of a process for which limits are controlled by the
 kernel are defined in \fI<sys/resource.h>\fP, and controlled by the

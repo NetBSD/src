@@ -1,4 +1,4 @@
-.\"	$NetBSD: ccd.4,v 1.29 2008/05/02 18:11:05 martin Exp $
+.\"	$NetBSD: ccd.4,v 1.29.28.1 2014/08/20 00:02:35 tls Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,14 +51,14 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 5, 2004
+.Dd November 30, 2013
 .Dt CCD 4
 .Os
 .Sh NAME
 .Nm ccd
 .Nd Concatenated disk driver
 .Sh SYNOPSIS
-.Cd "pseudo-device ccd" Op Ar count
+.Cd pseudo-device ccd
 .Sh DESCRIPTION
 The
 .Nm
@@ -93,15 +93,12 @@ In order to compile in support for the
 you must add a line similar
 to the following to your kernel configuration file:
 .Bd -unfilled -offset indent
-pseudo-device	ccd	4	# concatenated disk devices
+pseudo-device	ccd	# concatenated disk devices
 .Ed
 .Pp
-The count argument is how many
+The 
 .Nm Ns s
-memory is allocated for at boot time.
-In this example, no more than 4
-.Nm Ns s
-may be configured.
+are allocated dynamically as needed.
 .Pp
 A
 .Nm

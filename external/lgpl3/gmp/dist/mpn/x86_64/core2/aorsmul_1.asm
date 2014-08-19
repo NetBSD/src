@@ -1,6 +1,7 @@
 dnl  x86-64 mpn_addmul_1 and mpn_submul_1, optimized for "Core 2".
 
-dnl  Copyright 2003, 2004, 2005, 2007, 2008, 2009 Free Software Foundation, Inc.
+dnl  Copyright 2003, 2004, 2005, 2007, 2008, 2009, 2011, 2012 Free Software
+dnl  Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -20,11 +21,16 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 include(`../config.m4')
 
 C	     cycles/limb
-C K8,K9:	 4
-C K10:		 4
-C P4:		 ?
-C P6 core2:	 4.3-4.5 (fluctuating)
-C P6 corei7:	 5
+C AMD K8,K9	 4
+C AMD K10	 4
+C AMD bd1	 5.1
+C AMD bobcat
+C Intel P4	 ?
+C Intel core2	 4.3-4.5 (fluctuating)
+C Intel NHM	 5.0
+C Intel SBR	 4.1
+C Intel atom	 ?
+C VIA nano	 5.25
 
 C INPUT PARAMETERS
 define(`rp',	`%rdi')
@@ -34,19 +40,50 @@ define(`v0',	`%rcx')
 
 ifdef(`OPERATION_addmul_1',`
       define(`ADDSUB',        `add')
-      define(`func',  `mpn_addmul_1')
+      define(`func',     `mpn_addmul_1')
+      define(`func_1c',  `mpn_addmul_1c')
 ')
 ifdef(`OPERATION_submul_1',`
       define(`ADDSUB',        `sub')
-      define(`func',  `mpn_submul_1')
+      define(`func',     `mpn_submul_1')
+      define(`func_1c',  `mpn_submul_1c')
 ')
 
-MULFUNC_PROLOGUE(mpn_addmul_1 mpn_submul_1)
+MULFUNC_PROLOGUE(mpn_addmul_1 mpn_addmul_1c mpn_submul_1 mpn_submul_1c)
+
+ABI_SUPPORT(DOS64)
+ABI_SUPPORT(STD64)
+
+	C For DOS, on the stack we have four saved registers, return address,
+	C space for four register arguments, and finally the carry input.
+
+IFDOS(` define(`carry_in', `72(%rsp)')') dnl
+IFSTD(` define(`carry_in', `%r8')') dnl
 
 ASM_START()
 	TEXT
 	ALIGN(16)
+PROLOGUE(func_1c)
+	FUNC_ENTRY(4)
+	push	%rbx
+	push	%rbp
+	lea	(%rdx), %rbx
+	neg	%rbx
+
+	mov	(up), %rax
+	mov	(rp), %r10
+
+	lea	-16(rp,%rdx,8), rp
+	lea	(up,%rdx,8), up
+	mul	%rcx
+	add	carry_in, %rax
+	adc	$0, %rdx
+	jmp	L(start_nc)
+EPILOGUE()
+
+	ALIGN(16)
 PROLOGUE(func)
+	FUNC_ENTRY(4)
 	push	%rbx
 	push	%rbp
 	lea	(%rdx), %rbx
@@ -59,6 +96,7 @@ PROLOGUE(func)
 	lea	(up,%rdx,8), up
 	mul	%rcx
 
+L(start_nc):
 	bt	$0, R32(%rbx)
 	jc	L(odd)
 
@@ -125,5 +163,6 @@ L(n1):	mov	8(rp), %r10
 	adc	%rdx, %rax
 	pop	%rbp
 	pop	%rbx
+	FUNC_EXIT()
 	ret
 EPILOGUE()

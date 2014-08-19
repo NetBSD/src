@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3lcd.c,v 1.6 2012/02/12 16:34:08 matt Exp $	*/
+/*	$NetBSD: psh3lcd.c,v 1.6.6.1 2014/08/20 00:03:03 tls Exp $	*/
 /*
  * Copyright (c) 2005 KIYOHARA Takashi
  * All rights reserved.
@@ -249,13 +249,13 @@ static void
 psh3lcd_attach(device_t parent __unused, device_t self, void *aux __unused)
 {
 	struct psh3lcd_softc *sc = device_private(self);
-	uint8_t bcr0, bcr1, bcr2;
+	uint8_t bcr0;
 
 	sc->sc_dev = self;
 
 	bcr0 = _reg_read_1(PSH3LCD_BRIGHTNESS_REG0);
-	bcr1 = _reg_read_1(PSH3LCD_BRIGHTNESS_REG1);
-	bcr2 = _reg_read_1(PSH3LCD_BRIGHTNESS_REG2);
+	(void)_reg_read_1(PSH3LCD_BRIGHTNESS_REG1);
+	(void)_reg_read_1(PSH3LCD_BRIGHTNESS_REG2);
 	if (bcr0 == 0) {
 		sc->sc_set_brightness = psh3lcd_xx0_set_brightness;
 		sc->sc_brightness = psh3lcd_xx0_bcd_get();

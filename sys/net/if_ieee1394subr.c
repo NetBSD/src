@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.45 2010/04/05 07:22:23 joerg Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.45.18.1 2014/08/20 00:04:34 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.45 2010/04/05 07:22:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.45.18.1 2014/08/20 00:04:34 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -356,10 +356,12 @@ ieee1394_fragment(struct ifnet *ifp, struct mbuf *m0, int maxsize,
 void
 ieee1394_input(struct ifnet *ifp, struct mbuf *m, uint16_t src)
 {
+	pktqueue_t *pktq = NULL;
 	struct ifqueue *inq;
 	uint16_t etype;
 	int s;
 	struct ieee1394_unfraghdr *iuh;
+	int isr = 0;
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
@@ -407,20 +409,18 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m, uint16_t src)
 	switch (etype) {
 #ifdef INET
 	case ETHERTYPE_IP:
-		schednetisr(NETISR_IP);
-		inq = &ipintrq;
+		pktq = ip_pktq;
 		break;
 
 	case ETHERTYPE_ARP:
-		schednetisr(NETISR_ARP);
+		isr = NETISR_ARP;
 		inq = &arpintrq;
 		break;
 #endif /* INET */
 
 #ifdef INET6
 	case ETHERTYPE_IPV6:
-		schednetisr(NETISR_IPV6);
-		inq = &ip6intrq;
+		pktq = ip6_pktq;
 		break;
 #endif /* INET6 */
 
@@ -429,12 +429,21 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m, uint16_t src)
 		return;
 	}
 
+	if (__predict_true(pktq)) {
+		if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
+			m_freem(m);
+		}
+		return;
+	}
+
 	s = splnet();
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		m_freem(m);
-	} else
+	} else {
 		IF_ENQUEUE(inq, m);
+		schednetisr(isr);
+	}
 	splx(s);
 }
 

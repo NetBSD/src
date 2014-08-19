@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.48.2.2 2013/06/23 06:29:05 tls Exp $	*/
+/*	$NetBSD: ffs.c,v 1.48.2.3 2014/08/20 00:05:09 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.48.2.2 2013/06/23 06:29:05 tls Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.48.2.3 2014/08/20 00:05:09 tls Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -1069,7 +1069,7 @@ ffs_write_inode(union dinode *dp, uint32_t ino, const fsinfo_t *fsopts)
 		printf("ffs_write_inode: din %p ino %u cg %d cgino %d\n",
 		    dp, ino, cg, cgino);
 
-	ffs_rdfs(fsbtodb(fs, cgtod(fs, cg)), (int)fs->fs_cgsize, &sbbuf,
+	ffs_rdfs(FFS_FSBTODB(fs, cgtod(fs, cg)), (int)fs->fs_cgsize, &sbbuf,
 	    fsopts);
 	cgp = (struct cg *)sbbuf;
 	if (!cg_chkmagic(cgp, fsopts->needswap))
@@ -1112,7 +1112,7 @@ ffs_write_inode(union dinode *dp, uint32_t ino, const fsinfo_t *fsopts)
 			dip->di_gen = random() / 2 + 1;
 			dip++;
 		}
-		ffs_wtfs(fsbtodb(fs, ino_to_fsba(fs,
+		ffs_wtfs(FFS_FSBTODB(fs, ino_to_fsba(fs,
 				  cg * fs->fs_ipg + initediblk)),
 		    fs->fs_bsize, buf, fsopts);
 		initediblk += FFS_INOPB(fs);
@@ -1120,11 +1120,11 @@ ffs_write_inode(union dinode *dp, uint32_t ino, const fsinfo_t *fsopts)
 	}
 
 
-	ffs_wtfs(fsbtodb(fs, cgtod(fs, cg)), (int)fs->fs_cgsize, &sbbuf,
+	ffs_wtfs(FFS_FSBTODB(fs, cgtod(fs, cg)), (int)fs->fs_cgsize, &sbbuf,
 	    fsopts);
 
 					/* now write inode */
-	d = fsbtodb(fs, ino_to_fsba(fs, ino));
+	d = FFS_FSBTODB(fs, ino_to_fsba(fs, ino));
 	ffs_rdfs(d, fs->fs_bsize, buf, fsopts);
 	if (fsopts->needswap) {
 		if (ffs_opts->version == 1)

@@ -1,6 +1,5 @@
 /* Interface for common GDB/MI data
-   Copyright (C) 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +17,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
+#include "gdb_assert.h"
 #include "mi-common.h"
 
 static const char * const async_reason_string_lookup[] =
@@ -34,22 +34,20 @@ static const char * const async_reason_string_lookup[] =
   "exited",
   "exited-normally",
   "signal-received",
+  "solib-event",
+  "fork",
+  "vfork",
+  "syscall-entry",
+  "syscall-return",
+  "exec",
   NULL
 };
+
+gdb_static_assert (ARRAY_SIZE (async_reason_string_lookup)
+		   == EXEC_ASYNC_LAST + 1);
 
 const char *
 async_reason_lookup (enum async_reply_reason reason)
 {
   return async_reason_string_lookup[reason];
-}
-
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_gdb_mi_common;
-
-void
-_initialize_gdb_mi_common (void)
-{
-  if (ARRAY_SIZE (async_reason_string_lookup) != EXEC_ASYNC_LAST + 1)
-    internal_error (__FILE__, __LINE__,
-		    _("async_reason_string_lookup is inconsistent"));
 }

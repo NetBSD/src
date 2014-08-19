@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.138.2.1 2013/02/25 00:29:10 tls Exp $	*/
+/*	$NetBSD: db_command.c,v 1.138.2.2 2014/08/20 00:03:35 tls Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.138.2.1 2013/02/25 00:29:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.138.2.2 2014/08/20 00:03:35 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -969,6 +969,7 @@ static void
 db_map_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
+#ifdef _KERNEL
 	bool full = false;
 
 	if (modif[0] == 'f')
@@ -977,7 +978,6 @@ db_map_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	if (have_addr == false)
 		addr = (db_expr_t)(uintptr_t)db_read_ptr("kernel_map");
 
-#ifdef _KERNEL
 	uvm_map_printit((struct vm_map *)(uintptr_t) addr, full, db_printf);
 #endif	/* XXX CRASH(8) */
 }
@@ -987,12 +987,12 @@ static void
 db_object_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
+#ifdef _KERNEL /* XXX CRASH(8) */
 	bool full = false;
 
 	if (modif[0] == 'f')
 		full = true;
 
-#ifdef _KERNEL /* XXX CRASH(8) */
 	uvm_object_printit((struct uvm_object *)(uintptr_t) addr, full,
 	    db_printf);
 #endif
@@ -1003,12 +1003,12 @@ static void
 db_page_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
+#ifdef _KERNEL /* XXX CRASH(8) */
 	bool full = false;
 
 	if (modif[0] == 'f')
 		full = true;
 
-#ifdef _KERNEL /* XXX CRASH(8) */
 	uvm_page_printit((struct vm_page *)(uintptr_t) addr, full, db_printf);
 #endif
 }
@@ -1029,12 +1029,12 @@ static void
 db_buf_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
+#ifdef _KERNEL /* XXX CRASH(8) */
 	bool full = false;
 
 	if (modif[0] == 'f')
 		full = true;
 
-#ifdef _KERNEL /* XXX CRASH(8) */
 	vfs_buf_print((struct buf *)(uintptr_t) addr, full, db_printf);
 #endif
 }
@@ -1102,12 +1102,12 @@ static void
 db_vnode_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
+#ifdef _KERNEL /* XXX CRASH(8) */
 	bool full = false;
 
 	if (modif[0] == 'f')
 		full = true;
 
-#ifdef _KERNEL /* XXX CRASH(8) */
 	vfs_vnode_print((struct vnode *)(uintptr_t) addr, full, db_printf);
 #endif
 }
@@ -1127,12 +1127,12 @@ static void
 db_mount_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
+#ifdef _KERNEL	/* XXX CRASH(8) */
 	bool full = false;
 
 	if (modif[0] == 'f')
 		full = true;
 
-#ifdef _KERNEL	/* XXX CRASH(8) */
 	vfs_mount_print((struct mount *)(uintptr_t) addr, full, db_printf);
 #endif
 }

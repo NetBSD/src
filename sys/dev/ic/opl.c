@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.39 2012/04/09 10:18:16 plunky Exp $	*/
+/*	$NetBSD: opl.c,v 1.39.2.1 2014/08/20 00:03:38 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.39 2012/04/09 10:18:16 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.39.2.1 2014/08/20 00:03:38 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,8 +158,9 @@ opl_attach(struct opl_softc *sc)
 	mutex_exit(sc->lock);
 
 	sc->syn.mets = &opl3_midi;
-	snprintf(sc->syn.name, sizeof(sc->syn.name), "%sYamaha OPL%d",
-	    sc->syn.name, sc->model);
+	size_t len = strlen(sc->syn.name);
+	snprintf(sc->syn.name + len, sizeof(sc->syn.name) - len, "Yamaha OPL%d",
+	    sc->model);
 	sc->syn.data = sc;
 	sc->syn.nvoice = sc->model == OPL_2 ? OPL2_NVOICE : OPL3_NVOICE;
 	sc->syn.lock = sc->lock;

@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.22.2.2 2013/06/23 06:21:06 tls Exp $	*/
+/*	$NetBSD: strftime.c,v 1.22.2.3 2014/08/20 00:02:16 tls Exp $	*/
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -6,13 +6,14 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.22.2.2 2013/06/23 06:21:06 tls Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.22.2.3 2014/08/20 00:02:16 tls Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
 #include <stddef.h>
+#include <assert.h>
 #include <locale.h>
 #include "setlocale_local.h"
 
@@ -314,11 +315,10 @@ label:
 					mkt = mktime(&tm);
 					/* CONSTCOND */
 					if (TYPE_SIGNED(time_t))
-						(void) snprintf(buf, sizeof(buf),
-						    "%lld", (long long) mkt);
-					else	(void) snprintf(buf, sizeof(buf),
-						    "%llu", (unsigned long long)
-						    mkt);
+						(void)snprintf(buf, sizeof(buf),
+						    "%jd", (intmax_t) mkt);
+					else	(void)snprintf(buf, sizeof(buf),
+						    "%ju", (uintmax_t) mkt);
 					pt = _add(buf, pt, ptlim);
 				}
 				continue;
@@ -496,7 +496,7 @@ label:
 				continue;
 			case 'z':
 				{
-				int		diff;
+				long		diff;
 				char const *	sign;
 
 				if (t->tm_isdst < 0)
@@ -505,7 +505,7 @@ label:
 				diff = (int)t->TM_GMTOFF;
 #else /* !defined TM_GMTOFF */
 				/*
-				** C99 says that the UTC offset must
+				** C99 says that the UT offset must
 				** be computed by looking only at
 				** tm_isdst. This requirement is
 				** incorrect, since it means the code
@@ -574,7 +574,8 @@ label:
 				diff /= SECSPERMIN;
 				diff = (diff / MINSPERHOUR) * 100 +
 					(diff % MINSPERHOUR);
-				pt = _conv(diff, "%04d", pt, ptlim);
+				_DIAGASSERT(__type_fit(int, diff));
+				pt = _conv((int)diff, "%04d", pt, ptlim);
 				}
 				continue;
 #if 0
@@ -646,8 +647,8 @@ static char *
 _yconv(const int a, const int b, const int convert_top, const int convert_yy,
     char *pt, const char *const ptlim)
 {
-	register int	lead;
-	register int	trail;
+	int	lead;
+	int	trail;
 
 #define DIVISOR	100
 	trail = a % DIVISOR + b % DIVISOR;

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.53 2010/11/13 13:52:02 uebayasi Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.53.18.1 2014/08/20 00:03:38 tls Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -28,7 +28,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.53 2010/11/13 13:52:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.53.18.1 2014/08/20 00:03:38 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -726,7 +726,9 @@ siop_ma(struct siop_common_cmd *siop_cmd)
 {
 	int offset, dbc, sstat;
 	struct siop_common_softc *sc = siop_cmd->siop_sc;
+#ifdef DEBUG_DR
 	scr_table_t *table; /* table with partial xfer */
+#endif
 
 	/*
 	 * compute how much of the current table didn't get handled when
@@ -742,8 +744,8 @@ siop_ma(struct siop_common_cmd *siop_cmd)
 		    offset);
 		return;
 	}
-	table = &siop_cmd->siop_tables->data[offset];
 #ifdef DEBUG_DR
+	table = &siop_cmd->siop_tables->data[offset];
 	printf("siop_ma: offset %d count=%d addr=0x%x ", offset,
 	    table->count, table->addr);
 #endif
@@ -958,7 +960,7 @@ int
 siop_modechange(struct siop_common_softc *sc)
 {
 	int retry;
-	int sist0, sist1, stest2;
+	int sist1, stest2;
 
 	for (retry = 0; retry < 5; retry++) {
 		/*
@@ -968,7 +970,7 @@ siop_modechange(struct siop_common_softc *sc)
 		 * hopefully this will not happen often.
 		 */
 		delay(100000);
-		sist0 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SIST0);
+		(void)bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SIST0);
 		sist1 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SIST1);
 		if (sist1 & SIEN1_SBMC)
 			continue; /* we got an irq again */

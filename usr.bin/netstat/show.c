@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.15 2011/11/11 15:09:33 gdt Exp $	*/
+/*	$NetBSD: show.c,v 1.15.6.1 2014/08/20 00:05:01 tls Exp $	*/
 /*	$OpenBSD: show.c,v 1.1 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
@@ -273,6 +273,8 @@ p_rtentry(struct rt_msghdr *rtm)
 		p_tag(rti_info[RTAX_TAG]);
 	printf(" %.16s", if_indextoname(rtm->rtm_index, ifbuf));
 	putchar('\n');
+	if (vflag)
+		pr_rtrmx(&rtm->rtm_rmx);
 }
 
 /*
@@ -330,19 +332,9 @@ p_sockaddr(struct sockaddr *sa, struct sockaddr *mask, int flags, int width)
 	case AF_INET6:
 	    {
 		struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)sa;
-		struct in6_addr *in6 = &sa6->sin6_addr;
 
-		/*
-		 * XXX: This is a special workaround for KAME kernels.
-		 * sin6_scope_id field of SA should be set in the future.
-		 */
-		if (IN6_IS_ADDR_LINKLOCAL(in6) ||
-		    IN6_IS_ADDR_MC_LINKLOCAL(in6)) {
-			/* XXX: override is ok? */
-			sa6->sin6_scope_id = (u_int32_t)ntohs(*(u_short *)
-			    &in6->s6_addr[2]);
-			*(u_short *)&in6->s6_addr[2] = 0;
-		}
+		inet6_getscopeid(sa6, INET6_IS_ADDR_LINKLOCAL|
+		    INET6_IS_ADDR_MC_LINKLOCAL);
 		if (flags & RTF_HOST)
 			cp = routename((struct sockaddr *)sa6);
 		else
@@ -432,15 +424,9 @@ routename(struct sockaddr *sa)
 		memcpy(&sin6, sa, sa->sa_len);
 		sin6.sin6_len = sizeof(struct sockaddr_in6);
 		sin6.sin6_family = AF_INET6;
-		if (sa->sa_len == sizeof(struct sockaddr_in6) &&
-		    (IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr) ||
-		     IN6_IS_ADDR_MC_LINKLOCAL(&sin6.sin6_addr)) &&
-		    sin6.sin6_scope_id == 0) {
-			sin6.sin6_scope_id =
-			    ntohs(*(u_int16_t *)&sin6.sin6_addr.s6_addr[2]);
-			sin6.sin6_addr.s6_addr[2] = 0;
-			sin6.sin6_addr.s6_addr[3] = 0;
-		}
+		if (sa->sa_len == sizeof(struct sockaddr_in6))
+			inet6_getscopeid(&sin6, INET6_IS_ADDR_LINKLOCAL|
+			    INET6_IS_ADDR_MC_LINKLOCAL);
 		return (routename6(&sin6));
 	    }
 
@@ -719,6 +705,7 @@ char *
 mpls_ntoa(const struct sockaddr *sa)
 {
 	static char obuf[16];
+	size_t olen;
 	const union mpls_shim *pms;
 	union mpls_shim ms;
 	int psize = sizeof(struct sockaddr_mpls);
@@ -731,7 +718,8 @@ mpls_ntoa(const struct sockaddr *sa)
 	while(psize < sa->sa_len) {
 		pms++;
 		ms.s_addr = ntohl(pms->s_addr);
-		snprintf(obuf, sizeof(obuf), "%s,%u", obuf,
+		olen = strlen(obuf);
+		snprintf(obuf + olen, sizeof(obuf) - olen, ",%u",
 		    ms.shim.label);
 		psize+=sizeof(ms);
 	}

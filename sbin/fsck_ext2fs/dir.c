@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.23.12.2 2013/06/23 06:28:51 tls Exp $	*/
+/*	$NetBSD: dir.c,v 1.23.12.3 2014/08/20 00:02:24 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.23.12.2 2013/06/23 06:28:51 tls Exp $");
+__RCSID("$NetBSD: dir.c,v 1.23.12.3 2014/08/20 00:02:24 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -558,7 +558,7 @@ expanddir(struct ext2fs_dinode *dp, char *name)
 	struct bufarea *bp;
 	char *firstblk;
 
-	lastbn = lblkno(&sblock, inosize(dp));
+	lastbn = ext2_lblkno(&sblock, inosize(dp));
 	if (lastbn >= EXT2FS_NDADDR - 1 || fs2h32(dp->e2di_blocks[lastbn]) == 0 ||
 		inosize(dp) == 0) {
 		return (0);

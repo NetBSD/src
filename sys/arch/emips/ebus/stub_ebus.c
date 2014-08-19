@@ -1,4 +1,4 @@
-/*	$NetBSD: stub_ebus.c,v 1.1.20.1 2012/11/20 03:01:12 tls Exp $	*/
+/*	$NetBSD: stub_ebus.c,v 1.1.20.2 2014/08/20 00:02:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -98,16 +98,18 @@ static int     stubclose(dev_t device, int flags, int fmt, struct lwp *process);
 
 /* just define the character device handlers because that is all we need */
 const struct cdevsw stub_cdevsw = {
-	stubopen,
-	stubclose,
-	noread,
-	nowrite,
-	noioctl,
-	nostop,
-	notty,
-	nopoll,
-	nommap,
-	nokqfilter,
+	.d_open = stubopen,
+	.d_close = stubclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 /*

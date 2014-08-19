@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/10/16 19:41:07 christos Exp $
+#	$NetBSD: Makefile,v 1.2.8.1 2014/08/19 23:59:38 tls Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -9,9 +9,9 @@ LIB=		readline
 
 NOGCCERROR=	yes
 
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/arch/${GDB_MACHINE_ARCH}/defs.mk"
 
-CPPFLAGS+=	-DHAVE_CONFIG_H -I${.CURDIR}/arch/${MACHINE_ARCH} \
+CPPFLAGS+=	-DHAVE_CONFIG_H -I${.CURDIR}/arch/${GDB_MACHINE_ARCH} \
 		-I${DIST}/ \
 		-DHAVE_SYS_IOCTL_H \
 		${G_CCFLAGS:M-DRL_*} \

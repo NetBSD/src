@@ -1,6 +1,8 @@
 dnl  IA-64 mpn_divrem_1 and mpn_preinv_divrem_1 -- Divide an mpn number by an
 dnl  unnormalized limb.
 
+dnl  Contributed to the GNU project by Torbjorn Granlund.
+
 dnl  Copyright 2002, 2004, 2005 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.

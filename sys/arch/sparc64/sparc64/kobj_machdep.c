@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.4 2010/05/02 11:43:30 martin Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.4.18.1 2014/08/20 00:03:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 Jake Burkholder.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.4 2010/05/02 11:43:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.4.18.1 2014/08/20 00:03:25 tls Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -169,10 +169,10 @@ static const long reloc_target_bitmask[] = {
 	_BM(22), _BM(10), _BM(22),	/* _PC_HH22, _PC_HM10, _PC_LM22 */
 	_BM(16), _BM(19),		/* _WDISP16, _WDISP19 */
 	-1,				/* GLOB_JMP */
-	_BM(7), _BM(5), _BM(6)		/* _7, _5, _6 */
+	_BM(7), _BM(5), _BM(6),		/* _7, _5, _6 */
 	-1, -1,				/* DISP64, PLT64 */
 	_BM(22), _BM(13),		/* HIX22, LOX10 */
-	_BM(22), _BM(10), _BM(13),	/* H44, M44, L44 */
+	_BM(22), _BM(10), _BM(12),	/* H44, M44, L44 */
 	-1, -1, _BM(16),		/* REGISTER, UA64, UA16 */
 #undef _BM
 };

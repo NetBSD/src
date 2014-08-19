@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.66 2011/07/20 12:06:00 macallan Exp $
+#	$NetBSD: genassym.cf,v 1.66.12.1 2014/08/20 00:03:25 tls Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -137,7 +137,11 @@ define	PM_RESIDENT	offsetof(struct pmap, pm_stats.resident_count)
 define	PM_WIRED	offsetof(struct pmap, pm_stats.wired_count)
 
 # the assembler doesn't grok C constants with LL suffix
-define	A_TLB_TSB_LOCK	TLB_TSB_LOCK
+define	A_SUN4U_TLB_TSB_LOCK	SUN4U_TLB_TSB_LOCK
+ifdef SUN4V
+define	A_SUN4V_TLB_ACCESS	SUN4V_TLB_ACCESS
+define	A_SUN4V_TLB_TSB_LOCK	SUN4V_TLB_TSB_LOCK
+endif
 
 # CPU info structure
 define	CI_SELF		offsetof(struct cpu_info, ci_self)
@@ -146,10 +150,10 @@ define	CI_CPCB		offsetof(struct cpu_info, ci_cpcb)
 define	CI_NEXT		offsetof(struct cpu_info, ci_next)
 define	CI_NUMBER	offsetof(struct cpu_info, ci_data.cpu_index)
 define	CI_FPLWP	offsetof(struct cpu_info, ci_fplwp)
-define	CI_UPAID	offsetof(struct cpu_info, ci_cpuid)
 define	CI_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CI_SPINUP	offsetof(struct cpu_info, ci_spinup)
 define	CI_PADDR	offsetof(struct cpu_info, ci_paddr)
+define	CI_CPUID	offsetof(struct cpu_info, ci_cpuid)
 define	CI_WANT_AST	offsetof(struct cpu_info, ci_want_ast)
 define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CI_EINTSTACK	offsetof(struct cpu_info, ci_eintstack)
@@ -163,6 +167,7 @@ define	CI_TICK_IH	offsetof(struct cpu_info, ci_tick_ih)
 define	CI_CTXBUSY	offsetof(struct cpu_info, ci_ctxbusy)
 define	CI_TSB_DMMU	offsetof(struct cpu_info, ci_tsb_dmmu)
 define	CI_TSB_IMMU	offsetof(struct cpu_info, ci_tsb_immu)
+define	CI_MMFSA	offsetof(struct cpu_info, ci_mmfsa)
 ifdef MULTIPROCESSOR
 define	CI_IPIEVC	offsetof(struct cpu_info, ci_ipi_evcnt[0].ev_count)
 endif

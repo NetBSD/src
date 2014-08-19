@@ -1,4 +1,7 @@
 @c This summary of BFD is shared by the BFD and LD docs.
+@c Copyright 2012
+@c Free Software Foundation, Inc.
+
 When an object file is opened, BFD subroutines automatically determine
 the format of the input object file.  They then build a descriptor in
 memory with pointers to routines that will be used to access elements of

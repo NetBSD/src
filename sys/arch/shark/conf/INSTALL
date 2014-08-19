@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.50.2.2 2013/06/23 06:20:11 tls Exp $
+#	$NetBSD: INSTALL,v 1.50.2.3 2014/08/20 00:03:23 tls Exp $
 #
 #	Shark installation kernel
 #
@@ -66,7 +66,6 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks (Required
 				# if you enable the pseudo-device ipl).
 
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP

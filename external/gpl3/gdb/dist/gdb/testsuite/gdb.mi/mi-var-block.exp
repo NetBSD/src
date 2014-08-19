@@ -1,5 +1,4 @@
-# Copyright 1999, 2000, 2001, 2002, 2004, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 1999-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,10 +27,9 @@ if [mi_gdb_start] {
     continue
 }
 
-set testfile "var-cmd"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/mi-var-block
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-DFAKEARGV}] != "" } {
+standard_testfile var-cmd.c
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
     untested mi-var-block.exp
     return -1
 }
@@ -53,13 +51,13 @@ mi_gdb_test "-var-create foo * foo" \
 # step to "foo = 123;"
 mi_step_to "do_block_tests" "" "var-cmd.c" \
     [gdb_get_line_number "foo = 123;"] \
-    "step at do_block_test"
+    "step at do_block_test 1"
 
 
 # Be paranoid and assume 3.2 created foo
 mi_gdb_test "-var-delete foo" \
 	"\\^error,msg=\"Variable object not found\"" \
-	"delete var foo"
+	"delete var foo 1"
 
 
 # Test: c_variable-3.3
@@ -69,7 +67,7 @@ mi_create_varobj "foo" "foo" "create local variable foo"
 # step to "foo2 = 123;"
 mi_step_to "do_block_tests" "" "var-cmd.c" \
     [gdb_get_line_number "foo2 = 123;"] \
-    "step at do_block_test"
+    "step at do_block_test 2"
 
 # Test: c_variable-3.4
 # Desc: check foo, cb changed
@@ -80,7 +78,7 @@ mi_gdb_test "-var-update *" \
 # step to "foo = 321;"
 mi_step_to "do_block_tests" "" "var-cmd.c" \
     [gdb_get_line_number "foo = 321;"] \
-    "step at do_block_test"
+    "step at do_block_test 3"
 
 # Test: c_variable-3.5
 # Desc: create inner block foo
@@ -89,7 +87,7 @@ mi_create_varobj "inner_foo" "foo" "create local variable inner_foo"
 # step to "foo2 = 0;"
 mi_step_to "do_block_tests" "" "var-cmd.c" \
     [gdb_get_line_number "foo2 = 0;"] \
-    "step at do_block_test"
+    "step at do_block_test 4"
 
 # Test: c_variable-3.6
 # Desc: create foo2
@@ -121,7 +119,7 @@ mi_gdb_test "-var-delete inner_foo" \
 # step to "foo = 0;"
 mi_step_to "do_block_tests" "" "var-cmd.c" \
     [gdb_get_line_number "foo = 0;"] \
-    "step at do_block_test"
+    "step at do_block_test 5"
 
 # Test: c_variable-3.8
 # Desc: check that foo2 out of scope (known gdb problem)
@@ -134,7 +132,7 @@ clear_xfail *-*-*
 # step to "cb = 21;"
 mi_step_to "do_block_tests" "" "var-cmd.c" \
     [gdb_get_line_number "cb = 21;"] \
-    "step at do_block_test"
+    "step at do_block_test 6"
 
 # Test: c_variable-3.9
 # Desc: check that only cb is in scope (known gdb problem)
@@ -161,7 +159,7 @@ mi_gdb_test "-var-update cb" \
 # Done with block tests
 mi_gdb_test "-var-delete foo" \
 	"\\^done,ndeleted=\"1\"" \
-	"delete var foo"
+	"delete var foo 2"
 
 mi_gdb_test "-var-delete foo2" \
 	"\\^done,ndeleted=\"1\"" \

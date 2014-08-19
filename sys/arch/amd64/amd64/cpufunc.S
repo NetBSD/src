@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.21 2011/09/24 21:24:52 jym Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.21.12.1 2014/08/20 00:02:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -244,6 +244,21 @@ ENTRY(rdmsr_safe)
 	movq	%rax, PCB_ONFAULT(%r8)
 	ret
 
+ENTRY(rdxcr)
+	movq	%rdi, %rcx
+	xgetbv
+	shlq	$32, %rdx
+	orq	%rdx, %rax
+	ret
+
+ENTRY(wrxcr)
+	movq	%rdi, %rcx
+	movq	%rsi, %rax
+	movq	%rsi, %rdx
+	shrq	$32, %rdx
+	xsetbv
+	ret
+
 /*
  * MSR operations fault handler
  */
@@ -426,6 +441,10 @@ ENTRY(fnstcw)
 	fnstcw	(%rdi)
 	ret
 
+ENTRY(fngetsw)
+	fnstsw	%ax
+	ret
+
 ENTRY(fnstsw)
 	fnstsw	(%rdi)
 	ret
@@ -465,7 +484,32 @@ ENTRY(fxrstor)
 
 ENTRY(fldummy)
 	ffree	%st(7)
-	flds	(%rdi)
+	fldz
+	ret
+
+ENTRY(xsave)
+	movq	%rsi, %rax
+	movq	%rsi, %rdx
+	shrq	$32, %rdx
+	xsave	(%rdi)
+	ret
+
+ENTRY(xsaveopt)
+	movq	%rsi, %rax
+	movq	%rsi, %rdx
+	shrq	$32, %rdx
+	xsaveopt	(%rdi)
+	ret
+
+ENTRY(xrstor)
+	movq	%rsi, %rax
+	movq	%rsi, %rdx
+	shrq	$32, %rdx
+	xrstor	(%rdi)
+	ret
+
+ENTRY(x86_stmxcsr)
+	stmxcsr	(%rdi)
 	ret
 
 ENTRY(x86_ldmxcsr)

@@ -1,0 +1,79 @@
+#	$NetBSD: files.i915drmkms,v 1.6.2.2 2014/08/20 00:04:20 tls Exp $
+
+define	intelfbbus	{ }
+device	i915drmkms: drmkms, drmkms_pci, intelfbbus
+attach	i915drmkms at pci
+
+device	intelfb: intelfbbus, genfb, wsemuldisplaydev
+attach	intelfb at intelfbbus
+
+makeoptions	i915drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/i915"
+makeoptions	i915drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/i915drm"
+
+makeoptions 	i915drmkms 	"CWARNFLAGS.i915_drv.c"+="-Wno-override-init"
+makeoptions 	i915drmkms 	"CWARNFLAGS.intel_display.c"+="-Wno-shadow"
+makeoptions 	i915drmkms 	"CWARNFLAGS.intel_panel.c"+="-Wno-shadow"
+makeoptions 	i915drmkms 	"CWARNFLAGS.intel_pm.c"+="-Wno-shadow"
+
+# XXX x86 kludge.
+#makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_ACPI"
+makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_I915_FBDEV"
+
+file	external/bsd/drm2/dist/drm/i915/dvo_ch7017.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/dvo_ch7xxx.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/dvo_ivch.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/dvo_ns2501.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/dvo_sil164.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/dvo_tfp410.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_cmd_parser.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/i915_debugfs.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_dma.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_drv.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_gem.c		i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_gem_context.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_gem_debug.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/i915_gem_dmabuf.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_gem_evict.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_gem_execbuffer.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_gem_gtt.c		i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_gem_stolen.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_gem_tiling.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_gpu_error.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/i915_ioc32.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_irq.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_params.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_suspend.c	i915drmkms
+file	external/bsd/drm2/i915drm/i915_sysfs.c		i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_ums.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/intel_acpi.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_bios.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_crt.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_ddi.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_display.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_dp.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_dsi.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_dsi_cmd.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_dsi_pll.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_dvo.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_fbdev.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_hdmi.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_i2c.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_lvds.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_modes.c	i915drmkms
+# XXX Restore once I figure out what this does...
+#file	external/bsd/drm2/dist/drm/i915/intel_opregion.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_overlay.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_panel.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_pm.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_ringbuffer.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_sdvo.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_sideband.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_sprite.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_tv.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_uncore.c	i915drmkms
+
+file	external/bsd/drm2/i915drm/i915_module.c		i915drmkms
+file	external/bsd/drm2/i915drm/i915_pci.c		i915drmkms
+file	external/bsd/drm2/i915drm/intel_gtt.c		i915drmkms
+
+file	external/bsd/drm2/i915drm/intelfb.c		intelfb

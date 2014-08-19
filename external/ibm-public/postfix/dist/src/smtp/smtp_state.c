@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_state.c,v 1.1.1.1 2009/06/23 10:08:54 tron Exp $	*/
+/*	$NetBSD: smtp_state.c,v 1.1.1.1.16.1 2014/08/19 23:59:44 tls Exp $	*/
 
 /*++
 /* NAME
@@ -64,7 +64,11 @@ SMTP_STATE *smtp_state_alloc(void)
     state->session = 0;
     state->status = 0;
     state->space_left = 0;
-    state->nexthop_domain = 0;
+    state->iterator->request_nexthop = vstring_alloc(100);
+    state->iterator->dest = vstring_alloc(100);
+    state->iterator->host = vstring_alloc(100);
+    state->iterator->addr = vstring_alloc(100);
+    state->iterator->saved_dest = vstring_alloc(100);
     if (var_smtp_cache_conn) {
 	state->dest_label = vstring_alloc(10);
 	state->dest_prop = vstring_alloc(10);
@@ -79,24 +83,6 @@ SMTP_STATE *smtp_state_alloc(void)
 	state->cache_used = 0;
     }
     state->why = dsb_create();
-
-    /*
-     * The process name, "smtp" or "lmtp", is also used as the DSN server
-     * reply type and for SASL service information lookup. Since all three
-     * external representations are identical there is no reason to transform
-     * from some external form X to some Postfix-specific canonical internal
-     * form, and then to transform from the internal form to external forms Y
-     * and Z.
-     */
-    if (strcmp(var_procname, "lmtp") == 0) {
-	state->misc_flags |= SMTP_MISC_FLAG_USE_LMTP;
-    } else if (strcmp(var_procname, "smtp") == 0) {
-	/* void */
-    } else {
-	msg_fatal("unexpected process name \"%s\" - "
-		  "specify \"smtp\" or \"lmtp\"",
-		  var_procname);
-    }
     return (state);
 }
 
@@ -104,6 +90,15 @@ SMTP_STATE *smtp_state_alloc(void)
 
 void    smtp_state_free(SMTP_STATE *state)
 {
+#ifdef USE_TLS
+    /* The TLS policy cache lifetime is one delivery. */
+    smtp_tls_policy_cache_flush();
+#endif
+    vstring_free(state->iterator->request_nexthop);
+    vstring_free(state->iterator->dest);
+    vstring_free(state->iterator->host);
+    vstring_free(state->iterator->addr);
+    vstring_free(state->iterator->saved_dest);
     if (state->dest_label)
 	vstring_free(state->dest_label);
     if (state->dest_prop)

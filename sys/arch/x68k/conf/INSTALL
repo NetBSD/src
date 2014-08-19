@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.95.2.2 2013/06/23 06:20:14 tls Exp $
+#	$NetBSD: INSTALL,v 1.95.2.3 2014/08/20 00:03:28 tls Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.95.2.2 $"
+#ident 		"INSTALL-$Revision: 1.95.2.3 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -18,7 +18,7 @@ maxusers	4
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on memory-disk
 options 	MEMORY_DISK_SERVER=0	# No user space hooks
-options 	MEMORY_DISK_ROOT_SIZE=3000
+options 	MEMORY_DISK_ROOT_SIZE=3400
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 ## System kernel configuration.  See options(4) for more detail.
@@ -90,7 +90,7 @@ options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 ## intercept.  DDB_HISTORY_SIZE adds up/down arrow command history.
 #options 	DDB			# kernel dynamic debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-#options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
+#options 	DDB_ONPANIC=1		# see also sysctl(7): `ddb.onpanic'
 #options 	PANICBUTTON		# interrupt switch invokes DDB
 
 ## You may also use gdb, on another computer connected to this machine over
@@ -158,7 +158,7 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
 #file-system	KERNFS		# kernel data-structure filesystem
-#file-system	NULLFS		# NULL layered filesystem (buggy)
+#file-system	NULLFS		# NULL layered filesystem
 #file-system 	OVERLAY		# overlay file system
 #file-system	MFS		# memory-based filesystem
 #file-system	FDESC		# user file descriptor filesystem
@@ -192,7 +192,6 @@ options 	INET6		# IPV6
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 #options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
-#options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
 #options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_COMPAT # Compat for IP-Filter

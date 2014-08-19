@@ -1,4 +1,4 @@
-#	$NetBSD: std.armadaxp,v 1.2.2.2 2013/06/23 06:20:04 tls Exp $
+#	$NetBSD: std.armadaxp,v 1.2.2.3 2014/08/20 00:02:53 tls Exp $
 #
 # standard NetBSD/evbarm for ARMADAXP options
 
@@ -19,10 +19,12 @@ options 	__HAVE_PCI_CONF_HOOK		# should be in types.h
 # Build for armv7-a, soft-floats only
 makeoptions	CPUFLAGS="-march=armv7-a -msoft-float"
 
-options 	KERNEL_BASE_EXT=0xc0000000
+options 	KERNEL_BASE_EXT=0x80000000
 options 	STARTUP_PAGETABLE_ADDR=0x00100000
 options 	MEMSTART=0x00000000
 makeoptions	LOADADDRESS="0x00200000"
+makeoptions	KERNEL_BASE_PHYS="0x00200000"
+makeoptions	KERNEL_BASE_VIRT="0x80200000"
 
 makeoptions	BOARDTYPE="armadaxp"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.armadaxp"

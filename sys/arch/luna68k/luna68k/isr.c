@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.21 2011/11/26 04:40:51 tsutsui Exp $	*/
+/*	$NetBSD: isr.c,v 1.21.8.1 2014/08/20 00:03:10 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.21 2011/11/26 04:40:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.21.8.1 2014/08/20 00:03:10 tls Exp $");
 
 /*
  * Link and dispatch interrupts.
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.21 2011/11/26 04:40:51 tsutsui Exp $");
 isr_autovec_list_t isr_autovec[NISRAUTOVEC];
 struct	isr_vectored isr_vectored[NISRVECTORED];
 int	idepth;
-volatile int	ssir;
 
 extern	int intrcnt[];		/* from locore.s */
 extern	void (*vectab[])(void);

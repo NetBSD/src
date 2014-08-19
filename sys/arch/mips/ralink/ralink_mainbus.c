@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_mainbus.c,v 1.2 2011/07/28 15:38:49 matt Exp $	*/
+/*	$NetBSD: ralink_mainbus.c,v 1.2.12.1 2014/08/20 00:03:13 tls Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_mainbus.c,v 1.2 2011/07/28 15:38:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_mainbus.c,v 1.2.12.1 2014/08/20 00:03:13 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,16 +86,33 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	mainbus_softc_t * const sc = device_private(self);
 	struct mainbus_attach_args ma;
+	union {
+		char buf[9];
+		uint32_t id[2];
+	} xid;
 
 	mainbus_found = true;
 
-	aprint_naive(": Ralink System Bus\n");
-	aprint_normal(": Ralink System Bus\n");
-
 	sc->sc_dev = self;
+	sc->sc_memt = &ra_bus_memt;
+	sc->sc_dmat = &ra_bus_dmat;
+
+	xid.id[0] = bus_space_read_4(sc->sc_memt, ra_sysctl_bsh, RA_SYSCTL_ID0);
+	xid.id[1] = bus_space_read_4(sc->sc_memt, ra_sysctl_bsh, RA_SYSCTL_ID1);
+	xid.buf[8] = '\0';
+	if (xid.buf[6] == ' ') {
+		xid.buf[6] = '\0';
+	} else if (xid.buf[7] == ' ') {
+		xid.buf[7] = '\0';
+	}
+	const char * const manuf = xid.buf[0] == 'M' ? "Mediatek" : "Ralink";
+
+	aprint_naive(": %s %s System Bus\n", manuf, xid.buf);
+	aprint_normal(": %s %s System Bus\n", manuf, xid.buf);
+
 	ma.ma_name = NULL;
-	ma.ma_memt = sc->sc_memt = &ra_bus_memt;
-	ma.ma_dmat = sc->sc_dmat = &ra_bus_dmat;
+	ma.ma_memt = sc->sc_memt;
+	ma.ma_dmat = sc->sc_dmat;
 
 	/* attach critical devices */
 	mainbus_attach_critical(sc);
@@ -129,7 +146,7 @@ mainbus_find(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	struct mainbus_attach_args * const ma = aux;
 	char devname[16];
 
-	sprintf(devname, "%s%d", cf->cf_name, cf->cf_unit);
+	snprintf(devname, sizeof(devname), "%s%d", cf->cf_name, cf->cf_unit);
 	if (strcmp(ma->ma_name, devname) != 0)
 		return 0;
 

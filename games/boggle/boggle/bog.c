@@ -1,4 +1,4 @@
-/*	$NetBSD: bog.c,v 1.27.8.1 2012/11/20 02:58:46 tls Exp $	*/
+/*	$NetBSD: bog.c,v 1.27.8.2 2014/08/20 00:00:22 tls Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)bog.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: bog.c,v 1.27.8.1 2012/11/20 02:58:46 tls Exp $");
+__RCSID("$NetBSD: bog.c,v 1.27.8.2 2014/08/20 00:00:22 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -377,7 +377,7 @@ playgame(void)
 			else if (!validword(buf))
 				badword();
 			else {
-				int len;
+				size_t len;
 
 				len = strlen(buf) + 1;
 				if (npwords == MAXPWORDS - 1 ||

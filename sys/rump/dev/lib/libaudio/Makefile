@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/05/01 23:19:56 pooka Exp $
+#	$NetBSD: Makefile,v 1.1.24.1 2014/08/20 00:04:37 tls Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev
@@ -7,7 +7,7 @@ LIB=	rumpdev_audio
 IOCONF=	AUDIO.ioconf
 
 SRCS=	audio.c auconv.c aurateconv.c mulaw.c
-SRCS+=	component.c
+SRCS+=	audio_component.c
 
 CPPFLAGS+=	-I${.CURDIR}/../../../librump/rumpvfs
 

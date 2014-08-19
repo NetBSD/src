@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.3 2006/03/21 22:50:13 he Exp $
+#	$NetBSD: Makefile.inc,v 1.3.50.1 2014/08/20 00:02:10 tls Exp $
 
 SRCS+=	strtof.c
 
-.if ${MACHINE_ARCH} != "m68000"
+.if ${MACHINE_ARCH} == "m68k"
 SRCS+=	strtold_pxL.c
 SRCS+=	strtopxL.c
 .endif

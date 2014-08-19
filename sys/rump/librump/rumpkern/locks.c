@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.55.6.1 2013/06/23 06:20:28 tls Exp $	*/
+/*	$NetBSD: locks.c,v 1.55.6.2 2014/08/20 00:04:40 tls Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.55.6.1 2013/06/23 06:20:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.55.6.2 2014/08/20 00:04:40 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -36,6 +36,12 @@ __KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.55.6.1 2013/06/23 06:20:28 tls Exp $");
 #include <rump/rumpuser.h>
 
 #include "rump_private.h"
+
+#ifdef LOCKDEBUG
+const int rump_lockdebug = 1;
+#else
+const int rump_lockdebug = 0;
+#endif
 
 /*
  * Simple lockdebug.  If it's compiled in, it's always active.
@@ -59,8 +65,8 @@ static lockops_t rw_lockops = {
     lockdebug_alloc(lock, ops, (uintptr_t)__builtin_return_address(0))
 #define FREELOCK(lock)			\
     lockdebug_free(lock)
-#define WANTLOCK(lock, shar, try)	\
-    lockdebug_wantlock(lock, (uintptr_t)__builtin_return_address(0), shar, try)
+#define WANTLOCK(lock, shar)	\
+    lockdebug_wantlock(lock, (uintptr_t)__builtin_return_address(0), shar)
 #define LOCKED(lock, shar)		\
     lockdebug_locked(lock, NULL, (uintptr_t)__builtin_return_address(0), shar)
 #define UNLOCKED(lock, shar)		\
@@ -68,7 +74,7 @@ static lockops_t rw_lockops = {
 #else
 #define ALLOCK(a, b)
 #define FREELOCK(a)
-#define WANTLOCK(a, b, c)
+#define WANTLOCK(a, b)
 #define LOCKED(a, b)
 #define UNLOCKED(a, b)
 #endif
@@ -131,7 +137,7 @@ void
 mutex_enter(kmutex_t *mtx)
 {
 
-	WANTLOCK(mtx, false, false);
+	WANTLOCK(mtx, 0);
 	rumpuser_mutex_enter(RUMPMTX(mtx));
 	LOCKED(mtx, false);
 }
@@ -140,7 +146,7 @@ void
 mutex_spin_enter(kmutex_t *mtx)
 {
 
-	WANTLOCK(mtx, false, false);
+	WANTLOCK(mtx, 0);
 	rumpuser_mutex_enter_nowrap(RUMPMTX(mtx));
 	LOCKED(mtx, false);
 }
@@ -152,7 +158,7 @@ mutex_tryenter(kmutex_t *mtx)
 
 	error = rumpuser_mutex_tryenter(RUMPMTX(mtx));
 	if (error == 0) {
-		WANTLOCK(mtx, false, true);
+		WANTLOCK(mtx, 0);
 		LOCKED(mtx, false);
 	}
 	return error == 0;
@@ -224,7 +230,7 @@ rw_enter(krwlock_t *rw, const krw_t op)
 {
 
 
-	WANTLOCK(rw, op == RW_READER, false);
+	WANTLOCK(rw, op == RW_READER);
 	rumpuser_rw_enter(krw2rumprw(op), RUMPRW(rw));
 	LOCKED(rw, op == RW_READER);
 }
@@ -236,7 +242,7 @@ rw_tryenter(krwlock_t *rw, const krw_t op)
 
 	error = rumpuser_rw_tryenter(krw2rumprw(op), RUMPRW(rw));
 	if (error == 0) {
-		WANTLOCK(rw, op == RW_READER, true);
+		WANTLOCK(rw, op == RW_READER);
 		LOCKED(rw, op == RW_READER);
 	}
 	return error == 0;
@@ -264,7 +270,7 @@ rw_tryupgrade(krwlock_t *rw)
 	rv = rumpuser_rw_tryupgrade(RUMPRW(rw));
 	if (rv == 0) {
 		UNLOCKED(rw, 1);
-		WANTLOCK(rw, 0, true);
+		WANTLOCK(rw, 0);
 		LOCKED(rw, 0);
 	}
 	return rv == 0;
@@ -276,7 +282,7 @@ rw_downgrade(krwlock_t *rw)
 
 	rumpuser_rw_downgrade(RUMPRW(rw));
 	UNLOCKED(rw, 0);
-	WANTLOCK(rw, 1, false);
+	WANTLOCK(rw, 1);
 	LOCKED(rw, 1);
 }
 

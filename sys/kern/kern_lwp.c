@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.172.2.3 2013/06/23 06:18:57 tls Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.172.2.4 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.172.2.3 2013/06/23 06:18:57 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.172.2.4 2014/08/20 00:04:29 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -911,7 +911,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 
 	l2->l_sigstk = l1->l_sigstk;
 	l2->l_sigmask = l1->l_sigmask;
-	CIRCLEQ_INIT(&l2->l_sigpend.sp_info);
+	TAILQ_INIT(&l2->l_sigpend.sp_info);
 	sigemptyset(&l2->l_sigpend.sp_set);
 
 	if (__predict_true(lid == 0)) {
@@ -1174,8 +1174,14 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	KASSERT(l != curlwp);
 	KASSERT(last || mutex_owned(p->p_lock));
 
+	/*
+	 * We use the process credentials instead of the lwp credentials here
+	 * because the lwp credentials maybe cached (just after a setuid call)
+	 * and we don't want pay for syncing, since the lwp is going away
+	 * anyway
+	 */
 	if (p != &proc0 && p->p_nlwps != 1)
-		(void)chglwpcnt(kauth_cred_getuid(l->l_cred), -1);
+		(void)chglwpcnt(kauth_cred_getuid(p->p_cred), -1);
 	/*
 	 * If this was not the last LWP in the process, then adjust
 	 * counters and unlock.

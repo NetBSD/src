@@ -1,4 +1,4 @@
-.\"	$NetBSD: ldap_table.5,v 1.1.1.2 2011/03/02 19:31:51 tron Exp $
+.\"	$NetBSD: ldap_table.5,v 1.1.1.2.10.1 2014/08/19 23:59:41 tls Exp $
 .\"
 .TH LDAP_TABLE 5 
 .ad
@@ -10,9 +10,9 @@ Postfix LDAP client configuration
 .SH "SYNOPSIS"
 .na
 .nf
-\fBpostmap -q "\fIstring\fB" ldap:/etc/postfix/filename\fR
+\fBpostmap -q "\fIstring\fB" ldap:/etc/postfix/\fIfilename\fR
 
-\fBpostmap -q - ldap:/etc/postfix/\fIfilename\fR <\fIinputfile\fR
+\fBpostmap -q - ldap:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
 .SH DESCRIPTION
 .ad
 .fi
@@ -660,7 +660,7 @@ version dependent behavior). The \fByes\fR setting corresponds to the
 \fBdemand\fR value of \fBTLS_REQCERT\fR in LDAP client configuration
 files.
 .sp
-The "try" and "never" values of \fBTLS_REQCERT\fR have no equivalents
+The "try" and "allow" values of \fBTLS_REQCERT\fR have no equivalents
 here. They are not available with OpenLDAP 2.0, and in any case have
 questionable security properties. Either you want TLS verified LDAP
 connections, or you don't.

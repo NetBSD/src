@@ -1,4 +1,4 @@
-/* $NetBSD: mklocaledb.c,v 1.2 2009/01/05 02:55:34 dogcow Exp $ */
+/* $NetBSD: mklocaledb.c,v 1.2.16.1 2014/08/20 00:05:01 tls Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: mklocaledb.c,v 1.2 2009/01/05 02:55:34 dogcow Exp $");
+__RCSID("$NetBSD: mklocaledb.c,v 1.2.16.1 2014/08/20 00:05:01 tls Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -136,8 +136,8 @@ static const category_t lc_monetary = {
 	{ _CITRUS_LC_MONETARY_SYM_P_SIGN_POSN,        &save_as_uint8    },
 	{ _CITRUS_LC_MONETARY_SYM_N_SIGN_POSN,        &save_as_uint8    },
 	{ _CITRUS_LC_MONETARY_SYM_INT_P_CS_PRECEDES,  &save_as_uint8    },
-	{ _CITRUS_LC_MONETARY_SYM_INT_N_CS_PRECEDES,  &save_as_uint8    },
 	{ _CITRUS_LC_MONETARY_SYM_INT_P_SEP_BY_SPACE, &save_as_uint8    },
+	{ _CITRUS_LC_MONETARY_SYM_INT_N_CS_PRECEDES,  &save_as_uint8    },
 	{ _CITRUS_LC_MONETARY_SYM_INT_N_SEP_BY_SPACE, &save_as_uint8    },
 	{ _CITRUS_LC_MONETARY_SYM_INT_P_SIGN_POSN,    &save_as_uint8    },
 	{ _CITRUS_LC_MONETARY_SYM_INT_N_SIGN_POSN,    &save_as_uint8    },

@@ -1,4 +1,4 @@
-.\"	$NetBSD: 1.5.t,v 1.3 2003/08/07 10:30:49 agc Exp $
+.\"	$NetBSD: 1.5.t,v 1.3.60.1 2014/08/20 00:02:29 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,8 +29,8 @@
 .\"
 .\"	@(#)1.5.t	8.6 (Berkeley) 5/29/94
 .\"
-.Sh 2 Descriptors
-.Sh 3 "The reference table
+.Sh 2 16 "Descriptors
+.Sh 3 16 "The reference table
 .PP
 Each process has access to resources through
 \fIdescriptors\fP.  Each descriptor is a handle allowing
@@ -59,7 +59,7 @@ The maximum number of descriptors is a resource limit (see section
 The entries in the descriptor reference
 table are referred to by small integers; for example if there
 are 64 slots they are numbered 0 to 63.
-.Sh 3 "Descriptor properties
+.Sh 3 16 "Descriptor properties
 .PP
 Each descriptor has a logical set of properties maintained
 by the system and defined by its \fItype\fP.
@@ -78,7 +78,7 @@ Section
 describes communications domains and sockets.
 Terminals and (structured and unstructured) devices are described in section
 .Xr 2.4 .
-.Sh 3 "Managing descriptor references
+.Sh 3 16 "Managing descriptor references
 .LP
 A duplicate of a descriptor reference may be made by doing:
 .DS
@@ -109,7 +109,7 @@ Descriptors are deallocated by:
 close(old);
 int old;
 .DE
-.Sh 3 "Multiplexing requests
+.Sh 3 16 "Multiplexing requests
 .PP
 The system provides a
 standard way to do

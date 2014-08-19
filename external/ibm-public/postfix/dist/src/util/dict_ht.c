@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_ht.c,v 1.1.1.3.10.1 2013/02/25 00:27:31 tls Exp $	*/
+/*	$NetBSD: dict_ht.c,v 1.1.1.3.10.2 2014/08/19 23:59:45 tls Exp $	*/
 
 /*++
 /* NAME
@@ -49,6 +49,29 @@ typedef struct {
     DICT    dict;			/* generic members */
     HTABLE *table;			/* hash table */
 } DICT_HT;
+
+/* dict_ht_delete - delete hash-table entry */
+
+static int dict_ht_delete(DICT *dict, const char *name)
+{
+    DICT_HT *dict_ht = (DICT_HT *) dict;
+
+    /*
+     * Optionally fold the key.
+     */
+    if (dict->flags & DICT_FLAG_FOLD_FIX) {
+	if (dict->fold_buf == 0)
+	    dict->fold_buf = vstring_alloc(10);
+	vstring_strcpy(dict->fold_buf, name);
+	name = lowercase(vstring_str(dict->fold_buf));
+    }
+    if (htable_locate(dict_ht->table, name) == 0) {
+	DICT_ERR_VAL_RETURN(dict, DICT_ERR_NONE, DICT_STAT_FAIL);
+    } else {
+	htable_delete(dict_ht->table, name, myfree);
+	DICT_ERR_VAL_RETURN(dict, DICT_ERR_NONE, DICT_STAT_SUCCESS);
+    }
+}
 
 /* dict_ht_lookup - find hash-table entry */
 
@@ -138,6 +161,7 @@ DICT   *dict_ht_open(const char *name, int unused_open_flags, int dict_flags)
     dict_ht = (DICT_HT *) dict_alloc(DICT_TYPE_HT, name, sizeof(*dict_ht));
     dict_ht->dict.lookup = dict_ht_lookup;
     dict_ht->dict.update = dict_ht_update;
+    dict_ht->dict.delete = dict_ht_delete;
     dict_ht->dict.sequence = dict_ht_sequence;
     dict_ht->dict.close = dict_ht_close;
     dict_ht->dict.flags = dict_flags | DICT_FLAG_FIXED;

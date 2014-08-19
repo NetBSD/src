@@ -29,8 +29,7 @@ rm -f ${otmp}
 cat <<EOF >>${otmp}
 /* GDB Notifications to Observers.
 
-   Copyright (C) 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -64,6 +63,8 @@ struct bpstats;
 struct so_list;
 struct objfile;
 struct thread_info;
+struct inferior;
+struct trace_state_variable;
 EOF
         ;;
 esac
@@ -136,8 +137,17 @@ static void
 observer_${event}_notification_stub (const void *data, const void *args_data)
 {
   observer_${event}_ftype *notify = (observer_${event}_ftype *) data;
+EOF
+
+	notify_args=`echo ${actual} | sed -e 's/\([a-z0-9_][a-z0-9_]*\)/args->\1/g'`
+
+	if test ! -z "${notify_args}"; then
+	    cat<<EOF >>${otmp}
   const struct ${event}_args *args = args_data;
-  notify (`echo ${actual} | sed -e 's/\([a-z0-9_][a-z0-9_]*\)/args->\1/g'`);
+EOF
+	fi
+	cat <<EOF >>${otmp}
+  notify (${notify_args});
 }
 
 struct observer *

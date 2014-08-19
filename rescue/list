@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.43 2012/05/25 21:46:13 jnemeth Exp $
+#	$NetBSD: list,v 1.43.2.1 2014/08/20 00:02:23 tls Exp $
 
 SRCDIRS	bin
 
@@ -86,6 +86,8 @@ PROG	mount_null
 PROG	mount_overlay
 PROG	mount_procfs
 PROG	mount_smbfs
+SPECIAL	mount_smbfs	srcdir	external/bsd/smbfs/sbin/mount_smbfs
+LIBS	${SMB_LIBDIR}/libsmb.a
 PROG	mount_tmpfs
 PROG	mount_umap
 PROG	mount_union
@@ -126,11 +128,14 @@ PROG	kdump
 PROG	ktrace
 PROG	ktruss
 
+PROG	ekermit
+SPECIAL	ekermit		srcdir	external/bsd/ekermit/bin/ekermit
+
 PROG	less		more
 SPECIAL	less		srcdir	external/bsd/less/bin/less
 
 PROG	vi		ex
-SPECIAL vi        	srcdir  usr.bin/nvi/build
+SPECIAL vi        	srcdir  external/bsd/nvi/usr.bin/nvi
 
 SRCDIRS	usr.sbin
 

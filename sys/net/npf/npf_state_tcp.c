@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state_tcp.c,v 1.10.2.2 2013/02/25 00:30:03 tls Exp $	*/
+/*	$NetBSD: npf_state_tcp.c,v 1.10.2.3 2014/08/20 00:04:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -34,16 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.10.2.2 2013/02/25 00:30:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.10.2.3 2014/08/20 00:04:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 
-#ifndef _KERNEL
-#include <stdio.h>
-#include <stdbool.h>
-#include <inttypes.h>
-#endif
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_seq.h>
@@ -54,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.10.2.2 2013/02/25 00:30:03 tls E
  * NPF TCP states.  Note: these states are different from the TCP FSM
  * states of RFC 793.  The packet filter is a man-in-the-middle.
  */
-#define	NPF_TCPS_OK		(-1)
+#define	NPF_TCPS_OK		255
 #define	NPF_TCPS_CLOSED		0
 #define	NPF_TCPS_SYN_SENT	1
 #define	NPF_TCPS_SIMSYN_SENT	2
@@ -94,7 +89,7 @@ static u_int npf_tcp_timeouts[] __read_mostly = {
 	[NPF_TCPS_TIME_WAIT]	= 60 * 2 * 2,
 };
 
-static bool npf_strict_order_rst __read_mostly = false;
+static bool npf_strict_order_rst __read_mostly = true;
 
 #define	NPF_TCP_MAXACKWIN	66000
 
@@ -110,7 +105,7 @@ static bool npf_strict_order_rst __read_mostly = false;
 #define	TCPFC_COUNT		5
 
 static inline u_int
-npf_tcpfl2case(const int tcpfl)
+npf_tcpfl2case(const u_int tcpfl)
 {
 	u_int i, c;
 
@@ -150,7 +145,7 @@ npf_tcpfl2case(const int tcpfl)
  * Note that this state is different from the state in each end (host).
  */
 
-static const int npf_tcp_fsm[NPF_TCP_NSTATES][2][TCPFC_COUNT] = {
+static const uint8_t npf_tcp_fsm[NPF_TCP_NSTATES][2][TCPFC_COUNT] = {
 	[NPF_TCPS_CLOSED] = {
 		[NPF_FLOW_FORW] = {
 			/* Handshake (1): initial SYN. */
@@ -296,7 +291,7 @@ static const int npf_tcp_fsm[NPF_TCP_NSTATES][2][TCPFC_COUNT] = {
  * and thus part of the connection we are tracking.
  */
 static bool
-npf_tcp_inwindow(npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst, const int di)
+npf_tcp_inwindow(npf_cache_t *npc, npf_state_t *nst, const int di)
 {
 	const struct tcphdr * const th = npc->npc_l4.tcp;
 	const int tcpfl = th->th_flags;
@@ -361,13 +356,14 @@ npf_tcp_inwindow(npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst, const int di)
 		 * send this option in their SYN packets.
 		 */
 		fstate->nst_wscale = 0;
-		(void)npf_fetch_tcpopts(npc, nbuf, NULL, &fstate->nst_wscale);
+		(void)npf_fetch_tcpopts(npc, NULL, &fstate->nst_wscale);
 
 		tstate->nst_wscale = 0;
 
 		/* Done. */
 		return true;
 	}
+
 	if (fstate->nst_end == 0) {
 		/*
 		 * Should be a SYN-ACK reply to SYN.  If SYN is not set,
@@ -380,8 +376,7 @@ npf_tcp_inwindow(npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst, const int di)
 
 		/* Handle TCP Window Scaling (must be ignored if no SYN). */
 		if (tcpfl & TH_SYN) {
-			(void)npf_fetch_tcpopts(npc, nbuf, NULL,
-			    &fstate->nst_wscale);
+			(void)npf_fetch_tcpopts(npc, NULL, &fstate->nst_wscale);
 		}
 	}
 
@@ -400,7 +395,7 @@ npf_tcp_inwindow(npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst, const int di)
 			seq = end;
 		}
 
-		/* Strict in-order sequence for RST packets. */
+		/* Strict in-order sequence for RST packets (RFC 5961). */
 		if (npf_strict_order_rst && (fstate->nst_end - seq) > 1) {
 			return false;
 		}
@@ -461,17 +456,17 @@ npf_tcp_inwindow(npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst, const int di)
  * the connection and track its state.
  */
 bool
-npf_state_tcp(npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst, int di)
+npf_state_tcp(npf_cache_t *npc, npf_state_t *nst, int di)
 {
 	const struct tcphdr * const th = npc->npc_l4.tcp;
-	const int tcpfl = th->th_flags, state = nst->nst_state;
-	int nstate;
+	const u_int tcpfl = th->th_flags, state = nst->nst_state;
+	u_int nstate;
 
-	KASSERT(nst->nst_state == 0 || mutex_owned(&nst->nst_lock));
+	KASSERT(nst->nst_state < NPF_TCP_NSTATES);
 
 	/* Look for a transition to a new state. */
 	if (__predict_true((tcpfl & TH_RST) == 0)) {
-		const int flagcase = npf_tcpfl2case(tcpfl);
+		const u_int flagcase = npf_tcpfl2case(tcpfl);
 		nstate = npf_tcp_fsm[state][di][flagcase];
 	} else if (state == NPF_TCPS_TIME_WAIT) {
 		/* Prevent TIME-WAIT assassination (RFC 1337). */
@@ -481,7 +476,7 @@ npf_state_tcp(npf_cache_t *npc, nbuf_t *nbuf, npf_state_t *nst, int di)
 	}
 
 	/* Determine whether TCP packet really belongs to this connection. */
-	if (!npf_tcp_inwindow(npc, nbuf, nst, di)) {
+	if (!npf_tcp_inwindow(npc, nst, di)) {
 		return false;
 	}
 	if (__predict_true(nstate == NPF_TCPS_OK)) {

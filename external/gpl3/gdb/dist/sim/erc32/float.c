@@ -6,7 +6,7 @@
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free
- * Software Foundation; either version 2 of the License, or (at your option)
+ * Software Foundation; either version 3 of the License, or (at your option)
  * any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -15,8 +15,7 @@
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 675
- * Mass Ave, Cambridge, MA 02139, USA.
+ * this program; if not, see <http://www.gnu.org/licenses/>.
  *
  *
  * This file implements the interface between the host and the simulated
@@ -32,13 +31,14 @@
  * This can also be done using ieee_flags() library routine on sun.
  */
 
+#include "config.h"
 #include "sis.h"
 
 /* Forward declarations */
 
-extern uint32	_get_sw PARAMS ((void));
-extern uint32	_get_cw PARAMS ((void));
-static void	__setfpucw PARAMS ((unsigned short fpu_control));
+extern uint32	_get_sw (void);
+extern uint32	_get_cw (void);
+static void	__setfpucw (unsigned short fpu_control);
 
 /* This host dependent routine should return the accrued exceptions */
 int
@@ -91,9 +91,16 @@ uint32 fsr;
      fsr >>= 30;
      switch (fsr) {
 	case 0: 
-	case 2: break;
-	case 1: fsr = 3;
-	case 3: fsr = 1;
+	case 2:
+	  break;
+
+	case 1:
+	  fsr = 3;
+	  break;
+
+	case 3:
+	  fsr = 1;
+	  break;
      }
      rawfsr = _get_cw();
      rawfsr |= (fsr << 10) | 0x3ff;

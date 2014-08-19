@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_map11.c,v 1.1.1.1.16.1 2013/02/25 00:27:16 tls Exp $	*/
+/*	$NetBSD: cleanup_map11.c,v 1.1.1.1.16.2 2014/08/19 23:59:42 tls Exp $	*/
 
 /*++
 /* NAME
@@ -122,7 +122,8 @@ int     cleanup_map11_external(CLEANUP_STATE *state, VSTRING *addr,
 	    if (expand_to_self)
 		return (did_rewrite);
 	} else if (maps->error != 0) {
-	    msg_warn("%s: %s map lookup problem for %s",
+	    msg_warn("%s: %s map lookup problem for %s -- "
+		     "message not accepted, try again later",
 		     state->queue_id, maps->title, STR(addr));
 	    state->errs |= CLEANUP_STAT_WRITE;
 	    return (did_rewrite);
@@ -130,7 +131,8 @@ int     cleanup_map11_external(CLEANUP_STATE *state, VSTRING *addr,
 	    return (did_rewrite);
 	}
     }
-    msg_warn("%s: unreasonable %s map nesting for %s",
+    msg_warn("%s: unreasonable %s map nesting for %s -- "
+	     "message not accepted, try again later",
 	     state->queue_id, maps->title, STR(addr));
     return (did_rewrite);
 }

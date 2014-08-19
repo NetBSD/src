@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,8 +25,10 @@ if {![dwarf2_support]} {
     return 0  
 }
 
-set testfile "dw2-cp-infcall-ref-static"
-if { [prepare_for_testing ${testfile}.exp ${testfile} [list ${testfile}-main.c ${testfile}.S] {}] } {
+standard_testfile .S dw2-cp-infcall-ref-static-main.c
+
+if { [prepare_for_testing ${testfile}.exp ${testfile} \
+	  [list $srcfile2 $srcfile] {}] } {
     return -1
 }
 

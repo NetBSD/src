@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.60 2012/02/08 12:22:00 mbalmer Exp $	*/
+/*	$NetBSD: uk.c,v 1.60.6.1 2014/08/20 00:03:50 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.60 2012/02/08 12:22:00 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.60.6.1 2014/08/20 00:03:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,8 +76,18 @@ static dev_type_close(ukclose);
 static dev_type_ioctl(ukioctl);
 
 const struct cdevsw uk_cdevsw = {
-	ukopen, ukclose, noread, nowrite, ukioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	.d_open = ukopen,
+	.d_close = ukclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = ukioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 static int

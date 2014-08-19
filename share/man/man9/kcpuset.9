@@ -1,4 +1,4 @@
-.\" $NetBSD: kcpuset.9,v 1.3.2.2 2013/02/25 00:28:15 tls Exp $ */
+.\" $NetBSD: kcpuset.9,v 1.3.2.3 2014/08/20 00:02:37 tls Exp $ */
 .\"
 .\" Copyright (c) 2011 Jukka Ruohonen <jruohonen.iki.fi>
 .\" All rights reserved.
@@ -25,13 +25,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 16, 2012
+.Dd July 17, 2013
 .Dt KCPUSET 9
 .Os
 .Sh NAME
 .Nm kcpuset ,
 .Nm kcpuset_create ,
 .Nm kcpuset_destroy ,
+.Nm kcpuset_clone ,
 .Nm kcpuset_copy ,
 .Nm kcpuset_use ,
 .Nm kcpuset_unuse ,
@@ -45,10 +46,17 @@
 .Nm kcpuset_isotherset ,
 .Nm kcpuset_iszero ,
 .Nm kcpuset_match ,
+.Nm kcpuset_intersect ,
 .Nm kcpuset_merge ,
+.Nm kcpuset_remove ,
+.Nm kcpuset_ffs ,
+.Nm kcpuset_ffs_intersecting ,
 .Nm kcpuset_countset ,
 .Nm kcpuset_atomic_set ,
-.Nm kcpuset_atomic_clear
+.Nm kcpuset_atomic_clear ,
+.Nm kcpuset_atomicly_intersect ,
+.Nm kcpuset_atomicly_merge ,
+.Nm kcpuset_atomicly_remove ,
 .Nm kcpuset_export_32
 .Nd dynamic kernel CPU sets
 .Sh SYNOPSIS
@@ -58,7 +66,9 @@
 .Ft void
 .Fn kcpuset_destroy "kcpuset_t *kcp"
 .Ft void
-.Fn kcpuset_copy "kcpuset_t *dkcp" "kcpuset_t *skcp"
+.Fn kcpuset_clone "kcpuset_t **retkcp" "const kcpuset_t *skcp"
+.Ft void
+.Fn kcpuset_copy "kcpuset_t *dkcp" "const kcpuset_t *skcp"
 .Ft void
 .Fn kcpuset_use "kcpuset_t *kcp"
 .Ft void
@@ -76,21 +86,37 @@
 .Ft void
 .Fn kcpuset_clear "kcpuset_t *kcp" "cpuid_t cpu"
 .Ft bool
-.Fn kcpuset_isset "kcpuset_t * kcp" "cpuid_t cpu"
+.Fn kcpuset_isset "const kcpuset_t * kcp" "cpuid_t cpu"
 .Ft bool
-.Fn kcpuset_isotherset "kcpuset_t * kcp" "cpuid_t cpu"
+.Fn kcpuset_isotherset "const kcpuset_t * kcp" "cpuid_t cpu"
 .Ft bool
-.Fn kcpuset_iszero "kcpuset_t *kcp"
+.Fn kcpuset_iszero "const kcpuset_t *kcp"
+.Ft bool
+.Fn kcpuset_intersecting_p "const kcpuset_t *kcp1" "const kcpuset_t *kcp2"
 .Ft bool
 .Fn kcpuset_match "const kcpuset_t *kcp1" "const kcpuset_t *kcp2"
 .Ft void
-.Fn kcpuset_merge "kcpuset_t *kcp1" "kcpuset_t *kcp2"
+.Fn kcpuset_intersect "kcpuset_t *kcp1" "const kcpuset_t *kcp2"
+.Ft void
+.Fn kcpuset_merge "kcpuset_t *kcp1" "const kcpuset_t *kcp2"
+.Ft void
+.Fn kcpuset_remove "kcpuset_t *kcp1" "const kcpuset_t *kcp2"
+.Ft cpuid_t
+.Fn kcpuset_ffs "const kcpuset_t *kcp"
+.Ft cpuid_t
+.Fn kcpuset_ffs_intersecting "const kcpuset_t *kcp1" "const kcpuset_t *kcp2"
 .Ft int
-.Fn kcpuset_countset "kcpuset_t *kcp1"
+.Fn kcpuset_countset "const kcpuset_t *kcp"
 .Ft void
 .Fn kcpuset_atomic_set "kcpuset_t *kcp" "cpuid_t cpu"
 .Ft void
 .Fn kcpuset_atomic_clear "kcpuset_t *kcp" "cpuid_t cpu"
+.Ft void
+.Fn kcpuset_atomicly_intersect "kcpuset_t *kcp1" "const kcpuset_t *kcp2"
+.Ft void
+.Fn kcpuset_atomicly_merge "kcpuset_t *kcp1" "const kcpuset_t *kcp2"
+.Ft void
+.Fn kcpuset_atomicly_remove "kcpuset_t *kcp1" "const kcpuset_t *kcp2"
 .Ft void
 .Fn kcpuset_export_u32 "const kcpuset_t *kcp" "uint32_t *bitfield" "size_t len"
 .Sh DESCRIPTION
@@ -127,6 +153,18 @@ set pointed by
 .Fa skcp
 to
 .Fa dkcp .
+.It Fn kcpuset_clone "retkcp" "skcp"
+Creates a dynamic
+.Tn CPU
+set and stores the result to
+.Fa retkcp
+and copies the
+.Tn CPU
+set pointed by
+.Fa skcp
+to the new
+.Tn CPU
+set.
 .It Fn kcpuset_use "kcp"
 Marks
 .Fa kcp
@@ -210,11 +248,44 @@ Compares the sets
 and
 .Fa kcp2 ,
 returning true if these are identical.
+.It Fn kcpuset_intersect "kcp1" "kcp2"
+Removes any
+.Tn CPU
+not set in
+.Fa kcp2
+from the set
+.Fa kcp1 .
 .It Fn kcpuset_merge "kcp1" "kcp2"
 Merges the set
 .Fa kcp2
 to the set
 .Fa kcp1 .
+.It Fn kcpuset_remove "kcp1" "kcp2"
+Removes any
+.Tn CPU
+present in
+.Fa kcp2
+from the set
+.Fa kcp1 .
+.It Fn kcpuset_ffs "kcp"
+Returns the lowest numbered
+.Ft cpu
+present in
+.Fa kcp
+plus 1.
+If
+.Fa kcp
+is empty, a value of 0 is returned.
+.Fa kcp
+.It Fn kcpuset_ffs_intersecting "kcp1" "kcp2"
+Returns the lowest numbered
+.Ft cpu
+present in the intersection of
+.Fa kcp1
+and
+.Fa kcp2
+plus 1.
+If the intersection is empty, a value of 0 is returned.
 .It Fn kcpuset_countset "kcp"
 Counts how many CPUs are in the set
 .Fa kcp .
@@ -234,6 +305,30 @@ from the
 set
 .Fa kcp
 atomically.
+.It Fn kcpuset_atomicly_intersect "kcp1" "kcp2"
+The
+.Fn kcpuset_atomicly_intersect
+function operates as
+.Fn kcpuset_intersect ,
+but the operation is performed using atomic operations; see
+.Xr atomic_ops 3
+for more details.
+.It Fn kcpuset_atomicly_merge "kcp1" "kcp2"
+The
+.Fn kcpuset_atomicly_merge
+function operates as
+.Fn kcpuset_merge ,
+but the operation is performed using atomic operations; see
+.Xr atomic_ops 3
+for more details.
+.It Fn kcpuset_atomicly_remove "kcp1" "kcp2"
+The
+.Fn kcpuset_atomicly_remove
+function operates as
+.Fn kcpuset_remove ,
+but the operation is performed using atomic operations; see
+.Xr atomic_ops 3
+for more details.
 .It Fn kcpuset_export_u32 "kcp" "bitfield" "len"
 Exports the CPU set
 .Fa kcp

@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.27.6.1 2013/02/25 00:29:17 tls Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.27.6.2 2014/08/20 00:03:42 tls Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.27.6.1 2013/02/25 00:29:17 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.27.6.2 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -109,10 +109,16 @@ ichsmb_match(device_t parent, cfdata_t match, void *aux)
 		case PCI_PRODUCT_INTEL_3400_SMB:
 		case PCI_PRODUCT_INTEL_6SERIES_SMB:
 		case PCI_PRODUCT_INTEL_7SERIES_SMB:
+		case PCI_PRODUCT_INTEL_8SERIES_SMB:
+		case PCI_PRODUCT_INTEL_CORE4G_M_SMB:
+		case PCI_PRODUCT_INTEL_BAYTRAIL_PCU_SMB:
 		case PCI_PRODUCT_INTEL_C600_SMBUS:
 		case PCI_PRODUCT_INTEL_C600_SMB_0:
 		case PCI_PRODUCT_INTEL_C600_SMB_1:
 		case PCI_PRODUCT_INTEL_C600_SMB_2:
+		case PCI_PRODUCT_INTEL_EP80579_SMB:
+		case PCI_PRODUCT_INTEL_DH89XX_SMB:
+		case PCI_PRODUCT_INTEL_C2000_PCU_SMBUS:
 			return 1;
 		}
 	}
@@ -129,6 +135,7 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	bus_size_t iosize;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 
@@ -140,14 +147,14 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 
 	if ((conf & LPCIB_SMB_HOSTC_HSTEN) == 0) {
 		aprint_error_dev(self, "SMBus disabled\n");
-		return;
+		goto out;
 	}
 
 	/* Map I/O space */
 	if (pci_mapreg_map(pa, LPCIB_SMB_BASE, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, &iosize)) {
 		aprint_error_dev(self, "can't map I/O space\n");
-		return;
+		goto out;
 	}
 
 	sc->sc_poll = 1;
@@ -157,7 +164,7 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	} else {
 		/* Install interrupt handler */
 		if (pci_intr_map(pa, &ih) == 0) {
-			intrstr = pci_intr_string(pa->pa_pc, ih);
+			intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 			sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
 			    ichsmb_intr, sc);
 			if (sc->sc_ih != NULL) {
@@ -182,7 +189,7 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	iba.iba_tag = &sc->sc_i2c_tag;
 	config_found(self, &iba, iicbus_print);
 
-	if (!pmf_device_register(self, NULL, NULL))
+out:	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
@@ -222,6 +229,13 @@ ichsmb_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	DPRINTF(("%s: exec: op %d, addr 0x%02x, cmdlen %zu, len %zu, "
 	    "flags 0x%02x\n", device_xname(sc->sc_dev), op, addr, cmdlen,
 	    len, flags));
+
+	/* Clear status bits */
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LPCIB_SMB_HS,
+	    LPCIB_SMB_HS_INTR | LPCIB_SMB_HS_DEVERR |
+	    LPCIB_SMB_HS_BUSERR | LPCIB_SMB_HS_FAILED);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, LPCIB_SMB_HS, 1,
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);  
 
 	/* Wait for bus to be idle */
 	for (retries = 100; retries > 0; retries--) {

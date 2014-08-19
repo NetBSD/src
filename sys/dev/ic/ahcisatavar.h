@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatavar.h,v 1.13.2.1 2012/11/20 03:02:02 tls Exp $	*/
+/*	$NetBSD: ahcisatavar.h,v 1.13.2.2 2014/08/20 00:03:37 tls Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -62,6 +62,7 @@ struct ahci_softc {
 
 	uint32_t sc_ahci_cap;	/* copy of AHCI_CAP */
 	int sc_ncmds; /* number of command slots */
+	uint32_t sc_ahci_ports;
 	struct ata_channel *sc_chanarray[AHCI_MAX_PORTS];
 	struct ahci_channel {
 		struct ata_channel ata_channel; /* generic part */
@@ -82,6 +83,16 @@ struct ahci_softc {
 		bus_dmamap_t ahcic_datad[AHCI_MAX_CMDS];
 		uint32_t  ahcic_cmds_active; /* active commands */
 	} sc_channels[AHCI_MAX_PORTS];
+
+	void	(*sc_channel_start)(struct ahci_softc *, struct ata_channel *);
+	void	(*sc_channel_stop)(struct ahci_softc *, struct ata_channel *);
+
+	bool sc_save_init_data;
+	struct {
+		uint32_t cap;
+		uint32_t cap2;
+		uint32_t ports;
+	} sc_init_data;
 };
 
 #define AHCINAME(sc) (device_xname((sc)->sc_atac.atac_dev))

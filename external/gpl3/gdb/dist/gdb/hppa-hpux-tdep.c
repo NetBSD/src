@@ -1,7 +1,6 @@
 /* Target-dependent code for HP-UX on PA-RISC.
 
-   Copyright (C) 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,7 +36,7 @@
 #include "regcache.h"
 #include "exceptions.h"
 
-#include "gdb_string.h"
+#include <string.h>
 
 #define IS_32BIT_TARGET(_gdbarch) \
 	((gdbarch_tdep (_gdbarch))->bytes_per_address == 4)
@@ -66,31 +65,16 @@
 extern void _initialize_hppa_hpux_tdep (void);
 extern initialize_file_ftype _initialize_hppa_hpux_tdep;
 
-static int
-in_opd_section (CORE_ADDR pc)
-{
-  struct obj_section *s;
-  int retval = 0;
-
-  s = find_pc_section (pc);
-
-  retval = (s != NULL
-	    && s->the_bfd_section->name != NULL
-	    && strcmp (s->the_bfd_section->name, ".opd") == 0);
-  return (retval);
-}
-
 /* Return one if PC is in the call path of a trampoline, else return zero.
 
    Note we return one for *any* call trampoline (long-call, arg-reloc), not
    just shared library trampolines (import, export).  */
 
 static int
-hppa32_hpux_in_solib_call_trampoline (struct gdbarch *gdbarch,
-				      CORE_ADDR pc, char *name)
+hppa32_hpux_in_solib_call_trampoline (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  struct minimal_symbol *minsym;
+  struct bound_minimal_symbol minsym;
   struct unwind_table_entry *u;
 
   /* First see if PC is in one of the two C-library trampolines.  */
@@ -99,7 +83,8 @@ hppa32_hpux_in_solib_call_trampoline (struct gdbarch *gdbarch,
     return 1;
 
   minsym = lookup_minimal_symbol_by_pc (pc);
-  if (minsym && strcmp (SYMBOL_LINKAGE_NAME (minsym), ".stub") == 0)
+  if (minsym.minsym
+      && strcmp (SYMBOL_LINKAGE_NAME (minsym.minsym), ".stub") == 0)
     return 1;
 
   /* Get the unwind descriptor corresponding to PC, return zero
@@ -156,8 +141,7 @@ hppa32_hpux_in_solib_call_trampoline (struct gdbarch *gdbarch,
 }
 
 static int
-hppa64_hpux_in_solib_call_trampoline (struct gdbarch *gdbarch,
-				      CORE_ADDR pc, char *name)
+hppa64_hpux_in_solib_call_trampoline (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
 
@@ -175,16 +159,16 @@ hppa64_hpux_in_solib_call_trampoline (struct gdbarch *gdbarch,
      step.  If it does, then assume we are not in a stub and return.
 
      Finally peek at the instructions to see if they look like a stub.  */
-  struct minimal_symbol *minsym;
+  struct bound_minimal_symbol minsym;
   asection *sec;
   CORE_ADDR addr;
-  int insn, i;
+  int insn;
 
   minsym = lookup_minimal_symbol_by_pc (pc);
-  if (! minsym)
+  if (! minsym.minsym)
     return 0;
 
-  sec = SYMBOL_OBJ_SECTION (minsym)->the_bfd_section;
+  sec = SYMBOL_OBJ_SECTION (minsym.objfile, minsym.minsym)->the_bfd_section;
 
   if (bfd_get_section_vma (sec->owner, sec) <= pc
       && pc < (bfd_get_section_vma (sec->owner, sec)
@@ -231,7 +215,7 @@ hppa64_hpux_in_solib_call_trampoline (struct gdbarch *gdbarch,
 
 static int
 hppa_hpux_in_solib_return_trampoline (struct gdbarch *gdbarch,
-				      CORE_ADDR pc, char *name)
+				      CORE_ADDR pc, const char *name)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct unwind_table_entry *u;
@@ -312,7 +296,7 @@ hppa_hpux_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
   int word_size = gdbarch_ptr_bit (gdbarch) / 8;
   long orig_pc = pc;
   long prev_inst, curr_inst, loc;
-  struct minimal_symbol *msym;
+  struct bound_minimal_symbol msym;
   struct unwind_table_entry *u;
 
   /* Addresses passed to dyncall may *NOT* be the actual address
@@ -367,10 +351,12 @@ hppa_hpux_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
 /*--------------------------------------------------------------------------*/
       msym = lookup_minimal_symbol_by_pc (pc);
 
-      if (msym == NULL || MSYMBOL_TYPE (msym) != mst_solib_trampoline)
+      if (msym.minsym == NULL
+	  || MSYMBOL_TYPE (msym.minsym) != mst_solib_trampoline)
 	return orig_pc == pc ? 0 : pc & ~0x3;
 
-      else if (msym != NULL && MSYMBOL_TYPE (msym) == mst_solib_trampoline)
+      else if (msym.minsym != NULL
+	       && MSYMBOL_TYPE (msym.minsym) == mst_solib_trampoline)
 	{
 	  struct objfile *objfile;
 	  struct minimal_symbol *msymbol;
@@ -385,7 +371,7 @@ hppa_hpux_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
 	  {
 	    if (MSYMBOL_TYPE (msymbol) == mst_text
 		&& strcmp (SYMBOL_LINKAGE_NAME (msymbol),
-			    SYMBOL_LINKAGE_NAME (msym)) == 0)
+			    SYMBOL_LINKAGE_NAME (msym.minsym)) == 0)
 	      {
 		function_found = 1;
 		break;
@@ -402,7 +388,7 @@ hppa_hpux_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
 	       should be mst_text.  So we need to fix the msym, and also
 	       get out of this function.  */
 	    {
-	      MSYMBOL_TYPE (msym) = mst_text;
+	      MSYMBOL_TYPE (msym.minsym) = mst_text;
 	      return orig_pc == pc ? 0 : pc & ~0x3;
 	    }
 	}
@@ -473,21 +459,22 @@ hppa_hpux_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
 	  (curr_inst == 0xeaa0d000) ||
 	  (curr_inst == 0xeaa0d002))
 	{
-	  struct minimal_symbol *stubsym, *libsym;
+	  struct bound_minimal_symbol stubsym;
+	  struct minimal_symbol *libsym;
 
 	  stubsym = lookup_minimal_symbol_by_pc (loc);
-	  if (stubsym == NULL)
+	  if (stubsym.minsym == NULL)
 	    {
 	      warning (_("Unable to find symbol for 0x%lx"), loc);
 	      return orig_pc == pc ? 0 : pc & ~0x3;
 	    }
 
-	  libsym = lookup_minimal_symbol (SYMBOL_LINKAGE_NAME (stubsym),
+	  libsym = lookup_minimal_symbol (SYMBOL_LINKAGE_NAME (stubsym.minsym),
 					  NULL, NULL);
 	  if (libsym == NULL)
 	    {
 	      warning (_("Unable to find library symbol for %s."),
-		       SYMBOL_PRINT_NAME (stubsym));
+		       SYMBOL_PRINT_NAME (stubsym.minsym));
 	      return orig_pc == pc ? 0 : pc & ~0x3;
 	    }
 
@@ -773,7 +760,7 @@ hppa32_hpux_find_global_pointer (struct gdbarch *gdbarch,
   if (faddr & 2)
     {
       int status;
-      char buf[4];
+      gdb_byte buf[4];
 
       faddr &= ~3;
 
@@ -791,11 +778,11 @@ hppa64_hpux_find_global_pointer (struct gdbarch *gdbarch,
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR faddr;
-  char buf[32];
+  gdb_byte buf[32];
 
   faddr = value_as_address (function);
 
-  if (in_opd_section (faddr))
+  if (pc_in_section (faddr, ".opd"))
     {
       target_read_memory (faddr, buf, sizeof (buf));
       return extract_unsigned_integer (&buf[24], 8, byte_order);
@@ -858,7 +845,7 @@ hppa32_hpux_search_dummy_call_sequence (struct gdbarch *gdbarch, CORE_ADDR pc,
   struct frame_info *frame;
   struct unwind_table_entry *u;
   CORE_ADDR addr, rp;
-  char buf[4];
+  gdb_byte buf[4];
   unsigned int insn;
 
   sec = find_pc_section (pc);
@@ -957,7 +944,6 @@ hppa64_hpux_search_dummy_call_sequence (struct gdbarch *gdbarch, CORE_ADDR pc,
   struct hppa_objfile_private *priv;
   CORE_ADDR addr;
   struct minimal_symbol *msym;
-  int i;
 
   sec = find_pc_section (pc);
   obj = sec->objfile;
@@ -980,10 +966,10 @@ hppa64_hpux_search_dummy_call_sequence (struct gdbarch *gdbarch, CORE_ADDR pc,
      scheme; try to read in blocks of code, and look for a "bve,n (rp)" 
      instruction.  These are likely to occur at the end of functions, so
      we only look at the last two instructions of each function.  */
-  for (i = 0, msym = obj->msymbols; i < obj->minimal_symbol_count; i++, msym++)
+  ALL_OBJFILE_MSYMBOLS (obj, msym)
     {
       CORE_ADDR begin, end;
-      char *name;
+      const char *name;
       gdb_byte buf[2 * HPPA_INSN_SIZE];
       int offset;
 
@@ -1027,7 +1013,8 @@ static CORE_ADDR
 hppa_hpux_find_import_stub_for_addr (CORE_ADDR funcaddr)
 {
   struct objfile *objfile;
-  struct minimal_symbol *funsym, *stubsym;
+  struct bound_minimal_symbol funsym;
+  struct minimal_symbol *stubsym;
   CORE_ADDR stubaddr;
 
   funsym = lookup_minimal_symbol_by_pc (funcaddr);
@@ -1036,7 +1023,7 @@ hppa_hpux_find_import_stub_for_addr (CORE_ADDR funcaddr)
   ALL_OBJFILES (objfile)
     {
       stubsym = lookup_minimal_symbol_solib_trampoline
-	(SYMBOL_LINKAGE_NAME (funsym), objfile);
+	(SYMBOL_LINKAGE_NAME (funsym.minsym), objfile);
 
       if (stubsym)
 	{
@@ -1088,7 +1075,6 @@ hppa_hpux_find_dummy_bpaddr (CORE_ADDR addr)
   struct unwind_table_entry *u;
   struct minimal_symbol *msym;
   CORE_ADDR func;
-  int i;
 
   sec = find_pc_section (addr);
   if (sec)
@@ -1108,9 +1094,7 @@ hppa_hpux_find_dummy_bpaddr (CORE_ADDR addr)
 	 work.  */
 
       find_pc_partial_function (addr, NULL, &func, NULL);
-      for (i = 0, msym = sec->objfile->msymbols;
-      	   i < sec->objfile->minimal_symbol_count;
-	   i++, msym++)
+      ALL_OBJFILE_MSYMBOLS (sec->objfile, msym)
 	{
 	  u = find_unwind_entry (SYMBOL_VALUE_ADDRESS (msym));
 	  if (func != SYMBOL_VALUE_ADDRESS (msym) 
@@ -1206,17 +1190,18 @@ hppa_hpux_push_dummy_code (struct gdbarch *gdbarch, CORE_ADDR sp,
 
   if (IS_32BIT_TARGET (gdbarch))
     {
-      static unsigned int hppa32_tramp[] = {
-        0x0fdf1291, /* stw r31,-8(,sp) */
-        0x02c010a1, /* ldsid (,r22),r1 */
-        0x00011820, /* mtsp r1,sr0 */
-        0xe6c00000, /* be,l 0(sr0,r22),%sr0,%r31 */
-        0x081f0242, /* copy r31,rp */
-        0x0fd11082, /* ldw -8(,sp),rp */
-        0x004010a1, /* ldsid (,rp),r1 */
-        0x00011820, /* mtsp r1,sr0 */
-        0xe0400000, /* be 0(sr0,rp) */
-        0x08000240  /* nop */
+#define INSN(I1, I2, I3, I4) 0x ## I1, 0x ## I2, 0x ## I3, 0x ## I4
+     static const gdb_byte hppa32_tramp[] = {
+	INSN(0f,df,12,91), /* stw r31,-8(,sp) */
+	INSN(02,c0,10,a1), /* ldsid (,r22),r1 */
+	INSN(00,01,18,20), /* mtsp r1,sr0 */
+	INSN(e6,c0,00,00), /* be,l 0(sr0,r22),%sr0,%r31 */
+	INSN(08,1f,02,42), /* copy r31,rp */
+	INSN(0f,d1,10,82), /* ldw -8(,sp),rp */
+	INSN(00,40,10,a1), /* ldsid (,rp),r1 */
+	INSN(00,01,18,20), /* mtsp r1,sr0 */
+	INSN(e0,40,00,00), /* be 0(sr0,rp) */
+	INSN(08,00,02,40)  /* nop */
       };
 
       /* for hppa32, we must call the function through a stub so that on
@@ -1227,7 +1212,7 @@ hppa_hpux_push_dummy_code (struct gdbarch *gdbarch, CORE_ADDR sp,
 	       "(no import stub).\n"));
       regcache_cooked_write_unsigned (regcache, 22, stubaddr);
 
-      write_memory (sp, (char *)&hppa32_tramp, sizeof (hppa32_tramp));
+      write_memory (sp, hppa32_tramp, sizeof (hppa32_tramp));
 
       *bp_addr = hppa_hpux_find_dummy_bpaddr (pc);
       regcache_cooked_write_unsigned (regcache, 31, *bp_addr);
@@ -1242,18 +1227,19 @@ hppa_hpux_push_dummy_code (struct gdbarch *gdbarch, CORE_ADDR sp,
     }
   else
     {
-      static unsigned int hppa64_tramp[] = {
-        0xeac0f000, /* bve,l (r22),%r2 */
-        0x0fdf12d1, /* std r31,-8(,sp) */
-        0x0fd110c2, /* ldd -8(,sp),rp */
-        0xe840d002, /* bve,n (rp) */
-        0x08000240  /* nop */
+      static const gdb_byte hppa64_tramp[] = {
+	INSN(ea,c0,f0,00), /* bve,l (r22),%r2 */
+	INSN(0f,df,12,d1), /* std r31,-8(,sp) */
+	INSN(0f,d1,10,c2), /* ldd -8(,sp),rp */
+	INSN(e8,40,d0,02), /* bve,n (rp) */
+	INSN(08,00,02,40)  /* nop */
       };
+#undef INSN
 
       /* for hppa64, we don't need to call through a stub; all functions
          return via a bve.  */
       regcache_cooked_write_unsigned (regcache, 22, funcaddr);
-      write_memory (sp, (char *)&hppa64_tramp, sizeof (hppa64_tramp));
+      write_memory (sp, hppa64_tramp, sizeof (hppa64_tramp));
 
       *bp_addr = pc - 4;
       regcache_cooked_write_unsigned (regcache, 31, *bp_addr);
@@ -1276,9 +1262,9 @@ hppa_hpux_push_dummy_code (struct gdbarch *gdbarch, CORE_ADDR sp,
 
 static void
 hppa_hpux_supply_ss_narrow (struct regcache *regcache,
-			    int regnum, const char *save_state)
+			    int regnum, const gdb_byte *save_state)
 {
-  const char *ss_narrow = save_state + HPPA_HPUX_SS_NARROW_OFFSET;
+  const gdb_byte *ss_narrow = save_state + HPPA_HPUX_SS_NARROW_OFFSET;
   int i, offset = 0;
 
   for (i = HPPA_R1_REGNUM; i < HPPA_FP0_REGNUM; i++)
@@ -1292,9 +1278,9 @@ hppa_hpux_supply_ss_narrow (struct regcache *regcache,
 
 static void
 hppa_hpux_supply_ss_fpblock (struct regcache *regcache,
-			     int regnum, const char *save_state)
+			     int regnum, const gdb_byte *save_state)
 {
-  const char *ss_fpblock = save_state + HPPA_HPUX_SS_FPBLOCK_OFFSET;
+  const gdb_byte *ss_fpblock = save_state + HPPA_HPUX_SS_FPBLOCK_OFFSET;
   int i, offset = 0;
 
   /* FIXME: We view the floating-point state as 64 single-precision
@@ -1327,9 +1313,9 @@ hppa_hpux_supply_ss_fpblock (struct regcache *regcache,
 
 static void
 hppa_hpux_supply_ss_wide (struct regcache *regcache,
-			  int regnum, const char *save_state)
+			  int regnum, const gdb_byte *save_state)
 {
-  const char *ss_wide = save_state + HPPA_HPUX_SS_WIDE_OFFSET;
+  const gdb_byte *ss_wide = save_state + HPPA_HPUX_SS_WIDE_OFFSET;
   int i, offset = 8;
 
   if (register_size (get_regcache_arch (regcache), HPPA_R1_REGNUM) == 4)
@@ -1351,8 +1337,8 @@ hppa_hpux_supply_save_state (const struct regset *regset,
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  const char *proc_info = regs;
-  const char *save_state = proc_info + 8;
+  const gdb_byte *proc_info = regs;
+  const gdb_byte *save_state = proc_info + 8;
   ULONGEST flags;
 
   flags = extract_unsigned_integer (save_state + HPPA_HPUX_SS_FLAGS_OFFSET,
@@ -1360,7 +1346,7 @@ hppa_hpux_supply_save_state (const struct regset *regset,
   if (regnum == -1 || regnum == HPPA_FLAGS_REGNUM)
     {
       size_t size = register_size (gdbarch, HPPA_FLAGS_REGNUM);
-      char buf[8];
+      gdb_byte buf[8];
 
       store_unsigned_integer (buf, size, byte_order, flags);
       regcache_raw_supply (regcache, HPPA_FLAGS_REGNUM, buf);

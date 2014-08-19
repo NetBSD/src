@@ -1,6 +1,5 @@
 /* Remote serial support interface definitions for GDB, the GNU Debugger.
-   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001, 2004,
-   2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1992-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,12 +36,17 @@ typedef void *serial_ttystate;
 struct serial;
 
 /* Try to open NAME.  Returns a new `struct serial *' on success, NULL
-   on failure.  Note that some open calls can block and, if possible, 
-   should be  written to be non-blocking, with calls to ui_look_hook 
-   so they can be cancelled.  An async interface for open could be
-   added to GDB if necessary.  */
+   on failure.  The new serial object has a reference count of 1.
+   Note that some open calls can block and, if possible, should be
+   written to be non-blocking, with calls to ui_look_hook so they can
+   be cancelled.  An async interface for open could be added to GDB if
+   necessary.  */
 
 extern struct serial *serial_open (const char *name);
+
+/* Returns true if SCB is open.  */
+
+extern int serial_is_open (struct serial *scb);
 
 /* Find an already opened serial stream using a file handle.  */
 
@@ -52,9 +56,17 @@ extern struct serial *serial_for_fd (int fd);
 
 extern struct serial *serial_fdopen (const int fd);
 
-/* Push out all buffers, close the device and destroy SCB.  */
+/* Push out all buffers, close the device and unref SCB.  */
 
 extern void serial_close (struct serial *scb);
+
+/* Increment reference count of SCB.  */
+
+extern void serial_ref (struct serial *scb);
+
+/* Decrement reference count of SCB.  */
+
+extern void serial_unref (struct serial *scb);
 
 /* Create a pipe, and put the read end in files[0], and the write end
    in filde[1].  Returns 0 for success, negative value for error (in
@@ -92,10 +104,10 @@ enum serial_rc {
 
 extern int serial_readchar (struct serial *scb, int timeout);
 
-/* Write LEN chars from STRING to the port SCB.  Returns 0 for
+/* Write COUNT bytes from BUF to the port SCB.  Returns 0 for
    success, non-zero for failure.  */
 
-extern int serial_write (struct serial *scb, const char *str, int len);
+extern int serial_write (struct serial *scb, const void *buf, size_t count);
 
 /* Write a printf style string onto the serial port.  */
 
@@ -192,13 +204,6 @@ typedef void (serial_event_ftype) (struct serial *scb, void *context);
 extern void serial_async (struct serial *scb,
 			  serial_event_ftype *handler, void *context);
 
-/* Provide direct access to the underlying FD (if any) used to
-   implement the serial device.  This interface is clearly
-   deprecated.  Will call internal_error() if the operation isn't
-   applicable to the current serial device.  */
-
-extern int deprecated_serial_fd (struct serial *scb);
-
 /* Trace/debug mechanism.
 
    serial_debug() enables/disables internal debugging.
@@ -213,13 +218,17 @@ extern int serial_debug_p (struct serial *scb);
 
 struct serial
   {
+    /* serial objects are ref counted (but not the underlying
+       connection, just the object's lifetime in memory).  */
+    int refcnt;
+
     int fd;			/* File descriptor */
     /* File descriptor for a separate error stream that should be
        immediately forwarded to gdb_stderr.  This may be -1.
        If != -1, this descriptor should be non-blocking or
        ops->avail should be non-NULL.  */
     int error_fd;               
-    struct serial_ops *ops;	/* Function vector */
+    const struct serial_ops *ops; /* Function vector */
     void *state;       		/* Local context info for open FD */
     serial_ttystate ttystate;	/* Not used (yet) */
     int bufcnt;			/* Amount of data remaining in receive
@@ -233,7 +242,6 @@ struct serial
 				   more seconds.  */
     char *name;			/* The name of the device or host */
     struct serial *next;	/* Pointer to the next `struct serial *' */
-    int refcnt;			/* Number of pointers to this block */
     int debug_p;		/* Trace this serial devices operation.  */
     int async_state;		/* Async internal state.  */
     void *async_context;	/* Async event thread's context */
@@ -243,12 +251,11 @@ struct serial
 struct serial_ops
   {
     char *name;
-    struct serial_ops *next;
     int (*open) (struct serial *, const char *name);
     void (*close) (struct serial *);
     int (*fdopen) (struct serial *, int fd);
     int (*readchar) (struct serial *, int timeout);
-    int (*write) (struct serial *, const char *str, int len);
+    int (*write) (struct serial *, const void *buf, size_t count);
     /* Discard pending output */
     int (*flush_output) (struct serial *);
     /* Discard pending input */
@@ -278,7 +285,7 @@ struct serial_ops
     int (*write_prim)(struct serial *scb, const void *buf, size_t count);
     /* Return that number of bytes that can be read from FD
        without blocking.  Return value of -1 means that the
-       the read will not block even if less that requested bytes
+       read will not block even if less that requested bytes
        are available.  */
     int (*avail)(struct serial *scb, int fd);
 
@@ -293,7 +300,7 @@ struct serial_ops
 
 /* Add a new serial interface to the interface list.  */
 
-extern void serial_add_interface (struct serial_ops * optable);
+extern void serial_add_interface (const struct serial_ops * optable);
 
 /* File in which to record the remote debugging session.  */
 

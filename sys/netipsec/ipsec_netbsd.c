@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.34.2.1 2013/06/23 06:20:26 tls Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.34.2.2 2014/08/20 00:04:36 tls Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.34.2.1 2013/06/23 06:20:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.34.2.2 2014/08/20 00:04:36 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -473,17 +473,40 @@ sysctl_net_inet_ipip_stats(SYSCTLFN_ARGS)
 	return (NETSTAT_SYSCTL(ipipstat_percpu, IPIP_NSTATS));
 }
 
+static int
+sysctl_net_ipsec_enabled(SYSCTLFN_ARGS)
+{
+	int newenabled, error;
+	struct sysctlnode node;
+	node = *rnode;
+	node.sysctl_data = &newenabled;
+
+	newenabled = ipsec_enabled;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	switch (newenabled) {
+	case 0:
+		if (key_get_used())
+			return EBUSY;
+		/*FALLTHROUGH*/
+	case 1:
+	case 2:
+		ipsec_enabled = newenabled;
+		key_update_used();
+		return 0;
+	default:
+		return EINVAL;
+	}
+}
+
 /* XXX will need a different oid at parent */
 SYSCTL_SETUP(sysctl_net_inet_ipsec_setup, "sysctl net.inet.ipsec subtree setup")
 {
 	const struct sysctlnode *_ipsec;
 	int ipproto_ipsec;
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet", NULL,
@@ -665,6 +688,20 @@ SYSCTL_SETUP(sysctl_net_inet_ipsec_setup, "sysctl net.inet.ipsec subtree setup")
 		       sysctl_net_inet_ipsec_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET, ipproto_ipsec,
 		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "enabled",
+		       SYSCTL_DESCR("Enable IPSec processing"),
+		       sysctl_net_ipsec_enabled, 0, NULL, 0,
+		       CTL_NET, PF_INET, ipproto_ipsec,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_INT, "used",
+		       SYSCTL_DESCR("Is IPSec active?"),
+		       NULL, 0, &ipsec_used, 0,
+		       CTL_NET, PF_INET, ipproto_ipsec,
+		       CTL_CREATE, CTL_EOL);
 #ifdef IPSEC_DEBUG
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
@@ -688,11 +725,6 @@ SYSCTL_SETUP(sysctl_net_inet6_ipsec6_setup,
 	     "sysctl net.inet6.ipsec6 subtree setup")
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet6", NULL,
@@ -765,7 +797,20 @@ SYSCTL_SETUP(sysctl_net_inet6_ipsec6_setup,
 		       NULL, 0, &ipsec_debug, 0,
 		       CTL_NET, PF_INET6, IPPROTO_AH,
 		       IPSECCTL_DEBUG, CTL_EOL);
-
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "enabled",
+		       SYSCTL_DESCR("Enable IPSec processing"),
+		       sysctl_net_ipsec_enabled, 0, NULL, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_INT, "used",
+		       SYSCTL_DESCR("Is IPSec active?"),
+		       NULL, 0, &ipsec_used, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       CTL_CREATE, CTL_EOL);
 	/*
 	 * "aliases" for the ipsec6 subtree
 	 */

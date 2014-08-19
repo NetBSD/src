@@ -1,4 +1,4 @@
-#	$NetBSD: std.n900,v 1.2.6.3 2013/06/23 06:20:04 tls Exp $
+#	$NetBSD: std.n900,v 1.2.6.4 2014/08/20 00:02:53 tls Exp $
 #
 # standard NetBSD/evbarm for N900 options
 
@@ -19,7 +19,6 @@ options 	FPU_VFP
 makeoptions	LOADADDRESS="0x80300000"
 makeoptions	BOARDTYPE="n900"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.beagle"
-makeoptions	CPPFLAGS+="-I$S/../../../include"
 
 options 	ARM_INTR_IMPL="<arch/arm/omap/omap2_intr.h>"
 options		ARM_GENERIC_TODR

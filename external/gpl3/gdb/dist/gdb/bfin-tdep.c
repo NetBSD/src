@@ -1,7 +1,6 @@
 /* Target-dependent code for Analog Devices Blackfin processor, for GDB.
 
-   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
 
    Contributed by Analog Devices, Inc.
 
@@ -21,7 +20,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "inferior.h"
 #include "gdbcore.h"
 #include "arch-utils.h"
@@ -504,7 +503,7 @@ bfin_push_dummy_call (struct gdbarch *gdbarch,
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  char buf[4];
+  gdb_byte buf[4];
   int i;
   long reg_r0, reg_r1, reg_r2;
   int total_len = 0;
@@ -514,9 +513,8 @@ bfin_push_dummy_call (struct gdbarch *gdbarch,
   for (i = nargs - 1; i >= 0; i--)
     {
       struct type *value_type = value_enclosing_type (args[i]);
-      int len = TYPE_LENGTH (value_type);
 
-      total_len += (len + 3) & ~3;
+      total_len += (TYPE_LENGTH (value_type) + 3) & ~3;
     }
 
   /* At least twelve bytes of stack space must be allocated for the function's
@@ -532,8 +530,7 @@ bfin_push_dummy_call (struct gdbarch *gdbarch,
     {
       struct type *value_type = value_enclosing_type (args[i]);
       struct type *arg_type = check_typedef (value_type);
-      int len = TYPE_LENGTH (value_type);
-      int container_len = (len + 3) & ~3;
+      int container_len = (TYPE_LENGTH (value_type) + 3) & ~3;
 
       sp -= container_len;
       write_memory (sp, value_contents_writeable (args[i]), container_len);
@@ -577,11 +574,11 @@ bfin_reg_to_regnum (struct gdbarch *gdbarch, int reg)
   return map_gcc_gdb[reg];
 }
 
-/* This function implements the BREAKPOINT_FROM_PC macro.  It returns
-   a pointer to a string of bytes that encode a breakpoint instruction,
-   stores the length of the string to *lenptr, and adjusts the program
-   counter (if necessary) to point to the actual memory location where
-   the breakpoint should be inserted.  */
+/* This function implements the 'breakpoint_from_pc' gdbarch method.
+   It returns a pointer to a string of bytes that encode a breakpoint
+   instruction, stores the length of the string to *lenptr, and
+   adjusts the program counter (if necessary) to point to the actual
+   memory location where the breakpoint should be inserted.  */
 
 static const unsigned char *
 bfin_breakpoint_from_pc (struct gdbarch *gdbarch,
@@ -623,7 +620,7 @@ bfin_extract_return_value (struct type *type,
   while (len > 0)
     {
       regcache_cooked_read_unsigned (regs, regno++, &tmp);
-      store_unsigned_integer (valbuf, (len > 4 ? 4 : len), tmp, byte_order);
+      store_unsigned_integer (valbuf, (len > 4 ? 4 : len), byte_order, tmp);
       len -= 4;
       valbuf += 4;
     }
@@ -664,7 +661,7 @@ bfin_store_return_value (struct type *type,
 
 static enum return_value_convention
 bfin_return_value (struct gdbarch *gdbarch,
-		   struct type *func_type,
+		   struct value *function,
 		   struct type *type,
 		   struct regcache *regcache,
 		   gdb_byte *readbuf,

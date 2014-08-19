@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.40.6.1 2012/11/20 03:02:05 tls Exp $ */
+/* $NetBSD: lemac.c,v 1.40.6.2 2014/08/20 00:03:38 tls Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.40.6.1 2012/11/20 03:02:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.40.6.2 2014/08/20 00:03:38 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -1012,7 +1012,7 @@ lemac_ifattach(
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_NET, 0);
+			  RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	ifmedia_init(&sc->sc_ifmedia, 0,
 		     lemac_ifmedia_change,

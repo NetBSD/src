@@ -1,6 +1,6 @@
 /* CLI utilities.
 
-   Copyright (c) 2011 Free Software Foundation, Inc.
+   Copyright (C) 2011-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -94,13 +94,41 @@ extern int number_is_in_list (char *list, int number);
 
 extern char *skip_spaces (char *inp);
 
+/* A const-correct version of the above.  */
+
+extern const char *skip_spaces_const (const char *inp);
+
 /* Skip leading non-whitespace characters in INP, returning an updated
    pointer.  If INP is NULL, return NULL.  */
 
-extern char *skip_to_space (char *inp);
+#define skip_to_space(INP) ((char *) skip_to_space_const (INP))
+
+/* A const-correct version of the above.  */
+
+extern const char *skip_to_space_const (const char *inp);
 
 /* Reverse S to the last non-whitespace character without skipping past
    START.  */
 
 extern char *remove_trailing_whitespace (const char *start, char *s);
+
+/* A helper function to extract an argument from *ARG.  An argument is
+   delimited by whitespace.  The return value is either NULL if no
+   argument was found, or an xmalloc'd string.  */
+
+extern char *extract_arg (char **arg);
+
+/* A const-correct version of "extract_arg".
+
+   Since the returned value is xmalloc'd, it eventually needs to be
+   xfree'ed, which prevents us from making it const as well.  */
+
+extern char *extract_arg_const (const char **arg);
+
+/* A helper function that looks for an argument at the start of a
+   string.  The argument must also either be at the end of the string,
+   or be followed by whitespace.  Returns 1 if it finds the argument,
+   0 otherwise.  If the argument is found, it updates *STR.  */
+extern int check_for_argument (char **str, char *arg, int arg_len);
+
 #endif /* CLI_UTILS_H */

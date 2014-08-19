@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.13.6.1 2013/06/23 06:28:54 tls Exp $
+#	$NetBSD: Makefile,v 1.13.6.2 2014/08/20 00:02:36 tls Exp $
 
 MAN=	amdpcib.4 apic.4 balloon.4 coretemp.4 est.4 fdc.4 \
 	fwhrng.4 hpet.4 ichlpcib.4 lpt.4 mem.4 odcm.4 powernow.4 \
-	soekrisgpio.4 tprof_amdpmi.4 tprof_pmi.4 vmt.4
+	soekrisgpio.4 tprof_amdpmi.4 tprof_pmi.4 vmt.4 vmx.4
 
 MLINKS+=apic.4 ioapic.4 \
 	apic.4 lapic.4

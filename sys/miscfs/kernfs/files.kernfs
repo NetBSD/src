@@ -1,7 +1,6 @@
-#	$NetBSD: files.kernfs,v 1.4 2010/03/03 01:26:01 pooka Exp $
+#	$NetBSD: files.kernfs,v 1.4.20.1 2014/08/20 00:04:31 tls Exp $
 
 deffs					KERNFS
 
-file	miscfs/kernfs/kernfs_subr.c	kernfs
 file	miscfs/kernfs/kernfs_vfsops.c	kernfs
 file	miscfs/kernfs/kernfs_vnops.c	kernfs

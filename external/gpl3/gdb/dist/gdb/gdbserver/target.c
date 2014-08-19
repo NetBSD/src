@@ -1,6 +1,5 @@
 /* Target operations for the remote server for GDB.
-   Copyright (C) 2002, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
 
@@ -20,6 +19,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "server.h"
+#include "tracepoint.h"
 
 struct target_ops *the_target;
 
@@ -31,21 +31,7 @@ set_desired_inferior (int use_general)
   if (use_general == 1)
     found = find_thread_ptid (general_thread);
   else
-    {
-      found = NULL;
-
-      /* If we are continuing any (all) thread(s), use step_thread
-	 to decide which thread to step and/or send the specified
-	 signal to.  */
-      if ((!ptid_equal (step_thread, null_ptid)
-	   && !ptid_equal (step_thread, minus_one_ptid))
-	  && (ptid_equal (cont_thread, null_ptid)
-	      || ptid_equal (cont_thread, minus_one_ptid)))
-	found = find_thread_ptid (step_thread);
-
-      if (found == NULL)
-	found = find_thread_ptid (cont_thread);
-    }
+    found = find_thread_ptid (cont_thread);
 
   if (found == NULL)
     current_inferior = (struct thread_info *) all_threads.head;
@@ -77,7 +63,7 @@ write_inferior_memory (CORE_ADDR memaddr, const unsigned char *myaddr,
 
   buffer = xmalloc (len);
   memcpy (buffer, myaddr, len);
-  check_mem_write (memaddr, buffer, len);
+  check_mem_write (memaddr, buffer, myaddr, len);
   res = (*the_target->write_memory) (memaddr, buffer, len);
   free (buffer);
   buffer = NULL;
@@ -96,13 +82,27 @@ mywait (ptid_t ptid, struct target_waitstatus *ourstatus, int options,
 
   ret = (*the_target->wait) (ptid, ourstatus, options);
 
-  if (ourstatus->kind == TARGET_WAITKIND_EXITED)
-    fprintf (stderr,
-	     "\nChild exited with status %d\n", ourstatus->value.integer);
-  else if (ourstatus->kind == TARGET_WAITKIND_SIGNALLED)
-    fprintf (stderr, "\nChild terminated with signal = 0x%x (%s)\n",
-	     target_signal_to_host (ourstatus->value.sig),
-	     target_signal_to_name (ourstatus->value.sig));
+  /* We don't expose _LOADED events to gdbserver core.  See the
+     `dlls_changed' global.  */
+  if (ourstatus->kind == TARGET_WAITKIND_LOADED)
+    ourstatus->kind = TARGET_WAITKIND_STOPPED;
+
+  /* If GDB is connected through TCP/serial, then GDBserver will most
+     probably be running on its own terminal/console, so it's nice to
+     print there why is GDBserver exiting.  If however, GDB is
+     connected through stdio, then there's no need to spam the GDB
+     console with this -- the user will already see the exit through
+     regular GDB output, in that same terminal.  */
+  if (!remote_connection_is_stdio ())
+    {
+      if (ourstatus->kind == TARGET_WAITKIND_EXITED)
+	fprintf (stderr,
+		 "\nChild exited with status %d\n", ourstatus->value.integer);
+      else if (ourstatus->kind == TARGET_WAITKIND_SIGNALLED)
+	fprintf (stderr, "\nChild terminated with signal = 0x%x (%s)\n",
+		 gdb_signal_to_host (ourstatus->value.sig),
+		 gdb_signal_to_name (ourstatus->value.sig));
+    }
 
   if (connected_wait)
     server_waiting = 0;
@@ -155,44 +155,10 @@ target_pid_to_str (ptid_t ptid)
   return buf;
 }
 
-/* Return a pretty printed form of target_waitstatus.  */
-
-const char *
-target_waitstatus_to_string (const struct target_waitstatus *ws)
+int
+kill_inferior (int pid)
 {
-  static char buf[200];
-  const char *kind_str = "status->kind = ";
+  gdb_agent_about_to_close (pid);
 
-  switch (ws->kind)
-    {
-    case TARGET_WAITKIND_EXITED:
-      sprintf (buf, "%sexited, status = %d",
-	       kind_str, ws->value.integer);
-      break;
-    case TARGET_WAITKIND_STOPPED:
-      sprintf (buf, "%sstopped, signal = %s",
-	       kind_str, target_signal_to_name (ws->value.sig));
-      break;
-    case TARGET_WAITKIND_SIGNALLED:
-      sprintf (buf, "%ssignalled, signal = %s",
-	       kind_str, target_signal_to_name (ws->value.sig));
-      break;
-    case TARGET_WAITKIND_LOADED:
-      sprintf (buf, "%sloaded", kind_str);
-      break;
-    case TARGET_WAITKIND_EXECD:
-      sprintf (buf, "%sexecd", kind_str);
-      break;
-    case TARGET_WAITKIND_SPURIOUS:
-      sprintf (buf, "%sspurious", kind_str);
-      break;
-    case TARGET_WAITKIND_IGNORE:
-      sprintf (buf, "%signore", kind_str);
-      break;
-    default:
-      sprintf (buf, "%sunknown???", kind_str);
-      break;
-    }
-
-  return buf;
+  return (*the_target->kill) (pid);
 }

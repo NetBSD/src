@@ -1,6 +1,5 @@
 /* Darwin support for GDB, the GNU debugger.
-   Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2005, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
 
    Contributed by Apple Computer, Inc.
 
@@ -34,9 +33,6 @@
 #include "amd64-tdep.h"
 #include "osabi.h"
 #include "ui-out.h"
-#include "symtab.h"
-#include "frame.h"
-#include "gdb_assert.h"
 #include "amd64-darwin-tdep.h"
 #include "i386-darwin-tdep.h"
 #include "solib.h"
@@ -85,7 +81,6 @@ amd64_darwin_sigcontext_addr (struct frame_info *this_frame)
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR rbx;
-  CORE_ADDR si;
   gdb_byte buf[8];
 
   /* A pointer to the ucontext is passed as the fourth argument
@@ -116,10 +111,13 @@ x86_darwin_init_abi_64 (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->sc_reg_offset = amd64_darwin_thread_state_reg_offset;
   tdep->sc_num_regs = amd64_darwin_thread_state_num_regs;
 
-  tdep->jb_pc_offset = 148;
+  tdep->jb_pc_offset = 56;
 
   set_solib_ops (gdbarch, &darwin_so_ops);
 }
+
+/* -Wmissing-prototypes */
+extern initialize_file_ftype _initialize_amd64_darwin_tdep;
 
 void
 _initialize_amd64_darwin_tdep (void)

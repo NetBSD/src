@@ -1,8 +1,6 @@
 /* Generic serial interface functions.
 
-   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001, 2003,
-   2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1992-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,7 +23,8 @@
 #include "event-loop.h"
 
 #include "gdb_select.h"
-#include "gdb_string.h"
+#include <string.h>
+#include "gdb_assert.h"
 #include <sys/time.h>
 #ifdef USE_WIN32API
 #include <winsock2.h>
@@ -124,6 +123,29 @@ reschedule (struct serial *scb)
     }
 }
 
+/* Run the SCB's async handle, and reschedule, if the handler doesn't
+   close SCB.  */
+
+static void
+run_async_handler_and_reschedule (struct serial *scb)
+{
+  int is_open;
+
+  /* Take a reference, so a serial_close call within the handler
+     doesn't make SCB a dangling pointer.  */
+  serial_ref (scb);
+
+  /* Run the handler.  */
+  scb->async_handler (scb, scb->async_context);
+
+  is_open = serial_is_open (scb);
+  serial_unref (scb);
+
+  /* Get ready for more, if not already closed.  */
+  if (is_open)
+    reschedule (scb);
+}
+
 /* FD_EVENT: This is scheduled when the input FIFO is empty (and there
    is no pending error).  As soon as data arrives, it is read into the
    input FIFO and the client notified.  The client should then drain
@@ -159,8 +181,7 @@ fd_event (int error, void *context)
 	  scb->bufcnt = SERIAL_ERROR;
 	}
     }
-  scb->async_handler (scb, scb->async_context);
-  reschedule (scb);
+  run_async_handler_and_reschedule (scb);
 }
 
 /* PUSH_EVENT: The input FIFO is non-empty (or there is a pending
@@ -174,9 +195,7 @@ push_event (void *context)
   struct serial *scb = context;
 
   scb->async_state = NOTHING_SCHEDULED; /* Timers are one-off */
-  scb->async_handler (scb, scb->async_context);
-  /* re-schedule */
-  reschedule (scb);
+  run_async_handler_and_reschedule (scb);
 }
 
 /* Wait for input on scb, with timeout seconds.  Returns 0 on success,
@@ -220,6 +239,64 @@ ser_base_wait_for (struct serial *scb, int timeout)
 	}
 
       return 0;
+    }
+}
+
+/* Read any error output we might have.  */
+
+static void
+ser_base_read_error_fd (struct serial *scb, int close_fd)
+{
+  if (scb->error_fd != -1)
+    {
+      ssize_t s;
+      char buf[GDB_MI_MSG_WIDTH + 1];
+
+      for (;;)
+	{
+	  char *current;
+	  char *newline;
+	  int to_read = GDB_MI_MSG_WIDTH;
+	  int num_bytes = -1;
+
+	  if (scb->ops->avail)
+	    num_bytes = (scb->ops->avail)(scb, scb->error_fd);
+
+	  if (num_bytes != -1)
+	    to_read = (num_bytes < to_read) ? num_bytes : to_read;
+
+	  if (to_read == 0)
+	    break;
+
+	  s = read (scb->error_fd, &buf, to_read);
+	  if ((s == -1) || (s == 0 && !close_fd))
+	    break;
+
+	  if (s == 0 && close_fd)
+	    {
+	      /* End of file.  */
+	      close (scb->error_fd);
+	      scb->error_fd = -1;
+	      break;
+	    }
+
+	  /* In theory, embedded newlines are not a problem.
+	     But for MI, we want each output line to have just
+	     one newline for legibility.  So output things
+	     in newline chunks.  */
+	  gdb_assert (s > 0 && s <= GDB_MI_MSG_WIDTH);
+	  buf[s] = '\0';
+	  current = buf;
+	  while ((newline = strstr (current, "\n")) != NULL)
+	    {
+	      *newline = '\0';
+	      fputs_unfiltered (current, gdb_stderr);
+	      fputs_unfiltered ("\n", gdb_stderr);
+	      current = newline + 1;
+	    }
+
+	  fputs_unfiltered (current, gdb_stderr);
+       }
     }
 }
 
@@ -273,6 +350,11 @@ do_ser_base_readchar (struct serial *scb, int timeout)
 	  status = SERIAL_TIMEOUT;
 	  break;
 	}
+
+      /* We also need to check and consume the stderr because it could
+	 come before the stdout for some stubs.  If we just sit and wait
+	 for stdout, we would hit a deadlock for that case.  */
+      ser_base_read_error_fd (scb, 0);
     }
 
   if (status < 0)
@@ -343,54 +425,9 @@ generic_readchar (struct serial *scb, int timeout,
 	    }
 	}
     }
+
   /* Read any error output we might have.  */
-  if (scb->error_fd != -1)
-    {
-      ssize_t s;
-      char buf[81];
-
-      for (;;)
-        {
- 	  char *current;
- 	  char *newline;
-	  int to_read = 80;
-
-	  int num_bytes = -1;
-	  if (scb->ops->avail)
-	    num_bytes = (scb->ops->avail)(scb, scb->error_fd);
-	  if (num_bytes != -1)
-	    to_read = (num_bytes < to_read) ? num_bytes : to_read;
-
-	  if (to_read == 0)
-	    break;
-
-	  s = read (scb->error_fd, &buf, to_read);
-	  if (s == -1)
-	    break;
-	  if (s == 0)
-	    {
-	      /* EOF */
-	      close (scb->error_fd);
-	      scb->error_fd = -1;
-	      break;
-	    }
-
-	  /* In theory, embedded newlines are not a problem.
-	     But for MI, we want each output line to have just
-	     one newline for legibility.  So output things
-	     in newline chunks.  */
-	  buf[s] = '\0';
-	  current = buf;
-	  while ((newline = strstr (current, "\n")) != NULL)
-	    {
-	      *newline = '\0';
-	      fputs_unfiltered (current, gdb_stderr);
-	      fputs_unfiltered ("\n", gdb_stderr);
-	      current = newline + 1;
-	    }
-	  fputs_unfiltered (current, gdb_stderr);
-	}
-    }
+  ser_base_read_error_fd (scb, 1);
 
   reschedule (scb);
   return ch;
@@ -403,17 +440,18 @@ ser_base_readchar (struct serial *scb, int timeout)
 }
 
 int
-ser_base_write (struct serial *scb, const char *str, int len)
+ser_base_write (struct serial *scb, const void *buf, size_t count)
 {
+  const char *str = buf;
   int cc;
 
-  while (len > 0)
+  while (count > 0)
     {
-      cc = scb->ops->write_prim (scb, str, len); 
+      cc = scb->ops->write_prim (scb, str, count);
 
       if (cc < 0)
 	return 1;
-      len -= cc;
+      count -= cc;
       str += cc;
     }
   return 0;

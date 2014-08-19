@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile.macppc.inc,v 1.1 2011/06/17 05:17:30 matt Exp $
+#	$NetBSD: Makefile.macppc.inc,v 1.1.14.1 2014/08/20 00:03:11 tls Exp $
 
 .if ${PPC_ARCH_MODE} == "ppc64bridge"
-AOPTS+=	-Wa,-mppc64bridge
+AOPTS+=	${${ACTIVE_CC} == "gcc":? -Wa,-mppc64bridge :}
 .endif
 
-CFLAGS+=	-Wa,-maltivec
 AFLAGS+=	${AOPTS}

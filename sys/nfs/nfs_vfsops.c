@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.220.12.1 2013/02/25 00:30:07 tls Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.220.12.2 2014/08/20 00:04:36 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.220.12.1 2013/02/25 00:30:07 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.220.12.2 2014/08/20 00:04:36 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -104,31 +104,29 @@ const struct vnodeopv_desc * const nfs_vnodeopv_descs[] = {
 };
 
 struct vfsops nfs_vfsops = {
-	MOUNT_NFS,
-	sizeof (struct nfs_args),
-	nfs_mount,
-	nfs_start,
-	nfs_unmount,
-	nfs_root,
-	(void *)eopnotsupp,	/* vfs_quotactl */
-	nfs_statvfs,
-	nfs_sync,
-	nfs_vget,
-	nfs_fhtovp,
-	nfs_vptofh,
-	nfs_vfs_init,
-	NULL,
-	nfs_vfs_done,
-	nfs_mountroot,
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,	/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	nfs_vnodeopv_descs,
-	0,
-	{ NULL, NULL },
+	.vfs_name = MOUNT_NFS,
+	.vfs_min_mount_data = sizeof (struct nfs_args),
+	.vfs_mount = nfs_mount,
+	.vfs_start = nfs_start,
+	.vfs_unmount = nfs_unmount,
+	.vfs_root = nfs_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = nfs_statvfs,
+	.vfs_sync = nfs_sync,
+	.vfs_loadvnode = nfs_loadvnode,
+	.vfs_vget = nfs_vget,
+	.vfs_fhtovp = nfs_fhtovp,
+	.vfs_vptofh = nfs_vptofh,
+	.vfs_init = nfs_vfs_init,
+	.vfs_done = nfs_vfs_done,
+	.vfs_mountroot = nfs_mountroot,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = nfs_vnodeopv_descs
 };
 
 extern u_int32_t nfs_procids[NFS_NPROCS];
@@ -379,9 +377,7 @@ nfs_mountroot(void)
 	/*
 	 * Link it into the mount list.
 	 */
-	mutex_enter(&mountlist_lock);
-	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mutex_exit(&mountlist_lock);
+	mountlist_append(mp);
 	rootvp = vp;
 	mp->mnt_vnodecovered = NULLVP;
 	vfs_unbusy(mp, false, NULL);
@@ -596,14 +592,14 @@ nfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct sockaddr *sa;
 	struct vnode *vp;
 	char *pth, *hst;
-	struct proc *p;
 	size_t len;
 	u_char *nfh;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
-	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 
 		if (nmp == NULL)
@@ -726,12 +722,10 @@ mountnfs(struct nfs_args *argp, struct mount *mp, struct mbuf *nam, const char *
 		TAILQ_INIT(&nmp->nm_bufq);
 		rw_init(&nmp->nm_writeverflock);
 		mutex_init(&nmp->nm_lock, MUTEX_DEFAULT, IPL_NONE);
-		rw_init(&nmp->nm_rbtlock);
 		cv_init(&nmp->nm_rcvcv, "nfsrcv");
 		cv_init(&nmp->nm_sndcv, "nfssnd");
 		cv_init(&nmp->nm_aiocv, "nfsaio");
 		cv_init(&nmp->nm_disconcv, "nfsdis");
-		nfs_rbtinit(nmp);
 	}
 	vfs_getnewfsid(mp);
 	nmp->nm_mountp = mp;
@@ -831,7 +825,6 @@ mountnfs(struct nfs_args *argp, struct mount *mp, struct mbuf *nam, const char *
 bad:
 	nfs_disconnect(nmp);
 	rw_destroy(&nmp->nm_writeverflock);
-	rw_destroy(&nmp->nm_rbtlock);
 	mutex_destroy(&nmp->nm_lock);
 	cv_destroy(&nmp->nm_rcvcv);
 	cv_destroy(&nmp->nm_sndcv);
@@ -908,7 +901,6 @@ nfs_unmount(struct mount *mp, int mntflags)
 	m_freem(nmp->nm_nam);
 
 	rw_destroy(&nmp->nm_writeverflock);
-	rw_destroy(&nmp->nm_rbtlock);
 	mutex_destroy(&nmp->nm_lock);
 	cv_destroy(&nmp->nm_rcvcv);
 	cv_destroy(&nmp->nm_sndcv);
@@ -942,6 +934,13 @@ nfs_root(struct mount *mp, struct vnode **vpp)
 
 extern int syncprt;
 
+static bool
+nfs_sync_selector(void *cl, struct vnode *vp)
+{
+
+	return !LIST_EMPTY(&vp->v_dirtyblkhd) || !UVM_OBJ_IS_CLEAN(&vp->v_uobj);
+}
+
 /*
  * Flush out the buffer cache
  */
@@ -949,51 +948,30 @@ extern int syncprt;
 int
 nfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
-	struct vnode *vp, *mvp;
+	struct vnode *vp;
+	struct vnode_iterator *marker;
 	int error, allerror = 0;
 
 	/*
 	 * Force stale buffer cache information to be flushed.
 	 */
-	mvp = vnalloc(mp);
-loop:
-	/*
-	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
-	 * and vclean() can be called indirectly
-	 */
-	mutex_enter(&mntvnode_lock);
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
-		vmark(mvp, vp);
-		if (vp->v_mount != mp || vismarker(vp))
+	vfs_vnode_iterator_init(mp, &marker);
+	while ((vp = vfs_vnode_iterator_next(marker, nfs_sync_selector,
+	    NULL)))
+	{
+		error = vn_lock(vp, LK_EXCLUSIVE);
+		if (error) {
+			vrele(vp);
 			continue;
-		mutex_enter(vp->v_interlock);
-		/* XXX MNT_LAZY cannot be right? */
-		if (waitfor == MNT_LAZY ||
-		    (LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     UVM_OBJ_IS_CLEAN(&vp->v_uobj))) {
-			mutex_exit(vp->v_interlock);
-			continue;
-		}
-		mutex_exit(&mntvnode_lock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
-		if (error != 0) {
-			if (error != ENOENT) {
-				mutex_enter(&mntvnode_lock);
-				continue;
-			}
-			(void)vunmark(mvp);
-			goto loop;
 		}
 		error = VOP_FSYNC(vp, cred,
 		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0);
 		if (error)
 			allerror = error;
 		vput(vp);
-		mutex_enter(&mntvnode_lock);
 	}
-	mutex_exit(&mntvnode_lock);
-	vnfree(mvp);
-	return (allerror);
+	vfs_vnode_iterator_destroy(marker);
+	return allerror;
 }
 
 /*
@@ -1032,11 +1010,6 @@ static void
 nfs_sysctl_init(void)
 {
 
-	sysctl_createv(&nfs_clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
 	sysctl_createv(&nfs_clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "nfs",

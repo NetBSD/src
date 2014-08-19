@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nbuf_test.c,v 1.2.2.1 2013/02/25 00:30:47 tls Exp $	*/
+/*	$NetBSD: npf_nbuf_test.c,v 1.2.2.2 2014/08/20 00:05:11 tls Exp $	*/
 
 /*
  * NPF nbuf interface test.
@@ -30,7 +30,7 @@ mbuf_consistency_check(nbuf_t *nbuf)
 static char *
 parse_nbuf_chain(struct mbuf *m)
 {
-	const void *dummy_ifp = (void *)0xdeadbeef;
+	ifnet_t *dummy_ifp = npf_test_addif(IFNAME_TEST, false, false);
 	char *s = kmem_zalloc(MBUF_CHAIN_LEN + 1, KM_SLEEP);
 	nbuf_t nbuf;
 	void *nptr;

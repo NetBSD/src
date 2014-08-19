@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_output.c,v 1.16 2012/01/31 09:53:44 hauke Exp $	 */
+/*	$NetBSD: ddp_output.c,v 1.16.6.1 2014/08/20 00:04:35 tls Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.16 2012/01/31 09:53:44 hauke Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.16.6.1 2014/08/20 00:04:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,6 @@ ddp_route(struct mbuf *m, struct route *ro)
 	struct at_ifaddr *aa = NULL;
 	struct ifnet   *ifp = NULL;
 	uint16_t        net;
-	uint8_t         node;
 	uint8_t         loopback = 0;
 
 	if ((rt = rtcache_validate(ro)) != NULL && (ifp = rt->rt_ifp) != NULL) {
@@ -135,7 +134,6 @@ ddp_route(struct mbuf *m, struct route *ro)
 		uint16_t dnet = dst->sat_addr.s_net;
 		uint8_t dnode = dst->sat_addr.s_node;
 		net = satosat(rt->rt_gateway)->sat_addr.s_net;
-		node = satosat(rt->rt_gateway)->sat_addr.s_node;
 
 		TAILQ_FOREACH(aa, &at_ifaddr, aa_list) {
 			if (ntohs(net) >= ntohs(aa->aa_firstnet) &&

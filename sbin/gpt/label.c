@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: label.c,v 1.8.8.1 2013/06/23 06:28:51 tls Exp $");
+__RCSID("$NetBSD: label.c,v 1.8.8.2 2014/08/20 00:02:25 tls Exp $");
 #endif
 
 #include <sys/types.h>
@@ -51,7 +51,7 @@ static unsigned int entry;
 static uint8_t *name;
 
 const char labelmsg1[] = "label -a <-l label | -f file> device ...";
-const char labelmsg2[] = "label [-b lba] [-i index] [-s lba]";
+const char labelmsg2[] = "label [-b blocknr] [-i index] [-s sectors]";
 const char labelmsg3[] = "      [-t uuid] <-l label | -f file> device ...";
 
 __dead static void
@@ -144,13 +144,8 @@ label(int fd)
 		gpt_write(fd, lbt);
 		gpt_write(fd, tpg);
 
-#ifdef __FreeBSD__
-		printf("%sp%u labeled\n", device_name, m->map_index);
-#endif
-#ifdef __NetBSD__
 		printf("partition %d on %s labeled %s\n", m->map_index,
 		    device_name, name);
-#endif
 	}
 }
 
@@ -186,6 +181,7 @@ cmd_label(int argc, char *argv[])
 {
 	char *p;
 	int ch, fd;
+	int64_t human_num;
 
 	/* Get the label options */
 	while ((ch = getopt(argc, argv, "ab:f:i:l:s:t:")) != -1) {
@@ -198,8 +194,10 @@ cmd_label(int argc, char *argv[])
 		case 'b':
 			if (block > 0)
 				usage_label();
-			block = strtoll(optarg, &p, 10);
-			if (*p != 0 || block < 1)
+			if (dehumanize_number(optarg, &human_num) < 0)
+				usage_label();
+			block = human_num;
+			if (block < 1)
 				usage_label();
 			break;
 		case 'f':

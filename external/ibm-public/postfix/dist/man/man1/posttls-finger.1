@@ -1,0 +1,303 @@
+.\"	$NetBSD: posttls-finger.1,v 1.1.1.1.6.2 2014/08/19 23:59:41 tls Exp $
+.\"
+.TH POSTTLS-FINGER 1 
+.ad
+.fi
+.SH NAME
+posttls-finger
+\-
+Probe the TLS properties of an ESMTP or LMTP server.
+.SH "SYNOPSIS"
+.na
+.nf
+\fBposttls-finger\fR [\fIoptions\fR] [\fBinet:\fR]\fIdomain\fR[:\fIport\fR] [\fImatch ...\fR]
+.br
+\fBposttls-finger\fR -S [\fIoptions\fR] \fBunix:\fIpathname\fR [\fImatch ...\fR]
+.SH DESCRIPTION
+.ad
+.fi
+\fBposttls-finger\fR(1) connects to the specified destination
+and reports TLS-related information about the server. With SMTP, the
+destination is a domainname; with LMTP it is either a domainname
+prefixed with \fBinet:\fR or a pathname prefixed with \fBunix:\fR.  If
+Postfix is built without TLS support, the resulting posttls-finger
+program has very limited functionality, and only the \fB-a\fR, \fB-c\fR,
+\fB-h\fR, \fB-o\fR, \fB-S\fR, \fB-t\fR, \fB-T\fR and \fB-v\fR options
+are available.
+
+Note: this is an unsupported test program. No attempt is made
+to maintain compatibility between successive versions.
+
+For SMTP servers that don't support ESMTP, only the greeting banner
+and the negative EHLO response are reported. Otherwise, the reported
+EHLO response details further server capabilities.
+
+If TLS support is enabled when \fBposttls-finger\fR(1) is compiled, and
+the server supports \fBSTARTTLS\fR, a TLS handshake is attempted.
+
+If DNSSEC support is available, the connection TLS security level
+(\fB-l\fR option) defaults to \fBdane\fR; see TLS_README for
+details. Otherwise, it defaults to \fBsecure\fR.  This setting
+determines the certificate matching policy.
+
+If TLS negotiation succeeds, the TLS protocol and cipher details are
+reported. The server certificate is then verified in accordance with
+the policy at the chosen (or default) security level.  With public
+CA-based trust, when the \fB-L\fR option includes \fBcertmatch\fR,
+(true by default) name matching is performed even if the certificate
+chain is not trusted.  This logs the names found in the remote SMTP
+server certificate and which if any would match, were the certificate
+chain trusted.
+
+Note: \fBposttls-finger\fR(1) does not perform any table lookups, so
+the TLS policy table and obsolete per-site tables are not consulted.
+It does not communicate with the \fBtlsmgr\fR(8) daemon (or any other
+Postfix daemons); its TLS session cache is held in private memory, and
+disappears when the process exits.
+
+With the \fB-r \fIdelay\fR option, if the server assigns a TLS
+session id, the TLS session is cached. The connection is then closed
+and re-opened after the specified delay, and \fBposttls-finger\fR(1)
+then reports whether the cached TLS session was re-used.
+
+When the destination is a load-balancer, it may be distributing
+load between multiple server caches. Typically, each server returns
+its unique name in its EHLO response. If, upon reconnecting with
+\fB-r\fR, a new server name is detected, another session is cached
+for the new server, and the reconnect is repeated up to a maximum
+number of times (default 5) that can be specified via the \fB-m\fR
+option.
+
+The choice of SMTP or LMTP (\fB-S\fR option) determines the syntax of
+the destination argument. With SMTP, one can specify a service on a
+non-default port as \fIhost\fR:\fIservice\fR, and disable MX (mail
+exchanger) DNS lookups with [\fIhost\fR] or [\fIhost\fR]:\fIport\fR.
+The [] form is required when you specify an IP address instead of a
+hostname.  An IPv6 address takes the form [\fBipv6:\fIaddress\fR].
+The default port for SMTP is taken from the \fBsmtp/tcp\fR entry in
+/etc/services, defaulting to 25 if the entry is not found.
+
+With LMTP, specify \fBunix:\fIpathname\fR to connect to a local server
+listening on a unix-domain socket bound to the specified pathname;
+otherwise, specify an optional \fBinet:\fR prefix followed by a
+\fIdomain\fR and an optional port, with the same syntax as for
+SMTP. The default TCP port for LMTP is 24.
+
+Arguments:
+.IP "\fB-a\fR \fIfamily\fR (default: \fBany\fR)"
+Address family preference: \fBipv4\fR, \fBipv6\fR or \fBany\fR.  When
+using \fBany\fR, posttls-finger will randomly select one of the two as
+the more preferred, and exhaust all MX preferences for the first
+address family before trying any addresses for the other.
+.IP "\fB-A\fR \fItrust-anchor.pem\fR (default: none)"
+A list of PEM trust-anchor files that overrides CAfile and CApath
+trust chain verification.  Specify the option multiple times to
+specify multiple files.  See the main.cf documentation for
+smtp_tls_trust_anchor_file for details.
+.IP "\fB-c\fR"
+Disable SMTP chat logging; only TLS-related information is logged.
+.IP "\fB-C\fR"
+Print the remote SMTP server certificate trust chain in PEM format.
+The issuer DN, subject DN, certificate and public key fingerprints
+(see \fB-d \fImdalg\fR option below) are printed above each PEM
+certificate block.  If you specify \fB-F \fICAfile\fR or
+\fB-P \fICApath\fR, the OpenSSL library may augment the chain with
+missing issuer certificates.  To see the actual chain sent by the
+remote SMTP server leave \fICAfile\fR and \fICApath\fR unset.
+.IP "\fB-d \fImdalg\fR (default: \fBsha1\fR)"
+The message digest algorithm to use for reporting remote SMTP server
+fingerprints and matching against user provided certificate
+fingerprints (with DANE TLSA records the algorithm is specified
+in the DNS).
+.IP "\fB-f\fR"
+Lookup the associated DANE TLSA RRset even when a hostname is not an
+alias and its address records lie in an unsigned zone.  See
+smtp_tls_force_insecure_host_tlsa_lookup for details.
+.IP "\fB-F \fICAfile.pem\fR (default: none)"
+The PEM formatted CAfile for remote SMTP server certificate
+verification.  By default no CAfile is used and no public CAs
+are trusted.
+.IP "\fB-g \fIgrade\fR (default: medium)"
+The minimum TLS cipher grade used by posttls-finger.  See
+smtp_tls_mandatory_ciphers for details.
+.IP "\fB-h \fIhost_lookup\fR (default: \fBdns\fR)"
+The hostname lookup methods used for the connection.  See the
+documentation of smtp_host_lookup for syntax and semantics.
+.IP "\fB-l \fIlevel\fR (default: \fBdane\fR or \fBsecure\fR)"
+The security level for the connection, default \fBdane\fR or
+\fBsecure\fR depending on whether DNSSEC is available.  For syntax
+and semantics, see the documentation of smtp_tls_security_level.
+When \fBdane\fR or \fBdane-only\fR is supported and selected, if no
+TLSA records are found, or all the records found are unusable, the
+\fIsecure\fR level will be used instead.  The \fBfingerprint\fR
+security level allows you to test certificate or public-key
+fingerprint matches before you deploy them in the policy table.
+.IP
+Note, since \fBposttls-finger\fR does not actually deliver any email,
+the \fBnone\fR, \fBmay\fR and \fBencrypt\fR security levels are not
+very useful.  Since \fBmay\fR and \fBencrypt\fR don't require peer
+certificates, they will often negotiate anonymous TLS ciphersuites,
+so you won't learn much about the remote SMTP server's certificates
+at these levels if it also supports anonymous TLS (though you may
+learn that the server supports anonymous TLS).
+.IP "\fB-L \fIlogopts\fR (default: \fBroutine,certmatch\fR)"
+Fine-grained TLS logging options. To tune the TLS features logged
+during the TLS handshake, specify one or more of:
+.RS
+.IP "\fB0, none\fR"
+These yield no TLS logging; you'll generally want more, but this
+is handy if you just want the trust chain:
+.RS
+.ad
+.nf
+$ posttls-finger -cC -L none destination
+.fi
+.RE
+.IP "\fB1, routine, summary\fR"
+These synonymous values yield a normal one-line summary of the TLS
+connection.
+.IP "\fB2, debug\fR"
+These synonymous values combine routine, ssl-debug, cache and verbose.
+.IP "\fB3, ssl-expert\fR"
+These synonymous values combine debug with ssl-handshake-packet-dump.
+For experts only.
+.IP "\fB4, ssl-developer\fR"
+These synonymous values combine ssl-expert with ssl-session-packet-dump.
+For experts only, and in most cases, use wireshark instead.
+.IP "\fBssl-debug\fR"
+Turn on OpenSSL logging of the progress of the SSL handshake.
+.IP "\fBssl-handshake-packet-dump\fR"
+Log hexadecimal packet dumps of the SSL handshake; for experts only.
+.IP "\fBssl-session-packet-dump\fR"
+Log hexadecimal packet dumps of the entire SSL session; only useful
+to those who can debug SSL protocol problems from hex dumps.
+.IP "\fBuntrusted\fR"
+Logs trust chain verification problems.  This is turned on
+automatically at security levels that use peer names signed
+by certificate authorities to validate certificates.  So while
+this setting is recognized, you should never need to set it
+explicitly.
+.IP "\fBpeercert\fR"
+This logs a one line summary of the remote SMTP server certificate
+subject, issuer, and fingerprints.
+.IP "\fBcertmatch\fR"
+This logs remote SMTP server certificate matching, showing the CN
+and each subjectAltName and which name matched.  With DANE, logs
+matching of TLSA record trust-anchor and end-entity certificates.
+.IP "\fBcache\fR"
+This logs session cache operations, showing whether session caching
+is effective with the remote SMTP server.  Automatically used when
+reconnecting with the \fB-r\fR option; rarely needs to be set
+explicitly.
+.IP "\fBverbose\fR"
+Enables verbose logging in the Postfix TLS driver; includes all of
+peercert..cache and more.
+.RE
+.IP
+The default is \fBroutine,certmatch\fR. After a reconnect,
+\fBpeercert\fR, \fBcertmatch\fR and \fBverbose\fR are automatically
+disabled while \fBcache\fR and \fBsummary\fR are enabled.
+.IP "\fB-m \fIcount\fR (default: \fB5\fR)"
+When the \fB-r \fIdelay\fR option is specified, the \fB-m\fR option
+determines the maximum number of reconnect attempts to use with
+a server behind a load-balacer, to see whether connection caching
+is likely to be effective for this destination.  Some MTAs
+don't expose the underlying server identity in their EHLO
+response; with these servers there will never be more than
+1 reconnection attempt.
+.IP "\fB-o \fIname=value\fR"
+Specify zero or more times to override the value of the main.cf
+parameter \fIname\fR with \fIvalue\fR.  Possible use-cases include
+overriding the values of TLS library parameters, or "myhostname" to
+configure the SMTP EHLO name sent to the remote server.
+.IP "\fB-p \fIprotocols\fR (default: !SSLv2)"
+List of TLS protocols that posttls-finger will exclude or include.  See
+smtp_tls_mandatory_protocols for details.
+.IP "\fB-P \fICApath/\fR (default: none)"
+The OpenSSL CApath/ directory (indexed via c_rehash(1)) for remote
+SMTP server certificate verification.  By default no CApath is used
+and no public CAs are trusted.
+.IP "\fB-r \fIdelay\fR"
+With a cachable TLS session, disconnect and reconnect after \fIdelay\fR
+seconds. Report whether the session is re-used. Retry if a new server
+is encountered, up to 5 times or as specified with the \fB-m\fR option.
+By default reconnection is disabled, specify a positive delay to
+enable this behavior.
+.IP "\fB-S\fR"
+Disable SMTP; that is, connect to an LMTP server. The default port for
+LMTP over TCP is 24.  Alternative ports can specified by appending
+"\fI:servicename\fR" or ":\fIportnumber\fR" to the destination
+argument.
+.IP "\fB-t \fItimeout\fR (default: \fB30\fR)"
+The TCP connection timeout to use.  This is also the timeout for
+reading the remote server's 220 banner.
+.IP "\fB-T \fItimeout\fR (default: \fB30\fR)"
+The SMTP/LMTP command timeout for EHLO/LHLO, STARTTLS and QUIT.
+.IP "\fB-v\fR"
+Enable verose Postfix logging.  Specify more than once to increase
+the level of verbose logging.
+.IP "[\fBinet:\fR]\fIdomain\fR[:\fIport\fR]"
+Connect via TCP to domain \fIdomain\fR, port \fIport\fR. The default
+port is \fBsmtp\fR (or 24 with LMTP).  With SMTP an MX lookup is
+performed to resolve the domain to a host, unless the domain is
+enclosed in \fB[]\fR.  If you want to connect to a specific MX host,
+for instance \fImx1.example.com\fR, specify [\fImx1.example.com\fR]
+as the destination and \fIexample.com\fR as a \fBmatch\fR argument.
+When using DNS, the destination domain is assumed fully qualified
+and no default domain or search suffixes are applied; you must use
+fully-qualified names or also enable \fBnative\fR host lookups
+(these don't support \fBdane\fR or \fBdane-only\fR as no DNSSEC
+validation information is available via \fBnative\fR lookups).
+.IP "\fBunix:\fIpathname\fR"
+Connect to the UNIX-domain socket at \fIpathname\fR. LMTP only.
+.IP "\fBmatch ...\fR"
+With no match arguments specified, certificate peername matching uses
+the compiled-in default strategies for each security level.  If you
+specify one or more arguments, these will be used as the list of
+certificate or public-key digests to match for the \fBfingerprint\fR
+level, or as the list of DNS names to match in the certificate at the
+\fBverify\fR and \fBsecure\fR levels.  If the security level is
+\fBdane\fR, or \fBdane-only\fR the match names are ignored, and
+\fBhostname, nexthop\fR strategies are used.
+.ad
+.fi
+.SH "ENVIRONMENT"
+.na
+.nf
+.ad
+.fi
+.IP \fBMAIL_CONFIG\fR
+Read configuration parameters from a non-default location.
+.IP \fBMAIL_VERBOSE\fR
+Same as \fB-v\fR option.
+.SH "SEE ALSO"
+.na
+.nf
+smtp-source(1), SMTP/LMTP message source
+smtp-sink(1), SMTP/LMTP message dump
+
+.SH "README FILES"
+.na
+.nf
+.ad
+.fi
+Use "\fBpostconf readme_directory\fR" or "\fBpostconf
+html_directory\fR" to locate this information.
+.na
+.nf
+TLS_README, Postfix STARTTLS howto
+.SH "LICENSE"
+.na
+.nf
+.ad
+.fi
+The Secure Mailer license must be distributed with this software.
+.SH "AUTHOR(S)"
+.na
+.nf
+Wietse Venema
+IBM T.J. Watson Research
+P.O. Box 704
+Yorktown Heights, NY 10598, USA
+
+Viktor Dukhovni

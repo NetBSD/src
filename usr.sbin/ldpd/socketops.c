@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.11.8.3 2013/06/23 06:29:04 tls Exp $ */
+/* $NetBSD: socketops.c,v 1.11.8.4 2014/08/20 00:05:09 tls Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -80,12 +80,13 @@ bool	may_connect;
 void	recv_pdu(int);
 void	send_hello_alarm(int);
 __dead static void bail_out(int);
+static void print_info(int);
 static int bind_socket(int s, int stype);
 static int set_tos(int); 
 static int socket_reuse_port(int);
 static int get_local_addr(struct sockaddr_dl *, struct in_addr *);
 static int is_hello_socket(int);
-static int is_passive_if(char *if_name);
+static int is_passive_if(const char *if_name);
 
 int 
 create_hello_sockets()
@@ -284,12 +285,13 @@ is_hello_socket(int s)
 
 /* Check if interface is passive */
 static int
-is_passive_if(char *if_name)
+is_passive_if(const char *if_name)
 {
-	struct passive_if *pif;
+	struct conf_interface *coif;
 
-	SLIST_FOREACH(pif, &passifs_head, listentry)
-		if (strncasecmp(if_name, pif->if_name, IF_NAMESIZE) == 0)
+	SLIST_FOREACH(coif, &coifs_head, iflist)
+		if (strncasecmp(if_name, coif->if_name, IF_NAMESIZE) == 0 &&
+		    coif->passive != 0)
 			return 1;
 	return 0;
 }
@@ -334,6 +336,7 @@ bind_socket(int s, int stype)
 
 	assert (stype == AF_INET || stype == AF_INET6);
 
+	memset(&su, 0, sizeof su);
 	if (stype == AF_INET) {
 		su.sin.sin_len = sizeof(su.sin);
 		su.sin.sin_family = AF_INET;
@@ -407,6 +410,8 @@ send_hello(void)
 	int ip4socket = -1;
 	uint lastifindex;
 	struct hello_socket *hs;
+	struct conf_interface *coif;
+	bool bad_tr_addr;
 #ifdef INET6
 	struct sockaddr_in6 sadest6;
 	int ip6socket = -1;
@@ -443,8 +448,7 @@ send_hello(void)
 			sizeof(struct common_hello_tlv) +
 			IPV4_HELLO_MSG_SIZE - BASIC_HELLO_MSG_SIZE);
 	/*
-	 * kefren:
-	 * I used ID 0 instead of htonl(get_message_id()) because I've
+	 * We used ID 0 instead of htonl(get_message_id()) because we've
 	 * seen hellos from Cisco routers doing the same thing
 	 */
 	t->messageid = 0;
@@ -501,6 +505,16 @@ send_hello(void)
 
 		/* Send only once per interface, using primary address */
 		if (lastifindex == if_nametoindex(ifb->ifa_name))
+			continue;
+		/* Check if there is transport address set for this interface */
+		bad_tr_addr = false;
+		SLIST_FOREACH(coif, &coifs_head, iflist)
+			if (strncasecmp(coif->if_name, ifb->ifa_name,
+			    IF_NAMESIZE) == 0 &&
+			    coif->tr_addr.s_addr != 0 &&
+			    coif->tr_addr.s_addr != if_sa->sin_addr.s_addr)
+				bad_tr_addr = true;
+		if (bad_tr_addr == true)
 			continue;
 		lastifindex = if_nametoindex(ifb->ifa_name);
 
@@ -775,6 +789,19 @@ bail_out(int x)
 	exit(0);
 }
 
+static void
+print_info(int x)
+{
+	printf("Info for %s\n-------\n", LDP_ID);
+	printf("Neighbours:\n");
+	show_neighbours(1, NULL);
+	printf("Bindings:\n");
+	show_bindings(1, NULL);
+	printf("Labels:\n");
+	show_labels(1, NULL);
+	printf("--------\n");
+}
+
 /*
  * The big poll that catches every single event
  * on every socket.
@@ -799,12 +826,15 @@ the_big_loop(void)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGINT, bail_out);
 	signal(SIGTERM, bail_out);
+	signal(SIGINFO, print_info);
 
 	/* Send first hellos in 5 seconds. Avoid No hello notifications */
 	may_connect = false;
 	alarm(5);
 
 	route_socket = socket(PF_ROUTE, SOCK_RAW, AF_UNSPEC);
+	setsockopt(route_socket, SOL_SOCKET, SO_USELOOPBACK, &(int){0},
+		sizeof(int));
 
 	sock_error = bind_current_routes();
 	if (sock_error != LDP_E_OK) {
@@ -887,10 +917,15 @@ the_big_loop(void)
 					new_peer_connection();
 				else if (pfd[i].fd == route_socket) {
 					struct rt_msg xbuf;
-					int l;
+					int l, rtmlen = sizeof(xbuf);
+					/* Read at least rtm_msglen */
+					l = recv(route_socket, &xbuf,
+					  sizeof(u_short), MSG_PEEK);
+					if (l == sizeof(u_short))
+						rtmlen = xbuf.m_rtm.rtm_msglen;
 					do {
-						l = read(route_socket, &xbuf,
-						    sizeof(xbuf));
+						l = recv(route_socket, &xbuf,
+						    rtmlen, MSG_WAITALL);
 					} while ((l == -1) && (errno == EINTR));
 
 					if (l == -1)
@@ -916,6 +951,7 @@ the_big_loop(void)
 				p = get_ldp_peer_by_socket(pfd[i].fd);
 				if (!p)
 					continue;
+				assert(p->state == LDP_PEER_CONNECTING);
 				if (getsockopt(pfd[i].fd, SOL_SOCKET, SO_ERROR,
 				    &sock_error, &sock_error_size) != 0 ||
 				    sock_error != 0) {
@@ -944,7 +980,7 @@ new_peer_connection()
 	union sockunion peer_address, my_address;
 	struct in_addr *peer_ldp_id = NULL;
 	struct hello_info *hi;
-	int             s;
+	int s;
 
 	s = accept(ls, &peer_address.sa,
 		& (socklen_t) { sizeof(union sockunion) } );
@@ -997,7 +1033,7 @@ new_peer_connection()
 		}
 	}
 	if (peer_ldp_id == NULL) {
-		fatalp("Got connection from %s, but no hello info exists\n",
+		warnp("Got connection from %s, but no hello info exists\n",
 		    satos(&peer_address.sa));
 		close(s);
 		return;
@@ -1008,7 +1044,7 @@ new_peer_connection()
 }
 
 void 
-send_initialize(struct ldp_peer * p)
+send_initialize(const struct ldp_peer * p)
 {
 	struct init_tlv ti;
 
@@ -1028,7 +1064,7 @@ send_initialize(struct ldp_peer * p)
 }
 
 void 
-keep_alive(struct ldp_peer * p)
+keep_alive(const struct ldp_peer * p)
 {
 	struct ka_tlv   kt;
 
@@ -1037,10 +1073,12 @@ keep_alive(struct ldp_peer * p)
 	kt.messageid = htonl(get_message_id());
 
 	send_tlv(p, (struct tlv *) (void *) &kt);
-
 }
 
-void 
+/*
+ * Process a message received from a peer
+ */
+void
 recv_session_pdu(struct ldp_peer * p)
 {
 	struct ldp_pdu *rpdu;
@@ -1060,7 +1098,9 @@ recv_session_pdu(struct ldp_peer * p)
 
 	memset(recvspace, 0, MAX_PDU_SIZE);
 
-	c = recv(p->socket, (void *) recvspace, MAX_PDU_SIZE, MSG_PEEK);
+	do {
+		c = recv(p->socket, (void *) recvspace, MAX_PDU_SIZE, MSG_PEEK);
+	} while (c == -1 && errno == EINTR);
 
 	debugp("Ready to read %d bytes\n", c);
 
@@ -1074,16 +1114,17 @@ recv_session_pdu(struct ldp_peer * p)
 		return;
 	}
 	if (c < MIN_PDU_SIZE) {
-		debugp("PDU too small received from peer %s\n", inet_ntoa(p->ldp_id));
+		debugp("PDU too small received from peer %s\n",
+		    inet_ntoa(p->ldp_id));
 		return;
 	}
 	rpdu = (struct ldp_pdu *) recvspace;
-	/* XXX: buggy messages may crash the whole thing */
-	c = recv(p->socket, (void *) recvspace,
-		ntohs(rpdu->length) + PDU_VER_LENGTH, MSG_WAITALL);
-	rpdu = (struct ldp_pdu *) recvspace;
+	do {
+		c = recv(p->socket, (void *) recvspace,
+		    ntohs(rpdu->length) + PDU_VER_LENGTH, MSG_WAITALL);
+	} while (c == -1 && errno == EINTR);
 
-	/* Check if it's somehow OK... */
+	/* sanity check */
 	if (check_recv_pdu(p, rpdu, c) != 0)
 		return;
 
@@ -1181,6 +1222,11 @@ recv_session_pdu(struct ldp_peer * p)
 			atlv = (struct address_tlv *) ttmp;
 			altlv = (struct al_tlv *) (&atlv[1]);
 			add_ifaddresses(p, altlv);
+			/*
+			 * try to see if we have labels with null peer that
+			 * would match the new peer
+			 */
+			label_check_assoc(p);
 			print_bounded_addresses(p);
 			break;
 		case LDP_ADDRESS_WITHDRAW:
@@ -1277,7 +1323,8 @@ recv_session_pdu(struct ldp_peer * p)
 
 /* Sends a pdu, tlv pair to a connected peer */
 int 
-send_message(struct ldp_peer * p, struct ldp_pdu * pdu, struct tlv * t)
+send_message(const struct ldp_peer * p, const struct ldp_pdu * pdu,
+	const struct tlv * t)
 {
 	unsigned char   sendspace[MAX_PDU_SIZE];
 
@@ -1325,7 +1372,7 @@ send_message(struct ldp_peer * p, struct ldp_pdu * pdu, struct tlv * t)
  * Encapsulates TLV into a PDU and sends it to a peer
  */
 int 
-send_tlv(struct ldp_peer * p, struct tlv * t)
+send_tlv(const struct ldp_peer * p, const struct tlv * t)
 {
 	struct ldp_pdu  pdu;
 
@@ -1340,7 +1387,7 @@ send_tlv(struct ldp_peer * p, struct tlv * t)
 
 
 int 
-send_addresses(struct ldp_peer * p)
+send_addresses(const struct ldp_peer * p)
 {
 	struct address_list_tlv *t;
 	int             ret;

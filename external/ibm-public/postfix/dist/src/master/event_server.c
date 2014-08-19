@@ -1,4 +1,4 @@
-/*	$NetBSD: event_server.c,v 1.1.1.2.10.1 2013/02/25 00:27:20 tls Exp $	*/
+/*	$NetBSD: event_server.c,v 1.1.1.2.10.2 2014/08/19 23:59:43 tls Exp $	*/
 
 /*++
 /* NAME
@@ -40,7 +40,10 @@
 /*	its privileges. The application is responsible for managing
 /*	subsequent I/O events on the stream, and is responsible for
 /*	calling event_server_disconnect() when the stream is closed.
-/*	The stream initial state is non-blocking mode.  The service
+/*	The stream initial state is non-blocking mode.
+/*	Optional connection attributes are provided as a hash that
+/*	is attached as stream context. NOTE: the attributes are
+/*	destroyed after this function is called. The service
 /*	name argument corresponds to the service name in the master.cf
 /*	file.  The argv argument specifies command-line arguments
 /*	left over after options processing.
@@ -257,6 +260,7 @@ static unsigned event_server_generation;
 static void (*event_server_pre_disconn) (VSTREAM *, char *, char **);
 static void (*event_server_slow_exit) (char *, char **);
 static int event_server_watchdog = 1000;
+static int event_server_saved_flags;
 
 /* event_server_exit - normal termination */
 
@@ -341,6 +345,8 @@ void    event_server_disconnect(VSTREAM *stream)
 static void event_server_execute(int unused_event, char *context)
 {
     VSTREAM *stream = (VSTREAM *) context;
+    HTABLE *attr = (vstream_flags(stream) == event_server_saved_flags ?
+		    (HTABLE *) vstream_context(stream) : 0);
 
     if (event_server_lock != 0
 	&& myflock(vstream_fileno(event_server_lock), INTERNAL_LOCK,
@@ -357,11 +363,13 @@ static void event_server_execute(int unused_event, char *context)
     event_server_service(stream, event_server_name, event_server_argv);
     if (master_notify(var_pid, event_server_generation, MASTER_STAT_AVAIL) < 0)
 	event_server_abort(EVENT_NULL_TYPE, EVENT_NULL_CONTEXT);
+    if (attr)
+	htable_free(attr, myfree);
 }
 
 /* event_server_wakeup - wake up application */
 
-static void event_server_wakeup(int fd)
+static void event_server_wakeup(int fd, HTABLE *attr)
 {
     VSTREAM *stream;
     char   *tmp;
@@ -390,9 +398,13 @@ static void event_server_wakeup(int fd)
     client_count++;
     stream = vstream_fdopen(fd, O_RDWR);
     tmp = concatenate(event_server_name, " socket", (char *) 0);
-    vstream_control(stream, VSTREAM_CTL_PATH, tmp, VSTREAM_CTL_END);
+    vstream_control(stream,
+		    VSTREAM_CTL_PATH, tmp,
+		    VSTREAM_CTL_CONTEXT, (char *) attr,
+		    VSTREAM_CTL_END);
     myfree(tmp);
     timed_ipc_setup(stream);
+    event_server_saved_flags = vstream_flags(stream);
     if (event_server_in_flow_delay && mail_flow_get(1) < 0)
 	event_request_timer(event_server_execute, (char *) stream,
 			    var_in_flow_delay);
@@ -432,7 +444,7 @@ static void event_server_accept_local(int unused_event, char *context)
 	    event_request_timer(event_server_timeout, (char *) 0, time_left);
 	return;
     }
-    event_server_wakeup(fd);
+    event_server_wakeup(fd, (HTABLE *) 0);
 }
 
 #ifdef MASTER_XPORT_NAME_PASS
@@ -444,6 +456,7 @@ static void event_server_accept_pass(int unused_event, char *context)
     int     listen_fd = CAST_CHAR_PTR_TO_INT(context);
     int     time_left = -1;
     int     fd;
+    HTABLE *attr = 0;
 
     /*
      * Be prepared for accept() to fail because some other process already
@@ -457,7 +470,7 @@ static void event_server_accept_pass(int unused_event, char *context)
 
     if (event_server_pre_accept)
 	event_server_pre_accept(event_server_name, event_server_argv);
-    fd = PASS_ACCEPT(listen_fd);
+    fd = pass_accept_attr(listen_fd, &attr);
     if (event_server_lock != 0
 	&& myflock(vstream_fileno(event_server_lock), INTERNAL_LOCK,
 		   MYFLOCK_OP_NONE) < 0)
@@ -469,7 +482,7 @@ static void event_server_accept_pass(int unused_event, char *context)
 	    event_request_timer(event_server_timeout, (char *) 0, time_left);
 	return;
     }
-    event_server_wakeup(fd);
+    event_server_wakeup(fd, attr);
 }
 
 #endif
@@ -506,7 +519,7 @@ static void event_server_accept_inet(int unused_event, char *context)
 	    event_request_timer(event_server_timeout, (char *) 0, time_left);
 	return;
     }
-    event_server_wakeup(fd);
+    event_server_wakeup(fd, (HTABLE *) 0);
 }
 
 /* event_server_main - the real main program */

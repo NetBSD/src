@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.22 2012/02/19 21:07:00 rmind Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.22.2.1 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ void	sleepq_remove(sleepq_t *, lwp_t *);
 void	sleepq_enqueue(sleepq_t *, wchan_t, const char *, syncobj_t *);
 void	sleepq_unsleep(lwp_t *, bool);
 void	sleepq_timeout(void *);
-lwp_t	*sleepq_wake(sleepq_t *, wchan_t, u_int, kmutex_t *);
+void	sleepq_wake(sleepq_t *, wchan_t, u_int, kmutex_t *);
 int	sleepq_abort(kmutex_t *, int);
 void	sleepq_changepri(lwp_t *, pri_t);
 void	sleepq_lendpri(lwp_t *, pri_t);

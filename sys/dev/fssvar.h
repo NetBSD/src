@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.27 2011/11/29 20:56:12 bouyer Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.27.8.1 2014/08/20 00:03:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -31,8 +31,6 @@
 
 #ifndef _SYS_DEV_FSSVAR_H
 #define _SYS_DEV_FSSVAR_H
-
-#include <sys/simplelock.h>
 
 #define FSS_UNCONFIG_ON_CLOSE	0x01	/* Unconfigure on last close */
 #define FSS_UNLINK_ON_CREATE	0x02	/* Unlink backing store on create */

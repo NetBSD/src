@@ -1,4 +1,4 @@
-/*	$NetBSD: instr.h,v 1.6 2011/02/12 18:23:09 matt Exp $ */
+/*	$NetBSD: instr.h,v 1.6.14.1 2014/08/20 00:03:19 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -313,6 +313,11 @@ union instr {
 /* m[ft]spr are also opcode 31; ra/rb encode the spr */
 #define	OPC31_MFSPR	0x153
 #define OPC31_MTSPR	0x1d3
+
+/*
+ * Opcode 31 sub-types (integer only)
+ */
+#define OPC31_OR	0x1bc
 
 /*
  * Opcode 59 sub-types:

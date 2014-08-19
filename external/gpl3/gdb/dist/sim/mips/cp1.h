@@ -1,7 +1,6 @@
 /*> cp1.h <*/
 /* MIPS Simulator FPU (CoProcessor 1) definitions.
-   Copyright (C) 1997, 1998, 2002, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    Derived from sim-main.h contributed by Cygnus Solutions,
    modified substantially by Ed Satterthwaite of Broadcom Corporation
    (SiByte).

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.37 2011/02/17 19:02:50 matt Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.37.14.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*
  * Copyright (c) 2007 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.37 2011/02/17 19:02:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.37.14.1 2014/08/20 00:04:29 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -280,7 +280,7 @@ aio_worker(void *arg)
 	struct aio_job *a_job;
 	struct lio_req *lio;
 	sigset_t oss, nss;
-	int error, refcnt;
+	int error __diagused, refcnt;
 
 	/*
 	 * Make an empty signal mask, so it
@@ -1098,15 +1098,6 @@ sysctl_aio_init(void)
 	int rv;
 
 	aio_sysctl = NULL;
-
-	rv = sysctl_createv(&aio_sysctl, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
-
-	if (rv != 0)
-		return rv;
 
 	rv = sysctl_createv(&aio_sysctl, 0, NULL, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,

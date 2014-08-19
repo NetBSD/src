@@ -1,6 +1,6 @@
 /* Print SPARC instructions.
    Copyright 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010
+   2000, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010, 2012
    Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
@@ -20,9 +20,8 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-#include <stdio.h>
-
 #include "sysdep.h"
+#include <stdio.h>
 #include "opcode/sparc.h"
 #include "dis-asm.h"
 #include "libiberty.h"
@@ -108,7 +107,8 @@ static char *v9_hpriv_reg_names[] =
 static char *v9a_asr_reg_names[] =
 {
   "pcr", "pic", "dcr", "gsr", "set_softint", "clear_softint",
-  "softint", "tick_cmpr", "stick", "stick_cmpr"
+  "softint", "tick_cmpr", "stick", "stick_cmpr", "cfr",
+  "pause", "cps"
 };
 
 /* Macros used to extract instruction fields.  Not all fields have
@@ -119,6 +119,7 @@ static char *v9a_asr_reg_names[] =
 #define X_LDST_I(i)  (((i) >> 13) & 1)
 #define X_ASI(i)     (((i) >> 5) & 0xff)
 #define X_RS2(i)     (((i) >> 0) & 0x1f)
+#define X_RS3(i)     (((i) >> 9) & 0x1f)
 #define X_IMM(i,n)   (((i) >> 0) & ((1 << (n)) - 1))
 #define X_SIMM(i,n)  SEX (X_IMM ((i), (n)), (n))
 #define X_DISP22(i)  (((i) >> 0) & 0x3fffff)
@@ -127,6 +128,7 @@ static char *v9a_asr_reg_names[] =
 
 /* These are for v9.  */
 #define X_DISP16(i)  (((((i) >> 20) & 3) << 14) | (((i) >> 0) & 0x3fff))
+#define X_DISP10(i)  (((((i) >> 19) & 3) << 8) | (((i) >> 5) & 0xff))
 #define X_DISP19(i)  (((i) >> 0) & 0x7ffff)
 #define X_MEMBAR(i)  ((i) & 0x7f)
 
@@ -221,7 +223,8 @@ compute_arch_mask (unsigned long mach)
     {
     case 0 :
     case bfd_mach_sparc :
-      return SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_V8);
+      return (SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_V8)
+              | SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_LEON));
     case bfd_mach_sparc_sparclet :
       return SPARC_OPCODE_ARCH_MASK (SPARC_OPCODE_ARCH_SPARCLET);
     case bfd_mach_sparc_sparclite :
@@ -336,8 +339,17 @@ compare_opcodes (const void * a, const void * b)
   i = strcmp (op0->name, op1->name);
   if (i)
     {
-      if (op0->flags & F_ALIAS) /* If they're both aliases, be arbitrary.  */
-	return i;
+      if (op0->flags & F_ALIAS)
+	{
+	  if (op0->flags & F_PREFERRED)
+	    return -1;
+	  if (op1->flags & F_PREFERRED)
+	    return 1;
+
+	  /* If they're both aliases, and neither is marked as preferred,
+	     be arbitrary.  */
+	  return i;
+	}
       else
 	fprintf (stderr,
 		 /* xgettext:c-format */
@@ -548,7 +560,7 @@ print_insn_sparc (bfd_vma memaddr, disassemble_info *info)
 	      /* Can't do simple format if source and dest are different.  */
 	      continue;
 
-	  (*info->fprintf_func) (stream, opcode->name);
+	  (*info->fprintf_func) (stream, "%s", opcode->name);
 
 	  {
 	    const char *s;
@@ -634,6 +646,13 @@ print_insn_sparc (bfd_vma memaddr, disassemble_info *info)
 		    fregx (X_RS2 (insn));
 		    break;
 
+		  case '4':
+		    freg (X_RS3 (insn));
+		    break;
+		  case '5':	/* Double/even.  */
+		    fregx (X_RS3 (insn));
+		    break;
+
 		  case 'g':
 		    freg (X_RD (insn));
 		    break;
@@ -694,6 +713,10 @@ print_insn_sparc (bfd_vma memaddr, disassemble_info *info)
 		    }
 		    break;
 
+		  case ')':	/* 5 bit unsigned immediate from RS3.  */
+		    (info->fprintf_func) (stream, "%#x", (unsigned int) X_RS3 (insn));
+		    break;
+
 		  case 'X':	/* 5 bit unsigned immediate.  */
 		  case 'Y':	/* 6 bit unsigned immediate.  */
 		    {
@@ -733,6 +756,11 @@ print_insn_sparc (bfd_vma memaddr, disassemble_info *info)
 			  }
 		      break;
 		    }
+
+		  case '=':
+		    info->target = memaddr + SEX (X_DISP10 (insn), 10) * 4;
+		    (*info->print_address_func) (info->target, info);
+		    break;
 
 		  case 'k':
 		    info->target = memaddr + SEX (X_DISP16 (insn), 16) * 4;
@@ -814,7 +842,7 @@ print_insn_sparc (bfd_vma memaddr, disassemble_info *info)
 		    break;
 
 		  case '/':
-		    if (X_RS1 (insn) < 16 || X_RS1 (insn) > 25)
+		    if (X_RS1 (insn) < 16 || X_RS1 (insn) > 28)
 		      (*info->fprintf_func) (stream, "%%reserved");
 		    else
 		      (*info->fprintf_func) (stream, "%%%s",
@@ -822,7 +850,7 @@ print_insn_sparc (bfd_vma memaddr, disassemble_info *info)
 		    break;
 
 		  case '_':
-		    if (X_RD (insn) < 16 || X_RD (insn) > 25)
+		    if (X_RD (insn) < 16 || X_RD (insn) > 28)
 		      (*info->fprintf_func) (stream, "%%reserved");
 		    else
 		      (*info->fprintf_func) (stream, "%%%s",
@@ -880,6 +908,10 @@ print_insn_sparc (bfd_vma memaddr, disassemble_info *info)
 
 		  case 'F':
 		    (*info->fprintf_func) (stream, "%%fsr");
+		    break;
+
+		  case '(':
+		    (*info->fprintf_func) (stream, "%%efsr");
 		    break;
 
 		  case 'p':

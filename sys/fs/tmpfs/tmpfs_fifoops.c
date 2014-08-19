@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_fifoops.c,v 1.9 2011/05/24 20:17:49 rmind Exp $	*/
+/*	$NetBSD: tmpfs_fifoops.c,v 1.9.14.1 2014/08/20 00:04:28 tls Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_fifoops.c,v 1.9 2011/05/24 20:17:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_fifoops.c,v 1.9.14.1 2014/08/20 00:04:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -59,6 +59,8 @@ const struct vnodeopv_entry_desc tmpfs_fifoop_entries[] = {
 	{ &vop_setattr_desc,		tmpfs_fifo_setattr },
 	{ &vop_read_desc,		tmpfs_fifo_read },
 	{ &vop_write_desc,		tmpfs_fifo_write },
+	{ &vop_fallocate_desc,		vn_fifo_bypass },
+	{ &vop_fdiscard_desc,		vn_fifo_bypass },
 	{ &vop_ioctl_desc,		tmpfs_fifo_ioctl },
 	{ &vop_fcntl_desc,		tmpfs_fifo_fcntl },
 	{ &vop_poll_desc,		tmpfs_fifo_poll },
@@ -103,10 +105,8 @@ tmpfs_fifo_close(void *v)
 		struct vnode	*a_vp;
 		int		a_fflag;
 		kauth_cred_t	a_cred;
-	} */ *ap = v;
-	vnode_t *vp = ap->a_vp;
+	} */ *ap __unused = v;
 
-	tmpfs_update(vp, NULL, NULL, NULL, UPDATE_CLOSE);
 	return VOCALL(fifo_vnodeop_p, VOFFSET(vop_close), v);
 }
 
@@ -121,7 +121,7 @@ tmpfs_fifo_read(void *v)
 	} */ *ap = v;
 	vnode_t *vp = ap->a_vp;
 
-	VP_TO_TMPFS_NODE(vp)->tn_status |= TMPFS_NODE_ACCESSED;
+	tmpfs_update(vp, TMPFS_UPDATE_ATIME);
 	return VOCALL(fifo_vnodeop_p, VOFFSET(vop_read), v);
 }
 
@@ -136,6 +136,6 @@ tmpfs_fifo_write(void *v)
 	} */ *ap = v;
 	vnode_t *vp = ap->a_vp;
 
-	VP_TO_TMPFS_NODE(vp)->tn_status |= TMPFS_NODE_MODIFIED;
+	tmpfs_update(vp, TMPFS_UPDATE_MTIME);
 	return VOCALL(fifo_vnodeop_p, VOFFSET(vop_write), v);
 }

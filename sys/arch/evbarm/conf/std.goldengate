@@ -1,4 +1,4 @@
-#	$NetBSD: std.goldengate,v 1.1.4.2 2013/02/25 00:28:35 tls Exp $
+#	$NetBSD: std.goldengate,v 1.1.4.3 2014/08/20 00:02:53 tls Exp $
 #
 # standard NetBSD/evbarm for Cortina GoldenGate (CS75xx) options
 
@@ -25,7 +25,6 @@ options 	EVBARM_BOARDTYPE="goldengate"
 makeoptions	LOADADDRESS_VIRT="0x80008000"
 makeoptions	LOADADDRESS="0x8000"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.goldengate"
-makeoptions	CPPFLAGS+="-I$S/../../../include"
 
 options 	ARM_INTR_IMPL="<arch/arm/cortina/g2_intr.h>"
 options		ARM_GENERIC_TODR

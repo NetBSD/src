@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.33.2.1 2013/06/23 06:20:12 tls Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.33.2.2 2014/08/20 00:03:25 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -353,7 +353,7 @@ search_label(struct of_dev *devp, u_long off, char *buf,
 		return (disklabel_sun_to_bsd(buf, lp));
 
 
-	memset(buf, 0, sizeof(buf));
+	memset(buf, 0, DEV_BSIZE);
 	return ("no disk label");
 }
 

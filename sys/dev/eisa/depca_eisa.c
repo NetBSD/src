@@ -1,4 +1,4 @@
-/*	$NetBSD: depca_eisa.c,v 1.13.22.1 2012/11/20 03:02:00 tls Exp $	*/
+/*	$NetBSD: depca_eisa.c,v 1.13.22.2 2014/08/20 00:03:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.13.22.1 2012/11/20 03:02:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.13.22.2 2014/08/20 00:03:36 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -156,13 +156,14 @@ depca_eisa_intr_establish(struct depca_softc *sc, struct lance_softc *child)
 	eisa_intr_handle_t ih;
 	const char *intrstr;
 	void *rv;
+	char intrbuf[EISA_INTRSTR_LEN];
 
 	if (eisa_intr_map(esc->sc_ec, esc->sc_irq, &ih)) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to map interrupt (%d)\n", esc->sc_irq);
 		return (NULL);
 	}
-	intrstr = eisa_intr_string(esc->sc_ec, ih);
+	intrstr = eisa_intr_string(esc->sc_ec, ih, intrbuf, sizeof(intrbuf));
 	rv = eisa_intr_establish(esc->sc_ec, ih, esc->sc_ist, IPL_NET,
 	    (esc->sc_ist == IST_LEVEL) ? am7990_intr : depca_intredge, child);
 	if (rv == NULL) {

@@ -1,0 +1,91 @@
+# Copyright 2012-2014 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+if {[skip_shlib_tests]} {
+    return -1
+}
+
+set executable print-file-var-main
+
+set lib1 "print-file-var-lib1"
+set lib2 "print-file-var-lib2"
+
+set libobj1 [standard_output_file ${lib1}.so]
+set libobj2 [standard_output_file ${lib2}.so]
+
+set lib_opts { debug additional_flags=-fPIC }
+
+if { [gdb_compile_shlib ${srcdir}/${subdir}/${lib1}.c \
+                        ${libobj1} \
+                        ${lib_opts} ] != "" } {
+    return -1
+}
+if { [gdb_compile_shlib ${srcdir}/${subdir}/${lib2}.c \
+                        ${libobj2} \
+                        ${lib_opts} ] != "" } {
+    return -1
+}
+if { [gdb_compile "${srcdir}/${subdir}/${executable}.c" \
+                  [standard_output_file ${executable}] \
+                  executable \
+                  [list debug shlib=${libobj1} shlib=${libobj2}]]
+     != ""} {
+    return -1
+}
+
+clean_restart $executable
+gdb_load_shlibs $libobj1 $libobj2
+
+if ![runto_main] {
+    untested "could not run to main"
+    return -1
+}
+
+# Try printing "this_version_num" qualified with the name of the file
+# where the variables are defined.  There are two global variables
+# with that name, and some systems such as GNU/Linux merge them
+# into one single entity, while some other systems such as Windows
+# keep them separate.  In the first situation, we have to verify
+# that GDB does not randomly select the wrong instance, even when
+# a specific filename is used to qualified the lookup.  And in the
+# second case, we have to verify that GDB does select the instance
+# defined in the given filename.
+#
+# To avoid adding target-specific code in this testcase, the program
+# sets two local variable named 'v1' and 'v2' with the value of
+# our global variables.  This allows us to compare the value that
+# GDB returns for each query against the actual value seen by
+# the program itself.
+
+# Get past the initialization of variables 'v1' and 'v2'.
+
+set bp_location \
+    [gdb_get_line_number "STOP" "${executable}.c"]
+gdb_test "break $executable.c:$bp_location" \
+         "Breakpoint \[0-9\]+ at 0x\[0-9a-fA-F\]+: .*" \
+         "breapoint past v1 & v2 initialization"
+
+gdb_test "continue" \
+         "Breakpoint \[0-9\]+, main \\(\\) at.*" \
+         "continue to STOP marker"
+
+# Now check the value of this_version_id in both print-file-var-lib1.c
+# and print-file-var-lib2.c.
+
+gdb_test "print 'print-file-var-lib1.c'::this_version_id == v1" \
+         " = 1"
+
+gdb_test "print 'print-file-var-lib2.c'::this_version_id == v2" \
+         " = 1"

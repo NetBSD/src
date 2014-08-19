@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smscvar.h,v 1.2.6.2 2013/02/25 00:29:35 tls Exp $	*/
+/*	$NetBSD: if_smscvar.h,v 1.2.6.3 2014/08/20 00:03:51 tls Exp $	*/
 
 /*	$OpenBSD: if_smscreg.h,v 1.2 2012/09/27 12:38:11 jsg Exp $	*/
 /*-
@@ -68,6 +68,8 @@ struct smsc_softc {
 	 */
 	uint32_t		sc_mac_csr;
 	uint32_t		sc_rev_id;
+
+	uint32_t		sc_coe_ctrl;
 
 	int			sc_if_flags;
 	int			sc_refcnt;

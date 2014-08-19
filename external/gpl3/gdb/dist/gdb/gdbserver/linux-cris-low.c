@@ -1,6 +1,5 @@
 /* GNU/Linux/CRIS specific low level interface, for the remote server for GDB.
-   Copyright (C) 1995, 1996, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +22,7 @@
 
 /* Defined in auto-generated file reg-cris.c.  */
 void init_registers_cris (void);
+extern const struct target_desc *tdesc_cris;
 
 /* CRISv10 */
 #define cris_num_regs 32
@@ -108,12 +108,36 @@ cris_reinsert_addr (void)
   return pc;
 }
 
+static void
+cris_arch_setup (void)
+{
+  current_process ()->tdesc = tdesc_cris;
+}
+
+static struct usrregs_info cris_usrregs_info =
+  {
+    cris_num_regs,
+    cris_regmap,
+  };
+
+static struct regs_info regs_info =
+  {
+    NULL, /* regset_bitmap */
+    &cris_usrregs_info,
+  };
+
+static const struct regs_info *
+cris_regs_info (void)
+{
+  return &regs_info;
+}
+
 struct linux_target_ops the_low_target = {
-  init_registers_cris,
-  cris_num_regs,
-  cris_regmap,
+  cris_arch_setup,
+  cris_regs_info,
   cris_cannot_fetch_register,
   cris_cannot_store_register,
+  NULL, /* fetch_register */
   cris_get_pc,
   cris_set_pc,
   (const unsigned char *) &cris_breakpoint,
@@ -126,3 +150,9 @@ struct linux_target_ops the_low_target = {
   0,
   0,
 };
+
+void
+initialize_low_arch (void)
+{
+  init_registers_cris ();
+}

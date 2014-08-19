@@ -1,4 +1,4 @@
-/*      $NetBSD: kern_rndpool.c,v 1.2.2.1 2013/06/23 06:18:58 tls Exp $        */
+/*      $NetBSD: kern_rndpool.c,v 1.2.2.2 2014/08/20 00:04:29 tls Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.2.2.1 2013/06/23 06:18:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.2.2.2 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,22 @@ rndpool_get_entropy_count(rndpool_t *rp)
 {
 
 	return (rp->stats.curentropy);
+}
+
+void
+rndpool_set_entropy_count(rndpool_t *rp, u_int32_t count)
+{
+	int32_t difference = count - rp->stats.curentropy;
+
+	if (__predict_true(difference > 0)) {
+		rp->stats.added += difference;
+	}
+
+	rp->stats.curentropy = count;
+	if (rp->stats.curentropy > RND_POOLBITS) {
+		rp->stats.discarded += (rp->stats.curentropy - RND_POOLBITS);
+		rp->stats.curentropy = RND_POOLBITS;
+	}
 }
 
 void rndpool_get_stats(rndpool_t *rp, void *rsp, int size)
@@ -187,16 +203,16 @@ rndpool_add_one_word(rndpool_t *rp, u_int32_t  val)
  * Add a buffer's worth of data to the pool.
  */
 void
-rndpool_add_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t entropy)
+rndpool_add_data(rndpool_t *rp,
+		 const void * const p, u_int32_t len, u_int32_t entropy)
 {
 	u_int32_t val;
-	u_int8_t *buf;
+	const u_int8_t * buf;
 
 	buf = p;
 
 	for (; len > 3; len -= 4) {
-		val = *((u_int32_t *)buf);
-
+		(void)memcpy(&val, buf, 4);
 		rndpool_add_one_word(rp, val);
 		buf += 4;
 	}

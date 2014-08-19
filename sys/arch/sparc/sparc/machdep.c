@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.323.2.1 2012/11/20 03:01:44 tls Exp $ */
+/*	$NetBSD: machdep.c,v 1.323.2.2 2014/08/20 00:03:24 tls Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.323.2.1 2012/11/20 03:01:44 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.323.2.2 2014/08/20 00:03:24 tls Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -100,7 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.323.2.1 2012/11/20 03:01:44 tls Exp $"
 #include <sys/exec.h>
 #include <sys/exec_aout.h>
 #include <sys/ucontext.h>
-#include <sys/simplelock.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
 #include <sys/ras.h>

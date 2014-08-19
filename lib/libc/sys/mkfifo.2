@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkfifo.2,v 1.20.12.2 2013/02/25 00:27:54 tls Exp $
+.\"	$NetBSD: mkfifo.2,v 1.20.12.3 2014/08/20 00:02:16 tls Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mkfifo.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd November 18, 2012
+.Dd July 29, 2013
 .Dt MKFIFO 2
 .Os
 .Sh NAME
@@ -42,6 +42,8 @@
 .In sys/stat.h
 .Ft int
 .Fn mkfifo "const char *path" "mode_t mode"
+.In sys/stat.h
+.In fcntl.h
 .Ft int
 .Fn mkfifoat "int fd" "const char *path" "mode_t mode"
 .Sh DESCRIPTION
@@ -85,11 +87,11 @@ The fifo's owner ID is set to the process's effective user ID.
 The fifo's group ID is set to that of the parent directory in
 which it is created.
 .Sh RETURN VALUES
-A 0 return value indicates success.
-A \-1 return value indicates an error, and an error code is stored in
-.Va errno .
+.Rv -std mkfifo mkfifoat
 .Sh ERRORS
 .Fn mkfifo
+and
+.Fn mkfifoat
 will fail and no fifo will be created if:
 .Bl -tag -width Er
 .It Bq Er EACCES
@@ -135,6 +137,24 @@ A component of the path prefix is not a directory.
 The kernel has not been configured to support fifo's.
 .It Bq Er EROFS
 The named file resides on a read-only file system.
+.El
+.Pp
+In addition,
+.Fn mkfifoat
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+.Fa path
+does not specify an absolute path and
+.Fa fd
+is neither
+.Dv AT_FDCWD
+nor a valid file descriptor open for reading or searching.
+.It Bq Er ENOTDIR
+.Fa path
+is not an absolute path and
+.Fa fd
+is a file descriptor associated with a non-directory file.
 .El
 .Sh SEE ALSO
 .Xr chmod 2 ,

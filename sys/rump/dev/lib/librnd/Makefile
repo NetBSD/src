@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2012/02/02 19:43:08 tls Exp $
+#	$NetBSD: Makefile,v 1.6.6.1 2014/08/20 00:04:38 tls Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev
@@ -7,7 +7,7 @@ LIB=	rumpdev_rnd
 
 SRCS=	rndpseudo.c
 
-SRCS+=	component.c
+SRCS+=	rnd_component.c
 
 # sys/rump/Makefile.rump sets CPPFLAGS+= -DCOMPAT_50=1,
 # so we need rndpseudo_50.c from the compat/common directory.

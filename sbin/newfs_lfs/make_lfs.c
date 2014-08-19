@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.19.2.2 2013/06/23 06:28:52 tls Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.19.2.3 2014/08/20 00:02:27 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.19.2.2 2013/06/23 06:28:52 tls Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.19.2.3 2014/08/20 00:02:27 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -221,7 +221,7 @@ maxfilesize(int bshift)
 static void
 make_dinode(ino_t ino, struct ulfs1_dinode *dip, int nfrags, struct lfs *fs)
 {
-	int fsb_per_blk, i;
+	int i;
 	int nblocks, bb, base, factor, lvl;
 
 	nblocks = howmany(nfrags, fs->lfs_frag);
@@ -236,8 +236,6 @@ make_dinode(ino_t ino, struct ulfs1_dinode *dip, int nfrags, struct lfs *fs)
 	dip->di_atimensec = dip->di_mtimensec = dip->di_ctimensec = 0;
 	dip->di_inumber = ino;
 	dip->di_gen = 1;
-
-	fsb_per_blk = lfs_blkstofrags(fs, 1);
 
 	if (ULFS_NDADDR < nblocks) {
 		/* Count up how many indirect blocks we need, recursively */

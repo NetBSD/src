@@ -233,7 +233,7 @@ creates a "generic" database when none exists. </p>
     generic: Makefile
 	    @echo Creating $@
 	    @rm -f $@.tmp
-	    @printf '%s\t%s+root=%s\n' root $MTAADMIN `uname -n` &gt; $@.tmp
+	    @printf '%s\t%s+root=%s\n' root ${MTAADMIN} `uname -n` &gt; $@.tmp
 	    @mv $@.tmp generic
 
     %.cdb: %
@@ -374,6 +374,8 @@ post-filter re-injection SMTP service. Typical additions include: </p>
     # With multiple instances, rarely need "-o param=value" overrides
     # in master.cf, each instance gets its own main.cf file.
     #
+    # Postfix 2.10 and later: specify empty smtpd_relay_restrictions.
+    smtpd_relay_restrictions =
     smtpd_recipient_restrictions = permit_mynetworks, reject
 
     # Tolerate occasional high latency in the  content filter.
@@ -552,7 +554,7 @@ pre-filter input instance include: </p>
     # Avoid splitting the envelope and scanning messages multiple times.
     # Match the re-injection server's recipient limit.
     #
-	smtp_destination_recipient_limit = 1000
+    smtp_destination_recipient_limit = 1000
 
     # Tolerate occasional high latency in the content filter.
     #

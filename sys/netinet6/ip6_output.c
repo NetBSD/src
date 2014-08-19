@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.150.2.2 2013/06/23 06:20:26 tls Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.150.2.3 2014/08/20 00:04:36 tls Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,12 +62,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.150.2.2 2013/06/23 06:20:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.150.2.3 2014/08/20 00:04:36 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
 #include "opt_ipsec.h"
-#include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -82,9 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.150.2.2 2013/06/23 06:20:26 tls Exp
 
 #include <net/if.h>
 #include <net/route.h>
-#ifdef PFIL_HOOKS
 #include <net/pfil.h>
-#endif
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -110,9 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.150.2.2 2013/06/23 06:20:26 tls Exp
 
 #include <net/net_osdep.h>
 
-#ifdef PFIL_HOOKS
-extern struct pfil_head inet6_pfil_hook;	/* XXX */
-#endif
+extern pfil_head_t *inet6_pfil_hook;	/* XXX */
 
 struct ip6_exthdrs {
 	struct mbuf *ip6e_ip6;
@@ -186,7 +181,6 @@ ip6_output(
 	int needipsec = 0;
 #ifdef IPSEC
 	struct secpolicy *sp = NULL;
-	int s;
 #endif
 
 	memset(&ip6route, 0, sizeof(ip6route));
@@ -246,20 +240,22 @@ ip6_output(
 	if (exthdrs.ip6e_dest2) optlen += exthdrs.ip6e_dest2->m_len;
 
 #ifdef IPSEC
-	/* Check the security policy (SP) for the packet */
-    
-	sp = ipsec6_check_policy(m,so,flags,&needipsec,&error);
-	if (error != 0) {
-		/*
-		 * Hack: -EINVAL is used to signal that a packet
-		 * should be silently discarded.  This is typically
-		 * because we asked key management for an SA and
-		 * it was delayed (e.g. kicked up to IKE).
-		 */
-	if (error == -EINVAL) 
-		error = 0;
-	goto freehdrs;
-    }
+	if (ipsec_used) {
+		/* Check the security policy (SP) for the packet */
+	    
+		sp = ipsec6_check_policy(m, so, flags, &needipsec, &error);
+		if (error != 0) {
+			/*
+			 * Hack: -EINVAL is used to signal that a packet
+			 * should be silently discarded.  This is typically
+			 * because we asked key management for an SA and
+			 * it was delayed (e.g. kicked up to IKE).
+			 */
+			if (error == -EINVAL) 
+				error = 0;
+			goto freehdrs;
+		}
+	}
 #endif /* IPSEC */
 
 
@@ -469,8 +465,8 @@ ip6_output(
 
 #ifdef IPSEC
 	if (needipsec) {
-		s = splsoftnet();
-		error = ipsec6_process_packet(m,sp->req);
+		int s = splsoftnet();
+		error = ipsec6_process_packet(m, sp->req);
 
 		/*
 		 * Preserve KAME behaviour: ENOENT can be returned
@@ -484,8 +480,6 @@ ip6_output(
 		goto done;
 	}
 #endif /* IPSEC */    
-
-
 
 	/* adjust pointer */
 	ip6 = mtod(m, struct ip6_hdr *);
@@ -692,16 +686,15 @@ ip6_output(
 		ip6 = mtod(m, struct ip6_hdr *);
 	}
 
-#ifdef PFIL_HOOKS
 	/*
 	 * Run through list of hooks for output packets.
 	 */
-	if ((error = pfil_run_hooks(&inet6_pfil_hook, &m, ifp, PFIL_OUT)) != 0)
+	if ((error = pfil_run_hooks(inet6_pfil_hook, &m, ifp, PFIL_OUT)) != 0)
 		goto done;
 	if (m == NULL)
 		goto done;
 	ip6 = mtod(m, struct ip6_hdr *);
-#endif /* PFIL_HOOKS */
+
 	/*
 	 * Send the packet to the outgoing interface.
 	 * If necessary, do IPv6 fragmentation before sending.
@@ -1600,7 +1593,11 @@ else 					\
 				break;
 			}
 
-			sockopt_get(sopt, optbuf, optbuflen);
+			error = sockopt_get(sopt, optbuf, optbuflen);
+			if (error) {
+				free(optbuf, M_IP6OPT);
+				break;
+			}
 			optp = &in6p->in6p_outputopts;
 			error = ip6_pcbopt(optname, optbuf, optbuflen,
 			    optp, kauth_cred_get(), uproto);
@@ -1654,9 +1651,13 @@ else 					\
 
 #if defined(IPSEC)
 		case IPV6_IPSEC_POLICY:
-			error = ipsec6_set_policy(in6p, optname,
-			    sopt->sopt_data, sopt->sopt_size, kauth_cred_get());
-			break;
+			if (ipsec_enabled) {
+				error = ipsec6_set_policy(in6p, optname,
+				    sopt->sopt_data, sopt->sopt_size,
+				    kauth_cred_get());
+				break;
+			}
+			/*FALLTHROUGH*/
 #endif /* IPSEC */
 
 		default:
@@ -1843,17 +1844,20 @@ else 					\
 
 #if defined(IPSEC)
 		case IPV6_IPSEC_POLICY:
-		    {
-			struct mbuf *m = NULL;
+			if (ipsec_used) {
+				struct mbuf *m = NULL;
 
-			/* XXX this will return EINVAL as sopt is empty */
-			error = ipsec6_get_policy(in6p, sopt->sopt_data,
-			    sopt->sopt_size, &m);
-			if (!error)
-				error = sockopt_setmbuf(sopt, m);
-
-			break;
-		    }
+				/*
+				 * XXX: this will return EINVAL as sopt is
+				 * empty
+				 */
+				error = ipsec6_get_policy(in6p, sopt->sopt_data,
+				    sopt->sopt_size, &m);
+				if (!error)
+					error = sockopt_setmbuf(sopt, m);
+				break;
+			}
+			/*FALLTHROUGH*/
 #endif /* IPSEC */
 
 		default:
@@ -2279,11 +2283,10 @@ ip6_setmoptions(const struct sockopt *sopt, struct ip6_moptions **im6op)
 			break;
 
 		if (ifindex != 0) {
-			if (if_indexlim <= ifindex || !ifindex2ifnet[ifindex]) {
+			if ((ifp = if_byindex(ifindex)) == NULL) {
 				error = ENXIO;	/* XXX EINVAL? */
 				break;
 			}
-			ifp = ifindex2ifnet[ifindex];
 			if ((ifp->if_flags & IFF_MULTICAST) == 0) {
 				error = EADDRNOTAVAIL;
 				break;
@@ -2381,12 +2384,10 @@ ip6_setmoptions(const struct sockopt *sopt, struct ip6_moptions **im6op)
 			/*
 			 * If the interface is specified, validate it.
 			 */
-			if (if_indexlim <= mreq.ipv6mr_interface ||
-			    !ifindex2ifnet[mreq.ipv6mr_interface]) {
+			if ((ifp = if_byindex(mreq.ipv6mr_interface)) == NULL) {
 				error = ENXIO;	/* XXX EINVAL? */
 				break;
 			}
-			ifp = ifindex2ifnet[mreq.ipv6mr_interface];
 		}
 
 		/*
@@ -2440,12 +2441,10 @@ ip6_setmoptions(const struct sockopt *sopt, struct ip6_moptions **im6op)
 		 * to its ifnet structure.
 		 */
 		if (mreq.ipv6mr_interface != 0) {
-			if (if_indexlim <= mreq.ipv6mr_interface ||
-			    !ifindex2ifnet[mreq.ipv6mr_interface]) {
+			if ((ifp = if_byindex(mreq.ipv6mr_interface)) == NULL) {
 				error = ENXIO;	/* XXX EINVAL? */
 				break;
 			}
-			ifp = ifindex2ifnet[mreq.ipv6mr_interface];
 		} else
 			ifp = NULL;
 
@@ -2739,12 +2738,9 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 			return (EINVAL);
 		}
 
-		/* validate the interface index if specified. */
-		if (pktinfo->ipi6_ifindex >= if_indexlim) {
-			 return (ENXIO);
-		}
+		/* Validate the interface index if specified. */
 		if (pktinfo->ipi6_ifindex) {
-			ifp = ifindex2ifnet[pktinfo->ipi6_ifindex];
+			ifp = if_byindex(pktinfo->ipi6_ifindex);
 			if (ifp == NULL)
 				return (ENXIO);
 		}

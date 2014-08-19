@@ -1,3 +1,14 @@
+2011-05-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* hsuser.texi (Using History Interactively): Disable !BashFeatures
+	@defcodeindex.  Make the `Programming with GNU History' reference
+	external.
+	* inc-hist.texinfo: Remove.
+
+2011-05-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Imported readline 6.2, and upstream patch 001.
+
 2006-04-24  Daniel Jacobowitz  <dan@codesourcery.com>
 
 	Imported readline 5.1, and upstream patches 001-004.

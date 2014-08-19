@@ -1,4 +1,4 @@
-/*	$NetBSD: spe.c,v 1.5.12.1 2013/02/25 00:28:53 tls Exp $	*/
+/*	$NetBSD: spe.c,v 1.5.12.2 2014/08/20 00:03:19 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spe.c,v 1.5.12.1 2013/02/25 00:28:53 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spe.c,v 1.5.12.2 2014/08/20 00:03:19 tls Exp $");
 
 #include "opt_altivec.h"
 
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: spe.c,v 1.5.12.1 2013/02/25 00:28:53 tls Exp $");
 #include <powerpc/pcb.h>
 
 static void vec_state_load(lwp_t *, u_int);
-static void vec_state_save(lwp_t *, u_int);
-static void vec_state_release(lwp_t *, u_int);
+static void vec_state_save(lwp_t *);
+static void vec_state_release(lwp_t *);
 
 const pcu_ops_t vec_ops = {
 	.pcu_id = PCU_VEC,
@@ -63,13 +63,13 @@ const pcu_ops_t vec_ops = {
 bool
 vec_used_p(lwp_t *l)
 {
-	return (l->l_md.md_flags & MDLWP_USEDVEC) != 0;
+	return pcu_valid_p(&vec_ops);
 }
 
 void
 vec_mark_used(lwp_t *l)
 {
-	l->l_md.md_flags |= MDLWP_USEDVEC;
+	pcu_discard(&vec_ops, true);
 }
 
 void
@@ -77,7 +77,7 @@ vec_state_load(lwp_t *l, u_int flags)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
-	if (__predict_false(!vec_used_p(l))) {
+	if ((flags & PCU_VALID) == 0) {
 		memset(&pcb->pcb_vr, 0, sizeof(pcb->pcb_vr));
 		vec_mark_used(l);
 	}
@@ -103,14 +103,13 @@ vec_state_load(lwp_t *l, u_int flags)
 	__asm volatile ("isync");
 
 	/*
-	 * Note that vector has now been used.
+	 * Set PSL_SPV so vectors will be enabled on return to user.
 	 */
-	l->l_md.md_flags |= MDLWP_USEDVEC;
 	l->l_md.md_utf->tf_srr1 |= PSL_SPV;
 }
 
 void
-vec_state_save(lwp_t *l, u_int flags)
+vec_state_save(lwp_t *l)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
@@ -135,7 +134,7 @@ vec_state_save(lwp_t *l, u_int flags)
 }
 
 void
-vec_state_release(lwp_t *l, u_int flags)
+vec_state_release(lwp_t *l)
 {
 	/*
 	 * Turn off SPV so the next SPE instruction will cause a

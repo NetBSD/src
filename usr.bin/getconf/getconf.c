@@ -1,4 +1,4 @@
-/*	$NetBSD: getconf.c,v 1.34 2008/08/27 08:56:49 christos Exp $	*/
+/*	$NetBSD: getconf.c,v 1.34.24.1 2014/08/20 00:04:59 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getconf.c,v 1.34 2008/08/27 08:56:49 christos Exp $");
+__RCSID("$NetBSD: getconf.c,v 1.34.24.1 2014/08/20 00:04:59 tls Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -147,6 +147,7 @@ static const struct conf_variable conf_table[] =
   { "_POSIX_MONOTONIC_CLOCK",	SYSCONF,	_SC_MONOTONIC_CLOCK	},
   { "_POSIX_PRIORITY_SCHEDULING", SYSCONF,	_SC_PRIORITY_SCHEDULING },
   { "_POSIX_SEMAPHORES",	SYSCONF,	_SC_SEMAPHORES		},
+  { "_POSIX_SHARED_MEMORY_OBJECTS", SYSCONF,	_SC_SHARED_MEMORY_OBJECTS },
   { "_POSIX_SYNCHRONIZED_IO",	SYSCONF,	_SC_SYNCHRONIZED_IO	},
   { "_POSIX_TIMERS",		SYSCONF,	_SC_TIMERS		},
 

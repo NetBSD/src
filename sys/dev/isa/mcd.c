@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.109.22.1 2012/11/20 03:02:10 tls Exp $	*/
+/*	$NetBSD: mcd.c,v 1.109.22.2 2014/08/20 00:03:39 tls Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.109.22.1 2012/11/20 03:02:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.109.22.2 2014/08/20 00:03:39 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,12 +208,29 @@ dev_type_dump(mcddump);
 dev_type_size(mcdsize);
 
 const struct bdevsw mcd_bdevsw = {
-	mcdopen, mcdclose, mcdstrategy, mcdioctl, mcddump, mcdsize, D_DISK
+	.d_open = mcdopen,
+	.d_close = mcdclose,
+	.d_strategy = mcdstrategy,
+	.d_ioctl = mcdioctl,
+	.d_dump = mcddump,
+	.d_psize = mcdsize,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw mcd_cdevsw = {
-	mcdopen, mcdclose, mcdread, mcdwrite, mcdioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = mcdopen,
+	.d_close = mcdclose,
+	.d_read = mcdread,
+	.d_write = mcdwrite,
+	.d_ioctl = mcdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 void	mcdgetdefaultlabel(struct mcd_softc *, struct disklabel *);

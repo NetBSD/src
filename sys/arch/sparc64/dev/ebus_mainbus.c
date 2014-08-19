@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus_mainbus.c,v 1.9.2.1 2012/11/20 03:01:45 tls Exp $	*/
+/*	$NetBSD: ebus_mainbus.c,v 1.9.2.2 2014/08/20 00:03:25 tls Exp $	*/
 /*	$OpenBSD: ebus_mainbus.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus_mainbus.c,v 1.9.2.1 2012/11/20 03:01:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus_mainbus.c,v 1.9.2.2 2014/08/20 00:03:25 tls Exp $");
 
 #ifdef DEBUG
 #define	EDB_PROM	0x01
@@ -69,9 +69,11 @@ static void *ebus_mainbus_intr_establish(bus_space_tag_t, int, int,
 static bus_space_tag_t ebus_mainbus_alloc_bus_tag(struct ebus_softc *,
 	bus_space_tag_t, int);
 #ifdef SUN4V
+#if 0
+XXX
 static void ebus_mainbus_intr_ack(struct intrhand *);
 #endif
-
+#endif
 int
 ebus_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -208,7 +210,10 @@ ebus_mainbus_bus_map(bus_space_tag_t t, bus_addr_t offset, bus_size_t size,
 	struct ebus_softc *sc = t->cookie;
 	struct ebus_mainbus_ranges *range;
 	bus_addr_t hi, lo;
-	int i, ss;
+	int i;
+#if 0
+	int ss;
+#endif
 
 	DPRINTF(EDB_BUSMAP,
 	    ("\n_ebus_mainbus_bus_map: off %016llx sz %x flags %d",
@@ -252,8 +257,6 @@ ebus_mainbus_bus_map(bus_space_tag_t t, bus_addr_t offset, bus_size_t size,
 			panic("ebus_mainbus_bus_map: illegal space %x", ss);
 			break;
 		}
-#else
-ss = 0;
 #endif
 
 		addr = ((bus_addr_t)range[i].phys_hi << 32UL) |
@@ -279,6 +282,8 @@ ebus_mainbus_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	int ino;
 
 #ifdef SUN4V
+#if 0
+XXX
 	if (CPU_ISSUN4V) {
 		struct upa_reg reg;
 		u_int64_t devhandle, devino = INTINO(ihandle);
@@ -328,7 +333,7 @@ ebus_mainbus_intr_establish(bus_space_tag_t t, int ihandle, int level,
 		return (ih);
 	}
 #endif
-
+#endif
 	ihandle |= sc->sc_ign;
 	ino = INTINO(ihandle);
 
@@ -371,11 +376,12 @@ ebus_mainbus_intr_establish(bus_space_tag_t t, int ihandle, int level,
 }
 
 #ifdef SUN4V
-
+#if 0
+XXX
 static void
 ebus_mainbus_intr_ack(struct intrhand *ih)
 {
 	hv_intr_setstate(ih->ih_number, INTR_IDLE);
 }
-
+#endif
 #endif

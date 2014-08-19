@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_ehci.c,v 1.3.2.3 2013/06/23 06:20:01 tls Exp $ */
+/* $NetBSD: omap3_ehci.c,v 1.3.2.4 2014/08/20 00:02:47 tls Exp $ */
 
 /*-
  * Copyright (c) 2010-2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.3.2.3 2013/06/23 06:20:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.3.2.4 2014/08/20 00:02:47 tls Exp $");
 
 #include "locators.h"
 
@@ -110,7 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.3.2.3 2013/06/23 06:20:01 tls Exp $
 /* USBTLL module */
 #ifdef OMAP_3XXX
 #define	USBTLL_BASE		0x48062000
-#elif defined(OMAP4)
+#elif defined(OMAP4) || defined(OMAP5)
 #define	USBTLL_BASE		0x4a062000
 #endif
 #define	USBTLL_SIZE		0x1000
@@ -118,7 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.3.2.3 2013/06/23 06:20:01 tls Exp $
 /* HS USB HOST module */
 #ifdef OMAP_3XXX
 #define	UHH_BASE		0x48064000
-#elif defined(OMAP4)
+#elif defined(OMAP4) || defined(OMAP5)
 #define	UHH_BASE		0x4a064000
 #endif
 #define	UHH_SIZE		0x1000
@@ -127,6 +127,57 @@ enum omap3_ehci_port_mode {
 	OMAP3_EHCI_PORT_MODE_NONE,
 	OMAP3_EHCI_PORT_MODE_PHY,
 	OMAP3_EHCI_PORT_MODE_TLL,
+	OMAP3_EHCI_PORT_MODE_HSIC,
+};
+
+static const uint32_t uhh_map[3][4] = {
+#if defined(OMAP4) || defined(OMAP5)
+	{ 
+		[OMAP3_EHCI_PORT_MODE_NONE] = 
+		    __SHIFTIN(UHH_HOSTCONFIG_PMODE_UTMI, UHH_HOSTCONFIG_P1_MODE),
+		[OMAP3_EHCI_PORT_MODE_PHY] = 
+		    __SHIFTIN(UHH_HOSTCONFIG_PMODE_ULPI_PHY, UHH_HOSTCONFIG_P1_MODE),
+		[OMAP3_EHCI_PORT_MODE_TLL] = 
+		    __SHIFTIN(UHH_HOSTCONFIG_PMODE_UTMI, UHH_HOSTCONFIG_P1_MODE),
+		[OMAP3_EHCI_PORT_MODE_HSIC] = 
+		    __SHIFTIN(UHH_HOSTCONFIG_PMODE_HSIC, UHH_HOSTCONFIG_P1_MODE),
+	}, {
+		[OMAP3_EHCI_PORT_MODE_NONE] = 
+		    __SHIFTIN(UHH_HOSTCONFIG_PMODE_UTMI, UHH_HOSTCONFIG_P2_MODE),
+		[OMAP3_EHCI_PORT_MODE_PHY] = 
+		    __SHIFTIN(UHH_HOSTCONFIG_PMODE_ULPI_PHY, UHH_HOSTCONFIG_P2_MODE),
+		[OMAP3_EHCI_PORT_MODE_TLL] = 
+		    __SHIFTIN(UHH_HOSTCONFIG_PMODE_UTMI, UHH_HOSTCONFIG_P2_MODE),
+		[OMAP3_EHCI_PORT_MODE_HSIC] = 
+		    __SHIFTIN(UHH_HOSTCONFIG_PMODE_HSIC, UHH_HOSTCONFIG_P2_MODE),
+	}, {
+		[OMAP3_EHCI_PORT_MODE_NONE] = 
+		    __SHIFTIN(UHH_HOSTCONFIG_PMODE_UTMI, UHH_HOSTCONFIG_P3_MODE),
+		[OMAP3_EHCI_PORT_MODE_PHY] = 
+		    __SHIFTIN(UHH_HOSTCONFIG_PMODE_ULPI_PHY, UHH_HOSTCONFIG_P3_MODE),
+		[OMAP3_EHCI_PORT_MODE_TLL] = 
+		    __SHIFTIN(UHH_HOSTCONFIG_PMODE_UTMI, UHH_HOSTCONFIG_P3_MODE),
+		[OMAP3_EHCI_PORT_MODE_HSIC] = 
+		    __SHIFTIN(UHH_HOSTCONFIG_PMODE_HSIC, UHH_HOSTCONFIG_P3_MODE),
+	}
+#else
+	{
+		[OMAP3_EHCI_PORT_MODE_NONE] = UHH_HOSTCONFIG_P1_ULPI_BYPASS,
+		[OMAP3_EHCI_PORT_MODE_PHY]  = 0,
+		[OMAP3_EHCI_PORT_MODE_TLL]  = UHH_HOSTCONFIG_P1_ULPI_BYPASS,
+		[OMAP3_EHCI_PORT_MODE_HSIC] = UHH_HOSTCONFIG_P1_ULPI_BYPASS,
+	}, {
+		[OMAP3_EHCI_PORT_MODE_NONE] = UHH_HOSTCONFIG_P2_ULPI_BYPASS,
+		[OMAP3_EHCI_PORT_MODE_PHY]  = 0,
+		[OMAP3_EHCI_PORT_MODE_TLL]  = UHH_HOSTCONFIG_P2_ULPI_BYPASS,
+		[OMAP3_EHCI_PORT_MODE_HSIC] = UHH_HOSTCONFIG_P2_ULPI_BYPASS,
+	}, {
+		[OMAP3_EHCI_PORT_MODE_NONE] = UHH_HOSTCONFIG_P3_ULPI_BYPASS,
+		[OMAP3_EHCI_PORT_MODE_PHY]  = 0,
+		[OMAP3_EHCI_PORT_MODE_TLL]  = UHH_HOSTCONFIG_P3_ULPI_BYPASS,
+		[OMAP3_EHCI_PORT_MODE_HSIC] = UHH_HOSTCONFIG_P3_ULPI_BYPASS,
+	}, 
+#endif
 };
 
 struct omap3_ehci_softc {
@@ -154,6 +205,9 @@ struct omap3_ehci_softc {
 #ifdef OMAP_3XXX
 static void	omap3_dpll5_init(struct omap3_ehci_softc *);
 static void	omap3_usbhost_init(struct omap3_ehci_softc *, int);
+#endif
+#if defined(OMAP4) || defined(OMAP5)
+static void	omap4_usbhost_init(struct omap3_ehci_softc *, int);
 #endif
 static void	usbtll_reset(struct omap3_ehci_softc *);
 static void	usbtll_power(struct omap3_ehci_softc *, bool);
@@ -297,7 +351,7 @@ omap3_ehci_match(device_t parent, cfdata_t match, void *opaque)
 	if (obio->obio_addr == EHCI1_BASE_OMAP3)
 		return 1;
 #endif
-#ifdef OMAP4
+#if defined(OMAP4) || defined(OMAP5)
 	if (obio->obio_addr == EHCI1_BASE_OMAP4)
 		return 1;
 #endif
@@ -318,6 +372,14 @@ omap3_ehci_get_port_mode(prop_dictionary_t prop, const char *key)
 		} else if (strcmp(s, "tll") == 0) {
 			mode = OMAP3_EHCI_PORT_MODE_TLL;
 #endif
+#if defined(OMAP4) || defined(OMAP5)
+		} else if (strcmp(s, "hsic") == 0) {
+			mode = OMAP3_EHCI_PORT_MODE_HSIC;
+#endif
+		} else if (strcmp(s, "none") == 0) {
+			mode = OMAP3_EHCI_PORT_MODE_NONE;
+		} else {
+			panic("%s: unknown port mode %s", __func__, s);
 		}
 	}
 
@@ -415,6 +477,9 @@ omap3_ehci_attach(device_t parent, device_t self, void *opaque)
 
 	omap3_usbhost_init(sc, 1);
 #endif /* OMAP_3XXX */
+#if defined(OMAP4) || defined(OMAP5)
+	omap4_usbhost_init(sc, 1);
+#endif
 
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
 
@@ -587,6 +652,40 @@ omap3_usbhost_init(struct omap3_ehci_softc *sc, int enable)
 }
 #endif /* OMAP_3XXX */
 
+#if defined(OMAP4) || defined(OMAP5)
+static void
+omap4_usbhost_init(struct omap3_ehci_softc *sc, int enable)
+{
+	bus_space_tag_t iot = sc->sc.iot;
+        bus_space_handle_t ioh;
+	uint32_t val;
+	int err __diagused;
+#ifdef OMAP5
+	bus_size_t off = OMAP5_CM_L3INIT_CORE;
+#elif defined(OMAP4)
+	bus_size_t off = OMAP4_CM_L3INIT_CORE;
+#endif
+
+	err = bus_space_map(iot, OMAP2_CM_BASE + off, 0x100, 0, &ioh);
+	KASSERT(err == 0);
+
+	val = bus_space_read_4(iot, ioh, OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL);
+	val |= OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL_OPTFCLKEN_HSIC60M_P3_CLK
+	    |  OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL_OPTFCLKEN_HSIC60M_P2_CLK
+	    |  OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL_OPTFCLKEN_HSIC480M_P3_CLK
+	    |  OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL_OPTFCLKEN_HSIC480M_P2_CLK
+	    |  OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL_OPTFCLKEN_UTMI_P3_CLK
+	    |  OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL_OPTFCLKEN_UTMI_P2_CLK;
+	bus_space_write_4(iot, ioh, OMAP4_CM_L3INIT_USB_HOST_HS_CLKCTRL, val);
+
+	val = bus_space_read_4(iot, ioh, OMAP4_CM_L3INIT_USB_TLL_HS_CLKCTRL);
+	val |= OMAP4_CM_L3INIT_USB_TLL_HS_CLKCTRL_USB_CH2_CLK
+	    |  OMAP4_CM_L3INIT_USB_TLL_HS_CLKCTRL_USB_CH1_CLK;
+	bus_space_write_4(iot, ioh, OMAP4_CM_L3INIT_USB_TLL_HS_CLKCTRL, val);
+
+	bus_space_unmap(iot, ioh, 0x100);
+}
+#endif /* OMAP4 || OMAP5 */
 static void
 usbtll_reset(struct omap3_ehci_softc *sc)
 {
@@ -648,28 +747,48 @@ usbtll_init(struct omap3_ehci_softc *sc, int chmask)
 static void
 uhh_power(struct omap3_ehci_softc *sc, bool on)
 {
-	uint32_t v;
 	int retry = 5000;
+	
+	uint32_t v;
 
+	v = UHH_READ4(sc, UHH_REVISION);
+	const int vers = UHH_REVISION_MAJOR(v);
 	if (on) {
 		v = UHH_READ4(sc, UHH_SYSCONFIG);
-		v &= ~(UHH_SYSCONFIG_SIDLEMODE_MASK|UHH_SYSCONFIG_MIDLEMODE_MASK);
-		v |= UHH_SYSCONFIG_MIDLEMODE_SMARTSTANDBY;
-		v |= UHH_SYSCONFIG_CLOCKACTIVITY;
-		v |= UHH_SYSCONFIG_SIDLEMODE_SMARTIDLE;
-		v |= UHH_SYSCONFIG_ENAWAKEUP;
-		v &= ~UHH_SYSCONFIG_AUTOIDLE;
+		if (vers >= UHH_REVISION_VERS2) {
+			v &= ~UHH4_SYSCONFIG_STANDBYMODE;
+			v |= UHH4_SYSCONFIG_STANDBYMODE_SMARTSTANDBY;
+			v &= ~UHH4_SYSCONFIG_SIDLEMODE;
+			v |= UHH4_SYSCONFIG_SIDLEMODE_SMARTIDLE;
+		} else {
+			v &= ~UHH3_SYSCONFIG_MIDLEMODE_MASK;
+			v |= UHH3_SYSCONFIG_MIDLEMODE_SMARTSTANDBY;
+			v &= ~UHH3_SYSCONFIG_SIDLEMODE_MASK;
+			v |= UHH3_SYSCONFIG_SIDLEMODE_SMARTIDLE;
+			v |= UHH3_SYSCONFIG_CLOCKACTIVITY;
+			v |= UHH3_SYSCONFIG_ENAWAKEUP;
+			v &= ~UHH3_SYSCONFIG_AUTOIDLE;
+		}
 		UHH_WRITE4(sc, UHH_SYSCONFIG, v);
 
 		v = UHH_READ4(sc, UHH_SYSCONFIG);
 	} else {
 		v = UHH_READ4(sc, UHH_SYSCONFIG);
-		v |= UHH_SYSCONFIG_SOFTRESET;
+		if (vers >= UHH_REVISION_VERS2) {
+			v |= UHH4_SYSCONFIG_SOFTRESET;
+		} else {
+			v |= UHH3_SYSCONFIG_SOFTRESET;
+		}
 		UHH_WRITE4(sc, UHH_SYSCONFIG, v);
 		do {
 			v = UHH_READ4(sc, UHH_SYSSTATUS);
-			if (v & UHH_SYSSTATUS_RESETDONE_ALL)
-				break;
+			if (vers >= UHH_REVISION_VERS2) {
+				if ((v & UHH4_SYSSTATUS_RESETDONE_ALL) == 0)
+					break;
+			} else {
+				if (v & UHH3_SYSSTATUS_RESETDONE_ALL)
+					break;
+			}
 			delay(10);
 		} while (retry-- > 0);
 		if (retry == 0)
@@ -699,18 +818,18 @@ uhh_portconfig(struct omap3_ehci_softc *sc)
 	    && sc->sc_portconfig[2].mode == OMAP3_EHCI_PORT_MODE_NONE)
 		v &= ~UHH_HOSTCONFIG_P3_CONNECT_STATUS;
 
-	v &= ~(UHH_HOSTCONFIG_P1_ULPI_BYPASS |UHH_HOSTCONFIG_P2_ULPI_BYPASS
-	    |UHH_HOSTCONFIG_P2_ULPI_BYPASS);
-	if (sc->sc_portconfig[0].mode != OMAP3_EHCI_PORT_MODE_PHY)
-		v |= UHH_HOSTCONFIG_P1_ULPI_BYPASS;
+	v &= ~(UHH_HOSTCONFIG_P1_ULPI_BYPASS|UHH_HOSTCONFIG_P2_ULPI_BYPASS
+	    |UHH_HOSTCONFIG_P3_ULPI_BYPASS);
+	v &= ~(UHH_HOSTCONFIG_P1_MODE|UHH_HOSTCONFIG_P2_MODE
+	    |UHH_HOSTCONFIG_P3_MODE);
 
-	if (sc->sc_nports > 1
-	    && sc->sc_portconfig[1].mode != OMAP3_EHCI_PORT_MODE_PHY)
-		v |= UHH_HOSTCONFIG_P2_ULPI_BYPASS;
-
-	if (sc->sc_nports > 2
-	    && sc->sc_portconfig[2].mode == OMAP3_EHCI_PORT_MODE_PHY)
-		v |= UHH_HOSTCONFIG_P3_ULPI_BYPASS;
+	v |= uhh_map[0][sc->sc_portconfig[0].mode];
+	if (sc->sc_nports > 1) {
+		v |= uhh_map[1][sc->sc_portconfig[1].mode];
+		if (sc->sc_nports > 2) {
+			v |= uhh_map[2][sc->sc_portconfig[2].mode];
+		}
+	}
 
 	UHH_WRITE4(sc, UHH_HOSTCONFIG, v);
 }

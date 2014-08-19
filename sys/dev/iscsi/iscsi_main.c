@@ -90,9 +90,18 @@ static dev_type_open(iscsiopen);
 static dev_type_close(iscsiclose);
 
 struct cdevsw iscsi_cdevsw = {
-	iscsiopen, iscsiclose,
-	noread, nowrite,
-	iscsiioctl, nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
+	.d_open = iscsiopen,
+	.d_close = iscsiclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = iscsiioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 /******************************************************************************/

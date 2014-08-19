@@ -1,0 +1,55 @@
+# Copyright (C) 2011-2014 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file is part of the GDB testsuite.  It tests the mechanism
+# exposing values to Python.
+
+load_lib gdb-python.exp
+
+standard_testfile .cc
+set pyfile  ${srcdir}/${subdir}/${testfile}.py
+
+if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
+    return -1
+}
+
+# Skip all tests if Python scripting is not enabled.
+if { [skip_python_tests] } { continue }
+
+if ![runto_main] then {
+    fail "Cannot run to main."
+    return 0
+}
+
+#
+# Check FinishBreakpoints against C++ exceptions
+#
+
+gdb_breakpoint [gdb_get_line_number "Break after exception 2"]
+
+gdb_test "source $pyfile" ".*Python script imported.*" \
+         "import python scripts"
+         
+gdb_breakpoint "throw_exception_1"
+gdb_test "continue" "Breakpoint .*throw_exception_1.*" "run to exception 1"
+
+gdb_test "python print (len(gdb.breakpoints()))" "3" "check BP count"
+gdb_test "python ExceptionFinishBreakpoint(gdb.newest_frame())" "init ExceptionFinishBreakpoint" "set FinishBP after the exception"
+gdb_test "continue" ".*stopped at ExceptionFinishBreakpoint.*" "check FinishBreakpoint in catch()"
+gdb_test "python print (len(gdb.breakpoints()))" "3" "check finish BP removal"
+
+gdb_test "continue" ".*Breakpoint.* throw_exception_1.*" "continue to second exception"
+gdb_test "python ExceptionFinishBreakpoint(gdb.newest_frame())" "init ExceptionFinishBreakpoint" "set FinishBP after the exception"
+gdb_test "continue" ".*exception did not finish.*" "FinishBreakpoint with exception thrown not caught"

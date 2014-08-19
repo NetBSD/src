@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.59.10.1 2013/06/23 06:29:01 tls Exp $	*/
+/*	$NetBSD: inet6.c,v 1.59.10.2 2014/08/20 00:05:01 tls Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,9 +64,11 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.59.10.1 2013/06/23 06:29:01 tls Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.59.10.2 2014/08/20 00:05:01 tls Exp $");
 #endif
 #endif /* not lint */
+
+#define _CALLOUT_PRIVATE
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -90,22 +92,26 @@ __RCSID("$NetBSD: inet6.c,v 1.59.10.1 2013/06/23 06:29:01 tls Exp $");
 #include <netinet6/in6_pcb.h>
 #include <netinet6/in6_var.h>
 #ifdef TCP6
-#include <netinet6/tcp6.h>
-#include <netinet6/tcp6_seq.h>
+#include <netinet/tcp6.h>
+#include <netinet/tcp6_seq.h>
 #define TCP6STATES
-#include <netinet6/tcp6_fsm.h>
+#include <netinet/tcp6_fsm.h>
 #define TCP6TIMERS
-#include <netinet6/tcp6_timer.h>
-#include <netinet6/tcp6_var.h>
-#include <netinet6/tcp6_debug.h>
+#include <netinet/tcp6_timer.h>
+#include <netinet/tcp6_var.h>
+#include <netinet/tcp6_debug.h>
 #else
+#define TCP6T_NTIMERS	TCPT_NTIMERS
+#define tcp6timers tcptimers
+#define tcp6states tcpstates
+#define TCP6_NSTATES	TCP_NSTATES
+#define tcp6cb tcpcb
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_seq.h>
-/*#define TCPSTATES*/
 #include <netinet/tcp_fsm.h>
 extern const char * const tcpstates[];
-/*#define	TCPTIMERS*/
+extern const char * const tcptimers[];
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
 #include <netinet/tcp_debug.h>
@@ -280,33 +286,30 @@ static struct kinfo_pcb *
 getpcblist_kmem(u_long off, const char *name, size_t *len) {
 
 	struct inpcbtable table;
-	struct in6pcb *head, *prev, *next;
+	struct inpcb_hdr *next, *prev;
 	int istcp = strcmp(name, "tcp6") == 0;
 	struct kinfo_pcb *pcblist;
 	size_t size = 100, i;
 	struct sockaddr_in6 sin6;
+	struct inpcbqueue *head;
 
 	if (off == 0) {
 		*len = 0;
 		return NULL;
 	}
 	kread(off, (char *)&table, sizeof (table));
-	head = prev =
-	    (struct in6pcb *)&((struct inpcbtable *)off)->inpt_queue.cqh_first;
-	next = (struct in6pcb *)table.inpt_queue.cqh_first;
+	head = &table.inpt_queue;
+	next = TAILQ_FIRST(head);
+	prev = TAILQ_END(head);
 
 	if ((pcblist = malloc(size)) == NULL)
 		err(1, "malloc");
 
 	i = 0;
-	while (next != head) {
+	while (next != TAILQ_END(head)) {
 		kread((u_long)next, (char *)&in6pcb, sizeof in6pcb);
-		if ((struct in6pcb *)in6pcb.in6p_queue.cqe_prev != prev) {
-			warnx("bad pcb");
-			break;
-		}
+		next = TAILQ_NEXT(&in6pcb, in6p_queue);
 		prev = next;
-		next = (struct in6pcb *)in6pcb.in6p_queue.cqe_next;
 
 		if (in6pcb.in6p_af != AF_INET6)
 			continue;
@@ -1420,15 +1423,8 @@ inet6name(const struct in6_addr *in6p)
 		sin6.sin6_len = sizeof(sin6);
 		sin6.sin6_family = AF_INET6;
 		sin6.sin6_addr = *in6p;
-#ifdef __KAME__
-		if (IN6_IS_ADDR_LINKLOCAL(in6p) ||
-		    IN6_IS_ADDR_MC_LINKLOCAL(in6p)) {
-			sin6.sin6_scope_id =
-			    ntohs(*(const u_int16_t *)&in6p->s6_addr[2]);
-			sin6.sin6_addr.s6_addr[2] = 0;
-			sin6.sin6_addr.s6_addr[3] = 0;
-		}
-#endif
+		inet6_getscopeid(&sin6, INET6_IS_ADDR_LINKLOCAL|
+		    INET6_IS_ADDR_MC_LINKLOCAL);
 		if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
 				hbuf, sizeof(hbuf), NULL, 0, niflag) != 0)
 			strlcpy(hbuf, "?", sizeof(hbuf));
@@ -1437,17 +1433,20 @@ inet6name(const struct in6_addr *in6p)
 	return (line);
 }
 
-#ifdef TCP6
 /*
  * Dump the contents of a TCP6 PCB.
  */
 void
-tcp6_dump(u_long pcbaddr)
-	u_long pcbaddr;
+tcp6_dump(u_long off, const char *name, u_long pcbaddr)
 {
-	struct tcp6cb tcp6cb;
-	int i;
+	callout_impl_t *ci;
+	int i, hardticks;
 	struct kinfo_pcb *pcblist;
+#ifdef TCP6
+#define mypcb tcp6cb
+#else
+#define mypcb tcpcb
+#endif
 	size_t j, len;
 
 	if (use_sysctl)
@@ -1463,55 +1462,63 @@ tcp6_dump(u_long pcbaddr)
 	if (j == len)
 		errx(1, "0x%lx is not a valid pcb address", pcbaddr);
 
-	kread(pcbaddr, (char *)&tcp6cb, sizeof(tcp6cb));
+	kread(pcbaddr, (char *)&mypcb, sizeof(mypcb));
+	hardticks = get_hardticks();
 
 	printf("TCP Protocol Control Block at 0x%08lx:\n\n", pcbaddr);
-
 	printf("Timers:\n");
-	for (i = 0; i < TCP6T_NTIMERS; i++)
-		printf("\t%s: %u", tcp6timers[i], tcp6cb.t_timer[i]);
+	for (i = 0; i < TCP6T_NTIMERS; i++) {
+		ci = (callout_impl_t *)&tcpcb.t_timer[i];
+		printf("\t%s: %d", tcptimers[i],
+		    (ci->c_flags & CALLOUT_PENDING) ?
+		    ci->c_time - hardticks : 0);
+	}
 	printf("\n\n");
 
-	if (tcp6cb.t_state < 0 || tcp6cb.t_state >= TCP6_NSTATES)
-		printf("State: %d", tcp6cb.t_state);
+	if (mypcb.t_state < 0 || mypcb.t_state >= TCP6_NSTATES)
+		printf("State: %d", mypcb.t_state);
 	else
-		printf("State: %s", tcp6states[tcp6cb.t_state]);
-	printf(", flags 0x%x, in6pcb 0x%lx\n\n", tcp6cb.t_flags,
-	    (u_long)tcp6cb.t_in6pcb);
+		printf("State: %s", tcp6states[mypcb.t_state]);
+	printf(", flags 0x%x, in6pcb 0x%lx\n\n", mypcb.t_flags,
+	    (u_long)mypcb.t_in6pcb);
 
-	printf("rxtshift %d, rxtcur %d, dupacks %d\n", tcp6cb.t_rxtshift,
-	    tcp6cb.t_rxtcur, tcp6cb.t_dupacks);
-	printf("peermaxseg %u, maxseg %u, force %d\n\n", tcp6cb.t_peermaxseg,
-	    tcp6cb.t_maxseg, tcp6cb.t_force);
+	printf("rxtshift %d, rxtcur %d, dupacks %d\n", mypcb.t_rxtshift,
+	    mypcb.t_rxtcur, mypcb.t_dupacks);
+#ifdef TCP6
+	printf("peermaxseg %u, maxseg %u, force %d\n\n", mypcb.t_peermaxseg,
+	    mypcb.t_maxseg, mypcb.t_force);
+#endif
 
 	printf("snd_una %u, snd_nxt %u, snd_up %u\n",
-	    tcp6cb.snd_una, tcp6cb.snd_nxt, tcp6cb.snd_up);
+	    mypcb.snd_una, mypcb.snd_nxt, mypcb.snd_up);
 	printf("snd_wl1 %u, snd_wl2 %u, iss %u, snd_wnd %llu\n\n",
-	    tcp6cb.snd_wl1, tcp6cb.snd_wl2, tcp6cb.iss,
-	    (unsigned long long)tcp6cb.snd_wnd);
+	    mypcb.snd_wl1, mypcb.snd_wl2, mypcb.iss,
+	    (unsigned long long)mypcb.snd_wnd);
 
 	printf("rcv_wnd %llu, rcv_nxt %u, rcv_up %u, irs %u\n\n",
-	    (unsigned long long)cp6cb.rcv_wnd, tcp6cb.rcv_nxt,
-	    tcp6cb.rcv_up, tcp6cb.irs);
+	    (unsigned long long)mypcb.rcv_wnd, mypcb.rcv_nxt,
+	    mypcb.rcv_up, mypcb.irs);
 
 	printf("rcv_adv %u, snd_max %u, snd_cwnd %llu, snd_ssthresh %llu\n",
-	    tcp6cb.rcv_adv, tcp6cb.snd_max, (unsigned long long)tcp6cb.snd_cwnd,
-	    (unsigned long long)tcp6cb.snd_ssthresh);
+	    mypcb.rcv_adv, mypcb.snd_max, (unsigned long long)mypcb.snd_cwnd,
+	    (unsigned long long)mypcb.snd_ssthresh);
 
-	printf("idle %d, rtt %d, rtseq %u, srtt %d, rttvar %d, rttmin %d, "
-	    "max_sndwnd %llu\n\n", tcp6cb.t_idle, tcp6cb.t_rtt, tcp6cb.t_rtseq,
-	    tcp6cb.t_srtt, tcp6cb.t_rttvar, tcp6cb.t_rttmin,
-	    (unsigned long long)tcp6cb.max_sndwnd);
+#ifdef TCP6
+	printf("idle %d, rtt %d, " mypcb.t_idle, mypcb.t_rtt)
+#endif
+	printf("rtseq %u, srtt %d, rttvar %d, rttmin %d, "
+	    "max_sndwnd %llu\n\n", mypcb.t_rtseq,
+	    mypcb.t_srtt, mypcb.t_rttvar, mypcb.t_rttmin,
+	    (unsigned long long)mypcb.max_sndwnd);
 
-	printf("oobflags %d, iobc %d, softerror %d\n\n", tcp6cb.t_oobflags,
-	    tcp6cb.t_iobc, tcp6cb.t_softerror);
+	printf("oobflags %d, iobc %d, softerror %d\n\n", mypcb.t_oobflags,
+	    mypcb.t_iobc, mypcb.t_softerror);
 
 	printf("snd_scale %d, rcv_scale %d, req_r_scale %d, req_s_scale %d\n",
-	    tcp6cb.snd_scale, tcp6cb.rcv_scale, tcp6cb.request_r_scale,
-	    tcp6cb.requested_s_scale);
+	    mypcb.snd_scale, mypcb.rcv_scale, mypcb.request_r_scale,
+	    mypcb.requested_s_scale);
 	printf("ts_recent %u, ts_regent_age %d, last_ack_sent %u\n",
-	    tcp6cb.ts_recent, tcp6cb.ts_recent_age, tcp6cb.last_ack_sent);
+	    mypcb.ts_recent, mypcb.ts_recent_age, mypcb.last_ack_sent);
 }
-#endif
 
 #endif /*INET6*/

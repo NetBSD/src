@@ -1,4 +1,4 @@
-/* $NetBSD: sec.c,v 1.15 2009/05/11 20:13:49 bjh21 Exp $ */
+/* $NetBSD: sec.c,v 1.15.22.1 2014/08/20 00:03:49 tls Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2006 Ben Harris
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.15 2009/05/11 20:13:49 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.15.22.1 2014/08/20 00:03:49 tls Exp $");
 
 #include <sys/param.h>
 
@@ -446,6 +446,7 @@ sec_reset(struct wd33c93_softc *sc_sbic)
 		GET_SBIC_asr(sc_sbic, asr);
 	while (!(asr & SBIC_ASR_INT));
 	GET_SBIC_csr(sc_sbic, csr);
+	__USE(csr);
 	dmac_write(sc, NEC71071_DCTRL1, DCTRL1_CMP | DCTRL1_RQL);
 	dmac_write(sc, NEC71071_DCTRL2, 0);
 	sec_cli(sc);

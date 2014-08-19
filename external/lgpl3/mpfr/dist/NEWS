@@ -1,5 +1,5 @@
-Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -20,8 +20,55 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 ##############################################################################
 
-Changes from version 3.0.0 to version 3.0.1:
-- Bug fixes (see <http://www.mpfr.org/mpfr-3.0.0/#fixed> or ChangeLog file).
+Changes from version 3.1.1 to version 3.1.2:
+- Bug fixes (see <http://www.mpfr.org/mpfr-3.1.1/#fixed> or ChangeLog file).
+- Updated examples to the MPFR 3.x API.
+- Note: The official tarballs for MPFR up to 3.1.1 were affected by a
+  vulnerability for "make distcheck" due to a bug in old GNU Automake
+  versions: http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-3386
+
+Changes from version 3.1.0 to version 3.1.1:
+- Improved MPFR manual.
+- Test coverage: 96.5% lines of code.
+- Bug fixes (see <http://www.mpfr.org/mpfr-3.1.0/#fixed> or ChangeLog file).
+
+Changes from versions 3.0.* to version 3.1.0:
+- The "canard à l'orange" release.
+- The MPFR source has been reorganized.
+- Dropped ansi2knr support.
+- TLS support is now detected automatically. If TLS is supported, MPFR is
+  built as thread safe by default. To disable TLS explicitly, configure
+  MPFR with --disable-thread-safe.
+- New --enable-gmp-internals configure option to use GMP's undocumented
+  functions (not from the public API). Note that library versioning is
+  not guaranteed to work if this option is used.
+- The mpfr_urandom and mpfr_urandomb functions now return identical values
+  on processors with different word size (assuming the same random seed, and
+  since the GMP random generator does not depend itself on the word size,
+  cf http://gmplib.org/list-archives/gmp-devel/2010-September/001642.html).
+- The mpfr_add_one_ulp and mpfr_sub_one_ulp macros (which are obsolete and
+  no more documented) will be removed in a future release.
+- Speed improvement for the mpfr_sqr and mpfr_div functions using Mulders'
+  algorithm. As a consequence, other functions using those routines are
+  also faster.
+- Much faster formatted output (mpfr_printf, etc.) with %Rg and similar.
+- The --with-gmp-build configure option can now be used when the GMP
+  source directory and the GMP build directory are different (without
+  having to copy header files manually as before).
+- New functions mpfr_buildopt_gmpinternals_p, mpfr_buildopt_tune_case,
+  mpfr_frexp, mpfr_grandom and mpfr_z_sub.
+- New divide-by-zero exception (flag) and associated functions.
+- The mpfr.h header can be included several times, while still supporting
+  optional functions (see Section "Headers and Libraries" in the manual).
+- Updated tuning parameters.
+- Improved MPFR manual.
+- MPFR tests: libtool no longer generates wrapper scripts with "make check"
+  (so that running the tests under valgrind or gdb is easier).
+- Internal change: the logging mechanism has been improved.
+- Test coverage: 95.2% lines of code.
+- Bug fixes, in particular a huge inefficiency in mpfr_exp (when the
+  target precision is less than MPFR_EXP_THRESHOLD) on hard-to-round
+  cases, which can take several minutes.
   Note: The mpfr_subnormalize implementation up to MPFR 3.0.0 did not change
   the flags. In particular, it did not follow the generic rule concerning
   the inexact flag (and no special behavior was specified). The case of the
@@ -70,6 +117,7 @@ Changes from versions 2.4.* to version 3.0.0:
 - New function mpfr_urandom.
 - New function mpfr_set_z_2exp (companion to mpfr_get_z_2exp, which
   was renamed from mpfr_get_z_exp in previous versions).
+- New function mpfr_min_prec.
 - Speed improvement for large precisions in the trigonometric functions
   (mpfr_sin, mpfr_cos, mpfr_tan, mpfr_sin_cos): speedup of about 2.5
   for 10^5 digits, of about 5 for 10^6 digits.
@@ -119,7 +167,7 @@ Changes from versions 2.3.* to version 2.4.0:
   suppressed in the next release, and that the specification of
   mpfr_eq may change in the next release (for compatibility with
   the mpf layer of GMP).
-- Test coverage: 96.7% lines of code
+- Test coverage: 96.7% lines of code.
 - Bug fixes.
 
 Changes from versions 2.2.* to version 2.3.0:

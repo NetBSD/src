@@ -35,20 +35,20 @@ mpq_set_si (MP_RAT *dest, signed long int num, unsigned long int den)
       return;
     }
 
-  abs_num = ABS (num);
+  abs_num = ABS_CAST (unsigned long, num);
 
   if (num == 0)
     {
       /* Canonicalize 0/d to 0/1.  */
       den = 1;
-      dest->_mp_num._mp_size = 0;
+      SIZ(NUM(dest)) = 0;
     }
   else
     {
-      dest->_mp_num._mp_d[0] = abs_num;
-      dest->_mp_num._mp_size = num > 0 ? 1 : -1;
+      PTR(NUM(dest))[0] = abs_num;
+      SIZ(NUM(dest)) = num > 0 ? 1 : -1;
     }
 
-  dest->_mp_den._mp_d[0] = den;
-  dest->_mp_den._mp_size = (den != 0);
+  PTR(DEN(dest))[0] = den;
+  SIZ(DEN(dest)) = (den != 0);
 }

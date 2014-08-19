@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.34.6.1 2012/11/20 03:02:16 tls Exp $ */
+/*	$NetBSD: if_dge.c,v 1.34.6.2 2014/08/20 00:03:42 tls Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.34.6.1 2012/11/20 03:02:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.34.6.2 2014/08/20 00:03:42 tls Exp $");
 
 
 
@@ -473,7 +473,7 @@ struct rxbugentry {
 static int
 dge_alloc_rcvmem(struct dge_softc *sc)
 {
-	char *ptr, *kva;
+	char *kva;
 	bus_dma_segment_t seg;
 	int i, rseg, state, error;
 	struct rxbugentry *entry;
@@ -519,7 +519,6 @@ dge_alloc_rcvmem(struct dge_softc *sc)
 	 * Now divide it up into DGE_BUFFER_SIZE pieces and save the addresses
 	 * in an array.
 	 */
-	ptr = sc->sc_bugbuf;
 	if ((entry = malloc(sizeof(*entry) * DGE_NBUFFERS,
 	    M_DEVBUF, M_NOWAIT)) == NULL) {
 		error = ENOBUFS;
@@ -670,6 +669,7 @@ dge_attach(device_t parent, device_t self, void *aux)
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	pcireg_t preg, memtype;
 	uint32_t reg;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_dmat = pa->pa_dmat;
@@ -698,7 +698,7 @@ dge_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "unable to map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, dge_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");
@@ -895,7 +895,7 @@ dge_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 #ifdef DGE_EVENT_COUNTERS
 	/* Fix segment event naming */

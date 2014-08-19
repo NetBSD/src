@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.42 2012/08/05 02:47:52 riastradh Exp $	*/
+/*	$NetBSD: firewire.c,v 1.42.2.1 2014/08/20 00:03:38 tls Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.42 2012/08/05 02:47:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.42.2.1 2014/08/20 00:03:38 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -78,12 +78,6 @@ SYSCTL_SETUP(sysctl_ieee1394if, "sysctl ieee1394if(4) subtree setup")
 {
 	int rc, ieee1394if_node_num;
 	const struct sysctlnode *node;
-
-	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
-		goto err;
-	}
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "ieee1394if",
@@ -256,13 +250,13 @@ firewireattach(device_t parent, device_t self, void *aux)
 	callout_schedule(&fc->timeout_callout, hz);
 
 	/* Tell config we will have started a thread to scan the bus.  */
-	config_pending_incr();
+	config_pending_incr(self);
 
 	/* create thread */
 	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, fw_bus_probe_thread,
 	    fc, &fc->probe_thread, "fw%dprobe", device_unit(fc->bdev))) {
 		aprint_error_dev(self, "kthread_create failed\n");
-		config_pending_decr();
+		config_pending_decr(self);
 	}
 
 	devlist = malloc(sizeof(struct firewire_dev_list), M_DEVBUF, M_NOWAIT);
@@ -1962,7 +1956,7 @@ fw_bus_probe_thread(void *arg)
 	 * 		once = true;
 	 * 	}
 	 */
-	config_pending_decr();
+	config_pending_decr(fc->bdev);
 
 	mutex_enter(&fc->wait_lock);
 	while (fc->status != FWBUSDETACH) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.18 2011/02/08 20:20:16 rmind Exp $	*/
+/*	$NetBSD: reg.h,v 1.18.14.1 2014/08/20 00:03:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -97,7 +97,7 @@ struct fpreg {
 
 struct lwp;
 int	process_read_regs(struct lwp *, struct reg *);
-int	process_read_fpregs(struct lwp *, struct fpreg *);
+int	process_read_fpregs(struct lwp *, struct fpreg *, size_t *);
 
 #endif
 

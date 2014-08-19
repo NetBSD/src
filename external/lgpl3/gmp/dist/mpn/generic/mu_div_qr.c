@@ -247,7 +247,7 @@ mpn_preinv_mu_div_qr (mp_ptr qp,
   if (qh != 0)
     mpn_sub_n (rp, np, dp, dn);
   else
-    MPN_COPY (rp, np, dn);
+    MPN_COPY_INCR (rp, np, dn);
 
   if (qn == 0)
     return qh;			/* Degenerate use.  Should we allow this? */

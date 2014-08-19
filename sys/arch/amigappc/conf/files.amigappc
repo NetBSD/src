@@ -1,4 +1,4 @@
-#	$NetBSD: files.amigappc,v 1.25.6.2 2013/02/25 00:28:22 tls Exp $
+#	$NetBSD: files.amigappc,v 1.25.6.3 2014/08/20 00:02:43 tls Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -417,11 +417,14 @@ device	idesc: scsi
 attach	idesc at mainbus
 file	arch/amiga/dev/idesc.c		idesc needs-flag
 
+define  amibus_b1000
+file    arch/amiga/amiga/amiga_bus_simple_0x1000.c      amibus_b1000
+
 define	gayle
 file	arch/amiga/amiga/gayle.c		gayle
 
 file	arch/amiga/dev/gayle_pcmcia.c		pccard
-device	pccard: pcmciabus, gayle
+device	pccard: pcmciabus, gayle, amibus_b1000
 attach	pccard at mainbus
 
 include "dev/pcmcia/files.pcmcia"

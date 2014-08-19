@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.63 2012/03/13 18:40:54 elad Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.63.2.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.63 2012/03/13 18:40:54 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.63.2.1 2014/08/20 00:04:29 tls Exp $");
 
 #define SYSVMSG
 
@@ -249,7 +249,7 @@ msgrealloc(int newmsgmni, int newmsgseg)
 	}
 
 	/*
-	 * Copy all message queue identifiers, mesage headers and buffer
+	 * Copy all message queue identifiers, message headers and buffer
 	 * pools to the new memory location.
 	 */
 	for (msqid = 0; msqid < msginfo.msgmni; msqid++) {
@@ -656,8 +656,8 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 	kmsq_t *msq;
 	short next;
 
-	MSG_PRINTF(("call to msgsnd(%d, %p, %lld, %d)\n", msqid, user_msgp,
-	    (long long)msgsz, msgflg));
+	MSG_PRINTF(("call to msgsnd(%d, %p, %lld, %d)\n", msqidr,
+	     user_msgp, (long long)msgsz, msgflg));
 
 	if ((ssize_t)msgsz < 0)
 		return EINVAL;
@@ -966,7 +966,7 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 	kmsq_t *msq;
 	short next;
 
-	MSG_PRINTF(("call to msgrcv(%d, %p, %lld, %ld, %d)\n", msqid,
+	MSG_PRINTF(("call to msgrcv(%d, %p, %lld, %ld, %d)\n", msqidr,
 	    user_msgp, (long long)msgsz, msgtyp, msgflg));
 
 	if ((ssize_t)msgsz < 0)
@@ -1253,11 +1253,6 @@ SYSCTL_SETUP(sysctl_ipc_msg_setup, "sysctl kern.ipc subtree setup")
 {
 	const struct sysctlnode *node = NULL;
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, &node,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "ipc",

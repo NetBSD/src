@@ -1,4 +1,4 @@
-/*	$NetBSD: marvellvar.h,v 1.3 2010/07/20 11:37:39 kiyohara Exp $	*/
+/*	$NetBSD: marvellvar.h,v 1.3.20.1 2014/08/20 00:03:39 tls Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -34,6 +34,11 @@ enum marvell_tags {
 	MARVELL_TAG_SDRAM_CS2,
 	MARVELL_TAG_SDRAM_CS3,
 
+	MARVELL_TAG_DDR3_CS0,
+	MARVELL_TAG_DDR3_CS1,
+	MARVELL_TAG_DDR3_CS2,
+	MARVELL_TAG_DDR3_CS3,
+
 	MARVELL_TAG_MAX,
 
 	MARVELL_TAG_UNDEFINED = -1,
@@ -54,6 +59,7 @@ struct marvell_attach_args {
 	bus_size_t mva_size;
 	bus_dma_tag_t mva_dmat;
 	int mva_irq;
+	enum marvell_tags *mva_tags;
 };
 
 #include "locators.h"

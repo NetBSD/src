@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.104 2012/01/28 15:01:44 mbalmer Exp $
+.\"	$NetBSD: ifconfig.8,v 1.104.6.1 2014/08/20 00:02:25 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -503,9 +503,10 @@ The
 flag may be used to display long SSIDs.
 .Fl v
 also causes received information elements to be displayed symbolically.
+The interface must be up before any scanning operation.
 Only the super-user can use this command.
-.It Cm tunnel Ar src_addr Ns Op Ar ,src_port
-.Ar dest_addr Ns Op Ar ,dest_port
+.It Cm tunnel Ar src_addr Ns Oo Ar ,src_port Oc Ar dest_addr Ns Oo Ar ,dest_port
+.Oc
 .Pq IP tunnel devices only
 Configure the physical source and destination address for IP tunnel
 interfaces, including

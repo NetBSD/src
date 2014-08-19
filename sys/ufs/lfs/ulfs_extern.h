@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extern.h,v 1.6.2.2 2013/06/23 06:18:39 tls Exp $	*/
+/*	$NetBSD: ulfs_extern.h,v 1.6.2.3 2014/08/20 00:04:45 tls Exp $	*/
 /*  from NetBSD: ufs_extern.h,v 1.72 2012/05/09 00:21:18 riastradh Exp  */
 
 /*-
@@ -75,8 +75,6 @@ int	ulfs_inactive(void *);
 int	ulfs_link(void *);
 #define	ulfs_lock	genfs_lock
 int	ulfs_lookup(void *);
-int	ulfs_mkdir(void *);
-int	ulfs_mknod(void *);
 #define	ulfs_mmap	genfs_mmap
 #define	ulfs_revoke	genfs_revoke
 int	ulfs_open(void *);
@@ -85,13 +83,11 @@ int	ulfs_print(void *);
 int	ulfs_readdir(void *);
 int	ulfs_readlink(void *);
 int	ulfs_remove(void *);
-int	ulfs_rename(void *);
 int	ulfs_rmdir(void *);
 #define	ulfs_seek	genfs_seek
 #define	ulfs_poll	genfs_poll
 int	ulfs_setattr(void *);
 int	ulfs_strategy(void *);
-int	ulfs_symlink(void *);
 #define	ulfs_unlock	genfs_unlock
 int	ulfs_whiteout(void *);
 int	ulfsspec_close(void *);
@@ -103,7 +99,7 @@ int	ulfsfifo_write(void *);
 int	ulfsfifo_close(void *);
 
 /* ulfs_bmap.c */
-typedef	bool (*ulfs_issequential_callback_t)(const struct ulfsmount *,
+typedef	bool (*ulfs_issequential_callback_t)(const struct lfs *,
 						 daddr_t, daddr_t);
 int	ulfs_bmaparray(struct vnode *, daddr_t, daddr_t *, struct indir *,
 		      int *, int *, ulfs_issequential_callback_t);
@@ -135,33 +131,7 @@ int	ulfs_dirremove(struct vnode *, const struct ulfs_lookup_results *,
 int	ulfs_dirrewrite(struct inode *, off_t,
 		       struct inode *, ino_t, int, int, int);
 int	ulfs_dirempty(struct inode *, ino_t, kauth_cred_t);
-int	ulfs_checkpath(struct inode *, struct inode *, kauth_cred_t);
-int	ulfs_parentcheck(struct vnode *, struct vnode *, kauth_cred_t,
-			int *, struct vnode **);
 int	ulfs_blkatoff(struct vnode *, off_t, char **, struct buf **, bool);
-
-/* ulfs_rename.c -- for lfs */
-bool	ulfs_gro_directory_empty_p(struct mount *, kauth_cred_t,
-	    struct vnode *, struct vnode *);
-int	ulfs_gro_rename_check_possible(struct mount *,
-	    struct vnode *, struct vnode *, struct vnode *, struct vnode *);
-int	ulfs_gro_rename_check_permitted(struct mount *, kauth_cred_t,
-	    struct vnode *, struct vnode *, struct vnode *, struct vnode *);
-int	ulfs_gro_remove_check_possible(struct mount *,
-	    struct vnode *, struct vnode *);
-int	ulfs_gro_remove_check_permitted(struct mount *, kauth_cred_t,
-	    struct vnode *, struct vnode *);
-int	ulfs_gro_rename(struct mount *, kauth_cred_t,
-	    struct vnode *, struct componentname *, void *, struct vnode *,
-	    struct vnode *, struct componentname *, void *, struct vnode *);
-int	ulfs_gro_remove(struct mount *, kauth_cred_t,
-	    struct vnode *, struct componentname *, void *, struct vnode *);
-int	ulfs_gro_lookup(struct mount *, struct vnode *,
-	    struct componentname *, void *, struct vnode **);
-int	ulfs_gro_genealogy(struct mount *, kauth_cred_t,
-	    struct vnode *, struct vnode *, struct vnode **);
-int	ulfs_gro_lock_directory(struct mount *, struct vnode *);
-
 
 /* ulfs_quota.c */
 /*
@@ -182,6 +152,7 @@ int	lfsquota1_umount(struct mount *, int);
 
 /* ulfs_quota2.c */
 int	lfsquota2_umount(struct mount *, int);
+int	lfs_quota2_mount(struct mount *);
 
 /* ulfs_vfsops.c */
 void	ulfs_init(void);

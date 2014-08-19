@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_dma.c,v 1.23 2012/02/06 02:14:14 matt Exp $ */
+/* $NetBSD: dwlpx_dma.c,v 1.23.6.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.23 2012/02/06 02:14:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.23.6.1 2014/08/20 00:02:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,10 +209,12 @@ dwlpx_dma_init(struct dwlpx_config *ccp)
 	 *	Window base: 1GB
 	 *	SGVA base: 0
 	 */
-	exname = malloc(16, M_DEVBUF, M_NOWAIT);
+#define EXNAMELEN 16
+	exname = malloc(EXNAMELEN, M_DEVBUF, M_NOWAIT);
 	if (exname == NULL)
 		panic("dwlpx_dma_init");
-	sprintf(exname, "%s_sgmap_a", device_xname(ccp->cc_sc->dwlpx_dev));
+	snprintf(exname, EXNAMELEN, "%s_sgmap_a",
+	    device_xname(ccp->cc_sc->dwlpx_dev));
 	alpha_sgmap_init(t, &ccp->cc_sgmap, exname, DWLPx_SG_MAPPED_BASE,
 	    0, DWLPx_SG_MAPPED_SIZE(lim), sizeof(uint32_t),
 	    (void *)page_table, 0);

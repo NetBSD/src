@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpmu.c,v 1.18.122.1 2012/11/20 03:01:25 tls Exp $	*/
+/*	$NetBSD: vrpmu.c,v 1.18.122.2 2014/08/20 00:03:03 tls Exp $	*/
 
 /*
  * Copyright (c) 1999 M. Warner Losh.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpmu.c,v 1.18.122.1 2012/11/20 03:01:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpmu.c,v 1.18.122.2 2014/08/20 00:03:03 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,14 +219,12 @@ void
 vrpmu_dump_regs(void *arg)
 {
         struct vrpmu_softc *sc = arg;
-	unsigned int intstat1;
-	unsigned int intstat2;
 	unsigned int reg;
 #if NVRBCU > 0
 	int cpuid;
 #endif
-	intstat1 = vrpmu_read(sc, PMUINT_REG_W);
-	intstat2 = vrpmu_read(sc, PMUINT2_REG_W);
+	reg = vrpmu_read(sc, PMUINT_REG_W);
+	reg = vrpmu_read(sc, PMUINT2_REG_W);
 
 	/* others? XXXX */
 	reg = vrpmu_read(sc, PMUCNT_REG_W);

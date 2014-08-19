@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.9.6.1 2013/06/23 06:20:00 tls Exp $ */
+/* $NetBSD: imxuart.c,v 1.9.6.2 2014/08/20 00:02:46 tls Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.9.6.1 2013/06/23 06:20:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.9.6.2 2014/08/20 00:02:46 tls Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -338,8 +338,18 @@ dev_type_tty(imxutty);
 dev_type_poll(imxupoll);
 
 const struct cdevsw imxcom_cdevsw = {
-	imxuopen, imxuclose, imxuread, imxuwrite, imxuioctl,
-	imxustop, imxutty, imxupoll, nommap, ttykqfilter, D_TTY
+	.d_open = imxuopen,
+	.d_close = imxuclose,
+	.d_read = imxuread,
+	.d_write = imxuwrite,
+	.d_ioctl = imxuioctl,
+	.d_stop = imxustop,
+	.d_tty = imxutty,
+	.d_poll = imxupoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 /*
@@ -495,7 +505,8 @@ imxuart_attach_common(device_t parent, device_t self,
 
 #ifdef RND_COM
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_TTY, 0);
+			  RND_TYPE_TTY, RND_FLAG_COLLECT_TIME |
+					RND_FLAG_ESTIMATE_TIME);
 #endif
 
 	/* if there are no enable/disable functions, assume the device
@@ -2214,7 +2225,7 @@ imxuart_common_getc(dev_t dev, struct imxuart_regs *regsp)
 	c = 0xff & bus_space_read_4(iot, ioh, IMX_URXD);
 
 	{
-		int cn_trapped = 0; /* unused */
+		int __attribute__((__unused__))cn_trapped = 0; /* unused */
 #ifdef DDB
 		extern int db_active;
 		if (!db_active)
@@ -2237,7 +2248,7 @@ imxuart_common_putc(dev_t dev, struct imxuart_regs *regsp, int c)
 	if (!READAHEAD_IS_FULL() &&
 	    ((usr2 = bus_space_read_4(iot, ioh, IMX_USR2)) & IMX_USR2_RDR)) {
 
-		int cn_trapped = 0;
+		int __attribute__((__unused__))cn_trapped = 0;
 		cin = bus_space_read_4(iot, ioh, IMX_URXD);
 		cn_check_magic(dev, cin & 0xff, imxuart_cnm_state);
 		imxuart_readahead_in = (imxuart_readahead_in + 1) &

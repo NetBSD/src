@@ -1,4 +1,4 @@
-/*	$NetBSD: labs.S,v 1.7 2003/08/07 16:42:07 agc Exp $	*/
+/*	$NetBSD: labs.S,v 1.7.62.1 2014/08/20 00:02:10 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: labs.S,v 1.7 2003/08/07 16:42:07 agc Exp $")
+	RCSID("$NetBSD: labs.S,v 1.7.62.1 2014/08/20 00:02:10 tls Exp $")
 #endif
 
 ENTRY(labs)
@@ -45,3 +45,4 @@ ENTRY(labs)
 	jns	1f
 	negl	%eax
 1:	ret
+END(labs)

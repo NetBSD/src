@@ -1,4 +1,4 @@
-/*	$NetBSD: pyro.c,v 1.11.2.2 2013/06/23 06:20:12 tls Exp $	*/
+/*	$NetBSD: pyro.c,v 1.11.2.3 2014/08/20 00:03:25 tls Exp $	*/
 /*	from: $OpenBSD: pyro.c,v 1.20 2010/12/05 15:15:14 kettenis Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.11.2.2 2013/06/23 06:20:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.11.2.3 2014/08/20 00:03:25 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.11.2.2 2013/06/23 06:20:12 tls Exp $");
 #define PDB_BUSMAP      0x02
 #define PDB_INTR        0x04
 #define PDB_CONF        0x08
-int pyro_debug = 0x0 | PDB_INTR;
+int pyro_debug = 0x0;
 #define DPRINTF(l, s)   do { if (pyro_debug & l) printf s; } while (0)
 #else
 #define DPRINTF(l, s)
@@ -223,7 +223,7 @@ pyro_init(struct pyro_softc *sc, int busa)
 	pbm->pp_pc->spc_busnode = malloc(sizeof(*pbm->pp_pc->spc_busnode),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (pbm->pp_pc->spc_busnode == NULL)
-		panic("schizo: malloc busnode");
+		panic("pyro: malloc busnode");
 
 #if 0
 	pbm->pp_pc->bustag = pbm->pp_cfgt;

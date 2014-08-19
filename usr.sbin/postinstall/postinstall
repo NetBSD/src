@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.146.2.2 2013/06/23 06:29:05 tls Exp $
+# $NetBSD: postinstall,v 1.146.2.3 2014/08/20 00:05:11 tls Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -58,6 +58,8 @@
 : ${HOST_SH:=sh}
 : ${MAKE:=make}
 : ${PWD_MKDB:=/usr/sbin/pwd_mkdb}
+: ${SED:=sed}
+: ${SORT:=sort}
 : ${STAT:=stat}
 
 #
@@ -110,22 +112,71 @@ mkdtemp()
 #    eval "set -- $quotedlist"
 # or like this:
 #    eval "\$command $quotedlist \$filename"
+#
 shell_quote()
-{
+{(
 	local result=''
-	local arg
+	local arg qarg
+	LC_COLLATE=C ; export LC_COLLATE # so [a-zA-Z0-9] works in ASCII
 	for arg in "$@" ; do
-		# Append a space if necessary
-		result="${result}${result:+ }"
-		# Convert each embedded ' to '\'',
-		# then insert ' at the beginning of the first line,
-		# and append ' at the end of the last line.
-		result="${result}$(printf "%s\n" "$arg" | \
-			sed -e "s/'/'\\\\''/g" -e "1s/^/'/" -e "\$s/\$/'/")"
+		case "${arg}" in
+		'')
+			qarg="''"
+			;;
+		*[!-./a-zA-Z0-9]*)
+			# Convert each embedded ' to '\'',
+			# then insert ' at the beginning of the first line,
+			# and append ' at the end of the last line.
+			# Finally, elide unnecessary '' pairs at the
+			# beginning and end of the result and as part of
+			# '\'''\'' sequences that result from multiple
+			# adjacent quotes in he input.
+			qarg="$(printf "%s\n" "$arg" | \
+			    ${SED:-sed} -e "s/'/'\\\\''/g" \
+				-e "1s/^/'/" -e "\$s/\$/'/" \
+				-e "1s/^''//" -e "\$s/''\$//" \
+				-e "s/'''/'/g"
+				)"
+			;;
+		*)
+			# Arg is not the empty string, and does not contain
+			# any unsafe characters.  Leave it unchanged for
+			# readability.
+			qarg="${arg}"
+			;;
+		esac
+		result="${result}${result:+ }${qarg}"
 	done
 	printf "%s\n" "$result"
+)}
+
+# Convert arg $1 to a basic regular expression (as in sed)
+# that will match the arg.  This works by inserting backslashes
+# before characters that are special in basic regular expressions.
+# It also inserts backslashes before the extra characters specified
+# in $2 (which defaults to "/,").
+# XXX: Does not handle embedded newlines.
+# Usage: regex="$(bre_quote "${string}")"
+bre_quote()
+{
+	local arg="$1"
+	local extra="${2-/,}"
+	printf "%s\n" "${arg}" | ${SED} -e 's/[][^$.*\\'"${extra}"']/\\&/g'
 }
 
+# unprefix dir
+#	Remove any dir prefix from a list of paths on stdin,
+#	and write the result to stdout.  Useful for converting
+#	from ${DEST_DIR}/path to /path.
+#
+unprefix()
+{
+	[ $# -eq 1 ] || err 3 "USAGE: unprefix dir"
+	local prefix="${1%/}"
+	prefix="$(bre_quote "${prefix}")"
+
+	${SED} -e "s,^${prefix}/,/,"
+}
 
 # additem item description
 #	Add item to list of supported items to check/fix,
@@ -448,8 +499,8 @@ file_exists_exact()
 
 # obsolete_paths op
 #	Obsolete the list of paths provided on stdin.
-#	Each path is relative to ${DEST_DIR}, and should
-#	be an absolute path or start with `./'.
+#	Each path should start with '/' or './', and
+#	will be interpreted relative to ${DEST_DIR}.
 #
 obsolete_paths()
 {
@@ -559,6 +610,37 @@ function checklib(results, line, regex) {
 #}'
 	
 	)
+}
+
+# obsolete_stand dir
+#	Prints the names of all obsolete files and subdirs below the
+#	provided dir.  dir should be something like /stand/${MACHINE}.
+#	The input dir and all output paths are interpreted
+#	relative to ${DEST_DIR}.
+#
+#	Assumes that the numerically largest subdir is current, and all
+#	others are obsolete.
+#
+obsolete_stand()
+{
+	[ $# -eq 1 ] || err 3 "USAGE: obsolete_stand dir"
+	local dir="$1"
+	local subdir
+
+	if ! [ -d "${DEST_DIR}/${dir}" ]; then
+		msg "${DEST_DIR}${dir} doesn't exist; can't check for obsolete files"
+		return 1
+	fi
+
+	( cd "${DEST_DIR}${dir}" && ls -1d [0-9]*[0-9]/. ) \
+	| ${GREP} -v '[^0-9./]' \
+	| sort -t. -r -k1n -k2n -k3n \
+	| tail -n +2 \
+	| while read subdir ; do
+		subdir="${subdir%/.}"
+		find "${DEST_DIR}/${dir#/}/${subdir}" -depth -print
+	done \
+	| unprefix "${DEST_DIR}"
 }
 
 # modify_file op srcfile scratchfile awkprog
@@ -718,9 +800,9 @@ do_ddbonpanic()
 			result=1
 		else
 			echo >> "${DEST_DIR}/etc/sysctl.conf"
-			sed < "${SRC_DIR}/etc/sysctl.conf" \
+			${SED} < "${SRC_DIR}/etc/sysctl.conf" \
 			   -e '/^ddb\.onpanic/q' | \
-			       sed -e '1,/^$/d' >> \
+			       ${SED} -e '1,/^$/d' >> \
 			    "${DEST_DIR}/etc/sysctl.conf"
 			result=$?
 		fi
@@ -762,7 +844,7 @@ do_defaults()
 
 	compare_dir "$op" "${SRC_DIR}/etc/defaults" "${DEST_DIR}/etc/defaults" \
 		444 \
-		daily.conf monthly.conf security.conf \
+		daily.conf monthly.conf pkgpath.conf security.conf \
 		weekly.conf ${extra_scripts}
 	failed=$(( ${failed} + $? ))
 
@@ -792,6 +874,30 @@ do_dhcpcd()
 	populate_dir "$op" true "${dir}" "${DEST_DIR}/etc" 644 dhcpcd.conf
 	failed=$(( ${failed} + $? ))
 
+	return ${failed}
+}
+
+#
+#	dhcpcdrundir
+#
+additem dhcpcdrundir "accientaly created /@RUNDIR@ does not exist"
+do_dhcpcdrundir()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_dhcpcdrundir fix|check"
+	op="$1"
+	failed=0
+
+	if [ -d /@RUNDIR@ ]; then
+		if [ "${op}" = "check" ]; then
+			msg "Remove eroneously created /@RUNDIR@"
+			failed=1
+		elif ! eval "rm -r /@RUNDIR@"; then
+			msg "Failed to remove /@RUNDIR@"
+			failed=1
+		else
+			msg "Removed eroneously created /@RUNDIR@"
+		fi
+	fi
 	return ${failed}
 }
 
@@ -833,6 +939,11 @@ do_fontconfig()
 		FONTCONFIG_DIR="${SRC_DIR}/etc/fonts/conf.avail" 
 	else
 		FONTCONFIG_DIR="${XSRC_DIR}/external/mit/fontconfig/dist/conf.d"
+	fi
+
+	if [ ! -d "${FONTCONFIG_DIR}" ]; then
+		msg "${FONTCONFIG_DIR} is not a directory; skipping check"
+		return 0
 	fi
 
 	populate_dir "$op" false "${FONTCONFIG_DIR}" "${DEST_DIR}/etc/fonts/conf.avail" 444 \
@@ -881,7 +992,7 @@ do_fontconfig()
 		msg \
     "Broken fontconfig configuration found; please delete these files"
 		msg \
-    "in the ${DESTDIR}/etc/fonts/conf.d/ subdirectory:"
+    "in the ${DEST_DIR}/etc/fonts/conf.d/ subdirectory:"
 		msg \
     "   10-autohint.conf 10-no-sub-pixel.conf 10-sub-pixel-bgr.conf"
 		msg \
@@ -909,7 +1020,7 @@ do_gid()
 
 	check_ids "$1" groups "${DEST_DIR}/etc/group" 14 \
 	    named ntpd sshd SKIP _pflogd _rwhod staff _proxy _timedc \
-	    _sdpd _httpd _mdnsd _tests _tcpdump _tss _gpio
+	    _sdpd _httpd _mdnsd _tests _tcpdump _tss _gpio _rtadvd
 }
 
 #
@@ -1012,8 +1123,8 @@ do_motd()
 	then
 		tmp1="$(mktemp /tmp/postinstall.motd.XXXXXXXX)"
 		tmp2="$(mktemp /tmp/postinstall.motd.XXXXXXXX)"
-		sed '1,2d' <"${SRC_DIR}/etc/motd" >"${tmp1}"
-		sed '1,2d' <"${DEST_DIR}/etc/motd" >"${tmp2}"
+		${SED} '1,2d' <"${SRC_DIR}/etc/motd" >"${tmp1}"
+		${SED} '1,2d' <"${DEST_DIR}/etc/motd" >"${tmp2}"
 
 		if [ "$1" = check ]; then
 			cmp -s "${tmp1}" "${tmp2}"
@@ -1024,7 +1135,7 @@ do_motd()
 			fi
 		else
 			head -n 2 "${DEST_DIR}/etc/motd" >"${tmp1}"
-			sed '1,2d' <"${SRC_DIR}/etc/motd" >>"${tmp1}"
+			${SED} '1,2d' <"${SRC_DIR}/etc/motd" >>"${tmp1}"
 			cp "${tmp1}" "${DEST_DIR}/etc/motd"
 			result=0
 		fi
@@ -1234,7 +1345,7 @@ do_rc()
 		# generate scripts
 		mkdir "${SCRATCHDIR}/rc"
 		for f in ${generated_scripts}; do
-			sed -e "s,@X11ROOTDIR@,${X11ROOTDIR},g" \
+			${SED} -e "s,@X11ROOTDIR@,${X11ROOTDIR},g" \
 			    < "${SRC_DIR}/etc/rc.d/${f}.in" \
 			    > "${SCRATCHDIR}/rc/${f}"
 		done
@@ -1293,11 +1404,13 @@ do_sendmail()
 	for f in /etc/mail/helpfile /etc/mail/local-host-names \
 	    /etc/mail/sendmail.cf /etc/mail/submit.cf /etc/rc.d/sendmail \
 	    /etc/rc.d/smmsp /usr/share/misc/sendmail.hf \
-	    $(find "${DEST_DIR}/usr/share/sendmail" -type f) \
-	    $(find "${DEST_DIR}/usr/share/sendmail" -type d) \
-	    "${DEST_DIR}/var/log/sendmail.st" \
-	    "${DEST_DIR}/var/spool/clientmqueue" \
-	    "${DEST_DIR}/var/spool/mqueue"; do
+	    $( ( find "${DEST_DIR}/usr/share/sendmail" -type f ; \
+	         find "${DEST_DIR}/usr/share/sendmail" -type d \
+	       ) | unprefix "${DEST_DIR}" ) \
+	    /var/log/sendmail.st \
+	    /var/spool/clientmqueue \
+	    /var/spool/mqueue
+	do
 		[ -e "${DEST_DIR}${f}" ] && echo "${f}"
 	done | obsolete_paths "${op}"
 	failed=$(( ${failed} + $? ))
@@ -1538,7 +1651,7 @@ ${pcpath} was a directory, should be a file.
 		_notfixed="${NOT_FIXED}"
 	fi
 
-	if [ ! -d "${DESTDIR}${pcpath}" ]; then
+	if [ ! -d "${DEST_DIR}${pcpath}" ]; then
 		return 0
 	fi
 
@@ -1546,7 +1659,7 @@ ${pcpath} was a directory, should be a file.
 	# itself.  If the directory contains unexpected extra files
 	# then it will not be deleted.
 	( [ -f "${DEST_DIR}"/var/db/obsolete/xbase ] \
-	    &&  sort -ru "${DEST_DIR}"/var/db/obsolete/xbase \
+	    &&  ${SORT} -ru "${DEST_DIR}"/var/db/obsolete/xbase \
 	    | ${GREP} -E "^\\.?${pcpath}/" ;
 	    echo "${pcpath}" ) \
 	| obsolete_paths "${op}"
@@ -1554,7 +1667,7 @@ ${pcpath} was a directory, should be a file.
 
 	# If the directory was removed above, then try to replace it with
 	# a file.
-	if [ -d "${DESTDIR}${pcpath}" ]; then
+	if [ -d "${DEST_DIR}${pcpath}" ]; then
 		msg "${filemsg}${_notfixed}"
 		failed=$(( ${failed} + 1 ))
 	else
@@ -1585,7 +1698,7 @@ do_uid()
 
 	check_ids "$1" users "${DEST_DIR}/etc/master.passwd" 12 \
 	    postfix SKIP named ntpd sshd SKIP _pflogd _rwhod SKIP _proxy \
-	    _timedc _sdpd _httpd _mdnsd _tests _tcpdump _tss
+	    _timedc _sdpd _httpd _mdnsd _tests _tcpdump _tss SKIP _rtadvd
 }
 
 
@@ -1645,7 +1758,7 @@ do_atf()
 		failed=1
 	fi
 	if find_file_in_dirlist atf-run.hooks "atf-run.hooks" \
-	    "${SRC_DIR}/external/bsd/atf/dist/atf-run/sample" \
+	    "${SRC_DIR}/external/bsd/atf/dist/tools/sample" \
 	    "${SRC_DIR}/etc/atf"; then
 			# ${dir} is set by find_file_in_dirlist()
 		populate_dir "${op}" true "${dir}" "${DEST_DIR}/etc/atf" 644 \
@@ -1673,7 +1786,7 @@ handle_atf_user()
 	if grep '[^#]*unprivileged-user[ \t]*=.*_atf' "${conf}" >/dev/null
 	then
 		if [ "$1" = "fix" ]; then
-			sed -e \
+			${SED} -e \
 			    "/[^#]*unprivileged-user[\ t]*=/s/_atf/_tests/" \
 			    "${conf}" >"${conf}.new"
 			failed=$(( ${failed} + $? ))
@@ -1749,34 +1862,6 @@ do_catpages()
 	return $failed
 }
 
-#
-#	obsolete
-#	(this item is last to allow other items to move obsolete files)
-#
-additem obsolete "remove obsolete file sets and minor libraries"
-do_obsolete()
-{
-	[ -n "$1" ] || err 3 "USAGE: do_obsolete  fix|check"
-	op="$1"
-	failed=0
-
-	sort -ru "${DEST_DIR}"/var/db/obsolete/* | obsolete_paths "${op}"
-	failed=$(( ${failed} + $? ))
-
-	(
-		obsolete_libs /lib
-		obsolete_libs /usr/lib
-		obsolete_libs /usr/lib/i18n
-		obsolete_libs /usr/X11R6/lib
-		obsolete_libs /usr/X11R7/lib
-		[ "$MACHINE" = "amd64" ] && obsolete_libs /usr/lib/i386
-		[ "$MACHINE" = "sparc64" ] && obsolete_libs /usr/lib/sparc
-	) | obsolete_paths "${op}"
-	failed=$(( ${failed} + $? ))
-
-	return ${failed}
-}
-
 
 #
 #	ptyfsoldnodes
@@ -1792,6 +1877,11 @@ do_ptyfsoldnodes()
 	if ! ${GREP} -E "^ptyfs" "${DEST_DIR}/etc/fstab" > /dev/null; then
 		msg "ptyfs is not in use"
 		return 0
+	fi
+
+	if [ ! -e "${DEST_DIR}/dev/pts" ]; then
+		msg "ptyfs is not properly configured: missing /dev/pts"
+		return 1
 	fi
 
 	# Find the device major numbers for the pty master and slave
@@ -1862,6 +1952,79 @@ do_ptyfsoldnodes()
 	return ${failed}
 }
 
+
+#
+#	varshm
+#
+additem varshm "check for a tmpfs mounted on /var/shm"
+do_varshm()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_varshm  fix|check"
+	op="$1"
+	failed=0
+
+	[ -f "${DEST_DIR}/etc/fstab" ] || return 0
+	if ${GREP} -w "/var/shm" "${DEST_DIR}/etc/fstab" >/dev/null 2>&1;
+	then
+		failed=0;
+	else
+		if [ "${op}" = "check" ]; then
+			failed=1
+			msg "No /var/shm mount found in ${DEST_DIR}/etc/fstab"
+		elif [ "${op}" = "fix" ]; then
+			printf '\ntmpfs\t/var/shm\ttmpfs\trw,-m1777,-sram%%25\n' \
+				>> "${DEST_DIR}/etc/fstab"
+			msg "Added tmpfs with 25% ram limit as /var/shm"
+
+		fi
+	fi
+
+	return ${failed}
+}
+
+#
+#	obsolete_stand
+#
+adddisableditem obsolete_stand "remove obsolete files from /stand"
+do_obsolete_stand()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_obsolete_stnd  fix|check"
+	op="$1"
+	failed=0
+
+	obsolete_stand "/stand/${MACHINE}" | obsolete_paths "${op}"
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
+}
+
+#
+#	obsolete
+#	(this item is last to allow other items to move obsolete files)
+#
+additem obsolete "remove obsolete file sets and minor libraries"
+do_obsolete()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_obsolete  fix|check"
+	op="$1"
+	failed=0
+
+	${SORT} -ru "${DEST_DIR}"/var/db/obsolete/* | obsolete_paths "${op}"
+	failed=$(( ${failed} + $? ))
+
+	(
+		obsolete_libs /lib
+		obsolete_libs /usr/lib
+		obsolete_libs /usr/lib/i18n
+		obsolete_libs /usr/X11R6/lib
+		obsolete_libs /usr/X11R7/lib
+		[ "$MACHINE" = "amd64" ] && obsolete_libs /usr/lib/i386
+		[ "$MACHINE" = "sparc64" ] && obsolete_libs /usr/lib/sparc
+	) | obsolete_paths "${op}"
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
+}
 
 #
 #	end of items

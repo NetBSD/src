@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_print.c,v 1.12 2011/08/16 14:29:16 mbalmer Exp $	*/
+/*	$NetBSD: pcnfsd_print.c,v 1.12.8.1 2014/08/20 00:05:13 tls Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_print.c 1.7 92/01/24 19:58:58 SMI */
 /*
@@ -904,13 +904,14 @@ free_pr_queue_item(curr)
 */
 
 pirstat
-get_pr_status(pn, avail, printing, qlen, needs_operator, status)
+get_pr_status(pn, avail, printing, qlen, needs_operator, status, statuslen)
 	printername pn;
 	bool_t *avail;
 	bool_t *printing;
 	int    *qlen;
 	bool_t *needs_operator;
 	char   *status;
+	size_t statuslen;
 {
 	char    buff[256];
 	char    cmd[64];
@@ -949,10 +950,10 @@ get_pr_status(pn, avail, printing, qlen, needs_operator, status)
 			if (!strstr(buff, "disabled"))
 				*printing = TRUE;
 			if (strstr(buff, "printing"))
-				strlcpy(status, "printing", sizeof(status));
+				strlcpy(status, "printing", statuslen);
 			else
 				if (strstr(buff, "idle"))
-					strlcpy(status, "idle", sizeof(status));
+					strlcpy(status, "idle", statuslen);
 			continue;
 		}
 		if (!strncmp(buff, "UX:", 3)) {
@@ -968,13 +969,14 @@ get_pr_status(pn, avail, printing, qlen, needs_operator, status)
  * BSD way: lpc status
  */
 pirstat
-get_pr_status(pn, avail, printing, qlen, needs_operator, status)
+get_pr_status(pn, avail, printing, qlen, needs_operator, status, statuslen)
 	printername pn;
 	bool_t *avail;
 	bool_t *printing;
 	int    *qlen;
 	bool_t *needs_operator;
 	char   *status;
+	size_t statuslen;
 {
 	char    cmd[128];
 	char    buff[256];
@@ -1058,7 +1060,7 @@ get_pr_status(pn, avail, printing, qlen, needs_operator, status)
 			    strstr(buff2, "error") != NULL)
 				*needs_operator = TRUE;
 			if (*needs_operator || strstr(buff2, "waiting") != NULL)
-				strlcpy(status, cp, sizeof(status));
+				strlcpy(status, cp, statuslen);
 		}
 		pstat = PI_RES_OK;
 		break;

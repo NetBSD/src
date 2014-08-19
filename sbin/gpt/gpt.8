@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.11 2012/05/02 15:42:58 jakllsch Exp $
+.\" $NetBSD: gpt.8,v 1.11.2.1 2014/08/20 00:02:25 tls Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd March 9, 2012
+.Dd December 19, 2013
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -42,7 +42,9 @@
 The
 .Nm
 utility provides the necessary functionality to manipulate GUID partition
-tables (GPTs), but see
+tables
+.Pq GPTs ,
+but see
 .Sx BUGS
 below for how and where functionality is missing.
 The basic usage model of the
@@ -66,7 +68,7 @@ Not all commands use all default settings, so some general options may not
 have an effect on all commands.
 .Pp
 The
-.Fl p Ar count
+.Fl p Ar partitions
 option allows the user to change the number of partitions the GPT can
 accommodate.
 This is used whenever a new GPT is created.
@@ -92,7 +94,8 @@ There is no formalized definition of the different levels yet.
 .Ss Commands
 .Bl -tag -width indent
 .\" ==== add ====
-.It Nm Ic add Oo Fl b Ar number Oc Oo Fl i Ar index Oc Oo Fl s Ar count Oc \
+.It Nm Ic add Oo Fl a Ar alignment Oc Oo Fl b Ar blocknr Oc \
+Oo Fl i Ar index Oc Oo Fl l Ar label Oc Oo Fl s Ar size Oc \
 Oo Fl t Ar type Oc Ar device ...
 The
 .Ic add
@@ -102,7 +105,14 @@ of an unused disk space.
 The command-specific options can be used to control this behaviour.
 .Pp
 The
-.Fl b Ar number
+.Fl a Ar alignment
+option allows the user to specify an alignment for the start and size.
+The alignment may have a suffix to indicate its magnitude.
+.Nm
+will attempt to align the partition.
+.Pp
+The
+.Fl b Ar blocknr
 option allows the user to specify the starting (beginning) sector number of
 the partition.
 The minimum sector number is 1, but has to fall inside an unused region of
@@ -115,9 +125,19 @@ be used for the new partition.
 By default, the first free entry is selected.
 .Pp
 The
-.Fl s Ar count
-option allows the user to specify the size of the partition in sectors.
-The minimum size is 1.
+.Fl l Ar label
+option allows the user to specify a label for the partition.
+.Pp
+The
+.Fl s Ar size
+option allows the user to specify the size of the partition.
+If there is no suffix, or the suffix is
+.Sq s
+or
+.Sq S
+then size is in sectors, otherwise size is in bytes which must be
+a multiple of the device's sector size.
+The minimum size is 1 sector.
 .Pp
 The
 .Fl t Ar type
@@ -131,6 +151,16 @@ accepts
 and
 .Cm windows
 as aliases for the most commonly used partition types.
+.\" ==== backup ====
+.It Nm Ic backup Ar device ...
+The
+.Ic backup
+command dumps the MBR or (PMBR) and GPT partition tables to standard
+output in a format to be used by the
+.Ic restore
+command.
+The format is a plist.
+It should not be modified.
 .\" ==== biosboot ====
 .It Nm Ic biosboot Oo Fl c Ar bootcode Oc Oo Fl i Ar index Oc Ar device ...
 The
@@ -185,8 +215,8 @@ option instructs
 to destroy the table in a way that it can be recovered.
 .\" ==== label ====
 .It Nm Ic label Oo Fl a Oc Ao Fl f Ar file | Fl l Ar label Ac Ar device ...
-.It Nm Ic label Oo Fl b Ar number Oc Oo Fl i Ar index Oc \
-Oo Fl s Ar count Oc Oo Fl t Ar type Oc \
+.It Nm Ic label Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
+Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc \
 Ao Fl f Ar file | Fl l Ar label Ac Ar device ...
 The
 .Ic label
@@ -199,7 +229,7 @@ option specifies that all partitions should be labeled.
 It is mutually exclusive with all other selection options.
 .Pp
 The
-.Fl b Ar number
+.Fl b Ar blocknr
 option selects the partition that starts at the given block number.
 .Pp
 The
@@ -207,9 +237,9 @@ The
 option selects the partition with the given partition number.
 .Pp
 The
-.Fl s Ar count
+.Fl s Ar sectors
 option selects all partitions that have the given size.
-This can cause multiple partitions to be removed.
+This can cause multiple partitions to be labeled.
 .Pp
 The
 .Fl t Ar type
@@ -217,7 +247,7 @@ option selects all partitions that have the given type.
 The type is given as an UUID or by the aliases that the
 .Ic add
 command accepts.
-This can cause multiple partitions to be removed.
+This can cause multiple partitions to be labeled.
 .Pp
 The
 .Fl f Ar file
@@ -259,6 +289,27 @@ option prevents migrating
 .Bx
 disk labels into GPT partitions by creating
 the GPT equivalent of a slice.
+Note that the
+.Fl s
+option isn't applicable to
+.Nx
+partitions.
+.Pp
+The
+.Ic migrate
+command requires space at the beginning and the end of the device outside
+any partitions to store the GPTs.
+Space is required for the GPT header
+.Pq which takes one sector
+and the GPT partition table.
+See the
+.Fl p
+option
+for the size of the GPT partition table.
+By default, just about all devices have a minimum of 62 sectors free at the
+beginning of the device, but don't have any free space at the end.
+For the default GPT partition table size on a 512 byte sector size device,
+33 sectors at the end of the device would need to be freed.
 .\" ==== recover ====
 .It Nm Ic recover Ar device ...
 The
@@ -268,8 +319,8 @@ near the end of the disk.
 It is very useful in case the primary label was deleted.
 .\" ==== remove ====
 .It Nm Ic remove Oo Fl a Oc Ar device ...
-.It Nm Ic remove Oo Fl b Ar number Oc Oo Fl i Ar index Oc \
-Oo Fl s Ar count Oc Oo Fl t Ar type Oc Ar device ...
+.It Nm Ic remove Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
+Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc Ar device ...
 The
 .Ic remove
 command allows the user to remove any and all partitions that match the
@@ -280,26 +331,115 @@ command.
 See above for a description of these options.
 Partitions are removed by clearing the partition type.
 No other information is changed.
+.\" ==== resize ====
+.It Nm Ic resize Fl i Ar index Oo Fl a Ar alignment Oc \
+Oo Fl s Ar size Oc Ar device ...
+The
+.Ic resize
+command allows the user to resize a partition.
+The partition may be shrunk and if there is sufficient free space
+immediately after it then it may be expanded.
+The
+.Fl s
+option allows the new size to be specified, otherwise the partition will
+be increased to the maximum available size.
+If there is no suffix, or the suffix is
+.Sq s
+or
+.Sq S
+then size is in sectors, otherwise size is in bytes which must be
+a multiple of the device's sector size.
+The minimum size is 1 sector.
+If the
+.Fl a
+option is specified then the size will be adjusted to be a multiple of
+alignment if possible.
+.\" ==== set ====
+.It Nm Ic set Fl a Ar attribute Fl i Ar index Ar device ...
+The
+.Ic set
+command sets various partition attributes.
+The
+.Fl a
+option specifies which attributes to set and may be specified more than once.
+The
+.Fl i
+option specifies which entry to update.
+The possible attributes are
+.Do biosboot Dc ,
+.Do bootme Dc ,
+.Do bootonce Dc , and
+.Do bootfailed Dc .
+The biosboot flag is used to indicate which partition should be booted
+by legacy BIOS boot code.
+See the
+.Ic biosboot
+command for more information.
+The other three attributes are for compatibility with
+.Fx
+and are not currently used by any
+.Nx
+code.
+They may be used by
+.Nx
+code in the future.
 .\" ==== show ====
-.It Nm Ic show Oo Fl lu Oc Ar device ...
+.It Nm Ic show Oo Fl glu Oc Oo Fl i Ar index Oc Ar device ...
 The
 .Ic show
 command displays the current partitioning on the listed devices and gives
 an overall view of the disk contents.
 With the
+.Fl g
+option the GPT partition GUID will be displayed instead of the GPT partition
+type.
+With the
 .Fl l
 option the GPT partition label will be displayed instead of the GPT partition
 type.
-The option has no effect on non-GPT partitions.
 With the
 .Fl u
 option the GPT partition type is displayed as an UUID instead of in a
 user friendly form.
+With the
+.Fl i
+option, all the details of a particular GPT partition will be displayed.
+The format of this display is subject to change.
+None of the options have any effect on non-GPT partitions.
+The order of precedence for the options are:
+.Fl i ,
+.Fl l ,
+.Fl g ,
+.Fl u .
+.\" ==== unset ====
+.It Nm Ic unset Fl a Ar attribute Fl i Ar index Ar device ...
 The
-.Fl l
-option takes precedence over the
-.Fl u
-option.
+.Ic unset
+command unsets various partition attributes.
+The
+.Fl a
+option specifies which attributes to unset and may be specified more than once.
+The
+.Fl i
+option specifies which entry to update.
+The possible attributes are
+.Do biosboot Dc ,
+.Do bootme Dc ,
+.Do bootonce Dc , and
+.Do bootfailed Dc .
+The biosboot flag is used to indicate which partition should be booted
+by legacy BIOS boot code.
+See the
+.Ic biosboot
+command for more information.
+The other three attributes are for compatibility with
+.Fx
+and are not currently used by any
+.Nx
+code.
+They may be used by
+.Nx
+code in the future.
 .El
 .Sh EXAMPLES
 .Bd -literal
@@ -328,6 +468,15 @@ nas# gpt show wd3
            1           1         Pri GPT header
            2          32         Pri GPT table
           34    10486224      1  GPT part - NetBSD swap
+    10486258  3896542877
+  3907029135          32         Sec GPT table
+  3907029167           1         Sec GPT header
+nas# gpt show -l wd3
+       start        size  index  contents
+           0           1         PMBR
+           1           1         Pri GPT header
+           2          32         Pri GPT table
+          34    10486224      1  GPT part - "swap_1"
     10486258  3896542877
   3907029135          32         Sec GPT table
   3907029167           1         Sec GPT header
@@ -362,7 +511,7 @@ It is expected that the basic usage model does not change, but it is
 possible that future versions will not be compatible in the strictest sense
 of the word.
 For example, the
-.Fl p Ar count
+.Fl p Ar partitions
 option may be changed to a command option rather than a generic option.
 There are only two commands that use it so there is a chance that the natural
 tendency for people is to use it as a command option.

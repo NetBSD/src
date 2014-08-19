@@ -1,4 +1,4 @@
-/* $NetBSD: ansi.h,v 1.3 2011/08/22 21:45:38 jmcneill Exp $ */
+/* $NetBSD: ansi.h,v 1.3.12.1 2014/08/20 00:03:27 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -50,6 +50,11 @@
 #define _BSD_PTRDIFF_T_		long
 #define _BSD_SIZE_T_		unsigned long
 #define _BSD_SSIZE_T_		long
+#elif defined(__arm__)
+#define _BSD_CLOCK_T_		unsigned int
+#define _BSD_PTRDIFF_T_		long int
+#define _BSD_SIZE_T_		unsigned long int
+#define _BSD_SSIZE_T_		long int
 #else
 #error "platform not supported"
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.53.6.1 2012/11/20 03:00:57 tls Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.53.6.2 2014/08/20 00:02:43 tls Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.53.6.1 2012/11/20 03:00:57 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.53.6.2 2014/08/20 00:02:43 tls Exp $");
 
 #include "grfcv.h"
 #include "ite.h"
@@ -478,11 +478,9 @@ grfcvattach(device_t parent, device_t self, void *aux)
 	static struct grf_cv_softc congrf;
 	static char attachflag = 0;
 	struct device temp;
-	struct zbus_args *zap;
 	struct grf_softc *gp;
 	struct grf_cv_softc *gcp;
 
-	zap = aux;
 
 	/*
 	 * This function is called twice, once on console init (self == NULL)
@@ -1281,7 +1279,7 @@ cv_load_mon(struct grf_softc *gp, struct grfcvtext_mode *md)
 {
 	struct grfvideo_mode *gv;
 	struct grfinfo *gi;
-	volatile void *ba, *fb;
+	volatile void *ba;
 	unsigned short mnr;
 	unsigned short HT, HDE, HBS, HBE, HSS, HSE, VDE, VBS, VBE, VSS,
 		VSE, VT;
@@ -1304,7 +1302,6 @@ cv_load_mon(struct grf_softc *gp, struct grfcvtext_mode *md)
 	}
 
 	ba = gp->g_regkva;
-	fb = gp->g_fbkva;
 
 	/* Disable Interrupts */
 	test = RCrt(ba, CRT_ID_BACKWAD_COMP_1);
@@ -1689,12 +1686,11 @@ void
 cv_inittextmode(struct grf_softc *gp)
 {
 	struct grfcvtext_mode *tm = (struct grfcvtext_mode *)gp->g_data;
-	volatile void *ba, *fb;
+	volatile void *fb;
 	volatile unsigned char *c;
 	unsigned char *f, y;
 	unsigned short z;
 
-	ba = gp->g_regkva;
 	fb = gp->g_fbkva;
 
 	/* load text font into beginning of display memory.
@@ -1870,10 +1866,9 @@ M2I(short val)
 int
 cv_getspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 {
-	volatile void *ba, *fb;
+	volatile void *ba;
 
 	ba = gp->g_regkva;
-	fb = gp->g_fbkva;
 
 	if (info->set & GRFSPRSET_ENABLE)
 		info->enable = RCrt(ba, CRT_ID_HWGC_MODE) & 0x01;
@@ -1882,9 +1877,11 @@ cv_getspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 		cv_getspritepos (gp, &info->pos);
 
 #if 0	/* XXX */
+	volatile void *fb = gp->g_fbkva;
 	if (info->set & GRFSPRSET_SHAPE) {
 		u_char image[512], mask[512];
 		volatile u_long *hwp;
+		volative void *fb = gp->g_fbkva;
 		u_char *imp, *mp;
 		short row;
 		info->size.x = 64;
@@ -1997,11 +1994,10 @@ cv_setup_hwc(struct grf_softc *gp)
 int
 cv_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 {
-	volatile void *ba, *fb;
+	volatile void *ba;
 	int depth = gp->g_display.gd_planes;
 
 	ba = gp->g_regkva;
-	fb = gp->g_fbkva;
 
 	if (info->set & GRFSPRSET_SHAPE) {
 		/*
@@ -2183,10 +2179,9 @@ cv_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 	}
 	if (info->set & GRFSPRSET_CMAP) {
 		volatile char *hwc;
-		int test;
 
 		/* reset colour stack */
-		test = RCrt(ba, CRT_ID_HWGC_MODE);
+		(void)RCrt(ba, CRT_ID_HWGC_MODE);
 		amiga_cpu_sync();
 		switch (depth) {
 		    case 8:
@@ -2205,7 +2200,7 @@ cv_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 			break;
 		}
 
-		test = RCrt(ba, CRT_ID_HWGC_MODE);
+		(void)RCrt(ba, CRT_ID_HWGC_MODE);
 		amiga_cpu_sync();
 		switch (depth) {
 		    case 8:

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.22 2011/11/18 04:08:56 christos Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.22.10.1 2014/08/20 00:03:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.22 2011/11/18 04:08:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.22.10.1 2014/08/20 00:03:33 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -47,13 +47,14 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.22 2011/11/18 04:08:56 christos E
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
+#include <compat/linux/common/linux_types.h>
+
 #include <compat/linux32/common/linux32_types.h>
 #include <compat/linux32/common/linux32_signal.h>
 #include <compat/linux32/common/linux32_sched.h>
 #include <compat/linux32/linux32_syscallargs.h>
 
 #include <compat/linux/common/linux_ptrace.h>
-#include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_emuldata.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_misc.h>

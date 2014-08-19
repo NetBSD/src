@@ -1,4 +1,4 @@
-/*	$NetBSD: ka88.c,v 1.16 2011/06/05 16:59:21 matt Exp $	*/
+/*	$NetBSD: ka88.c,v 1.16.12.1 2014/08/20 00:03:27 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.16 2011/06/05 16:59:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.16.12.1 2014/08/20 00:03:27 tls Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -93,7 +93,7 @@ const struct cpu_dep ka88_calls = {
 
 #if defined(MULTIPROCESSOR)
 static void ka88_startslave(struct cpu_info *);
-static void ka88_txrx(int, const char *, int);
+static void ka88_txrx(int, const char *, ...) __printflike(2, 3);
 static void ka88_sendstr(int, const char *);
 static void ka88_sergeant(int);
 static int rxchar(void);
@@ -327,27 +327,28 @@ ka88_settime(volatile struct timeval *tvp)
 void
 ka88_steal_pages(void)
 {
+	char c = '0', d = '0';
 	mtpr(1, PR_COR); /* Cache on */
-	strcpy(cpu_model, "VAX 8800");
 	tocons(KA88_COMM|KA88_GETCONF);
 	ka88_confdata = fromcons(KA88_CONFDATA);
 	ka88_confdata = mfpr(PR_RXDB);
 	mastercpu = 20;
 	if (vax_cputype == VAX_TYP_8NN) {
 		if (ka88_confdata & KA88_SMALL) {
-			cpu_model[5] = '5';
+			c = '5';
 			if (ka88_confdata & KA88_SLOW) {
 				vax_boardtype = VAX_BTYP_8500;
-				cpu_model[6] = '3';
+				d = '3';
 			} else {
 				vax_boardtype = VAX_BTYP_8550;
-				cpu_model[6] = '5';
+				d = '5';
 			}
 		} else if (ka88_confdata & KA88_SINGLE) {
 			vax_boardtype = VAX_BTYP_8700;
-			cpu_model[5] = '7';
+			c = '7';
 		}
 	}
+	cpu_setmodel("VAX 88%c%c", c, d);
 }
 	
 
@@ -378,8 +379,8 @@ ka88_startslave(struct cpu_info *ci)
 	for (i = 0; i < 10000; i++)
 		if (rxchar())
 			i = 0;
-	ka88_txrx(id, "\020", 0);		/* Send ^P to get attention */
-	ka88_txrx(id, "I\r", 0);			/* Init other end */
+	ka88_txrx(id, "\020");		/* Send ^P to get attention */
+	ka88_txrx(id, "I\r");			/* Init other end */
 	ka88_txrx(id, "D/I 4 %x\r", ci->ci_istack);	/* Interrupt stack */
 	ka88_txrx(id, "D/I C %x\r", mfpr(PR_SBR));	/* SBR */
 	ka88_txrx(id, "D/I D %x\r", mfpr(PR_SLR));	/* SLR */
@@ -395,12 +396,15 @@ ka88_startslave(struct cpu_info *ci)
 		aprint_error_dev(ci->ci_dev, "(ID %d) failed starting!!\n", id);
 }
 
-void
-ka88_txrx(int id, const char *fmt, int arg)
+static void
+ka88_txrx(int id, const char *fmt, ...)
 {
 	char buf[20];
+	va_list ap;
 
-	sprintf(buf, fmt, arg);
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
 	ka88_sendstr(id, buf);
 	ka88_sergeant(id);
 }

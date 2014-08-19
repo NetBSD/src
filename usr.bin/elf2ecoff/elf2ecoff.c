@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.28 2011/08/23 20:27:22 christos Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.28.8.1 2014/08/20 00:04:58 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -106,7 +106,6 @@ main(int argc, char **argv)
 	size_t	i;
 	int     pad;
 	struct sect text, data, bss;	/* a.out-compatible sections */
-	struct sect rdata, sdata, sbss;	/* ECOFF-only sections */
 
 	struct ecoff_exechdr ep;
 	struct ecoff_scnhdr esecs[6];
@@ -114,16 +113,12 @@ main(int argc, char **argv)
 
 	int     infile, outfile;
 	unsigned long cur_vma = ULONG_MAX;
-	int     symflag = 0;
 	int     nsecs = 0;
 	int	mipsel;
 
 
 	text.len = data.len = bss.len = 0;
 	text.vaddr = data.vaddr = bss.vaddr = 0;
-
-	rdata.len = sdata.len = sbss.len = 0;
-	rdata.vaddr = sdata.vaddr = sbss.vaddr = 0;
 
 	/* Check args... */
 	if (argc < 3 || argc > 4) {
@@ -136,7 +131,6 @@ usage:
 	if (argc == 4) {
 		if (strcmp(argv[3], "-s"))
 			goto usage;
-		symflag = 1;
 	}
 	/* Try the input file... */
 	if ((infile = open(argv[1], O_RDONLY)) < 0)
@@ -753,10 +747,9 @@ translate_syms(struct elf_syms *elfp, struct ecoff_syms *ecoffp)
 	/* Copy and translate  symbols... */
 	idx = 0;
 	for (i = 0; i < nsyms; i++) {
-		int     binding, type;
+		int     binding;
 
 		binding = ELF32_ST_BIND((elfp->elf_syms[i].st_info));
-		type = ELF32_ST_TYPE((elfp->elf_syms[i].st_info));
 
 		/* skip strange symbols */
 		if (binding == 0) {

@@ -96,6 +96,15 @@ r12, Reg64|BaseIndex, RegRex, 4, Dw2Inval, 12
 r13, Reg64|BaseIndex, RegRex, 5, Dw2Inval, 13
 r14, Reg64|BaseIndex, RegRex, 6, Dw2Inval, 14
 r15, Reg64|BaseIndex, RegRex, 7, Dw2Inval, 15
+// Vector mask registers.
+k0, RegMask, 0, 0, 93, 118
+k1, RegMask, 0, 1, 94, 119
+k2, RegMask, 0, 2, 95, 120
+k3, RegMask, 0, 3, 96, 121
+k4, RegMask, 0, 4, 97, 122
+k5, RegMask, 0, 5, 98, 123
+k6, RegMask, 0, 6, 99, 124
+k7, RegMask, 0, 7, 100, 125
 // Segment registers.
 es, SReg2, 0, 0, 40, 50
 cs, SReg2, 0, 1, 41, 51
@@ -188,6 +197,22 @@ xmm12, RegXMM, RegRex, 4, Dw2Inval, 29
 xmm13, RegXMM, RegRex, 5, Dw2Inval, 30
 xmm14, RegXMM, RegRex, 6, Dw2Inval, 31
 xmm15, RegXMM, RegRex, 7, Dw2Inval, 32
+xmm16, RegXMM, RegVRex, 0, Dw2Inval, 67
+xmm17, RegXMM, RegVRex, 1, Dw2Inval, 68
+xmm18, RegXMM, RegVRex, 2, Dw2Inval, 69
+xmm19, RegXMM, RegVRex, 3, Dw2Inval, 70
+xmm20, RegXMM, RegVRex, 4, Dw2Inval, 71
+xmm21, RegXMM, RegVRex, 5, Dw2Inval, 72
+xmm22, RegXMM, RegVRex, 6, Dw2Inval, 73
+xmm23, RegXMM, RegVRex, 7, Dw2Inval, 74
+xmm24, RegXMM, RegVRex|RegRex, 0, Dw2Inval, 75
+xmm25, RegXMM, RegVRex|RegRex, 1, Dw2Inval, 76
+xmm26, RegXMM, RegVRex|RegRex, 2, Dw2Inval, 77
+xmm27, RegXMM, RegVRex|RegRex, 3, Dw2Inval, 78
+xmm28, RegXMM, RegVRex|RegRex, 4, Dw2Inval, 79
+xmm29, RegXMM, RegVRex|RegRex, 5, Dw2Inval, 80
+xmm30, RegXMM, RegVRex|RegRex, 6, Dw2Inval, 81
+xmm31, RegXMM, RegVRex|RegRex, 7, Dw2Inval, 82
 // AVX registers.
 ymm0, RegYMM, 0, 0, Dw2Inval, Dw2Inval
 ymm1, RegYMM, 0, 1, Dw2Inval, Dw2Inval
@@ -205,14 +230,68 @@ ymm12, RegYMM, RegRex, 4, Dw2Inval, Dw2Inval
 ymm13, RegYMM, RegRex, 5, Dw2Inval, Dw2Inval
 ymm14, RegYMM, RegRex, 6, Dw2Inval, Dw2Inval
 ymm15, RegYMM, RegRex, 7, Dw2Inval, Dw2Inval
+ymm16, RegYMM, RegVRex, 0, Dw2Inval, Dw2Inval
+ymm17, RegYMM, RegVRex, 1, Dw2Inval, Dw2Inval
+ymm18, RegYMM, RegVRex, 2, Dw2Inval, Dw2Inval
+ymm19, RegYMM, RegVRex, 3, Dw2Inval, Dw2Inval
+ymm20, RegYMM, RegVRex, 4, Dw2Inval, Dw2Inval
+ymm21, RegYMM, RegVRex, 5, Dw2Inval, Dw2Inval
+ymm22, RegYMM, RegVRex, 6, Dw2Inval, Dw2Inval
+ymm23, RegYMM, RegVRex, 7, Dw2Inval, Dw2Inval
+ymm24, RegYMM, RegVRex|RegRex, 0, Dw2Inval, Dw2Inval
+ymm25, RegYMM, RegVRex|RegRex, 1, Dw2Inval, Dw2Inval
+ymm26, RegYMM, RegVRex|RegRex, 2, Dw2Inval, Dw2Inval
+ymm27, RegYMM, RegVRex|RegRex, 3, Dw2Inval, Dw2Inval
+ymm28, RegYMM, RegVRex|RegRex, 4, Dw2Inval, Dw2Inval
+ymm29, RegYMM, RegVRex|RegRex, 5, Dw2Inval, Dw2Inval
+ymm30, RegYMM, RegVRex|RegRex, 6, Dw2Inval, Dw2Inval
+ymm31, RegYMM, RegVRex|RegRex, 7, Dw2Inval, Dw2Inval
+// AVX512 registers.
+zmm0, RegZMM, 0, 0, Dw2Inval, Dw2Inval
+zmm1, RegZMM, 0, 1, Dw2Inval, Dw2Inval
+zmm2, RegZMM, 0, 2, Dw2Inval, Dw2Inval
+zmm3, RegZMM, 0, 3, Dw2Inval, Dw2Inval
+zmm4, RegZMM, 0, 4, Dw2Inval, Dw2Inval
+zmm5, RegZMM, 0, 5, Dw2Inval, Dw2Inval
+zmm6, RegZMM, 0, 6, Dw2Inval, Dw2Inval
+zmm7, RegZMM, 0, 7, Dw2Inval, Dw2Inval
+zmm8, RegZMM, RegRex, 0, Dw2Inval, Dw2Inval
+zmm9, RegZMM, RegRex, 1, Dw2Inval, Dw2Inval
+zmm10, RegZMM, RegRex, 2, Dw2Inval, Dw2Inval
+zmm11, RegZMM, RegRex, 3, Dw2Inval, Dw2Inval
+zmm12, RegZMM, RegRex, 4, Dw2Inval, Dw2Inval
+zmm13, RegZMM, RegRex, 5, Dw2Inval, Dw2Inval
+zmm14, RegZMM, RegRex, 6, Dw2Inval, Dw2Inval
+zmm15, RegZMM, RegRex, 7, Dw2Inval, Dw2Inval
+zmm16, RegZMM, RegVRex, 0, Dw2Inval, Dw2Inval
+zmm17, RegZMM, RegVRex, 1, Dw2Inval, Dw2Inval
+zmm18, RegZMM, RegVRex, 2, Dw2Inval, Dw2Inval
+zmm19, RegZMM, RegVRex, 3, Dw2Inval, Dw2Inval
+zmm20, RegZMM, RegVRex, 4, Dw2Inval, Dw2Inval
+zmm21, RegZMM, RegVRex, 5, Dw2Inval, Dw2Inval
+zmm22, RegZMM, RegVRex, 6, Dw2Inval, Dw2Inval
+zmm23, RegZMM, RegVRex, 7, Dw2Inval, Dw2Inval
+zmm24, RegZMM, RegVRex|RegRex, 0, Dw2Inval, Dw2Inval
+zmm25, RegZMM, RegVRex|RegRex, 1, Dw2Inval, Dw2Inval
+zmm26, RegZMM, RegVRex|RegRex, 2, Dw2Inval, Dw2Inval
+zmm27, RegZMM, RegVRex|RegRex, 3, Dw2Inval, Dw2Inval
+zmm28, RegZMM, RegVRex|RegRex, 4, Dw2Inval, Dw2Inval
+zmm29, RegZMM, RegVRex|RegRex, 5, Dw2Inval, Dw2Inval
+zmm30, RegZMM, RegVRex|RegRex, 6, Dw2Inval, Dw2Inval
+zmm31, RegZMM, RegVRex|RegRex, 7, Dw2Inval, Dw2Inval
+// Bound registers for MPX
+bnd0, RegBND, 0, 0, Dw2Inval, Dw2Inval
+bnd1, RegBND, 0, 1, Dw2Inval, Dw2Inval
+bnd2, RegBND, 0, 2, Dw2Inval, Dw2Inval
+bnd3, RegBND, 0, 3, Dw2Inval, Dw2Inval
 // No type will make these registers rejected for all purposes except
 // for addressing.  This saves creating one extra type for RIP/EIP.
 rip, BaseIndex, RegRex64, RegRip, Dw2Inval, 16
 eip, BaseIndex, RegRex64, RegEip, 8, Dw2Inval
 // No type will make these registers rejected for all purposes except
 // for addressing.
+riz, BaseIndex, RegRex64, RegRiz, Dw2Inval, Dw2Inval
 eiz, BaseIndex, 0, RegEiz, Dw2Inval, Dw2Inval
-riz, BaseIndex, 0, RegRiz, Dw2Inval, Dw2Inval
 // fp regs.
 st(0), FloatReg|FloatAcc, 0, 0, 11, 33
 st(1), FloatReg, 0, 1, 12, 34

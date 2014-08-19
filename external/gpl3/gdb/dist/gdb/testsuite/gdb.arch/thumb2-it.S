@@ -1,6 +1,6 @@
 /* Thumb-2 IT blocks test program.
 
-   Copyright 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2010-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -124,7 +124,7 @@ it_7:
 	bx	lr	@ Done, Check $r0 == 15
 
 	@ Block of four, only first executed.
-	.type it_3,%function
+	.type it_8,%function
 	.thumb_func
 it_8:
 	mov	r0, #0	@ Setup

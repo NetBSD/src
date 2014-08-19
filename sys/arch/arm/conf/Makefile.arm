@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.34.2.2 2013/02/25 00:28:26 tls Exp $
+#	$NetBSD: Makefile.arm,v 1.34.2.3 2014/08/20 00:02:45 tls Exp $
 
 # Makefile for NetBSD
 #
@@ -35,12 +35,29 @@ GENASSYM_CONF=	${ARM}/arm32/genassym.cf
 # CPPFLAGS set by platform-specific Makefile fragment.
 AFLAGS+=	-x assembler-with-cpp
 COPTS.arm32_kvminit.c+=		-fno-stack-protector
+COPTS.vfp_init.c=		-mfpu=vfp
+AFLAGS.bcopyinout.S+=-marm
+AFLAGS.cpuswitch.S+=-marm -mfpu=vfp
+AFLAGS.locore.S+=-marm
+AFLAGS.fusu.S+=-marm
+AFLAGS.exception.S+=-marm
+AFLAGS.irq_dispatch.S+=-marm
+AFLAGS.blockio.S+=-marm
+AFLAGS.copystr.S+=-marm
 CFLAGS+=	 -mfloat-abi=soft
+
+# This files use instructions deprecated for ARMv7+, but still
+# included in kernel that build with higher -mcpu=... settings.
+CPPFLAGS.cpufunc_asm_armv4.S+=	-mcpu=arm8
+CPPFLAGS.cpufunc_asm_armv6.S+=	-mcpu=arm1136j-s
+CPPFLAGS.cpufunc_asm_arm11.S+=	-mcpu=arm1136j-s
+CPPFLAGS.cpufunc_asm_xscale.S+=	-mcpu=xscale
 
 ##
 ## (3) libkern and compat
 ##
 KERN_AS=	obj
+
 
 ##
 ## (4) local objects, compile rules, and dependencies
@@ -109,11 +126,20 @@ spl.o vectors.o: assym.h
 %RULES
 
 ##
-## (9) port independent kernel machinery
+## (9) after the config file is inserted
 ##
+
+.for f in ${SFILES:T:Mcpufunc_asm*}
+AFLAGS.${f}+=-marm
+.endfor
+
+##
+## (10) port independent kernel machinery
+##
+
 .include "$S/conf/Makefile.kern.inc"
 
 ##
-## (10) Appending make options.
+## (11) Appending make options.
 ##
 %MAKEOPTIONSAPPEND

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.16.12.1 2013/06/23 06:28:51 tls Exp $	*/
+/*	$NetBSD: parse.c,v 1.16.12.2 2014/08/20 00:02:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: parse.c,v 1.16.12.1 2013/06/23 06:28:51 tls Exp $");
+__RCSID("$NetBSD: parse.c,v 1.16.12.2 2014/08/20 00:02:25 tls Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -49,7 +49,11 @@ __RCSID("$NetBSD: parse.c,v 1.16.12.1 2013/06/23 06:28:51 tls Exp $");
 #include "parse.h"
 #include "util.h"
 
+#ifdef DEBUG
+#define dbg_warnx(__fmt, ...)	warnx(__fmt, __VA_ARGS__)
+#else
 #define dbg_warnx(__fmt, ...)	/* empty */
+#endif
 
 static int parser_default_init(struct parser *);
 static int pbranch_init(struct parser *);
@@ -568,9 +572,9 @@ pbranch_match(const struct parser *p, const struct match *im,
 	memset(&tmpm, 0, sizeof(tmpm));
 
 	SIMPLEQ_FOREACH(b, &pb->pb_branches, b_next) {
-		dbg_warnx("%s: b->b_nextparser %p", __func__,
-		    (const void *)b->b_nextparser);
 		nextp = b->b_nextparser;
+		dbg_warnx("%s: b->b_nextparser %p [%s]", __func__,
+		    nextp, nextp ? nextp->p_name : "(null)");
 		if (nextp == NULL) {
 			if (arg == NULL) {
 				nmatch++;
@@ -766,8 +770,9 @@ pbranch_setbranches(struct pbranch *pb, const struct branch *brs, size_t nbr)
 		if ((b = malloc(sizeof(*b))) == NULL)
 			goto err;
 		*b = brs[i];
-		dbg_warnx("%s: b->b_nextparser %p", __func__,
-		    (const void *)b->b_nextparser);
+		dbg_warnx("%s: b->b_nextparser %p [%s]", __func__,
+		    b->b_nextparser, b->b_nextparser ? b->b_nextparser->p_name
+		    : "(null)");
 		SIMPLEQ_INSERT_TAIL(&pb->pb_branches, b, b_next);
 	}
 

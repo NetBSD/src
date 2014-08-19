@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.48.2.1 2012/11/20 03:02:29 tls Exp $	*/
+/*	$NetBSD: satalink.c,v 1.48.2.2 2014/08/20 00:03:48 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.48.2.1 2012/11/20 03:02:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.48.2.2 2014/08/20 00:03:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,7 +260,7 @@ static int  satalink_match(device_t, cfdata_t, void *);
 static void satalink_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(satalink, sizeof(struct pciide_softc),
-    satalink_match, satalink_attach, NULL, NULL);
+    satalink_match, satalink_attach, pciide_detach, NULL);
 
 static void sii3112_chip_map(struct pciide_softc*,
     const struct pci_attach_args*);
@@ -674,6 +674,7 @@ sii3114_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
 	int channel;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -760,7 +761,7 @@ sii3114_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 		    "couldn't map native-PCI interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
 	sc->sc_pci_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_BIO,
 					   /* XXX */
 					   pciide_pci_intr, sc);
@@ -795,7 +796,7 @@ sii3112_drv_probe(struct ata_channel *chp)
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
 	uint32_t scontrol, sstatus;
-	uint8_t scnt, sn, cl, ch;
+	uint8_t /* scnt, sn, */ cl, ch;
 	int s;
 
 	/*
@@ -857,10 +858,12 @@ sii3112_drv_probe(struct ata_channel *chp)
 		    WDSD_IBM | (0 << 4));
 		delay(10);	/* 400ns delay */
 		/* Save register contents. */
+#if 0
 		scnt = bus_space_read_1(wdr->cmd_iot,
 				        wdr->cmd_iohs[wd_seccnt], 0);
 		sn = bus_space_read_1(wdr->cmd_iot,
 				      wdr->cmd_iohs[wd_sector], 0);
+#endif
 		cl = bus_space_read_1(wdr->cmd_iot,
 				      wdr->cmd_iohs[wd_cyl_lo], 0);
 		ch = bus_space_read_1(wdr->cmd_iot,

@@ -1,5 +1,5 @@
 /* BFD support for the Axis CRIS architecture.
-   Copyright 2000, 2002, 2004, 2005, 2007
+   Copyright 2000, 2002, 2004, 2005, 2007, 2012
    Free Software Foundation, Inc.
    Contributed by Axis Communications AB.
    Written by Hans-Peter Nilsson.
@@ -30,12 +30,11 @@
    there's a compatible subset for which we provide an arch_info.  */
 
 static const bfd_arch_info_type * get_compatible
-  PARAMS ((const bfd_arch_info_type *, const bfd_arch_info_type *));
+  (const bfd_arch_info_type *, const bfd_arch_info_type *);
 
 static const bfd_arch_info_type *
-get_compatible (a,b)
-     const bfd_arch_info_type *a;
-     const bfd_arch_info_type *b;
+get_compatible (const bfd_arch_info_type *a,
+		const bfd_arch_info_type *b)
 {
   /* Arches must match.  */
   if (a->arch != b->arch)
@@ -69,7 +68,7 @@ get_compatible (a,b)
 
 #define N(NUMBER, PRINT, NEXT)  \
  { 32, 32, 8, bfd_arch_cris, NUMBER, "cris", PRINT, 1, FALSE, \
-   get_compatible, bfd_default_scan, NEXT }
+   get_compatible, bfd_default_scan, bfd_arch_default_fill, NEXT }
 
 static const bfd_arch_info_type bfd_cris_arch_compat_v10_v32 =
  N (bfd_mach_cris_v10_v32, "cris:common_v10_v32", NULL);
@@ -98,6 +97,7 @@ const bfd_arch_info_type bfd_cris_arch =
 				   bfd_arch_info_type.  */
   bfd_default_scan,		/* Check if a bfd_arch_info_type is a
 				   match.  */
+  bfd_arch_default_fill,	/* Default fill.  */
   &bfd_cris_arch_v32		/* Pointer to next bfd_arch_info_type in
 				   the same family.  */
 };

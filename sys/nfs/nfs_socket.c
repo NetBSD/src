@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.189 2011/03/23 17:42:11 tls Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.189.14.1 2014/08/20 00:04:36 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.189 2011/03/23 17:42:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.189.14.1 2014/08/20 00:04:36 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -605,6 +605,8 @@ nfs_rephead(int siz, struct nfsrv_descript *nd, struct nfssvc_sock *slp, int err
 				 */
 #ifdef NFSKERB
 				XXX
+#else
+				(void)ktvin.tv_sec;
 #endif
 
 				*tl++ = rpc_auth_kerb;
@@ -803,11 +805,11 @@ nfs_timer(void *arg)
 		    nmp->nm_sent < nmp->nm_cwnd) &&
 		   (m = m_copym(rep->r_mreq, 0, M_COPYALL, M_DONTWAIT))){
 		        if (so->so_state & SS_ISCONNECTED)
-			    error = (*so->so_proto->pr_usrreq)(so, PRU_SEND, m,
-			    NULL, NULL, NULL);
+			    error = (*so->so_proto->pr_usrreqs->pr_send)(so,
+			    m, NULL, NULL, NULL);
 			else
-			    error = (*so->so_proto->pr_usrreq)(so, PRU_SEND, m,
-			    nmp->nm_nam, NULL, NULL);
+			    error = (*so->so_proto->pr_usrreqs->pr_send)(so,
+			    m, nmp->nm_nam, NULL, NULL);
 			if (error) {
 				if (NFSIGNORE_SOERROR(nmp->nm_soflags, error)) {
 #ifdef DEBUG
@@ -1165,6 +1167,8 @@ nfs_getreq(struct nfsrv_descript *nd, struct nfsd *nfsd, int has_header)
 			 */
 #ifdef NFSKERB
 			XXX
+#else
+			(void)tvin.tv_sec;
 #endif
 
 			tvout.tv_sec = fxdr_unsigned(long, tvout.tv_sec);

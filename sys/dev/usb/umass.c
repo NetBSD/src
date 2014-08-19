@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.146.2.1 2013/02/25 00:29:39 tls Exp $	*/
+/*	$NetBSD: umass.c,v 1.146.2.2 2014/08/20 00:03:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.146.2.1 2013/02/25 00:29:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.146.2.2 2014/08/20 00:03:51 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_umass.h"
@@ -302,7 +302,7 @@ umass_attach(device_t parent, device_t self, void *aux)
 	const char *sWire, *sCommand;
 	char *devinfop;
 	usbd_status err;
-	int i, bno, error;
+	int i, error;
 
 	sc->sc_dev = self;
 
@@ -558,27 +558,52 @@ umass_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 	}
-	/* Allocate buffer for data transfer (it's huge). */
+	/* Allocate buffer for data transfer (it's huge), command and
+	   status data here as auto allocation cannot happen in interrupt
+	   context */
 	switch (sc->sc_wire) {
 	case UMASS_WPROTO_BBB:
-		bno = XFER_BBB_DATA;
-		goto dalloc;
+		sc->data_buffer = usbd_alloc_buffer(
+			sc->transfer_xfer[XFER_BBB_DATA],
+			UMASS_MAX_TRANSFER_SIZE);
+		sc->cmd_buffer = usbd_alloc_buffer(
+			sc->transfer_xfer[XFER_BBB_CBW],
+			UMASS_BBB_CBW_SIZE);
+		sc->s1_buffer = usbd_alloc_buffer(
+			sc->transfer_xfer[XFER_BBB_CSW1],
+			UMASS_BBB_CSW_SIZE);
+		sc->s2_buffer = usbd_alloc_buffer(
+			sc->transfer_xfer[XFER_BBB_CSW2],
+			UMASS_BBB_CSW_SIZE);
+		break;
 	case UMASS_WPROTO_CBI:
-		bno = XFER_CBI_DATA;
-		goto dalloc;
 	case UMASS_WPROTO_CBI_I:
-		bno = XFER_CBI_DATA;
-	dalloc:
-		sc->data_buffer = usbd_alloc_buffer(sc->transfer_xfer[bno],
-						    UMASS_MAX_TRANSFER_SIZE);
-		if (sc->data_buffer == NULL) {
-			aprint_error_dev(self, "no buffer memory\n");
-			umass_disco(sc);
-			return;
-		}
+		sc->data_buffer = usbd_alloc_buffer(
+			sc->transfer_xfer[XFER_CBI_DATA],
+			UMASS_MAX_TRANSFER_SIZE);
+		sc->cmd_buffer = usbd_alloc_buffer(
+			sc->transfer_xfer[XFER_CBI_CB],
+			sizeof(sc->cbl));
+		sc->s1_buffer = usbd_alloc_buffer(
+			sc->transfer_xfer[XFER_CBI_STATUS],
+			sizeof(sc->sbl));
+		sc->s2_buffer = usbd_alloc_buffer(
+			sc->transfer_xfer[XFER_CBI_RESET1],
+			sizeof(sc->cbl));
 		break;
 	default:
 		break;
+	}
+
+	if (sc->data_buffer == NULL || sc->cmd_buffer == NULL
+	    || sc->s1_buffer == NULL || sc->s2_buffer == NULL) {
+		/*
+		 * partially preallocated buffers are freed with
+		 * the xfer structures
+		 */
+		aprint_error_dev(self, "no buffer memory\n");
+		umass_disco(sc);
+		return;
 	}
 
 	/* Initialise the wire protocol specific methods */

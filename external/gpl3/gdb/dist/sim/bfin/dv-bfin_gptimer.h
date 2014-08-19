@@ -1,6 +1,6 @@
 /* Blackfin General Purpose Timers (GPtimer) model
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -20,8 +20,5 @@
 
 #ifndef DV_BFIN_GPTIMER_H
 #define DV_BFIN_GPTIMER_H
-
-/* XXX: This should be pushed into the model data.  */
-#define BFIN_MMR_GPTIMER_SIZE	(4 * 4)
 
 #endif

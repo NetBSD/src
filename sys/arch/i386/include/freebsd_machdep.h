@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.h,v 1.9 2005/09/14 15:00:16 he Exp $	*/
+/*	$NetBSD: freebsd_machdep.h,v 1.9.128.1 2014/08/20 00:03:06 tls Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -108,83 +108,6 @@ struct freebsd_sigframe {
 	char	*sf_addr;
 	sig_t	sf_handler;
 	struct	freebsd_sigcontext sf_sc;
-};
-
-/*
- * freebsd_ptrace(2) support
- */
-
-#define	FREEBSD_USRSTACK	0xefbfe000 /* USRSTACK */
-#define	FREEBSD_U_AR0_OFFSET	0x0000045c /* offsetof(struct user, u_ar0) */
-#define	FREEBSD_U_SAVEFP_OFFSET	0x00000070
-	/* offsetof(struct user, u_pcb) + offsetof(struct pcb, pcb_savefpu) */
-
-/* Exception/Trap Stack Frame */
-struct freebsd_trapframe {
-	int	tf_es;
-	int	tf_ds;
-	int	tf_edi;
-	int	tf_esi;
-	int	tf_ebp;
-	int	tf_isp;
-	int	tf_ebx;
-	int	tf_edx;
-	int	tf_ecx;
-	int	tf_eax;
-	int	tf_trapno;
-	/* below portion defined in 386 hardware */
-	int	tf_err;
-	int	tf_eip;
-	int	tf_cs;
-	int	tf_eflags;
-	/* below only when transitting rings (e.g. user to kernel) */
-	int	tf_esp;
-	int	tf_ss;
-};
-
-/* Environment information of floating point unit */
-struct freebsd_env87 {
-	long	en_cw;		/* control word (16bits) */
-	long	en_sw;		/* status word (16bits) */
-	long	en_tw;		/* tag word (16bits) */
-	long	en_fip;		/* floating point instruction pointer */
-	u_short	en_fcs;		/* floating code segment selector */
-	u_short	en_opcode;	/* opcode last executed (11 bits ) */
-	long	en_foo;		/* floating operand offset */
-	long	en_fos;		/* floating operand segment selector */
-};
-
-/* Contents of each floating point accumulator */
-struct freebsd_fpacc87 {
-#ifdef dontdef /* too unportable */
-	u_long	fp_mantlo;	/* mantissa low (31:0) */
-	u_long	fp_manthi;	/* mantissa high (63:32) */
-	int	fp_exp:15;	/* exponent */
-	int	fp_sgn:1;	/* mantissa sign */
-#else
-	u_char	fp_bytes[10];
-#endif
-};
-
-/* Floating point context */
-struct freebsd_save87 {
-	struct freebsd_env87 sv_env;	/* floating point control/status */
-	struct freebsd_fpacc87 sv_ac[8];	/* accumulator contents, 0-7 */
-	u_long	sv_ex_sw;		/* status word for last exception */
-	/*
-	 * Bogus padding for emulators.  Emulators should use their own
-	 * struct and arrange to store into this struct (ending here)
-	 * before it is inspected for ptracing or for core dumps.  Some
-	 * emulators overwrite the whole struct.  We have no good way of
-	 * knowing how much padding to leave.  Leave just enough for the
-	 * GPL emulator's i387_union (176 bytes total).
-	 */
-	u_char	sv_pad[64];	/* padding; used by emulators */
-};
-
-struct freebsd_ptrace_reg {
-	struct freebsd_trapframe freebsd_ptrace_regs;
-	struct freebsd_save87 freebsd_ptrace_fpregs;
 };
 
 /* sys/i386/include/exec.h */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.6.2.2 2013/06/23 06:20:22 tls Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.6.2.3 2014/08/20 00:03:51 tls Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.6.2.2 2013/06/23 06:20:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.6.2.3 2014/08/20 00:03:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -149,7 +149,8 @@ CFATTACH_DECL_NEW(upgt, sizeof(struct upgt_softc),
 
 static const struct usb_devno upgt_devs_1[] = {
 	/* version 1 devices */
-	{ USB_VENDOR_ALCATELT,		USB_PRODUCT_ALCATELT_ST120G }
+	{ USB_VENDOR_ALCATELT,		USB_PRODUCT_ALCATELT_ST120G },
+	{ USB_VENDOR_SMC,		USB_PRODUCT_SMC_2862WG_V1 }
 };
 
 static const struct usb_devno upgt_devs_2[] = {
@@ -174,8 +175,8 @@ static const struct usb_devno upgt_devs_2[] = {
 	{ USB_VENDOR_SMC,		USB_PRODUCT_SMC_2862WG },
 	{ USB_VENDOR_USR,		USB_PRODUCT_USR_USR5422 },
 	{ USB_VENDOR_WISTRONNEWEB,	USB_PRODUCT_WISTRONNEWEB_UR045G },
-	{ USB_VENDOR_XYRATEX,		USB_PRODUCT_XYRATEX_PRISM_GT_1 },
-	{ USB_VENDOR_XYRATEX,		USB_PRODUCT_XYRATEX_PRISM_GT_2 },
+	{ USB_VENDOR_CONEXANT,		USB_PRODUCT_CONEXANT_PRISM_GT_1 },
+	{ USB_VENDOR_CONEXANT,		USB_PRODUCT_CONEXANT_PRISM_GT_2 },
 	{ USB_VENDOR_ZCOM,		USB_PRODUCT_ZCOM_MD40900 },
 	{ USB_VENDOR_ZCOM,		USB_PRODUCT_ZCOM_XG703A }
 };
@@ -1137,6 +1138,7 @@ upgt_eeprom_parse_freq3(struct upgt_softc *sc, uint8_t *data, int len)
 
 	DPRINTF(2, "%s: flags=0x%02x\n", device_xname(sc->sc_dev), flags);
 	DPRINTF(2, "%s: elements=%d\n", device_xname(sc->sc_dev), elements);
+	__USE(flags);
 
 	for (i = 0; i < elements; i++) {
 		channel = ieee80211_mhz2ieee(le16toh(freq3[i].freq), 0);
@@ -1171,6 +1173,7 @@ upgt_eeprom_parse_freq4(struct upgt_softc *sc, uint8_t *data, int len)
 	DPRINTF(2, "%s: flags=0x%02x\n", device_xname(sc->sc_dev), flags);
 	DPRINTF(2, "%s: elements=%d\n", device_xname(sc->sc_dev), elements);
 	DPRINTF(2, "%s: settings=%d\n", device_xname(sc->sc_dev), settings);
+	__USE(flags);
 
 	for (i = 0; i < elements; i++) {
 		channel = ieee80211_mhz2ieee(le16toh(freq4_1[i].freq), 0);

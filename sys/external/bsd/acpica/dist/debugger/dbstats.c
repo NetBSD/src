@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -79,7 +79,7 @@ AcpiDbListInfo (
 /*
  * Statistics subcommands
  */
-static ARGUMENT_INFO        AcpiDbStatTypes [] =
+static ACPI_DB_ARGUMENT_INFO    AcpiDbStatTypes [] =
 {
     {"ALLOCATIONS"},
     {"OBJECTS"},
@@ -227,8 +227,8 @@ AcpiDbEnumerateObject (
 
     case ACPI_TYPE_DEVICE:
 
-        AcpiDbEnumerateObject (ObjDesc->Device.SystemNotify);
-        AcpiDbEnumerateObject (ObjDesc->Device.DeviceNotify);
+        AcpiDbEnumerateObject (ObjDesc->Device.NotifyList[0]);
+        AcpiDbEnumerateObject (ObjDesc->Device.NotifyList[1]);
         AcpiDbEnumerateObject (ObjDesc->Device.Handler);
         break;
 
@@ -248,25 +248,26 @@ AcpiDbEnumerateObject (
 
     case ACPI_TYPE_POWER:
 
-        AcpiDbEnumerateObject (ObjDesc->PowerResource.SystemNotify);
-        AcpiDbEnumerateObject (ObjDesc->PowerResource.DeviceNotify);
+        AcpiDbEnumerateObject (ObjDesc->PowerResource.NotifyList[0]);
+        AcpiDbEnumerateObject (ObjDesc->PowerResource.NotifyList[1]);
         break;
 
     case ACPI_TYPE_PROCESSOR:
 
-        AcpiDbEnumerateObject (ObjDesc->Processor.SystemNotify);
-        AcpiDbEnumerateObject (ObjDesc->Processor.DeviceNotify);
+        AcpiDbEnumerateObject (ObjDesc->Processor.NotifyList[0]);
+        AcpiDbEnumerateObject (ObjDesc->Processor.NotifyList[1]);
         AcpiDbEnumerateObject (ObjDesc->Processor.Handler);
         break;
 
     case ACPI_TYPE_THERMAL:
 
-        AcpiDbEnumerateObject (ObjDesc->ThermalZone.SystemNotify);
-        AcpiDbEnumerateObject (ObjDesc->ThermalZone.DeviceNotify);
+        AcpiDbEnumerateObject (ObjDesc->ThermalZone.NotifyList[0]);
+        AcpiDbEnumerateObject (ObjDesc->ThermalZone.NotifyList[1]);
         AcpiDbEnumerateObject (ObjDesc->ThermalZone.Handler);
         break;
 
     default:
+
         break;
     }
 }
@@ -314,7 +315,7 @@ AcpiDbClassifyOneObject (
         AcpiGbl_NodeTypeCount [Type]++;
     }
 
-    return AE_OK;
+    return (AE_OK);
 
 
 #ifdef ACPI_FUTURE_IMPLEMENTATION
@@ -398,12 +399,6 @@ AcpiDbDisplayStatistics (
     UINT32                  Temp;
 
 
-    if (!TypeArg)
-    {
-        AcpiOsPrintf ("The following subcommands are available:\n    ALLOCATIONS, OBJECTS, MEMORY, MISC, SIZES, TABLES\n");
-        return (AE_OK);
-    }
-
     AcpiUtStrupr (TypeArg);
     Temp = AcpiDbMatchArgument (TypeArg, AcpiDbStatTypes);
     if (Temp == (UINT32) -1)
@@ -485,7 +480,6 @@ AcpiDbDisplayStatistics (
         }
         break;
 
-
     case CMD_STAT_SIZES:
 
         AcpiOsPrintf ("\nInternal object sizes:\n\n");
@@ -522,8 +516,19 @@ AcpiDbDisplayStatistics (
         AcpiOsPrintf ("NamespaceNode    %3d\n", sizeof (ACPI_NAMESPACE_NODE));
         AcpiOsPrintf ("AcpiObject       %3d\n", sizeof (ACPI_OBJECT));
 
-        break;
+        AcpiOsPrintf ("\n");
 
+        AcpiOsPrintf ("Generic State    %3d\n", sizeof (ACPI_GENERIC_STATE));
+        AcpiOsPrintf ("Common State     %3d\n", sizeof (ACPI_COMMON_STATE));
+        AcpiOsPrintf ("Control State    %3d\n", sizeof (ACPI_CONTROL_STATE));
+        AcpiOsPrintf ("Update State     %3d\n", sizeof (ACPI_UPDATE_STATE));
+        AcpiOsPrintf ("Scope State      %3d\n", sizeof (ACPI_SCOPE_STATE));
+        AcpiOsPrintf ("Parse Scope      %3d\n", sizeof (ACPI_PSCOPE_STATE));
+        AcpiOsPrintf ("Package State    %3d\n", sizeof (ACPI_PKG_STATE));
+        AcpiOsPrintf ("Thread State     %3d\n", sizeof (ACPI_THREAD_STATE));
+        AcpiOsPrintf ("Result Values    %3d\n", sizeof (ACPI_RESULT_VALUES));
+        AcpiOsPrintf ("Notify Info      %3d\n", sizeof (ACPI_NOTIFY_INFO));
+        break;
 
     case CMD_STAT_STACK:
 #if defined(ACPI_DEBUG_OUTPUT)
@@ -539,6 +544,7 @@ AcpiDbDisplayStatistics (
         break;
 
     default:
+
         break;
     }
 

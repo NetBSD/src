@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_start.S,v 1.2 2011/01/31 06:28:05 matt Exp $	*/
+/*	$NetBSD: netwalker_start.S,v 1.2.16.1 2014/08/20 00:02:55 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009 SHIMIZU Ryo <ryo@nerv.org>
@@ -54,8 +54,11 @@
 
 #include "opt_imx.h"
 #include "opt_com.h"
+#include "opt_cpuoptions.h"
+#include "opt_cputypes.h"
+#include "opt_arm_debug.h"
 
-#include <machine/asm.h>
+#include <arm/asm.h>
 #include <arm/armreg.h>
 #include "assym.h"
 
@@ -63,25 +66,22 @@
 #include <arm/imx/imxuartreg.h>
 #include <evbarm/netwalker/netwalker_reg.h>
 
-RCSID("$NetBSD: netwalker_start.S,v 1.2 2011/01/31 06:28:05 matt Exp $")
+RCSID("$NetBSD: netwalker_start.S,v 1.2.16.1 2014/08/20 00:02:55 tls Exp $")
 
-#if 0
-#define CPWAIT_BRANCH							 \
-	sub	pc, pc, #4
-
-#define CPWAIT(tmp)							 \
-	mrc	p15, 0, tmp, c2, c0, 0  /* arbitrary read of CP15 */	;\
-	mov	tmp, tmp		/* wait for it to complete */	;\
-	CPWAIT_BRANCH			/* branch to next insn */
+#if defined(VERBOSE_INIT_ARM)
+#define DEBUG_STARTUP
+#define	XPUTC(n) 	mov r0, n; bl _C_LABEL(debugputc)
 #else
-#define	CPWAIT_BRANCH	/* nothing to do */
-#define	CPWAIT(tmp)	/* nothing to do */
+#define	XPUTC(n)
 #endif
 
 #ifndef SDRAM_START
 #define SDRAM_START CSD0DDR_BASE
 #endif
 #define KERNEL_TEXT_ADDR	(SDRAM_START+0x00100000)
+
+#define INIT_MEMSIZE	128
+#define TEMP_L1_TABLE	(SDRAM_START + INIT_MEMSIZE * 0x100000 - L1_TABLE_SIZE)
 
 #ifdef	DEBUG_STARTUP
 #define	CHECKPOINT(n)	CHECKPOINT2(n,r0,r1)
@@ -93,14 +93,13 @@ RCSID("$NetBSD: netwalker_start.S,v 1.2 2011/01/31 06:28:05 matt Exp $")
 #define	CHECKPOINT(n)		/* nothing to do */
 #define	CHECKPOINT2(n,ra,rb)	/* nothing to do */
 #endif
-	
+
 	.section .start,"ax",%progbits
 
 	.text
 
 	.global _C_LABEL(netwalker_start)
 _C_LABEL(netwalker_start):
-	CHECKPOINT(0)
 	CHECKPOINT(0)
 
 #ifdef	DEBUG_STARTUP
@@ -110,11 +109,11 @@ _C_LABEL(netwalker_start):
 	ldr	r0, =0xdeadb01f
 	bl	_C_LABEL(debugprintx)
 	bl	newline
-	
+
 	mov	r0, pc
 	bl	_C_LABEL(debugprintx)
 	bl	newline
-	
+
 	mrc	p15, 0, r0, c0, c0, 3	/* read TLB type register */
 	bl	_C_LABEL(debugprintx)
 	bl	newline
@@ -147,17 +146,17 @@ _C_LABEL(netwalker_start):
 	bl	_C_LABEL(debugprintx)
 	bl	newline
 #endif	/* DEBUG_STARTUP */
-	
+
 	/* Are we running on right place ? */
 	ldr	r2, =KERNEL_TEXT_ADDR
 	adr	r0, _C_LABEL(netwalker_start)
 	cmp	r0, r2
 	beq	relocated
-	
+
 	/*
 	 * move me to RAM
 	 */
-	ldr	r1, Lcopy_size
+	ldr	r1, .Lcopy_size
 	add	r1, r1, #3
 	mov	r1, r1, LSR #2
 	mov	r4, r2
@@ -180,128 +179,84 @@ _C_LABEL(netwalker_start):
 	subs r1,r1,#1
 	bhi 5b
 
-7:	
-	
+7:
+
 
 	/*
 	 * Okay, we are finished relocating the text segment.  Now
 	 * we need to leap to the next instruction.
 	 */
-	ldr	r0, Lrelocate_address
-	ldr	r1, Lrelocate_offset
+	ldr	r0, .Lrelocate_address
+	ldr	r1, .Lrelocate_offset
 	add	pc, r0, r1
 
-Lrelocate_offset:	.word relocated-_C_LABEL(netwalker_start)
+.Lrelocate_offset:	.word relocated-_C_LABEL(netwalker_start)
 
 relocated:
-	CHECKPOINT(5)
-	
+	CHECKPOINT(1)
+
 	/* Move into supervisor mode and disable IRQs/FIQs. */
-	mrs	r0, cpsr
-	bic	r0, r0, #PSR_MODE
-	orr	r0, r0, #(I32_bit | F32_bit | PSR_SVC32_MODE)
-	msr	cpsr, r0
+	cpsid   if, #PSR_SVC32_MODE
 
-	mrc	p15, 0, r0, c2, c0, 0	/* get ttb prepared by bootloader */
-	adr	r4, mmu_init_table
-	b	3f
+	bl	cortex_init
 
-2:
-	str	r3, [r0, r2]
-	add	r2, r2, #4
-	add	r3, r3, #(L1_S_SIZE)
-	adds	r1, r1, #-1
-	bhi	2b
-3:	
-	ldmia	r4!, {r1,r2,r3}   /* # of sections, PA|attr, VA */
-	cmp	r1, #0
-	bne	2b	
+	movw	r0, #:lower16:TEMP_L1_TABLE
+	movt	r0, #:upper16:TEMP_L1_TABLE
+	adr	r1, .Lmmu_init_table
+	bl	arm_boot_l1pt_init
 
-	CHECKPOINT2(6,r3,r4)
-	
-#if 0
-	/* XXX: clean and invalidate Dcache. */
-#endif
-	
-	mcr	p15, 0, r0, c7, c10, 5	/* DMB */
-	CPWAIT(r0)
+	CHECKPOINT(2)
+	/*
+	 * Turn on the MMU, Caches, etc.
+	 */
+	movw	r0, #:lower16:TEMP_L1_TABLE
+	movt	r0, #:upper16:TEMP_L1_TABLE
+	bl	arm_cpuinit
+	CHECKPOINT(3)
 
-	mcr	p15, 0, r0, c7, c5, 0	/* invalied Icache */
+	movw	ip, #:lower16:start
+	movt	ip, #:upper16:start
+	bx	ip		/* Jump to start (flushes pipeline). */
 
-	mcr	p15, 0, r0, c2, c0, 0	/* Set TTB */
-	mcr	p15, 0, r0, c8, c7, 0	/* Flush TLB */
-
-	CHECKPOINT(7)
-
-	/* Set the Domain Access register.  Very important! */
-	mov	r0, #((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT)
-	mcr	p15, 0, r0, c3, c0, 0
-
-	CHECKPOINT(8)
-	
-	/* Enable MMU */
-	mrc	p15, 0, r0, c1, c0, 0
-	orr	r0, r0, #CPU_CONTROL_MMU_ENABLE|CPU_CONTROL_AFLT_ENABLE|CPU_CONTROL_DC_ENABLE
-	orr	r0, r0, #CPU_CONTROL_IC_ENABLE|CPU_CONTROL_BPRD_ENABLE
-	mcr	p15, 0, r0, c1, c0, 0
-	CPWAIT(r0)
-
-	nop
-	nop
-	nop
-	nop
-
-#ifdef	DEBUG_STARTUP
-	CHECKPOINT(9)
-	bl	newline
-#endif
-	
-	ldr	pc, =start
-	nop
-	nop
-	nop
-	nop
+	/* NOTREACHED */
 
 /*
  * Calculate size of kernel to copy.  Don't bother to copy bss,
  * although I guess the CPU could use the warmup exercise ...
  */
-Lcopy_size:
+.Lcopy_size:
         .word	_edata - _C_LABEL(netwalker_start)
 
-Lrelocate_address:
+.Lrelocate_address:
 	.word	KERNEL_BASE_phys
 
-#define MMU_INIT(va,pa,n_sec,attr) \
-	.word	n_sec					    ; \
-	.word	4*((va)>>L1_S_SHIFT)			    ; \
-	.word	(pa)|(attr)				    ;
+#include <arm/cortex/a9_mpsubr.S>
 
-mmu_init_table:
+.Lmmu_init_table:
 	/* fill all table VA==PA */
-	MMU_INIT(0x00000000, 0x00000000,
-		1 << (32 - L1_S_SHIFT),
-		L1_S_PROTO | L1_S_APv7_KRW)
+	MMU_INIT(0x00000000, 0x00000000, 1 << (32 - L1_S_SHIFT),
+		L1_S_PROTO_armv7 | L1_S_APv7_KRW)
 
-	/* Map KERNEL_BASE VA to SDRAM PA, write-back cacheable */
-	MMU_INIT(SDRAM_START, SDRAM_START,
-		512,
-		L1_S_PROTO | L1_S_APv7_KRW | L1_S_B | L1_S_C)
+	/* Map memory 1:1 VA to PA, write-back cacheable, shareable */
+	MMU_INIT(SDRAM_START, SDRAM_START, 512,
+		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_CACHEABLE)
 
-	/* map VA 0xc0000000..0xdfffffff to PA 0x90000000..0xafffffff */
-	MMU_INIT(0xc0000000, SDRAM_START,
-		512, L1_S_PROTO | L1_S_APv7_KRW | L1_S_B | L1_S_C)
-	
-	/* Map all 256KB of L4 WAKEUP (so console will work) */
-	MMU_INIT(NETWALKER_IO_VBASE0, NETWALKER_IO_PBASE0,
-		4,
-		L1_S_PROTO | L1_S_APv7_KRW)
+	/* Map KERNEL_BASE VA to SDRAM PA, write-back cacheable, shareable */
+	MMU_INIT(KERNEL_BASE, SDRAM_START, INIT_MEMSIZE,
+		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_CACHEABLE)
+
+	/*
+	 * In case of early start debugging it might be useful to map
+	 * SoC registers (for UART access).
+	 */
+	MMU_INIT(NETWALKER_IO_VBASE0, NETWALKER_IO_PBASE0, 4,
+		L1_S_PROTO | L1_S_APv7_KRW | L1_S_V6_XN)
 
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)
 
 #ifdef	DEBUG_STARTUP
-Luart0adr:
+.Luart0adr:
 	.word	UART1_BASE
 
 	.global _C_LABEL(debugprintx)
@@ -350,7 +305,7 @@ print_r3:
 _C_LABEL(debugputc):
 	stmfd	sp!, {r0, r1, r2, lr}
 
-	ldr	r1, Luart0adr
+	ldr	r1, .Luart0adr
 
 1:	/* wait */
 	ldr	r2, [r1, #0x98]
@@ -362,7 +317,7 @@ _C_LABEL(debugputc):
 
 	ldmfd	sp!, {r0, r1, r2, pc}
 
-newline:	
+newline:
 	mov	r1, lr
 	mov	r0, #0x0d
 	bl	_C_LABEL(debugputc)
@@ -371,3 +326,5 @@ newline:
 	b	_C_LABEL(debugputc)
 
 #endif	/* DEBUG_STARTUP */
+
+END(_C_LABEL(netwalker_start))

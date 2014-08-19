@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.21.6.1 2013/02/25 00:29:43 tls Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.21.6.2 2014/08/20 00:03:52 tls Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -29,8 +29,10 @@
 #ifndef _WSDISPLAY_VCONS_H_
 #define _WSDISPLAY_VCONS_H_
 
+#ifdef _KERNEL_OPT
 #include "opt_wsdisplay_compat.h"
 #include "opt_vcons.h"
+#endif
 
 struct vcons_data;
 

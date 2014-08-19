@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.23 2008/04/28 20:22:56 martin Exp $	*/
+/*	$NetBSD: SYS.h,v 1.23.28.1 2014/08/20 00:02:09 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 	ENTRY(x);							\
 	SYSTRAP(y)
 
-#ifdef PIC
+#ifdef __PIC__
 #define _SYSCALL_ERR							\
 	PIC_PROLOGUE;							\
 	mov PIC_GOT(CERROR), %ecx;					\
@@ -126,13 +126,15 @@
 
 #define PSEUDO_NOERROR(x,y)						\
 	_SYSCALL_NOERROR(x,y);						\
-	ret
+	ret;								\
+	END(x)
 
 #define PSEUDO(x,y)							\
 	_SYSCALL_NOERROR(x,y);						\
 	jc 2f;								\
 	ret;								\
-	2: _SYSCALL_ERR
+	2: _SYSCALL_ERR;						\
+	END(x)
 
 #define RSYSCALL_NOERROR(x)						\
 	PSEUDO_NOERROR(x,x)

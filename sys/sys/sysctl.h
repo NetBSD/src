@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.201.2.2 2013/02/25 00:30:13 tls Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.201.2.3 2014/08/20 00:04:44 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,10 +59,6 @@
 #else
 #include <stddef.h>
 #include <stdbool.h>
-#endif
-
-#ifdef SYSCTL_PRIVATE
-#include <sys/cprng.h>
 #endif
 
 /*
@@ -159,13 +155,13 @@ struct ctlname {
 /*
  * Meta-identifiers
  */
-#define CTL_EOL		-1		/* end of createv/destroyv list */
-#define CTL_QUERY	-2		/* enumerates children of a node */
-#define CTL_CREATE	-3		/* node create request */
-#define CTL_CREATESYM	-4		/* node create request with symbol */
-#define CTL_DESTROY	-5		/* node destroy request */
-#define CTL_MMAP	-6		/* mmap request */
-#define CTL_DESCRIBE	-7		/* get node descriptions */
+#define CTL_EOL		(-1)		/* end of createv/destroyv list */
+#define CTL_QUERY	(-2)		/* enumerates children of a node */
+#define CTL_CREATE	(-3)		/* node create request */
+#define CTL_CREATESYM	(-4)		/* node create request with symbol */
+#define CTL_DESTROY	(-5)		/* node destroy request */
+#define CTL_MMAP	(-6)		/* mmap request */
+#define CTL_DESCRIBE	(-7)		/* get node descriptions */
 
 /*
  * Top-level identifiers
@@ -227,7 +223,7 @@ struct ctlname {
 #define	KERN_ROOT_DEVICE	30	/* string: root device */
 #define	KERN_MSGBUFSIZE		31	/* int: max # of chars in msg buffer */
 #define	KERN_FSYNC		32	/* int: file synchronization support */
-#define	KERN_OLDSYSVMSG		33	/* old: SysV message queue suppoprt */
+#define	KERN_OLDSYSVMSG		33	/* old: SysV message queue support */
 #define	KERN_OLDSYSVSEM		34	/* old: SysV semaphore support */
 #define	KERN_OLDSYSVSHM		35	/* old: SysV shared memory support */
 #define	KERN_OLDSHORTCORENAME	36	/* old, unimplemented */
@@ -240,7 +236,7 @@ struct ctlname {
 #define	KERN_MEMORY_PROTECTION	43	/* int: POSIX memory protections */
 #define	KERN_LOGIN_NAME_MAX	44	/* int: max length login name + NUL */
 #define	KERN_DEFCORENAME	45	/* old: sort core name format */
-#define	KERN_LOGSIGEXIT		46	/* int: log signalled processes */
+#define	KERN_LOGSIGEXIT		46	/* int: log signaled processes */
 #define	KERN_PROC2		47	/* struct: process entries */
 #define	KERN_PROC_ARGS		48	/* struct: process argv/env */
 #define	KERN_FSCALE		49	/* int: fixpt FSCALE */
@@ -599,7 +595,7 @@ struct kinfo_proc2 {
 };
 
 /*
- * Compat flags for kinfo_proc, kinfo_proc2.  Not guarenteed to be stable.
+ * Compat flags for kinfo_proc, kinfo_proc2.  Not guaranteed to be stable.
  * Some of them used to be shared with LWP flags.
  * XXXAD Trim to the minimum necessary...
  */
@@ -685,7 +681,7 @@ struct kinfo_lwp {
  * KERN_SYSVIPC subtypes
  */
 #define	KERN_SYSVIPC_INFO	1	/* struct: number of valid kern ids */
-#define	KERN_SYSVIPC_MSG	2	/* int: SysV message queue suppoprt */
+#define	KERN_SYSVIPC_MSG	2	/* int: SysV message queue support */
 #define	KERN_SYSVIPC_SEM	3	/* int: SysV semaphore support */
 #define	KERN_SYSVIPC_SHM	4	/* int: SysV shared memory support */
 #define	KERN_SYSVIPC_SHMMAX	5	/* int: max shared memory segment size (bytes) */
@@ -700,7 +696,7 @@ struct kinfo_lwp {
 /* KERN_SYSVIPC_OMSG_INFO		1	*/
 /* KERN_SYSVIPC_OSEM_INFO		2	*/
 /* KERN_SYSVIPC_OSHM_INFO		3	*/
-#define	KERN_SYSVIPC_MSG_INFO		4	/* msginfo and msqid_ds */
+#define	KERN_SYSVIPC_MSG_INFO		4	/* msginfo and msgid_ds */
 #define	KERN_SYSVIPC_SEM_INFO		5	/* seminfo and semid_ds */
 #define	KERN_SYSVIPC_SHM_INFO		6	/* shminfo and shmid_ds */
 
@@ -1058,7 +1054,7 @@ struct sysctllog;
  * variable. The loader prevents multiple use by issuing errors
  * if a variable is initialized in more than one place. They are
  * aggregated into an array in debug_sysctl(), so that it can
- * conveniently locate them when querried. If more debugging
+ * conveniently locate them when queried. If more debugging
  * variables are added, they must also be declared here and also
  * entered into the array.
  *
@@ -1147,11 +1143,13 @@ typedef int (*sysctlfn)(SYSCTLFN_PROTO);
  * used in more than just sysctl
  */
 void	fill_eproc(struct proc *, struct eproc *, bool);
+void	fill_kproc2(struct proc *, struct kinfo_proc2 *, bool);
 
 /*
  * subsystem setup
  */
 void	sysctl_init(void);
+void	sysctl_basenode_init(void);
 void	sysctl_finalize(void);
 
 /*
@@ -1251,10 +1249,6 @@ MALLOC_DECLARE(M_SYSCTLDATA);
 
 extern const u_int sysctl_lwpflagmap[];
 
-#ifdef SYSCTL_PRIVATE
-extern cprng_strong_t *sysctl_prng;
-#endif
-
 #else	/* !_KERNEL */
 #include <sys/cdefs.h>
 
@@ -1268,6 +1262,8 @@ int	sysctlgetmibinfo(const char *, int *, u_int *,
 int	sysctlnametomib(const char *, int *, size_t *);
 int	proc_compare(const struct kinfo_proc2 *, const struct kinfo_lwp *,
     const struct kinfo_proc2 *, const struct kinfo_lwp *);
+void	*asysctl(const int *, size_t, size_t *);
+void	*asysctlbyname(const char *, size_t *);
 __END_DECLS
 
 #endif	/* !_KERNEL */

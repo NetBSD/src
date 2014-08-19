@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.26 2011/03/06 17:08:34 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.26.14.1 2014/08/20 00:03:33 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -383,6 +383,7 @@ netbsd32_to_timex(const struct netbsd32_timex *tx32p, struct timex *txp)
 static __inline void
 netbsd32_from___stat13(const struct stat *sbp, struct netbsd32_stat13 *sb32p)
 {
+	memset(sb32p, 0, sizeof(*sb32p));
 	sb32p->st_dev = (uint32_t)sbp->st_dev;
 	sb32p->st_ino = sbp->st_ino;
 	sb32p->st_mode = sbp->st_mode;
@@ -408,6 +409,7 @@ netbsd32_from___stat13(const struct stat *sbp, struct netbsd32_stat13 *sb32p)
 static __inline void
 netbsd32_from___stat50(const struct stat *sbp, struct netbsd32_stat50 *sb32p)
 {
+	memset(sb32p, 0, sizeof(*sb32p));
 	sb32p->st_dev = (uint32_t)sbp->st_dev;
 	sb32p->st_ino = sbp->st_ino;
 	sb32p->st_mode = sbp->st_mode;
@@ -433,6 +435,7 @@ netbsd32_from___stat50(const struct stat *sbp, struct netbsd32_stat50 *sb32p)
 static __inline void
 netbsd32_from_stat(const struct stat *sbp, struct netbsd32_stat *sb32p)
 {
+	memset(sb32p, 0, sizeof(*sb32p));
 	sb32p->st_dev = sbp->st_dev;
 	sb32p->st_ino = sbp->st_ino;
 	sb32p->st_mode = sbp->st_mode;

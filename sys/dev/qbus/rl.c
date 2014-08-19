@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.42 2009/04/18 14:58:03 tsutsui Exp $	*/
+/*	$NetBSD: rl.c,v 1.42.22.1 2014/08/20 00:03:49 tls Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.42 2009/04/18 14:58:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.42.22.1 2014/08/20 00:03:49 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -96,12 +96,29 @@ static dev_type_dump(rldump);
 static dev_type_size(rlpsize);
 
 const struct bdevsw rl_bdevsw = {
-	rlopen, rlclose, rlstrategy, rlioctl, rldump, rlpsize, D_DISK
+	.d_open = rlopen,
+	.d_close = rlclose,
+	.d_strategy = rlstrategy,
+	.d_ioctl = rlioctl,
+	.d_dump = rldump,
+	.d_psize = rlpsize,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw rl_cdevsw = {
-	rlopen, rlclose, rlread, rlwrite, rlioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = rlopen,
+	.d_close = rlclose,
+	.d_read = rlread,
+	.d_write = rlwrite,
+	.d_ioctl = rlioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 #define	MAXRLXFER (RL_BPS * RL_SPT)

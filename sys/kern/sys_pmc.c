@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pmc.c,v 1.10 2008/04/21 12:56:31 ad Exp $	*/
+/*	$NetBSD: sys_pmc.c,v 1.10.46.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pmc.c,v 1.10 2008/04/21 12:56:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pmc.c,v 1.10.46.1 2014/08/20 00:04:29 tls Exp $");
 
 #include "opt_perfctrs.h"
 
@@ -71,6 +71,7 @@ sys_pmc_control(struct lwp *l, const struct sys_pmc_control_args *uap, register_
 	int ctr, operation, error=0;
 
 	ctr = SCARG(uap, ctr);
+	__USE(ctr);
 	operation = SCARG(uap, op);
 
 	KERNEL_LOCK(1, NULL);
@@ -140,6 +141,7 @@ sys_pmc_get_info(struct lwp *l, const struct sys_pmc_get_info_args *uap, registe
 	ctr = SCARG(uap, ctr);
 	request = SCARG(uap, op);
 	args = SCARG(uap, args);
+	__USE(flags);
 
 	KERNEL_LOCK(1, NULL);
 	nctrs = pmc_get_num_counters();

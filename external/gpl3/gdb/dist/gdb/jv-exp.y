@@ -1,6 +1,5 @@
 /* YACC parser for Java expressions, for GDB.
-   Copyright (C) 1997, 1998, 1999, 2000, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,7 +36,7 @@
 %{
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include <ctype.h>
 #include "expression.h"
 #include "value.h"
@@ -48,6 +47,7 @@
 #include "symfile.h" /* Required by objfiles.h.  */
 #include "objfiles.h" /* For have_full_symbols and have_partial_symbols */
 #include "block.h"
+#include "completer.h"
 
 #define parse_type builtin_type (parse_gdbarch)
 #define parse_java_type builtin_java_type (parse_gdbarch)
@@ -99,6 +99,12 @@
 #define yygindex java_yygindex
 #define yytable	 java_yytable
 #define yycheck	 java_yycheck
+#define yyss	java_yyss
+#define yysslim	java_yysslim
+#define yyssp	java_yyssp
+#define yystacksize java_yystacksize
+#define yyvs	java_yyvs
+#define yyvsp	java_yyvsp
 
 #ifndef YYDEBUG
 #define	YYDEBUG 1		/* Default to yydebug support */
@@ -149,7 +155,7 @@ static void insert_exp (int, struct expression *);
 
 %{
 /* YYSTYPE gets defined by %union */
-static int parse_number (char *, int, int, YYSTYPE *);
+static int parse_number (const char *, int, int, YYSTYPE *);
 %}
 
 %type <lval> rcurly Dims Dims_opt
@@ -340,10 +346,13 @@ QualifiedName:
 		    $$.ptr = $1.ptr;  /* Optimization.  */
 		  else
 		    {
-		      $$.ptr = (char *) malloc ($$.length + 1);
-		      make_cleanup (free, $$.ptr);
-		      sprintf ($$.ptr, "%.*s.%.*s",
+		      char *buf;
+
+		      buf = malloc ($$.length + 1);
+		      make_cleanup (free, buf);
+		      sprintf (buf, "%.*s.%.*s",
 			       $1.length, $1.ptr, $3.length, $3.ptr);
+		      $$.ptr = buf;
 		} }
 ;
 
@@ -691,7 +700,7 @@ Expression:
 /*** Needs some error checking for the float case ***/
 
 static int
-parse_number (char *p, int len, int parsed_float, YYSTYPE *putithere)
+parse_number (const char *p, int len, int parsed_float, YYSTYPE *putithere)
 {
   ULONGEST n = 0;
   ULONGEST limit, limit_div_base;
@@ -853,8 +862,8 @@ yylex (void)
   int c;
   int namelen;
   unsigned int i;
-  char *tokstart;
-  char *tokptr;
+  const char *tokstart;
+  const char *tokptr;
   int tempbufindex;
   static char *tempbuf;
   static int tempbufsize;
@@ -961,7 +970,7 @@ yylex (void)
       {
 	/* It's a number.  */
 	int got_dot = 0, got_e = 0, toktype;
-	char *p = tokstart;
+	const char *p = tokstart;
 	int hex = input_radix > 10;
 
 	if (c == '0' && (p[1] == 'x' || p[1] == 'X'))
@@ -1222,7 +1231,7 @@ static int
 push_variable (struct stoken name)
 {
   char *tmp = copy_name (name);
-  int is_a_field_of_this = 0;
+  struct field_of_this_result is_a_field_of_this;
   struct symbol *sym;
   sym = lookup_symbol (tmp, expression_context_block, VAR_DOMAIN,
 		       &is_a_field_of_this);
@@ -1243,7 +1252,7 @@ push_variable (struct stoken name)
       write_exp_elt_opcode (OP_VAR_VALUE);
       return 1;
     }
-  if (is_a_field_of_this)
+  if (is_a_field_of_this.type != NULL)
     {
       /* it hangs off of `this'.  Must not inadvertently convert from a
 	 method call to data ref.  */
@@ -1386,15 +1395,15 @@ push_expression_name (struct stoken name)
     }
   else
     {
-      struct minimal_symbol *msymbol;
+      struct bound_minimal_symbol msymbol;
 
-      msymbol = lookup_minimal_symbol (tmp, NULL, NULL);
-      if (msymbol != NULL)
+      msymbol = lookup_bound_minimal_symbol (tmp);
+      if (msymbol.minsym != NULL)
 	write_exp_msymbol (msymbol);
       else if (!have_full_symbols () && !have_partial_symbols ())
 	error (_("No symbol table is loaded.  Use the \"file\" command"));
       else
-	error (_("No symbol \"%s\" in current context"), tmp);
+	error (_("No symbol \"%s\" in current context."), tmp);
     }
 
 }

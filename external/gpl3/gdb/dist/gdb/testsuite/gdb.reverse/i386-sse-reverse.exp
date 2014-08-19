@@ -1,4 +1,4 @@
-# Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2009-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,12 +19,8 @@
 # This test tests some i386 general instructions for reverse execution.
 #
 
-if ![target_info exists gdb,can_reverse] {
+if ![supports_reverse] {
     return
-}
-
-if $tracelevel {
-    strace $tracelevel
 }
 
 
@@ -33,35 +29,24 @@ if ![istarget "*86*-*linux*"] then {
     return
 }
 
-set testfile "i386-sse-reverse"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile
 
 # some targets have leading underscores on assembly symbols.
-# TODO: detect this automatically
-set additional_flags ""
-if [istarget "i?86-*-cygwin*"] then {
-  set additional_flags "additional_flags=-DSYMBOL_PREFIX=\"_\""
-}
+set additional_flags [gdb_target_symbol_prefix_flags]
 
-if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list debug $additional_flags]] != "" } {
-    untested i386-sse-reverse
+if {[prepare_for_testing $testfile.exp $testfile $srcfile \
+	 [list debug $additional_flags]]} {
     return -1
 }
 
 set end_of_main          [gdb_get_line_number " end of main "]
 set end_sse_test         [gdb_get_line_number " end sse_test "]
+set end_ssse3_test       [gdb_get_line_number " end ssse3_test "]
 set end_sse4_test         [gdb_get_line_number " end sse4_test "]
 
-# Get things started.
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 runto main
 
-if [target_info exists gdb,use_precord] {
+if [supports_process_record] {
     # Activate process record/replay
     gdb_test_no_output "record" "Turn on process record"
 }
@@ -75,177 +60,142 @@ gdb_test "break $end_sse_test" \
     "Breakpoint $decimal at .* line $end_sse_test\." \
     "set breakpoint at end of sse_test"
 
-gdb_test "continue" \
-    " end sse_test .*" \
-    "continue to end of sse_test"
+set test "continue to end of sse_test"
+gdb_test_multiple "continue" $test {
+    -re " end sse_test .*\r\n$gdb_prompt $" {
+	pass $test
+    }
+    -re " Illegal instruction.*\r\n$gdb_prompt $" {
+	untested i386-sse-reverse
+	return -1
+    }
+}
 
 gdb_test "reverse-step" "xorps.*" "reverse-step to xorps"
 
 gdb_test "info register xmm0" \
-    "xmm0 .*uint128 = 0x7f007f007fff7fff7f007f007fff7fff.*" \
+    "xmm0 .*uint128 = 0xf000c00080008000f800c00080008000.*" \
     "verify xmm0 at end of sse_test"
 
 gdb_test "info register xmm1" \
-    "xmm1 .*uint128 = 0x00ff00ff0000000000ff00ff00000000.*" \
+    "xmm1 .*uint128 = 0x70004000000000007800400000000000.*" \
     "verify xmm1 at end of sse_test"
 
 gdb_test "info register xmm2" \
-    "xmm2 .*uint128 = 0x7f007f007f007f007f007f007f007f00.*" \
+    "xmm2 .*uint128 = 0xf000c000f800c000f000c000f000c000.*" \
     "verify xmm2 at end of sse_test"
 
 gdb_test "reverse-step" "xorpd.*" "reverse-step to xorpd"
 
 gdb_test "info register xmm0" \
-    "xmm0 .*uint128 = 0x7f007f007fff7fff7f007f007fff7fff.*" \
+    "xmm0 .*uint128 = 0xf000c00080008000f800c00080008000.*" \
     "verify xmm0 after reverse xorps"
 
 gdb_test "info register xmm1" \
-    "xmm1 .*uint128 = 0x7fff7fff7fff7fff7fff7fff7fff7fff.*" \
+    "xmm1 .*uint128 = 0x80008000800080008000800080008000.*" \
     "verify xmm1 after reverse xorps"
 
 gdb_test "info register xmm2" \
-    "xmm2 .*uint128 = 0x7f007f007f007f007f007f007f007f00.*" \
+    "xmm2 .*uint128 = 0xf000c000f800c000f000c000f000c000.*" \
     "verify xmm2 after reverse xorps"
 
 gdb_test "reverse-step" "unpckhps.*" "reverse-step to unpckhps"
 
 gdb_test "info register xmm0" \
-    "xmm0 .*uint128 = 0x7fff7fff7fff7fff0108000001400000.*" \
+    "xmm0 .*uint128 = 0x8000800080008000fff00000ffc00000.*" \
     "verify xmm0 after reverse xorpd"
 
 gdb_test "info register xmm1" \
-    "xmm1 .*uint128 = 0x7fff7fff7fff7fff7fff7fff7fff7fff.*" \
+    "xmm1 .*uint128 = 0x80008000800080008000800080008000.*" \
     "verify xmm1 after reverse xorpd"
 
 gdb_test "info register xmm2" \
-    "xmm2 .*uint128 = 0x7f007f007f007f007f007f007f007f00.*" \
+    "xmm2 .*uint128 = 0xf000c000f800c000f000c000f000c000.*" \
     "verify xmm2 after reverse xorpd"
 
 gdb_test "reverse-step" "unpckhpd.*" "reverse-step to unpckhpd"
 
 gdb_test "info register xmm0" \
-    "xmm0 .*uint128 = 0x01080000014000000108000001400000.*" \
+    "xmm0 .*uint128 = 0xfff00000ffc00000fff80000ffc00000.*" \
     "verify xmm0 after reverse unpckhps"
 
 gdb_test "info register xmm1" \
-    "xmm1 .*uint128 = 0x7fff7fff7fff7fff7fff7fff7fff7fff.*" \
+    "xmm1 .*uint128 = 0x80008000800080008000800080008000.*" \
     "verify xmm1 after reverse unpckhps"
 
 gdb_test "info register xmm2" \
-    "xmm2 .*uint128 = 0x7f007f007f007f007f007f007f007f00.*" \
+    "xmm2 .*uint128 = 0xf000c000f800c000f000c000f000c000.*" \
     "verify xmm2 after reverse unpckhps"
 
 gdb_test "reverse-step" "ucomiss.*" "reverse-step to ucomiss"
 
 gdb_test "info register xmm0" \
-    "xmm0 .*uint128 = 0x01080000014000000108000001400000.*" \
+    "xmm0 .*uint128 = 0xfff00000ffc00000fff80000ffc00000.*" \
     "verify xmm0 after reverse unpckhpd"
 
 gdb_test "info register xmm1" \
-    "xmm1 .*uint128 = 0x7fff7fff7fff7fff7fff7fff7fff7fff.*" \
+    "xmm1 .*uint128 = 0x80008000800080008000800080008000.*" \
     "verify xmm1 after reverse unpckhpd"
 
 gdb_test "info register xmm2" \
-    "xmm2 .*uint128 = 0x7f007f007f007f007f007f007f007f00.*" \
+    "xmm2 .*uint128 = 0xf000c000f800c000f000c000f000c000.*" \
     "verify xmm2 after reverse unpckhpd"
 
 gdb_test "reverse-step" "ucomisd.*" "reverse-step to ucomisd"
 
 gdb_test "info register xmm0" \
-    "xmm0 .*uint128 = 0x01080000014000000108000001400000.*" \
+    "xmm0 .*uint128 = 0xfff00000ffc00000fff80000ffc00000.*" \
     "verify xmm0 after reverse ucomiss"
 
 gdb_test "info register xmm1" \
-    "xmm1 .*uint128 = 0x7fff7fff7fff7fff7fff7fff7fff7fff.*" \
+    "xmm1 .*uint128 = 0x80008000800080008000800080008000.*" \
     "verify xmm1 after reverse ucomiss"
 
 gdb_test "info register xmm2" \
-    "xmm2 .*uint128 = 0x7f007f007f007f007f007f007f007f00.*" \
+    "xmm2 .*uint128 = 0xf000c000f800c000f000c000f000c000.*" \
     "verify xmm2 after reverse ucomiss"
 
 gdb_test "reverse-step" "packssdw.*" "reverse-step to packssdw"
 
 gdb_test "info register xmm0" \
-    "xmm0 .*uint128 = 0x01080000014000000108000001400000.*" \
+    "xmm0 .*uint128 = 0xfff00000ffc00000fff80000ffc00000.*" \
     "verify xmm0 after reverse ucomisd"
 
 gdb_test "info register xmm1" \
-    "xmm1 .*uint128 = 0x01080000014000000108000001400000.*" \
+    "xmm1 .*uint128 = 0xfff80000ffc00000fff80000ffc00000.*" \
     "verify xmm1 after reverse ucomisd"
 
 gdb_test "info register xmm2" \
-    "xmm2 .*uint128 = 0x7f007f007f007f007f007f007f007f00.*" \
+    "xmm2 .*uint128 = 0xf000c000f800c000f000c000f000c000.*" \
     "verify xmm2 after reverse ucomisd"
 
 gdb_test "reverse-step" "packsswb.*" "reverse-step to packsswb"
 
 gdb_test "info register xmm0" \
-    "xmm0 .*uint128 = 0x01080000014000000108000001400000.*" \
+    "xmm0 .*uint128 = 0xfff00000ffc00000fff80000ffc00000.*" \
     "verify xmm0 after reverse packssdw"
 
 gdb_test "info register xmm1" \
-    "xmm1 .*uint128 = 0x01080000014000000108000001400000.*" \
+    "xmm1 .*uint128 = 0xfff80000ffc00000fff80000ffc00000.*" \
     "verify xmm1 after reverse packssdw"
 
 gdb_test "info register xmm2" \
-    "xmm2 .*uint128 = 0x01080000014000000108000001400000.*" \
+    "xmm2 .*uint128 = 0xfff00000ffc00000fff00000ffc00000.*" \
     "verify xmm2 after reverse packssdw"
 
-gdb_test "reverse-step" "pabsd.*" "reverse-step to pabsd"
+gdb_test "reverse-step" "orps.*" "reverse-step to orps"
 
 gdb_test "info register xmm0" \
     "xmm0 .*uint128 = 0xfff00000ffc00000fff80000ffc00000.*" \
     "verify xmm0 after reverse packsswb"
 
 gdb_test "info register xmm1" \
-    "xmm1 .*uint128 = 0x01080000014000000108000001400000.*" \
+    "xmm1 .*uint128 = 0xfff80000ffc00000fff80000ffc00000.*" \
     "verify xmm1 after reverse packsswb"
 
 gdb_test "info register xmm2" \
-    "xmm2 .*uint128 = 0x01080000014000000108000001400000.*" \
+    "xmm2 .*uint128 = 0xfff00000ffc00000fff00000ffc00000.*" \
     "verify xmm2 after reverse packsswb"
-
-gdb_test "reverse-step" "pabsw.*" "reverse-step to pabsw"
-
-gdb_test "info register xmm0" \
-    "xmm0 .*uint128 = 0xfff00000ffc00000fff80000ffc00000.*" \
-    "verify xmm0 after reverse pabsd"
-
-gdb_test "info register xmm1" \
-    "xmm1 .*uint128 = 0xfff80000ffc00000fff80000ffc00000.*" \
-    "verify xmm1 after reverse pabsd"
-
-gdb_test "info register xmm2" \
-    "xmm2 .*uint128 = 0x01080000014000000108000001400000.*" \
-    "verify xmm2 after reverse pabsd"
-
-gdb_test "reverse-step" "pabsb.*" "reverse-step to pabsb"
-
-gdb_test "info register xmm0" \
-    "xmm0 .*uint128 = 0xfff00000ffc00000fff80000ffc00000.*" \
-    "verify xmm0 after reverse pabsw"
-
-gdb_test "info register xmm1" \
-    "xmm1 .*uint128 = 0xfff80000ffc00000fff80000ffc00000.*" \
-    "verify xmm1 after reverse pabsw"
-
-gdb_test "info register xmm2" \
-    "xmm2 .*uint128 = 0xfff00000ffc00000fff00000ffc00000.*" \
-    "verify xmm2 after reverse pabsw"
-
-gdb_test "reverse-step" "orps.*" "reverse-step to orps"
-
-gdb_test "info register xmm0" \
-    "xmm0 .*uint128 = 0xfff00000ffc00000fff80000ffc00000.*" \
-    "verify xmm0 after reverse pabsb"
-
-gdb_test "info register xmm1" \
-    "xmm1 .*uint128 = 0xfff80000ffc00000fff80000ffc00000.*" \
-    "verify xmm1 after reverse pabsb"
-
-gdb_test "info register xmm2" \
-    "xmm2 .*uint128 = 0xfff00000ffc00000fff00000ffc00000.*" \
-    "verify xmm2 after reverse pabsb"
 
 gdb_test "reverse-step" "orpd.*" "reverse-step to orpd"
 
@@ -626,20 +576,98 @@ gdb_test "info register xmm2" \
     "verify xmm2 after reverse addps"
 
 
+#ssse3_test
+
+gdb_test "continue" \
+    " end sse_test .*" \
+    "continue to end of sse_test #2"
+
+gdb_test "break $end_ssse3_test" \
+    "Breakpoint $decimal at .* line $end_ssse3_test\." \
+    "set breakpoint at end of ssse3_test"
+
+set test "continue to end of ssse3_test"
+gdb_test_multiple "continue" $test {
+    -re " end ssse3_test .*\r\n$gdb_prompt $" {
+	pass $test
+    }
+    -re " Illegal instruction.*\r\n$gdb_prompt $" {
+	untested i386-ssse3-reverse
+	return -1
+    }
+}
+
+gdb_test "info register xmm0" \
+    "xmm0 .*uint128 = 0x1f1e1d1c1b1a19181716151413121110.*" \
+    "verify xmm0 at end of ssse3_test"
+
+gdb_test "info register xmm1" \
+    "xmm1 .*uint128 = 0x1f1e1d1c1b1a19181716151413121110.*" \
+    "verify xmm1 at end of ssse3_test"
+
+gdb_test "info register xmm2" \
+    "xmm2 .*uint128 = 0x1f1e1d1c1b1a19181716151413121110.*" \
+    "verify xmm2 at end of ssse3_test"
+
+gdb_test "reverse-step" "pabsd.*" "reverse-step to pabsd"
+
+gdb_test "info register xmm0" \
+    "xmm0 .*uint128 = 0x0f0e0d0c0b0a09080706050403020100.*" \
+    "verify xmm0 after reverse pabsd"
+
+gdb_test "info register xmm1" \
+    "xmm1 .*uint128 = 0x1f1e1d1c1b1a19181716151413121110.*" \
+    "verify xmm1 after reverse pabsd"
+
+gdb_test "info register xmm2" \
+    "xmm2 .*uint128 = 0x1f1e1d1c1b1a19181716151413121110.*" \
+    "verify xmm2 after reverse pabsd"
+
+gdb_test "reverse-step" "pabsw.*" "reverse-step to pabsw"
+
+gdb_test "info register xmm0" \
+    "xmm0 .*uint128 = 0x0f0e0d0c0b0a09080706050403020100.*" \
+    "verify xmm0 after reverse pabsw"
+
+gdb_test "info register xmm1" \
+    "xmm1 .*uint128 = 0x1f1e1d1c1b1a19181716151413121110.*" \
+    "verify xmm1 after reverse pabsw"
+
+gdb_test "info register xmm2" \
+    "xmm2 .*uint128 = 0x1f1e1d1c1b1a19181716151413121110.*" \
+    "verify xmm2 after reverse pabsw"
+
+gdb_test "reverse-step" "pabsb.*" "reverse-step to pabsb"
+
+gdb_test "info register xmm0" \
+    "xmm0 .*uint128 = 0x0f0e0d0c0b0a09080706050403020100.*" \
+    "verify xmm0 after reverse pabsb"
+
+gdb_test "info register xmm1" \
+    "xmm1 .*uint128 = 0x1f1e1d1c1b1a19181716151413121110.*" \
+    "verify xmm1 after reverse pabsb"
+
+gdb_test "info register xmm2" \
+    "xmm2 .*uint128 = 0x2f2e2d2c2b2a29282726252423222120.*" \
+    "verify xmm2 after reverse pabsb"
+
+
 #sse4_test
 
-send_gdb "continue\n"
+gdb_test "continue" \
+    " end ssse3_test .*" \
+    "continue to end of ssse3_test #2"
 
 gdb_test "break $end_sse4_test" \
     "Breakpoint $decimal at .* line $end_sse4_test\." \
     "set breakpoint at end of sse4_test"
 
-send_gdb "continue\n"
-gdb_expect {
-    -re " end sse4_test .*" {
-	pass "continue to end of sse4_test"
+set test "continue to end of sse4_test"
+gdb_test_multiple "continue" $test {
+    -re " end sse4_test .*\r\n$gdb_prompt $" {
+	pass $test
     }
-    -re " Illegal instruction.*" {
+    -re " Illegal instruction.*\r\n$gdb_prompt $" {
 	untested i386-sse4-reverse
         return -1
     }

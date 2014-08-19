@@ -1,4 +1,4 @@
-/*	$NetBSD: spellprog.c,v 1.8 2007/12/15 19:44:53 perry Exp $	*/
+/*	$NetBSD: spellprog.c,v 1.8.32.1 2014/08/20 00:05:04 tls Exp $	*/
 
 /* derived from OpenBSD: spellprog.c,v 1.4 2003/06/03 02:56:16 millert Exp */
 
@@ -455,7 +455,7 @@ suffix(char *ep, size_t lev)
 		if ((*t->p1)(ep - t->n1, t->d1, t->a1, lev + 1))
 			return 1;
 		if (t->p2 != NULL) {
-			deriv.buf[lev] = deriv.buf[lev + 1] = '\0';
+			deriv.buf[lev] = deriv.buf[lev + 1] = NULL;
 			return (*t->p2)(ep - t->n2, t->d2, t->a2, lev);
 		}
 		return 0;
@@ -724,7 +724,7 @@ trypref(char *ep, const char *a, size_t lev)
 		if (pp - space >= sizeof(space))
 			return 0;
 	}
-	deriv.buf[lev + 1] = deriv.buf[lev + 2] = '\0';
+	deriv.buf[lev + 1] = deriv.buf[lev + 2] = NULL;
 	return val;
 }
 

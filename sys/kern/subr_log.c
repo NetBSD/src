@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.50 2008/04/28 20:24:04 martin Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.50.44.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.50 2008/04/28 20:24:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.50.44.1 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -387,8 +387,26 @@ logputchar(int c)
 				mbp->msg_bufx = 0;
 			/* If the buffer is full, keep the most recent data. */
 			if (mbp->msg_bufr == mbp->msg_bufx) {
-				 if (++mbp->msg_bufr >= mbp->msg_bufs)
-					mbp->msg_bufr = 0;
+				char c0;
+				int i;
+
+				/*
+				 * Move forward read pointer to the next line
+				 * in the buffer.  Note that the buffer is
+				 * a ring buffer so we should reset msg_bufr
+				 * to 0 when msg_bufr exceeds msg_bufs.
+				 *
+				 * To prevent to loop forever, give up if we
+				 * cannot find a newline in mbp->msg_bufs
+				 * characters (the max size of the buffer).
+				 */
+				for (i = 0; i < mbp->msg_bufs; i++) {
+					c0 = mbp->msg_bufc[mbp->msg_bufr];
+					if (++mbp->msg_bufr >= mbp->msg_bufs)
+						mbp->msg_bufr = 0;
+					if (c0 == '\n')
+						break;
+				}
 			}
 		}
 	}
@@ -397,7 +415,16 @@ logputchar(int c)
 }
 
 const struct cdevsw log_cdevsw = {
-	logopen, logclose, logread, nowrite, logioctl,
-	nostop, notty, logpoll, nommap, logkqfilter,
-	D_OTHER | D_MPSAFE
+	.d_open = logopen,
+	.d_close = logclose,
+	.d_read = logread,
+	.d_write = nowrite,
+	.d_ioctl = logioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = logpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = logkqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER | D_MPSAFE
 };

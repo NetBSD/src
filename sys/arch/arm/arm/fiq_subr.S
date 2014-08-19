@@ -1,4 +1,4 @@
-/*	$NetBSD: fiq_subr.S,v 1.4 2008/04/27 18:58:43 matt Exp $	*/
+/*	$NetBSD: fiq_subr.S,v 1.4.44.1 2014/08/20 00:02:45 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -52,12 +52,17 @@
 #endif
 
 #ifdef __PROG32
+#ifdef _ARM_ARCH_6
 #define	SWITCH_TO_FIQ_MODE						\
-	mrs	r2, cpsr_all					;	\
+	cps	#PSR_FIQ32_MODE
+#else
+#define	SWITCH_TO_FIQ_MODE						\
+	mrs	r2, cpsr					;	\
 	mov	r3, r2						;	\
 	bic	r2, r2, #(PSR_MODE)				;	\
 	orr	r2, r2, #(PSR_FIQ32_MODE)			;	\
 	msr	cpsr_all, r2
+#endif
 #else
 #define	SWITCH_TO_FIQ_MODE					;	\
 	mov	r1, r15						;	\
@@ -67,8 +72,13 @@
 #endif /* __PROG32 */
 
 #ifdef __PROG32
+#ifdef _ARM_ARCH_6
+#define	BACK_TO_SVC_MODE						\
+	cps	#PSR_SVC32_MODE
+#else
 #define	BACK_TO_SVC_MODE						\
 	msr	cpsr_all, r3
+#endif
 #else
 #define	BACK_TO_SVC_MODE					;	\
 	teqp	r1, #0						;	\
@@ -84,10 +94,16 @@
 ENTRY(fiq_getregs)
 	SWITCH_TO_FIQ_MODE
 
+#ifdef __thumb__
+	stmia	r0!, {r8-r12}
+	str	sp, [r0]
+#else
 	stmia	r0, {r8-r13}
+#endif
 
 	BACK_TO_SVC_MODE
 	RET
+END(fiq_getregs)
 
 /*
  * fiq_setregs:
@@ -98,10 +114,16 @@ ENTRY(fiq_getregs)
 ENTRY(fiq_setregs)
 	SWITCH_TO_FIQ_MODE
 
+#ifdef __thumb__
+	ldmia	r0!, {r8-r12}
+	ldr	sp, [r0]
+#else
 	ldmia	r0, {r8-r13}
+#endif
 
 	BACK_TO_SVC_MODE
 	RET
+END(fiq_setregs)
 
 /*
  * fiq_nullhandler:
@@ -113,3 +135,4 @@ ENTRY(fiq_setregs)
 _C_LABEL(fiq_nullhandler):
 	subs	pc, lr, #4
 _C_LABEL(fiq_nullhandler_end):
+	.size	_C_LABEL(fiq_nullhandler), . - _C_LABEL(fiq_nullhandler)

@@ -1,5 +1,5 @@
 /* Simulation code for the CR16 processor.
-   Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
    Contributed by M Ranga Swami Reddy <MR.Swami.Reddy@nsc.com>
 
    This file is part of GDB, the GNU debugger.
@@ -189,10 +189,10 @@ move_to_cr (int cr, creg_t mask, creg_t val, int psw_hw_p)
 }
 
 #ifdef DEBUG
-static void trace_input_func PARAMS ((char *name,
-				      enum op_types in1,
-				      enum op_types in2,
-				      enum op_types in3));
+static void trace_input_func (char *name,
+			      enum op_types in1,
+			      enum op_types in2,
+			      enum op_types in3);
 
 #define trace_input(name, in1, in2, in3) do { if (cr16_debug) trace_input_func (name, in1, in2, in3); } while (0)
 
@@ -5059,6 +5059,8 @@ OP_14C_14 ()
 void
 OP_C_C ()
 {
+  uint32 tmp;
+  uint16 a;
   trace_input ("excp", OP_CONSTANT4, OP_VOID, OP_VOID);
   switch (OP[0])
     {
@@ -5131,11 +5133,13 @@ OP_C_C ()
 	switch (FUNC)
 	  {
 #if !defined(__GO32__) && !defined(_WIN32)
+#ifdef TARGET_SYS_fork
 	  case TARGET_SYS_fork:
 	    trace_input ("<fork>", OP_VOID, OP_VOID, OP_VOID);
 	    RETVAL (fork ());
 	    trace_output_16 (result);
 	    break;
+#endif
 
 #define getpid() 47
 	  case TARGET_SYS_getpid:
@@ -5272,12 +5276,14 @@ OP_C_C ()
 	      }
 	    break;
 
+#ifdef TARGET_SYS_execve
 	  case TARGET_SYS_execve:
 	    trace_input ("<execve>", OP_VOID, OP_VOID, OP_VOID);
 	    RETVAL (execve (MEMPTR (PARM1), (char **) MEMPTR (PARM2<<16|PARM3),
 			     (char **)MEMPTR (PARM4)));
 	    trace_output_16 (result);
 	    break;
+#endif
 
 #ifdef TARGET_SYS_execv
 	  case TARGET_SYS_execv:
@@ -5287,6 +5293,7 @@ OP_C_C ()
 	    break;
 #endif
 
+#ifdef TARGET_SYS_pipe
 	  case TARGET_SYS_pipe:
 	    {
 	      reg_t buf;
@@ -5301,6 +5308,7 @@ OP_C_C ()
 	      trace_output_16 (result);
 	    }
 	  break;
+#endif
 
 #ifdef TARGET_SYS_wait
 	  case TARGET_SYS_wait:
@@ -5365,6 +5373,7 @@ OP_C_C ()
 	    trace_output_32 (result);
 	    break;
 
+#ifdef TARGET_SYS_rename
 	  case TARGET_SYS_rename:
 	    trace_input ("<rename>", OP_MEMREF, OP_MEMREF, OP_VOID);
 	    RETVAL (cr16_callback->rename (cr16_callback, 
@@ -5372,6 +5381,7 @@ OP_C_C ()
 				   MEMPTR ((((unsigned long)PARM4)<<16) |PARM3)));
 	    trace_output_16 (result);
 	    break;
+#endif
 
 	  case 0x408: /* REVISIT: Added a dummy getenv call. */
 	    trace_input ("<getenv>", OP_MEMREF, OP_MEMREF, OP_VOID);
@@ -5424,11 +5434,13 @@ OP_C_C ()
 	    break;
 #endif
 
+#ifdef TARGET_SYS_chown
 	  case TARGET_SYS_chown:
 	    trace_input ("<chown>", OP_VOID, OP_VOID, OP_VOID);
 	    RETVAL (chown (MEMPTR (PARM1), PARM2, PARM3));
 	    trace_output_16 (result);
 	    break;
+#endif
 
 	  case TARGET_SYS_chmod:
 	    trace_input ("<chmod>", OP_VOID, OP_VOID, OP_VOID);
@@ -5455,9 +5467,24 @@ OP_C_C ()
 #endif
 	    
 	  default:
-	    cr16_callback->error (cr16_callback, "Unknown syscall %d", FUNC);
+	    a = OP[0];
+	    switch (a)
+	    {
+	      case TRAP_BREAKPOINT:
+		State.exception = SIGTRAP;
+		tmp = (PC);
+		JMP(tmp);
+		trace_output_void ();
+		break;
+	      case SIGTRAP:  /* supervisor call ?  */
+		State.exception = SIG_CR16_EXIT;
+		trace_output_void ();
+		break;
+	      default:
+		cr16_callback->error (cr16_callback, "Unknown syscall %d", FUNC);
+		break;
+	    }
 	  }
-
 	if ((uint16) result == (uint16) -1)
 	  RETERR (cr16_callback->get_errno(cr16_callback));
 	else

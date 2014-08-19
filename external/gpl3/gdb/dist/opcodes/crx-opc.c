@@ -1,5 +1,5 @@
 /* crx-opc.c -- Table of opcodes for the CRX processor.
-   Copyright 2004, 2005, 2007 Free Software Foundation, Inc.
+   Copyright 2004, 2005, 2007, 2012, 2013 Free Software Foundation, Inc.
    Contributed by Tomer Levi NSC, Israel.
    Originally written for GAS 2.12 by Tomer Levi.
 
@@ -543,16 +543,16 @@ const inst crx_instruction[] =
 
   /* CO-processor extensions.  */
   /* opc12 c4 opc4 ui4 disps9 */
-  {"bcop",    2, 0x30107, 12, COP_BRANCH_INS | FMT_4 | RELAXABLE, 
+  {"bcop",    2, 0x30107, 12, COP_BRANCH_INS | FMT_4 | RELAXABLE,
       {{ui4,8}, {ui4,16}, {disps9,0}}},
   /* opc12 c4 opc4 ui4 disps25 */
-  {"bcop",    3, 0x31107, 12, COP_BRANCH_INS | FMT_4 | RELAXABLE, 
+  {"bcop",    3, 0x31107, 12, COP_BRANCH_INS | FMT_4 | RELAXABLE,
       {{ui4,8}, {ui4,16}, {disps25,0}}},
   /* opc12 c4 opc4 cpdo r r */
-  {"cpdop",   2, 0x3010B, 12, COP_REG_INS | FMT_4, 
+  {"cpdop",   2, 0x3010B, 12, COP_REG_INS | FMT_4,
       {{ui4,16}, {ui4,8}, {regr,4}, {regr,0}}},
   /* opc12 c4 opc4 cpdo r r cpdo16 */
-  {"cpdop",   3, 0x3110B, 12, COP_REG_INS | FMT_4, 
+  {"cpdop",   3, 0x3110B, 12, COP_REG_INS | FMT_4,
       {{ui4,16}, {ui4,8}, {regr,4}, {regr,0}, {ui16,16}}},
   /* esc16 r procreg */
   {"mtpr",    2, 0x3009,  16, NO_TYPE_INS, {{regr8,8}, {regr8,0}}},
@@ -566,9 +566,9 @@ const inst crx_instruction[] =
   {"cinv",    2, 0x3010000, 4,	NO_TYPE_INS, {{ui4,0}}},
 
   /* opc9 ui5 ui5 ui5 r r */
-  {"ram", 2, 0x7C,  23, NO_TYPE_INS, 
+  {"ram", 2, 0x7C,  23, NO_TYPE_INS,
       {{ui5,18}, {ui5,13}, {ui5,8}, {regr,4}, {regr,0}}},
-  {"rim", 2, 0x7D,  23, NO_TYPE_INS, 
+  {"rim", 2, 0x7D,  23, NO_TYPE_INS,
       {{ui5,18}, {ui5,13}, {ui5,8}, {regr,4}, {regr,0}}},
 
   /* opc9 ui3 r */
@@ -587,8 +587,11 @@ const int crx_num_opcodes = ARRAY_SIZE (crx_instruction);
    For example :
       REG(u4, 0x84, CRX_U_REGTYPE)
    is interpreted as :
-      {"u4",  u4, 0x84, CRX_U_REGTYPE}  */
-#define REG(NAME, N, TYPE)    {STRINGX(NAME), {NAME}, N, TYPE}
+      {"u4",  u4, 0x84, CRX_U_REGTYPE}
+   The union initializer (second member) always refers to the first
+   member of the union, so cast NAME to that type to avoid possible
+   compiler warnings when used for non-CRX_R_REGTYPE cases.  */
+#define REG(NAME, N, TYPE)    {STRINGX(NAME), {(reg) NAME}, N, TYPE}
 
 const reg_entry crx_regtab[] =
 {
@@ -701,7 +704,7 @@ The value in entry <N> is mapped to the value <N>
 Example (for N=5):
 
     cst4_map[5]=-4  -->>	5		*/
-const long cst4_map[] =
+const int cst4_map[] =
 {
   0, 1, 2, 3, 4, -4, -1, 7, 8, 16, 32, 20, 12, 48
 };
@@ -709,7 +712,7 @@ const long cst4_map[] =
 const int cst4_maps = ARRAY_SIZE (cst4_map);
 
 /* CRX instructions that don't have arguments.  */
-const char* no_op_insn[] = 
+const char* no_op_insn[] =
 {
   "di", "ei", "eiwait", "nop", "retx", "wait", NULL
 };

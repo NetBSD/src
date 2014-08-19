@@ -1,4 +1,4 @@
-/*	$NetBSD: user.h,v 1.18 2011/01/14 02:06:34 rmind Exp $	*/
+/*	$NetBSD: user.h,v 1.18.18.1 2014/08/20 00:04:44 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,11 +37,5 @@
 #ifdef _KERNEL
 #error "This header has been obsoleted and will be removed."
 #endif
-
-#include <machine/pcb.h>
-
-struct user {
-	struct pcb u_pcb;
-};
 
 #endif /* !_SYS_USER_H_ */

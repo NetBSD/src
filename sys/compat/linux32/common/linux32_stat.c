@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_stat.c,v 1.16 2009/06/04 17:59:30 njoly Exp $ */
+/*	$NetBSD: linux32_stat.c,v 1.16.22.1 2014/08/20 00:03:33 tls Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.16 2009/06/04 17:59:30 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.16.22.1 2014/08/20 00:03:33 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.16 2009/06/04 17:59:30 njoly Exp 
 #include <compat/linux/common/linux_oldolduname.h>
 #include <compat/linux/common/linux_ipc.h>
 #include <compat/linux/common/linux_sem.h>
+#include <compat/linux/common/linux_fcntl.h>
 #include <compat/linux/linux_syscallargs.h>
 
 #include <compat/linux32/common/linux32_types.h>
@@ -248,4 +249,31 @@ linux32_sys_fstat64(struct lwp *l, const struct linux32_sys_fstat64_args *uap, r
 
 	bsd_to_linux32_stat64(&st, &st32);
 	return copyout(&st32, SCARG_P32(uap, sp), sizeof(st32));
+}
+
+int
+linux32_sys_fstatat64(struct lwp *l, const struct linux32_sys_fstatat64_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(netbsd32_charp) path;
+		syscallarg(linux32_stat64p) sp;
+		syscallarg(int) flag;
+	} */
+	int error, nd_flag;
+	struct stat st;
+	struct linux32_stat64 st32;
+
+	if (SCARG(uap, flag) & LINUX_AT_SYMLINK_NOFOLLOW)
+		nd_flag = NOFOLLOW;
+	else
+		nd_flag = FOLLOW;
+
+	error = do_sys_statat(l, SCARG(uap, fd), SCARG_P32(uap, path), nd_flag, &st);
+	if (error != 0)
+		return error;
+
+	bsd_to_linux32_stat64(&st, &st32);
+
+	return copyout(&st32, SCARG_P32(uap, sp), sizeof st32);
 }

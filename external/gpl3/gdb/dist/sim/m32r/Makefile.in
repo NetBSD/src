@@ -1,6 +1,5 @@
 # Makefile template for Configure for the m32r simulator
-# Copyright (C) 1996, 1997, 1998, 1999, 2000, 2003, 2004, 2007, 2008, 2009,
-# 2010, 2011 Free Software Foundation, Inc.
+# Copyright (C) 1996-2014 Free Software Foundation, Inc.
 # Contributed by Cygnus Support.
 #
 # This file is part of GDB, the GNU debugger.
@@ -25,9 +24,6 @@ M32RX_OBJS = m32rx.o cpux.o decodex.o modelx.o mloopx.o
 M32R2_OBJS = m32r2.o cpu2.o decode2.o model2.o mloop2.o
 TRAPS_OBJ = @traps_obj@
 
-CONFIG_DEVICES = dv-sockser.o
-CONFIG_DEVICES =
-
 SIM_OBJS = \
 	$(SIM_NEW_COMMON_OBJS) \
 	sim-cpu.o \
@@ -43,7 +39,7 @@ SIM_OBJS = \
 	$(M32R2_OBJS) \
 	$(TRAPS_OBJ) \
 	devices.o \
-	$(CONFIG_DEVICES)
+	$(m32r_extra_objs)
 
 # Extra headers included by sim-main.h.
 SIM_EXTRA_DEPS = \

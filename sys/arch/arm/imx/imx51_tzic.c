@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_tzic.c,v 1.4 2011/07/28 02:07:42 uebayasi Exp $	*/
+/*	$NetBSD: imx51_tzic.c,v 1.4.12.1 2014/08/20 00:02:46 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 SHIMIZU Ryo <ryo@nerv.org>
@@ -26,10 +26,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_tzic.c,v 1.4 2011/07/28 02:07:42 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_tzic.c,v 1.4.12.1 2014/08/20 00:02:46 tls Exp $");
 
 #define	_INTR_PRIVATE	/* for arm/pic/picvar.h */
 
+#include "opt_imx.h"
 #include "locators.h"
 
 #include <sys/param.h>
@@ -258,19 +259,18 @@ imx51_irq_handler(void *frame)
 static void
 tzic_intr_init(struct tzic_softc * const tzic)
 {
-	uint32_t reg;
 	int i;
 
 	disable_interrupts(I32_bit|F32_bit);
 
-	reg = INTC_READ(tzic, TZIC_INTCNTL);
+	(void) INTC_READ(tzic, TZIC_INTCNTL);
 	INTC_WRITE(tzic, TZIC_INTCNTL, INTCNTL_NSEN_MASK|INTCNTL_NSEN|INTCNTL_EN);
-	reg = INTC_READ(tzic, TZIC_INTCNTL);
+	(void) INTC_READ(tzic, TZIC_INTCNTL);
 	INTC_WRITE(tzic, TZIC_PRIOMASK, SW_TO_HW_IPL(IPL_NONE));
-	reg = INTC_READ(tzic, TZIC_PRIOMASK);
+	(void) INTC_READ(tzic, TZIC_PRIOMASK);
 
 	INTC_WRITE(tzic, TZIC_SYNCCTRL, 0x00);
-	reg = INTC_READ(tzic, TZIC_SYNCCTRL);
+	(void) INTC_READ(tzic, TZIC_SYNCCTRL);
 
 	/* route all interrupts to IRQ.  secure interrupts are for FIQ */
 	for (i = 0; i < 4; i++)

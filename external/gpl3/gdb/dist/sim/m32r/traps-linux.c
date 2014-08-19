@@ -1,6 +1,5 @@
 /* m32r exception, interrupt, and trap (EIT) support
-   Copyright (C) 1998, 2003, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    Contributed by Renesas.
 
    This file is part of GDB, the GNU debugger.
@@ -142,7 +141,6 @@ static void *
 t2h_addr (host_callback *cb, struct cb_syscall *sc,
           unsigned long taddr)
 {
-  extern sim_core_trans_addr (SIM_DESC, sim_cpu *, unsigned, address_word);
   void *addr;
   SIM_DESC sd = (SIM_DESC) sc->p1;
   SIM_CPU *cpu = (SIM_CPU *) sc->p2;

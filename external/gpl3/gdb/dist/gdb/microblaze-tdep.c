@@ -1,6 +1,6 @@
 /* Target-dependent code for Xilinx MicroBlaze.
 
-   Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,14 +29,13 @@
 #include "inferior.h"
 #include "regcache.h"
 #include "target.h"
-#include "frame.h"
 #include "frame-base.h"
 #include "frame-unwind.h"
 #include "dwarf2-frame.h"
 #include "osabi.h"
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "target-descriptions.h"
 #include "opcodes/microblaze-opcm.h"
 #include "opcodes/microblaze-dis.h"
@@ -79,9 +78,9 @@ static const char *microblaze_register_names[] =
 
 #define MICROBLAZE_NUM_REGS ARRAY_SIZE (microblaze_register_names)
 
-static int microblaze_debug_flag = 0;
+static unsigned int microblaze_debug_flag = 0;
 
-void
+static void
 microblaze_debug (const char *fmt, ...)
 { 
   if (microblaze_debug_flag)
@@ -120,10 +119,10 @@ microblaze_register_type (struct gdbarch *gdbarch, int regnum)
 
 /* Fetch the instruction at PC.  */
 
-unsigned long
+static unsigned long
 microblaze_fetch_instruction (CORE_ADDR pc)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch);
+  enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
   gdb_byte buf[4];
 
   /* If we can't read the instruction at PC, return zero.  */
@@ -173,7 +172,6 @@ static struct microblaze_frame_cache *
 microblaze_alloc_frame_cache (void)
 {
   struct microblaze_frame_cache *cache;
-  int i;
 
   cache = FRAME_OBSTACK_ZALLOC (struct microblaze_frame_cache);
 
@@ -228,10 +226,10 @@ microblaze_analyze_prologue (struct gdbarch *gdbarch, CORE_ADDR pc,
 			     CORE_ADDR current_pc,
 			     struct microblaze_frame_cache *cache)
 {
-  char *name;
+  const char *name;
   CORE_ADDR func_addr, func_end, addr, stop, prologue_end_addr = 0;
   unsigned long insn;
-  int rn, rd, ra, rb, imm;
+  int rd, ra, rb, imm;
   enum microblaze_instr op;
   int flags = 0;
   int save_hidden_pointer_found = 0;
@@ -426,7 +424,7 @@ microblaze_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
 /* Return PC of first real instruction of the function starting at
    START_PC.  */
 
-CORE_ADDR
+static CORE_ADDR
 microblaze_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc)
 {
   struct symtab_and_line sal;
@@ -456,12 +454,12 @@ microblaze_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc)
 
 /* Normal frames.  */
 
-struct microblaze_frame_cache *
+static struct microblaze_frame_cache *
 microblaze_frame_cache (struct frame_info *next_frame, void **this_cache)
 {
   struct microblaze_frame_cache *cache;
   struct gdbarch *gdbarch = get_frame_arch (next_frame);
-  CORE_ADDR func, pc, fp;
+  CORE_ADDR func;
   int rn;
 
   if (*this_cache)
@@ -562,6 +560,7 @@ microblaze_extract_return_value (struct type *type, struct regcache *regcache,
 	memcpy(valbuf, buf + MICROBLAZE_REGISTER_SIZE - 1, 1);
 	return;
       case 2:	/* return last 2 bytes in register.  */
+	regcache_cooked_read (regcache, MICROBLAZE_RETVAL_REGNUM, buf);
 	memcpy(valbuf, buf + MICROBLAZE_REGISTER_SIZE - 2, 2);
 	return;
       case 4:	/* for sizes 4 or 8, copy the required length.  */
@@ -611,7 +610,7 @@ microblaze_store_return_value (struct type *type, struct regcache *regcache,
 }
 
 static enum return_value_convention
-microblaze_return_value (struct gdbarch *gdbarch, struct type *func_type,
+microblaze_return_value (struct gdbarch *gdbarch, struct value *function,
 			 struct type *type, struct regcache *regcache,
 			 gdb_byte *readbuf, const gdb_byte *writebuf)
 {
@@ -739,13 +738,13 @@ _initialize_microblaze_tdep (void)
   register_gdbarch_init (bfd_arch_microblaze, microblaze_gdbarch_init);
 
   /* Debug this files internals.  */
-  add_setshow_zinteger_cmd ("microblaze", class_maintenance,
-			    &microblaze_debug_flag, _("\
+  add_setshow_zuinteger_cmd ("microblaze", class_maintenance,
+			     &microblaze_debug_flag, _("\
 Set microblaze debugging."), _("\
 Show microblaze debugging."), _("\
 When non-zero, microblaze specific debugging is enabled."),
-			    NULL,
-			    NULL, 
-			    &setdebuglist, &showdebuglist);
+			     NULL,
+			     NULL,
+			     &setdebuglist, &showdebuglist);
 
 }

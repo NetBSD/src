@@ -1,3 +1,4 @@
+@node typedef bfd, Error reporting, BFD front end, BFD front end
 @section @code{typedef bfd}
 A BFD has type @code{bfd}; objects of this type are the
 cornerstone of any application using BFD. Using BFD
@@ -132,14 +133,17 @@ struct bfd
   /* Decompress sections in this BFD.  */
 #define BFD_DECOMPRESS 0x10000
 
+  /* BFD is a dummy, for plugins.  */
+#define BFD_PLUGIN 0x20000
+
   /* Flags bits to be saved in bfd_preserve_save.  */
 #define BFD_FLAGS_SAVED \
-  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS)
+  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_PLUGIN)
 
   /* Flags bits which are for BFD use only.  */
 #define BFD_FLAGS_FOR_BFD_USE_MASK \
   (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_LINKER_CREATED \
-   | BFD_TRADITIONAL_FORMAT | BFD_DETERMINISTIC_OUTPUT)
+   | BFD_PLUGIN | BFD_TRADITIONAL_FORMAT | BFD_DETERMINISTIC_OUTPUT)
 
   /* Currently my_archive is tested before adding origin to
      anything. I believe that this can become always an add of
@@ -282,7 +286,16 @@ struct bfd
   unsigned int selective_search : 1;
 @};
 
+/* See note beside bfd_set_section_userdata.  */
+static inline bfd_boolean
+bfd_set_cacheable (bfd * abfd, bfd_boolean val)
+@{
+  abfd->cacheable = val;
+  return TRUE;
+@}
+
 @end example
+@node Error reporting, Miscellaneous, typedef bfd, BFD front end
 @section Error reporting
 Most BFD functions return nonzero on success (check their
 individual documentation for precise semantics).  On an error,
@@ -314,6 +327,7 @@ typedef enum bfd_error
   bfd_error_no_armap,
   bfd_error_no_more_archived_files,
   bfd_error_malformed_archive,
+  bfd_error_missing_dso,
   bfd_error_file_not_recognized,
   bfd_error_file_ambiguously_recognized,
   bfd_error_no_contents,
@@ -416,6 +430,44 @@ bfd_error_handler_type bfd_get_error_handler (void);
 @strong{Description}@*
 Return the BFD error handler function.
 
+@subsection BFD assert handler
+If BFD finds an internal inconsistency, the bfd assert
+handler is called with information on the BFD version, BFD
+source file and line.  If this happens, most programs linked
+against BFD are expected to want to exit with an error, or mark
+the current BFD operation as failed, so it is recommended to
+override the default handler, which just calls
+_bfd_error_handler and continues.
+
+
+@example
+
+typedef void (*bfd_assert_handler_type) (const char *bfd_formatmsg,
+                                         const char *bfd_version,
+                                         const char *bfd_file,
+                                         int bfd_line);
+
+@end example
+@findex bfd_set_assert_handler
+@subsubsection @code{bfd_set_assert_handler}
+@strong{Synopsis}
+@example
+bfd_assert_handler_type bfd_set_assert_handler (bfd_assert_handler_type);
+@end example
+@strong{Description}@*
+Set the BFD assert handler function.  Returns the previous
+function.
+
+@findex bfd_get_assert_handler
+@subsubsection @code{bfd_get_assert_handler}
+@strong{Synopsis}
+@example
+bfd_assert_handler_type bfd_get_assert_handler (void);
+@end example
+@strong{Description}@*
+Return the BFD assert handler function.
+
+@node Miscellaneous, Memory Usage, Error reporting, BFD front end
 @section Miscellaneous
 
 
@@ -678,6 +730,11 @@ The following functions exist but have not yet been documented.
        BFD_SEND (abfd, _bfd_find_nearest_line, \
                  (abfd, sec, syms, off, file, func, line))
 
+#define bfd_find_nearest_line_discriminator(abfd, sec, syms, off, file, func, \
+                                            line, disc) \
+       BFD_SEND (abfd, _bfd_find_nearest_line_discriminator, \
+                 (abfd, sec, syms, off, file, func, line, disc))
+
 #define bfd_find_line(abfd, syms, sym, file, line) \
        BFD_SEND (abfd, _bfd_find_line, \
                  (abfd, syms, sym, file, line))
@@ -709,6 +766,9 @@ The following functions exist but have not yet been documented.
 
 #define bfd_gc_sections(abfd, link_info) \
        BFD_SEND (abfd, _bfd_gc_sections, (abfd, link_info))
+
+#define bfd_lookup_section_flags(link_info, flag_info, section) \
+       BFD_SEND (abfd, _bfd_lookup_section_flags, (link_info, flag_info, section))
 
 #define bfd_merge_sections(abfd, link_info) \
        BFD_SEND (abfd, _bfd_merge_sections, (abfd, link_info))
@@ -774,60 +834,6 @@ same machine type, this function can be used to switch between
 the preferred one (alternative == 0) and any others.  Currently,
 only ELF supports this feature, with up to two alternate
 machine codes.
-
-
-@example
-struct bfd_preserve
-@{
-  void *marker;
-  void *tdata;
-  flagword flags;
-  const struct bfd_arch_info *arch_info;
-  struct bfd_section *sections;
-  struct bfd_section *section_last;
-  unsigned int section_count;
-  struct bfd_hash_table section_htab;
-@};
-
-@end example
-@findex bfd_preserve_save
-@subsubsection @code{bfd_preserve_save}
-@strong{Synopsis}
-@example
-bfd_boolean bfd_preserve_save (bfd *, struct bfd_preserve *);
-@end example
-@strong{Description}@*
-When testing an object for compatibility with a particular
-target back-end, the back-end object_p function needs to set
-up certain fields in the bfd on successfully recognizing the
-object.  This typically happens in a piecemeal fashion, with
-failures possible at many points.  On failure, the bfd is
-supposed to be restored to its initial state, which is
-virtually impossible.  However, restoring a subset of the bfd
-state works in practice.  This function stores the subset and
-reinitializes the bfd.
-
-@findex bfd_preserve_restore
-@subsubsection @code{bfd_preserve_restore}
-@strong{Synopsis}
-@example
-void bfd_preserve_restore (bfd *, struct bfd_preserve *);
-@end example
-@strong{Description}@*
-This function restores bfd state saved by bfd_preserve_save.
-If MARKER is non-NULL in struct bfd_preserve then that block
-and all subsequently bfd_alloc'd memory is freed.
-
-@findex bfd_preserve_finish
-@subsubsection @code{bfd_preserve_finish}
-@strong{Synopsis}
-@example
-void bfd_preserve_finish (bfd *, struct bfd_preserve *);
-@end example
-@strong{Description}@*
-This function should be called when the bfd state saved by
-bfd_preserve_save is no longer needed.  ie. when the back-end
-object_p function returns with success.
 
 @findex bfd_emul_get_maxpagesize
 @subsubsection @code{bfd_emul_get_maxpagesize}

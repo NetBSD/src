@@ -1,6 +1,7 @@
-/*	$NetBSD: iavc_pci.c,v 1.13.22.1 2012/11/20 03:02:15 tls Exp $	*/
+/*	$NetBSD: iavc_pci.c,v 1.13.22.2 2014/08/20 00:03:42 tls Exp $	*/
 
 /*
+	char intrbuf[PCI_INTRSTR_LEN];
  * Copyright (c) 2001-2003 Cubical Solutions Ltd.
  * All rights reserved.
  *
@@ -32,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.13.22.1 2012/11/20 03:02:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.13.22.2 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -129,6 +130,7 @@ iavc_pci_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	int ret;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	pp = find_cardname(pa);
 	if (pp == NULL)
@@ -138,8 +140,6 @@ iavc_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_t1 = 0;
 	sc->sc_dma = 0;
 	sc->dmat = pa->pa_dmat;
-
-	iavc_b1dma_reset(sc);
 
 	if (pci_mapreg_map(pa, IAVC_PCI_IOBA, PCI_MAPREG_TYPE_IO, 0,
 		&sc->sc_io_bt, &sc->sc_io_bh, &psc->io_base, &psc->io_size)) {
@@ -153,6 +153,8 @@ iavc_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	aprint_normal(": %s\n", pp->name);
+
+	iavc_b1dma_reset(sc);
 
 	if (pp->npp_product == PCI_PRODUCT_AVM_T1) {
 		aprint_error_dev(sc->sc_dev, "sorry, PRI not yet supported\n");
@@ -207,7 +209,7 @@ iavc_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, iavc_pci_intr, psc);
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");

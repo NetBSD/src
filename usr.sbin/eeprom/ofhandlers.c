@@ -1,4 +1,4 @@
-/*	$NetBSD: ofhandlers.c,v 1.5 2011/01/04 09:25:21 wiz Exp $	*/
+/*	$NetBSD: ofhandlers.c,v 1.5.12.1 2014/08/20 00:05:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,15 +48,15 @@ extern	int verbose;
 
 static	char err_str[BUFSIZE];
 
-static	void of_notsupp (struct extabent *, struct ofiocdesc *, char *);
-static	void of_uint32h (struct extabent *, struct ofiocdesc *, char *);
-static	void of_uint32d (struct extabent *, struct ofiocdesc *, char *);
+static	void of_notsupp(const struct extabent *, struct ofiocdesc *, char *);
+static	void of_uint32h(const struct extabent *, struct ofiocdesc *, char *);
+static	void of_uint32d(const struct extabent *, struct ofiocdesc *, char *);
 
 /*
  * There are several known fields that I either don't know how to
  * deal with or require special treatment.
  */
-static	struct extabent ofextab[] = {
+static	const struct extabent ofextab[] = {
 	{ "security-password",		of_notsupp },
 	{ "security-mode",		of_notsupp },
 	{ "oem-logo",			of_notsupp },
@@ -79,8 +79,7 @@ static	struct extabent ofextab[] = {
 };
 
 void
-of_action(keyword, arg)
-	char *keyword, *arg;
+of_action(char *keyword, char *arg)
 {
 	char	*cp;
 
@@ -90,11 +89,10 @@ of_action(keyword, arg)
 }
 
 char *
-of_handler(keyword, arg)
-	char *keyword, *arg;
+of_handler(char *keyword, char *arg)
 {
 	struct ofiocdesc ofio;
-	struct extabent *ex;
+	const struct extabent *ex;
 	char ofio_buf[BUFSIZE];
 	int fd, optnode;
 
@@ -184,30 +182,21 @@ of_handler(keyword, arg)
 
 /* ARGSUSED */
 static void
-of_notsupp(exent, ofiop, arg)
-	struct extabent *exent;
-	struct ofiocdesc *ofiop;
-	char *arg;
+of_notsupp(const struct extabent *exent, struct ofiocdesc *ofiop, char *arg)
 {
 
 	warnx("property `%s' not yet supported", exent->ex_keyword);
 }
 
 static void
-of_uint32h(exent, ofiop, arg)
-	struct extabent *exent;
-	struct ofiocdesc *ofiop;
-	char *arg;
+of_uint32h(const struct extabent *exent, struct ofiocdesc *ofiop, char *arg)
 {
 
 	printf("%s=0x%08x\n", exent->ex_keyword, *(uint32_t *)ofiop->of_buf);
 }
 
 static void
-of_uint32d(exent, ofiop, arg)
-	struct extabent *exent;
-	struct ofiocdesc *ofiop;
-	char *arg;
+of_uint32d(const struct extabent *exent, struct ofiocdesc *ofiop, char *arg)
 {
 
 	printf("%s=%d\n", exent->ex_keyword, *(uint32_t *)ofiop->of_buf);
@@ -218,10 +207,10 @@ of_uint32d(exent, ofiop, arg)
  * (Really!  This is the only way I could get it to work!)
  */
 void
-of_dump()
+of_dump(void)
 {
 	struct ofiocdesc ofio1, ofio2;
-	struct extabent *ex;
+	const struct extabent *ex;
 	char buf1[BUFSIZE], buf2[BUFSIZE], buf3[BUFSIZE], buf4[BUFSIZE];
 	int fd, optnode;
 

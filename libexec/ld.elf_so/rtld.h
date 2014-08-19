@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.110.2.1 2013/06/23 06:28:50 tls Exp $	 */
+/*	$NetBSD: rtld.h,v 1.110.2.2 2014/08/20 00:02:22 tls Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -48,7 +48,7 @@
 
 #if defined(_RTLD_SOURCE)
 
-#ifdef __ARM_EABI__
+#if defined(__ARM_EABI__) && !defined(__ARM_DWARF_EH__)
 #include "unwind.h"
 #endif
 
@@ -259,7 +259,11 @@ typedef struct Struct_Obj_Entry {
 						  * object we know about. */
 
 #ifdef __powerpc__
+#ifdef _LP64
+	Elf_Addr	glink;		/* global linkage */
+#else
 	Elf_Addr       *gotptr;		/* GOT table (secure-plt only) */
+#endif
 #endif
 
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
@@ -348,7 +352,7 @@ __dso_public int dl_iterate_phdr(int (*)(struct dl_phdr_info *, size_t, void *),
 
 __dso_public void *_dlauxinfo(void) __pure;
 
-#ifdef __ARM_EABI__
+#if defined(__ARM_EABI__) && !defined(__ARM_DWARF_EH__)
 /*
  * This is used by libgcc to find the start and length of the exception table
  * associated with a PC.

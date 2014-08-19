@@ -1,4 +1,4 @@
-/* $NetBSD: bt463.c,v 1.16 2012/02/12 16:34:11 matt Exp $ */
+/* $NetBSD: bt463.c,v 1.16.6.1 2014/08/20 00:03:37 tls Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt463.c,v 1.16 2012/02/12 16:34:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt463.c,v 1.16.6.1 2014/08/20 00:03:37 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,10 +171,15 @@ static struct bt463data *console_data;
 /*
  * Internal functions.
  */
-inline void bt463_wraddr(struct bt463data *, u_int16_t);
 
 void	bt463_update(void *);
 
+static inline void
+bt463_wraddr(struct bt463data *data, u_int16_t ireg)
+{
+	data->ramdac_wr(data->cookie, BT463_REG_ADDR_LOW, ireg & 0xff);
+	data->ramdac_wr(data->cookie, BT463_REG_ADDR_HIGH, (ireg >> 8) & 0xff);
+}
 
 /*****************************************************************************/
 
@@ -537,13 +542,6 @@ bt463_copyback(void *p)
 		}
 }
 #endif
-
-inline void
-bt463_wraddr(struct bt463data *data, u_int16_t ireg)
-{
-	data->ramdac_wr(data->cookie, BT463_REG_ADDR_LOW, ireg & 0xff);
-	data->ramdac_wr(data->cookie, BT463_REG_ADDR_HIGH, (ireg >> 8) & 0xff);
-}
 
 void
 bt463_update(void *p)

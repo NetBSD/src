@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.101.2.1 2013/06/23 06:21:05 tls Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.101.2.2 2014/08/20 00:02:15 tls Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.101.2.1 2013/06/23 06:21:05 tls Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.101.2.2 2014/08/20 00:02:15 tls Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -2121,6 +2121,7 @@ res_searchN(const char *name, struct res_target *target, res_state res)
 	const char *cp, * const *domain;
 	HEADER *hp;
 	u_int dots;
+	char buf[MAXHOSTNAMELEN];
 	int trailing_dot, ret, saved_herrno;
 	int got_nodata = 0, got_servfail = 0, tried_as_is = 0;
 
@@ -2141,7 +2142,7 @@ res_searchN(const char *name, struct res_target *target, res_state res)
 	/*
 	 * if there aren't any dots, it could be a user-level alias
 	 */
-	if (!dots && (cp = __hostalias(name)) != NULL) {
+	if (!dots && (cp = res_hostalias(res, name, buf, sizeof(buf))) != NULL) {
 		ret = res_queryN(cp, target, res);
 		return ret;
 	}

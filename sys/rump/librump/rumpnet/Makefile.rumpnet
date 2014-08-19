@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpnet,v 1.12.14.1 2013/06/23 06:20:28 tls Exp $
+#	$NetBSD: Makefile.rumpnet,v 1.12.14.2 2014/08/20 00:04:42 tls Exp $
 #
 
 LIB=		rumpnet
@@ -12,9 +12,14 @@ SRCS=	net_stub.c netisr.c rump_net.c
 
 SRCS+=	rumpnet_if_wrappers.c
 
+SRCS+=	rumpnet_syscalls.c
+
 # sys/kern networking (sockets, mbufs, etc.)
 SRCS+=	sys_socket.c uipc_accf.c uipc_domain.c uipc_mbuf.c uipc_mbuf2.c	\
 	uipc_socket.c uipc_socket2.c uipc_syscalls.c
+
+# sys/net
+SRCS+=	pktqueue.c
 
 # radix trie support
 SRCS+=	radix.c

@@ -1,7 +1,6 @@
 /* Remote debugging interface for PPCbug (PowerPC) Rom monitor
    for GDB, the GNU debugger.
-   Copyright (C) 1995, 1998, 1999, 2000, 2001, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
 
    Written by Stu Grossman of Cygnus Support
 
@@ -169,7 +168,6 @@ init_ppc_cmds (char *LOAD_CMD,
   OPS->register_pattern = "\\(\\w+\\) +=\\([0-9a-fA-F]+\\b\\)";
   OPS->supply_register = ppcbug_supply_register;
   OPS->dump_registers = "rd\r";	/* dump all registers */
-  OPS->load_routine = NULL;	/* load_routine (defaults to SRECs) */
   OPS->load = LOAD_CMD;		/* download command */
   OPS->loadresp = NULL;		/* load response */
   OPS->prompt = "PPC1-Bug>";	/* monitor command prompt */

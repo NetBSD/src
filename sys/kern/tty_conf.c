@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.55 2008/04/28 20:24:05 martin Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.55.44.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -66,7 +66,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.55 2008/04/28 20:24:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.55.44.1 2014/08/20 00:04:29 tls Exp $");
+
+#define TTY_ALLOW_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>

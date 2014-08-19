@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.4 2005/04/07 16:28:40 christos Exp $	*/
+/*	$NetBSD: externs.h,v 1.4.50.1 2014/08/20 00:05:06 tls Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -69,5 +69,6 @@ extern	void	outchar(int);
 extern	void	outqchar(int);
 extern	void	outstrg(const char *);
 extern	void	outint(int);
-extern	void	outname(const char *);
+#define outname(a)	outname1(__FILE__, __LINE__, a);
+extern	void	outname1(const char *, size_t, const char *);
 extern	void	outsrc(const char *);

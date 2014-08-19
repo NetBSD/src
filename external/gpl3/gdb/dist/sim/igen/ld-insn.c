@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2002-2014 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -874,13 +874,6 @@ parse_insn_model_record (table *file,
 	  filter_parse (&insn->processors, name);
 	}
     }
-#if 0
-  /* for some reason record the max length of any
-     function unit field */
-  int len = strlen (insn_model_ptr->field[insn_model_fields]);
-  if (model->max_model_fields_len < len)
-    model->max_model_fields_len = len;
-#endif
   /* link it in */
   last_insn_model = &insn->models;
   while ((*last_insn_model) != NULL)
@@ -1296,6 +1289,8 @@ print_insn_words (lf *file, insn_entry * insn)
 	  insn_field_entry *field = word->first;
 	  while (1)
 	    {
+	      insn_field_cond *cond;
+
 	      if (options.insn_specifying_widths)
 		lf_printf (file, "%d.", field->width);
 	      else
@@ -1317,6 +1312,34 @@ print_insn_words (lf *file, insn_entry * insn)
 		  break;
 		case insn_field_string:
 		  lf_printf (file, "%s", field->val_string);
+
+		  if (field->conditions == NULL)
+		    break;
+
+		  if (field->conditions->test == insn_field_cond_eq)
+		    {
+		      if (field->conditions->type == insn_field_cond_value)
+			lf_printf (file, "=%ld",
+				   (long) field->conditions->value);
+		      else
+			lf_printf (file, "=%s", field->conditions->string);
+
+		      /* There can be only one equality condition.  */
+		      ASSERT (field->conditions->next == NULL);
+		      break;
+		    }
+
+		  for (cond = field->conditions;
+		       cond != NULL;
+		       cond = cond->next)
+		    {
+		      ASSERT (cond->test == insn_field_cond_ne);
+
+		      if (cond->type == insn_field_cond_value)
+			lf_printf (file, "!%ld", (long) cond->value);
+		      else
+			lf_printf (file, "!%s", cond->string);
+		    }
 		  break;
 		}
 	      if (field == word->last)

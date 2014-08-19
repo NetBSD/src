@@ -49,12 +49,8 @@ int argc;
 char *argv[], **envp;
 #endif
 {
-#ifdef usestubs
-    set_debug_traps();
-    breakpoint();
-#endif
 #ifdef FAKEARGV
-    printf ("%d\n", factorial (1));
+    printf ("%d\n", factorial (1)); /* commands.exp: hw local_var out of scope */
 #else    
     if (argc != 2) {
 	printf ("usage:  factorial <number>\n");
@@ -79,4 +75,4 @@ int factorial (value) int value;
     }
     local_var = value;
     return (value);
-}
+} /* commands.exp: local_var out of scope  */

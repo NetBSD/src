@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_afmap.c,v 1.19 2008/11/07 00:20:01 dyoung Exp $	*/
+/*	$NetBSD: altq_afmap.c,v 1.19.26.1 2014/08/20 00:02:39 tls Exp $	*/
 /*	$KAME: altq_afmap.c,v 1.12 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.19 2008/11/07 00:20:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.19.26.1 2014/08/20 00:02:39 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -334,7 +334,8 @@ afmclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	     head = head->afh_chain.le_next) {
 
 		/* call interface to clean up maps */
-		sprintf(fmap.af_ifname, "%s", head->afh_ifp->if_xname);
+		snprintf(fmap.af_ifname, sizeof(fmap.af_ifname),
+		    "%s", head->afh_ifp->if_xname);
 		err = afmioctl(dev, AFM_CLEANFMAP, (void *)&fmap, flag, l);
 		if (err && error == 0)
 			error = err;

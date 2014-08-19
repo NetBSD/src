@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.73.2.2 2013/06/23 06:20:11 tls Exp $
+# $NetBSD: GENERIC,v 1.73.2.3 2014/08/20 00:03:21 tls Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.73.2.2 $"
+#ident 		"GENERIC-$Revision: 1.73.2.3 $"
 
 maxusers	32
 
@@ -34,9 +34,9 @@ maxusers	32
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	KTRACE
 
-#options 	SYSVMSG		# System V message queues
-#options 	SYSVSEM		# System V semaphores
-#options 	SYSVSHM		# System V shared memory
+options 	SYSVMSG		# System V message queues
+options 	SYSVSEM		# System V semaphores
+options 	SYSVSHM		# System V shared memory
 
 #options 	MODULAR		# module(7) support
 #options 	USERCONF	# userconf(4) support
@@ -134,7 +134,6 @@ options 	INET6		# IPV6
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires BPF)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_COMPAT # Compat for IP-Filter
@@ -206,7 +205,26 @@ viaide* 	at pci? dev ? function ?	# VIA IDE controllers
 atabus* at ata?
 
 # IDE drives
-wd*		at atabus? drive ? flags 0x0000	# the drives themselves
+# Flags are used only with controllers that support DMA operations
+# and mode settings (e.g. some pciide controllers)
+# The lowest order four bits (rightmost digit) of the flags define the PIO
+# mode to use, the next set of four bits the DMA mode and the third set the
+# UltraDMA mode. For each set of four bits, the 3 lower bits define the mode
+# to use, and the last bit must be 1 for this setting to be used.
+# For DMA and UDMA, 0xf (1111) means 'disable'.
+# 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
+# (0xc=1100, 0xa=1010, 0xf=1111)
+# 0x0000 means "use whatever the drive claims to support".
+wd*		at atabus? drive ? flags 0x0000
+
+# ATAPI bus support
+atapibus*	at atapi?
+
+# ATAPI devices
+# flags have the same meaning as for IDE drives.
+cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 # PCI network interfaces
 ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
@@ -248,19 +266,23 @@ uvideo* at uhub?			# USB Video Class capture devices
 video*	at videobus?
 
 # USB printer
-ulpt*	at uhub? port ? configuration ? interface ?	# USB Printer
+ulpt*	at uhub? port ? configuration ? interface ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
 wd*	at umass?
 
-scsibus* at umass?
-sd*	at scsibus? target ? lun ?	# SCSI disk drives
-cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+# USB scanners
+#uscanner* at uhub? port ?
+ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
 
-atapibus* at atapi?
-sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
-cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+# SCSI bus support
+scsibus* 	at umass?
+
+# SCSI devices
+sd*		at scsibus? target ? lun ?	# SCSI disk drives
+cd*		at scsibus? target ? lun ?	# SCSI CD-ROM drives
+
 
 #
 # Pseudo-Devices

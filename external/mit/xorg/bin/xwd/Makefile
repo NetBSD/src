@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.2.12.1 2013/06/23 06:28:42 tls Exp $
+#	$NetBSD: Makefile,v 1.2.12.2 2014/08/20 00:00:10 tls Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xwd
 SRCS=	xwd.c clientwin.c dsimple.c list.c multiVis.c
 
-CPPFLAGS+=-I${X11SRCDIR./xlsfonts}
+CPPFLAGS+=-I${X11SRCDIR./xlsfonts} -DXKB
 .PATH:	${X11SRCDIR./xlsfonts}
 
 LDADD+=	-lXmuu -lXt -lSM -lICE -lXext -lX11

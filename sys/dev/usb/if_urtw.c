@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.1.6.1 2013/02/25 00:29:36 tls Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.1.6.2 2014/08/20 00:03:51 tls Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.1.6.1 2013/02/25 00:29:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.1.6.2 2014/08/20 00:03:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1984,12 +1984,11 @@ usbd_status
 urtw_led_blink(struct urtw_softc *sc)
 {
 	uint8_t ing = 0;
-	usbd_status error;
 
 	if (sc->sc_gpio_blinkstate == URTW_LED_ON)
-		error = urtw_led_on(sc, URTW_LED_GPIO);
+		(void)urtw_led_on(sc, URTW_LED_GPIO);
 	else
-		error = urtw_led_off(sc, URTW_LED_GPIO);
+		(void)urtw_led_off(sc, URTW_LED_GPIO);
 	sc->sc_gpio_blinktime--;
 	if (sc->sc_gpio_blinktime == 0)
 		ing = 1;
@@ -2002,10 +2001,10 @@ urtw_led_blink(struct urtw_softc *sc)
 	if (ing == 1) {
 		if (sc->sc_gpio_ledstate == URTW_LED_ON &&
 		    sc->sc_gpio_ledon == 0)
-			error = urtw_led_on(sc, URTW_LED_GPIO);
+			(void)urtw_led_on(sc, URTW_LED_GPIO);
 		else if (sc->sc_gpio_ledstate == URTW_LED_OFF &&
 		    sc->sc_gpio_ledon == 1)
-			error = urtw_led_off(sc, URTW_LED_GPIO);
+			(void)urtw_led_off(sc, URTW_LED_GPIO);
 
 		sc->sc_gpio_blinktime = 0;
 		sc->sc_gpio_ledinprogress = 0;
@@ -2248,7 +2247,6 @@ urtw_init(struct ifnet *ifp)
 	struct urtw_rf *rf = &sc->sc_rf;
 	struct ieee80211com *ic = &sc->sc_ic;
 	usbd_status error;
-	int ret;
 
 	urtw_stop(ifp, 0);
 
@@ -2328,10 +2326,10 @@ urtw_init(struct ifnet *ifp)
 		error = urtw_open_pipes(sc);
 		if (error != 0)
 			goto fail;
-		ret = urtw_alloc_rx_data_list(sc);
+		error = urtw_alloc_rx_data_list(sc);
 		if (error != 0)
 			goto fail;
-		ret = urtw_alloc_tx_data_list(sc);
+		error = urtw_alloc_tx_data_list(sc);
 		if (error != 0)
 			goto fail;
 		sc->sc_flags |= URTW_INIT_ONCE;
@@ -3059,7 +3057,7 @@ urtw_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct ieee80211_node *ni;
 	struct mbuf *m, *mnew;
 	uint8_t *desc, quality, rate;
-	int actlen, flen, len, nf, rssi, s;
+	int actlen, flen, len, rssi, s;
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
@@ -3160,8 +3158,6 @@ urtw_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			quality = 127 - quality;
 	} else
 		quality = (quality > 64) ? 0 : ((64 - quality) * 100) / 64;
-
-	nf = quality;
 
 	/* send the frame to the 802.11 layer */
 	ieee80211_input(ic, m, ni, rssi, 0);
@@ -3594,7 +3590,6 @@ urtw_8187b_init(struct ifnet *ifp)
 	struct urtw_softc *sc = ifp->if_softc;
 	struct urtw_rf *rf = &sc->sc_rf;
 	struct ieee80211com *ic = &sc->sc_ic;
-	int ret;
 	uint8_t data;
 	usbd_status error;
 
@@ -3698,10 +3693,10 @@ urtw_8187b_init(struct ifnet *ifp)
 		error = urtw_open_pipes(sc);
 		if (error != 0)
 			goto fail;
-		ret = urtw_alloc_rx_data_list(sc);
+		error = urtw_alloc_rx_data_list(sc);
 		if (error != 0)
 			goto fail;
-		ret = urtw_alloc_tx_data_list(sc);
+		error = urtw_alloc_tx_data_list(sc);
 		if (error != 0)
 			goto fail;
 		sc->sc_flags |= URTW_INIT_ONCE;

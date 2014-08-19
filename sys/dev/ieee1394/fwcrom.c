@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcrom.c,v 1.13 2010/08/26 07:36:53 cegger Exp $	*/
+/*	$NetBSD: fwcrom.c,v 1.13.18.1 2014/08/20 00:03:38 tls Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwcrom.c,v 1.13 2010/08/26 07:36:53 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwcrom.c,v 1.13.18.1 2014/08/20 00:03:38 tls Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -283,44 +283,45 @@ crom_desc_specver(uint32_t spec, uint32_t ver, char *buf, int len)
 }
 
 const char *
-crom_desc(struct crom_context *cc, char *buf, int len)
+crom_desc(struct crom_context *cc, char *buf, size_t len)
 {
 	struct csrreg *reg;
 	struct csrdirectory *dir;
 	const char *desc;
 	uint16_t crc;
+	size_t l = 0;
 
 	reg = crom_get(cc);
 	switch (reg->key & CSRTYPE_MASK) {
 	case CSRTYPE_I:
 #if 0
-		len -= snprintf(buf, len, "0x%x", reg->val);
-		buf += strlen(buf);
+		l += snprintf(buf + l, len - l, "0x%x", reg->val);
 #else
 		*buf = '\0';
 #endif
 		break;
 	case CSRTYPE_C:
-		len -=
-		    snprintf(buf, len, "offset=0x%04x(%d)", reg->val, reg->val);
-		buf += strlen(buf);
+		l += snprintf(buf + l, len - l, "offset=0x%04x(%d)",
+		    reg->val, reg->val);
 		break;
 	case CSRTYPE_L:
 		/* XXX fall through */
 	case CSRTYPE_D:
 		dir = (struct csrdirectory *) (reg + reg->val);
 		crc = crom_crc((uint32_t *)dir->entry, dir->crc_len);
-		len -= snprintf(buf, len, "len=%d crc=0x%04x ",
+		l += snprintf(buf + l, len - l, "len=%d crc=0x%04x ",
 		    dir->crc_len, crc);
-		buf += strlen(buf);
 
+		if (l > len)
+			l = len;
 		if (crc == dir->crc)
-			len -= snprintf(buf, len, "(OK) ");
+			l += snprintf(buf + l, len - l, "(OK) ");
 		else
-			len -= snprintf(buf, len, "(NG, 0x%x) ",
+			l += snprintf(buf + l, len - l, "(NG, 0x%x) ",
 			    dir->crc);
-		buf += strlen(buf);
 	}
+	if (l > len)
+		l = len;
 	switch (reg->key) {
 	case CSRKEY_VENDOR: /* 0x03 */
 		desc = "module_vendor_ID";
@@ -374,7 +375,7 @@ crom_desc(struct crom_context *cc, char *buf, int len)
 	case CROM_TEXTLEAF: /* 0x81 */
 	case CROM_TEXTLEAF2: /* 0x82 */
 		desc = "text_leaf";
-		crom_parse_text(cc, buf + strlen(buf), len);
+		crom_parse_text(cc, buf + l, len - l);
 		break;
 	case CROM_NODEID: /* 0x8d */
 		desc = "node_unique_ID";

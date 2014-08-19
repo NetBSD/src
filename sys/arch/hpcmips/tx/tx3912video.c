@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.41.6.1 2012/11/20 03:01:24 tls Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.41.6.2 2014/08/20 00:03:03 tls Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.41.6.1 2012/11/20 03:01:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.41.6.2 2014/08/20 00:03:03 tls Exp $");
 
 #define TX3912VIDEO_DEBUG
 
@@ -434,7 +434,7 @@ tx3912video_framebuffer_init(struct video_chip *chip)
 void
 tx3912video_resolution_init(struct video_chip *chip)
 {
-	int h, v, split, bit8, horzval, lineval;
+	int h, v, split, horzval, lineval;
 	tx_chipset_tag_t tc = chip->vc_v;
 	txreg_t reg;
 	u_int32_t val;
@@ -443,8 +443,6 @@ tx3912video_resolution_init(struct video_chip *chip)
 	v = chip->vc_fbheight;
 	reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);
 	split = reg & TX3912_VIDEOCTRL1_DISPSPLIT;
-	bit8  = (TX3912_VIDEOCTRL1_BITSEL(reg) == 
-	    TX3912_VIDEOCTRL1_BITSEL_8BITCOLOR);
 	val = TX3912_VIDEOCTRL1_BITSEL(reg);
 
 	if ((val == TX3912_VIDEOCTRL1_BITSEL_8BITCOLOR) && !split) {

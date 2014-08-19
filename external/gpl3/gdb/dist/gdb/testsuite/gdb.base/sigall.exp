@@ -1,5 +1,4 @@
-#   Copyright 1995, 1996, 1997, 1999, 2007, 2008, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright 1995-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,26 +18,12 @@ if [target_info exists gdb,nosignals] {
     continue
 }
 
-if $tracelevel then {
-	strace $tracelevel
+standard_testfile
+
+if {[prepare_for_testing $testfile.exp $testfile $srcfile debug]} {
+    untested $testfile.exp
+    return -1
 }
-
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-
-set testfile sigall
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
-     untested sigall.exp
-     return -1
-}
-
-# Make the first signal SIGABRT because it is always supported.
-set sig_supported 1
-set thissig "ABRT"
 
 proc test_one_sig {nextsig} {
     global sig_supported
@@ -54,12 +39,20 @@ proc test_one_sig {nextsig} {
     set need_another_continue 1
     set missed_handler 0
     if $this_sig_supported then {
+	set esig $thissig
+
 	if { $thissig == "IO" } {
 	    setup_xfail "i*86-pc-linuxoldld-gnu" "i*86-pc-linuxaout-gnu"
 	}
+	# On Linux SPARC64 systems SIGLOST==SIGPWR and gdb identifies
+	# the raised signal as PWR.
+	if { $thissig == "LOST" && [ istarget "sparc64-*-linux*" ] } then {
+	    set esig "PWR"
+	}
+
 	gdb_test "continue" \
-	    "Continuing.*Program received signal SIG$thissig.*" \
-	    "get signal $thissig"
+	    "Continuing.*Program received signal SIG$esig.*" \
+		"get signal $esig"
     }
     if [ istarget "alpha-dec-osf3*" ] then {
 	# OSF/1-3.x is unable to continue with a job control stop signal.
@@ -107,79 +100,91 @@ proc test_one_sig {nextsig} {
     set thissig $nextsig
 }
 
-gdb_load $binfile
+# The list of signals that the program generates, in the order they
+# are generated.
+set signals {
+    ABRT
+    HUP
+    QUIT
+    ILL
+    EMT
+    FPE
+    BUS
+    SEGV
+    SYS
+    PIPE
+    ALRM
+    URG
+    TSTP
+    CONT
+    CHLD
+    TTIN
+    TTOU
+    IO
+    XCPU
+    XFSZ
+    VTALRM
+    PROF
+    WINCH
+    LOST
+    USR1
+    USR2
+    PWR
+    POLL
+    WIND
+    PHONE
+    WAITING
+    LWP
+    DANGER
+    GRANT
+    RETRACT
+    MSG
+    SOUND
+    SAK
+    PRIO
+    33
+    34
+    35
+    36
+    37
+    38
+    39
+    40
+    41
+    42
+    43
+    44
+    45
+    46
+    47
+    48
+    49
+    50
+    51
+    52
+    53
+    54
+    55
+    56
+    57
+    58
+    59
+    60
+    61
+    62
+    63
+    TERM
+}
+
+# Make the first signal SIGABRT because it is always supported.
+set sig_supported 1
+set thissig "ABRT"
 
 runto gen_ABRT
-test_one_sig HUP
-test_one_sig QUIT
-test_one_sig ILL
-test_one_sig EMT
-test_one_sig FPE
-test_one_sig BUS
-test_one_sig SEGV
-test_one_sig SYS
-test_one_sig PIPE
-test_one_sig ALRM
-test_one_sig URG
-test_one_sig TSTP
-test_one_sig CONT
-test_one_sig CHLD
-test_one_sig TTIN
-test_one_sig TTOU
-test_one_sig IO
-test_one_sig XCPU
-test_one_sig XFSZ
-test_one_sig VTALRM
-test_one_sig PROF
-test_one_sig WINCH
-test_one_sig LOST
-test_one_sig USR1
-test_one_sig USR2
-test_one_sig PWR
-test_one_sig POLL
-test_one_sig WIND
-test_one_sig PHONE
-test_one_sig WAITING
-test_one_sig LWP
-test_one_sig DANGER
-test_one_sig GRANT
-test_one_sig RETRACT
-test_one_sig MSG
-test_one_sig SOUND
-test_one_sig SAK
-test_one_sig PRIO
-test_one_sig 33
-test_one_sig 34
-test_one_sig 35
-test_one_sig 36
-test_one_sig 37
-test_one_sig 38
-test_one_sig 39
-test_one_sig 40
-test_one_sig 41
-test_one_sig 42
-test_one_sig 43
-test_one_sig 44
-test_one_sig 45
-test_one_sig 46
-test_one_sig 47
-test_one_sig 48
-test_one_sig 49
-test_one_sig 50
-test_one_sig 51
-test_one_sig 52
-test_one_sig 53
-test_one_sig 54
-test_one_sig 55
-test_one_sig 56
-test_one_sig 57
-test_one_sig 58
-test_one_sig 59
-test_one_sig 60
-test_one_sig 61
-test_one_sig 62
-test_one_sig 63
-test_one_sig TERM
+
+foreach sig [lrange $signals 1 end] {
+    test_one_sig $sig
+}
 
 # The last signal (SIGTERM) gets handled slightly differently because
 # we are not setting up for another test.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.20 2010/12/14 23:44:49 matt Exp $	*/
+/*	$NetBSD: cfl.c,v 1.20.18.1 2014/08/20 00:03:27 tls Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfl.c,v 1.20 2010/12/14 23:44:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfl.c,v 1.20.18.1 2014/08/20 00:03:27 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,8 +123,18 @@ static dev_type_close(cflclose);
 static dev_type_read(cflrw);
 
 const struct cdevsw cfl_cdevsw = {
-	cflopen, cflclose, cflrw, cflrw, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	.d_open = cflopen,
+	.d_close = cflclose,
+	.d_read = cflrw,
+	.d_write = cflrw,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 /*ARGSUSED*/

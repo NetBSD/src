@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.116.2.1 2013/06/23 06:20:12 tls Exp $ */
+/*	$NetBSD: intr.c,v 1.116.2.2 2014/08/20 00:03:24 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.116.2.1 2013/06/23 06:20:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.116.2.2 2014/08/20 00:03:24 tls Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -420,12 +420,12 @@ nmi_hard_msiiep(void)
 
 		if (afsr & MSIIEP_AFSR_ERR) {
 			snprintb(bits, sizeof(bits), MSIIEP_AFSR_BITS, afsr);
-			printf("async fault: afsr=%s; afar=%08x\n", bits, afsr);
+			printf("async fault: afsr=%s; afar=%08x\n", bits, afar);
 		}
 
 		if (mfsr & MSIIEP_MFSR_ERR) {
 			snprintb(bits, sizeof(bits), MSIIEP_MFSR_BITS, mfsr);
-			printf("mem fault: mfsr=%s; mfar=%08x\n", bits, mfsr);
+			printf("mem fault: mfsr=%s; mfar=%08x\n", bits, mfar);
 		}
 
 		fatal = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.15.2.1 2013/02/25 00:28:24 tls Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.15.2.2 2014/08/20 00:02:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.15.2.1 2013/02/25 00:28:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.15.2.2 2014/08/20 00:02:45 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.15.2.1 2013/02/25 00:28:24 tls Exp
 #include <machine/sysarch.h>
 #include <machine/pcb.h>
 #include <arm/vfpreg.h>
+#include <arm/locore.h>
 
 /* Prototypes */
 static int arm32_sync_icache(struct lwp *, const void *, register_t *);
@@ -105,11 +106,12 @@ arm32_vfp_fpscr(struct lwp *l, const void *uap, register_t *retval)
 
 	retval[0] = pcb->pcb_vfp.vfp_fpscr;
 	if (uap) {
+		extern uint32_t vfp_fpscr_changable;
 		struct arm_vfp_fpscr_args ua;
 		int error;
 		if ((error = copyin(uap, &ua, sizeof(ua))) != 0)
 			return (error);
-		if (((ua.fpscr_clear|ua.fpscr_set) & ~VFP_FPSCR_RMODE) != 0)
+		if ((ua.fpscr_clear|ua.fpscr_set) & ~vfp_fpscr_changable)
 			return EINVAL;
 		pcb->pcb_vfp.vfp_fpscr &= ~ua.fpscr_clear;
 		pcb->pcb_vfp.vfp_fpscr |= ua.fpscr_set;
@@ -122,7 +124,11 @@ static int
 arm32_fpu_used(struct lwp *l, const void *uap, register_t *retval)
 {
 	/* No args */
-	retval[0] = (curlwp->l_md.md_flags & MDLWP_VFPUSED) != 0;
+#ifdef FPU_VFP
+	retval[0] = vfp_used_p();
+#else
+	retval[0] = false;
+#endif
 	return 0;
 }
 

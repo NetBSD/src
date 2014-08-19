@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.32 2009/11/07 07:27:48 cegger Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.32.22.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.32 2009/11/07 07:27:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.32.22.1 2014/08/20 00:03:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ bus_tmapin(int bustype, int pa)
 	return ((void *)(pgva + off));
 }
 
-void 
+void
 bus_tmapout(void *vp)
 {
 	vaddr_t pgva;
@@ -165,7 +165,7 @@ done:
 	return ((void*)(va + off));
 }
 
-void 
+void
 bus_mapout(void *ptr, int sz)
 {
 	vaddr_t va;

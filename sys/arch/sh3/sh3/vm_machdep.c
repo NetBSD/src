@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.75 2012/02/19 21:06:27 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.75.2.1 2014/08/20 00:03:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.75 2012/02/19 21:06:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.75.2.1 2014/08/20 00:03:23 tls Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -269,7 +269,7 @@ startlwp(void *arg)
 {
 	ucontext_t *uc = arg;
 	lwp_t *l = curlwp;
-	int error;
+	int error __diagused;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);

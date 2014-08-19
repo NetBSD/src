@@ -1,4 +1,4 @@
-/*	$NetBSD: pucvar.h,v 1.9 2010/08/01 18:50:24 msaitoh Exp $	*/
+/*	$NetBSD: pucvar.h,v 1.9.18.1 2014/08/20 00:03:48 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -37,7 +37,7 @@
  * Author: Christopher G. Demetriou, May 14, 1998.
  */
 
-#define	PUC_MAX_PORTS		16
+#define	PUC_MAX_PORTS		32
 
 struct puc_device_description {
 	const char		*name;

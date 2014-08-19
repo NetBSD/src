@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.7.2.1 2013/06/23 06:28:49 tls Exp $	*/
+/*	$NetBSD: fenv.h,v 1.7.2.2 2014/08/20 00:02:05 tls Exp $	*/
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if !defined(__arm__) && !defined(__i386__) \
+#if !defined(__aarch64__) && !defined(__arm__) && !defined(__i386__) \
     && !defined(__sparc__) && !defined(__x86_64__)
 #error	"fenv.h is currently not supported for this architecture"
 #endif

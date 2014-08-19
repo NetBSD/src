@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy_page.S,v 1.8 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: bcopy_page.S,v 1.8.124.1 2014/08/20 00:02:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -73,8 +73,8 @@
 #endif /* ! COPY_CHUNK */
 
 #ifndef SAVE_REGS
-#define	SAVE_REGS	stmfd	sp!, {r4-r8, lr}
-#define	RESTORE_REGS	ldmfd	sp!, {r4-r8, pc}
+#define	SAVE_REGS	push	{r4-r8, lr}
+#define	RESTORE_REGS	pop	{r4-r8, pc}
 #endif
 
 ENTRY(bcopy_page)
@@ -115,6 +115,7 @@ ENTRY(bcopy_page)
 	bne	1b
 
 	RESTORE_REGS		/* ...and return. */
+END(bcopy_page)
 
 /*
  * bzero_page(dest)
@@ -130,7 +131,7 @@ ENTRY(bcopy_page)
  */
 
 ENTRY(bzero_page)
-	stmfd	sp!, {r4-r8, lr}
+	push	{r4-r8, lr}
 #ifdef BIG_LOOPS
 	mov	r2, #(PAGE_SIZE >> 9)
 #else
@@ -175,7 +176,8 @@ ENTRY(bzero_page)
 	subs	r2, r2, #1
 	bne	1b
 
-	ldmfd	sp!, {r4-r8, pc}
+	pop	{r4-r8, pc}
+END(bzero_page)
 
 #else	/* __XSCALE__ */
 
@@ -184,66 +186,67 @@ ENTRY(bzero_page)
  */
 ENTRY(bcopy_page)
 	pld	[r0]
-	stmfd	sp!, {r4, r5}
+	push	{r4, r5}
 	mov	ip, #32
 	ldr	r2, [r0], #0x04		/* 0x00 */
 	ldr	r3, [r0], #0x04		/* 0x04 */
 1:	pld	[r0, #0x18]		/* Prefetch 0x20 */
 	ldr	r4, [r0], #0x04		/* 0x08 */
 	ldr	r5, [r0], #0x04		/* 0x0c */
-	strd	r2, [r1], #0x08
+	strd	r2, r3, [r1], #0x08
 	ldr	r2, [r0], #0x04		/* 0x10 */
 	ldr	r3, [r0], #0x04		/* 0x14 */
-	strd	r4, [r1], #0x08
+	strd	r4, r5, [r1], #0x08
 	ldr	r4, [r0], #0x04		/* 0x18 */
 	ldr	r5, [r0], #0x04		/* 0x1c */
-	strd	r2, [r1], #0x08
+	strd	r2, r3, [r1], #0x08
 	ldr	r2, [r0], #0x04		/* 0x20 */
 	ldr	r3, [r0], #0x04		/* 0x24 */
 	pld	[r0, #0x18]		/* Prefetch 0x40 */
-	strd	r4, [r1], #0x08
+	strd	r4, r5, [r1], #0x08
 	ldr	r4, [r0], #0x04		/* 0x28 */
 	ldr	r5, [r0], #0x04		/* 0x2c */
-	strd	r2, [r1], #0x08
+	strd	r2, r3, [r1], #0x08
 	ldr	r2, [r0], #0x04		/* 0x30 */
 	ldr	r3, [r0], #0x04		/* 0x34 */
-	strd	r4, [r1], #0x08
+	strd	r4, r5, [r1], #0x08
 	ldr	r4, [r0], #0x04		/* 0x38 */
 	ldr	r5, [r0], #0x04		/* 0x3c */
-	strd	r2, [r1], #0x08
+	strd	r2, r3, [r1], #0x08
 	ldr	r2, [r0], #0x04		/* 0x40 */
 	ldr	r3, [r0], #0x04		/* 0x44 */
 	pld	[r0, #0x18]		/* Prefetch 0x60 */
-	strd	r4, [r1], #0x08
+	strd	r4, r5, [r1], #0x08
 	ldr	r4, [r0], #0x04		/* 0x48 */
 	ldr	r5, [r0], #0x04		/* 0x4c */
-	strd	r2, [r1], #0x08
+	strd	r2, r3, [r1], #0x08
 	ldr	r2, [r0], #0x04		/* 0x50 */
 	ldr	r3, [r0], #0x04		/* 0x54 */
-	strd	r4, [r1], #0x08
+	strd	r4, r5, [r1], #0x08
 	ldr	r4, [r0], #0x04		/* 0x58 */
 	ldr	r5, [r0], #0x04		/* 0x5c */
-	strd	r2, [r1], #0x08
+	strd	r2, r3, [r1], #0x08
 	ldr	r2, [r0], #0x04		/* 0x60 */
 	ldr	r3, [r0], #0x04		/* 0x64 */
 	pld	[r0, #0x18]		/* Prefetch 0x80 */
-	strd	r4, [r1], #0x08
+	strd	r4, r5, [r1], #0x08
 	ldr	r4, [r0], #0x04		/* 0x68 */
 	ldr	r5, [r0], #0x04		/* 0x6c */
-	strd	r2, [r1], #0x08
+	strd	r2, r3, [r1], #0x08
 	ldr	r2, [r0], #0x04		/* 0x70 */
 	ldr	r3, [r0], #0x04		/* 0x74 */
-	strd	r4, [r1], #0x08
+	strd	r4, r5, [r1], #0x08
 	ldr	r4, [r0], #0x04		/* 0x78 */
 	ldr	r5, [r0], #0x04		/* 0x7c */
-	strd	r2, [r1], #0x08
+	strd	r2, r3, [r1], #0x08
 	subs	ip, ip, #0x01
 	ldrgt	r2, [r0], #0x04		/* 0x80 */
 	ldrgt	r3, [r0], #0x04		/* 0x84 */
-	strd	r4, [r1], #0x08
+	strd	r4, r5, [r1], #0x08
 	bgt	1b
-	ldmfd	sp!, {r4, r5}
-	mov	pc, lr
+	pop	{r4, r5}
+	RET
+END(bcopy_page)
 
 /*
  * XSCALE version of bzero_page
@@ -252,23 +255,24 @@ ENTRY(bzero_page)
 	mov	r1, #PAGE_SIZE
 	mov	r2, #0
 	mov	r3, #0
-1:	strd	r2, [r0], #8		/* 32 */
-	strd	r2, [r0], #8
-	strd	r2, [r0], #8
-	strd	r2, [r0], #8
-	strd	r2, [r0], #8		/* 64 */
-	strd	r2, [r0], #8
-	strd	r2, [r0], #8
-	strd	r2, [r0], #8
-	strd	r2, [r0], #8		/* 96 */
-	strd	r2, [r0], #8
-	strd	r2, [r0], #8
-	strd	r2, [r0], #8
-	strd	r2, [r0], #8		/* 128 */
-	strd	r2, [r0], #8
-	strd	r2, [r0], #8
-	strd	r2, [r0], #8
+1:	strd	r2, r3, [r0], #8	/* 32 */
+	strd	r2, r3, [r0], #8
+	strd	r2, r3, [r0], #8
+	strd	r2, r3, [r0], #8
+	strd	r2, r3, [r0], #8	/* 64 */
+	strd	r2, r3, [r0], #8
+	strd	r2, r3, [r0], #8
+	strd	r2, r3, [r0], #8
+	strd	r2, r3, [r0], #8	/* 96 */
+	strd	r2, r3, [r0], #8
+	strd	r2, r3, [r0], #8
+	strd	r2, r3, [r0], #8
+	strd	r2, r3, [r0], #8	/* 128 */
+	strd	r2, r3, [r0], #8
+	strd	r2, r3, [r0], #8
+	strd	r2, r3, [r0], #8
 	subs	r1, r1, #128
 	bne	1b
-	mov	pc, lr
+	RET
+END(bzero_page)
 #endif	/* __XSCALE__ */

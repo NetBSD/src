@@ -1,7 +1,6 @@
 /* Generic serial interface functions.
 
-   Copyright (C) 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -46,7 +45,7 @@ extern int ser_base_setbaudrate (struct serial *scb, int rate);
 extern int ser_base_setstopbits (struct serial *scb, int rate);
 extern int ser_base_drain_output (struct serial *scb);
 
-extern int ser_base_write (struct serial *scb, const char *str, int len);
+extern int ser_base_write (struct serial *scb, const void *buf, size_t count);
 
 extern void ser_base_async (struct serial *scb, int async_p);
 extern int ser_base_readchar (struct serial *scb, int timeout);

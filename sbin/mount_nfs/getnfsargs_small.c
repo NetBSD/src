@@ -1,4 +1,4 @@
-/*	$NetBSD: getnfsargs_small.c,v 1.9 2011/07/06 09:02:54 mrg Exp $	*/
+/*	$NetBSD: getnfsargs_small.c,v 1.9.8.1 2014/08/20 00:02:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getnfsargs_small.c,v 1.9 2011/07/06 09:02:54 mrg Exp $");
+__RCSID("$NetBSD: getnfsargs_small.c,v 1.9.8.1 2014/08/20 00:02:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -129,6 +129,13 @@ struct nfhret {
 	long		fhsize;
 	u_char		nfh[NFSX_V3FHMAX];
 };
+
+int retrycnt = DEF_RETRY; 
+int opflags = 0;
+int force2 = 0;
+int force3 = 0;
+int mnttcp_ok = 1;
+int port = 0;
 
 /* Ripped from src/sys/arch/i386/stand/libsa/nfs.c */
 static int

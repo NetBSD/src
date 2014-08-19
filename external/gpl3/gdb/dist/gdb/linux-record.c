@@ -1,6 +1,6 @@
 /* Process record and replay target code for GNU/Linux.
 
-   Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,6 +22,7 @@
 #include "gdbtypes.h"
 #include "regcache.h"
 #include "record.h"
+#include "record-full.h"
 #include "linux-record.h"
 
 /* These macros are the values of the first argument of system call
@@ -99,7 +100,7 @@ record_linux_sockaddr (struct regcache *regcache,
 
   a = alloca (tdep->size_int);
 
-  if (record_arch_list_add_mem ((CORE_ADDR) len, tdep->size_int))
+  if (record_full_arch_list_add_mem ((CORE_ADDR) len, tdep->size_int))
     return -1;
 
   /* Get the addrlen.  */
@@ -117,7 +118,7 @@ record_linux_sockaddr (struct regcache *regcache,
   if (addrlen <= 0 || addrlen > tdep->size_sockaddr)
     addrlen = tdep->size_sockaddr;
 
-  if (record_arch_list_add_mem ((CORE_ADDR) addr, addrlen))
+  if (record_full_arch_list_add_mem ((CORE_ADDR) addr, addrlen))
     return -1;
 
   return 0;
@@ -136,7 +137,7 @@ record_linux_msghdr (struct regcache *regcache,
   if (!addr)
     return 0;
 
-  if (record_arch_list_add_mem ((CORE_ADDR) addr, tdep->size_msghdr))
+  if (record_full_arch_list_add_mem ((CORE_ADDR) addr, tdep->size_msghdr))
     return -1;
 
   a = alloca (tdep->size_msghdr);
@@ -155,10 +156,11 @@ record_linux_msghdr (struct regcache *regcache,
   /* msg_name msg_namelen */
   addr = extract_unsigned_integer (a, tdep->size_pointer, byte_order);
   a += tdep->size_pointer;
-  if (record_arch_list_add_mem ((CORE_ADDR) addr,
-                                (int) extract_unsigned_integer (a,
-				                                tdep->size_int,
-				                                byte_order)))
+  if (record_full_arch_list_add_mem
+      ((CORE_ADDR) addr,
+       (int) extract_unsigned_integer (a,
+				       tdep->size_int,
+				       byte_order)))
     return -1;
   a += tdep->size_int;
 
@@ -192,7 +194,7 @@ record_linux_msghdr (struct regcache *regcache,
           tmpint = (int) extract_unsigned_integer (iov + tdep->size_pointer,
                                                    tdep->size_size_t,
                                                    byte_order);
-          if (record_arch_list_add_mem (tmpaddr, tmpint))
+          if (record_full_arch_list_add_mem (tmpaddr, tmpint))
             return -1;
           addr += tdep->size_iovec;
         }
@@ -203,7 +205,7 @@ record_linux_msghdr (struct regcache *regcache,
   addr = extract_unsigned_integer (a, tdep->size_pointer, byte_order);
   a += tdep->size_pointer;
   tmpint = (int) extract_unsigned_integer (a, tdep->size_size_t, byte_order);
-  if (record_arch_list_add_mem ((CORE_ADDR) addr, tmpint))
+  if (record_full_arch_list_add_mem ((CORE_ADDR) addr, tmpint))
     return -1;
 
   return 0;
@@ -260,7 +262,7 @@ record_linux_system_call (enum gdb_syscall syscall,
 
         regcache_raw_read_unsigned (regcache, tdep->arg2, &addr);
         regcache_raw_read_unsigned (regcache, tdep->arg3, &count);
-        if (record_arch_list_add_mem ((CORE_ADDR) addr, (int) count))
+        if (record_full_arch_list_add_mem ((CORE_ADDR) addr, (int) count))
           return -1;
       }
       break;
@@ -285,8 +287,8 @@ record_linux_system_call (enum gdb_syscall syscall,
     case gdb_sys_fstat:
     case gdb_sys_lstat:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size__old_kernel_stat))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size__old_kernel_stat))
         return -1;
       break;
 
@@ -307,7 +309,7 @@ record_linux_system_call (enum gdb_syscall syscall,
         {
           regcache_raw_read_unsigned (regcache, tdep->arg4,
                                       &tmpulongest);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, 4))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest, 4))
             return -1;
         }
       break;
@@ -331,7 +333,8 @@ record_linux_system_call (enum gdb_syscall syscall,
 
     case gdb_sys_times:
       regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, tdep->size_tms))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_tms))
         return -1;
       break;
 
@@ -403,8 +406,8 @@ record_linux_system_call (enum gdb_syscall syscall,
         {
           regcache_raw_read_unsigned (regcache, tdep->arg3,
                                       &tmpulongest);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        tdep->size_termios))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     tdep->size_termios))
             return -1;
         }
       else if (tmpulongest == tdep->ioctl_TIOCGPGRP
@@ -412,8 +415,8 @@ record_linux_system_call (enum gdb_syscall syscall,
         {
           regcache_raw_read_unsigned (regcache, tdep->arg3,
                                       &tmpulongest);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        tdep->size_pid_t))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     tdep->size_pid_t))
             return -1;
         }
       else if (tmpulongest == tdep->ioctl_TIOCOUTQ
@@ -427,16 +430,16 @@ record_linux_system_call (enum gdb_syscall syscall,
         {
           regcache_raw_read_unsigned (regcache, tdep->arg3,
                                       &tmpulongest);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        tdep->size_int))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     tdep->size_int))
             return -1;
         }
       else if (tmpulongest == tdep->ioctl_TIOCGWINSZ)
         {
           regcache_raw_read_unsigned (regcache, tdep->arg3,
                                       &tmpulongest);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        tdep->size_winsize))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     tdep->size_winsize))
             return -1;
         }
       else if (tmpulongest == tdep->ioctl_TIOCLINUX)
@@ -444,47 +447,47 @@ record_linux_system_call (enum gdb_syscall syscall,
           regcache_raw_read_unsigned (regcache, tdep->arg3,
                                       &tmpulongest);
 	  /* This syscall affects a char-size memory.  */
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, 1))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest, 1))
             return -1;
         }
       else if (tmpulongest == tdep->ioctl_TIOCGSERIAL)
         {
           regcache_raw_read_unsigned (regcache, tdep->arg3,
                                       &tmpulongest);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        tdep->size_serial_struct))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     tdep->size_serial_struct))
             return -1;
         }
       else if (tmpulongest == tdep->ioctl_TCGETS2)
         {
           regcache_raw_read_unsigned (regcache, tdep->arg3,
                                       &tmpulongest);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        tdep->size_termios2))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     tdep->size_termios2))
             return -1;
         }
       else if (tmpulongest == tdep->ioctl_FIOQSIZE)
         {
           regcache_raw_read_unsigned (regcache, tdep->arg3,
                                       &tmpulongest);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        tdep->size_loff_t))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     tdep->size_loff_t))
             return -1;
         }
       else if (tmpulongest == tdep->ioctl_TIOCGICOUNT)
         {
           regcache_raw_read_unsigned (regcache, tdep->arg3,
                                       &tmpulongest);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        tdep->size_serial_icounter_struct))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     tdep->size_serial_icounter_struct))
             return -1;
         }
       else if (tmpulongest == tdep->ioctl_TIOCGHAYESESP)
         {
           regcache_raw_read_unsigned (regcache, tdep->arg3,
                                       &tmpulongest);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        tdep->size_hayes_esp_config))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     tdep->size_hayes_esp_config))
             return -1;
         }
       else if (tmpulongest == tdep->ioctl_TIOCSERGSTRUCT)
@@ -510,8 +513,8 @@ record_linux_system_call (enum gdb_syscall syscall,
         {
           regcache_raw_read_unsigned (regcache, tdep->arg3,
                                       &tmpulongest);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        tdep->size_flock))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     tdep->size_flock))
             return -1;
         }
       break;
@@ -523,8 +526,8 @@ record_linux_system_call (enum gdb_syscall syscall,
 
     case gdb_sys_olduname:
       regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_oldold_utsname))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_oldold_utsname))
         return -1;
       break;
 
@@ -534,8 +537,8 @@ record_linux_system_call (enum gdb_syscall syscall,
 
     case gdb_sys_ustat:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_ustat))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_ustat))
         return -1;
       break;
 
@@ -547,8 +550,8 @@ record_linux_system_call (enum gdb_syscall syscall,
 
     case gdb_sys_sigaction:
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_old_sigaction))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_old_sigaction))
         return -1;
       break;
 
@@ -561,8 +564,8 @@ record_linux_system_call (enum gdb_syscall syscall,
 
     case gdb_sys_sigpending:
       regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_old_sigset_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_old_sigset_t))
         return -1;
       break;
 
@@ -572,26 +575,26 @@ record_linux_system_call (enum gdb_syscall syscall,
 
     case gdb_sys_old_getrlimit:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_rlimit))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_rlimit))
         return -1;
       break;
 
     case gdb_sys_getrusage:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_rusage))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_rusage))
         return -1;
       break;
 
     case gdb_sys_gettimeofday:
       regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_timeval))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_timeval))
         return -1;
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_timezone))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_timezone))
         return -1;
       break;
 
@@ -600,15 +603,15 @@ record_linux_system_call (enum gdb_syscall syscall,
 
     case gdb_sys_getgroups16:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_old_gid_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_old_gid_t))
         return -1;
       break;
 
     case gdb_sys_setgroups16:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_old_gid_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_old_gid_t))
         return -1;
       break;
 
@@ -638,13 +641,13 @@ record_linux_system_call (enum gdb_syscall syscall,
                                       (unsigned long) sizeof (sel));
                 return -1;
               }
-            if (record_arch_list_add_mem (sel.inp, tdep->size_fd_set))
+            if (record_full_arch_list_add_mem (sel.inp, tdep->size_fd_set))
               return -1;
-            if (record_arch_list_add_mem (sel.outp, tdep->size_fd_set))
+            if (record_full_arch_list_add_mem (sel.outp, tdep->size_fd_set))
               return -1;
-            if (record_arch_list_add_mem (sel.exp, tdep->size_fd_set))
+            if (record_full_arch_list_add_mem (sel.exp, tdep->size_fd_set))
               return -1;
-            if (record_arch_list_add_mem (sel.tvp, tdep->size_timeval))
+            if (record_full_arch_list_add_mem (sel.tvp, tdep->size_timeval))
               return -1;
           }
       }
@@ -660,7 +663,7 @@ record_linux_system_call (enum gdb_syscall syscall,
         regcache_raw_read_unsigned (regcache, tdep->arg2,
                                     &tmpulongest);
         regcache_raw_read_unsigned (regcache, tdep->arg3, &len);
-        if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, (int) len))
+        if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest, (int) len))
           return -1;
       }
       break;
@@ -685,8 +688,8 @@ record_linux_system_call (enum gdb_syscall syscall,
 
     case gdb_old_readdir:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_dirent))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_dirent))
         return -1;
       break;
 
@@ -700,7 +703,7 @@ record_linux_system_call (enum gdb_syscall syscall,
         regcache_raw_read_unsigned (regcache, tdep->arg1,
                                     &tmpulongest);
         regcache_raw_read_unsigned (regcache, tdep->arg2, &len);
-        if (record_memory_query)
+        if (record_full_memory_query)
           {
 	    int q;
 
@@ -730,8 +733,8 @@ Do you want to stop the program?"),
     case gdb_sys_statfs:
     case gdb_sys_fstatfs:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_statfs))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_statfs))
         return -1;
       break;
 
@@ -778,7 +781,8 @@ Do you want to stop the program?"),
 
         regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
         regcache_raw_read_unsigned (regcache, tdep->arg3, &size);
-        if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, (int) size))
+        if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					   (int) size))
           return -1;
       }
       break;
@@ -791,7 +795,8 @@ Do you want to stop the program?"),
 
     case gdb_sys_socketpair:
       regcache_raw_read_unsigned (regcache, tdep->arg4, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, tdep->size_int))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_int))
         return -1;
       break;
 
@@ -817,10 +822,10 @@ Do you want to stop the program?"),
           regcache_raw_read_unsigned (regcache, tdep->arg4, &optvalp);
           tmpint = (int) extract_signed_integer (optlenp, tdep->size_int,
                                                  byte_order);
-          if (record_arch_list_add_mem ((CORE_ADDR) optvalp, tmpint))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) optvalp, tmpint))
             return -1;
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        tdep->size_int))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     tdep->size_int))
             return -1;
         }
       break;
@@ -891,7 +896,7 @@ Do you want to stop the program?"),
                 tmpaddr
                   = (CORE_ADDR) extract_unsigned_integer (a, tdep->size_ulong,
                                                           byte_order);
-                if (record_arch_list_add_mem (tmpaddr, tdep->size_int))
+                if (record_full_arch_list_add_mem (tmpaddr, tdep->size_int))
                   return -1;
               }
           }
@@ -952,8 +957,8 @@ Do you want to stop the program?"),
                   a += tdep->size_ulong;
                   tmpint = (int) extract_unsigned_integer (a, tdep->size_ulong,
                                                            byte_order);
-                  if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                                tmpint))
+                  if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+						     tmpint))
                     return -1;
                 }
             }
@@ -1007,14 +1012,15 @@ Do you want to stop the program?"),
                     tmpint = (int) extract_unsigned_integer (av,
                                                              tdep->size_int,
                                                              byte_order);
-                    if (record_arch_list_add_mem (tmpaddr, tmpint))
+                    if (record_full_arch_list_add_mem (tmpaddr, tmpint))
                       return -1;
                     a += tdep->size_ulong;
                     tmpaddr
                       = (CORE_ADDR) extract_unsigned_integer (a,
                                                               tdep->size_ulong,
                                                               byte_order);
-                    if (record_arch_list_add_mem (tmpaddr, tdep->size_int))
+                    if (record_full_arch_list_add_mem (tmpaddr,
+						       tdep->size_int))
                       return -1;
                   }
               }
@@ -1063,15 +1069,15 @@ Do you want to stop the program?"),
 
     case gdb_sys_setitimer:
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_itimerval))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_itimerval))
         return -1;
       break;
 
     case gdb_sys_getitimer:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_itimerval))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_itimerval))
         return -1;
       break;
 
@@ -1080,14 +1086,15 @@ Do you want to stop the program?"),
     case gdb_sys_newfstat:
     case gdb_sys_newfstatat:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, tdep->size_stat))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_stat))
         return -1;
       break;
 
     case gdb_sys_uname:
       regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_old_utsname))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_old_utsname))
         return -1;
       break;
 
@@ -1099,12 +1106,12 @@ Do you want to stop the program?"),
 
     case gdb_sys_wait4:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_int))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_int))
         return -1;
       regcache_raw_read_unsigned (regcache, tdep->arg4, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_rusage))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_rusage))
         return -1;
       break;
 
@@ -1113,8 +1120,8 @@ Do you want to stop the program?"),
 
     case gdb_sys_sysinfo:
       regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_sysinfo))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_sysinfo))
         return -1;
       break;
 
@@ -1130,15 +1137,15 @@ Do you want to stop the program?"),
 
     case gdb_sys_shmat:
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_ulong))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_ulong))
         return -1;
       break;
 
     case gdb_sys_shmctl:
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_shmid_ds))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_shmid_ds))
         return -1;
       break;
 
@@ -1148,19 +1155,20 @@ Do you want to stop the program?"),
     case gdb_sys_msgrcv:
       {
         ULONGEST msgp;
+        LONGEST l;
 
-        regcache_raw_read_signed (regcache, tdep->arg3, &tmpulongest);
+        regcache_raw_read_signed (regcache, tdep->arg3, &l);
         regcache_raw_read_unsigned (regcache, tdep->arg2, &msgp);
-        tmpint = (int) tmpulongest + tdep->size_long;
-        if (record_arch_list_add_mem ((CORE_ADDR) msgp, tmpint))
+        tmpint = l + tdep->size_long;
+        if (record_full_arch_list_add_mem ((CORE_ADDR) msgp, tmpint))
           return -1;
       }
       break;
 
     case gdb_sys_msgctl:
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_msqid_ds))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_msqid_ds))
         return -1;
       break;
 
@@ -1180,35 +1188,35 @@ Do you want to stop the program?"),
           break;
         case RECORD_MSGRCV:
           {
-            ULONGEST second;
+            LONGEST second;
             ULONGEST ptr;
 
             regcache_raw_read_signed (regcache, tdep->arg3, &second);
             regcache_raw_read_unsigned (regcache, tdep->arg5, &ptr);
             tmpint = (int) second + tdep->size_long;
-            if (record_arch_list_add_mem ((CORE_ADDR) ptr, tmpint))
+            if (record_full_arch_list_add_mem ((CORE_ADDR) ptr, tmpint))
               return -1;
           }
           break;
         case RECORD_MSGCTL:
           regcache_raw_read_unsigned (regcache, tdep->arg5,
                                       &tmpulongest);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        tdep->size_msqid_ds))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     tdep->size_msqid_ds))
             return -1;
           break;
         case RECORD_SHMAT:
           regcache_raw_read_unsigned (regcache, tdep->arg4,
                                       &tmpulongest);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        tdep->size_ulong))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     tdep->size_ulong))
             return -1;
           break;
         case RECORD_SHMCTL:
           regcache_raw_read_unsigned (regcache, tdep->arg5,
                                       &tmpulongest);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        tdep->size_shmid_ds))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     tdep->size_shmid_ds))
             return -1;
           break;
         default:
@@ -1228,8 +1236,8 @@ Do you want to stop the program?"),
 
     case gdb_sys_newuname:
       regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_new_utsname))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_new_utsname))
         return -1;
       break;
 
@@ -1241,14 +1249,15 @@ Do you want to stop the program?"),
 
           regcache_raw_read_unsigned (regcache, tdep->arg2, &ptr);
           regcache_raw_read_unsigned (regcache, tdep->arg3, &bytecount);
-          if (record_arch_list_add_mem ((CORE_ADDR) ptr, (int) bytecount))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) ptr, (int) bytecount))
             return -1;
         }
       break;
 
     case gdb_sys_adjtimex:
       regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, tdep->size_timex))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_timex))
         return -1;
       break;
 
@@ -1257,8 +1266,8 @@ Do you want to stop the program?"),
 
     case gdb_sys_sigprocmask:
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_old_sigset_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_old_sigset_t))
         return -1;
       break;
 
@@ -1276,29 +1285,29 @@ Do you want to stop the program?"),
           regcache_raw_read_unsigned (regcache, tdep->arg4,
                                       &tmpulongest);
           /* __u32 */
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, 4))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest, 4))
             return -1;
           break;
         case RECORD_Q_GETINFO:
           regcache_raw_read_unsigned (regcache, tdep->arg4,
                                       &tmpulongest);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        tdep->size_mem_dqinfo))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     tdep->size_mem_dqinfo))
             return -1;
           break;
         case RECORD_Q_GETQUOTA:
           regcache_raw_read_unsigned (regcache, tdep->arg4,
                                       &tmpulongest);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        tdep->size_if_dqblk))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     tdep->size_if_dqblk))
             return -1;
           break;
         case RECORD_Q_XGETQSTAT:
         case RECORD_Q_XGETQUOTA:
           regcache_raw_read_unsigned (regcache, tdep->arg4,
                                       &tmpulongest);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        tdep->size_fs_quota_stat))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     tdep->size_fs_quota_stat))
             return -1;
           break;
         }
@@ -1316,7 +1325,7 @@ Do you want to stop the program?"),
           regcache_raw_read_unsigned (regcache, tdep->arg3,
                                       &tmpulongest);
 	  /*XXX the size of memory is not very clear.  */
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, 10))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest, 10))
             return -1;
         }
       break;
@@ -1329,8 +1338,8 @@ Do you want to stop the program?"),
 
     case gdb_sys_llseek:
       regcache_raw_read_unsigned (regcache, tdep->arg4, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_loff_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_loff_t))
         return -1;
       break;
 
@@ -1341,28 +1350,28 @@ Do you want to stop the program?"),
         regcache_raw_read_unsigned (regcache, tdep->arg2,
                                     &tmpulongest);
         regcache_raw_read_unsigned (regcache, tdep->arg3, &count);
-        if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                      tdep->size_dirent * count))
+        if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					   tdep->size_dirent * count))
           return -1;
       }
       break;
 
     case gdb_sys_select:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_fd_set))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_fd_set))
         return -1;
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_fd_set))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_fd_set))
         return -1;
       regcache_raw_read_unsigned (regcache, tdep->arg4, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_fd_set))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_fd_set))
         return -1;
       regcache_raw_read_unsigned (regcache, tdep->arg5, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_timeval))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_timeval))
         return -1;
       break;
 
@@ -1401,7 +1410,7 @@ Do you want to stop the program?"),
                   = (int) extract_unsigned_integer (iov + tdep->size_pointer,
                                                     tdep->size_size_t,
                                                     byte_order);
-                if (record_arch_list_add_mem (tmpaddr, tmpint))
+                if (record_full_arch_list_add_mem (tmpaddr, tmpint))
                   return -1;
                 vec += tdep->size_iovec;
               }
@@ -1422,7 +1431,8 @@ Do you want to stop the program?"),
 
     case gdb_sys_sched_getparam:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, tdep->size_int))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_int))
         return -1;
       break;
 
@@ -1436,8 +1446,8 @@ Do you want to stop the program?"),
     case gdb_sys_sched_rr_get_interval:
     case gdb_sys_nanosleep:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_timespec))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_timespec))
         return -1;
       break;
 
@@ -1447,16 +1457,16 @@ Do you want to stop the program?"),
 
     case gdb_sys_getresuid16:
       regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_old_uid_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_old_uid_t))
         return -1;
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_old_uid_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_old_uid_t))
         return -1;
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_old_uid_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_old_uid_t))
         return -1;
       break;
 
@@ -1471,8 +1481,8 @@ Do you want to stop the program?"),
           ULONGEST nfds;
 
           regcache_raw_read_unsigned (regcache, tdep->arg2, &nfds);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        tdep->size_pollfd * nfds))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     tdep->size_pollfd * nfds))
             return -1;
         }
       break;
@@ -1489,7 +1499,7 @@ Do you want to stop the program?"),
             rsize = tdep->size_knfsd_fh;
           regcache_raw_read_unsigned (regcache, tdep->arg3,
                                       &tmpulongest);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, rsize))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest, rsize))
             return -1;
         }
       break;
@@ -1499,16 +1509,16 @@ Do you want to stop the program?"),
 
     case gdb_sys_getresgid16:
       regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_old_gid_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_old_gid_t))
         return -1;
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_old_gid_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_old_gid_t))
         return -1;
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_old_gid_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_old_gid_t))
         return -1;
       break;
 
@@ -1519,15 +1529,15 @@ Do you want to stop the program?"),
         case 2:
           regcache_raw_read_unsigned (regcache, tdep->arg2,
                                       &tmpulongest);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        tdep->size_int))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     tdep->size_int))
             return -1;
           break;
         case 16:
           regcache_raw_read_unsigned (regcache, tdep->arg2,
                                       &tmpulongest);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        tdep->size_TASK_COMM_LEN))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     tdep->size_TASK_COMM_LEN))
             return -1;
           break;
         }
@@ -1538,15 +1548,15 @@ Do you want to stop the program?"),
 
     case gdb_sys_rt_sigaction:
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_sigaction))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_sigaction))
         return -1;
       break;
 
     case gdb_sys_rt_sigprocmask:
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_sigset_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_sigset_t))
         return -1;
       break;
 
@@ -1557,16 +1567,16 @@ Do you want to stop the program?"),
           ULONGEST sigsetsize;
 
           regcache_raw_read_unsigned (regcache, tdep->arg2,&sigsetsize);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        (int) sigsetsize))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     (int) sigsetsize))
             return -1;
         }
       break;
 
     case gdb_sys_rt_sigtimedwait:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_siginfo_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_siginfo_t))
         return -1;
       break;
 
@@ -1581,7 +1591,8 @@ Do you want to stop the program?"),
           ULONGEST count;
 
           regcache_raw_read_unsigned (regcache, tdep->arg3,&count);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, (int) count))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     (int) count))
             return -1;
         }
       break;
@@ -1597,15 +1608,16 @@ Do you want to stop the program?"),
           ULONGEST size;
 
           regcache_raw_read_unsigned (regcache, tdep->arg2, &size);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, (int) size))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     (int) size))
             return -1;
         }
       break;
 
     case gdb_sys_capget:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_cap_user_data_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_cap_user_data_t))
         return -1;
       break;
 
@@ -1614,15 +1626,15 @@ Do you want to stop the program?"),
 
     case gdb_sys_sigaltstack:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_stack_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_stack_t))
         return -1;
       break;
 
     case gdb_sys_sendfile:
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_off_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_off_t))
         return -1;
       break;
 
@@ -1633,8 +1645,8 @@ Do you want to stop the program?"),
 
     case gdb_sys_getrlimit:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_rlimit))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_rlimit))
         return -1;
       break;
 
@@ -1649,8 +1661,8 @@ Do you want to stop the program?"),
     case gdb_sys_lstat64:
     case gdb_sys_fstat64:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_stat64))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_stat64))
         return -1;
       break;
 
@@ -1672,7 +1684,7 @@ Do you want to stop the program?"),
           regcache_raw_read_unsigned (regcache, tdep->arg1,
                                       &gidsetsize);
           tmpint = tdep->size_gid_t * (int) gidsetsize;
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, tmpint))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest, tmpint))
             return -1;
         }
       break;
@@ -1684,13 +1696,16 @@ Do you want to stop the program?"),
 
     case gdb_sys_getresuid:
       regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, tdep->size_uid_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_uid_t))
         return -1;
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, tdep->size_uid_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_uid_t))
         return -1;
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, tdep->size_uid_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_uid_t))
         return -1;
       break;
 
@@ -1699,13 +1714,16 @@ Do you want to stop the program?"),
 
     case gdb_sys_getresgid:
       regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, tdep->size_gid_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_gid_t))
         return -1;
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, tdep->size_gid_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_gid_t))
         return -1;
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, tdep->size_gid_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_gid_t))
         return -1;
       break;
 
@@ -1719,8 +1737,8 @@ Do you want to stop the program?"),
 
     case gdb_sys_mincore:
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_PAGE_SIZE))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_PAGE_SIZE))
         return -1;
       break;
 
@@ -1734,8 +1752,8 @@ Do you want to stop the program?"),
         regcache_raw_read_unsigned (regcache, tdep->arg2,
                                     &tmpulongest);
         regcache_raw_read_unsigned (regcache, tdep->arg3, &count);
-        if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                      tdep->size_dirent64 * count))
+        if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					   tdep->size_dirent64 * count))
           return -1;
       }
       break;
@@ -1746,8 +1764,8 @@ Do you want to stop the program?"),
         {
           regcache_raw_read_unsigned (regcache, tdep->arg3,
                                       &tmpulongest);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        tdep->size_flock64))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     tdep->size_flock64))
             return -1;
         }
       else if (tmpulongest != tdep->fcntl_F_SETLK64
@@ -1775,7 +1793,8 @@ Do you want to stop the program?"),
           ULONGEST size;
 
           regcache_raw_read_unsigned (regcache, tdep->arg4, &size);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, (int) size))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     (int) size))
             return -1;
         }
       break;
@@ -1789,7 +1808,8 @@ Do you want to stop the program?"),
           ULONGEST size;
 
           regcache_raw_read_unsigned (regcache, tdep->arg3, &size);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, (int) size))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     (int) size))
             return -1;
         }
       break;
@@ -1802,8 +1822,8 @@ Do you want to stop the program?"),
 
     case gdb_sys_sendfile64:
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_loff_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_loff_t))
         return -1;
       break;
 
@@ -1818,27 +1838,30 @@ Do you want to stop the program?"),
           ULONGEST len;
 
           regcache_raw_read_unsigned (regcache, tdep->arg2, &len);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, (int) len))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     (int) len))
             return -1;
         }
       break;
 
     case gdb_sys_set_thread_area:
       regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, tdep->size_int))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_int))
         return -1;
       break;
 
     case gdb_sys_get_thread_area:
       regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_user_desc))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_user_desc))
         return -1;
       break;
 
     case gdb_sys_io_setup:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, tdep->size_long))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_long))
         return -1;
       break;
 
@@ -1852,8 +1875,8 @@ Do you want to stop the program?"),
           ULONGEST nr;
 
           regcache_raw_read_unsigned (regcache, tdep->arg3, &nr);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        nr * tdep->size_io_event))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     nr * tdep->size_io_event))
             return -1;
         }
       break;
@@ -1884,7 +1907,7 @@ Do you want to stop the program?"),
                 = (CORE_ADDR) extract_unsigned_integer (iocbp,
                                                         tdep->size_pointer,
                                                         byte_order);
-              if (record_arch_list_add_mem (tmpaddr, tdep->size_iocb))
+              if (record_full_arch_list_add_mem (tmpaddr, tdep->size_iocb))
                 return -1;
               iocbp += tdep->size_pointer;
             }
@@ -1893,8 +1916,8 @@ Do you want to stop the program?"),
 
     case gdb_sys_io_cancel:
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_io_event))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_io_event))
         return -1;
       break;
 
@@ -1923,7 +1946,8 @@ Do you want to stop the program?"),
           ULONGEST len;
 
           regcache_raw_read_unsigned (regcache, tdep->arg3, &len);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, (int) len))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     (int) len))
             return -1;
         }
       break;
@@ -1939,8 +1963,9 @@ Do you want to stop the program?"),
           ULONGEST maxevents;
 
           regcache_raw_read_unsigned (regcache, tdep->arg3, &maxevents);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        maxevents * tdep->size_epoll_event))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     (maxevents
+					      * tdep->size_epoll_event)))
             return -1;
         }
       break;
@@ -1951,21 +1976,22 @@ Do you want to stop the program?"),
 
     case gdb_sys_timer_create:
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, tdep->size_int))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_int))
         return -1;
       break;
 
     case gdb_sys_timer_settime:
       regcache_raw_read_unsigned (regcache, tdep->arg4, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_itimerspec))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_itimerspec))
         return -1;
       break;
 
     case gdb_sys_timer_gettime:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_itimerspec))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_itimerspec))
         return -1;
       break;
 
@@ -1976,30 +2002,30 @@ Do you want to stop the program?"),
 
     case gdb_sys_clock_gettime:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_timespec))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_timespec))
         return -1;
       break;
 
     case gdb_sys_clock_getres:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_timespec))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_timespec))
         return -1;
       break;
 
     case gdb_sys_clock_nanosleep:
       regcache_raw_read_unsigned (regcache, tdep->arg4, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_timespec))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_timespec))
         return -1;
       break;
 
     case gdb_sys_statfs64:
     case gdb_sys_fstatfs64:
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_statfs64))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_statfs64))
         return -1;
       break;
 
@@ -2012,7 +2038,8 @@ Do you want to stop the program?"),
 
     case gdb_sys_get_mempolicy:
       regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, tdep->size_int))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_int))
         return -1;
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
       if (tmpulongest)
@@ -2020,8 +2047,8 @@ Do you want to stop the program?"),
           ULONGEST maxnode;
 
           regcache_raw_read_unsigned (regcache, tdep->arg3, &maxnode);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        maxnode * tdep->size_long))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     maxnode * tdep->size_long))
             return -1;
         }
       break;
@@ -2039,12 +2066,13 @@ Do you want to stop the program?"),
           ULONGEST msg_len;
 
           regcache_raw_read_unsigned (regcache, tdep->arg3, &msg_len);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        (int) msg_len))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     (int) msg_len))
             return -1;
         }
       regcache_raw_read_unsigned (regcache, tdep->arg4, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, tdep->size_int))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_int))
         return -1;
       break;
 
@@ -2053,8 +2081,8 @@ Do you want to stop the program?"),
 
     case gdb_sys_mq_getsetattr:
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_mq_attr))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_mq_attr))
         return -1;
       break;
 
@@ -2063,12 +2091,12 @@ Do you want to stop the program?"),
 
     case gdb_sys_waitid:
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_siginfo))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_siginfo))
         return -1;
       regcache_raw_read_unsigned (regcache, tdep->arg5, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_rusage))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_rusage))
         return -1;
       break;
 
@@ -2088,8 +2116,8 @@ Do you want to stop the program?"),
               ULONGEST buflen;
 
               regcache_raw_read_unsigned (regcache, tdep->arg4, &buflen);
-              if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                            (int) buflen))
+              if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+						 (int) buflen))
                 return -1;
             }
         }
@@ -2110,8 +2138,8 @@ Do you want to stop the program?"),
 
     case gdb_sys_fstatat64:
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_stat64))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_stat64))
         return -1;
       break;
 
@@ -2128,7 +2156,8 @@ Do you want to stop the program?"),
           ULONGEST bufsiz;
 
           regcache_raw_read_unsigned (regcache, tdep->arg4, &bufsiz);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, (int) bufsiz))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     (int) bufsiz))
             return -1;
         }
       break;
@@ -2139,20 +2168,20 @@ Do you want to stop the program?"),
 
     case gdb_sys_pselect6:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_fd_set))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_fd_set))
         return -1;
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_fd_set))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_fd_set))
         return -1;
       regcache_raw_read_unsigned (regcache, tdep->arg4, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_fd_set))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_fd_set))
         return -1;
       regcache_raw_read_unsigned (regcache, tdep->arg5, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_timespec))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_timespec))
         return -1;
       break;
 
@@ -2163,13 +2192,13 @@ Do you want to stop the program?"),
           ULONGEST nfds;
 
           regcache_raw_read_unsigned (regcache, tdep->arg2, &nfds);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        tdep->size_pollfd * nfds))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     tdep->size_pollfd * nfds))
             return -1;
         }
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_timespec))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_timespec))
         return -1;
       break;
 
@@ -2179,21 +2208,23 @@ Do you want to stop the program?"),
 
     case gdb_sys_get_robust_list:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, tdep->size_int))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_int))
         return -1;
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, tdep->size_int))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_int))
         return -1;
       break;
 
     case gdb_sys_splice:
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_loff_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_loff_t))
         return -1;
       regcache_raw_read_unsigned (regcache, tdep->arg4, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_loff_t))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_loff_t))
         return -1;
       break;
 
@@ -2209,22 +2240,24 @@ Do you want to stop the program?"),
           ULONGEST nr_pages;
 
           regcache_raw_read_unsigned (regcache, tdep->arg2, &nr_pages);
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                        nr_pages * tdep->size_int))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					     nr_pages * tdep->size_int))
             return -1;
         }
       break;
 
     case gdb_sys_getcpu:
       regcache_raw_read_unsigned (regcache, tdep->arg1, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, tdep->size_int))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_int))
         return -1;
       regcache_raw_read_unsigned (regcache, tdep->arg2, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, tdep->size_int))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_int))
         return -1;
       regcache_raw_read_unsigned (regcache, tdep->arg3, &tmpulongest);
-      if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest,
-                                    tdep->size_ulong * 2))
+      if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest,
+					 tdep->size_ulong * 2))
         return -1;
       break;
 
@@ -2236,7 +2269,7 @@ Do you want to stop the program?"),
 
           regcache_raw_read_unsigned (regcache, tdep->arg3, &maxevents);
           tmpint = (int) maxevents * tdep->size_epoll_event;
-          if (record_arch_list_add_mem ((CORE_ADDR) tmpulongest, tmpint))
+          if (record_full_arch_list_add_mem ((CORE_ADDR) tmpulongest, tmpint))
             return -1;
         }
       break;

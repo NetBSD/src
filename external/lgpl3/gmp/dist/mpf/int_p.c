@@ -23,7 +23,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
 
 int
-mpf_integer_p (mpf_srcptr f)
+mpf_integer_p (mpf_srcptr f) __GMP_NOTHROW
 {
   mp_srcptr ptr;
   mp_exp_t exp;

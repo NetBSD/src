@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.8.2.1 2013/02/25 00:28:30 tls Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.8.2.2 2014/08/20 00:02:46 tls Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -70,7 +70,7 @@ struct arm_unaligned_faults_args {
 
 #ifndef _KERNEL
 __BEGIN_DECLS
-int	arm_sync_icache(u_int addr, int len);
+int	arm_sync_icache(uintptr_t, size_t);
 int	arm_drain_writebuf(void);
 int	sysarch(int, void *);
 __END_DECLS

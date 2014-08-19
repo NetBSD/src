@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_timer.c,v 1.5 2011/07/01 19:32:28 dyoung Exp $	*/
+/*	$NetBSD: gemini_timer.c,v 1.5.12.1 2014/08/20 00:02:46 tls Exp $	*/
 
 /* adapted from:
  *	NetBSD: omap2_geminitmr.c,v 1.1 2008/08/27 11:03:10 matt Exp
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_timer.c,v 1.5 2011/07/01 19:32:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_timer.c,v 1.5.12.1 2014/08/20 00:02:46 tls Exp $");
 
 #include "opt_gemini.h"
 #include "opt_cpuoptions.h"
@@ -267,7 +267,7 @@ timer_init(geminitmr_softc_t *sc, int schz, boolean_t autoload, boolean_t intr)
 	if (intr)
 		_timer_intr_enb(sc);
 	_timer_start(sc);
-	psw = disable_interrupts(I32_bit);
+	restore_interrupts(psw);
 }
 
 void

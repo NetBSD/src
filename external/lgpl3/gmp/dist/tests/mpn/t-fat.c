@@ -1,21 +1,21 @@
 /* Test fat binary setups.
 
-Copyright 2003 Free Software Foundation, Inc.
+Copyright 2003, 2012 Free Software Foundation, Inc.
 
-This file is part of the GNU MP Library.
+This file is part of the GNU MP Library test suite.
 
-The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+The GNU MP Library test suite is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 3 of the License,
+or (at your option) any later version.
 
-The GNU MP Library is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+The GNU MP Library test suite is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received a copy of the GNU General Public License along with
+the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,7 +66,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 /* dummies when not a fat binary */
 #if ! WANT_FAT_BINARY
 struct cpuvec_t {
-  int  initialized;
+  int  dummy;
 };
 struct cpuvec_t __gmpn_cpuvec;
 #define ITERATE_FAT_THRESHOLDS()  do { } while (0)
@@ -207,6 +207,15 @@ check_functions (void)
       ASSERT_ALWAYS (wp[1] == 0);
     }
 
+  memcpy (&__gmpn_cpuvec, &initial_cpuvec, sizeof (__gmpn_cpuvec));
+  for (i = 0; i < 2; i++)
+    {
+      xp[0] = 5;
+      yp[0] = 7;
+      mpn_mullo_basecase (wp, xp, yp, (mp_size_t) 1);
+      ASSERT_ALWAYS (wp[0] == 35);
+    }
+
 #if HAVE_NATIVE_mpn_preinv_divrem_1 && GMP_NAIL_BITS == 0
   memcpy (&__gmpn_cpuvec, &initial_cpuvec, sizeof (__gmpn_cpuvec));
   for (i = 0; i < 2; i++)
@@ -269,17 +278,18 @@ check_functions (void)
     }
 }
 
-/* Expect the first use of a each fat threshold to invoke the necessary
+/* Expect the first use of each fat threshold to invoke the necessary
    initialization.  */
 void
 check_thresholds (void)
 {
 #define ITERATE(name,field)                                             \
   do {                                                                  \
+    __gmpn_cpuvec_initialized = 0;					\
     memcpy (&__gmpn_cpuvec, &initial_cpuvec, sizeof (__gmpn_cpuvec));   \
     ASSERT_ALWAYS (name != 0);                                          \
     ASSERT_ALWAYS (name == __gmpn_cpuvec.field);                        \
-    ASSERT_ALWAYS (__gmpn_cpuvec.initialized);                          \
+    ASSERT_ALWAYS (__gmpn_cpuvec_initialized);                          \
   } while (0)
 
   ITERATE_FAT_THRESHOLDS ();

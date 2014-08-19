@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.51 2012/08/01 21:30:24 matt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.51.2.1 2014/08/20 00:03:20 tls Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.51 2012/08/01 21:30:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.51.2.1 2014/08/20 00:03:20 tls Exp $");
 
 #define USERACC
 
@@ -254,7 +254,7 @@ kdb_trap(int type, void *v)
 static void
 print_battranslation(struct bat *bat, unsigned int blidx)
 {
-	static const char const batsizes[][6] = {
+	static const char batsizes[][6] = {
 		"128KB",
 		"256KB",
 		"512KB",

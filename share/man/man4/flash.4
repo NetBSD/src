@@ -1,4 +1,4 @@
-.\"	$NetBSD: flash.4,v 1.3 2011/02/27 06:24:27 wiz Exp $
+.\"	$NetBSD: flash.4,v 1.3.14.1 2014/08/20 00:02:35 tls Exp $
 .\"
 .\" Copyright (c) 2010 Department of Software Engineering,
 .\"		      University of Szeged, Hungary
@@ -56,7 +56,7 @@ This command dumps a block.
 .It Dv FLASH_ERASE_BLOCK (struct flash_erase_params)
 This command erases one or more blocks.
 .It Dv FLASH_GET_INFO (struct flash_info_params)
-This command aquires information aboout the flash device.
+This command acquires information about the flash device.
 .El
 .Sh FILES
 .Bl -tag -width /dev/flash -compact
@@ -66,4 +66,4 @@ This command aquires information aboout the flash device.
 .Xr flash 9 ,
 .Xr nand 9
 .Sh AUTHORS
-.An Adam Hoka Aq ahoka@NetBSD.org
+.An Adam Hoka Aq Mt ahoka@NetBSD.org

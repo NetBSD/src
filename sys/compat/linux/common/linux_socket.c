@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.114.2.1 2013/02/25 00:29:08 tls Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.114.2.2 2014/08/20 00:03:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.114.2.1 2013/02/25 00:29:08 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.114.2.2 2014/08/20 00:03:32 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -70,7 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.114.2.1 2013/02/25 00:29:08 tls E
 #include <sys/kauth.h>
 #include <sys/syscallargs.h>
 #include <sys/ktrace.h>
-#include <sys/fcntl.h>
 
 #include <lib/libkern/libkern.h>
 
@@ -111,9 +110,11 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.114.2.1 2013/02/25 00:29:08 tls E
 
 static int linux_to_bsd_domain(int);
 static int bsd_to_linux_domain(int);
+static int linux_to_bsd_type(int);
 int linux_to_bsd_sopt_level(int);
 int linux_to_bsd_so_sockopt(int);
 int linux_to_bsd_ip_sockopt(int);
+int linux_to_bsd_ipv6_sockopt(int);
 int linux_to_bsd_tcp_sockopt(int);
 int linux_to_bsd_udp_sockopt(int);
 int linux_getifname(struct lwp *, register_t *, void *);
@@ -237,6 +238,27 @@ bsd_to_linux_domain(int bdom)
 }
 
 static int
+linux_to_bsd_type(int ltype)
+{
+	int type, flags;
+
+	/* Real types are identical between Linux and NetBSD */
+	type = ltype & LINUX_SOCK_TYPE_MASK;
+
+	/* But flags are not .. */
+	flags = ltype & ~LINUX_SOCK_TYPE_MASK;
+	if (flags & ~(LINUX_SOCK_CLOEXEC|LINUX_SOCK_NONBLOCK))
+		return -1;
+
+	if (flags & LINUX_SOCK_CLOEXEC)
+		type |= SOCK_CLOEXEC;
+	if (flags & LINUX_SOCK_NONBLOCK)
+		type |= SOCK_NONBLOCK;
+
+	return type;
+}
+
+static int
 linux_to_bsd_msg_flags(int lflag)
 {
 	int i, lfl, bfl;
@@ -299,15 +321,15 @@ linux_sys_socket(struct lwp *l, const struct linux_sys_socket_args *uap, registe
 		syscallarg(int) protocol;
 	} */
 	struct sys___socket30_args bsa;
-	struct sys_fcntl_args fsa;
-	register_t fretval[2];
-	int error, flags;
+	int error;
 
 
 	SCARG(&bsa, protocol) = SCARG(uap, protocol);
-	SCARG(&bsa, type) = SCARG(uap, type) & LINUX_SOCK_TYPE_MASK;
 	SCARG(&bsa, domain) = linux_to_bsd_domain(SCARG(uap, domain));
 	if (SCARG(&bsa, domain) == -1)
+		return EINVAL;
+	SCARG(&bsa, type) = linux_to_bsd_type(SCARG(uap, type));
+	if (SCARG(&bsa, type) == -1)
 		return EINVAL;
 	/*
 	 * Apparently linux uses this to talk to ISDN sockets. If we fail
@@ -316,35 +338,7 @@ linux_sys_socket(struct lwp *l, const struct linux_sys_socket_args *uap, registe
 	 */
 	if (SCARG(&bsa, domain) == AF_ROUTE && SCARG(&bsa, type) == SOCK_RAW)
 		return ENOTSUP;
-	flags = SCARG(uap, type) & ~LINUX_SOCK_TYPE_MASK;
-	if (flags & ~(LINUX_SOCK_CLOEXEC | LINUX_SOCK_NONBLOCK))
-		return EINVAL;
 	error = sys___socket30(l, &bsa, retval);
-
-	/*
-	 * Linux overloads the "type" parameter to include some
-	 * fcntl flags to be set on the file descriptor.
-	 * Process those if creating the socket succeeded.
-	 */
-
-	if (!error && flags & LINUX_SOCK_CLOEXEC) {
-		SCARG(&fsa, fd) = *retval;
-		SCARG(&fsa, cmd) = F_SETFD;
-		SCARG(&fsa, arg) = (void *)(uintptr_t)FD_CLOEXEC;
-		(void) sys_fcntl(l, &fsa, fretval);
-	}
-	if (!error && flags & LINUX_SOCK_NONBLOCK) {
-		SCARG(&fsa, fd) = *retval;
-		SCARG(&fsa, cmd) = F_SETFL;
-		SCARG(&fsa, arg) = (void *)(uintptr_t)O_NONBLOCK;
-		error = sys_fcntl(l, &fsa, fretval);
-		if (error) {
-			struct sys_close_args csa;
-
-			SCARG(&csa, fd) = *retval;
-			(void) sys_close(l, &csa, fretval);
-		}
-	}
 
 #ifdef INET6
 	/*
@@ -384,7 +378,9 @@ linux_sys_socketpair(struct lwp *l, const struct linux_sys_socketpair_args *uap,
 	SCARG(&bsa, domain) = linux_to_bsd_domain(SCARG(uap, domain));
 	if (SCARG(&bsa, domain) == -1)
 		return EINVAL;
-	SCARG(&bsa, type) = SCARG(uap, type);
+	SCARG(&bsa, type) = linux_to_bsd_type(SCARG(uap, type));
+	if (SCARG(&bsa, type) == -1)
+		return EINVAL;
 	SCARG(&bsa, protocol) = SCARG(uap, protocol);
 	SCARG(&bsa, rsv) = SCARG(uap, rsv);
 
@@ -833,6 +829,10 @@ linux_to_bsd_sopt_level(int llevel)
 		return SOL_SOCKET;
 	case LINUX_SOL_IP:
 		return IPPROTO_IP;
+#ifdef INET6
+	case LINUX_SOL_IPV6:
+		return IPPROTO_IPV6;
+#endif
 	case LINUX_SOL_TCP:
 		return IPPROTO_TCP;
 	case LINUX_SOL_UDP:
@@ -873,12 +873,18 @@ linux_to_bsd_so_sockopt(int lopt)
 		return SO_SNDBUF;
 	case LINUX_SO_RCVBUF:
 		return SO_RCVBUF;
+	case LINUX_SO_SNDLOWAT:
+		return SO_SNDLOWAT;
+	case LINUX_SO_RCVLOWAT:
+		return SO_RCVLOWAT;
 	case LINUX_SO_KEEPALIVE:
 		return SO_KEEPALIVE;
 	case LINUX_SO_OOBINLINE:
 		return SO_OOBINLINE;
 	case LINUX_SO_LINGER:
 		return SO_LINGER;
+	case LINUX_SO_ACCEPTCONN:
+		return SO_ACCEPTCONN;
 	case LINUX_SO_PRIORITY:
 	case LINUX_SO_NO_CHECK:
 	default:
@@ -914,6 +920,23 @@ linux_to_bsd_ip_sockopt(int lopt)
 		return -1;
 	}
 }
+
+/*
+ * Convert Linux IPV6 level socket option number to NetBSD values.
+ */
+#ifdef INET6
+int
+linux_to_bsd_ipv6_sockopt(int lopt)
+{
+
+	switch (lopt) {
+	case LINUX_IPV6_V6ONLY:
+		return IPV6_V6ONLY;
+	default:
+		return -1;
+	}
+}
+#endif
 
 /*
  * Convert Linux TCP level socket option number to NetBSD values.
@@ -994,6 +1017,11 @@ linux_sys_setsockopt(struct lwp *l, const struct linux_sys_setsockopt_args *uap,
 	case IPPROTO_IP:
 		name = linux_to_bsd_ip_sockopt(SCARG(uap, optname));
 		break;
+#ifdef INET6
+	case IPPROTO_IPV6:
+		name = linux_to_bsd_ipv6_sockopt(SCARG(uap, optname));
+		break;
+#endif
 	case IPPROTO_TCP:
 		name = linux_to_bsd_tcp_sockopt(SCARG(uap, optname));
 		break;
@@ -1039,6 +1067,11 @@ linux_sys_getsockopt(struct lwp *l, const struct linux_sys_getsockopt_args *uap,
 	case IPPROTO_IP:
 		name = linux_to_bsd_ip_sockopt(SCARG(uap, optname));
 		break;
+#ifdef INET6
+	case IPPROTO_IPV6:
+		name = linux_to_bsd_ipv6_sockopt(SCARG(uap, optname));
+		break;
+#endif
 	case IPPROTO_TCP:
 		name = linux_to_bsd_tcp_sockopt(SCARG(uap, optname));
 		break;
@@ -1067,10 +1100,7 @@ linux_getifname(struct lwp *l, register_t *retval, void *data)
 	if (error)
 		return error;
 
-	if (ifr.ifr_ifru.ifru_ifindex >= if_indexlim)
-		return ENODEV;
-	
-	ifp = ifindex2ifnet[ifr.ifr_ifru.ifru_ifindex];
+	ifp = if_byindex(ifr.ifr_ifru.ifru_ifindex);
 	if (ifp == NULL)
 		return ENODEV;
 

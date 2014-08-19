@@ -1,4 +1,4 @@
-# Copyright 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2008-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,23 +13,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 load_lib "ada.exp"
 
-set testdir "lang_switch"
-set testfile "${testdir}/lang_switch"
+standard_ada_testfile lang_switch
 set cfile "${testdir}/foo"
-set adasrcfile ${srcdir}/${subdir}/${testfile}.adb
 set csrcfile ${srcdir}/${subdir}/${cfile}.c
-set cobject  ${objdir}/${subdir}/${cfile}.o
-set binfile ${objdir}/${subdir}/${testfile}
+set cobject [standard_output_file ${cfile}.o]
 
-file mkdir ${objdir}/${subdir}/${testdir}
 gdb_compile "${csrcfile}" "${cobject}" object [list debug]
-if {[gdb_compile_ada "${adasrcfile}" "${binfile}" executable [list debug]] != "" } {
+if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug]] != "" } {
   return -1
 }
 
@@ -50,6 +42,5 @@ gdb_test "bt" \
 # if the current language is not "auto".
 gdb_test "set lang c"
 gdb_test "bt" \
-         ".*#1.*lang_switch\\.ada_procedure\\s*\\(msg={.*\\).*" \
-         "backtrace"
-
+         ".*#1.*lang_switch\\.ada_procedure\\s*\\(msg=(@$hex: +)?{.*\\).*" \
+         "backtrace with lang set to C"

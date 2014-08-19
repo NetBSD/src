@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.42.2.1 2012/11/20 03:02:29 tls Exp $ */
+/*	$NetBSD: twa.c,v 1.42.2.2 2014/08/20 00:03:48 tls Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.42.2.1 2012/11/20 03:02:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.42.2.2 2014/08/20 00:03:48 tls Exp $");
 
 //#define TWA_DEBUG
 
@@ -262,6 +262,7 @@ static const char	*twa_aen_severity_table[] = {
 	NULL
 };
 
+#if 0
 /* Error messages. */
 static const struct twa_message	twa_error_table[] = {
 	{0x0100, "SGL entry contains zero data"},
@@ -368,7 +369,7 @@ static const struct twa_message	twa_error_table[] = {
 	{0x0253, "Inadequate disk space to support descriptor in CreateUnit"},
 	{0x0254, "Unable to create data channel for this unit descriptor"},
 	{0x0255, "CreateUnit descriptor specifies a drive already in use"},
-       {0x0256, "Unable to write configuration to all disks during CreateUnit"},
+	{0x0256, "Unable to write configuration to all disks during CreateUnit"},
 	{0x0257, "CreateUnit does not support this descriptor version"},
 	{0x0258, "Invalid subunit for RAID 0 or 5 in CreateUnit"},
 	{0x0259, "Too many descriptors in CreateUnit"},
@@ -378,6 +379,7 @@ static const struct twa_message	twa_error_table[] = {
 	{0x0260, "SMART attribute exceeded threshold"},
 	{0xFFFFFFFF, NULL}
 };
+#endif
 
 struct twa_pci_identity {
 	uint32_t	vendor_id;
@@ -1126,7 +1128,6 @@ out:
 static int
 twa_drain_response_queue(struct twa_softc *sc)
 {
-	union twa_response_queue	rq;
 	uint32_t			status_reg;
 
 	for (;;) {
@@ -1135,7 +1136,7 @@ twa_drain_response_queue(struct twa_softc *sc)
 			return(1);
 		if (status_reg & TWA_STATUS_RESPONSE_QUEUE_EMPTY)
 			return(0); /* no more response queue entries */
-		rq.value = twa_inl(sc, TWA_RESPONSE_QUEUE_OFFSET);
+		(void)twa_inl(sc, TWA_RESPONSE_QUEUE_OFFSET);
 	}
 }
 
@@ -1504,6 +1505,7 @@ twa_attach(device_t parent, device_t self, void *aux)
 	const struct twa_pci_identity *entry;
 	int i;
 	bool use_64bit;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 
@@ -1583,7 +1585,7 @@ twa_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->twa_dv, "can't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 
 	sc->twa_ih = pci_intr_establish(pc, ih, IPL_BIO, twa_intr, sc);
 	if (sc->twa_ih == NULL) {
@@ -1603,14 +1605,6 @@ twa_attach(device_t parent, device_t self, void *aux)
 		twa_sdh = shutdownhook_establish(twa_shutdown, NULL);
 
 	/* sysctl set-up for 3ware cli */
-	if (sysctl_createv(NULL, 0, NULL, NULL,
-				CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",
-				NULL, NULL, 0, NULL, 0,
-				CTL_HW, CTL_EOL) != 0) {
-		aprint_error_dev(sc->twa_dv, "could not create %s sysctl node\n",
-			"hw");
-		return;
-	}
 	if (sysctl_createv(NULL, 0, NULL, &node,
 				0, CTLTYPE_NODE, device_xname(sc->twa_dv),
 				SYSCTL_DESCR("twa driver information"),
@@ -1641,7 +1635,7 @@ twa_shutdown(void *arg)
 {
 	extern struct cfdriver twa_cd;
 	struct twa_softc *sc;
-	int i, rv, unit;
+	int i, unit;
 
 	for (i = 0; i < twa_cd.cd_ndevs; i++) {
 		if ((sc = device_lookup_private(&twa_cd, i)) == NULL)
@@ -1656,7 +1650,7 @@ twa_shutdown(void *arg)
 			TWA_CONTROL_DISABLE_INTERRUPTS);
 
 		/* Let the controller know that we are going down. */
-		rv = twa_init_connection(sc, TWA_SHUTDOWN_MESSAGE_CREDITS,
+		(void)twa_init_connection(sc, TWA_SHUTDOWN_MESSAGE_CREDITS,
 				0, 0, 0, 0, 0,
 				NULL, NULL, NULL, NULL, NULL);
 	}
@@ -1872,7 +1866,7 @@ twa_map_request(struct twa_request *tr)
 static int
 twa_intr(void *arg)
 {
-	int	caught, s, rv;
+	int	caught, s, rv __diagused;
 	struct twa_softc *sc;
 	uint32_t	status_reg;
 	sc = (struct twa_softc *)arg;
@@ -2280,8 +2274,18 @@ fw_passthru_done:
 }
 
 const struct cdevsw twa_cdevsw = {
-	twaopen, twaclose, noread, nowrite, twaioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	.d_open = twaopen,
+	.d_close = twaclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = twaioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 /*
@@ -2763,7 +2767,7 @@ twa_aen_callback(struct twa_request *tr)
 static uint16_t
 twa_enqueue_aen(struct twa_softc *sc, struct twa_command_header *cmd_hdr)
 {
-	int			rv, s;
+	int			rv __diagused, s;
 	struct tw_cl_event_packet *event;
 	uint16_t		aen_code;
 	unsigned long		sync_time;

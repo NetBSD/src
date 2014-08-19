@@ -1,4 +1,4 @@
-# Copyright 2007, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2007-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,37 +21,26 @@
 #
 # PR c++/9489.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 if { [skip_cplus_tests] } { continue }
 if { [skip_shlib_tests] } { continue }
 
-set testfile "gdb2384"
-set srcfile ${testfile}.cc
-set binfile $objdir/$subdir/$testfile
+standard_testfile .cc gdb2384-base.cc
 
-set libfile "gdb2384-base"
-set libsrcfile ${libfile}.cc
-set sofile $objdir/$subdir/${libfile}.so
+set sofile [standard_output_file gdb2384-base.so]
 
 # Create and source the file that provides information about the compiler
 # used to compile the test case.
-if [get_compiler_info ${binfile} "c++"] {
+if [get_compiler_info "c++"] {
     return -1
 }
 
-if { [gdb_compile_shlib $srcdir/$subdir/$libsrcfile $sofile {debug c++}] != ""
+if { [gdb_compile_shlib $srcdir/$subdir/$srcfile2 $sofile {debug c++}] != ""
      || [gdb_compile $srcdir/$subdir/$srcfile $binfile executable [list debug "c++" shlib=${sofile}]] != ""} {
     untested gdb2384.exp
     return -1
 }
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart ${binfile}
 gdb_load_shlibs ${sofile}
 
 

@@ -1,6 +1,7 @@
 /* Memory allocation routines.
 
-Copyright 1991, 1993, 1994, 2000, 2001, 2002 Free Software Foundation, Inc.
+Copyright 1991, 1993, 1994, 2000, 2001, 2002, 2012 Free Software Foundation,
+Inc.
 
 This file is part of the GNU MP Library.
 
@@ -24,10 +25,9 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp-impl.h"
 
 
-void *	(*__gmp_allocate_func) __GMP_PROTO ((size_t)) = __gmp_default_allocate;
-void *	(*__gmp_reallocate_func) __GMP_PROTO ((void *, size_t, size_t))
-     = __gmp_default_reallocate;
-void	(*__gmp_free_func) __GMP_PROTO ((void *, size_t)) = __gmp_default_free;
+void * (*__gmp_allocate_func) (size_t) = __gmp_default_allocate;
+void * (*__gmp_reallocate_func) (void *, size_t, size_t) = __gmp_default_reallocate;
+void   (*__gmp_free_func) (void *, size_t) = __gmp_default_free;
 
 
 /* Default allocation functions.  In case of failure to allocate/reallocate

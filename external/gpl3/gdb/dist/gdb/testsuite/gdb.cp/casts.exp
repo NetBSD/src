@@ -1,5 +1,4 @@
-# Copyright 2002, 2003, 2004, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 2002-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,10 +20,6 @@
 
 # This file is part of the gdb testsuite
 
-if $tracelevel then {
-        strace $tracelevel
-        }
-
 #
 # test running programs
 #
@@ -32,24 +27,15 @@ if $tracelevel then {
 
 if { [skip_cplus_tests] } { continue }
 
-set testfile "casts"
-set srcfile ${testfile}.cc
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .cc
 
-if [get_compiler_info ${binfile} "c++"] {
-    return -1;
+if [get_compiler_info "c++"] {
+    return -1
 }
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
-     untested casts.exp
-     return -1
+if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
+    return -1
 }
-
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 
 if ![runto_main] then {
     perror "couldn't run to breakpoint"
@@ -121,6 +107,25 @@ gdb_test "print reinterpret_cast<void> (b)" "Invalid reinterpret_cast" \
 gdb_test "print reinterpret_cast<A &> (*b)" " = \\(A \\&\\) @$hex: {a = 42}" \
     "reinterpret_cast to reference type"
 
+# Test that keyword shadowing works.
+
+gdb_test "whatis decltype(5)" " = double"
+
+# Basic tests using typeof.
+
+foreach opname {__typeof__ __typeof __decltype} {
+    gdb_test "print (${opname}(a)) (b)" " = \\(A \\*\\) $hex" \
+	"old-style cast using $opname"
+
+    gdb_test "print static_cast<${opname}(a)> (b)" " = \\(A \\*\\) $hex" \
+	"static_cast using $opname"
+
+    gdb_test "print reinterpret_cast<${opname}(a)> (b)" " = \\(A \\*\\) $hex" \
+	"reinterpret_cast using $opname"
+}
+
+gdb_test "whatis __decltype(*a)" "type = A \\&"
+
 # Tests of dynamic_cast.
 
 set nonzero_hex "0x\[0-9A-Fa-f\]\[0-9A-Fa-f\]+"
@@ -142,11 +147,11 @@ gdb_test "print dynamic_cast<Alpha *> (&doublyderived)" \
     "dynamic_cast upcast to unique base"
 
 gdb_test "print dynamic_cast<Alpha &> (derived)" \
-    " = \\(Alpha \\&\\) @$nonzero_hex: {.* = $nonzero_hex}" \
+    " = \\(Alpha \\&\\) @$nonzero_hex: {.* = ${nonzero_hex}( <vtable for Derived.*>)?}" \
     "dynamic_cast simple upcast to reference"
 
 gdb_test "print dynamic_cast<Derived *> (ad)" \
-    " = \\(Derived \\*\\) $nonzero_hex" \
+    " = \\(Derived \\*\\) ${nonzero_hex}( <vtable for Derived.*>)?" \
     "dynamic_cast simple downcast"
 
 gdb_test "print dynamic_cast<VirtuallyDerived *> (add)" \
@@ -162,7 +167,7 @@ gdb_test "print dynamic_cast<VirtuallyDerived &> (*ad)" \
     "dynamic_cast to reference to non-existing base"
 
 gdb_test "print dynamic_cast<DoublyDerived *> (add)" \
-    " = \\(DoublyDerived \\*\\) $nonzero_hex" \
+    " = \\(DoublyDerived \\*\\) ${nonzero_hex}( <vtable for DoublyDerived.*>)?" \
     "dynamic_cast unique downcast"
 
 gdb_test "print dynamic_cast<Gamma *> (add)" \

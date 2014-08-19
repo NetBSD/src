@@ -1,4 +1,4 @@
-/* $NetBSD: if_le.c,v 1.6 2010/01/19 22:06:20 pooka Exp $ */
+/* $NetBSD: if_le.c,v 1.6.22.1 2014/08/20 00:03:10 tls Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.6 2010/01/19 22:06:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.6.22.1 2014/08/20 00:03:10 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -225,7 +225,7 @@ myetheraddr(uint8_t *ether)
 			u = (u < 'A') ? u & 0xf : u - 'A' + 10;
 			l = ea[1];
 			l = (l < 'A') ? l & 0xf : l - 'A' + 10;
-		
+
 			ether[i] = l | (u << 4);
 			ea += 2;
 		}

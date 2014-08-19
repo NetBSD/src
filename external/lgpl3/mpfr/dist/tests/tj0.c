@@ -1,7 +1,7 @@
 /* tj0 -- test file for the Bessel function of first kind (order 0)
 
-Copyright 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -34,6 +34,7 @@ int
 main (int argc, char *argv[])
 {
   mpfr_t x, y;
+  int inex;
 
   tests_start_mpfr ();
 
@@ -97,6 +98,29 @@ main (int argc, char *argv[])
   mpfr_set_si (x, -100, MPFR_RNDN);
   mpfr_j0 (y, x, MPFR_RNDN);
   MPFR_ASSERTN (! mpfr_nan_p (y) && mpfr_cmp_ui_2exp (y, 41, -11) == 0);
+
+  /* Case for which s = 0 in mpfr_jn */
+  mpfr_set_prec (x, 44);
+  mpfr_set_prec (y, 44);
+  mpfr_set_si (x, 2, MPFR_RNDN);
+  mpfr_clear_flags ();
+  inex = mpfr_j0 (y, x, MPFR_RNDN);
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_INEXACT);
+  mpfr_set_str (x, "0x.e5439fd9267p-2", 0, MPFR_RNDN);
+  if (! mpfr_equal_p (y, x))
+    {
+      printf ("Error on 2:\n");
+      printf ("Expected ");
+      mpfr_dump (x);
+      printf ("Got      ");
+      mpfr_dump (y);
+      exit (1);
+    }
+  if (inex >= 0)
+    {
+      printf ("Bad ternary value on 2: expected negative, got %d\n", inex);
+      exit (1);
+    }
 
   mpfr_clear (x);
   mpfr_clear (y);
