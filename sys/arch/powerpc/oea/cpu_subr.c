@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.73.6.1 2012/11/20 03:01:39 tls Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.73.6.2 2014/08/20 00:03:20 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.73.6.1 2012/11/20 03:01:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.73.6.2 2014/08/20 00:03:20 tls Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -73,7 +73,7 @@ static void cpu_tau_setup(struct cpu_info *);
 static void cpu_tau_refresh(struct sysmon_envsys *, envsys_data_t *);
 #endif
 
-int cpu;
+int cpu = -1;
 int ncpus;
 
 struct fmttab {
@@ -255,7 +255,6 @@ int cpu_altivec;
 register_t cpu_psluserset;
 register_t cpu_pslusermod;
 register_t cpu_pslusermask = 0xffff;
-char cpu_model[80];
 
 /* This is to be called from locore.S, and nowhere else. */
 
@@ -278,15 +277,32 @@ cpu_model_init(void)
 	} else if (vers == MPC601) {
 		oeacpufeat |= OEACPU_601;
 
-	} else if (MPC745X_P(vers) && vers != MPC7450) {
-		oeacpufeat |= OEACPU_HIGHSPRG;
-		oeacpufeat |= OEACPU_XBSEN;
-		oeacpufeat |= OEACPU_HIGHBAT;
-		/* Enable more and larger BAT registers */
-		register_t hid0 = mfspr(SPR_HID0);
-		hid0 |= HID0_XBSEN;
-		hid0 |= HID0_HIGH_BAT_EN;
-		mtspr(SPR_HID0, hid0);
+	} else if (MPC745X_P(vers)) {
+		register_t hid1 = mfspr(SPR_HID1);
+
+		if (vers != MPC7450) {
+			register_t hid0 = mfspr(SPR_HID0);
+
+			/* Enable more SPRG registers */
+			oeacpufeat |= OEACPU_HIGHSPRG;
+
+			/* Enable more BAT registers */
+			oeacpufeat |= OEACPU_HIGHBAT;
+			hid0 |= HID0_HIGH_BAT_EN;
+
+			/* Enable larger BAT registers */
+			oeacpufeat |= OEACPU_XBSEN;
+			hid0 |= HID0_XBSEN;
+
+			mtspr(SPR_HID0, hid0);
+			__asm volatile("sync;isync");
+		}
+
+		/* Enable address broadcasting for MP systems */
+		hid1 |= HID1_SYNCBE | HID1_ABE;
+
+		mtspr(SPR_HID1, hid1);
+		__asm volatile("sync;isync");
 
 	} else if (vers == IBM750FX || vers == IBM750GX) {
 		oeacpufeat |= OEACPU_HIGHBAT;
@@ -730,7 +746,6 @@ cpu_identify(char *str, size_t len)
 	u_int pvr, major, minor;
 	uint16_t vers, rev, revfmt;
 	const struct cputab *cp;
-	const char *name;
 	size_t n;
 
 	pvr = mfpvr();
@@ -756,16 +771,11 @@ cpu_identify(char *str, size_t len)
 			break;
 	}
 
-	if (str == NULL) {
-		str = cpu_model;
-		len = sizeof(cpu_model);
+	if (cpu == -1)
 		cpu = vers;
-	}
 
 	revfmt = cp->revfmt;
-	name = cp->name;
 	if (rev == MPC750 && pvr == 15) {
-		name = "755";
 		revfmt = REVFMT_HEX;
 	}
 
@@ -1204,11 +1214,9 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 {
 	volatile struct cpu_hatch_data hatch_data, *h = &hatch_data;
 	struct pglist mlist;
-	int i, error, pvr, vers;
+	int i, error;
 	char *hp;
 
-	pvr = mfpvr();
-	vers = pvr >> 16;
 	KASSERT(ci != curcpu());
 
 	/* Now allocate a hatch stack */

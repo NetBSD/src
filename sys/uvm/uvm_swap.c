@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.161.6.2 2013/06/23 06:20:29 tls Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.161.6.3 2014/08/20 00:04:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.161.6.2 2013/06/23 06:20:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.161.6.3 2014/08/20 00:04:45 tls Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.161.6.2 2013/06/23 06:20:29 tls Exp $
  * partitions/files.   there is a sorted LIST of "swappri" structures
  * which describe "swapdev"'s at that priority.   this LIST is headed
  * by the "swap_priority" global var.    each "swappri" contains a
- * CIRCLEQ of "swapdev" structures at that priority.
+ * TAILQ of "swapdev" structures at that priority.
  *
  * locking:
  *  - swap_syscall_lock (krwlock_t): this lock serializes the swapctl
@@ -136,7 +136,7 @@ struct swapdev {
 	int			swd_drumsize;	/* #pages in drum */
 	blist_t			swd_blist;	/* blist for this swapdev */
 	struct vnode		*swd_vp;	/* backing vnode */
-	CIRCLEQ_ENTRY(swapdev)	swd_next;	/* priority circleq */
+	TAILQ_ENTRY(swapdev)	swd_next;	/* priority tailq */
 
 	int			swd_bsize;	/* blocksize (bytes) */
 	int			swd_maxactive;	/* max active i/o reqs */
@@ -149,8 +149,8 @@ struct swapdev {
  */
 struct swappri {
 	int			spi_priority;     /* priority */
-	CIRCLEQ_HEAD(spi_swapdev, swapdev)	spi_swapdev;
-	/* circleq of swapdevs at this priority */
+	TAILQ_HEAD(spi_swapdev, swapdev)	spi_swapdev;
+	/* tailq of swapdevs at this priority */
 	LIST_ENTRY(swappri)	spi_swappri;      /* global list of pri's */
 };
 
@@ -236,8 +236,6 @@ static void		 swaplist_trim(void);
 
 static int swap_on(struct lwp *, struct swapdev *);
 static int swap_off(struct lwp *, struct swapdev *);
-
-static void uvm_swap_stats(int, struct swapent *, int, register_t *);
 
 static void sw_reg_strategy(struct swapdev *, struct buf *, int);
 static void sw_reg_biodone(struct buf *);
@@ -335,7 +333,7 @@ swaplist_insert(struct swapdev *sdp, struct swappri *newspp, int priority)
 			    priority, 0, 0, 0);
 
 		spp->spi_priority = priority;
-		CIRCLEQ_INIT(&spp->spi_swapdev);
+		TAILQ_INIT(&spp->spi_swapdev);
 
 		if (pspp)
 			LIST_INSERT_AFTER(pspp, spp, spi_swappri);
@@ -348,10 +346,10 @@ swaplist_insert(struct swapdev *sdp, struct swappri *newspp, int priority)
 
 	/*
 	 * priority found (or created).   now insert on the priority's
-	 * circleq list and bump the total number of swapdevs.
+	 * tailq list and bump the total number of swapdevs.
 	 */
 	sdp->swd_priority = priority;
-	CIRCLEQ_INSERT_TAIL(&spp->spi_swapdev, sdp, swd_next);
+	TAILQ_INSERT_TAIL(&spp->spi_swapdev, sdp, swd_next);
 	uvmexp.nswapdev++;
 }
 
@@ -373,10 +371,10 @@ swaplist_find(struct vnode *vp, bool remove)
 	 */
 
 	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
-		CIRCLEQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
+		TAILQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
 			if (sdp->swd_vp == vp) {
 				if (remove) {
-					CIRCLEQ_REMOVE(&spp->spi_swapdev,
+					TAILQ_REMOVE(&spp->spi_swapdev,
 					    sdp, swd_next);
 					uvmexp.nswapdev--;
 				}
@@ -399,8 +397,7 @@ swaplist_trim(void)
 	struct swappri *spp, *nextspp;
 
 	LIST_FOREACH_SAFE(spp, &swap_priority, spi_swappri, nextspp) {
-		if (CIRCLEQ_FIRST(&spp->spi_swapdev) !=
-		    (void *)&spp->spi_swapdev)
+		if (!TAILQ_EMPTY(&spp->spi_swapdev))
 			continue;
 		LIST_REMOVE(spp, spi_swappri);
 		kmem_free(spp, sizeof(*spp));
@@ -421,7 +418,7 @@ swapdrum_getsdp(int pgno)
 	struct swappri *spp;
 
 	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
-		CIRCLEQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
+		TAILQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
 			if (sdp->swd_flags & SWF_FAKE)
 				continue;
 			if (pgno >= sdp->swd_drumoffset &&
@@ -495,13 +492,17 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 	    || SCARG(uap, cmd) == SWAP_STATS13
 #endif
 	    ) {
-		if ((size_t)misc > (size_t)uvmexp.nswapdev)
-			misc = uvmexp.nswapdev;
-
-		if (misc == 0) {
+		if (misc < 0) {
 			error = EINVAL;
 			goto out;
 		}
+		if (misc == 0 || uvmexp.nswapdev == 0) {
+			error = 0;
+			goto out;
+		}
+		/* Make sure userland cannot exhaust kernel memory */
+		if ((size_t)misc > (size_t)uvmexp.nswapdev)
+			misc = uvmexp.nswapdev;
 		KASSERT(misc > 0);
 #if defined(COMPAT_13)
 		if (SCARG(uap, cmd) == SWAP_STATS13)
@@ -564,7 +565,6 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 		if (SCARG(uap, cmd) == SWAP_ON &&
 		    copystr("miniroot", userpath, SWAP_PATH_MAX, &len))
 			panic("swapctl: miniroot copy failed");
-		KASSERT(len > 0);
 	} else {
 		struct pathbuf *pb;
 
@@ -734,7 +734,7 @@ out:
  * is not known at build time. Hence it would not be possible to
  * ensure it would fit in the stackgap in any case.
  */
-static void
+void
 uvm_swap_stats(int cmd, struct swapent *sep, int sec, register_t *retval)
 {
 	struct swappri *spp;
@@ -742,7 +742,7 @@ uvm_swap_stats(int cmd, struct swapent *sep, int sec, register_t *retval)
 	int count = 0;
 
 	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
-		CIRCLEQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
+		TAILQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
 			int inuse;
 
 			if (sec-- <= 0)
@@ -1108,6 +1108,55 @@ swap_off(struct lwp *l, struct swapdev *sdp)
 	return (0);
 }
 
+void
+uvm_swap_shutdown(struct lwp *l)
+{
+	struct swapdev *sdp;
+	struct swappri *spp;
+	struct vnode *vp;
+	int error;
+
+	printf("turning of swap...");
+	rw_enter(&swap_syscall_lock, RW_WRITER);
+	mutex_enter(&uvm_swap_data_lock);
+again:
+	LIST_FOREACH(spp, &swap_priority, spi_swappri)
+		TAILQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
+			if (sdp->swd_flags & SWF_FAKE)
+				continue;
+			if ((sdp->swd_flags & (SWF_INUSE|SWF_ENABLE)) == 0)
+				continue;
+#ifdef DEBUG
+			printf("\nturning off swap on %s...",
+			    sdp->swd_path);
+#endif
+			if (vn_lock(vp = sdp->swd_vp, LK_EXCLUSIVE)) {
+				error = EBUSY;
+				vp = NULL;
+			} else
+				error = 0;
+			if (!error) {
+				error = swap_off(l, sdp);
+				mutex_enter(&uvm_swap_data_lock);
+			}
+			if (error) {
+				printf("stopping swap on %s failed "
+				    "with error %d\n", sdp->swd_path, error);
+				TAILQ_REMOVE(&spp->spi_swapdev, sdp,
+				    swd_next);
+				uvmexp.nswapdev--;
+				swaplist_trim();
+				if (vp)
+					vput(vp);
+			}
+			goto again;
+		}
+	printf(" done\n");
+	mutex_exit(&uvm_swap_data_lock);
+	rw_exit(&swap_syscall_lock);
+}
+
+
 /*
  * /dev/drum interface and i/o functions
  */
@@ -1231,12 +1280,29 @@ swwrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 const struct bdevsw swap_bdevsw = {
-	nullopen, nullclose, swstrategy, noioctl, nodump, nosize, D_OTHER,
+	.d_open = nullopen,
+	.d_close = nullclose,
+	.d_strategy = swstrategy,
+	.d_ioctl = noioctl,
+	.d_dump = nodump,
+	.d_psize = nosize,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 const struct cdevsw swap_cdevsw = {
-	nullopen, nullclose, swread, swwrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	.d_open = nullopen,
+	.d_close = nullclose,
+	.d_read = swread,
+	.d_write = swwrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER,
 };
 
 /*
@@ -1555,7 +1621,7 @@ uvm_swap_alloc(int *nslots /* IN/OUT */, bool lessok)
 
 ReTry:	/* XXXMRG */
 	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
-		CIRCLEQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
+		TAILQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
 			uint64_t result;
 
 			/* if it's not enabled, then we can't swap from it */
@@ -1570,10 +1636,10 @@ ReTry:	/* XXXMRG */
 			KASSERT(result < sdp->swd_drumsize);
 
 			/*
-			 * successful allocation!  now rotate the circleq.
+			 * successful allocation!  now rotate the tailq.
 			 */
-			CIRCLEQ_REMOVE(&spp->spi_swapdev, sdp, swd_next);
-			CIRCLEQ_INSERT_TAIL(&spp->spi_swapdev, sdp, swd_next);
+			TAILQ_REMOVE(&spp->spi_swapdev, sdp, swd_next);
+			TAILQ_INSERT_TAIL(&spp->spi_swapdev, sdp, swd_next);
 			sdp->swd_npginuse += *nslots;
 			uvmexp.swpginuse += *nslots;
 			mutex_exit(&uvm_swap_data_lock);

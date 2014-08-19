@@ -1,7 +1,6 @@
 /* Target-dependent code for GNU/Linux SPARC.
 
-   Copyright (C) 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -90,6 +89,31 @@ static const struct tramp_frame sparc32_linux_rt_sigframe =
   },
   sparc32_linux_sigframe_init
 };
+
+/* This enum represents the signals' numbers on the SPARC
+   architecture.  It just contains the signal definitions which are
+   different from the generic implementation.
+
+   It is derived from the file <arch/sparc/include/uapi/asm/signal.h>,
+   from the Linux kernel tree.  */
+
+enum
+  {
+    SPARC_LINUX_SIGEMT = 7,
+    SPARC_LINUX_SIGBUS = 10,
+    SPARC_LINUX_SIGSYS = 12,
+    SPARC_LINUX_SIGURG = 16,
+    SPARC_LINUX_SIGSTOP = 17,
+    SPARC_LINUX_SIGTSTP = 18,
+    SPARC_LINUX_SIGCONT = 19,
+    SPARC_LINUX_SIGCHLD = 20,
+    SPARC_LINUX_SIGIO = 23,
+    SPARC_LINUX_SIGPOLL = SPARC_LINUX_SIGIO,
+    SPARC_LINUX_SIGLOST = 29,
+    SPARC_LINUX_SIGPWR = SPARC_LINUX_SIGLOST,
+    SPARC_LINUX_SIGUSR1 = 30,
+    SPARC_LINUX_SIGUSR2 = 31,
+  };
 
 static void
 sparc32_linux_sigframe_init (const struct tramp_frame *self,
@@ -211,7 +235,7 @@ sparc32_linux_supply_core_fpregset (const struct regset *regset,
 				    struct regcache *regcache,
 				    int regnum, const void *fpregs, size_t len)
 {
-  sparc32_supply_fpregset (regcache, regnum, fpregs);
+  sparc32_supply_fpregset (&sparc32_bsd_fpregset, regcache, regnum, fpregs);
 }
 
 static void
@@ -219,7 +243,7 @@ sparc32_linux_collect_core_fpregset (const struct regset *regset,
 				     const struct regcache *regcache,
 				     int regnum, void *fpregs, size_t len)
 {
-  sparc32_collect_fpregset (regcache, regnum, fpregs);
+  sparc32_collect_fpregset (&sparc32_bsd_fpregset, regcache, regnum, fpregs);
 }
 
 /* Set the program counter for process PTID to PC.  */
@@ -269,6 +293,114 @@ sparc32_linux_get_syscall_number (struct gdbarch *gdbarch,
   return ret;
 }
 
+/* Implementation of `gdbarch_gdb_signal_from_target', as defined in
+   gdbarch.h.  */
+
+static enum gdb_signal
+sparc32_linux_gdb_signal_from_target (struct gdbarch *gdbarch,
+				      int signal)
+{
+  switch (signal)
+    {
+    case SPARC_LINUX_SIGEMT:
+      return GDB_SIGNAL_EMT;
+
+    case SPARC_LINUX_SIGBUS:
+      return GDB_SIGNAL_BUS;
+
+    case SPARC_LINUX_SIGSYS:
+      return GDB_SIGNAL_SYS;
+
+    case SPARC_LINUX_SIGURG:
+      return GDB_SIGNAL_URG;
+
+    case SPARC_LINUX_SIGSTOP:
+      return GDB_SIGNAL_STOP;
+
+    case SPARC_LINUX_SIGTSTP:
+      return GDB_SIGNAL_TSTP;
+
+    case SPARC_LINUX_SIGCONT:
+      return GDB_SIGNAL_CONT;
+
+    case SPARC_LINUX_SIGCHLD:
+      return GDB_SIGNAL_CHLD;
+
+    /* No way to differentiate between SIGIO and SIGPOLL.
+       Therefore, we just handle the first one.  */
+    case SPARC_LINUX_SIGIO:
+      return GDB_SIGNAL_IO;
+
+    /* No way to differentiate between SIGLOST and SIGPWR.
+       Therefore, we just handle the first one.  */
+    case SPARC_LINUX_SIGLOST:
+      return GDB_SIGNAL_LOST;
+
+    case SPARC_LINUX_SIGUSR1:
+      return GDB_SIGNAL_USR1;
+
+    case SPARC_LINUX_SIGUSR2:
+      return GDB_SIGNAL_USR2;
+    }
+
+  return linux_gdb_signal_from_target (gdbarch, signal);
+}
+
+/* Implementation of `gdbarch_gdb_signal_to_target', as defined in
+   gdbarch.h.  */
+
+static int
+sparc32_linux_gdb_signal_to_target (struct gdbarch *gdbarch,
+				    enum gdb_signal signal)
+{
+  switch (signal)
+    {
+    case GDB_SIGNAL_EMT:
+      return SPARC_LINUX_SIGEMT;
+
+    case GDB_SIGNAL_BUS:
+      return SPARC_LINUX_SIGBUS;
+
+    case GDB_SIGNAL_SYS:
+      return SPARC_LINUX_SIGSYS;
+
+    case GDB_SIGNAL_URG:
+      return SPARC_LINUX_SIGURG;
+
+    case GDB_SIGNAL_STOP:
+      return SPARC_LINUX_SIGSTOP;
+
+    case GDB_SIGNAL_TSTP:
+      return SPARC_LINUX_SIGTSTP;
+
+    case GDB_SIGNAL_CONT:
+      return SPARC_LINUX_SIGCONT;
+
+    case GDB_SIGNAL_CHLD:
+      return SPARC_LINUX_SIGCHLD;
+
+    case GDB_SIGNAL_IO:
+      return SPARC_LINUX_SIGIO;
+
+    case GDB_SIGNAL_POLL:
+      return SPARC_LINUX_SIGPOLL;
+
+    case GDB_SIGNAL_LOST:
+      return SPARC_LINUX_SIGLOST;
+
+    case GDB_SIGNAL_PWR:
+      return SPARC_LINUX_SIGPWR;
+
+    case GDB_SIGNAL_USR1:
+      return SPARC_LINUX_SIGUSR1;
+
+    case GDB_SIGNAL_USR2:
+      return SPARC_LINUX_SIGUSR2;
+    }
+
+  return linux_gdb_signal_to_target (gdbarch, signal);
+}
+
 
 
 static void
@@ -314,6 +446,11 @@ sparc32_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_xml_syscall_file_name (XML_SYSCALL_FILENAME_SPARC32);
   set_gdbarch_get_syscall_number (gdbarch,
                                   sparc32_linux_get_syscall_number);
+
+  set_gdbarch_gdb_signal_from_target (gdbarch,
+				      sparc32_linux_gdb_signal_from_target);
+  set_gdbarch_gdb_signal_to_target (gdbarch,
+				    sparc32_linux_gdb_signal_to_target);
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */

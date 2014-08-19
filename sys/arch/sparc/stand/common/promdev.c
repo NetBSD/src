@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.26 2010/09/02 03:14:42 uwe Exp $ */
+/*	$NetBSD: promdev.c,v 1.26.18.1 2014/08/20 00:03:24 tls Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -583,6 +583,8 @@ mygetpropstring(int node, char *name)
 static	char buf[64];
 
 	len = prom_proplen(node, name);
+	if (len > sizeof(buf))
+		len = sizeof(buf)-1;
 	if (len > 0)
 		_prom_getprop(node, name, buf, len);
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.133.2.2 2013/06/23 06:20:22 tls Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.133.2.3 2014/08/20 00:03:51 tls Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.133.2.2 2013/06/23 06:20:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.133.2.3 2014/08/20 00:03:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1557,10 +1557,10 @@ uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 	const usb_endpoint_descriptor_audio_t *ed;
 	const usb_endpoint_descriptor_audio_t *epdesc1;
 	const struct usb_audio_streaming_endpoint_descriptor *sed;
-	int format, chan, prec, enc;
+	int format, chan __unused, prec, enc;
 	int dir, type, sync;
 	struct as_info ai;
-	const char *format_str;
+	const char *format_str __unused;
 
 	asid = (const void *)(tbuf + offs);
 	if (asid->bDescriptorType != UDESC_CS_INTERFACE ||
@@ -2374,7 +2374,7 @@ uaudio_set(struct uaudio_softc *sc, int which, int type, int wValue,
 {
 	usb_device_request_t req;
 	u_int8_t data[4];
-	usbd_status err;
+	int err __unused;
 
 	if (wValue == -1)
 		return;
@@ -2593,16 +2593,15 @@ uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 	}
 
 	err = uaudio_chan_open(sc, ch);
-	mutex_spin_enter(&sc->sc_intr_lock);
 	if (err) {
 		uaudio_chan_free_buffers(sc, ch);
+		mutex_spin_enter(&sc->sc_intr_lock);
 		return EIO;
 	}
 
 	ch->intr = intr;
 	ch->arg = arg;
 
-	mutex_spin_exit(&sc->sc_intr_lock);
 	for (i = 0; i < UAUDIO_NCHANBUFS-1; i++) /* XXX -1 shouldn't be needed */
 		uaudio_chan_rtransfer(ch);
 	mutex_spin_enter(&sc->sc_intr_lock);
@@ -2640,16 +2639,15 @@ uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 	}
 
 	err = uaudio_chan_open(sc, ch);
-	mutex_spin_enter(&sc->sc_intr_lock);
 	if (err) {
 		uaudio_chan_free_buffers(sc, ch);
+		mutex_spin_enter(&sc->sc_intr_lock);
 		return EIO;
 	}
 
 	ch->intr = intr;
 	ch->arg = arg;
 
-	mutex_spin_exit(&sc->sc_intr_lock);
 	for (i = 0; i < UAUDIO_NCHANBUFS-1; i++) /* XXX */
 		uaudio_chan_ptransfer(ch);
 	mutex_spin_enter(&sc->sc_intr_lock);

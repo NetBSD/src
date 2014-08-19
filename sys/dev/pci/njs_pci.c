@@ -1,4 +1,4 @@
-/*	$NetBSD: njs_pci.c,v 1.9 2008/07/09 19:08:44 joerg Exp $	*/
+/*	$NetBSD: njs_pci.c,v 1.9.38.1 2014/08/20 00:03:43 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njs_pci.c,v 1.9 2008/07/09 19:08:44 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njs_pci.c,v 1.9.38.1 2014/08/20 00:03:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,6 +125,7 @@ njs_pci_attach(device_t parent, device_t self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcireg_t reg;
 	const char *str_intr, *str_at;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	aprint_naive(": SCSI controller\n");
 	if ((prod = njs_pci_lookup(pa)) == NULL)
@@ -184,7 +185,7 @@ njs_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	str_intr = pci_intr_string(pa->pa_pc, ih);
+	str_intr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	str_at = " at ";
 	if (str_intr == NULL)
 		str_at = str_intr = "";

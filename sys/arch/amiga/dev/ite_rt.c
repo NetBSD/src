@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rt.c,v 1.24 2009/10/26 19:16:54 cegger Exp $ */
+/*	$NetBSD: ite_rt.c,v 1.24.22.1 2014/08/20 00:02:43 tls Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_rt.c,v 1.24 2009/10/26 19:16:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_rt.c,v 1.24.22.1 2014/08/20 00:02:43 tls Exp $");
 
 #include "grfrt.h"
 #if NGRFRT > 0
@@ -436,10 +436,8 @@ retina_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
 void
 retina_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 {
-	volatile void *ba;
 	u_long *fb;
 
-	ba = ip->grf->g_regkva;
 	fb = (u_long *)__UNVOLATILE(ip->grf->g_fbkva);
 
 	retina_cursor(ip, ERASE_CURSOR);

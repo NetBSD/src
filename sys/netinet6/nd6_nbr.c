@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.96.2.1 2013/06/23 06:20:26 tls Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.96.2.2 2014/08/20 00:04:36 tls Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.96.2.1 2013/06/23 06:20:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.96.2.2 2014/08/20 00:04:36 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -143,10 +143,13 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 			goto bad;
 		}
 	} else {
+		struct sockaddr_in6 ssin6;
+
 		/*
 		 * Make sure the source address is from a neighbor's address.
 		 */
-		if (in6ifa_ifplocaladdr(ifp, &saddr6) == NULL) {
+		sockaddr_in6_init(&ssin6, &saddr6, 0, 0, 0);
+		if (nd6_is_addr_neighbor(&ssin6, ifp) == 0) {
 			nd6log((LOG_INFO, "nd6_ns_input: "
 			    "NS packet from non-neighbor\n"));
 			goto bad;
@@ -563,6 +566,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	struct rtentry *rt;
 	struct sockaddr_dl *sdl;
 	union nd_opts ndopts;
+	struct sockaddr_in6 ssin6;
 
 	if (ip6->ip6_hlim != 255) {
 		nd6log((LOG_ERR,
@@ -637,11 +641,13 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		    ip6_sprintf(&taddr6));
 		goto freeit;
 	}
+
 	/*
 	 * Make sure the source address is from a neighbor's address.
 	 */
-	if (in6ifa_ifplocaladdr(ifp, &saddr6) == NULL) {
-		nd6log((LOG_INFO, "nd6_ns_input: "
+	sockaddr_in6_init(&ssin6, &saddr6, 0, 0, 0);
+	if (nd6_is_addr_neighbor(&ssin6, ifp) == 0) {
+		nd6log((LOG_INFO, "nd6_na_input: "
 		    "ND packet from non-neighbor\n"));
 		goto bad;
 	}
@@ -1090,6 +1096,8 @@ nd6_newaddrmsg(struct ifaddr *ifa)
 
 /*
  * Start Duplicate Address Detection (DAD) for specified interface address.
+ *
+ * Note that callout is used when xtick > 0 and not when xtick == 0.
  *
  * xtick: minimum delay ticks for IFF_UP event
  */

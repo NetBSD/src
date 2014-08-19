@@ -34,6 +34,14 @@ struct DoublyDerived : public VirtuallyDerived,
 {
 };
 
+// Confuse a simpler approach.
+
+double
+decltype(int x)
+{
+  return x + 2.0;
+}
+
 int
 main (int argc, char **argv)
 {
@@ -47,6 +55,8 @@ main (int argc, char **argv)
 
   Alpha *ad = &derived;
   Alpha *add = &doublyderived;
+
+  double y = decltype(2);
 
   return 0;  /* breakpoint spot: casts.exp: 1 */
 }

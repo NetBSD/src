@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_sa_to_rr.c,v 1.1.1.1 2009/06/23 10:08:43 tron Exp $	*/
+/*	$NetBSD: dns_sa_to_rr.c,v 1.1.1.1.16.1 2014/08/19 23:59:42 tls Exp $	*/
 
 /*++
 /* NAME
@@ -17,7 +17,8 @@
 /*
 /*	Arguments:
 /* .IP hostname
-/*	The resource record host name.
+/*	The resource record host name. This will be both the qname
+/*	and the rname in the synthetic DNS resource record.
 /* .IP pref
 /*	The resource record MX host preference, if applicable.
 /* .IP sa

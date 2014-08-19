@@ -1,7 +1,7 @@
 /* mpf_eq -- Compare two floats up to a specified bit #.
 
-Copyright 1993, 1995, 1996, 2001, 2002, 2008, 2009 Free Software Foundation,
-Inc.
+Copyright 1993, 1995, 1996, 2001, 2002, 2008, 2009, 2012 Free Software
+Foundation, Inc.
 
 This file is part of the GNU MP Library.
 

@@ -1,7 +1,7 @@
 /* Test file for mpfr_{mul,div}_2{ui,si}.
 
-Copyright 1999, 2001, 2002, 2003, 2004, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 1999, 2001, 2002, 2003, 2004, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -101,8 +101,10 @@ underflow (mpfr_exp_t e)
                     printf ("MPFR_EMIN_MIN");
                   else if (e == emin)
                     printf ("default emin");
+                  else if (e >= LONG_MIN)
+                    printf ("%ld", (long) e);
                   else
-                    printf ("%ld", e);
+                    printf ("<LONG_MIN");
                   printf (") with mpfr_%s,\nx = %d/16, prec = %d, k = %d, "
                           "%s\n", div == 0 ? "mul_2si" : div == 1 ?
                           "div_2si" : "div_2ui", i, prec, k,

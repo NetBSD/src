@@ -1,8 +1,6 @@
 /* Perform arithmetic and other operations on values, for GDB.
 
-   Copyright (C) 1986, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996,
-   1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009,
-   2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,7 +24,7 @@
 #include "expression.h"
 #include "target.h"
 #include "language.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "doublest.h"
 #include "dfp.h"
 #include <math.h>
@@ -65,7 +63,7 @@ find_size_for_pointer_math (struct type *ptr_type)
 	sz = 1;
       else
 	{
-	  char *name;
+	  const char *name;
 	  
 	  name = TYPE_NAME (ptr_target);
 	  if (name == NULL)
@@ -140,7 +138,6 @@ value_ptrdiff (struct value *arg1, struct value *arg2)
 
    ARRAY may be of type TYPE_CODE_ARRAY or TYPE_CODE_STRING.  If the
    current language supports C-style arrays, it may also be TYPE_CODE_PTR.
-   To access TYPE_CODE_BITSTRING values, use value_bitstring_subscript.
 
    See comments in value_coerce_array() for rationale for reason for
    doing lower bounds adjustment here rather than there.
@@ -222,46 +219,6 @@ value_subscripted_rvalue (struct value *array, LONGEST index, int lowerbound)
   return v;
 }
 
-/* Return the value of BITSTRING[IDX] as (boolean) type TYPE.  */
-
-struct value *
-value_bitstring_subscript (struct type *type,
-			   struct value *bitstring, LONGEST index)
-{
-
-  struct type *bitstring_type, *range_type;
-  struct value *v;
-  int offset, byte, bit_index;
-  LONGEST lowerbound, upperbound;
-
-  bitstring_type = check_typedef (value_type (bitstring));
-  gdb_assert (TYPE_CODE (bitstring_type) == TYPE_CODE_BITSTRING);
-
-  range_type = TYPE_INDEX_TYPE (bitstring_type);
-  get_discrete_bounds (range_type, &lowerbound, &upperbound);
-  if (index < lowerbound || index > upperbound)
-    error (_("bitstring index out of range"));
-
-  index -= lowerbound;
-  offset = index / TARGET_CHAR_BIT;
-  byte = *((char *) value_contents (bitstring) + offset);
-
-  bit_index = index % TARGET_CHAR_BIT;
-  byte >>= (gdbarch_bits_big_endian (get_type_arch (bitstring_type)) ?
-	    TARGET_CHAR_BIT - 1 - bit_index : bit_index);
-
-  v = value_from_longest (type, byte & 1);
-
-  set_value_bitpos (v, bit_index);
-  set_value_bitsize (v, 1);
-  set_value_component_location (v, bitstring);
-  VALUE_FRAME_ID (v) = VALUE_FRAME_ID (bitstring);
-
-  set_value_offset (v, offset + value_offset (bitstring));
-
-  return v;
-}
-
 
 /* Check to see if either argument is a structure, or a reference to
    one.  This is called so we know whether to go ahead with the normal
@@ -280,7 +237,7 @@ binop_types_user_defined_p (enum exp_opcode op,
   if (TYPE_CODE (type1) == TYPE_CODE_REF)
     type1 = check_typedef (TYPE_TARGET_TYPE (type1));
 
-  type2 = check_typedef (type1);
+  type2 = check_typedef (type2);
   if (TYPE_CODE (type2) == TYPE_CODE_REF)
     type2 = check_typedef (TYPE_TARGET_TYPE (type2));
 
@@ -335,16 +292,9 @@ value_user_defined_cpp_op (struct value **args, int nargs, char *operator,
 
   struct symbol *symp = NULL;
   struct value *valp = NULL;
-  struct type **arg_types;
-  int i;
 
-  arg_types = (struct type **) alloca (nargs * (sizeof (struct type *)));
-  /* Prepare list of argument types for overload resolution.  */
-  for (i = 0; i < nargs; i++)
-    arg_types[i] = value_type (args[i]);
-
-  find_overload_match (arg_types, nargs, operator, BOTH /* could be method */,
-                       0 /* strict match */, &args[0], /* objp */
+  find_overload_match (args, nargs, operator, BOTH /* could be method */,
+                       &args[0] /* objp */,
                        NULL /* pass NULL symbol since symbol is unknown */,
                        &valp, &symp, static_memfuncp, 0);
 
@@ -560,7 +510,7 @@ value_x_unop (struct value *arg1, enum exp_opcode op, enum noside noside)
 {
   struct gdbarch *gdbarch = get_type_arch (value_type (arg1));
   struct value **argvec;
-  char *ptr, *mangle_ptr;
+  char *ptr;
   char tstr[13], mangle_tstr[13];
   int static_memfuncp, nargs;
 
@@ -582,7 +532,6 @@ value_x_unop (struct value *arg1, enum exp_opcode op, enum noside noside)
   strcpy (tstr, "operator__");
   ptr = tstr + 8;
   strcpy (mangle_tstr, "__");
-  mangle_ptr = mangle_tstr + 2;
   switch (op)
     {
     case UNOP_PREINCREMENT:
@@ -717,9 +666,12 @@ value_concat (struct value *arg1, struct value *arg2)
       if (TYPE_CODE (type2) == TYPE_CODE_STRING
 	  || TYPE_CODE (type2) == TYPE_CODE_CHAR)
 	{
+	  struct cleanup *back_to;
+
 	  count = longest_to_int (value_as_long (inval1));
 	  inval2len = TYPE_LENGTH (type2);
-	  ptr = (char *) alloca (count * inval2len);
+	  ptr = (char *) xmalloc (count * inval2len);
+	  back_to = make_cleanup (xfree, ptr);
 	  if (TYPE_CODE (type2) == TYPE_CODE_CHAR)
 	    {
 	      char_type = type2;
@@ -742,11 +694,11 @@ value_concat (struct value *arg1, struct value *arg2)
 		}
 	    }
 	  outval = value_string (ptr, count * inval2len, char_type);
+	  do_cleanups (back_to);
 	}
-      else if (TYPE_CODE (type2) == TYPE_CODE_BITSTRING
-	       || TYPE_CODE (type2) == TYPE_CODE_BOOL)
+      else if (TYPE_CODE (type2) == TYPE_CODE_BOOL)
 	{
-	  error (_("unimplemented support for bitstring/boolean repeats"));
+	  error (_("unimplemented support for boolean repeats"));
 	}
       else
 	{
@@ -756,6 +708,8 @@ value_concat (struct value *arg1, struct value *arg2)
   else if (TYPE_CODE (type1) == TYPE_CODE_STRING
 	   || TYPE_CODE (type1) == TYPE_CODE_CHAR)
     {
+      struct cleanup *back_to;
+
       /* We have two character strings to concatenate.  */
       if (TYPE_CODE (type2) != TYPE_CODE_STRING
 	  && TYPE_CODE (type2) != TYPE_CODE_CHAR)
@@ -764,7 +718,8 @@ value_concat (struct value *arg1, struct value *arg2)
 	}
       inval1len = TYPE_LENGTH (type1);
       inval2len = TYPE_LENGTH (type2);
-      ptr = (char *) alloca (inval1len + inval2len);
+      ptr = (char *) xmalloc (inval1len + inval2len);
+      back_to = make_cleanup (xfree, ptr);
       if (TYPE_CODE (type1) == TYPE_CODE_CHAR)
 	{
 	  char_type = type1;
@@ -787,18 +742,17 @@ value_concat (struct value *arg1, struct value *arg2)
 	  memcpy (ptr + inval1len, value_contents (inval2), inval2len);
 	}
       outval = value_string (ptr, inval1len + inval2len, char_type);
+      do_cleanups (back_to);
     }
-  else if (TYPE_CODE (type1) == TYPE_CODE_BITSTRING
-	   || TYPE_CODE (type1) == TYPE_CODE_BOOL)
+  else if (TYPE_CODE (type1) == TYPE_CODE_BOOL)
     {
       /* We have two bitstrings to concatenate.  */
-      if (TYPE_CODE (type2) != TYPE_CODE_BITSTRING
-	  && TYPE_CODE (type2) != TYPE_CODE_BOOL)
+      if (TYPE_CODE (type2) != TYPE_CODE_BOOL)
 	{
-	  error (_("Bitstrings or booleans can only be concatenated "
+	  error (_("Booleans can only be concatenated "
 		   "with other bitstrings or booleans."));
 	}
-      error (_("unimplemented support for bitstring/boolean concatenation."));
+      error (_("unimplemented support for boolean concatenation."));
     }
   else
     {
@@ -1391,6 +1345,49 @@ scalar_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
   return val;
 }
 
+/* Widen a scalar value SCALAR_VALUE to vector type VECTOR_TYPE by
+   replicating SCALAR_VALUE for each element of the vector.  Only scalar
+   types that can be cast to the type of one element of the vector are
+   acceptable.  The newly created vector value is returned upon success,
+   otherwise an error is thrown.  */
+
+struct value *
+value_vector_widen (struct value *scalar_value, struct type *vector_type)
+{
+  /* Widen the scalar to a vector.  */
+  struct type *eltype, *scalar_type;
+  struct value *val, *elval;
+  LONGEST low_bound, high_bound;
+  int i;
+
+  CHECK_TYPEDEF (vector_type);
+
+  gdb_assert (TYPE_CODE (vector_type) == TYPE_CODE_ARRAY
+	      && TYPE_VECTOR (vector_type));
+
+  if (!get_array_bounds (vector_type, &low_bound, &high_bound))
+    error (_("Could not determine the vector bounds"));
+
+  eltype = check_typedef (TYPE_TARGET_TYPE (vector_type));
+  elval = value_cast (eltype, scalar_value);
+
+  scalar_type = check_typedef (value_type (scalar_value));
+
+  /* If we reduced the length of the scalar then check we didn't loose any
+     important bits.  */
+  if (TYPE_LENGTH (eltype) < TYPE_LENGTH (scalar_type)
+      && !value_equal (elval, scalar_value))
+    error (_("conversion of scalar to vector involves truncation"));
+
+  val = allocate_value (vector_type);
+  for (i = 0; i < high_bound - low_bound + 1; i++)
+    /* Duplicate the contents of elval into the destination vector.  */
+    memcpy (value_contents_writeable (val) + (i * TYPE_LENGTH (eltype)),
+	    value_contents_all (elval), TYPE_LENGTH (eltype));
+
+  return val;
+}
+
 /* Performs a binary operation on two vector operands by calling scalar_binop
    for each pair of vector components.  */
 
@@ -1398,7 +1395,7 @@ static struct value *
 vector_binop (struct value *val1, struct value *val2, enum exp_opcode op)
 {
   struct value *val, *tmp, *mark;
-  struct type *type1, *type2, *eltype1, *eltype2, *result_type;
+  struct type *type1, *type2, *eltype1, *eltype2;
   int t1_is_vec, t2_is_vec, elsize, i;
   LONGEST low_bound1, high_bound1, low_bound2, high_bound2;
 
@@ -1470,7 +1467,9 @@ value_binop (struct value *arg1, struct value *arg2, enum exp_opcode op)
 	  && !is_integral_type (t))
 	error (_("Argument to operation not a number or boolean."));
 
-      *v = value_cast (t1_is_vec ? type1 : type2, *v);
+      /* Replicate the scalar value to make a vector value.  */
+      *v = value_vector_widen (*v, t1_is_vec ? type1 : type2);
+
       val = vector_binop (arg1, arg2, op);
     }
 

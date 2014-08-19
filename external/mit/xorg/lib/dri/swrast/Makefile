@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2009/06/16 00:26:11 mrg Exp $
+# $NetBSD: Makefile,v 1.1.16.1 2014/08/20 00:00:11 tls Exp $
 
 MODULE=	swrast
 
@@ -8,7 +8,5 @@ DRI_EXTRA_PATHS=	${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/swrast
 SRCS= \
 	swrast.c \
         swrast_span.c
-
-COPTS.swrast.c=		-Wno-error	# XXX const
 
 .include "${.CURDIR}/../dri.mk"

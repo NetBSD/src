@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.54.14.1 2012/11/20 03:00:58 tls Exp $ */
+/*	$NetBSD: mfc.c,v 1.54.14.2 2014/08/20 00:02:43 tls Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -55,7 +55,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.54.14.1 2012/11/20 03:00:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.54.14.2 2014/08/20 00:02:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,8 +248,18 @@ dev_type_tty(mfcstty);
 dev_type_poll(mfcspoll);
 
 const struct cdevsw mfcs_cdevsw = {
-	mfcsopen, mfcsclose, mfcsread, mfcswrite, mfcsioctl,
-	mfcsstop, mfcstty, mfcspoll, nommap, ttykqfilter, D_TTY
+	.d_open = mfcsopen,
+	.d_close = mfcsclose,
+	.d_read = mfcsread,
+	.d_write = mfcswrite,
+	.d_ioctl = mfcsioctl,
+	.d_stop = mfcsstop,
+	.d_tty = mfcstty,
+	.d_poll = mfcspoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 int	mfcs_active;

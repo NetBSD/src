@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsmgr.c,v 1.1.1.1.16.1 2013/02/25 00:27:30 tls Exp $	*/
+/*	$NetBSD: tlsmgr.c,v 1.1.1.1.16.2 2014/08/19 23:59:45 tls Exp $	*/
 
 /*++
 /* NAME
@@ -153,6 +153,8 @@
 /* .ad
 /* .fi
 /*	The Secure Mailer license must be distributed with this software.
+/* HISTORY
+/*	This service was introduced with Postfix version 2.2.
 /* AUTHOR(S)
 /*	Lutz Jaenicke
 /*	BTU Cottbus
@@ -209,7 +211,6 @@
 #include <mail_conf.h>
 #include <mail_params.h>
 #include <mail_version.h>
-#include <tls_mgr.h>
 #include <mail_proto.h>
 #include <data_redirect.h>
 
@@ -221,6 +222,7 @@
 /* TLS library. */
 
 #ifdef USE_TLS
+#include <tls_mgr.h>
 #define TLS_INTERNAL
 #include <tls.h>			/* TLS_MGR_SCACHE_<type> */
 #include <tls_prng.h>
@@ -291,7 +293,7 @@ typedef struct {
     int    *cache_timeout;		/* main.cf parameter value */
 } TLSMGR_SCACHE;
 
-TLSMGR_SCACHE cache_table[] = {
+static TLSMGR_SCACHE cache_table[] = {
     TLS_MGR_SCACHE_SMTPD, 0, 0, &var_smtpd_tls_scache_db,
     VAR_SMTPD_TLS_LOGLEVEL,
     &var_smtpd_tls_loglevel, &var_smtpd_tls_scache_timeout,
@@ -303,6 +305,8 @@ TLSMGR_SCACHE cache_table[] = {
     &var_lmtp_tls_loglevel, &var_lmtp_tls_scache_timeout,
     0,
 };
+
+#define	smtpd_cache	(cache_table[0])
 
  /*
   * SLMs.
@@ -455,6 +459,44 @@ static void tlsmgr_cache_run_event(int unused_event, char *ctx)
 
     event_request_timer(tlsmgr_cache_run_event, (char *) cache,
 			cache->cache_info->timeout);
+}
+
+/* tlsmgr_key - return matching or current RFC 5077 session ticket keys */
+
+static int tlsmgr_key(VSTRING *buffer, int timeout)
+{
+    TLS_TICKET_KEY *key;
+    TLS_TICKET_KEY tmp;
+    unsigned char *name;
+    time_t  now = time((time_t *) 0);
+
+    /* In tlsmgr requests we encode null key names as empty strings. */
+    name = LEN(buffer) ? (unsigned char *) STR(buffer) : 0;
+
+    /*
+     * Each key's encrypt and subsequent decrypt-only timeout is half of the
+     * total session timeout.
+     */
+    timeout /= 2;
+
+    /* Attempt to locate existing key */
+    if ((key = tls_scache_key(name, now, timeout)) == 0) {
+	if (name == 0) {
+	    /* Create new encryption key */
+	    if (RAND_bytes(tmp.name, TLS_TICKET_NAMELEN) <= 0
+		|| RAND_bytes(tmp.bits, TLS_TICKET_KEYLEN) <= 0
+		|| RAND_bytes(tmp.hmac, TLS_TICKET_MACLEN) <= 0)
+		return (TLS_MGR_STAT_ERR);
+	    tmp.tout = now + timeout - 1;
+	    key = tls_scache_key_rotate(&tmp);
+	} else {
+	    /* No matching decryption key found */
+	    return (TLS_MGR_STAT_ERR);
+	}
+    }
+    /* Return value overrites name buffer */
+    vstring_memcpy(buffer, (char *) key, sizeof(*key));
+    return (TLS_MGR_STAT_OK);
 }
 
 /* tlsmgr_loop - TLS manager main loop */
@@ -670,6 +712,31 @@ static void tlsmgr_service(VSTREAM *client_stream, char *unused_service,
 	}
 
 	/*
+	 * RFC 5077 TLS session ticket keys
+	 */
+	else if (STREQ(STR(request), TLS_MGR_REQ_TKTKEY)) {
+	    if (attr_scan(client_stream, ATTR_FLAG_STRICT,
+			  ATTR_TYPE_DATA, TLS_MGR_ATTR_KEYNAME, buffer,
+			  ATTR_TYPE_END) == 1) {
+		if (LEN(buffer) != 0 && LEN(buffer) != TLS_TICKET_NAMELEN) {
+		    msg_warn("invalid session ticket key name length: %ld",
+			     (long) LEN(buffer));
+		    VSTRING_RESET(buffer);
+		} else if (*smtpd_cache.cache_timeout <= 0) {
+		    status = TLS_MGR_STAT_ERR;
+		    VSTRING_RESET(buffer);
+		} else {
+		    status = tlsmgr_key(buffer, *smtpd_cache.cache_timeout);
+		}
+	    }
+	    attr_print(client_stream, ATTR_FLAG_NONE,
+		       ATTR_TYPE_INT, MAIL_ATTR_STATUS, status,
+		       ATTR_TYPE_DATA, TLS_MGR_ATTR_KEYBUF,
+		       LEN(buffer), STR(buffer),
+		       ATTR_TYPE_END);
+	}
+
+	/*
 	 * Entropy request.
 	 */
 	else if (STREQ(STR(request), TLS_MGR_REQ_SEED)) {
@@ -700,6 +767,7 @@ static void tlsmgr_service(VSTREAM *client_stream, char *unused_service,
 	 */
 	else if (STREQ(STR(request), TLS_MGR_REQ_POLICY)) {
 	    int     cachable = 0;
+	    int     timeout = 0;
 
 	    if (attr_scan(client_stream, ATTR_FLAG_STRICT,
 			  ATTR_TYPE_STR, TLS_MGR_ATTR_CACHE_TYPE, cache_type,
@@ -712,12 +780,14 @@ static void tlsmgr_service(VSTREAM *client_stream, char *unused_service,
 			     STR(cache_type), TLS_MGR_REQ_POLICY);
 		} else {
 		    cachable = (ent->cache_info != 0) ? 1 : 0;
+		    timeout = *ent->cache_timeout;
 		    status = TLS_MGR_STAT_OK;
 		}
 	    }
 	    attr_print(client_stream, ATTR_FLAG_NONE,
 		       ATTR_TYPE_INT, MAIL_ATTR_STATUS, status,
 		       ATTR_TYPE_INT, TLS_MGR_ATTR_CACHABLE, cachable,
+		       ATTR_TYPE_INT, TLS_MGR_ATTR_SESSTOUT, timeout,
 		       ATTR_TYPE_END);
 	}
 
@@ -849,7 +919,15 @@ static void tlsmgr_pre_init(char *unused_name, char **unused_argv)
      */
     dup_filter = htable_create(sizeof(cache_table) / sizeof(cache_table[0]));
     for (ent = cache_table; ent->cache_label; ++ent) {
-	if (**ent->cache_db) {
+	/* Sanitize session timeout */
+	if (*ent->cache_timeout > 0) {
+	    if (*ent->cache_timeout < TLS_SESSION_LIFEMIN)
+		*ent->cache_timeout = TLS_SESSION_LIFEMIN;
+	} else {
+	    *ent->cache_timeout = 0;
+	}
+	/* External cache database disabled if timeout is non-positive */
+	if (*ent->cache_timeout > 0 && **ent->cache_db) {
 	    if ((dup_label = htable_find(dup_filter, *ent->cache_db)) != 0)
 		msg_fatal("do not use the same TLS cache file %s for %s and %s",
 			  *ent->cache_db, dup_label, ent->cache_label);
@@ -950,9 +1028,9 @@ int     main(int argc, char **argv)
     static const CONFIG_TIME_TABLE time_table[] = {
 	VAR_TLS_RESEED_PERIOD, DEF_TLS_RESEED_PERIOD, &var_tls_reseed_period, 1, 0,
 	VAR_TLS_PRNG_UPD_PERIOD, DEF_TLS_PRNG_UPD_PERIOD, &var_tls_prng_exch_period, 1, 0,
-	VAR_SMTPD_TLS_SCACHTIME, DEF_SMTPD_TLS_SCACHTIME, &var_smtpd_tls_scache_timeout, 0, 0,
-	VAR_SMTP_TLS_SCACHTIME, DEF_SMTP_TLS_SCACHTIME, &var_smtp_tls_scache_timeout, 0, 0,
-	VAR_LMTP_TLS_SCACHTIME, DEF_LMTP_TLS_SCACHTIME, &var_lmtp_tls_scache_timeout, 0, 0,
+	VAR_SMTPD_TLS_SCACHTIME, DEF_SMTPD_TLS_SCACHTIME, &var_smtpd_tls_scache_timeout, 0, MAX_SMTPD_TLS_SCACHETIME,
+	VAR_SMTP_TLS_SCACHTIME, DEF_SMTP_TLS_SCACHTIME, &var_smtp_tls_scache_timeout, 0, MAX_SMTP_TLS_SCACHETIME,
+	VAR_LMTP_TLS_SCACHTIME, DEF_LMTP_TLS_SCACHTIME, &var_lmtp_tls_scache_timeout, 0, MAX_LMTP_TLS_SCACHETIME,
 	0,
     };
     static const CONFIG_INT_TABLE int_table[] = {

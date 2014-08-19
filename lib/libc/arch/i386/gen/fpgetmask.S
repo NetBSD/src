@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetmask.S,v 1.4 2002/01/13 21:45:42 thorpej Exp $	*/
+/*	$NetBSD: fpgetmask.S,v 1.4.64.1 2014/08/20 00:02:10 tls Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 4, 1995
@@ -20,3 +20,8 @@ ENTRY(fpgetmask)
 	andl $63,%eax
 	addl $4,%esp
 	ret
+#ifdef WEAK_ALIAS
+END(_fpgetmask)
+#else
+END(fpgetmask)
+#endif

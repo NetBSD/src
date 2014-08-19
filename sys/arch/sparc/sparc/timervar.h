@@ -1,4 +1,4 @@
-/*	$NetBSD: timervar.h,v 1.11 2012/07/29 00:04:05 matt Exp $	*/
+/*	$NetBSD: timervar.h,v 1.11.2.1 2014/08/20 00:03:24 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,6 @@ void	timerattach_mainbus_4c(device_t, device_t, void *);
 #endif /* SUN4 || SUN4C */
 
 #if defined(SUN4M)
-void	schedintr_4m(void *);
 int	clockintr_4m(void *);
 int	statintr_4m(void *);
 void	timer_init_4m(void);
@@ -66,7 +65,7 @@ extern void tickle_tc(void);
 
 /* Common timer attach routine in timer.c: */
 void	timerattach(volatile int *, volatile int *);
-extern void	*sched_cookie;	/* for schedclock() interrupts */
+extern void	*sched_cookie;		/* for schedclock() interrupts */
 
 static inline u_long __attribute__((__unused__))
 new_interval(void)

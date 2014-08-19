@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_pnpbios.c,v 1.17 2008/06/08 18:35:25 tsutsui Exp $	*/
+/*	$NetBSD: pckbc_pnpbios.c,v 1.17.42.1 2014/08/20 00:03:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.17 2008/06/08 18:35:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.17.42.1 2014/08/20 00:03:06 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,16 +108,13 @@ pckbc_pnpbios_attach(device_t parent, device_t self, void *aux)
 	struct pnpbiosdev_attach_args *aa = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh_d, ioh_c;
-	pckbc_slot_t peer;
 	int iobase;
 
 	sc->sc_dv = self;
 	if (strncmp(aa->idstr, "PNP03", 5) == 0) {
 		psc->sc_slot = PCKBC_KBD_SLOT;
-		peer = PCKBC_AUX_SLOT;
 	} else if (strcmp(aa->idstr, "PNP0F13") == 0) {
 		psc->sc_slot = PCKBC_AUX_SLOT;
-		peer = PCKBC_KBD_SLOT;
 	} else {
 		aprint_error(": unknown port!\n");
 		panic("pckbc_pnpbios_attach: impossible");

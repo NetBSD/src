@@ -1,4 +1,4 @@
-# Copyright 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2007-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,25 +20,14 @@
 
 if { [skip_cplus_tests] } { continue }
 
-set testfile "method2"
-set srcfile ${testfile}.cc
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .cc
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
+if  {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
      untested method2.exp
      return -1
 }
 
-if [get_compiler_info $binfile "c++"] {
-  return -1
-}
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
-
-if ![runto_main] then {
+if {![runto_main]} {
     perror "couldn't run to breakpoint"
     continue
 }
@@ -50,8 +39,21 @@ proc test_break { lang } {
 	"" \
 	"setting language $lang"
 
+    # Menu items should be alphabetical
+    set ovlds [lsort {"" "int" "A*"}]
+    set items {"cancel" "all"}
+    foreach ovld $ovlds {
+        lappend items "A::method($ovld)"
+    }
+    set menu_items {}
+    set idx 0
+    foreach item $items {
+        lappend menu_items ".$idx. .*[string_to_regexp $item]"
+        incr idx
+    }
+    set expect [join $menu_items {.*[\r\n]*}]
     gdb_test_multiple "break A::method" "breaking in method ($lang)" {
-	-re ".0. cancel.*\[\r\n\]*.1. all.*\[\r\n\]*.2. A::method\\(A\\*\\) at .*\[\r\n\]*.3. A::method\\(int\\) at .*\[\r\n\]*\[\r\n\]*.4. A::method\\(\\) at .*\[\r\n\]*> $" {
+        -re $expect {
 	    gdb_test "0" \
 		"canceled" \
 		"breaking in method ($lang)"

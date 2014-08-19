@@ -42,20 +42,8 @@
  *      2/2010
  */
 
-#ifndef IMXWDOGREG_H
-#define	IMXWDOGREG_H
-
-#ifdef	_LOCORE
-#ifndef	__BIT
-#define	__BIT(n)	(1<<(n))
-#endif
-#ifndef	__BITS
-#define	__BITS(hi,lo)	(((1<<((hi)+1))-1) & ~((1<<((lo))-1))
-#endif
-#else
-#include <sys/cdefs.h>
-#endif
-
+#ifndef _ARM_IMX_IMXWDOGREG_H
+#define _ARM_IMX_IMXWDOGREG_H
 
 #define	IMX_WDOG_WCR	0x0000	/* Watchdog Control Register */
 #define	 WCR_WDZST	__BIT(0)	/* watchdog low power */
@@ -65,9 +53,7 @@
 #define	 WCR_SRS	__BIT(4)	/* software reset signal */
 #define	 WCR_WDA	__BIT(5)	/* ipp_wdog* assertion */
 #define	 WCR_WDW	__BIT(7)	/* disable for wait */
-#define	 WCR_WT_SHIFT	8
-#define	 WCR_WT_LEN	8
-#define	 WCR_WT_MASK	__BIT(WCR_WT_SHIFT+WCR_WT_LEN-1, WCR_WT_SHIFT)
+#define	 WCR_WT		__BITS(15, 8)
 					/* watchdog timeout
 					   0=0.5sec 0xff=128sec */
 
@@ -86,17 +72,14 @@
 #define	 WRSR_PWR	__BIT(4)
 #define	 WRSR_JRST	__BIT(5)
 
-
 /* only for i.MX51 */
 #define	IMX_WDOG_WICR	0x0006	/* Watchdog Interrupt Control Register */
-#define	 WICR_WICT_LEN	8
-#define	 WICR_WICT_MASK	__BITS(WICT_LEN-1,0)  /* interrupt count timeout */
+#define	 WICR_WICT	__BITS(7,0)	/* interrupt count timeout */
 #define	 WICR_WTIS	__BIT(14)	/* interrupt status [w1c] */
 #define	 WICR_WIE	__BIT(15)	/* interrupt enable */
-
 
 /* only for i.MX51 */
 #define	IMX_WDOG_WMCR	0x0008
 #define	 WMCR_PDE	__BIT(0)	/* power down enable */
 
-#endif
+#endif /* _ARM_IMX_IMXWDOGREG_H */

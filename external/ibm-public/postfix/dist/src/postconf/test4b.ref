@@ -1,0 +1,5 @@
+always_bcc = $foo
+bar = aaa
+biff = $bar
+config_directory = .
+./postconf: warning: ./master.cf: unused parameter: baz=zzz

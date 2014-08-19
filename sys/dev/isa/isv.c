@@ -1,4 +1,4 @@
-/*	$NetBSD: isv.c,v 1.4 2010/11/06 10:59:45 uebayasi Exp $ */
+/*	$NetBSD: isv.c,v 1.4.18.1 2014/08/20 00:03:39 tls Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isv.c,v 1.4 2010/11/06 10:59:45 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isv.c,v 1.4.18.1 2014/08/20 00:03:39 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,8 +105,18 @@ CFATTACH_DECL_NEW(isv_isa, sizeof(struct isv_softc),
     isv_match, isv_attach, isv_detach, NULL);
 
 const struct cdevsw isv_cdevsw = {
-	isv_open, nullclose, noread, nowrite, isv_ioctl,
-	nostop, notty, nopoll, isv_mmap, nokqfilter, D_OTHER
+	.d_open = isv_open,
+	.d_close = nullclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = isv_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = isv_mmap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 static uint16_t
@@ -315,7 +325,6 @@ static int
 isv_capture(struct isv_softc *sc)
 {
 	int speed;
-	uint16_t discard;
 	int rc, state = ISV_S_CAPTURE0;
 	struct timeval diff, end, start, stop;
 	static const struct timeval wait = {.tv_sec = 0, .tv_usec = 200000};
@@ -363,7 +372,7 @@ isv_capture(struct isv_softc *sc)
 	/* read one dummy word to prime the state machine on the
 	 * image capture board
 	 */
-	discard = isv_read(ir, ISV_DATA);
+	isv_read(ir, ISV_DATA);
 	bus_space_read_multi_stream_2(ir->ir_bt, ir->ir_bh, ISV_DATA,
 	    sc->sc_frame, ISV_WIDTH * ISV_LINES / 2);
 

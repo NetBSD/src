@@ -1,6 +1,5 @@
 /* Native debugging support for Intel x86 running DJGPP.
-   Copyright (C) 1997, 1999, 2000, 2001, 2005, 2006, 2007, 2008, 2009, 2010,
-   2011 Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    Written by Robert Hoehne.
 
    This file is part of GDB.
@@ -82,9 +81,10 @@
    GDB does not use those as of this writing, and will never need
    to.  */
 
+#include "defs.h"
+
 #include <fcntl.h>
 
-#include "defs.h"
 #include "i386-nat.h"
 #include "inferior.h"
 #include "gdbthread.h"
@@ -96,10 +96,12 @@
 #include "buildsym.h"
 #include "i387-tdep.h"
 #include "i386-tdep.h"
+#include "i386-cpuid.h"
 #include "value.h"
 #include "regcache.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "top.h"
+#include "cli/cli-utils.h"
 
 #include <stdio.h>		/* might be required for __DJGPP_MINOR__ */
 #include <stdlib.h>
@@ -232,34 +234,10 @@ static int dr_ref_count[4];
 #define SOME_PID 42
 
 static int prog_has_started = 0;
-static void go32_open (char *name, int from_tty);
-static void go32_close (int quitting);
-static void go32_attach (struct target_ops *ops, char *args, int from_tty);
-static void go32_detach (struct target_ops *ops, char *args, int from_tty);
-static void go32_resume (struct target_ops *ops,
-			 ptid_t ptid, int step,
-			 enum target_signal siggnal);
-static void go32_fetch_registers (struct target_ops *ops,
-				  struct regcache *, int regno);
-static void store_register (const struct regcache *, int regno);
-static void go32_store_registers (struct target_ops *ops,
-				  struct regcache *, int regno);
-static void go32_prepare_to_store (struct regcache *);
-static int go32_xfer_memory (CORE_ADDR memaddr, gdb_byte *myaddr, int len,
-			     int write,
-			     struct mem_attrib *attrib,
-			     struct target_ops *target);
-static void go32_files_info (struct target_ops *target);
-static void go32_kill_inferior (struct target_ops *ops);
-static void go32_create_inferior (struct target_ops *ops, char *exec_file,
-				  char *args, char **env, int from_tty);
+
 static void go32_mourn_inferior (struct target_ops *ops);
-static int go32_can_run (void);
 
 static struct target_ops go32_ops;
-static void go32_terminal_init (void);
-static void go32_terminal_inferior (void);
-static void go32_terminal_ours (void);
 
 #define r_ofs(x) (offsetof(TSS,x))
 
@@ -309,57 +287,57 @@ regno_mapping[] =
 static struct
   {
     int go32_sig;
-    enum target_signal gdb_sig;
+    enum gdb_signal gdb_sig;
   }
 sig_map[] =
 {
-  {0, TARGET_SIGNAL_FPE},
-  {1, TARGET_SIGNAL_TRAP},
+  {0, GDB_SIGNAL_FPE},
+  {1, GDB_SIGNAL_TRAP},
   /* Exception 2 is triggered by the NMI.  DJGPP handles it as SIGILL,
      but I think SIGBUS is better, since the NMI is usually activated
      as a result of a memory parity check failure.  */
-  {2, TARGET_SIGNAL_BUS},
-  {3, TARGET_SIGNAL_TRAP},
-  {4, TARGET_SIGNAL_FPE},
-  {5, TARGET_SIGNAL_SEGV},
-  {6, TARGET_SIGNAL_ILL},
-  {7, TARGET_SIGNAL_EMT},	/* no-coprocessor exception */
-  {8, TARGET_SIGNAL_SEGV},
-  {9, TARGET_SIGNAL_SEGV},
-  {10, TARGET_SIGNAL_BUS},
-  {11, TARGET_SIGNAL_SEGV},
-  {12, TARGET_SIGNAL_SEGV},
-  {13, TARGET_SIGNAL_SEGV},
-  {14, TARGET_SIGNAL_SEGV},
-  {16, TARGET_SIGNAL_FPE},
-  {17, TARGET_SIGNAL_BUS},
-  {31, TARGET_SIGNAL_ILL},
-  {0x1b, TARGET_SIGNAL_INT},
-  {0x75, TARGET_SIGNAL_FPE},
-  {0x78, TARGET_SIGNAL_ALRM},
-  {0x79, TARGET_SIGNAL_INT},
-  {0x7a, TARGET_SIGNAL_QUIT},
-  {-1, TARGET_SIGNAL_LAST}
+  {2, GDB_SIGNAL_BUS},
+  {3, GDB_SIGNAL_TRAP},
+  {4, GDB_SIGNAL_FPE},
+  {5, GDB_SIGNAL_SEGV},
+  {6, GDB_SIGNAL_ILL},
+  {7, GDB_SIGNAL_EMT},	/* no-coprocessor exception */
+  {8, GDB_SIGNAL_SEGV},
+  {9, GDB_SIGNAL_SEGV},
+  {10, GDB_SIGNAL_BUS},
+  {11, GDB_SIGNAL_SEGV},
+  {12, GDB_SIGNAL_SEGV},
+  {13, GDB_SIGNAL_SEGV},
+  {14, GDB_SIGNAL_SEGV},
+  {16, GDB_SIGNAL_FPE},
+  {17, GDB_SIGNAL_BUS},
+  {31, GDB_SIGNAL_ILL},
+  {0x1b, GDB_SIGNAL_INT},
+  {0x75, GDB_SIGNAL_FPE},
+  {0x78, GDB_SIGNAL_ALRM},
+  {0x79, GDB_SIGNAL_INT},
+  {0x7a, GDB_SIGNAL_QUIT},
+  {-1, GDB_SIGNAL_LAST}
 };
 
 static struct {
-  enum target_signal gdb_sig;
+  enum gdb_signal gdb_sig;
   int djgpp_excepno;
 } excepn_map[] = {
-  {TARGET_SIGNAL_0, -1},
-  {TARGET_SIGNAL_ILL, 6},	/* Invalid Opcode */
-  {TARGET_SIGNAL_EMT, 7},	/* triggers SIGNOFP */
-  {TARGET_SIGNAL_SEGV, 13},	/* GPF */
-  {TARGET_SIGNAL_BUS, 17},	/* Alignment Check */
+  {GDB_SIGNAL_0, -1},
+  {GDB_SIGNAL_ILL, 6},	/* Invalid Opcode */
+  {GDB_SIGNAL_EMT, 7},	/* triggers SIGNOFP */
+  {GDB_SIGNAL_SEGV, 13},	/* GPF */
+  {GDB_SIGNAL_BUS, 17},	/* Alignment Check */
   /* The rest are fake exceptions, see dpmiexcp.c in djlsr*.zip for
      details.  */
-  {TARGET_SIGNAL_TERM, 0x1b},	/* triggers Ctrl-Break type of SIGINT */
-  {TARGET_SIGNAL_FPE, 0x75},
-  {TARGET_SIGNAL_INT, 0x79},
-  {TARGET_SIGNAL_QUIT, 0x7a},
-  {TARGET_SIGNAL_ALRM, 0x78},	/* triggers SIGTIMR */
-  {TARGET_SIGNAL_PROF, 0x78},
-  {TARGET_SIGNAL_LAST, -1}
+  {GDB_SIGNAL_TERM, 0x1b},	/* triggers Ctrl-Break type of SIGINT */
+  {GDB_SIGNAL_FPE, 0x75},
+  {GDB_SIGNAL_INT, 0x79},
+  {GDB_SIGNAL_QUIT, 0x7a},
+  {GDB_SIGNAL_ALRM, 0x78},	/* triggers SIGTIMR */
+  {GDB_SIGNAL_PROF, 0x78},
+  {GDB_SIGNAL_LAST, -1}
 };
 
 static void
@@ -369,7 +347,7 @@ go32_open (char *name, int from_tty)
 }
 
 static void
-go32_close (int quitting)
+go32_close (void)
 {
 }
 
@@ -382,7 +360,7 @@ Use the `run' command to run DJGPP programs."));
 }
 
 static void
-go32_detach (struct target_ops *ops, char *args, int from_tty)
+go32_detach (struct target_ops *ops, const char *args, int from_tty)
 {
 }
 
@@ -391,16 +369,16 @@ static int resume_signal = -1;
 
 static void
 go32_resume (struct target_ops *ops,
-	     ptid_t ptid, int step, enum target_signal siggnal)
+	     ptid_t ptid, int step, enum gdb_signal siggnal)
 {
   int i;
 
   resume_is_step = step;
 
-  if (siggnal != TARGET_SIGNAL_0 && siggnal != TARGET_SIGNAL_TRAP)
+  if (siggnal != GDB_SIGNAL_0 && siggnal != GDB_SIGNAL_TRAP)
   {
     for (i = 0, resume_signal = -1;
-	 excepn_map[i].gdb_sig != TARGET_SIGNAL_LAST; i++)
+	 excepn_map[i].gdb_sig != GDB_SIGNAL_LAST; i++)
       if (excepn_map[i].gdb_sig == siggnal)
       {
 	resume_signal = excepn_map[i].djgpp_excepno;
@@ -408,7 +386,7 @@ go32_resume (struct target_ops *ops,
       }
     if (resume_signal == -1)
       printf_unfiltered ("Cannot deliver signal %s on this platform.\n",
-			 target_signal_to_name (siggnal));
+			 gdb_signal_to_name (siggnal));
   }
 }
 
@@ -513,7 +491,7 @@ go32_wait (struct target_ops *ops,
     }
   else
     {
-      status->value.sig = TARGET_SIGNAL_UNKNOWN;
+      status->value.sig = GDB_SIGNAL_UNKNOWN;
       status->kind = TARGET_WAITKIND_STOPPED;
       for (i = 0; sig_map[i].go32_sig != -1; i++)
 	{
@@ -521,7 +499,7 @@ go32_wait (struct target_ops *ops,
 	    {
 #if __DJGPP_MINOR__ < 3
 	      if ((status->value.sig = sig_map[i].gdb_sig) !=
-		  TARGET_SIGNAL_TRAP)
+		  GDB_SIGNAL_TRAP)
 		status->kind = TARGET_WAITKIND_SIGNALLED;
 #else
 	      status->value.sig = sig_map[i].gdb_sig;
@@ -801,6 +779,29 @@ go32_get_dr6 (void)
   return STATUS;
 }
 
+/* Get the value of the DR7 debug status register from the inferior.
+   Here we just return the value stored in D_REGS, as we've got it
+   from the last go32_wait call.  */
+
+static unsigned long
+go32_get_dr7 (void)
+{
+  return CONTROL;
+}
+
+/* Get the value of the DR debug register I from the inferior.  Here
+   we just return the value stored in D_REGS, as we've got it from the
+   last go32_wait call.  */
+
+static CORE_ADDR
+go32_get_dr (int i)
+{
+  if (i < 0 || i > 3)
+    internal_error (__FILE__, __LINE__,
+		    _("Invalid register %d in go32_get_dr.\n"), i);
+  return D_REGS[i];
+}
+
 /* Put the device open on handle FD into either raw or cooked
    mode, return 1 if it was in raw mode, zero otherwise.  */
 
@@ -852,7 +853,7 @@ go32_terminal_init (void)
 }
 
 static void
-go32_terminal_info (char *args, int from_tty)
+go32_terminal_info (const char *args, int from_tty)
 {
   printf_unfiltered ("Inferior's terminal is in %s mode.\n",
 		     !inf_mode_valid
@@ -984,8 +985,9 @@ init_go32_ops (void)
 
   i386_dr_low.set_control = go32_set_dr7;
   i386_dr_low.set_addr = go32_set_dr;
-  i386_dr_low.reset_addr = NULL;
   i386_dr_low.get_status = go32_get_dr6;
+  i386_dr_low.get_control = go32_get_dr7;
+  i386_dr_low.get_addr = go32_get_dr;
   i386_set_debug_register_length (4);
 
   go32_ops.to_magic = OPS_MAGIC;
@@ -1002,9 +1004,6 @@ init_go32_ops (void)
 
   /* We are always processing GCC-compiled programs.  */
   processing_gcc_compilation = 2;
-
-  /* Override the default name of the GDB init file.  */
-  strcpy (gdbinit, "gdb.ini");
 }
 
 /* Return the current DOS codepage number.  */
@@ -1116,6 +1115,21 @@ go32_sysinfo (char *arg, int from_tty)
   else if (u.machine[0] == 'i' && u.machine[1] > 4)
     {
       /* CPUID with EAX = 0 returns the Vendor ID.  */
+#if 0
+      /* Ideally we would use i386_cpuid(), but it needs someone to run
+         native tests first to make sure things actually work.  They should.
+         http://sourceware.org/ml/gdb-patches/2013-05/msg00164.html  */
+      unsigned int eax, ebx, ecx, edx;
+
+      if (i386_cpuid (0, &eax, &ebx, &ecx, &edx))
+	{
+	  cpuid_max = eax;
+	  memcpy (&vendor[0], &ebx, 4);
+	  memcpy (&vendor[4], &ecx, 4);
+	  memcpy (&vendor[8], &edx, 4);
+	  cpuid_vendor[12] = '\0';
+	}
+#else
       __asm__ __volatile__ ("xorl   %%ebx, %%ebx;"
 			    "xorl   %%ecx, %%ecx;"
 			    "xorl   %%edx, %%edx;"
@@ -1132,6 +1146,7 @@ go32_sysinfo (char *arg, int from_tty)
 			    :
 			    : "%eax", "%ebx", "%ecx", "%edx");
       cpuid_vendor[12] = '\0';
+#endif
     }
 
   printf_filtered ("CPU Type.......................%s", u.machine);
@@ -1157,6 +1172,10 @@ go32_sysinfo (char *arg, int from_tty)
       int amd_p = strcmp (cpuid_vendor, "AuthenticAMD") == 0;
       unsigned cpu_family, cpu_model;
 
+#if 0
+      /* See comment above about cpuid usage.  */
+      i386_cpuid (1, &cpuid_eax, &cpuid_ebx, NULL, &cpuid_edx);
+#else
       __asm__ __volatile__ ("movl   $1, %%eax;"
 			    "cpuid;"
 			    : "=a" (cpuid_eax),
@@ -1164,6 +1183,7 @@ go32_sysinfo (char *arg, int from_tty)
 			      "=d" (cpuid_edx)
 			    :
 			    : "%ecx");
+#endif
       brand_idx = cpuid_ebx & 0xff;
       cpu_family = (cpuid_eax >> 8) & 0xf;
       cpu_model  = (cpuid_eax >> 4) & 0xf;
@@ -1248,9 +1268,9 @@ go32_sysinfo (char *arg, int from_tty)
 		break;
 	    }
 	}
-      sprintf (cpu_string, "%s%s Model %d Stepping %d",
-	       intel_p ? "Pentium" : (amd_p ? "AMD" : "ix86"),
-	       cpu_brand, cpu_model, cpuid_eax & 0xf);
+      xsnprintf (cpu_string, sizeof (cpu_string), "%s%s Model %d Stepping %d",
+	         intel_p ? "Pentium" : (amd_p ? "AMD" : "ix86"),
+	         cpu_brand, cpu_model, cpuid_eax & 0xf);
       printfi_filtered (31, "%s\n", cpu_string);
       if (((cpuid_edx & (6 | (0x0d << 23))) != 0)
 	  || ((cpuid_edx & 1) == 0)
@@ -1678,8 +1698,7 @@ go32_sldt (char *arg, int from_tty)
 
   if (arg && *arg)
     {
-      while (*arg && isspace(*arg))
-	arg++;
+      arg = skip_spaces (arg);
 
       if (*arg)
 	{
@@ -1749,8 +1768,7 @@ go32_sgdt (char *arg, int from_tty)
 
   if (arg && *arg)
     {
-      while (*arg && isspace(*arg))
-	arg++;
+      arg = skip_spaces (arg);
 
       if (*arg)
 	{
@@ -1791,8 +1809,7 @@ go32_sidt (char *arg, int from_tty)
 
   if (arg && *arg)
     {
-      while (*arg && isspace(*arg))
-	arg++;
+      arg = skip_spaces (arg);
 
       if (*arg)
 	{
@@ -1962,8 +1979,7 @@ go32_pde (char *arg, int from_tty)
 
   if (arg && *arg)
     {
-      while (*arg && isspace(*arg))
-	arg++;
+      arg = skip_spaces (arg);
 
       if (*arg)
 	{
@@ -2013,8 +2029,7 @@ go32_pte (char *arg, int from_tty)
 
   if (arg && *arg)
     {
-      while (*arg && isspace(*arg))
-	arg++;
+      arg = skip_spaces (arg);
 
       if (*arg)
 	{
@@ -2041,8 +2056,7 @@ go32_pte_for_address (char *arg, int from_tty)
 
   if (arg && *arg)
     {
-      while (*arg && isspace(*arg))
-	arg++;
+      arg = skip_spaces (arg);
 
       if (*arg)
 	addr = parse_and_eval_address (arg);
@@ -2072,6 +2086,9 @@ go32_info_dos_command (char *args, int from_tty)
 {
   help_list (info_dos_cmdlist, "info dos ", class_info, gdb_stdout);
 }
+
+/* -Wmissing-prototypes */
+extern initialize_file_ftype _initialize_go32_nat;
 
 void
 _initialize_go32_nat (void)

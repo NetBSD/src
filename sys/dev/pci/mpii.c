@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.1 2012/04/19 17:50:51 bouyer Exp $ */
+/* $NetBSD: mpii.c,v 1.1.8.1 2014/08/20 00:03:43 tls Exp $ */
 /*	OpenBSD: mpii.c,v 1.51 2012/04/11 13:29:14 naddy Exp 	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.1 2012/04/19 17:50:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.1.8.1 2014/08/20 00:03:43 tls Exp $");
 
 #include "bio.h"
 
@@ -790,18 +790,18 @@ struct mpii_msg_scsi_io_error {
 	u_int16_t		reserved3;
 
 	u_int8_t		scsi_status;
-	/* XXX JPG validate this */
-#if notyet
-#define MPII_SCSIIO_ERR_STATUS_SUCCESS
-#define MPII_SCSIIO_ERR_STATUS_CHECK_COND
-#define MPII_SCSIIO_ERR_STATUS_BUSY
-#define MPII_SCSIIO_ERR_STATUS_INTERMEDIATE
-#define MPII_SCSIIO_ERR_STATUS_INTERMEDIATE_CONDMET
-#define MPII_SCSIIO_ERR_STATUS_RESERVATION_CONFLICT
-#define MPII_SCSIIO_ERR_STATUS_CMD_TERM
-#define MPII_SCSIIO_ERR_STATUS_TASK_SET_FULL
-#define MPII_SCSIIO_ERR_STATUS_ACA_ACTIVE
-#endif
+
+#define MPII_SCSIIO_ERR_STATUS_SUCCESS			(0x00)
+#define MPII_SCSIIO_ERR_STATUS_CHECK_COND		(0x02)
+#define MPII_SCSIIO_ERR_STATUS_BUSY			(0x04)
+#define MPII_SCSIIO_ERR_STATUS_INTERMEDIATE		(0x08)
+#define MPII_SCSIIO_ERR_STATUS_INTERMEDIATE_CONDMET	(0x10)
+#define MPII_SCSIIO_ERR_STATUS_RESERVATION_CONFLICT	(0x14)
+#define MPII_SCSIIO_ERR_STATUS_CMD_TERM			(0x22)
+#define MPII_SCSIIO_ERR_STATUS_TASK_SET_FULL		(0x28)
+#define MPII_SCSIIO_ERR_STATUS_ACA_ACTIVE		(0x30)
+#define MPII_SCSIIO_ERR_STATUS_TASK_ABORTED		(0x40)
+
 	u_int8_t		scsi_state;
 #define MPII_SCSIIO_ERR_STATE_AUTOSENSE_VALID		(1<<0)
 #define MPII_SCSIIO_ERR_STATE_AUTOSENSE_FAILED		(1<<1)
@@ -2134,6 +2134,7 @@ mpii_attach(device_t parent, device_t self, void *aux)
 	struct scsipi_adapter *adapt = &sc->sc_adapt;
 	struct scsipi_channel *chan = &sc->sc_chan;
 	char wkname[15];
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	pci_aprint_devinfo(pa, NULL);
 
@@ -2195,7 +2196,7 @@ mpii_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "unable to map interrupt\n");
 		goto unmap;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 
 	if (mpii_init(sc) != 0) {
 		aprint_error_dev(self, "unable to initialize ioc\n");
@@ -2296,7 +2297,7 @@ mpii_attach(device_t parent, device_t self, void *aux)
 	chan->chan_bustype = &scsi_sas_bustype;
 	chan->chan_channel = 0;
 	chan->chan_flags = 0;
-	chan->chan_nluns = 1;
+	chan->chan_nluns = 8;
 	chan->chan_ntargets = sc->sc_max_devices;
 	chan->chan_id = -1;
 
@@ -3258,7 +3259,6 @@ static int
 mpii_portenable(struct mpii_softc *sc)
 {
 	struct mpii_msg_portenable_request	*peq;
-	struct mpii_msg_portenable_repy		*pep;
 	struct mpii_ccb				*ccb;
 
 	DNPRINTF(MPII_D_MISC, "%s: mpii_portenable\n", DEVNAME(sc));
@@ -3287,7 +3287,6 @@ mpii_portenable(struct mpii_softc *sc)
 		    DEVNAME(sc));
 		return (1);
 	}
-	pep = ccb->ccb_rcb->rcb_reply;
 
 	mpii_push_reply(sc, ccb->ccb_rcb);
 	mpii_put_ccb(sc, ccb);
@@ -4682,6 +4681,58 @@ mpii_scsi_cmd_tmo_done(struct mpii_ccb *tccb)
         mpii_put_ccb(tccb->ccb_sc, tccb);
 }
 
+static u_int8_t
+map_scsi_status(u_int8_t mpii_scsi_status)
+{
+	u_int8_t scsi_status;
+	
+	switch (mpii_scsi_status) 
+	{
+	case MPII_SCSIIO_ERR_STATUS_SUCCESS:
+		scsi_status = SCSI_OK;
+		break;
+		
+	case MPII_SCSIIO_ERR_STATUS_CHECK_COND:
+		scsi_status = SCSI_CHECK;
+		break;
+		
+	case MPII_SCSIIO_ERR_STATUS_BUSY:
+		scsi_status = SCSI_BUSY;
+		break;
+		
+	case MPII_SCSIIO_ERR_STATUS_INTERMEDIATE:
+		scsi_status = SCSI_INTERM;
+		break;
+		
+	case MPII_SCSIIO_ERR_STATUS_INTERMEDIATE_CONDMET:
+		scsi_status = SCSI_INTERM;
+		break;
+		
+	case MPII_SCSIIO_ERR_STATUS_RESERVATION_CONFLICT:
+		scsi_status = SCSI_RESV_CONFLICT;
+		break;
+		
+	case MPII_SCSIIO_ERR_STATUS_CMD_TERM:
+	case MPII_SCSIIO_ERR_STATUS_TASK_ABORTED:
+		scsi_status = SCSI_TERMINATED;
+		break;
+
+	case MPII_SCSIIO_ERR_STATUS_TASK_SET_FULL:
+		scsi_status = SCSI_QUEUE_FULL;
+		break;
+
+	case MPII_SCSIIO_ERR_STATUS_ACA_ACTIVE:
+		scsi_status = SCSI_ACA_ACTIVE;
+		break;
+
+	default:
+		/* XXX: for the lack of anything better and other than OK */
+		scsi_status = 0xFF;
+		break;
+	}
+
+	return scsi_status;
+}
 
 static void
 mpii_scsi_cmd_done(struct mpii_ccb *ccb)
@@ -4745,31 +4796,43 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 	DNPRINTF(MPII_D_CMD, "%s:  bidirectional_transfer_count: 0x%08x\n",
 	    DEVNAME(sc), le32toh(sie->bidirectional_transfer_count));
 
-	xs->status = sie->scsi_status;
+	xs->status = map_scsi_status(sie->scsi_status);
+
 	switch (le16toh(sie->ioc_status) & MPII_IOCSTATUS_MASK) {
 	case MPII_IOCSTATUS_SCSI_DATA_UNDERRUN:
-		switch (xs->status) {
-		case SCSI_OK:
+		switch (sie->scsi_status) {
+		case MPII_SCSIIO_ERR_STATUS_CHECK_COND:
+			xs->error = XS_SENSE;
+			/*FALLTHROUGH*/
+		case MPII_SCSIIO_ERR_STATUS_SUCCESS:
 			xs->resid = xs->datalen - le32toh(sie->transfer_count);
 			break;
+
 		default:
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
 		}
 		break;
+
 	case MPII_IOCSTATUS_SUCCESS:
 	case MPII_IOCSTATUS_SCSI_RECOVERED_ERROR:
-		switch (xs->status) {
-		case SCSI_OK:
-			xs->resid = 0;
+		switch (sie->scsi_status) {
+		case MPII_SCSIIO_ERR_STATUS_SUCCESS:
+			/*
+			 * xs->resid = 0; - already set above
+			 *
+			 * XXX: check whether UNDERUN strategy
+			 * would be appropriate here too.
+			 * that would allow joining these cases.
+			 */
 			break;
 
-		case SCSI_CHECK:
+		case MPII_SCSIIO_ERR_STATUS_CHECK_COND:
 			xs->error = XS_SENSE;
 			break;
-
-		case SCSI_BUSY:
-		case SCSI_QUEUE_FULL:
+			
+		case MPII_SCSIIO_ERR_STATUS_BUSY:
+		case MPII_SCSIIO_ERR_STATUS_TASK_SET_FULL:
 			xs->error = XS_BUSY;
 			break;
 

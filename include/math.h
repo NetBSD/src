@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.58.2.2 2013/06/23 06:28:49 tls Exp $	*/
+/*	$NetBSD: math.h,v 1.58.2.3 2014/08/20 00:02:05 tls Exp $	*/
 
 /*
  * ====================================================
@@ -472,14 +472,14 @@ long double fminl(long double, long double);
     ((_POSIX_C_SOURCE - 0) >= 200112L) || \
     defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
 /* 7.12.3.3 int isinf(real-floating x) */
-#ifdef __isinf
+#if defined(__isinf) || defined(__HAVE_INLINE___ISINF)
 #define	isinf(__x)	__isinf(__x)
 #else
 #define	isinf(__x)	__fpmacro_unary_floating(isinf, __x)
 #endif
 
 /* 7.12.3.4 int isnan(real-floating x) */
-#ifdef __isnan
+#if defined(__isnan) || defined(__HAVE_INLINE___ISNAN)
 #define	isnan(__x)	__isnan(__x)
 #else
 #define	isnan(__x)	__fpmacro_unary_floating(isnan, __x)

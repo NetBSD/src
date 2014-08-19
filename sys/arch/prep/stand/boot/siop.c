@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.1 2012/05/19 14:40:13 kiyohara Exp $	*/
+/*	$NetBSD: siop.c,v 1.1.6.1 2014/08/20 00:03:21 tls Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -238,7 +238,7 @@ siop_intr(struct siop_adapter *adp)
 	int offset, target, lun, tag, restart = 0, need_reset = 0;
 	uint32_t dsa, irqcode;
 	uint16_t sist;
-	uint8_t dstat, sstat1, istat;
+	uint8_t dstat = 0, sstat1, istat;
 
 	istat = readb(adp->addr + SIOP_ISTAT);
 	if ((istat & (ISTAT_INTF | ISTAT_DIP | ISTAT_SIP)) == 0)
@@ -604,7 +604,7 @@ siop_start(struct siop_adapter *adp, struct scsi_xfer *xs)
 {
 	struct siop_xfer *siop_xfer = adp->xfer;
 	uint32_t dsa, *script = adp->script;
-	int target, lun, slot;
+	int slot;
 	void *scriptaddr = (void *)local_to_PCI((u_long)script);
 	const int siop_common_xfer_size = sizeof(struct siop_common_xfer);
 
@@ -631,8 +631,6 @@ siop_start(struct siop_adapter *adp, struct scsi_xfer *xs)
 	} else {
 		slot++;
 	}
-	target = xs->target;
-	lun = xs->lun;
 	/*
 	 * find a free scheduler slot and load it.
 	 */

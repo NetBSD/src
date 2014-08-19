@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.25.22.1 2013/02/25 00:29:57 tls Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.25.22.2 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.25.22.1 2013/02/25 00:29:57 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.25.22.2 2014/08/20 00:04:29 tls Exp $");
 
 /*
  * File system transaction operations.
@@ -82,7 +82,6 @@ static kcondvar_t fstrans_count_cv;	/* Fstrans or cow count changed. */
 static pserialize_t fstrans_psz;	/* Pserialize state. */
 static LIST_HEAD(fstrans_lwp_head, fstrans_lwp_info) fstrans_fli_head;
 					/* List of all fstrans_lwp_info. */
-static pool_cache_t fstrans_cache;	/* Pool of struct fstrans_lwp_info. */
 
 static void fstrans_lwp_dtor(void *);
 static void fstrans_mount_dtor(struct mount *);
@@ -99,7 +98,7 @@ static void cow_change_done(const struct mount *);
 void
 fstrans_init(void)
 {
-	int error;
+	int error __diagused;
 
 	error = lwp_specific_key_create(&lwp_data_key, fstrans_lwp_dtor);
 	KASSERT(error == 0);
@@ -110,8 +109,6 @@ fstrans_init(void)
 	cv_init(&fstrans_count_cv, "fstcnt");
 	fstrans_psz = pserialize_create();
 	LIST_INIT(&fstrans_fli_head);
-	fstrans_cache = pool_cache_init(sizeof(struct fstrans_lwp_info), 0, 0,
-	    0, "fstrans", NULL, IPL_NONE, NULL, NULL, NULL);
 }
 
 /*
@@ -122,17 +119,16 @@ fstrans_lwp_dtor(void *arg)
 {
 	struct fstrans_lwp_info *fli, *fli_next;
 
-	mutex_enter(&fstrans_lock);
 	for (fli = arg; fli; fli = fli_next) {
 		KASSERT(fli->fli_trans_cnt == 0);
 		KASSERT(fli->fli_cow_cnt == 0);
 		if (fli->fli_mount != NULL)
 			fstrans_mount_dtor(fli->fli_mount);
 		fli_next = fli->fli_succ;
-		LIST_REMOVE(fli, fli_list);
-		pool_cache_put(fstrans_cache, fli);
+		fli->fli_mount = NULL;
+		membar_sync();
+		fli->fli_self = NULL;
 	}
-	mutex_exit(&fstrans_lock);
 }
 
 /*
@@ -237,7 +233,21 @@ fstrans_get_lwp_info(struct mount *mp, bool do_alloc)
 		}
 	}
 	if (fli == NULL) {
-		fli = pool_cache_get(fstrans_cache, PR_WAITOK);
+		mutex_enter(&fstrans_lock);
+		LIST_FOREACH(fli, &fstrans_fli_head, fli_list) {
+			if (fli->fli_self == NULL) {
+				KASSERT(fli->fli_trans_cnt == 0);
+				KASSERT(fli->fli_cow_cnt == 0);
+				fli->fli_self = curlwp;
+				fli->fli_succ = lwp_getspecific(lwp_data_key);
+				lwp_setspecific(lwp_data_key, fli);
+				break;
+			}
+		}
+		mutex_exit(&fstrans_lock);
+	}
+	if (fli == NULL) {
+		fli = kmem_alloc(sizeof(*fli), KM_SLEEP);
 		mutex_enter(&fstrans_lock);
 		memset(fli, 0, sizeof(*fli));
 		fli->fli_self = curlwp;
@@ -510,7 +520,7 @@ static bool
 cow_state_change_done(const struct mount *mp)
 {
 	struct fstrans_lwp_info *fli;
-	struct fstrans_mount_info *fmi;
+	struct fstrans_mount_info *fmi __diagused;
 
 	fmi = mp->mnt_transinfo;
 
@@ -657,7 +667,7 @@ fscow_run(struct buf *bp, bool data_valid)
 		return 0;
 	}
 	if (bp->b_vp->v_type == VBLK)
-		mp = bp->b_vp->v_specmountpoint;
+		mp = spec_node_getmountedfs(bp->b_vp);
 	else
 		mp = bp->b_vp->v_mount;
 	if (mp == NULL || (mp->mnt_iflag & IMNT_HAS_TRANS) == 0) {
@@ -812,7 +822,7 @@ fstrans_dump(int full)
 				fstrans_print_lwp(p, l, full == 1);
 
 	printf("Fstrans state by mount:\n");
-	CIRCLEQ_FOREACH(mp, &mountlist, mnt_list)
+	TAILQ_FOREACH(mp, &mountlist, mnt_list)
 		fstrans_print_mount(mp, full == 1);
 }
 #endif /* defined(DDB) */

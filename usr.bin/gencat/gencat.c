@@ -1,4 +1,4 @@
-/*	$NetBSD: gencat.c,v 1.35 2012/03/09 18:54:28 ginsbach Exp $	*/
+/*	$NetBSD: gencat.c,v 1.35.2.1 2014/08/20 00:04:58 tls Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: gencat.c,v 1.35 2012/03/09 18:54:28 ginsbach Exp $");
+__RCSID("$NetBSD: gencat.c,v 1.35.2.1 2014/08/20 00:04:58 tls Exp $");
 #endif
 
 /***********************************************************
@@ -108,7 +108,7 @@ struct _setT {
         LIST_ENTRY(_setT) entries;
 };
 
-static LIST_HEAD(sethead, _setT) sethead;
+static LIST_HEAD(sethead, _setT) sethead = LIST_HEAD_INITIALIZER(sethead);
 static struct _setT *curSet;
 
 static const char *curfile;
@@ -470,8 +470,6 @@ MCParse(int fd)
 	int     setid = 0;
 	char    quote = 0;
 
-	/* XXX: init sethead? */
-
 	while ((cptr = get_line(fd))) {
 		if (*cptr == '$') {
 			++cptr;
@@ -564,8 +562,6 @@ MCReadCat(int fd)
 	ssize_t	n;
 	int	m, s;
 	int	msgno, setno;
-
-	/* XXX init sethead? */
 
 	n = read(fd, &cat_hdr, sizeof(cat_hdr));
 	if (n < (ssize_t)sizeof(cat_hdr)) {
@@ -674,12 +670,10 @@ MCWriteCat(int fd)
 	nmsgs = 0;
 	string_size = 0;
 
-	for (set = sethead.lh_first; set != NULL;
-	    set = set->entries.le_next) {
+	LIST_FOREACH(set, &sethead, entries) {
 		nsets++;
 
-		for (msg = set->msghead.lh_first; msg != NULL;
-		    msg = msg->entries.le_next) {
+		LIST_FOREACH(msg, &set->msghead, entries) {
 			nmsgs++;
 			string_size += strlen(msg->str) + 1;
 		}
@@ -725,12 +719,10 @@ MCWriteCat(int fd)
 
 	msg_index = 0;
 	msg_offset = 0;
-	for (set = sethead.lh_first; set != NULL;
-	    set = set->entries.le_next) {
+	LIST_FOREACH(set, &sethead, entries) {
 
 		nmsgs = 0;
-		for (msg = set->msghead.lh_first; msg != NULL;
-		    msg = msg->entries.le_next) {
+		LIST_FOREACH(msg, &set->msghead, entries) {
 			int32_t     msg_len = strlen(msg->str) + 1;
 
 			msg_hdr->__msgno = htonl(msg->msgId);
@@ -770,9 +762,10 @@ MCAddSet(int setId)
 		/* NOTREACHED */
 	}
 
-	p = sethead.lh_first;
+	p = LIST_FIRST(&sethead);
 	q = NULL;
-	for (; p != NULL && p->setId < setId; q = p, p = p->entries.le_next);
+	for (; p != NULL && p->setId < setId; q = p, p = LIST_NEXT(p, entries))
+		continue;
 
 	if (p && p->setId == setId) {
 		;
@@ -810,9 +803,10 @@ MCAddMsg(int msgId, const char *str)
 		/* NOTREACHED */
 	}
 
-	p = curSet->msghead.lh_first;
+	p = LIST_FIRST(&curSet->msghead);
 	q = NULL;
-	for (; p != NULL && p->msgId < msgId; q = p, p = p->entries.le_next);
+	for (; p != NULL && p->msgId < msgId; q = p, p = LIST_NEXT(p, entries))
+		continue;
 
 	if (p && p->msgId == msgId) {
 		free(p->str);
@@ -846,12 +840,13 @@ MCDelSet(int setId)
 		/* NOTREACHED */
 	}
 
-	set = sethead.lh_first;
-	for (; set != NULL && set->setId < setId; set = set->entries.le_next);
+	set = LIST_FIRST(&sethead);
+	for (; set != NULL && set->setId < setId; set = LIST_NEXT(set, entries))
+		continue;
 
 	if (set && set->setId == setId) {
 		LIST_REMOVE(set, entries);
-		while ((msg = set->msghead.lh_first) != NULL) {
+		while ((msg = LIST_FIRST(&set->msghead)) != NULL) {
 			LIST_REMOVE(msg, entries);
 			free(msg->str);
 			free(msg);
@@ -870,8 +865,9 @@ MCDelMsg(int msgId)
 	if (!curSet)
 		error("you can't delete a message before defining the set");
 
-	msg = curSet->msghead.lh_first;
-	for (; msg != NULL && msg->msgId < msgId; msg = msg->entries.le_next);
+	msg = LIST_FIRST(&curSet->msghead);
+	for (; msg != NULL && msg->msgId < msgId; msg = LIST_NEXT(msg, entries))
+		continue;
 
 	if (msg && msg->msgId == msgId) {
 		LIST_REMOVE(msg, entries);

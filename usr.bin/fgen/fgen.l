@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.35 2011/09/01 13:44:25 joerg Exp $	*/
+/*	$NetBSD: fgen.l,v 1.35.8.1 2014/08/20 00:04:58 tls Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -42,7 +42,7 @@
 #endif
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: fgen.l,v 1.35 2011/09/01 13:44:25 joerg Exp $");
+__RCSID("$NetBSD: fgen.l,v 1.35.8.1 2014/08/20 00:04:58 tls Exp $");
 #endif
 
 %}
@@ -996,7 +996,7 @@ usage(const char *me)
 int
 main(int argc, char *argv[])
 {
-	int bflag, ch;
+	int ch;
 	FILE *inf;
 	struct fcode_header *fheader;
 	YY_BUFFER_STATE inbuf;
@@ -1006,7 +1006,6 @@ main(int argc, char *argv[])
 	outf = 1; /* stdout */
 	myname = argv[0];
 
-	bflag = 0;
 	while ((ch = getopt(argc, argv, "d:o:")) != -1)
 		switch(ch) {
 		case 'd':

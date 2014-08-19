@@ -19,14 +19,17 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
-C                cycles/limb
-C 603e:              ?
-C 604e:              ?		old: 3.25
-C 75x (G3):          ?		old: 3.5
-C 7400,7410 (G4):    3.25
-C 744x,745x (G4+):   4
-C power4/ppc970:     ?		old: 2.0
-C power5:            ?		old: 2.5
+C                   cycles/limb
+C 603e:                  ?
+C 604e:                  ?		old: 3.25
+C 75x (G3):              ?		old: 3.5
+C 7400,7410 (G4):        3.25
+C 744x,745x (G4+):       4
+C POWER3/PPC630          2
+C POWER4/PPC970          2.4
+C POWER5                 2.75
+C POWER6               40-140
+C POWER7                 3
 
 C INPUT PARAMETERS
 define(`rp',	`r3')

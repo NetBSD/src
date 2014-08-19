@@ -1,7 +1,6 @@
 /* Code dealing with dummy stack frames, for GDB, the GNU debugger.
 
-   Copyright (C) 2002, 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -52,6 +51,8 @@ extern void dummy_frame_push (struct infcall_suspend_state *caller_state,
    currently no way to tell which stack frame is for which thread.  */
 
 extern void dummy_frame_pop (struct frame_id dummy_id);
+
+extern void dummy_frame_discard (struct frame_id dummy_id);
 
 /* If the PC falls in a dummy frame, return a dummy frame
    unwinder.  */

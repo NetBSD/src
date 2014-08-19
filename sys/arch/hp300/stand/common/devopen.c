@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.10 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: devopen.c,v 1.10.44.1 2014/08/20 00:03:01 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,16 +72,6 @@ u_int opendev;
 static void usage(void);
 static int devlookup(const char * ,int);
 static int devparse(const char *, int *, int*, int*, int*, int*, char **);
-
-int
-atoi(char *cp)
-{
-	int val = 0;
-
-	while (isdigit((unsigned char)*cp))
-		val = val * 10 + (*cp++ - '0');
-	return val;
-}
 
 void
 usage(void)

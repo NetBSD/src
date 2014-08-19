@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.360.2.2 2013/06/23 06:20:18 tls Exp $
+#	$NetBSD: files.pci,v 1.360.2.3 2014/08/20 00:03:42 tls Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -604,20 +604,19 @@ device	puc { port = -1 }
 attach	puc at pci
 file	dev/pci/puc.c			puc
 file	dev/pci/pucdata.c		puc
+defflag opt_puc.h	PUC_CNAUTO
+defparam opt_puc.h	PUC_CNBUS
 
 attach	com at puc with com_puc
-file	dev/pci/com_puc.c		com_puc
+file	dev/pci/com_puc.c		com_puc needs-flag
 file	dev/pci/cyber.c			com_puc
+file	dev/pci/puccn.c			com_puc
 
 attach	lpt at puc with lpt_puc
 file	dev/pci/lpt_puc.c		lpt_puc & !ppbus
 
 attach	atppc at puc with atppc_puc
 file	dev/pci/atppc_puc.c		atppc_puc
-
-# Console device support for puc drivers
-defflag	opt_puccn.h	PUCCN
-file	dev/pci/puccn.c			puccn
 
 # UHCI USB controller
 attach	uhci at pci with uhci_pci
@@ -632,6 +631,10 @@ attach	ehci at pci with ehci_pci
 file	dev/pci/ehci_pci.c		ehci_pci
 
 file	dev/pci/usb_pci.c		ehci_pci | ehci_cardbus
+
+# xHCI USB controller
+attach	xhci at pci with xhci_pci
+file	dev/pci/xhci_pci.c		xhci_pci
 
 # OHCI IEEE 1394 controller
 attach	fwohci at pci with fwohci_pci
@@ -974,7 +977,7 @@ attach	msk at mskc
 file	dev/pci/if_msk.c		mskc | msk
 
 # SD Host Controller
-attach sdhc at pci with sdhc_pci
+attach	sdhc at pci with sdhc_pci
 file	dev/pci/sdhc_pci.c		sdhc_pci
 
 # generic framebuffer console driver, PCI frontend
@@ -1127,8 +1130,27 @@ device	lynxfb: wsemuldisplaydev, rasops16
 attach	lynxfb at pci
 file	dev/pci/lynxfb.c	lynxfb needs-flag
 
+include "dev/pci/igma/files.igma"
+# Intel GMA
+device	igma: igmabus, i2cbus, i2c_bitbang, ddc_read_edid, edid
+attach	igma at pci
+file	dev/pci/igma.c		igma
+
 # 3Dfx Voodoo Graphics
 defflag	opt_tdvfb.h		TDVFB_CONSOLE
 device	tdvfb: wsemuldisplaydev, rasops16, rasops32, vcons, videomode
 attach	tdvfb at pci
 file	dev/pci/tdvfb.c		tdvfb	
+
+# nvidia geforce framebuffer console driver
+device	gffb: wsemuldisplaydev, rasops8, vcons, videomode, i2cbus, i2c_bitbang, glyphcache
+attach	gffb at pci
+file	dev/pci/gffb.c		gffb
+defflag	opt_gffb.h	GFFB_DEBUG
+
+# Realtek RTS5209/RTS5229 Card Reader driver
+attach	rtsx at pci with rtsx_pci
+file	dev/pci/rtsx_pci.c	rtsx_pci
+
+# PCI graphics devices with DRM/KMS
+include "external/bsd/drm2/pci/files.drmkms_pci"

@@ -1,7 +1,6 @@
 /* Pascal language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2000, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,27 +30,27 @@ extern void pascal_error (char *);	/* Defined in p-exp.y */
 
 /* Defined in p-typeprint.c */
 extern void pascal_print_type (struct type *, const char *, struct ui_file *,
-			       int, int);
+			       int, int, const struct type_print_options *);
 
 extern void pascal_print_typedef (struct type *, struct symbol *,
 				  struct ui_file *);
 
-extern int pascal_val_print (struct type *, const gdb_byte *, int,
-			     CORE_ADDR, struct ui_file *, int,
-			     const struct value *,
-			     const struct value_print_options *);
+extern void pascal_val_print (struct type *, const gdb_byte *, int,
+			      CORE_ADDR, struct ui_file *, int,
+			      const struct value *,
+			      const struct value_print_options *);
 
-extern int pascal_value_print (struct value *, struct ui_file *,
-			       const struct value_print_options *);
+extern void pascal_value_print (struct value *, struct ui_file *,
+				const struct value_print_options *);
 
-extern void pascal_type_print_method_args (char *, char *,
+extern void pascal_type_print_method_args (const char *, const char *,
 					   struct ui_file *);
 
 /* These are in p-lang.c: */
 
 extern int
   is_pascal_string_type (struct type *, int *, int *, int *,
-			 struct type **, char **);
+			 struct type **, const char **);
 
 extern void pascal_printchar (int, struct type *, struct ui_file *);
 
@@ -64,10 +63,12 @@ extern struct type **const (pascal_builtin_types[]);
 /* These are in p-typeprint.c: */
 
 extern void
-  pascal_type_print_base (struct type *, struct ui_file *, int, int);
+  pascal_type_print_base (struct type *, struct ui_file *, int, int,
+			  const struct type_print_options *);
 
 extern void
-  pascal_type_print_varspec_prefix (struct type *, struct ui_file *, int, int);
+  pascal_type_print_varspec_prefix (struct type *, struct ui_file *, int, int,
+				    const struct type_print_options *);
 
 extern void pascal_object_print_value_fields (struct type *, const gdb_byte *,
 					      int,

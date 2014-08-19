@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.7 2005/07/01 00:48:34 jmc Exp $	*/
+/*	$NetBSD: list.c,v 1.7.48.1 2014/08/20 00:00:21 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: list.c,v 1.7 2005/07/01 00:48:34 jmc Exp $");
+__RCSID("$NetBSD: list.c,v 1.7.48.1 2014/08/20 00:00:21 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: list.c,v 1.7 2005/07/01 00:48:34 jmc Exp $");
 PLANE *
 newplane(void)
 {
-	return ((PLANE *) calloc(1, sizeof (PLANE)));
+	return calloc(1, sizeof (PLANE));
 }
 
 void

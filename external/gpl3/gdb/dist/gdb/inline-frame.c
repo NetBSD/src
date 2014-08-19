@@ -1,6 +1,6 @@
 /* Inline frame unwinder for GDB.
 
-   Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
+#include "inline-frame.h"
 #include "addrmap.h"
 #include "block.h"
 #include "frame-unwind.h"
@@ -177,7 +178,7 @@ inline_frame_this_id (struct frame_info *this_frame,
   func = get_frame_function (this_frame);
   gdb_assert (func != NULL);
   (*this_id).code_addr = BLOCK_START (SYMBOL_BLOCK_VALUE (func));
-  (*this_id).inline_depth++;
+  (*this_id).artificial_depth++;
 }
 
 static struct value *
@@ -288,7 +289,7 @@ block_starting_point_at (CORE_ADDR pc, struct block *block)
   if (new_block == block || contained_in (new_block, block))
     return 0;
 
-  /* The immediately preceeding address belongs to a different block,
+  /* The immediately preceding address belongs to a different block,
      which is not a child of this one.  Treat this as an entrance into
      BLOCK.  */
   return 1;

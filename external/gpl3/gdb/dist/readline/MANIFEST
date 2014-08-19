@@ -3,6 +3,7 @@
 #
 doc		d
 examples	d
+examples/autoconf	d
 examples/rlfe	d
 support		d
 shlib		d
@@ -26,6 +27,7 @@ histlib.h	f
 keymaps.h	f
 posixdir.h	f
 posixjmp.h	f
+posixselect.h	f
 posixstat.h	f
 readline.h	f
 rlconf.h	f
@@ -69,11 +71,13 @@ undo.c		f
 util.c		f
 vi_keymap.c	f
 vi_mode.c	f
+xfree.c		f
 xmalloc.c	f
 history.c	f
 histexpand.c	f
 histfile.c	f
 histsearch.c	f
+patchlevel	f
 shlib/Makefile.in	f
 support/config.guess	f
 support/config.rpath	f
@@ -107,12 +111,16 @@ examples/manexamp.c	f
 examples/readlinebuf.h	f
 examples/rl-fgets.c	f
 examples/rlcat.c	f
+examples/rlevent.c	f
 examples/rltest.c	f
 examples/rl.c		f
 examples/rlptytest.c	f
 examples/rlversion.c	f
 examples/histexamp.c	f
 examples/Inputrc	f
+examples/autoconf/BASH_CHECK_LIB_TERMCAP	f
+examples/autoconf/RL_LIB_READLINE_VERSION	f
+examples/autoconf/wi_LIB_READLINE	f
 examples/rlfe/ChangeLog		f
 examples/rlfe/Makefile.in	f
 examples/rlfe/README		f
@@ -124,6 +132,7 @@ examples/rlfe/os.h		f
 examples/rlfe/pty.c		f
 examples/rlfe/rlfe.c		f
 examples/rlfe/screen.h		f
+examples/rlwrap-0.30.tar.gz	f
 # formatted documentation, from MANIFEST.doc
 doc/readline.ps		f
 doc/history.ps		f

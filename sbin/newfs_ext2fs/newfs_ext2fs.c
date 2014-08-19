@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_ext2fs.c,v 1.8 2009/03/02 10:38:13 tsutsui Exp $	*/
+/*	$NetBSD: newfs_ext2fs.c,v 1.8.12.1 2014/08/20 00:02:26 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs_ext2fs.c,v 1.8 2009/03/02 10:38:13 tsutsui Exp $");
+__RCSID("$NetBSD: newfs_ext2fs.c,v 1.8.12.1 2014/08/20 00:02:26 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,12 +126,11 @@ main(int argc, char *argv[])
 	struct statvfs *mp;
 	struct stat sb;
 	int ch, fsi, fso, len, n, Fflag, Iflag, Zflag;
-	char *cp, *s1, *s2, *special;
+	char *s1, *s2, *special;
 	const char *opstring;
 	int byte_sized;
 	uint blocks;			/* number of blocks */
 
-	cp = NULL;
 	fsi = fso = -1;
 	Fflag = Iflag = Zflag = 0;
 	verbosity = -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_frodo.c,v 1.8 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: com_frodo.c,v 1.8.44.1 2014/08/20 00:03:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_frodo.c,v 1.8 2008/04/28 20:23:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_frodo.c,v 1.8.44.1 2014/08/20 00:03:00 tls Exp $");
+
+#include "sti_sgc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,9 +157,31 @@ com_frodo_cnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 {
 	bus_space_tag_t iot = &comcntag;
 	bus_space_handle_t ioh;
+	volatile uint8_t *frodoregs;
 
 	if (machineid != HP_425 || mmuid != MMUID_425_E)
 		return 1;
+
+	/*
+	 * Check the service switch. On the 425e, this is a physical
+	 * switch, unlike other frodo-based machines, so we can use it
+	 * as a serial vs internal video selector, since the PROM can not
+	 * be configured for serial console.
+	 */
+	frodoregs = (volatile uint8_t *)IIOV(INTIOBASE + FRODO_BASE);
+	if (badaddr(__UNVOLATILE(frodoregs)) != 0) {
+		/* 425e but no frodo chip found? */
+		return 1;
+	}
+
+	/*
+	 * if sti(4) is not configured, we need serial console anyway
+	 * and no need to check the service switch.
+	 */
+#if NSTI_SGC > 0
+	if (ISSET(frodoregs[FRODO_IISR], FRODO_IISR_SERVICE))
+		return 1;
+#endif
 
 	frodo_init_bus_space(iot);
 

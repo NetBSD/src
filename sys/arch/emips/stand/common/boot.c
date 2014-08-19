@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 2011/01/26 01:18:54 pooka Exp $	*/
+/*	$NetBSD: boot.c,v 1.1.20.1 2014/08/20 00:02:52 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@ char *kernelnames[] = {
 	"netbsd.old",
 	"onetbsd",
 	"gennetbsd",
-    "nfsnetbsd",
+	"nfsnetbsd",
 	NULL
 };
 
@@ -66,9 +66,9 @@ static int devcanon(char *);
 
 static int loadit(char *name, u_long marks[MARK_MAX])
 {
-    printf("Loading: %s\n", name);
-    memset(marks, 0, sizeof marks);
-    return (loadfile(name, marks, LOAD_ALL));
+	printf("Loading: %s\n", name);
+	memset(marks, 0, sizeof marks);
+	return (loadfile(name, marks, LOAD_ALL));
 }
 
 /*
@@ -78,31 +78,30 @@ static int loadit(char *name, u_long marks[MARK_MAX])
 void
 main(char *stack_top)
 {
-	int argc;
-    int autoboot = 1, win;
+	int autoboot = 1, win;
 	char *name, **namep, *dev, *kernel;
-	char bootname[PATH_MAX], bootpath[PATH_MAX], options[OPT_MAX];
+	char bootpath[PATH_MAX], options[OPT_MAX];
 	uint32_t entry;
 	u_long marks[MARK_MAX];
 	struct btinfo_symtab bi_syms;
 	struct btinfo_bootpath bi_bpath;
 
-    /* Init all peripherals, esp USART for printf and memory */
-    init_board();
+	/* Init all peripherals, esp USART for printf and memory */
+	init_board();
 
-    /* On account of compression, we need a fairly large heap.
-     * To keep things simple, take one meg just below the 16 meg mark.
-     * That allows for a large kernel, and a 16MB configuration still works.
-     */
-    setheap((void *)(0x81000000-(1024*1024)), (void *)0x81000000);
+	/* On account of compression, we need a fairly large heap.
+	 * To keep things simple, take one meg just below the 16 meg mark.
+	 * That allows for a large kernel, and a 16MB configuration still works.
+	 */
+	setheap((void *)(0x81000000-(1024*1024)), (void *)0x81000000);
 
-    /* On the BEE3 and the Giano simulator, we need a sec between the serial-line download complete
-     * and switching the serial line to PuTTY as console. Get a char to pause.
-     * This delay is also the practice on PCs so.
-     */
-    Delay(200000);
-    printf("Hit any char to boot..");
-    argc = GetChar();
+	/* On the BEE3 and the Giano simulator, we need a sec between the serial-line download complete
+	 * and switching the serial line to PuTTY as console. Get a char to pause.
+	 * This delay is also the practice on PCs so.
+	 */
+	Delay(200000);
+	printf("Hit any char to boot..");
+	(void)GetChar();
 
 	/* print a banner */
 	printf("\n");
@@ -112,25 +111,25 @@ main(char *stack_top)
 	/* initialise bootinfo structure early */
 	bi_init(BOOTINFO_ADDR);
 
-    /* Default is to auto-boot from the first disk */
-    dev = "0/ace(0,0)/";
+	/* Default is to auto-boot from the first disk */
+	dev = "0/ace(0,0)/";
 	kernel = kernelnames[0];
-    options[0] = 0;
+	options[0] = 0;
 
-    win = 0;
-    for (;!win;) {
-        strcpy(bootpath, dev);
-        strcat(bootpath, kernel);
-        name = getboot(bootpath,options);
+	win = 0;
+	for (;!win;) {
+	    strcpy(bootpath, dev);
+	    strcat(bootpath, kernel);
+	    name = getboot(bootpath,options);
 
-        if (name != NULL) {
-            win = (loadit(name, marks) == 0);
-        } else if (autoboot)
-            break;
-        autoboot = 0;
-    }
+	    if (name != NULL) {
+	        win = (loadit(name, marks) == 0);
+	    } else if (autoboot)
+	        break;
+	    autoboot = 0;
+	}
 
-    if (!win) {
+	if (!win) {
 		for (namep = kernelnames, win = 0; *namep != NULL && !win;
 		    namep++) {
 			kernel = *namep;
@@ -155,7 +154,7 @@ main(char *stack_top)
 	bi_add(&bi_syms, BTINFO_SYMTAB, sizeof(bi_syms));
 
 	printf("Starting at 0x%x\n\n", entry);
-    call_kernel(entry, name, options, BOOTINFO_MAGIC, bootinfo);
+	call_kernel(entry, name, options, BOOTINFO_MAGIC, bootinfo);
 	(void)printf("KERNEL RETURNED!\n");
 
 fail:
@@ -165,90 +164,90 @@ fail:
 static inline int
 parse(char *cmd, char *kname, char *optarg)
 {
-    char *arg = cmd;
-    char *ep, *p;
-    int c, i;
+	char *arg = cmd;
+	char *ep, *p;
+	int c, i;
 
-    while ((c = *arg++)) {
-        /* skip leading blanks */
-        if (c == ' ' || c == '\t' || c == '\n')
-            continue;
-        /* find separator, or eol */
-        for (p = arg; *p && *p != '\n' && *p != ' ' && *p != '\t'; p++);
-        ep = p;
-        /* trim if separator */
-        if (*p)
-            *p++ = 0;
-        /* token is either "-opts" or "kernelname" */
-        if (c == '-') {
-            /* no overflow because whole line same length as optarg anyways */
-            while ((c = *arg++)) {
-                *optarg++ = c;
-            }
-            *optarg = 0;
-        } else {
-            arg--;
-            if ((i = ep - arg)) {
-                if ((size_t)i >= PATH_MAX)
-                    return -1;
-                memcpy(kname, arg, i + 1);
-            }
-        }
-        arg = p;
-    }
-    return 0;
+	while ((c = *arg++)) {
+	    /* skip leading blanks */
+	    if (c == ' ' || c == '\t' || c == '\n')
+	        continue;
+	    /* find separator, or eol */
+	    for (p = arg; *p && *p != '\n' && *p != ' ' && *p != '\t'; p++);
+	    ep = p;
+	    /* trim if separator */
+	    if (*p)
+	        *p++ = 0;
+	    /* token is either "-opts" or "kernelname" */
+	    if (c == '-') {
+	        /* no overflow because whole line same length as optarg anyways */
+	        while ((c = *arg++)) {
+	            *optarg++ = c;
+	        }
+	        *optarg = 0;
+	    } else {
+	        arg--;
+	        if ((i = ep - arg)) {
+	            if ((size_t)i >= PATH_MAX)
+	                return -1;
+	            memcpy(kname, arg, i + 1);
+	        }
+	    }
+	    arg = p;
+	}
+	return 0;
 }
 
 /* String returned is zero-terminated and at most PATH_MAX chars */
 static inline void
 getstr(char *cmd, int c)
 {
-    char *s;
+	char *s;
 
-    s = cmd;
-    if (c == 0)
-        c = GetChar();
-    for (;;) {
-        switch (c) {
-        case 0:
-            break;
-        case '\177':
-        case '\b':
-            if (s > cmd) {
-                s--;
-                printf("\b \b");
-            }
-            break;
-        case '\n':
-        case '\r':
-            *s = 0;
-            return;
-        default:
-            if ((s - cmd) < (PATH_MAX - 1))
-                *s++ = c;
-            xputchar(c);
-        }
-        c = GetChar();
-    }
+	s = cmd;
+	if (c == 0)
+	    c = GetChar();
+	for (;;) {
+	    switch (c) {
+	    case 0:
+	        break;
+	    case '\177':
+	    case '\b':
+	        if (s > cmd) {
+	            s--;
+	            printf("\b \b");
+	        }
+	        break;
+	    case '\n':
+	    case '\r':
+	        *s = 0;
+	        return;
+	    default:
+	        if ((s - cmd) < (PATH_MAX - 1))
+	            *s++ = c;
+	        xputchar(c);
+	    }
+	    c = GetChar();
+	}
 }
 
 char *getboot(char *kname, char* optarg)
 {
-    char c = 0;
-    char cmd[PATH_MAX];
+	char c = 0;
+	char cmd[PATH_MAX];
 
-    printf("\nDefault: %s%s %s\nboot: ", (*optarg) ? "-" : "", optarg, kname);
-    if ((c = GetChar()) == -1)
-        return NULL;
+	printf("\nDefault: %s%s %s\nboot: ", (*optarg) ? "-" : "", optarg, kname);
+	if ((c = GetChar()) == -1)
+	    return NULL;
 
-    cmd[0] = 0;
-    getstr(cmd,c);
-    xputchar('\n');
-    if (parse(cmd,kname,optarg))
-        xputchar('\a');
-    else if (devcanon(kname) == 0)
-        return kname;
-    return NULL;
+	cmd[0] = 0;
+	getstr(cmd,c);
+	xputchar('\n');
+	if (parse(cmd,kname,optarg))
+	    xputchar('\a');
+	else if (devcanon(kname) == 0)
+	    return kname;
+	return NULL;
 }
 
 /*
@@ -258,73 +257,73 @@ static int
 devcanon(char *fname)
 {
 	int ctlr = 0, unit = 0, part = 0;
-	int c, rc;
+	int c;
 	char device_name[20];
-    char file_name[PATH_MAX];
+	char file_name[PATH_MAX];
 	const char *cp;
 	char *ncp;
 
-    //printf("devcanon(%s)\n",fname);
+	//printf("devcanon(%s)\n",fname);
 
 	cp = fname;
 	ncp = device_name;
 
-    /* expect a string like '0/ace(0,0)/netbsd' e.g. ctrl/name(unit,part)/file
-     * Defaults: ctrl=0, name='ace', unit=0, part=0, file=<none>
-     */
+	/* expect a string like '0/ace(0,0)/netbsd' e.g. ctrl/name(unit,part)/file
+	 * Defaults: ctrl=0, name='ace', unit=0, part=0, file=<none>
+	 */
 
-    /* get controller number */
-    if ((c = *cp) >= '0' && c <= '9') {
-        ctlr = c - '0';
-        c = *++cp;
-        if (c != '/')
-            return (ENXIO);
-        c = *++cp;
-    }
+	/* get controller number */
+	if ((c = *cp) >= '0' && c <= '9') {
+	    ctlr = c - '0';
+	    c = *++cp;
+	    if (c != '/')
+	        return (ENXIO);
+	    c = *++cp;
+	}
 
-    /* get device name */
-    while ((c = *cp) != '\0') {
-        if ((c == '(') || (c == '/')) {
-            cp++;
-            break;
-        }
-        if (ncp < device_name + sizeof(device_name) - 1)
-            *ncp++ = c;
-        cp++;
-    }
-    /* set default if missing */
-    if (ncp == device_name) {
-        strcpy(device_name,"ace");
-        ncp += 3;
-    }
+	/* get device name */
+	while ((c = *cp) != '\0') {
+	    if ((c == '(') || (c == '/')) {
+	        cp++;
+	        break;
+	    }
+	    if (ncp < device_name + sizeof(device_name) - 1)
+	        *ncp++ = c;
+	    cp++;
+	}
+	/* set default if missing */
+	if (ncp == device_name) {
+	    strcpy(device_name,"ace");
+	    ncp += 3;
+	}
 
-    /* get device number */
-    if ((c = *cp) >= '0' && c <= '9') {
-        unit = c - '0';
-        c = *++cp;
-    }
+	/* get device number */
+	if ((c = *cp) >= '0' && c <= '9') {
+	    unit = c - '0';
+	    c = *++cp;
+	}
 
-    if (c == ',') {
-        /* get partition number */
-        if ((c = *++cp) >= '0' && c <= '9') {
-            part = c - '0';
-            c = *++cp;
-        }
-    }
+	if (c == ',') {
+	    /* get partition number */
+	    if ((c = *++cp) >= '0' && c <= '9') {
+	        part = c - '0';
+	        c = *++cp;
+	    }
+	}
 
-    if (c == ')')
-        c = *++cp;
-    if (c == '/')
-        cp++;
+	if (c == ')')
+	    c = *++cp;
+	if (c == '/')
+	    cp++;
 
 	*ncp = '\0';
 
-    /* Copy kernel name before we overwrite, then do it */
-    strcpy(file_name, (*cp) ? cp : kernelnames[0]);
-    sprintf(fname,"%c/%s(%c,%c)/%s",
-            ctlr + '0', device_name, unit + '0', part + '0', file_name);
+	/* Copy kernel name before we overwrite, then do it */
+	strcpy(file_name, (*cp) ? cp : kernelnames[0]);
+	snprintf(fname, PATH_MAX, "%c/%s(%c,%c)/%s",
+	        ctlr + '0', device_name, unit + '0', part + '0', file_name);
 
-    //printf("devcanon -> %s\n",fname);
+	//printf("devcanon -> %s\n",fname);
 
 	return (0);
 }

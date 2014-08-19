@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdmareg.h,v 1.3.6.2 2013/02/25 00:28:31 tls Exp $ */
+/*	$NetBSD: omap3_sdmareg.h,v 1.3.6.3 2014/08/20 00:02:47 tls Exp $ */
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdmareg.h,v 1.3.6.2 2013/02/25 00:28:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdmareg.h,v 1.3.6.3 2014/08/20 00:02:47 tls Exp $");
 
 #ifndef OMAPDMA_REG_H
 #define OMAPDMA_REG_H
@@ -99,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_sdmareg.h,v 1.3.6.2 2013/02/25 00:28:31 tls Ex
 	#define CCR_SEL_SRC_DST_SYNC		0x01000000
 	#define CCR_PREFETCH			0x00800000
 	#define CCR_SUPERVISOR			0x00400000
-	#define CCR_SUNC_CONTROL_UPPER_MASK	0x00180000
+	#define CCR_SYNC_CONTROL_UPPER_MASK	0x00180000
 	#define CCR_BLOCK_SYNC			0x00040000
 	#define CCR_TRANSPARENT_COPY_ENABLE	0x00020000
 	#define CCR_CONST_FILL_ENABLE		0x00010000

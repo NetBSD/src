@@ -1,4 +1,4 @@
-/* Copyright 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+/* Copyright 2007-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,11 +37,6 @@ Enum1 e1 = Val11;
 
 int main(void) 
 {
-
-  #ifdef usestubs
-     set_debug_traps();
-     breakpoint();
-  #endif
 
   f1 (s1, e1, i1);
 

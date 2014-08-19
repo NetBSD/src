@@ -1,6 +1,10 @@
-/*	$NetBSD: kern.ldscript.tail,v 1.2 2005/12/11 12:16:45 christos Exp $	*/
+/*	$NetBSD: kern.ldscript.tail,v 1.2.124.1 2014/08/20 00:02:45 tls Exp $	*/
 
   } =0
+  .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) }
+  PROVIDE (__exidx_start = .);
+  .ARM.exidx   : { *(.ARM.exidx* .gnu.linkonce.armexidx.*) }
+  PROVIDE (__exidx_end = .);
   PROVIDE (__etext = .);
   PROVIDE (_etext = .);
   PROVIDE (etext = .);
@@ -13,6 +17,7 @@
     *(.sdata)
     *(.sdata.*)
   }
+  . = ALIGN(8);
   _edata = .;
   PROVIDE (edata = .);
   __bss_start = .;

@@ -19,7 +19,7 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  *
  ****************************************************************
- * Id: os.h,v 1.10 1994/05/31 12:32:22 mlschroe Exp FAU
+ * Id FAU
  */
 
 #include <stdio.h>
@@ -186,7 +186,7 @@ extern int errno;
  *    terminal handling
  */
 
-#ifdef POSIX
+#if defined (POSIX) || defined (__FreeBSD__)
 # include <termios.h>
 # ifdef hpux
 #  include <bsdtty.h>
@@ -527,4 +527,3 @@ typedef struct fd_set { int fds_bits[1]; } fd_set;
  * how many characters your pty's can buffer.
  */
 #define IOSIZE		4096
-

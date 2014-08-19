@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.6.1 2013/06/23 06:20:15 tls Exp $
+#	$NetBSD: Makefile,v 1.8.6.2 2014/08/20 00:03:30 tls Exp $
 
 PROG=		zboot
 
@@ -17,10 +17,16 @@ NOMAN=		# defined
 CFLAGS+=	-Wall -Wno-main
 CFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 CFLAGS+=	-fno-stack-protector -fno-builtin -ffreestanding
+CFLAGS+=	-fno-unwind-tables
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -I${.OBJDIR} -I${S}
 CPPFLAGS+=	-D_STANDALONE -DHEAP_VARIABLE
 CPPFLAGS+=	-DLIBSA_ENABLE_LS_OP
-CPPFLAGS+=	-mabi=apcs-gnu -mfloat-abi=soft -mcpu=xscale
+CPPFLAGS+=	${ARM_APCS_FLAGS} -mcpu=xscale
+.if ${HAVE_LLVM:Uno} != "no" || ${HAVE_GCC:U0} >= 48
+CPPFLAGS+=	-marm
+.else
+CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
+.endif
 CPUFLAGS=
 AFLAGS+=	-D_LOCORE
 LDFLAGS+=	-nostdlib -Bstatic
@@ -28,6 +34,7 @@ LDFLAGS+=	-nostdlib -Bstatic
 CLEANFILES+=	vers.c vers.o
 
 LIBCRT0=	crt0.o
+LIBCRTI=	# nothing
 LIBC=		# nothing
 LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing

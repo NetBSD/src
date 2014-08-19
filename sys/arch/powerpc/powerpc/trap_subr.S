@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.75.2.1 2013/06/23 06:20:10 tls Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.75.2.2 2014/08/20 00:03:20 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -489,7 +489,7 @@ _C_LABEL(tlbimiss):
 	mtctr	%r1			/* load counter */
 2:
 	ldregu	%r1,8(%r2)		/* get next pte */
-	cmpl	%cr0,%r1,%r3		/* see if found pte */
+	cmplw	%r1,%r3			/* see if found pte */
 	bdneq	2b			/* loop if not eq */
 	bne	3f			/* not found */
 	ldreg	%r1,4(%r2)		/* load tlb entry lower word */
@@ -550,7 +550,7 @@ _C_LABEL(tlbdlmiss):
 	mtctr	%r1			/* load counter */
 2:
 	ldregu	%r1,8(%r2)		/* get next pte */
-	cmpl	%cr0,%r1,%r3		/* see if found pte */
+	cmplw	%r1,%r3			/* see if found pte */
 	bdneq	2b			/* loop if not eq */
 	bne	3f			/* not found */
 	ldreg	%r1,4(%r2)		/* load tlb entry lower word */
@@ -606,7 +606,7 @@ _C_LABEL(tlbdsmiss):
 	mtctr	%r1			/* load counter */
 2:
 	ldregu	%r1,8(%r2)		/* get next pte */
-	cmpl	%cr0,%r1,%r3		/* see if found pte */
+	cmplw	%r1,%r3			/* see if found pte */
 	bdneq	2b			/* loop if not eq */
 	bne	3f			/* not found */
 	ldreg	%r1,4(%r2)		/* load tlb entry lower word */
@@ -1068,13 +1068,7 @@ s_sctrap:
 	isync
 	addi	%r3,%r1,FRAME_TF
 /* Call the appropriate syscall handler: */
-#if 0
-	GET_CPUINFO(%r4)
-	ldptr	%r4,CI_CURLWP(%r4)
-	ldptr	%r4,L_PROC(%r4)
-#else
 	ldptr	%r4,L_PROC(%r13)
-#endif
 	ldptr	%r4,P_MD_SYSCALL(%r4)
 	mtctr	%r4
 	bctrl

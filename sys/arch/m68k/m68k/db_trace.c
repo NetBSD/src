@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.57 2012/01/31 21:17:57 mlelstv Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.57.6.1 2014/08/20 00:03:11 tls Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.57 2012/01/31 21:17:57 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.57.6.1 2014/08/20 00:03:11 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -393,7 +393,9 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	const char *	name;
 	struct stackpos pos;
 	struct pcb	*pcb;
+#ifdef _KERNEL
 	bool		kernel_only = true;
+#endif
 	bool		trace_thread = false;
 	bool		lwpaddr = false;
 	int		fault_pc = 0;
@@ -408,8 +410,10 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 				trace_thread = true;
 			} else if (c == 't')
 				trace_thread = true;
+#ifdef _KERNEL
 			else if (c == 'u')
 				kernel_only = false;
+#endif
 	}
 
 	if (!have_addr)

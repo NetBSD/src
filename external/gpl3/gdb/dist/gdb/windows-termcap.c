@@ -1,7 +1,6 @@
 /* Win32 termcap emulation.
 
-   Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery, LLC.
 
@@ -21,6 +20,14 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <stdlib.h>
+
+/* -Wmissing-prototypes */
+extern int tgetent (char *buffer, char *termtype);
+extern int tgetnum (char *name);
+extern int tgetflag (char *name);
+extern char* tgetstr (char *name, char **area);
+extern int tputs (char *string, int nlines, int (*outfun) ());
+extern char *tgoto (const char *cap, int col, int row);
 
 /* Each of the files below is a minimal implementation of the standard
    termcap function with the same name, suitable for use in a Windows

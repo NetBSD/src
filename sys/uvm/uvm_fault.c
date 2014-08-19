@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.194 2012/02/19 00:05:55 rmind Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.194.2.1 2014/08/20 00:04:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.194 2012/02/19 00:05:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.194.2.1 2014/08/20 00:04:45 tls Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -803,9 +803,7 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 	struct vm_anon *anons_store[UVM_MAXRANGE], **anons;
 	struct vm_page *pages_store[UVM_MAXRANGE], **pages;
 	int error;
-#if 0
-	uintptr_t delta, delta2, delta3;
-#endif
+
 	UVMHIST_FUNC("uvm_fault"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "(map=0x%x, vaddr=0x%x, at=%d, ff=%d)",
@@ -818,37 +816,7 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 	/* Don't flood RNG subsystem with samples. */
 	if (cd->cpu_nfault % 503)
 		goto norng;
-#if 0
-	/*
-	 * Avoid trying to count "entropy" for accesses of regular
-	 * stride, by checking the 1st, 2nd, 3rd order differentials
-	 * of vaddr, like the rnd code does internally with sample times.
-	 *
-	 * XXX If the selection of only every 503rd fault above is
-	 * XXX removed, this code should exclude most samples, but
-	 * XXX does not, and is therefore disabled.
-	 */
-	if (ucpu->last_fltaddr > (uintptr_t)trunc_page(vaddr))
-		delta = ucpu->last_fltaddr - (uintptr_t)trunc_page(vaddr);
-	else
-		delta = (uintptr_t)trunc_page(vaddr) - ucpu->last_fltaddr;
 
-	if (ucpu->last_delta > delta) 
-		delta2 = ucpu->last_delta - delta;
-	else
-		delta2 = delta - ucpu->last_delta;
-
-	if (ucpu->last_delta2 > delta2)
-		delta3 = ucpu->last_delta2 - delta2;
-	else
-		delta3 = delta2 - ucpu->last_delta2;
-
-	ucpu->last_fltaddr = (uintptr_t)vaddr;
-	ucpu->last_delta = delta;
-	ucpu->last_delta2 = delta2;
-
-	if (delta != 0 && delta2 != 0 && delta3 != 0)
-#endif
 	/* Don't count anything until user interaction is possible */
 	if (__predict_true(start_init_exec)) {
 		kpreempt_disable();
@@ -1170,7 +1138,7 @@ uvm_fault_upper_lookup(
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 	int lcv;
 	vaddr_t currva;
-	bool shadowed;
+	bool shadowed __unused;
 	UVMHIST_FUNC("uvm_fault_upper_lookup"); UVMHIST_CALLED(maphist);
 
 	/* locked: maps(read), amap(if there) */

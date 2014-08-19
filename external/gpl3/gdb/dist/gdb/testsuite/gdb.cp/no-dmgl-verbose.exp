@@ -1,4 +1,4 @@
-# Copyright 2011 Free Software Foundation, Inc.
+# Copyright 2011-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,19 +15,16 @@
 
 # Test loading symbols from unrelocated C++ object files.
 
-set testfile no-dmgl-verbose
-set srcfile ${testfile}.cc
-set executable ${testfile}.o
-set binfile ${objdir}/${subdir}/${executable}
+standard_testfile .cc
 
 if { [skip_cplus_tests] } { continue }
 
-if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" object {c++ debug}] != "" } {
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}.o" object {c++ debug}] != "" } {
      untested ${testfile}.exp
      return -1
 }
 
-clean_restart ${executable}
+clean_restart ${testfile}.o
 
 gdb_test_no_output "set breakpoint pending off"
 

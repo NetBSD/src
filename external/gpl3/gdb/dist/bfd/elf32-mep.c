@@ -1,6 +1,6 @@
 /* MeP-specific support for 32-bit ELF.
    Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-   2010, 2011  Free Software Foundation, Inc.
+   2010, 2011, 2012 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -490,19 +490,19 @@ mep_elf_relocate_section
 	}
       else
 	{
-	  bfd_boolean warned, unresolved_reloc;
+	  bfd_boolean warned, unresolved_reloc, ignored;
 
 	  RELOC_FOR_GLOBAL_SYMBOL(info, input_bfd, input_section, rel,
 				  r_symndx, symtab_hdr, sym_hashes,
 				  h, sec, relocation,
-				  unresolved_reloc, warned);
+				  unresolved_reloc, warned, ignored);
 
 	  name = h->root.root.string;
 	}
 
-      if (sec != NULL && elf_discarded_section (sec))
+      if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, relend, howto, contents);
+					 rel, 1, relend, howto, 0, contents);
 
       if (info->relocatable)
 	continue;
@@ -580,22 +580,6 @@ mep_elf_set_private_flags (bfd *    abfd,
   return TRUE;
 }
 
-static bfd_boolean
-mep_elf_copy_private_bfd_data (bfd * ibfd, bfd * obfd)
-{
-  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
-    return TRUE;
-
-  elf_elfheader (obfd)->e_flags = elf_elfheader (ibfd)->e_flags;
-  elf_flags_init (obfd) = TRUE;
-
-  /* Copy object attributes.  */
-  _bfd_elf_copy_obj_attributes (ibfd, obfd);
-
-  return TRUE;
-}
-
 /* Merge backend specific data from an object file to the output
    object file when linking.  */
 
@@ -606,7 +590,7 @@ mep_elf_merge_private_bfd_data (bfd * ibfd, bfd * obfd)
   flagword old_flags, new_flags;
   flagword old_partial, new_partial;
 
-  /* Check if we have the same endianess.  */
+  /* Check if we have the same endianness.  */
   if (_bfd_generic_verify_endian_match (ibfd, obfd) == FALSE)
     return FALSE;
 
@@ -778,7 +762,6 @@ mep_elf_fake_sections (bfd *               abfd ATTRIBUTE_UNUSED,
 #define bfd_elf32_bfd_reloc_type_lookup		mep_reloc_type_lookup
 #define bfd_elf32_bfd_reloc_name_lookup		mep_reloc_name_lookup
 #define bfd_elf32_bfd_set_private_flags		mep_elf_set_private_flags
-#define bfd_elf32_bfd_copy_private_bfd_data	mep_elf_copy_private_bfd_data
 #define bfd_elf32_bfd_merge_private_bfd_data	mep_elf_merge_private_bfd_data
 #define bfd_elf32_bfd_print_private_bfd_data	mep_elf_print_private_bfd_data
 

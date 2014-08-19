@@ -1,4 +1,4 @@
-/* $NetBSD: eisa_machdep.c,v 1.9 2012/02/06 02:14:13 matt Exp $ */
+/* $NetBSD: eisa_machdep.c,v 1.9.6.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.9 2012/02/06 02:14:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.9.6.1 2014/08/20 00:02:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,6 +255,7 @@ eisa_parse_io(struct ecu_func *ecuf, uint8_t *dp)
 		ecuio->ecuio_io.ecio_addr = dp[1] | (dp[2] << 8);
 		ecuio->ecuio_io.ecio_size = (dp[0] & 0x1f) + 1;
 		ecuio->ecuio_io.ecio_shared = (dp[0] & 0x40) ? 1 : 0;
+		SIMPLEQ_INSERT_TAIL(&ecuf->ecuf_io, ecuio, ecuio_list);
 
 #ifdef EISA_DEBUG
 		printf("IO 0x%lx 0x%lx%s\n", ecuio->ecuio_io.ecio_addr,

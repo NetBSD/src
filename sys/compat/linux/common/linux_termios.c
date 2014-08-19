@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.36 2008/07/04 10:13:52 matthias Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.36.40.1 2014/08/20 00:03:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.36 2008/07/04 10:13:52 matthias Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.36.40.1 2014/08/20 00:03:32 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptm.h"
@@ -348,6 +348,22 @@ linux_ioctl_termios(struct lwp *l, const struct linux_sys_ioctl_args *uap, regis
 			DPRINTF(("TIOCSPTLCK %d\n", idat));
 			return 0;
 #endif
+	case LINUX_TCXONC:
+		idat = (u_long)SCARG(uap, data);
+		switch (idat) {
+		case LINUX_TCOOFF:
+			SCARG(&ia, com) = TIOCSTOP;
+			break;
+		case LINUX_TCOON:
+			SCARG(&ia, com) = TIOCSTART;
+			break;
+		case LINUX_TCIOFF:
+		case LINUX_TCION:
+		default:
+			error = EINVAL;
+			goto out;
+		}
+		break;
 	default:
 		error = EINVAL;
 		goto out;

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irq.S,v 1.14 2012/09/03 16:35:33 matt Exp $	*/
+/*	$NetBSD: isa_irq.S,v 1.14.2.1 2014/08/20 00:03:23 tls Exp $	*/
 
 /*
  * Copyright 1997
@@ -143,7 +143,7 @@ ASENTRY_NP(irq_entry)
 	/* address of 8259 #2 */
 	tst	r2, #(1 << IRQ_SLAVE)             /* if slave is enabled */
 	tstne	r8, #(1 << IRQ_SLAVE)             /* anything from slave? */
-	ldrneb	r1, [r0, #IO_ICU2]                /* ocw3 = irr */
+	ldrbne	r1, [r0, #IO_ICU2]                /* ocw3 = irr */
 	orrne	r8, r8, r1, lsl #8
 
 	and	r8, r8, r2                        /* clear disabled */
@@ -206,7 +206,7 @@ ASENTRY_NP(irq_entry)
 	/* Update the IOMD irq masks */
 	bl	_C_LABEL(irq_setmasks)
 
-	mrs     r0, cpsr_all		/* Enable IRQ's */
+	mrs     r0, cpsr		/* Enable IRQ's */
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
@@ -274,7 +274,7 @@ nextirq:
 #endif
 
 	/* Kill IRQ's in preparation for exit */
-	mrs     r0, cpsr_all
+	mrs     r0, cpsr
 	orr     r0, r0, #(I32_bit)
 	msr     cpsr_all, r0
 
@@ -304,7 +304,7 @@ AST_ALIGNMENT_FAULT_LOCALS
 
 ENTRY(irq_setmasks)
 	/* Disable interrupts */
-	mrs	r3, cpsr_all
+	mrs	r3, cpsr
 	orr	r1, r3,  #(I32_bit)
 	msr	cpsr_all, r1
 
@@ -366,12 +366,12 @@ ENTRY(irq_setmasks)
 
 	/* see if there's any change for 8259 #1 (master) */
 	tst	r2, #0x00FF               /* bottom 8 bits different? */
-	strneb	r1, [r0, #(IO_ICU1 + 1)]  /* icu1 / ocw1 */
+	strbne	r1, [r0, #(IO_ICU1 + 1)]  /* icu1 / ocw1 */
 
 	/* anything for 8259 #2? */
 	tst	r2, #0xFF00
 	mov	r1, r1, lsr #8            /* next byte */
-	strneb	r1, [r0, #(IO_ICU2 + 1)]  /* icu2 / ocw1 */
+	strbne	r1, [r0, #(IO_ICU2 + 1)]  /* icu2 / ocw1 */
 
 	/* Restore old cpsr and exit */
 	msr	cpsr_all, r3

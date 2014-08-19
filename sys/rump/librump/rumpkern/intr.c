@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.36.14.1 2013/06/23 06:20:28 tls Exp $	*/
+/*	$NetBSD: intr.c,v 1.36.14.2 2014/08/20 00:04:40 tls Exp $	*/
 
 /*
  * Copyright (c) 2008-2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.36.14.1 2013/06/23 06:20:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.36.14.2 2014/08/20 00:04:40 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -103,6 +103,7 @@ doclock(void *noarg)
 	int64_t sec;
 	long nsec;
 	int error;
+	int cpuindx = curcpu()->ci_index;
 	extern int hz;
 
 	error = rumpuser_clock_gettime(RUMPUSER_CLOCK_ABSMONO, &sec, &nsec);
@@ -122,14 +123,8 @@ doclock(void *noarg)
 		KASSERT(!error);
 		timespecadd(&curclock, &thetick, &curclock);
 
-#if 0
-		/* CPU_IS_PRIMARY is MD and hence unreliably correct here */
-		if (!CPU_IS_PRIMARY(curcpu()))
+		if (cpuindx != 0)
 			continue;
-#else
-		if (curcpu()->ci_index != 0)
-			continue;
-#endif
 
 		if ((++ticks % hz) == 0) {
 			cv_broadcast(&lbolt);
@@ -188,11 +183,52 @@ sithread(void *arg)
 	panic("sithread unreachable");
 }
 
+static kmutex_t sithr_emtx;
+static unsigned int sithr_est;
+static int sithr_canest;
+
+/*
+ * Create softint handler threads when the softint for each respective
+ * level is established for the first time.  Most rump kernels don't
+ * need at least half of the softint levels, so on-demand saves bootstrap
+ * time and memory resources.  Note, though, that this routine may be
+ * called before it's possible to call kthread_create().  Creation of
+ * those softints (SOFTINT_CLOCK, as of writing this) will be deferred
+ * to until softint_init() is called for the main CPU.
+ */
+static void
+sithread_establish(int level)
+{
+	int docreate, rv;
+	int lvlbit = 1<<level;
+	int i;
+
+	KASSERT((level & ~SOFTINT_LVLMASK) == 0);
+	if (__predict_true(sithr_est & lvlbit))
+		return;
+
+	mutex_enter(&sithr_emtx);
+	docreate = (sithr_est & lvlbit) == 0 && sithr_canest;
+	sithr_est |= lvlbit;
+	mutex_exit(&sithr_emtx);
+
+	if (docreate) {
+		for (i = 0; i < ncpu_final; i++) {
+			if ((rv = kthread_create(PRI_NONE,
+			    KTHREAD_MPSAFE | KTHREAD_INTR,
+			    cpu_lookup(i), sithread, (void *)(uintptr_t)level,
+			    NULL, "rsi%d/%d", i, level)) != 0)
+				panic("softint thread create failed: %d", rv);
+		}
+	}
+}
+
 void
 rump_intr_init(int numcpu)
 {
 
 	cv_init(&lbolt, "oh kath ra");
+	mutex_init(&sithr_emtx, MUTEX_DEFAULT, IPL_NONE);
 	ncpu_final = numcpu;
 }
 
@@ -206,12 +242,6 @@ softint_init(struct cpu_info *ci)
 	if (!rump_threads)
 		return;
 
-	/* XXX */
-	if (ci->ci_index == 0) {
-		rumptc.tc_frequency = hz;
-		tc_init(&rumptc);
-	}
-
 	slev = kmem_alloc(sizeof(struct softint_lev) * SOFTINT_COUNT, KM_SLEEP);
 	for (i = 0; i < SOFTINT_COUNT; i++) {
 		rumpuser_cv_init(&slev[i].si_cv);
@@ -219,19 +249,29 @@ softint_init(struct cpu_info *ci)
 	}
 	cd->cpu_softcpu = slev;
 
-	/* softint might run on different physical CPU */
-	membar_sync();
+	/* overloaded global init ... */
+	/* XXX: should be done the last time we are called */
+	if (ci->ci_index == 0) {
+		int sithr_swap;
 
-	for (i = 0; i < SOFTINT_COUNT; i++) {
-		rv = kthread_create(PRI_NONE,
-		    KTHREAD_MPSAFE | KTHREAD_INTR, ci,
-		    sithread, (void *)(uintptr_t)i,
-		    NULL, "rsi%d/%d", ci->ci_index, i);
+		rumptc.tc_frequency = hz;
+		tc_init(&rumptc);
+
+		/* create deferred softint threads */
+		mutex_enter(&sithr_emtx);
+		sithr_swap = sithr_est;
+		sithr_est = 0;
+		sithr_canest = 1;
+		mutex_exit(&sithr_emtx);
+		for (i = 0; i < SOFTINT_COUNT; i++) {
+			if (sithr_swap & (1<<i))
+				sithread_establish(i);
+		}
 	}
 
-	rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE,
-	    ci, doclock, NULL, NULL, "rumpclk%d", ci->ci_index);
-	if (rv)
+	/* well, not really a "soft" interrupt ... */
+	if ((rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE,
+	    ci, doclock, NULL, NULL, "rumpclk%d", ci->ci_index)) != 0)
 		panic("clock thread creation failed: %d", rv);
 }
 
@@ -240,13 +280,14 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 {
 	struct softint *si;
 	struct softint_percpu *sip;
+	int level = flags & SOFTINT_LVLMASK;
 	int i;
 
 	si = malloc(sizeof(*si), M_TEMP, M_WAITOK);
 	si->si_func = func;
 	si->si_arg = arg;
 	si->si_flags = flags & SOFTINT_MPSAFE ? SI_MPSAFE : 0;
-	si->si_level = flags & SOFTINT_LVLMASK;
+	si->si_level = level;
 	KASSERT(si->si_level < SOFTINT_COUNT);
 	si->si_entry = malloc(sizeof(*si->si_entry) * ncpu_final,
 	    M_TEMP, M_WAITOK | M_ZERO);
@@ -254,6 +295,7 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 		sip = &si->si_entry[i];
 		sip->sip_parent = si;
 	}
+	sithread_establish(level);
 
 	return si;
 }
@@ -267,8 +309,9 @@ void
 softint_schedule(void *arg)
 {
 	struct softint *si = arg;
-	struct softint_percpu *sip = &si->si_entry[curcpu()->ci_index];
-	struct cpu_data *cd = &curcpu()->ci_data;
+	struct cpu_info *ci = curcpu();
+	struct softint_percpu *sip = &si->si_entry[ci->ci_index];
+	struct cpu_data *cd = &ci->ci_data;
 	struct softint_lev *si_lvl = cd->cpu_softcpu;
 
 	if (!rump_threads) {
@@ -280,6 +323,16 @@ softint_schedule(void *arg)
 			sip->sip_onlist = true;
 		}
 	}
+}
+
+void
+softint_schedule_cpu(void *arg, struct cpu_info *ci)
+{
+	/*
+	 * TODO: implement this properly
+	 */
+	KASSERT(curcpu() == ci);
+	softint_schedule(arg);
 }
 
 /*

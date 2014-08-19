@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.60 2012/06/17 03:52:32 christos Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.60.2.1 2014/08/20 00:05:01 tls Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.60 2012/06/17 03:52:32 christos Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.60.2.1 2014/08/20 00:05:01 tls Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -824,7 +824,7 @@ getsig(const char *sig)
 	
 	if (isnumber(sig)) {
 		n = (int)strtol(sig, &p, 0);
-		if (p != '\0' || n < 0 || n >= NSIG)
+		if (*p != '\0' || n < 0 || n >= NSIG)
 			return -1;
 		return n;
 	}

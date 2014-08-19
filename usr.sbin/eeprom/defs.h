@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.13.12.1 2013/06/23 06:29:04 tls Exp $	*/
+/*	$NetBSD: defs.h,v 1.13.12.2 2014/08/20 00:05:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 struct	keytabent {
 	const char *kt_keyword;		/* keyword for this entry */
 	u_int	kt_offset;		/* offset into prom of value */
-	void	(*kt_handler) (struct keytabent *, char *);
+	void	(*kt_handler) (const struct keytabent *, char *);
 					/* handler function for this entry */
 };
 
@@ -84,7 +84,7 @@ struct	opiocdesc;
  */
 struct	extabent {
 	const char *ex_keyword;		/* keyword for this entry */
-	void	(*ex_handler) (struct extabent *,
+	void	(*ex_handler) (const struct extabent *,
 		    struct opiocdesc *, char *);
 					/* handler function for this entry */
 };
@@ -93,7 +93,7 @@ struct	extabent {
 #ifdef USE_OPENFIRM
 struct	extabent {
 	const char *ex_keyword;		/* keyword for this entry */
-	void	(*ex_handler) (struct extabent *,
+	void	(*ex_handler) (const struct extabent *,
 		    struct ofiocdesc *, char *);
 					/* handler function for this entry */
 };
@@ -102,7 +102,7 @@ struct	extabent {
 #ifdef USE_PREPNVRAM
 struct	extabent {
 	const char *ex_keyword;		/* keyword for this entry */
-	void	(*ex_handler) (struct extabent *,
+	void	(*ex_handler) (const struct extabent *,
 		    struct pnviocdesc *, char *);
 					/* handler function for this entry */
 };
@@ -110,37 +110,25 @@ struct	extabent {
 
 
 /* Sun 3/4 EEPROM handlers. */
-void	ee_action (char *, char *);
-void	ee_dump (void);
-void	ee_hwupdate (struct keytabent *, char *);
-void	ee_num8 (struct keytabent *, char *);
-void	ee_num16 (struct keytabent *, char *);
-void	ee_screensize (struct keytabent *, char *);
-void	ee_truefalse (struct keytabent *, char *);
-void	ee_bootdev (struct keytabent *, char *);
-void	ee_kbdtype (struct keytabent *, char *);
-void	ee_constype (struct keytabent *, char *);
-void	ee_diagpath (struct keytabent *, char *);
-void	ee_banner (struct keytabent *, char *);
-void	ee_notsupp (struct keytabent *, char *);
+void	ee_action(char *, char *);
+void	ee_dump(void);
 
 /* Sun 3/4 EEPROM checksum routines. */
-u_char	ee_checksum (u_char *, size_t);
-void	ee_updatechecksums (void);
-void	ee_verifychecksums (void);
+void	ee_updatechecksums(void);
+void	ee_verifychecksums(void);
 
 /* Sparc Openprom handlers. */
-char	*op_handler (char *, char *);
-void	op_action (char *, char *);
-void	op_dump (void);
-int	check_for_openprom (void);
+char	*op_handler(char *, char *);
+void	op_action(char *, char *);
+void	op_dump(void);
+int	check_for_openprom(void);
 
 /* OpenFirmware handlers. */
-char	*of_handler (char *, char *);
-void	of_action (char *, char *);
-void	of_dump (void);
+char	*of_handler(char *, char *);
+void	of_action(char *, char *);
+void	of_dump(void);
 
 /* PReP nvram handlers. */
-char	*prep_handler (char *, char *);
-void	prep_action (char *, char *);
-void	prep_dump (void);
+char	*prep_handler(char *, char *);
+void	prep_action(char *, char *);
+void	prep_dump(void);

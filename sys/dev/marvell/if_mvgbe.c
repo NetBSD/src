@@ -1,6 +1,6 @@
-/*	$NetBSD: if_mvgbe.c,v 1.19.2.2 2013/02/25 00:29:16 tls Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.19.2.3 2014/08/20 00:03:39 tls Exp $	*/
 /*
- * Copyright (c) 2007, 2008 KIYOHARA Takashi
+ * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.19.2.2 2013/02/25 00:29:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.19.2.3 2014/08/20 00:03:39 tls Exp $");
+
+#include "opt_multiprocessor.h"
+
+#if defined MULTIPROCESSOR
+#warning Queue Management Method 'Counters' not support yet 
+#endif
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -79,6 +85,10 @@ int mvgbe_debug = MVGBE_DEBUG;
 	bus_space_read_region_4((sc)->sc_iot, (sc)->sc_dafh, (reg), (val), (c))
 #define MVGBE_WRITE_FILTER(sc, reg, val, c) \
 	bus_space_write_region_4((sc)->sc_iot, (sc)->sc_dafh, (reg), (val), (c))
+
+#define MVGBE_LINKUP_READ(sc) \
+    bus_space_read_4((sc)->sc_iot, (sc)->sc_linkup.ioh, 0)
+#define MVGBE_IS_LINKUP(sc)	(MVGBE_LINKUP_READ(sc) & (sc)->sc_linkup.bit)
 
 #define MVGBE_TX_RING_CNT	256
 #define MVGBE_TX_RING_MSK	(MVGBE_TX_RING_CNT - 1)
@@ -208,6 +218,7 @@ struct mvgbec_softc {
 struct mvgbe_softc {
 	device_t sc_dev;
 	int sc_port;
+	uint32_t sc_version;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
@@ -232,6 +243,12 @@ struct mvgbe_softc {
 	LIST_HEAD(__mvgbe_jinusehead, mvgbe_jpool_entry) sc_jinuse_listhead;
 	SIMPLEQ_HEAD(__mvgbe_txmaphead, mvgbe_txmap_entry) sc_txmap_head;
 
+	struct {
+		bus_space_handle_t ioh;
+		uint32_t bit;
+	} sc_linkup;
+	uint32_t sc_cmdsts_opts;
+
 	krndsource_t sc_rnd_source;
 	struct sysctllog *mvgbe_clog;
 #ifdef MVGBE_EVENT_COUNTERS
@@ -254,7 +271,7 @@ static int mvgbec_miibus_readreg(device_t, int, int);
 static void mvgbec_miibus_writereg(device_t, int, int, int);
 static void mvgbec_miibus_statchg(struct ifnet *);
 
-static void mvgbec_wininit(struct mvgbec_softc *);
+static void mvgbec_wininit(struct mvgbec_softc *, enum marvell_tags *);
 
 /* Gigabit Ethernet Port part functions */
 
@@ -318,6 +335,7 @@ struct mvgbe_port {
 #define FLAGS_FIX_MTU	(1 << 1)
 #define	FLAGS_IPG1	(1 << 2)
 #define	FLAGS_IPG2	(1 << 3)
+#define	FLAGS_HAS_PV	(1 << 4)	/* Has Port Version Register */
 } mvgbe_ports[] = {
 	{ MARVELL_DISCOVERY_II,		0, 3, { 32, 33, 34 }, 0 },
 	{ MARVELL_DISCOVERY_III,	0, 3, { 32, 33, 34 }, 0 },
@@ -348,6 +366,32 @@ struct mvgbe_port {
 	{ MARVELL_MV78XX0_MV78200,	1, 1, { 44 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
 	{ MARVELL_MV78XX0_MV78200,	2, 1, { 48 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
 	{ MARVELL_MV78XX0_MV78200,	3, 1, { 52 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
+
+	{ MARVELL_ARMADAXP_MV78130,	0, 1, { 66 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADAXP_MV78130,	1, 1, { 70 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADAXP_MV78130,	2, 1, { 74 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADAXP_MV78160,	0, 1, { 66 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADAXP_MV78160,	1, 1, { 70 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADAXP_MV78160,	2, 1, { 74 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADAXP_MV78160,	3, 1, { 78 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADAXP_MV78230,	0, 1, { 66 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADAXP_MV78230,	1, 1, { 70 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADAXP_MV78230,	2, 1, { 74 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADAXP_MV78260,	0, 1, { 66 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADAXP_MV78260,	1, 1, { 70 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADAXP_MV78260,	2, 1, { 74 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADAXP_MV78260,	3, 1, { 78 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADAXP_MV78460,	0, 1, { 66 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADAXP_MV78460,	1, 1, { 70 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADAXP_MV78460,	2, 1, { 74 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADAXP_MV78460,	3, 1, { 78 }, FLAGS_HAS_PV },
+
+	{ MARVELL_ARMADA370_MV6707,	0, 1, { 66 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADA370_MV6707,	1, 1, { 70 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADA370_MV6710,	0, 1, { 66 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADA370_MV6710,	1, 1, { 70 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADA370_MV6W11,	0, 1, { 66 }, FLAGS_HAS_PV },
+	{ MARVELL_ARMADA370_MV6W11,	1, 1, { 70 }, FLAGS_HAS_PV },
 };
 
 
@@ -406,7 +450,7 @@ mvgbec_attach(device_t parent, device_t self, void *aux)
 	MVGBE_WRITE(csc, MVGBE_EUIM, 0);
 	MVGBE_WRITE(csc, MVGBE_EUIC, 0);
 
-	mvgbec_wininit(csc);
+	mvgbec_wininit(csc, mva->mva_tags);
 
 	memset(&gbea, 0, sizeof(gbea));
 	for (i = 0; i < __arraycount(mvgbe_ports); i++) {
@@ -577,20 +621,12 @@ mvgbec_miibus_statchg(struct ifnet *ifp)
 
 
 static void
-mvgbec_wininit(struct mvgbec_softc *sc)
+mvgbec_wininit(struct mvgbec_softc *sc, enum marvell_tags *tags)
 {
 	device_t pdev = device_parent(sc->sc_dev);
 	uint64_t base;
 	uint32_t en, ac, size;
 	int window, target, attr, rv, i;
-	static int tags[] = {
-		MARVELL_TAG_SDRAM_CS0,
-		MARVELL_TAG_SDRAM_CS1,
-		MARVELL_TAG_SDRAM_CS2,
-		MARVELL_TAG_SDRAM_CS3,
-
-		MARVELL_TAG_UNDEFINED,
-	};
 
 	/* First disable all address decode windows */
 	en = MVGBE_BARE_EN_MASK;
@@ -654,6 +690,7 @@ mvgbe_match(device_t parent, cfdata_t match, void *aux)
 static void
 mvgbe_attach(device_t parent, device_t self, void *aux)
 {
+	struct mvgbec_softc *csc = device_private(parent);
 	struct mvgbe_softc *sc = device_private(self);
 	struct marvell_attach_args *mva = aux;
 	struct mvgbe_txmap_entry *entry;
@@ -686,6 +723,33 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_dmat = mva->mva_dmat;
+
+	if (csc->sc_flags & FLAGS_HAS_PV) {
+		/* GbE port has Port Version register. */
+		sc->sc_version = MVGBE_READ(sc, MVGBE_PV);
+		aprint_normal_dev(self, "Port Version 0x%x\n", sc->sc_version);
+	}
+
+	if (sc->sc_version >= 0x10) {
+		/*
+		 * Armada XP
+		 */
+
+		if (bus_space_subregion(mva->mva_iot, mva->mva_ioh,
+		    MVGBE_PS0, sizeof(uint32_t), &sc->sc_linkup.ioh)) {
+			aprint_error_dev(self, "Cannot map linkup register\n");
+			return;
+		}
+		sc->sc_linkup.bit = MVGBE_PS0_LINKUP;
+		csc->sc_flags |= FLAGS_IPG2;
+	} else {
+		if (bus_space_subregion(mva->mva_iot, sc->sc_ioh,
+		    MVGBE_PS, sizeof(uint32_t), &sc->sc_linkup.ioh)) {
+			aprint_error_dev(self, "Cannot map linkup register\n");
+			return;
+		}
+		sc->sc_linkup.bit = MVGBE_PS_LINKUP;
+	}
 
 	maddrh = MVGBE_READ(sc, MVGBE_MACAH);
 	maddrl = MVGBE_READ(sc, MVGBE_MACAL);
@@ -830,7 +894,7 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 	    NULL, device_xname(sc->sc_dev), "wdogsoft");
 #endif
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	return;
 
@@ -938,13 +1002,13 @@ mvgbe_intr(void *arg)
 			break;
 
 		if (ice & MVGBE_ICE_LINKCHG) {
-			if (MVGBE_READ(sc, MVGBE_PS) & MVGBE_PS_LINKUP) {
+			if (MVGBE_IS_LINKUP(sc)) {
 				/* Enable port RX and TX. */
 				MVGBE_WRITE(sc, MVGBE_RQC, MVGBE_RQC_ENQ(0));
-				MVGBE_WRITE(sc, MVGBE_TQC, MVGBE_TQC_ENQ);
+				MVGBE_WRITE(sc, MVGBE_TQC, MVGBE_TQC_ENQ(0));
 			} else {
 				MVGBE_WRITE(sc, MVGBE_RQC, MVGBE_RQC_DISQ(0));
-				MVGBE_WRITE(sc, MVGBE_TQC, MVGBE_TQC_DISQ);
+				MVGBE_WRITE(sc, MVGBE_TQC, MVGBE_TQC_DISQ(0));
 			}
 
 			/* Notify link change event to mii layer */
@@ -954,7 +1018,7 @@ mvgbe_intr(void *arg)
 		if (ic & (MVGBE_IC_RXBUF | MVGBE_IC_RXERROR))
 			mvgbe_rxeof(sc);
 
-		if (ice & (MVGBE_ICE_TXBUF | MVGBE_ICE_TXERR))
+		if (ice & (MVGBE_ICE_TXBUF_MASK | MVGBE_ICE_TXERR_MASK))
 			mvgbe_txeof(sc);
 	}
 
@@ -980,7 +1044,7 @@ mvgbe_start(struct ifnet *ifp)
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 	/* If Link is DOWN, can't start TX */
-	if (!(MVGBE_READ(sc, MVGBE_PS) & MVGBE_PS_LINKUP))
+	if (!MVGBE_IS_LINKUP(sc))
 		return;
 
 	while (sc->sc_cdata.mvgbe_tx_chain[idx].mvgbe_mbuf == NULL) {
@@ -994,7 +1058,8 @@ mvgbe_start(struct ifnet *ifp)
 		 * for the NIC to drain the ring.
 		 */
 		if (mvgbe_encap(sc, m_head, &idx)) {
-			ifp->if_flags |= IFF_OACTIVE;
+			if (sc->sc_cdata.mvgbe_tx_cnt > 0)
+				ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 
@@ -1014,7 +1079,7 @@ mvgbe_start(struct ifnet *ifp)
 	/* Transmit at Queue 0 */
 	if (idx != sc->sc_cdata.mvgbe_tx_prod) {
 		sc->sc_cdata.mvgbe_tx_prod = idx;
-		MVGBE_WRITE(sc, MVGBE_TQC, MVGBE_TQC_ENQ);
+		MVGBE_WRITE(sc, MVGBE_TQC, MVGBE_TQC_ENQ(0));
 
 		/*
 		 * Set a timeout in case the chip goes out to lunch.
@@ -1092,17 +1157,49 @@ mvgbe_init(struct ifnet *ifp)
 	}
 	if (csc->sc_flags & FLAGS_FIX_MTU)
 		MVGBE_WRITE(sc, MVGBE_MTU, 0);	/* hw reset value is wrong */
-	MVGBE_WRITE(sc, MVGBE_PSC,
-	    MVGBE_PSC_ANFC |			/* Enable Auto-Neg Flow Ctrl */
-	    MVGBE_PSC_RESERVED |		/* Must be set to 1 */
-	    MVGBE_PSC_FLFAIL |			/* Do NOT Force Link Fail */
-	    MVGBE_PSC_MRU(MVGBE_PSC_MRU_9022) | /* we want 9k */
-	    MVGBE_PSC_SETFULLDX);		/* Set_FullDx */
-	/* XXXX: mvgbe(4) always use RGMII. */
-	MVGBE_WRITE(sc, MVGBE_PSC1,
-	    MVGBE_READ(sc, MVGBE_PSC1) | MVGBE_PSC1_RGMIIEN);
-	/* XXXX: Also always Weighted Round-Robin Priority Mode */
-	MVGBE_WRITE(sc, MVGBE_TQFPC, MVGBE_TQFPC_EN(0));
+	if (sc->sc_version >= 0x10) {
+		MVGBE_WRITE(csc, MVGBE_PANC,
+		    MVGBE_PANC_FORCELINKPASS	|
+		    MVGBE_PANC_INBANDANBYPASSEN	|
+		    MVGBE_PANC_SETMIISPEED	|
+		    MVGBE_PANC_SETGMIISPEED	|
+		    MVGBE_PANC_ANSPEEDEN	|
+		    MVGBE_PANC_SETFCEN		|
+		    MVGBE_PANC_PAUSEADV		|
+		    MVGBE_PANC_SETFULLDX	|
+		    MVGBE_PANC_ANDUPLEXEN	|
+		    MVGBE_PANC_RESERVED);
+		MVGBE_WRITE(csc, MVGBE_PMACC0,
+		    MVGBE_PMACC0_RESERVED |
+		    MVGBE_PMACC0_FRAMESIZELIMIT(1600));
+		reg = MVGBE_READ(csc, MVGBE_PMACC2);
+		reg &= MVGBE_PMACC2_PCSEN;	/* keep PCSEN bit */
+		MVGBE_WRITE(csc, MVGBE_PMACC2,
+		    reg | MVGBE_PMACC2_RESERVED | MVGBE_PMACC2_RGMIIEN);
+
+		MVGBE_WRITE(sc, MVGBE_PXCX,
+		    MVGBE_READ(sc, MVGBE_PXCX) & ~MVGBE_PXCX_TXCRCDIS);
+
+#ifndef MULTIPROCESSOR
+		MVGBE_WRITE(sc, MVGBE_PACC, MVGVE_PACC_ACCELERATIONMODE_BM);
+#else
+		MVGBE_WRITE(sc, MVGBE_PACC, MVGVE_PACC_ACCELERATIONMODE_EDM);
+#endif
+	} else {
+		MVGBE_WRITE(sc, MVGBE_PSC,
+		    MVGBE_PSC_ANFC |		/* Enable Auto-Neg Flow Ctrl */
+		    MVGBE_PSC_RESERVED |	/* Must be set to 1 */
+		    MVGBE_PSC_FLFAIL |		/* Do NOT Force Link Fail */
+		    MVGBE_PSC_MRU(MVGBE_PSC_MRU_9022) | /* we want 9k */
+		    MVGBE_PSC_SETFULLDX);	/* Set_FullDx */
+		/* XXXX: mvgbe(4) always use RGMII. */
+		MVGBE_WRITE(sc, MVGBE_PSC1,
+		    MVGBE_READ(sc, MVGBE_PSC1) | MVGBE_PSC1_RGMIIEN);
+		/* XXXX: Also always Weighted Round-Robin Priority Mode */
+		MVGBE_WRITE(sc, MVGBE_TQFPC, MVGBE_TQFPC_EN(0));
+
+		sc->sc_cmdsts_opts = MVGBE_TX_GENERATE_CRC;
+	}
 
 	MVGBE_WRITE(sc, MVGBE_CRDP(0), MVGBE_RX_RING_ADDR(sc, 0));
 	MVGBE_WRITE(sc, MVGBE_TCQDP, MVGBE_TX_RING_ADDR(sc, 0));
@@ -1119,7 +1216,7 @@ mvgbe_init(struct ifnet *ifp)
 			MVGBE_WRITE(sc, MVGBE_TQTBCOUNT(i), 0x0);
 			MVGBE_WRITE(sc, MVGBE_TQTBCONFIG(i), 0x0);
 		}
-	} else
+	} else if (sc->sc_version < 0x10)
 		for (i = 1; i < 8; i++) {
 			MVGBE_WRITE(sc, MVGBE_TQTBCOUNT(i), 0x3fffffff);
 			MVGBE_WRITE(sc, MVGBE_TQTBCONFIG(i), 0xffff7fff);
@@ -1149,14 +1246,19 @@ mvgbe_init(struct ifnet *ifp)
 	mii_mediachg(mii);
 
 	/* Enable port */
-	reg = MVGBE_READ(sc, MVGBE_PSC);
-	MVGBE_WRITE(sc, MVGBE_PSC, reg | MVGBE_PSC_PORTEN);
+	if (sc->sc_version >= 0x10) {
+		reg = MVGBE_READ(csc, MVGBE_PMACC0);
+		MVGBE_WRITE(csc, MVGBE_PMACC0, reg | MVGBE_PMACC0_PORTEN);
+	} else {
+		reg = MVGBE_READ(sc, MVGBE_PSC);
+		MVGBE_WRITE(sc, MVGBE_PSC, reg | MVGBE_PSC_PORTEN);
+	}
 
 	/* If Link is UP, Start RX and TX traffic */
-	if (MVGBE_READ(sc, MVGBE_PS) & MVGBE_PS_LINKUP) {
+	if (MVGBE_IS_LINKUP(sc)) {
 		/* Enable port RX/TX. */
 		MVGBE_WRITE(sc, MVGBE_RQC, MVGBE_RQC_ENQ(0));
-		MVGBE_WRITE(sc, MVGBE_TQC, MVGBE_TQC_ENQ);
+		MVGBE_WRITE(sc, MVGBE_TQC, MVGBE_TQC_ENQ(0));
 	}
 
 	/* Enable interrupt masks */
@@ -1167,8 +1269,8 @@ mvgbe_init(struct ifnet *ifp)
 	    MVGBE_IC_RXERROR |
 	    MVGBE_IC_RXERRQ_MASK);
 	MVGBE_WRITE(sc, MVGBE_PEIM,
-	    MVGBE_ICE_TXBUF |
-	    MVGBE_ICE_TXERR |
+	    MVGBE_ICE_TXBUF_MASK |
+	    MVGBE_ICE_TXERR_MASK |
 	    MVGBE_ICE_LINKCHG);
 
 	callout_schedule(&sc->sc_tick_ch, hz);
@@ -1186,7 +1288,7 @@ mvgbe_stop(struct ifnet *ifp, int disable)
 	struct mvgbe_softc *sc = ifp->if_softc;
 	struct mvgbec_softc *csc = device_private(device_parent(sc->sc_dev));
 	struct mvgbe_chain_data *cdata = &sc->sc_cdata;
-	uint32_t reg;
+	uint32_t reg, txinprog, txfifoemp;
 	int i, cnt;
 
 	DPRINTFN(2, ("mvgbe_stop\n"));
@@ -1200,12 +1302,23 @@ mvgbe_stop(struct ifnet *ifp, int disable)
 		MVGBE_WRITE(sc, MVGBE_RQC, MVGBE_RQC_DISQ_DISABLE(reg));
 
 	/* Stop Tx port activity. Check port Tx activity. */
-	if (MVGBE_READ(sc, MVGBE_TQC) & MVGBE_TQC_ENQ)
-		MVGBE_WRITE(sc, MVGBE_TQC, MVGBE_TQC_DISQ);
+	if (MVGBE_READ(sc, MVGBE_TQC) & MVGBE_TQC_ENQ(0))
+		MVGBE_WRITE(sc, MVGBE_TQC, MVGBE_TQC_DISQ(0));
 
 	/* Force link down */
-	reg = MVGBE_READ(sc, MVGBE_PSC);
-	MVGBE_WRITE(sc, MVGBE_PSC, reg & ~MVGBE_PSC_FLFAIL);
+	if (sc->sc_version >= 0x10) {
+		reg = MVGBE_READ(csc, MVGBE_PANC);
+		MVGBE_WRITE(csc, MVGBE_PANC, reg | MVGBE_PANC_FORCELINKFAIL);
+
+		txinprog = MVGBE_PS_TXINPROG_(0);
+		txfifoemp = MVGBE_PS_TXFIFOEMP_(0);
+	} else {
+		reg = MVGBE_READ(sc, MVGBE_PSC);
+		MVGBE_WRITE(sc, MVGBE_PSC, reg & ~MVGBE_PSC_FLFAIL);
+
+		txinprog = MVGBE_PS_TXINPROG;
+		txfifoemp = MVGBE_PS_TXFIFOEMP;
+	}
 
 #define RX_DISABLE_TIMEOUT          0x1000000
 #define TX_FIFO_EMPTY_TIMEOUT       0x1000000
@@ -1239,15 +1352,14 @@ mvgbe_stop(struct ifnet *ifp, int disable)
 			cnt++;
 
 			reg = MVGBE_READ(sc, MVGBE_PS);
-		} while
-		    (!(reg & MVGBE_PS_TXFIFOEMP) || reg & MVGBE_PS_TXINPROG);
+		} while (!(reg & txfifoemp) || reg & txinprog);
 
 		if (cnt >= TX_FIFO_EMPTY_TIMEOUT)
 			break;
 
 		/* Double check */
 		reg = MVGBE_READ(sc, MVGBE_PS);
-		if (reg & MVGBE_PS_TXFIFOEMP && !(reg & MVGBE_PS_TXINPROG))
+		if (reg & txfifoemp && !(reg & txinprog))
 			break;
 		else
 			aprint_error_ifnet(ifp,
@@ -1255,9 +1367,14 @@ mvgbe_stop(struct ifnet *ifp, int disable)
 			    " %d loops, status 0x%x\n", cnt, reg);
 	}
 
-	/* Reset the Enable bit in the Port Serial Control Register */
-	reg = MVGBE_READ(sc, MVGBE_PSC);
-	MVGBE_WRITE(sc, MVGBE_PSC, reg & ~MVGBE_PSC_PORTEN);
+	/* Reset the Enable bit */
+	if (sc->sc_version >= 0x10) {
+		reg = MVGBE_READ(csc, MVGBE_PMACC0);
+		MVGBE_WRITE(csc, MVGBE_PMACC0, reg & ~MVGBE_PMACC0_PORTEN);
+	} else {
+		reg = MVGBE_READ(sc, MVGBE_PSC);
+		MVGBE_WRITE(sc, MVGBE_PSC, reg & ~MVGBE_PSC_PORTEN);
+	}
 
 	/*
 	 * Disable and clear interrupts
@@ -1306,7 +1423,7 @@ mvgbe_watchdog(struct ifnet *ifp)
 			 * engine. When DMA engine encounters queue end,
 			 * it clears MVGBE_TQC_ENQ bit.
 			 */
-			MVGBE_WRITE(sc, MVGBE_TQC, MVGBE_TQC_ENQ);
+			MVGBE_WRITE(sc, MVGBE_TQC, MVGBE_TQC_ENQ(0));
 			ifp->if_timer = 5;
 			sc->sc_wdogsoft = 0;
 			MVGBE_EVCNT_INCR(&sc->sc_ev_wdogsoft);
@@ -1661,7 +1778,7 @@ mvgbe_encap(struct mvgbe_softc *sc, struct mbuf *m_head,
 	struct mvgbe_txmap_entry *entry;
 	bus_dma_segment_t *txseg;
 	bus_dmamap_t txmap;
-	uint32_t first, current, last, cmdsts = 0;
+	uint32_t first, current, last, cmdsts;
 	int m_csumflags, i;
 	bool needs_defrag = false;
 
@@ -1745,6 +1862,7 @@ do_defrag:
 		current = MVGBE_TX_RING_NEXT(current);
 	}
 
+	cmdsts = sc->sc_cmdsts_opts;
 	if (m_csumflags & M_CSUM_IPv4)
 		cmdsts |= MVGBE_TX_GENERATE_IP_CHKSUM;
 	if (m_csumflags & M_CSUM_TCPv4)
@@ -1761,16 +1879,13 @@ do_defrag:
 	}
 	if (txmap->dm_nsegs == 1)
 		f->cmdsts = cmdsts		|
-		    MVGBE_TX_GENERATE_CRC	|
 		    MVGBE_TX_ENABLE_INTERRUPT	|
 		    MVGBE_TX_ZERO_PADDING	|
 		    MVGBE_TX_FIRST_DESC		|
 		    MVGBE_TX_LAST_DESC;
 	else {
 		f = &sc->sc_rdata->mvgbe_tx_ring[first];
-		f->cmdsts = cmdsts		|
-		    MVGBE_TX_GENERATE_CRC	|
-		    MVGBE_TX_FIRST_DESC;
+		f->cmdsts = cmdsts | MVGBE_TX_FIRST_DESC;
 
 		f = &sc->sc_rdata->mvgbe_tx_ring[last];
 		f->cmdsts =
@@ -2133,12 +2248,6 @@ SYSCTL_SETUP(sysctl_mvgbe, "sysctl mvgbe subtree setup")
 {
 	int rc;
 	const struct sysctlnode *node;
-
-	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
-	    0, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
-		goto err;
-	}
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    0, CTLTYPE_NODE, "mvgbe",

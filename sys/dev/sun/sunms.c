@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.31 2009/05/12 14:46:39 cegger Exp $	*/
+/*	$NetBSD: sunms.c,v 1.31.22.1 2014/08/20 00:03:50 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.31 2009/05/12 14:46:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.31.22.1 2014/08/20 00:03:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,16 +141,12 @@ sunms_attach(device_t parent, device_t self, void *aux)
 {
 	struct ms_softc *ms = device_private(self);
 	struct kbd_ms_tty_attach_args *args = aux;
-	cfdata_t cf;
 	struct tty *tp = args->kmta_tp;
-	int ms_unit;
 #if NWSMOUSE > 0
 	struct wsmousedev_attach_args a;
 #endif
 
 	ms->ms_dev = self;
-	cf = device_cfdata(self);
-	ms_unit = device_unit(self);
 	tp->t_sc  = ms;
 	tp->t_dev = args->kmta_dev;
 	ms->ms_priv = tp;

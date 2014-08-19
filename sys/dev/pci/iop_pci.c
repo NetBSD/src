@@ -1,4 +1,4 @@
-/*	$NetBSD: iop_pci.c,v 1.26.22.1 2012/11/20 03:02:19 tls Exp $	*/
+/*	$NetBSD: iop_pci.c,v 1.26.22.2 2014/08/20 00:03:43 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.26.22.1 2012/11/20 03:02:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.26.22.2 2014/08/20 00:03:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,6 +114,7 @@ iop_pci_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	pcireg_t reg;
 	int i;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -185,7 +186,7 @@ iop_pci_attach(device_t parent, device_t self, void *aux)
 		printf("can't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, iop_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("can't establish interrupt");

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.445.2.2 2013/06/23 06:18:57 tls Exp $	*/
+/*	$NetBSD: init_main.c,v 1.445.2.3 2014/08/20 00:04:28 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.445.2.2 2013/06/23 06:18:57 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.445.2.3 2014/08/20 00:04:28 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -112,6 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.445.2.2 2013/06/23 06:18:57 tls Exp 
 #include "opt_compat_netbsd.h"
 #include "opt_wapbl.h"
 #include "opt_ptrace.h"
+#include "opt_rnd_printf.h"
 
 #include "drvctl.h"
 #include "ksyms.h"
@@ -157,6 +158,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.445.2.2 2013/06/23 06:18:57 tls Exp 
 #include <sys/mbuf.h>
 #include <sys/sched.h>
 #include <sys/sleepq.h>
+#include <sys/ipi.h>
 #include <sys/iostat.h>
 #include <sys/vmem.h>
 #include <sys/uuid.h>
@@ -306,6 +308,7 @@ main(void)
 	evcnt_init();
 
 	uvm_init();
+	ubchist_init();
 	kcpuset_sysinit();
 
 	prop_kern_init();
@@ -497,6 +500,8 @@ main(void)
 	/* Initialize the kernel strong PRNG. */
 	kern_cprng = cprng_strong_create("kernel", IPL_VM,
 					 CPRNG_INIT_ANY|CPRNG_REKEY_ANY);
+
+	cprng_fast_init();
 					 
 	/* Initialize interfaces. */
 	ifinit1();
@@ -516,8 +521,19 @@ main(void)
 	mm_init();
 
 	configure2();
+
+	ipi_sysinit();
+
 	/* Now timer is working.  Enable preemption. */
 	kpreempt_enable();
+
+	/* Enable deferred processing of RNG samples */
+	rnd_init_softint();
+
+#ifdef RND_PRINTF
+	/* Enable periodic injection of console output into entropy pool */
+	kprintf_init_callout();
+#endif
 
 #ifdef SYSVSHM
 	/* Initialize System V style shared memory. */
@@ -564,8 +580,6 @@ main(void)
 	domaininit(true);
 	if_attachdomain();
 	splx(s);
-
-	rnd_init_softint();
 
 #ifdef GPROF
 	/* Initialize kernel profiling. */
@@ -901,6 +915,7 @@ static const char * const initpaths[] = {
 	"/sbin/init",
 	"/sbin/oinit",
 	"/sbin/init.bak",
+	"/rescue/init",
 	NULL,
 };
 

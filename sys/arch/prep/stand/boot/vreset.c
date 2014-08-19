@@ -1,4 +1,4 @@
-/* $NetBSD: vreset.c,v 1.8 2008/09/13 15:58:01 tsutsui Exp $ */
+/* $NetBSD: vreset.c,v 1.8.38.1 2014/08/20 00:03:21 tls Exp $ */
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -234,9 +234,8 @@ vga_reset(u_char *ISA_mem)
 static void
 write_attr(u_int8_t index, u_int8_t data, u_int8_t videoOn)
 {
-	u_int8_t v;
 
-	v = inb(0x3da);		/* reset attr addr toggle */
+	(void)inb(0x3da);	/* reset attr addr toggle */
 	if (videoOn)
 		outb(0x3c0, (index & 0x1F) | 0x20);
 	else

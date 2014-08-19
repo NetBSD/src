@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.35 2011/04/24 18:46:22 rmind Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.35.14.1 2014/08/20 00:04:28 tls Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.35 2011/04/24 18:46:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.35.14.1 2014/08/20 00:04:28 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -54,19 +54,21 @@ __KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.35 2011/04/24 18:46:22 rmind Exp $")
 #define	DEP	NULL
 #endif
 
-MODULE(MODULE_CLASS_MISC, exec_aout, DEP);
+MODULE(MODULE_CLASS_EXEC, exec_aout, DEP);
 
-static struct execsw exec_aout_execsw[] = {
-	{ sizeof(struct exec),
-	  exec_aout_makecmds,
-	  { NULL },
-	  &emul_netbsd,
-	  EXECSW_PRIO_ANY,
-	  0,
-	  copyargs,
-	  NULL,
-	  coredump_netbsd,
-	  exec_setup_stack },
+static struct execsw exec_aout_execsw = {
+	.es_hdrsz = sizeof(struct exec),
+	.es_makecmds = exec_aout_makecmds,
+	.u = {
+		.elf_probe_func = NULL,
+	},
+	.es_emul = &emul_netbsd,
+	.es_prio = EXECSW_PRIO_ANY,
+	.es_arglen = 0,
+	.es_copyargs = copyargs,
+	.es_setregs = NULL,
+	.es_coredump = coredump_netbsd,
+	.es_setup_stack = exec_setup_stack,
 };
 
 static int
@@ -75,12 +77,10 @@ exec_aout_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return exec_add(exec_aout_execsw,
-		    __arraycount(exec_aout_execsw));
+		return exec_add(&exec_aout_execsw, 1);
 
 	case MODULE_CMD_FINI:
-		return exec_remove(exec_aout_execsw,
-		    __arraycount(exec_aout_execsw));
+		return exec_remove(&exec_aout_execsw, 1);
 
 	default:
 		return ENOTTY;
@@ -132,6 +132,8 @@ exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 
 	if (error)
 		kill_vmcmds(&epp->ep_vmcmds);
+	else
+		epp->ep_flags &= ~EXEC_TOPDOWN_VM;
 
 	return error;
 }

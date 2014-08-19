@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.128.2.1 2012/11/20 03:01:51 tls Exp $
+#	$NetBSD: files.xen,v 1.128.2.2 2014/08/20 00:03:29 tls Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -55,7 +55,6 @@ file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/lock_stubs.S
 
-
 file	arch/i386/i386/pmc.c			perfctrs
 
 file	crypto/des/arch/i386/des_enc.S		des
@@ -77,13 +76,14 @@ file	arch/amd64/amd64/gdt.c
 file	arch/amd64/amd64/machdep.c
 file	arch/amd64/amd64/process_machdep.c
 file	arch/amd64/amd64/trap.c
-file	arch/amd64/amd64/fpu.c
 file	arch/amd64/amd64/lock_stubs.S
 endif
 
 file	kern/subr_disk_mbr.c		disk
+file	arch/x86/x86/convert_xmm_s87.c
 file	arch/x86/x86/db_memrw.c		ddb | kgdb
 file	arch/x86/x86/db_trace.c		ddb
+file	arch/x86/x86/fpu.c
 file	arch/xen/x86/hypervisor_machdep.c
 # file 	arch/x86/x86/mtrr_i686.c	mtrr
 file	arch/x86/x86/syscall.c
@@ -182,15 +182,6 @@ file arch/xen/xenbus/xenbus_comms.c xenbus needs-flag
 file arch/xen/xenbus/xenbus_dev.c xenbus needs-flag
 file arch/xen/xenbus/xenbus_probe.c xenbus needs-flag
 file arch/xen/xenbus/xenbus_xs.c xenbus needs-flag
-
-ifdef i386
-# Numeric Processing Extension; Math Co-processor
-device	npx
-file	arch/i386/isa/npx.c		npx needs-flag
-
-attach	npx at xendevbus with npx_hv
-file	arch/xen/i386/npx_hv.c		npx_hv
-endif
 
 # Xen console support
 device	xencons: tty

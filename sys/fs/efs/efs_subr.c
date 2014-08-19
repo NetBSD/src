@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_subr.c,v 1.7.42.1 2013/02/25 00:29:47 tls Exp $	*/
+/*	$NetBSD: efs_subr.c,v 1.7.42.2 2014/08/20 00:04:26 tls Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.7.42.1 2013/02/25 00:29:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.7.42.2 2014/08/20 00:04:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kauth.h>
@@ -269,7 +269,7 @@ efs_dirblk_lookup(struct efs_dirblk *dir, struct componentname *cn,
     ino_t *inode)
 {
 	struct efs_dirent *de;
-	int i, slot, offset;
+	int i, slot __diagused, offset;
 
 	KASSERT(cn->cn_namelen <= EFS_DIRENT_NAMELEN_MAX);
 
@@ -350,7 +350,9 @@ efs_inode_lookup(struct efs_mount *emp, struct efs_inode *ei,
 	int ret;
 	
 	KASSERT(VOP_ISLOCKED(ei->ei_vp));
+#ifdef DIAGNOSTIC
 	KASSERT(efs_is_inode_synced(ei) == 0);
+#endif
 	KASSERT((ei->ei_mode & S_IFMT) == S_IFDIR);
 
 	efs_extent_iterator_init(&exi, ei, 0);

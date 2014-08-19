@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv4.S,v 1.2 2008/10/14 16:01:22 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv4.S,v 1.2.38.1 2014/08/20 00:02:44 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Limited
@@ -33,11 +33,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * ARM9 assembly functions for CPU / MMU / TLB specific operations
+ * ARMv4 assembly functions for CPU / MMU / TLB specific operations
  */
  
-#include <machine/cpu.h>
+#include "assym.h"
 #include <machine/asm.h>
+#include <arm/locore.h>
 
 /*
  * TLB functions
@@ -45,20 +46,28 @@
 ENTRY(armv4_tlb_flushID)
 	mcr	p15, 0, r0, c8, c7, 0	/* flush I+D tlb */
 	mov	pc, lr
+END(armv4_tlb_flushID)
 
 ENTRY(armv4_tlb_flushI)
 	mov	r0, #0
 	mcr	p15, 0, r0, c8, c5, 0	/* flush I tlb */
 	mov	pc, lr
+END(armv4_tlb_flushI)
 
 ENTRY(armv4_tlb_flushD)
 	mov	r0, #0
 	mcr	p15, 0, r0, c8, c6, 0	/* flush D tlb */
 	mov	pc, lr
+END(armv4_tlb_flushD)
 
 ENTRY(armv4_tlb_flushD_SE)
 	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
+#if PAGE_SIZE == 2 * L2_S_SIZE
+	add	r0, r0, #L2_S_SIZE
+	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
+#endif
 	mov	pc, lr
+END(armv4_tlb_flushD_SE)
 
 /*
  * Other functions
@@ -66,3 +75,4 @@ ENTRY(armv4_tlb_flushD_SE)
 ENTRY(armv4_drain_writebuf)
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
+END(armv4_drain_writebuf)

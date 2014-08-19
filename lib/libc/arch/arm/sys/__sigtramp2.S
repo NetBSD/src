@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.2 2008/04/28 20:22:55 martin Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.2.28.1 2014/08/20 00:02:09 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,3 +47,4 @@ ENTRY_NP(__sigtramp_siginfo_2)
 
 	/* If that failed, exit with the error code. */
 	SYSTRAP(exit)
+END(__sigtramp_siginfo_2)

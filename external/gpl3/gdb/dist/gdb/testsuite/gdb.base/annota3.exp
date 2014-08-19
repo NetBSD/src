@@ -1,5 +1,4 @@
-# Copyright 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 2003-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,10 +15,6 @@
 
 # This file was written by Elena Zannoni (ezannoni@cygnus.com)
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 
 # are we on a target board? If so, don't run these tests.
 # note: this is necessary because we cannot use runto_main (which would
@@ -35,9 +30,7 @@ if [is_remote target] then {
 # test running programs
 #
 
-set testfile "annota3"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}$EXEEXT
+standard_testfile .c
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
     untested annota3.exp
@@ -45,19 +38,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
 }
 
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
-
-if [target_info exists gdb_stub] {
-    gdb_step_for_stub;
-}
-
-#
-# the line at which break main will put the breakpoint
-#
-set main_line 32
+clean_restart ${binfile}
 
 # The commands we test here produce many lines of output; disable "press 
 # <return> to continue" prompts.
@@ -66,8 +47,11 @@ gdb_test_no_output "set height 0"
 #
 # break at main
 #
+
+set main_line [gdb_get_line_number "break main"]
+
 gdb_test "break main" \
-    "Breakpoint.*at.* file .*$srcfile, line.*" \
+    "Breakpoint.*at.* file .*$srcfile, line $main_line\\." \
     "breakpoint main"
 
 
@@ -115,11 +99,10 @@ gdb_test_multiple "end" "end if construct" {
 # info break:
 #
 send_gdb "info break\n" 
-gdb_expect_list "breakpoint info" "$gdb_prompt$" {
+gdb_expect_list "breakpoint info" "$gdb_prompt$" [concat {
     "\r\n\032\032post-prompt\r\n"
-    "Num     Type           Disp Enb Address    +What\r\n"
-    "1       breakpoint     keep y   0x\[0-9a-zA-Z\]+ +in main at .*annota3.c:32\r\n"
-}
+    "Num     Type           Disp Enb Address    +What\r\n" } [list \
+    "1       breakpoint     keep y   0x\[0-9a-zA-Z\]+ +in main at .*annota3.c:$main_line\r\n"]]
 
 
 #
@@ -127,18 +110,18 @@ gdb_expect_list "breakpoint info" "$gdb_prompt$" {
 #
 #exp_internal 1
 send_gdb "run\n"
-gdb_expect_list "run until main breakpoint" "$gdb_prompt$" {
+gdb_expect_list "run until main breakpoint" "$gdb_prompt$" [concat {
     "\r\n\032\032post-prompt\r\n"
     "Starting program: .*annota3(|\.exe) \r\n"
     "\r\n\032\032starting\r\n"
     "\r\n\032\032breakpoint 1\r\n"
     "\r\n"
     "Breakpoint 1, "
-    "\r\n\032\032frame-begin 0 0x\[0-9a-z\]+\r\n"
-    "main \\(\\) at .*annota3.c:32\r\n"
-    "\r\n\032\032source.*annota3.c:32:.*:beg:0x\[0-9a-z\]+\r\n"
+    "\r\n\032\032frame-begin 0 0x\[0-9a-z\]+\r\n" } [list \
+    "main \\(\\) at .*annota3.c:$main_line\r\n"] [list \
+    "\r\n\032\032source.*annota3.c:$main_line:.*:beg:0x\[0-9a-z\]+\r\n"] {
     "\r\n\032\032stopped\r\n"
-}
+}]
 #exp_internal 0
 #exit 0
 
@@ -279,10 +262,9 @@ gdb_expect_list "delete bp 3" "$gdb_prompt$" {
 # to test the annotate output for the display command.
 #
 send_gdb "break main\n"
-gdb_expect_list "break at 28" "$gdb_prompt$" {
-    "\r\n\032\032post-prompt\r\n"
-    "Breakpoint 4 at 0x\[0-9a-z\]+: file .*annota3.c, line 32.\r\n"
-}
+gdb_expect_list "break at main" "$gdb_prompt$" [concat {
+    "\r\n\032\032post-prompt\r\n" } [list \
+    "Breakpoint 4 at 0x\[0-9a-z\]+: file .*annota3.c, line $main_line.\r\n"]]
 
 #
 # display the value
@@ -318,11 +300,13 @@ gdb_expect {
 # NOTE: breakpoints-invalid annotations have been removed from
 # level 3 but keep these tests for continuity and comparison
 # with annota1.exp.
-send_gdb "break 46\n"
-gdb_expect_list  "break at 46" "$gdb_prompt$" {
-    "\r\n\032\032post-prompt\r\n"
-    "Breakpoint 5 at 0x\[0-9a-z\]+: file .*annota3.c, line 46.\r\n"
-}
+
+set value_inc_line [gdb_get_line_number "increment value"]
+
+send_gdb "break $value_inc_line\n"
+gdb_expect_list  "break at value++" "$gdb_prompt$" [concat {
+    "\r\n\032\032post-prompt\r\n" } [list \
+    "Breakpoint 5 at 0x\[0-9a-z\]+: file .*annota3.c, line $value_inc_line.\r\n"]]
 
 send_gdb "ignore 5 4\n"
 gdb_expect_list "ignore 5 4" "$gdb_prompt$" {
@@ -332,17 +316,17 @@ gdb_expect_list "ignore 5 4" "$gdb_prompt$" {
 }
 
 send_gdb "continue\n"
-gdb_expect_list "annotate ignore count change" "$gdb_prompt$" {
+gdb_expect_list "annotate ignore count change" "$gdb_prompt$" [concat {
     "\r\n\032\032post-prompt\r\n"
     "\r\n\032\032breakpoint 5\r\n"
     "\r\n"
     "Breakpoint 5, "
-    "\r\n\032\032frame-begin 0 0x\[0-9a-z\]+\r\n"
-    "main \\(\\) at .*annota3.c:46\r\n"
-    "\r\n\032\032source .*annota3.c:46:\[0-9\]+:beg:0x\[0-9a-z\]+\r\n"
+    "\r\n\032\032frame-begin 0 0x\[0-9a-z\]+\r\n" } [list \
+    "main \\(\\) at .*annota3.c:$value_inc_line\r\n"] [list \
+    "\r\n\032\032source .*annota3.c:$value_inc_line:\[0-9\]+:beg:0x\[0-9a-z\]+\r\n"] {
     "1: value = 11\r\n"
     "\r\n\032\032stopped\r\n"
-}
+}]
 
 # check that ignore command is working, or the above can provide
 # misleading assurance ...
@@ -356,13 +340,26 @@ gdb_expect_list "next to exit loop" "$gdb_prompt$"  {
     "\r\n\032\032stopped\r\n"
 }
 
+set after_loop_line [gdb_get_line_number "after loop"]
+
 send_gdb "next\n"
-gdb_expect_list "breakpoint ignore count" "$gdb_prompt$" {
+gdb_expect_list "breakpoint ignore count" "$gdb_prompt$" [concat {
     "\r\n\032\032post-prompt\r\n"
-    "\r\n\032\032starting\r\n"
-    "\r\n\032\032source.*annota3.c:49:\[0-9\]+:beg:0x\[0-9a-z\]+\r\n"
+    "\r\n\032\032starting\r\n" } [list \
+    "\r\n\032\032source.*annota3.c:$after_loop_line:\[0-9\]+:beg:0x\[0-9a-z\]+\r\n"] {
     "1: value = 12\r\n"
     "\r\n\032\032stopped\r\n"
+}]
+
+# Get the inferior's PID for later.
+
+set test "get inferior pid"
+set pid -1
+gdb_test_multiple "info inferior 1" "$test" {
+    -re "process (\[0-9\]*).*$gdb_prompt$" {
+	set pid $expect_out(1,string)
+	pass "$test"
+    }
 }
 
 #
@@ -396,18 +393,15 @@ if [target_info exists gdb,nosignals] {
 
 # Check for production of a core file and remove it!
 
-set exec_output [remote_exec build "ls core"]
-
 set test "cleanup core file"
-if [ regexp "core not found" $exec_output]  {
-    pass "$test (not dumped)"
+if { [remote_file host exists core] } {
+    remote_file host delete core
+    pass "$test (removed)"
+} elseif { $pid != -1 && [remote_file host exists core.$pid] } {
+    remote_file host delete core.$pid
+    pass "$test (removed)"
 } else {
-    if [ regexp "No such file or directory" $exec_output] {
-	pass "$test (not dumped)"
-    } else {
-	remote_exec build "rm -f core"
-	pass "$test (removed)"
-    }
+    pass "$test (not dumped)"
 }
 
 # restore the original prompt for the rest of the testsuite

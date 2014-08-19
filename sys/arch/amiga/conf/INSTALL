@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.110.2.2 2013/06/23 06:19:59 tls Exp $
+# $NetBSD: INSTALL,v 1.110.2.3 2014/08/20 00:02:43 tls Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.110 2013/01/29 21:04:55 rkujawa Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.125 2014/07/05 09:59:06 tsutsui Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.110.2.2 $"
+#ident 		"GENERIC-$Revision: 1.110.2.3 $"
 
 makeoptions	COPTS="-Os"
 
@@ -72,7 +72,6 @@ options 	INET6		# IPV6
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
@@ -155,12 +154,6 @@ options 	DDB		# Kernel debugger
 #
 #options 	LIMITMEM=24	# Do not use more than LIMITMEM MB of the
 				# first bank of RAM. (default: unlimited)
-#options 	NKPTADD=4	# set this for 4 additional KPT pages
-#options 	NKPTADDSHIFT=24	# set this for 1 additional KPT page
-				# per 16 MB (1<<24 bytes) of RAM
-				# uncomment and decrease this, or uncomment and
-				# increase NKPTADD if you get "out of PT pages"
-				# panics.
 
 # ATTENTION: There is NO WARRANTY AT ALL that the sync will be complete
 # before the 10 secondinterval ends, or that KBDRESET does work at all.
@@ -325,10 +318,14 @@ ed*		at zbus0		# Hydra, ASDG LanRover
 es*		at zbus0		# CEI A4066 EthernetPLUS
 qn*		at zbus0		# Quicknet
 
+xsh*		at zbus0		# X-Surf 100
+ne*		at xshbus?		# NE2000 chip on X-Surf 100
+
 xsurf*		at zbus0		# X-Surf
 ne*		at xsurfbus?		# NE2000 chip on X-Surf
 gencp*		at xsurfbus?		# clockports on X-Surf
 wdc*		at xsurfbus?		# IDE on X-Surf
+
 clockport*	at gencp?
 
 # Arcnet
@@ -380,6 +377,10 @@ cbiiisc0 	at p5bus0		# Cyberstorm mk.III/Cyberstorm PPC SCSI
 scsibus*	at cbiiisc0
 empsc0		at zbus0		# Emplant scsi
 scsibus*	at empsc0
+
+acafh0		at mainbus0		# Individual Computers ACA500
+wdc*		at acafhbus?		# CF slots on ACA500
+gencp*		at acafhbus?		# clockport on ACA500
 
 wdc0		at mainbus0		# A4000 & A1200 IDE bus
 wdc*		at zbus0		# Buddha / Catweasel
@@ -482,6 +483,16 @@ bthidev* at bthub?
 
 # Bluetooth Audio support
 #btsco* at bthub?
+
+# USB
+slhci*		at zbus?                # Thylacine
+usb*		at slhci?
+
+uhub*		at usb?
+uhub*		at uhub? port ?
+
+uhidev*		at uhub? port ? configuration ? interface ?
+uhid*		at uhidev? reportid ?
 
 
 pseudo-device	loop			# loopback network interface

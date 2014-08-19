@@ -14,10 +14,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5416desc.h,v 1.1.1.1 2008/12/11 04:46:50 alc Exp $
+ * $Id: ar5416desc.h,v 1.1.1.1.34.1 2014/08/20 00:04:26 tls Exp $
  */
 #ifndef _ATH_AR5416_DESC_H_
-#define _ATH_AR5416_DESC_H
+#define _ATH_AR5416_DESC_H_
 
 /*
  * Hardware-specific descriptor structures.

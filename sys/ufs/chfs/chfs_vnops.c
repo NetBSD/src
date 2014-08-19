@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.10.2.3 2013/06/23 06:18:39 tls Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.10.2.4 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -53,9 +53,9 @@
 int
 chfs_lookup(void *v)
 {
-	struct vnode *dvp = ((struct vop_lookup_args *) v)->a_dvp;
-	struct vnode **vpp = ((struct vop_lookup_args *) v)->a_vpp;
-	struct componentname *cnp = ((struct vop_lookup_args *) v)->a_cnp;
+	struct vnode *dvp = ((struct vop_lookup_v2_args *) v)->a_dvp;
+	struct vnode **vpp = ((struct vop_lookup_v2_args *) v)->a_vpp;
+	struct componentname *cnp = ((struct vop_lookup_v2_args *) v)->a_cnp;
 
 	int error;
 	struct chfs_inode* ip;
@@ -161,12 +161,15 @@ chfs_lookup(void *v)
 	}
 
 out:
-	/* If there were no errors, *vpp cannot be null and it must be
-	 * locked. */
-	KASSERT(IFF(error == 0, *vpp != NULL && VOP_ISLOCKED(*vpp)));
+	/* If there were no errors, *vpp cannot be NULL. */
+	KASSERT(IFF(error == 0, *vpp != NULL));
 	KASSERT(VOP_ISLOCKED(dvp));
 
-	return error;
+	if (error)
+		return error;
+	if (*vpp != dvp)
+		VOP_UNLOCK(*vpp);
+	return 0;
 }
 
 /* --------------------------------------------------------------------- */
@@ -174,7 +177,7 @@ out:
 int
 chfs_create(void *v)
 {
-	struct vop_create_args /* {
+	struct vop_create_v3_args /* {
 				  struct vnode *a_dvp;
 				  struct vnode **a_vpp;
 				  struct componentname *a_cnp;
@@ -207,17 +210,16 @@ chfs_create(void *v)
 int
 chfs_mknod(void *v)
 {
-	struct vnode *dvp = ((struct vop_mknod_args *) v)->a_dvp;
-	struct vnode **vpp = ((struct vop_mknod_args *) v)->a_vpp;
-	struct componentname *cnp = ((struct vop_mknod_args *) v)->a_cnp;
-	struct vattr *vap = ((struct vop_mknod_args *) v)->a_vap;
+	struct vnode *dvp = ((struct vop_mknod_v3_args *) v)->a_dvp;
+	struct vnode **vpp = ((struct vop_mknod_v3_args *) v)->a_vpp;
+	struct componentname *cnp = ((struct vop_mknod_v3_args *) v)->a_cnp;
+	struct vattr *vap = ((struct vop_mknod_v3_args *) v)->a_vap;
 	int mode, err = 0;
 	struct chfs_inode *ip;
 	struct vnode *vp;
 
 	struct ufsmount *ump;
 	struct chfs_mount *chmp;
-	ino_t ino;
 
 	struct chfs_full_dnode *fd;
 	struct buf *bp;
@@ -255,7 +257,6 @@ chfs_mknod(void *v)
 	err = chfs_makeinode(mode, dvp, &vp, cnp, vap->va_type);
 
 	ip = VTOI(vp);
-	ino = ip->ino;
 	if (vap->va_rdev != VNOVAL)
 		ip->rdev = vap->va_rdev;
 
@@ -579,7 +580,7 @@ chfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred)
 
 /* --------------------------------------------------------------------- */
 /* calculates ((off_t)blk * chmp->chm_chm_fs_bsize) */
-#define	lblktosize(chmp, blk)						      \
+#define	chfs_lblktosize(chmp, blk)					      \
 	(((off_t)(blk)) << (chmp)->chm_fs_bshift)
 
 /* calculates (loc % chmp->chm_chm_fs_bsize) */
@@ -587,20 +588,20 @@ chfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred)
 	((loc) & (chmp)->chm_fs_qbmask)
 
 /* calculates (loc / chmp->chm_chm_fs_bsize) */
-#define	lblkno(chmp, loc)							      \
+#define	chfs_lblkno(chmp, loc)							      \
 	((loc) >> (chmp)->chm_fs_bshift)
 
 /* calculates roundup(size, chmp->chm_chm_fs_fsize) */
-#define	fragroundup(chmp, size)						      \
+#define	chfs_fragroundup(chmp, size)					      \
 	(((size) + (chmp)->chm_fs_qfmask) & (chmp)->chm_fs_fmask)
 
 #define	chfs_blksize(chmp, ip, lbn)					      \
-	(((lbn) >= UFS_NDADDR || (ip)->size >= lblktosize(chmp, (lbn) + 1))	      \
+	(((lbn) >= UFS_NDADDR || (ip)->size >= chfs_lblktosize(chmp, (lbn) + 1))	      \
 	    ? (chmp)->chm_fs_bsize					      \
-	    : (fragroundup(chmp, chfs_blkoff(chmp, (ip)->size))))
+	    : (chfs_fragroundup(chmp, chfs_blkoff(chmp, (ip)->size))))
 
 /* calculates roundup(size, chmp->chm_chm_fs_bsize) */
-#define	blkroundup(chmp, size)						      \
+#define	chfs_blkroundup(chmp, size)					      \
  	(((size) + (chmp)->chm_fs_qbmask) & (chmp)->chm_fs_bmask)
 
 /* from ffs read */
@@ -686,14 +687,14 @@ chfs_read(void *v)
 		bytesinfile = ip->size - uio->uio_offset;
 		if (bytesinfile <= 0)
 			break;
-		lbn = lblkno(chmp, uio->uio_offset);
+		lbn = chfs_lblkno(chmp, uio->uio_offset);
 		nextlbn = lbn + 1;
 		size = chfs_blksize(chmp, ip, lbn);
 		blkoffset = chfs_blkoff(chmp, uio->uio_offset);
 		xfersize = MIN(MIN(chmp->chm_fs_bsize - blkoffset, uio->uio_resid),
 		    bytesinfile);
 
-		if (lblktosize(chmp, nextlbn) >= ip->size) {
+		if (chfs_lblktosize(chmp, nextlbn) >= ip->size) {
 			error = bread(vp, lbn, size, NOCRED, 0, &bp);
 			dbg("after bread\n");
 		} else {
@@ -842,7 +843,7 @@ chfs_write(void *v)
 	osize = ip->size;
 	error = 0;
 
-	preallocoff = round_page(blkroundup(chmp,
+	preallocoff = round_page(chfs_blkroundup(chmp,
 		MAX(osize, uio->uio_offset)));
 	aflag = ioflag & IO_SYNC ? B_SYNC : 0;
 	nsize = MAX(osize, uio->uio_offset + uio->uio_resid);
@@ -853,12 +854,12 @@ chfs_write(void *v)
 	 * the fragment if there is one.
 	 */
 
-	if (nsize > osize && lblkno(chmp, osize) < UFS_NDADDR &&
-	    lblkno(chmp, osize) != lblkno(chmp, nsize) &&
-	    blkroundup(chmp, osize) != osize) {
+	if (nsize > osize && chfs_lblkno(chmp, osize) < UFS_NDADDR &&
+	    chfs_lblkno(chmp, osize) != chfs_lblkno(chmp, nsize) &&
+	    chfs_blkroundup(chmp, osize) != osize) {
 		off_t eob;
 
-		eob = blkroundup(chmp, osize);
+		eob = chfs_blkroundup(chmp, osize);
 		uvm_vnp_setwritesize(vp, eob);
 		error = ufs_balloc_range(vp, osize, eob - osize, cred, aflag);
 		if (error)
@@ -972,7 +973,7 @@ out:
 		mutex_enter(vp->v_interlock);
 		error = VOP_PUTPAGES(vp,
 		    trunc_page(origoff & chmp->chm_fs_bmask),
-		    round_page(blkroundup(chmp, uio->uio_offset)),
+		    round_page(chfs_blkroundup(chmp, uio->uio_offset)),
 		    PGO_CLEANIT | PGO_SYNCIO | PGO_JOURNALLOCKED);
 	}
 	ip->iflag |= IN_CHANGE | IN_UPDATE;
@@ -1181,10 +1182,10 @@ out_unlocked:
 int
 chfs_mkdir(void *v)
 {
-	struct vnode *dvp = ((struct vop_mkdir_args *) v)->a_dvp;
-	struct vnode **vpp = ((struct vop_mkdir_args *)v)->a_vpp;
-	struct componentname *cnp = ((struct vop_mkdir_args *) v)->a_cnp;
-	struct vattr *vap = ((struct vop_mkdir_args *) v)->a_vap;
+	struct vnode *dvp = ((struct vop_mkdir_v3_args *) v)->a_dvp;
+	struct vnode **vpp = ((struct vop_mkdir_v3_args *)v)->a_vpp;
+	struct componentname *cnp = ((struct vop_mkdir_v3_args *) v)->a_cnp;
+	struct vattr *vap = ((struct vop_mkdir_v3_args *) v)->a_vap;
 	dbg("mkdir()\n");
 
 	int mode;
@@ -1246,11 +1247,11 @@ out:
 int
 chfs_symlink(void *v)
 {
-	struct vnode *dvp = ((struct vop_symlink_args *) v)->a_dvp;
-	struct vnode **vpp = ((struct vop_symlink_args *) v)->a_vpp;
-	struct componentname *cnp = ((struct vop_symlink_args *) v)->a_cnp;
-	struct vattr *vap = ((struct vop_symlink_args *) v)->a_vap;
-	char *target = ((struct vop_symlink_args *) v)->a_target;
+	struct vnode *dvp = ((struct vop_symlink_v3_args *) v)->a_dvp;
+	struct vnode **vpp = ((struct vop_symlink_v3_args *) v)->a_vpp;
+	struct componentname *cnp = ((struct vop_symlink_v3_args *) v)->a_cnp;
+	struct vattr *vap = ((struct vop_symlink_v3_args *) v)->a_vap;
+	char *target = ((struct vop_symlink_v3_args *) v)->a_target;
 
 	struct ufsmount *ump;
 	struct chfs_mount *chmp;
@@ -1317,7 +1318,7 @@ chfs_symlink(void *v)
 
 out:
 	if (err)
-		vput(vp);
+		vrele(vp);
 
 	return (err);
 }
@@ -1615,6 +1616,8 @@ const struct vnodeopv_entry_desc chfs_vnodeop_entries[] =
 		{ &vop_setattr_desc, chfs_setattr },
 		{ &vop_read_desc, chfs_read },
 		{ &vop_write_desc, chfs_write },
+		{ &vop_fallocate_desc, genfs_eopnotsupp },
+		{ &vop_fdiscard_desc, genfs_eopnotsupp },
 		{ &vop_ioctl_desc, genfs_enoioctl },
 		{ &vop_fcntl_desc, genfs_fcntl },
 		{ &vop_poll_desc, genfs_poll },
@@ -1671,6 +1674,8 @@ const struct vnodeopv_entry_desc chfs_specop_entries[] =
 		{ &vop_setattr_desc, chfs_setattr },
 		{ &vop_read_desc, chfs_read },
 		{ &vop_write_desc, chfs_write },
+		{ &vop_fallocate_desc, spec_fallocate },
+		{ &vop_fdiscard_desc, spec_fdiscard },
 		{ &vop_ioctl_desc, spec_ioctl },
 		{ &vop_fcntl_desc, genfs_fcntl },
 		{ &vop_poll_desc, spec_poll },
@@ -1725,6 +1730,8 @@ const struct vnodeopv_entry_desc chfs_fifoop_entries[] =
 		{ &vop_setattr_desc, chfs_setattr },
 		{ &vop_read_desc, ufsfifo_read },
 		{ &vop_write_desc, ufsfifo_write },
+		{ &vop_fallocate_desc, vn_fifo_bypass },
+		{ &vop_fdiscard_desc, vn_fifo_bypass },
 		{ &vop_ioctl_desc, vn_fifo_bypass },
 		{ &vop_fcntl_desc, genfs_fcntl },
 		{ &vop_poll_desc, vn_fifo_bypass },

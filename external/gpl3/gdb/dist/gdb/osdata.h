@@ -1,6 +1,6 @@
 /* Routines for handling XML generic OS data provided by target.
 
-   Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -49,5 +49,6 @@ void osdata_free (struct osdata *);
 struct cleanup *make_cleanup_osdata_free (struct osdata *data);
 struct osdata *get_osdata (const char *type);
 const char *get_osdata_column (struct osdata_item *item, const char *name);
+void info_osdata_command (char *type, int from_tty);
 
 #endif /* OSDATA_H */

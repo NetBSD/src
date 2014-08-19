@@ -1,4 +1,4 @@
-# Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2009-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,27 +17,32 @@ if { [is_remote target] || ![isnative] } then {
     continue
 }
 
-set testfile "bkpt-multi-exec"
-
-set exec1 "bkpt-multi-exec"
-set srcfile1 ${exec1}.c
-set binfile1 ${objdir}/${subdir}/${exec1}
-
-set exec2 "crashme"
-set srcfile2 ${exec2}.c
-set binfile2 ${objdir}/${subdir}/${exec2}
-
-if { [prepare_for_testing ${testfile}.exp ${exec1} "${srcfile1}" {debug nowarnings}] } {
-    return -1
-}
-
-if { [prepare_for_testing ${testfile}.exp ${exec2} "${srcfile2}" {debug nowarnings}] } {
-    return -1
-}
 # Until "catch exec" is implemented on other targets...
 #
 if {![istarget "hppa*-hp-hpux*"] && ![istarget "*-linux*"]} then {
     continue
+}
+
+set testfile "bkpt-multi-exec"
+
+set exec1 "bkpt-multi-exec"
+set srcfile1 ${exec1}.c
+set binfile1 [standard_output_file ${exec1}]
+
+set exec2 "crashme"
+set srcfile2 ${exec2}.c
+set binfile2 [standard_output_file ${exec2}]
+
+set compile_options {debug nowarnings}
+set dirname [relative_filename [pwd] [file dirname $binfile1]]
+lappend compile_options "additional_flags=-DBASEDIR=\"$dirname\""
+
+if { [build_executable ${testfile}.exp ${exec1} "${srcfile1}" $compile_options] == -1 } {
+    return -1
+}
+
+if { [build_executable ${testfile}.exp ${exec2} "${srcfile2}" $compile_options] == -1 } {
+    return -1
 }
 
 # Start with a fresh gdb

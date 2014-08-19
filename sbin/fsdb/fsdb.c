@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.44.2.2 2013/06/23 06:28:51 tls Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.44.2.3 2014/08/20 00:02:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.44.2.2 2013/06/23 06:28:51 tls Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.44.2.3 2014/08/20 00:02:25 tls Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -508,7 +508,7 @@ CMDFUNC(findblk)
 		memset(wantedblk64, 0, sizeof(uint64_t) * wantedblksize);
 		for (i = 1; i < argc; i++)
 			wantedblk64[i - 1] =
-			    dbtofsb(sblock, strtoull(argv[i], NULL, 0)); 
+			    FFS_DBTOFSB(sblock, strtoull(argv[i], NULL, 0)); 
 	} else {
 		wantedblk32 = malloc(sizeof(uint32_t) * wantedblksize);
 		if (wantedblk32 == NULL) {
@@ -518,7 +518,7 @@ CMDFUNC(findblk)
 		memset(wantedblk32, 0, sizeof(uint32_t) * wantedblksize);
 		for (i = 1; i < argc; i++)
 			wantedblk32[i - 1] =
-			    dbtofsb(sblock, strtoull(argv[i], NULL, 0)); 
+			    FFS_DBTOFSB(sblock, strtoull(argv[i], NULL, 0)); 
 	}
 	findblk_numtofind = wantedblksize;
 	for (c = 0; c < sblock->fs_ncg; c++) {
@@ -539,7 +539,7 @@ CMDFUNC(findblk)
 			    compare_blk32(wantedblk32,
 			        ino_to_fsba(sblock, inum))) {
 				printf("block %llu: inode block (%llu-%llu)\n",
-				    (unsigned long long)fsbtodb(sblock,
+				    (unsigned long long)FFS_FSBTODB(sblock,
 					ino_to_fsba(sblock, inum)),
 				    (unsigned long long)
 				    (inum / FFS_INOPB(sblock)) * FFS_INOPB(sblock),
@@ -639,7 +639,7 @@ static int
 founddatablk(uint64_t blk)
 {
 	printf("%llu: data block of inode %llu\n",
-	    (unsigned long long)fsbtodb(sblock, blk),
+	    (unsigned long long)FFS_FSBTODB(sblock, blk),
 	    (unsigned long long)curinum);
 	findblk_numtofind--;
 	if (findblk_numtofind == 0)
@@ -669,7 +669,7 @@ find_indirblks32(uint32_t blk, int ind_level, uint32_t *wantedblk)
 	uint32_t idblk[MAXNINDIR];
 	size_t i;
 
-	bread(fsreadfd, (char *)idblk, fsbtodb(sblock, blk),
+	bread(fsreadfd, (char *)idblk, FFS_FSBTODB(sblock, blk),
 	    (int)sblock->fs_bsize);
 	if (ind_level <= 0) {
 		if (find_blks32(idblk,
@@ -715,7 +715,7 @@ find_indirblks64(uint64_t blk, int ind_level, uint64_t *wantedblk)
 	uint64_t idblk[MAXNINDIR];
 	size_t i;
 
-	bread(fsreadfd, (char *)idblk, fsbtodb(sblock, blk),
+	bread(fsreadfd, (char *)idblk, FFS_FSBTODB(sblock, blk),
 	    (int)sblock->fs_bsize);
 	if (ind_level <= 0) {
 		if (find_blks64(idblk,
@@ -808,7 +808,7 @@ print_indirblks32(uint32_t blk, int ind_level, uint64_t *blknum)
  
 	printf("Indirect block %lld (level %d):\n", (long long)blk,
 	    ind_level+1);
-	bread(fsreadfd, (char *)idblk, fsbtodb(sblock, blk),
+	bread(fsreadfd, (char *)idblk, FFS_FSBTODB(sblock, blk),
 	    (int)sblock->fs_bsize);
 	if (ind_level <= 0) {
 		print_blks32(idblk, ptrperblk, blknum);
@@ -836,7 +836,7 @@ print_indirblks64(uint64_t blk, int ind_level, uint64_t *blknum)
  
 	printf("Indirect block %lld (level %d):\n", (long long)blk,
 	    ind_level+1);
-	bread(fsreadfd, (char *)idblk, fsbtodb(sblock, blk),
+	bread(fsreadfd, (char *)idblk, FFS_FSBTODB(sblock, blk),
 	    (int)sblock->fs_bsize);
 	if (ind_level <= 0) {
 		print_blks64(idblk, ptrperblk, blknum);

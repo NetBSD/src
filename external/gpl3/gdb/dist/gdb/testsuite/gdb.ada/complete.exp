@@ -1,4 +1,4 @@
-# Copyright 2005, 2007, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2005-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,18 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 load_lib "ada.exp"
 
-set testdir "complete"
-set testfile "${testdir}/foo"
-set srcfile ${srcdir}/${subdir}/${testfile}.adb
-set binfile ${objdir}/${subdir}/${testfile}
+standard_ada_testfile foo
 
-file mkdir ${objdir}/${subdir}/${testdir}
 if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug ]] != "" } {
   return -1
 }
@@ -46,13 +38,10 @@ proc test_gdb_complete { expr expected_output } {
 }
 
 # A convenience function that verifies that the "complete EXPR" command
-# does not genearte any output.
+# does not generate any output.
 
 proc test_gdb_no_completion { expr } {
-    # FIXME: brobecker/2007-12-27: How do you verify that the command
-    # output is actually really empty???  For now, the following does
-    # not verify this at all:
-    test_gdb_complete "$expr" ""
+    gdb_test_no_output "complete p $expr"
 }
 
 # A convenience function that joins all the arguments together,
@@ -183,4 +172,19 @@ test_gdb_complete "pck." \
 test_gdb_complete "<pck__my" \
                   "p <pck__my_global_variable>"
 
-
+# Very simple completion, but using the interactive form, this time.
+# The verification we are trying to make involves the event loop,
+# and using the "complete" command is not sufficient to reproduce
+# the original problem.
+set test "interactive complete 'print some'"
+send_gdb "print some\t"
+gdb_test_multiple "" "$test" {
+    -re "^print some_local_variable $" {
+        send_gdb "\n"
+        gdb_test_multiple "" "$test" {
+            -re " = 1$eol$gdb_prompt $" {
+                pass "$test"
+            }
+        }
+    }
+}

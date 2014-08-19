@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.25.2.1 2013/02/25 00:29:05 tls Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.25.2.2 2014/08/20 00:03:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.25.2.1 2013/02/25 00:29:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.25.2.2 2014/08/20 00:03:29 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -220,17 +220,19 @@ bad:
 }
 
 const char *
-pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
+    size_t len)
 {
 	pci_chipset_tag_t ipc;
 
 	for (ipc = pc; ipc != NULL; ipc = ipc->pc_super) {
 		if ((ipc->pc_present & PCI_OVERRIDE_INTR_STRING) == 0)
 			continue;
-		return (*ipc->pc_ov->ov_intr_string)(ipc->pc_ctx, pc, ih);
+		return (*ipc->pc_ov->ov_intr_string)(ipc->pc_ctx, pc, ih,
+		    buf, len);
 	}
 
-	return intr_string(ih & ~MPSAFE_MASK);
+	return intr_string(ih & ~MPSAFE_MASK, buf, len);
 }
 
 

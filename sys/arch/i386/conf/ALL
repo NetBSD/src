@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.343.2.3 2013/06/23 06:20:06 tls Exp $
+# $NetBSD: ALL,v 1.343.2.4 2014/08/20 00:03:05 tls Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.343.2.3 $"
+#ident 		"ALL-$Revision: 1.343.2.4 $"
 
 maxusers	64		# estimated number of users
 
@@ -109,12 +109,12 @@ options 	BUFQ_READPRIO
 options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# expensive kernel consistency checks
+options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 options 	DEBUG		# expensive debugging checks/support
 options 	LOCKDEBUG	# expensive locking checks/support
 options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
-options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
+options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	DDB_VERBOSE_HELP
 options 	KGDB		# remote debugger
@@ -208,7 +208,7 @@ options 	LFS_EXTATTR_AUTOSTART	# like UFS_EXTATTR_AUTOSTART
 options 	LFS_QUOTA	# quotas for LFS - experimental
 options 	LFS_QUOTA2	# new-style quotas for LFS - experimental
 options 	NFSSERVER	# Network File System server
-options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 options 	V7FS_EI		# V7FS Endian Independent support
@@ -226,7 +226,6 @@ options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
@@ -252,6 +251,7 @@ options 	ALTQ_WFQ	# Weighted Fair Queueing
 options 	ACPIVERBOSE	# verbose ACPI device autoconfig messages
 options 	EISAVERBOSE	# verbose EISA device autoconfig messages
 options 	MIIVERBOSE	# verbose PHY autoconfig messages
+options 	MPVERBOSE	# verbose mpbios config messages
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
@@ -376,6 +376,7 @@ acpiwmi*	at acpi?		# ACPI WMI Mapper
 
 # Mainboard devices
 aibs*		at acpi?		# ASUSTeK AI Booster hardware monitor
+applesmc*	at acpi?		# Apple System Management Controller
 asus*		at acpi?		# ASUS hotkeys
 attimer*	at acpi?		# AT Timer
 com*		at acpi?		# Serial communications interface
@@ -389,7 +390,6 @@ hpet*		at acpinodebus?		# High Precision Event Timer (device)
 joy*		at acpi?		# Joystick/Game port
 lpt*		at acpi?		# Parallel port
 mpu*		at acpi?		# Roland MPU-401 MIDI UART
-npx*		at acpi?		# Math coprocessor
 pckbc*		at acpi?		# PC keyboard controller
 pcppi*		at acpi?		# AT-style speaker sound
 thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
@@ -413,6 +413,10 @@ sony*		at acpi?		# Sony Miscellaneous Controller
 
 # Toshiba Libretto devices
 vald* at acpi?
+
+# Apple System Management Controller devices
+applesmcfan*	at applesmcbus?
+applesmctemp*	at applesmcbus?
 
 # Plug-and-Play BIOS and attached devices
 
@@ -438,7 +442,6 @@ lpt*		at pnpbios? index ?	# parallel ports
 
 pckbc*		at pnpbios? index ?	# PC keyboard/mouse controller
 fdc*		at pnpbios? index ?	# floppy controller
-npx*		at pnpbios? index ?	# Math coprocessor
 
 # IDE controller on Toshiba Portege 3000 series (crippled PCI device)
 pciide* 	at pnpbios? index ?
@@ -558,12 +561,6 @@ cardslot*	at cbb?
 cardbus*	at cardslot?
 pcmcia* 	at cardslot?
 
-# Coprocessor Support
-
-# Math Coprocessor support
-npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
-
-
 # Console Devices
 
 # wscons
@@ -580,6 +577,7 @@ wsmouse*	at pms? mux 0
 
 chipsfb*	at pci? dev ? function ?
 genfb*		at pci? dev ? function ?
+gffb*		at pci? dev ? function ?
 igsfb*		at pci? dev ? function ?
 machfb* 	at pci? dev ? function ?
 pm2fb*		at pci? dev ? function ?
@@ -1026,6 +1024,7 @@ hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 iwn*	at pci? dev ? function ?	# Intel PRO/Wireless 4965AGN
+ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 Ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
@@ -1054,6 +1053,7 @@ tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 txp*	at pci? dev ? function ?	# 3com 3cr990
 vge*	at pci? dev ? function ?	# VIATech VT612X Gigabit Ethernet
+vmx*	at pci? dev ? function ?	# VMware VMXNET3
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 vte*	at pci? dev ? function ?	# Vortex86 RDC R6040 Fast Ethernet
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
@@ -1081,6 +1081,7 @@ awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
 cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer
 cs*	at pcmcia? function ?		# CS89xx Ethernet
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
+malo*	at pcmcia? function ?		# Marvell Libertas
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
@@ -1188,6 +1189,7 @@ ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
 gcscehci* at pci? dev ? function ?	# Enhanced Host Controller (Geode CSC)
 ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
+xhci*	at pci?	dev ? function ?	# eXtensible Host Controller
 
 # CardBus USB controllers
 ehci*	at cardbus? function ?		# Enhanced Host Controller
@@ -1206,6 +1208,7 @@ usb*	at gcscehci?
 usb*	at ohci?
 usb*	at slhci?
 usb*	at uhci?
+usb*	at xhci?
 
 # USB Hubs
 uhub*	at usb?
@@ -1292,6 +1295,7 @@ cir*	at irmce?
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 axe*	at uhub? port ?		# ASIX AX88172 based adapters
+axen*	at uhub? port ?		# ASIX AX88178a/AX88179 based adapters
 cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
@@ -1347,6 +1351,9 @@ ucom*	at uark? portno ?
 
 moscom* at uhub? port ?
 ucom*	at moscom? portno ?
+
+umcs* at uhub? port ?		# Moschip MCS7xxx serial adapter
+ucom*	at umcs? portno ?
 
 uhmodem* at uhub?
 ucom*	at uhmodem? portno ?
@@ -1418,11 +1425,13 @@ sbp*	at ieee1394if? euihi ? euilo ?	# SCSI over IEEE1394
 
 # PCI SD/MMC controller
 sdhc*	at pci?				# SD Host Controller
+rtsx*	at pci?				# Realtek RTS5209/RTS5229 Card Reader
 
 # CardBus SD/MMC controller
 sdhc*	at cardbus? function ?		# SD Host Controller
 
 sdmmc*	at sdhc?			# SD/MMC bus
+sdmmc*	at rtsx?			# SD/MMC bus
 ld*	at sdmmc?
 
 
@@ -1673,6 +1682,7 @@ pseudo-device	ccd			# concatenated/striped disk devices
 pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+options 	RAID_DIAGNOSTIC		# Additional raidframe diagnostic info
 # Options to enable various other RAIDframe RAID types.
 options 	RF_INCLUDE_EVENODD=1
 options 	RF_INCLUDE_RAID5_RS=1
@@ -1717,7 +1727,7 @@ pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	pf			# PF packet filter
 pseudo-device	pflog			# PF log if
 pseudo-device	pfsync			# PF sync if
-pseudo-device	npf			# NPF packet filter
+#pseudo-device	npf			# NPF packet filter
 pseudo-device	kttcp
 pseudo-device	etherip			# EtherIP
 # srt is EXPERIMENTAL
@@ -2021,7 +2031,6 @@ options DEBUG_FIND_COMPORT
 options DEBUG_FIND_PCIC
 options DEBUG_FIND_PCIC_I82365SL_ONLY
 options DEBUG_FPE
-options DEBUG_FREEBSD_ELF
 options DEBUG_GPIO
 options DEBUG_GPIO2
 options DEBUG_HPUX
@@ -2217,6 +2226,7 @@ options NETATALKDEBUG
 options NETDOCK_DEBUG_DRIVER
 options NETIF_DEBUG
 options NET_DEBUG
+options NET_MPSAFE
 options NFE_DEBUG
 options NFS_DEBUG
 options NFS_DEBUG_COMMIT

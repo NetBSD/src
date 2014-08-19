@@ -1,4 +1,4 @@
-# 	$NetBSD: DEJIKO,v 1.30 2012/08/17 20:11:40 abs Exp $
+# 	$NetBSD: DEJIKO,v 1.30.2.1 2014/08/20 00:03:16 tls Exp $
 #
 #	Dejiko's sekai-seifuku NEWS5000 nyo.
 
@@ -37,6 +37,10 @@ options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 options 	NFS_BOOT_BOOTPARAM
 options 	NFS_BOOTPARAM_NOGATEWAY
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
 
 # Compatibility options
 options 	COMPAT_43		# compatibility with 4.3BSD binaries

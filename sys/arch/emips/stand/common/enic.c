@@ -1,4 +1,4 @@
-/*	$NetBSD: enic.c,v 1.1 2011/01/26 01:18:54 pooka Exp $	*/
+/*	$NetBSD: enic.c,v 1.1.20.1 2014/08/20 00:02:52 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,7 +66,12 @@
 #include <lib/libsa/netif.h>
 #include <lib/libkern/libkern.h>
 
+
 #include <machine/emipsreg.h>
+
+#include "start.h"
+#include "common.h"
+
 #define the_enic ((struct _Enic *)ETHERNET_DEFAULT_ADDRESS)
 
 /* forward declarations */
@@ -96,7 +101,8 @@ static void dump_packet(void *, int);
 
 /* Send a packet
  */
-static int enic_putpkt(struct _Enic *regs, void *buf, int bytes)
+static int
+enic_putpkt(struct _Enic *regs, void *buf, int bytes)
 {
     paddr_t phys = kvtophys(buf);
 
@@ -109,7 +115,8 @@ static int enic_putpkt(struct _Enic *regs, void *buf, int bytes)
 
 /* Get a packet
  */
-int enic_getpkt(struct _Enic *regs, void *buf, int bytes, int timeo)
+static int
+enic_getpkt(struct _Enic *regs, void *buf, int bytes, int timeo)
 {
     paddr_t phys;
     unsigned int isr, saf, hi, lo, fl;
@@ -139,8 +146,9 @@ int enic_getpkt(struct _Enic *regs, void *buf, int bytes, int timeo)
 
             /* beware, order matters */
             saf = regs->SizeAndFlags;
-            hi  = regs->BufferAddressHi32; /* BUGBUG 64bit */
-            lo  = regs->BufferAddressLo32; /* this pops the fifo */
+            hi = regs->BufferAddressHi32; /* BUGBUG 64bit */
+            lo = regs->BufferAddressLo32; /* this pops the fifo */
+	    __USE(hi);
 
             fl = saf & (ES_F_MASK &~ ES_F_DONE);
 
@@ -154,7 +162,7 @@ int enic_getpkt(struct _Enic *regs, void *buf, int bytes, int timeo)
                 ;/* nothing */
             } else if (fl != ES_F_CMD)
             {
-                printf("enic: invalid saf=x%x (lo=%x)\n", saf, lo);
+                printf("enic: invalid saf=x%x (lo=%x, hi=%x)\n", saf, lo, hi);
             }
         }
 
@@ -178,7 +186,7 @@ static int enic_getmac(struct _Enic *regs, uint8_t *mac)
 
     regs->Control = EC_RESET;
     Delay(1);
-	regs->Control = regs->Control & (~EC_RXDIS);
+    regs->Control = regs->Control & (~EC_RXDIS);
 
     buffer[0] = ENIC_CMD_GET_ADDRESS;
 
@@ -204,10 +212,11 @@ static int enic_getmac(struct _Enic *regs, uint8_t *mac)
 
 /* Exported interface
  */
-int enic_present(int unit)
+int
+enic_present(int unit)
 {
-	if ((unit != 0) || (the_enic->Tag != PMTTAG_ETHERNET))
-        return 0;
+    if ((unit != 0) || (the_enic->Tag != PMTTAG_ETHERNET))
+	return 0;
 
     return 1;
 }

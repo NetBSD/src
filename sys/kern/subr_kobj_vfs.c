@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj_vfs.c,v 1.6 2011/08/13 21:04:07 christos Exp $	*/
+/*	$NetBSD: subr_kobj_vfs.c,v 1.6.12.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include <sys/vnode.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj_vfs.c,v 1.6 2011/08/13 21:04:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj_vfs.c,v 1.6.12.1 2014/08/20 00:04:29 tls Exp $");
 
 static void
 kobj_close_vfs(kobj_t ko)
@@ -135,15 +135,12 @@ kobj_load_vfs(kobj_t *kop, const char *path, const bool nochroot)
 {
 	struct nameidata nd;
 	struct pathbuf *pb;
-	kauth_cred_t cred;
 	int error;
 	kobj_t ko;
 
 	KASSERT(path != NULL);
 	if (strchr(path, '/') == NULL)
 		return ENOENT;
-
-	cred = kauth_cred_get();
 
 	ko = kmem_zalloc(sizeof(*ko), KM_SLEEP);
 	if (ko == NULL) {

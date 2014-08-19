@@ -1,7 +1,6 @@
 /* Target-dependent code for GNU/Linux i386.
 
-   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2010,
-   2011 Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,7 +27,7 @@
 #include "osabi.h"
 #include "reggroups.h"
 #include "dwarf2-frame.h"
-#include "gdb_string.h"
+#include <string.h>
 
 #include "i386-tdep.h"
 #include "i386-linux-tdep.h"
@@ -45,12 +44,13 @@
 /* The syscall's XML filename for i386.  */
 #define XML_SYSCALL_FILENAME_I386 "syscalls/i386-linux.xml"
 
-#include "record.h"
+#include "record-full.h"
 #include "linux-record.h"
 #include <stdint.h>
 
 #include "features/i386/i386-linux.c"
 #include "features/i386/i386-mmx-linux.c"
+#include "features/i386/i386-mpx-linux.c"
 #include "features/i386/i386-avx-linux.c"
 
 /* Supported register note sections.  */
@@ -255,7 +255,7 @@ static int
 i386_linux_sigtramp_p (struct frame_info *this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
-  char *name;
+  const char *name;
 
   find_pc_partial_function (pc, &name, NULL, NULL);
 
@@ -280,7 +280,7 @@ i386_linux_dwarf_signal_frame_p (struct gdbarch *gdbarch,
 				 struct frame_info *this_frame)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
-  char *name;
+  const char *name;
 
   find_pc_partial_function (pc, &name, NULL, NULL);
 
@@ -371,23 +371,23 @@ i386_linux_write_pc (struct regcache *regcache, CORE_ADDR pc)
 static int
 i386_all_but_ip_registers_record (struct regcache *regcache)
 {
-  if (record_arch_list_add_reg (regcache, I386_EAX_REGNUM))
+  if (record_full_arch_list_add_reg (regcache, I386_EAX_REGNUM))
     return -1;
-  if (record_arch_list_add_reg (regcache, I386_ECX_REGNUM))
+  if (record_full_arch_list_add_reg (regcache, I386_ECX_REGNUM))
     return -1;
-  if (record_arch_list_add_reg (regcache, I386_EDX_REGNUM))
+  if (record_full_arch_list_add_reg (regcache, I386_EDX_REGNUM))
     return -1;
-  if (record_arch_list_add_reg (regcache, I386_EBX_REGNUM))
+  if (record_full_arch_list_add_reg (regcache, I386_EBX_REGNUM))
     return -1;
-  if (record_arch_list_add_reg (regcache, I386_ESP_REGNUM))
+  if (record_full_arch_list_add_reg (regcache, I386_ESP_REGNUM))
     return -1;
-  if (record_arch_list_add_reg (regcache, I386_EBP_REGNUM))
+  if (record_full_arch_list_add_reg (regcache, I386_EBP_REGNUM))
     return -1;
-  if (record_arch_list_add_reg (regcache, I386_ESI_REGNUM))
+  if (record_full_arch_list_add_reg (regcache, I386_ESI_REGNUM))
     return -1;
-  if (record_arch_list_add_reg (regcache, I386_EDI_REGNUM))
+  if (record_full_arch_list_add_reg (regcache, I386_EDI_REGNUM))
     return -1;
-  if (record_arch_list_add_reg (regcache, I386_EFLAGS_REGNUM))
+  if (record_full_arch_list_add_reg (regcache, I386_EFLAGS_REGNUM))
     return -1;
 
   return 0;
@@ -419,7 +419,7 @@ i386_canonicalize_syscall (int syscall)
 static struct linux_record_tdep i386_linux_record_tdep;
 
 static int
-i386_linux_intx80_sysenter_record (struct regcache *regcache)
+i386_linux_intx80_sysenter_syscall_record (struct regcache *regcache)
 {
   int ret;
   LONGEST syscall_native;
@@ -451,7 +451,7 @@ i386_linux_intx80_sysenter_record (struct regcache *regcache)
     return ret;
 
   /* Record the return value of the system call.  */
-  if (record_arch_list_add_reg (regcache, I386_EAX_REGNUM))
+  if (record_full_arch_list_add_reg (regcache, I386_EAX_REGNUM))
     return -1;
 
   return 0;
@@ -460,17 +460,17 @@ i386_linux_intx80_sysenter_record (struct regcache *regcache)
 #define I386_LINUX_xstate	270
 #define I386_LINUX_frame_size	732
 
-int
+static int
 i386_linux_record_signal (struct gdbarch *gdbarch,
                           struct regcache *regcache,
-                          enum target_signal signal)
+                          enum gdb_signal signal)
 {
   ULONGEST esp;
 
   if (i386_all_but_ip_registers_record (regcache))
     return -1;
 
-  if (record_arch_list_add_reg (regcache, I386_EIP_REGNUM))
+  if (record_full_arch_list_add_reg (regcache, I386_EIP_REGNUM))
     return -1;
 
   /* Record the change in the stack.  */
@@ -481,22 +481,28 @@ i386_linux_record_signal (struct gdbarch *gdbarch,
   /* This is for frame_size.
      sp -= sizeof (struct rt_sigframe);  */
   esp -= I386_LINUX_frame_size;
-  if (record_arch_list_add_mem (esp,
-                                I386_LINUX_xstate + I386_LINUX_frame_size))
+  if (record_full_arch_list_add_mem (esp,
+				     I386_LINUX_xstate + I386_LINUX_frame_size))
     return -1;
 
-  if (record_arch_list_add_end ())
+  if (record_full_arch_list_add_end ())
     return -1;
 
   return 0;
 }
 
 
+/* Core of the implementation for gdbarch get_syscall_number.  Get pending
+   syscall number from REGCACHE.  If there is no pending syscall -1 will be
+   returned.  Pending syscall means ptrace has stepped into the syscall but
+   another ptrace call will step out.  PC is right after the int $0x80
+   / syscall / sysenter instruction in both cases, PC does not change during
+   the second ptrace step.  */
+
 static LONGEST
-i386_linux_get_syscall_number (struct gdbarch *gdbarch,
-                               ptid_t ptid)
+i386_linux_get_syscall_number_from_regcache (struct regcache *regcache)
 {
-  struct regcache *regcache = get_thread_regcache (ptid);
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   /* The content of a register.  */
   gdb_byte buf[4];
@@ -511,6 +517,18 @@ i386_linux_get_syscall_number (struct gdbarch *gdbarch,
   ret = extract_signed_integer (buf, 4, byte_order);
 
   return ret;
+}
+
+/* Wrapper for i386_linux_get_syscall_number_from_regcache to make it
+   compatible with gdbarch get_syscall_number method prototype.  */
+
+static LONGEST
+i386_linux_get_syscall_number (struct gdbarch *gdbarch,
+                               ptid_t ptid)
+{
+  struct regcache *regcache = get_thread_regcache (ptid);
+
+  return i386_linux_get_syscall_number_from_regcache (regcache);
 }
 
 /* The register sets used in GNU/Linux ELF core-dumps are identical to
@@ -552,6 +570,8 @@ int i386_linux_gregset_reg_offset[] =
   -1, -1, -1, -1, -1, -1, -1, -1,
   -1,
   -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1,		/* MPX registers BND0 ... BND3.  */
+  -1, -1,			/* MPX registers BNDCFGU, BNDSTATUS.  */
   11 * 4			/* "orig_eax" */
 };
 
@@ -582,8 +602,7 @@ static int i386_linux_sc_reg_offset[] =
 /* Get XSAVE extended state xcr0 from core dump.  */
 
 uint64_t
-i386_linux_core_read_xcr0 (struct gdbarch *gdbarch,
-			   struct target_ops *target, bfd *abfd)
+i386_linux_core_read_xcr0 (bfd *abfd)
 {
   asection *xstate = bfd_get_section_by_name (abfd, ".reg-xstate");
   uint64_t xcr0;
@@ -625,9 +644,12 @@ i386_linux_core_read_description (struct gdbarch *gdbarch,
 				  bfd *abfd)
 {
   /* Linux/i386.  */
-  uint64_t xcr0 = i386_linux_core_read_xcr0 (gdbarch, target, abfd);
-  switch ((xcr0 & I386_XSTATE_AVX_MASK))
+  uint64_t xcr0 = i386_linux_core_read_xcr0 (abfd);
+
+  switch ((xcr0 & I386_XSTATE_ALL_MASK))
     {
+    case I386_XSTATE_MPX_MASK:
+      return tdesc_i386_mpx_linux;
     case I386_XSTATE_AVX_MASK:
       return tdesc_i386_avx_linux;
     case I386_XSTATE_SSE_MASK:
@@ -642,6 +664,49 @@ i386_linux_core_read_description (struct gdbarch *gdbarch,
     return tdesc_i386_linux;
   else
     return tdesc_i386_mmx_linux;
+}
+
+/* Linux kernel shows PC value after the 'int $0x80' instruction even if
+   inferior is still inside the syscall.  On next PTRACE_SINGLESTEP it will
+   finish the syscall but PC will not change.
+   
+   Some vDSOs contain 'int $0x80; ret' and during stepping out of the syscall
+   i386_displaced_step_fixup would keep PC at the displaced pad location.
+   As PC is pointing to the 'ret' instruction before the step
+   i386_displaced_step_fixup would expect inferior has just executed that 'ret'
+   and PC should not be adjusted.  In reality it finished syscall instead and
+   PC should get relocated back to its vDSO address.  Hide the 'ret'
+   instruction by 'nop' so that i386_displaced_step_fixup is not confused.
+   
+   It is not fully correct as the bytes in struct displaced_step_closure will
+   not match the inferior code.  But we would need some new flag in
+   displaced_step_closure otherwise to keep the state that syscall is finishing
+   for the later i386_displaced_step_fixup execution as the syscall execution
+   is already no longer detectable there.  The new flag field would mean
+   i386-linux-tdep.c needs to wrap all the displacement methods of i386-tdep.c
+   which does not seem worth it.  The same effect is achieved by patching that
+   'nop' instruction there instead.  */
+
+static struct displaced_step_closure *
+i386_linux_displaced_step_copy_insn (struct gdbarch *gdbarch,
+				     CORE_ADDR from, CORE_ADDR to,
+				     struct regcache *regs)
+{
+  struct displaced_step_closure *closure;
+  
+  closure = i386_displaced_step_copy_insn (gdbarch, from, to, regs);
+
+  if (i386_linux_get_syscall_number_from_regcache (regs) != -1)
+    {
+      /* Since we use simple_displaced_step_copy_insn, our closure is a
+	 copy of the instruction.  */
+      gdb_byte *insn = (gdb_byte *) closure;
+
+      /* Fake nop.  */
+      insn[0] = 0x90;
+    }
+
+  return closure;
 }
 
 static void
@@ -857,8 +922,9 @@ i386_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   i386_linux_record_tdep.arg5 = I386_EDI_REGNUM;
   i386_linux_record_tdep.arg6 = I386_EBP_REGNUM;
 
-  tdep->i386_intx80_record = i386_linux_intx80_sysenter_record;
-  tdep->i386_sysenter_record = i386_linux_intx80_sysenter_record;
+  tdep->i386_intx80_record = i386_linux_intx80_sysenter_syscall_record;
+  tdep->i386_sysenter_record = i386_linux_intx80_sysenter_syscall_record;
+  tdep->i386_syscall_record = i386_linux_intx80_sysenter_syscall_record;
 
   /* N_FUN symbols in shared libaries have 0 for their values and need
      to be relocated.  */
@@ -891,7 +957,7 @@ i386_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* Displaced stepping.  */
   set_gdbarch_displaced_step_copy_insn (gdbarch,
-                                        i386_displaced_step_copy_insn);
+                                        i386_linux_displaced_step_copy_insn);
   set_gdbarch_displaced_step_fixup (gdbarch, i386_displaced_step_fixup);
   set_gdbarch_displaced_step_free_closure (gdbarch,
                                            simple_displaced_step_free_closure);
@@ -919,4 +985,5 @@ _initialize_i386_linux_tdep (void)
   initialize_tdesc_i386_linux ();
   initialize_tdesc_i386_mmx_linux ();
   initialize_tdesc_i386_avx_linux ();
+  initialize_tdesc_i386_mpx_linux ();
 }

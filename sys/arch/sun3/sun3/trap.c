@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.142 2012/02/19 21:06:32 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.142.2.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.142 2012/02/19 21:06:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.142.2.1 2014/08/20 00:03:26 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -182,7 +182,7 @@ short	exframesize[] = {
 	FMT2SIZE,	/* type 2 - normal 6-word (68020/030/040/060) */
 	FMT3SIZE,	/* type 3 - FP post-instruction (68040/060) */
 	FMT4SIZE,	/* type 4 - access error/fp disabled (68060) */
-	-1, -1, 	/* type 5-6 - undefined */
+	-1, -1,		/* type 5-6 - undefined */
 	FMT7SIZE,	/* type 7 - access error (68040) */
 	58,		/* type 8 - bus fault (68010) */
 	FMT9SIZE,	/* type 9 - coprocessor mid-instruction (68020/030) */
@@ -204,14 +204,14 @@ int mmupid = -1;
 #define MDB_FOLLOW	1
 #define MDB_WBFOLLOW	2
 #define MDB_WBFAILED	4
-#define MDB_CPFAULT 	8
+#define MDB_CPFAULT	8
 #endif
 
 /*
  * trap and syscall both need the following work done before
  * returning to user mode.
  */
-static void 
+static void
 userret(struct lwp *l, struct trapframe *tf, u_quad_t oticks)
 {
 	struct proc *p = l->l_proc;
@@ -235,7 +235,7 @@ userret(struct lwp *l, struct trapframe *tf, u_quad_t oticks)
  */
 void machine_userret(struct lwp *, struct frame *, u_quad_t);
 
-void 
+void
 machine_userret(struct lwp *l, struct frame *f, u_quad_t t)
 {
 
@@ -248,7 +248,7 @@ machine_userret(struct lwp *l, struct frame *f, u_quad_t t)
  * System calls are broken out for efficiency.
  */
 /*ARGSUSED*/
-void 
+void
 trap(struct trapframe *tf, int type, u_int code, u_int v)
 {
 	struct lwp *l;
@@ -496,7 +496,7 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 		}
 		/*FALLTHROUGH*/
 
-	case T_MMUFLT|T_USER: { 	/* page fault */
+	case T_MMUFLT|T_USER: {		/* page fault */
 		vaddr_t va;
 		struct vmspace *vm = p->p_vmspace;
 		struct vm_map *map;
@@ -511,8 +511,8 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 
 		/*
 		 * It is only a kernel address space fault iff:
-		 * 	1. (type & T_USER) == 0  and: (2 or 3)
-		 * 	2. pcb_onfault not set or
+		 *	1. (type & T_USER) == 0  and: (2 or 3)
+		 *	2. pcb_onfault not set or
 		 *	3. pcb_onfault set but supervisor space data fault
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.
@@ -623,7 +623,7 @@ done:;
  * when there is no debugger installed (or not attached).
  * Drop into the PROM temporarily...
  */
-int 
+int
 _nodb_trap(int type, struct trapframe *tf)
 {
 
@@ -649,7 +649,7 @@ _nodb_trap(int type, struct trapframe *tf)
  * If we have both DDB and KGDB, let KGDB see it first,
  * because KGDB will just return 0 if not connected.
  */
-void 
+void
 trap_kdebug(int type, struct trapframe tf)
 {
 
@@ -672,7 +672,7 @@ trap_kdebug(int type, struct trapframe tf)
  * Called by locore.s for an unexpected interrupt.
  * XXX - Almost identical to trap_kdebug...
  */
-void 
+void
 straytrap(struct trapframe tf)
 {
 	int type = -1;

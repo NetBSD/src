@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.97.14.1 2012/11/20 03:01:26 tls Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.97.14.2 2014/08/20 00:03:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.97.14.1 2012/11/20 03:01:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.97.14.2 2014/08/20 00:03:06 tls Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_intrdebug.h"
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.97.14.1 2012/11/20 03:01:26 tls Exp $
 #include <machine/intr.h>
 #include <machine/pcb.h>
 #include <machine/cpufunc.h>
+#include <x86/fpu.h>
 
 #include "ioapic.h"
 #include "lapic.h"
@@ -118,6 +119,7 @@ cpu_configure(void)
 #if NIOAPIC > 0
 	ioapic_enable();
 #endif
+	fpuinit(&cpu_info_primary);
 	/* resync cr0 after FPU configuration */
 	pcb = lwp_getpcb(&lwp0);
 	pcb->pcb_cr0 = rcr0() & ~CR0_TS;

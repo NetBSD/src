@@ -1,4 +1,4 @@
-# Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2009-2014 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -35,25 +35,21 @@ if { [skip_shlib_tests] || [is_remote target] } {
 # Library file.
 set libname "solib-display-lib"
 set srcfile_lib ${srcdir}/${subdir}/${libname}.c
-set binfile_lib ${objdir}/${subdir}/${libname}.so
+set binfile_lib [standard_output_file ${libname}.so]
 set lib_flags {}
 # Binary file.
 set testfile "solib-display-main"
 set srcfile ${srcdir}/${subdir}/${testfile}.c
 set executable ${testfile}
-set binfile ${objdir}/${subdir}/${executable}
+set binfile [standard_output_file ${executable}]
 set bin_flags [list debug shlib=${binfile_lib}]
 
-if [get_compiler_info ${binfile}] {
+if [get_compiler_info] {
     return -1
 }
 
-set save_pf_prefix $pf_prefix
 # SEP must be last for the possible `unsupported' error path.
-foreach libsepdebug {NO IN SEP} {
-
-    set pf_prefix $save_pf_prefix
-    lappend pf_prefix "$libsepdebug:"
+foreach libsepdebug {NO IN SEP} { with_test_prefix "$libsepdebug" {
 
     set sep_lib_flags $lib_flags
     if {$libsepdebug != "NO"} {
@@ -135,5 +131,4 @@ foreach libsepdebug {NO IN SEP} {
     gdb_test "break [gdb_get_line_number "break here" ${testfile}.c]" \
 	    ".*Breakpoint.* at .*" 
     gdb_test "continue" "6: a_static = 46\\r\\n5: a_local = 45\\r\\n4: main_global = 44\\r\\n.*"
-}
-set pf_prefix $save_pf_prefix
+}}

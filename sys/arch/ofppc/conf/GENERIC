@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.143.2.2 2013/06/23 06:20:10 tls Exp $
+# $NetBSD: GENERIC,v 1.143.2.3 2014/08/20 00:03:17 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.143.2.2 $"
+#ident 		"GENERIC-$Revision: 1.143.2.3 $"
 
 maxusers	32
 
@@ -133,7 +133,6 @@ options 	INET6		# IPV6
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires BPF)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter

@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.18.2.1 2013/06/23 06:28:56 tls Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.18.2.2 2014/08/20 00:04:49 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -45,7 +45,9 @@
 #include <setjmp.h>
 #include <float.h>
 
-#ifdef _FLOAT_IEEE754
+#ifdef HAVE_FENV
+#include <fenv.h>
+#elif defined(_FLOAT_IEEE754)
 #include <ieeefp.h>
 #endif
 
@@ -307,14 +309,17 @@ ATF_TC_BODY(sigfpe_flt, tc)
 
 	if (isQEMU())
 		atf_tc_skip("Test does not run correctly under QEMU");
-	if (strcmp(atf_config_get("atf_arch"),"powerpc") == 0)
-		atf_tc_skip("Test not valid on powerpc");
+#if defined(__powerpc__)
+	atf_tc_skip("Test not valid on powerpc");
+#endif
 	if (sigsetjmp(sigfpe_flt_env, 0) == 0) {
 		sa.sa_flags = SA_SIGINFO;
 		sa.sa_sigaction = sigfpe_flt_action;
 		sigemptyset(&sa.sa_mask);
 		sigaction(SIGFPE, &sa, NULL);
-#ifdef _FLOAT_IEEE754
+#ifdef HAVE_FENV
+		feenableexcept(FE_ALL_EXCEPT);
+#elif defined(_FLOAT_IEEE754)
 		fpsetmask(FP_X_INV|FP_X_DZ|FP_X_OFL|FP_X_UFL|FP_X_IMP);
 #endif
 		printf("%g\n", 1 / d);
@@ -355,14 +360,17 @@ ATF_TC_BODY(sigfpe_int, tc)
 	struct sigaction sa;
 	long l = strtol("0", NULL, 10);
 
-	if (strcmp(atf_config_get("atf_arch"),"powerpc") == 0)
-		atf_tc_skip("Test not valid on powerpc");
+#if defined(__powerpc__)
+	atf_tc_skip("Test not valid on powerpc");
+#endif
 	if (sigsetjmp(sigfpe_int_env, 0) == 0) {
 		sa.sa_flags = SA_SIGINFO;
 		sa.sa_sigaction = sigfpe_int_action;
 		sigemptyset(&sa.sa_mask);
 		sigaction(SIGFPE, &sa, NULL);
-#ifdef _FLOAT_IEEE754
+#ifdef HAVE_FENV
+		feenableexcept(FE_ALL_EXCEPT);
+#elif defined(_FLOAT_IEEE754)
 		fpsetmask(FP_X_INV|FP_X_DZ|FP_X_OFL|FP_X_UFL|FP_X_IMP);
 #endif
 		printf("%ld\n", 1 / l);
@@ -418,11 +426,10 @@ sigbus_action(int signo, siginfo_t *info, void *ptr)
 	ATF_REQUIRE_EQ(info->si_errno, 0);
 	ATF_REQUIRE_EQ(info->si_code, BUS_ADRALN);
 
-	if (strcmp(atf_config_get("atf_arch"), "i386") == 0 ||
-	    strcmp(atf_config_get("atf_arch"), "x86_64") == 0) {
-		atf_tc_expect_fail("x86 architecture does not correctly "
-		    "report the address where the unaligned access occured");
-	}
+#if defined(__i386__) || defined(__x86_64__)
+	atf_tc_expect_fail("x86 architecture does not correctly "
+	    "report the address where the unaligned access occured");
+#endif
 	ATF_REQUIRE_EQ(info->si_addr, (volatile void *)addr);
 
 	atf_tc_pass();
@@ -440,27 +447,23 @@ ATF_TC_HEAD(sigbus_adraln, tc)
 
 ATF_TC_BODY(sigbus_adraln, tc)
 {
-	const char *arch = atf_config_get("atf_arch");
 	struct sigaction sa;
 
-	if (strcmp(arch, "alpha") == 0) {
-		int rv, val;
-		size_t len = sizeof(val);
-		rv = sysctlbyname("machdep.unaligned_sigbus", &val, &len,
-			NULL, 0);
-		ATF_REQUIRE(rv == 0);
-		if (val == 0)
-			atf_tc_skip("SIGBUS signal not enabled for"
-				    " unaligned accesses");
-
-	}
+#if defined(__alpha__)
+	int rv, val;
+	size_t len = sizeof(val);
+	rv = sysctlbyname("machdep.unaligned_sigbus", &val, &len, NULL, 0);
+	ATF_REQUIRE(rv == 0);
+	if (val == 0)
+		atf_tc_skip("SIGBUS signal not enabled for unaligned accesses");
+#endif
 
 	sa.sa_flags = SA_SIGINFO;
 	sa.sa_sigaction = sigbus_action;
 	sigemptyset(&sa.sa_mask);
 	sigaction(SIGBUS, &sa, NULL);
 
-	/* Enable alignement checks for x86. 0x40000 is PSL_AC. */
+	/* Enable alignment checks for x86. 0x40000 is PSL_AC. */
 #if defined(__i386__)
 	__asm__("pushf; orl $0x40000, (%esp); popf");
 #elif defined(__amd64__)

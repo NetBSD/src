@@ -1,4 +1,4 @@
-/*	$NetBSD: recipient.c,v 1.1.1.3.10.1 2013/02/25 00:27:20 tls Exp $	*/
+/*	$NetBSD: recipient.c,v 1.1.1.3.10.2 2014/08/19 23:59:43 tls Exp $	*/
 
 /*++
 /* NAME
@@ -272,7 +272,7 @@ int     deliver_recipient(LOCAL_STATE state, USER_ATTR usr_attr)
     state.msg_attr.user = mystrdup(state.msg_attr.local);
     if (*var_rcpt_delim) {
 	state.msg_attr.extension =
-	    split_addr(state.msg_attr.user, *var_rcpt_delim);
+	    split_addr(state.msg_attr.user, var_rcpt_delim);
 	if (state.msg_attr.extension && strchr(state.msg_attr.extension, '/')) {
 	    msg_warn("%s: address with illegal extension: %s",
 		     state.msg_attr.queue_id, state.msg_attr.local);

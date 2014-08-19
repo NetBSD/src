@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.1.2.3 2013/06/23 06:20:01 tls Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.1.2.4 2014/08/20 00:02:47 tls Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.1.2.3 2013/06/23 06:20:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.1.2.4 2014/08/20 00:02:47 tls Exp $");
 
 #include "opt_omap.h"
 
@@ -89,9 +89,9 @@ struct am335x_sdhc {
 
 static const struct am335x_sdhc am335x_sdhc[] = {
 	/* XXX All offset by 0x100 because of the am335x's mmc registers.  */
-	{ "MMCHS0",	0x48060100, 64, { AM335X_PRCM_CM_PER, 0x3c } },
-	{ "MMC1",	0x481d8100, 28, { AM335X_PRCM_CM_PER, 0xf4 } },
-	{ "MMCHS2",	0x47810100, 29, { AM335X_PRCM_CM_WKUP, 0xf8 } },
+	{ "MMCHS0", SDMMC1_BASE_TIAM335X, 64, { AM335X_PRCM_CM_PER, 0x3c } },
+	{ "MMC1",   SDMMC2_BASE_TIAM335X, 28, { AM335X_PRCM_CM_PER, 0xf4 } },
+	{ "MMCHS2", SDMMC3_BASE_TIAM335X, 29, { AM335X_PRCM_CM_WKUP, 0xf8 } },
 };
 #endif
 
@@ -119,7 +119,7 @@ obiosdhc_match(device_t parent, cfdata_t cf, void *aux)
 	    || oa->obio_addr == SDMMC2_BASE_3530
 	    || oa->obio_addr == SDMMC3_BASE_3530)
                 return 1;
-#elif defined(OMAP4)
+#elif defined(OMAP4) || defined(OMAP5)
 	if (oa->obio_addr == SDMMC1_BASE_4430
 	    || oa->obio_addr == SDMMC2_BASE_4430
 	    || oa->obio_addr == SDMMC3_BASE_4430
@@ -372,9 +372,9 @@ obiosdhc_bus_clock(struct sdhc_softc *sc, int clk)
 
 	ctl = bus_space_read_4(osc->sc_bst, osc->sc_bsh, MMCHS_SYSCTL);
 	if (clk == 0) {
-		clk &= ~SYSCTL_CEN;
+		ctl &= ~SYSCTL_CEN;
 	} else {
-		clk |= SYSCTL_CEN;
+		ctl |= SYSCTL_CEN;
 	}
 	bus_space_write_4(osc->sc_bst, osc->sc_bsh, MMCHS_SYSCTL, ctl);
 

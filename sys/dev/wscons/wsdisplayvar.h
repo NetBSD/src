@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.49.12.1 2013/02/25 00:29:43 tls Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.49.12.2 2014/08/20 00:03:52 tls Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -163,6 +163,7 @@ void	wsdisplay_cnattach(const struct wsscreen_descr *, void *, int, int,
             long);
 void	wsdisplay_preattach(const struct wsscreen_descr *, void *, int, int,
             long);
+void	wsdisplay_cndetach(void);
 
 int	wsdisplaydevprint(void *, const char *);
 int	wsemuldisplaydevprint(void *, const char *);

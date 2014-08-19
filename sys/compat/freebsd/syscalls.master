@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.66 2012/03/10 21:51:57 joerg Exp $
+	$NetBSD: syscalls.master,v 1.66.2.1 2014/08/20 00:03:31 tls Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -112,7 +112,7 @@
 39	NOARGS		{ pid_t|sys||getppid(void); }
 40	NOARGS		{ int|compat_43_sys||lstat(const char *path, \
 			    struct stat43 *ub); } lstat43
-41	NOARGS		{ int|sys||dup(u_int fd); }
+41	NOARGS		{ int|sys||dup(int fd); }
 42	NOARGS		{ int|sys||pipe(void); }
 43	NOARGS		{ gid_t|sys||getegid(void); }
 44	NOARGS		{ int|sys||profil(void *samples, u_int size, \
@@ -186,7 +186,7 @@
 			    u_int len); } osethostname
 89	NOARGS		{ int|compat_43_sys||getdtablesize(void); } \
 			    ogetdtablesize
-90	NOARGS		{ int|sys||dup2(u_int from, u_int to); }
+90	NOARGS		{ int|sys||dup2(int from, int to); }
 91	UNIMPL		getdopt
 92	NOARGS		{ int|sys||fcntl(int fd, int cmd, void *arg); }
 93	NOARGS		{ int|compat_50_sys||select(u_int nd, fd_set *in, \

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.22 2010/06/06 04:52:17 mrg Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.22.18.1 2014/08/20 00:03:11 tls Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -34,7 +34,7 @@
 #include "opt_grf_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.22 2010/06/06 04:52:17 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.22.18.1 2014/08/20 00:03:11 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,8 +67,18 @@ dev_type_ioctl(grfioctl);
 dev_type_mmap(grfmmap);
 
 const struct cdevsw grf_cdevsw = {
-	grfopen, grfclose, noread, nowrite, grfioctl,
-	nostop, notty, nopoll, grfmmap, nokqfilter,
+	.d_open = grfopen,
+	.d_close = grfclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = grfioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = grfmmap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 void	grf_scinit(struct grf_softc *, const char *, int);
@@ -315,7 +325,8 @@ grfmap(dev_t dev, struct macfb_softc *sc, void **addrp, struct proc *p)
 	int error, flags;
 
 	len = m68k_round_page(sc->sc_dc->dc_offset + sc->sc_dc->dc_size);
-	*addrp = (void *)VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, len);
+	*addrp = (void *)p->p_emul->e_vm_default_addr(p,
+	    (vaddr_t)p->p_vmspace->vm_daddr, len);
 	flags = MAP_SHARED | MAP_FIXED;
 
 	vn.v_type = VCHR;		/* XXX */

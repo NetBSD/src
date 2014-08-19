@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.62.6.2 2013/06/23 06:29:01 tls Exp $
+.\"	$NetBSD: netstat.1,v 1.62.6.3 2014/08/20 00:05:01 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,21 +29,22 @@
 .\"
 .\"	@(#)netstat.1	8.8 (Berkeley) 4/18/94
 .\"
-.Dd February 5, 2013
+.Dd October 19, 2013
 .Dt NETSTAT 1
 .Os
 .Sh NAME
 .Nm netstat
 .Nd show network status
 .Sh SYNOPSIS
+.ds address_family Fl f Ar address_family Ns Op , Ns Ar family ...
 .Nm
 .Op Fl Aan
-.Op Fl f Ar address_family
+.Op \*[address_family]
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Nm
 .Op Fl bdghiLlmnqrSsTtv
-.Op Fl f Ar address_family
+.Op \*[address_family]
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Nm
@@ -67,7 +68,7 @@
 .Op Fl p Ar protocol
 .Nm
 .Op Fl is
-.Op Fl f Ar address_family
+.Op \*[address_family]
 .Op Fl I Ar Interface
 .Nm
 .Op Fl s
@@ -127,10 +128,10 @@ With either interface display (option
 .Fl i
 or an interval, as described below),
 show the number of dropped packets.
-.It Fl f Ar address_family
+.It \*[address_family]
 Limit statistics or address control block reports to those
 of the specified
-.Ar address_family  .
+.Ar address_families  .
 The following address families
 are recognized:
 .Ar inet ,

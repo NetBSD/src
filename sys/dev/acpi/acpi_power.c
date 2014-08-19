@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.33 2012/06/02 21:36:43 dsl Exp $ */
+/* $NetBSD: acpi_power.c,v 1.33.2.1 2014/08/20 00:03:35 tls Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.33 2012/06/02 21:36:43 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.33.2.1 2014/08/20 00:03:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -651,17 +651,9 @@ SYSCTL_SETUP(sysctl_acpi_power_setup, "sysctl hw.acpi.power subtree setup")
 	int err;
 
 	err = sysctl_createv(NULL, 0, NULL, &anode,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",
-	    NULL, NULL, 0, NULL, 0,
-	    CTL_HW, CTL_EOL);
-
-	if (err != 0)
-		return;
-
-	err = sysctl_createv(NULL, 0, &anode, &anode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "acpi",
 	    NULL, NULL, 0, NULL, 0,
-	    CTL_CREATE, CTL_EOL);
+	    CTL_HW, CTL_CREATE, CTL_EOL);
 
 	if (err != 0)
 		return;

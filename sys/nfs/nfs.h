@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.72.20.1 2013/06/23 06:20:26 tls Exp $	*/
+/*	$NetBSD: nfs.h,v 1.72.20.2 2014/08/20 00:04:36 tls Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -238,39 +238,39 @@ struct mountd_exports_list {
  * Stats structure
  */
 struct nfsstats {
-	int	attrcache_hits;
-	int	attrcache_misses;
-	int	lookupcache_hits;
-	int	lookupcache_misses;
-	int	direofcache_hits;
-	int	direofcache_misses;
-	int	biocache_reads;
-	int	read_bios;
-	int	read_physios;
-	int	biocache_writes;
-	int	write_bios;
-	int	write_physios;
-	int	biocache_readlinks;
-	int	readlink_bios;
-	int	biocache_readdirs;
-	int	readdir_bios;
-	int	rpccnt[NFSSTATS_NPROCS];
-	int	rpcretries;
-	int	srvrpccnt[NFSSTATS_NPROCS];
-	int	srvrpc_errs;
-	int	srv_errs;
-	int	rpcrequests;
-	int	rpctimeouts;
-	int	rpcunexpected;
-	int	rpcinvalid;
-	int	srvcache_inproghits;
-	int	srvcache_idemdonehits;
-	int	srvcache_nonidemdonehits;
-	int	srvcache_misses;
-	int	__srvnqnfs_leases;	/* unused */
-	int	__srvnqnfs_maxleases;	/* unused */
-	int	__srvnqnfs_getleases;	/* unused */
-	int	srvvop_writes;
+	uint32_t	attrcache_hits;
+	uint32_t	attrcache_misses;
+	uint32_t	lookupcache_hits;
+	uint32_t	lookupcache_misses;
+	uint32_t	direofcache_hits;
+	uint32_t	direofcache_misses;
+	uint32_t	biocache_reads;
+	uint32_t	read_bios;
+	uint32_t	read_physios;
+	uint32_t	biocache_writes;
+	uint32_t	write_bios;
+	uint32_t	write_physios;
+	uint32_t	biocache_readlinks;
+	uint32_t	readlink_bios;
+	uint32_t	biocache_readdirs;
+	uint32_t	readdir_bios;
+	uint32_t	rpccnt[NFSSTATS_NPROCS];
+	uint32_t	rpcretries;
+	uint32_t	srvrpccnt[NFSSTATS_NPROCS];
+	uint32_t	srvrpc_errs;
+	uint32_t	srv_errs;
+	uint32_t	rpcrequests;
+	uint32_t	rpctimeouts;
+	uint32_t	rpcunexpected;
+	uint32_t	rpcinvalid;
+	uint32_t	srvcache_inproghits;
+	uint32_t	srvcache_idemdonehits;
+	uint32_t	srvcache_nonidemdonehits;
+	uint32_t	srvcache_misses;
+	uint32_t	__srvnqnfs_leases;	/* unused */
+	uint32_t	__srvnqnfs_maxleases;	/* unused */
+	uint32_t	__srvnqnfs_getleases;	/* unused */
+	uint32_t	srvvop_writes;
 };
 
 /*

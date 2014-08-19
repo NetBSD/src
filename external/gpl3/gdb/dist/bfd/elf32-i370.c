@@ -1,6 +1,6 @@
 /* i370-specific support for 32-bit ELF
    Copyright 1994, 1995, 1996, 1997, 1998, 2000, 2001, 2002, 2003, 2004,
-   2005, 2006, 2007, 2008, 2010  Free Software Foundation, Inc.
+   2005, 2006, 2007, 2008, 2010, 2011, 2012 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Hacked by Linas Vepstas for i370 linas@linas.org
 
@@ -420,23 +420,23 @@ i370_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
   flags = (SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS | SEC_IN_MEMORY
 	   | SEC_LINKER_CREATED);
 
-  s = bfd_make_section_with_flags (abfd, ".dynsbss",
-				   SEC_ALLOC | SEC_LINKER_CREATED);
+  s = bfd_make_section_anyway_with_flags (abfd, ".dynsbss",
+					  SEC_ALLOC | SEC_LINKER_CREATED);
   if (s == NULL)
     return FALSE;
 
   if (! info->shared)
     {
-      s = bfd_make_section_with_flags (abfd, ".rela.sbss",
-				       flags | SEC_READONLY);
+      s = bfd_make_section_anyway_with_flags (abfd, ".rela.sbss",
+					      flags | SEC_READONLY);
       if (s == NULL
 	  || ! bfd_set_section_alignment (abfd, s, 2))
 	return FALSE;
     }
 
    /* XXX beats me, seem to need a rela.text ...  */
-   s = bfd_make_section_with_flags (abfd, ".rela.text",
-				    flags | SEC_READONLY);
+   s = bfd_make_section_anyway_with_flags (abfd, ".rela.text",
+					   flags | SEC_READONLY);
    if (s == NULL
       || ! bfd_set_section_alignment (abfd, s, 2))
     return FALSE;
@@ -472,7 +472,7 @@ i370_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 		      && h->ref_regular
 		      && !h->def_regular)));
 
-  s = bfd_get_section_by_name (dynobj, ".rela.text");
+  s = bfd_get_linker_section (dynobj, ".rela.text");
   BFD_ASSERT (s != NULL);
   s->size += sizeof (Elf32_External_Rela);
 
@@ -498,13 +498,6 @@ i370_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
   if (info->shared)
     return TRUE;
 
-  if (h->size == 0)
-    {
-      (*_bfd_error_handler) (_("dynamic variable `%s' is zero size"),
-			     h->root.root.string);
-      return TRUE;
-    }
-
   /* We must allocate the symbol in our .dynbss section, which will
      become part of the .bss section of the executable.  There will be
      an entry for this symbol in the .dynsym section.  The dynamic
@@ -520,23 +513,23 @@ i370_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
      only if there were actually SDAREL relocs for that symbol.  */
 
   if (h->size <= elf_gp_size (dynobj))
-    s = bfd_get_section_by_name (dynobj, ".dynsbss");
+    s = bfd_get_linker_section (dynobj, ".dynsbss");
   else
-    s = bfd_get_section_by_name (dynobj, ".dynbss");
+    s = bfd_get_linker_section (dynobj, ".dynbss");
   BFD_ASSERT (s != NULL);
 
   /* We must generate a R_I370_COPY reloc to tell the dynamic linker to
      copy the initial value out of the dynamic object and into the
      runtime process image.  We need to remember the offset into the
      .rela.bss section we are going to use.  */
-  if ((h->root.u.def.section->flags & SEC_ALLOC) != 0)
+  if ((h->root.u.def.section->flags & SEC_ALLOC) != 0 && h->size != 0)
     {
       asection *srel;
 
       if (h->size <= elf_gp_size (dynobj))
-	srel = bfd_get_section_by_name (dynobj, ".rela.sbss");
+	srel = bfd_get_linker_section (dynobj, ".rela.sbss");
       else
-	srel = bfd_get_section_by_name (dynobj, ".rela.bss");
+	srel = bfd_get_linker_section (dynobj, ".rela.bss");
       BFD_ASSERT (srel != NULL);
       srel->size += sizeof (Elf32_External_Rela);
       h->needs_copy = 1;
@@ -561,9 +554,6 @@ i370_elf_adjust_dynindx (struct elf_link_hash_entry *h, void * cparg)
 	   "i370_elf_adjust_dynindx called, h->dynindx = %ld, *cp = %d\n",
 	   h->dynindx, *cp);
 #endif
-
-  if (h->root.type == bfd_link_hash_warning)
-    h = (struct elf_link_hash_entry *) h->root.u.i.link;
 
   if (h->dynindx != -1)
     h->dynindx += *cp;
@@ -598,7 +588,7 @@ i370_elf_size_dynamic_sections (bfd *output_bfd,
       /* Set the contents of the .interp section to the interpreter.  */
       if (info->executable)
 	{
-	  s = bfd_get_section_by_name (dynobj, ".interp");
+	  s = bfd_get_linker_section (dynobj, ".interp");
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
@@ -618,7 +608,7 @@ i370_elf_size_dynamic_sections (bfd *output_bfd,
 
       for (p = rela_sections; *p != NULL; p++)
 	{
-	  s = bfd_get_section_by_name (dynobj, *p);
+	  s = bfd_get_linker_section (dynobj, *p);
 	  if (s != NULL)
 	    s->size = 0;
 	}
@@ -835,6 +825,10 @@ i370_elf_check_relocs (bfd *abfd,
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+
+	  /* PR15323, ref flags aren't set for references in the same
+	     object.  */
+	  h->root.non_ir_ref = 1;
 	}
 
       if (info->shared)
@@ -879,20 +873,20 @@ i370_elf_finish_dynamic_sections (bfd *output_bfd,
 {
   asection *sdyn;
   bfd *dynobj = elf_hash_table (info)->dynobj;
-  asection *sgot = bfd_get_section_by_name (dynobj, ".got");
+  asection *sgot = bfd_get_linker_section (dynobj, ".got");
 
 #ifdef DEBUG
   fprintf (stderr, "i370_elf_finish_dynamic_sections called\n");
 #endif
 
-  sdyn = bfd_get_section_by_name (dynobj, ".dynamic");
+  sdyn = bfd_get_linker_section (dynobj, ".dynamic");
 
   if (elf_hash_table (info)->dynamic_sections_created)
     {
       asection *splt;
       Elf32_External_Dyn *dyncon, *dynconend;
 
-      splt = bfd_get_section_by_name (dynobj, ".plt");
+      splt = bfd_get_linker_section (dynobj, ".plt");
       BFD_ASSERT (splt != NULL && sdyn != NULL);
 
       dyncon = (Elf32_External_Dyn *) sdyn->contents;
@@ -955,7 +949,7 @@ i370_elf_finish_dynamic_sections (bfd *output_bfd,
 
       /* Set up the section symbols for the output sections.  */
 
-      sdynsym = bfd_get_section_by_name (dynobj, ".dynsym");
+      sdynsym = bfd_get_linker_section (dynobj, ".dynsym");
       BFD_ASSERT (sdynsym != NULL);
 
       sym.st_size = 0;
@@ -1141,9 +1135,9 @@ i370_elf_relocate_section (bfd *output_bfd,
 	    }
 	}
 
-      if (sec != NULL && elf_discarded_section (sec))
+      if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, relend, howto, contents);
+					 rel, 1, relend, howto, 0, contents);
 
       if (info->relocatable)
 	continue;
@@ -1371,7 +1365,7 @@ i370_elf_relocate_section (bfd *output_bfd,
 #define ELF_MACHINE_ALT1	EM_I370_OLD
 #endif
 #define ELF_MAXPAGESIZE		0x1000
-#define ELF_OSABI		ELFOSABI_LINUX
+#define ELF_OSABI		ELFOSABI_GNU
 
 #define elf_info_to_howto	i370_elf_info_to_howto
 
@@ -1394,7 +1388,6 @@ i370_elf_relocate_section (bfd *output_bfd,
 #define elf_backend_section_from_shdr		i370_elf_section_from_shdr
 #define elf_backend_adjust_dynamic_symbol	i370_elf_adjust_dynamic_symbol
 #define elf_backend_check_relocs		i370_elf_check_relocs
-#define elf_backend_post_process_headers	_bfd_elf_set_osabi
 
 static int
 i370_noop (void)

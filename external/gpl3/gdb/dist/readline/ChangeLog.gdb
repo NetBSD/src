@@ -1,11 +1,53 @@
-2011-06-27  Jan Kratochvil  <jan.kratochvil@redhat.com>
+2013-09-24  Pierre Muller  <muller@sourceware.org>
+
+	* readline.c (bind_arrow_keys_internal):
+	Handle VK_HOME, VK_END, VK_DELETE and VK_INSERT for mingw
+	hosts.
+
+2013-09-23  Martin Benda  <martin.benda@omsquare.com>
+
+	Checked in by Joel Brobecker  <brobecker@adacore.com>
+	* util.c (_rl_strnicmp): Add missing semicolon.
+
+2013-05-22  Yao Qi  <yao@codesourcery.com>
+
+	* configure.in: Invoke AC_CANONICAL_BUILD.
+	Change $host_os to $build_os.
+	* configure: Regenerated.
+
+2012-10-18  Joel Brobecker  <brobecker@adacore.com>
+
+	* terminal.c: Remove duplicate includes of windows.h and
+	wincon.h.
+	(_rl_get_screen_size): Remove redundant code for MinGW getting
+	the console size from the Windows API.
+
+2012-02-24  Pierre Muller  <muller@ics.u-strasbg.fr>
+
+	* signals.c (_rl_block_sigwinch, _rl_release_sigwinch): Add
+	conditional SIGWINCH around functions.
+
+2011-05-11  Sterling Augustine  <saugustine@google.com>
+
+	* complete.c (rl_completion_matches): Undo inadvertant checkin.
+
+2011-06-29  Jan Kratochvil  <jan.kratochvil@redhat.com>
 
 	Avoid free from a signal handler.
-	* Makefile.in (xmalloc.o): Add readline.h.
-	* xmalloc.c: Include readline.h.
-	(xmalloc, xrealloc): Disable them by #if 0.
-	(xfree): Return on RL_STATE_SIGHANDLER, #undef free.
-	* xmalloc.h (xfree, free): New definition.
+	* Makefile.in (xfree.o): Add readline.h.
+	* xfree.c: Include stdio.h and readline.h.
+	(xfree): Return on RL_STATE_SIGHANDLER.
+	* xmalloc.h (xfree): New definition.
+
+2011-05-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Workaround gdb.base/completion.exp regression on readline-6.2.
+	* complete.c (get_y_or_n): Disable the return on RL_STATE_CALLBACK.
+
+2011-05-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Imported readline 6.2, and upstream patch 001.
+	* configure: Regenerate.
 
 2011-03-04  Michael Snyder  <msnyder@vmware.com>
 

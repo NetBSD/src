@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_sprintf.c,v 1.6 2007/11/24 13:20:55 isaki Exp $	*/
+/*	$NetBSD: ether_sprintf.c,v 1.6.62.1 2014/08/20 00:04:30 tls Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -47,8 +47,7 @@
 #include <string.h>
 #endif
 
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
+#include <net/if_ether.h>
 
 #include "stand.h"
 #include "net.h"
@@ -60,10 +59,10 @@ char *
 ether_sprintf(const u_char *ap)
 {
 	int i;
-	static char etherbuf[18];
+	static char etherbuf[3*ETHER_ADDR_LEN];
 	char *cp = etherbuf;
 
-	for (i = 0; i < 6; i++) {
+	for (i = 0; i < ETHER_ADDR_LEN; i++) {
 		*cp++ = hexdigits[*ap >> 4];
 		*cp++ = hexdigits[*ap++ & 0xf];
 		*cp++ = ':';

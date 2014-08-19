@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.37 2012/03/06 03:35:29 mrg Exp $	*/
+/*	$NetBSD: uirda.c,v 1.37.2.1 2014/08/20 00:03:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.37 2012/03/06 03:35:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.37.2.1 2014/08/20 00:03:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -465,7 +465,6 @@ int
 uirda_read(void *h, struct uio *uio, int flag)
 {
 	struct uirda_softc *sc = h;
-	usbd_status err;
 	int s;
 	int error;
 	u_int n;
@@ -509,8 +508,8 @@ uirda_read(void *h, struct uio *uio, int flag)
 		sc->sc_rd_count = 0;
 		mutex_exit(&sc->sc_rd_buf_lk);
 
-		err = uirda_start_read(sc);
-		/* XXX check err */
+		uirda_start_read(sc);
+		/* XXX check uirda_start_read() return value */
 
 	} while (n == 0);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.28 2005/12/11 12:19:05 christos Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.28.122.1 2014/08/20 00:03:24 tls Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -145,7 +145,7 @@
 #define	SER_TIMEOUT	0x20		/* bus timeout (non-existent mem) */
 #define	SER_SBUSERR	0x10		/* S-Bus bus error */
 #define	SER_MEMERR	0x08		/* memory ecc/parity error */
-#define	SER_SZERR	0x02		/* [4/vme?] size error, whatever that is */
+#define	SER_SZERR	0x02		/* [4/vme] size error (r/w too large) */
 #define	SER_WATCHDOG	0x01		/* watchdog reset (never see this) */
 
 #define	SER_BITS \

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.40.6.1 2012/11/20 03:01:06 tls Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.40.6.2 2014/08/20 00:02:46 tls Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.40.6.1 2012/11/20 03:01:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.40.6.2 2014/08/20 00:02:46 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -151,8 +151,18 @@ dev_type_tty(ixpcomtty);
 dev_type_poll(ixpcompoll);
 
 const struct cdevsw ixpcom_cdevsw = {
-	ixpcomopen, ixpcomclose, ixpcomread, ixpcomwrite, ixpcomioctl,
-	ixpcomstop, ixpcomtty, ixpcompoll, nommap, ttykqfilter, D_TTY
+	.d_open = ixpcomopen,
+	.d_close = ixpcomclose,
+	.d_read = ixpcomread,
+	.d_write = ixpcomwrite,
+	.d_ioctl = ixpcomioctl,
+	.d_stop = ixpcomstop,
+	.d_tty = ixpcomtty,
+	.d_poll = ixpcompoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 struct consdev ixpcomcons = {
@@ -238,7 +248,8 @@ ixpcom_attach_subr(struct ixpcom_softc *sc)
 
 #ifdef RND_COM
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_TTY, 0);
+			  RND_TYPE_TTY, RND_FLAG_COLLECT_TIME|
+					RND_FLAG_ESTIMATE_TIME);
 #endif
 
 	/* if there are no enable/disable functions, assume the device

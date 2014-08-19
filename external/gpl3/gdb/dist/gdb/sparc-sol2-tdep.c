@@ -1,7 +1,6 @@
 /* Target-dependent code for Solaris SPARC.
 
-   Copyright (C) 2003, 2004, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,7 +29,7 @@
 #include "trad-frame.h"
 
 #include "gdb_assert.h"
-#include "gdb_string.h"
+#include <string.h>
 
 #include "sol2-tdep.h"
 #include "sparc-tdep.h"
@@ -47,6 +46,12 @@ const struct sparc_gregset sparc32_sol2_gregset =
   37 * 4,			/* %tbr */
   1 * 4,			/* %g1 */
   16 * 4,			/* %l0 */
+};
+
+const struct sparc_fpregset sparc32_sol2_fpregset =
+{
+  0 * 4,			/* %f0 */
+  33 * 4,			/* %fsr */
 };
 
 
@@ -67,7 +72,7 @@ const struct sparc_gregset sparc32_sol2_gregset =
    ignore this.  */
 
 int
-sparc_sol2_pc_in_sigtramp (CORE_ADDR pc, char *name)
+sparc_sol2_pc_in_sigtramp (CORE_ADDR pc, const char *name)
 {
   return (name && (strcmp (name, "sigacthandler") == 0
 		   || strcmp (name, "ucbsigvechandler") == 0
@@ -93,7 +98,8 @@ sparc32_sol2_sigtramp_frame_cache (struct frame_info *this_frame,
   /* The third argument is a pointer to an instance of `ucontext_t',
      which has a member `uc_mcontext' that contains the saved
      registers.  */
-  regnum = (cache->frameless_p ? SPARC_O2_REGNUM : SPARC_I2_REGNUM);
+  regnum =
+    (cache->copied_regs_mask & 0x04) ? SPARC_I2_REGNUM : SPARC_O2_REGNUM;
   mcontext_addr = get_frame_register_unsigned (this_frame, regnum) + 40;
 
   cache->saved_regs[SPARC32_PSR_REGNUM].addr = mcontext_addr + 0 * 4;
@@ -152,7 +158,7 @@ sparc32_sol2_sigtramp_frame_sniffer (const struct frame_unwind *self,
 				     void **this_cache)
 {
   CORE_ADDR pc = get_frame_pc (this_frame);
-  char *name;
+  const char *name;
 
   find_pc_partial_function (pc, &name, NULL, NULL);
   if (sparc_sol2_pc_in_sigtramp (pc, name))
@@ -173,8 +179,8 @@ static const struct frame_unwind sparc32_sol2_sigtramp_frame_unwind =
 
 /* Unglobalize NAME.  */
 
-char *
-sparc_sol2_static_transform_name (char *name)
+const const char *
+sparc_sol2_static_transform_name (const char *name)
 {
   /* The Sun compilers (Sun ONE Studio, Forte Developer, Sun WorkShop,
      SunPRO) convert file static variables into global values, a

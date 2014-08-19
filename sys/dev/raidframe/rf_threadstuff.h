@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.h,v 1.33 2011/05/11 18:13:12 mrg Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.33.14.1 2014/08/20 00:03:49 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,6 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
-#include <sys/simplelock.h>
 #include <sys/mutex.h>
 
 #include <dev/raidframe/raidframevar.h>

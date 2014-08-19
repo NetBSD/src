@@ -1,8 +1,18 @@
-# $NetBSD: Makefile,v 1.18 2012/04/13 12:31:19 njoly Exp $
+# $NetBSD: Makefile,v 1.18.2.1 2014/08/20 00:04:50 tls Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/lib/libm
+
+.if ${MACHINE_CPU} == "aarch64" || ${MACHINE_CPU} == "arm" \
+    || ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64" \
+    || ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+CPPFLAGS+=	-DHAVE_FENV_H
+.endif
+
+.if ${MACHINE} == "alpha"
+COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
+.endif
 
 TESTS_C+=	t_acos
 TESTS_C+=	t_asin
@@ -13,10 +23,13 @@ TESTS_C+=	t_cos
 TESTS_C+=	t_cosh
 TESTS_C+=	t_erf
 TESTS_C+=	t_exp
+TESTS_C+=	t_fmod
 TESTS_C+=	t_infinity
 TESTS_C+=	t_ldexp
 TESTS_C+=	t_log
+TESTS_C+=	t_modf
 TESTS_C+=	t_pow
+TESTS_C+=	t_precision
 TESTS_C+=	t_round
 TESTS_C+=	t_scalbn
 TESTS_C+=	t_sin

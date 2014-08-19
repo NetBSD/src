@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.97.2.1 2013/02/25 00:28:09 tls Exp $	*/
+/*	$NetBSD: mount.c,v 1.97.2.2 2014/08/20 00:02:26 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.97.2.1 2013/02/25 00:28:09 tls Exp $");
+__RCSID("$NetBSD: mount.c,v 1.97.2.2 2014/08/20 00:02:26 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ static void	prmount(struct statvfs *);
 __dead static void	usage(void);
 
 
-/* Map from mount otions to printable formats. */
+/* Map from mount options to printable formats. */
 static const struct opt {
 	int o_opt;
 	int o_silent;
@@ -352,7 +352,7 @@ hasopt(const char *mntopts, const char *option)
 }
 
 static int
-mountfs(const char *vfstype, const char *spec, const char *name, 
+mountfs(const char *vfstype, const char *spec, const char *name,
     int flags, const char *options, const char *mntopts,
     int skipmounted, char *buf, size_t buflen)
 {
@@ -579,7 +579,7 @@ prmount(struct statvfs *sfp)
 	    sfp->f_fstypename);
 
 	flags = sfp->f_flag & MNT_VISFLAGMASK;
-	for (f = 0, o = optnames; flags && o < 
+	for (f = 0, o = optnames; flags && o <
 	    &optnames[sizeof(optnames)/sizeof(optnames[0])]; o++)
 		if (flags & o->o_opt) {
 			if (!o->o_silent || verbose)

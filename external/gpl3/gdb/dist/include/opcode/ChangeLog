@@ -1,3 +1,768 @@
+2013-12-16  Andrew Bennett  <andrew.bennett@imgtec.com>
+
+	* mips.h: Updated description of +o, +u, +v and +w for MIPS and
+	microMIPS.
+
+2013-12-13  Kuan-Lin Chen  <kuanlinchentw@gmail.com>
+	    Wei-Cheng Wang  <cole945@gmail.com>
+
+	* nds32.h: New file for Andes NDS32.
+
+2013-12-07  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin.h: Remove +x file mode.
+
+2013-11-20  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* aarch64.h (aarch64_pstatefields): Change element type to
+	aarch64_sys_reg.
+
+2013-11-18  Renlin Li  <Renlin.Li@arm.com>
+
+	* arm.h (ARM_AEXT_V7VE): New define.
+	(ARM_ARCH_V7VE): New define.
+	(ARM_ARCH_V7A_IDIV_MP_SEC_VIRT): Removed.
+
+2013-11-18  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	Revert
+
+	2013-11-15  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* aarch64.h (aarch64_sys_reg_readonly_p): New declaration.
+	(aarch64_sys_reg_writeonly_p): Ditto.
+
+2013-11-15  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* aarch64.h (aarch64_sys_reg_readonly_p): New declaration.
+	(aarch64_sys_reg_writeonly_p): Ditto.
+
+2013-11-05  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* aarch64.h (aarch64_sys_reg): New typedef.
+	(aarch64_sys_regs): Change to define with the new type.
+	(aarch64_sys_reg_deprecated_p): Declare.
+
+2013-11-05  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* aarch64.h (enum aarch64_operand_class): Add AARCH64_OPND_CLASS_COND.
+	(enum aarch64_opnd): Add AARCH64_OPND_COND1.
+
+2013-10-14  Chao-ying Fu  <Chao-ying.Fu@imgtec.com>
+
+	* mips.h (mips_operand_type): Add OP_IMM_INDEX and OP_REG_INDEX.
+	(mips_reg_operand_type): Add OP_REG_MSA and OP_REG_MSA_CTRL.
+	For MIPS, add comments for +d, +e, +h, +k, +l, +n, +o, +u, +v, +w,
+	+T, +U, +V, +W, +~, +!, +@, +#, +$, +%, +^, +&, +*, +|.
+	For MIPS, update extension character sequences after +.
+	(ASE_MSA): New define.
+	(ASE_MSA64): New define.
+	For microMIPS, add comments for +d, +e, +h, +k, +l, +n, +o, +u, +v, +w,
+	+x, +T, +U, +V, +W, +~, +!, +@, +#, +$, +%, +^, +&, +*, +|.
+	For microMIPS, update extension character sequences after +.
+
+2013-08-23  Yuri Chornoivan  <yurchor@ukr.net>
+
+	PR binutils/15834
+	* i960.h: Fix typos.
+
+2013-08-19  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h: Remove references to "+I" and imm2_expr.
+
+2013-08-19  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h (M_DEXT, M_DINS): Delete.
+
+2013-08-19  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h (OP_OPTIONAL_REG): New mips_operand_type.
+	(mips_optional_operand_p): New function.
+
+2013-08-04  Jürgen Urban  <JuergenUrban@gmx.de>
+	    Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h: Document new VU0 operand characters.
+	(OP_VU0_SUFFIX, OP_VU0_MATCH_SUFFIX): New mips_operand_types.
+	(OP_REG_VF, OP_REG_VI, OP_REG_R5900_I, OP_REG_R5900_Q, OP_REG_R5900_R)
+	(OP_REG_R5900_ACC): New mips_reg_operand_types.
+	(INSN2_VU0_CHANNEL_SUFFIX): New macro.
+	(mips_vu0_channel_mask): Declare.
+
+2013-08-03  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h (mips_pcrel_operand): Inherit from mips_int_operand.
+	(mips_int_operand_min, mips_int_operand_max): New functions.
+	(mips_decode_pcrel_operand): Use mips_decode_int_operand.
+
+2013-08-01  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h (mips_decode_reg_operand): New function.
+	(INSN_WRITE_SHIFT, INSN_WRITE_1, INSN_WRITE_2, INSN_WRITE_ALL)
+	(INSN_READ_SHIFT, INSN_READ_1, INSN_READ_2, INSN_READ_3, INSN_READ_4)
+	(INSN_READ_ALL, INSN_READ_GPR_24, INSN_WRITE_GPR_24, INSN_UDI):
+	New macros.
+	(INSN_WRITE_GPR_D, INSN_WRITE_GPR_T, INSN_WRITE_FPR_D)
+	(INSN_WRITE_FPR_S, INSN_WRITE_FPR_T, INSN_READ_GPR_S, INSN_READ_GPR_T)
+	(INSN_READ_FPR_S, INSN_READ_FPR_T, INSN_READ_FPR_R, INSN_WRITE_GPR_S)
+	(INSN2_WRITE_GPR_Z, INSN2_WRITE_FPR_Z, INSN2_READ_GPR_Z)
+	(INSN2_READ_FPR_Z, INSN2_READ_GPR_D, INSN2_READ_FPR_D)
+	(INSN2_WRITE_GPR_MB, INSN2_READ_GPR_MC, INSN2_MOD_GPR_MD)
+	(INSN2_READ_GPR_ME, INSN2_MOD_GPR_MF, INSN2_READ_GPR_MG)
+	(INSN2_READ_GPR_MJ, INSN2_WRITE_GPR_MJ, INSN2_READ_GPR_MP)
+	(INSN2_WRITE_GPR_MP, INSN2_READ_GPR_MQ, INSN2_READ_GP)
+	(INSN2_WRITE_GPR_MH, INSN2_READ_GPR_MMN): Delete.  Renumber other
+	macros to cover the gaps.
+	(INSN2_MOD_SP): Replace with...
+	(INSN2_WRITE_SP, INSN2_READ_SP): ...these new macros.
+	(MIPS16_INSN_WRITE_X, MIPS16_INSN_WRITE_Y, MIPS16_INSN_WRITE_Z)
+	(MIPS16_INSN_WRITE_T, MIPS16_INSN_WRITE_31, MIPS16_INSN_WRITE_GPR_Y)
+	(MIPS16_INSN_READ_X, MIPS16_INSN_READ_Y, MIPS16_INSN_READ_Z)
+	(MIPS16_INSN_READ_T, MIPS16_INSN_READ_SP, MIPS16_INSN_READ_GPR_X):
+	Delete.
+
+2013-08-01  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h (MIPS16_INSN_WRITE_SP, MIPS16_INSN_READ_31)
+	(MIPS16_INSN_READ_PC, MIPS16_INSN_UNCOND_BRANCH)
+	(MIPS16_INSN_COND_BRANCH): Delete.
+
+2013-07-24  Anna Tikhonova  <anna.tikhonova@intel.com>
+	    Kirill Yukhin  <kirill.yukhin@intel.com>
+	    Michael Zolotukhin  <michael.v.zolotukhin@intel.com>
+
+	* i386.h (BND_PREFIX_OPCODE): New.
+
+2013-07-14  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h (mips_operand_type): Add OP_ENTRY_EXIT_LIST and
+	OP_SAVE_RESTORE_LIST.
+	(decode_mips16_operand): Declare.
+
+2013-07-14  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h (mips_operand_type, mips_reg_operand_type): New enums.
+	(mips_operand, mips_int_operand, mips_mapped_int_operand)
+	(mips_msb_operand, mips_reg_operand, mips_reg_pair_operand)
+	(mips_pcrel_operand): New structures.
+	(mips_insert_operand, mips_extract_operand, mips_signed_operand)
+	(mips_decode_int_operand, mips_decode_pcrel_operand): New functions.
+	(decode_mips_operand, decode_micromips_operand): Declare.
+
+2013-07-14  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h: Document MIPS16 "I" opcode.
+
+2013-07-07  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h (M_ACLR_OB, M_ASET_OB, M_CACHE_OB, M_CACHEE_OB, M_L_DOB)
+	(M_LB_A, M_LBE_OB, M_LBU_A, M_LBUE_OB, M_LD_A, M_LD_OB, M_LDC2_OB)
+	(M_LDL_OB, M_LDM_OB, M_LDP_OB, M_LDR_OB, M_LH_A, M_LHE_OB, M_LHU_A)
+	(M_LHUE_OB, M_LL_OB, M_LLD_OB, M_LLE_OB, M_LS_A, M_LW_A, M_LWE_OB)
+	(M_LWC0_A, M_LWC1_A, M_LWC2_A, M_LWC2_OB, M_LWC3_A, M_LWL_A, M_LWL_OB)
+	(M_LWLE_OB, M_LWM_OB, M_LWP_OB, M_LWR_A, M_LWR_OB, M_LWRE_OB, M_LWU_OB)
+	(M_PREF_OB, M_PREFE_OB, M_S_DOB, M_SAA_OB, M_SAAD_OB, M_SC_OB)
+	(M_SCD_OB, M_SCE_OB, M_SD_A, M_SD_OB, M_SDC2_OB, M_SDL_OB, M_SDM_OB)
+	(M_SDP_OB, M_SDR_OB, M_SB_A, M_SBE_OB, M_SH_A, M_SHE_OB, M_SW_A)
+	(M_SWE_OB, M_SWC0_A, M_SWC1_A, M_SWC2_A, M_SWC2_OB, M_SWC3_A, M_SWL_A)
+	(M_SWL_OB, M_SWLE_OB, M_SWM_OB, M_SWP_OB, M_SWR_A, M_SWR_OB, M_SWRE_OB)
+	(M_ULD, M_ULH, M_ULHU, M_ULW, M_USH, M_USW, M_USD): Delete.
+	(M_ULD_A, M_ULH_A, M_ULHU_A, M_ULW_A, M_USH_A, M_USW_A, M_USD_A):
+	Rename to...
+	(M_ULD_AB, M_ULH_AB, M_ULHU_AB, M_ULW_AB, M_USH_AB, M_USW_AB)
+	(M_USD_AB): ...these.
+
+2013-07-07  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h: Remove documentation of "[" and "]".  Update documentation
+	of "k" and the MDMX formats.
+
+2013-07-07  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h: Update documentation of "+s" and "+S".
+
+2013-07-07  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h: Document "+i".
+
+2013-07-07  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h: Remove "mi" documentation.  Update "mh" documentation.
+	(OP_MASK_MI, OP_SH_MI, MICROMIPSOP_MASK_MI, MICROMIPSOP_MASK_MI):
+	Delete.
+	(INSN2_WRITE_GPR_MHI): Rename to...
+	(INSN2_WRITE_GPR_MH): ...this.
+
+2013-07-07  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h: Remove documentation of "+D" and "+T".
+
+2013-06-26  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h: Fix comment for "1": it is now STYPE rather than SHAMT.
+	Use "source" rather than "destination" for microMIPS "G".
+
+2013-06-25  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips.h: Add M_JRADDIUSP, M_JRC and M_MOVEP anonymous enum
+	values.
+
+2013-06-23  Richard Sandiford  <rdsandiford@googlemail.com>
+
+	* mips.h: Fix comment typo: "G" is _RS rather than _RD for microMIPS.
+
+2013-06-17  Catherine Moore  <clm@codesourcery.com>
+	    Maciej W. Rozycki  <macro@codesourcery.com>
+	    Chao-Ying Fu  <fu@mips.com>
+
+	* mips.h (OP_SH_EVAOFFSET): Define.
+	(OP_MASK_EVAOFFSET): Define.
+	(INSN_ASE_MASK): Delete.
+	(ASE_EVA): Define.
+	(M_CACHEE_AB, M_CACHEE_OB): New.
+	(M_LBE_OB, M_LBE_AB): New.
+	(M_LBUE_OB, M_LBUE_AB): New.
+	(M_LHE_OB, M_LHE_AB): New.
+	(M_LHUE_OB, M_LHUE_AB): New.
+	(M_LLE_AB, M_LLE_OB): New.
+	(M_LWE_OB, M_LWE_AB): New.
+	(M_LWLE_AB, M_LWLE_OB): New.
+	(M_LWRE_AB, M_LWRE_OB): New.
+	(M_PREFE_AB, M_PREFE_OB): New.
+	(M_SCE_AB, M_SCE_OB): New.
+	(M_SBE_OB, M_SBE_AB): New.
+	(M_SHE_OB, M_SHE_AB): New.
+	(M_SWE_OB, M_SWE_AB): New.
+	(M_SWLE_AB, M_SWLE_OB): New.
+	(M_SWRE_AB, M_SWRE_OB): New.
+	(MICROMIPSOP_SH_EVAOFFSET): Define.
+	(MICROMIPSOP_MASK_EVAOFFSET): Define.
+
+2013-06-12  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* nios2.h (OP_MATCH_ERET): Correct eret encoding.
+
+2013-05-22  Jürgen Urban  <JuergenUrban@gmx.de>
+
+	* mips.h (M_LQC2_AB, M_SQC2_AB): New macros.
+
+2013-05-09  Andrew Pinski  <apinski@cavium.com>
+
+	* mips.h (OP_MASK_CODE10): Correct definition.
+	(OP_SH_CODE10): Likewise.
+	Add a comment that "+J" is used now for OP_*CODE10.
+	(INSN_ASE_MASK): Update.
+	(INSN_VIRT): New macro.
+	(INSN_VIRT64): New macro
+
+2013-05-02  Nick Clifton  <nickc@redhat.com>
+
+	* msp430.h: Add patterns for MSP430X instructions.
+
+2013-04-06  David S. Miller  <davem@davemloft.net>
+
+	* sparc.h (F_PREFERRED): Define.
+	(F_PREF_ALIAS): Define.
+
+2013-04-03  Nick Clifton  <nickc@redhat.com>
+
+	* v850.h (V850_INVERSE_PCREL): Define.
+
+2013-03-27  Alexis Deruelle  <alexis.deruelle@gmail.com>
+
+	PR binutils/15068
+	* tic6x-opcode-table.h: Fix patterns for add, ldnw and xor.
+
+2013-03-27  Alexis Deruelle  <alexis.deruelle@gmail.com>
+
+	PR binutils/15068
+	* tic6xc-insn-formats.h (FLD): Add use of bitfield array.
+	Add 16-bit opcodes.
+	* tic6xc-opcode-table.h: Add 16-bit insns.
+	* tic6x.h: Add support for 16-bit insns.
+
+2013-03-21  Michael Schewe  <michael.schewe@gmx.net>
+
+	* h8300.h: Add MEMRELAX flag for mov.b/w/l @(d:32,ERs),Rd
+	and mov.b/w/l Rs,@(d:32,ERd).
+
+2013-03-20  Alexis Deruelle  <alexis.deruelle@gmail.com>
+
+	PR gas/15082
+	* tic6x-opcode-table.h: Rename mpydp's specific operand type macro
+	from ORREGD1324 to ORXREGD1324 and make it cross-path-able through
+	tic6x_operand_xregpair operand coding type.
+	Make mpydp instruction cross-path-able, ie: remove the FIXed 'x'
+	opcode field, usu ORXREGD1324 for the src2 operand and remove the
+	TIC6X_FLAG_NO_CROSS.
+
+2013-03-20  Alexis Deruelle  <alexis.deruelle@gmail.com>
+
+	PR gas/15095
+	* tic6x.h (enum tic6x_coding_method): Add
+	tic6x_coding_dreg_(msb|lsb) field coding type in order to encode
+	separately the msb and lsb of a register pair.  This is needed to
+	encode the opcodes in the same way as TI assembler does.
+	* tic6x-opcode-table.h: Modify absdp, dpint, dpsp, dptrunc, rcpdp
+	and rsqrdp opcodes to use the new field coding types.
+
+2013-03-11  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
+
+	* arm.h (CRC_EXT_ARMV8): New constant.
+	(ARCH_CRC_ARMV8): New macro.
+
+2013-02-28  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* aarch64.h (AARCH64_FEATURE_CRC): New macro.
+
+2013-02-06  Sandra Loosemore  <sandra@codesourcery.com>
+            Andrew Jenner <andrew@codesourcery.com>
+
+	Based on patches from Altera Corporation.
+
+	* nios2.h: New file.
+
+2013-01-30  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* aarch64.h (aarch64_op): Add OP_SXTL, OP_SXTL2, OP_UXTL and OP_UXTL2.
+
+2013-01-28  Alexis Deruelle  <alexis.deruelle@gmail.com>
+
+	PR gas/15069
+	* tic6x-opcode-table.h: Fix encoding of BNOP instruction.
+
+2013-01-24  Nick Clifton  <nickc@redhat.com>
+
+	* v850.h: Add e3v5 support.
+
+2013-01-17  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* aarch64.h (aarch64_op): Remove OP_V_MOVI_B.
+
+2013-01-10  Peter Bergner <bergner@vnet.ibm.com>
+
+	* ppc.h (PPC_OPCODE_POWER8): New define.
+	(PPC_OPCODE_HTM): Likewise.
+
+2013-01-10  Will Newton <will.newton@imgtec.com>
+
+	* metag.h: New file.
+
+2013-01-07  Kaushik Phatak  <kaushik.phatak@kpitcummins.com>
+
+	* cr16.h (make_instruction): Rename to cr16_make_instruction.
+	(match_opcode): Rename to cr16_match_opcode.
+
+2013-01-04  Juergen Urban <JuergenUrban@gmx.de>
+
+	* mips.h: Add support for r5900 instructions including lq and sq.
+
+2013-01-02  Kaushik Phatak  <kaushik.phatak@kpitcummins.com>
+
+	* cr16.h (dwordU,wordU): Moved typedefs from cr16-dis.c
+	(make_instruction,match_opcode): Added function prototypes.
+	(cr16_words,cr16_allWords,cr16_currInsn): Declare as extern.
+
+2012-11-23  Alan Modra  <amodra@gmail.com>
+
+	* ppc.h (ppc_parse_cpu): Update prototype.
+
+2012-10-14  John David Anglin  <dave.anglin@nrc-cnrc.gc.ca>
+
+	* hppa.h (pa_opcodes): Use "cX" completer instead of "cx" in fstqx
+	opcodes.  Likewise, use "cM" instead of "cm" in fstqs opcodes.
+
+2012-10-04  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* s390.h (s390_opcode_cpu_val): Add S390_OPCODE_ZEC12.
+
+2012-09-04  Sergey A. Guriev <sergey.a.guriev@intel.com>
+
+	* ia64.h (ia64_opnd): Add new operand types.
+
+2012-08-21  David S. Miller  <davem@davemloft.net>
+
+	* sparc.h (F3F4): New macro.
+
+2012-08-13  Ian Bolton  <ian.bolton@arm.com>
+	    Laurent Desnogues  <laurent.desnogues@arm.com>
+	    Jim MacArthur  <jim.macarthur@arm.com>
+	    Marcus Shawcroft  <marcus.shawcroft@arm.com>
+	    Nigel Stephens  <nigel.stephens@arm.com>
+	    Ramana Radhakrishnan  <ramana.radhakrishnan@arm.com>
+	    Richard Earnshaw  <rearnsha@arm.com>
+	    Sofiane Naci  <sofiane.naci@arm.com>
+	    Tejas Belagod  <tejas.belagod@arm.com>
+	    Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	* aarch64.h: New file.
+
+2012-08-13  Richard Sandiford  <rdsandiford@googlemail.com>
+	    Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips.h (mips_opcode): Add the exclusions field.
+	(OPCODE_IS_MEMBER): Remove macro.
+	(cpu_is_member): New inline function.
+	(opcode_is_member): Likewise.
+
+2012-07-31  Chao-Ying Fu  <fu@mips.com>
+	    Catherine Moore  <clm@codesourcery.com>
+	    Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips.h: Document microMIPS DSP ASE usage.
+	(MICROMIPSOP_MASK_DSPACC, MICROMIPSOP_SH_DSPACC): Update for
+	microMIPS DSP ASE support.
+	(MICROMIPSOP_MASK_DSPSFT, MICROMIPSOP_SH_DSPSFT): Likewise.
+	(MICROMIPSOP_MASK_SA3, MICROMIPSOP_SH_SA3): Likewise.
+	(MICROMIPSOP_MASK_SA4, MICROMIPSOP_SH_SA4): Likewise.
+	(MICROMIPSOP_MASK_IMM8, MICROMIPSOP_SH_IMM8): Likewise.
+	(MICROMIPSOP_MASK_IMM10, MICROMIPSOP_SH_IMM10): Likewise.
+	(MICROMIPSOP_MASK_WRDSP, MICROMIPSOP_SH_WRDSP): Likewise.
+	(MICROMIPSOP_MASK_BP, MICROMIPSOP_SH_BP): Likewise.
+
+2012-07-06  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips.h: Fix a typo in description.
+
+2012-06-07  Georg-Johann Lay  <avr@gjlay.de>
+
+	* avr.h: (AVR_ISA_XCH): New define.
+	(AVR_ISA_XMEGA): Use it.
+	(XCH, LAS, LAT, LAC): New XMEGA opcodes.
+
+2012-05-15  James Murray <jsm@jsm-net.demon.co.uk>
+
+	* m68hc11.h: Add XGate definitions.
+	(struct m68hc11_opcode): Add xg_mask field.
+
+2012-05-14  Catherine Moore  <clm@codesourcery.com>
+	    Maciej W. Rozycki  <macro@codesourcery.com>
+	    Rhonda Wittels  <rhonda@codesourcery.com>
+
+	* ppc.h (PPC_OPCODE_VLE): New definition.
+	(PPC_OP_SA): New macro.
+	(PPC_OP_SE_VLE): New macro.
+	(PPC_OP): Use a variable shift amount.
+	(powerpc_operand): Update comments.
+	(PPC_OPSHIFT_INV): New macro.
+	(PPC_OPERAND_CR): Replace with...
+	(PPC_OPERAND_CR_BIT): ...this and
+	(PPC_OPERAND_CR_REG): ...this.
+
+
+2012-05-03  Sean Keys  <skeys@ipdatasys.com>
+
+	* xgate.h: Header file for XGATE assembler.
+
+2012-04-27  David S. Miller  <davem@davemloft.net>
+
+	* sparc.h: Document new arg code' )' for crypto RS3
+	immediates.
+
+	* sparc.h (struct sparc_opcode): New field 'hwcaps'.
+	F_MUL32, F_DIV32, F_FDMULD, F_V8PLUS, F_POPC, F_VIS, F_VIS2,
+	F_ASI_BLK_INIT, F_FMAF, F_VIS3, F_HPC, F_RANDOM, F_TRANS,
+	F_FJFMAU, F_IMA, F_ASI_CACHE_SPARING, F_HWCAP_MASK): Delete.
+	(HWCAP_MUL32, HWCAP_DIV32, HWCAP_FSMULD, HWCAP_V8PLUS, HWCAP_POPC,
+	HWCAP_VIS, HWCAP_VIS2, HWCAP_ASI_BLK_INIT, HWCAP_FMAF,
+	HWCAP_VIS3, HWCAP_HPC, HWCAP_RANDOM, HWCAP_TRANS, HWCAP_FJFMAU,
+	HWCAP_IMA, HWCAP_ASI_CACHE_SPARING, HWCAP_AES, HWCAP_DES,
+	HWCAP_KASUMI, HWCAP_CAMELLIA, HWCAP_MD5, HWCAP_SHA1,
+	HWCAP_SHA256, HWCAP_SHA512, HWCAP_MPMUL, HWCAP_MONT, HWCAP_PAUSE,
+	HWCAP_CBCOND, HWCAP_CRC32): New defines.
+
+2012-03-10  Edmar Wienskoski  <edmar@freescale.com>
+
+	* ppc.h: Add PPC_OPCODE_ALTIVEC2, PPC_OPCODE_E6500, PPC_OPCODE_TMR.
+
+2012-02-27  Alan Modra  <amodra@gmail.com>
+
+	* crx.h (cst4_map): Update declaration.
+
+2012-02-25  Walter Lee  <walt@tilera.com>
+
+	* tilegx.h (tilegx_mnemonic): Add TILEGX_OPC_LD4S_TLS,
+	TILEGX_OPC_LD_TLS.
+	* tilepro.h (tilepro_mnemonic): Add TILEPRO_OPC_LW_TLS,
+	TILEPRO_OPC_LW_TLS_SN.
+
+2012-02-08  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* i386.h (XACQUIRE_PREFIX_OPCODE): New.
+	(XRELEASE_PREFIX_OPCODE): Likewise.
+
+2011-12-08  Andrew Pinski  <apinski@cavium.com>
+	    Adam Nemet  <anemet@caviumnetworks.com>
+
+	* mips.h (INSN_CHIP_MASK): Update according to INSN_OCTEON2.
+	(INSN_OCTEON2): New macro.
+	(CPU_OCTEON2): New macro.
+	(OPCODE_IS_MEMBER): Add Octeon2.
+
+2011-11-29  Andrew Pinski  <apinski@cavium.com>
+
+	* mips.h (INSN_CHIP_MASK): Update according to INSN_OCTEONP.
+	(INSN_OCTEONP): New macro.
+	(CPU_OCTEONP): New macro.
+	(OPCODE_IS_MEMBER): Add Octeon+.
+	(M_SAA_AB, M_SAAD_AB, M_SAA_OB, M_SAAD_OB): New enum values.
+
+2011-11-01  DJ Delorie  <dj@redhat.com>
+
+	* rl78.h: New file.
+
+2011-10-24  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips.h: Fix a typo in description.
+
+2011-09-21  David S. Miller  <davem@davemloft.net>
+
+	* sparc.h (struct sparc_opcode): Expand 'flags' to unsigned int.
+	(F_MUL32, F_DIV32, F_FSMULD, F_V8PLUS, F_POPC, F_VIS, F_VIS2,
+	F_ASI_BLK_INIT, F_FMAF, F_VIS3, F_HPC, F_RANDOM, F_TRANS,
+	F_FJFMAU, F_IMA, F_ASI_CACHE_SPARING): New flag bits.
+
+2011-08-09  Chao-ying Fu  <fu@mips.com>
+	    Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips.h (OP_MASK_3BITPOS, OP_SH_3BITPOS): New macros.
+	(OP_MASK_OFFSET12, OP_SH_OFFSET12): Redefine.
+	(INSN_ASE_MASK): Add the MCU bit.
+	(INSN_MCU): New macro.
+	(M_ACLR_AB, M_ACLR_OB, M_ASET_AB, M_ASET_OB): New enum values.
+	(MICROMIPSOP_MASK_3BITPOS, MICROMIPSOP_SH_3BITPOS): New macros.
+
+2011-08-09  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips.h (INSN_WRITE_GPR_S, INSN2_WRITE_GPR_MB): New macros.
+	(INSN2_READ_GPR_MC, INSN2_READ_GPR_ME): Likewise.
+	(INSN2_WRITE_GPR_MF, INSN2_READ_GPR_MG): Likewise.
+	(INSN2_READ_GPR_MJ, INSN2_WRITE_GPR_MJ): Likewise.
+	(INSN2_READ_GPR_MP, INSN2_WRITE_GPR_MP): Likewise.
+	(INSN2_READ_GPR_MQ, INSN2_WRITE_GPR_MHI): Likewise.
+	(INSN2_READ_GPR_MMN): Likewise.
+	(INSN2_READ_FPR_D): Change the bit used.
+	(INSN2_MOD_GPR_MD, INSN2_MOD_GPR_MF): Likewise.
+	(INSN2_MOD_SP, INSN2_READ_GPR_31, INSN2_READ_GP): Likewise.
+	(INSN2_READ_PC, INSN2_UNCOND_BRANCH): Likewise.
+	(INSN2_COND_BRANCH): Likewise.
+	(INSN2_WRITE_GPR_S, INSN2_MOD_GPR_MB): Remove macros.
+	(INSN2_MOD_GPR_MC, INSN2_MOD_GPR_ME, INSN2_MOD_GPR_MG): Likewise.
+	(INSN2_MOD_GPR_MJ, INSN2_MOD_GPR_MP, INSN2_MOD_GPR_MQ): Likewise.
+	(INSN2_MOD_GPR_MHI, INSN2_MOD_GPR_MM): Likewise.
+	(INSN2_MOD_GPR_MN): Likewise.
+
+2011-08-05  David S. Miller  <davem@davemloft.net>
+
+	* sparc.h: Document new format codes '4', '5', and '('.
+	(OPF_LOW4, RS3): New macros.
+
+2011-08-03  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips.h: Document the use of FP_D in MIPS16 mode.  Adjust the
+	order of flags documented.
+
+2011-07-29  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips.h: Clarify the description of microMIPS instruction
+	manipulation macros.
+	(MICROMIPSOP_MASK_MAJOR, MICROMIPSOP_SH_MAJOR): Remove macros.
+
+2011-07-24  Chao-ying Fu  <fu@mips.com>
+	    Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips.h (OP_MASK_EXTLSB, OP_SH_EXTLSB): New macros.
+	(OP_MASK_STYPE, OP_SH_STYPE): Likewise.
+	(OP_MASK_CODE10, OP_SH_CODE10): Likewise.
+	(OP_MASK_TRAP, OP_SH_TRAP): Likewise.
+	(OP_MASK_OFFSET12, OP_SH_OFFSET12): Likewise.
+	(OP_MASK_OFFSET10, OP_SH_OFFSET10): Likewise.
+	(OP_MASK_RS3, OP_SH_RS3): Likewise.
+	(OP_MASK_MB, OP_SH_MB, OP_MASK_MC, OP_SH_MC): Likewise.
+	(OP_MASK_MD, OP_SH_MD, OP_MASK_ME, OP_SH_ME): Likewise.
+	(OP_MASK_MF, OP_SH_MF, OP_MASK_MG, OP_SH_MG): Likewise.
+	(OP_MASK_MJ, OP_SH_MJ, OP_MASK_ML, OP_SH_ML): Likewise.
+	(OP_MASK_MP, OP_SH_MP, OP_MASK_MQ, OP_SH_MQ): Likewise.
+	(OP_MASK_IMMA, OP_SH_IMMA, OP_MASK_IMMB, OP_SH_IMMB): Likewise.
+	(OP_MASK_IMMC, OP_SH_IMMC, OP_MASK_IMMF, OP_SH_IMMF): Likewise.
+	(OP_MASK_IMMG, OP_SH_IMMG, OP_MASK_IMMH, OP_SH_IMMH): Likewise.
+	(OP_MASK_IMMI, OP_SH_IMMI, OP_MASK_IMMJ, OP_SH_IMMJ): Likewise.
+	(OP_MASK_IMML, OP_SH_IMML, OP_MASK_IMMM, OP_SH_IMMM): Likewise.
+	(OP_MASK_IMMN, OP_SH_IMMN, OP_MASK_IMMO, OP_SH_IMMO): Likewise.
+	(OP_MASK_IMMP, OP_SH_IMMP, OP_MASK_IMMQ, OP_SH_IMMQ): Likewise.
+	(OP_MASK_IMMU, OP_SH_IMMU, OP_MASK_IMMW, OP_SH_IMMW): Likewise.
+	(OP_MASK_IMMX, OP_SH_IMMX, OP_MASK_IMMY, OP_SH_IMMY): Likewise.
+	(INSN_WRITE_GPR_S): New macro.
+	(INSN2_BRANCH_DELAY_16BIT, INSN2_BRANCH_DELAY_32BIT): Likewise.
+	(INSN2_READ_FPR_D): Likewise.
+	(INSN2_MOD_GPR_MB, INSN2_MOD_GPR_MC): Likewise.
+	(INSN2_MOD_GPR_MD, INSN2_MOD_GPR_ME): Likewise.
+	(INSN2_MOD_GPR_MF, INSN2_MOD_GPR_MG): Likewise.
+	(INSN2_MOD_GPR_MJ, INSN2_MOD_GPR_MP): Likewise.
+	(INSN2_MOD_GPR_MQ, INSN2_MOD_SP): Likewise.
+	(INSN2_READ_GPR_31, INSN2_READ_GP, INSN2_READ_PC): Likewise.
+	(INSN2_UNCOND_BRANCH, INSN2_COND_BRANCH): Likewise.
+	(INSN2_MOD_GPR_MHI, INSN2_MOD_GPR_MM, INSN2_MOD_GPR_MN): Likewise.
+	(CPU_MICROMIPS): New macro.
+	(M_BC1FL, M_BC1TL, M_BC2FL, M_BC2TL): New enum values.
+	(M_BEQL, M_BGEZ, M_BGEZL, M_BGEZALL, M_BGTZ, M_BGTZL): Likewise.
+	(M_BLEZ, M_BLEZL, M_BLTZ, M_BLTZL, M_BLTZALL, M_BNEL): Likewise.
+	(M_CACHE_OB, M_JALS_1, M_JALS_2, M_JALS_A): Likewise.
+	(M_LDC2_OB, M_LDL_OB, M_LDM_AB, M_LDM_OB): Likewise.
+	(M_LDP_AB, M_LDP_OB, M_LDR_OB, M_LL_OB, M_LLD_OB): Likewise.
+	(M_LWC2_OB, M_LWL_OB, M_LWM_AB, M_LWM_OB): Likewise.
+	(M_LWP_AB, M_LWP_OB, M_LWR_OB): Likewise.
+	(M_LWU_OB, M_PREF_OB, M_SC_OB, M_SCD_OB): Likewise.
+	(M_SDC2_OB, M_SDL_OB, M_SDM_AB, M_SDM_OB): Likewise.
+	(M_SDP_AB, M_SDP_OB, M_SDR_OB): Likewise.
+	(M_SWC2_OB, M_SWL_OB, M_SWM_AB, M_SWM_OB): Likewise.
+	(M_SWP_AB, M_SWP_OB, M_SWR_OB): Likewise.
+	(MICROMIPSOP_MASK_MAJOR, MICROMIPSOP_SH_MAJOR): New macros.
+	(MICROMIPSOP_MASK_IMMEDIATE, MICROMIPSOP_SH_IMMEDIATE): Likewise.
+	(MICROMIPSOP_MASK_DELTA, MICROMIPSOP_SH_DELTA): Likewise.
+	(MICROMIPSOP_MASK_CODE10, MICROMIPSOP_SH_CODE10): Likewise.
+	(MICROMIPSOP_MASK_TRAP, MICROMIPSOP_SH_TRAP): Likewise.
+	(MICROMIPSOP_MASK_SHAMT, MICROMIPSOP_SH_SHAMT): Likewise.
+	(MICROMIPSOP_MASK_TARGET, MICROMIPSOP_SH_TARGET): Likewise.
+	(MICROMIPSOP_MASK_EXTLSB, MICROMIPSOP_SH_EXTLSB): Likewise.
+	(MICROMIPSOP_MASK_EXTMSBD, MICROMIPSOP_SH_EXTMSBD): Likewise.
+	(MICROMIPSOP_MASK_INSMSB, MICROMIPSOP_SH_INSMSB): Likewise.
+	(MICROMIPSOP_MASK_CODE, MICROMIPSOP_SH_CODE): Likewise.
+	(MICROMIPSOP_MASK_CODE2, MICROMIPSOP_SH_CODE2): Likewise.
+	(MICROMIPSOP_MASK_CACHE, MICROMIPSOP_SH_CACHE): Likewise.
+	(MICROMIPSOP_MASK_SEL, MICROMIPSOP_SH_SEL): Likewise.
+	(MICROMIPSOP_MASK_OFFSET12, MICROMIPSOP_SH_OFFSET12): Likewise.
+	(MICROMIPSOP_MASK_3BITPOS, MICROMIPSOP_SH_3BITPOS): Likewise.
+	(MICROMIPSOP_MASK_STYPE, MICROMIPSOP_SH_STYPE): Likewise.
+	(MICROMIPSOP_MASK_OFFSET10, MICROMIPSOP_SH_OFFSET10): Likewise.
+	(MICROMIPSOP_MASK_RS, MICROMIPSOP_SH_RS): Likewise.
+	(MICROMIPSOP_MASK_RT, MICROMIPSOP_SH_RT): Likewise.
+	(MICROMIPSOP_MASK_RD, MICROMIPSOP_SH_RD): Likewise.
+	(MICROMIPSOP_MASK_FS, MICROMIPSOP_SH_FS): Likewise.
+	(MICROMIPSOP_MASK_FT, MICROMIPSOP_SH_FT): Likewise.
+	(MICROMIPSOP_MASK_FD, MICROMIPSOP_SH_FD): Likewise.
+	(MICROMIPSOP_MASK_FR, MICROMIPSOP_SH_FR): Likewise.
+	(MICROMIPSOP_MASK_RS3, MICROMIPSOP_SH_RS3): Likewise.
+	(MICROMIPSOP_MASK_PREFX, MICROMIPSOP_SH_PREFX): Likewise.
+	(MICROMIPSOP_MASK_BCC, MICROMIPSOP_SH_BCC): Likewise.
+	(MICROMIPSOP_MASK_CCC, MICROMIPSOP_SH_CCC): Likewise.
+	(MICROMIPSOP_MASK_COPZ, MICROMIPSOP_SH_COPZ): Likewise.
+	(MICROMIPSOP_MASK_MB, MICROMIPSOP_SH_MB): Likewise.
+	(MICROMIPSOP_MASK_MC, MICROMIPSOP_SH_MC): Likewise.
+	(MICROMIPSOP_MASK_MD, MICROMIPSOP_SH_MD): Likewise.
+	(MICROMIPSOP_MASK_ME, MICROMIPSOP_SH_ME): Likewise.
+	(MICROMIPSOP_MASK_MF, MICROMIPSOP_SH_MF): Likewise.
+	(MICROMIPSOP_MASK_MG, MICROMIPSOP_SH_MG): Likewise.
+	(MICROMIPSOP_MASK_MH, MICROMIPSOP_SH_MH): Likewise.
+	(MICROMIPSOP_MASK_MI, MICROMIPSOP_SH_MI): Likewise.
+	(MICROMIPSOP_MASK_MJ, MICROMIPSOP_SH_MJ): Likewise.
+	(MICROMIPSOP_MASK_ML, MICROMIPSOP_SH_ML): Likewise.
+	(MICROMIPSOP_MASK_MM, MICROMIPSOP_SH_MM): Likewise.
+	(MICROMIPSOP_MASK_MN, MICROMIPSOP_SH_MN): Likewise.
+	(MICROMIPSOP_MASK_MP, MICROMIPSOP_SH_MP): Likewise.
+	(MICROMIPSOP_MASK_MQ, MICROMIPSOP_SH_MQ): Likewise.
+	(MICROMIPSOP_MASK_IMMA, MICROMIPSOP_SH_IMMA): Likewise.
+	(MICROMIPSOP_MASK_IMMB, MICROMIPSOP_SH_IMMB): Likewise.
+	(MICROMIPSOP_MASK_IMMC, MICROMIPSOP_SH_IMMC): Likewise.
+	(MICROMIPSOP_MASK_IMMD, MICROMIPSOP_SH_IMMD): Likewise.
+	(MICROMIPSOP_MASK_IMME, MICROMIPSOP_SH_IMME): Likewise.
+	(MICROMIPSOP_MASK_IMMF, MICROMIPSOP_SH_IMMF): Likewise.
+	(MICROMIPSOP_MASK_IMMG, MICROMIPSOP_SH_IMMG): Likewise.
+	(MICROMIPSOP_MASK_IMMH, MICROMIPSOP_SH_IMMH): Likewise.
+	(MICROMIPSOP_MASK_IMMI, MICROMIPSOP_SH_IMMI): Likewise.
+	(MICROMIPSOP_MASK_IMMJ, MICROMIPSOP_SH_IMMJ): Likewise.
+	(MICROMIPSOP_MASK_IMML, MICROMIPSOP_SH_IMML): Likewise.
+	(MICROMIPSOP_MASK_IMMM, MICROMIPSOP_SH_IMMM): Likewise.
+	(MICROMIPSOP_MASK_IMMN, MICROMIPSOP_SH_IMMN): Likewise.
+	(MICROMIPSOP_MASK_IMMO, MICROMIPSOP_SH_IMMO): Likewise.
+	(MICROMIPSOP_MASK_IMMP, MICROMIPSOP_SH_IMMP): Likewise.
+	(MICROMIPSOP_MASK_IMMQ, MICROMIPSOP_SH_IMMQ): Likewise.
+	(MICROMIPSOP_MASK_IMMU, MICROMIPSOP_SH_IMMU): Likewise.
+	(MICROMIPSOP_MASK_IMMW, MICROMIPSOP_SH_IMMW): Likewise.
+	(MICROMIPSOP_MASK_IMMX, MICROMIPSOP_SH_IMMX): Likewise.
+	(MICROMIPSOP_MASK_IMMY, MICROMIPSOP_SH_IMMY): Likewise.
+	(MICROMIPSOP_MASK_CODE, MICROMIPSOP_SH_CODE): Likewise.
+	(MICROMIPSOP_MASK_CODE2, MICROMIPSOP_SH_CODE2): Likewise.
+	(MICROMIPSOP_MASK_CACHE, MICROMIPSOP_SH_CACHE): Likewise.
+	(MICROMIPSOP_MASK_CODE20, MICROMIPSOP_SH_CODE20): Likewise.
+	(MICROMIPSOP_MASK_PERFREG, MICROMIPSOP_SH_PERFREG): Likewise.
+	(MICROMIPSOP_MASK_CODE19, MICROMIPSOP_SH_CODE19): Likewise.
+	(MICROMIPSOP_MASK_ALN, MICROMIPSOP_SH_ALN): Likewise.
+	(MICROMIPSOP_MASK_VECBYTE, MICROMIPSOP_SH_VECBYTE): Likewise.
+	(MICROMIPSOP_MASK_VECALIGN, MICROMIPSOP_SH_VECALIGN): Likewise.
+	(MICROMIPSOP_MASK_DSPACC, MICROMIPSOP_SH_DSPACC): Likewise.
+	(MICROMIPSOP_MASK_DSPACC_S, MICROMIPSOP_SH_DSPACC_S): Likewise.
+	(MICROMIPSOP_MASK_DSPSFT, MICROMIPSOP_SH_DSPSFT): Likewise.
+	(MICROMIPSOP_MASK_DSPSFT_7, MICROMIPSOP_SH_DSPSFT_7): Likewise.
+	(MICROMIPSOP_MASK_SA3, MICROMIPSOP_SH_SA3): Likewise.
+	(MICROMIPSOP_MASK_SA4, MICROMIPSOP_SH_SA4): Likewise.
+	(MICROMIPSOP_MASK_IMM8, MICROMIPSOP_SH_IMM8): Likewise.
+	(MICROMIPSOP_MASK_IMM10, MICROMIPSOP_SH_IMM10): Likewise.
+	(MICROMIPSOP_MASK_WRDSP, MICROMIPSOP_SH_WRDSP): Likewise.
+	(MICROMIPSOP_MASK_RDDSP, MICROMIPSOP_SH_RDDSP): Likewise.
+	(MICROMIPSOP_MASK_BP, MICROMIPSOP_SH_BP): Likewise.
+	(MICROMIPSOP_MASK_MT_U, MICROMIPSOP_SH_MT_U): Likewise.
+	(MICROMIPSOP_MASK_MT_H, MICROMIPSOP_SH_MT_H): Likewise.
+	(MICROMIPSOP_MASK_MTACC_T, MICROMIPSOP_SH_MTACC_T): Likewise.
+	(MICROMIPSOP_MASK_MTACC_D, MICROMIPSOP_SH_MTACC_D): Likewise.
+	(MICROMIPSOP_MASK_BBITIND, MICROMIPSOP_SH_BBITIND): Likewise.
+	(MICROMIPSOP_MASK_CINSPOS, MICROMIPSOP_SH_CINSPOS): Likewise.
+	(MICROMIPSOP_MASK_CINSLM1, MICROMIPSOP_SH_CINSLM1): Likewise.
+	(MICROMIPSOP_MASK_SEQI, MICROMIPSOP_SH_SEQI): Likewise.
+	(micromips_opcodes): New declaration.
+	(bfd_micromips_num_opcodes): Likewise.
+
+2011-07-24  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips.h (INSN_TRAP): Rename to...
+	(INSN_NO_DELAY_SLOT): ... this.
+	(INSN_SYNC): Remove macro.
+
+2011-07-01  Eric B. Weddington  <eric.weddington@atmel.com>
+
+	* avr.h (AVR_ISA_AVR6): Remove AVR_ISA_SPMX as it was actually
+	a duplicate of AVR_ISA_SPM.
+
+2011-07-01  Nick Clifton  <nickc@redhat.com>
+
+	* avr.h (AVR_ISA_AVR6): Fix typo, adding AVR_ISA_SPMX.
+
+2011-06-18  Robin Getz  <robin.getz@analog.com>
+
+	* bfin.h (is_macmod_signed): New func
+
+2011-06-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* bfin.h (is_macmod_pmove): Add missing space before func args.
+	(is_macmod_hmove): Likewise.
+
+2011-06-13  Walter Lee  <walt@tilera.com>
+
+	* tilegx.h: New file.
+	* tilepro.h: New file.
+
+2011-05-31  Paul Brook  <paul@codesourcery.com>
+
+	* arm.h (ARM_ARCH_V7R_IDIV): Define.
+
+2011-05-24  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* s390.h: Replace S390_OPERAND_REG_EVEN with
+	S390_OPERAND_REG_PAIR.
+
+2011-05-24  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* s390.h: Add S390_OPCODE_REG_EVEN flag.
+
+2011-04-18  Julian Brown  <julian@codesourcery.com>
+
+	* arm.h (ARM_AEXT_V7_ARM): Remove ARM_EXT_OS from bitmask.
+
+2011-04-11  Dan McDonald  <dan@wellkeeper.com>
+
+	PR gas/12296
+	* arm.h (ARM_AEXT_V7_ARM): Add ARM_EXT_OS.
+
 2011-03-22  Eric B. Weddington  <eric.weddington@atmel.com>
 
 	* avr.h (AVR_ISA_SPMX,AVR_ISA_DES,AVR_ISA_M256,AVR_ISA_XMEGA):
@@ -43,6 +808,10 @@
 	* mips.h (OP_*_OFFSET_A, OP_*_OFFSET_B, OP_*_OFFSET_C)
 	(OP_*_RZ, OP_*_FZ, INSN2_M_FP_D, INSN2_WRITE_GPR_Z, INSN2_WRITE_FPR_Z)
 	(INSN2_READ_GPR_Z, INSN2_READ_FPR_Z, INSN2_READ_GPR_D): Define.
+
+2010-11-25  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* s390.h (enum s390_opcode_cpu_val): Add S390_OPCODE_MAXCPU.
 
 2010-11-23  Richard Sandiford  <rdsandiford@googlemail.com>
 
@@ -363,7 +1132,7 @@
 2008-11-28  Joshua Kinard  <kumba@gentoo.org>
 
 	* mips.h: Define CPU_R14000, CPU_R16000.
-        (OPCODE_IS_MEMBER): Include R14000, R16000 in test.
+	(OPCODE_IS_MEMBER): Include R14000, R16000 in test.
 
 2008-11-18  Catherine Moore  <clm@codesourcery.com>
 
@@ -409,7 +1178,7 @@
 
 2008-04-28  Adam Nemet  <anemet@caviumnetworks.com>
 
-	* mips.h (INSN_MACRO): Move it up to the the pinfo macros.
+	* mips.h (INSN_MACRO): Move it up to the pinfo macros.
 	(INSN2_M_FP_S, INSN2_M_FP_D): New pinfo2 macros.
 
 2008-04-14  Edmar Wienskoski  <edmar@freescale.com>
@@ -602,9 +1371,9 @@
 	* i386.h: Replace CpuMNI with CpuSSSE3.
 
 2006-09-26  Mark Shinwell  <shinwell@codesourcery.com>
-            Joseph Myers  <joseph@codesourcery.com>
-            Ian Lance Taylor  <ian@wasabisystems.com>
-            Ben Elliston  <bje@wasabisystems.com>
+	    Joseph Myers  <joseph@codesourcery.com>
+	    Ian Lance Taylor  <ian@wasabisystems.com>
+	    Ben Elliston  <bje@wasabisystems.com>
 
 	* arm.h (ARM_CEXT_IWMMXT2, ARM_ARCH_IWMMXT2): Define.
 
@@ -647,18 +1416,18 @@
 	* m68k.h (mcf_mask): Define.
 
 2006-05-05  Thiemo Seufer  <ths@mips.com>
-            David Ung  <davidu@mips.com>
+	    David Ung  <davidu@mips.com>
 
 	* mips.h (enum): Add macro M_CACHE_AB.
 
 2006-05-04  Thiemo Seufer  <ths@mips.com>
-            Nigel Stephens  <nigel@mips.com>
+	    Nigel Stephens  <nigel@mips.com>
 	    David Ung  <davidu@mips.com>
 
 	* mips.h: Add INSN_SMARTMIPS define.
 
 2006-04-30  Thiemo Seufer  <ths@mips.com>
-            David Ung  <davidu@mips.com>
+	    David Ung  <davidu@mips.com>
 
 	* mips.h: Defines udi bits and masks.  Add description of
 	characters which may appear in the args field of udi
@@ -1183,6 +1952,12 @@
 
 For older changes see ChangeLog-9103
 
+Copyright (C) 2004-2012 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

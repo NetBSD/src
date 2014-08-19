@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.25.2.2 2013/06/23 06:29:00 tls Exp $ */
+/*      $NetBSD: meta.c,v 1.25.2.3 2014/08/20 00:05:00 tls Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -55,7 +55,12 @@
 #endif
 
 static BuildMon Mybm;			/* for compat */
-static Lst metaBailiwick;			/* our scope of control */
+static Lst metaBailiwick;		/* our scope of control */
+static Lst metaIgnorePaths;		/* paths we deliberately ignore */
+
+#ifndef MAKE_META_IGNORE_PATHS
+#define MAKE_META_IGNORE_PATHS ".MAKE.META.IGNORE_PATHS"
+#endif
 
 Boolean useMeta = FALSE;
 static Boolean useFilemon = FALSE;
@@ -607,6 +612,17 @@ meta_mode_init(const char *make_mode)
     if (cp) {
 	str2Lst_Append(metaBailiwick, cp, NULL);
     }
+    /*
+     * We ignore any paths that start with ${.MAKE.META.IGNORE_PATHS}
+     */
+    metaIgnorePaths = Lst_Init(FALSE);
+    Var_Append(MAKE_META_IGNORE_PATHS,
+	       "/dev /etc /proc /tmp /var/run /var/tmp ${TMPDIR}", VAR_GLOBAL);
+    cp = Var_Subst(NULL,
+		   "${" MAKE_META_IGNORE_PATHS ":O:u:tA}", VAR_GLOBAL, 0);
+    if (cp) {
+	str2Lst_Append(metaIgnorePaths, cp, NULL);
+    }
 }
 
 /*
@@ -844,6 +860,13 @@ string_match(const void *p, const void *q)
     continue; \
     }
 
+#define DEQUOTE(p) if (*p == '\'') {	\
+    char *ep; \
+    p++; \
+    if ((ep = strchr(p, '\''))) \
+	*ep = '\0'; \
+    }
+
 Boolean
 meta_oodate(GNode *gn, Boolean oodate)
 {
@@ -856,6 +879,8 @@ meta_oodate(GNode *gn, Boolean oodate)
     char fname2[MAXPATHLEN];
     char *p;
     char *cp;
+    char *link_src;
+    char *move_target;
     static size_t cwdlen = 0;
     static size_t tmplen = 0;
     FILE *fp;
@@ -922,6 +947,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 		oodate = TRUE;
 		break;
 	    }
+	    link_src = NULL;
+	    move_target = NULL;
 	    /* Find the start of the build monitor section. */
 	    if (!f) {
 		if (strncmp(buf, "-- filemon", 10) == 0) {
@@ -1035,16 +1062,21 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    break;
 
 		case 'M':		/* renaMe */
-		    if (Lst_IsEmpty(missingFiles))
-			break;
+		    /*
+		     * For 'M'oves we want to check
+		     * the src as for 'R'ead
+		     * and the target as for 'W'rite.
+		     */
+		    cp = p;		/* save this for a second */
+		    /* now get target */
+		    if (strsep(&p, " ") == NULL)
+			continue;
+		    CHECK_VALID_META(p);
+		    move_target = p;
+		    p = cp;
 		    /* 'L' and 'M' put single quotes around the args */
-		    if (*p == '\'') {
-			char *ep;
-
-			p++;
-			if ((ep = strchr(p, '\'')))
-			    *ep = '\0';
-		    }
+		    DEQUOTE(p);
+		    DEQUOTE(move_target);
 		    /* FALLTHROUGH */
 		case 'D':		/* unlink */
 		    if (*p == '/' && !Lst_IsEmpty(missingFiles)) {
@@ -1056,22 +1088,39 @@ meta_oodate(GNode *gn, Boolean oodate)
 			    ln = NULL;	/* we're done with it */
 			}
 		    }
+		    if (buf[0] == 'M') {
+			/* the target of the mv is a file 'W'ritten */
+#ifdef DEBUG_META_MODE
+			if (DEBUG(META))
+			    fprintf(debug_file, "meta_oodate: M %s -> %s\n",
+				    p, move_target);
+#endif
+			p = move_target;
+			goto check_write;
+		    }
 		    break;
 		case 'L':		/* Link */
-		    /* we want the target */
+		    /*
+		     * For 'L'inks check
+		     * the src as for 'R'ead
+		     * and the target as for 'W'rite.
+		     */
+		    link_src = p;
+		    /* now get target */
 		    if (strsep(&p, " ") == NULL)
 			continue;
 		    CHECK_VALID_META(p);
 		    /* 'L' and 'M' put single quotes around the args */
-		    if (*p == '\'') {
-			char *ep;
-
-			p++;
-			if ((ep = strchr(p, '\'')))
-			    *ep = '\0';
-		    }
+		    DEQUOTE(p);
+		    DEQUOTE(link_src);
+#ifdef DEBUG_META_MODE
+		    if (DEBUG(META))
+			fprintf(debug_file, "meta_oodate: L %s -> %s\n",
+				link_src, p);
+#endif
 		    /* FALLTHROUGH */
 		case 'W':		/* Write */
+		check_write:
 		    /*
 		     * If a file we generated within our bailiwick
 		     * but outside of .OBJDIR is missing,
@@ -1103,6 +1152,14 @@ meta_oodate(GNode *gn, Boolean oodate)
 			Lst_AtEnd(missingFiles, bmake_strdup(p));
 		    }
 		    break;
+		check_link_src:
+		    p = link_src;
+		    link_src = NULL;
+#ifdef DEBUG_META_MODE
+		    if (DEBUG(META))
+			fprintf(debug_file, "meta_oodate: L src %s\n", p);
+#endif
+		    /* FALLTHROUGH */
 		case 'R':		/* Read */
 		case 'E':		/* Exec */
 		    /*
@@ -1110,20 +1167,15 @@ meta_oodate(GNode *gn, Boolean oodate)
 		     * be part of the dependencies because
 		     * they are _expected_ to change.
 		     */
-		    if (strncmp(p, "/tmp/", 5) == 0 ||
-			(tmplen > 0 && strncmp(p, tmpdir, tmplen) == 0))
+		    if (*p == '/' &&
+			Lst_ForEach(metaIgnorePaths, prefix_match, p)) {
+#ifdef DEBUG_META_MODE
+			if (DEBUG(META))
+			    fprintf(debug_file, "meta_oodate: ignoring: %s\n",
+				    p);
+#endif
 			break;
-
-		    if (strncmp(p, "/var/", 5) == 0)
-			break;
-
-		    /* Ignore device files. */
-		    if (strncmp(p, "/dev/", 5) == 0)
-			break;
-
-		    /* Ignore /etc/ files. */
-		    if (strncmp(p, "/etc/", 5) == 0)
-			break;
+		    }
 
 		    if ((cp = strrchr(p, '/'))) {
 			cp++;
@@ -1202,6 +1254,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 		default:
 		    break;
 		}
+		if (!oodate && buf[0] == 'L' && link_src != NULL)
+		    goto check_link_src;
 	    } else if (strcmp(buf, "CMD") == 0) {
 		/*
 		 * Compare the current command with the one in the

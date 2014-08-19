@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.28 2011/07/10 21:02:38 mhitch Exp $
+ * $NetBSD: main.c,v 1.28.12.1 2014/08/20 00:02:43 tls Exp $
  *
  *
  * Copyright (c) 1996,1999 Ignatios Souvatzis
@@ -100,7 +100,7 @@ pain(void *aio,	void *cons)
 	int	p_flag = 0;
 	int	m_value = 0;
 	int	S_flag = 0;
-	int	t_flag = 0;
+	/* int	t_flag = 0; */
 
 	u_int32_t fmem = 0x0;
 	int	fmemsz = 0x0;
@@ -209,7 +209,7 @@ again:
 					boothowto |= RB_SINGLE;
 					break;
 				case 't':	/* test flag */
-					t_flag = 1;
+					/* t_flag = 1; */
 					break;
 				case 'v':
 					boothowto |= AB_VERBOSE;

@@ -1,24 +1,24 @@
 /* misc.c -- miscellaneous bindable readline functions. */
 
-/* Copyright (C) 1987-2005 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2009 Free Software Foundation, Inc.
 
-   This file is part of the GNU Readline Library, a library for
-   reading lines of text with interactive input and history editing.
+   This file is part of the GNU Readline Library (Readline), a library
+   for reading lines of text with interactive input and history editing.      
 
-   The GNU Readline Library is free software; you can redistribute it
-   and/or modify it under the terms of the GNU General Public License
-   as published by the Free Software Foundation; either version 2, or
+   Readline is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
    (at your option) any later version.
 
-   The GNU Readline Library is distributed in the hope that it will be
-   useful, but WITHOUT ANY WARRANTY; without even the implied warranty
-   of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   Readline is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
-   The GNU General Public License is often shipped with GNU software, and
-   is generally kept in a file called COPYING or LICENSE.  If you do not
-   have a copy of the license, write to the Free Software Foundation,
-   59 Temple Place, Suite 330, Boston, MA 02111 USA. */
+   You should have received a copy of the GNU General Public License
+   along with Readline.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #define READLINE_LIBRARY
 
 #if defined (HAVE_CONFIG_H)
@@ -146,6 +146,8 @@ _rl_arg_dispatch (cxt, c)
 	  rl_restore_prompt ();
 	  rl_clear_message ();
 	  RL_UNSETSTATE(RL_STATE_NUMERICARG);
+	  if (key < 0)
+	    return -1;
 	  return (_rl_dispatch (key, _rl_keymap));
 	}
     }
@@ -212,6 +214,8 @@ rl_digit_loop ()
       if (r <= 0 || (RL_ISSTATE (RL_STATE_NUMERICARG) == 0))
         break;
     }
+
+  return r;
 }
 
 /* Create a default argument. */
@@ -324,7 +328,7 @@ _rl_free_history_entry (entry)
   FREE (entry->line);
   FREE (entry->timestamp);
 
-  free (entry);
+  xfree (entry);
 }
 
 /* Perhaps put back the current line if it has changed. */
@@ -338,9 +342,9 @@ rl_maybe_replace_line ()
   if (temp && ((UNDO_LIST *)(temp->data) != rl_undo_list))
     {
       temp = replace_history_entry (where_history (), rl_line_buffer, (histdata_t)rl_undo_list);
-      free (temp->line);
+      xfree (temp->line);
       FREE (temp->timestamp);
-      free (temp);
+      xfree (temp);
     }
   return 0;
 }
@@ -427,6 +431,56 @@ rl_replace_from_history (entry, flags)
       rl_mark = rl_end;
     }
 #endif
+}
+
+/* Process and free undo lists attached to each history entry prior to the
+   current entry, inclusive, reverting each line to its saved state.  This 
+   is destructive, and state about the current line is lost.  This is not
+   intended to be called while actively editing, and the current line is
+   not assumed to have been added to the history list. */
+void
+_rl_revert_all_lines ()
+{
+  int hpos;
+  HIST_ENTRY *entry;
+  UNDO_LIST *ul, *saved_undo_list;
+  char *lbuf;
+
+  lbuf = savestring (rl_line_buffer);
+  saved_undo_list = rl_undo_list;
+  hpos = where_history ();
+
+  entry = (hpos == history_length) ? previous_history () : current_history ();
+  while (entry)
+    {
+      if (ul = (UNDO_LIST *)entry->data)
+	{
+	  if (ul == saved_undo_list)
+	    saved_undo_list = 0;
+	  /* Set up rl_line_buffer and other variables from history entry */
+	  rl_replace_from_history (entry, 0);	/* entry->line is now current */
+	  /* Undo all changes to this history entry */
+	  while (rl_undo_list)
+	    rl_do_undo ();
+	  /* And copy the reverted line back to the history entry, preserving
+	     the timestamp. */
+	  FREE (entry->line);
+	  entry->line = savestring (rl_line_buffer);
+	  entry->data = 0;
+	}
+      entry = previous_history ();
+    }
+
+  /* Restore history state */
+  rl_undo_list = saved_undo_list;	/* may have been set to null */
+  history_set_pos (hpos);
+  
+  /* reset the line buffer */
+  rl_replace_line (lbuf, 0);
+  _rl_set_the_line ();
+
+  /* and clean up */
+  xfree (lbuf);
 }  
 
 /* **************************************************************** */
@@ -556,7 +610,7 @@ rl_vi_editing_mode (count, key)
 #if defined (VI_MODE)
   _rl_set_insert_mode (RL_IM_INSERT, 1);	/* vi mode ignores insert mode */
   rl_editing_mode = vi_mode;
-  rl_vi_insertion_mode (1, key);
+  rl_vi_insert_mode (1, key);
 #endif /* VI_MODE */
 
   return 0;

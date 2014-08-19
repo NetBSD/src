@@ -1,4 +1,4 @@
-/*	$NetBSD: mfm.c,v 1.13 2009/10/26 19:16:58 cegger Exp $	*/
+/*	$NetBSD: mfm.c,v 1.13.22.1 2014/08/20 00:03:27 tls Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -240,7 +240,7 @@ static int	mfm_retry = 0;
 int
 mfm_command(int	cmd)
 {
-	int	termcode, ready, i;
+	int	termcode, i;
 
 	creg_write();		/* write command-registers */
 	*ka410_intclr = INTR_DC;
@@ -280,7 +280,6 @@ mfm_command(int	cmd)
 		goto retry;
 	}
 	termcode = (dkc->dkc_stat & DKC_ST_TERMCOD) >> 3;
-	ready = sreg.udc_dstat & UDC_DS_READY;
 
 	printf("cmd:0x%x: termcode=0x%x, status=0x%x, cstat=0x%x, dstat=0x%x\n",
 	       cmd, termcode, dkc->dkc_stat, sreg.udc_cstat, sreg.udc_dstat);
@@ -456,7 +455,7 @@ int
 mfm_rxstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *rsize) {
 	struct mfm_softc *msc = f;
 	struct disklabel *lp;
-	int	block, sect, head, cyl, scount, res;
+	int	block, sect, head, cyl, scount;
 	char *cbuf;
 
 	cbuf = (char*)buf;
@@ -517,7 +516,7 @@ mfm_rxstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *
 			mfm_rxprepare();
 			/* copy from buf */
 			memcpy((void *) 0x200D0000, cbuf, *rsize);
-			res = mfm_command(DKC_CMD_WRITE_RX33);
+			(void)mfm_command(DKC_CMD_WRITE_RX33);
 		} else {
 			creg.udc_rtcnt = UDC_RC_RX33READ;
 			creg.udc_mode = UDC_MD_RX33;
@@ -526,7 +525,7 @@ mfm_rxstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *
 			mfm_rxprepare();
 			/* clear disk buffer */
 			memset((void *) 0x200D0000, 0, *rsize);
-			res = mfm_command(DKC_CMD_READ_RX33);
+			(void)mfm_command(DKC_CMD_READ_RX33);
 			/* copy to buf */
 			memcpy(cbuf, (void *) 0x200D0000, *rsize);
 		}
@@ -544,7 +543,7 @@ int
 mfm_rdstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *rsize) {
 	struct mfm_softc *msc = f;
 	struct disklabel *lp;
-	int	block, sect, head, cyl, scount, cmd, res;
+	int	block, sect, head, cyl, scount, cmd;
 	char *cbuf;
 
 	cbuf = (char *)buf;
@@ -608,7 +607,7 @@ mfm_rdstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *
 			cmd = DKC_CMD_WRITE_HDD;
 
 			memcpy((void *) 0x200D0000, cbuf, *rsize);
-			res = mfm_command(cmd);
+			(void)mfm_command(cmd);
 		} else {
 			creg.udc_rtcnt = UDC_RC_HDD_READ;
 			creg.udc_mode = UDC_MD_HDD;
@@ -616,7 +615,7 @@ mfm_rdstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *
 			cmd = DKC_CMD_READ_HDD;
 
 			memset((void *) 0x200D0000, 0, *rsize);
-			res = mfm_command(cmd);
+			(void)mfm_command(cmd);
 			memcpy(cbuf, (void *) 0x200D0000, *rsize);
 		}
 
@@ -638,18 +637,17 @@ int
 mfmstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *rsize)
 {
 	struct mfm_softc *msc = f;
-	int	res = -1;
 
 	switch (msc->unit) {
 	case 0:
 	case 1:
-		res = mfm_rdstrategy(f, func, dblk, size, buf, rsize);
+		return mfm_rdstrategy(f, func, dblk, size, buf, rsize);
 		break;
 	case 2:
-		res = mfm_rxstrategy(f, func, dblk, size, buf, rsize);
+		return mfm_rxstrategy(f, func, dblk, size, buf, rsize);
 		break;
 	default:
 		printf("invalid unit %d in mfmstrategy()\n", msc->unit);
+		return -1;
 	}
-	return (res);
 }

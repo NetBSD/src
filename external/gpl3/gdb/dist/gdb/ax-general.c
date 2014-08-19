@@ -1,6 +1,5 @@
 /* Functions for manipulating expressions designed to be executed on the agent
-   Copyright (C) 1998, 1999, 2000, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,7 +25,7 @@
 #include "ax.h"
 
 #include "value.h"
-#include "gdb_string.h"
+#include <string.h>
 
 #include "user-regs.h"
 
@@ -58,6 +57,9 @@ new_agent_expr (struct gdbarch *gdbarch, CORE_ADDR scope)
   x->reg_mask_len = 1;
   x->reg_mask = xmalloc (x->reg_mask_len * sizeof (x->reg_mask[0]));
   memset (x->reg_mask, 0, x->reg_mask_len * sizeof (x->reg_mask[0]));
+
+  x->tracing = 0;
+  x->trace_string = 0;
 
   return x;
 }
@@ -331,6 +333,30 @@ ax_tsv (struct agent_expr *x, enum agent_op op, int num)
   x->buf[x->len + 2] = (num) & 0xff;
   x->len += 3;
 }
+
+/* Append a string to the expression.  Note that the string is going
+   into the bytecodes directly, not on the stack.  As a precaution,
+   include both length as prefix, and terminate with a NUL.  (The NUL
+   is counted in the length.)  */
+
+void
+ax_string (struct agent_expr *x, const char *str, int slen)
+{
+  int i;
+
+  /* Make sure the string length is reasonable.  */
+  if (slen < 0 || slen > 0xffff)
+    internal_error (__FILE__, __LINE__, 
+		    _("ax-general.c (ax_string): string "
+		      "length is %d, out of allowed range"), slen);
+
+  grow_expr (x, 2 + slen + 1);
+  x->buf[x->len++] = ((slen + 1) >> 8) & 0xff;
+  x->buf[x->len++] = (slen + 1) & 0xff;
+  for (i = 0; i < slen; ++i)
+    x->buf[x->len++] = str[i];
+  x->buf[x->len++] = '\0';
+}
 
 
 
@@ -352,7 +378,6 @@ void
 ax_print (struct ui_file *f, struct agent_expr *x)
 {
   int i;
-  int is_float = 0;
 
   fprintf_filtered (f, _("Scope: %s\n"), paddress (x->gdbarch, x->scope));
   fprintf_filtered (f, _("Reg mask:"));
@@ -392,10 +417,21 @@ ax_print (struct ui_file *f, struct agent_expr *x)
 	  print_longest (f, 'd', 0,
 			 read_const (x, i + 1, aop_map[op].op_size));
 	}
+      /* Handle the complicated printf arguments specially.  */
+      else if (op == aop_printf)
+	{
+	  int slen, nargs;
+
+	  i++;
+	  nargs = x->buf[i++];
+	  slen = x->buf[i++];
+	  slen = slen * 256 + x->buf[i++];
+	  fprintf_filtered (f, _(" \"%s\", %d args"),
+			    &(x->buf[i]), nargs);
+	  i += slen - 1;
+	}
       fprintf_filtered (f, "\n");
       i += 1 + aop_map[op].op_size;
-
-      is_float = (op == aop_float);
     }
 }
 

@@ -2,7 +2,7 @@
    integer in the range 0 to N-1, using STATE as the random state
    previously initialized by a call to gmp_randinit().
 
-Copyright 2000, 2002  Free Software Foundation, Inc.
+Copyright 2000, 2002, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -37,7 +37,7 @@ mpz_urandomm (mpz_ptr rop, gmp_randstate_t rstate, mpz_srcptr n)
   TMP_DECL;
 
   size = ABSIZ (n);
-  if (size == 0)
+  if (UNLIKELY (size == 0))
     DIVIDE_BY_ZERO;
 
   nlast = &PTR (n)[size - 1];

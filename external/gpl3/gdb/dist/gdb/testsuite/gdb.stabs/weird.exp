@@ -1,5 +1,4 @@
-# Copyright 1997, 1998, 1999, 2001, 2003, 2004, 2006, 2007, 2008, 2009, 2010,
-# 2011 Free Software Foundation, Inc.
+# Copyright 1997-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,22 +16,12 @@
 # Test that GDB properly ignores invalid stabs.
 # Also test that GDB can debug a .o file, and that it doesn't mind
 # a file that's more minimal than what a compiler normally puts out.
-if $tracelevel then {
-	strace $tracelevel
-}
-
-# If the test directory was not created by configure then skip
-# this test.
-if ![file isdirectory ${objdir}/${subdir}] then {
-    return 0
-}
-
 
 set testfile weird
-set srcfile ${objdir}/${subdir}/weird.s
-set binfile ${objdir}/${subdir}/weirdx.o
+set srcfile [standard_output_file weird.s]
+set binfile [standard_output_file weirdx.o]
 
-if { [ get_compiler_info "$binfile" ] } {
+if { [ get_compiler_info ] } {
     return -1
 }
 
@@ -303,7 +292,8 @@ gdb_exit
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 
-set binfile [remote_download host ${binfile} object.o]
+set binfile [gdb_remote_download host ${binfile} \
+		 [standard_output_file object.o]]
 send_gdb "file $binfile\n"
 # If $binfile is very long, a \r (but not a \n) will echo in the
 # middle of the echo of the command.  So to match the echo, we

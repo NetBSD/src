@@ -24,7 +24,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
 
 int
-mpz_cmpabs (mpz_srcptr u, mpz_srcptr v)
+mpz_cmpabs (mpz_srcptr u, mpz_srcptr v) __GMP_NOTHROW
 {
   mp_size_t  usize, vsize, dsize;
   mp_srcptr  up, vp;

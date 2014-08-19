@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.140 2012/07/22 14:32:57 matt Exp $	*/
+/*	$NetBSD: i82557.c,v 1.140.2.1 2014/08/20 00:03:38 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.140 2012/07/22 14:32:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.140.2.1 2014/08/20 00:03:38 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,7 +409,7 @@ fxp_attach(struct fxp_softc *sc)
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 #ifdef FXP_EVENT_COUNTERS
 	evcnt_attach_dynamic(&sc->sc_ev_txstall, EVCNT_TYPE_MISC,
@@ -1217,11 +1217,9 @@ fxp_rx_hwcksum(struct fxp_softc *sc, struct mbuf *m, const struct fxp_rfa *rfa,
 	csum_data = 0;
 
 	if ((sc->sc_flags & FXPF_EXT_RFA) != 0) {
-		uint8_t rxparsestat;
 		uint8_t csum_stat;
 
 		csum_stat = rfa->cksum_stat;
-		rxparsestat = rfa->rx_parse_stat;
 		if ((rfa->rfa_status & htole16(FXP_RFA_STATUS_PARSE)) == 0)
 			goto out;
 

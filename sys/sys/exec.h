@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.139 2012/08/05 01:43:59 matt Exp $	*/
+/*	$NetBSD: exec.h,v 1.139.2.1 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -143,6 +143,7 @@ struct lwp;
 struct proc;
 struct exec_package;
 struct vnode;
+struct coredump_iostate;
 
 typedef int (*exec_makecmds_fcn)(struct lwp *, struct exec_package *);
 
@@ -164,7 +165,7 @@ struct execsw {
 					/* Set registers before execution */
 	void	(*es_setregs)(struct lwp *, struct exec_package *, vaddr_t);
 					/* Dump core */
-	int	(*es_coredump)(struct lwp *, void *);
+	int	(*es_coredump)(struct lwp *, struct coredump_iostate *);
 	int	(*es_setup_stack)(struct lwp *, struct exec_package *);
 };
 
@@ -199,6 +200,7 @@ struct exec_package {
 	vaddr_t	ep_minsaddr;		/* proc's min stack addr ("bottom") */
 	vsize_t	ep_ssize;		/* size of process's stack */
 	vaddr_t	ep_entry;		/* process's entry point */
+	vaddr_t	ep_entryoffset;		/* offset to entry point */
 	vaddr_t	ep_vm_minaddr;		/* bottom of process address space */
 	vaddr_t	ep_vm_maxaddr;		/* top of process address space */
 	u_int	ep_flags;		/* flags; see below. */
@@ -216,6 +218,8 @@ struct exec_package {
 	char	*ep_path;		/* absolute path of executable */
 	void	(*ep_emul_arg_free)(void *);
 					/* free ep_emul_arg */
+	uint32_t ep_osversion;		/* OS version */
+	char	ep_machine_arch[12];	/* from MARCH note */
 };
 #define	EXEC_INDIR	0x0001		/* script handling already done */
 #define	EXEC_HASFD	0x0002		/* holding a shell script */
@@ -224,6 +228,7 @@ struct exec_package {
 #define	EXEC_DESTR	0x0010		/* destructive ops performed */
 #define	EXEC_32		0x0020		/* 32-bit binary emulation */
 #define	EXEC_FORCEAUX	0x0040		/* always use ELF AUX vector */
+#define	EXEC_TOPDOWN_VM	0x0080		/* may use top-down VM layout */
 
 struct exec_vmcmd {
 	int	(*ev_proc)(struct lwp *, struct exec_vmcmd *);
@@ -269,7 +274,9 @@ int	exec_read_from		(struct lwp *, struct vnode *, u_long off,
 				    void *, size_t);
 int	exec_setup_stack	(struct lwp *, struct exec_package *);
 
-int	coredump_write		(void *, enum uio_seg, const void *, size_t);
+int	coredump_write		(struct coredump_iostate *, enum uio_seg,
+				    const void *, size_t);
+off_t	coredump_offset		(struct coredump_iostate *);
 
 void	exec_free_emul_arg	(struct exec_package *);
 
@@ -279,8 +286,8 @@ void	exec_free_emul_arg	(struct exec_package *);
  */
 struct core;
 struct core32;
-int	cpu_coredump(struct lwp *, void *, struct core *);
-int	cpu_coredump32(struct lwp *, void *, struct core32 *);
+int	cpu_coredump(struct lwp *, struct coredump_iostate *, struct core *);
+int	cpu_coredump32(struct lwp *, struct coredump_iostate *, struct core32 *);
 
 int	exec_add(struct execsw *, int);
 int	exec_remove(struct execsw *, int);

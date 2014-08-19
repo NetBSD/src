@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.3.2.1 2013/02/25 00:29:16 tls Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.3.2.2 2014/08/20 00:03:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1143,7 +1143,7 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 			throttle_ccb(req_ccb, FALSE);
 			TAILQ_INSERT_TAIL(&waiting, req_ccb, chain);
 		}
-		splbio();
+		splx(s);
 
 		while ((req_ccb = TAILQ_FIRST(&waiting)) != NULL) {
 			TAILQ_REMOVE(&waiting, req_ccb, chain);

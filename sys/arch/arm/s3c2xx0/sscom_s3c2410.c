@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom_s3c2410.c,v 1.5.6.1 2012/11/20 03:01:07 tls Exp $ */
+/*	$NetBSD: sscom_s3c2410.c,v 1.5.6.2 2014/08/20 00:02:47 tls Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom_s3c2410.c,v 1.5.6.1 2012/11/20 03:01:07 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom_s3c2410.c,v 1.5.6.2 2014/08/20 00:02:47 tls Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -106,6 +106,26 @@ sscom_match(device_t parent, cfdata_t cf, void *aux)
 	return unit == 0 || unit == 1;
 }
 
+/* RXINTn, TXINTn and ERRn interrupts are cascaded to UARTn irq. */
+
+#define	_sscom_intbit(irqno)	(1<<((irqno)-S3C2410_SUBIRQ_MIN))
+
+static void
+s3c2410_change_txrx_interrupts(struct sscom_softc *sc, bool unmask_p,
+    u_int flags)
+{
+	int intbits = 0;
+	if (flags & SSCOM_HW_RXINT)
+		intbits |= _sscom_intbit((sc)->sc_rx_irqno);
+	if (flags & SSCOM_HW_TXINT)
+		intbits |= _sscom_intbit((sc)->sc_rx_irqno);
+	if (unmask_p) {
+		s3c2410_unmask_subinterrupts(intbits);
+	} else {
+		s3c2410_mask_subinterrupts(intbits);
+	}
+}
+
 static void
 sscom_attach(device_t parent, device_t self, void *aux)
 {
@@ -114,18 +134,20 @@ sscom_attach(device_t parent, device_t self, void *aux)
 	int unit = sa->sa_index;
 	bus_addr_t iobase = s3c2410_uart_config[unit].iobase;
 
-	printf( ": UART%d addr=%lx", sa->sa_index, iobase );
+	aprint_normal(": UART%d addr=%lx", sa->sa_index, iobase );
 
 	sc->sc_dev = self;
 	sc->sc_iot = s3c2xx0_softc->sc_iot;
 	sc->sc_unit = unit;
 	sc->sc_frequency = s3c2xx0_softc->sc_pclk;
 
+	sc->sc_change_txrx_interrupts = s3c2410_change_txrx_interrupts;
+
 	sc->sc_rx_irqno = s3c2410_uart_config[sa->sa_index].rx_int;
 	sc->sc_tx_irqno = s3c2410_uart_config[sa->sa_index].tx_int;
 
 	if (bus_space_map(sc->sc_iot, iobase, SSCOM_SIZE, 0, &sc->sc_ioh)) {
-		printf( ": failed to map registers\n" );
+		aprint_error( ": failed to map registers\n" );
 		return;
 	}
 

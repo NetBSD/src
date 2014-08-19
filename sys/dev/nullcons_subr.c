@@ -1,4 +1,4 @@
-/*	$NetBSD: nullcons_subr.c,v 1.11 2011/04/24 16:26:59 rmind Exp $	*/
+/*	$NetBSD: nullcons_subr.c,v 1.11.14.1 2014/08/20 00:03:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.11 2011/04/24 16:26:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.11.14.1 2014/08/20 00:03:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -52,8 +52,18 @@ dev_type_tty(nullcndev_tty);
 static int	nullcons_newdev(struct consdev *);
 
 const struct cdevsw nullcn_devsw = {
-	nullopen, nullclose, nullcndev_read, nullwrite, nullcndev_ioctl,
-	nullstop, nullcndev_tty, nopoll, nommap, ttykqfilter, D_TTY
+	.d_open = nullopen,
+	.d_close = nullclose,
+	.d_read = nullcndev_read,
+	.d_write = nullwrite,
+	.d_ioctl = nullcndev_ioctl,
+	.d_stop = nullstop,
+	.d_tty = nullcndev_tty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 /*

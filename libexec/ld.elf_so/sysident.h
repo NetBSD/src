@@ -1,4 +1,4 @@
-/* $NetBSD: sysident.h,v 1.14.40.1 2013/06/23 06:28:50 tls Exp $ */
+/* $NetBSD: sysident.h,v 1.14.40.2 2014/08/20 00:02:22 tls Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -63,7 +63,7 @@
 
 #define	__S(x)	__STRING(x)
 __asm(
-	".section\t\".note.netbsd.ident\", \"a\"\n"
+	".pushsection\t\".note.netbsd.ident\", \"a\"\n"
 	"\t.p2align\t2\n\n"
 
 	"\t.long\t" __S(ELF_NOTE_NETBSD_NAMESZ) "\n"
@@ -72,12 +72,11 @@ __asm(
 	"\t.ascii\t" __S(ELF_NOTE_NETBSD_NAME) "\n"
 	"\t.long\t" __S(__NetBSD_Version__) "\n\n"
 
-	"\t.previous\n"
-	"\t.p2align\t2\n"
+	"\t.popsection\n"
 );
 
 __asm(
-	".section\t\".note.netbsd.pax\", \"a\"\n"
+	".pushsection\t\".note.netbsd.pax\", \"a\"\n"
 	"\t.p2align\t2\n\n"
 
 	"\t.long\t" __S(ELF_NOTE_PAX_NAMESZ) "\n"
@@ -86,6 +85,21 @@ __asm(
 	"\t.ascii\t" __S(ELF_NOTE_PAX_NAME) "\n"
 	"\t.long\t" __S(0) "\n\n"
 
-	"\t.previous\n"
-	"\t.p2align\t2\n"
+	"\t.popsection\n"
 );
+
+#ifdef ELF_NOTE_MARCH_DESC
+__asm(
+	".pushsection\t\".note.netbsd.march\", \"a\"\n"
+	"\t.p2align\t2\n\n"
+
+	"\t.long\t" __S(ELF_NOTE_MARCH_NAMESZ) "\n"
+	"\t.long\t2f-1f\n"
+	"\t.long\t" __S(ELF_NOTE_TYPE_MARCH_TAG) "\n"
+	"\t.ascii\t" __S(ELF_NOTE_MARCH_NAME) "\n"
+	"1:\t.asciz\t" __S(ELF_NOTE_MARCH_DESC) "\n"
+	"2:\n"
+
+	"\t.popsection\n"
+);
+#endif

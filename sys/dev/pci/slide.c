@@ -1,4 +1,4 @@
-/*	$NetBSD: slide.c,v 1.28.2.1 2012/10/09 13:36:06 bouyer Exp $	*/
+/*	$NetBSD: slide.c,v 1.28.2.2 2014/08/20 00:03:48 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.28.2.1 2012/10/09 13:36:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.28.2.2 2014/08/20 00:03:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ static int  slide_match(device_t, cfdata_t, void *);
 static void slide_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(slide, sizeof(struct pciide_softc),
-    slide_match, slide_attach, NULL, NULL);
+    slide_match, slide_attach, pciide_detach, NULL);
 
 static const struct pciide_product_desc pciide_symphony_products[] = {
 	{ PCI_PRODUCT_SYMPHONY_82C105,

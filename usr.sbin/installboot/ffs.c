@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.29.12.2 2013/06/23 06:29:04 tls Exp $	*/
+/*	$NetBSD: ffs.c,v 1.29.12.3 2014/08/20 00:05:08 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.29.12.2 2013/06/23 06:29:04 tls Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.29.12.3 2014/08/20 00:05:08 tls Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -158,7 +158,7 @@ ffs_find_disk_blocks_ufs1(ib_params *params, ino_t ino,
 
 	/* Read the inode. */
 	if (! ffs_read_disk_block(params,
-		fsbtodb(fs, ino_to_fsba(fs, ino)) + params->fstype->offset,
+		FFS_FSBTODB(fs, ino_to_fsba(fs, ino)) + params->fstype->offset,
 		fs->fs_bsize, inodebuf))
 		return (0);
 	inode = (struct ufs1_dinode *)inodebuf;
@@ -215,7 +215,7 @@ ffs_find_disk_blocks_ufs1(ib_params *params, ino_t ino,
 			if (blk == 0)
 				memset(level[level_i].diskbuf, 0, MAXBSIZE);
 			else if (! ffs_read_disk_block(params, 
-				fsbtodb(fs, blk) + params->fstype->offset,
+				FFS_FSBTODB(fs, blk) + params->fstype->offset,
 				fs->fs_bsize, level[level_i].diskbuf))
 				return (0);
 			/* XXX ondisk32 */
@@ -228,10 +228,10 @@ ffs_find_disk_blocks_ufs1(ib_params *params, ino_t ino,
 		/* blk is the next direct level block. */
 #if 0
 		fprintf(stderr, "ino %lu db %lu blksize %lu\n", ino, 
-		    fsbtodb(fs, blk), ffs_sblksize(fs, inode->di_size, lblk));
+		    FFS_FSBTODB(fs, blk), ffs_sblksize(fs, inode->di_size, lblk));
 #endif
 		rv = (*callback)(params, state, 
-		    fsbtodb(fs, blk) + params->fstype->offset,
+		    FFS_FSBTODB(fs, blk) + params->fstype->offset,
 		    ffs_sblksize(fs, (int64_t)inode->di_size, lblk));
 		lblk++;
 		nblk--;
@@ -295,7 +295,7 @@ ffs_find_disk_blocks_ufs2(ib_params *params, ino_t ino,
 
 	/* Read the inode. */
 	if (! ffs_read_disk_block(params,
-		fsbtodb(fs, ino_to_fsba(fs, ino)) + params->fstype->offset,
+		FFS_FSBTODB(fs, ino_to_fsba(fs, ino)) + params->fstype->offset,
 		fs->fs_bsize, inodebuf))
 		return (0);
 	inode = (struct ufs2_dinode *)inodebuf;
@@ -352,7 +352,7 @@ ffs_find_disk_blocks_ufs2(ib_params *params, ino_t ino,
 			if (blk == 0)
 				memset(level[level_i].diskbuf, 0, MAXBSIZE);
 			else if (! ffs_read_disk_block(params, 
-				fsbtodb(fs, blk) + params->fstype->offset,
+				FFS_FSBTODB(fs, blk) + params->fstype->offset,
 				fs->fs_bsize, level[level_i].diskbuf))
 				return (0);
 			level[level_i].blknums = 
@@ -364,10 +364,10 @@ ffs_find_disk_blocks_ufs2(ib_params *params, ino_t ino,
 		/* blk is the next direct level block. */
 #if 0
 		fprintf(stderr, "ino %lu db %llu blksize %lu\n", ino, 
-		    fsbtodb(fs, blk), ffs_sblksize(fs, inode->di_size, lblk));
+		    FFS_FSBTODB(fs, blk), ffs_sblksize(fs, inode->di_size, lblk));
 #endif
 		rv = (*callback)(params, state, 
-		    fsbtodb(fs, blk) + params->fstype->offset,
+		    FFS_FSBTODB(fs, blk) + params->fstype->offset,
 		    ffs_sblksize(fs, (int64_t)inode->di_size, lblk));
 		lblk++;
 		nblk--;

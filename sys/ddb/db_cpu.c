@@ -1,4 +1,4 @@
-/*	$NetBSD: db_cpu.c,v 1.4 2011/02/20 10:24:45 hannken Exp $	*/
+/*	$NetBSD: db_cpu.c,v 1.4.14.1 2014/08/20 00:03:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_cpu.c,v 1.4 2011/02/20 10:24:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_cpu.c,v 1.4.14.1 2014/08/20 00:03:35 tls Exp $");
 
 #ifndef _KERNEL
 #include <stdbool.h>
@@ -42,26 +42,46 @@ __KERNEL_RCSID(0, "$NetBSD: db_cpu.c,v 1.4 2011/02/20 10:24:45 hannken Exp $");
 
 #include <ddb/ddb.h>
 
-static struct cpu_info	*head;
-static void *head_addr;
+static int		db_ncpu;
+static struct cpu_info	**db_cpu_infos;
+
+static void
+db_cpu_init(void)
+{
+	db_expr_t addr;
+
+	db_value_of_name("ncpu", &addr);
+	db_read_bytes((db_addr_t)addr, sizeof(db_ncpu), (char *)&db_ncpu);
+
+	db_value_of_name("cpu_infos", &addr);
+	db_read_bytes((db_addr_t)addr, sizeof(db_cpu_infos),
+	    (char *)&db_cpu_infos);
+}
+
+static struct cpu_info *
+db_cpu_by_index(u_int idx)
+{
+	struct cpu_info *ci;
+
+	db_read_bytes((db_addr_t)&db_cpu_infos[idx], sizeof(ci), (char *)&ci);
+	return ci;
+}
 
 struct cpu_info *
 db_cpu_first(void)
 {
 
-	head = db_read_ptr("cpu_queue");
-	(void) db_value_of_name("cpu_queue", (db_expr_t *)&head_addr);
-	return head;
+	db_cpu_init();
+	return db_cpu_by_index(0);
 }
 
 struct cpu_info *
 db_cpu_next(struct cpu_info *ci)
 {
+	u_int idx;
 
-	db_read_bytes((db_addr_t)&ci->ci_data.cpu_qchain.cqe_next,
-	    sizeof(ci), (char *)&ci);
-	if (ci == head_addr) {
-		ci = NULL;
-	}
-	return ci;
+	db_read_bytes((db_addr_t)&ci->ci_index, sizeof(idx), (char *)&idx);
+	if ((idx + 1) >= (u_int)db_ncpu)
+		return NULL;
+	return db_cpu_by_index(idx + 1);
 }

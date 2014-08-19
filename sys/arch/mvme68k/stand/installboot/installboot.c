@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.15.44.2 2013/06/23 06:20:09 tls Exp $ */
+/*	$NetBSD: installboot.c,v 1.15.44.3 2014/08/20 00:03:14 tls Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -294,7 +294,7 @@ loadblocknums(char *boot, int devfd)
 	if ((buf = malloc(fs->fs_bsize)) == NULL)
 		errx(1, "No memory for filesystem block");
 
-	blk = fsbtodb(fs, ino_to_fsba(fs, statbuf.st_ino));
+	blk = FFS_FSBTODB(fs, ino_to_fsba(fs, statbuf.st_ino));
 	devread(devfd, buf, blk, fs->fs_bsize, "inode");
 	ip = (struct ufs1_dinode *)(buf) + ino_to_fsbo(fs, statbuf.st_ino);
 
@@ -315,7 +315,7 @@ loadblocknums(char *boot, int devfd)
 	 */
 	ap = ip->di_db;
 	for (i = 0; i < UFS_NDADDR && *ap && ndb; i++, ap++, ndb--) {
-		blk = fsbtodb(fs, *ap);
+		blk = FFS_FSBTODB(fs, *ap);
 		if (verbose)
 			printf("%d: %d\n", i, blk);
 		block_table[i] = blk;
@@ -327,12 +327,12 @@ loadblocknums(char *boot, int devfd)
 	 * Just one level of indirections; there isn't much room
 	 * for more in the 1st-level bootblocks anyway.
 	 */
-	blk = fsbtodb(fs, ip->di_ib[0]);
+	blk = FFS_FSBTODB(fs, ip->di_ib[0]);
 	devread(devfd, buf, blk, fs->fs_bsize, "indirect block");
 	/* XXX ondisk32 */
 	ap = (int32_t *)buf;
 	for (; i < FFS_NINDIR(fs) && *ap && ndb; i++, ap++, ndb--) {
-		blk = fsbtodb(fs, *ap);
+		blk = FFS_FSBTODB(fs, *ap);
 		if (verbose)
 			printf("%d: %d\n", i, blk);
 		block_table[i] = blk;

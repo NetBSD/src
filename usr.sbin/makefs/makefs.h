@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.27.2.1 2013/02/25 00:30:44 tls Exp $	*/
+/*	$NetBSD: makefs.h,v 1.27.2.2 2014/08/20 00:05:09 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -92,6 +92,7 @@ typedef struct {
 	uint32_t	 nlink;		/* number of links to this entry */
 	enum fi_flags	 flags;		/* flags used by fs specific code */
 	struct stat	 st;		/* stat entry */
+	void		*fsuse;		/* for storing FS dependent info */
 } fsinode;
 
 typedef struct _fsnode {
@@ -194,6 +195,7 @@ DECLARE_FUN(cd9660);
 DECLARE_FUN(chfs);
 DECLARE_FUN(v7fs);
 DECLARE_FUN(msdos);
+DECLARE_FUN(udf);
 
 extern	u_int		debug;
 extern	struct timespec	start_time;

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_isa.c,v 1.25 2008/05/25 16:19:12 jmcneill Exp $ */
+/* $NetBSD: pckbc_isa.c,v 1.25.42.1 2014/08/20 00:03:39 tls Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.25 2008/05/25 16:19:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.25.42.1 2014/08/20 00:03:39 tls Exp $");
 
 #include "opt_pckbc.h"
 
@@ -123,6 +123,8 @@ pckbc_isa_match(device_t parent, cfdata_t match, void *aux)
 #endif
 			ok = 0;
 		}
+#else
+		__USE(res);
 #endif /* PCKBCNOTEST */
  out:
 		bus_space_unmap(iot, ioh_d, 1);

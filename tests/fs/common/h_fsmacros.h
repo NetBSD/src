@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.36.2.1 2013/06/23 06:28:55 tls Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.36.2.2 2014/08/20 00:04:47 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@ FSPROTOS(puffs);
 FSPROTOS(rumpfs);
 FSPROTOS(sysvbfs);
 FSPROTOS(tmpfs);
+FSPROTOS(udf);
 FSPROTOS(v7fs);
 FSPROTOS(zfs);
 
@@ -175,6 +176,7 @@ do {									\
   ATF_TC_FSADD(rumpfs,MOUNT_RUMPFS,func,desc)				\
   ATF_TC_FSADD(sysvbfs,MOUNT_SYSVBFS,func,desc)				\
   ATF_TC_FSADD(tmpfs,MOUNT_TMPFS,func,desc)				\
+  ATF_TC_FSADD(udf,MOUNT_UDF,func,desc)				\
   ATF_TC_FSADD(v7fs,MOUNT_V7FS,func,desc)
 
 #define ATF_TP_FSAPPLY_NOZFS(func)					\
@@ -189,6 +191,7 @@ do {									\
   ATF_TP_FSADD(rumpfs,func);						\
   ATF_TP_FSADD(sysvbfs,func);						\
   ATF_TP_FSADD(tmpfs,func);						\
+  ATF_TP_FSADD(udf,func);						\
   ATF_TP_FSADD(v7fs,func);
 
 /* XXX: this will not scale */
@@ -228,6 +231,7 @@ do {									\
   ATF_TC_FSADD_RO(nfs,MOUNT_NFS,func,desc,gen)				\
   ATF_TC_FSADD_RO(nfsro,MOUNT_NFS,func,desc,gen)			\
   ATF_TC_FSADD_RO(sysvbfs,MOUNT_SYSVBFS,func,desc,gen)			\
+  ATF_TC_FSADD_RO(udf,MOUNT_UDF,func,desc,gen)			\
   ATF_TC_FSADD_RO(v7fs,MOUNT_V7FS,func,desc,gen)
 
 #define ATF_TP_FSAPPLY_RO(func)						\
@@ -238,6 +242,7 @@ do {									\
   ATF_TP_FSADD(nfs,func);						\
   ATF_TP_FSADD(nfsro,func);						\
   ATF_TP_FSADD(sysvbfs,func);						\
+  ATF_TP_FSADD(udf,func);						\
   ATF_TP_FSADD(v7fs,func);
 
 #define ATF_FSAPPLY(func,desc)						\
@@ -286,6 +291,8 @@ atf_check_fstype(const atf_tc_t *tc, const char *fs)
     (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "sysvbfs") == 0)
 #define FSTYPE_TMPFS(tc)\
     (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "tmpfs") == 0)
+#define FSTYPE_UDF(tc)\
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "udf") == 0)
 #define FSTYPE_V7FS(tc)\
     (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), "v7fs") == 0)
 #define FSTYPE_ZFS(tc)\

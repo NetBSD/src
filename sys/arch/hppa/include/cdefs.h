@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.2 2012/01/20 14:08:05 joerg Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.2.6.1 2014/08/20 00:03:05 tls Exp $	*/
 
 #ifndef	_HPPA_CDEFS_H_
 #define	_HPPA_CDEFS_H_
@@ -10,6 +10,6 @@
  */
 #define __ASM_DELIMITER "\n\t"
 
-#define	__ALIGNBYTES	7
+#define	__ALIGNBYTES	((size_t)7)
 
 #endif /* !_HPPA_CDEFS_H_ */

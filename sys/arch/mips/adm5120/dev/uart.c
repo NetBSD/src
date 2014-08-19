@@ -1,4 +1,4 @@
-/* $NetBSD: uart.c,v 1.9 2011/07/10 23:13:23 matt Exp $ */
+/* $NetBSD: uart.c,v 1.9.12.1 2014/08/20 00:03:12 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.9 2011/07/10 23:13:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.9.12.1 2014/08/20 00:03:12 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -66,8 +66,18 @@ dev_type_poll(uart_poll);
 dev_type_stop(uart_stop);
 
 const struct cdevsw uart_cdevsw = {
-        uart_open, uart_close, uart_read, uart_write, uart_ioctl,
-        uart_stop, uart_tty, uart_poll, nommap, ttykqfilter, D_TTY
+        .d_open = uart_open,
+	.d_close = uart_close,
+	.d_read = uart_read,
+	.d_write = uart_write,
+	.d_ioctl = uart_ioctl,
+        .d_stop = uart_stop,
+	.d_tty = uart_tty,
+	.d_poll = uart_poll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 struct consdev uartcons = {
@@ -162,8 +172,6 @@ uart_cnattach(void)
 void
 uart_cnputc(dev_t dev, int c)
 {
-	char chr;
-	chr = c;
 	while ((*((volatile unsigned long *)0xb2600018)) & 0x20)
 		continue;
 	(*((volatile unsigned long *)0xb2600000)) = c;
@@ -326,7 +334,7 @@ uart_intr(void *v)
 {
 	struct uart_softc *sc = v;
 	struct tty *tp = sc->sc_tty;
-	int c, l_r;
+	int c;
 
 	if (REG_READ(UART_RSR_REG) & UART_RSR_BE) {
 		REG_WRITE(UART_ECR_REG, UART_ECR_RSR);
@@ -336,7 +344,7 @@ uart_intr(void *v)
 	while ((REG_READ(UART_FR_REG) & UART_FR_RX_FIFO_EMPTY) == 0) {
 		c = REG_READ(UART_DR_REG) & 0xff;
 		if (tp->t_state & TS_ISOPEN)
-			l_r = (*tp->t_linesw->l_rint)(c, tp);
+			(*tp->t_linesw->l_rint)(c, tp);
 	}
 	return 0;
 }

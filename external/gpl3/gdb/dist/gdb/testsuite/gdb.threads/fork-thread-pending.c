@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2008-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@
 #define NUMTHREADS 10
 
 volatile int done = 0;
+static pthread_barrier_t barrier;
 
 static void *
 start (void *arg)
@@ -45,6 +46,8 @@ thread_function (void *arg)
 
   printf ("Thread <%d> executing\n", x);
 
+  pthread_barrier_wait (&barrier);
+
   while (!done)
     usleep (100);
 
@@ -61,6 +64,8 @@ thread_forker (void *arg)
   pthread_t thread;
 
   printf ("Thread forker <%d> executing\n", x);
+
+  pthread_barrier_wait (&barrier);
 
   switch ((pid = fork ()))
     {
@@ -88,6 +93,11 @@ main (void)
   pthread_t threads[NUMTHREADS];
   int args[NUMTHREADS];
   int i, j;
+
+  alarm (600);
+
+  i = pthread_barrier_init (&barrier, NULL, NUMTHREADS);
+  assert (i == 0);
 
   /* Create a few threads that do mostly nothing, and then one that
      forks.  */

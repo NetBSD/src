@@ -218,24 +218,24 @@ document for an introduction to the Postfix architecture. </p>
 
    <td colspan="2"> </td>
 
-	<td bgcolor="#f0f0ff" align="center" valign="middle">
-	<a href="QSHAPE_README.html#maildrop_queue"> maildrop <br>
-	queue </a> </td>
+        <td bgcolor="#f0f0ff" align="center" valign="middle">
+        <a href="QSHAPE_README.html#maildrop_queue"> maildrop <br>
+        queue </a> </td>
 
    <td align="center" valign="middle"> <tt> &lt;- </tt> </td>
 
-	<td bgcolor="#f0f0ff" align="center" valign="middle">Postfix<br>
-	postdrop(1) </td>
+        <td bgcolor="#f0f0ff" align="center" valign="middle">Postfix<br>
+        postdrop(1) </td>
 
    <td align="center" valign="middle"> <tt> &lt;- </tt> </td>
 
-	<td bgcolor="#f0f0ff" align="center" valign="middle">Postfix<br>
-	sendmail(1) </td>
+        <td bgcolor="#f0f0ff" align="center" valign="middle">Postfix<br>
+        sendmail(1) </td>
 
    <td align="center" valign="middle"> <tt> &lt;- </tt> </td>
 
-	<td bgcolor="#f0f0ff" align="center" valign="middle">Content
-	<br> filter </td>
+        <td bgcolor="#f0f0ff" align="center" valign="middle">Content
+        <br> filter </td>
 
    <td colspan="2"> </td>
 
@@ -750,6 +750,8 @@ that injects mail back into Postfix. </p>
         -o smtpd_helo_restrictions=
         -o smtpd_client_restrictions=
         -o smtpd_sender_restrictions=
+        # Postfix 2.10 and later: specify empty smtpd_relay_restrictions.
+        -o smtpd_relay_restrictions=
         -o smtpd_recipient_restrictions=permit_mynetworks,reject
         -o mynetworks=127.0.0.0/8
         -o smtpd_authorized_xforward_hosts=127.0.0.0/8

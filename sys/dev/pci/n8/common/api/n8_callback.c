@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: n8_callback.c,v 1.1 2008/10/30 12:02:14 darran Exp $";
+static char const n8_id[] = "$Id: n8_callback.c,v 1.1.42.1 2014/08/20 00:03:48 tls Exp $";
 /*****************************************************************************/
 /** @file n8_callback.c
  *  @brief Routines for implementing the API callbacks.
@@ -188,7 +188,7 @@ N8_Status_t n8_callbackThread(N8_CallbackData_t *callbackData_p)
    recalc_sigpending(current);
 
    /* set name of this process (max 15 chars + 0 !) */
-   sprintf(current->comm, "NSP2000 Thread");
+   strcpy(current->comm, "NSP2000 Thread");
 #endif
         
    while (callbackData_p->n8_thread == TRUE)

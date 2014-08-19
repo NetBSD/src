@@ -19,7 +19,9 @@ Things that still need to be done: -*- Text -*-
      the stupid quips and fill in all the blanks.
 
  o - upgrade the reloc handling as per Steve's suggestion.
+
+Copyright (C) 2012 Free Software Foundation, Inc.
 
-
-
-
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.

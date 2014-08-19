@@ -1,4 +1,4 @@
-/*	$NetBSD: n_erf.c,v 1.8 2011/11/02 02:34:56 christos Exp $	*/
+/*	$NetBSD: n_erf.c,v 1.8.8.1 2014/08/20 00:02:18 tls Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -320,6 +320,12 @@ erf(double x)
 		return (z-one);
 }
 
+float
+erff(float x)
+{
+	return (float)erf(x);
+}
+
 double
 erfc(double x)
 {
@@ -396,3 +402,11 @@ erfc(double x)
 	else
 		return two-r;
 }
+
+float
+erfcf(float x)
+{
+	return (float)erfc(x);
+}
+
+

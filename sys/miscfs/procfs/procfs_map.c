@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.42 2012/05/06 03:13:11 christos Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.42.2.1 2014/08/20 00:04:31 tls Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.42 2012/05/06 03:13:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.42.2.1 2014/08/20 00:04:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,6 +208,8 @@ again:
 			bufsize <<= 1;
 			if (bufsize > MAXBUFFERSIZE) {
 				error = ENOMEM;
+				vm_map_unlock_read(map);
+				uvmspace_free(vm);
 				goto out;
 			}
 			free(buffer, M_TEMP);

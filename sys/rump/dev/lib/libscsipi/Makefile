@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/08/23 20:49:53 pooka Exp $
+#	$NetBSD: Makefile,v 1.1.24.1 2014/08/20 00:04:38 tls Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/scsipi
@@ -14,7 +14,7 @@ SRCS+=	cd.c sd.c
 SRCS+=		scsipi_verbose.c
 .endif
 
-SRCS+=	component.c
+SRCS+=	scsipi_component.c
 
 CPPFLAGS+=	-I${.CURDIR}/opt -I${RUMPTOP}/librump/rumpvfs
 

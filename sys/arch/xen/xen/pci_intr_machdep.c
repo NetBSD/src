@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_intr_machdep.c,v 1.15 2011/07/01 18:36:45 dyoung Exp $      */
+/*      $NetBSD: pci_intr_machdep.c,v 1.15.12.1 2014/08/20 00:03:30 tls Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.15 2011/07/01 18:36:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.15.12.1 2014/08/20 00:03:30 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -151,26 +151,26 @@ bad:
 	return 1;
 }
 
-const char
-*pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
+const char *
+pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
+    size_t len)
 {
-	static char buf[64];
 #if NIOAPIC > 0
 	struct ioapic_softc *pic;
 	if (ih.pirq & APIC_INT_VIA_APIC) {
 		pic = ioapic_find(APIC_IRQ_APIC(ih.pirq));
 		if (pic == NULL) {
-			printf("pci_intr_string: bad ioapic %d\n",
+			printf("%s: bad ioapic %d\n", __func__,
 			    APIC_IRQ_APIC(ih.pirq));
 			return NULL;
 		}
-		snprintf(buf, 64, "%s pin %d, event channel %d",
+		snprintf(buf, len, "%s pin %d, event channel %d",
 		    device_xname(pic->sc_dev), APIC_IRQ_PIN(ih.pirq),
 		    ih.evtch);
 		return buf;
 	}
 #endif
-	snprintf(buf, 64, "irq %d, event channel %d",
+	snprintf(buf, len, "irq %d, event channel %d",
 	    ih.pirq, ih.evtch);
 	return buf;
 }

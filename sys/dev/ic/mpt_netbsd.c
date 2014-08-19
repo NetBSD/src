@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.18.2.2 2012/11/20 03:02:06 tls Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.18.2.3 2014/08/20 00:03:38 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,29 +77,28 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.18.2.2 2012/11/20 03:02:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.18.2.3 2014/08/20 00:03:38 tls Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
+#include <sys/scsiio.h>
 
 static int	mpt_poll(mpt_softc_t *, struct scsipi_xfer *, int);
 static void	mpt_timeout(void *);
+static void	mpt_restart(mpt_softc_t *, request_t *);
 static void	mpt_done(mpt_softc_t *, uint32_t);
+static int	mpt_drain_queue(mpt_softc_t *);
 static void	mpt_run_xfer(mpt_softc_t *, struct scsipi_xfer *);
 static void	mpt_set_xfer_mode(mpt_softc_t *, struct scsipi_xfer_mode *);
 static void	mpt_get_xfer_mode(mpt_softc_t *, struct scsipi_periph *);
 static void	mpt_ctlop(mpt_softc_t *, void *vmsg, uint32_t);
 static void	mpt_event_notify_reply(mpt_softc_t *, MSG_EVENT_NOTIFY_REPLY *);
+static void  mpt_bus_reset(mpt_softc_t *);
 
 static void	mpt_scsipi_request(struct scsipi_channel *,
 		    scsipi_adapter_req_t, void *);
 static void	mpt_minphys(struct buf *);
-
-/*
- * XXX - this assumes the device_private() of the attachement starts with
- * a struct mpt_softc, so we can use the return value of device_private()
- * straight without any offset.
- */
-#define DEV_TO_MPT(DEV)	device_private(DEV)
+static int 	mpt_ioctl(struct scsipi_channel *, u_long, void *, int,
+	struct proc *);
 
 void
 mpt_scsipi_attach(mpt_softc_t *mpt)
@@ -121,6 +120,7 @@ mpt_scsipi_attach(mpt_softc_t *mpt)
 	adapt->adapt_max_periph = maxq - 2;
 	adapt->adapt_request = mpt_scsipi_request;
 	adapt->adapt_minphys = mpt_minphys;
+	adapt->adapt_ioctl = mpt_ioctl;
 
 	/* Fill in the scsipi_channel. */
 	memset(chan, 0, sizeof(*chan));
@@ -138,7 +138,12 @@ mpt_scsipi_attach(mpt_softc_t *mpt)
 	chan->chan_ntargets = mpt->mpt_max_devices;
 	chan->chan_id = mpt->mpt_ini_id;
 
-	(void) config_found(mpt->sc_dev, &mpt->sc_channel, scsiprint);
+	/*
+	* Save the output of the config so we can rescan the bus in case of 
+	* errors
+	*/
+	mpt->sc_scsibus_dv = config_found(mpt->sc_dev, &mpt->sc_channel, 
+	scsiprint);
 }
 
 int
@@ -306,26 +311,11 @@ mpt_intr(void *arg)
 {
 	mpt_softc_t *mpt = arg;
 	int nrepl = 0;
-	uint32_t reply;
 
 	if ((mpt_read(mpt, MPT_OFFSET_INTR_STATUS) & MPT_INTR_REPLY_READY) == 0)
 		return (0);
 
-	reply = mpt_pop_reply_queue(mpt);
-	while (reply != MPT_REPLY_EMPTY) {
-		nrepl++;
-		if (mpt->verbose > 1) {
-			if ((reply & MPT_CONTEXT_REPLY) != 0) {
-				/* Address reply; IOC has something to say */
-				mpt_print_reply(MPT_REPLY_PTOV(mpt, reply));
-			} else {
-				/* Context reply; all went well */
-				mpt_prt(mpt, "context %u reply OK", reply);
-			}
-		}
-		mpt_done(mpt, reply);
-		reply = mpt_pop_reply_queue(mpt);
-	}
+	nrepl = mpt_drain_queue(mpt);
 	return (nrepl != 0);
 }
 
@@ -360,13 +350,20 @@ static void
 mpt_timeout(void *arg)
 {
 	request_t *req = arg;
-	struct scsipi_xfer *xs = req->xfer;
-	struct scsipi_periph *periph = xs->xs_periph;
-	mpt_softc_t *mpt = DEV_TO_MPT(
-	    periph->periph_channel->chan_adapter->adapt_dev);
-	uint32_t oseq;
-	int s;
-
+	struct scsipi_xfer *xs;
+	struct scsipi_periph *periph;
+	mpt_softc_t *mpt;
+ 	uint32_t oseq;
+	int s, nrepl = 0;
+ 
+	if (req->xfer  == NULL) {
+		printf("mpt_timeout: NULL xfer for request index 0x%x, sequenc 0x%x\n",
+		req->index, req->sequence);
+		return;
+	}
+	xs = req->xfer;
+	periph = xs->xs_periph;
+	mpt = device_private(periph->periph_channel->chan_adapter->adapt_dev);
 	scsipi_printaddr(periph);
 	printf("command timeout\n");
 
@@ -376,11 +373,28 @@ mpt_timeout(void *arg)
 	mpt->timeouts++;
 	if (mpt_intr(mpt)) {
 		if (req->sequence != oseq) {
+			mpt->success++;
 			mpt_prt(mpt, "recovered from command timeout");
 			splx(s);
 			return;
 		}
 	}
+
+	/*
+	 * Ensure the IOC is really done giving us data since it appears it can
+	 * sometimes fail to give us interrupts under heavy load.
+	 */
+	nrepl = mpt_drain_queue(mpt);
+	if (nrepl ) {
+		mpt_prt(mpt, "mpt_timeout: recovered %d commands",nrepl);
+	}
+
+	if (req->sequence != oseq) {
+		mpt->success++;
+		splx(s);
+		return;
+	}
+
 	mpt_prt(mpt,
 	    "timeout on request index = 0x%x, seq = 0x%08x",
 	    req->index, req->sequence);
@@ -393,14 +407,89 @@ mpt_timeout(void *arg)
 	if (mpt->verbose > 1)
 		mpt_print_scsi_io_request((MSG_SCSI_IO_REQUEST *)req->req_vbuf);
 
-	/* XXX WHAT IF THE IOC IS STILL USING IT?? */
-	req->xfer = NULL;
-	mpt_free_request(mpt, req);
-
 	xs->error = XS_TIMEOUT;
-	scsipi_done(xs);
-
 	splx(s);
+	mpt_restart(mpt, req);
+}
+
+static void
+mpt_restart(mpt_softc_t *mpt, request_t *req0)
+{
+	int i, s, nreq;
+	request_t *req;
+	struct scsipi_xfer *xs;
+
+	/* first, reset the IOC, leaving stopped so all requests are idle */
+	if (mpt_soft_reset(mpt) != MPT_OK) {
+		mpt_prt(mpt, "soft reset failed");
+		/* 
+		* Don't try a hard reset since this mangles the PCI 
+		* configuration registers.
+		*/
+		return;
+	}
+
+	/* Freeze the channel so scsipi doesn't queue more commands. */
+	scsipi_channel_freeze(&mpt->sc_channel, 1);
+
+	/* Return all pending requests to scsipi and de-allocate them. */
+	s = splbio();
+	nreq = 0;
+	for (i = 0; i < MPT_MAX_REQUESTS(mpt); i++) {
+		req = &mpt->request_pool[i];
+		xs = req->xfer;
+		if (xs != NULL) {
+			if (xs->datalen != 0)
+				bus_dmamap_unload(mpt->sc_dmat, req->dmap);
+			req->xfer = NULL;
+			callout_stop(&xs->xs_callout);
+			if (req != req0) {
+				nreq++;
+				xs->error = XS_REQUEUE;
+			}
+			scsipi_done(xs);
+			/*
+			* Don't need to mpt_free_request() since mpt_init() 
+			* below will free all requests anyway.
+			*/
+			mpt_free_request(mpt, req);
+		}
+	}
+	splx(s);
+	if (nreq > 0)
+		mpt_prt(mpt, "re-queued %d requests", nreq);
+
+	/* Re-initialize the IOC (which restarts it). */
+	if (mpt_init(mpt, MPT_DB_INIT_HOST) == 0)
+		mpt_prt(mpt, "restart succeeded");
+	/* else error message already printed */
+
+	/* Thaw the channel, causing scsipi to re-queue the commands. */
+	scsipi_channel_thaw(&mpt->sc_channel, 1);
+}
+
+static int 
+mpt_drain_queue(mpt_softc_t *mpt)
+{
+	int nrepl = 0;
+	uint32_t reply;
+
+	reply = mpt_pop_reply_queue(mpt);
+	while (reply != MPT_REPLY_EMPTY) {
+		nrepl++;
+		if (mpt->verbose > 1) {
+			if ((reply & MPT_CONTEXT_REPLY) != 0) {
+				/* Address reply; IOC has something to say */
+				mpt_print_reply(MPT_REPLY_PTOV(mpt, reply));
+			} else {
+				/* Context reply; all went well */
+				mpt_prt(mpt, "context %u reply OK", reply);
+			}
+		}
+		mpt_done(mpt, reply);
+		reply = mpt_pop_reply_queue(mpt);
+	}
+	return (nrepl);
 }
 
 static void
@@ -412,6 +501,7 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 	request_t *req;
 	MSG_REQUEST_HEADER *mpt_req;
 	MSG_SCSI_IO_REPLY *mpt_reply;
+	int restart = 0; /* nonzero if we need to restart the IOC*/
 
 	if (__predict_true((reply & MPT_CONTEXT_REPLY) == 0)) {
 		/* context reply (ok) */
@@ -422,19 +512,22 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 
 		/* XXX BUS_DMASYNC_POSTREAD XXX */
 		mpt_reply = MPT_REPLY_PTOV(mpt, reply);
-		if (mpt->verbose > 1) {
-			uint32_t *pReply = (uint32_t *) mpt_reply;
+		if (mpt_reply != NULL) {
+			if (mpt->verbose > 1) {
+				uint32_t *pReply = (uint32_t *) mpt_reply;
 
-			mpt_prt(mpt, "Address Reply (index %u):",
-			    le32toh(mpt_reply->MsgContext) & 0xffff);
-			mpt_prt(mpt, "%08x %08x %08x %08x",
-			    pReply[0], pReply[1], pReply[2], pReply[3]);
-			mpt_prt(mpt, "%08x %08x %08x %08x",
-			    pReply[4], pReply[5], pReply[6], pReply[7]);
-			mpt_prt(mpt, "%08x %08x %08x %08x",
-			    pReply[8], pReply[9], pReply[10], pReply[11]);
-		}
-		index = le32toh(mpt_reply->MsgContext);
+				mpt_prt(mpt, "Address Reply (index %u):",
+				    le32toh(mpt_reply->MsgContext) & 0xffff);
+				mpt_prt(mpt, "%08x %08x %08x %08x", pReply[0],
+				    pReply[1], pReply[2], pReply[3]);
+				mpt_prt(mpt, "%08x %08x %08x %08x", pReply[4],
+				    pReply[5], pReply[6], pReply[7]);
+				mpt_prt(mpt, "%08x %08x %08x %08x", pReply[8],
+				    pReply[9], pReply[10], pReply[11]);
+			}
+			index = le32toh(mpt_reply->MsgContext);
+		} else
+			index = reply & MPT_CONTEXT_MASK;
 	}
 
 	/*
@@ -446,13 +539,15 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 		if (mpt_reply != NULL)
 			mpt_ctlop(mpt, mpt_reply, reply);
 		else
-			mpt_prt(mpt, "mpt_done: index 0x%x, NULL reply", index);
+			mpt_prt(mpt, "%s: index 0x%x, NULL reply", __func__,
+			    index);
 		return;
 	}
 
 	/* Did we end up with a valid index into the table? */
 	if (__predict_false(index < 0 || index >= MPT_MAX_REQUESTS(mpt))) {
-		mpt_prt(mpt, "mpt_done: invalid index (0x%x) in reply", index);
+		mpt_prt(mpt, "%s: invalid index (0x%x) in reply", __func__,
+		    index);
 		return;
 	}
 
@@ -460,7 +555,8 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 
 	/* Make sure memory hasn't been trashed. */
 	if (__predict_false(req->index != index)) {
-		mpt_prt(mpt, "mpt_done: corrupted request_t (0x%x)", index);
+		mpt_prt(mpt, "%s: corrupted request_t (0x%x)", __func__,
+		    index);
 		return;
 	}
 
@@ -470,7 +566,9 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 	/* Short cut for task management replies; nothing more for us to do. */
 	if (__predict_false(mpt_req->Function == MPI_FUNCTION_SCSI_TASK_MGMT)) {
 		if (mpt->verbose > 1)
-			mpt_prt(mpt, "mpt_done: TASK MGMT");
+			mpt_prt(mpt, "%s: TASK MGMT", __func__);
+		KASSERT(req == mpt->mngt_req);
+		mpt->mngt_req = NULL;
 		goto done;
 	}
 
@@ -484,8 +582,8 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 	if (__predict_false(mpt_req->Function !=
 			    MPI_FUNCTION_SCSI_IO_REQUEST)) {
 		if (mpt->verbose > 1)
-			mpt_prt(mpt, "mpt_done: unknown Function 0x%x (0x%x)",
-			    mpt_req->Function, index);
+			mpt_prt(mpt, "%s: unknown Function 0x%x (0x%x)",
+			    __func__, mpt_req->Function, index);
 		goto done;
 	}
 
@@ -495,7 +593,7 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 	/* Can't have a SCSI command without a scsipi_xfer. */
 	if (__predict_false(xs == NULL)) {
 		mpt_prt(mpt,
-		    "mpt_done: no scsipi_xfer, index = 0x%x, seq = 0x%08x",
+		    "%s: no scsipi_xfer, index = 0x%x, seq = 0x%08x", __func__,
 		    req->index, req->sequence);
 		mpt_prt(mpt, "request state: %s", mpt_req_state(req->debug));
 		mpt_prt(mpt, "mpt_request:");
@@ -547,9 +645,10 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 	}
 
 	xs->status = mpt_reply->SCSIStatus;
-	switch (le16toh(mpt_reply->IOCStatus)) {
+	switch (le16toh(mpt_reply->IOCStatus) & MPI_IOCSTATUS_MASK) {
 	case MPI_IOCSTATUS_SCSI_DATA_OVERRUN:
 		xs->error = XS_DRIVER_STUFFUP;
+		mpt_prt(mpt, "%s: IOC overrun!", __func__);
 		break;
 
 	case MPI_IOCSTATUS_SCSI_DATA_UNDERRUN:
@@ -608,47 +707,84 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 
 	case MPI_IOCSTATUS_SCSI_RESIDUAL_MISMATCH:
 		xs->error = XS_DRIVER_STUFFUP;
+		mpt_prt(mpt, "%s: IOC SCSI residual mismatch!", __func__);
+		restart = 1;
 		break;
 
 	case MPI_IOCSTATUS_SCSI_TASK_TERMINATED:
 		/* XXX What should we do here? */
+		mpt_prt(mpt, "%s: IOC SCSI task terminated!", __func__);
+		restart = 1;
 		break;
 
 	case MPI_IOCSTATUS_SCSI_TASK_MGMT_FAILED:
 		/* XXX */
 		xs->error = XS_DRIVER_STUFFUP;
+		mpt_prt(mpt, "%s: IOC SCSI task failed!", __func__);
+		restart = 1;
 		break;
 
 	case MPI_IOCSTATUS_SCSI_IOC_TERMINATED:
 		/* XXX */
 		xs->error = XS_DRIVER_STUFFUP;
+		mpt_prt(mpt, "%s: IOC task terminated!", __func__);
+		restart = 1;
 		break;
 
 	case MPI_IOCSTATUS_SCSI_EXT_TERMINATED:
 		/* XXX This is a bus-reset */
 		xs->error = XS_DRIVER_STUFFUP;
+		mpt_prt(mpt, "%s: IOC SCSI bus reset!", __func__);
+		restart = 1;
+		break;
+
+	case MPI_IOCSTATUS_SCSI_PROTOCOL_ERROR:
+		/*
+		 * FreeBSD and Linux indicate this is a phase error between
+		 * the IOC and the drive itself. When this happens, the IOC
+		 * becomes unhappy and stops processing all transactions.  
+		 * Call mpt_timeout which knows how to get the IOC back
+		 * on its feet.
+		 */
+		 mpt_prt(mpt, "%s: IOC indicates protocol error -- "
+		     "recovering...", __func__);
+		xs->error = XS_TIMEOUT;
+		restart = 1;
+
 		break;
 
 	default:
 		/* XXX unrecognized HBA error */
 		xs->error = XS_DRIVER_STUFFUP;
+		mpt_prt(mpt, "%s: IOC returned unknown code: 0x%x", __func__,
+		    le16toh(mpt_reply->IOCStatus));
+		restart = 1;
 		break;
 	}
 
-	if (mpt_reply->SCSIState & MPI_SCSI_STATE_AUTOSENSE_VALID) {
-		memcpy(&xs->sense.scsi_sense, req->sense_vbuf,
-		    sizeof(xs->sense.scsi_sense));
-	} else if (mpt_reply->SCSIState & MPI_SCSI_STATE_AUTOSENSE_FAILED) {
-		/*
-		 * This will cause the scsipi layer to issue
-		 * a REQUEST SENSE.
-		 */
-		if (xs->status == SCSI_CHECK)
-			xs->error = XS_BUSY;
+	if (mpt_reply != NULL) {
+		if (mpt_reply->SCSIState & MPI_SCSI_STATE_AUTOSENSE_VALID) {
+			memcpy(&xs->sense.scsi_sense, req->sense_vbuf,
+			    sizeof(xs->sense.scsi_sense));
+		} else if (mpt_reply->SCSIState &
+		    MPI_SCSI_STATE_AUTOSENSE_FAILED) {
+			/*
+			 * This will cause the scsipi layer to issue
+			 * a REQUEST SENSE.
+			 */
+			if (xs->status == SCSI_CHECK)
+				xs->error = XS_BUSY;
+		}
 	}
 
  done:
-	/* If IOC done with this requeset, free it up. */
+	if (mpt_reply != NULL && le16toh(mpt_reply->IOCStatus) & 
+	MPI_IOCSTATUS_FLAG_LOG_INFO_AVAILABLE) {
+		mpt_prt(mpt, "%s: IOC has error - logging...\n", __func__);
+		mpt_ctlop(mpt, mpt_reply, reply);
+	}
+
+	/* If IOC done with this request, free it up. */
 	if (mpt_reply == NULL || (mpt_reply->MsgFlags & 0x80) == 0)
 		mpt_free_request(mpt, req);
 
@@ -658,6 +794,11 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 
 	if (xs != NULL)
 		scsipi_done(xs);
+
+	if (restart) {
+		mpt_prt(mpt, "%s: IOC fatal error: restarting...", __func__);
+		mpt_restart(mpt, NULL);
+	}
 }
 
 static void
@@ -930,6 +1071,12 @@ mpt_run_xfer(mpt_softc_t *mpt, struct scsipi_xfer *xs)
 
 	if (mpt->verbose > 1)
 		mpt_print_scsi_io_request(mpt_req);
+
+		if (xs->timeout == 0) {
+			mpt_prt(mpt, "mpt_run_xfer: no timeout specified for request: 0x%x\n",
+			req->index);
+			xs->timeout = 500;
+		}
 
 	s = splbio();
 	if (__predict_true((xs->xs_control & XS_CTL_POLL) == 0))
@@ -1343,7 +1490,43 @@ mpt_event_notify_reply(mpt_softc_t *mpt, MSG_EVENT_NOTIFY_REPLY *msg)
 	}
 }
 
-/* XXXJRT mpt_bus_reset() */
+static void
+mpt_bus_reset(mpt_softc_t *mpt)
+{
+	request_t *req;
+	MSG_SCSI_TASK_MGMT *mngt_req;
+	int s;
+
+	s = splbio();
+	if (mpt->mngt_req) {
+		/* request already queued; can't do more */
+		splx(s);
+		return;
+	}
+	req = mpt_get_request(mpt);
+	if (__predict_false(req == NULL)) {
+		mpt_prt(mpt, "no mngt request\n");
+		splx(s);
+		return;
+	}
+	mpt->mngt_req = req;
+	splx(s);
+	mngt_req = req->req_vbuf;
+	memset(mngt_req, 0, sizeof(*mngt_req));
+	mngt_req->Function = MPI_FUNCTION_SCSI_TASK_MGMT;
+	mngt_req->Bus = mpt->bus;
+	mngt_req->TargetID = 0;
+	mngt_req->ChainOffset = 0;
+	mngt_req->TaskType = MPI_SCSITASKMGMT_TASKTYPE_RESET_BUS;
+	mngt_req->Reserved1 = 0;
+	mngt_req->MsgFlags =
+	    mpt->is_fc ? MPI_SCSITASKMGMT_MSGFLAGS_LIP_RESET_OPTION : 0;
+	mngt_req->MsgContext = req->index;
+	mngt_req->TaskMsgContext = 0;
+	s = splbio();
+	mpt_send_handshake_cmd(mpt, sizeof(*mngt_req), mngt_req);
+	splx(s);
+}
 
 /*****************************************************************************
  * SCSI interface routines
@@ -1354,7 +1537,7 @@ mpt_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
     void *arg)
 {
 	struct scsipi_adapter *adapt = chan->chan_adapter;
-	mpt_softc_t *mpt = DEV_TO_MPT(adapt->adapt_dev);
+	mpt_softc_t *mpt = device_private(adapt->adapt_dev);
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
@@ -1377,4 +1560,24 @@ mpt_minphys(struct buf *bp)
 	if (bp->b_bcount > MPT_MAX_XFER)
 		bp->b_bcount = MPT_MAX_XFER;
 	minphys(bp);
+}
+
+static int
+mpt_ioctl(struct scsipi_channel *chan, u_long cmd, void *arg,
+    int flag, struct proc *p)
+{
+	mpt_softc_t *mpt;
+	int s;
+
+	mpt = device_private(chan->chan_adapter->adapt_dev);
+	switch (cmd) {
+	case SCBUSIORESET:
+		mpt_bus_reset(mpt);
+		s = splbio();
+		mpt_intr(mpt);
+		splx(s);
+		return(0);
+	default:
+		return (ENOTTY);
+	}
 }

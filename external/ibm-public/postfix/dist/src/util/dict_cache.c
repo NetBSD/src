@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_cache.c,v 1.1.1.1.14.1 2013/02/25 00:27:31 tls Exp $	*/
+/*	$NetBSD: dict_cache.c,v 1.1.1.1.14.2 2014/08/19 23:59:45 tls Exp $	*/
 
 /*++
 /* NAME
@@ -161,6 +161,11 @@
 /*	until a cache cleanup run is completed. Some entries may
 /*	never be removed when the process max_idle time is less
 /*	than the time needed to make a full pass over the cache.
+/*
+/*	The delete-behind strategy assumes that all updates are
+/*	made by a single process. Otherwise, delete-behind may
+/*	remove an entry that was updated after it was scheduled for
+/*	deletion.
 /* LICENSE
 /* .ad
 /* .fi
@@ -679,3 +684,440 @@ const char *dict_cache_name(DICT_CACHE *cp)
      */
     return (cp->name);
 }
+
+ /*
+  * Test driver with support for interleaved access. First, enter a number of
+  * requests to look up, update or delete a sequence of cache entries, then
+  * interleave those sequences with the "run" command.
+  */
+#ifdef TEST
+#include <msg_vstream.h>
+#include <vstring_vstream.h>
+#include <argv.h>
+#include <stringops.h>
+
+#define DELIMS	" "
+#define USAGE	"\n\tTo manage settings:" \
+		"\n\tverbose <level> (verbosity level)" \
+		"\n\telapsed <level> (0=don't show elapsed time)" \
+		"\n\tlmdb_map_size <limit> (initial LMDB size limit)" \
+		"\n\tcache <type>:<name> (switch to named database)" \
+		"\n\tstatus (show map size, cache, pending requests)" \
+		"\n\n\tTo manage pending requests:" \
+		"\n\treset (discard pending requests)" \
+		"\n\trun (execute pending requests in interleaved order)" \
+		"\n\n\tTo add a pending request:" \
+		"\n\tquery <key-suffix> <count> (negative to reverse order)" \
+		"\n\tupdate <key-suffix> <count> (negative to reverse order)" \
+		"\n\tdelete <key-suffix> <count> (negative to reverse order)" \
+		"\n\tpurge <key-suffix>" \
+		"\n\tcount <key-suffix>"
+
+ /*
+  * For realism, open the cache with the same flags as postscreen(8) and
+  * verify(8).
+  */
+#define DICT_CACHE_OPEN_FLAGS (DICT_FLAG_DUP_REPLACE | DICT_FLAG_SYNC_UPDATE | \
+	DICT_FLAG_OPEN_LOCK)
+
+ /*
+  * Storage for one request to access a sequence of cache entries.
+  */
+typedef struct DICT_CACHE_SREQ {
+    int     flags;			/* per-request: reverse, purge */
+    char   *cmd;			/* command for status report */
+    void    (*action) (struct DICT_CACHE_SREQ *, DICT_CACHE *, VSTRING *);
+    char   *suffix;			/* key suffix */
+    int     done;			/* progress indicator */
+    int     todo;			/* number of entries to process */
+    int     first_next;			/* first/next */
+} DICT_CACHE_SREQ;
+
+#define DICT_CACHE_SREQ_FLAG_PURGE	(1<<1)	/* purge instead of count */
+#define DICT_CACHE_SREQ_FLAG_REVERSE	(1<<2)	/* reverse instead of forward */
+
+#define DICT_CACHE_SREQ_LIMIT		10
+
+ /*
+  * All test requests combined.
+  */
+typedef struct DICT_CACHE_TEST {
+    int     flags;			/* exclusion flags */
+    int     size;			/* allocated slots */
+    int     used;			/* used slots */
+    DICT_CACHE_SREQ job_list[1];	/* actually, a bunch */
+} DICT_CACHE_TEST;
+
+#define DICT_CACHE_TEST_FLAG_ITER	(1<<0)	/* count or purge */
+
+#define STR(x)	vstring_str(x)
+
+int     show_elapsed = 1;		/* show elapsed time */
+
+#ifdef HAS_LMDB
+extern size_t dict_lmdb_map_size;	/* LMDB-specific */
+
+#endif
+
+/* usage - command-line usage message */
+
+static NORETURN usage(const char *progname)
+{
+    msg_fatal("usage: %s (no argument)", progname);
+}
+
+/* make_tagged_key - make tagged search key */
+
+static void make_tagged_key(VSTRING *bp, DICT_CACHE_SREQ *cp)
+{
+    if (cp->done < 0)
+	msg_panic("make_tagged_key: bad done count: %d", cp->done);
+    if (cp->todo < 1)
+	msg_panic("make_tagged_key: bad todo count: %d", cp->todo);
+    vstring_sprintf(bp, "%d-%s",
+		    (cp->flags & DICT_CACHE_SREQ_FLAG_REVERSE) ?
+		    cp->todo - cp->done - 1 : cp->done, cp->suffix);
+}
+
+/* create_requests - create request list */
+
+static DICT_CACHE_TEST *create_requests(int count)
+{
+    DICT_CACHE_TEST *tp;
+    DICT_CACHE_SREQ *cp;
+
+    tp = (DICT_CACHE_TEST *) mymalloc(sizeof(DICT_CACHE_TEST) +
+				      (count - 1) *sizeof(DICT_CACHE_SREQ));
+    tp->flags = 0;
+    tp->size = count;
+    tp->used = 0;
+    for (cp = tp->job_list; cp < tp->job_list + count; cp++) {
+	cp->flags = 0;
+	cp->cmd = 0;
+	cp->action = 0;
+	cp->suffix = 0;
+	cp->todo = 0;
+	cp->first_next = DICT_SEQ_FUN_FIRST;
+    }
+    return (tp);
+}
+
+/* reset_requests - reset request list */
+
+static void reset_requests(DICT_CACHE_TEST *tp)
+{
+    DICT_CACHE_SREQ *cp;
+
+    tp->flags = 0;
+    tp->used = 0;
+    for (cp = tp->job_list; cp < tp->job_list + tp->size; cp++) {
+	cp->flags = 0;
+	if (cp->cmd) {
+	    myfree(cp->cmd);
+	    cp->cmd = 0;
+	}
+	cp->action = 0;
+	if (cp->suffix) {
+	    myfree(cp->suffix);
+	    cp->suffix = 0;
+	}
+	cp->todo = 0;
+	cp->first_next = DICT_SEQ_FUN_FIRST;
+    }
+}
+
+/* free_requests - destroy request list */
+
+static void free_requests(DICT_CACHE_TEST *tp)
+{
+    reset_requests(tp);
+    myfree((char *) tp);
+}
+
+/* run_requests - execute pending requests in interleaved order */
+
+static void run_requests(DICT_CACHE_TEST *tp, DICT_CACHE *dp, VSTRING *bp)
+{
+    DICT_CACHE_SREQ *cp;
+    int     todo;
+    struct timeval start;
+    struct timeval finish;
+    struct timeval elapsed;
+
+    if (dp == 0) {
+	msg_warn("no cache");
+	return;
+    }
+    GETTIMEOFDAY(&start);
+    do {
+	todo = 0;
+	for (cp = tp->job_list; cp < tp->job_list + tp->used; cp++) {
+	    if (cp->done < cp->todo) {
+		todo = 1;
+		cp->action(cp, dp, bp);
+	    }
+	}
+    } while (todo);
+    GETTIMEOFDAY(&finish);
+    timersub(&finish, &start, &elapsed);
+    if (show_elapsed)
+	vstream_printf("Elapsed: %g\n",
+		       elapsed.tv_sec + elapsed.tv_usec / 1000000.0);
+
+    reset_requests(tp);
+}
+
+/* show_status - show settings and pending requests */
+
+static void show_status(DICT_CACHE_TEST *tp, DICT_CACHE *dp)
+{
+    DICT_CACHE_SREQ *cp;
+
+#ifdef HAS_LMDB
+    vstream_printf("lmdb_map_size\t%ld\n", (long) dict_lmdb_map_size);
+#endif
+    vstream_printf("cache\t%s\n", dp ? dp->name : "(none)");
+
+    if (tp->used == 0)
+	vstream_printf("No pending requests\n");
+    else
+	vstream_printf("%s\t%s\t%s\t%s\t%s\t%s\n",
+		     "cmd", "dir", "suffix", "count", "done", "first/next");
+
+    for (cp = tp->job_list; cp < tp->job_list + tp->used; cp++)
+	if (cp->todo > 0)
+	    vstream_printf("%s\t%s\t%s\t%d\t%d\t%d\n",
+			   cp->cmd,
+			   (cp->flags & DICT_CACHE_SREQ_FLAG_REVERSE) ?
+			   "reverse" : "forward",
+			   cp->suffix ? cp->suffix : "(null)", cp->todo,
+			   cp->done, cp->first_next);
+}
+
+/* query_action - lookup cache entry */
+
+static void query_action(DICT_CACHE_SREQ *cp, DICT_CACHE *dp, VSTRING *bp)
+{
+    const char *lookup;
+
+    make_tagged_key(bp, cp);
+    if ((lookup = dict_cache_lookup(dp, STR(bp))) == 0) {
+	if (dp->error)
+	    msg_warn("query_action: query failed: %s: %m", STR(bp));
+	else
+	    msg_warn("query_action: query failed: %s", STR(bp));
+    } else if (strcmp(STR(bp), lookup) != 0) {
+	msg_warn("lookup result \"%s\" differs from key \"%s\"",
+		 lookup, STR(bp));
+    }
+    cp->done += 1;
+}
+
+/* update_action - update cache entry */
+
+static void update_action(DICT_CACHE_SREQ *cp, DICT_CACHE *dp, VSTRING *bp)
+{
+    make_tagged_key(bp, cp);
+    if (dict_cache_update(dp, STR(bp), STR(bp)) != 0) {
+	if (dp->error)
+	    msg_warn("update_action: update failed: %s: %m", STR(bp));
+	else
+	    msg_warn("update_action: update failed: %s", STR(bp));
+    }
+    cp->done += 1;
+}
+
+/* delete_action - delete cache entry */
+
+static void delete_action(DICT_CACHE_SREQ *cp, DICT_CACHE *dp, VSTRING *bp)
+{
+    make_tagged_key(bp, cp);
+    if (dict_cache_delete(dp, STR(bp)) != 0) {
+	if (dp->error)
+	    msg_warn("delete_action: delete failed: %s: %m", STR(bp));
+	else
+	    msg_warn("delete_action: delete failed: %s", STR(bp));
+    }
+    cp->done += 1;
+}
+
+/* iter_action - iterate over cache and act on entries with given suffix */
+
+static void iter_action(DICT_CACHE_SREQ *cp, DICT_CACHE *dp, VSTRING *bp)
+{
+    const char *cache_key;
+    const char *cache_val;
+    const char *what;
+    const char *suffix;
+
+    if (dict_cache_sequence(dp, cp->first_next, &cache_key, &cache_val) == 0) {
+	if (strcmp(cache_key, cache_val) != 0)
+	    msg_warn("value \"%s\" differs from key \"%s\"",
+		     cache_val, cache_key);
+	suffix = cache_key + strspn(cache_key, "0123456789");
+	if (suffix[0] == '-' && strcmp(suffix + 1, cp->suffix) == 0) {
+	    cp->done += 1;
+	    cp->todo = cp->done + 1;		/* XXX */
+	    if ((cp->flags & DICT_CACHE_SREQ_FLAG_PURGE)
+		&& dict_cache_delete(dp, cache_key) != 0) {
+		if (dp->error)
+		    msg_warn("purge_action: delete failed: %s: %m", STR(bp));
+		else
+		    msg_warn("purge_action: delete failed: %s", STR(bp));
+	    }
+	}
+	cp->first_next = DICT_SEQ_FUN_NEXT;
+    } else {
+	what = (cp->flags & DICT_CACHE_SREQ_FLAG_PURGE) ? "purge" : "count";
+	if (dp->error)
+	    msg_warn("%s error after %d: %m", what, cp->done);
+	else
+	    vstream_printf("suffix=%s %s=%d\n", cp->suffix, what, cp->done);
+	cp->todo = 0;
+    }
+}
+
+ /*
+  * Table-driven support.
+  */
+typedef struct DICT_CACHE_SREQ_INFO {
+    const char *name;
+    int     argc;
+    void    (*action) (DICT_CACHE_SREQ *, DICT_CACHE *, VSTRING *);
+    int     test_flags;
+    int     req_flags;
+} DICT_CACHE_SREQ_INFO;
+
+static DICT_CACHE_SREQ_INFO req_info[] = {
+    {"query", 3, query_action},
+    {"update", 3, update_action},
+    {"delete", 3, delete_action},
+    {"count", 2, iter_action, DICT_CACHE_TEST_FLAG_ITER},
+    {"purge", 2, iter_action, DICT_CACHE_TEST_FLAG_ITER, DICT_CACHE_SREQ_FLAG_PURGE},
+    0,
+};
+
+/* add_request - add a request to the list */
+
+static void add_request(DICT_CACHE_TEST *tp, ARGV *argv)
+{
+    DICT_CACHE_SREQ_INFO *rp;
+    DICT_CACHE_SREQ *cp;
+    int     req_flags;
+    int     count;
+    char   *cmd = argv->argv[0];
+    char   *suffix = (argv->argc > 1 ? argv->argv[1] : 0);
+    char   *todo = (argv->argc > 2 ? argv->argv[2] : "1");	/* XXX */
+
+    if (tp->used >= tp->size) {
+	msg_warn("%s: request list is full", cmd);
+	return;
+    }
+    for (rp = req_info; /* See below */ ; rp++) {
+	if (rp->name == 0) {
+	    vstream_printf("usage: %s\n", USAGE);
+	    return;
+	}
+	if (strcmp(rp->name, argv->argv[0]) == 0
+	    && rp->argc == argv->argc)
+	    break;
+    }
+    req_flags = rp->req_flags;
+    if (todo[0] == '-') {
+	req_flags |= DICT_CACHE_SREQ_FLAG_REVERSE;
+	todo += 1;
+    }
+    if (!alldig(todo) || (count = atoi(todo)) == 0) {
+	msg_warn("%s: bad count: %s", cmd, todo);
+	return;
+    }
+    if (tp->flags & rp->test_flags) {
+	msg_warn("%s: command conflicts with other command", cmd);
+	return;
+    }
+    tp->flags |= rp->test_flags;
+    cp = tp->job_list + tp->used;
+    cp->cmd = mystrdup(cmd);
+    cp->action = rp->action;
+    if (suffix)
+	cp->suffix = mystrdup(suffix);
+    cp->done = 0;
+    cp->flags = req_flags;
+    cp->todo = count;
+    tp->used += 1;
+}
+
+/* main - main program */
+
+int     main(int argc, char **argv)
+{
+    DICT_CACHE_TEST *test_job;
+    VSTRING *inbuf = vstring_alloc(100);
+    char   *bufp;
+    ARGV   *args;
+    DICT_CACHE *cache = 0;
+    int     stdin_is_tty;
+
+    msg_vstream_init(argv[0], VSTREAM_ERR);
+    if (argc != 1)
+	usage(argv[0]);
+
+
+    test_job = create_requests(DICT_CACHE_SREQ_LIMIT);
+
+    stdin_is_tty = isatty(0);
+
+    for (;;) {
+	if (stdin_is_tty) {
+	    vstream_printf("> ");
+	    vstream_fflush(VSTREAM_OUT);
+	}
+	if (vstring_fgets_nonl(inbuf, VSTREAM_IN) == 0)
+	    break;
+	bufp = vstring_str(inbuf);
+	if (!stdin_is_tty) {
+	    vstream_printf("> %s\n", bufp);
+	    vstream_fflush(VSTREAM_OUT);
+	}
+	if (*bufp == '#')
+	    continue;
+	args = argv_split(bufp, DELIMS);
+	if (argc == 0) {
+	    vstream_printf("usage: %s\n", USAGE);
+	    vstream_fflush(VSTREAM_OUT);
+	    continue;
+	}
+	if (strcmp(args->argv[0], "verbose") == 0 && args->argc == 2) {
+	    msg_verbose = atoi(args->argv[1]);
+	} else if (strcmp(args->argv[0], "elapsed") == 0 && args->argc == 2) {
+	    show_elapsed = atoi(args->argv[1]);
+#ifdef HAS_LMDB
+	} else if (strcmp(args->argv[0], "lmdb_map_size") == 0 && args->argc == 2) {
+	    dict_lmdb_map_size = atol(args->argv[1]);
+#endif
+	} else if (strcmp(args->argv[0], "cache") == 0 && args->argc == 2) {
+	    if (cache)
+		dict_cache_close(cache);
+	    cache = dict_cache_open(args->argv[1], O_CREAT | O_RDWR,
+				    DICT_CACHE_OPEN_FLAGS);
+	} else if (strcmp(args->argv[0], "reset") == 0 && args->argc == 1) {
+	    reset_requests(test_job);
+	} else if (strcmp(args->argv[0], "run") == 0 && args->argc == 1) {
+	    run_requests(test_job, cache, inbuf);
+	} else if (strcmp(args->argv[0], "status") == 0 && args->argc == 1) {
+	    show_status(test_job, cache);
+	} else {
+	    add_request(test_job, args);
+	}
+	vstream_fflush(VSTREAM_OUT);
+	argv_free(args);
+    }
+
+    vstring_free(inbuf);
+    free_requests(test_job);
+    if (cache)
+	dict_cache_close(cache);
+    return (0);
+}
+
+#endif

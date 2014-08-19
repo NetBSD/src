@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35.8.1 2013/02/25 00:27:44 tls Exp $
+#	$NetBSD: Makefile,v 1.35.8.2 2014/08/20 00:00:23 tls Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
@@ -53,6 +53,6 @@ map: map.c
 
 .include <bsd.prog.mk>
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45 && ${MACHINE_ARCH} == "vax"
+.if defined(HAVE_GCC) && ${MACHINE_ARCH} == "vax"
 COPTS.misc.c+=	-O0
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.33 2011/05/17 17:34:47 dyoung Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.33.14.1 2014/08/20 00:02:42 tls Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.33 2011/05/17 17:34:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.33.14.1 2014/08/20 00:02:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,7 +262,10 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
 		mba.mba_pba.pba_dmat64 = &pci_bus_dma64_tag;
 		mba.mba_pba.pba_pc = NULL;
-		mba.mba_pba.pba_flags = pci_bus_flags();
+		mba.mba_pba.pba_flags =
+		    PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
+		    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
+		    PCI_FLAGS_MWI_OKAY;
 		mba.mba_pba.pba_bus = 0;
 		mba.mba_pba.pba_bridgetag = NULL;
 #if NACPICA > 0 && defined(ACPI_SCANPCI)

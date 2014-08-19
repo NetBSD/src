@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.78.8.1 2013/06/23 06:21:06 tls Exp $
+#	$NetBSD: Makefile.inc,v 1.78.8.2 2014/08/20 00:02:16 tls Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -30,7 +30,6 @@ SRCS+=	jemalloc.c
 SRCS+=	malloc.c
 .endif
 
-CPPFLAGS.strtoimax.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
 CPPFLAGS.strtol.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
 CPPFLAGS.strtoq.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
 CPPFLAGS.strtouq.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
@@ -67,10 +66,12 @@ MLINKS+=getenv.3 setenv.3 getenv.3 unsetenv.3 getenv.3 putenv.3
 MLINKS+=getenv.3 getenv_r.3
 MLINKS+=hcreate.3 hdestroy.3 hcreate.3 hsearch.3
 MLINKS+=hcreate.3 hcreate_r.3 hcreate.3 hdestroy_r.3 hcreate.3 hsearch_r.3
+MLINKS+=hcreate.3 hdestroy1.3 hcreate.3 hdestroy1_r.3
 MLINKS+=insque.3 remque.3
 MLINKS+=lsearch.3 lfind.3
 MLINKS+=malloc.3 calloc.3 malloc.3 realloc.3 malloc.3 free.3
 MLINKS+=qsort.3 heapsort.3 qsort.3 mergesort.3
+MLINKS+=ptsname.3 ptsname_r.3
 MLINKS+=rand.3 rand_r.3
 MLINKS+=rand.3 srand.3
 MLINKS+=rand48.3 drand48.3 rand48.3 erand48.3 rand48.3 lrand48.3

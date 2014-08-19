@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.59 2012/02/25 02:43:08 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.59.2.1 2014/08/20 00:03:29 tls Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,10 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.59 2012/02/25 02:43:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.59.2.1 2014/08/20 00:03:29 tls Exp $");
 
 #include "opt_m68k_arch.h"
-#include "opt_extmem.h"
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -125,19 +124,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	kptpa = nextpa;
 	nptpages = RELOC(Sysptsize, int) + howmany(RELOC(physmem, int), NPTEPG) +
 		(IIOMAPSIZE + NPTEPG - 1) / NPTEPG;
-#ifdef EXTENDED_MEMORY
-	/*
-	 * Current supported maximum EXTENDED_MEMORY is 128MB on 060turbo.
-	 */
-#define MAX_EXTENDED_MEMORY	(128 * 1024 * 1024)
-	nptpages += howmany(btoc(MAX_EXTENDED_MEMORY), NPTEPG);
-
-	/*
-	 * mem_exist() in machdep.c needs two extra VA pages before pmap_init()
-	 * to probe >16MB memory.
-	 */
-	nptpages += 1;
-#endif
 	nextpa += nptpages * PAGE_SIZE;
 
 	/*
@@ -413,12 +399,11 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * VM data structures are now initialized, set up data for
 	 * the pmap module.
 	 *
-	 * Note about avail_end: msgbuf is initialized just after
-	 * avail_end in machdep.c.
+	 * Note about avail_end: msgbuf is initialized at the end of
+	 * main memory region (not after avail_end) in machdep.c.
 	 */
 	RELOC(avail_start, paddr_t) = nextpa;
-	RELOC(avail_end, paddr_t) = m68k_ptob(RELOC(maxmem, int)) -
-	    m68k_round_page(MSGBUFSIZE);
+	RELOC(avail_end, paddr_t) = m68k_ptob(RELOC(maxmem, int));
 	RELOC(mem_size, psize_t) = m68k_ptob(RELOC(physmem, int));
 	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
 

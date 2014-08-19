@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.51 2010/03/02 21:07:22 pooka Exp $
+	$NetBSD: syscalls.master,v 1.51.20.1 2014/08/20 00:03:34 tls Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -88,7 +88,7 @@
 39	OBSOL		v7 setpgrp
 40	STD		{ int|ultrix_sys||lstat(const char *path, \
 			    struct stat43 *ub); } lstat43
-41	NOARGS		{ int|sys||dup(u_int fd); }
+41	NOARGS		{ int|sys||dup(int fd); }
 42	NOARGS		{ int|sys||pipe(void); }
 43	OBSOL		v7 times
 44	NOARGS		{ int|sys||profil(void *samples, u_int size, \
@@ -147,7 +147,7 @@
 88	NOARGS		{ int|compat_43_sys||sethostname(char *hostname, \
 			    u_int len); }
 89	NOARGS		{ int|compat_43_sys||getdtablesize(void); }
-90	NOARGS		{ int|sys||dup2(u_int from, u_int to); }
+90	NOARGS		{ int|sys||dup2(int from, int to); }
 91	UNIMPL		getdopt
 92	STD		{ int|ultrix_sys||fcntl(int fd, int cmd, void *arg); }
 93	STD		{ int|ultrix_sys||select(u_int nd, fd_set *in, fd_set *ou, \

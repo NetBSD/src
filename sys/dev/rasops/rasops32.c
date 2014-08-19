@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops32.c,v 1.24.6.1 2012/11/20 03:02:32 tls Exp $	*/
+/*	 $NetBSD: rasops32.c,v 1.24.6.2 2014/08/20 00:03:50 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.24.6.1 2012/11/20 03:02:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.24.6.2 2014/08/20 00:03:50 tls Exp $");
 
 #include "opt_rasops.h"
 
@@ -162,16 +162,15 @@ rasops32_putchar(void *cookie, int row, int col, u_int uc, long attr)
 static void
 rasops32_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 {
-	int width, height, cnt, fs, clr[2];
+	int width, height, cnt, clr[2];
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
-	int32_t *dp, *rp, *hp, *hrp;
+	int32_t *dp, *rp;
 	uint8_t *rrp;
 	u_char *fr;
+	uint32_t buffer[64]; /* XXX */
 	int x, y, r, g, b, aval;
 	int r1, g1, b1, r0, g0, b0;
-
-	hp = hrp = NULL;
 
 #ifdef RASOPS_CLIPPING
 	/* Catches 'row < 0' case too */
@@ -188,9 +187,6 @@ rasops32_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 
 	rrp = (ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
 	rp = (int32_t *)rrp;
-	if (ri->ri_hwbits)
-		hrp = (int32_t *)(ri->ri_hwbits + row*ri->ri_yscale +
-		    col*ri->ri_xscale);
 
 	height = font->fontheight;
 	width = font->fontwidth;
@@ -199,23 +195,15 @@ rasops32_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 	clr[1] = ri->ri_devcmap[(attr >> 24) & 0xf];
 
 	if (uc == ' ') {
+	        for (cnt = 0; cnt < width; cnt++)
+	                buffer[cnt] = clr[0];
 		while (height--) {
 			dp = rp;
 			DELTA(rp, ri->ri_stride, int32_t *);
-			if (ri->ri_hwbits) {
-				hp = hrp;
-				DELTA(hrp, ri->ri_stride, int32_t *);
-			}
-
-			for (cnt = width; cnt; cnt--) {
-				*dp++ = clr[0];
-				if (ri->ri_hwbits)
-					*hp++ = clr[0];
-			}
+			memcpy(dp, buffer, width << 2);
 		}
 	} else {
 		fr = WSFONT_GLYPH(uc, font);
-		fs = font->stride;
 
 		r0 = (clr[0] >> 16) & 0xff;
 		r1 = (clr[1] >> 16) & 0xff;
@@ -229,33 +217,28 @@ rasops32_putchar_aa(void *cookie, int row, int col, u_int uc, long attr)
 			for (x = 0; x < width; x++) {
 				aval = *fr;
 				if (aval == 0) {
-					*dp = clr[0];
+					buffer[x] = clr[0];
 				} else if (aval == 255) {
-					*dp = clr[1];
+					buffer[x] = clr[1];
 				} else {
 					r = aval * r1 + (255 - aval) * r0;
 					g = aval * g1 + (255 - aval) * g0;
 					b = aval * b1 + (255 - aval) * b0;
-					*dp = (r & 0xff00) << 8 | 
+					buffer[x] = (r & 0xff00) << 8 | 
 					      (g & 0xff00) | 
 					      (b & 0xff00) >> 8;
 				}
-				dp++;
 				fr++;
 			}
+			memcpy(dp, buffer, width << 2);
 		}
 	}
 
 	/* Do underline */
 	if ((attr & 1) != 0) {
-		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
-		if (ri->ri_hwbits)
-			DELTA(hrp, -(ri->ri_stride << 1), int32_t *);
-
-		while (width--) {
+	        rp = (uint32_t *)rrp;                         
+		DELTA(rp, (ri->ri_stride * (height - 2)), int32_t *);
+		while (width--)
 			*rp++ = clr[1];
-			if (ri->ri_hwbits)
-				*hrp++ = clr[1];
-		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.98.12.3 2013/06/23 06:20:12 tls Exp $ */
+/*	$NetBSD: cpu.h,v 1.98.12.4 2014/08/20 00:03:25 tls Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -174,6 +174,20 @@ struct cpu_info {
 	pte_t			*ci_tsb_dmmu;
 	pte_t			*ci_tsb_immu;
 
+	/* MMU Fault Status Area (sun4v).
+	 * Will be initialized to the physical address of the bottom of
+	 * the interrupt stack.
+	 */
+	paddr_t			ci_mmfsa;
+
+	/*
+	 * sun4v mondo control fields
+	 */
+	paddr_t			ci_cpumq;  /* cpu mondo queue address */
+	paddr_t			ci_devmq;  /* device mondo queue address */
+	paddr_t			ci_cpuset; /* mondo recipient address */ 
+	paddr_t			ci_mondo;  /* mondo message address */
+	
 	/* probe fault in PCI config space reads */
 	bool			ci_pci_probe;
 	bool			ci_pci_fault;
@@ -220,9 +234,8 @@ extern struct pool_cache *fpstate_cache;
 #define	cpu_number()	(curcpu()->ci_index)
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 
-#define CPU_INFO_ITERATOR		int
-#define CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpus; ci != NULL; \
-					ci = ci->ci_next
+#define CPU_INFO_ITERATOR		int __unused
+#define CPU_INFO_FOREACH(cii, ci)	ci = cpus; ci != NULL; ci = ci->ci_next
 
 #define curlwp		curcpu()->ci_curlwp
 #define fplwp		curcpu()->ci_fplwp
@@ -349,6 +362,9 @@ void	*sparc_softintr_establish(int, int (*)(void *), void *);
 void	sparc_softintr_schedule(void *);
 void	sparc_softintr_disestablish(void *);
 
+/* cpu.c */
+int	cpu_myid(void);
+
 /* disksubr.c */
 struct dkbad;
 int isbad(struct dkbad *bt, int, int, int);
@@ -358,11 +374,14 @@ void *	reserve_dumppages(void *);
 struct timeval;
 int	tickintr(void *);	/* level 10/14 (tick) interrupt code */
 int	stickintr(void *);	/* system tick interrupt code */
+int	stick2eintr(void *);	/* system tick interrupt code */
 int	clockintr(void *);	/* level 10 (clock) interrupt code */
 int	statintr(void *);	/* level 14 (statclock) interrupt code */
 int	schedintr(void *);	/* level 10 (schedclock) interrupt code */
 void	tickintr_establish(int, int (*)(void *));
 void	stickintr_establish(int, int (*)(void *));
+void	stick2eintr_establish(int, int (*)(void *));
+
 /* locore.s */
 struct fpstate64;
 void	savefpstate(struct fpstate64 *);
@@ -370,6 +389,7 @@ void	loadfpstate(struct fpstate64 *);
 void	clearfpstate(void);
 uint64_t	probeget(paddr_t, int, int);
 int	probeset(paddr_t, int, int, uint64_t);
+void	setcputyp(int);
 
 #define	 write_all_windows() __asm volatile("flushw" : : )
 #define	 write_user_windows() __asm volatile("flushw" : : )

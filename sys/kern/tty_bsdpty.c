@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_bsdpty.c,v 1.17 2010/11/19 06:44:43 dholland Exp $	*/
+/*	$NetBSD: tty_bsdpty.c,v 1.17.18.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.17 2010/11/19 06:44:43 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.17.18.1 2014/08/20 00:04:29 tls Exp $");
 
 #include "opt_ptm.h"
 
+#ifndef NO_DEV_PTM
 #ifdef COMPAT_BSDPTY
 /* bsd tty implementation for pty multiplexor driver /dev/ptm{,x} */
 
@@ -68,22 +69,23 @@ __KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.17 2010/11/19 06:44:43 dholland Exp
 #define TTY_OLD_SUFFIX  "0123456789abcdef"
 #define TTY_NEW_SUFFIX  "ghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-static int pty_makename(struct ptm_pty *, struct lwp *, char *, size_t, dev_t,
+static int pty_makename(struct mount *, struct lwp *, char *, size_t, dev_t,
     char);
-static int pty_allocvp(struct ptm_pty *, struct lwp *, struct vnode **,
+static int pty_allocvp(struct mount *, struct lwp *, struct vnode **,
     dev_t, char);
-static void pty_getvattr(struct ptm_pty *, struct lwp *, struct vattr *);
+static void pty_getvattr(struct mount *, struct lwp *, struct vattr *);
+static int pty__getmp(struct lwp *, struct mount **);
 
 struct ptm_pty ptm_bsdpty = {
 	pty_allocvp,
 	pty_makename,
 	pty_getvattr,
-	NULL
+	pty__getmp,
 };
 
 static int
 /*ARGSUSED*/
-pty_makename(struct ptm_pty *ptm, struct lwp *l, char *bf,
+pty_makename(struct mount *mp, struct lwp *l, char *bf,
     size_t bufsiz, dev_t dev, char c)
 {
 	size_t nt;
@@ -113,7 +115,7 @@ pty_makename(struct ptm_pty *ptm, struct lwp *l, char *bf,
 
 static int
 /*ARGSUSED*/
-pty_allocvp(struct ptm_pty *ptm, struct lwp *l, struct vnode **vp, dev_t dev,
+pty_allocvp(struct mount *mp, struct lwp *l, struct vnode **vp, dev_t dev,
     char ms)
 {
 	int error;
@@ -121,7 +123,7 @@ pty_allocvp(struct ptm_pty *ptm, struct lwp *l, struct vnode **vp, dev_t dev,
 	struct nameidata nd;
 	char name[TTY_NAMESIZE];
 
-	error = (*ptm->makename)(ptm, l, name, sizeof(name), dev, ms);
+	error = pty_makename(NULL, l, name, sizeof(name), dev, ms);
 	if (error)
 		return error;
 
@@ -143,7 +145,7 @@ pty_allocvp(struct ptm_pty *ptm, struct lwp *l, struct vnode **vp, dev_t dev,
 
 static void
 /*ARGSUSED*/
-pty_getvattr(struct ptm_pty *ptm, struct lwp *l, struct vattr *vattr)
+pty_getvattr(struct mount *mp, struct lwp *l, struct vattr *vattr)
 {
 	vattr_null(vattr);
 	/* get real uid */
@@ -151,4 +153,13 @@ pty_getvattr(struct ptm_pty *ptm, struct lwp *l, struct vattr *vattr)
 	vattr->va_gid = TTY_GID;
 	vattr->va_mode = TTY_PERM;
 }
-#endif
+
+static int
+pty__getmp(struct lwp *l __unused, struct mount **mpp)
+{
+	*mpp = 0;
+	return 0;
+}
+
+#endif /* COMPAT_BSDPTY */
+#endif /* NO_DEV_PTM */

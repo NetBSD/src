@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.20.8.1 2012/11/20 03:01:23 tls Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.20.8.2 2014/08/20 00:03:03 tls Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucbsnd.c,v 1.20.8.1 2012/11/20 03:01:23 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucbsnd.c,v 1.20.8.2 2014/08/20 00:03:03 tls Exp $");
 
 #include "opt_use_poll.h"
 
@@ -176,8 +176,18 @@ dev_type_read(ucbsndread);
 dev_type_write(ucbsndwrite);
 
 const struct cdevsw ucbsnd_cdevsw = {
-	ucbsndopen, ucbsndclose, ucbsndread, ucbsndwrite, nullioctl,
-	nostop, notty, nopoll, nullmmap, nokqfilter,
+	.d_open = ucbsndopen,
+	.d_close = ucbsndclose,
+	.d_read = ucbsndread,
+	.d_write = ucbsndwrite,
+	.d_ioctl = nullioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nullmmap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 int

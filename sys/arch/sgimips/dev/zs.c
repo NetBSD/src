@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.37 2011/02/20 07:59:50 matt Exp $	*/
+/*	$NetBSD: zs.c,v 1.37.14.1 2014/08/20 00:03:22 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.37 2011/02/20 07:59:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.37.14.1 2014/08/20 00:03:22 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -444,7 +444,7 @@ zs_get_speed(struct zs_chanstate *cs)
 int
 zs_set_speed(struct zs_chanstate *cs, int bps)
 {
-	int tconst, real_bps;
+	int tconst;
 
 #if 0
 	while (!(zs_read_csr(cs) & ZSRR0_TX_READY))
@@ -464,11 +464,11 @@ zs_set_speed(struct zs_chanstate *cs, int bps)
 	if (tconst < 0)
 		return (EINVAL);
 
+#if 0
 	/* Convert back to make sure we can do it. */
-	real_bps = TCONST_TO_BPS(cs->cs_brg_clk, tconst);
+	int real_bps = TCONST_TO_BPS(cs->cs_brg_clk, tconst);
 
 	/* XXX - Allow some tolerance here? */
-#if 0
 	if (real_bps != bps)
 		return (EINVAL);
 #endif

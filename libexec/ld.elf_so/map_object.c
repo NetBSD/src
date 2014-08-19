@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.44.2.2 2013/06/23 06:28:50 tls Exp $	 */
+/*	$NetBSD: map_object.c,v 1.44.2.3 2014/08/20 00:02:22 tls Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.44.2.2 2013/06/23 06:28:50 tls Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.44.2.3 2014/08/20 00:02:22 tls Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -189,11 +189,6 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 				segs[nsegs] = phdr;
 			++nsegs;
 
-#if ELFSIZE == 64
-#define	PRImemsz	PRIu64
-#else
-#define PRImemsz	PRIu32
-#endif
 			dbg(("%s: %s %p phsize %" PRImemsz, obj->path, "PT_LOAD",
 			    (void *)(uintptr_t)phdr->p_vaddr, phdr->p_memsz));
 			break;

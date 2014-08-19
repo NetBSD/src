@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_command.c,v 1.7.6.1 2013/02/25 00:30:43 tls Exp $ */
+/* $NetBSD: ldp_command.c,v 1.7.6.2 2014/08/20 00:05:09 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -74,11 +74,8 @@ static int set_func(int, char *);
 static int exit_func(int, char *);
  
 /* Show functions */
-static int show_neighbours(int, char *);
-static int show_bindings(int, char *);
 static int show_debug(int, char *);
 static int show_hellos(int, char *);
-static int show_labels(int, char *);
 static int show_parameters(int, char *);
 static int show_version(int, char *);
 static int show_warning(int, char *);
@@ -402,7 +399,7 @@ exit_func(int s, char *recvspace)
 /*
  * Show functions
  */
-static int
+int
 show_neighbours(int s, char *recvspace)
 {
 	struct ldp_peer *p;
@@ -480,16 +477,16 @@ show_neighbours(int s, char *recvspace)
 }
 
 /* Shows labels grabbed from unsolicited label maps */
-static int
+int
 show_labels(int s, char *recvspace)
 {
 	struct ldp_peer *p;
-	struct label_mapping *lm;
+	struct label_mapping *lm = NULL;
 
 	SLIST_FOREACH(p, &ldp_peer_head, peers) {
 		if (p->state != LDP_PEER_ESTABLISHED)
 			continue;
-		SLIST_FOREACH(lm, &p->label_mapping_head, mappings) {
+		while ((lm = ldp_peer_lm_right(p, lm)) != NULL) {
 			char lma[256];
 			/* XXX: TODO */
 			if (lm->address.sa.sa_family != AF_INET)
@@ -504,18 +501,18 @@ show_labels(int s, char *recvspace)
 	return 1;
 }
 
-static int
+int
 show_bindings(int s, char *recvspace)
 {
-	struct label *l;
+	struct label *l = NULL;
 
 	snprintf(sendspace, MAXSEND, "Local label\tNetwork\t\t\t\tNexthop\n");
 	writestr(s, sendspace);
-	SLIST_FOREACH (l, &label_head, labels) {
+	while((l = label_get_right(l)) != NULL) {
 		snprintf(sendspace, MAXSEND, "%d\t\t%s/", l->binding,
-		    union_ntoa(&l->so_dest));
+		    satos(&l->so_dest.sa));
 		writestr(s, sendspace);
-		snprintf(sendspace, MAXSEND, "%s", union_ntoa(&l->so_pref));
+		snprintf(sendspace, MAXSEND, "%s", satos(&l->so_pref.sa));
 		writestr(s, sendspace);
 		if (l->p)
 			snprintf(sendspace, MAXSEND, "\t%s:%d\n",

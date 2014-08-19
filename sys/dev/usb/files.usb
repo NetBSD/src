@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.125.2.2 2013/06/23 06:20:22 tls Exp $
+#	$NetBSD: files.usb,v 1.125.2.3 2014/08/20 00:03:51 tls Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -108,7 +108,7 @@ device	uep: wsmousedev, tpcalib
 attach	uep at usbdevif
 file	dev/usb/uep.c			uep			needs-flag
 
-# Cypress microcontroller based serial adpaters
+# Cypress microcontroller based serial adapters
 device	ucycom: hid
 attach	ucycom at uhidbus
 file	dev/usb/ucycom.c		ucycom			needs-flag
@@ -284,6 +284,11 @@ device	axe: arp, ether, ifnet, mii, mii_phy
 attach	axe at usbdevif
 file	dev/usb/if_axe.c		axe
 
+# ASIX AX88178a and AX88179
+device	axen: arp, ether, ifnet, mii
+attach	axen at usbdevif
+file	dev/usb/if_axen.c		axen
+
 # DAVICOM DM9601
 device	udav: arp, ether, ifnet, mii, mii_phy
 attach	udav at usbdevif
@@ -321,6 +326,11 @@ file	dev/usb/umct.c			umct
 device	moscom: ucombus
 attach	moscom at usbdevif
 file	dev/usb/moscom.c		moscom
+
+# andother driver for the same chip
+device	umcs: ucombus
+attach	umcs at usbdevif
+file	dev/usb/umcs.c			umcs
 
 # SUNTAC Slipper U VS-10U driver
 device	uvscom: ucombus

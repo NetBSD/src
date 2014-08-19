@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_dsn_fix.h,v 1.1.1.1 2009/06/23 10:08:56 tron Exp $	*/
+/*	$NetBSD: smtpd_dsn_fix.h,v 1.1.1.1.16.1 2014/08/19 23:59:44 tls Exp $	*/
 
 /*++
 /* NAME
@@ -17,6 +17,7 @@
 #define SMTPD_NAME_CLIENT	"Client host"
 #define SMTPD_NAME_REV_CLIENT	"Unverified Client host"
 #define SMTPD_NAME_CCERT	"Client certificate"
+#define SMTPD_NAME_SASL_USER	"SASL login name"
 #define SMTPD_NAME_HELO		"Helo command"
 #define SMTPD_NAME_SENDER	"Sender address"
 #define SMTPD_NAME_RECIPIENT	"Recipient address"

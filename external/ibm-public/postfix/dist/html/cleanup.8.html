@@ -13,46 +13,40 @@ CLEANUP(8)                                                          CLEANUP(8)
        <b>cleanup</b> [generic Postfix daemon options]
 
 <b>DESCRIPTION</b>
-       The  <a href="cleanup.8.html"><b>cleanup</b>(8)</a>  daemon processes inbound mail, inserts it
-       into the <b>incoming</b> mail queue, and informs the  queue  man-
-       ager of its arrival.
+       The  <a href="cleanup.8.html"><b>cleanup</b>(8)</a>  daemon  processes  inbound  mail,  inserts it into the
+       <b>incoming</b> mail queue, and informs the queue manager of its arrival.
 
-       The <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon always performs the following trans-
-       formations:
+       The <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon always performs the following transformations:
 
-       <b>o</b>      Insert missing message  headers:  (<b>Resent-</b>)  <b>From:</b>,
-              <b>To:</b>, <b>Message-Id:</b>, and <b>Date:</b>.
+       <b>o</b>      Insert missing message headers: (<b>Resent-</b>) <b>From:</b>,  <b>To:</b>,  <b>Message-</b>
+              <b>Id:</b>, and <b>Date:</b>.
 
-       <b>o</b>      Transform  envelope  and  header  addresses  to the
-              standard <i>user@fully-qualified-domain</i> form  that  is
-              expected  by  other Postfix programs.  This task is
-              delegated to the <a href="trivial-rewrite.8.html"><b>trivial-rewrite</b>(8)</a> daemon.
+       <b>o</b>      Transform   envelope   and  header  addresses  to  the  standard
+              <i>user@fully-qualified-domain</i> form that is expected by other Post-
+              fix  programs.  This task is delegated to the <a href="trivial-rewrite.8.html"><b>trivial-rewrite</b>(8)</a>
+              daemon.
 
        <b>o</b>      Eliminate duplicate envelope recipient addresses.
 
        The following address transformations are optional:
 
-       <b>o</b>      Optionally,  rewrite  all   envelope   and   header
-              addresses  according  to  the mappings specified in
-              the <a href="canonical.5.html"><b>canonical</b>(5)</a> lookup tables.
+       <b>o</b>      Optionally, rewrite all envelope and header addresses  according
+              to the mappings specified in the <a href="canonical.5.html"><b>canonical</b>(5)</a> lookup tables.
 
-       <b>o</b>      Optionally, masquerade  envelope  sender  addresses
-              and  message  header  addresses (i.e. strip host or
-              domain information below all domains listed in  the
-              <b><a href="postconf.5.html#masquerade_domains">masquerade_domains</a></b> parameter, except for user names
-              listed  in  <b><a href="postconf.5.html#masquerade_exceptions">masquerade_exceptions</a></b>).   By   default,
-              address   masquerading  does  not  affect  envelope
-              recipients.
+       <b>o</b>      Optionally,  masquerade  envelope  sender  addresses and message
+              header addresses (i.e. strip host or  domain  information  below
+              all  domains  listed in the <b><a href="postconf.5.html#masquerade_domains">masquerade_domains</a></b> parameter, except
+              for user names listed in  <b><a href="postconf.5.html#masquerade_exceptions">masquerade_exceptions</a></b>).   By  default,
+              address masquerading does not affect envelope recipients.
 
-       <b>o</b>      Optionally, expand envelope recipients according to
-              information  found in the <a href="virtual.5.html"><b>virtual</b>(5)</a> lookup tables.
+       <b>o</b>      Optionally,  expand envelope recipients according to information
+              found in the <a href="virtual.5.html"><b>virtual</b>(5)</a> lookup tables.
 
-       The <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon performs sanity checks on  the  con-
-       tent  of each message. When it finds a problem, by default
-       it returns a diagnostic status to the client,  and  leaves
-       it  up  to  the  client to deal with the problem. Alterna-
-       tively, the client can request the  <a href="cleanup.8.html"><b>cleanup</b>(8)</a>  daemon  to
-       bounce  the message back to the sender in case of trouble.
+       The <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon performs sanity checks on  the  content  of  each
+       message.  When  it  finds a problem, by default it returns a diagnostic
+       status to the client, and leaves it up to the client to deal  with  the
+       problem. Alternatively, the client can request the <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon to
+       bounce the message back to the sender in case of trouble.
 
 <b>STANDARDS</b>
        <a href="http://tools.ietf.org/html/rfc822">RFC 822</a> (ARPA Internet Text Messages)
@@ -67,176 +61,158 @@ CLEANUP(8)                                                          CLEANUP(8)
        Problems and transactions are logged to <b>syslogd</b>(8).
 
 <b>BUGS</b>
-       Table-driven rewriting rules make it hard  to  express  <b>if</b>
-       <b>then else</b> and other logical relationships.
+       Table-driven rewriting rules make it hard to express <b>if then  else</b>  and
+       other logical relationships.
 
 <b>CONFIGURATION PARAMETERS</b>
-       Changes   to  <a href="postconf.5.html"><b>main.cf</b></a>  are  picked  up  automatically,  as
-       <a href="cleanup.8.html"><b>cleanup</b>(8)</a> processes run for  only  a  limited  amount  of
-       time.  Use  the  command  "<b>postfix  reload</b>"  to speed up a
-       change.
+       Changes to <a href="postconf.5.html"><b>main.cf</b></a> are picked up automatically, as <a href="cleanup.8.html"><b>cleanup</b>(8)</a> processes
+       run for only a limited amount of time. Use the command "<b>postfix reload</b>"
+       to speed up a change.
 
-       The text below provides  only  a  parameter  summary.  See
-       <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
+       The  text  below provides only a parameter summary. See <a href="postconf.5.html"><b>postconf</b>(5)</a> for
+       more details including examples.
 
 <b>COMPATIBILITY CONTROLS</b>
        <b><a href="postconf.5.html#undisclosed_recipients_header">undisclosed_recipients_header</a> (see 'postconf -d' output)</b>
-              Message  header  that the Postfix <a href="cleanup.8.html"><b>cleanup</b>(8)</a> server
-              inserts when a message contains no To: or Cc:  mes-
-              sage header.
+              Message header that the Postfix <a href="cleanup.8.html"><b>cleanup</b>(8)</a> server inserts when a
+              message contains no To: or Cc: message header.
 
        Available in Postfix version 2.1 only:
 
        <b><a href="postconf.5.html#enable_errors_to">enable_errors_to</a> (no)</b>
-              Report  mail  delivery errors to the address speci-
-              fied  with  the  non-standard  Errors-To:   message
-              header,  instead  of  the  envelope  sender address
-              (this feature is removed with Postfix version  2.2,
-              is  turned off by default with Postfix version 2.1,
-              and is always turned on  with  older  Postfix  ver-
-              sions).
+              Report  mail  delivery  errors to the address specified with the
+              non-standard Errors-To: message header, instead of the  envelope
+              sender  address  (this  feature  is removed with Postfix version
+              2.2, is turned off by default with Postfix version 2.1,  and  is
+              always turned on with older Postfix versions).
 
        Available in Postfix version 2.6 and later:
 
        <b><a href="postconf.5.html#always_add_missing_headers">always_add_missing_headers</a> (no)</b>
-              Always  add (Resent-) From:, To:, Date: or Message-
-              ID: headers when not present.
+              Always  add  (Resent-)  From:, To:, Date: or Message-ID: headers
+              when not present.
 
        Available in Postfix version 2.9 and later:
 
        <b><a href="postconf.5.html#enable_long_queue_ids">enable_long_queue_ids</a> (no)</b>
-              Enable long, non-repeating, queue IDs  (queue  file
-              names).
+              Enable long, non-repeating, queue IDs (queue file names).
 
 <b>BUILT-IN CONTENT FILTERING CONTROLS</b>
-       Postfix  built-in  content  filtering  is  meant to stop a
-       flood of worms or viruses. It is  not  a  general  content
-       filter.
+       Postfix built-in content filtering is meant to stop a flood of worms or
+       viruses. It is not a general content filter.
 
        <b><a href="postconf.5.html#body_checks">body_checks</a> (empty)</b>
-              Optional  lookup  tables  for content inspection as
-              specified in the <a href="header_checks.5.html"><b>body_checks</b>(5)</a> manual page.
+              Optional  lookup  tables  for content inspection as specified in
+              the <a href="header_checks.5.html"><b>body_checks</b>(5)</a> manual page.
 
        <b><a href="postconf.5.html#header_checks">header_checks</a> (empty)</b>
-              Optional lookup tables for  content  inspection  of
-              primary  non-MIME  message headers, as specified in
-              the <a href="header_checks.5.html"><b>header_checks</b>(5)</a> manual page.
+              Optional lookup tables for content inspection  of  primary  non-
+              MIME  message headers, as specified in the <a href="header_checks.5.html"><b>header_checks</b>(5)</a> man-
+              ual page.
 
        Available in Postfix version 2.0 and later:
 
        <b><a href="postconf.5.html#body_checks_size_limit">body_checks_size_limit</a> (51200)</b>
-              How much text in a message body segment (or attach-
-              ment,  if you prefer to use that term) is subjected
-              to <a href="postconf.5.html#body_checks">body_checks</a> inspection.
+              How much text in a message body segment (or attachment,  if  you
+              prefer to use that term) is subjected to <a href="postconf.5.html#body_checks">body_checks</a> inspection.
 
        <b><a href="postconf.5.html#mime_header_checks">mime_header_checks</a> ($<a href="postconf.5.html#header_checks">header_checks</a>)</b>
-              Optional lookup tables for  content  inspection  of
-              MIME  related  message headers, as described in the
-              <a href="header_checks.5.html"><b>header_checks</b>(5)</a> manual page.
+              Optional lookup tables for content inspection  of  MIME  related
+              message  headers,  as  described  in the <a href="header_checks.5.html"><b>header_checks</b>(5)</a> manual
+              page.
 
        <b><a href="postconf.5.html#nested_header_checks">nested_header_checks</a> ($<a href="postconf.5.html#header_checks">header_checks</a>)</b>
-              Optional lookup tables for  content  inspection  of
-              non-MIME  message  headers in attached messages, as
-              described in the <a href="header_checks.5.html"><b>header_checks</b>(5)</a> manual page.
+              Optional lookup tables for content inspection of  non-MIME  mes-
+              sage   headers   in  attached  messages,  as  described  in  the
+              <a href="header_checks.5.html"><b>header_checks</b>(5)</a> manual page.
 
        Available in Postfix version 2.3 and later:
 
        <b><a href="postconf.5.html#message_reject_characters">message_reject_characters</a> (empty)</b>
-              The set of characters that Postfix will  reject  in
-              message content.
+              The set of characters that Postfix will reject in  message  con-
+              tent.
 
        <b><a href="postconf.5.html#message_strip_characters">message_strip_characters</a> (empty)</b>
-              The set of characters that Postfix will remove from
-              message content.
+              The set of characters that Postfix will remove from message con-
+              tent.
 
 <b>BEFORE QUEUE MILTER CONTROLS</b>
-       As of version 2.3, Postfix supports the Sendmail version 8
-       Milter  (mail  filter) protocol. When mail is not received
-       via the <a href="smtpd.8.html">smtpd(8)</a> server, the <a href="cleanup.8.html">cleanup(8)</a> server will  simu-
-       late  SMTP events to the extent that this is possible. For
-       details see the <a href="MILTER_README.html">MILTER_README</a> document.
+       As of version 2.3, Postfix supports the Sendmail version 8 Milter (mail
+       filter)  protocol.  When  mail is not received via the <a href="smtpd.8.html">smtpd(8)</a> server,
+       the <a href="cleanup.8.html">cleanup(8)</a> server will simulate SMTP events to the extent that this
+       is possible. For details see the <a href="MILTER_README.html">MILTER_README</a> document.
 
        <b><a href="postconf.5.html#non_smtpd_milters">non_smtpd_milters</a> (empty)</b>
-              A list of Milter (mail filter) applications for new
-              mail  that does not arrive via the Postfix <a href="smtpd.8.html"><b>smtpd</b>(8)</a>
-              server.
+              A  list  of  Milter (mail filter) applications for new mail that
+              does not arrive via the Postfix <a href="smtpd.8.html"><b>smtpd</b>(8)</a> server.
 
        <b><a href="postconf.5.html#milter_protocol">milter_protocol</a> (6)</b>
-              The mail filter protocol version and optional  pro-
-              tocol  extensions  for  communication with a Milter
-              application; prior to Postfix 2.6 the default  pro-
-              tocol is 2.
+              The mail filter protocol version and  optional  protocol  exten-
+              sions  for  communication  with  a  Milter application; prior to
+              Postfix 2.6 the default protocol is 2.
 
        <b><a href="postconf.5.html#milter_default_action">milter_default_action</a> (tempfail)</b>
-              The  default  action  when  a  Milter (mail filter)
-              application is unavailable or mis-configured.
+              The default action when a Milter (mail  filter)  application  is
+              unavailable or mis-configured.
 
        <b><a href="postconf.5.html#milter_macro_daemon_name">milter_macro_daemon_name</a> ($<a href="postconf.5.html#myhostname">myhostname</a>)</b>
-              The {daemon_name} macro value for Milter (mail fil-
-              ter) applications.
+              The  {daemon_name} macro value for Milter (mail filter) applica-
+              tions.
 
        <b><a href="postconf.5.html#milter_macro_v">milter_macro_v</a> ($<a href="postconf.5.html#mail_name">mail_name</a> $<a href="postconf.5.html#mail_version">mail_version</a>)</b>
-              The {v} macro value for Milter (mail filter) appli-
-              cations.
+              The {v} macro value for Milter (mail filter) applications.
 
        <b><a href="postconf.5.html#milter_connect_timeout">milter_connect_timeout</a> (30s)</b>
-              The time limit for connecting  to  a  Milter  (mail
-              filter)  application,  and for negotiating protocol
-              options.
+              The time limit for connecting to a Milter (mail filter) applica-
+              tion, and for negotiating protocol options.
 
        <b><a href="postconf.5.html#milter_command_timeout">milter_command_timeout</a> (30s)</b>
-              The time limit for sending an  SMTP  command  to  a
-              Milter (mail filter) application, and for receiving
-              the response.
+              The  time  limit  for  sending an SMTP command to a Milter (mail
+              filter) application, and for receiving the response.
 
        <b><a href="postconf.5.html#milter_content_timeout">milter_content_timeout</a> (300s)</b>
-              The time limit for sending  message  content  to  a
-              Milter (mail filter) application, and for receiving
-              the response.
+              The time limit for sending message content  to  a  Milter  (mail
+              filter) application, and for receiving the response.
 
        <b><a href="postconf.5.html#milter_connect_macros">milter_connect_macros</a> (see 'postconf -d' output)</b>
-              The macros that are sent to  Milter  (mail  filter)
-              applications  after  completion  of an SMTP connec-
-              tion.
+              The  macros  that  are sent to Milter (mail filter) applications
+              after completion of an SMTP connection.
 
        <b><a href="postconf.5.html#milter_helo_macros">milter_helo_macros</a> (see 'postconf -d' output)</b>
-              The macros that are sent to  Milter  (mail  filter)
-              applications after the SMTP HELO or EHLO command.
+              The macros that are sent to Milter  (mail  filter)  applications
+              after the SMTP HELO or EHLO command.
 
        <b><a href="postconf.5.html#milter_mail_macros">milter_mail_macros</a> (see 'postconf -d' output)</b>
-              The  macros  that  are sent to Milter (mail filter)
-              applications after the SMTP MAIL FROM command.
+              The  macros  that  are sent to Milter (mail filter) applications
+              after the SMTP MAIL FROM command.
 
        <b><a href="postconf.5.html#milter_rcpt_macros">milter_rcpt_macros</a> (see 'postconf -d' output)</b>
-              The macros that are sent to  Milter  (mail  filter)
-              applications after the SMTP RCPT TO command.
+              The macros that are sent to Milter  (mail  filter)  applications
+              after the SMTP RCPT TO command.
 
        <b><a href="postconf.5.html#milter_data_macros">milter_data_macros</a> (see 'postconf -d' output)</b>
-              The  macros  that  are  sent to version 4 or higher
-              Milter (mail filter) applications  after  the  SMTP
-              DATA command.
+              The  macros  that  are  sent to version 4 or higher Milter (mail
+              filter) applications after the SMTP DATA command.
 
        <b><a href="postconf.5.html#milter_unknown_command_macros">milter_unknown_command_macros</a> (see 'postconf -d' output)</b>
-              The  macros  that  are  sent to version 3 or higher
-              Milter (mail filter) applications after an  unknown
-              SMTP command.
+              The macros that are sent to version 3  or  higher  Milter  (mail
+              filter) applications after an unknown SMTP command.
 
        <b><a href="postconf.5.html#milter_end_of_data_macros">milter_end_of_data_macros</a> (see 'postconf -d' output)</b>
-              The  macros  that  are sent to Milter (mail filter)
-              applications after the message end-of-data.
+              The  macros  that  are sent to Milter (mail filter) applications
+              after the message end-of-data.
 
        Available in Postfix version 2.5 and later:
 
        <b><a href="postconf.5.html#milter_end_of_header_macros">milter_end_of_header_macros</a> (see 'postconf -d' output)</b>
-              The macros that are sent to  Milter  (mail  filter)
-              applications after the end of the message header.
+              The macros that are sent to Milter  (mail  filter)  applications
+              after the end of the message header.
 
        Available in Postfix version 2.7 and later:
 
        <b><a href="postconf.5.html#milter_header_checks">milter_header_checks</a> (empty)</b>
-              Optional  lookup  tables  for content inspection of
-              message headers that are produced by Milter  appli-
-              cations.
+              Optional lookup tables for content inspection of message headers
+              that are produced by Milter applications.
 
 <b>MIME PROCESSING CONTROLS</b>
        Available in Postfix version 2.0 and later:
@@ -245,253 +221,226 @@ CLEANUP(8)                                                          CLEANUP(8)
               Turn off MIME processing while receiving mail.
 
        <b><a href="postconf.5.html#mime_boundary_length_limit">mime_boundary_length_limit</a> (2048)</b>
-              The  maximal  length  of  MIME  multipart  boundary
-              strings.
+              The maximal length of MIME multipart boundary strings.
 
        <b><a href="postconf.5.html#mime_nesting_limit">mime_nesting_limit</a> (100)</b>
-              The maximal recursion level that the MIME processor
-              will handle.
+              The maximal recursion level that the MIME processor will handle.
 
        <b><a href="postconf.5.html#strict_8bitmime">strict_8bitmime</a> (no)</b>
-              Enable  both  <a href="postconf.5.html#strict_7bit_headers">strict_7bit_headers</a>  and strict_8bit-
-              mime_body.
+              Enable both <a href="postconf.5.html#strict_7bit_headers">strict_7bit_headers</a> and <a href="postconf.5.html#strict_8bitmime_body">strict_8bitmime_body</a>.
 
        <b><a href="postconf.5.html#strict_7bit_headers">strict_7bit_headers</a> (no)</b>
               Reject mail with 8-bit text in message headers.
 
        <b><a href="postconf.5.html#strict_8bitmime_body">strict_8bitmime_body</a> (no)</b>
-              Reject 8-bit message body text without  8-bit  MIME
-              content encoding information.
+              Reject 8-bit message body text without 8-bit MIME content encod-
+              ing information.
 
        <b><a href="postconf.5.html#strict_mime_encoding_domain">strict_mime_encoding_domain</a> (no)</b>
-              Reject mail with invalid Content-Transfer-Encoding:
-              information for the message/* or  multipart/*  MIME
-              content types.
+              Reject mail with invalid Content-Transfer-Encoding:  information
+              for the message/* or multipart/* MIME content types.
 
        Available in Postfix version 2.5 and later:
 
        <b><a href="postconf.5.html#detect_8bit_encoding_header">detect_8bit_encoding_header</a> (yes)</b>
-              Automatically detect 8BITMIME body content by look-
-              ing at Content-Transfer-Encoding: message  headers;
-              historically,  this  behavior  was hard-coded to be
-              "always on".
+              Automatically  detect  8BITMIME  body content by looking at Con-
+              tent-Transfer-Encoding:  message  headers;  historically,   this
+              behavior was hard-coded to be "always on".
 
 <b>AUTOMATIC BCC RECIPIENT CONTROLS</b>
-       Postfix can automatically add BCC (blind carbon copy) when
-       mail enters the mail system:
+       Postfix  can automatically add BCC (blind carbon copy) when mail enters
+       the mail system:
 
        <b><a href="postconf.5.html#always_bcc">always_bcc</a> (empty)</b>
-              Optional  address  that  receives  a  "blind carbon
-              copy" of each message that is received by the Post-
-              fix mail system.
+              Optional address that receives a "blind  carbon  copy"  of  each
+              message that is received by the Postfix mail system.
 
        Available in Postfix version 2.1 and later:
 
        <b><a href="postconf.5.html#sender_bcc_maps">sender_bcc_maps</a> (empty)</b>
-              Optional  BCC  (blind  carbon-copy)  address lookup
-              tables, indexed by sender address.
+              Optional  BCC (blind carbon-copy) address lookup tables, indexed
+              by sender address.
 
        <b><a href="postconf.5.html#recipient_bcc_maps">recipient_bcc_maps</a> (empty)</b>
-              Optional BCC  (blind  carbon-copy)  address  lookup
-              tables, indexed by recipient address.
+              Optional BCC (blind carbon-copy) address lookup tables,  indexed
+              by recipient address.
 
 <b>ADDRESS TRANSFORMATION CONTROLS</b>
-       Address  rewriting  is delegated to the <a href="trivial-rewrite.8.html"><b>trivial-rewrite</b>(8)</a>
-       daemon.  The <a href="cleanup.8.html"><b>cleanup</b>(8)</a>  server  implements  table  driven
-       address mapping.
+       Address  rewriting  is delegated to the <a href="trivial-rewrite.8.html"><b>trivial-rewrite</b>(8)</a> daemon.  The
+       <a href="cleanup.8.html"><b>cleanup</b>(8)</a> server implements table driven address mapping.
 
        <b><a href="postconf.5.html#empty_address_recipient">empty_address_recipient</a> (MAILER-DAEMON)</b>
-              The   recipient  of  mail  addressed  to  the  null
-              address.
+              The recipient of mail addressed to the null address.
 
        <b><a href="postconf.5.html#canonical_maps">canonical_maps</a> (empty)</b>
-              Optional address mapping lookup tables for  message
-              headers and envelopes.
+              Optional address mapping lookup tables for message  headers  and
+              envelopes.
 
        <b><a href="postconf.5.html#recipient_canonical_maps">recipient_canonical_maps</a> (empty)</b>
-              Optional address mapping lookup tables for envelope
-              and header recipient addresses.
+              Optional  address  mapping lookup tables for envelope and header
+              recipient addresses.
 
        <b><a href="postconf.5.html#sender_canonical_maps">sender_canonical_maps</a> (empty)</b>
-              Optional address mapping lookup tables for envelope
-              and header sender addresses.
+              Optional address mapping lookup tables for envelope  and  header
+              sender addresses.
 
-       <b><a href="postconf.5.html#masquerade_classes">masquerade_classes</a>     (envelope_sender,    header_sender,</b>
-       <b>header_recipient)</b>
+       <b><a href="postconf.5.html#masquerade_classes">masquerade_classes</a> (envelope_sender, header_sender, header_recipient)</b>
               What addresses are subject to address masquerading.
 
        <b><a href="postconf.5.html#masquerade_domains">masquerade_domains</a> (empty)</b>
-              Optional list of domains whose subdomain  structure
-              will be stripped off in email addresses.
+              Optional  list  of  domains  whose  subdomain  structure will be
+              stripped off in email addresses.
 
        <b><a href="postconf.5.html#masquerade_exceptions">masquerade_exceptions</a> (empty)</b>
-              Optional  list of user names that are not subjected
-              to address masquerading, even  when  their  address
-              matches $<a href="postconf.5.html#masquerade_domains">masquerade_domains</a>.
+              Optional list of user names that are not  subjected  to  address
+              masquerading,   even   when   their  address  matches  $<a href="postconf.5.html#masquerade_domains">masquer</a>-
+              <a href="postconf.5.html#masquerade_domains">ade_domains</a>.
 
        <b><a href="postconf.5.html#propagate_unmatched_extensions">propagate_unmatched_extensions</a> (canonical, virtual)</b>
-              What  address  lookup tables copy an address exten-
-              sion from the lookup key to the lookup result.
+              What address lookup tables copy an address  extension  from  the
+              lookup key to the lookup result.
 
        Available before Postfix version 2.0:
 
        <b><a href="postconf.5.html#virtual_maps">virtual_maps</a> (empty)</b>
-              Optional lookup tables with a) names of domains for
-              which  all  addresses  are  aliased to addresses in
-              other local or remote  domains,  and  b)  addresses
-              that  are  aliased  to  addresses in other local or
-              remote domains.
+              Optional  lookup  tables  with a) names of domains for which all
+              addresses are aliased to addresses  in  other  local  or  remote
+              domains, and b) addresses that are aliased to addresses in other
+              local or remote domains.
 
        Available in Postfix version 2.0 and later:
 
        <b><a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> ($<a href="postconf.5.html#virtual_maps">virtual_maps</a>)</b>
-              Optional lookup tables  that  alias  specific  mail
-              addresses  or  domains  to  other  local  or remote
-              address.
+              Optional lookup tables that alias  specific  mail  addresses  or
+              domains to other local or remote address.
 
        Available in Postfix version 2.2 and later:
 
-       <b><a href="postconf.5.html#canonical_classes">canonical_classes</a>  (envelope_sender,   envelope_recipient,</b>
-       <b>header_sender, header_recipient)</b>
-              What  addresses  are  subject   to   <a href="postconf.5.html#canonical_maps">canonical_maps</a>
-              address mapping.
-
-       <b><a href="postconf.5.html#recipient_canonical_classes">recipient_canonical_classes</a>           (envelope_recipient,</b>
+       <b><a href="postconf.5.html#canonical_classes">canonical_classes</a>  (envelope_sender, envelope_recipient, header_sender,</b>
        <b>header_recipient)</b>
-              What  addresses  are  subject  to <a href="postconf.5.html#recipient_canonical_maps">recipient_canoni</a>-
-              <a href="postconf.5.html#recipient_canonical_maps">cal_maps</a> address mapping.
+              What addresses are subject to <a href="postconf.5.html#canonical_maps">canonical_maps</a> address mapping.
+
+       <b><a href="postconf.5.html#recipient_canonical_classes">recipient_canonical_classes</a> (envelope_recipient, header_recipient)</b>
+              What  addresses  are subject to <a href="postconf.5.html#recipient_canonical_maps">recipient_canonical_maps</a> address
+              mapping.
 
        <b><a href="postconf.5.html#sender_canonical_classes">sender_canonical_classes</a> (envelope_sender, header_sender)</b>
-              What addresses are subject to <a href="postconf.5.html#sender_canonical_maps">sender_canonical_maps</a>
-              address mapping.
+              What addresses are subject to <a href="postconf.5.html#sender_canonical_maps">sender_canonical_maps</a> address map-
+              ping.
 
        <b><a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a> (empty)</b>
-              Don't  rewrite  message headers from remote clients
-              at all when this parameter is empty; otherwise, re-
-              write  message  headers  and  append  the specified
-              domain name to incomplete addresses.
+              Don't  rewrite  message  headers from remote clients at all when
+              this parameter is empty; otherwise, rewrite message headers  and
+              append the specified domain name to incomplete addresses.
 
 <b>RESOURCE AND RATE CONTROLS</b>
        <b><a href="postconf.5.html#duplicate_filter_limit">duplicate_filter_limit</a> (1000)</b>
-              The maximal number of addresses remembered  by  the
-              address  duplicate  filter  for  <a href="aliases.5.html"><b>aliases</b>(5)</a> or <a href="virtual.5.html"><b>vir-</b></a>
-              <a href="virtual.5.html"><b>tual</b>(5)</a> alias expansion, or for <a href="showq.8.html"><b>showq</b>(8)</a> queue dis-
-              plays.
+              The maximal number of addresses remembered by the address dupli-
+              cate filter for <a href="aliases.5.html"><b>aliases</b>(5)</a> or <a href="virtual.5.html"><b>virtual</b>(5)</a> alias expansion, or for
+              <a href="showq.8.html"><b>showq</b>(8)</a> queue displays.
 
        <b><a href="postconf.5.html#header_size_limit">header_size_limit</a> (102400)</b>
-              The maximal amount of memory in bytes for storing a
-              message header.
+              The  maximal  amount  of  memory  in bytes for storing a message
+              header.
 
        <b><a href="postconf.5.html#hopcount_limit">hopcount_limit</a> (50)</b>
-              The maximal number of  Received:   message  headers
-              that is allowed in the primary message headers.
+              The maximal number of Received:  message headers that is allowed
+              in the primary message headers.
 
        <b><a href="postconf.5.html#in_flow_delay">in_flow_delay</a> (1s)</b>
-              Time  to pause before accepting a new message, when
-              the message arrival rate exceeds the message deliv-
-              ery rate.
+              Time  to  pause before accepting a new message, when the message
+              arrival rate exceeds the message delivery rate.
 
        <b><a href="postconf.5.html#message_size_limit">message_size_limit</a> (10240000)</b>
-              The  maximal  size in bytes of a message, including
-              envelope information.
+              The maximal size in  bytes  of  a  message,  including  envelope
+              information.
 
        Available in Postfix version 2.0 and later:
 
        <b><a href="postconf.5.html#header_address_token_limit">header_address_token_limit</a> (10240)</b>
-              The maximal number of address tokens are allowed in
-              an address message header.
+              The  maximal  number of address tokens are allowed in an address
+              message header.
 
        <b><a href="postconf.5.html#mime_boundary_length_limit">mime_boundary_length_limit</a> (2048)</b>
-              The  maximal  length  of  MIME  multipart  boundary
-              strings.
+              The maximal length of MIME multipart boundary strings.
 
        <b><a href="postconf.5.html#mime_nesting_limit">mime_nesting_limit</a> (100)</b>
-              The maximal recursion level that the MIME processor
-              will handle.
+              The maximal recursion level that the MIME processor will handle.
 
        <b><a href="postconf.5.html#queue_file_attribute_count_limit">queue_file_attribute_count_limit</a> (100)</b>
-              The  maximal number of (name=value) attributes that
-              may be stored in a Postfix queue file.
+              The maximal number of (name=value) attributes that may be stored
+              in a Postfix queue file.
 
        Available in Postfix version 2.1 and later:
 
        <b><a href="postconf.5.html#virtual_alias_expansion_limit">virtual_alias_expansion_limit</a> (1000)</b>
-              The maximal number of addresses that virtual  alias
-              expansion produces from each original recipient.
+              The maximal number of addresses  that  virtual  alias  expansion
+              produces from each original recipient.
 
        <b><a href="postconf.5.html#virtual_alias_recursion_limit">virtual_alias_recursion_limit</a> (1000)</b>
-              The  maximal  nesting depth of virtual alias expan-
-              sion.
+              The maximal nesting depth of virtual alias expansion.
 
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
-              <a href="master.5.html">master.cf</a> configuration files.
+              The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
+              figuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How  much time a Postfix daemon process may take to
-              handle a request  before  it  is  terminated  by  a
-              built-in watchdog timer.
+              How much time a Postfix daemon process  may  take  to  handle  a
+              request before it is terminated by a built-in watchdog timer.
 
        <b><a href="postconf.5.html#delay_logging_resolution_limit">delay_logging_resolution_limit</a> (2)</b>
-              The  maximal  number  of  digits  after the decimal
-              point when logging sub-second delay values.
+              The  maximal  number of digits after the decimal point when log-
+              ging sub-second delay values.
 
        <b><a href="postconf.5.html#delay_warning_time">delay_warning_time</a> (0h)</b>
-              The time after which the sender receives  the  mes-
-              sage headers of mail that is still queued.
+              The time after which the sender receives a copy of  the  message
+              headers of mail that is still queued.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
-              The time limit for sending or receiving information
-              over an internal communication channel.
+              The  time  limit  for  sending  or receiving information over an
+              internal communication channel.
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
-              The maximum amount of time  that  an  idle  Postfix
-              daemon  process  waits  for  an incoming connection
-              before terminating voluntarily.
+              The maximum amount of time that an idle Postfix  daemon  process
+              waits for an incoming connection before terminating voluntarily.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
-              The maximal number of incoming connections  that  a
-              Postfix  daemon  process will service before termi-
-              nating voluntarily.
+              The maximal number of incoming connections that a Postfix daemon
+              process will service before terminating voluntarily.
 
        <b><a href="postconf.5.html#myhostname">myhostname</a> (see 'postconf -d' output)</b>
               The internet hostname of this mail system.
 
        <b><a href="postconf.5.html#myorigin">myorigin</a> ($<a href="postconf.5.html#myhostname">myhostname</a>)</b>
-              The domain name that locally-posted mail appears to
-              come  from,  and that locally posted mail is deliv-
-              ered to.
+              The  domain  name that locally-posted mail appears to come from,
+              and that locally posted mail is delivered to.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The process ID  of  a  Postfix  command  or  daemon
-              process.
+              The process ID of a Postfix command or daemon process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
-              The  process  name  of  a Postfix command or daemon
-              process.
+              The process name of a Postfix command or daemon process.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The location of the Postfix top-level queue  direc-
-              tory.
+              The location of the Postfix top-level queue directory.
 
        <b><a href="postconf.5.html#soft_bounce">soft_bounce</a> (no)</b>
-              Safety net to keep mail queued that would otherwise
-              be returned to the sender.
+              Safety net to keep mail queued that would otherwise be  returned
+              to the sender.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The mail system  name  that  is  prepended  to  the
-              process  name  in  syslog  records, so that "smtpd"
-              becomes, for example, "postfix/smtpd".
+              The  mail  system  name that is prepended to the process name in
+              syslog records, so that "smtpd"  becomes,  for  example,  "post-
+              fix/smtpd".
 
        Available in Postfix version 2.1 and later:
 
        <b><a href="postconf.5.html#enable_original_recipient">enable_original_recipient</a> (yes)</b>
-              Enable  support  for  the   X-Original-To   message
-              header.
+              Enable support for the X-Original-To message header.
 
 <b>FILES</b>
        /etc/postfix/canonical*, canonical mapping table
@@ -514,8 +463,7 @@ CLEANUP(8)                                                          CLEANUP(8)
        <a href="CONTENT_INSPECTION_README.html">CONTENT_INSPECTION_README</a> content inspection
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
-       software.
+       The Secure Mailer license must be distributed with this software.
 
 <b>AUTHOR(S)</b>
        Wietse Venema

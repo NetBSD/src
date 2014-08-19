@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.59.2.1 2012/11/20 03:02:33 tls Exp $ */
+/*	$NetBSD: cgsix.c,v 1.59.2.2 2014/08/20 00:03:50 tls Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.59.2.1 2012/11/20 03:02:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.59.2.2 2014/08/20 00:03:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,8 +125,18 @@ dev_type_ioctl(cgsixioctl);
 dev_type_mmap(cgsixmmap);
 
 const struct cdevsw cgsix_cdevsw = {
-	cgsixopen, cgsixclose, noread, nowrite, cgsixioctl,
-	nostop, notty, nopoll, cgsixmmap, nokqfilter, D_OTHER
+	.d_open = cgsixopen,
+	.d_close = cgsixclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = cgsixioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = cgsixmmap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 /* frame buffer generic driver */
@@ -285,12 +295,12 @@ int cgsix_use_rasterconsole = 1;
 /*
  * Run a blitter command
  */
-#define CG6_BLIT(f) { volatile uint32_t foo; foo = f->fbc_blit; }
+#define CG6_BLIT(f) { (void)f->fbc_blit; }
 
 /*
  * Run a drawing command
  */
-#define CG6_DRAW(f) { volatile uint32_t foo; foo = f->fbc_draw; }
+#define CG6_DRAW(f) { (void)f->fbc_draw; }
 
 /*
  * Wait for the whole engine to go idle.  This may not matter in our case;
@@ -614,9 +624,6 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 	vcons_init(&sc->vd, sc, &cgsix_defaultscreen, &cgsix_accessops);
 	sc->vd.init_screen = cgsix_init_screen;
 
-	cg6_setup_palette(sc);
-	cgsix_clearscreen(sc);
-
 	sc->sc_gc.gc_bitblt = cgsix_bitblt;
 	sc->sc_gc.gc_blitcookie = sc;
 	sc->sc_gc.gc_rop = CG6_ALU_COPY;
@@ -625,6 +632,19 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 		/* we mess with cg6_console_screen only once */
 		vcons_init_screen(&sc->vd, &cg6_console_screen, 1,
 		    &defattr);
+		sc->sc_bg = (defattr >> 16) & 0xf; /* yes, this is an index into devcmap */
+		
+		/*
+		 * XXX
+		 * Is this actually necessary? We're going to use the blitter later on anyway.
+		 */ 
+		/* We need unaccelerated initial screen clear on old revisions */
+		if (sc->sc_fhcrev < 2) {
+			memset(sc->sc_fb.fb_pixels, ri->ri_devcmap[sc->sc_bg],
+			    sc->sc_stride * sc->sc_height);
+		} else
+			cgsix_clearscreen(sc);
+
 		cg6_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 		
 		cgsix_defaultscreen.textops = &ri->ri_ops;
@@ -653,7 +673,9 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 			/* do some minimal setup to avoid weirdnesses later */
 			vcons_init_screen(&sc->vd, &cg6_console_screen, 1,
 			    &defattr);
-		}
+		} else
+			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
+		sc->sc_bg = (defattr >> 16) & 0xf;
 		if (ri->ri_flg & RI_ENABLE_ALPHA) {
 			glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
 				(sc->sc_ramsize / sc->sc_stride) - 
@@ -1296,10 +1318,6 @@ cgsix_init_screen(void *cookie, struct vcons_screen *scr,
 	}
 	ri->ri_bits = sc->sc_fb.fb_pixels;
 	
-	/* We need unaccelerated initial screen clear on old revisions */
-	if (sc->sc_fhcrev < 2)
-		memset(sc->sc_fb.fb_pixels, (*defattr >> 16) & 0xff,
-		    sc->sc_stride * sc->sc_height);
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,

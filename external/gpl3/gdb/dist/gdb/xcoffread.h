@@ -1,5 +1,5 @@
 /* Read AIX xcoff symbol tables and convert to internal format, for GDB.
-   Copyright (C) 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,5 +20,7 @@
 #define XCOFF_READ_H
 
 extern CORE_ADDR xcoff_get_toc_offset (struct objfile *);
+
+extern int xcoff_get_n_import_files (bfd *abfd);
 
 #endif /* xcoffread.h */

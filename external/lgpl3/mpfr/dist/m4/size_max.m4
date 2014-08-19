@@ -1,10 +1,11 @@
 # size_max.m4 serial 6
-dnl Copyright (C) 2003, 2005-2006 Free Software Foundation, Inc.
+dnl Copyright (C) 2003, 2005-2006, 2010 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 dnl From Bruno Haible.
+dnl Change by Vincent Lefevre: added <inttypes.h> for consistency with MPFR
 
 AC_DEFUN([gl_SIZE_MAX],
 [
@@ -15,8 +16,11 @@ AC_DEFUN([gl_SIZE_MAX],
     gl_cv_size_max=
     AC_EGREP_CPP([Found it], [
 #include <limits.h>
+#ifdef HAVE_INTTYPES_H
+# include <inttypes.h>
+#endif
 #if HAVE_STDINT_H
-#include <stdint.h>
+# include <stdint.h>
 #endif
 #ifdef SIZE_MAX
 Found it

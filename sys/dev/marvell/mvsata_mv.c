@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata_mv.c,v 1.4.2.1 2013/06/23 06:20:17 tls Exp $	*/
+/*	$NetBSD: mvsata_mv.c,v 1.4.2.2 2014/08/20 00:03:39 tls Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata_mv.c,v 1.4.2.1 2013/06/23 06:20:17 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata_mv.c,v 1.4.2.2 2014/08/20 00:03:39 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -71,7 +71,7 @@ static void mvsatahc_attach(device_t, device_t, void *);
 static int mvsatahc_intr(void *);
 
 static void mvsatahc_enable_intr(struct mvsata_port *, int);
-static void mvsatahc_wininit(struct mvsata_softc *);
+static void mvsatahc_wininit(struct mvsata_softc *, enum marvell_tags *);
 
 CFATTACH_DECL_NEW(mvsata_gt, sizeof(struct mvsata_softc),
     mvsatahc_match, mvsatahc_attach, NULL, NULL);
@@ -100,7 +100,16 @@ struct mvsata_product mvsata_products[] = {
 	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_MV78200, 1, 2, gen2e, 0 },
 
 	/* Armada XP */
+	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_MV78130, 1, 2, gen2e, 0 },
+	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_MV78160, 1, 2, gen2e, 0 },
+	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_MV78230, 1, 2, gen2e, 0 },
+	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_MV78260, 1, 2, gen2e, 0 },
 	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_MV78460, 1, 2, gen2e, 0 },
+
+	/* Armada 370 */
+	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_MV6707, 1, 2, gen2e, 0 },
+	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_MV6710, 1, 2, gen2e, 0 },
+	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_MV6W11, 1, 2, gen2e, 0 },
 };
 
 
@@ -148,7 +157,7 @@ mvsatahc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = mva->mva_dmat;
 	sc->sc_enable_intr = mvsatahc_enable_intr;
 
-	mvsatahc_wininit(sc);
+	mvsatahc_wininit(sc, mva->mva_tags);
 
 	for (i = 0; i < __arraycount(mvsata_products); i++)
 		if (mva->mva_model == mvsata_products[i].model)
@@ -202,20 +211,12 @@ mvsatahc_enable_intr(struct mvsata_port *mvport, int on)
 }
 
 static void
-mvsatahc_wininit(struct mvsata_softc *sc)
+mvsatahc_wininit(struct mvsata_softc *sc, enum marvell_tags *tags)
 {
 	device_t pdev = device_parent(sc->sc_wdcdev.sc_atac.atac_dev);
 	uint64_t base;
 	uint32_t size;
 	int window, target, attr, rv, i;
-	static int tags[] = {
-		MARVELL_TAG_SDRAM_CS0,
-		MARVELL_TAG_SDRAM_CS1,
-		MARVELL_TAG_SDRAM_CS2,
-		MARVELL_TAG_SDRAM_CS3,
-
-		MARVELL_TAG_UNDEFINED,
-	};
 
 	for (window = 0, i = 0;
 	    tags[i] != MARVELL_TAG_UNDEFINED && window < MVSATAHC_NWINDOW;

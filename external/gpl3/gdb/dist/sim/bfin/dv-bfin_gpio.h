@@ -1,6 +1,6 @@
 /* Blackfin General Purpose Ports (GPIO) model
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -20,8 +20,5 @@
 
 #ifndef DV_BFIN_GPIO_H
 #define DV_BFIN_GPIO_H
-
-/* XXX: This should be pushed into the model data.  */
-#define BFIN_MMR_GPIO_SIZE	(17 * 4)
 
 #endif

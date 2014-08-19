@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.212.2.3 2013/06/23 06:28:54 tls Exp $
+$NetBSD: acronyms,v 1.212.2.4 2014/08/20 00:02:38 tls Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -6,8 +6,12 @@ $NetBSD: acronyms,v 1.212.2.3 2013/06/23 06:28:54 tls Exp $
 31337	elite ("eleet")
 4TW	for the win
 AAMOF	as a matter of fact
+ABD	all but dissertation
 AC	audible chuckle
+ADD	attention deficit disorder
+ADHD	attention deficit (and) hyperactivity disorder
 ADN	any day now
+ADOS	attention deficit ... oh, shiny!
 AEAP	as early as possible
 AFAIAC	as far as I am concerned
 AFAIC	as far as I'm concerned
@@ -46,6 +50,7 @@ B/S	bullshit
 B/W	bandwidth
 B/W	between
 BAK	back at keyboard
+BAMF	bad-ass motherfucker
 BBIAB	be back in a bit
 BBL	[I'll] be back later
 BBR	burnt beyond repair
@@ -88,12 +93,15 @@ CNP	continued [in my] next post
 COB	close of business [day]
 COTS	commercial off-the-shelf
 CPC	cost per click
+CPE	customer premises equipment
 CTN	can't talk now
 CU	see you
 CUL	see you later
 CYA	see you around
 CYE	check your email
+D/B/A	doing business as
 D/L	download
+DBA	doing business as
 DBEYR	don't believe everything you read
 DGAS	don't give a shit
 DIAFYO	did I ask for your opinion?
@@ -144,6 +152,7 @@ FOAD	{fall over,fuck off} and die
 FOC	free of charge
 FOS	full of shit
 FPS	first person shooter
+FPS	frames per second
 FSCK	fuck
 FSDO	for some definition of
 FSVO	for some value of
@@ -368,6 +377,9 @@ OTTOMH	off the top of my head
 OWTTE	or words to that effect
 PC	player character
 PC	politically correct
+PCB	polychlorinated biphenyl(s)
+PD	police department
+PDA	public display of affection
 PDQ	pretty darn quick
 PDS	please don't shout
 PEBCAK	problem exists between chair and keyboard
@@ -400,6 +412,7 @@ PTV	parental tunnel vision
 QED	quod erat demonstrandum
 QFT	quoted for truth
 RA	residential advisor
+REMF	rear echelon motherfucker
 RFC	request for comments
 RFD	request for discussion
 RFE	request for enhancements
@@ -466,6 +479,8 @@ TBH	to be honest
 TBOMK	the best of my knowledge
 TCB	taking care of business
 TCO	taken care of
+TCO	total cost of ownership
+TFOA	things falling off aircraft
 THNX	thanks
 THX	thanks
 TIA	thanks in advance
@@ -492,6 +507,7 @@ TOC	table of contents
 TOCTOU	time of check to time of use
 TOEFL	test of english as a foreign language
 TOH	to other half
+TP	toilet paper
 TPTB	the powers that be
 TRT	the right thing
 TTBOMK	to the best of my knowledge
@@ -506,6 +522,7 @@ TWIAVBP	the world is a very big place
 TY	thank you
 TYVM	thank you very much
 U/L	upload
+UGT	universal greeting time
 UTSL	use the source, Luke
 VCR	video cassette recorder
 VEG	very evil grin
@@ -545,5 +562,6 @@ YKWIM	you know what I mean
 YMA	yo momma's ass
 YMMV	your mileage may vary
 YOLO	you only live once
+YTF	why the fuck
 YW	you're welcome
 YWSYLS	you win some, you lose some

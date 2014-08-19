@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.29.18.1 2013/06/23 06:20:13 tls Exp $ */
+/*	$NetBSD: ka780.c,v 1.29.18.2 2014/08/20 00:03:27 tls Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka780.c,v 1.29.18.1 2013/06/23 06:20:13 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka780.c,v 1.29.18.2 2014/08/20 00:03:27 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,7 +365,7 @@ ka780_attach_cpu(device_t self)
 	struct ka78x * const ka78 = (void *)&vax_cpudata;
 
 	aprint_normal(": KA%s, S/N %d(%d), hardware ECO level %d(%d)\n",
-	    &cpu_model[8], ka78->snr, ka78->plant, ka78->eco >> 4, ka78->eco);
+	    cpu_getmodel() + 8, ka78->snr, ka78->plant, ka78->eco >> 4, ka78->eco);
 	aprint_normal_dev(self, "4KB L1 cachen");
 	if (mfpr(PR_ACCS) & 255) {
 		aprint_normal(", FPA present\n");

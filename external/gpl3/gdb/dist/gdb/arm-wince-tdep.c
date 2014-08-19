@@ -1,7 +1,7 @@
 /* Target-dependent code for Windows CE running on ARM processors,
    for GDB.
 
-   Copyright (C) 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2007-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,16 +22,15 @@
 #include "osabi.h"
 #include "gdbcore.h"
 #include "target.h"
-#include "solib.h"
-#include "solib-target.h"
 #include "frame.h"
 
-#include "gdb_string.h"
+#include <string.h>
 
 #include "arm-tdep.h"
+#include "windows-tdep.h"
 
-static const char arm_wince_le_breakpoint[] = { 0x10, 0x00, 0x00, 0xe6 };
-static const char arm_wince_thumb_le_breakpoint[] = { 0xfe, 0xdf };
+static const gdb_byte arm_wince_le_breakpoint[] = { 0x10, 0x00, 0x00, 0xe6 };
+static const gdb_byte arm_wince_thumb_le_breakpoint[] = { 0xfe, 0xdf };
 
 /* Description of the longjmp buffer.  */
 #define ARM_WINCE_JB_ELEMENT_SIZE	INT_REGISTER_SIZE
@@ -43,8 +42,8 @@ arm_pe_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
   struct gdbarch *gdbarch = get_frame_arch (frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   ULONGEST indirect;
-  struct minimal_symbol *indsym;
-  char *symname;
+  struct bound_minimal_symbol indsym;
+  const char *symname;
   CORE_ADDR next_pc;
 
   /* The format of an ARM DLL trampoline is:
@@ -62,10 +61,10 @@ arm_pe_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
     return 0;
 
   indsym = lookup_minimal_symbol_by_pc (indirect);
-  if (indsym == NULL)
+  if (indsym.minsym == NULL)
     return 0;
 
-  symname = SYMBOL_LINKAGE_NAME (indsym);
+  symname = SYMBOL_LINKAGE_NAME (indsym.minsym);
   if (symname == NULL || strncmp (symname, "__imp_", 6) != 0)
     return 0;
 
@@ -84,7 +83,7 @@ arm_pe_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
    the address of the instruction following that call.  Otherwise, it
    simply returns PC.  */
 
-CORE_ADDR
+static CORE_ADDR
 arm_wince_skip_main_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -100,11 +99,11 @@ arm_wince_skip_main_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 
       long offset = sign_extend (this_instr & 0x000fffff, 23) << 2;
       CORE_ADDR call_dest = (pc + 8 + offset) & 0xffffffffU;
-      struct minimal_symbol *s = lookup_minimal_symbol_by_pc (call_dest);
+      struct bound_minimal_symbol s = lookup_minimal_symbol_by_pc (call_dest);
 
-      if (s != NULL
-	  && SYMBOL_LINKAGE_NAME (s) != NULL
-	  && strcmp (SYMBOL_LINKAGE_NAME (s), "__gccmain") == 0)
+      if (s.minsym != NULL
+	  && SYMBOL_LINKAGE_NAME (s.minsym) != NULL
+	  && strcmp (SYMBOL_LINKAGE_NAME (s.minsym), "__gccmain") == 0)
 	pc += 4;
     }
 
@@ -115,6 +114,8 @@ static void
 arm_wince_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
+  windows_init_abi (info, gdbarch);
 
   tdep->arm_breakpoint = arm_wince_le_breakpoint;
   tdep->arm_breakpoint_size = sizeof (arm_wince_le_breakpoint);
@@ -131,7 +132,6 @@ arm_wince_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_char_signed (gdbarch, 1);
 
   /* Shared library handling.  */
-  set_solib_ops (gdbarch, &solib_target_so_ops);
   set_gdbarch_skip_trampoline_code (gdbarch, arm_pe_skip_trampoline_code);
 
   /* Single stepping.  */
@@ -139,10 +139,6 @@ arm_wince_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* Skip call to __gccmain that gcc places in main.  */
   set_gdbarch_skip_main_prologue (gdbarch, arm_wince_skip_main_prologue);
-
-  /* Canonical paths on this target look like `\Windows\coredll.dll',
-     for example.  */
-  set_gdbarch_has_dos_based_file_system (gdbarch, 1);
 }
 
 static enum gdb_osabi

@@ -96,6 +96,10 @@ enum some_volatile_enum { enumvolval1, enumvolval2 };
    name.  See PR11827.  */
 volatile enum some_volatile_enum some_volatile_enum = enumvolval1;
 
+enum flag_enum { ONE = 1, TWO = 2 };
+
+enum flag_enum three = ONE | TWO;
+
 /* A structure with an embedded array at an offset > 0.  The array has
    all elements with the same repeating value, which must not be the
    same as the value of the preceding fields in the structure for the
@@ -118,18 +122,107 @@ struct some_struct
   }
 };
 
+/* The following variables are used for testing byte repeat sequences.
+   The variable names are encoded: invalid_XYZ where:
+   X = start
+   Y = invalid
+   Z = end
+
+   Each of X and Z can be "E" (empty), "S" (single), "L" (long single),
+   or "R" (repeat).
+
+   Y can be either any of the above except "E" (otherwise there is nothing
+   to test).  */
+char invalid_ESE[] = "\240";
+char invalid_SSE[] = "a\240";
+char invalid_LSE[] = "abaabbaaabbb\240";
+char invalid_RSE[] = "aaaaaaaaaaaaaaaaaaaa\240";
+char invalid_ESS[] = "\240c";
+char invalid_SSS[] = "a\240c";
+char invalid_LSS[] = "abaabbaaabbb\240c";
+char invalid_RSS[] = "aaaaaaaaaaaaaaaaaaaa\240c";
+char invalid_ESL[] = "\240cdccddcccddd";
+char invalid_SSL[] = "a\240cdccddcccddd";
+char invalid_LSL[] = "abaabbaaabbb\240cdccddcccddd";
+char invalid_RSL[] = "aaaaaaaaaaaaaaaaaaaa\240cdccddcccddd";
+char invalid_ESR[] = "\240cccccccccccccccccccc";
+char invalid_SSR[] = "a\240cccccccccccccccccccc";
+char invalid_LSR[] = "abaabbaaabbb\240cccccccccccccccccccc";
+char invalid_RSR[] = "aaaaaaaaaaaaaaaaaaaa\240cccccccccccccccccccc";
+char invalid_ELE[] = "\240\240\240\240";
+char invalid_SLE[] = "a\240\240\240\240";
+char invalid_LLE[] = "abaabbaaabbb\240\240\240\240";
+char invalid_RLE[] = "aaaaaaaaaaaaaaaaaaaa\240\240\240\240";
+char invalid_ELS[] = "\240\240\240\240c";
+char invalid_SLS[] = "a\240\240\240\240c";
+char invalid_LLS[] = "abaabbaaabbb\240\240\240\240c";
+char invalid_RLS[] = "aaaaaaaaaaaaaaaaaaaa\240\240\240\240c";
+char invalid_ELL[] = "\240\240\240\240cdccddcccddd";
+char invalid_SLL[] = "a\240\240\240\240cdccddcccddd";
+char invalid_LLL[] = "abaabbaaabbb\240\240\240\240cdccddcccddd";
+char invalid_RLL[] = "aaaaaaaaaaaaaaaaaaaa\240\240\240\240cdccddcccddd";
+char invalid_ELR[] = "\240\240\240\240cccccccccccccccccccc";
+char invalid_SLR[] = "a\240\240\240\240cccccccccccccccccccc";
+char invalid_LLR[] = "abaabbaaabbb\240\240\240\240cccccccccccccccccccc";
+char invalid_RLR[] = "aaaaaaaaaaaaaaaaaaaa\240\240\240\240cccccccccccccccccccc";
+char invalid_ERE[] = ""
+  "\240\240\240\240\240\240\240\240\240\240"
+  "\240\240\240\240\240\240\240\240\240\240";
+char invalid_LRE[] = "abaabbaaabbb"
+  "\240\240\240\240\240\240\240\240\240\240"
+  "\240\240\240\240\240\240\240\240\240\240";
+char invalid_RRE[] = "aaaaaaaaaaaaaaaaaaaa"
+  "\240\240\240\240\240\240\240\240\240\240"
+  "\240\240\240\240\240\240\240\240\240\240";
+char invalid_ERS[] = ""
+  "\240\240\240\240\240\240\240\240\240\240"
+  "\240\240\240\240\240\240\240\240\240\240c";
+char invalid_ERL[] = ""
+  "\240\240\240\240\240\240\240\240\240\240"
+  "\240\240\240\240\240\240\240\240\240\240cdccddcccddd";
+char invalid_ERR[] = ""
+  "\240\240\240\240\240\240\240\240\240\240"
+  "\240\240\240\240\240\240\240\240\240\240cccccccccccccccccccc";
+char invalid_SRE[] = "a"
+  "\240\240\240\240\240\240\240\240\240\240"
+  "\240\240\240\240\240\240\240\240\240\240";
+char invalid_SRS[] = "a"
+  "\240\240\240\240\240\240\240\240\240\240"
+  "\240\240\240\240\240\240\240\240\240\240c";
+char invalid_SRL[] = "a"
+  "\240\240\240\240\240\240\240\240\240\240"
+  "\240\240\240\240\240\240\240\240\240\240cdccddcccddd";
+char invalid_SRR[] = "a"
+  "\240\240\240\240\240\240\240\240\240\240"
+  "\240\240\240\240\240\240\240\240\240\240cccccccccccccccccccc";
+char invalid_LRS[] = "abaabbaaabbb"
+  "\240\240\240\240\240\240\240\240\240\240"
+  "\240\240\240\240\240\240\240\240\240\240c";
+char invalid_LRL[] = "abaabbaaabbb"
+  "\240\240\240\240\240\240\240\240\240\240"
+  "\240\240\240\240\240\240\240\240\240\240cdccddcccddd";
+char invalid_LRR[] = "abaabbaaabbb"
+  "\240\240\240\240\240\240\240\240\240\240"
+  "\240\240\240\240\240\240\240\240\240\240cccccccccccccccccccc";
+char invalid_RRS[] = "aaaaaaaaaaaaaaaaaaaa"
+  "\240\240\240\240\240\240\240\240\240\240"
+  "\240\240\240\240\240\240\240\240\240\240c";
+char invalid_RRL[] = "aaaaaaaaaaaaaaaaaaaa"
+  "\240\240\240\240\240\240\240\240\240\240"
+  "\240\240\240\240\240\240\240\240\240\240cdccddcccddd";
+char invalid_RRR[] = "aaaaaaaaaaaaaaaaaaaa"
+  "\240\240\240\240\240\240\240\240\240\240"
+  "\240\240\240\240\240\240\240\240\240\240cccccccccccccccccccc";
+
 /* -- */
 
 int main ()
 {
-#ifdef usestubs
-  set_debug_traps();
-  breakpoint();
-#endif
-  malloc(1);
+  void *p = malloc (1);
 
   /* Prevent AIX linker from removing variables.  */
   return ctable1[0] + ctable2[0] + int1dim[0] + int2dim[0][0]
     + int3dim[0][0][0] + int4dim[0][0][0][0] + teststring[0] +
       *parrays -> array1 + a1[0] + a2[0];
+  free (p);
 }

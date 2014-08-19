@@ -1,5 +1,5 @@
 /* simple.c -- BFD simple client routines
-   Copyright 2002, 2003, 2004, 2005, 2007, 2008, 2009
+   Copyright 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011
    Free Software Foundation, Inc.
    Contributed by MontaVista Software, Inc.
 
@@ -82,10 +82,7 @@ simple_dummy_unattached_reloc (struct bfd_link_info *link_info ATTRIBUTE_UNUSED,
 
 static bfd_boolean
 simple_dummy_multiple_definition (struct bfd_link_info *link_info ATTRIBUTE_UNUSED,
-				  const char *name ATTRIBUTE_UNUSED,
-				  bfd *obfd ATTRIBUTE_UNUSED,
-				  asection *osec ATTRIBUTE_UNUSED,
-				  bfd_vma oval ATTRIBUTE_UNUSED,
+				  struct bfd_link_hash_entry *h ATTRIBUTE_UNUSED,
 				  bfd *nbfd ATTRIBUTE_UNUSED,
 				  asection *nsec ATTRIBUTE_UNUSED,
 				  bfd_vma nval ATTRIBUTE_UNUSED)

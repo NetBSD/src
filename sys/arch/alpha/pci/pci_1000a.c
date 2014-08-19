@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000a.c,v 1.26 2012/02/06 02:14:15 matt Exp $ */
+/* $NetBSD: pci_1000a.c,v 1.26.6.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.26 2012/02/06 02:14:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.26.6.1 2014/08/20 00:02:41 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -94,7 +94,7 @@ static bus_space_handle_t mystery_icu_ioh[2];
 
 int	dec_1000a_intr_map(const struct pci_attach_args *,
 	    pci_intr_handle_t *);
-const char *dec_1000a_intr_string(void *, pci_intr_handle_t);
+const char *dec_1000a_intr_string(void *, pci_intr_handle_t, char *, size_t);
 const struct evcnt *dec_1000a_intr_evcnt(void *, pci_intr_handle_t);
 void	*dec_1000a_intr_establish(void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *);
@@ -129,13 +129,15 @@ pci_1000a_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt, pci_ch
 
 	pc->pc_pciide_compat_intr_establish = NULL;
 
-	dec_1000a_pci_intr = alpha_shared_intr_alloc(PCI_NIRQ, 8);
+#define PCI_1000A_IRQ_STR	8
+	dec_1000a_pci_intr = alpha_shared_intr_alloc(PCI_NIRQ,
+	    PCI_1000A_IRQ_STR);
 	for (i = 0; i < PCI_NIRQ; i++) {
 		alpha_shared_intr_set_maxstrays(dec_1000a_pci_intr, i,
 		    PCI_STRAY_MAX);
 
 		cp = alpha_shared_intr_string(dec_1000a_pci_intr, i);
-		sprintf(cp, "irq %d", i);
+		snprintf(cp, PCI_1000A_IRQ_STR, "irq %d", i);
 		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
 		    dec_1000a_pci_intr, i), EVCNT_TYPE_INTR, NULL,
 		    "dec_1000a", cp);
@@ -153,7 +155,7 @@ dec_1000a_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	pcitag_t bustag = pa->pa_intrtag;
 	int buspin = pa->pa_intrpin;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	int imrbit, device;
+	int imrbit, device = 0;	/* XXX gcc */
 	/*
 	 * Get bit number in mystery ICU imr
 	 */
@@ -196,17 +198,15 @@ bad:	printf("dec_1000a_intr_map: can't map dev %d pin %d\n", device, buspin);
 }
 
 const char *
-dec_1000a_intr_string(void *ccv, pci_intr_handle_t ih)
+dec_1000a_intr_string(void *ccv, pci_intr_handle_t ih, char *buf, size_t len)
 {
 	static const char irqmsg_fmt[] = "dec_1000a irq %ld";
-	static char irqstr[sizeof irqmsg_fmt];
-
 
 	if (ih >= PCI_NIRQ)
-	        panic("dec_1000a_intr_string: bogus dec_1000a IRQ 0x%lx", ih);
+	        panic("%s: bogus dec_1000a IRQ 0x%lx", __func__, ih);
 
-	snprintf(irqstr, sizeof irqstr, irqmsg_fmt, ih);
-	return (irqstr);
+	snprintf(buf, len, irqmsg_fmt, ih);
+	return buf;
 }
 
 const struct evcnt *
@@ -214,7 +214,7 @@ dec_1000a_intr_evcnt(void *ccv, pci_intr_handle_t ih)
 {
 
 	if (ih >= PCI_NIRQ)
-		panic("dec_1000a_intr_evcnt: bogus dec_1000a IRQ 0x%lx", ih);
+		panic("%s: bogus dec_1000a IRQ 0x%lx", __func__, ih);
 
 	return (alpha_shared_intr_evcnt(dec_1000a_pci_intr, ih));
 }

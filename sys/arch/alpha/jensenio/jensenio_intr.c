@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_intr.c,v 1.10 2012/02/06 02:14:14 matt Exp $ */
+/* $NetBSD: jensenio_intr.c,v 1.10.6.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.10 2012/02/06 02:14:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.10.6.1 2014/08/20 00:02:41 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,7 +56,7 @@ static bus_space_handle_t pic_ioh[2];
 static bus_space_handle_t pic_elcr_ioh;
 
 int	jensenio_eisa_intr_map(void *, u_int, eisa_intr_handle_t *);
-const char *jensenio_eisa_intr_string(void *, int);
+const char *jensenio_eisa_intr_string(void *, int, char *, size_t);
 const struct evcnt *jensenio_eisa_intr_evcnt(void *, int);
 void	*jensenio_eisa_intr_establish(void *, int, int, int,
 	    int (*)(void *), void *);
@@ -64,6 +64,7 @@ void	jensenio_eisa_intr_disestablish(void *, void *);
 int	jensenio_eisa_intr_alloc(void *, int, int, int *);
 
 #define	JENSEN_MAX_IRQ		16
+#define	JENSEN_MAX_IRQ_STR	16
 
 struct alpha_shared_intr *jensenio_eisa_intr;
 
@@ -115,7 +116,8 @@ jensenio_intr_init(struct jensenio_config *jcp)
 
 	jensenio_pic_init();
 
-	jensenio_eisa_intr = alpha_shared_intr_alloc(JENSEN_MAX_IRQ, 16);
+	jensenio_eisa_intr = alpha_shared_intr_alloc(JENSEN_MAX_IRQ,
+	    JENSEN_MAX_IRQ_STR);
 	for (i = 0; i < JENSEN_MAX_IRQ; i++) {
 		alpha_shared_intr_set_dfltsharetype(jensenio_eisa_intr,
 		    i, jensenio_intr_deftype[i]);
@@ -124,7 +126,7 @@ jensenio_intr_init(struct jensenio_config *jcp)
 		    i, 0);
 
 		cp = alpha_shared_intr_string(jensenio_eisa_intr, i);
-		sprintf(cp, "irq %d", i);
+		snprintf(cp, JENSEN_MAX_IRQ_STR, "irq %d", i);
 		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
 		    jensenio_eisa_intr, i), EVCNT_TYPE_INTR,
 		    NULL, "eisa", cp);
@@ -178,16 +180,13 @@ jensenio_eisa_intr_map(void *v, u_int eirq, eisa_intr_handle_t *ihp)
 }
 
 const char *
-jensenio_eisa_intr_string(void *v, int eirq)
+jensenio_eisa_intr_string(void *v, int eirq, char *buf, size_t len)
 {
-	static char irqstr[64];
-
 	if (eirq >= JENSEN_MAX_IRQ)
-		panic("jensenio_eisa_intr_string: bogus IRQ %d", eirq);
+		panic("%s: bogus IRQ %d", __func__, eirq);
 
-	sprintf(irqstr, "eisa irq %d", eirq);
-
-	return (irqstr);
+	snprintf(buf, len, "eisa irq %d", eirq);
+	return buf;
 }
 
 const struct evcnt *
@@ -195,7 +194,7 @@ jensenio_eisa_intr_evcnt(void *v, int eirq)
 {
 
 	if (eirq >= JENSEN_MAX_IRQ)
-		panic("jensenio_eisa_intr_evcnt: bogus IRQ %d", eirq);
+		panic("%s: bogus IRQ %d", __func__, eirq);
 
 	return (alpha_shared_intr_evcnt(jensenio_eisa_intr, eirq));
 }

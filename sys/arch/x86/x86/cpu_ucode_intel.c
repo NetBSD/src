@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_intel.c,v 1.1.2.1 2012/11/20 03:01:51 tls Exp $ */
+/* $NetBSD: cpu_ucode_intel.c,v 1.1.2.2 2014/08/20 00:03:29 tls Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.1.2.1 2012/11/20 03:01:51 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.1.2.2 2014/08/20 00:03:29 tls Exp $");
 
 #include "opt_xen.h"
 #include "opt_cpu_ucode.h"
@@ -76,7 +76,7 @@ cpu_ucode_intel_get_version(struct cpu_ucode_version *ucode)
 	struct cpu_ucode_version_intel1 data;
 
 	if (ucode->loader_version != CPU_UCODE_LOADER_INTEL1 ||
-	    CPUID2FAMILY(ci->ci_signature) < 6)
+	    CPUID_TO_FAMILY(ci->ci_signature) < 6)
 		return EOPNOTSUPP;
 	if (!ucode->data)
 		return 0;
@@ -98,11 +98,12 @@ cpu_ucode_intel_firmware_open(firmware_handle_t *fwh, const char *fwname)
 		return firmware_open(fw_path, fwname, fwh);
 
 	cpu_signature = curcpu()->ci_signature;
-	if (CPUID2FAMILY(cpu_signature) < 6)
+	if (CPUID_TO_FAMILY(cpu_signature) < 6)
 		return EOPNOTSUPP;
 
 	intel_getcurrentucode(&ucodeversion, &platformid);
-	sprintf(cpuspec, "%08x-%d", cpu_signature, platformid);
+	snprintf(cpuspec, sizeof(cpuspec), "%08x-%d", cpu_signature,
+	    platformid);
 
 	return firmware_open(fw_path, cpuspec, fwh);
 }
@@ -150,4 +151,4 @@ cpu_ucode_intel_apply(struct cpu_ucode_softc *sc, int cpuno)
 
 	return 0;
 }
-#endif
+#endif /* ! XEN */

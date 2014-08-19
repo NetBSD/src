@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.7.12.1 2012/11/20 03:01:23 tls Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.7.12.2 2014/08/20 00:03:03 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -59,7 +59,8 @@ struct hpcmips_pci_chipset {
 	pcireg_t (*pc_conf_read)(pci_chipset_tag_t, pcitag_t, int);
 	void (*pc_conf_write)(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 	int (*pc_intr_map)(const struct pci_attach_args *, pci_intr_handle_t *);
-	const char *(*pc_intr_string)(pci_chipset_tag_t, pci_intr_handle_t);
+	const char *(*pc_intr_string)(pci_chipset_tag_t, pci_intr_handle_t,
+	    char *, size_t);
 	const struct evcnt *(*pc_intr_evcnt)(pci_chipset_tag_t,
 	    pci_intr_handle_t);
 	void *(*pc_intr_establish)(pci_chipset_tag_t, pci_intr_handle_t, int,
@@ -84,8 +85,8 @@ struct hpcmips_pci_chipset {
     (*(c)->pc_conf_write)((c), (t), (r), (v))
 #define	pci_intr_map(pa, ihp)						\
     (*(pa)->pa_pc->pc_intr_map)((pa), (ihp))
-#define	pci_intr_string(c, ih)						\
-    (*(c)->pc_intr_string)((c), (ih))
+#define	pci_intr_string(c, ih, buf, len)				\
+    (*(c)->pc_intr_string)((c), (ih), (buf), (len))
 #define	pci_intr_evcnt(c, ih)						\
     (*(c)->pc_intr_evcnt)((c), (ih))
 #define	pci_intr_establish(c, ih, l, h, a)				\

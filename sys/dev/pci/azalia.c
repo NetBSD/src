@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.79 2011/11/24 03:35:58 mrg Exp $	*/
+/*	$NetBSD: azalia.c,v 1.79.8.1 2014/08/20 00:03:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.79 2011/11/24 03:35:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.79.8.1 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -305,6 +305,7 @@ azalia_pci_attach(device_t parent, device_t self, void *aux)
 	const char *intrrupt_str;
 	const char *name;
 	const char *vendor;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->dev = self;
 	sc->dmat = pa->pa_dmat;
@@ -335,7 +336,7 @@ azalia_pci_attach(device_t parent, device_t self, void *aux)
 
 	sc->pc = pa->pa_pc;
 	sc->tag = pa->pa_tag;
-	intrrupt_str = pci_intr_string(pa->pa_pc, ih);
+	intrrupt_str = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	sc->ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, azalia_intr, sc);
 	if (sc->ih == NULL) {
 		aprint_error_dev(self, "can't establish interrupt");
@@ -1314,10 +1315,11 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 {
 #ifdef AZALIA_DEBUG
 	char flagbuf[FLAGBUFLEN];
+	int prev_dac = this->dacs.cur;
+	int prev_adc = this->adcs.cur;
 #endif
 	const convgroup_t *group;
 	uint32_t bits_rates;
-	int prev_dac, prev_adc;
 	int variation;
 	int nbits, c, chan, i, err;
 	nid_t nid;
@@ -1325,7 +1327,6 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 	variation = 0;
 	chan = 0;
 
-	prev_dac = this->dacs.cur;
 	if (newdac >= 0 && newdac < this->dacs.ngroups) {
 		this->dacs.cur = newdac;
 		group = &this->dacs.groups[this->dacs.cur];
@@ -1349,7 +1350,6 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 		variation = group->nconv * nbits;
 	}
 
-	prev_adc = this->adcs.cur;
 	if (newadc >= 0 && newadc < this->adcs.ngroups) {
 		this->adcs.cur = newadc;
 		group = &this->adcs.groups[this->adcs.cur];

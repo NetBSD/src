@@ -1,7 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2003, 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright 2003-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,8 +13,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-   */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 struct A
 {
@@ -68,6 +66,7 @@ int main (void)
   B beta, *bbp;
   C gamma;
   empty e;
+  A &aref (alpha);
 
   alpha.a1 = 100;
   beta.a1 = 200; beta.b1 = 201; beta.b2 = 202;

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.17 2009/12/23 09:13:21 mbalmer Exp $ */
+/* $NetBSD: udf_create.c,v 1.17.12.1 2014/08/20 00:02:27 tls Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -25,14 +25,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
  */
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: udf_create.c,v 1.17 2009/12/23 09:13:21 mbalmer Exp $");
-#endif /* not lint */
+__RCSID("$NetBSD: udf_create.c,v 1.17.12.1 2014/08/20 00:02:27 tls Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
 #include <errno.h>
 #include <time.h>
@@ -40,6 +42,7 @@ __RCSID("$NetBSD: udf_create.c,v 1.17 2009/12/23 09:13:21 mbalmer Exp $");
 #include <err.h>
 #include <sys/types.h>
 #include <sys/param.h>
+#include "unicode.h"
 #include "udf_create.h"
 
 
@@ -49,6 +52,10 @@ __RCSID("$NetBSD: udf_create.c,v 1.17 2009/12/23 09:13:21 mbalmer Exp $");
 #  endif
 #endif
 
+/*
+ * NOTE that there is some overlap between this code and the udf kernel fs.
+ * This is intentially though it might better be factored out one day.
+ */
 
 void
 udf_init_create_context(void)
@@ -70,10 +77,11 @@ udf_init_create_context(void)
 	context.volset_name  = NULL;
 	context.fileset_name = NULL;
 
-	context.app_name	  = "*NetBSD newfs";
-	context.app_version_main =  __NetBSD_Version__ / 100000000;
-	context.app_version_sub  = (__NetBSD_Version__ / 1000000) % 100;
-	context.impl_name        = "*NetBSD kernel UDF";
+	/* most basic identification */
+	context.app_name	 = "*NetBSD";
+	context.app_version_main = 0;
+	context.app_version_sub  = 0;
+	context.impl_name        = "*NetBSD";
 
 	context.vds_seq = 0;		/* first one starts with zero */
 
@@ -82,6 +90,67 @@ udf_init_create_context(void)
 
 	context.num_files       = 0;
 	context.num_directories = 0;
+
+	context.data_part          = 0;
+	context.metadata_part      = 0;
+	context.metadata_alloc_pos = 0;
+	context.data_alloc_pos     = 0;
+}
+
+
+/* version can be specified as 0xabc or a.bc */
+static int
+parse_udfversion(const char *pos, uint32_t *version) {
+	int hex = 0;
+	char c1, c2, c3, c4;
+
+	*version = 0;
+	if (*pos == '0') {
+		pos++;
+		/* expect hex format */
+		hex = 1;
+		if (*pos++ != 'x')
+			return 1;
+	}
+
+	c1 = *pos++;
+	if (c1 < '0' || c1 > '9')
+		return 1;
+	c1 -= '0';
+
+	c2 = *pos++;
+	if (!hex) {
+		if (c2 != '.')
+			return 1;
+		c2 = *pos++;
+	}
+	if (c2 < '0' || c2 > '9')
+		return 1;
+	c2 -= '0';
+
+	c3 = *pos++;
+	if (c3 < '0' || c3 > '9')
+		return 1;
+	c3 -= '0';
+
+	c4 = *pos++;
+	if (c4 != 0)
+		return 1;
+
+	*version = c1 * 0x100 + c2 * 0x10 + c3;
+	return 0;
+}
+
+
+/* parse a given string for an udf version */
+int
+a_udf_version(const char *s, const char *id_type)
+{
+	uint32_t version;
+
+	if (parse_udfversion(s, &version))
+		errx(1, "unknown %s id %s; specify as hex or float", id_type, s);
+	return version;
 }
 
 
@@ -114,7 +183,7 @@ udf_calculate_disc_layout(int format_flags, int min_udf,
 	uint32_t pos, mpos;
 
 	/* clear */
-	bzero(&layout, sizeof(struct udf_disclayout));
+	memset(&layout, 0, sizeof(layout));
 
 	/* fill with parameters */
 	layout.wrtrack_skew    = wrtrack_skew;
@@ -178,7 +247,7 @@ udf_calculate_disc_layout(int format_flags, int min_udf,
 
 	/* all non sequential media needs an unallocated space bitmap */
 	layout.alloc_bitmap_dscr_size = 0;
-	if ((format_flags & FORMAT_SEQUENTIAL) == 0) {
+	if ((format_flags & (FORMAT_SEQUENTIAL | FORMAT_READONLY)) == 0) {
 		bytes = udf_space_bitmap_len(layout.part_size_lba);
 		layout.alloc_bitmap_dscr_size = udf_bytes_to_sectors(bytes);
 
@@ -208,7 +277,7 @@ udf_calculate_disc_layout(int format_flags, int min_udf,
 	 * not updated sporadically
 	 */
 
-	if ((format_flags & FORMAT_SEQUENTIAL) == 0) {
+	if ((format_flags & (FORMAT_SEQUENTIAL | FORMAT_READONLY)) == 0) {
 #ifdef DEBUG
 		printf("Lost %d slack sectors at start\n", UDF_ROUNDUP(
 			first_lba - wrtrack_skew, align_blockingnr) -
@@ -218,8 +287,10 @@ udf_calculate_disc_layout(int format_flags, int min_udf,
 				first_lba - wrtrack_skew, align_blockingnr));
 #endif
 
-		first_lba = UDF_ROUNDUP( first_lba - wrtrack_skew, align_blockingnr);
-		last_lba  = UDF_ROUNDDOWN(last_lba - wrtrack_skew, align_blockingnr);
+		first_lba = UDF_ROUNDUP( first_lba - wrtrack_skew,
+				align_blockingnr);
+		last_lba  = UDF_ROUNDDOWN(last_lba - wrtrack_skew,
+				align_blockingnr);
 	}
 
 	if ((format_flags & FORMAT_SPARABLE) == 0)
@@ -335,11 +406,13 @@ udf_calculate_disc_layout(int format_flags, int min_udf,
 #endif
 
 	kbsize = (uint64_t) last_lba * sector_size;
-	printf("Total space on this medium approx. %"PRIu64" KiB, %"PRIu64" MiB\n",
+	printf("Total space on this medium approx. "
+			"%"PRIu64" KiB, %"PRIu64" MiB\n",
 			kbsize/1024, kbsize/(1024*1024));
-	kbsize = (uint64_t) (layout.part_size_lba - layout.alloc_bitmap_dscr_size
+	kbsize = (uint64_t)(layout.part_size_lba - layout.alloc_bitmap_dscr_size
 		- layout.meta_bitmap_dscr_size) * sector_size;
-	printf("Free space on this volume approx.  %"PRIu64" KiB, %"PRIu64" MiB\n\n",
+	printf("Free space on this volume approx.  "
+			"%"PRIu64" KiB, %"PRIu64" MiB\n\n",
 			kbsize/1024, kbsize/(1024*1024));
 
 	return 0;
@@ -425,7 +498,7 @@ udf_create_anchor(int num)
 void
 udf_create_terminator(union dscrptr *dscr, uint32_t loc)
 {
-	bzero(dscr, context.sector_size);
+	memset(dscr, 0, context.sector_size);
 	udf_inittag(&dscr->tag, TAGID_TERM, loc);
 
 	/* CRC length for an anchor is 512 - tag length; defined in Ecma 167 */
@@ -436,7 +509,7 @@ udf_create_terminator(union dscrptr *dscr, uint32_t loc)
 void
 udf_osta_charset(struct charspec *charspec)
 {
-	bzero(charspec, sizeof(struct charspec));
+	memset(charspec, 0, sizeof(*charspec));
 	charspec->type = 0;
 	strcpy((char *) charspec->inf, "OSTA Compressed Unicode");
 }
@@ -449,10 +522,10 @@ udf_encode_osta_id(char *osta_id, uint16_t len, char *text)
 	uint8_t  *pos;
 	uint16_t *pos16;
 
-	bzero(osta_id, len);
+	memset(osta_id, 0, len);
 	if (!text || (strlen(text) == 0)) return;
 
-	bzero(u16_name, sizeof(uint16_t) * 1023);
+	memset(u16_name, 0, sizeof(uint16_t) * 1023);
 
 	/* convert ascii to 16 bits unicode */
 	pos   = (uint8_t *) text;
@@ -474,7 +547,7 @@ udf_encode_osta_id(char *osta_id, uint16_t len, char *text)
 void
 udf_set_regid(struct regid *regid, char const *name)
 {
-	bzero(regid, sizeof(struct regid));
+	memset(regid, 0, sizeof(*regid));
 	regid->flags    = 0;		/* not dirty and not protected */
 	strcpy((char *) regid->id, name);
 }
@@ -520,8 +593,8 @@ udf_add_app_regid(struct regid *regid)
 
 
 /*
- * Fill in timestamp structure based on clock_gettime(). Time is reported back as a time_t
- * accompanied with a nano second field.
+ * Fill in timestamp structure based on clock_gettime(). Time is reported back
+ * as a time_t accompanied with a nano second field.
  *
  * The husec, usec and csec could be relaxed in type.
  */
@@ -531,7 +604,7 @@ udf_timespec_to_timestamp(struct timespec *timespec, struct timestamp *timestamp
 	struct tm tm;
 	uint64_t husec, usec, csec;
 
-	bzero(timestamp, sizeof(struct timestamp));
+	memset(timestamp, 0, sizeof(*timestamp));
 	gmtime_r(&timespec->tv_sec, &tm);
 
 	/*
@@ -557,11 +630,15 @@ udf_timespec_to_timestamp(struct timespec *timespec, struct timestamp *timestamp
 	csec   =  husec / 100;				/* only 0-99 in csec  */
 	husec -=   csec * 100;				/* only 0-99 in husec */
 
+	/* in rare cases there is overflow in csec */
+	csec  = MIN(99, csec);
+	husec = MIN(99, husec);
+	usec  = MIN(99, usec);
+
 	timestamp->centisec	= csec;
 	timestamp->hund_usec	= husec;
 	timestamp->usec		= usec;
 }
-
 
 
 void
@@ -569,9 +646,49 @@ udf_set_timestamp_now(struct timestamp *timestamp)
 {
 	struct timespec now;
 
-	clock_gettime(CLOCK_REALTIME, &now);
+#ifdef CLOCK_REALTIME
+	(void)clock_gettime(CLOCK_REALTIME, &now);
+#else
+	struct timeval time_of_day;
+
+	(void)gettimeofday(&time_of_day, NULL);
+	now.tv_sec = time_of_day.tv_sec;
+	now.tv_nsec = time_of_day.tv_usec * 1000;
+#endif
 	udf_timespec_to_timestamp(&now, timestamp);
 }
+
+
+/* some code copied from sys/fs/udf */
+
+static void
+udf_set_timestamp(struct timestamp *timestamp, time_t value)
+{
+	struct timespec t;
+
+	memset(&t, 0, sizeof(struct timespec));
+	t.tv_sec  = value;
+	t.tv_nsec = 0;
+	udf_timespec_to_timestamp(&t, timestamp);
+}
+
+
+static uint32_t
+unix_mode_to_udf_perm(mode_t mode)
+{
+	uint32_t perm;
+	
+	perm  = ((mode & S_IRWXO)     );
+	perm |= ((mode & S_IRWXG) << 2);
+	perm |= ((mode & S_IRWXU) << 4);
+	perm |= ((mode & S_IWOTH) << 3);
+	perm |= ((mode & S_IWGRP) << 5);
+	perm |= ((mode & S_IWUSR) << 7);
+
+	return perm;
+}
+
+/* end of copied code */
 
 
 int
@@ -584,7 +701,7 @@ udf_create_primaryd(void)
 	if (pri == NULL)
 		return ENOMEM;
 
-	bzero(pri, context.sector_size);
+	memset(pri, 0, context.sector_size);
 	udf_inittag(&pri->tag, TAGID_PRI_VOL, /* loc */ 0);
 	pri->seq_num = udf_rw32(context.vds_seq); context.vds_seq++;
 
@@ -1242,7 +1359,7 @@ udf_mark_allocated(uint32_t start_lb, int partnr, uint32_t blocks)
 	uint8_t *bpos;
 	uint32_t cnt, bit;
 
-	/* make not on space used on underlying partition */
+	/* account for space used on underlying partition */
 	context.part_free[partnr] -= blocks;
 #ifdef DEBUG
 	printf("mark allocated : partnr %d, start_lb %d for %d blocks\n",
@@ -1256,6 +1373,10 @@ udf_mark_allocated(uint32_t start_lb, int partnr, uint32_t blocks)
 	case UDF_VTOP_TYPE_PHYS:
 	case UDF_VTOP_TYPE_SPARABLE:
 	case UDF_VTOP_TYPE_META:
+		if (context.part_unalloc_bits[context.vtop[partnr]] == NULL) {
+			context.part_free[partnr] = 0;
+			break;
+		}
 #ifdef DEBUG
 		printf("Marking %d+%d as used\n", start_lb, blocks);
 #endif
@@ -1274,9 +1395,7 @@ udf_mark_allocated(uint32_t start_lb, int partnr, uint32_t blocks)
 }
 
 
-/* --------------------------------------------------------------------- */
-
-static void
+void
 udf_advance_uniqueid(void)
 {
 	/* Minimum value of 16 : UDF 3.2.1.1, 3.3.3.4. */
@@ -1285,10 +1404,192 @@ udf_advance_uniqueid(void)
 		context.unique_id = 0x10;
 }
 
+/* --------------------------------------------------------------------- */
 
-static int
-udf_create_parentfid(struct fileid_desc *fid, struct long_ad *parent,
-	uint64_t unique_id)
+static void
+unix_to_udf_name(char *result, uint8_t *result_len,
+	char const *name, int name_len, struct charspec *chsp)
+{
+	uint16_t   *raw_name;
+	uint16_t   *outchp;
+	const char *inchp;
+	const char *osta_id = "OSTA Compressed Unicode";
+	int         udf_chars, is_osta_typ0, bits;
+	size_t      cnt;
+
+	/* allocate temporary unicode-16 buffer */
+	raw_name = malloc(1024);
+	assert(raw_name);
+
+	/* convert utf8 to unicode-16 */
+	*raw_name = 0;
+	inchp  = name;
+	outchp = raw_name;
+	bits = 8;
+	for (cnt = name_len, udf_chars = 0; cnt;) {
+		*outchp = wget_utf8(&inchp, &cnt);
+		if (*outchp > 0xff)
+			bits=16;
+		outchp++;
+		udf_chars++;
+	}
+	/* null terminate just in case */
+	*outchp++ = 0;
+
+	is_osta_typ0  = (chsp->type == 0);
+	is_osta_typ0 &= (strcmp((char *) chsp->inf, osta_id) == 0);
+	if (is_osta_typ0) {
+		udf_chars = udf_CompressUnicode(udf_chars, bits,
+				(unicode_t *) raw_name,
+				(byte *) result);
+	} else {
+		printf("unix to udf name: no CHSP0 ?\n");
+		/* XXX assume 8bit char length byte latin-1 */
+		*result++ = 8; udf_chars = 1;
+		strncpy(result, name + 1, name_len);
+		udf_chars += name_len;
+	}
+	*result_len = udf_chars;
+	free(raw_name);
+}
+
+
+#define UDF_SYMLINKBUFLEN    (64*1024)               /* picked */
+int
+udf_encode_symlink(uint8_t **pathbufp, uint32_t *pathlenp, char *target)
+{
+	struct charspec osta_charspec;
+	struct pathcomp pathcomp;
+	char *pathbuf, *pathpos, *compnamepos;
+//	char *mntonname;
+//	int   mntonnamelen;
+	int pathlen, len, compnamelen;
+	int error;
+
+	/* process `target' to an UDF structure */
+	pathbuf = malloc(UDF_SYMLINKBUFLEN);
+	assert(pathbuf);
+
+	*pathbufp = NULL;
+	*pathlenp = 0;
+
+	pathpos = pathbuf;
+	pathlen = 0;
+	udf_osta_charset(&osta_charspec);
+
+	if (*target == '/') {
+		/* symlink starts from the root */
+		len = UDF_PATH_COMP_SIZE;
+		memset(&pathcomp, 0, len);
+		pathcomp.type = UDF_PATH_COMP_ROOT;
+
+#if 0
+		/* XXX how to check for in makefs? */
+		/* check if its mount-point relative! */
+		mntonname    = udf_node->ump->vfs_mountp->mnt_stat.f_mntonname;
+		mntonnamelen = strlen(mntonname);
+		if (strlen(target) >= mntonnamelen) {
+			if (strncmp(target, mntonname, mntonnamelen) == 0) {
+				pathcomp.type = UDF_PATH_COMP_MOUNTROOT;
+				target += mntonnamelen;
+			}
+		} else {
+			target++;
+		}
+#else
+		target++;
+#endif
+
+		memcpy(pathpos, &pathcomp, len);
+		pathpos += len;
+		pathlen += len;
+	}
+
+	error = 0;
+	while (*target) {
+		/* ignore multiple '/' */
+		while (*target == '/') {
+			target++;
+		}
+		if (!*target)
+			break;
+
+		/* extract component name */
+		compnamelen = 0;
+		compnamepos = target;
+		while ((*target) && (*target != '/')) {
+			target++;
+			compnamelen++;
+		}
+
+		/* just trunc if too long ?? (security issue) */
+		if (compnamelen >= 127) {
+			error = ENAMETOOLONG;
+			break;
+		}
+
+		/* convert unix name to UDF name */
+		len = sizeof(struct pathcomp);
+		memset(&pathcomp, 0, len);
+		pathcomp.type = UDF_PATH_COMP_NAME;
+		len = UDF_PATH_COMP_SIZE;
+
+		if ((compnamelen == 2) && (strncmp(compnamepos, "..", 2) == 0))
+			pathcomp.type = UDF_PATH_COMP_PARENTDIR;
+		if ((compnamelen == 1) && (*compnamepos == '.'))
+			pathcomp.type = UDF_PATH_COMP_CURDIR;
+
+		if (pathcomp.type == UDF_PATH_COMP_NAME) {
+			unix_to_udf_name(
+				(char *) &pathcomp.ident, &pathcomp.l_ci,
+				compnamepos, compnamelen,
+				&osta_charspec);
+			len = UDF_PATH_COMP_SIZE + pathcomp.l_ci;
+		}
+
+		if (pathlen + len >= UDF_SYMLINKBUFLEN) {
+			error = ENAMETOOLONG;
+			break;
+		}
+
+		memcpy(pathpos, &pathcomp, len);
+		pathpos += len;
+		pathlen += len;
+	}
+
+	if (error) {
+		/* aparently too big */
+		free(pathbuf);
+		return error;
+	}
+
+	/* return status of symlink contents writeout */
+	*pathbufp = (uint8_t *) pathbuf;
+	*pathlenp = pathlen;
+
+	return 0;
+
+}
+#undef UDF_SYMLINKBUFLEN
+
+
+int
+udf_fidsize(struct fileid_desc *fid)
+{
+	uint32_t size;
+
+	if (udf_rw16(fid->tag.id) != TAGID_FID)
+		errx(EINVAL, "got udf_fidsize on non FID\n");
+
+	size = UDF_FID_SIZE + fid->l_fi + udf_rw16(fid->l_iu);
+	size = (size + 3) & ~3;
+
+	return size;
+}
+
+
+int
+udf_create_parentfid(struct fileid_desc *fid, struct long_ad *parent)
 {
 	/* the size of an empty FID is 38 but needs to be a multiple of 4 */
 	int fidsize = 40;
@@ -1297,7 +1598,7 @@ udf_create_parentfid(struct fileid_desc *fid, struct long_ad *parent,
 	fid->file_version_num = udf_rw16(1);	/* UDF 2.3.4.1 */
 	fid->file_char = UDF_FILE_CHAR_DIR | UDF_FILE_CHAR_PAR;
 	fid->icb = *parent;
-	fid->icb.longad_uniqueid = udf_rw32((uint32_t) unique_id);
+	fid->icb.longad_uniqueid = parent->longad_uniqueid;
 	fid->tag.desc_crc_len = udf_rw16(fidsize - UDF_DESC_TAG_LENGTH);
 
 	/* we have to do the fid here explicitly for simplicity */
@@ -1305,6 +1606,102 @@ udf_create_parentfid(struct fileid_desc *fid, struct long_ad *parent,
 
 	return fidsize;
 }
+
+
+void
+udf_create_fid(uint32_t diroff, struct fileid_desc *fid, char *name,
+	int file_char, struct long_ad *ref)
+{
+	struct charspec osta_charspec;
+	uint32_t endfid;
+	uint32_t fidsize, lb_rest;
+
+	memset(fid, 0, sizeof(*fid));
+	udf_inittag(&fid->tag, TAGID_FID, udf_rw32(ref->loc.lb_num));
+	fid->file_version_num = udf_rw16(1);	/* UDF 2.3.4.1 */
+	fid->file_char = file_char;
+	fid->l_iu = udf_rw16(0);
+	fid->icb = *ref;
+	fid->icb.longad_uniqueid = ref->longad_uniqueid;
+
+	udf_osta_charset(&osta_charspec);
+	unix_to_udf_name((char *) fid->data, &fid->l_fi, name, strlen(name),
+			&osta_charspec);
+
+	/*
+	 * OK, tricky part: we need to pad so the next descriptor header won't
+	 * cross the sector boundary
+	 */
+	endfid = diroff + udf_fidsize(fid);
+	lb_rest = context.sector_size - (endfid % context.sector_size);
+	if (lb_rest < sizeof(struct desc_tag)) {
+		/* add at least 32 */
+		fid->l_iu = udf_rw16(32);
+		udf_set_regid((struct regid *) fid->data, context.impl_name);
+		udf_add_impl_regid((struct regid *) fid->data);
+
+		unix_to_udf_name((char *) fid->data + udf_rw16(fid->l_iu),
+			&fid->l_fi, name, strlen(name), &osta_charspec);
+	}
+
+	fidsize = udf_fidsize(fid);
+	fid->tag.desc_crc_len = udf_rw16(fidsize - UDF_DESC_TAG_LENGTH);
+
+	/* make sure the header sums stays correct */
+	udf_validate_tag_and_crc_sums((union dscrptr *)fid);
+}
+
+
+static void
+udf_append_parentfid(union dscrptr *dscr, struct long_ad *parent_icb)
+{
+	struct file_entry      *fe;
+	struct extfile_entry   *efe;
+	struct fileid_desc     *fid;
+	uint32_t l_ea;
+	uint32_t fidsize, crclen;
+	uint8_t *bpos, *data;
+
+	fe = NULL;
+	efe = NULL;
+	if (udf_rw16(dscr->tag.id) == TAGID_FENTRY) {
+		fe    = &dscr->fe;
+		data  = fe->data;
+		l_ea  = udf_rw32(fe->l_ea);
+	} else if (udf_rw16(dscr->tag.id) == TAGID_EXTFENTRY) {
+		efe   = &dscr->efe;
+		data  = efe->data;
+		l_ea  = udf_rw32(efe->l_ea);
+	} else {
+		errx(1, "Bad tag passed to udf_append_parentfid");
+	}
+
+	/* create '..' */
+	bpos = data + l_ea;
+	fid  = (struct fileid_desc *) bpos;
+	fidsize = udf_create_parentfid(fid, parent_icb);
+
+	/* record fidlength information */
+	if (fe) {
+		fe->inf_len     = udf_rw64(fidsize);
+		fe->l_ad        = udf_rw32(fidsize);
+		fe->logblks_rec = udf_rw64(0);		/* intern */
+		crclen  = sizeof(struct file_entry);
+	} else {
+		efe->inf_len     = udf_rw64(fidsize);
+		efe->obj_size    = udf_rw64(fidsize);
+		efe->l_ad        = udf_rw32(fidsize);
+		efe->logblks_rec = udf_rw64(0);		/* intern */
+		crclen  = sizeof(struct extfile_entry);
+	}
+	crclen -= 1 + UDF_DESC_TAG_LENGTH;
+	crclen += l_ea + fidsize;
+	dscr->tag.desc_crc_len = udf_rw16(crclen);
+
+	/* make sure the header sums stays correct */
+	udf_validate_tag_and_crc_sums(dscr);
+}
+
 
 
 /*
@@ -1425,16 +1822,14 @@ udf_extattr_append_internal(union dscrptr *dscr, struct extattr_entry *extattr)
 
 
 int
-udf_create_new_fe(struct file_entry **fep, int file_type,
-	struct long_ad *parent_icb)
+udf_create_new_fe(struct file_entry **fep, int file_type, struct stat *st)
 {
 	struct file_entry      *fe;
 	struct icb_tag         *icb;
 	struct timestamp        birthtime;
 	struct filetimes_extattr_entry *ft_extattr;
-	uint32_t fidsize;
-	uint8_t *bpos;
 	uint32_t crclen;	/* XXX: should be 16; need to detect overflow */
+	uint16_t icbflags;
 
 	*fep = NULL;
 	fe = calloc(1, context.sector_size);
@@ -1457,14 +1852,45 @@ udf_create_new_fe(struct file_entry **fep, int file_type,
 	fe->link_cnt = udf_rw16(0);		/* explicit setting */
 
 	fe->ckpoint  = udf_rw32(1);		/* user supplied file version */
+
 	udf_set_timestamp_now(&birthtime);
 	udf_set_timestamp_now(&fe->atime);
 	udf_set_timestamp_now(&fe->attrtime);
 	udf_set_timestamp_now(&fe->mtime);
 
+	/* set attributes */
+	if (st) {
+#if !HAVE_NBTOOL_CONFIG_H
+		udf_set_timestamp(&birthtime,    st->st_birthtime);
+#else
+		udf_set_timestamp(&birthtime,    0);
+#endif
+		udf_set_timestamp(&fe->atime,    st->st_atime);
+		udf_set_timestamp(&fe->attrtime, st->st_ctime);
+		udf_set_timestamp(&fe->mtime,    st->st_mtime);
+		fe->uid  = udf_rw32(st->st_uid);
+		fe->gid  = udf_rw32(st->st_gid);
+
+		fe->perm = unix_mode_to_udf_perm(st->st_mode);
+
+		icbflags = udf_rw16(fe->icbtag.flags);
+		icbflags &= ~UDF_ICB_TAG_FLAGS_SETUID;
+		icbflags &= ~UDF_ICB_TAG_FLAGS_SETGID;
+		icbflags &= ~UDF_ICB_TAG_FLAGS_STICKY;
+		if (st->st_mode & S_ISUID)
+			icbflags |= UDF_ICB_TAG_FLAGS_SETUID;
+		if (st->st_mode & S_ISGID)
+			icbflags |= UDF_ICB_TAG_FLAGS_SETGID;
+		if (st->st_mode & S_ISVTX)
+			icbflags |= UDF_ICB_TAG_FLAGS_STICKY;
+		fe->icbtag.flags  = udf_rw16(icbflags);
+	}
+
 	udf_set_regid(&fe->imp_id, context.impl_name);
 	udf_add_impl_regid(&fe->imp_id);
 	fe->unique_id = udf_rw64(context.unique_id);
+	udf_advance_uniqueid();
+
 	fe->l_ea = udf_rw32(0);
 
 	/* create extended attribute to record our creation time */
@@ -1480,24 +1906,17 @@ udf_create_new_fe(struct file_entry **fep, int file_type,
 		(struct extattr_entry *) ft_extattr);
 	free(ft_extattr);
 
-	/* if its a directory, create '..' */
-	bpos = (uint8_t *) fe->data + udf_rw32(fe->l_ea);
-	fidsize = 0;
-	if (file_type == UDF_ICB_FILETYPE_DIRECTORY) {
-		fidsize = udf_create_parentfid((struct fileid_desc *) bpos,
-			parent_icb, context.unique_id);
-	}
-	udf_advance_uniqueid();
-
 	/* record fidlength information */
-	fe->inf_len = udf_rw64(fidsize);
-	fe->l_ad    = udf_rw32(fidsize);
+	fe->inf_len = udf_rw64(0);
+	fe->l_ad    = udf_rw32(0);
 	fe->logblks_rec = udf_rw64(0);		/* intern */
 
 	crclen  = sizeof(struct file_entry) - 1 - UDF_DESC_TAG_LENGTH;
-	crclen += udf_rw32(fe->l_ea) + fidsize;
-/* XXX ensure crclen doesn't exceed UINT16_MAX ? */
+	crclen += udf_rw32(fe->l_ea);
+
+	/* make sure the header sums stays correct */
 	fe->tag.desc_crc_len = udf_rw16(crclen);
+	udf_validate_tag_and_crc_sums((union dscrptr *) fe);
 
 	*fep = fe;
 	return 0;
@@ -1505,13 +1924,12 @@ udf_create_new_fe(struct file_entry **fep, int file_type,
 
 
 int
-udf_create_new_efe(struct extfile_entry **efep, int file_type,
-	struct long_ad *parent_icb)
+udf_create_new_efe(struct extfile_entry **efep, int file_type, struct stat *st)
 {
 	struct extfile_entry *efe;
 	struct icb_tag       *icb;
-	uint32_t fidsize;
 	uint32_t crclen;	/* XXX: should be 16; need to detect overflow */
+	uint16_t icbflags;
 
 	*efep = NULL;
 	efe = calloc(1, context.sector_size);
@@ -1534,32 +1952,57 @@ udf_create_new_efe(struct extfile_entry **efep, int file_type,
 	efe->link_cnt = udf_rw16(0);		/* explicit setting */
 
 	efe->ckpoint  = udf_rw32(1);		/* user supplied file version */
+
 	udf_set_timestamp_now(&efe->ctime);
 	udf_set_timestamp_now(&efe->atime);
 	udf_set_timestamp_now(&efe->attrtime);
 	udf_set_timestamp_now(&efe->mtime);
 
+	/* set attributes */
+	if (st) {
+#if !HAVE_NBTOOL_CONFIG_H
+		udf_set_timestamp(&efe->ctime,    st->st_birthtime);
+#else
+		udf_set_timestamp(&efe->ctime,    0);
+#endif
+		udf_set_timestamp(&efe->atime,    st->st_atime);
+		udf_set_timestamp(&efe->attrtime, st->st_ctime);
+		udf_set_timestamp(&efe->mtime,    st->st_mtime);
+		efe->uid = udf_rw32(st->st_uid);
+		efe->gid = udf_rw32(st->st_gid);
+
+		efe->perm = unix_mode_to_udf_perm(st->st_mode);
+
+		icbflags = udf_rw16(efe->icbtag.flags);
+		icbflags &= ~UDF_ICB_TAG_FLAGS_SETUID;
+		icbflags &= ~UDF_ICB_TAG_FLAGS_SETGID;
+		icbflags &= ~UDF_ICB_TAG_FLAGS_STICKY;
+		if (st->st_mode & S_ISUID)
+			icbflags |= UDF_ICB_TAG_FLAGS_SETUID;
+		if (st->st_mode & S_ISGID)
+			icbflags |= UDF_ICB_TAG_FLAGS_SETGID;
+		if (st->st_mode & S_ISVTX)
+			icbflags |= UDF_ICB_TAG_FLAGS_STICKY;
+		efe->icbtag.flags = udf_rw16(icbflags);
+	}
+
 	udf_set_regid(&efe->imp_id, context.impl_name);
 	udf_add_impl_regid(&efe->imp_id);
 
-	fidsize = 0;
 	efe->unique_id = udf_rw64(context.unique_id);
-	if (file_type == UDF_ICB_FILETYPE_DIRECTORY) {
-		fidsize = udf_create_parentfid((struct fileid_desc *) efe->data,
-			parent_icb, context.unique_id);
-	}
 	udf_advance_uniqueid();
 
 	/* record fidlength information */
-	efe->inf_len  = udf_rw64(fidsize);
-	efe->obj_size = udf_rw64(fidsize);
-	efe->l_ad     = udf_rw32(fidsize);
+	efe->inf_len  = udf_rw64(0);
+	efe->obj_size = udf_rw64(0);
+	efe->l_ad     = udf_rw32(0);
 	efe->logblks_rec = udf_rw64(0);
 
 	crclen  = sizeof(struct extfile_entry) - 1 - UDF_DESC_TAG_LENGTH;
-	crclen += fidsize;
-/* XXX ensure crclen doesn't exceed UINT16_MAX ? */
+
+	/* make sure the header sums stays correct */
 	efe->tag.desc_crc_len = udf_rw16(crclen);
+	udf_validate_tag_and_crc_sums((union dscrptr *) efe);
 
 	*efep = efe;
 	return 0;
@@ -1567,8 +2010,10 @@ udf_create_new_efe(struct extfile_entry **efep, int file_type,
 
 /* --------------------------------------------------------------------- */
 
+/* for METADATA file appending only */
 static void
-udf_append_mapping_part_to_efe(struct extfile_entry *efe, struct short_ad *mapping)
+udf_append_meta_mapping_part_to_efe(struct extfile_entry *efe,
+		struct short_ad *mapping)
 {
 	struct icb_tag *icb;
 	uint64_t inf_len, obj_size, logblks_rec;
@@ -1606,8 +2051,10 @@ udf_append_mapping_part_to_efe(struct extfile_entry *efe, struct short_ad *mappi
 }
 
 
+/* for METADATA file appending only */
 static void
-udf_append_meta_mapping_to_efe(struct extfile_entry *efe, uint16_t partnr, uint32_t lb_num,
+udf_append_meta_mapping_to_efe(struct extfile_entry *efe,
+		uint16_t partnr, uint32_t lb_num,
 	uint64_t len)
 {
 	struct short_ad mapping;
@@ -1618,13 +2065,13 @@ udf_append_meta_mapping_to_efe(struct extfile_entry *efe, uint16_t partnr, uint3
 	max_len = (max_len / layout.meta_blockingnr) * layout.meta_blockingnr;
 	max_len = max_len * context.sector_size;
 
-	memset(&mapping, 0, sizeof(struct short_ad));
+	memset(&mapping, 0, sizeof(mapping));
 	while (len) {
 		part_len = MIN(len, max_len);
 		mapping.lb_num   = udf_rw32(lb_num);
 		mapping.len      = udf_rw32(part_len);
 
-		udf_append_mapping_part_to_efe(efe, &mapping);
+		udf_append_meta_mapping_part_to_efe(efe, &mapping);
 
 		lb_num += part_len / context.sector_size;
 		len    -= part_len;
@@ -1643,14 +2090,14 @@ udf_create_meta_files(void)
 
 	sector_size = context.sector_size;
 
-	bzero(&meta_icb, sizeof(struct long_ad));
+	memset(&meta_icb, 0, sizeof(meta_icb));
 	meta_icb.len          = udf_rw32(sector_size);
 	meta_icb.loc.part_num = udf_rw16(context.data_part);
 
 	/* create metadata file */
 	meta_icb.loc.lb_num   = udf_rw32(layout.meta_file);
 	filetype = UDF_ICB_FILETYPE_META_MAIN;
-	error = udf_create_new_efe(&efe, filetype, &meta_icb);
+	error = udf_create_new_efe(&efe, filetype, NULL);
 	if (error)
 		return error;
 	context.meta_file = efe;
@@ -1658,7 +2105,7 @@ udf_create_meta_files(void)
 	/* create metadata mirror file */
 	meta_icb.loc.lb_num   = udf_rw32(layout.meta_mirror);
 	filetype = UDF_ICB_FILETYPE_META_MIRROR;
-	error = udf_create_new_efe(&efe, filetype, &meta_icb);
+	error = udf_create_new_efe(&efe, filetype, NULL);
 	if (error)
 		return error;
 	context.meta_mirror = efe;
@@ -1666,7 +2113,7 @@ udf_create_meta_files(void)
 	/* create metadata bitmap file */
 	meta_icb.loc.lb_num   = udf_rw32(layout.meta_bitmap);
 	filetype = UDF_ICB_FILETYPE_META_BITMAP;
-	error = udf_create_new_efe(&efe, filetype, &meta_icb);
+	error = udf_create_new_efe(&efe, filetype, NULL);
 	if (error)
 		return error;
 	context.meta_bitmap = efe;
@@ -1710,23 +2157,26 @@ udf_create_new_rootdir(union dscrptr **dscr)
 	struct long_ad root_icb;
 	int filetype, error;
 
-	bzero(&root_icb, sizeof(struct long_ad));
+	memset(&root_icb, 0, sizeof(root_icb));
 	root_icb.len          = udf_rw32(context.sector_size);
 	root_icb.loc.lb_num   = udf_rw32(layout.rootdir);
 	root_icb.loc.part_num = udf_rw16(context.metadata_part);
 
 	filetype = UDF_ICB_FILETYPE_DIRECTORY;
 	if (context.dscrver == 2) {
-		error = udf_create_new_fe(&fe, filetype, &root_icb);
+		error = udf_create_new_fe(&fe, filetype, NULL);
 		*dscr = (union dscrptr *) fe;
 	} else {
-		error = udf_create_new_efe(&efe, filetype, &root_icb);
+		error = udf_create_new_efe(&efe, filetype, NULL);
 		*dscr = (union dscrptr *) efe;
 	}
 	if (error)
 		return error;
 
-	/* Rootdir has explicit only one link on creation; '..' is no link */
+	/* append '..' */
+	udf_append_parentfid(*dscr, &root_icb);
+
+	/* rootdir has explicit only one link on creation; '..' is no link */
 	if (context.dscrver == 2) {
 		fe->link_cnt  = udf_rw16(1);
 	} else {
@@ -1740,22 +2190,120 @@ udf_create_new_rootdir(union dscrptr **dscr)
 }
 
 
+void
+udf_prepend_VAT_file(void)
+{
+	/* old style VAT has no prepend */
+	if (context.dscrver == 2) {
+		context.vat_start = 0;
+		context.vat_size  = 0;
+		return;
+	}
+
+	context.vat_start = offsetof(struct udf_vat, data);
+	context.vat_size  = offsetof(struct udf_vat, data);
+}
+
+
+void
+udf_vat_update(uint32_t virt, uint32_t phys)
+{
+	uint32_t *vatpos;
+	uint32_t new_size;
+
+	if (context.vtop_tp[context.metadata_part] != UDF_VTOP_TYPE_VIRT)
+		return;
+ 
+	new_size = MAX(context.vat_size,
+		(context.vat_start + (virt+1)*sizeof(uint32_t)));
+
+	if (new_size > context.vat_allocated) {
+		context.vat_allocated = 
+			UDF_ROUNDUP(new_size, context.sector_size);
+		context.vat_contents = realloc(context.vat_contents,
+			context.vat_allocated);
+		assert(context.vat_contents);
+		/* XXX could also report error */
+	}
+	vatpos  = (uint32_t *) (context.vat_contents + context.vat_start);
+	vatpos[virt] = udf_rw32(phys);
+
+	context.vat_size = MAX(context.vat_size,
+		(context.vat_start + (virt+1)*sizeof(uint32_t)));
+}
+
+
 int
-udf_create_new_VAT(union dscrptr **vat_dscr)
+udf_append_VAT_file(void)
+{
+	struct udf_oldvat_tail *oldvat_tail;
+	struct udf_vat *vathdr;
+	int32_t len_diff;
+
+	/* new style VAT has VAT LVInt analog in front */
+	if (context.dscrver == 3) {
+		/* set up VATv2 descriptor */
+		vathdr = (struct udf_vat *) context.vat_contents;
+		vathdr->header_len      = udf_rw16(sizeof(struct udf_vat) - 1);
+		vathdr->impl_use_len    = udf_rw16(0);
+		memcpy(vathdr->logvol_id, context.logical_vol->logvol_id, 128);
+		vathdr->prev_vat        = udf_rw32(UDF_NO_PREV_VAT);
+		vathdr->num_files       = udf_rw32(context.num_files);
+		vathdr->num_directories = udf_rw32(context.num_directories);
+
+		vathdr->min_udf_readver  = udf_rw16(context.min_udf);
+		vathdr->min_udf_writever = udf_rw16(context.min_udf);
+		vathdr->max_udf_writever = udf_rw16(context.max_udf);
+
+		return 0;
+	}
+
+	/* old style VAT has identifier appended */
+
+	/* append "*UDF Virtual Alloc Tbl" id and prev. VAT location */
+	len_diff = context.vat_allocated - context.vat_size;
+	assert(len_diff >= 0);
+	if (len_diff < (int32_t) sizeof(struct udf_oldvat_tail)) {
+		context.vat_allocated += context.sector_size;
+		context.vat_contents = realloc(context.vat_contents,
+			context.vat_allocated);
+		assert(context.vat_contents);
+		/* XXX could also report error */
+	}
+
+	oldvat_tail = (struct udf_oldvat_tail *) (context.vat_contents +
+			context.vat_size);
+
+	udf_set_regid(&oldvat_tail->id, "*UDF Virtual Alloc Tbl");
+	udf_add_udf_regid(&oldvat_tail->id);
+	oldvat_tail->prev_vat = udf_rw32(UDF_NO_PREV_VAT);
+
+	context.vat_size += sizeof(struct udf_oldvat_tail);
+
+	return 0;
+}
+
+
+int
+udf_create_VAT(union dscrptr **vat_dscr)
 {
 	struct file_entry *fe;
 	struct extfile_entry *efe;
 	struct impl_extattr_entry *implext;
 	struct vatlvext_extattr_entry *vatlvext;
-	struct udf_oldvat_tail *oldvat_tail;
-	struct udf_vat *vathdr;
-	uint32_t *vat_pos;
+	struct long_ad dataloc, *allocpos;
 	uint8_t *bpos, *extattr;
-	uint32_t ea_len, inf_len, vat_len;
+	uint32_t ea_len, inf_len, vat_len, blks;
 	int filetype;
 	int error;
 
 	assert((layout.rootdir < 2) && (layout.fsd < 2));
+
+	memset(&dataloc, 0, sizeof(dataloc));
+	dataloc.len = udf_rw32(context.vat_size);
+	dataloc.loc.part_num = udf_rw16(context.data_part);
+	dataloc.loc.lb_num   = udf_rw32(layout.vat);
+
 	if (context.dscrver == 2) {
 		/* old style VAT */
 		filetype = UDF_ICB_FILETYPE_UNKNOWN;
@@ -1785,32 +2333,29 @@ udf_create_new_VAT(union dscrptr **vat_dscr)
 		vatlvext->unique_id_chk = udf_rw64(fe->unique_id);
 		vatlvext->num_files = udf_rw32(context.num_files);
 		vatlvext->num_directories = udf_rw32(context.num_directories);
-		memcpy(vatlvext->logvol_id, context.logical_vol->logvol_id, 128);
+		memcpy(vatlvext->logvol_id, context.logical_vol->logvol_id,128);
 
 		udf_extattr_append_internal((union dscrptr *) fe,
 			(struct extattr_entry *) extattr);
 
 		free(extattr);
 
-		/* writeout VAT locations (partition offsets) */
-		vat_pos = (uint32_t *) (fe->data + udf_rw32(fe->l_ea));
-		vat_pos[layout.rootdir] = udf_rw32(layout.rootdir); 
-		vat_pos[layout.fsd    ] = udf_rw32(layout.fsd);
+		fe->icbtag.flags = udf_rw16(UDF_ICB_LONG_ALLOC);
 
-		/* Append "*UDF Virtual Alloc Tbl" id and prev. VAT location */
-		oldvat_tail = (struct udf_oldvat_tail *) (vat_pos + 2);
-		udf_set_regid(&oldvat_tail->id, "*UDF Virtual Alloc Tbl");
-		udf_add_udf_regid(&oldvat_tail->id);
-		oldvat_tail->prev_vat = udf_rw32(UDF_NO_PREV_VAT);
+		allocpos = (struct long_ad *) (fe->data + udf_rw32(fe->l_ea));
+		*allocpos = dataloc;
 
 		/* set length */
-		inf_len = 2 * 4 + sizeof(struct udf_oldvat_tail);
+		inf_len = context.vat_size;
 		fe->inf_len = udf_rw64(inf_len);
-		fe->l_ad    = udf_rw32(inf_len);
+		fe->l_ad    = udf_rw32(sizeof(struct long_ad));
+		blks = UDF_ROUNDUP(inf_len, context.sector_size) /
+			context.sector_size;
+		fe->logblks_rec = udf_rw32(blks);
 
 		/* update vat descriptor's CRC length */
-		vat_len = inf_len + udf_rw32(fe->l_ea) +
-			sizeof(struct file_entry) - 1 - UDF_DESC_TAG_LENGTH;
+		vat_len  = sizeof(struct file_entry) - 1 - UDF_DESC_TAG_LENGTH;
+		vat_len += udf_rw32(fe->l_ad) + udf_rw32(fe->l_ea);
 		fe->tag.desc_crc_len = udf_rw16(vat_len);
 
 		*vat_dscr = (union dscrptr *) fe;
@@ -1821,33 +2366,22 @@ udf_create_new_VAT(union dscrptr **vat_dscr)
 		if (error)
 			return error;
 
-		/* set up VATv2 descriptor */
-		vathdr = (struct udf_vat *) efe->data;
-		vathdr->header_len      = udf_rw16(sizeof(struct udf_vat) - 1);
-		vathdr->impl_use_len    = udf_rw16(0);
-		memcpy(vathdr->logvol_id, context.logical_vol->logvol_id, 128);
-		vathdr->prev_vat        = udf_rw32(UDF_NO_PREV_VAT);
-		vathdr->num_files       = udf_rw32(context.num_files);
-		vathdr->num_directories = udf_rw32(context.num_directories);
+		efe->icbtag.flags = udf_rw16(UDF_ICB_LONG_ALLOC);
 
-		vathdr->min_udf_readver  = udf_rw16(context.min_udf);
-		vathdr->min_udf_writever = udf_rw16(context.min_udf);
-		vathdr->max_udf_writever = udf_rw16(context.max_udf);
-
-		/* writeout VAT locations */
-		vat_pos = (uint32_t *) vathdr->data;
-		vat_pos[layout.rootdir] = udf_rw32(layout.rootdir);
-		vat_pos[layout.fsd    ] = udf_rw32(layout.fsd);
+		allocpos = (struct long_ad *) efe->data;
+		*allocpos = dataloc;
 
 		/* set length */
-		inf_len  = 2 * 4 + sizeof(struct udf_vat) - 1;
+		inf_len = context.vat_size;
 		efe->inf_len     = udf_rw64(inf_len);
 		efe->obj_size    = udf_rw64(inf_len);
-		efe->l_ad        = udf_rw32(inf_len);
-		efe->logblks_rec = udf_rw32(0);
+		efe->l_ad        = udf_rw32(sizeof(struct long_ad));
+		blks = UDF_ROUNDUP(inf_len, context.sector_size) /
+			context.sector_size;
+		efe->logblks_rec = udf_rw32(blks);
 
 		vat_len  = sizeof(struct extfile_entry)-1 - UDF_DESC_TAG_LENGTH;
-		vat_len += inf_len;
+		vat_len += udf_rw32(efe->l_ad);
 		efe->tag.desc_crc_len = udf_rw16(vat_len);
 
 		*vat_dscr = (union dscrptr *) efe;

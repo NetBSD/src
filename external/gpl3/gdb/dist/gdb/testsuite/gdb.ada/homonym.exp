@@ -1,4 +1,4 @@
-# Copyright 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2008-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,23 +13,33 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 load_lib "ada.exp"
 
-set testdir "homonym"
-set testfile "${testdir}/homonym_main"
-set srcfile ${srcdir}/${subdir}/${testfile}.adb
-set binfile ${objdir}/${subdir}/${testfile}
+standard_ada_testfile homonym_main
 
-file mkdir ${objdir}/${subdir}/${testdir}
 if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug]] != "" } {
   return -1
 }
 
 clean_restart ${testfile}
+
+
+# Do these tests before running, so we are operating in a known
+# environment.
+
+gdb_test "break Get_Value" \
+    "Breakpoint \[0-9\]+ at $hex: Get_Value. .2 locations." \
+    "set breakpoint at Get_Value"
+
+gdb_test "break homonym.adb:Get_Value" \
+    "Breakpoint \[0-9\]+ at $hex: homonym.adb:Get_Value. .2 locations." \
+    "set breakpoint at homonym.adb:Get_Value"
+
+gdb_test "break <homonym__get_value>" \
+    "Breakpoint \[0-9\]+ at $hex: <homonym__get_value>. .2 locations." \
+    "set breakpoint at <homonym__get_value>"
+
+delete_breakpoints
 
 set bp_location [gdb_get_line_number "BREAK_1" ${testdir}/homonym.adb]
 runto "homonym.adb:$bp_location"
@@ -86,6 +96,3 @@ gdb_test "ptype lcl" \
 gdb_test "print lcl" \
          "= 17" \
          "print lcl at BREAK_2"
-
-
-

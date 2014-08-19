@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2011/01/22 19:19:20 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.9.14.1 2014/08/20 00:03:15 tls Exp $
 
 BINDIR= /usr/mdec
 
@@ -18,6 +18,7 @@ CLEANFILES+= vers.c
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=

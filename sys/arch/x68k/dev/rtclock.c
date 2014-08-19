@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock.c,v 1.23 2009/01/03 09:32:13 isaki Exp $	*/
+/*	$NetBSD: rtclock.c,v 1.23.24.1 2014/08/20 00:03:28 tls Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtclock.c,v 1.23 2009/01/03 09:32:13 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtclock.c,v 1.23.24.1 2014/08/20 00:03:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ rtc_attach(device_t parent, device_t self, void *aux)
 {
 	struct rtc_softc *sc = device_private(self);
 	struct intio_attach_args *ia = aux;
-	int r;
+	int r __diagused;
 
 	rtc_attached = 1;
 

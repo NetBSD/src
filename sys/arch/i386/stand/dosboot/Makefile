@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2011/12/25 06:09:09 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.27.6.1 2014/08/20 00:03:07 tls Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -8,9 +8,6 @@ NOMAN=	# defined
 NEWVERSWHAT=	"DOS Boot"
 STARTFILE=	${DOSSTART}
 RELOC=		0x100
-
-AFLAGS.dosboot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
-AFLAGS.start_dos.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 SRCS= main.c devopen.c exec.c
 

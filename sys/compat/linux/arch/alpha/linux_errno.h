@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_errno.h,v 1.7 2008/04/28 20:23:42 martin Exp $	*/
+/* 	$NetBSD: linux_errno.h,v 1.7.44.1 2014/08/20 00:03:31 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -146,5 +146,17 @@
 
 #define LINUX_ENOMEDIUM		129	/* No medium found */
 #define LINUX_EMEDIUMTYPE	130	/* Wrong medium type */
+#define LINUX_ECANCELED		131	/* Operation Cancelled */
+#define LINUX_ENOKEY		132	/* Required key not available */
+#define LINUX_EKEYEXPIRED	133	/* Key has expired */
+#define LINUX_EKEYREVOKED	134	/* Key has been revoked */
+#define LINUX_EKEYREJECTED	135	/* Key was rejected by service */
+
+#define LINUX_EOWNERDEAD	136	/* Owner died */
+#define LINUX_ENOTRECOVERABLE	137	/* State not recoverable */
+
+#define LINUX_ERFKILL		138	/* Operation not possible due to RF-kill */
+
+#define LINUX_EHWPOISON		139	/* Memory page has hardware error */
 
 #endif /* !_ALPHA_LINUX_ERRNO_H */

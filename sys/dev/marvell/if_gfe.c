@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.41 2012/07/22 14:32:59 matt Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.41.2.1 2014/08/20 00:03:39 tls Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.41 2012/07/22 14:32:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.41.2.1 2014/08/20 00:03:39 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -537,7 +537,7 @@ gfe_attach(device_t parent, device_t self, void *aux)
 	ether_ifattach(ifp, enaddr);
 	bpf_attach(ifp, DLT_EN10MB, sizeof(struct ether_header));
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(self), RND_TYPE_NET,
-	    0);
+	    RND_FLAG_DEFAULT);
 	marvell_intr_establish(mva->mva_irq, IPL_NET, gfe_intr, sc);
 }
 

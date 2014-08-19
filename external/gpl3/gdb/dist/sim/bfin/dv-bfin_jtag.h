@@ -1,6 +1,6 @@
 /* Blackfin JTAG model.
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -20,8 +20,5 @@
 
 #ifndef DV_BFIN_JTAG_H
 #define DV_BFIN_JTAG_H
-
-#define BFIN_COREMMR_JTAG_BASE	0xFFE05000
-#define BFIN_COREMMR_JTAG_SIZE	(4 * 3)
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.14.4.2 2013/02/25 00:30:45 tls Exp $ */
+/*	$NetBSD: msdosfs_vnops.c,v 1.14.4.3 2014/08/20 00:05:09 tls Exp $ */
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -51,7 +51,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.14.4.2 2013/02/25 00:30:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.14.4.3 2014/08/20 00:05:09 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -136,7 +136,6 @@ msdosfs_findslot(struct denode *dp, struct componentname *cnp)
 	int blkoff;
 	u_int diroff;
 	int blsize;
-	struct denode *tdp;
 	struct msdosfsmount *pmp;
 	struct buf *bp = 0;
 	struct direntry *dep;
@@ -179,7 +178,6 @@ msdosfs_findslot(struct denode *dp, struct componentname *cnp)
 	 * Search the directory pointed at by vdp for the name pointed at
 	 * by cnp->cn_nameptr.
 	 */
-	tdp = NULL;
 	/*
 	 * The outer loop ranges over the clusters that make up the
 	 * directory.  Note that the root directory is different from all

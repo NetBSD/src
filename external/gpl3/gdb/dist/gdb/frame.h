@@ -1,8 +1,6 @@
 /* Definitions for dealing with stack frames, for GDB, the GNU debugger.
 
-   Copyright (C) 1986, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1996, 1997,
-   1998, 1999, 2000, 2001, 2002, 2003, 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -78,6 +76,23 @@ struct block;
 struct gdbarch;
 struct ui_file;
 
+/* Status of a given frame's stack.  */
+
+enum frame_id_stack_status
+{
+  /* Stack address is invalid.  E.g., this frame is the outermost
+     (i.e., _start), and the stack hasn't been setup yet.  */
+  FID_STACK_INVALID = 0,
+
+  /* Stack address is valid, and is found in the stack_addr field.  */
+  FID_STACK_VALID = 1,
+
+  /* Stack address is unavailable.  I.e., there's a valid stack, but
+     we don't know where it is (because memory or registers we'd
+     compute it from were not collected).  */
+  FID_STACK_UNAVAILABLE = -1
+};
+
 /* The frame object.  */
 
 struct frame_info;
@@ -99,8 +114,9 @@ struct frame_id
      function pointer register or stack pointer register.  They are
      wrong.
 
-     This field is valid only if stack_addr_p is true.  Otherwise, this
-     frame represents the null frame.  */
+     This field is valid only if frame_id.stack_status is
+     FID_STACK_VALID.  It will be 0 for other
+     FID_STACK_... statuses.  */
   CORE_ADDR stack_addr;
 
   /* The frame's code address.  This shall be constant through out the
@@ -131,13 +147,15 @@ struct frame_id
   CORE_ADDR special_addr;
 
   /* Flags to indicate the above fields have valid contents.  */
-  unsigned int stack_addr_p : 1;
+  ENUM_BITFIELD(frame_id_stack_status) stack_status : 2;
   unsigned int code_addr_p : 1;
   unsigned int special_addr_p : 1;
 
-  /* The inline depth of this frame.  A frame representing a "called"
-     inlined function will have this set to a nonzero value.  */
-  int inline_depth;
+  /* It is non-zero for a frame made up by GDB without stack data
+     representation in inferior, such as INLINE_FRAME or TAILCALL_FRAME.
+     Caller of inlined function will have it zero, each more inner called frame
+     will have it increasingly one, two etc.  Similarly for TAILCALL_FRAME.  */
+  int artificial_depth;
 };
 
 /* Methods for constructing and comparing Frame IDs.  */
@@ -152,7 +170,7 @@ extern const struct frame_id outer_frame_id;
 
 /* Flag to control debugging.  */
 
-extern int frame_debug;
+extern unsigned int frame_debug;
 
 /* Construct a frame ID.  The first parameter is the frame's constant
    stack address (typically the outer-bound), and the second the
@@ -169,6 +187,12 @@ extern struct frame_id frame_id_build_special (CORE_ADDR stack_addr,
 					       CORE_ADDR code_addr,
 					       CORE_ADDR special_addr);
 
+/* Construct a frame ID representing a frame where the stack address
+   exists, but is unavailable.  CODE_ADDR is the frame's constant code
+   address (typically the entry point).  The special identifier
+   address is set to indicate a wild card.  */
+extern struct frame_id frame_id_build_unavailable_stack (CORE_ADDR code_addr);
+
 /* Construct a wild card frame ID.  The parameter is the frame's constant
    stack address (typically the outer-bound).  The code address as well
    as the special identifier address are set to indicate wild cards.  */
@@ -179,9 +203,10 @@ extern struct frame_id frame_id_build_wild (CORE_ADDR stack_addr);
    ID.  */
 extern int frame_id_p (struct frame_id l);
 
-/* Returns non-zero when L is a valid frame representing an inlined
-   function.  */
-extern int frame_id_inlined_p (struct frame_id l);
+/* Returns non-zero when L is a valid frame representing a frame made up by GDB
+   without stack data representation in inferior, such as INLINE_FRAME or
+   TAILCALL_FRAME.  */
+extern int frame_id_artificial_p (struct frame_id l);
 
 /* Returns non-zero when L and R identify the same frame, or, if
    either L or R have a zero .func, then the same frame base.  */
@@ -206,6 +231,8 @@ enum frame_type
   /* A frame representing an inlined function, associated with an
      upcoming (prev, outer, older) NORMAL_FRAME.  */
   INLINE_FRAME,
+  /* A virtual frame of a tail call - see dwarf2_tailcall_frame_unwind.  */
+  TAILCALL_FRAME,
   /* In a signal handler, various OSs handle this in various ways.
      The main thing is that the frame may be far from normal.  */
   SIGTRAMP_FRAME,
@@ -444,47 +471,16 @@ extern struct address_space *get_frame_address_space (struct frame_info *);
 
 enum unwind_stop_reason
   {
-    /* No particular reason; either we haven't tried unwinding yet,
-       or we didn't fail.  */
-    UNWIND_NO_REASON,
+#define SET(name, description) name,
+#define FIRST_ENTRY(name) UNWIND_FIRST = name,
+#define LAST_ENTRY(name) UNWIND_LAST = name,
+#define FIRST_ERROR(name) UNWIND_FIRST_ERROR = name,
 
-    /* The previous frame's analyzer returns an invalid result
-       from this_id.
-
-       FIXME drow/2006-08-16: This is how GDB used to indicate end of
-       stack.  We should migrate to a model where frames always have a
-       valid ID, and this becomes not just an error but an internal
-       error.  But that's a project for another day.  */
-    UNWIND_NULL_ID,
-
-    /* This frame is the outermost.  */
-    UNWIND_OUTERMOST,
-
-    /* All the conditions after this point are considered errors;
-       abnormal stack termination.  If a backtrace stops for one
-       of these reasons, we'll let the user know.  This marker
-       is not a valid stop reason.  */
-    UNWIND_FIRST_ERROR,
-
-    /* Can't unwind further, because that would require knowing the
-       values of registers or memory that haven't been collected.  */
-    UNWIND_UNAVAILABLE,
-
-    /* This frame ID looks like it ought to belong to a NEXT frame,
-       but we got it for a PREV frame.  Normally, this is a sign of
-       unwinder failure.  It could also indicate stack corruption.  */
-    UNWIND_INNER_ID,
-
-    /* This frame has the same ID as the previous one.  That means
-       that unwinding further would almost certainly give us another
-       frame with exactly the same ID, so break the chain.  Normally,
-       this is a sign of unwinder failure.  It could also indicate
-       stack corruption.  */
-    UNWIND_SAME_ID,
-
-    /* The frame unwinder didn't find any saved PC, but we needed
-       one to unwind further.  */
-    UNWIND_NO_SAVED_PC,
+#include "unwind_stop_reasons.def"
+#undef SET
+#undef FIRST_ENTRY
+#undef LAST_ENTRY
+#undef FIRST_ERROR
   };
 
 /* Return the reason why we can't unwind past this frame.  */
@@ -530,6 +526,13 @@ extern ULONGEST frame_unwind_register_unsigned (struct frame_info *frame,
 extern ULONGEST get_frame_register_unsigned (struct frame_info *frame,
 					     int regnum);
 
+/* Read a register from this, or unwind a register from the next
+   frame.  Note that the read_frame methods are wrappers to
+   get_frame_register_value, that do not throw if the result is
+   optimized out or unavailable.  */
+
+extern int read_frame_register_unsigned (struct frame_info *frame,
+					 int regnum, ULONGEST *val);
 
 /* Get the value of the register that belongs to this FRAME.  This
    function is a wrapper to the call sequence ``frame_register_unwind
@@ -568,14 +571,6 @@ extern void put_frame_register_bytes (struct frame_info *frame, int regnum,
    specific register.  */
 
 extern CORE_ADDR frame_unwind_caller_pc (struct frame_info *frame);
-
-/* Same as frame_unwind_caller_pc, but returns a boolean indication of
-   whether the caller PC is determinable (when the PC is unavailable,
-   it will not be), instead of possibly throwing an error trying to
-   read unavailable memory or registers.  */
-
-extern int frame_unwind_caller_pc_if_available (struct frame_info *this_frame,
-						CORE_ADDR *pc);
 
 /* Discard the specified frame.  Restoring the registers to the state
    of the caller.  */
@@ -680,35 +675,63 @@ extern CORE_ADDR get_pc_function_start (CORE_ADDR);
 
 extern struct frame_info *find_relative_frame (struct frame_info *, int *);
 
-extern void show_and_print_stack_frame (struct frame_info *fi, int print_level,
-					enum print_what print_what);
-
 extern void print_stack_frame (struct frame_info *, int print_level,
-			       enum print_what print_what);
+			       enum print_what print_what,
+			       int set_current_sal);
 
 extern void print_frame_info (struct frame_info *, int print_level,
-			      enum print_what print_what, int args);
+			      enum print_what print_what, int args,
+			      int set_current_sal);
 
-extern struct frame_info *block_innermost_frame (struct block *);
+extern struct frame_info *block_innermost_frame (const struct block *);
 
-extern int deprecated_pc_in_call_dummy (struct gdbarch *gdbarch, CORE_ADDR pc);
-
-/* FIXME: cagney/2003-02-02: Should be deprecated or replaced with a
-   function called get_frame_register_p().  This slightly weird (and
-   older) variant of get_frame_register() returns zero (indicating the
-   register value is unavailable/invalid) if either: the register
-   isn't cached; or the register has been optimized out; or the
-   register contents are unavailable (because they haven't been
-   collected in a traceframe).  Problem is, neither check is exactly
-   correct.  A register can't be optimized out (it may not have been
-   saved as part of a function call); The fact that a register isn't
-   in the register cache doesn't mean that the register isn't
-   available (it could have been fetched from memory).  */
-
-extern int frame_register_read (struct frame_info *frame, int regnum,
+extern int deprecated_frame_register_read (struct frame_info *frame, int regnum,
 				gdb_byte *buf);
 
 /* From stack.c.  */
+
+extern const char print_entry_values_no[];
+extern const char print_entry_values_only[];
+extern const char print_entry_values_preferred[];
+extern const char print_entry_values_if_needed[];
+extern const char print_entry_values_both[];
+extern const char print_entry_values_compact[];
+extern const char print_entry_values_default[];
+extern const char *print_entry_values;
+
+/* Inferior function parameter value read in from a frame.  */
+
+struct frame_arg
+{
+  /* Symbol for this parameter used for example for its name.  */
+  struct symbol *sym;
+
+  /* Value of the parameter.  It is NULL if ERROR is not NULL; if both VAL and
+     ERROR are NULL this parameter's value should not be printed.  */
+  struct value *val;
+
+  /* String containing the error message, it is more usually NULL indicating no
+     error occured reading this parameter.  */
+  char *error;
+
+  /* One of the print_entry_values_* entries as appropriate specifically for
+     this frame_arg.  It will be different from print_entry_values.  With
+     print_entry_values_no this frame_arg should be printed as a normal
+     parameter.  print_entry_values_only says it should be printed as entry
+     value parameter.  print_entry_values_compact says it should be printed as
+     both as a normal parameter and entry values parameter having the same
+     value - print_entry_values_compact is not permitted fi ui_out_is_mi_like_p
+     (in such case print_entry_values_no and print_entry_values_only is used
+     for each parameter kind specifically.  */
+  const char *entry_kind;
+};
+
+extern void read_frame_arg (struct symbol *sym, struct frame_info *frame,
+			    struct frame_arg *argp,
+			    struct frame_arg *entryargp);
+extern void read_frame_local (struct symbol *sym, struct frame_info *frame,
+			      struct frame_arg *argp);
+
 extern void args_info (char *, int);
 
 extern void locals_info (char *, int);

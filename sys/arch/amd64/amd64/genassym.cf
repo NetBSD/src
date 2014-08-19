@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.52 2012/07/15 15:17:56 dsl Exp $
+#	$NetBSD: genassym.cf,v 1.52.2.1 2014/08/20 00:02:42 tls Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -181,11 +181,9 @@ define	IP_DST			offsetof(struct ip, ip_dst)
 define	PCB_CR3			offsetof(struct pcb, pcb_cr3)
 define	PCB_RBP			offsetof(struct pcb, pcb_rbp)
 define	PCB_RSP			offsetof(struct pcb, pcb_rsp)
-define	PCB_USERSP		offsetof(struct pcb, pcb_usersp)
 define	PCB_RSP0		offsetof(struct pcb, pcb_rsp0)
 define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
-define	PCB_FPCPU		offsetof(struct pcb, pcb_fpcpu)
 define	PCB_FLAGS		offsetof(struct pcb, pcb_flags)
 define	PCB_COMPAT32		PCB_COMPAT32
 define	PCB_FS			offsetof(struct pcb, pcb_fs)

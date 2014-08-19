@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 2012/07/28 23:08:56 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25.2.1 2014/08/20 00:03:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2012/07/28 23:08:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25.2.1 2014/08/20 00:03:00 tls Exp $");
 
 #include "opt_ddb.h"
 
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2012/07/28 23:08:56 matt Exp $");
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -149,7 +150,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 		    atop(start), atop(start + size), VM_FREELIST_DEFAULT);
 	}
 
-	sprintf(cpu_model, "NEC %s", platform.name);
+	cpu_setmodel("NEC %s", platform.name);
 
 	mips_init_msgbuf();
 
@@ -217,7 +218,7 @@ cpu_startup(void)
 	char pbuf[9];
 
 	printf("%s%s", copyright, version);
-	printf("%s %dMHz\n", cpu_model, platform.cpu_clock / 1000000);
+	printf("%s %dMHz\n", cpu_getmodel(), platform.cpu_clock / 1000000);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 

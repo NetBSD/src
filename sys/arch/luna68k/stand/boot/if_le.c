@@ -1,4 +1,4 @@
-/* $NetBSD: if_le.c,v 1.3.6.2 2013/02/25 00:28:49 tls Exp $ */
+/* $NetBSD: if_le.c,v 1.3.6.3 2014/08/20 00:03:10 tls Exp $ */
 
 /*
  * Copyright (c) 2013 Izumi Tsutsui.  All rights reserved.
@@ -72,7 +72,6 @@
 #include <lib/libsa/netif.h>
 
 #include <luna68k/stand/boot/samachdep.h>
-#include <luna68k/stand/boot/device.h>
 
 /* libsa netif_driver glue functions */
 static int  le_match(struct netif *, void *);
@@ -83,13 +82,6 @@ static int  le_put(struct iodesc *, void *, size_t);
 static void le_end(struct netif *);
 
 static void myetheraddr(uint8_t *);
-
-/* luna68k driver glue stuff */
-struct driver ledriver = {
-	leinit,
-	"le",
-	NULL
-};
 
 /* libsa netif glue stuff */
 struct netif_stats le_stats;
@@ -114,27 +106,25 @@ int debug;
 #endif
 
 int
-leinit(void *arg)
+leinit(int unit, void *addr)
 {
-	struct hp_device *hd = arg;
 	void *cookie;
 	void *reg, *mem;
 	uint8_t eaddr[6];
 
-	reg = hd->hp_addr;
+	reg = addr;
 	mem = (void *)0x71010000;	/* XXX */
 
 	myetheraddr(eaddr);
 
-	cookie = lance_attach(hd->hp_unit, reg, mem, eaddr);
+	cookie = lance_attach(unit, reg, mem, eaddr);
 	if (cookie == NULL)
 		return 0;
 
-	printf("%s%d: Am7990 LANCE Ethernet, mem at 0x%x\n",
-	    hd->hp_driver->d_name, hd->hp_unit, (uint32_t)mem);
-	printf("%s%d: Ethernet address = %s\n",
-	    hd->hp_driver->d_name, hd->hp_unit,
-	    ether_sprintf(eaddr));
+	printf("le%d: Am7990 LANCE Ethernet, mem at 0x%x\n",
+	    unit, (uint32_t)mem);
+	printf("le%d: Ethernet address = %s\n",
+	    unit, ether_sprintf(eaddr));
 
 	return 1;
 }
@@ -215,12 +205,12 @@ le_put(struct iodesc *desc, void *pkt, size_t len)
 	struct netif_dif *dif = &nif->nif_driver->netif_ifs[nif->nif_unit];
 	void *cookie = dif->dif_private;
 #ifdef DEBUG
- 	struct ether_header *eh;
+	struct ether_header *eh;
 
- 	eh = pkt;
- 	printf("dst:  %s\n", ether_sprintf(eh->ether_dhost));
- 	printf("src:  %s\n", ether_sprintf(eh->ether_shost));
- 	printf("type: 0x%x\n", eh->ether_type & 0xffff);
+	eh = pkt;
+	printf("dst:  %s\n", ether_sprintf(eh->ether_dhost));
+	printf("src:  %s\n", ether_sprintf(eh->ether_shost));
+	printf("type: 0x%x\n", eh->ether_type & 0xffff);
 #endif
 
 	return lance_put(cookie, pkt, len) ? len : -1;

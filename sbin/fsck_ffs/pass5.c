@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.50.2.1 2013/02/25 00:28:06 tls Exp $	*/
+/*	$NetBSD: pass5.c,v 1.50.2.2 2014/08/20 00:02:24 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.50.2.1 2013/02/25 00:28:06 tls Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.50.2.2 2014/08/20 00:02:24 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,7 @@ pass5(void)
 					if (preen)
 						pwarn("%sING CLUSTER MAPS\n",
 						    doit);
-					ncgsize = fragroundup(fs, CGSIZE(fs));
+					ncgsize = ffs_fragroundup(fs, CGSIZE(fs));
 					ncg = realloc(cgrp, ncgsize);
 					if (ncg == NULL)
 						errexit(
@@ -160,7 +160,7 @@ pass5(void)
 		newcg->cg_clusteroff = newcg->cg_clustersumoff +
 		    (fs->fs_contigsumsize + 1) * sizeof(u_int32_t);
 		newcg->cg_nextfreeoff = newcg->cg_clusteroff +
-		    howmany(fragstoblks(fs, fs->fs_fpg), CHAR_BIT);
+		    howmany(ffs_fragstoblks(fs, fs->fs_fpg), CHAR_BIT);
 	}
 	newcg->cg_magic = CG_MAGIC;
 	mapsize = newcg->cg_nextfreeoff - newcg->cg_iusedoff;
@@ -195,7 +195,7 @@ pass5(void)
 			idesc[i].id_fix = FIX;
 	}
 	memset(&cstotal, 0, sizeof(struct csum_total));
-	dmax = blknum(fs, fs->fs_size + fs->fs_frag - 1);
+	dmax = ffs_blknum(fs, fs->fs_size + fs->fs_frag - 1);
 	for (d = fs->fs_size; d < dmax; d++)
 		setbmap(d);
 	for (c = 0; c < fs->fs_ncg; c++) {
@@ -225,7 +225,7 @@ pass5(void)
 		 */
 		if ((cvtlevel && sblk.b_dirty) || doswap) {
 			bwrite(fswritefd, sblk.b_un.b_buf,
-			    fsbtodb(sblock, cgsblock(sblock, c)),
+			    FFS_FSBTODB(sblock, cgsblock(sblock, c)),
 			    sblock->fs_sbsize);
 		} else {
 			/*
@@ -248,7 +248,7 @@ pass5(void)
 			     dofix(&idesc[3],
 				   "ALTERNATE SUPERBLK(S) ARE INCORRECT")) {
 				bwrite(fswritefd, sblk.b_un.b_buf,
-				    fsbtodb(sblock, cgsblock(sblock, c)),
+				    FFS_FSBTODB(sblock, cgsblock(sblock, c)),
 				    sblock->fs_sbsize);
 			}
 			sb_oldfscompat_read(sblock, 0);
@@ -360,7 +360,7 @@ pass5(void)
 				}
 				if (fs->fs_contigsumsize > 0)
 					setbit(cg_clustersfree(newcg, 0),
-					    fragstoblks(fs, i));
+					    ffs_fragstoblks(fs, i));
 			} else if (frags > 0) {
 				newcg->cg_cs.cs_nffree += frags;
 				blk = blkmap(fs, cg_blksfree(newcg, 0), i);

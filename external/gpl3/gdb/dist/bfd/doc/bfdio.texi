@@ -26,9 +26,15 @@ struct bfd_iovec
   int (*bclose) (struct bfd *abfd);
   int (*bflush) (struct bfd *abfd);
   int (*bstat) (struct bfd *abfd, struct stat *sb);
-  /* Just like mmap: (void*)-1 on failure, mmapped address on success.  */
+  /* Mmap a part of the files. ADDR, LEN, PROT, FLAGS and OFFSET are the usual
+     mmap parameter, except that LEN and OFFSET do not need to be page
+     aligned.  Returns (void *)-1 on failure, mmapped address on success.
+     Also write in MAP_ADDR the address of the page aligned buffer and in
+     MAP_LEN the size mapped (a page multiple).  Use unmap with MAP_ADDR and
+     MAP_LEN to unmap.  */
   void *(*bmmap) (struct bfd *abfd, void *addr, bfd_size_type len,
-                  int prot, int flags, file_ptr offset);
+                  int prot, int flags, file_ptr offset,
+                  void **map_addr, bfd_size_type *map_len);
 @};
 extern const struct bfd_iovec _bfd_memory_iovec;
 @end example
@@ -79,8 +85,11 @@ size reasonable?".
 @strong{Synopsis}
 @example
 void *bfd_mmap (bfd *abfd, void *addr, bfd_size_type len,
-    int prot, int flags, file_ptr offset);
+    int prot, int flags, file_ptr offset,
+    void **map_addr, bfd_size_type *map_len);
 @end example
 @strong{Description}@*
 Return mmap()ed region of the file, if possible and implemented.
+LEN and OFFSET do not need to be page aligned.  The page aligned
+address and length are written to MAP_ADDR and MAP_LEN.
 

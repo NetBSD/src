@@ -25,7 +25,7 @@ CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
 #LDFLAGS = -L$(READLINE_DIR)
 LDFLAGS = @LDFLAGS@
-LIBS = -lreadline -lhistory -lncurses
+LIBS = -lreadline -lhistory @LIBS@
 
 CPP=@CPP@
 CPP_DEPEND=$(CC) -MM
@@ -55,7 +55,7 @@ rlfe-$(VERSION).tar.gz:
 	tar czf $@ $(CFILES) $(HFILES) $(EXTRA_DIST)
 
 .c.o:
-	$(CC) -c -I. -I$(srcdir) $(M_CFLAGS) $(DEFS) $(OPTIONS) $(CFLAGS) $<
+	$(CC) -c -I. -I$(srcdir) $(CPPFLAGS) $(M_CFLAGS) $(DEFS) $(OPTIONS) $(CFLAGS) $<
 
 install_bin: .version screen
 	-if [ -f $(DESTDIR)$(bindir)/$(SCREEN) ] && [ ! -f $(DESTDIR)$(bindir)/$(SCREEN).old ]; \
@@ -67,7 +67,6 @@ install_bin: .version screen
 	rm -f $(DESTDIR)$(bindir)/screen
 	(cd $(DESTDIR)$(bindir) && ln -sf $(SCREEN) screen)
 	cp $(srcdir)/utf8encodings/?? $(DESTDIR)$(SCREENENCODINGS)
-
 
 uninstall: .version
 	rm -f $(DESTDIR)$(bindir)/$(SCREEN)
@@ -169,6 +168,15 @@ depend.in: $(CFILES) term.h
 	sed -e '/\#\#\# Dependencies/q' < Makefile.in > tmp_make
 	for i in $(CFILES); do echo $$i; $(CPP_DEPEND) $$i >> tmp_make; done 
 	mv tmp_make Makefile.in
+
+Makefile makefile:	config.status $(srcdir)/Makefile.in
+	CONFIG_FILES=Makefile CONFIG_HEADERS= $(SHELL) ./config.status
+
+config.status:	$(srcdir)/configure
+	$(SHELL) ./config.status --recheck
+
+$(srcdir)/configure:	$(srcdir)/configure.in
+	cd $(srcdir) && autoconf
 
 ###############################################################################
 

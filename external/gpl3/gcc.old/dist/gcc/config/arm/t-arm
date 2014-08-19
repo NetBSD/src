@@ -1,0 +1,53 @@
+# Rules common to all arm targets
+#
+# Copyright (C) 2004, 2005, 2007, 2008, 2009 Free Software Foundation, Inc.
+#
+# This file is part of GCC.
+#
+# GCC is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3, or (at your option)
+# any later version.
+#
+# GCC is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with GCC; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
+
+MD_INCLUDES= 	$(srcdir)/config/arm/arm-tune.md \
+		$(srcdir)/config/arm/predicates.md \
+		$(srcdir)/config/arm/arm-generic.md \
+		$(srcdir)/config/arm/arm1020e.md \
+		$(srcdir)/config/arm/arm1026ejs.md \
+		$(srcdir)/config/arm/arm1136jfs.md \
+		$(srcdir)/config/arm/arm926ejs.md \
+		$(srcdir)/config/arm/cirrus.md \
+		$(srcdir)/config/arm/fpa.md \
+		$(srcdir)/config/arm/vec-common.md \
+		$(srcdir)/config/arm/iwmmxt.md \
+		$(srcdir)/config/arm/vfp.md \
+		$(srcdir)/config/arm/neon.md \
+		$(srcdir)/config/arm/thumb2.md
+
+LIB1ASMSRC = arm/lib1funcs.asm
+LIB1ASMFUNCS = _thumb1_case_sqi _thumb1_case_uqi _thumb1_case_shi \
+	_thumb1_case_uhi _thumb1_case_si
+s-config s-conditions s-flags s-codes s-constants s-emit s-recog s-preds \
+	s-opinit s-extract s-peep s-attr s-attrtab s-output: $(MD_INCLUDES)
+
+$(srcdir)/config/arm/arm-tune.md: $(srcdir)/config/arm/gentune.sh \
+	$(srcdir)/config/arm/arm-cores.def
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_config_arm_arm-tune.md:
+	$(SHELL) $(srcdir)/config/arm/gentune.sh \
+		$(srcdir)/config/arm/arm-cores.def > \
+		$(srcdir)/config/arm/arm-tune.md
+
+arm-c.o: $(srcdir)/config/arm/arm-c.c $(CONFIG_H) $(SYSTEM_H) \
+    coretypes.h $(TM_H) $(TREE_H) output.h $(C_COMMON_H)
+	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+		$(srcdir)/config/arm/arm-c.c

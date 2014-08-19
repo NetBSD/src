@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.33.12.1 2012/11/20 03:02:13 tls Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.33.12.2 2014/08/20 00:03:41 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.33.12.1 2012/11/20 03:02:13 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.33.12.2 2014/08/20 00:03:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,6 +499,7 @@ aac_pci_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	int state;
 	const struct aac_ident *m;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	pa = aux;
 	pc = pa->pa_pc;
@@ -545,7 +546,7 @@ aac_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error("couldn't map interrupt\n");
 		goto bail_out;
 	}
-	intrstr = pci_intr_string(pc, pcisc->sc_ih);
+	intrstr = pci_intr_string(pc, pcisc->sc_ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, pcisc->sc_ih, IPL_BIO, aac_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error("couldn't establish interrupt");

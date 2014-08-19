@@ -1,4 +1,4 @@
-/* $NetBSD: latches.c,v 1.8 2012/05/11 15:39:18 skrll Exp $ */
+/* $NetBSD: latches.c,v 1.8.2.1 2014/08/20 00:02:40 tls Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: latches.c,v 1.8 2012/05/11 15:39:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: latches.c,v 1.8.2.1 2014/08/20 00:02:40 tls Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -79,14 +79,12 @@ latches_attach(device_t parent, device_t self, void *aux)
 {
 	struct latches_softc *sc = device_private(self);
 	struct ioc_attach_args *ioc = aux;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
 
 	sc->sc_dev = self;
 	if (the_latches == NULL)
 		the_latches = self;
-	iot = sc->sc_iot = ioc->ioc_fast_t;
-	ioh = sc->sc_ioh = ioc->ioc_fast_h;
+	sc->sc_iot = ioc->ioc_fast_t;
+	sc->sc_ioh = ioc->ioc_fast_h;
 
 	sc->sc_latcha =
 	    LATCHA_NSEL0 | LATCHA_NSEL1 | LATCHA_NSEL2 | LATCHA_NSEL3 |

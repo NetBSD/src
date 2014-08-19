@@ -1,7 +1,7 @@
 /* GNU/Linux/x86-64 specific low level interface, for the in-process
    agent library for GDB.
 
-   Copyright (C) 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,9 +19,11 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "server.h"
+#include "tracepoint.h"
 
 /* Defined in auto-generated file amd64-linux.c.  */
 void init_registers_amd64_linux (void);
+extern const struct target_desc *tdesc_amd64_linux;
 
 /* fast tracepoints collect registers.  */
 
@@ -164,12 +166,9 @@ supply_static_tracepoint_registers (struct regcache *regcache,
 
 #endif /* HAVE_UST */
 
-/* This is only needed because reg-i386-linux-lib.o references it.  We
-   may use it proper at some point.  */
-const char *gdbserver_xmltarget;
-
 void
 initialize_low_tracepoint (void)
 {
   init_registers_amd64_linux ();
+  ipa_tdesc = tdesc_amd64_linux;
 }

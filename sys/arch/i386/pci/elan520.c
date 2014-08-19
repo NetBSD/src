@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.49 2011/07/01 17:37:26 dyoung Exp $	*/
+/*	$NetBSD: elan520.c,v 1.49.12.1 2014/08/20 00:03:06 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.49 2011/07/01 17:37:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.49.12.1 2014/08/20 00:03:06 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -693,7 +693,6 @@ static void
 elansc_protect_text(device_t self, struct elansc_softc *sc)
 {
 	int i, j, nregion, pidx, tidx = 0, xnregion;
-	uint32_t par;
 	uint32_t protsize, unprotsize;
 	paddr_t start_pa, end_pa;
 	extern char kernel_text, etext;
@@ -722,7 +721,7 @@ elansc_protect_text(device_t self, struct elansc_softc *sc)
 		return;
 	}
 
-	par = bus_space_read_4(memt, memh, MMCR_PAR(pidx));
+	(void) bus_space_read_4(memt, memh, MMCR_PAR(pidx));
 
 	aprint_debug_dev(self,
 	    "protect kernel text at physical addresses "

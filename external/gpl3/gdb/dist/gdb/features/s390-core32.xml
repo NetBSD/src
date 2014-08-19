@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- Copyright (C) 2010, 2011 Free Software Foundation, Inc.
+<!-- Copyright (C) 2010-2014 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
@@ -7,8 +7,8 @@
 
 <!DOCTYPE feature SYSTEM "gdb-target.dtd">
 <feature name="org.gnu.gdb.s390.core">
-  <reg name="pswm" bitsize="32" type="uint32" group="psw" save-restore="no"/>
-  <reg name="pswa" bitsize="32" type="uint32" group="psw" save-restore="no"/>
+  <reg name="pswm" bitsize="32" type="uint32" group="psw"/>
+  <reg name="pswa" bitsize="32" type="uint32" group="psw"/>
   <reg name="r0" bitsize="32" type="uint32" group="general"/>
   <reg name="r1" bitsize="32" type="uint32" group="general"/>
   <reg name="r2" bitsize="32" type="uint32" group="general"/>

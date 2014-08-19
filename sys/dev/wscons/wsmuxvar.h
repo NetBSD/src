@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmuxvar.h,v 1.14 2008/04/28 20:24:01 martin Exp $	*/
+/*	$NetBSD: wsmuxvar.h,v 1.14.44.1 2014/08/20 00:03:52 tls Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@ struct wsevsrc {
 #endif
 #if NWSMUX > 0
 	struct wsmux_softc *me_parent;	/* parent mux device */
-	CIRCLEQ_ENTRY(wsevsrc) me_next;	/* sibling pointers */
+	TAILQ_ENTRY(wsevsrc) me_next;	/* sibling pointers */
 #endif
 };
 
@@ -74,7 +74,7 @@ struct wssrcops {
 struct wsmux_softc {
 	struct wsevsrc sc_base;
 	struct proc *sc_p;		/* open proc */
-	CIRCLEQ_HEAD(, wsevsrc) sc_cld; /* list of children */
+	TAILQ_HEAD(, wsevsrc) sc_cld;	/* list of children */
 	u_int32_t sc_kbd_layout;	/* current layout of keyboard */
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int sc_rawkbd;		        /* A hack to remember the kbd mode */

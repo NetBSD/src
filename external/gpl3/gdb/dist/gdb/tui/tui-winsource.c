@@ -1,7 +1,6 @@
 /* TUI display source/assembly window.
 
-   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2006, 2007, 2008,
-   2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -39,7 +38,7 @@
 #include "tui/tui-source.h"
 #include "tui/tui-disasm.h"
 
-#include "gdb_string.h"
+#include <string.h>
 #include "gdb_curses.h"
 #include "gdb_assert.h"
 
@@ -60,9 +59,9 @@ tui_display_main (void)
 	  tui_update_source_windows_with_addr (gdbarch, addr);
 	  sal = find_pc_line (addr, 0);
           if (sal.symtab)
-             tui_update_locator_filename (sal.symtab->filename);
+             tui_update_locator_fullname (symtab_to_fullname (sal.symtab));
           else
-             tui_update_locator_filename ("??");
+             tui_update_locator_fullname ("??");
 	}
     }
 }
@@ -455,29 +454,35 @@ tui_update_breakpoint_info (struct tui_win_info *win,
            bp != (struct breakpoint *) NULL;
            bp = bp->next)
         {
+	  struct bp_location *loc;
+
 	  gdb_assert (line->line_or_addr.loa == LOA_LINE
 		      || line->line_or_addr.loa == LOA_ADDRESS);
-          if ((win == TUI_SRC_WIN
-               && bp->source_file
-               && (filename_cmp (src->filename, bp->source_file) == 0)
-	       && line->line_or_addr.loa == LOA_LINE
-               && bp->line_number == line->line_or_addr.u.line_no)
-              || (win == TUI_DISASM_WIN
-		  && line->line_or_addr.loa == LOA_ADDRESS
-		  && bp->loc != NULL
-                  && bp->loc->address == line->line_or_addr.u.addr))
-            {
-              if (bp->enable_state == bp_disabled)
-                mode |= TUI_BP_DISABLED;
-              else
-                mode |= TUI_BP_ENABLED;
-              if (bp->hit_count)
-                mode |= TUI_BP_HIT;
-              if (bp->loc->cond)
-                mode |= TUI_BP_CONDITIONAL;
-              if (bp->type == bp_hardware_breakpoint)
-                mode |= TUI_BP_HARDWARE;
-            }
+
+	  for (loc = bp->loc; loc != NULL; loc = loc->next)
+	    {
+	      if ((win == TUI_SRC_WIN
+		   && loc->symtab != NULL
+		   && filename_cmp (src->fullname,
+				    symtab_to_fullname (loc->symtab)) == 0
+		   && line->line_or_addr.loa == LOA_LINE
+		   && loc->line_number == line->line_or_addr.u.line_no)
+		  || (win == TUI_DISASM_WIN
+		      && line->line_or_addr.loa == LOA_ADDRESS
+		      && loc->address == line->line_or_addr.u.addr))
+		{
+		  if (bp->enable_state == bp_disabled)
+		    mode |= TUI_BP_DISABLED;
+		  else
+		    mode |= TUI_BP_ENABLED;
+		  if (bp->hit_count)
+		    mode |= TUI_BP_HIT;
+		  if (bp->loc->cond)
+		    mode |= TUI_BP_CONDITIONAL;
+		  if (bp->type == bp_hardware_breakpoint)
+		    mode |= TUI_BP_HARDWARE;
+		}
+	    }
         }
       if (line->has_break != mode)
         {

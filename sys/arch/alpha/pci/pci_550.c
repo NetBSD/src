@@ -1,4 +1,4 @@
-/* $NetBSD: pci_550.c,v 1.36 2012/02/06 02:14:15 matt Exp $ */
+/* $NetBSD: pci_550.c,v 1.36.6.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.36 2012/02/06 02:14:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.36.6.1 2014/08/20 00:02:41 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.36 2012/02/06 02:14:15 matt Exp $");
 
 int	dec_550_intr_map(const struct pci_attach_args *,
 	    pci_intr_handle_t *);
-const char *dec_550_intr_string(void *, pci_intr_handle_t);
+const char *dec_550_intr_string(void *, pci_intr_handle_t, char *, size_t);
 const struct evcnt *dec_550_intr_evcnt(void *, pci_intr_handle_t);
 void	*dec_550_intr_establish(void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *);
@@ -149,14 +149,16 @@ pci_550_pickintr(struct cia_config *ccp)
 	for (i = 0; i < DEC_550_MAX_IRQ; i++)
 		dec_550_intr_disable(i);
 
-	dec_550_pci_intr = alpha_shared_intr_alloc(DEC_550_MAX_IRQ, 8);
+#define PCI_550_IRQ_STR	8
+	dec_550_pci_intr = alpha_shared_intr_alloc(DEC_550_MAX_IRQ,
+	    PCI_550_IRQ_STR);
 	for (i = 0; i < DEC_550_MAX_IRQ; i++) {
 		alpha_shared_intr_set_maxstrays(dec_550_pci_intr, i,
 		    PCI_STRAY_MAX);
 		alpha_shared_intr_set_private(dec_550_pci_intr, i, ccp);
 		
 		cp = alpha_shared_intr_string(dec_550_pci_intr, i);
-		sprintf(cp, "irq %d", i);
+		snprintf(cp, PCI_550_IRQ_STR, "irq %d", i);
 		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
 		    dec_550_pci_intr, i), EVCNT_TYPE_INTR, NULL,
 		    "dec_550", cp);
@@ -247,23 +249,22 @@ dec_550_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 const char *
-dec_550_intr_string(void *ccv, pci_intr_handle_t ih)
+dec_550_intr_string(void *ccv, pci_intr_handle_t ih, char *buf, size_t len)
 {
 #if 0
 	struct cia_config *ccp = ccv;
 #endif
-	static char irqstr[16];		/* 12 + 2 + NULL + sanity */
 
 #if NSIO
 	if (DEC_550_LINE_IS_ISA(ih))
-		return (sio_intr_string(NULL /*XXX*/,
-		    DEC_550_LINE_ISA_IRQ(ih)));
+		return sio_intr_string(NULL /*XXX*/,
+		    DEC_550_LINE_ISA_IRQ(ih), buf, len);
 #endif
 
 	if (ih >= DEC_550_MAX_IRQ)
-		panic("dec_550_intr_string: bogus 550 IRQ 0x%lx", ih);
-	sprintf(irqstr, "dec 550 irq %ld", ih);
-	return (irqstr);
+		panic("%s: bogus 550 IRQ 0x%lx", __func__, ih);
+	snprintf(buf, len, "dec 550 irq %ld", ih);
+	return buf;
 }
 
 const struct evcnt *
@@ -280,7 +281,7 @@ dec_550_intr_evcnt(void *ccv, pci_intr_handle_t ih)
 #endif
 
 	if (ih >= DEC_550_MAX_IRQ)
-		panic("dec_550_intr_evcnt: bogus 550 IRQ 0x%lx", ih);
+		panic("%s: bogus 550 IRQ 0x%lx", __func__, ih);
 
 	return (alpha_shared_intr_evcnt(dec_550_pci_intr, ih));
 }
@@ -356,6 +357,7 @@ dec_550_pciide_compat_intr_establish(void *v, device_t dev,
 	pci_chipset_tag_t pc = pa->pa_pc;
 	void *cookie = NULL;
 	int bus, irq;
+	char buf[64];
 
 	pci_decompose_tag(pc, pa->pa_tag, &bus, NULL, NULL);
 
@@ -372,7 +374,8 @@ dec_550_pciide_compat_intr_establish(void *v, device_t dev,
 	if (cookie == NULL)
 		return (NULL);
 	aprint_normal_dev(dev, "%s channel interrupting at %s\n",
-	    PCIIDE_CHANNEL_NAME(chan), sio_intr_string(NULL /*XXX*/, irq));
+	    PCIIDE_CHANNEL_NAME(chan), sio_intr_string(NULL /*XXX*/, irq,
+	    buf, sizeof(buf)));
 #endif
 	return (cookie);
 }

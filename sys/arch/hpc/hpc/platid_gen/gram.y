@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.4 2011/09/23 14:14:38 nonaka Exp $	*/
+/*	$NetBSD: gram.y,v 1.4.12.1 2014/08/20 00:03:02 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -184,7 +184,7 @@ dump_node(prefix, n)
 	char prefix2[1024];
 	node_t *np;
 
-	sprintf(prefix2, "%s    ", prefix);
+	snprintf(prefix2, sizeof(prefix2), "%s    ", prefix);
 
 	switch (n->type) {
 	case N_LABEL:

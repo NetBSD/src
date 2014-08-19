@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.29 2012/05/28 19:24:30 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.29.2.1 2014/08/20 00:03:25 tls Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -44,6 +44,7 @@
  */
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/bootcfg.h>
 #include <lib/libsa/loadfile.h>
 #include <lib/libkern/libkern.h>
 
@@ -410,7 +411,7 @@ help(void)
 }
 
 static void
-do_config_command(const char *cmd, const char *arg)
+do_config_command(const char *cmd, char *arg)
 {
 	DPRINTF(("do_config_command: %s\n", cmd));
 	if (strcmp(cmd, "bootpartition") == 0) {
@@ -429,73 +430,12 @@ do_config_command(const char *cmd, const char *arg)
 }
 
 static void
-parse_boot_config(char *cfg, size_t len)
-{
-	const char *cmd = NULL, *arg = NULL;
-
-	while (len) {
-		if (isspace(*cfg)) {
-			cfg++; len--; continue;
-		}
-		if (*cfg == ';' || *cfg == '#') {
-			while (len && *cfg != '\r' && *cfg != '\n') {
-				cfg++; len--;
-			}
-			continue;
-		}
-		cmd = cfg;
-		while (len && !isspace(*cfg)) {
-			cfg++; len--;
-		}
-		*cfg = 0;
-		if (len > 0) {
-			cfg++; len--;
-			while (isspace(*cfg) && len) {
-				cfg++; len--;
-			}
-			if (len > 0 ) {
-				arg = cfg;
-				while (len && !isspace(*cfg)) {
-					cfg++; len--;
-				}
-				*cfg = 0;
-			}
-		}
-		do_config_command(cmd, arg);
-		if (len > 0) {
-			cfg++; len--;
-		}
-	}
-}
-
-static void
 check_boot_config(void)
 {
-	int fd, off, len;
-	struct stat st;
-	char *bc;
-
-	if (!root_fs_quickseekable) return;
-	DPRINTF(("checking for /boot.cfg...\n"));
-	fd = open("/boot.cfg", 0);
-	if (fd < 0) return;
-	DPRINTF(("found /boot.cfg\n"));
-	if (fstat(fd, &st) == -1 || st.st_size > 32*1024) {
-		close(fd);
+	if (!root_fs_quickseekable)
 		return;
-	}
-	bc = alloc(st.st_size+1);
-	off = 0;
-	do {
-		len = read(fd, bc+off, 1024);
-		if (len <= 0)
-			break;
-		off += len;
-	} while (len > 0);
-	bc[off] = 0;
-	close(fd);
 
-	parse_boot_config(bc, off);
+	perform_bootcfg(BOOTCFG_FILENAME, &do_config_command, 32768);
 }
 
 void

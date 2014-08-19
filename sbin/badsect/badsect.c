@@ -1,4 +1,4 @@
-/*	$NetBSD: badsect.c,v 1.32 2009/03/16 12:53:30 lukem Exp $	*/
+/*	$NetBSD: badsect.c,v 1.32.12.1 2014/08/20 00:02:24 tls Exp $	*/
 
 /*
  * Copyright (c) 1981, 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1981, 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: badsect.c,v 1.32 2009/03/16 12:53:30 lukem Exp $");
+__RCSID("$NetBSD: badsect.c,v 1.32.12.1 2014/08/20 00:02:24 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,13 +179,13 @@ main(int argc, char *argv[])
 		break;
 	}
 
-	dev_bsize = fs->fs_fsize / fsbtodb(fs, 1);
+	dev_bsize = fs->fs_fsize / FFS_FSBTODB(fs, 1);
 	for (argc -= 2, argv += 2; argc > 0; argc--, argv++) {
 		number = atoi(*argv);
 		if (chkuse(number, 1))
 			continue;
 		if (mknod(*argv, S_IFMT|S_IRUSR|S_IWUSR,
-		    (dev_t)dbtofsb(fs, number)) == -1) {
+		    (dev_t)FFS_DBTOFSB(fs, number)) == -1) {
 			warn("Cannot mknod `%s'", *argv);
 			errs++;
 			continue;
@@ -206,7 +206,7 @@ chkuse(off_t blkno, int cnt)
 	int cg;
 	off_t fsbn, bn, fsbe;
 
-	fsbn = dbtofsb(fs, blkno);
+	fsbn = FFS_DBTOFSB(fs, blkno);
 	fsbe = fsbn + cnt;
 	if (fsbe > fs->fs_size) {
 		warnx("block %lld out of range of file system",
@@ -229,7 +229,7 @@ chkuse(off_t blkno, int cnt)
 		}
 	}
 
-	rdfs(fsbtodb(fs, cgtod(fs, cg)), (int)sblock.fs_cgsize, &acg);
+	rdfs(FFS_FSBTODB(fs, cgtod(fs, cg)), (int)sblock.fs_cgsize, &acg);
 
 	if (!cg_chkmagic(&acg, needswap)) {
 		warnx("cg %d: bad magic number", cg);

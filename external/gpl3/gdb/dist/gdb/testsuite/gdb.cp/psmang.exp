@@ -1,5 +1,4 @@
-# Copyright 2002, 2004, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 2002-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -172,10 +171,6 @@
 # other ways this test could fail to do its job.  If you need to make
 # revisions, please be very careful.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 #
 # test running programs
 #
@@ -183,42 +178,22 @@ if $tracelevel then {
 
 if { [skip_cplus_tests] } { continue }
 
-set testfile "psmang"
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile psmang1.cc psmang2.cc
 
-if [get_compiler_info ${binfile} "c++"] {
-    return -1;
+if [get_compiler_info "c++"] {
+    return -1
 }
 
-if  { [gdb_compile "${srcdir}/${subdir}/${testfile}1.cc" "${testfile}1.o" object {debug c++}] != "" } {
-     untested psmang.exp
-     return -1
+if {[prepare_for_testing $testfile.exp $testfile \
+	 [list $srcfile $srcfile2] {debug c++}]} {
+    return -1
 }
-
-if  { [gdb_compile "${srcdir}/${subdir}/${testfile}2.cc" "${testfile}2.o" object {debug c++}] != "" } {
-     untested psmang.exp
-     return -1
-}
-
-if  { [gdb_compile "${testfile}1.o ${testfile}2.o" ${binfile} executable {debug c++}] != "" } {
-     untested psmang.exp
-     return -1
-}
-
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 
 gdb_test "break s::method1" "Breakpoint .* at .*: file .*psmang1.cc.*"
 
 # We have to exit and restart GDB here, to make sure that all the
 # compilation units are psymtabs again.
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart ${binfile}
 
 gdb_test "break s::method2" "Breakpoint .* at .*: file .*psmang2.cc.*"

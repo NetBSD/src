@@ -1,4 +1,4 @@
-/*	$NetBSD: odcm.c,v 1.2 2012/06/02 21:36:42 dsl Exp $ */
+/*	$NetBSD: odcm.c,v 1.2.2.1 2014/08/20 00:03:29 tls Exp $ */
 /*      $OpenBSD: p4tcc.c,v 1.13 2006/12/20 17:50:40 gwk Exp $ */
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odcm.c,v 1.2 2012/06/02 21:36:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odcm.c,v 1.2.2.1 2014/08/20 00:03:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -166,7 +166,7 @@ odcm_quirks(void)
 
 	x86_cpuid(1, regs);
 
-	switch (CPUID2STEPPING(regs[0])) {
+	switch (CPUID_TO_STEPPING(regs[0])) {
 
 	case 0x22:	/* errata O50 P44 and Z21 */
 	case 0x24:
@@ -208,6 +208,8 @@ odcm_init(device_t self)
 		len += snprintf(sc->sc_names + len,
 		    sc->sc_names_len - len, "%d%s", state[i].level,
 		    i < __arraycount(state) ? " " : "");
+		if (len > sc->sc_names_len)
+			break;
 	}
 
 	/*

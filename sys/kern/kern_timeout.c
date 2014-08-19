@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.45 2010/12/18 01:36:19 rmind Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.45.18.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.45 2010/12/18 01:36:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.45.18.1 2014/08/20 00:04:29 tls Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -229,13 +229,13 @@ callout_startup(void)
  *
  *	Per-CPU initialization.
  */
+CTASSERT(sizeof(callout_impl_t) <= sizeof(callout_t));
+
 void
 callout_init_cpu(struct cpu_info *ci)
 {
 	struct callout_cpu *cc;
 	int b;
-
-	CTASSERT(sizeof(callout_impl_t) <= sizeof(callout_t));
 
 	if ((cc = ci->ci_data.cpu_callout) == NULL) {
 		cc = kmem_zalloc(sizeof(*cc), KM_SLEEP);
@@ -311,7 +311,9 @@ callout_destroy(callout_t *cs)
 	 */
 	KASSERT((c->c_flags & CALLOUT_PENDING) == 0);
 	KASSERT(c->c_cpu->cc_lwp == curlwp || c->c_cpu->cc_active != c);
-	KASSERT(c->c_magic == CALLOUT_MAGIC);
+	KASSERTMSG(c->c_magic == CALLOUT_MAGIC,
+	    "callout %p: c_magic (%#x) != CALLOUT_MAGIC (%#x)",
+	    c, c->c_magic, CALLOUT_MAGIC);
 	c->c_magic = 0;
 }
 

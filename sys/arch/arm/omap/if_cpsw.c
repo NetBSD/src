@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.2.6.3 2013/06/23 06:20:01 tls Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.2.6.4 2014/08/20 00:02:47 tls Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.2.6.3 2013/06/23 06:20:01 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.2.6.4 2014/08/20 00:02:47 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -122,6 +122,7 @@ struct cpsw_softc {
 	bus_addr_t sc_rxdescs_pa;
 	struct ethercom sc_ec;
 	struct mii_data sc_mii;
+	bool sc_phy_has_1000t;
 	callout_t sc_tick_ch;
 	void *sc_ih;
 	struct cpsw_ring_data *sc_rdp;
@@ -162,6 +163,11 @@ static int cpsw_rxthintr(void *);
 static int cpsw_rxintr(void *);
 static int cpsw_txintr(void *);
 static int cpsw_miscintr(void *);
+
+/* ALE support */
+#define CPSW_MAX_ALE_ENTRIES	1024
+
+static int cpsw_ale_update_addresses(struct cpsw_softc *, int purge);
 
 CFATTACH_DECL_NEW(cpsw, sizeof(struct cpsw_softc),
     cpsw_match, cpsw_attach, NULL, NULL);
@@ -318,6 +324,18 @@ cpsw_match(device_t parent, cfdata_t cf, void *aux)
 	return 0;
 }
 
+static bool
+cpsw_phy_has_1000t(struct cpsw_softc * const sc)
+{
+	struct ifmedia_entry *ifm;
+
+	TAILQ_FOREACH(ifm, &sc->sc_mii.mii_media.ifm_list, ifm_list) {
+		if (IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_T)
+			return true;
+	}
+	return false;
+}
+
 static void
 cpsw_attach(device_t parent, device_t self, void *aux)
 {
@@ -469,13 +487,28 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ec.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
 	    ether_mediastatus);
+
+	/* Initialize MDIO */
+	cpsw_write_4(sc, MDIOCONTROL, MDIOCTL_ENABLE | MDIOCTL_FAULTENB | MDIOCTL_CLKDIV(0xff));
+	/* Clear ALE */
+	cpsw_write_4(sc, CPSW_ALE_CONTROL, ALECTL_CLEAR_TABLE);
+
 	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY, 0, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
+		sc->sc_phy_has_1000t = false;
 		ifmedia_add(&sc->sc_mii.mii_media,
 		    IFM_ETHER|IFM_MANUAL, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL);
 	} else {
+		sc->sc_phy_has_1000t = cpsw_phy_has_1000t(sc);
+		if (sc->sc_phy_has_1000t) {
+			aprint_normal_dev(sc->sc_dev, "1000baseT PHY found. setting RGMII Mode\n");
+			/* Select the Interface RGMII Mode in the Control Module */
+			sitara_cm_reg_write_4(CPSW_GMII_SEL,
+			    GMIISEL_GMII2_SEL(RGMII_MODE) | GMIISEL_GMII1_SEL(RGMII_MODE));
+		}
+
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 	}
 
@@ -494,8 +527,7 @@ cpsw_start(struct ifnet *ifp)
 	uint32_t * const dw = bd.word;
 	struct mbuf *m;
 	bus_dmamap_t dm;
-	u_int sopi;	/* Start of Packet Index */
-	u_int eopi = ~0;
+	u_int eopi __diagused = ~0;
 	u_int seg;
 	u_int txfree;
 	int txstart = -1;
@@ -556,7 +588,7 @@ cpsw_start(struct ifnet *ifp)
 
 		if (txstart == -1)
 			txstart = sc->sc_txnext;
-		sopi = eopi = sc->sc_txnext;
+		eopi = sc->sc_txnext;
 		for (seg = 0; seg < dm->dm_nsegs; seg++) {
 			dw[0] = cpsw_txdesc_paddr(sc,
 			    TXDESC_NEXT(sc->sc_txnext));
@@ -792,6 +824,8 @@ cpsw_init(struct ifnet *ifp)
 
 	/* Reset and init Sliver port 1 and 2 */
 	for (i = 0; i < 2; i++) {
+		uint32_t macctl;
+
 		/* Reset */
 		cpsw_write_4(sc, CPSW_SL_SOFT_RESET(i), 1);
 		while(cpsw_read_4(sc, CPSW_SL_SOFT_RESET(i)) & 1);
@@ -806,9 +840,12 @@ cpsw_init(struct ifnet *ifp)
 		cpsw_write_4(sc, CPSW_PORT_P_SA_LO(i+1),
 		    sc->sc_enaddr[4] | (sc->sc_enaddr[5] << 8));
 
-		/* Set MACCONTROL for ports 0,1: FULLDUPLEX(1), GMII_EN(5),
-		   IFCTL_A(15), IFCTL_B(16) FIXME */
-		cpsw_write_4(sc, CPSW_SL_MACCONTROL(i), 1 | (1<<5) | (1<<15));
+		/* Set MACCONTROL for ports 0,1 */
+		macctl = SLMACCTL_FULLDUPLEX | SLMACCTL_GMII_EN |
+		    SLMACCTL_IFCTL_A;
+		if (sc->sc_phy_has_1000t)
+			macctl |= SLMACCTL_GIG;
+		cpsw_write_4(sc, CPSW_SL_MACCONTROL(i), macctl);
 
 		/* Set ALE port to forwarding(3) */
 		cpsw_write_4(sc, CPSW_ALE_PORTCTL(i+1), 3);
@@ -820,6 +857,9 @@ cpsw_init(struct ifnet *ifp)
 
 	/* Set ALE port to forwarding(3) */
 	cpsw_write_4(sc, CPSW_ALE_PORTCTL(0), 3);
+
+	/* Initialize addrs */
+	cpsw_ale_update_addresses(sc, 1);
 
 	cpsw_write_4(sc, CPSW_SS_PTYPE, 0);
 	cpsw_write_4(sc, CPSW_SS_STAT_PORT_EN, 7);
@@ -1242,4 +1282,195 @@ cpsw_miscintr(void *arg)
 	cpsw_write_4(sc, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_MISC);
 
 	return 1;
+}
+
+/*
+ *
+ * ALE support routines.
+ *
+ */
+
+static void
+cpsw_ale_entry_init(uint32_t *ale_entry)
+{
+	ale_entry[0] = ale_entry[1] = ale_entry[2] = 0;
+}
+
+static void
+cpsw_ale_entry_set_mac(uint32_t *ale_entry, const uint8_t *mac)
+{
+	ale_entry[0] = mac[2] << 24 | mac[3] << 16 | mac[4] << 8 | mac[5];
+	ale_entry[1] = mac[0] << 8 | mac[1];
+}
+
+static void
+cpsw_ale_entry_set_bcast_mac(uint32_t *ale_entry)
+{
+	ale_entry[0] = 0xffffffff;
+	ale_entry[1] = 0x0000ffff;
+}
+
+static void
+cpsw_ale_entry_set(uint32_t *ale_entry, ale_entry_filed_t field, uint32_t val)
+{
+	/* Entry type[61:60] is addr entry(1), Mcast fwd state[63:62] is fw(3)*/
+	switch (field) {
+	case ALE_ENTRY_TYPE:
+		/* [61:60] */
+		ale_entry[1] |= (val & 0x3) << 28;
+		break;
+	case ALE_MCAST_FWD_STATE:
+		/* [63:62] */
+		ale_entry[1] |= (val & 0x3) << 30;
+		break;
+	case ALE_PORT_MASK:
+		/* [68:66] */
+		ale_entry[2] |= (val & 0x7) << 2;
+		break;
+	case ALE_PORT_NUMBER:
+		/* [67:66] */
+		ale_entry[2] |= (val & 0x3) << 2;
+		break;
+	default:
+		panic("Invalid ALE entry field: %d\n", field);
+	}
+
+	return;
+}
+
+static bool
+cpsw_ale_entry_mac_match(const uint32_t *ale_entry, const uint8_t *mac)
+{
+	return (((ale_entry[1] >> 8) & 0xff) == mac[0]) &&
+	    (((ale_entry[1] >> 0) & 0xff) == mac[1]) &&
+	    (((ale_entry[0] >>24) & 0xff) == mac[2]) &&
+	    (((ale_entry[0] >>16) & 0xff) == mac[3]) &&
+	    (((ale_entry[0] >> 8) & 0xff) == mac[4]) &&
+	    (((ale_entry[0] >> 0) & 0xff) == mac[5]);
+}
+
+static void
+cpsw_ale_set_outgoing_mac(struct cpsw_softc *sc, int port, const uint8_t *mac)
+{
+	cpsw_write_4(sc, CPSW_PORT_P_SA_HI(port),
+	    mac[3] << 24 | mac[2] << 16 | mac[1] << 8 | mac[0]);
+	cpsw_write_4(sc, CPSW_PORT_P_SA_LO(port),
+	    mac[5] << 8 | mac[4]);
+}
+
+static void
+cpsw_ale_read_entry(struct cpsw_softc *sc, uint16_t idx, uint32_t *ale_entry)
+{
+	cpsw_write_4(sc, CPSW_ALE_TBLCTL, idx & 1023);
+	ale_entry[0] = cpsw_read_4(sc, CPSW_ALE_TBLW0);
+	ale_entry[1] = cpsw_read_4(sc, CPSW_ALE_TBLW1);
+	ale_entry[2] = cpsw_read_4(sc, CPSW_ALE_TBLW2);
+}
+
+static void
+cpsw_ale_write_entry(struct cpsw_softc *sc, uint16_t idx, uint32_t *ale_entry)
+{
+	cpsw_write_4(sc, CPSW_ALE_TBLW0, ale_entry[0]);
+	cpsw_write_4(sc, CPSW_ALE_TBLW1, ale_entry[1]);
+	cpsw_write_4(sc, CPSW_ALE_TBLW2, ale_entry[2]);
+	cpsw_write_4(sc, CPSW_ALE_TBLCTL, 1 << 31 | (idx & 1023));
+}
+
+static int
+cpsw_ale_remove_all_mc_entries(struct cpsw_softc *sc)
+{
+	int i;
+	uint32_t ale_entry[3];
+
+	/* First two entries are link address and broadcast. */
+	for (i = 2; i < CPSW_MAX_ALE_ENTRIES; i++) {
+		cpsw_ale_read_entry(sc, i, ale_entry);
+		if (((ale_entry[1] >> 28) & 3) == 1 && /* Address entry */
+		    ((ale_entry[1] >> 8) & 1) == 1) { /* MCast link addr */
+			ale_entry[0] = ale_entry[1] = ale_entry[2] = 0;
+			cpsw_ale_write_entry(sc, i, ale_entry);
+		}
+	}
+	return CPSW_MAX_ALE_ENTRIES;
+}
+
+static int
+cpsw_ale_mc_entry_set(struct cpsw_softc *sc, uint8_t portmask, uint8_t *mac)
+{
+	int free_index = -1, matching_index = -1, i;
+	uint32_t ale_entry[3];
+
+	/* Find a matching entry or a free entry. */
+	for (i = 0; i < CPSW_MAX_ALE_ENTRIES; i++) {
+		cpsw_ale_read_entry(sc, i, ale_entry);
+
+		/* Entry Type[61:60] is 0 for free entry */ 
+		if (free_index < 0 && ((ale_entry[1] >> 28) & 3) == 0) {
+			free_index = i;
+		}
+
+		if (cpsw_ale_entry_mac_match(ale_entry, mac)) {
+			matching_index = i;
+			break;
+		}
+	}
+
+	if (matching_index < 0) {
+		if (free_index < 0)
+			return ENOMEM;
+		i = free_index;
+	}
+
+	cpsw_ale_entry_init(ale_entry);
+
+	cpsw_ale_entry_set_mac(ale_entry, mac);
+	cpsw_ale_entry_set(ale_entry, ALE_ENTRY_TYPE, ALE_TYPE_ADDRESS);
+	cpsw_ale_entry_set(ale_entry, ALE_MCAST_FWD_STATE, ALE_FWSTATE_FWONLY);
+	cpsw_ale_entry_set(ale_entry, ALE_PORT_MASK, portmask);
+
+	cpsw_ale_write_entry(sc, i, ale_entry);
+
+	return 0;
+}
+
+static int
+cpsw_ale_update_addresses(struct cpsw_softc *sc, int purge)
+{
+	uint8_t *mac = sc->sc_enaddr;
+	uint32_t ale_entry[3];
+	int i;
+	struct ethercom * const ec = &sc->sc_ec;
+	struct ether_multi *ifma;
+
+	cpsw_ale_entry_init(ale_entry);
+	/* Route incoming packets for our MAC address to Port 0 (host). */
+	/* For simplicity, keep this entry at table index 0 in the ALE. */
+	cpsw_ale_entry_set_mac(ale_entry, mac);
+	cpsw_ale_entry_set(ale_entry, ALE_ENTRY_TYPE, ALE_TYPE_ADDRESS);
+	cpsw_ale_entry_set(ale_entry, ALE_PORT_NUMBER, 0);
+	cpsw_ale_write_entry(sc, 0, ale_entry);
+
+	/* Set outgoing MAC Address for Ports 1 and 2. */
+	for (i = 1; i < 3; ++i)
+		cpsw_ale_set_outgoing_mac(sc, i, mac);
+
+	/* Keep the broadcast address at table entry 1. */
+	cpsw_ale_entry_init(ale_entry);
+	cpsw_ale_entry_set_bcast_mac(ale_entry);
+	cpsw_ale_entry_set(ale_entry, ALE_ENTRY_TYPE, ALE_TYPE_ADDRESS);
+	cpsw_ale_entry_set(ale_entry, ALE_MCAST_FWD_STATE, ALE_FWSTATE_FWONLY);
+	cpsw_ale_entry_set(ale_entry, ALE_PORT_MASK, ALE_PORT_MASK_ALL);
+	cpsw_ale_write_entry(sc, 1, ale_entry);
+
+	/* SIOCDELMULTI doesn't specify the particular address
+	   being removed, so we have to remove all and rebuild. */
+	if (purge)
+		cpsw_ale_remove_all_mc_entries(sc);
+
+	/* Set other multicast addrs desired. */
+	LIST_FOREACH(ifma, &ec->ec_multiaddrs, enm_list) {
+		cpsw_ale_mc_entry_set(sc, ALE_PORT_MASK_ALL, ifma->enm_addrlo);
+	}
+
+	return 0;
 }

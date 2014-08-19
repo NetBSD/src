@@ -1,5 +1,6 @@
-/*	$NetBSD: ulfs_quota2.c,v 1.6.2.2 2013/06/23 06:18:39 tls Exp $	*/
+/*	$NetBSD: ulfs_quota2.c,v 1.6.2.3 2014/08/20 00:04:45 tls Exp $	*/
 /*  from NetBSD: ufs_quota2.c,v 1.35 2012/09/27 07:47:56 bouyer Exp  */
+/*  from NetBSD: ffs_quota2.c,v 1.4 2011/06/12 03:36:00 rmind Exp  */
 
 /*-
   * Copyright (c) 2010 Manuel Bouyer
@@ -28,7 +29,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.6.2.2 2013/06/23 06:18:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.6.2.3 2014/08/20 00:04:45 tls Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -44,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.6.2.2 2013/06/23 06:18:39 tls Exp 
 #include <sys/wapbl.h>
 #include <sys/quota.h>
 #include <sys/quotactl.h>
+
+#include <ufs/lfs/lfs_extern.h>
 
 #include <ufs/lfs/ulfs_quota2.h>
 #include <ufs/lfs/ulfs_inode.h>
@@ -139,9 +142,8 @@ static int
 getq2h(struct ulfsmount *ump, int type,
     struct buf **bpp, struct quota2_header **q2hp, int flags)
 {
-#ifdef LFS_EI
-	const int needswap = ULFS_MPNEEDSWAP(ump);
-#endif
+	struct lfs *fs = ump->um_lfs;
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 	int error;
 	struct buf *bp;
 	struct quota2_header *q2h;
@@ -195,9 +197,8 @@ quota2_walk_list(struct ulfsmount *ump, struct buf *hbp, int type,
     uint64_t *offp, int flags, void *a,
     int (*func)(struct ulfsmount *, uint64_t *, struct quota2_entry *, uint64_t, void *))
 {
-#ifdef LFS_EI
-	const int needswap = ULFS_MPNEEDSWAP(ump);
-#endif
+	struct lfs *fs = ump->um_lfs;
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 	daddr_t off = ulfs_rw64(*offp, needswap);
 	struct buf *bp, *obp = hbp;
 	int ret = 0, ret2 = 0;
@@ -271,8 +272,9 @@ lfsquota2_umount(struct mount *mp, int flags)
 {
 	int i, error;
 	struct ulfsmount *ump = VFSTOULFS(mp);
+	struct lfs *fs = ump->um_lfs;
 
-	if ((ump->um_flags & ULFS_QUOTA2) == 0)
+	if ((fs->um_flags & ULFS_QUOTA2) == 0)
 		return 0;
 
 	for (i = 0; i < ULFS_MAXQUOTAS; i++) {
@@ -299,7 +301,8 @@ quota2_q2ealloc(struct ulfsmount *ump, int type, uid_t uid, struct dquot *dq)
 	struct quota2_entry *q2e;
 	daddr_t offset;
 	u_long hash_mask;
-	const int needswap = ULFS_MPNEEDSWAP(ump);
+	struct lfs *fs = ump->um_lfs;
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 
 	KASSERT(mutex_owned(&dq->dq_interlock));
 	KASSERT(mutex_owned(&lfs_dqlock));
@@ -312,7 +315,7 @@ quota2_q2ealloc(struct ulfsmount *ump, int type, uid_t uid, struct dquot *dq)
 		struct inode *ip = VTOI(vp);
 		uint64_t size = ip->i_size;
 		/* need to alocate a new disk block */
-		error = ULFS_BALLOC(vp, size, ump->umq2_bsize,
+		error = lfs_balloc(vp, size, ump->umq2_bsize,
 		    ump->um_cred[type], B_CLRBUF | B_SYNC, &bp);
 		if (error) {
 			brelse(hbp, 0);
@@ -326,7 +329,7 @@ quota2_q2ealloc(struct ulfsmount *ump, int type, uid_t uid, struct dquot *dq)
 		lfsquota2_addfreeq2e(q2h, bp->b_data, size, ump->umq2_bsize,
 		    needswap);
 		error = bwrite(bp);
-		error2 = ULFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+		error2 = lfs_update(vp, NULL, NULL, UPDATE_WAIT);
 		if (error || error2) {
 			brelse(hbp, 0);
 			if (error)
@@ -445,8 +448,9 @@ quota2_check(struct inode *ip, int vtype, int64_t change, kauth_cred_t cred,
 	struct dquot *dq;
 	uint64_t ncurblks;
 	struct ulfsmount *ump = ip->i_ump;
+	struct lfs *fs = ip->i_lfs;
 	struct mount *mp = ump->um_mountp;
-	const int needswap = ULFS_MPNEEDSWAP(ump);
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 	int i;
 
 	if ((error = getinoquota2(ip, change > 0, change != 0, bp, q2e)) != 0)
@@ -582,7 +586,8 @@ lfsquota2_handle_cmd_put(struct ulfsmount *ump, const struct quotakey *key,
 	struct quota2_header *q2h;
 	struct quota2_entry q2e, *q2ep;
 	struct buf *bp;
-	const int needswap = ULFS_MPNEEDSWAP(ump);
+	struct lfs *fs = ump->um_lfs;
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 
 	/* make sure we can index by the fs-independent idtype */
 	CTASSERT(QUOTA_IDTYPE_USER == ULFS_USRQUOTA);
@@ -648,9 +653,8 @@ dq2clear_callback(struct ulfsmount *ump, uint64_t *offp, struct quota2_entry *q2
     uint64_t off, void *v)
 {
 	struct dq2clear_callback *c = v;
-#ifdef LFS_EI
-	const int needswap = ULFS_MPNEEDSWAP(ump);
-#endif
+	struct lfs *fs = ump->um_lfs;
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 	uint64_t myoff;
 
 	if (ulfs_rw32(q2e->q2e_uid, needswap) == c->id) {
@@ -668,7 +672,7 @@ dq2clear_callback(struct ulfsmount *ump, uint64_t *offp, struct quota2_entry *q2
 	return 0;
 }
 int
-lfsquota2_handle_cmd_delete(struct ulfsmount *ump, const struct quotakey *qk)
+lfsquota2_handle_cmd_del(struct ulfsmount *ump, const struct quotakey *qk)
 {
 	int idtype;
 	id_t id;
@@ -785,7 +789,8 @@ quota2_fetch_q2e(struct ulfsmount *ump, const struct quotakey *qk,
 	int error;
 	struct quota2_entry *q2ep;
 	struct buf *bp;
-	const int needswap = ULFS_MPNEEDSWAP(ump);
+	struct lfs *fs = ump->um_lfs;
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 
 	error = lfs_dqget(NULLVP, qk->qk_id, ump, qk->qk_idtype, &dq);
 	if (error)
@@ -820,7 +825,8 @@ quota2_fetch_quotaval(struct ulfsmount *ump, const struct quotakey *qk,
 	int error;
 	struct quota2_entry *q2ep, q2e;
 	struct buf  *bp;
-	const int needswap = ULFS_MPNEEDSWAP(ump);
+	struct lfs *fs = ump->um_lfs;
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 	id_t id2;
 
 	error = lfs_dqget(NULLVP, qk->qk_id, ump, qk->qk_idtype, &dq);
@@ -858,7 +864,8 @@ lfsquota2_handle_cmd_get(struct ulfsmount *ump, const struct quotakey *qk,
 	struct quota2_header *q2h;
 	struct quota2_entry q2e;
 	struct buf *bp;
-	const int needswap = ULFS_MPNEEDSWAP(ump);
+	struct lfs *fs = ump->um_lfs;
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 	id_t id2;
 
 	/*
@@ -1084,9 +1091,8 @@ q2cursor_getids_callback(struct ulfsmount *ump, uint64_t *offp,
 {
 	struct q2cursor_getids *gi = v;
 	id_t id;
-#ifdef LFS_EI
-	const int needswap = ULFS_MPNEEDSWAP(ump);
-#endif
+	struct lfs *fs = ump->um_lfs;
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 
 	if (gi->skipped < gi->skip) {
 		gi->skipped++;
@@ -1111,7 +1117,8 @@ q2cursor_getkeys(struct ulfsmount *ump, int idtype, struct ulfsq2_cursor *cursor
     struct q2cursor_state *state,
     int *hashsize_ret, struct quota2_entry *default_q2e_ret)
 {
-	const int needswap = ULFS_MPNEEDSWAP(ump);
+	struct lfs *fs = ump->um_lfs;
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 	struct buf *hbp;
 	struct quota2_header *q2h;
 	int quota2_hash_size;
@@ -1495,9 +1502,8 @@ dq2get_callback(struct ulfsmount *ump, uint64_t *offp, struct quota2_entry *q2e,
 	struct dq2get_callback *c = v;
 	daddr_t lblkno;
 	int blkoff;
-#ifdef LFS_EI
-	const int needswap = ULFS_MPNEEDSWAP(ump);
-#endif
+	struct lfs *fs = ump->um_lfs;
+	const int needswap = ULFS_MPNEEDSWAP(fs);
 
 	if (ulfs_rw32(q2e->q2e_uid, needswap) == c->id) {
 		KASSERT(mutex_owned(&c->dq->dq_interlock));
@@ -1543,5 +1549,77 @@ out_mutex:
 int
 lfs_dq2sync(struct vnode *vp, struct dquot *dq)
 {
+	return 0;
+}
+
+int
+lfs_quota2_mount(struct mount *mp)
+{
+	struct ulfsmount *ump = VFSTOULFS(mp);
+	struct lfs *fs = ump->um_lfs;
+	int error = 0;
+	struct vnode *vp;
+	struct lwp *l = curlwp;
+
+	if ((fs->lfs_use_quota2) == 0)
+		return 0;
+
+	fs->um_flags |= ULFS_QUOTA2;
+	ump->umq2_bsize = fs->lfs_bsize;
+	ump->umq2_bmask = fs->lfs_bmask;
+	if (fs->lfs_quota_magic != Q2_HEAD_MAGIC) {
+		printf("%s: Invalid quota magic number\n",
+		    mp->mnt_stat.f_mntonname);
+		return EINVAL;
+	}
+        if ((fs->lfs_quota_flags & FS_Q2_DO_TYPE(ULFS_USRQUOTA)) &&
+            fs->lfs_quotaino[ULFS_USRQUOTA] == 0) {
+                printf("%s: no user quota inode\n",
+		    mp->mnt_stat.f_mntonname); 
+                error = EINVAL;
+        }
+        if ((fs->lfs_quota_flags & FS_Q2_DO_TYPE(ULFS_GRPQUOTA)) &&
+            fs->lfs_quotaino[ULFS_GRPQUOTA] == 0) {
+                printf("%s: no group quota inode\n",
+		    mp->mnt_stat.f_mntonname);
+                error = EINVAL;
+        }
+	if (error)
+		return error;
+
+        if (fs->lfs_quota_flags & FS_Q2_DO_TYPE(ULFS_USRQUOTA) &&
+	    ump->um_quotas[ULFS_USRQUOTA] == NULLVP) {
+		error = VFS_VGET(mp, fs->lfs_quotaino[ULFS_USRQUOTA], &vp);
+		if (error) {
+			printf("%s: can't vget() user quota inode: %d\n",
+			    mp->mnt_stat.f_mntonname, error);
+			return error;
+		}
+		ump->um_quotas[ULFS_USRQUOTA] = vp;
+		ump->um_cred[ULFS_USRQUOTA] = l->l_cred;
+		mutex_enter(vp->v_interlock);
+		vp->v_writecount++;
+		mutex_exit(vp->v_interlock);
+		VOP_UNLOCK(vp);
+	}
+        if (fs->lfs_quota_flags & FS_Q2_DO_TYPE(ULFS_GRPQUOTA) &&
+	    ump->um_quotas[ULFS_GRPQUOTA] == NULLVP) {
+		error = VFS_VGET(mp, fs->lfs_quotaino[ULFS_GRPQUOTA], &vp);
+		if (error) {
+			vn_close(ump->um_quotas[ULFS_USRQUOTA],
+			    FREAD|FWRITE, l->l_cred);
+			printf("%s: can't vget() group quota inode: %d\n",
+			    mp->mnt_stat.f_mntonname, error);
+			return error;
+		}
+		ump->um_quotas[ULFS_GRPQUOTA] = vp;
+		ump->um_cred[ULFS_GRPQUOTA] = l->l_cred;
+		mutex_enter(vp->v_interlock);
+		vp->v_vflag |= VV_SYSTEM;
+		vp->v_writecount++;
+		mutex_exit(vp->v_interlock);
+		VOP_UNLOCK(vp);
+	}
+	mp->mnt_flag |= MNT_QUOTA;
 	return 0;
 }

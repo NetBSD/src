@@ -1,7 +1,6 @@
 /* Target-dependent code for Morpho mt processor, for GDB.
 
-   Copyright (C) 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2005-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,7 +27,7 @@
 #include "dis-asm.h"
 #include "arch-utils.h"
 #include "gdbtypes.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "regcache.h"
 #include "reggroups.h"
 #include "gdbcore.h"
@@ -336,7 +335,7 @@ mt_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
    values.  */
 
 static enum return_value_convention
-mt_return_value (struct gdbarch *gdbarch, struct type *func_type,
+mt_return_value (struct gdbarch *gdbarch, struct value *function,
 		 struct type *type, struct regcache *regcache,
 		 gdb_byte *readbuf, const gdb_byte *writebuf)
 {
@@ -409,7 +408,7 @@ mt_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR func_addr = 0, func_end = 0;
-  char *func_name;
+  const char *func_name;
   unsigned long instr;
 
   if (find_pc_partial_function (pc, &func_name, &func_addr, &func_end))
@@ -686,7 +685,7 @@ mt_registers_info (struct gdbarch *gdbarch,
 	  buff = alloca (regsize);
 	  bytes = alloca (regsize * sizeof (*bytes));
 
-	  frame_register_read (frame, regnum, buff);
+	  deprecated_frame_register_read (frame, regnum, buff);
 
 	  fputs_filtered (gdbarch_register_name
 			  (gdbarch, regnum), file);
@@ -711,7 +710,7 @@ mt_registers_info (struct gdbarch *gdbarch,
 	  struct value_print_options opts;
 
 	  buf = alloca (register_size (gdbarch, MT_COPRO_REGNUM));
-	  frame_register_read (frame, MT_COPRO_REGNUM, buf);
+	  deprecated_frame_register_read (frame, MT_COPRO_REGNUM, buf);
 	  /* And print.  */
 	  regnum = MT_COPRO_PSEUDOREG_REGNUM;
 	  fputs_filtered (gdbarch_register_name (gdbarch, regnum),
@@ -719,7 +718,7 @@ mt_registers_info (struct gdbarch *gdbarch,
 	  print_spaces_filtered (15 - strlen (gdbarch_register_name
 					        (gdbarch, regnum)),
 				 file);
-	  get_raw_print_options (&opts);
+	  get_no_prettyformat_print_options (&opts);
 	  opts.deref_ref = 1;
 	  val_print (register_type (gdbarch, regnum), buf,
 		     0, 0, file, 0, NULL,
@@ -732,13 +731,13 @@ mt_registers_info (struct gdbarch *gdbarch,
 	  gdb_byte buf[3 * sizeof (LONGEST)];
 
 	  /* Get the two "real" mac registers.  */
-	  frame_register_read (frame, MT_MAC_REGNUM, buf);
+	  deprecated_frame_register_read (frame, MT_MAC_REGNUM, buf);
 	  oldmac = extract_unsigned_integer
 	    (buf, register_size (gdbarch, MT_MAC_REGNUM), byte_order);
 	  if (gdbarch_bfd_arch_info (gdbarch)->mach == bfd_mach_mrisc2
 	      || gdbarch_bfd_arch_info (gdbarch)->mach == bfd_mach_ms2)
 	    {
-	      frame_register_read (frame, MT_EXMAC_REGNUM, buf);
+	      deprecated_frame_register_read (frame, MT_EXMAC_REGNUM, buf);
 	      ext_mac = extract_unsigned_integer
 		(buf, register_size (gdbarch, MT_EXMAC_REGNUM), byte_order);
 	    }
@@ -846,16 +845,20 @@ mt_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   for (j = nargs - 1; j >= i; j--)
     {
       gdb_byte *val;
+      struct cleanup *back_to;
+      const gdb_byte *contents = value_contents (args[j]);
       
       /* Right-justify the value in an aligned-length buffer.  */
       typelen = TYPE_LENGTH (value_type (args[j]));
       slacklen = (wordsize - (typelen % wordsize)) % wordsize;
-      val = alloca (typelen + slacklen);
-      memcpy (val, value_contents (args[j]), typelen);
+      val = xmalloc (typelen + slacklen);
+      back_to = make_cleanup (xfree, val);
+      memcpy (val, contents, typelen);
       memset (val + typelen, 0, slacklen);
       /* Now write this data to the stack.  */
       stack_dest -= typelen + slacklen;
       write_memory (stack_dest, val, typelen + slacklen);
+      do_cleanups (back_to);
     }
 
   /* Finally, if a param needs to be split between registers and stack, 

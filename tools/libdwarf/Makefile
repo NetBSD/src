@@ -1,26 +1,67 @@
-#	$NetBSD: Makefile,v 1.3.10.1 2013/02/25 00:30:30 tls Exp $
+#	$NetBSD: Makefile,v 1.3.10.2 2014/08/20 00:04:54 tls Exp $
 
 HOSTLIB=dwarf
 
 .include <bsd.own.mk>
 
-SRCS=	dwarf_abbrev.c		\
-	dwarf_attr.c		\
-	dwarf_attrval.c		\
-	dwarf_cu.c		\
-	dwarf_dealloc.c		\
-	dwarf_die.c		\
-	dwarf_dump.c		\
-	dwarf_errmsg.c		\
-	dwarf_errno.c		\
-	dwarf_finish.c		\
-	dwarf_form.c		\
-	dwarf_func.c		\
-	dwarf_init.c		\
-	dwarf_loc.c
+SRCS= \
+	dwarf_abbrev.c	\
+	dwarf_arange.c	\
+	dwarf_attr.c	\
+	dwarf_attrval.c	\
+	dwarf_cu.c	\
+	dwarf_dealloc.c	\
+	dwarf_die.c	\
+	dwarf_dump.c	\
+	dwarf_errmsg.c	\
+	dwarf_finish.c	\
+	dwarf_form.c	\
+	dwarf_frame.c	\
+	dwarf_init.c	\
+	dwarf_lineno.c	\
+	dwarf_loclist.c	\
+	dwarf_macinfo.c	\
+	dwarf_pro_arange.c	\
+	dwarf_pro_attr.c	\
+	dwarf_pro_die.c	\
+	dwarf_pro_expr.c	\
+	dwarf_pro_finish.c	\
+	dwarf_pro_frame.c	\
+	dwarf_pro_init.c	\
+	dwarf_pro_lineno.c	\
+	dwarf_pro_macinfo.c	\
+	dwarf_pro_reloc.c	\
+	dwarf_pro_sections.c	\
+	dwarf_ranges.c	\
+	dwarf_reloc.c	\
+	dwarf_seterror.c	\
+	dwarf_str.c	\
+	libdwarf.c	\
+	libdwarf_abbrev.c	\
+	libdwarf_arange.c	\
+	libdwarf_attr.c	\
+	libdwarf_die.c	\
+	libdwarf_elf_access.c	\
+	libdwarf_elf_init.c	\
+	libdwarf_error.c	\
+	libdwarf_frame.c	\
+	libdwarf_info.c	\
+	libdwarf_init.c	\
+	libdwarf_lineno.c	\
+	libdwarf_loc.c	\
+	libdwarf_loclist.c	\
+	libdwarf_macinfo.c	\
+	libdwarf_nametbl.c	\
+	libdwarf_ranges.c	\
+	libdwarf_reloc.c	\
+	libdwarf_rw.c	\
+	libdwarf_sections.c	\
+	libdwarf_str.c
 
-LIBDWARF_DIR=	${.CURDIR}/../../external/bsd/libdwarf/dist
-LIBELF_DIR=	${.CURDIR}/../../external/bsd/libelf/dist
+ELFTOOLCHAIN_DIR=${.CURDIR}/../../external/bsd/elftoolchain/dist
+LIBDWARF_DIR=	${ELFTOOLCHAIN_DIR}/libdwarf
+LIBELF_DIR=	${ELFTOOLCHAIN_DIR}/libelf
+COMMON_DIR=	${ELFTOOLCHAIN_DIR}/common
 
 INCS=		dwarf.h libdwarf.h
 INCSDIR=	/usr/include
@@ -31,6 +72,7 @@ COMPATLIB_NO_LIB= yes # only the include files, not the library
 .endif
 
 CPPFLAGS+=	-I${.CURDIR}/../compat -I${LIBDWARF_DIR} -I${LIBELF_DIR}
+CPPFLAGS+=	-I${COMMON_DIR}
 
 BUILD_OSTYPE!=  uname -s
 

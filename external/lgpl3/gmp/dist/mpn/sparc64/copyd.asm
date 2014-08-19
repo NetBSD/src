@@ -36,7 +36,7 @@ PROLOGUE(mpn_copyd)
 	add	%g1,%o0,%o0
 	add	%g1,%o1,%o1
 	addcc	%o2,-8,%o2
-	bl,pt	%icc,L(end01234567)
+	bl,pt	%xcc,L(end01234567)
 	nop
 L(loop1):
 	ldx	[%o1-8],%g1
@@ -57,18 +57,18 @@ L(loop1):
 	stx	%o4,[%o0-56]
 	stx	%o5,[%o0-64]
 	addcc	%o2,-8,%o2
-	bge,pt	%icc,L(loop1)
+	bge,pt	%xcc,L(loop1)
 	add	%o0,-64,%o0
 L(end01234567):
 	addcc	%o2,8,%o2
-	bz,pn	%icc,L(end)
+	bz,pn	%xcc,L(end)
 	nop
 L(loop2):
 	ldx	[%o1-8],%g1
 	add	%o1,-8,%o1
 	addcc	%o2,-1,%o2
 	stx	%g1,[%o0-8]
-	bg,pt	%icc,L(loop2)
+	bg,pt	%xcc,L(loop2)
 	add	%o0,-8,%o0
 L(end):	retl
 	nop

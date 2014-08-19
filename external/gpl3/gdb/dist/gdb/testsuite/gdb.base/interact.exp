@@ -1,4 +1,4 @@
-# Copyright 2011 Free Software Foundation, Inc.
+# Copyright 2011-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,8 @@
 
 # Create a GDB script that we can source.  The script needs to generate
 # some output, to allow us to verify that it is executed properly.
-set fd [open "zzz-gdbscript" "w"]
+set script [standard_output_file zzz-gdbscript]
+set fd [open $script "w"]
 puts $fd "print 1"
 puts $fd "print 2"
 close $fd
@@ -32,7 +33,7 @@ gdb_start
 # Verify that evaluating the script does not cause an unexpected
 # change of the interactive-mode setting.
 gdb_test_no_output "set interactive-mode auto"
-gdb_test "source zzz-gdbscript" "$script_output" \
+gdb_test "source $script" "$script_output" \
          "source script with interactive-mode auto"
 gdb_test "print 3" "= 3" "sanity check with interactive-mode auto"
 gdb_test "show interactive-mode" \
@@ -43,7 +44,7 @@ gdb_test "show interactive-mode" \
 # Verify that evaluating the script does not cause an unexpected
 # change of the interactive-mode setting.
 gdb_test_no_output "set interactive-mode on"
-gdb_test "source zzz-gdbscript" "$script_output" \
+gdb_test "source $script" "$script_output" \
          "source script with interactive-mode on"
 gdb_test "print 4" "= 4" "sanity check with interactive-mode on"
 gdb_test "show interactive-mode" \
@@ -54,7 +55,7 @@ gdb_test "show interactive-mode" \
 # Verify that evaluating the script does not cause an unexpected
 # change of the interactive-mode setting.
 gdb_test_no_output "set interactive-mode off"
-gdb_test "source zzz-gdbscript" "$script_output" \
+gdb_test "source $script" "$script_output" \
          "source script with interactive-mode off"
 gdb_test "print 5" "= 5" "sanity check with interactive-mode off"
 gdb_test "show interactive-mode" \

@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.4 2009/01/11 02:45:50 christos Exp $	*/
+/*	$NetBSD: stat.h,v 1.4.24.1 2014/08/20 00:03:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -181,20 +181,20 @@ void compat_12_stat_conv(const struct stat *st, struct stat12 *ost);
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 
 __BEGIN_DECLS
-int	stat(const char *, struct stat12 *);
-int	fstat(int, struct stat12 *);
-int	mknod(const char *, mode_t, uint32_t);
-int	__stat13(const char *, struct stat13 *);
-int	__fstat13(int, struct stat13 *);
-int	__stat30(const char *, struct stat30 *);
-int	__fstat30(int, struct stat30 *);
+int	__compat_stat(const char *, struct stat12 *) __dso_hidden;
+int	__compat_fstat(int, struct stat12 *) __dso_hidden;
+int	__compat_mknod(const char *, mode_t, uint32_t) __dso_hidden;
+int	__compat___stat13(const char *, struct stat13 *) __dso_hidden;
+int	__compat___fstat13(int, struct stat13 *) __dso_hidden;
+int	__compat___stat30(const char *, struct stat30 *) __dso_hidden;
+int	__compat___fstat30(int, struct stat30 *) __dso_hidden;
 int	__stat50(const char *, struct stat *);
 int	__fstat50(int, struct stat *);
 int	__mknod50(const char *, mode_t, dev_t);
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-int	lstat(const char *, struct stat12 *);
-int	__lstat13(const char *, struct stat13 *);
-int	__lstat30(const char *, struct stat30 *);
+int	__compat_lstat(const char *, struct stat12 *) __dso_hidden;
+int	__compat___lstat13(const char *, struct stat13 *) __dso_hidden;
+int	__compat___lstat30(const char *, struct stat30 *) __dso_hidden;
 int	__lstat50(const char *, struct stat *);
 #endif /* defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE) */
 __END_DECLS

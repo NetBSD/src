@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.43.2.2 2013/06/23 06:18:58 tls Exp $ */
+/* $NetBSD: kern_tc.c,v 1.43.2.3 2014/08/20 00:04:29 tls Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.43.2.2 2013/06/23 06:18:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.43.2.3 2014/08/20 00:04:29 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -992,7 +992,10 @@ pps_ref_event(struct pps_state *pps,
 	struct timespec ts, *tsp, *osp;
 	struct timehands *th;
 	u_int64_t tcount, acount, dcount, *pcount;
-	int foff, fhard, gen;
+	int foff, gen;
+#ifdef PPS_SYNC
+	int fhard;
+#endif
 	pps_seq_t *pseq;
 
 	KASSERT(mutex_owned(&timecounter_lock));
@@ -1049,14 +1052,18 @@ pps_ref_event(struct pps_state *pps,
 		tsp = &pps->ppsinfo.assert_timestamp;
 		osp = &pps->ppsparam.assert_offset;
 		foff = pps->ppsparam.mode & PPS_OFFSETASSERT;
+#ifdef PPS_SYNC
 		fhard = pps->kcmode & PPS_CAPTUREASSERT;
+#endif
 		pcount = &pps->ppscount[0];
 		pseq = &pps->ppsinfo.assert_sequence;
 	} else {
 		tsp = &pps->ppsinfo.clear_timestamp;
 		osp = &pps->ppsparam.clear_offset;
 		foff = pps->ppsparam.mode & PPS_OFFSETCLEAR;
+#ifdef PPS_SYNC
 		fhard = pps->kcmode & PPS_CAPTURECLEAR;
+#endif
 		pcount = &pps->ppscount[1];
 		pseq = &pps->ppsinfo.clear_sequence;
 	}

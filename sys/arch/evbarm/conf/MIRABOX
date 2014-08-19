@@ -1,0 +1,28 @@
+#	$NetBSD: MIRABOX,v 1.4.8.2 2014/08/20 00:02:53 tls Exp $
+#
+#  This configuration supports for generically GlobalScale MiraBox
+#
+
+include 	"arch/evbarm/conf/ARMADAXP"
+
+# Board Type
+no makeoptions	BOARDTYPE
+makeoptions	BOARDTYPE="mirabox"
+no options 	EVBARM_BOARDTYPE
+options 	EVBARM_BOARDTYPE=mirabox
+#options 	VERBOSE_INIT_ARM
+no options	MEMSIZE
+options 	MEMSIZE=0x40000000
+options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+#options 	UVMHIST
+#options 	UVMHIST_PRINT,KERNHIST_DELAY=0
+no makeoptions	KERNEL_BASE_PHYS
+makeoptions	KERNEL_BASE_PHYS="0x01000000"
+no makeoptions	KERNEL_BASE_VIRT
+makeoptions	KERNEL_BASE_VIRT="0x81000000"
+
+# CPU options
+options 	FPU_VFP
+no makeoptions	CPUFLAGS
+makeoptions	CPUFLAGS="-march=armv7-a -msoft-float -mfpu=vfpv3"
+no options	CONSFREQ

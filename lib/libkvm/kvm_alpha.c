@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_alpha.c,v 1.25 2010/09/20 23:23:16 jym Exp $ */
+/* $NetBSD: kvm_alpha.c,v 1.25.12.1 2014/08/20 00:02:17 tls Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -30,7 +30,6 @@
 #define	__KVM_ALPHA_PRIVATE		/* see <machine/pte.h> */
 
 #include <sys/param.h>
-#include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/kcore.h>
@@ -50,6 +49,8 @@
 #include <stdlib.h>
 
 #include "kvm_private.h"
+
+__RCSID("$NetBSD: kvm_alpha.c,v 1.25.12.1 2014/08/20 00:02:17 tls Exp $");
 
 /*ARGSUSED*/
 void

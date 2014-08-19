@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.85.2.1 2012/11/20 03:00:53 tls Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.85.2.2 2014/08/20 00:02:40 tls Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.85.2.1 2012/11/20 03:00:53 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.85.2.2 2014/08/20 00:02:40 tls Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -66,8 +66,16 @@ __KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.85.2.1 2012/11/20 03:00:53 tls Exp
 #include <sys/exec_aout.h>
 #include <sys/ksyms.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/device.h>
 
 #include <dev/cons.h>
+
+#include <dev/ic/pckbcvar.h>
+
+#include <dev/i2c/i2cvar.h>
+#include <dev/i2c/pcf8583var.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
@@ -75,30 +83,21 @@ __KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.85.2.1 2012/11/20 03:00:53 tls Exp
 
 #include <uvm/uvm.h>
 
-#include <machine/signal.h>
-#include <machine/frame.h>
-#include <machine/bootconfig.h>
-#include <machine/cpu.h>
-#include <machine/io.h>
-#include <machine/intr.h>
-#include <arm/cpuconf.h>
+#include <arm/locore.h>
+#include <arm/undefined.h>
 #include <arm/arm32/katelib.h>
 #include <arm/arm32/machdep.h>
 #include <arm/arm32/pmap.h>
-#include <arm/undefined.h>
+
 #include <machine/rtc.h>
+#include <machine/signal.h>
+#include <machine/bootconfig.h>
+#include <machine/io.h>
 
 #include <arm/iomd/vidc.h>
 #include <arm/iomd/iomdreg.h>
 #include <arm/iomd/iomdvar.h>
-
 #include <arm/iomd/vidcvideo.h>
-
-#include <sys/device.h>
-#include <dev/ic/pckbcvar.h>
-
-#include <dev/i2c/i2cvar.h>
-#include <dev/i2c/pcf8583var.h>
 #include <arm/iomd/iomdiicvar.h>
 
 static i2c_tag_t acorn32_i2c_tag;
@@ -1097,14 +1096,14 @@ rpc_sa110_cc_setup(void)
 {
 	int loop;
 	paddr_t kaddr;
-	pt_entry_t *pte;
 
 	(void) pmap_extract(pmap_kernel(), KERNEL_TEXT_BASE, &kaddr);
+	const pt_entry_t npte = L2_S_PROTO | kaddr |
+	    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) | pte_l2_s_cache_mode;
 	for (loop = 0; loop < CPU_SA110_CACHE_CLEAN_SIZE; loop += PAGE_SIZE) {
-		pte = vtopte(sa110_cc_base + loop);
-		*pte = L2_S_PROTO | kaddr |
-		    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) | pte_l2_s_cache_mode;
-		PTE_SYNC(pte);
+		pt_entry_t * const ptep = vtopte(sa110_cc_base + loop);
+		l2pte_set(ptep, npte, 0);
+		PTE_SYNC(ptep);
 	}
 	sa1_cache_clean_addr = sa110_cc_base;
 	sa1_cache_clean_size = CPU_SA110_CACHE_CLEAN_SIZE / 2;

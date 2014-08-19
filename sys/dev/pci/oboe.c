@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.38.18.1 2012/11/20 03:02:20 tls Exp $	*/
+/*	$NetBSD: oboe.c,v 1.38.18.2 2014/08/20 00:03:43 tls Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.38.18.1 2012/11/20 03:02:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.38.18.2 2014/08/20 00:03:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,6 +177,7 @@ oboe_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	struct ir_attach_args ia;
 	const char *intrstring;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_revision = PCI_REVISION(pa->pa_class);
 	printf(": Toshiba Fast Infrared Type O, revision %d\n",
@@ -213,7 +214,7 @@ oboe_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstring = pci_intr_string(pa->pa_pc, ih);
+	intrstring = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih  = pci_intr_establish(pa->pa_pc, ih, IPL_IR, oboe_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
@@ -298,9 +299,9 @@ oboe_read(void *h, struct uio *uio, int flag)
 	int s;
 	int slot;
 
-	DPRINTF(("%s: resid=%d, iovcnt=%d, offset=%ld\n",
+	DPRINTF(("%s: resid=%zu, iovcnt=%d, offset=%jd\n",
 		 __func__, uio->uio_resid, uio->uio_iovcnt,
-		 (long)uio->uio_offset));
+		 (intmax_t)uio->uio_offset));
 
 	s = splir();
 	while (sc->sc_saved == 0) {
@@ -324,7 +325,7 @@ oboe_read(void *h, struct uio *uio, int flag)
 		slot = (sc->sc_rxs - sc->sc_saved + RX_SLOTS) % RX_SLOTS;
 		if (uio->uio_resid < sc->sc_lens[slot]) {
 			DPRINTF(("oboe_read: uio buffer smaller than frame size"
-			    "(%d < %d)\n", uio->uio_resid, sc->sc_lens[slot]));
+			    "(%zu < %d)\n", uio->uio_resid, sc->sc_lens[slot]));
 			error = EINVAL;
 		} else {
 			DPRINTF(("oboe_read: moving %d bytes from %p\n",
@@ -618,14 +619,14 @@ oboe_init_taskfile(struct oboe_softc *sc)
 		sc->sc_taskfile->xmit[i].len = 0;
 		sc->sc_taskfile->xmit[i].control = 0x00;
 		sc->sc_taskfile->xmit[i].buffer =
-			vtophys((u_int)sc->sc_xmit_bufs[i]); /* u_int? */
+		    vtophys((uintptr_t)sc->sc_xmit_bufs[i]);
 	}
 
 	for (i = 0; i < RX_SLOTS; ++i) {
 		sc->sc_taskfile->recv[i].len = 0;
 		sc->sc_taskfile->recv[i].control = 0x83;
 		sc->sc_taskfile->recv[i].buffer =
-			vtophys((u_int)sc->sc_recv_bufs[i]); /* u_int? */
+		    vtophys((uintptr_t)sc->sc_recv_bufs[i]);
 	}
 
 	sc->sc_txpending = 0;
@@ -638,7 +639,8 @@ oboe_alloc_taskfile(struct oboe_softc *sc)
 {
 	int i;
 	/* XXX */
-	uint32_t addr = (uint32_t)malloc(OBOE_TASK_BUF_LEN, M_DEVBUF, M_WAITOK);
+	uintptr_t addr =
+	    (uintptr_t)malloc(OBOE_TASK_BUF_LEN, M_DEVBUF, M_WAITOK);
 	if (addr == 0) {
 		goto bad;
 	}
@@ -686,7 +688,7 @@ oboe_startchip (struct oboe_softc *sc)
 	OUTB(sc, 0x0f, OBOE_REG_1A);
 	OUTB(sc, 0xff, OBOE_REG_1B);
 
-	physaddr = vtophys((u_int)sc->sc_taskfile); /* u_int? */
+	physaddr = vtophys((uintptr_t)sc->sc_taskfile);
 
 	OUTB(sc, (physaddr >> 0x0a) & 0xff, OBOE_TFP0);
 	OUTB(sc, (physaddr >> 0x12) & 0xff, OBOE_TFP1);

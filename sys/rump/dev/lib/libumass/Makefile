@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2010/08/23 20:49:53 pooka Exp $
+#	$NetBSD: Makefile,v 1.6.18.1 2014/08/20 00:04:38 tls Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/usb
@@ -9,7 +9,7 @@ IOCONF=	UMASS.ioconf
 .if ${MACHINE} == "i386"
 SRCS=	umass.c umass_isdata.c umass_quirks.c umass_scsipi.c
 
-SRCS+=	component.c
+SRCS+=	umass_component.c
 .else
 SRCS=	dummy.c
 .endif

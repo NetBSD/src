@@ -1,4 +1,4 @@
-/*	$NetBSD: bonito_pci.c,v 1.10 2011/08/27 12:59:16 bouyer Exp $	*/
+/*	$NetBSD: bonito_pci.c,v 1.10.12.1 2014/08/20 00:03:12 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bonito_pci.c,v 1.10 2011/08/27 12:59:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bonito_pci.c,v 1.10.12.1 2014/08/20 00:03:12 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -139,7 +139,7 @@ bonito_conf_read(void *v, pcitag_t tag, int offset)
 {
 	struct bonito_config *bc = v;
 	pcireg_t data;
-	u_int32_t cfgoff, dummy, pcimap_cfg;
+	u_int32_t cfgoff, pcimap_cfg;
 	int s;
 
 	if (bonito_conf_addr(bc, tag, offset, &cfgoff, &pcimap_cfg))
@@ -156,7 +156,7 @@ bonito_conf_read(void *v, pcitag_t tag, int offset)
 
 	wbflush();
 	/* Issue a read to make sure the write is posted */
-	dummy = REGVAL(BONITO_PCIMAP_CFG);
+	(void)REGVAL(BONITO_PCIMAP_CFG);
 
 	/* low 16 bits of address are offset into config space */
 	data = REGVAL(BONITO_PCICFG_BASE + (cfgoff & 0xfffc));
@@ -175,7 +175,7 @@ void
 bonito_conf_write(void *v, pcitag_t tag, int offset, pcireg_t data)
 {
 	struct bonito_config *vt = v;
-	u_int32_t cfgoff, dummy, pcimap_cfg;
+	u_int32_t cfgoff, pcimap_cfg;
 	int s;
 
 	if (bonito_conf_addr(vt, tag, offset, &cfgoff, &pcimap_cfg))
@@ -192,7 +192,7 @@ bonito_conf_write(void *v, pcitag_t tag, int offset, pcireg_t data)
 
 	wbflush();
 	/* Issue a read to make sure the write is posted */
-	dummy = REGVAL(BONITO_PCIMAP_CFG);
+	(void)REGVAL(BONITO_PCIMAP_CFG);
 
 	/* low 16 bits of address are offset into config space */
 	REGVAL(BONITO_PCICFG_BASE + (cfgoff & 0xfffc)) = data;

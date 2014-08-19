@@ -6,7 +6,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -51,20 +51,14 @@
 #include "actables.h"
 #endif
 
+#ifdef ACPI_ASL_COMPILER
+#include "aslcompiler.h"
+#endif
+
 #if (defined ACPI_DEBUGGER || defined ACPI_DISASSEMBLER)
 
 #define _COMPONENT          ACPI_CA_DEBUGGER
         ACPI_MODULE_NAME    ("dbfileio")
-
-/*
- * NOTE: this is here for lack of a better place. It is used in all
- * flavors of the debugger, need LCD file
- */
-#ifdef ACPI_APPLICATION
-#include <stdio.h>
-FILE                        *AcpiGbl_DebugFile = NULL;
-#endif
-
 
 #ifdef ACPI_DEBUGGER
 
@@ -131,16 +125,16 @@ AcpiDbOpenDebugFile (
 
     AcpiDbCloseDebugFile ();
     AcpiGbl_DebugFile = fopen (Name, "w+");
-    if (AcpiGbl_DebugFile)
-    {
-        AcpiOsPrintf ("Debug output file %s opened\n", Name);
-        ACPI_STRCPY (AcpiGbl_DbDebugFilename, Name);
-        AcpiGbl_DbOutputToFile = TRUE;
-    }
-    else
+    if (!AcpiGbl_DebugFile)
     {
         AcpiOsPrintf ("Could not open debug file %s\n", Name);
+        return;
     }
+
+    AcpiOsPrintf ("Debug output file %s opened\n", Name);
+    ACPI_STRNCPY (AcpiGbl_DbDebugFilename, Name,
+        sizeof (AcpiGbl_DbDebugFilename));
+    AcpiGbl_DbOutputToFile = TRUE;
 
 #endif
 }
@@ -271,10 +265,9 @@ AcpiDbReadTable (
 
     fseek (fp, 0, SEEK_SET);
 
-    /* The RSDT and FACS tables do not have standard ACPI headers */
+    /* The RSDP table does not have standard ACPI header */
 
-    if (ACPI_COMPARE_NAME (TableHeader.Signature, "RSD ") ||
-        ACPI_COMPARE_NAME (TableHeader.Signature, "FACS"))
+    if (ACPI_COMPARE_NAME (TableHeader.Signature, "RSD "))
     {
         *TableLength = FileSize;
         StandardHeader = FALSE;
@@ -283,7 +276,7 @@ AcpiDbReadTable (
     {
         /* Read the table header */
 
-        if (fread (&TableHeader, 1, sizeof (TableHeader), fp) !=
+        if (fread (&TableHeader, 1, sizeof (ACPI_TABLE_HEADER), fp) !=
                 sizeof (ACPI_TABLE_HEADER))
         {
             AcpiOsPrintf ("Could not read the table header\n");
@@ -308,15 +301,24 @@ AcpiDbReadTable (
             AcpiOsPrintf (
                 "TableHeader length [0x%X] greater than the input file size [0x%X]\n",
                 TableHeader.Length, FileSize);
+
+#ifdef ACPI_ASL_COMPILER
+            Status = FlCheckForAscii (fp, NULL, FALSE);
+            if (ACPI_SUCCESS (Status))
+            {
+                AcpiOsPrintf ("File appears to be ASCII only, must be binary\n",
+                    TableHeader.Length, FileSize);
+            }
+#endif
             return (AE_BAD_HEADER);
         }
 
 #ifdef ACPI_OBSOLETE_CODE
         /* We only support a limited number of table types */
 
-        if (ACPI_STRNCMP ((char *) TableHeader.Signature, DSDT_SIG, 4) &&
-            ACPI_STRNCMP ((char *) TableHeader.Signature, PSDT_SIG, 4) &&
-            ACPI_STRNCMP ((char *) TableHeader.Signature, SSDT_SIG, 4))
+        if (!ACPI_COMPARE_NAME ((char *) TableHeader.Signature, ACPI_SIG_DSDT) &&
+            !ACPI_COMPARE_NAME ((char *) TableHeader.Signature, ACPI_SIG_PSDT) &&
+            !ACPI_COMPARE_NAME ((char *) TableHeader.Signature, ACPI_SIG_SSDT))
         {
             AcpiOsPrintf ("Table signature [%4.4s] is invalid or not supported\n",
                 (char *) TableHeader.Signature);
@@ -373,7 +375,6 @@ AcpiDbReadTable (
     AcpiOsFree (*Table);
     *Table = NULL;
     *TableLength = 0;
-
     return (AE_ERROR);
 }
 
@@ -471,25 +472,25 @@ AcpiDbReadTableFromFile (
     char                    *Filename,
     ACPI_TABLE_HEADER       **Table)
 {
-    FILE                    *fp;
+    FILE                    *File;
     UINT32                  TableLength;
     ACPI_STATUS             Status;
 
 
     /* Open the file */
 
-    fp = fopen (Filename, "rb");
-    if (!fp)
+    File = fopen (Filename, "rb");
+    if (!File)
     {
-        AcpiOsPrintf ("Could not open input file %s\n", Filename);
+        perror ("Could not open input file");
         return (AE_ERROR);
     }
 
     /* Get the entire file */
 
     fprintf (stderr, "Loading Acpi table from file %s\n", Filename);
-    Status = AcpiDbReadTable (fp, Table, &TableLength);
-    fclose(fp);
+    Status = AcpiDbReadTable (File, Table, &TableLength);
+    fclose(File);
 
     if (ACPI_FAILURE (Status))
     {
@@ -574,4 +575,3 @@ AcpiDbGetTableFromFile (
 }
 
 #endif  /* ACPI_DEBUGGER */
-

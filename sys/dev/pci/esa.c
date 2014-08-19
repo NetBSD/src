@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.58 2012/01/30 19:41:19 drochner Exp $ */
+/* $NetBSD: esa.c,v 1.58.6.1 2014/08/20 00:03:42 tls Exp $ */
 
 /*
  * Copyright (c) 2001-2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.58 2012/01/30 19:41:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.58.6.1 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -653,7 +653,7 @@ esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 	    ESA_DMAC_BLOCKF_SELECTOR);
 
 	/* Set an armload of static initializers */
-	for (i = 0; i < (sizeof(esa_playvals) / sizeof(esa_playvals[0])); i++)
+	for (i = 0; i < __arraycount(esa_playvals); i++)
 		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 		    esa_playvals[i].addr, esa_playvals[i].val);
 
@@ -787,7 +787,7 @@ esa_trigger_input(void *hdl, void *start, void *end, int blksize,
 	    ESA_DMAC_PAGE3_SELECTOR + ESA_DMAC_BLOCKF_SELECTOR);
 
 	/* Set an armload of static initializers */
-	for (i = 0; i < (sizeof(esa_recvals) / sizeof(esa_recvals[0])); i++)
+	for (i = 0; i < __arraycount(esa_recvals); i++)
 		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, adc_data +
 		    esa_recvals[i].addr, esa_recvals[i].val);
 
@@ -930,7 +930,7 @@ esa_allocmem(struct esa_softc *sc, size_t size, size_t align,
 
 	p->size = size;
 	error = bus_dmamem_alloc(sc->sc_dmat, p->size, align, 0,
-				 p->segs, sizeof(p->segs) / sizeof(p->segs[0]),
+				 p->segs, __arraycount(p->segs),
 				 &p->nsegs, BUS_DMA_WAITOK);
 	if (error)
 		return error;
@@ -1009,6 +1009,7 @@ esa_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	uint32_t data;
 	int revision, i, error;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 	pa = (struct pci_attach_args *)aux;
@@ -1056,7 +1057,7 @@ esa_attach(device_t parent, device_t self, void *aux)
 		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, esa_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "can't establish interrupt");
@@ -1090,7 +1091,7 @@ esa_attach(device_t parent, device_t self, void *aux)
 	/* create suspend save area */
 	sc->savememsz = sizeof(uint16_t) * (ESA_REV_B_CODE_MEMORY_LENGTH
 	    + ESA_REV_B_DATA_MEMORY_LENGTH + 1);
-	sc->savemem = (uint16_t *)kmem_zalloc(sc->savememsz, KM_SLEEP);
+	sc->savemem = kmem_zalloc(sc->savememsz, KM_SLEEP);
 	if (sc->savemem == NULL) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to allocate suspend buffer\n");
@@ -1385,21 +1386,19 @@ esa_init(struct esa_softc *sc)
 	    ESA_KDATA_DMA_XFER0);
 
 	/* Write kernel code into memory */
-	size = sizeof(esa_assp_kernel_image);
-	for (i = 0; i < size / 2; i++)
+	for (i = 0; i < __arraycount(esa_assp_kernel_image); i++)
 		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_CODE,
 		    ESA_REV_B_CODE_MEMORY_BEGIN + i, esa_assp_kernel_image[i]);
 
-	size = sizeof(esa_assp_minisrc_image);
-	for (i = 0; i < size / 2; i++)
+	for (i = 0; i < __arraycount(esa_assp_minisrc_image); i++)
 		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_CODE, 0x400 + i,
 		    esa_assp_minisrc_image[i]);
 
 	/* Write the coefficients for the low pass filter */
-	size = sizeof(esa_minisrc_lpf_image);
-	for (i = 0; i < size / 2; i++)
+	for (i = 0; i < __arraycount(esa_minisrc_lpf_image); i++)
 		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_CODE,
-		    0x400 + ESA_MINISRC_COEF_LOC + i, esa_minisrc_lpf_image[i]);
+		    0x400 + ESA_MINISRC_COEF_LOC + i,
+		    esa_minisrc_lpf_image[i]);
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_CODE,
 	    0x400 + ESA_MINISRC_COEF_LOC + size, 0x8000);
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_TASK0, 0x400);

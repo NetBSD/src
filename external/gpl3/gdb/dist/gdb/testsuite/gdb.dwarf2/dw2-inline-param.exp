@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,13 +19,12 @@ if {![dwarf2_support]} {
     return 0  
 }
 
-set testfile dw2-inline-param
-set binfile ${objdir}/${subdir}/${testfile}
-if { [build_executable ${testfile}.exp "${testfile}" [list ${testfile}-main.c ${testfile}.S] {nodebug}] } {
+standard_testfile .S dw2-inline-param-main.c
+
+if { [prepare_for_testing ${testfile}.exp "${testfile}" \
+	  [list $srcfile2 $srcfile] {nodebug}] } {
     return -1
 }
-
-clean_restart ${testfile}
 
 set break_at ""
 set test "info addr break_at"
@@ -40,8 +39,10 @@ gdb_unload
 
 # Strip out any labels there as they could corrupt the `main' name.
 
-set objcopy_program [transform objcopy]
-set result [catch "exec $objcopy_program -N block_start -N block_end -N break_at ${binfile}" output]
+set objcopy_program [gdb_find_objcopy]
+set command "$objcopy_program -N block_start -N block_end -N break_at ${binfile}"
+verbose -log "Executing: $command"
+set result [catch "exec $command" output]
 verbose "result is $result"
 verbose "output is $output"
 if {$result != 0} {
@@ -49,9 +50,6 @@ if {$result != 0} {
 }
 
 gdb_load ${binfile}
-if [target_info exists gdb_stub] {
-    gdb_step_for_stub;
-}    
 
 if ![runto "*${break_at}"] {
     return -1

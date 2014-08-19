@@ -1,4 +1,4 @@
-/*	$NetBSD: at_proto.c,v 1.17 2011/03/31 19:40:52 dyoung Exp $	*/
+/*	$NetBSD: at_proto.c,v 1.17.14.1 2014/08/20 00:04:35 tls Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.17 2011/03/31 19:40:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.17.14.1 2014/08/20 00:04:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.17 2011/03/31 19:40:52 dyoung Exp $")
 
 #include <sys/kernel.h>
 #include <net/if.h>
-#include <net/radix.h>
 #include <net/if_ether.h>
 #include <netinet/in.h>
 #include <net/route.h>
@@ -50,9 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.17 2011/03/31 19:40:52 dyoung Exp $")
 
 DOMAIN_DEFINE(atalkdomain);	/* forward declare and add to link set */
 
-PR_WRAP_USRREQ(ddp_usrreq)
-#define	ddp_usrreq	ddp_usrreq_wrapper
-
 const struct protosw atalksw[] = {
     {
 	.pr_type = SOCK_DGRAM,
@@ -60,7 +56,7 @@ const struct protosw atalksw[] = {
 	.pr_protocol = ATPROTO_DDP,
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_output = ddp_output,
-	.pr_usrreq = ddp_usrreq,
+	.pr_usrreqs = &ddp_usrreqs,
 	.pr_init = ddp_init,
     },
 };

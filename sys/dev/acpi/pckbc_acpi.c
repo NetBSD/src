@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.33 2010/03/05 14:00:17 jruoho Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.33.20.1 2014/08/20 00:03:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.33 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.33.20.1 2014/08/20 00:03:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -130,7 +130,6 @@ pckbc_acpi_attach(device_t parent, device_t self, void *aux)
 	struct pckbc_internal *t;
 	struct acpi_attach_args *aa = aux;
 	bus_space_handle_t ioh_d, ioh_c;
-	pckbc_slot_t peer;
 	struct acpi_resources res;
 	struct acpi_io *io0, *io1, *ioswap;
 	struct acpi_irq *irq;
@@ -141,10 +140,8 @@ pckbc_acpi_attach(device_t parent, device_t self, void *aux)
 
 	if (acpi_match_hid(aa->aa_node->ad_devinfo, pckbc_acpi_ids_kbd)) {
 		psc->sc_slot = PCKBC_KBD_SLOT;
-		peer = PCKBC_AUX_SLOT;
 	} else if (acpi_match_hid(aa->aa_node->ad_devinfo, pckbc_acpi_ids_ms)) {
 		psc->sc_slot = PCKBC_AUX_SLOT;
-		peer = PCKBC_KBD_SLOT;
 	} else {
 		aprint_error(": unknown port!\n");
 		panic("pckbc_acpi_attach: impossible");

@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.59 2010/04/05 07:19:33 joerg Exp $	*/
+/*	$NetBSD: an.c,v 1.59.18.1 2014/08/20 00:03:37 tls Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.59 2010/04/05 07:19:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.59.18.1 2014/08/20 00:03:37 tls Exp $");
 
 
 #include <sys/param.h>
@@ -349,14 +349,9 @@ SYSCTL_SETUP(sysctl_an, "sysctl an(4) subtree setup")
 	const struct sysctlnode *cnode, *rnode;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &rnode,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
-		goto err;
-
-	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "an",
 	    "Cisco/Aironet 802.11 controls",
-	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 	/* control debugging printfs */
@@ -1800,11 +1795,9 @@ an_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct an_softc *sc = (struct an_softc *)ic->ic_ifp->if_softc;
 	struct ieee80211_node *ni = ic->ic_bss;
-	enum ieee80211_state ostate;
 	int buflen;
 
-	ostate = ic->ic_state;
-	DPRINTF(("an_newstate: %s -> %s\n", ieee80211_state_name[ostate],
+	DPRINTF(("an_newstate: %s -> %s\n", ieee80211_state_name[ic->ic_state],
 	    ieee80211_state_name[nstate]));
 
 	switch (nstate) {

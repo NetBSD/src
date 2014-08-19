@@ -1,6 +1,5 @@
 /* Language independent support for printing types for GDB, the GNU debugger.
-   Copyright (C) 1986, 1988, 1989, 1991-1993, 1999, 2000, 2007, 2008, 2009,
-   2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,11 +21,56 @@
 
 enum language;
 struct ui_file;
+struct typedef_hash_table;
+
+struct type_print_options
+{
+  /* True means that no special printing flags should apply.  */
+  unsigned int raw : 1;
+
+  /* True means print methods in a class.  */
+  unsigned int print_methods : 1;
+
+  /* True means print typedefs in a class.  */
+  unsigned int print_typedefs : 1;
+
+  /* If not NULL, a local typedef hash table used when printing a
+     type.  */
+  struct typedef_hash_table *local_typedefs;
+
+  /* If not NULL, a global typedef hash table used when printing a
+     type.  */
+  struct typedef_hash_table *global_typedefs;
+
+  /* The list of type printers associated with the global typedef
+     table.  This is intentionally opaque.  */
+  void *global_printers;
+};
+
+extern const struct type_print_options type_print_raw_options;
+
+void recursively_update_typedef_hash (struct typedef_hash_table *,
+				      struct type *);
+
+void add_template_parameters (struct typedef_hash_table *, struct type *);
+
+struct typedef_hash_table *create_typedef_hash (void);
+
+void free_typedef_hash (struct typedef_hash_table *);
+
+struct cleanup *make_cleanup_free_typedef_hash (struct typedef_hash_table *);
+
+struct typedef_hash_table *copy_typedef_hash (struct typedef_hash_table *);
+
+const char *find_typedef_in_hash (const struct type_print_options *,
+				  struct type *);
 
 void print_type_scalar (struct type * type, LONGEST, struct ui_file *);
 
 void c_type_print_varspec_suffix (struct type *, struct ui_file *, int,
-				  int, int);
+				  int, int, const struct type_print_options *);
 
-void c_type_print_args (struct type *, struct ui_file *, int, enum language);
+void c_type_print_args (struct type *, struct ui_file *, int, enum language,
+			const struct type_print_options *);
+
 #endif

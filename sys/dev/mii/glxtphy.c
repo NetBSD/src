@@ -1,4 +1,4 @@
-/*	$NetBSD: glxtphy.c,v 1.23 2009/10/19 18:41:13 bouyer Exp $	*/
+/*	$NetBSD: glxtphy.c,v 1.23.22.1 2014/08/20 00:03:41 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glxtphy.c,v 1.23 2009/10/19 18:41:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: glxtphy.c,v 1.23.22.1 2014/08/20 00:03:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,6 +265,8 @@ glxtphy_status(struct mii_softc *sc)
 		if (qsr & QSR_DUPLEX)
 			mii->mii_media_active |=
 			    IFM_FDX | mii_phy_flowstatus(sc);
+		else
+			mii->mii_media_active |= IFM_HDX;
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }

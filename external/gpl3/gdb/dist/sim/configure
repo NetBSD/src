@@ -652,6 +652,8 @@ microblaze
 mips
 mn10300
 moxie
+msp430
+rl78
 rx
 sh64
 sh
@@ -3623,7 +3625,7 @@ sim_common=yes
 sim_igen=no
 sim_arch=
 case "${target}" in
-   arm*-*-* | thumb*-*-* | strongarm*-*-* | xscale-*-*)
+   arm*-*-*)
 
   sim_arch=arm
 
@@ -3646,6 +3648,7 @@ subdirs="$subdirs arm"
   subdirs="$subdirs bfin"
 
 
+       sim_testsuite=yes
        ;;
    cr16*-*-*)
 
@@ -3765,6 +3768,20 @@ subdirs="$subdirs arm"
 
 
        sim_testsuite=yes
+       ;;
+   msp430*-*-*)
+
+  sim_arch=msp430
+  subdirs="$subdirs msp430"
+
+
+       ;;
+   rl78-*-*)
+
+  sim_arch=rl78
+  subdirs="$subdirs rl78"
+
+
        ;;
    rx-*-*)
 

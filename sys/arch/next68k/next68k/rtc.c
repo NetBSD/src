@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.15 2009/12/12 14:44:09 tsutsui Exp $        */
+/*      $NetBSD: rtc.c,v 1.15.22.1 2014/08/20 00:03:17 tls Exp $        */
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1997 Rolf Grossmann 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.15 2009/12/12 14:44:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.15.22.1 2014/08/20 00:03:17 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>          /* for panic */
@@ -272,7 +272,6 @@ gettime_old(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
 	u_char h, y;
 	
-	struct clock_ymdhms val;
 	y = FROMBCD(rtc_read(RTC_YR));
 	if (y >= 69) {
 		dt->dt_year = 1900+y;
@@ -292,8 +291,11 @@ gettime_old(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 		} else {  /* am */
 			if (dt->dt_hour == 12) dt->dt_hour = 0;
 		}
+#ifdef notdef
 	} else {	/* time is 24 hour format */
+		struct clock_ymdhms val;
 		val.dt_hour = FROMBCD(h & 0x3f);
+#endif
 	}
 
 	dt->dt_min	= FROMBCD(rtc_read(RTC_MIN)&0x7f);

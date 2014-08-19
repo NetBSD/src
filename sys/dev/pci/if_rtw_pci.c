@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_pci.c,v 1.20.12.1 2012/11/20 03:02:17 tls Exp $ */
+/* $NetBSD: if_rtw_pci.c,v 1.20.12.2 2014/08/20 00:03:42 tls Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005, 2010 David Young.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.20.12.1 2012/11/20 03:02:17 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.20.12.2 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,6 +188,7 @@ rtw_pci_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	const char *intrstr = NULL;
 	const struct rtw_pci_product *rpp;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	sc->sc_dmat = pa->pa_dmat;
@@ -246,7 +247,7 @@ rtw_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "unable to map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(psc->psc_pc, psc->psc_pih);
+	intrstr = pci_intr_string(psc->psc_pc, psc->psc_pih, intrbuf, sizeof(intrbuf));
 	psc->psc_ih = pci_intr_establish(psc->psc_pc, psc->psc_pih, IPL_NET,
 	    rtw_intr, sc);
 	if (psc->psc_ih == NULL) {

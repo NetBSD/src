@@ -1,7 +1,7 @@
-/* mpz_rootrem(root, rem, u, nth) --  Set ROOT to floor(U^(1/nth)) and
+/* mpz_rootrem(root, rem, u, nth) --  Set ROOT to trunc(U^(1/nth)) and
    set REM to the remainder.
 
-Copyright 1999, 2000, 2001, 2002, 2003, 2005 Free Software Foundation, Inc.
+Copyright 1999, 2000, 2001, 2002, 2003, 2005, 2012 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -32,12 +32,12 @@ mpz_rootrem (mpz_ptr root, mpz_ptr rem, mpz_srcptr u, unsigned long int nth)
   us = SIZ(u);
 
   /* even roots of negatives provoke an exception */
-  if (us < 0 && (nth & 1) == 0)
+  if (UNLIKELY (us < 0 && (nth & 1) == 0))
     SQRT_OF_NEGATIVE;
 
   /* root extraction interpreted as c^(1/nth) means a zeroth root should
      provoke a divide by zero, do this even if c==0 */
-  if (nth == 0)
+  if (UNLIKELY (nth == 0))
     DIVIDE_BY_ZERO;
 
   if (us == 0)
@@ -81,10 +81,10 @@ mpz_rootrem (mpz_ptr root, mpz_ptr rem, mpz_srcptr u, unsigned long int nth)
       SIZ(root) = us >= 0 ? rootn : -rootn;
       if (u == root)
 	MPN_COPY (up, rootp, rootn);
-      else if (u == rem)
-	MPN_COPY (up, remp, remn);
     }
 
-  SIZ(rem) = remn;
+  if (u == rem)
+    MPN_COPY (up, remp, remn);
+  SIZ(rem) = us >= 0 ? remn : -remn;
   TMP_FREE;
 }

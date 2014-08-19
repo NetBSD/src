@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.38.2.2 2013/06/23 06:28:50 tls Exp $	*/
+/*	$NetBSD: optr.c,v 1.38.2.3 2014/08/20 00:02:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.38.2.2 2013/06/23 06:28:50 tls Exp $");
+__RCSID("$NetBSD: optr.c,v 1.38.2.3 2014/08/20 00:02:24 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -320,15 +320,11 @@ static struct fstab *
 allocfsent(const struct fstab *fs)
 {
 	struct fstab *new;
-	char buf[MAXPATHLEN];
 
 	new = xmalloc(sizeof (*fs));
 	new->fs_file = xstrdup(fs->fs_file);
 	new->fs_type = xstrdup(fs->fs_type);
-
-	if (getfsspecname(buf, sizeof(buf), fs->fs_spec) == NULL)
-		msg("%s (%s)", buf, strerror(errno));
-	new->fs_spec = xstrdup(buf);
+	new->fs_spec = xstrdup(fs->fs_spec);
 	new->fs_passno = fs->fs_passno;
 	new->fs_freq = fs->fs_freq;
 	return (new);

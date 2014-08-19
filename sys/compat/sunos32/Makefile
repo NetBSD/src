@@ -1,14 +1,5 @@
-#	$NetBSD: Makefile,v 1.5 2005/12/11 12:20:23 christos Exp $
+#	$NetBSD: Makefile,v 1.5.120.1 2014/08/20 00:03:33 tls Exp $
 
-.include <bsd.sys.mk>		# for HOST_SH
+SYSCALL_PREFIX=sunos32
 
-DEP=	syscalls.conf syscalls.master ../../kern/makesyscalls.sh
-OBJS=	sunos32_sysent.c sunos32_syscalls.c sunos32_syscall.h sunos32_syscallargs.h
-
-${OBJS}: ${DEP}
-	${HOST_SH} ../../kern/makesyscalls.sh syscalls.conf syscalls.master
-
-
-all: ${OBJS}
-
-.include <bsd.kinc.mk>
+.include <bsd.syscall.mk>

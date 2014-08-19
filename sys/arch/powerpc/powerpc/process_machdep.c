@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.35 2011/09/27 01:02:36 jym Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.35.12.1 2014/08/20 00:03:20 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.35 2011/09/27 01:02:36 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.35.12.1 2014/08/20 00:03:20 tls Exp $");
 
 #include "opt_altivec.h"
 
@@ -82,7 +82,7 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 }
 
 int
-process_read_fpregs(struct lwp *l, struct fpreg *fpregs)
+process_read_fpregs(struct lwp *l, struct fpreg *fpregs, size_t *sz)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
@@ -105,7 +105,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *fpregs)
 }
 
 int
-process_write_fpregs(struct lwp *l, const struct fpreg *fpregs)
+process_write_fpregs(struct lwp *l, const struct fpreg *fpregs, size_t sz)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
@@ -137,10 +137,13 @@ process_sstep(struct lwp *l, int sstep)
 {
 	struct trapframe * const tf = l->l_md.md_utf;
 	
-	if (sstep)
+	if (sstep) {
 		tf->tf_srr1 |= PSL_SE;
-	else
+		l->l_md.md_flags |= PSL_SE;
+	} else {
 		tf->tf_srr1 &= ~PSL_SE;
+		l->l_md.md_flags &= ~PSL_SE;
+	}
 	return 0;
 }
 

@@ -1,6 +1,6 @@
 /* BFD back-end definitions used by all NetBSD targets.
    Copyright 1990, 1991, 1992, 1994, 1995, 1996, 1997, 1998, 2000, 2002,
-   2005, 2007 Free Software Foundation, Inc.
+   2005, 2007, 2011  Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -105,10 +105,10 @@ MY (write_object_contents) (bfd *abfd)
       break;
     }
 
-  /* The NetBSD magic number is always big-endian */
+  /* The NetBSD magic number is always big-endian.  */
 #ifndef TARGET_IS_BIG_ENDIAN_P
   /* XXX aren't there any macro to change byteorder of a word independent of
-     the host's or target's endianesses?  */
+     the host's or target's endiannesses?  */
   execp->a_info
     = (execp->a_info & 0xff) << 24 | (execp->a_info & 0xff00) << 8
       | (execp->a_info & 0xff0000) >> 8 | (execp->a_info & 0xff000000) >> 24;

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.14 2012/02/19 21:06:27 rmind Exp $	*/
+/*	$NetBSD: syscall.c,v 1.14.2.1 2014/08/20 00:03:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -88,17 +88,14 @@
 
 #include <uvm/uvm_extern.h>
 
-static void syscall_plain(struct lwp *, struct trapframe *);
-static void syscall_fancy(struct lwp *, struct trapframe *);
+static void syscall(struct lwp *, struct trapframe *);
 
 void
 syscall_intern(struct proc *p)
 {
 
-	if (trace_is_enabled(p))
-		p->p_md.md_syscall = syscall_fancy;
-	else
-		p->p_md.md_syscall = syscall_plain;
+	p->p_trace_enabled = trace_is_enabled(p);
+	p->p_md.md_syscall = syscall;
 }
 
 
@@ -108,7 +105,7 @@ syscall_intern(struct proc *p)
  *	tf ... full user context.
  */
 static void
-syscall_plain(struct lwp *l, struct trapframe *tf)
+syscall(struct lwp *l, struct trapframe *tf)
 {
 	struct proc *p = l->l_proc;
 	void *params;
@@ -205,7 +202,7 @@ syscall_plain(struct lwp *l, struct trapframe *tf)
 
 	rval[0] = 0;
 	rval[1] = tf->tf_r1;
-	error = sy_call(callp, l, args, rval);
+	error = sy_invoke(callp, l, args, rval, code);
 
 	switch (error) {
 	case 0:
@@ -235,140 +232,3 @@ syscall_plain(struct lwp *l, struct trapframe *tf)
 	userret(l);
 }
 
-
-/*
- * Like syscall_plain but with trace_enter/trace_exit.
- */
-static void
-syscall_fancy(struct lwp *l, struct trapframe *tf)
-{
-	struct proc *p = l->l_proc;
-	void *params;
-	const struct sysent *callp;
-	int error, opc, nsys;
-	size_t argsize;
-	register_t code, args[8], rval[2], ocode;
-
-	curcpu()->ci_data.cpu_nsyscall++;
-
-	opc = tf->tf_spc;
-	ocode = code = tf->tf_r0;
-
-	nsys = p->p_emul->e_nsysent;
-	callp = p->p_emul->e_sysent;
-	params = (void *)tf->tf_r15;
-
-	switch (code) {
-	case SYS_syscall:
-		/*
-		 * Code is first argument, followed by actual args.
-		 */
-	        code = tf->tf_r4;  /* fuword(params); */
-		/* params += sizeof(int); */
-		break;
-	case SYS___syscall:
-		/*
-		 * Like syscall, but code is a quad, so as to maintain
-		 * quad alignment for the rest of the arguments.
-		 */
-		if (callp != sysent)
-			break;
-		/* fuword(params + _QUAD_LOWWORD * sizeof(int)); */
-#if _BYTE_ORDER == BIG_ENDIAN
-		code = tf->tf_r5;
-#else
-		code = tf->tf_r4;
-#endif
-		/* params += sizeof(quad_t); */
-		break;
-	default:
-		break;
-	}
-	if (code < 0 || code >= nsys)
-		callp += p->p_emul->e_nosys;		/* illegal */
-	else
-		callp += code;
-	argsize = callp->sy_argsize;
-
-	if (ocode == SYS_syscall) {
-		if (argsize) {
-			args[0] = tf->tf_r5;
-			args[1] = tf->tf_r6;
-			args[2] = tf->tf_r7;
-			if (argsize > 3 * sizeof(int)) {
-				argsize -= 3 * sizeof(int);
-				error = copyin(params, (void *)&args[3],
-					       argsize);
-			} else
-				error = 0;
-		} else
-			error = 0;
-	}
-	else if (ocode == SYS___syscall) {
-		if (argsize) {
-			args[0] = tf->tf_r6;
-			args[1] = tf->tf_r7;
-			if (argsize > 2 * sizeof(int)) {
-				argsize -= 2 * sizeof(int);
-				error = copyin(params, (void *)&args[2],
-					       argsize);
-			} else
-				error = 0;
-		} else
-			error = 0;
-	} else {
-		if (argsize) {
-			args[0] = tf->tf_r4;
-			args[1] = tf->tf_r5;
-			args[2] = tf->tf_r6;
-			args[3] = tf->tf_r7;
-			if (argsize > 4 * sizeof(int)) {
-				argsize -= 4 * sizeof(int);
-				error = copyin(params, (void *)&args[4],
-					       argsize);
-			} else
-				error = 0;
-		} else
-			error = 0;
-	}
-
-	if (error)
-		goto bad;
-
-	if ((error = trace_enter(code, args, callp->sy_narg)) != 0)
-		goto out;
-
-	rval[0] = 0;
-	rval[1] = tf->tf_r1;
-	error = sy_call(callp, l, args, rval);
-out:
-	switch (error) {
-	case 0:
-		tf->tf_r0 = rval[0];
-		tf->tf_r1 = rval[1];
-		tf->tf_ssr |= PSL_TBIT;	/* T bit */
-
-		break;
-	case ERESTART:
-		/* 2 = TRAPA instruction size */
-		tf->tf_spc = opc - 2;
-
-		break;
-	case EJUSTRETURN:
-		/* nothing to do */
-		break;
-	default:
-	bad:
-		if (p->p_emul->e_errno)
-			error = p->p_emul->e_errno[error];
-		tf->tf_r0 = error;
-		tf->tf_ssr &= ~PSL_TBIT;	/* T bit */
-
-		break;
-	}
-
-
-	trace_exit(code, rval, error);
-
-	userret(l);
-}

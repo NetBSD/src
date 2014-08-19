@@ -1,6 +1,6 @@
 /* Blackfin Serial Peripheral Interface (SPI) model
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.

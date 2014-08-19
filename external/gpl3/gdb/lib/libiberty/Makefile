@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2011/09/26 03:02:45 christos Exp $
+#	$NetBSD: Makefile,v 1.1.8.1 2014/08/19 23:59:35 tls Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -7,12 +7,12 @@ LIBISPRIVATE=	yes
 
 LIB=		iberty
 
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/arch/${GDB_MACHINE_ARCH}/defs.mk"
 
 SRCS=		${G_REQUIRED_OFILES:.o=.c} ${G_EXTRA_OFILES:.o=.c} \
 		${G_LIBOBJS:.o=.c} ${G_ALLOCA:.o=.c}
 
-CPPFLAGS+=	-DHAVE_CONFIG_H -I${.CURDIR}/arch/${MACHINE_ARCH} \
+CPPFLAGS+=	-DHAVE_CONFIG_H -I${.CURDIR}/arch/${GDB_MACHINE_ARCH} \
 		-I${DIST}/include
 
 COPTS.argv.c = -Wno-stack-protector

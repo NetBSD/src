@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.56 2012/08/16 17:35:01 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.56.2.1 2014/08/20 00:02:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,8 +71,9 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.56 2012/08/16 17:35:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.56.2.1 2014/08/20 00:02:45 tls Exp $");
 
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
@@ -85,9 +86,9 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.56 2012/08/16 17:35:01 matt Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
 #include <machine/frame.h>
 #include <arm/swi.h>
+#include <arm/locore.h>
 
 #ifdef acorn26
 #include <machine/machdep.h>
@@ -141,21 +142,16 @@ swi_handler(trapframe_t *tf)
 
 #ifdef THUMB_CODE
 	if (tf->tf_spsr & PSR_T_bit) {
-		/* Map a Thumb SWI onto the bottom 256 ARM SWIs.  */
-		insn = fusword((void *)(tf->tf_pc - THUMB_INSN_SIZE));
-		if (insn & 0x00ff)
-			insn = (insn & 0x00ff) | 0xef000000;
-		else
-			insn = tf->tf_ip | 0xef000000;
+		insn = 0xef000000 | SWI_OS_NETBSD | tf->tf_r0;
+		tf->tf_r0 = tf->tf_ip;
 	}
 	else
 #endif
 	{
-	/* XXX fuword? */
 #ifdef __PROG32
-		insn = *(uint32_t *)(tf->tf_pc - INSN_SIZE);
+		insn = read_insn(tf->tf_pc - INSN_SIZE, true);
 #else
-		insn = *(uint32_t *)((tf->tf_r15 & R15_PC) - INSN_SIZE);
+		insn = read_insn((tf->tf_r15 & R15_PC) - INSN_SIZE, true);
 #endif
 	}
 
@@ -254,17 +250,7 @@ syscall(struct trapframe *tf, lwp_t *l, uint32_t insn)
 		args = &tf->tf_r0;
 	}
 
-	if (!__predict_false(p->p_trace_enabled)
-	    || __predict_false(callp->sy_flags & SYCALL_INDIRECT)
-	    || (error = trace_enter(code, args, nargs)) == 0) {
-		rval[0] = 0;
-		rval[1] = 0;
-		error = (*callp->sy_call)(l, args, rval);
-	}
-
-	if (__predict_false(p->p_trace_enabled)
-	    || !__predict_false(callp->sy_flags & SYCALL_INDIRECT))
-		trace_exit(code, rval, error);
+	error = sy_invoke(callp, l, args, rval, code);
 
 	switch (error) {
 	case 0:

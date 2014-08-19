@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.95.2.2 2013/06/23 06:20:16 tls Exp $
+	$NetBSD: syscalls.master,v 1.95.2.3 2014/08/20 00:03:33 tls Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -359,10 +359,10 @@
 172	UNIMPL
 173	STD		{ netbsd32_ssize_t|netbsd32||pread(int fd, \
 			    netbsd32_voidp buf, netbsd32_size_t nbyte, \
-			    int PAD, off_t offset); }
+			    int PAD, netbsd32_off_t offset); }
 174	STD		{ netbsd32_ssize_t|netbsd32||pwrite(int fd, \
 			    netbsd32_voidp buf, netbsd32_size_t nbyte, \
-			    int PAD, off_t offset); }
+			    int PAD, netbsd32_off_t offset); }
 #if defined(NTP) || !defined(_KERNEL_OPT)
 175	COMPAT_30	{ int|netbsd32||ntp_gettime( \
 			    netbsd32_ntptimeval50p_t ntvp); }
@@ -402,18 +402,18 @@
 			    netbsd32_longp basep); }
 197	STD		{ netbsd32_voidp|netbsd32||mmap(netbsd32_voidp addr, \
 			    netbsd32_size_t len, int prot, int flags, int fd, \
-			    netbsd32_long PAD, off_t pos); }
+			    netbsd32_long PAD, netbsd32_off_t pos); }
 198	INDIR		{ quad_t|netbsd32||___syscall(quad_t code, \
 			    ... register32_t args[NETBSD32_SYS_MAXSYSARGS]); }
-199	STD		{ off_t|netbsd32||lseek(int fd, int PAD, off_t offset, \
-			    int whence); }
+199	STD		{ netbsd32_off_t|netbsd32||lseek(int fd, int PAD, \
+			    netbsd32_off_t offset, int whence); }
 200	STD		{ int|netbsd32||truncate(netbsd32_charp path, int PAD, \
-			    off_t length); }
+			    netbsd32_off_t length); }
 201	STD		{ int|netbsd32||ftruncate(int fd, int PAD, \
-			    off_t length); }
+			    netbsd32_off_t length); }
 202	STD		{ int|netbsd32||__sysctl(netbsd32_intp name, \
-			    u_int namelen, netbsd32_voidp old, \
-			    netbsd32_size_tp oldlenp, netbsd32_voidp new, \
+			    u_int namelen, netbsd32_voidp oldv, \
+			    netbsd32_size_tp oldlenp, netbsd32_voidp newv, \
 			    netbsd32_size_t newlen); }
 203	STD		{ int|netbsd32||mlock(netbsd32_voidp addr, \
 			    netbsd32_size_t len); }
@@ -583,10 +583,10 @@
 			    int pid); }
 289	STD		{ netbsd32_ssize_t|netbsd32||preadv(int fd, \
 			    netbsd32_iovecp_t iovp, int iovcnt, int PAD, \
-			    off_t offset); }
+			    netbsd32_off_t offset); }
 290	STD		{ netbsd32_ssize_t|netbsd32||pwritev(int fd, \
 			    netbsd32_iovecp_t iovp, int iovcnt, int PAD, \
-			    off_t offset); }
+			    netbsd32_off_t offset); }
 291	STD		{ int|netbsd32|14|sigaction(int signum, \
 			    netbsd32_sigactionp_t nsa, \
 			    netbsd32_sigactionp_t osa); }
@@ -630,8 +630,7 @@
 306	STD		{ int|netbsd32||utrace(netbsd32_charp label, \
 			    netbsd32_voidp addr, netbsd32_size_t len); }
 307	STD		{ int|netbsd32||getcontext(netbsd32_ucontextp ucp); }
-308	STD		{ int|netbsd32||setcontext(netbsd32_ucontextp ucp, \
-			    uint32_t flags, netbsd32_lwpidp new_lwp); }
+308	STD		{ int|netbsd32||setcontext(netbsd32_ucontextp ucp); }
 309	STD		{ int|netbsd32||_lwp_create(netbsd32_ucontextp ucp, \
 			    netbsd32_u_long flags, netbsd32_lwpidp new_lwp); }
 310	NOARGS		{ int|sys||_lwp_exit(void); }
@@ -705,7 +704,7 @@
 352	UNIMPL
 353	UNIMPL
 354	STD		{ int|netbsd32||fsync_range(int fd, int flags, \
-			    off_t start, off_t length); }
+			    netbsd32_off_t start, netbsd32_off_t length); }
 355	STD		{ int|netbsd32||uuidgen(netbsd32_uuidp_t store, \
 			    int count); }
 356	STD		{ int|netbsd32||getvfsstat(netbsd32_statvfsp_t buf, \
@@ -851,7 +850,7 @@
 415	UNIMPL
 
 416	STD 		{ int|netbsd32|50|posix_fadvise(int fd, int PAD, \
-			    off_t offset, off_t len, int advice); }
+			    netbsd32_off_t offset, netbsd32_off_t len, int advice); }
 417	STD 		{ int|netbsd32|50|select(int nd, \
 			    netbsd32_fd_setp_t in,  netbsd32_fd_setp_t ou, \
 			    netbsd32_fd_setp_t ex, netbsd32_timevalp_t tv); }
@@ -976,8 +975,8 @@
 			    mode_t mode); }
 460	STD  		{ int|netbsd32||mknodat(int fd, \
 			    const netbsd32_charp path, \
-			    mode_t mode, \
-			    uint32_t dev); }
+			    mode_t mode, int PAD, \
+			    netbsd32_dev_t dev); }
 461	STD  		{ int|netbsd32||mkdirat(int fd, \
 			    const netbsd32_charp path, \
 			    mode_t mode); }

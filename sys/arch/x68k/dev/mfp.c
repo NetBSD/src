@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.25 2011/05/05 13:44:35 tsutsui Exp $	*/
+/*	$NetBSD: mfp.c,v 1.25.14.1 2014/08/20 00:03:28 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.25 2011/05/05 13:44:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.25.14.1 2014/08/20 00:03:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ mfp_attach(device_t parent, device_t self, void *aux)
 {
 	struct mfp_softc *sc = device_private(self);
 	struct intio_attach_args *ia = aux;
-	int r;
+	int r __diagused;
 
 	aprint_normal("\n");
 	mfp_attached = 1;

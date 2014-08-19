@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.123 2012/03/13 18:40:54 elad Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.123.2.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.123 2012/03/13 18:40:54 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.123.2.1 2014/08/20 00:04:29 tls Exp $");
 
 #define SYSVSHM
 
@@ -908,9 +908,11 @@ shmrealloc(int newshmni)
 	    ALIGN(newshmni * sizeof(struct shmid_ds)));
 
 	/* Copy all memory to the new area */
-	for (i = 0; i < shm_nused; i++)
+	for (i = 0; i < shm_nused; i++) {
+		cv_init(&newshm_cv[i], "shmwait");
 		(void)memcpy(&newshmsegs[i], &shmsegs[i],
 		    sizeof(newshmsegs[0]));
+	}
 
 	/* Mark as free all new segments, if there is any */
 	for (; i < newshmni; i++) {
@@ -1053,11 +1055,6 @@ sysctl_ipc_shmmax(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_ipc_shm_setup, "sysctl kern.ipc subtree setup")
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "ipc",

@@ -1,7 +1,6 @@
 /* Code dealing with blocks for GDB.
 
-   Copyright (C) 2003, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +20,8 @@
 #ifndef BLOCK_H
 #define BLOCK_H
 
+#include "dictionary.h"
+
 /* Opaque declarations.  */
 
 struct symbol;
@@ -28,7 +29,6 @@ struct symtab;
 struct block_namespace_info;
 struct using_direct;
 struct obstack;
-struct dictionary;
 struct addrmap;
 
 /* All of the name-scope contours of the program
@@ -99,19 +99,27 @@ struct block
   language_specific;
 };
 
+/* The global block is singled out so that we can provide a back-link
+   to the primary symtab.  */
+
+struct global_block
+{
+  /* The block.  */
+
+  struct block block;
+
+  /* This holds a pointer to the primary symtab holding this
+     block.  */
+
+  struct symtab *symtab;
+};
+
 #define BLOCK_START(bl)		(bl)->startaddr
 #define BLOCK_END(bl)		(bl)->endaddr
 #define BLOCK_FUNCTION(bl)	(bl)->function
 #define BLOCK_SUPERBLOCK(bl)	(bl)->superblock
 #define BLOCK_DICT(bl)		(bl)->dict
 #define BLOCK_NAMESPACE(bl)   (bl)->language_specific.cplus_specific.namespace
-
-/* Macro to loop through all symbols in a block BL, in no particular
-   order.  ITER helps keep track of the iteration, and should be a
-   struct dict_iterator.  SYM points to the current symbol.  */
-
-#define ALL_BLOCK_SYMBOLS(block, iter, sym)			\
-	ALL_DICT_SYMBOLS (BLOCK_DICT (block), iter, sym)
 
 struct blockvector
 {
@@ -129,11 +137,9 @@ struct blockvector
 #define BLOCKVECTOR_BLOCK(blocklist,n) (blocklist)->block[n]
 #define BLOCKVECTOR_MAP(blocklist) ((blocklist)->map)
 
-/* Special block numbers */
-
-enum { GLOBAL_BLOCK = 0, STATIC_BLOCK = 1, FIRST_LOCAL_BLOCK = 2 };
-
 extern struct symbol *block_linkage_function (const struct block *);
+
+extern struct symbol *block_containing_function (const struct block *);
 
 extern int block_inlined_p (const struct block *block);
 
@@ -145,6 +151,11 @@ extern struct blockvector *blockvector_for_pc_sect (CORE_ADDR,
 						    struct obj_section *,
 						    struct block **,
                                                     struct symtab *);
+
+extern int blockvector_contains_pc (struct blockvector *bv, CORE_ADDR pc);
+
+extern struct call_site *call_site_for_pc (struct gdbarch *gdbarch,
+					   CORE_ADDR pc);
 
 extern struct block *block_for_pc (CORE_ADDR);
 
@@ -166,5 +177,106 @@ extern const struct block *block_static_block (const struct block *block);
 extern const struct block *block_global_block (const struct block *block);
 
 extern struct block *allocate_block (struct obstack *obstack);
+
+extern struct block *allocate_global_block (struct obstack *obstack);
+
+extern void set_block_symtab (struct block *, struct symtab *);
+
+/* A block iterator.  This structure should be treated as though it
+   were opaque; it is only defined here because we want to support
+   stack allocation of iterators.  */
+
+struct block_iterator
+{
+  /* If we're iterating over a single block, this holds the block.
+     Otherwise, it holds the canonical symtab.  */
+
+  union
+  {
+    struct symtab *symtab;
+    const struct block *block;
+  } d;
+
+  /* If we're iterating over a single block, this is always -1.
+     Otherwise, it holds the index of the current "included" symtab in
+     the canonical symtab (that is, d.symtab->includes[idx]), with -1
+     meaning the canonical symtab itself.  */
+
+  int idx;
+
+  /* Which block, either static or global, to iterate over.  If this
+     is FIRST_LOCAL_BLOCK, then we are iterating over a single block.
+     This is used to select which field of 'd' is in use.  */
+
+  enum block_enum which;
+
+  /* The underlying dictionary iterator.  */
+
+  struct dict_iterator dict_iter;
+};
+
+/* Initialize ITERATOR to point at the first symbol in BLOCK, and
+   return that first symbol, or NULL if BLOCK is empty.  */
+
+extern struct symbol *block_iterator_first (const struct block *block,
+					    struct block_iterator *iterator);
+
+/* Advance ITERATOR, and return the next symbol, or NULL if there are
+   no more symbols.  Don't call this if you've previously received
+   NULL from block_iterator_first or block_iterator_next on this
+   iteration.  */
+
+extern struct symbol *block_iterator_next (struct block_iterator *iterator);
+
+/* Initialize ITERATOR to point at the first symbol in BLOCK whose
+   SYMBOL_SEARCH_NAME is NAME (as tested using strcmp_iw), and return
+   that first symbol, or NULL if there are no such symbols.  */
+
+extern struct symbol *block_iter_name_first (const struct block *block,
+					     const char *name,
+					     struct block_iterator *iterator);
+
+/* Advance ITERATOR to point at the next symbol in BLOCK whose
+   SYMBOL_SEARCH_NAME is NAME (as tested using strcmp_iw), or NULL if
+   there are no more such symbols.  Don't call this if you've
+   previously received NULL from block_iterator_first or
+   block_iterator_next on this iteration.  And don't call it unless
+   ITERATOR was created by a previous call to block_iter_name_first
+   with the same NAME.  */
+
+extern struct symbol *block_iter_name_next (const char *name,
+					    struct block_iterator *iterator);
+
+/* Initialize ITERATOR to point at the first symbol in BLOCK whose
+   SYMBOL_SEARCH_NAME is NAME, as tested using COMPARE (which must use
+   the same conventions as strcmp_iw and be compatible with any
+   block hashing function), and return that first symbol, or NULL
+   if there are no such symbols.  */
+
+extern struct symbol *block_iter_match_first (const struct block *block,
+					      const char *name,
+					      symbol_compare_ftype *compare,
+					      struct block_iterator *iterator);
+
+/* Advance ITERATOR to point at the next symbol in BLOCK whose
+   SYMBOL_SEARCH_NAME is NAME, as tested using COMPARE (see
+   block_iter_match_first), or NULL if there are no more such symbols.
+   Don't call this if you've previously received NULL from 
+   block_iterator_match_first or block_iterator_match_next on this
+   iteration.  And don't call it unless ITERATOR was created by a
+   previous call to block_iter_match_first with the same NAME and COMPARE.  */
+
+extern struct symbol *block_iter_match_next (const char *name,
+					     symbol_compare_ftype *compare,
+					     struct block_iterator *iterator);
+
+/* Macro to loop through all symbols in a block BL, in no particular
+   order.  ITER helps keep track of the iteration, and should be a
+   struct block_iterator.  SYM points to the current symbol.  */
+
+#define ALL_BLOCK_SYMBOLS(block, iter, sym)		\
+  for ((sym) = block_iterator_first ((block), &(iter));	\
+       (sym);						\
+       (sym) = block_iterator_next (&(iter)))
 
 #endif /* BLOCK_H */

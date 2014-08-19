@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.33 2012/07/26 10:13:33 yamt Exp $	*/
+/*	$NetBSD: putter.c,v 1.33.2.1 2014/08/20 00:03:49 tls Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.33 2012/07/26 10:13:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.33.2.1 2014/08/20 00:03:49 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,9 +62,18 @@ dev_type_ioctl(puttercdioctl);
 
 /* dev */
 const struct cdevsw putter_cdevsw = {
-	puttercdopen,	puttercdclose,	noread,		nowrite,
-	noioctl,	nostop,		notty,		nopoll,
-	nommap,		nokqfilter,	D_OTHER
+	.d_open = puttercdopen,
+	.d_close = puttercdclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 /*

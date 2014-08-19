@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_gen.c,v 1.10 2011/09/23 14:14:38 nonaka Exp $	*/
+/*	$NetBSD: platid_gen.c,v 1.10.12.1 2014/08/20 00:03:02 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platid_gen.c,v 1.10 2011/09/23 14:14:38 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platid_gen.c,v 1.10.12.1 2014/08/20 00:03:02 tls Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -307,7 +307,7 @@ gen_list(node_t* np)
 		case N_ENTRY:
 			if (np->ptr2 == NULL) {
 				char buf[MAXLEN];
-				sprintf(buf, "%s%s",
+				snprintf(buf, sizeof(buf), "%s%s",
 				    nest == 0 ? "" : " ",
 				    np->ptr1);
 		  		np->ptr2 = strdup(buf);

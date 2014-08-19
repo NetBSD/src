@@ -1,4 +1,4 @@
-/*	$NetBSD: sx.c,v 1.2.4.2 2013/02/25 00:28:57 tls Exp $	*/
+/*	$NetBSD: sx.c,v 1.2.4.3 2014/08/20 00:03:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sx.c,v 1.2.4.2 2013/02/25 00:28:57 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sx.c,v 1.2.4.3 2014/08/20 00:03:24 tls Exp $");
 
 #include "locators.h"
 
@@ -70,6 +70,7 @@ sx_attach(device_t parent, device_t self, void *aux)
 {
 	struct sx_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
+	uint32_t id;
     	int i;
 #ifdef SX_DEBUG
 	int j;
@@ -85,6 +86,11 @@ sx_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "failed to map registers\n");
 		return;
 	}
+
+	id = sx_read(sc, SX_ID);
+	aprint_normal_dev(self, "architecture rev. %d chip rev. %d\n",
+	    (id & SX_ARCHITECTURE_MASK),
+	    (id & SX_CHIP_REVISION) >> 8);
 
 	/* stop the processor */
 	sx_write(sc, SX_CONTROL_STATUS, 0);

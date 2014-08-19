@@ -1,4 +1,4 @@
-/*	$NetBSD: stack_protector.c,v 1.8 2012/03/13 21:13:39 christos Exp $	*/
+/*	$NetBSD: stack_protector.c,v 1.8.2.1 2014/08/20 00:02:15 tls Exp $	*/
 /*	$OpenBSD: stack_protector.c,v 1.10 2006/03/31 05:34:44 deraadt Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: stack_protector.c,v 1.8 2012/03/13 21:13:39 christos Exp $");
+__RCSID("$NetBSD: stack_protector.c,v 1.8.2.1 2014/08/20 00:02:15 tls Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
@@ -53,7 +53,7 @@ static void __fail(const char *) __attribute__((__noreturn__));
 __dead void __stack_chk_fail_local(void);
 void __guard_setup(void);
 
-void
+void __section(".text.startup")
 __guard_setup(void)
 {
 	static const int mib[2] = { CTL_KERN, KERN_ARND };

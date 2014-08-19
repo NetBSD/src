@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.44.12.1 2012/11/20 03:00:58 tls Exp $ */
+/*	$NetBSD: msc.c,v 1.44.12.2 2014/08/20 00:02:43 tls Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.44.12.1 2012/11/20 03:00:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.44.12.2 2014/08/20 00:02:43 tls Exp $");
 
 #include "msc.h"
 
@@ -226,8 +226,18 @@ dev_type_tty(msctty);
 dev_type_poll(mscpoll);
 
 const struct cdevsw msc_cdevsw = {
-	mscopen, mscclose, mscread, mscwrite, mscioctl,
-	mscstop, msctty, mscpoll, nommap, ttykqfilter, D_TTY
+	.d_open = mscopen,
+	.d_close = mscclose,
+	.d_read = mscread,
+	.d_write = mscwrite,
+	.d_ioctl = mscioctl,
+	.d_stop = mscstop,
+	.d_tty = msctty,
+	.d_poll = mscpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 int

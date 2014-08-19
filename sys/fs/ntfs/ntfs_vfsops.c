@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.87 2011/11/14 18:35:13 hannken Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.87.10.1 2014/08/20 00:04:27 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.87 2011/11/14 18:35:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.87.10.1 2014/08/20 00:04:27 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,9 +118,7 @@ ntfs_mountroot(void)
 		return (error);
 	}
 
-	mutex_enter(&mountlist_lock);
-	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mutex_exit(&mountlist_lock);
+	mountlist_append(mp);
 	(void)ntfs_statvfs(mp, &mp->mnt_stat);
 	vfs_unbusy(mp, false, NULL);
 	return (0);
@@ -174,6 +172,8 @@ ntfs_mount (
 	struct vnode	*devvp;
 	struct ntfs_args *args = data;
 
+	if (args == NULL)
+		return EINVAL;
 	if (*data_len < sizeof *args)
 		return EINVAL;
 
@@ -307,7 +307,7 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp, str
 	struct buf *bp;
 	struct ntfsmount *ntmp;
 	dev_t dev = devvp->v_rdev;
-	int error, ronly, i;
+	int error, i;
 	struct vnode *vp;
 
 	ntmp = NULL;
@@ -320,8 +320,6 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp, str
 	VOP_UNLOCK(devvp);
 	if (error)
 		return (error);
-
-	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
 
 	bp = NULL;
 
@@ -455,7 +453,7 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp, str
 	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 	mp->mnt_stat.f_namemax = NTFS_MAXFILENAME;
 	mp->mnt_flag |= MNT_LOCAL;
-	devvp->v_specmountpoint = mp;
+	spec_node_setmountedfs(devvp, mp);
 	return (0);
 
 out1:
@@ -466,7 +464,7 @@ out1:
 		dprintf(("ntfs_mountfs: vflush failed\n"));
 	}
 out:
-	devvp->v_specmountpoint = NULL;
+	spec_node_setmountedfs(devvp, NULL);
 	if (bp)
 		brelse(bp, 0);
 
@@ -532,9 +530,10 @@ ntfs_unmount(
 	 * field is NULL and touching it causes null pointer derefercence.
 	 */
 	if (ntmp->ntm_devvp->v_type != VBAD)
-		ntmp->ntm_devvp->v_specmountpoint = NULL;
+		spec_node_setmountedfs(ntmp->ntm_devvp, NULL);
 
-	vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, l, 0, 0);
+	error = vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, l, 0, 0);
+	KASSERT(error == 0);
 
 	/* lock the device vnode before calling VOP_CLOSE() */
 	vn_lock(ntmp->ntm_devvp, LK_EXCLUSIVE | LK_RETRY);
@@ -861,31 +860,29 @@ const struct vnodeopv_desc * const ntfs_vnodeopv_descs[] = {
 };
 
 struct vfsops ntfs_vfsops = {
-	MOUNT_NTFS,
-	sizeof (struct ntfs_args),
-	ntfs_mount,
-	ntfs_start,
-	ntfs_unmount,
-	ntfs_root,
-	(void *)eopnotsupp,	/* vfs_quotactl */
-	ntfs_statvfs,
-	ntfs_sync,
-	ntfs_vget,
-	ntfs_fhtovp,
-	ntfs_vptofh,
-	ntfs_init,
-	ntfs_reinit,
-	ntfs_done,
-	ntfs_mountroot,
-	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,		/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	ntfs_vnodeopv_descs,
-	0,
-	{ NULL, NULL },
+	.vfs_name = MOUNT_NTFS,
+	.vfs_min_mount_data = sizeof (struct ntfs_args),
+	.vfs_mount = ntfs_mount,
+	.vfs_start = ntfs_start,
+	.vfs_unmount = ntfs_unmount,
+	.vfs_root = ntfs_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = ntfs_statvfs,
+	.vfs_sync = ntfs_sync,
+	.vfs_vget = ntfs_vget,
+	.vfs_fhtovp = ntfs_fhtovp,
+	.vfs_vptofh = ntfs_vptofh,
+	.vfs_init = ntfs_init,
+	.vfs_reinit = ntfs_reinit,
+	.vfs_done = ntfs_done,
+	.vfs_mountroot = ntfs_mountroot,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = ntfs_vnodeopv_descs
 };
 
 static int
@@ -898,11 +895,6 @@ ntfs_modcmd(modcmd_t cmd, void *arg)
 		error = vfs_attach(&ntfs_vfsops);
 		if (error != 0)
 			break;
-		sysctl_createv(&ntfs_sysctl_log, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_NODE, "vfs", NULL,
-			       NULL, 0, NULL, 0,
-			       CTL_VFS, CTL_EOL);
 		sysctl_createv(&ntfs_sysctl_log, 0, NULL, NULL,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "ntfs",

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.176.6.1 2012/11/20 03:01:26 tls Exp $
+#	$NetBSD: Makefile.i386,v 1.176.6.2 2014/08/20 00:03:06 tls Exp $
 
 # Makefile for NetBSD
 #
@@ -33,12 +33,11 @@ GENASSYM_CONF=	${I386}/i386/genassym.cf
 ##
 ## (2) compile settings
 ##
+DEFCOPTS=	-O2 -fno-omit-frame-pointer
 CPPFLAGS+=	-Di386
-CFLAGS+=	-mno-sse -mno-sse2 -mno-sse3
-
-AFLAGS.mptramp.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
-AFLAGS.spl.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
-AFLAGS.lock_stubs.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+CFLAGS+=	-msoft-float
+## no-sse implies no-sse2 but not no-avx
+CFLAGS+=	-mno-mmx -mno-sse -mno-avx
 
 ##
 ## (3) libkern and compat

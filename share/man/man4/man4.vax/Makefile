@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.15 2007/04/21 06:11:58 plunky Exp $
+#	$NetBSD: Makefile,v 1.15.42.1 2014/08/20 00:02:36 tls Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
 
 MAN=	acc.4 ad.4 asc.4 autoconf.4 \
 	cons.4 crl.4 css.4 ct.4 \
-	ddn.4 de.4 dh.4 dhu.4 dl.4 dmc.4 dmf.4 dmz.4 dn.4 dz.4 \
+	ddn.4 de.4 dh.4 dhu.4 dl.4 dmc.4 dmf.4 dmv.4 dmz.4 dn.4 dz.4 \
 	ec.4 en.4 ex.4 \
 	fl.4 \
 	hdh.4 hk.4 hp.4 ht.4 hy.4 \

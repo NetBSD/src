@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.175 2012/08/10 17:43:32 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.175.2.1 2014/08/20 00:02:48 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.175 2012/08/10 17:43:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.175.2.1 2014/08/20 00:02:48 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -232,8 +232,6 @@ cpu_startup(void)
 /*
  * Info for CTL_HW
  */
-char cpu_model[120];
- 
 static void
 identifycpu(void)
 {
@@ -270,7 +268,7 @@ identifycpu(void)
 
 			__asm(".word 0x4e7a,0x0808;"
 			    "movl %%d0,%0" : "=d"(pcr) : : "d0");
-			sprintf(cputxt, "68%s060 rev.%d",
+			snprintf(cputxt, sizeof(cputxt), "68%s060 rev.%d",
 			    pcr & 0x10000 ? "LC/EC" : "", (pcr >> 8) & 0xff);
 			cpu = cputxt;
 			mmu = "/MMU";
@@ -288,8 +286,8 @@ identifycpu(void)
 		cpu = "m68020";
 		mmu = " m68851 MMU";
 	}
-	sprintf(cpu_model, "%s (%s CPU%s%sFPU)", mach, cpu, mmu, fpu);
-	printf("%s\n", cpu_model);
+	cpu_setmodel("%s (%s CPU%s%sFPU)", mach, cpu, mmu, fpu);
+	printf("%s\n", cpu_getmodel());
 }
 
 /*
@@ -570,12 +568,9 @@ int	*nofault;
 int
 badbaddr(void *addr, int size)
 {
-	register int i;
+	int i;
 	label_t	faultbuf;
 
-#ifdef lint
-	i = *addr; if (i) return(0);
-#endif
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = (int *) 0;
@@ -594,6 +589,7 @@ badbaddr(void *addr, int size)
 	default:
 		panic("badbaddr: unknown size");
 	}
+	__USE(i);
 	nofault = (int *)0;
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.43.12.1 2013/06/23 06:20:12 tls Exp $ */
+/*	$NetBSD: msiiep.c,v 1.43.12.2 2014/08/20 00:03:24 tls Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.43.12.1 2013/06/23 06:20:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.43.12.2 2014/08/20 00:03:24 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -211,13 +211,14 @@ msiiep_attach(device_t parent, device_t self, void *aux)
 	struct msiiep_attach_args msa;
 	bus_space_handle_t hmid;
 	struct cpu_info *cur;
-	uint32_t mid;
 
 	aprint_normal("\n");
 
 	if (bus_space_map(ma->ma_bustag, MSIIEP_MID_PA, 4, 0, &hmid) == 0) {
-		mid = bus_space_read_4(ma->ma_bustag, hmid, 0);
 #ifdef DIAGNOSTICS
+		uint32_t mid;
+
+		mid = bus_space_read_4(ma->ma_bustag, hmid, 0);
 		printf("MID: %08x\n", mid);
 #endif
 		msiiep_mid = (volatile uint32_t *)bus_space_vaddr(ma->ma_bustag,

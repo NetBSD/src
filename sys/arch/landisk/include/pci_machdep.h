@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.2.14.1 2012/11/20 03:01:29 tls Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.2.14.2 2014/08/20 00:03:09 tls Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,8 @@ struct pci_attach_args;
 void landisk_pci_attach_hook(device_t, device_t,
     struct pcibus_attach_args *);
 int landisk_pci_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
-const char *landisk_pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
+const char *landisk_pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t,
+    char *, size_t);
 const struct evcnt *landisk_pci_intr_evcnt(pci_chipset_tag_t,pci_intr_handle_t);
 void *landisk_pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t, int,
     int (*)(void *), void *);
@@ -82,8 +83,8 @@ int landisk_pci_conf_hook(void *, int, int, int, pcireg_t);
 	landisk_pci_attach_hook(pa, self, pba)
 #define	pci_intr_map(pa, ihp) \
 	landisk_pci_intr_map(pa, ihp)
-#define	pci_intr_string(v, ih) \
-	landisk_pci_intr_string(v, ih)
+#define	pci_intr_string(v, ih, buf, len) \
+	landisk_pci_intr_string(v, ih, buf, len)
 #define	pci_intr_evcnt(v, ih) \
 	landisk_pci_intr_evcnt(v, ih)
 #define	pci_intr_establish(v, ih, level, ih_fun, ih_arg) \

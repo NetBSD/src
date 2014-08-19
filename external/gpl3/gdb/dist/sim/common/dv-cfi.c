@@ -2,7 +2,7 @@
    http://www.spansion.com/Support/AppNotes/CFI_Spec_AN_03.pdf
    http://www.spansion.com/Support/AppNotes/cfi_100_20011201.pdf
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -27,13 +27,15 @@
 #include <math.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdbool.h>
 #include <unistd.h>
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
 
 #include "sim-main.h"
-#include "devices.h"
+#include "hw-base.h"
+#include "hw-main.h"
 #include "dv-cfi.h"
 
 /* Flashes are simple state machines, so here we cover all the
@@ -725,7 +727,7 @@ attach_cfi_regs (struct hw *me, struct cfi *cfi)
   /* Figure out where our initial flash data is coming from.  */
   if (fd != -1 && fd_writable)
     {
-#ifdef HAVE_MMAP
+#if defined (HAVE_MMAP) && defined (HAVE_POSIX_FALLOCATE)
       posix_fallocate (fd, 0, cfi->dev_size);
 
       cfi->mmap = mmap (NULL, cfi->dev_size,

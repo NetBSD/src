@@ -1,5 +1,5 @@
 /*	$OpenBSD: mdef.h,v 1.29 2006/03/20 20:27:45 espie Exp $	*/
-/*	$NetBSD: mdef.h,v 1.14 2011/03/05 16:37:50 christos Exp $	*/
+/*	$NetBSD: mdef.h,v 1.14.10.1 2014/08/20 00:05:00 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -127,8 +127,12 @@
 #define ALL             1
 #define TOP             0
  
-#define TRUE            1
-#define FALSE           0
+#ifndef TRUE
+#define TRUE	1
+#endif
+#ifndef FALSE
+#define FALSE	0
+#endif
 #define cycle           for(;;)
 
 /*

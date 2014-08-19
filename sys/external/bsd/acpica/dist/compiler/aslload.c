@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -113,7 +113,7 @@ LdLoadNamespace (
     WalkState = AcpiDsCreateWalkState (0, NULL, NULL, NULL);
     if (!WalkState)
     {
-        return AE_NO_MEMORY;
+        return (AE_NO_MEMORY);
     }
 
     /* Walk the entire parse tree, first pass */
@@ -129,7 +129,7 @@ LdLoadNamespace (
     /* Dump the namespace if debug is enabled */
 
     AcpiNsDumpTables (ACPI_NS_ALL, ACPI_UINT32_MAX);
-    return AE_OK;
+    return (AE_OK);
 }
 
 
@@ -177,7 +177,9 @@ LdLoadFieldElements (
         break;
 
     default:
+
         /* No other opcodes should arrive here */
+
         return (AE_BAD_PARAMETER);
     }
 
@@ -189,7 +191,7 @@ LdLoadFieldElements (
         {
         case AML_INT_RESERVEDFIELD_OP:
         case AML_INT_ACCESSFIELD_OP:
-
+        case AML_INT_CONNECTION_OP:
             break;
 
         default:
@@ -224,8 +226,10 @@ LdLoadFieldElements (
             }
             break;
         }
+
         Child = Child->Asl.Next;
     }
+
     return (AE_OK);
 }
 
@@ -290,7 +294,6 @@ LdLoadResourceElements (
     InitializerOp = ASL_GET_CHILD_NODE (Op);
     while (InitializerOp)
     {
-
         if (InitializerOp->Asl.ExternalName)
         {
             Status = AcpiNsLookup (WalkState->ScopeInfo,
@@ -305,20 +308,15 @@ LdLoadResourceElements (
             }
 
             /*
-             * Store the field offset in the namespace node so it
-             * can be used when the field is referenced
+             * Store the field offset and length in the namespace node
+             * so it can be used when the field is referenced
              */
-            Node->Value = (UINT32) InitializerOp->Asl.Value.Integer;
+            Node->Value = InitializerOp->Asl.Value.Tag.BitOffset;
+            Node->Length = InitializerOp->Asl.Value.Tag.BitLength;
             InitializerOp->Asl.Node = Node;
             Node->Op = InitializerOp;
-
-            /* Pass thru the field type (Bitfield or Bytefield) */
-
-            if (InitializerOp->Asl.CompileFlags & NODE_IS_BIT_OFFSET)
-            {
-                Node->Flags |= ANOBJ_IS_BIT_OFFSET;
-            }
         }
+
         InitializerOp = ASL_GET_PEER_NODE (InitializerOp);
     }
 
@@ -378,6 +376,7 @@ LdNamespace1Begin (
     default:
 
         /* All other opcodes go below */
+
         break;
     }
 
@@ -426,7 +425,6 @@ LdNamespace1Begin (
 
 
     case PARSEOP_EXTERNAL:
-
         /*
          * "External" simply enters a name and type into the namespace.
          * We must be careful to not open a new scope, however, no matter
@@ -470,7 +468,6 @@ LdNamespace1Begin (
 
 
     case PARSEOP_SCOPE:
-
         /*
          * The name referenced by Scope(Name) must already exist at this point.
          * In other words, forward references for Scope() are not supported.
@@ -490,6 +487,10 @@ LdNamespace1Begin (
                             ACPI_TYPE_LOCAL_SCOPE,
                             ACPI_IMODE_LOAD_PASS1, Flags,
                             WalkState, &(Node));
+                if (ACPI_FAILURE (Status))
+                {
+                    return_ACPI_STATUS (Status);
+                }
 
                 /*
                  * However, this is an error -- primarily because the MS
@@ -525,7 +526,6 @@ LdNamespace1Begin (
         case ACPI_TYPE_INTEGER:
         case ACPI_TYPE_STRING:
         case ACPI_TYPE_BUFFER:
-
             /*
              * These types we will allow, but we will change the type.
              * This enables some existing code of the form:
@@ -536,7 +536,7 @@ LdNamespace1Begin (
              * Which is used to workaround the fact that the MS interpreter
              * does not allow Scope() forward references.
              */
-            sprintf (MsgBuffer, "%s [%s], changing type to [Scope]",
+            snprintf (MsgBuffer, sizeof(MsgBuffer), "%s [%s], changing type to [Scope]",
                 Op->Asl.ExternalName, AcpiUtGetTypeName (Node->Type));
             AslError (ASL_REMARK, ASL_MSG_SCOPE_TYPE, Op, MsgBuffer);
 
@@ -555,7 +555,7 @@ LdNamespace1Begin (
 
             /* All other types are an error */
 
-            sprintf (MsgBuffer, "%s [%s]", Op->Asl.ExternalName,
+            snprintf (MsgBuffer, sizeof(MsgBuffer), "%s [%s]", Op->Asl.ExternalName,
                 AcpiUtGetTypeName (Node->Type));
             AslError (ASL_ERROR, ASL_MSG_SCOPE_TYPE, Op, MsgBuffer);
 
@@ -898,5 +898,3 @@ LdCommonNamespaceEnd (
 
     return (AE_OK);
 }
-
-

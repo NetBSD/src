@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.8.1 2013/06/23 06:28:46 tls Exp $
+#	$NetBSD: Makefile,v 1.8.8.2 2014/08/20 00:00:14 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ FILES=	af al altwin am apl ara at az \
 	ba bd be bg br brai bt bw by \
 	ca capslock cd ch cm cn compose ctrl cz \
 	de dk \
-	ee empty epo es et eurosign \
+	ee empty epo es et eu eurosign \
 	fi fo fr \
 	gb ge gh gn gr group \
 	hr hu \

@@ -1,4 +1,4 @@
-/*	$NetBSD: binhash.c,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: binhash.c,v 1.1.1.1.16.1 2014/08/19 23:59:45 tls Exp $	*/
 
 /*++
 /* NAME
@@ -62,7 +62,7 @@
 /*	should be used or the code will not be portable.
 /*
 /*	binhash_create() creates a table of the specified size and returns a
-/*	pointer to the result. The lookup keys are saved with strdup().
+/*	pointer to the result. The lookup keys are saved with mymemdup().
 /*
 /*	binhash_enter() stores a (key, value) pair into the specified table
 /*	and returns a pointer to the resulting entry. The code does not
@@ -136,7 +136,7 @@ static unsigned binhash_hash(const char *key, int len, unsigned size)
      */
 
     while (len-- > 0) {
-	h = (h << 4U) + *key++;
+	h = (h << 4U) + *(unsigned const char *) key++;
 	if ((g = (h & 0xf0000000)) != 0) {
 	    h ^= (g >> 24U);
 	    h ^= g;

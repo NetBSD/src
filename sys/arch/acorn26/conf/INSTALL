@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.35.2.1 2013/06/23 06:19:58 tls Exp $
+# $NetBSD: INSTALL,v 1.35.2.2 2014/08/20 00:02:40 tls Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -67,7 +67,6 @@ options 	INET6		# IPV6
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
@@ -107,7 +106,7 @@ options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=4096 # size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=4224 # size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # WS console uses DUMB, SUN or VT100 terminal emulation

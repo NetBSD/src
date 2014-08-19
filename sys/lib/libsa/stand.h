@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.76 2012/05/21 21:34:16 dsl Exp $	*/
+/*	$NetBSD: stand.h,v 1.76.2.1 2014/08/20 00:04:30 tls Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -80,9 +80,7 @@
 #define gets		libsa_gets
 #define printf		libsa_printf
 #define putchar		libsa_putchar
-#define sprintf		libsa_sprintf
 #define vprintf		libsa_vprintf
-#define vsprintf	libsa_vsprintf
 #endif
 
 struct open_file;
@@ -110,7 +108,7 @@ struct open_file;
  * This structure is used to define file system operations in a file system
  * independent way.
  */
-extern char *fsmod;
+extern const char *fsmod;
 
 #if !defined(LIBSA_SINGLE_FILESYSTEM)
 struct fs_ops {
@@ -252,14 +250,10 @@ int	dkcksum(const struct disklabel *);
 
 void	printf(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
-int	sprintf(char *, const char *, ...)
-    __attribute__((__format__(__printf__, 2, 3)));
 int	snprintf(char *, size_t, const char *, ...)
     __attribute__((__format__(__printf__, 3, 4)));
 void	vprintf(const char *, va_list)
     __attribute__((__format__(__printf__, 1, 0)));
-int	vsprintf(char *, const char *, va_list)
-    __attribute__((__format__(__printf__, 2, 0)));
 int	vsnprintf(char *, size_t, const char *, va_list)
     __attribute__((__format__(__printf__, 3, 0)));
 void	twiddle(void);
@@ -324,5 +318,7 @@ int	fnmatch(const char *, const char *);
 /* XXX: These should be removed eventually. */
 void	bcopy(const void *, void *, size_t);
 void	bzero(void *, size_t);
+
+int	atoi(const char *);
 
 #endif /* _LIBSA_STAND_H_ */

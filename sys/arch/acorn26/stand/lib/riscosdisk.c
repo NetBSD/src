@@ -1,4 +1,4 @@
-/*	$NetBSD: riscosdisk.c,v 1.1 2002/03/24 15:47:27 bjh21 Exp $	*/
+/*	$NetBSD: riscosdisk.c,v 1.1.164.1 2014/08/20 00:02:40 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,10 +58,10 @@ rodisk_open(struct open_file *f, ...)
 
 	buflen = strlen(fsname) + 13;
 	buf = alloc(buflen);
-	sprintf(buf, "%s_DescribeDisc", fsname);
+	snprintf(buf, buflen, "%s_DescribeDisc", fsname);
 	if (xos_swi_number_from_string(buf, &rd->describe_disc) != NULL)
 		return ENODEV;
-	sprintf(buf, "%s_DiscOp", fsname);
+	snprintf(buf, buflen, "%s_DiscOp", fsname);
 	if (xos_swi_number_from_string(buf, &rd->disc_op) != NULL)
 		return ENODEV;
 	

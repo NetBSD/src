@@ -55,10 +55,10 @@ documentation: </p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#alias_maps">alias_maps</a> = hash:/etc/postfix/aliases            (local aliasing)
+    <a href="postconf.5.html#alias_maps">alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/aliases            (local aliasing)
     <a href="postconf.5.html#header_checks">header_checks</a> = <a href="regexp_table.5.html">regexp</a>:/etc/postfix/header_checks (content filtering)
-    <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport      (routing table)
-    <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual    (address rewriting)
+    <a href="postconf.5.html#transport_maps">transport_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/transport      (routing table)
+    <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual    (address rewriting)
 </pre>
 </blockquote>
 
@@ -94,7 +94,8 @@ string is the client, sender or recipient, and the result is an
 action such as "reject"). </p>
 
 <p> With some tables, however, Postfix needs to know only if the
-lookup key exists.  The lookup result itself is not used. Examples
+lookup key exists.  Any non-empty lookup result value may be used
+here: the lookup result is not used. Examples
 are the <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> that determine what local recipients
 Postfix accepts in mail from the network, the <a href="postconf.5.html#mydestination">mydestination</a> parameter
 that specifies what domains Postfix delivers locally, or the
@@ -115,7 +116,7 @@ and are easy to debug with the <a href="postmap.1.html">postmap(1)</a> command: 
 
 <blockquote>
 <pre>
-% <b>postmap -q info@example.com hash:/etc/postfix/virtual </b>
+% <b>postmap -q info@example.com <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual </b>
 </pre>
 </blockquote>
 
@@ -156,7 +157,8 @@ SQL, there is no need to execute "postfix reload".  The LDAP, NIS
 or SQL server takes care of read/write access conflicts and gives
 the new data to Postfix once that data is available.  </p>
 
-<li> <p> If you change a <a href="regexp_table.5.html">regexp</a>: or <a href="pcre_table.5.html">pcre</a>: file then Postfix may or
+<li> <p> If you change a <a href="regexp_table.5.html">regexp</a>:, <a href="pcre_table.5.html">pcre</a>:, <a href="cidr_table.5.html">cidr</a>: or <a href="DATABASE_README.html#types">texthash</a>: file
+then Postfix 
 may not pick up the file changes immediately. This is because a
 Postfix process reads the entire file into memory once and never
 examines the file again.  </p>
@@ -184,19 +186,22 @@ process can initialize with the new database.  </p>
 
 <h2><a name="safe_db">Updating Berkeley DB files safely</a></h2>
 
-<p> Although Postfix uses file locking to avoid access conflicts
-while updating Berkeley DB or other local database files, you still
-have a problem when the update fails because the disk is full or
-because something else happens.  This is because commands such as
-<a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a> overwrite existing files. If the update
+<p> Postfix uses file locking to avoid access conflicts while
+updating Berkeley DB or other local database files. This used to
+be safe, but as Berkeley DB has evolved to use more aggressive
+caching, file locking may no longer be sufficient. </p>
+
+<p> Furthermore, file locking would not prevent problems when the
+update fails because the disk is full or something else causes a
+database update to fail. In particular, commands such as <a href="postmap.1.html">postmap(1)</a>
+or <a href="postalias.1.html">postalias(1)</a> overwrite existing files. If the overwrite
 fails in the middle then you have no usable database, and Postfix
 will stop working. This is not an issue with the CDB database type
 available with Postfix 2.2 and later: <a href="CDB_README.html">CDB</a>
 creates a new file, and renames the file upon successful completion.
 </p>
 
-<p> With multi-file databases such as DBM, there is no simple
-solution. With Berkeley DB and other "one file" databases, it is
+<p> With Berkeley DB and other "one file" databases, it is
 possible to add some extra robustness by using "mv" to REPLACE an
 existing database file instead of overwriting it:  </p>
 
@@ -220,16 +225,16 @@ all: aliases.db access.db virtual.db ...etcetera...
 # Note 1: commands are specified after a TAB character.
 # Note 2: use <a href="postalias.1.html">postalias(1)</a> for local aliases, <a href="postmap.1.html">postmap(1)</a> for the rest.
 aliases.db: aliases.in
-	postalias aliases.in
-	mv aliases.in.db aliases.db
+        postalias aliases.in
+        mv aliases.in.db aliases.db
 
 access.db: access.in
-	postmap access.in
-	mv access.in.db access.db
+        postmap access.in
+        mv access.in.db access.db
 
 virtual.db: virtual.in
-	postmap virtual.in
-	mv virtual.in.db virtual.db
+        postmap virtual.in
+        mv virtual.in.db virtual.db
 
 ...etcetera...
 # <b>vi access.in</b>
@@ -261,7 +266,7 @@ that are often supported: </p>
 <dd> A sorted, balanced tree structure.  This is available only on
 systems with support for Berkeley DB databases. Database files are
 created with the <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a> command. The lookup
-table name as used in "btree:table" is the database file name
+table name as used in "<a href="DATABASE_README.html#types">btree</a>:table" is the database file name
 without the ".db" suffix.  </dd>
 
 <dt> <b>cdb</b> </dt>
@@ -281,15 +286,16 @@ Routing (CIDR) patterns. The table format is described in <a href="cidr_table.5.
 <dt> <b>dbm</b> </dt>
 
 <dd> An indexed file type based on hashing.  This is available only
-on systems with support for DBM databases. Database files are
-created with the <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a> command. The lookup
-table name as used in "dbm:table" is the database file name without
-the ".dir" or ".pag" suffix.  </dd>
+on systems with support for DBM databases. Public database files
+are created with the <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a> command, and private
+databases are maintained by Postfix daemons. The lookup table name
+as used in "<a href="DATABASE_README.html#types">dbm</a>:table" is the database file name without the ".dir"
+or ".pag" suffix.  </dd>
 
 <dt> <b>environ</b> </dt>
 
 <dd> The UNIX process environment array. The lookup key is the
-variable name. The lookup table name in "environ:table" is ignored.
+variable name. The lookup table name in "<a href="DATABASE_README.html#types">environ</a>:table" is ignored.
 </dd>
 
 <dt> <b>fail</b> </dt>
@@ -301,43 +307,53 @@ error tests. </dd>
 <dt> <b>hash</b> </dt>
 
 <dd> An indexed file type based on hashing.  This is available only
-on systems with support for Berkeley DB databases. Database files are
-created with the <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a> command. The database
-name as used in "hash:table" is the database file name without the
-".db" suffix. </dd>
+on systems with support for Berkeley DB databases. Public database
+files are created with the <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a> command, and
+private databases are maintained by Postfix daemons. The database
+name as used in "<a href="DATABASE_README.html#types">hash</a>:table" is the database file name without the
+".db" suffix.  </dd>
 
 <dt> <b>internal</b> </dt>
 
 <dd> A non-shared, in-memory hash table. Its content are lost when
 a process terminates. </dd>
 
+<dt> <b>lmdb</b> </dt>
+
+<dd> OpenLDAP LMDB database.  This is available only on systems
+with support for LMDB databases. Public database files are created
+with the <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a> command, and private databases
+are maintained by Postfix daemons. The database name as used in
+"<a href="lmdb_table.5.html">lmdb</a>:table" is the database file name without the ".lmdb" suffix.
+See <a href="lmdb_table.5.html">lmdb_table(5)</a> for details.  </dd>
+
 <dt> <b>ldap</b> (read-only) </dt>
 
-<dd> Perform lookups using the LDAP protocol. Configuration details
-are given in the <a href="ldap_table.5.html">ldap_table(5)</a>. </dd>
+<dd> LDAP database client. Configuration details are given in the
+<a href="ldap_table.5.html">ldap_table(5)</a>. </dd>
 
 <dt> <b>memcache</b> </dt>
 
-<dd> Perform memcache database lookups or updates. Configuration
-details are given in <a href="memcache_table.5.html">memcache_table(5)</a>. </dd>
+<dd> Memcache database client. Configuration details are given in
+<a href="memcache_table.5.html">memcache_table(5)</a>. </dd>
 
 <dt> <b>mysql</b> (read-only) </dt>
 
-<dd> Perform MySQL database lookups. Configuration details are given
-in <a href="mysql_table.5.html">mysql_table(5)</a>. </dd>
+<dd> MySQL database client. Configuration details are given in
+<a href="mysql_table.5.html">mysql_table(5)</a>.  </dd>
 
 <dt> <b>netinfo</b> (read-only) </dt>
 
-<dd> Perform Netinfo database lookups. </dd>
+<dd> Netinfo database client. </dd>
 
 <dt> <b>nis</b> (read-only) </dt>
 
-<dd> Perform NIS database lookups. </dd>
+<dd> NIS database client. </dd>
 
 <dt> <b>nisplus</b> (read-only) </dt>
 
-<dd> Perform NIS+ database lookups. Configuration details are given
-in <a href="nisplus_table.5.html">nisplus_table(5)</a>. </dd>
+<dd> NIS+ database client. Configuration details are given in
+<a href="nisplus_table.5.html">nisplus_table(5)</a>.  </dd>
 
 <dt> <b>pcre</b> (read-only) </dt>
 
@@ -348,13 +364,14 @@ file.  </dd>
 
 <dt> <b>pgsql</b> (read-only) </dt>
 
-<dd> Perform PostgreSQL database lookups.  Configuration details
-are given in <a href="pgsql_table.5.html">pgsql_table(5)</a>. </dd>
+<dd> PostgreSQL database client.  Configuration details are given
+in <a href="pgsql_table.5.html">pgsql_table(5)</a>. </dd>
 
 <dt> <b>proxy</b> </dt>
 
-<dd> Access information via the Postfix <a href="proxymap.8.html">proxymap(8)</a> service. The
-lookup table name syntax is "<a href="proxymap.8.html">proxy</a>:<a href="DATABASE_README.html">type:table</a>". </dd>
+<dd> Postfix <a href="proxymap.8.html">proxymap(8)</a> client for shared access to Postfix
+databases. The lookup table name syntax is "<a href="proxymap.8.html">proxy</a>:<a href="DATABASE_README.html">type:table</a>".
+</dd>
 
 <dt> <b>regexp</b> (read-only) </dt>
 
@@ -365,43 +382,49 @@ is described in <a href="regexp_table.5.html">regexp_table(5)</a>. The lookup ta
 <dt> <b>sdbm</b> </dt>
 
 <dd> An indexed file type based on hashing.  This is available only
-on systems with support for SDBM databases. Database files are
-created with the <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a> command. The lookup
-table name as used in "sdbm:table" is the database file name without
-the ".dir" or ".pag" suffix.  </dd>
+on systems with support for SDBM databases. Public database files
+are created with the <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a> command, and private
+databases are maintained by Postfix daemons. The lookup table name
+as used in "<a href="DATABASE_README.html#types">sdbm</a>:table" is the database file name without the ".dir"
+or ".pag" suffix.  </dd>
+
+<dt> <b>socketmap</b> (read-only) </dt>
+
+<dd> Sendmail-style socketmap client. The name of the table is
+either <b>inet</b>:<i>host</i>:<i>port</i>:<i>name</i> for a TCP/IP
+server, or <b>unix</b>:<i>pathname</i>:<i>name</i> for a UNIX-domain
+server. See <a href="socketmap_table.5.html">socketmap_table(5)</a> for details.  </dd>
 
 <dt> <b>sqlite</b> (read-only) </dt>
 
-<dd> Perform SQLite database lookups. Configuration details are given
-in <a href="sqlite_table.5.html">sqlite_table(5)</a>. </dd>
+<dd> SQLite database. Configuration details are given in <a href="sqlite_table.5.html">sqlite_table(5)</a>.
+</dd>
 
 <dt> <b>static</b> (read-only) </dt>
 
-<dd> Always returns its lookup table name as lookup result.  For
-example, the lookup table "<a href="DATABASE_README.html#types">static</a>:foobar" always returns the string
-"foobar" as lookup result. </dd>
+<dd> A table that always returns its name as the lookup result.
+For example, "<a href="DATABASE_README.html#types">static</a>:foobar" always returns the string "foobar" as
+lookup result. </dd>
 
 <dt> <b>tcp</b> </dt>
 
-<dd> Access information through a TCP/IP server. The protocol is
-described in <a href="tcp_table.5.html">tcp_table(5)</a>. The lookup table name is "<a href="tcp_table.5.html">tcp</a>:host:port"
-where "host" specifies a symbolic hostname or a numeric IP address,
-and "port" specifies a symbolic service name or a numeric port
-number.
-</dd>
+<dd> TCP/IP client. The protocol is described in <a href="tcp_table.5.html">tcp_table(5)</a>. The
+lookup table name is "<a href="tcp_table.5.html">tcp</a>:host:port" where "host" specifies a
+symbolic hostname or a numeric IP address, and "port" specifies a
+symbolic service name or a numeric port number.  </dd>
 
 <dt> <b>texthash</b> (read-only) </dt>
 
-<dd> This produces similar results as hash: files, except that you
-don't have to run the <a href="postmap.1.html">postmap(1)</a> command before you can use the
-file, and that <a href="DATABASE_README.html#types">texthash</a>: does not detect changes after the file is
-read.  The lookup table name is "<a href="DATABASE_README.html#types">texthash</a>:filename", where the file
-name is taken literally; no suffix is appended. </dd>
+<dd> A table that produces similar results as <a href="DATABASE_README.html#types">hash</a>: files, except
+that you don't have to run the <a href="postmap.1.html">postmap(1)</a> command before you can
+use the file, and that <a href="DATABASE_README.html#types">texthash</a>: does not detect changes after the
+file is read.  The lookup table name is "<a href="DATABASE_README.html#types">texthash</a>:filename", where
+the file name is taken literally; no suffix is appended. </dd>
 
 <dt> <b>unix</b> (read-only) </dt>
 
-<dd> A limited way to query the UNIX authentication database. The
-following tables are implemented:
+<dd> A limited view of the UNIX authentication database. The following
+tables are implemented:
 
 <dl>
 

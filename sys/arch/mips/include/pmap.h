@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.62 2012/07/05 17:21:02 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.62.2.1 2014/08/20 00:03:12 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -283,6 +283,7 @@ void	pmap_prefer(vaddr_t, vaddr_t *, vsize_t, int);
 #endif /* MIPS3_PLUS */
 
 #define	PMAP_STEAL_MEMORY	/* enable pmap_steal_memory() */
+#define	PMAP_ENABLE_PMAP_KMPAGE	/* enable the PMAP_KMPAGE flag */
 
 /*
  * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.
@@ -329,6 +330,7 @@ typedef struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
 	vaddr_t		pv_va;		/* virtual address for mapping */
+#define	PV_KENTER	0x001
 } *pv_entry_t;
 
 #define	PG_MD_UNCACHED		0x0001	/* page is mapped uncached */

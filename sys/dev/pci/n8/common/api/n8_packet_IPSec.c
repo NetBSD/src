@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: n8_packet_IPSec.c,v 1.1 2008/10/30 12:02:14 darran Exp $";
+static char const n8_id[] = "$Id: n8_packet_IPSec.c,v 1.1.42.1 2014/08/20 00:03:48 tls Exp $";
 /*****************************************************************************/
 /** @file n8_packet_IPSec.c
  *  @brief Contains IPSec packet level interface functions.
@@ -241,8 +241,8 @@ static void resultHandlerIPSecVerify(API_Request_t* req_p)
  * @par Errors:
  *    N8_INVALID_OBJECT   - packet object is zero, couldn't write to unspecified
  *                          address<BR>
- *    N8_INVALID_INPUT_SIZE - The value of packetLength is less then 8 or bigger 
- *                            then 17 KBytes or is not a multiple of 8.
+ *    N8_INVALID_INPUT_SIZE - The value of packetLength is less than 8 or bigger 
+ *                            than 17 KBytes or is not a multiple of 8.
  *    N8_UNIMPLEMENTED_FUNCTION - not supported protocol configuration requested
  *    N8_HARDWARE_ERROR   - couldn't write to context memory
  *   

@@ -1,4 +1,4 @@
-/* Copyright (C) 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +24,7 @@
 
 /* Defined in auto-generated file reg-arm.c.  */
 void init_registers_arm (void);
-
+extern const struct target_desc *tdesc_arm;
 
 static void
 arm_get_thread_context (win32_thread_info *th, DEBUG_EVENT* current_event)
@@ -108,12 +108,19 @@ arm_store_inferior_register (struct regcache *regcache,
   collect_register (regcache, r, regptr (&th->context, r));
 }
 
+static void
+arm_arch_setup (void)
+{
+  init_registers_arm ();
+  win32_tdesc = tdesc_arm;
+}
+
 /* Correct in either endianness.  We do not support Thumb yet.  */
 static const unsigned long arm_wince_breakpoint = 0xe6000010;
 #define arm_wince_breakpoint_len 4
 
 struct win32_target_ops the_low_target = {
-  init_registers_arm,
+  arm_arch_setup,
   sizeof (mappings) / sizeof (mappings[0]),
   NULL, /* initial_stuff */
   arm_get_thread_context,

@@ -1,4 +1,4 @@
-# Copyright 2008, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2008-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
 # This tests for evaluation of functions in the form of
 # complex expressions.
 
-set testfile fpointer
-set srcfile ${testfile}.cc
+standard_testfile .cc
+
 if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} {debug c++}] } {
      return -1
 }

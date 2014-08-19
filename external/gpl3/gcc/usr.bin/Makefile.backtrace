@@ -1,0 +1,10 @@
+#	$NetBSD: Makefile.backtrace,v 1.1.8.2 2014/08/19 23:56:57 tls Exp $
+
+.ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_BACKTRACE_
+_EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_BACKTRACE_=1
+
+LIBBACKTRACEOBJ!=	cd ${.CURDIR}/../../lib/libbacktrace && ${PRINTOBJDIR}
+DPADD+=			${LIBBACKTRACEOBJ}/libbacktrace.a
+LDADD+=			${LIBBACKTRACEOBJ}/libbacktrace.a
+
+.endif

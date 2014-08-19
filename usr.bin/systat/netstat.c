@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.28 2006/10/22 16:43:24 christos Exp $	*/
+/*	$NetBSD: netstat.c,v 1.28.46.1 2014/08/20 00:05:04 tls Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netstat.c,v 1.28 2006/10/22 16:43:24 christos Exp $");
+__RCSID("$NetBSD: netstat.c,v 1.28.46.1 2014/08/20 00:05:04 tls Exp $");
 #endif /* not lint */
 
 /*
@@ -214,25 +214,26 @@ static void
 fetchnetstat4(void *off, int istcp)
 {
 	struct inpcbtable pcbtable;
-	struct inpcb *head, *prev, *next;
+	struct inpcb_hdr **pprev, *next;
 	struct netinfo *p;
-	struct inpcb inpcb;
+	struct inpcb inpcb, *inpcbp;
 	struct socket sockb;
 	struct tcpcb tcpcb;
 
 	KREAD(off, &pcbtable, sizeof pcbtable);
-	prev = head = (struct inpcb *)&((struct inpcbtable *)off)->inpt_queue;
-	next = (struct inpcb *)pcbtable.inpt_queue.cqh_first;
-	while (next != head) {
-		KREAD(next, &inpcb, sizeof (inpcb));
-		if ((struct inpcb *)inpcb.inp_queue.cqe_prev != prev) {
+	pprev = &((struct inpcbtable *)off)->inpt_queue.tqh_first;
+	next = TAILQ_FIRST(&pcbtable.inpt_queue);
+	while (next != TAILQ_END(&pcbtable.inpt_queue)) {
+		inpcbp = (struct inpcb *)next;
+		KREAD(inpcbp, &inpcb, sizeof (inpcb));
+		if (inpcb.inp_queue.tqe_prev != pprev) {
 			for (p = netcb.ni_forw; p != nhead; p = p->ni_forw)
 				p->ni_seen = 1;
 			error("Kernel state in transition");
 			return;
 		}
-		prev = next;
-		next = (struct inpcb *)inpcb.inp_queue.cqe_next;
+		pprev = &next->inph_queue.tqe_next;
+		next = inpcb.inp_queue.tqe_next;
 
 		if (inpcb.inp_af != AF_INET)
 			continue;
@@ -256,25 +257,26 @@ static void
 fetchnetstat6(void *off, int istcp)
 {
 	struct inpcbtable pcbtable;
-	struct in6pcb *head6, *prev6, *next6;
+	struct inpcb_hdr **pprev, *next;
 	struct netinfo *p;
 	struct socket sockb;
 	struct tcpcb tcpcb;
-	struct in6pcb in6pcb;
+	struct in6pcb in6pcb, *in6pcbp;
 
 	KREAD(off, &pcbtable, sizeof pcbtable);
-	prev6 = head6 = (struct in6pcb *)&((struct inpcbtable *)off)->inpt_queue;
-	next6 = (struct in6pcb *)pcbtable.inpt_queue.cqh_first;
-	while (next6 != head6) {
-		KREAD(next6, &in6pcb, sizeof (in6pcb));
-		if ((struct in6pcb *)in6pcb.in6p_queue.cqe_prev != prev6) {
+	pprev = &((struct inpcbtable *)off)->inpt_queue.tqh_first;
+	next = TAILQ_FIRST(&pcbtable.inpt_queue);
+	while (next != TAILQ_END(&pcbtable.inpt_queue)) {
+		in6pcbp = (struct in6pcb *)next;
+		KREAD(in6pcbp, &in6pcb, sizeof (in6pcb));
+		if (in6pcb.in6p_queue.tqe_prev != pprev) {
 			for (p = netcb.ni_forw; p != nhead; p = p->ni_forw)
 				p->ni_seen = 1;
 			error("Kernel state in transition");
 			return;
 		}
-		prev6 = next6;
-		next6 = (struct in6pcb *)in6pcb.in6p_queue.cqe_next;
+		pprev = &next->inph_queue.tqe_next;
+		next = in6pcb.in6p_queue.tqe_next;
 
 		if (in6pcb.in6p_af != AF_INET6)
 			continue;

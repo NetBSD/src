@@ -1,4 +1,4 @@
-/*	$NetBSD: mvpex.c,v 1.7.2.1 2013/06/23 06:20:17 tls Exp $	*/
+/*	$NetBSD: mvpex.c,v 1.7.2.2 2014/08/20 00:03:39 tls Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.7.2.1 2013/06/23 06:20:17 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.7.2.2 2014/08/20 00:03:39 tls Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -61,19 +61,21 @@ static void mvpex_attach(device_t, device_t, void *);
 
 static int mvpex_intr(void *);
 
-static void mvpex_init(struct mvpex_softc *);
+static void mvpex_init(struct mvpex_softc *, enum marvell_tags *);
 #if 0	/* shall move to pchb(4)? */
 static void mvpex_barinit(struct mvpex_softc *);
 static int mvpex_wininit(struct mvpex_softc *, int, int, int, int, uint32_t *,
 			 uint32_t *);
 #else
-static void mvpex_wininit(struct mvpex_softc *);
+static void mvpex_wininit(struct mvpex_softc *, enum marvell_tags *);
 #endif
 #if NPCI > 0
 static void mvpex_pci_config(struct mvpex_softc *, bus_space_tag_t,
 			     bus_space_tag_t, bus_dma_tag_t, pci_chipset_tag_t,
 			     u_long, u_long, u_long, u_long, int);
 #endif
+
+enum marvell_tags *mvpex_bar2_tags;
 
 CFATTACH_DECL_NEW(mvpex_gt, sizeof(struct mvpex_softc),
     mvpex_match, mvpex_attach, NULL, NULL);
@@ -174,7 +176,7 @@ mvpex_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "can't map registers\n");
 		return;
 	}
-	mvpex_init(sc);
+	mvpex_init(sc, mva->mva_tags);
 
 	/* XXX: looks seem good to specify level IPL_VM. */
 	marvell_intr_establish(mva->mva_irq, IPL_VM, mvpex_intr, sc);
@@ -233,7 +235,7 @@ mvpex_intr(void *arg)
 
 
 static void
-mvpex_init(struct mvpex_softc *sc)
+mvpex_init(struct mvpex_softc *sc, enum marvell_tags *tags)
 {
 	uint32_t reg;
 	int window;
@@ -258,7 +260,7 @@ mvpex_init(struct mvpex_softc *sc)
 #if 0	/* shall move to pchb(4)? */
 	mvpex_barinit(sc);
 #else
-	mvpex_wininit(sc);
+	mvpex_wininit(sc, tags);
 #endif
 
 	/* Clear Interrupt Cause and Mask registers */
@@ -352,28 +354,16 @@ mvpex_barinit(struct mvpex_softc *sc)
 }
 #else
 static void
-mvpex_wininit(struct mvpex_softc *sc)
+mvpex_wininit(struct mvpex_softc *sc, enum marvell_tags *tags)
 {
 	device_t pdev = device_parent(sc->sc_dev);
 	uint64_t base;
-	uint32_t size;
-	int target, attr, window, rv, i;
-	static struct {
-		int tag;
-		int bar;
-	} tags[] = {
-		{ MARVELL_TAG_SDRAM_CS0,	MVPEX_WC_BARMAP_BAR1	},
-		{ MARVELL_TAG_SDRAM_CS1,	MVPEX_WC_BARMAP_BAR1	},
-		{ MARVELL_TAG_SDRAM_CS2,	MVPEX_WC_BARMAP_BAR1	},
-		{ MARVELL_TAG_SDRAM_CS3,	MVPEX_WC_BARMAP_BAR1	},
-
-		{ MARVELL_TAG_UNDEFINED,	0			},
-	};
+	uint32_t size, bar;
+	int target, attr, window, rv, i, j;
 
 	for (window = 0, i = 0;
-	    tags[i].tag != MARVELL_TAG_UNDEFINED && window < MVPEX_NWINDOW;
-	    i++) {
-		rv = marvell_winparams_by_tag(pdev, tags[i].tag,
+	    tags[i] != MARVELL_TAG_UNDEFINED && window < MVPEX_NWINDOW; i++) {
+		rv = marvell_winparams_by_tag(pdev, tags[i],
 		    &target, &attr, &base, &size);
 		if (rv != 0 || size == 0)
 			continue;
@@ -381,13 +371,23 @@ mvpex_wininit(struct mvpex_softc *sc)
 		if (base > 0xffffffffULL) {
 			aprint_error_dev(sc->sc_dev,
 			    "tag %d address 0x%llx not support\n",
-			    tags[i].tag, base);
+			    tags[i], base);
 			continue;
 		}
 
+		bar = MVPEX_WC_BARMAP_BAR1;
+		if (mvpex_bar2_tags != NULL)
+			for (j = 0; mvpex_bar2_tags[j] != MARVELL_TAG_UNDEFINED;
+			    j++) {
+				if (mvpex_bar2_tags[j] != tags[i])
+					continue;
+				bar = MVPEX_WC_BARMAP_BAR2;
+				break;
+			}
+
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVPEX_WC(window),
 		    MVPEX_WC_WINEN		|
-		    tags[i].bar			|
+		    bar				|
 		    MVPEX_WC_TARGET(target)	|
 		    MVPEX_WC_ATTR(attr)		|
 		    MVPEX_WC_SIZE(size));
@@ -620,10 +620,8 @@ mvpex_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 /* ARGSUSED */
 const char *
-mvpex_intr_string(void *v, pci_intr_handle_t pin)
+mvpex_intr_string(void *v, pci_intr_handle_t pin, char *buf, size_t len)
 {
-	static char intrstr[32];
-
 	switch (pin) {
 	case PCI_INTERRUPT_PIN_A:
 	case PCI_INTERRUPT_PIN_B:
@@ -634,10 +632,9 @@ mvpex_intr_string(void *v, pci_intr_handle_t pin)
 	default:
 		return NULL;
 	}
-	snprintf(intrstr, sizeof(intrstr), "interrupt pin INT%c#",
-	    (char)('A' - 1 + pin));
+	snprintf(buf, len, "interrupt pin INT%c#", (char)('A' - 1 + pin));
 
-	return intrstr;
+	return buf;
 }
 
 /* ARGSUSED */
@@ -663,6 +660,7 @@ mvpex_intr_establish(void *v, pci_intr_handle_t pin, int ipl,
 	struct mvpex_intrhand *pexih;
 	uint32_t mask;
 	int ih = pin - 1, s;
+	char buf[PCI_INTRSTR_LEN];
 
 	intrtab = &sc->sc_intrtab[ih];
 
@@ -677,7 +675,7 @@ mvpex_intr_establish(void *v, pci_intr_handle_t pin, int ipl,
 	pexih->ih_type = ipl;
 	pexih->ih_intrtab = intrtab;
 	evcnt_attach_dynamic(&pexih->ih_evcnt, EVCNT_TYPE_INTR, NULL, "mvpex",
-	    mvpex_intr_string(v, pin));
+	    mvpex_intr_string(v, pin, buf, sizeof(buf)));
 
 	s = splhigh();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: valid_hostname.c,v 1.1.1.2 2010/04/17 10:25:00 tron Exp $	*/
+/*	$NetBSD: valid_hostname.c,v 1.1.1.2.14.1 2014/08/19 23:59:45 tls Exp $	*/
 
 /*++
 /* NAME
@@ -23,6 +23,10 @@
 /*	int	valid_ipv6_hostaddr(addr, gripe)
 /*	const char *addr;
 /*	int	gripe;
+/*
+/*	int	valid_hostport(port, gripe)
+/*	const char *port;
+/*	int	gripe;
 /* DESCRIPTION
 /*	valid_hostname() scrutinizes a hostname: the name should
 /*	be no longer than VALID_HOSTNAME_LEN characters, should
@@ -44,6 +48,9 @@
 /*	These routines operate silently unless the gripe parameter
 /*	specifies a non-zero value. The macros DO_GRIPE and DONT_GRIPE
 /*	provide suitable constants.
+/*
+/*	valid_hostport() requires that the input is a valid string
+/*	representation of a TCP or UDP port number.
 /* BUGS
 /*	valid_hostmumble() does not guarantee that string lengths
 /*	fit the buffer sizes defined in myaddrinfo(3h).
@@ -67,6 +74,7 @@
 #include <sys_defs.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdlib.h>
 
 /* Utility library. */
 
@@ -337,6 +345,32 @@ int     valid_ipv6_hostaddr(const char *addr, int gripe)
 	    break;
 	}
     }
+}
+
+/* valid_hostport - validate numeric port */
+
+int     valid_hostport(const char *str, int gripe)
+{
+    const char *myname = "valid_hostport";
+    int     port;
+
+    if (str[0] == '0' && str[1] != 0) {
+	if (gripe)
+	    msg_warn("%s: leading zero in port number: %.100s", myname, str);
+	return (0);
+    }
+    if (alldig(str) == 0) {
+	if (gripe)
+	    msg_warn("%s: non-numeric port number: %.100s", myname, str);
+	return (0);
+    }
+    if (strlen(str) > strlen("65535")
+	|| (port = atoi(str)) > 65535 || port < 0) {
+	if (gripe)
+	    msg_warn("%s: out-of-range port number: %.100s", myname, str);
+	return (0);
+    }
+    return (1);
 }
 
 #ifdef TEST

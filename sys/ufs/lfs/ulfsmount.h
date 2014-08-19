@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfsmount.h,v 1.7.2.2 2013/06/23 06:18:39 tls Exp $	*/
+/*	$NetBSD: ulfsmount.h,v 1.7.2.3 2014/08/20 00:04:45 tls Exp $	*/
 /*  from NetBSD: ufsmount.h,v 1.39 2012/10/19 17:09:08 drochner Exp  */
 
 /*
@@ -57,31 +57,30 @@ struct vnode;
 
 /* This structure describes the ULFS specific mount structure data. */
 struct ulfsmount {
-	struct	mount *um_mountp;		/* filesystem vfs structure */
-	dev_t	um_dev;				/* device mounted */
-	struct	vnode *um_devvp;		/* block device mounted vnode */
-	u_long	um_fstype;
-	u_int32_t um_flags;			/* ULFS-specific flags - see below */
-	union {					/* pointer to superblock */
-		struct	lfs *lfs;		/* LFS */
-	} ulfsmount_u;
-#define	um_lfs	ulfsmount_u.lfs
+	/* Abstract vfs-level filesystem structure. */
+	struct mount *um_mountp;
+
+	/* The block device we're mounted on. */
+	dev_t um_dev;
+	struct vnode *um_devvp;
+
+	/* type of fs; currently always ULFS1, theoretically also ULFS2 */
+	u_long um_fstype;
+
+	/* pointer to the filesystem-specific filesystem structure */
+	struct lfs *um_lfs;
 
 	/* Extended attribute information. */
 	struct ulfs_extattr_per_mount um_extattr;
 
-	struct	vnode *um_quotas[ULFS_MAXQUOTAS];	/* pointer to quota files */
-	kauth_cred_t   um_cred[ULFS_MAXQUOTAS];	/* quota file access cred */
-	u_long	um_nindir;			/* indirect ptrs per block */
-	u_long	um_lognindir;			/* log2 of um_nindir */
-	u_long	um_bptrtodb;			/* indir ptr to disk block */
-	u_long	um_seqinc;			/* inc between seq blocks */
-	kmutex_t um_lock;			/* lock on global data */
+	/* Quota-related material. */
+	struct vnode *um_quotas[ULFS_MAXQUOTAS]; /* quota files */
+	kauth_cred_t um_cred[ULFS_MAXQUOTAS];	/* quota file access cred */
 	union {
 	    struct um_q1 {
-		time_t	q1_btime[ULFS_MAXQUOTAS];	/* block quota time limit */
-		time_t	q1_itime[ULFS_MAXQUOTAS];	/* inode quota time limit */
-		char	q1_qflags[ULFS_MAXQUOTAS];	/* quota specific flags */
+		time_t	q1_btime[ULFS_MAXQUOTAS]; /* block quota time limit */
+		time_t	q1_itime[ULFS_MAXQUOTAS]; /* inode quota time limit */
+		char	q1_qflags[ULFS_MAXQUOTAS]; /* quota flags */
 	    } um_q1;
 	    struct um_q2 {
 		uint64_t q2_bsize;		/* block size of quota file */
@@ -93,49 +92,9 @@ struct ulfsmount {
 #define umq1_qflags um_q.um_q1.q1_qflags
 #define umq2_bsize  um_q.um_q2.q2_bsize
 #define umq2_bmask  um_q.um_q2.q2_bmask
-
-	void	*um_oldfscompat;		/* save 4.2 rotbl */
-	int	um_maxsymlinklen;
-	int	um_dirblksiz;
-	u_int64_t um_maxfilesize;
-	void	*um_snapinfo;			/* snapshot private data */
-
-	const struct ulfs_ops *um_ops;
-
-	void *um_discarddata;
 };
 
-struct ulfs_ops {
-	void (*uo_itimes)(struct inode *ip, const struct timespec *,
-	    const struct timespec *, const struct timespec *);
-	int (*uo_update)(struct vnode *, const struct timespec *,
-	    const struct timespec *, int);
-	int (*uo_truncate)(struct vnode *, off_t, int, kauth_cred_t);
-	int (*uo_valloc)(struct vnode *, int, kauth_cred_t, struct vnode **);
-	int (*uo_vfree)(struct vnode *, ino_t, int);
-	int (*uo_balloc)(struct vnode *, off_t, int, kauth_cred_t, int,
-	    struct buf **);
-        void (*uo_unmark_vnode)(struct vnode *);
-};
-
-#define	ULFS_OPS(vp)	(VFSTOULFS((vp)->v_mount)->um_ops)
-
-#define	ULFS_ITIMES(vp, acc, mod, cre) \
-	(*ULFS_OPS(vp)->uo_itimes)(VTOI(vp), (acc), (mod), (cre))
-#define	ULFS_UPDATE(vp, acc, mod, flags) \
-	(*ULFS_OPS(vp)->uo_update)((vp), (acc), (mod), (flags))
-#define	ULFS_TRUNCATE(vp, off, flags, cr) \
-	(*ULFS_OPS(vp)->uo_truncate)((vp), (off), (flags), (cr))
-#define	ULFS_VALLOC(vp, mode, cr, vpp) \
-	(*ULFS_OPS(vp)->uo_valloc)((vp), (mode), (cr), (vpp))
-#define	ULFS_VFREE(vp, ino, mode) \
-	(*ULFS_OPS(vp)->uo_vfree)((vp), (ino), (mode))
-#define	ULFS_BALLOC(vp, off, size, cr, flags, bpp) \
-	(*ULFS_OPS(vp)->uo_balloc)((vp), (off), (size), (cr), (flags), (bpp))
-#define	ULFS_UNMARK_VNODE(vp) \
-	(*ULFS_OPS(vp)->uo_unmark_vnode)((vp))
-
-/* ULFS-specific flags */
+/* ULFS-specific flags for um_flags */
 #define ULFS_NEEDSWAP	0x01	/* filesystem metadata need byte-swapping */
 /*	unused		0x02	   */
 #define ULFS_QUOTA	0x04	/* filesystem has QUOTA (v1) */
@@ -158,11 +117,12 @@ struct ulfs_ops {
 #define VFSTOULFS(mp)	((struct ulfsmount *)((mp)->mnt_data))
 
 /*
- * Macros to access file system parameters in the ulfsmount structure.
+ * Macros to access file system parameters (no longer) in the
+ * ulfsmount structure.
  * Used by ulfs_bmap.
  */
-#define MNINDIR(ump)			((ump)->um_nindir)
-#define	blkptrtodb(ump, b)		((b) << (ump)->um_bptrtodb)
+#define MNINDIR(lfs)			((lfs)->um_nindir)
+#define	blkptrtodb(lfs, b)		((b) << (lfs)->um_bptrtodb)
 
 /*
  * Predicate for byte-swapping support.

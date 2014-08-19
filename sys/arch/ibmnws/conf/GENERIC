@@ -1,12 +1,10 @@
-#	$NetBSD: GENERIC,v 1.41.2.1 2013/06/23 06:20:07 tls Exp $
+#	$NetBSD: GENERIC,v 1.41.2.2 2014/08/20 00:03:09 tls Exp $
 #
 #
 
 include "arch/ibmnws/conf/std.ibmnws"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
-
-#makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
 # Console settings
 options 	CONSOLE="\"genfb\""

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.15.12.1 2012/11/20 03:01:19 tls Exp $	*/
+/*	$NetBSD: pcib.c,v 1.15.12.2 2014/08/20 00:02:58 tls Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.15.12.1 2012/11/20 03:01:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.15.12.2 2014/08/20 00:02:58 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ static void	pcib_isa_attach_hook(device_t, device_t,
 static void	pcib_isa_detach_hook(isa_chipset_tag_t, device_t);
 static int	pcib_isa_intr_alloc(void *, int, int, int *);
 static const char *
-		pcib_isa_intr_string(void *, int);
+		pcib_isa_intr_string(void *, int, char *, size_t);
 
 CFATTACH_DECL_NEW(pcib, sizeof(struct pcib_softc),
     pcib_match, pcib_attach, NULL, NULL);
@@ -306,7 +306,7 @@ pcib_attach(device_t parent, device_t self, void *aux)
 #if 0
 		char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
-		sprintf(irqstr, "irq %d", i);
+		snprintf(irqstr, sizeof(irqstr), "irq %d", i);
 		evcnt_attach_dynamic(&sc->sc_intrtab[i].intr_count,
 		    EVCNT_TYPE_INTR, NULL, "pcib", irqstr);
 #else
@@ -462,15 +462,13 @@ pcib_intr(void *v)
 }
 
 const char *
-pcib_isa_intr_string(void *v, int irq)
+pcib_isa_intr_string(void *v, int irq, char *buf, size_t len)
 {
-	static char irqstr[12];		/* 8 + 2 + NULL + sanity */
-
 	if (irq == 0 || irq >= ICU_LEN || irq == 2)
-		panic("pcib_isa_intr_string: bogus isa irq 0x%x", irq);
+		panic("%s: bogus isa irq 0x%x", __func__, irq);
 
-	sprintf(irqstr, "isa irq %d", irq);
-	return (irqstr);
+	snprintf(buf, len, "isa irq %d", irq);
+	return buf;
 }
 
 const struct evcnt *

@@ -1,7 +1,6 @@
 /* Reverse execution and reverse debugging.
 
-   Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "target.h"
 #include "top.h"
 #include "cli/cli-cmds.h"
@@ -49,9 +48,6 @@ exec_reverse_once (char *cmd, char *args, int from_tty)
   char *reverse_command;
   enum exec_direction_kind dir = execution_direction;
   struct cleanup *old_chain;
-
-  if (dir == EXEC_ERROR)
-    error (_("Target %s does not support this command."), target_shortname);
 
   if (dir == EXEC_REVERSE)
     error (_("Already in reverse mode.  Use '%s' or 'set exec-dir forward'."),
@@ -187,7 +183,7 @@ delete_one_bookmark (int num)
   if (b == bookmark_chain)
     bookmark_chain = b->next;
 
-  /* Find bookmark preceeding "marked" one, so we can unlink.  */
+  /* Find bookmark preceding "marked" one, so we can unlink.  */
   if (b)
     {
       ALL_BOOKMARKS (b1)
@@ -220,7 +216,6 @@ delete_all_bookmarks (void)
 static void
 delete_bookmark_command (char *args, int from_tty)
 {
-  struct bookmark *b;
   int num;
   struct get_number_or_range_state state;
 
@@ -264,7 +259,7 @@ goto_bookmark_command (char *args, int from_tty)
       || strncmp (args, "end",   strlen ("end")) == 0)
     {
       /* Special case.  Give target opportunity to handle.  */
-      target_goto_bookmark (args, from_tty);
+      target_goto_bookmark ((gdb_byte *) args, from_tty);
       return;
     }
 
@@ -273,7 +268,7 @@ goto_bookmark_command (char *args, int from_tty)
       /* Special case -- quoted string.  Pass on to target.  */
       if (args[strlen (args) - 1] != args[0])
 	error (_("Unbalanced quotes: %s"), args);
-      target_goto_bookmark (args, from_tty);
+      target_goto_bookmark ((gdb_byte *) args, from_tty);
       return;
     }
 

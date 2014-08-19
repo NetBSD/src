@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.86 2012/08/10 12:18:14 joerg Exp $
+#	$NetBSD: Makefile.booters,v 1.86.2.1 2014/08/20 00:03:06 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,7 @@ STRIPFLAG=
 BINMODE=444
 
 LIBCRT0=	# nothing
+LIBCRTI=	# nothing
 LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing
@@ -48,18 +49,6 @@ KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 
 CLEANFILES+= ${STARTFILE} vers.c ${BASE}.list
 SRCS+=	vers.c
-
-CLEANFILES+= machine x86
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	-rm -f machine && ln -s $S/arch/i386/include machine
-	-rm -f x86 && ln -s $S/arch/x86/include x86
-.ifdef LIBOBJ
-	-rm -f lib && ln -s ${LIBOBJ}/lib lib
-	mkdir -p ${LIBOBJ}/lib
-.endif
-.endif
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -125,3 +114,5 @@ ${BASE}.bin: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
 	${OBJCOPY} -O binary ${BASE}.sym ${BASE}.bin
 
 .include <bsd.prog.mk>
+KLINK_MACHINE=	i386
+.include <bsd.klinks.mk>

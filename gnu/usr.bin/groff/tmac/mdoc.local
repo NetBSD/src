@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.68.2.1 2013/06/23 06:28:49 tls Exp $
+.\" $NetBSD: mdoc.local,v 1.68.2.2 2014/08/20 00:02:05 tls Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,9 +44,9 @@
 .as doc-str-St--ieee1275-94     " (\*[Lq]\*[doc-Tn-font-size]Open Firmware\*[doc-str-St]\*[Rq])
 .
 .\" Default .Os value
-.ds doc-operating-system NetBSD\~6.0
+.ds doc-operating-system NetBSD\~7.0
 .\" Default footer operating system value
-.ds doc-default-operating-system NetBSD\~6.0
+.ds doc-default-operating-system NetBSD\~7.0
 .\" Other known versions, not yet in groff distribution
 .ds doc-operating-system-NetBSD-1.3.3  1.3.3
 .ds doc-operating-system-NetBSD-1.6.3  1.6.3
@@ -59,7 +59,9 @@
 .ds doc-operating-system-NetBSD-5.0    5.0
 .ds doc-operating-system-NetBSD-5.1    5.1
 .ds doc-operating-system-NetBSD-6.0    6.0
+.ds doc-operating-system-NetBSD-6.1    6.1
 .ds doc-operating-system-NetBSD-7.0    7.0
+.ds doc-operating-system-NetBSD-8.0    8.0
 .ds doc-operating-system-FreeBSD-4.11  4.11
 .ds doc-operating-system-FreeBSD-5.4   5.4
 .ds doc-operating-system-FreeBSD-5.5   5.5
@@ -105,3 +107,5 @@
 .ds doc-str-Lb-libsaslc         Simple Authentication and Security Layer client library (libsaslc, \-lsaslc)
 .ds doc-str-Lb-libssp           Buffer Overflow Protection Library (libssp, \-lssp)
 .ds doc-str-Lb-libterminfo      Terminal Information Library (libterminfo, \-lterminfo)
+.ds doc-str-St--p1003.1j-2000  \*[doc-Tn-font-size]\%IEEE\*[doc-str-St] Std 1003.1j-2000 
+.as doc-str-St--p1003.1j-2000  " (\*[Lq]\)\*[Px]\*[doc-str-St].1\*[Rq])

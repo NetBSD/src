@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_npevar.h,v 1.3.22.1 2012/11/20 03:01:08 tls Exp $	*/
+/*	$NetBSD: ixp425_npevar.h,v 1.3.22.2 2014/08/20 00:02:48 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -89,7 +89,7 @@ struct ixpnpe_softc {
 	bus_size_t	sc_size;	/* size of mapped register window */
 	int		sc_unit;
 	void		*sc_ih;		/* interrupt handler */
-	struct simplelock sc_lock;	/* mailbox lock */
+	kmutex_t	sc_lock;	/* mailbox lock */
 	uint32_t	sc_msg[2];	/* reply msg collected in ixpnpe_intr */
 	int		sc_msgwaiting;	/* sc_msg holds valid data */
 

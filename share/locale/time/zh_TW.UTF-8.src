@@ -1,45 +1,65 @@
-# $NetBSD: zh_TW.UTF-8.src,v 1.1 2008/05/17 04:11:30 ginsbach Exp $
+# $NetBSD: zh_TW.UTF-8.src,v 1.1.30.1 2014/08/20 00:02:34 tls Exp $
 #
-# Chinese Language Time Locale for Taiwan, Province of China
+# Locale: zh_Hant_TW
+# Character set: UTF-8
 #
-# WARNING: Empty lines and/or blank spaces may be essential.
-#
-# From: $FreeBSD: src/share/timedef/zh_TW.UTF-8.src,v 1.3 2007/12/30 03:08:52 ache Exp $
+# Copyright 1991-2011 Unicode, Inc. All rights reserved. Distributed under the Terms of Use in
+# http://www.unicode.org/copyright.html.
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy of the Unicode
+# data files and any associated documentation (the "Data Files") or Unicode software and any
+# associated documentation (the "Software") to deal in the Data Files or Software without
+# restriction, including without limitation the rights to use, copy, modify, merge, publish,
+# distribute, and/or sell copies of the Data Files or Software, and to permit persons to whom
+# the Data Files or Software are furnished to do so, provided that (a) the above copyright
+# notice(s) and this permission notice appear with all copies of the Data Files or Software,
+# (b) both the above copyright notice(s) and this permission notice appear in associated
+# documentation, and (c) there is clear notice in each modified Data File or in the Software as
+# well as in the documentation associated with the Data File(s) or Software that the data or
+# software has been modified.
+# 
+# THE DATA FILES AND SOFTWARE ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+# PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS. IN NO EVENT SHALL THE COPYRIGHT
+# HOLDER OR HOLDERS INCLUDED IN THIS NOTICE BE LIABLE FOR ANY CLAIM, OR ANY SPECIAL INDIRECT OR
+# CONSEQUENTIAL DAMAGES, OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+# WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+# CONNECTION WITH THE USE OR PERFORMANCE OF THE DATA FILES OR SOFTWARE.
 #
 # Short weekday names (abday)
 #
-日
-一
-二
-三
-四
-五
-六
+週日
+週一
+週二
+週三
+週四
+週五
+週六
 #
 # Long weekday names (day)
 #
-周日
-周一
-周二
-周三
-周四
-周五
-周六
+星期日
+星期一
+星期二
+星期三
+星期四
+星期五
+星期六
 #
 # Short month names (abmon)
 #
- 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
-10
-11
-12
+1月
+2月
+3月
+4月
+5月
+6月
+7月
+8月
+9月
+10月
+11月
+12月
 #
 # Long month names (mon)
 #
@@ -63,17 +83,18 @@
 #
 # Date and Time - %c (d_t_fmt)
 #
-%a %b/%e %T %Y
+%Y年%m月%e日%Z%p%I時%M分%S秒
 #
 # Date - %x (d_fmt)
 #
-%Y/%m/%d
+%Y/%m/%e
 #
 # Time - %X (t_fmt)
 #
-%H時%M分%S秒
+%p%I:%M:%S
 #
-# 12-hour Clock - %r (t_ampm_fmt)
+# 12-hour Clock - %r (t_fmt_ampm)
 #
-%I:%M:%S %p
+%p%I:%M:%S
 # EOF
+

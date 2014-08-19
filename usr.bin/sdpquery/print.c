@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.19 2011/09/15 17:52:53 plunky Exp $	*/
+/*	$NetBSD: print.c,v 1.19.8.1 2014/08/20 00:05:03 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.19 2011/09/15 17:52:53 plunky Exp $");
+__RCSID("$NetBSD: print.c,v 1.19.8.1 2014/08/20 00:05:03 tls Exp $");
 
 #include <ctype.h>
 #include <iconv.h>
@@ -833,7 +833,7 @@ print_codeset_string(const char *src, size_t srclen, const char *codeset)
 {
 	char buf[50], *dst;
 	iconv_t ih;
-	size_t n, dstlen;
+	size_t dstlen;
 
 	dst = buf;
 	dstlen = sizeof(buf);
@@ -844,7 +844,7 @@ print_codeset_string(const char *src, size_t srclen, const char *codeset)
 		return;
 	}
 
-	n = iconv(ih, &src, &srclen, &dst, &dstlen);
+	(void)iconv(ih, &src, &srclen, &dst, &dstlen);
 
 	iconv_close(ih);
 

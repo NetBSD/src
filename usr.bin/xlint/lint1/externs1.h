@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.30.10.1 2013/06/23 06:29:02 tls Exp $	*/
+/*	$NetBSD: externs1.h,v 1.30.10.2 2014/08/20 00:05:06 tls Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -68,6 +68,7 @@ extern	int	yyparse(void);
 /*
  * scan.l
  */
+extern  int	attron;
 extern	pos_t	curr_pos;
 extern	pos_t	csrc_pos;
 extern	symt_t	symtyp;

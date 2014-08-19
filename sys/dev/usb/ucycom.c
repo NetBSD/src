@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.34.2.1 2013/02/25 00:29:38 tls Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.34.2.2 2014/08/20 00:03:51 tls Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.34.2.1 2013/02/25 00:29:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.34.2.2 2014/08/20 00:03:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,8 +148,18 @@ dev_type_tty(ucycomtty);
 dev_type_poll(ucycompoll);
 
 const struct cdevsw ucycom_cdevsw = {
-	ucycomopen, ucycomclose, ucycomread, ucycomwrite, ucycomioctl,
-	ucycomstop, ucycomtty, ucycompoll, nommap, ttykqfilter, D_TTY
+	.d_open = ucycomopen,
+	.d_close = ucycomclose,
+	.d_read = ucycomread,
+	.d_write = ucycomwrite,
+	.d_ioctl = ucycomioctl,
+	.d_stop = ucycomstop,
+	.d_tty = ucycomtty,
+	.d_poll = ucycompoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 Static int ucycomparam(struct tty *, struct termios *);
@@ -452,7 +462,7 @@ ucycomstart(struct tty *tp)
 {
 	struct ucycom_softc *sc =
 	    device_lookup_private(&ucycom_cd, UCYCOMUNIT(tp->t_dev));
-	usbd_status err;
+	usbd_status err __unused;
 	u_char *data;
 	int cnt, len, s;
 
@@ -1096,6 +1106,10 @@ ucycom_get_cfg(struct ucycom_softc *sc)
 
 	err = uhidev_get_report(&sc->sc_hdev, UHID_FEATURE_REPORT,
 	    report, sc->sc_flen);
+	if (err) {
+		DPRINTF(("%s: failed\n", __func__));
+		return;
+	}
 	cfg = report[4];
 	baud = (report[3] << 24) + (report[2] << 16) + (report[1] << 8) +
 	    report[0];

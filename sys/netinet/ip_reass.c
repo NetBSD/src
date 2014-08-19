@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_reass.c,v 1.8 2011/06/27 00:45:50 enami Exp $	*/
+/*	$NetBSD: ip_reass.c,v 1.8.12.1 2014/08/20 00:04:35 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.8 2011/06/27 00:45:50 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.8.12.1 2014/08/20 00:04:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -170,11 +170,6 @@ void
 sysctl_ip_reass_setup(void)
 {
 
-	sysctl_createv(&ip_reass_sysctllog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "net", NULL,
-		NULL, 0, NULL, 0,
-		CTL_NET, CTL_EOL);
 	sysctl_createv(&ip_reass_sysctllog, 0, NULL, NULL,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "inet",

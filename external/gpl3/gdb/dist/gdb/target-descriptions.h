@@ -1,7 +1,6 @@
 /* Target description support for GDB.
 
-   Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -29,22 +28,44 @@ struct tdesc_type;
 struct tdesc_reg;
 struct target_desc;
 struct target_ops;
+struct target_desc;
+/* An inferior's target description info is stored in this opaque
+   object.  There's one such object per inferior.  */
+struct target_desc_info;
+struct inferior;
 
-/* Fetch the current target's description, and switch the current
+/* Fetch the current inferior's description, and switch its current
    architecture to one which incorporates that description.  */
 
 void target_find_description (void);
 
-/* Discard any description fetched from the current target, and switch
-   the current architecture to one with no target description.  */
+/* Discard any description fetched from the target for the current
+   inferior, and switch the current architecture to one with no target
+   description.  */
 
 void target_clear_description (void);
 
-/* Return the global current target description.  This should only be
-   used by gdbarch initialization code; most access should be through
-   an existing gdbarch.  */
+/* Return the current inferior's target description.  This should only
+   be used by gdbarch initialization code; most access should be
+   through an existing gdbarch.  */
 
 const struct target_desc *target_current_description (void);
+
+/* Copy inferior target description data.  Used for example when
+   handling (v)forks, where child's description is the same as the
+   parent's, since the child really is a copy of the parent.  */
+
+void copy_inferior_target_desc_info (struct inferior *destinf,
+				     struct inferior *srcinf);
+
+/* Free a target_desc_info object.  */
+
+void target_desc_info_free (struct target_desc_info *tdesc_info);
+
+/* Returns true if INFO indicates the target description had been
+   supplied by the user.  */
+
+int target_desc_info_from_user_p (struct target_desc_info *info);
 
 /* Record architecture-specific functions to call for pseudo-register
    support.  If tdesc_use_registers is called and gdbarch_num_pseudo_regs

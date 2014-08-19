@@ -1,4 +1,4 @@
-.\"	$NetBSD: ip.4,v 1.33 2012/06/25 14:47:55 christos Exp $
+.\"	$NetBSD: ip.4,v 1.33.2.1 2014/08/20 00:02:35 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ip.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd June 25, 2012
+.Dd June 27, 2013
 .Dt IP 4
 .Os
 .Sh NAME
@@ -111,6 +111,25 @@ setsockopt(s, IPPROTO_IP, IP_IPSEC_POLICY, buf, ipsec_get_policylen(buf));
 .Ed
 .Pp
 The
+.Dv IP_PKTINFO
+option can be used to turn on receiving of information about the source
+address of the packet, and the interface index.
+The information is passed in a
+.Vt struct in_pktinfo
+structure, which contains
+.Bd -literal
+	struct in_addr ipi_addr;	/* the source or destination address */
+	unsigned int ipi_ifindex;	/* the interface index */
+.Ed
+and added to the control portion of the message:
+The cmsghdr fields have the following values:
+.Bd -literal
+cmsg_len = CMSG_LEN(sizeof(struct in_pktinfo))
+cmsg_level = IPPROTO_IP
+cmsg_type = IP_PKTINFO
+.Ed
+.Pp
+The
 .Dv IP_PORTALGO
 can be used to randomize the port selection.
 Valid algorithms are described in
@@ -188,6 +207,12 @@ cmsg_len = CMSG_LEN(sizeof(struct sockaddr_dl))
 cmsg_level = IPPROTO_IP
 cmsg_type = IP_RECVIF
 .Ed
+.Pp
+The
+.Dv IP_RECVPKTINFO
+option is similar to the
+.Dv IP_PKTINFO
+one, only in this case the inbound information is returned.
 .Pp
 If the
 .Dv IP_RECVTTL

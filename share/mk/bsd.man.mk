@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.109.8.2 2013/06/23 06:28:54 tls Exp $
+#	$NetBSD: bsd.man.mk,v 1.109.8.3 2014/08/20 00:02:38 tls Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -31,14 +31,16 @@ MANTARGET?=	cat
 
 MAN?=
 MLINKS?=
-_MNUMBERS=	1 2 3 4 5 6 7 8 9
-.SUFFIXES:	${_MNUMBERS:@N@.$N@}
+_MSECTIONS=	1 2 3 4 5 6 7 8 9
+_MSECTIONS+=	3lua 9lua
+_MSECTIONREGEX=	${_MSECTIONS:ts|} # e.g. 1|2|3|...
+.SUFFIXES:	${_MSECTIONS:@N@.$N@}
 
 .if ${MKMANZ} == "no"
 MANCOMPRESS?=
 MANSUFFIX?=
 .else
-MANCOMPRESS?=	${TOOL_GZIP} -ncf
+MANCOMPRESS?=	${TOOL_GZIP_N} -cf
 MANSUFFIX?=	.gz
 .endif
 
@@ -73,9 +75,9 @@ MANPAGES=	${MAN:C/.$/&${MANSUFFIX}/}
 realall:	${MANPAGES}
 .if !empty(MANSUFFIX)
 .NOPATH:	${MANPAGES}
-.SUFFIXES:	${_MNUMBERS:@N@.$N${MANSUFFIX}@}
+.SUFFIXES:	${_MSECTIONS:@N@.$N${MANSUFFIX}@}
 
-${_MNUMBERS:@N@.$N.$N${MANSUFFIX}@}:			# build rule
+${_MSECTIONS:@N@.$N.$N${MANSUFFIX}@}:			# build rule
 	${_MKTARGET_FORMAT}
 	cat ${.IMPSRC} ${MANCOMPRESS} > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
 .endif # !empty(MANSUFFIX)
@@ -123,14 +125,14 @@ manlinks::	${_t}
 .if (${MKCATPAGES} != "no") && (${MKMAN} != "no")
 catinstall:	catpages catlinks
 catpages::	# ensure target exists
-CATPAGES=	${MAN:C/\.([1-9])$/.cat\1${MANSUFFIX}/}
+CATPAGES=	${MAN:C/\.(${_MSECTIONREGEX})\$/.cat\1${MANSUFFIX}/}
 
 realall:	${CATPAGES}
 .NOPATH:	${CATPAGES}
-.SUFFIXES:	${_MNUMBERS:@N@.cat$N${MANSUFFIX}@}
+.SUFFIXES:	${_MSECTIONS:@N@.cat$N${MANSUFFIX}@}
 .MADE:	${CATDEPS}
 
-${_MNUMBERS:@N@.$N.cat$N${MANSUFFIX}@}: ${CATDEPS}	# build rule
+${_MSECTIONS:@N@.$N.cat$N${MANSUFFIX}@}: ${CATDEPS}	# build rule
 	${_MKTARGET_FORMAT}
 .if ${MKMANDOC} == yes && !defined(NOMANDOC)
 	if test ""${NOMANDOC.${.IMPSRC:T}:tl:Q} != "yes"; then \
@@ -191,16 +193,16 @@ catlinks::	${_t}
 .if (${MKHTML} != "no") && (${MKMAN} != "no")		# {
 htmlinstall:	htmlpages htmllinks
 htmlpages::	# ensure target exists
-HTMLPAGES=	${MAN:C/\.([1-9])$/.html\1/}
+HTMLPAGES=	${MAN:C/\.(${_MSECTIONREGEX})\$/.html\1/}
 
 HTMLLINKS=	${MANSUBDIR:?../:}../html%S/%N.html
 HTMLSTYLE=	${MANSUBDIR:?../:}../style.css
 
 realall:	${HTMLPAGES}
 .NOPATH:	${HTMLPAGES}
-.SUFFIXES:	${_MNUMBERS:@N@.html$N@}
+.SUFFIXES:	${_MSECTIONS:@N@.html$N@}
 
-${_MNUMBERS:@N@.$N.html$N@}: 				# build rule
+${_MSECTIONS:@N@.$N.html$N@}: 				# build rule
 	${_MKTARGET_FORMAT}
 .if ${MKMANDOC} == yes && !defined(NOMANDOC)
 	if test ""${NOMANDOC.${.IMPSRC:T}:tl:Q} != "yes"; then \

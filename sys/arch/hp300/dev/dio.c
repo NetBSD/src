@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.38 2011/03/06 14:51:21 tsutsui Exp $	*/
+/*	$NetBSD: dio.c,v 1.38.14.1 2014/08/20 00:03:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.38 2011/03/06 14:51:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.38.14.1 2014/08/20 00:03:00 tls Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -263,7 +263,8 @@ dio_devinfo(struct dio_attach_args *da, char *buf, size_t buflen)
 				}
 			} else {
 			foundit:
-				sprintf(buf, "%s", dio_devdescs[i].dd_desc);
+				snprintf(buf, buflen, "%s",
+				    dio_devdescs[i].dd_desc);
 				return buf;
 			}
 		}
@@ -273,7 +274,7 @@ dio_devinfo(struct dio_attach_args *da, char *buf, size_t buflen)
 	/*
 	 * Device is unknown.  Construct something reasonable.
 	 */
-	sprintf(buf, "device id = 0x%x secid = 0x%x",
+	snprintf(buf, buflen, "device id = 0x%x secid = 0x%x",
 	    da->da_id, da->da_secid);
 	return buf;
 }

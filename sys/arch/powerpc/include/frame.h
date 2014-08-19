@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.25 2012/08/01 16:19:42 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.25.2.1 2014/08/20 00:03:19 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -59,6 +59,16 @@ struct reg_sans_pc {
 	register_t r_ctr;
 };
 
+#ifdef _LP64
+struct reg_sans_pc32 {
+	register32_t r_fixreg[32];
+	register32_t r_lr;
+	uint32_t r_cr;
+	uint32_t r_xer;
+	register32_t r_ctr;
+};
+#endif
+
 struct utrapframe {
 	register_t fixreg[32];
 	register_t lr;
@@ -77,6 +87,14 @@ struct clockframe {
 	register_t cf_srr1;
 	int cf_idepth;
 };
+
+#ifdef _LP64
+struct clockframe32 {
+	register32_t cf_srr0;
+	register32_t cf_srr1;
+	int cf_idepth;
+};
+#endif
 
 struct trapframe {
 	struct reg_sans_pc tf_ureg;
@@ -100,6 +118,31 @@ struct trapframe {
 	uint32_t tf_spefscr;
 #endif
 };
+
+#ifdef _LP64
+struct trapframe32 {
+	struct reg_sans_pc32 tf_ureg;
+	struct clockframe32 tf_cf;
+	uint32_t tf_exc;
+#if defined(PPC_OEA) || defined(PPC_OEA64) || defined(PPC_OEA64_BRIDGE)
+	register32_t tf_dar;
+	register32_t tf_pad0[2];
+	uint32_t tf_dsisr;
+	uint32_t tf_vrsave;
+	uint32_t tf_mq;
+	uint32_t tf_pad1[1];
+#endif
+#if defined(PPC_BOOKE) || defined(PPC_IBM4XX)
+	register32_t tf_dear;
+	register32_t tf_mcar;
+	register32_t tf_sprg1;
+	uint32_t tf_esr;
+	uint32_t tf_mcsr;
+	uint32_t tf_pid;
+	uint32_t tf_spefscr;
+#endif
+};
+#endif /* _LP64 */
 #define tf_fixreg	tf_ureg.r_fixreg
 #define tf_lr		tf_ureg.r_lr
 #define tf_cr		tf_ureg.r_cr

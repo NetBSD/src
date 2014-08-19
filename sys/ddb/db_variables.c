@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.43 2012/06/02 21:36:42 dsl Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.43.2.1 2014/08/20 00:03:35 tls Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.43 2012/06/02 21:36:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.43.2.1 2014/08/20 00:03:35 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddbparam.h"
@@ -104,12 +104,6 @@ db_rw_internal_variable(const struct db_variable *vp, db_expr_t *valp, int rw)
 #ifdef _KERNEL
 SYSCTL_SETUP(sysctl_ddb_setup, "sysctl ddb subtree setup")
 {
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "ddb", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_DDB, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,

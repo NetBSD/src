@@ -1,4 +1,4 @@
-/* $NetBSD: devopen.c,v 1.2 2011/03/06 18:22:13 phx Exp $ */
+/* $NetBSD: devopen.c,v 1.2.16.1 2014/08/20 00:03:22 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -52,7 +52,6 @@ struct fs_ops fs_tftp  = FS_OPS(tftp);
 struct fs_ops fs_ffsv2 = FS_OPS(ffsv2);
 struct fs_ops fs_ffsv1 = FS_OPS(ffsv1);
 struct fs_ops fs_mem   = FS_OPS(mem);
-extern char *fsmod;
 
 static void parseunit(const char *, int *, int *, char **);
 

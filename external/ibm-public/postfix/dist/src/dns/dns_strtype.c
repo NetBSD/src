@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_strtype.c,v 1.1.1.1 2009/06/23 10:08:43 tron Exp $	*/
+/*	$NetBSD: dns_strtype.c,v 1.1.1.1.16.1 2014/08/19 23:59:42 tls Exp $	*/
 
 /*++
 /* NAME
@@ -169,6 +169,15 @@ static struct dns_type_map dns_type_map[] = {
 #endif
 #ifdef T_MAILA
     T_MAILA, "MAILA",
+#endif
+#ifdef T_TLSA
+    T_TLSA, "TLSA",
+#endif
+#ifdef T_RRSIG
+    T_RRSIG, "RRSIG",
+#endif
+#ifdef T_DNAME
+    T_DNAME, "DNAME",
 #endif
 #ifdef T_ANY
     T_ANY, "ANY",

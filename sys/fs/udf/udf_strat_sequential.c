@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_sequential.c,v 1.11 2011/01/03 13:12:40 drochner Exp $ */
+/* $NetBSD: udf_strat_sequential.c,v 1.11.18.1 2014/08/20 00:04:28 tls Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.11 2011/01/03 13:12:40 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.11.18.1 2014/08/20 00:04:28 tls Exp $");
 #endif /* not lint */
 
 
@@ -302,7 +302,6 @@ udf_VAT_mapping_update(struct udf_mount *ump, struct buf *buf, uint32_t lb_map)
 	union dscrptr    *fdscr = (union dscrptr *) buf->b_data;
 	struct vnode     *vp = buf->b_vp;
 	struct udf_node  *udf_node = VTOI(vp);
-	uint32_t lb_size, blks;
 	uint32_t lb_num;
 	uint32_t udf_rw32_lbmap;
 	int c_type = buf->b_udf_c_type;
@@ -316,10 +315,6 @@ udf_VAT_mapping_update(struct udf_mount *ump, struct buf *buf, uint32_t lb_map)
 	/* NOTE: and the fileset descriptor (FIXME ?) */
 	if (c_type != UDF_C_NODE)
 		return;
-
-	/* we now have an UDF FE/EFE node on media with VAT (or VAT itself) */
-	lb_size = udf_rw32(ump->logical_vol->lb_size);
-	blks = lb_size / DEV_BSIZE;
 
 	udf_rw32_lbmap = udf_rw32(lb_map);
 
@@ -362,8 +357,8 @@ udf_issue_buf(struct udf_mount *ump, int queue, struct buf *buf)
 	union dscrptr *dscr;
 	struct long_ad *node_ad_cpy;
 	struct part_desc *pdesc;
-	uint64_t *lmapping, *lmappos, blknr;
-	uint32_t our_sectornr, sectornr, bpos;
+	uint64_t *lmapping, *lmappos;
+	uint32_t sectornr, bpos;
 	uint32_t ptov;
 	uint16_t vpart_num;
 	uint8_t *fidblk;
@@ -380,9 +375,6 @@ udf_issue_buf(struct udf_mount *ump, int queue, struct buf *buf)
 		VOP_STRATEGY(ump->devvp, buf);
 		return;
 	}
-
-	blknr        = buf->b_blkno;
-	our_sectornr = blknr / blks;
 
 	if (queue == UDF_SHED_WRITING) {
 		DPRINTF(SHEDULE, ("\nudf_issue_buf WRITE %p : sector %d "
@@ -533,6 +525,7 @@ udf_doshedule(struct udf_mount *ump)
 					&ump->metadata_track);
 			assert(error == 0);
 			mutex_enter(&priv->discstrat_mutex);
+			__USE(error);
 		}
 	}
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164.c,v 1.44 2012/02/06 02:14:15 matt Exp $ */
+/* $NetBSD: pci_eb164.c,v 1.44.6.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.44 2012/02/06 02:14:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.44.6.1 2014/08/20 00:02:41 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.44 2012/02/06 02:14:15 matt Exp $");
 #endif
 
 int	dec_eb164_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
-const char *dec_eb164_intr_string(void *, pci_intr_handle_t);
+const char *dec_eb164_intr_string(void *, pci_intr_handle_t, char *, size_t);
 const struct evcnt *dec_eb164_intr_evcnt(void *, pci_intr_handle_t);
 void	*dec_eb164_intr_establish(void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *);
@@ -136,7 +136,9 @@ pci_eb164_pickintr(struct cia_config *ccp)
 	for (i = 0; i < EB164_MAX_IRQ; i++)
 		eb164_intr_disable(i);	
 
-	eb164_pci_intr = alpha_shared_intr_alloc(EB164_MAX_IRQ, 8);
+#define PCI_EB164_IRQ_STR	8
+	eb164_pci_intr = alpha_shared_intr_alloc(EB164_MAX_IRQ,
+	    PCI_EB164_IRQ_STR);
 	for (i = 0; i < EB164_MAX_IRQ; i++) {
 		/*
 		 * Systems with a Pyxis seem to have problems with
@@ -147,7 +149,7 @@ pci_eb164_pickintr(struct cia_config *ccp)
 			(ccp->cc_flags & CCF_ISPYXIS) ? 0 : PCI_STRAY_MAX);
 
 		cp = alpha_shared_intr_string(eb164_pci_intr, i);
-		sprintf(cp, "irq %d", i);
+		snprintf(cp, PCI_EB164_IRQ_STR, "irq %d", i);
 		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
 		    eb164_pci_intr, i), EVCNT_TYPE_INTR, NULL,
 		    "eb164", cp);
@@ -232,17 +234,16 @@ dec_eb164_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 const char *
-dec_eb164_intr_string(void *ccv, pci_intr_handle_t ih)
+dec_eb164_intr_string(void *ccv, pci_intr_handle_t ih, char *buf, size_t len)
 {
 #if 0
 	struct cia_config *ccp = ccv;
 #endif
-	static char irqstr[15];          /* 11 + 2 + NULL + sanity */
 
 	if (ih > EB164_MAX_IRQ)
-	        panic("dec_eb164_intr_string: bogus eb164 IRQ 0x%lx", ih);
-	sprintf(irqstr, "eb164 irq %ld", ih);
-	return (irqstr);
+	        panic("%s: bogus eb164 IRQ 0x%lx", __func__, ih);
+	snprintf(buf, len, "eb164 irq %ld", ih);
+	return buf;
 }
 
 const struct evcnt *
@@ -253,7 +254,7 @@ dec_eb164_intr_evcnt(void *ccv, pci_intr_handle_t ih)
 #endif
 
 	if (ih > EB164_MAX_IRQ)
-		panic("dec_eb164_intr_string: bogus eb164 IRQ 0x%lx", ih);
+		panic("%s: bogus eb164 IRQ 0x%lx", __func__, ih);
 	return (alpha_shared_intr_evcnt(eb164_pci_intr, ih));
 }
 
@@ -311,6 +312,7 @@ dec_eb164_pciide_compat_intr_establish(void *v, device_t dev,
 	pci_chipset_tag_t pc = pa->pa_pc;
 	void *cookie = NULL;
 	int bus, irq;
+	char buf[64];
 
 	pci_decompose_tag(pc, pa->pa_tag, &bus, NULL, NULL);
 
@@ -327,7 +329,8 @@ dec_eb164_pciide_compat_intr_establish(void *v, device_t dev,
 	if (cookie == NULL)
 		return (NULL);
 	aprint_normal_dev(dev, "%s channel interrupting at %s\n",
-	    PCIIDE_CHANNEL_NAME(chan), sio_intr_string(NULL /*XXX*/, irq));
+	    PCIIDE_CHANNEL_NAME(chan), sio_intr_string(NULL /*XXX*/, irq,
+		buf, sizeof(buf)));
 #endif
 	return (cookie);
 }

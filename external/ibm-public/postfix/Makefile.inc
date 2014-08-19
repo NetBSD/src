@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2012/03/04 16:12:24 tron Exp $
+#	$NetBSD: Makefile.inc,v 1.14.2.1 2014/08/19 23:59:40 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -59,15 +59,11 @@ CPPFLAGS+=	-DHAS_LDAP
 
 # Automatically link in libldap for a program.
 . if defined(PROG)
-LDADD+=		-lldap
-DPADD+=		${LIBLDAP}
-.  if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != ""))
-LDADD+=		-llber
-DPADD+=		${LIBLBER}
-.   if ${MKCRYPTO} != "no" 
+LDADD+=		-lldap -llber
+DPADD+=		${LIBLDAP} ${LIBLBER}
+.  if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "")) && ${MKCRYPTO} != "no"
 DPADD+=		${LIBSSL} ${LIBCRYPTO}
 LDADD+=		-lssl -lcrypto
-.   endif
 .  endif
 . endif
 .endif # USE_LDAP != no
@@ -94,7 +90,7 @@ LIBP${_LL:tu}=	${POBJDIR.${_LL}}/lib${_LL}.a
 PFIX_LIBEXECDIR=/usr/libexec/postfix
 PFIX_ETCDIR=	/etc/postfix
 PFIX_EXAMPLEDIR=/usr/share/examples/postfix
-PFIX_HTMLDIR=	/usr/share/doc/html/postfix
+PFIX_HTMLDIR=	/usr/share/doc/reference/ref8/postfix
 PFIX_SBINDIR=	/usr/sbin
 
 # override defaults which are otherwise empty and/or so postconf is correct

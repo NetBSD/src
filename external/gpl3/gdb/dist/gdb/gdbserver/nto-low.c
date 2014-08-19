@@ -1,6 +1,6 @@
 /* QNX Neutrino specific low level interface, for the remote server
    for GDB.
-   Copyright (C) 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,9 @@
 
 
 #include "server.h"
+#include "gdbthread.h"
 #include "nto-low.h"
+#include "hostio.h"
 
 #include <limits.h>
 #include <fcntl.h>
@@ -33,6 +35,8 @@
 
 extern int using_threads;
 int using_threads = 1;
+
+const struct target_desc *nto_tdesc;
 
 static void
 nto_trace (const char *fmt, ...)
@@ -202,11 +206,13 @@ do_attach (pid_t pid)
       && (status.flags & _DEBUG_FLAG_STOPPED))
     {
       ptid_t ptid;
+      struct process_info *proc;
 
       kill (pid, SIGCONT);
       ptid = ptid_build (status.pid, status.tid, 0);
       the_low_target.arch_setup ();
-      add_process (status.pid, 1);
+      proc = add_process (status.pid, 1);
+      proc->tdesc = nto_tdesc;
       TRACE ("Adding thread: pid=%d tid=%ld\n", status.pid,
 	     ptid_get_lwp (ptid));
       nto_find_new_threads (&nto_inferior);
@@ -531,14 +537,14 @@ nto_wait (ptid_t ptid,
     {
       TRACE ("SSTEP\n");
       ourstatus->kind = TARGET_WAITKIND_STOPPED;
-      ourstatus->value.sig = TARGET_SIGNAL_TRAP;
+      ourstatus->value.sig = GDB_SIGNAL_TRAP;
     }
   /* Was it a breakpoint?  */
   else if (status.flags & trace_mask)
     {
       TRACE ("STOPPED\n");
       ourstatus->kind = TARGET_WAITKIND_STOPPED;
-      ourstatus->value.sig = TARGET_SIGNAL_TRAP;
+      ourstatus->value.sig = GDB_SIGNAL_TRAP;
     }
   else if (status.flags & _DEBUG_FLAG_ISTOP)
     {
@@ -549,7 +555,7 @@ nto_wait (ptid_t ptid,
 	  TRACE ("  SIGNALLED\n");
 	  ourstatus->kind = TARGET_WAITKIND_STOPPED;
 	  ourstatus->value.sig =
-	    target_signal_from_host (status.info.si_signo);
+	    gdb_signal_from_host (status.info.si_signo);
 	  nto_inferior.exit_signo = ourstatus->value.sig;
 	  break;
 	case _DEBUG_WHY_FAULTED:
@@ -563,7 +569,7 @@ nto_wait (ptid_t ptid,
 	  else
 	    {
 	      ourstatus->value.sig =
-		target_signal_from_host (status.info.si_signo);
+		gdb_signal_from_host (status.info.si_signo);
 	      nto_inferior.exit_signo = ourstatus->value.sig;
 	    }
 	  break;
@@ -594,7 +600,7 @@ nto_wait (ptid_t ptid,
 	  TRACE ("REQUESTED\n");
 	  /* We are assuming a requested stop is due to a SIGINT.  */
 	  ourstatus->kind = TARGET_WAITKIND_STOPPED;
-	  ourstatus->value.sig = TARGET_SIGNAL_INT;
+	  ourstatus->value.sig = GDB_SIGNAL_INT;
 	  nto_inferior.exit_signo = 0;
 	  break;
 	}

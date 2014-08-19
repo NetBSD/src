@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.18 2012/01/14 21:15:48 jakllsch Exp $ */
+/* $NetBSD: uslsa.c,v 1.18.6.1 2014/08/20 00:03:51 tls Exp $ */
 
 /* from ugensa.c */
 
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.18 2012/01/14 21:15:48 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.18.6.1 2014/08/20 00:03:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -388,8 +388,11 @@ static int
 uslsa_param(void *vsc, int portno, struct termios *t)
 {
 	struct uslsa_softc *sc;
-	int ret;
+	usb_device_request_t req;
+	usbd_status status;
 	uint16_t value;
+	uint32_t baud;
+	int ret;
 
 	sc = vsc;
 
@@ -399,12 +402,27 @@ uslsa_param(void *vsc, int portno, struct termios *t)
 		return EIO;
 	}
 
-	value = SLSA_RV_BAUDDIV(t->c_ospeed);
+	req.bmRequestType = UT_WRITE_VENDOR_INTERFACE;
+	req.bRequest = SLSA_R_SET_BAUDRATE;
+	USETW(req.wValue, 0);
+	USETW(req.wIndex, sc->sc_ifnum);
+	USETW(req.wLength, 4);
 
-	if ((ret = uslsa_request_set(sc, SLSA_R_SET_BAUDDIV, value)) != 0) {
-		device_printf(sc->sc_dev, "%s: SET_BAUDDIV failed\n",
-		       __func__);
-		return ret;
+	baud = t->c_ospeed;
+	status = usbd_do_request(sc->sc_udev, &req, &baud);
+	if (status != USBD_NORMAL_COMPLETION) {
+		/* fallback method for devices that don't know SET_BAUDRATE */
+		/* hope we calculate it right */
+		device_printf(sc->sc_dev, "%s: set baudrate %d, failed %s,"
+				" using set bauddiv\n",
+		    __func__, baud, usbd_errstr(status));
+
+		value = SLSA_RV_BAUDDIV(t->c_ospeed);
+		if ((ret = uslsa_request_set(sc, SLSA_R_SET_BAUDDIV, value)) != 0) {
+			device_printf(sc->sc_dev, "%s: SET_BAUDDIV failed\n",
+			       __func__);
+			return ret;
+		}
 	}
 
 	value = 0;

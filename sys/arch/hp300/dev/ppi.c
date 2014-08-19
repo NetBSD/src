@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.43 2011/07/28 03:42:20 uebayasi Exp $	*/
+/*	$NetBSD: ppi.c,v 1.43.12.1 2014/08/20 00:03:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.43 2011/07/28 03:42:20 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.43.12.1 2014/08/20 00:03:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,8 +117,18 @@ static dev_type_write(ppiwrite);
 static dev_type_ioctl(ppiioctl);
 
 const struct cdevsw ppi_cdevsw = {
-	ppiopen, ppiclose, ppiread, ppiwrite, ppiioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	.d_open = ppiopen,
+	.d_close = ppiclose,
+	.d_read = ppiread,
+	.d_write = ppiwrite,
+	.d_ioctl = ppiioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 static void	ppistart(void *);

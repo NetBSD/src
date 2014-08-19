@@ -1,4 +1,4 @@
-/*	$NetBSD: draw.c,v 1.8 2009/08/12 07:42:11 dholland Exp $	*/
+/*	$NetBSD: draw.c,v 1.8.12.1 2014/08/20 00:00:23 tls Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: draw.c,v 1.8 2009/08/12 07:42:11 dholland Exp $");
+__RCSID("$NetBSD: draw.c,v 1.8.12.1 2014/08/20 00:00:23 tls Exp $");
 #endif /* not lint */
 
 #include "hunt.h"
@@ -312,7 +312,7 @@ showstat(PLAYER *pp)
  *	unless he is cloaked.
  */
 void
-drawplayer(PLAYER *pp, FLAG draw)
+drawplayer(PLAYER *pp, bool draw)
 {
 	PLAYER *newp;
 	int x, y;

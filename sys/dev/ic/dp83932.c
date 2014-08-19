@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.35 2010/11/13 13:52:00 uebayasi Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.35.18.1 2014/08/20 00:03:38 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.35 2010/11/13 13:52:00 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.35.18.1 2014/08/20 00:03:38 tls Exp $");
 
 
 #include <sys/param.h>
@@ -701,7 +701,7 @@ sonic_rxintr(struct sonic_softc *sc)
 	struct sonic_rda16 *rda16;
 	struct mbuf *m;
 	int i, len;
-	uint16_t status, bytecount, ptr0, ptr1, seqno;
+	uint16_t status, bytecount /*, ptr0, ptr1, seqno */;
 
 	for (i = sc->sc_rxptr;; i = SONIC_NEXTRX(i)) {
 		ds = &sc->sc_rxsoft[i];
@@ -715,9 +715,9 @@ sonic_rxintr(struct sonic_softc *sc)
 				break;
 			status = sonic32toh(sc, rda32->rda_status);
 			bytecount = sonic32toh(sc, rda32->rda_bytecount);
-			ptr0 = sonic32toh(sc, rda32->rda_pkt_ptr0);
-			ptr1 = sonic32toh(sc, rda32->rda_pkt_ptr1);
-			seqno = sonic32toh(sc, rda32->rda_seqno);
+			/* ptr0 = sonic32toh(sc, rda32->rda_pkt_ptr0); */
+			/* ptr1 = sonic32toh(sc, rda32->rda_pkt_ptr1); */
+			/* seqno = sonic32toh(sc, rda32->rda_seqno); */
 		} else {
 			SONIC_CDRXSYNC16(sc, i,
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
@@ -727,9 +727,9 @@ sonic_rxintr(struct sonic_softc *sc)
 				break;
 			status = sonic16toh(sc, rda16->rda_status);
 			bytecount = sonic16toh(sc, rda16->rda_bytecount);
-			ptr0 = sonic16toh(sc, rda16->rda_pkt_ptr0);
-			ptr1 = sonic16toh(sc, rda16->rda_pkt_ptr1);
-			seqno = sonic16toh(sc, rda16->rda_seqno);
+			/* ptr0 = sonic16toh(sc, rda16->rda_pkt_ptr0); */
+			/* ptr1 = sonic16toh(sc, rda16->rda_pkt_ptr1); */
+			/* seqno = sonic16toh(sc, rda16->rda_seqno); */
 		}
 
 		/*

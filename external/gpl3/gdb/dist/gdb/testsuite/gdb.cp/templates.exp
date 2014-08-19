@@ -1,5 +1,4 @@
-# Copyright 1992, 1994, 1995, 1996, 1997, 1999, 2000, 2002, 2003, 2004, 2007,
-# 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 1992-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,25 +17,18 @@
 
 set ws "\[\r\n\t \]+"
 
-if $tracelevel then {
-	strace $tracelevel
-}
-
 if { [skip_cplus_tests] } { continue }
 
-set testfile "templates"
-set srcfile ${testfile}.cc
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .cc
 
 # Create and source the file that provides information about the compiler
 # used to compile the test case.
-if [get_compiler_info ${binfile} "c++"] {
+if [get_compiler_info "c++"] {
     return -1
 }
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
-     untested templates.exp
-     return -1
+if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
+    return -1
 }
 
 #
@@ -47,53 +39,71 @@ proc test_ptype_of_templates {} {
     global gdb_prompt
     global ws
 
-    gdb_test_multiple "ptype T5<int>" "ptype T5<int>" {
+    gdb_test_multiple "ptype/r T5<int>" "ptype T5<int>" {
 	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}T5<int> & operator=\\(T5<int> const ?&\\);${ws}T5\\(int\\);${ws}T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\((void|)\\);${ws}static void \\* operator new\\(unsigned( int| long)?\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
-	    pass "ptype T5<int>"
+	    xfail "ptype T5<int> -- new without size_t"
 	}
 	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}T5\\(int\\);${ws}T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\((void|)\\);${ws}static void \\* operator new\\(unsigned( int| long)?\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}T5<int> & operator=\\(T5<int> const ?&\\);${ws}\}\r\n$gdb_prompt $" {
-	    pass "ptype T5<int>"
+	    xfail "ptype T5<int> -- new without size_t"
 	}
 	-re "type = class T5<int> \\{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}${ws}T5 \\(int\\);${ws}T5 \\(const class T5<int> &\\);${ws}void ~T5 \\(int\\);${ws}static void \\* new \\(unsigned int\\);${ws}static void delete \\(void ?\\*\\);${ws}int value \\((void|)\\);${ws}\\}${ws}$gdb_prompt $" {
-	    pass "ptype T5<int> -- new with unsigned int"
+	    xfail "ptype T5<int> -- new with unsigned int"
 	}
 	-re "type = class T5<int> \\{.*public:.*static int X;.*int x;.*int val;.*T5 \\(int\\);.*T5 \\(const class T5<int> &\\);.*void ~T5 \\(int\\);.*static void \\* new \\(unsigned long\\);.*static void delete \\(void ?\\*\\);.*int value \\((void|)\\);.*\\}\r\n$gdb_prompt $" {
-	    pass "ptype T5<int> -- new with unsigned long"
+	    xfail "ptype T5<int> -- new with unsigned long"
 	}
 	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;((${ws}T5<int> & operator=\\(T5<int> const ?&\\);)|(${ws}T5\\(int\\);)|(${ws}T5\\((T5<int> const|const T5<int>) ?&\\);)|(${ws}~T5\\((void|)\\);)|(${ws}static void \\* operator new\\(unsigned( int| long)?\\);)|(${ws}static void operator delete\\(void ?\\*\\);)|(${ws}int value\\((void|)\\);))*${ws}\}\r\n$gdb_prompt $" {
-	    pass "ptype T5<int> (obsolescent gcc or gdb)"
+	    xfail "ptype T5<int> (obsolescent gcc or gdb)"
 	}
-	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}void T5\\(int\\);${ws}void T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\(int\\);${ws}static void \\* operator new\\(unsigned( int| long|)\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
+	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}void T5\\(int\\);${ws}void T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\(int\\);${ws}static void \\* operator new\\((size_t|unsigned( int| long|))\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
 	    # This also triggers gdb/1113...
 	    kfail "gdb/1111" "ptype T5<int>"
+	    # Add here a PASS case when PR gdb/1111 gets fixed.
+	    # These are really:
+	    # http://sourceware.org/bugzilla/show_bug.cgi?id=8216
+	    # http://sourceware.org/bugzilla/show_bug.cgi?id=8218
+	}
+	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}T5\\(int\\);${ws}T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\(int\\);${ws}static void \\* operator new\\((size_t|unsigned( int| long|))\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
+	    # http://sourceware.org/bugzilla/show_bug.cgi?id=8218
+	    # The destructor has an argument type.
+	    kfail "gdb/8218" "ptype T5<int>"
 	}
     }
 
-    gdb_test_multiple "ptype t5i" "ptype t5i" {
+    gdb_test_multiple "ptype/r t5i" "ptype t5i" {
         -re "type = class T5<int> \\{${ws}public:${ws}static int X;${ws}int x;${ws}int val;\r\n${ws}T5\\(int\\);${ws}T5\\(T5<int> const ?&\\);${ws}~T5\\((void|)\\);${ws}static void \\* operator new\\(unsigned( int| long)?\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\\}\r\n$gdb_prompt $" {
-	    pass "ptype T5<int> -- with several fixes from 4.17"
+	    xfail "ptype T5<int> -- with several fixes from 4.17 -- without size_t"
 	}
         -re "type = class T5<int> \\{${ws}public:${ws}static int X;${ws}int x;${ws}int val;\r\n${ws}T5 \\(int\\);${ws}T5 \\(const class T5<int> &\\);${ws}void ~T5 \\(int\\);${ws}static void \\* new \\(unsigned int\\);${ws}static void delete \\(void ?\\*\\);${ws}int value \\((void|)\\);${ws}\\}\r\n$gdb_prompt $" {
-	    pass "ptype t5i<int> -- new with unsigned int"
+	    xfail "ptype t5i<int> -- new with unsigned int -- without size_t"
 	}
         -re "type = class T5<int> \\{${ws}public:${ws}static int X;${ws}int x;${ws}int val;\r\n${ws}T5 \\(int\\);${ws}T5 \\(const class T5<int> &\\);${ws}void ~T5 \\(int\\);${ws}static void \\* new \\(unsigned long\\);${ws}static void delete \\(void ?\\*\\);${ws}int value \\((void|)\\);${ws}\\}\r\n$gdb_prompt $" {
-	    pass "ptype t5i<int> -- new with unsigned long"
+	    xfail "ptype t5i<int> -- new with unsigned long -- without size_t"
 	}
         -re "type = class T5<int> \{.*public:.*static int X;.*int x;.*int val;.*.*T5 \\(int\\);.*.*void ~T5 \\(int\\).*.*.*int value \\((void|)\\);.*\}.*$gdb_prompt $" { 
-            pass "ptype t5i"
+            xfail "ptype t5i -- without size_t"
         }
 	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}T5<int> & operator=\\(T5<int> const ?&\\);${ws}T5\\(int\\);${ws}T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\((void|)\\);${ws}static void \\* operator new\\(unsigned( int| long)?\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
-	    pass "ptype t5i"
+	    xfail "ptype t5i -- without size_t"
 	}
 	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}T5\\(int\\);${ws}T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\((void|)\\);${ws}static void \\* operator new\\(unsigned( int| long)?\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}T5<int> & operator=\\(T5<int> const ?&\\);${ws}\}\r\n$gdb_prompt $" {
-	    pass "ptype t5i"
+	    xfail "ptype t5i -- without size_t"
 	}
 	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;((${ws}T5<int> & operator=\\(T5<int> const ?&\\);)|(${ws}T5\\(int\\);)|(${ws}T5\\(T5<int> const ?&\\);)|(${ws}~T5\\((void|)\\);)|(${ws}static void \\* operator new\\(unsigned( int| long)?\\);)|(${ws}static void operator delete\\(void ?\\*\\);)|(${ws}int value\\((void|)\\);))*${ws}\}\r\n$gdb_prompt $" {
-	    pass "ptype t5i (obsolescent gcc or gdb)"
+	    xfail "ptype t5i (obsolescent gcc or gdb) -- without size_t"
 	}
-	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}void T5\\(int\\);${ws}void T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\(int\\);${ws}static void \\* operator new\\(unsigned( int| long|)\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
+	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}void T5\\(int\\);${ws}void T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\(int\\);${ws}static void \\* operator new\\((size_t|unsigned( int| long|))\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
 	    # This also triggers gdb/1113...
 	    kfail "gdb/1111" "ptype T5<int>"
+	    # Add here a PASS case when PR gdb/1111 gets fixed.
+	    # These are really:
+	    # http://sourceware.org/bugzilla/show_bug.cgi?id=8216
+	    # http://sourceware.org/bugzilla/show_bug.cgi?id=8218
+	}
+	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}T5\\(int\\);${ws}T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\(int\\);${ws}static void \\* operator new\\((size_t|unsigned( int| long|))\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
+	    # http://sourceware.org/bugzilla/show_bug.cgi?id=8218
+	    # The destructor has an argument type.
+	    kfail "gdb/8218" "ptype T5<int>"
 	}
     }
 }
@@ -109,12 +119,7 @@ proc test_template_breakpoints {} {
     global hp_aCC_compiler
 
     gdb_test_multiple "break T5<int>::T5" "constructor breakpoint" {
-	-re "0. cancel.*\[\r\n\]*.1. all.*\[\r\n\]*.2. T5<int>::T5\\(int\\) at .*\[\r\n\]*.3. T5<int>::T5\\((T5<int> const|const T5<int>) ?&\\) at .*\[\r\n\]*> $" {
-	    gdb_test "0" \
-		"canceled" \
-		"constructor breakpoint (obsolete format!)"
-	}
-	-re ".0. cancel\[\r\n\]*.1. all\[\r\n\]*.2. T5<int>::T5\\((T5<int> const|const T5<int>) ?&\\) at .*templates.cc:.*\[\r\n\]*.3. T5<int>::T5\\(int\\) at .*templates.cc:.*\[\r\n\]*> $" {
+	-re "0. cancel.*\[\r\n\]*.1. all.*\[\r\n\]*.2.*templates.cc:T5<int>::T5\\((T5<int> const|const T5<int>) ?&\\)\[\r\n\]*.3.*templates.cc:T5<int>::T5\\(int\\)\[\r\n\]*> $" {
 	    gdb_test "0" \
 		"canceled" \
 		"constructor breakpoint"
@@ -152,9 +157,26 @@ proc test_template_breakpoints {} {
 
     set bp_location [gdb_get_line_number \
                          "set breakpoint on a line with no real code"]
-    gdb_test "break ${testfile}.cc:${bp_location}" \
-        "Breakpoint.*at.* file .*${testfile}.cc, line.*(2 locations).*" \
-        "breakpoint on a line with no real code"
+
+    gdb_test_multiple "break ${testfile}.cc:${bp_location}" \
+	"breakpoint on a line with no real code" {
+	    -re "0. cancel.*\[\r\n\]*.1. all.*\[\r\n\]*.2.*templates.cc:GetMax<int>\\(int, int\\)\[\r\n\]*.3.*templates.cc:GetMax<long>\\(long, long\\)\[\r\n\]*> $" {
+		gdb_test "0" \
+		    "canceled" \
+		    "breakpoint on a line with no real code"
+	    }
+	    -re "0. cancel.*\[\r\n\]*.1. all.*\[\r\n\]*.2.*\[\r\n\]*.3.*\[\r\n\]*> $" {
+		gdb_test "0" \
+		    "nonsense intended to insure that this test fails" \
+		    "breakpoint on a line with no real code"
+	    }
+	    -re ".*\n> $" {
+		gdb_test "0" \
+		    "nonsense intended to insure that this test fails" \
+		    "breakpoint on a line with no real code"
+	    }
+	}
+
     delete_breakpoints
 }
 
@@ -188,39 +210,47 @@ proc test_template_calls {} {
 }
 
 proc test_template_typedef {} {
+    global gdb_prompt
 
     gdb_test "print intBazOne::baz" ".*baz\\(int, int\\)>" \
 	"print method of template typedef"
 
-    gdb_test "print intBazOne::~Baz" ".*~Baz(\\(\\))?>" \
-	"print destructor of template typedef"
+    set test "print destructor of template typedef"
+    gdb_test_multiple "print intBazOne::~Baz" $test {
+	-re "~Baz(\\(\\))?>\r\n$gdb_prompt $" {
+	    pass $test
+	}
+	-re "There is no field named ~Baz\r\n$gdb_prompt $" {
+	    set test2 "verify GCC PR debug/51668"
+	    gdb_test_multiple "whatis intBazOne" $test2 {
+		-re "type = Baz<int, \\(char\\)'\\\\001'>\r\n$gdb_prompt $" {
+		    setup_xfail gcc/51668 "*-*-*"
+		    xfail $test
+		    pass $test2
+		}
+		-re "\r\n$gdb_prompt $" {
+		    # Some unexpected response.
+		    fail $test
+		    fail $test2
+		}
+	    }
+	}
+    }
 }
 
 proc test_template_args {} {
 
     set empty_re "Empty *<void *\\(FunctionArg *<int>\\)>"
-    gdb_test "ptype empty" \
-	"type = (struct|class) $empty_re {.*<no data fields>.*}"
+    gdb_test "ptype/r empty" \
+	"type = (struct|class) $empty_re {.*<no data fields>.*}" \
+	"ptype empty"
 
-    gdb_test "ptype arg" \
-	"type = (struct|class) FunctionArg<int> {.*int method\\($empty_re \\&\\);.*}"
+    gdb_test "ptype/r arg" \
+	"type = (struct|class) FunctionArg<int> {.*int method\\($empty_re \\&\\);.*}" \
+	"ptype arg"
 }
 
 proc do_tests {} {
-    global subdir
-    global objdir
-    global srcdir
-    global binfile
-    global gdb_prompt
-
-
-    # Start with a fresh gdb.
-
-    gdb_exit
-    gdb_start
-    gdb_reinitialize_dir $srcdir/$subdir
-    gdb_load $binfile
-
     # Change multiple-symbols to "ask" in order to get the multiple-choice
     # menu when breaking on overloaded methods.
     gdb_test_no_output "set multiple-symbols ask"
@@ -278,7 +308,7 @@ gdb_test "print fvpchar" \
 # NOTE: carlton/2003-02-26: However, because of a bug in the way GDB
 # handles nested types, we don't get this right in the DWARF-2 case.
 
-gdb_test_multiple "ptype Foo" "ptype Foo" {
+gdb_test_multiple "ptype/r Foo" "ptype Foo" {
     -re "type = template <(class |)T> (class |)Foo \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*T t;\r\n\\}\r\ntemplate instantiations:\r\n\[ \t\]*(class |)Foo<volatile char \\*>\r\n\[ \t\]*(class |)Foo<char>\r\n\[ \t\]*(class |)Foo<int>\r\n$gdb_prompt $" {
 	pass "ptype Foo"
     }
@@ -299,7 +329,7 @@ gdb_test_multiple "ptype Foo" "ptype Foo" {
 
 # ptype Foo<int>
 
-gdb_test_multiple "ptype fint" "ptype fint" {
+gdb_test_multiple "ptype/r fint" "ptype fint" {
     -re "type = (class |)Foo<int> \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*int t;\r\n\r\n\[ \t\]*.*int foo\\(int, int\\);\r\n\\}\r\n$gdb_prompt $" {
 	pass "ptype fint"
     }
@@ -310,7 +340,7 @@ gdb_test_multiple "ptype fint" "ptype fint" {
 
 # ptype Foo<char>
 
-gdb_test_multiple "ptype fchar" "ptype fchar" {
+gdb_test_multiple "ptype/r fchar" "ptype fchar" {
     -re "type = (class |)Foo<char> \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*char t;\r\n\r\n\[ \t\]*.*char foo\\(int, char\\);\r\n\\}\r\n$gdb_prompt $" {
 	pass "ptype fchar"
     }
@@ -321,7 +351,7 @@ gdb_test_multiple "ptype fchar" "ptype fchar" {
 
 # ptype Foo<volatile char *>
 
-gdb_test_multiple "ptype fvpchar" "ptype fvpchar" {
+gdb_test_multiple "ptype/r fvpchar" "ptype fvpchar" {
     -re "type = (class |)Foo<volatile char ?\\*> \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*.*char.*\\*t;\r\n\r\n\[ \t\]*.*char \\* foo\\(int,.*char.*\\*\\);\r\n\\}\r\n$gdb_prompt $" {
 	pass "ptype fvpchar"
     }
@@ -361,7 +391,7 @@ gdb_test_multiple "print Foo<volatile char*>::foo" "print Foo<volatile char*>::f
 # Template Bar<T, int>
 
 # same as Foo for g++
-gdb_test_multiple "ptype Bar" "ptype Bar" {
+gdb_test_multiple "ptype/r Bar" "ptype Bar" {
     -re "type = template <(class |)T, (class |)sz> (class |)Bar \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*T t;\r\n\\}\r\ntemplate instantiations:\r\n\[ \t\]*(class |)Bar<int,(\\(int\\)|)1>\r\n\[ \t\]*(class |)Bar<int,(\\(int\\)|)33>\r\n$gdb_prompt $" {
 	pass "ptype Bar"
     }
@@ -381,7 +411,7 @@ gdb_test_multiple "ptype Bar" "ptype Bar" {
 
 # ptype Bar<int,33>
 
-gdb_test_multiple "ptype bint" "ptype bint" {
+gdb_test_multiple "ptype/r bint" "ptype bint" {
     -re "type = (class |)Bar<int, ?(\\(int\\)|)33> \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*int t;\r\n\r\n\[ \t\]*.*int bar\\(int, int\\);\r\n\\}\r\n$gdb_prompt $" {
 	pass "ptype bint"
     }
@@ -392,7 +422,7 @@ gdb_test_multiple "ptype bint" "ptype bint" {
 
 # ptype Bar<int, (4>3)>
 
-gdb_test_multiple "ptype bint2" "ptype bint2" {
+gdb_test_multiple "ptype/r bint2" "ptype bint2" {
     -re "type = (class |)Bar<int, ?(\\(int\\)|)1> \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*int t;\r\n\r\n\[ \t\]*.*int bar\\(int, int\\);\r\n\\}\r\n$gdb_prompt $" {
 	pass "ptype bint2"
     }
@@ -404,7 +434,7 @@ gdb_test_multiple "ptype bint2" "ptype bint2" {
 # Template Baz<T, char>
 
 # Same as Foo, for g++
-gdb_test_multiple "ptype Baz" "ptype Baz" {
+gdb_test_multiple "ptype/r Baz" "ptype Baz" {
     -re "type = template <(class |)T, ?(class |)sz> (class |)Baz \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*T t;\r\n\\}\r\ntemplate instantiations:\r\n\[ \t\]*(class |)Baz<char,(\\(char\\)|)97>\r\n\[ \t\]*(class |)Baz<int,(\\(char\\)|)115>\r\n$gdb_prompt $" {
 	pass "ptype Baz"
     }
@@ -428,7 +458,7 @@ gdb_test_multiple "ptype Baz" "ptype Baz" {
 
 # ptype Baz<int, 's'>
 
-gdb_test_multiple "ptype bazint" "ptype bazint" {
+gdb_test_multiple "ptype/r bazint" "ptype bazint" {
     -re "type = (class |)Baz<int, ?(\\(char\\)|)(115|\\'s\\')> \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*int t;\r\n\r\n\[ \t\]*.*int baz\\(int, int\\);\r\n\\}\r\n$gdb_prompt $" {
 	pass "ptype bazint"
     }
@@ -439,7 +469,7 @@ gdb_test_multiple "ptype bazint" "ptype bazint" {
 
 # ptype Baz<char, 'a'>
 
-gdb_test_multiple "ptype bazint2" "ptype bazint2" {
+gdb_test_multiple "ptype/r bazint2" "ptype bazint2" {
     -re "type = (class |)Baz<char, ?(\\(char\\)|)(97|\\'a\\')> \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*char t;\r\n\r\n\[ \t\]*.*char baz\\(int, char\\);\r\n\\}\r\n$gdb_prompt $" {
 	pass "ptype bazint2"
     }
@@ -450,7 +480,7 @@ gdb_test_multiple "ptype bazint2" "ptype bazint2" {
 
 # Template Qux<T, int (*f)(int) >
 # Same as Foo for g++
-gdb_test_multiple "ptype Qux" "ptype Qux" {
+gdb_test_multiple "ptype/r Qux" "ptype Qux" {
     -re "type = template <(class |)T, ?(class |)sz> (class |)Qux \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*T t;\r\n\\}\r\ntemplate instantiations:\r\n\[ \t\]*(class |)Qux<int,&string>\r\n\[ \t\]*(class |)Qux<char,&string>\r\n$gdb_prompt $" {
 	pass "ptype Qux"
     }
@@ -473,7 +503,7 @@ gdb_test_multiple "ptype Qux" "ptype Qux" {
 
 # pt Qux<int,&string>
 
-gdb_test_multiple "ptype quxint" "ptype quxint" {
+gdb_test_multiple "ptype/r quxint" "ptype quxint" {
     -re "type = class Qux<int, ?& ?string> \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*int t;\r\n\r\n\[ \t\]*.*int qux\\(int, int\\);\r\n\\}\r\n$gdb_prompt $" {
 	pass "ptype quxint"
     }
@@ -492,7 +522,7 @@ gdb_test_multiple "ptype quxint" "ptype quxint" {
 # Template Spec<T1, T2>
 
 # Same as Foo for g++
-gdb_test_multiple "ptype Spec" "ptype Spec" {
+gdb_test_multiple "ptype/r Spec" "ptype Spec" {
     -re "type = template <(class |)T1, (class |)T2> (class |)Spec \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\\}\r\ntemplate instantiations:\r\n\[ \t\]*(class |)Spec<int,int \\*>\r\n\[ \t\]*(class |)Spec<int,char>\r\n$gdb_prompt $" {
 	pass "ptype Spec"
     }
@@ -511,7 +541,7 @@ gdb_test_multiple "ptype Spec" "ptype Spec" {
 
 # pt Spec<char,0>
 
-gdb_test_multiple "ptype siip" "ptype siip" {
+gdb_test_multiple "ptype/r siip" "ptype siip" {
     -re "type = class Spec<int, ?int ?\\*> \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\r\n\[ \t\]*.*int spec\\(int ?\\*\\);\r\n\\}\r\n$gdb_prompt $" {
 	pass "ptype siip"
     }
@@ -522,7 +552,7 @@ gdb_test_multiple "ptype siip" "ptype siip" {
 
 # pt Garply<int>
 
-gdb_test_multiple "ptype Garply<int>" "ptype Garply<int>" {
+gdb_test_multiple "ptype/r Garply<int>" "ptype Garply<int>" {
     -re "type = class Garply<int> \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*int t;\r\n\r\n\[ \t\]*.*int garply\\(int, int\\);\r\n\\}\r\n$gdb_prompt $" {
 	pass "ptype Garply<int>"
     }
@@ -533,7 +563,7 @@ gdb_test_multiple "ptype Garply<int>" "ptype Garply<int>" {
 
 # ptype of nested template name
 
-gdb_test_multiple "ptype Garply<Garply<char> >" "ptype Garply<Garply<char> >" {
+gdb_test_multiple "ptype/r Garply<Garply<char> >" "ptype Garply<Garply<char> >" {
     -re "type = (class |)Garply<Garply<char> > \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*.*(class |)Garply<char> t;\r\n\r\n\[ \t\]*.*(class |)Garply<char> garply\\(int, (class |)Garply<char>\\);\r\n\\}\r\n$gdb_prompt $" {
 	pass "ptype Garply<Garply<char> >"
     }

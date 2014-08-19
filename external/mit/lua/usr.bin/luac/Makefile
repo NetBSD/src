@@ -1,7 +1,7 @@
-# $NetBSD: Makefile,v 1.3 2011/01/19 11:43:18 plunky Exp $
+# $NetBSD: Makefile,v 1.3.12.1 2014/08/20 00:00:08 tls Exp $
 
 PROG=		luac
-SRCS=		luac.c print.c
+SRCS=		luac.c
 BINDIR=		/usr/bin
 
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: libaudio.h,v 1.17 2011/08/28 01:17:47 joerg Exp $	*/
+/*	$NetBSD: libaudio.h,v 1.17.8.1 2014/08/20 00:04:56 tls Exp $	*/
 
 /*
  * Copyright (c) 1999, 2009 Matthew R. Green
@@ -182,6 +182,38 @@ const char *audio_errstring (int);
 void	decode_int (const char *, int *);
 void	decode_time (const char *, struct timeval *);
 void	decode_encoding (const char *, int *);
+
+/*
+ * Write a sun/wav header, shared between record and merge.
+ *
+ * Note that write_header() may change the values of format,
+ * encoding.
+ */
+
+struct write_info {
+	int	outfd;
+	char	*header_info;
+	int	format;
+	int	encoding;
+	int	precision;
+	int	qflag;
+	ssize_t	total_size;
+	int	sample_rate;
+	int	channels;
+};
+
+typedef void (*write_conv_func) (u_char *, int);
+
+void	write_header (struct write_info *);
+write_conv_func write_get_conv_func(struct write_info *);
+
+/* backends for the above */
+int sun_prepare_header(struct write_info *wi, void **hdrp, size_t *lenp, int *leftp);
+int wav_prepare_header(struct write_info *wi, void **hdrp, size_t *lenp, int *leftp);
+write_conv_func sun_write_get_conv_func(struct write_info *wi);
+write_conv_func wav_write_get_conv_func(struct write_info *wi);
+
+extern char	audio_default_info[8];
 
 /*
  * get/put 16/32 bits of big/little endian data

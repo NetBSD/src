@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.47 2010/03/02 21:09:21 pooka Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.47.20.1 2014/08/20 00:03:33 tls Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.47 2010/03/02 21:09:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.47.20.1 2014/08/20 00:03:33 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,8 @@ osf1_sys_getfsstat(struct lwp *l, const struct osf1_sys_getfsstat_args *uap, reg
 	maxcount = SCARG(uap, bufsize) / sizeof(struct osf1_statfs);
 	osf_sfsp = (void *)SCARG(uap, buf);
 	mutex_enter(&mountlist_lock);
-	for (count = 0, mp = mountlist.cqh_first; mp != (void *)&mountlist;
+	for (count = 0, mp = TAILQ_FIRST(&mountlist);
+	    mp != NULL;
 	    mp = nmp) {
 		if (vfs_busy(mp, &nmp)) {
 			continue;

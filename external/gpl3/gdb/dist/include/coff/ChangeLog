@@ -1,3 +1,57 @@
+2013-12-06  Tristan Gingold  <gingold@adacore.com>
+
+	* pe.h (UWOP_EPILOG, UWOP_PARE): Define.
+
+2013-07-10  Tristan Gingold  <gingold@adacore.com>
+
+	* rs6000.h (external_core_dumpx): New structure.
+	(external_ld_info32): Ditto.
+
+2013-07-02  Tristan Gingold  <gingold@adacore.com>
+
+	* internal.h (C_STTLS, C_GTLS): Define.
+	* xcoff.h (XMC_TL, XMC_TU, XMC_TE): Define.
+
+2013-02-04  Alan Modra  <amodra@gmail.com>
+
+	* ti.h (SWAP_OUT_RELOC_EXTRA): Define.
+
+2013-01-02  Martin Storsjo <martin@martin.st>
+
+	* arm.h (ARMV7PEMAGIC): Define.
+	(ARMBADMAG): Update.
+
+2011-06-02  Nick Clifton  <nickc@redhat.com>
+
+	* i860.h: Fix spelling mistake in comment.
+
+2011-05-04  Tristan Gingold  <gingold@adacore.com>
+
+	* rs6000.h (union external_auxent): Add x_ftype field.
+	* rs6k64.h: (struct external_auxent): Remap x_file field.
+
+2011-05-04  Tristan Gingold  <gingold@adacore.com>
+
+	* rs6000.h (struct external_exceptab): New struct.
+	(EXCEPTSZ): New macro.
+	* rs6k64.h: (struct external_exceptab): New struct.
+	(EXCEPTSZ): New macro.
+
+2011-05-03  Tristan Gingold  <gingold@adacore.com>
+
+	* rs6000.h (struct external_ldsym): Use E_SYMNMLEN instead of
+	SYMNMLEN.
+
+2011-04-27  Tristan Gingold  <gingold@adacore.com>
+
+	* xcoff.h (F_FDPR_PROF, F_FDPR_OPTI, F_DSA, F_VARPG)
+	(STYP_DWARF, SSUBTYP_DWINFO)
+	(SSUBTYP_DWLINE, SSUBTYP_DWPBNMS, SSUBTYP_DWPBTYP)
+	(SSUBTYP_DWARNGE, SSUBTYP_DWABREV, SSUBTYP_DWSTR)
+	(SSUBTYP_DWRNGES, STYP_TDATA, STYP_TBSS, R_TLS, R_TLS_IE)
+	(R_TLS_LD, R_TLS_LE, R_TLSM, R_TLSML, R_TOCU, R_TOCL, C_DWARF):
+	New macros.
+
 2011-03-31  Tristan Gingold  <gingold@adacore.com>
 
 	* internal.h (C_NULL_VALUE): Define.
@@ -309,6 +363,12 @@
 
 For older changes see ChangeLog-9103
 
+Copyright (C) 2004-2012 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
 Local Variables:
 mode: change-log
 left-margin: 8

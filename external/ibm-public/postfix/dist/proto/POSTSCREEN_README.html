@@ -17,24 +17,29 @@
 
 <h2> <a name="intro">Introduction</a> </h2>
 
-<p> The Postfix postscreen(8) server performs triage on multiple
-inbound SMTP connections at the same time. While a single postscreen(8)
-process keeps zombies away from Postfix SMTP server processes, more
-Postfix SMTP server processes remain available for legitimate
-clients. </p>
+<p> This document describes features that are available in Postfix
+2.8 and later. </p>
+
+<p> The Postfix postscreen(8) daemon provides additional protection
+against mail server overload. One postscreen(8) process handles
+multiple inbound SMTP connections, and decides which clients may
+talk to a Postfix SMTP server process.  By keeping spambots away,
+postscreen(8) leaves more SMTP server processes available for
+legitimate clients, and delays the onset of <a
+href="STRESS_README.html">server overload</a> conditions. </p>
+
+<p> postscreen(8) should not be used on SMTP ports that receive
+mail from end-user clients (MUAs). In a typical deployment,
+postscreen(8) handles the MX service on TCP port 25, while MUA
+clients submit mail via the submission service on TCP port 587 which
+requires client authentication. Alternatively, a site could set up
+a dedicated, non-postscreen, "port 25" server that provides submission
+service and client authentication, but no MX service.  </p>
 
 <p> postscreen(8) maintains a temporary whitelist for clients that
 pass its tests; by allowing whitelisted clients to skip tests,
 postscreen(8) minimizes its impact on legitimate email traffic.
 </p>
-
-<p> postscreen(8) should not be used on SMTP ports that receive
-mail from end-user clients (MUAs). In a typical deployment,
-postscreen(8) is used on the "port 25" service, while MUA clients
-submit mail via the submission service (port 587) which normally
-requires client authentication, or via a "port 25" server that
-provides no MX service (i.e. a dedicated server that provides
-submission service on port 25). </p>
 
 <p> postscreen(8) is part of a multi-layer defense. <p>
 
@@ -43,11 +48,12 @@ submission service on port 25). </p>
 <li> <p> As the first layer, postscreen(8) blocks connections from
 zombies and other spambots that are responsible for about 90% of
 all spam.  It is implemented as a single process to make this defense
-as cheap as possible. </p>
+as inexpensive as possible. </p>
 
 <li> <p> The second layer implements more complex SMTP-level access
-checks with Postfix SMTP servers, policy daemons, and Milter
-applications. </p>
+checks with <a href="SMTPD_ACCESS_README.html">Postfix SMTP servers</a>, 
+<a href="SMTPD_POLICY_README.html">policy daemons</a>, and 
+<a href="MILTER_README.html">Milter applications</a>. </p>
 
 <li> <p> The third layer performs light-weight content inspection
 with the Postfix built-in header_checks and body_checks. This can
@@ -55,8 +61,10 @@ block unacceptable attachments such as executable programs, and
 worms or viruses with easy-to-recognize signatures. </p>
 
 <li> <p> The fourth layer provides heavy-weight content inspection
-with external content filters. Typical examples are Amavisd-new,
-SpamAssassin, and Milter applications. </p>
+with external content filters. Typical examples are <a
+href="http://www.ijs.si/software/amavisd/">Amavisd-new</a>, <a
+href="http://spamassassin.apache.org/">SpamAssassin</a>, and <a
+href="MILTER_README.html">Milter applications</a>. </p>
 
 </ul>
 
@@ -127,7 +135,8 @@ and that is the problem that postscreen(8) is focused on.  </p>
 
 <h2> <a name="general"> General operation </a> </h2>
 
-<p> The postscreen(8) triage process involves a number of tests,
+<p> For each connection from an SMTP client, postscreen(8) performs
+a number of tests
 in the order as described below.  Some tests introduce a delay of
 a few seconds.  postscreen(8) maintains a temporary whitelist for
 clients that pass its tests; by allowing whitelisted clients to
@@ -218,15 +227,9 @@ specifies the location of the temporary whitelist.  The
 temporary whitelist is not used for SMTP client addresses
 that appear on the <i>permanent</i> access list. </p>
 
-<blockquote> <p> NOTE: To share a postscreen(8) cache between
-multiple postscreen(8) instances, use "<tt>postscreen_cache_map =
-proxy:btree:$data_directory/postscreen_cache</tt>", and disable
-cache cleanup (postscreen_cache_cleanup_interval = 0) in all
-postscreen(8) instances except one that is responsible for cache
-cleanup. </p> <p> postscreen(8) cache sharing requires Postfix 2.9
-or later; earlier proxymap(8) implementations don't support cache
-cleanup. </p> <p>  For an alternative postscreen(8) cache sharing
-approach see the memcache_table(5) manpage.  </p> </blockquote>
+<p> By default the temporary whitelist is not shared with other
+postscreen(8) daemons. See <a href="#temp_white_sharing"> Sharing
+the temporary whitelist </a> below for alternatives. </p>
 
 <p> When the SMTP client address appears on the temporary
 whitelist, postscreen(8) logs this with the client address and port
@@ -249,11 +252,16 @@ or temporary whitelist, postscreen(8) can implement a number of
 whitelist tests, before it grants the client a temporary whitelist
 status that allows it to talk to a Postfix SMTP server process. </p>
 
-<p> By listening on both primary and backup MX addresses, postscreen(8)
-can deny the temporary whitelist status to clients that connect
-only to backup MX hosts (an old spammer trick to take advantage of
-backup MX hosts with weaker anti-spam policies than primary MX
+<p> When postscreen(8) is configured to monitor all primary and
+backup MX addresses, it can refuse to whitelist clients that connect
+to a backup MX address only (an old spammer trick to take advantage
+of backup MX hosts with weaker anti-spam policies than primary MX
 hosts). </p>
+
+<blockquote> <p> NOTE: The following solution is for small sites.
+Larger sites would have to share the postscreen(8) cache between
+primary and backup MTAs, which would introduce a common point of
+failure.  </p> </blockquote>
 
 <ul>
 
@@ -261,6 +269,10 @@ hosts). </p>
 backup MX addresses. Use the appropriate <tt>ifconfig</tt> command
 for the local operating system, or update the appropriate configuration
 files and "refresh" the network protocol stack. </p>
+
+<p> <p> Second, configure Postfix to listen on the new IP address
+(this step is needed when you have specified inet_interfaces in
+main.cf). </p>
 
 <li> <p> Then, configure postscreen(8) to deny the temporary whitelist
 status on the backup MX address(es).  An example for Wietse's
@@ -437,36 +449,50 @@ this test the next time the client connects. </dd>
 number of "deep protocol" tests. These tests use an SMTP protocol
 engine that is built into the postscreen(8) server. </p>
 
-<p> Important note: deep protocol tests are disabled by default.
+<p> Important note: these protocol tests are disabled by default.
 They are more intrusive than the pregreet and DNSBL tests, and they
 have limitations as discussed next. </p>
 
 <ul>
 
-<li> <p> When a good client passes the <a href="#after_220">deep
-protocol tests</a>, postscreen(8) adds the client to the temporary
-whitelist but it cannot hand off the "live" connection to a Postfix
-SMTP server process in the middle of the session. Instead, postscreen(8)
-defers mail delivery attempts with a 4XX status, logs the
-helo/sender/recipient information, and waits for the client to
-disconnect. </p>
+<li> <p> The main limitation of "after 220 greeting" tests is that
+a new client must disconnect after passing these tests (reason:
+postscreen is not a proxy).  Then the client must reconnect from
+the same IP address before it can deliver mail.  The following
+measures may help to avoid email delays: </p>
 
-<p> The next time the client connects it will be allowed to talk
-to a Postfix SMTP server process to deliver its mail.  To minimize the
-impact of this limitation, postscreen(8) gives deep protocol tests
-a relatively long expiration time. </p>
+<ul>
 
-<li> <p> postscreen(8)'s built-in SMTP engine does not implement
-the AUTH, XCLIENT, and XFORWARD features.  AUTH support may be added
-in a future version. In the mean time, if you need to make these
-services available on port 25, then do not enable the tests after
-the 220 server greeting. </p>
+<li> <p> Allow "good" clients to skip tests with the
+postscreen_dnsbl_whitelist_threshold feature (Postfix 2.11 and
+later). This is especially effective for sites such as Google that
+never retry immediately from the same IP address. </p>
+
+<li> <p> Small sites: Configure postscreen(8) to listen on multiple
+IP addresses, published in DNS as different IP addresses for the
+same MX hostname or for different MX hostnames. This avoids mail
+delivery delays with clients that reconnect immediately from the
+same IP address.  </p>
+
+<li> <p> Large sites: Share the postscreen(8) cache between different
+Postfix MTAs with a large-enough memcache_table(5). Again, this
+avoids mail delivery delays with clients that reconnect immediately
+from the same IP address. </p>
 
 </ul>
 
-<p> End-user clients should connect directly to the submission
+<li> <p> postscreen(8)'s built-in SMTP engine does not implement the
+AUTH, XCLIENT, and XFORWARD features. If you need to make these
+services available on port 25, then do not enable the tests after
+the 220 server greeting. </p>
+
+<li> <p> End-user clients should connect directly to the submission
 service, so that they never have to deal with postscreen(8)'s tests.
 </p>
+
+</ul>
+
+<p> The following "after 220 greeting" tests are available: </p>
 
 <ul>
 
@@ -538,12 +564,15 @@ logging more informative.  </p>
 as: </p>
 
 <pre>
-    <b>NON-SMTP COMMAND from</b> <i>[address]:port command</i>
+    <b>NON-SMTP COMMAND from</b> <i>[address]:port</i> <b>after</b> <i>command: text</i>
 </pre>
 
 <p> Translation: the SMTP client at <i>[address]:port</i> sent a
-<i>command</i> that matches the postscreen_forbidden_commands
-parameter, or that has the syntax of a message header label. </p>
+command that matches the postscreen_forbidden_commands
+parameter, or that has the syntax of a message header label (text 
+followed by optional space and ":").
+The "<tt><b>after</b> <i>command</i></tt>" portion is logged with
+Postfix 2.10 and later. </p>
 
 <p> The postscreen_non_smtp_command_action parameter specifies
 the action that is taken next.  See "<a href="#fail_after_220">When
@@ -570,12 +599,14 @@ this as:
 </p>
 
 <pre>
-    <b>BARE NEWLINE from</b> <i>[address]:port</i>
+    <b>BARE NEWLINE from</b> <i>[address]:port</i> <b>after</b> <i>command</i>
 </pre>
 
 <p> Translation: the SMTP client at <i>[address]:port</i> sent a bare
 newline character, that is newline not preceded by carriage
-return. </p>
+return.
+The "<tt><b>after</b> <i>command</i></tt>" portion is logged with
+Postfix 2.10 and later. </p>
 
 <p> The postscreen_bare_newline_action parameter specifies the
 action that is taken next.  See "<a href="#fail_after_220">When
@@ -652,29 +683,35 @@ This engine never accepts mail, therefore it has per-session limits
 on the number of commands and on the session length. </p>
 
 <pre>
-    <b>COMMAND TIME LIMIT</b> <b>from</b> <i>[address]:port</i>
+    <b>COMMAND TIME LIMIT</b> <b>from</b> <i>[address]:port</i> <b>after</b> <i>command</i>
 </pre>
 
 <p> Translation: the SMTP client at <i>[address]:port</i> reached the
 per-command time limit as specified with the postscreen_command_time_limit
-parameter.  The session is terminated immediately. </p>
+parameter.  The session is terminated immediately.
+The "<tt><b>after</b> <i>command</i></tt>" portion is logged with
+Postfix 2.10 and later. </p>
 
 <pre>
-    <b>COMMAND COUNT LIMIT from</b> <i>[address]:port</i>
+    <b>COMMAND COUNT LIMIT from</b> <i>[address]:port</i> <b>after</b> <i>command</i>
 </pre>
 
 <p> Translation: the SMTP client at <i>[address]:port</i> reached the
 per-session command count limit as specified with the
 postscreen_command_count_limit parameter.  The session is terminated
-immediately. </p>
+immediately.
+The "<tt><b>after</b> <i>command</i></tt>" portion is logged with
+Postfix 2.10 and later. </p>
 
 <pre>
-    <b>COMMAND LENGTH LIMIT from</b> <i>[address]:port</i>
+    <b>COMMAND LENGTH LIMIT from</b> <i>[address]:port</i> <b>after</b> <i>command</i>
 </pre>
 
 <p> Translation: the SMTP client at <i>[address]:port</i> reached the
 per-command length limit, as specified with the line_length_limit
-parameter.  The session is terminated immediately. </p>
+parameter.  The session is terminated immediately.
+The "<tt><b>after</b> <i>command</i></tt>" portion is logged with
+Postfix 2.10 and later. </p>
 
 <p> When an SMTP client makes too many connections at the same time,
 or when all postscreen(8) ports are busy, postscreen(8) rejects the
@@ -736,6 +773,9 @@ mail</a>
 <li> <a href="#blocking"> Blocking mail with postscreen(8) </a>
 
 <li> <a href="#turnoff"> Turning off postscreen(8) </a>
+
+<li> <a href="#temp_white_sharing"> Sharing the temporary whitelist
+</a>
 
 </ul>
 
@@ -1019,6 +1059,88 @@ may follow.  </p>
 
 </ol>
 
+<h3> <a name="temp_white_sharing"> Sharing the temporary whitelist </a> </h3>
+
+<p> By default, the temporary whitelist is not shared between
+multiple postscreen(8) daemons.  To enable sharing, choose one
+of the following options: </p>
+
+<ul>
+
+<li> <p> A non-persistent memcache: temporary whitelist can be shared
+    between postscreen(8) daemons on the same host or different
+    hosts.  Disable cache cleanup (postscreen_cache_cleanup_interval
+    = 0) in all postscreen(8) daemons because memcache: does not
+    implement this (but see example 4 below for memcache: with
+    persistent backup). This requires Postfix 2.9 or later. </p>
+
+    <pre>
+    # Example 1: non-persistent memcache: whitelist.
+    /etc/postfix/main.cf:
+	postscreen_cache_map = memcache:/etc/postfix/postscreen_cache
+	postscreen_cache_cleanup_interval = 0
+
+    /etc/postfix/postscreen_cache:
+	memcache = inet:127.0.0.1:11211
+	key_format = postscreen:%s
+    </pre>
+
+<li> <p>
+    A persistent lmdb: temporary whitelist can be shared between
+    postscreen(8) daemons that run under the same master(8) daemon,
+    or under different master(8) daemons on the same host.  Disable
+    cache cleanup (postscreen_cache_cleanup_interval = 0) in all
+    postscreen(8) daemons except one that is responsible for cache
+    cleanup. This requires Postfix 2.11 or later. </p>
+
+    <pre>
+    # Example 2: persistent lmdb: whitelist.
+    /etc/postfix/main.cf:
+	postscreen_cache_map = lmdb:$data_directory/postscreen_cache
+	# See note 1 below.
+	# postscreen_cache_cleanup_interval = 0
+    </pre>
+
+<li> <p> Other kinds of persistent temporary whitelist can be shared
+    only between postscreen(8) daemons that run under the same
+    master(8) daemon. In this case, temporary whitelist access must
+    be shared through the proxymap(8) daemon. This requires Postfix
+    2.9 or later. </p>
+
+    <pre> 
+    # Example 3: proxied btree: whitelist.
+    /etc/postfix/main.cf:
+	postscreen_cache_map = 
+	    proxy:btree:/var/lib/postfix/postscreen_cache
+	# See note 1 below.
+	# postscreen_cache_cleanup_interval = 0
+
+    # Example 4: proxied btree: whitelist with memcache: accelerator.
+    /etc/postfix/main.cf:
+	postscreen_cache_map = memcache:/etc/postfix/postscreen_cache
+	proxy_write_maps = 
+	    proxy:btree:/var/lib/postfix/postscreen_cache 
+	    ... other proxied tables ...
+	# See note 1 below.
+	# postscreen_cache_cleanup_interval = 0
+
+    /etc/postfix/postscreen_cache:
+	# Note: the $data_directory macro is not defined in this context.
+	memcache = inet:127.0.0.1:11211
+	backup = proxy:btree:/var/lib/postfix/postscreen_cache
+	key_format = postscreen:%s
+    </pre>
+
+    <p> Note 1: disable cache cleanup (postscreen_cache_cleanup_interval
+    = 0) in all postscreen(8) daemons except one that is responsible
+    for cache cleanup. </p>
+
+    <p> Note 2: postscreen(8) cache sharing via proxymap(8) requires Postfix
+    2.9 or later; earlier proxymap(8) implementations don't support
+    cache cleanup.  </p>
+
+</ul>
+
 <h2> <a name="historical"> Historical notes and credits </a> </h2>
 
 <p> Many ideas in postscreen(8) were explored in earlier work by
@@ -1043,6 +1165,15 @@ dnsblog(8) ad-hoc DNS client program.  </p>
 postscreen(8) usable for sites that require TLS support.  The
 implementation introduces the tlsproxy(8) event-driven TLS proxy
 that decrypts/encrypts the sessions for multiple SMTP clients. </p>
+
+<p> The tlsproxy(8) implementation led to the discovery of a "new"
+class of vulnerability (<a
+href="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2011-0411"
+>CVE-2011-0411</a>) that affected multiple implementations of SMTP,
+POP, IMAP, NNTP, and FTP over TLS. </p>
+
+<p> postscreen(8) was officially released as part of the Postfix
+2.8 stable release in January 2011.</p>
 
 </body>
 

@@ -1,6 +1,5 @@
 /* Utility to load a file into the simulator.
-   Copyright (C) 1997, 1998, 2001, 2002, 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -37,11 +36,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "gdb/callback.h"
 #include "gdb/remote-sim.h"
 
-static void eprintf PARAMS ((host_callback *, const char *, ...));
-static void xprintf PARAMS ((host_callback *, const char *, ...));
+static void eprintf (host_callback *, const char *, ...);
+static void xprintf (host_callback *, const char *, ...);
 static void report_transfer_performance
-  PARAMS ((host_callback *, unsigned long, time_t, time_t));
-static void xprintf_bfd_vma PARAMS ((host_callback *, bfd_vma));
+  (host_callback *, unsigned long, time_t, time_t);
+static void xprintf_bfd_vma (host_callback *, bfd_vma);
 
 /* Load program PROG into the simulator using the function DO_LOAD.
    If PROG_BFD is non-NULL, the file has already been opened.
@@ -170,11 +169,11 @@ sim_load_file (sd, myname, callback, prog, prog_bfd, verbose_p, lma_p, do_write)
 }
 
 static void
-xprintf VPARAMS ((host_callback *callback, const char *fmt, ...))
+xprintf (host_callback *callback, const char *fmt, ...)
 {
   va_list ap;
 
-  VA_START (ap, fmt);
+  va_start (ap, fmt);
 
   (*callback->vprintf_filtered) (callback, fmt, ap);
 
@@ -182,11 +181,11 @@ xprintf VPARAMS ((host_callback *callback, const char *fmt, ...))
 }
 
 static void
-eprintf VPARAMS ((host_callback *callback, const char *fmt, ...))
+eprintf (host_callback *callback, const char *fmt, ...)
 {
   va_list ap;
 
-  VA_START (ap, fmt);
+  va_start (ap, fmt);
 
   (*callback->evprintf_filtered) (callback, fmt, ap);
 

@@ -1,6 +1,6 @@
 /* The find command.
 
-   Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,15 +20,16 @@
 #include "defs.h"
 #include "arch-utils.h"
 #include <ctype.h>
-#include "gdb_string.h"
+#include <string.h>
 #include "gdbcmd.h"
 #include "value.h"
 #include "target.h"
+#include "cli/cli-utils.h"
 
 /* Copied from bfd_put_bits.  */
 
 static void
-put_bits (bfd_uint64_t data, char *buf, int bits, bfd_boolean big_p)
+put_bits (bfd_uint64_t data, gdb_byte *buf, int bits, bfd_boolean big_p)
 {
   int i;
   int bytes;
@@ -50,7 +51,7 @@ put_bits (bfd_uint64_t data, char *buf, int bits, bfd_boolean big_p)
 
 static void
 parse_find_args (char *args, ULONGEST *max_countp,
-		 char **pattern_bufp, ULONGEST *pattern_lenp,
+		 gdb_byte **pattern_bufp, ULONGEST *pattern_lenp,
 		 CORE_ADDR *start_addrp, ULONGEST *search_space_lenp,
 		 bfd_boolean big_p)
 {
@@ -58,17 +59,17 @@ parse_find_args (char *args, ULONGEST *max_countp,
   char size = '\0';
   ULONGEST max_count = ~(ULONGEST) 0;
   /* Buffer to hold the search pattern.  */
-  char *pattern_buf;
+  gdb_byte *pattern_buf;
   /* Current size of search pattern buffer.
      We realloc space as needed.  */
 #define INITIAL_PATTERN_BUF_SIZE 100
   ULONGEST pattern_buf_size = INITIAL_PATTERN_BUF_SIZE;
   /* Pointer to one past the last in-use part of pattern_buf.  */
-  char *pattern_buf_end;
+  gdb_byte *pattern_buf_end;
   ULONGEST pattern_len;
   CORE_ADDR start_addr;
   ULONGEST search_space_len;
-  char *s = args;
+  const char *s = args;
   struct cleanup *old_cleanups;
   struct value *v;
 
@@ -109,8 +110,7 @@ parse_find_args (char *args, ULONGEST *max_countp,
 	    }
 	}
 
-      while (isspace (*s))
-	++s;
+      s = skip_spaces_const (s);
     }
 
   /* Get the search range.  */
@@ -120,8 +120,7 @@ parse_find_args (char *args, ULONGEST *max_countp,
 
   if (*s == ',')
     ++s;
-  while (isspace (*s))
-    ++s;
+  s = skip_spaces_const (s);
 
   if (*s == '+')
     {
@@ -132,6 +131,7 @@ parse_find_args (char *args, ULONGEST *max_countp,
       len = value_as_long (v);
       if (len == 0)
 	{
+	  do_cleanups (old_cleanups);
 	  printf_filtered (_("Empty search range.\n"));
 	  return;
 	}
@@ -150,7 +150,7 @@ parse_find_args (char *args, ULONGEST *max_countp,
       v = parse_to_comma_and_eval (&s);
       end_addr = value_as_address (v);
       if (start_addr > end_addr)
-	error (_("Invalid search space, end preceeds start."));
+	error (_("Invalid search space, end precedes start."));
       search_space_len = end_addr - start_addr + 1;
       /* We don't support searching all of memory
 	 (i.e. start=0, end = 0xff..ff).
@@ -168,22 +168,23 @@ parse_find_args (char *args, ULONGEST *max_countp,
   while (*s != '\0')
     {
       LONGEST x;
-      int val_bytes;
+      struct type *t;
+      ULONGEST pattern_buf_size_need;
 
-      while (isspace (*s))
-	++s;
+      s = skip_spaces_const (s);
 
       v = parse_to_comma_and_eval (&s);
-      val_bytes = TYPE_LENGTH (value_type (v));
+      t = value_type (v);
 
       /* Keep it simple and assume size == 'g' when watching for when we
 	 need to grow the pattern buf.  */
-      if ((pattern_buf_end - pattern_buf + max (val_bytes, sizeof (int64_t)))
-	  > pattern_buf_size)
+      pattern_buf_size_need = (pattern_buf_end - pattern_buf
+			       + max (TYPE_LENGTH (t), sizeof (int64_t)));
+      if (pattern_buf_size_need > pattern_buf_size)
 	{
 	  size_t current_offset = pattern_buf_end - pattern_buf;
 
-	  pattern_buf_size *= 2;
+	  pattern_buf_size = pattern_buf_size_need * 2;
 	  pattern_buf = xrealloc (pattern_buf, pattern_buf_size);
 	  pattern_buf_end = pattern_buf + current_offset;
 	}
@@ -212,14 +213,13 @@ parse_find_args (char *args, ULONGEST *max_countp,
 	}
       else
 	{
-	  memcpy (pattern_buf_end, value_contents (v), val_bytes);
-	  pattern_buf_end += val_bytes;
+	  memcpy (pattern_buf_end, value_contents (v), TYPE_LENGTH (t));
+	  pattern_buf_end += TYPE_LENGTH (t);
 	}
 
       if (*s == ',')
 	++s;
-      while (isspace (*s))
-	++s;
+      s = skip_spaces_const (s);
     }
 
   if (pattern_buf_end == pattern_buf)
@@ -249,7 +249,7 @@ find_command (char *args, int from_tty)
   /* Command line parameters.
      These are initialized to avoid uninitialized warnings from -Wall.  */
   ULONGEST max_count = 0;
-  char *pattern_buf = 0;
+  gdb_byte *pattern_buf = 0;
   ULONGEST pattern_len = 0;
   CORE_ADDR start_addr = 0;
   ULONGEST search_space_len = 0;

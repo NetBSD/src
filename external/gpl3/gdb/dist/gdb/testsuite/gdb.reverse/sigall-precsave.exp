@@ -1,4 +1,4 @@
-#   Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
+#   Copyright 2009-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,16 +14,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 if [target_info exists gdb,nosignals] {
-    verbose "Skipping sigall-reverse.exp because of nosignals."
+    verbose "Skipping sigall-precsave.exp because of nosignals."
     return
 }
 
-if ![target_info exists gdb,can_reverse] {
+if ![supports_reverse] {
     return
-}
-
-if $tracelevel then {
-	strace $tracelevel
 }
 
 
@@ -31,17 +27,12 @@ gdb_exit
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 
-set testfile sigall-reverse
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
-     untested sigall.exp
-     return -1
-}
+standard_testfile sigall-reverse.c
+set precsave [standard_output_file sigall.precsave]
 
-# Make the first signal SIGABRT because it is always supported.
-set sig_supported 1
-set thissig "ABRT"
+if {[build_executable $testfile.exp $testfile $srcfile debug] == -1} {
+    return -1
+}
 
 proc test_one_sig {nextsig} {
     global sig_supported
@@ -172,7 +163,7 @@ gdb_load $binfile
 
 runto gen_ABRT
 
-if [target_info exists gdb,use_precord] {
+if [supports_process_record] {
     # Activate process record/replay
     gdb_test_no_output "record" "Turn on process record"
 }
@@ -187,93 +178,131 @@ gdb_test "break $breakloc" \
 # Signal handlers must be disabled
 gdb_test "handle all nostop noprint"
 
-gdb_test "continue" "Breakpoint .* end of main .*" "run to end of main"
+# The list of signals that the program generates, in the order they
+# are generated.
+set signals {
+    ABRT
+    HUP
+    QUIT
+    ILL
+    EMT
+    FPE
+    BUS
+    SEGV
+    SYS
+    PIPE
+    ALRM
+    URG
+    TSTP
+    CONT
+    CHLD
+    TTIN
+    TTOU
+    IO
+    XCPU
+    XFSZ
+    VTALRM
+    PROF
+    WINCH
+    LOST
+    USR1
+    USR2
+    PWR
+    POLL
+    WIND
+    PHONE
+    WAITING
+    LWP
+    DANGER
+    GRANT
+    RETRACT
+    MSG
+    SOUND
+    SAK
+    PRIO
+    33
+    34
+    35
+    36
+    37
+    38
+    39
+    40
+    41
+    42
+    43
+    44
+    45
+    46
+    47
+    48
+    49
+    50
+    51
+    52
+    53
+    54
+    55
+    56
+    57
+    58
+    59
+    60
+    61
+    62
+    63
+    TERM
+}
 
-gdb_test "record save sigall.precsave" \
-    "Saved core file sigall.precsave with execution log\."  \
+# Software single-step targets can't step into signal handlers.  Since
+# later, when replaying the execution log, the test wants to set
+# breakpoints on handlers, we need to make sure that while recording,
+# GDB steps through the handlers too, so that the execution log covers
+# them.  Setting breakpoints in all handlers takes care of it.  This
+# is harmless for hardware-step targets.
+foreach sig $signals {
+    set test "break *handle_$sig"
+    gdb_test_multiple $test $test {
+	-re "Breakpoint .*$gdb_prompt $" {
+	    # No need to record a pass for each breakpoint.
+	}
+    }
+}
+
+gdb_test_multiple "continue" "continue" {
+    -re "Breakpoint .* end of main .*$gdb_prompt $" {
+	pass "run to end of main"
+    }
+    -re "Breakpoint .* handle_.*$gdb_prompt $" {
+	send_gdb "continue\n"
+	exp_continue
+    }
+}
+
+delete_breakpoints
+
+gdb_test "record save $precsave" \
+    "Saved core file $precsave with execution log\."  \
     "save process recfile"
 
 gdb_test "kill" "" "Kill process, prepare to debug log file" \
     "Kill the program being debugged\\? \\(y or n\\) " "y"
 
-gdb_test "record restore sigall.precsave" \
+gdb_test "record restore $precsave" \
     "Program terminated with signal .*" \
     "reload precord save file"
 
 # Signal handlers must be re-enabled
 gdb_test "handle all stop print"
 
+# Make the first signal SIGABRT because it is always supported.
+set sig_supported 1
+set thissig "ABRT"
+
 # test signal handling
-test_one_sig HUP
-test_one_sig QUIT
-test_one_sig ILL
-test_one_sig EMT
-test_one_sig FPE
-test_one_sig BUS
-test_one_sig SEGV
-test_one_sig SYS
-test_one_sig PIPE
-test_one_sig ALRM
-test_one_sig URG
-test_one_sig TSTP
-test_one_sig CONT
-test_one_sig CHLD
-test_one_sig TTIN
-test_one_sig TTOU
-test_one_sig IO
-test_one_sig XCPU
-test_one_sig XFSZ
-test_one_sig VTALRM
-test_one_sig PROF
-test_one_sig WINCH
-test_one_sig LOST
-test_one_sig USR1
-test_one_sig USR2
-test_one_sig PWR
-test_one_sig POLL
-test_one_sig WIND
-test_one_sig PHONE
-test_one_sig WAITING
-test_one_sig LWP
-test_one_sig DANGER
-test_one_sig GRANT
-test_one_sig RETRACT
-test_one_sig MSG
-test_one_sig SOUND
-test_one_sig SAK
-test_one_sig PRIO
-test_one_sig 33
-test_one_sig 34
-test_one_sig 35
-test_one_sig 36
-test_one_sig 37
-test_one_sig 38
-test_one_sig 39
-test_one_sig 40
-test_one_sig 41
-test_one_sig 42
-test_one_sig 43
-test_one_sig 44
-test_one_sig 45
-test_one_sig 46
-test_one_sig 47
-test_one_sig 48
-test_one_sig 49
-test_one_sig 50
-test_one_sig 51
-test_one_sig 52
-test_one_sig 53
-test_one_sig 54
-test_one_sig 55
-test_one_sig 56
-test_one_sig 57
-test_one_sig 58
-test_one_sig 59
-test_one_sig 60
-test_one_sig 61
-test_one_sig 62
-test_one_sig 63
-test_one_sig TERM
+foreach sig [lrange $signals 1 end] {
+    test_one_sig $sig
+}
 
 # The last signal (SIGTERM) gets handled slightly differently because
 # we are not setting up for another test.
@@ -287,149 +316,14 @@ gdb_test "continue" "Breakpoint.*handle_TERM.*" "send signal TERM"
 
 gdb_test "continue" " end of main .*" "continue to sigall exit" 
 
-test_one_sig_reverse TERM
-test_one_sig_reverse 63
-test_one_sig_reverse 62
-test_one_sig_reverse 61
-test_one_sig_reverse 60
-test_one_sig_reverse 59
-test_one_sig_reverse 58
-test_one_sig_reverse 57
-test_one_sig_reverse 56
-test_one_sig_reverse 55
-test_one_sig_reverse 54
-test_one_sig_reverse 53
-test_one_sig_reverse 52
-test_one_sig_reverse 51
-test_one_sig_reverse 50
-test_one_sig_reverse 49
-test_one_sig_reverse 48
-test_one_sig_reverse 47
-test_one_sig_reverse 46
-test_one_sig_reverse 45
-test_one_sig_reverse 44
-test_one_sig_reverse 43
-test_one_sig_reverse 42
-test_one_sig_reverse 41
-test_one_sig_reverse 40
-test_one_sig_reverse 39
-test_one_sig_reverse 38
-test_one_sig_reverse 37
-test_one_sig_reverse 36
-test_one_sig_reverse 35
-test_one_sig_reverse 34
-test_one_sig_reverse 33
-test_one_sig_reverse PRIO
-test_one_sig_reverse SAK
-test_one_sig_reverse SOUND
-test_one_sig_reverse MSG
-test_one_sig_reverse RETRACT
-test_one_sig_reverse GRANT
-test_one_sig_reverse DANGER
-test_one_sig_reverse LWP
-test_one_sig_reverse WAITING
-test_one_sig_reverse PHONE
-test_one_sig_reverse WIND
-test_one_sig_reverse POLL
-test_one_sig_reverse PWR
-test_one_sig_reverse USR2
-test_one_sig_reverse USR1
-test_one_sig_reverse LOST
-test_one_sig_reverse WINCH
-test_one_sig_reverse PROF
-test_one_sig_reverse VTALRM
-test_one_sig_reverse XFSZ
-test_one_sig_reverse XCPU
-test_one_sig_reverse IO
-test_one_sig_reverse TTOU
-test_one_sig_reverse TTIN
-test_one_sig_reverse CHLD
-test_one_sig_reverse CONT
-test_one_sig_reverse TSTP
-test_one_sig_reverse URG
-test_one_sig_reverse ALRM
-test_one_sig_reverse PIPE
-test_one_sig_reverse SYS
-test_one_sig_reverse SEGV
-test_one_sig_reverse BUS
-test_one_sig_reverse FPE
-test_one_sig_reverse EMT
-test_one_sig_reverse ILL
-test_one_sig_reverse QUIT
-test_one_sig_reverse HUP
-test_one_sig_reverse ABRT
+foreach sig [lreverse $signals] {
+    test_one_sig_reverse $sig
+}
 
 # Make the first signal SIGABRT because it is always supported.
 set sig_supported 1
 set thissig "ABRT"
 
-test_one_sig HUP
-test_one_sig QUIT
-test_one_sig ILL
-test_one_sig EMT
-test_one_sig FPE
-test_one_sig BUS
-test_one_sig SEGV
-test_one_sig SYS
-test_one_sig PIPE
-test_one_sig ALRM
-test_one_sig URG
-test_one_sig TSTP
-test_one_sig CONT
-test_one_sig CHLD
-test_one_sig TTIN
-test_one_sig TTOU
-test_one_sig IO
-test_one_sig XCPU
-test_one_sig XFSZ
-test_one_sig VTALRM
-test_one_sig PROF
-test_one_sig WINCH
-test_one_sig LOST
-test_one_sig USR1
-test_one_sig USR2
-test_one_sig PWR
-test_one_sig POLL
-test_one_sig WIND
-test_one_sig PHONE
-test_one_sig WAITING
-test_one_sig LWP
-test_one_sig DANGER
-test_one_sig GRANT
-test_one_sig RETRACT
-test_one_sig MSG
-test_one_sig SOUND
-test_one_sig SAK
-test_one_sig PRIO
-test_one_sig 33
-test_one_sig 34
-test_one_sig 35
-test_one_sig 36
-test_one_sig 37
-test_one_sig 38
-test_one_sig 39
-test_one_sig 40
-test_one_sig 41
-test_one_sig 42
-test_one_sig 43
-test_one_sig 44
-test_one_sig 45
-test_one_sig 46
-test_one_sig 47
-test_one_sig 48
-test_one_sig 49
-test_one_sig 50
-test_one_sig 51
-test_one_sig 52
-test_one_sig 53
-test_one_sig 54
-test_one_sig 55
-test_one_sig 56
-test_one_sig 57
-test_one_sig 58
-test_one_sig 59
-test_one_sig 60
-test_one_sig 61
-test_one_sig 62
-test_one_sig 63
-test_one_sig TERM
+foreach sig [lrange $signals 1 end] {
+    test_one_sig $sig
+}

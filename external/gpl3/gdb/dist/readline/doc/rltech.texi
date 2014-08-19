@@ -1,14 +1,13 @@
 @comment %**start of header (This is for running Texinfo on a region.)
 @setfilename rltech.info
 @comment %**end of header (This is for running Texinfo on a region.)
-@setchapternewpage odd
 
 @ifinfo
 This document describes the GNU Readline Library, a utility for aiding
 in the consistency of user interface across discrete programs that need
 to provide a command line interface.
 
-Copyright (C) 1988-2005 Free Software Foundation, Inc.
+Copyright (C) 1988--2011 Free Software Foundation, Inc.
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -351,6 +350,12 @@ The @code{rl_set_prompt()} function (@pxref{Redisplay}) may
 be used to modify the prompt string after calling @code{readline()}.
 @end deftypevar
 
+@deftypevar {char *} rl_display_prompt
+The string displayed as the prompt.  This is usually identical to
+@var{rl_prompt}, but may be changed temporarily by functions that
+use the prompt string as a message area, such as incremental search.
+@end deftypevar
+
 @deftypevar int rl_already_prompted
 If an application wishes to display the prompt itself, rather than have
 Readline do it the first time @code{readline()} is called, it should set
@@ -518,6 +523,20 @@ Readline is performing word completion.
 Readline is currently executing the readline signal handler.
 @item RL_STATE_UNDOING
 Readline is performing an undo.
+@item RL_STATE_INPUTPENDING
+Readline has input pending due to a call to @code{rl_execute_next()}.
+@item RL_STATE_TTYCSAVED
+Readline has saved the values of the terminal's special characters.
+@item RL_STATE_CALLBACK
+Readline is currently using the alternate (callback) interface
+(@pxref{Alternate Interface}).
+@item RL_STATE_VIMOTION
+Readline is reading the argument to a vi-mode "motion" command.
+@item RL_STATE_MULTIKEY
+Readline is reading a multiple-keystroke command.
+@item RL_STATE_VICMDONCE
+Readline has entered vi command (movement) mode at least one time during
+the current call to @code{readline()}.
 @item RL_STATE_DONE
 Readline has read a key sequence bound to @code{accept-line}
 and is about to return the line to the caller.
@@ -603,7 +622,7 @@ Readline which keymap to use.
 @deftypefun Keymap rl_make_bare_keymap (void)
 Returns a new, empty keymap.  The space for the keymap is allocated with
 @code{malloc()}; the caller should free it by calling
-@code{rl_discard_keymap()} when done.
+@code{rl_free_keymap()} when done.
 @end deftypefun
 
 @deftypefun Keymap rl_copy_keymap (Keymap map)
@@ -617,7 +636,13 @@ the Meta digits bound to produce numeric arguments.
 @end deftypefun
 
 @deftypefun void rl_discard_keymap (Keymap keymap)
-Free the storage associated with @var{keymap}.
+Free the storage associated with the data in @var{keymap}.
+The caller should free @var{keymap}.
+@end deftypefun
+
+@deftypefun void rl_free_keymap (Keymap keymap)
+Free all storage associated with @var{keymap}.  This calls
+@code{rl_discard_keymap} to free subordindate keymaps and macros.
 @end deftypefun
 
 Readline has several internal keymaps.  These functions allow you to
@@ -793,7 +818,8 @@ Print the names of all bindable Readline functions to @code{rl_outstream}.
 @deftypefun {const char **} rl_funmap_names (void)
 Return a NULL terminated array of known function names.  The array is
 sorted.  The array itself is allocated, but not the strings inside.  You
-should @code{free()} the array when you are done, but not the pointers.
+should free the array, but not the pointers, using @code{free} or
+@code{rl_free} when you are done.
 @end deftypefun
 
 @deftypefun int rl_add_funmap_entry (const char *name, rl_command_func_t *function)
@@ -1033,8 +1059,10 @@ pending input has not already been read with @code{rl_read_key()}.
 @deftypefun int rl_set_keyboard_input_timeout (int u)
 While waiting for keyboard input in @code{rl_read_key()}, Readline will
 wait for @var{u} microseconds for input before calling any function
-assigned to @code{rl_event_hook}.  The default waiting period is
-one-tenth of a second.  Returns the old timeout value.
+assigned to @code{rl_event_hook}.  @var{u} must be greater than or equal
+to zero (a zero-length timeout is equivalent to a poll).
+The default waiting period is one-tenth of a second.
+Returns the old timeout value.
 @end deftypefun
 
 @node Terminal Management
@@ -1075,6 +1103,26 @@ environment variable is used.
 @node Utility Functions
 @subsection Utility Functions
 
+@deftypefun int rl_save_state (struct readline_state *sp)
+Save a snapshot of Readline's internal state to @var{sp}.
+The contents of the @var{readline_state} structure are documented
+in @file{readline.h}.
+The caller is responsible for allocating the structure.
+@end deftypefun
+
+@deftypefun int rl_restore_state (struct readline_state *sp)
+Restore Readline's internal state to that stored in @var{sp}, which must
+have been saved by a call to @code{rl_save_state}.
+The contents of the @var{readline_state} structure are documented
+in @file{readline.h}.
+The caller is responsible for freeing the structure.
+@end deftypefun
+
+@deftypefun void rl_free (void *mem)
+Deallocate the memory pointed to by @var{mem}.  @var{mem} must have been
+allocated by @code{malloc}.
+@end deftypefun
+
 @deftypefun void rl_replace_line (const char *text, int clear_undo)
 Replace the contents of @code{rl_line_buffer} with @var{text}.
 The point and mark are preserved, if possible.
@@ -1082,7 +1130,7 @@ If @var{clear_undo} is non-zero, the undo list associated with the
 current line is cleared.
 @end deftypefun
 
-@deftypefun int rl_extend_line_buffer (int len)
+@deftypefun void rl_extend_line_buffer (int len)
 Ensure that @code{rl_line_buffer} has enough space to hold @var{len}
 characters, possibly reallocating it if necessary.
 @end deftypefun
@@ -1109,6 +1157,9 @@ of strings, in argv format, such as a list of completion matches.
 is the length of the longest string in @code{matches}.  This function uses
 the setting of @code{print-completions-horizontally} to select how the
 matches are displayed (@pxref{Readline Init File Syntax}).
+When displaying completions, this function sets the number of columns used
+for display to the value of @code{completion-display-width}, the value of
+the environment variable @env{COLUMNS}, or the screen width, in that order.
 @end deftypefun
 
 The following are implemented as macros, defined in @code{chardefs.h}.
@@ -1392,6 +1443,13 @@ call @code{rl_resize_terminal()} or @code{rl_set_screen_size()} to force
 Readline to update its idea of the terminal size when a @code{SIGWINCH}
 is received.
 
+@deftypefun void rl_echo_signal_char (int sig)
+If an application wishes to install its own signal handlers, but still
+have readline display characters that generate signals, calling this
+function with @var{sig} set to @code{SIGINT}, @code{SIGQUIT}, or
+@code{SIGTSTP} will display the character generating that signal.
+@end deftypefun
+
 @deftypefun void rl_resize_terminal (void)
 Update Readline's internal screen size by reading values from the kernel.
 @end deftypefun
@@ -1659,15 +1717,49 @@ from the array must be freed.
 
 @deftypevar {rl_icppfunc_t *} rl_directory_completion_hook
 This function, if defined, is allowed to modify the directory portion
-of filenames Readline completes.  It is called with the address of a
-string (the current directory name) as an argument, and may modify that string.
+of filenames Readline completes.
+It could be used to expand symbolic links or shell variables in pathnames.
+It is called with the address of a string (the current directory name) as an
+argument, and may modify that string.
 If the string is replaced with a new string, the old value should be freed.
 Any modified directory name should have a trailing slash.
-The modified value will be displayed as part of the completion, replacing
+The modified value will be used as part of the completion, replacing
 the directory portion of the pathname the user typed.
-It returns an integer that should be non-zero if the function modifies
-its directory argument.
-It could be used to expand symbolic links or shell variables in pathnames.
+At the least, even if no other expansion is performed, this function should
+remove any quote characters from the directory name, because its result will
+be passed directly to @code{opendir()}.
+The directory completion hook returns an integer that should be non-zero if
+the function modifies its directory argument.
+The function should not modify the directory argument if it returns 0.
+@end deftypevar
+
+@ignore
+@deftypevar extern rl_icppfunc_t *rl_directory_rewrite_hook;
+If non-zero, this is the address of a function to call when completing
+a directory name.  This function takes the address of the directory name
+to be modified as an argument.  Unlike @code{rl_directory_completion_hook},
+it only modifies the directory name used in @code{opendir}, not what is
+displayed when the possible completions are printed or inserted.  It is
+called before rl_directory_completion_hook.
+
+I'm not happy with how this works yet, so it's undocumented.
+@end deftypevar
+@end ignore
+
+@deftypevar {rl_dequote_func_t *} rl_filename_rewrite_hook
+If non-zero, this is the address of a function called when reading
+directory entries from the filesystem for completion and comparing
+them to the partial word to be completed.  The function should
+perform any necesary application or system-specific conversion on
+the filename, such as converting between character sets or converting
+from a filesystem format to a character input format.
+The function takes two arguments: @var{fname}, the filename to be converted,
+and @var{fnlen}, its length in bytes.
+It must either return its first argument (if no conversion takes place)
+or the converted filename in newly-allocated memory.  The converted
+form is used to compare against the word to be completed, and, if it
+matches, is added to the list of matches.  Readline will free the
+allocated string.
 @end deftypevar
 
 @deftypevar {rl_compdisp_func_t *} rl_completion_display_matches_hook
@@ -1822,6 +1914,15 @@ if the application's completion function returns no matches.
 It should be set only by an application's completion function.
 @end deftypevar
 
+@deftypevar int rl_sort_completion_matches
+If an application sets this variable to 0, Readline will not sort the
+list of completions (which implies that it cannot remove any duplicate
+completions).  The default value is 1, which means that Readline will
+sort the completions and, depending on the value of
+@code{rl_ignore_completion_duplicates}, will attempt to remove duplicate
+matches.
+@end deftypevar
+
 @deftypevar int rl_completion_type
 Set to a character describing the type of completion Readline is currently
 attempting; see the description of @code{rl_complete_internal()}
@@ -1829,6 +1930,13 @@ attempting; see the description of @code{rl_complete_internal()}
 This is set to the appropriate value before any application-specific
 completion function is called, allowing such functions to present
 the same interface as @code{rl_complete()}.
+@end deftypevar
+
+@deftypevar int rl_completion_invoking_key
+Set to the final character in the key sequence that invoked one of the
+completion functions that call @code{rl_complete_internal()}.  This is
+set to the appropriate value before any application-specific completion
+function is called.
 @end deftypevar
 
 @deftypevar int rl_inhibit_completion
@@ -1851,27 +1959,51 @@ history list.
    GNU Readline library.  This application interactively allows users
    to manipulate files and their modes. */
 
-#include <stdio.h>
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <sys/types.h>
-#include <sys/file.h>
+#ifdef HAVE_SYS_FILE_H
+#  include <sys/file.h>
+#endif
 #include <sys/stat.h>
-#include <sys/errno.h>
+
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+
+#include <fcntl.h>
+#include <stdio.h>
+#include <errno.h>
+
+#if defined (HAVE_STRING_H)
+#  include <string.h>
+#else /* !HAVE_STRING_H */
+#  include <strings.h>
+#endif /* !HAVE_STRING_H */
+
+#ifdef HAVE_STDLIB_H
+#  include <stdlib.h>
+#endif
+
+#include <time.h>
 
 #include <readline/readline.h>
 #include <readline/history.h>
 
-extern char *xmalloc ();
+extern char *xmalloc PARAMS((size_t));
 
 /* The names of functions that actually do the manipulation. */
-int com_list __P((char *));
-int com_view __P((char *));
-int com_rename __P((char *));
-int com_stat __P((char *));
-int com_pwd __P((char *));
-int com_delete __P((char *));
-int com_help __P((char *));
-int com_cd __P((char *));
-int com_quit __P((char *));
+int com_list PARAMS((char *));
+int com_view PARAMS((char *));
+int com_rename PARAMS((char *));
+int com_stat PARAMS((char *));
+int com_pwd PARAMS((char *));
+int com_delete PARAMS((char *));
+int com_help PARAMS((char *));
+int com_cd PARAMS((char *));
+int com_quit PARAMS((char *));
 
 /* A structure which contains information on the commands this program
    can understand. */
@@ -1904,12 +2036,12 @@ COMMAND *find_command ();
 /* The name of this program, as taken from argv[0]. */
 char *progname;
 
-/* When non-zero, this means the user is done using this program. */
+/* When non-zero, this global means the user is done using this program. */
 int done;
 
 char *
 dupstr (s)
-     int s;
+     char *s;
 @{
   char *r;
 
@@ -2034,12 +2166,12 @@ stripwhite (string)
 /*                                                                  */
 /* **************************************************************** */
 
-char *command_generator __P((const char *, int));
-char **fileman_completion __P((const char *, int, int));
+char *command_generator PARAMS((const char *, int));
+char **fileman_completion PARAMS((const char *, int, int));
 
-/* Tell the GNU Readline library how to complete.  We want to try to
-   complete on command names if this is the first word in the line, or
-   on filenames if not. */
+/* Tell the GNU Readline library how to complete.  We want to try to complete
+   on command names if this is the first word in the line, or on filenames
+   if not. */
 initialize_readline ()
 @{
   /* Allow conditional parsing of the ~/.inputrc file. */
@@ -2049,11 +2181,11 @@ initialize_readline ()
   rl_attempted_completion_function = fileman_completion;
 @}
 
-/* Attempt to complete on the contents of TEXT.  START and END
-   bound the region of rl_line_buffer that contains the word to
-   complete.  TEXT is the word to complete.  We can use the entire
-   contents of rl_line_buffer in case we want to do some simple
-   parsing.  Returnthe array of matches, or NULL if there aren't any. */
+/* Attempt to complete on the contents of TEXT.  START and END bound the
+   region of rl_line_buffer that contains the word to complete.  TEXT is
+   the word to complete.  We can use the entire contents of rl_line_buffer
+   in case we want to do some simple parsing.  Return the array of matches,
+   or NULL if there aren't any. */
 char **
 fileman_completion (text, start, end)
      const char *text;
@@ -2072,9 +2204,9 @@ fileman_completion (text, start, end)
   return (matches);
 @}
 
-/* Generator function for command completion.  STATE lets us
-   know whether to start from scratch; without any state
-   (i.e. STATE == 0), then we start at the top of the list. */
+/* Generator function for command completion.  STATE lets us know whether
+   to start from scratch; without any state (i.e. STATE == 0), then we
+   start at the top of the list. */
 char *
 command_generator (text, state)
      const char *text;
@@ -2083,17 +2215,16 @@ command_generator (text, state)
   static int list_index, len;
   char *name;
 
-  /* If this is a new word to complete, initialize now.  This
-     includes saving the length of TEXT for efficiency, and
-     initializing the index variable to 0. */
+  /* If this is a new word to complete, initialize now.  This includes
+     saving the length of TEXT for efficiency, and initializing the index
+     variable to 0. */
   if (!state)
     @{
       list_index = 0;
       len = strlen (text);
     @}
 
-  /* Return the next name which partially matches from the
-     command list. */
+  /* Return the next name which partially matches from the command list. */
   while (name = commands[list_index].name)
     @{
       list_index++;
@@ -2133,7 +2264,12 @@ com_view (arg)
   if (!valid_argument ("view", arg))
     return 1;
 
+#if defined (__MSDOS__)
+  /* more.com doesn't grok slashes in pathnames */
+  sprintf (syscom, "less %s", arg);
+#else
   sprintf (syscom, "more %s", arg);
+#endif
   return (system (syscom));
 @}
 
@@ -2160,7 +2296,8 @@ com_stat (arg)
 
   printf ("Statistics for `%s':\n", arg);
 
-  printf ("%s has %d link%s, and is %d byte%s in length.\n", arg,
+  printf ("%s has %d link%s, and is %d byte%s in length.\n",
+	  arg,
           finfo.st_nlink,
           (finfo.st_nlink == 1) ? "" : "s",
           finfo.st_size,
@@ -2249,8 +2386,7 @@ com_pwd (ignore)
   return 0;
 @}
 
-/* The user wishes to quit using this program.  Just set DONE
-   non-zero. */
+/* The user wishes to quit using this program.  Just set DONE non-zero. */
 com_quit (arg)
      char *arg;
 @{
@@ -2263,13 +2399,12 @@ too_dangerous (caller)
      char *caller;
 @{
   fprintf (stderr,
-           "%s: Too dangerous for me to distribute.\n",
+           "%s: Too dangerous for me to distribute.  Write it yourself.\n",
            caller);
-  fprintf (stderr, "Write it yourself.\n");
 @}
 
-/* Return non-zero if ARG is a valid argument for CALLER,
-   else print an error message and return zero. */
+/* Return non-zero if ARG is a valid argument for CALLER, else print
+   an error message and return zero. */
 int
 valid_argument (caller, arg)
      char *caller, *arg;

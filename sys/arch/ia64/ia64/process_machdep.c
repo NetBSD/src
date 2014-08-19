@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.5 2009/07/20 04:41:37 kiyohara Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.5.22.1 2014/08/20 00:03:07 tls Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.5 2009/07/20 04:41:37 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.5.22.1 2014/08/20 00:03:07 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/ptrace.h>
@@ -53,7 +53,7 @@ printf("%s: not yet\n", __func__);
 
 
 int
-process_read_fpregs(struct lwp *l, struct fpreg *fpregs)
+process_read_fpregs(struct lwp *l, struct fpreg *fpregs, size_t *sz)
 {
 printf("%s: not yet\n", __func__);
 	return 0;
@@ -61,7 +61,7 @@ printf("%s: not yet\n", __func__);
 
 
 int
-process_write_fpregs(struct lwp *l, const struct fpreg *fpregs)
+process_write_fpregs(struct lwp *l, const struct fpreg *fpregs, size_t sz)
 {
 printf("%s: not yet\n", __func__);
 	return 0;

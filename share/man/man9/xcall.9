@@ -1,4 +1,4 @@
-.\"     $NetBSD: xcall.9,v 1.8 2011/10/24 07:25:51 yamt Exp $
+.\"     $NetBSD: xcall.9,v 1.8.8.1 2014/08/20 00:02:37 tls Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 24, 2011
+.Dd November 26, 2013
 .Dt XCALL 9
 .Os
 .Sh NAME
@@ -87,7 +87,7 @@ also provides a mechanism for making
 .Dq "high priority"
 cross calls.
 The function to be executed runs on the remote CPU within a
-.Dv IPL_SOFTCLOCK
+.Dv IPL_SOFTSERIAL
 software interrupt context, possibly interrupting other lower-priority
 code running on the CPU.
 .Sh NOTES
@@ -151,4 +151,4 @@ The
 interface first appeared in
 .Nx 5.0 .
 .Sh AUTHORS
-.An Andrew Doran Aq ad@NetBSD.org
+.An Andrew Doran Aq Mt ad@NetBSD.org

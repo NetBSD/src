@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.88.6.1 2012/11/20 03:02:35 tls Exp $	*/
+/*	$NetBSD: xd.c,v 1.88.6.2 2014/08/20 00:03:52 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.88.6.1 2012/11/20 03:02:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.88.6.2 2014/08/20 00:03:52 tls Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -292,12 +292,29 @@ dev_type_dump(xddump);
 dev_type_size(xdsize);
 
 const struct bdevsw xd_bdevsw = {
-	xdopen, xdclose, xdstrategy, xdioctl, xddump, xdsize, D_DISK
+	.d_open = xdopen,
+	.d_close = xdclose,
+	.d_strategy = xdstrategy,
+	.d_ioctl = xdioctl,
+	.d_dump = xddump,
+	.d_psize = xdsize,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw xd_cdevsw = {
-	xdopen, xdclose, xdread, xdwrite, xdioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = xdopen,
+	.d_close = xdclose,
+	.d_read = xdread,
+	.d_write = xdwrite,
+	.d_ioctl = xdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 struct xdc_attach_args {	/* this is the "aux" args to xdattach */
@@ -2437,6 +2454,7 @@ xdc_ioctlcmd(struct xd_softc *xd, dev_t dev, struct xd_iocmd *xio)
 	xio->errnum = xdcsc->reqs[rqno].errnum;
 	xio->tries = xdcsc->reqs[rqno].tries;
 	XDC_DONE(xdcsc, rqno, dummy);
+	__USE(dummy);
 
 	if (xio->cmd == XDCMD_RD || xio->cmd == XDCMD_XRD)
 		error = copyout(buf, xio->dptr, xio->dlen);

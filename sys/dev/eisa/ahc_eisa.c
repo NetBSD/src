@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.38 2009/12/04 11:13:04 njoly Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.38.22.1 2014/08/20 00:03:36 tls Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.38 2009/12/04 11:13:04 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.38.22.1 2014/08/20 00:03:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,6 +110,7 @@ ahc_eisa_attach(device_t parent, device_t self, void *aux)
 #ifdef AHC_DEBUG
 	int i;
 #endif
+	char intrbuf[EISA_INTRSTR_LEN];
 
 	ahc->sc_dev = self;
 
@@ -165,7 +166,7 @@ ahc_eisa_attach(device_t parent, device_t self, void *aux)
 		intrtype = IST_LEVEL;
 		intrtypestr = "level sensitive";
 	}
-	intrstr = eisa_intr_string(ec, ih);
+	intrstr = eisa_intr_string(ec, ih, intrbuf, sizeof(intrbuf));
 	ahc->ih = eisa_intr_establish(ec, ih,
 	    intrtype, IPL_BIO, ahc_intr, ahc);
 	if (ahc->ih == NULL) {

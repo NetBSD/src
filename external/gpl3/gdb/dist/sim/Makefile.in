@@ -1,6 +1,5 @@
 #    Makefile template for Configure for the sim library.
-#    Copyright (C) 1993, 1995, 1997, 1998, 2007, 2008, 2009, 2010, 2011
-#    Free Software Foundation, Inc.
+#    Copyright (C) 1993-2014 Free Software Foundation, Inc.
 #    Written by Cygnus Support.
 # 
 # This file is part of BFD, the Binary File Descriptor library.

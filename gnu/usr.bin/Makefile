@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.136.2.1 2012/11/20 03:00:24 tls Exp $
+#	$NetBSD: Makefile,v 1.136.2.2 2014/08/20 00:01:59 tls Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR+=	bc
 SUBDIR+=	c89 c99
-SUBDIR+=	dc diffutils gkermit
+SUBDIR+=	dc diffutils
 SUBDIR+=	rcs send-pr texinfo
 
 .if ${MKBSDGREP} == "no"
@@ -16,13 +16,5 @@ SUBDIR+=	groff
 .endif
 
 SUBDIR+=	gettext
-
-.if ${MKGCC} != "no"
-.if ${HAVE_GCC} == 4
-.if ${MKGCCCMDS} != "no"
-SUBDIR+=	gcc4
-.endif
-.endif
-.endif
 
 .include <bsd.subdir.mk>

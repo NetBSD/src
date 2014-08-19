@@ -1,3 +1,5 @@
+/*	$NetBSD: sljitConfig.h,v 1.6.2.3 2014/08/20 00:04:25 tls Exp $	*/
+
 /*
  *    Stack-less Just-In-Time compiler
  *
@@ -44,15 +46,18 @@
 /* #define SLJIT_CONFIG_ARM_V5 1 */
 /* #define SLJIT_CONFIG_ARM_V7 1 */
 /* #define SLJIT_CONFIG_ARM_THUMB2 1 */
+/* #define SLJIT_CONFIG_ARM_64 1 */
 /* #define SLJIT_CONFIG_PPC_32 1 */
 /* #define SLJIT_CONFIG_PPC_64 1 */
 /* #define SLJIT_CONFIG_MIPS_32 1 */
+/* #define SLJIT_CONFIG_MIPS_64 1 */
 /* #define SLJIT_CONFIG_SPARC_32 1 */
+/* #define SLJIT_CONFIG_TILEGX 1 */
 
 /* #define SLJIT_CONFIG_AUTO 1 */
 /* #define SLJIT_CONFIG_UNSUPPORTED 1 */
 
-#include <machine/sljitarch.h>
+#include <machine/sljit_machdep.h>
 
 #if defined(_KERNEL) && !defined(SLJIT_MALLOC)
 #define SLJIT_MALLOC(size) malloc((size), M_TEMP, M_WAITOK)
@@ -63,15 +68,9 @@
 #endif
 
 #if defined(_KERNEL) && !defined(SLJIT_CACHE_FLUSH)
-#define SLJIT_CACHE_FLUSH(from, to)
+#error "SLJIT_CACHE_FLUSH must be defined."
 #endif
 
-#if defined(_KERNEL)
-#define SLJIT_UTIL_GLOBAL_LOCK 0
-#define SLJIT_EXECUTABLE_ALLOCATOR 0
-#define SLJIT_MALLOC_EXEC(sz) SLJIT_MALLOC(sz)
-#define SLJIT_FREE_EXEC(ptr) SLJIT_FREE(ptr)
-#endif
 
 #ifdef _KERNEL
 
@@ -88,6 +87,10 @@
 
 #ifdef _KERNEL
 #define SLJIT_VERBOSE 0
+#endif
+
+#ifdef _KERNEL
+#define SLJIT_IS_FPU_AVAILABLE 0
 #endif
 
 #ifdef _KERNEL
@@ -149,6 +152,13 @@
 #define SLJIT_VERBOSE 1
 #endif
 
-/* See the beginning of sljitConfigInternal.h */
+/*
+  SLJIT_IS_FPU_AVAILABLE
+    The availability of the FPU can be controlled by SLJIT_IS_FPU_AVAILABLE.
+      zero value - FPU is NOT present.
+      nonzero value - FPU is present.
+*/
+
+/* For further configurations, see the beginning of sljitConfigInternal.h */
 
 #endif

@@ -1,5 +1,4 @@
-#   Copyright 2002, 2003, 2004, 2007, 2008, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright 2002-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,16 +20,18 @@ if [target_info exists gdb,nofileio] {
     continue
 }
 
-if $tracelevel then {
-        strace $tracelevel
+
+standard_testfile
+
+if {[is_remote host]} {
+    set outdir .
+} else {
+    set outdir [standard_output_file {}]
 }
 
-
-set testfile "fileio"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
-
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
+	   executable \
+	   [list debug "additional_flags=-DOUTDIR=\"$outdir/\""]] != "" } {
     untested fileio.exp
     return -1
 }
@@ -38,12 +39,15 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
 # Create and source the file that provides information about the compiler
 # used to compile the test case.
 
-if [get_compiler_info ${binfile}] {
-    return -1;
+if [get_compiler_info] {
+    return -1
 }
 
-remote_exec build {sh -xc test\ -r\ dir2.fileio.test\ &&\ chmod\ -f\ +w\ dir2.fileio.test}
-remote_exec build {sh -xc rm\ -rf\ *.fileio.test}
+set dir2 [standard_output_file dir2.fileio.test]
+if {[file exists $dir2] && ![file writable $dir2]} {
+    system "chmod +w $dir2"
+}
+system "rm -rf [standard_output_file *.fileio.test]"
 
 set oldtimeout $timeout
 set timeout [expr "$timeout + 60"]
@@ -85,7 +89,7 @@ gdb_test continue \
 
 gdb_test "continue" ".*" ""
 
-catch "system \"chmod -f -w nowrt.fileio.test\""
+catch "system \"chmod -f -w [standard_output_file nowrt.fileio.test]\""
 
 gdb_test continue \
 "Continuing\\..*open 5:.*EACCES$stop_msg" \
@@ -247,11 +251,12 @@ gdb_test continue \
 "Continuing\\..*time 2:.*OK$stop_msg" \
 "Time(2) returns feasible values"
 
-send_gdb "quit\n"
-send_gdb "y\n"
+gdb_exit
 
-remote_exec build {sh -xc test\ -r\ dir2.fileio.test\ &&\ chmod\ -f\ +w\ dir2.fileio.test}
-remote_exec build {sh -xc rm\ -rf\ *.fileio.test}
+# Make dir2 writable again so rm -rf of a build tree Just Works.
+if {[file exists $dir2] && ![file writable $dir2]} {
+    system "chmod +w $dir2"
+}
 
 set timeout $oldtimeout
 return 0

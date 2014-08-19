@@ -1,4 +1,4 @@
-/* $NetBSD: isctype.c,v 1.21.12.1 2013/06/23 06:21:05 tls Exp $ */
+/* $NetBSD: isctype.c,v 1.21.12.2 2014/08/20 00:02:14 tls Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: isctype.c,v 1.21.12.1 2013/06/23 06:21:05 tls Exp $");
+__RCSID("$NetBSD: isctype.c,v 1.21.12.2 2014/08/20 00:02:14 tls Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -44,20 +44,22 @@ __RCSID("$NetBSD: isctype.c,v 1.21.12.1 2013/06/23 06:21:05 tls Exp $");
 #error "EOF != -1"
 #endif
 
+#include "runetype_local.h"
 #include "setlocale_local.h"
 
-#define _CTYPE_TAB(table, i)	((_current_cache()->table + 1)[i])
+#define _RUNE_LOCALE(loc) \
+    ((_RuneLocale *)((loc)->part_impl[(size_t)LC_CTYPE]))
 
 #define _ISCTYPE_FUNC(name, bit) \
 int \
 is##name(int c) \
 { \
-	return (int)(_CTYPE_TAB(ctype_tab, c) & (bit)); \
+	return (int)_ctype_tab_[c + 1] & (bit); \
 } \
 int \
 is##name ## _l(int c, locale_t loc) \
 { \
-	return (int)(((loc->cache->ctype_tab + 1)[c]) & (bit)); \
+	return (int)((_RUNE_LOCALE(loc)->rl_ctype_tab[c + 1]) & (bit)); \
 }
 
 _ISCTYPE_FUNC(alnum, (_CTYPE_A|_CTYPE_D))
@@ -76,25 +78,25 @@ _ISCTYPE_FUNC(xdigit, _CTYPE_X)
 int
 toupper(int c)
 {
-	return (int)_CTYPE_TAB(toupper_tab, c);
+	return (int)_toupper_tab_[c + 1];
 }
 
 int
 toupper_l(int c, locale_t loc)
 {
-	return (int)(((loc->cache->toupper_tab + 1)[c]));
+	return (int)(_RUNE_LOCALE(loc)->rl_toupper_tab[c + 1]);
 }
 
 int
 tolower(int c)
 {
-	return (int)_CTYPE_TAB(tolower_tab, c);
+	return (int)_tolower_tab_[c + 1];
 }
 
 int
 tolower_l(int c, locale_t loc)
 {
-	return (int)(((loc->cache->tolower_tab + 1)[c]));
+	return (int)(_RUNE_LOCALE(loc)->rl_tolower_tab[c + 1]);
 }
 
 int

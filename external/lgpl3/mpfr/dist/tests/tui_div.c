@@ -1,7 +1,7 @@
 /* Test file for mpfr_ui_div.
 
-Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -102,7 +102,7 @@ check_inexact (void)
 }
 
 static void
-check_nan (void)
+check_special (void)
 {
   mpfr_t  d, q;
 
@@ -112,47 +112,63 @@ check_nan (void)
   /* 1/+inf == 0 */
   MPFR_SET_INF (d);
   MPFR_SET_POS (d);
+  mpfr_clear_flags ();
   MPFR_ASSERTN (mpfr_ui_div (q, 1L, d, MPFR_RNDZ) == 0); /* exact */
   MPFR_ASSERTN (mpfr_number_p (q));
   MPFR_ASSERTN (mpfr_sgn (q) == 0);
+  MPFR_ASSERTN (__gmpfr_flags == 0);
 
   /* 1/-inf == -0 */
   MPFR_SET_INF (d);
   MPFR_SET_NEG (d);
+  mpfr_clear_flags ();
   MPFR_ASSERTN (mpfr_ui_div (q, 1L, d, MPFR_RNDZ) == 0); /* exact */
   MPFR_ASSERTN (mpfr_number_p (q));
   MPFR_ASSERTN (mpfr_sgn (q) == 0);
+  MPFR_ASSERTN (__gmpfr_flags == 0);
 
   /* 1/nan == nan */
   MPFR_SET_NAN (d);
+  mpfr_clear_flags ();
   MPFR_ASSERTN (mpfr_ui_div (q, 1L, d, MPFR_RNDZ) == 0); /* exact */
   MPFR_ASSERTN (mpfr_nan_p (q));
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_NAN);
 
   /* 0/0 == nan */
   mpfr_set_ui (d, 0L, MPFR_RNDN);
+  mpfr_clear_flags ();
   MPFR_ASSERTN (mpfr_ui_div (q, 0L, d, MPFR_RNDZ) == 0); /* exact */
   MPFR_ASSERTN (mpfr_nan_p (q));
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_NAN);
 
   /* 1/+0 = +inf */
   mpfr_set_ui (d, 0L, MPFR_RNDN);
+  mpfr_clear_flags ();
   MPFR_ASSERTN (mpfr_ui_div (q, 1L, d, MPFR_RNDZ) == 0); /* exact */
   MPFR_ASSERTN (mpfr_inf_p (q) && mpfr_sgn (q) > 0);
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_DIVBY0);
 
   /* 1/-0 = -inf */
   mpfr_set_ui (d, 0L, MPFR_RNDN);
   mpfr_neg (d, d, MPFR_RNDN);
+  mpfr_clear_flags ();
   MPFR_ASSERTN (mpfr_ui_div (q, 1L, d, MPFR_RNDZ) == 0); /* exact */
   MPFR_ASSERTN (mpfr_inf_p (q) && mpfr_sgn (q) < 0);
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_DIVBY0);
 
   /* 0/1 = +0 */
   mpfr_set_ui (d, 1L, MPFR_RNDN);
+  mpfr_clear_flags ();
   MPFR_ASSERTN (mpfr_ui_div (q, 0L, d, MPFR_RNDZ) == 0); /* exact */
   MPFR_ASSERTN (mpfr_cmp_ui (q, 0) == 0 && MPFR_IS_POS (q));
+  MPFR_ASSERTN (__gmpfr_flags == 0);
 
   /* 0/-1 = -0 */
   mpfr_set_si (d, -1, MPFR_RNDN);
+  mpfr_clear_flags ();
   MPFR_ASSERTN (mpfr_ui_div (q, 0L, d, MPFR_RNDZ) == 0); /* exact */
   MPFR_ASSERTN (mpfr_cmp_ui (q, 0) == 0 && MPFR_IS_NEG (q));
+  MPFR_ASSERTN (__gmpfr_flags == 0);
 
   mpfr_clear (d);
   mpfr_clear (q);
@@ -169,7 +185,7 @@ main (int argc, char *argv[])
 {
   tests_start_mpfr ();
 
-  check_nan ();
+  check_special ();
   check_inexact ();
   check(948002822, "1.22191250737771397120e+20", MPFR_RNDN,
         "7.758352715731357946e-12");

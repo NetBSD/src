@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2012/08/31 14:46:53 pooka Exp $
+#	$NetBSD: Makefile,v 1.18.2.1 2014/08/20 00:04:48 tls Exp $
 #
 
 .include <bsd.own.mk>
@@ -24,6 +24,7 @@ LDADD+=-lrumpfs_syspuffs					# puffs
 LDADD+=-lrumpdev_putter -lrumpdev				#   \ putter
 LDADD+=-lrumpfs_sysvbfs						# sysvbfs
 LDADD+=-lrumpfs_tmpfs						# tmpfs
+LDADD+=-lrumpfs_udf						# udf
 LDADD+=-lrumpfs_union						# union
 LDADD+=-lrumpfs_v7fs						# v7fs
 LDADD+=-lrumpdev_disk -lrumpdev					# disk device

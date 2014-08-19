@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.28 2011/06/30 20:09:38 wiz Exp $	*/
+/*	$NetBSD: qv.c,v 1.28.12.1 2014/08/20 00:03:27 tls Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.28 2011/06/30 20:09:38 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.28.12.1 2014/08/20 00:03:27 tls Exp $");
 
 #include "qv.h"
 #if NQV > 0
@@ -280,8 +280,18 @@ dev_type_poll(qvpoll);
 dev_type_kqfilter(qvkqfilter);
 
 const struct cdevsw qv_cdevsw = {
-	qvopen, qvclose, qvread, qvwrite, qvioctl,
-	qvstop, notty, qvpoll, nommap, qvkqfilter,
+	.d_open = qvopen,
+	.d_close = qvclose,
+	.d_read = qvread,
+	.d_write = qvwrite,
+	.d_ioctl = qvioctl,
+	.d_stop = qvstop,
+	.d_tty = notty,
+	.d_poll = qvpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = qvkqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 /*

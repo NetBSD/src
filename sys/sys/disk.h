@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.57.2.3 2013/06/23 06:20:29 tls Exp $	*/
+/*	$NetBSD: disk.h,v 1.57.2.4 2014/08/20 00:04:44 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -536,6 +536,7 @@ int	dkwedge_list(struct disk *, struct dkwedge_list *, struct lwp *);
 void	dkwedge_discover(struct disk *);
 int	dkwedge_read(struct disk *, struct vnode *, daddr_t, void *, size_t);
 device_t dkwedge_find_by_wname(const char *);
+const char *dkwedge_get_parent_name(dev_t);
 void	dkwedge_print_wnames(void);
 device_t dkwedge_find_partition(device_t, daddr_t, uint64_t);
 #endif

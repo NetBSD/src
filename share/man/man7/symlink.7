@@ -1,4 +1,4 @@
-.\"	$NetBSD: symlink.7,v 1.21 2011/06/02 09:02:39 jruoho Exp $
+.\"	$NetBSD: symlink.7,v 1.21.8.1 2014/08/20 00:02:36 tls Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)symlink.7	8.3 (Berkeley) 3/31/94
 .\"
-.Dd June 2, 2011
+.Dd January 9, 2014
 .Dt SYMLINK 7
 .Os
 .Sh NAME
@@ -513,25 +513,31 @@ For example
 .It @machine
 Expands to the value of
 .Li MACHINE
-for the system
-.Po
+for the system.
+For native binaries, this is
 equivalent to the output of
 .Dq uname -m
 or
 .Xr sysctl 3
-.Dq hw.machine 
-.Pc .
+.Dq hw.machine .
+.Po
+For non-native binaries, the values returned by uname and sysctl
+typically vary to match the emulation environment.
+.Pc
 .It @machine_arch
 Expands to the value of
 .Li MACHINE_ARCH
-for the system
-.Po
+for the system.
+For native binaries, this is
 equivalent to the output of
 .Dq uname -p
 or
 .Xr sysctl 3
-.Dq hw.machine_arch
-.Pc .
+.Dq hw.machine_arch .
+.Po
+For non-native binaries, the values returned by uname and sysctl
+typically vary to match the emulation environment.
+.Pc
 .It @osrelease
 Expands to the operating system release of the running kernel
 .Po

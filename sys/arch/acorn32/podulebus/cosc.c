@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.17.12.1 2012/11/20 03:00:54 tls Exp $	*/
+/*	$NetBSD: cosc.c,v 1.17.12.2 2014/08/20 00:02:40 tls Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cosc.c,v 1.17.12.1 2012/11/20 03:00:54 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cosc.c,v 1.17.12.2 2014/08/20 00:02:40 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,17 +290,16 @@ coscattach(device_t parent, device_t self, void *aux)
 void
 cosc_led(struct esc_softc *sc, int mode)
 {
-	cosc_regmap_p		rp;
-
-	rp = (cosc_regmap_p)sc->sc_esc;
-
 	if (mode) {
 		sc->sc_led_status++;
 	} else {
 		if (sc->sc_led_status)
 			sc->sc_led_status--;
 	}
-/*	*rp->led = (sc->sc_led_status?1:0);*/
+#if 0
+	cosc_regmap_p		rp = (cosc_regmap_p)sc->sc_esc;
+	*rp->led = c->sc_led_status ? 1 : 0;
+#endif
 }
 
 

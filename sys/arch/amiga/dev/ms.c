@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.36.22.1 2012/11/20 03:00:58 tls Exp $ */
+/*	$NetBSD: ms.c,v 1.36.22.2 2014/08/20 00:02:43 tls Exp $ */
 
 /*
  * based on:
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.36.22.1 2012/11/20 03:00:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.36.22.2 2014/08/20 00:02:43 tls Exp $");
 
 /*
  * Mouse driver.
@@ -131,8 +131,18 @@ dev_type_poll(mspoll);
 dev_type_kqfilter(mskqfilter);
 
 const struct cdevsw ms_cdevsw = {
-	msopen, msclose, msread, nowrite, msioctl,
-	nostop, notty, mspoll, nommap, mskqfilter,
+	.d_open = msopen,
+	.d_close = msclose,
+	.d_read = msread,
+	.d_write = nowrite,
+	.d_ioctl = msioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = mspoll,
+	.d_mmap = nommap,
+	.d_kqfilter = mskqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 #define	MS_UNIT(d)	((minor(d) & ~0x1) >> 1)

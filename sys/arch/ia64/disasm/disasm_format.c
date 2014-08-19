@@ -1,4 +1,4 @@
-/*	$NetBSD: disasm_format.c,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: disasm_format.c,v 1.1.122.1 2014/08/20 00:03:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 Marcel Moolenaar
@@ -111,21 +111,23 @@ static const char *asm_completers[] = {
 };
 
 void
-asm_completer(const struct asm_cmpltr *c, char *buf)
+asm_completer(const struct asm_cmpltr *c, char *buf, size_t buflen)
 {
-	strcpy(buf, asm_completers[c->c_type]);
+	strlcpy(buf, asm_completers[c->c_type], buflen);
 }
 
 void
-asm_mnemonic(enum asm_op op, char *buf)
+asm_mnemonic(enum asm_op op, char *buf, size_t buflen)
 {
-	strcpy(buf, asm_mnemonics[(op < ASM_OP_INTERNAL_OPCODES) ? op : 0]); 
+	strlcpy(buf, asm_mnemonics[(op < ASM_OP_INTERNAL_OPCODES) ? op : 0],
+	    buflen); 
 }
 
 void
-asm_operand(const struct asm_oper *o, char *buf, uint64_t ip)
+asm_operand(const struct asm_oper *o, char *buf, size_t buflen, uint64_t ip)
 {
 	const char *n;
+	size_t l;
 
 	n = "";
 	switch (o->o_type) {
@@ -159,16 +161,16 @@ asm_operand(const struct asm_oper *o, char *buf, uint64_t ip)
 		case AR_LC: n = "lc"; break;
 		case AR_EC: n = "ec"; break;
 		default:
-			sprintf(buf, "ar%d", (int)o->o_value);
+			snprintf(buf, buflen, "ar%d", (int)o->o_value);
 			return;
 		}
-		sprintf(buf, "ar.%s", n);
+		snprintf(buf, buflen, "ar.%s", n);
 		return;
 	case ASM_OPER_BREG:
 		if (o->o_value != 0)
-			sprintf(buf, "b%d", (int)o->o_value);
+			snprintf(buf, buflen, "b%d", (int)o->o_value);
 		else
-			strcpy(buf, "rp");
+			strlcpy(buf, "rp", buflen);
 		return;
 	case ASM_OPER_CPUID:
 		n = "cpuid";
@@ -202,22 +204,22 @@ asm_operand(const struct asm_oper *o, char *buf, uint64_t ip)
 		case CR_LRR0: n = "lrr0"; break;
 		case CR_LRR1: n = "lrr1"; break;
 		default:
-			sprintf(buf, "cr%d", (int)o->o_value);
+			snprintf(buf, buflen, "cr%d", (int)o->o_value);
 			return;
 		}
-		sprintf(buf, "cr.%s", n);
+		snprintf(buf, buflen, "cr.%s", n);
 		return;
 	case ASM_OPER_DBR:
 		n = "dbr";
 		break;
 	case ASM_OPER_DISP:
-		sprintf(buf, "%lx", ip + o->o_value);
+		snprintf(buf, buflen, "%lx", ip + o->o_value);
 		return;
 	case ASM_OPER_DTR:
 		n = "dtr";
 		break;
 	case ASM_OPER_FREG:
-		sprintf(buf, "f%d", (int)o->o_value);
+		snprintf(buf, buflen, "f%d", (int)o->o_value);
 		return;
 	case ASM_OPER_GREG:
 		break;
@@ -225,10 +227,10 @@ asm_operand(const struct asm_oper *o, char *buf, uint64_t ip)
 		n = "ibr";
 		break;
 	case ASM_OPER_IMM:
-		sprintf(buf, "0x%lx", o->o_value);
+		snprintf(buf, buflen, "0x%lx", o->o_value);
 		return;
 	case ASM_OPER_IP:
-		strcpy(buf, "ip");
+		strlcpy(buf, "ip", buflen);
 		return;
 	case ASM_OPER_ITR:
 		n = "itr";
@@ -249,22 +251,22 @@ asm_operand(const struct asm_oper *o, char *buf, uint64_t ip)
 		n = "pmd";
 		break;
 	case ASM_OPER_PR:
-		strcpy(buf, "pr");
+		strlcpy(buf, "pr", buflen);
                 return;
 	case ASM_OPER_PR_ROT:
-		strcpy(buf, "pr.rot");
+		strlcpy(buf, "pr.rot", buflen);
 		return;
 	case ASM_OPER_PREG:
-		sprintf(buf, "p%d", (int)o->o_value);
+		snprintf(buf, buflen, "p%d", (int)o->o_value);
 		return;
 	case ASM_OPER_PSR:
-		strcpy(buf, "psr");
+		strlcpy(buf, "psr", buflen);
 		return;
 	case ASM_OPER_PSR_L:
-		strcpy(buf, "psr.l");
+		strlcpy(buf, "psr.l", buflen);
 		return;
 	case ASM_OPER_PSR_UM:
-		strcpy(buf, "psr.um");
+		strlcpy(buf, "psr.um", buflen);
 		return;
 	case ASM_OPER_RR:
 		n = "rr";
@@ -273,16 +275,27 @@ asm_operand(const struct asm_oper *o, char *buf, uint64_t ip)
 		KASSERT(0);
 		break;
 	}
-	if (n[0] != '\0')
-		buf += sprintf(buf, "%s[", n);
-	switch ((int)o->o_value) {
-	case 1:	strcpy(buf, "gp"); buf += 2; break;
-	case 12: strcpy(buf, "sp"); buf += 2; break;
-	case 13: strcpy(buf, "tp"); buf += 2; break;
-	default: buf += sprintf(buf, "r%d", (int)o->o_value); break;
+	if (n[0] != '\0') {
+		l = snprintf(buf, buflen, "%s[", n);
+		if (l > buflen)
+			l = buflen;
+		buf += l;
+		buflen -= l;
 	}
+	switch ((int)o->o_value) {
+	case 1:	l = strlcpy(buf, "gp", buflen); break;
+	case 12: l = strlcpy(buf, "sp", buflen); break;
+	case 13: l = strlcpy(buf, "tp", buflen); break;
+	default:
+	    l = snprintf(buf, buflen, "r%d", (int)o->o_value);
+	    if (l > buflen)
+		l = buflen;
+	    break;
+	}
+	buf += l;
+	buflen -= l;
 	if (n[0] != '\0')
-		strcpy(buf, "]");
+		strlcpy(buf, "]", buflen);
 }
 
 void
@@ -313,7 +326,7 @@ asm_print_inst(const struct asm_bundle *b, int slot, uint64_t ip)
 
 	/* Predicate. */
 	if (i->i_oper[0].o_value != 0) {
-		asm_operand(i->i_oper+0, buf, ip);
+		asm_operand(i->i_oper+0, buf, sizeof(buf), ip);
 		printf("(%s)", buf);
 		w = strlen(buf);
 	} else
@@ -322,12 +335,12 @@ asm_print_inst(const struct asm_bundle *b, int slot, uint64_t ip)
 		printf(" ");
 
 	/* Mnemonic & completers. */
-	asm_mnemonic(i->i_op, buf);
-	printf(buf);
+	asm_mnemonic(i->i_op, buf, sizeof(buf));
+	printf("%s", buf);
 	w = strlen(buf);
 	n = 0;
 	while (n < i->i_ncmpltrs) {
-		asm_completer(i->i_cmpltr + n, buf);
+		asm_completer(i->i_cmpltr + n, buf, sizeof(buf));
 		printf(buf);
 		w += strlen(buf);
 		n++;
@@ -345,8 +358,8 @@ asm_print_inst(const struct asm_bundle *b, int slot, uint64_t ip)
 			else
 				printf(", ");
 		}
-		asm_operand(i->i_oper + n, buf, ip);
-		printf(buf);
+		asm_operand(i->i_oper + n, buf, sizeof(buf), ip);
+		printf("%s", buf);
 		n++;
 	}
 	printf("\n");

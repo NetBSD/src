@@ -1,4 +1,4 @@
-/*	$NetBSD: semctl.c,v 1.15 2009/01/16 00:02:57 christos Exp $	*/
+/*	$NetBSD: semctl.c,v 1.15.14.1 2014/08/20 00:02:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,13 +30,16 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: semctl.c,v 1.15 2009/01/16 00:02:57 christos Exp $");
+__RCSID("$NetBSD: semctl.c,v 1.15.14.1 2014/08/20 00:02:16 tls Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <stdarg.h>
+#ifdef __lint__
+#include <string.h>
+#endif
 
 /* The kernel version [... == union semun *] */
 int ____semctl50(int, int, int, ...);

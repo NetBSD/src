@@ -1,4 +1,4 @@
-# Copyright 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2009-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,23 +21,16 @@ if {![dwarf2_support]} {
     return 0  
 }
 # This test can only be run on x86 targets.
-if {![istarget i?86-*]} {
+if {![is_x86_like_target]} {
     return 0  
 }
 
-set testfile "valop"
-set srcfile ${testfile}.S
-set binfile ${objdir}/${subdir}/${testfile}.x
+standard_testfile .S
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable \
-       [list {additional_flags=-nostdlib}]] != "" } {
+if {[prepare_for_testing $testfile.exp $testfile \
+	 [list $srcfile] [list {additional_flags=-nostdlib}]]} {
     return -1
 }
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 
 if ![runto_main] {
     return -1

@@ -17,6 +17,7 @@ check:
 
 clean mostlyclean:
 	-rm -f *~ objdbg*/*.o objdbg*/*.ci
+	-rm -f *.dwo *.dwp
 	-rm -f core $(EXECUTABLES)
 
 distclean maintainer-clean realclean: clean

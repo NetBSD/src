@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.1 2012/08/25 08:20:03 kiyohara Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.1.2.1 2014/08/20 00:03:49 tls Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.1 2012/08/25 08:20:03 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.1.2.1 2014/08/20 00:03:49 tls Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.1 2012/08/25 08:20:03 kiyohara 
 int cmalo_d = 1;
 #define DPRINTF(l, x...)	do { if ((l) <= cmalo_d) printf(x); } while (0)
 #else
-#define DPRINTF(l, x...)
+#define DPRINTF(l, x...)	do {} while (0)
 #endif
 
 static int	malo_pcmcia_match(device_t, cfdata_t, void *);
@@ -1013,7 +1013,7 @@ cmalo_rx(struct malo_softc *sc)
 
 	/* push the frame up to the network stack if not in monitor mode */
 	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
-		ether_input(ifp, m);
+		(*ifp->if_input)(ifp, m);
 		ifp->if_ipackets++;
 	}
 }
@@ -1033,7 +1033,7 @@ cmalo_tx(struct malo_softc *sc, struct mbuf *m)
 	/* prepare TX descriptor */
 	txdesc->pkgoffset = htole32(sizeof(*txdesc));
 	txdesc->pkglen = htole16(m->m_pkthdr.len);
-	memcpy(txdesc->dstaddrhigh, data, ETHER_ADDR_LEN);
+	memcpy(txdesc->dstaddr, data, ETHER_ADDR_LEN);
 
 	/* copy mbuf data to the buffer */
 	m_copydata(m, 0, m->m_pkthdr.len, sc->sc_data + sizeof(*txdesc));
@@ -1364,11 +1364,9 @@ cmalo_cmd_rsp_scan(struct malo_softc *sc)
 	struct malo_cmd_header *hdr = (struct malo_cmd_header *)sc->sc_cmd;
 	struct malo_cmd_body_rsp_scan *body;
 	struct malo_cmd_body_rsp_scan_set *set;
-	uint16_t psize;
 	int i;
 
 	memset(sc->sc_net, 0, sizeof(sc->sc_net));
-	psize = sizeof(*hdr) + sizeof(*body);
 
 	body = (struct malo_cmd_body_rsp_scan *)(hdr + 1);
 	body->bufsize = le16toh(body->bufsize);
@@ -1793,7 +1791,7 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 	hdr->result = 0;
 
 	body = (struct malo_cmd_body_assoc *)(hdr + 1);
-	memset(body, 0, sizeof(struct malo_cmd_body_assoc *));
+	memset(body, 0, sizeof(*body));
 	memcpy(body->peermac, sc->sc_net[sc->sc_net_cur].bssid, ETHER_ADDR_LEN);
 	body->capinfo = htole16(sc->sc_net[sc->sc_net_cur].capinfo);
 	body->listenintrv = htole16(10);

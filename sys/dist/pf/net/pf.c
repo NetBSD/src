@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.69 2012/03/22 20:34:38 drochner Exp $	*/
+/*	$NetBSD: pf.c,v 1.69.2.1 2014/08/20 00:03:52 tls Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.69 2012/03/22 20:34:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.69.2.1 2014/08/20 00:03:52 tls Exp $");
 
 #include "pflog.h"
 
@@ -2820,7 +2820,6 @@ pf_socket_lookup(int direction, struct pf_pdesc *pd)
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
-/*###2817 [cc] warning: assignment from incompatible pointer type%%%*/
 		in6p = in6_pcbhashlookup(tb, &saddr->v6, sport, &daddr->v6,
 		    dport);
 		if (inp == NULL) {
@@ -2844,7 +2843,6 @@ pf_socket_lookup(int direction, struct pf_pdesc *pd)
 #endif
 #ifdef INET6
 	case AF_INET6:
-/*###2840 [cc] error: 'struct inpcb' has no member named 'in6p_head'%%%*/
 		so = in6p->in6p_socket;
 		break;
 #endif /* INET6 */
@@ -3089,7 +3087,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	u_int8_t		 icmptype = 0, icmpcode = 0;
 
 	if (direction == PF_IN && pf_check_congestion(ifq)) {
-		REASON_SET(&reason, PFRES_CONGEST);
+		REASON_SET_NOPTR(&reason, PFRES_CONGEST);
 		return (PF_DROP);
 	}
 
@@ -3340,7 +3338,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	a = *am;
 	ruleset = *rsm;
 
-	REASON_SET(&reason, PFRES_MATCH);
+	REASON_SET_NOPTR(&reason, PFRES_MATCH);
 
 	if (r->log || (nr != NULL && nr->log)) {
 		if (rewrite)
@@ -3350,7 +3348,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	}
 
 	if (r->keep_state && pf_state_lock) {
-		REASON_SET(&reason, PFRES_STATELOCKED);
+		REASON_SET_NOPTR(&reason, PFRES_STATELOCKED);
 		return PF_DROP;
 	}
 
@@ -3446,7 +3444,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 			if (pf_check_proto_cksum(m, off,
 			    ntohs(hip->ip_len) - off, IPPROTO_TCP, AF_INET))
 #endif /* !__NetBSD__ */
-				REASON_SET(&reason, PFRES_PROTCKSUM);
+				REASON_SET_NOPTR(&reason, PFRES_PROTCKSUM);
 			else {
 				if (th->th_flags & TH_SYN)
 					ack++;
@@ -3469,7 +3467,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		return (PF_DROP);
 
 	if (pf_tag_packet(m, tag, rtableid)) {
-		REASON_SET(&reason, PFRES_MEMORY);
+		REASON_SET_NOPTR(&reason, PFRES_MEMORY);
 		return (PF_DROP);
 	}
 
@@ -3484,14 +3482,14 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		/* check maximums */
 		if (r->max_states && (r->states >= r->max_states)) {
 			pf_status.lcounters[LCNT_STATES]++;
-			REASON_SET(&reason, PFRES_MAXSTATES);
+			REASON_SET_NOPTR(&reason, PFRES_MAXSTATES);
 			goto cleanup;
 		}
 		/* src node for filter rule */
 		if ((r->rule_flag & PFRULE_SRCTRACK ||
 		    r->rpool.opts & PF_POOL_STICKYADDR) &&
 		    pf_insert_src_node(&sn, r, saddr, af) != 0) {
-			REASON_SET(&reason, PFRES_SRCLIMIT);
+			REASON_SET_NOPTR(&reason, PFRES_SRCLIMIT);
 			goto cleanup;
 		}
 		/* src node for translation rule */
@@ -3499,12 +3497,12 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		    ((direction == PF_OUT &&
 		    pf_insert_src_node(&nsn, nr, &pd->baddr, af) != 0) ||
 		    (pf_insert_src_node(&nsn, nr, saddr, af) != 0))) {
-			REASON_SET(&reason, PFRES_SRCLIMIT);
+			REASON_SET_NOPTR(&reason, PFRES_SRCLIMIT);
 			goto cleanup;
 		}
 		s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL) {
-			REASON_SET(&reason, PFRES_MEMORY);
+			REASON_SET_NOPTR(&reason, PFRES_MEMORY);
 cleanup:
 			if (sn != NULL && sn->states == 0 && sn->expire == 0) {
 				RB_REMOVE(pf_src_tree, &tree_src_tracking, sn);
@@ -3603,7 +3601,7 @@ cleanup:
 			if ((pd->flags & PFDESC_TCP_NORM) &&
 			    pf_normalize_tcp_init(m, off, pd, th, &s->src,
 			    &s->dst)) {
-				REASON_SET(&reason, PFRES_MEMORY);
+				REASON_SET_NOPTR(&reason, PFRES_MEMORY);
 				pf_src_tree_remove_state(s);
 				STATE_DEC_COUNTERS(s);
 				pool_put(&pf_state_pl, s);
@@ -3625,7 +3623,7 @@ cleanup:
 		}
 
 		if ((sk = pf_alloc_state_key(s)) == NULL) {
-			REASON_SET(&reason, PFRES_MEMORY);
+			REASON_SET_NOPTR(&reason, PFRES_MEMORY);
 			goto cleanup;
 		}
 
@@ -3683,7 +3681,7 @@ cleanup:
 		if (pf_insert_state(bound_iface(r, nr, kif), s)) {
 			if (pd->proto == IPPROTO_TCP)
 				pf_normalize_tcp_cleanup(s);
-			REASON_SET(&reason, PFRES_STATEINS);
+			REASON_SET_NOPTR(&reason, PFRES_STATEINS);
 			pf_src_tree_remove_state(s);
 			STATE_DEC_COUNTERS(s);
 			pool_put(&pf_state_pl, s);
@@ -3720,7 +3718,7 @@ cleanup:
 			pf_send_tcp(r, af, daddr, saddr, th->th_dport,
 			    th->th_sport, s->src.seqhi, ntohl(th->th_seq) + 1,
 			    TH_SYN|TH_ACK, 0, s->src.mss, 0, 1, 0, NULL, NULL);
-			REASON_SET(&reason, PFRES_SYNPROXY);
+			REASON_SET_NOPTR(&reason, PFRES_SYNPROXY);
 			return (PF_SYNPROXY_DROP);
 		}
 	}
@@ -3793,7 +3791,7 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 	a = *am;
 	ruleset = *rsm;
 
-	REASON_SET(&reason, PFRES_MATCH);
+	REASON_SET_NOPTR(&reason, PFRES_MATCH);
 
 	if (r->log)
 		PFLOG_PACKET(kif, h, m, af, direction, reason, r, a, ruleset,
@@ -3803,7 +3801,7 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 		return (PF_DROP);
 
 	if (pf_tag_packet(m, tag, -1)) {
-		REASON_SET(&reason, PFRES_MEMORY);
+		REASON_SET_NOPTR(&reason, PFRES_MEMORY);
 		return (PF_DROP);
 	}
 
@@ -5450,7 +5448,6 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	struct ifnet		*ifp = NULL;
 	struct pf_addr		 naddr;
 	struct pf_src_node	*sn = NULL;
-	int			 error = 0;
 #ifdef __NetBSD__
 	struct pf_mtag		*pf_mtag;
 #endif /* __NetBSD__ */
@@ -5550,7 +5547,7 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	if (IN6_IS_SCOPE_EMBEDDABLE(&dst.sin6_addr))
 		dst.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
 	if ((u_long)m0->m_pkthdr.len <= ifp->if_mtu) {
-		error = nd6_output(ifp, ifp, m0, &dst, NULL);
+		(void)nd6_output(ifp, ifp, m0, &dst, NULL);
 	} else {
 		in6_ifstat_inc(ifp, ifs6_in_toobig);
 		if (r->rt != PF_DUPTO)
@@ -5712,9 +5709,12 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 	struct pf_state_key	*sk = NULL;
 	struct pf_ruleset	*ruleset = NULL;
 	struct pf_pdesc		 pd;
-	int			 off, dirndx, pqid = 0;
+	int			 off, dirndx;
 #ifdef __NetBSD__
 	struct pf_mtag		*pf_mtag = NULL; /* XXX gcc */
+#if defined(ALTQ)
+	int pqid = 0;
+#endif
 #endif /* __NetBSD__ */
 
 	if (!pf_status.running)
@@ -5741,7 +5741,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 
 	if (m->m_pkthdr.len < (int)sizeof(*h)) {
 		action = PF_DROP;
-		REASON_SET(&reason, PFRES_SHORT);
+		REASON_SET_NOPTR(&reason, PFRES_SHORT);
 		log = 1;
 		goto done;
 	}
@@ -5770,7 +5770,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 	off = h->ip_hl << 2;
 	if (off < (int)sizeof(*h)) {
 		action = PF_DROP;
-		REASON_SET(&reason, PFRES_SHORT);
+		REASON_SET_NOPTR(&reason, PFRES_SHORT);
 		log = 1;
 		goto done;
 	}
@@ -5804,8 +5804,10 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 			goto done;
 		}
 		pd.p_len = pd.tot_len - off - (th.th_off << 2);
+#if defined(ALTQ) && defined(__NetBSD__)
 		if ((th.th_flags & TH_ACK) && pd.p_len == 0)
 			pqid = 1;
+#endif
 		action = pf_normalize_tcp(dir, kif, m, 0, off, h, &pd);
 		if (action == PF_DROP)
 			goto done;
@@ -5820,7 +5822,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif,
-			    m, off, h, &pd, &a, &ruleset, &ipintrq);
+			    m, off, h, &pd, &a, &ruleset, NULL);
 		break;
 	}
 
@@ -5837,7 +5839,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 		    ntohs(uh.uh_ulen) > m->m_pkthdr.len - off ||
 		    ntohs(uh.uh_ulen) < sizeof(struct udphdr)) {
 			action = PF_DROP;
-			REASON_SET(&reason, PFRES_SHORT);
+			REASON_SET_NOPTR(&reason, PFRES_SHORT);
 			goto done;
 		}
 		action = pf_test_state_udp(&s, dir, kif, m, off, h, &pd);
@@ -5850,7 +5852,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif,
-			    m, off, h, &pd, &a, &ruleset, &ipintrq);
+			    m, off, h, &pd, &a, &ruleset, NULL);
 		break;
 	}
 
@@ -5874,7 +5876,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif,
-			    m, off, h, &pd, &a, &ruleset, &ipintrq);
+			    m, off, h, &pd, &a, &ruleset, NULL);
 		break;
 	}
 
@@ -5898,7 +5900,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif, m, off, h,
-			    &pd, &a, &ruleset, &ipintrq);
+			    &pd, &a, &ruleset, NULL);
 		break;
 	}
 
@@ -5906,7 +5908,7 @@ done:
 	if (action == PF_PASS && h->ip_hl > 5 &&
 	    !((s && s->allow_opts) || r->allow_opts)) {
 		action = PF_DROP;
-		REASON_SET(&reason, PFRES_IPOPTIONS);
+		REASON_SET_NOPTR(&reason, PFRES_IPOPTIONS);
 		log = 1;
 		DPFPRINTF(PF_DEBUG_MISC,
 		    ("pf: dropping packet with ip options\n"));
@@ -5961,6 +5963,7 @@ done:
 #endif /* !__NetBSD__ */
 
 	if (log) {
+#if NPFLOG > 0
 		struct pf_rule *lr;
 
 		if (s != NULL && s->nat_rule.ptr != NULL &&
@@ -5970,6 +5973,7 @@ done:
 			lr = r;
 		PFLOG_PACKET(kif, h, m, AF_INET, dir, reason, lr, a, ruleset,
 		    &pd);
+#endif
 	}
 
 	kif->pfik_bytes[0][dir == PF_OUT][action != PF_PASS] += pd.tot_len;
@@ -6094,7 +6098,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 
 	if (m->m_pkthdr.len < (int)sizeof(*h)) {
 		action = PF_DROP;
-		REASON_SET(&reason, PFRES_SHORT);
+		REASON_SET_NOPTR(&reason, PFRES_SHORT);
 		log = 1;
 		goto done;
 	}
@@ -6127,7 +6131,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	 */
 	if (htons(h->ip6_plen) == 0) {
 		action = PF_DROP;
-		REASON_SET(&reason, PFRES_NORM);	/*XXX*/
+		REASON_SET_NOPTR(&reason, PFRES_NORM);	/*XXX*/
 		goto done;
 	}
 #endif
@@ -6149,7 +6153,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 			action = pf_test_fragment(&r, dir, kif, m, h,
 			    &pd, &a, &ruleset);
 			if (action == PF_DROP)
-				REASON_SET(&reason, PFRES_FRAG);
+				REASON_SET_NOPTR(&reason, PFRES_FRAG);
 			goto done;
 		case IPPROTO_ROUTING: {
 			struct ip6_rthdr rthdr;
@@ -6158,7 +6162,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 				DPFPRINTF(PF_DEBUG_MISC,
 				    ("pf: IPv6 more than one rthdr\n"));
 				action = PF_DROP;
-				REASON_SET(&reason, PFRES_IPOPTIONS);
+				REASON_SET_NOPTR(&reason, PFRES_IPOPTIONS);
 				log = 1;
 				goto done;
 			}
@@ -6167,7 +6171,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 				DPFPRINTF(PF_DEBUG_MISC,
 				    ("pf: IPv6 short rthdr\n"));
 				action = PF_DROP;
-				REASON_SET(&reason, PFRES_SHORT);
+				REASON_SET_NOPTR(&reason, PFRES_SHORT);
 				log = 1;
 				goto done;
 			}
@@ -6175,7 +6179,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 				DPFPRINTF(PF_DEBUG_MISC,
 				    ("pf: IPv6 rthdr0\n"));
 				action = PF_DROP;
-				REASON_SET(&reason, PFRES_IPOPTIONS);
+				REASON_SET_NOPTR(&reason, PFRES_IPOPTIONS);
 				log = 1;
 				goto done;
 			}
@@ -6239,7 +6243,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif,
-			    m, off, h, &pd, &a, &ruleset, &ip6intrq);
+			    m, off, h, &pd, &a, &ruleset, NULL);
 		break;
 	}
 
@@ -6256,7 +6260,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 		    ntohs(uh.uh_ulen) > m->m_pkthdr.len - off ||
 		    ntohs(uh.uh_ulen) < sizeof(struct udphdr)) {
 			action = PF_DROP;
-			REASON_SET(&reason, PFRES_SHORT);
+			REASON_SET_NOPTR(&reason, PFRES_SHORT);
 			goto done;
 		}
 		action = pf_test_state_udp(&s, dir, kif, m, off, h, &pd);
@@ -6269,7 +6273,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif,
-			    m, off, h, &pd, &a, &ruleset, &ip6intrq);
+			    m, off, h, &pd, &a, &ruleset, NULL);
 		break;
 	}
 
@@ -6302,7 +6306,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif,
-			    m, off, h, &pd, &a, &ruleset, &ip6intrq);
+			    m, off, h, &pd, &a, &ruleset, NULL);
 		break;
 	}
 
@@ -6317,7 +6321,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif, m, off, h,
-			    &pd, &a, &ruleset, &ip6intrq);
+			    &pd, &a, &ruleset, NULL);
 		break;
 	}
 
@@ -6331,7 +6335,7 @@ done:
 	if (action == PF_PASS && rh_cnt &&
 	    !((s && s->allow_opts) || r->allow_opts)) {
 		action = PF_DROP;
-		REASON_SET(&reason, PFRES_IPOPTIONS);
+		REASON_SET_NOPTR(&reason, PFRES_IPOPTIONS);
 		log = 1;
 		DPFPRINTF(PF_DEBUG_MISC,
 		    ("pf: dropping packet with dangerous v6 headers\n"));
@@ -6381,6 +6385,7 @@ done:
 #endif /* !__NetBSD__ */
 
 	if (log) {
+#if NPFLOG > 0
 		struct pf_rule *lr;
 
 		if (s != NULL && s->nat_rule.ptr != NULL &&
@@ -6390,6 +6395,7 @@ done:
 			lr = r;
 		PFLOG_PACKET(kif, h, m, AF_INET6, dir, reason, lr, a, ruleset,
 		    &pd);
+#endif
 	}
 
 	kif->pfik_bytes[1][dir == PF_OUT][action != PF_PASS] += pd.tot_len;
@@ -6474,6 +6480,8 @@ int
 pf_check_congestion(struct ifqueue *ifq)
 {
 #ifdef __NetBSD__
+	// XXX: not handled anyway
+	KASSERT(ifq == NULL);
 	return (0);
 #else
 	if (ifq->ifq_congestion)

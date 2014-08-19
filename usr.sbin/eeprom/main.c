@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21.12.1 2013/06/23 06:29:04 tls Exp $	*/
+/*	$NetBSD: main.c,v 1.21.12.2 2014/08/20 00:05:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1996\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: main.c,v 1.21.12.1 2013/06/23 06:29:04 tls Exp $");
+__RCSID("$NetBSD: main.c,v 1.21.12.2 2014/08/20 00:05:07 tls Exp $");
 #endif
 
 #include <sys/param.h>
@@ -59,10 +59,9 @@ __RCSID("$NetBSD: main.c,v 1.21.12.1 2013/06/23 06:29:04 tls Exp $");
 # endif
 #endif
 
-int	main (int, char *[]);
-static	void action (char *);
-static	void dump_prom (void);
-static	void usage (void);
+static	void action(char *);
+static	void dump_prom(void);
+static	void usage(void) __dead;
 
 const char *path_eeprom = _PATH_EEPROM;
 const char *path_openprom = _PATH_OPENPROM;
@@ -83,9 +82,7 @@ int	verbose=0;
 #endif
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, do_stdin = 0;
 	char *cp, line[BUFSIZE];
@@ -182,8 +179,7 @@ main(argc, argv)
  * the table, and call the corresponding handler function.
  */
 static void
-action(line)
-	char *line;
+action(char *line)
 {
 	char *keyword, *arg;
 
@@ -214,7 +210,7 @@ action(line)
  * Dump the contents of the prom corresponding to all known keywords.
  */
 static void
-dump_prom()
+dump_prom(void)
 {
 
 #ifdef USE_PREPNVRAM
@@ -239,8 +235,8 @@ dump_prom()
 #endif /* USE_PREPNVRAM */
 }
 
-static void
-usage()
+__dead static void
+usage(void)
 {
 
 #if defined(USE_OPENPROM) || defined(USE_OPENFIRM) || defined(USE_PREPNVRAM)

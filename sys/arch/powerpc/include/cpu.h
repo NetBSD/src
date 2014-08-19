@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.93.2.3 2013/06/23 06:20:10 tls Exp $	*/
+/*	$NetBSD: cpu.h,v 1.93.2.4 2014/08/20 00:03:19 tls Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -175,14 +175,14 @@ struct cpu_hatch_data {
 };
 
 struct cpuset_info {
-	__cpuset_t cpus_running;
-	__cpuset_t cpus_hatched;
-	__cpuset_t cpus_paused;
-	__cpuset_t cpus_resumed;
-	__cpuset_t cpus_halted;
+	kcpuset_t *cpus_running;
+	kcpuset_t *cpus_hatched;
+	kcpuset_t *cpus_paused;
+	kcpuset_t *cpus_resumed;
+	kcpuset_t *cpus_halted;
 };
 
-extern volatile struct cpuset_info cpuset_info;
+extern struct cpuset_info cpuset_info;
 #endif /* MULTIPROCESSOR && !_MODULE */
 
 #if defined(MULTIPROCESSOR) || defined(_MODULE)
@@ -199,7 +199,7 @@ extern volatile struct cpuset_info cpuset_info;
 #define CPU_IS_PRIMARY(ci)	true
 #define CPU_INFO_ITERATOR	int
 #define CPU_INFO_FOREACH(cii, ci)				\
-	cii = 0, ci = curcpu(); ci != NULL; ci = NULL
+	(void)cii, ci = curcpu(); ci != NULL; ci = NULL
 
 #endif /* MULTIPROCESSOR || _MODULE */
 
@@ -316,6 +316,26 @@ mfrtc(uint32_t *rtcp)
 	    : [rtcu] "=r"(rtcp[0]), [rtcl] "=r"(rtcp[1]), [tmp] "=r"(tmp)
 	    :: "cr0");
 }
+
+static __inline uint64_t
+rtc_nanosecs(void)
+{
+    /* 
+     * 601 RTC/DEC registers share clock of 7.8125 MHz, 128 ns per tick.
+     * DEC has max of 25 bits, FFFFFF => 2.14748352 seconds.
+     * RTCU is seconds, 32 bits.
+     * RTCL is nano-seconds, 23 bit counter from 0 - 999,999,872 (999,999,999 - 128 ns)
+     */
+    uint64_t cycles;
+    uint32_t tmp[2];
+
+    mfrtc(tmp);
+
+    cycles = tmp[0] * 1000000000;
+    cycles += (tmp[1] >> 7);
+
+    return cycles;
+}
 #endif /* !_MODULE */
 
 static __inline uint32_t
@@ -341,7 +361,6 @@ extern char *booted_kernel;
 extern int powersave;
 extern int cpu_timebase;
 extern int cpu_printfataltraps;
-extern char cpu_model[];
 
 struct cpu_info *
 	cpu_attach_common(device_t, int);

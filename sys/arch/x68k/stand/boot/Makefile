@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2012/03/20 12:37:01 minoura Exp $
+#	$NetBSD: Makefile,v 1.22.2.1 2014/08/20 00:03:28 tls Exp $
 
 NOMAN=		# defined
 
@@ -19,10 +19,8 @@ BINMODE=	444
 STRIPFLAG=
 
 BFDNAME=	a.out-m68k-netbsd
-STRIP?=		/usr/bin/strip
-OBJCOPY?=	/usr/bin/objcopy
 
-SRCS=		srt0.S boot.c conf.c exec_image.S
+SRCS=		srt0.S boot.c conf.c switch.c exec_image.S
 S=		${.CURDIR}/../../../..
 M=		${.CURDIR}/../..
 COMMONDIR=	$M/stand/common
@@ -41,6 +39,7 @@ CPPFLAGS+=	-D_STANDALONE -DHEAP_VARIABLE
 CPPFLAGS+=	-DTEXTADDR="0x${TEXT}" 
 CPPFLAGS+=	-DBOOT=\"${BOOT}\" -DBOOT_VERS=\"${VERSION}\"
 CPPFLAGS+=	-DLIBSA_ENABLE_LS_OP
+#CPPFLAGS+=	-DDEBUG
 CFLAGS=		-Wno-main -Os -m68020-60
 LINKFLAGS=	-N -static -T ${.CURDIR}/boot.ldscript
 LIBIOCS!=	cd $M/stand/libiocs && ${PRINTOBJDIR}

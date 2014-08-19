@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_var.h,v 1.1.2.2 2013/02/25 00:28:25 tls Exp $	*/
+/*	$NetBSD: bcm53xx_var.h,v 1.1.2.3 2014/08/20 00:02:45 tls Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@ struct bcm_locators {
 	bus_size_t loc_size;
 	int loc_port;
 	uint8_t loc_nintrs;
-	u_int loc_intrs[4];
+	u_int loc_intrs[8];
 	int loc_mdio;
 	int loc_phy;
 };
@@ -95,6 +95,7 @@ struct cpu_softc {
 	bus_space_handle_t cpu_armcore_bsh;
 
 	struct bcm53xx_clock_info cpu_clk;
+	uint32_t cpu_chipid;
 };
 
 

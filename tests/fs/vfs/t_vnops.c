@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.33.2.1 2013/06/23 06:28:56 tls Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.33.2.2 2014/08/20 00:04:48 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,38 @@ lookup_complex(const atf_tc_t *tc, const char *mountpath)
 	if (rump_sys_stat(pb, &sb2) == -1)
 		atf_tc_fail_errno("stat 2");
 
-	ATF_REQUIRE(memcmp(&sb1, &sb2, sizeof(sb1)) == 0);
+	if (memcmp(&sb1, &sb2, sizeof(sb1)) != 0) {
+		printf("what\tsb1\t\tsb2\n");
+
+#define FIELD(FN)	\
+		printf(#FN "\t%lld\t%lld\n", \
+		(long long)sb1.FN, (long long)sb2.FN)
+#define TIME(FN)	\
+		printf(#FN "\t%lld.%ld\t%lld.%ld\n", \
+		(long long)sb1.FN.tv_sec, sb1.FN.tv_nsec, \
+		(long long)sb2.FN.tv_sec, sb2.FN.tv_nsec)
+
+		FIELD(st_dev);
+		FIELD(st_mode);
+		FIELD(st_ino);
+		FIELD(st_nlink);
+		FIELD(st_uid);
+		FIELD(st_gid);
+		FIELD(st_rdev);
+		TIME(st_atim);
+		TIME(st_mtim);
+		TIME(st_ctim);
+		TIME(st_birthtim);
+		FIELD(st_size);
+		FIELD(st_blocks);
+		FIELD(st_flags);
+		FIELD(st_gen);
+
+#undef FIELD
+#undef TIME
+
+		atf_tc_fail("stat results differ, see ouput for more details");
+	}
 }
 
 static void
@@ -333,7 +364,7 @@ rename_reg_nodir(const atf_tc_t *tc, const char *mp)
 {
 	bool haslinks;
 	struct stat sb;
-	ino_t f1ino, f2ino;
+	ino_t f1ino;
 
 	if (FSTYPE_RUMPFS(tc))
 		atf_tc_skip("rename not supported by file system");
@@ -366,7 +397,6 @@ rename_reg_nodir(const atf_tc_t *tc, const char *mp)
 
 	if (rump_sys_stat("file2", &sb) == -1)
 		atf_tc_fail_errno("stat");
-	f2ino = sb.st_ino;
 
 	if (rump_sys_rename("file1", "file3") == -1)
 		atf_tc_fail_errno("rename 1");
@@ -399,6 +429,9 @@ rename_reg_nodir(const atf_tc_t *tc, const char *mp)
 		ATF_REQUIRE_EQ(sb.st_ino, f1ino);
 		ATF_REQUIRE_EQ(sb.st_nlink, 1);
 	}
+
+	ATF_CHECK_ERRNO(EFAULT, rump_sys_rename("file2", NULL) == -1);
+	ATF_CHECK_ERRNO(EFAULT, rump_sys_rename(NULL, "file2") == -1);
 
 	rump_sys_chdir("/");
 }
@@ -845,6 +878,30 @@ read_directory(const atf_tc_t *tc, const char *mp)
 	FSTEST_EXIT();
 }
 
+static void
+lstat_symlink(const atf_tc_t *tc, const char *mp)
+{
+	const char *src, *dst;
+	int res;
+	struct stat st;
+
+	USES_SYMLINKS;
+	FSTEST_ENTER();
+
+	src = "source";
+	dst = "destination";
+
+	res = rump_sys_symlink(src, dst);
+	ATF_REQUIRE(res != -1);
+	res = rump_sys_lstat(dst, &st);
+	ATF_REQUIRE(res != -1);
+
+	ATF_CHECK(S_ISLNK(st.st_mode) != 0);
+	ATF_CHECK(st.st_size == (off_t)strlen(src));
+
+	FSTEST_EXIT();
+}
+
 ATF_TC_FSAPPLY(lookup_simple, "simple lookup (./.. on root)");
 ATF_TC_FSAPPLY(lookup_complex, "lookup of non-dot entries");
 ATF_TC_FSAPPLY(dir_simple, "mkdir/rmdir");
@@ -864,6 +921,7 @@ ATF_TC_FSAPPLY(fcntl_lock, "check fcntl F_SETLK");
 ATF_TC_FSAPPLY(fcntl_getlock_pids,"fcntl F_GETLK w/ many procs, PR kern/44494");
 ATF_TC_FSAPPLY(access_simple, "access(2)");
 ATF_TC_FSAPPLY(read_directory, "read(2) on directories");
+ATF_TC_FSAPPLY(lstat_symlink, "lstat(2) values for symbolic links");
 
 ATF_TP_ADD_TCS(tp)
 {
@@ -886,6 +944,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(fcntl_getlock_pids);
 	ATF_TP_FSAPPLY(access_simple);
 	ATF_TP_FSAPPLY(read_directory);
+	ATF_TP_FSAPPLY(lstat_symlink);
 
 	return atf_no_error();
 }

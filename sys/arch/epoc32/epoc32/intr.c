@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.4.2 2013/06/23 06:20:02 tls Exp $	*/
+/*	$NetBSD: intr.c,v 1.1.4.3 2014/08/20 00:02:52 tls Exp $	*/
 /*
  * Copyright (c) 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -26,11 +26,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.4.2 2013/06/23 06:20:02 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.4.3 2014/08/20 00:02:52 tls Exp $");
 
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
-#include <machine/cpu.h>
+#include <arm/locore.h>
 
 #include <arm/pic/picvar.h>
 

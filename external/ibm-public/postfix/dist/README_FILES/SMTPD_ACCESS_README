@@ -27,10 +27,18 @@ abused systems end up on anti-spammer blacklists. See, for example, the
 information on http://www.mail-abuse.org/ and other websites.
 
 By default, Postfix has a moderately restrictive approach to mail relaying.
-Postfix forwards mail only from clients in trusted networks, or to domains that
-are configured as authorized relay destinations. For a description of the
-default policy, see the smtpd_recipient_restrictions parameter in the postconf
-(5) manual page, and the information that is referenced from there.
+Postfix forwards mail only from clients in trusted networks, from clients that
+have authenticated with SASL, or to domains that are configured as authorized
+relay destinations. For a description of the default mail relay policy, see the
+smtpd_relay_restrictions parameter in the postconf(5) manual page, and the
+information that is referenced from there.
+
+    NOTE: Postfix versions before 2.10 did not have smtpd_relay_restrictions.
+    They combined the mail relay and spam blocking policies, under
+    smtpd_recipient_restrictions. This could lead to unexpected results. For
+    example, a permissive spam blocking policy could unexpectedly result in a
+    permissive mail relay policy. An example of this is documented under
+    "Dangerous use of smtpd_recipient_restrictions".
 
 Most of the Postfix SMTP server access controls are targeted at stopping junk
 email.
@@ -123,8 +131,23 @@ Examples of simple restriction lists are:
     # Don't accept mail from domains that don't exist.
     smtpd_sender_restrictions = reject_unknown_sender_domain
 
-    # Whitelisting: local clients may specify any destination domain.
-    smtpd_recipient_restrictions = permit_mynetworks, reject_unauth_destination
+    # Relay control (Postfix 2.10 and later): local clients and
+    # authenticated clients may specify any destination domain.
+    smtpd_relay_restrictions = permit_mynetworks,
+        permit_sasl_authenticated,
+        reject_unauth_destination
+
+    # Spam control: exclude local clients and authenticated clients
+    # from DNSBL lookups.
+    smtpd_recipient_restrictions = permit_mynetworks,
+        permit_sasl_authenticated,
+        # reject_unauth_destination is not needed here if the mail
+        # relay policy is specified under smtpd_relay_restrictions
+        # (available with Postfix 2.10 and later).
+        reject_unauth_destination
+        reject_rbl_client zen.spamhaus.org,
+        reject_rhsbl_helo dbl.spamhaus.org,
+        reject_rhsbl_sender dbl.spamhaus.org
 
     # Block clients that speak too early.
     smtpd_data_restrictions = reject_unauth_pipelining
@@ -143,23 +166,52 @@ The table below summarizes the purpose of each SMTP access restriction list.
 All lists use the exact same syntax; they differ only in the time of evaluation
 and in the effect of a REJECT or DEFER result.
 
-     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-    |RReessttrriiccttiioonn lliisstt nnaammee         |SSttaattuuss  |EEffffeecctt ooff RREEJJEECCTT oorr DDEEFFEERR rreessuulltt|
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |smtpd_client_restrictions     |Optional|Reject all client commands      |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |smtpd_helo_restrictions       |Optional|Reject HELO/EHLO information    |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |smtpd_sender_restrictions     |Optional|Reject MAIL FROM information    |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |smtpd_recipient_restrictions  |Required|Reject RCPT TO information      |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |smtpd_data_restrictions       |Optional|Reject DATA command             |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |smtpd_end_of_data_restrictions|Optional|Reject END-OF-DATA command      |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
-    |smtpd_etrn_restrictions       |Optional|Reject ETRN command             |
-    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    |                              |       |                            |EEffffeecctt ooff  |
+    |RReessttrriiccttiioonn lliisstt nnaammee         |VVeerrssiioonn|SSttaattuuss                      |RREEJJEECCTT oorr  |
+    |                              |       |                            |DDEEFFEERR      |
+    |                              |       |                            |rreessuulltt     |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ |
+    |                              |       |                            |Reject all |
+    |smtpd_client_restrictions     |All    |Optional                    |client     |
+    |                              |       |                            |commands   |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ |
+    |                              |       |                            |Reject     |
+    |smtpd_helo_restrictions       |All    |Optional                    |HELO/EHLO  |
+    |                              |       |                            |information|
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ |
+    |                              |       |                            |Reject MAIL|
+    |smtpd_sender_restrictions     |All    |Optional                    |FROM       |
+    |                              |       |                            |information|
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ |
+    |                              |       |Required if                 |           |
+    |                              |>= 2.10|smtpd_recipient_restrictions|           |
+    |                              |       |does not enforce relay      |Reject RCPT|
+    |smtpd_relay_restrictions      |       |policy                      |TO         |
+    |                              |_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |information|
+    |                              |       |                            |           |
+    |                              |< 2.10 |Not available               |           |
+    |                              |       |                            |           |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ |
+    |                              |       |Required if                 |           |
+    |                              |>= 2.10|smtpd_relay_restrictions    |           |
+    |                              |       |does not enforce relay      |Reject RCPT|
+    |smtpd_recipient_restrictions  |       |policy                      |TO         |
+    |                              |_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |information|
+    |                              |       |                            |           |
+    |                              |< 2.10 |Required                    |           |
+    |                              |       |                            |           |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ |
+    |smtpd_data_restrictions       |>= 2.0 |Optional                    |Reject DATA|
+    |                              |       |                            |command    |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ |
+    |                              |       |                            |Reject END-|
+    |smtpd_end_of_data_restrictions|>= 2.2 |Optional                    |OF-DATA    |
+    |                              |       |                            |command    |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ |
+    |smtpd_etrn_restrictions       |All    |Optional                    |Reject ETRN|
+    |                              |       |                            |command    |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ |
 
 DDeellaayyeedd eevvaalluuaattiioonn ooff SSMMTTPP aacccceessss rreessttrriiccttiioonn lliissttss
 
@@ -174,9 +226,9 @@ Current Postfix versions postpone the evaluation of client, helo and sender
 restriction lists until the RCPT TO or ETRN command. This behavior is
 controlled by the smtpd_delay_reject parameter. Restriction lists are still
 evaluated in the proper order of (client, helo, etrn) or (client, helo, sender,
-recipient, data, or end-of-data) restrictions. When a restriction list
-(example: client) evaluates to REJECT or DEFER the other restriction lists
-(example: helo, sender, etc.) are skipped.
+relay, recipient, data, or end-of-data) restrictions. When a restriction list
+(example: client) evaluates to REJECT or DEFER the restriction lists that
+follow (example: helo, sender, etc.) are skipped.
 
 Around the time that smtpd_delay_reject was introduced, Postfix was also
 changed to support mixed restriction lists that combine information about the
@@ -215,6 +267,12 @@ REJECT or DEFER, the recipient address is rejected; no surprises here. If the
 result is PERMIT, then the recipient address is accepted. And this is where
 surprises can happen.
 
+The problem is that Postfix versions before 2.10 did not have
+smtpd_relay_restrictions. They combined the mail relay and spam blocking
+policies, under smtpd_recipient_restrictions. The result is that a permissive
+spam blocking policy could unexpectedly result in a permissive mail relay
+policy.
+
 Here is an example that shows when a PERMIT result can result in too much
 access permission:
 
@@ -223,7 +281,7 @@ access permission:
 3         permit_mynetworks
 4         check_helo_access hash:/etc/postfix/helo_access
 5         reject_unknown_helo_hostname
-6         reject_unauth_destination
+6         rreejjeecctt__uunnaauutthh__ddeessttiinnaattiioonn
 7
 8 /etc/postfix/helo_access:
 9     localhost.localdomain PERMIT
@@ -237,12 +295,26 @@ The problem with this configuration is that smtpd_recipient_restrictions
 evaluates to PERMIT for EVERY host that announces itself as
 "localhost.localdomain", making Postfix an open relay for all such hosts.
 
-In order to avoid surprises like these with smtpd_recipient_restrictions, you
-should place non-recipient restrictions AFTER the reject_unauth_destination
-restriction, not before. In the above example, the HELO based restrictions
-should be placed AFTER reject_unauth_destination, or better, the HELO based
-restrictions should be placed under smtpd_helo_restrictions where they can do
-no harm.
+With Postfix before version 2.10 you should place non-recipient restrictions
+AFTER the reject_unauth_destination restriction, not before. In the above
+example, the HELO based restrictions should be placed AFTER
+reject_unauth_destination, or better, the HELO based restrictions should be
+placed under smtpd_helo_restrictions where they can do no harm.
+
+1 /etc/postfix/main.cf:
+2     smtpd_recipient_restrictions =
+3         permit_mynetworks
+4         rreejjeecctt__uunnaauutthh__ddeessttiinnaattiioonn
+5         check_helo_access hash:/etc/postfix/helo_access
+6         reject_unknown_helo_hostname
+7
+8 /etc/postfix/helo_access:
+9     localhost.localdomain PERMIT
+
+The above mistake will not happen with Postfix 2.10 and later, when the relay
+policy is specified under smtpd_relay_restrictions, and the spam blocking
+policy under smtpd_recipient_restrictions. Then, a permissive spam blocking
+policy will not result in a permissive mail relay policy.
 
 SSMMTTPP aacccceessss rruullee tteessttiinngg
 
@@ -256,14 +328,18 @@ soft_bounce
     changing all 5xx SMTP reply codes into 4xx.
 
 warn_if_reject
-    This is a different safety net that changes SMTP server REJECT actions into
-    warnings. Instead of rejecting a command, Postfix logs what it would
-    reject. Specify "warn_if_reject" in an SMTP access restriction list, before
-    the restriction that you want to test without actually rejecting mail.
+    When placed before a reject-type restriction, access table query, or
+    check_policy_service query, this logs a "reject_warning" message instead of
+    rejecting a request (when a reject-type restriction fails due to a
+    temporary error, this logs a "reject_warning" message for any implicit
+    "defer_if_permit" actions that would normally prevent mail from being
+    accepted by some later access restriction). This feature has no effect on
+    defer_if_reject restrictions.
 
 XCLIENT
-    With this Postfix 2.1 feature, authorized SMTP clients can impersonate
-    other systems, so that you can do realistic SMTP access rule tests.
-    Examples of how to impersonate other systems for access rule testing are
-    given at the end of the XCLIENT_README document.
+    With this feature, an authorized SMTP client can impersonate other systems
+    and perform realistic SMTP access rule tests. Examples of how to
+    impersonate other systems for access rule testing are given at the end of
+    the XCLIENT_README document.
+    This feature is available in Postfix 2.1.
 

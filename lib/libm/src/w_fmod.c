@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_fmod.c,v 1.9 2002/05/26 22:02:00 wiz Exp $");
+__RCSID("$NetBSD: w_fmod.c,v 1.9.60.1 2014/08/20 00:02:18 tls Exp $");
 #endif
 
 /*
@@ -22,6 +22,10 @@ __RCSID("$NetBSD: w_fmod.c,v 1.9 2002/05/26 22:02:00 wiz Exp $");
 #include "math.h"
 #include "math_private.h"
 
+#ifndef __HAVE_LONG_DOUBLE
+__strong_alias(_fmodl, fmod)
+__weak_alias(fmodl, fmod)
+#endif
 
 double
 fmod(double x, double y)	/* wrapper fmod */

@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile.fdboot,v 1.3 2005/12/11 12:17:02 christos Exp $
+#	$NetBSD: Makefile.fdboot,v 1.3.122.1 2014/08/20 00:02:49 tls Exp $
 
 PROG=	fdboot
 SRCS=	fdboot.S
 NOMAN=	# defined
 LIBCRT0=
+LIBCRTI=
 
 .PATH: ${.CURDIR}/..
 

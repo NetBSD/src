@@ -124,7 +124,8 @@ scan (const struct bfd_arch_info *info, const char *string)
 }
 
 #define N(number, print, default, next)  \
-{  32, 32, 8, bfd_arch_arm, number, "arm", print, 4, default, compatible, scan, next }
+{  32, 32, 8, bfd_arch_arm, number, "arm", print, 4, default, compatible, \
+   scan, bfd_arch_default_fill, next }
 
 static const bfd_arch_info_type arch_info_struct[] =
 {
@@ -251,10 +252,10 @@ arm_check_note (bfd *abfd,
 	return FALSE;
     }
   else
-    { 
+    {
       if (namesz != ((strlen (expected_name) + 1 + 3) & ~3))
 	return FALSE;
-      
+
       if (strcmp (descr, expected_name) != 0)
 	return FALSE;
 

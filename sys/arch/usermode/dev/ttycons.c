@@ -1,4 +1,4 @@
-/* $NetBSD: ttycons.c,v 1.19 2012/03/03 21:15:15 reinoud Exp $ */
+/* $NetBSD: ttycons.c,v 1.19.2.1 2014/08/20 00:03:26 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.19 2012/03/03 21:15:15 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.19.2.1 2014/08/20 00:03:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -95,6 +95,7 @@ const struct cdevsw ttycons_cdevsw = {
 	.d_poll = ttycons_poll,
 	.d_kqfilter = ttykqfilter,
 	.d_flag = D_TTY,
+	.d_discard = nodiscard,
 };
 
 static void	ttycons_start(struct tty *);

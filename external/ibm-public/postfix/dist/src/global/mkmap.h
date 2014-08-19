@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmap.h,v 1.1.1.1.16.1 2013/02/25 00:27:19 tls Exp $	*/
+/*	$NetBSD: mkmap.h,v 1.1.1.1.16.2 2014/08/19 23:59:42 tls Exp $	*/
 
 #ifndef _MKMAP_H_INCLUDED_
 #define _MKMAP_H_INCLUDED_
@@ -29,6 +29,7 @@ typedef struct MKMAP {
     struct DICT *dict;			/* dict_xx_open() result */
     void    (*after_open) (struct MKMAP *);	/* may be null */
     void    (*after_close) (struct MKMAP *);	/* may be null */
+    int     multi_writer;			/* multi-writer safe */
 } MKMAP;
 
 extern MKMAP *mkmap_open(const char *, const char *, int, int);
@@ -41,6 +42,7 @@ extern MKMAP *mkmap_dbm_open(const char *);
 extern MKMAP *mkmap_cdb_open(const char *);
 extern MKMAP *mkmap_hash_open(const char *);
 extern MKMAP *mkmap_btree_open(const char *);
+extern MKMAP *mkmap_lmdb_open(const char *);
 extern MKMAP *mkmap_sdbm_open(const char *);
 extern MKMAP *mkmap_proxy_open(const char *);
 extern MKMAP *mkmap_fail_open(const char *);

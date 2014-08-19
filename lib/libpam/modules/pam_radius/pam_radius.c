@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_radius.c,v 1.7 2006/11/03 18:55:40 christos Exp $	*/
+/*	$NetBSD: pam_radius.c,v 1.7.46.1 2014/08/20 00:02:19 tls Exp $	*/
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_radius/pam_radius.c,v 1.22 2004/06/25 12:32:45 kan Exp $");
 #else
-__RCSID("$NetBSD: pam_radius.c,v 1.7 2006/11/03 18:55:40 christos Exp $");
+__RCSID("$NetBSD: pam_radius.c,v 1.7.46.1 2014/08/20 00:02:19 tls Exp $");
 #endif
 
 #include <sys/param.h>
@@ -76,6 +76,7 @@ static int	 do_accept(pam_handle_t *, struct rad_handle *);
 static int	 do_challenge(pam_handle_t *, struct rad_handle *,
 		    const char *);
 
+__printflike(2, 3)
 static void
 logit(int level, const char *fmt, ...)
 {

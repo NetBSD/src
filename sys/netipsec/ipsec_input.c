@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.29.6.1 2013/06/23 06:20:26 tls Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.29.6.2 2014/08/20 00:04:36 tls Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.29.6.1 2013/06/23 06:20:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.29.6.2 2014/08/20 00:04:36 tls Exp $");
 
 /*
  * IPsec input processing.
@@ -278,7 +278,7 @@ int
 ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
     int skip, int protoff, struct m_tag *mt)
 {
-	int prot, af, sproto;
+	int prot, af __diagused, sproto;
 	struct ip *ip;
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
@@ -592,7 +592,7 @@ int
 ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int protoff,
     struct m_tag *mt)
 {
-	int af, sproto;
+	int af __diagused, sproto;
 	struct ip6_hdr *ip6;
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;

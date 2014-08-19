@@ -1,4 +1,4 @@
-# Copyright 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2010-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,10 +13,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-set testfile "nostdlib"
-set srcfile ${testfile}.c
-set executable ${testfile}
-set binfile ${objdir}/${subdir}/${executable}
+standard_testfile .c
+
+# If we're using a stub, breakpoints at the entry point will not trigger.
+# See also the comment in break-entry.exp.
+
+if [target_info exists use_gdb_stub] {
+    untested ${testfile}.exp
+    return
+}
 
 # default_target_compile would otherwise add "-lm" making the testcase
 # dependent on whether the system libraries are already prelinked.
@@ -40,7 +45,7 @@ if {$err != ""} {
     return -1
 }
 
-clean_restart $executable
+clean_restart $binfile
 
 gdb_breakpoint "*marker"
 gdb_breakpoint "*_start"

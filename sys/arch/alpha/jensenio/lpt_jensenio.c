@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_jensenio.c,v 1.11 2011/07/01 19:22:35 dyoung Exp $ */
+/* $NetBSD: lpt_jensenio.c,v 1.11.12.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lpt_jensenio.c,v 1.11 2011/07/01 19:22:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_jensenio.c,v 1.11.12.1 2014/08/20 00:02:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,7 @@ lpt_jensenio_attach(device_t parent, device_t self, void *aux)
 	struct lpt_softc *sc = &jsc->sc_lpt;
 	struct jensenio_attach_args *ja = aux;
 	const char *intrstr;
+	char buf[64];
 
 	sc->sc_dev = self;
 	sc->sc_iot = ja->ja_iot;
@@ -106,7 +107,8 @@ lpt_jensenio_attach(device_t parent, device_t self, void *aux)
 
 	lpt_attach_subr(sc);
 
-	intrstr = eisa_intr_string(ja->ja_ec, ja->ja_irq[0]);
+	intrstr = eisa_intr_string(ja->ja_ec, ja->ja_irq[0],
+	    buf, sizeof(buf));
 	jsc->sc_ih = eisa_intr_establish(ja->ja_ec, ja->ja_irq[0],
 	    IST_EDGE, IPL_TTY, lptintr, sc);
 	if (jsc->sc_ih == NULL) {

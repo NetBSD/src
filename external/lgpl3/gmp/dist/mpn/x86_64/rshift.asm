@@ -1,19 +1,19 @@
 dnl  AMD64 mpn_rshift -- mpn right shift.
 
-dnl  Copyright 2003, 2005, 2009 Free Software Foundation, Inc.
-dnl
+dnl  Copyright 2003, 2005, 2009, 2011, 2012 Free Software Foundation, Inc.
+
 dnl  This file is part of the GNU MP Library.
-dnl
-dnl  The GNU MP Library is free software; you can redistribute it and/or
-dnl  modify it under the terms of the GNU Lesser General Public License as
-dnl  published by the Free Software Foundation; either version 3 of the
-dnl  License, or (at your option) any later version.
-dnl
-dnl  The GNU MP Library is distributed in the hope that it will be useful,
-dnl  but WITHOUT ANY WARRANTY; without even the implied warranty of
-dnl  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-dnl  Lesser General Public License for more details.
-dnl
+
+dnl  The GNU MP Library is free software; you can redistribute it and/or modify
+dnl  it under the terms of the GNU Lesser General Public License as published
+dnl  by the Free Software Foundation; either version 3 of the License, or (at
+dnl  your option) any later version.
+
+dnl  The GNU MP Library is distributed in the hope that it will be useful, but
+dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+dnl  License for more details.
+
 dnl  You should have received a copy of the GNU Lesser General Public License
 dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
@@ -21,11 +21,13 @@ include(`../config.m4')
 
 
 C	     cycles/limb
-C K8,K9:	 2.375
-C K10:		 2.375
-C P4:		 8
-C P6-15 (Core2): 2.11
-C P6-28 (Atom):	 5.75
+C AMD K8,K9	 2.375
+C AMD K10	 2.375
+C Intel P4	 8
+C Intel core2	 2.11
+C Intel corei	 ?
+C Intel atom	 5.75
+C VIA nano	 3.5
 
 
 C INPUT PARAMETERS
@@ -34,10 +36,14 @@ define(`up',	`%rsi')
 define(`n',	`%rdx')
 define(`cnt',	`%rcx')
 
+ABI_SUPPORT(DOS64)
+ABI_SUPPORT(STD64)
+
 ASM_START()
 	TEXT
 	ALIGN(32)
 PROLOGUE(mpn_rshift)
+	FUNC_ENTRY(4)
 	neg	R32(%rcx)		C put rsh count in cl
 	mov	(up), %rax
 	shl	R8(%rcx), %rax		C function return value
@@ -154,5 +160,6 @@ L(end):
 L(ast):	mov	(up), %r10
 	shr	R8(%rcx), %r10
 	mov	%r10, (rp)
+	FUNC_EXIT()
 	ret
 EPILOGUE()

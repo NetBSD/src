@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.52.2.3 2013/02/25 00:29:58 tls Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.52.2.4 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.52.2.3 2013/02/25 00:29:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.52.2.4 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.52.2.3 2013/02/25 00:29:58 tls Exp $
 static struct sysctllog *wapbl_sysctl;
 static int wapbl_flush_disk_cache = 1;
 static int wapbl_verbose_commit = 0;
+
+static inline size_t wapbl_space_free(size_t, off_t, off_t);
 
 #else /* !_KERNEL */
 #include <assert.h>
@@ -209,8 +211,6 @@ static int wapbl_write_inodes(struct wapbl *wl, off_t *offp);
 
 static int wapbl_replay_process(struct wapbl_replay *wr, off_t, off_t);
 
-static inline size_t wapbl_space_free(size_t avail, off_t head,
-	off_t tail);
 static inline size_t wapbl_space_used(size_t avail, off_t head,
 	off_t tail);
 
@@ -272,18 +272,10 @@ wapbl_sysctl_init(void)
 
 	rv = sysctl_createv(&wapbl_sysctl, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	if (rv)
-		return rv;
-
-	rv = sysctl_createv(&wapbl_sysctl, 0, &rnode, &rnode,
-		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "wapbl",
 		       SYSCTL_DESCR("WAPBL journaling options"),
 		       NULL, 0, NULL, 0,
-		       CTL_CREATE, CTL_EOL);
+		       CTL_VFS, CTL_CREATE, CTL_EOL);
 	if (rv)
 		return rv;
 
@@ -687,7 +679,6 @@ wapbl_discard(struct wapbl *wl)
 int
 wapbl_stop(struct wapbl *wl, int force)
 {
-	struct vnode *vp;
 	int error;
 
 	WAPBL_PRINTF(WAPBL_PRINT_OPEN, ("wapbl_stop called\n"));
@@ -715,8 +706,6 @@ wapbl_stop(struct wapbl *wl, int force)
 	KASSERT(wl->wl_dealloccnt == 0);
 	KASSERT(SIMPLEQ_EMPTY(&wl->wl_entries));
 	KASSERT(wl->wl_inohashcnt == 0);
-
-	vp = wl->wl_logvp;
 
 	wapbl_free(wl->wl_wc_scratch, wl->wl_wc_header->wc_len);
 	wapbl_free(wl->wl_wc_header, wl->wl_wc_header->wc_len);
@@ -1126,6 +1115,18 @@ wapbl_resize_buf(struct wapbl *wl, struct buf *bp, long oldsz, long oldcnt)
 /****************************************************************/
 /* Some utility inlines */
 
+static inline size_t
+wapbl_space_used(size_t avail, off_t head, off_t tail)
+{
+
+	if (tail == 0) {
+		KASSERT(head == 0);
+		return 0;
+	}
+	return ((head + (avail - 1) - tail) % avail) + 1;
+}
+
+#ifdef _KERNEL
 /* This is used to advance the pointer at old to new value at old+delta */
 static inline off_t
 wapbl_advance(size_t size, size_t off, off_t old, size_t delta)
@@ -1153,17 +1154,6 @@ wapbl_advance(size_t size, size_t off, off_t old, size_t delta)
 	KASSERT((new == 0) || ((size_t)new >= off));
 	KASSERT((size_t)new < (size + off));
 	return new;
-}
-
-static inline size_t
-wapbl_space_used(size_t avail, off_t head, off_t tail)
-{
-
-	if (tail == 0) {
-		KASSERT(head == 0);
-		return 0;
-	}
-	return ((head + (avail - 1) - tail) % avail) + 1;
 }
 
 static inline size_t
@@ -1204,7 +1194,6 @@ wapbl_advance_tail(size_t size, size_t off, size_t delta, off_t *headp,
 	*tailp = tail;
 }
 
-#ifdef _KERNEL
 
 /****************************************************************/
 

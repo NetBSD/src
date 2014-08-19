@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.149.6.2 2013/06/23 06:28:53 tls Exp $
+.\"	$NetBSD: ddb.4,v 1.149.6.3 2014/08/20 00:02:35 tls Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd May 15, 2013
+.Dd June 12, 2014
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -119,19 +119,19 @@ from the keyboard:
 \*[Lt]Alt\*[Gt]-\*[Lt]LeftShift\*[Gt]-\*[Lt]F9\*[Gt]
 .It hp300
 \*[Lt]Shift\*[Gt]-\*[Lt]Reset\*[Gt]
-.It hp700
-\*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt] on PC style keyboards.
-.It ""
-+++++
-(five plus signs) on PDC console
-.It ""
-\*[Lt]Break\*[Gt] on serial console.
 .It hpcarm
 \*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
 .It hpcmips
 \*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
 .It hpcsh
 \*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
+.It hppa
+\*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt] on PC style keyboards.
+.It ""
++++++
+(five plus signs) on PDC console
+.It ""
+\*[Lt]Break\*[Gt] on serial console.
 .It i386
 \*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
 .It ""
@@ -657,14 +657,6 @@ Display information about a lock at
 .Ar address .
 This command is useful only if a kernel is compiled with
 .Cd options LOCKDEBUG .
-.It Ic show malloc Ar address
-If
-.Ar address
-is supplied, display the kernel memory allocator's idea on the
-allocation status for it.
-Also, print out global statistics for the memory allocator.
-This command is useful only if a kernel is compiled with
-.Cd options MALLOC_DEBUG .
 .It Ic show map Ns Oo Cm /f Oc Ar address
 Print the vm_map at
 .Ar address .
@@ -994,7 +986,7 @@ Switch to another cpu.
 .It Ic frame
 Given a trap frame address, print out the trap frame.
 .El
-.Ss HP700
+.Ss HPPA
 .Bl -tag -width "traptrace" -compact
 .It Ic frame
 Without an address the default trap frame is printed.

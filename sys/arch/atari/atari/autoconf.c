@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.63.2.1 2012/11/20 03:01:08 tls Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.63.2.2 2014/08/20 00:02:48 tls Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.63.2.1 2012/11/20 03:01:08 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.63.2.2 2014/08/20 00:02:48 tls Exp $");
 
 #include "opt_md.h"
 
@@ -95,14 +95,12 @@ cpu_rootconf(void)
 
 	if ((boothowto & RB_ASKNAME) != 0) {
 		int md_major, i;
-		dev_t md_dev;
 		cfdata_t cf;
 		struct md_softc *sc;
 
 		md_major = devsw_name2blk("md", NULL, 0);
 		if (md_major >= 0) {
 			for (i = 0; i < RAMD_NDEV; i++) {
-				md_dev = MAKEDISKDEV(md_major, i, RAW_PART);
 				cf = malloc(sizeof(*cf), M_DEVBUF,
 				    M_ZERO|M_WAITOK);
 				if (cf == NULL)

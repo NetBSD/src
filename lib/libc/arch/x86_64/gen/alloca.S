@@ -1,9 +1,9 @@
-/*	$NetBSD: alloca.S,v 1.1 2001/06/19 00:25:02 fvdl Exp $	*/
+/*	$NetBSD: alloca.S,v 1.1.64.1 2014/08/20 00:02:12 tls Exp $	*/
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: alloca.S,v 1.1 2001/06/19 00:25:02 fvdl Exp $")
+	RCSID("$NetBSD: alloca.S,v 1.1.64.1 2014/08/20 00:02:12 tls Exp $")
 #endif
 
 ENTRY(alloca)
@@ -14,3 +14,4 @@ ENTRY(alloca)
 	subq	%rdi,%rsp
 	movq	%rsp,%rax
 	jmp	*%rdx
+END(alloca)

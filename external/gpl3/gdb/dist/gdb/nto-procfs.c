@@ -1,8 +1,7 @@
 /* Machine independent support for QNX Neutrino /proc (process file system)
    for GDB.  Written by Colin Burgess at QNX Software Systems Limited.
 
-   Copyright (C) 2003, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    Contributed by QNX Software Systems Ltd.
 
@@ -29,11 +28,11 @@
 #include <sys/procfs.h>
 #include <sys/neutrino.h>
 #include <sys/syspage.h>
-#include "gdb_dirent.h"
+#include <dirent.h>
 #include <sys/netmgr.h>
 
 #include "exceptions.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdbcore.h"
 #include "inferior.h"
 #include "target.h"
@@ -64,17 +63,17 @@ static int procfs_xfer_memory (CORE_ADDR, gdb_byte *, int, int,
 			       struct mem_attrib *attrib,
 			       struct target_ops *);
 
-static void notice_signals (void);
-
 static void init_procfs_ops (void);
 
 static ptid_t do_attach (ptid_t ptid);
 
 static int procfs_can_use_hw_breakpoint (int, int, int);
 
-static int procfs_insert_hw_watchpoint (CORE_ADDR addr, int len, int type);
+static int procfs_insert_hw_watchpoint (CORE_ADDR addr, int len, int type,
+					struct expression *cond);
 
-static int procfs_remove_hw_watchpoint (CORE_ADDR addr, int len, int type);
+static int procfs_remove_hw_watchpoint (CORE_ADDR addr, int len, int type,
+					struct expression *cond);
 
 static int procfs_stopped_by_watchpoint (void);
 
@@ -198,7 +197,7 @@ procfs_open (char *arg, int from_tty)
 	    {
 	      if (sysinfo->type !=
 		  nto_map_arch_to_cputype (gdbarch_bfd_arch_info
-					   (target_gdbarch)->arch_name))
+					   (target_gdbarch ())->arch_name))
 		error (_("Invalid target CPU."));
 	    }
 	}
@@ -313,7 +312,7 @@ update_thread_private_data (struct thread_info *new_thread,
 #endif /* _NTO_VERSION */
 }
 
-void
+static void
 procfs_find_new_threads (struct target_ops *ops)
 {
   procfs_status status;
@@ -662,7 +661,8 @@ do_attach (ptid_t ptid)
   struct sigevent event;
   char path[PATH_MAX];
 
-  snprintf (path, PATH_MAX - 1, "%s/%d/as", nto_procfs_path, PIDGET (ptid));
+  snprintf (path, PATH_MAX - 1, "%s/%d/as", nto_procfs_path,
+	    ptid_get_pid (ptid));
   ctl_fd = open (path, O_RDWR);
   if (ctl_fd == -1)
     error (_("Couldn't open proc file %s, error %d (%s)"), path, errno,
@@ -680,9 +680,9 @@ do_attach (ptid_t ptid)
 
   if (devctl (ctl_fd, DCMD_PROC_STATUS, &status, sizeof (status), 0) == EOK
       && status.flags & _DEBUG_FLAG_STOPPED)
-    SignalKill (nto_node (), PIDGET (ptid), 0, SIGCONT, 0, 0);
+    SignalKill (nto_node (), ptid_get_pid (ptid), 0, SIGCONT, 0, 0);
   nto_init_solib_absolute_prefix ();
-  return ptid_build (PIDGET (ptid), 0, status.tid);
+  return ptid_build (ptid_get_pid (ptid), 0, status.tid);
 }
 
 /* Ask the user what to do when an interrupt is received.  */
@@ -695,7 +695,7 @@ interrupt_query (void)
 Give up (and stop debugging it)? ")))
     {
       target_mourn_inferior ();
-      deprecated_throw_reason (RETURN_QUIT);
+      quit ();
     }
 
   target_terminal_inferior ();
@@ -733,7 +733,7 @@ procfs_wait (struct target_ops *ops,
   if (ptid_equal (inferior_ptid, null_ptid))
     {
       ourstatus->kind = TARGET_WAITKIND_STOPPED;
-      ourstatus->value.sig = TARGET_SIGNAL_0;
+      ourstatus->value.sig = GDB_SIGNAL_0;
       exit_signo = 0;
       return null_ptid;
     }
@@ -753,13 +753,13 @@ procfs_wait (struct target_ops *ops,
   if (status.flags & _DEBUG_FLAG_SSTEP)
     {
       ourstatus->kind = TARGET_WAITKIND_STOPPED;
-      ourstatus->value.sig = TARGET_SIGNAL_TRAP;
+      ourstatus->value.sig = GDB_SIGNAL_TRAP;
     }
   /* Was it a breakpoint?  */
   else if (status.flags & _DEBUG_FLAG_TRACE)
     {
       ourstatus->kind = TARGET_WAITKIND_STOPPED;
-      ourstatus->value.sig = TARGET_SIGNAL_TRAP;
+      ourstatus->value.sig = GDB_SIGNAL_TRAP;
     }
   else if (status.flags & _DEBUG_FLAG_ISTOP)
     {
@@ -768,7 +768,7 @@ procfs_wait (struct target_ops *ops,
 	case _DEBUG_WHY_SIGNALLED:
 	  ourstatus->kind = TARGET_WAITKIND_STOPPED;
 	  ourstatus->value.sig =
-	    target_signal_from_host (status.info.si_signo);
+	    gdb_signal_from_host (status.info.si_signo);
 	  exit_signo = 0;
 	  break;
 	case _DEBUG_WHY_FAULTED:
@@ -781,7 +781,7 @@ procfs_wait (struct target_ops *ops,
 	  else
 	    {
 	      ourstatus->value.sig =
-		target_signal_from_host (status.info.si_signo);
+		gdb_signal_from_host (status.info.si_signo);
 	      exit_signo = ourstatus->value.sig;
 	    }
 	  break;
@@ -790,7 +790,7 @@ procfs_wait (struct target_ops *ops,
 	  {
 	    int waitval = 0;
 
-	    waitpid (PIDGET (inferior_ptid), &waitval, WNOHANG);
+	    waitpid (ptid_get_pid (inferior_ptid), &waitval, WNOHANG);
 	    if (exit_signo)
 	      {
 		/* Abnormal death.  */
@@ -810,7 +810,7 @@ procfs_wait (struct target_ops *ops,
 	case _DEBUG_WHY_REQUESTED:
 	  /* We are assuming a requested stop is due to a SIGINT.  */
 	  ourstatus->kind = TARGET_WAITKIND_STOPPED;
-	  ourstatus->value.sig = TARGET_SIGNAL_INT;
+	  ourstatus->value.sig = GDB_SIGNAL_INT;
 	  exit_signo = 0;
 	  break;
 	}
@@ -877,7 +877,7 @@ procfs_xfer_memory (CORE_ADDR memaddr, gdb_byte *myaddr, int len, int dowrite,
    on signals, etc.  We'd better not have left any breakpoints
    in the program or it'll die when it hits one.  */
 static void
-procfs_detach (struct target_ops *ops, char *args, int from_tty)
+procfs_detach (struct target_ops *ops, const char *args, int from_tty)
 {
   int siggnal = 0;
   int pid;
@@ -895,7 +895,7 @@ procfs_detach (struct target_ops *ops, char *args, int from_tty)
     siggnal = atoi (args);
 
   if (siggnal)
-    SignalKill (nto_node (), PIDGET (inferior_ptid), 0, siggnal, 0, 0);
+    SignalKill (nto_node (), ptid_get_pid (inferior_ptid), 0, siggnal, 0, 0);
 
   close (ctl_fd);
   ctl_fd = -1;
@@ -953,7 +953,7 @@ procfs_remove_hw_breakpoint (struct gdbarch *gdbarch,
 
 static void
 procfs_resume (struct target_ops *ops,
-	       ptid_t ptid, int step, enum target_signal signo)
+	       ptid_t ptid, int step, enum gdb_signal signo)
 {
   int signal_to_pass;
   procfs_status status;
@@ -983,19 +983,17 @@ procfs_resume (struct target_ops *ops,
 
   run.flags |= _DEBUG_RUN_ARM;
 
-  sigemptyset (&run.trace);
-  notice_signals ();
-  signal_to_pass = target_signal_to_host (signo);
+  signal_to_pass = gdb_signal_to_host (signo);
 
   if (signal_to_pass)
     {
       devctl (ctl_fd, DCMD_PROC_STATUS, &status, sizeof (status), 0);
-      signal_to_pass = target_signal_to_host (signo);
+      signal_to_pass = gdb_signal_to_host (signo);
       if (status.why & (_DEBUG_WHY_SIGNALLED | _DEBUG_WHY_FAULTED))
 	{
 	  if (signal_to_pass != status.info.si_signo)
 	    {
-	      SignalKill (nto_node (), PIDGET (inferior_ptid), 0,
+	      SignalKill (nto_node (), ptid_get_pid (inferior_ptid), 0,
 			  signal_to_pass, 0, 0);
 	      run.flags |= _DEBUG_RUN_CLRFLT | _DEBUG_RUN_CLRSIG;
 	    }
@@ -1019,7 +1017,7 @@ procfs_mourn_inferior (struct target_ops *ops)
 {
   if (!ptid_equal (inferior_ptid, null_ptid))
     {
-      SignalKill (nto_node (), PIDGET (inferior_ptid), 0, SIGKILL, 0, 0);
+      SignalKill (nto_node (), ptid_get_pid (inferior_ptid), 0, SIGKILL, 0, 0);
       close (ctl_fd);
     }
   inferior_ptid = null_ptid;
@@ -1332,32 +1330,21 @@ procfs_store_registers (struct target_ops *ops,
     }
 }
 
+/* Set list of signals to be handled in the target.  */
+
 static void
-notice_signals (void)
+procfs_pass_signals (int numsigs, unsigned char *pass_signals)
 {
   int signo;
 
+  sigfillset (&run.trace);
+
   for (signo = 1; signo < NSIG; signo++)
     {
-      if (signal_stop_state (target_signal_from_host (signo)) == 0
-	  && signal_print_state (target_signal_from_host (signo)) == 0
-	  && signal_pass_state (target_signal_from_host (signo)) == 1)
-	sigdelset (&run.trace, signo);
-      else
-	sigaddset (&run.trace, signo);
+      int target_signo = gdb_signal_from_host (signo);
+      if (target_signo < numsigs && pass_signals[target_signo])
+        sigdelset (&run.trace, signo);
     }
-}
-
-/* When the user changes the state of gdb's signal handling via the
-   "handle" command, this function gets called to see if any change
-   in the /proc interface is required.  It is also called internally
-   by other /proc interface functions to initialize the state of
-   the traced signal set.  */
-static void
-procfs_notice_signals (ptid_t ptid)
-{
-  sigemptyset (&run.trace);
-  notice_signals ();
 }
 
 static struct tidinfo *
@@ -1367,7 +1354,7 @@ procfs_thread_info (pid_t pid, short tid)
   return NULL;
 }
 
-char *
+static char *
 procfs_pid_to_str (struct target_ops *ops, ptid_t ptid)
 {
   static char buf[1024];
@@ -1424,7 +1411,7 @@ init_procfs_ops (void)
   procfs_ops.to_create_inferior = procfs_create_inferior;
   procfs_ops.to_mourn_inferior = procfs_mourn_inferior;
   procfs_ops.to_can_run = procfs_can_run;
-  procfs_ops.to_notice_signals = procfs_notice_signals;
+  procfs_ops.to_pass_signals = procfs_pass_signals;
   procfs_ops.to_thread_alive = procfs_thread_alive;
   procfs_ops.to_find_new_threads = procfs_find_new_threads;
   procfs_ops.to_pid_to_str = procfs_pid_to_str;
@@ -1456,8 +1443,8 @@ _initialize_procfs (void)
   sigaddset (&set, SIGUSR1);
   sigprocmask (SIG_BLOCK, &set, NULL);
 
-  /* Set up trace and fault sets, as gdb expects them.  */
-  sigemptyset (&run.trace);
+  /* Initially, make sure all signals are reported.  */
+  sigfillset (&run.trace);
 
   /* Stuff some information.  */
   nto_cpuinfo_flags = SYSPAGE_ENTRY (cpuinfo)->flags;

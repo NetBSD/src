@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.21 2011/07/17 20:54:52 joerg Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.21.12.1 2014/08/20 00:04:30 tls Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -79,7 +79,7 @@ const char hexdigits[16] = "0123456789abcdef";
 #define ZEROPAD		0x40
 #define NEGATIVE	0x80
 #define KPRINTN(base)	kprintn(put, ul, base, lflag, width)
-#define RZERO()							\
+#define LZERO()							\
 do {								\
 	if ((lflag & (ZEROPAD|LADJUST)) == ZEROPAD) {		\
 		while (width-- > 0)				\
@@ -102,7 +102,7 @@ do {								\
 } while (/*CONSTCOND*/0)
 #else	/* LIBSA_PRINTF_WIDTH_SUPPORT */
 #define KPRINTN(base)	kprintn(put, ul, base)
-#define RZERO()		/**/
+#define LZERO()		/**/
 #define RPAD()		/**/
 #define LPAD()		/**/
 #endif	/* LIBSA_PRINTF_WIDTH_SUPPORT */
@@ -213,6 +213,15 @@ reswitch:
 #endif
 				lflag |= LONG;
 			goto reswitch;
+		case 'j':
+#ifdef LIBSA_PRINTF_LONGLONG_SUPPORT
+			if (sizeof(intmax_t) == sizeof(long long))
+				lflag |= LLONG;
+			else
+#endif
+			if (sizeof(intmax_t) == sizeof(long))
+				lflag |= LONG;
+			goto reswitch;
 		case 't':
 			if (sizeof(PTRDIFF_T) == sizeof(long))
 				lflag |= LONG;
@@ -226,9 +235,9 @@ reswitch:
 #ifdef LIBSA_PRINTF_WIDTH_SUPPORT
 			--width;
 #endif
-			RPAD();
-			put(ch & 0xFF);
 			LPAD();
+			put(ch & 0xFF);
+			RPAD();
 			break;
 		case 's':
 			p = va_arg(ap, char *);
@@ -237,10 +246,10 @@ reswitch:
 				continue;
 			width -= q - p;
 #endif
-			RPAD();
+			LPAD();
 			while ((ch = (unsigned char)*p++))
 				put(ch);
-			LPAD();
+			RPAD();
 			break;
 		case 'd':
 			ul =
@@ -318,15 +327,15 @@ kprintn(void (*put)(int), UINTMAX_T ul, int base)
 	else if (lflag & SPACE)
 		*p++ = ' ';
 	width -= p - buf;
-	if ((lflag & LADJUST) == 0) {
+	if (lflag & ZEROPAD) {
 		while (p > q)
 			put(*--p);
 	}
 #endif
-	RPAD();
-	RZERO();
+	LPAD();
+	LZERO();
 	do {
 		put(*--p);
 	} while (p > buf);
-	LPAD();
+	RPAD();
 }

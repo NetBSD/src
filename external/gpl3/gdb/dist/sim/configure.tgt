@@ -16,7 +16,7 @@ sim_common=yes
 sim_igen=no
 sim_arch=
 case "${target}" in
-   arm*-*-* | thumb*-*-* | strongarm*-*-* | xscale-*-*)
+   arm*-*-*)
        SIM_ARCH(arm)
        sim_testsuite=yes
        ;;
@@ -25,6 +25,7 @@ case "${target}" in
        ;;
    bfin-*-*)
        SIM_ARCH(bfin)
+       sim_testsuite=yes
        ;;
    cr16*-*-*)
        SIM_ARCH(cr16)
@@ -84,6 +85,12 @@ case "${target}" in
    moxie-*-*)
        SIM_ARCH(moxie)
        sim_testsuite=yes
+       ;;
+   msp430*-*-*)
+       SIM_ARCH(msp430)
+       ;;
+   rl78-*-*)
+       SIM_ARCH(rl78)
        ;;
    rx-*-*)
        SIM_ARCH(rx)

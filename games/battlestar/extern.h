@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.33 2011/08/26 06:18:17 dholland Exp $ */
+/*	$NetBSD: extern.h,v 1.33.8.1 2014/08/20 00:00:22 tls Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,17 +38,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <time.h>
 #include <unistd.h>
 
-#define BITS (8 * sizeof (int))
+#define BITS (CHAR_BIT * sizeof (unsigned int))
 
 #define OUTSIDE		(position > 68 && position < 246 && position != 218)
-#define rnd(x)		(rand() % (x))
+#define rnd(x)		(random() % (x))
 #define max(a,b)	((a) < (b) ? (b) : (a))
-#define testbit(array, index)	(array[index/BITS] & (1 << (index % BITS)))
-#define setbit(array, index)	(array[index/BITS] |= (1 << (index % BITS)))
-#define clearbit(array, index)	(array[index/BITS] &= ~(1 << (index % BITS)))
+#define testbit(array, index)	(array[index/BITS] & (1U << (index % BITS)))
+#define setbit(array, index)	(array[index/BITS] |= (1U << (index % BITS)))
+#define clearbit(array, index)	(array[index/BITS] &= ~(1U << (index % BITS)))
 
  /* well known rooms */
 #define FINAL	275

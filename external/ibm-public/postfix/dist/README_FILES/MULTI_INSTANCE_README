@@ -157,13 +157,13 @@ submission null client:
         # a template file. The build process expands the template into
         # "mtaadmin+root=mta1"
         #
-        root    	mtaadmin+root=mta1
+        root        mtaadmin+root=mta1
 
     /etc/postfix/virtual:
         # Caretaker aliases:
         #
-        root    	mtaadmin
-        postmaster	root
+        root        mtaadmin
+        postmaster  root
 
 You would typically also add a Makefile, to automatically run postmap(1)
 commands when source files change. This Makefile also creates a "generic"
@@ -175,13 +175,13 @@ database when none exists.
         all: virtual.cdb generic.cdb
 
         generic: Makefile
-    	    @echo Creating $@
-    	    @rm -f $@.tmp
-    	    @printf '%s\t%s+root=%s\n' root $MTAADMIN `uname -n` > $@.tmp
-    	    @mv $@.tmp generic
+                @echo Creating $@
+                @rm -f $@.tmp
+                @printf '%s\t%s+root=%s\n' root ${MTAADMIN} `uname -n` > $@.tmp
+                @mv $@.tmp generic
 
         %.cdb: %
-    	    postmap cdb:$<
+                postmap cdb:$<
 
 Construct the "virtual" and "generic" databases (the latter is created by
 running "make"), then start and test the null-client:
@@ -290,6 +290,8 @@ injection SMTP service. Typical additions include:
         # With multiple instances, rarely need "-o param=value" overrides
         # in master.cf, each instance gets its own main.cf file.
         #
+        # Postfix 2.10 and later: specify empty smtpd_relay_restrictions.
+        smtpd_relay_restrictions =
         smtpd_recipient_restrictions = permit_mynetworks, reject
 
         # Tolerate occasional high latency in the  content filter.
@@ -437,7 +439,7 @@ include:
         # Avoid splitting the envelope and scanning messages multiple times.
         # Match the re-injection server's recipient limit.
         #
-    	smtp_destination_recipient_limit = 1000
+        smtp_destination_recipient_limit = 1000
 
         # Tolerate occasional high latency in the content filter.
         #
@@ -873,9 +875,9 @@ If you want to override the conventional values of the instance installation
 parameters, specify their values on the command-line:
 
     # postmulti [-I postfix-myinst] [-G mygroup] -e create \
-    	"config_directory = /path/to/config_directory" \
-    	"queue_directory = /path/to/queue_directory" \
-    	"data_directory = /path/to/data_directory"
+            "config_directory = /path/to/config_directory" \
+            "queue_directory = /path/to/queue_directory" \
+            "data_directory = /path/to/data_directory"
 
 A note on the --II and --GG options above. These are always used to assign a name
 or group name to an instance, while the --ii and --gg options always select
@@ -922,7 +924,7 @@ match this name if necessary):
 Otherwise, you must specify the location of its configuration directory:
 
     # postmulti [-I postfix-myinst] [-G mygroup] -e import \
-    	"config_directory = /path/of/config_directory"
+            "config_directory = /path/of/config_directory"
 
 When the instance is imported, you can assign a name or a group. As with
 "create", you can control the placement of the new instance in the start order

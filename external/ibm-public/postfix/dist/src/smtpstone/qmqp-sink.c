@@ -1,4 +1,4 @@
-/*	$NetBSD: qmqp-sink.c,v 1.1.1.1 2009/06/23 10:08:56 tron Exp $	*/
+/*	$NetBSD: qmqp-sink.c,v 1.1.1.1.16.1 2014/08/19 23:59:44 tls Exp $	*/
 
 /*++
 /* NAME
@@ -223,6 +223,7 @@ static void connect_event(int unused_event, char *context)
 	non_blocking(fd, NON_BLOCKING);
 	state = (SINK_STATE *) mymalloc(sizeof(*state));
 	state->stream = vstream_fdopen(fd, O_RDWR);
+	vstream_tweak_sock(state->stream);
 	netstring_setup(state->stream, var_tmout);
 	event_enable_read(fd, read_length, (char *) state);
     }

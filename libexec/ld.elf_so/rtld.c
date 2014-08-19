@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.158.2.3 2013/06/23 06:28:50 tls Exp $	 */
+/*	$NetBSD: rtld.c,v 1.158.2.4 2014/08/20 00:02:22 tls Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.158.2.3 2013/06/23 06:28:50 tls Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.158.2.4 2014/08/20 00:02:22 tls Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -558,7 +558,10 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 				*oenvp++ = *env;
 			}
 		} else if (strncmp(*env, bind_var, LEN(bind_var)) == 0) {
-			ld_bind_now = *env + LEN(bind_var);
+			if (_rtld_trust) {
+				ld_bind_now = *env + LEN(bind_var);
+				*oenvp++ = *env;
+			}
 		} else if (strncmp(*env, path_var, LEN(path_var)) == 0) {
 			if (_rtld_trust) {
 				ld_library_path = *env + LEN(path_var);
@@ -636,8 +639,10 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	 * one is being used.
 	 */
 	if (_rtld_objmain->interp != NULL &&
-	    strcmp(_rtld_objmain->interp, _rtld_objself.path) != 0)
+	    strcmp(_rtld_objmain->interp, _rtld_objself.path) != 0) {
 		_rtld_objself.path = xstrdup(_rtld_objmain->interp);
+		_rtld_objself.pathlen = strlen(_rtld_objself.path);
+	}
 	dbg(("actual dynamic linker is %s", _rtld_objself.path));
 
 	_rtld_digest_dynamic(execname, _rtld_objmain);
@@ -1290,6 +1295,7 @@ dladdr(const void *addr, Dl_info *info)
 		info->dli_saddr = symbol_addr;
 		best_def = def;
 
+
 		/* Exact match? */
 		if (info->dli_saddr == addr)
 			break;
@@ -1299,6 +1305,8 @@ dladdr(const void *addr, Dl_info *info)
 	if (best_def != NULL && ELF_ST_TYPE(best_def->st_info) == STT_FUNC)
 		info->dli_saddr = (void *)_rtld_function_descriptor_alloc(obj,
 		    best_def, 0);
+#else
+	__USE(best_def);
 #endif /* __HAVE_FUNCTION_DESCRIPTORS */
 
 	lookup_mutex_exit();
@@ -1541,7 +1549,8 @@ _rtld_shared_enter(void)
 		 */
 		if ((_rtld_mutex & RTLD_EXCLUSIVE_MASK) ||
 		    _rtld_waiter_exclusive)
-			_lwp_park(NULL, 0, __UNVOLATILE(&_rtld_mutex), NULL);
+			_lwp_park(CLOCK_REALTIME, 0, NULL, 0,
+			    __UNVOLATILE(&_rtld_mutex), NULL);
 		/* Try to remove us from the waiter list. */
 		atomic_cas_uint(&_rtld_waiter_shared, self, 0);
 		if (waiter)
@@ -1597,7 +1606,8 @@ _rtld_exclusive_enter(sigset_t *mask)
 			_rtld_die();
 		}
 		if (cur)
-			_lwp_park(NULL, 0, __UNVOLATILE(&_rtld_mutex), NULL);
+			_lwp_park(CLOCK_REALTIME, 0, NULL, 0,
+			    __UNVOLATILE(&_rtld_mutex), NULL);
 		atomic_cas_uint(&_rtld_waiter_exclusive, self, 0);
 		if (waiter)
 			_lwp_unpark(waiter, __UNVOLATILE(&_rtld_mutex));

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.1.4.3 2013/06/23 06:20:00 tls Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.1.4.4 2014/08/20 00:02:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.1.4.3 2013/06/23 06:20:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.1.4.4 2014/08/20 00:02:45 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting on intr %d\n", aaa->aaa_intr);
 
 	error = sdhc_host_found(&sc->sc, sc->sc_iot, sc->sc_ioh,
- 	    aaa->aaa_size);
+	    aaa->aaa_size);
 	if (error != 0) {
 		aprint_error_dev(self, "couldn't initialize host, error=%d\n",
 		    error);

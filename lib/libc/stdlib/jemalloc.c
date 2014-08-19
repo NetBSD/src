@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.28 2012/03/21 14:32:22 christos Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.28.2.1 2014/08/20 00:02:16 tls Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.28 2012/03/21 14:32:22 christos Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.28.2.1 2014/08/20 00:02:16 tls Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -216,6 +216,14 @@ __strerror_r(int e, char *s, size_t l)
 #define	STRERROR_BUF		64
 
 /* Minimum alignment of allocations is 2^QUANTUM_2POW_MIN bytes. */
+
+/*
+ * If you touch the TINY_MIN_2POW definition for any architecture, please
+ * make sure to adjust the corresponding definition for JEMALLOC_TINY_MIN_2POW
+ * in the gcc 4.8 tree in dist/gcc/tree-ssa-ccp.c and verify that a native
+ * gcc is still buildable!
+ */
+
 #ifdef __i386__
 #  define QUANTUM_2POW_MIN	4
 #  define SIZEOF_PTR_2POW	2
@@ -225,30 +233,42 @@ __strerror_r(int e, char *s, size_t l)
 #  define QUANTUM_2POW_MIN	4
 #  define SIZEOF_PTR_2POW	3
 #endif
+#ifdef __aarch64__
+#  define QUANTUM_2POW_MIN	4
+#  define SIZEOF_PTR_2POW	3
+#  define NO_TLS
+#endif
 #ifdef __alpha__
 #  define QUANTUM_2POW_MIN	4
 #  define SIZEOF_PTR_2POW	3
+#  define TINY_MIN_2POW		3
 #  define NO_TLS
 #endif
 #ifdef __sparc64__
 #  define QUANTUM_2POW_MIN	4
 #  define SIZEOF_PTR_2POW	3
+#  define TINY_MIN_2POW		3
 #  define NO_TLS
 #endif
 #ifdef __amd64__
 #  define QUANTUM_2POW_MIN	4
 #  define SIZEOF_PTR_2POW	3
+#  define TINY_MIN_2POW		3
 #endif
 #ifdef __arm__
 #  define QUANTUM_2POW_MIN	3
 #  define SIZEOF_PTR_2POW	2
 #  define USE_BRK
+#  ifdef __ARM_EABI__
+#    define TINY_MIN_2POW	3
+#  endif
 #  define NO_TLS
 #endif
 #ifdef __powerpc__
 #  define QUANTUM_2POW_MIN	4
 #  define SIZEOF_PTR_2POW	2
 #  define USE_BRK
+#  define TINY_MIN_2POW		3
 #endif
 #if defined(__sparc__) && !defined(__sparc64__)
 #  define QUANTUM_2POW_MIN	4
@@ -288,11 +308,6 @@ __strerror_r(int e, char *s, size_t l)
 #  define SIZEOF_INT_2POW	2
 #endif
 
-/* We can't use TLS in non-PIC programs, since TLS relies on loader magic. */
-#if (!defined(PIC) && !defined(NO_TLS))
-#  define NO_TLS
-#endif
-
 /*
  * Size and alignment of memory chunks that are allocated by the OS's virtual
  * memory system.
@@ -308,7 +323,9 @@ __strerror_r(int e, char *s, size_t l)
 #define	CACHELINE		((size_t)(1 << CACHELINE_2POW))
 
 /* Smallest size class to support. */
-#define	TINY_MIN_2POW		1
+#ifndef TINY_MIN_2POW
+#define	TINY_MIN_2POW		2
+#endif
 
 /*
  * Maximum size class that is a multiple of the quantum, but not (necessarily)
@@ -3916,7 +3933,6 @@ _malloc_prefork(void)
 		if (arenas[i] != NULL)
 			malloc_mutex_lock(&arenas[i]->mtx);
 	}
-	malloc_mutex_unlock(&arenas_mtx);
 
 	malloc_mutex_lock(&base_mtx);
 
@@ -3934,7 +3950,6 @@ _malloc_postfork(void)
 
 	malloc_mutex_unlock(&base_mtx);
 
-	malloc_mutex_lock(&arenas_mtx);
 	for (i = 0; i < narenas; i++) {
 		if (arenas[i] != NULL)
 			malloc_mutex_unlock(&arenas[i]->mtx);

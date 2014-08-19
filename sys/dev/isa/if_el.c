@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.88.6.1 2012/11/20 03:02:10 tls Exp $	*/
+/*	$NetBSD: if_el.c,v 1.88.6.2 2014/08/20 00:03:39 tls Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.88.6.1 2012/11/20 03:02:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.88.6.2 2014/08/20 00:03:39 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -255,7 +255,7 @@ elattach(device_t parent, device_t self, void *aux)
 
 	DPRINTF(("Attaching to random...\n"));
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_NET, 0);
+			  RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	DPRINTF(("elattach() finished.\n"));
 }

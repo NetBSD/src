@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.cpp,v 1.1.1.3 2006/02/06 18:14:43 wiz Exp $	*/
+/*	$NetBSD: ps.cpp,v 1.1.1.3.48.1 2014/08/20 00:01:54 tls Exp $	*/
 
 // -*- C++ -*-
 /* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003, 2004
@@ -854,7 +854,6 @@ void ps_printer::encode_fonts()
 
 void ps_printer::encode_subfont(subencoding *sub)
 {
-  assert(sub->glyphs != 0);
   out.put_literal_symbol(make_subencoding_name(sub->idx))
      .put_delimiter('[');
   for (int i = 0; i < 256; i++)

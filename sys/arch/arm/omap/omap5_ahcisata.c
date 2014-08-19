@@ -1,4 +1,4 @@
-/* $NetBSD: omap5_ahcisata.c,v 1.1.2.2 2013/06/23 06:20:01 tls Exp $ */
+/* $NetBSD: omap5_ahcisata.c,v 1.1.2.3 2014/08/20 00:02:47 tls Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap5_ahcisata.c,v 1.1.2.2 2013/06/23 06:20:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap5_ahcisata.c,v 1.1.2.3 2014/08/20 00:02:47 tls Exp $");
 
 #include "locators.h"
 
@@ -83,6 +83,22 @@ omap5_ahcisata_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": OMAP AHCI controller\n");
 
+#ifdef OMAP5
+	{
+		bus_space_handle_t ioh;
+		rv = bus_space_map(obio->obio_iot, OMAP2_CM_BASE
+		    + OMAP5_CM_L3INIT_CORE + OMAP5_CM_L3INIT_SATA_CLKCTRL,
+		    4, 0, &ioh);
+		KASSERT(rv == 0);
+		uint32_t v = bus_space_read_4(obio->obio_iot, ioh, 0);
+		v &= ~OMAP4_CM_L3INIT_SATA_CLKCTRL_MODULEMODE;
+		v |= OMAP4_CM_L3INIT_SATA_CLKCTRL_MODULEMODE_HW;
+		bus_space_write_4(obio->obio_iot, ioh, 0, v);
+		bus_space_unmap(obio->obio_iot, ioh, 4);
+	}
+#endif
+
+	sc->sc_ahci_ports = 1;
 	sc->sc_dmat = obio->obio_dmat;
 	sc->sc_ahcit = obio->obio_iot;
 	sc->sc_ahcis = obio->obio_size;

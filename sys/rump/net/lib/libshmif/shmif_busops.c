@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_busops.c,v 1.9 2011/03/21 16:41:09 pooka Exp $	*/
+/*	$NetBSD: shmif_busops.c,v 1.9.14.1 2014/08/20 00:04:43 tls Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -27,20 +27,23 @@
  * SUCH DAMAGE.
  */
 
+#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shmif_busops.c,v 1.9 2011/03/21 16:41:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shmif_busops.c,v 1.9.14.1 2014/08/20 00:04:43 tls Exp $");
+#else
+#include <rump/rumpuser_port.h>
+__RCSID("$NetBSD: shmif_busops.c,v 1.9.14.1 2014/08/20 00:04:43 tls Exp $");
+#endif
 
 #include <sys/param.h>
-#include <sys/atomic.h>
 
 #ifndef _KERNEL
 #include <assert.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
 
 #define KASSERT(a) assert(a)
-#else
-#include <rump/rumpuser.h>
 #endif
 
 #include "shmifvar.h"

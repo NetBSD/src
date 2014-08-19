@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.34.2.1 2013/06/23 06:18:58 tls Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.34.2.2 2014/08/20 00:04:29 tls Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.34.2.1 2013/06/23 06:18:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.34.2.2 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1137,11 +1137,6 @@ mqueue_sysctl_init(void)
 
 	mqsysctl_log = NULL;
 
-	sysctl_createv(&mqsysctl_log, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
 	sysctl_createv(&mqsysctl_log, 0, NULL, NULL,
 		CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		CTLTYPE_INT, "posix_msg",

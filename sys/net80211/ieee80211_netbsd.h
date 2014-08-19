@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.h,v 1.17 2011/12/31 20:41:58 christos Exp $ */
+/* $NetBSD: ieee80211_netbsd.h,v 1.17.6.1 2014/08/20 00:04:35 tls Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -234,13 +234,13 @@ struct ieee80211_michael_event {
 #define	ovbcopy(__src, __dst, __n)	((void)memmove(__dst, __src, __n))
 
 void	if_printf(struct ifnet *, const char *, ...);
-void	m_align(struct mbuf *, int);
-int	m_append(struct mbuf *, int, const void *);
 void	get_random_bytes(void *, size_t);
 
 void	ieee80211_sysctl_attach(struct ieee80211com *);
 void	ieee80211_sysctl_detach(struct ieee80211com *);
 void	ieee80211_load_module(const char *);
+
+void	ieee80211_rssadapt_sysctl_setup(struct sysctllog **);
 
 void	ieee80211_init(void);
 #define	IEEE80211_CRYPTO_SETUP(name)				\

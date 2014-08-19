@@ -3,8 +3,8 @@
    always fit into the return type, the negative of the true remainder is
    returned.
 
-Copyright 1994, 1995, 1996, 1999, 2001, 2002, 2004 Free Software Foundation,
-Inc.
+Copyright 1994, 1995, 1996, 1999, 2001, 2002, 2004, 2012 Free Software
+Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -31,7 +31,7 @@ mpz_cdiv_qr_ui (mpz_ptr quot, mpz_ptr rem, mpz_srcptr dividend, unsigned long in
   mp_ptr np, qp;
   mp_limb_t rl;
 
-  if (divisor == 0)
+  if (UNLIKELY (divisor == 0))
     DIVIDE_BY_ZERO;
 
   ns = SIZ(dividend);
@@ -43,8 +43,7 @@ mpz_cdiv_qr_ui (mpz_ptr quot, mpz_ptr rem, mpz_srcptr dividend, unsigned long in
     }
 
   nn = ABS(ns);
-  MPZ_REALLOC (quot, nn);
-  qp = PTR(quot);
+  qp = MPZ_REALLOC (quot, nn);
   np = PTR(dividend);
 
 #if BITS_PER_ULONG > GMP_NUMB_BITS  /* avoid warnings about shift amount */
@@ -54,8 +53,7 @@ mpz_cdiv_qr_ui (mpz_ptr quot, mpz_ptr rem, mpz_srcptr dividend, unsigned long in
       mp_ptr rp;
       mp_size_t rn;
 
-      MPZ_REALLOC (rem, 2);
-      rp = PTR(rem);
+      rp = MPZ_REALLOC (rem, 2);
 
       if (nn == 1)		/* tdiv_qr requirements; tested above for 0 */
 	{

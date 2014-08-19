@@ -1,4 +1,4 @@
-/*	$NetBSD: playit.c,v 1.16 2009/08/27 00:36:32 dholland Exp $	*/
+/*	$NetBSD: playit.c,v 1.16.12.1 2014/08/20 00:00:23 tls Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: playit.c,v 1.16 2009/08/27 00:36:32 dholland Exp $");
+__RCSID("$NetBSD: playit.c,v 1.16.12.1 2014/08/20 00:00:23 tls Exp $");
 #endif /* not lint */
 
 #include <sys/file.h>
@@ -42,17 +42,17 @@ __RCSID("$NetBSD: playit.c,v 1.16 2009/08/27 00:36:32 dholland Exp $");
 #include <curses.h>
 #include <ctype.h>
 #include <signal.h>
+#include <string.h>
 #include <termios.h>
 #include <unistd.h>
-#include "hunt.h"
+
+#include "hunt_common.h"
+#include "hunt_private.h"
 
 #ifndef FREAD
 #define FREAD	1
 #endif
 
-#define clear_eol()	clrtoeol()
-#define put_ch		addch
-#define put_str		addstr
 
 static int nchar_send;
 #ifdef OTTO
@@ -63,7 +63,6 @@ static char otto_face;
 #endif
 
 #define MAX_SEND	5
-#define STDIN		0
 
 /*
  * ibuf is the input buffer used for the stream from the driver.
@@ -90,8 +89,10 @@ playit(void)
 	int ch;
 	int y, x;
 	uint32_t version;
+	ssize_t result;
 
-	if (read(Socket, &version, LONGLEN) != LONGLEN) {
+	result = read(huntsocket, &version, sizeof(version));
+	if (result != (ssize_t)sizeof(version)) {
 		bad_con();
 		/* NOTREACHED */
 	}
@@ -128,10 +129,10 @@ playit(void)
 				break;
 			}
 #endif
-			put_ch(ch);
+			addch(ch);
 			break;
 		  case CLRTOEOL:
-			clear_eol();
+			clrtoeol();
 			break;
 		  case CLEAR:
 			clear_the_screen();
@@ -146,7 +147,7 @@ playit(void)
 		  case ENDWIN:
 			refresh();
 			if ((ch = GETCHR()) == LAST_PLAYER)
-				Last_player = TRUE;
+				Last_player = true;
 			ch = EOF;
 			goto out;
 		  case BELL:
@@ -155,7 +156,7 @@ playit(void)
 		  case READY:
 			refresh();
 			if (nchar_send < 0)
-				tcflush(STDIN, TCIFLUSH);
+				tcflush(STDIN_FILENO, TCIFLUSH);
 			nchar_send = MAX_SEND;
 #ifndef OTTO
 			(void) GETCHR();
@@ -183,12 +184,12 @@ playit(void)
 				break;
 			}
 #endif
-			put_ch(ch);
+			addch(ch);
 			break;
 		}
 	}
 out:
-	(void) close(Socket);
+	(void) close(huntsocket);
 }
 
 /*
@@ -204,9 +205,9 @@ getchr(void)
 	struct pollfd set[2];
 	int nfds;
 
-	set[0].fd = Socket;
+	set[0].fd = huntsocket;
 	set[0].events = POLLIN;
-	set[1].fd = STDIN;
+	set[1].fd = STDIN_FILENO;
 	set[1].events = POLLIN;
 
 one_more_time:
@@ -219,7 +220,7 @@ one_more_time:
 		send_stuff();
 	if (! (set[0].revents & POLLIN))
 		goto one_more_time;
-	icnt = read(Socket, ibuf, sizeof ibuf);
+	icnt = read(huntsocket, ibuf, sizeof ibuf);
 	if (icnt < 0) {
 		bad_con();
 		/* NOTREACHED */
@@ -242,11 +243,11 @@ send_stuff(void)
 	char *sp, *nsp;
 	static char inp[sizeof Buf];
 
-	count = read(STDIN, Buf, sizeof Buf);
+	count = read(STDIN_FILENO, Buf, sizeof(Buf) - 1);
 	if (count <= 0)
 		return;
 	if (nchar_send <= 0 && !no_beep) {
-		(void) write(1, "\7", 1);	/* CTRL('G') */
+		(void) beep();
 		return;
 	}
 
@@ -258,7 +259,7 @@ send_stuff(void)
 	Buf[count] = '\0';
 	nsp = inp;
 	for (sp = Buf; *sp != '\0'; sp++)
-		if ((*nsp = map_key[(int)*sp]) == 'q')
+		if ((*nsp = map_key[(unsigned char)*sp]) == 'q')
 			intr(0);
 		else
 			nsp++;
@@ -270,7 +271,7 @@ send_stuff(void)
 		nchar_send -= count;
 		if (nchar_send < 0)
 			count += nchar_send;
-		(void) write(Socket, inp, count);
+		(void) write(huntsocket, inp, count);
 	}
 }
 
@@ -281,7 +282,8 @@ send_stuff(void)
 int
 quit(int old_status)
 {
-	int explain, ch;
+	bool explain;
+	int ch;
 
 	if (Last_player)
 		return Q_QUIT;
@@ -290,9 +292,9 @@ quit(int old_status)
 		return Q_CLOAK;
 #endif
 	move(HEIGHT, 0);
-	put_str("Re-enter game [ynwo]? ");
-	clear_eol();
-	explain = FALSE;
+	addstr("Re-enter game [ynwo]? ");
+	clrtoeol();
+	explain = false;
 	for (;;) {
 		refresh();
 		if (isupper(ch = getchar()))
@@ -306,8 +308,8 @@ quit(int old_status)
 			return Q_QUIT;
 #else
 			move(HEIGHT, 0);
-			put_str("Write a parting message [yn]? ");
-			clear_eol();
+			addstr("Write a parting message [yn]? ");
+			clrtoeol();
 			refresh();
 			for (;;) {
 				if (isupper(ch = getchar()))
@@ -327,8 +329,8 @@ quit(int old_status)
 get_message:
 			c = ch;		/* save how we got here */
 			move(HEIGHT, 0);
-			put_str("Message: ");
-			clear_eol();
+			addstr("Message: ");
+			clrtoeol();
 			refresh();
 			cp = buf;
 			for (;;) {
@@ -341,7 +343,7 @@ get_message:
 						getyx(stdscr, y, x);
 						move(y, x - 1);
 						cp -= 1;
-						clear_eol();
+						clrtoeol();
 					}
 					continue;
 				}
@@ -350,13 +352,13 @@ get_message:
 					getyx(stdscr, y, x);
 					move(y, x - (cp - buf));
 					cp = buf;
-					clear_eol();
+					clrtoeol();
 					continue;
 				} else if (!isprint(ch)) {
 					beep();
 					continue;
 				}
-				put_ch(ch);
+				addch(ch);
 				*cp++ = ch;
 				if (cp + 1 >= buf + sizeof buf)
 					break;
@@ -368,20 +370,20 @@ get_message:
 #endif
 		beep();
 		if (!explain) {
-			put_str("(Yes, No, Write message, or Options) ");
-			explain = TRUE;
+			addstr("(Yes, No, Write message, or Options) ");
+			explain = true;
 		}
 	}
 
 	move(HEIGHT, 0);
 #ifdef FLY
-	put_str("Scan, Cloak, Flying, or Quit? ");
+	addstr("Scan, Cloak, Flying, or Quit? ");
 #else
-	put_str("Scan, Cloak, or Quit? ");
+	addstr("Scan, Cloak, or Quit? ");
 #endif
-	clear_eol();
+	clrtoeol();
 	refresh();
-	explain = FALSE;
+	explain = false;
 	for (;;) {
 		if (isupper(ch = getchar()))
 			ch = tolower(ch);
@@ -398,11 +400,11 @@ get_message:
 		beep();
 		if (!explain) {
 #ifdef FLY
-			put_str("[SCFQ] ");
+			addstr("[SCFQ] ");
 #else
-			put_str("[SCQ] ");
+			addstr("[SCQ] ");
 #endif
-			explain = TRUE;
+			explain = true;
 		}
 		refresh();
 	}
@@ -431,8 +433,10 @@ void
 do_message(void)
 {
 	uint32_t version;
+	ssize_t result;
 
-	if (read(Socket, &version, LONGLEN) != LONGLEN) {
+	result = read(huntsocket, &version, sizeof(version));
+	if (result != (ssize_t)sizeof(version)) {
 		bad_con();
 		/* NOTREACHED */
 	}
@@ -441,10 +445,10 @@ do_message(void)
 		/* NOTREACHED */
 	}
 #ifdef INTERNET
-	if (write(Socket, Send_message, strlen(Send_message)) < 0) {
+	if (write(huntsocket, Send_message, strlen(Send_message)) < 0) {
 		bad_con();
 		/* NOTREACHED */
 	}
 #endif
-	(void) close(Socket);
+	(void) close(huntsocket);
 }

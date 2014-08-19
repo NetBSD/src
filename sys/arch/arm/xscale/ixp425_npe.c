@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_npe.c,v 1.8.12.1 2012/11/20 03:01:08 tls Exp $	*/
+/*	$NetBSD: ixp425_npe.c,v 1.8.12.2 2014/08/20 00:02:48 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -62,7 +62,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/ixp425_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_npe.c,v 1.8.12.1 2012/11/20 03:01:08 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_npe.c,v 1.8.12.2 2014/08/20 00:02:48 tls Exp $");
 
 /*
  * Intel XScale Network Processing Engine (NPE) support.
@@ -86,7 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_npe.c,v 1.8.12.1 2012/11/20 03:01:08 tls Exp 
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/simplelock.h>
+#include <sys/mutex.h>
 #include <sys/time.h>
 #include <sys/proc.h>
 
@@ -274,7 +274,7 @@ ixpnpe_attach(device_t parent, device_t self, void *arg)
     sc->sc_dt = ixa->ixa_dt;
     sc->sc_unit = ixa->ixa_npe;
 
-    simple_lock_init(&sc->sc_lock);
+    mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
 
     /* XXX: Check features to ensure this NPE is enabled */
 
@@ -353,13 +353,13 @@ ixpnpe_stopandreset(struct ixpnpe_softc *sc)
 {
     int error;
 
-    simple_lock(&sc->sc_lock);
+    mutex_enter(&sc->sc_lock);
     error = npe_cpu_stop(sc);		/* stop NPE */
     if (error == 0)
 	error = npe_cpu_reset(sc);	/* reset it */
     if (error == 0)
 	sc->started = 0;		/* mark stopped */
-    simple_unlock(&sc->sc_lock);
+    mutex_exit(&sc->sc_lock);
 
     DPRINTF(sc->sc_dev, "%s: error %d\n", __func__, error);
     return error;
@@ -386,9 +386,9 @@ ixpnpe_start(struct ixpnpe_softc *sc)
 {
 	int ret;
 
-	simple_lock(&sc->sc_lock);
+	mutex_enter(&sc->sc_lock);
 	ret = ixpnpe_start_locked(sc);
-	simple_unlock(&sc->sc_lock);
+	mutex_exit(&sc->sc_lock);
 	return (ret);
 }
 
@@ -397,11 +397,11 @@ ixpnpe_stop(struct ixpnpe_softc *sc)
 {
     int error;
 
-    simple_lock(&sc->sc_lock);
+    mutex_enter(&sc->sc_lock);
     error = npe_cpu_stop(sc);
     if (error == 0)
 	sc->started = 0;
-    simple_unlock(&sc->sc_lock);
+    mutex_exit(&sc->sc_lock);
 
     DPRINTF(sc->sc_dev, "%s: error %d\n", __func__, error);
     return error;
@@ -489,7 +489,7 @@ ixpnpe_init(struct ixpnpe_softc *sc, const char *imageName, uint32_t imageId)
      * currently loaded images. If a critical error occured
      * during download, record that the NPE has an invalid image
      */
-    simple_lock(&sc->sc_lock);
+    mutex_enter(&sc->sc_lock);
     error = npe_load_image(sc, imageCodePtr, 1 /*VERIFY*/);
     if (error == 0) {
 	sc->validImage = 1;
@@ -498,7 +498,7 @@ ixpnpe_init(struct ixpnpe_softc *sc, const char *imageName, uint32_t imageId)
 	sc->validImage = 0;
     }
     sc->functionalityId = IX_NPEDL_FUNCTIONID_FROM_IMAGEID_GET(imageId);
-    simple_unlock(&sc->sc_lock);
+    mutex_exit(&sc->sc_lock);
 done:
     DPRINTF(sc->sc_dev, "%s: error %d\n", __func__, error);
     return error;
@@ -1405,11 +1405,11 @@ ixpnpe_sendandrecvmsg(struct ixpnpe_softc *sc,
 {
     int error;
 
-    simple_lock(&sc->sc_lock);
+    mutex_enter(&sc->sc_lock);
     error = ixpnpe_sendmsg_locked(sc, send);
     if (error == 0)
 	error = ixpnpe_recvmsg_locked(sc, recv);
-    simple_unlock(&sc->sc_lock);
+    mutex_exit(&sc->sc_lock);
 
     return error;
 }
@@ -1421,9 +1421,9 @@ ixpnpe_sendmsg(struct ixpnpe_softc *sc, const uint32_t msg[2])
 {
     int error;
 
-    simple_lock(&sc->sc_lock);
+    mutex_enter(&sc->sc_lock);
     error = ixpnpe_sendmsg_locked(sc, msg);
-    simple_unlock(&sc->sc_lock);
+    mutex_exit(&sc->sc_lock);
 
     return error;
 }
@@ -1433,12 +1433,12 @@ ixpnpe_recvmsg(struct ixpnpe_softc *sc, uint32_t msg[2])
 {
     int error;
 
-    simple_lock(&sc->sc_lock);
+    mutex_enter(&sc->sc_lock);
     if (sc->sc_msgwaiting)
 	memcpy(msg, sc->sc_msg, sizeof(sc->sc_msg));
     /* NB: sc_msgwaiting != 1 means the ack fetch failed */
     error = sc->sc_msgwaiting != 1 ? EIO : 0;
-    simple_unlock(&sc->sc_lock);
+    mutex_exit(&sc->sc_lock);
 
     return error;
 }

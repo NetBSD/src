@@ -1,5 +1,4 @@
-# Copyright 2002, 2003, 2005, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 2002-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,16 +16,12 @@
 # code_elim.exp -- tests that GDB can handle executables where some data/code
 #                  has been eliminated by the linker.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 set testfile1 code_elim1
 set testfile2 code_elim2
 set srcfile1 ${testfile1}.c
 set srcfile2 ${testfile2}.c
-set binfile1 ${objdir}/${subdir}/${testfile1}
-set binfile2 ${objdir}/${subdir}/${testfile2}
+set binfile1 [standard_output_file ${testfile1}]
+set binfile2 [standard_output_file ${testfile2}]
 set opts [list debug]
 lappend opts "additional_flags=-ffunction-sections"
 lappend opts "additional_flags=-fdata-sections"
@@ -100,16 +95,16 @@ proc test_eliminated_var { var } {
 gdb_exit
 gdb_start
 
-gdb_test "add-symbol-file ${binfile1} 0x100000" \
+gdb_test "symbol-file ${binfile1}" \
 	"Reading symbols from .*${testfile1}\\.\\.\\.done\\.(|\r\nUsing host libthread_db library .*libthread_db.so.*\\.)" \
-	"add-symbol-file ${testfile1} 0x100000" \
-	"add symbol table from file \".*${testfile1}\" at\[ \t\r\n\]+\.text_addr = 0x100000\[\r\n\]+\\(y or n\\) " \
-	"y"
+	"symbol-file ${testfile1}"
 
-test_eliminated_var my_global_symbol
-test_eliminated_var my_static_symbol
-test_eliminated_var my_global_func
-not_null_var_address main
+with_test_prefix "single psymtabs" {
+    test_eliminated_var my_global_symbol
+    test_eliminated_var my_static_symbol
+    test_eliminated_var my_global_func
+    not_null_var_address main
+}
 
 # Same thing for symtabs
 
@@ -120,10 +115,12 @@ set GDBFLAGS "$GDBFLAGS --readnow $binfile1"
 gdb_start
 set GDBFLAGS $saved_gdbflags
 
-test_eliminated_var my_global_symbol
-test_eliminated_var my_static_symbol
-test_eliminated_var my_global_func
-not_null_var_address main
+with_test_prefix "single symtabs" {
+    test_eliminated_var my_global_symbol
+    test_eliminated_var my_static_symbol
+    test_eliminated_var my_global_func
+    not_null_var_address main
+}
 
 # binfile2 contains the symbols that have been eliminated in binfile1. Check
 # the eliminated symbols does not hide these valid ones.
@@ -131,43 +128,45 @@ not_null_var_address main
 gdb_exit
 gdb_start
 
-gdb_test "add-symbol-file ${binfile1} 0x100000" \
-	"Reading symbols from .*${testfile1}\\.\\.\\.done\\." \
-	"add-symbol-file ${testfile1} 0x100000" \
-	"add symbol table from file \".*${testfile1}\" at\[ \t\r\n\]+\.text_addr = 0x100000\[\r\n\]+\\(y or n\\) " \
-	"y"
+with_test_prefix "order1" {
+    gdb_test "add-symbol-file ${binfile1} 0x100000 -s .bss 0x120000" \
+	    "Reading symbols from .*${testfile1}\\.\\.\\.done\\." \
+	    "add-symbol-file ${testfile1} 0x100000" \
+	    "add symbol table from file \".*${testfile1}\" at.*\\(y or n\\) " \
+	    "y"
 
-gdb_test "add-symbol-file ${binfile2} 0x200000" \
-	"Reading symbols from .*${testfile2}\\.\\.\\.done\\." \
-	"add-symbol-file ${testfile2} 0x200000" \
-	"add symbol table from file \".*${testfile2}\" at\[ \t\r\n\]+\.text_addr = 0x200000\[\r\n\]+\\(y or n\\) " \
-	"y"
+    gdb_test "add-symbol-file ${binfile2} 0x200000 -s .data 0x210000 -s .bss 0x220000" \
+	    "Reading symbols from .*${testfile2}\\.\\.\\.done\\." \
+	    "add-symbol-file ${testfile2} 0x200000" \
+	    "add symbol table from file \".*${testfile2}\" at.*\\(y or n\\) " \
+	    "y"
 
-not_null_var_address my_global_symbol
-not_null_var_address my_static_symbol
-not_null_var_address my_global_func
-not_null_var_address main
+    not_null_var_address my_global_symbol
+    not_null_var_address my_static_symbol
+    not_null_var_address my_global_func
+    not_null_var_address main
+}
 
 # Same thing, but loading binfile2 before binfile1.
 
 gdb_exit
 gdb_start
 
-gdb_test "add-symbol-file ${binfile2} 0x200000" \
-	"Reading symbols from .*${testfile2}\\.\\.\\.done\\." \
-	"add-symbol-file ${testfile2} 0x200000" \
-	"add symbol table from file \".*${testfile2}\" at\[ \t\r\n\]+\.text_addr = 0x200000\[\r\n\]+\\(y or n\\) " \
-	"y"
+with_test_prefix "order2" {
+    gdb_test "add-symbol-file ${binfile2} 0x200000 -s .data 0x210000 -s .bss 0x220000" \
+	    "Reading symbols from .*${testfile2}\\.\\.\\.done\\." \
+	    "add-symbol-file ${testfile2} 0x200000" \
+	    "add symbol table from file \".*${testfile2}\" at.*\\(y or n\\) " \
+	    "y"
 
-gdb_test "add-symbol-file ${binfile1} 0x100000" \
-	"Reading symbols from .*${testfile1}\\.\\.\\.done\\." \
-	"add-symbol-file ${testfile1} 0x100000" \
-	"add symbol table from file \".*${testfile1}\" at\[ \t\r\n\]+\.text_addr = 0x100000\[\r\n\]+\\(y or n\\) " \
-	"y"
+    gdb_test "add-symbol-file ${binfile1} 0x100000 -s .bss 0x120000" \
+	    "Reading symbols from .*${testfile1}\\.\\.\\.done\\." \
+	    "add-symbol-file ${testfile1} 0x100000" \
+	    "add symbol table from file \".*${testfile1}\" at.*\\(y or n\\) " \
+	    "y"
 
-not_null_var_address my_global_symbol
-not_null_var_address my_static_symbol
-not_null_var_address my_global_func
-not_null_var_address main
-
-
+    not_null_var_address my_global_symbol
+    not_null_var_address my_static_symbol
+    not_null_var_address my_global_func
+    not_null_var_address main
+}

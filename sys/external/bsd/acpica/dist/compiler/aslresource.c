@@ -1,4 +1,3 @@
-
 /******************************************************************************
  *
  * Module Name: aslresource - Resource template/descriptor utilities
@@ -6,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2011, Intel Corp.
+ * Copyright (C) 2000 - 2013, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -320,6 +319,7 @@ RsLargeAddressCheck (
         case ACPI_RESOURCE_FLAG_MIF:
         case ACPI_RESOURCE_FLAG_MAF:
         default:
+
             AslError (ASL_ERROR, ASL_MSG_INVALID_ADDR_FLAGS, LengthOp, NULL);
         }
     }
@@ -365,6 +365,7 @@ RsLargeAddressCheck (
 
         case (ACPI_RESOURCE_FLAG_MIF | ACPI_RESOURCE_FLAG_MAF):
         default:
+
             AslError (ASL_ERROR, ASL_MSG_INVALID_ADDR_FLAGS, LengthOp, NULL);
         }
     }
@@ -398,7 +399,7 @@ RsGetStringDataLength (
         InitializerOp = ASL_GET_PEER_NODE (InitializerOp);
     }
 
-    return 0;
+    return (0);
 }
 
 
@@ -437,63 +438,38 @@ RsAllocateResourceNode (
 
 /*******************************************************************************
  *
- * FUNCTION:    RsCreateBitField
+ * FUNCTION:    RsCreateResourceField
  *
  * PARAMETERS:  Op              - Resource field node
  *              Name            - Name of the field (Used only to reference
  *                                the field in the ASL, not in the AML)
  *              ByteOffset      - Offset from the field start
  *              BitOffset       - Additional bit offset
+ *              BitLength       - Number of bits in the field
  *
  * RETURN:      None, sets fields within the input node
  *
  * DESCRIPTION: Utility function to generate a named bit field within a
- *              resource descriptor.  Mark a node as 1) a field in a resource
+ *              resource descriptor. Mark a node as 1) a field in a resource
  *              descriptor, and 2) set the value to be a BIT offset
  *
  ******************************************************************************/
 
 void
-RsCreateBitField (
+RsCreateResourceField (
     ACPI_PARSE_OBJECT       *Op,
     char                    *Name,
     UINT32                  ByteOffset,
-    UINT32                  BitOffset)
+    UINT32                  BitOffset,
+    UINT32                  BitLength)
 {
 
-    Op->Asl.ExternalName      = Name;
-    Op->Asl.Value.Integer     = ((UINT64) ByteOffset * 8) + BitOffset;
-    Op->Asl.CompileFlags     |= (NODE_IS_RESOURCE_FIELD | NODE_IS_BIT_OFFSET);
-}
+    Op->Asl.ExternalName = Name;
+    Op->Asl.CompileFlags |= NODE_IS_RESOURCE_FIELD;
 
 
-/*******************************************************************************
- *
- * FUNCTION:    RsCreateByteField
- *
- * PARAMETERS:  Op              - Resource field node
- *              Name            - Name of the field (Used only to reference
- *                                the field in the ASL, not in the AML)
- *              ByteOffset      - Offset from the field start
- *
- * RETURN:      None, sets fields within the input node
- *
- * DESCRIPTION: Utility function to generate a named byte field within a
- *              resource descriptor.  Mark a node as 1) a field in a resource
- *              descriptor, and 2) set the value to be a BYTE offset
- *
- ******************************************************************************/
-
-void
-RsCreateByteField (
-    ACPI_PARSE_OBJECT       *Op,
-    char                    *Name,
-    UINT32                  ByteOffset)
-{
-
-    Op->Asl.ExternalName      = Name;
-    Op->Asl.Value.Integer     = ByteOffset;
-    Op->Asl.CompileFlags     |= NODE_IS_RESOURCE_FIELD;
+    Op->Asl.Value.Tag.BitOffset = (ByteOffset * 8) + BitOffset;
+    Op->Asl.Value.Tag.BitLength = BitLength;
 }
 
 
@@ -509,8 +485,8 @@ RsCreateByteField (
  * RETURN:      Sets bits within the *Flags output byte.
  *
  * DESCRIPTION: Set a bit in a cumulative flags word from an initialization
- *              node.  Will use a default value if the node is DEFAULT, meaning
- *              that no value was specified in the ASL.  Used to merge multiple
+ *              node. Will use a default value if the node is DEFAULT, meaning
+ *              that no value was specified in the ASL. Used to merge multiple
  *              keywords into a single flags byte.
  *
  ******************************************************************************/
@@ -534,6 +510,29 @@ RsSetFlagBits (
         /* Use the bit specified in the initialization node */
 
         *Flags |= (((UINT8) Op->Asl.Value.Integer) << Position);
+    }
+}
+
+
+void
+RsSetFlagBits16 (
+    UINT16                  *Flags,
+    ACPI_PARSE_OBJECT       *Op,
+    UINT8                   Position,
+    UINT8                   DefaultBit)
+{
+
+    if (Op->Asl.ParseOpcode == PARSEOP_DEFAULT_ARG)
+    {
+        /* Use the default bit */
+
+        *Flags |= (DefaultBit << Position);
+    }
+    else
+    {
+        /* Use the bit specified in the initialization node */
+
+        *Flags |= (((UINT16) Op->Asl.Value.Integer) << Position);
     }
 }
 
@@ -658,40 +657,54 @@ RsDoOneResourceDescriptor (
     switch (DescriptorTypeOp->Asl.ParseOpcode)
     {
     case PARSEOP_DMA:
+
         Rnode = RsDoDmaDescriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
+    case PARSEOP_FIXEDDMA:
+
+        Rnode = RsDoFixedDmaDescriptor (DescriptorTypeOp,
+                    CurrentByteOffset);
+        break;
+
     case PARSEOP_DWORDIO:
+
         Rnode = RsDoDwordIoDescriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
     case PARSEOP_DWORDMEMORY:
+
         Rnode = RsDoDwordMemoryDescriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
     case PARSEOP_DWORDSPACE:
+
         Rnode = RsDoDwordSpaceDescriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
     case PARSEOP_ENDDEPENDENTFN:
+
         switch (*State)
         {
         case ACPI_RSTATE_NORMAL:
+
             AslError (ASL_ERROR, ASL_MSG_MISSING_STARTDEPENDENT,
                 DescriptorTypeOp, NULL);
             break;
 
         case ACPI_RSTATE_START_DEPENDENT:
+
             AslError (ASL_ERROR, ASL_MSG_DEPENDENT_NESTING,
                 DescriptorTypeOp, NULL);
             break;
 
         case ACPI_RSTATE_DEPENDENT_LIST:
         default:
+
             break;
         }
 
@@ -701,89 +714,107 @@ RsDoOneResourceDescriptor (
         break;
 
     case PARSEOP_ENDTAG:
+
         Rnode = RsDoEndTagDescriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
     case PARSEOP_EXTENDEDIO:
+
         Rnode = RsDoExtendedIoDescriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
     case PARSEOP_EXTENDEDMEMORY:
+
         Rnode = RsDoExtendedMemoryDescriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
     case PARSEOP_EXTENDEDSPACE:
+
         Rnode = RsDoExtendedSpaceDescriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
     case PARSEOP_FIXEDIO:
+
         Rnode = RsDoFixedIoDescriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
     case PARSEOP_INTERRUPT:
+
         Rnode = RsDoInterruptDescriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
     case PARSEOP_IO:
+
         Rnode = RsDoIoDescriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
     case PARSEOP_IRQ:
+
         Rnode = RsDoIrqDescriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
     case PARSEOP_IRQNOFLAGS:
+
         Rnode = RsDoIrqNoFlagsDescriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
     case PARSEOP_MEMORY24:
+
         Rnode = RsDoMemory24Descriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
     case PARSEOP_MEMORY32:
+
         Rnode = RsDoMemory32Descriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
     case PARSEOP_MEMORY32FIXED:
+
         Rnode = RsDoMemory32FixedDescriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
     case PARSEOP_QWORDIO:
+
         Rnode = RsDoQwordIoDescriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
     case PARSEOP_QWORDMEMORY:
+
         Rnode = RsDoQwordMemoryDescriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
     case PARSEOP_QWORDSPACE:
+
         Rnode = RsDoQwordSpaceDescriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
     case PARSEOP_REGISTER:
+
         Rnode = RsDoGeneralRegisterDescriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
     case PARSEOP_STARTDEPENDENTFN:
+
         switch (*State)
         {
         case ACPI_RSTATE_START_DEPENDENT:
+
             AslError (ASL_ERROR, ASL_MSG_DEPENDENT_NESTING,
                 DescriptorTypeOp, NULL);
             break;
@@ -791,6 +822,7 @@ RsDoOneResourceDescriptor (
         case ACPI_RSTATE_NORMAL:
         case ACPI_RSTATE_DEPENDENT_LIST:
         default:
+
             break;
         }
 
@@ -801,9 +833,11 @@ RsDoOneResourceDescriptor (
         break;
 
     case PARSEOP_STARTDEPENDENTFN_NOPRI:
+
         switch (*State)
         {
         case ACPI_RSTATE_START_DEPENDENT:
+
             AslError (ASL_ERROR, ASL_MSG_DEPENDENT_NESTING,
                 DescriptorTypeOp, NULL);
             break;
@@ -811,6 +845,7 @@ RsDoOneResourceDescriptor (
         case ACPI_RSTATE_NORMAL:
         case ACPI_RSTATE_DEPENDENT_LIST:
         default:
+
             break;
         }
 
@@ -821,35 +856,72 @@ RsDoOneResourceDescriptor (
         break;
 
     case PARSEOP_VENDORLONG:
+
         Rnode = RsDoVendorLargeDescriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
     case PARSEOP_VENDORSHORT:
+
         Rnode = RsDoVendorSmallDescriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
     case PARSEOP_WORDBUSNUMBER:
+
         Rnode = RsDoWordBusNumberDescriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
     case PARSEOP_WORDIO:
+
         Rnode = RsDoWordIoDescriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
     case PARSEOP_WORDSPACE:
+
         Rnode = RsDoWordSpaceDescriptor (DescriptorTypeOp,
                     CurrentByteOffset);
         break;
 
+    case PARSEOP_GPIO_INT:
+
+        Rnode = RsDoGpioIntDescriptor (DescriptorTypeOp,
+                    CurrentByteOffset);
+        break;
+
+    case PARSEOP_GPIO_IO:
+
+        Rnode = RsDoGpioIoDescriptor (DescriptorTypeOp,
+                    CurrentByteOffset);
+        break;
+
+    case PARSEOP_I2C_SERIALBUS:
+
+        Rnode = RsDoI2cSerialBusDescriptor (DescriptorTypeOp,
+                    CurrentByteOffset);
+        break;
+
+    case PARSEOP_SPI_SERIALBUS:
+
+        Rnode = RsDoSpiSerialBusDescriptor (DescriptorTypeOp,
+                    CurrentByteOffset);
+        break;
+
+    case PARSEOP_UART_SERIALBUS:
+
+        Rnode = RsDoUartSerialBusDescriptor (DescriptorTypeOp,
+                    CurrentByteOffset);
+        break;
+
     case PARSEOP_DEFAULT_ARG:
+
         /* Just ignore any of these, they are used as fillers/placeholders */
         break;
 
     default:
+
         printf ("Unknown resource descriptor type [%s]\n",
                     DescriptorTypeOp->Asl.ParseOpName);
         break;
@@ -867,6 +939,7 @@ RsDoOneResourceDescriptor (
     if (Rnode)
     {
         DescriptorTypeOp->Asl.FinalAmlLength = Rnode->BufferLength;
+        DescriptorTypeOp->Asl.Extra = ((AML_RESOURCE *) Rnode->Buffer)->DescriptorType;
     }
 
     return (Rnode);
@@ -901,7 +974,7 @@ RsLinkDescriptorChain (
 
     if (!Rnode)
     {
-        return 0;
+        return (0);
     }
 
     /* Point the previous node to the new node */
@@ -921,7 +994,7 @@ RsLinkDescriptorChain (
     /* Previous node becomes the last node in the chain */
 
     *PreviousRnode = LastRnode;
-    return CurrentByteOffset;
+    return (CurrentByteOffset);
 }
 
 
@@ -931,7 +1004,7 @@ RsLinkDescriptorChain (
  *
  * PARAMETERS:  Op        - Parent of a resource template list
  *
- * RETURN:      None.  Sets input node to point to a list of AML code
+ * RETURN:      None. Sets input node to point to a list of AML code
  *
  * DESCRIPTION: Merge a list of resource descriptors into a single AML buffer,
  *              in preparation for output to the AML output file.
@@ -988,7 +1061,7 @@ RsDoResourceTemplate (
 
         /*
          * Update current byte offset to indicate the number of bytes from the
-         * start of the buffer.  Buffer can include multiple descriptors, we
+         * start of the buffer. Buffer can include multiple descriptors, we
          * must keep track of the offset of not only each descriptor, but each
          * element (field) within each descriptor as well.
          */
@@ -1019,10 +1092,12 @@ RsDoResourceTemplate (
     Op->Asl.ParseOpcode               = PARSEOP_BUFFER;
     Op->Asl.AmlOpcode                 = AML_BUFFER_OP;
     Op->Asl.CompileFlags              = NODE_AML_PACKAGE | NODE_IS_RESOURCE_DESC;
+    UtSetParseOpName (Op);
 
     BufferLengthOp->Asl.ParseOpcode   = PARSEOP_INTEGER;
     BufferLengthOp->Asl.Value.Integer = CurrentByteOffset;
     (void) OpcSetOptimalIntegerSize (BufferLengthOp);
+    UtSetParseOpName (BufferLengthOp);
 
     BufferOp->Asl.ParseOpcode         = PARSEOP_RAW_DATA;
     BufferOp->Asl.AmlOpcode           = AML_RAW_DATA_CHAIN;
@@ -1030,8 +1105,7 @@ RsDoResourceTemplate (
     BufferOp->Asl.AmlLength           = CurrentByteOffset;
     BufferOp->Asl.Value.Buffer        = (UINT8 *) HeadRnode.Next;
     BufferOp->Asl.CompileFlags       |= NODE_IS_RESOURCE_DATA;
+    UtSetParseOpName (BufferOp);
 
     return;
 }
-
-

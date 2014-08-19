@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_iostat.c,v 1.19 2009/11/30 11:28:35 pooka Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.19.22.1 2014/08/20 00:04:29 tls Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.19 2009/11/30 11:28:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.19.22.1 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -382,12 +382,6 @@ sysctl_hw_iostats(SYSCTLFN_ARGS)
 static void
 sysctl_io_stats_setup(struct sysctllog **clog)
 {
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "hw", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_HW, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,

@@ -1,6 +1,5 @@
 /* C preprocessor macro expansion for GDB.
-   Copyright (C) 2002, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -114,6 +113,17 @@ free_buffer (struct macro_buffer *b)
     xfree (b->text);
 }
 
+/* Like free_buffer, but return the text as an xstrdup()d string.
+   This only exists to try to make the API relatively clean.  */
+
+static char *
+free_buffer_return_text (struct macro_buffer *b)
+{
+  gdb_assert (! b->shared);
+  gdb_assert (b->size);
+  /* Nothing to do.  */
+  return b->text;
+}
 
 /* A cleanup function for macro buffers.  */
 static void
@@ -327,7 +337,6 @@ get_character_constant (struct macro_buffer *tok, char *p, char *end)
 	  && p[1] == '\''))
     {
       char *tok_start = p;
-      char *body_start;
       int char_count = 0;
 
       if (*p == '\'')
@@ -337,7 +346,6 @@ get_character_constant (struct macro_buffer *tok, char *p, char *end)
       else
         gdb_assert_not_reached ("unexpected character constant");
 
-      body_start = p;
       for (;;)
         {
           if (p >= end)
@@ -352,8 +360,11 @@ get_character_constant (struct macro_buffer *tok, char *p, char *end)
             }
           else if (*p == '\\')
             {
-              p++;
-	      char_count += c_parse_escape (&p, NULL);
+	      const char *s, *o;
+
+	      s = o = ++p;
+	      char_count += c_parse_escape (&s, NULL);
+	      p += s - o;
             }
           else
 	    {
@@ -406,8 +417,11 @@ get_string_literal (struct macro_buffer *tok, char *p, char *end)
                    "constants."));
           else if (*p == '\\')
             {
-              p++;
-              c_parse_escape (&p, NULL);
+	      const char *s, *o;
+
+	      s = o = ++p;
+	      c_parse_escape (&s, NULL);
+	      p += s - o;
             }
           else
             p++;
@@ -640,7 +654,7 @@ append_tokens_without_splicing (struct macro_buffer *dest,
    stringify; it is LEN bytes long.  */
 
 static void
-stringify (struct macro_buffer *dest, char *arg, int len)
+stringify (struct macro_buffer *dest, const char *arg, int len)
 {
   /* Trim initial whitespace from ARG.  */
   while (len > 0 && macro_is_whitespace (*arg))
@@ -681,6 +695,21 @@ stringify (struct macro_buffer *dest, char *arg, int len)
     }
   appendc (dest, '"');
   dest->last_token = dest->len;
+}
+
+/* See macroexp.h.  */
+
+char *
+macro_stringify (const char *str)
+{
+  struct macro_buffer buffer;
+  int len = strlen (str);
+
+  init_buffer (&buffer, len);
+  stringify (&buffer, str, len);
+  appendc (&buffer, '\0');
+
+  return free_buffer_return_text (&buffer);
 }
 
 
@@ -1411,7 +1440,7 @@ macro_expand_once (const char *source,
 
 
 char *
-macro_expand_next (char **lexptr,
+macro_expand_next (const char **lexptr,
                    macro_lookup_ftype *lookup_func,
                    void *lookup_baton)
 {
@@ -1419,7 +1448,7 @@ macro_expand_next (char **lexptr,
   struct cleanup *back_to;
 
   /* Set up SRC to refer to the input text, pointed to by *lexptr.  */
-  init_shared_buffer (&src, *lexptr, strlen (*lexptr));
+  init_shared_buffer (&src, (char *) *lexptr, strlen (*lexptr));
 
   /* Set up DEST to receive the expansion, if there is one.  */
   init_buffer (&dest, 0);

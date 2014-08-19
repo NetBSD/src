@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.75.2.1 2012/11/20 03:02:12 tls Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.75.2.2 2014/08/20 00:03:41 tls Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.75.2.1 2012/11/20 03:02:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.75.2.2 2014/08/20 00:03:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -157,12 +157,29 @@ dev_type_size(rasize);
 #if NRA
 
 const struct bdevsw ra_bdevsw = {
-	raopen, raclose, rastrategy, raioctl, radump, rasize, D_DISK
+	.d_open = raopen,
+	.d_close = raclose,
+	.d_strategy = rastrategy,
+	.d_ioctl = raioctl,
+	.d_dump = radump,
+	.d_psize = rasize,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw ra_cdevsw = {
-	raopen, raclose, raread, rawrite, raioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = raopen,
+	.d_close = raclose,
+	.d_read = raread,
+	.d_write = rawrite,
+	.d_ioctl = raioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 static struct dkdriver radkdriver = {
@@ -320,13 +337,11 @@ void
 rastrategy(struct buf *bp)
 {
 	struct ra_softc *ra = mscp_device_lookup(bp->b_dev);
-	int unit;
 	int b;
 
 	/*
 	 * Make sure this is a reasonable drive to use.
 	 */
-	unit = DISKUNIT(bp->b_dev);
 	if (ra == NULL) {
 		bp->b_error = ENXIO;
 		goto done;
@@ -565,12 +580,29 @@ dev_type_dump(radump);
 dev_type_size(rxsize);
 
 const struct bdevsw rx_bdevsw = {
-	rxopen, nullclose, rxstrategy, rxioctl, radump, rxsize, D_DISK
+	.d_open = rxopen,
+	.d_close = nullclose,
+	.d_strategy = rxstrategy,
+	.d_ioctl = rxioctl,
+	.d_dump = radump,
+	.d_psize = rxsize,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw rx_cdevsw = {
-	rxopen, nullclose, rxread, rxwrite, rxioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = rxopen,
+	.d_close = nullclose,
+	.d_read = rxread,
+	.d_write = rxwrite,
+	.d_ioctl = rxioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 static struct dkdriver rxdkdriver = {
@@ -621,12 +653,29 @@ dev_type_dump(radump);
 dev_type_size(rasize);
 
 const struct bdevsw racd_bdevsw = {
-	raopen, nullclose, rastrategy, raioctl, radump, rasize, D_DISK
+	.d_open = raopen,
+	.d_close = nullclose,
+	.d_strategy = rastrategy,
+	.d_ioctl = raioctl,
+	.d_dump = radump,
+	.d_psize = rasize,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw racd_cdevsw = {
-	raopen, nullclose, raread, rawrite, raioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = raopen,
+	.d_close = nullclose,
+	.d_read = raread,
+	.d_write = rawrite,
+	.d_ioctl = raioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 static struct dkdriver racddkdriver = {
@@ -728,7 +777,6 @@ rx_putonline(struct rx_softc *rx)
 {
 	struct	mscp *mp;
 	struct	mscp_softc *mi = device_private(device_parent(rx->ra_dev));
-	volatile int i;
 
 	rx->ra_state = DK_CLOSED;
 	mp = mscp_getcp(mi, MSCP_WAIT);
@@ -738,7 +786,7 @@ rx_putonline(struct rx_softc *rx)
 	*mp->mscp_addr |= MSCP_OWN | MSCP_INT;
 
 	/* Poll away */
-	i = bus_space_read_2(mi->mi_iot, mi->mi_iph, 0);
+	bus_space_read_2(mi->mi_iot, mi->mi_iph, 0);
 	if (tsleep(&rx->ra_state, PRIBIO, "rxonline", 100*100))
 		rx->ra_state = DK_CLOSED;
 

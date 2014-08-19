@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.74.2.1 2012/11/20 03:01:10 tls Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.74.2.2 2014/08/20 00:02:50 tls Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.74.2.1 2012/11/20 03:01:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.74.2.2 2014/08/20 00:02:50 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.74.2.1 2012/11/20 03:01:10 tls Ex
 #include <sys/reboot.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <dev/cons.h>
 
@@ -69,12 +71,10 @@ __KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.74.2.1 2012/11/20 03:01:10 tls Ex
 #include <machine/bootconfig.h>
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/bus.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
-#include <machine/intr.h>
+#include <arm/locore.h>
 #include <arm/undefined.h>
 #include <arm/arm32/machdep.h>
- 
+
 #include <machine/cyclone_boot.h>
 #include <arm/footbridge/dc21285mem.h>
 #include <arm/footbridge/dc21285reg.h>
@@ -116,30 +116,11 @@ static char bootargs[MAX_BOOT_STRING + 1];
 char *boot_args = NULL;
 char *boot_file = NULL;
 
-vm_offset_t physical_start;
-vm_offset_t physical_freestart;
-vm_offset_t physical_freeend;
-vm_offset_t physical_end;
-u_int free_pages;
-vm_offset_t pagetables_start;
-
-vm_offset_t msgbufphys;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;
 #endif
 
-#define KERNEL_PT_SYS		0	/* L2 table for mapping zero page */
-#define KERNEL_PT_KERNEL	1	/* L2 table for mapping kernel */
-#define	KERNEL_PT_KERNEL_NUM	2
-
-/* now this could move into something more generic */
-					/* L2 tables for mapping kernel VM */
-#define	KERNEL_PT_VMDATA	(KERNEL_PT_KERNEL + KERNEL_PT_KERNEL_NUM)
-#define	KERNEL_PT_VMDATA_NUM	4	/* 16MB kernel VM !*/
-#define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
-
-pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
 
 /* Prototypes */
 
@@ -190,88 +171,7 @@ extern void configure(void);
 int comcnspeed = CONSPEED;
 int comcnmode = CONMODE;
 
-
-/*
- * void cpu_reboot(int howto, char *bootstr)
- *
- * Reboots the system
- *
- * Deal with any syncing, unmounting, dumping and shutdown hooks,
- * then reset the CPU.
- */
-
-void
-cpu_reboot(int howto, char *bootstr)
-{
-#ifdef DIAGNOSTIC
-	/* info */
-	printf("boot: howto=%08x curlwp=%p\n", howto, curlwp);
-#endif
-
-	/*
-	 * If we are still cold then hit the air brakes
-	 * and crash to earth fast
-	 */
-	if (cold) {
-		doshutdownhooks();
-		pmf_system_shutdown(boothowto);
-		printf("The operating system has halted.\n");
-		printf("Please press any key to reboot.\n\n");
-		cngetc();
-		printf("rebooting...\n");
-		cpu_reset();
-		/*NOTREACHED*/
-	}
-
-	/* Disable console buffering */
-/*	cnpollc(1);*/
-
-	/*
-	 * If RB_NOSYNC was not specified sync the discs.
-	 * Note: Unless cold is set to 1 here, syslogd will die during the unmount.
-	 * It looks like syslogd is getting woken up only to find that it cannot
-	 * page part of the binary in as the filesystem has been unmounted.
-	 */
-	if (!(howto & RB_NOSYNC))
-		bootsync();
-
-	/* Say NO to interrupts */
-	splhigh();
-
-	/* Do a dump if requested. */
-	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
-		dumpsys();
-	
-	/* Run any shutdown hooks */
-	doshutdownhooks();
-
-	pmf_system_shutdown(boothowto);
-
-	/* Make sure IRQ's are disabled */
-	IRQdisable;
-
-	if (howto & RB_HALT) {
-		printf("The operating system has halted.\n");
-		printf("Please press any key to reboot.\n\n");
-		cngetc();
-	}
-
-	printf("rebooting...\n");
-	cpu_reset();
-	/*NOTREACHED*/
-}
-
-/*
- * Mapping table for core kernel memory. This memory is mapped at init
- * time with section mappings.
- */
-struct l1_sec_map {
-	vm_offset_t	va;
-	vm_offset_t	pa;
-	vm_size_t	size;
-	vm_prot_t	prot;
-	int		cache;
-} l1_sec_table[] = {
+static const struct pmap_devmap cats_devmap[] = {
 	/* Map 1MB for CSR space */
 	{ DC21285_ARMCSR_VBASE,			DC21285_ARMCSR_BASE,
 	    DC21285_ARMCSR_VSIZE,		VM_PROT_READ|VM_PROT_WRITE,
@@ -310,6 +210,14 @@ struct l1_sec_map {
 	{ 0, 0, 0, 0, 0 }
 };
 
+#define MAX_PHYSMEM 4
+static struct boot_physmem cats_physmem[MAX_PHYSMEM];
+int ncats_physmem = 0;
+
+extern struct bus_space footbridge_pci_io_bs_tag;
+extern struct bus_space footbridge_pci_mem_bs_tag;
+void footbridge_pci_bs_tag_init(void);
+
 /*
  * u_int initarm(struct ebsaboot *bootinfo)
  *
@@ -328,9 +236,6 @@ u_int
 initarm(void *arm_bootargs)
 {
 	struct ebsaboot *bootinfo = arm_bootargs;
-	int loop;
-	int loop1;
-	u_int l1pagetable;
 	extern u_int cpu_get_control(void);
 
 	/*
@@ -358,8 +263,10 @@ initarm(void *arm_bootargs)
 	 * Once all the memory map changes are complete we can call consinit()
 	 * and not have to worry about things moving.
 	 */
+	pmap_devmap_bootstrap((vaddr_t)ebsabootinfo.bt_l1, cats_devmap);
+
 #ifdef FCOM_INIT_ARM
-	 fcomcnattach(DC21285_ARMCSR_BASE, comcnspeed, comcnmode);
+	fcomcnattach(DC21285_ARMCSR_BASE, comcnspeed, comcnmode);
 #endif
 
 	/* Talk to the user */
@@ -387,37 +294,6 @@ initarm(void *arm_bootargs)
 	printf("bt_vers     = 0x%08x\n", ebsabootinfo.bt_vers);
 	printf("bt_features = 0x%08x\n", ebsabootinfo.bt_features);
 #endif
-/*	{
-	int loop;
-	for (loop = 0; loop < 8; ++loop) {
-		printf("%08x\n", *(((int *)bootinfo)+loop));
-	}
-	}*/
-
-	/*
-	 * Ok we have the following memory map
-	 *
-	 * virtual address == physical address apart from the areas:
-	 * 0x00000000 -> 0x000fffff which is mapped to
-	 * top 1MB of physical memory
-	 * 0x00100000 -> 0x0fffffff which is mapped to
-	 * physical addresses 0x00100000 -> 0x0fffffff
-	 * 0x10000000 -> 0x1fffffff which is mapped to
-	 * physical addresses 0x00000000 -> 0x0fffffff
-	 * 0x20000000 -> 0xefffffff which is mapped to
-	 * physical addresses 0x20000000 -> 0xefffffff
-	 * 0xf0000000 -> 0xf03fffff which is mapped to
-	 * physical addresses 0x00000000 -> 0x003fffff
-	 *
-	 * This means that the kernel is mapped suitably for continuing
-	 * execution, all I/O is mapped 1:1 virtual to physical and
-	 * physical memory is accessible.
-	 *
-	 * The initarm() has the responsibility for creating the kernel
-	 * page tables.
-	 * It must also set up various memory pointers that are used
-	 * by pmap etc. 
-	 */
 
 	/*
 	 * Examine the boot args string for options we need to know about
@@ -425,186 +301,14 @@ initarm(void *arm_bootargs)
 	 */
 	process_kernel_args(ebsabootinfo.bt_args);
 
-	printf("initarm: Configuring system ...\n");
+	arm32_bootmem_init(ebsabootinfo.bt_memstart,
+	    ebsabootinfo.bt_memend - ebsabootinfo.bt_memstart,
+	    ebsabootinfo.bt_memstart);
 
-	/*
-	 * Set up the variables that define the availablilty of
-	 * physical memory
-	 */
-	physical_start = ebsabootinfo.bt_memstart;
-	physical_freestart = physical_start;
-	physical_end = ebsabootinfo.bt_memend;
-	physical_freeend = physical_end;
-	free_pages = (physical_end - physical_start) / PAGE_SIZE;
-    
-	physmem = (physical_end - physical_start) / PAGE_SIZE;
+	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_LOW, 0, cats_devmap,
+	    false);
 
-	/* Tell the user about the memory */
-	printf("physmemory: %d pages at 0x%08lx -> 0x%08lx\n", physmem,
-	    physical_start, physical_end - 1);
-
-	/*
-	 * Ok the kernel occupies the bottom of physical memory.
-	 * The first free page after the kernel can be found in
-	 * ebsabootinfo->bt_memavail
-	 * We now need to allocate some fixed page tables to get the kernel
-	 * going.
-	 * We allocate one page directory and a number page tables and store
-	 * the physical addresses in the kernel_pt_table array.
-	 *
-	 * Ok the next bit of physical allocation may look complex but it is
-	 * simple really. I have done it like this so that no memory gets
-	 * wasted during the allocation of various pages and tables that are
-	 * all different sizes.
-	 * The start addresses will be page aligned.
-	 * We allocate the kernel page directory on the first free 16KB boundry
-	 * we find.
-	 * We allocate the kernel page tables on the first 4KB boundry we find.
-	 * Since we allocate at least 3 L2 pagetables we know that we must
-	 * encounter at least one 16KB aligned address.
-	 */
-
-#ifdef VERBOSE_INIT_ARM
-	printf("Allocating page tables");
-#endif
-
-	/* Update the address of the first free page of physical memory */
-	physical_freestart = ebsabootinfo.bt_memavail;
-	free_pages -= (physical_freestart - physical_start) / PAGE_SIZE;
-	
-#ifdef VERBOSE_INIT_ARM
-	printf(" above %p\n", (void *)physical_freestart);
-#endif
-	/* Define a macro to simplify memory allocation */
-#define	valloc_pages(var, np)			\
-	alloc_pages((var).pv_pa, (np));	\
-	(var).pv_va = KERNEL_BASE + (var).pv_pa - physical_start;
-
-#define alloc_pages(var, np)			\
-	(var) = physical_freestart;		\
-	physical_freestart += ((np) * PAGE_SIZE);\
-	free_pages -= (np);			\
-	memset((char *)(var), 0, ((np) * PAGE_SIZE));
-
-	loop1 = 0;
-	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
-		/* Are we 16KB aligned for an L1 ? */
-		if ((physical_freestart & (L1_TABLE_SIZE - 1)) == 0
-		    && kernel_l1pt.pv_pa == 0) {
-			valloc_pages(kernel_l1pt, L1_TABLE_SIZE / PAGE_SIZE);
-		} else {
-			valloc_pages(kernel_pt_table[loop1],
-					L2_TABLE_SIZE / PAGE_SIZE);
-			++loop1;			
-		}
-	}
-
-#ifdef DIAGNOSTIC
-	/* This should never be able to happen but better confirm that. */
-	if (!kernel_l1pt.pv_pa || (kernel_l1pt.pv_pa & (L1_TABLE_SIZE-1)) != 0)
-		panic("initarm: Failed to align the kernel page directory");
-#endif
-
-	/*
-	 * Allocate a page for the system page mapped to V0x00000000
-	 * This page will just contain the system vectors and can be
-	 * shared by all processes.
-	 */
-	alloc_pages(systempage.pv_pa, 1);
-
-	/* Allocate stacks for all modes */
-	valloc_pages(irqstack, IRQ_STACK_SIZE);
-	valloc_pages(abtstack, ABT_STACK_SIZE);
-	valloc_pages(undstack, UND_STACK_SIZE);
-	valloc_pages(kernelstack, UPAGES);
-
-#ifdef VERBOSE_INIT_ARM
-	printf("IRQ stack: p0x%08lx v0x%08lx\n", irqstack.pv_pa, irqstack.pv_va); 
-	printf("ABT stack: p0x%08lx v0x%08lx\n", abtstack.pv_pa, abtstack.pv_va); 
-	printf("UND stack: p0x%08lx v0x%08lx\n", undstack.pv_pa, undstack.pv_va); 
-	printf("SVC stack: p0x%08lx v0x%08lx\n", kernelstack.pv_pa, kernelstack.pv_va); 
-#endif
-
-	alloc_pages(msgbufphys, round_page(MSGBUFSIZE) / PAGE_SIZE);
-
-	/*
-	 * Ok we have allocated physical pages for the primary kernel
-	 * page tables
-	 */
-
-#ifdef VERBOSE_INIT_ARM
-	printf("Creating L1 page table\n");
-#endif
-
-	/*
-	 * Now we start consturction of the L1 page table
-	 * We start by mapping the L2 page tables into the L1.
-	 * This means that we can replace L1 mappings later on if necessary
-	 */
-	l1pagetable = kernel_l1pt.pv_pa;
-
-	/* Map the L2 pages tables in the L1 page table */
-	pmap_link_l2pt(l1pagetable, 0x00000000,
-	    &kernel_pt_table[KERNEL_PT_SYS]);
-
-	for (loop = 0; loop < KERNEL_PT_KERNEL_NUM; loop++)
-		pmap_link_l2pt(l1pagetable, KERNEL_BASE + loop * 0x00400000,
-		    &kernel_pt_table[KERNEL_PT_KERNEL + loop]);
-
-	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
-		pmap_link_l2pt(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
-		    &kernel_pt_table[KERNEL_PT_VMDATA + loop]);
-
-	/* update the top of the kernel VM */
-	pmap_curmaxkvaddr =
-	    KERNEL_VM_BASE + (KERNEL_PT_VMDATA_NUM * 0x00400000);
-	
-#ifdef VERBOSE_INIT_ARM
-	printf("Mapping kernel\n");
-#endif
-
-	/* Now we fill in the L2 pagetable for the kernel static code/data */
-	struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
-	if (N_GETMAGIC(kernexec[0]) != ZMAGIC) {
-		/*
-		 * If it's not a.out, assume ELF.
-		 */
-		extern char etext[], _end[];
-		size_t textsize = (uintptr_t) etext - KERNEL_BASE;
-		size_t totalsize = (uintptr_t) _end - KERNEL_BASE;
-		u_int logical;
-		
-		textsize = round_page(textsize);
-		totalsize = round_page(totalsize);
-
-		logical = pmap_map_chunk(l1pagetable, KERNEL_BASE,
-		    physical_start, textsize,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-
-		(void) pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
-		    physical_start + logical, totalsize - textsize,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	} else {
-		extern int end;
-		u_int logical;
-			
-		logical = pmap_map_chunk(l1pagetable, KERNEL_TEXT_BASE,
-			physical_start, kernexec->a_text,
-			VM_PROT_READ, PTE_CACHE);
-		logical += pmap_map_chunk(l1pagetable,
-			KERNEL_TEXT_BASE + logical,
-			physical_start + logical, kernexec->a_data,
-			VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-		logical += pmap_map_chunk(l1pagetable,
-			KERNEL_TEXT_BASE + logical,
-			physical_start + logical, kernexec->a_bss,
-			VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-		logical += pmap_map_chunk(l1pagetable,
-			KERNEL_TEXT_BASE + logical,
-			physical_start + logical, kernexec->a_syms + sizeof(int)
-			+ *(u_int *)((int)&end + kernexec->a_syms + sizeof(int)),
-			VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	}
+	printf("init subsystems: patch ");
 
 	/*
 	 * PATCH PATCH ...
@@ -617,190 +321,45 @@ initarm(void *arm_bootargs)
 	 */
 	*((u_int *)KERNEL_TEXT_BASE) = 0xe28ff441;
 
-#ifdef VERBOSE_INIT_ARM
-	printf("Constructing L2 page tables\n");
+#if NISA > 0
+	/* Initialise the ISA subsystem early ... */
+	isa_footbridge_init(DC21285_PCI_IO_VBASE, DC21285_PCI_ISA_MEM_VBASE);
 #endif
+
+	footbridge_pci_bs_tag_init();
+
+	printf("busses done.\n");
 
 	/* Map the boot arguments page */
-	pmap_map_entry(l1pagetable, ebsabootinfo.bt_vargp,
-	    ebsabootinfo.bt_pargp, VM_PROT_READ, PTE_CACHE);
-
-	/* Map the stack pages */
-	pmap_map_chunk(l1pagetable, irqstack.pv_va, irqstack.pv_pa,
-	    IRQ_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	pmap_map_chunk(l1pagetable, abtstack.pv_va, abtstack.pv_pa,
-	    ABT_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	pmap_map_chunk(l1pagetable, undstack.pv_va, undstack.pv_pa,
-	    UND_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	pmap_map_chunk(l1pagetable, kernelstack.pv_va, kernelstack.pv_pa,
-	    UPAGES * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-
-	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
-	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
-
-	for (loop = 0; loop < NUM_KERNEL_PTS; ++loop) {
-		pmap_map_chunk(l1pagetable, kernel_pt_table[loop].pv_va,
-		    kernel_pt_table[loop].pv_pa, L2_TABLE_SIZE,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
+	if (ebsabootinfo.bt_vargp != vector_page) {
+		pmap_map_entry(kernel_l1pt.pv_va, ebsabootinfo.bt_vargp,
+		    ebsabootinfo.bt_pargp, VM_PROT_READ, PTE_CACHE);
 	}
 
-	/* Map the vector page. */
-	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	extern struct bootmem_info bootmem_info;
+	struct bootmem_info * const bmi = &bootmem_info;
 
-	/* Map the core memory needed before autoconfig */
-	loop = 0;
-	while (l1_sec_table[loop].size) {
-		vm_size_t sz;
+	printf("Doing freeblocks: %d\n", bmi->bmi_nfreeblocks);
 
-#ifdef VERBOSE_INIT_ARM
-		printf("%08lx -> %08lx @ %08lx\n", l1_sec_table[loop].pa,
-		    l1_sec_table[loop].pa + l1_sec_table[loop].size - 1,
-		    l1_sec_table[loop].va);
-#endif
-		for (sz = 0; sz < l1_sec_table[loop].size; sz += L1_S_SIZE)
-			pmap_map_section(l1pagetable,
-			    l1_sec_table[loop].va + sz,
-			    l1_sec_table[loop].pa + sz,
-			    l1_sec_table[loop].prot,
-			    l1_sec_table[loop].cache);
-		++loop;
-	}
-
-	/*
-	 * Now we have the real page tables in place so we can switch to them.
-	 * Once this is done we will be running with the REAL kernel page tables.
-	 */
-#ifdef VERBOSE_INIT_ARM
-	/* checking sttb address */
-	printf("cpu_setttb address = %p\n", cpufuncs.cf_setttb);
-
-	printf("kernel_l1pt=0x%08x old = 0x%08x, phys = 0x%08x\n",
-			((uint*)kernel_l1pt.pv_va)[0xf00],
-			((uint*)ebsabootinfo.bt_l1)[0xf00],
-			((uint*)kernel_l1pt.pv_pa)[0xf00]);
-
-	printf("old pt @ %p, new pt @ %p\n", (uint*)kernel_l1pt.pv_pa, (uint*)ebsabootinfo.bt_l1);
-
-	printf("Enabling System access\n");
-#endif
-	/* 
-	 * enable the system bit in the control register, otherwise we can't
-	 * access the kernel after the switch to the new L1 table
-	 * I suspect cyclone hid this problem, by enabling the ROM bit
-	 * Note can not have both SYST and ROM enabled together, the results
-	 * are "undefined"
-	 */
-	cpu_control(CPU_CONTROL_SYST_ENABLE | CPU_CONTROL_ROM_ENABLE, CPU_CONTROL_SYST_ENABLE);
-#ifdef VERBOSE_INIT_ARM
-	printf("switching domains\n");
-#endif
-	/* be a client to all domains */
-	cpu_domains(0x55555555);
-	/* Switch tables */
-#ifdef VERBOSE_INIT_ARM
-	printf("switching to new L1 page table\n");
-#endif
-
-	/*
-	 * Ok the DC21285 CSR registers are about to be moved.
-	 * Detach the diagnostic serial port.
-	 */
-#ifdef FCOM_INIT_ARM
-	fcomcndetach();
-#endif
-	
-	cpu_setttb(kernel_l1pt.pv_pa, true);
-	cpu_tlb_flushID();
-	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
-	/*
-	 * Moved from cpu_startup() as data_abort_handler() references
-	 * this during uvm init
-	 */
-	uvm_lwp_setuarea(&lwp0, kernelstack.pv_va);
-
-	/*
-	 * XXX this should only be done in main() but it useful to
-	 * have output earlier ...
-	 */
-	consinit();
-
-#ifdef VERBOSE_INIT_ARM
-	printf("bootstrap done.\n");
-#endif
-
-	arm32_vector_init(ARM_VECTORS_LOW, ARM_VEC_ALL);
-
-	/*
-	 * Pages were allocated during the secondary bootstrap for the
-	 * stacks for different CPU modes.
-	 * We must now set the r13 registers in the different CPU modes to
-	 * point to these stacks.
-	 * Since the ARM stacks use STMFD etc. we must set r13 to the top end
-	 * of the stack memory.
-	 */
-	printf("init subsystems: stacks ");
-
-	set_stackptr(PSR_IRQ32_MODE,
-	    irqstack.pv_va + IRQ_STACK_SIZE * PAGE_SIZE);
-	set_stackptr(PSR_ABT32_MODE,
-	    abtstack.pv_va + ABT_STACK_SIZE * PAGE_SIZE);
-	set_stackptr(PSR_UND32_MODE,
-	    undstack.pv_va + UND_STACK_SIZE * PAGE_SIZE);
-
-	/*
-	 * Well we should set a data abort handler.
-	 * Once things get going this will change as we will need a proper handler.
-	 * Until then we will use a handler that just panics but tells us
-	 * why.
-	 * Initialisation of the vectors will just panic on a data abort.
-	 * This just fills in a slightly better one.
-	 */
-	printf("vectors ");
-	data_abort_handler_address = (u_int)data_abort_handler;
-	prefetch_abort_handler_address = (u_int)prefetch_abort_handler;
-	undefined_handler_address = (u_int)undefinedinstruction_bounce;
-
-	/* At last !
-	 * We now have the kernel in physical memory from the bottom upwards.
-	 * Kernel page tables are physically above this.
-	 * The kernel is mapped to KERNEL_TEXT_BASE
-	 * The kernel data PTs will handle the mapping of 0xf1000000-0xf3ffffff
-	 * The page tables are mapped to 0xefc00000
-	 */
-
-	/* Initialise the undefined instruction handlers */
-	printf("undefined ");
-	undefined_init();
-
-	/* Load memory into UVM. */
-	printf("page ");
-	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
-
-	/* XXX Always one RAM block -- nuke the loop. */
-	for (loop = 0; loop < bootconfig.dramblocks; loop++) {
-		paddr_t start = (paddr_t)bootconfig.dram[loop].address;
-		paddr_t end = start + (bootconfig.dram[loop].pages * PAGE_SIZE);
+	for (size_t i = 0; i < bmi->bmi_nfreeblocks; i++) {
+		pv_addr_t * const pv = &bmi->bmi_freeblocks[i];
+		paddr_t start = pv->pv_pa;
+		paddr_t end = pv->pv_pa + pv->pv_size;
+		struct boot_physmem *bp;
 #if NISADMA > 0
 		paddr_t istart, isize;
 		extern struct arm32_dma_range *footbridge_isa_dma_ranges;
 		extern int footbridge_isa_dma_nranges;
 #endif
 
-		if (start < physical_freestart)
-			start = physical_freestart;
-		if (end > physical_freeend)
-			end = physical_freeend;
-
 #if 0
-		printf("%d: %lx -> %lx\n", loop, start, end - 1);
+		printf("%zu: %lx -> %lx\n", i, start, end - 1);
 #endif
 
 #if NISADMA > 0
 		if (arm32_dma_range_intersect(footbridge_isa_dma_ranges,
-					      footbridge_isa_dma_nranges,
-					      start, end - start,
-					      &istart, &isize)) {
+		   footbridge_isa_dma_nranges, start, end - start,
+		   &istart, &isize)) {
 			/*
 			 * Place the pages that intersect with the
 			 * ISA DMA range onto the ISA DMA free list.
@@ -809,9 +368,11 @@ initarm(void *arm_bootargs)
 			printf("    ISADMA 0x%lx -> 0x%lx\n", istart,
 			    istart + isize - 1);
 #endif
-			uvm_page_physload(atop(istart),
-			    atop(istart + isize), atop(istart),
-			    atop(istart + isize), VM_FREELIST_ISADMA);
+			bp = &cats_physmem[ncats_physmem++];
+			KASSERT(ncats_physmem < MAX_PHYSMEM);
+			bp->bp_start = atop(istart);
+			bp->bp_pages = atop(isize);
+			bp->bp_freelist = VM_FREELIST_ISADMA;
 
 			/*
 			 * Load the pieces that come before the
@@ -822,9 +383,11 @@ initarm(void *arm_bootargs)
 				printf("    BEFORE 0x%lx -> 0x%lx\n",
 				    start, istart - 1);
 #endif
-				uvm_page_physload(atop(start),
-				    atop(istart), atop(start),
-				    atop(istart), VM_FREELIST_DEFAULT);
+				bp = &cats_physmem[ncats_physmem++];
+				KASSERT(ncats_physmem < MAX_PHYSMEM);
+				bp->bp_start = atop(start);
+				bp->bp_pages = atop(istart - start);
+				bp->bp_freelist = VM_FREELIST_DEFAULT;
 			}
 
 			/*
@@ -836,30 +399,45 @@ initarm(void *arm_bootargs)
 				printf("     AFTER 0x%lx -> 0x%lx\n",
 				    (istart + isize), end - 1);
 #endif
-				uvm_page_physload(atop(istart + isize),
-				    atop(end), atop(istart + isize), 
-				    atop(end), VM_FREELIST_DEFAULT);
+				bp = &cats_physmem[ncats_physmem++];
+				KASSERT(ncats_physmem < MAX_PHYSMEM);
+				bp->bp_start = atop(istart + isize);
+				bp->bp_pages = atop(end - (istart + isize));
+				bp->bp_freelist = VM_FREELIST_DEFAULT;
 			}
 		} else {
-			uvm_page_physload(atop(start), atop(end),
-			    atop(start), atop(end), VM_FREELIST_DEFAULT);
+			bp = &cats_physmem[ncats_physmem++];
+			KASSERT(ncats_physmem < MAX_PHYSMEM);
+			bp->bp_start = atop(start);
+			bp->bp_pages = atop(end - start);
+			bp->bp_freelist = VM_FREELIST_DEFAULT;
 		}
 #else /* NISADMA > 0 */
-		uvm_page_physload(atop(start), atop(end),
-		    atop(start), atop(end), VM_FREELIST_DEFAULT);
+		bp = &cats_physmem[ncats_physmem++];
+		KASSERT(ncats_physmem < MAX_PHYSMEM);
+		bp->bp_start = atop(start);
+		bp->bp_pages = atop(end - start);
+		bp->bp_freelist = VM_FREELIST_DEFAULT;
 #endif /* NISADMA > 0 */
 	}
 
-	/* Boot strap pmap telling it where the kernel page table is */
-	printf("pmap ");
-	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
-
 	cpu_reset_address_paddr = DC21285_ROM_BASE;
 
+	/* initarm_common returns the new stack pointer address */
+	u_int sp;
+	sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, cats_physmem,
+	    ncats_physmem);
+
 	/* Setup the IRQ system */
-	printf("irq ");
+	printf("init subsystems: irq ");
 	footbridge_intr_init();
+
 	printf("done.\n");
+
+#ifdef FCOM_INIT_ARM
+	fcomcndetach();
+#endif
+
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 #ifndef __ELF__		/* XXX */
@@ -878,8 +456,13 @@ initarm(void *arm_bootargs)
 		Debugger();
 #endif
 
-	/* We return the new stack pointer address */
-	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
+	/*
+	 * XXX this should only be done in main() but it useful to
+	 * have output earlier ...
+	 */
+	consinit();
+
+	return sp;
 }
 
 static void
@@ -912,10 +495,6 @@ process_kernel_args(const char *loader_args)
 	parse_mi_bootargs(boot_args);
 }
 
-extern struct bus_space footbridge_pci_io_bs_tag;
-extern struct bus_space footbridge_pci_mem_bs_tag;
-void footbridge_pci_bs_tag_init(void);
-
 void
 consinit(void)
 {
@@ -926,13 +505,6 @@ consinit(void)
 		return;
 
 	consinit_called = 1;
-
-#if NISA > 0
-	/* Initialise the ISA subsystem early ... */
-	isa_footbridge_init(DC21285_PCI_IO_VBASE, DC21285_PCI_ISA_MEM_VBASE);
-#endif
-
-	footbridge_pci_bs_tag_init();
 
 	get_bootconf_option(boot_args, "console", BOOTOPT_TYPE_STRING,
 	    &console);

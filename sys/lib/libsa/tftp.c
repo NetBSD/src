@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.34 2011/12/25 06:09:08 tsutsui Exp $	 */
+/*	$NetBSD: tftp.c,v 1.34.6.1 2014/08/20 00:04:30 tls Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -430,11 +430,11 @@ tftp_stat(struct open_file *f, struct stat *sb)
 }
 
 #if defined(LIBSA_ENABLE_LS_OP)
+#include "ls.h"
 __compactcall void
 tftp_ls(struct open_file *f, const char *pattern)
 {
-	printf("Currently ls command is unsupported by tftp\n");
-	return;
+	lsunsup("tftp");
 }
 #endif
 

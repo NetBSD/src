@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.226 2012/08/10 12:29:59 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.226.2.1 2014/08/20 00:03:00 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,10 +39,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.226 2012/08/10 12:29:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.226.2.1 2014/08/20 00:03:00 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
+#include "opt_fpu_emulate.h"
 #include "opt_modular.h"
 #include "opt_panicbutton.h"
 
@@ -71,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.226 2012/08/10 12:29:59 tsutsui Exp $"
 #include <sys/vnode.h>
 #include <sys/ksyms.h>
 #include <sys/module.h>
+#include <sys/cpu.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -293,6 +295,8 @@ cpu_startup(void)
 	pmapdebug = 0;
 #endif
 
+	hp300_cninit_deferred();
+
 	if (fputype != FPU_NONE)
 		m68k_make_fpu_idle_frame();
 
@@ -332,11 +336,6 @@ cpu_startup(void)
 	extio_ex_malloc_safe = 1;
 }
 
-/*
- * Info for CTL_HW
- */
-char cpu_model[120];
-
 struct hp300_model {
 	int id;
 	int mmuid;
@@ -371,8 +370,9 @@ static const struct hp300_model hp300_models[] = {
 static void
 identifycpu(void)
 {
-	const char *t, *mc, *s;
-	int i, len;
+	const char *t, *mc, *s, *mmu;
+	int i; 
+	char fpu[64], cache[64];
 
 	/*
 	 * Find the model number.
@@ -410,7 +410,6 @@ identifycpu(void)
 		goto lose;
 	}
 
-	sprintf(cpu_model, "HP 9000/%s (%sMHz MC680%s CPU", t, s, mc);
 
 	/*
 	 * ...and the MMU type.
@@ -418,61 +417,68 @@ identifycpu(void)
 	switch (mmutype) {
 	case MMU_68040:
 	case MMU_68030:
-		strcat(cpu_model, "+MMU");
+		mmu = "+MMU";
 		break;
 	case MMU_68851:
-		strcat(cpu_model, ", MC68851 MMU");
+		mmu = ", MC68851 MMU";
 		break;
 	case MMU_HP:
-		strcat(cpu_model, ", HP MMU");
+		mmu = ", HP MMU";
 		break;
 	default:
-		printf("%s\nunknown MMU type %d\n", cpu_model, mmutype);
+		printf("MC680%s\nunknown MMU type %d\n", mc, mmutype);
 		panic("startup");
 	}
-
-	len = strlen(cpu_model);
 
 	/*
 	 * ...and the FPU type.
 	 */
 	switch (fputype) {
 	case FPU_68040:
-		len += sprintf(cpu_model + len, "+FPU");
+		strlcpy(fpu, "+FPU", sizeof(fpu));
 		break;
 	case FPU_68882:
-		len += sprintf(cpu_model + len, ", %sMHz MC68882 FPU", s);
+		snprintf(fpu, sizeof(fpu), ", %sMHz MC68882 FPU", s);
 		break;
 	case FPU_68881:
-		len += sprintf(cpu_model + len, ", %sMHz MC68881 FPU",
+		snprintf(fpu, sizeof(fpu), ", %sMHz MC68881 FPU",
 		    machineid == HP_350 ? "20" : "16.67");
 		break;
+	case FPU_NONE:
+#ifdef FPU_EMULATE
+		strlcpy(fpu, ", emulated FPU", sizeof(fpu));
+#else
+		strlcpy(fpu, ", no FPU", sizeof(fpu));
+#endif
+		break;
 	default:
-		len += sprintf(cpu_model + len, ", unknown FPU");
+		strlcpy(fpu, ", unknown FPU", sizeof(fpu));
 	}
 
 	/*
 	 * ...and finally, the cache type.
 	 */
 	if (cputype == CPU_68040)
-		sprintf(cpu_model + len, ", 4k on-chip physical I/D caches");
+		snprintf(cache, sizeof(cache),
+		    ", 4k on-chip physical I/D caches");
 	else {
 		switch (ectype) {
 		case EC_VIRT:
-			sprintf(cpu_model + len,
+			snprintf(cache, sizeof(cache),
 			    ", %dK virtual-address cache",
 			    machineid == HP_320 ? 16 : 32);
 			break;
 		case EC_PHYS:
-			sprintf(cpu_model + len,
+			snprintf(cache, sizeof(cache),
 			    ", %dK physical-address cache",
 			    machineid == HP_370 ? 64 : 32);
 			break;
 		}
 	}
 
-	strcat(cpu_model, ")");
-	printf("%s\n", cpu_model);
+	cpu_setmodel("HP 9000/%s (%sMHz MC680%s CPU%s%s%s)", t, s, mc,
+	    mmu, fpu, cache);
+	printf("%s\n", cpu_getmodel());
 #ifdef DIAGNOSTIC
 	printf("cpu: delay divisor %d", delay_divisor);
 	if (mmuid)
@@ -902,6 +908,7 @@ badaddr(void *addr)
 		return 1;
 	}
 	i = *(volatile short *)addr;
+	__USE(i);
 	nofault = (int *)0;
 	return 0;
 }
@@ -918,6 +925,7 @@ badbaddr(void *addr)
 		return 1;
 	}
 	i = *(volatile char *)addr;
+	__USE(i);
 	nofault = (int *) 0;
 	return 0;
 }
@@ -1068,11 +1076,6 @@ parityerrorfind(void)
 	int i;
 	int found;
 
-#ifdef lint
-	i = o = pg = 0;
-	if (i)
-		return 0;
-#endif
 	/*
 	 * If looking is true we are searching for a known parity error
 	 * and it has just occurred.  All we do is return to the higher
@@ -1107,6 +1110,7 @@ parityerrorfind(void)
 		for (o = 0; o < PAGE_SIZE; o += sizeof(int))
 			i = *ip++;
 	}
+	__USE(i);
 	/*
 	 * Getting here implies no fault was found.  Should never happen.
 	 */

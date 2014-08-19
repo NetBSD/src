@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.21 2007/12/20 23:02:43 dsl Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.21.54.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.21 2007/12/20 23:02:43 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.21.54.1 2014/08/20 00:03:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.21 2007/12/20 23:02:43 dsl Exp $")
 /* XXX end should be */
 
 /*ARGSUSED1*/
-int 
+int
 cachectl1(unsigned long req, vaddr_t addr, size_t len, struct proc *p)
 {
 	int error = 0;
@@ -86,7 +86,7 @@ cachectl1(unsigned long req, vaddr_t addr, size_t len, struct proc *p)
 	return(error);
 }
 
-int 
+int
 sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retval)
 {
 	/* {

@@ -1,4 +1,4 @@
-/*	$NetBSD: slattach.c,v 1.32 2011/12/30 03:19:36 christos Exp $	*/
+/*	$NetBSD: slattach.c,v 1.32.6.1 2014/08/20 00:02:28 tls Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)slattach.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: slattach.c,v 1.32 2011/12/30 03:19:36 christos Exp $");
+__RCSID("$NetBSD: slattach.c,v 1.32.6.1 2014/08/20 00:02:28 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,11 +67,10 @@ __RCSID("$NetBSD: slattach.c,v 1.32 2011/12/30 03:19:36 christos Exp $");
 #include <unistd.h>
 
 static int	speed = 9600;
-static int	slipdisc = SLIPDISC;
+static const char	*ldisc = "slip";
 
 static char	devicename[32];
 
-static int	ttydisc(char *);
 __dead static void	usage(void);
 
 int
@@ -105,8 +104,8 @@ main(int argc, char *argv[])
 		case 's':
 			speed = atoi(optarg);
 			break;
-		case 'r': case 't':
-			slipdisc = ttydisc(optarg);
+		case 't':
+			ldisc = optarg;
 			break;
 		case '?':
 		default:
@@ -138,28 +137,13 @@ main(int argc, char *argv[])
 		err(1, "tcsetattr");
 	if (ioctl(fd, TIOCSDTR, 0) < 0 && errno != ENOTTY)
 		err(1, "TIOCSDTR");
-	if (ioctl(fd, TIOCSETD, &slipdisc) < 0)
-		err(1, "TIOCSETD");
+	if (ioctl(fd, TIOCSLINED, ldisc) < 0)
+		err(1, "TIOCSLINED");
 	if (opt_detach && daemon(0, 0) != 0)
 		err(1, "couldn't detach");
 	sigemptyset(&nsigset);
 	for (;;)
 		sigsuspend(&nsigset);
-}
-
-static int
-ttydisc(char *name)
-{
-	if (strcmp(name, "slip") == 0)
-		return(SLIPDISC);
-#ifdef STRIPDISC
-	else if (strcmp(name, "strip") == 0)
-  		return(STRIPDISC);
-#endif
-	else
-		usage();
-	/* NOTREACHED */
-	return -1;
 }
 
 static void

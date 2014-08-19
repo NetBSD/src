@@ -1,7 +1,6 @@
 /* Native-dependent code for Motorola 88000 BSD's.
 
-   Copyright (C) 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -69,7 +68,7 @@ m88kbsd_fetch_inferior_registers (struct target_ops *ops,
 {
   struct reg regs;
 
-  if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
+  if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
 	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
     perror_with_name (_("Couldn't get registers"));
 
@@ -85,13 +84,13 @@ m88kbsd_store_inferior_registers (struct target_ops *ops,
 {
   struct reg regs;
 
-  if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
+  if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
 	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
     perror_with_name (_("Couldn't get registers"));
 
   m88kbsd_collect_gregset (regcache, &regs, regnum);
 
-  if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
+  if (ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid),
 	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
     perror_with_name (_("Couldn't write registers"));
 }

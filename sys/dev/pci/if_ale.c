@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.14.2.1 2013/06/23 06:20:18 tls Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.14.2.2 2014/08/20 00:03:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.14.2.1 2013/06/23 06:20:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.14.2.2 2014/08/20 00:03:42 tls Exp $");
 
 #include "vlan.h"
 
@@ -389,6 +389,7 @@ ale_attach(device_t parent, device_t self, void *aux)
 	int mii_flags, error = 0;
 	uint32_t rxf_len, txf_len;
 	const char *chipname;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	aprint_naive("\n");
 	aprint_normal(": Attansic/Atheros L1E Ethernet\n");
@@ -426,7 +427,7 @@ ale_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Allocate IRQ
 	 */
-	intrstr = pci_intr_string(sc->sc_pct, ih);
+	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_irq_handle = pci_intr_establish(pc, ih, IPL_NET, ale_intr, sc);
 	if (sc->sc_irq_handle == NULL) {
 		aprint_error_dev(self, "could not establish interrupt");
@@ -1549,7 +1550,7 @@ ale_rxeof(struct ale_softc *sc)
 		bpf_mtap(ifp, m);
 
 		/* Pass it to upper layer. */
-		ether_input(ifp, m);
+		(*ifp->if_input)(ifp, m);
 
 		ale_rx_update_page(sc, &rx_page, length, &prod);
 	}

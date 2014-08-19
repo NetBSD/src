@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.11.2.1 2013/02/25 00:28:30 tls Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.11.2.2 2014/08/20 00:02:46 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -123,6 +123,7 @@ typedef struct {
 static __inline void *
 __lwp_getprivate_fast(void)
 {
+#if !defined(__thumb__) || defined(_ARM_ARCH_T2)
 	extern void *_lwp_getprivate(void);
 	void *rv;
 	__asm("mrc p15, 0, %0, c13, c0, 3" : "=r"(rv));
@@ -135,6 +136,10 @@ __lwp_getprivate_fast(void)
 	 * syscall.
 	 */
 	return _lwp_getprivate();
+#else
+	extern void *__aeabi_read_tp(void);
+	return __aeabi_read_tp();
+#endif /* !__thumb__ || _ARM_ARCH_T2 */
 }
 
 #if defined(_KERNEL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.41.2.1 2013/06/23 06:20:18 tls Exp $ */
+/*	$NetBSD: if_age.c,v 1.41.2.2 2014/08/20 00:03:42 tls Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.41.2.1 2013/06/23 06:20:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.41.2.2 2014/08/20 00:03:42 tls Exp $");
 
 #include "vlan.h"
 
@@ -148,6 +148,7 @@ age_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	pcireg_t memtype;
 	int error = 0;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	aprint_naive("\n");
 	aprint_normal(": Attansic/Atheros L1 Gigabit Ethernet\n");
@@ -185,7 +186,7 @@ age_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Allocate IRQ
 	 */
-	intrstr = pci_intr_string(sc->sc_pct, ih);
+	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_irq_handle = pci_intr_establish(sc->sc_pct, ih, IPL_NET,
 	    age_intr, sc);
 	if (sc->sc_irq_handle == NULL) {
@@ -1506,7 +1507,7 @@ age_rxeof(struct age_softc *sc, struct rx_rdesc *rxrd)
 
 			bpf_mtap(ifp, m);
 			/* Pass it on. */
-			ether_input(ifp, m);
+			(*ifp->if_input)(ifp, m);
 
 			/* Reset mbuf chains. */
 			AGE_RXCHAIN_RESET(sc);

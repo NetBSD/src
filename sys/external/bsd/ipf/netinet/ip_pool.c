@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pool.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: ip_pool.c,v 1.3.2.1 2014/08/20 00:04:24 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -72,7 +72,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_pool.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_pool.c,v 1.3.2.1 2014/08/20 00:04:24 tls Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_pool.c,v 1.1.1.2 2012/07/22 13:45:31 darrenr Exp";
@@ -955,21 +955,13 @@ ipf_pool_create(ipf_main_softc_t *softc, ipf_pool_softc_t *softp,
 		h->ipo_flags |= IPOOL_ANON;
 		poolnum = LOOKUP_ANON;
 
-#if defined(SNPRINTF) && defined(_KERNEL)
-		SNPRINTF(name, sizeof(name), "%x", poolnum);
-#else
-		(void)sprintf(name, "%x", poolnum);
-#endif
+		snprintf(name, sizeof(name), "%x", poolnum);
 
 		for (p = softp->ipf_pool_list[unit + 1]; p != NULL; ) {
 			if (strncmp(name, p->ipo_name,
 				    sizeof(p->ipo_name)) == 0) {
 				poolnum++;
-#if defined(SNPRINTF) && defined(_KERNEL)
-				SNPRINTF(name, sizeof(name), "%x", poolnum);
-#else
-				(void)sprintf(name, "%x", poolnum);
-#endif
+				snprintf(name, sizeof(name), "%x", poolnum);
 				p = softp->ipf_pool_list[unit + 1];
 			} else
 				p = p->ipo_next;

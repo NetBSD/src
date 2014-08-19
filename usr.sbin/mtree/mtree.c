@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.37.8.3 2013/06/23 06:29:05 tls Exp $	*/
+/*	$NetBSD: mtree.c,v 1.37.8.4 2014/08/20 00:05:10 tls Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.37.8.3 2013/06/23 06:29:05 tls Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.37.8.4 2014/08/20 00:05:10 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -296,11 +296,11 @@ main(int argc, char **argv)
 		mtree_err("-l and -u flags are mutually exclusive");
 
 	if (cflag) {
-		cwalk();
+		cwalk(stdout);
 		exit(0);
 	}
 	if (Cflag || Dflag) {
-		dump_nodes("", spec(spec1), Dflag);
+		dump_nodes(stdout, "", spec(spec1), Dflag);
 		exit(0);
 	}
 	if (spec2 != NULL)

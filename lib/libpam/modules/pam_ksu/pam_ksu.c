@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ksu.c,v 1.6 2011/04/25 22:03:20 christos Exp $	*/
+/*	$NetBSD: pam_ksu.c,v 1.6.10.1 2014/08/20 00:02:19 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 Jacques A. Vidrine <nectar@FreeBSD.org>
@@ -29,7 +29,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ksu/pam_ksu.c,v 1.5 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ksu.c,v 1.6 2011/04/25 22:03:20 christos Exp $");
+__RCSID("$NetBSD: pam_ksu.c,v 1.6.10.1 2014/08/20 00:02:19 tls Exp $");
 #endif
 
 #include <sys/param.h>
@@ -53,8 +53,8 @@ static const char superuser[] = "root";
 
 static void	log_krb5(krb5_context, krb5_error_code, const char *, ...)
     __printflike(3, 4);
-static long	get_su_principal(krb5_context, const char *, const char *,
-		    char **, krb5_principal *);
+static krb5_error_code	get_su_principal(krb5_context, const char *,
+    const char *, char **, krb5_principal *);
 static int	auth_krb5(pam_handle_t *, krb5_context, const char *,
 		    krb5_principal);
 
@@ -67,7 +67,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	const char	*user;
 	const void	*ruser;
 	char		*su_principal_name;
-	long		 rv;
+	krb5_error_code	 rv;
 	int		 pamret;
 
 	pamret = pam_get_user(pamh, &user, NULL);
@@ -125,7 +125,7 @@ auth_krb5(pam_handle_t *pamh, krb5_context context, const char *su_principal_nam
 	krb5_verify_init_creds_opt vic_opt;
 	const char	*pass;
 	char		 prompt[80];
-	long		 rv;
+	krb5_error_code	 rv;
 	int		 pamret;
 
 	rv = krb5_get_init_creds_opt_alloc(context, &gic_opt);
@@ -139,8 +139,6 @@ auth_krb5(pam_handle_t *pamh, krb5_context context, const char *su_principal_nam
 		    su_principal_name);
 	else
 		(void)snprintf(prompt, sizeof(prompt), "Password:");
-	if (prompt == NULL)
-		return (PAM_BUF_ERR);
 	pass = NULL;
 	pamret = pam_get_authtok(pamh, PAM_AUTHTOK, &pass, prompt);
 	if (pamret != PAM_SUCCESS)
@@ -177,12 +175,12 @@ log_krb5(krb5_context ctx, krb5_error_code err, const char *fmt, ...)
 	else
 		errtxt = NULL;
 	if (errtxt != NULL) {
+		snprintf(b2, sizeof(b2), "%s", errtxt);
 		krb5_free_error_message(ctx, errtxt);
-		snprintf(b2, sizeof(b2), "%s (%s)", b1, errtxt);
 	} else {
-		snprintf(b2, sizeof(b2), "%s (unknown %d)", b1, (int)err);
+		snprintf(b2, sizeof(b2), "unknown %d", (int)err);
 	}
-	PAM_LOG(b2);
+	PAM_LOG("%s (%s)", b1, b2);
 }
 
 /* Determine the target principal given the current user and the target user.
@@ -200,14 +198,14 @@ log_krb5(krb5_context ctx, krb5_error_code err, const char *fmt, ...)
  *
  * Returns 0 for success, or a com_err error code on failure.
  */
-static long
+static krb5_error_code
 get_su_principal(krb5_context context, const char *target_user, const char *current_user,
     char **su_principal_name, krb5_principal *su_principal)
 {
 	krb5_principal	 default_principal;
 	krb5_ccache	 ccache;
 	char		*principal_name, *ccname, *p;
-	long		 rv;
+	krb5_error_code	 rv;
 	uid_t		 euid, ruid;
 
 	*su_principal = NULL;

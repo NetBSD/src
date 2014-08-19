@@ -1,4 +1,4 @@
-# Copyright (C) 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright (C) 2007-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,25 +21,13 @@
 # Test G++ has compiled debuginfo without a C++ '&' reference where it should
 # not be.  GCC Bug 33537.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 if { [skip_cplus_tests] } { continue }
 
 
-set testfile "arg-reference"
-set srcfile ${testfile}.cc
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .cc
 
-if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
-    untested ${testfile}.exp
+if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
     return -1
 }
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 
 gdb_test "ptype foo" "type = int \\\(Obj\\\)" "No false reference"

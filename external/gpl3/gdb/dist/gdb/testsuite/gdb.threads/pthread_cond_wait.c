@@ -1,6 +1,6 @@
 /* A small multi-threaded test case.
 
-   Copyright 2004, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -59,12 +59,11 @@ int
 main (void)
 {
   pthread_t forever;
-  const struct timespec ts = { 0, 10000000 }; /* 0.01 sec */
 
   pthread_create (&forever, NULL, forever_pthread, NULL);
   for (;;)
     {
-      nanosleep (&ts, NULL);
+      sleep (2);
       break_me();
     }
 

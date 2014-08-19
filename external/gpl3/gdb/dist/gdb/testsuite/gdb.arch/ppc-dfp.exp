@@ -1,4 +1,4 @@
-# Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright (C) 2008-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,10 +16,6 @@
 
 # Tests for Powerpc Decimal Floating Point registers setting and fetching
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 if ![istarget "powerpc*"] then {
     verbose "Skipping powerpc decimal floating point register tests."
     return
@@ -29,7 +25,7 @@ set testfile "ppc-dfp"
 set binfile ${objdir}/${subdir}/${testfile}
 set srcfile ${testfile}.c
 
-if [get_compiler_info $binfile] {
+if [get_compiler_info] {
     warning "get_compiler failed"
     return -1
 }

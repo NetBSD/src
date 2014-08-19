@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.88 2011/01/17 18:11:10 joerg Exp $
+# 	$NetBSD: Makefile.sparc,v 1.88.16.1 2014/08/20 00:03:24 tls Exp $
 
 # Makefile for NetBSD
 #
@@ -34,7 +34,9 @@ GENASSYM_CONF=	${SPARC}/sparc/genassym.cf
 # work around GCC (egcs-2.91.66) bug which is liable
 # to use FPU registers as temporaries:
 CFLAGS+=	-mno-fpu
+CFLAGS+=	-Wa,-Av8
 AFLAGS+=	-x assembler-with-cpp
+AFLAGS+=	-Wa,-Av8
 
 ##
 ## (3) libkern and compat

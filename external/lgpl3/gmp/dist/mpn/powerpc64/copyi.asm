@@ -19,9 +19,12 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 
 include(`../config.m4')
 
-C		cycles/limb
-C POWER3/PPC630:     1
-C POWER4/PPC970:     1
+C                  cycles/limb
+C POWER3/PPC630          1
+C POWER4/PPC970          1
+C POWER5                 ?
+C POWER6                 ?
+C POWER7                 1.4
 
 C INPUT PARAMETERS
 C rp	r3

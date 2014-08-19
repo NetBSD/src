@@ -1,4 +1,4 @@
-/*	$NetBSD: shots.c,v 1.12 2011/08/31 16:24:56 plunky Exp $	*/
+/*	$NetBSD: shots.c,v 1.12.8.1 2014/08/20 00:00:23 tls Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shots.c,v 1.12 2011/08/31 16:24:56 plunky Exp $");
+__RCSID("$NetBSD: shots.c,v 1.12.8.1 2014/08/20 00:00:23 tls Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -47,7 +47,7 @@ static void chkshot(BULLET *, BULLET *);
 static void chkslime(BULLET *, BULLET *);
 static void explshot(BULLET *, int, int);
 static void find_under(BULLET *, BULLET *);
-static int iswall(int, int);
+static bool iswall(int, int);
 static void mark_boot(BULLET *);
 static void mark_player(BULLET *);
 #ifdef DRONE
@@ -319,7 +319,7 @@ move_normal_shot(BULLET *bp)
 						"%3d", pp->p_ammo);
 				cgoto(pp, STAT_AMMO_ROW, STAT_VALUE_COL);
 				outstr(pp, Buf, 3);
-				return FALSE;
+				return false;
 			    }
 			    pp->p_ident->i_faced += bp->b_charge;
 			}
@@ -354,14 +354,14 @@ move_normal_shot(BULLET *bp)
 		  case WALL1:
 		  case WALL2:
 		  case WALL3:
-			bp->b_expl = TRUE;
+			bp->b_expl = true;
 			break;
 		}
 
 		bp->b_x = x;
 		bp->b_y = y;
 	}
-	return TRUE;
+	return true;
 }
 
 #ifdef DRONE
@@ -413,7 +413,7 @@ move_drone(BULLET *bp)
 	 * All blocked up, just you wait
 	 */
 	if (count == 0)
-		return TRUE;
+		return true;
 
 	/*
 	 * Only one way to go.
@@ -499,12 +499,12 @@ drone_move:
 			(void) snprintf(Buf, sizeof(buf), "%3d", pp->p_ammo);
 			cgoto(pp, STAT_AMMO_ROW, STAT_VALUE_COL);
 			outstr(pp, Buf, 3);
-			return FALSE;
+			return false;
 		}
-		bp->b_expl = TRUE;
+		bp->b_expl = true;
 		break;
 	}
-	return TRUE;
+	return true;
 }
 #endif
 
@@ -570,7 +570,7 @@ move_flyer(PLAYER *pp)
 
 	if (pp->p_undershot) {
 		fixshots(pp->p_y, pp->p_x, pp->p_over);
-		pp->p_undershot = FALSE;
+		pp->p_undershot = false;
 	}
 	Maze[pp->p_y][pp->p_x] = pp->p_over;
 	x = pp->p_x + pp->p_flyx;
@@ -732,7 +732,7 @@ chkshot(BULLET *bp, BULLET *next)
 					y, x, LEFTS,
 					(Maze[y][x] == GMINE) ?
 					GRENREQ : BULREQ,
-					NULL, TRUE, SPACE);
+					NULL, true, SPACE);
 				Maze[y][x] = SPACE;
 				break;
 			}
@@ -791,7 +791,7 @@ chkslime(BULLET *bp, BULLET *next)
  *	move the given slime shot speed times and add it back if
  *	it hasn't fizzled yet
  */
-void
+static void
 move_slime(BULLET *bp, int speed, BULLET *next)
 {
 	int i, j, dirmask, count;
@@ -916,28 +916,28 @@ move_slime(BULLET *bp, int speed, BULLET *next)
 	if (dirmask & WEST) {
 		count--;
 		nbp = create_shot(bp->b_type, bp->b_y, bp->b_x - 1, LEFTS,
-			i, bp->b_size, bp->b_owner, bp->b_score, TRUE, SPACE);
+			i, bp->b_size, bp->b_owner, bp->b_score, true, SPACE);
 		move_slime(nbp, speed - 1, next);
 	}
 	if (dirmask & EAST) {
 		count--;
 		nbp = create_shot(bp->b_type, bp->b_y, bp->b_x + 1, RIGHT,
 			(count < j) ? i + 1 : i, bp->b_size, bp->b_owner,
-			bp->b_score, TRUE, SPACE);
+			bp->b_score, true, SPACE);
 		move_slime(nbp, speed - 1, next);
 	}
 	if (dirmask & NORTH) {
 		count--;
 		nbp = create_shot(bp->b_type, bp->b_y - 1, bp->b_x, ABOVE,
 			(count < j) ? i + 1 : i, bp->b_size, bp->b_owner,
-			bp->b_score, TRUE, SPACE);
+			bp->b_score, true, SPACE);
 		move_slime(nbp, speed - 1, next);
 	}
 	if (dirmask & SOUTH) {
 		count--;
 		nbp = create_shot(bp->b_type, bp->b_y + 1, bp->b_x, BELOW,
 			(count < j) ? i + 1 : i, bp->b_size, bp->b_owner,
-			bp->b_score, TRUE, SPACE);
+			bp->b_score, true, SPACE);
 		move_slime(nbp, speed - 1, next);
 	}
 
@@ -948,11 +948,11 @@ move_slime(BULLET *bp, int speed, BULLET *next)
  * iswall:
  *	returns whether the given location is a wall
  */
-static int
+static bool
 iswall(int y, int x)
 {
 	if (y < 0 || x < 0 || y >= HEIGHT || x >= WIDTH)
-		return TRUE;
+		return true;
 	switch (Maze[y][x]) {
 	  case WALL1:
 	  case WALL2:
@@ -970,9 +970,9 @@ iswall(int y, int x)
 	  case LAVA:
 #endif
 #endif
-		return TRUE;
+		return true;
 	}
-	return FALSE;
+	return false;
 }
 #endif
 
@@ -984,15 +984,15 @@ static void
 zapshot(BULLET *blist, BULLET *obp)
 {
 	BULLET *bp;
-	FLAG explode;
+	bool explode;
 
-	explode = FALSE;
+	explode = false;
 	for (bp = blist; bp != NULL; bp = bp->b_next) {
 		if (bp->b_x != obp->b_x || bp->b_y != obp->b_y)
 			continue;
 		if (bp->b_face == obp->b_face)
 			continue;
-		explode = TRUE;
+		explode = true;
 		break;
 	}
 	if (!explode)
@@ -1004,14 +1004,14 @@ zapshot(BULLET *blist, BULLET *obp)
  * explshot -
  *	Make all shots at this location blow up
  */
-void
+static void
 explshot(BULLET *blist, int y, int x)
 {
 	BULLET *bp;
 
 	for (bp = blist; bp != NULL; bp = bp->b_next)
 		if (bp->b_x == x && bp->b_y == y) {
-			bp->b_expl = TRUE;
+			bp->b_expl = true;
 			if (bp->b_owner != NULL)
 				message(bp->b_owner, "Shot intercepted");
 		}
@@ -1035,10 +1035,10 @@ play_at(int y, int x)
 
 /*
  * opposite:
- *	Return TRUE if the bullet direction faces the opposite direction
+ *	Return true if the bullet direction faces the opposite direction
  *	of the player in the maze
  */
-int
+bool
 opposite(int face, char dir)
 {
 	switch (face) {
@@ -1051,7 +1051,7 @@ opposite(int face, char dir)
 	  case BELOW:
 		return (dir == ABOVE);
 	  default:
-		return FALSE;
+		return false;
 	}
 }
 
@@ -1114,7 +1114,7 @@ mark_player(BULLET *bp)
 
 	for (pp = Player; pp < End_player; pp++)
 		if (pp->p_y == bp->b_y && pp->p_x == bp->b_x) {
-			pp->p_undershot = TRUE;
+			pp->p_undershot = true;
 			break;
 		}
 }
@@ -1131,7 +1131,7 @@ mark_boot(BULLET *bp)
 
 	for (pp = Boot; pp < &Boot[NBOOTS]; pp++)
 		if (pp->p_y == bp->b_y && pp->p_x == bp->b_x) {
-			pp->p_undershot = TRUE;
+			pp->p_undershot = true;
 			break;
 		}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_machdep.c,v 1.2 2012/06/28 17:53:42 tsutsui Exp $	*/
+/*	$NetBSD: fpu_machdep.c,v 1.2.2.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_machdep.c,v 1.2 2012/06/28 17:53:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_machdep.c,v 1.2.2.1 2014/08/20 00:03:26 tls Exp $");
 
 #include "opt_fpu_emulate.h"
 
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_machdep.c,v 1.2 2012/06/28 17:53:42 tsutsui Exp 
 
 static const char *fpu_descr[] = {
 #ifdef	FPU_EMULATE
-	"emulator", 		/* 0 */
+	"emulator",		/* 0 */
 #else
 	"no math support",	/* 0 */
 #endif
@@ -58,7 +58,7 @@ static const char *fpu_descr[] = {
 	"mc68060 internal",	/* 4 */
 	"unknown type" };	/* 5 */
 
-void 
+void
 initfpu(void)
 {
 	const char *descr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.152 2012/07/28 19:08:24 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.152.2.1 2014/08/20 00:03:14 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.152 2012/07/28 19:08:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.152.2.1 2014/08/20 00:03:14 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.152 2012/07/28 19:08:24 matt Exp $");
 #include <sys/ksyms.h>
 #include <sys/module.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 
 #include "ksyms.h"
 
@@ -478,51 +479,39 @@ cpu_startup(void)
 	initcpu();
 }
 
-/*
- * Info for CTL_HW
- */
-char	cpu_model[124];
-
 void
 identifycpu(void)
 {
 	char board_str[16];
-	char cpu_str[32];
-	char mmu_str[16];
-	char fpu_str[16];
-	int len = 0;
-
-	memset(cpu_model, 0, sizeof(cpu_model));
-	memset(board_str, 0, sizeof(board_str));
-	memset(cpu_str, 0, sizeof(cpu_str));
-	memset(mmu_str, 0, sizeof(mmu_str));
-	memset(fpu_str, 0, sizeof(fpu_str));
+	const char *cpu_str, *mmu_str, *fpu_str, *cache_str;
 
 	/* Fill in the CPU string. */
 	switch (cputype) {
 #ifdef M68020
 	case CPU_68020:
-		sprintf(cpu_str, "MC68020 CPU");
-		sprintf(fpu_str, "MC68881 FPU");	/* XXX */
+		cpu_str = "MC68020 CPU";
+		fpu_str = ", MC68881 FPU";	/* XXX */
 		break;
 #endif
 
 #ifdef M68030
 	case CPU_68030:
-		sprintf(cpu_str, "MC68030 CPU+MMU");
-		sprintf(fpu_str, "MC68882 FPU");	/* XXX */
+		cpu_str = "MC68030 CPU+MMU";
+		fpu_str = ", MC68882 FPU";	/* XXX */
 		break;
 #endif
 
 #ifdef M68040
 	case CPU_68040:
-		sprintf(cpu_str, "MC68040 CPU+MMU+FPU");
+		cpu_str = "MC68040 CPU+MMU+FPU";
+		fpu_str = "";
 		break;
 #endif
 
 #ifdef M68060
 	case CPU_68060:
-		sprintf(cpu_str, "MC68060 CPU+MMU+FPU");
+		cpu_str = "MC68060 CPU+MMU+FPU";
+		fpu_str = "";
 		break;
 #endif
 
@@ -534,40 +523,31 @@ identifycpu(void)
 	/* Fill in the MMU string; only need to handle one case. */
 	switch (mmutype) {
 	case MMU_68851:
-		sprintf(mmu_str, "MC68851 MMU");
+		mmu_str = ", MC68851 MMU";
+		break;
+	default:
+		mmu_str = "";
 		break;
 	}
 
-	/* XXX Find out FPU type and fill in string here. */
-
 	/* Fill in board model string. */
 	switch (machineid) {
-#ifdef MVME147
+#if defined(MVME_147) || defined(MVME162) || defined(MVME167) || defined(MVME172) || defined(MVME177)
 	case MVME_147:
-	    {
-		char *suffix = (char *)&boardid.suffix;
-		len = sprintf(board_str, "%x", machineid);
-		if (suffix[0] != '\0') {
-			board_str[len++] = suffix[0];
-			if (suffix[1] != '\0')
-				board_str[len++] = suffix[1];
-		}
-		break;
-	    }
-#endif
-
-#if defined(MVME162) || defined(MVME167) || defined(MVME172) || defined(MVME177)
 	case MVME_162:
 	case MVME_167:
 	case MVME_172:
 	case MVME_177:
 	    {
 		char *suffix = (char *)&boardid.suffix;
-		len = sprintf(board_str, "%x", machineid);
-		if (suffix[0] != '\0') {
+		int len = snprintf(board_str, sizeof(board_str), "%x",
+		    machineid);
+		if (suffix[0] != '\0' && len > 0 &&
+		    len + 3 < sizeof(board_str)) {
 			board_str[len++] = suffix[0];
 			if (suffix[1] != '\0')
 				board_str[len++] = suffix[1];
+			board_str[len] = '\0';
 		}
 		break;
 	    }
@@ -577,33 +557,29 @@ identifycpu(void)
 		panic("startup");
 	}
 
-	len = sprintf(cpu_model, "Motorola MVME-%s: %d.%dMHz %s", board_str,
-	    cpuspeed / 100, (cpuspeed % 100) / 10, cpu_str);
-
-	cpuspeed /= 100;
-
-	if (mmu_str[0] != '\0')
-		len += sprintf(cpu_model + len, ", %s", mmu_str);
-
-	if (fpu_str[0] != '\0')
-		len += sprintf(cpu_model + len, ", %s", fpu_str);
-
-#if defined(M68040) || defined(M68060)
 	switch (cputype) {
 #if defined(M68040)
 	case CPU_68040:
-		strcat(cpu_model, ", 4k+4k on-chip physical I/D caches");
+		cache_str = ", 4k+4k on-chip physical I/D caches";
 		break;
 #endif
 #if defined(M68060)
 	case CPU_68060:
-		strcat(cpu_model, ", 8k+8k on-chip physical I/D caches");
+		cache_str = ", 8k+8k on-chip physical I/D caches";
 		break;
 #endif
+	default:
+		cache_str = "";
+		break;
 	}
-#endif
 
-	printf("%s\n", cpu_model);
+	cpu_setmodel("Motorola MVME-%s: %d.%dMHz %s%s%s%s",
+	    board_str, cpuspeed / 100, (cpuspeed % 100) / 10, cpu_str,
+	    mmu_str, fpu_str, cache_str);
+
+	cpuspeed /= 100;
+
+	printf("%s\n", cpu_getmodel());
 }
 
 /*

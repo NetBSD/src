@@ -1,9 +1,12 @@
 /* mpn_subcnd_n -- Compute R = U - V if CND != 0 or R = U if CND == 0.
+   Both cases should take the same time and perform the exact same memory
+   accesses, since this function is intended to be used where side-channel
+   attack resilience is relevant.
 
    THIS IS AN INTERNAL FUNCTION WITH A MUTABLE INTERFACE.  IT IS ONLY
    SAFE TO REACH THIS FUNCTION THROUGH DOCUMENTED INTERFACES.
 
-Copyright 1992, 1993, 1994, 1996, 2000, 2002, 2008, 2009 Free Software
+Copyright 1992, 1993, 1994, 1996, 2000, 2002, 2008, 2009, 2011 Free Software
 Foundation, Inc.
 
 This file is part of the GNU MP Library.
@@ -24,9 +27,6 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp.h"
 #include "gmp-impl.h"
 
-
-#if GMP_NAIL_BITS == 0
-
 mp_limb_t
 mpn_subcnd_n (mp_ptr rp, mp_srcptr up, mp_srcptr vp, mp_size_t n, mp_limb_t cnd)
 {
@@ -42,44 +42,21 @@ mpn_subcnd_n (mp_ptr rp, mp_srcptr up, mp_srcptr vp, mp_size_t n, mp_limb_t cnd)
     {
       ul = *up++;
       vl = *vp++ & mask;
+#if GMP_NAIL_BITS == 0
       sl = ul - vl;
       cy1 = sl > ul;
       rl = sl - cy;
       cy2 = rl > sl;
       cy = cy1 | cy2;
       *rp++ = rl;
-    }
-  while (--n != 0);
-
-  return cy;
-}
-
-#endif
-
-#if GMP_NAIL_BITS >= 1
-
-mp_limb_t
-mpn_subcnd_n (mp_ptr rp, mp_srcptr up, mp_srcptr vp, mp_size_t n, mp_limb_t cnd)
-{
-  mp_limb_t ul, vl, rl, cy, mask;
-
-  ASSERT (n >= 1);
-  ASSERT (MPN_SAME_OR_SEPARATE_P (rp, up, n));
-  ASSERT (MPN_SAME_OR_SEPARATE_P (rp, vp, n));
-
-  mask = -(mp_limb_t) (cnd != 0);
-  cy = 0;
-  do
-    {
-      ul = *up++;
-      vl = *vp++ & mask;
-      rl = ul - vl - cy;
+#else
+      rl = ul - vl;
+      rl -= cy;
       cy = rl >> (GMP_LIMB_BITS - 1);
       *rp++ = rl & GMP_NUMB_MASK;
+#endif
     }
   while (--n != 0);
 
   return cy;
 }
-
-#endif

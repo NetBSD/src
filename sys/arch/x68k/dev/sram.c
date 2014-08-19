@@ -1,4 +1,4 @@
-/*	$NetBSD: sram.c,v 1.18 2008/12/21 09:01:19 isaki Exp $	*/
+/*	$NetBSD: sram.c,v 1.18.24.1 2014/08/20 00:03:28 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Kazuhisa Shimizu.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.18 2008/12/21 09:01:19 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.18.24.1 2014/08/20 00:03:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,8 +75,18 @@ CFATTACH_DECL_NEW(sram, sizeof(struct sram_softc),
 	srammatch, sramattach, NULL, NULL);
 
 const struct cdevsw sram_cdevsw = {
-	sramopen, sramclose, noread, nowrite, sramioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	.d_open = sramopen,
+	.d_close = sramclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = sramioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 static int sram_attached;

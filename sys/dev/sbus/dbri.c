@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.34 2011/11/23 23:07:36 jmcneill Exp $	*/
+/*	$NetBSD: dbri.c,v 1.34.8.1 2014/08/20 00:03:50 tls Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.34 2011/11/23 23:07:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.34.8.1 2014/08/20 00:03:50 tls Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1270,8 +1270,10 @@ setup_ring_xmit(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 {
 	volatile uint32_t *cmd;
 	int i;
+#if 0
 	int td;
 	int td_first, td_last;
+#endif
 	bus_addr_t dmabuf, dmabase;
 	struct dbri_desc *dd = &sc->sc_desc[which];
 
@@ -1285,8 +1287,10 @@ setup_ring_xmit(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 			return;
 	}
  
+#if 0
 	td = 0;
 	td_first = td_last = -1;
+#endif
 
 	if (sc->sc_pipe[pipe].sdp == 0) {
 		aprint_error_dev(sc->sc_dev, "uninitialized pipe %d\n",
@@ -1296,7 +1300,6 @@ setup_ring_xmit(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 
 	dmabuf = dd->dmabase;
 	dmabase = sc->sc_dmabase;
-	td = 0;
 
 	for (i = 0; i < (num - 1); i++) {
 
@@ -1306,7 +1309,9 @@ setup_ring_xmit(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 		sc->sc_dma->xmit[i].nda = dmabase + dbri_dma_off(xmit, i + 1);
 		sc->sc_dma->xmit[i].status = 0;
 
+#if 0
 		td_last = td;
+#endif
 		dmabuf += blksz;
 	}
 
@@ -1366,7 +1371,9 @@ setup_ring_recv(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 {
 	volatile uint32_t *cmd;
 	int i;
+#if 0
 	int td_first, td_last;
+#endif
 	bus_addr_t dmabuf, dmabase;
 	struct dbri_desc *dd = &sc->sc_desc[which];
 
@@ -1379,7 +1386,9 @@ setup_ring_recv(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 			return;
 	}
  
+#if 0
 	td_first = td_last = -1;
+#endif
 
 	if (sc->sc_pipe[pipe].sdp == 0) {
 		aprint_error_dev(sc->sc_dev, "uninitialized pipe %d\n",
@@ -1397,7 +1406,9 @@ setup_ring_recv(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 		sc->sc_dma->recv[i].nda = dmabase + dbri_dma_off(recv, i + 1);
 		sc->sc_dma->recv[i].status = RX_EOF;
 
+#if 0
 		td_last = i;
+#endif
 		dmabuf += blksz;
 	}
 

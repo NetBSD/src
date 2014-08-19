@@ -4,8 +4,8 @@ divert(-1)
 dnl  m4 macros for x86 assembler.
 
 
-dnl  Copyright 1999, 2000, 2001, 2002, 2003, 2007 Free Software Foundation,
-dnl  Inc.
+dnl  Copyright 1999, 2000, 2001, 2002, 2003, 2007, 2010, 2012 Free Software
+dnl  Foundation, Inc.
 dnl
 dnl  This file is part of the GNU MP Library.
 dnl
@@ -58,24 +58,39 @@ dnl  order they appear in that structure.
 
 define(CPUVEC_FUNCS_LIST,
 ``add_n',
+`addlsh1_n',
+`addlsh2_n',
 `addmul_1',
+`addmul_2',
+`bdiv_dbm1c',
+`com',
 `copyd',
 `copyi',
 `divexact_1',
-`divexact_by3c',
 `divrem_1',
 `gcd_1',
 `lshift',
+`lshiftc',
 `mod_1',
+`mod_1_1p',
+`mod_1_1p_cps',
+`mod_1s_2p',
+`mod_1s_2p_cps',
+`mod_1s_4p',
+`mod_1s_4p_cps',
 `mod_34lsub1',
 `modexact_1c_odd',
 `mul_1',
 `mul_basecase',
+`mullo_basecase',
 `preinv_divrem_1',
 `preinv_mod_1',
+`redc_1',
+`redc_2',
 `rshift',
 `sqr_basecase',
 `sub_n',
+`sublsh1_n',
 `submul_1'')
 
 
@@ -928,7 +943,9 @@ m4_assert_numargs(1)
 
 dnl  Usage LEA(symbol,reg)
 
-define(`LEA',`
+define(`LEA',
+m4_assert_numargs(2)
+`ifdef(`PIC',`
 define(`EPILOGUE_cpu',
 `
 L(movl_eip_`'substr($2,1)):
@@ -936,11 +953,12 @@ L(movl_eip_`'substr($2,1)):
 	ret_internal
 	SIZE($'`1, .-$'`1)')
 
-        call    L(movl_eip_`'substr($2,1))
-        addl    $_GLOBAL_OFFSET_TABLE_, $2
-        movl    $1@GOT($2), $2
-')
-
+	call	L(movl_eip_`'substr($2,1))
+	addl	$_GLOBAL_OFFSET_TABLE_, $2
+	movl	$1@GOT($2), $2
+',`
+	movl	`$'$1, $2
+')')
 
 define(`DEF_OBJECT',
 m4_assert_numargs_range(1,2)
@@ -952,5 +970,18 @@ $1:
 define(`END_OBJECT',
 m4_assert_numargs(1)
 `	SIZE(`$1',.-`$1')')
+
+dnl  Usage: CALL(funcname)
+dnl
+
+define(`CALL',
+m4_assert_numargs(1)
+`ifdef(`PIC',
+  `call	GSYM_PREFIX`'$1@PLT',
+  `call	GSYM_PREFIX`'$1')')
+
+ifdef(`PIC',
+`define(`PIC_WITH_EBX')',
+`undefine(`PIC_WITH_EBX')')
 
 divert`'dnl

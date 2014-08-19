@@ -1,7 +1,7 @@
-#	$NetBSD: mk.marvell,v 1.4 2012/08/10 02:46:51 matt Exp $
+#	$NetBSD: mk.marvell,v 1.4.2.1 2014/08/20 00:02:53 tls Exp $
 
-SYSTEM_FIRST_OBJ=	marvell_start.o
-SYSTEM_FIRST_SFILE=	${THISARM}/marvell/marvell_start.S
+SYSTEM_FIRST_OBJ?=	marvell_start.o
+SYSTEM_FIRST_SFILE?=	${THISARM}/marvell/marvell_start.S
 
 _OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
 

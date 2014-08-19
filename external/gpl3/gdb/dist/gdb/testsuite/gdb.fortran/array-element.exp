@@ -1,4 +1,4 @@
-# Copyright 2005, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2005-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,25 +18,13 @@
 # This file is part of the gdb testsuite.  It contains test for printing
 # the elements of an array which is passed as pointer to a subroutine.
 
-if $tracelevel then {
-	strace $tracelevel
-}
-
 if { [skip_fortran_tests] } { return -1 }
 
-set testfile "array-element"
-set srcfile ${testfile}.f
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .f
 
-if {[gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
-	 executable {debug f77}] != ""} {
+if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug f90}]} {
     return -1
 }
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
 
 if ![runto sub_] then {
     perror "couldn't run to breakpoint sub_"

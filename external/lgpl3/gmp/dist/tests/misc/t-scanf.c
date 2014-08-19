@@ -2,20 +2,20 @@
 
 Copyright 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
-This file is part of the GNU MP Library.
+This file is part of the GNU MP Library test suite.
 
-The GNU MP Library is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+The GNU MP Library test suite is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 3 of the License,
+or (at your option) any later version.
 
-The GNU MP Library is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-License for more details.
+The GNU MP Library test suite is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+Public License for more details.
 
-You should have received a copy of the GNU Lesser General Public License
-along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
+You should have received a copy of the GNU General Public License along with
+the GNU MP Library test suite.  If not, see http://www.gnu.org/licenses/.  */
 
 
 /* Usage: t-scanf [-s]
@@ -63,7 +63,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
 int   option_libc_scanf = 0;
 
-typedef int (*fun_t) __GMP_PROTO ((const char *, const char *, void *, void *));
+typedef int (*fun_t) (const char *, const char *, void *, void *);
 
 
 /* This problem was seen on powerpc7450-apple-darwin7.0.0, sscanf returns 0
@@ -229,7 +229,7 @@ fun_sscanf (const char *input, const char *fmt, void *a1, void *a2)
   int     ret;
 
   size = strlen (input) + 1;
-  input_writable = (*__gmp_allocate_func) (size);
+  input_writable = (char *) (*__gmp_allocate_func) (size);
   memcpy (input_writable, input, size);
 
   if (a2 == NULL)

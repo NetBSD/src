@@ -1,5 +1,5 @@
 /* Serial port emulation via sockets.
-   Copyright (C) 1998, Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 

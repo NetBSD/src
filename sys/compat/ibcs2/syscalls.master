@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.38 2010/07/23 02:46:12 christos Exp $
+	$NetBSD: syscalls.master,v 1.38.18.1 2014/08/20 00:03:31 tls Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -102,7 +102,7 @@
 39	STD		{ int|ibcs2_sys||pgrpsys(int type, void *dummy, \
 			    int pid, int pgid); }
 40	UNIMPL		ibcs2_xenix
-41	NOARGS		{ int|sys||dup(u_int fd); }
+41	NOARGS		{ int|sys||dup(int fd); }
 42	NOARGS		{ int|sys||pipe(void); }
 43	STD		{ int|ibcs2_sys||times(struct tms *tp); }
 44	UNIMPL		profil
@@ -172,10 +172,8 @@
 			    struct ibcs2_stropts *dat, int flags); }
 87	NOARGS		{ int|sys||poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
-88	STD		{ int|ibcs2_sys||lstat(const char *path, \
-			    struct ibcs2_stat *st); }
-89	NOARGS		{ int|sys||symlink(const char *path, \
-			    const char *link); }
+88	UNIMPL		unknown
+89	UNIMPL		secure
 90	NOARGS		{ int|sys||symlink(const char *path, \
 			    const char *link); }
 91	STD		{ int|ibcs2_sys||lstat(const char *path, \
@@ -195,12 +193,12 @@
 99	UNIMPL		sigpending
 100	UNIMPL		getcontext/setcontext/sigsetjmp
 101	UNIMPL		envsys
-102	UNIMP		evtrapret
+102	UNIMPL		evtrapret
 103	STD		{ int|ibcs2_sys||statvfs(const char *path, \
 			    struct ibcs2_statvfs *buf); }
 104	STD		{ int|ibcs2_sys||fstatvfs(int fd, \
 			    struct ibcs2_statvfs *buf); }
-105	UNIMPL
+105	UNIMPL		isc
 106	UNIMPL		nfssys
 107	UNIMPL		waitsys
 108	UNIMPL		sigsendsys

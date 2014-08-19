@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_lcd.c,v 1.1 2012/04/17 10:19:57 bsh Exp $	*/
+/*	$NetBSD: netwalker_lcd.c,v 1.1.6.1 2014/08/20 00:02:55 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2012 Genetec corp. All rights reserved.
@@ -25,12 +25,24 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: netwalker_lcd.c,v 1.1.6.1 2014/08/20 00:02:55 tls Exp $");
+
+#include "opt_imx51_ipuv3.h"
+#include "opt_netwalker_lcd.h"
+
+#include "wsdisplay.h"
+#include "ioconf.h"
+#include "netwalker_backlight.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/pmf.h>
 
 #include <dev/cons.h>
 #include <dev/wscons/wsconsio.h>
@@ -42,14 +54,9 @@
 #include <arm/imx/imx51reg.h>
 #include <arm/imx/imx51_ipuv3var.h>
 #include <arm/imx/imx51_ipuv3reg.h>
-#include <arm/imx/imx51_iomuxreg.h>
 #include <arm/imx/imxgpiovar.h>
 
-#include "opt_imx51_ipuv3.h"
-#include "opt_netwalker_lcd.h"
-
-#include "wsdisplay.h"
-#include "ioconf.h"
+#include <evbarm/netwalker/netwalker_backlightvar.h>
 
 int lcd_match(device_t, cfdata_t, void *);
 void lcd_attach(device_t, device_t, void *);
@@ -57,6 +64,50 @@ void lcd_attach(device_t, device_t, void *);
 void netwalker_cnattach(void);
 
 #if NWSDISPLAY > 0
+static int netwalker_lcd_ioctl(void *, void *, u_long, void *, int,
+    struct lwp *);
+static int netwalker_lcd_show_screen(void *, void *, int,
+    void (*)(void *, int, int), void *);
+
+bool netwalker_lcd_console = 0;
+
+/*
+ * wsdisplay glue
+ */
+static struct imx51_wsscreen_descr netwalker_lcd_stdscreen = {
+	.c = {
+		.name	      = "std",
+		.ncols	      = 0,
+		.nrows	      = 0,
+		.textops      = NULL,
+		.fontwidth    = 8,
+		.fontheight   = 16,
+		.capabilities = WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
+		.modecookie   = NULL
+	},
+	.depth = 16,		/* bits per pixel */
+	.flags = RI_CENTER | RI_FULLCLEAR
+};
+
+static const struct wsscreen_descr *netwalker_lcd_scr_descr[] = {
+	&netwalker_lcd_stdscreen.c,
+};
+
+const struct wsscreen_list netwalker_lcd_screen_list = {
+	sizeof netwalker_lcd_scr_descr / sizeof netwalker_lcd_scr_descr[0],
+	netwalker_lcd_scr_descr
+};
+
+struct wsdisplay_accessops netwalker_lcd_accessops = {
+	.ioctl	      = netwalker_lcd_ioctl,
+	.mmap	      = imx51_ipuv3_mmap,
+	.alloc_screen = imx51_ipuv3_alloc_screen,
+	.free_screen  = imx51_ipuv3_free_screen,
+	.show_screen  = netwalker_lcd_show_screen,
+	.load_font    = NULL,
+	.pollc	      = NULL,
+	.scroll	      = NULL
+};
 #else
 #ifdef LCD_DEBUG
 static void draw_test_pattern(struct imx51_ipuv3_softc *,
@@ -73,8 +124,18 @@ dev_type_close(lcdclose);
 dev_type_ioctl(lcdioctl);
 dev_type_mmap(lcdmmap);
 const struct cdevsw ipu_cdevsw = {
-	lcdopen, lcdclose, noread, nowrite, lcdioctl,
-	nostop, notty, nopoll, lcdmmap, nokqfilter, D_TTY
+	.d_open = lcdopen,
+	.d_close = lcdclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = lcdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = lcdmmap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 #endif
@@ -107,8 +168,6 @@ static const struct lcd_panel_geometry sharp_panel =
 	.panel_info = 0,
 };
 
-#define PANEL	sharp_panel
-
 void lcd_attach( device_t parent, device_t self, void *aux )
 {
 	struct imx51_ipuv3_softc *sc = device_private(self);
@@ -117,13 +176,11 @@ void lcd_attach( device_t parent, device_t self, void *aux )
 
 	sc->dev = self;
 
-#if (NWSDISPLAY > 0) && defined(IMXIPUCONSOLE)
-	netwalker_cnattach();
+#if defined(IMXIPUCONSOLE)
+	netwalker_lcd_console = 1;
 #endif
-
-#if 0
-	/* IOMUX registers are already set correctly for LCD display */
-	iomux_mux_config(iomux_ipuv3_config);
+#if (NWSDISPLAY > 0)
+	netwalker_cnattach();
 #endif
 
 	/* XXX move this to imx51_ipuv3.c */
@@ -154,29 +211,36 @@ void lcd_attach( device_t parent, device_t self, void *aux )
 	delay(180 * 1000);
 	gpio_data_write(GPIO_NO(4, 10), 1);
 
-	/* pwm pin (100%) */
-	gpio_set_direction(GPIO_NO(1, 2), GPIO_DIR_OUT);
-	gpio_data_write(GPIO_NO(1, 2), 1);
-
 	gpio_set_direction(GPIO_NO(2, 13), GPIO_DIR_OUT);
 	gpio_data_write(GPIO_NO(2, 13), 1);
 
-	imx51_ipuv3_attach_sub(sc, aux, &PANEL);
+	imx51_ipuv3_attach_sub(sc, aux, &sharp_panel);
 
 #if NWSDISPLAY == 0
-	{
-		struct imx51_ipuv3_screen *screen;
-		int error;
+	struct imx51_ipuv3_screen *screen;
+	int error;
 
-		error = imx51_ipuv3_new_screen(sc, 16, &screen);
+	error = imx51_ipuv3_new_screen(sc, 16, &screen);
 #ifdef LCD_DEBUG
-		draw_test_pattern(sc, screen);
+	draw_test_pattern(sc, screen);
 #endif
-		if (error == 0) {
-			sc->active = screen;
-			imx51_ipuv3_start_dma(sc, screen);
-		}
+	if (error == 0) {
+		sc->active = screen;
+		imx51_ipuv3_start_dma(sc, screen);
 	}
+#else
+	struct wsemuldisplaydev_attach_args aa;
+
+#if defined(IMXIPUCONSOLE)
+	aa.console = true;
+#else
+	aa.console = false;
+#endif
+	aa.scrdata = &netwalker_lcd_screen_list;
+	aa.accessops = &netwalker_lcd_accessops;
+	aa.accesscookie = &sc->vd;
+
+	(void) config_found(sc->dev, &aa, wsemuldisplaydevprint);
 #endif
 }
 
@@ -184,8 +248,44 @@ void lcd_attach( device_t parent, device_t self, void *aux )
 void
 netwalker_cnattach(void)
 {
-	imx51_ipuv3_cnattach(&PANEL);
+	imx51_ipuv3_cnattach(netwalker_lcd_console, &netwalker_lcd_stdscreen,
+	    &netwalker_lcd_accessops, &sharp_panel);
 	return;
+}
+
+/*
+ * wsdisplay accessops overrides
+ */
+static int
+netwalker_lcd_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
+{
+	int res = EINVAL;
+
+	switch (cmd) {
+#if NNETWALKER_BACKLIGHT > 0
+	case WSDISPLAYIO_GETPARAM:
+	case WSDISPLAYIO_SETPARAM:
+		res = netwalker_lcd_param_ioctl(cmd, (struct wsdisplay_param *)data);
+		break;
+#endif
+	}
+
+	if (res == EINVAL)
+		res = imx51_ipuv3_ioctl(v, vs, cmd, data, flag, l);
+	return res;
+}
+
+static int
+netwalker_lcd_show_screen(void *v, void *cookie, int waitok,
+    void (*cb_func)(void *, int, int), void *cb_arg)
+{
+	int error;
+
+	error = imx51_ipuv3_show_screen(v, cookie, waitok, cb_func, cb_arg);
+	if (error)
+		return (error);
+
+	return 0;
 }
 #else
 

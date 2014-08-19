@@ -1,5 +1,5 @@
 /*
- * acm.h: Xen access control module interface defintions
+ * acm.h: Xen access control module interface definitions
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to

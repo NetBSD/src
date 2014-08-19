@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.30 2012/08/16 16:41:53 matt Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.30.2.1 2014/08/20 00:03:31 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.30 2012/08/16 16:41:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.30.2.1 2014/08/20 00:03:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.30 2012/08/16 16:41:53 matt Exp 
 #include <sys/exec_elf.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
+
 #include <miscfs/specfs/specdev.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -65,6 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.30 2012/08/16 16:41:53 matt Exp 
 #include <compat/linux/common/linux_exec.h>
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/linux_syscallargs.h>
+
+#include <arm/locore.h>
 
 void
 linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)

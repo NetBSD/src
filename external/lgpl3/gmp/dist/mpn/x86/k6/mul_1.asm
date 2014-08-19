@@ -20,19 +20,19 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 include(`../config.m4')
 
 
-C                           cycles/limb
-C P5:
-C P6 model 0-8,10-12)            5.5
+C			    cycles/limb
+C P5
+C P6 model 0-8,10-12		 5.5
 C P6 model 9  (Banias)
-C P6 model 13 (Dothan)           4.87
+C P6 model 13 (Dothan)		 4.87
 C P4 model 0  (Willamette)
 C P4 model 1  (?)
 C P4 model 2  (Northwood)
 C P4 model 3  (Prescott)
 C P4 model 4  (Nocona)
-C K6:                            6.25
-C K7:
-C K8:
+C AMD K6			 6.25
+C AMD K7
+C AMD K8
 
 
 C mp_limb_t mpn_mul_1 (mp_ptr dst, mp_srcptr src, mp_size_t size,

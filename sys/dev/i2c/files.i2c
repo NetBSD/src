@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.45.10.2 2013/06/23 06:20:17 tls Exp $
+#	$NetBSD: files.i2c,v 1.45.10.3 2014/08/20 00:03:37 tls Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -52,6 +52,8 @@ file	dev/i2c/cx24227.c			cx24227
 #
 define	motoi2c
 file	dev/i2c/motoi2c.c			motoi2c
+define	mvi2c
+file	dev/i2c/gttwsi_core.c			mvi2c
 
 #
 # I2C client devices
@@ -101,9 +103,19 @@ device	lmtemp: sysmon_envsys
 attach	lmtemp at iic
 file	dev/i2c/lm75.c				lmtemp
 
+# IST-AG Humidity and Teperature sensor (P14)
+device	hythygtemp: sysmon_envsys
+attach	hythygtemp at iic
+file	dev/i2c/hytp14.c			hythygtemp
+
 # National Semiconductor LM78 temp sensor/fan controller
 attach	lm at iic with lm_iic
 file	dev/i2c/lm_i2c.c			lm_iic
+
+# National Semiconductor LM87 and clones system hardware monitor
+device	lmenv: sysmon_envsys
+attach	lmenv at iic
+file	dev/i2c/lm87.c				lmenv
 
 # Dallas DS1307 Real Time Clock
 device	dsrtc
@@ -152,6 +164,11 @@ device	sdtemp: sysmon_envsys
 attach	sdtemp at iic
 file	dev/i2c/sdtemp.c		sdtemp
 
+# DS1672 Real Time Clock
+device	ds1672rtc
+attach	ds1672rtc at iic
+file	dev/i2c/ds1672.c		ds1672rtc
+
 # ADM1021
 device	admtemp: sysmon_envsys
 attach	admtemp at iic
@@ -186,4 +203,14 @@ file	dev/i2c/tps65217pmic.c 		tps65217pmic
 device	mcp980x: sysmon_envsys
 attach	mcp980x at iic
 file	dev/i2c/mcp980x.c 		mcp980x
+
+# Nuvoton W83795G/ADG Hardware Monitor
+device	w83795g: gpiobus, sysmon_envsys, sysmon_wdog
+attach	w83795g at iic
+file	dev/i2c/w83795g.c 		w83795g
+
+# Freescale MPL115A2
+device  mpl115a: sysmon_envsys
+attach  mpl115a at iic
+file    dev/i2c/mpl115a.c		mpl115a
 

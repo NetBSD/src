@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.34 2009/01/11 02:45:46 christos Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.34.24.1 2014/08/20 00:03:31 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.34 2009/01/11 02:45:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.34.24.1 2014/08/20 00:03:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.34 2009/01/11 02:45:46 christos E
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
 #include <sys/kauth.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
@@ -220,6 +221,7 @@ compat_43_sys_getkerninfo(struct lwp *l, const struct compat_43_sys_getkerninfo_
 			    (struct bsdi_si *) SCARG(uap, where);
 			struct bsdi_si ksi;
 			struct timeval tv;
+			const char *cpu_model = cpu_getmodel();
 			char *us = (char *) &usi[1];
 
 			if (usi == NULL) {

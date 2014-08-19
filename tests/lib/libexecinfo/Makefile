@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2012/05/27 22:57:24 martin Exp $
+# $NetBSD: Makefile,v 1.2.2.1 2014/08/20 00:04:50 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,7 @@ TESTS_C+=	t_backtrace
 
 LDADD+=		-lexecinfo -lelf
 DPADD+=		${LIBEXECINFO} ${LIBELF}
-DBG=-O0		# prevent inlining, nothing else helps.
+
+COPTS.t_backtrace.c=	-Wno-stack-protector
 
 .include <bsd.test.mk>

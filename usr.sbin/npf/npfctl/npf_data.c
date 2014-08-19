@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_data.c,v 1.18.2.1 2013/02/25 00:30:46 tls Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.18.2.2 2014/08/20 00:05:11 tls Exp $	*/
 
 /*-
- * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.18.2.1 2013/02/25 00:30:46 tls Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.18.2.2 2014/08/20 00:05:11 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h>
@@ -47,7 +47,9 @@ __RCSID("$NetBSD: npf_data.c,v 1.18.2.1 2013/02/25 00:30:46 tls Exp $");
 #include <net/if.h>
 
 #include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <ifaddrs.h>
@@ -57,14 +59,48 @@ __RCSID("$NetBSD: npf_data.c,v 1.18.2.1 2013/02/25 00:30:46 tls Exp $");
 
 static struct ifaddrs *		ifs_list = NULL;
 
-unsigned long
+void
+npfctl_note_interface(const char *ifname)
+{
+	unsigned long if_idx = if_nametoindex(ifname);
+	bool testif = npfctl_debug_addif(ifname);
+	const char *p = ifname;
+
+	/* If such interface exists or if it is a test interface - done. */
+	if (if_idx || testif) {
+		return;
+	}
+
+	/*
+	 * Minimum sanity check.  The interface name shall be non-empty
+	 * string shorter than IFNAMSIZ and alphanumeric only.
+	 */
+	if (*p == '\0') {
+		goto invalid;
+	}
+	while (*p) {
+		const size_t len = (ptrdiff_t)p - (ptrdiff_t)ifname;
+
+		if (!isalnum((unsigned char)*p) || len > IFNAMSIZ) {
+invalid:		yyerror("illegitimate interface name '%s'", ifname);
+		}
+		p++;
+	}
+
+	/* Throw a warning, so that the user could double check. */
+	warnx("warning - unknown interface '%s'", ifname);
+}
+
+static unsigned long
 npfctl_find_ifindex(const char *ifname)
 {
 	unsigned long if_idx = if_nametoindex(ifname);
+	bool testif = npfctl_debug_addif(ifname);
 
 	if (!if_idx) {
-		if ((if_idx = npfctl_debug_addif(ifname)) != 0) {
-			return if_idx;
+		if (testif) {
+			static u_int dummy_if_idx = (1 << 15);
+			return ++dummy_if_idx;
 		}
 		yyerror("unknown interface '%s'", ifname);
 	}
@@ -165,13 +201,12 @@ npfvar_t *
 npfctl_parse_fam_addr_mask(const char *addr, const char *mask,
     unsigned long *nummask)
 {
-	npfvar_t *vp = npfvar_create(".addr");
 	fam_addr_mask_t fam;
 
 	memset(&fam, 0, sizeof(fam));
 
 	if (!npfctl_parse_fam_addr(addr, &fam.fam_family, &fam.fam_addr))
-		goto out;
+		return NULL;
 
 	/*
 	 * Note: both mask and nummask may be NULL.  In such case,
@@ -180,36 +215,22 @@ npfctl_parse_fam_addr_mask(const char *addr, const char *mask,
 	if (nummask) {
 		fam.fam_mask = *nummask;
 	} else if (!npfctl_parse_mask(mask, fam.fam_family, &fam.fam_mask)) {
-		goto out;
+		return NULL;
 	}
-
-	if (!npfvar_add_element(vp, NPFVAR_FAM, &fam, sizeof(fam)))
-		goto out;
-
-	return vp;
-out:
-	npfvar_destroy(vp);
-	return NULL;
+	return npfvar_create_element(NPFVAR_FAM, &fam, sizeof(fam));
 }
 
 npfvar_t *
-npfctl_parse_table_id(const char *id)
+npfctl_parse_table_id(const char *name)
 {
-	npfvar_t *vp;
+	u_int tid;
 
-	if (!npfctl_table_exists_p(id)) {
-		yyerror("table '%s' is not defined", id);
+	tid = npfctl_table_getid(name);
+	if (tid == (unsigned)-1) {
+		yyerror("table '%s' is not defined", name);
 		return NULL;
 	}
-	vp = npfvar_create(".table");
-
-	if (!npfvar_add_element(vp, NPFVAR_TABLE, id, strlen(id) + 1))
-		goto out;
-
-	return vp;
-out:
-	npfvar_destroy(vp);
-	return NULL;
+	return npfvar_create_element(NPFVAR_TABLE, &tid, sizeof(u_int));
 }
 
 /*
@@ -219,19 +240,12 @@ out:
 npfvar_t *
 npfctl_parse_port_range(in_port_t s, in_port_t e)
 {
-	npfvar_t *vp = npfvar_create(".port_range");
 	port_range_t pr;
 
 	pr.pr_start = htons(s);
 	pr.pr_end = htons(e);
 
-	if (!npfvar_add_element(vp, NPFVAR_PORT_RANGE, &pr, sizeof(pr)))
-		goto out;
-
-	return vp;
-out:
-	npfvar_destroy(vp);
-	return NULL;
+	return npfvar_create_element(NPFVAR_PORT_RANGE, &pr, sizeof(pr));
 }
 
 npfvar_t *
@@ -239,7 +253,7 @@ npfctl_parse_port_range_variable(const char *v)
 {
 	npfvar_t *vp = npfvar_lookup(v);
 	size_t count = npfvar_get_count(vp);
-	npfvar_t *pvp = npfvar_create(".port_range");
+	npfvar_t *pvp = npfvar_create();
 	port_range_t *pr;
 	in_port_t p;
 
@@ -275,15 +289,16 @@ npfctl_parse_port_range_variable(const char *v)
 npfvar_t *
 npfctl_parse_ifnet(const char *ifname, const int family)
 {
-	npfvar_t *vpa, *vp;
 	struct ifaddrs *ifa;
 	ifnet_addr_t ifna;
+	npfvar_t *vpa;
 
 	if (ifs_list == NULL && getifaddrs(&ifs_list) == -1) {
 		err(EXIT_FAILURE, "getifaddrs");
 	}
 
-	vpa = npfvar_create(".ifaddrs");
+	vpa = npfvar_create();
+	ifna.ifna_name = estrdup(ifname);
 	ifna.ifna_addrs = vpa;
 	ifna.ifna_index = npfctl_find_ifindex(ifname);
 	assert(ifna.ifna_index != 0);
@@ -322,9 +337,7 @@ npfctl_parse_ifnet(const char *ifname, const int family)
 		goto out;
 	}
 
-	vp = npfvar_create(".interface");
-	npfvar_add_element(vp, NPFVAR_INTERFACE, &ifna, sizeof(ifna));
-	return vp;
+	return npfvar_create_element(NPFVAR_INTERFACE, &ifna, sizeof(ifna));
 out:
 	npfvar_destroy(ifna.ifna_addrs);
 	return NULL;
@@ -437,14 +450,7 @@ npfctl_parse_tcpflag(const char *s)
 		}
 		s++;
 	}
-
-	npfvar_t *vp = npfvar_create(".tcp_flag");
-	if (!npfvar_add_element(vp, NPFVAR_TCPFLAG, &tfl, sizeof(tfl))) {
-		npfvar_destroy(vp);
-		return NULL;
-	}
-
-	return vp;
+	return npfvar_create_element(NPFVAR_TCPFLAG, &tfl, sizeof(tfl));
 }
 
 uint8_t
@@ -464,7 +470,7 @@ npfctl_icmptype(int proto, const char *type)
 				return ul;
 		for (ul = 0; icmp6_type_info[ul]; ul++)
 			if (strcmp(icmp6_type_info[ul], type) == 0)
-				return (ul+128);
+				return ul + 128;
 		break;
 	default:
 		assert(false);
@@ -566,28 +572,62 @@ npfctl_icmpcode(int proto, uint8_t type, const char *code)
 npfvar_t *
 npfctl_parse_icmp(int proto, int type, int code)
 {
-	npfvar_t *vp = npfvar_create(".icmp");
-	int varnum;
+	npfvar_t *vp = npfvar_create();
 
-	switch (proto) {
-	case IPPROTO_ICMP:
-		varnum = NPFVAR_ICMP;
-		break;
-	case IPPROTO_ICMPV6:
-		varnum = NPFVAR_ICMP6;
-		break;
-	default:
-		assert(false);
-	}
-
-	if (!npfvar_add_element(vp, varnum, &type, sizeof(type)))
+	if (!npfvar_add_element(vp, NPFVAR_ICMP, &type, sizeof(type)))
 		goto out;
 
-	if (!npfvar_add_element(vp, varnum, &code, sizeof(code)))
+	if (!npfvar_add_element(vp, NPFVAR_ICMP, &code, sizeof(code)))
 		goto out;
 
 	return vp;
 out:
 	npfvar_destroy(vp);
 	return NULL;
+}
+
+/*
+ * npfctl_npt66_calcadj: calculate the adjustment for NPTv6 as per RFC 6296.
+ */
+uint16_t
+npfctl_npt66_calcadj(npf_netmask_t len, const npf_addr_t *pref_in,
+    const npf_addr_t *pref_out)
+{
+	const uint16_t *addr6_in = (const uint16_t *)pref_in;
+	const uint16_t *addr6_out = (const uint16_t *)pref_out;
+	unsigned i, remnant, wordmask, preflen = len >> 4;
+	uint32_t adj, isum = 0, osum = 0;
+
+	/*
+	 * Extract the bits within a 16-bit word (when prefix length is
+	 * not dividable by 16) and include them into the sum.
+	 */
+	remnant = len - (preflen << 4);
+	wordmask = (1U << remnant) - 1;
+	assert(wordmask == 0 || (len % 16) != 0);
+
+	/* Inner prefix - sum and fold. */
+	for (i = 0; i < preflen; i++) {
+		isum += addr6_in[i];
+	}
+	isum += addr6_in[i] & wordmask;
+	while (isum >> 16) {
+		isum = (isum >> 16) + (isum & 0xffff);
+	}
+
+	/* Outer prefix - sum and fold. */
+	for (i = 0; i < preflen; i++) {
+		osum += addr6_out[i];
+	}
+	osum += addr6_out[i] & wordmask;
+	while (osum >> 16) {
+		osum = (osum >> 16) + (osum & 0xffff);
+	}
+
+	/* Calculate 1's complement difference. */
+	adj = isum + ~osum;
+	while (adj >> 16) {
+		adj = (adj >> 16) + (adj & 0xffff);
+	}
+	return (uint16_t)adj;
 }

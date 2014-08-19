@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.3 2011/09/16 16:13:18 plunky Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.3.8.1 2014/08/20 00:04:47 tls Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -233,9 +233,7 @@ init_transport(struct netconfig *nconf)
 	struct addrinfo hints, *res = NULL;
 	struct __rpc_sockinfo si;
 	SVCXPRT	*my_xprt;
-	int status;	/* bound checking ? */
-	int aicode;
-	int addrlen;
+	int aicode, status, addrlen;
 	struct sockaddr *sa;
 	struct sockaddr_un sun;
 	const int one = 1;
@@ -480,6 +478,8 @@ init_transport(struct netconfig *nconf)
 				nconf->nc_netid);
 		}
 	}
+#else
+	__USE(status);
 #endif
 	/*
 	 * rmtcall only supported on CLTS transports for now.

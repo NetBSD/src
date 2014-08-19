@@ -1,4 +1,4 @@
-.\" $NetBSD: urtwn.4,v 1.6 2012/06/19 22:12:03 njoly Exp $
+.\" $NetBSD: urtwn.4,v 1.6.2.1 2014/08/20 00:02:35 tls Exp $
 .\" $OpenBSD: urtwn.4,v 1.15 2011/11/26 06:39:33 ckuethe Exp $
 .\"
 .\" Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -15,23 +15,23 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd June 13, 2012
+.Dd July 25, 2014
 .Dt URTWN 4
 .Os
 .Sh NAME
 .Nm urtwn
-.Nd Realtek RTL8188CU/RTL8192CU USB IEEE 802.11b/g/n wireless network device
+.Nd Realtek RTL8188CU/RTL8188EU/RTL8192CU USB IEEE 802.11b/g/n wireless network device
 .Sh SYNOPSIS
 .Cd "urtwn* at uhub? port ?"
 .Sh DESCRIPTION
 The
 .Nm
 driver supports USB 2.0 wireless network devices based on Realtek
-RTL8188CUS, RTL8188CE-VAU, RTL8188RU, and RTL8192CU chipsets.
+RTL8188CUS, RTL8188CE-VAU, RTL8188EUS, RTL8188RU, and RTL8192CU chipsets.
 .Pp
-The RTL8188CUS is a highly integrated 802.11n adapter that combines
-a MAC, a 1T1R capable baseband and an RF in a single chip.
-It operates in the 2GHz spectrum only.
+The RTL8188CUS and RTL8188EUS are highly integrated 802.11n adapters that
+combine a MAC, a 1T1R capable baseband and an RF in a single chip.
+They operate in the 2GHz spectrum only.
 The RTL8188RU is a high-power variant of the RTL8188CUS.
 The RTL8188CE-VAU is a PCI Express Mini Card adapter that attaches
 to the USB interface.
@@ -51,6 +51,18 @@ Also known as
 mode, this is used when associating with an access point, through
 which all traffic passes.
 This mode is the default.
+.It IBSS mode
+Also known as
+.Em IEEE ad-hoc
+mode or
+.Em peer-to-peer
+mode.
+This is the standardized method of operating without an access point.
+Stations associate with a service set.
+However, actual connections between stations are peer-to-peer.
+.It Host AP
+In this mode the driver acts as an access point (base station)
+for other cards.
 .It monitor mode
 In this mode the driver is able to receive packets without
 associating with an access point.
@@ -81,6 +93,7 @@ The driver needs the following firmware files,
 which are loaded when an interface is attached:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
+.It /libdata/firmware/if_urtwn/rtl8188eufw.bin
 .It /libdata/firmware/if_urtwn/rtl8192cfw.bin
 .It /libdata/firmware/if_urtwn/rtl8192cfwU.bin
 .El
@@ -90,6 +103,7 @@ The following adapters should work:
 .Bl -tag -width Ds -offset indent -compact
 .It Airlink101 AWLL5088
 .It Aus. Linx AL-9604R1S
+.It ASUSTeK USB-N10 NANO
 .It B-Link BL-LW05-5R
 .It Belkin F7D1102 Surf Wireless Micro
 .It D-Link DWA-121
@@ -98,6 +112,7 @@ The following adapters should work:
 .It Digitus DN-7042
 .It Edimax EW-7811Un
 .It EDUP EP-N8508
+.It ELECOM WDC-150SU2M
 .It Full River FR-W100NUL
 .It Hercules Wireless N USB Pico HWNUp-150
 .It Netgear WNA1000A
@@ -106,8 +121,11 @@ The following adapters should work:
 .It Planex GW-USValue-EZ
 .It Planex GW-USWExtreme
 .It POWCHIP POW-N18
+.It Sitecom N300 USB (WLA-2102 v1)
 .It Sitecom WL-365
 .It Solwise NET-WL-UMD-606N
+.It TP-LINK TL-WN723N v3
+.It TP-LINK TL-WN725N v2
 .It TRENDnet TEW-648UBM
 .El
 .Sh EXAMPLES
@@ -120,14 +138,6 @@ channel 11, obtaining an IP address using DHCP:
 .Bd -literal -offset indent
 nwkey 0x1deadbeef1 chan 11
 dhcp
-.Ed
-.Pp
-Configure urtwn0 to join network
-.Dq my_net
-using WPA with passphrase
-.Dq my_passphrase :
-.Bd -literal -offset indent
-# ifconfig urtwn0 nwid my_net wpakey my_passphrase
 .Ed
 .Pp
 Join an existing BSS network,

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.7 2011/04/04 20:37:51 dyoung Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.7.14.1 2014/08/20 00:03:12 tls Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -65,7 +65,8 @@ struct mips_pci_chipset {
 	void		*pc_intr_v;
 	int		(*pc_intr_map)(const struct pci_attach_args *, 
 			    pci_intr_handle_t *);
-	const char	*(*pc_intr_string)(void *, pci_intr_handle_t);
+	const char	*(*pc_intr_string)(void *, pci_intr_handle_t,
+			    char *, size_t);
 	const struct evcnt *(*pc_intr_evcnt)(void *, pci_intr_handle_t);
 	void		*(*pc_intr_establish)(void *, pci_intr_handle_t,
 			    int, int (*)(void *), void *);
@@ -98,8 +99,8 @@ struct mips_pci_chipset {
     (*(c)->pc_conf_write)((c)->pc_conf_v, (t), (r), (v))
 #define	pci_intr_map(pa, ihp)						\
     (*(pa)->pa_pc->pc_intr_map)((pa), (ihp))
-#define	pci_intr_string(c, ih)						\
-    (*(c)->pc_intr_string)((c)->pc_intr_v, (ih))
+#define	pci_intr_string(c, ih, buf, len)				\
+    (*(c)->pc_intr_string)((c)->pc_intr_v, (ih), (buf), (len))
 #define	pci_intr_evcnt(c, ih)						\
     (*(c)->pc_intr_evcnt)((c)->pc_intr_v, (ih))
 #define	pci_intr_establish(c, ih, l, h, a)				\

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.56.2.1 2013/06/23 06:20:14 tls Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.56.2.2 2014/08/20 00:03:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.56.2.1 2013/06/23 06:20:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.56.2.2 2014/08/20 00:03:29 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -110,9 +110,11 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.56.2.1 2013/06/23 06:20:14 tls Exp
 #include "opt_acpi.h"
 #include "opt_ddb.h"
 #include "opt_mpbios.h"
+#include "opt_puc.h"
 #include "opt_vga.h"
 #include "pci.h"
 #include "wsdisplay.h"
+#include "com.h"
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -136,6 +138,10 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.56.2.1 2013/06/23 06:20:14 tls Exp
 #endif
 
 #include <machine/mpconfig.h>
+
+#if NCOM > 0
+#include <dev/pci/puccn.h>
+#endif
 
 #include "opt_pci_conf_mode.h"
 
@@ -304,9 +310,7 @@ pci_conf_lock(struct pci_conf_lock *ocl, uint32_t sel)
 static void
 pci_conf_unlock(struct pci_conf_lock *ocl)
 {
-	uint32_t sel;
-
-	sel = atomic_cas_32_ni(&cl->cl_sel, cl->cl_sel, ocl->cl_sel);
+	atomic_cas_32_ni(&cl->cl_sel, cl->cl_sel, ocl->cl_sel);
 	pci_conf_select(ocl->cl_sel);
 	if (ocl->cl_cpuno != cl->cl_cpuno)
 		atomic_cas_32(&cl->cl_cpuno, cl->cl_cpuno, ocl->cl_cpuno);
@@ -521,6 +525,7 @@ pci_mode_detect(void)
 	uint32_t sav, val;
 	int i;
 	pcireg_t idreg;
+	extern char cpu_brand_string[];
 
 	if (pci_mode != -1)
 		return pci_mode;
@@ -544,11 +549,30 @@ pci_mode_detect(void)
 		idreg = pci_conf_read(NULL, t, PCI_ID_REG); /* needs "pci_mode" */
 		if (idreg == pcim1_quirk_tbl[i].id) {
 #ifdef DEBUG
-			printf("known mode 1 PCI chipset (%08x)\n",
-			       idreg);
+			printf("%s: known mode 1 PCI chipset (%08x)\n",
+			    __func__, idreg);
 #endif
 			return (pci_mode);
 		}
+	}
+
+	const char *reason, *system_vendor, *system_product;
+	if (memcmp(cpu_brand_string, "QEMU", 4) == 0)
+		/* PR 45671, https://bugs.launchpad.net/qemu/+bug/897771 */
+		reason = "QEMU";
+	else if ((system_vendor = pmf_get_platform("system-vendor")) != NULL &&
+	    strcmp(system_vendor, "Xen") == 0 &&
+	    (system_product = pmf_get_platform("system-product")) != NULL &&
+	    strcmp(system_product, "HVM domU") == 0)
+		reason = "Xen";
+	else
+		reason = NULL;
+
+	if (reason) {
+#ifdef DEBUG
+		printf("%s: forcing PCI mode 1 for %s\n", __func__, reason);
+#endif
+		return (pci_mode);
 	}
 
 	/*
@@ -562,8 +586,7 @@ pci_mode_detect(void)
 	val = inl(PCI_MODE1_ADDRESS_REG);
 	if ((val & 0x80fffffc) != PCI_MODE1_ENABLE) {
 #ifdef DEBUG
-		printf("pci_mode_detect: mode 1 enable failed (%x)\n",
-		       val);
+		printf("%s: mode 1 enable failed (%x)\n", __func__, val);
 #endif
 		goto not1;
 	}
@@ -591,53 +614,6 @@ not1:
 not2:
 
 	return (pci_mode = 0);
-}
-
-/*
- * Determine which flags should be passed to the primary PCI bus's
- * autoconfiguration node.  We use this to detect broken chipsets
- * which cannot safely use memory-mapped device access.
- */
-int
-pci_bus_flags(void)
-{
-	int rval = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
-	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
-	int device, maxndevs;
-	pcitag_t tag;
-	pcireg_t id;
-
-	maxndevs = pci_bus_maxdevs(NULL, 0);
-
-	for (device = 0; device < maxndevs; device++) {
-		tag = pci_make_tag(NULL, 0, device, 0);
-		id = pci_conf_read(NULL, tag, PCI_ID_REG);
-
-		/* Invalid vendor ID value? */
-		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
-			continue;
-		/* XXX Not invalid, but we've done this ~forever. */
-		if (PCI_VENDOR(id) == 0)
-			continue;
-
-		switch (PCI_VENDOR(id)) {
-		case PCI_VENDOR_SIS:
-			switch (PCI_PRODUCT(id)) {
-			case PCI_PRODUCT_SIS_85C496:
-				goto disable_mem;
-			}
-			break;
-		}
-	}
-
-	return (rval);
-
- disable_mem:
-	printf("Warning: broken PCI-Host bridge detected; "
-	    "disabling memory-mapped access\n");
-	rval &= ~(PCI_FLAGS_MEM_OKAY|PCI_FLAGS_MRL_OKAY|PCI_FLAGS_MRM_OKAY|
-	    PCI_FLAGS_MWI_OKAY);
-	return (rval);
 }
 
 void
@@ -939,7 +915,7 @@ device_pci_register(device_t dev, void *aux)
 				if (ri->ri_bits != NULL) {
 					prop_dictionary_set_uint64(dict,
 					    "virtual_address",
-					    (vaddr_t)ri->ri_bits);
+					    (vaddr_t)ri->ri_origbits);
 				}
 #endif
 				}
@@ -973,7 +949,15 @@ device_pci_register(device_t dev, void *aux)
 				}
 #endif
 			}
+#if 1 && NWSDISPLAY > 0 && NGENFB > 0
+			/* XXX */
+			if (device_is_a(dev, "genfb")) {
+				prop_dictionary_set_bool(dict, "is_console",
+				    genfb_is_console());
+			} else
+#endif
 			prop_dictionary_set_bool(dict, "is_console", true);
+
 			prop_dictionary_set_bool(dict, "clear-screen", false);
 #if NWSDISPLAY > 0 && NGENFB > 0
 			prop_dictionary_set_uint16(dict, "cursor-row",
@@ -997,3 +981,22 @@ device_pci_register(device_t dev, void *aux)
 	}
 	return NULL;
 }
+
+#ifndef PUC_CNBUS
+#define PUC_CNBUS 0
+#endif
+
+#if NCOM > 0
+int
+cpu_puc_cnprobe(struct consdev *cn, struct pci_attach_args *pa)
+{
+	pci_mode_detect();
+	pa->pa_iot = x86_bus_space_io;
+	pa->pa_memt = x86_bus_space_mem;
+	pa->pa_pc = 0;
+	pa->pa_tag = pci_make_tag(0, PUC_CNBUS, pci_bus_maxdevs(NULL, 0) - 1,
+				  0);
+
+	return 0;
+}
+#endif

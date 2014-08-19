@@ -1,7 +1,6 @@
 /* External/Public TUI Header File.
 
-   Copyright (C) 1998, 1999, 2000, 2001, 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -96,7 +95,7 @@ extern void tui_set_key_mode (enum tui_key_mode mode);
 
 extern int tui_active;
 
-extern void tui_show_source (const char *file, int line);
+extern void tui_show_source (const char *fullname, int line);
 
 extern struct ui_out *tui_out_new (struct ui_file *stream);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.h,v 1.1.1.3.10.1 2013/02/25 00:27:28 tls Exp $	*/
+/*	$NetBSD: smtpd.h,v 1.1.1.3.10.2 2014/08/19 23:59:44 tls Exp $	*/
 
 /*++
 /* NAME
@@ -81,7 +81,9 @@ typedef struct {
     char   *namaddr;			/* name[address]:port */
     char   *rfc_addr;			/* address for RFC 2821 */
     int     addr_family;		/* address family */
+    char   *dest_addr;			/* for Dovecot AUTH */
     struct sockaddr_storage sockaddr;	/* binary client endpoint */
+    SOCKADDR_SIZE sockaddr_len;		/* binary client endpoint */
     int     name_status;		/* 2=ok 4=soft 5=hard 6=forged */
     int     reverse_name_status;	/* 2=ok 4=soft 5=hard */
     int     conn_count;			/* connections from this client */
@@ -306,10 +308,16 @@ extern void smtpd_state_reset(SMTPD_STATE *);
 	(SMTPD_STAND_ALONE(state) == 0 && *var_smtpd_proxy_filt)
 
  /*
+  * Are we in a MAIL transaction?
+  */
+#define SMTPD_IN_MAIL_TRANSACTION(state) ((state)->sender != 0)
+
+ /*
   * SMTPD peer information lookup.
   */
 extern void smtpd_peer_init(SMTPD_STATE *state);
 extern void smtpd_peer_reset(SMTPD_STATE *state);
+extern int smtpd_peer_from_haproxy(SMTPD_STATE *state);
 
 #define	SMTPD_PEER_CODE_OK	2
 #define SMTPD_PEER_CODE_TEMP	4

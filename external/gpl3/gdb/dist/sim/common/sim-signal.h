@@ -1,6 +1,5 @@
 /* Simulator signal support
-   Copyright (C) 1997, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Support
 
 This file is part of the GNU Simulators.
@@ -47,6 +46,6 @@ typedef enum {
 } SIM_SIGNAL;
 
 int sim_signal_to_host (SIM_DESC sd, SIM_SIGNAL);
-enum target_signal sim_signal_to_target (SIM_DESC sd, SIM_SIGNAL);
+enum gdb_signal sim_signal_to_gdb_signal (SIM_DESC sd, SIM_SIGNAL);
 
 #endif /* SIM_SIGNAL_H */

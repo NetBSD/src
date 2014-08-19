@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.21 2012/02/12 16:34:07 matt Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.21.6.1 2014/08/20 00:02:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.21 2012/02/12 16:34:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.21.6.1 2014/08/20 00:02:45 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,8 @@ footbridge_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable, bus_s
 }
 
 int
-footbridge_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags, bus_space_handle_t *bshp)
+footbridge_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
+    bus_space_handle_t *bshp)
 {
 	bus_addr_t startpa, endpa, pa;
 	vaddr_t va;
@@ -214,15 +215,14 @@ footbridge_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags, bus_s
 
 	/* Now map the pages */
 	/* The cookie is the physical base address for the I/O area */
-	for (pa = startpa; pa < endpa; pa+=PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_enter(pmap_kernel(), va, (bus_addr_t)t + pa, VM_PROT_READ | VM_PROT_WRITE,
-		    VM_PROT_READ | VM_PROT_WRITE| PMAP_WIRED);
-		if ((flags & BUS_SPACE_MAP_CACHEABLE) == 0) {
-			pt_entry_t *pte;	
-			pte = vtopte(va);
-			*pte &= ~L2_S_CACHE_MASK;
-			PTE_SYNC(pte);
-		}
+	const int pmapflags =
+	    (flags & (BUS_SPACE_MAP_CACHEABLE|BUS_SPACE_MAP_PREFETCHABLE))
+		? 0
+		: PMAP_NOCACHE;
+
+	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
+		pmap_kenter_pa(va, (bus_addr_t)t + pa,
+		    VM_PROT_READ | VM_PROT_WRITE, pmapflags);
 	}
 	pmap_update(pmap_kernel());
 
@@ -274,7 +274,7 @@ footbridge_mem_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 	startva = trunc_page(bsh);
 	endva = round_page(bsh + size);
 
-	pmap_remove(pmap_kernel(), startva, endva);
+	pmap_kremove(startva, endva);
 	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, startva, endva - startva, UVM_KMF_VAONLY);
 }

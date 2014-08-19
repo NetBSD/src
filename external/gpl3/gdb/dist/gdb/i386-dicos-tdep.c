@@ -1,6 +1,6 @@
 /* Target-dependent code for DICOS running on i386's, for GDB.
 
-   Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,26 +19,8 @@
 
 #include "defs.h"
 #include "osabi.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "dicos-tdep.h"
-
-static CORE_ADDR
-i386_dicos_push_dummy_code (struct gdbarch *gdbarch,
-			    CORE_ADDR sp, CORE_ADDR funaddr,
-			    struct value **args, int nargs,
-			    struct type *value_type,
-			    CORE_ADDR *real_pc, CORE_ADDR *bp_addr,
-			    struct regcache *regcache)
-{
-  int bplen;
-  CORE_ADDR bppc = sp;
-
-  gdbarch_breakpoint_from_pc (gdbarch, &bppc, &bplen);
-  *bp_addr = sp - bplen;
-  *real_pc = funaddr;
-
-  return *bp_addr;
-}
 
 static void
 i386_dicos_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
@@ -46,8 +28,6 @@ i386_dicos_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
   dicos_init_abi (gdbarch);
-
-  set_gdbarch_push_dummy_code (gdbarch, i386_dicos_push_dummy_code);
 }
 
 static enum gdb_osabi

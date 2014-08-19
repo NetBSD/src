@@ -1,4 +1,4 @@
-/*	$NetBSD: efa.c,v 1.11 2012/07/31 15:50:31 bouyer Exp $ */
+/*	$NetBSD: efa.c,v 1.11.2.1 2014/08/20 00:02:43 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -172,8 +172,6 @@ efa_attach(device_t parent, device_t self, void *aux)
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
-	sc->sc_intreg = &gayle.intreq;
-
 	for (i = 0; i < FATA1_CHANNELS; i++) 
 		efa_attach_channel(sc, i);
 
@@ -194,7 +192,7 @@ efa_attach(device_t parent, device_t self, void *aux)
 		sc->sc_isr.isr_arg = sc;
 		sc->sc_isr.isr_ipl = 2;
 		add_isr (&sc->sc_isr);
-		gayle.intena |= GAYLE_INT_IDE;
+		gayle_intr_enable_set(GAYLE_INT_IDE);
 	}
 
 }
@@ -283,13 +281,13 @@ efa_intr(void *arg)
 {
 	struct efa_softc *sc = (struct efa_softc *)arg;
 	int r1, r2, ret;
-	u_char intreq;
+	uint8_t intreq;
 
-	intreq = *sc->sc_intreg;
+	intreq = gayle_intr_status();
 	ret = 0;
 
 	if (intreq & GAYLE_INT_IDE) {
-		gayle.intreq = 0x7c | (intreq & 0x03);
+		gayle_intr_ack(0x7C | (intreq & 0x03));
 		/* How to check which channel caused interrupt?
 		 * Interrupt status register is not very useful here. */
 		r1 = wdcintr(&sc->sc_ports[0].chan);

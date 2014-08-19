@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lwp_specificdata.c,v 1.2 2010/04/12 23:09:28 christos Exp $	*/
+/*	$NetBSD: subr_lwp_specificdata.c,v 1.2.24.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define _LWP_API_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lwp_specificdata.c,v 1.2 2010/04/12 23:09:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lwp_specificdata.c,v 1.2.24.1 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -74,7 +74,7 @@ lwp_specific_key_delete(specificdata_key_t key)
 void
 lwp_initspecific(struct lwp *l)
 {
-	int error;
+	int error __diagused;
 
 	error = specificdata_init(lwp_specificdata_domain, &l->l_specdataref);
 	KASSERT(error == 0);

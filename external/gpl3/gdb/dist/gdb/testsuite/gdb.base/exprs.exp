@@ -1,5 +1,4 @@
-#   Copyright 1988, 1990, 1991, 1992, 1994, 1995, 1996, 1997, 1998, 2000,
-#   2001, 2003, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+#   Copyright 1988-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,30 +15,22 @@
 
 # This file was written by Rob Savoye. (rob@cygnus.com)
 
-if $tracelevel {
-    strace $tracelevel
-}
-
 #
 # test running programs
 #
 
-set testfile "exprs"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .c
+
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
      untested exprs.exp
      return -1
 }
 
-if [get_compiler_info ${binfile}] {
-    return -1;
+if [get_compiler_info] {
+    return -1
 }
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart ${binfile}
 
 #
 # set it up at a breakpoint so we can play with the variable values
@@ -54,17 +45,17 @@ proc test_expr { args } {
     if { [llength $args] % 2 } {
 	warning "an even # of arguments should be passed to test_expr"
     }
-    set last_ent [expr [llength $args] - 1];
-    set testname [lindex $args $last_ent];
+    set last_ent [expr [llength $args] - 1]
+    set testname [lindex $args $last_ent]
     if [gdb_test [lindex $args 0] ".*" "$testname (setup)"] {
-	gdb_suppress_tests;
+	gdb_suppress_tests
     }
     for {set x 1} {$x < $last_ent} {set x [expr $x + 2]} {
 	if [gdb_test [lindex $args $x] [lindex $args [expr $x + 1]] "$testname ([lindex $args $x])"] {
-	    gdb_suppress_tests;
+	    gdb_suppress_tests
 	}
     }
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 #
 # test expressions with "char" types
@@ -262,3 +253,23 @@ gdb_test "print v_int--" "\\$\[0-9\]* = 3"
 gdb_test "print --v_int" "\\$\[0-9\]* = 1"
 gdb_test "print v_int++ = 5" "Left operand of assignment is not an lvalue."
 gdb_test "print v_int-- = 5" "Left operand of assignment is not an lvalue."
+
+# initialized array
+gdb_test {print v_int_array_init} { = \{10, 20\}}
+gdb_test {print *v_int_array_init@1} { = \{10\}}
+gdb_test {print *v_int_array_init@2} { = \{10, 20\}}
+gdb_test {print v_int_array_init[0]@1} { = \{10\}}
+gdb_test {print v_int_array_init[0]@2} { = \{10, 20\}}
+gdb_test {print v_int_array_init[1]@1} { = \{20\}}
+
+# gdb's {} extension
+gdb_test_no_output "set variable v_short_array\[0\] = 42"
+gdb_test "print {short} v_short_array" "$decimal = 42"
+
+# Regression tests for cast to void.
+gdb_test "print (void) v_int_pointer" " = void"
+gdb_test "print & (void) v_char" "value not located in memory."
+
+# Regression test for "&&".
+gdb_test "print null_t_struct && null_t_struct->v_int_member == 0" \
+    " = 0"

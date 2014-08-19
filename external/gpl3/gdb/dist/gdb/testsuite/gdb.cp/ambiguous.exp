@@ -1,5 +1,4 @@
-# Copyright 1998, 1999, 2003, 2004, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 1998-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,10 +20,6 @@
 
 # This file is part of the gdb testsuite
 
-if $tracelevel then {
-        strace $tracelevel
-        }
-
 #
 # test running programs
 #
@@ -32,27 +27,17 @@ if $tracelevel then {
 
 if { [skip_cplus_tests] } { continue }
 
-set testfile "ambiguous"
-set srcfile ${testfile}.cc
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .cc
 
-if [get_compiler_info ${binfile} "c++"] {
-    return -1;
+if [get_compiler_info "c++"] {
+    return -1
 }
 
 if { [test_compiler_info gcc-*] } then { continue }
 
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
-     untested ambiguous.exp
-     return -1
+if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
+    return -1
 }
-
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
-
 
 #
 # set it up at a breakpoint so we can play with the variable values

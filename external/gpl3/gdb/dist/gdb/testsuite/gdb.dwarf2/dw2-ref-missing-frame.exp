@@ -1,4 +1,4 @@
-# Copyright 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2008-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,24 +19,16 @@ if {![dwarf2_support]} {
     return 0  
 }
 
-set testfile "dw2-ref-missing-frame"
-set srcsfile ${testfile}.S
-set objsfile ${objdir}/${subdir}/${testfile}.o
+standard_testfile .S
 set srcfuncfile ${testfile}-func.c
-set objfuncfile ${objdir}/${subdir}/${testfile}-func.o
 set srcmainfile ${testfile}-main.c
-set objmainfile ${objdir}/${subdir}/${testfile}-main.o
 set executable ${testfile}
-set binfile ${objdir}/${subdir}/${executable}
 
-if { [gdb_compile "${srcdir}/${subdir}/${srcsfile}" $objsfile object {}] != ""
-     || [gdb_compile "${srcdir}/${subdir}/${srcfuncfile}" $objfuncfile object {}] != ""
-     || [gdb_compile "${srcdir}/${subdir}/${srcmainfile}" $objmainfile object {debug}] != ""
-     || [gdb_compile "$objsfile $objfuncfile $objmainfile" $binfile executable {}] != "" } {
+if {[prepare_for_testing_full $testfile.exp \
+	 [list $testfile {} $srcfile {} $srcfuncfile {} \
+	      $srcmainfile debug]]} {
     return -1
 }
-
-clean_restart $executable
 
 # First try referencing DW_AT_frame_base which is not defined.
 if [runto func_nofb] {

@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_prcm.c,v 1.3.6.1 2013/02/25 00:28:31 tls Exp $	*/
+/*	$NetBSD: omap2_prcm.c,v 1.3.6.2 2014/08/20 00:02:47 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 Adam Hoka
@@ -28,7 +28,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_prcm.c,v 1.3.6.1 2013/02/25 00:28:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_prcm.c,v 1.3.6.2 2014/08/20 00:02:47 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,14 +52,17 @@ struct prcm_softc {
 };
 
 /* for external access to prcm operations */
-struct prcm_softc *prcm_sc;
+struct prcm_softc prcm_sc = {
+	.sc_iot = &omap_bs_tag,
+	.sc_size = OMAP2_PRM_SIZE,
+};
 
 /* prototypes */
 static int	prcm_match(device_t, cfdata_t, void *);
 static void	prcm_attach(device_t, device_t, void *);
 
 /* attach structures */
-CFATTACH_DECL_NEW(prcm, sizeof(struct prcm_softc),
+CFATTACH_DECL_NEW(prcm, 0,
 	prcm_match, prcm_attach, NULL, NULL);
 
 static int
@@ -77,18 +80,16 @@ prcm_attach(device_t parent, device_t self, void *aux)
 {
 	struct obio_attach_args *obio = aux;
 
-	KASSERT(prcm_sc == NULL);
-	prcm_sc = device_private(self);
+	KASSERT(prcm_sc.sc_dev == NULL);
 
-	prcm_sc->sc_dev = self;
-	prcm_sc->sc_iot = &omap_bs_tag;
+	self->dv_private = &prcm_sc;
+	prcm_sc.sc_dev = self;
 
-	prcm_sc->sc_base = obio->obio_addr;
-	prcm_sc->sc_size = OMAP2_PRM_SIZE;
+	prcm_sc.sc_base = obio->obio_addr;
 
 	/* map i/o space for PRM */
-	if (bus_space_map(prcm_sc->sc_iot, prcm_sc->sc_base, prcm_sc->sc_size,
-	    0, &prcm_sc->sc_ioh) != 0) {
+	if (bus_space_map(prcm_sc.sc_iot, prcm_sc.sc_base, prcm_sc.sc_size,
+	    0, &prcm_sc.sc_ioh) != 0) {
 		aprint_error("prcm_attach: can't map i/o space for prm");
 		return;
 	}
@@ -96,22 +97,26 @@ prcm_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": Power, Reset and Clock Management\n");
 }
 
+void
+prcm_bootstrap(bus_space_handle_t ioh)
+{
+	prcm_sc.sc_ioh = ioh;
+}
+
 uint32_t
 prcm_read_4(bus_size_t module, bus_size_t reg)
 {
 
-	KASSERT(prcm_sc != NULL);
-	return bus_space_read_4(prcm_sc->sc_iot, prcm_sc->sc_ioh,
-	    module + reg);
+	KASSERT(prcm_sc.sc_ioh != 0);
+	return bus_space_read_4(prcm_sc.sc_iot, prcm_sc.sc_ioh, module + reg);
 }
 
 void
 prcm_write_4(bus_size_t module, bus_size_t reg, uint32_t data)
 {
 
-	KASSERT(prcm_sc != NULL);
-	bus_space_write_4(prcm_sc->sc_iot, prcm_sc->sc_ioh,
-	    module + reg, data);
+	KASSERT(prcm_sc.sc_ioh != 0);
+	bus_space_write_4(prcm_sc.sc_iot, prcm_sc.sc_ioh, module + reg, data);
 }
 
 void

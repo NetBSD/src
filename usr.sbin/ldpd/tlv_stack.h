@@ -1,4 +1,4 @@
-/* $NetBSD: tlv_stack.h,v 1.1.12.1 2013/02/25 00:30:44 tls Exp $ */
+/* $NetBSD: tlv_stack.h,v 1.1.12.2 2014/08/20 00:05:09 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -39,16 +39,18 @@
 #define	FEC_PREFIX	0x02
 #define	FEC_HOST	0x03
 
-int	map_label(struct ldp_peer *, struct fec_tlv *, struct label_tlv *);
+int	map_label(struct ldp_peer *, struct fec_tlv *,
+		struct label_tlv *);
 int	withdraw_label(struct ldp_peer *, struct fec_tlv *);
 void	prepare_release(struct tlv *);
-void	send_label_tlv(struct ldp_peer *, struct sockaddr *, uint8_t,
-		uint32_t, struct label_request_tlv *);
-void	send_label_tlv_to_all(struct sockaddr *, uint8_t, uint32_t);
-void	send_all_bindings(struct ldp_peer *);
-void	send_withdraw_tlv(struct ldp_peer *, struct sockaddr *, uint8_t);
-void	send_withdraw_tlv_to_all(struct sockaddr *, uint8_t);
-int	request_respond(struct ldp_peer *, struct label_map_tlv *,
-		struct fec_tlv *);
+void	send_label_tlv(const struct ldp_peer *, const struct sockaddr *,
+		uint8_t, uint32_t, const struct label_request_tlv *);
+void	send_label_tlv_to_all(const struct sockaddr *, uint8_t, uint32_t);
+void	send_all_bindings(const struct ldp_peer *);
+void	send_withdraw_tlv(const struct ldp_peer *, const struct sockaddr *,
+		uint8_t);
+void	send_withdraw_tlv_to_all(const struct sockaddr *, uint8_t);
+int	request_respond(const struct ldp_peer *, const struct label_map_tlv *,
+		const struct fec_tlv *);
 
 #endif	/* !_TLV_STACK_H_ */

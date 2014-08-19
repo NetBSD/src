@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_bio.c,v 1.7.2.2 2013/06/23 06:21:08 tls Exp $	*/
+/*	$NetBSD: rumpuser_bio.c,v 1.7.2.3 2014/08/20 00:02:21 tls Exp $	*/
 
 /*-
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -26,6 +26,10 @@
  */
 
 #include "rumpuser_port.h"
+
+#if !defined(lint)
+__RCSID("$NetBSD: rumpuser_bio.c,v 1.7.2.3 2014/08/20 00:02:21 tls Exp $");
+#endif /* !lint */
 
 #include <sys/types.h>
 

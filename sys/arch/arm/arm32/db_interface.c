@@ -1,29 +1,29 @@
-/*	$NetBSD: db_interface.c,v 1.49 2012/02/16 02:33:37 christos Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.49.2.1 2014/08/20 00:02:45 tls Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1996 Scott K. Stevens
  *
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.49 2012/02/16 02:33:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.49.2.1 2014/08/20 00:02:45 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.49 2012/02/16 02:33:37 christos E
 #include <sys/reboot.h>
 #include <sys/systm.h>	/* just for boothowto */
 #include <sys/exec.h>
+#include <sys/atomic.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -70,6 +72,14 @@ int db_trapper(u_int, u_int, trapframe_t *, int);
 
 int	db_active = 0;
 db_regs_t ddb_regs;	/* register state */
+db_regs_t *ddb_regp;
+
+#ifdef MULTIPROCESSOR
+volatile struct cpu_info *db_onproc;
+volatile struct cpu_info *db_newcpu;
+#endif
+
+
 
 
 #ifdef DDB
@@ -79,12 +89,24 @@ db_regs_t ddb_regs;	/* register state */
 int
 kdb_trap(int type, db_regs_t *regs)
 {
+	struct cpu_info * const ci = curcpu();
+	db_regs_t dbreg;
 	int s;
 
 	switch (type) {
 	case T_BREAKPOINT:	/* breakpoint */
 	case -1:		/* keyboard interrupt */
 		break;
+#ifdef MULTIPROCESSOR
+	case -2:
+		/*
+		 * We called to enter ddb from another process but by the time
+		 * we got here, no one was in ddb.  So ignore the request.
+		 */
+		if (db_onproc == NULL)
+			return 1;
+		break;
+#endif
 	default:
 		if (db_recover != 0) {
 			/* This will longjmp back into db_command_loop() */
@@ -95,17 +117,80 @@ kdb_trap(int type, db_regs_t *regs)
 
 	/* Should switch to kdb`s own stack here. */
 
-	ddb_regs = *regs;
+#ifdef MULTIPROCESSOR
+	const bool is_mp_p = ncpu > 1;
+	if (is_mp_p) {
+		/*
+		 * Try to take ownership of DDB.  If we do, tell all other
+		 * CPUs to enter DDB too.
+		 */
+		if (atomic_cas_ptr(&db_onproc, NULL, ci) == NULL) {
+			intr_ipi_send(NULL, IPI_DDB);
+		}
+	}
+	for (;;) {
+		if (is_mp_p) {
+			/*
+			 * While we aren't the master, wait until the master
+			 * gives control to us or exits.  If it exited, we
+			 * just exit to.  Otherwise this cpu will enter DDB.
+			 */
+			membar_consumer();
+			while (db_onproc != ci) {
+				if (db_onproc == NULL)
+					return 1;
+#ifdef _ARM_ARCH_6
+				__asm __volatile("wfe");
+				membar_consumer();
+#endif
+				if (db_onproc == ci) {
+					printf("%s: switching to %s\n",
+					    __func__, ci->ci_cpuname);
+				}
+			}
+		}
+#endif
 
-	s = splhigh();
-	db_active++;
-	cnpollc(true);
-	db_trap(type, 0/*code*/);
-	cnpollc(false);
-	db_active--;
-	splx(s);
+		s = splhigh();
+		ci->ci_ddb_regs = &dbreg;
+		ddb_regp = &dbreg;
+		ddb_regs = *regs;
 
-	*regs = ddb_regs;
+		atomic_inc_32(&db_active);
+		cnpollc(true);
+		db_trap(type, 0/*code*/);
+		cnpollc(false);
+		atomic_dec_32(&db_active);
+
+		ci->ci_ddb_regs = NULL;
+		ddb_regp = &dbreg;
+		*regs = ddb_regs;
+		splx(s);
+
+#ifdef MULTIPROCESSOR
+		if (is_mp_p && db_newcpu != NULL) {
+			db_onproc = db_newcpu;
+			db_newcpu = NULL;
+#ifdef _ARM_ARCH_6
+			membar_producer();
+			__asm __volatile("sev; sev");
+#endif
+			continue;
+		}
+		break;
+	}
+
+	if (is_mp_p) {
+		/*
+		 * We are exiting DDB so there is noone onproc.  Tell
+		 * the other CPUs to exit.
+		 */
+		db_onproc = NULL;
+#ifdef _ARM_ARCH_6
+		__asm __volatile("sev; sev");
+#endif
+	}
+#endif
 
 	return (1);
 }
@@ -165,7 +250,7 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
 
 static void
 db_write_text(vaddr_t addr, size_t size, const char *data)
-{        
+{
 	struct pmap *pmap = pmap_kernel();
 	pd_entry_t *pde, oldpde, tmppde;
 	pt_entry_t *pte, oldpte, tmppte;

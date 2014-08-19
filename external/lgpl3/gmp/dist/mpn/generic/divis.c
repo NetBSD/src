@@ -26,13 +26,13 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "longlong.h"
 
 
-/* Determine whether {ap,an} is divisible by {dp,dn}.  Must have both
+/* Determine whether A={ap,an} is divisible by D={dp,dn}.  Must have both
    operands normalized, meaning high limbs non-zero, except that an==0 is
    allowed.
 
-   There usually won't be many low zero bits on d, but the checks for this
+   There usually won't be many low zero bits on D, but the checks for this
    are fast and might pick up a few operand combinations, in particular they
-   might reduce d to fit the single-limb mod_1/modexact_1 code.
+   might reduce D to fit the single-limb mod_1/modexact_1 code.
 
    Future:
 
@@ -41,11 +41,9 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
    there's no addback, but it would need a multi-precision inverse and so
    might be slower than the plain method (on small sizes at least).
 
-   When d must be normalized (shifted to high bit set), it's possible to
-   just append a low zero limb to "a" rather than bit-shifting as
-   mpn_tdiv_qr does internally, so long as it's already been checked that a
-   has at least as many trailing zeros bits as d.  Or equivalently, pass
-   qxn==1 to mpn_tdiv_qr, if/when it accepts that.  */
+   When D must be normalized (shifted to low bit set), it's possible to supress
+   the bit-shifting of A down, as long as it's already been checked that A has
+   at least as many trailing zero bits as D.  */
 
 int
 mpn_divisible_p (mp_srcptr ap, mp_size_t an,
@@ -127,7 +125,7 @@ mpn_divisible_p (mp_srcptr ap, mp_size_t an,
   TMP_MARK;
 
   rp = TMP_ALLOC_LIMBS (an + 1);
-  qp = TMP_ALLOC_LIMBS (an - dn + 1); /* FIXME: Could we avoid this */
+  qp = TMP_ALLOC_LIMBS (an - dn + 1); /* FIXME: Could we avoid this? */
 
   count_trailing_zeros (twos, dp[0]);
 

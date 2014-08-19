@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_ofw.c,v 1.18 2012/02/01 09:54:03 matt Exp $ */
+/* $NetBSD: pci_machdep_ofw.c,v 1.18.6.1 2014/08/20 00:03:20 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.18 2012/02/01 09:54:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.18.6.1 2014/08/20 00:03:20 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -238,12 +238,12 @@ genofw_setup_pciintr_map(void *v, struct genppc_pci_chipset_businfo *pbi,
 			sub = prop_dictionary_create_with_capacity(4);
 		pin = map[i*reclen + acells];
 		intr_num = prop_number_create_integer(map[i*reclen + acells + icells + 1] + picnodes[pic].offset);
-		sprintf(key, "pin-%c", 'A' + (pin-1));
+		snprintf(key, sizeof(key), "pin-%c", 'A' + (pin-1));
 		prop_dictionary_set(sub, key, intr_num);
 		prop_object_release(intr_num);
 		/* should we care about level? */
 
-		sprintf(key, "devfunc-%d", dev*0x8 + func);
+		snprintf(key, sizeof(key), "devfunc-%d", dev*0x8 + func);
 		prop_dictionary_set(dict, key, sub);
 		if (curdev != dev) {
 			prop_object_release(sub);
@@ -293,10 +293,10 @@ nomap:
 			if (OF_getprop(node, "interrupts", &pin, 4) < 0)
 				pin = 1;
 			intr_num = prop_number_create_integer(irqs[0]);
-			sprintf(key, "pin-%c", 'A' + (pin-1));
+			snprintf(key, sizeof(key), "pin-%c", 'A' + (pin-1));
 			prop_dictionary_set(sub, key, intr_num);
 			prop_object_release(intr_num);
-			sprintf(key, "devfunc-%d", dev*0x8 + func);
+			snprintf(key, sizeof(key), "devfunc-%d", dev*0x8 + func);
 			prop_dictionary_set(dict, key, sub);
 			prop_object_release(sub);
 			foundirqs++;
@@ -331,10 +331,10 @@ nomap:
 			if (OF_getprop(node, "interrupts", &pin, 4) < 0)
 				pin = 1;
 			intr_num = prop_number_create_integer(irq);
-			sprintf(key, "pin-%c", 'A' + (pin-1));
+			snprintf(key, sizeof(key), "pin-%c", 'A' + (pin-1));
 			prop_dictionary_set(sub, key, intr_num);
 			prop_object_release(intr_num);
-			sprintf(key, "devfunc-%d", dev*0x8 + func);
+			snprintf(key, sizeof(key), "devfunc-%d", dev*0x8 + func);
 			prop_dictionary_set(dict, key, sub);
 			prop_object_release(sub);
 		}
@@ -375,13 +375,12 @@ genofw_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	prop_dictionary_t dict, devsub;
 	prop_object_t pinsub;
 	prop_number_t pbus;
-	int busno, bus, pin, line, swiz, dev, origdev, func, i;
+	int busno, pin, line, dev, origdev, func, i;
 	char key[20];
 
 	pin = pa->pa_intrpin;
 	line = pa->pa_intrline;
-	bus = busno = pa->pa_bus;
-	swiz = pa->pa_intrswiz;
+	busno = pa->pa_bus;
 	origdev = dev = pa->pa_device;
 	func = pa->pa_function;
 	i = 0;
@@ -431,11 +430,11 @@ genofw_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		goto bad;
 	}
 
-	sprintf(key, "devfunc-%d", dev*0x8 + func);
+	snprintf(key, sizeof(key), "devfunc-%d", dev*0x8 + func);
 	devsub = prop_dictionary_get(dict, key);
 	if (devsub == NULL)
 		goto bad;
-	sprintf(key, "pin-%c", 'A' + (pin-1));
+	snprintf(key, sizeof(key), "pin-%c", 'A' + (pin-1));
 	pinsub = prop_dictionary_get(devsub, key);
 	if (pinsub == NULL)
 		goto bad;

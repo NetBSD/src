@@ -1,4 +1,4 @@
-/* $NetBSD: tlv_stack.c,v 1.4.8.2 2013/02/25 00:30:43 tls Exp $ */
+/* $NetBSD: tlv_stack.c,v 1.4.8.3 2014/08/20 00:05:09 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -47,9 +47,9 @@
 #include "mpls_interface.h"
 #include "tlv_stack.h"
 
-uint8_t ldp_ceil8(int);
+static uint8_t ldp_ceil8(int);
 
-uint8_t 
+static uint8_t 
 ldp_ceil8(int x)
 {
 	if (x % 8 == 0)
@@ -60,9 +60,10 @@ ldp_ceil8(int x)
 int 
 map_label(struct ldp_peer * p, struct fec_tlv * f, struct label_tlv * l)
 {
-	int             n;
+	int n;
 	struct prefix_tlv *pref;
 	union sockunion socktmp;
+	struct label *lbl_check;
 
 	if (ntohs(f->type) != TLV_FEC) {
 		debugp("Invalid FEC TLV !\n");
@@ -118,16 +119,24 @@ map_label(struct ldp_peer * p, struct fec_tlv * f, struct label_tlv * l)
 			else
 				memcpy(&socktmp.sin6.sin6_addr, &pref->prefix,
 				    ldp_ceil8(pref->prelen));
-			debugp("Prefix/Host add: %s/%d\n", satos(&socktmp.sa),
+			warnp("Prefix/Host add from %s: %s/%d\n",
+			    inet_ntoa(p->ldp_id), satos(&socktmp.sa),
 			    pref->prelen);
 
 			ldp_peer_add_mapping(p, &socktmp.sa, pref->prelen,
 			    ntohl(l->label));
 
 			/* Try to change RIB only if label is installed */
-			if (label_get_by_prefix(&socktmp.sa, pref->prelen) != NULL)
-				mpls_add_label(p, NULL, &socktmp.sa, pref->prelen,
-				    ntohl(l->label), 1);
+			lbl_check = label_get_by_prefix(&socktmp.sa,
+			    pref->prelen);
+			if (lbl_check != NULL && lbl_check->p == p) {
+				lbl_check->label = ntohl(l->label);
+				mpls_add_label(lbl_check);
+			} else
+				warnp("[map_label] lbl check failed: %s\n",
+				    lbl_check == NULL ? "(null)" :
+				    lbl_check->p == NULL ? "(null peer)" :
+				    inet_ntoa(lbl_check->p->ldp_id));
 			break;
 		    case FEC_WILDCARD:
 			fatalp("LDP: Wildcard add from peer %s\n",
@@ -192,16 +201,16 @@ withdraw_label(struct ldp_peer * p, struct fec_tlv * f)
 		 * POP Label
 		 */
 		lab = label_get_by_prefix(&socktmp.sa, pref->prelen);
-		if ((lab) && (lab->p == p)) {
-			change_local_label(lab, MPLS_LABEL_IMPLNULL);
-			label_reattach_route(lab, LDP_READD_CHANGE);
+		if (lab && lab->p == p) {
+			label_reattach_route(lab, REATT_INET_CHANGE);
+			announce_label_change(lab); /* binding has changed */
 		}
 		break;
 	    case FEC_WILDCARD:
 		fatalp("LDP neighbour %s: Wildcard withdraw !!!\n",
 		    satos(p->address));
-		ldp_peer_delete_mapping(p, NULL, 0);
-		label_reattach_all_peer_labels(p, LDP_READD_CHANGE);
+		ldp_peer_delete_all_mappings(p);
+		label_reattach_all_peer_labels(p, REATT_INET_CHANGE);
 		break;
 	    default:
 		fatalp("Unknown FEC type %d\n", pref->type);
@@ -213,7 +222,7 @@ withdraw_label(struct ldp_peer * p, struct fec_tlv * f)
 
 
 /*
- * In case of label redraw, reuse the same buffer to send label release
+ * In case of label withdraw, reuse the same buffer to send label release
  * Simply replace type and message id
  */
 void 
@@ -229,13 +238,16 @@ prepare_release(struct tlv * v)
 
 /* Sends a label mapping */
 void 
-send_label_tlv(struct ldp_peer * peer, struct sockaddr * addr,
-    uint8_t prefixlen, uint32_t label, struct label_request_tlv *lrt)
+send_label_tlv(const struct ldp_peer * peer, const struct sockaddr * addr,
+    uint8_t prefixlen, uint32_t label, const struct label_request_tlv *lrt)
 {
 	struct label_map_tlv *lmt;
 	struct fec_tlv *fec;
 	struct prefix_tlv *p;
 	struct label_tlv *l;
+
+	debugp("SENDING LABEL TLV %s TO %s\n", satos(addr),
+	    inet_ntoa(peer->ldp_id));
 
 	/*
 	 * Ok, so we have label map tlv that contains fec tlvs and label tlv
@@ -244,7 +256,7 @@ send_label_tlv(struct ldp_peer * peer, struct sockaddr * addr,
 	 * Got it ?
 	 */
 
-	lmt = malloc(
+	lmt = calloc(1,
 		sizeof(struct label_map_tlv) +
 		sizeof(struct fec_tlv) +
 		sizeof(struct prefix_tlv) - sizeof(struct in_addr) +
@@ -254,7 +266,7 @@ send_label_tlv(struct ldp_peer * peer, struct sockaddr * addr,
 	 	(lrt != NULL ? sizeof(struct label_request_tlv) : 0) );
 
 	if (!lmt) {
-		fatalp("send_label_tlv: malloc problem\n");
+		fatalp("send_label_tlv: calloc problem\n");
 		return;
 	}
 
@@ -270,8 +282,7 @@ send_label_tlv(struct ldp_peer * peer, struct sockaddr * addr,
 	/* FEC TLV */
 	fec = (struct fec_tlv *) & lmt[1];
 	fec->type = htons(TLV_FEC);
-	fec->length = htons(sizeof(struct fec_tlv) - TLV_TYPE_LENGTH
-	    + sizeof(struct prefix_tlv) - sizeof(struct in_addr) +
+	fec->length = htons(sizeof(struct prefix_tlv) - sizeof(struct in_addr) +
 		ldp_ceil8(prefixlen));
 
 	/* Now let's do the even a dirtier job: PREFIX TLV */
@@ -284,7 +295,8 @@ send_label_tlv(struct ldp_peer * peer, struct sockaddr * addr,
 	p->type = FEC_PREFIX;
 	p->af = htons(LDP_AF_INET);
 	p->prelen = prefixlen;
-	memcpy(&p->prefix, addr, ldp_ceil8(prefixlen));
+	memcpy(&p->prefix, & ((const struct sockaddr_in*)addr)->sin_addr,
+	    ldp_ceil8(prefixlen));
 
 	/* LABEL TLV */
 	l = (struct label_tlv *) ((unsigned char *) p +
@@ -305,22 +317,24 @@ send_label_tlv(struct ldp_peer * peer, struct sockaddr * addr,
 }
 
 void 
-send_label_tlv_to_all(struct sockaddr * addr, uint8_t prefixlen, uint32_t label)
+send_label_tlv_to_all(const struct sockaddr * addr, uint8_t prefixlen,
+    uint32_t label)
 {
 	struct ldp_peer *p;
 	SLIST_FOREACH(p, &ldp_peer_head, peers)
-		send_label_tlv(p, addr, prefixlen, label, NULL);
+		if (p->state == LDP_PEER_ESTABLISHED)
+			send_label_tlv(p, addr, prefixlen, label, NULL);
 }
 
 /*
  * Send all local labels to a peer
  */
 void 
-send_all_bindings(struct ldp_peer * peer)
+send_all_bindings(const struct ldp_peer * peer)
 {
-	struct label *l;
+	struct label *l = NULL;
 
-	SLIST_FOREACH(l, &label_head, labels)
+	while((l = label_get_right(l)) != NULL)
 	   send_label_tlv(peer, &l->so_dest.sa,
 		from_union_to_cidr(&l->so_pref), l->binding, NULL);
 
@@ -328,7 +342,7 @@ send_all_bindings(struct ldp_peer * peer)
 
 /* Sends a label WITHDRAW */
 void 
-send_withdraw_tlv(struct ldp_peer * peer, struct sockaddr * addr,
+send_withdraw_tlv(const struct ldp_peer * peer, const struct sockaddr * addr,
     uint8_t prefixlen)
 {
 	struct label_map_tlv *lmt;
@@ -383,18 +397,19 @@ send_withdraw_tlv(struct ldp_peer * peer, struct sockaddr * addr,
 }
 
 void 
-send_withdraw_tlv_to_all(struct sockaddr * addr, uint8_t prefixlen)
+send_withdraw_tlv_to_all(const struct sockaddr * addr, uint8_t prefixlen)
 {
 	struct ldp_peer *p;
 	SLIST_FOREACH(p, &ldp_peer_head, peers)
-		send_withdraw_tlv(p, addr, prefixlen);
+		if (p->state == LDP_PEER_ESTABLISHED)
+			send_withdraw_tlv(p, addr, prefixlen);
 }
 
 int
-request_respond(struct ldp_peer *p, struct label_map_tlv *lmt,
-    struct fec_tlv *fec)
+request_respond(const struct ldp_peer *p, const struct label_map_tlv *lmt,
+    const struct fec_tlv *fec)
 {
-	struct prefix_tlv *pref;
+	const struct prefix_tlv *pref;
 	union sockunion socktmp;
 	struct label *lab;
 	struct label_request_tlv lrm;
@@ -403,7 +418,7 @@ request_respond(struct ldp_peer *p, struct label_map_tlv *lmt,
 		debugp("Invalid FEC TLV !\n");
 		return LDP_E_BAD_FEC;
 	}
-	pref = (struct prefix_tlv *) (fec + 1);
+	pref = (const struct prefix_tlv *) (fec + 1);
 
 	memset(&socktmp, 0, sizeof(socktmp));
 	if (ntohs(pref->af) == LDP_AF_INET) {
@@ -437,7 +452,8 @@ request_respond(struct ldp_peer *p, struct label_map_tlv *lmt,
 		/* XXX - use sizeof */
 		lrm.length = htons(socktmp.sa.sa_family == AF_INET ? 4 : 16);
 		lrm.messageid = lmt->messageid;
-		send_label_tlv(p, &socktmp.sa, pref->prelen, lab->binding, &lrm);
+		send_label_tlv(p, &socktmp.sa, pref->prelen, lab->binding,
+		    &lrm);
 		break;
 
 		case FEC_WILDCARD:

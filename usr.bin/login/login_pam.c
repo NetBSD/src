@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.22 2012/04/23 09:27:36 martin Exp $       */
+/*     $NetBSD: login_pam.c,v 1.22.2.1 2014/08/20 00:05:00 tls Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.22 2012/04/23 09:27:36 martin Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.22.2.1 2014/08/20 00:05:00 tls Exp $");
 #endif /* not lint */
 
 /*
@@ -107,10 +107,9 @@ main(int argc, char *argv[])
 	uid_t uid, saved_uid;
 	gid_t saved_gid, saved_gids[NGROUPS_MAX];
 	int nsaved_gids;
-	char *domain, *p, *ttyn, *pwprompt;
+	char *domain, *p, *ttyn;
 	char tbuf[MAXPATHLEN + 2], tname[sizeof(_PATH_TTY) + 10];
 	char localhost[MAXHOSTNAMELEN + 1];
-	int need_chpass, require_chpass;
 	int login_retries = DEFAULT_RETRIES, 
 	    login_backoff = DEFAULT_BACKOFF;
 	char *shell = NULL;
@@ -126,9 +125,7 @@ main(int argc, char *argv[])
 	char **pamenv;
 
 	tbuf[0] = '\0';
-	pwprompt = NULL;
 	nested = NULL;
-	need_chpass = require_chpass = 0;
 
 	oabrt = signal(SIGABRT, SIG_IGN);
 	oalrm = signal(SIGALRM, timedout);

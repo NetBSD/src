@@ -1,4 +1,4 @@
-/* $NetBSD: cpuconf.c,v 1.35 2012/02/06 02:14:10 matt Exp $ */
+/* $NetBSD: cpuconf.c,v 1.35.6.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpuconf.c,v 1.35 2012/02/06 02:14:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuconf.c,v 1.35.6.1 2014/08/20 00:02:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -233,6 +233,7 @@ static const struct cpuinit cpuinit[] = {
 	cpu_notsupp(ST_DEC_EV56_PBP, "EV56 Passive Backplane Board"),
 	cpu_notsupp(ST_DEC_ALPHAVME_320, "AlphaVME 320"),
 	cpu_init(ST_DEC_6600, dec_6600_init, "DEC_6600"),
+	cpu_init(ST_DEC_TITAN, dec_6600_init, "DEC_6600"), 
 	cpu_init(ST_API_NAUTILUS, api_up1000_init, "API_UP1000"),
 };
 static const int ncpuinit = (sizeof(cpuinit) / sizeof(cpuinit[0]));

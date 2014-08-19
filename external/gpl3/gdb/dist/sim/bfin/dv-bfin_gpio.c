@@ -1,6 +1,6 @@
 /* Blackfin General Purpose Ports (GPIO) model
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -27,6 +27,8 @@
 struct bfin_gpio
 {
   bu32 base;
+
+  bu16 int_state;
 
   /* Order after here is important -- matches hardware MMR layout.  */
   bu16 BFIN_MMR_16(data);
@@ -60,6 +62,44 @@ static const char * const mmr_names[] =
 };
 #define mmr_name(off) mmr_names[(off) / 4]
 
+static void
+bfin_gpio_forward_int (struct hw *me, struct bfin_gpio *port, bu32 mask,
+		       int dst_port)
+{
+  HW_TRACE ((me, "resending levels on port %c", 'a' + dst_port));
+  hw_port_event (me, dst_port, !!(port->int_state & mask));
+}
+static void
+bfin_gpio_forward_ints (struct hw *me, struct bfin_gpio *port)
+{
+  bfin_gpio_forward_int (me, port, port->maska, 0);
+  bfin_gpio_forward_int (me, port, port->maskb, 1);
+}
+
+static void
+bfin_gpio_forward_ouput (struct hw *me, struct bfin_gpio *port, bu32 odata)
+{
+  int pin, value, ovalue, bit;
+
+  for (pin = 0; pin < 16; ++pin)
+    {
+      bit = 1 << pin;
+
+      /* Make sure this is an output pin.  */
+      if (!(port->dir & bit))
+	continue;
+
+      /* Only signal port if the pin changes value.  */
+      value = !!(port->data & bit);
+      ovalue = !!(odata & bit);
+      if (value == ovalue)
+	continue;
+
+      HW_TRACE ((me, "outputting gpio %i changed to %i", pin, value));
+      hw_port_event (me, pin, value);
+    }
+}
+
 static unsigned
 bfin_gpio_io_write_buffer (struct hw *me, const void *source, int space,
 			   address_word addr, unsigned nr_bytes)
@@ -68,6 +108,7 @@ bfin_gpio_io_write_buffer (struct hw *me, const void *source, int space,
   bu32 mmr_off;
   bu16 value;
   bu16 *valuep;
+  bu32 data = port->data;
 
   value = dv_load_2 (source);
   mmr_off = addr - port->base;
@@ -112,6 +153,21 @@ bfin_gpio_io_write_buffer (struct hw *me, const void *source, int space,
       break;
     default:
       dv_bfin_mmr_invalid (me, addr, nr_bytes, true);
+      break;
+    }
+
+  /* If updating masks, make sure we send updated port info.  */
+  switch (mmr_off)
+    {
+    case mmr_offset(dir):
+    case mmr_offset(data) ... mmr_offset(toggle):
+      bfin_gpio_forward_ouput (me, port, data);
+      break;
+    case mmr_offset(maska) ... mmr_offset(maska_toggle):
+      bfin_gpio_forward_int (me, port, port->maska, 0);
+      break;
+    case mmr_offset(maskb) ... mmr_offset(maskb_toggle):
+      bfin_gpio_forward_int (me, port, port->maskb, 1);
       break;
     }
 
@@ -172,21 +228,22 @@ static const struct hw_port_descriptor bfin_gpio_ports[] =
 {
   { "mask_a", 0, 0, output_port, },
   { "mask_b", 1, 0, output_port, },
-  { "p0",     0, 0, input_port, },
-  { "p1",     1, 0, input_port, },
-  { "p2",     2, 0, input_port, },
-  { "p3",     3, 0, input_port, },
-  { "p4",     4, 0, input_port, },
-  { "p5",     5, 0, input_port, },
-  { "p6",     6, 0, input_port, },
-  { "p7",     7, 0, input_port, },
-  { "p8",     8, 0, input_port, },
-  { "p9",     9, 0, input_port, },
-  { "p10",   10, 0, input_port, },
-  { "p11",   11, 0, input_port, },
-  { "p12",   12, 0, input_port, },
-  { "p13",   13, 0, input_port, },
-  { "p14",   14, 0, input_port, },
+  { "p0",     0, 0, bidirect_port, },
+  { "p1",     1, 0, bidirect_port, },
+  { "p2",     2, 0, bidirect_port, },
+  { "p3",     3, 0, bidirect_port, },
+  { "p4",     4, 0, bidirect_port, },
+  { "p5",     5, 0, bidirect_port, },
+  { "p6",     6, 0, bidirect_port, },
+  { "p7",     7, 0, bidirect_port, },
+  { "p8",     8, 0, bidirect_port, },
+  { "p9",     9, 0, bidirect_port, },
+  { "p10",   10, 0, bidirect_port, },
+  { "p11",   11, 0, bidirect_port, },
+  { "p12",   12, 0, bidirect_port, },
+  { "p13",   13, 0, bidirect_port, },
+  { "p14",   14, 0, bidirect_port, },
+  { "p15",   15, 0, bidirect_port, },
   { NULL, 0, 0, 0, },
 };
 
@@ -249,6 +306,11 @@ bfin_gpio_port_event (struct hw *me, int my_port, struct hw *source,
 	      return;
 	    }
 	}
+
+      /* Send the signal up, and then fall through to clear it.  */
+      port->int_state |= bit;
+      bfin_gpio_forward_ints (me, port);
+      port->int_state &= ~bit;
     }
   else
     {
@@ -257,21 +319,14 @@ bfin_gpio_port_event (struct hw *me, int my_port, struct hw *source,
 	{
 	  HW_TRACE ((me, "ignoring int due to EDGE=%i POLAR=%i lvl=%i",
 		     !!(port->edge & bit), !!(port->polar & bit), nlvl));
-	  return;
+	  /* We still need to signal SIC to clear the int, so don't return.  */
+	  port->int_state &= ~bit;
 	}
+      else
+	port->int_state |= bit;
     }
 
-  /* If the masks allow it, push the interrupt even higher.  */
-  if (port->maska & bit)
-    {
-      HW_TRACE ((me, "pin %i triggered an int via mask a", my_port));
-      hw_port_event (me, 0, 1);
-    }
-  if (port->maskb & bit)
-    {
-      HW_TRACE ((me, "pin %i triggered an int via mask b", my_port));
-      hw_port_event (me, 1, 1);
-    }
+  bfin_gpio_forward_ints (me, port);
 }
 
 static void

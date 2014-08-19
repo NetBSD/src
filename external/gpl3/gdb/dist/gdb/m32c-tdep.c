@@ -1,7 +1,6 @@
 /* Renesas M32C target-dependent code for GDB, the GNU debugger.
 
-   Copyright 2004, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,10 +21,7 @@
 
 #include <stdarg.h>
 
-#if defined (HAVE_STRING_H)
 #include <string.h>
-#endif
-
 #include "gdb_assert.h"
 #include "elf-bfd.h"
 #include "elf/m32c.h"
@@ -201,16 +197,16 @@ make_types (struct gdbarch *arch)
   TYPE_UNSIGNED (tdep->ptr_voyd) = 1;
   tdep->func_voyd = lookup_function_type (tdep->voyd);
 
-  sprintf (type_name, "%s_data_addr_t",
-	   gdbarch_bfd_arch_info (arch)->printable_name);
+  xsnprintf (type_name, sizeof (type_name), "%s_data_addr_t",
+	     gdbarch_bfd_arch_info (arch)->printable_name);
   tdep->data_addr_reg_type
     = arch_type (arch, TYPE_CODE_PTR, data_addr_reg_bits / TARGET_CHAR_BIT,
                  xstrdup (type_name));
   TYPE_TARGET_TYPE (tdep->data_addr_reg_type) = tdep->voyd;
   TYPE_UNSIGNED (tdep->data_addr_reg_type) = 1;
 
-  sprintf (type_name, "%s_code_addr_t",
-	   gdbarch_bfd_arch_info (arch)->printable_name);
+  xsnprintf (type_name, sizeof (type_name), "%s_code_addr_t",
+	     gdbarch_bfd_arch_info (arch)->printable_name);
   tdep->code_addr_reg_type
     = arch_type (arch, TYPE_CODE_PTR, code_addr_reg_bits / TARGET_CHAR_BIT,
                  xstrdup (type_name));
@@ -1835,7 +1831,7 @@ m32c_analyze_prologue (struct gdbarch *arch,
 static CORE_ADDR
 m32c_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR ip)
 {
-  char *name;
+  const char *name;
   CORE_ADDR func_addr, func_end, sal_end;
   struct m32c_prologue p;
 
@@ -2207,7 +2203,7 @@ m32c_return_by_passed_buf (struct type *type)
 
 static enum return_value_convention
 m32c_return_value (struct gdbarch *gdbarch,
-		   struct type *func_type,
+		   struct value *function,
 		   struct type *valtype,
 		   struct regcache *regcache,
 		   gdb_byte *readbuf,
@@ -2283,8 +2279,7 @@ m32c_return_value (struct gdbarch *gdbarch,
 	    error (_("The return value is stored in memory at 'mem0', "
 		     "but GDB cannot find\n"
 		     " its address."));
-	  write_memory (SYMBOL_VALUE_ADDRESS (mem0),
-                        (char *) writebuf, valtype_len);
+	  write_memory (SYMBOL_VALUE_ADDRESS (mem0), writebuf, valtype_len);
 	}
     }
 
@@ -2354,7 +2349,7 @@ m32c_skip_trampoline_code (struct frame_info *frame, CORE_ADDR stop_pc)
      someone loaded a new executable, and I'm not quite sure of the
      best way to do that.  find_pc_partial_function does do some
      caching, so we'll see how this goes.  */
-  char *name;
+  const char *name;
   CORE_ADDR start, end;
 
   if (find_pc_partial_function (stop_pc, &name, &start, &end))
@@ -2453,19 +2448,20 @@ m32c_m16c_address_to_pointer (struct gdbarch *gdbarch,
 
   if (target_code == TYPE_CODE_FUNC || target_code == TYPE_CODE_METHOD)
     {
-      char *func_name;
+      const char *func_name;
       char *tramp_name;
       struct minimal_symbol *tramp_msym;
 
       /* Try to find a linker symbol at this address.  */
-      struct minimal_symbol *func_msym = lookup_minimal_symbol_by_pc (addr);
+      struct bound_minimal_symbol func_msym
+	= lookup_minimal_symbol_by_pc (addr);
 
-      if (! func_msym)
+      if (! func_msym.minsym)
         error (_("Cannot convert code address %s to function pointer:\n"
                "couldn't find a symbol at that address, to find trampoline."),
                paddress (gdbarch, addr));
 
-      func_name = SYMBOL_LINKAGE_NAME (func_msym);
+      func_name = SYMBOL_LINKAGE_NAME (func_msym.minsym);
       tramp_name = xmalloc (strlen (func_name) + 5);
       strcpy (tramp_name, func_name);
       strcat (tramp_name, ".plt");
@@ -2536,11 +2532,11 @@ m32c_m16c_pointer_to_address (struct gdbarch *gdbarch,
     {
       /* See if there is a minimal symbol at that address whose name is
          "NAME.plt".  */
-      struct minimal_symbol *ptr_msym = lookup_minimal_symbol_by_pc (ptr);
+      struct bound_minimal_symbol ptr_msym = lookup_minimal_symbol_by_pc (ptr);
 
-      if (ptr_msym)
+      if (ptr_msym.minsym)
         {
-          char *ptr_msym_name = SYMBOL_LINKAGE_NAME (ptr_msym);
+          const char *ptr_msym_name = SYMBOL_LINKAGE_NAME (ptr_msym.minsym);
           int len = strlen (ptr_msym_name);
 
           if (len > 4
@@ -2573,7 +2569,7 @@ m32c_m16c_pointer_to_address (struct gdbarch *gdbarch,
 	    {
 	      ptr_msym = lookup_minimal_symbol_by_pc ((aspace << 16) | ptr);
 	      
-	      if (ptr_msym)
+	      if (ptr_msym.minsym)
 		ptr |= aspace << 16;
 	    }
 	}
@@ -2587,8 +2583,8 @@ m32c_virtual_frame_pointer (struct gdbarch *gdbarch, CORE_ADDR pc,
 			    int *frame_regnum,
 			    LONGEST *frame_offset)
 {
-  char *name;
-  CORE_ADDR func_addr, func_end, sal_end;
+  const char *name;
+  CORE_ADDR func_addr, func_end;
   struct m32c_prologue p;
 
   struct regcache *regcache = get_current_regcache ();

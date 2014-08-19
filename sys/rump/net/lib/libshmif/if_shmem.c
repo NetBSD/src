@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.44.8.3 2013/06/23 06:20:29 tls Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.44.8.4 2014/08/20 00:04:43 tls Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.44.8.3 2013/06/23 06:20:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.44.8.4 2014/08/20 00:04:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.44.8.3 2013/06/23 06:20:29 tls Exp $"
 
 #include "rump_private.h"
 #include "rump_net_private.h"
-#include "rumpcomp_user.h"
+#include "shmif_user.h"
 
 static int shmif_clone(struct if_clone *, int);
 static int shmif_unclone(struct ifnet *);
@@ -98,8 +98,6 @@ struct shmif_sc {
 	struct lwp *sc_rcvl;
 	bool sc_dying;
 };
-
-static const uint32_t busversion = SHMIF_VERSION;
 
 static void shmif_rcv(void *);
 
@@ -147,7 +145,7 @@ shmif_lockbus(struct shmif_mem *busmem)
 static void
 shmif_unlockbus(struct shmif_mem *busmem)
 {
-	unsigned int old;
+	unsigned int old __diagused;
 
 	membar_exit();
 	old = atomic_swap_32(&busmem->shm_lock, LOCK_UNLOCKED);
@@ -172,7 +170,7 @@ allocif(int unit, struct shmif_sc **scp)
 
 	ifp = &sc->sc_ec.ec_if;
 
-	sprintf(ifp->if_xname, "shmif%d", unit);
+	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "shmif%d", unit);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST;
 	ifp->if_init = shmif_init;
@@ -347,7 +345,7 @@ rump_shmif_create(const char *path, int *ifnum)
 static int
 shmif_clone(struct if_clone *ifc, int unit)
 {
-	int rc;
+	int rc __diagused;
 	vmem_addr_t unit2;
 
 	/*
@@ -568,6 +566,7 @@ shmif_start(struct ifnet *ifp)
 
 		m_freem(m0);
 		wrote = true;
+		ifp->if_opackets++;
 
 		DPRINTF(("shmif_start: send %d bytes at off %d\n",
 		    pktsize, busmem->shm_last));
@@ -647,6 +646,8 @@ shmif_rcv(void *arg)
 	uint32_t nextpkt;
 	bool wrap, passup;
 	int error;
+	const int align
+	    = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
 
  reup:
 	mutex_enter(&sc->sc_mtx);
@@ -662,6 +663,7 @@ shmif_rcv(void *arg)
 		if (m == NULL) {
 			m = m_gethdr(M_WAIT, MT_DATA);
 			MCLGET(m, M_WAIT);
+			m->m_data += align;
 		}
 
 		DPRINTF(("waiting %d/%" PRIu64 "\n",
@@ -754,6 +756,7 @@ shmif_rcv(void *arg)
 		}
 
 		if (passup) {
+			ifp->if_ipackets++;
 			KERNEL_LOCK(1, NULL);
 			bpf_mtap(ifp, m);
 			ifp->if_input(ifp, m);

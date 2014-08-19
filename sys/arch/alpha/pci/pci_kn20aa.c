@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.53 2012/02/06 02:14:15 matt Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.53.6.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.53 2012/02/06 02:14:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.53.6.1 2014/08/20 00:02:41 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.53 2012/02/06 02:14:15 matt Exp $")
 
 int	dec_kn20aa_intr_map(const struct pci_attach_args *,
 	    pci_intr_handle_t *);
-const char *dec_kn20aa_intr_string(void *, pci_intr_handle_t);
+const char *dec_kn20aa_intr_string(void *, pci_intr_handle_t, char *, size_t);
 const struct evcnt *dec_kn20aa_intr_evcnt(void *, pci_intr_handle_t);
 void	*dec_kn20aa_intr_establish(void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *);
@@ -93,13 +93,15 @@ pci_kn20aa_pickintr(struct cia_config *ccp)
 	/* Not supported on KN20AA. */
 	pc->pc_pciide_compat_intr_establish = NULL;
 
-	kn20aa_pci_intr = alpha_shared_intr_alloc(KN20AA_MAX_IRQ, 8);
+#define PCI_KN20AA_IRQ_STR	8
+	kn20aa_pci_intr = alpha_shared_intr_alloc(KN20AA_MAX_IRQ,
+	    PCI_KN20AA_IRQ_STR);
 	for (i = 0; i < KN20AA_MAX_IRQ; i++) {
 		alpha_shared_intr_set_maxstrays(kn20aa_pci_intr, i,
 		    PCI_STRAY_MAX);
 
 		cp = alpha_shared_intr_string(kn20aa_pci_intr, i);
-		sprintf(cp, "irq %d", i);
+		snprintf(cp, PCI_KN20AA_IRQ_STR, "irq %d", i);
 		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
 		    kn20aa_pci_intr, i), EVCNT_TYPE_INTR, NULL,
 		    "kn20aa", cp);
@@ -175,19 +177,16 @@ dec_kn20aa_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 const char *
-dec_kn20aa_intr_string(void *ccv, pci_intr_handle_t ih)
+dec_kn20aa_intr_string(void *ccv, pci_intr_handle_t ih, char *buf, size_t len)
 {
 #if 0
 	struct cia_config *ccp = ccv;
 #endif
-	static char irqstr[15];          /* 11 + 2 + NULL + sanity */
-
 	if (ih > KN20AA_MAX_IRQ)
-	        panic("dec_kn20aa_intr_string: bogus kn20aa IRQ 0x%lx",
-		    ih);
+	        panic("%s: bogus kn20aa IRQ 0x%lx", __func__, ih);
 
-	sprintf(irqstr, "kn20aa irq %ld", ih);
-	return (irqstr);
+	snprintf(buf, len, "kn20aa irq %ld", ih);
+	return buf;
 }
 
 const struct evcnt *
@@ -198,7 +197,7 @@ dec_kn20aa_intr_evcnt(void *ccv, pci_intr_handle_t ih)
 #endif
 
 	if (ih > KN20AA_MAX_IRQ)
-		panic("dec_kn20aa_intr_string: bogus kn20aa IRQ 0x%lx", ih);
+		panic("%s: bogus kn20aa IRQ 0x%lx", __func__, ih);
 	return (alpha_shared_intr_evcnt(kn20aa_pci_intr, ih));
 }
 

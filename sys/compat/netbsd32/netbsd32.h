@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.95.2.1 2012/11/20 03:01:56 tls Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.95.2.2 2014/08/20 00:03:33 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -48,6 +48,7 @@
 #include <sys/ucred.h>
 #include <compat/sys/ucontext.h>
 #include <compat/sys/mount.h>
+#include <compat/sys/signal.h>
 
 /*
  * first, define the basic types we need.
@@ -165,6 +166,7 @@ typedef netbsd32_pointer_t netbsd32_fd_setp_t;
 typedef netbsd32_intptr_t netbsd32_semid_t;
 typedef netbsd32_pointer_t netbsd32_semidp_t;
 typedef netbsd32_uint64 netbsd32_dev_t;
+typedef netbsd32_int64 netbsd32_off_t;
 
 /* from <sys/uio.h> */
 typedef netbsd32_pointer_t netbsd32_iovecp_t;
@@ -298,7 +300,7 @@ struct netbsd32_quotactlargs {
 		} put;
 		struct {
 			netbsd32_pointer_t qc_key;
-		} delete;
+		} del;
 		struct {
 			netbsd32_pointer_t qc_cursor;
 		} cursoropen;
@@ -381,6 +383,16 @@ typedef netbsd32_pointer_t netbsd32_rlimitp_t;
 struct netbsd32_loadavg {
 	fixpt_t	ldavg[3];
 	netbsd32_long	fscale;
+};
+
+/* from <sys/swap.h> */
+struct netbsd32_swapent {
+	netbsd32_dev_t	se_dev;		/* device id */
+	int	se_flags;		/* flags */
+	int	se_nblks;		/* total blocks */
+	int	se_inuse;		/* blocks in use */
+	int	se_priority;		/* priority of this device */
+	char	se_path[PATH_MAX+1];	/* path	name */
 };
 
 /* from <sys/ipc.h> */
@@ -586,6 +598,12 @@ struct netbsd32_shmid_ds14 {
 /* from <sys/signal.h> */
 typedef netbsd32_pointer_t netbsd32_sigsetp_t;
 typedef netbsd32_pointer_t netbsd32_sigactionp_t;
+struct	netbsd32_sigaction13 {
+	netbsd32_voidp netbsd32_sa_handler;	/* signal handler */
+	sigset13_t netbsd32_sa_mask;		/* signal mask to apply */
+	int	netbsd32_sa_flags;		/* see signal options below */
+};
+
 struct	netbsd32_sigaction {
 	netbsd32_voidp netbsd32_sa_handler;	/* signal handler */
 	sigset_t netbsd32_sa_mask;		/* signal mask to apply */
@@ -993,7 +1011,8 @@ int	netbsd32_kevent(struct lwp *, void *, register_t *);
 
 #define	SCARG_P32(uap, name) NETBSD32PTR64(SCARG(uap, name))
 
-int	coredump_netbsd32(struct lwp *, void *);
+struct coredump_iostate;
+int	coredump_netbsd32(struct lwp *, struct coredump_iostate *);
 
 /*
  * random other stuff

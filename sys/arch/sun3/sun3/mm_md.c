@@ -1,4 +1,4 @@
-/*	$NetBSD: mm_md.c,v 1.2 2011/06/12 03:35:48 rmind Exp $	*/
+/*	$NetBSD: mm_md.c,v 1.2.14.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm_md.c,v 1.2 2011/06/12 03:35:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm_md.c,v 1.2.14.1 2014/08/20 00:03:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -92,8 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: mm_md.c,v 1.2 2011/06/12 03:35:48 rmind Exp $");
 #define DEV_VME16D32	8	/* minor device 8 is /dev/vme16d32 */
 #define DEV_VME24D32	9	/* minor device 9 is /dev/vme24d32 */
 #define DEV_VME32D32	10	/* minor device 10 is /dev/vme32d32 */
-#define DEV_EEPROM	11 	/* minor device 11 is eeprom */
-#define DEV_LEDS	13 	/* minor device 13 is leds */
+#define DEV_EEPROM	11	/* minor device 11 is eeprom */
+#define DEV_LEDS	13	/* minor device 13 is leds */
 
 int
 mm_md_readwrite(dev_t dev, struct uio *uio)
@@ -109,7 +109,7 @@ mm_md_readwrite(dev_t dev, struct uio *uio)
 	}
 }
 
-paddr_t 
+paddr_t
 mm_md_mmap(dev_t dev, off_t off, int prot)
 {
 

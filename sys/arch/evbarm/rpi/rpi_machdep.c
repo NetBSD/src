@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.7.2.3 2013/06/23 06:20:04 tls Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.7.2.4 2014/08/20 00:02:56 tls Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,14 +30,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.7.2.3 2013/06/23 06:20:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.7.2.4 2014/08/20 00:02:56 tls Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_arm_debug.h"
+#include "opt_vcprop.h"
 
 #include "sdhc.h"
-#include "dotg.h"
+#include "bcmdwctwo.h"
 #include "bcmspi.h"
 #include "bsciic.h"
 #include "plcom.h"
@@ -102,7 +104,7 @@ extern int KERNEL_BASE_phys[];
 extern int KERNEL_BASE_virt[];
 
 BootConfig bootconfig;		/* Boot config storage */
-static char bootargs[MAX_BOOT_STRING];
+static char bootargs[VCPROP_MAXCMDLINE];
 char *boot_args = NULL;
 
 static void rpi_bootparams(void);
@@ -168,7 +170,7 @@ static struct plcom_instance rpi_pi = {
 /* Smallest amount of RAM start.elf could give us. */
 #define RPI_MINIMUM_SPLIT (128U * 1024 * 1024)
 
-static struct {
+static struct __aligned(16) {
 	struct vcprop_buffer_hdr	vb_hdr;
 	struct vcprop_tag_fwrev		vbt_fwrev;
 	struct vcprop_tag_boardmodel	vbt_boardmodel;
@@ -180,7 +182,7 @@ static struct {
 	struct vcprop_tag_clockrate	vbt_emmcclockrate;
 	struct vcprop_tag_clockrate	vbt_armclockrate;
 	struct vcprop_tag end;
-} vb __packed __aligned(16) =
+} vb =
 {
 	.vb_hdr = {
 		.vpb_len = sizeof(vb),
@@ -257,11 +259,11 @@ static struct {
 };
 
 #if NGENFB > 0
-static struct {
+static struct __aligned(16) {
 	struct vcprop_buffer_hdr	vb_hdr;
 	struct vcprop_tag_edidblock	vbt_edid;
 	struct vcprop_tag end;
-} vb_edid __packed __aligned(16) =
+} vb_edid =
 {
 	.vb_hdr = {
 		.vpb_len = sizeof(vb_edid),
@@ -280,7 +282,7 @@ static struct {
 	}
 };
 
-static struct {
+static struct __aligned(16) {
 	struct vcprop_buffer_hdr	vb_hdr;
 	struct vcprop_tag_fbres		vbt_res;
 	struct vcprop_tag_fbres		vbt_vres;
@@ -291,7 +293,7 @@ static struct {
 	struct vcprop_tag_blankscreen	vbt_blank;
 	struct vcprop_tag_fbpitch	vbt_pitch;
 	struct vcprop_tag end;
-} vb_setfb __packed __aligned(16) =
+} vb_setfb =
 {
 	.vb_hdr = {
 		.vpb_len = sizeof(vb_setfb),
@@ -380,20 +382,20 @@ rpi_bootparams(void)
 
 	bcm2835_mbox_write(iot, ioh, BCMMBOX_CHANPM, (
 #if (NSDHC > 0)
-	    (1 << VCPM_POWER_SDCARD) | 
+	    (1 << VCPM_POWER_SDCARD) |
 #endif
 #if (NPLCOM > 0)
 	    (1 << VCPM_POWER_UART0) |
 #endif
-#if (NDOTG > 0)
-	    (1 << VCPM_POWER_USB) | 
+#if (NBCMDWCTWO > 0)
+	    (1 << VCPM_POWER_USB) |
 #endif
 #if (NBSCIIC > 0)
-	    (1 << VCPM_POWER_I2C0) | (1 << VCPM_POWER_I2C1) | 
+	    (1 << VCPM_POWER_I2C0) | (1 << VCPM_POWER_I2C1) |
 	/*  (1 << VCPM_POWER_I2C2) | */
 #endif
 #if (NBCMSPI > 0)
-	    (1 << VCPM_POWER_SPI) | 
+	    (1 << VCPM_POWER_SPI) |
 #endif
 	    0) << 4);
 
@@ -537,11 +539,41 @@ initarm(void *arg)
 #ifdef VERBOSE_INIT_ARM
 	printf("initarm: Configuring system ...\n");
 #endif
-	arm32_bootmem_init(bootconfig.dram[0].address,
-	    bootconfig.dram[0].pages * PAGE_SIZE, (uintptr_t)KERNEL_BASE_phys);
+
+	psize_t ram_size = bootconfig.dram[0].pages * PAGE_SIZE;
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	if (ram_size > KERNEL_VM_BASE - KERNEL_BASE) {
+		printf("%s: dropping RAM size from %luMB to %uMB\n",
+		    __func__, (unsigned long) (ram_size >> 20),
+		    (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
+		ram_size = KERNEL_VM_BASE - KERNEL_BASE;
+	}
+#endif
+
+	/*
+	 * If MEMSIZE specified less than what we really have, limit ourselves
+	 * to that.
+	 */
+#ifdef MEMSIZE
+	if (ram_size == 0 || ram_size > (unsigned)MEMSIZE * 1024 * 1024)
+		ram_size = (unsigned)MEMSIZE * 1024 * 1024;
+#else
+	KASSERTMSG(ram_size > 0, "RAM size unknown and MEMSIZE undefined");
+#endif
+
+	arm32_bootmem_init(bootconfig.dram[0].address, ram_size,
+	    (uintptr_t)KERNEL_BASE_phys);
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	const bool mapallmem_p = true;
+	KASSERT(ram_size <= KERNEL_VM_BASE - KERNEL_BASE);
+#else
+	const bool mapallmem_p = false;
+#endif
 
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, rpi_devmap,
-	    false);
+	    mapallmem_p);
 
 	cpu_reset_address = bcm2835_system_reset;
 
@@ -645,7 +677,7 @@ rpi_fb_get_edid_mode(uint32_t *pwidth, uint32_t *pheight)
 	uint8_t edid_data[1024];
 	uint32_t res;
 	int error;
-	
+
 	error = bcmmbox_request(BCMMBOX_CHANARM2VC, &vb_edid,
 	    sizeof(vb_edid), &res);
 	if (error) {
@@ -688,7 +720,7 @@ rpi_fb_init(prop_dictionary_t dict)
 	uint32_t width = 0, height = 0;
 	uint32_t res;
 	char *ptr;
-	int integer; 
+	int integer;
 	int error;
 
 	if (get_bootconf_option(boot_args, "fb",

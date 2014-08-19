@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_lfs.c,v 1.6.26.1 2013/06/23 06:28:52 tls Exp $	*/
+/*	$NetBSD: resize_lfs.c,v 1.6.26.2 2014/08/20 00:02:27 tls Exp $	*/
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,6 +60,7 @@ int
 main(int argc, char **argv)
 {
 	char *rdev, *fsname, buf[LFS_SBPAD];
+	size_t rdevlen;
 	daddr_t newsize, newnsegs;
 	int devfd, rootfd;
 	int ch, i, verbose;
@@ -95,8 +96,9 @@ main(int argc, char **argv)
 	 */
 	if (statvfs(fsname, &vfs) < 0)
 		err(1, "%s", fsname);
-	rdev = (char *)malloc(strlen(vfs.f_mntfromname + 2));
-	sprintf(rdev, "/dev/r%s", vfs.f_mntfromname + 5);
+	rdevlen = strlen(vfs.f_mntfromname) + 2;
+	rdev = malloc(rdevlen);
+	snprintf(rdev, rdevlen, "/dev/r%s", vfs.f_mntfromname + 5);
 	devfd = open(rdev, O_RDONLY);
 	if (devfd < 0)
 		err(1, "open raw device");
@@ -144,13 +146,14 @@ main(int argc, char **argv)
 	 * (XXX make the kernel able to do this instead?)
 	 */
 	for (i = fs->lfs_nseg - 1; i >= newnsegs; --i) {
-		char cmd[80];
+		char cmd[128];
 
 		/* If it's already empty, don't call the cleaner */
 		if (fcntl(rootfd, LFCNINVAL, &i) == 0)
 			continue;
 
-		sprintf(cmd, "/libexec/lfs_cleanerd -q -i %d %s", i, fsname);
+		snprintf(cmd, sizeof(cmd), "/libexec/lfs_cleanerd -q -i %d %s",
+			 i, fsname);
 		if (system(cmd) != 0)
 			err(1, "invalidating segment %d", i);
 	}

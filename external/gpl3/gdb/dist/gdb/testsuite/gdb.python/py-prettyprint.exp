@@ -1,4 +1,4 @@
-# Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,15 +16,9 @@
 # This file is part of the GDB testsuite.  It tests Python-based
 # pretty-printing for the CLI.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 load_lib gdb-python.exp
 
-set testfile "py-prettyprint"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile
 
 # Start with a fresh gdb.
 gdb_exit
@@ -33,9 +27,9 @@ gdb_start
 # Skip all tests if Python scripting is not enabled.
 if { [skip_python_tests] } { continue }
 
-proc run_lang_tests {lang} {
-    global srcdir subdir srcfile binfile testfile hex
-    if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable "debug $lang"] != "" } {
+proc run_lang_tests {exefile lang} {
+    global srcdir subdir srcfile testfile hex
+    if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${exefile}" executable "debug $lang"] != "" } {
 	untested "Couldn't compile ${srcfile} in $lang mode"
 	return -1
     }
@@ -46,7 +40,7 @@ proc run_lang_tests {lang} {
     gdb_exit
     gdb_start
     gdb_reinitialize_dir $srcdir/$subdir
-    gdb_load ${binfile}
+    gdb_load ${exefile}
 
     if ![runto_main ] then {
 	perror "couldn't run to breakpoint"
@@ -59,9 +53,11 @@ proc run_lang_tests {lang} {
 	".*Breakpoint.*"
     gdb_test "continue" ".*Breakpoint.*"
 
-    set remote_python_file [remote_download host ${srcdir}/${subdir}/${testfile}.py]
+    set remote_python_file [gdb_remote_download host \
+				${srcdir}/${subdir}/${testfile}.py]
 
-    gdb_test_no_output "python execfile ('${remote_python_file}')"
+    gdb_test_no_output "python exec (open ('${remote_python_file}').read ())" \
+	"python exec (open ('[file tail ${remote_python_file}]').read ())"
     
     gdb_test "print ss" " = a=< a=<1> b=<$hex>> b=< a=<2> b=<$hex>>"
     gdb_test "print ssa\[1\]" " = a=< a=<5> b=<$hex>> b=< a=<6> b=<$hex>>"
@@ -87,7 +83,7 @@ proc run_lang_tests {lang} {
 	gdb_py_test_silent_cmd "set print elements 200" "" 1
     }
 
-    gdb_test "print ns2" ".error reading variable: Address 0x0 out of bounds."
+    gdb_test "print ns2" ".error reading variable: Cannot access memory at address 0x0."
 
     gdb_test "print x" " = \"this is x\""
     gdb_test "print cstring" " = \"const string\""
@@ -96,6 +92,9 @@ proc run_lang_tests {lang} {
 
     gdb_test_no_output "python pp_ls_encoding = 'UTF-8'"
     gdb_test "print estring2" "\"embedded \", <incomplete sequence \\\\302>"
+
+    gdb_test_no_output "set python print-stack full"
+    gdb_test "print hint_error" "Exception: hint failed\r\nhint_error_val"
 
     gdb_test "print c" " = container \"container\" with 2 elements = {$nl *.0. = 23,$nl *.1. = 72$nl}"
 
@@ -110,15 +109,10 @@ proc run_lang_tests {lang} {
     remote_file host delete ${remote_python_file}
 }
 
-run_lang_tests "c"
-run_lang_tests "c++"
+run_lang_tests "${binfile}" "c"
+run_lang_tests "${binfile}-cxx" "c++"
 
 # Run various other tests.
-
-if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable "debug"] != "" } {
-    untested "Couldn't compile ${srcfile}"
-    return -1
-}
 
 # Start with a fresh gdb.
 gdb_exit
@@ -131,13 +125,20 @@ if ![runto_main ] then {
     return
 }
 
+set remote_python_file [gdb_remote_download host \
+			    ${srcdir}/${subdir}/${testfile}.py]
+
+gdb_test_no_output "python exec (open ('${remote_python_file}').read ())" \
+    "python exec (open ('[file tail ${remote_python_file}]').read ())"
+
+gdb_breakpoint [gdb_get_line_number "eval-break"]
+gdb_continue_to_breakpoint "eval-break" ".* eval-break .*"
+
+gdb_test "info locals" "eval9 = eval=<123456789>"
+
 gdb_test "b [gdb_get_line_number {break to inspect} ${testfile}.c ]" \
     ".*Breakpoint.*"
 gdb_test "continue" ".*Breakpoint.*"
-
-set remote_python_file [remote_download host ${srcdir}/${subdir}/${testfile}.py]
-
-gdb_test_no_output "python execfile ('${remote_python_file}')"
 
 gdb_test "print ss" " = a=< a=<1> b=<$hex>> b=< a=<2> b=<$hex>>" \
     "print ss enabled #1"

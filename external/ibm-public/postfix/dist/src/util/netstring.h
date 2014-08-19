@@ -1,4 +1,4 @@
-/*	$NetBSD: netstring.h,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: netstring.h,v 1.1.1.1.16.1 2014/08/19 23:59:45 tls Exp $	*/
 
 #ifndef _NETSTRING_H_INCLUDED_
 #define _NETSTRING_H_INCLUDED_
@@ -38,6 +38,7 @@ extern void netstring_put_multi(VSTREAM *,...);
 extern void netstring_fflush(VSTREAM *);
 extern VSTRING *netstring_memcpy(VSTRING *, const char *, ssize_t);
 extern VSTRING *netstring_memcat(VSTRING *, const char *, ssize_t);
+extern const char *netstring_strerror(int);
 
 #define NETSTRING_PUT_BUF(str, buf) \
 	netstring_put((str), vstring_str(buf), VSTRING_LEN(buf))

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_emap.c,v 1.9 2012/04/13 15:33:38 yamt Exp $	*/
+/*	$NetBSD: uvm_emap.c,v 1.9.2.1 2014/08/20 00:04:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_emap.c,v 1.9 2012/04/13 15:33:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_emap.c,v 1.9.2.1 2014/08/20 00:04:45 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -116,12 +116,12 @@ void
 uvm_emap_sysinit(void)
 {
 	struct uvm_cpu *ucpu;
-	size_t qmax;
+	/* size_t qmax; */
 	u_int i;
 
 	uvm_emap_size = roundup(uvm_emap_size, PAGE_SIZE);
-	qmax = 16 * PAGE_SIZE;
 #if 0
+	qmax = 16 * PAGE_SIZE;
 	uvm_emap_va = uvm_km_alloc(kernel_map, uvm_emap_size, 0,
 	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	if (uvm_emap_va == 0) {

@@ -1,4 +1,4 @@
-# Copyright 2005, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 2005-2014 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,23 +13,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 load_lib "ada.exp"
 
 if { [skip_ada_tests] } { return -1 }
 
-set testdir "arrayidx"
-set testfile "${testdir}/p"
-set srcfile ${srcdir}/${subdir}/${testfile}.adb
-set binfile ${objdir}/${subdir}/${testfile}
+standard_ada_testfile p
 
-file mkdir ${objdir}/${subdir}/${testdir}
 if {[gdb_compile_ada "${srcfile}" "${binfile}" executable {debug}] != ""} {
     return -1
 }
+
+if [get_compiler_info] {
+    return -1
+}
+set old_gcc [expr [test_compiler_info {gcc-[0-3]-*}] \
+	     || [test_compiler_info {gcc-4-[0-6]-*}]]
 
 clean_restart ${testfile}
 
@@ -40,6 +38,9 @@ runto "p.adb:$bp_location"
 
 gdb_test_no_output "set print array-indexes off"
 
+if $old_gcc {
+    setup_xfail "*-*-*"
+}
 gdb_test "print one_two_three" \
          "= \\(1, 2, 3\\)" \
          "print one_two_three, indexes off"
@@ -57,17 +58,26 @@ gdb_test "print u_one_two_three" \
          "print u_one_two_three, indexes off"
 
 gdb_test "print p_one_two_three" \
-         "= \\(0 => false, true, true\\)" \
+         "= \\(false, true, true\\)" \
          "print p_one_two_three, indexes off"
 
+if $old_gcc {
+    setup_xfail "*-*-*"
+}
 gdb_test "print few_reps" \
          "= \\(1, 2, 3, 3, 3, 3, 3, 4, 5\\)" \
          "print few_reps, indexes off"
 
+if $old_gcc {
+    setup_xfail "*-*-*"
+}
 gdb_test "print many_reps" \
          "= \\(1, 2, 3 <repeats 12 times>, 4, 5\\)" \
          "print many_reps, indexes off"
 
+if $old_gcc {
+    setup_xfail "*-*-*"
+}
 gdb_test "print empty" \
          "= \\(\\)" \
          "print empty, indexes off"
@@ -76,6 +86,9 @@ gdb_test "print empty" \
 
 gdb_test_no_output "set print array-indexes on"
 
+if $old_gcc {
+    setup_xfail "*-*-*"
+}
 gdb_test "print one_two_three" \
          "= \\(1 => 1, 2 => 2, 3 => 3\\)" \
          "print one_two_three"
@@ -93,17 +106,26 @@ gdb_test "print u_one_two_three" \
          "print u_one_two_three"
 
 gdb_test "print p_one_two_three" \
-         "= \\(0 => false, 1 => true, 2 => true\\)" \
+         "= \\(one => false, two => true, three => true\\)" \
          "print p_one_two_three"
 
+if $old_gcc {
+    setup_xfail "*-*-*"
+}
 gdb_test "print few_reps" \
          "= \\(1 => 1, 2 => 2, 3 => 3, 4 => 3, 5 => 3, 6 => 3, 7 => 3, 8 => 4, 9 => 5\\)" \
          "print few_reps"
 
+if $old_gcc {
+    setup_xfail "*-*-*"
+}
 gdb_test "print many_reps" \
          "= \\(1 => 1, 2 => 2, 3 => 3 <repeats 12 times>, 15 => 4, 16 => 5\\)" \
          "print many_reps"
 
+if $old_gcc {
+    setup_xfail "*-*-*"
+}
 gdb_test "print empty" \
          "= \\(\\)" \
          "print empty"

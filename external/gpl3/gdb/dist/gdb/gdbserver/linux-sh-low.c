@@ -1,6 +1,5 @@
 /* GNU/Linux/SH specific low level interface, for the remote server for GDB.
-   Copyright (C) 1995, 1996, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2007,
-   2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1995-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,6 +21,7 @@
 
 /* Defined in auto-generated file reg-sh.c.  */
 void init_registers_sh (void);
+extern const struct target_desc *tdesc_sh;
 
 #ifdef HAVE_SYS_REG_H
 #include <sys/reg.h>
@@ -103,17 +103,49 @@ static void sh_fill_gregset (struct regcache *regcache, void *buf)
       collect_register (regcache, i, (char *) buf + sh_regmap[i]);
 }
 
-struct regset_info target_regsets[] = {
+static struct regset_info sh_regsets[] = {
   { 0, 0, 0, 0, GENERAL_REGS, sh_fill_gregset, NULL },
   { 0, 0, 0, -1, -1, NULL, NULL }
 };
 
+static struct regsets_info sh_regsets_info =
+  {
+    sh_regsets, /* regsets */
+    0, /* num_regsets */
+    NULL, /* disabled_regsets */
+  };
+
+static struct usrregs_info sh_usrregs_info =
+  {
+    sh_num_regs,
+    sh_regmap,
+  };
+
+static struct regs_info regs_info =
+  {
+    NULL, /* regset_bitmap */
+    &sh_usrregs_info,
+    &sh_regsets_info
+  };
+
+static const struct regs_info *
+sh_regs_info (void)
+{
+  return &regs_info;
+}
+
+static void
+sh_arch_setup (void)
+{
+  current_process ()->tdesc = tdesc_sh;
+}
+
 struct linux_target_ops the_low_target = {
-  init_registers_sh,
-  sh_num_regs,
-  sh_regmap,
+  sh_arch_setup,
+  sh_regs_info,
   sh_cannot_fetch_register,
   sh_cannot_store_register,
+  NULL, /* fetch_register */
   sh_get_pc,
   sh_set_pc,
   (const unsigned char *) &sh_breakpoint,
@@ -122,3 +154,11 @@ struct linux_target_ops the_low_target = {
   0,
   sh_breakpoint_at,
 };
+
+void
+initialize_low_arch (void)
+{
+  init_registers_sh ();
+
+  initialize_regsets_info (&sh_regsets_info);
+}

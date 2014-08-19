@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.37 2012/01/21 16:48:08 chs Exp $	*/
+/*	$NetBSD: makphy.c,v 1.37.6.1 2014/08/20 00:03:41 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.37 2012/01/21 16:48:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.37.6.1 2014/08/20 00:03:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,11 +101,12 @@ static const struct mii_phydesc makphys[] = {
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1011,
 	  MII_STR_xxMARVELL_E1011 },
 
-#if 0
-/* doesn't work on eg. HP XW9400 */
+	/* XXX: reported not to work on eg. HP XW9400 */
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1149,
 	  MII_STR_xxMARVELL_E1149 },
-#endif
+
+	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1149R,
+	  MII_STR_xxMARVELL_E1149R },
 
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1111,
 	  MII_STR_xxMARVELL_E1111 },
@@ -121,6 +122,9 @@ static const struct mii_phydesc makphys[] = {
 
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1116R_29,
 	  MII_STR_xxMARVELL_E1116R_29 },
+
+	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1543,
+	  MII_STR_xxMARVELL_E1543 },
 
 	{ 0,				0,
 	  NULL },
@@ -150,12 +154,38 @@ makphyattach(device_t parent, device_t self, void *aux)
 	aprint_normal(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_dev = self;
+	sc->mii_mpd_model = MII_MODEL(ma->mii_id2);
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &makphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = MII_ANEGTICKS;
+
+	switch (sc->mii_mpd_model) {
+	case MII_MODEL_xxMARVELL_E1011:
+	case MII_MODEL_xxMARVELL_E1112:
+		if (PHY_READ(sc, MII_MAKPHY_ESSR) & ESSR_FIBER_LINK)
+			sc->mii_flags |= MIIF_HAVEFIBER;
+                break;
+	case MII_MODEL_xxMARVELL_E1149:
+	case MII_MODEL_xxMARVELL_E1149R:
+		/*
+		 * Some 88E1149 PHY's page select is initialized to
+		 * point to other bank instead of copper/fiber bank
+		 * which in turn resulted in wrong registers were
+		 * accessed during PHY operation. It is believed that
+		 * page 0 should be used for copper PHY so reinitialize
+		 * MII_MAKPHY_EADR to select default copper PHY. If parent
+		 * device know the type of PHY(either copper or fiber),
+		 * that information should be used to select default
+		 * type of PHY.
+		 */
+		PHY_WRITE(sc, MII_MAKPHY_EADR, 0);
+		break;
+	default:
+		break;
+	}
 
 	PHY_RESET(sc);
 
@@ -314,6 +344,8 @@ makphy_status(struct mii_softc *sc)
 		if (pssr & PSSR_DUPLEX)
 			mii->mii_media_active |=
 			    IFM_FDX | mii_phy_flowstatus(sc);
+		else
+			mii->mii_media_active |= IFM_HDX;
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }

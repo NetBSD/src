@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_accf.c,v 1.12 2010/08/21 13:19:39 pgoyette Exp $	*/
+/*	$NetBSD: uipc_accf.c,v 1.12.18.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.12 2010/08/21 13:19:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.12.18.1 2014/08/20 00:04:29 tls Exp $");
 
 #define ACCEPT_FILTER_MOD
 
@@ -92,11 +92,6 @@ static void
 sysctl_net_inet_accf_setup(void)
 {
 
-	sysctl_createv(&ctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(&ctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet", NULL,

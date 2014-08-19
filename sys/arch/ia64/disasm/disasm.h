@@ -1,4 +1,4 @@
-/*	$NetBSD: disasm.h,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: disasm.h,v 1.1.122.1 2014/08/20 00:03:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 Marcel Moolenaar
@@ -316,9 +316,9 @@ int asm_extract(enum asm_op, enum asm_fmt, uint64_t, struct asm_bundle *, int);
 
 int asm_decode(uint64_t, struct asm_bundle *);
 
-void asm_completer(const struct asm_cmpltr *, char *);
-void asm_mnemonic(const enum asm_op, char *);
-void asm_operand(const struct asm_oper *, char *, uint64_t);
+void asm_completer(const struct asm_cmpltr *, char *, size_t);
+void asm_mnemonic(const enum asm_op, char *, size_t);
+void asm_operand(const struct asm_oper *, char *, size_t, uint64_t);
 void asm_print_bundle(const struct asm_bundle *, uint64_t);
 void asm_print_inst(const struct asm_bundle *, int, uint64_t);
 

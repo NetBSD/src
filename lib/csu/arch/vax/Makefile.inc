@@ -1,3 +1,3 @@
-# $NetBSD: Makefile.inc,v 1.1.12.1 2013/06/23 06:21:03 tls Exp $
+# $NetBSD: Makefile.inc,v 1.1.12.2 2014/08/20 00:02:06 tls Exp $
 
-CPPFLAGS+=	-DELFSIZE=32
+CPPFLAGS+=	-I${ARCHDIR}

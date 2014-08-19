@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.11.12.1 2012/11/20 03:01:17 tls Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.11.12.2 2014/08/20 00:02:56 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.11.12.1 2012/11/20 03:01:17 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.11.12.2 2014/08/20 00:02:56 tls Exp $");
 
 #include "opt_irqstats.h"
 
@@ -116,7 +116,7 @@ isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 	/* some interrupts should never be dynamically allocated */
 	mask &= 0x00e0;
 
-	for (i = 0; i < sizeof(isairq); i++) {
+	for (i = 0; i < __arraycount(isairq); i++) {
 		if ((mask & (1<<isairq[i])) == 0)
 			continue;
 		if (isairq_nhandlers[i] < count || count == -1) {
@@ -147,7 +147,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level, int (*ih_
 {
 	int epirq = -1, i;
 	/* Find real EP93XX irq number */
-	for(i = 0; i < sizeof(isairq); i++) {
+	for(i = 0; i < __arraycount(isairq); i++) {
 		if (irq == isairq[i]) epirq = ep93xxirq[i];
 	}
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.54 2011/06/05 16:59:21 matt Exp $	*/
+/*	$NetBSD: ka820.c,v 1.54.12.1 2014/08/20 00:03:27 tls Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.54 2011/06/05 16:59:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.54.12.1 2014/08/20 00:03:27 tls Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -98,7 +98,7 @@ const struct cpu_dep ka820_calls = {
 #if defined(MULTIPROCESSOR)
 static void ka820_startslave(struct cpu_info *);
 static void ka820_send_ipi(struct cpu_info *);
-static void ka820_txrx(int, const char *, int);
+static void ka820_txrx(int, const char *, ...) __printflike(2, 3);
 static void ka820_sendstr(int, const char *);
 static void ka820_sergeant(int);
 static int rxchar(void);
@@ -144,15 +144,16 @@ ka820_attach(device_t parent, device_t self, void *aux)
 {
 	struct bi_attach_args * const ba = aux;
 	struct cpu_info *ci;
+	char c;
 	int csr;
 	u_short rev;
 
 	rev = bus_space_read_4(ba->ba_iot, ba->ba_ioh, BIREG_DTYPE) >> 16;
+	c = rev & 0x8000 ? '5' : '0';
 	mastercpu = mfpr(PR_BINID);
-	strcpy(cpu_model, "VAX 8200");
-	cpu_model[6] = rev & 0x8000 ? '5' : '0';
+	cpu_setmodel("VAX 82%c0", c);
 	printf(": ka82%c (%s) CPU rev %d, u patch rev %d, sec patch %d\n",
-	    cpu_model[6], mastercpu == ba->ba_nodenr ? "master" : "slave",
+	    c, mastercpu == ba->ba_nodenr ? "master" : "slave",
 	    ((rev >> 11) & 15), ((rev >> 1) &1023), rev & 1);
 
 	/* Allow for IPINTR */
@@ -538,12 +539,12 @@ ka820_startslave(struct cpu_info *ci)
 	for (i = 0; i < 10000; i++)
 		if (rxchar())
 			i = 0;
-	ka820_txrx(id, "\020", 0);		/* Send ^P to get attention */
-	ka820_txrx(id, "I\r", 0);			/* Init other end */
-	ka820_txrx(id, "D/I 4 %x\r", ci->ci_istack);	/* Interrupt stack */
+	ka820_txrx(id, "\020");		/* Send ^P to get attention */
+	ka820_txrx(id, "I\r");			/* Init other end */
+	ka820_txrx(id, "D/I 4 %x\r", (int)ci->ci_istack);	/* Interrupt stack */
 	ka820_txrx(id, "D/I C %x\r", mfpr(PR_SBR));	/* SBR */
 	ka820_txrx(id, "D/I D %x\r", mfpr(PR_SLR));	/* SLR */
-	ka820_txrx(id, "D/I 10 %x\r", pcb->pcb_paddr);	/* PCB for idle proc */
+	ka820_txrx(id, "D/I 10 %x\r", (int)pcb->pcb_paddr);	/* PCB for idle proc */
 	ka820_txrx(id, "D/I 11 %x\r", mfpr(PR_SCBB));	/* SCB */
 	ka820_txrx(id, "D/I 38 %x\r", mfpr(PR_MAPEN));	/* Enable MM */
 	ka820_txrx(id, "S %x\r", (int)&vax_mp_tramp);	/* Start! */
@@ -556,11 +557,14 @@ ka820_startslave(struct cpu_info *ci)
 }
 
 void
-ka820_txrx(int id, const char *fmt, int arg)
+ka820_txrx(int id, const char *fmt, ...)
 {
 	char buf[20];
+	va_list ap;
 
-	sprintf(buf, fmt, arg);
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
 	ka820_sendstr(id, buf);
 	ka820_sergeant(id);
 }

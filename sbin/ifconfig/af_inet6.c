@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.27 2010/12/13 17:35:08 pooka Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.27.12.1 2014/08/20 00:02:25 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.27 2010/12/13 17:35:08 pooka Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.27.12.1 2014/08/20 00:02:25 tls Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -71,7 +71,6 @@ static int setia6vltime_impl(prop_dictionary_t, struct in6_aliasreq *);
 
 static int setia6lifetime(prop_dictionary_t, int64_t, time_t *, uint32_t *);
 
-static void in6_delscopeid(struct sockaddr_in6 *sin6);
 static void in6_status(prop_dictionary_t, prop_dictionary_t, bool);
 
 static struct usage_func usage;
@@ -257,18 +256,6 @@ setia6eui64_impl(prop_dictionary_t env, struct in6_aliasreq *ifra)
 	return 0;
 }
 
-/* KAME idiosyncrasy */
-static void
-in6_delscopeid(struct sockaddr_in6 *sin6)
-{
-	if (!IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) ||
-	    sin6->sin6_scope_id == 0)
-		return;
-
-	*(u_int16_t *)&sin6->sin6_addr.s6_addr[2] = htons(sin6->sin6_scope_id);
-	sin6->sin6_scope_id = 0;
-}
-
 /* XXX not really an alias */
 void
 in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
@@ -291,7 +278,7 @@ in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 
 	sin6 = &creq->ifr_addr;
 
-	in6_fillscopeid(sin6);
+	inet6_getscopeid(sin6, INET6_IS_ADDR_LINKLOCAL);
 	scopeid = sin6->sin6_scope_id;
 	if (getnameinfo((const struct sockaddr *)sin6, sin6->sin6_len,
 			hbuf, sizeof(hbuf), NULL, 0, niflag))
@@ -311,7 +298,7 @@ in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 			ifr6.ifr_addr.sin6_len = sizeof(struct sockaddr_in6);
 		}
 		sin6 = &ifr6.ifr_addr;
-		in6_fillscopeid(sin6);
+		inet6_getscopeid(sin6, INET6_IS_ADDR_LINKLOCAL);
 		hbuf[0] = '\0';
 		if (getnameinfo((struct sockaddr *)sin6, sin6->sin6_len,
 				hbuf, sizeof(hbuf), NULL, 0, niflag))
@@ -419,8 +406,8 @@ in6_pre_aifaddr(prop_dictionary_t env, const struct afparam *param)
 	setia6vltime_impl(env, ifra);
 	setia6pltime_impl(env, ifra);
 	setia6flags_impl(env, ifra);
-	in6_delscopeid(&ifra->ifra_addr);
-	in6_delscopeid(&ifra->ifra_dstaddr);
+	inet6_putscopeid(&ifra->ifra_addr, INET6_IS_ADDR_LINKLOCAL);
+	inet6_putscopeid(&ifra->ifra_dstaddr, INET6_IS_ADDR_LINKLOCAL);
 
 	return 0;
 }

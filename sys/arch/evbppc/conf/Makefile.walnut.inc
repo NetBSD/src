@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.walnut.inc,v 1.6 2012/02/01 21:46:02 matt Exp $
+#	$NetBSD: Makefile.walnut.inc,v 1.6.6.1 2014/08/20 00:02:59 tls Exp $
 
 MKIMG?=	${HOST_SH} ${THISPPC}/compile/walnut-mkimg.sh
 CFLAGS+=-mcpu=403
@@ -10,5 +10,5 @@ SYSTEM_FIRST_SFILE=	${THISPPC}/walnut/walnut_start.S
 
 SYSTEM_LD_TAIL_EXTRA_EXTRA+=; \
 	echo ${MKIMG} $@ $@.img ; \
-	OBJDUMP=${OBJDUMP}; OBJCOPY=${OBJCOPY}; export OBJDUMP OBJCOPY; \
-		${MKIMG} $@ $@.img
+	OBJDUMP=${OBJDUMP}; OBJCOPY=${OBJCOPY}; STAT=${TOOL_STAT]; \
+		export OBJDUMP OBJCOPY STAT; ${MKIMG} $@ $@.img

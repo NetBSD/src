@@ -1,4 +1,4 @@
-# $NetBSD: t_nbperf.sh,v 1.1.2.1 2012/11/20 03:02:56 tls Exp $
+# $NetBSD: t_nbperf.sh,v 1.1.2.2 2014/08/20 00:04:52 tls Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,6 +34,8 @@ atf_test_case chm
 chm_head()
 {
 	atf_set "descr" "Checks chm algorithm"
+	atf_set "require.files" "/usr/share/dict/web2"
+	atf_set "require.progs" "cc"
 }
 chm_body()
 { 
@@ -56,6 +58,8 @@ atf_test_case chm3
 chm3_head()
 {
 	atf_set "descr" "Checks chm3 algorithm"
+	atf_set "require.files" "/usr/share/dict/web2"
+	atf_set "require.progs" "cc"
 }
 chm3_body()
 { 
@@ -78,6 +82,8 @@ atf_test_case bdz
 bdz_head()
 {
 	atf_set "descr" "Checks bdz algorithm"
+	atf_set "require.files" "/usr/share/dict/web2"
+	atf_set "require.progs" "cc"
 }
 bdz_body()
 { 

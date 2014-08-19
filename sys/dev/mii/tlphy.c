@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.59.22.1 2013/06/23 06:20:18 tls Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.59.22.2 2014/08/20 00:03:41 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.59.22.1 2013/06/23 06:20:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.59.22.2 2014/08/20 00:03:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -327,6 +327,8 @@ tlphy_status(struct mii_softc *sc)
 	 */
 	if (bmcr & BMCR_FDX)
 		mii->mii_media_active |= IFM_FDX;
+	else
+		mii->mii_media_active |= IFM_HDX;
 	mii->mii_media_active |= IFM_10_T;
 }
 

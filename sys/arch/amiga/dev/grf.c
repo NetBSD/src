@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.58.2.1 2012/11/20 03:00:57 tls Exp $ */
+/*	$NetBSD: grf.c,v 1.58.2.2 2014/08/20 00:02:43 tls Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.58.2.1 2012/11/20 03:00:57 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.58.2.2 2014/08/20 00:02:43 tls Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -116,8 +116,18 @@ dev_type_ioctl(grfioctl);
 dev_type_mmap(grfmmap);
 
 const struct cdevsw grf_cdevsw = {
-	grfopen, grfclose, nullread, nullwrite, grfioctl,
-	nostop, notty, nopoll, grfmmap, nokqfilter,
+	.d_open = grfopen,
+	.d_close = grfclose,
+	.d_read = nullread,
+	.d_write = nullwrite,
+	.d_ioctl = grfioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = grfmmap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 /*
@@ -493,7 +503,7 @@ grf_init_screen(void *cookie, struct vcons_screen *scr, int existing,
     long *defattr)
 {
 	struct grf_softc *gp;
-	struct rasops_info *ri;
+	struct rasops_info *ri __unused;
 
 	gp = cookie;
 	ri = grf_setup_rasops(gp, scr);
@@ -611,7 +621,7 @@ grf_wsaogetcmap(void *c, void *data)
 {
 	u_int index, count;
 	struct grf_softc *gp;
-	struct wsdisplay_cmap *cm;
+	struct wsdisplay_cmap *cm __unused;
 
 	cm = (struct wsdisplay_cmap*) data;
 	gp = c;
@@ -704,7 +714,7 @@ grf_wsaogvideo(void *c, void *data)
 int
 grf_wsaogtype(void *c, void *data)
 {
-	struct grf_softc *gp;
+	struct grf_softc *gp __unused;
 
 	gp = c;
 

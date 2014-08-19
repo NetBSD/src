@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___sigtramp1.S,v 1.2 2008/04/28 20:22:58 martin Exp $	*/
+/*	$NetBSD: compat___sigtramp1.S,v 1.2.28.1 2014/08/20 00:02:13 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -49,3 +49,4 @@ NENTRY(__sigtramp_sigcontext_1)
 	SYSTRAP(compat_16___sigreturn14) /* do sigreturn */
 	movl	%eax,4(%esp)	/* error code */
 	SYSTRAP(exit)		/* exit */
+END(__sigtramp_sigcontext_1)

@@ -1,6 +1,6 @@
 /* Support for printing D values for GDB, the GNU debugger.
 
-   Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,10 +23,10 @@
 #include "d-lang.h"
 #include "c-lang.h"
 
-/* Assuming that TYPE is a TYPE_CODE_STRUCT, verify that TYPE is
-   a dynamic array, and then print its value to STREAM.  Return
-   the number of string characters printed, or -1 if TYPE is not
-   a dynamic array.  */
+/* Assuming that TYPE is a TYPE_CODE_STRUCT, verify that TYPE is a
+   dynamic array, and then print its value to STREAM.  Return zero if
+   TYPE is a dynamic array, non-zero otherwise.  */
+
 static int
 dynamic_array_type (struct type *type, const gdb_byte *valaddr,
 		    int embedded_offset, CORE_ADDR address,
@@ -60,16 +60,17 @@ dynamic_array_type (struct type *type, const gdb_byte *valaddr,
       true_type = lookup_array_range_type (true_type, 0, length - 1);
       ival = value_at (true_type, addr);
 
-      return d_val_print (true_type,
-			  value_contents_for_printing (ival),
-			  value_embedded_offset (ival), addr,
-			  stream, recurse + 1, ival, options);
+      d_val_print (true_type,
+		   value_contents_for_printing (ival),
+		   value_embedded_offset (ival), addr,
+		   stream, recurse + 1, ival, options);
+      return 0;
     }
-  return -1;
+  return 1;
 }
 
 /* Implements the la_val_print routine for language D.  */
-int
+void
 d_val_print (struct type *type, const gdb_byte *valaddr, int embedded_offset,
              CORE_ADDR address, struct ui_file *stream, int recurse,
 	     const struct value *val,
@@ -83,12 +84,10 @@ d_val_print (struct type *type, const gdb_byte *valaddr, int embedded_offset,
       case TYPE_CODE_STRUCT:
         ret = dynamic_array_type (type, valaddr, embedded_offset, address,
 				  stream, recurse, val, options);
-	if (ret != -1)
-	   break;
+	if (ret == 0)
+	  break;
       default:
-	ret = c_val_print (type, valaddr, embedded_offset, address, stream,
-			   recurse, val, options);
+	c_val_print (type, valaddr, embedded_offset, address, stream,
+		     recurse, val, options);
     }
-
-  return ret;
 }

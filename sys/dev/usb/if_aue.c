@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.127.2.2 2013/06/23 06:20:22 tls Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.127.2.3 2014/08/20 00:03:51 tls Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.127.2.2 2013/06/23 06:20:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.127.2.3 2014/08/20 00:03:51 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -859,7 +859,7 @@ aue_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->aue_dev),
-	    RND_TYPE_NET, 0);
+	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	callout_init(&(sc->aue_stat_ch), 0);
 

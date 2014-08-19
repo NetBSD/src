@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30.12.1 2013/02/25 00:28:51 tls Exp $
+#	$NetBSD: Makefile,v 1.30.12.2 2014/08/20 00:03:12 tls Exp $
 
 INCSDIR= /usr/include/mips
 
@@ -14,7 +14,7 @@ INCS=	ansi.h asm.h \
 	mips1_pte.h mips3_pte.h mips_opcode.h mips_param.h mutex.h \
 	pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h regdef.h regnum.h reloc.h rwlock.h \
-	setjmp.h signal.h sljitarch.h sysarch.h \
+	setjmp.h signal.h sljit_machdep.h sysarch.h \
 	trap.h types.h \
 	vmparam.h \
 	wchar_limits.h

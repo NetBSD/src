@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpio_subr.c,v 1.2.8.2 2013/02/25 00:28:25 tls Exp $	*/
+/*	$NetBSD: bcm2835_gpio_subr.c,v 1.2.8.3 2014/08/20 00:02:45 tls Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio_subr.c,v 1.2.8.2 2013/02/25 00:28:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio_subr.c,v 1.2.8.3 2014/08/20 00:02:45 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,7 +51,6 @@ bcm2835gpio_function_select(u_int pin, u_int func)
 	    BCM2835_GPIO_GPFSEL_BITS_PER_PIN;
 	uint32_t v;
 
-
 	KASSERT(func <= mask);
 
 	v = bus_space_read_4(iot, ioh, BCM2835_GPIO_GPFSEL(regid));
@@ -66,4 +65,20 @@ bcm2835gpio_function_select(u_int pin, u_int func)
 	v |=  (func << shift);
 
 	bus_space_write_4(iot, ioh, BCM2835_GPIO_GPFSEL(regid), v);
+}
+
+u_int
+bcm2835gpio_function_read(u_int pin)
+{
+	const bus_space_tag_t iot = &bcm2835_bs_tag;
+	const bus_space_handle_t ioh = BCM2835_IOPHYSTOVIRT(BCM2835_GPIO_BASE);
+	const u_int mask = (1 << BCM2835_GPIO_GPFSEL_BITS_PER_PIN) - 1;
+	const u_int regid = (pin / BCM2835_GPIO_GPFSEL_PINS_PER_REGISTER);
+	const u_int shift = (pin % BCM2835_GPIO_GPFSEL_PINS_PER_REGISTER) *
+	    BCM2835_GPIO_GPFSEL_BITS_PER_PIN;
+	uint32_t v;
+
+	v = bus_space_read_4(iot, ioh, BCM2835_GPIO_GPFSEL(regid));
+
+	return ((v >> shift) & mask);
 }

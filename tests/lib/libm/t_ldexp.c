@@ -1,4 +1,4 @@
-/* $NetBSD: t_ldexp.c,v 1.10 2011/09/19 05:40:38 jruoho Exp $ */
+/* $NetBSD: t_ldexp.c,v 1.10.8.1 2014/08/20 00:04:50 tls Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ldexp.c,v 1.10 2011/09/19 05:40:38 jruoho Exp $");
+__RCSID("$NetBSD: t_ldexp.c,v 1.10.8.1 2014/08/20 00:04:50 tls Exp $");
+
+#include <sys/param.h>
 
 #include <atf-c.h>
 #include <atf-c/config.h>
@@ -193,9 +195,12 @@ ATF_TC_HEAD(ldexp_exp2, tc)
 
 ATF_TC_BODY(ldexp_exp2, tc)
 {
-#ifndef __vax__
 	const double n[] = { 1, 2, 3, 10, 50, 100 };
+#if __DBL_MIN_10_EXP__ <= -40
 	const double eps = 1.0e-40;
+#else
+	const double eps = __DBL_MIN__*4.0;
+#endif
 	const double x = 12.0;
 	double y;
 	size_t i;
@@ -209,7 +214,6 @@ ATF_TC_BODY(ldexp_exp2, tc)
 			    "!= %0.01f * exp2(%0.01f)", x, n[i], x, n[i]);
 		}
 	}
-#endif
 }
 
 ATF_TC(ldexp_nan);
@@ -220,7 +224,6 @@ ATF_TC_HEAD(ldexp_nan, tc)
 
 ATF_TC_BODY(ldexp_nan, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L / 0.0L;
 	double y;
 	size_t i;
@@ -231,7 +234,6 @@ ATF_TC_BODY(ldexp_nan, tc)
 		y = ldexp(x, exps[i]);
 		ATF_CHECK(isnan(y) != 0);
 	}
-#endif
 }
 
 ATF_TC(ldexp_inf_neg);
@@ -242,13 +244,11 @@ ATF_TC_HEAD(ldexp_inf_neg, tc)
 
 ATF_TC_BODY(ldexp_inf_neg, tc)
 {
-#ifndef __vax__
 	const double x = -1.0L / 0.0L;
 	size_t i;
 
 	for (i = 0; i < __arraycount(exps); i++)
 		ATF_CHECK(ldexp(x, exps[i]) == x);
-#endif
 }
 
 ATF_TC(ldexp_inf_pos);
@@ -259,13 +259,11 @@ ATF_TC_HEAD(ldexp_inf_pos, tc)
 
 ATF_TC_BODY(ldexp_inf_pos, tc)
 {
-#ifndef __vax__
 	const double x = 1.0L / 0.0L;
 	size_t i;
 
 	for (i = 0; i < __arraycount(exps); i++)
 		ATF_CHECK(ldexp(x, exps[i]) == x);
-#endif
 }
 
 ATF_TC(ldexp_zero_neg);
@@ -276,7 +274,6 @@ ATF_TC_HEAD(ldexp_zero_neg, tc)
 
 ATF_TC_BODY(ldexp_zero_neg, tc)
 {
-#ifndef __vax__
 	const double x = -0.0L;
 	double y;
 	size_t i;
@@ -288,7 +285,6 @@ ATF_TC_BODY(ldexp_zero_neg, tc)
 		ATF_CHECK(x == y);
 		ATF_CHECK(signbit(y) != 0);
 	}
-#endif
 }
 
 ATF_TC(ldexp_zero_pos);
@@ -299,7 +295,6 @@ ATF_TC_HEAD(ldexp_zero_pos, tc)
 
 ATF_TC_BODY(ldexp_zero_pos, tc)
 {
-#ifndef __vax__
 	const double x = 0.0L;
 	double y;
 	size_t i;
@@ -311,7 +306,6 @@ ATF_TC_BODY(ldexp_zero_pos, tc)
 		ATF_CHECK(x == y);
 		ATF_CHECK(signbit(y) == 0);
 	}
-#endif
 }
 
 /*
@@ -326,7 +320,6 @@ ATF_TC_HEAD(ldexpf_exp2f, tc)
 
 ATF_TC_BODY(ldexpf_exp2f, tc)
 {
-#ifndef __vax__
 	const float n[] = { 1, 2, 3, 10, 50, 100 };
 	const float eps = 1.0e-9;
 	const float x = 12.0;
@@ -342,7 +335,6 @@ ATF_TC_BODY(ldexpf_exp2f, tc)
 			    "!= %0.01f * exp2f(%0.01f)", x, n[i], x, n[i]);
 		}
 	}
-#endif
 }
 
 ATF_TC(ldexpf_nan);
@@ -353,7 +345,6 @@ ATF_TC_HEAD(ldexpf_nan, tc)
 
 ATF_TC_BODY(ldexpf_nan, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L / 0.0L;
 	float y;
 	size_t i;
@@ -364,7 +355,6 @@ ATF_TC_BODY(ldexpf_nan, tc)
 		y = ldexpf(x, exps[i]);
 		ATF_CHECK(isnan(y) != 0);
 	}
-#endif
 }
 
 ATF_TC(ldexpf_inf_neg);
@@ -375,13 +365,11 @@ ATF_TC_HEAD(ldexpf_inf_neg, tc)
 
 ATF_TC_BODY(ldexpf_inf_neg, tc)
 {
-#ifndef __vax__
 	const float x = -1.0L / 0.0L;
 	size_t i;
 
 	for (i = 0; i < __arraycount(exps); i++)
 		ATF_CHECK(ldexpf(x, exps[i]) == x);
-#endif
 }
 
 ATF_TC(ldexpf_inf_pos);
@@ -392,13 +380,11 @@ ATF_TC_HEAD(ldexpf_inf_pos, tc)
 
 ATF_TC_BODY(ldexpf_inf_pos, tc)
 {
-#ifndef __vax__
 	const float x = 1.0L / 0.0L;
 	size_t i;
 
 	for (i = 0; i < __arraycount(exps); i++)
 		ATF_CHECK(ldexpf(x, exps[i]) == x);
-#endif
 }
 
 ATF_TC(ldexpf_zero_neg);
@@ -409,7 +395,6 @@ ATF_TC_HEAD(ldexpf_zero_neg, tc)
 
 ATF_TC_BODY(ldexpf_zero_neg, tc)
 {
-#ifndef __vax__
 	const float x = -0.0L;
 	float y;
 	size_t i;
@@ -421,7 +406,6 @@ ATF_TC_BODY(ldexpf_zero_neg, tc)
 		ATF_CHECK(x == y);
 		ATF_CHECK(signbit(y) != 0);
 	}
-#endif
 }
 
 ATF_TC(ldexpf_zero_pos);
@@ -432,7 +416,6 @@ ATF_TC_HEAD(ldexpf_zero_pos, tc)
 
 ATF_TC_BODY(ldexpf_zero_pos, tc)
 {
-#ifndef __vax__
 	const float x = 0.0L;
 	float y;
 	size_t i;
@@ -444,7 +427,6 @@ ATF_TC_BODY(ldexpf_zero_pos, tc)
 		ATF_CHECK(x == y);
 		ATF_CHECK(signbit(y) == 0);
 	}
-#endif
 }
 
 #define TEST(name, desc)						\
@@ -457,11 +439,8 @@ ATF_TC_BODY(ldexpf_zero_pos, tc)
 	}								\
 	ATF_TC_BODY(name, tc)						\
 	{								\
-		const char *machine;					\
-									\
-		machine = atf_config_get("atf_machine");		\
-		if (strcmp("vax", machine) == 0)			\
-			atf_tc_skip("Test not valid for %s", machine);	\
+		if (strcmp("vax", MACHINE_ARCH) == 0)			\
+			atf_tc_skip("Test not valid for " MACHINE_ARCH); \
 		run_test(name);						\
 	}
 

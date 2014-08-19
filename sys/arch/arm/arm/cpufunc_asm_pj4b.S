@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.2.2.2 2013/06/23 06:19:59 tls Exp $ */
+/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.2.2.3 2014/08/20 00:02:44 tls Exp $ */
 
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
@@ -38,8 +38,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include "assym.h"
-#include <machine/cpu.h>
-#include <machine/asm.h>
+#include <arm/asm.h>
+#include <arm/locore.h>
 
 #define TTB_RGN_OC_WB	(3 << 3)
 #define TTB_IRGN_WB	((1 << 0) | (1 << 6))
@@ -58,11 +58,18 @@ ENTRY(pj4b_setttb)
 #else
 	bic	r2, r0, #0x18
 #endif
-	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
+	mcr	p15, 0, r0, c2, c0, 0	/* load TTBR0 */
+#ifdef ARM_MMU_EXTENDED
+	cmp	r1, #0
+	mcreq	p15, 0, r0, c2, c0, 1	/* load TTBR1 */
+#else
 	mov	r0, #0
-	isb
 	mcr	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
+#endif
+	isb
+	dsb
 	RET
+END(pj4b_setttb)
 
 ENTRY(pj4b_tlb_flushID)
 	mcr	p15, 0, r0, c8, c7, 0	/* flush I+D tlb */
@@ -72,6 +79,10 @@ END(pj4b_tlb_flushID)
 
 ENTRY(pj4b_tlb_flushID_SE)
 	mcr	p15, 0, r0, c8, c7, 1	@flush I+D tlb single entry
+#if PAGE_SIZE == 2 * L2_S_SIZE
+	add	r0, r0, L2_S_SIZE
+	mcr	p15, 0, r0, c8, c7, 1	@flush I+D tlb single entry
+#endif
 	dsb
 	RET
 END(pj4b_tlb_flushID_SE)
@@ -184,20 +195,21 @@ ENTRY(pj4b_flush_brnchtgt_va)
 	RET
 END(pj4b_flush_brnchtgt_va)
 
-ENTRY(get_core_id)
-	mrc p15, 0, r0, c0, c0, 5
-	RET
-END(get_core_id)
-
 ENTRY(pj4b_context_switch)
 	dsb
 #if defined(L2CACHE_ENABLE) && defined(AURORA_L2_PT_WALK)
-	orr	r1, r0, #TTB_FLAGS_UP
+	orr	r2, r0, #TTB_FLAGS_UP
 #else
-	bic	r1, r0, #0x18
+	bic	r2, r0, #0x18
 #endif
-	mcr	p15, 0, r1, c2, c0, 0 	@set the new TTB
+	mcr	p15, 0, r2, c2, c0, 0 	@set the new TTBR0
+#ifdef ARM_MMU_EXTENDED
+	cmp	r1, #0
+	mcreq	p15, 0, r2, c2, c0, 1 	@set the new TTBR1
+#else
+	mov	r0, #0
 	mcr	p15, 0, r0, c8, c7, 0	@flush the I+D
+#endif
 	dsb
 	isb
 	RET

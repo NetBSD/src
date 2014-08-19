@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_uic.c,v 1.3 2012/02/01 09:54:02 matt Exp $	*/
+/*	$NetBSD: pic_uic.c,v 1.3.6.1 2014/08/20 00:03:19 tls Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_uic.c,v 1.3 2012/02/01 09:54:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_uic.c,v 1.3.6.1 2014/08/20 00:03:19 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -213,7 +213,7 @@ extern struct pic_ops pic_uic1;
 static void
 uic1_finish_setup(struct pic_ops *pic)
 {
-	intr_establish(30, IST_LEVEL, IPL_NONE, pic_handle_intr, &pic_uic1);
+	intr_establish(30, IST_LEVEL, IPL_HIGH, pic_handle_intr, &pic_uic1);
 }
 
 struct uic uic1 = {
@@ -268,7 +268,7 @@ extern struct pic_ops pic_uic2;
 static void
 uic2_finish_setup(struct pic_ops *pic)
 {
-	intr_establish(28, IST_LEVEL, IPL_NONE, pic_handle_intr, &pic_uic2);
+	intr_establish(28, IST_LEVEL, IPL_HIGH, pic_handle_intr, &pic_uic2);
 }
 
 static struct uic uic2 = {

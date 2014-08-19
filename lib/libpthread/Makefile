@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.77.2.2 2013/06/23 06:21:08 tls Exp $
+#	$NetBSD: Makefile,v 1.77.2.3 2014/08/20 00:02:20 tls Exp $
 #
 
 WARNS?=	5
@@ -8,6 +8,9 @@ WARNS?=	5
 .if defined(PTHREAD_MACHINE_ARCH) && !empty(PTHREAD_MACHINE_ARCH) && \
     exists(${.CURDIR}/arch/${PTHREAD_MACHINE_ARCH})
 ARCHSUBDIR=	${PTHREAD_MACHINE_ARCH}
+.elif defined(PTHREAD_MACHINE_CPU) && !empty(PTHREAD_MACHINE_CPU) && \
+    exists(${.CURDIR}/arch/${PTHREAD_MACHINE_CPU})
+ARCHSUBDIR=	${PTHREAD_MACHINE_CPU}
 .elif exists(${.CURDIR}/arch/${MACHINE_ARCH})
 ARCHSUBDIR=	${MACHINE_ARCH}
 .elif exists(${.CURDIR}/arch/${MACHINE_CPU}) 
@@ -58,6 +61,9 @@ SRCS+=	sem.c
 .if exists(${ARCHDIR}/pthread_md.S)
 SRCS+= pthread_md.S
 .endif
+.if exists(${ARCHDIR}/Makefile.inc)
+.include "${ARCHDIR}/Makefile.inc"
+.endif
 
 # The PTHREAD__COMPAT flag builds a libpthread that can be dropped
 # into a NetBSD 2/3/4 chroot with a NetBSD 5 or later kernel.
@@ -75,21 +81,27 @@ SRCS+=		pthread_compat.c
 
 ALIGN_FUNCTIONS=	${${ACTIVE_CC} == "gcc":? -falign-functions=32 :}
 
+.if ${MACHINE_CPU} != "m68k" && ${MACHINE_CPU} != "sh3" && ${MACHINE_ARCH} != "vax"
+OMIT_FRAME_POINTER=	-fomit-frame-pointer
+.else
+OMIT_FRAME_POINTER=
+.endif
+
 # The TSD routines are used in the implementation of profiling, and so
 # can't be profiled themselves.
-COPTS.pthread_specific.c+=	-fomit-frame-pointer ${ALIGN_FUNCTIONS}
+COPTS.pthread_specific.c+=	${OMIT_FRAME_POINTER} ${ALIGN_FUNCTIONS}
 pthread_specific.po: pthread_specific.o
 	${_MKTARGET_CREATE}
 	cp pthread_specific.o pthread_specific.po
 
 # Internal spinlock routines are performance critical.  Don't profile them,
 # it's incompatibile with -fomit-frame-pointer.
-COPTS.pthread_lock.c+=	-fomit-frame-pointer ${ALIGN_FUNCTIONS}
+COPTS.pthread_lock.c+=	${OMIT_FRAME_POINTER} ${ALIGN_FUNCTIONS}
 pthread_lock.po: pthread_lock.o
 	${_MKTARGET_CREATE}
 	cp pthread_lock.o pthread_lock.po
 
-COPTS.pthread_mutex.c+=	-fomit-frame-pointer ${ALIGN_FUNCTIONS}
+COPTS.pthread_mutex.c+=	${OMIT_FRAME_POINTER} ${ALIGN_FUNCTIONS}
 pthread_mutex.po: pthread_mutex.o
 	${_MKTARGET_CREATE}
 	cp pthread_mutex.o pthread_mutex.po

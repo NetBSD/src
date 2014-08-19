@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.186.2.1 2013/06/23 06:18:58 tls Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.186.2.2 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.186.2.1 2013/06/23 06:18:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.186.2.2 2014/08/20 00:04:29 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -201,6 +201,9 @@ struct proc proc0 = {
 	.p_vmspace = &vmspace0,
 	.p_stats = &pstat0,
 	.p_sigacts = &sigacts0,
+#ifdef PROC0_MD_INITIALIZERS
+	PROC0_MD_INITIALIZERS
+#endif
 };
 kauth_cred_t cred0;
 
@@ -209,7 +212,6 @@ static const int	maxuprc	= MAXUPRC;
 
 static int sysctl_doeproc(SYSCTLFN_PROTO);
 static int sysctl_kern_proc_args(SYSCTLFN_PROTO);
-static void fill_kproc2(struct proc *, struct kinfo_proc2 *, bool);
 
 /*
  * The process list descriptors, used during pid allocation and
@@ -356,12 +358,6 @@ procinit_sysctl(void)
 
 	sysctl_createv(&clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, CTL_EOL);
-
-	sysctl_createv(&clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "proc",
 		       SYSCTL_DESCR("System-wide process information"),
 		       sysctl_doeproc, 0, NULL, 0,
@@ -480,7 +476,13 @@ proc0_init(void)
 	 * share proc0's vmspace, and thus, the kernel pmap.
 	 */
 	uvmspace_init(&vmspace0, pmap_kernel(), round_page(VM_MIN_ADDRESS),
-	    trunc_page(VM_MAX_ADDRESS));
+	    trunc_page(VM_MAX_ADDRESS),
+#ifdef __USE_TOPDOWN_VM
+	    true
+#else
+	    false
+#endif
+	    );
 
 	/* Initialize signal state for proc0. XXX IPL_SCHED */
 	mutex_init(&p->p_sigacts->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
@@ -1449,7 +1451,7 @@ proc_specific_key_delete(specificdata_key_t key)
 void
 proc_initspecific(struct proc *p)
 {
-	int error;
+	int error __diagused;
 
 	error = specificdata_init(proc_specificdata_domain, &p->p_specdataref);
 	KASSERT(error == 0);
@@ -2197,7 +2199,7 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
 /*
  * Fill in a kinfo_proc2 structure for the specified process.
  */
-static void
+void
 fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 {
 	struct tty *tp;

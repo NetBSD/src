@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.33.2.2 2013/06/23 06:28:52 tls Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.33.2.3 2014/08/20 00:02:27 tls Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.33.2.2 2013/06/23 06:28:52 tls Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.33.2.3 2014/08/20 00:02:27 tls Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -138,16 +138,16 @@ static unsigned char *iflags;
 
 /* resize_ffs works directly on dinodes, adapt blksize() */
 #define dblksize(fs, dip, lbn, filesize) \
-	(((lbn) >= UFS_NDADDR || (uint64_t)(filesize) >= lblktosize(fs, (lbn) + 1)) \
+	(((lbn) >= UFS_NDADDR || (uint64_t)(filesize) >= ffs_lblktosize(fs, (lbn) + 1)) \
 	    ? (fs)->fs_bsize						       \
-	    : (fragroundup(fs, ffs_blkoff(fs, (filesize)))))
+	    : (ffs_fragroundup(fs, ffs_blkoff(fs, (filesize)))))
 
 
 /*
  * Number of disk sectors per block/fragment
  */
-#define NSPB(fs)	(fsbtodb((fs),1) << (fs)->fs_fragshift)
-#define NSPF(fs)	(fsbtodb((fs),1))
+#define NSPB(fs)	(FFS_FSBTODB((fs),1) << (fs)->fs_fragshift)
+#define NSPF(fs)	(FFS_FSBTODB((fs),1))
 
 /* global flags */
 int is_ufs2 = 0;
@@ -182,7 +182,7 @@ isplainfile(void)
 }
 /*
  * Read size bytes starting at blkno into buf.  blkno is in DEV_BSIZE
- *  units, ie, after fsbtodb(); size is in bytes.
+ *  units, ie, after FFS_FSBTODB(); size is in bytes.
  */
 static void
 readat(off_t blkno, void *buf, int size)
@@ -222,7 +222,7 @@ readat(off_t blkno, void *buf, int size)
 }
 /*
  * Write size bytes from buf starting at blkno.  blkno is in DEV_BSIZE
- *  units, ie, after fsbtodb(); size is in bytes.
+ *  units, ie, after FFS_FSBTODB(); size is in bytes.
  */
 static void
 writeat(off_t blkno, const void *buf, int size)
@@ -328,13 +328,13 @@ loadcgs(void)
 	csums = nfmalloc(oldsb->fs_cssize, "cg summary");
 	for (cg = 0; cg < oldsb->fs_ncg; cg++) {
 		cgs[cg] = (struct cg *) cgp;
-		readat(fsbtodb(oldsb, cgtod(oldsb, cg)), cgp, cgblksz);
+		readat(FFS_FSBTODB(oldsb, cgtod(oldsb, cg)), cgp, cgblksz);
 		if (needswap)
 			ffs_cg_swap(cgs[cg],cgs[cg],oldsb);
 		cgflags[cg] = 0;
 		cgp += cgblksz;
 	}
-	readat(fsbtodb(oldsb, oldsb->fs_csaddr), csums, oldsb->fs_cssize);
+	readat(FFS_FSBTODB(oldsb, oldsb->fs_csaddr), csums, oldsb->fs_cssize);
 	if (needswap)
 		ffs_csum_swap(csums,csums,oldsb->fs_cssize);
 }
@@ -527,7 +527,7 @@ initcg(int cgn)
 		cg->cg_clusteroff = cg->cg_clustersumoff +
 		    ((newsb->fs_contigsumsize + 1) * sizeof(int32_t));
 		cg->cg_nextfreeoff = cg->cg_clusteroff +
-		    howmany(fragstoblks(newsb,newsb->fs_fpg), NBBY);
+		    howmany(ffs_fragstoblks(newsb,newsb->fs_fpg), NBBY);
 		n = dlow / newsb->fs_frag;
 		if (n > 0) {
 			set_bits(cg_clustersfree(cg, 0), 0, n);
@@ -610,7 +610,7 @@ initcg(int cgn)
 	newsb->fs_cstotal.cs_nifree += cg->cg_cs.cs_nifree;
 	if (is_ufs2 == 0)
 		/* Write out the cleared inodes. */
-		writeat(fsbtodb(newsb, cgimin(newsb, cgn)), zinodes,
+		writeat(FFS_FSBTODB(newsb, cgimin(newsb, cgn)), zinodes,
 		    newsb->fs_ipg * sizeof(*zinodes));
 	/* Dirty the cg. */
 	cgflags[cgn] |= CGF_DIRTY;
@@ -706,7 +706,7 @@ find_freeblock(void)
 	fwc = dtogd(newsb, hand);
 	secondpass = (hand == 0);
 	bits = cg_blksfree(cgs[cgn], 0);
-	cgsize = blknum(newsb, cgs[cgn]->cg_ndblk);
+	cgsize = ffs_blknum(newsb, cgs[cgn]->cg_ndblk);
 	while (1) {
 		if (blk_is_set(bits, fwc, newsb->fs_frag))
 			return (hand);
@@ -723,7 +723,7 @@ find_freeblock(void)
 				cgn = 0;
 			}
 			bits = cg_blksfree(cgs[cgn], 0);
-			cgsize = blknum(newsb, cgs[cgn]->cg_ndblk);
+			cgsize = ffs_blknum(newsb, cgs[cgn]->cg_ndblk);
 		}
 	}
 }
@@ -927,7 +927,7 @@ grow(void)
 	zinodes = alloconce(newsb->fs_ipg * sizeof(*zinodes), "zeroed inodes");
 	memset(zinodes, 0, newsb->fs_ipg * sizeof(*zinodes));
 	/* Update the size. */
-	newsb->fs_size = dbtofsb(newsb, newsize);
+	newsb->fs_size = FFS_DBTOFSB(newsb, newsize);
 	/* Did we actually not grow?  (This can happen if newsize is less than
 	 * a frag larger than the old size - unlikely, but no excuse to
 	 * misbehave if it happens.) */
@@ -941,7 +941,7 @@ grow(void)
 	 * overwriting anything important by this.  (The choice of sbbuf as
 	 * what to write is irrelevant; it's just something handy that's known
 	 * to be at least one frag in size.) */
-	writeat(fsbtodb(newsb,newsb->fs_size - 1), &sbbuf, newsb->fs_fsize);
+	writeat(FFS_FSBTODB(newsb,newsb->fs_size - 1), &sbbuf, newsb->fs_fsize);
 	if (is_ufs2)
 		newsb->fs_ncg = howmany(newsb->fs_size, newsb->fs_fpg);
 	else {
@@ -963,10 +963,10 @@ grow(void)
 		    / NSPF(newsb);
 		printf("Warning: last cylinder group is too small;\n");
 		printf("    dropping it.  New size = %lu.\n",
-		    (unsigned long int) fsbtodb(newsb, newsb->fs_size));
+		    (unsigned long int) FFS_FSBTODB(newsb, newsb->fs_size));
 	}
 	/* Find out how big the csum area is, and realloc csums if bigger. */
-	newsb->fs_cssize = fragroundup(newsb,
+	newsb->fs_cssize = ffs_fragroundup(newsb,
 	    newsb->fs_ncg * sizeof(struct csum));
 	if (newsb->fs_cssize > oldsb->fs_cssize)
 		csums = nfrealloc(csums, newsb->fs_cssize, "new cg summary");
@@ -1054,10 +1054,10 @@ markblk(mark_callback_t fn, union dinode * di, off_t bn, off_t o)
 	filesize = DIP(di,di_size);
 	if (o >= filesize)
 		return (0);
-	sz = dblksize(newsb, di, lblkno(newsb, o), filesize);
+	sz = dblksize(newsb, di, ffs_lblkno(newsb, o), filesize);
 	nb = (sz > filesize - o) ? filesize - o : sz;
 	if (bn)
-		(*fn) (bn, numfrags(newsb, sz), nb, MDB_DATA);
+		(*fn) (bn, ffs_numfrags(newsb, sz), nb, MDB_DATA);
 	return (sz);
 }
 /* Helper function - handles an indirect block.  Makes the
@@ -1089,7 +1089,7 @@ markiblk(mark_callback_t fn, union dinode * di, off_t bn, off_t o, int lev)
 		return (i);
 	}
 	(*fn) (bn, newsb->fs_frag, newsb->fs_bsize, MDB_INDIR_PRE);
-	readat(fsbtodb(newsb, bn), indirblks[lev], newsb->fs_bsize);
+	readat(FFS_FSBTODB(newsb, bn), indirblks[lev], newsb->fs_bsize);
 	if (needswap)
 		for (k = 0; k < howmany(MAXBSIZE, sizeof(int32_t)); k++)
 			indirblks[lev][k] = bswap32(indirblks[lev][k]);
@@ -1213,7 +1213,7 @@ loadinodes(void)
 		dp1 = (struct ufs1_dinode *)ibuf;
 
 	for (ino = 0,imax = oldsb->fs_ipg * oldsb->fs_ncg; ino < imax; ) {
-		readat(fsbtodb(oldsb, ino_to_fsba(oldsb, ino)), ibuf,
+		readat(FFS_FSBTODB(oldsb, ino_to_fsba(oldsb, ino)), ibuf,
 		    oldsb->fs_bsize);
 
 		for (i = 0; i < oldsb->fs_inopb; i++) {
@@ -1385,9 +1385,9 @@ perform_data_move(void)
 		    ((run > 0) &&
 			(blkmove[i] != blkmove[i - 1] + 1))) {
 			if (run > 0) {
-				readat(fsbtodb(oldsb, i - run), &buf[0],
+				readat(FFS_FSBTODB(oldsb, i - run), &buf[0],
 				    run << oldsb->fs_fshift);
-				writeat(fsbtodb(oldsb, blkmove[i - run]),
+				writeat(FFS_FSBTODB(oldsb, blkmove[i - run]),
 				    &buf[0], run << oldsb->fs_fshift);
 			}
 			run = 0;
@@ -1396,9 +1396,9 @@ perform_data_move(void)
 			run++;
 	}
 	if (run > 0) {
-		readat(fsbtodb(oldsb, i - run), &buf[0],
+		readat(FFS_FSBTODB(oldsb, i - run), &buf[0],
 		    run << oldsb->fs_fshift);
-		writeat(fsbtodb(oldsb, blkmove[i - run]), &buf[0],
+		writeat(FFS_FSBTODB(oldsb, blkmove[i - run]), &buf[0],
 		    run << oldsb->fs_fshift);
 	}
 }
@@ -1467,7 +1467,7 @@ moveindir_callback(off_t off, unsigned int nfrag, unsigned int nbytes,
 
 	if (kind == MDB_INDIR_PRE) {
 		int32_t blk[howmany(MAXBSIZE, sizeof(int32_t))];
-		readat(fsbtodb(oldsb, off), &blk[0], oldsb->fs_bsize);
+		readat(FFS_FSBTODB(oldsb, off), &blk[0], oldsb->fs_bsize);
 		if (needswap)
 			for (i = 0; i < howmany(MAXBSIZE, sizeof(int32_t)); i++)
 				blk[i] = bswap32(blk[i]);
@@ -1476,7 +1476,7 @@ moveindir_callback(off_t off, unsigned int nfrag, unsigned int nbytes,
 				for (i = 0; i < howmany(MAXBSIZE,
 					sizeof(int32_t)); i++)
 					blk[i] = bswap32(blk[i]);
-			writeat(fsbtodb(oldsb, off), &blk[0], oldsb->fs_bsize);
+			writeat(FFS_FSBTODB(oldsb, off), &blk[0], oldsb->fs_bsize);
 		}
 	}
 }
@@ -1557,7 +1557,7 @@ flush_inodes(void)
 					}
 				}
 
-			writeat(fsbtodb(newsb, ino_to_fsba(newsb, i)),
+			writeat(FFS_FSBTODB(newsb, ino_to_fsba(newsb, i)),
 			    ibuf, newsb->fs_bsize);
 		}
 	}
@@ -1653,9 +1653,9 @@ update_dir_data(off_t bn, unsigned int size, unsigned int nb, int kind)
 			struct direct d;
 			char ch[MAXBSIZE];
 		}     buf;
-		readat(fsbtodb(oldsb, bn), &buf, size << oldsb->fs_fshift);
+		readat(FFS_FSBTODB(oldsb, bn), &buf, size << oldsb->fs_fshift);
 		if (update_dirents((char *) &buf, nb)) {
-			writeat(fsbtodb(oldsb, bn), &buf,
+			writeat(FFS_FSBTODB(oldsb, bn), &buf,
 			    size << oldsb->fs_fshift);
 		}
 	}
@@ -1690,7 +1690,7 @@ shrink(void)
 	/* Update the timestamp. */
 	newsb->fs_time = timestamp();
 	/* Update the size figures. */
-	newsb->fs_size = dbtofsb(newsb, newsize);
+	newsb->fs_size = FFS_DBTOFSB(newsb, newsize);
 	if (is_ufs2)
 		newsb->fs_ncg = howmany(newsb->fs_size, newsb->fs_fpg);
 	else {
@@ -1711,7 +1711,7 @@ shrink(void)
 
 		printf("Warning: last cylinder group is too small;\n");
 		printf("    dropping it.  New size = %lu.\n",
-		    (unsigned long int) fsbtodb(newsb, newsb->fs_size));
+		    (unsigned long int) FFS_FSBTODB(newsb, newsb->fs_size));
 	}
 	/* Let's make sure we're not being shrunk into oblivion. */
 	if (newsb->fs_ncg < 1)
@@ -1720,7 +1720,7 @@ shrink(void)
 	/* Initialize for block motion. */
 	blkmove_init();
 	/* Update csum size, then fix up for the new size */
-	newsb->fs_cssize = fragroundup(newsb,
+	newsb->fs_cssize = ffs_fragroundup(newsb,
 	    newsb->fs_ncg * sizeof(struct csum));
 	csum_fixup();
 	/* Evict data from any cgs being wholly eliminated */
@@ -1980,13 +1980,13 @@ flush_cgs(void)
 			cgs[i]->cg_irotor = 0;
 			if (needswap)
 				ffs_cg_swap(cgs[i],cgs[i],newsb);
-			writeat(fsbtodb(newsb, cgtod(newsb, i)), cgs[i],
+			writeat(FFS_FSBTODB(newsb, cgtod(newsb, i)), cgs[i],
 			    cgblksz);
 		}
 	}
 	if (needswap)
 		ffs_csum_swap(csums,csums,newsb->fs_cssize);
-	writeat(fsbtodb(newsb, newsb->fs_csaddr), csums, newsb->fs_cssize);
+	writeat(FFS_FSBTODB(newsb, newsb->fs_csaddr), csums, newsb->fs_cssize);
 }
 /*
  * Write the superblock, both to the main superblock and to each cg's
@@ -2016,7 +2016,7 @@ write_sbs(void)
 		ffs_sb_swap(newsb,newsb);
 	writeat(where /  DEV_BSIZE, newsb, SBLOCKSIZE);
 	for (i = 0; i < oldsb->fs_ncg; i++) {
-		writeat(fsbtodb(oldsb, cgsblock(oldsb, i)), newsb, SBLOCKSIZE);
+		writeat(FFS_FSBTODB(oldsb, cgsblock(oldsb, i)), newsb, SBLOCKSIZE);
 	}
 }
 
@@ -2164,9 +2164,9 @@ main(int argc, char **argv)
 	 * just once, so being generous is cheap. */
 	memcpy(newsb, oldsb, SBLOCKSIZE);
 	loadcgs();
-	if (newsize > fsbtodb(oldsb, oldsb->fs_size)) {
+	if (newsize > FFS_FSBTODB(oldsb, oldsb->fs_size)) {
 		grow();
-	} else if (newsize < fsbtodb(oldsb, oldsb->fs_size)) {
+	} else if (newsize < FFS_FSBTODB(oldsb, oldsb->fs_size)) {
 		if (is_ufs2)
 			errx(EXIT_FAILURE,"shrinking not supported for ufs2");
 		shrink();

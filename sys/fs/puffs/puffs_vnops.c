@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.174.2.1 2012/11/20 03:02:40 tls Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.174.2.2 2014/08/20 00:04:27 tls Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.174.2.1 2012/11/20 03:02:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.174.2.2 2014/08/20 00:04:27 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -113,6 +113,8 @@ const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
         { &vop_setattr_desc, puffs_vnop_checkop },	/* setattr */
         { &vop_read_desc, puffs_vnop_checkop },		/* read */
         { &vop_write_desc, puffs_vnop_checkop },	/* write */
+	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
+	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
         { &vop_fsync_desc, puffs_vnop_fsync },		/* REAL fsync */
         { &vop_seek_desc, puffs_vnop_checkop },		/* seek */
         { &vop_remove_desc, puffs_vnop_checkop },	/* remove */
@@ -168,6 +170,8 @@ const struct vnodeopv_entry_desc puffs_specop_entries[] = {
 	{ &vop_setattr_desc, puffs_vnop_checkop },	/* setattr */
 	{ &vop_read_desc, puffs_vnop_spec_read },	/* update, read */
 	{ &vop_write_desc, puffs_vnop_spec_write },	/* update, write */
+	{ &vop_fallocate_desc, spec_fallocate },	/* fallocate */
+	{ &vop_fdiscard_desc, spec_fdiscard },		/* fdiscard */
 	{ &vop_ioctl_desc, spec_ioctl },		/* spec_ioctl */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* dummy */
 	{ &vop_poll_desc, spec_poll },			/* spec_poll */
@@ -225,6 +229,8 @@ const struct vnodeopv_entry_desc puffs_fifoop_entries[] = {
 	{ &vop_setattr_desc, puffs_vnop_checkop },	/* setattr */
 	{ &vop_read_desc, puffs_vnop_fifo_read },	/* read, update */
 	{ &vop_write_desc, puffs_vnop_fifo_write },	/* write, update */
+	{ &vop_fallocate_desc, vn_fifo_bypass },	/* fallocate */
+	{ &vop_fdiscard_desc, vn_fifo_bypass },		/* fdiscard */
 	{ &vop_ioctl_desc, vn_fifo_bypass },		/* ioctl */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* dummy */
 	{ &vop_poll_desc, vn_fifo_bypass },		/* poll */
@@ -473,7 +479,7 @@ puffs_abortbutton(struct puffs_mount *pmp, int what,
 int
 puffs_vnop_lookup(void *v)
 {
-        struct vop_lookup_args /* {
+        struct vop_lookup_v2_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
@@ -506,17 +512,11 @@ puffs_vnop_lookup(void *v)
 	    cnp->cn_nameptr, dvp, cnp->cn_nameiop));
 
 	/*
-	 * If dotdot cache is enabled, unlock parent, lock ..
-	 * (grand-parent) and relock parent.
+	 * If dotdot cache is enabled, add reference to .. and return.
 	 */
 	if (PUFFS_USE_DOTDOTCACHE(pmp) && (cnp->cn_flags & ISDOTDOT)) {
-		VOP_UNLOCK(dvp);
-
 		vp = VPTOPP(ap->a_dvp)->pn_parent;
 		vref(vp);
-
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 
 		*ap->a_vpp = vp;
 		return 0;
@@ -542,7 +542,7 @@ puffs_vnop_lookup(void *v)
 			if (TIMED_OUT(cpn->pn_cn_timeout)) {
 				cache_purge(cvp);
 				/*
-				 * cached vnode (cvp) is still locked
+				 * cached vnode (cvp) is still referenced
 				 * so that we can reuse it upon a new
 				 * successful lookup. 
 				 */
@@ -582,8 +582,13 @@ puffs_vnop_lookup(void *v)
 		return 0;
 	}
 
-	if (cvp != NULL)
-		mutex_enter(&cpn->pn_sizemtx);
+	if (cvp != NULL) {
+		if (vn_lock(cvp, LK_EXCLUSIVE) != 0) {
+			vrele(cvp);
+			cvp = NULL;
+		} else
+			mutex_enter(&cpn->pn_sizemtx);
+	}
 
 	PUFFS_MSG_ALLOC(vn, lookup);
 	puffs_makecn(&lookup_msg->pvnr_cn, &lookup_msg->pvnr_cn_cred,
@@ -722,6 +727,8 @@ puffs_vnop_lookup(void *v)
 		if (error || (cvp != vp))
 			vput(cvp);
 	}
+	if (error == 0)
+		VOP_UNLOCK(*ap->a_vpp);
 
 	if (cnp->cn_flags & ISDOTDOT)
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
@@ -755,7 +762,7 @@ do {									\
 int
 puffs_vnop_create(void *v)
 {
-	struct vop_create_args /* {
+	struct vop_create_v3_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
@@ -809,8 +816,6 @@ puffs_vnop_create(void *v)
 		update_parent(*ap->a_vpp, dvp);
 
  out:
-	vput(dvp);
-
 	DPRINTF(("puffs_create: return %d\n", error));
 	PUFFS_MSG_RELEASE(create);
 	return error;
@@ -819,7 +824,7 @@ puffs_vnop_create(void *v)
 int
 puffs_vnop_mknod(void *v)
 {
-	struct vop_mknod_args /* {
+	struct vop_mknod_v3_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
@@ -872,7 +877,6 @@ puffs_vnop_mknod(void *v)
 		update_parent(*ap->a_vpp, dvp);
 
  out:
-	vput(dvp);
 	PUFFS_MSG_RELEASE(mknod);
 	return error;
 }
@@ -1252,15 +1256,13 @@ doinact(struct puffs_mount *pmp, int iaflag)
 static void
 callinactive(struct puffs_mount *pmp, puffs_cookie_t ck, int iaflag)
 {
-	int error;
 	PUFFS_MSG_VARS(vn, inactive);
 
 	if (doinact(pmp, iaflag)) {
 		PUFFS_MSG_ALLOC(vn, inactive);
 		puffs_msg_setinfo(park_inactive, PUFFSOP_VN,
 		    PUFFS_VN_INACTIVE, ck);
-
-		PUFFS_MSG_ENQUEUEWAIT(pmp, park_inactive, error);
+		PUFFS_MSG_ENQUEUEWAIT_NOERROR(pmp, park_inactive);
 		PUFFS_MSG_RELEASE(inactive);
 	}
 }
@@ -1278,7 +1280,6 @@ puffs_vnop_inactive(void *v)
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	struct puffs_node *pnode;
 	bool recycle = false;
-	int error;
 
 	pnode = vp->v_data;
 	mutex_enter(&pnode->pn_sizemtx);
@@ -1288,9 +1289,8 @@ puffs_vnop_inactive(void *v)
 		PUFFS_MSG_ALLOC(vn, inactive);
 		puffs_msg_setinfo(park_inactive, PUFFSOP_VN,
 		    PUFFS_VN_INACTIVE, VPTOPNC(vp));
-
-		PUFFS_MSG_ENQUEUEWAIT2(pmp, park_inactive, vp->v_data,
-		    NULL, error);
+		PUFFS_MSG_ENQUEUEWAIT2_NOERROR(pmp, park_inactive, vp->v_data,
+		    NULL);
 		PUFFS_MSG_RELEASE(inactive);
 	}
 	pnode->pn_stat &= ~PNODE_DOINACT;
@@ -1584,7 +1584,7 @@ puffs_vnop_poll(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	struct puffs_node *pn = vp->v_data;
-	int events, error;
+	int events;
 
 	if (EXISTSOP(pmp, POLL)) {
 		mutex_enter(&pn->pn_mtx);
@@ -1605,8 +1605,8 @@ puffs_vnop_poll(void *v)
 			puffs_msg_setcall(park_poll, puffs_parkdone_poll, pn);
 			selrecord(curlwp, &pn->pn_sel);
 
-			PUFFS_MSG_ENQUEUEWAIT2(pmp, park_poll, vp->v_data,
-			    NULL, error);
+			PUFFS_MSG_ENQUEUEWAIT2_NOERROR(pmp, park_poll,
+			    vp->v_data, NULL);
 			PUFFS_MSG_RELEASE(poll);
 
 			return 0;
@@ -1698,7 +1698,7 @@ puffs_vnop_fsync(void *v)
 	 */
 	if (dofaf == 0) {
 		mutex_enter(vp->v_interlock);
-		if (vp->v_iflag & VI_XLOCK)
+		if (vdead_check(vp, VDEAD_NOWAIT) != 0)
 			dofaf = 1;
 		mutex_exit(vp->v_interlock);
 	}
@@ -1820,7 +1820,7 @@ puffs_vnop_remove(void *v)
 int
 puffs_vnop_mkdir(void *v)
 {
-	struct vop_mkdir_args /* {
+	struct vop_mkdir_v3_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
@@ -1872,7 +1872,6 @@ puffs_vnop_mkdir(void *v)
 		update_parent(*ap->a_vpp, dvp);
 
  out:
-	vput(dvp);
 	PUFFS_MSG_RELEASE(mkdir);
 	return error;
 }
@@ -1985,7 +1984,7 @@ puffs_vnop_link(void *v)
 int
 puffs_vnop_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v3_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
@@ -2042,7 +2041,6 @@ puffs_vnop_symlink(void *v)
 		update_parent(*ap->a_vpp, dvp);
 
  out:
-	vput(dvp);
 	PUFFS_MSG_RELEASE(symlink);
 
 	return error;
@@ -2440,7 +2438,6 @@ puffs_vnop_print(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	struct puffs_node *pn = vp->v_data;
-	int error;
 
 	/* kernel portion */
 	printf("tag VT_PUFFS, vnode %p, puffs node: %p,\n"
@@ -2454,8 +2451,8 @@ puffs_vnop_print(void *v)
 		PUFFS_MSG_ALLOC(vn, print);
 		puffs_msg_setinfo(park_print, PUFFSOP_VN,
 		    PUFFS_VN_PRINT, VPTOPNC(vp));
-		PUFFS_MSG_ENQUEUEWAIT2(pmp, park_print, vp->v_data,
-		    NULL, error);
+		PUFFS_MSG_ENQUEUEWAIT2_NOERROR(pmp, park_print, vp->v_data,
+		    NULL);
 		PUFFS_MSG_RELEASE(print);
 	}
 	
@@ -2610,7 +2607,7 @@ puffs_vnop_strategy(void *v)
 	 */
 	if (BUF_ISWRITE(bp)) {
 		mutex_enter(vp->v_interlock);
-		if (vp->v_iflag & VI_XLOCK)
+		if (vdead_check(vp, VDEAD_NOWAIT) != 0)
 			dofaf = 1;
 		if (pn->pn_stat & PNODE_FAF)
 			dofaf = 1;

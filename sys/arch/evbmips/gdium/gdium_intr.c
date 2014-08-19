@@ -1,4 +1,4 @@
-/*	$NetBSD: gdium_intr.c,v 1.5 2011/07/10 00:03:53 matt Exp $	*/
+/*	$NetBSD: gdium_intr.c,v 1.5.12.1 2014/08/20 00:02:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdium_intr.c,v 1.5 2011/07/10 00:03:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdium_intr.c,v 1.5.12.1 2014/08/20 00:02:58 tls Exp $");
 
 #define __INTR_PRIVATE
 
@@ -165,7 +165,7 @@ static const struct ipl_sr_map gdium_ipl_sr_map = {
 };
 
 int	gdium_pci_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
-const char *gdium_pci_intr_string(void *, pci_intr_handle_t);
+const char *gdium_pci_intr_string(void *, pci_intr_handle_t, char *, size_t);
 const struct evcnt *gdium_pci_intr_evcnt(void *, pci_intr_handle_t);
 void	*gdium_pci_intr_establish(void *, pci_intr_handle_t, int,
 	    int (*)(void *), void *);
@@ -299,7 +299,6 @@ evbmips_intr_disestablish(void *cookie)
 void
 evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 {
-	const struct gdium_irqmap *irqmap;
 	struct evbmips_intrhand *ih;
 	int level;
 	uint32_t isr;
@@ -315,7 +314,6 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 			continue;
 		gdium_cpuintrs[level].cintr_count.ev_count++;
 		LIST_FOREACH (ih, &gdium_cpuintrs[level].cintr_list, ih_q) {
-			irqmap = &gdium_irqmap[ih->ih_irq];
 			if (isr & (1 << ih->ih_irq)) {
 				gdium_intrtab[ih->ih_irq].intr_count.ev_count++;
 				(*ih->ih_func)(ih->ih_arg);
@@ -367,13 +365,14 @@ gdium_pci_intr_map(const struct pci_attach_args *pa,
 }
 
 const char *
-gdium_pci_intr_string(void *v, pci_intr_handle_t ih)
+gdium_pci_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
 
 	if (ih >= __arraycount(gdium_irqmap))
 		panic("gdium_intr_string: bogus IRQ %ld", ih);
 
-	return gdium_irqmap[ih].name;
+	strlcpy(buf, gdium_irqmap[ih].name, len);
+	return buf;
 }
 
 const struct evcnt *

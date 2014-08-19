@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm.h,v 1.9 2009/09/13 18:45:11 pooka Exp $	*/
+/*	$NetBSD: rfcomm.h,v 1.9.22.1 2014/08/20 00:04:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,7 +55,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: rfcomm.h,v 1.9 2009/09/13 18:45:11 pooka Exp $
+ * $Id: rfcomm.h,v 1.9.22.1 2014/08/20 00:04:35 tls Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_btsocket_rfcomm.h,v 1.4 2005/01/11 01:39:53 emax Exp $
  */
 
@@ -404,20 +404,19 @@ int rfcomm_session_send_mcc(struct rfcomm_session *, int, uint8_t, void *, int);
 void rfcomm_init(void);
 
 /* rfcomm_socket.c */
-int rfcomm_usrreq(struct socket *, int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 int rfcomm_ctloutput(int, struct socket *, struct sockopt *);
 
 /* rfcomm_upper.c */
-int rfcomm_attach(struct rfcomm_dlc **, const struct btproto *, void *);
-int rfcomm_bind(struct rfcomm_dlc *, struct sockaddr_bt *);
-int rfcomm_sockaddr(struct rfcomm_dlc *, struct sockaddr_bt *);
-int rfcomm_connect(struct rfcomm_dlc *, struct sockaddr_bt *);
-int rfcomm_peeraddr(struct rfcomm_dlc *, struct sockaddr_bt *);
-int rfcomm_disconnect(struct rfcomm_dlc *, int);
-int rfcomm_detach(struct rfcomm_dlc **);
-int rfcomm_listen(struct rfcomm_dlc *);
-int rfcomm_send(struct rfcomm_dlc *, struct mbuf *);
-int rfcomm_rcvd(struct rfcomm_dlc *, size_t);
+int rfcomm_attach_pcb(struct rfcomm_dlc **, const struct btproto *, void *);
+int rfcomm_bind_pcb(struct rfcomm_dlc *, struct sockaddr_bt *);
+int rfcomm_sockaddr_pcb(struct rfcomm_dlc *, struct sockaddr_bt *);
+int rfcomm_connect_pcb(struct rfcomm_dlc *, struct sockaddr_bt *);
+int rfcomm_peeraddr_pcb(struct rfcomm_dlc *, struct sockaddr_bt *);
+int rfcomm_disconnect_pcb(struct rfcomm_dlc *, int);
+void rfcomm_detach_pcb(struct rfcomm_dlc **);
+int rfcomm_listen_pcb(struct rfcomm_dlc *);
+int rfcomm_send_pcb(struct rfcomm_dlc *, struct mbuf *);
+int rfcomm_rcvd_pcb(struct rfcomm_dlc *, size_t);
 int rfcomm_setopt(struct rfcomm_dlc *, const struct sockopt *);
 int rfcomm_getopt(struct rfcomm_dlc *, struct sockopt *);
 

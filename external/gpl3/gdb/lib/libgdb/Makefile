@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2012/02/28 22:07:54 joerg Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2014/08/19 23:59:31 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@
 
 LIBISPRIVATE=	yes
 LIB=		gdb
-GDBARCHDIR=	${.CURDIR}/arch/${MACHINE_ARCH}
+GDBARCHDIR=	${.CURDIR}/arch/${GDB_MACHINE_ARCH}
 
 .include "${GDBARCHDIR}/defs.mk"
 
@@ -19,11 +19,12 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-I${DIST}/gdb \
 		-I${DIST}/gdb/config \
 		-I${DIST}/gdb/common \
+		-I${DIST}/gdb/gnulib/import \
 		-I${DIST}/include/opcode \
 		-I${DIST}/libdecnumber \
 		-I${DIST} \
-		-I${.CURDIR}/../libbfd/arch/${MACHINE_ARCH} \
-		-I${.CURDIR}/../libdecnumber/arch/${MACHINE_ARCH} \
+		-I${.CURDIR}/../libbfd/arch/${GDB_MACHINE_ARCH} \
+		-I${.CURDIR}/../libdecnumber/arch/${GDB_MACHINE_ARCH} \
 		-I${DIST}/bfd \
 		-I${DIST}/include \
 		-DTARGET_SYSTEM_ROOT=\"\" \
@@ -41,19 +42,14 @@ CWARNFLAGS.clang+=	-Wno-switch
 .include <bsd.lib.mk>
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
-    ${DIST}/gdb/python ${DIST}/gdb/common ${DIST}/gdb/doc \
-    ${GDBARCHDIR}
+    ${DIST}/gdb/python ${DIST}/gdb/common ${DIST}/gdb/target \
+    ${DIST}/gdb/doc ${GDBARCHDIR}
 
 #
 COPTS+=	-Wno-stack-protector
 
-# Don't run yacc/bison or lex
-.y.c .y.h .l.c:
+ada-exp.c: ada-lex.c
 
 .if ${MACHINE} == "amiga"
 COPTS.dwarf2-frame.c+=-O1
-.endif
-
-.if defined(HAVE_GCC) && HAVE_GCC == 4 && ${MACHINE} == "sun2"
-COPTS.dwarf2-frame.c+=-O0
 .endif

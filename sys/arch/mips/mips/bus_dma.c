@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.27 2011/07/10 23:13:22 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.27.12.1 2014/08/20 00:03:12 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.27 2011/07/10 23:13:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.27.12.1 2014/08/20 00:03:12 tls Exp $");
 
 #define _MIPS_BUS_DMA_PRIVATE
 
@@ -97,26 +97,29 @@ EVCNT_ATTACH_STATIC(bus_dma_bounced_destroys);
 paddr_t kvtophys(vaddr_t);	/* XXX */
 
 /*
- * Utility function to load a linear buffer.  lastaddrp holds state
- * between invocations (for multiple-buffer loads).  segp contains
- * the starting segment on entrance, and the ending segment on exit.
- * first indicates if this is the first invocation of this function.
+ * Utility function to load a linear buffer.  segp contains the starting
+ * segment on entrance, and the ending segment on exit. first indicates
+ * if this is the first invocation of this function.
  */
 static int
 _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
     void *buf, bus_size_t buflen, struct vmspace *vm, int flags,
-    paddr_t *lastaddrp, int *segp, int first)
+    int *segp, bool first)
 {
 	bus_size_t sgsize;
-	bus_size_t bmask;
 	paddr_t baddr, curaddr, lastaddr;
-	vaddr_t vaddr = (vaddr_t)buf;
-	int seg;
+	vaddr_t vaddr = (vaddr_t)buf, lastvaddr;
+	int seg = *segp;
+	bus_dma_segment_t *ds = &map->dm_segs[seg];
+	bus_dma_segment_t * const eds = &map->dm_segs[map->_dm_segcnt];
+	const bool d_cache_coherent =
+	    (mips_options.mips_cpu_flags & CPU_MIPS_D_CACHE_COHERENT) != 0;
 
-	lastaddr = *lastaddrp;
-	bmask = ~(map->_dm_boundary - 1);
+	lastaddr = ds->ds_addr + ds->ds_len;
+	lastvaddr = ds->_ds_vaddr + ds->ds_len;
+	const bus_size_t bmask = ~(map->_dm_boundary - 1);
 
-	for (seg = *segp; buflen > 0 ; ) {
+	while (buflen > 0) {
 		/*
 		 * Get the physical address for this segment.
 		 */
@@ -130,9 +133,9 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 		 * If we're beyond the current DMA window, indicate
 		 * that and try to fall back onto something else.
 		 */
-		if (curaddr < t->_bounce_alloc_lo ||
-		    (t->_bounce_alloc_hi != 0
-		     && curaddr >= t->_bounce_alloc_hi))
+		if (curaddr < t->_bounce_alloc_lo
+		    || (t->_bounce_alloc_hi != 0
+			&& curaddr >= t->_bounce_alloc_hi))
 			return (EINVAL);
 #if BUS_DMA_DEBUG
 		printf("dma: addr %#"PRIxPADDR" -> %#"PRIxPADDR"\n", curaddr,
@@ -144,18 +147,21 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 		 * Compute the segment size, and adjust counts.
 		 */
 		sgsize = PAGE_SIZE - ((uintptr_t)vaddr & PGOFSET);
-		if (buflen < sgsize)
+		if (sgsize > buflen) {
 			sgsize = buflen;
-		if (map->dm_maxsegsz < sgsize)
+		}
+		if (sgsize > map->dm_maxsegsz) {
 			sgsize = map->dm_maxsegsz;
+		}
 
 		/*
 		 * Make sure we don't cross any boundaries.
 		 */
 		if (map->_dm_boundary > 0) {
 			baddr = (curaddr + map->_dm_boundary) & bmask;
-			if (sgsize > (baddr - curaddr))
-				sgsize = (baddr - curaddr);
+			if (sgsize > baddr - curaddr) {
+				sgsize = baddr - curaddr;
+			}
 		}
 
 		/*
@@ -163,34 +169,31 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 		 * the previous segment if possible.
 		 */
 		if (first) {
-			map->dm_segs[seg].ds_addr = curaddr;
-			map->dm_segs[seg].ds_len = sgsize;
-			map->dm_segs[seg]._ds_vaddr = vaddr;
-			first = 0;
+			ds->ds_addr = curaddr;
+			ds->ds_len = sgsize;
+			ds->_ds_vaddr = vaddr;
+			first = false;
+		} else if (curaddr == lastaddr
+		    && (d_cache_coherent || lastvaddr == vaddr)
+		    && ds->ds_len + sgsize <= map->dm_maxsegsz
+		    && (map->_dm_boundary == 0
+			|| ((ds->ds_addr ^ curaddr) & bmask) == 0)) {
+			ds->ds_len += sgsize;
 		} else {
-			if (curaddr == lastaddr &&
-			    (map->dm_segs[seg].ds_len + sgsize) <=
-			     map->dm_maxsegsz &&
-			    (map->_dm_boundary == 0 ||
-			     (map->dm_segs[seg].ds_addr & bmask) ==
-			     (curaddr & bmask)))
-				map->dm_segs[seg].ds_len += sgsize;
-			else {
-				if (++seg >= map->_dm_segcnt)
-					break;
-				map->dm_segs[seg].ds_addr = curaddr;
-				map->dm_segs[seg].ds_len = sgsize;
-				map->dm_segs[seg]._ds_vaddr = vaddr;
-			}
+			if (++ds >= eds)
+				break;
+			ds->ds_addr = curaddr;
+			ds->ds_len = sgsize;
+			ds->_ds_vaddr = vaddr;
 		}
 
 		lastaddr = curaddr + sgsize;
 		vaddr += sgsize;
 		buflen -= sgsize;
+		lastvaddr = vaddr;
 	}
 
-	*segp = seg;
-	*lastaddrp = lastaddr;
+	*segp = ds - map->dm_segs;
 
 	/*
 	 * Did we fit?
@@ -219,7 +222,6 @@ _bus_dma_load_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 {
 	struct mips_bus_dma_cookie * const cookie = map->_dm_cookie;
 	struct vmspace * const vm = vmspace_kernel();
-	paddr_t lastaddr;
 	int seg, error;
 
 	KASSERT(cookie != NULL);
@@ -243,7 +245,7 @@ _bus_dma_load_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	cookie->id_buftype = buftype;
 	seg = 0;
 	error = _bus_dmamap_load_buffer(t, map, cookie->id_bouncebuf,
-	    buflen, vm, flags, &lastaddr, &seg, 1);
+	    buflen, vm, flags, &seg, true);
 	if (error)
 		return (error);
 
@@ -400,7 +402,6 @@ int
 _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct proc *p, int flags)
 {
-	paddr_t lastaddr;
 	int seg, error;
 	struct vmspace *vm;
 
@@ -435,7 +436,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 	seg = 0;
 	error = _bus_dmamap_load_buffer(t, map, buf, buflen,
-	    vm, flags, &lastaddr, &seg, 1);
+	    vm, flags, &seg, true);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
@@ -477,10 +478,10 @@ int
 _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
     struct mbuf *m0, int flags)
 {
-	paddr_t lastaddr;
-	int seg, error, first;
+	int seg, error;
 	struct mbuf *m;
 	struct vmspace * vm = vmspace_kernel();
+	bool first;
 
 	if (map->dm_nsegs > 0) {
 #ifdef _MIPS_NEED_BUS_DMA_BOUNCE
@@ -510,15 +511,15 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 	if (m0->m_pkthdr.len > map->_dm_size)
 		return (EINVAL);
 
-	first = 1;
+	first = true;
 	seg = 0;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
 		error = _bus_dmamap_load_buffer(t, map, m->m_data, m->m_len,
-		    vm, flags, &lastaddr, &seg, first);
-		first = 0;
+		    vm, flags, &seg, first);
+		first = false;
 	}
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
@@ -548,8 +549,8 @@ int
 _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
     struct uio *uio, int flags)
 {
-	paddr_t lastaddr;
-	int seg, i, error, first;
+	int seg, i, error;
+	bool first;
 	bus_size_t minlen, resid;
 	struct iovec *iov;
 	void *addr;
@@ -577,7 +578,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
 
-	first = 1;
+	first = true;
 	seg = 0;
 	error = 0;
 	for (i = 0; i < uio->uio_iovcnt && resid != 0 && error == 0; i++) {
@@ -589,8 +590,8 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
 		addr = (void *)iov[i].iov_base;
 
 		error = _bus_dmamap_load_buffer(t, map, addr, minlen,
-		    uio->uio_vmspace, flags, &lastaddr, &seg, first);
-		first = 0;
+		    uio->uio_vmspace, flags, &seg, first);
+		first = false;
 
 		resid -= minlen;
 	}
@@ -623,7 +624,52 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
     bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
 
-	panic("_bus_dmamap_load_raw: not implemented");
+	struct vmspace * const vm = vmspace_kernel();
+	const bool coherent_p = (mips_options.mips_cpu_flags & CPU_MIPS_D_CACHE_COHERENT);
+	const bool cached_p = coherent_p || (flags & BUS_DMA_COHERENT) == 0;
+	bus_size_t mapsize = 0;
+	bool first = true;
+	int curseg = 0;
+	int error = 0;
+
+	for (; error == 0 && nsegs-- > 0; segs++) {
+		void *kva;
+#ifdef _LP64
+		if (cached_p) {
+			kva = (void *)MIPS_PHYS_TO_XKPHYS_CACHED(segs->ds_addr);
+		} else {
+			kva = (void *)MIPS_PHYS_TO_XKPHYS_UNCACHED(segs->ds_addr);
+		}
+#else
+		if (segs->ds_addr >= MIPS_PHYS_MASK)
+			return EFBIG;
+		if (cached_p) {
+			kva = (void *)MIPS_PHYS_TO_KSEG0(segs->ds_addr);
+		} else {
+			kva = (void *)MIPS_PHYS_TO_KSEG1(segs->ds_addr);
+		}
+#endif	/* _LP64 */
+		mapsize += segs->ds_len;
+		error = _bus_dmamap_load_buffer(t, map, kva, segs->ds_len,
+		    vm, flags, &curseg, first);
+		first = false;
+	}
+	if (error == 0) {
+		map->dm_mapsize = mapsize;
+		map->dm_nsegs = curseg + 1;
+		map->_dm_vmspace = vm;		/* always kernel */
+		/*
+		 * If our cache is coherent, then the map must be coherent too.
+		 */
+		if (coherent_p)
+			map->_dm_flags |= _BUS_DMAMAP_COHERENT;
+		return 0;
+	}
+	/*
+	 * If bus_dmamem_alloc didn't return memory that didn't need bouncing
+	 * that's a bug which we will not workaround.
+	 */
+	return error;
 }
 
 /*
@@ -810,13 +856,27 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			mips_dcache_wbinv_range(vaddr, minlen);
 			break;
 
-		case BUS_DMASYNC_PREREAD:
-#if 1
-			mips_dcache_wbinv_range(vaddr, minlen);
-#else
-			mips_dcache_inv_range(vaddr, minlen);
-#endif
+		case BUS_DMASYNC_PREREAD: {
+			struct mips_cache_info * const mci = &mips_cache_info;
+			vaddr_t start = vaddr;
+			vaddr_t end = vaddr + minlen;
+			vaddr_t preboundary, firstboundary, lastboundary;
+
+			preboundary = start & ~mci->mci_dcache_align_mask;
+			firstboundary = (start + mci->mci_dcache_align_mask)
+			    & ~mci->mci_dcache_align_mask;
+			lastboundary = end & ~mci->mci_dcache_align_mask;
+			if (preboundary < start && preboundary < lastboundary)
+				mips_dcache_wbinv_range(preboundary,
+				    mci->mci_dcache_align);
+			if (firstboundary < lastboundary)
+				mips_dcache_inv_range(firstboundary,
+				    lastboundary - firstboundary);
+			if (lastboundary < end)
+				mips_dcache_wbinv_range(lastboundary,
+				    mci->mci_dcache_align);
 			break;
+		}
 
 		case BUS_DMASYNC_PREWRITE:
 			mips_dcache_wb_range(vaddr, minlen);

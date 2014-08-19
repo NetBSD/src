@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcsata.c,v 1.25.2.1 2012/10/09 13:36:06 bouyer Exp $	*/
+/*	$NetBSD: pdcsata.c,v 1.25.2.2 2014/08/20 00:03:48 tls Exp $	*/
 
 /*
  * Copyright (c) 2004, Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.25.2.1 2012/10/09 13:36:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.25.2.2 2014/08/20 00:03:48 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -71,7 +71,7 @@ static int  pdcsata_match(device_t, cfdata_t, void *);
 static void pdcsata_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(pdcsata, sizeof(struct pciide_softc),
-    pdcsata_match, pdcsata_attach, NULL, NULL);
+    pdcsata_match, pdcsata_attach, pciide_detach, NULL);
 
 static const struct pciide_product_desc pciide_pdcsata_products[] =  {
 	{ PCI_PRODUCT_PROMISE_PDC20318,
@@ -231,6 +231,7 @@ pdcsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	int channel, i;
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	/*
 	 * Promise SATA controllers have 3 or 4 channels,
@@ -241,7 +242,7 @@ pdcsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 		    "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
 	sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
 	    intrhandle, IPL_BIO, pdcsata_pci_intr, sc);
 

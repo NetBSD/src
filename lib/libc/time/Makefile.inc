@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.17 2011/08/14 09:07:37 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.17.8.1 2014/08/20 00:02:16 tls Exp $
 
 .PATH: ${.CURDIR}/time
 
-SRCS+=	_daylight.c							\
-	asctime.c difftime.c localtime.c getdate.c strftime.c strptime.c
+SRCS+=	asctime.c difftime.c localtime.c getdate.c strftime.c strptime.c
 MAN+=	ctime.3 getdate.3 offtime.3 strftime.3 strptime.3		\
 	time2posix.3 tzfile.5 tzset.3
 CPPFLAGS+=-DALL_STATE -DUSG_COMPAT

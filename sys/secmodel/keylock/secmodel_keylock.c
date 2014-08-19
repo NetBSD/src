@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_keylock.c,v 1.7 2011/12/08 11:01:59 jym Exp $ */
+/* $NetBSD: secmodel_keylock.c,v 1.7.6.1 2014/08/20 00:04:43 tls Exp $ */
 /*-
  * Copyright (c) 2009 Marc Balmer <marc@msys.ch>
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.7 2011/12/08 11:01:59 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.7.6.1 2014/08/20 00:04:43 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -84,15 +84,9 @@ SYSCTL_SETUP(sysctl_security_keylock_setup,
 
 	sysctl_createv(clog, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "security", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_SECURITY, CTL_EOL);
-
-	sysctl_createv(clog, 0, &rnode, &rnode,
-		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "models", NULL,
 		       NULL, 0, NULL, 0,
-		       CTL_CREATE, CTL_EOL);
+		       CTL_SECURITY, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, &rnode,
 		       CTLFLAG_PERMANENT,

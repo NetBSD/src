@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2007-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,7 +23,13 @@ void pendfunc1 (int x)
   printf ("in pendfunc1, x is %d\n", x);
 }
 
+void pendfunc2 (int x)
+{
+  printf ("in pendfunc2, x is %d\n", x);
+}
+
 void pendfunc (int x)
 {
   pendfunc1 (x);
+  pendfunc2 (x);
 }

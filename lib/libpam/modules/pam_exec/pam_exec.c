@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_exec.c,v 1.6 2012/01/03 19:02:54 christos Exp $	*/
+/*	$NetBSD: pam_exec.c,v 1.6.6.1 2014/08/20 00:02:19 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001,2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_exec/pam_exec.c,v 1.4 2005/02/01 10:37:07 des Exp $");
 #else
-__RCSID("$NetBSD: pam_exec.c,v 1.6 2012/01/03 19:02:54 christos Exp $");
+__RCSID("$NetBSD: pam_exec.c,v 1.6.6.1 2014/08/20 00:02:19 tls Exp $");
 #endif
 
 #include <sys/types.h>
@@ -70,7 +70,8 @@ static int
 _pam_exec(pam_handle_t *pamh __unused, int flags __unused,
     int argc, const char *argv[])
 {
-	int envlen, i, nitems, pam_err, status;
+	size_t envlen, i, nitems;
+	int pam_err, status;
 	char **envlist, **tmp;
 	volatile int childerr;
 	pid_t pid;

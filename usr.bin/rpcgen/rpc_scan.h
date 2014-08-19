@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_scan.h,v 1.8 2009/05/06 14:30:51 ginsbach Exp $	*/
+/*	$NetBSD: rpc_scan.h,v 1.8.12.1 2014/08/20 00:05:03 tls Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -91,7 +91,7 @@ typedef enum tok_kind tok_kind;
  */
 struct token {
 	tok_kind kind;
-	char *str;
+	const char *str;
 };
 typedef struct token token;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_trouble.c,v 1.1.1.2.12.1 2013/02/25 00:27:28 tls Exp $	*/
+/*	$NetBSD: smtp_trouble.c,v 1.1.1.2.12.2 2014/08/19 23:59:44 tls Exp $	*/
 
 /*++
 /* NAME
@@ -153,6 +153,7 @@
 #include <mail_error.h>
 #include <dsn_buf.h>
 #include <dsn.h>
+#include <mail_params.h>
 
 /* Application-specific. */
 
@@ -192,6 +193,7 @@ static int smtp_bulk_fail(SMTP_STATE *state, int throttle_queue)
     RECIPIENT *rcpt;
     int     status;
     int     soft_error = (STR(why->status)[0] == '4');
+    int     soft_bounce_error = (STR(why->status)[0] == '5' && var_soft_bounce);
     int     nrcpt;
 
     /*
@@ -199,7 +201,8 @@ static int smtp_bulk_fail(SMTP_STATE *state, int throttle_queue)
      * delivery to a backup server. Just log something informative to show
      * why we're skipping this host.
      */
-    if (soft_error && (state->misc_flags & SMTP_MISC_FLAG_FINAL_SERVER) == 0) {
+    if ((soft_error || soft_bounce_error)
+	&& (state->misc_flags & SMTP_MISC_FLAG_FINAL_SERVER) == 0) {
 	msg_info("%s: %s", request->queue_id, STR(why->reason));
 	for (nrcpt = 0; nrcpt < SMTP_RCPT_LEFT(state); nrcpt++) {
 	    rcpt = request->rcpt_list.info + nrcpt;
@@ -247,7 +250,8 @@ static int smtp_bulk_fail(SMTP_STATE *state, int throttle_queue)
 	    state->status |= status;
 	}
 	if ((state->misc_flags & SMTP_MISC_FLAG_COMPLETE_SESSION) == 0
-	    && throttle_queue && soft_error && request->hop_status == 0)
+	    && throttle_queue && (soft_error || soft_bounce_error)
+	    && request->hop_status == 0)
 	    request->hop_status = DSN_COPY(&why->dsn);
     }
 
@@ -356,6 +360,7 @@ void    smtp_rcpt_fail(SMTP_STATE *state, RECIPIENT *rcpt, const char *mta_name,
     DSN_BUF *why = state->why;
     int     status;
     int     soft_error;
+    int     soft_bounce_error;
     va_list ap;
 
     /*
@@ -371,6 +376,7 @@ void    smtp_rcpt_fail(SMTP_STATE *state, RECIPIENT *rcpt, const char *mta_name,
     vsmtp_fill_dsn(state, mta_name, resp->dsn, resp->str, format, ap);
     va_end(ap);
     soft_error = STR(why->status)[0] == '4';
+    soft_bounce_error = (STR(why->status)[0] == '5' && var_soft_bounce);
 
     if (state->session && mta_name)
 	smtp_check_code(state->session, resp->code);
@@ -380,7 +386,8 @@ void    smtp_rcpt_fail(SMTP_STATE *state, RECIPIENT *rcpt, const char *mta_name,
      * for trying other mail servers. Just log something informative to show
      * why we're skipping this recipient now.
      */
-    if (soft_error && (state->misc_flags & SMTP_MISC_FLAG_FINAL_SERVER) == 0) {
+    if ((soft_error || soft_bounce_error)
+	&& (state->misc_flags & SMTP_MISC_FLAG_FINAL_SERVER) == 0) {
 	msg_info("%s: %s", request->queue_id, STR(why->reason));
 	SMTP_RCPT_KEEP(state, rcpt);
     }

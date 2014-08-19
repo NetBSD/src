@@ -1,7 +1,6 @@
 /* This file defines the interface between the simulator and gdb.
 
-   Copyright 1993, 1994, 1996, 1997, 1998, 2000, 2002, 2007, 2008, 2009, 2010,
-   2011 Free Software Foundation, Inc.
+   Copyright 1993-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -275,6 +274,11 @@ void sim_stop_reason (SIM_DESC sd, enum sim_stop *reason, int *sigrc);
    or empty CMD. */
 
 void sim_do_command (SIM_DESC sd, char *cmd);
+
+/* Complete a command based on the available sim commands.  Returns an
+   array of possible matches.  */
+
+char **sim_complete_command (SIM_DESC sd, const char *text, const char *word);
 
 #ifdef __cplusplus
 }

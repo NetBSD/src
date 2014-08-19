@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.20 2011/09/24 22:53:50 christos Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.20.12.1 2014/08/20 00:04:28 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.20 2011/09/24 22:53:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.20.12.1 2014/08/20 00:04:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -154,6 +154,12 @@ coredump(struct lwp *l, const char *pattern)
 	}
 	error = coredump_buildname(p, name, pattern, MAXPATHLEN);
 	mutex_exit(&lim->pl_lock);
+
+	if (error) {
+		mutex_exit(p->p_lock);
+		mutex_exit(proc_lock);
+		goto done;
+	}
 
 	/*
 	 * On a simple filename, see if the filesystem allow us to write
@@ -303,9 +309,9 @@ coredump_buildname(struct proc *p, char *dst, const char *src, size_t len)
 }
 
 int
-coredump_write(void *cookie, enum uio_seg segflg, const void *data, size_t len)
+coredump_write(struct coredump_iostate *io, enum uio_seg segflg,
+    const void *data, size_t len)
 {
-	struct coredump_iostate *io = cookie;
 	int error;
 
 	error = vn_rdwr(UIO_WRITE, io->io_vp, __UNCONST(data), len,
@@ -322,4 +328,10 @@ coredump_write(void *cookie, enum uio_seg segflg, const void *data, size_t len)
 
 	io->io_offset += len;
 	return (0);
+}
+
+off_t
+coredump_offset(struct coredump_iostate *io)
+{
+	return io->io_offset; 
 }

@@ -1,7 +1,6 @@
 /* Native support code for PPC AIX, for GDB the GNU debugger.
 
-   Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2006-2014 Free Software Foundation, Inc.
 
    Free Software Foundation, Inc.
 
@@ -21,7 +20,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "gdb_string.h"
+#include <string.h>
 #include "gdb_assert.h"
 #include "osabi.h"
 #include "regcache.h"
@@ -35,13 +34,12 @@
 #include "breakpoint.h"
 #include "rs6000-tdep.h"
 #include "ppc-tdep.h"
+#include "rs6000-aix-tdep.h"
 #include "exceptions.h"
-
-/* Hook for determining the TOC address when calling functions in the
-   inferior under AIX.  The initialization code in rs6000-nat.c sets
-   this hook to point to find_toc_address.  */
-
-CORE_ADDR (*rs6000_find_toc_address_hook) (CORE_ADDR) = NULL;
+#include "xcoffread.h"
+#include "solib.h"
+#include "solib-aix.h"
+#include "xml-utils.h"
 
 /* If the kernel has to deliver a signal, it pushes a sigcontext
    structure on the stack and then calls the signal handler, passing
@@ -258,16 +256,21 @@ rs6000_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
       if (TYPE_CODE (type) == TYPE_CODE_FLT)
 	{
-
 	  /* Floating point arguments are passed in fpr's, as well as gpr's.
 	     There are 13 fpr's reserved for passing parameters.  At this point
-	     there is no way we would run out of them.  */
+	     there is no way we would run out of them.
+
+	     Always store the floating point value using the register's
+	     floating-point format.  */
+	  const int fp_regnum = tdep->ppc_fp0_regnum + 1 + f_argno;
+	  gdb_byte reg_val[MAX_REGISTER_SIZE];
+	  struct type *reg_type = register_type (gdbarch, fp_regnum);
 
 	  gdb_assert (len <= 8);
 
-	  regcache_cooked_write (regcache,
-	                         tdep->ppc_fp0_regnum + 1 + f_argno,
-	                         value_contents (arg));
+	  convert_typed_floating (value_contents (arg), type,
+				  reg_val, reg_type);
+	  regcache_cooked_write (regcache, fp_regnum, reg_val);
 	  ++f_argno;
 	}
 
@@ -412,26 +415,21 @@ ran_out_of_registers_for_arguments:
      breakpoint.  */
   regcache_raw_write_signed (regcache, tdep->ppc_lr_regnum, bp_addr);
 
-  /* Set the TOC register, get the value from the objfile reader
-     which, in turn, gets it from the VMAP table.  */
-  if (rs6000_find_toc_address_hook != NULL)
-    {
-      CORE_ADDR tocvalue = (*rs6000_find_toc_address_hook) (func_addr);
-      regcache_raw_write_signed (regcache, tdep->ppc_toc_regnum, tocvalue);
-    }
+  /* Set the TOC register value.  */
+  regcache_raw_write_signed (regcache, tdep->ppc_toc_regnum,
+			     solib_aix_get_toc_value (func_addr));
 
   target_store_registers (regcache, -1);
   return sp;
 }
 
 static enum return_value_convention
-rs6000_return_value (struct gdbarch *gdbarch, struct type *func_type,
+rs6000_return_value (struct gdbarch *gdbarch, struct value *function,
 		     struct type *valtype, struct regcache *regcache,
 		     gdb_byte *readbuf, const gdb_byte *writebuf)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  gdb_byte buf[8];
 
   /* The calling convention this function implements assumes the
      processor has floating-point registers.  We shouldn't be using it
@@ -584,7 +582,7 @@ rs6000_convert_from_func_ptr_addr (struct gdbarch *gdbarch,
     {
       CORE_ADDR pc = 0;
       struct obj_section *pc_section;
-      struct gdb_exception e;
+      volatile struct gdb_exception e;
 
       TRY_CATCH (e, RETURN_MASK_ERROR)
         {
@@ -721,14 +719,327 @@ rs6000_software_single_step (struct frame_info *frame)
   return 1;
 }
 
+/* Implement the "auto_wide_charset" gdbarch method for this platform.  */
+
+static const char *
+rs6000_aix_auto_wide_charset (void)
+{
+  return "UTF-16";
+}
+
+/* Implement an osabi sniffer for RS6000/AIX.
+
+   This function assumes that ABFD's flavour is XCOFF.  In other words,
+   it should be registered as a sniffer for bfd_target_xcoff_flavour
+   objfiles only.  A failed assertion will be raised if this condition
+   is not met.  */
+
 static enum gdb_osabi
 rs6000_aix_osabi_sniffer (bfd *abfd)
 {
-  
-  if (bfd_get_flavour (abfd) == bfd_target_xcoff_flavour);
-    return GDB_OSABI_AIX;
+  gdb_assert (bfd_get_flavour (abfd) == bfd_target_xcoff_flavour);
 
-  return GDB_OSABI_UNKNOWN;
+  /* The only noticeable difference between Lynx178 XCOFF files and
+     AIX XCOFF files comes from the fact that there are no shared
+     libraries on Lynx178.  On AIX, we are betting that an executable
+     linked with no shared library will never exist.  */
+  if (xcoff_get_n_import_files (abfd) <= 0)
+    return GDB_OSABI_UNKNOWN;
+
+  return GDB_OSABI_AIX;
+}
+
+/* A structure encoding the offset and size of a field within
+   a struct.  */
+
+struct field_info
+{
+  int offset;
+  int size;
+};
+
+/* A structure describing the layout of all the fields of interest
+   in AIX's struct ld_info.  Each field in this struct corresponds
+   to the field of the same name in struct ld_info.  */
+
+struct ld_info_desc
+{
+  struct field_info ldinfo_next;
+  struct field_info ldinfo_fd;
+  struct field_info ldinfo_textorg;
+  struct field_info ldinfo_textsize;
+  struct field_info ldinfo_dataorg;
+  struct field_info ldinfo_datasize;
+  struct field_info ldinfo_filename;
+};
+
+/* The following data has been generated by compiling and running
+   the following program on AIX 5.3.  */
+
+#if 0
+#include <stddef.h>
+#include <stdio.h>
+#define __LDINFO_PTRACE32__
+#define __LDINFO_PTRACE64__
+#include <sys/ldr.h>
+
+#define pinfo(type,member)                  \
+  {                                         \
+    struct type ldi = {0};                  \
+                                            \
+    printf ("  {%d, %d},\t/* %s */\n",      \
+            offsetof (struct type, member), \
+            sizeof (ldi.member),            \
+            #member);                       \
+  }                                         \
+  while (0)
+
+int
+main (void)
+{
+  printf ("static const struct ld_info_desc ld_info32_desc =\n{\n");
+  pinfo (__ld_info32, ldinfo_next);
+  pinfo (__ld_info32, ldinfo_fd);
+  pinfo (__ld_info32, ldinfo_textorg);
+  pinfo (__ld_info32, ldinfo_textsize);
+  pinfo (__ld_info32, ldinfo_dataorg);
+  pinfo (__ld_info32, ldinfo_datasize);
+  pinfo (__ld_info32, ldinfo_filename);
+  printf ("};\n");
+
+  printf ("\n");
+
+  printf ("static const struct ld_info_desc ld_info64_desc =\n{\n");
+  pinfo (__ld_info64, ldinfo_next);
+  pinfo (__ld_info64, ldinfo_fd);
+  pinfo (__ld_info64, ldinfo_textorg);
+  pinfo (__ld_info64, ldinfo_textsize);
+  pinfo (__ld_info64, ldinfo_dataorg);
+  pinfo (__ld_info64, ldinfo_datasize);
+  pinfo (__ld_info64, ldinfo_filename);
+  printf ("};\n");
+
+  return 0;
+}
+#endif /* 0 */
+
+/* Layout of the 32bit version of struct ld_info.  */
+
+static const struct ld_info_desc ld_info32_desc =
+{
+  {0, 4},       /* ldinfo_next */
+  {4, 4},       /* ldinfo_fd */
+  {8, 4},       /* ldinfo_textorg */
+  {12, 4},      /* ldinfo_textsize */
+  {16, 4},      /* ldinfo_dataorg */
+  {20, 4},      /* ldinfo_datasize */
+  {24, 2},      /* ldinfo_filename */
+};
+
+/* Layout of the 64bit version of struct ld_info.  */
+
+static const struct ld_info_desc ld_info64_desc =
+{
+  {0, 4},       /* ldinfo_next */
+  {8, 4},       /* ldinfo_fd */
+  {16, 8},      /* ldinfo_textorg */
+  {24, 8},      /* ldinfo_textsize */
+  {32, 8},      /* ldinfo_dataorg */
+  {40, 8},      /* ldinfo_datasize */
+  {48, 2},      /* ldinfo_filename */
+};
+
+/* A structured representation of one entry read from the ld_info
+   binary data provided by the AIX loader.  */
+
+struct ld_info
+{
+  ULONGEST next;
+  int fd;
+  CORE_ADDR textorg;
+  ULONGEST textsize;
+  CORE_ADDR dataorg;
+  ULONGEST datasize;
+  char *filename;
+  char *member_name;
+};
+
+/* Return a struct ld_info object corresponding to the entry at
+   LDI_BUF.
+
+   Note that the filename and member_name strings still point
+   to the data in LDI_BUF.  So LDI_BUF must not be deallocated
+   while the struct ld_info object returned is in use.  */
+
+static struct ld_info
+rs6000_aix_extract_ld_info (struct gdbarch *gdbarch,
+			    const gdb_byte *ldi_buf)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+  struct type *ptr_type = builtin_type (gdbarch)->builtin_data_ptr;
+  const struct ld_info_desc desc
+    = tdep->wordsize == 8 ? ld_info64_desc : ld_info32_desc;
+  struct ld_info info;
+
+  info.next = extract_unsigned_integer (ldi_buf + desc.ldinfo_next.offset,
+					desc.ldinfo_next.size,
+					byte_order);
+  info.fd = extract_signed_integer (ldi_buf + desc.ldinfo_fd.offset,
+				    desc.ldinfo_fd.size,
+				    byte_order);
+  info.textorg = extract_typed_address (ldi_buf + desc.ldinfo_textorg.offset,
+					ptr_type);
+  info.textsize
+    = extract_unsigned_integer (ldi_buf + desc.ldinfo_textsize.offset,
+				desc.ldinfo_textsize.size,
+				byte_order);
+  info.dataorg = extract_typed_address (ldi_buf + desc.ldinfo_dataorg.offset,
+					ptr_type);
+  info.datasize
+    = extract_unsigned_integer (ldi_buf + desc.ldinfo_datasize.offset,
+				desc.ldinfo_datasize.size,
+				byte_order);
+  info.filename = (char *) ldi_buf + desc.ldinfo_filename.offset;
+  info.member_name = info.filename + strlen (info.filename) + 1;
+
+  return info;
+}
+
+/* Append to OBJSTACK an XML string description of the shared library
+   corresponding to LDI, following the TARGET_OBJECT_LIBRARIES_AIX
+   format.  */
+
+static void
+rs6000_aix_shared_library_to_xml (struct ld_info *ldi,
+				  struct obstack *obstack)
+{
+  char *p;
+
+  obstack_grow_str (obstack, "<library name=\"");
+  p = xml_escape_text (ldi->filename);
+  obstack_grow_str (obstack, p);
+  xfree (p);
+  obstack_grow_str (obstack, "\"");
+
+  if (ldi->member_name[0] != '\0')
+    {
+      obstack_grow_str (obstack, " member=\"");
+      p = xml_escape_text (ldi->member_name);
+      obstack_grow_str (obstack, p);
+      xfree (p);
+      obstack_grow_str (obstack, "\"");
+    }
+
+  obstack_grow_str (obstack, " text_addr=\"");
+  obstack_grow_str (obstack, core_addr_to_string (ldi->textorg));
+  obstack_grow_str (obstack, "\"");
+
+  obstack_grow_str (obstack, " text_size=\"");
+  obstack_grow_str (obstack, pulongest (ldi->textsize));
+  obstack_grow_str (obstack, "\"");
+
+  obstack_grow_str (obstack, " data_addr=\"");
+  obstack_grow_str (obstack, core_addr_to_string (ldi->dataorg));
+  obstack_grow_str (obstack, "\"");
+
+  obstack_grow_str (obstack, " data_size=\"");
+  obstack_grow_str (obstack, pulongest (ldi->datasize));
+  obstack_grow_str (obstack, "\"");
+
+  obstack_grow_str (obstack, "></library>");
+}
+
+/* Convert the ld_info binary data provided by the AIX loader into
+   an XML representation following the TARGET_OBJECT_LIBRARIES_AIX
+   format.
+
+   LDI_BUF is a buffer containing the ld_info data.
+   READBUF, OFFSET and LEN follow the same semantics as target_ops'
+   to_xfer_partial target_ops method.
+
+   If CLOSE_LDINFO_FD is nonzero, then this routine also closes
+   the ldinfo_fd file descriptor.  This is useful when the ldinfo
+   data is obtained via ptrace, as ptrace opens a file descriptor
+   for each and every entry; but we cannot use this descriptor
+   as the consumer of the XML library list might live in a different
+   process.  */
+
+LONGEST
+rs6000_aix_ld_info_to_xml (struct gdbarch *gdbarch, const gdb_byte *ldi_buf,
+			   gdb_byte *readbuf, ULONGEST offset, LONGEST len,
+			   int close_ldinfo_fd)
+{
+  struct obstack obstack;
+  const char *buf;
+  LONGEST len_avail;
+
+  obstack_init (&obstack);
+  obstack_grow_str (&obstack, "<library-list-aix version=\"1.0\">\n");
+
+  while (1)
+    {
+      struct ld_info ldi = rs6000_aix_extract_ld_info (gdbarch, ldi_buf);
+
+      rs6000_aix_shared_library_to_xml (&ldi, &obstack);
+      if (close_ldinfo_fd)
+	close (ldi.fd);
+
+      if (!ldi.next)
+	break;
+      ldi_buf = ldi_buf + ldi.next;
+    }
+
+  obstack_grow_str0 (&obstack, "</library-list-aix>\n");
+
+  buf = obstack_finish (&obstack);
+  len_avail = strlen (buf);
+  if (offset >= len_avail)
+    len= 0;
+  else
+    {
+      if (len > len_avail - offset)
+        len = len_avail - offset;
+      memcpy (readbuf, buf + offset, len);
+    }
+
+  obstack_free (&obstack, NULL);
+  return len;
+}
+
+/* Implement the core_xfer_shared_libraries_aix gdbarch method.  */
+
+static LONGEST
+rs6000_aix_core_xfer_shared_libraries_aix (struct gdbarch *gdbarch,
+					   gdb_byte *readbuf,
+					   ULONGEST offset,
+					   LONGEST len)
+{
+  struct bfd_section *ldinfo_sec;
+  int ldinfo_size;
+  gdb_byte *ldinfo_buf;
+  struct cleanup *cleanup;
+  LONGEST result;
+
+  ldinfo_sec = bfd_get_section_by_name (core_bfd, ".ldinfo");
+  if (ldinfo_sec == NULL)
+    error (_("cannot find .ldinfo section from core file: %s"),
+	   bfd_errmsg (bfd_get_error ()));
+  ldinfo_size = bfd_get_section_size (ldinfo_sec);
+
+  ldinfo_buf = xmalloc (ldinfo_size);
+  cleanup = make_cleanup (xfree, ldinfo_buf);
+
+  if (! bfd_get_section_contents (core_bfd, ldinfo_sec,
+				  ldinfo_buf, 0, ldinfo_size))
+    error (_("unable to read .ldinfo section from core file: %s"),
+	  bfd_errmsg (bfd_get_error ()));
+
+  result = rs6000_aix_ld_info_to_xml (gdbarch, ldinfo_buf, readbuf,
+				      offset, len, 0);
+
+  do_cleanups (cleanup);
+  return result;
 }
 
 static void
@@ -758,6 +1069,8 @@ rs6000_aix_init_osabi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Core file support.  */
   set_gdbarch_regset_from_core_section
     (gdbarch, rs6000_aix_regset_from_core_section);
+  set_gdbarch_core_xfer_shared_libraries_aix
+    (gdbarch, rs6000_aix_core_xfer_shared_libraries_aix);
 
   if (tdep->wordsize == 8)
     tdep->lr_frame_offset = 16;
@@ -772,6 +1085,10 @@ rs6000_aix_init_osabi (struct gdbarch_info info, struct gdbarch *gdbarch)
     set_gdbarch_frame_red_zone_size (gdbarch, 224);
   else
     set_gdbarch_frame_red_zone_size (gdbarch, 0);
+
+  set_gdbarch_auto_wide_charset (gdbarch, rs6000_aix_auto_wide_charset);
+
+  set_solib_ops (gdbarch, &solib_aix_so_ops);
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */

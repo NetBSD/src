@@ -1,5 +1,13 @@
 #!/bin/sh
+# Sierra Wireless 3G/4G 250U
+
+# CDMA Version
+# at!rssi?		# Show signal level -60 to -90 dbm is acceptable
+# at!pcinfo		# Show if the modem is online
+# at!pcstate=1		# Turn radio on
+
 chat -t 100 -v ''	'ATZ' \
-      'OK' 		'ATDT#777' \
+      'OK' 		'AT!PCSTATE=1' \
+      'OK'		'ATDT#777' \
       TIMEOUT		120 \
       'CONNECT'   	'\c'

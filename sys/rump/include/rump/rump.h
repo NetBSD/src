@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.54.2.2 2013/06/23 06:20:27 tls Exp $	*/
+/*	$NetBSD: rump.h,v 1.54.2.3 2014/08/20 00:04:39 tls Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -57,7 +57,7 @@ typedef struct prop_dictionary *prop_dictionary_t;
 #endif
 #endif /* __NetBSD__ */
 
-#if defined(__sun__) && !defined(RUMP_REGISTER_T)
+#if (!defined(_KERNEL)) && (defined(__sun__) || defined(__ANDROID__)) && !defined(RUMP_REGISTER_T)
 #define RUMP_REGISTER_T long
 typedef RUMP_REGISTER_T register_t;
 #endif
@@ -71,7 +71,7 @@ enum rump_uiorw { RUMPUIO_READ, RUMPUIO_WRITE };
 enum rump_sigmodel {
 	RUMP_SIGMODEL_PANIC,
 	RUMP_SIGMODEL_IGNORE,
-	RUMP_SIGMODEL_HOST,
+	RUMP_SIGMODEL__HOST_NOTANYMORE,
 	RUMP_SIGMODEL_RAISE,
 	RUMP_SIGMODEL_RECORD
 };
@@ -79,6 +79,10 @@ enum rump_sigmodel {
 /* flags to rump_lwproc_rfork */
 #define RUMP_RFFDG	0x01
 #define RUMP_RFCFDG	0x02
+/* slightly-easier-to-parse aliases for the above */
+#define RUMP_RFFD_SHARE 0x00 /* lossage */
+#define RUMP_RFFD_COPY	RUMP_RFFDG
+#define RUMP_RFFD_CLEAR	RUMP_RFCFDG
 
 /* rumpvfs */
 #define RUMPCN_FREECRED  0x02
@@ -96,9 +100,27 @@ enum rump_etfs_type {
 _BEGIN_DECLS
 #endif
 
+int	rump_getversion(void);
+int	rump_pub_getversion(void); /* compat */
+int	rump_nativeabi_p(void);
+
 int	rump_boot_gethowto(void);
 void	rump_boot_sethowto(int);
 void	rump_boot_setsigmodel(enum rump_sigmodel);
+
+struct rump_boot_etfs {
+	/* client initializes */
+	const char *eb_key;
+	const char *eb_hostpath;
+	enum rump_etfs_type eb_type;
+	uint64_t eb_begin;
+	uint64_t eb_size;
+
+	/* rump kernel initializes */
+	struct rump_boot_etfs *_eb_next;
+	int eb_status;
+};
+void	rump_boot_etfs_register(struct rump_boot_etfs *);
 
 void	rump_schedule(void);
 void	rump_unschedule(void);

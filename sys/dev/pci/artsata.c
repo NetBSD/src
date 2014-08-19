@@ -1,4 +1,4 @@
-/*	$NetBSD: artsata.c,v 1.24.2.1 2012/10/09 13:36:05 bouyer Exp $	*/
+/*	$NetBSD: artsata.c,v 1.24.2.2 2014/08/20 00:03:41 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.24.2.1 2012/10/09 13:36:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.24.2.2 2014/08/20 00:03:41 tls Exp $");
 
 #include "opt_pciide.h"
 
@@ -91,7 +91,7 @@ static const struct artisea_cmd_map artisea_dpa_cmd_map[] =
 #define ARTISEA_NUM_CHAN 4
 
 CFATTACH_DECL_NEW(artsata, sizeof(struct pciide_softc),
-    artsata_match, artsata_attach, NULL, NULL);
+    artsata_match, artsata_attach, pciide_detach, NULL);
 
 static int
 artsata_match(device_t parent, cfdata_t match, void *aux)
@@ -130,6 +130,7 @@ artisea_mapregs(const struct pci_attach_args *pa, struct pciide_channel *cp,
 	const char *intrstr;
 	pci_intr_handle_t intrhandle;
 	int i;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	cp->compat = 0;
 
@@ -139,13 +140,13 @@ artisea_mapregs(const struct pci_attach_args *pa, struct pciide_channel *cp,
 			    "couldn't map native-PCI interrupt\n");
 			goto bad;
 		}
-		intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+		intrstr = pci_intr_string(pa->pa_pc, intrhandle,
+		    intrbuf, sizeof(intrbuf));
 		sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
 		    intrhandle, IPL_BIO, pci_intr, sc);
 		if (sc->sc_pci_ih != NULL) {
 			aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
-			    "using %s for native-PCI interrupt\n",
-			    intrstr ? intrstr : "unknown interrupt");
+			    "using %s for native-PCI interrupt\n", intrstr);
 		} else {
 			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 			    "couldn't establish native-PCI interrupt");

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.102.2.1 2012/11/20 03:01:27 tls Exp $	*/
+/*	$NetBSD: locore.S,v 1.102.2.2 2014/08/20 00:03:06 tls Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.102.2.1 2012/11/20 03:01:27 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.102.2.2 2014/08/20 00:03:06 tls Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -139,7 +139,6 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.102.2.1 2012/11/20 03:01:27 tls Exp $")
 #include "opt_vm86.h"
 #include "opt_xen.h"
 
-#include "npx.h"
 #include "assym.h"
 #include "lapic.h"
 #include "ioapic.h"
@@ -163,26 +162,33 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.102.2.1 2012/11/20 03:01:27 tls Exp $")
 /* Get definitions for IOM_BEGIN, IOM_END, and IOM_SIZE */
 #include <dev/isa/isareg.h>
 
+#ifndef XEN
+#define	_RELOC(x)	((x) - KERNBASE)
+#else
+#define	_RELOC(x)	((x))
+#endif /* XEN */
+#define	RELOC(x)	_RELOC(_C_LABEL(x))
+
 #ifdef XEN
 /*
  * Xen guest identifier and loader selection
  */
 .section __xen_guest
 	.ascii	"GUEST_OS=netbsd,GUEST_VER=3.0,XEN_VER=xen-3.0"
-	.ascii  ",VIRT_BASE=0xc0000000" /* KERNBASE */
-	.ascii  ",ELF_PADDR_OFFSET=0xc0000000" /* KERNBASE */
-	.ascii  ",VIRT_ENTRY=0xc0100000" /* KERNTEXTOFF */
-	.ascii  ",HYPERCALL_PAGE=0x00000101"
+	.ascii	",VIRT_BASE=0xc0000000" /* KERNBASE */
+	.ascii	",ELF_PADDR_OFFSET=0xc0000000" /* KERNBASE */
+	.ascii	",VIRT_ENTRY=0xc0100000" /* KERNTEXTOFF */
+	.ascii	",HYPERCALL_PAGE=0x00000101"
 		/* (???+HYPERCALL_PAGE_OFFSET)/PAGE_SIZE) */
 #ifdef PAE
-	.ascii  ",PAE=yes[extended-cr3]"
+	.ascii	",PAE=yes[extended-cr3]"
 #endif
 	.ascii	",LOADER=generic"
 #if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(SYMTAB_SPACE)
 	.ascii	",BSD_SYMTAB=yes"
 #endif
 	.byte	0
-#endif
+#endif	/* XEN */
 
 /*
  * Initialization
@@ -194,7 +200,8 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.102.2.1 2012/11/20 03:01:27 tls Exp $")
 	.globl	_C_LABEL(esym)
 	.globl	_C_LABEL(eblob)
 	.globl	_C_LABEL(atdevbase)
-	.globl	_C_LABEL(lwp0uarea),_C_LABEL(PDPpaddr)
+	.globl	_C_LABEL(lwp0uarea)
+	.globl	_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(gdt)
 	.globl	_C_LABEL(idt)
 	.globl	_C_LABEL(lapic_tpr)
@@ -206,52 +213,68 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.102.2.1 2012/11/20 03:01:27 tls Exp $")
 	.align	12
 #endif
 	.globl _C_LABEL(local_apic), _C_LABEL(lapic_id)
-_C_LABEL(local_apic):
+	.type	_C_LABEL(local_apic), @object
+LABEL(local_apic)
 	.space	LAPIC_ID
-_C_LABEL(lapic_id):
+END(local_apic)
+	.type	_C_LABEL(lapic_id), @object
+LABEL(lapic_id)
 	.long	0x00000000
-	.space  LAPIC_TPRI-(LAPIC_ID+4)
-_C_LABEL(lapic_tpr):
-	.space  LAPIC_PPRI-LAPIC_TPRI
+	.space	LAPIC_TPRI-(LAPIC_ID+4)
+END(lapic_id)
+	.type	_C_LABEL(lapic_tpr), @object
+LABEL(lapic_tpr)
+	.space	LAPIC_PPRI-LAPIC_TPRI
+END(lapic_tpr)
+	.type	_C_LABEL(lapic_ppr), @object
 _C_LABEL(lapic_ppr):
 	.space	LAPIC_ISR-LAPIC_PPRI
+END(lapic_ppr)
+	.type	_C_LABEL(lapic_isr), @object
 _C_LABEL(lapic_isr):
 	.space	PAGE_SIZE-LAPIC_ISR
+END(lapic_isr)
 #else
-_C_LABEL(lapic_tpr):
+	.type	_C_LABEL(lapic_tpr), @object
+LABEL(lapic_tpr)
 	.long 0
+END(lapic_tpr)
 #endif
-
-_C_LABEL(cputype):	.long	0	# are we 80486, Pentium, or..
-_C_LABEL(cpuid_level):	.long	0
-_C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
-_C_LABEL(lwp0uarea):	.long	0
-_C_LABEL(PDPpaddr):	.long	0	# paddr of PDP, for libkvm
+	.type	_C_LABEL(cputype), @object
+LABEL(cputype)		.long	0	# are we 80486, Pentium, or..
+END(cputype)
+	.type	_C_LABEL(cpuid_level), @object
+LABEL(cpuid_level)	.long	0
+END(cpuid_level)
+	.type	_C_LABEL(atdevbase), @object
+LABEL(atdevbase)	.long	0	# location of start of iomem in virtual
+END(atdevbase)
+	.type	_C_LABEL(lwp0uarea), @object
+LABEL(lwp0uarea)	.long	0
+END(lwp0uarea)
+	.type	_C_LABEL(PDPpaddr), @object
+LABEL(PDPpaddr)		.long	0	# paddr of PDP, for libkvm
+END(PDPpaddr)
+	.type	_C_LABEL(tablesize), @object
 _C_LABEL(tablesize):	.long	0
-
+END(tablesize)
+	.size	tmpstk, tmpstk - .
 	.space 512
 tmpstk:
 #ifdef XEN
 	.align 		PAGE_SIZE, 0x0	# Align on page boundary
-	.globl tmpgdt
-_C_LABEL(tmpgdt):
+LABEL(tmpgdt)
 	.space 		PAGE_SIZE	# Xen expects a page
+END(tmpgdt)
 #endif /* XEN */
-#ifndef XEN
-#define	_RELOC(x)	((x) - KERNBASE)
-#else
-#define	_RELOC(x)	((x))
-#endif /* XEN */
-#define	RELOC(x)	_RELOC(_C_LABEL(x))
 
 	.text
 	.globl	_C_LABEL(kernel_text)
 	.set	_C_LABEL(kernel_text),KERNTEXTOFF
 
-	.globl	start
+ENTRY(start)
 #ifndef XEN
-start:	movw	$0x1234,0x472			# warm boot
-
+	movw	$0x1234,0x472			# warm boot
 #if defined(MULTIBOOT)
 	jmp	1f
 
@@ -505,7 +528,7 @@ try586:	/* Use the `cpuid' instruction. */
  *	eax = pte (page frame | control | status)
  *	ebx = page table address
  *	ecx = number of pages to map
- * 
+ *
  * For PAE, each entry is 8 bytes long: we must set the 4 upper bytes to 0.
  * This is done by the first instruction of fillkpt. In the non-PAE case, this
  * instruction just clears the page table entry.
@@ -513,9 +536,9 @@ try586:	/* Use the `cpuid' instruction. */
 
 #define fillkpt	\
 1:	movl	$0,(PDE_SIZE-4)(%ebx)	;	/* clear bits */	\
-	movl	%eax,(%ebx)		;	/* store phys addr */   \
-	addl	$PDE_SIZE,%ebx		;	/* next pte/pde */      \
-	addl	$PAGE_SIZE,%eax		;	/* next phys page */    \
+	movl	%eax,(%ebx)		;	/* store phys addr */	\
+	addl	$PDE_SIZE,%ebx		;	/* next pte/pde */	\
+	addl	$PAGE_SIZE,%eax		;	/* next phys page */	\
 	loop	1b			;
 
 	/* Find end of kernel image. */
@@ -568,38 +591,38 @@ try586:	/* Use the `cpuid' instruction. */
 	cmpl	%eax,RELOC(nkptp)+1*4
 	jnz	1b
 
- 	/* Clear tables */
- 	movl	%esi,%edi
+	/* Clear tables */
+	movl	%esi,%edi
 	xorl	%eax,%eax
 	cld
- 	movl	RELOC(tablesize),%ecx
- 	shrl	$2,%ecx
+	movl	RELOC(tablesize),%ecx
+	shrl	$2,%ecx
 	rep
 	stosl
 
- 	leal	(PROC0_PTP1_OFF)(%esi), %ebx
+	leal	(PROC0_PTP1_OFF)(%esi), %ebx
 
 /*
  * Build initial page tables.
  */
- 	/*
- 	 * Compute &__data_start - KERNBASE. This can't be > 4G,
+	/*
+	 * Compute &__data_start - KERNBASE. This can't be > 4G,
 	 * or we can't deal with it anyway, since we can't load it in
 	 * 32 bit mode. So use the bottom 32 bits.
- 	 */
- 	movl	$RELOC(__data_start),%edx
+	 */
+	movl	$RELOC(__data_start),%edx
 	andl	$~PGOFSET,%edx
 
- 	/*
- 	 * Skip the first MB.
- 	 */
+	/*
+	 * Skip the first MB.
+	 */
 	movl	$_RELOC(KERNTEXTOFF),%eax
 	movl	%eax,%ecx
 	shrl	$(PGSHIFT-2),%ecx	/* ((n >> PGSHIFT) << 2) for # pdes */
 #ifdef PAE
- 	shll	$1,%ecx			/* pdes are twice larger with PAE */
+	shll	$1,%ecx			/* pdes are twice larger with PAE */
 #endif
- 	addl	%ecx,%ebx
+	addl	%ecx,%ebx
 
 	/* Map the kernel text read-only. */
 	movl	%edx,%ecx
@@ -624,24 +647,24 @@ try586:	/* Use the `cpuid' instruction. */
 /*
  * Construct a page table directory.
  */
- 	/* Set up top level entries for identity mapping */
- 	leal	(PROC0_PDIR_OFF)(%esi),%ebx
- 	leal	(PROC0_PTP1_OFF)(%esi),%eax
- 	orl	$(PG_V|PG_KW), %eax
- 	movl	RELOC(nkptp)+1*4,%ecx
+	/* Set up top level entries for identity mapping */
+	leal	(PROC0_PDIR_OFF)(%esi),%ebx
+	leal	(PROC0_PTP1_OFF)(%esi),%eax
+	orl	$(PG_V|PG_KW), %eax
+	movl	RELOC(nkptp)+1*4,%ecx
 	fillkpt
 
- 	/* Set up top level entries for actual kernel mapping */
- 	leal	(PROC0_PDIR_OFF + L2_SLOT_KERNBASE*PDE_SIZE)(%esi),%ebx
- 	leal	(PROC0_PTP1_OFF)(%esi),%eax
- 	orl	$(PG_V|PG_KW), %eax
- 	movl	RELOC(nkptp)+1*4,%ecx
+	/* Set up top level entries for actual kernel mapping */
+	leal	(PROC0_PDIR_OFF + L2_SLOT_KERNBASE*PDE_SIZE)(%esi),%ebx
+	leal	(PROC0_PTP1_OFF)(%esi),%eax
+	orl	$(PG_V|PG_KW), %eax
+	movl	RELOC(nkptp)+1*4,%ecx
 	fillkpt
 
 	/* Install a PDE recursively mapping page directory as a page table! */
- 	leal	(PROC0_PDIR_OFF + PDIR_SLOT_PTE*PDE_SIZE)(%esi),%ebx
- 	leal	(PROC0_PDIR_OFF)(%esi),%eax
- 	orl	$(PG_V|PG_KW),%eax
+	leal	(PROC0_PDIR_OFF + PDIR_SLOT_PTE*PDE_SIZE)(%esi),%ebx
+	leal	(PROC0_PDIR_OFF)(%esi),%eax
+	orl	$(PG_V|PG_KW),%eax
 	movl	$PDP_SIZE,%ecx
 	fillkpt
 
@@ -670,29 +693,29 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	%esi,%eax		# phys address of ptd in proc 0
 	movl	%eax,%cr3		# load ptd addr into mmu
 
- 	/*
- 	 * 2. Enable paging and the rest of it.
- 	 */
+	/*
+	 * 2. Enable paging and the rest of it.
+	 */
 	movl	%cr0,%eax		# get control word
-					# enable paging & NPX emulation
-	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_EM|CR0_MP|CR0_WP|CR0_AM),%eax
+					# enable paging & NPX
+	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP|CR0_AM),%eax
 	movl	%eax,%cr0		# and page NOW!
 
 	pushl	$begin			# jump to high mem
 	ret
 
 begin:
- 	/*
- 	 * We have arrived.
- 	 * There's no need anymore for the identity mapping in low
- 	 * memory, remove it.
- 	 */
- 	movl	_C_LABEL(nkptp)+1*4,%ecx
- 	leal	(PROC0_PDIR_OFF)(%esi),%ebx	# old, phys address of PDIR
- 	addl	$(KERNBASE), %ebx		# new, virtual address of PDIR
+	/*
+	 * We have arrived.
+	 * There's no need anymore for the identity mapping in low
+	 * memory, remove it.
+	 */
+	movl	_C_LABEL(nkptp)+1*4,%ecx
+	leal	(PROC0_PDIR_OFF)(%esi),%ebx	# old, phys address of PDIR
+	addl	$(KERNBASE), %ebx		# new, virtual address of PDIR
 1:	movl	$0,(PDE_SIZE-4)(%ebx)		# Upper bits (for PAE)
 	movl	$0,(%ebx)
- 	addl	$PDE_SIZE,%ebx
+	addl	$PDE_SIZE,%ebx
 	loop	1b
 
 	/* Relocate atdevbase. */
@@ -702,11 +725,11 @@ begin:
 	movl	%edx,_C_LABEL(atdevbase)
 
 	/* Set up bootstrap stack. */
- 	leal	(PROC0_STK_OFF+KERNBASE)(%esi),%eax
+	leal	(PROC0_STK_OFF+KERNBASE)(%esi),%eax
 	movl	%eax,_C_LABEL(lwp0uarea)
-	leal	(KSTACK_SIZE-FRAMESIZE)(%eax),%esp
-	movl	%esi,(KSTACK_SIZE+PCB_CR3)(%eax)	# pcb->pcb_cr3
-	xorl	%ebp,%ebp               # mark end of frames
+	leal	(USPACE-FRAMESIZE)(%eax),%esp
+	movl	%esi,PCB_CR3(%eax)	# pcb->pcb_cr3
+	xorl	%ebp,%ebp		# mark end of frames
 
 #if defined(MULTIBOOT)
 	/* It is now safe to parse the Multiboot information structure
@@ -721,7 +744,7 @@ begin:
 	call	_C_LABEL(initgdt)
 	addl	$4,%esp
 
- 	movl	_C_LABEL(tablesize),%eax
+	movl	_C_LABEL(tablesize),%eax
 	addl	%esi,%eax		# skip past stack and page tables
 
 #ifdef PAE
@@ -752,7 +775,6 @@ begin:
 
 	call 	_C_LABEL(main)
 #else /* XEN */
-start:
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO
 	popfl
@@ -761,7 +783,7 @@ start:
 	movl	%esp, %ebx		# save start of available space
 	movl	$_RELOC(tmpstk),%esp	# bootstrap stack end location
 
-        /* Clear BSS first so that there are no surprises... */
+	/* Clear BSS. */
 	xorl	%eax,%eax
 	movl	$RELOC(__bss_start),%edi
 	movl	$RELOC(_end),%ecx
@@ -769,7 +791,7 @@ start:
 	rep stosb
 
 	/* Copy the necessary stuff from start_info structure. */
-        /* We need to copy shared_info early, so that sti/cli work */
+	/* We need to copy shared_info early, so that sti/cli work */
 	movl	$RELOC(start_info_union),%edi
 	movl	$128,%ecx
 	rep movsl
@@ -803,8 +825,8 @@ start:
 	movl	%esi, _C_LABEL(lwp0uarea)
 
 	/* Set up bootstrap stack. */
-	leal	(KSTACK_SIZE-FRAMESIZE)(%eax),%esp
-	xorl	%ebp,%ebp               # mark end of frames
+	leal	(USPACE-FRAMESIZE)(%eax),%esp
+	xorl	%ebp,%ebp		# mark end of frames
 
 	addl	$USPACE, %esi
 	subl	$KERNBASE, %esi		#init386 want a physical address
@@ -816,6 +838,8 @@ start:
 	call	_C_LABEL(init386)	# wire 386 chip for unix operation
 	addl	$PDE_SIZE,%esp		# pop paddr_t
 	call 	_C_LABEL(main)
+#endif /* XEN */
+END(start)
 
 #if defined(XEN)
 /* space for the hypercall call page */
@@ -823,7 +847,7 @@ start:
 .org HYPERCALL_PAGE_OFFSET
 ENTRY(hypercall_page)
 .skip 0x1000
-#endif /* defined(XEN) */
+END(hypercall_page)
 
 /*
  * void lgdt_finish(void);
@@ -856,8 +880,9 @@ END(lgdt_finish)
  *
  * This is a trampoline function pushed onto the stack of a newly created
  * process in order to do some additional setup.  The trampoline is entered by
- * cpu_switch()ing to the process, so we abuse the callee-saved registers used
- * by cpu_switch() to store the information about the stub to call.
+ * cpu_switchto()ing to the process, so we abuse the callee-saved
+ * registers used by cpu_switchto() to store the information about the
+ * stub to call.
  * NOTE: This function does not have a normal calling sequence!
  */
 NENTRY(lwp_trampoline)
@@ -949,7 +974,7 @@ ENTRY(dumpsys)
 END(dumpsys)
 
 /*
- * struct lwp *cpu_switchto(struct lwp *oldlwp, struct *newlwp,
+ * struct lwp *cpu_switchto(struct lwp *oldlwp, struct lwp *newlwp,
  *			    bool returning)
  *
  *	1. if (oldlwp != NULL), save its context.
@@ -1185,13 +1210,13 @@ syscall1:
 .Lsyscall_resume:
 	movl	%ebx,%eax	# get cpl
 	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
-	andl	CPUVAR(IPENDING),%eax   # any non-masked bits left?
+	andl	CPUVAR(IPENDING),%eax	# any non-masked bits left?
 	jz	17f
 	bsrl	%eax,%eax
 	btrl	%eax,CPUVAR(IPENDING)
 	movl	CPUVAR(ISOURCES)(,%eax,4),%eax
 	jmp	*IS_RESUME(%eax)
-17:	movl	%ebx, CPUVAR(ILEVEL)    #restore cpl
+17:	movl	%ebx, CPUVAR(ILEVEL)	#restore cpl
 	jmp	.Lsyscall_checkast
 14:
 #endif /* XEN */
@@ -1262,41 +1287,10 @@ IDTVEC(svr4_fasttrap)
 	cli
 	jmp	2b
 
-#if NNPX > 0
-/*
- * Special interrupt handlers.  Someday intr0-intr15 will be used to count
- * interrupts.  We'll still need a special exception 16 handler.  The busy
- * latch stuff in probintr() can be moved to npxprobe().
- */
-
-/*
- * void probeintr(void)
- */
-NENTRY(probeintr)
-	ss
-	incl	_C_LABEL(npx_intrs_while_probing)
-	pushl	%eax
-	movb	$0x20,%al	# EOI (asm in strings loses cpp features)
-	outb	%al,$0xa0	# IO_ICU2
-	outb	%al,$0x20	# IO_ICU1
-	movb	$0,%al
-	outb	%al,$0xf0	# clear BUSY# latch
-	popl	%eax
-	iret
-END(probeintr)
-
-/*
- * void probetrap(void)
- */
-NENTRY(probetrap)
-	ss
-	incl	_C_LABEL(npx_traps_while_probing)
-	fnclex
-	iret
-END(probetrap)
-
 /*
  * int npx586bug1(int a, int b)
+ * Used when checking for the FDIV bug on first generations pentiums.
+ * Anything 120MHz or above is fine.
  */
 NENTRY(npx586bug1)
 	fildl	4(%esp)		# x
@@ -1310,7 +1304,6 @@ NENTRY(npx586bug1)
 	popl	%eax
 	ret
 END(npx586bug1)
-#endif /* NNPX > 0 */
 
 /*
  * void sse2_idlezero_page(void *pg)

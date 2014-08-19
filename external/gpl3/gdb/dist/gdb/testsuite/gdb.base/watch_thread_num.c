@@ -1,7 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2002, 2003, 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright 2002-2014 Free Software Foundation, Inc.
 
    Copyright 1992, 1993, 1994, 1995, 1999, 2002, 2003, 2007, 2008, 2009
    Free Software Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.207.6.4 2013/06/23 06:20:29 tls Exp $	*/
+/*	$NetBSD: mount.h,v 1.207.6.5 2014/08/20 00:04:44 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -107,7 +107,7 @@ struct vnode;
  * put on a doubly linked list.
  */
 struct mount {
-	CIRCLEQ_ENTRY(mount) mnt_list;		/* mount list */
+	TAILQ_ENTRY(mount) mnt_list;		/* mount list */
 	TAILQ_HEAD(, vnode) mnt_vnodelist;	/* list of vnodes this mount */
 	struct vfsops	*mnt_op;		/* operations on fs */
 	struct vnode	*mnt_vnodecovered;	/* vnode we mounted on */
@@ -222,6 +222,8 @@ struct vfsops {
 	int	(*vfs_statvfs)	(struct mount *, struct statvfs *);
 	int	(*vfs_sync)	(struct mount *, int, struct kauth_cred *);
 	int	(*vfs_vget)	(struct mount *, ino_t, struct vnode **);
+	int	(*vfs_loadvnode) (struct mount *, struct vnode *,
+				    const void *, size_t, const void **);
 	int	(*vfs_fhtovp)	(struct mount *, struct fid *,
 				    struct vnode **);
 	int	(*vfs_vptofh)	(struct vnode *, struct fid *, size_t *);
@@ -244,6 +246,8 @@ struct vfsops {
 
 /* XXX vget is actually file system internal. */
 #define VFS_VGET(MP, INO, VPP)    (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP)
+#define VFS_LOADVNODE(MP, VP, KEY, KEY_LEN, NEW_KEY) \
+	(*(MP)->mnt_op->vfs_loadvnode)(MP, VP, KEY, KEY_LEN, NEW_KEY)
 
 #define VFS_RENAMELOCK_ENTER(MP)  (*(MP)->mnt_op->vfs_renamelock_enter)(MP)
 #define VFS_RENAMELOCK_EXIT(MP)   (*(MP)->mnt_op->vfs_renamelock_exit)(MP)
@@ -283,6 +287,8 @@ int	fsname##_quotactl(struct mount *, struct quotactl_args *);	\
 int	fsname##_statvfs(struct mount *, struct statvfs *);		\
 int	fsname##_sync(struct mount *, int, struct kauth_cred *);	\
 int	fsname##_vget(struct mount *, ino_t, struct vnode **);		\
+int	fsname##_loadvnode(struct mount *, struct vnode *,		\
+		const void *, size_t, const void **);			\
 int	fsname##_fhtovp(struct mount *, struct fid *, struct vnode **);	\
 int	fsname##_vptofh(struct vnode *, struct fid *, size_t *);	\
 void	fsname##_init(void);						\
@@ -412,7 +418,6 @@ void	vfs_reinit(void);
 struct vfsops *vfs_getopsbyname(const char *);
 void	vfs_delref(struct vfsops *);
 void	vfs_destroy(struct mount *);
-void	vfs_scrubvnlist(struct mount *);
 struct mount *vfs_mountalloc(struct vfsops *, struct vnode *);
 int	vfs_stdextattrctl(struct mount *, int, struct vnode *,
 	    int, const char *);
@@ -424,7 +429,7 @@ int	vfs_quotactl_get(struct mount *, const struct quotakey *,
 	    struct quotaval *);
 int	vfs_quotactl_put(struct mount *, const struct quotakey *,
 	    const struct quotaval *);
-int	vfs_quotactl_delete(struct mount *, const struct quotakey *);
+int	vfs_quotactl_del(struct mount *, const struct quotakey *);
 int	vfs_quotactl_cursoropen(struct mount *, struct quotakcursor *);
 int	vfs_quotactl_cursorclose(struct mount *, struct quotakcursor *);
 int	vfs_quotactl_cursorskipidtype(struct mount *, struct quotakcursor *,
@@ -436,7 +441,13 @@ int	vfs_quotactl_cursorrewind(struct mount *, struct quotakcursor *);
 int	vfs_quotactl_quotaon(struct mount *, int, const char *);
 int	vfs_quotactl_quotaoff(struct mount *, int);
 
-extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
+struct vnode_iterator; /* Opaque. */
+void	vfs_vnode_iterator_init(struct mount *, struct vnode_iterator **);
+void	vfs_vnode_iterator_destroy(struct vnode_iterator *);
+struct vnode *vfs_vnode_iterator_next(struct vnode_iterator *,
+    bool (*)(void *, struct vnode *), void *);
+
+extern	TAILQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];			/* filesystem type table */
 extern	int nvfssw;
 extern  kmutex_t mountlist_lock;
@@ -464,6 +475,7 @@ void *	mount_getspecific(struct mount *, specificdata_key_t);
 void	mount_setspecific(struct mount *, specificdata_key_t, void *);
 
 int	usermount_common_policy(struct mount *, u_long);
+void	mountlist_append(struct mount *);
 
 LIST_HEAD(vfs_list_head, vfsops);
 extern struct vfs_list_head vfs_list;

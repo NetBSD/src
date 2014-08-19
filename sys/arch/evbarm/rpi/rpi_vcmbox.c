@@ -1,4 +1,4 @@
-/* $NetBSD: rpi_vcmbox.c,v 1.2.8.2 2013/02/25 00:28:37 tls Exp $ */
+/* $NetBSD: rpi_vcmbox.c,v 1.2.8.3 2014/08/20 00:02:56 tls Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_vcmbox.c,v 1.2.8.2 2013/02/25 00:28:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_vcmbox.c,v 1.2.8.3 2014/08/20 00:02:56 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -264,7 +264,7 @@ vcmbox_cpufreq_init(struct vcmbox_softc *sc)
 	error = sysctl_createv(&sc->sc_log, 0, &freqnode, &node,
 	    CTLFLAG_READWRITE, CTLTYPE_INT, "target", NULL,
 	    vcmbox_cpufreq_sysctl_helper, 0, (void *)sc, 0,
-	    CTL_CREATE, CTL_EOL); 
+	    CTL_CREATE, CTL_EOL);
 	if (error)
 		goto sysctl_failed;
 	sc->sc_node_target = node->sysctl_num;
@@ -272,7 +272,7 @@ vcmbox_cpufreq_init(struct vcmbox_softc *sc)
 	error = sysctl_createv(&sc->sc_log, 0, &freqnode, &node,
 	    0, CTLTYPE_INT, "current", NULL,
 	    vcmbox_cpufreq_sysctl_helper, 0, (void *)sc, 0,
-	    CTL_CREATE, CTL_EOL); 
+	    CTL_CREATE, CTL_EOL);
 	if (error)
 		goto sysctl_failed;
 	sc->sc_node_current = node->sysctl_num;
@@ -280,7 +280,7 @@ vcmbox_cpufreq_init(struct vcmbox_softc *sc)
 	error = sysctl_createv(&sc->sc_log, 0, &freqnode, &node,
 	    0, CTLTYPE_INT, "min", NULL,
 	    vcmbox_cpufreq_sysctl_helper, 0, (void *)sc, 0,
-	    CTL_CREATE, CTL_EOL); 
+	    CTL_CREATE, CTL_EOL);
 	if (error)
 		goto sysctl_failed;
 	sc->sc_node_min = node->sysctl_num;
@@ -288,7 +288,7 @@ vcmbox_cpufreq_init(struct vcmbox_softc *sc)
 	error = sysctl_createv(&sc->sc_log, 0, &freqnode, &node,
 	    0, CTLTYPE_INT, "max", NULL,
 	    vcmbox_cpufreq_sysctl_helper, 0, (void *)sc, 0,
-	    CTL_CREATE, CTL_EOL); 
+	    CTL_CREATE, CTL_EOL);
 	if (error)
 		goto sysctl_failed;
 	sc->sc_node_max = node->sysctl_num;
@@ -361,7 +361,7 @@ vcmbox_create_sensors(struct vcmbox_softc *sc)
 	    sizeof(sc->sc_sensor[VCMBOX_SENSOR_TEMP].desc));
 	if (vcmbox_read_temp(sc, VCPROPTAG_GET_MAX_TEMPERATURE,
 			     vcmbox_sensor_id[VCMBOX_SENSOR_TEMP], &val) == 0) {
-		sc->sc_sensor[VCMBOX_SENSOR_TEMP].value_max = 
+		sc->sc_sensor[VCMBOX_SENSOR_TEMP].value_max =
 		    val * 1000 + 273150000;
 		sc->sc_sensor[VCMBOX_SENSOR_TEMP].flags |= ENVSYS_FVALID_MAX;
 	}

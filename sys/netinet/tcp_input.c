@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.325.2.1 2013/06/23 06:20:25 tls Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.325.2.2 2014/08/20 00:04:35 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.325.2.1 2013/06/23 06:20:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.325.2.2 2014/08/20 00:04:35 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -997,13 +997,12 @@ static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
 			  struct mbuf *m, int tlen, int multicast)
 {
 	int		tiflags;
-	int		todrop, dupseg;
+	int		todrop;
 	uint32_t	t_flags = 0;
 	uint64_t	*tcps;
 
 	tiflags = th->th_flags;
 	todrop  = vp->rcv_nxt - th->th_seq;
-	dupseg  = false;
 
 	if (todrop > 0) {
 		if (tiflags & TH_SYN) {
@@ -1033,7 +1032,6 @@ static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
 			 */
 			t_flags |= TF_ACKNOW;
 			todrop = tlen;
-			dupseg = true;
 			tcps = TCP_STAT_GETREF();
 			tcps[TCP_STAT_RCVDUPPACK] += 1;
 			tcps[TCP_STAT_RCVDUPBYTE] += todrop;
@@ -1102,7 +1100,7 @@ static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
 				/* We only support this in the !NOFDREF case, which
 				 * is to say: not here.
 				 */
-				goto dropwithreset;;
+				goto dropwithreset;
 			}
 			/*
 			 * If window is closed can only take segments at
@@ -1449,19 +1447,22 @@ findpcb:
 			goto dropwithreset_ratelim;
 		}
 #if defined(IPSEC)
-		if (inp && (inp->inp_socket->so_options & SO_ACCEPTCONN) == 0 &&
-		    ipsec4_in_reject(m, inp)) {
-			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
-			goto drop;
-		}
+		if (ipsec_used) {
+			if (inp &&
+			    (inp->inp_socket->so_options & SO_ACCEPTCONN) == 0
+			    && ipsec4_in_reject(m, inp)) {
+				IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
+				goto drop;
+			}
 #ifdef INET6
-		else if (in6p &&
-		    (in6p->in6p_socket->so_options & SO_ACCEPTCONN) == 0 &&
-		    ipsec6_in_reject_so(m, in6p->in6p_socket)) {
-			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
-			goto drop;
-		}
+			else if (in6p &&
+			    (in6p->in6p_socket->so_options & SO_ACCEPTCONN) == 0
+			    && ipsec6_in_reject_so(m, in6p->in6p_socket)) {
+				IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
+				goto drop;
+			}
 #endif
+		}
 #endif /*IPSEC*/
 		break;
 #endif /*INET*/
@@ -1492,7 +1493,7 @@ findpcb:
 			goto dropwithreset_ratelim;
 		}
 #if defined(IPSEC)
-		if (in6p
+		if (ipsec_used && in6p
 		    && (in6p->in6p_socket->so_options & SO_ACCEPTCONN) == 0
 		    && ipsec6_in_reject(m, in6p)) {
 			IPSEC6_STATINC(IPSEC_STAT_IN_POLVIO);
@@ -1801,25 +1802,27 @@ findpcb:
 #endif
 
 #if defined(IPSEC)
-				switch (af) {
+				if (ipsec_used) {
+					switch (af) {
 #ifdef INET
-				case AF_INET:
-					if (ipsec4_in_reject_so(m, so)) {
-						IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
+					case AF_INET:
+						if (!ipsec4_in_reject_so(m, so))
+							break;
+						IPSEC_STATINC(
+						    IPSEC_STAT_IN_POLVIO);
 						tp = NULL;
 						goto dropwithreset;
-					}
-					break;
 #endif
 #ifdef INET6
-				case AF_INET6:
-					if (ipsec6_in_reject_so(m, so)) {
-						IPSEC6_STATINC(IPSEC_STAT_IN_POLVIO);
+					case AF_INET6:
+						if (!ipsec6_in_reject_so(m, so))
+							break;
+						IPSEC6_STATINC(
+						    IPSEC_STAT_IN_POLVIO);
 						tp = NULL;
 						goto dropwithreset;
-					}
-					break;
 #endif /*INET6*/
+					}
 				}
 #endif /*IPSEC*/
 
@@ -2657,12 +2660,8 @@ after_listen:
 		 * If the congestion window was inflated to account
 		 * for the other side's cached packets, retract it.
 		 */
-		/* XXX: make SACK have his own congestion control
-		 * struct -- rpaulo */
-		if (TCP_SACK_ENABLED(tp))
-			tcp_sack_newack(tp, th);
-		else
-			tp->t_congctl->fast_retransmit_newack(tp, th);
+		tp->t_congctl->fast_retransmit_newack(tp, th);
+
 		if (SEQ_GT(th->th_ack, tp->snd_max)) {
 			TCP_STATINC(TCP_STAT_RCVACKTOOMUCH);
 			goto dropafterack;
@@ -2880,7 +2879,7 @@ dodata:							/* XXX */
 	 * and arranging for acknowledgement of receipt if necessary.
 	 * This process logically involves adjusting tp->rcv_wnd as data
 	 * is presented to the user (this happens in tcp_usrreq.c,
-	 * case PRU_RCVD).  If a FIN has already been received on this
+	 * tcp_rcvd()).  If a FIN has already been received on this
 	 * connection then we just ignore the text.
 	 */
 	if ((tlen || (tiflags & TH_FIN)) &&
@@ -3134,10 +3133,6 @@ tcp_signature_apply(void *fstate, void *data, u_int len)
 struct secasvar *
 tcp_signature_getsav(struct mbuf *m, struct tcphdr *th)
 {
-	struct secasvar *sav;
-#ifdef IPSEC
-	union sockaddr_union dst;
-#endif
 	struct ip *ip;
 	struct ip6_hdr *ip6;
 
@@ -3156,34 +3151,36 @@ tcp_signature_getsav(struct mbuf *m, struct tcphdr *th)
 	}
 
 #ifdef IPSEC
-	/* Extract the destination from the IP header in the mbuf. */
-	memset(&dst, 0, sizeof(union sockaddr_union));
-	if (ip !=NULL) {
-		dst.sa.sa_len = sizeof(struct sockaddr_in);
-		dst.sa.sa_family = AF_INET;
-		dst.sin.sin_addr = ip->ip_dst;
-	} else {
-		dst.sa.sa_len = sizeof(struct sockaddr_in6);
-		dst.sa.sa_family = AF_INET6;
-		dst.sin6.sin6_addr = ip6->ip6_dst;
-	}
+	if (ipsec_used) {
+		union sockaddr_union dst;
+		/* Extract the destination from the IP header in the mbuf. */
+		memset(&dst, 0, sizeof(union sockaddr_union));
+		if (ip != NULL) {
+			dst.sa.sa_len = sizeof(struct sockaddr_in);
+			dst.sa.sa_family = AF_INET;
+			dst.sin.sin_addr = ip->ip_dst;
+		} else {
+			dst.sa.sa_len = sizeof(struct sockaddr_in6);
+			dst.sa.sa_family = AF_INET6;
+			dst.sin6.sin6_addr = ip6->ip6_dst;
+		}
 
-	/*
-	 * Look up an SADB entry which matches the address of the peer.
-	 */
-	sav = KEY_ALLOCSA(&dst, IPPROTO_TCP, htonl(TCP_SIG_SPI), 0, 0);
+		/*
+		 * Look up an SADB entry which matches the address of the peer.
+		 */
+		return KEY_ALLOCSA(&dst, IPPROTO_TCP, htonl(TCP_SIG_SPI), 0, 0);
+	}
+	return NULL;
 #else
 	if (ip)
-		sav = key_allocsa(AF_INET, (void *)&ip->ip_src,
+		return key_allocsa(AF_INET, (void *)&ip->ip_src,
 		    (void *)&ip->ip_dst, IPPROTO_TCP,
 		    htonl(TCP_SIG_SPI), 0, 0);
 	else
-		sav = key_allocsa(AF_INET6, (void *)&ip6->ip6_src,
+		return key_allocsa(AF_INET6, (void *)&ip6->ip6_src,
 		    (void *)&ip6->ip6_dst, IPPROTO_TCP,
 		    htonl(TCP_SIG_SPI), 0, 0);
 #endif
-
-	return (sav);	/* freesav must be performed by caller */
 }
 
 int
@@ -3967,7 +3964,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	 * to the new one.
 	 */
 	oso = so;
-	so = sonewconn(so, SS_ISCONNECTED);
+	so = sonewconn(so, true);
 	if (so == NULL)
 		goto resetandabort;
 
@@ -4040,23 +4037,26 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 #endif
 
 #if defined(IPSEC)
-	/*
-	 * we make a copy of policy, instead of sharing the policy,
-	 * for better behavior in terms of SA lookup and dead SA removal.
-	 */
-	if (inp) {
-		/* copy old policy into new socket's */
-		if (ipsec_copy_pcbpolicy(sotoinpcb(oso)->inp_sp, inp->inp_sp))
-			printf("tcp_input: could not copy policy\n");
-	}
+	if (ipsec_used) {
+		/*
+		 * we make a copy of policy, instead of sharing the policy, for
+		 * better behavior in terms of SA lookup and dead SA removal.
+		 */
+		if (inp) {
+			/* copy old policy into new socket's */
+			if (ipsec_copy_pcbpolicy(sotoinpcb(oso)->inp_sp,
+			    inp->inp_sp))
+				printf("tcp_input: could not copy policy\n");
+		}
 #ifdef INET6
-	else if (in6p) {
-		/* copy old policy into new socket's */
-		if (ipsec_copy_pcbpolicy(sotoin6pcb(oso)->in6p_sp,
-		    in6p->in6p_sp))
-			printf("tcp_input: could not copy policy\n");
-	}
+		else if (in6p) {
+			/* copy old policy into new socket's */
+			if (ipsec_copy_pcbpolicy(sotoin6pcb(oso)->in6p_sp,
+			    in6p->in6p_sp))
+				printf("tcp_input: could not copy policy\n");
+		}
 #endif
+	}
 #endif
 
 	/*

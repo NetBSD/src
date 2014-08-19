@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.4 2012/07/12 17:14:39 dsl Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.4.2.1 2014/08/20 00:03:06 tls Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.4 2012/07/12 17:14:39 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.4.2.1 2014/08/20 00:03:06 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,9 +147,11 @@ db_frame_info(long *frame, db_addr_t callpc, const char **namep, db_expr_t *offp
 			    !strncmp(name, "Xstray", 6) ||
 			    !strncmp(name, "Xhold", 5) ||
 			    !strncmp(name, "Xrecurse", 8) ||
-			    !strcmp(name, "Xdoreti") ||
-			    !strncmp(name, "Xsoft", 5)) {
+			    !strcmp(name, "Xdoreti")) {
 				*is_trap = INTERRUPT;
+				narg = 0;
+			} else if (!strcmp(name, "Xsoftintr")) {
+				*is_trap = SOFTINTR;
 				narg = 0;
 			} else if (!strncmp(name, "Xtss_", 5)) {
 				*is_trap = INTERRUPT_TSS;
@@ -172,9 +174,11 @@ db_frame_info(long *frame, db_addr_t callpc, const char **namep, db_expr_t *offp
 			    !strncmp(name, "_Xstray", 7) ||
 			    !strncmp(name, "_Xhold", 6) ||
 			    !strncmp(name, "_Xrecurse", 9) ||
-			    !strcmp(name, "_Xdoreti") ||
-			    !strncmp(name, "_Xsoft", 6)) {
+			    !strcmp(name, "_Xdoreti")) {
 				*is_trap = INTERRUPT;
+				narg = 0;
+			} else if (!strcmp(name, "_Xsoftintr")) {
+				*is_trap = SOFTINTR;
 				narg = 0;
 			} else if (!strncmp(name, "_Xtss_", 6)) {
 				*is_trap = INTERRUPT_TSS;
@@ -252,6 +256,7 @@ db_nextframe(
 	    case TRAP:
 	    case SYSCALL:
 	    case INTERRUPT:
+	    case SOFTINTR:
 	    default:
 		/* The only argument to trap() or syscall() is the trapframe. */
 		switch (is_trap) {
@@ -271,6 +276,11 @@ db_nextframe(
 			 * see the "XXX -1 here is a hack" comment below.
 			 */
 			db_read_bytes((db_addr_t)argp, sizeof(tf), (char *)&tf);
+			break;
+		case SOFTINTR:
+			(*pr)("--- softint ---\n");
+			tf.tf_eip = 0;
+			tf.tf_ebp = 0;
 			break;
 		}
 		*ip = (db_addr_t)tf.tf_eip;

@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.78 2012/08/10 16:05:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.78.2.1 2014/08/20 00:04:30 tls Exp $
 
 LIB=	sa
-NOPIC=	# defined
-NOPROFILE=# defined
+LIBISPRIVATE?= yes
 
 SA_USE_CREAD?= no		# Read compressed kernels
 SA_INCLUDE_NET?= yes		# Netboot via TFTP, NFS
@@ -24,14 +23,12 @@ CPPFLAGS=	-I${SADIR} ${SACPPFLAGS} ${SAMISCCPPFLAGS} \
 .PATH.c: ${SADIR} ${.PARSEDIR}/../../../common/lib/libc/string
 
 # stand routines
-SRCS+=	alloc.c errno.c exit.c files.c \
+SRCS+=	alloc.c atoi.c errno.c exit.c files.c \
 	getfile.c gets.c globals.c \
-	panic.c printf.c qsort.c snprintf.c sprintf.c strerror.c \
-	subr_prf.c twiddle.c vsprintf.c checkpasswd.c
+	panic.c printf.c qsort.c snprintf.c strerror.c \
+	subr_prf.c twiddle.c checkpasswd.c
 
-.if (${MACHINE_CPU} != "mips")
-SRCS+=	exec.c
-.endif
+SRCS+=	bootcfg.c
 
 # string routines
 .if ${MACHINE_ARCH} != "i386" && ${MACHINE_ARCH} != "x86_64"
@@ -80,10 +77,6 @@ SRCS+=	fnmatch.c
 # for historic compatibility ufs == ffsv1
 SRCS+=	ufs.c
 
-# only needed during build
-libinstall::
-
-.undef DESTDIR
 .include <bsd.lib.mk>
 
 lib${LIB}.o:: ${OBJS}
@@ -93,6 +86,6 @@ lib${LIB}.o:: ${OBJS}
 
 CPPFLAGS+=	-Wno-pointer-sign
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 45 && ${MACHINE_ARCH} == "vax"
+.if defined(HAVE_GCC) && ${MACHINE_ARCH} == "vax"
 COPTS.bootp.c+=	-O0
 .endif

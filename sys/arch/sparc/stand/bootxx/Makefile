@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2005/12/11 12:19:08 christos Exp $
+#	$NetBSD: Makefile,v 1.16.122.1 2014/08/20 00:03:24 tls Exp $
 
 PROG=		bootxx
 PROGSOURCE=	bootxx.c
@@ -12,6 +12,7 @@ CLEANFILES+=	${PROG}.sym
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=

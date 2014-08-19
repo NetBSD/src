@@ -1,4 +1,4 @@
-/*	$NetBSD: sioreg.h,v 1.2.6.2 2013/02/25 00:28:50 tls Exp $	*/
+/*	$NetBSD: sioreg.h,v 1.2.6.3 2014/08/20 00:03:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -84,10 +84,10 @@ struct siodevice {
 #define splsio			spl6
 
 
-#define REG(u, r)	( (u << 4) | r )
-#define CHANNEL(r)	( r >> 4 )
-#define REGNO(r)	( r & 0x07 )
-#define isStatusReg(r)	( r & 0x08 )
+#define REG(u, r)	(((u) << 4) | (r))
+#define CHANNEL(r)	((r) >> 4)
+#define REGNO(r)	((r) & 0x07)
+#define isStatusReg(r)	((r) & 0x08)
 
 #define WR0		0x00
 #define WR1		0x01

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.37 2011/10/23 13:21:54 tsutsui Exp $	*/
+/*	$NetBSD: kbd.c,v 1.37.12.1 2014/08/20 00:03:28 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.37 2011/10/23 13:21:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.37.12.1 2014/08/20 00:03:28 tls Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.37 2011/10/23 13:21:54 tsutsui Exp $");
 #include <sys/cpu.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
+#include <sys/mutex.h>
 
 #include <arch/x68k/dev/intiovar.h>
 #include <arch/x68k/dev/mfp.h>
@@ -63,9 +64,11 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.37 2011/10/23 13:21:54 tsutsui Exp $");
 #include <machine/vuid_event.h>
 
 struct kbd_softc {
+	device_t sc_dev;
 	int sc_event_mode;	/* if true, collect events, else pass to ite */
 	struct evvar sc_events; /* event queue state */
 	void *sc_softintr_cookie;
+	kmutex_t sc_lock;
 };
 
 void	kbdenable(int);
@@ -93,8 +96,18 @@ dev_type_poll(kbdpoll);
 dev_type_kqfilter(kbdkqfilter);
 
 const struct cdevsw kbd_cdevsw = {
-	kbdopen, kbdclose, kbdread, nowrite, kbdioctl,
-	nostop, notty, kbdpoll, nommap, kbdkqfilter,
+	.d_open = kbdopen,
+	.d_close = kbdclose,
+	.d_read = kbdread,
+	.d_write = nowrite,
+	.d_ioctl = kbdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = kbdpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = kbdkqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 static int
@@ -114,11 +127,10 @@ kbdattach(device_t parent, device_t self, void *aux)
 {
 	struct kbd_softc *sc = device_private(self);
 	struct mfp_softc *mfp = device_private(parent);
-	int s;
 
 	kbd_attached = 1;
-
-	s = spltty();
+	sc->sc_dev = self;
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	/* MFP interrupt #12 is for USART receive buffer full */
 	intio_intr_establish(mfp->sc_intr + 12, "kbd", kbdintr, sc);
@@ -128,7 +140,6 @@ kbdattach(device_t parent, device_t self, void *aux)
 	kbdenable(1);
 	sc->sc_event_mode = 0;
 	sc->sc_events.ev_io = 0;
-	splx(s);
 
 	aprint_normal("\n");
 }
@@ -182,7 +193,7 @@ kbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 	if (k->sc_events.ev_io)
 		return (EBUSY);
 	k->sc_events.ev_io = l->l_proc;
-	ev_init(&k->sc_events);
+	ev_init(&k->sc_events, device_xname(k->sc_dev), &k->sc_lock);
 
 	return (0);
 }
@@ -315,7 +326,7 @@ static int kbdgetoff = 0;
 int
 kbdintr(void *arg)
 {
-	u_char c, st;
+	uint8_t c, st;
 	struct kbd_softc *sc = arg;
 	struct firm_event *fe;
 	int put;
@@ -359,18 +370,19 @@ void
 kbdsoftint(void *arg)			/* what if ite is not configured? */
 {
 	struct kbd_softc *sc = arg;
-	int s;
-
-	s = spltty();
 
 	if (sc->sc_event_mode)
-		EV_WAKEUP(&sc->sc_events);
+		ev_wakeup(&sc->sc_events);
 
-	while(kbdgetoff < kbdputoff)
+	mutex_enter(&sc->sc_lock);
+	while (kbdgetoff < kbdputoff) {
+		mutex_exit(&sc->sc_lock);
 		ite_filter(kbdbuf[kbdgetoff++ & KBDBUFMASK]);
+		mutex_enter(&sc->sc_lock);
+	}
 	kbdgetoff = kbdputoff = 0;
 
-	splx(s);
+	mutex_exit(&sc->sc_lock);
 }
 
 void

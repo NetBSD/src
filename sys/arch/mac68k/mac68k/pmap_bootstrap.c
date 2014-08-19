@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.93 2012/02/10 04:49:45 mhitch Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.93.6.1 2014/08/20 00:03:11 tls Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.93 2012/02/10 04:49:45 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.93.6.1 2014/08/20 00:03:11 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -166,6 +166,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	for (i = 0; i < numranges; i++)
 		mem_size += high[i] - low[i];
 	nptpages += howmany(m68k_btop(mem_size), NPTEPG);
+	nptpages++;
 	nextpa += nptpages * PAGE_SIZE;
 	
 	for (i = 0; i < numranges; i++)
@@ -534,6 +535,17 @@ bootstrap_mac68k(int tc)
 	extern int *esym;
 	paddr_t nextpa;
 	void *oldROMBase;
+	char use_bootmem = 0;
+
+#ifdef DJMEMCMAX
+	if(mac68k_machine.machineid == MACH_MACC650 ||
+	    mac68k_machine.machineid == MACH_MACQ650 ||
+	    mac68k_machine.machineid == MACH_MACQ610 ||
+	    mac68k_machine.machineid == MACH_MACC610 ||
+	    mac68k_machine.machineid == MACH_MACQ800) {
+		use_bootmem = 1;
+	}
+#endif
 
 	if (mac68k_machine.do_graybars)
 		printf("Bootstrapping NetBSD/mac68k.\n");
@@ -541,8 +553,8 @@ bootstrap_mac68k(int tc)
 	oldROMBase = ROMBase;
 	mac68k_video.mv_phys = mac68k_video.mv_kvaddr;
 
-	if (((tc & 0x80000000) && (mmutype == MMU_68030)) ||
-	    ((tc & 0x8000) && (mmutype == MMU_68040))) {
+	if ((!use_bootmem) && (((tc & 0x80000000) && (mmutype == MMU_68030)) ||
+	    ((tc & 0x8000) && (mmutype == MMU_68040)))) {
 		if (mac68k_machine.do_graybars)
 			printf("Getting mapping from MMU.\n");
 		(void) get_mapping();

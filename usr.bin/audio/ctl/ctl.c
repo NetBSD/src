@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.39 2011/08/28 01:17:48 joerg Exp $	*/
+/*	$NetBSD: ctl.c,v 1.39.8.1 2014/08/20 00:04:56 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: ctl.c,v 1.39 2011/08/28 01:17:48 joerg Exp $");
+__RCSID("$NetBSD: ctl.c,v 1.39.8.1 2014/08/20 00:04:56 tls Exp $");
 #endif
 
 
@@ -65,6 +65,8 @@ static audio_info_t info;
 static char encbuf[1000];
 
 static int properties, fullduplex, rerror;
+
+int verbose;
 
 static struct field {
 	const char *name;

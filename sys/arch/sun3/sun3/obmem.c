@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.26 2008/06/28 12:13:38 tsutsui Exp $	*/
+/*	$NetBSD: obmem.c,v 1.26.40.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.26 2008/06/28 12:13:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obmem.c,v 1.26.40.1 2014/08/20 00:03:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ static struct sun68k_bus_space_tag obmem_space_tag = {
 	NULL				/* bus_space_poke_N */
 };
 
-static int 
+static int
 obmem_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
@@ -96,7 +96,7 @@ obmem_match(device_t parent, cfdata_t cf, void *aux)
 	return 1;
 }
 
-static void 
+static void
 obmem_attach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux;

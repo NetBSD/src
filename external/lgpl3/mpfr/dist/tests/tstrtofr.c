@@ -1,7 +1,7 @@
 /* Test file for mpfr_set_str.
 
-Copyright 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -1105,6 +1105,92 @@ test20100310 (void)
   mpfr_clear (y);
 }
 
+/* From a bug reported by Joseph S. Myers
+   https://sympa.inria.fr/sympa/arc/mpfr/2012-08/msg00005.html */
+static void
+bug20120814 (void)
+{
+  mpfr_exp_t emin = -30, e;
+  mpfr_t x, y;
+  int r;
+  char s[64], *p;
+
+  mpfr_init2 (x, 2);
+  mpfr_set_ui_2exp (x, 3, emin - 2, MPFR_RNDN);
+  mpfr_get_str (s + 1, &e, 10, 19, x, MPFR_RNDD);
+  s[0] = s[1];
+  s[1] = '.';
+  for (p = s; *p != 0; p++) ;
+  *p = 'e';
+  sprintf (p + 1, "%d", (int) e - 1);
+
+  mpfr_init2 (y, 4);
+  r = mpfr_strtofr (y, s, NULL, 0, MPFR_RNDN);
+  if (r <= 0 || ! mpfr_equal_p (x, y))
+    {
+      printf ("Error in bug20120814\n");
+      printf ("mpfr_strtofr failed on string \"%s\"\n", s);
+      printf ("Expected inex > 0 and y = 0.1100E%d\n", (int) emin);
+      printf ("Got inex = %-6d and y = ", r);
+      mpfr_dump (y);
+      exit (1);
+    }
+
+  mpfr_clear (x);
+  mpfr_clear (y);
+}
+
+static void
+bug20120829 (void)
+{
+  mpfr_t x1, x2, e;
+  int inex1, inex2, i, r;
+  char s[48] = "1e-1";
+
+  mpfr_init2 (e, 128);
+  mpfr_inits2 (4, x1, x2, (mpfr_ptr) 0);
+
+  inex1 = mpfr_set_si (e, -1, MPFR_RNDN);
+  MPFR_ASSERTN (inex1 == 0);
+
+  for (i = 1; i <= sizeof(s) - 5; i++)
+    {
+      s[3+i] = '0';
+      s[4+i] = 0;
+      inex1 = mpfr_mul_ui (e, e, 10, MPFR_RNDN);
+      MPFR_ASSERTN (inex1 == 0);
+      RND_LOOP(r)
+        {
+          mpfr_rnd_t rnd = (mpfr_rnd_t) r;
+
+          inex1 = mpfr_exp10 (x1, e, rnd);
+          inex1 = SIGN (inex1);
+          inex2 = mpfr_strtofr (x2, s, NULL, 0, rnd);
+          inex2 = SIGN (inex2);
+          /* On 32-bit machines, for i = 7, r8389, r8391 and r8394 do:
+             strtofr.c:...: MPFR assertion failed: cy == 0
+             r8396 is OK.
+             On 64-bit machines, for i = 15,
+             r8389 does: strtofr.c:678: MPFR assertion failed: err < (64 - 0)
+             r8391 does: strtofr.c:680: MPFR assertion failed: h < ysize
+             r8394 and r8396 are OK.
+          */
+          if (! mpfr_equal_p (x1, x2) || inex1 != inex2)
+            {
+              printf ("Error in bug20120829 for i = %d, rnd = %s\n",
+                      i, mpfr_print_rnd_mode (rnd));
+              printf ("Expected inex = %d, x = ", inex1);
+              mpfr_dump (x1);
+              printf ("Got      inex = %d, x = ", inex2);
+              mpfr_dump (x2);
+              exit (1);
+            }
+        }
+    }
+
+  mpfr_clears (e, x1, x2, (mpfr_ptr) 0);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -1117,6 +1203,8 @@ main (int argc, char *argv[])
   check_retval ();
   bug20081028 ();
   test20100310 ();
+  bug20120814 ();
+  bug20120829 ();
 
   tests_end_mpfr ();
   return 0;

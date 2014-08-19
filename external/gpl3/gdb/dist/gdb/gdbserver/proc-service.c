@@ -1,6 +1,5 @@
 /* libthread_db helper functions for the remote server for GDB.
-   Copyright (C) 2002, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
 
@@ -40,18 +39,20 @@ typedef size_t gdb_ps_size_t;
 
 #ifdef HAVE_REGSETS
 static struct regset_info *
-gregset_info(void)
+gregset_info (void)
 {
   int i = 0;
+  const struct regs_info *regs_info = (*the_low_target.regs_info) ();
+  struct regsets_info *regsets_info = regs_info->regsets_info;
 
-  while (target_regsets[i].size != -1)
+  while (regsets_info->regsets[i].size != -1)
     {
-      if (target_regsets[i].type == GENERAL_REGS)
+      if (regsets_info->regsets[i].type == GENERAL_REGS)
 	break;
       i++;
     }
 
-  return &target_regsets[i];
+  return &regsets_info->regsets[i];
 }
 #endif
 

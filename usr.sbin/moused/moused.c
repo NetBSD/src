@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.22 2011/08/31 16:32:48 christos Exp $ */
+/* $NetBSD: moused.c,v 1.22.8.1 2014/08/20 00:05:10 tls Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.22 2011/08/31 16:32:48 christos Exp $");
+__RCSID("$NetBSD: moused.c,v 1.22.8.1 2014/08/20 00:05:10 tls Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -1514,7 +1514,7 @@ r_protocol(u_char rBuf, mousestatus_t *act)
 
     debug("received char 0x%x",(int)rBuf);
     if (rodent.rtype == MOUSE_PROTO_KIDSPAD)
-	return kidspad(rBuf, act) ;
+	return kidspad(rBuf, act);
 
     /*
      * Hack for resyncing: We check here for a package that is:
@@ -2045,7 +2045,7 @@ r_installmap(char *arg)
 	    return FALSE;
 	lbutton = atoi(s);
 
-	arg = skipspace(++arg);
+	arg = skipspace(arg + 1);
 	s = arg;
 	while (isdigit((unsigned char)*arg))
 	    ++arg;
@@ -2763,67 +2763,66 @@ we store the last coordinates sent when the pen went out of the tablet,
 
 typedef enum {
     S_IDLE, S_PROXY, S_FIRST, S_DOWN, S_UP
-} k_status ;
+} k_status;
 
 static int
 kidspad(u_char rxc, mousestatus_t *act)
 {
     static int buf[5];
-    static int buflen = 0, b_prev = 0 , x_prev = -1, y_prev = -1 ;
-    static k_status status = S_IDLE ;
-    static struct timeval old, now ;
+    static int buflen = 0, b_prev = 0 , x_prev = -1, y_prev = -1;
+    static k_status status = S_IDLE;
+    static struct timeval now;
 
-    int x, y ;
+    int x, y;
 
     if (buflen > 0 && (rxc & 0x80) ) {
 	fprintf(stderr, "invalid code %d 0x%x\n", buflen, rxc);
-	buflen = 0 ;
+	buflen = 0;
     }
     if (buflen == 0 && (rxc & 0xb8) != 0xb8 ) {
 	fprintf(stderr, "invalid code 0 0x%x\n", rxc);
-	return 0 ; /* invalid code, no action */
+	return 0; /* invalid code, no action */
     }
-    buf[buflen++] = rxc ;
+    buf[buflen++] = rxc;
     if (buflen < 5)
-	return 0 ;
+	return 0;
 
-    buflen = 0 ; /* for next time... */
+    buflen = 0; /* for next time... */
 
-    x = buf[1]+128*(buf[2] - 7) ;
-    if (x < 0) x = 0 ;
-    y = 28*128 - (buf[3] + 128* (buf[4] - 7)) ;
-    if (y < 0) y = 0 ;
+    x = buf[1]+128*(buf[2] - 7);
+    if (x < 0) x = 0;
+    y = 28*128 - (buf[3] + 128* (buf[4] - 7));
+    if (y < 0) y = 0;
 
-    x /= 8 ;
-    y /= 8 ;
+    x /= 8;
+    y /= 8;
 
-    act->flags = 0 ;
-    act->obutton = act->button ;
-    act->dx = act->dy = act->dz = 0 ;
+    act->flags = 0;
+    act->obutton = act->button;
+    act->dx = act->dy = act->dz = 0;
     gettimeofday(&now, NULL);
     if ( buf[0] & 0x40 ) /* pen went out of reach */
-	status = S_IDLE ;
+	status = S_IDLE;
     else if (status == S_IDLE) { /* pen is newly near the tablet */
-	act->flags |= MOUSE_POSCHANGED ; /* force update */
-	status = S_PROXY ;
-	x_prev = x ;
-	y_prev = y ;
+	act->flags |= MOUSE_POSCHANGED; /* force update */
+	status = S_PROXY;
+	x_prev = x;
+	y_prev = y;
     }
-    old = now ;
-    act->dx = x - x_prev ;
-    act->dy = y - y_prev ;
+    act->dx = x - x_prev;
+    act->dy = y - y_prev;
     if (act->dx || act->dy)
-	act->flags |= MOUSE_POSCHANGED ;
-    x_prev = x ;
-    y_prev = y ;
+	act->flags |= MOUSE_POSCHANGED;
+    x_prev = x;
+    y_prev = y;
     if (b_prev != 0 && b_prev != buf[0]) { /* possibly record button change */
-	act->button = 0 ;
+	act->button = 0;
 	if ( buf[0] & 0x01 ) /* tip pressed */
-	    act->button |= MOUSE_BUTTON1DOWN ;
+	    act->button |= MOUSE_BUTTON1DOWN;
 	if ( buf[0] & 0x02 ) /* button pressed */
-	    act->button |= MOUSE_BUTTON2DOWN ;
-	act->flags |= MOUSE_BUTTONSCHANGED ;
+	    act->button |= MOUSE_BUTTON2DOWN;
+	act->flags |= MOUSE_BUTTONSCHANGED;
     }
-    b_prev = buf[0] ;
-    return act->flags ;
+    b_prev = buf[0];
+    return act->flags;
 }

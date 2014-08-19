@@ -1,4 +1,4 @@
-/*	$NetBSD: mbox_open.c,v 1.1.1.1.16.1 2013/02/25 00:27:19 tls Exp $	*/
+/*	$NetBSD: mbox_open.c,v 1.1.1.1.16.2 2014/08/19 23:59:42 tls Exp $	*/
 
 /*++
 /* NAME
@@ -196,9 +196,9 @@ MBOX   *mbox_open(const char *path, int flags, mode_t mode, struct stat * st,
     /*
      * Sanity check: reportedly, GNU POP3D creates a new mailbox file and
      * deletes the old one. This does not play well with software that opens
-     * the mailbox first and then locks it, such as software that that uses
-     * FCNTL or FLOCK locks on open file descriptors (some UNIX systems don't
-     * use dotlock files).
+     * the mailbox first and then locks it, such as software that uses FCNTL
+     * or FLOCK locks on open file descriptors (some UNIX systems don't use
+     * dotlock files).
      * 
      * To detect that GNU POP3D deletes the mailbox file we look at the target
      * file hard-link count. Note that safe_open() guarantees a hard-link

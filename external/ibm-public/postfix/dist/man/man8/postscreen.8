@@ -1,4 +1,4 @@
-.\"	$NetBSD: postscreen.8,v 1.1.1.1.12.1 2013/02/25 00:27:12 tls Exp $
+.\"	$NetBSD: postscreen.8,v 1.1.1.1.12.2 2014/08/19 23:59:42 tls Exp $
 .\"
 .TH POSTSCREEN 8 
 .ad
@@ -14,19 +14,22 @@ Postfix zombie blocker
 .SH DESCRIPTION
 .ad
 .fi
-The Postfix \fBpostscreen\fR(8) server performs triage on
-multiple inbound SMTP connections at the same time. While
-a single \fBpostscreen\fR(8) process keeps spambots away
-from Postfix SMTP server processes, more Postfix SMTP server
-processes remain available for legitimate clients.
+The Postfix \fBpostscreen\fR(8) server provides additional
+protection against mail server overload. One \fBpostscreen\fR(8)
+process handles multiple inbound SMTP connections, and decides
+which clients may talk to a Postfix SMTP server process.
+By keeping spambots away, \fBpostscreen\fR(8) leaves more
+SMTP server processes available for legitimate clients, and
+delays the onset of server overload conditions.
 
 This program should not be used on SMTP ports that receive
 mail from end-user clients (MUAs). In a typical deployment,
-\fBpostscreen\fR(8) is used on the "port 25" service, while
-MUA clients submit mail via the \fBsubmission\fR service,
-or via a "port 25" server that provides no MX service (i.e.
-a dedicated server that provides \fBsubmission\fR service
-on port 25).
+\fBpostscreen\fR(8) handles the MX service on TCP port 25,
+while MUA clients submit mail via the \fBsubmission\fR
+service on TCP port 587 which requires client authentication.
+Alternatively, a site could set up a dedicated, non-postscreen,
+"port 25" server that provides \fBsubmission\fR service and
+client authentication, but no MX service.
 
 \fBpostscreen\fR(8) maintains a temporary whitelist for
 clients that have passed a number of tests.  When an SMTP
@@ -84,8 +87,7 @@ Problems and transactions are logged to \fBsyslogd\fR(8).
 The \fBpostscreen\fR(8) built-in SMTP protocol engine
 currently does not announce support for AUTH, XCLIENT or
 XFORWARD.
-Support for AUTH may be added in the future.
-In the mean time, if you need to make these services available
+If you need to make these services available
 on port 25, then do not enable the optional "after 220
 server greeting" tests, and do not use DNSBLs that reject
 traffic from dial-up and residential networks.
@@ -93,15 +95,16 @@ traffic from dial-up and residential networks.
 The optional "after 220 server greeting" tests involve
 \fBpostscreen\fR(8)'s built-in SMTP protocol engine. When
 these tests succeed, \fBpostscreen\fR(8) adds the client
-to the temporary whitelist but it cannot not hand off the
+to the temporary whitelist, but it cannot not hand off the
 "live" connection to a Postfix SMTP server process in the
 middle of a session.  Instead, \fBpostscreen\fR(8) defers
 attempts to deliver mail with a 4XX status, and waits for
-the client to disconnect.  The next time a good client
-connects, it will be allowed to talk to a Postfix SMTP
-server process to deliver mail. \fBpostscreen\fR(8) mitigates
-the impact of this limitation by giving such tests a long
-expiration time.
+the client to disconnect.  When the client connects again,
+\fBpostscreen\fR(8) will allow the client to talk to a
+Postfix SMTP server process (provided that the whitelist
+status has not expired).  \fBpostscreen\fR(8) mitigates
+the impact of this limitation by giving the "after 220
+server greeting" tests a long expiration time.
 .SH "CONFIGURATION PARAMETERS"
 .na
 .nf
@@ -153,6 +156,18 @@ response.
 .IP "\fBsoft_bounce (no)\fR"
 Safety net to keep mail queued that would otherwise be returned to
 the sender.
+.SH "BEFORE-POSTSCREEN PROXY AGENT"
+.na
+.nf
+.ad
+.fi
+Available in Postfix version 2.10 and later:
+.IP "\fBpostscreen_upstream_proxy_protocol (empty)\fR"
+The name of the proxy protocol used by an optional before-postscreen
+proxy agent.
+.IP "\fBpostscreen_upstream_proxy_timeout (5s)\fR"
+The time limit for the proxy protocol specified with the
+postscreen_upstream_proxy_protocol parameter.
 .SH "PERMANENT WHITE/BLACKLIST TEST"
 .na
 .nf
@@ -172,19 +187,18 @@ permanently blacklisted with the postscreen_access_list parameter.
 .nf
 .ad
 .fi
-When a remote SMTP client is not on the permanent access
-list, \fBpostscreen\fR(8) can implement a number of whitelist
-tests before it grants the client a temporary whitelist
-status to talk to a Postfix SMTP server process.
-
-By listening on both primary and backup MX addresses,
-\fBpostscreen\fR(8) can deny the temporary whitelist status
-to clients that connect only to backup MX hosts.
+When \fBpostscreen\fR(8) is configured to monitor all primary
+and backup MX addresses, it can refuse to whitelist clients
+that connect to a backup MX address only. For small sites,
+this requires configuring primary and backup MX addresses
+on the same MTA. Larger sites would have to share the
+\fBpostscreen\fR(8) cache between primary and backup MTAs,
+which would introduce a common point of failure.
 .IP "\fBpostscreen_whitelist_interfaces (static:all)\fR"
 A list of local \fBpostscreen\fR(8) server IP addresses where a
 non-whitelisted remote SMTP client can obtain \fBpostscreen\fR(8)'s temporary
 whitelist status.
-.SH "BEFORE-GREETING TESTS"
+.SH "BEFORE 220 GREETING TESTS"
 .na
 .nf
 .ad
@@ -230,7 +244,13 @@ up to 6 seconds otherwise).
 .IP "\fBsmtpd_service_name (smtpd)\fR"
 The internal service that \fBpostscreen\fR(8) hands off allowed
 connections to.
-.SH "AFTER-GREETING TESTS"
+.PP
+Available in Postfix version 2.11 and later:
+.IP "\fBpostscreen_dnsbl_whitelist_threshold (0)\fR"
+Allow a remote SMTP client to skip "before" and "after 220
+greeting" protocol tests, based on its combined DNSBL score as
+defined with the postscreen_dnsbl_sites parameter.
+.SH "AFTER 220 GREETING TESTS"
 .na
 .nf
 .ad
@@ -238,9 +258,9 @@ connections to.
 These tests are executed after the remote SMTP client
 receives the "220 servername" greeting. If a client passes
 all tests during this phase, it will receive a 4XX response
-to RCPT TO commands until the client hangs up. After this,
-the client will be allowed to talk directly to a Postfix
-SMTP server process.
+to all RCPT TO commands. After the client reconnects, it
+will be allowed to talk directly to a Postfix SMTP server
+process.
 .IP "\fBpostscreen_bare_newline_action (ignore)\fR"
 The action that \fBpostscreen\fR(8) takes when a remote SMTP client sends
 a bare newline character, that is, a newline not preceded by carriage

@@ -1,9 +1,6 @@
 #include <signal.h>
 #include <unistd.h>
 
-#ifdef __sh__
-#define signal(a,b)	/* Signals not supported on this target - make them go away */
-#endif
 
 /* Signal handlers, we set breakpoints in them to make sure that the
    signals really get delivered.  */
@@ -1086,7 +1083,7 @@ return 0;
 int
 gen_PWR ()
 {
-#ifdef SIGPWR
+#if defined(SIGPWR) && (!defined (SIGLOST) || SIGPWR != SIGLOST)
   kill (getpid (), SIGPWR);
 #else
   handle_PWR (0);
@@ -1577,10 +1574,6 @@ return 0;
 int
 main ()
 {
-#ifdef usestubs
-  set_debug_traps ();
-  breakpoint ();
-#endif
 
 #ifdef SIG_SETMASK
   /* Ensure all the signals aren't blocked.
@@ -1669,7 +1662,7 @@ main ()
 #ifdef SIGUSR2
   signal (SIGUSR2, handle_USR2);
 #endif
-#ifdef SIGPWR
+#if defined(SIGPWR) && (!defined (SIGLOST) || SIGPWR != SIGLOST)
   signal (SIGPWR, handle_PWR);
 #endif
 #if defined (SIGPOLL) && (!defined (SIGIO) || SIGPOLL != SIGIO)

@@ -1,7 +1,6 @@
 /* Native-dependent code for FreeBSD/i386.
 
-   Copyright (C) 2001, 2002, 2003, 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,7 +36,7 @@
 
 static void
 i386fbsd_resume (struct target_ops *ops,
-		 ptid_t ptid, int step, enum target_signal signal)
+		 ptid_t ptid, int step, enum gdb_signal signal)
 {
   pid_t pid = ptid_get_pid (ptid);
   int request = PT_STEP;
@@ -76,14 +75,13 @@ i386fbsd_resume (struct target_ops *ops,
      was.  (If GDB wanted it to start some other way, we have already
      written a new PC value to the child.)  */
   if (ptrace (request, pid, (caddr_t) 1,
-	      target_signal_to_host (signal)) == -1)
+	      gdb_signal_to_host (signal)) == -1)
     perror_with_name (("ptrace"));
 }
 
 
 /* Support for debugging kernel virtual memory images.  */
 
-#include <sys/types.h>
 #include <machine/pcb.h>
 
 #include "bsd-kvm.h"
@@ -134,8 +132,9 @@ _initialize_i386fbsd_nat (void)
 
   i386_dr_low.set_control = i386bsd_dr_set_control;
   i386_dr_low.set_addr = i386bsd_dr_set_addr;
-  i386_dr_low.reset_addr = i386bsd_dr_reset_addr;
+  i386_dr_low.get_addr = i386bsd_dr_get_addr;
   i386_dr_low.get_status = i386bsd_dr_get_status;
+  i386_dr_low.get_control = i386bsd_dr_get_control;
   i386_set_debug_register_length (4);
 
 #endif /* HAVE_PT_GETDBREGS */

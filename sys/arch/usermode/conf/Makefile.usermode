@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.32.2.1 2013/06/23 06:20:13 tls Exp $
+# $NetBSD: Makefile.usermode,v 1.32.2.2 2014/08/20 00:03:26 tls Exp $
 
 USETOOLS?=			no
 NEED_OWN_INSTALL_TARGET?=	no
@@ -59,8 +59,8 @@ MD_OBJS=	thunk.o
 MD_CFILES=	${USERMODE}/usermode/thunk.c
 MD_SFILES=
 
-MD_OBJS+=	cpu_${MACHINE_ARCH}.o
-MD_CFILES+=	${USERMODE}/target/${MACHINE_ARCH}/cpu_${MACHINE_ARCH}.c
+MD_OBJS+=	cpu_${MACHINE_CPU}.o
+MD_CFILES+=	${USERMODE}/target/${MACHINE_CPU}/cpu_${MACHINE_CPU}.c
 
 ##
 ## (5) link settings
@@ -88,6 +88,8 @@ NVFLAGS=	-n
 		ln -s $S/arch/i386/include i386
 	@rm -f amd64 && \
 		ln -s $S/arch/amd64/include amd64
+	@rm -f arm && \
+		ln -s $S/arch/arm/include arm
 .endif
 
 thunk.d: ${USERMODE}/usermode/thunk.c
@@ -97,7 +99,7 @@ thunk.d: ${USERMODE}/usermode/thunk.c
 thunk.o: ${USERMODE}/usermode/thunk.c
 	${CC} ${COPTS} ${CPPFLAGS.thunk.c} -c -o $@ ${USERMODE}/usermode/thunk.c
 
-cpu_${MACHINE_ARCH}.o:	${USERMODE}/target/${MACHINE_ARCH}/cpu_${MACHINE_ARCH}.c
+cpu_${MACHINE_CPU}.o:	${USERMODE}/target/${MACHINE_CPU}/cpu_${MACHINE_CPU}.c
 
 ##
 ## (7) misc settings

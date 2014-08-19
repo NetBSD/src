@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.116 2012/07/28 23:11:01 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.116.2.1 2014/08/20 00:03:17 tls Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116 2012/07/28 23:11:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116.2.1 2014/08/20 00:03:17 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,17 +166,17 @@ model_init(void)
 		}
 
 		/* init frame buffer mode */
-		sprintf(buf, "%x vesa-set-mode", mode);
+		snprintf(buf, sizeof(buf), "%x vesa-set-mode", mode);
 		OF_interpret(buf, 0, 0);
 
 		/* set dimensions and frame buffer address in OFW */
-		sprintf(buf, "%x to screen-width", width);
+		snprintf(buf, sizeof(buf), "%x to screen-width", width);
 		OF_interpret(buf, 0, 0);
-		sprintf(buf, "%x to screen-height", height);
+		snprintf(buf, sizeof(buf), "%x to screen-height", height);
 		OF_interpret(buf, 0, 0);
 		OF_interpret("vesa-frame-buffer-adr", 0, 1, &fbaddr);
 		if (fbaddr != 0) {
-			sprintf(buf, "%x to frame-buffer-adr", fbaddr);
+			snprintf(buf, sizeof(buf), "%x to frame-buffer-adr", fbaddr);
 			OF_interpret(buf, 0, 0);
 		}
 	}

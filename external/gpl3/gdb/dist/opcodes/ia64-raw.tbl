@@ -45,7 +45,7 @@ CFM;	alloc;	IC:cfm-readers;	none
 CPUID#;	IC:none;	IC:mov-from-IND-CPUID+3;	specific
 CR[CMCV];	IC:mov-to-CR-CMCV;	IC:mov-from-CR-CMCV;	data
 CR[DCR];	IC:mov-to-CR-DCR;	IC:mov-from-CR-DCR, IC:mem-readers-spec;	data
-CR[EOI];	IC:mov-to-CR-EOI;	IC:none;	SC Section 5.8.3.4, "End of External Interrupt Register (EOI Ð CR67)" on page 2:119
+CR[EOI];	IC:mov-to-CR-EOI;	IC:none;	SC Section 5.8.3.4, "End of External Interrupt Register (EOI - CR67)" on page 2:119
 CR[GPTA];	IC:mov-to-CR-GPTA;	IC:mov-from-CR-GPTA, thash;	data
 CR[IFA];	IC:mov-to-CR-IFA;	itc.i, itc.d, itr.i, itr.d;	implied
 CR[IFA];	IC:mov-to-CR-IFA;	IC:mov-from-CR-IFA;	data
@@ -67,15 +67,16 @@ CR[ITIR];	IC:mov-to-CR-ITIR;	itc.i, itc.d, itr.i, itr.d;	implied
 CR[ITM];	IC:mov-to-CR-ITM;	IC:mov-from-CR-ITM;	data
 CR[ITV];	IC:mov-to-CR-ITV;	IC:mov-from-CR-ITV;	data
 CR[IVA];	IC:mov-to-CR-IVA;	IC:mov-from-CR-IVA;	instr
-CR[IVR];	IC:none;	IC:mov-from-CR-IVR;	SC Section 5.8.3.2, "External Interrupt Vector Register (IVR Ð CR65)" on page 2:118
-CR[LID];	IC:mov-to-CR-LID;	IC:mov-from-CR-LID;	SC Section 5.8.3.1, "Local ID (LID Ð CR64)" on page 2:117
+CR[IVR];	IC:none;	IC:mov-from-CR-IVR;	SC Section 5.8.3.2, "External Interrupt Vector Register (IVR - CR65)" on page 2:118
+CR[LID];	IC:mov-to-CR-LID;	IC:mov-from-CR-LID;	SC Section 5.8.3.1, "Local ID (LID - CR64)" on page 2:117
 CR[LRR%], % in 0 - 1;	IC:mov-to-CR-LRR+1;	IC:mov-from-CR-LRR+1;	data
 CR[PMV];	IC:mov-to-CR-PMV;	IC:mov-from-CR-PMV;	data
 CR[PTA];	IC:mov-to-CR-PTA;	IC:mov-from-CR-PTA, IC:mem-readers, IC:mem-writers, IC:non-access, thash;	data
 CR[TPR];	IC:mov-to-CR-TPR;	IC:mov-from-CR-TPR, IC:mov-from-CR-IVR;	data
-CR[TPR];	IC:mov-to-CR-TPR;	IC:mov-to-PSR-l+17, ssm+17;	SC Section 5.8.3.3, "Task Priority Register (TPR Ð CR66)" on page 2:119
+CR[TPR];	IC:mov-to-CR-TPR;	IC:mov-to-PSR-l+17, ssm+17;	SC Section 5.8.3.3, "Task Priority Register (TPR - CR66)" on page 2:119
 CR[TPR];	IC:mov-to-CR-TPR;	rfi;	implied
 CR%, % in 3-7, 10-15, 18, 28-63, 75-79, 82-127;	IC:none;	IC:mov-from-CR-rv+1;	none
+DAHR%, % in 0-7;	br.call, brl.call, br.ret, IC:mov-to-DAHR;	br.call, IC:mem-readers, IC:mem-writers, IC:mov-from-DAHR;	implied
 DBR#;	IC:mov-to-IND-DBR+3;	IC:mov-from-IND-DBR+3;	impliedF
 DBR#;	IC:mov-to-IND-DBR+3;	IC:probe-all, IC:lfetch-all, IC:mem-readers, IC:mem-writers;	data
 DTC;	ptc.e, ptc.g, ptc.ga, ptc.l, ptr.i, ptr.d, itc.i, itc.d, itr.i, itr.d;	IC:mem-readers, IC:mem-writers, IC:non-access;	data

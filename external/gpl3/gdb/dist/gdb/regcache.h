@@ -1,7 +1,6 @@
 /* Cache and manage the values of registers for GDB, the GNU debugger.
 
-   Copyright (C) 1986, 1987, 1989, 1991, 1994, 1995, 1996, 1998, 2000, 2001,
-   2002, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,6 +27,9 @@ struct address_space;
 extern struct regcache *get_current_regcache (void);
 extern struct regcache *get_thread_regcache (ptid_t ptid);
 extern struct regcache *get_thread_arch_regcache (ptid_t, struct gdbarch *);
+extern struct regcache *get_thread_arch_aspace_regcache (ptid_t,
+							 struct gdbarch *,
+							 struct address_space *);
 
 void regcache_xfree (struct regcache *regcache);
 struct cleanup *make_cleanup_regcache_xfree (struct regcache *regcache);
@@ -104,6 +106,12 @@ enum register_status regcache_cooked_read (struct regcache *regcache,
 void regcache_cooked_write (struct regcache *regcache, int rawnum,
 			    const gdb_byte *buf);
 
+/* Read register REGNUM from REGCACHE and return a new value.  This
+   will call mark_value_bytes_unavailable as appropriate.  */
+
+struct value *regcache_cooked_read_value (struct regcache *regcache,
+					  int regnum);
+
 /* Read a register as a signed/unsigned quantity.  */
 extern enum register_status
   regcache_cooked_read_signed (struct regcache *regcache,
@@ -165,9 +173,6 @@ typedef enum register_status (regcache_cooked_read_ftype) (void *src,
 extern void regcache_save (struct regcache *dst,
 			   regcache_cooked_read_ftype *cooked_read,
 			   void *cooked_read_context);
-extern void regcache_restore (struct regcache *dst,
-			      regcache_cooked_read_ftype *cooked_read,
-			      void *cooked_read_context);
 
 /* Copy/duplicate the contents of a register cache.  By default, the
    operation is pass-through.  Writes to DST and reads from SRC will

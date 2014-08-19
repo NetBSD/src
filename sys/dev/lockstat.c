@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.15.44.1 2013/02/25 00:29:11 tls Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.15.44.2 2014/08/20 00:03:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.15.44.1 2013/02/25 00:29:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.15.44.2 2014/08/20 00:03:35 tls Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.15.44.1 2013/02/25 00:29:11 tls Exp $
 
 #define	LOCKSTAT_MINBUFS	1000
 #define	LOCKSTAT_DEFBUFS	10000
-#define	LOCKSTAT_MAXBUFS	50000
+#define	LOCKSTAT_MAXBUFS	1000000
 
 #define	LOCKSTAT_HASH_SIZE	128
 #define	LOCKSTAT_HASH_MASK	(LOCKSTAT_HASH_SIZE - 1)
@@ -111,8 +111,18 @@ int		lockstat_busy;
 struct timespec	lockstat_stime;
 
 const struct cdevsw lockstat_cdevsw = {
-	lockstat_open, lockstat_close, lockstat_read, nowrite, lockstat_ioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER | D_MPSAFE
+	.d_open = lockstat_open,
+	.d_close = lockstat_close,
+	.d_read = lockstat_read,
+	.d_write = nowrite,
+	.d_ioctl = lockstat_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 /*

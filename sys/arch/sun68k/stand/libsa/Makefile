@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.28 2010/05/27 06:58:15 dholland Exp $
+#	$NetBSD: Makefile,v 1.28.18.1 2014/08/20 00:03:26 tls Exp $
 
 # Logically src/sys
+.include <bsd.own.mk>
 S!= cd ${.CURDIR}/../../../..; pwd
 DIR_SA=${S}/lib/libsa
 DIR_KERN=${S}/lib/libkern ${S}/lib/libkern/arch/m68k
@@ -13,9 +14,16 @@ CPUFLAGS=	# ignore settings in /etc/mk.conf
 DEFS= -Dsun3 -D_STANDALONE -D__daddr_t=int32_t
 INCL= -I. -I${.CURDIR} -I${S}/lib/libsa -I${S} -I${S}/arch
 AFLAGS= -Wa,-mc68020 -Wa,-mc68851
-CFLAGS= -mc68000 -Wa,-mc68010 -Wa,-m68851 -msoft-float
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 48
+# gcc 4.8 convers -mc68000 to -mcpu=68000 and that breaks gas
+# which works for -march=68010 but breaks for -mcpu=68010
+CFLAGS= -march=68010
+.else
+CFLAGS= -mc68000 -Wa,-mc68010
+.endif
+CFLAGS+= -Wa,-m68851 -msoft-float
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
-COPTS= -Os -fno-defer-pop -ffreestanding
+COPTS= -Os -fno-defer-pop -ffreestanding -fno-unwind-tables
 CPPFLAGS= ${DEFS} ${DEBUG} ${INCL}
 CLEANFILES= SRT0.o SRT1.o vers.c
 

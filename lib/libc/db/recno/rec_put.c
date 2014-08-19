@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_put.c,v 1.19 2011/06/26 22:18:16 christos Exp $	*/
+/*	$NetBSD: rec_put.c,v 1.19.8.1 2014/08/20 00:02:14 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rec_put.c,v 1.19 2011/06/26 22:18:16 christos Exp $");
+__RCSID("$NetBSD: rec_put.c,v 1.19.8.1 2014/08/20 00:02:14 tls Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -87,11 +87,10 @@ __rec_put(const DB *dbp, DBT *key, const DBT *data, u_int flags)
 			goto einval;
 
 		if (t->bt_rdata.size < t->bt_reclen) {
-			t->bt_rdata.data = t->bt_rdata.data == NULL ?
-			    malloc(t->bt_reclen) :
-			    realloc(t->bt_rdata.data, t->bt_reclen);
-			if (t->bt_rdata.data == NULL)
+			void *np = realloc(t->bt_rdata.data, t->bt_reclen);
+			if (np == NULL)
 				return (RET_ERROR);
+			t->bt_rdata.data = np;
 			t->bt_rdata.size = t->bt_reclen;
 		}
 		memmove(t->bt_rdata.data, data->data, data->size);
@@ -146,8 +145,7 @@ einval:		errno = EINVAL;
 			return (RET_ERROR);
 		if (nrec > t->bt_nrecs + 1) {
 			if (F_ISSET(t, R_FIXLEN)) {
-				if ((tdata.data =
-				    (void *)malloc(t->bt_reclen)) == NULL)
+				if ((tdata.data = malloc(t->bt_reclen)) == NULL)
 					return (RET_ERROR);
 				tdata.size = t->bt_reclen;
 				memset(tdata.data, t->bt_bval, tdata.size);

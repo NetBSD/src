@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_clntout.c,v 1.13 2004/06/20 22:20:16 jmc Exp $	*/
+/*	$NetBSD: rpc_clntout.c,v 1.13.56.1 2014/08/20 00:05:03 tls Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_clntout.c 1.11 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_clntout.c,v 1.13 2004/06/20 22:20:16 jmc Exp $");
+__RCSID("$NetBSD: rpc_clntout.c,v 1.13.56.1 2014/08/20 00:05:03 tls Exp $");
 #endif
 #endif
 
@@ -53,17 +53,17 @@ __RCSID("$NetBSD: rpc_clntout.c,v 1.13 2004/06/20 22:20:16 jmc Exp $");
 #include "rpc_parse.h"
 #include "rpc_util.h"
 
-static void write_program __P((definition *));
-static char *ampr __P((char *));
-static char *aster __P((char *));
-static void printbody __P((proc_list *));
+static void write_program(definition *);
+static const char *ampr(const char *);
+static const char *aster(const char *);
+static void printbody(proc_list *);
 
 #define DEFAULT_TIMEOUT 25	/* in seconds */
 static char RESULT[] = "clnt_res";
 
 
 void
-write_stubs()
+write_stubs(void)
 {
 	list   *l;
 	definition *def;
@@ -81,8 +81,7 @@ write_stubs()
 }
 
 static void
-write_program(def)
-	definition *def;
+write_program(definition *def)
 {
 	version_list *vp;
 	proc_list *proc;
@@ -112,99 +111,49 @@ write_program(def)
 /* sample addargname = "clnt"; sample addargtype = "CLIENT * " */
 
 void 
-printarglist(proc, result, addargname, addargtype)
-	proc_list *proc;
-	char   *result, *addargname, *addargtype;
+printarglist(proc_list *proc, const char *result,
+	     const char *addargname, const char *addargtype)
 {
 
 	decl_list *l;
 
 	if (!newstyle) {	/* old style: always pass argument by
 				 * reference */
-		if (Cflag) {	/* C++ style heading */
-			f_print(fout, "(");
-			ptype(proc->args.decls->decl.prefix, proc->args.decls->decl.type, 1);
-			f_print(fout, "*argp, ");
-			if (Mflag) {
-				if (streq(proc->res_type, "void"))
-					f_print(fout, "char ");
-				else
-					ptype(proc->res_prefix, proc->res_type, 0);
-				f_print(fout, "%s%s, ", aster(proc->res_type),
-				    result);
-			}
-			f_print(fout, "%s%s)\n", addargtype, addargname);
-		} else {
-			f_print(fout, "(argp, ");
-			if (Mflag)
-				f_print(fout, "%s, ", result);
-			f_print(fout, "%s)\n", addargname);
-			f_print(fout, "\t");
-			ptype(proc->args.decls->decl.prefix, proc->args.decls->decl.type, 1);
-			f_print(fout, "*argp;\n");
-			if (Mflag) {
-				f_print(fout, "\t");
-				if (streq(proc->res_type, "void"))
-					f_print(fout, "char ");
-				else
-					ptype(proc->res_prefix, proc->res_type, 0);
-				f_print(fout, "%s%s;\n", aster(proc->res_type),
-				    result);
-			}
+		f_print(fout, "(");
+		ptype(proc->args.decls->decl.prefix, proc->args.decls->decl.type, 1);
+		f_print(fout, "*argp, ");
+		if (Mflag) {
+			if (streq(proc->res_type, "void"))
+				f_print(fout, "char ");
+			else
+				ptype(proc->res_prefix, proc->res_type, 0);
+			f_print(fout, "%s%s, ", aster(proc->res_type),
+			    result);
 		}
+		f_print(fout, "%s%s)\n", addargtype, addargname);
 	} else {
 		f_print(fout, "(");
 		if (!streq(proc->args.decls->decl.type, "void")) {
 			/* new style, 1 or multiple arguments */
-			if (!Cflag) {
-				for (l = proc->args.decls; l != NULL;
-				    l = l->next)
-					f_print(fout, "%s, ", l->decl.name);
-			} else {/* C++ style header */
-				for (l = proc->args.decls; l != NULL;
-				    l = l->next)
-					pdeclaration(proc->args.argname,
-					    &l->decl, 0, ", ");
-			}
+			for (l = proc->args.decls; l != NULL; l = l->next)
+				pdeclaration(proc->args.argname,
+				    &l->decl, 0, ", ");
 		}
-		if (!Cflag) {
-			if (Mflag) {
-				f_print(fout, "\t");
-				if (streq(proc->res_type, "void"))
-					f_print(fout, "char ");
-				else
-					ptype(proc->res_prefix, proc->res_type, 0);
-				f_print(fout, "%s%s;\n", aster(proc->res_type),
-				    result);
-			}
-			f_print(fout, "%s)\n", addargname);
-			if (!streq(proc->args.decls->decl.type, "void")) {
-				for (l = proc->args.decls; l != NULL;
-				    l = l->next)
-					pdeclaration(proc->args.argname,
-					    &l->decl, 1, ";\n");
-			}
-		} else {
-			if (Mflag) {
-				if (streq(proc->res_type, "void"))
-					f_print(fout, "char ");
-				else
-					ptype(proc->res_prefix, proc->res_type, 0);
-				f_print(fout, "%s%s, ", aster(proc->res_type),
-				    result);
-			}
-			f_print(fout, "%s%s)\n", addargtype, addargname);
+		if (Mflag) {
+			if (streq(proc->res_type, "void"))
+				f_print(fout, "char ");
+			else
+				ptype(proc->res_prefix, proc->res_type, 0);
+			f_print(fout, "%s%s, ", aster(proc->res_type),
+			    result);
 		}
+		f_print(fout, "%s%s)\n", addargtype, addargname);
 	}
-
-	if (!Cflag)
-		f_print(fout, "\t%s%s;\n", addargtype, addargname);
 }
 
 
-static char *
-ampr(type)
-	char   *type;
+static const char *
+ampr(const char *type)
 {
 	if (isvectordef(type, REL_ALIAS)) {
 		return ("");
@@ -213,9 +162,8 @@ ampr(type)
 	}
 }
 
-static char *
-aster(type)
-	char   *type;
+static const char *
+aster(const char *type)
 {
 	if (isvectordef(type, REL_ALIAS)) {
 		return ("");
@@ -225,8 +173,7 @@ aster(type)
 }
 
 static void
-printbody(proc)
-	proc_list *proc;
+printbody(proc_list *proc)
 {
 	decl_list *l;
 	bool_t  args2 = (proc->arg_num > 1);

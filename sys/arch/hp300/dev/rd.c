@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.92.6.2 2012/12/02 05:46:39 tls Exp $	*/
+/*	$NetBSD: rd.c,v 1.92.6.3 2014/08/20 00:03:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.92.6.2 2012/12/02 05:46:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.92.6.3 2014/08/20 00:03:00 tls Exp $");
 
 #include "opt_useleds.h"
 
@@ -282,12 +282,29 @@ static dev_type_dump(rddump);
 static dev_type_size(rdsize);
 
 const struct bdevsw rd_bdevsw = {
-	rdopen, rdclose, rdstrategy, rdioctl, rddump, rdsize, D_DISK
+	.d_open = rdopen,
+	.d_close = rdclose,
+	.d_strategy = rdstrategy,
+	.d_ioctl = rdioctl,
+	.d_dump = rddump,
+	.d_psize = rdsize,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw rd_cdevsw = {
-	rdopen, rdclose, rdread, rdwrite, rdioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = rdopen,
+	.d_close = rdclose,
+	.d_read = rdread,
+	.d_write = rdwrite,
+	.d_ioctl = rdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 static void
@@ -372,7 +389,7 @@ rdattach(device_t parent, device_t self, void *aux)
 	 * attach the device into the random source list
 	 */
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-	    RND_TYPE_DISK, 0);
+	    RND_TYPE_DISK, RND_FLAG_DEFAULT);
 }
 
 static int
@@ -766,7 +783,7 @@ rdstart(void *arg)
 {
 	struct rd_softc *sc = arg;
 	struct buf *bp = bufq_peek(sc->sc_tab);
-	int part, ctlr, slave;
+	int ctlr, slave;
 
 	ctlr = device_unit(device_parent(sc->sc_dev));
 	slave = sc->sc_slave;
@@ -777,7 +794,6 @@ again:
 		printf("rdstart(%s): bp %p, %c\n", device_xname(sc->sc_dev), bp,
 		    (bp->b_flags & B_READ) ? 'R' : 'W');
 #endif
-	part = rdpart(bp->b_dev);
 	sc->sc_flags |= RDF_SEEK;
 	sc->sc_ioc.c_unit = C_SUNIT(sc->sc_punit);
 	sc->sc_ioc.c_volume = C_SVOL(0);
@@ -1255,7 +1271,7 @@ rddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	int sectoff;		/* sector offset of partition */
 	int totwrt;		/* total number of sectors left to write */
 	int nwrt;		/* current number of sectors to write */
-	int unit, part;
+	int part;
 	int ctlr, slave;
 	struct rd_softc *sc;
 	struct disklabel *lp;
@@ -1267,7 +1283,6 @@ rddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	rddoingadump = 1;
 
 	/* Decompose unit and partition. */
-	unit = rdunit(dev);
 	part = rdpart(dev);
 
 	/* Make sure dump device is ok. */

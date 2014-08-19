@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_mvme.c,v 1.19 2011/06/05 16:22:00 tsutsui Exp $	*/
+/*	$NetBSD: if_ie_mvme.c,v 1.19.12.1 2014/08/20 00:03:41 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.19 2011/06/05 16:22:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.19.12.1 2014/08/20 00:03:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,10 +130,7 @@ ie_reset(struct ie_softc *sc, int why)
 static int
 ie_intrhook(struct ie_softc *sc, int when)
 {
-	struct ie_pcctwo_softc *ps;
 	u_int8_t reg;
-
-	ps = (struct ie_pcctwo_softc *) sc;
 
 	if (when == INTR_EXIT) {
 		reg = pcc2_reg_read(sys_pcctwo, PCC2REG_ETH_ICSR);

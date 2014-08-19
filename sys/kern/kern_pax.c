@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.26 2011/11/19 22:51:25 tls Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.26.8.1 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.26 2011/11/19 22:51:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.26.8.1 2014/08/20 00:04:29 tls Exp $");
 
 #include "opt_pax.h"
 
@@ -121,18 +121,12 @@ SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
 {
 	const struct sysctlnode *rnode = NULL, *cnode;
 
-        sysctl_createv(clog, 0, NULL, &rnode,
-                       CTLFLAG_PERMANENT,
-                       CTLTYPE_NODE, "security", NULL,
-                       NULL, 0, NULL, 0,
-                       CTL_SECURITY, CTL_EOL);
-
-	sysctl_createv(clog, 0, &rnode, &rnode,
+	sysctl_createv(clog, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "pax",
 		       SYSCTL_DESCR("PaX (exploit mitigation) features."),
 		       NULL, 0, NULL, 0,
-		       CTL_CREATE, CTL_EOL);
+		       CTL_SECURITY, CTL_CREATE, CTL_EOL);
 
 	cnode = rnode;
 

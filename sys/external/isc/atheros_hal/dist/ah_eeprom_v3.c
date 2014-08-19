@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ah_eeprom_v3.c,v 1.3 2011/03/07 11:25:42 cegger Exp $
+ * $Id: ah_eeprom_v3.c,v 1.3.14.1 2014/08/20 00:04:25 tls Exp $
  */
 #include "opt_ah.h"
 
@@ -181,7 +181,6 @@ eepromExpandPower5112(struct ath_hal *ah,
 	EEPROM_POWER_EXPN_5112 *pPowerExpn)
 {
 	int ii, jj, kk;
-	int16_t maxPower_t4;
 	EXPN_DATA_PER_XPD_5112 *pExpnXPD;
 	/* ptr to array of info held per channel */
 	const EEPROM_DATA_PER_CHANNEL_5112 *pCalCh;
@@ -218,7 +217,6 @@ eepromExpandPower5112(struct ath_hal *ah,
 			pCalCh->channelValue;
 		pPowerExpn->pDataPerChannel[ii].maxPower_t4 =
 			pCalCh->maxPower_t4;
-		maxPower_t4 = pPowerExpn->pDataPerChannel[ii].maxPower_t4;
 
 		for (jj = 0; jj < NUM_XPD_PER_CHANNEL; jj++)
 			pPowerExpn->pDataPerChannel[ii].pDataPerXPD[jj].numPcdacs = 0;

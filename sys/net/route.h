@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.81.2.1 2013/06/23 06:20:25 tls Exp $	*/
+/*	$NetBSD: route.h,v 1.81.2.2 2014/08/20 00:04:35 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -382,14 +382,12 @@ void	 rt_timer_queue_destroy(struct rttimer_queue *, int);
 void	 rt_timer_remove_all(struct rtentry *, int);
 unsigned long	rt_timer_count(struct rttimer_queue *);
 void	 rt_timer_timer(void *);
-void	 rtcache(struct route *);
 void	 rtflushall(int);
 struct rtentry *
 	 rtalloc1(const struct sockaddr *, int);
 void	 rtfree(struct rtentry *);
 int	 rt_getifa(struct rt_addrinfo *);
 int	 rtinit(struct ifaddr *, int, int);
-int	 rtioctl(u_long, void *, struct lwp *);
 void	 rtredirect(const struct sockaddr *, const struct sockaddr *,
 	    const struct sockaddr *, int, const struct sockaddr *,
 	    struct rtentry **);
@@ -494,15 +492,6 @@ rtcache_validate(const struct route *ro)
 		return rt;
 	return NULL;
 
-}
-
-static inline void
-RTFREE(struct rtentry *rt)
-{
-	if (rt->rt_refcnt <= 1)
-		rtfree(rt);
-	else
-		rt->rt_refcnt--;
 }
 
 int rt_walktree(sa_family_t, int (*)(struct rtentry *, void *), void *);

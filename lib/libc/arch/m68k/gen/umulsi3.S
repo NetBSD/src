@@ -1,4 +1,4 @@
-/*	$NetBSD: umulsi3.S,v 1.5 2003/08/07 16:42:12 agc Exp $	*/
+/*	$NetBSD: umulsi3.S,v 1.5.62.1 2014/08/20 00:02:10 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,12 +39,13 @@
 #if 0
 	RCSID("from: @(#)umulsi3.s	5.1 (Berkeley) 6/7/90")
 #else
-	RCSID("$NetBSD: umulsi3.S,v 1.5 2003/08/07 16:42:12 agc Exp $")
+	RCSID("$NetBSD: umulsi3.S,v 1.5.62.1 2014/08/20 00:02:10 tls Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* unsigned * unsigned */
 ENTRY(__umulsi3)
-	movel	%sp@(4),%d0
-	mulul	%sp@(8),%d0
+	movel	4(%sp),%d0
+	mulul	8(%sp),%d0
 	rts
+END(__umulsi3)

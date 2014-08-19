@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv6.S,v 1.4.18.1 2012/11/20 03:01:02 tls Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv6.S,v 1.4.18.2 2014/08/20 00:02:44 tls Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -33,10 +33,10 @@
  * These routines can be used by any core that supports the mcrr address
  * range operations.
  */
- 
+
 #include "assym.h"
-#include <machine/cpu.h>
 #include <machine/asm.h>
+#include <arm/locore.h>
 
 	.arch	armv6
 
@@ -58,6 +58,7 @@ ENTRY(armv6_setttb)
 
 	mcrne	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
 	RET
+END(armv6_setttb)
 
 /*
  * Cache operations.
@@ -71,6 +72,7 @@ ENTRY_NP(armv6_icache_sync_range)
 	mcrr	p15, 0, r1, r0, c12	/* clean D cache range */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
+END(armv6_icache_sync_range)
 
 /* LINTSTUB: void armv6_icache_sync_all(void); */
 ENTRY_NP(armv6_icache_sync_all)
@@ -83,6 +85,7 @@ ENTRY_NP(armv6_icache_sync_all)
 	mcr	p15, 0, r0, c7, c10, 0	/* Clean D cache */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
+END(armv6_icache_sync_all)
 
 /* LINTSTUB: void armv6_dcache_wb_range(vaddr_t, vsize_t); */
 ENTRY(armv6_dcache_wb_range)
@@ -91,7 +94,8 @@ ENTRY(armv6_dcache_wb_range)
 	mcrr	p15, 0, r1, r0, c12	/* clean D cache range */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
-	
+END(armv6_dcache_wb_range)
+
 /* LINTSTUB: void armv6_dcache_wbinv_range(vaddr_t, vsize_t); */
 ENTRY(armv6_dcache_wbinv_range)
 	add	r1, r1, r0
@@ -99,7 +103,8 @@ ENTRY(armv6_dcache_wbinv_range)
 	mcrr	p15, 0, r1, r0, c14	/* clean and invaliate D cache range */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
-	
+END(armv6_dcache_wbinv_range)
+
 /*
  * Note, we must not invalidate everything.  If the range is too big we
  * must use wb-inv of the entire cache.
@@ -112,6 +117,7 @@ ENTRY(armv6_dcache_inv_range)
 	mcrr	p15, 0, r1, r0, c6	/* invaliate D cache range */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
+END(armv6_dcache_inv_range)
 
 /* LINTSTUB: void armv6_idcache_wbinv_range(vaddr_t, vsize_t); */
 ENTRY(armv6_idcache_wbinv_range)
@@ -121,6 +127,7 @@ ENTRY(armv6_idcache_wbinv_range)
 	mcrr	p15, 0, r1, r0, c14	/* clean & invaliate D cache range */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
+END(armv6_idcache_wbinv_range)
 
 /* LINTSTUB: void armv6_idcache_wbinv_all(void); */
 ENTRY_NP(armv6_idcache_wbinv_all)
@@ -137,3 +144,5 @@ ENTRY(armv6_dcache_wbinv_all)
 	mcr	p15, 0, r0, c7, c14, 0	/* clean & invalidate D cache */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
+END(armv6_dcache_wbinv_all)
+END(armv6_idcache_wbinv_all)

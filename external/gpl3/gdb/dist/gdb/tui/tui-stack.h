@@ -1,7 +1,6 @@
 /* TUI display locator.
 
-   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2004, 2007, 2008, 2009, 2010,
-   2011 Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -25,7 +24,7 @@
 
 struct frame_info;
 
-extern void tui_update_locator_filename (const char *);
+extern void tui_update_locator_fullname (const char *);
 extern void tui_show_locator_content (void);
 extern void tui_show_frame_info (struct frame_info *);
 

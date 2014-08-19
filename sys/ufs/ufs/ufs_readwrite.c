@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.104.2.4 2013/06/23 06:18:40 tls Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.104.2.5 2014/08/20 00:04:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.104.2.4 2013/06/23 06:18:40 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.104.2.5 2014/08/20 00:04:45 tls Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -48,6 +48,9 @@ __KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.104.2.4 2013/06/23 06:18:40 tls 
 #define	UFS_WAPBL_UPDATE(vp, access, modify, flags)	do { } while (0)
 #define ufs_blkoff		lfs_blkoff
 #define ufs_blksize		lfs_blksize
+#define ufs_lblkno		lfs_lblkno
+#define ufs_lblktosize		lfs_lblktosize
+#define ufs_blkroundup		lfs_blkroundup
 #else
 #define	FS			struct fs
 #define	I_FS			i_fs
@@ -57,6 +60,9 @@ __KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.104.2.4 2013/06/23 06:18:40 tls 
 #define	WRITE_S			"ffs_write"
 #define ufs_blkoff		ffs_blkoff
 #define ufs_blksize		ffs_blksize
+#define ufs_lblkno		ffs_lblkno
+#define ufs_lblktosize		ffs_lblktosize
+#define ufs_blkroundup		ffs_blkroundup
 #endif
 
 /*
@@ -147,14 +153,14 @@ READ(void *v)
 		bytesinfile = ip->i_size - uio->uio_offset;
 		if (bytesinfile <= 0)
 			break;
-		lbn = lblkno(fs, uio->uio_offset);
+		lbn = ufs_lblkno(fs, uio->uio_offset);
 		nextlbn = lbn + 1;
 		size = ufs_blksize(fs, ip, lbn);
 		blkoffset = ufs_blkoff(fs, uio->uio_offset);
 		xfersize = MIN(MIN(fs->fs_bsize - blkoffset, uio->uio_resid),
 		    bytesinfile);
 
-		if (lblktosize(fs, nextlbn) >= ip->i_size)
+		if (ufs_lblktosize(fs, nextlbn) >= ip->i_size)
 			error = bread(vp, lbn, size, NOCRED, 0, &bp);
 		else {
 			int nextsize = ufs_blksize(fs, ip, nextlbn);
@@ -304,7 +310,7 @@ WRITE(void *v)
 	if (!usepc)
 		goto bcache;
 
-	preallocoff = round_page(blkroundup(fs, MAX(osize, uio->uio_offset)));
+	preallocoff = round_page(ufs_blkroundup(fs, MAX(osize, uio->uio_offset)));
 	aflag = ioflag & IO_SYNC ? B_SYNC : 0;
 	nsize = MAX(osize, uio->uio_offset + uio->uio_resid);
 	endallocoff = nsize - ufs_blkoff(fs, nsize);
@@ -314,12 +320,12 @@ WRITE(void *v)
 	 * the fragment if there is one.
 	 */
 
-	if (nsize > osize && lblkno(fs, osize) < UFS_NDADDR &&
-	    lblkno(fs, osize) != lblkno(fs, nsize) &&
-	    blkroundup(fs, osize) != osize) {
+	if (nsize > osize && ufs_lblkno(fs, osize) < UFS_NDADDR &&
+	    ufs_lblkno(fs, osize) != ufs_lblkno(fs, nsize) &&
+	    ufs_blkroundup(fs, osize) != osize) {
 		off_t eob;
 
-		eob = blkroundup(fs, osize);
+		eob = ufs_blkroundup(fs, osize);
 		uvm_vnp_setwritesize(vp, eob);
 		error = ufs_balloc_range(vp, osize, eob - osize, cred, aflag);
 		if (error)
@@ -440,7 +446,7 @@ WRITE(void *v)
 	if (error == 0 && ioflag & IO_SYNC) {
 		mutex_enter(vp->v_interlock);
 		error = VOP_PUTPAGES(vp, trunc_page(origoff & fs->fs_bmask),
-		    round_page(blkroundup(fs, uio->uio_offset)),
+		    round_page(ufs_blkroundup(fs, uio->uio_offset)),
 		    PGO_CLEANIT | PGO_SYNCIO | PGO_JOURNALLOCKED);
 	}
 	goto out;
@@ -450,7 +456,7 @@ WRITE(void *v)
 	VOP_PUTPAGES(vp, trunc_page(origoff), round_page(origoff + resid),
 	    PGO_CLEANIT | PGO_FREE | PGO_SYNCIO | PGO_JOURNALLOCKED);
 	while (uio->uio_resid > 0) {
-		lbn = lblkno(fs, uio->uio_offset);
+		lbn = ufs_lblkno(fs, uio->uio_offset);
 		blkoffset = ufs_blkoff(fs, uio->uio_offset);
 		xfersize = MIN(fs->fs_bsize - blkoffset, uio->uio_resid);
 		if (fs->fs_bsize > xfersize)

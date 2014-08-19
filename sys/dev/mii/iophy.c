@@ -1,4 +1,4 @@
-/*	$NetBSD: iophy.c,v 1.36 2009/10/19 18:41:14 bouyer Exp $	*/
+/*	$NetBSD: iophy.c,v 1.36.22.1 2014/08/20 00:03:41 tls Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iophy.c,v 1.36 2009/10/19 18:41:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iophy.c,v 1.36.22.1 2014/08/20 00:03:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,6 +246,8 @@ iophy_status(struct mii_softc *sc)
 
 		if (ext0 & EXT0_DUPLEX)
 			mii->mii_media_active |= IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }

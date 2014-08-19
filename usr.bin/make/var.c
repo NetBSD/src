@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.171.2.2 2013/06/23 06:29:00 tls Exp $	*/
+/*	$NetBSD: var.c,v 1.171.2.3 2014/08/20 00:05:00 tls Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.171.2.2 2013/06/23 06:29:00 tls Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.171.2.3 2014/08/20 00:05:00 tls Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.171.2.2 2013/06/23 06:29:00 tls Exp $");
+__RCSID("$NetBSD: var.c,v 1.171.2.3 2014/08/20 00:05:00 tls Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -139,6 +139,7 @@ __RCSID("$NetBSD: var.c,v 1.171.2.2 2013/06/23 06:29:00 tls Exp $");
 #include    "dir.h"
 #include    "job.h"
 
+extern int makelevel;
 /*
  * This lets us tell if we have replaced the original environ
  * (which we cannot free).
@@ -175,6 +176,7 @@ static char	varNoError[] = "";
  * The four contexts are searched in the reverse order from which they are
  * listed.
  */
+GNode          *VAR_INTERNAL; /* variables from make itself */
 GNode          *VAR_GLOBAL;   /* variables from the makefile */
 GNode          *VAR_CMD;      /* variables defined on the command-line */
 
@@ -407,6 +409,10 @@ VarFind(const char *name, GNode *ctxt, int flags)
 	(ctxt != VAR_GLOBAL))
     {
 	var = Hash_FindEntry(&VAR_GLOBAL->context, name);
+	if ((var == NULL) && (ctxt != VAR_INTERNAL)) {
+	    /* VAR_INTERNAL is subordinate to VAR_GLOBAL */
+	    var = Hash_FindEntry(&VAR_INTERNAL->context, name);
+	}
     }
     if ((var == NULL) && (flags & FIND_ENV)) {
 	char *env;
@@ -428,6 +434,9 @@ VarFind(const char *name, GNode *ctxt, int flags)
 		   (ctxt != VAR_GLOBAL))
 	{
 	    var = Hash_FindEntry(&VAR_GLOBAL->context, name);
+	    if ((var == NULL) && (ctxt != VAR_INTERNAL)) {
+		var = Hash_FindEntry(&VAR_INTERNAL->context, name);
+	    }
 	    if (var == NULL) {
 		return NULL;
 	    } else {
@@ -656,6 +665,15 @@ Var_ExportVars(void)
     Var *v;
     char *val;
     int n;
+
+    /*
+     * Several make's support this sort of mechanism for tracking
+     * recursion - but each uses a different name.
+     * We allow the makefiles to update MAKELEVEL and ensure
+     * children see a correctly incremented value.
+     */
+    snprintf(tmp, sizeof(tmp), "%d", makelevel + 1);
+    setenv(MAKE_LEVEL_ENV, tmp, 1);
 
     if (VAR_EXPORTED_NONE == var_exportedVars)
 	return;
@@ -919,6 +937,14 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
     }
     v = VarFind(name, ctxt, 0);
     if (v == NULL) {
+	if (ctxt == VAR_CMD && (flags & VAR_NO_EXPORT) == 0) {
+	    /*
+	     * This var would normally prevent the same name being added
+	     * to VAR_GLOBAL, so delete it from there if needed.
+	     * Otherwise -V name may show the wrong value.
+	     */
+	    Var_Delete(name, VAR_GLOBAL);
+	}
 	VarAdd(name, val, ctxt);
     } else {
 	Buf_Empty(&v->val);
@@ -953,16 +979,6 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
 
 	Var_Append(MAKEOVERRIDES, name, VAR_GLOBAL);
     }
-    /*
-     * Another special case.
-     * Several make's support this sort of mechanism for tracking
-     * recursion - but each uses a different name.
-     * We allow the makefiles to update .MAKE.LEVEL and ensure
-     * children see a correctly incremented value.
-     */
-    if (ctxt == VAR_GLOBAL && strcmp(MAKE_LEVEL, name) == 0)
-	setenv(MAKE_LEVEL_ENV, val, 1);
-	
 	
  out:
     if (expanded_name != NULL)
@@ -2620,7 +2636,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 			break;
 		    }
 		    free(UNCONST(pattern.rhs));
-		    newStr = var_Error;
+		    newStr = varNoError;
 		    break;
 		}
 		goto default_case; /* "::<unrecognised>" */
@@ -3644,6 +3660,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 	}
     } else {
 	Buffer buf;	/* Holds the variable name */
+	int depth = 1;
 
 	endc = startc == PROPEN ? PRCLOSE : BRCLOSE;
 	Buf_Init(&buf, 0);
@@ -3651,10 +3668,21 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 	/*
 	 * Skip to the end character or a colon, whichever comes first.
 	 */
-	for (tstr = str + 2;
-	     *tstr != '\0' && *tstr != endc && *tstr != ':';
-	     tstr++)
+	for (tstr = str + 2; *tstr != '\0'; tstr++)
 	{
+	    /*
+	     * Track depth so we can spot parse errors.
+	     */
+	    if (*tstr == startc) {
+		depth++;
+	    }
+	    if (*tstr == endc) {
+		if (--depth == 0)
+		    break;
+	    }
+	    if (depth == 1 && *tstr == ':') {
+		break;
+	    }
 	    /*
 	     * A variable inside a variable, expand
 	     */
@@ -3674,7 +3702,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 	}
 	if (*tstr == ':') {
 	    haveModifier = TRUE;
-	} else if (*tstr != '\0') {
+	} else if (*tstr == endc) {
 	    haveModifier = FALSE;
 	} else {
 	    /*
@@ -4024,7 +4052,7 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Boolean undefErr)
 		 */
 		if (oldVars) {
 		    str += length;
-		} else if (undefErr) {
+		} else if (undefErr || val == var_Error) {
 		    /*
 		     * If variable is undefined, complain and skip the
 		     * variable. The complaint will stop us from doing anything
@@ -4129,6 +4157,7 @@ Var_GetHead(char *file)
 void
 Var_Init(void)
 {
+    VAR_INTERNAL = Targ_NewGN("Internal");
     VAR_GLOBAL = Targ_NewGN("Global");
     VAR_CMD = Targ_NewGN("Command");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: radix_ipf.c,v 1.3 2012/07/22 14:27:52 darrenr Exp $	*/
+/*	$NetBSD: radix_ipf.c,v 1.3.2.1 2014/08/20 00:04:24 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -99,7 +99,6 @@ static void
 buildnodes(addrfamily_t *addr, addrfamily_t *mask, ipf_rdx_node_t nodes[2])
 {
 	u_32_t maskbits;
-	u_32_t lastbits;
 	u_32_t lastmask;
 	u_32_t *last;
 	int masklen;
@@ -113,7 +112,6 @@ buildnodes(addrfamily_t *addr, addrfamily_t *mask, ipf_rdx_node_t nodes[2])
 		masklen = last - (u_32_t *)mask;
 		lastmask = *last;
 	}
-	lastbits = maskbits & 0x1f;
 
 	bzero(&nodes[0], sizeof(ipf_rdx_node_t) * 2);
 	nodes[0].maskbitcount = maskbits;
@@ -1395,11 +1393,11 @@ add_addr(rnh, n, item)
 	setmask(&stp->mask, ttable[item].mask);
 	stp->next = myst_top;
 	myst_top = stp;
-	(void) sprintf(rn[0].name, "_BORN.0");
-	(void) sprintf(rn[1].name, "_BORN.1");
+	(void) snprintf(rn[0].name, sizeof(rn[0].name), "_BORN.0");
+	(void) snprintf(rn[1].name, sizeof(rn[1].name), "_BORN.1");
 	rn = ipf_rx_addroute(rnh, &stp->dst, &stp->mask, stp->nodes);
-	(void) sprintf(rn[0].name, "%d_NODE.0", item);
-	(void) sprintf(rn[1].name, "%d_NODE.1", item);
+	(void) snprintf(rn[0].name, sizeof(rn[0].name), "%d_NODE.0", item);
+	(void) snprintf(rn[1].name, sizeof(rn[1].name), "%d_NODE.1", item);
 	printf("ADD %d/%d %s/%s\n", n, item, rn[0].name, rn[1].name);
 	nodecount++;
 	checktree(rnh);

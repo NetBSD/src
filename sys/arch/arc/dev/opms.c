@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.19 2011/07/01 19:25:41 dyoung Exp $	*/
+/*	$NetBSD: opms.c,v 1.19.12.1 2014/08/20 00:02:44 tls Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.19 2011/07/01 19:25:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.19.12.1 2014/08/20 00:02:44 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,8 +139,18 @@ dev_type_poll(opmspoll);
 dev_type_kqfilter(opmskqfilter);
 
 const struct cdevsw opms_cdevsw = {
-	opmsopen, opmsclose, opmsread, nowrite, opmsioctl,
-	nostop, notty, opmspoll, nommap, opmskqfilter,
+	.d_open = opmsopen,
+	.d_close = opmsclose,
+	.d_read = opmsread,
+	.d_write = nowrite,
+	.d_ioctl = opmsioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = opmspoll,
+	.d_mmap = nommap,
+	.d_kqfilter = opmskqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 static inline void pms_dev_cmd(uint8_t);

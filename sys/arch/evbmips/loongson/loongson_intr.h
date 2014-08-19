@@ -1,4 +1,4 @@
-/*	$NetBSD: loongson_intr.h,v 1.1 2011/08/27 13:42:45 bouyer Exp $	*/
+/*	$NetBSD: loongson_intr.h,v 1.1.12.1 2014/08/20 00:02:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ extern const struct bonito_irqmap loongson2f_irqmap[BONITO_NDIRECT];
 
 int	loongson_pci_intr_map(const struct pci_attach_args *,
 	    pci_intr_handle_t *);
-const char *loongson_pci_intr_string(void *, pci_intr_handle_t);
+const char *loongson_pci_intr_string(void *, pci_intr_handle_t, char *, size_t);
 const struct evcnt *loongson_pci_intr_evcnt(void *, pci_intr_handle_t);
 void *	loongson_pci_intr_establish(void *, pci_intr_handle_t, int,
 	    int (*)(void *), void *);
@@ -75,5 +75,5 @@ void *	loongson_pciide_compat_intr_establish(void *,
 	    device_t, const struct pci_attach_args *, int,
 	    int (*)(void *), void *);
 
-const char *loongson_intr_string(const struct bonito_config *, int);
+const char *loongson_intr_string(const struct bonito_config *, int, char *, size_t);
 #endif /* ! _LOONGSON_INTR_H_ */

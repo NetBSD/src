@@ -1,0 +1,66 @@
+# Copyright 2012-2014 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+load_lib mi-support.exp
+set MIFLAGS "-i=mi"
+
+gdb_exit
+if [mi_gdb_start] {
+    continue
+}
+
+standard_testfile
+set srcfileabs [standard_output_file $srcfile]
+
+# "//$srcfile" It is used for the test of compare_filenames_for_search.
+if { [regsub {/[^/]+$} $srcfileabs {/\0} srcfileabs] != 1 } {
+    xfail "Cannot double the last slash separator"
+    return -1
+}
+
+if { [regsub {^(/[^/]+)/} $srcfileabs {\1subst/} srcfileabssubst] != 1
+     || [regsub {^(/[^/]+)/.*$} $srcfileabs {\1} initdir] != 1 } {
+    xfail "Missing root subdirectory"
+    return -1
+}
+
+set f [open $srcfileabs "w"]
+puts $f "int main (void) { return 0; }"
+close $f
+
+if { [gdb_compile "$srcfileabs" "${binfile}" executable {debug}] != "" } {
+    untested $testname
+    return -1
+}
+
+file delete -- $srcfileabs
+
+mi_gdb_reinitialize_dir $srcdir/$subdir
+mi_gdb_load ${binfile}
+
+mi_gdb_test "-interpreter-exec console \"set substitute-path ${initdir} ${initdir}subst\"" {\^done} "set substitute-path"
+
+mi_gdb_test "-file-list-exec-source-file" ".*\",fullname=\".*\".*" "fullname present"
+
+mi_gdb_test "-file-list-exec-source-file" ".*\",fullname=\"[string_to_regexp $srcfileabssubst]\".*" "substituted fullname"
+
+# Test compare_filenames_for_search does not falsely use absolute filename as
+# a relative one.
+mi_gdb_test "-break-insert -t /$srcfile:main" \
+	    "\\^error,msg=\"No source file named /[string_to_regexp $srcfile]\\.\"" \
+	    "compare_filenames_for_search does not match"
+mi_gdb_test "-break-insert -t $srcfile:main" \
+	    {\^done,bkpt=.*} \
+	    "compare_filenames_for_search does match"

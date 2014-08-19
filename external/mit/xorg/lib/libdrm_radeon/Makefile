@@ -1,4 +1,4 @@
-#      $NetBSD: Makefile,v 1.4 2010/08/14 10:29:43 mrg Exp $
+#      $NetBSD: Makefile,v 1.4.12.1 2014/08/20 00:00:12 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -11,17 +11,20 @@ SRCS=	radeon_bo.c \
 	radeon_cs.c \
 	radeon_cs_gem.c \
 	radeon_cs_space.c \
+	radeon_surface.c \
 	bof.c
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 -I${X11SRCDIR.drm}
 
-COPTS.radeon_cs_gem.c+=	-Wno-error	# XXX
+CWARNFLAGS.clang+=	-Wno-pointer-sign -Wno-parentheses-equality
 
 LIBDPLIBS=	drm	${.CURDIR}/../libdrm
 
 PKGCONFIG=	libdrm_radeon
 PKGDIST=	drm
+
+.include "../libdrm/Makefile.defines"
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.27 2010/06/06 03:34:14 mrg Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.27.18.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.27 2010/06/06 03:34:14 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.27.18.1 2014/08/20 00:03:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -71,12 +71,12 @@ const struct db_command db_machine_command_table[] = {
 /*
  * Machine-specific ddb commands for the sun3:
  *    abort:	Drop into monitor via abort (allows continue)
- *    halt: 	Exit to monitor as in halt(8)
+ *    halt:	Exit to monitor as in halt(8)
  *    reboot:	Reboot the machine as in reboot(8)
  *    pgmap:	Given addr, Print addr, segmap, pagemap, pte
  */
 
-static void 
+static void
 db_mach_abort(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
@@ -84,14 +84,14 @@ db_mach_abort(db_expr_t addr, bool have_addr, db_expr_t count,
 	sunmon_abort();
 }
 
-static void 
+static void
 db_mach_halt(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 
 	sunmon_halt();
 }
 
-static void 
+static void
 db_mach_reboot(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
@@ -102,7 +102,7 @@ db_mach_reboot(db_expr_t addr, bool have_addr, db_expr_t count,
 
 static void pte_print(int);
 
-static void 
+static void
 db_mach_pagemap(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
@@ -129,7 +129,7 @@ db_mach_pagemap(db_expr_t addr, bool have_addr, db_expr_t count,
 }
 
 #ifdef	_SUN3_
-static void 
+static void
 pte_print(int pte)
 {
 	int t;
@@ -159,7 +159,7 @@ pte_print(int pte)
 #endif	/* SUN3 */
 
 #ifdef	_SUN3X_
-static void 
+static void
 pte_print(int pte)
 {
 

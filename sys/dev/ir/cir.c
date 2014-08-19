@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.29 2011/07/26 08:59:38 mrg Exp $	*/
+/*	$NetBSD: cir.c,v 1.29.12.1 2014/08/20 00:03:38 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.29 2011/07/26 08:59:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.29.12.1 2014/08/20 00:03:38 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,9 +55,18 @@ dev_type_ioctl(cirioctl);
 dev_type_poll(cirpoll);
 
 const struct cdevsw cir_cdevsw = {
-	ciropen, circlose, cirread, cirwrite, cirioctl,
-	nostop, notty, cirpoll, nommap, nokqfilter,
-	D_OTHER
+	.d_open = ciropen,
+	.d_close = circlose,
+	.d_read = cirread,
+	.d_write = cirwrite,
+	.d_ioctl = cirioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = cirpoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 int cir_match(device_t parent, cfdata_t match, void *aux);

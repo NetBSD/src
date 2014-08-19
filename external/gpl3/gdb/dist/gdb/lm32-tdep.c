@@ -1,7 +1,7 @@
 /* Target-dependent code for Lattice Mico32 processor, for GDB.
    Contributed by Jon Beniston <jon@beniston.com>
 
-   Copyright (C) 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2009-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,7 +37,7 @@
 #include "reggroups.h"
 #include "opcodes/lm32-desc.h"
 
-#include "gdb_string.h"
+#include <string.h>
 
 /* Macros to extract fields from an instruction.  */
 #define LM32_OPCODE(insn)       ((insn >> 26) & 0x3f)
@@ -188,7 +188,6 @@ static CORE_ADDR
 lm32_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   CORE_ADDR func_addr, limit_pc;
-  struct symtab_and_line sal;
   struct lm32_frame_cache frame_info;
   struct trad_frame_saved_reg saved_regs[SIM_LM32_NUM_REGS];
 
@@ -262,9 +261,6 @@ lm32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       struct value *arg = args[i];
       struct type *arg_type = check_typedef (value_type (arg));
       gdb_byte *contents;
-      int len;
-      int j;
-      int reg;
       ULONGEST val;
 
       /* Promote small integer types to int.  */
@@ -286,8 +282,8 @@ lm32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       /* FIXME: Handle structures.  */
 
       contents = (gdb_byte *) value_contents (arg);
-      len = TYPE_LENGTH (arg_type);
-      val = extract_unsigned_integer (contents, len, byte_order);
+      val = extract_unsigned_integer (contents, TYPE_LENGTH (arg_type),
+				      byte_order);
 
       /* First num_arg_regs parameters are passed by registers, 
          and the rest are passed on the stack.  */
@@ -295,7 +291,7 @@ lm32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	regcache_cooked_write_unsigned (regcache, first_arg_reg + i, val);
       else
 	{
-	  write_memory (sp, (void *) &val, len);
+	  write_memory (sp, (void *) &val, TYPE_LENGTH (arg_type));
 	  sp -= 4;
 	}
     }
@@ -315,7 +311,6 @@ lm32_extract_return_value (struct type *type, struct regcache *regcache,
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  int offset;
   ULONGEST l;
   CORE_ADDR return_buffer;
 
@@ -374,7 +369,7 @@ lm32_store_return_value (struct type *type, struct regcache *regcache,
 
 /* Determine whether a functions return value is in a register or memory.  */
 static enum return_value_convention
-lm32_return_value (struct gdbarch *gdbarch, struct type *func_type,
+lm32_return_value (struct gdbarch *gdbarch, struct value *function,
 		   struct type *valtype, struct regcache *regcache,
 		   gdb_byte *readbuf, const gdb_byte *writebuf)
 {
@@ -422,17 +417,11 @@ lm32_dummy_id (struct gdbarch *gdbarch, struct frame_info *this_frame)
 static struct lm32_frame_cache *
 lm32_frame_cache (struct frame_info *this_frame, void **this_prologue_cache)
 {
-  CORE_ADDR prologue_pc;
   CORE_ADDR current_pc;
   ULONGEST prev_sp;
   ULONGEST this_base;
   struct lm32_frame_cache *info;
-  int prefixed;
-  unsigned long instruction;
-  int op;
-  int offsets[32];
   int i;
-  long immediate;
 
   if ((*this_prologue_cache))
     return (*this_prologue_cache);
@@ -589,6 +578,9 @@ lm32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   return gdbarch;
 }
+
+/* -Wmissing-prototypes */
+extern initialize_file_ftype _initialize_lm32_tdep;
 
 void
 _initialize_lm32_tdep (void)

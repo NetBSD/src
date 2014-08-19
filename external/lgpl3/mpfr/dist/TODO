@@ -1,5 +1,5 @@
-Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
-Contributed by the Arenaire and Cacao projects, INRIA.
+Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Free Software Foundation, Inc.
+Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -51,14 +51,14 @@ Table of contents:
 3. Changes in existing functions
 ##############################################################################
 
+- export mpfr_overflow and mpfr_underflow as public functions
+
 - many functions currently taking into account the precision of the *input*
   variable to set the initial working precison (acosh, asinh, cosh, ...).
   This is nonsense since the "average" working precision should only depend
   on the precision of the *output* variable (and maybe on the *value* of
   the input in case of cancellation).
   -> remove those dependencies from the input precision.
-
-- mpfr_get_str should support base up to 62 too.
 
 - mpfr_can_round:
    change the meaning of the 2nd argument (err). Currently the error is
@@ -79,7 +79,7 @@ Table of contents:
        a  = q*bb+r     --> q has exactly n bits.
     else
        aa <- a*2^(nq-n)
-       aa = q*b+r      --> q has exaclty n bits.
+       aa = q*b+r      --> q has exactly n bits.
   If RNDN, takes nq+1 bits. (See also the new division function).
 
 
@@ -87,9 +87,9 @@ Table of contents:
 4. New functions to implement
 ##############################################################################
 
-- implement mpfr_z_sub, mpfr_q_sub, mpfr_z_div, mpfr_q_div?
+- implement mpfr_q_sub, mpfr_z_div, mpfr_q_div?
 - implement functions for random distributions, see for example
-  http://websympa.loria.fr/wwsympa/arc/mpfr/2010-01/msg00034.html
+  https://sympa.inria.fr/sympa/arc/mpfr/2010-01/msg00034.html
   (suggested by Charles Karney <ckarney@Sarnoff.com>, 18 Jan 2010):
    * a Bernoulli distribution with prob p/q (exact)
    * a general discrete distribution (i with prob w[i]/sum(w[i]) (Walker
@@ -217,21 +217,27 @@ Table of contents:
   - radians
   - sqrtpi
 
-- mpfr_frexp(mpfr_t rop, mpfr_exp_t *n, mpfr_t op, mpfr_rnd_t rnd) suggested
-  by Steve Kargl <sgk@troutmask.apl.washington.edu> Sun, 7 Aug 2005
 - mpfr_inp_raw, mpfr_out_raw (cf mail "Serialization of mpfr_t" from Alexey
   and answer from Granlund on mpfr list, May 2007)
 - [maybe useful for SAGE] implement companion frac_* functions to the rint_*
   functions. For example mpfr_frac_floor(x) = x - floor(x). (The current
   mpfr_frac function corresponds to mpfr_rint_trunc.)
-- scaled erfc (http://websympa.loria.fr/wwsympa/arc/mpfr/2009-05/msg00054.html)
-- asec, acsc, acot, asech, acsch and acoth (mail from Björn Terelius on mpfr
+- scaled erfc (https://sympa.inria.fr/sympa/arc/mpfr/2009-05/msg00054.html)
+- asec, acsc, acot, asech, acsch and acoth (mail from BjÃ¶rn Terelius on mpfr
   list, 18 June 2009)
 
 ##############################################################################
 5. Efficiency
 ##############################################################################
 
+- implement a mpfr_sqrthigh algorithm based on Mulders' algorithm, with a
+  basecase variant
+- use mpn_div_q to speed up mpfr_div. However mpn_div_q, which is new in
+  GMP 5, is not documented in the GMP manual, thus we are not sure it
+  guarantees to return the same quotient as mpn_tdiv_qr.
+  Also mpfr_div uses the remainder computed by mpn_divrem. A workaround would
+  be to first try with mpn_div_q, and if we cannot (easily) compute the
+  rounding, then use the current code with mpn_divrem.
 - compute exp by using the series for cosh or sinh, which has half the terms
   (see Exercise 4.11 from Modern Computer Arithmetic, version 0.3)
   The same method can be used for log, using the series for atanh, i.e.,
@@ -268,15 +274,10 @@ Table of contents:
   unnecessary computations by calling the auxiliary cos function instead of
   the full cos function). This will require a native code for sin, for
   example using the reduction sin(3x)=3sin(x)-4sin(x)^3.
-  See http://websympa.loria.fr/wwsympa/arc/mpfr/2007-08/msg00001.html and
+  See https://sympa.inria.fr/sympa/arc/mpfr/2007-08/msg00001.html and
   the following messages.
 - improve generic.c to work for number of terms <> 2^k
 - rewrite mpfr_greater_p... as native code.
-- inline mpfr_neg? Problems with NAN flags:
-   #define mpfr_neg(_d,_x,_r)                          \
-    (__builtin_constant_p ((_d)==(_x)) && (_d)==(_x) ? \
-     ((_d)->_mpfr_sign = -(_d)->_mpfr_sign, 0)       : \
-      mpfr_neg ((_d), (_x), (_r)))  */
 
 - mpf_t uses a scheme where the number of limbs actually present can
   be less than the selected precision, thereby allowing low precision
@@ -312,7 +313,7 @@ Table of contents:
 
 - better distinguish different processors (for example Opteron and Core 2)
   and use corresponding default tuning parameters (as in GMP). This could be
-  done in configure.in to avoid hacking config.guess, for example define
+  done in configure.ac to avoid hacking config.guess, for example define
   MPFR_HAVE_CORE2.
   Note (VL): the effect on cross-compilation (that can be a processor
   with the same architecture, e.g. compilation on a Core 2 for an
@@ -330,9 +331,6 @@ Table of contents:
 6. Miscellaneous
 ##############################################################################
 
-- Once the double inclusion of mpfr.h is fully supported, add tstdint
-  to check_PROGRAMS in the tests/Makefile.am file.
-
 - [suggested by Tobias Burnus <burnus(at)net-b.de> and
    Asher Langton <langton(at)gcc.gnu.org>, Wed, 01 Aug 2007]
   support quiet and signaling NaNs in mpfr:
@@ -340,7 +338,7 @@ Table of contents:
     mpfr_set_qnan, mpfr_qnan_p
   * correctly convert to/from double (if encoding of s/qNaN is fixed in 754R)
 
-- check again coverage: on July 27, Patrick Pelissier reports that the
+- check again coverage: on 2007-07-27, Patrick Pelissier reports that the
   following files are not tested at 100%: add1.c, atan.c, atan2.c,
   cache.c, cmp2.c, const_catalan.c, const_euler.c, const_log2.c, cos.c,
   gen_inverse.h, div_ui.c, eint.c, exp3.c, exp_2.c, expm1.c, fma.c, fms.c,
@@ -384,14 +382,6 @@ Table of contents:
       - The rounded value is the same.
   It should be a complement to tgeneric tests.
 
-- add a new exception "division by zero" (IEEE-754 terminology) / "infinitary"
-  (LIA-2 terminology). In IEEE 754R (2006 February 14 8:00):
-    "The division by zero exception shall be signaled iff an exact
-    infinite result is defined for an operation on finite operands.
-    [such as a pole or logarithmic singularity.] In particular, the
-    division by zero exception shall be signaled if the divisor is
-    zero and the dividend is a finite nonzero number."
-
 - in div.c, try to find a case for which cy != 0 after the line
         cy = mpn_sub_1 (sp + k, sp + k, qsize, cy);
   (which should be added to the tests), e.g. by having {vp, k} = 0, or
@@ -400,8 +390,6 @@ Table of contents:
 - add a configure test for --enable-logging to ignore the option if
   it cannot be supported. Modify the "configure --help" description
   to say "on systems that support it".
-
-- allow generic tests to run with a restricted exponent range.
 
 - add generic bad cases for functions that don't have an inverse
   function that is implemented (use a single Newton iteration).
@@ -414,15 +402,26 @@ Table of contents:
   mainly for developers, in order to be able to test the case where the
   extended exponent range is the same as the default exponent range, on
   such platforms.
+  Tests can be done with the exp-int branch (added on 2010-12-17, and
+  many tests fail at this time).
 
 - test underflow/overflow detection of various functions (in particular
   mpfr_exp) in reduced exponent ranges, including ranges that do not
   contain 0.
 
+- add an internal macro that does the equivalent of the following?
+    MPFR_IS_ZERO(x) || MPFR_GET_EXP(x) <= value
+
+- check whether __gmpfr_emin and __gmpfr_emax could be replaced by
+  a constant (see README.dev). Also check the use of MPFR_EMIN_MIN
+  and MPFR_EMAX_MAX.
+
 
 ##############################################################################
 7. Portability
 ##############################################################################
+
+- add a web page with results of builds on different architectures
 
 - support the decimal64 function without requiring --with-gmp-build
 
@@ -433,5 +432,3 @@ Table of contents:
   couple of places already.  Arrays of chars are not much fun.
 
 - use http://gcc.gnu.org/viewcvs/trunk/config/stdint.m4 for mpfr-gmp.h
-
-- rename configure.in to configure.ac

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.15.6.1 2013/06/23 06:21:08 tls Exp $
+# $NetBSD: Makefile.inc,v 1.15.6.2 2014/08/20 00:02:19 tls Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 #
@@ -38,7 +38,7 @@ MODLIBDIR=/usr/lib/${MLIBDIR}/security
 MODLIBDIR=/usr/lib/security
 .endif
 
-CPPFLAGS+= -DOPENPAM_MODULES_DIR=\"${MODLIBDIR}\"
+CPPFLAGS+= -DOPENPAM_MODULES_DIRECTORY=\"${MODLIBDIR}\"
 # No debugging
 #CPPFLAGS+= -DDEBUG
 

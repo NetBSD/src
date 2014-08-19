@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.188 2011/09/27 01:07:38 christos Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.188.12.1 2014/08/20 00:04:36 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.188 2011/09/27 01:07:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.188.12.1 2014/08/20 00:04:36 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -614,7 +614,7 @@ nfs_vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred,
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	int error = 0, slptimeo;
+	int error = 0, allerror = 0, slptimeo;
 	bool catch;
 
 	if ((nmp->nm_flag & NFSMNT_INT) == 0)
@@ -647,6 +647,8 @@ nfs_vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred,
 	mutex_exit(vp->v_interlock);
 	error = vinvalbuf(vp, flags, cred, l, catch, 0);
 	while (error) {
+		if (allerror == 0)
+			allerror = error;
 		if (intrflg && nfs_sigintr(nmp, NULL, l)) {
 			error = EINTR;
 			break;
@@ -654,6 +656,13 @@ nfs_vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred,
 		error = vinvalbuf(vp, flags, cred, l, 0, slptimeo);
 	}
 	mutex_enter(vp->v_interlock);
+	if (allerror != 0) {
+		/*
+		 * Keep error from vinvalbuf so fsync/close will know.
+		 */
+		np->n_error = allerror;
+		np->n_flag |= NWRITEERR;
+	}
 	if (error == 0)
 		np->n_flag &= ~NMODIFIED;
 	np->n_flag &= ~NFLUSHINPROG;

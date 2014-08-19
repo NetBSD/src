@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_pmi.c,v 1.12 2011/02/05 14:04:40 yamt Exp $	*/
+/*	$NetBSD: tprof_pmi.c,v 1.12.14.1 2014/08/20 00:03:29 tls Exp $	*/
 
 /*-
  * Copyright (c)2008,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.12 2011/02/05 14:04:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.12.14.1 2014/08/20 00:03:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,7 @@ tprof_pmi_start(tprof_backend_cookie_t *cookie)
 	uint64_t xc;
 
 	if (!(cpu_vendor == CPUVENDOR_INTEL &&
-	    CPUID2FAMILY(ci->ci_signature) == 15)) {
+	    CPUID_TO_BASEFAMILY(ci->ci_signature) == 15)) {
 		return ENOTSUP;
 	}
 

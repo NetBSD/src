@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.84.2.2 2013/06/23 06:20:26 tls Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.84.2.3 2014/08/20 00:04:36 tls Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.84.2.2 2013/06/23 06:20:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.84.2.3 2014/08/20 00:04:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -915,8 +915,7 @@ purge_detached(struct ifnet *ifp)
 		    !LIST_EMPTY(&pr->ndpr_advrtrs)))
 			continue;
 
-		for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa_next) {
-			ifa_next = ifa->ifa_list.tqe_next;
+		IFADDR_FOREACH_SAFE(ifa, ifp, ifa_next) {
 			if (ifa->ifa_addr->sa_family != AF_INET6)
 				continue;
 			ia = (struct in6_ifaddr *)ifa;
@@ -1064,7 +1063,6 @@ prelist_update(struct nd_prefixctl *new,
 	struct nd_prefix *pr;
 	int s = splsoftnet();
 	int error = 0;
-	int newprefix = 0;
 	int auth;
 	struct in6_addrlifetime lt6_tmp;
 
@@ -1121,8 +1119,6 @@ prelist_update(struct nd_prefixctl *new,
 			pfxrtr_add(pr, dr);
 	} else {
 		struct nd_prefix *newpr = NULL;
-
-		newprefix = 1;
 
 		if (new->ndpr_vltime == 0)
 			goto end;
@@ -2165,19 +2161,15 @@ rt6_deleteroute(struct rtentry *rt, void *arg)
 int
 nd6_setdefaultiface(int ifindex)
 {
+	ifnet_t *ifp;
 	int error = 0;
 
-	if (ifindex < 0 || if_indexlim <= ifindex)
-		return (EINVAL);
-	if (ifindex != 0 && !ifindex2ifnet[ifindex])
-		return (EINVAL);
-
+	if ((ifp = if_byindex(ifindex)) == NULL) {
+		return EINVAL;
+	}
 	if (nd6_defifindex != ifindex) {
 		nd6_defifindex = ifindex;
-		if (nd6_defifindex > 0) {
-			nd6_defifp = ifindex2ifnet[nd6_defifindex];
-		} else
-			nd6_defifp = NULL;
+		nd6_defifp = nd6_defifindex > 0 ? ifp : NULL;
 
 		/*
 		 * Our current implementation assumes one-to-one maping between

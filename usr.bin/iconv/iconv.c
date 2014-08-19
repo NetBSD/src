@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.c,v 1.18 2011/10/31 13:27:51 yamt Exp $ */
+/*	$NetBSD: iconv.c,v 1.18.8.1 2014/08/20 00:04:59 tls Exp $ */
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iconv.c,v 1.18 2011/10/31 13:27:51 yamt Exp $");
+__RCSID("$NetBSD: iconv.c,v 1.18.8.1 2014/08/20 00:04:59 tls Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
@@ -99,6 +99,7 @@ do_conv(const char *fn, FILE *fp, const char *from, const char *to, int silent,
 	size_t inbytes, outbytes, ret, invalids;
 	iconv_t cd;
 	uint32_t flags = 0;
+	int serrno;
 
 	if (hide_invalid)
 		flags |= __ICONV_F_HIDE_INVALID;
@@ -116,10 +117,12 @@ do_conv(const char *fn, FILE *fp, const char *from, const char *to, int silent,
 			outbytes = OUTBUFSIZE;
 			ret = __iconv(cd, &in, &inbytes, &out, &outbytes,
 			    flags, &inval);
+			serrno = errno;
 			invalids += inval;
 			if (outbytes < OUTBUFSIZE)
 				(void)fwrite(outbuf, 1, OUTBUFSIZE - outbytes,
 				    stdout);
+			errno = serrno;
 			if (ret == (size_t)-1 && errno != E2BIG) {
 				/*
 				 * XXX: iconv(3) is bad interface.

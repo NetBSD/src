@@ -1,7 +1,7 @@
 /* mpz_cdiv_q_2exp, mpz_fdiv_q_2exp -- quotient from mpz divided by 2^n.
 
-Copyright 1991, 1993, 1994, 1996, 1998, 1999, 2001, 2002, 2004 Free Software
-Foundation, Inc.
+Copyright 1991, 1993, 1994, 1996, 1998, 1999, 2001, 2002, 2004, 2012 Free
+Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -24,7 +24,7 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 
 /* dir==1 for ceil, dir==-1 for floor */
 
-static void __gmpz_cfdiv_q_2exp __GMP_PROTO ((REGPARM_3_1 (mpz_ptr, mpz_srcptr, mp_bitcnt_t, int))) REGPARM_ATTR (1);
+static void __gmpz_cfdiv_q_2exp (REGPARM_3_1 (mpz_ptr, mpz_srcptr, mp_bitcnt_t, int)) REGPARM_ATTR (1);
 #define cfdiv_q_2exp(w,u,cnt,dir)  __gmpz_cfdiv_q_2exp (REGPARM_3_1 (w,u,cnt,dir))
 
 REGPARM_ATTR (1) static void
@@ -73,7 +73,7 @@ cfdiv_q_2exp (mpz_ptr w, mpz_srcptr u, mp_bitcnt_t cnt, int dir)
     {
       if (wsize != 0)
 	{
-          mp_limb_t cy;
+	  mp_limb_t cy;
 	  cy = mpn_add_1 (wp, wp, wsize, CNST_LIMB(1));
 	  wp[wsize] = cy;
 	  wsize += cy;

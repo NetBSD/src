@@ -1,7 +1,5 @@
 /* BFD back-end for ieee-695 objects.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright 1990-2013 Free Software Foundation, Inc.
 
    Written by Steve Chamberlain of Cygnus Support.
 
@@ -35,6 +33,7 @@
 #include "ieee.h"
 #include "libieee.h"
 #include "safe-ctype.h"
+#include "libiberty.h"
 
 struct output_buffer_struct
 {
@@ -1662,7 +1661,7 @@ ieee_slurp_section_data (bfd *abfd)
   unsigned int section_number;
   ieee_per_section_type *current_map = NULL;
   asection *s;
-  
+
   /* Seek to the start of the data area.  */
   if (ieee->read_data)
     return TRUE;
@@ -1824,7 +1823,7 @@ ieee_object_p (bfd *abfd)
     goto got_wrong_format;
   ieee->mb.module_name = read_id (&(ieee->h));
   if (abfd->filename == (const char *) NULL)
-    abfd->filename = ieee->mb.module_name;
+    abfd->filename = xstrdup (ieee->mb.module_name);
 
   /* Determine the architecture and machine type of the object file.  */
   {
@@ -3772,6 +3771,7 @@ ieee_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
   bfd_generic_get_relocated_section_contents
 #define ieee_bfd_relax_section bfd_generic_relax_section
 #define ieee_bfd_gc_sections bfd_generic_gc_sections
+#define ieee_bfd_lookup_section_flags bfd_generic_lookup_section_flags
 #define ieee_bfd_merge_sections bfd_generic_merge_sections
 #define ieee_bfd_is_group_section bfd_generic_is_group_section
 #define ieee_bfd_discard_group bfd_generic_discard_group
@@ -3801,6 +3801,7 @@ const bfd_target ieee_vec =
   '_',				/* Leading underscore.  */
   ' ',				/* AR_pad_char.  */
   16,				/* AR_max_namelen.  */
+  0,				/* match priority.  */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* Data.  */

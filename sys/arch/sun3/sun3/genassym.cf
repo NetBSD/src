@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.14 2010/10/15 15:55:53 tsutsui Exp $
+#	$NetBSD: genassym.cf,v 1.14.18.1 2014/08/20 00:03:26 tls Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -189,7 +189,7 @@ define	PCB_FPCTX		offsetof(struct pcb, pcb_fpregs)
 define	SIZEOF_PCB		sizeof(struct pcb)
 
 # frame offsets
-define 	TF_PC			offsetof(struct frame, f_pc)
+define	TF_PC			offsetof(struct frame, f_pc)
 
 # exception frame offset/sizes
 define	FR_SP			offsetof(struct trapframe, tf_regs[15])

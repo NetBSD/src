@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.15.12.2 2013/06/23 06:20:28 tls Exp $	*/
+/*	$NetBSD: threads.c,v 1.15.12.3 2014/08/20 00:04:41 tls Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.15.12.2 2013/06/23 06:20:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.15.12.3 2014/08/20 00:04:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -37,31 +37,36 @@ __KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.15.12.2 2013/06/23 06:20:28 tls Exp $"
 #include <sys/kthread.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/queue.h>
 
 #include <rump/rumpuser.h>
 
 #include "rump_private.h"
 
-struct kthdesc {
+struct thrdesc {
 	void (*f)(void *);
 	void *arg;
-	struct lwp *mylwp;
+	struct lwp *newlwp;
+	int runnable;
+
+	TAILQ_ENTRY(thrdesc) entries;
 };
 
 static bool threads_are_go;
 static struct rumpuser_mtx *thrmtx;
 static struct rumpuser_cv *thrcv;
+static TAILQ_HEAD(, thrdesc) newthr;
 
 static void *
 threadbouncer(void *arg)
 {
-	struct kthdesc *k = arg;
-	struct lwp *l = k->mylwp;
+	struct thrdesc *td = arg;
+	struct lwp *l = td->newlwp;
 	void (*f)(void *);
 	void *thrarg;
 
-	f = k->f;
-	thrarg = k->arg;
+	f = td->f;
+	thrarg = td->arg;
 
 	/* don't allow threads to run before all CPUs have fully attached */
 	if (!threads_are_go) {
@@ -73,11 +78,11 @@ threadbouncer(void *arg)
 	}
 
 	/* schedule ourselves */
-	rumpuser_curlwpop(RUMPUSER_LWP_SET, l);
+	rump_lwproc_curlwp_set(l);
 	rump_schedule();
 
 	/* free dance struct */
-	free(k, M_TEMP);
+	kmem_intr_free(td, sizeof(*td));
 
 	if ((curlwp->l_pflag & LP_MPSAFE) == 0)
 		KERNEL_LOCK(1, NULL);
@@ -93,17 +98,27 @@ rump_thread_init(void)
 
 	rumpuser_mutex_init(&thrmtx, RUMPUSER_MTX_SPIN);
 	rumpuser_cv_init(&thrcv);
+	TAILQ_INIT(&newthr);
 }
 
 void
-rump_thread_allow(void)
+rump_thread_allow(struct lwp *l)
 {
+	struct thrdesc *td;
 
 	rumpuser_mutex_enter(thrmtx);
-	threads_are_go = true;
+	if (l == NULL) {
+		threads_are_go = true;
+	} else {
+		TAILQ_FOREACH(td, &newthr, entries) {
+			if (td->newlwp == l) {
+				td->runnable = 1;
+				break;
+			}
+		}
+	}
 	rumpuser_cv_broadcast(thrcv);
 	rumpuser_mutex_exit(thrmtx);
-
 }
 
 static struct {
@@ -126,7 +141,7 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	char thrstore[MAXCOMLEN];
 	const char *thrname = NULL;
 	va_list ap;
-	struct kthdesc *k;
+	struct thrdesc *td;
 	struct lwp *l;
 	int rv;
 
@@ -171,10 +186,14 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	}
 	KASSERT(fmt != NULL);
 
-	k = malloc(sizeof(*k), M_TEMP, M_WAITOK);
-	k->f = func;
-	k->arg = arg;
-	k->mylwp = l = rump__lwproc_alloclwp(&proc0);
+	/*
+	 * Allocate with intr-safe allocator, give that we may be
+	 * creating interrupt threads.
+	 */
+	td = kmem_intr_alloc(sizeof(*td), KM_SLEEP);
+	td->f = func;
+	td->arg = arg;
+	td->newlwp = l = rump__lwproc_alloclwp(&proc0);
 	l->l_flag |= LW_SYSTEM;
 	if (flags & KTHREAD_MPSAFE)
 		l->l_pflag |= LP_MPSAFE;
@@ -189,11 +208,11 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 		strlcpy(l->l_name, thrname, MAXCOMLEN);
 	}
 		
-	rv = rumpuser_thread_create(threadbouncer, k, thrname,
+	rv = rumpuser_thread_create(threadbouncer, td, thrname,
 	    (flags & KTHREAD_MUSTJOIN) == KTHREAD_MUSTJOIN,
 	    pri, ci ? ci->ci_index : -1, &l->l_ctxlink);
 	if (rv)
-		return rv;
+		return rv; /* XXX */
 
 	if (newlp) {
 		*newlp = l;
@@ -226,4 +245,108 @@ kthread_join(struct lwp *l)
 	membar_consumer();
 
 	return rv;
+}
+
+/*
+ * Create a non-kernel thread that is scheduled by a rump kernel hypercall.
+ *
+ * Sounds strange and out-of-place?  yup yup yup.  the original motivation
+ * for this was aio.  This is a very infrequent code path in rump kernels.
+ * XXX: threads created with lwp_create() are eternal for local clients.
+ * however, they are correctly reaped for remote clients with process exit.
+ */
+static void *
+lwpbouncer(void *arg)
+{
+	struct thrdesc *td = arg;
+	struct lwp *l = td->newlwp;
+	void (*f)(void *);
+	void *thrarg;
+	int run;
+
+	f = td->f;
+	thrarg = td->arg;
+
+	/* do not run until we've been enqueued */
+	rumpuser_mutex_enter_nowrap(thrmtx);
+	while ((run = td->runnable) == 0) {
+		rumpuser_cv_wait_nowrap(thrcv, thrmtx);
+	}
+	rumpuser_mutex_exit(thrmtx);
+
+	/* schedule ourselves */
+	rump_lwproc_curlwp_set(l);
+	rump_schedule();
+	kmem_free(td, sizeof(*td));
+
+	/* should we just die instead? */
+	if (run == -1) {
+		rump_lwproc_releaselwp();
+		lwp_userret(l);
+		panic("lwpbouncer reached unreachable");
+	}
+
+	/* run, and don't come back! */
+	f(thrarg);
+	panic("lwp return from worker not supported");
+}
+
+int
+lwp_create(struct lwp *l1, struct proc *p2, vaddr_t uaddr, int flags,
+           void *stack, size_t stacksize, void (*func)(void *), void *arg,
+           struct lwp **newlwpp, int sclass)
+{
+	struct thrdesc *td;
+	struct lwp *l;
+	int rv;
+
+	if (flags)
+		panic("lwp_create: flags not supported by this implementation");
+	td = kmem_alloc(sizeof(*td), KM_SLEEP);
+	td->f = func;
+	td->arg = arg;
+	td->runnable = 0;
+	td->newlwp = l = rump__lwproc_alloclwp(p2);
+
+	rumpuser_mutex_enter_nowrap(thrmtx);
+	TAILQ_INSERT_TAIL(&newthr, td, entries);
+	rumpuser_mutex_exit(thrmtx);
+
+	rv = rumpuser_thread_create(lwpbouncer, td, p2->p_comm, 0,
+	    PRI_USER, -1, NULL);
+	if (rv)
+		panic("rumpuser_thread_create failed"); /* XXX */
+
+	*newlwpp = l;
+	return 0;
+}
+
+void
+lwp_exit(struct lwp *l)
+{
+	struct thrdesc *td;
+
+	rumpuser_mutex_enter_nowrap(thrmtx);
+	TAILQ_FOREACH(td, &newthr, entries) {
+		if (td->newlwp == l) {
+			td->runnable = -1;
+			break;
+		}
+	}
+	rumpuser_mutex_exit(thrmtx);
+
+	if (td == NULL)
+		panic("lwp_exit: could not find %p\n", l);
+}
+
+void
+lwp_userret(struct lwp *l)
+{
+
+	if ((l->l_flag & LW_RUMP_QEXIT) == 0)
+		return;
+
+	/* ok, so we should die */
+	rump_unschedule();
+	rumpuser_thread_exit();
 }

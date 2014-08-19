@@ -1,4 +1,4 @@
-/*	$NetBSD: diofb.c,v 1.3 2011/02/18 19:15:43 tsutsui Exp $	*/
+/*	$NetBSD: diofb.c,v 1.3.18.1 2014/08/20 00:03:00 tls Exp $	*/
 /*	$OpenBSD: diofb.c,v 1.18 2010/12/26 15:40:59 miod Exp $	*/
 
 /*
@@ -318,7 +318,7 @@ diofb_end_attach(device_t self, struct wsdisplay_accessops *accessops,
 
 	fb->scrlist[0] = &fb->wsd;
 	fb->wsl.nscreens = 1;
-	fb->wsl.screens = (const struct wsscreen_descr **)fb->scrlist;
+	fb->wsl.screens = (void *)fb->scrlist;
 
 	waa.console = console;
 	waa.scrdata = &fb->wsl;

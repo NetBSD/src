@@ -1,6 +1,6 @@
 dnl  AMD64 mpn_lshiftc -- mpn left shift with complement.
 
-dnl  Copyright 2003, 2005, 2006, 2009 Free Software Foundation, Inc.
+dnl  Copyright 2003, 2005, 2006, 2009, 2011, 2012 Free Software Foundation, Inc.
 dnl
 dnl  This file is part of the GNU MP Library.
 dnl
@@ -21,11 +21,13 @@ include(`../config.m4')
 
 
 C	     cycles/limb
-C K8,K9:	 2.75
-C K10:		 2.75
-C P4:		 ?
-C P6-15 (Core2): ?
-C P6-28 (Atom):	 ?
+C AMD K8,K9	 2.75
+C AMD K10	 2.75
+C Intel P4	 ?
+C Intel core2	 ?
+C Intel corei	 ?
+C Intel atom	 ?
+C VIA nano	 3.75
 
 
 C INPUT PARAMETERS
@@ -34,10 +36,14 @@ define(`up',	`%rsi')
 define(`n',	`%rdx')
 define(`cnt',	`%rcx')
 
+ABI_SUPPORT(DOS64)
+ABI_SUPPORT(STD64)
+
 ASM_START()
 	TEXT
 	ALIGN(32)
 PROLOGUE(mpn_lshiftc)
+	FUNC_ENTRY(4)
 	neg	R32(%rcx)		C put rsh count in cl
 	mov	-8(up,n,8), %rax
 	shr	R8(%rcx), %rax		C function return value
@@ -144,21 +150,22 @@ L(top):
 	jae	L(top)			C				      2
 L(end):
 	neg	R32(%rcx)		C put rsh count in cl
-	mov	16(up,n,8), %r8
+	mov	8(up), %r8
 	shr	R8(%rcx), %r8
 	or	%r8, %r10
-	mov	8(up,n,8), %r9
+	mov	(up), %r9
 	shr	R8(%rcx), %r9
 	or	%r9, %r11
 	not	%r10
 	not	%r11
-	mov	%r10, 24(rp,n,8)
-	mov	%r11, 16(rp,n,8)
+	mov	%r10, 16(rp)
+	mov	%r11, 8(rp)
 
 	neg	R32(%rcx)		C put lsh count in cl
 L(ast):	mov	(up), %r10
 	shl	R8(%rcx), %r10
 	not	%r10
 	mov	%r10, (rp)
+	FUNC_EXIT()
 	ret
 EPILOGUE()

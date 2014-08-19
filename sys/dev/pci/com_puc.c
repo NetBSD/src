@@ -1,4 +1,4 @@
-/*	$NetBSD: com_puc.c,v 1.19 2009/11/26 15:17:09 njoly Exp $	*/
+/*	$NetBSD: com_puc.c,v 1.19.22.1 2014/08/20 00:03:42 tls Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.19 2009/11/26 15:17:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.19.22.1 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,17 @@ struct com_puc_softc {
 
 	/* puc-specific goo. */
 	void	*sc_ih;			/* interrupt handler */
+};
+
+/* Interface field in PCI Class register */
+static const char *serialtype[] = {
+	"Generic XT",
+	"16450",
+	"16550",
+	"16650",
+	"16750",
+	"16850",
+	"16950",
 };
 
 static int
@@ -81,27 +92,43 @@ com_puc_attach(device_t parent, device_t self, void *aux)
 	struct com_softc *sc = &psc->sc_com;
 	struct puc_attach_args *aa = aux;
 	const char *intrstr;
+	char intrbuf[PCI_INTRSTR_LEN];
+	unsigned int iface;
 
 	sc->sc_dev = self;
 
-	/*
-	 * XXX This driver assumes that 'com' ports attached to 'puc'
-	 * XXX can not be console.  That isn't unreasonable, because PCI
-	 * XXX devices are supposed to be dynamically mapped, and com
-	 * XXX console ports want fixed addresses.  When/if baseboard
-	 * XXX 'com' ports are identified as PCI/communications/serial
-	 * XXX devices and are known to be mapped at the standard
-	 * XXX addresses, if they can be the system console then we have
-	 * XXX to cope with doing the mapping right.  Then this will get
-	 * XXX really ugly.  Of course, by then we might know the real
-	 * XXX definition of PCI/communications/serial, and attach 'com'
-	 * XXX directly on PCI.
-	 */
-
-	aprint_naive(": Serial port\n");
+	iface = PCI_INTERFACE(pci_conf_read(aa->pc, aa->tag, PCI_CLASS_REG));
+	aprint_naive(": Serial port");
+	if (iface < __arraycount(serialtype))
+		aprint_normal(" (%s-compatible)", serialtype[iface]);
+	aprint_normal(": ");
 
 	COM_INIT_REGS(sc->sc_regs, aa->t, aa->h, aa->a);
 	sc->sc_frequency = aa->flags & PUC_COM_CLOCKMASK;
+
+	intrstr = pci_intr_string(aa->pc, aa->intrhandle, intrbuf, sizeof(intrbuf));
+	psc->sc_ih = pci_intr_establish(aa->pc, aa->intrhandle, IPL_SERIAL,
+	    comintr, sc);
+	if (psc->sc_ih == NULL) {
+		aprint_error("couldn't establish interrupt");
+		if (intrstr != NULL)
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
+		return;
+	}
+
+#if defined(amd64) || defined(i386)
+	/*
+	 * Since puc(4) serial ports are typically not identified in the
+	 * BIOS COM[1234] table, the I/O address must be manually set using
+	 * installboot(8) in order to enable a serial console.
+	 * Print the address here so the user doesn't have to dig through
+	 * PCI configuration space to find it.
+	 */
+	if (aa->h < 0x10000)
+		aprint_normal("ioaddr 0x%04lx, ", aa->h);
+#endif
+	aprint_normal("interrupting at %s\n", intrstr);
 
 	/* Enable Cyberserial 8X clock. */
 	if (aa->flags & (PUC_COM_SIIG10x|PUC_COM_SIIG20x)) {
@@ -116,21 +143,13 @@ com_puc_attach(device_t parent, device_t self, void *aux)
 			write_siig10x_usrreg(aa->pc, aa->tag, usrregno, 1);
 		else
 			write_siig20x_usrreg(aa->pc, aa->tag, usrregno, 1);
+	} else {
+		if (!pmf_device_register(self, NULL, com_resume))
+			aprint_error_dev(self,
+			    "couldn't establish power handler\n");
 	}
 
-	intrstr = pci_intr_string(aa->pc, aa->intrhandle);
-	psc->sc_ih = pci_intr_establish(aa->pc, aa->intrhandle, IPL_SERIAL,
-	    comintr, sc);
-	if (psc->sc_ih == NULL) {
-		aprint_error(": couldn't establish interrupt");
-		if (intrstr != NULL)
-			aprint_error(" at %s", intrstr);
-		aprint_error("\n");
-		return;
-	}
-	aprint_normal(": interrupting at %s\n", intrstr);
 	aprint_normal("%s", device_xname(self));
-
 	com_attach_subr(sc);
 }
 

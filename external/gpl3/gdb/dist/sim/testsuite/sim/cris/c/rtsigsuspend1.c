@@ -2,7 +2,7 @@
 #notarget: cris*-*-elf
 #xerror:
 #output: Unimplemented rt_sigsuspend syscall arguments (0x1, 0x2)\n
-#output: program stopped with signal 4.\n
+#output: program stopped with signal 4 (*).\n
 */
 
 #include <unistd.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2010/07/06 06:09:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.9.18.1 2014/08/20 00:02:43 tls Exp $
 
 ### what we need:
 
@@ -41,9 +41,10 @@ all: ${FILES}
 INCPATH = -I${DIR_TOP} -I${DIR_TOP}/lib/libsa -I${DIR_BOOT} -I${.CURDIR} -I${.CURDIR}/../../.. -I${.CURDIR}/../elf2bb -I${.OBJDIR}
 
 AFLAGS += -m68030 -l
-CAFLAGS += -Wa,-l -Wa,-m68030 ${INCPATH}
+CAFLAGS += -Wa,-l -Wa,-mcpu=68030 ${INCPATH}
 
-COPTIM= -O -fomit-frame-pointer -fcse-follow-jumps -fcse-skip-blocks  -Wa,-l -m68060 -Wa,-m68030
+COPTIM= -Os -fomit-frame-pointer -fcse-follow-jumps -fcse-skip-blocks
+COPTIM+= -Wa,-l -m68060 -Wa,-mcpu=68030 -fno-unwind-tables
 CFLAGS= -ffreestanding ${COPTIM} ${INCPATH} ${DEFS} -Wall #-Wstrict-prototypes
 
 .c.o:

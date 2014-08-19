@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2009/07/18 16:31:42 reinoud Exp $
+#	$NetBSD: Makefile,v 1.1.12.1 2014/08/20 00:02:26 tls Exp $
 
 .include <bsd.own.mk>
 
-WARNS=	4
 PROG=	mount_nilfs
 SRCS=	mount_nilfs.c fattr.c pathadj.c
 MAN=	mount_nilfs.8

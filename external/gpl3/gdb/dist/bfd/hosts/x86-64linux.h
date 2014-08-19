@@ -1,4 +1,5 @@
-/* Copyright (C) 2006 Free Software Foundation, Inc.
+/* Copyright (C) 2006, 2011, 2012
+   Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    The GNU C Library is free software; you can redistribute it and/or
@@ -36,44 +37,21 @@
 #include <stdint.h>
 #else
 typedef unsigned int uint32_t;
+typedef unsigned long long int uint64_t;
 #endif
+
+/* Unsigned 64-bit integer aligned to 8 bytes.  */
+typedef uint64_t __attribute__ ((__aligned__ (8))) a8_uint64_t;
 
 #undef HAVE_PRPSINFO32_T
 #define HAVE_PRPSINFO32_T
+#undef HAVE_PRPSINFO32_T_PR_PID
+#define HAVE_PRPSINFO32_T_PR_PID
 
 #undef HAVE_PRSTATUS32_T
 #define HAVE_PRSTATUS32_T
 
 /* These are the 32-bit x86 structures.  */
-
-struct user_fpregs32_struct
-{
-  int32_t cwd;
-  int32_t swd;
-  int32_t twd;
-  int32_t fip;
-  int32_t fcs;
-  int32_t foo;
-  int32_t fos;
-  int32_t st_space [20];
-};
-
-struct user_fpxregs32_struct
-{
-  unsigned short int cwd;
-  unsigned short int swd;
-  unsigned short int twd;
-  unsigned short int fop;
-  int32_t fip;
-  int32_t fcs;
-  int32_t foo;
-  int32_t fos;
-  int32_t mxcsr;
-  int32_t reserved;
-  int32_t st_space[32];   /* 8*16 bytes for each FP-reg = 128 bytes */
-  int32_t xmm_space[32];  /* 8*16 bytes for each XMM-reg = 128 bytes */
-  int32_t padding[56];
-};
 
 struct user_regs32_struct
 {
@@ -96,27 +74,40 @@ struct user_regs32_struct
   int32_t xss;
 };
 
-struct user32
+struct user_regs64_struct
 {
-  struct user_regs32_struct	regs;
-  int				u_fpvalid;
-  struct user_fpregs32_struct	i387;
-  uint32_t			u_tsize;
-  uint32_t			u_dsize;
-  uint32_t			u_ssize;
-  uint32_t			start_code;
-  uint32_t			start_stack;
-  int32_t			signal;
-  int				reserved;
-  struct user_regs32_struct*	u_ar0;
-  struct user_fpregs32_struct*	u_fpstate;
-  uint32_t			magic;
-  char				u_comm [32];
-  int				u_debugreg [8];
+  a8_uint64_t r15;
+  a8_uint64_t r14;
+  a8_uint64_t r13;
+  a8_uint64_t r12;
+  a8_uint64_t rbp;
+  a8_uint64_t rbx;
+  a8_uint64_t r11;
+  a8_uint64_t r10;
+  a8_uint64_t r9;
+  a8_uint64_t r8;
+  a8_uint64_t rax;
+  a8_uint64_t rcx;
+  a8_uint64_t rdx;
+  a8_uint64_t rsi;
+  a8_uint64_t rdi;
+  a8_uint64_t orig_rax;
+  a8_uint64_t rip;
+  a8_uint64_t cs;
+  a8_uint64_t eflags;
+  a8_uint64_t rsp;
+  a8_uint64_t ss;
+  a8_uint64_t fs_base;
+  a8_uint64_t gs_base;
+  a8_uint64_t ds;
+  a8_uint64_t es;
+  a8_uint64_t fs;
+  a8_uint64_t gs;
 };
 
 /* Type for a general-purpose register.  */
-typedef unsigned int elf_greg32_t;
+typedef uint32_t elf_greg32_t;
+typedef a8_uint64_t elf_greg64_t;
 
 /* And the whole bunch of them.  We could have used `struct
    user_regs_struct' directly in the typedef, but tradition says that
@@ -124,15 +115,8 @@ typedef unsigned int elf_greg32_t;
    semantics, so leave it that way.  */
 #define ELF_NGREG32 (sizeof (struct user_regs32_struct) / sizeof(elf_greg32_t))
 typedef elf_greg32_t elf_gregset32_t[ELF_NGREG32];
-
-/* Register set for the floating-point registers.  */
-typedef struct user_fpregs32_struct elf_fpregset32_t;
-
-/* Register set for the extended floating-point registers.  Includes
-   the Pentium III SSE registers in addition to the classic
-   floating-point stuff.  */
-typedef struct user_fpxregs32_struct elf_fpxregset32_t;
-
+#define ELF_NGREG64 (sizeof (struct user_regs64_struct) / sizeof(elf_greg64_t))
+typedef elf_greg64_t elf_gregset64_t[ELF_NGREG64];
 
 /* Definitions to generate Intel SVR4-like core files.  These mostly
    have the same names as the SVR4 types with "elf_" tacked on the
@@ -147,16 +131,22 @@ struct prstatus32_timeval
     int tv_usec;
   };
 
+struct prstatus64_timeval
+  {
+    a8_uint64_t tv_sec;
+    a8_uint64_t tv_usec;
+  };
+
 struct elf_prstatus32
   {
     struct elf_siginfo pr_info;		/* Info associated with signal.  */
     short int pr_cursig;		/* Current signal.  */
     unsigned int pr_sigpend;		/* Set of pending signals.  */
     unsigned int pr_sighold;		/* Set of held signals.  */
-    __pid_t pr_pid;
-    __pid_t pr_ppid;
-    __pid_t pr_pgrp;
-    __pid_t pr_sid;
+    pid_t pr_pid;
+    pid_t pr_ppid;
+    pid_t pr_pgrp;
+    pid_t pr_sid;
     struct prstatus32_timeval pr_utime;		/* User time.  */
     struct prstatus32_timeval pr_stime;		/* System time.  */
     struct prstatus32_timeval pr_cutime;	/* Cumulative user time.  */
@@ -165,6 +155,41 @@ struct elf_prstatus32
     int pr_fpvalid;			/* True if math copro being used.  */
   };
 
+struct elf_prstatusx32
+  {
+    struct elf_siginfo pr_info;		/* Info associated with signal.  */
+    short int pr_cursig;		/* Current signal.  */
+    unsigned int pr_sigpend;		/* Set of pending signals.  */
+    unsigned int pr_sighold;		/* Set of held signals.  */
+    pid_t pr_pid;
+    pid_t pr_ppid;
+    pid_t pr_pgrp;
+    pid_t pr_sid;
+    struct prstatus32_timeval pr_utime;		/* User time.  */
+    struct prstatus32_timeval pr_stime;		/* System time.  */
+    struct prstatus32_timeval pr_cutime;	/* Cumulative user time.  */
+    struct prstatus32_timeval pr_cstime;	/* Cumulative system time.  */
+    elf_gregset64_t pr_reg;		/* GP registers.  */
+    int pr_fpvalid;			/* True if math copro being used.  */
+  };
+
+struct elf_prstatus64
+  {
+    struct elf_siginfo pr_info;	/* Info associated with signal.  */
+    short int pr_cursig;		/* Current signal.  */
+    a8_uint64_t pr_sigpend;		/* Set of pending signals.  */
+    a8_uint64_t pr_sighold;		/* Set of held signals.  */
+    pid_t pr_pid;
+    pid_t pr_ppid;
+    pid_t pr_pgrp;
+    pid_t pr_sid;
+    struct prstatus64_timeval pr_utime;		/* User time.  */
+    struct prstatus64_timeval pr_stime;		/* System time.  */
+    struct prstatus64_timeval pr_cutime;	/* Cumulative user time.  */
+    struct prstatus64_timeval pr_cstime;	/* Cumulative system time.  */
+    elf_gregset64_t pr_reg;		/* GP registers.  */
+    int pr_fpvalid;			/* True if math copro being used.  */
+  };
 
 struct elf_prpsinfo32
   {
@@ -181,15 +206,28 @@ struct elf_prpsinfo32
     char pr_psargs[ELF_PRARGSZ];	/* Initial part of arg list.  */
   };
 
+struct elf_prpsinfo64
+  {
+    char pr_state;			/* Numeric process state.  */
+    char pr_sname;			/* Char for pr_state.  */
+    char pr_zomb;			/* Zombie.  */
+    char pr_nice;			/* Nice val.  */
+    a8_uint64_t pr_flag;		/* Flags.  */
+    unsigned int pr_uid;
+    unsigned int pr_gid;
+    int pr_pid, pr_ppid, pr_pgrp, pr_sid;
+    /* Lots missing */
+    char pr_fname[16];			/* Filename of executable.  */
+    char pr_psargs[ELF_PRARGSZ];	/* Initial part of arg list.  */
+  };
 
 /* The rest of this file provides the types for emulation of the
    Solaris <proc_service.h> interfaces that should be implemented by
    users of libthread_db.  */
 
-/* Register sets.  Linux has different names.  */
-typedef elf_gregset_t prgregset32_t;
-typedef elf_fpregset_t prfpregset32_t;
-
 /* Process status and info.  In the end we do provide typedefs for them.  */
 typedef struct elf_prstatus32 prstatus32_t;
+typedef struct elf_prstatusx32 prstatusx32_t;
+typedef struct elf_prstatus64 prstatus64_t;
 typedef struct elf_prpsinfo32 prpsinfo32_t;
+typedef struct elf_prpsinfo64 prpsinfo64_t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.60 2012/06/15 14:23:46 yamt Exp $	*/
+/*	$NetBSD: vector.S,v 1.60.2.1 2014/08/20 00:03:06 tls Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.60 2012/06/15 14:23:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.60.2.1 2014/08/20 00:03:06 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.60 2012/06/15 14:23:46 yamt Exp $");
 #include "ioapic.h"
 #include "lapic.h"
 
-#include "npx.h"
 #include "assym.h"
 
 /*
@@ -444,8 +443,8 @@ INTRSTUB(ioapic_level,31,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
 
 #endif
 
-.globl _C_LABEL(i8259_stubs)
-_C_LABEL(i8259_stubs):
+	.type	_C_LABEL(i8259_stubs), @object
+LABEL(i8259_stubs)
 	.long _C_LABEL(Xintr_legacy0), _C_LABEL(Xrecurse_legacy0)
 	.long _C_LABEL(Xresume_legacy0)
 	.long _C_LABEL(Xintr_legacy1), _C_LABEL(Xrecurse_legacy1)
@@ -478,10 +477,11 @@ _C_LABEL(i8259_stubs):
 	.long _C_LABEL(Xresume_legacy14)
 	.long _C_LABEL(Xintr_legacy15), _C_LABEL(Xrecurse_legacy15)
 	.long _C_LABEL(Xresume_legacy15)
+END(i8259_stubs)
 
 #if NIOAPIC > 0
-.globl _C_LABEL(ioapic_edge_stubs)
-_C_LABEL(ioapic_edge_stubs):
+	.type	_C_LABEL(ioapic_edge_stubs), @object
+LABEL(ioapic_edge_stubs)
 	.long _C_LABEL(Xintr_ioapic_edge0), _C_LABEL(Xrecurse_ioapic_edge0)
 	.long _C_LABEL(Xresume_ioapic_edge0)
 	.long _C_LABEL(Xintr_ioapic_edge1), _C_LABEL(Xrecurse_ioapic_edge1)
@@ -546,9 +546,10 @@ _C_LABEL(ioapic_edge_stubs):
 	.long _C_LABEL(Xresume_ioapic_edge30)
 	.long _C_LABEL(Xintr_ioapic_edge31), _C_LABEL(Xrecurse_ioapic_edge31)
 	.long _C_LABEL(Xresume_ioapic_edge31)
+END(ioapic_edge_stubs)
 
-.globl _C_LABEL(ioapic_level_stubs)
-_C_LABEL(ioapic_level_stubs):
+	.type	_C_LABEL(ioapic_level_stubs), @object
+LABEL(ioapic_level_stubs)
 	.long _C_LABEL(Xintr_ioapic_level0), _C_LABEL(Xrecurse_ioapic_level0)
 	.long _C_LABEL(Xresume_ioapic_level0)
 	.long _C_LABEL(Xintr_ioapic_level1), _C_LABEL(Xrecurse_ioapic_level1)
@@ -613,6 +614,7 @@ _C_LABEL(ioapic_level_stubs):
 	.long _C_LABEL(Xresume_ioapic_level30)
 	.long _C_LABEL(Xintr_ioapic_level31), _C_LABEL(Xrecurse_ioapic_level31)
 	.long _C_LABEL(Xresume_ioapic_level31)
+END(ioapic_level_stubs)
 #endif
 #else /* XEN */
 #define voidop(num)
@@ -692,8 +694,8 @@ XENINTRSTUB(xenev,29,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
 XENINTRSTUB(xenev,30,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
 XENINTRSTUB(xenev,31,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
 
-.globl _C_LABEL(xenev_stubs)
-_C_LABEL(xenev_stubs):
+	.type	_C_LABEL(xenev_stubs), @object
+LABEL(xenev_stubs)
 	.long _C_LABEL(Xrecurse_xenev0), _C_LABEL(Xresume_xenev0)
 	.long _C_LABEL(Xrecurse_xenev1) ,_C_LABEL(Xresume_xenev1)
 	.long _C_LABEL(Xrecurse_xenev2) ,_C_LABEL(Xresume_xenev2)
@@ -726,413 +728,14 @@ _C_LABEL(xenev_stubs):
 	.long _C_LABEL(Xrecurse_xenev29), _C_LABEL(Xresume_xenev29)
 	.long _C_LABEL(Xrecurse_xenev30), _C_LABEL(Xresume_xenev30)
 	.long _C_LABEL(Xrecurse_xenev31), _C_LABEL(Xresume_xenev31)
+END(xenev_stubs)
 
 #endif /* XEN */
 
-/*
- * Trap and fault vector routines
- *
- * On exit from the kernel to user mode, we always need to check for ASTs.  In
- * addition, we need to do this atomically; otherwise an interrupt may occur
- * which causes an AST, but it won't get processed until the next kernel entry
- * (possibly the next clock tick).  Thus, we disable interrupt before checking,
- * and only enable them again on the final `iret' or before calling the AST
- * handler.
- */ 
-
-#define TRAP(a)			pushl $(a) ; jmp _C_LABEL(alltraps)
-#define ZTRAP(a)		pushl $0 ; TRAP(a)
-
+#include "i386_trap.S"
 #ifdef IPKDB
-#define BPTTRAP(a)	pushl $0; pushl $(a); jmp _C_LABEL(bpttraps)
-#else
-#define BPTTRAP(a)	ZTRAP(a)
+#include "i386_trap_ipkdb.S"
 #endif
-
-
-	.text
-IDTVEC(trap00)
-	ZTRAP(T_DIVIDE)
-IDTVEC(trap01)
-	BPTTRAP(T_TRCTRAP)
-IDTVEC(trap02)
-	pushl $0
-	pushl $(T_NMI)
-	INTRENTRY
-	jmp _C_LABEL(calltrap)
-IDTVEC(trap03)
-	BPTTRAP(T_BPTFLT)
-IDTVEC(trap04)
-	ZTRAP(T_OFLOW)
-IDTVEC(trap05)
-	ZTRAP(T_BOUND)
-/*
- * Privileged instruction fault.
- */
-#ifdef KDTRACE_HOOKS
-	SUPERALIGN_TEXT
-IDTVEC(trap06)
-	/* Check if there is no DTrace hook registered. */
-	cmpl	$0,dtrace_invop_jump_addr
-	je	norm_ill
-
-	/* Check if this is a user fault. */
-	/* XXX this was 0x0020 in FreeBSD */
-	cmpl	$GSEL(GCODE_SEL, SEL_KPL), 4(%esp)   /* Check code segment. */
-
-	/* If so, just handle it as a normal trap. */
-	jne	norm_ill
-              
-	/*
-	 * This is a kernel instruction fault that might have been caused
-	 * by a DTrace provider.
-	 */
-	pushal				/* Push all registers onto the stack. */
-
-	/*
-	 * Set our jump address for the jump back in the event that
-	 * the exception wasn't caused by DTrace at all.
-	 */
-	movl	$norm_ill, dtrace_invop_calltrap_addr
-
-	/* Jump to the code hooked in by DTrace. */
-	jmpl	*dtrace_invop_jump_addr
-
-	/*
-	 * Process the instruction fault in the normal way.
-	 */
-norm_ill:
-	ZTRAP(T_PRIVINFLT)
-#else
-IDTVEC(trap06)
-	ZTRAP(T_PRIVINFLT)
-#endif
-IDTVEC(trap07)
-#if NNPX > 0
-	pushl	$0			# dummy error code
-	pushl	$T_DNA
-	INTRENTRY
-#ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
-#endif
-	pushl	CPUVAR(SELF)
-	call	*_C_LABEL(npxdna_func)
-	addl	$4,%esp
-	testl	%eax,%eax
-	jz	calltrap
-	jmp	_C_LABEL(trapreturn)
-#else
-#ifndef XEN
-	sti
-#endif
-	ZTRAP(T_DNA)
-#endif
-IDTVEC(trap08)
-	TRAP(T_DOUBLEFLT)
-IDTVEC(trap09)
-	ZTRAP(T_FPOPFLT)
-IDTVEC(trap0a)
-	TRAP(T_TSSFLT)
-IDTVEC(trap0b)
-	TRAP(T_SEGNPFLT)
-IDTVEC(trap0c)
-	TRAP(T_STKFLT)
-IDTVEC(trap0d)
-	TRAP(T_PROTFLT)
-#ifndef XEN
-IDTVEC(trap0e)
-	pushl	$T_PAGEFLT
-	INTRENTRY
-	STI(%eax)
-	testb	$PGEX_U,TF_ERR(%esp)
-	jnz	calltrap
-	movl	%cr2,%eax
-	subl	_C_LABEL(pentium_idt),%eax
-	cmpl	$(6*8),%eax
-	jne	calltrap
-	movb	$T_PRIVINFLT,TF_TRAPNO(%esp)
-	jmp	calltrap
-#else /* !XEN */
-IDTVEC(trap0e)
-	TRAP(T_PAGEFLT)
-#endif /* !XEN */
-
-IDTVEC(intrspurious)
-IDTVEC(trap0f)
-	/*
-	 * The Pentium Pro local APIC may erroneously call this vector for a
-	 * default IR7.  Just ignore it.
-	 *
-	 * (The local APIC does this when CPL is raised while it's on the 
-	 * way to delivering an interrupt.. presumably enough has been set 
-	 * up that it's inconvenient to abort delivery completely..)
-	 */
-	pushl	$0			# dummy error code
-	pushl	$T_ASTFLT
-	INTRENTRY
-	STI(%eax)
-#ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
-#endif
-	jmp	_C_LABEL(trapreturn)
-
-IDTVEC(trap10)
-#if NNPX > 0
-	/*
-	 * Handle like an interrupt so that we can call npxintr to clear the
-	 * error.  It would be better to handle npx interrupts as traps but
-	 * this is difficult for nested interrupts.
-	 */
-	pushl	$0			# dummy error code
-	pushl	$T_ASTFLT
-	INTRENTRY
-	movl	CPUVAR(ILEVEL),%ebx
-	pushl	%ebx
-	pushl	%esp
-	pushl	$0			# dummy arg
-	addl	$1,CPUVAR(NTRAP)	# statistical info
-	adcl	$0,CPUVAR(NTRAP)+4
-	call	_C_LABEL(npxintr)
-	addl	$12,%esp
-	jmp	_C_LABEL(trapreturn)
-#else
-	sti
-	ZTRAP(T_ARITHTRAP)
-#endif
-IDTVEC(trap11)
-	TRAP(T_ALIGNFLT)
-#ifdef XEN
-IDTVEC(trap12)
-IDTVEC(trap13)
-#else
-IDTVEC(trap12)
-	ZTRAP(T_MCA)
-IDTVEC(trap13)
-	ZTRAP(T_XMM)
-#endif
-IDTVEC(trap14)
-IDTVEC(trap15)
-IDTVEC(trap16)
-IDTVEC(trap17)
-IDTVEC(trap18)
-IDTVEC(trap19)
-IDTVEC(trap1a)
-IDTVEC(trap1b)
-IDTVEC(trap1c)
-IDTVEC(trap1d)
-IDTVEC(trap1e)
-IDTVEC(trap1f)
-	/* 20 - 31 reserved for future exp */
-	ZTRAP(T_RESERVED)
-
-IDTVEC(exceptions)
-	.long	_C_LABEL(Xtrap00), _C_LABEL(Xtrap01)
-	.long	_C_LABEL(Xtrap02), _C_LABEL(Xtrap03)
-	.long	_C_LABEL(Xtrap04), _C_LABEL(Xtrap05)
-	.long	_C_LABEL(Xtrap06), _C_LABEL(Xtrap07)
-	.long	_C_LABEL(Xtrap08), _C_LABEL(Xtrap09)
-	.long	_C_LABEL(Xtrap0a), _C_LABEL(Xtrap0b)
-	.long	_C_LABEL(Xtrap0c), _C_LABEL(Xtrap0d)
-	.long	_C_LABEL(Xtrap0e), _C_LABEL(Xtrap0f)
-	.long	_C_LABEL(Xtrap10), _C_LABEL(Xtrap11)
-	.long	_C_LABEL(Xtrap12), _C_LABEL(Xtrap13)
-	.long	_C_LABEL(Xtrap14), _C_LABEL(Xtrap15)
-	.long	_C_LABEL(Xtrap16), _C_LABEL(Xtrap17)
-	.long	_C_LABEL(Xtrap18), _C_LABEL(Xtrap19)
-	.long	_C_LABEL(Xtrap1a), _C_LABEL(Xtrap1b)
-	.long	_C_LABEL(Xtrap1c), _C_LABEL(Xtrap1d)
-	.long	_C_LABEL(Xtrap1e), _C_LABEL(Xtrap1f)
-
- 
-IDTVEC(tss_trap08)
-1:
-	str	%ax
-	GET_TSS
-	movzwl	(%eax),%eax
-	GET_TSS
-	pushl	$T_DOUBLEFLT
-	pushl	%eax
-	call	_C_LABEL(trap_tss)
-	addl	$12,%esp
-	iret
-	jmp	1b
-
-/*
- * trap() calls here when it detects a fault in INTRFASTEXIT (loading the
- * segment registers or during the iret itself).
- * The address of the (possibly reconstructed) user trap frame is
- * passed as an argument.
- * Typically the code will have raised a SIGSEGV which will be actioned
- * by the code below.
- */
-_C_LABEL(trap_return_fault_return):	.globl	trap_return_fault_return
-	mov	4(%esp),%esp	/* frame for user return */
-	jmp	_C_LABEL(trapreturn)
-
-/* LINTSTUB: Ignore */
-NENTRY(alltraps)
-	INTRENTRY
-	STI(%eax)
-calltrap:
-#ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
-#endif /* DIAGNOSTIC */
-	addl	$1,CPUVAR(NTRAP)	# statistical info
-	adcl	$0,CPUVAR(NTRAP)+4
-	pushl	%esp
-	call	_C_LABEL(trap)
-	addl	$4,%esp
-_C_LABEL(trapreturn):	.globl	trapreturn
-	testb	$CHK_UPL,TF_CS(%esp)
-	jnz	.Lalltraps_checkast
-#ifdef VM86
-	testl	$PSL_VM,TF_EFLAGS(%esp)
-	jz	6f
-#else
-	jmp	6f
-#endif
-.Lalltraps_checkast:
-	/* Check for ASTs on exit to user mode. */
-	CLI(%eax)
-	CHECK_ASTPENDING(%eax)
-	jz	3f
-5:	CLEAR_ASTPENDING(%eax)
-	STI(%eax)
-	movl	$T_ASTFLT,TF_TRAPNO(%esp)
-	addl	$1,CPUVAR(NTRAP)	# statistical info
-	adcl	$0,CPUVAR(NTRAP)+4
-	pushl	%esp
-	call	_C_LABEL(trap)
-	addl	$4,%esp
-	jmp	.Lalltraps_checkast	/* re-check ASTs */
-3:	CHECK_DEFERRED_SWITCH
-	jnz	9f
-#ifdef XEN
-	STIC(%eax)
-	jz      6f
-	call    _C_LABEL(stipending)
-	testl   %eax,%eax
-	jz      6f
-	/* process pending interrupts */
-	CLI(%eax)
-	movl    CPUVAR(ILEVEL), %ebx
-	movl    $.Lalltraps_resume, %esi # address to resume loop at
-.Lalltraps_resume:
-	movl    %ebx,%eax               # get cpl
-	movl    CPUVAR(IUNMASK)(,%eax,4),%eax
-	andl    CPUVAR(IPENDING),%eax   # any non-masked bits left?
-	jz	7f
-	bsrl    %eax,%eax
-	btrl    %eax,CPUVAR(IPENDING)
-	movl    CPUVAR(ISOURCES)(,%eax,4),%eax
-	jmp     *IS_RESUME(%eax)
-7:      movl    %ebx, CPUVAR(ILEVEL) #restore cpl
-	jmp     _C_LABEL(trapreturn)
-#endif /* XEN */
-#ifndef DIAGNOSTIC
-6:	INTRFASTEXIT
-#else
-6:	cmpl	CPUVAR(ILEVEL),%ebx
-	jne	3f
-	INTRFASTEXIT
-3:	STI(%eax)
-	pushl	$4f
-	call	_C_LABEL(panic)
-	addl	$4,%esp
-	pushl	%ebx
-	call	_C_LABEL(spllower)
-	addl	$4,%esp
-	jmp	.Lalltraps_checkast	/* re-check ASTs */
-4:	.asciz	"SPL NOT LOWERED ON TRAP EXIT\n"
-#endif /* DIAGNOSTIC */
-9:	STI(%eax)
-	call	_C_LABEL(pmap_load)
-	jmp	.Lalltraps_checkast	/* re-check ASTs */
-
-#ifdef IPKDB
-/* LINTSTUB: Ignore */
-NENTRY(bpttraps)
-	INTRENTRY
-	call	_C_LABEL(ipkdb_trap_glue)
-	testl	%eax,%eax
-	jz	calltrap
-	INTRFASTEXIT
-
-ipkdbsetup:
-	popl	%ecx
-
-	/* Disable write protection: */
-	movl	%cr0,%eax
-	pushl	%eax
-	andl	$~CR0_WP,%eax
-	movl	%eax,%cr0
-
-	/* Substitute Protection & Page Fault handlers: */
-	movl	_C_LABEL(idt),%edx
-	pushl	13*8(%edx)
-	pushl	13*8+4(%edx)
-	pushl	14*8(%edx)
-	pushl	14*8+4(%edx)
-	movl	$fault,%eax
-	movw	%ax,13*8(%edx)
-	movw	%ax,14*8(%edx)
-	shrl	$16,%eax
-	movw	%ax,13*8+6(%edx)
-	movw	%ax,14*8+6(%edx)
-
-	pushl	%ecx
-	ret
-
-ipkdbrestore:
-	popl	%ecx
-
-	/* Restore Protection & Page Fault handlers: */
-	movl	_C_LABEL(idt),%edx
-	popl	14*8+4(%edx)
-	popl	14*8(%edx)
-	popl	13*8+4(%edx)
-	popl	13*8(%edx)
-
-	/* Restore write protection: */
-	popl	%edx
-	movl	%edx,%cr0
-
-	pushl	%ecx
-	ret
-#endif /* IPKDB */
-
-#ifdef IPKDB
-/* LINTSTUB: Func: int ipkdbfbyte(u_char *c) */
-NENTRY(ipkdbfbyte)
-	pushl	%ebp
-	movl	%esp,%ebp
-	call	ipkdbsetup
-	movl	8(%ebp),%edx
-	movzbl	(%edx),%eax
-faultexit:
-	call	ipkdbrestore
-	popl	%ebp
-	ret
-
-/* LINTSTUB: Func: int ipkdbsbyte(u_char *c, int i) */
-NENTRY(ipkdbsbyte)
-	pushl	%ebp
-	movl	%esp,%ebp
-	call	ipkdbsetup
-	movl	8(%ebp),%edx
-	movl	12(%ebp),%eax
-	movb	%al,(%edx)
-	call	ipkdbrestore
-	popl	%ebp
-	ret
-
-fault:
-	popl	%eax		/* error code */
-	movl	$faultexit,%eax
-	movl	%eax,(%esp)
-	movl	$-1,%eax
-	iret
-#endif	/* IPKDB */
 
 #ifdef XEN
 
@@ -1210,6 +813,7 @@ critical_region_fixup:
         loop 15b
 16:     movl %edi,%esp        # final %edi is top of merged stack
         jmp  11b
+END(hypervisor_callback)
 
 
 /*
@@ -1222,5 +826,6 @@ NENTRY(failsafe_callback)
 	pop	%gs
 	call	_C_LABEL(xen_failsafe_handler)
 	iret
+END(failsafe_callback)
 
 #endif /* XEN */

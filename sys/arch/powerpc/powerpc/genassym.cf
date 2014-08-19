@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.9 2012/08/01 20:35:52 matt Exp $
+#	$NetBSD: genassym.cf,v 1.9.2.1 2014/08/20 00:03:20 tls Exp $
 
 #-
 # Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -171,6 +171,7 @@ define	CI_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CI_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CI_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 define	CPU_CI		offsetof(struct cpu_info, ci_ci)
+define CACHE_INFO_DCACHE_LINE_SIZE offsetof(struct cache_info, dcache_line_size)
 
 define	FB_PC		offsetof(struct faultbuf, fb_pc)
 define	FB_MSR		offsetof(struct faultbuf, fb_msr)

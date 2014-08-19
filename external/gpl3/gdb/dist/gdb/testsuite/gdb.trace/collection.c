@@ -1,3 +1,20 @@
+/* This testcase is part of GDB, the GNU debugger.
+
+   Copyright 1998-2014 Free Software Foundation, Inc.
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
 /*
  * Test program for trace collection
  */
@@ -201,6 +218,21 @@ int globals_test_func ()
   return i;	/* Set_Tracepoint_Here */
 }
 
+int strings_test_func ()
+{
+  int i = 0;
+  char *locstr, *longloc;
+
+  locstr = "abcdef";
+  longloc = malloc(500);
+  strcpy(longloc, "how now brown cow spam spam spam wonderful wonderful spam");
+
+  i += strlen (locstr);
+  i += strlen (longloc);
+
+  return i;	/* Set_Tracepoint_Here */
+}
+
 int
 main (argc, argv, envp)
      int argc;
@@ -209,11 +241,6 @@ main (argc, argv, envp)
   int         i = 0;
   test_struct mystruct;
   int         myarray[4];
-
-#ifdef usestubs
-  set_debug_traps ();
-  breakpoint ();
-#endif
 
   begin ();
   /* Assign collectable values to global variables. */
@@ -263,6 +290,7 @@ main (argc, argv, envp)
   i += reglocal_test_func ();
   i += statlocal_test_func ();
   i += globals_test_func ();
+  i += strings_test_func ();
 
   /* Values of globals at end of test should be different from
      values that they had when trace data was captured.  */

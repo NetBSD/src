@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.13 2010/01/19 15:28:52 tsutsui Exp $	*/
+/*	$NetBSD: wdc.c,v 1.13.22.1 2014/08/20 00:02:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,6 @@ wdcprobe(struct wdc_channel *chp)
 	uint8_t st0, st1;
 	uint8_t ret_value = 0x03;
 	uint8_t drive;
-	int found;
 
 	/*
 	 * Sanity check to see if the wdc channel responds at all.
@@ -157,7 +156,6 @@ wdcprobe(struct wdc_channel *chp)
 	 * something here assume it's ATA or OLD. Ghost will be killed later in
 	 * attach routine.
 	 */
-	found = 0;
 	for (drive = 0; drive < 2; drive++) {
 		if ((ret_value & (0x01 << drive)) == 0)
 			continue;

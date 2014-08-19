@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_coredump.c,v 1.2 2011/02/02 15:25:27 chuck Exp $	*/
+/*	$NetBSD: uvm_coredump.c,v 1.2.14.1 2014/08/20 00:04:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_coredump.c,v 1.2 2011/02/02 15:25:27 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_coredump.c,v 1.2.14.1 2014/08/20 00:04:45 tls Exp $");
 
 /*
  * uvm_coredump.c: glue functions for coredump
@@ -77,11 +77,14 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_coredump.c,v 1.2 2011/02/02 15:25:27 chuck Exp $
 /*
  * uvm_coredump_walkmap: walk a process's map for the purpose of dumping
  * a core file.
+ * XXX: I'm not entirely sure the locking is this function is in anyway
+ * correct.  If the process isn't actually stopped then the data passed
+ * to func() is at best stale, and horrid things might happen if the
+ * entry being processed is deleted (dsl).
  */
 
 int
-uvm_coredump_walkmap(struct proc *p, void *iocookie,
-    int (*func)(struct proc *, void *, struct uvm_coredump_state *),
+uvm_coredump_walkmap(struct proc *p, int (*func)(struct uvm_coredump_state *),
     void *cookie)
 {
 	struct uvm_coredump_state state;
@@ -182,10 +185,9 @@ uvm_coredump_walkmap(struct proc *p, void *iocookie,
 				amap_unlock(entry->aref.ar_amap);
 			}
 		}
-		
 
 		vm_map_unlock_read(map);
-		error = (*func)(p, iocookie, &state);
+		error = (*func)(&state);
 		if (error)
 			return (error);
 		vm_map_lock_read(map);
@@ -193,4 +195,21 @@ uvm_coredump_walkmap(struct proc *p, void *iocookie,
 	vm_map_unlock_read(map);
 
 	return (0);
+}
+
+static int
+count_segs(struct uvm_coredump_state *s)
+{
+    (*(int *)s->cookie)++;
+
+    return 0;
+}
+
+int
+uvm_coredump_count_segs(struct proc *p)
+{
+	int count = 0;
+
+	uvm_coredump_walkmap(p, count_segs, &count);
+	return count;
 }

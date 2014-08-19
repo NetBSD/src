@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.150.14.3 2013/06/23 06:20:28 tls Exp $	*/
+/*	$NetBSD: emul.c,v 1.150.14.4 2014/08/20 00:04:40 tls Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.150.14.3 2013/06/23 06:20:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.150.14.4 2014/08/20 00:04:40 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.150.14.3 2013/06/23 06:20:28 tls Exp $");
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/cpu.h>
 #include <sys/kmem.h>
 #include <sys/poll.h>
@@ -52,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.150.14.3 2013/06/23 06:20:28 tls Exp $");
 #include <sys/syscallvar.h>
 #include <sys/xcall.h>
 #include <sys/sleepq.h>
+#include <sys/cprng.h>
 
 #include <dev/cons.h>
 
@@ -60,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.150.14.3 2013/06/23 06:20:28 tls Exp $");
 #include <uvm/uvm_map.h>
 
 #include "rump_private.h"
+
+void (*rump_vfs_fini)(void) = (void *)nullop;
 
 /*
  * physmem is largely unused (except for nmbcluster calculations),
@@ -72,7 +76,11 @@ int physmem = PHYSMEM;
 int nkmempages = PHYSMEM/2; /* from le chapeau */
 #undef PHYSMEM
 
-struct lwp lwp0;
+struct lwp lwp0 = {
+	.l_lid = 1,
+	.l_proc = &proc0,
+	.l_fd = &filedesc0,
+};
 struct vnode *rootvp;
 dev_t rootdev = NODEV;
 
@@ -140,11 +148,16 @@ struct emul emul_netbsd = {
 
 u_int nprocs = 1;
 
+cprng_strong_t *kern_cprng;
+
+/* not used, but need the symbols for pointer comparisons */
+syncobj_t mutex_syncobj, rw_syncobj;
+
 int
 kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 {
 	extern int hz;
-	int rv;
+	int rv __diagused;
 	uint64_t sec, nsec;
 
 	if (mtx)
@@ -272,28 +285,21 @@ cnflush(void)
 	/* done */
 }
 
+void
+resettodr(void)
+{
+
+	/* setting clocks is not in the jurisdiction of rump kernels */
+}
+
 #ifdef __HAVE_SYSCALL_INTERN
 void
 syscall_intern(struct proc *p)
 {
 
-	/* no you don't */
+	p->p_emuldata = NULL;
 }
 #endif
-
-int
-trace_enter(register_t code, const register_t *args, int narg)
-{
-
-	return 0;
-}
-
-void
-trace_exit(register_t code, register_t rval[], int error)
-{
-
-	/* nada */
-}
 
 #ifdef LOCKDEBUG
 void
@@ -303,3 +309,45 @@ turnstile_print(volatile void *obj, void (*pr)(const char *, ...))
 	/* nada */
 }
 #endif
+
+void
+cpu_reboot(int howto, char *bootstr)
+{
+	int ruhow = 0;
+	void *finiarg;
+
+	printf("rump kernel halting...\n");
+
+	if (!RUMP_LOCALPROC_P(curproc))
+		finiarg = curproc->p_vmspace->vm_map.pmap;
+	else
+		finiarg = NULL;
+
+	/* dump means we really take the dive here */
+	if ((howto & RB_DUMP) || panicstr) {
+		ruhow = RUMPUSER_PANIC;
+		goto out;
+	}
+
+	/* try to sync */
+	if (!((howto & RB_NOSYNC) || panicstr)) {
+		rump_vfs_fini();
+	}
+
+	doshutdownhooks();
+
+	/* your wish is my command */
+	if (howto & RB_HALT) {
+		printf("rump kernel halted\n");
+		rumpuser_sp_fini(finiarg);
+		for (;;) {
+			rumpuser_clock_sleep(RUMPUSER_CLOCK_RELWALL, 10, 0);
+		}
+	}
+
+	/* this function is __dead, we must exit */
+ out:
+	printf("halted\n");
+	rumpuser_sp_fini(finiarg);
+	rumpuser_exit(ruhow);
+}

@@ -1,4 +1,4 @@
-|	$NetBSD: oc_cksum.s,v 1.6 2011/12/23 05:06:19 tsutsui Exp $
+|	$NetBSD: oc_cksum.s,v 1.6.6.1 2014/08/20 00:03:11 tls Exp $
 
 | Copyright (c) 1988 Regents of the University of California.
 | All rights reserved.
@@ -91,10 +91,10 @@
 	.text
 
 ENTRY(oc_cksum)
-	movl	%sp@(4),%a0	| get buffer ptr
-	movl	%sp@(8),%d1	| get byte count
-	movl	%sp@(12),%d0	| get starting value
-	movl	%d2,%sp@-	| free a reg
+	movl	4(%sp),%a0	| get buffer ptr
+	movl	8(%sp),%d1	| get byte count
+	movl	12(%sp),%d0	| get starting value
+	movl	%d2,-(%sp)	| free a reg
 
 	| test for possible 1, 2 or 3 bytes of excess at end
 	| of buffer.  The usual case is no excess (the usual
@@ -104,80 +104,121 @@ ENTRY(oc_cksum)
 	| bits of the count in d1.)
 
 	btst	#0,%d1
-	jne	L5		| if one or three bytes excess
+	jne	.L5		| if one or three bytes excess
 	btst	#1,%d1
-	jne	L7		| if two bytes excess
-L1:
-	movl	%d1,%d2
+	jne	.L7		| if two bytes excess
+.L1:
+#ifdef __mcoldfire__
+	movq	#-4,%d2		| mask to clear bottom two bits
+	andl	%d2,%d1		| longword truncate length
+	movl	%d1,%d2		| move length to d2
+	movl	%d1,%a1		| move length to a1
+	addl	%a0,%a1		| add start so a1 now points to end
+	movq	#0x3c,%d1	| then find fractions of a chunk
+	andl	%d1,%d2
+	negl	%d2
+	subl	%d1,%d1		| this can never carry so X is cleared
+#else
+	movl	%d1,%d2		| move to d2
 	lsrl	#6,%d1		| make cnt into # of 64 byte chunks
 	andl	#0x3c,%d2	| then find fractions of a chunk
 	negl	%d2
 	andb	#0xf,%cc	| clear X
-	jmp	%pc@(L3-.-2:b,%d2)
-L2:
-	movl	%a0@+,%d2
+#endif
+	jmp	(.L3-.-2:b,%pc,%d2)
+.L2:
+	movl	(%a0)+,%d2
 	addxl	%d2,%d0
-	movl	%a0@+,%d2
+	movl	(%a0)+,%d2
 	addxl	%d2,%d0
-	movl	%a0@+,%d2
+	movl	(%a0)+,%d2
 	addxl	%d2,%d0
-	movl	%a0@+,%d2
+	movl	(%a0)+,%d2
 	addxl	%d2,%d0
-	movl	%a0@+,%d2
+	movl	(%a0)+,%d2
 	addxl	%d2,%d0
-	movl	%a0@+,%d2
+	movl	(%a0)+,%d2
 	addxl	%d2,%d0
-	movl	%a0@+,%d2
+	movl	(%a0)+,%d2
 	addxl	%d2,%d0
-	movl	%a0@+,%d2
+	movl	(%a0)+,%d2
 	addxl	%d2,%d0
-	movl	%a0@+,%d2
+	movl	(%a0)+,%d2
 	addxl	%d2,%d0
-	movl	%a0@+,%d2
+	movl	(%a0)+,%d2
 	addxl	%d2,%d0
-	movl	%a0@+,%d2
+	movl	(%a0)+,%d2
 	addxl	%d2,%d0
-	movl	%a0@+,%d2
+	movl	(%a0)+,%d2
 	addxl	%d2,%d0
-	movl	%a0@+,%d2
+	movl	(%a0)+,%d2
 	addxl	%d2,%d0
-	movl	%a0@+,%d2
+	movl	(%a0)+,%d2
 	addxl	%d2,%d0
-	movl	%a0@+,%d2
+	movl	(%a0)+,%d2
 	addxl	%d2,%d0
-	movl	%a0@+,%d2
+	movl	(%a0)+,%d2
 	addxl	%d2,%d0
-L3:
-	dbra	%d1,L2		| (NB- dbra doesn't affect X)
+.L3:
+#ifdef __mcoldfire__
+	cmpal	%a0,%a1		| cmpa doesn't affect X
+	bne	.L2		| loop until reached
+#else
+	dbra	%d1,.L2		| (NB- dbra doesn't affect X)
+#endif
 
 	movl	%d0,%d1		| fold 32 bit sum to 16 bits
 	swap	%d1		| (NB- swap doesn't affect X)
+#ifdef __mcoldfire__
+	mvzw	%d1,%d1		| zero extend %d1 (doesn't affect X)
+	mvzw	%d0,%d0		| zero extend %d0 (doesn't affect X)
+	addxl	%d1,%d0		| 
+	jcc	.L4
+	addql	#1,%d0
+#else
 	addxw	%d1,%d0
-	jcc	L4
+	jcc	.L4
 	addw	#1,%d0
-L4:
+#endif
+.L4:
+#ifdef __mcoldfire__
+	mvzw	%d0,%d0
+#else
 	andl	#0xffff,%d0
-	movl	%sp@+,%d2
+#endif
+	movl	(%sp)+,%d2
 	rts
 
-L5:	| deal with 1 or 3 excess bytes at the end of the buffer.
+.L5:	| deal with 1 or 3 excess bytes at the end of the buffer.
 	btst	#1,%d1
-	jeq	L6		| if 1 excess
+	jeq	.L6		| if 1 excess
 
 	| 3 bytes excess
+#ifdef __mcoldfire__
+	mvzw	(-3,%a0,%d1:l),%d2	| add in last full word then drop
+#else
 	clrl	%d2
-	movw	%a0@(-3,%d1:l),%d2	| add in last full word then drop
+	movw	(-3,%a0,%d1:l),%d2	| add in last full word then drop
+#endif
 	addl	%d2,%d0		|  through to pick up last byte
 
-L6:	| 1 byte excess
+.L6:	| 1 byte excess
+#ifdef __mcoldfire__
+	mvzb	(-1,%a0,%d1:l),%d2
+#else
 	clrl	%d2
-	movb	%a0@(-1,%d1:l),%d2
+	movb	(-1,%a0,%d1:l),%d2
+#endif
 	lsll	#8,%d2
 	addl	%d2,%d0
-	jra	L1
+	jra	.L1
 
-L7:	| 2 bytes excess
+.L7:	| 2 bytes excess
+#ifdef __mcoldfire__
+	mvzw	(-2,%a0,%d1:l),%d2
+#else
 	clrl	%d2
-	movw	%a0@(-2,%d1:l),%d2
+	movw	(-2,%a0,%d1:l),%d2
+#endif
 	addl	%d2,%d0
-	jra	L1
+	jra	.L1

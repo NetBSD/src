@@ -1,7 +1,6 @@
 /* DWARF 2 location expression support for GDB.
 
-   Copyright (C) 2003, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2003-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +20,8 @@
 #if !defined (DWARF2LOC_H)
 #define DWARF2LOC_H
 
+#include "dwarf2expr.h"
+
 struct symbol_computed_ops;
 struct objfile;
 struct dwarf2_per_cu_data;
@@ -31,13 +32,20 @@ struct axs_value;
 /* This header is private to the DWARF-2 reader.  It is shared between
    dwarf2read.c and dwarf2loc.c.  */
 
+/* `set debug entry-values' setting.  */
+extern unsigned int entry_values_debug;
+
 /* Return the OBJFILE associated with the compilation unit CU.  If CU
    came from a separate debuginfo file, then the master objfile is
    returned.  */
 struct objfile *dwarf2_per_cu_objfile (struct dwarf2_per_cu_data *cu);
 
 /* Return the address size given in the compilation unit header for CU.  */
-CORE_ADDR dwarf2_per_cu_addr_size (struct dwarf2_per_cu_data *cu);
+int dwarf2_per_cu_addr_size (struct dwarf2_per_cu_data *cu);
+
+/* Return the DW_FORM_ref_addr size given in the compilation unit header for
+   CU.  */
+int dwarf2_per_cu_ref_addr_size (struct dwarf2_per_cu_data *cu);
 
 /* Return the offset size given in the compilation unit header for CU.  */
 int dwarf2_per_cu_offset_size (struct dwarf2_per_cu_data *cu);
@@ -54,10 +62,23 @@ const gdb_byte *dwarf2_find_location_expression
    size_t *locexpr_length,
    CORE_ADDR pc);
 
-struct dwarf2_locexpr_baton dwarf2_fetch_die_location_block
-  (unsigned int offset, struct dwarf2_per_cu_data *per_cu,
+struct dwarf2_locexpr_baton dwarf2_fetch_die_loc_sect_off
+  (sect_offset offset_in_cu, struct dwarf2_per_cu_data *per_cu,
    CORE_ADDR (*get_frame_pc) (void *baton),
    void *baton);
+
+struct dwarf2_locexpr_baton dwarf2_fetch_die_loc_cu_off
+  (cu_offset offset_in_cu, struct dwarf2_per_cu_data *per_cu,
+   CORE_ADDR (*get_frame_pc) (void *baton),
+   void *baton);
+
+extern const gdb_byte *dwarf2_fetch_constant_bytes (sect_offset,
+						    struct dwarf2_per_cu_data *,
+						    struct obstack *,
+						    LONGEST *);
+
+struct type *dwarf2_get_die_type (cu_offset die_offset,
+				  struct dwarf2_per_cu_data *per_cu);
 
 /* Evaluate a location description, starting at DATA and with length
    SIZE, to find the current location of variable of TYPE in the context
@@ -66,8 +87,11 @@ struct dwarf2_locexpr_baton dwarf2_fetch_die_location_block
 struct value *dwarf2_evaluate_loc_desc (struct type *type,
 					struct frame_info *frame,
 					const gdb_byte *data,
-					unsigned short size,
+					size_t size,
 					struct dwarf2_per_cu_data *per_cu);
+
+CORE_ADDR dwarf2_read_addr_index (struct dwarf2_per_cu_data *per_cu,
+				  unsigned int addr_index);
 
 /* The symbol location baton types used by the DWARF-2 reader (i.e.
    SYMBOL_LOCATION_BATON for a LOC_COMPUTED symbol).  "struct
@@ -77,11 +101,13 @@ struct value *dwarf2_evaluate_loc_desc (struct type *type,
 
 struct dwarf2_locexpr_baton
 {
-  /* Pointer to the start of the location expression.  */
+  /* Pointer to the start of the location expression.  Valid only if SIZE is
+     not zero.  */
   const gdb_byte *data;
 
-  /* Length of the location expression.  */
-  unsigned long size;
+  /* Length of the location expression.  For optimized out expressions it is
+     zero.  */
+  size_t size;
 
   /* The compilation unit containing the symbol whose location
      we're computing.  */
@@ -98,15 +124,22 @@ struct dwarf2_loclist_baton
   const gdb_byte *data;
 
   /* Length of the location list.  */
-  unsigned long size;
+  size_t size;
 
   /* The compilation unit containing the symbol whose location
      we're computing.  */
   struct dwarf2_per_cu_data *per_cu;
+
+  /* Non-zero if the location list lives in .debug_loc.dwo.
+     The format of entries in this section are different.  */
+  unsigned char from_dwo;
 };
 
 extern const struct symbol_computed_ops dwarf2_locexpr_funcs;
 extern const struct symbol_computed_ops dwarf2_loclist_funcs;
+
+extern const struct symbol_block_ops dwarf2_block_frame_base_locexpr_funcs;
+extern const struct symbol_block_ops dwarf2_block_frame_base_loclist_funcs;
 
 /* Compile a DWARF location expression to an agent expression.
    
@@ -128,5 +161,24 @@ extern void dwarf2_compile_expr_to_ax (struct agent_expr *expr,
 				       const gdb_byte *op_ptr,
 				       const gdb_byte *op_end,
 				       struct dwarf2_per_cu_data *per_cu);
+
+/* Determined tail calls for constructing virtual tail call frames.  */
+
+struct call_site_chain
+  {
+    /* Initially CALLERS == CALLEES == LENGTH.  For partially ambiguous result
+       CALLERS + CALLEES < LENGTH.  */
+    int callers, callees, length;
+
+    /* Variably sized array with LENGTH elements.  Later [0..CALLERS-1] contain
+       top (GDB "prev") sites and [LENGTH-CALLEES..LENGTH-1] contain bottom
+       (GDB "next") sites.  One is interested primarily in the PC field.  */
+    struct call_site *call_site[1];
+  };
+
+struct call_site_stuff;
+extern struct call_site_chain *call_site_find_chain (struct gdbarch *gdbarch,
+						     CORE_ADDR caller_pc,
+						     CORE_ADDR callee_pc);
 
 #endif /* dwarf2loc.h */

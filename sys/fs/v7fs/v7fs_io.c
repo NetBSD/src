@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_io.c,v 1.2 2011/07/18 21:51:49 apb Exp $	*/
+/*	$NetBSD: v7fs_io.c,v 1.2.12.1 2014/08/20 00:04:28 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_io.c,v 1.2 2011/07/18 21:51:49 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_io.c,v 1.2.12.1 2014/08/20 00:04:28 tls Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -96,6 +96,7 @@ scratch_read(struct v7fs_self *fs, daddr_t blk)
 	uint8_t *buf = malloc(V7FS_BSIZE);
 	if (!fs->io.read(fs->io.cookie, buf, blk)) {
 		DPRINTF("*** I/O error block %ld\n",(long)blk);
+		free(buf);
 		return NULL;
 	}
 	return buf;

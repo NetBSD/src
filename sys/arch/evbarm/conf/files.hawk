@@ -1,0 +1,15 @@
+# $NetBSD: files.hawk,v 1.1.10.2 2014/08/20 00:02:53 tls Exp $
+#
+# Hawk board configuration info
+#
+
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/evbarm/hawk/hawk_machdep.c
+
+# Kernel boot arguments
+defparam opt_machdep.h				BOOT_ARGS
+
+# CPU support and integrated peripherals
+include "arch/arm/omap/files.omapl1x"
+

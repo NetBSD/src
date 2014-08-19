@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2004, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2004-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ func_cu1:
 	.byte		1			/* DW_AT_decl_file */
 	.byte		2			/* DW_AT_decl_line */
 	.ascii		"func_cu1\0"		/* DW_AT_name */
-	.4byte		.Ltype_int_in_cu2	/* DW_AT_type */
+	.4byte		.Ltype_int2_in_cu2	/* DW_AT_type */
 	.4byte		.Lbegin_func_cu1	/* DW_AT_low_pc */
 	.4byte		.Lend_func_cu1		/* DW_AT_high_pc */
 	.byte		1			/* DW_AT_frame_base: length */
@@ -83,9 +83,12 @@ func_cu1:
 	.ascii	"GNU C 3.3.3\0"			/* DW_AT_producer */
 	.byte	1				/* DW_AT_language (C) */
 
-.Ltype_int_in_cu2:
+	/* This type is named "int2" and not "int" to ensure it is unique,
+	   and thus we can easily ensure we expand this CU and not some
+	   other CU with "int".  */
+.Ltype_int2_in_cu2:
 	.uleb128	2			/* Abbrev: DW_TAG_base_type */
-	.ascii		"int\0"			/* DW_AT_name */
+	.ascii		"int2\0"		/* DW_AT_name */
 	.byte		4			/* DW_AT_byte_size */
 	.byte		5			/* DW_AT_encoding */
 

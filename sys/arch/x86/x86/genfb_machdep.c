@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.c,v 1.10 2011/07/01 18:21:31 dyoung Exp $ */
+/* $NetBSD: genfb_machdep.c,v 1.10.12.1 2014/08/20 00:03:29 tls Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.10 2011/07/01 18:21:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.10.12.1 2014/08/20 00:03:29 tls Exp $");
 
 #include "opt_mtrr.h"
 
@@ -159,7 +159,7 @@ x86_genfb_cnattach(void)
 		return 0;
 
 	err = _x86_memio_map(t, (bus_addr_t)fbinfo->physaddr,
-	    fbinfo->width * fbinfo->stride,
+	    fbinfo->height * fbinfo->stride,
 	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE, &h);
 	if (err) {
 		aprint_error("x86_genfb_cnattach: couldn't map framebuffer\n");

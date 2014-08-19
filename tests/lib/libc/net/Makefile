@@ -1,10 +1,11 @@
-# $NetBSD: Makefile,v 1.6.8.1 2012/11/20 03:02:55 tls Exp $
+# $NetBSD: Makefile,v 1.6.8.2 2014/08/20 00:04:49 tls Exp $
 
 .include <bsd.own.mk>
 
 MKMAN=	no
 
 TESTS_SUBDIRS+=	getaddrinfo
+FILES+=hosts resolv.conf
 
 TESTSDIR=	${TESTSBASE}/lib/libc/net
 
@@ -19,12 +20,21 @@ aton_ether_subr.c: gen_ether_subr ${NETBSDSRCDIR}/sys/net/if_ethersubr.c
 TESTS_SH+=	t_nsdispatch
 TESTS_SH+=	t_protoent
 TESTS_SH+=	t_servent
+TESTS_SH+=	t_hostent
 
 BINDIR=		${TESTSDIR}
 
 PROGS+=		h_nsd_recurse
 PROGS+=		h_protoent
 PROGS+=		h_servent
+PROGS+=		h_hostent
+PROGS+=		h_dns_server
+CPPFLAGS.h_hostent.c += -I${NETBSDSRCDIR}/lib/libc/net
+
+# For easy debugging, without installing libc
+#.PATH.c:${NETBSDSRCDIR}/lib/libc/net
+#SRCS.h_hostent = h_hostent.c gethnamaddr.c
+#DBG=-g3
 
 LDADD.h_nsd_recurse+=	-lpthread
 

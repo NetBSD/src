@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.24 2012/03/13 18:40:32 elad Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.24.2.1 2014/08/20 00:03:43 tls Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.24 2012/03/13 18:40:32 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.24.2.1 2014/08/20 00:03:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -74,8 +74,10 @@ static int
 pciioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct pci_softc *sc = device_lookup_private(&pci_cd, minor(dev));
+	struct pci_child *child;
 	struct pciio_bdf_cfgreg *bdfr;
 	struct pciio_businfo *binfo;
+	struct pciio_drvname *dname;
 	pcitag_t tag;
 
 	switch (cmd) {
@@ -83,7 +85,7 @@ pciioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case PCI_IOC_BDF_CFGWRITE:
 		bdfr = data;
 		if (bdfr->bus > 255 || bdfr->device >= sc->sc_maxndevs ||
-		    bdfr->function > 7)
+		    bdfr->function > 7 || ISSET(bdfr->cfgreg.reg, 3))
 			return EINVAL;
 		tag = pci_make_tag(sc->sc_pc, bdfr->bus, bdfr->device,
 		    bdfr->function);
@@ -103,6 +105,17 @@ pciioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		binfo = data;
 		binfo->busno = sc->sc_bus;
 		binfo->maxdevs = sc->sc_maxndevs;
+		return 0;
+
+	case PCI_IOC_DRVNAME:
+		dname = data;
+		if (dname->device >= sc->sc_maxndevs || dname->function > 7)
+			return EINVAL;
+		child = &sc->PCI_SC_DEVICESC(dname->device, dname->function);
+		if (!child->c_dev)
+			return ENXIO;
+		strlcpy(dname->name, device_xname(child->c_dev),
+			sizeof dname->name);
 		return 0;
 
 	default:
@@ -170,8 +183,18 @@ pcimmap(dev_t dev, off_t offset, int prot)
 }
 
 const struct cdevsw pci_cdevsw = {
-	pciopen, nullclose, noread, nowrite, pciioctl,
-	nostop, notty, nopoll, pcimmap, nokqfilter, D_OTHER,
+	.d_open = pciopen,
+	.d_close = nullclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = pciioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = pcimmap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 /*

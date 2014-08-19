@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.20.14.1 2013/06/23 06:20:00 tls Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.20.14.2 2014/08/20 00:02:46 tls Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -80,10 +80,7 @@
 			 defined(CPU_SA1110) +				\
 			 defined(CPU_FA526) +				\
 			 defined(CPU_IXP12X0) +				\
-			 defined(CPU_XSCALE_80200) +			\
-			 defined(CPU_XSCALE_80321) +			\
-			 defined(__CPU_XSCALE_PXA2XX) +			\
-			 defined(CPU_XSCALE_IXP425)) +			\
+			 defined(CPU_XSCALE) +				\
 			 defined(CPU_SHEEVA))
 #else
 #define	CPU_NTYPES	2
@@ -118,9 +115,7 @@
 
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_ARM9E) || defined(CPU_ARM10) ||			\
-     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) ||		\
-     defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)) ||	\
-     defined(CPU_SHEEVA)
+     defined(CPU_XSCALE) || defined(CPU_SHEEVA))
 #define	ARM_ARCH_5	1
 #else
 #define	ARM_ARCH_5	0
@@ -205,27 +200,21 @@
 #endif
 
 #if !defined(_KERNEL_OPT) ||						\
-    (defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) ||		\
-     defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425))
+    defined(CPU_XSCALE)
 #define	ARM_MMU_XSCALE		1
 #else
 #define	ARM_MMU_XSCALE		0
 #endif
 
 #if !defined(_KERNEL_OPT) ||						\
-	defined(CPU_ARM11MPCORE) && defined(ARM11MPCORE_COMPAT_MMU) ||	\
-	defined(CPU_ARM1136) || \
-	defined(CPU_ARM1176) || \
-	defined(CPU_ARM11) && \
-	!defined(CPU_CORTEX) && \
-	!defined(CPU_ARM11MPCORE) && !defined(CPU_PJ4B)
+	(defined(CPU_ARM11) && defined(ARM11_COMPAT_MMU))
 #define	ARM_MMU_V6C		1
 #else
 #define	ARM_MMU_V6C		0
 #endif
 
 #if !defined(_KERNEL_OPT) ||						\
-	defined(CPU_ARM11MPCORE) && !defined(ARM11MPCORE_COMPAT_MMU)
+	(defined(CPU_ARM11) && !defined(ARM11_COMPAT_MMU))
 #define	ARM_MMU_V6N		1
 #else
 #define	ARM_MMU_V6N		0
@@ -233,12 +222,24 @@
 
 #define	ARM_MMU_V6	(ARM_MMU_V6C + ARM_MMU_V6N)
 
-
 #if !defined(_KERNEL_OPT) ||						\
-	 defined(CPU_CORTEX) || defined(CPU_PJ4B)
+	 defined(CPU_ARMV7)
 #define	ARM_MMU_V7		1
 #else
 #define	ARM_MMU_V7		0
+#endif
+
+/*
+ * Can we use the ASID support in armv6+ MMUs?
+ */
+#if !defined(_LOCORE)
+#define	ARM_MMU_EXTENDED	((ARM_MMU_MEMC + ARM_MMU_GENERIC	\
+				  + ARM_MMU_SA1 + ARM_MMU_XSCALE	\
+				  + ARM_MMU_V6C) == 0			\
+				 && (ARM_MMU_V6N + ARM_MMU_V7) > 0)
+#if ARM_MMU_EXTENDED == 0
+#undef ARM_MMU_EXTENDED
+#endif
 #endif
 
 #define	ARM_NMMUS		(ARM_MMU_MEMC + ARM_MMU_GENERIC +	\

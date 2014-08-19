@@ -1,4 +1,4 @@
-.\"	$NetBSD: 1.0.t,v 1.3 2003/08/07 10:30:48 agc Exp $
+.\"	$NetBSD: 1.0.t,v 1.3.60.1 2014/08/20 00:02:29 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)1.0.t	8.3 (Berkeley) 5/26/94
 .\"
-.Sh 1 "Kernel primitives
+.Sh 1 4 "Kernel primitives
 .PP
 The facilities available to a user process are logically
 divided into two parts: kernel facilities directly implemented by

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.218.6.1 2013/02/25 00:29:50 tls Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.218.6.2 2014/08/20 00:04:28 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.218.6.1 2013/02/25 00:29:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.218.6.2 2014/08/20 00:04:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,8 +122,18 @@ static void fill_file(struct kinfo_file *, const file_t *, const fdfile_t *,
 		      int, pid_t);
 
 const struct cdevsw filedesc_cdevsw = {
-	filedescopen, noclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER | D_MPSAFE,
+	.d_open = filedescopen,
+	.d_close = noclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 /* For ease of reading. */
@@ -154,9 +164,6 @@ fd_sys_init(void)
 	    NULL);
 	KASSERT(filedesc_cache != NULL);
 
-	sysctl_createv(&clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT, CTLTYPE_NODE, "kern", NULL,
-		       NULL, 0, NULL, 0, CTL_KERN, CTL_EOL);
 	sysctl_createv(&clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "file",
@@ -1170,6 +1177,7 @@ fd_abort(proc_t *p, file_t *fp, unsigned fd)
 
 	fdp = p->p_fd;
 	ff = fdp->fd_dt->dt_ff[fd];
+	ff->ff_exclose = false;
 
 	KASSERT(fd >= NDFDFILE || ff == (fdfile_t *)fdp->fd_dfdfile[fd]);
 

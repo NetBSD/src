@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.14.2.2 2013/02/25 00:29:47 tls Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.14.2.3 2014/08/20 00:04:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.14.2.2 2013/02/25 00:29:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.14.2.3 2014/08/20 00:04:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -79,8 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.14.2.2 2013/02/25 00:29:47 tls
 #include <fs/filecorefs/filecore.h>
 #include <fs/filecorefs/filecore_extern.h>
 #include <fs/filecorefs/filecore_node.h>
-
-struct	nchstats filecore_nchstats;
 
 /*
  * Convert a component of a pathname into a pointer to a locked inode.
@@ -120,14 +118,13 @@ struct	nchstats filecore_nchstats;
 int
 filecore_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
 	struct vnode *vdp;		/* vnode for directory being searched */
 	struct filecore_node *dp;	/* inode for directory being searched */
-	struct filecore_mnt *fcmp;	/* file system that directory is in */
 	struct buf *bp;			/* a buffer of directory entries */
 	struct filecore_direntry *de;
 	int numdirpasses;		/* strategy for directory search */
@@ -150,7 +147,6 @@ filecore_lookup(void *v)
 	*vpp = NULL;
 	vdp = ap->a_dvp;
 	dp = VTOI(vdp);
-	fcmp = dp->i_mnt;
 
 	/*
 	 * Check accessiblity of directory.
@@ -195,7 +191,7 @@ filecore_lookup(void *v)
 	} else {
 		i = dp->i_diroff;
 		numdirpasses = 2;
-		filecore_nchstats.ncs_2passes++;
+		namecache_count_2passes();
 	}
 	endsearch = FILECORE_MAXDIRENTS;
 
@@ -253,7 +249,7 @@ notfound:
 
 found:
 	if (numdirpasses == 2)
-		filecore_nchstats.ncs_pass2++;
+		namecache_count_pass2();
 
 	/*
 	 * Found component in pathname.
@@ -318,5 +314,7 @@ found:
 	 */
 	cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
 		    cnp->cn_flags);
+	if (*vpp != vdp)
+		VOP_UNLOCK(*vpp);
 	return 0;
 }

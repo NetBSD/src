@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.45 2010/01/19 22:06:19 pooka Exp $ */
+/*	$NetBSD: if_le.c,v 1.45.22.1 2014/08/20 00:02:43 tls Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #include "opt_inet.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.45 2010/01/19 22:06:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.45.22.1 2014/08/20 00:02:43 tls Exp $");
 
 
 #include <sys/param.h>
@@ -216,6 +216,7 @@ lepcnet_reset(struct lance_softc *sc)
 	volatile int dummy;
 
 	dummy = ler1->ler1_reset;	/* Reset PCNet-ISA */
+	__USE(dummy);
 }
 
 void

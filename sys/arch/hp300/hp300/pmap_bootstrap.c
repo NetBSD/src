@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.57 2012/02/10 06:28:39 mhitch Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.57.6.1 2014/08/20 00:03:00 tls Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.57 2012/02/10 06:28:39 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.57.6.1 2014/08/20 00:03:00 tls Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -411,8 +411,10 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 */
 	RELOC(Sysseg, st_entry_t *) = (st_entry_t *)(kstpa - firstpa);
 	RELOC(Sysseg_pa, paddr_t) = kstpa;
+#if defined(M68040)
 	if (RELOC(mmutype, int) == MMU_68040)
 		RELOC(protostfree, u_int) = stfree;
+#endif
 	/*
 	 * Sysptmap: base of kernel page table map
 	 */

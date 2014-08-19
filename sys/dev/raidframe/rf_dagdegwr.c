@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.31 2011/08/01 12:28:53 mbalmer Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.31.12.1 2014/08/20 00:03:49 tls Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.31 2011/08/01 12:28:53 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.31.12.1 2014/08/20 00:03:49 tls Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -161,9 +161,12 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 				      int (*redFunc) (RF_DagNode_t *),
 				      int allowBufferRecycle)
 {
-	int     nNodes, nRrdNodes, nWndNodes, nXorBufs, i, j, paramNum,
+	int     nRrdNodes, nWndNodes, nXorBufs, i, j, paramNum,
 	        rdnodesFaked;
-	RF_DagNode_t *blockNode, *unblockNode, *wnpNode, *wnqNode, *termNode;
+	RF_DagNode_t *blockNode, *unblockNode, *wnpNode, *termNode;
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
+	RF_DagNode_t *wnqNode;
+#endif
 	RF_DagNode_t *wndNodes, *rrdNodes, *xorNode, *commitNode;
 	RF_DagNode_t *tmpNode, *tmpwndNode, *tmprrdNode;
 	RF_SectorCount_t sectorsPerSU;
@@ -226,8 +229,6 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 	} else {
 		rdnodesFaked = 0;
 	}
-	/* lock, unlock, xor, Wnd, Rrd, W(nfaults) */
-	nNodes = 5 + nfaults + nWndNodes + nRrdNodes;
 
 	blockNode = rf_AllocDAGNode();
 	blockNode->list_next = dag_h->nodes;
@@ -273,9 +274,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 		wnqNode->list_next = dag_h->nodes;
 		dag_h->nodes = wnqNode;
 	} else {
-#endif
 		wnqNode = NULL;
-#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	}
 #endif
 
@@ -583,7 +582,7 @@ rf_WriteGenerateFailedAccessASMs(
 	int     numDataCol = layoutPtr->numDataCol;
 	int     state;
 	unsigned napdas;
-	RF_SectorNum_t fone_start, fone_end, ftwo_start = 0, ftwo_end;
+	RF_SectorNum_t fone_start, ftwo_start = 0;
 	RF_PhysDiskAddr_t *fone = asmap->failedPDAs[0], *ftwo = asmap->failedPDAs[1];
 	RF_PhysDiskAddr_t *pda_p;
 	RF_RaidAddr_t sosAddr;
@@ -593,7 +592,6 @@ rf_WriteGenerateFailedAccessASMs(
 	 * possibly two, depending whether they overlap. */
 
 	fone_start = rf_StripeUnitOffset(layoutPtr, fone->startSector);
-	fone_end = fone_start + fone->numSector;
 
 	if (asmap->numDataFailed == 1) {
 		PDAPerDisk = 1;
@@ -609,7 +607,6 @@ rf_WriteGenerateFailedAccessASMs(
 		pda_p->type = RF_PDA_TYPE_Q;
 	} else {
 		ftwo_start = rf_StripeUnitOffset(layoutPtr, ftwo->startSector);
-		ftwo_end = ftwo_start + ftwo->numSector;
 		if (fone->numSector + ftwo->numSector > secPerSU) {
 			PDAPerDisk = 1;
 			state = 2;

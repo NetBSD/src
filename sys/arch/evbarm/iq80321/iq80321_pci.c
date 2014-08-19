@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_pci.c,v 1.7 2011/07/01 20:41:16 dyoung Exp $	*/
+/*	$NetBSD: iq80321_pci.c,v 1.7.12.1 2014/08/20 00:02:55 tls Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,14 +40,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80321_pci.c,v 1.7 2011/07/01 20:41:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80321_pci.c,v 1.7.12.1 2014/08/20 00:02:55 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/bus.h>
+
+#include <dev/pci/pcidevs.h>
+#include <dev/pci/ppbreg.h>
+
+#include <arm/locore.h>
 
 #include <machine/autoconf.h>
-#include <sys/bus.h>
 
 #include <evbarm/iq80321/iq80321reg.h>
 #include <evbarm/iq80321/iq80321var.h>
@@ -55,12 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: iq80321_pci.c,v 1.7 2011/07/01 20:41:16 dyoung Exp $
 #include <arm/xscale/i80321reg.h>
 #include <arm/xscale/i80321var.h>
 
-#include <dev/pci/pcidevs.h>
-#include <dev/pci/ppbreg.h>
-
 int	iq80321_pci_intr_map(const struct pci_attach_args *,
 	    pci_intr_handle_t *);
-const char *iq80321_pci_intr_string(void *, pci_intr_handle_t);
+const char *iq80321_pci_intr_string(void *, pci_intr_handle_t, char *, size_t);
 const struct evcnt *iq80321_pci_intr_evcnt(void *, pci_intr_handle_t);
 void	*iq80321_pci_intr_establish(void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *);
@@ -138,10 +140,11 @@ iq80321_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 const char *
-iq80321_pci_intr_string(void *v, pci_intr_handle_t ih)
+iq80321_pci_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
 
-	return (i80321_irqnames[ih]);
+	strlcpy(buf, i80321_irqnames[ih], len);
+	return buf;
 }
 
 const struct evcnt *

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12.2.1 2013/02/25 00:27:40 tls Exp $
+#	$NetBSD: Makefile,v 1.12.2.2 2014/08/20 00:00:09 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -7,9 +7,9 @@
 # WSDISPLAY_COMPAT_PCVT, this might change soon)
 .if	   ${MACHINE_ARCH} == "x86_64" \
 	|| ${MACHINE_ARCH} == "cats" \
-	|| ${MACHINE_ARCH} == "hp700" \
 	|| ${MACHINE_ARCH} == "hpcmips" \
 	|| ${MACHINE_ARCH} == "hpcsh" \
+	|| ${MACHINE_ARCH} == "hppa" \
 	|| ${MACHINE_ARCH} == "i386" \
 	|| ${MACHINE_ARCH} == "netwinder" \
 	|| ${MACHINE_ARCH} == "shark" \

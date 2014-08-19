@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.435.2.2 2013/06/23 06:18:58 tls Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.435.2.3 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.435.2.2 2013/06/23 06:18:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.435.2.3 2014/08/20 00:04:29 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -131,8 +131,8 @@ vntblinit(void)
 {
 
 	vn_initialize_syncerd();
-	vfs_vnode_sysinit();
 	vfs_mount_sysinit();
+	vfs_vnode_sysinit();
 }
 
 /*
@@ -460,7 +460,7 @@ reassignbuf(struct buf *bp, struct vnode *vp)
 				delayx = dirdelay;
 				break;
 			case VBLK:
-				if (vp->v_specmountpoint != NULL) {
+				if (spec_node_getmountedfs(vp) != NULL) {
 					delayx = metadelay;
 					break;
 				}
@@ -611,7 +611,8 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 	char *where = oldp;
 	size_t *sizep = oldlenp;
 	struct mount *mp, *nmp;
-	vnode_t *vp, *mvp, vbuf;
+	vnode_t *vp, vbuf;
+	struct vnode_iterator *marker;
 	char *bp = where;
 	char *ewhere;
 	int error;
@@ -631,52 +632,33 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 
 	sysctl_unlock();
 	mutex_enter(&mountlist_lock);
-	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
-	    mp = nmp) {
+	for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
 		if (vfs_busy(mp, &nmp)) {
 			continue;
 		}
-		/* Allocate a marker vnode. */
-		mvp = vnalloc(mp);
-		/* Should never fail for mp != NULL */
-		KASSERT(mvp != NULL);
-		mutex_enter(&mntvnode_lock);
-		for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp;
-		    vp = vunmark(mvp)) {
-			vmark(mvp, vp);
-			/*
-			 * Check that the vp is still associated with
-			 * this filesystem.  RACE: could have been
-			 * recycled onto the same filesystem.
-			 */
-			if (vp->v_mount != mp || vismarker(vp))
-				continue;
+		vfs_vnode_iterator_init(mp, &marker);
+		while ((vp = vfs_vnode_iterator_next(marker, NULL, NULL))) {
 			if (bp + VPTRSZ + VNODESZ > ewhere) {
-				(void)vunmark(mvp);
-				mutex_exit(&mntvnode_lock);
-				vnfree(mvp);
+				vrele(vp);
+				vfs_vnode_iterator_destroy(marker);
 				vfs_unbusy(mp, false, NULL);
 				sysctl_relock();
 				*sizep = bp - where;
 				return (ENOMEM);
 			}
 			memcpy(&vbuf, vp, VNODESZ);
-			mutex_exit(&mntvnode_lock);
 			if ((error = copyout(&vp, bp, VPTRSZ)) ||
 			    (error = copyout(&vbuf, bp + VPTRSZ, VNODESZ))) {
-			   	mutex_enter(&mntvnode_lock);
-				(void)vunmark(mvp);
-				mutex_exit(&mntvnode_lock);
-				vnfree(mvp);
+				vrele(vp);
+				vfs_vnode_iterator_destroy(marker);
 				vfs_unbusy(mp, false, NULL);
 				sysctl_relock();
 				return (error);
 			}
+			vrele(vp);
 			bp += VPTRSZ + VNODESZ;
-			mutex_enter(&mntvnode_lock);
 		}
-		mutex_exit(&mntvnode_lock);
-		vnfree(mvp);
+		vfs_vnode_iterator_destroy(marker);
 		vfs_unbusy(mp, false, &nmp);
 	}
 	mutex_exit(&mountlist_lock);
@@ -903,16 +885,16 @@ setrootfstime(time_t t)
 	rootfstime = t;
 }
 
-static const uint8_t vttodt_tab[9] = {
-	DT_UNKNOWN,	/* VNON  */
-	DT_REG,		/* VREG  */
-	DT_DIR,		/* VDIR  */
-	DT_BLK,		/* VBLK  */
-	DT_CHR,		/* VCHR  */
-	DT_LNK,		/* VLNK  */
-	DT_SOCK,	/* VSUCK */
-	DT_FIFO,	/* VFIFO */
-	DT_UNKNOWN	/* VBAD  */
+static const uint8_t vttodt_tab[ ] = {
+	[VNON]	=	DT_UNKNOWN,
+	[VREG]	=	DT_REG,
+	[VDIR]	=	DT_DIR,
+	[VBLK]	=	DT_BLK,
+	[VCHR]	=	DT_CHR,
+	[VLNK]	=	DT_LNK,
+	[VSOCK]	=	DT_SOCK,
+	[VFIFO]	=	DT_FIFO,
+	[VBAD]	=	DT_UNKNOWN
 };
 
 uint8_t
@@ -1264,8 +1246,7 @@ printlockedvnodes(void)
 
 	printf("Locked vnodes\n");
 	mutex_enter(&mountlist_lock);
-	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
-	     mp = nmp) {
+	for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
 		if (vfs_busy(mp, &nmp)) {
 			continue;
 		}

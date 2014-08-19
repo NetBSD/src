@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.261 2012/04/30 02:16:46 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.261.2.1 2014/08/20 00:03:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.261 2012/04/30 02:16:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.261.2.1 2014/08/20 00:03:35 tls Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -349,8 +349,18 @@ dev_type_mmap(audiommap);
 dev_type_kqfilter(audiokqfilter);
 
 const struct cdevsw audio_cdevsw = {
-	audioopen, audioclose, audioread, audiowrite, audioioctl,
-	nostop, notty, audiopoll, audiommap, audiokqfilter, D_OTHER | D_MPSAFE
+	.d_open = audioopen,
+	.d_close = audioclose,
+	.d_read = audioread,
+	.d_write = audiowrite,
+	.d_ioctl = audioioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = audiopoll,
+	.d_mmap = audiommap,
+	.d_kqfilter = audiokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 /* The default audio mode: 8 kHz mono mu-law */

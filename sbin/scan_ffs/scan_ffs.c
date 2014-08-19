@@ -1,4 +1,4 @@
-/* $NetBSD: scan_ffs.c,v 1.21.12.1 2013/06/23 06:28:52 tls Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.21.12.2 2014/08/20 00:02:27 tls Exp $ */
 
 /*
  * Copyright (c) 2005-2007 Juan Romero Pardines
@@ -33,7 +33,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.21.12.1 2013/06/23 06:28:52 tls Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.21.12.2 2014/08/20 00:02:27 tls Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -44,40 +44,11 @@ __RCSID("$NetBSD: scan_ffs.c,v 1.21.12.1 2013/06/23 06:28:52 tls Exp $");
 #include <sys/fcntl.h>
 #include <sys/mount.h>
 
-#include <ufs/ufs/dinode.h>
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
 
-/* Undefine macros defined by both lfs/lfs.h and ffs/fs.h */
-#undef fsbtodb
-#undef dbtofsb
-#undef blkoff
-#undef lblktosize
-#undef lblkno
-#undef numfrags
-#undef blkroundup
-#undef fragroundup
-#undef fragstoblks
-#undef blkstofrags
-#undef fragnum
-#undef blknum
-
+#include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
-
-/* Undefine macros defined by both lfs/lfs.h and ffs/fs.h */
-/* ...to make sure we don't later depend on their (ambigious) definition */
-#undef fsbtodb
-#undef dbtofsb
-#undef blkoff
-#undef lblktosize
-#undef lblkno
-#undef numfrags
-#undef blkroundup
-#undef fragroundup
-#undef fragstoblks
-#undef blkstofrags
-#undef fragnum
-#undef blknum
 
 #include <unistd.h>
 #include <stdlib.h>

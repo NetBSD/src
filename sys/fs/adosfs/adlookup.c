@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.16.2.1 2012/11/20 03:02:39 tls Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.16.2.2 2014/08/20 00:04:26 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.16.2.1 2012/11/20 03:02:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.16.2.2 2014/08/20 00:04:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.16.2.1 2012/11/20 03:02:39 tls Exp $"
 int
 adosfs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -243,6 +243,8 @@ found:
 	if (vdp == *vpp)
 		vref(vdp);
 found_lockdone:
+	if (*vpp != vdp)
+		VOP_UNLOCK(*vpp);
 	if (nocache == 0)
 		cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
 			    cnp->cn_flags);

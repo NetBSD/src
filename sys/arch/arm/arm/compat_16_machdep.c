@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.16 2012/08/16 17:35:01 matt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.16.2.1 2014/08/20 00:02:44 tls Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.16 2012/08/16 17:35:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.16.2.1 2014/08/20 00:02:44 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.16 2012/08/16 17:35:01 matt 
 #include <sys/ucontext.h>
 
 #include <arm/armreg.h>
+#include <arm/locore.h>
 
 #include <machine/cpu.h>
 #include <machine/frame.h>

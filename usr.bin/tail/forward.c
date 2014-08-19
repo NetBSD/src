@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.31 2011/09/03 10:59:10 christos Exp $	*/
+/*	$NetBSD: forward.c,v 1.31.8.1 2014/08/20 00:05:04 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: forward.c,v 1.31 2011/09/03 10:59:10 christos Exp $");
+__RCSID("$NetBSD: forward.c,v 1.31.8.1 2014/08/20 00:05:04 tls Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -90,13 +90,7 @@ forward(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 	int ch, n;
 	int kq=-1, action=USE_SLEEP;
 	struct stat statbuf;
-	dev_t lastdev;
-	ino_t lastino;
 	struct kevent ev[2];
-
-	/* Keep track of file's previous incarnation. */
-	lastdev = sbp->st_dev;
-	lastino = sbp->st_ino;
 
 	switch(style) {
 	case FBYTES:

@@ -1,7 +1,6 @@
 /* Native-dependent code for NetBSD/sh.
 
-   Copyright (C) 2002, 2003, 2004, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -62,8 +61,8 @@ shnbsd_fetch_inferior_registers (struct target_ops *ops,
     {
       struct reg inferior_registers;
 
-      if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &inferior_registers, TIDGET (inferior_ptid)) == -1)
+      if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
+		  (PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_lwp (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       sh_corefile_supply_regset (&sh_corefile_gregset, regcache, regno,
@@ -83,16 +82,16 @@ shnbsd_store_inferior_registers (struct target_ops *ops,
     {
       struct reg inferior_registers;
 
-      if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &inferior_registers, TIDGET (inferior_ptid)) == -1)
+      if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
+		  (PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_lwp (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       sh_corefile_collect_regset (&sh_corefile_gregset, regcache, regno,
 				  (char *) &inferior_registers,
 				  SHNBSD_SIZEOF_GREGS);
 
-      if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &inferior_registers, TIDGET (inferior_ptid)) == -1)
+      if (ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid),
+		  (PTRACE_TYPE_ARG3) &inferior_registers, ptid_get_lwp (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't set registers"));
 
       if (regno != -1)
@@ -103,16 +102,16 @@ shnbsd_store_inferior_registers (struct target_ops *ops,
 void
 supply_gregset (struct regcache *regcache, const gregset_t *gregs)
 {
-      if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) gregs, TIDGET (inferior_ptid)) == -1)
+      if (ptrace (PT_SETREGS, ptid_get_pid (inferior_ptid),
+		  (PTRACE_TYPE_ARG3) gregs, ptid_get_lwp (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't set registers"));
 }
 
 void
 fill_gregset (const struct regcache *regcache, gregset_t *gregs, int regnum)
 {
-   if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-	(PTRACE_TYPE_ARG3) gregs, TIDGET (inferior_ptid)) == -1)
+   if (ptrace (PT_GETREGS, ptid_get_pid (inferior_ptid),
+	(PTRACE_TYPE_ARG3) gregs, ptid_get_lwp (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get registers"));
 }
 

@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_modf.c,v 1.14 2010/01/27 14:07:41 drochner Exp $");
+__RCSID("$NetBSD: s_modf.c,v 1.14.12.1 2014/08/20 00:02:18 tls Exp $");
 #endif
 
 /*
@@ -29,6 +29,11 @@ __RCSID("$NetBSD: s_modf.c,v 1.14 2010/01/27 14:07:41 drochner Exp $");
 #include "math_private.h"
 
 static const double one = 1.0;
+
+#ifndef __HAVE_LONG_DOUBLE
+__strong_alias(_modfl, modf)
+__weak_alias(modfl, modf)
+#endif
 
 double
 modf(double x, double *iptr)

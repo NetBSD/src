@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.77.6.1 2013/06/23 06:18:39 tls Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.77.6.2 2014/08/20 00:04:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.77.6.1 2013/06/23 06:18:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.77.6.2 2014/08/20 00:04:45 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.77.6.1 2013/06/23 06:18:39 tls Exp $"
 
 #include <ufs/lfs/ulfs_inode.h>
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_kernel.h>
 #include <ufs/lfs/lfs_extern.h>
 
 #include <uvm/uvm.h>

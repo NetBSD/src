@@ -1,8 +1,8 @@
-/*	$NetBSD: ciss.c,v 1.27.12.1 2012/11/20 03:02:03 tls Exp $	*/
-/*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
+/*	$NetBSD: ciss.c,v 1.27.12.2 2014/08/20 00:03:37 tls Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.68 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
- * Copyright (c) 2005 Michael Shalayeff
+ * Copyright (c) 2005,2006 Michael Shalayeff
  * All rights reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.27.12.1 2012/11/20 03:02:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.27.12.2 2014/08/20 00:03:37 tls Exp $");
 
 #include "bio.h"
 
@@ -323,9 +323,15 @@ ciss_attach(struct ciss_softc *sc)
 	sc->maxunits = inq->numld;
 	sc->nbus = inq->nscsi_bus;
 	sc->ndrives = inq->buswidth ? inq->buswidth : 256;
-	printf(": %d LD%s, HW rev %d, FW %4.4s/%4.4s\n",
+	printf(": %d LD%s, HW rev %d, FW %4.4s/%4.4s",
 	    inq->numld, inq->numld == 1? "" : "s",
 	    inq->hw_rev, inq->fw_running, inq->fw_stored);
+
+	if (sc->cfg.methods & CISS_METH_FIFO64)
+		printf(", 64bit fifo");
+	else if (sc->cfg.methods & CISS_METH_FIFO64_RRO)
+		printf(", 64bit fifo rro");
+	printf("\n");
 
 	mutex_exit(&sc->sc_mutex_scratch);
 
@@ -423,7 +429,7 @@ ciss_shutdown(void *v)
 static void
 cissminphys(struct buf *bp)
 {
-#if 0	/* TOSO */
+#if 0	/* TODO */
 #define	CISS_MAXFER	(PAGE_SIZE * (sc->maxsg + 1))
 	if (bp->b_bcount > CISS_MAXFER)
 		bp->b_bcount = CISS_MAXFER;
@@ -445,6 +451,7 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 	struct ciss_ccb *ccb1;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
 	u_int32_t id;
+	u_int64_t addr;
 	int i, tohz, error = 0;
 
 	if (ccb->ccb_state != CISS_CCB_READY) {
@@ -505,7 +512,19 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 	mutex_exit(&sc->sc_mutex);
 	ccb->ccb_state = CISS_CCB_ONQ;
 	CISS_DPRINTF(CISS_D_CMD, ("submit=0x%x ", cmd->id));
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CISS_INQ, ccb->ccb_cmdpa);
+	if (sc->cfg.methods & (CISS_METH_FIFO64|CISS_METH_FIFO64_RRO)) {
+		/*
+		 * Write the upper 32bits immediately before the lower
+		 * 32bits and set bit 63 to indicate 64bit FIFO mode.
+		 */
+		addr = (u_int64_t)ccb->ccb_cmdpa;
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, CISS_INQ64_HI,
+		    (addr >> 32) | 0x80000000);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, CISS_INQ64_LO,
+		    addr & 0x00000000ffffffffULL);
+	} else
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, CISS_INQ,
+		    ccb->ccb_cmdpa);
 
 	if (wait & XS_CTL_POLL) {
 		int etick;
@@ -543,16 +562,39 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 					continue;
 				}
 
-				if ((id = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-				    CISS_OUTQ)) == 0xffffffff) {
-					CISS_DPRINTF(CISS_D_CMD, ("Q"));
-					continue;
+				if (sc->cfg.methods & CISS_METH_FIFO64) {
+					if (bus_space_read_4(sc->sc_iot,
+					    sc->sc_ioh,
+					    CISS_OUTQ64_HI) == 0xffffffff) {
+						CISS_DPRINTF(CISS_D_CMD, ("Q"));
+						continue;
+					}
+					id = bus_space_read_4(sc->sc_iot,
+					    sc->sc_ioh, CISS_OUTQ64_LO);
+				} else if (sc->cfg.methods &
+				    CISS_METH_FIFO64_RRO) {
+					id = bus_space_read_4(sc->sc_iot,
+					    sc->sc_ioh, CISS_OUTQ64_LO);
+					if (id == 0xffffffff) {
+						CISS_DPRINTF(CISS_D_CMD, ("Q"));
+						continue;
+					}
+					(void)bus_space_read_4(sc->sc_iot,
+					    sc->sc_ioh, CISS_OUTQ64_HI);
+				} else {
+					id = bus_space_read_4(sc->sc_iot,
+					    sc->sc_ioh, CISS_OUTQ);
+					if (id == 0xffffffff) {
+						CISS_DPRINTF(CISS_D_CMD, ("Q"));
+						continue;
+					}
 				}
 
 				CISS_DPRINTF(CISS_D_CMD, ("got=0x%x ", id));
 				ccb1 = (struct ciss_ccb *)
 					((char *)sc->ccbs + (id >> 2) * sc->ccblen);
 				ccb1->ccb_cmd.id = htole32(id);
+				ccb1->ccb_cmd.id_hi = htole32(0);
 			}
 
 			error = ciss_done(ccb1);
@@ -640,6 +682,7 @@ ciss_error(struct ciss_ccb *ccb)
 
 	switch ((rv = le16toh(err->cmd_stat))) {
 	case CISS_ERR_OK:
+		rv = 0;
 		break;
 
 	case CISS_ERR_INVCMD:
@@ -657,10 +700,12 @@ ciss_error(struct ciss_ccb *ccb)
 			xs->sense.scsi_sense.ascq = 0x0;
 			xs->error = XS_SENSE;
 		}
+		rv = EIO;
 		break;
 
 	case CISS_ERR_TMO:
 		xs->error = XS_TIMEOUT;
+		rv = ETIMEDOUT;
 		break;
 
 	case CISS_ERR_UNRUN:
@@ -668,6 +713,7 @@ ciss_error(struct ciss_ccb *ccb)
 		xs->resid = le32toh(err->resid);
 		CISS_DPRINTF(CISS_D_CMD, (" underrun resid=0x%x ",
 					  xs->resid));
+		rv = EIO;
 		break;
 	default:
 		if (xs) {
@@ -679,10 +725,12 @@ ciss_error(struct ciss_ccb *ccb)
 				    sizeof(xs->sense));
 				CISS_DPRINTF(CISS_D_CMD, (" sense=%02x %02x %02x %02x ",
 					     err->sense[0], err->sense[1], err->sense[2], err->sense[3]));
+				rv = EIO;
 				break;
 
 			case XS_BUSY:
 				xs->error = XS_BUSY;
+				rv = EBUSY;
 				break;
 
 			default:
@@ -693,10 +741,12 @@ ciss_error(struct ciss_ccb *ccb)
 				printf("ciss driver stuffup in %s:%d: %s()\n",
 				       __FILE__, __LINE__, __func__);
 				xs->error = XS_DRIVER_STUFFUP;
+				rv = EIO;
 				break;
 			}
 			xs->resid = le32toh(err->resid);
-		}
+		} else
+			rv = EIO;
 	}
 	ccb->ccb_cmd.id &= htole32(~3);
 
@@ -936,8 +986,8 @@ ciss_scsi_raw_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	void *arg)				/* TODO */
 {
 	struct scsipi_xfer *xs = (struct scsipi_xfer *) arg;
-	struct ciss_rawsoftc *rsc =
-		(struct ciss_rawsoftc *) chan->chan_adapter->adapt_dev;
+	struct ciss_rawsoftc *rsc = device_private(
+	    chan->chan_adapter->adapt_dev);
 	struct ciss_softc *sc = rsc->sc_softc;
 	struct ciss_ccb *ccb;
 	struct ciss_cmd *cmd;
@@ -1013,12 +1063,10 @@ ciss_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_xfer_mode *xm;
-	struct ciss_softc *sc =
-		(struct ciss_softc *) chan->chan_adapter->adapt_dev;
+	struct ciss_softc *sc = device_private(chan->chan_adapter->adapt_dev);
 	u_int8_t target;
 	struct ciss_ccb *ccb;
 	struct ciss_cmd *cmd;
-	int error;
 
 	CISS_DPRINTF(CISS_D_CMD, ("ciss_scsi_cmd "));
 
@@ -1031,14 +1079,13 @@ ciss_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		if (xs->cmdlen > CISS_MAX_CDB) {
 			CISS_DPRINTF(CISS_D_CMD, ("CDB too big %p ", xs));
 			memset(&xs->sense, 0, sizeof(xs->sense));
+			xs->error = XS_SENSE;
 			printf("ciss driver stuffup in %s:%d: %s()\n",
 			       __FILE__, __LINE__, __func__);
-			xs->error = XS_DRIVER_STUFFUP;
 			scsipi_done(xs);
 			break;
 		}
 
-		error = 0;
 		xs->error = XS_NOERROR;
 
 		/* XXX emulate SYNCHRONIZE_CACHE ??? */
@@ -1056,7 +1103,7 @@ ciss_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			cmd->flags |= CISS_CDB_IN;
 		else if (xs->xs_control & XS_CTL_DATA_OUT)
 			cmd->flags |= CISS_CDB_OUT;
-		cmd->tmo = xs->timeout < 1000? 1 : xs->timeout / 1000;
+		cmd->tmo = htole16(xs->timeout < 1000? 1 : xs->timeout / 1000);
 		memset(&cmd->cdb[0], 0, sizeof(cmd->cdb));
 		memcpy(&cmd->cdb[0], xs->cmd, CISS_MAX_CDB);
 		CISS_DPRINTF(CISS_D_CMD, ("cmd=%02x %02x %02x %02x %02x %02x ",
@@ -1087,6 +1134,8 @@ ciss_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		xm->xm_mode |= PERIPH_CAP_TQING;
 		scsipi_async_event(chan, ASYNC_EVENT_XFER_MODE, xm);
 		break;
+	default:
+		printf("%s: %d %d unsupported\n", __func__, __LINE__, req);
 	}
 }
 
@@ -1096,6 +1145,7 @@ ciss_intr(void *v)
 	struct ciss_softc *sc = v;
 	struct ciss_ccb *ccb;
 	u_int32_t id;
+	bus_size_t reg;
 	int hit = 0;
 
 	CISS_DPRINTF(CISS_D_INTR, ("intr "));
@@ -1103,11 +1153,24 @@ ciss_intr(void *v)
 	if (!(bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_ISR) & sc->iem))
 		return 0;
 
-	while ((id = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_OUTQ)) !=
+	if (sc->cfg.methods & CISS_METH_FIFO64)
+		reg = CISS_OUTQ64_HI;
+	else if (sc->cfg.methods & CISS_METH_FIFO64_RRO)
+		reg = CISS_OUTQ64_LO;
+	else
+		reg = CISS_OUTQ;
+	while ((id = bus_space_read_4(sc->sc_iot, sc->sc_ioh, reg)) !=
 	    0xffffffff) {
+		if (reg == CISS_OUTQ64_HI)
+			id = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+			    CISS_OUTQ64_LO);
+		else if (reg == CISS_OUTQ64_LO)
+			(void)bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+			    CISS_OUTQ64_HI);
 
 		ccb = (struct ciss_ccb *) ((char *)sc->ccbs + (id >> 2) * sc->ccblen);
 		ccb->ccb_cmd.id = htole32(id);
+		ccb->ccb_cmd.id_hi = htole32(0); /* ignore the upper 32bits */
 		if (ccb->ccb_state == CISS_CCB_POLL) {
 			ccb->ccb_state = CISS_CCB_ONQ;
 			mutex_enter(&sc->sc_mutex);
@@ -1131,10 +1194,23 @@ ciss_heartbeat(void *v)
 
 	hb = bus_space_read_4(sc->sc_iot, sc->cfg_ioh,
 	    sc->cfgoff + offsetof(struct ciss_config, heartbeat));
-	if (hb == sc->heartbeat)
-		panic("ciss: dead");	/* XX reset! */
-	else
+	if (hb == sc->heartbeat) {
+		sc->fibrillation++;
+		CISS_DPRINTF(CISS_D_ERR, ("%s: fibrillation #%d (value=%d)\n",
+		    device_xname(sc->sc_dev), sc->fibrillation, hb));
+		if (sc->fibrillation >= 11) {
+			/* No heartbeat for 33 seconds */
+			panic("%s: dead", device_xname(sc->sc_dev));	/* XXX reset! */
+		}
+	} else {
 		sc->heartbeat = hb;
+		if (sc->fibrillation) {
+			CISS_DPRINTF(CISS_D_ERR, ("%s: "
+			    "fibrillation ended (value=%d)\n",
+			    device_xname(sc->sc_dev), hb));
+		}
+		sc->fibrillation = 0;
+	}
 
 	callout_schedule(&sc->sc_hb, hz * 3);
 }
@@ -1160,7 +1236,7 @@ const int ciss_stat[] = { BIOC_SVONLINE, BIOC_SVOFFLINE, BIOC_SVOFFLINE,
 int
 ciss_ioctl(device_t dev, u_long cmd, void *addr)
 {
-	struct ciss_softc	*sc = (struct ciss_softc *)dev;
+	struct ciss_softc	*sc = device_private(dev);
 	struct bioc_inq *bi;
 	struct bioc_disk *bd;
 	struct bioc_blink *bb;

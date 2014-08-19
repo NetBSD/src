@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.153.2.2 2013/02/25 00:28:14 tls Exp $
+.\"	$NetBSD: rc.conf.5,v 1.153.2.3 2014/08/20 00:02:36 tls Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 2, 2012
+.Dd January 15, 2014
 .Dt RC.CONF 5
 .Os
 .Sh NAME
@@ -432,6 +432,26 @@ Checks and enables quotas by running
 .Xr quotacheck 8
 and
 .Xr quotaon 8 .
+.It Sy random_seed
+Boolean value.
+During boot-up, runs the
+.Xr rndctl 8
+utility with the
+.Fl L
+flag to seed the random number subsystem from an entropy file.
+During shutdown, runs the
+.Xr rndctl 8
+utility with the
+.Fl S
+flag to save some random information to the entropy file.
+The entropy file name is specified by the
+.Sy random_file
+variable, and defaults to
+.Pa /var/db/entropy-file .
+The entropy file must be on a local file system that is writable early during
+boot-up (just after the file systems specified in
+.Sy critical_filesystems_local
+have been mounted), and correspondingly late during shutdown.
 .It Sy rndctl
 Boolean value.
 Runs the

@@ -1,6 +1,6 @@
 /* e500 expression macros, for PSIM, the PowerPC simulator.
 
-   Copyright 2003, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2003-2014 Free Software Foundation, Inc.
 
    Contributed by Red Hat Inc; developed under contract from Motorola.
    Written by matthew green <mrg@redhat.com>.

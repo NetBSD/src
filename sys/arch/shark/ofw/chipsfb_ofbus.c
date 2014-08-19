@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb_ofbus.c,v 1.3 2012/08/22 21:15:17 macallan Exp $ */
+/*	$NetBSD: chipsfb_ofbus.c,v 1.3.2.1 2014/08/20 00:03:23 tls Exp $ */
 
 /*
  * Copyright (c) 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb_ofbus.c,v 1.3 2012/08/22 21:15:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb_ofbus.c,v 1.3.2.1 2014/08/20 00:03:23 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ int chipsfb_ofbus_cnattach(bus_space_tag_t, bus_space_tag_t);
 CFATTACH_DECL_NEW(chipsfb_ofbus, sizeof(struct chipsfb_softc),
     chipsfb_ofbus_match, chipsfb_ofbus_attach, NULL, NULL);
     
-static const char const *compat_strings[] = { "CHPS,ct65550", NULL };
+static const char * const compat_strings[] = { "CHPS,ct65550", NULL };
 
 vaddr_t chipsfb_mem_vaddr = 0, chipsfb_mmio_vaddr = 0;
 paddr_t chipsfb_mem_paddr;

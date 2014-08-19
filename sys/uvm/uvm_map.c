@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.322.2.2 2012/11/20 03:02:53 tls Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.322.2.3 2014/08/20 00:04:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.322.2.2 2012/11/20 03:02:53 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.322.2.3 2014/08/20 00:04:45 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -101,7 +101,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.322.2.2 2012/11/20 03:02:53 tls Exp $"
 #endif
 
 #ifdef UVMHIST
-UVMHIST_DEFINE(maphist);
+static struct kern_history_ent maphistbuf[100];
+UVMHIST_DEFINE(maphist) = UVMHIST_INITIALIZER(maphist, maphistbuf);
 #endif
 
 #if !defined(UVMMAP_COUNTERS)
@@ -404,7 +405,7 @@ uvm_rb_fixup(struct vm_map *map, struct vm_map_entry *entry)
 static void
 uvm_rb_insert(struct vm_map *map, struct vm_map_entry *entry)
 {
-	struct vm_map_entry *ret;
+	struct vm_map_entry *ret __diagused;
 
 	entry->gap = entry->maxgap = uvm_rb_gap(entry);
 	if (entry->prev != &map->header)
@@ -875,7 +876,6 @@ void
 uvm_map_init(void)
 {
 #if defined(UVMHIST)
-	static struct kern_history_ent maphistbuf[100];
 	static struct kern_history_ent pdhistbuf[100];
 #endif
 
@@ -884,7 +884,7 @@ uvm_map_init(void)
 	 */
 
 	UVMHIST_FUNC("uvm_map_init");
-	UVMHIST_INIT_STATIC(maphist, maphistbuf);
+	UVMHIST_LINK_STATIC(maphist);
 	UVMHIST_INIT_STATIC(pdhist, pdhistbuf);
 	UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"<starting uvm map system>", 0, 0, 0, 0);
@@ -1798,7 +1798,7 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 {
 	struct vm_map_entry *entry;
 	struct vm_map_entry *child, *prev, *tmp;
-	vaddr_t orig_hint;
+	vaddr_t orig_hint __diagused;
 	const int topdown = map->flags & VM_MAP_TOPDOWN;
 	UVMHIST_FUNC("uvm_map_findspace");
 	UVMHIST_CALLED(maphist);
@@ -2551,7 +2551,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 	struct vm_map_entry *chain, *endchain, *entry, *orig_entry, *newentry,
 	    *deadentry, *oldentry;
 	struct vm_map_entry *resentry = NULL; /* a dummy reservation entry */
-	vsize_t elen;
+	vsize_t elen __unused;
 	int nchain, error, copy_ok;
 	vsize_t nsize;
 	UVMHIST_FUNC("uvm_map_extract"); UVMHIST_CALLED(maphist);
@@ -3097,6 +3097,7 @@ uvm_map_inherit(struct vm_map *map, vaddr_t start, vaddr_t end,
 	case MAP_INHERIT_NONE:
 	case MAP_INHERIT_COPY:
 	case MAP_INHERIT_SHARE:
+	case MAP_INHERIT_ZERO:
 		break;
 	default:
 		UVMHIST_LOG(maphist,"<- done (INVALID ARG)",0,0,0,0);
@@ -3933,13 +3934,13 @@ uvm_map_checkprot(struct vm_map *map, vaddr_t start, vaddr_t end,
  * - refcnt set to 1, rest must be init'd by caller
  */
 struct vmspace *
-uvmspace_alloc(vaddr_t vmin, vaddr_t vmax)
+uvmspace_alloc(vaddr_t vmin, vaddr_t vmax, bool topdown)
 {
 	struct vmspace *vm;
 	UVMHIST_FUNC("uvmspace_alloc"); UVMHIST_CALLED(maphist);
 
 	vm = pool_cache_get(&uvm_vmspace_cache, PR_WAITOK);
-	uvmspace_init(vm, NULL, vmin, vmax);
+	uvmspace_init(vm, NULL, vmin, vmax, topdown);
 	UVMHIST_LOG(maphist,"<- done (vm=0x%x)", vm,0,0,0);
 	return (vm);
 }
@@ -3951,15 +3952,14 @@ uvmspace_alloc(vaddr_t vmin, vaddr_t vmax)
  * - refcnt set to 1, rest must be init'd by caller
  */
 void
-uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t vmin, vaddr_t vmax)
+uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t vmin,
+    vaddr_t vmax, bool topdown)
 {
 	UVMHIST_FUNC("uvmspace_init"); UVMHIST_CALLED(maphist);
 
 	memset(vm, 0, sizeof(*vm));
 	uvm_map_setup(&vm->vm_map, vmin, vmax, VM_MAP_PAGEABLE
-#ifdef __USING_TOPDOWN_VM
-	    | VM_MAP_TOPDOWN
-#endif
+	    | (topdown ? VM_MAP_TOPDOWN : 0)
 	    );
 	if (pmap)
 		pmap_reference(pmap);
@@ -4022,7 +4022,7 @@ uvmspace_unshare(struct lwp *l)
  */
 
 void
-uvmspace_spawn(struct lwp *l, vaddr_t start, vaddr_t end)
+uvmspace_spawn(struct lwp *l, vaddr_t start, vaddr_t end, bool topdown)
 {
 	struct proc *p = l->l_proc;
 	struct vmspace *nvm;
@@ -4031,7 +4031,7 @@ uvmspace_spawn(struct lwp *l, vaddr_t start, vaddr_t end)
 	cpu_vmspace_exec(l, start, end);
 #endif
 
-	nvm = uvmspace_alloc(start, end);
+	nvm = uvmspace_alloc(start, end, topdown);
 	kpreempt_disable();
 	p->p_vmspace = nvm;
 	pmap_activate(l);
@@ -4043,7 +4043,7 @@ uvmspace_spawn(struct lwp *l, vaddr_t start, vaddr_t end)
  */
 
 void
-uvmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end)
+uvmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end, bool topdown)
 {
 	struct proc *p = l->l_proc;
 	struct vmspace *nvm, *ovm = p->p_vmspace;
@@ -4059,11 +4059,14 @@ uvmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end)
 	 * see if more than one process is using this vmspace...
 	 */
 
-	if (ovm->vm_refcnt == 1) {
+	if (ovm->vm_refcnt == 1
+	    && topdown == ((ovm->vm_map.flags & VM_MAP_TOPDOWN) != 0)) {
 
 		/*
 		 * if p is the only process using its vmspace then we can safely
 		 * recycle that vmspace for the program that is being exec'd.
+		 * But only if TOPDOWN matches the requested value for the new
+		 * vm space!
 		 */
 
 #ifdef SYSVSHM
@@ -4105,7 +4108,7 @@ uvmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end)
 		 * for p
 		 */
 
-		nvm = uvmspace_alloc(start, end);
+		nvm = uvmspace_alloc(start, end, topdown);
 
 		/*
 		 * install new vmspace and drop our ref to the old one.
@@ -4187,6 +4190,197 @@ uvmspace_free(struct vmspace *vm)
 	pool_cache_put(&uvm_vmspace_cache, vm);
 }
 
+static struct vm_map_entry *
+uvm_mapent_clone(struct vm_map *new_map, struct vm_map_entry *old_entry,
+    int flags)
+{
+	struct vm_map_entry *new_entry;
+
+	new_entry = uvm_mapent_alloc(new_map, 0);
+	/* old_entry -> new_entry */
+	uvm_mapent_copy(old_entry, new_entry);
+
+	/* new pmap has nothing wired in it */
+	new_entry->wired_count = 0;
+
+	/*
+	 * gain reference to object backing the map (can't
+	 * be a submap, already checked this case).
+	 */
+
+	if (new_entry->aref.ar_amap)
+		uvm_map_reference_amap(new_entry, flags);
+
+	if (new_entry->object.uvm_obj &&
+	    new_entry->object.uvm_obj->pgops->pgo_reference)
+		new_entry->object.uvm_obj->pgops->pgo_reference(
+			new_entry->object.uvm_obj);
+
+	/* insert entry at end of new_map's entry list */
+	uvm_map_entry_link(new_map, new_map->header.prev,
+	    new_entry);
+
+	return new_entry;
+}
+
+/*
+ * share the mapping: this means we want the old and
+ * new entries to share amaps and backing objects.
+ */
+static void
+uvm_mapent_forkshared(struct vm_map *new_map, struct vm_map *old_map,
+    struct vm_map_entry *old_entry)
+{
+	/*
+	 * if the old_entry needs a new amap (due to prev fork)
+	 * then we need to allocate it now so that we have
+	 * something we own to share with the new_entry.   [in
+	 * other words, we need to clear needs_copy]
+	 */
+
+	if (UVM_ET_ISNEEDSCOPY(old_entry)) {
+		/* get our own amap, clears needs_copy */
+		amap_copy(old_map, old_entry, AMAP_COPY_NOCHUNK,
+		    0, 0);
+		/* XXXCDC: WAITOK??? */
+	}
+
+	uvm_mapent_clone(new_map, old_entry, AMAP_SHARED);
+}
+
+
+static void
+uvm_mapent_forkcopy(struct vm_map *new_map, struct vm_map *old_map,
+    struct vm_map_entry *old_entry)
+{
+	struct vm_map_entry *new_entry;
+
+	/*
+	 * copy-on-write the mapping (using mmap's
+	 * MAP_PRIVATE semantics)
+	 *
+	 * allocate new_entry, adjust reference counts.
+	 * (note that new references are read-only).
+	 */
+
+	new_entry = uvm_mapent_clone(new_map, old_entry, 0);
+
+	new_entry->etype |=
+	    (UVM_ET_COPYONWRITE|UVM_ET_NEEDSCOPY);
+
+	/*
+	 * the new entry will need an amap.  it will either
+	 * need to be copied from the old entry or created
+	 * from scratch (if the old entry does not have an
+	 * amap).  can we defer this process until later
+	 * (by setting "needs_copy") or do we need to copy
+	 * the amap now?
+	 *
+	 * we must copy the amap now if any of the following
+	 * conditions hold:
+	 * 1. the old entry has an amap and that amap is
+	 *    being shared.  this means that the old (parent)
+	 *    process is sharing the amap with another
+	 *    process.  if we do not clear needs_copy here
+	 *    we will end up in a situation where both the
+	 *    parent and child process are refering to the
+	 *    same amap with "needs_copy" set.  if the
+	 *    parent write-faults, the fault routine will
+	 *    clear "needs_copy" in the parent by allocating
+	 *    a new amap.   this is wrong because the
+	 *    parent is supposed to be sharing the old amap
+	 *    and the new amap will break that.
+	 *
+	 * 2. if the old entry has an amap and a non-zero
+	 *    wire count then we are going to have to call
+	 *    amap_cow_now to avoid page faults in the
+	 *    parent process.   since amap_cow_now requires
+	 *    "needs_copy" to be clear we might as well
+	 *    clear it here as well.
+	 *
+	 */
+
+	if (old_entry->aref.ar_amap != NULL) {
+		if ((amap_flags(old_entry->aref.ar_amap) & AMAP_SHARED) != 0 ||
+		    VM_MAPENT_ISWIRED(old_entry)) {
+
+			amap_copy(new_map, new_entry,
+			    AMAP_COPY_NOCHUNK, 0, 0);
+			/* XXXCDC: M_WAITOK ... ok? */
+		}
+	}
+
+	/*
+	 * if the parent's entry is wired down, then the
+	 * parent process does not want page faults on
+	 * access to that memory.  this means that we
+	 * cannot do copy-on-write because we can't write
+	 * protect the old entry.   in this case we
+	 * resolve all copy-on-write faults now, using
+	 * amap_cow_now.   note that we have already
+	 * allocated any needed amap (above).
+	 */
+
+	if (VM_MAPENT_ISWIRED(old_entry)) {
+
+		/*
+		 * resolve all copy-on-write faults now
+		 * (note that there is nothing to do if
+		 * the old mapping does not have an amap).
+		 */
+		if (old_entry->aref.ar_amap)
+			amap_cow_now(new_map, new_entry);
+
+	} else {
+		/*
+		 * setup mappings to trigger copy-on-write faults
+		 * we must write-protect the parent if it has
+		 * an amap and it is not already "needs_copy"...
+		 * if it is already "needs_copy" then the parent
+		 * has already been write-protected by a previous
+		 * fork operation.
+		 */
+		if (old_entry->aref.ar_amap &&
+		    !UVM_ET_ISNEEDSCOPY(old_entry)) {
+			if (old_entry->max_protection & VM_PROT_WRITE) {
+				pmap_protect(old_map->pmap,
+				    old_entry->start, old_entry->end,
+				    old_entry->protection & ~VM_PROT_WRITE);
+			}
+			old_entry->etype |= UVM_ET_NEEDSCOPY;
+		}
+	}
+}
+
+/*
+ * zero the mapping: the new entry will be zero initialized
+ */
+static void
+uvm_mapent_forkzero(struct vm_map *new_map, struct vm_map *old_map,
+    struct vm_map_entry *old_entry)
+{
+	struct vm_map_entry *new_entry;
+
+	new_entry = uvm_mapent_clone(new_map, old_entry, 0);
+
+	new_entry->etype |=
+	    (UVM_ET_COPYONWRITE|UVM_ET_NEEDSCOPY);
+
+	if (new_entry->aref.ar_amap) {
+		uvm_map_unreference_amap(new_entry, 0);
+		new_entry->aref.ar_pageoff = 0;
+		new_entry->aref.ar_amap = NULL;
+	}
+
+	if (UVM_ET_ISOBJ(new_entry)) {
+		if (new_entry->object.uvm_obj->pgops->pgo_detach)
+			new_entry->object.uvm_obj->pgops->pgo_detach(
+			    new_entry->object.uvm_obj);
+		new_entry->object.uvm_obj = NULL;
+		new_entry->etype &= ~UVM_ET_OBJ;
+	}
+}
+
 /*
  *   F O R K   -   m a i n   e n t r y   p o i n t
  */
@@ -4204,12 +4398,12 @@ uvmspace_fork(struct vmspace *vm1)
 	struct vm_map *old_map = &vm1->vm_map;
 	struct vm_map *new_map;
 	struct vm_map_entry *old_entry;
-	struct vm_map_entry *new_entry;
 	UVMHIST_FUNC("uvmspace_fork"); UVMHIST_CALLED(maphist);
 
 	vm_map_lock(old_map);
 
-	vm2 = uvmspace_alloc(vm_map_min(old_map), vm_map_max(old_map));
+	vm2 = uvmspace_alloc(vm_map_min(old_map), vm_map_max(old_map),
+	    vm1->vm_map.flags & VM_MAP_TOPDOWN);
 	memcpy(&vm2->vm_startcopy, &vm1->vm_startcopy,
 	    (char *) (vm1 + 1) - (char *) &vm1->vm_startcopy);
 	new_map = &vm2->vm_map;		  /* XXX */
@@ -4233,7 +4427,6 @@ uvmspace_fork(struct vmspace *vm1)
 
 		switch (old_entry->inheritance) {
 		case MAP_INHERIT_NONE:
-
 			/*
 			 * drop the mapping, modify size
 			 */
@@ -4241,171 +4434,20 @@ uvmspace_fork(struct vmspace *vm1)
 			break;
 
 		case MAP_INHERIT_SHARE:
-
-			/*
-			 * share the mapping: this means we want the old and
-			 * new entries to share amaps and backing objects.
-			 */
-			/*
-			 * if the old_entry needs a new amap (due to prev fork)
-			 * then we need to allocate it now so that we have
-			 * something we own to share with the new_entry.   [in
-			 * other words, we need to clear needs_copy]
-			 */
-
-			if (UVM_ET_ISNEEDSCOPY(old_entry)) {
-				/* get our own amap, clears needs_copy */
-				amap_copy(old_map, old_entry, AMAP_COPY_NOCHUNK,
-				    0, 0);
-				/* XXXCDC: WAITOK??? */
-			}
-
-			new_entry = uvm_mapent_alloc(new_map, 0);
-			/* old_entry -> new_entry */
-			uvm_mapent_copy(old_entry, new_entry);
-
-			/* new pmap has nothing wired in it */
-			new_entry->wired_count = 0;
-
-			/*
-			 * gain reference to object backing the map (can't
-			 * be a submap, already checked this case).
-			 */
-
-			if (new_entry->aref.ar_amap)
-				uvm_map_reference_amap(new_entry, AMAP_SHARED);
-
-			if (new_entry->object.uvm_obj &&
-			    new_entry->object.uvm_obj->pgops->pgo_reference)
-				new_entry->object.uvm_obj->
-				    pgops->pgo_reference(
-				        new_entry->object.uvm_obj);
-
-			/* insert entry at end of new_map's entry list */
-			uvm_map_entry_link(new_map, new_map->header.prev,
-			    new_entry);
-
+			uvm_mapent_forkshared(new_map, old_map, old_entry);
 			break;
 
 		case MAP_INHERIT_COPY:
-
-			/*
-			 * copy-on-write the mapping (using mmap's
-			 * MAP_PRIVATE semantics)
-			 *
-			 * allocate new_entry, adjust reference counts.
-			 * (note that new references are read-only).
-			 */
-
-			new_entry = uvm_mapent_alloc(new_map, 0);
-			/* old_entry -> new_entry */
-			uvm_mapent_copy(old_entry, new_entry);
-
-			if (new_entry->aref.ar_amap)
-				uvm_map_reference_amap(new_entry, 0);
-
-			if (new_entry->object.uvm_obj &&
-			    new_entry->object.uvm_obj->pgops->pgo_reference)
-				new_entry->object.uvm_obj->pgops->pgo_reference
-				    (new_entry->object.uvm_obj);
-
-			/* new pmap has nothing wired in it */
-			new_entry->wired_count = 0;
-
-			new_entry->etype |=
-			    (UVM_ET_COPYONWRITE|UVM_ET_NEEDSCOPY);
-			uvm_map_entry_link(new_map, new_map->header.prev,
-			    new_entry);
-
-			/*
-			 * the new entry will need an amap.  it will either
-			 * need to be copied from the old entry or created
-			 * from scratch (if the old entry does not have an
-			 * amap).  can we defer this process until later
-			 * (by setting "needs_copy") or do we need to copy
-			 * the amap now?
-			 *
-			 * we must copy the amap now if any of the following
-			 * conditions hold:
-			 * 1. the old entry has an amap and that amap is
-			 *    being shared.  this means that the old (parent)
-			 *    process is sharing the amap with another
-			 *    process.  if we do not clear needs_copy here
-			 *    we will end up in a situation where both the
-			 *    parent and child process are refering to the
-			 *    same amap with "needs_copy" set.  if the
-			 *    parent write-faults, the fault routine will
-			 *    clear "needs_copy" in the parent by allocating
-			 *    a new amap.   this is wrong because the
-			 *    parent is supposed to be sharing the old amap
-			 *    and the new amap will break that.
-			 *
-			 * 2. if the old entry has an amap and a non-zero
-			 *    wire count then we are going to have to call
-			 *    amap_cow_now to avoid page faults in the
-			 *    parent process.   since amap_cow_now requires
-			 *    "needs_copy" to be clear we might as well
-			 *    clear it here as well.
-			 *
-			 */
-
-			if (old_entry->aref.ar_amap != NULL) {
-				if ((amap_flags(old_entry->aref.ar_amap) &
-				     AMAP_SHARED) != 0 ||
-				    VM_MAPENT_ISWIRED(old_entry)) {
-
-					amap_copy(new_map, new_entry,
-					    AMAP_COPY_NOCHUNK, 0, 0);
-					/* XXXCDC: M_WAITOK ... ok? */
-				}
-			}
-
-			/*
-			 * if the parent's entry is wired down, then the
-			 * parent process does not want page faults on
-			 * access to that memory.  this means that we
-			 * cannot do copy-on-write because we can't write
-			 * protect the old entry.   in this case we
-			 * resolve all copy-on-write faults now, using
-			 * amap_cow_now.   note that we have already
-			 * allocated any needed amap (above).
-			 */
-
-			if (VM_MAPENT_ISWIRED(old_entry)) {
-
-			  /*
-			   * resolve all copy-on-write faults now
-			   * (note that there is nothing to do if
-			   * the old mapping does not have an amap).
-			   */
-			  if (old_entry->aref.ar_amap)
-			    amap_cow_now(new_map, new_entry);
-
-			} else {
-
-			  /*
-			   * setup mappings to trigger copy-on-write faults
-			   * we must write-protect the parent if it has
-			   * an amap and it is not already "needs_copy"...
-			   * if it is already "needs_copy" then the parent
-			   * has already been write-protected by a previous
-			   * fork operation.
-			   */
-
-			  if (old_entry->aref.ar_amap &&
-			      !UVM_ET_ISNEEDSCOPY(old_entry)) {
-			      if (old_entry->max_protection & VM_PROT_WRITE) {
-				pmap_protect(old_map->pmap,
-					     old_entry->start,
-					     old_entry->end,
-					     old_entry->protection &
-					     ~VM_PROT_WRITE);
-			      }
-			      old_entry->etype |= UVM_ET_NEEDSCOPY;
-			  }
-			}
+			uvm_mapent_forkcopy(new_map, old_map, old_entry);
 			break;
-		}  /* end of switch statement */
+
+		case MAP_INHERIT_ZERO:
+			uvm_mapent_forkzero(new_map, old_map, old_entry);
+			break;
+		default:
+			KASSERT(0);
+			break;
+		}
 		old_entry = old_entry->next;
 	}
 

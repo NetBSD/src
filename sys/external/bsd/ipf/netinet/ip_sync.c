@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sync.c,v 1.4 2012/07/22 17:48:53 martin Exp $	*/
+/*	$NetBSD: ip_sync.c,v 1.4.2.1 2014/08/20 00:04:24 tls Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -100,7 +100,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_sync.c,v 1.4 2012/07/22 17:48:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_sync.c,v 1.4.2.1 2014/08/20 00:04:24 tls Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_sync.c,v 1.1.1.2 2012/07/22 13:45:38 darrenr Exp";
 #endif
@@ -915,7 +915,7 @@ ipf_sync_nat(ipf_main_softc_t *softc, synchdr_t *sp, void *data)
 	nat_t *n, *nat;
 	synclist_t *sl;
 	u_int hv = 0;
-	int err;
+	int err = 0;
 
 	READ_ENTER(&softs->ipf_syncnat);
 
@@ -992,7 +992,7 @@ ipf_sync_nat(ipf_main_softc_t *softc, synchdr_t *sp, void *data)
 	}
 
 	RWLOCK_EXIT(&softs->ipf_syncnat);
-	return 0;
+	return err;
 }
 
 

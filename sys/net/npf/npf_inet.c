@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_inet.c,v 1.16.2.3 2013/06/23 06:20:25 tls Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.16.2.4 2014/08/20 00:04:35 tls Exp $	*/
 
 /*-
- * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.16.2.3 2013/06/23 06:20:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.16.2.4 2014/08/20 00:04:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.16.2.3 2013/06/23 06:20:25 tls Exp $"
 #include "npf_impl.h"
 
 /*
- * npf_fixup{16,32}_cksum: update IPv4 checksum.
+ * npf_fixup{16,32}_cksum: incremental update of the Internet checksum.
  */
 
 uint16_t
@@ -71,22 +71,33 @@ npf_fixup16_cksum(uint16_t cksum, uint16_t odatum, uint16_t ndatum)
 	/*
 	 * RFC 1624:
 	 *	HC' = ~(~HC + ~m + m')
+	 *
+	 * Note: 1's complement sum is endian-independent (RFC 1071, page 2).
 	 */
-	sum = ~ntohs(cksum) & 0xffff;
-	sum += (~ntohs(odatum) & 0xffff) + ntohs(ndatum);
+	sum = ~cksum & 0xffff;
+	sum += (~odatum & 0xffff) + ndatum;
 	sum = (sum >> 16) + (sum & 0xffff);
 	sum += (sum >> 16);
 
-	return htons(~sum & 0xffff);
+	return ~sum & 0xffff;
 }
 
 uint16_t
 npf_fixup32_cksum(uint16_t cksum, uint32_t odatum, uint32_t ndatum)
 {
+	uint32_t sum;
 
-	cksum = npf_fixup16_cksum(cksum, odatum & 0xffff, ndatum & 0xffff);
-	cksum = npf_fixup16_cksum(cksum, odatum >> 16, ndatum >> 16);
-	return cksum;
+	/*
+	 * Checksum 32-bit datum as as two 16-bit.  Note, the first
+	 * 32->16 bit reduction is not necessary.
+	 */
+	sum = ~cksum & 0xffff;
+	sum += (~odatum & 0xffff) + (ndatum & 0xffff);
+
+	sum += (~odatum >> 16) + (ndatum >> 16);
+	sum = (sum >> 16) + (sum & 0xffff);
+	sum += (sum >> 16);
+	return ~sum & 0xffff;
 }
 
 /*
@@ -109,20 +120,19 @@ npf_addr_cksum(uint16_t cksum, int sz, const npf_addr_t *oaddr,
 }
 
 /*
- * npf_addr_sum: provide IP address as a summed (if needed) 32-bit integer.
+ * npf_addr_sum: provide IP addresses as a XORed 32-bit integer.
  * Note: used for hash function.
  */
 uint32_t
-npf_addr_sum(const int sz, const npf_addr_t *a1, const npf_addr_t *a2)
+npf_addr_mix(const int sz, const npf_addr_t *a1, const npf_addr_t *a2)
 {
 	uint32_t mix = 0;
-	int i;
 
 	KASSERT(sz > 0 && a1 != NULL && a2 != NULL);
 
-	for (i = 0; i < (sz >> 2); i++) {
-		mix += a1->s6_addr32[i];
-		mix += a2->s6_addr32[i];
+	for (int i = 0; i < (sz >> 2); i++) {
+		mix ^= a1->s6_addr32[i];
+		mix ^= a2->s6_addr32[i];
 	}
 	return mix;
 }
@@ -211,8 +221,9 @@ npf_tcpsaw(const npf_cache_t *npc, tcp_seq *seq, tcp_seq *ack, uint32_t *win)
  * npf_fetch_tcpopts: parse and return TCP options.
  */
 bool
-npf_fetch_tcpopts(npf_cache_t *npc, nbuf_t *nbuf, uint16_t *mss, int *wscale)
+npf_fetch_tcpopts(npf_cache_t *npc, uint16_t *mss, int *wscale)
 {
+	nbuf_t *nbuf = npc->npc_nbuf;
 	const struct tcphdr *th = npc->npc_l4.tcp;
 	int topts_len, step;
 	void *nptr;
@@ -296,7 +307,7 @@ next:
 	ok = true;
 done:
 	if (nbuf_flag_p(nbuf, NBUF_DATAREF_RESET)) {
-		npf_recache(npc, nbuf);
+		npf_recache(npc);
 	}
 	return ok;
 }
@@ -328,8 +339,8 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 
 		/* Cache: layer 3 - IPv4. */
 		npc->npc_alen = sizeof(struct in_addr);
-		npc->npc_srcip = (npf_addr_t *)&ip->ip_src;
-		npc->npc_dstip = (npf_addr_t *)&ip->ip_dst;
+		npc->npc_ips[NPF_SRC] = (npf_addr_t *)&ip->ip_src;
+		npc->npc_ips[NPF_DST] = (npf_addr_t *)&ip->ip_dst;
 		npc->npc_hlen = ip->ip_hl << 2;
 		npc->npc_proto = ip->ip_p;
 
@@ -391,16 +402,20 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 			npc->npc_hlen += hlen;
 		}
 
-		/* Restore the offset. */
+		/*
+		 * Re-fetch the header pointers (nbufs might have been
+		 * reallocated).  Restore the original offset (if any).
+		 */
 		nbuf_reset(nbuf);
+		ip6 = nbuf_dataptr(nbuf);
 		if (off) {
 			nbuf_advance(nbuf, off, 0);
 		}
 
 		/* Cache: layer 3 - IPv6. */
 		npc->npc_alen = sizeof(struct in6_addr);
-		npc->npc_srcip = (npf_addr_t *)&ip6->ip6_src;
-		npc->npc_dstip = (npf_addr_t *)&ip6->ip6_dst;
+		npc->npc_ips[NPF_SRC] = (npf_addr_t *)&ip6->ip6_src;
+		npc->npc_ips[NPF_DST]= (npf_addr_t *)&ip6->ip6_dst;
 
 		npc->npc_ip.v6 = ip6;
 		flags |= NPC_IP6;
@@ -419,8 +434,9 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
  * => nbuf offset shall be set accordingly.
  */
 int
-npf_cache_all(npf_cache_t *npc, nbuf_t *nbuf)
+npf_cache_all(npf_cache_t *npc)
 {
+	nbuf_t *nbuf = npc->npc_nbuf;
 	int flags, l4flags;
 	u_int hlen;
 
@@ -437,6 +453,7 @@ again:
 	 */
 	flags = npf_cache_ip(npc, nbuf);
 	if ((flags & NPC_IP46) == 0 || (flags & NPC_IPFRAG) != 0) {
+		nbuf_unset_flag(nbuf, NBUF_DATAREF_RESET);
 		npc->npc_info |= flags;
 		return flags;
 	}
@@ -485,14 +502,16 @@ again:
 }
 
 void
-npf_recache(npf_cache_t *npc, nbuf_t *nbuf)
+npf_recache(npf_cache_t *npc)
 {
-	const int mflags __unused = npc->npc_info & (NPC_IP46 | NPC_LAYER4);
-	int flags;
+	nbuf_t *nbuf = npc->npc_nbuf;
+	const int mflags __diagused = npc->npc_info & (NPC_IP46 | NPC_LAYER4);
+	int flags __diagused;
 
 	nbuf_reset(nbuf);
 	npc->npc_info = 0;
-	flags = npf_cache_all(npc, nbuf);
+	flags = npf_cache_all(npc);
+
 	KASSERT((flags & mflags) == mflags);
 	KASSERT(nbuf_flag_p(nbuf, NBUF_DATAREF_RESET) == 0);
 }
@@ -501,17 +520,12 @@ npf_recache(npf_cache_t *npc, nbuf_t *nbuf)
  * npf_rwrip: rewrite required IP address.
  */
 bool
-npf_rwrip(const npf_cache_t *npc, int di, const npf_addr_t *addr)
+npf_rwrip(const npf_cache_t *npc, u_int which, const npf_addr_t *addr)
 {
-	npf_addr_t *oaddr;
-
 	KASSERT(npf_iscached(npc, NPC_IP46));
+	KASSERT(which == NPF_SRC || which == NPF_DST);
 
-	/*
-	 * Rewrite source address if outgoing and destination if incoming.
-	 */
-	oaddr = (di == PFIL_OUT) ? npc->npc_srcip : npc->npc_dstip;
-	memcpy(oaddr, addr, npc->npc_alen);
+	memcpy(npc->npc_ips[which], addr, npc->npc_alen);
 	return true;
 }
 
@@ -519,21 +533,22 @@ npf_rwrip(const npf_cache_t *npc, int di, const npf_addr_t *addr)
  * npf_rwrport: rewrite required TCP/UDP port.
  */
 bool
-npf_rwrport(const npf_cache_t *npc, int di, const in_port_t port)
+npf_rwrport(const npf_cache_t *npc, u_int which, const in_port_t port)
 {
 	const int proto = npc->npc_proto;
 	in_port_t *oport;
 
 	KASSERT(npf_iscached(npc, NPC_TCP) || npf_iscached(npc, NPC_UDP));
 	KASSERT(proto == IPPROTO_TCP || proto == IPPROTO_UDP);
+	KASSERT(which == NPF_SRC || which == NPF_DST);
 
 	/* Get the offset and store the port in it. */
 	if (proto == IPPROTO_TCP) {
 		struct tcphdr *th = npc->npc_l4.tcp;
-		oport = (di == PFIL_OUT) ? &th->th_sport : &th->th_dport;
+		oport = (which == NPF_SRC) ? &th->th_sport : &th->th_dport;
 	} else {
 		struct udphdr *uh = npc->npc_l4.udp;
-		oport = (di == PFIL_OUT) ? &uh->uh_sport : &uh->uh_dport;
+		oport = (which == NPF_SRC) ? &uh->uh_sport : &uh->uh_dport;
 	}
 	memcpy(oport, &port, sizeof(in_port_t));
 	return true;
@@ -543,17 +558,17 @@ npf_rwrport(const npf_cache_t *npc, int di, const in_port_t port)
  * npf_rwrcksum: rewrite IPv4 and/or TCP/UDP checksum.
  */
 bool
-npf_rwrcksum(const npf_cache_t *npc, const int di,
+npf_rwrcksum(const npf_cache_t *npc, u_int which,
     const npf_addr_t *addr, const in_port_t port)
 {
+	const npf_addr_t *oaddr = npc->npc_ips[which];
 	const int proto = npc->npc_proto;
 	const int alen = npc->npc_alen;
-	npf_addr_t *oaddr;
 	uint16_t *ocksum;
 	in_port_t oport;
 
 	KASSERT(npf_iscached(npc, NPC_LAYER4));
-	oaddr = (di == PFIL_OUT) ? npc->npc_srcip : npc->npc_dstip;
+	KASSERT(which == NPF_SRC || which == NPF_DST);
 
 	if (npf_iscached(npc, NPC_IP4)) {
 		struct ip *ip = npc->npc_ip.v4;
@@ -567,7 +582,7 @@ npf_rwrcksum(const npf_cache_t *npc, const int di,
 	}
 
 	/* Nothing else to do for ICMP. */
-	if (proto == IPPROTO_ICMP) {
+	if (proto == IPPROTO_ICMP || proto == IPPROTO_ICMPV6) {
 		return true;
 	}
 	KASSERT(npf_iscached(npc, NPC_TCP) || npf_iscached(npc, NPC_UDP));
@@ -582,7 +597,7 @@ npf_rwrcksum(const npf_cache_t *npc, const int di,
 		struct tcphdr *th = npc->npc_l4.tcp;
 
 		ocksum = &th->th_sum;
-		oport = (di == PFIL_OUT) ? th->th_sport : th->th_dport;
+		oport = (which == NPF_SRC) ? th->th_sport : th->th_dport;
 	} else {
 		struct udphdr *uh = npc->npc_l4.udp;
 
@@ -592,7 +607,7 @@ npf_rwrcksum(const npf_cache_t *npc, const int di,
 			/* No need to update. */
 			return true;
 		}
-		oport = (di == PFIL_OUT) ? uh->uh_sport : uh->uh_dport;
+		oport = (which == NPF_SRC) ? uh->uh_sport : uh->uh_dport;
 	}
 
 	uint16_t cksum = npf_addr_cksum(*ocksum, alen, oaddr, addr);
@@ -605,14 +620,134 @@ npf_rwrcksum(const npf_cache_t *npc, const int di,
 	return true;
 }
 
+/*
+ * npf_napt_rwr: perform address and/or port translation.
+ */
+int
+npf_napt_rwr(const npf_cache_t *npc, u_int which,
+    const npf_addr_t *addr, const in_addr_t port)
+{
+	const unsigned proto = npc->npc_proto;
+
+	/*
+	 * Rewrite IP and/or TCP/UDP checksums first, since we need the
+	 * current (old) address/port for the calculations.  Then perform
+	 * the address translation i.e. rewrite source or destination.
+	 */
+	if (!npf_rwrcksum(npc, which, addr, port)) {
+		return EINVAL;
+	}
+	if (!npf_rwrip(npc, which, addr)) {
+		return EINVAL;
+	}
+	if (port == 0) {
+		/* Done. */
+		return 0;
+	}
+
+	switch (proto) {
+	case IPPROTO_TCP:
+	case IPPROTO_UDP:
+		/* Rewrite source/destination port. */
+		if (!npf_rwrport(npc, which, port)) {
+			return EINVAL;
+		}
+		break;
+	case IPPROTO_ICMP:
+	case IPPROTO_ICMPV6:
+		KASSERT(npf_iscached(npc, NPC_ICMP));
+		/* Nothing. */
+		break;
+	default:
+		return ENOTSUP;
+	}
+	return 0;
+}
+
+/*
+ * IPv6-to-IPv6 Network Prefix Translation (NPTv6), as per RFC 6296.
+ */
+
+int
+npf_npt66_rwr(const npf_cache_t *npc, u_int which, const npf_addr_t *pref,
+    npf_netmask_t len, uint16_t adj)
+{
+	npf_addr_t *addr = npc->npc_ips[which];
+	unsigned remnant, word, preflen = len >> 4;
+	uint32_t sum;
+
+	KASSERT(which == NPF_SRC || which == NPF_DST);
+
+	if (!npf_iscached(npc, NPC_IP6)) {
+		return EINVAL;
+	}
+	if (len <= 48) {
+		/*
+		 * The word to adjust.  Cannot translate the 0xffff
+		 * subnet if /48 or shorter.
+		 */
+		word = 3;
+		if (addr->s6_addr16[word] == 0xffff) {
+			return EINVAL;
+		}
+	} else {
+		/*
+		 * Also, all 0s or 1s in the host part are disallowed for
+		 * longer than /48 prefixes.
+		 */
+		if ((addr->s6_addr32[2] == 0 && addr->s6_addr32[3] == 0) ||
+		    (addr->s6_addr32[2] == ~0U && addr->s6_addr32[3] == ~0U))
+			return EINVAL;
+
+		/* Determine the 16-bit word to adjust. */
+		for (word = 4; word < 8; word++)
+			if (addr->s6_addr16[word] != 0xffff)
+				break;
+	}
+
+	/* Rewrite the prefix. */
+	for (unsigned i = 0; i < preflen; i++) {
+		addr->s6_addr16[i] = pref->s6_addr16[i];
+	}
+
+	/*
+	 * If prefix length is within a 16-bit word (not dividable by 16),
+	 * then prepare a mask, determine the word and adjust it.
+	 */
+	if ((remnant = len - (preflen << 4)) != 0) {
+		const uint16_t wordmask = (1U << remnant) - 1;
+		const unsigned i = preflen;
+
+		addr->s6_addr16[i] = (pref->s6_addr16[i] & wordmask) |
+		    (addr->s6_addr16[i] & ~wordmask);
+	}
+
+	/*
+	 * Performing 1's complement sum/difference.
+	 */
+	sum = addr->s6_addr16[word] + adj;
+	while (sum >> 16) {
+		sum = (sum >> 16) + (sum & 0xffff);
+	}
+	if (sum == 0xffff) {
+		/* RFC 1071. */
+		sum = 0x0000;
+	}
+	addr->s6_addr16[word] = sum;
+	return 0;
+}
+
 #if defined(DDB) || defined(_NPF_TESTING)
 
-void
-npf_addr_dump(const npf_addr_t *addr)
+const char *
+npf_addr_dump(const npf_addr_t *addr, int alen)
 {
-	printf("IP[%x:%x:%x:%x]\n",
-	    addr->s6_addr32[0], addr->s6_addr32[1],
-	    addr->s6_addr32[2], addr->s6_addr32[3]);
+	if (alen == sizeof(struct in_addr)) {
+		struct in_addr ip;
+		memcpy(&ip, addr, alen);
+		return inet_ntoa(ip);
+	}
+	return "[IPv6]"; // XXX
 }
 
 #endif

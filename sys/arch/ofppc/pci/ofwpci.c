@@ -1,4 +1,4 @@
-/* $NetBSD: ofwpci.c,v 1.11 2012/01/27 18:52:59 para Exp $ */
+/* $NetBSD: ofwpci.c,v 1.11.6.1 2014/08/20 00:03:17 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.11 2012/01/27 18:52:59 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.11.6.1 2014/08/20 00:03:17 tls Exp $");
 
 #include "opt_pci.h"
 
@@ -151,10 +151,10 @@ ofwpci_attach(device_t parent, device_t self, void *aux)
 	    "ofwpci mem-space") != 0)
 		panic("Can't init ofwpci mem tag");
 
-	aprint_debug("io base=0x%x offset=0x%x limit=0x%x\n",
+	aprint_debug("io base=0x%"PRIxPTR" offset=0x%"PRIxPTR" limit=0x%"PRIxPTR"\n",
 	    sc->sc_iot.pbs_base, sc->sc_iot.pbs_offset, sc->sc_iot.pbs_limit);
 	
-	aprint_debug("mem base=0x%x offset=0x%x limit=0x%x\n",
+	aprint_debug("mem base=0x%"PRIxPTR" offset=0x%"PRIxPTR" limit=0x%"PRIxPTR"\n",
 	    sc->sc_memt.pbs_base, sc->sc_memt.pbs_offset,
 	    sc->sc_memt.pbs_limit);
 	

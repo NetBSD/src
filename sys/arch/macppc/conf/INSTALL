@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.117.2.1 2013/06/23 06:20:08 tls Exp $
+#	$NetBSD: INSTALL,v 1.117.2.2 2014/08/20 00:03:11 tls Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -7,7 +7,7 @@ include		"arch/macppc/conf/std.macppc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-makeoptions	COPTS="-Os -mmultiple -pipe" # -Os -mmultiple to reduce size.
+makeoptions	COPTS="-Os" # Reduce size.
 
 maxusers	12
 
@@ -17,7 +17,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=4424	# 2212 KiB
+options 	MEMORY_DISK_ROOT_SIZE=5120	# 2560 KiB
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 options 	USERCONF	# userconf(4) support

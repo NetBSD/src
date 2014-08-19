@@ -1,0 +1,98 @@
+/*	$NetBSD: msg.md.de,v 1.1.6.2 2014/08/20 00:05:15 tls Exp $	*/
+
+/*
+ * Copyright 1997 Piermont Information Systems Inc.
+ * All rights reserved.
+ *
+ * Based on code written by Philip A. Nelson for Piermont Information
+ * Systems Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of Piermont Information Systems Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/* evbarm machine dependent messages, German */
+
+
+message md_hello
+{
+}
+
+message md_may_remove_boot_medium
+{Wenn Sie von einer Diskette gebootet haben, können Sie diese jetzt
+entfernen.
+
+}
+
+message badreadbb
+{Kann den Bootblock des Filecores nicht lesen
+}
+
+message badreadriscix
+{Kann die RISCiX Partitionstabelle nicht lesen 
+}
+
+message notnetbsdriscix
+{Keine NetBSD Partition in der RISCiX Partitionstabelle gefunden - erstellen
+eines Labels nicht möglich.
+}
+
+message notnetbsd
+{Keine NetBSD Partition gefunden (eine Nur-Filecore Platte?) - erstellen eines
+Labels nicht möglich. 
+}
+
+message dobootblks
+{Installiere die Bootblöcke auf %s ...
+}
+
+message arm32fspart
+{Dies sind die NetBSD Partitionen auf %s (Größe und Offset in %s):
+}
+
+message set_kernel_1
+{Kernel (ADI_BRH)}
+message set_kernel_2
+{Kernel (INTERGRATOR)}
+message set_kernel_3
+{Kernel (IQ80310)}
+message set_kernel_4
+{Kernel (IQ80321)}
+message set_kernel_5
+{Kernel (MINI2440)}
+message set_kernel_6
+{Kernel (TEAMASA_NPWR)}
+message set_kernel_7
+{Kernel (TS7200)}
+message set_kernel_8
+{Kernel (RPI)}
+message set_kernel_9
+{Kernel (KUROBOX_PRO)}
+
+message nomsdospart
+{There is no MSDOS boot partition in the MBR partition table.}
+
+message rpikernelmissing
+{The RPI kernel was not installed, perhaps you didn't select it?}

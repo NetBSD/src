@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.2 2012/01/18 23:12:21 nonaka Exp $	*/
+/*	$NetBSD: boot.h,v 1.2.6.1 2014/08/20 00:03:30 tls Exp $	*/
 
 /*
  * Copyright (c) 2009 NONAKA Kimihiro
@@ -31,6 +31,7 @@
 #include <sys/param.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/bootcfg.h>
 #include <lib/libkern/libkern.h>
 
 extern int debug;

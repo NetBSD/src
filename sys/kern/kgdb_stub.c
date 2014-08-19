@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.25.2.1 2013/06/23 06:18:58 tls Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.25.2.2 2014/08/20 00:04:29 tls Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.25.2.1 2013/06/23 06:18:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.25.2.2 2014/08/20 00:04:29 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -304,6 +304,7 @@ kgdb_recv(u_char *bp, int maxlen)
 			break;
 		}
 		DPRINTF((" Bad(wanted %x, off by %d)- ", tmpcsum, csum));
+		__USE(tmpcsum);
 		PUTC(KGDB_BADP);
 	} while (1);
 	DPRINTF(("kgdb_recv: %s\n", bp));

@@ -1,5 +1,4 @@
-#   Copyright 1997, 1998, 1999, 2000, 2001, 2003, 2007, 2008, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright 1997-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,22 +16,12 @@
 # display.exp   Test display commands
 #               Also do some printing stuff for coverage's sake.
 #
-if $tracelevel then {
-	strace $tracelevel
-}
+standard_testfile
 
-set testfile display
-set srcfile  ${testfile}.c
-set binfile  ${objdir}/${subdir}/${testfile}
-
-
-
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
+if {[prepare_for_testing $testfile.exp $testfile $srcfile \
+	 {debug nowarnings}]} {
     untested display.exp
     return -1
-}
-if [target_info exists gdb_stub] {
-    gdb_step_for_stub;
 }
 
 # Preserve the old timeout, and set a new one that should be
@@ -44,14 +33,9 @@ verbose "Timeout is now $timeout seconds" 2
 # use this to debug:
 #log_user 1
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
-
 # Some coverage stuff
 #
-if ![target_info exists use_gdb_stub] {
+if !$use_gdb_stub {
     gdb_test "kill" ".*The program is not being run.*"
     gdb_test "detach" ".*"
     gdb_test "run" ".*"
@@ -119,6 +103,32 @@ gdb_test "undisp" \
     "y"
 
 
+# Test displaying a variable that is temporarily at a bad address.
+# But if we can examine what's at memory address 0, then we'll also be
+# able to display it without error.  Don't run the test in that case.
+set can_read_0 0
+gdb_test_multiple "x 0" "memory at address 0" {
+    -re "0x0:.*Cannot access memory at address 0x0.*$gdb_prompt $" { }
+    -re "0x0:.*Error accessing memory address 0x0.*$gdb_prompt $" { }
+    -re ".*$gdb_prompt $" {
+	set can_read_0 1
+    }
+}
+
+if { !$can_read_0 } {
+    gdb_test "disp *p_i" ".*: \\*p_i = 0"
+    gdb_test "p p_i = 0x0" " = \\(int \\*\\) 0x0"
+    gdb_test "display" ".*: \\*p_i = <error: .*>" "display bad address"
+    gdb_test "p p_i = &i" " = \\(int \\*\\) $hex"
+    gdb_test "display" ".*: \\*p_i = 0" "display good address"
+
+    gdb_test "undisp" \
+	"" \
+	"undisp all again" \
+	".*Delete all auto-display expressions.*y or n. $" \
+	"y"
+}
+
 gdb_test "disab 3" ".*.*" "disab 3"
 gdb_test "cont" ".*Breakpoint 4.*" "watch off"
 
@@ -158,7 +168,7 @@ gdb_test "printf \"%p\\n\", 1" "0x1"
 
 # play with "print", too
 #
-gdb_test "print/z j" ".*Undefined output format.*"
+gdb_test "print/k j" ".*Undefined output format.*"
 gdb_test "print/d j" " = 0\[\\r\\n\]+"   "debug test output 1"
 gdb_test "print/r j" " = 0\[\\r\\n\]+"   "debug test output 1a"
 gdb_test "print/x j" " = 0x0\[\\r\\n\]+" "debug test output 2"

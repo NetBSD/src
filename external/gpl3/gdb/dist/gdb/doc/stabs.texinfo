@@ -13,9 +13,7 @@
 @end direntry
 
 @copying
-Copyright @copyright{} 1992, 1993, 1994, 1995, 1997, 1998, 2000, 2001,
-2002, 2003, 2004, 2005, 2006, 2007, 2009, 2010, 2011
-Free Software Foundation, Inc.
+Copyright @copyright{} 1992-2014 Free Software Foundation, Inc.
 Contributed by Cygnus Support.  Written by Julia Menapace, Jim Kingdon,
 and David MacKenzie.
 
@@ -40,7 +38,7 @@ This document describes the stabs debugging symbol tables.
 @page
 @tex
 \def\$#1${{#1}}  % Kluge: collect RCS revision info without $...$
-\xdef\manvers{\Revision: 2.130}  % For use in headers, footers too
+\xdef\manvers{\Revision}  % For use in headers, footers too
 {\parskip=0pt
 \hfill Cygnus Support\par
 \hfill \manvers\par
@@ -74,8 +72,8 @@ This document describes the stabs debugging format.
 * Questions::			Questions and anomalies
 * Stab Sections::		In some object file formats, stabs are
                                 in sections.
-* Symbol Types Index::          Index of symbolic stab symbol type names.
 * GNU Free Documentation License::  The license for this documentation
+* Symbol Types Index::          Index of symbolic stab symbol type names.
 @end menu
 @end ifnottex
 

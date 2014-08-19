@@ -1,4 +1,4 @@
-/* $NetBSD: xilinx_ml40x.c,v 1.2 2011/02/22 08:20:20 matt Exp $ */
+/* $NetBSD: xilinx_ml40x.c,v 1.2.18.1 2014/08/20 00:02:51 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,13 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xilinx_ml40x.c,v 1.2 2011/02/22 08:20:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xilinx_ml40x.c,v 1.2.18.1 2014/08/20 00:02:51 tls Exp $");
 
 #define __INTR_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -100,7 +101,8 @@ xilinx_ml40x_init(void)
 	//cpu_mhz = 10;
 	cpuspeed = 8; /* xxx */
 
-	sprintf(cpu_model, "Xilinx ML%s (eMIPS)", (systype == XS_ML40x) ? "40x" : "50x");
+	cpu_setmodel("Xilinx ML%s (eMIPS)",
+	    (systype == XS_ML40x) ? "40x" : "50x");
 
 	ipl_sr_map = xilinx_ml40x_ipl_sr_map;
 }

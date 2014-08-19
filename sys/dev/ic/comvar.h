@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.73.6.1 2013/06/23 06:20:17 tls Exp $	*/
+/*	$NetBSD: comvar.h,v 1.73.6.2 2014/08/20 00:03:38 tls Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -69,6 +69,7 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 #define	COM_HW_KGDB	0x80
 #define	COM_HW_TXFIFO_DISABLE	0x100
 #define	COM_HW_NO_TXPRELOAD	0x200
+#define	COM_HW_AFE	0x400
 
 /* Buffer size for character buffer */
 #ifndef COM_RING_SIZE
@@ -92,7 +93,7 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 #define	COM_REG_LSR		10
 #define	COM_REG_MSR		11
 #ifdef	COM_16750
-#define COM_REG_USR		31
+#define	COM_REG_USR		31
 #endif
 
 struct com_regs {
@@ -138,6 +139,9 @@ extern const bus_size_t com_std_map[16];
 #define	COM_REG_TCR		com_msr
 #define	COM_REG_TLR		com_scratch
 #define	COM_REG_MDR1		8
+#ifdef	COM_16750
+#define COM_REG_USR		com_usr
+#endif
 
 struct com_regs {
 	bus_space_tag_t		cr_iot;
@@ -235,6 +239,9 @@ struct com_softc {
 	int (*enable)(struct com_softc *);
 	void (*disable)(struct com_softc *);
 	int enabled;
+
+	/* XXXX: vendor workaround functions */
+	int (*sc_vendor_workaround)(struct com_softc *);
 
 	struct pps_state sc_pps_state;	/* pps state */
 

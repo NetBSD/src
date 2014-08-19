@@ -60,7 +60,7 @@ mpn_toom32_mul (mp_ptr pp,
   mp_size_t n, s, t;
   int vm1_neg;
   mp_limb_t cy;
-  int hi;
+  mp_limb_signed_t hi;
   mp_limb_t ap1_hi, bp1_hi;
 
 #define a0  ap

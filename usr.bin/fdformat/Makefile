@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.13 2010/03/30 07:26:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.13.12.1 2014/08/20 00:04:58 tls Exp $
 
 .include <bsd.own.mk>
 
 .if (${MACHINE_ARCH} == "alpha" || \
      ${MACHINE_CPU} == "arm" || \
      ${MACHINE_ARCH} == "i386" || \
-     ${MACHINE_ARCH} == "m68k" || \
+     ${MACHINE_CPU} == "m68k" || \
      ${MACHINE_CPU} == "powerpc" || \
      ${MACHINE_ARCH} == "sparc" || \
      ${MACHINE_ARCH} == "sparc64" || \

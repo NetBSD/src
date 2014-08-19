@@ -1,4 +1,4 @@
-/*	$NetBSD: core_netbsd.c,v 1.18 2011/02/02 20:10:09 chuck Exp $	*/
+/*	$NetBSD: core_netbsd.c,v 1.18.14.1 2014/08/20 00:04:28 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.18 2011/02/02 20:10:09 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.18.14.1 2014/08/20 00:04:28 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -70,22 +70,21 @@ __KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.18 2011/02/02 20:10:09 chuck Exp $
 #ifdef COREDUMP
 
 struct coredump_state {
+	struct coredump_iostate *iocookie;
 	struct CORENAME(core) core;
 };
 
-static int	CORENAME(coredump_countsegs_netbsd)(struct proc *, void *,
-		    struct uvm_coredump_state *);
-static int	CORENAME(coredump_writesegs_netbsd)(struct proc *, void *,
-		    struct uvm_coredump_state *);
+static int	CORENAME(coredump_writesegs_netbsd)(struct uvm_coredump_state *);
 
 int
-CORENAME(coredump_netbsd)(struct lwp *l, void *iocookie)
+CORENAME(coredump_netbsd)(struct lwp *l, struct coredump_iostate *iocookie)
 {
 	struct coredump_state cs;
 	struct proc *p = l->l_proc;
 	struct vmspace *vm = p->p_vmspace;
 	int error;
 
+	cs.iocookie = iocookie;
 	cs.core.c_midmag = 0;
 	strncpy(cs.core.c_name, p->p_comm, MAXCOMLEN);
 	cs.core.c_nseg = 0;
@@ -99,10 +98,7 @@ CORENAME(coredump_netbsd)(struct lwp *l, void *iocookie)
 	error = CORENAME(cpu_coredump)(l, NULL, &cs.core);
 	if (error)
 		return (error);
-	error = uvm_coredump_walkmap(p, NULL,
-	    CORENAME(coredump_countsegs_netbsd), &cs);
-	if (error)
-		return (error);
+	cs.core.c_nseg = uvm_coredump_count_segs(p);
 
 	/* First write out the core header. */
 	error = coredump_write(iocookie, UIO_SYSSPACE, &cs.core,
@@ -116,32 +112,16 @@ CORENAME(coredump_netbsd)(struct lwp *l, void *iocookie)
 		return (error);
 
 	/* Finally, the address space dump */
-	return uvm_coredump_walkmap(p, iocookie,
-	    CORENAME(coredump_writesegs_netbsd), &cs);
+	return uvm_coredump_walkmap(p, CORENAME(coredump_writesegs_netbsd),
+	    &cs);
 }
 
 static int
-CORENAME(coredump_countsegs_netbsd)(struct proc *p, void *iocookie,
-    struct uvm_coredump_state *us)
-{
-	struct coredump_state *cs = us->cookie;
-
-	if (us->start != us->realend)
-		cs->core.c_nseg++;
-
-	return (0);
-}
-
-static int
-CORENAME(coredump_writesegs_netbsd)(struct proc *p, void *iocookie,
-    struct uvm_coredump_state *us)
+CORENAME(coredump_writesegs_netbsd)(struct uvm_coredump_state *us)
 {
 	struct coredump_state *cs = us->cookie;
 	struct CORENAME(coreseg) cseg;
 	int flag, error;
-
-	if (us->start == us->realend)
-		return (0);
 
 	if (us->flags & UVM_COREDUMP_STACK)
 		flag = CORE_STACK;
@@ -153,21 +133,26 @@ CORENAME(coredump_writesegs_netbsd)(struct proc *p, void *iocookie,
 	 */
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, CORE_GETMID(cs->core), flag);
 	cseg.c_addr = us->start;
-	cseg.c_size = us->end - us->start;
 
-	error = coredump_write(iocookie, UIO_SYSSPACE,
+	if (us->start == us->realend)
+		/* Not really wanted, but counted... */
+		cseg.c_size = 0;
+	else
+		cseg.c_size = us->end - us->start;
+
+	error = coredump_write(cs->iocookie, UIO_SYSSPACE,
 	    &cseg, cs->core.c_seghdrsize);
 	if (error)
 		return (error);
 
-	return coredump_write(iocookie, UIO_USERSPACE,
+	return coredump_write(cs->iocookie, UIO_USERSPACE,
 	    (void *)(vaddr_t)us->start, cseg.c_size);
 }
 
 #else	/* COREDUMP */
 
 int
-CORENAME(coredump_netbsd)(struct lwp *l, void *cookie)
+CORENAME(coredump_netbsd)(struct lwp *l, struct coredump_iostate *cookie)
 {
 
 	return ENOSYS;

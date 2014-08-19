@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_addr.c,v 1.1.1.2 2011/03/02 19:32:32 tron Exp $	*/
+/*	$NetBSD: smtp_addr.c,v 1.1.1.2.10.1 2014/08/19 23:59:44 tls Exp $	*/
 
 /*++
 /* NAME
@@ -8,8 +8,9 @@
 /* SYNOPSIS
 /*	#include "smtp_addr.h"
 /*
-/*	DNS_RR *smtp_domain_addr(name, misc_flags, why, found_myself)
+/*	DNS_RR *smtp_domain_addr(name, mxrr, misc_flags, why, found_myself)
 /*	char	*name;
+/*	DNS_RR  **mxrr;
 /*	int	misc_flags;
 /*	DSN_BUF	*why;
 /*	int	*found_myself;
@@ -31,7 +32,9 @@
 /*	so that it contains only hosts that are more preferred than the
 /*	local mail server itself. The found_myself result parameter
 /*	is updated when the local MTA is MX host for the specified
-/*	destination.
+/*	destination.  If MX records were found, the rname, qname,
+/*	and dnssec validation status of the MX RRset are returned
+/*	via mxrr, which the caller must free with dns_rr_free().
 /*
 /*	When no mail exchanger is listed in the DNS for \fIname\fR, the
 /*	request is passed to smtp_host_addr().
@@ -122,7 +125,7 @@ static void smtp_print_addr(const char *what, DNS_RR *addr_list)
 
 /* smtp_addr_one - address lookup for one host name */
 
-static DNS_RR *smtp_addr_one(DNS_RR *addr_list, const char *host,
+static DNS_RR *smtp_addr_one(DNS_RR *addr_list, const char *host, int res_opt,
 			             unsigned pref, DSN_BUF *why)
 {
     const char *myname = "smtp_addr_one";
@@ -157,7 +160,8 @@ static DNS_RR *smtp_addr_one(DNS_RR *addr_list, const char *host,
      * should not clobber a soft error text and status code.
      */
     if (smtp_host_lookup_mask & SMTP_HOST_FLAG_DNS) {
-	switch (dns_lookup_v(host, smtp_dns_res_opt, &addr, (VSTRING *) 0,
+	res_opt |= smtp_dns_res_opt;
+	switch (dns_lookup_v(host, res_opt, &addr, (VSTRING *) 0,
 			     why->reason, DNS_REQ_FLAG_NONE,
 			     proto_info->dns_atype_list)) {
 	case DNS_OK:
@@ -238,6 +242,7 @@ static DNS_RR *smtp_addr_list(DNS_RR *mx_names, DSN_BUF *why)
 {
     DNS_RR *addr_list = 0;
     DNS_RR *rr;
+    int     res_opt = mx_names->dnssec_valid ? RES_USE_DNSSEC : 0;
 
     /*
      * As long as we are able to look up any host address, we ignore problems
@@ -263,7 +268,8 @@ static DNS_RR *smtp_addr_list(DNS_RR *mx_names, DSN_BUF *why)
     for (rr = mx_names; rr; rr = rr->next) {
 	if (rr->type != T_MX)
 	    msg_panic("smtp_addr_list: bad resource type: %d", rr->type);
-	addr_list = smtp_addr_one(addr_list, (char *) rr->data, rr->pref, why);
+	addr_list = smtp_addr_one(addr_list, (char *) rr->data, res_opt,
+				  rr->pref, why);
     }
     return (addr_list);
 }
@@ -338,14 +344,15 @@ static DNS_RR *smtp_truncate_self(DNS_RR *addr_list, unsigned pref)
 
 /* smtp_domain_addr - mail exchanger address lookup */
 
-DNS_RR *smtp_domain_addr(char *name, int misc_flags, DSN_BUF *why,
-			         int *found_myself)
+DNS_RR *smtp_domain_addr(char *name, DNS_RR **mxrr, int misc_flags,
+			         DSN_BUF *why, int *found_myself)
 {
     DNS_RR *mx_names;
     DNS_RR *addr_list = 0;
     DNS_RR *self = 0;
     unsigned best_pref;
     unsigned best_found;
+    int     r = 0;			/* Resolver flags */
 
     dsb_reset(why);				/* Paranoia */
 
@@ -357,8 +364,10 @@ DNS_RR *smtp_domain_addr(char *name, int misc_flags, DSN_BUF *why,
     /*
      * Sanity check.
      */
-    if (var_disable_dns)
+    if (smtp_dns_support == SMTP_DNS_DISABLED)
 	msg_panic("smtp_domain_addr: DNS lookup is disabled");
+    if (smtp_dns_support == SMTP_DNS_DNSSEC)
+	r |= RES_USE_DNSSEC;
 
     /*
      * Look up the mail exchanger hosts listed for this name. Sort the
@@ -402,7 +411,7 @@ DNS_RR *smtp_domain_addr(char *name, int misc_flags, DSN_BUF *why,
      * at hostnames provides a partial solution for MX hosts behind a NAT
      * gateway.
      */
-    switch (dns_lookup(name, T_MX, 0, &mx_names, (VSTRING *) 0, why->reason)) {
+    switch (dns_lookup(name, T_MX, r, &mx_names, (VSTRING *) 0, why->reason)) {
     default:
 	dsb_status(why, "4.4.3");
 	if (var_ign_mx_lookup_err)
@@ -422,6 +431,8 @@ DNS_RR *smtp_domain_addr(char *name, int misc_flags, DSN_BUF *why,
 	mx_names = dns_rr_sort(mx_names, dns_rr_compare_pref_any);
 	best_pref = (mx_names ? mx_names->pref : IMPOSSIBLE_PREFERENCE);
 	addr_list = smtp_addr_list(mx_names, why);
+	if (mxrr)
+	    *mxrr = dns_rr_copy(mx_names);	/* copies one record! */
 	dns_rr_free(mx_names);
 	if (addr_list == 0) {
 	    /* Text does not change. */
@@ -479,15 +490,19 @@ DNS_RR *smtp_domain_addr(char *name, int misc_flags, DSN_BUF *why,
 DNS_RR *smtp_host_addr(const char *host, int misc_flags, DSN_BUF *why)
 {
     DNS_RR *addr_list;
+    int     res_opt = 0;
 
     dsb_reset(why);				/* Paranoia */
+
+    if (smtp_dns_support == SMTP_DNS_DNSSEC)
+	res_opt |= RES_USE_DNSSEC;
 
     /*
      * If the host is specified by numerical address, just convert the
      * address to internal form. Otherwise, the host is specified by name.
      */
 #define PREF0	0
-    addr_list = smtp_addr_one((DNS_RR *) 0, host, PREF0, why);
+    addr_list = smtp_addr_one((DNS_RR *) 0, host, res_opt, PREF0, why);
     if (addr_list
 	&& (misc_flags & SMTP_MISC_FLAG_LOOP_DETECT)
 	&& smtp_find_self(addr_list) != 0) {

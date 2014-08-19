@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.13 2011/02/12 16:31:32 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.13.14.1 2014/08/20 00:03:04 tls Exp $	*/
 
 /*	$OpenBSD: asm.h,v 1.12 2001/03/29 02:15:57 mickey Exp $	*/
 
@@ -42,15 +42,17 @@
 
 #define _ASM_LS_CHAR	!
 
-#define	LEAF_ENTRY_NOPROFILE(x)				!\
+#define	_ENTRY(x) \
 	 ! .text ! .align 4				!\
-	.export	x, entry ! .label x ! .proc		!\
+	.export x, entry ! .label x ! .proc
+
+#define	LEAF_ENTRY_NOPROFILE(x)				!\
+	_ENTRY(x)					!\
 	.callinfo frame=0, no_calls, save_rp		!\
 	.entry
 
 #define	ENTRY_NOPROFILE(x,n)				!\
-	 ! .text ! .align 4				!\
-	.export x, entry ! .label x ! .proc		!\
+	_ENTRY(x)					!\
 	.callinfo frame=n, calls, save_rp, save_sp	!\
 	.entry
 
@@ -120,7 +122,7 @@
 	bv,n	%r0(tmp)				!\
 	nop
 
-#ifdef PIC
+#ifdef __PIC__
 #define PIC_CALL(func)					!\
 	addil	LT%func, %r19				!\
 	ldw	RT%func(%r1), %r1			!\

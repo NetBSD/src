@@ -1,4 +1,4 @@
-/* $NetBSD: ixm1200_start.S,v 1.4 2011/01/31 06:28:04 matt Exp $ */
+/* $NetBSD: ixm1200_start.S,v 1.4.14.1 2014/08/20 00:02:55 tls Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,14 +39,14 @@
 
 	.section .start,"ax",%progbits
 
-RCSID("$NetBSD: ixm1200_start.S,v 1.4 2011/01/31 06:28:04 matt Exp $")
+RCSID("$NetBSD: ixm1200_start.S,v 1.4.14.1 2014/08/20 00:02:55 tls Exp $")
 
 	.global _C_LABEL(ixm1200_start)
 _C_LABEL(ixm1200_start):
 	/*
 	 * Disable IRQ and FIQ
 	 */
-	mrs     r3, cpsr_all
+	mrs     r3, cpsr
 	orr     r1, r3, #(I32_bit | F32_bit)
 	msr     cpsr_all, r1
 

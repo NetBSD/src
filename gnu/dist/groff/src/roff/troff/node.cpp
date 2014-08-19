@@ -1,4 +1,4 @@
-/*	$NetBSD: node.cpp,v 1.2 2012/01/06 15:16:03 joerg Exp $	*/
+/*	$NetBSD: node.cpp,v 1.2.6.1 2014/08/20 00:01:54 tls Exp $	*/
 
 // -*- C++ -*-
 /* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003, 2004, 2005
@@ -2159,7 +2159,7 @@ void glyph_node::debug_node()
   if (c)
     fprintf(stderr, "%c", c);
   else
-    fprintf(stderr, ci->nm.contents());
+    fprintf(stderr, "%s", ci->nm.contents());
   if (push_state)
     fprintf(stderr, " <push_state>");
   if (state)

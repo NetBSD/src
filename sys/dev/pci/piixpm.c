@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.40 2012/02/14 15:08:07 pgoyette Exp $ */
+/* $NetBSD: piixpm.c,v 1.40.6.1 2014/08/20 00:03:48 tls Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.40 2012/02/14 15:08:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.40.6.1 2014/08/20 00:03:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,40 +55,37 @@ __KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.40 2012/02/14 15:08:07 pgoyette Exp $")
 #define PIIXPM_DELAY	200
 #define PIIXPM_TIMEOUT	1
 
-#define PIIXPM_INDIRECTIO_BASE	0xcd6
-#define PIIXPM_INDIRECTIO_SIZE	2
-#define PIIXPM_INDIRECTIO_INDEX	0
-#define PIIXPM_INDIRECTIO_DATA	1
-
-#define SB800_PM_SMBUS0EN_LO	0x2c
-#define SB800_PM_SMBUS0EN_HI	0x2d
-
-#define SB800_PM_SMBUS0EN_ENABLE	0x0001
-#define SB800_PM_SMBUS0EN_BADDR		0xffe0
+struct piixpm_smbus {
+	int			sda;
+	struct			piixpm_softc *softc;
+};
 
 struct piixpm_softc {
 	device_t		sc_dev;
 
-	bus_space_tag_t		sc_smb_iot;
+	bus_space_tag_t		sc_iot;
+#define	sc_pm_iot sc_iot
+#define sc_smb_iot sc_iot
+	bus_space_handle_t	sc_pm_ioh;
+	bus_space_handle_t	sc_sb800_ioh;
 	bus_space_handle_t	sc_smb_ioh;
 	void *			sc_smb_ih;
 	int			sc_poll;
-
-	bus_space_tag_t		sc_pm_iot;
-	bus_space_handle_t	sc_pm_ioh;
 
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_pcitag;
 	pcireg_t		sc_id;
 
-	struct i2c_controller	sc_i2c_tag;
+	struct piixpm_smbus	sc_busses[4];
+	struct i2c_controller	sc_i2c_tags[4];
+
 	kmutex_t		sc_i2c_mutex;
 	struct {
-		i2c_op_t     op;
-		void *      buf;
-		size_t       len;
-		int          flags;
-		volatile int error;
+		i2c_op_t	op;
+		void *		buf;
+		size_t		len;
+		int		flags;
+		volatile int	error;
 	}			sc_i2c_xfer;
 
 	pcireg_t		sc_devact[2];
@@ -100,8 +97,7 @@ static void	piixpm_attach(device_t, device_t, void *);
 static bool	piixpm_suspend(device_t, const pmf_qual_t *);
 static bool	piixpm_resume(device_t, const pmf_qual_t *);
 
-static int	piixpm_sb800_init(struct piixpm_softc *,
-    struct pci_attach_args *);
+static int	piixpm_sb800_init(struct piixpm_softc *);
 static void	piixpm_csb5_reset(void *);
 static int	piixpm_i2c_acquire_bus(void *, int);
 static void	piixpm_i2c_release_bus(void *, int);
@@ -159,8 +155,11 @@ piixpm_attach(device_t parent, device_t self, void *aux)
 	pcireg_t pmmisc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
+	int i, numbusses = 1;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
+	sc->sc_iot = pa->pa_iot;
 	sc->sc_id = pa->pa_id;
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -183,7 +182,6 @@ piixpm_attach(device_t parent, device_t self, void *aux)
 	if (!(pmmisc & 1))
 		goto nopowermanagement;
 
-	sc->sc_pm_iot = pa->pa_iot;
 	/* Map I/O space */
 	base = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_PM_BASE);
 	if (bus_space_map(sc->sc_pm_iot, PCI_MAPREG_IO_ADDR(base),
@@ -207,8 +205,10 @@ nopowermanagement:
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ATI &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_SB600_SMB &&
 	    PCI_REVISION(pa->pa_class) >= 0x40) {
-		if (piixpm_sb800_init(sc, pa) == 0)
+		if (piixpm_sb800_init(sc) == 0) {
+			numbusses = 4;
 			goto attach_i2c;
+		}
 		aprint_normal_dev(self, "SMBus disabled\n");
 		return;
 	}
@@ -219,7 +219,6 @@ nopowermanagement:
 	}
 
 	/* Map I/O space */
-	sc->sc_smb_iot = pa->pa_iot;
 	base = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_BASE) & 0xffff;
 	if (bus_space_map(sc->sc_smb_iot, PCI_MAPREG_IO_ADDR(base),
 	    PIIX_SMB_SIZE, 0, &sc->sc_smb_ioh)) {
@@ -235,7 +234,7 @@ nopowermanagement:
 	} else if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_IRQ) {
 		/* Install interrupt handler */
 		if (pci_intr_map(pa, &ih) == 0) {
-			intrstr = pci_intr_string(pa->pa_pc, ih);
+			intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 			sc->sc_smb_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
 			    piixpm_intr, sc);
 			if (sc->sc_smb_ih != NULL) {
@@ -252,17 +251,20 @@ nopowermanagement:
 attach_i2c:
 	/* Attach I2C bus */
 	mutex_init(&sc->sc_i2c_mutex, MUTEX_DEFAULT, IPL_NONE);
-	sc->sc_i2c_tag.ic_cookie = sc;
-	sc->sc_i2c_tag.ic_acquire_bus = piixpm_i2c_acquire_bus;
-	sc->sc_i2c_tag.ic_release_bus = piixpm_i2c_release_bus;
-	sc->sc_i2c_tag.ic_exec = piixpm_i2c_exec;
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_type = I2C_TYPE_SMBUS;
-	iba.iba_tag = &sc->sc_i2c_tag;
-	config_found_ia(self, "i2cbus", &iba, iicbus_print);
+	for (i = 0; i < numbusses; i++) {
+		sc->sc_busses[i].sda = i;
+		sc->sc_busses[i].softc = sc;
+		sc->sc_i2c_tags[i].ic_cookie = &sc->sc_busses[i];
+		sc->sc_i2c_tags[i].ic_acquire_bus = piixpm_i2c_acquire_bus;
+		sc->sc_i2c_tags[i].ic_release_bus = piixpm_i2c_release_bus;
+		sc->sc_i2c_tags[i].ic_exec = piixpm_i2c_exec;
 
-	return;
+		memset(&iba, 0, sizeof(iba));
+		iba.iba_type = I2C_TYPE_SMBUS;
+		iba.iba_tag = &sc->sc_i2c_tags[i];
+		config_found_ia(self, "i2cbus", &iba, iicbus_print);
+	}
 }
 
 static bool
@@ -298,9 +300,9 @@ piixpm_resume(device_t dv, const pmf_qual_t *qual)
  * called once it uses indirect I/O for simplicity.
  */
 static int
-piixpm_sb800_init(struct piixpm_softc *sc, struct pci_attach_args *pa)
+piixpm_sb800_init(struct piixpm_softc *sc)
 {
-	bus_space_tag_t iot = pa->pa_iot;
+	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh;	/* indirect I/O handle */
 	uint16_t val, base_addr;
 
@@ -316,7 +318,7 @@ piixpm_sb800_init(struct piixpm_softc *sc, struct pci_attach_args *pa)
 	bus_space_write_1(iot, ioh, PIIXPM_INDIRECTIO_INDEX,
 	    SB800_PM_SMBUS0EN_HI);
 	val |= bus_space_read_1(iot, ioh, PIIXPM_INDIRECTIO_DATA) << 8;
-	bus_space_unmap(iot, ioh, 2);
+	sc->sc_sb800_ioh = ioh;
 
 	if ((val & SB800_PM_SMBUS0EN_ENABLE) == 0)
 		return ENOENT;
@@ -325,8 +327,10 @@ piixpm_sb800_init(struct piixpm_softc *sc, struct pci_attach_args *pa)
 
 	aprint_debug_dev(sc->sc_dev, "SMBus @ 0x%04x\n", base_addr);
 
-	sc->sc_smb_iot = iot;
-	if (bus_space_map(sc->sc_smb_iot, PCI_MAPREG_IO_ADDR(base_addr),
+	bus_space_write_1(iot, ioh, PIIXPM_INDIRECTIO_INDEX, SB800_PM_SMBUS0SELEN);
+	bus_space_write_1(iot, ioh, PIIXPM_INDIRECTIO_DATA, 1); /* SMBUS0SEL */
+
+	if (bus_space_map(iot, PCI_MAPREG_IO_ADDR(base_addr),
 	    PIIX_SMB_SIZE, 0, &sc->sc_smb_ioh)) {
 		aprint_error_dev(sc->sc_dev, "can't map smbus I/O space\n");
 		return EBUSY;
@@ -361,10 +365,19 @@ piixpm_csb5_reset(void *arg)
 static int
 piixpm_i2c_acquire_bus(void *cookie, int flags)
 {
-	struct piixpm_softc *sc = cookie;
+	struct piixpm_smbus *smbus = cookie;
+	struct piixpm_softc *sc = smbus->softc;
 
 	if (!cold)
 		mutex_enter(&sc->sc_i2c_mutex);
+
+	if (smbus->sda > 0)	/* SB800 */
+	{
+		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+		    PIIXPM_INDIRECTIO_INDEX, SB800_PM_SMBUS0SEL);
+		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+		    PIIXPM_INDIRECTIO_DATA, smbus->sda << 1);
+	}
 
 	return 0;
 }
@@ -372,7 +385,20 @@ piixpm_i2c_acquire_bus(void *cookie, int flags)
 static void
 piixpm_i2c_release_bus(void *cookie, int flags)
 {
-	struct piixpm_softc *sc = cookie;
+	struct piixpm_smbus *smbus = cookie;
+	struct piixpm_softc *sc = smbus->softc;
+
+	if (smbus->sda > 0)	/* SB800 */
+	{
+		/*
+		 * HP Microserver hangs after reboot if not set to SDA0.
+		 * Also add shutdown hook?
+		 */
+		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+		    PIIXPM_INDIRECTIO_INDEX, SB800_PM_SMBUS0SEL);
+		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+		    PIIXPM_INDIRECTIO_DATA, 0);
+	}
 
 	if (!cold)
 		mutex_exit(&sc->sc_i2c_mutex);
@@ -382,13 +408,21 @@ static int
 piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
     const void *cmdbuf, size_t cmdlen, void *buf, size_t len, int flags)
 {
-	struct piixpm_softc *sc = cookie;
+	struct piixpm_smbus *smbus = cookie;
+	struct piixpm_softc *sc = smbus->softc;
 	const u_int8_t *b;
 	u_int8_t ctl = 0, st;
 	int retries;
 
 	DPRINTF(("%s: exec: op %d, addr 0x%x, cmdlen %zu, len %zu, flags 0x%x\n",
 	    device_xname(sc->sc_dev), op, addr, cmdlen, len, flags));
+
+	/* Clear status bits */
+	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS, 
+	    PIIX_SMB_HS_INTR | PIIX_SMB_HS_DEVERR | 
+	    PIIX_SMB_HS_BUSERR | PIIX_SMB_HS_FAILED);
+	bus_space_barrier(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS, 1,
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 
 	/* Wait for bus to be idle */
 	for (retries = 100; retries > 0; retries--) {

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.12.1 2013/02/25 00:30:29 tls Exp $
+#	$NetBSD: Makefile,v 1.2.12.2 2014/08/20 00:04:53 tls Exp $
 
 NOMAN=	# defined
 
@@ -27,8 +27,9 @@ HOST_SRCDIR=    external/cddl/osnet/usr.bin/ctfconvert
 		traverse.c \
 		util.c
 
-LIBELF_DIR=	${.CURDIR}/../../external/bsd/libelf/dist
-LIBDWARF_DIR=	${.CURDIR}/../../external/bsd/libdwarf/dist
+ELFTOOLCHAIN_DIR=	${.CURDIR}/../../external/bsd/elftoolchain/dist
+LIBELF_DIR=		${ELFTOOLCHAIN_DIR}/libelf
+LIBDWARF_DIR=		${ELFTOOLCHAIN_DIR}/libdwarf
 
 HOST_CPPFLAGS+=	-I${OSNETDIR}/sys \
 		-I${OSNETDIR}/include \

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.32.54.1 2012/11/20 03:01:35 tls Exp $	*/
+/*	$NetBSD: sbic.c,v 1.32.54.2 2014/08/20 00:03:14 tls Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.32.54.1 2012/11/20 03:01:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.32.54.2 2014/08/20 00:03:14 tls Exp $");
 
 #include "opt_ddb.h"
 
@@ -900,6 +900,7 @@ sbicreset(struct sbic_softc *dev)
 
 	SBIC_WAIT(regs, SBIC_ASR_INT, 0);
 	GET_SBIC_csr(regs, csr);	/* clears interrupt also */
+	__USE(csr);
 
 	/*
 	 * Set up various chip parameters
@@ -1258,6 +1259,7 @@ sbicxfin(sbic_regmap_p regs, int len, void *bp)
 			} else {
 				u_char foo;
 				GET_SBIC_data (regs, foo);
+				__USE(foo);
 			}
 			wait = sbic_data_wait;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.h,v 1.16 2009/06/17 14:18:51 njoly Exp $	*/
+/*	$NetBSD: linux_socketcall.h,v 1.16.22.1 2014/08/20 00:03:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -74,23 +74,23 @@
  * action to take.
  */
 
-#define LINUX_SYS_socket	1
-#define LINUX_SYS_bind		2
-#define LINUX_SYS_connect	3
-#define LINUX_SYS_listen	4
-#define LINUX_SYS_accept	5
-#define LINUX_SYS_getsockname	6
-#define LINUX_SYS_getpeername	7
-#define LINUX_SYS_socketpair	8
-#define LINUX_SYS_send		9
-#define LINUX_SYS_recv		10
-#define LINUX_SYS_sendto	11
-#define LINUX_SYS_recvfrom	12
-#define LINUX_SYS_shutdown	13
-#define LINUX_SYS_setsockopt	14
-#define LINUX_SYS_getsockopt	15
-#define LINUX_SYS_sendmsg	16
-#define LINUX_SYS_recvmsg	17
+#define LINUX_SYS_SOCKET	1
+#define LINUX_SYS_BIND		2
+#define LINUX_SYS_CONNECT	3
+#define LINUX_SYS_LISTEN	4
+#define LINUX_SYS_ACCEPT	5
+#define LINUX_SYS_GETSOCKNAME	6
+#define LINUX_SYS_GETPEERNAME	7
+#define LINUX_SYS_SOCKETPAIR	8
+#define LINUX_SYS_SEND		9
+#define LINUX_SYS_RECV		10
+#define LINUX_SYS_SENDTO	11
+#define LINUX_SYS_RECVFROM	12
+#define LINUX_SYS_SHUTDOWN	13
+#define LINUX_SYS_SETSOCKOPT	14
+#define LINUX_SYS_GETSOCKOPT	15
+#define LINUX_SYS_SENDMSG	16
+#define LINUX_SYS_RECVMSG	17
 
 #define LINUX_MAX_SOCKETCALL	17
 

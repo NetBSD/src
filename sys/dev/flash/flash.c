@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.c,v 1.9 2011/07/29 20:48:33 ahoka Exp $	*/
+/*	$NetBSD: flash.c,v 1.9.14.1 2014/08/20 00:03:36 tls Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.9 2011/07/29 20:48:33 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.9.14.1 2014/08/20 00:03:36 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -98,6 +98,7 @@ const struct bdevsw flash_bdevsw = {
 	.d_ioctl = flashioctl,
 	.d_dump = flashdump,
 	.d_psize = nosize,
+	.d_discard = nodiscard,	/* XXX this driver probably wants a discard */
 	.d_flag = D_DISK | D_MPSAFE
 };
 
@@ -115,6 +116,7 @@ const struct cdevsw flash_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
 	.d_flag = D_DISK | D_MPSAFE
 };
 
@@ -533,12 +535,6 @@ flash_get_size(dev_t dev)
 	sc = flash_get_softc(dev);
 
 	return sc->sc_partinfo.part_size;
-}
-
-static inline flash_off_t
-flash_get_part_offset(struct flash_softc * const sc, size_t poffset)
-{
-	return sc->sc_partinfo.part_offset + poffset;
 }
 
 int

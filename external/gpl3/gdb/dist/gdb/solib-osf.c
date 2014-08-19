@@ -1,7 +1,6 @@
 /* Handle OSF/1, Digital UNIX, and Tru64 shared libraries
    for GDB, the GNU Debugger.
-   Copyright (C) 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001, 2007, 2008,
-   2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1993-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -45,7 +44,7 @@
 
 #include <sys/types.h>
 #include <signal.h>
-#include "gdb_string.h"
+#include <string.h>
 
 #include "bfd.h"
 #include "symtab.h"
@@ -342,13 +341,13 @@ osf_solib_create_inferior_hook (int from_tty)
   tp = inferior_thread ();
   clear_proceed_status ();
   inf->control.stop_soon = STOP_QUIETLY;
-  tp->suspend.stop_signal = TARGET_SIGNAL_0;
+  tp->suspend.stop_signal = GDB_SIGNAL_0;
   do
     {
       target_resume (minus_one_ptid, 0, tp->suspend.stop_signal);
-      wait_for_inferior (0);
+      wait_for_inferior ();
     }
-  while (tp->suspend.stop_signal != TARGET_SIGNAL_TRAP);
+  while (tp->suspend.stop_signal != GDB_SIGNAL_TRAP);
 
   /*  solib_add will call reinit_frame_cache.
      But we are stopped in the runtime loader and we do not have symbols

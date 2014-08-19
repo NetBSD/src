@@ -1,7 +1,5 @@
 /* Include file for stabs debugging format support functions.
-   Copyright (C) 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995,
-   1996, 1997, 1999, 2000, 2001, 2002, 2003, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -130,7 +128,7 @@ EXTERN int n_this_object_header_files;
 
 EXTERN int n_allocated_this_object_header_files;
 
-extern void cleanup_undefined_types (struct objfile *);
+extern void cleanup_undefined_stabs_types (struct objfile *);
 
 extern long read_number (char **, int);
 
@@ -162,8 +160,9 @@ struct stab_section_list
 /* Functions exported by dbxread.c.  These are not in stabsread.c because
    they are only used by some stabs readers.  */
 
-extern struct partial_symtab *end_psymtab (struct partial_symtab *pst,
-					   char **include_list,
+extern struct partial_symtab *end_psymtab (struct objfile *objfile,
+					   struct partial_symtab *pst,
+					   const char **include_list,
 					   int num_includes,
 					   int capping_symbol_offset,
 					   CORE_ADDR capping_text,
@@ -173,7 +172,8 @@ extern struct partial_symtab *end_psymtab (struct partial_symtab *pst,
 					   int textlow_not_set);
 
 extern void process_one_symbol (int, int, CORE_ADDR, char *,
-				struct section_offsets *, struct objfile *);
+				const struct section_offsets *,
+				struct objfile *);
 
 extern void elfstab_build_psymtabs (struct objfile *objfile,
 				    asection *stabsect,

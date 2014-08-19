@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.9 2011/07/03 08:56:25 mrg Exp $ */
+/*	$NetBSD: if_ni.c,v 1.9.12.1 2014/08/20 00:03:27 tls Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -193,7 +193,7 @@ niopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 	struct ni_dg *data;
 	struct ni_msg *msg;
 	struct ni_ptdb *ptdb;
-	int i, va, res;
+	int i, va;
 	struct ni_param *nip;
 
 	if (beenhere++ && askname == 0)
@@ -288,7 +288,7 @@ niopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 	for (i = 0; i < NMSGBUF; i++) {
 		msg = (void *)(va + i * 512);
 
-		res = INSQTI(msg, &fqb->nf_mforw);
+		(void)INSQTI(msg, &fqb->nf_mforw);
 	}
 	WAITREG(NI_PCR, PCR_OWN);
 	NI_WREG(NI_PCR, PCR_FREEQNE|PCR_MFREEQ|PCR_OWN);
@@ -317,7 +317,7 @@ niopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 		allocbase += 2048;
 		data->bufs[0]._index = i;
 
-		res = INSQTI(data, &fqb->nf_dforw);
+		(void)INSQTI(data, &fqb->nf_dforw);
 	}
 	WAITREG(NI_PCR, PCR_OWN);
 	NI_WREG(NI_PCR, PCR_FREEQNE|PCR_DFREEQ|PCR_OWN);
@@ -352,7 +352,7 @@ niopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 		data->bufs[0]._len = bd->nb_len;
 		data->bufs[0]._index = idx;
 
-		res = INSQTI(data, &fqb->nf_rforw);
+		(void)INSQTI(data, &fqb->nf_rforw);
 	}
 	WAITREG(NI_PCR, PCR_OWN);
 	NI_WREG(NI_PCR, PCR_FREEQNE|PCR_RFREEQ|PCR_OWN);

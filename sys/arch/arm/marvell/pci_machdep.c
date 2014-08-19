@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.4.2.1 2013/06/23 06:20:00 tls Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.4.2.2 2014/08/20 00:02:47 tls Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.4.2.1 2013/06/23 06:20:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.4.2.2 2014/08/20 00:02:47 tls Exp $");
 
 #include "opt_mvsoc.h"
 #include "gtpci.h"
@@ -70,7 +70,8 @@ static void gtpci_mbus_conf_write(void *, pcitag_t, int, pcireg_t);
 #endif
 static int gtpci_gpp_intr_map(const struct pci_attach_args *,
     pci_intr_handle_t *);
-static const char *gtpci_gpp_intr_string(void *, pci_intr_handle_t);
+static const char *gtpci_gpp_intr_string(void *, pci_intr_handle_t,
+    char *, size_t);
 static const struct evcnt *gtpci_gpp_intr_evcnt(void *, pci_intr_handle_t);
 static void *gtpci_gpp_intr_establish(void *, pci_intr_handle_t, int, int (*)(void *), void *);
 static void gtpci_gpp_intr_disestablish(void *, void *);
@@ -312,18 +313,17 @@ gtpci_gpp_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 /* ARGSUSED */
 static const char *
-gtpci_gpp_intr_string(void *v, pci_intr_handle_t pin)
+gtpci_gpp_intr_string(void *v, pci_intr_handle_t pin, char *buf, size_t len)
 {
 	struct gtpci_softc *sc = v;
 	prop_array_t int2gpp;
 	prop_object_t gpp;
-	static char intrstr[8];
 
 	int2gpp = prop_dictionary_get(device_properties(sc->sc_dev), "int2gpp");
 	gpp = prop_array_get(int2gpp, pin);
-	sprintf(intrstr, "gpp %d", (int)prop_number_integer_value(gpp));
+	snprintf(buf, len, "gpp %d", (int)prop_number_integer_value(gpp));
 
-	return intrstr;
+	return buf;
 }
 
 /* ARGSUSED */

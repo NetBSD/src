@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.34.2.2 2013/06/23 06:18:27 tls Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.34.2.3 2014/08/20 00:04:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.34.2.2 2013/06/23 06:18:27 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.34.2.3 2014/08/20 00:04:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,7 @@ filecore_read(void *v)
 	struct filecore_node *ip = VTOI(vp);
 	struct filecore_mnt *fcmp;
 	struct buf *bp;
-	daddr_t lbn, rablock;
+	daddr_t lbn;
 	off_t diff;
 	int error = 0;
 	long size, n, on;
@@ -239,7 +239,7 @@ filecore_read(void *v)
 	}
 
 	do {
-		lbn = lblkno(fcmp, uio->uio_offset);
+		lbn = filecore_lblkno(fcmp, uio->uio_offset);
 		on = filecore_blkoff(fcmp, uio->uio_offset);
 		n = MIN(filecore_blksize(fcmp, ip, lbn) - on, uio->uio_resid);
 		diff = (off_t)ip->i_size - uio->uio_offset;
@@ -248,7 +248,6 @@ filecore_read(void *v)
 		if (diff < n)
 			n = diff;
 		size = filecore_blksize(fcmp, ip, lbn);
-		rablock = lbn + 1;
 		if (ip->i_dirent.attr & FILECORE_ATTR_DIR) {
 			error = filecore_dbread(ip, &bp);
 			on = uio->uio_offset;
@@ -294,7 +293,6 @@ filecore_readdir(void *v)
 	struct uio *uio = ap->a_uio;
 	struct vnode *vdp = ap->a_vp;
 	struct filecore_node *dp;
-	struct filecore_mnt *fcmp;
 	struct buf *bp = NULL;
 	struct dirent *de;
 	struct filecore_direntry *dep = NULL;
@@ -315,7 +313,6 @@ filecore_readdir(void *v)
 	uiooff = uio->uio_offset;
 
 	*ap->a_eofflag = 0;
-	fcmp = dp->i_mnt;
 
 	error = filecore_dbread(dp, &bp);
 	if (error) {
@@ -436,7 +433,7 @@ filecore_link(void *v)
 int
 filecore_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -445,7 +442,6 @@ filecore_symlink(void *v)
 	} */ *ap = v;
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	vput(ap->a_dvp);
 	return (EROFS);
 }
 
@@ -569,6 +565,8 @@ const struct vnodeopv_entry_desc filecore_vnodeop_entries[] = {
 	{ &vop_setattr_desc, filecore_setattr },	/* setattr */
 	{ &vop_read_desc, filecore_read },		/* read */
 	{ &vop_write_desc, filecore_write },		/* write */
+	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
+	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_fcntl_desc, filecore_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, filecore_ioctl },		/* ioctl */
 	{ &vop_poll_desc, filecore_poll },		/* poll */

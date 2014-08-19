@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.20.2.1 2012/11/20 03:02:35 tls Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.20.2.2 2014/08/20 00:03:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.20.2.1 2012/11/20 03:02:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.20.2.2 2014/08/20 00:03:51 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,8 +179,18 @@ dev_type_write(utoppywrite);
 dev_type_ioctl(utoppyioctl);
 
 const struct cdevsw utoppy_cdevsw = {
-	utoppyopen, utoppyclose, utoppyread, utoppywrite, utoppyioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	.d_open = utoppyopen,
+	.d_close = utoppyclose,
+	.d_read = utoppyread,
+	.d_write = utoppywrite,
+	.d_ioctl = utoppyioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
 };
 
 #define	UTOPPYUNIT(n)	(minor(n))
@@ -512,47 +522,18 @@ utoppy_dump_packet(const void *b, size_t len)
 }
 #endif
 
-/*
- * Very much like usbd_bulk_transfer(), except don't catch signals
- */
-static void
-utoppy_bulk_transfer_cb(usbd_xfer_handle xfer,
-    usbd_private_handle priv,
-    usbd_status status)
-{
-
-	if (xfer->pipe->device->bus->lock)
-		cv_broadcast(&xfer->cv);
-	else
-		wakeup(xfer);
-}
-
 static usbd_status
 utoppy_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
     u_int16_t flags, u_int32_t timeout, void *buf, u_int32_t *size,
     const char *lbl)
 {
 	usbd_status err;
-	int s, error;
 
-	usbd_setup_xfer(xfer, pipe, 0, buf, *size, flags, timeout,
-	    utoppy_bulk_transfer_cb);
-	usbd_lock_pipe(pipe);	/* don't want callback until tsleep() */
-	err = usbd_transfer(xfer);
-	if (err != USBD_IN_PROGRESS) {
-		usbd_unlock_pipe(pipe);
-		return (err);
-	}
-	if (pipe->device->bus->lock)
-		error = cv_wait_sig(&xfer->cv, pipe->device->bus->lock);
-	else
-		error = tsleep((void *)xfer, PZERO, lbl, 0);
-	usbd_unlock_pipe(pipe);
-	if (error) {
-		usbd_abort_pipe(pipe);
-		return (USBD_INTERRUPTED);
-	}
-	usbd_get_xfer_status(xfer, NULL, NULL, size, &err);
+	usbd_setup_xfer(xfer, pipe, 0, buf, *size, flags, timeout, NULL);
+
+	err = usbd_sync_transfer_sig(xfer);
+
+	usbd_get_xfer_status(xfer, NULL, NULL, size, NULL);
 	return (err);
 }
 

@@ -1,5 +1,5 @@
+#include "config.h"
 #include <signal.h>
-#include "sysdep.h"
 #include "bfd.h"
 #include "gdb/callback.h"
 #include "gdb/remote-sim.h"
@@ -7,6 +7,18 @@
 #include "d10v_sim.h"
 #include "gdb/sim-d10v.h"
 #include "gdb/signals.h"
+
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#ifdef HAVE_STRINGS_H
+#include <strings.h>
+#endif /* HAVE_STRING_H */
+#endif /* HAVE_STRINGS_H */
+
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
 
 enum _leftright { LEFT_FIRST, RIGHT_FIRST };
 
@@ -31,15 +43,15 @@ asection *text;
 bfd_vma text_start;
 bfd_vma text_end;
 
-static long hash PARAMS ((long insn, int format));
-static struct hash_entry *lookup_hash PARAMS ((uint32 ins, int size));
-static void get_operands PARAMS ((struct simops *s, uint32 ins));
-static void do_long PARAMS ((uint32 ins));
-static void do_2_short PARAMS ((uint16 ins1, uint16 ins2, enum _leftright leftright));
-static void do_parallel PARAMS ((uint16 ins1, uint16 ins2));
-static char *add_commas PARAMS ((char *buf, int sizeof_buf, unsigned long value));
-extern void sim_set_profile PARAMS ((int n));
-extern void sim_set_profile_size PARAMS ((int n));
+static long hash (long insn, int format);
+static struct hash_entry *lookup_hash (uint32 ins, int size);
+static void get_operands (struct simops *s, uint32 ins);
+static void do_long (uint32 ins);
+static void do_2_short (uint16 ins1, uint16 ins2, enum _leftright leftright);
+static void do_parallel (uint16 ins1, uint16 ins2);
+static char *add_commas (char *buf, int sizeof_buf, unsigned long value);
+extern void sim_set_profile (int n);
+extern void sim_set_profile_size (int n);
 static INLINE uint8 *map_memory (unsigned phys_addr);
 
 #ifdef NEED_UI_LOOP_HOOK
@@ -50,7 +62,7 @@ static INLINE uint8 *map_memory (unsigned phys_addr);
 static long ui_loop_hook_counter = UI_LOOP_POLL_INTERVAL;
 
 /* Actual hook to call to run through gdb's gui event loop */
-extern int (*deprecated_ui_loop_hook) PARAMS ((int signo));
+extern int (*deprecated_ui_loop_hook) (int signo);
 #endif /* NEED_UI_LOOP_HOOK */
 
 #ifndef INLINE
@@ -1278,13 +1290,13 @@ sim_stop_reason (sd, reason, sigrc)
 
     case SIG_D10V_BUS:
       *reason = sim_stopped;
-      *sigrc = TARGET_SIGNAL_BUS;
+      *sigrc = GDB_SIGNAL_BUS;
       break;
 
     default:				/* some signal */
       *reason = sim_stopped;
       if (stop_simulator && !State.exception)
-	*sigrc = TARGET_SIGNAL_INT;
+	*sigrc = GDB_SIGNAL_INT;
       else
 	*sigrc = State.exception;
       break;

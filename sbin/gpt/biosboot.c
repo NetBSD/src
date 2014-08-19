@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.5.8.1 2013/06/23 06:28:51 tls Exp $ */
+/*	$NetBSD: biosboot.c,v 1.5.8.2 2014/08/20 00:02:25 tls Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.5.8.1 2013/06/23 06:28:51 tls Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.5.8.2 2014/08/20 00:02:25 tls Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -291,7 +291,6 @@ cmd_biosboot(int argc, char *argv[])
 		start = 0;
 		size = 0;
 
-#ifdef __NetBSD__
 		/*
 		 * If a dk wedge was specified, loader should be
 		 * installed onto parent device
@@ -315,7 +314,6 @@ cmd_biosboot(int argc, char *argv[])
 #endif
 	close:
 		close(fd);
-#endif	/* __NetBSD__*/
 
 		fd = gpt_open(dev);
 	next:

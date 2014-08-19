@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.24.2.2 2013/06/23 06:20:07 tls Exp $ */
+/* $NetBSD: lunaws.c,v 1.24.2.3 2014/08/20 00:03:10 tls Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,8 +31,9 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.24.2.2 2013/06/23 06:20:07 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.24.2.3 2014/08/20 00:03:10 tls Exp $");
 
+#include "opt_wsdisplay_compat.h"
 #include "wsmouse.h"
 
 #include <sys/param.h>
@@ -46,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.24.2.2 2013/06/23 06:20:07 tls Exp $");
 #include <dev/wscons/wsksymvar.h>
 #include <dev/wscons/wsmousevar.h>
 
+#include <luna68k/dev/omkbdmap.h>
 #include <luna68k/dev/sioreg.h>
 #include <luna68k/dev/siovar.h>
 
@@ -78,15 +80,14 @@ struct ws_softc {
 	int		sc_msbuttons, sc_msdx, sc_msdy;
 #endif
 	void		*sc_si;
+	int		sc_rawkbd;
 };
 
 static void omkbd_input(void *, int);
-static int  omkbd_decode(void *, int, u_int *, int *);
+static void omkbd_decode(void *, int, u_int *, int *);
 static int  omkbd_enable(void *, int);
 static void omkbd_set_leds(void *, int);
 static int  omkbd_ioctl(void *, u_long, void *, int, struct lwp *);
-
-struct wscons_keydesc omkbd_keydesctab[];
 
 static const struct wskbd_mapdata omkbd_keymapdata = {
 	omkbd_keydesctab,
@@ -118,7 +119,7 @@ static const struct wsmouse_accessops omms_accessops = {
 };
 #endif
 
-static void wsintr(int);
+static void wsintr(void *);
 static void wssoftintr(void *);
 
 static int  wsmatch(device_t, cfdata_t, void *);
@@ -144,15 +145,17 @@ static void
 wsattach(device_t parent, device_t self, void *aux)
 {
 	struct ws_softc *sc = device_private(self);
-	struct sio_softc *scp = device_private(parent);
+	struct sio_softc *siosc = device_private(parent);
 	struct sio_attach_args *args = aux;
+	int channel = args->channel;
 	struct wskbddev_attach_args a;
 
 	sc->sc_dev = self;
-	sc->sc_ctl = (struct sioreg *)scp->scp_ctl + 1;
+	sc->sc_ctl = &siosc->sc_ctl[channel];
 	memcpy(sc->sc_wr, ch1_regs, sizeof(ch1_regs));
-	scp->scp_intr[1] = wsintr;
-	
+	siosc->sc_intrhand[channel].ih_func = wsintr;
+	siosc->sc_intrhand[channel].ih_arg = sc;
+
 	setsioreg(sc->sc_ctl, WR0, sc->sc_wr[WR0]);
 	setsioreg(sc->sc_ctl, WR4, sc->sc_wr[WR4]);
 	setsioreg(sc->sc_ctl, WR3, sc->sc_wr[WR3]);
@@ -179,7 +182,7 @@ wsattach(device_t parent, device_t self, void *aux)
 	{
 	struct wsmousedev_attach_args b;
 	b.accessops = &omms_accessops;
-	b.accesscookie = (void *)sc;	
+	b.accesscookie = (void *)sc;
 	sc->sc_wsmousedev =
 	    config_found_ia(self, "wsmousedev", &b, wsmousedevprint);
 	sc->sc_msreport = 0;
@@ -189,15 +192,15 @@ wsattach(device_t parent, device_t self, void *aux)
 
 /*ARGSUSED*/
 static void
-wsintr(int chan)
+wsintr(void *arg)
 {
-	struct ws_softc *sc = device_lookup_private(&ws_cd, 0);
+	struct ws_softc *sc = arg;
 	struct sioreg *sio = sc->sc_ctl;
 	uint8_t code;
 	int rr;
 
 	rr = getsiocsr(sio);
-	if (rr & RR_RXRDY) {
+	if ((rr & RR_RXRDY) != 0) {
 		do {
 			code = sio->sio_data;
 			if (rr & (RR_FRAMING | RR_OVERRUN | RR_PARITY)) {
@@ -206,10 +209,10 @@ wsintr(int chan)
 			}
 			sc->sc_rxq[sc->sc_rxqtail] = code;
 			sc->sc_rxqtail = OMKBD_NEXTRXQ(sc->sc_rxqtail);
-		} while ((rr = getsiocsr(sio)) & RR_RXRDY);
+		} while (((rr = getsiocsr(sio)) & RR_RXRDY) != 0);
 		softint_schedule(sc->sc_si);
 	}
-	if (rr & RR_TXRDY)
+	if ((rr & RR_TXRDY) != 0)
 		sio->sio_cmd = WR0_RSTPEND;
 	/* not capable of transmit, yet */
 }
@@ -227,7 +230,7 @@ wssoftintr(void *arg)
 		/*
 		 * if (code >= 0x80 && code <= 0x87), then
 		 * it's the first byte of 3 byte long mouse report
-		 * 	code[0] & 07 -> LMR button condition
+		 *	code[0] & 07 -> LMR button condition
 		 *	code[1], [2] -> x,y delta
 		 * otherwise, key press or release event.
 		 */
@@ -239,9 +242,9 @@ wssoftintr(void *arg)
 			code = (code & 07) ^ 07;
 			/* LMR->RML: wsevent counts 0 for leftmost */
 			sc->sc_msbuttons = (code & 02);
-			if (code & 01)
+			if ((code & 01) != 0)
 				sc->sc_msbuttons |= 04;
-			if (code & 04)
+			if ((code & 04) != 0)
 				sc->sc_msbuttons |= 01;
 			sc->sc_msreport = 1;
 		} else if (sc->sc_msreport == 1) {
@@ -268,143 +271,48 @@ omkbd_input(void *v, int data)
 	u_int type;
 	int key;
 
-	if (omkbd_decode(v, data, &type, &key))
-		wskbd_input(sc->sc_wskbddev, type, key);	
+	omkbd_decode(v, data, &type, &key);
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	if (sc->sc_rawkbd) {
+		uint8_t cbuf[2];
+		int c, j = 0;
+
+		c = omkbd_raw[key];
+		if (c != 0x00) {
+			/* fake extended scancode if necessary */
+			if (c & 0x80)
+				cbuf[j++] = 0xe0;
+			cbuf[j] = c & 0x7f;
+			if (type == WSCONS_EVENT_KEY_UP)
+				cbuf[j] |= 0x80;
+			j++;
+
+			wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
+		}
+	} else
+#endif
+	{
+		if (sc->sc_wskbddev != NULL)
+			wskbd_input(sc->sc_wskbddev, type, key);
+	}
 }
 
-static int
+static void
 omkbd_decode(void *v, int datain, u_int *type, int *dataout)
 {
 
 	*type = (datain & 0x80) ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
 	*dataout = datain & 0x7f;
-	return 1;
 }
-
-#define KC(n) KS_KEYCODE(n)
-
-static const keysym_t omkbd_keydesc_1[] = {
-/*  pos      command		normal		shifted */
-    KC(0x9), 			KS_Tab,
-    KC(0xa),  			KS_Control_L,
-    KC(0xb),			KS_Mode_switch,	/* Kana */
-    KC(0xc),			KS_Shift_R,
-    KC(0xd),			KS_Shift_L,
-    KC(0xe),			KS_Caps_Lock,
-    KC(0xf),			KS_Meta_L,	/* Zenmen */
-    KC(0x10),			KS_Escape,
-    KC(0x11),			KS_BackSpace,
-    KC(0x12),			KS_Return,
-    KC(0x14),			KS_space,
-    KC(0x15),			KS_Delete,
-    KC(0x16),			KS_Alt_L,	/* Henkan */
-    KC(0x17),			KS_Alt_R,	/* Kakutei */
-    KC(0x18),			KS_f11,		/* Shokyo */
-    KC(0x19),			KS_f12,		/* Yobidashi */
-    KC(0x1a),			KS_f13,		/* Bunsetsu L */
-    KC(0x1b),			KS_f14,		/* Bunsetsu R */
-    KC(0x1c),			KS_KP_Up,
-    KC(0x1d),			KS_KP_Left,
-    KC(0x1e),			KS_KP_Right,
-    KC(0x1f),			KS_KP_Down,
- /* KC(0x20),			KS_f11, */
- /* KC(0x21),			KS_f12, */
-    KC(0x22),  			KS_1,		KS_exclam,
-    KC(0x23),			KS_2,		KS_quotedbl,
-    KC(0x24),			KS_3,		KS_numbersign,
-    KC(0x25),			KS_4,		KS_dollar,
-    KC(0x26),			KS_5,		KS_percent,
-    KC(0x27),			KS_6,		KS_ampersand,
-    KC(0x28),			KS_7,		KS_apostrophe,
-    KC(0x29),			KS_8,		KS_parenleft,
-    KC(0x2a),			KS_9,		KS_parenright,
-    KC(0x2b),			KS_0,
-    KC(0x2c),			KS_minus,	KS_equal,
-    KC(0x2d),			KS_asciicircum,	KS_asciitilde,
-    KC(0x2e),			KS_backslash,	KS_bar,
- /* KC(0x30),			KS_f13, */
- /* KC(0x31),			KS_f14, */
-    KC(0x32),			KS_q,
-    KC(0x33),			KS_w,
-    KC(0x34),			KS_e,
-    KC(0x35),			KS_r,
-    KC(0x36),			KS_t,
-    KC(0x37),			KS_y,
-    KC(0x38),			KS_u,
-    KC(0x39),			KS_i,
-    KC(0x3a),			KS_o,
-    KC(0x3b),			KS_p,
-    KC(0x3c),			KS_at,		KS_grave,
-    KC(0x3d),			KS_bracketleft,	KS_braceleft,
-    KC(0x42),			KS_a,
-    KC(0x43),			KS_s,
-    KC(0x44),			KS_d,
-    KC(0x45),			KS_f,
-    KC(0x46),			KS_g,
-    KC(0x47),			KS_h,
-    KC(0x48),			KS_j,
-    KC(0x49),			KS_k,
-    KC(0x4a),			KS_l,
-    KC(0x4b),			KS_semicolon,	KS_plus,
-    KC(0x4c),			KS_colon,	KS_asterisk,
-    KC(0x4d),			KS_bracketright, KS_braceright,
-    KC(0x52),			KS_z,
-    KC(0x53),			KS_x,
-    KC(0x54),			KS_c,
-    KC(0x55),			KS_v,
-    KC(0x56),			KS_b,
-    KC(0x57),			KS_n,
-    KC(0x58),			KS_m,
-    KC(0x59),			KS_comma,	KS_less,
-    KC(0x5a),			KS_period,	KS_greater,
-    KC(0x5b),			KS_slash,	KS_question,
-    KC(0x5c),			KS_underscore,
-    KC(0x60),			KS_KP_Delete,
-    KC(0x61),			KS_KP_Add,
-    KC(0x62),			KS_KP_Subtract,
-    KC(0x63),			KS_KP_7,
-    KC(0x64),			KS_KP_8,
-    KC(0x65),			KS_KP_9,
-    KC(0x66),			KS_KP_4,
-    KC(0x67),			KS_KP_5,
-    KC(0x68),			KS_KP_6,
-    KC(0x69),			KS_KP_1,
-    KC(0x6a),			KS_KP_2,
-    KC(0x6b),			KS_KP_3,
-    KC(0x6c),			KS_KP_0,
-    KC(0x6d),			KS_KP_Decimal,
-    KC(0x6e),			KS_KP_Enter,
-    KC(0x72),			KS_f1,
-    KC(0x73),			KS_f2,
-    KC(0x74),			KS_f3,
-    KC(0x75),			KS_f4,
-    KC(0x76),			KS_f5,
-    KC(0x77),			KS_f6,
-    KC(0x78),			KS_f7,
-    KC(0x79),			KS_f8,
-    KC(0x7a),			KS_f9,
-    KC(0x7b),			KS_f10,
-    KC(0x7c),			KS_KP_Multiply,
-    KC(0x7d),			KS_KP_Divide,
-    KC(0x7e),			KS_KP_Equal,
-    KC(0x7f),			KS_KP_Separator,
-};
-
-#define	SIZE(map) (sizeof(map)/sizeof(keysym_t))
-
-struct wscons_keydesc omkbd_keydesctab[] = {
-	{ KB_JP, 0, SIZE(omkbd_keydesc_1), omkbd_keydesc_1, },
-	{ 0, 0, 0, 0 },
-};
 
 static void
 ws_cngetc(void *v, u_int *type, int *data)
 {
 	int code;
 
-	do {
-		code = syscngetc((dev_t)1);
-	} while (!omkbd_decode(v, code, type, data));
+	code = syscngetc((dev_t)1);
+	omkbd_decode(v, code, type, data);
 }
 
 static void
@@ -444,6 +352,9 @@ omkbd_set_leds(void *v, int leds)
 static int
 omkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	struct ws_softc *sc = v;
+#endif
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
@@ -453,6 +364,14 @@ omkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 	case WSKBDIO_GETLEDS:
 	case WSKBDIO_COMPLEXBELL:	/* XXX capable of complex bell */
 		return 0;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	case WSKBDIO_SETMODE:
+		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
+		return 0;
+	case WSKBDIO_GETMODE:
+		*(int *)data = sc->sc_rawkbd;
+		return 0;
+#endif
 	}
 	return EPASSTHROUGH;
 }

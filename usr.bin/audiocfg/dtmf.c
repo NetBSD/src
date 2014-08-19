@@ -1,4 +1,4 @@
-/* $NetBSD: dtmf.c,v 1.2 2010/09/01 21:54:00 jmcneill Exp $ */
+/* $NetBSD: dtmf.c,v 1.2.12.1 2014/08/20 00:04:56 tls Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -45,7 +45,8 @@ dtmf_create(int16_t *buf, unsigned int sample_rate,
     unsigned short sample_length, unsigned short channels,
     unsigned int chanmask, float freq1, float freq2)
 {
-	int c, i;
+	int c;
+	unsigned i;
 	size_t sample_count = sample_rate * sample_length;
 
 	for (i = 0; i < sample_count; i++) {

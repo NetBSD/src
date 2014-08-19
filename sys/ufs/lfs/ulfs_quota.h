@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota.h,v 1.4.2.2 2013/06/23 06:18:39 tls Exp $	*/
+/*	$NetBSD: ulfs_quota.h,v 1.4.2.3 2014/08/20 00:04:45 tls Exp $	*/
 /*  from NetBSD: ufs_quota.h,v 1.21 2012/02/18 06:13:23 matt Exp  */
 
 /*
@@ -131,7 +131,7 @@ int lfsquota2_handle_cmd_get(struct ulfsmount *, const struct quotakey *,
     struct quotaval *);
 int lfsquota2_handle_cmd_put(struct ulfsmount *, const struct quotakey *,
     const struct quotaval *);
-int lfsquota2_handle_cmd_delete(struct ulfsmount *, const struct quotakey *);
+int lfsquota2_handle_cmd_del(struct ulfsmount *, const struct quotakey *);
 int lfsquota2_handle_cmd_cursorget(struct ulfsmount *, struct quotakcursor *,
     struct quotakey *, struct quotaval *, unsigned, unsigned *);
 int lfsquota2_handle_cmd_cursoropen(struct ulfsmount *, struct quotakcursor *);

@@ -1,4 +1,4 @@
-.\" $NetBSD: b.t,v 1.1 2007/12/18 03:35:54 garbled Exp $
+.\" $NetBSD: b.t,v 1.1.34.1 2014/08/20 00:02:29 tls Exp $
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -46,7 +46,8 @@ When \fIconfig\fP processes a ``config'' rule which does
 not fully specify the location of the root file system,
 paging area(s), device for system dumps, and device for
 argument list processing it applies a set of rules to
-define those values left unspecified.  The following list
+define those values left unspecified.
+The following list
 of rules are used in defaulting system devices.
 .IP 1) 3
 If a root device is not specified, the swap
@@ -89,7 +90,8 @@ first specified as a ``primary'' swap area which is always used.
 The remaining partitions are then interleaved into the paging
 system at the time a
 .IR swapon (2)
-system call is made.  This is normally done at boot time with
+system call is made.
+This is normally done at boot time with
 a call to
 .IR swapon (8)
 from the /etc/rc file.
@@ -98,22 +100,29 @@ System dumps
 .PP
 System dumps are automatically taken after a system crash,
 provided the device driver for the ``dumps'' device supports
-this.  The dump contains the contents of memory, but not
-the swap areas.  Normally the dump device is a disk in
+this.
+The dump contains the contents of memory, but not
+the swap areas.
+Normally the dump device is a disk in
 which case the information is copied to a location at the
-back of the partition.  The dump is placed in the back of the
+back of the partition.
+The dump is placed in the back of the
 partition because the primary swap and dump device are commonly
 the same device and this allows the system to be rebooted without
-immediately overwriting the saved information.  When a dump has
+immediately overwriting the saved information.
+When a dump has
 occurred, the system variable \fIdumpsize\fP 
 is set to a non-zero value indicating the size (in bytes) of
-the dump.  The \fIsavecore\fP\|(8)
+the dump.
+The \fIsavecore\fP\|(8)
 program then copies the information from the dump partition to
 a file in a ``crash'' directory and also makes a copy of the
 system which was running at the time of the crash (usually
-``/kernel'').  The offset to the system dump is defined in the
+``/kernel'').
+The offset to the system dump is defined in the
 system variable \fIdumplo\fP (a sector offset from
-the front of the dump partition). The 
+the front of the dump partition).
+The 
 .I savecore
 program operates by reading the contents of \fIdumplo\fP, \fIdumpdev\fP,
 and \fIdumpmagic\fP from /dev/kmem, then comparing the value
@@ -122,8 +131,10 @@ corresponding location in the dump area of the dump partition.
 If a match is found, 
 .I savecore
 assumes a crash occurred and reads \fIdumpsize\fP from the dump area
-of the dump partition.  This value is then used in copying the
-system dump.  Refer to 
+of the dump partition.
+This value is then used in copying the
+system dump.
+Refer to 
 \fIsavecore\fP\|(8)
 for more information about its operation.
 .PP

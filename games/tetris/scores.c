@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.20 2011/01/05 15:48:00 wiz Exp $	*/
+/*	$NetBSD: scores.c,v 1.20.12.1 2014/08/20 00:00:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -381,7 +381,7 @@ getscores(int *fdp)
 	struct highscore_header header;
 	int sd, mint, lck;
 	mode_t mask;
-	const char *mstr, *human;
+	const char *human;
 	int doflip;
 	int serrno;
 	ssize_t result;
@@ -395,7 +395,6 @@ getscores(int *fdp)
 #endif
 	{
 		mint = O_RDONLY;
-		mstr = "r";
 		human = "reading";
 		lck = LOCK_SH;
 	}
@@ -413,6 +412,7 @@ getscores(int *fdp)
 		 * trying to write it, don't fail -- we can still show
 		 * the player the score they got.
 		 */
+		errno = serrno;
 		if (fdp != NULL || errno != ENOENT) {
 			warn("Cannot open %s for %s", _PATH_SCOREFILE, human);
 		}

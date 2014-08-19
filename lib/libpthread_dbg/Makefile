@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2012/07/19 06:33:48 joerg Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 2014/08/20 00:02:20 tls Exp $
 #
 
 WARNS?=		5
@@ -29,8 +29,8 @@ ARCHDIR=	${LIBPDIR}/arch/${ARCHSUBDIR}
 CPPFLAGS+=	-I${ARCHDIR} -I${LIBPDIR} -I${.CURDIR}
 
 assym.h: genassym.sh ${ARCHDIR}/genassym.cf
-	${HOST_SH} ${.CURDIR}/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-		< ${ARCHDIR}/genassym.cf > assym.h.tmp && \
+	${TOOL_GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${PROF} \
+		${GENASSYM_CPPFLAGS} < ${ARCHDIR}/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 
 SRCS=	pthread_dbg.c 

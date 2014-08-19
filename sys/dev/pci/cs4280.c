@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.64.6.1 2012/11/20 03:02:14 tls Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.64.6.2 2014/08/20 00:03:42 tls Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.64.6.1 2012/11/20 03:02:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.64.6.2 2014/08/20 00:03:42 tls Exp $");
 
 #include "midi.h"
 
@@ -245,6 +245,7 @@ cs4280_attach(device_t parent, device_t self, void *aux)
 	pcireg_t reg;
 	uint32_t mem;
 	int error;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -320,7 +321,7 @@ cs4280_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, sc->intrh);
+	intrstr = pci_intr_string(pc, sc->intrh, intrbuf, sizeof(intrbuf));
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);

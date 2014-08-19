@@ -1,4 +1,4 @@
-/* $NetBSD: dev_net.c,v 1.2 2011/07/17 20:54:46 joerg Exp $ */
+/* $NetBSD: dev_net.c,v 1.2.12.1 2014/08/20 00:03:22 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ net_open(struct open_file *f, ...)
 	}
 
 	if (file[0] != '\0') 
-		snprintf(bootfile, sizeof(bootfile), file);
+		snprintf(bootfile, sizeof(bootfile), "%s", file);
 	else if (bootfile[0] == '\0')
 		snprintf(bootfile, sizeof(bootfile), "netbsd");
 
@@ -83,7 +83,7 @@ net_open(struct open_file *f, ...)
 	    && (error = nfs_mount(netdev_sock, rootip, rootpath)) != 0)
 		goto bad;
 
-	snprintf(bi_path.bootpath, sizeof(bi_path.bootpath), bootfile);
+	snprintf(bi_path.bootpath, sizeof(bi_path.bootpath), "%s", bootfile);
 	f->f_devdata = &netdev_sock;
 	netdev_opens++;
 	return 0;

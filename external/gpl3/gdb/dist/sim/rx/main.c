@@ -1,7 +1,6 @@
 /* main.c --- main function for stand-alone RX simulator.
 
-Copyright (C) 2005, 2007, 2008, 2009, 2010, 2011
-Free Software Foundation, Inc.
+Copyright (C) 2005-2014 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -175,7 +174,7 @@ main (int argc, char **argv)
   rx_in_gdb = 0;
   save_trace = trace;
   trace = 0;
-  rx_load (prog);
+  rx_load (prog, NULL);
   trace = save_trace;
 
   sim_disasm_init (prog);

@@ -1,3 +1,167 @@
+2014-01-06  Tom Tromey  <tromey@redhat.com>
+
+	* common/cgen-trace.c: Don't use old VA_* macros.
+	* common/sim-load.c (xprintf): Likewise.
+	* common/sim-trace.c (trace_printf, debug_printf): Likewise.
+
+2014-01-06  Tom Tromey  <tromey@redhat.com>
+
+	* README-HACKING: Don't use PARAMS.
+	* arm/wrapper.c: Don't use PARAMS.
+	* bfin/sim-main.h: Don't use PARAMS.
+	* common/callback.c: Don't use PARAMS.
+	* common/cgen-trace.c: Don't use PARAMS.
+	* common/run-sim.h: Don't use PARAMS.
+	* common/run.c: Don't use PARAMS.
+	* common/sim-base.h: Don't use PARAMS.
+	* common/sim-load.c: Don't use PARAMS.
+	* common/sim-options.h: Don't use PARAMS.
+	* common/sim-trace.c: Don't use PARAMS.
+	* common/sim-trace.h: Don't use PARAMS.
+	* common/sim-utils.h: Don't use PARAMS.
+	* cr16/cr16_sim.h: Don't use PARAMS.
+	* cr16/gencode.c: Don't use PARAMS.
+	* cr16/interp.c: Don't use PARAMS.
+	* cr16/simops.c: Don't use PARAMS.
+	* d10v/d10v_sim.h: Don't use PARAMS.
+	* d10v/gencode.c: Don't use PARAMS.
+	* d10v/interp.c: Don't use PARAMS.
+	* d10v/simops.c: Don't use PARAMS.
+	* erc32/erc32.c: Don't use PARAMS.
+	* erc32/exec.c: Don't use PARAMS.
+	* erc32/float.c: Don't use PARAMS.
+	* erc32/func.c: Don't use PARAMS.
+	* erc32/sis.c: Don't use PARAMS.
+	* erc32/sis.h: Don't use PARAMS.
+	* mips/interp.c: Don't use PARAMS.
+	* mips/sim-main.h: Don't use PARAMS.
+	* sh/interp.c: Don't use PARAMS.
+	* v850/sim-main.h: Don't use PARAMS.
+	* v850/v850_sim.h: Don't use PARAMS.
+
+2013-11-07  Will Newton  <will.newton@linaro.org>
+
+	PR gdb/15508
+	* arm/wrapper.c (sim_create_inferior): Call init before
+	accessing STATE.
+
+2013-11-07  Will Newton  <will.newton@linaro.org>
+
+	PR gdb/8989
+	* arm/wrapper.c (sim_create_inferior): Avoid calling
+	bfd_get_mach with a NULL bfd.
+
+2013-06-21  Nick Clifton  <nickc@redhat.com>
+
+	* msp430: New Directory.
+	* configure.tgt: Add it.
+	* configure: Regenerate.
+
+2013-03-15  Steve Ellcey  <sellcey@mips.com>
+
+	* arm/wrapper.c (sim_complete_command): Make char arguments const.
+	* avr/interp.c (sim_complete_command): Ditto.
+	* common/sim-options.c (sim_complete_command): Ditto.
+	* cr16/interp.c (sim_complete_command): Ditto.
+	* erc32/interf.c (sim_complete_command): Ditto.
+	* m32c/gdb-if.c (sim_complete_command): Ditto.
+	* microblaze/interp.c (sim_complete_command): Ditto.
+	* ppc/sim_calls.c (sim_complete_command): Ditto.
+	* rl78/gdb-if.c (sim_complete_command): Ditto.
+	* rx/gdb-if.c (sim_complete_command): Ditto.
+	* sh/interp.c (sim_complete_command): Ditto.
+
+2013-01-01  Joel Brobecker  <brobecker@adacore.com>
+
+	Update year range in copyright notice of all files.
+
+2012-12-19  Joel Brobecker  <brobecker@adacore.com>
+
+	Update old contact info in GPL license notices.
+
+2012-12-19  Joel Brobecker  <brobecker@adacore.com>
+
+	Update the non-FSF-copyrighted files in sim to GPLv3 or later.
+
+2012-11-20  Pavel Chupin  <pavel.v.chupin@intel.com>
+
+	* common/Make-common.in: Use lt_cv_dlopen_libs under PLUGINS
+	condition.
+	* common/acinclude.m4: Define lt_cv_dlopen_libs.
+	* arm/configure: Regenerate.
+	* avr/configure: Regenerate.
+	* bfin/configure: Regenerate.
+	* common/configure: Regenerate.
+	* cr16/configure: Regenerate.
+	* cris/configure: Regenerate.
+	* d10v/configure: Regenerate.
+	* erc32/configure: Regenerate.
+	* frv/configure: Regenerate.
+	* h8300/configure: Regenerate.
+	* igen/configure: Regenerate.
+	* iq2000/configure: Regenerate.
+	* lm32/configure: Regenerate.
+	* m32c/configure: Regenerate.
+	* m32r/configure: Regenerate.
+	* m68hc11/configure: Regenerate.
+	* mcore/configure: Regenerate.
+	* microblaze/configure: Regenerate.
+	* mips/configure: Regenerate.
+	* mn10300/configure: Regenerate.
+	* moxie/configure: Regenerate.
+	* ppc/configure: Regenerate.
+	* rl78/configure: Regenerate.
+	* rx/configure: Regenerate.
+	* sh/configure: Regenerate.
+	* sh64/configure: Regenerate.
+	* testsuite/configure: Regenerate.
+	* v850/configure: Regenerate.
+
+2012-11-05  Stephane Carrez  <Stephane.Carrez@gmail.com>
+
+	* MAINTAINERS: Update my email address.
+
+2012-09-24  Steve Ellcey  <sellcey@mips.com>
+
+	* mips/basic.exp: Add mips*-mti-elf* target.
+	* configure.ac: Add mips*-mti-elf* target.
+	* configure: Regenerate.
+
+2012-06-15  Joel Brobecker  <brobecker@adacore.com>
+
+	* configure: Regenerate.
+
+2012-06-06  Michael Eager  <eager@eagercon.com>
+
+	* microblaze/interp.c (config.h): Add #include.
+
+2011-11-29  Joel Brobecker  <brobecker@adacore.com>
+
+	* MAINTAINERS (Global Maintainers): New section.  Add Mike
+	Frysinger.
+
+2011-11-28  DJ Delorie  <dj@redhat.com>
+
+	* configure.tgt: Add rl78 support.
+	* configure: Regenerate.
+	* rl78: New directory.
+	* MAINTAINERS: Add myself as RL78 maintainer.
+
+2011-07-08  Hans-Peter Nilsson  <hp@axis.com>
+
+	* MAINTAINERS: Remove Thiemo Seufer.
+
+2011-06-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.tgt (bfin-*-*): Add sim_testsuite=yes.
+	* configure: Regenerate.
+
+2011-05-04  Joseph Myers  <joseph@codesourcery.com>
+
+	* configure.tgt (thumb*-*-* | strongarm*-*-* | xscale-*-*): Don't
+	handle targets.
+	* configure: Regenerate.
+
 2011-03-05  Mike Frysinger  <vapier@gentoo.org>
 
 	* MAINTAINERS: Add bfin entry.

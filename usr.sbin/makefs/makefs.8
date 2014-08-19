@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.41.2.1 2013/02/25 00:30:44 tls Exp $
+.\"	$NetBSD: makefs.8,v 1.41.2.2 2014/08/20 00:05:09 tls Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 2, 2013
+.Dd August 6, 2013
 .Dt MAKEFS 8
 .Os
 .Sh NAME
@@ -189,13 +189,13 @@ Set file system specific options.
 .Ar fs-options
 is a comma separated list of options.
 Valid file system specific options are detailed below.
+.It Fl r
+When merging multiple directories replace duplicate files with the last found.
 .It Fl S Ar sector-size
 Set the file system sector size to
 .Ar sector-size .
 .\" XXX: next line also true for cd9660?
 Defaults to 512.
-.It Fl r
-When merging multiple directories replace duplicate files with the last found.
 .It Fl s Ar image-size
 Set the size of the file system image to
 .Ar image-size .
@@ -215,6 +215,8 @@ Chip flash file system.
 FAT12, FAT16, or FAT32 file system.
 .It Sy v7fs
 7th Edition(V7) file system.
+.It Sy udf
+ISO/Ecma UDF file system.
 .El
 .It Fl x
 Exclude file system nodes not explicitly listed in the specfile.
@@ -388,6 +390,46 @@ PDP endian.
 Display a progress meter for the file system construction and file
 population.
 .El
+.Ss UDF-specific options
+.Sy udf
+images have udf-specific optional parameters that may be provided.
+Each of the options consists of a keyword, an equal sign
+.Pq Ql = ,
+and a value.
+The following keywords are supported:
+.Pp
+.Bl -tag -width optimization -compact
+.It Sy disctype
+This can have the following values:
+.Bl -tag -width cdromXdvdromXbdromXXX -compact
+.It Sy cdrom , Sy dvdrom , Sy bdrom
+create a read-only fs
+.It Sy dvdram , Sy bdre , Sy disk
+create a rewritable fs without sparing for defective sectors
+.It Sy cdr , Sy dvdr , Sy bdr
+create a rewritable fs on once recordable media using a VAT
+.It Sy cdrw , Sy dvdrw
+create a rewritable fs with sparing for defective sectors
+.El
+When an optical media is selected here, the sectorsize and the default disc
+size is assumed unless given explicitly.
+For rom images the disc size is the minimum needed.
+.It Sy loglabel
+Set the logical volume label of the disc to the specified argument.
+.It Sy discid
+Set the physical volume label of the disc to the specified argument.
+Prepend the physical volume label with a volumeset label separated
+with a ':' if wanted.
+For strict conformance and interchange, don't set the volumeset label
+manually unless it has an unique hex number in the first 8 character
+positions.
+.It Sy minver
+Set the minimum UDF version to be used.
+Choose UDF version numbers from 0x102, 0x150, 0x200, and 0x201.
+Versions 0x250 and 0x260 are currently not supported
+in
+.Nm .
+.El
 .Sh SEE ALSO
 .Xr strsuftoll 3 ,
 .Xr installboot 8 ,
@@ -414,3 +456,5 @@ utility appeared in
 (chfs support).
 .An Christos Zoulas
 (msdos support).
+.An Reinoud Zandijk
+(udf support).

@@ -1,5 +1,4 @@
-#   Copyright (C) 1997, 2007, 2008, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright (C) 1997-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,10 +44,6 @@
 #
 #
 
-if $tracelevel {
-    strace $tracelevel
-}
-
 if { [skip_hp_tests] } { continue }
 
 
@@ -75,8 +70,8 @@ set libfile2 ${objdir}/${subdir}/${testfile}2.sl
 
 # Create and source the file that provides information about the compiler
 # used to compile the test case.
-if [get_compiler_info ${binfile}] {
-    return -1;
+if [get_compiler_info] {
+    return -1
 }
 
 # set up appropriate compile option to recognize long double

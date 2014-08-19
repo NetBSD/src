@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_glyphcache.c,v 1.3.2.1 2012/11/20 03:02:36 tls Exp $	*/
+/*	$NetBSD: wsdisplay_glyphcache.c,v 1.3.2.2 2014/08/20 00:03:52 tls Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -67,6 +67,8 @@ glyphcache_init(glyphcache *gc, int first, int lines, int width,
 	gc->gc_cellheight = cellheight;
 	gc->gc_firstline = first;
 	gc->gc_cellsperline = width / cellwidth;
+	gc->gc_buckets = NULL;
+	gc->gc_numbuckets = 0;
 	if (lines < 0) lines = 0;
 	cache_lines = lines / cellheight;
 	gc->gc_numcells = cache_lines * gc->gc_cellsperline;
@@ -123,6 +125,9 @@ glyphcache_wipe(glyphcache *gc)
 {
 	gc_bucket *b;
 	int i, j, idx;
+
+	if ((gc->gc_buckets == NULL) || (gc->gc_numbuckets < 1))
+		return;
 
 	idx = gc->gc_buckets[0].gb_index;
 

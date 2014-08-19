@@ -1,4 +1,4 @@
-#	$NetBSD: files.malta,v 1.18 2011/07/09 16:03:01 matt Exp $
+#	$NetBSD: files.malta,v 1.18.12.1 2014/08/20 00:02:58 tls Exp $
 
 file	arch/evbmips/malta/malta_bus_io.c
 file	arch/evbmips/malta/malta_bus_mem.c
@@ -25,6 +25,9 @@ file	arch/evbmips/malta/dev/mainbus.c	mainbus
 device	cpu
 attach	cpu at mainbus
 file	arch/evbmips/evbmips/cpu.c		cpu
+
+# Stack-less Just-In-Time compiler
+include	"external/bsd/sljit/conf/files.sljit"
 
 # Machine-independent I2O drivers.
 include "dev/i2o/files.i2o"

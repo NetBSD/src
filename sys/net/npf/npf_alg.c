@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg.c,v 1.5.2.2 2013/06/23 06:20:25 tls Exp $	*/
+/*	$NetBSD: npf_alg.c,v 1.5.2.3 2014/08/20 00:04:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.5.2.2 2013/06/23 06:20:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.5.2.3 2014/08/20 00:04:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -58,17 +58,13 @@ struct npf_alg {
 	u_int		na_slot;
 };
 
-#define	NPF_MAX_ALGS	8
-
 /* List of ALGs and the count. */
 static pserialize_t	alg_psz			__cacheline_aligned;
 static npf_alg_t	alg_list[NPF_MAX_ALGS]	__read_mostly;
 static u_int		alg_count		__read_mostly;
 
-/* Session, matching and translation functions. */
-static npf_alg_sfunc_t	alg_sfunc[NPF_MAX_ALGS]	__read_mostly;
-static npf_alg_func_t	alg_mfunc[NPF_MAX_ALGS]	__read_mostly;
-static npf_alg_func_t	alg_tfunc[NPF_MAX_ALGS]	__read_mostly;
+/* Matching, inspection and translation functions. */
+static npfa_funcs_t	alg_funcs[NPF_MAX_ALGS]	__read_mostly;
 
 static const char	alg_prefix[] = "npf_alg_";
 #define	NPF_EXT_PREFLEN	(sizeof(alg_prefix) - 1)
@@ -77,12 +73,9 @@ void
 npf_alg_sysinit(void)
 {
 	alg_psz = pserialize_create();
-	memset(&alg_list, 0, sizeof(alg_list));
+	memset(alg_list, 0, sizeof(alg_list));
+	memset(alg_funcs, 0, sizeof(alg_funcs));
 	alg_count = 0;
-
-	memset(&alg_mfunc, 0, sizeof(alg_mfunc));
-	memset(&alg_tfunc, 0, sizeof(alg_tfunc));
-	memset(&alg_sfunc, 0, sizeof(alg_sfunc));
 }
 
 void
@@ -131,8 +124,7 @@ npf_alg_construct(const char *name)
  * npf_alg_register: register application-level gateway.
  */
 npf_alg_t *
-npf_alg_register(const char *name, npf_alg_func_t mfunc, npf_alg_func_t tfunc,
-    npf_alg_sfunc_t sfunc)
+npf_alg_register(const char *name, const npfa_funcs_t *funcs)
 {
 	npf_alg_t *alg;
 	u_int i;
@@ -160,12 +152,13 @@ npf_alg_register(const char *name, npf_alg_func_t mfunc, npf_alg_func_t tfunc,
 	alg->na_slot = i;
 
 	/* Assign the functions. */
-	alg_mfunc[i] = mfunc;
-	alg_tfunc[i] = tfunc;
-	alg_sfunc[i] = sfunc;
+	alg_funcs[i].match = funcs->match;
+	alg_funcs[i].translate = funcs->translate;
+	alg_funcs[i].inspect = funcs->inspect;
 
 	alg_count = MAX(alg_count, i + 1);
 	npf_config_exit();
+
 	return alg;
 }
 
@@ -179,9 +172,9 @@ npf_alg_unregister(npf_alg_t *alg)
 
 	/* Deactivate the functions first. */
 	npf_config_enter();
-	alg_mfunc[i] = NULL;
-	alg_tfunc[i] = NULL;
-	alg_sfunc[i] = NULL;
+	alg_funcs[i].match = NULL;
+	alg_funcs[i].translate = NULL;
+	alg_funcs[i].inspect = NULL;
 	pserialize_perform(alg_psz);
 
 	/* Finally, unregister the ALG. */
@@ -196,16 +189,16 @@ npf_alg_unregister(npf_alg_t *alg)
  * npf_alg_match: call ALG matching inspectors, determine if any ALG matches.
  */
 bool
-npf_alg_match(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
+npf_alg_match(npf_cache_t *npc, npf_nat_t *nt, int di)
 {
 	bool match = false;
 	int s;
 
 	s = pserialize_read_enter();
 	for (u_int i = 0; i < alg_count; i++) {
-		npf_alg_func_t func = alg_mfunc[i];
+		const npfa_funcs_t *f = &alg_funcs[i];
 
-		if (func && func(npc, nbuf, nt, di)) {
+		if (f->match && f->match(npc, nt, di)) {
 			match = true;
 			break;
 		}
@@ -218,35 +211,36 @@ npf_alg_match(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
  * npf_alg_exec: execute ALG hooks for translation.
  */
 void
-npf_alg_exec(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, int di)
+npf_alg_exec(npf_cache_t *npc, npf_nat_t *nt, bool forw)
 {
 	int s;
 
 	s = pserialize_read_enter();
 	for (u_int i = 0; i < alg_count; i++) {
-		npf_alg_func_t func;
+		const npfa_funcs_t *f = &alg_funcs[i];
 
-		if ((func = alg_tfunc[i]) != NULL) {
-			func(npc, nbuf, nt, di);
+		if (f->translate) {
+			f->translate(npc, nt, forw);
 		}
 	}
 	pserialize_read_exit(s);
 }
 
-npf_session_t *
-npf_alg_session(npf_cache_t *npc, nbuf_t *nbuf, int di)
+npf_conn_t *
+npf_alg_conn(npf_cache_t *npc, int di)
 {
-	npf_session_t *se = NULL;
+	npf_conn_t *con = NULL;
 	int s;
 
 	s = pserialize_read_enter();
 	for (u_int i = 0; i < alg_count; i++) {
-		npf_alg_sfunc_t func = alg_sfunc[i];
+		const npfa_funcs_t *f = &alg_funcs[i];
 
-		if (func && (se = func(npc, nbuf, di)) != NULL) {
+		if (!f->inspect)
+			continue;
+		if ((con = f->inspect(npc, di)) != NULL)
 			break;
-		}
 	}
 	pserialize_read_exit(s);
-	return se;
+	return con;
 }

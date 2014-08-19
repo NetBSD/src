@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.185.2.1 2013/02/25 00:29:04 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.185.2.2 2014/08/20 00:03:29 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.185.2.1 2013/02/25 00:29:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.185.2.2 2014/08/20 00:03:29 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -130,10 +130,6 @@ void	initcpu(void);
 int	cpu_dumpsize(void);
 int	cpu_dump(int (*)(dev_t, daddr_t, void *, size_t), daddr_t *);
 void	cpu_init_kcore_hdr(void);
-#ifdef EXTENDED_MEMORY
-static int mem_exists(void *, u_long);
-static void setmemrange(void);
-#endif
 
 /* functions called from locore.s */
 void	x68k_init(void);
@@ -141,6 +137,24 @@ void	dumpsys(void);
 void	straytrap(int, u_short);
 void	nmihand(struct frame);
 void	intrhand(int);
+
+/* memory probe function called from locore.s */
+void	setmemrange(void);
+#ifdef EXTENDED_MEMORY
+static bool mem_exists(paddr_t, paddr_t);
+#endif
+
+typedef struct {
+	paddr_t start;
+	paddr_t end;
+} phys_seg_t;
+
+static int basemem;
+static phys_seg_t phys_basemem_seg;
+#ifdef EXTENDED_MEMORY
+#define EXTMEM_SEGS	(VM_PHYSSEG_MAX - 1)
+static phys_seg_t phys_extmem_seg[EXTMEM_SEGS];
+#endif
 
 /*
  * On the 68020/68030, the value of delay_divisor is roughly
@@ -167,24 +181,35 @@ x68k_init(void)
 {
 	u_int i;
 	paddr_t msgbuf_pa;
+	paddr_t s, e;
+
+	/*
+	 * Most m68k ports allocate msgbuf at the end of available memory
+	 * (i.e. just after avail_end), but on x68k we allocate msgbuf
+	 * at the end of main memory for compatibility.
+	 */
+	msgbuf_pa = phys_basemem_seg.end - m68k_round_page(MSGBUFSIZE);
 
 	/*
 	 * Tell the VM system about available physical memory.
 	 */
-	uvm_page_physload(atop(avail_start), atop(avail_end),
-	    atop(avail_start), atop(avail_end),
+	/* load the main memory region */
+	s = avail_start;
+	e = msgbuf_pa;
+	uvm_page_physload(atop(s), atop(e), atop(s), atop(e),
 	    VM_FREELIST_MAINMEM);
 
-	/*
-	 * avail_end was pre-decremented in pmap_bootstrap to compensate
-	 * for msgbuf pages, but avail_end is also used to check DMA'able
-	 * memory range for intio devices and it would be updated per
-	 * probed extended memories, so explicitly save msgbuf address here.
-	 */
-	msgbuf_pa = avail_end;
-
 #ifdef EXTENDED_MEMORY
-	setmemrange();
+	/* load extended memory regions */
+	for (i = 0; i < EXTMEM_SEGS; i++) {
+		if (phys_extmem_seg[i].start == phys_extmem_seg[i].end)
+			continue;
+		uvm_page_physload(atop(phys_extmem_seg[i].start),
+		    atop(phys_extmem_seg[i].end),
+		    atop(phys_extmem_seg[i].start),
+		    atop(phys_extmem_seg[i].end),
+		    VM_FREELIST_HIGHMEM);
+	}
 #endif
 
 	/*
@@ -283,10 +308,6 @@ cpu_startup(void)
 	callout_init(&candbtimer_ch, 0);
 }
 
-/*
- * Info for CTL_HW
- */
-char	cpu_model[96];		/* max 85 chars */
 static const char *fpu_descr[] = {
 #ifdef	FPU_EMULATE
 	", emulator FPU",	/* 0 */
@@ -341,19 +362,19 @@ identifycpu(void)
 	check_emulator(emubuf, sizeof(emubuf));
 
 	cpuspeed = 2048 / delay_divisor;
-	sprintf(clock, "%dMHz", cpuspeed);
+	snprintf(clock, sizeof(clock), "%dMHz", cpuspeed);
 	switch (cputype) {
 	case CPU_68060:
 		cpu_type = "m68060";
 		mmu = "/MMU";
 		cpuspeed = 128 / delay_divisor;
-		sprintf(clock, "%d/%dMHz", cpuspeed*2, cpuspeed);
+		snprintf(clock, sizeof(clock), "%d/%dMHz", cpuspeed*2, cpuspeed);
 		break;
 	case CPU_68040:
 		cpu_type = "m68040";
 		mmu = "/MMU";
 		cpuspeed = 759 / delay_divisor;
-		sprintf(clock, "%d/%dMHz", cpuspeed*2, cpuspeed);
+		snprintf(clock, sizeof(clock), "%d/%dMHz", cpuspeed*2, cpuspeed);
 		break;
 	case CPU_68030:
 		cpu_type = "m68030";
@@ -372,10 +393,10 @@ identifycpu(void)
 		fpu = fpu_descr[fputype];
 	else
 		fpu = ", unknown FPU";
-	sprintf(cpu_model, "X68%s (%s CPU%s%s, %s clock)%s%s",
+	cpu_setmodel("X68%s (%s CPU%s%s, %s clock)%s%s",
 	    mach, cpu_type, mmu, fpu, clock,
 		emubuf[0] ? " on " : "", emubuf);
-	printf("%s\n", cpu_model);
+	printf("%s\n", cpu_getmodel());
 }
 
 /*
@@ -492,16 +513,23 @@ cpu_reboot(int howto, char *bootstr)
 	 *	Power cannot be removed; simply halt the system (b)
 	 *	Power switch state is checked in shutdown hook
 	 *  a2: the power switch is off
-	 *	Remove the power; the simplest way is go back to ROM eg. reboot
+	 *	Remove the power
 	 * b) RB_HALT
 	 *	call cngetc
 	 * c) otherwise
 	 *	Reboot
 	 */
-	if (((howto & RB_POWERDOWN) == RB_POWERDOWN) && power_switch_is_off)
-		doboot();
-	else if (/*((howto & RB_POWERDOWN) == RB_POWERDOWN) ||*/
-		 ((howto & RB_HALT) == RB_HALT)) {
+	if (((howto & RB_POWERDOWN) == RB_POWERDOWN) && power_switch_is_off) {
+		printf("powering off...\n");
+		delay(1000000);
+		intio_set_sysport_powoff(0x00);
+		intio_set_sysport_powoff(0x0f);
+		intio_set_sysport_powoff(0x0f);
+		delay(1000000);
+		printf("WARNING: powerdown failed\n");
+		delay(1000000);
+		/* PASSTHROUGH even if came back */
+	} else if ((howto & RB_HALT) == RB_HALT) {
 		printf("System halted.  Hit any key to reboot.\n\n");
 		(void)cngetc();
 	}
@@ -853,6 +881,7 @@ badaddr(volatile void* addr)
 		return 1;
 	}
 	i = *(volatile short *)addr;
+	__USE(i);
 	nofault = NULL;
 	return 0;
 }
@@ -869,6 +898,7 @@ badbaddr(volatile void *addr)
 		return 1;
 	}
 	i = *(volatile char *)addr;
+	__USE(i);
 	nofault = NULL;
 	return 0;
 }
@@ -1011,57 +1041,63 @@ module_init_md(void)
 #endif
 
 #ifdef EXTENDED_MEMORY
-#ifdef EM_DEBUG
-static int em_debug = 0;
-#define DPRINTF(str) do{ if (em_debug) printf str; } while (0);
-#else
-#define DPRINTF(str)
-#endif
 
-static struct memlist {
-	void *base;
-	psize_t min;
-	psize_t max;
+static const struct memlist {
+	paddr_t exstart;
+	psize_t minsize;
+	psize_t maxsize;
 } memlist[] = {
-	/* TS-6BE16 16MB memory */
-	{(void *)0x01000000, 0x01000000, 0x01000000},
-	/* 060turbo SIMM slot (4--128MB) */
-	{(void *)0x10000000, 0x00400000, 0x08000000},
+	/* We define two extended memory regions for all possible settings. */
+
+	/*
+	 * The first region is at 0x01000000:
+	 *
+	 *  TS-6BE16:	16MB at 0x01000000 (to 0x01FFFFFF)
+	 *  XM6i:	4MB - 240MB at 0x01000000 (upto 0x0FFFFFFF)
+	 */
+	{ 0x01000000, 0x00400000, 0x0f000000 },
+
+	/*
+	 * The second region is at 0x10000000:
+	 *
+	 * 060turbo:	4MB - 128MB at 0x10000000 (upto 0x17FFFFFF)
+	 * XM6i:	4MB - 768MB at 0x10000000 (upto 0x3FFFFFFF)
+	 */
+	{ 0x10000000, 0x00400000, 0x30000000 },
 };
-static vaddr_t mem_v, base_v;
+
+/* check each 4MB region */
+#define EXTMEM_RANGE	(4 * 1024 * 1024)
 
 /*
  * check memory existency
  */
-static int
-mem_exists(void *mem, u_long basemax)
+static bool
+mem_exists(paddr_t mem, paddr_t basemax)
 {
 	/* most variables must be register! */
 	volatile unsigned char *m, *b;
 	unsigned char save_m, save_b=0;	/* XXX: shutup gcc */
-	int baseismem;
-	int exists = 0;
+	bool baseismem;
+	bool exists = false;
 	void *base;
 	void *begin_check, *end_check;
 	label_t	faultbuf;
 
-	DPRINTF(("Enter mem_exists(%p, %lx)\n", mem, basemax));
-	DPRINTF((" pmap_enter(%" PRIxVADDR ", %p) for target... ", mem_v, mem));
-	pmap_enter(pmap_kernel(), mem_v, (paddr_t)mem,
-	    VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|PMAP_WIRED);
-	pmap_update(pmap_kernel());
-	DPRINTF((" done.\n"));
+	/*
+	 * In this function we assume:
+	 *  - MMU is not enabled yet but PA == VA
+	 *    (i.e. no RELOC() macro to convert PA to VA)
+	 *  - bus error can be caught by setjmp()
+	 *    (i.e. %vbr register is initialized properly)
+	 *  - all memory cache is not enabled
+	 */
 
 	/* only 24bits are significant on normal X680x0 systems */
-	base = (void *)((u_long)mem & 0x00FFFFFF);
-	DPRINTF((" pmap_enter(%" PRIxVADDR ", %p) for shadow... ", base_v, base));
-	pmap_enter(pmap_kernel(), base_v, (paddr_t)base,
-	    VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|PMAP_WIRED);
-	pmap_update(pmap_kernel());
-	DPRINTF((" done.\n"));
+	base = (void *)(mem & 0x00FFFFFF);
 
-	m = (void *)mem_v;
-	b = (void *)base_v;
+	m = (void *)mem;
+	b = (void *)base;
 
 	/* This is somewhat paranoid -- avoid overwriting myself */
 	__asm("lea %%pc@(begin_check_mem),%0" : "=a"(begin_check));
@@ -1069,7 +1105,6 @@ mem_exists(void *mem, u_long basemax)
 	if (base >= begin_check && base < end_check) {
 		size_t off = (char *)end_check - (char *)begin_check;
 
-		DPRINTF((" Adjusting the testing area.\n"));
 		m -= off;
 		b -= off;
 	}
@@ -1077,15 +1112,8 @@ mem_exists(void *mem, u_long basemax)
 	nofault = (int *)&faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = (int *)0;
-		pmap_remove(pmap_kernel(), mem_v, mem_v+PAGE_SIZE);
-		pmap_remove(pmap_kernel(), base_v, base_v+PAGE_SIZE);
-		pmap_update(pmap_kernel());
-		DPRINTF(("Fault!!! Returning 0.\n"));
-		return 0;
+		return false;
 	}
-
-	DPRINTF((" Let's begin. mem=%p, base=%p, m=%p, b=%p\n",
-	    mem, base, m, b));
 
 	(void)*m;
 	/*
@@ -1122,7 +1150,7 @@ __asm("begin_check_mem:");
 	if (*m != 0x55 || (baseismem && *b != 0xAA))
 		goto out;
 
-	exists = 1;
+	exists = true;
 out:
 	*m = save_m;
 	if (baseismem)
@@ -1131,102 +1159,70 @@ out:
 __asm("end_check_mem:");
 
 	nofault = (int *)0;
-	pmap_remove(pmap_kernel(), mem_v, mem_v+PAGE_SIZE);
-	pmap_remove(pmap_kernel(), base_v, base_v+PAGE_SIZE);
-	pmap_update(pmap_kernel());
-
-	DPRINTF((" End.\n"));
-
-	DPRINTF(("Returning from mem_exists. result = %d\n", exists));
 
 	return exists;
 }
+#endif
 
-static void
+void
 setmemrange(void)
 {
+#ifdef EXTENDED_MEMORY
 	int i;
-	psize_t s, minimum, maximum;
-	struct memlist *mlist = memlist;
-	u_long h;
-	int basemax = ctob(physmem);
+	paddr_t exstart, exend;
+	psize_t size, minsize, maxsize;
+	const struct memlist *mlist = memlist;
+	paddr_t basemax = m68k_ptob(physmem);
+#endif
 
 	/*
-	 * VM system is not started yet.  Use the first and second avalable
-	 * pages to map the (possible) target memory and its shadow.
+	 * VM system is not started yet, and even MMU is not enabled here.
+	 * We assume VA == PA and don't bother to use RELOC() macro
+	 * as pmap_bootstrap() does.
 	 */
-	mem_v = virtual_avail;		/* target */
-	base_v = mem_v + PAGE_SIZE;	/* shadow */
 
-	{	/* Turn off the processor cache. */
-		int cacr;
-		PCIA();		/* cpusha dc */
-		switch (cputype) {
-		default:
-		case CPU_68030:
-			cacr = CACHE_OFF;
-			break;
-		case CPU_68040:
-			cacr = CACHE40_OFF;
-			break;
-		case CPU_68060:
-			cacr = CACHE60_OFF;
-			break;
-		}
-		__asm volatile ("movc %0,%%cacr"::"d"(cacr));
-	}
+	/* save the original base memory range */
+	basemem = physmem;
 
+	/*
+	 * XXX
+	 * Probably we should also probe the main memory region
+	 * for machines which might have a wrong value in a dead SRAM.
+	 */
+	phys_basemem_seg.start = lowram;
+	phys_basemem_seg.end   = m68k_ptob(basemem) + lowram;
+
+#ifdef EXTENDED_MEMORY
 	/* discover extended memory */
-	for (i = 0; i < sizeof(memlist) / sizeof(memlist[0]); i++) {
-		minimum = mlist[i].min;
-		maximum = mlist[i].max;
+	for (i = 0; i < __arraycount(memlist); i++) {
+		exstart = mlist[i].exstart;
+		minsize = mlist[i].minsize;
+		maxsize = mlist[i].maxsize;
 		/*
 		 * Normally, x68k hardware is NOT 32bit-clean.
 		 * But some type of extended memory is in 32bit address space.
 		 * Check whether.
 		 */
-		if (!mem_exists(mlist[i].base, basemax))
+		if (!mem_exists(exstart, basemax))
 			continue;
-		h = 0;
+		exend = 0;
 		/* range check */
-		for (s = minimum; s <= maximum; s += 0x00100000) {
-			if (!mem_exists((char*)mlist[i].base + s - 4, basemax))
+		for (size = minsize; size <= maxsize; size += EXTMEM_RANGE) {
+			if (!mem_exists(exstart + size - 4, basemax))
 				break;
-			h = (u_long)((char*)mlist[i].base + s);
+			exend = exstart + size;
 		}
-		if ((u_long)mlist[i].base < h) {
-			uvm_page_physload(atop(mlist[i].base), atop(h),
-			    atop(mlist[i].base), atop(h),
-			    VM_FREELIST_HIGHMEM);
-			mem_size += h - (u_long) mlist[i].base;
-			if (avail_end < h)
-				avail_end = h;
+		if (exstart < exend) {
+			phys_extmem_seg[i].start = exstart;
+			phys_extmem_seg[i].end   = exend;
+			physmem += m68k_btop(exend - exstart);
+			if (maxmem < m68k_btop(exend))
+				maxmem = m68k_btop(exend);
 		}
 	}
-
-	{	/* Re-enable the processor cache. */
-		int cacr;
-		ICIA();
-		switch (cputype) {
-		default:
-		case CPU_68030:
-			cacr = CACHE_ON;
-			break;
-		case CPU_68040:
-			cacr = CACHE40_ON;
-			break;
-		case CPU_68060:
-			cacr = CACHE60_ON;
-			break;
-		}
-		__asm volatile ("movc %0,%%cacr"::"d"(cacr));
-	}
-
-	physmem = m68k_btop(mem_size);
-}
 #endif
+}
 
-volatile int ssir;
 int idepth;
 
 bool

@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.28 2009/11/21 04:16:52 rmind Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.28.22.1 2014/08/20 00:03:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si_sebuf.c,v 1.28 2009/11/21 04:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si_sebuf.c,v 1.28.22.1 2014/08/20 00:03:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -526,11 +526,10 @@ se_intr(void *arg)
 {
 	struct se_softc *sc = arg;
 	volatile struct se_regs *se = sc->sc_regs;
-	int dma_error, claimed;
+	int claimed;
 	u_short csr;
 
 	claimed = 0;
-	dma_error = 0;
 
 	/* SBC interrupt? DMA interrupt? */
 	csr = se->se_csr;

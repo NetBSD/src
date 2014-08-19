@@ -1,4 +1,4 @@
-.\"	$NetBSD: 2.4.t,v 1.3 2003/08/07 10:30:49 agc Exp $
+.\"	$NetBSD: 2.4.t,v 1.3.60.1 2014/08/20 00:02:29 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,8 +29,8 @@
 .\"
 .\"	@(#)2.4.t	8.5 (Berkeley) 6/1/94
 .\"
-.Sh 2 "Terminals and Devices
-.Sh 3 "Terminals
+.Sh 2 37 "Terminals and Devices
+.Sh 3 37 "Terminals
 .PP
 Terminals support
 .Fn read
@@ -62,7 +62,7 @@ int fd;
 .DE
 Only a session leader may acquire a controlling terminal.
 .ne 1i
-.Sh 4 "Terminal input
+.Sh 4 37 "Terminal input
 .PP
 Terminals are handled according to the underlying communication
 characteristics such as baud rate and required delays,
@@ -145,7 +145,7 @@ and SIGQUIT signals,
 and to stop a process group
 with the SIGTSTP signal either immediately, or when
 all input up to the stop character has been read.
-.Sh 4 "Terminal output
+.Sh 4 38 "Terminal output
 .PP
 On output, the terminal handler provides some simple formatting services.
 These include converting the carriage return character to the
@@ -153,7 +153,7 @@ two character return-linefeed sequence,
 inserting delays after certain standard control characters,
 and expanding tabs.
 .pl +1
-.Sh 3 "Structured devices
+.Sh 3 38 "Structured devices
 .PP
 Structured devices are typified by disks and magnetic
 tapes, but may represent any random-access device.
@@ -162,7 +162,7 @@ devices to allow them to be read and written in random access
 fashion like ordinary files.
 Filesystems are normally mounted on block devices.
 .pl -1
-.Sh 3 "Unstructured devices
+.Sh 3 38 "Unstructured devices
 .PP
 Unstructured devices are those devices which
 do not support block structure.  Familiar unstructured devices

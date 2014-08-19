@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.35 2011/08/29 14:35:04 joerg Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.35.8.1 2014/08/20 00:02:28 tls Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -181,11 +181,11 @@ print_entry(prop_dictionary_t entry)
 
 	/* Get fingerprint in ASCII. */
 	len = prop_data_size(prop_dictionary_get(entry, "fp"));
-	len *= 2;
-	fp = calloc(1, len + 1);
+	fp = calloc(1, len*2 + 1);
 	v = dict_getd(entry, "fp");
-	for (i = 0; i < len; i++)
-		snprintf(fp, len + 1, "%s%02x", fp, v[i] & 0xff);
+	for (i = 0; i < len; i++) {
+		snprintf(&fp[i*2], 3, "%02x", v[i] & 0xff);
+	}
 
 	/* Get flags. */
 	memset(flags, 0, sizeof(flags));
@@ -245,7 +245,7 @@ main(int argc, char **argv)
 
 		lfd = open(file, O_RDONLY|O_EXLOCK, 0);
 		if (lfd == -1)
-			err(1, "Cannot open `%s'", argv[1]);
+			err(1, "Cannot open `%s'", file);
 
 		yyin = fdopen(lfd, "r");
 

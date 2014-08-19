@@ -1,7 +1,5 @@
 /* MI Command Set for GDB, the GNU debugger.
-
-   Copyright (C) 2000, 2001, 2003, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2014 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -23,140 +21,184 @@
 #include "defs.h"
 #include "top.h"
 #include "mi-cmds.h"
-#include "gdb_string.h"
+#include <string.h>
+#include "mi-main.h"
 
 extern void _initialize_mi_cmds (void);
+
 struct mi_cmd;
 static struct mi_cmd **lookup_table (const char *command);
 static void build_table (struct mi_cmd *commands);
 
-
-struct mi_cmd mi_cmds[] =
+static struct mi_cmd mi_cmds[] =
 {
-  { "add-inferior", { NULL, 0 }, mi_cmd_add_inferior },
-  { "break-after", { "ignore", 1 }, NULL },
-  { "break-condition", { "cond", 1 }, NULL },
-  { "break-commands", { NULL, 0 }, mi_cmd_break_commands },
-  { "break-delete", { "delete breakpoint", 1 }, NULL },
-  { "break-disable", { "disable breakpoint", 1 }, NULL },
-  { "break-enable", { "enable breakpoint", 1 }, NULL },
-  { "break-info", { "info break", 1 }, NULL },
-  { "break-insert", { NULL, 0 }, mi_cmd_break_insert},
-  { "break-list", { "info break", }, NULL },
-  { "break-passcount", { NULL, 0 }, mi_cmd_break_passcount},
-  { "break-watch", { NULL, 0 }, mi_cmd_break_watch},
-  { "data-disassemble", { NULL, 0 }, mi_cmd_disassemble},
-  { "data-evaluate-expression", { NULL, 0 }, mi_cmd_data_evaluate_expression},
-  { "data-list-changed-registers", { NULL, 0 },
-    mi_cmd_data_list_changed_registers},
-  { "data-list-register-names", { NULL, 0 }, mi_cmd_data_list_register_names},
-  { "data-list-register-values", { NULL, 0 },
-    mi_cmd_data_list_register_values},
-  { "data-read-memory", { NULL, 0 }, mi_cmd_data_read_memory},
-  { "data-read-memory-bytes", { NULL, 0 }, mi_cmd_data_read_memory_bytes},
-  { "data-write-memory", { NULL, 0 }, mi_cmd_data_write_memory},
-  { "data-write-memory-bytes", {NULL, 0}, mi_cmd_data_write_memory_bytes},
-  { "data-write-register-values", { NULL, 0 },
-    mi_cmd_data_write_register_values},
-  { "enable-timings", { NULL, 0 }, mi_cmd_enable_timings},
-  { "enable-pretty-printing", { NULL, 0 }, mi_cmd_enable_pretty_printing},
-  { "environment-cd", { NULL, 0 }, mi_cmd_env_cd},
-  { "environment-directory", { NULL, 0 }, mi_cmd_env_dir},
-  { "environment-path", { NULL, 0 }, mi_cmd_env_path},
-  { "environment-pwd", { NULL, 0 }, mi_cmd_env_pwd},
-  { "exec-arguments", { "set args", 1 }, NULL },
-  { "exec-continue", { NULL, 0 }, mi_cmd_exec_continue},
-  { "exec-finish", { NULL, 0 }, mi_cmd_exec_finish},
-  { "exec-jump", { NULL, 0 }, mi_cmd_exec_jump},
-  { "exec-interrupt", { NULL, 0 }, mi_cmd_exec_interrupt},
-  { "exec-next", { NULL, 0 }, mi_cmd_exec_next},
-  { "exec-next-instruction", { NULL, 0 }, mi_cmd_exec_next_instruction},
-  { "exec-return", { NULL, 0 }, mi_cmd_exec_return},
-  { "exec-run", { NULL, 0}, mi_cmd_exec_run},
-  { "exec-step", { NULL, 0 }, mi_cmd_exec_step},
-  { "exec-step-instruction", { NULL, 0 }, mi_cmd_exec_step_instruction},
-  { "exec-until", { "until", 1 }, NULL},
-  { "file-exec-and-symbols", { "file", 1 }, NULL },
-  { "file-exec-file", { "exec-file", 1 }, NULL },
-  { "file-list-exec-source-file", { NULL, 0 },
-    mi_cmd_file_list_exec_source_file},
-  { "file-list-exec-source-files", { NULL, 0 },
-    mi_cmd_file_list_exec_source_files },
-  { "file-symbol-file", { "symbol-file", 1 }, NULL },
-  { "gdb-exit", { NULL, 0 }, mi_cmd_gdb_exit},
-  { "gdb-set", { "set", 1 }, NULL },
-  { "gdb-show", { "show", 1 }, NULL },
-  { "gdb-version", { "show version", 0 }, 0 },
-  { "inferior-tty-set", { NULL, 0 }, mi_cmd_inferior_tty_set},
-  { "inferior-tty-show", { NULL, 0 }, mi_cmd_inferior_tty_show},
-  { "interpreter-exec", { NULL, 0 }, mi_cmd_interpreter_exec},
-  { "list-features", { NULL, 0 }, mi_cmd_list_features},
-  { "list-target-features", { NULL, 0 }, mi_cmd_list_target_features},
-  { "list-thread-groups", { NULL, 0 }, mi_cmd_list_thread_groups },  
-  { "remove-inferior", { NULL, 0 }, mi_cmd_remove_inferior },
-  { "stack-info-depth", { NULL, 0 }, mi_cmd_stack_info_depth},
-  { "stack-info-frame", { NULL, 0 }, mi_cmd_stack_info_frame},
-  { "stack-list-arguments", { NULL, 0 }, mi_cmd_stack_list_args},
-  { "stack-list-frames", { NULL, 0 }, mi_cmd_stack_list_frames},
-  { "stack-list-locals", { NULL, 0 }, mi_cmd_stack_list_locals},
-  { "stack-list-variables", { NULL, 0 }, mi_cmd_stack_list_variables},
-  { "stack-select-frame", { NULL, 0 }, mi_cmd_stack_select_frame},
-  { "symbol-list-lines", { NULL, 0 }, mi_cmd_symbol_list_lines},
-  { "target-attach", { "attach", 1 }, NULL },
-  { "target-detach", { NULL, 0 }, mi_cmd_target_detach },
-  { "target-disconnect", { "disconnect", 0 }, 0 },
-  { "target-download", { "load", 1 }, NULL},
-  { "target-file-delete", { NULL, 0 }, mi_cmd_target_file_delete },
-  { "target-file-get", { NULL, 0 }, mi_cmd_target_file_get },
-  { "target-file-put", { NULL, 0 }, mi_cmd_target_file_put },
-  { "target-select", { "target", 1 }, NULL},
-  { "thread-info", { NULL, 0 }, mi_cmd_thread_info },
-  { "thread-list-ids", { NULL, 0 }, mi_cmd_thread_list_ids},
-  { "thread-select", { NULL, 0 }, mi_cmd_thread_select},
-  { "trace-define-variable", { NULL, 0 }, mi_cmd_trace_define_variable },
-  { "trace-find", { NULL, 0 }, mi_cmd_trace_find },
-  { "trace-list-variables", { NULL, 0 }, mi_cmd_trace_list_variables },
-  { "trace-save", { NULL, 0 }, mi_cmd_trace_save },
-  { "trace-start", { NULL, 0 }, mi_cmd_trace_start },
-  { "trace-status", { NULL, 0 }, mi_cmd_trace_status },
-  { "trace-stop", { NULL, 0 }, mi_cmd_trace_stop },
-  { "var-assign", { NULL, 0 }, mi_cmd_var_assign},
-  { "var-create", { NULL, 0 }, mi_cmd_var_create},
-  { "var-delete", { NULL, 0 }, mi_cmd_var_delete},
-  { "var-evaluate-expression", { NULL, 0 },  mi_cmd_var_evaluate_expression},
-  { "var-info-path-expression", { NULL, 0 }, mi_cmd_var_info_path_expression},
-  { "var-info-expression", { NULL, 0 }, mi_cmd_var_info_expression},
-  { "var-info-num-children", { NULL, 0 }, mi_cmd_var_info_num_children},
-  { "var-info-type", { NULL, 0 }, mi_cmd_var_info_type},
-  { "var-list-children", { NULL, 0 }, mi_cmd_var_list_children},
-  { "var-set-format", { NULL, 0 }, mi_cmd_var_set_format},
-  { "var-set-frozen", { NULL, 0 }, mi_cmd_var_set_frozen},
-  { "var-set-update-range", { NULL, 0 }, mi_cmd_var_set_update_range },
-  { "var-set-visualizer", { NULL, 0 }, mi_cmd_var_set_visualizer},
-  { "var-show-attributes", { NULL, 0 }, mi_cmd_var_show_attributes},
-  { "var-show-format", { NULL, 0 }, mi_cmd_var_show_format},
-  { "var-update", { NULL, 0 }, mi_cmd_var_update},
+/* Define a MI command of NAME, and its corresponding CLI command is
+   CLI_NAME.  */
+#define DEF_MI_CMD_CLI_1(NAME, CLI_NAME, ARGS_P, CALLED)	\
+  { NAME, { CLI_NAME, ARGS_P}, NULL, CALLED }
+#define DEF_MI_CMD_CLI(NAME, CLI_NAME, ARGS_P) \
+  DEF_MI_CMD_CLI_1(NAME, CLI_NAME, ARGS_P, NULL)
+
+/* Define a MI command of NAME, and implemented by function MI_FUNC.  */
+#define DEF_MI_CMD_MI_1(NAME, MI_FUNC, CALLED) \
+  { NAME, {NULL, 0}, MI_FUNC, CALLED }
+#define DEF_MI_CMD_MI(NAME, MI_FUNC) DEF_MI_CMD_MI_1(NAME, MI_FUNC, NULL)
+
+  DEF_MI_CMD_MI ("ada-task-info", mi_cmd_ada_task_info),
+  DEF_MI_CMD_MI ("add-inferior", mi_cmd_add_inferior),
+  DEF_MI_CMD_CLI_1 ("break-after", "ignore", 1,
+		    &mi_suppress_notification.breakpoint),
+  DEF_MI_CMD_CLI_1 ("break-condition","cond", 1,
+		  &mi_suppress_notification.breakpoint),
+  DEF_MI_CMD_MI_1 ("break-commands", mi_cmd_break_commands,
+		   &mi_suppress_notification.breakpoint),
+  DEF_MI_CMD_CLI_1 ("break-delete", "delete breakpoint", 1,
+		    &mi_suppress_notification.breakpoint),
+  DEF_MI_CMD_CLI_1 ("break-disable", "disable breakpoint", 1,
+		    &mi_suppress_notification.breakpoint),
+  DEF_MI_CMD_CLI_1 ("break-enable", "enable breakpoint", 1,
+		     &mi_suppress_notification.breakpoint),
+  DEF_MI_CMD_CLI ("break-info", "info break", 1),
+  DEF_MI_CMD_MI_1 ("break-insert", mi_cmd_break_insert,
+		   &mi_suppress_notification.breakpoint),
+  DEF_MI_CMD_MI_1 ("dprintf-insert", mi_cmd_dprintf_insert,
+		   &mi_suppress_notification.breakpoint),
+  DEF_MI_CMD_CLI ("break-list", "info break", 0),
+  DEF_MI_CMD_MI_1 ("break-passcount", mi_cmd_break_passcount,
+		   &mi_suppress_notification.breakpoint),
+  DEF_MI_CMD_MI_1 ("break-watch", mi_cmd_break_watch,
+		   &mi_suppress_notification.breakpoint),
+  DEF_MI_CMD_MI_1 ("catch-assert", mi_cmd_catch_assert,
+                   &mi_suppress_notification.breakpoint),
+  DEF_MI_CMD_MI_1 ("catch-exception", mi_cmd_catch_exception,
+                   &mi_suppress_notification.breakpoint),
+  DEF_MI_CMD_MI_1 ("catch-load", mi_cmd_catch_load,
+                   &mi_suppress_notification.breakpoint),
+  DEF_MI_CMD_MI_1 ("catch-unload", mi_cmd_catch_unload,
+                   &mi_suppress_notification.breakpoint),
+  DEF_MI_CMD_MI ("data-disassemble", mi_cmd_disassemble),
+  DEF_MI_CMD_MI ("data-evaluate-expression", mi_cmd_data_evaluate_expression),
+  DEF_MI_CMD_MI ("data-list-changed-registers",
+		 mi_cmd_data_list_changed_registers),
+  DEF_MI_CMD_MI ("data-list-register-names", mi_cmd_data_list_register_names),
+  DEF_MI_CMD_MI ("data-list-register-values", mi_cmd_data_list_register_values),
+  DEF_MI_CMD_MI ("data-read-memory", mi_cmd_data_read_memory),
+  DEF_MI_CMD_MI ("data-read-memory-bytes", mi_cmd_data_read_memory_bytes),
+  DEF_MI_CMD_MI_1 ("data-write-memory", mi_cmd_data_write_memory,
+		   &mi_suppress_notification.memory),
+  DEF_MI_CMD_MI_1 ("data-write-memory-bytes", mi_cmd_data_write_memory_bytes,
+		   &mi_suppress_notification.memory),
+  DEF_MI_CMD_MI ("data-write-register-values",
+		 mi_cmd_data_write_register_values),
+  DEF_MI_CMD_MI ("enable-timings", mi_cmd_enable_timings),
+  DEF_MI_CMD_MI ("enable-pretty-printing", mi_cmd_enable_pretty_printing),
+  DEF_MI_CMD_MI ("enable-frame-filters", mi_cmd_enable_frame_filters),
+  DEF_MI_CMD_MI ("environment-cd", mi_cmd_env_cd),
+  DEF_MI_CMD_MI ("environment-directory", mi_cmd_env_dir),
+  DEF_MI_CMD_MI ("environment-path", mi_cmd_env_path),
+  DEF_MI_CMD_MI ("environment-pwd", mi_cmd_env_pwd),
+  DEF_MI_CMD_CLI_1 ("exec-arguments", "set args", 1,
+		    &mi_suppress_notification.cmd_param_changed),
+  DEF_MI_CMD_MI ("exec-continue", mi_cmd_exec_continue),
+  DEF_MI_CMD_MI ("exec-finish", mi_cmd_exec_finish),
+  DEF_MI_CMD_MI ("exec-jump", mi_cmd_exec_jump),
+  DEF_MI_CMD_MI ("exec-interrupt", mi_cmd_exec_interrupt),
+  DEF_MI_CMD_MI ("exec-next", mi_cmd_exec_next),
+  DEF_MI_CMD_MI ("exec-next-instruction", mi_cmd_exec_next_instruction),
+  DEF_MI_CMD_MI ("exec-return", mi_cmd_exec_return),
+  DEF_MI_CMD_MI ("exec-run", mi_cmd_exec_run),
+  DEF_MI_CMD_MI ("exec-step", mi_cmd_exec_step),
+  DEF_MI_CMD_MI ("exec-step-instruction", mi_cmd_exec_step_instruction),
+  DEF_MI_CMD_CLI ("exec-until", "until", 1),
+  DEF_MI_CMD_CLI ("file-exec-and-symbols", "file", 1),
+  DEF_MI_CMD_CLI ("file-exec-file", "exec-file", 1),
+  DEF_MI_CMD_MI ("file-list-exec-source-file",
+		 mi_cmd_file_list_exec_source_file),
+  DEF_MI_CMD_MI ("file-list-exec-source-files",
+		 mi_cmd_file_list_exec_source_files),
+  DEF_MI_CMD_CLI ("file-symbol-file", "symbol-file", 1),
+  DEF_MI_CMD_MI ("gdb-exit", mi_cmd_gdb_exit),
+  DEF_MI_CMD_CLI_1 ("gdb-set", "set", 1,
+		    &mi_suppress_notification.cmd_param_changed),
+  DEF_MI_CMD_CLI ("gdb-show", "show", 1),
+  DEF_MI_CMD_CLI ("gdb-version", "show version", 0),
+  DEF_MI_CMD_MI ("inferior-tty-set", mi_cmd_inferior_tty_set),
+  DEF_MI_CMD_MI ("inferior-tty-show", mi_cmd_inferior_tty_show),
+  DEF_MI_CMD_MI ("info-ada-exceptions", mi_cmd_info_ada_exceptions),
+  DEF_MI_CMD_MI ("info-gdb-mi-command", mi_cmd_info_gdb_mi_command),
+  DEF_MI_CMD_MI ("info-os", mi_cmd_info_os),
+  DEF_MI_CMD_MI ("interpreter-exec", mi_cmd_interpreter_exec),
+  DEF_MI_CMD_MI ("list-features", mi_cmd_list_features),
+  DEF_MI_CMD_MI ("list-target-features", mi_cmd_list_target_features),
+  DEF_MI_CMD_MI ("list-thread-groups", mi_cmd_list_thread_groups),
+  DEF_MI_CMD_MI ("remove-inferior", mi_cmd_remove_inferior),
+  DEF_MI_CMD_MI ("stack-info-depth", mi_cmd_stack_info_depth),
+  DEF_MI_CMD_MI ("stack-info-frame", mi_cmd_stack_info_frame),
+  DEF_MI_CMD_MI ("stack-list-arguments", mi_cmd_stack_list_args),
+  DEF_MI_CMD_MI ("stack-list-frames", mi_cmd_stack_list_frames),
+  DEF_MI_CMD_MI ("stack-list-locals", mi_cmd_stack_list_locals),
+  DEF_MI_CMD_MI ("stack-list-variables", mi_cmd_stack_list_variables),
+  DEF_MI_CMD_MI ("stack-select-frame", mi_cmd_stack_select_frame),
+  DEF_MI_CMD_MI ("symbol-list-lines", mi_cmd_symbol_list_lines),
+  DEF_MI_CMD_CLI ("target-attach", "attach", 1),
+  DEF_MI_CMD_MI ("target-detach", mi_cmd_target_detach),
+  DEF_MI_CMD_CLI ("target-disconnect", "disconnect", 0),
+  DEF_MI_CMD_CLI ("target-download", "load", 1),
+  DEF_MI_CMD_MI ("target-file-delete", mi_cmd_target_file_delete),
+  DEF_MI_CMD_MI ("target-file-get", mi_cmd_target_file_get),
+  DEF_MI_CMD_MI ("target-file-put", mi_cmd_target_file_put),
+  DEF_MI_CMD_CLI ("target-select", "target", 1),
+  DEF_MI_CMD_MI ("thread-info", mi_cmd_thread_info),
+  DEF_MI_CMD_MI ("thread-list-ids", mi_cmd_thread_list_ids),
+  DEF_MI_CMD_MI ("thread-select", mi_cmd_thread_select),
+  DEF_MI_CMD_MI ("trace-define-variable", mi_cmd_trace_define_variable),
+  DEF_MI_CMD_MI_1 ("trace-find", mi_cmd_trace_find,
+		   &mi_suppress_notification.traceframe),
+  DEF_MI_CMD_MI ("trace-frame-collected",
+		 mi_cmd_trace_frame_collected),
+  DEF_MI_CMD_MI ("trace-list-variables", mi_cmd_trace_list_variables),
+  DEF_MI_CMD_MI ("trace-save", mi_cmd_trace_save),
+  DEF_MI_CMD_MI ("trace-start", mi_cmd_trace_start),
+  DEF_MI_CMD_MI ("trace-status", mi_cmd_trace_status),
+  DEF_MI_CMD_MI ("trace-stop", mi_cmd_trace_stop),
+  DEF_MI_CMD_MI ("var-assign", mi_cmd_var_assign),
+  DEF_MI_CMD_MI ("var-create", mi_cmd_var_create),
+  DEF_MI_CMD_MI ("var-delete", mi_cmd_var_delete),
+  DEF_MI_CMD_MI ("var-evaluate-expression", mi_cmd_var_evaluate_expression),
+  DEF_MI_CMD_MI ("var-info-path-expression", mi_cmd_var_info_path_expression),
+  DEF_MI_CMD_MI ("var-info-expression", mi_cmd_var_info_expression),
+  DEF_MI_CMD_MI ("var-info-num-children", mi_cmd_var_info_num_children),
+  DEF_MI_CMD_MI ("var-info-type", mi_cmd_var_info_type),
+  DEF_MI_CMD_MI ("var-list-children", mi_cmd_var_list_children),
+  DEF_MI_CMD_MI ("var-set-format", mi_cmd_var_set_format),
+  DEF_MI_CMD_MI ("var-set-frozen", mi_cmd_var_set_frozen),
+  DEF_MI_CMD_MI ("var-set-update-range", mi_cmd_var_set_update_range),
+  DEF_MI_CMD_MI ("var-set-visualizer", mi_cmd_var_set_visualizer),
+  DEF_MI_CMD_MI ("var-show-attributes", mi_cmd_var_show_attributes),
+  DEF_MI_CMD_MI ("var-show-format", mi_cmd_var_show_format),
+  DEF_MI_CMD_MI ("var-update", mi_cmd_var_update),
   { NULL, }
 };
 
-/* Pointer to the mi command table (built at run time) */
+/* Pointer to the mi command table (built at run time). */
 
 static struct mi_cmd **mi_table;
 
-/* A prime large enough to accomodate the entire command table */
+/* A prime large enough to accomodate the entire command table.  */
 enum
   {
     MI_TABLE_SIZE = 227
   };
 
-/* Exported function used to obtain info from the table */
+/* Exported function used to obtain info from the table.  */
 struct mi_cmd *
 mi_lookup (const char *command)
 {
   return *lookup_table (command);
 }
 
-/* stat collecting */
+/* Used for collecting hash hit/miss statistics.  */
+
 struct mi_cmd_stats
 {
   int hit;
@@ -165,20 +207,21 @@ struct mi_cmd_stats
 };
 struct mi_cmd_stats stats;
 
-/* our lookup function */
+/* Look up a command.  */
+
 static struct mi_cmd **
 lookup_table (const char *command)
 {
   const char *chp;
   unsigned int index = 0;
 
-  /* compute our hash */
+  /* Compute our hash.  */
   for (chp = command; *chp; chp++)
     {
-      /* some what arbitrary */
+      /* We use a somewhat arbitrary formula.  */
       index = ((index << 6) + (unsigned int) *chp) % MI_TABLE_SIZE;
     }
-  /* look it up */
+
   while (1)
     {
       struct mi_cmd **entry = &mi_table[index];
@@ -217,6 +260,7 @@ build_table (struct mi_cmd *commands)
 			_("command `%s' appears to be duplicated"),
 			command->name);
       *entry = command;
+      /* FIXME lose these prints */
       if (0)
 	{
 	  fprintf_unfiltered (gdb_stdlog, "%-30s %2d\n",

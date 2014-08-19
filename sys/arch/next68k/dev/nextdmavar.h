@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdmavar.h,v 1.15.18.1 2012/11/20 03:01:37 tls Exp $	*/
+/*	$NetBSD: nextdmavar.h,v 1.15.18.2 2014/08/20 00:03:16 tls Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -77,3 +77,9 @@ void nextdma_reset(struct nextdma_softc *);
 void nextdma_print(struct nextdma_softc *);
 
 struct nextdma_softc *nextdma_findchannel(const char *);
+
+void ndtrace_printf(const char *fmt, ...) __printflike(1, 2);
+int ndtrace_empty(void);
+void ndtrace_reset(void);
+void ndtrace_addc(int);
+const char *ndtrace_get(void);

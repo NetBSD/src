@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.86 2012/06/24 07:48:01 riastradh Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.86.2.1 2014/08/20 00:03:50 tls Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.86 2012/06/24 07:48:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.86.2.1 2014/08/20 00:03:50 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,8 +231,10 @@ atapi_probe_bus(struct atapibus_softc *sc, int target)
 	int error;
 	struct atapi_adapter *atapi_adapter;
 
+	KASSERT(chan->chan_ntargets >= 1);
+
 	if (target == -1) {
-		maxtarget = 1;
+		maxtarget = chan->chan_ntargets - 1;
 		mintarget = 0;
 	} else {
 		if (target < 0 || target >= chan->chan_ntargets)

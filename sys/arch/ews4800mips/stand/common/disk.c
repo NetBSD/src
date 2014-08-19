@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.7 2009/02/04 15:22:13 tsutsui Exp $	*/
+/*	$NetBSD: disk.c,v 1.7.24.1 2014/08/20 00:03:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -285,9 +285,8 @@ __fd_progress_msg(int pos)
 {
 	char msg[16];
 
-	memset(msg, 0, sizeof msg);
-	sprintf(msg, "C%d H%d S%d  \r", (pos >> 16) & 0xff, (pos >> 8) & 0xff,
-	    pos & 0xff);
+	snprintf(msg, sizeof(msg), "C%d H%d S%d  \r",
+	    (pos >> 16) & 0xff, (pos >> 8) & 0xff, pos & 0xff);
 	printf("%s", msg);
 }
 #endif

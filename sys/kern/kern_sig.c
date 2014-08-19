@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.317.2.1 2013/06/23 06:18:58 tls Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.317.2.2 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.317.2.1 2013/06/23 06:18:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.317.2.2 2014/08/20 00:04:29 tls Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -519,11 +519,11 @@ ksiginfo_queue_drain0(ksiginfoq_t *kq)
 {
 	ksiginfo_t *ksi;
 
-	KASSERT(!CIRCLEQ_EMPTY(kq));
+	KASSERT(!TAILQ_EMPTY(kq));
 
-	while (!CIRCLEQ_EMPTY(kq)) {
-		ksi = CIRCLEQ_FIRST(kq);
-		CIRCLEQ_REMOVE(kq, ksi, ksi_list);
+	while (!TAILQ_EMPTY(kq)) {
+		ksi = TAILQ_FIRST(kq);
+		TAILQ_REMOVE(kq, ksi, ksi_list);
 		pool_cache_put(ksiginfo_cache, ksi);
 	}
 }
@@ -537,10 +537,10 @@ siggetinfo(sigpend_t *sp, ksiginfo_t *out, int signo)
 		goto out;
 
 	/* Find siginfo and copy it out. */
-	CIRCLEQ_FOREACH(ksi, &sp->sp_info, ksi_list) {
+	TAILQ_FOREACH(ksi, &sp->sp_info, ksi_list) {
 		if (ksi->ksi_signo != signo)
 			continue;
-		CIRCLEQ_REMOVE(&sp->sp_info, ksi, ksi_list);
+		TAILQ_REMOVE(&sp->sp_info, ksi, ksi_list);
 		KASSERT((ksi->ksi_flags & KSI_FROMPOOL) != 0);
 		KASSERT((ksi->ksi_flags & KSI_QUEUED) != 0);
 		ksi->ksi_flags &= ~KSI_QUEUED;
@@ -626,7 +626,7 @@ sigput(sigpend_t *sp, struct proc *p, ksiginfo_t *ksi)
 	if (ksi->ksi_signo < SIGRTMIN)
 #endif
 	{
-		CIRCLEQ_FOREACH(kp, &sp->sp_info, ksi_list) {
+		TAILQ_FOREACH(kp, &sp->sp_info, ksi_list) {
 			if (kp->ksi_signo == ksi->ksi_signo) {
 				KSI_COPY(ksi, kp);
 				kp->ksi_flags |= KSI_QUEUED;
@@ -636,7 +636,7 @@ sigput(sigpend_t *sp, struct proc *p, ksiginfo_t *ksi)
 	}
 
 	ksi->ksi_flags |= KSI_QUEUED;
-	CIRCLEQ_INSERT_TAIL(&sp->sp_info, ksi, ksi_list);
+	TAILQ_INSERT_TAIL(&sp->sp_info, ksi, ksi_list);
 }
 
 /*
@@ -654,14 +654,12 @@ sigclear(sigpend_t *sp, const sigset_t *mask, ksiginfoq_t *kq)
 	else
 		sigminusset(mask, &sp->sp_set);
 
-	ksi = CIRCLEQ_FIRST(&sp->sp_info);
-	for (; ksi != (void *)&sp->sp_info; ksi = next) {
-		next = CIRCLEQ_NEXT(ksi, ksi_list);
+	TAILQ_FOREACH_SAFE(ksi, &sp->sp_info, ksi_list, next) {
 		if (mask == NULL || sigismember(mask, ksi->ksi_signo)) {
-			CIRCLEQ_REMOVE(&sp->sp_info, ksi, ksi_list);
+			TAILQ_REMOVE(&sp->sp_info, ksi, ksi_list);
 			KASSERT((ksi->ksi_flags & KSI_FROMPOOL) != 0);
 			KASSERT((ksi->ksi_flags & KSI_QUEUED) != 0);
-			CIRCLEQ_INSERT_TAIL(kq, ksi, ksi_list);
+			TAILQ_INSERT_TAIL(kq, ksi, ksi_list);
 		}
 	}
 }

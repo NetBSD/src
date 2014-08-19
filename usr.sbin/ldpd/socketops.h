@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.h,v 1.2.8.2 2013/02/25 00:30:43 tls Exp $ */
+/* $NetBSD: socketops.h,v 1.2.8.3 2014/08/20 00:05:09 tls Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -48,12 +48,13 @@ void	send_hello(void);
 int	get_message_id(void);
 int	the_big_loop(void);
 void	new_peer_connection(void);
-void	send_initialize(struct ldp_peer *);
-void	keep_alive(struct ldp_peer *);
+void	send_initialize(const struct ldp_peer *);
+void	keep_alive(const struct ldp_peer *);
 void	recv_session_pdu(struct ldp_peer *);
-int	send_message(struct ldp_peer *, struct ldp_pdu *, struct tlv *);
-int	send_tlv(struct ldp_peer *, struct tlv *);
-int	send_addresses(struct ldp_peer *);
+int	send_message(const struct ldp_peer *, const struct ldp_pdu *,
+	const struct tlv *);
+int	send_tlv(const struct ldp_peer *, const struct tlv *);
+int	send_addresses(const struct ldp_peer *);
 
 struct	hello_info {
 	union sockunion transport_address;

@@ -2,7 +2,7 @@
    simaulator program - run - and simulator library - libsim.a - that
    is not used by GDB.  The GDB part is described in include/remote-sim.h.
 
-   Copyright 2002, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2002-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,11 +26,11 @@
   /* Parse the command line, extracting any target specific switches
      before the generic simulator code gets a chance to complain
      about them.  Returns the adjusted value of argc.  */
-int sim_target_parse_command_line PARAMS ((int, char **));
+int sim_target_parse_command_line (int, char **);
 
   /* Display a list of target specific switches supported by this
      target.  */
-void sim_target_display_usage PARAMS ((int help));
+void sim_target_display_usage (int help);
 
 #endif
 
@@ -40,7 +40,7 @@ void sim_target_display_usage PARAMS ((int help));
    This procedure does not take a SIM_DESC argument as it is
    used before sim_open. */
 
-void sim_set_callbacks PARAMS ((struct host_callback_struct *));
+void sim_set_callbacks (struct host_callback_struct *);
 
 
 /* Set the size of the simulator memory array.
@@ -49,7 +49,7 @@ void sim_set_callbacks PARAMS ((struct host_callback_struct *));
    This procedure does not take a SIM_DESC argument as it is
    used before sim_open. */
 
-void sim_size PARAMS ((int i));
+void sim_size (int i);
 
 
 /* Single-step simulator with tracing enabled.
@@ -60,7 +60,7 @@ void sim_size PARAMS ((int i));
    be continued using sim_trace() calls; ``1'' indicating that the
    simulation has finished. */
 
-int sim_trace PARAMS ((SIM_DESC sd));
+int sim_trace (SIM_DESC sd);
 
 
 /* Enable tracing.
@@ -70,7 +70,7 @@ int sim_trace PARAMS ((SIM_DESC sd));
    be continued using sim_trace() calls; ``1'' indicating that the
    simulation has finished. */
 
-void sim_set_trace PARAMS ((void));
+void sim_set_trace (void);
 
 
 /* Configure the size of the profile buffer.
@@ -79,7 +79,7 @@ void sim_set_trace PARAMS ((void));
    This procedure does not take a SIM_DESC argument as it is
    used before sim_open. */
 
-void sim_set_profile_size PARAMS ((int n));
+void sim_set_profile_size (int n);
 
 
 /* Kill the running program.
@@ -88,6 +88,6 @@ void sim_set_profile_size PARAMS ((int n));
    This procedure will be replaced as part of the introduction of
    multi-cpu simulators. */
 
-void sim_kill PARAMS ((SIM_DESC sd));
+void sim_kill (SIM_DESC sd);
 
 #endif

@@ -1,6 +1,5 @@
 /* Simulator hardware option handling.
-   Copyright (C) 1998, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1998-2014 Free Software Foundation, Inc.
    Contributed by Cygnus Support and Andrew Cagney.
 
 This file is part of GDB, the GNU debugger.
@@ -160,7 +159,7 @@ merge_device_file (struct sim_state *sd,
     }
 
   line_nr = 0;
-  while (fgets (device_path, sizeof(device_path), description))
+  while (fgets (device_path, sizeof (device_path), description))
     {
       char *device;
       /* check that a complete line was read */
@@ -195,13 +194,13 @@ merge_device_file (struct sim_state *sd,
 	      sim_io_eprintf (sd, "%s:%d: unexpected eof", file_name, line_nr);
 	      return SIM_RC_FAIL;
 	    }
-	  if (strchr(device_path, '\n') == NULL)
+	  if (strchr (device_path, '\n') == NULL)
 	    {
-	      fclose(description);
+	      fclose (description);
 	      sim_io_eprintf (sd, "%s:%d: line to long", file_name, line_nr);
 	      return SIM_RC_FAIL;
 	    }
-	  *strchr(device_path, '\n') = '\0';
+	  *strchr (device_path, '\n') = '\0';
 	  line_nr++;
 	}
       /* parse this line */

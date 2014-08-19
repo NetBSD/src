@@ -1,4 +1,4 @@
-/*	$NetBSD: stddef.h,v 1.16 2009/11/15 22:21:03 christos Exp $	*/
+/*	$NetBSD: stddef.h,v 1.16.14.1 2014/08/20 00:02:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,10 @@
 #include <sys/featuretest.h>
 #include <machine/ansi.h>
 
+#ifdef	_BSD_PTRDIFF_T_
 typedef	_BSD_PTRDIFF_T_	ptrdiff_t;
+#undef	_BSD_PTRDIFF_T_
+#endif
 
 #ifdef	_BSD_SIZE_T_
 typedef	_BSD_SIZE_T_	size_t;

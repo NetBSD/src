@@ -27,7 +27,7 @@
  *	i4b_q931.c - Q931 received messages handling
  *	--------------------------------------------
  *
- *	$Id: i4b_q931.c,v 1.21 2006/11/16 01:33:49 christos Exp $
+ *	$Id: i4b_q931.c,v 1.21.98.1 2014/08/20 00:04:36 tls Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.21 2006/11/16 01:33:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.21.98.1 2014/08/20 00:04:36 tls Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -272,6 +272,7 @@ int
 i4b_decode_q931_cs0_ie(call_desc_t *cd, int msg_len, u_char *msg_ptr)
 {
 	int i, j;
+	size_t len;
 	char *p;
 
 	switch(*msg_ptr)
@@ -415,11 +416,15 @@ i4b_decode_q931_cs0_ie(call_desc_t *cd, int msg_len, u_char *msg_ptr)
 		case IEI_DATETIME:	/* date/time		*/
 			i = 2;
 			j = msg_ptr[1];
-			p = &(cd->datetime[0]);
+			p = cd->datetime;
 			*p = '\0';
 
-			for(j = msg_ptr[1]; j > 0; j--, i++)
-				sprintf(p+strlen(p), "%02d", msg_ptr[i]);
+			len = 0;
+			for(j = msg_ptr[1]; j > 0; j--, i++) {
+				snprintf(p + len, sizeof(cd->datetime) - len,
+				    "%02d", msg_ptr[i]);
+				len = strlen(p);
+			}
 
 			NDBGL3(L3_P_MSG, "IEI_DATETIME = %s", cd->datetime);
 			break;

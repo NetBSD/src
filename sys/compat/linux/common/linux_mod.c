@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mod.c,v 1.2 2011/09/14 12:28:08 christos Exp $	*/
+/*	$NetBSD: linux_mod.c,v 1.2.12.1 2014/08/20 00:03:32 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.2 2011/09/14 12:28:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.2.12.1 2014/08/20 00:03:32 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -65,43 +65,55 @@ __KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.2 2011/09/14 12:28:08 christos Exp $
 # define	MD3	""
 #endif
 
-MODULE(MODULE_CLASS_MISC, compat_linux, "compat,compat_ossaudio" MD1 MD2 MD3);
+MODULE(MODULE_CLASS_EXEC, compat_linux, "compat,compat_ossaudio" MD1 MD2 MD3);
 
 static struct execsw linux_execsw[] = {
 #if defined(EXEC_ELF32) && ELFSIZE == 32
-	{ sizeof (Elf32_Ehdr),
-	  exec_elf32_makecmds,
-	  { linux_elf32_probe },
-	  &emul_linux,
-	  EXECSW_PRIO_ANY,
-	  LINUX_ELF_AUX_ARGSIZ,
-	  linux_elf32_copyargs,
-	  NULL,
-	  coredump_elf32,
-	  linux_exec_setup_stack },
+	{
+		.es_hdrsz = sizeof (Elf32_Ehdr),
+		.es_makecmds = exec_elf32_makecmds,
+		.u = {
+			.elf_probe_func = linux_elf32_probe,
+		},
+		.es_emul = &emul_linux,
+		.es_prio = EXECSW_PRIO_ANY,
+		.es_arglen = LINUX_ELF_AUX_ARGSIZ,
+		.es_copyargs = linux_elf32_copyargs,
+		.es_setregs = NULL,
+		.es_coredump = coredump_elf32,
+		.es_setup_stack = linux_exec_setup_stack,
+	},
 #elif defined(EXEC_ELF64)
-	{ sizeof (Elf64_Ehdr),
-	  exec_elf64_makecmds,
-	  { linux_elf64_probe },
-	  &emul_linux,
-	  EXECSW_PRIO_ANY,
-	  LINUX_ELF_AUX_ARGSIZ,
-	  linux_elf64_copyargs,
-	  NULL,
- 	  coredump_elf64,
-	  linux_exec_setup_stack },
+	{
+		.es_hdrsz = sizeof (Elf64_Ehdr),
+		.es_makecmds = exec_elf64_makecmds,
+		.u = {
+			.elf_probe_func = linux_elf64_probe,
+		},
+		.es_emul = &emul_linux,
+		.es_prio = EXECSW_PRIO_ANY,
+		.es_arglen = LINUX_ELF_AUX_ARGSIZ,
+		.es_copyargs = linux_elf64_copyargs,
+		.es_setregs = NULL,
+ 		.es_coredump = coredump_elf64,
+		.es_setup_stack = linux_exec_setup_stack,
+	},
 #endif
 #ifdef EXEC_AOUT
-	{ LINUX_AOUT_HDR_SIZE,
-	  exec_linux_aout_makecmds,
-	  { NULL },
-	  &emul_linux,
-	  EXECSW_PRIO_LAST,
-	  LINUX_AOUT_AUX_ARGSIZ,
-	  linux_aout_copyargs,
-	  NULL,
-	  coredump_netbsd,
-	  linux_exec_setup_stack },
+	{
+		.es_hdrsz = LINUX_AOUT_HDR_SIZE,
+		.es_makecmds = exec_linux_aout_makecmds,
+		.u = {
+			.elf_probe_func = NULL,
+		},
+		.es_emul = &emul_linux,
+		.es_prio = EXECSW_PRIO_LAST,
+		.es_arglen = LINUX_AOUT_AUX_ARGSIZ,
+		.es_copyargs = linux_aout_copyargs,
+		.es_setregs = NULL,
+		.es_coredump = coredump_netbsd,
+		.es_setup_stack = linux_exec_setup_stack,
+	},
 #endif
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.28.6.1 2012/11/20 03:02:32 tls Exp $ */
+/*	$NetBSD: agten.c,v 1.28.6.2 2014/08/20 00:03:50 tls Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.28.6.1 2012/11/20 03:02:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.28.6.2 2014/08/20 00:03:50 tls Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -350,7 +350,9 @@ agten_attach(device_t parent, device_t dev, void *aux)
 			/* do some minimal setup to avoid weirdnesses later */
 			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
 			    &defattr);
-		}
+		} else
+			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
+
 		glyphcache_init(&sc->sc_gc,
 		    sc->sc_height + 5,
 		    (0x400000 / sc->sc_stride) - sc->sc_height - 5,
@@ -616,7 +618,6 @@ agten_init(struct agten_softc *sc)
 {
 	int i;
 	uint32_t src, srcw;
-	volatile uint32_t junk;
 
 	/* then we set up a linear LUT for 24bit colour */
 	agten_write_idx(sc, IBM561_CMAP_TABLE + 256);
@@ -681,7 +682,7 @@ agten_init(struct agten_softc *sc)
 	bus_space_write_4(sc->sc_bustag, sc->sc_p9100_regh, COORD_INDEX, 0);
 	bus_space_write_4(sc->sc_bustag, sc->sc_p9100_regh, RECT_RTW_XY, src);
 	bus_space_write_4(sc->sc_bustag, sc->sc_p9100_regh, RECT_RTW_XY, srcw);
-	junk = bus_space_read_4(sc->sc_bustag, sc->sc_p9100_regh, COMMAND_QUAD);
+	(void)bus_space_read_4(sc->sc_bustag, sc->sc_p9100_regh, COMMAND_QUAD);
 
 	/* initialize the cursor registers */
 	

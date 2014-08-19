@@ -21,7 +21,7 @@ extern "C" {
 #endif
 
 #define XCB_RANDR_MAJOR_VERSION 1
-#define XCB_RANDR_MINOR_VERSION 3
+#define XCB_RANDR_MINOR_VERSION 4
   
 extern xcb_extension_t xcb_randr_id;
 
@@ -58,6 +58,17 @@ typedef struct xcb_randr_output_iterator_t {
     int                 index; /**<  */
 } xcb_randr_output_iterator_t;
 
+typedef uint32_t xcb_randr_provider_t;
+
+/**
+ * @brief xcb_randr_provider_iterator_t
+ **/
+typedef struct xcb_randr_provider_iterator_t {
+    xcb_randr_provider_t *data; /**<  */
+    int                   rem; /**<  */
+    int                   index; /**<  */
+} xcb_randr_provider_iterator_t;
+
 /** Opcode for xcb_randr_bad_output. */
 #define XCB_RANDR_BAD_OUTPUT 0
 
@@ -93,6 +104,18 @@ typedef struct xcb_randr_bad_mode_error_t {
     uint8_t  error_code; /**<  */
     uint16_t sequence; /**<  */
 } xcb_randr_bad_mode_error_t;
+
+/** Opcode for xcb_randr_bad_provider. */
+#define XCB_RANDR_BAD_PROVIDER 3
+
+/**
+ * @brief xcb_randr_bad_provider_error_t
+ **/
+typedef struct xcb_randr_bad_provider_error_t {
+    uint8_t  response_type; /**<  */
+    uint8_t  error_code; /**<  */
+    uint16_t sequence; /**<  */
+} xcb_randr_bad_provider_error_t;
 
 typedef enum xcb_randr_rotation_t {
     XCB_RANDR_ROTATION_ROTATE_0 = 1,
@@ -224,7 +247,10 @@ typedef enum xcb_randr_notify_mask_t {
     XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE = 1,
     XCB_RANDR_NOTIFY_MASK_CRTC_CHANGE = 2,
     XCB_RANDR_NOTIFY_MASK_OUTPUT_CHANGE = 4,
-    XCB_RANDR_NOTIFY_MASK_OUTPUT_PROPERTY = 8
+    XCB_RANDR_NOTIFY_MASK_OUTPUT_PROPERTY = 8,
+    XCB_RANDR_NOTIFY_MASK_PROVIDER_CHANGE = 16,
+    XCB_RANDR_NOTIFY_MASK_PROVIDER_PROPERTY = 32,
+    XCB_RANDR_NOTIFY_MASK_RESOURCE_CHANGE = 64
 } xcb_randr_notify_mask_t;
 
 /** Opcode for xcb_randr_select_input. */
@@ -416,9 +442,9 @@ typedef struct xcb_randr_get_screen_resources_reply_t {
 } xcb_randr_get_screen_resources_reply_t;
 
 typedef enum xcb_randr_connection_t {
-    XCB_RANDR_CONNECTION_CONNECTED,
-    XCB_RANDR_CONNECTION_DISCONNECTED,
-    XCB_RANDR_CONNECTION_UNKNOWN
+    XCB_RANDR_CONNECTION_CONNECTED = 0,
+    XCB_RANDR_CONNECTION_DISCONNECTED = 1,
+    XCB_RANDR_CONNECTION_UNKNOWN = 2
 } xcb_randr_connection_t;
 
 /**
@@ -891,6 +917,13 @@ typedef struct xcb_randr_get_screen_resources_current_reply_t {
     uint8_t         pad1[8]; /**<  */
 } xcb_randr_get_screen_resources_current_reply_t;
 
+typedef enum xcb_randr_transform_t {
+    XCB_RANDR_TRANSFORM_UNIT = 1,
+    XCB_RANDR_TRANSFORM_SCALE_UP = 2,
+    XCB_RANDR_TRANSFORM_SCALE_DOWN = 4,
+    XCB_RANDR_TRANSFORM_PROJECTIVE = 8
+} xcb_randr_transform_t;
+
 /** Opcode for xcb_randr_set_crtc_transform. */
 #define XCB_RANDR_SET_CRTC_TRANSFORM 26
 
@@ -1078,6 +1111,272 @@ typedef struct xcb_randr_get_output_primary_reply_t {
     xcb_randr_output_t output; /**<  */
 } xcb_randr_get_output_primary_reply_t;
 
+/**
+ * @brief xcb_randr_get_providers_cookie_t
+ **/
+typedef struct xcb_randr_get_providers_cookie_t {
+    unsigned int sequence; /**<  */
+} xcb_randr_get_providers_cookie_t;
+
+/** Opcode for xcb_randr_get_providers. */
+#define XCB_RANDR_GET_PROVIDERS 32
+
+/**
+ * @brief xcb_randr_get_providers_request_t
+ **/
+typedef struct xcb_randr_get_providers_request_t {
+    uint8_t      major_opcode; /**<  */
+    uint8_t      minor_opcode; /**<  */
+    uint16_t     length; /**<  */
+    xcb_window_t window; /**<  */
+} xcb_randr_get_providers_request_t;
+
+/**
+ * @brief xcb_randr_get_providers_reply_t
+ **/
+typedef struct xcb_randr_get_providers_reply_t {
+    uint8_t         response_type; /**<  */
+    uint8_t         pad0; /**<  */
+    uint16_t        sequence; /**<  */
+    uint32_t        length; /**<  */
+    xcb_timestamp_t timestamp; /**<  */
+    uint16_t        num_providers; /**<  */
+    uint8_t         pad1[18]; /**<  */
+} xcb_randr_get_providers_reply_t;
+
+typedef enum xcb_randr_provider_capability_t {
+    XCB_RANDR_PROVIDER_CAPABILITY_SOURCE_OUTPUT = 1,
+    XCB_RANDR_PROVIDER_CAPABILITY_SINK_OUTPUT = 2,
+    XCB_RANDR_PROVIDER_CAPABILITY_SOURCE_OFFLOAD = 4,
+    XCB_RANDR_PROVIDER_CAPABILITY_SINK_OFFLOAD = 8
+} xcb_randr_provider_capability_t;
+
+/**
+ * @brief xcb_randr_get_provider_info_cookie_t
+ **/
+typedef struct xcb_randr_get_provider_info_cookie_t {
+    unsigned int sequence; /**<  */
+} xcb_randr_get_provider_info_cookie_t;
+
+/** Opcode for xcb_randr_get_provider_info. */
+#define XCB_RANDR_GET_PROVIDER_INFO 33
+
+/**
+ * @brief xcb_randr_get_provider_info_request_t
+ **/
+typedef struct xcb_randr_get_provider_info_request_t {
+    uint8_t              major_opcode; /**<  */
+    uint8_t              minor_opcode; /**<  */
+    uint16_t             length; /**<  */
+    xcb_randr_provider_t provider; /**<  */
+    xcb_timestamp_t      config_timestamp; /**<  */
+} xcb_randr_get_provider_info_request_t;
+
+/**
+ * @brief xcb_randr_get_provider_info_reply_t
+ **/
+typedef struct xcb_randr_get_provider_info_reply_t {
+    uint8_t         response_type; /**<  */
+    uint8_t         status; /**<  */
+    uint16_t        sequence; /**<  */
+    uint32_t        length; /**<  */
+    xcb_timestamp_t timestamp; /**<  */
+    uint32_t        capabilities; /**<  */
+    uint16_t        num_crtcs; /**<  */
+    uint16_t        num_outputs; /**<  */
+    uint16_t        num_associated_providers; /**<  */
+    uint16_t        name_len; /**<  */
+    uint8_t         pad0[8]; /**<  */
+} xcb_randr_get_provider_info_reply_t;
+
+/** Opcode for xcb_randr_set_provider_offload_sink. */
+#define XCB_RANDR_SET_PROVIDER_OFFLOAD_SINK 34
+
+/**
+ * @brief xcb_randr_set_provider_offload_sink_request_t
+ **/
+typedef struct xcb_randr_set_provider_offload_sink_request_t {
+    uint8_t              major_opcode; /**<  */
+    uint8_t              minor_opcode; /**<  */
+    uint16_t             length; /**<  */
+    xcb_randr_provider_t provider; /**<  */
+    xcb_randr_provider_t sink_provider; /**<  */
+    xcb_timestamp_t      config_timestamp; /**<  */
+} xcb_randr_set_provider_offload_sink_request_t;
+
+/** Opcode for xcb_randr_set_provider_output_source. */
+#define XCB_RANDR_SET_PROVIDER_OUTPUT_SOURCE 35
+
+/**
+ * @brief xcb_randr_set_provider_output_source_request_t
+ **/
+typedef struct xcb_randr_set_provider_output_source_request_t {
+    uint8_t              major_opcode; /**<  */
+    uint8_t              minor_opcode; /**<  */
+    uint16_t             length; /**<  */
+    xcb_randr_provider_t provider; /**<  */
+    xcb_randr_provider_t source_provider; /**<  */
+    xcb_timestamp_t      config_timestamp; /**<  */
+} xcb_randr_set_provider_output_source_request_t;
+
+/**
+ * @brief xcb_randr_list_provider_properties_cookie_t
+ **/
+typedef struct xcb_randr_list_provider_properties_cookie_t {
+    unsigned int sequence; /**<  */
+} xcb_randr_list_provider_properties_cookie_t;
+
+/** Opcode for xcb_randr_list_provider_properties. */
+#define XCB_RANDR_LIST_PROVIDER_PROPERTIES 36
+
+/**
+ * @brief xcb_randr_list_provider_properties_request_t
+ **/
+typedef struct xcb_randr_list_provider_properties_request_t {
+    uint8_t              major_opcode; /**<  */
+    uint8_t              minor_opcode; /**<  */
+    uint16_t             length; /**<  */
+    xcb_randr_provider_t provider; /**<  */
+} xcb_randr_list_provider_properties_request_t;
+
+/**
+ * @brief xcb_randr_list_provider_properties_reply_t
+ **/
+typedef struct xcb_randr_list_provider_properties_reply_t {
+    uint8_t  response_type; /**<  */
+    uint8_t  pad0; /**<  */
+    uint16_t sequence; /**<  */
+    uint32_t length; /**<  */
+    uint16_t num_atoms; /**<  */
+    uint8_t  pad1[22]; /**<  */
+} xcb_randr_list_provider_properties_reply_t;
+
+/**
+ * @brief xcb_randr_query_provider_property_cookie_t
+ **/
+typedef struct xcb_randr_query_provider_property_cookie_t {
+    unsigned int sequence; /**<  */
+} xcb_randr_query_provider_property_cookie_t;
+
+/** Opcode for xcb_randr_query_provider_property. */
+#define XCB_RANDR_QUERY_PROVIDER_PROPERTY 37
+
+/**
+ * @brief xcb_randr_query_provider_property_request_t
+ **/
+typedef struct xcb_randr_query_provider_property_request_t {
+    uint8_t              major_opcode; /**<  */
+    uint8_t              minor_opcode; /**<  */
+    uint16_t             length; /**<  */
+    xcb_randr_provider_t provider; /**<  */
+    xcb_atom_t           property; /**<  */
+} xcb_randr_query_provider_property_request_t;
+
+/**
+ * @brief xcb_randr_query_provider_property_reply_t
+ **/
+typedef struct xcb_randr_query_provider_property_reply_t {
+    uint8_t  response_type; /**<  */
+    uint8_t  pad0; /**<  */
+    uint16_t sequence; /**<  */
+    uint32_t length; /**<  */
+    uint8_t  pending; /**<  */
+    uint8_t  range; /**<  */
+    uint8_t  immutable; /**<  */
+    uint8_t  pad1[21]; /**<  */
+} xcb_randr_query_provider_property_reply_t;
+
+/** Opcode for xcb_randr_configure_provider_property. */
+#define XCB_RANDR_CONFIGURE_PROVIDER_PROPERTY 38
+
+/**
+ * @brief xcb_randr_configure_provider_property_request_t
+ **/
+typedef struct xcb_randr_configure_provider_property_request_t {
+    uint8_t              major_opcode; /**<  */
+    uint8_t              minor_opcode; /**<  */
+    uint16_t             length; /**<  */
+    xcb_randr_provider_t provider; /**<  */
+    xcb_atom_t           property; /**<  */
+    uint8_t              pending; /**<  */
+    uint8_t              range; /**<  */
+    uint8_t              pad0[2]; /**<  */
+} xcb_randr_configure_provider_property_request_t;
+
+/** Opcode for xcb_randr_change_provider_property. */
+#define XCB_RANDR_CHANGE_PROVIDER_PROPERTY 39
+
+/**
+ * @brief xcb_randr_change_provider_property_request_t
+ **/
+typedef struct xcb_randr_change_provider_property_request_t {
+    uint8_t              major_opcode; /**<  */
+    uint8_t              minor_opcode; /**<  */
+    uint16_t             length; /**<  */
+    xcb_randr_provider_t provider; /**<  */
+    xcb_atom_t           property; /**<  */
+    xcb_atom_t           type; /**<  */
+    uint8_t              format; /**<  */
+    uint8_t              mode; /**<  */
+    uint8_t              pad0[2]; /**<  */
+    uint32_t             num_items; /**<  */
+} xcb_randr_change_provider_property_request_t;
+
+/** Opcode for xcb_randr_delete_provider_property. */
+#define XCB_RANDR_DELETE_PROVIDER_PROPERTY 40
+
+/**
+ * @brief xcb_randr_delete_provider_property_request_t
+ **/
+typedef struct xcb_randr_delete_provider_property_request_t {
+    uint8_t              major_opcode; /**<  */
+    uint8_t              minor_opcode; /**<  */
+    uint16_t             length; /**<  */
+    xcb_randr_provider_t provider; /**<  */
+    xcb_atom_t           property; /**<  */
+} xcb_randr_delete_provider_property_request_t;
+
+/**
+ * @brief xcb_randr_get_provider_property_cookie_t
+ **/
+typedef struct xcb_randr_get_provider_property_cookie_t {
+    unsigned int sequence; /**<  */
+} xcb_randr_get_provider_property_cookie_t;
+
+/** Opcode for xcb_randr_get_provider_property. */
+#define XCB_RANDR_GET_PROVIDER_PROPERTY 41
+
+/**
+ * @brief xcb_randr_get_provider_property_request_t
+ **/
+typedef struct xcb_randr_get_provider_property_request_t {
+    uint8_t              major_opcode; /**<  */
+    uint8_t              minor_opcode; /**<  */
+    uint16_t             length; /**<  */
+    xcb_randr_provider_t provider; /**<  */
+    xcb_atom_t           property; /**<  */
+    xcb_atom_t           type; /**<  */
+    uint32_t             long_offset; /**<  */
+    uint32_t             long_length; /**<  */
+    uint8_t              _delete; /**<  */
+    uint8_t              pending; /**<  */
+    uint8_t              pad0[2]; /**<  */
+} xcb_randr_get_provider_property_request_t;
+
+/**
+ * @brief xcb_randr_get_provider_property_reply_t
+ **/
+typedef struct xcb_randr_get_provider_property_reply_t {
+    uint8_t    response_type; /**<  */
+    uint8_t    format; /**<  */
+    uint16_t   sequence; /**<  */
+    uint32_t   length; /**<  */
+    xcb_atom_t type; /**<  */
+    uint32_t   bytes_after; /**<  */
+    uint32_t   num_items; /**<  */
+    uint8_t    pad0[12]; /**<  */
+} xcb_randr_get_provider_property_reply_t;
+
 /** Opcode for xcb_randr_screen_change_notify. */
 #define XCB_RANDR_SCREEN_CHANGE_NOTIFY 0
 
@@ -1103,7 +1402,10 @@ typedef struct xcb_randr_screen_change_notify_event_t {
 typedef enum xcb_randr_notify_t {
     XCB_RANDR_NOTIFY_CRTC_CHANGE = 0,
     XCB_RANDR_NOTIFY_OUTPUT_CHANGE = 1,
-    XCB_RANDR_NOTIFY_OUTPUT_PROPERTY = 2
+    XCB_RANDR_NOTIFY_OUTPUT_PROPERTY = 2,
+    XCB_RANDR_NOTIFY_PROVIDER_CHANGE = 3,
+    XCB_RANDR_NOTIFY_PROVIDER_PROPERTY = 4,
+    XCB_RANDR_NOTIFY_RESOURCE_CHANGE = 5
 } xcb_randr_notify_t;
 
 /**
@@ -1177,12 +1479,73 @@ typedef struct xcb_randr_output_property_iterator_t {
 } xcb_randr_output_property_iterator_t;
 
 /**
+ * @brief xcb_randr_provider_change_t
+ **/
+typedef struct xcb_randr_provider_change_t {
+    xcb_timestamp_t      timestamp; /**<  */
+    xcb_window_t         window; /**<  */
+    xcb_randr_provider_t provider; /**<  */
+    uint8_t              pad0[16]; /**<  */
+} xcb_randr_provider_change_t;
+
+/**
+ * @brief xcb_randr_provider_change_iterator_t
+ **/
+typedef struct xcb_randr_provider_change_iterator_t {
+    xcb_randr_provider_change_t *data; /**<  */
+    int                          rem; /**<  */
+    int                          index; /**<  */
+} xcb_randr_provider_change_iterator_t;
+
+/**
+ * @brief xcb_randr_provider_property_t
+ **/
+typedef struct xcb_randr_provider_property_t {
+    xcb_window_t         window; /**<  */
+    xcb_randr_provider_t provider; /**<  */
+    xcb_atom_t           atom; /**<  */
+    xcb_timestamp_t      timestamp; /**<  */
+    uint8_t              state; /**<  */
+    uint8_t              pad0[11]; /**<  */
+} xcb_randr_provider_property_t;
+
+/**
+ * @brief xcb_randr_provider_property_iterator_t
+ **/
+typedef struct xcb_randr_provider_property_iterator_t {
+    xcb_randr_provider_property_t *data; /**<  */
+    int                            rem; /**<  */
+    int                            index; /**<  */
+} xcb_randr_provider_property_iterator_t;
+
+/**
+ * @brief xcb_randr_resource_change_t
+ **/
+typedef struct xcb_randr_resource_change_t {
+    xcb_timestamp_t timestamp; /**<  */
+    xcb_window_t    window; /**<  */
+    uint8_t         pad0[20]; /**<  */
+} xcb_randr_resource_change_t;
+
+/**
+ * @brief xcb_randr_resource_change_iterator_t
+ **/
+typedef struct xcb_randr_resource_change_iterator_t {
+    xcb_randr_resource_change_t *data; /**<  */
+    int                          rem; /**<  */
+    int                          index; /**<  */
+} xcb_randr_resource_change_iterator_t;
+
+/**
  * @brief xcb_randr_notify_data_t
  **/
 typedef union xcb_randr_notify_data_t {
-    xcb_randr_crtc_change_t     cc; /**<  */
-    xcb_randr_output_change_t   oc; /**<  */
-    xcb_randr_output_property_t op; /**<  */
+    xcb_randr_crtc_change_t       cc; /**<  */
+    xcb_randr_output_change_t     oc; /**<  */
+    xcb_randr_output_property_t   op; /**<  */
+    xcb_randr_provider_change_t   pc; /**<  */
+    xcb_randr_provider_property_t pp; /**<  */
+    xcb_randr_resource_change_t   rc; /**<  */
 } xcb_randr_notify_data_t;
 
 /**
@@ -1335,6 +1698,49 @@ xcb_randr_output_next (xcb_randr_output_iterator_t *i  /**< */);
  
 xcb_generic_iterator_t
 xcb_randr_output_end (xcb_randr_output_iterator_t i  /**< */);
+
+/**
+ * Get the next element of the iterator
+ * @param i Pointer to a xcb_randr_provider_iterator_t
+ *
+ * Get the next element in the iterator. The member rem is
+ * decreased by one. The member data points to the next
+ * element. The member index is increased by sizeof(xcb_randr_provider_t)
+ */
+
+/*****************************************************************************
+ **
+ ** void xcb_randr_provider_next
+ ** 
+ ** @param xcb_randr_provider_iterator_t *i
+ ** @returns void
+ **
+ *****************************************************************************/
+ 
+void
+xcb_randr_provider_next (xcb_randr_provider_iterator_t *i  /**< */);
+
+/**
+ * Return the iterator pointing to the last element
+ * @param i An xcb_randr_provider_iterator_t
+ * @return  The iterator pointing to the last element
+ *
+ * Set the current element in the iterator to the last element.
+ * The member rem is set to 0. The member data points to the
+ * last element.
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_generic_iterator_t xcb_randr_provider_end
+ ** 
+ ** @param xcb_randr_provider_iterator_t i
+ ** @returns xcb_generic_iterator_t
+ **
+ *****************************************************************************/
+ 
+xcb_generic_iterator_t
+xcb_randr_provider_end (xcb_randr_provider_iterator_t i  /**< */);
 
 /**
  * Get the next element of the iterator
@@ -4891,6 +5297,1120 @@ xcb_randr_get_output_primary_reply (xcb_connection_t                       *c  /
                                     xcb_randr_get_output_primary_cookie_t   cookie  /**< */,
                                     xcb_generic_error_t                   **e  /**< */);
 
+int
+xcb_randr_get_providers_sizeof (const void  *_buffer  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_randr_get_providers_cookie_t xcb_randr_get_providers
+ ** 
+ ** @param xcb_connection_t *c
+ ** @param xcb_window_t      window
+ ** @returns xcb_randr_get_providers_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_randr_get_providers_cookie_t
+xcb_randr_get_providers (xcb_connection_t *c  /**< */,
+                         xcb_window_t      window  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ * This form can be used only if the request will cause
+ * a reply to be generated. Any returned error will be
+ * placed in the event queue.
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_randr_get_providers_cookie_t xcb_randr_get_providers_unchecked
+ ** 
+ ** @param xcb_connection_t *c
+ ** @param xcb_window_t      window
+ ** @returns xcb_randr_get_providers_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_randr_get_providers_cookie_t
+xcb_randr_get_providers_unchecked (xcb_connection_t *c  /**< */,
+                                   xcb_window_t      window  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** xcb_randr_provider_t * xcb_randr_get_providers_providers
+ ** 
+ ** @param const xcb_randr_get_providers_reply_t *R
+ ** @returns xcb_randr_provider_t *
+ **
+ *****************************************************************************/
+ 
+xcb_randr_provider_t *
+xcb_randr_get_providers_providers (const xcb_randr_get_providers_reply_t *R  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** int xcb_randr_get_providers_providers_length
+ ** 
+ ** @param const xcb_randr_get_providers_reply_t *R
+ ** @returns int
+ **
+ *****************************************************************************/
+ 
+int
+xcb_randr_get_providers_providers_length (const xcb_randr_get_providers_reply_t *R  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** xcb_generic_iterator_t xcb_randr_get_providers_providers_end
+ ** 
+ ** @param const xcb_randr_get_providers_reply_t *R
+ ** @returns xcb_generic_iterator_t
+ **
+ *****************************************************************************/
+ 
+xcb_generic_iterator_t
+xcb_randr_get_providers_providers_end (const xcb_randr_get_providers_reply_t *R  /**< */);
+
+/**
+ * Return the reply
+ * @param c      The connection
+ * @param cookie The cookie
+ * @param e      The xcb_generic_error_t supplied
+ *
+ * Returns the reply of the request asked by
+ * 
+ * The parameter @p e supplied to this function must be NULL if
+ * xcb_randr_get_providers_unchecked(). is used.
+ * Otherwise, it stores the error if any.
+ *
+ * The returned value must be freed by the caller using free().
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_randr_get_providers_reply_t * xcb_randr_get_providers_reply
+ ** 
+ ** @param xcb_connection_t                  *c
+ ** @param xcb_randr_get_providers_cookie_t   cookie
+ ** @param xcb_generic_error_t              **e
+ ** @returns xcb_randr_get_providers_reply_t *
+ **
+ *****************************************************************************/
+ 
+xcb_randr_get_providers_reply_t *
+xcb_randr_get_providers_reply (xcb_connection_t                  *c  /**< */,
+                               xcb_randr_get_providers_cookie_t   cookie  /**< */,
+                               xcb_generic_error_t              **e  /**< */);
+
+int
+xcb_randr_get_provider_info_sizeof (const void  *_buffer  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_randr_get_provider_info_cookie_t xcb_randr_get_provider_info
+ ** 
+ ** @param xcb_connection_t     *c
+ ** @param xcb_randr_provider_t  provider
+ ** @param xcb_timestamp_t       config_timestamp
+ ** @returns xcb_randr_get_provider_info_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_randr_get_provider_info_cookie_t
+xcb_randr_get_provider_info (xcb_connection_t     *c  /**< */,
+                             xcb_randr_provider_t  provider  /**< */,
+                             xcb_timestamp_t       config_timestamp  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ * This form can be used only if the request will cause
+ * a reply to be generated. Any returned error will be
+ * placed in the event queue.
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_randr_get_provider_info_cookie_t xcb_randr_get_provider_info_unchecked
+ ** 
+ ** @param xcb_connection_t     *c
+ ** @param xcb_randr_provider_t  provider
+ ** @param xcb_timestamp_t       config_timestamp
+ ** @returns xcb_randr_get_provider_info_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_randr_get_provider_info_cookie_t
+xcb_randr_get_provider_info_unchecked (xcb_connection_t     *c  /**< */,
+                                       xcb_randr_provider_t  provider  /**< */,
+                                       xcb_timestamp_t       config_timestamp  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** xcb_randr_crtc_t * xcb_randr_get_provider_info_crtcs
+ ** 
+ ** @param const xcb_randr_get_provider_info_reply_t *R
+ ** @returns xcb_randr_crtc_t *
+ **
+ *****************************************************************************/
+ 
+xcb_randr_crtc_t *
+xcb_randr_get_provider_info_crtcs (const xcb_randr_get_provider_info_reply_t *R  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** int xcb_randr_get_provider_info_crtcs_length
+ ** 
+ ** @param const xcb_randr_get_provider_info_reply_t *R
+ ** @returns int
+ **
+ *****************************************************************************/
+ 
+int
+xcb_randr_get_provider_info_crtcs_length (const xcb_randr_get_provider_info_reply_t *R  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** xcb_generic_iterator_t xcb_randr_get_provider_info_crtcs_end
+ ** 
+ ** @param const xcb_randr_get_provider_info_reply_t *R
+ ** @returns xcb_generic_iterator_t
+ **
+ *****************************************************************************/
+ 
+xcb_generic_iterator_t
+xcb_randr_get_provider_info_crtcs_end (const xcb_randr_get_provider_info_reply_t *R  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** xcb_randr_output_t * xcb_randr_get_provider_info_outputs
+ ** 
+ ** @param const xcb_randr_get_provider_info_reply_t *R
+ ** @returns xcb_randr_output_t *
+ **
+ *****************************************************************************/
+ 
+xcb_randr_output_t *
+xcb_randr_get_provider_info_outputs (const xcb_randr_get_provider_info_reply_t *R  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** int xcb_randr_get_provider_info_outputs_length
+ ** 
+ ** @param const xcb_randr_get_provider_info_reply_t *R
+ ** @returns int
+ **
+ *****************************************************************************/
+ 
+int
+xcb_randr_get_provider_info_outputs_length (const xcb_randr_get_provider_info_reply_t *R  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** xcb_generic_iterator_t xcb_randr_get_provider_info_outputs_end
+ ** 
+ ** @param const xcb_randr_get_provider_info_reply_t *R
+ ** @returns xcb_generic_iterator_t
+ **
+ *****************************************************************************/
+ 
+xcb_generic_iterator_t
+xcb_randr_get_provider_info_outputs_end (const xcb_randr_get_provider_info_reply_t *R  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** xcb_randr_provider_t * xcb_randr_get_provider_info_associated_providers
+ ** 
+ ** @param const xcb_randr_get_provider_info_reply_t *R
+ ** @returns xcb_randr_provider_t *
+ **
+ *****************************************************************************/
+ 
+xcb_randr_provider_t *
+xcb_randr_get_provider_info_associated_providers (const xcb_randr_get_provider_info_reply_t *R  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** int xcb_randr_get_provider_info_associated_providers_length
+ ** 
+ ** @param const xcb_randr_get_provider_info_reply_t *R
+ ** @returns int
+ **
+ *****************************************************************************/
+ 
+int
+xcb_randr_get_provider_info_associated_providers_length (const xcb_randr_get_provider_info_reply_t *R  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** xcb_generic_iterator_t xcb_randr_get_provider_info_associated_providers_end
+ ** 
+ ** @param const xcb_randr_get_provider_info_reply_t *R
+ ** @returns xcb_generic_iterator_t
+ **
+ *****************************************************************************/
+ 
+xcb_generic_iterator_t
+xcb_randr_get_provider_info_associated_providers_end (const xcb_randr_get_provider_info_reply_t *R  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** uint32_t * xcb_randr_get_provider_info_associated_capability
+ ** 
+ ** @param const xcb_randr_get_provider_info_reply_t *R
+ ** @returns uint32_t *
+ **
+ *****************************************************************************/
+ 
+uint32_t *
+xcb_randr_get_provider_info_associated_capability (const xcb_randr_get_provider_info_reply_t *R  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** int xcb_randr_get_provider_info_associated_capability_length
+ ** 
+ ** @param const xcb_randr_get_provider_info_reply_t *R
+ ** @returns int
+ **
+ *****************************************************************************/
+ 
+int
+xcb_randr_get_provider_info_associated_capability_length (const xcb_randr_get_provider_info_reply_t *R  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** xcb_generic_iterator_t xcb_randr_get_provider_info_associated_capability_end
+ ** 
+ ** @param const xcb_randr_get_provider_info_reply_t *R
+ ** @returns xcb_generic_iterator_t
+ **
+ *****************************************************************************/
+ 
+xcb_generic_iterator_t
+xcb_randr_get_provider_info_associated_capability_end (const xcb_randr_get_provider_info_reply_t *R  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** char * xcb_randr_get_provider_info_name
+ ** 
+ ** @param const xcb_randr_get_provider_info_reply_t *R
+ ** @returns char *
+ **
+ *****************************************************************************/
+ 
+char *
+xcb_randr_get_provider_info_name (const xcb_randr_get_provider_info_reply_t *R  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** int xcb_randr_get_provider_info_name_length
+ ** 
+ ** @param const xcb_randr_get_provider_info_reply_t *R
+ ** @returns int
+ **
+ *****************************************************************************/
+ 
+int
+xcb_randr_get_provider_info_name_length (const xcb_randr_get_provider_info_reply_t *R  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** xcb_generic_iterator_t xcb_randr_get_provider_info_name_end
+ ** 
+ ** @param const xcb_randr_get_provider_info_reply_t *R
+ ** @returns xcb_generic_iterator_t
+ **
+ *****************************************************************************/
+ 
+xcb_generic_iterator_t
+xcb_randr_get_provider_info_name_end (const xcb_randr_get_provider_info_reply_t *R  /**< */);
+
+/**
+ * Return the reply
+ * @param c      The connection
+ * @param cookie The cookie
+ * @param e      The xcb_generic_error_t supplied
+ *
+ * Returns the reply of the request asked by
+ * 
+ * The parameter @p e supplied to this function must be NULL if
+ * xcb_randr_get_provider_info_unchecked(). is used.
+ * Otherwise, it stores the error if any.
+ *
+ * The returned value must be freed by the caller using free().
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_randr_get_provider_info_reply_t * xcb_randr_get_provider_info_reply
+ ** 
+ ** @param xcb_connection_t                      *c
+ ** @param xcb_randr_get_provider_info_cookie_t   cookie
+ ** @param xcb_generic_error_t                  **e
+ ** @returns xcb_randr_get_provider_info_reply_t *
+ **
+ *****************************************************************************/
+ 
+xcb_randr_get_provider_info_reply_t *
+xcb_randr_get_provider_info_reply (xcb_connection_t                      *c  /**< */,
+                                   xcb_randr_get_provider_info_cookie_t   cookie  /**< */,
+                                   xcb_generic_error_t                  **e  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ * This form can be used only if the request will not cause
+ * a reply to be generated. Any returned error will be
+ * saved for handling by xcb_request_check().
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_void_cookie_t xcb_randr_set_provider_offload_sink_checked
+ ** 
+ ** @param xcb_connection_t     *c
+ ** @param xcb_randr_provider_t  provider
+ ** @param xcb_randr_provider_t  sink_provider
+ ** @param xcb_timestamp_t       config_timestamp
+ ** @returns xcb_void_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_void_cookie_t
+xcb_randr_set_provider_offload_sink_checked (xcb_connection_t     *c  /**< */,
+                                             xcb_randr_provider_t  provider  /**< */,
+                                             xcb_randr_provider_t  sink_provider  /**< */,
+                                             xcb_timestamp_t       config_timestamp  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_void_cookie_t xcb_randr_set_provider_offload_sink
+ ** 
+ ** @param xcb_connection_t     *c
+ ** @param xcb_randr_provider_t  provider
+ ** @param xcb_randr_provider_t  sink_provider
+ ** @param xcb_timestamp_t       config_timestamp
+ ** @returns xcb_void_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_void_cookie_t
+xcb_randr_set_provider_offload_sink (xcb_connection_t     *c  /**< */,
+                                     xcb_randr_provider_t  provider  /**< */,
+                                     xcb_randr_provider_t  sink_provider  /**< */,
+                                     xcb_timestamp_t       config_timestamp  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ * This form can be used only if the request will not cause
+ * a reply to be generated. Any returned error will be
+ * saved for handling by xcb_request_check().
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_void_cookie_t xcb_randr_set_provider_output_source_checked
+ ** 
+ ** @param xcb_connection_t     *c
+ ** @param xcb_randr_provider_t  provider
+ ** @param xcb_randr_provider_t  source_provider
+ ** @param xcb_timestamp_t       config_timestamp
+ ** @returns xcb_void_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_void_cookie_t
+xcb_randr_set_provider_output_source_checked (xcb_connection_t     *c  /**< */,
+                                              xcb_randr_provider_t  provider  /**< */,
+                                              xcb_randr_provider_t  source_provider  /**< */,
+                                              xcb_timestamp_t       config_timestamp  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_void_cookie_t xcb_randr_set_provider_output_source
+ ** 
+ ** @param xcb_connection_t     *c
+ ** @param xcb_randr_provider_t  provider
+ ** @param xcb_randr_provider_t  source_provider
+ ** @param xcb_timestamp_t       config_timestamp
+ ** @returns xcb_void_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_void_cookie_t
+xcb_randr_set_provider_output_source (xcb_connection_t     *c  /**< */,
+                                      xcb_randr_provider_t  provider  /**< */,
+                                      xcb_randr_provider_t  source_provider  /**< */,
+                                      xcb_timestamp_t       config_timestamp  /**< */);
+
+int
+xcb_randr_list_provider_properties_sizeof (const void  *_buffer  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_randr_list_provider_properties_cookie_t xcb_randr_list_provider_properties
+ ** 
+ ** @param xcb_connection_t     *c
+ ** @param xcb_randr_provider_t  provider
+ ** @returns xcb_randr_list_provider_properties_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_randr_list_provider_properties_cookie_t
+xcb_randr_list_provider_properties (xcb_connection_t     *c  /**< */,
+                                    xcb_randr_provider_t  provider  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ * This form can be used only if the request will cause
+ * a reply to be generated. Any returned error will be
+ * placed in the event queue.
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_randr_list_provider_properties_cookie_t xcb_randr_list_provider_properties_unchecked
+ ** 
+ ** @param xcb_connection_t     *c
+ ** @param xcb_randr_provider_t  provider
+ ** @returns xcb_randr_list_provider_properties_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_randr_list_provider_properties_cookie_t
+xcb_randr_list_provider_properties_unchecked (xcb_connection_t     *c  /**< */,
+                                              xcb_randr_provider_t  provider  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** xcb_atom_t * xcb_randr_list_provider_properties_atoms
+ ** 
+ ** @param const xcb_randr_list_provider_properties_reply_t *R
+ ** @returns xcb_atom_t *
+ **
+ *****************************************************************************/
+ 
+xcb_atom_t *
+xcb_randr_list_provider_properties_atoms (const xcb_randr_list_provider_properties_reply_t *R  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** int xcb_randr_list_provider_properties_atoms_length
+ ** 
+ ** @param const xcb_randr_list_provider_properties_reply_t *R
+ ** @returns int
+ **
+ *****************************************************************************/
+ 
+int
+xcb_randr_list_provider_properties_atoms_length (const xcb_randr_list_provider_properties_reply_t *R  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** xcb_generic_iterator_t xcb_randr_list_provider_properties_atoms_end
+ ** 
+ ** @param const xcb_randr_list_provider_properties_reply_t *R
+ ** @returns xcb_generic_iterator_t
+ **
+ *****************************************************************************/
+ 
+xcb_generic_iterator_t
+xcb_randr_list_provider_properties_atoms_end (const xcb_randr_list_provider_properties_reply_t *R  /**< */);
+
+/**
+ * Return the reply
+ * @param c      The connection
+ * @param cookie The cookie
+ * @param e      The xcb_generic_error_t supplied
+ *
+ * Returns the reply of the request asked by
+ * 
+ * The parameter @p e supplied to this function must be NULL if
+ * xcb_randr_list_provider_properties_unchecked(). is used.
+ * Otherwise, it stores the error if any.
+ *
+ * The returned value must be freed by the caller using free().
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_randr_list_provider_properties_reply_t * xcb_randr_list_provider_properties_reply
+ ** 
+ ** @param xcb_connection_t                             *c
+ ** @param xcb_randr_list_provider_properties_cookie_t   cookie
+ ** @param xcb_generic_error_t                         **e
+ ** @returns xcb_randr_list_provider_properties_reply_t *
+ **
+ *****************************************************************************/
+ 
+xcb_randr_list_provider_properties_reply_t *
+xcb_randr_list_provider_properties_reply (xcb_connection_t                             *c  /**< */,
+                                          xcb_randr_list_provider_properties_cookie_t   cookie  /**< */,
+                                          xcb_generic_error_t                         **e  /**< */);
+
+int
+xcb_randr_query_provider_property_sizeof (const void  *_buffer  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_randr_query_provider_property_cookie_t xcb_randr_query_provider_property
+ ** 
+ ** @param xcb_connection_t     *c
+ ** @param xcb_randr_provider_t  provider
+ ** @param xcb_atom_t            property
+ ** @returns xcb_randr_query_provider_property_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_randr_query_provider_property_cookie_t
+xcb_randr_query_provider_property (xcb_connection_t     *c  /**< */,
+                                   xcb_randr_provider_t  provider  /**< */,
+                                   xcb_atom_t            property  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ * This form can be used only if the request will cause
+ * a reply to be generated. Any returned error will be
+ * placed in the event queue.
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_randr_query_provider_property_cookie_t xcb_randr_query_provider_property_unchecked
+ ** 
+ ** @param xcb_connection_t     *c
+ ** @param xcb_randr_provider_t  provider
+ ** @param xcb_atom_t            property
+ ** @returns xcb_randr_query_provider_property_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_randr_query_provider_property_cookie_t
+xcb_randr_query_provider_property_unchecked (xcb_connection_t     *c  /**< */,
+                                             xcb_randr_provider_t  provider  /**< */,
+                                             xcb_atom_t            property  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** int32_t * xcb_randr_query_provider_property_valid_values
+ ** 
+ ** @param const xcb_randr_query_provider_property_reply_t *R
+ ** @returns int32_t *
+ **
+ *****************************************************************************/
+ 
+int32_t *
+xcb_randr_query_provider_property_valid_values (const xcb_randr_query_provider_property_reply_t *R  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** int xcb_randr_query_provider_property_valid_values_length
+ ** 
+ ** @param const xcb_randr_query_provider_property_reply_t *R
+ ** @returns int
+ **
+ *****************************************************************************/
+ 
+int
+xcb_randr_query_provider_property_valid_values_length (const xcb_randr_query_provider_property_reply_t *R  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** xcb_generic_iterator_t xcb_randr_query_provider_property_valid_values_end
+ ** 
+ ** @param const xcb_randr_query_provider_property_reply_t *R
+ ** @returns xcb_generic_iterator_t
+ **
+ *****************************************************************************/
+ 
+xcb_generic_iterator_t
+xcb_randr_query_provider_property_valid_values_end (const xcb_randr_query_provider_property_reply_t *R  /**< */);
+
+/**
+ * Return the reply
+ * @param c      The connection
+ * @param cookie The cookie
+ * @param e      The xcb_generic_error_t supplied
+ *
+ * Returns the reply of the request asked by
+ * 
+ * The parameter @p e supplied to this function must be NULL if
+ * xcb_randr_query_provider_property_unchecked(). is used.
+ * Otherwise, it stores the error if any.
+ *
+ * The returned value must be freed by the caller using free().
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_randr_query_provider_property_reply_t * xcb_randr_query_provider_property_reply
+ ** 
+ ** @param xcb_connection_t                            *c
+ ** @param xcb_randr_query_provider_property_cookie_t   cookie
+ ** @param xcb_generic_error_t                        **e
+ ** @returns xcb_randr_query_provider_property_reply_t *
+ **
+ *****************************************************************************/
+ 
+xcb_randr_query_provider_property_reply_t *
+xcb_randr_query_provider_property_reply (xcb_connection_t                            *c  /**< */,
+                                         xcb_randr_query_provider_property_cookie_t   cookie  /**< */,
+                                         xcb_generic_error_t                        **e  /**< */);
+
+int
+xcb_randr_configure_provider_property_sizeof (const void  *_buffer  /**< */,
+                                              uint32_t     values_len  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ * This form can be used only if the request will not cause
+ * a reply to be generated. Any returned error will be
+ * saved for handling by xcb_request_check().
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_void_cookie_t xcb_randr_configure_provider_property_checked
+ ** 
+ ** @param xcb_connection_t     *c
+ ** @param xcb_randr_provider_t  provider
+ ** @param xcb_atom_t            property
+ ** @param uint8_t               pending
+ ** @param uint8_t               range
+ ** @param uint32_t              values_len
+ ** @param const int32_t        *values
+ ** @returns xcb_void_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_void_cookie_t
+xcb_randr_configure_provider_property_checked (xcb_connection_t     *c  /**< */,
+                                               xcb_randr_provider_t  provider  /**< */,
+                                               xcb_atom_t            property  /**< */,
+                                               uint8_t               pending  /**< */,
+                                               uint8_t               range  /**< */,
+                                               uint32_t              values_len  /**< */,
+                                               const int32_t        *values  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_void_cookie_t xcb_randr_configure_provider_property
+ ** 
+ ** @param xcb_connection_t     *c
+ ** @param xcb_randr_provider_t  provider
+ ** @param xcb_atom_t            property
+ ** @param uint8_t               pending
+ ** @param uint8_t               range
+ ** @param uint32_t              values_len
+ ** @param const int32_t        *values
+ ** @returns xcb_void_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_void_cookie_t
+xcb_randr_configure_provider_property (xcb_connection_t     *c  /**< */,
+                                       xcb_randr_provider_t  provider  /**< */,
+                                       xcb_atom_t            property  /**< */,
+                                       uint8_t               pending  /**< */,
+                                       uint8_t               range  /**< */,
+                                       uint32_t              values_len  /**< */,
+                                       const int32_t        *values  /**< */);
+
+int
+xcb_randr_change_provider_property_sizeof (const void  *_buffer  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ * This form can be used only if the request will not cause
+ * a reply to be generated. Any returned error will be
+ * saved for handling by xcb_request_check().
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_void_cookie_t xcb_randr_change_provider_property_checked
+ ** 
+ ** @param xcb_connection_t     *c
+ ** @param xcb_randr_provider_t  provider
+ ** @param xcb_atom_t            property
+ ** @param xcb_atom_t            type
+ ** @param uint8_t               format
+ ** @param uint8_t               mode
+ ** @param uint32_t              num_items
+ ** @param const void           *data
+ ** @returns xcb_void_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_void_cookie_t
+xcb_randr_change_provider_property_checked (xcb_connection_t     *c  /**< */,
+                                            xcb_randr_provider_t  provider  /**< */,
+                                            xcb_atom_t            property  /**< */,
+                                            xcb_atom_t            type  /**< */,
+                                            uint8_t               format  /**< */,
+                                            uint8_t               mode  /**< */,
+                                            uint32_t              num_items  /**< */,
+                                            const void           *data  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_void_cookie_t xcb_randr_change_provider_property
+ ** 
+ ** @param xcb_connection_t     *c
+ ** @param xcb_randr_provider_t  provider
+ ** @param xcb_atom_t            property
+ ** @param xcb_atom_t            type
+ ** @param uint8_t               format
+ ** @param uint8_t               mode
+ ** @param uint32_t              num_items
+ ** @param const void           *data
+ ** @returns xcb_void_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_void_cookie_t
+xcb_randr_change_provider_property (xcb_connection_t     *c  /**< */,
+                                    xcb_randr_provider_t  provider  /**< */,
+                                    xcb_atom_t            property  /**< */,
+                                    xcb_atom_t            type  /**< */,
+                                    uint8_t               format  /**< */,
+                                    uint8_t               mode  /**< */,
+                                    uint32_t              num_items  /**< */,
+                                    const void           *data  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ * This form can be used only if the request will not cause
+ * a reply to be generated. Any returned error will be
+ * saved for handling by xcb_request_check().
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_void_cookie_t xcb_randr_delete_provider_property_checked
+ ** 
+ ** @param xcb_connection_t     *c
+ ** @param xcb_randr_provider_t  provider
+ ** @param xcb_atom_t            property
+ ** @returns xcb_void_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_void_cookie_t
+xcb_randr_delete_provider_property_checked (xcb_connection_t     *c  /**< */,
+                                            xcb_randr_provider_t  provider  /**< */,
+                                            xcb_atom_t            property  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_void_cookie_t xcb_randr_delete_provider_property
+ ** 
+ ** @param xcb_connection_t     *c
+ ** @param xcb_randr_provider_t  provider
+ ** @param xcb_atom_t            property
+ ** @returns xcb_void_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_void_cookie_t
+xcb_randr_delete_provider_property (xcb_connection_t     *c  /**< */,
+                                    xcb_randr_provider_t  provider  /**< */,
+                                    xcb_atom_t            property  /**< */);
+
+int
+xcb_randr_get_provider_property_sizeof (const void  *_buffer  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_randr_get_provider_property_cookie_t xcb_randr_get_provider_property
+ ** 
+ ** @param xcb_connection_t     *c
+ ** @param xcb_randr_provider_t  provider
+ ** @param xcb_atom_t            property
+ ** @param xcb_atom_t            type
+ ** @param uint32_t              long_offset
+ ** @param uint32_t              long_length
+ ** @param uint8_t               _delete
+ ** @param uint8_t               pending
+ ** @returns xcb_randr_get_provider_property_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_randr_get_provider_property_cookie_t
+xcb_randr_get_provider_property (xcb_connection_t     *c  /**< */,
+                                 xcb_randr_provider_t  provider  /**< */,
+                                 xcb_atom_t            property  /**< */,
+                                 xcb_atom_t            type  /**< */,
+                                 uint32_t              long_offset  /**< */,
+                                 uint32_t              long_length  /**< */,
+                                 uint8_t               _delete  /**< */,
+                                 uint8_t               pending  /**< */);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ * 
+ * This form can be used only if the request will cause
+ * a reply to be generated. Any returned error will be
+ * placed in the event queue.
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_randr_get_provider_property_cookie_t xcb_randr_get_provider_property_unchecked
+ ** 
+ ** @param xcb_connection_t     *c
+ ** @param xcb_randr_provider_t  provider
+ ** @param xcb_atom_t            property
+ ** @param xcb_atom_t            type
+ ** @param uint32_t              long_offset
+ ** @param uint32_t              long_length
+ ** @param uint8_t               _delete
+ ** @param uint8_t               pending
+ ** @returns xcb_randr_get_provider_property_cookie_t
+ **
+ *****************************************************************************/
+ 
+xcb_randr_get_provider_property_cookie_t
+xcb_randr_get_provider_property_unchecked (xcb_connection_t     *c  /**< */,
+                                           xcb_randr_provider_t  provider  /**< */,
+                                           xcb_atom_t            property  /**< */,
+                                           xcb_atom_t            type  /**< */,
+                                           uint32_t              long_offset  /**< */,
+                                           uint32_t              long_length  /**< */,
+                                           uint8_t               _delete  /**< */,
+                                           uint8_t               pending  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** void * xcb_randr_get_provider_property_data
+ ** 
+ ** @param const xcb_randr_get_provider_property_reply_t *R
+ ** @returns void *
+ **
+ *****************************************************************************/
+ 
+void *
+xcb_randr_get_provider_property_data (const xcb_randr_get_provider_property_reply_t *R  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** int xcb_randr_get_provider_property_data_length
+ ** 
+ ** @param const xcb_randr_get_provider_property_reply_t *R
+ ** @returns int
+ **
+ *****************************************************************************/
+ 
+int
+xcb_randr_get_provider_property_data_length (const xcb_randr_get_provider_property_reply_t *R  /**< */);
+
+
+/*****************************************************************************
+ **
+ ** xcb_generic_iterator_t xcb_randr_get_provider_property_data_end
+ ** 
+ ** @param const xcb_randr_get_provider_property_reply_t *R
+ ** @returns xcb_generic_iterator_t
+ **
+ *****************************************************************************/
+ 
+xcb_generic_iterator_t
+xcb_randr_get_provider_property_data_end (const xcb_randr_get_provider_property_reply_t *R  /**< */);
+
+/**
+ * Return the reply
+ * @param c      The connection
+ * @param cookie The cookie
+ * @param e      The xcb_generic_error_t supplied
+ *
+ * Returns the reply of the request asked by
+ * 
+ * The parameter @p e supplied to this function must be NULL if
+ * xcb_randr_get_provider_property_unchecked(). is used.
+ * Otherwise, it stores the error if any.
+ *
+ * The returned value must be freed by the caller using free().
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_randr_get_provider_property_reply_t * xcb_randr_get_provider_property_reply
+ ** 
+ ** @param xcb_connection_t                          *c
+ ** @param xcb_randr_get_provider_property_cookie_t   cookie
+ ** @param xcb_generic_error_t                      **e
+ ** @returns xcb_randr_get_provider_property_reply_t *
+ **
+ *****************************************************************************/
+ 
+xcb_randr_get_provider_property_reply_t *
+xcb_randr_get_provider_property_reply (xcb_connection_t                          *c  /**< */,
+                                       xcb_randr_get_provider_property_cookie_t   cookie  /**< */,
+                                       xcb_generic_error_t                      **e  /**< */);
+
 /**
  * Get the next element of the iterator
  * @param i Pointer to a xcb_randr_crtc_change_iterator_t
@@ -5019,6 +6539,135 @@ xcb_randr_output_property_next (xcb_randr_output_property_iterator_t *i  /**< */
  
 xcb_generic_iterator_t
 xcb_randr_output_property_end (xcb_randr_output_property_iterator_t i  /**< */);
+
+/**
+ * Get the next element of the iterator
+ * @param i Pointer to a xcb_randr_provider_change_iterator_t
+ *
+ * Get the next element in the iterator. The member rem is
+ * decreased by one. The member data points to the next
+ * element. The member index is increased by sizeof(xcb_randr_provider_change_t)
+ */
+
+/*****************************************************************************
+ **
+ ** void xcb_randr_provider_change_next
+ ** 
+ ** @param xcb_randr_provider_change_iterator_t *i
+ ** @returns void
+ **
+ *****************************************************************************/
+ 
+void
+xcb_randr_provider_change_next (xcb_randr_provider_change_iterator_t *i  /**< */);
+
+/**
+ * Return the iterator pointing to the last element
+ * @param i An xcb_randr_provider_change_iterator_t
+ * @return  The iterator pointing to the last element
+ *
+ * Set the current element in the iterator to the last element.
+ * The member rem is set to 0. The member data points to the
+ * last element.
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_generic_iterator_t xcb_randr_provider_change_end
+ ** 
+ ** @param xcb_randr_provider_change_iterator_t i
+ ** @returns xcb_generic_iterator_t
+ **
+ *****************************************************************************/
+ 
+xcb_generic_iterator_t
+xcb_randr_provider_change_end (xcb_randr_provider_change_iterator_t i  /**< */);
+
+/**
+ * Get the next element of the iterator
+ * @param i Pointer to a xcb_randr_provider_property_iterator_t
+ *
+ * Get the next element in the iterator. The member rem is
+ * decreased by one. The member data points to the next
+ * element. The member index is increased by sizeof(xcb_randr_provider_property_t)
+ */
+
+/*****************************************************************************
+ **
+ ** void xcb_randr_provider_property_next
+ ** 
+ ** @param xcb_randr_provider_property_iterator_t *i
+ ** @returns void
+ **
+ *****************************************************************************/
+ 
+void
+xcb_randr_provider_property_next (xcb_randr_provider_property_iterator_t *i  /**< */);
+
+/**
+ * Return the iterator pointing to the last element
+ * @param i An xcb_randr_provider_property_iterator_t
+ * @return  The iterator pointing to the last element
+ *
+ * Set the current element in the iterator to the last element.
+ * The member rem is set to 0. The member data points to the
+ * last element.
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_generic_iterator_t xcb_randr_provider_property_end
+ ** 
+ ** @param xcb_randr_provider_property_iterator_t i
+ ** @returns xcb_generic_iterator_t
+ **
+ *****************************************************************************/
+ 
+xcb_generic_iterator_t
+xcb_randr_provider_property_end (xcb_randr_provider_property_iterator_t i  /**< */);
+
+/**
+ * Get the next element of the iterator
+ * @param i Pointer to a xcb_randr_resource_change_iterator_t
+ *
+ * Get the next element in the iterator. The member rem is
+ * decreased by one. The member data points to the next
+ * element. The member index is increased by sizeof(xcb_randr_resource_change_t)
+ */
+
+/*****************************************************************************
+ **
+ ** void xcb_randr_resource_change_next
+ ** 
+ ** @param xcb_randr_resource_change_iterator_t *i
+ ** @returns void
+ **
+ *****************************************************************************/
+ 
+void
+xcb_randr_resource_change_next (xcb_randr_resource_change_iterator_t *i  /**< */);
+
+/**
+ * Return the iterator pointing to the last element
+ * @param i An xcb_randr_resource_change_iterator_t
+ * @return  The iterator pointing to the last element
+ *
+ * Set the current element in the iterator to the last element.
+ * The member rem is set to 0. The member data points to the
+ * last element.
+ */
+
+/*****************************************************************************
+ **
+ ** xcb_generic_iterator_t xcb_randr_resource_change_end
+ ** 
+ ** @param xcb_randr_resource_change_iterator_t i
+ ** @returns xcb_generic_iterator_t
+ **
+ *****************************************************************************/
+ 
+xcb_generic_iterator_t
+xcb_randr_resource_change_end (xcb_randr_resource_change_iterator_t i  /**< */);
 
 /**
  * Get the next element of the iterator

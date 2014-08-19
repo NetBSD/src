@@ -1,6 +1,5 @@
 
-# Copyright 1992, 1993, 1994, 1995, 1996, 1997, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 1992-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,10 +16,6 @@
 
 # This file was written by Jeff Law. (law@cs.utah.edu)
 
-if $tracelevel then {
-	strace $tracelevel
-}
-
 if ![istarget "hppa*-*-*"] {
     verbose "Tests ignored for all but hppa based targets."
     return
@@ -31,7 +26,7 @@ if ![istarget "hppa*-*-*"] {
 set testfile "hppa"
 set srcfile ${srcdir}/${subdir}/${testfile}.s
 set binfile ${objdir}/${subdir}/${testfile}
-set comp_output [gdb_compile "${srcfile}" "${binfile}" executable ""];
+set comp_output [gdb_compile "${srcfile}" "${binfile}" executable ""]
 if  { $comp_output != "" } {
     if [ regexp "Opcode not defined - DIAG" $comp_output] {
 	warning "HP assembler in use--skipping disasm tests"

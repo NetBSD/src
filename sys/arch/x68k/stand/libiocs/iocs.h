@@ -6,7 +6,7 @@
  *	(based on PD libc 1.1.32 by PROJECT C Library)
  *	public domain
  *
- *	$NetBSD: iocs.h,v 1.8 2011/02/21 02:31:59 itohy Exp $
+ *	$NetBSD: iocs.h,v 1.8.14.1 2014/08/20 00:03:28 tls Exp $
  */
 /*
  * PROJECT C Library, X68000 PROGRAMMING INTERFACE DEFINITION
@@ -224,7 +224,10 @@ struct iocs_inquiry {
 	unsigned char	ver;
 	unsigned char	reserve;
 	unsigned char	size;
-	unsigned char	buff[0];	/* actually longer */
+	unsigned char	class[3];
+	char		vendor[8];
+	char		product[16];
+	char		revision[4];
 };
 
 /*

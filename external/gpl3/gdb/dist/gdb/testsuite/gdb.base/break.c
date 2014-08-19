@@ -1,7 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 1992, 1993, 1994, 1995, 1999, 2002, 2003, 2007, 2008, 2009, 2010,
-   2011 Free Software Foundation, Inc.
+   Copyright 1992-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -86,10 +85,6 @@ int argc;
 char *argv[], **envp;
 #endif
 {
-#ifdef usestubs
-    set_debug_traps();  /* set breakpoint 5 here */
-    breakpoint();
-#endif
     if (argc == 12345) {  /* an unlikely value < 2^16, in case uninited */ /* set breakpoint 6 here */
 	fprintf (stderr, "usage:  factorial <number>\n");
 	return 1;

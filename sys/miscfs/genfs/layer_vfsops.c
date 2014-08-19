@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.41 2012/05/31 16:08:14 pgoyette Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.41.2.1 2014/08/20 00:04:31 tls Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.41 2012/05/31 16:08:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.41.2.1 2014/08/20 00:04:31 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.41 2012/05/31 16:08:14 pgoyette E
 #include <sys/kauth.h>
 #include <sys/module.h>
 
+#include <miscfs/specfs/specdev.h>
 #include <miscfs/genfs/layer.h>
 #include <miscfs/genfs/layer_extern.h>
 
@@ -204,6 +205,43 @@ layerfs_sync(struct mount *mp, int waitfor,
 }
 
 int
+layerfs_loadvnode(struct mount *mp, struct vnode *vp,
+    const void *key, size_t key_len, const void **new_key)
+{
+	struct layer_mount *lmp = MOUNTTOLAYERMOUNT(mp);
+	struct vnode *lowervp;
+	struct layer_node *xp;
+
+	KASSERT(key_len == sizeof(struct vnode *));
+	memcpy(&lowervp, key, key_len);
+
+	xp = kmem_alloc(lmp->layerm_size, KM_SLEEP);
+	if (xp == NULL)
+		return ENOMEM;
+
+	/* Share the interlock with the lower node. */
+	mutex_obj_hold(lowervp->v_interlock);
+	uvm_obj_setlock(&vp->v_uobj, lowervp->v_interlock);
+	vp->v_iflag |= VI_LAYER | VI_LOCKSHARE;
+
+	vp->v_tag = lmp->layerm_tag;
+	vp->v_type = lowervp->v_type;
+	vp->v_op = lmp->layerm_vnodeop_p;
+	if (vp->v_type == VBLK || vp->v_type == VCHR)
+		spec_node_init(vp, lowervp->v_rdev);
+	vp->v_data = xp;
+	xp->layer_vnode = vp;
+	xp->layer_lowervp = lowervp;
+	xp->layer_flags = 0;
+	uvm_vnp_setsize(vp, 0);
+
+	/*  Add a reference to the lower node. */
+	vref(lowervp);
+	*new_key = &xp->layer_lowervp;
+	return 0;
+}
+
+int
 layerfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
 	struct vnode *vp;
@@ -214,9 +252,16 @@ layerfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		*vpp = NULL;
 		return error;
 	}
+	VOP_UNLOCK(vp);
 	error = layer_node_create(mp, vp, vpp);
 	if (error) {
-		vput(vp);
+		vrele(vp);
+		*vpp = NULL;
+		return error;
+	}
+	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(*vpp);
 		*vpp = NULL;
 		return error;
 	}
@@ -231,13 +276,21 @@ layerfs_fhtovp(struct mount *mp, struct fid *fidp, struct vnode **vpp)
 
 	error = VFS_FHTOVP(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, fidp, &vp);
 	if (error) {
+		*vpp = NULL;
 		return error;
 	}
+	VOP_UNLOCK(vp);
 	error = layer_node_create(mp, vp, vpp);
 	if (error) {
 		vput(vp);
 		*vpp = NULL;
 		return (error);
+	}
+	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(*vpp);
+		*vpp = NULL;
+		return error;
 	}
 	return 0;
 }
@@ -274,15 +327,6 @@ SYSCTL_SETUP(sysctl_vfs_layerfs_setup, "sysctl vfs.layerfs subtree setup")
 {
 	const struct sysctlnode *layerfs_node = NULL;
 
-	sysctl_createv(clog, 0, NULL, NULL,
-#ifdef _MODULE
-		       0,
-#else
-		       CTLFLAG_PERMANENT,
-#endif
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, &layerfs_node,
 #ifdef _MODULE
 		       0,
@@ -292,7 +336,7 @@ SYSCTL_SETUP(sysctl_vfs_layerfs_setup, "sysctl vfs.layerfs subtree setup")
 		       CTLTYPE_NODE, "layerfs",
 		       SYSCTL_DESCR("Generic layered file system"),
 		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_CREATE);
+		       CTL_VFS, CTL_CREATE, CTL_EOL);
 
 #ifdef LAYERFS_DIAGNOSTIC
 	sysctl_createv(clog, 0, &layerfs_node, NULL,

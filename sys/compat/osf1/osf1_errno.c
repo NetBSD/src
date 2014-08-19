@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_errno.c,v 1.5.160.1 2013/02/25 00:29:09 tls Exp $ */
+/* $NetBSD: osf1_errno.c,v 1.5.160.2 2014/08/20 00:03:33 tls Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_errno.c,v 1.5.160.1 2013/02/25 00:29:09 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_errno.c,v 1.5.160.2 2014/08/20 00:03:33 tls Exp $");
+
+#include <sys/errno.h>
 
 #include <compat/osf1/osf1.h>
 
@@ -128,4 +130,17 @@ const int native_to_osf1_errno[] = {
     OSF1_EIDRM,			/* EIDRM (82) -> 81 */
     OSF1_ENOMSG,		/* ENOMSG (83) -> 80 */
     OSF1_EOVERFLOW,		/* EOVERFLOW (84) -> 103 */
+    OSF1_EILSEQ,		/* EILSEQ (85) -> 116 */
+    OSF1_ENOTSUP,		/* ENOTSUP (86) -> 99 */
+    OSF1_ECANCELED,		/* ECANCELED (87) -> 94 */
+    OSF1_EBADMSG,		/* EBADMSG (88) -> 84 */
+    OSF1_ENODATA,		/* ENODATA (89) -> 86 */
+    OSF1_ENOSR,			/* ENOSR (90) -> 82 */
+    OSF1_ENOSTR,		/* ENOSTR (91) -> 87 */
+    OSF1_ETIME,			/* ETIME (92) -> 83 */
+    OSF1_ENOSYS,		/* ENOATTR (93) has no equivalent */
+    OSF1_EMULTIHOP,		/* EMULTIHOP (94) -> 101 */
+    OSF1_ENOLINK,		/* ENOLINK (95) -> 102 */
+    OSF1_EPROTO,		/* EPROTO (96) -> 85 */
 };
+__CTASSERT(__arraycount(native_to_osf1_errno) == ELAST + 1);

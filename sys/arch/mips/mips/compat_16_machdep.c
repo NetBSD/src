@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.20 2011/05/02 00:29:54 rmind Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.20.14.1 2014/08/20 00:03:12 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.20 2011/05/02 00:29:54 rmind Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.20.14.1 2014/08/20 00:03:12 tls Exp $"); 
 
 #ifdef _KERNEL_OPT
 #include "opt_cputype.h"
@@ -270,7 +270,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	memcpy(&tf->tf_regs[1], &scp->sc_regs[1],
 	    sizeof(scp->sc_regs) - sizeof(scp->sc_regs[0]));
 #else
-	for (size_t i = 1; i < __arraycount(tf->tf_regs); i++)
+	for (size_t i = 1; i < __arraycount(ksc.sc_regs); i++)
 		tf->tf_regs[i] = ksc.sc_regs[i];
 #endif
 #if !defined(NOFPU)

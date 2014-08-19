@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.68 2009/11/26 15:17:08 njoly Exp $
+ * $Id: ahc_pci.c,v 1.68.22.1 2014/08/20 00:03:41 tls Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.68 2009/11/26 15:17:08 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.68.22.1 2014/08/20 00:03:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -780,6 +780,7 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 	const char        *intrstr;
 	struct ahc_pci_busdata *bd;
 	bool               override_ultra;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	ahc->sc_dev = self;
 	ahc_set_name(ahc, device_xname(ahc->sc_dev));
@@ -833,20 +834,22 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 	ioh_valid = (pci_mapreg_map(pa, AHC_PCI_IOADDR,
 				    PCI_MAPREG_TYPE_IO, 0, &iot,
 				    &ioh, NULL, NULL) == 0);
+
 #if 0
 	printf("%s: bus info: memt 0x%lx, memh 0x%lx, iot 0x%lx, ioh 0x%lx\n",
 	    ahc_name(ahc), (u_long)memt, (u_long)memh, (u_long)iot,
 	    (u_long)ioh);
 #endif
 
+#ifdef AHC_ALLOW_MEMIO
+	if (memh_valid) {
+		st = memt;
+		sh = memh;
+	} else
+#endif
 	if (ioh_valid) {
 		st = iot;
 		sh = ioh;
-#ifdef AHC_ALLOW_MEMIO
-	} else if (memh_valid) {
-		st = memt;
-		sh = memh;
-#endif
 	} else {
 		printf(": unable to map registers\n");
 		return;
@@ -951,7 +954,7 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 		ahc_free(ahc);
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
+	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
 	ahc->ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ahc_intr, ahc);
 	if (ahc->ih == NULL) {
 		aprint_error_dev(ahc->sc_dev,

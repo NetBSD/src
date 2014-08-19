@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.149 2012/02/19 21:06:07 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.149.2.1 2014/08/20 00:03:00 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,12 +39,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.149 2012/02/19 21:06:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.149.2.1 2014/08/20 00:03:00 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
 #include "opt_kgdb.h"
 #include "opt_compat_sunos.h"
+#include "opt_fpu_emulate.h"
 #include "opt_m68k_arch.h"
 
 #include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
@@ -73,6 +74,10 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.149 2012/02/19 21:06:07 rmind Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
+
+#ifdef FPU_EMULATE
+#include <m68k/fpe/fpu_emulate.h>
+#endif
 
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_exec.h>
@@ -378,9 +383,30 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 		ksi.ksi_code = fpsr2siginfocode(code);
 		break;
 
-#ifdef M68040
+	/*
+	 * FPU faults in supervisor mode.
+	 */
+	case T_ILLINST: /* fnop generates this, apparently. */
+	case T_FPEMULI:
+	case T_FPEMULD: {
+		extern label_t *nofault;
+
+		if (nofault)    /* If we're probing. */
+			longjmp(nofault);
+		if (type == T_ILLINST)
+			printf("Kernel Illegal Instruction trap.\n");
+		else
+			printf("Kernel FPU trap.\n");
+		goto dopanic;
+	}
+
 	case T_FPEMULI|T_USER:	/* unimplemented FP instruction */
 	case T_FPEMULD|T_USER:	/* unimplemented FP data type */
+#ifdef FPU_EMULATE
+		if (fpu_emulate(fp, &pcb->pcb_fpregs, &ksi) == 0)
+			; /* XXX - Deal with tracing? (fp->f_sr & PSL_T) */
+		break;
+#elif defined(M68040)
 		/* XXX need to FSAVE */
 		printf("pid %d(%s): unimplemented FP %s at %x (EA %x)\n",
 		       p->p_pid, p->p_comm,
@@ -390,6 +416,8 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 		ksi.ksi_signo = SIGFPE;
 		ksi.ksi_code = FPE_FLTINV;
 		break;
+#else
+		/* FALLTHROUGH */
 #endif
 
 	case T_ILLINST|T_USER:	/* illegal instruction fault */
@@ -616,7 +644,8 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 		break;
 	    }
 	}
-	trapsignal(l, &ksi);
+	if (ksi.ksi_signo)
+		trapsignal(l, &ksi);
 	if ((type & T_USER) == 0)
 		return;
  out:

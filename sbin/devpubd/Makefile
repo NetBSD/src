@@ -1,9 +1,8 @@
-# $NetBSD: Makefile,v 1.2.8.1 2013/02/25 00:28:04 tls Exp $
+# $NetBSD: Makefile,v 1.2.8.2 2014/08/20 00:02:24 tls Exp $
 
 PROG=		devpubd
 SRCS=		devpubd.c
 MAN=		devpubd.8
-WARNS=		4
 
 BINDIR?=	/sbin
 

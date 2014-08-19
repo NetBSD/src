@@ -1,5 +1,4 @@
-# Copyright 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011
-# Free Software Foundation, Inc.
+# Copyright 2002-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,6 +12,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+if { ![support_displaced_stepping] } { 
+    unsupported "displaced stepping"
+    return -1
+}
 
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
@@ -34,11 +39,9 @@ proc mi_nonstop_resume { command test } {
 #
 # Start here
 #
-set testfile "non-stop"
-set srcfile "$testfile.c"
-set binfile "$objdir/$subdir/mi-$testfile"
+standard_testfile non-stop.c
 
-set options [list debug incdir=$objdir]
+set options [list debug]
 if {[gdb_compile_pthreads "$srcdir/$subdir/$srcfile" $binfile executable $options] != "" } {
     return -1
 }
@@ -46,20 +49,9 @@ if {[gdb_compile_pthreads "$srcdir/$subdir/$srcfile" $binfile executable $option
 mi_gdb_reinitialize_dir $srcdir/$subdir
 mi_gdb_load $binfile
 
-set supported 0
-gdb_test_multiple "-gdb-show non-stop" "" {
-    -re ".*\\^done,value=\"off\",supported=\"(\[^\"\]+)\"\r\n$mi_gdb_prompt$" {
-	if { $expect_out(1,string) == "1" } {
-	    set supported 1
-	}
-    }
-    -re ".*$mi_gdb_prompt$" {
-    }
-}
-
 mi_gdb_test "-gdb-set non-stop 1" ".*"
 mi_gdb_test "-gdb-set target-async 1" ".*"
-detect_async
+mi_detect_async
 
 if { [mi_run_to_main] < 0 } {
     continue
@@ -92,22 +84,17 @@ mi_varobj_update * {I_W1 I_W0} "update varobj, 1"
 mi_check_varobj_value I_W0 1 "check varobj, w0, 1"
 mi_check_varobj_value I_W1 1 "check varobj, w1, 1"
 
-gdb_test_multiple "-exec-interrupt --thread 1" "interrupted" {
-    -re "\\^done\r\n$mi_gdb_prompt\\*stopped\[^\r\n\]+\r\n$" {
-	pass "interrupted"
-    }
-}
+mi_gdb_test "-exec-interrupt --thread 1" "\\^done" "interrupted"
+mi_expect_interrupt "got interrupt"
+
 # The interrupt command sends SIGINT to the target, and therefore the
 # thread might not be stopped immediately when we return from the target.
 # So, wait a bit
 sleep 1
 mi_check_thread_states {"stopped" "stopped" "stopped"} "thread state, stop 4"
 
-gdb_test_multiple "-exec-continue --all" "resume all" {
-    -re ".*\\*running,thread-id=\"3\"\r\n\\*running,thread-id=\"2\"\r\n\\*running,thread-id=\"1\"\r\n$mi_gdb_prompt" {
-	pass "resume all"
-    }
-}
+mi_gdb_test "-exec-continue --all" ".*\\*running,thread-id=\"3\"\r\n\\*running,thread-id=\"2\"\r\n\\*running,thread-id=\"1\"" \
+    "resume all"
 
 mi_expect_stop "breakpoint-hit" "break_at_me" "\[^\n\]*" "non-stop.c" "\[0-9\]*" {"" "disp=\"keep\""} "w0,i2 stop"
 mi_expect_stop "breakpoint-hit" "break_at_me" ".*" "non-stop.c" ".*" {"" "disp=\"keep\""} "w1,i2 stop"

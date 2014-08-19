@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_main.c,v 1.1.1.1.6.2 2013/02/25 00:27:22 tls Exp $	*/
+/*	$NetBSD: postconf_main.c,v 1.1.1.1.6.3 2014/08/19 23:59:43 tls Exp $	*/
 
 /*++
 /* NAME
@@ -8,48 +8,47 @@
 /* SYNOPSIS
 /*	#include <postconf.h>
 /*
-/*	void	read_parameters()
+/*	void	pcf_read_parameters()
 /*
-/*	void	set_parameters()
-/*
-/*	void	show_parameters(mode, param_class, names)
+/*	void	pcf_show_parameters(fp, mode, param_class, names)
+/*	VSTREAM	*fp;
 /*	int	mode;
 /*	int	param_class;
 /*	char	**names;
 /* DESCRIPTION
-/*	read_parameters() reads parameters from main.cf.
+/*	pcf_read_parameters() reads parameters from main.cf.
 /*
-/*	set_parameters() does nothing. It is a place holder for
-/*	code that assigns actual or default parameter values, which
-/*	could be needed to implement "postconf -e" parameter value
-/*	expansion.
+/*	pcf_set_parameters() takes an array of \fIname=value\fR
+/*	pairs and overrides settings read with pcf_read_parameters().
 /*
-/*	show_parameters() writes main.cf parameters to the standard
-/*	output stream.
+/*	pcf_show_parameters() writes main.cf parameters to the
+/*	specified output stream.
 /*
 /*	Arguments:
+/* .IP fp
+/*	Output stream.
 /* .IP mode
 /*	Bit-wise OR of zero or more of the following:
 /* .RS
-/* .IP FOLD_LINE
+/* .IP PCF_FOLD_LINE
 /*	Fold long lines.
-/* .IP SHOW_DEFS
+/* .IP PCF_SHOW_DEFS
 /*	Output default parameter values.
-/* .IP SHOW_NONDEF
+/* .IP PCF_SHOW_NONDEF
 /*	Output explicit settings only.
-/* .IP SHOW_NAME
-/*	Output the parameter as "name = value".
-/* .IP SHOW_EVAL
-/*	Expand parameter values (not implemented).
+/* .IP PCF_HIDE_NAME
+/*	Output parameter values without the "name =" prefix.
+/* .IP PCF_SHOW_EVAL
+/*	Expand $name in parameter values.
 /* .RE
 /* .IP param_class
 /*	Bit-wise OR of one or more of the following:
 /* .RS
-/* .IP PC_PARAM_FLAG_BUILTIN
+/* .IP PCF_PARAM_FLAG_BUILTIN
 /*	Show built-in parameters.
-/* .IP PC_PARAM_FLAG_SERVICE
+/* .IP PCF_PARAM_FLAG_SERVICE
 /*	Show service-defined parameters.
-/* .IP PC_PARAM_FLAG_USER
+/* .IP PCF_PARAM_FLAG_USER
 /*	Show user-defined parameters.
 /* .RE
 /* .IP names
@@ -85,6 +84,7 @@
 #include <dict.h>
 #include <stringops.h>
 #include <htable.h>
+#include <mac_expand.h>
 
 /* Global library. */
 
@@ -97,9 +97,9 @@
 
 #define STR(x) vstring_str(x)
 
-/* read_parameters - read parameter info from file */
+/* pcf_read_parameters - read parameter info from file */
 
-void    read_parameters(void)
+void    pcf_read_parameters(void)
 {
     char   *path;
 
@@ -107,154 +107,91 @@ void    read_parameters(void)
      * A direct rip-off of mail_conf_read(). XXX Avoid code duplication by
      * better code decomposition.
      */
-    set_config_dir();
+    pcf_set_config_dir();
     path = concatenate(var_config_dir, "/", MAIN_CONF_FILE, (char *) 0);
     if (dict_load_file_xt(CONFIG_DICT, path) == 0)
 	msg_fatal("open %s: %m", path);
     myfree(path);
 }
 
-/* set_parameters - set parameter values from default or explicit setting */
+/* pcf_set_parameters - add or override name=value pairs */
 
-void set_parameters(void)
+void    pcf_set_parameters(char **name_val_array)
 {
+    char   *name, *value, *junk;
+    const char *err;
+    char  **cpp;
 
-    /*
-     * The proposal below describes some of the steps needed to expand
-     * parameter values. It has a problem: it updates the configuration
-     * parameter dictionary, and in doing so breaks the "postconf -d"
-     * implementation. This makes "-d" and "-e" mutually exclusive.
-     * 
-     * Populate the configuration parameter dictionary with default settings or
-     * with actual settings.
-     * 
-     * Iterate over each entry in str_fn_table, str_fn_table_2, time_table,
-     * bool_table, int_table, str_table, and raw_table. Look up each
-     * parameter name in the configuration parameter dictionary. If the
-     * parameter is not set, take the default value, or take the value from
-     * main.cf, without doing $name expansions. This includes converting
-     * default values from numeric/boolean internal forms to external string
-     * form.
-     * 
-     * Once the configuration parameter dictionary is populated, printing a
-     * parameter setting is a matter of querying the configuration parameter
-     * dictionary, optionally expanding of $name values, and printing the
-     * result.
-     */
-}
-
-/* print_line - show line possibly folded, and with normalized whitespace */
-
-static void print_line(int mode, const char *fmt,...)
-{
-    va_list ap;
-    static VSTRING *buf = 0;
-    char   *start;
-    char   *next;
-    int     line_len = 0;
-    int     word_len;
-
-    /*
-     * One-off initialization.
-     */
-    if (buf == 0)
-	buf = vstring_alloc(100);
-
-    /*
-     * Format the text.
-     */
-    va_start(ap, fmt);
-    vstring_vsprintf(buf, fmt, ap);
-    va_end(ap);
-
-    /*
-     * Normalize the whitespace. We don't use the line_wrap() routine because
-     * 1) that function does not normalize whitespace between words and 2) we
-     * want to normalize whitespace even when not wrapping lines.
-     * 
-     * XXX Some parameters preserve whitespace: for example, smtpd_banner and
-     * smtpd_reject_footer. If we have to preserve whitespace between words,
-     * then perhaps readlline() can be changed to canonicalize whitespace
-     * that follows a newline.
-     */
-    for (start = STR(buf); *(start += strspn(start, SEPARATORS)) != 0; start = next) {
-	word_len = strcspn(start, SEPARATORS);
-	if (*(next = start + word_len) != 0)
-	    *next++ = 0;
-	if (word_len > 0 && line_len > 0) {
-	    if ((mode & FOLD_LINE) == 0 || line_len + word_len < LINE_LIMIT) {
-		vstream_fputs(" ", VSTREAM_OUT);
-		line_len += 1;
-	    } else {
-		vstream_fputs("\n" INDENT_TEXT, VSTREAM_OUT);
-		line_len = INDENT_LEN;
-	    }
-	}
-	vstream_fputs(start, VSTREAM_OUT);
-	line_len += word_len;
+    for (cpp = name_val_array; *cpp; cpp++) {
+	junk = mystrdup(*cpp);
+	if ((err = split_nameval(junk, &name, &value)) != 0)
+	    msg_fatal("invalid parameter override: %s: %s", *cpp, err);
+	mail_conf_update(name, value);
+	myfree(junk);
     }
-    vstream_fputs("\n", VSTREAM_OUT);
 }
 
-/* print_parameter - show specific parameter */
+/* pcf_print_parameter - show specific parameter */
 
-static void print_parameter(int mode, const char *name,
-			            PC_PARAM_NODE *node)
+static void pcf_print_parameter(VSTREAM *fp, int mode, const char *name,
+				        PCF_PARAM_NODE *node)
 {
     const char *value;
 
     /*
      * Use the default or actual value.
      */
-    if ((mode & SHOW_DEFS) != 0
-	|| ((value = dict_lookup(CONFIG_DICT, name)) == 0
-	    && (mode & SHOW_NONDEF) == 0))
-	value = convert_param_node(SHOW_DEFS, name, node);
+    value = pcf_lookup_parameter_value(mode, name, (PCF_MASTER_ENT *) 0, node);
 
     /*
-     * Print with or without the name= prefix.
+     * Optionally expand $name in the parameter value. Print the result with
+     * or without the name= prefix.
      */
     if (value != 0) {
-	if (mode & SHOW_NAME) {
-	    print_line(mode, "%s = %s\n", name, value);
+	if ((mode & PCF_SHOW_EVAL) != 0 && PCF_RAW_PARAMETER(node) == 0)
+	    value = pcf_expand_parameter_value((VSTRING *) 0, mode, value,
+					       (PCF_MASTER_ENT *) 0);
+	if ((mode & PCF_HIDE_NAME) == 0) {
+	    pcf_print_line(fp, mode, "%s = %s\n", name, value);
 	} else {
-	    print_line(mode, "%s\n", value);
+	    pcf_print_line(fp, mode, "%s\n", value);
 	}
 	if (msg_verbose)
-	    vstream_fflush(VSTREAM_OUT);
+	    vstream_fflush(fp);
     }
 }
 
-/* comp_names - qsort helper */
+/* pcf_comp_names - qsort helper */
 
-static int comp_names(const void *a, const void *b)
+static int pcf_comp_names(const void *a, const void *b)
 {
-    PC_PARAM_INFO **ap = (PC_PARAM_INFO **) a;
-    PC_PARAM_INFO **bp = (PC_PARAM_INFO **) b;
+    PCF_PARAM_INFO **ap = (PCF_PARAM_INFO **) a;
+    PCF_PARAM_INFO **bp = (PCF_PARAM_INFO **) b;
 
-    return (strcmp(PC_PARAM_INFO_NAME(ap[0]),
-		   PC_PARAM_INFO_NAME(bp[0])));
+    return (strcmp(PCF_PARAM_INFO_NAME(ap[0]),
+		   PCF_PARAM_INFO_NAME(bp[0])));
 }
 
-/* show_parameters - show parameter info */
+/* pcf_show_parameters - show parameter info */
 
-void    show_parameters(int mode, int param_class, char **names)
+void    pcf_show_parameters(VSTREAM *fp, int mode, int param_class, char **names)
 {
-    PC_PARAM_INFO **list;
-    PC_PARAM_INFO **ht;
+    PCF_PARAM_INFO **list;
+    PCF_PARAM_INFO **ht;
     char  **namep;
-    PC_PARAM_NODE *node;
+    PCF_PARAM_NODE *node;
 
     /*
      * Show all parameters.
      */
     if (*names == 0) {
-	list = PC_PARAM_TABLE_LIST(param_table);
-	qsort((char *) list, param_table->used, sizeof(*list), comp_names);
+	list = PCF_PARAM_TABLE_LIST(pcf_param_table);
+	qsort((char *) list, pcf_param_table->used, sizeof(*list),
+	      pcf_comp_names);
 	for (ht = list; *ht; ht++)
-	    if (param_class & PC_PARAM_INFO_NODE(*ht)->flags)
-		print_parameter(mode, PC_PARAM_INFO_NAME(*ht),
-				PC_PARAM_INFO_NODE(*ht));
+	    if (param_class & PCF_PARAM_INFO_NODE(*ht)->flags)
+		pcf_print_parameter(fp, mode, PCF_PARAM_INFO_NAME(*ht),
+				    PCF_PARAM_INFO_NODE(*ht));
 	myfree((char *) list);
 	return;
     }
@@ -263,10 +200,10 @@ void    show_parameters(int mode, int param_class, char **names)
      * Show named parameters.
      */
     for (namep = names; *namep; namep++) {
-	if ((node = PC_PARAM_TABLE_FIND(param_table, *namep)) == 0) {
+	if ((node = PCF_PARAM_TABLE_FIND(pcf_param_table, *namep)) == 0) {
 	    msg_warn("%s: unknown parameter", *namep);
 	} else {
-	    print_parameter(mode, *namep, node);
+	    pcf_print_parameter(fp, mode, *namep, node);
 	}
     }
 }

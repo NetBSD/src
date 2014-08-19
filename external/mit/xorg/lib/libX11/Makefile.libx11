@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libx11,v 1.9.2.1 2013/06/23 06:28:43 tls Exp $
+#	$NetBSD: Makefile.libx11,v 1.9.2.2 2014/08/20 00:00:12 tls Exp $
 
 LIB=	X11
 .PATH:	${X11SRCDIR.${LIB}}/src
@@ -462,10 +462,6 @@ COPTS.Font.c+=		-Wno-error	# XXX xf86bigfstr.h
 COPTS.OpenDis.c+=	-Wno-error	# XXX xf86bigfstr.h
 COPTS.XlibInt.c+=	-Wno-error	# XXX xcmiscstr.h
 COPTS.XKBBind.c+=	-Wno-error	# uses XKeycodeToKeysym
-.if ${HAVE_GCC} < 45
-COPTS.LiHosts.c+=	-Wno-error	# XXX: old gcc figures out that const
-					# cond because nHosts < max_hosts
-.endif
 
 CWARNFLAGS.clang+=	-Wno-string-plus-int
 

@@ -1,6 +1,4 @@
-#   Copyright 1988, 1990, 1991, 1992, 1994, 1995, 1997, 1998, 1999, 2000,
-#   2001, 2002, 2003, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright 1988-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,13 +13,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if $tracelevel then {
-    strace $tracelevel
-}
-
 #
 # test special commands (if, while, etc)
 #
+
+standard_testfile
 
 if { [prepare_for_testing commands.exp commands run.c {debug additional_flags=-DFAKEARGV}] } {
     return -1
@@ -80,7 +76,7 @@ proc progvar_simple_if_test {} {
     gdb_test "if value == 5\np/x 0xfeedface\nelse\np/x 0xdeadbeef\nend" \
 	    "\\\$\[0-9\]* = 0xfeedface" \
 	    "progvar_simple_if_test #2"
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 proc progvar_simple_while_test {} {
@@ -100,7 +96,7 @@ proc progvar_simple_while_test {} {
     gdb_test "while value > 0\np/x 0xfeedface\nset value -= 1\nend" \
 	    "\\\$\[0-9\]* = 0xfeedface\[^\n\]*\n\\\$\[0-9\]* = 0xfeedface\[^\n\]*\n\\\$\[0-9\]* = 0xfeedface\[^\n\]*\n\\\$\[0-9\]* = 0xfeedface\[^\n\]*\n\\\$\[0-9\]* = 0xfeedface" \
 	    "progvar_simple_while_test #1"
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 proc progvar_complex_if_while_test {} {
@@ -121,7 +117,7 @@ proc progvar_complex_if_while_test {} {
     gdb_test "while value > 0\nset value -= 1\nif \(value % 2\) == 1\np/x 0xdeadbeef\nelse\np/x 0xfeedface\nend\nend" \
 	    "\\\$\[0-9\]* = 0xdeadbeef\[^\n\]*\n\\\$\[0-9\]* = 0xfeedface\[^\n\]*\n\\\$\[0-9\]* = 0xdeadbeef\[^\n\]*\n\\\$\[0-9\]* = 0xfeedface" \
 	    "progvar_complex_if_while_test #1"
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 proc if_while_breakpoint_command_test {} {
@@ -156,7 +152,7 @@ proc if_while_breakpoint_command_test {} {
    gdb_test "info break" \
 	   "while.*set.*if.*p/x.*else.*p/x.*end.*" \
 	   "info break in if_while_breakpoint_command_test"
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 # Test that we can run the inferior from breakpoint commands.
@@ -197,7 +193,7 @@ proc infrun_breakpoint_command_test {} {
 	"Continuing.*.*.*Breakpoint \[0-9\]*, factorial \\(value=5\\).*at.*\[0-9\]*\[      \]*if \\(value > 1\\) \{.*\[0-9\]*\[      \]*value \\*= factorial \\(value - 1\\);.*" \
 	"continue in infrun_breakpoint_command_test"
 
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 proc breakpoint_command_test {} {
@@ -219,7 +215,7 @@ proc breakpoint_command_test {} {
 	    "Breakpoint \[0-9\]*, factorial.*Now the value is 5" \
 	"continue in breakpoint_command_test"
     gdb_test "print value" " = 5" "print value in breakpoint_command_test"
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 # Test a simple user defined command (with arguments)
@@ -294,6 +290,9 @@ proc watchpoint_command_test {} {
 	    pass "begin commands on watch"
 	}
     }
+    # See the 'No symbol "value...' fail below.  This command will
+    # fail if it's executed in the wrong frame.  If adjusting the
+    # test, make sure this property holds.
     gdb_test_multiple "print value" "add print command to watch" {
 	-re ">$" {
 	    pass "add print command to watch"
@@ -308,9 +307,20 @@ proc watchpoint_command_test {} {
 	"" \
 	"end commands on watch"
 
-    gdb_test "continue" \
-	"Continuing.*\[Ww\]atchpoint $wp_id deleted because the program has left the block in.*which its expression is valid.*run.c:(57|82).*" \
-	"continue with watch"
+    set test "continue with watch"
+    set lno_1 [gdb_get_line_number "commands.exp: hw local_var out of scope" "run.c"]
+    set lno_2 [gdb_get_line_number "commands.exp: local_var out of scope"    "run.c"]
+    gdb_test_multiple "continue" "$test" {
+	-re "No symbol \"value\" in current context.\r\n$gdb_prompt $" {
+	    # Happens if GDB actually runs the watchpoints commands,
+	    # even though the watchpoint was deleted for not being in
+	    # scope.
+	    fail $test
+	}
+	-re "Continuing.*\[Ww\]atchpoint $wp_id deleted because the program has left the block in.*which its expression is valid.*run.c:($lno_1|$lno_2).*$gdb_prompt $" {
+	    pass $test
+	}
+   }
 }
 
 proc test_command_prompt_position {} {
@@ -373,7 +383,7 @@ proc test_command_prompt_position {} {
 	timeout { fail "(timeout) 3 commands in test_command_prompt_position" }
     }
 
-    gdb_stop_suppressing_tests;
+    gdb_stop_suppressing_tests
 }
 
 
@@ -549,7 +559,9 @@ proc stray_arg0_test { } {
 
 # Test that GDB is able to source a file with an indented comment.
 proc source_file_with_indented_comment {} {
-    set fd [open "file1" w]
+    set file1 [standard_output_file file1]
+
+    set fd [open "$file1" w]
     puts $fd \
 {define my_fun
     #indented comment
@@ -557,40 +569,44 @@ end
 echo Done!\n}
     close $fd
 
-    gdb_test "source file1" "Done!" "source file with indented comment"
+    gdb_test "source $file1" "Done!" "source file with indented comment"
 }
 
 # Test that GDB can handle arguments when sourcing files recursively.
 # If the arguments are overwritten with ####### then the test has failed.
 proc recursive_source_test {} {
-    set fd [open "file1" w]
+    set file1 [standard_output_file file1]
+    set file2 [standard_output_file file2]
+    set file3 [standard_output_file file3]
+
+    set fd [open "$file1" w]
     puts $fd \
-{source file2
-abcdef qwerty}
+"source $file2
+abcdef qwerty"
     close $fd
 
-    set fd [open "file2" w]
+    set fd [open "$file2" w]
     puts $fd \
-{define abcdef
-  echo 1: <<<$arg0>>>\n
-  source file3
-  echo 2: <<<$arg0>>>\n
-end}
+"define abcdef
+  echo 1: <<<\$arg0>>>\\n
+  source $file3
+  echo 2: <<<\$arg0>>>\\n
+end"
     close $fd
 
-    set fd [open "file3" w]
+    set fd [open "$file3" w]
     puts $fd \
 "echo in file3\\n
 #################################################################"
     close $fd
 
-    gdb_test "source file1" \
+    gdb_test "source $file1" \
 	"1: <<<qwerty>>>\[\r\n]+in file3\[\r\n]+2: <<<qwerty>>>" \
 	"recursive source test"
 
-    file delete file1
-    file delete file2
-    file delete file3
+    file delete $file1
+    file delete $file2
+    file delete $file3
 }
 
 proc gdb_test_no_prompt { command result msg } {
@@ -666,6 +682,74 @@ proc if_commands_test {} {
     }
 }
 
+# Verify an error during "commands" commands execution will prevent any other
+# "commands" from other breakpoints at the same location to be executed.
+
+proc error_clears_commands_left {} {
+    set test "hook-stop 1"
+    gdb_test_multiple {define hook-stop} $test {
+	-re "End with a line saying just \"end\"\\.\r\n>$" {
+	    pass $test
+	}
+    }
+    set test "hook-stop 1a"
+    gdb_test_multiple {echo hook-stop1\n} $test {
+	-re "\r\n>$" {
+	    pass $test
+	}
+    }
+    gdb_test_no_output "end" "hook-stop 1b"
+
+    delete_breakpoints
+    gdb_breakpoint "main"
+
+    set test "main commands 1"
+    gdb_test_multiple {commands $bpnum} $test {
+	-re "End with a line saying just \"end\"\\.\r\n>$" {
+	    pass $test
+	}
+    }
+    set test "main commands 1a"
+    gdb_test_multiple {echo cmd1\n} $test {
+	-re "\r\n>$" {
+	    pass $test
+	}
+    }
+    set test "main commands 1b"
+    gdb_test_multiple {errorcommandxy\n} $test {
+	-re "\r\n>$" {
+	    pass $test
+	}
+    }
+    gdb_test_no_output "end" "main commands 1c"
+
+    gdb_breakpoint "main"
+    set test "main commands 2"
+    gdb_test_multiple {commands $bpnum} $test {
+	-re "End with a line saying just \"end\"\\.\r\n>$" {
+	    pass $test
+	}
+    }
+    set test "main commands 2a"
+    gdb_test_multiple {echo cmd2\n} $test {
+	-re "\r\n>$" {
+	    pass $test
+	}
+    }
+    set test "main commands 2b"
+    gdb_test_multiple {errorcommandyz\n} $test {
+	-re "\r\n>$" {
+	    pass $test
+	}
+    }
+    gdb_test_no_output "end" "main commands 2c"
+
+    gdb_run_cmd
+    gdb_test "" "hook-stop1\r\n.*\r\ncmd1\r\nUndefined command: \"errorcommandxy\"\\.  Try \"help\"\\." "cmd1 error"
+
+    gdb_test {echo idle\n} "\r\nidle" "no cmd2"
+}
+
 proc redefine_hook_test {} {
     global gdb_prompt
 
@@ -704,18 +788,17 @@ proc redefine_backtrace_test {} {
     global gdb_prompt
 
     gdb_test_multiple "define backtrace" "define backtrace" {
-	-re "Really redefine built-in.*$" {
-	    send_gdb "y\n"
-	    exp_continue
-	}
-
-	-re "End with"  {
-	    pass "define backtrace in redefine_backtrace_test"
-	}
-        default {
-	    fail "(timeout or eof) define backtrace in redefine_backtrace_test"
+	-re "Really redefine built-in command \"backtrace\"\\? \\(y or n\\) $"  {
+	    pass "define backtrace"
 	}
     }
+
+    gdb_test_multiple "y" "expect response to define backtrace" {
+	-re "End with a line saying just \"end\"\\.\r\n>$"  {
+	    pass "expect response to define backtrace"
+	}
+    }
+
     gdb_test "echo hibob\\n\nend" \
 	    "" \
 	    "enter commands in redefine_backtrace_test"
@@ -747,6 +830,7 @@ stray_arg0_test
 source_file_with_indented_comment
 recursive_source_test
 if_commands_test
+error_clears_commands_left
 redefine_hook_test
 # This one should come last, as it redefines "backtrace".
 redefine_backtrace_test

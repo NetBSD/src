@@ -3,12 +3,13 @@
 # build a 100% lean bozohttpd-small.c
 PROG=	bozohttpd-small
 NOMAN=	# defined
-SRCS=	bozohttpd-small.c content-bozo-small.c
+SRCS=	bozohttpd-small.c content-bozo-small.c ssl-bozo.c main.c:
 
 LEAN_IFDEF_FLAGS=	-UDEBUG -DNO_USER_SUPPORT \
 			-DNO_CGIBIN_SUPPORT -DNO_DIRINDEX_SUPPORT \
 			-DNO_DAEMON_MODE -DNO_DYNAMIC_CONTENT \
-			-DNO_SSL_SUPPORT -UDO_HTPASSWD
+			-DNO_SSL_SUPPORT -UDO_HTPASSWD \
+			-DNO_LUA_SUPPORT
 
 CFLAGS=	-I$(.CURDIR)/.. ${LEAN_IFDEF_FLAGS}
 

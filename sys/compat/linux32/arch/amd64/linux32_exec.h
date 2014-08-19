@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.h,v 1.4 2010/07/07 01:30:35 chs Exp $ */
+/*	$NetBSD: linux32_exec.h,v 1.4.18.1 2014/08/20 00:03:32 tls Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -41,7 +41,10 @@
 
 #define LINUX32_DEBUGLINK_SIGNATURE	1
 
-#define LINUX32_ELF_AUX_ENTRIES 14
+/* Counted from common/linux32_exec_elf32.c */
+#define LINUX32_ELF_AUX_ENTRIES 15
+
+#define LINUX32_RANDOM_BYTES 16		/* 16 bytes for AT_RANDOM */
 
 #if 0
 
@@ -75,7 +78,7 @@ struct linux32_extra_stack_data {
 #endif
 
 #define LINUX32_ELF_AUX_ARGSIZ \
-	(howmany(LINUX32_ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr)))
+	(howmany(LINUX32_ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr)) + LINUX32_RANDOM_BYTES)
 
 #ifdef _KERNEL
 int linux32_exec_setup_stack(struct lwp *, struct exec_package *);

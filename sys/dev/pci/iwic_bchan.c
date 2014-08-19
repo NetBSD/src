@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_bchan.c,v 1.7.48.1 2012/11/20 03:02:19 tls Exp $	*/
+/*	$NetBSD: iwic_bchan.c,v 1.7.48.2 2014/08/20 00:03:43 tls Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_bchan.c,v 1.7.48.1 2012/11/20 03:02:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_bchan.c,v 1.7.48.2 2014/08/20 00:03:43 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -78,7 +78,6 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 	int irq_stat;
 	struct iwic_bchan *chan;
 	int cmd = 0;
-	int activity = 0;
 
 	chan = &sc->sc_bchan[chan_no];
 
@@ -176,8 +175,6 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 				(*chan->l4_driver->bch_rx_data_ready)(chan->l4_driver_softc);
 
 
-				activity = ACT_RX;
-
 				/* mark buffer ptr as unused */
 
 				chan->in_mbuf = NULL;
@@ -252,8 +249,7 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 
 				/* silence detection */
 
-				if(!(isdn_bchan_silence(chan->in_mbuf->m_data, chan->in_mbuf->m_len)))
-					activity = ACT_RX;
+				isdn_bchan_silence(chan->in_mbuf->m_data, chan->in_mbuf->m_len);
 
 #if defined (__FreeBSD__) && __FreeBSD__ > 4
 				(void) IF_HANDOFF(&chan->rx_queue, chan->in_mbuf, NULL);
@@ -311,7 +307,6 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 	{
 		/* transmit fifo empty, new data can be written to fifo */
 
-		int activity1 = -1;
 		int len;
 		int nextlen;
 
@@ -344,12 +339,7 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 
 				if(chan->bprot == BPROT_NONE)
 				{
-					if(!(isdn_bchan_silence(chan->out_mbuf_cur->m_data, chan->out_mbuf_cur->m_len)))
-						activity1 = ACT_TX;
-				}
-				else
-				{
-					activity1 = ACT_TX;
+					isdn_bchan_silence(chan->out_mbuf_cur->m_data, chan->out_mbuf_cur->m_len);
 				}
 			}
 		}

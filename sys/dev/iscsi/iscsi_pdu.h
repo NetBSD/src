@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_pdu.h,v 1.1 2011/10/23 21:15:02 agc Exp $	*/
+/*	$NetBSD: iscsi_pdu.h,v 1.1.12.1 2014/08/20 00:03:39 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ struct scsi_command_pdu_s
 	uint32_t CmdSN;
 	uint32_t ExpStatSN;
 	uint8_t SCSI_CDB[16];
-} __attribute__ ((__packed__));
+} __packed;
 
 typedef struct scsi_command_pdu_s scsi_command_pdu_t;
 
@@ -137,7 +137,7 @@ struct scsi_response_pdu_s
 	uint32_t ExpStatSN;
 	uint32_t ReadResidualCount;
 	uint32_t ResidualCount;
-} __attribute__ ((__packed__));
+} __packed;
 
 typedef struct scsi_response_pdu_s scsi_response_pdu_t;
 
@@ -152,7 +152,7 @@ struct task_management_req_pdu_s
 	uint32_t RefCmdSN;
 	uint32_t ExpDataSN;
 	uint8_t reserved[8];
-} __attribute__ ((__packed__));
+} __packed;
 
 typedef struct task_management_req_pdu_s task_management_req_pdu_t;
 
@@ -164,7 +164,7 @@ struct task_management_rsp_pdu_s
 	uint32_t ExpCmdSN;
 	uint32_t MaxCmdSN;
 	uint8_t reserved2[12];
-} __attribute__ ((__packed__));
+} __packed;
 
 typedef struct task_management_rsp_pdu_s task_management_rsp_pdu_t;
 
@@ -180,7 +180,7 @@ struct data_out_pdu_s
 	uint32_t DataSN;
 	uint32_t BufferOffset;
 	uint32_t reserved3;
-} __attribute__ ((__packed__));
+} __packed;
 
 typedef struct data_out_pdu_s data_out_pdu_t;
 
@@ -194,7 +194,7 @@ struct data_in_pdu_s
 	uint32_t DataSN;
 	uint32_t BufferOffset;
 	uint32_t ResidualCount;
-} __attribute__ ((__packed__));
+} __packed;
 
 typedef struct data_in_pdu_s data_in_pdu_t;
 
@@ -208,7 +208,7 @@ struct r2t_pdu_s
 	uint32_t R2TSN;
 	uint32_t BufferOffset;
 	uint32_t DesiredDataTransferLength;
-} __attribute__ ((__packed__));
+} __packed;
 
 typedef struct r2t_pdu_s r2t_pdu_t;
 
@@ -227,7 +227,7 @@ struct asynch_pdu_s
 	uint16_t Parameter2;
 	uint16_t Parameter3;
 	uint32_t reserved2;
-} __attribute__ ((__packed__));
+} __packed;
 
 typedef struct asynch_pdu_s asynch_pdu_t;
 
@@ -240,7 +240,7 @@ struct text_req_pdu_s
 	uint32_t CmdSN;
 	uint32_t ExpStatSN;
 	uint8_t reserved[16];
-} __attribute__ ((__packed__));
+} __packed;
 
 typedef struct text_req_pdu_s text_req_pdu_t;
 
@@ -252,7 +252,7 @@ struct text_rsp_pdu_s
 	uint32_t ExpCmdSN;
 	uint32_t MaxCmdSN;
 	uint8_t reserved[12];
-} __attribute__ ((__packed__));
+} __packed;
 
 typedef struct text_rsp_pdu_s text_rsp_pdu_t;
 
@@ -266,7 +266,7 @@ struct login_req_pdu_s
 	uint32_t CmdSN;
 	uint32_t ExpStatSN;
 	uint8_t reserved2[16];
-} __attribute__ ((__packed__));
+} __packed;
 
 typedef struct login_req_pdu_s login_req_pdu_t;
 
@@ -278,7 +278,7 @@ struct login_isid_s
 	uint8_t ISID_C;
 	uint16_t ISID_D;
 	uint16_t TSIH;
-} __attribute__ ((__packed__));
+} __packed;
 
 typedef struct login_isid_s login_isid_t;
 
@@ -291,7 +291,7 @@ struct login_rsp_pdu_s
 	uint8_t StatusClass;
 	uint8_t StatusDetail;
 	uint8_t reserved2[10];
-} __attribute__ ((__packed__));
+} __packed;
 
 typedef struct login_rsp_pdu_s login_rsp_pdu_t;
 
@@ -305,7 +305,7 @@ struct logout_req_pdu_s
 	uint32_t CmdSN;
 	uint32_t ExpStatSN;
 	uint8_t reserved3[16];
-} __attribute__ ((__packed__));
+} __packed;
 
 typedef struct logout_req_pdu_s logout_req_pdu_t;
 
@@ -320,7 +320,7 @@ struct logout_rsp_pdu_s
 	uint16_t Time2Wait;
 	uint16_t Time2Retain;
 	uint32_t reserved4;
-} __attribute__ ((__packed__));
+} __packed;
 
 typedef struct logout_rsp_pdu_s logout_rsp_pdu_t;
 
@@ -342,7 +342,7 @@ struct snack_req_pdu_s
 	uint8_t reserved2[8];
 	uint32_t BegRun;
 	uint32_t RunLength;
-} __attribute__ ((__packed__));
+} __packed;
 
 typedef struct snack_req_pdu_s snack_req_pdu_t;
 
@@ -370,7 +370,7 @@ struct reject_pdu_s
 	uint32_t MaxCmdSN;
 	uint8_t DataSN;
 	uint8_t reserved[8];
-} __attribute__ ((__packed__));
+} __packed;
 
 typedef struct reject_pdu_s reject_pdu_t;
 
@@ -383,7 +383,7 @@ struct nop_out_pdu_s
 	uint32_t CmdSN;
 	uint32_t ExpStatSN;
 	uint8_t reserved[16];
-} __attribute__ ((__packed__));
+} __packed;
 
 typedef struct nop_out_pdu_s nop_out_pdu_t;
 
@@ -395,7 +395,7 @@ struct nop_in_pdu_s
 	uint32_t ExpCmdSN;
 	uint32_t MaxCmdSN;
 	uint8_t reserved3[12];
-} __attribute__ ((__packed__));
+} __packed;
 
 typedef struct nop_in_pdu_s nop_in_pdu_t;
 
@@ -435,7 +435,7 @@ struct pdu_header_s
 		nop_in_pdu_t nop_in;
 	} p;
 	uint32_t HeaderDigest;
-} __attribute__ ((__packed__));
+} __packed;
 
 typedef struct pdu_header_s pdu_header_t;
 

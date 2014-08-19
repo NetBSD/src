@@ -1,6 +1,6 @@
 dnl  PowerPC-32/VMX and PowerPC-64/VMX mpn_popcount.
 
-dnl  Copyright 2006 Free Software Foundation, Inc.
+dnl  Copyright 2006, 2010 Free Software Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -20,17 +20,13 @@ dnl  along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.
 include(`../config.m4')
 
 C                   cycles/limb
-C 7400,7410 (G4):       2.75
-C 744x,745x (G4+):      2.25
-C 970 (G5):             5.3
-
-C STATUS
-C  * Works for all sizes and alignments.
+C 7400,7410 (G4):       ?
+C 744x,745x (G4+):      1.125
+C 970 (G5):             2.25
 
 C TODO
-C  * Tune the awkward huge n outer loop code.
+C  * Rewrite the awkward huge n outer loop code.
 C  * Two lvx, two vperm, and two vxor could make us a similar hamdist.
-C  * For the 970, a combined VMX+intop approach might be best.
 C  * Compress cnsts table in 64-bit mode, only half the values are needed.
 
 define(`GMP_LIMB_BYTES', eval(GMP_LIMB_BITS/8))
@@ -39,26 +35,11 @@ define(`LIMBS_PER_2VR', eval(32/GMP_LIMB_BYTES))
 
 define(`OPERATION_popcount')
 
-ifdef(`OPERATION_popcount',`
-  define(`func',`mpn_popcount')
-  define(`up',		`r3')
-  define(`n',		`r4')
-  define(`HAM',		`dnl')
-')
-ifdef(`OPERATION_hamdist',`
-  define(`func',`mpn_hamdist')
-  define(`up',		`r3')
-  define(`vp',		`r4')
-  define(`n',		`r5')
-  define(`HAM',		`$1')
-')
+define(`ap',	`r3')
+define(`n',	`r4')
 
-define(`x01010101',`v2')
-define(`x00110011',`v7')
-define(`x00001111',`v10')
-define(`cnt1',`v11')
-define(`cnt2',`v12')
-define(`cnt4',`v13')
+define(`rtab',	`v10')
+define(`cnt4',	`v11')
 
 ifelse(GMP_LIMB_BITS,32,`
 	define(`LIMB32',`	$1')
@@ -85,30 +66,29 @@ ifdef(`HAVE_ABI_mode32',
 C Load various constants into vector registers
 	LEAL(	r11, cnsts)
 	li	r12, 16
-	vspltisb cnt1, 1		C 0x0101...01 used as shift count
-	vspltisb cnt2, 2		C 0x0202...02 used as shift count
 	vspltisb cnt4, 4		C 0x0404...04 used as shift count
-	lvx	x01010101, 0, r11	C 0x3333...33
-	lvx	x00110011, r12, r11	C 0x5555...55
-	vspltisb x00001111, 15		C 0x0f0f...0f
+
+	li	r7, 160
+	lvx	rtab, 0, r11
 
 LIMB64(`lis	r0, LIMBS_CHUNK_THRES	')
 LIMB64(`cmpd	cr7, n, r0		')
 
-	lvx	v0, 0, up
-	addi	r7, r11, 96
-	rlwinm	r6, up, 2,26,29
+	lvx	v0, 0, ap
+	addi	r7, r11, 80
+	rlwinm	r6, ap, 2,26,29
 	lvx	v8, r7, r6
 	vand	v0, v0, v8
 
-LIMB32(`rlwinm	r8, up, 30,30,31	')
-LIMB64(`rlwinm	r8, up, 29,31,31	')
-	add	n, n, r8		C compensate n for rounded down `up'
+LIMB32(`rlwinm	r8, ap, 30,30,31	')
+LIMB64(`rlwinm	r8, ap, 29,31,31	')
+	add	n, n, r8		C compensate n for rounded down `ap'
 
 	vxor	v1, v1, v1
 	li	r8, 0			C grand total count
 
-	vxor	v3, v3, v3		C zero total count
+	vxor	v12, v12, v12		C zero total count
+	vxor	v13, v13, v13		C zero total count
 
 	addic.	n, n, -LIMBS_PER_VR
 	ble	L(sum)
@@ -120,82 +100,61 @@ C For 64-bit machines, handle huge n that would overflow vsum4ubs
 LIMB64(`ble	cr7, L(small)		')
 LIMB64(`addis	r9, n, -LIMBS_PER_CHUNK	') C remaining n
 LIMB64(`lis	n, LIMBS_PER_CHUNK	')
+
+	ALIGN(16)
 L(small):
-
-
 LIMB32(`srwi	r7, n, 3	')	C loop count corresponding to n
 LIMB64(`srdi	r7, n, 2	')	C loop count corresponding to n
 	addi	r7, r7, 1
 	mtctr	r7			C copy n to count register
 	b	L(ent)
 
-	ALIGN(8)
-L(top):	lvx	v0, 0, up
-	li	r7, 128			C prefetch distance
-L(ent):	lvx	v1, r12, up
-	addi	up, up, 32
-	vsr	v4, v0, cnt1
-	vsr	v5, v1, cnt1
-	dcbt	up, r7			C prefetch
-	vand	v8, v4, x01010101
-	vand	v9, v5, x01010101
-	vsububm	v0, v0, v8		C 64 2-bit accumulators (0..2)
-	vsububm	v1, v1, v9		C 64 2-bit accumulators (0..2)
-	vsr	v4, v0, cnt2
-	vsr	v5, v1, cnt2
-	vand	v8, v0, x00110011
-	vand	v9, v1, x00110011
-	vand	v4, v4, x00110011
-	vand	v5, v5, x00110011
-	vaddubm	v0, v4, v8		C 32 4-bit accumulators (0..4)
-	vaddubm	v1, v5, v9		C 32 4-bit accumulators (0..4)
-	vaddubm	v8, v0, v1		C 32 4-bit accumulators (0..8)
-	vsr	v9, v8, cnt4
-	vand	v6, v8, x00001111
-	vand	v9, v9, x00001111
-	vaddubm	v6, v9, v6		C 16 8-bit accumulators (0..16)
-	vsum4ubs v3, v6, v3		C sum 4 x 4 bytes into 4 32-bit fields
+	ALIGN(16)
+L(top):
+	lvx	v0, 0, ap
+L(ent):	lvx	v1, r12, ap
+	addi	ap, ap, 32
+	vsrb	v8, v0, cnt4
+	vsrb	v9, v1, cnt4
+	vperm	v2, rtab, rtab, v0
+	vperm	v3, rtab, rtab, v8
+	vperm	v4, rtab, rtab, v1
+	vperm	v5, rtab, rtab, v9
+	vaddubm	v6, v2, v3
+	vaddubm	v7, v4, v5
+	vsum4ubs v12, v6, v12
+	vsum4ubs v13, v7, v13
 	bdnz	L(top)
 
 	andi.	n, n, eval(LIMBS_PER_2VR-1)
 	beq	L(rt)
 
-	lvx	v0, 0, up
+	lvx	v0, 0, ap
 	vxor	v1, v1, v1
 	cmpwi	n, LIMBS_PER_VR
 	ble	L(sum)
 L(lsum):
 	vor	v1, v0, v0
-	lvx	v0, r12, up
+	lvx	v0, r12, ap
 L(sum):
 LIMB32(`rlwinm	r6, n, 4,26,27	')
 LIMB64(`rlwinm	r6, n, 5,26,26	')
-	addi	r7, r11, 32
+	addi	r7, r11, 16
 	lvx	v8, r7, r6
 	vand	v0, v0, v8
+	vsrb	v8, v0, cnt4
+	vsrb	v9, v1, cnt4
+	vperm	v2, rtab, rtab, v0
+	vperm	v3, rtab, rtab, v8
+	vperm	v4, rtab, rtab, v1
+	vperm	v5, rtab, rtab, v9
+	vaddubm	v6, v2, v3
+	vaddubm	v7, v4, v5
+	vsum4ubs v12, v6, v12
+	vsum4ubs v13, v7, v13
 
-	vsr	v4, v0, cnt1
-	vsr	v5, v1, cnt1
-	vand	v8, v4, x01010101
-	vand	v9, v5, x01010101
-	vsububm	v0, v0, v8		C 64 2-bit accumulators (0..2)
-	vsububm	v1, v1, v9		C 64 2-bit accumulators (0..2)
-	vsr	v4, v0, cnt2
-	vsr	v5, v1, cnt2
-	vand	v8, v0, x00110011
-	vand	v9, v1, x00110011
-	vand	v4, v4, x00110011
-	vand	v5, v5, x00110011
-	vaddubm	v0, v4, v8		C 32 4-bit accumulators (0..4)
-	vaddubm	v1, v5, v9		C 32 4-bit accumulators (0..4)
-	vaddubm	v8, v0, v1		C 32 4-bit accumulators (0..8)
-	vsr	v9, v8, cnt4
-	vand	v6, v8, x00001111
-	vand	v9, v9, x00001111
-	vaddubm	v6, v9, v6		C 16 8-bit accumulators (0..16)
-	vsum4ubs v3, v6, v3		C sum 4 x 4 bytes into 4 32-bit fields
-
-L(rt):
+	ALIGN(16)
+L(rt):	vadduwm	v3, v12, v13
 	li	r7, -16			C FIXME: does all ppc32 and ppc64 ABIs
 	stvx	v3, r7, r1		C FIXME: ...support storing below sp?
 
@@ -210,7 +169,8 @@ L(rt):
 
 C Handle outer loop for huge n.  We inherit cr7 and r0 from above.
 LIMB64(`ble	cr7, L(ret)
-	vxor	v3, v3, v3		C zero total count
+	vxor	v12, v12, v12		C zero total count
+	vxor	v13, v13, v13		C zero total count
 	mr	n, r9
 	cmpd	cr7, n, r0
 	ble	cr7, L(2)
@@ -221,17 +181,16 @@ L(2):	srdi	r7, n, 2		C loop count corresponding to n
 	b	L(top)
 ')
 
+	ALIGN(16)
 L(ret):	mr	r3, r8
 	mtspr	256, r10
 	blr
 EPILOGUE()
 
 DEF_OBJECT(cnsts,16)
-	.byte	0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55
-	.byte	0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x55
-
-	.byte	0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33
-	.byte	0x33,0x33,0x33,0x33,0x33,0x33,0x33,0x33
+C Counts for vperm
+	.byte	0x00,0x01,0x01,0x02,0x01,0x02,0x02,0x03
+	.byte	0x01,0x02,0x02,0x03,0x02,0x03,0x03,0x04
 C Masks for high end of number
 	.byte	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
 	.byte	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff

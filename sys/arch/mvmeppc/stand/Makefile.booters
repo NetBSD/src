@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.12 2011/01/22 19:19:20 joerg Exp $
+#	$NetBSD: Makefile.booters,v 1.12.14.1 2014/08/20 00:03:15 tls Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
@@ -23,6 +23,7 @@ BINDIR= ${MDEC_DIR}
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBCRTI=
 LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
@@ -55,6 +56,8 @@ LIB_SA_DIR=	${.CURDIR}/../libsa
 LIBSA_DIR!=	cd ${LIB_SA_DIR} && ${PRINTOBJDIR}
 LIBSA=		${LIBSA_DIR}/lib/sa/libsa.a
 LIBKERN=	${LIBSA_DIR}/lib/kern/libkern.a
+
+SRTOBJ?= ${LIBSA_DIR}/srt0.o
 
 #WRTVID_BOOT_DIR=  ${.CURDIR}/../wrtvid
 #WRTVID_DIR!=	cd ${WRTVID_BOOT_DIR} && ${PRINTOBJDIR}

@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.17.2.1 2013/06/23 06:20:10 tls Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.17.2.2 2014/08/20 00:03:20 tls Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.17.2.1 2013/06/23 06:20:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.17.2.2 2014/08/20 00:03:20 tls Exp $");
 
 #ifdef ofppc
 #include "gtpci.h"
@@ -168,12 +168,15 @@ canonicalize_bootpath(void)
 	/*
 	 * OF_1.x (at least) always returns addr == 0 for
 	 * SCSI disks (i.e. "/bandit@.../.../sd@0,0").
+	 * also check for .../disk@ which some Adaptec firmware uses
 	 */
 	lastp = strrchr(cbootpath, '/');
 	if (lastp != NULL) {
 		lastp++;
-		if (strncmp(lastp, "sd@", 3) == 0
-		    && strncmp(last, "sd@", 3) == 0)
+		if ((strncmp(lastp, "sd@", 3) == 0
+		     && strncmp(last, "sd@", 3) == 0) ||
+		    (strncmp(lastp, "disk@", 5) == 0
+		     && strncmp(last, "disk@", 5) == 0))
 			strcpy(lastp, last);
 	} else {
 		lastp = cbootpath;

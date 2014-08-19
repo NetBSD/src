@@ -1,5 +1,4 @@
-# Copyright 1988, 1990, 1991, 1992, 1994, 1995, 1996, 1997, 1999, 2002, 2003,
-# 2004, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright 1988-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,10 +15,6 @@
 
 # This file was written by Rob Savoye. (rob@cygnus.com)
 
-if $tracelevel {
-    strace $tracelevel
-}
-
 #
 # test running programs
 #
@@ -30,9 +25,8 @@ if [target_info exists no_long_long] {
     set exec_opts [list debug]
 }
 
-set testfile whatis
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/${testfile}
+standard_testfile .c
+
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable $exec_opts] != "" } {
      untested whatis.exp
      return -1
@@ -40,16 +34,13 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable $exe
 
 # Create and source the file that provides information about the compiler
 # used to compile the test case.
-if [get_compiler_info ${binfile}] {
-    return -1;
+if [get_compiler_info] {
+    return -1
 }
 
 # Start with a fresh gdb.
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load $binfile
+clean_restart $binfile
 
 # Define a procedure to set up an xfail for all targets that put out a
 # `long' type as an `int' type.
@@ -469,3 +460,45 @@ gdb_test "whatis char_addr" \
 gdb_test "whatis a_char_addr" \
     "type = char_addr" \
     "whatis applied to variable defined by typedef"
+
+# Regression tests for PR 9514.
+
+gdb_test "whatis void (**)()" \
+  "type = void \\(\\*\\*\\)\\(\\)" \
+  "whatis applied to pointer to pointer to function"
+
+gdb_test "whatis void (** const)()" \
+  "type = void \\(\\*\\* const\\)\\(\\)" \
+  "whatis applied to const pointer to pointer to function"
+
+gdb_test "whatis void (* const *)()" \
+  "type = void \\(\\* const \\*\\)\\(\\)" \
+  "whatis applied to pointer to const pointer to function"
+
+gdb_test "whatis int *(*)()" \
+    "type = int \\*\\(\\*\\)\\(\\)" \
+    "whatis applied to pointer to function returning pointer to int"
+
+gdb_test "whatis int *(**)()" \
+    "type = int \\*\\(\\*\\*\\)\\(\\)" \
+    "whatis applied to pointer to pointer to function returning pointer to int"
+
+gdb_test "whatis char (*(*)())\[23\]" \
+    "type = char \\(\\*\\(\\*\\)\\(\\)\\)\\\[23\\\]" \
+    "whatis applied to pointer to function returning pointer to array"
+
+gdb_test "whatis int (*)(int, int)" \
+    "type = int \\(\\*\\)\\(int, int\\)" \
+    "whatis applied to pointer to function taking int,int and returning int"
+
+gdb_test "whatis int (*)(const int *, ...)" \
+    "type = int \\(\\*\\)\\(const int \\*, \\.\\.\\.\\)" \
+    "whatis applied to pointer to function taking const int ptr and varargs and returning int"
+
+gdb_test "whatis int (*)(void, int, int)" \
+    "parameter types following 'void'" \
+    "whatis applied to function with types trailing 'void'"
+
+gdb_test "whatis int (*)(int, void, int)" \
+    "'void' invalid as parameter type" \
+    "whatis applied to function with 'void' parameter type"

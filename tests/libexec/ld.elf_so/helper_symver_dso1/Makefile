@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/06/25 05:45:13 nonaka Exp $
+# $NetBSD: Makefile,v 1.1.8.1 2014/08/20 00:04:51 tls Exp $
 
 .include <bsd.own.mk>
 
@@ -21,3 +21,4 @@ FILESDIR=	${TESTSBASE}/libexec/ld.elf_so/h_helper_symver_dso1
 LDFLAGS.lib${LIB} += -Wl,--version-script=${.CURDIR}/h_helper_symver_dso1.map
 
 .include <bsd.lib.mk>
+

@@ -1,6 +1,6 @@
 /* Test case for hand function calls in multi-threaded program.
 
-   Copyright 2008, 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2008-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

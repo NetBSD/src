@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.78.2.2 2013/06/23 06:20:26 tls Exp $	*/
+/*	$NetBSD: key.c,v 1.78.2.3 2014/08/20 00:04:36 tls Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.78.2.2 2013/06/23 06:20:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.78.2.3 2014/08/20 00:04:36 tls Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -329,9 +329,9 @@ MALLOC_DEFINE(M_SECA, "key mgmt", "security associations, key management");
 #else
 #define KMALLOC(p, t, n) \
 do { \
-	((p) = (t)malloc((unsigned long)(n), M_SECA, M_NOWAIT));             \
+	((p) = malloc((unsigned long)(n), M_SECA, M_NOWAIT));             \
 	printf("%s %d: %p <- KMALLOC(%s, %d)\n",                             \
-		__FILE__, __LINE__, (p), #t, n);                             \
+	    __FILE__, __LINE__, (p), #t, n);                             	\
 } while (0)
 
 #define KFREE(p)                                                             \
@@ -597,7 +597,7 @@ key_allocsp(const struct secpolicyindex *spidx, u_int dir, const char* where, in
 		("key_allocsp: invalid direction %u", dir));
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_allocsp from %s:%u\n", where, tag));
+		printf("DP %s from %s:%u\n", __func__, where, tag));
 
 	/* get a SP entry */
 	s = splsoftnet();	/*called from softclock()*/
@@ -628,8 +628,8 @@ found:
 	splx(s);
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_allocsp return SP:%p (ID=%u) refcnt %u\n",
-			sp, sp ? sp->id : 0, sp ? sp->refcnt : 0));
+		printf("DP %s return SP:%p (ID=%u) refcnt %u\n", __func__,
+		    sp, sp ? sp->id : 0, sp ? sp->refcnt : 0));
 	return sp;
 }
 
@@ -654,7 +654,7 @@ key_allocsp2(u_int32_t spi,
 		("key_allocsp2: invalid direction %u", dir));
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_allocsp2 from %s:%u\n", where, tag));
+		printf("DP %s from %s:%u\n", __func__, where, tag));
 
 	/* get a SP entry */
 	s = splsoftnet();	/*called from softclock()*/
@@ -692,8 +692,8 @@ found:
 	splx(s);
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_allocsp2 return SP:%p (ID=%u) refcnt %u\n",
-			sp, sp ? sp->id : 0, sp ? sp->refcnt : 0));
+		printf("DP %s return SP:%p (ID=%u) refcnt %u\n", __func__,
+		    sp, sp ? sp->id : 0, sp ? sp->refcnt : 0));
 	return sp;
 }
 
@@ -715,7 +715,7 @@ key_gettunnel(const struct sockaddr *osrc,
 	struct secpolicyindex spidx;
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_gettunnel from %s:%u\n", where, tag));
+		printf("DP %s from %s:%u\n", __func__, where, tag));
 
 	if (isrc->sa_family != idst->sa_family) {
 		ipseclog((LOG_ERR, "protocol family mismatched %d != %d\n.",
@@ -769,8 +769,8 @@ found:
 	splx(s);
 done:
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_gettunnel return SP:%p (ID=%u) refcnt %u\n",
-			sp, sp ? sp->id : 0, sp ? sp->refcnt : 0));
+		printf("DP %s return SP:%p (ID=%u) refcnt %u\n", __func__,
+		    sp, sp ? sp->id : 0, sp ? sp->refcnt : 0));
 	return sp;
 }
 
@@ -1050,9 +1050,8 @@ key_do_allocsa_policy(struct secashead *sah, u_int state)
 	if (candidate) {
 		SA_ADDREF(candidate);
 		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-			printf("DP allocsa_policy cause "
-				"refcnt++:%d SA:%p\n",
-				candidate->refcnt, candidate));
+			printf("DP %s cause refcnt++:%d SA:%p\n", __func__,
+			    candidate->refcnt, candidate));
 	}
 	return candidate;
 }
@@ -1102,7 +1101,7 @@ key_allocsa(
 	IPSEC_ASSERT(dst != NULL, ("key_allocsa: null dst address"));
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_allocsa from %s:%u\n", where, tag));
+		printf("DP %s from %s:%u\n", __func__, where, tag));
 
 	/*
 	 * XXX IPCOMP case
@@ -1178,8 +1177,8 @@ done:
 	splx(s);
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_allocsa return SA:%p; refcnt %u\n",
-			sav, sav ? sav->refcnt : 0));
+		printf("DP %s return SA:%p; refcnt %u\n", __func__,
+		    sav, sav ? sav->refcnt : 0));
 	return sav;
 }
 
@@ -1197,8 +1196,8 @@ _key_freesp(struct secpolicy **spp, const char* where, int tag)
 	SP_DELREF(sp);
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_freesp SP:%p (ID=%u) from %s:%u; refcnt now %u\n",
-			sp, sp->id, where, tag, sp->refcnt));
+		printf("DP %s SP:%p (ID=%u) from %s:%u; refcnt now %u\n",
+		    __func__, sp, sp->id, where, tag, sp->refcnt));
 
 	if (sp->refcnt == 0) {
 		*spp = NULL;
@@ -1225,8 +1224,10 @@ key_freeso(struct socket *so)
 		/* Does it have a PCB ? */
 		if (pcb == NULL)
 			return;
-		key_freesp_so(&pcb->inp_sp->sp_in);
-		key_freesp_so(&pcb->inp_sp->sp_out);
+
+		struct inpcbpolicy *sp = pcb->inp_sp;
+		key_freesp_so(&sp->sp_in);
+		key_freesp_so(&sp->sp_out);
 	    }
 		break;
 #endif
@@ -1235,12 +1236,13 @@ key_freeso(struct socket *so)
 	    {
 #ifdef HAVE_NRL_INPCB
 		struct inpcb *pcb  = sotoinpcb(so);
+		struct inpcbpolicy *sp = pcb->inp_sp;
 
 		/* Does it have a PCB ? */
 		if (pcb == NULL)
 			return;
-		key_freesp_so(&pcb->inp_sp->sp_in);
-		key_freesp_so(&pcb->inp_sp->sp_out);
+		key_freesp_so(&sp->sp_in);
+		key_freesp_so(&sp->sp_out);
 #else
 		struct in6pcb *pcb  = sotoin6pcb(so);
 
@@ -1289,9 +1291,9 @@ key_freesav(struct secasvar **psav, const char* where, int tag)
 	SA_DELREF(sav);
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_freesav SA:%p (SPI %lu) from %s:%u; refcnt now %u\n",
-			sav, (u_long)ntohl(sav->spi),
-		       where, tag, sav->refcnt));
+		printf("DP %s SA:%p (SPI %lu) from %s:%u; refcnt now %u\n",
+		    __func__, sav, (u_long)ntohl(sav->spi), where, tag,
+		    sav->refcnt));
 
 	if (sav->refcnt == 0) {
 		*psav = NULL;
@@ -1406,8 +1408,8 @@ key_newsp(const char* where, int tag)
 	}
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_newsp from %s:%u return SP:%p\n",
-			where, tag, newsp));
+		printf("DP %s from %s:%u return SP:%p\n", __func__,
+		    where, tag, newsp));
 	return newsp;
 }
 
@@ -1771,7 +1773,7 @@ key_gather_mbuf(struct mbuf *m, const struct sadb_msghdr *mhp,
 	}
 	va_end(ap);
 
-	if ((result->m_flags & M_PKTHDR) != 0) {
+	if (result && (result->m_flags & M_PKTHDR) != 0) {
 		result->m_pkthdr.len = 0;
 		for (n = result; n; n = n->m_next)
 			result->m_pkthdr.len += n->m_len;
@@ -2006,6 +2008,7 @@ key_spdadd(struct socket *so, struct mbuf *m,
 	xpl->sadb_x_policy_id = newsp->id;
 
 	m_freem(m);
+	key_update_used();
 	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
     }
 }
@@ -2138,6 +2141,7 @@ key_spddelete(struct socket *so, struct mbuf *m,
 	newmsg->sadb_msg_len = PFKEY_UNIT64(n->m_pkthdr.len);
 
 	m_freem(m);
+	key_update_used();
 	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
     }
 }
@@ -2621,8 +2625,6 @@ key_nat_map(struct socket *so, struct mbuf *m,
 	raddr = (struct sadb_address *)mhp->ext[SADB_X_EXT_NAT_T_OAR];
 	frag = (struct sadb_x_nat_t_frag *) mhp->ext[SADB_X_EXT_NAT_T_FRAG];
 
-	printf("sadb_nat_map called\n");
-
 	/*
 	 * XXX handle that, it should also contain a SA, or anything
 	 * that enable to update the SA information.
@@ -3001,8 +3003,8 @@ key_newsav(struct mbuf *m, const struct sadb_msghdr *mhp,
 			secasvar, chain);
 done:
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP key_newsav from %s:%u return SP:%p\n",
-			where, tag, newsav));
+		printf("DP %s from %s:%u return SP:%p\n", __func__,
+		    where, tag, newsav));
 
 	return newsav;
 }
@@ -3030,9 +3032,11 @@ key_delsav(struct secasvar *sav)
 		sav->tdb_xform = NULL;
 	} else {
 		if (sav->key_auth != NULL)
-			explicit_bzero(_KEYBUF(sav->key_auth), _KEYLEN(sav->key_auth));
+			explicit_memset(_KEYBUF(sav->key_auth), 0,
+			    _KEYLEN(sav->key_auth));
 		if (sav->key_enc != NULL)
-			explicit_bzero(_KEYBUF(sav->key_enc), _KEYLEN(sav->key_enc));
+			explicit_memset(_KEYBUF(sav->key_enc), 0,
+			    _KEYLEN(sav->key_enc));
 	}
 	if (sav->key_auth != NULL) {
 		KFREE(sav->key_auth);
@@ -3777,7 +3781,7 @@ key_portfromsaddr(const union sockaddr_union *saddr)
 	}
 #endif
 	default:
-		printf("key_portfromsaddr: unexpected address family\n");
+		printf("%s: unexpected address family\n", __func__);
 		port = 0;
 		break;
 	}
@@ -3804,8 +3808,8 @@ key_porttosaddr(union sockaddr_union *saddr, u_int16_t port)
 	}
 #endif
 	default:
-		printf("key_porttosaddr: unexpected address family %d\n",
-			saddr->sa.sa_family);
+		printf("%s: unexpected address family %d\n", __func__,
+		    saddr->sa.sa_family);
 		break;
 	}
 
@@ -3830,7 +3834,7 @@ key_checksalen(const union sockaddr_union *saddr)
                 break;
 #endif
         default:
-                printf("key_checksalen: unexpected sa_family %d\n",
+                printf("%s: unexpected sa_family %d\n", __func__,
                     saddr->sa.sa_family);
                 return -1;
                 break;
@@ -5078,11 +5082,93 @@ static int
 key_handle_natt_info(struct secasvar *sav,
       		     const struct sadb_msghdr *mhp)
 {
+	const char *msg = "?" ;
+	struct sadb_x_nat_t_type *type;
+	struct sadb_x_nat_t_port *sport, *dport;
+	struct sadb_address *iaddr, *raddr;
+	struct sadb_x_nat_t_frag *frag;
 
+	if (mhp->ext[SADB_X_EXT_NAT_T_TYPE] == NULL ||
+	    mhp->ext[SADB_X_EXT_NAT_T_SPORT] == NULL ||
+	    mhp->ext[SADB_X_EXT_NAT_T_DPORT] == NULL)
+		return 0;
+
+	if (mhp->extlen[SADB_X_EXT_NAT_T_TYPE] < sizeof(*type)) {
+		msg = "TYPE";
+		goto bad;
+	}
+
+	if (mhp->extlen[SADB_X_EXT_NAT_T_SPORT] < sizeof(*sport)) {
+		msg = "SPORT";
+		goto bad;
+	}
+
+	if (mhp->extlen[SADB_X_EXT_NAT_T_DPORT] < sizeof(*dport)) {
+		msg = "DPORT";
+		goto bad;
+	}
+
+	if (mhp->ext[SADB_X_EXT_NAT_T_OAI] != NULL) {
+		ipseclog((LOG_DEBUG,"%s: NAT-T OAi present\n", __func__));
+		if (mhp->extlen[SADB_X_EXT_NAT_T_OAI] < sizeof(*iaddr)) {
+			msg = "OAI";
+			goto bad;
+		}
+	}
+
+	if (mhp->ext[SADB_X_EXT_NAT_T_OAR] != NULL) {
+		ipseclog((LOG_DEBUG,"%s: NAT-T OAr present\n", __func__));
+		if (mhp->extlen[SADB_X_EXT_NAT_T_OAR] < sizeof(*raddr)) {
+			msg = "OAR";
+			goto bad;
+		}
+	}
+
+	if (mhp->ext[SADB_X_EXT_NAT_T_FRAG] != NULL) {
+	    if (mhp->extlen[SADB_X_EXT_NAT_T_FRAG] < sizeof(*frag)) {
+		    msg = "FRAG";
+		    goto bad;
+	    }
+	}
+
+	type = (struct sadb_x_nat_t_type *)mhp->ext[SADB_X_EXT_NAT_T_TYPE];
+	sport = (struct sadb_x_nat_t_port *)mhp->ext[SADB_X_EXT_NAT_T_SPORT];
+	dport = (struct sadb_x_nat_t_port *)mhp->ext[SADB_X_EXT_NAT_T_DPORT];
+	iaddr = (struct sadb_address *)mhp->ext[SADB_X_EXT_NAT_T_OAI];
+	raddr = (struct sadb_address *)mhp->ext[SADB_X_EXT_NAT_T_OAR];
+	frag = (struct sadb_x_nat_t_frag *)mhp->ext[SADB_X_EXT_NAT_T_FRAG];
+
+	ipseclog((LOG_DEBUG, "%s: type %d, sport = %d, dport = %d\n",
+	    __func__, type->sadb_x_nat_t_type_type,
+	    ntohs(sport->sadb_x_nat_t_port_port),
+	    ntohs(dport->sadb_x_nat_t_port_port)));
+
+	sav->natt_type = type->sadb_x_nat_t_type_type;
+	key_porttosaddr(&sav->sah->saidx.src,
+	    sport->sadb_x_nat_t_port_port);
+	key_porttosaddr(&sav->sah->saidx.dst,
+	    dport->sadb_x_nat_t_port_port);
+	if (frag)
+		sav->esp_frag = frag->sadb_x_nat_t_frag_fraglen;
+	else
+		sav->esp_frag = IP_MAXPACKET;
+
+	return 0;
+bad:
+	ipseclog((LOG_DEBUG, "%s: invalid message %s\n", __func__, msg));
+	__USE(msg);
+	return -1;
+}
+
+/* Just update the IPSEC_NAT_T ports if present */
+static int
+key_set_natt_ports(union sockaddr_union *src, union sockaddr_union *dst,
+      		     const struct sadb_msghdr *mhp)
+{
 	if (mhp->ext[SADB_X_EXT_NAT_T_OAI] != NULL)
-		ipseclog((LOG_DEBUG,"update: NAT-T OAi present\n"));
+		ipseclog((LOG_DEBUG,"%s: NAT-T OAi present\n", __func__));
 	if (mhp->ext[SADB_X_EXT_NAT_T_OAR] != NULL)
-		ipseclog((LOG_DEBUG,"update: NAT-T OAr present\n"));
+		ipseclog((LOG_DEBUG,"%s: NAT-T OAr present\n", __func__));
 
 	if ((mhp->ext[SADB_X_EXT_NAT_T_TYPE] != NULL) &&
 	    (mhp->ext[SADB_X_EXT_NAT_T_SPORT] != NULL) &&
@@ -5090,32 +5176,12 @@ key_handle_natt_info(struct secasvar *sav,
 		struct sadb_x_nat_t_type *type;
 		struct sadb_x_nat_t_port *sport;
 		struct sadb_x_nat_t_port *dport;
-		struct sadb_address *iaddr, *raddr;
-		struct sadb_x_nat_t_frag *frag;
 
 		if ((mhp->extlen[SADB_X_EXT_NAT_T_TYPE] < sizeof(*type)) ||
 		    (mhp->extlen[SADB_X_EXT_NAT_T_SPORT] < sizeof(*sport)) ||
 		    (mhp->extlen[SADB_X_EXT_NAT_T_DPORT] < sizeof(*dport))) {
-			ipseclog((LOG_DEBUG, "key_update: "
-			    "invalid message.\n"));
-			return -1;
-		}
-
-		if ((mhp->ext[SADB_X_EXT_NAT_T_OAI] != NULL) &&
-		    (mhp->extlen[SADB_X_EXT_NAT_T_OAI] < sizeof(*iaddr))) {
-			ipseclog((LOG_DEBUG, "key_update: invalid message\n"));
-			return -1;
-		}
-
-		if ((mhp->ext[SADB_X_EXT_NAT_T_OAR] != NULL) &&
-		    (mhp->extlen[SADB_X_EXT_NAT_T_OAR] < sizeof(*raddr))) {
-			ipseclog((LOG_DEBUG, "key_update: invalid message\n"));
-			return -1;
-		}
-
-		if ((mhp->ext[SADB_X_EXT_NAT_T_FRAG] != NULL) &&
-		    (mhp->extlen[SADB_X_EXT_NAT_T_FRAG] < sizeof(*frag))) {
-			ipseclog((LOG_DEBUG, "key_update: invalid message\n"));
+			ipseclog((LOG_DEBUG, "%s: invalid message\n",
+			    __func__));
 			return -1;
 		}
 
@@ -5125,73 +5191,14 @@ key_handle_natt_info(struct secasvar *sav,
 		    mhp->ext[SADB_X_EXT_NAT_T_SPORT];
 		dport = (struct sadb_x_nat_t_port *)
 		    mhp->ext[SADB_X_EXT_NAT_T_DPORT];
-		iaddr = (struct sadb_address *)
-		    mhp->ext[SADB_X_EXT_NAT_T_OAI];
-		raddr = (struct sadb_address *)
-		    mhp->ext[SADB_X_EXT_NAT_T_OAR];
-		frag = (struct sadb_x_nat_t_frag *)
-		    mhp->ext[SADB_X_EXT_NAT_T_FRAG];
 
-		ipseclog((LOG_DEBUG,
-			"key_update: type %d, sport = %d, dport = %d\n",
-			type->sadb_x_nat_t_type_type,
-			sport->sadb_x_nat_t_port_port,
-			dport->sadb_x_nat_t_port_port));
+		key_porttosaddr(src, sport->sadb_x_nat_t_port_port);
+		key_porttosaddr(dst, dport->sadb_x_nat_t_port_port);
 
-		if (type)
-			sav->natt_type = type->sadb_x_nat_t_type_type;
-		if (sport)
-			key_porttosaddr(&sav->sah->saidx.src,
-			    sport->sadb_x_nat_t_port_port);
-		if (dport)
-			key_porttosaddr(&sav->sah->saidx.dst,
-			    dport->sadb_x_nat_t_port_port);
-		if (frag)
-			sav->esp_frag = frag->sadb_x_nat_t_frag_fraglen;
-		else
-			sav->esp_frag = IP_MAXPACKET;
-	}
-
-	return 0;
-}
-
-/* Just update the IPSEC_NAT_T ports if present */
-static int
-key_set_natt_ports(union sockaddr_union *src, union sockaddr_union *dst,
-      		     const struct sadb_msghdr *mhp)
-{
-
-	if (mhp->ext[SADB_X_EXT_NAT_T_OAI] != NULL)
-		ipseclog((LOG_DEBUG,"update: NAT-T OAi present\n"));
-	if (mhp->ext[SADB_X_EXT_NAT_T_OAR] != NULL)
-		ipseclog((LOG_DEBUG,"update: NAT-T OAr present\n"));
-
-	if ((mhp->ext[SADB_X_EXT_NAT_T_TYPE] != NULL) &&
-	    (mhp->ext[SADB_X_EXT_NAT_T_SPORT] != NULL) &&
-	    (mhp->ext[SADB_X_EXT_NAT_T_DPORT] != NULL)) {
-		struct sadb_x_nat_t_type *type;
-		struct sadb_x_nat_t_port *sport;
-		struct sadb_x_nat_t_port *dport;
-
-		if ((mhp->extlen[SADB_X_EXT_NAT_T_TYPE] < sizeof(*type)) ||
-		    (mhp->extlen[SADB_X_EXT_NAT_T_SPORT] < sizeof(*sport)) ||
-		    (mhp->extlen[SADB_X_EXT_NAT_T_DPORT] < sizeof(*dport))) {
-			ipseclog((LOG_DEBUG, "key_update: "
-			    "invalid message.\n"));
-			return -1;
-		}
-
-		sport = (struct sadb_x_nat_t_port *)
-		    mhp->ext[SADB_X_EXT_NAT_T_SPORT];
-		dport = (struct sadb_x_nat_t_port *)
-		    mhp->ext[SADB_X_EXT_NAT_T_DPORT];
-
-		if (sport)
-			key_porttosaddr(src,
-			    sport->sadb_x_nat_t_port_port);
-		if (dport)
-			key_porttosaddr(dst,
-			    dport->sadb_x_nat_t_port_port);
+		ipseclog((LOG_DEBUG, "%s: type %d, sport = %d, dport = %d\n",
+		    __func__, type->sadb_x_nat_t_type_type,
+		    ntohs(sport->sadb_x_nat_t_port_port),
+		    ntohs(dport->sadb_x_nat_t_port_port)));
 	}
 
 	return 0;
@@ -5382,9 +5389,8 @@ key_getsavbyseq(struct secashead *sah, u_int32_t seq)
 		if (sav->seq == seq) {
 			SA_ADDREF(sav);
 			KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-				printf("DP key_getsavbyseq cause "
-					"refcnt++:%d SA:%p\n",
-					sav->refcnt, sav));
+				printf("DP %s cause refcnt++:%d SA:%p\n",
+				    __func__, sav->refcnt, sav));
 			return sav;
 		}
 	}
@@ -6999,7 +7005,6 @@ key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp, pid_t pid)
 	u_int8_t state;
 	int cnt;
 	struct mbuf *m, *n, *prev;
-	int totlen;
 
 	*lenp = 0;
 
@@ -7059,7 +7064,6 @@ key_setdump_chain(u_int8_t req_satype, int *errorp, int *lenp, pid_t pid)
 					return (NULL);
 				}
 
-				totlen += n->m_pkthdr.len;
 				if (!m)
 					m = n;
 				else
@@ -7263,7 +7267,6 @@ key_parse(struct mbuf *m, struct socket *so)
 {
 	struct sadb_msg *msg;
 	struct sadb_msghdr mh;
-	u_int orglen;
 	int error;
 	int target;
 
@@ -7283,7 +7286,6 @@ key_parse(struct mbuf *m, struct socket *so)
 			return ENOBUFS;
 	}
 	msg = mtod(m, struct sadb_msg *);
-	orglen = PFKEY_UNUNIT64(msg->sadb_msg_len);
 	target = KEY_SENDUP_ONE;
 
 	if ((m->m_flags & M_PKTHDR) == 0 ||
@@ -8086,6 +8088,36 @@ key_setspddump(int *errorp, pid_t pid)
 	return (m);
 }
 
+int
+key_get_used(void) {
+	return !LIST_EMPTY(&sptree[IPSEC_DIR_INBOUND]) ||
+	    !LIST_EMPTY(&sptree[IPSEC_DIR_OUTBOUND]);
+}
+
+void
+key_update_used(void)
+{
+	switch (ipsec_enabled) {
+	default:
+	case 0:
+#ifdef notyet
+		/* XXX: racy */
+		ipsec_used = 0;
+#endif
+		break;
+	case 1:
+#ifndef notyet
+		/* XXX: racy */
+		if (!ipsec_used)
+#endif
+		ipsec_used = key_get_used();
+		break;
+	case 2:
+		ipsec_used = 1;
+		break;
+	}
+}
+
 static int
 sysctl_net_key_dumpsa(SYSCTLFN_ARGS)
 {
@@ -8211,11 +8243,6 @@ SYSCTL_SETUP(sysctl_net_keyv2_setup, "sysctl net.keyv2 subtree setup")
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, IPSEC_PFKEY_NAME, NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, IPSEC_PFKEY, CTL_EOL);
@@ -8296,12 +8323,6 @@ SYSCTL_SETUP(sysctl_net_keyv2_setup, "sysctl net.keyv2 subtree setup")
 SYSCTL_SETUP(sysctl_net_key_compat_setup, "sysctl net.key subtree setup for IPSEC")
 {
 
-	/* Make sure net.key exists before we register nodes underneath it. */
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "key", NULL,

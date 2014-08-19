@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_blist.c,v 1.10.14.1 2013/02/25 00:29:53 tls Exp $	*/
+/*	$NetBSD: subr_blist.c,v 1.10.14.2 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 Matthew Dillon.  All Rights Reserved.
@@ -31,7 +31,7 @@
  *
  *	This module implements a general bitmap allocator/deallocator.  The
  *	allocator eats around 2 bits per 'block'.  The module does not 
- *	try to interpret the meaning of a 'block' other then to return 
+ *	try to interpret the meaning of a 'block' other than to return 
  *	BLIST_NONE on an allocation failure.
  *
  *	A radix tree is used to maintain the bitmap.  Two radix constants are
@@ -59,7 +59,7 @@
  *	the memory subsystem.  In contrast, the rlist code may allocate memory 
  *	on an rlist_free() call.  The non-blocking features of the blist code
  *	are used to great advantage in the swap code (vm/nswap_pager.c).  The
- *	rlist code uses a little less overall memory then the blist code (but
+ *	rlist code uses a little less overall memory than the blist code (but
  *	due to swap interleaving not all that much less), but the blist code 
  *	scales much, much better.
  *
@@ -74,7 +74,7 @@
  *	to cover the number of blocks requested at creation time even if it
  *	must be encompassed in larger root-node radix.
  *
- *	NOTE: the allocator cannot currently allocate more then 
+ *	NOTE: the allocator cannot currently allocate more than 
  *	BLIST_BMAP_RADIX blocks per call.  It will panic with 'allocation too 
  *	large' if you try.  This is an area that could use improvement.  The 
  *	radix is large enough that this restriction does not effect the swap 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_blist.c,v 1.10.14.1 2013/02/25 00:29:53 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_blist.c,v 1.10.14.2 2014/08/20 00:04:29 tls Exp $");
 #if 0
 __FBSDID("$FreeBSD: src/sys/kern/subr_blist.c,v 1.17 2004/06/04 04:03:25 alc Exp $");
 #endif
@@ -174,7 +174,7 @@ static void blst_radix_print(blmeta_t *scan, blist_blkno_t blk,
  * blist_create() - create a blist capable of handling up to the specified
  *		    number of blocks
  *
- *	blocks must be greater then 0
+ *	blocks must be greater than 0
  *
  *	The smallest blist consists of a single leaf node capable of 
  *	managing BLIST_BMAP_RADIX blocks.
@@ -868,7 +868,7 @@ blst_meta_fill(
  *
  *	Initialize our meta structures and bitmaps and calculate the exact
  *	amount of space required to manage 'count' blocks - this space may
- *	be considerably less then the calculated radix due to the large
+ *	be considerably less than the calculated radix due to the large
  *	RADIX values we use.
  */
 

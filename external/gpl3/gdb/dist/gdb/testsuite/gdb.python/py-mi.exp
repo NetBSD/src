@@ -1,4 +1,4 @@
-# Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+# Copyright (C) 2008-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,11 +24,10 @@ if [mi_gdb_start] {
     continue
 }
 
-set testfile "py-prettyprint"
-set srcfile ${testfile}.c
-set binfile ${objdir}/${subdir}/py-mi
+standard_testfile py-prettyprint.c
+set pyfile py-prettyprint.py
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-DMI}] != "" } {
-    untested mi2-var-child.exp
+    untested ${testfile}.exp
     return -1
 }
 
@@ -43,14 +42,14 @@ if {[lsearch -exact [mi_get_features] python] < 0} {
 
 mi_runto main
 
-set remote_python_file [remote_download host ${srcdir}/${subdir}/${testfile}.py]
+set remote_python_file [gdb_remote_download host ${srcdir}/${subdir}/${pyfile}]
 
-mi_gdb_test "python execfile ('${remote_python_file}')" ""
+mi_gdb_test "python exec (open ('${remote_python_file}').read ())" ""
 
-mi_continue_to_line [gdb_get_line_number {MI breakpoint here} ${testfile}.c] \
+mi_continue_to_line [gdb_get_line_number {MI breakpoint here} ${srcfile}] \
   "step to breakpoint"
 
-mi_create_dynamic_varobj container c \
+mi_create_floating_varobj container c \
   "create container varobj, no pretty-printing"
 
 mi_list_varobj_children container {
@@ -61,7 +60,7 @@ mi_list_varobj_children container {
 
 mi_delete_varobj container "delete varobj"
 
-mi_create_dynamic_varobj nscont nstype \
+mi_create_floating_varobj nscont nstype \
   "create nscont varobj, no pretty-printing"
 
 mi_list_varobj_children nscont {
@@ -88,7 +87,9 @@ mi_gdb_test "-var-update string" \
     "\\^done,changelist=\\\[{name=\"string\",in_scope=\"true\",type_changed=\"false\",dynamic=\"1\",has_more=\"0\"}\\\]" \
     "update string varobj after assignment"
 
-mi_create_dynamic_varobj container c \
+# The "elements" field of "c" is still empty, so the attribute
+# "has_more" is expected to be zero.
+mi_create_dynamic_varobj container c 0 \
   "create container varobj"
 
 mi_list_varobj_children container {
@@ -183,7 +184,7 @@ mi_varobj_update_dynamic container \
   "update after next with restricted range" {
       type_changed false new_num_children 1 dynamic 1 has_more 1
   } {
-      { name {container.\[0\]} in_scope true type_changed false dynamic 1 has_more 0 }
+      { name {container.\[0\]} in_scope true type_changed false has_more 0 }
   } {
   }
 
@@ -203,7 +204,7 @@ mi_next "next over update 5"
 
 # Regression test: examine an object that has no children, then update
 # it to ensure that we don't print the children.
-mi_create_dynamic_varobj container2 c2 \
+mi_create_dynamic_varobj container2 c2 0 \
   "create second container varobj"
 
 mi_gdb_test "-var-update container2" \
@@ -221,10 +222,10 @@ mi_varobj_update_dynamic container2 \
     } {} {}
 
 mi_continue_to_line \
-    [gdb_get_line_number {MI outer breakpoint here} ${testfile}.c] \
+    [gdb_get_line_number {MI outer breakpoint here} ${srcfile}] \
     "step to outer breakpoint"
 
-mi_create_dynamic_varobj outer outer \
+mi_create_dynamic_varobj outer outer 1 \
   "create outer varobj"
 
 mi_list_varobj_children outer {
@@ -240,21 +241,21 @@ mi_list_varobj_children outer.s {
 mi_next "next over outer update"
 
 mi_gdb_test "-var-update outer" \
-  ".done,changelist=.{name=\"outer.s.a\",in_scope=\"true\",type_changed=\"false\",dynamic=\"1\",has_more=\"0\"}." \
+  ".done,changelist=.{name=\"outer.s.a\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"}." \
   "update after updating element of outer"
 
 mi_continue_to_line \
-    [gdb_get_line_number {Another MI breakpoint} ${testfile}.c] \
+    [gdb_get_line_number {Another MI breakpoint} ${srcfile}] \
     "step to second breakpoint"
 
 mi_varobj_update_with_type_change container int 0 "update after type change"
 
 
 mi_continue_to_line \
-    [gdb_get_line_number {break to inspect struct and union} ${testfile}.c] \
+    [gdb_get_line_number {break to inspect struct and union} ${srcfile}] \
     "step to outer breakpoint"
 
-mi_create_dynamic_varobj nscont nstype \
+mi_create_dynamic_varobj nscont nstype 1 \
   "create nstype varobj"
 
 mi_list_varobj_children nscont {
@@ -276,16 +277,49 @@ mi_gdb_test "-var-set-visualizer nscont gdb.default_visualizer" \
 
 mi_gdb_test "python exception_flag = True" ""
 
-mi_create_dynamic_varobj nstype2 nstype2 \
+mi_create_dynamic_varobj nstype2 nstype2 1 \
   "create nstype2 varobj"
 
 mi_list_varobj_children nstype2 {
     { {nstype2.<error at 0>} {<error at 0>} 6 {char \[6\]} }
 } "list children after setting exception flag"
 
+mi_create_varobj me me \
+  "create me varobj"
+
+mi_gdb_test "-var-evaluate-expression me" \
+	"\\^done,value=\"<error reading variable: Cannot access memory.>.*\"" \
+	"evaluate me varobj"
+
+# Regression test for python/14836.
+mi_create_dynamic_varobj children_as_list children_as_list 1 \
+    "printer whose children are returned as a list"
+
+# Regression test for bug 14741.
+mi_continue_to_line \
+    [gdb_get_line_number {breakpoint bug 14741} ${srcfile}] \
+    "step to breakpoint for bug 14741"
+
+mi_create_dynamic_varobj c c 1 \
+  "create varobj for c"
+
+mi_gdb_test "-var-set-visualizer c ArrayPrinter" \
+  "\\^done" \
+  "choose array visualizer for c"
+
+mi_list_varobj_children c {
+    { {c.\[0\]} {\[0\]} 0 int }
+} "list children of c"
+
+mi_next "next over change of array element"
+
+mi_gdb_test "-var-update c" \
+    "\\^done,changelist=\\\[{name=\"c.\\\[0\\\]\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"}\\\]" \
+    "update varobj after element change"
+
 # C++ MI tests
 gdb_exit
-if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}-cxx" \
 	   executable {debug c++ additional_flags=-DMI}] != "" } {
     untested "Couldn't compile ${srcfile} in c++ mode"
     return -1
@@ -296,7 +330,7 @@ if [mi_gdb_start] {
 }
 mi_delete_breakpoints
 mi_gdb_reinitialize_dir $srcdir/$subdir
-mi_gdb_load ${binfile}
+mi_gdb_load ${binfile}-cxx
 
 if {[lsearch -exact [mi_get_features] python] < 0} {
     unsupported "python support is disabled"
@@ -305,7 +339,7 @@ if {[lsearch -exact [mi_get_features] python] < 0} {
 
 mi_runto main
 mi_continue_to_line \
-    [gdb_get_line_number {break to inspect struct and union} ${testfile}.c] \
+    [gdb_get_line_number {break to inspect struct and union} ${srcfile}] \
     "step to breakpoint"
 
 # Test python/12531.  Install visualizer on a cplus_fake_child.

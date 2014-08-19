@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.61 2012/08/15 00:16:06 joerg Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.61.2.1 2014/08/20 00:05:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.61 2012/08/15 00:16:06 joerg Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.61.2.1 2014/08/20 00:05:10 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,7 @@ __RCSID("$NetBSD: nfsd.c,v 1.61 2012/08/15 00:16:06 joerg Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
+#include <paths.h>
 #include <pwd.h>
 #include <pthread.h>
 #include <signal.h>
@@ -249,6 +250,124 @@ out:
 }
 
 /*
+ * The functions daemon2_fork() and daemon2_detach() below provide
+ * functionality similar to daemon(3) but split into two phases.
+ * daemon2_fork() is called early, before creating resources that
+ * cannot be inherited across a fork, such as threads or kqueues.
+ * When the daemon is ready to provide service, daemon2_detach()
+ * is called to complete the daemonization and signal the parent
+ * process to exit.
+ *
+ * These functions could potentially be moved to a library and 
+ * shared by other daemons.
+ *
+ * The return value from daemon2_fork() is a file descriptor to
+ * be passed as the first argument to daemon2_detach().
+ */
+
+static int
+daemon2_fork(void)
+{
+	 int i;
+	 int fd;
+	 int r;
+	 pid_t pid;
+	 int detach_msg_pipe[2];
+
+	 /*
+	  * Set up a pipe for singalling the parent, making sure the
+	  * write end does not get allocated one of the file
+	  * descriptors that may be closed in daemon2_detach().  The
+	  * read end does not need such protection.
+	  */
+	 for (i = 0; i < 3; i++) {
+		 r = pipe2(detach_msg_pipe, O_CLOEXEC|O_NOSIGPIPE);
+		 if (r < 0)
+			 return -1;
+		 if (detach_msg_pipe[1] <= STDERR_FILENO &&
+		     (fd = open(_PATH_DEVNULL, O_RDWR, 0)) != -1) {
+			 (void)dup2(fd, detach_msg_pipe[0]);
+			 (void)dup2(fd, detach_msg_pipe[1]);
+			 if (fd > STDERR_FILENO)
+				 (void)close(fd);
+			 continue;
+		 }
+		 break;
+	 }
+
+	 pid = fork();
+	 switch (pid) {
+	 case -1:
+		 return -1;
+	 case 0:
+		 /* child */
+		 (void)close(detach_msg_pipe[0]);
+		 return detach_msg_pipe[1];
+	 default:
+		 break;
+	}
+
+	/* Parent */
+	(void)close(detach_msg_pipe[1]);
+
+	for (;;) {
+		ssize_t nread;
+		char dummy;
+		nread = read(detach_msg_pipe[0], &dummy, 1);
+		if (nread < 0) {
+			if (errno == EINTR)
+				continue;
+			_exit(1);
+		} else if (nread == 0) {
+			_exit(1);
+		} else { /* nread > 0 */
+			_exit(0);
+		}
+	}
+}
+
+static int
+daemon2_detach(int parentfd, int nochdir, int noclose)
+{
+	int fd;
+
+	if (setsid() == -1)
+		return -1;
+
+	if (!nochdir)
+		(void)chdir("/");
+
+	if (!noclose && (fd = open(_PATH_DEVNULL, O_RDWR, 0)) != -1) {
+		(void)dup2(fd, STDIN_FILENO);
+		(void)dup2(fd, STDOUT_FILENO);
+		(void)dup2(fd, STDERR_FILENO);
+		if (fd > STDERR_FILENO)
+			(void)close(fd);
+	}
+
+	while (1) {
+		ssize_t r = write(parentfd, "", 1);
+		if (r < 0) {
+			if (errno == EINTR)
+				continue;
+			else if (errno == EPIPE)
+				break;
+			else
+				return -1;
+		} else if (r == 0) {
+			/* Should not happen */
+			return -1;
+		} else {
+			break;
+		}
+	}
+
+	(void)close(parentfd);
+
+	return 0;
+}
+
+/*
  * Nfs server daemon mostly just a user context for nfssvc()
  *
  * 1 - do file descriptor and signal cleanup
@@ -279,6 +398,7 @@ main(int argc, char *argv[])
 	int tcpflag, udpflag;
 	int ip6flag, ip4flag;
 	int s, compat;
+	int parent_fd = -1;
 
 #define	DEFNFSDCNT	 4
 	nfsdcnt = DEFNFSDCNT;
@@ -348,11 +468,7 @@ main(int argc, char *argv[])
 	}
 
 	if (debug == 0) {
-		daemon(0, 0);
-		(void)signal(SIGHUP, SIG_IGN);
-		(void)signal(SIGINT, SIG_IGN);
-		(void)signal(SIGQUIT, SIG_IGN);
-		(void)signal(SIGSYS, nonfs);
+		parent_fd = daemon2_fork();
 	}
 
 	openlog("nfsd", LOG_PID, LOG_DAEMON);
@@ -400,6 +516,14 @@ main(int argc, char *argv[])
 		exit(0);
 
 	pthread_setname_np(pthread_self(), "master", NULL);
+
+	if (debug == 0) {
+		daemon2_detach(parent_fd, 0, 0);
+		(void)signal(SIGHUP, SIG_IGN);
+		(void)signal(SIGINT, SIG_IGN);
+		(void)signal(SIGQUIT, SIG_IGN);
+		(void)signal(SIGSYS, nonfs);
+	}
 
 	/*
 	 * Loop forever accepting connections and passing the sockets

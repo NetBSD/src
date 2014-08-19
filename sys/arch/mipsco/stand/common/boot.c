@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.9 2011/01/22 19:19:20 joerg Exp $	*/
+/*	$NetBSD: boot.c,v 1.9.14.1 2014/08/20 00:03:13 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -133,7 +133,9 @@ main(int argc, char **argv)
 			--argc;
 		}
 
-	}
+	} else
+		kernel = NULL;
+
 	if (dev == NULL) {
 		(void) devsplit(argv[0], bootname);
 		dev = bootname;
@@ -156,7 +158,7 @@ main(int argc, char **argv)
 			}
 		}
 	}
-	if (!win)
+	if (!win || !kernel)
 		goto fail;
 
 	strncpy(bi_bpath.bootpath, kernel, BTINFO_BOOTPATH_LEN);

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.23.2.1 2013/02/25 00:28:23 tls Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.23.2.2 2014/08/20 00:02:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -133,18 +133,18 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.23.2.1 2013/02/25 00:28:23 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.23.2.2 2014/08/20 00:02:45 tls Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
 #include <sys/systm.h>
 
-#include <machine/frame.h>
-#include <machine/pcb.h>
-#include <machine/reg.h>
-
 #include <arm/armreg.h>
 #include <arm/vfpreg.h>
+#include <arm/locore.h>
+
+#include <machine/pcb.h>
+#include <machine/reg.h>
 
 int
 process_read_regs(struct lwp *l, struct reg *regs)
@@ -172,11 +172,11 @@ process_read_regs(struct lwp *l, struct reg *regs)
 }
 
 int
-process_read_fpregs(struct lwp *l, struct fpreg *regs)
+process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 {
 #ifdef FPU_VFP
 	if (curcpu()->ci_vfp_id == 0) {
-		memset(regs, 0, sizeof(regs));
+		memset(regs, 0, sizeof(*regs));
 		return 0;
 	}
 	const struct pcb * const pcb = lwp_getpcb(l);
@@ -220,15 +220,14 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 }
 
 int
-process_write_fpregs(struct lwp *l, const struct fpreg *regs)
+process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 {
 #ifdef FPU_VFP
 	if (curcpu()->ci_vfp_id == 0) {
 		return EINVAL;
 	}
 	struct pcb * const pcb = lwp_getpcb(l);
-	vfp_discardcontext();
-	l->l_md.md_flags |= MDLWP_VFPUSED;
+	vfp_discardcontext(true);
 	pcb->pcb_vfp = regs->fpr_vfp;
 	pcb->pcb_vfp.vfp_fpexc &= ~VFP_FPEXC_EN;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_selsrc.c,v 1.9 2012/06/02 21:36:47 dsl Exp $	*/
+/*	$NetBSD: in_selsrc.c,v 1.9.2.1 2014/08/20 00:04:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.9 2012/06/02 21:36:47 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.9.2.1 2014/08/20 00:04:35 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -108,12 +108,6 @@ SYSCTL_SETUP(sysctl_selectsrc_setup, "sysctl selectsrc subtree setup")
 	const struct sysctlnode *rnode, *cnode;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &rnode,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "net",
-	    NULL, NULL, 0, NULL, 0, CTL_NET, CTL_EOL)) != 0) {
-		printf("%s: could not create net, rc = %d\n", __func__, rc);
-		return;
-	}
-	if ((rc = sysctl_createv(clog, 0, NULL, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "inet",
 	    NULL, NULL, 0, NULL, 0, CTL_NET, PF_INET, CTL_EOL)) != 0) {
 		printf("%s: could not create net.inet, rc = %d\n", __func__,
@@ -147,7 +141,7 @@ SYSCTL_SETUP(sysctl_selectsrc_setup, "sysctl selectsrc subtree setup")
 	}
 #endif /* GETIFA_DEBUG */
 	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_STRING, "default",
+	    CTLFLAG_READWRITE, CTLTYPE_STRUCT, "default",
 	    SYSCTL_DESCR("default source selection policy"),
 	    in_sysctl_selectsrc, 0, &default_iss, IN_SELECTSRC_LEN,
 	    CTL_CREATE, CTL_EOL)) != 0) {

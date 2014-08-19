@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/06/29 02:01:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.3.8.1 2014/08/19 23:57:02 tls Exp $
 
 LIBISPRIVATE=	yes
 
@@ -6,13 +6,21 @@ LIB=		cpp
 
 SRCS=		${G_libcpp_a_OBJS:.o=.c}
 
-CPPFLAGS+=	-I${.CURDIR} -I${.CURDIR}/arch/${MACHINE_ARCH} \
+CPPFLAGS+=	-I${.CURDIR} -I${.CURDIR}/arch/${GCC_MACHINE_ARCH} \
 		-I${GCCARCH} -I${BACKENDOBJ} -I. \
 		${G_INCLUDES:M-I*:N-I.*} \
 		-DPREFIX=\"/usr\"
 
+HOSTPROG_CXX=	1
+
 .include <bsd.lib.mk>
+
 COPTS+=	-Wno-stack-protector
+
+# Force using C++ for this
+HOST_CC:=	${HOST_CXX}
+CC:=		${CXX}
+CFLAGS:=	${CXXFLAGS}
 
 ${OBJS}: ${G_LIBCPP_DEPS}
 
@@ -21,5 +29,6 @@ ${OBJS}: ${G_LIBCPP_DEPS}
 
 localedir.h:
 	echo '#define LOCALEDIR "/usr/share/locale"' > ${.TARGET}
+CLEANFILES+= localedir.h
 
 init.d init.o: localedir.h

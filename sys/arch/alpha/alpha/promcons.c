@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.37 2012/02/06 02:14:12 matt Exp $ */
+/* $NetBSD: promcons.c,v 1.37.6.1 2014/08/20 00:02:41 tls Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.37 2012/02/06 02:14:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.37.6.1 2014/08/20 00:02:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,18 @@ dev_type_tty(promtty);
 dev_type_poll(prompoll);
 
 const struct cdevsw prom_cdevsw = {
-	promopen, promclose, promread, promwrite, promioctl,
-	promstop, promtty, prompoll, nommap, ttykqfilter, D_TTY
+	.d_open = promopen,
+	.d_close = promclose,
+	.d_read = promread,
+	.d_write = promwrite,
+	.d_ioctl = promioctl,
+	.d_stop = promstop,
+	.d_tty = promtty,
+	.d_poll = prompoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
 };
 
 #define	PROM_POLL_HZ	50
@@ -256,8 +266,18 @@ promtty(dev_t dev)
  * NEVER REMOVE!
  */
 const struct cdevsw prom_cdevsw = {
-	noopen, noclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap,
+	.d_open = noopen,
+	.d_close = noclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 #endif /* _PMAP_MAY_USE_PROM_CONSOLE */

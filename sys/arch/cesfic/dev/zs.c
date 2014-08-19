@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.18 2009/10/26 19:16:55 cegger Exp $	*/
+/*	$NetBSD: zs.c,v 1.18.22.1 2014/08/20 00:02:50 tls Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.18 2009/10/26 19:16:55 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.18.22.1 2014/08/20 00:02:50 tls Exp $");
 
 #include "opt_ddb.h"
 
@@ -271,16 +271,16 @@ zs_write_data(struct zs_chanstate *cs, uint8_t val)
 int
 zs_set_speed(struct zs_chanstate *cs, int bps)
 {
-	int tconst, real_bps;
+	int tconst;
 
 	tconst = BPS_TO_TCONST(cs->cs_brg_clk, bps);
 
 	if (tconst < 0)
 		return (EINVAL);
 
-	/* Convert back to make sure we can do it. */
-	real_bps = TCONST_TO_BPS(cs->cs_brg_clk, tconst);
 #if 0
+	/* Convert back to make sure we can do it. */
+	int real_bps = TCONST_TO_BPS(cs->cs_brg_clk, tconst);
 	/* XXX - Allow some tolerance here? */
 	if (real_bps != bps)
 		return (EINVAL);

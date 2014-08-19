@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.40 2011/02/08 20:20:25 rmind Exp $	*/
+/*	$NetBSD: grf.c,v 1.40.14.1 2014/08/20 00:03:28 tls Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.40 2011/02/08 20:20:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.40.14.1 2014/08/20 00:03:28 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,8 +99,18 @@ dev_type_ioctl(grfioctl);
 dev_type_mmap(grfmmap);
 
 const struct cdevsw grf_cdevsw = {
-	grfopen, grfclose, nullread, nullwrite, grfioctl,
-	nostop, notty, nopoll, grfmmap, nokqfilter,
+	.d_open = grfopen,
+	.d_close = grfclose,
+	.d_read = nullread,
+	.d_write = nullwrite,
+	.d_ioctl = grfioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = grfmmap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 /*ARGSUSED*/
@@ -270,8 +280,9 @@ grfmap(dev_t dev, void **addrp, struct proc *p)
 	if (*addrp)
 		flags |= MAP_FIXED;
 	else
-		*addrp =
-		    (void *)VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, len);
+		*addrp = (void *)p->p_emul->e_vm_default_addr(p, 
+		    (vaddr_t)p->p_vmspace->vm_daddr, len);
+
 	vn.v_type = VCHR;			/* XXX */
 	vn.v_rdev = dev;			/* XXX */
 	error = uvm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,

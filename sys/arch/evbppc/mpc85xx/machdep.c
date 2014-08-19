@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 2012/07/29 21:39:43 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29.2.1 2014/08/20 00:02:59 tls Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetSBD$");
 #include <net/if_media.h>
 #include <dev/mii/miivar.h>
 
-#include <powerpc/cpuset.h>
 #include <powerpc/pcb.h>
 #include <powerpc/spr.h>
 #include <powerpc/booke/spr.h>
@@ -807,7 +806,7 @@ e500_cpu_spinup(device_t self, struct cpu_info *ci)
 	struct uboot_spinup_entry * const e = (void *)spinup_table_addr;
 	volatile struct cpu_hatch_data * const h = &cpu_hatch_data;
 	const size_t id = cpu_index(ci);
-	volatile __cpuset_t * const hatchlings = &cpuset_info.cpus_hatched;
+	kcpuset_t * const hatchlings = cpuset_info.cpus_hatched;
 
 	if (h->hatch_sp == 0) {
 		int error = uvm_pglistalloc(PAGE_SIZE, PAGE_SIZE,
@@ -839,6 +838,9 @@ e500_cpu_spinup(device_t self, struct cpu_info *ci)
 			h->hatch_running = -1;
 			h->hatch_pir = e[i].entry_pir;
 			h->hatch_hid0 = mfspr(SPR_HID0);
+			u_int tlbidx;
+		        e500_tlb_lookup_xtlb(0, &tlbidx);
+		        h->hatch_tlbidx = tlbidx;
 			KASSERT(h->hatch_sp != 0);
 			/*
 			 * Get new timebase.  We don't want to deal with
@@ -859,7 +861,6 @@ e500_cpu_spinup(device_t self, struct cpu_info *ci)
 			__asm("sync;isync");
 			dcache_wbinv((vaddr_t)h, sizeof(*h));
 
-#if 1
 			/*
 			 * And here we go...
 			 */
@@ -872,19 +873,23 @@ e500_cpu_spinup(device_t self, struct cpu_info *ci)
 			for (u_int timo = 0; timo++ < 10000; ) {
 				dcache_inv((vaddr_t)&e[i], sizeof(e[i]));
 				if (e[i].entry_addr_lower == 3) {
+#if 0
 					printf(
 					    "%s: cpu%u started in %u spins\n",
 					    __func__, cpu_index(ci), timo);
+#endif
 					break;
 				}
 			}
 			for (u_int timo = 0; timo++ < 10000; ) {
 				dcache_inv((vaddr_t)h, sizeof(*h));
 				if (h->hatch_running == 0) {
+#if 0
 					printf(
 					    "%s: cpu%u cracked in %u spins: (running=%d)\n",
 					    __func__, cpu_index(ci),
 					    timo, h->hatch_running);
+#endif
 					break;
 				}
 			}
@@ -895,7 +900,6 @@ e500_cpu_spinup(device_t self, struct cpu_info *ci)
 				    h->hatch_running, e[i].entry_addr_lower);
 				goto out;
 			}
-#endif
 
 			/*
 			 * First then we do is to synchronize timebases.
@@ -908,6 +912,8 @@ e500_cpu_spinup(device_t self, struct cpu_info *ci)
 			dcache_wbinv((vaddr_t)h, sizeof(*h));
 			__asm("sync;isync");
 			__insn_barrier();
+			printf("%s: cpu%u set to running\n",
+			    __func__, cpu_index(ci));
 
 			for (u_int timo = 10000; timo-- > 0; ) {
 				dcache_inv((vaddr_t)h, sizeof(*h));
@@ -937,7 +943,7 @@ e500_cpu_spinup(device_t self, struct cpu_info *ci)
 			 * should be long enough.
 			 */
 			for (u_int timo = 10000; timo-- > 0; ) {
-				if (CPUSET_HAS_P(*hatchlings, id)) {
+				if (kcpuset_isset(hatchlings, id)) {
 					aprint_normal_dev(self,
 					    "hatch successful (%u spins, "
 					    "timebase adjusted by %"PRId64")\n",
@@ -1177,7 +1183,7 @@ initppc(vaddr_t startkernel, vaddr_t endkernel,
 	/*
 	 * fill in with an absolute branch to a routine that will panic.
 	 */
-	*(int *)0 = 0x48000002 | (int) calltozero;
+	*(volatile int *)0 = 0x48000002 | (int) calltozero;
 
 	/*
 	 * Get the cache sizes.
@@ -1287,6 +1293,7 @@ static const char * const mpc8548cds_extirq_names[] = {
 };
 #endif
 
+#ifndef MPC8548
 static const char * const mpc85xx_extirq_names[] = {
 	[0] = "extirq 0",
 	[1] = "extirq 1",
@@ -1301,6 +1308,7 @@ static const char * const mpc85xx_extirq_names[] = {
 	[10] = "extirq 10",
 	[11] = "extirq 11",
 };
+#endif
 
 static void
 mpc85xx_extirq_setup(void)

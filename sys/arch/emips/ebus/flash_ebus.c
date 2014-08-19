@@ -1,4 +1,4 @@
-/*	$NetBSD: flash_ebus.c,v 1.4.6.2 2013/06/23 06:20:02 tls Exp $	*/
+/*	$NetBSD: flash_ebus.c,v 1.4.6.3 2014/08/20 00:02:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.4.6.2 2013/06/23 06:20:02 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.4.6.3 2014/08/20 00:02:51 tls Exp $");
 
 /* Driver for the Intel 28F320/640/128 (J3A150) StrataFlash memory device
  * Extended to include the Intel JS28F256P30T95.
@@ -295,7 +295,7 @@ eflash_ebus_attach(device_t parent, device_t self, void *aux)
                sc->sc_type.ft_manuf_code, sc->sc_type.ft_device_code);
     }
 
-    config_pending_incr();
+    config_pending_incr(self);
 
 	error = kthread_create(PRI_NONE, 0, NULL,
 	    eflash_thread, sc, NULL, "%s", device_xname(sc->sc_dev));
@@ -1302,8 +1302,6 @@ static int eflash_write_at (struct eflash_softc *sc,
 /* Rest of code lifted with mods from the dev\ata\wd.c driver
  */
 
-/*	$NetBSD: flash_ebus.c,v 1.4.6.2 2013/06/23 06:20:02 tls Exp $ */
-
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
  *
@@ -1396,12 +1394,29 @@ dev_type_dump(eflashdump);
 dev_type_size(eflashsize);
 
 const struct bdevsw eflash_bdevsw = {
-	eflashopen, eflashclose, eflashstrategy, eflashioctl, eflashdump, eflashsize, D_DISK
+	.d_open = eflashopen,
+	.d_close = eflashclose,
+	.d_strategy = eflashstrategy,
+	.d_ioctl = eflashioctl,
+	.d_dump = eflashdump,
+	.d_psize = eflashsize,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw eflash_cdevsw = {
-	eflashopen, eflashclose, eflashread, eflashwrite, eflashioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = eflashopen,
+	.d_close = eflashclose,
+	.d_read = eflashread,
+	.d_write = eflashwrite,
+	.d_ioctl = eflashioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_DISK
 };
 
 void  eflashgetdefaultlabel(struct eflash_softc *, struct disklabel *);
@@ -1455,7 +1470,7 @@ eflashattach(struct eflash_softc *sc)
 	disk_attach(&sc->sc_dk);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_DISK, 0);
+			  RND_TYPE_DISK, RND_FLAG_DEFAULT);
 
 }
 
@@ -1537,7 +1552,7 @@ eflash_wedges(void *arg)
     dkwedge_autodiscover = 1;
 	dkwedge_discover(&sc->sc_dk);
 
-    config_pending_decr();
+    config_pending_decr(sc->sc_dev);
 
     DBGME(DEBUG_STATUS,printf("%s: wedges thread done for %p\n", device_xname(sc->sc_dev), sc));
 	kthread_exit(0);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/12/08 20:20:17 pooka Exp $
+#	$NetBSD: Makefile,v 1.1.20.1 2014/08/20 00:04:42 tls Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../net/agr
@@ -12,7 +12,7 @@ SRCS=	if_agr.c if_agrsoftc.c if_agrsubr.c if_agrtimer.c if_agrmonitor.c \
 	ieee8023ad_lacp_sm_ptx.c ieee8023ad_lacp_sm_tx.c \
 	ieee8023ad_lacp_debug.c ieee8023_tlv.c
 
-SRCS+=	component.c
+SRCS+=	agr_component.c
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

@@ -1,6 +1,6 @@
 /* Blackfin Core Event Controller (CEC) model.
 
-   Copyright (C) 2010-2011 Free Software Foundation, Inc.
+   Copyright (C) 2010-2014 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -22,9 +22,6 @@
 #define DV_BFIN_CEC_H
 
 #include "sim-main.h"
-
-#define BFIN_COREMMR_CEC_BASE	0xFFE02100
-#define BFIN_COREMMR_CEC_SIZE	(4 * 5)
 
 /* 0xFFE02100 ... 0xFFE02110 */
 #define BFIN_COREMMR_EVT_OVERRIDE	(BFIN_COREMMR_CEC_BASE + (4 * 0))

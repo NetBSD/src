@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.8 2008/02/21 14:32:31 tsutsui Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.8.50.1 2014/08/20 00:03:16 tls Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -108,7 +108,8 @@ bootxx(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4,
 			printf("unknown bootdev (0x%x)\n", bootdev);
 			return;
 		}
-		sprintf(devname, "%s(%d,%d,%d)", devs[type], ctlr, unit, part);
+		snprintf(devname, sizeof(devname), "%s(%d,%d,%d)",
+		    devs[type], ctlr, unit, part);
 
 		fd = rom_open(devname, 0);
 	}

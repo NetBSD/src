@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.64 2012/03/16 07:41:55 matt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.64.2.1 2014/08/20 00:03:20 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.64 2012/03/16 07:41:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.64.2.1 2014/08/20 00:03:20 tls Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.64 2012/03/16 07:41:55 matt Ex
 #include <sys/atomic.h>
 #include <sys/kmem.h>
 #include <sys/xcall.h>
+#include <sys/ipi.h>
 
 #include <dev/mm.h>
 
@@ -90,19 +91,20 @@ const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
 };
 
 #ifdef MULTIPROCESSOR
-volatile struct cpuset_info cpuset_info;
+struct cpuset_info cpuset_info;
 #endif
 
 /*
  * Set set up registers on exec.
  */
 void
-setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
+setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
 	struct proc * const p = l->l_proc;
 	struct trapframe * const tf = l->l_md.md_utf;
 	struct pcb * const pcb = lwp_getpcb(l);
 	struct ps_strings arginfo;
+	vaddr_t func = epp->ep_entry;
 
 	memset(tf, 0, sizeof *tf);
 	tf->tf_fixreg[1] = -roundup(-stack + 8, 16);
@@ -132,9 +134,20 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_fixreg[5] = (register_t)arginfo.ps_envstr;
 	tf->tf_fixreg[6] = 0;			/* auxillary vector */
 	tf->tf_fixreg[7] = 0;			/* termination vector */
-	tf->tf_fixreg[8] = p->p_psstrp;	/* NetBSD extension */
+	tf->tf_fixreg[8] = p->p_psstrp;		/* NetBSD extension */
 
-	tf->tf_srr0 = pack->ep_entry;
+#ifdef _LP64
+	/*
+	 * For native ELF64, entry point to the function
+	 * descriptor which contains the real function address
+	 * and its TOC base address.
+	 */
+	uintptr_t fdesc[3] = { [0] = func, [1] = 0, [2] = 0 };
+	copyin((void *)func, fdesc, sizeof(fdesc));
+	tf->tf_fixreg[2] = fdesc[1] + epp->ep_entryoffset;
+	func = fdesc[0] + epp->ep_entryoffset;
+#endif
+	tf->tf_srr0 = func;
 	tf->tf_srr1 = PSL_MBO | PSL_USERSET;
 #ifdef ALTIVEC
 	tf->tf_vrsave = 0;
@@ -257,11 +270,6 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 #endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRING, "model", NULL,
-		       NULL, 0, cpu_model, 0,
-		       CTL_MACHDEP, CPU_MODEL, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "booted_device", NULL,
 		       sysctl_machdep_booted_device, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_BOOTED_DEVICE, CTL_EOL);
@@ -319,7 +327,7 @@ startlwp(void *arg)
 	ucontext_t * const uc = arg;
 	lwp_t * const l = curlwp;
 	struct trapframe * const tf = l->l_md.md_utf;
-	int error;
+	int error __diagused;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);
@@ -481,6 +489,20 @@ xc_send_ipi(struct cpu_info *ci)
 	/* Broadcast: all, but local CPU (caller will handle it). */
 	cpu_send_ipi(target, IPI_XCALL);
 }
+
+void
+cpu_ipi(struct cpu_info *ci)
+{
+	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu() != ci);
+
+	cpuid_t target = (ci != NULL ? cpu_index(ci) : IPI_DST_NOTME);
+
+	/* Unicast: remote CPU. */
+	/* Broadcast: all, but local CPU (caller will handle it). */
+	cpu_send_ipi(target, IPI_GENERIC);
+}
+
 #endif /* MULTIPROCESSOR */
 
 #ifdef MODULAR

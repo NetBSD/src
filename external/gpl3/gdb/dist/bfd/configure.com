@@ -7,6 +7,22 @@ $!
 $! Written by Klaus K"ampf (kkaempf@rmi.de)
 $! Rewritten by Tristan Gingold (gingold@adacore.com)
 $!
+$!   Copyright 2012 Free Software Foundation
+$!
+$! This file is free software; you can redistribute it and/or modify
+$! it under the terms of the GNU General Public License as published by
+$! the Free Software Foundation; either version 3 of the License, or
+$! (at your option) any later version.
+$! 
+$! This program is distributed in the hope that it will be useful,
+$! but WITHOUT ANY WARRANTY; without even the implied warranty of
+$! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+$! GNU General Public License for more details.
+$! 
+$! You should have received a copy of the GNU General Public License
+$! along with this program; see the file COPYING3.  If not see
+$! <http://www.gnu.org/licenses/>.
+$!
 $ arch=F$GETSYI("ARCH_NAME")
 $ arch=F$EDIT(arch,"LOWERCASE")
 $if arch .eqs. "alpha" then target = "alpha"
@@ -28,26 +44,10 @@ $DECK
 !
 !
    set (success,off);
-   vfile := CREATE_BUFFER("vfile", "CONFIGURE.IN");
-   rang := CREATE_RANGE(BEGINNING_OF(vfile), END_OF(vfile));
-   match_pos := SEARCH_QUIETLY('AM_INIT_AUTOMAKE(bfd, ', FORWARD, EXACT, rang);
-   IF match_pos <> 0 THEN;
-     POSITION(BEGINNING_OF(match_pos));
-     ERASE(match_pos);
-     vers := CURRENT_LINE-")";
-   ELSE;
-     vers := "unknown";
-   ENDIF;
 
    file := CREATE_BUFFER("file", GET_INFO(COMMAND_LINE, "file_name"));
    rang := CREATE_RANGE(BEGINNING_OF(file), END_OF(file));
 
-   match_pos := SEARCH_QUIETLY('@VERSION@', FORWARD, EXACT, rang);
-   IF match_pos <> 0 THEN;
-      POSITION(BEGINNING_OF(match_pos));
-      ERASE(match_pos);
-      COPY_TEXT(vers);
-   ENDIF;
    match_pos := SEARCH_QUIETLY('@wordsize@', FORWARD, EXACT, rang);
    IF match_pos <> 0 THEN;
       POSITION(BEGINNING_OF(match_pos));
@@ -82,27 +82,25 @@ $DECK
    IF match_pos <> 0 THEN;
       POSITION(BEGINNING_OF(match_pos));
       ERASE(match_pos);
-      COPY_TEXT('__DECC');
-      SPLIT_LINE;
-      COPY_TEXT('#include <ints.h>');
+      COPY_TEXT('1');
    ENDIF;
    match_pos := SEARCH_QUIETLY('@BFD_HOST_64_BIT@', FORWARD, EXACT, rang);
    IF match_pos <> 0 THEN;
       POSITION(BEGINNING_OF(match_pos));
       ERASE(match_pos);
-      COPY_TEXT('int64');
+      COPY_TEXT('__int64');
    ENDIF;
    match_pos := SEARCH_QUIETLY('@BFD_HOST_U_64_BIT@', FORWARD, EXACT, rang);
    IF match_pos <> 0 THEN;
       POSITION(BEGINNING_OF(match_pos));
       ERASE(match_pos);
-      COPY_TEXT('uint64');
+      COPY_TEXT('unsigned __int64');
    ENDIF;
    match_pos := SEARCH_QUIETLY('@BFD_HOSTPTR_T@', FORWARD, EXACT, rang);
    IF match_pos <> 0 THEN;
       POSITION(BEGINNING_OF(match_pos));
       ERASE(match_pos);
-      COPY_TEXT('uint64');
+      COPY_TEXT('unsigned __int64');
    ENDIF;
    match_pos := SEARCH_QUIETLY('@bfd_file_ptr@', FORWARD, EXACT, rang);
    IF match_pos <> 0 THEN;
@@ -142,26 +140,10 @@ $DECK
 !
 !
    set (success,off);
-   vfile := CREATE_BUFFER("vfile", "CONFIGURE.IN");
-   rang := CREATE_RANGE(BEGINNING_OF(vfile), END_OF(vfile));
-   match_pos := SEARCH_QUIETLY('AM_INIT_AUTOMAKE(bfd, ', FORWARD, EXACT, rang);
-   IF match_pos <> 0 THEN;
-     POSITION(BEGINNING_OF(match_pos));
-     ERASE(match_pos);
-     vers := CURRENT_LINE-")";
-   ELSE;
-     vers := "unknown";
-   ENDIF;
 
    file := CREATE_BUFFER("file", GET_INFO(COMMAND_LINE, "file_name"));
    rang := CREATE_RANGE(BEGINNING_OF(file), END_OF(file));
 
-   match_pos := SEARCH_QUIETLY('@VERSION@', FORWARD, EXACT, rang);
-   IF match_pos <> 0 THEN;
-      POSITION(BEGINNING_OF(match_pos));
-      ERASE(match_pos);
-      COPY_TEXT(vers);
-   ENDIF;
    match_pos := SEARCH_QUIETLY('@wordsize@', FORWARD, EXACT, rang);
    IF match_pos <> 0 THEN;
       POSITION(BEGINNING_OF(match_pos));
@@ -213,11 +195,11 @@ $DECK
    set (success,off);
    vfile := CREATE_BUFFER("vfile", "configure.in");
    rang := CREATE_RANGE(BEGINNING_OF(vfile), END_OF(vfile));
-   match_pos := SEARCH_QUIETLY('AM_INIT_AUTOMAKE(bfd, ', FORWARD, EXACT, rang);
+   match_pos := SEARCH_QUIETLY('AC_INIT([bfd], [', FORWARD, EXACT, rang);
    IF match_pos <> 0 THEN;
      POSITION(BEGINNING_OF(match_pos));
      ERASE(match_pos);
-     vers := CURRENT_LINE-")";
+     vers := CURRENT_LINE-"])";
    ELSE;
      vers := "unknown";
    ENDIF;
@@ -324,6 +306,20 @@ $ create []config.h
 #define HAVE_UNISTD_H 1
 /* Disable NLS  */
 #undef ENABLE_NLS
+/* Name of package */
+#define PACKAGE "bfd"
+/* Define to the address where bug reports for this package should be sent. */
+#define PACKAGE_BUGREPORT ""
+/* Define to the full name of this package. */
+#define PACKAGE_NAME "bfd"
+/* Define to the full name and version of this package. */
+#define PACKAGE_STRING "bfd"
+/* Define to the one symbol short name of this package. */
+#define PACKAGE_TARNAME "bfd"
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
+/* Define to the version of this package. */
+#define PACKAGE_VERSION "(package version)"
 $!
 $ write sys$output "Copy sysdep.h"
 $ copy [.hosts]alphavms.h sysdep.h
@@ -365,9 +361,6 @@ $DECK
    WRITE_FILE(file, GET_INFO(COMMAND_LINE, "output_file"));
    QUIT
 $  EOD
-$ write sys$output "Generate elf64-ia64.c from elfxx-ia64.c"
-$ edit/tpu/nojournal/nosection/nodisplay/command=substxx.tpu -
-        []elfXX-ia64.c /output=[]elf64-ia64.c
 $ write sys$output "Generate elf64-target.h from elfxx-target.h"
 $ edit/tpu/nojournal/nosection/nodisplay/command=substxx.tpu -
         []elfXX-target.h /output=[]elf64-target.h

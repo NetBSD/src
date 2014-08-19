@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.28 2010/12/18 23:09:48 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.28.12.1 2014/08/20 00:05:04 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include "sort.h"
 
-__RCSID("$NetBSD: init.c,v 1.28 2010/12/18 23:09:48 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.28.12.1 2014/08/20 00:05:04 tls Exp $");
 
 #include <ctype.h>
 #include <string.h>
@@ -287,7 +287,6 @@ fixit(int *argc, char **argv, const char *opts)
 	int i, j, sawplus;
 	char *vpos, *tpos, spec[20];
 	int col, indent;
-	size_t sz;
 
 	sawplus = 0;
 	for (i = 1; i < *argc; i++) {
@@ -358,7 +357,7 @@ fixit(int *argc, char **argv, const char *opts)
 		}
 
 		/* make the new style spec */
-		sz = snprintf(spec, sizeof(spec), "%d.%d%s", col, indent,
+		(void)snprintf(spec, sizeof(spec), "%d.%d%s", col, indent,
 		    tpos);
 
 		if (sawplus) {

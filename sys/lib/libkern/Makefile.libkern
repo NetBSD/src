@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.18.2.2 2013/06/23 06:20:23 tls Exp $
+#	$NetBSD: Makefile.libkern,v 1.18.2.3 2014/08/20 00:04:29 tls Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -43,16 +43,8 @@ CPPFLAGS+=	-I${KERNDIR}/../../../common/include
 .include "$M/Makefile.inc"
 .endif
 
-.if (${MACHINE_ARCH} != "alpha") && \
-    (${MACHINE_ARCH} != "mips64eb" || !empty(CFLAGS:M-mabi=32)) && \
-    (${MACHINE_ARCH} != "mips64el" || !empty(CFLAGS:M-mabi=32)) && \
-    (${MACHINE_ARCH} != "powerpc64") && \
-    (${MACHINE_ARCH} != "sparc64") && \
-    (${MACHINE_ARCH} != "x86_64" || !empty(CFLAGS:M-m32))
-# Quad support
-SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
-	lshldi3.c lshrdi3.c moddi3.c muldi3.c negdi2.c notdi2.c qdivrem.c \
-	subdi3.c  ucmpdi2.c udivdi3.c umoddi3.c xordi3.c
+.if !defined(RUMPKERNEL)
+.include "${.PARSEDIR}/Makefile.compiler-rt"
 .endif
 
 # Other stuff
@@ -61,8 +53,8 @@ SRCS+=	cpuset.c inet_addr.c intoa.c
 .if empty(SRCS:Mbyte_swap_8.*)
 SRCS+=	bswap64.c
 .endif
-SRCS+=	md4c.c md5c.c rmd160.c sha1.c sha2.c
-SRCS+=	pmatch.c arc4random.c bcd.c mcount.c mertwist.c crc32.c
+SRCS+=	md4c.c md5c.c rmd160.c sha1.c sha2.c murmurhash.c
+SRCS+=	pmatch.c bcd.c mcount.c mertwist.c crc32.c
 
 SRCS+=	ppath_kmem_alloc.c
 
@@ -80,15 +72,15 @@ SRCS+=	memset.c
 .endif
 
 SRCS+=	popcount32.c popcount64.c
-SRCS+=	strtoul.c strtoll.c strtoull.c strtoumax.c
+SRCS+=	strtoul.c strtoll.c strtoull.c strtoimax.c strtoumax.c
 
 SRCS+=	scanc.c skpc.c
 SRCS+=	random.c
 SRCS+=	rngtest.c
 
 SRCS+=	memchr.c
-SRCS+=	strcat.c strcmp.c strcpy.c strlen.c strnlen.c
-SRCS+=	strncmp.c strncpy.c
+SRCS+=	strcat.c strcmp.c strcpy.c strcspn.c strlen.c strnlen.c
+SRCS+=	strncat.c strncmp.c strncpy.c strpbrk.c strspn.c
 SRCS+=	strcasecmp.c strncasecmp.c
 
 SRCS+=	xlat_mbr_fstype.c
@@ -96,7 +88,14 @@ SRCS+=	xlat_mbr_fstype.c
 SRCS+=	heapsort.c ptree.c rb.c
 
 # for crypto
-SRCS+=	explicit_bzero.c consttime_bcmp.c
+SRCS+=	explicit_memset.c consttime_memequal.c
+
+.PATH:	${NETBSDSRCDIR}/common/lib/libc/cdb
+SRCS+=	cdbr.c
+SRCS+=	mi_vector_hash.c
+
+#.PATH:	${NETBSDSRCDIR}/external/bsd/liblzf/dist
+#SRCS+=	lzf_c.c lzf_d.c
 
 # Files to clean up
 CLEANFILES+= lib${LIB}.o lib${LIB}.po
@@ -111,3 +110,7 @@ unwanted_file := ${SRCS:M${check_file:.S=.c}}
 SRCS := ${SRCS:N${unwanted_file}}
 .endif
 .endfor
+
+.if ${HAVE_GCC:U} == "45" && ${MACHINE_CPU} == "hppa"
+COPTS.md5c.c +=		${${ACTIVE_CC} == "gcc" :? -O0 :}
+.endif

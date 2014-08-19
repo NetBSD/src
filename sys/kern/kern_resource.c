@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.169.2.2 2013/02/25 00:29:51 tls Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.169.2.3 2014/08/20 00:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.169.2.2 2013/02/25 00:29:51 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.169.2.3 2014/08/20 00:04:29 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1039,11 +1039,6 @@ static void
 sysctl_proc_setup(void)
 {
 
-	sysctl_createv(&proc_sysctllog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "proc", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_PROC, CTL_EOL);
 	sysctl_createv(&proc_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_ANYNUMBER,
 		       CTLTYPE_NODE, "curproc",

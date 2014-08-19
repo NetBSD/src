@@ -1,5 +1,5 @@
 /* Simulation code for the CR16 processor.
-   Copyright (C) 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2008-2014 Free Software Foundation, Inc.
    Contributed by M Ranga Swami Reddy <MR.Swami.Reddy@nsc.com>
 
    This file is part of GDB, the GNU debugger.
@@ -17,8 +17,10 @@
    You should have received a copy of the GNU General Public License 
    along with this program. If not, see <http://www.gnu.org/licenses/>.  */
 
+#include "config.h"
 #include <signal.h>
-#include "sysdep.h"
+#include <stdlib.h>
+#include <string.h>
 #include "bfd.h"
 #include "gdb/callback.h"
 #include "gdb/remote-sim.h"
@@ -50,12 +52,12 @@ asection *text;
 bfd_vma text_start;
 bfd_vma text_end;
 
-static struct hash_entry *lookup_hash PARAMS ((uint64 ins, int size));
-static void get_operands PARAMS ((operand_desc *s, uint64 mcode, int isize, int nops));
-static int do_run PARAMS ((uint64 mc));
-static char *add_commas PARAMS ((char *buf, int sizeof_buf, unsigned long value));
-extern void sim_set_profile PARAMS ((int n));
-extern void sim_set_profile_size PARAMS ((int n));
+static struct hash_entry *lookup_hash (uint64 ins, int size);
+static void get_operands (operand_desc *s, uint64 mcode, int isize, int nops);
+static int do_run (uint64 mc);
+static char *add_commas (char *buf, int sizeof_buf, unsigned long value);
+extern void sim_set_profile (int n);
+extern void sim_set_profile_size (int n);
 static INLINE uint8 *map_memory (unsigned phys_addr);
 
 #ifdef NEED_UI_LOOP_HOOK
@@ -66,7 +68,7 @@ static INLINE uint8 *map_memory (unsigned phys_addr);
 static long ui_loop_hook_counter = UI_LOOP_POLL_INTERVAL;
 
 /* Actual hook to call to run through gdb's gui event loop */
-extern int (*deprecated_ui_loop_hook) PARAMS ((int signo));
+extern int (*deprecated_ui_loop_hook) (int signo);
 #endif /* NEED_UI_LOOP_HOOK */
 
 #ifndef INLINE
@@ -1190,7 +1192,11 @@ sim_resume (SIM_DESC sd, int step, int siggnal)
       iaddr = imem_addr ((uint32)PC);
       if (iaddr == State.mem.fault)
         {
+#ifdef SIGBUS
           State.exception = SIGBUS;
+#else
+          State.exception = SIGSEGV;
+#endif
           break;
         }
  
@@ -1417,18 +1423,18 @@ sim_stop_reason (sd, reason, sigrc)
 
     case SIG_CR16_BUS:
       *reason = sim_stopped;
-      *sigrc = TARGET_SIGNAL_BUS;
+      *sigrc = GDB_SIGNAL_BUS;
       break;
 //
 //    case SIG_CR16_IAD:
 //      *reason = sim_stopped;
-//      *sigrc = TARGET_SIGNAL_IAD;
+//      *sigrc = GDB_SIGNAL_IAD;
 //      break;
 
     default:                                /* some signal */
       *reason = sim_stopped;
       if (stop_simulator && !State.exception)
-        *sigrc = TARGET_SIGNAL_INT;
+        *sigrc = GDB_SIGNAL_INT;
       else
         *sigrc = State.exception;
       break;
@@ -1546,6 +1552,11 @@ sim_store_register (sd, rn, memory, length)
   return size;
 }
 
+char **
+sim_complete_command (SIM_DESC sd, const char *text, const char *word)
+{
+  return NULL;
+}
 
 void
 sim_do_command (sd, cmd)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io.c,v 1.22 2012/07/15 20:53:23 matt Exp $	*/
+/*	$NetBSD: mainbus_io.c,v 1.22.2.1 2014/08/20 00:02:47 tls Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus_io.c,v 1.22 2012/07/15 20:53:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus_io.c,v 1.22.2.1 2014/08/20 00:02:47 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,6 @@ mainbus_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags, bus_space_ha
 {
 	u_long startpa, endpa, pa;
 	vaddr_t va;
-	pt_entry_t *pte;
 
 	if ((u_long)bpa > (u_long)KERNEL_BASE) {
 		/* XXX This is a temporary hack to aid transition. */
@@ -197,13 +196,12 @@ mainbus_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags, bus_space_ha
 
 	*bshp = (bus_space_handle_t)(va + (bpa - startpa));
 
-	for(pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
-		if ((flags & BUS_SPACE_MAP_CACHEABLE) == 0) {
-			pte = vtopte(va);
-			*pte &= ~L2_S_CACHE_MASK;
-			PTE_SYNC(pte);
-		}
+	const int pmapflags =
+	    (flags & (BUS_SPACE_MAP_CACHEABLE|BUS_SPACE_MAP_PREFETCHABLE))
+		? 0
+		: PMAP_NOCACHE; 
+	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
+		pmap_kenter_pa(va, pa, VM_PROT_READ|VM_PROT_WRITE, pmapflags);
 	}
 	pmap_update(pmap_kernel());
 

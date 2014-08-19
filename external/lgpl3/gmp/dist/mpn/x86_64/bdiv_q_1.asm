@@ -1,8 +1,8 @@
 dnl  AMD64 mpn_bdiv_q_1, mpn_pi1_bdiv_q_1 -- schoolbook Hensel division by
 dnl  1-limb divisor, returning quotient only.
 
-dnl  Copyright 2001, 2002, 2004, 2005, 2006, 2009 Free Software Foundation,
-dnl  Inc.
+dnl  Copyright 2001, 2002, 2004, 2005, 2006, 2009, 2011, 2012 Free Software
+dnl  Foundation, Inc.
 
 dnl  This file is part of the GNU MP Library.
 
@@ -11,7 +11,7 @@ dnl  it under the terms of the GNU Lesser General Public License as published
 dnl  by the Free Software Foundation; either version 3 of the License, or (at
 dnl  your option) any later version.
 
-dnl The GNU MP Library is distributed in the hope that it will be useful, but
+dnl  The GNU MP Library is distributed in the hope that it will be useful, but
 dnl  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 dnl  or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 dnl  License for more details.
@@ -23,31 +23,35 @@ include(`../config.m4')
 
 
 C	     cycles/limb
-C K8,K9:	10
-C K10:		10
-C P4:		33
-C P6 core2:	13.25
-C P6 corei7:	14
-C P6 atom:	42
+C AMD K8,K9	10
+C AMD K10	10
+C Intel P4	33
+C Intel core2	13.25
+C Intel corei	14
+C Intel atom	42
+C VIA nano	 ?
 
 
 C INPUT PARAMETERS
-C rp		rdi
-C up		rsi
-C n		rdx
-C d		rcx
-C di		r8	just mpn_pi1_bdiv_q_1
-C shift		r9	just mpn_pi1_bdiv_q_1
+define(`rp',		`%rdi')
+define(`up',		`%rsi')
+define(`n',		`%rdx')
+define(`d',		`%rcx')
+define(`di',		`%r8')		C	just mpn_pi1_bdiv_q_1
+define(`ncnt',		`%r9')		C	just mpn_pi1_bdiv_q_1
 
+ABI_SUPPORT(DOS64)
+ABI_SUPPORT(STD64)
 
 ASM_START()
 	TEXT
 	ALIGN(16)
 PROLOGUE(mpn_bdiv_q_1)
+	FUNC_ENTRY(4)
 	push	%rbx
 
 	mov	%rcx, %rax
-	xor	R32(%rcx), R32(%rcx)	C shift count
+	xor	R32(%rcx), R32(%rcx)	C ncnt count
 	mov	%rdx, %r10
 
 	bt	$0, R32(%rax)
@@ -57,11 +61,7 @@ L(odd):	mov	%rax, %rbx
 	shr	R32(%rax)
 	and	$127, R32(%rax)		C d/2, 7 bits
 
-ifdef(`PIC',`
-	mov	binvert_limb_table@GOTPCREL(%rip), %rdx
-',`
-	movabs	$binvert_limb_table, %rdx
-')
+	LEA(	binvert_limb_table, %rdx)
 
 	movzbl	(%rdx,%rax), R32(%rax)	C inv 8 bits
 
@@ -90,20 +90,23 @@ L(evn):	bsf	%rax, %rcx
 EPILOGUE()
 
 PROLOGUE(mpn_pi1_bdiv_q_1)
+	FUNC_ENTRY(4)
+IFDOS(`	mov	56(%rsp), %r8	')
+IFDOS(`	mov	64(%rsp), %r9	')
 	push	%rbx
 
 	mov	%rcx, %r11		C d
 	mov	%rdx, %r10		C n
-	mov	%r9, %rcx		C shift
-L(com):
-	mov	(%rsi), %rax		C up[0]
+	mov	%r9, %rcx		C ncnt
+
+L(com):	mov	(up), %rax		C up[0]
 
 	dec	%r10
 	jz	L(one)
 
-	mov	8(%rsi), %rdx		C up[1]
-	lea	(%rsi,%r10,8), %rsi	C up end
-	lea	(%rdi,%r10,8), %rdi	C rp end
+	mov	8(up), %rdx		C up[1]
+	lea	(up,%r10,8), up		C up end
+	lea	(rp,%r10,8), rp		C rp end
 	neg	%r10			C -n
 
 	shrd	R8(%rcx), %rdx, %rax
@@ -115,15 +118,13 @@ L(com):
 L(top):
 	C rax	q
 	C rbx	carry bit, 0 or 1
-	C rcx	shift
+	C rcx	ncnt
 	C rdx
-	C rsi	up end
-	C rdi	rp end
 	C r10	counter, limbs, negative
 
 	mul	%r11			C carry limb in rdx
-	mov	(%rsi,%r10,8), %rax
-	mov	8(%rsi,%r10,8), %r9
+	mov	(up,%r10,8), %rax
+	mov	8(up,%r10,8), %r9
 	shrd	R8(%rcx), %r9, %rax
 	nop
 	sub	%rbx, %rax		C apply carry bit
@@ -131,23 +132,25 @@ L(top):
 	sub	%rdx, %rax		C apply carry limb
 	adc	$0, %rbx
 L(ent):	imul	%r8, %rax
-	mov	%rax, (%rdi,%r10,8)
+	mov	%rax, (rp,%r10,8)
 	inc	%r10
 	jnz	L(top)
 
 	mul	%r11			C carry limb in rdx
-	mov	(%rsi), %rax		C up high limb
+	mov	(up), %rax		C up high limb
 	shr	R8(%rcx), %rax
 	sub	%rbx, %rax		C apply carry bit
 	sub	%rdx, %rax		C apply carry limb
 	imul	%r8, %rax
-	mov	%rax, (%rdi)
+	mov	%rax, (rp)
 	pop	%rbx
+	FUNC_EXIT()
 	ret
 
 L(one):	shr	R8(%rcx), %rax
 	imul	%r8, %rax
-	mov	%rax, (%rdi)
+	mov	%rax, (rp)
 	pop	%rbx
+	FUNC_EXIT()
 	ret
 EPILOGUE()

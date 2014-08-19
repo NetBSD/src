@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.16 2008/07/16 13:44:51 tsutsui Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.16.38.1 2014/08/20 00:03:01 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -66,10 +66,6 @@ void printrominvo(void);
 void configure(void);
 int sctoaddr(int);
 
-/* clock.c */
-void read_bbc(void);
-u_char read_bbc_reg(int);
-
 /* cons.c */
 extern	int cons_scode;
 void cninit(void);
@@ -78,7 +74,6 @@ int cnputc(int);
 
 /* devopen.c */
 extern	u_int opendev;
-int atoi(char *);
 
 /* exec.c */
 void exec_hp300(char *, u_long, int);

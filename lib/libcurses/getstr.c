@@ -1,4 +1,4 @@
-/*	$NetBSD: getstr.c,v 1.22 2012/01/27 15:37:09 christos Exp $	*/
+/*	$NetBSD: getstr.c,v 1.22.6.1 2014/08/20 00:02:17 tls Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)getstr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getstr.c,v 1.22 2012/01/27 15:37:09 christos Exp $");
+__RCSID("$NetBSD: getstr.c,v 1.22.6.1 2014/08/20 00:02:17 tls Exp $");
 #endif
 #endif				/* not lint */
 
@@ -178,7 +178,7 @@ __wgetnstr(WINDOW *win, char *str, int n)
 		    win, c, remain);
 #endif
 		*str = c;
-		touchline(win, win->cury, 1);
+		__touchline(win, win->cury, 0, (int) win->maxx - 1);
 		if (c == ec || c == KEY_BACKSPACE || c == KEY_LEFT) {
 			*str = '\0';
 			if (str != ostr) {

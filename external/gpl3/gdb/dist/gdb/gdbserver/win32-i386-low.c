@@ -1,4 +1,4 @@
-/* Copyright (C) 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,14 +31,14 @@
 #ifdef __x86_64__
 /* Defined in auto-generated file reg-amd64.c.  */
 void init_registers_amd64 (void);
+extern const struct target_desc *tdesc_amd64;
 #else
 /* Defined in auto-generated file reg-i386.c.  */
 void init_registers_i386 (void);
+extern const struct target_desc *tdesc_i386;
 #endif
 
 static struct i386_debug_reg_state debug_reg_state;
-static unsigned dr_status_mirror;
-static unsigned dr_control_mirror;
 
 static int debug_registers_changed = 0;
 static int debug_registers_used = 0;
@@ -81,7 +81,7 @@ i386_dr_low_set_control (const struct i386_debug_reg_state *state)
 unsigned
 i386_dr_low_get_control (void)
 {
-  return dr_control_mirror;
+  return debug_reg_state.dr_control_mirror;
 }
 
 /* Get the value of the DR6 debug status register from the inferior
@@ -92,7 +92,7 @@ i386_dr_low_get_status (void)
 {
   /* We don't need to do anything here, the last call to thread_rec for
      current_event.dwThreadId id has already set it.  */
-  return dr_status_mirror;
+  return debug_reg_state.dr_status_mirror;
 }
 
 /* Watchpoint support.  */
@@ -150,8 +150,6 @@ i386_initial_stuff (void)
   i386_low_init_dregs (&debug_reg_state);
   debug_registers_changed = 0;
   debug_registers_used = 0;
-  dr_status_mirror = 0;
-  dr_control_mirror = 0;
 }
 
 static void
@@ -190,8 +188,8 @@ i386_get_thread_context (win32_thread_info *th, DEBUG_EVENT* current_event)
       dr->dr_mirror[1] = th->context.Dr1;
       dr->dr_mirror[2] = th->context.Dr2;
       dr->dr_mirror[3] = th->context.Dr3;
-      dr_status_mirror = th->context.Dr6;
-      dr_control_mirror = th->context.Dr7;
+      dr->dr_status_mirror = th->context.Dr6;
+      dr->dr_control_mirror = th->context.Dr7;
     }
 }
 
@@ -205,9 +203,9 @@ i386_set_thread_context (win32_thread_info *th, DEBUG_EVENT* current_event)
       th->context.Dr1 = dr->dr_mirror[1];
       th->context.Dr2 = dr->dr_mirror[2];
       th->context.Dr3 = dr->dr_mirror[3];
-      /* th->context.Dr6 = dr_status_mirror;
+      /* th->context.Dr6 = dr->dr_status_mirror;
 	 FIXME: should we set dr6 also ?? */
-      th->context.Dr7 = dr_control_mirror;
+      th->context.Dr7 = dr->dr_control_mirror;
     }
 
   SetThreadContext (th->h, &th->context);
@@ -227,9 +225,9 @@ i386_thread_added (win32_thread_info *th)
       th->context.Dr1 = dr->dr_mirror[1];
       th->context.Dr2 = dr->dr_mirror[2];
       th->context.Dr3 = dr->dr_mirror[3];
-      /* th->context.Dr6 = dr_status_mirror;
+      /* th->context.Dr6 = dr->dr_status_mirror;
 	 FIXME: should we set dr6 also ?? */
-      th->context.Dr7 = dr_control_mirror;
+      th->context.Dr7 = dr->dr_control_mirror;
 
       SetThreadContext (th->h, &th->context);
       th->context.ContextFlags = 0;
@@ -403,17 +401,19 @@ static const unsigned char i386_win32_breakpoint = 0xcc;
 #define i386_win32_breakpoint_len 1
 
 static void
-init_windows_x86 (void)
+i386_arch_setup (void)
 {
 #ifdef __x86_64__
   init_registers_amd64 ();
+  win32_tdesc = tdesc_amd64;
 #else
   init_registers_i386 ();
+  win32_tdesc = tdesc_i386;
 #endif
 }
 
 struct win32_target_ops the_low_target = {
-  init_windows_x86,
+  i386_arch_setup,
   sizeof (mappings) / sizeof (mappings[0]),
   i386_initial_stuff,
   i386_get_thread_context,

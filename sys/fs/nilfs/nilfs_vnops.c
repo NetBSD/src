@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.18.2.2 2013/06/23 06:18:27 tls Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.18.2.3 2014/08/20 00:04:27 tls Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.18.2.2 2013/06/23 06:18:27 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.18.2.3 2014/08/20 00:04:27 tls Exp $");
 #endif /* not lint */
 
 
@@ -212,7 +212,7 @@ nilfs_write(void *v)
 	int           advice = IO_ADV_DECODE(ap->a_ioflag);
 	struct uvm_object    *uobj;
 	struct nilfs_node      *nilfs_node = VTOI(vp);
-	uint64_t file_size, old_size;
+	uint64_t file_size;
 	vsize_t len;
 	int error, resid, extended;
 
@@ -235,12 +235,10 @@ nilfs_write(void *v)
 
 	assert(nilfs_node);
 	panic("nilfs_write() called\n");
-return EIO;
 
 	/* remember old file size */
 	assert(nilfs_node);
 	file_size = nilfs_rw64(nilfs_node->inode.i_size);
-	old_size = file_size;
 
 	/* if explicitly asked to append, uio_offset can be wrong? */
 	if (ioflag & IO_APPEND)
@@ -615,7 +613,7 @@ nilfs_readdir(void *v)
 int
 nilfs_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -773,7 +771,11 @@ out:
 
 	DPRINTFIF(LOOKUP, error, ("nilfs_lookup returing error %d\n", error));
 
-	return error;
+	if (error)
+		return error;
+	if (*vpp != dvp)
+		VOP_UNLOCK(*vpp);
+	return 0;
 }
 
 /* --------------------------------------------------------------------- */
@@ -1085,7 +1087,7 @@ nilfs_access(void *v)
 int
 nilfs_create(void *v)
 {
-	struct vop_create_args /* {
+	struct vop_create_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1100,7 +1102,6 @@ nilfs_create(void *v)
 	DPRINTF(VFSCALL, ("nilfs_create called\n"));
 	error = nilfs_create_node(dvp, vpp, vap, cnp);
 
-	vput(dvp);
 	return error;
 }
 
@@ -1109,7 +1110,7 @@ nilfs_create(void *v)
 int
 nilfs_mknod(void *v)
 {
-	struct vop_mknod_args /* {
+	struct vop_mknod_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1124,7 +1125,6 @@ nilfs_mknod(void *v)
 	DPRINTF(VFSCALL, ("nilfs_mknod called\n"));
 	error = nilfs_create_node(dvp, vpp, vap, cnp);
 
-	vput(dvp);
 	return error;
 }
 
@@ -1133,7 +1133,7 @@ nilfs_mknod(void *v)
 int
 nilfs_mkdir(void *v)
 {
-	struct vop_mkdir_args /* {
+	struct vop_mkdir_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1148,7 +1148,6 @@ nilfs_mkdir(void *v)
 	DPRINTF(VFSCALL, ("nilfs_mkdir called\n"));
 	error = nilfs_create_node(dvp, vpp, vap, cnp);
 
-	vput(dvp);
 	return error;
 }
 
@@ -1230,7 +1229,7 @@ nilfs_do_symlink(struct nilfs_node *nilfs_node, char *target)
 int
 nilfs_symlink(void *v)
 {
-	struct vop_symlink_args /* {
+	struct vop_symlink_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
@@ -1260,7 +1259,6 @@ nilfs_symlink(void *v)
 			nilfs_dir_detach(nilfs_node->ump, dir_node, nilfs_node, cnp);
 		}
 	}
-	vput(dvp);
 	return error;
 }
 
@@ -1574,6 +1572,8 @@ const struct vnodeopv_entry_desc nilfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, nilfs_setattr },	/* setattr */	/* TODO chflags */
 	{ &vop_read_desc, nilfs_read },		/* read */
 	{ &vop_write_desc, nilfs_write },	/* write */	/* WRITE */
+	{ &vop_fallocate_desc, genfs_eopnotsupp }, /* fallocate */
+	{ &vop_fdiscard_desc, genfs_eopnotsupp }, /* fdiscard */
 	{ &vop_fcntl_desc, genfs_fcntl },	/* fcntl */	/* TODO? */
 	{ &vop_ioctl_desc, genfs_enoioctl },	/* ioctl */	/* TODO? */
 	{ &vop_poll_desc, genfs_poll },		/* poll */	/* TODO/OK? */

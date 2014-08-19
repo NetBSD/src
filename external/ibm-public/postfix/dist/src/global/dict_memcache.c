@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_memcache.c,v 1.1.1.1.6.2 2013/02/25 00:27:17 tls Exp $	*/
+/*	$NetBSD: dict_memcache.c,v 1.1.1.1.6.3 2014/08/19 23:59:42 tls Exp $	*/
 
 /*++
 /* NAME
@@ -593,6 +593,8 @@ DICT   *dict_memcache_open(const char *name, int open_flags, int dict_flags)
 	dict_mc->dict.flags |= DICT_FLAG_PATTERN;
     else
 	dict_mc->dict.flags |= DICT_FLAG_FIXED;
+
+    dict_mc->dict.flags |= DICT_FLAG_MULTI_WRITER;
 
     return (&dict_mc->dict);
 }

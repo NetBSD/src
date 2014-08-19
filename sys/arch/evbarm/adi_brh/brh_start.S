@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_start.S,v 1.2 2011/01/31 06:28:02 matt Exp $	*/
+/*	$NetBSD: brh_start.S,v 1.2.14.1 2014/08/20 00:02:52 tls Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
 
 #include <evbarm/adi_brh/brhreg.h>
 
-RCSID("$NetBSD: brh_start.S,v 1.2 2011/01/31 06:28:02 matt Exp $")
+RCSID("$NetBSD: brh_start.S,v 1.2.14.1 2014/08/20 00:02:52 tls Exp $")
 
 	.section .start,"ax",%progbits
 
@@ -62,7 +62,7 @@ _C_LABEL(brh_start):
 	 * Note that we may not currently be running VA==PA, which means
 	 * we'll need to leap to the next insn after disabing the MMU.
 	 */
-	add	r8, pc, #(.Lunmapped - . - 8)
+	adr	r8, .Lunmapped
 	bic	r8, r8, #0xff000000	/* clear upper 8 bits */
 	orr	r8, r8, #0xc0000000	/* OR in physical base address */
 
@@ -96,8 +96,7 @@ _C_LABEL(brh_start):
 	/*
 	 * Step 1: Map the entire address space VA==PA.
 	 */
-	add	r0, pc, #(.Ltable - . - 8)
-	ldr	r0, [r0]			/* r0 = &l1table */
+	ldr	r0, .Ltable			/* r0 = &l1table */
 
 	mov	r3, #(L1_S_AP_KRW)
 	orr	r3, r3, #(L1_TYPE_S)
@@ -114,8 +113,7 @@ _C_LABEL(brh_start):
 	 * Step 2: Map the PCI configuration space (this is needed
 	 * to access some of the core logic registers).
 	 */
-	add	r0, pc, #(.Ltable - . - 8)	/* r0 = &l1table */
-	ldr	r0, [r0]
+	ldr	r0, .Ltable			/* r0 = &l1table */
 
 	mov	r3, #(L1_S_AP_KRW)
 	orr	r3, r3, #(L1_TYPE_S)
@@ -132,39 +130,33 @@ _C_LABEL(brh_start):
 	/*
 	 * Step 3: Map the BECC, UARTs, and LED display.
 	 */
-	add	r0, pc, #(.Ltable - . - 8)	/* r0 = &l1table */
-	ldr	r0, [r0]
+	ldr	r0, .Ltable			/* r0 = &l1table */
 
 	mov	r3, #(L1_S_AP_KRW)
 	orr	r3, r3, #(L1_TYPE_S)
 
 	orr	r3, r3, #(BECC_REG_BASE)
-	add	r2, pc, #(.Lbrh_becc_vbase - . - 8)
-	ldr	r2, [r2]
+	ldr	r2, .Lbrh_becc_vbase
 	str	r3, [r0, r2]
 	bic	r3, r3, #(BECC_REG_BASE)
 
 	orr	r3, r3, #(BRH_UART1_BASE)
-	add	r2, pc, #(.Lbrh_uart1_vbase - . - 8)
-	ldr	r2, [r2]
+	ldr	r2, .Lbrh_uart1_vbase 
 	str	r3, [r0, r2]
 	bic	r3, r3, #(BRH_UART1_BASE)
 
 	orr	r3, r3, #(BRH_UART2_BASE)
-	add	r2, pc, #(.Lbrh_uart2_vbase - . - 8)
-	ldr	r2, [r2]
+	ldr	r2, .Lbrh_uart2_vbase 
 	str	r3, [r0, r2]
 	bic	r3, r3, #(BRH_UART2_BASE)
 
 	orr	r3, r3, #(BRH_LED_BASE)
-	add	r2, pc, #(.Lbrh_led_vbase - . - 8)
-	ldr	r2, [r2]
+	ldr	r2, .Lbrh_led_vbase 
 	str	r3, [r0, r2]
 	bic	r3, r3, #(BRH_LED_BASE)
 
 	/* OK!  Page table is set up.  Give it to the CPU. */
-	add	r0, pc, #(.Ltable - . - 8)
-	ldr	r0, [r0]
+	ldr	r0, .Ltable
 	mcr	p15, 0, r0, c2, c0, 0
 
 	/* Flush the old TLBs, just in case. */
@@ -175,8 +167,7 @@ _C_LABEL(brh_start):
 	mcr	p15, 0, r0, c3, c0, 0
 
 	/* Get ready to jump to the "real" kernel entry point... */
-	add	r0, pc, #(.Lstart - . - 8)
-	ldr	r0, [r0]
+	ldr	r0, .Lstart
 
 	/* OK, let's enable the MMU. */
 	mrc	p15, 0, r2, c1, c0, 0

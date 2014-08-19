@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.93.2.1 2013/02/25 00:28:48 tls Exp $ */
+/* $NetBSD: machdep.c,v 1.93.2.2 2014/08/20 00:03:10 tls Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93.2.1 2013/02/25 00:28:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93.2.2 2014/08/20 00:03:10 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -70,11 +70,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93.2.1 2013/02/25 00:28:48 tls Exp $")
 #include <sys/boot_flag.h>
 #define ELFSIZE 32
 #include <sys/exec_elf.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <sys/sysctl.h>
 
+#include <machine/bootinfo.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/pcb.h>
@@ -97,7 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93.2.1 2013/02/25 00:28:48 tls Exp $")
  * Info for CTL_HW
  */
 char	machine[] = MACHINE;
-char	cpu_model[120];
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
@@ -194,8 +195,25 @@ luna68k_init(void)
 	sw1 ^= 0xff;
 	sysconsole = !(sw1 & 0x2);	/* console selection */
 
+	/*
+	 * Check if boothowto and bootdev values are passed by our bootloader.
+	 */
+	if ((bootdev & B_MAGICMASK) == B_DEVMAGIC) {
+		/* Valid value is set; no need to parse bootarg. */
+		return;
+	}
+
+	/*
+	 * No valid bootdev value is set.
+	 * Assume we are booted by ROM monitor directly using a.out kernel
+	 * and we have to parse bootarg passed from the monitor to set
+	 * proper boothowto and check netboot.
+	 */
+
+	/* set default to "sd0a" with no howto flags */
+	bootdev = MAKEBOOTDEV(0, LUNA68K_BOOTADPT_SPC, 0, 0, 0);
 	boothowto = 0;
-	i = 0;
+
 	/*
 	 * 'bootarg' on LUNA has:
 	 *   "<args of x command> ENADDR=<addr> HOST=<host> SERVER=<name>"
@@ -207,15 +225,19 @@ luna68k_init(void)
 	 *
 	 * NetBSD/luna68k cares only the first argment; any of "sda".
 	 */
-	for (cp = bootarg; *cp != ' ' && *cp != 0; cp++) {
-		BOOT_FLAG(*cp, boothowto);
-		if (i++ >= sizeof(bootarg))
-			break;
+	bootarg[63] = '\0';
+	for (cp = bootarg; *cp != '\0'; cp++) {
+		if (*cp == '-') {
+			char c;
+			while ((c = *cp) != '\0' && c != ' ') {
+				BOOT_FLAG(c, boothowto);
+				cp++;
+			}
+		} else if (*cp == 'E' && memcmp("ENADDR=", cp, 7) == 0) {
+			bootdev =
+			    MAKEBOOTDEV(0, LUNA68K_BOOTADPT_LANCE, 0, 0, 0);
+		}
 	}
-#if 0 /* overload 1:sw1, which now means 'go ROM monitor' after poweron */
-	if (boothowto == 0)
-		boothowto = (sw1 & 0x1) ? RB_SINGLE : 0;
-#endif
 }
 
 /*
@@ -338,7 +360,6 @@ identifycpu(void)
 	extern int cputype;
 	const char *model, *fpu;
 
-	memset(cpu_model, 0, sizeof(cpu_model));
 	switch (cputype) {
 	case CPU_68030:
 		model ="LUNA-I";
@@ -356,8 +377,7 @@ identifycpu(void)
 			fpu = "unknown";
 			break;
 		}
-		snprintf(cpu_model, sizeof(cpu_model),
-		    "%s (MC68030 CPU+MMU, %s FPU)", model, fpu);
+		cpu_setmodel("%s (MC68030 CPU+MMU, %s FPU)", model, fpu);
 		machtype = LUNA_I;
 		/* 20MHz 68030 */
 		cpuspeed = 20;
@@ -367,7 +387,7 @@ identifycpu(void)
 #if defined(M68040)
 	case CPU_68040:
 		model ="LUNA-II";
-		snprintf(cpu_model, sizeof(cpu_model),
+		cpu_setmodel(
 		    "%s (MC68040 CPU+MMU+FPU, 4k on-chip physical I/D caches)",
 		    model);
 		machtype = LUNA_II;
@@ -380,7 +400,7 @@ identifycpu(void)
 	default:
 		panic("unknown CPU type");
 	}
-	printf("%s\n", cpu_model);
+	printf("%s\n", cpu_getmodel());
 }
 
 /*
@@ -720,12 +740,8 @@ int	*nofault;
 int
 badaddr(register void *addr, int nbytes)
 {
-	register int i;
+	int i;
 	label_t faultbuf;
-
-#ifdef lint
-	i = *addr; if (i) return (0);
-#endif
 
 	nofault = (int *)&faultbuf;
 	if (setjmp((label_t *)nofault)) {
@@ -749,6 +765,7 @@ badaddr(register void *addr, int nbytes)
 	default:
 		panic("badaddr: bad request");
 	}
+	__USE(i);
 	nofault = (int *)0;
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.18.2.1 2012/11/20 03:01:07 tls Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.18.2.2 2014/08/20 00:02:47 tls Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.18.2.1 2012/11/20 03:01:07 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.18.2.2 2014/08/20 00:02:47 tls Exp $");
+
+#include "opt_pci.h"
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,14 +116,14 @@ __KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.18.2.1 2012/11/20 03:01:07 tls Exp
 
 #include <sys/bus.h>
 
-#include <arm/s3c2xx0/s3c2800reg.h>
-#include <arm/s3c2xx0/s3c2800var.h>
-
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
 
-#include "opt_pci.h"
-#include "pci.h"
+#include <arm/locore.h>
+
+#include <arm/s3c2xx0/s3c2800reg.h>
+#include <arm/s3c2xx0/s3c2800var.h>
 
 /*
  * pci tag encoding.
@@ -146,7 +149,7 @@ void	s3c2800_pci_conf_write(void *, pcitag_t, int, pcireg_t);
 void	s3c2800_pci_conf_interrupt(void *, int, int, int, int, int *);
 int	s3c2800_pci_intr_map(const struct pci_attach_args *,
 	    pci_intr_handle_t *);
-const char *s3c2800_pci_intr_string(void *, pci_intr_handle_t);
+const char *s3c2800_pci_intr_string(void *, pci_intr_handle_t, char *, size_t);
 const struct evcnt *s3c2800_pci_intr_evcnt(void *, pci_intr_handle_t);
 void *s3c2800_pci_intr_establish(void *, pci_intr_handle_t, int,
 				  int (*) (void *), void *);
@@ -570,10 +573,11 @@ s3c2800_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 const char *
-s3c2800_pci_intr_string(void *pcv, pci_intr_handle_t ih)
+s3c2800_pci_intr_string(void *pcv, pci_intr_handle_t ih, char *buf, size_t len)
 {
 	/* We have only one interrupt source from PCI */
-	return "pciint";
+	strlcpy(buf, "pciint", len);
+	return buf;
 }
 
 const struct evcnt *

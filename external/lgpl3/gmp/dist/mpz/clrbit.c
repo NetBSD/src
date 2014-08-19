@@ -1,6 +1,7 @@
 /* mpz_clrbit -- clear a specified bit.
 
-Copyright 1991, 1993, 1994, 1995, 2001, 2002 Free Software Foundation, Inc.
+Copyright 1991, 1993, 1994, 1995, 2001, 2002, 2012 Free Software Foundation,
+Inc.
 
 This file is part of the GNU MP Library.
 
@@ -21,30 +22,30 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 #include "gmp-impl.h"
 
 void
-mpz_clrbit (mpz_ptr d, mp_bitcnt_t bit_index)
+mpz_clrbit (mpz_ptr d, mp_bitcnt_t bit_idx)
 {
-  mp_size_t dsize = d->_mp_size;
-  mp_ptr dp = d->_mp_d;
-  mp_size_t limb_index;
+  mp_size_t dsize = SIZ (d);
+  mp_ptr dp = PTR (d);
+  mp_size_t limb_idx;
+  mp_limb_t mask;
 
-  limb_index = bit_index / GMP_NUMB_BITS;
+  limb_idx = bit_idx / GMP_NUMB_BITS;
+  mask = CNST_LIMB(1) << (bit_idx % GMP_NUMB_BITS);
   if (dsize >= 0)
     {
-      if (limb_index < dsize)
+      if (limb_idx < dsize)
 	{
-          mp_limb_t  dlimb;
-          dlimb = dp[limb_index];
-          dlimb &= ~((mp_limb_t) 1 << (bit_index % GMP_NUMB_BITS));
-          dp[limb_index] = dlimb;
+	  mp_limb_t  dlimb;
+	  dlimb = dp[limb_idx];
+	  dlimb &= ~mask;
+	  dp[limb_idx] = dlimb;
 
-          if (UNLIKELY (dlimb == 0 && limb_index == dsize-1))
-            {
-              /* high limb became zero, must normalize */
-              do {
-                dsize--;
-              } while (dsize > 0 && dp[dsize-1] == 0);
-              d->_mp_size = dsize;
-            }
+	  if (UNLIKELY (dlimb == 0 && limb_idx == dsize-1))
+	    {
+	      /* high limb became zero, must normalize */
+	      MPN_NORMALIZE (dp, limb_idx);
+	      SIZ (d) = limb_idx;
+	    }
 	}
       else
 	;
@@ -60,51 +61,39 @@ mpz_clrbit (mpz_ptr d, mp_bitcnt_t bit_index)
 
       dsize = -dsize;
 
-      /* No upper bound on this loop, we're sure there's a non-zero limb
-	 sooner ot later.  */
-      for (zero_bound = 0; ; zero_bound++)
-	if (dp[zero_bound] != 0)
-	  break;
+      /* No index upper bound on this loop, we're sure there's a non-zero limb
+	 sooner or later.  */
+      zero_bound = 0;
+      while (dp[zero_bound] == 0)
+	zero_bound++;
 
-      if (limb_index > zero_bound)
+      if (limb_idx > zero_bound)
 	{
-	  if (limb_index < dsize)
-	    dp[limb_index] |= (mp_limb_t) 1 << (bit_index % GMP_NUMB_BITS);
+	  if (limb_idx < dsize)
+	    dp[limb_idx] |= mask;
 	  else
 	    {
 	      /* Ugh.  The bit should be cleared outside of the end of the
 		 number.  We have to increase the size of the number.  */
-	      if (UNLIKELY (d->_mp_alloc < limb_index + 1))
-                dp = _mpz_realloc (d, limb_index + 1);
-
-	      MPN_ZERO (dp + dsize, limb_index - dsize);
-	      dp[limb_index] = (mp_limb_t) 1 << (bit_index % GMP_NUMB_BITS);
-	      d->_mp_size = -(limb_index + 1);
+	      dp = MPZ_REALLOC (d, limb_idx + 1);
+	      SIZ (d) = -(limb_idx + 1);
+	      MPN_ZERO (dp + dsize, limb_idx - dsize);
+	      dp[limb_idx] = mask;
 	    }
 	}
-      else if (limb_index == zero_bound)
+      else if (limb_idx == zero_bound)
 	{
-	  dp[limb_index] = ((((dp[limb_index] - 1)
-			      | ((mp_limb_t) 1 << (bit_index % GMP_NUMB_BITS))) + 1)
-			    & GMP_NUMB_MASK);
-	  if (dp[limb_index] == 0)
+	  dp[limb_idx] = ((((dp[limb_idx] - 1) | mask) + 1) & GMP_NUMB_MASK);
+	  if (dp[limb_idx] == 0)
 	    {
-	      mp_size_t i;
-	      for (i = limb_index + 1; i < dsize; i++)
-		{
-		  dp[i] = (dp[i] + 1) & GMP_NUMB_MASK;
-		  if (dp[i] != 0)
-		    goto fin;
-		}
-	      /* We got carry all way out beyond the end of D.  Increase
-		 its size (and allocation if necessary).  */
-	      dsize++;
-	      if (UNLIKELY (d->_mp_alloc < dsize))
-                dp = _mpz_realloc (d, dsize);
+	      /* Increment at limb_idx + 1.  Extend the number with a zero limb
+		 for simplicity.  */
+	      dp = MPZ_REALLOC (d, dsize + 1);
+	      dp[dsize] = 0;
+	      MPN_INCR_U (dp + limb_idx + 1, dsize - limb_idx, 1);
+	      dsize += dp[dsize];
 
-	      dp[i] = 1;
-	      d->_mp_size = -dsize;
-	    fin:;
+	      SIZ (d) = -dsize;
 	    }
 	}
       else

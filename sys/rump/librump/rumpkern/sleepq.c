@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.13.14.1 2013/06/23 06:20:28 tls Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.13.14.2 2014/08/20 00:04:41 tls Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.13.14.1 2013/06/23 06:20:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.13.14.2 2014/08/20 00:04:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -99,14 +99,11 @@ sleepq_block(int timo, bool catch)
 	return error;
 }
 
-lwp_t *
+void
 sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
 {
 	struct lwp *l, *l_next;
 	bool found = false;
-
-	if (__predict_false(expected != -1))
-		panic("sleepq_wake: \"expected\" not supported");
 
 	for (l = TAILQ_FIRST(sq); l; l = l_next) {
 		l_next = TAILQ_NEXT(l, l_sleepchain);
@@ -115,13 +112,14 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
 			l->l_wchan = NULL;
 			l->l_wmesg = NULL;
 			TAILQ_REMOVE(sq, l, l_sleepchain);
+			if (--expected == 0)
+				break;
 		}
 	}
 	if (found)
 		cv_broadcast(&sq_cv);
 
 	mutex_spin_exit(mp);
-	return NULL;
 }
 
 void

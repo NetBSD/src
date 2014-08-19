@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.28.2.2 2013/06/23 06:20:07 tls Exp $ */
+/* $NetBSD: pmap.c,v 1.28.2.3 2014/08/20 00:03:07 tls Exp $ */
 
 
 /*-
@@ -85,7 +85,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.28.2.2 2013/06/23 06:20:07 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.28.2.3 2014/08/20 00:03:07 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1097,8 +1097,6 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	pmap_t oldpmap;
 	struct ia64_lpte *pte;
-	vaddr_t pa;
-	struct vm_page *pg;
 
 	if ((prot & VM_PROT_READ) == VM_PROT_NONE) {
 		pmap_remove(pmap, sva, eva);
@@ -1125,8 +1123,6 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 		if (pmap_prot(pte) != prot) {
 			if (pmap_managed(pte)) {
-				pa = pmap_ppn(pte);
-				pg = PHYS_TO_VM_PAGE(pa);
 				if (pmap_dirty(pte))
 					pmap_clear_dirty(pte);
 				if (pmap_accessed(pte)) {
@@ -1154,9 +1150,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
 	struct ia64_lpte *pte;
 	pmap_t oldpmap;
-	paddr_t pa;
 
-	pa = 0;
 	mutex_enter(&pmap->pm_slock);
 	oldpmap = pmap_install(pmap); /*XXX: isn't this a little inefficient ?*/
 	pte = pmap_find_vhpt(va);

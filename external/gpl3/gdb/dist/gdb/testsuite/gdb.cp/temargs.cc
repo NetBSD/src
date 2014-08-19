@@ -1,6 +1,6 @@
 /* Template argument tests.
 
-   Copyright 2010, 2011 Free Software Foundation, Inc.
+   Copyright 2010-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@ int a_global;
 struct S
 {
   int f;
+  void somefunc() { }
 };
 
 template<typename T, int I, int *P, int S::*MP>
@@ -55,6 +56,15 @@ void func ()
   // Breakpoint 3.
 }
 
+template<void (S::*F) ()>
+struct K2
+{
+  void k2_m ()
+  {
+    // Breakpoint 5.
+  }
+};
+
 // GCC PR debug/49546
 struct S3
 {
@@ -76,6 +86,7 @@ int main ()
   // Note that instantiating with P==0 does not work with g++.
   // That would be worth testing, once g++ is fixed.
   Base<long, 47, &a_global, &S::f>::Inner<float> inner;
+  K2<&S::somefunc> k2;
   K3<&S3::m> k3;
 // or: K3<S3::m> k3;
 
@@ -83,6 +94,7 @@ int main ()
   inner.inner_m ();
   func<unsigned char, 91, &a_global, &S::f> ();
   base.templ_m<short> ();
+  k2.k2_m ();
   k3.k3_m ();
 
   return 0;

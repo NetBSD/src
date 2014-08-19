@@ -1,24 +1,22 @@
-#	$NetBSD: Makefile,v 1.18 2012/03/22 23:46:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.18.2.1 2014/08/20 00:00:11 tls Exp $
 
 .include <bsd.own.mk>
 
 LIB=		GL
+LIBISCXX=	yes
 
 SUBDIR=		internal
 
 # glx
 .PATH:		${X11SRCDIR.MesaLib}/src/glx
-SRCS.glx=	glcontextmodes.c clientattrib.c compsize.c eval.c glxcmds.c \
-		glxext.c glxextensions.c indirect.c indirect_init.c \
-		indirect_size.c indirect_window_pos.c \
+SRCS.glx=	clientattrib.c compsize.c eval.c glxconfig.c glxcmds.c \
+		glxext.c glxextensions.c indirect_glx.c indirect.c \
+		indirect_init.c indirect_size.c indirect_window_pos.c \
 		indirect_transpose_matrix.c indirect_vertex_array.c \
 		indirect_vertex_program.c pixel.c pixelstore.c render2.c \
 		renderpix.c single2.c singlepix.c vertarr.c xfont.c \
 		glx_pbuffer.c glx_query.c \
 		glxcurrent.c indirect_texture_compression.c
-
-.PATH:		${X11SRCDIR.MesaLib}/src/mesa/glapi
-SRCS.glx+=	glapi.c glapi_dispatch.c glapi_getproc.c glapi_nop.c glthread.c
 
 # XXX see TODO
 #.if ${MACHINE_ARCH} == "i386"
@@ -38,11 +36,17 @@ CPPFLAGS.${fn}=-DDEFAULT_DRIVER_DIR=\"${X11USRLIBDIR}/modules/dri\"
 .endfor
 .endif
 
-MESA_SRC_MODULES=  main math vbo tnl shader swrast slang glapi common \
-                        osmesa ss
+# MAPI stuff.
+.PATH:		${X11SRCDIR.MesaLib}/src/mapi/mapi
+SRCS.mapi= \
+	u_current.c \
+	u_execmem.c \
+	u_thread.c
+
+# XXX Why don't we just link against libmesa?
+MESA_SRC_MODULES=  main math vbo tnl program swrast glapi common ss
 
 .include "../libOSMesa/libmesa.mk"
-
 
 .PATH:		${X11SRCDIR.MesaLib}/src/glw
 .PATH:		${X11SRCDIR.MesaLib}/include/GL
@@ -52,24 +56,26 @@ INCS=	GLwDrawA.h GLwDrawAP.h GLwMDrawA.h GLwMDrawAP.h gl.h gl_mangle.h \
 	xmesa_xf86.h
 INCSDIR=${X11INCDIR}/GL
 
-SRCS+=	${SRCS.dri} ${SRCS.glx}
-
+# XXX Create a separate libglsl rather than copying this...
 .include "../../tools/glsl/Makefile.glslsrcs"
 
-SRCS+=	${SRCS.pp} ${SRCS.cl}
+SRCS+=	${SRCS.dri} ${SRCS.glx} ${SRCS.glsl} ${SRCS.mapi}
 
-CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/GL \
-		-I${DESTDIR}${X11INCDIR}/X11 \
-		-I${DESTDIR}${X11INCDIR}/X11/extensions \
-		-I${DESTDIR}${X11INCDIR}/libdrm \
-		-I${X11SRCDIR.MesaLib}/include \
-		-I${X11SRCDIR.MesaLib}/include/GL/internal \
-		-I${X11SRCDIR.MesaLib}/src/mesa/main \
-		-I${X11SRCDIR.MesaLib}/src/mesa/glapi \
-		-I${X11SRCDIR.MesaLib}/src/mesa \
-		${X11FLAGS.THREADLIB}
+CPPFLAGS+= \
+	-I${X11SRCDIR.MesaLib}/include \
+	-I${X11SRCDIR.MesaLib}/include/GL/internal \
+	-I${X11SRCDIR.MesaLib}/src/mesa \
+	-I${X11SRCDIR.MesaLib}/src/mapi \
+	-I${X11SRCDIR.MesaLib}/src/mapi/glapi \
+	-I${DESTDIR}${X11INCDIR}/libdrm \
+	-I${DESTDIR}${X11INCDIR}/GL \
+	-I${DESTDIR}${X11INCDIR}/X11 \
+	-I${DESTDIR}${X11INCDIR}/X11/extensions
 
+# XXX ?
 #		-I${X11SRCDIR.dri2proto}/src/mesa \
+
+CPPFLAGS+=	${X11FLAGS.THREADLIB}
 
 CFLAGS+=	-fno-strict-aliasing -fvisibility=hidden -pthread
 CPPFLAGS+=	-DUSE_SSE_SYSCTL_DETECTION \
@@ -86,7 +92,8 @@ CPPFLAGS+=	-DUSE_SSE_SYSCTL_DETECTION \
 		-DHZ=100 \
 		-DHAVE_ALIAS \
 		-DXF86VIDMODE \
-		-UIN_DRI_DRIVER
+		-UIN_DRI_DRIVER \
+		-DMAPI_MODE_UTIL
 
 LIBDPLIBS=	Xext	${.CURDIR}/../libXext \
 		X11	${.CURDIR}/../libX11/dynamic \
@@ -96,12 +103,6 @@ LIBDPLIBS=	Xext	${.CURDIR}/../libXext \
 		drm	${.CURDIR}/../libdrm \
 		m	${.CURDIR}/../../../../../lib/libm
 
-# XXX XXX
-COPTS.dri_glx.c=			-Wno-error
-COPTS.dri2_glx.c=			-Wno-error
-COPTS.drisw_glx.c=			-Wno-error
-COPTS.glxext.c=				-Wno-error
-COPTS.indirect_vertex_program.c=	-Wno-error
 MKLINT=no
 
 PKGCONFIG=	gl

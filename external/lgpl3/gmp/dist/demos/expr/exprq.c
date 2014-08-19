@@ -72,7 +72,7 @@ e_mpq_den (mpq_ptr w, mpq_srcptr x)
 }
 
 
-static __gmp_const struct mpexpr_operator_t  _mpq_expr_standard_table[] = {
+static const struct mpexpr_operator_t  _mpq_expr_standard_table[] = {
 
   { "**",  (mpexpr_fun_t) e_mpq_pow_ui,
     MPEXPR_TYPE_BINARY_UI | MPEXPR_TYPE_RIGHTASSOC,                   220 },
@@ -121,13 +121,13 @@ static __gmp_const struct mpexpr_operator_t  _mpq_expr_standard_table[] = {
   { NULL }
 };
 
-__gmp_const struct mpexpr_operator_t * __gmp_const mpq_expr_standard_table
+const struct mpexpr_operator_t * const mpq_expr_standard_table
 = _mpq_expr_standard_table;
 
 
 int
 #if HAVE_STDARG
-mpq_expr (mpq_ptr res, int base, __gmp_const char *e, ...)
+mpq_expr (mpq_ptr res, int base, const char *e, ...)
 #else
 mpq_expr (va_alist)
      va_dcl
@@ -139,13 +139,13 @@ mpq_expr (va_alist)
 #if HAVE_STDARG
   va_start (ap, e);
 #else
-  mpq_ptr           res;
-  int               base;
-  __gmp_const char  *e;
+  mpq_ptr     res;
+  int         base;
+  const char  *e;
   va_start (ap);
   res  = va_arg (ap, mpq_ptr);
   base = va_arg (ap, int);
-  e    = va_arg (ap, __gmp_const char *);
+  e    = va_arg (ap, const char *);
 #endif
 
   TRACE (printf ("mpq_expr(): base %d, %s\n", base, e));

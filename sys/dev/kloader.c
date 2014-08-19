@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.25 2010/11/19 09:08:26 dholland Exp $	*/
+/*	$NetBSD: kloader.c,v 1.25.18.1 2014/08/20 00:03:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.25 2010/11/19 09:08:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.25.18.1 2014/08/20 00:03:35 tls Exp $");
 
 #include "debug_kloader.h"
 
@@ -702,7 +702,7 @@ kloader_pagetag_dump(void)
 			break;
 		}
 		if ((p->src & 3) || (p->dst & 3)) {
-			printf("data alignement error.\n");
+			printf("data alignment error.\n");
 			print = TRUE;
 		}
 

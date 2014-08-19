@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.14 2011/03/28 11:19:13 martin Exp $	*/
+/*	$NetBSD: SYS.h,v 1.14.10.1 2014/08/20 00:02:12 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -51,8 +51,7 @@
  * ERROR branches to cerror.  This is done with a macro so that I can
  * change it to be position independent later, if need be.
  */
-#ifdef PIC
-#ifdef BIGPIC
+#if __PIC__ - 0 >= 2
 #define	JUMP(name) \
 	PIC_PROLOGUE(%g1,%g5); \
 	sethi %hi(_C_LABEL(name)),%g5; \
@@ -60,11 +59,10 @@
 	ldx [%g1+%g5],%g5; \
 	jmp %g5; \
 	nop
-#else
+#elif __PIC__ - 0 >= 1
 #define	JUMP(name) \
 	PIC_PROLOGUE(%g1,%g5); \
 	ldx [%g1+_C_LABEL(name)],%g5; jmp %g5; nop
-#endif
 #else
 #define	JUMP(name)	set _C_LABEL(name),%g1; jmp %g1; nop
 #endif

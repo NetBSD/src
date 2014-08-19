@@ -1,0 +1,16 @@
+#	$NetBSD: Makefile.defines,v 1.1.8.2 2014/08/20 00:00:12 tls Exp $
+
+# common defiles for libdrm components
+
+CPPFLAGS+=	-DHAVE_INTTYPES_H \
+		-DHAVE_RADEON \
+		-DHAVE_SETENV \
+		-DHAVE_STDINT_H \
+		-DHAVE_STRINGS_H \
+		-DHAVE_STRING_H  \
+		-DHAVE_SYS_STAT_H \
+		-DHAVE_SYS_TYPES_H \
+		-DHAVE_UNISTD_H
+
+#		-DHAVE_NOUVEAU
+

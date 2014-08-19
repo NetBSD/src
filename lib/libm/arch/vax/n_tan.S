@@ -1,4 +1,4 @@
-/*	$NetBSD: n_tan.S,v 1.6 2003/08/07 16:44:45 agc Exp $	*/
+/*	$NetBSD: n_tan.S,v 1.6.60.1 2014/08/20 00:02:18 tls Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -87,3 +87,11 @@ ENTRY(tan, 0x0fc0)		# save %r6-%r11
 	divd3	%r0,%r10,%r0
 	bispsw	(%sp)+
 1:	ret
+
+
+ENTRY(tanf, 0)
+	cvtfd	4(%ap),-(%sp)
+	calls	$2,_C_LABEL(tan)
+	cvtdf	%r0,%r0
+	ret
+

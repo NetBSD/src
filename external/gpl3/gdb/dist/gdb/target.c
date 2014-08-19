@@ -1,8 +1,6 @@
 /* Select target systems and architectures at runtime for GDB.
 
-   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 1990-2014 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -23,15 +21,15 @@
 
 #include "defs.h"
 #include <errno.h>
-#include "gdb_string.h"
+#include <string.h>
 #include "target.h"
+#include "target-dcache.h"
 #include "gdbcmd.h"
 #include "symtab.h"
 #include "inferior.h"
 #include "bfd.h"
 #include "symfile.h"
 #include "objfiles.h"
-#include "gdb_wait.h"
 #include "dcache.h"
 #include <signal.h>
 #include "regcache.h"
@@ -44,10 +42,12 @@
 #include "exec.h"
 #include "inline-frame.h"
 #include "tracepoint.h"
+#include "gdb/fileio.h"
+#include "agent.h"
 
 static void target_info (char *, int);
 
-static void default_terminal_info (char *, int);
+static void default_terminal_info (const char *, int);
 
 static int default_watchpoint_addr_within_range (struct target_ops *,
 						 CORE_ADDR, CORE_ADDR, int);
@@ -64,29 +64,17 @@ static int return_one (void);
 
 static int return_minus_one (void);
 
+static void *return_null (void);
+
 void target_ignore (void);
 
 static void target_command (char *, int);
 
 static struct target_ops *find_default_run_target (char *);
 
-static LONGEST default_xfer_partial (struct target_ops *ops,
-				     enum target_object object,
-				     const char *annex, gdb_byte *readbuf,
-				     const gdb_byte *writebuf,
-				     ULONGEST offset, LONGEST len);
+static target_xfer_partial_ftype default_xfer_partial;
 
-static LONGEST current_xfer_partial (struct target_ops *ops,
-				     enum target_object object,
-				     const char *annex, gdb_byte *readbuf,
-				     const gdb_byte *writebuf,
-				     ULONGEST offset, LONGEST len);
-
-static LONGEST target_xfer_partial (struct target_ops *ops,
-				    enum target_object object,
-				    const char *annex,
-				    void *readbuf, const void *writebuf,
-				    ULONGEST offset, LONGEST len);
+static target_xfer_partial_ftype current_xfer_partial;
 
 static struct gdbarch *default_thread_architecture (struct target_ops *ops,
 						    ptid_t ptid);
@@ -143,13 +131,9 @@ static void debug_to_terminal_save_ours (void);
 
 static void debug_to_terminal_ours (void);
 
-static void debug_to_terminal_info (char *, int);
-
 static void debug_to_load (char *, int);
 
 static int debug_to_can_run (void);
-
-static void debug_to_notice_signals (ptid_t);
 
 static void debug_to_stop (ptid_t);
 
@@ -158,7 +142,6 @@ static void debug_to_stop (ptid_t);
    array.  */
 struct target_ops **target_structs;
 unsigned target_struct_size;
-unsigned target_struct_index;
 unsigned target_struct_allocsize;
 #define	DEFAULT_ALLOCSIZE	10
 
@@ -208,7 +191,7 @@ int may_stop = 1;
 
 /* Non-zero if we want to see trace of target level stuff.  */
 
-static int targetdebug = 0;
+static unsigned int targetdebug = 0;
 static void
 show_targetdebug (struct ui_file *file, int from_tty,
 		  struct cmd_list_element *c, const char *value)
@@ -217,46 +200,6 @@ show_targetdebug (struct ui_file *file, int from_tty,
 }
 
 static void setup_target_debug (void);
-
-/* The option sets this.  */
-static int stack_cache_enabled_p_1 = 1;
-/* And set_stack_cache_enabled_p updates this.
-   The reason for the separation is so that we don't flush the cache for
-   on->on transitions.  */
-static int stack_cache_enabled_p = 1;
-
-/* This is called *after* the stack-cache has been set.
-   Flush the cache for off->on and on->off transitions.
-   There's no real need to flush the cache for on->off transitions,
-   except cleanliness.  */
-
-static void
-set_stack_cache_enabled_p (char *args, int from_tty,
-			   struct cmd_list_element *c)
-{
-  if (stack_cache_enabled_p != stack_cache_enabled_p_1)
-    target_dcache_invalidate ();
-
-  stack_cache_enabled_p = stack_cache_enabled_p_1;
-}
-
-static void
-show_stack_cache_enabled_p (struct ui_file *file, int from_tty,
-			    struct cmd_list_element *c, const char *value)
-{
-  fprintf_filtered (file, _("Cache use for stack accesses is %s.\n"), value);
-}
-
-/* Cache of memory operations, to speed up remote access.  */
-static DCACHE *target_dcache;
-
-/* Invalidate the target dcache.  */
-
-void
-target_dcache_invalidate (void)
-{
-  dcache_invalidate (target_dcache);
-}
 
 /* The user just typed 'target' without the name of a target.  */
 
@@ -387,10 +330,11 @@ target_has_execution_current (void)
   return target_has_execution_1 (inferior_ptid);
 }
 
-/* Add a possible target architecture to the list.  */
+/* Complete initialization of T.  This ensures that various fields in
+   T are set, if needed by the target implementation.  */
 
 void
-add_target (struct target_ops *t)
+complete_target_initialization (struct target_ops *t)
 {
   /* Provide default values for all "must have" methods.  */
   if (t->to_xfer_partial == NULL)
@@ -410,6 +354,19 @@ add_target (struct target_ops *t)
 
   if (t->to_has_execution == NULL)
     t->to_has_execution = (int (*) (struct target_ops *, ptid_t)) return_zero;
+}
+
+/* Add possible target architecture T to the list and add a new
+   command 'target T->to_shortname'.  Set COMPLETER as the command's
+   completer if not NULL.  */
+
+void
+add_target_with_completer (struct target_ops *t,
+			   completer_ftype *completer)
+{
+  struct cmd_list_element *c;
+
+  complete_target_initialization (t);
 
   if (!target_structs)
     {
@@ -434,7 +391,33 @@ Remaining arguments are interpreted by the target protocol.  For more\n\
 information on the arguments for a particular protocol, type\n\
 `help target ' followed by the protocol name."),
 		    &targetlist, "target ", 0, &cmdlist);
-  add_cmd (t->to_shortname, no_class, t->to_open, t->to_doc, &targetlist);
+  c = add_cmd (t->to_shortname, no_class, t->to_open, t->to_doc,
+	       &targetlist);
+  if (completer != NULL)
+    set_cmd_completer (c, completer);
+}
+
+/* Add a possible target architecture to the list.  */
+
+void
+add_target (struct target_ops *t)
+{
+  add_target_with_completer (t, NULL);
+}
+
+/* See target.h.  */
+
+void
+add_deprecated_target_alias (struct target_ops *t, char *alias)
+{
+  struct cmd_list_element *c;
+  char *alt;
+
+  /* If we use add_alias_cmd, here, we do not get the deprecated warning,
+     see PR cli/15104.  */
+  c = add_cmd (alias, no_class, t->to_open, t->to_doc, &targetlist);
+  alt = xstrprintf ("target %s", t->to_shortname);
+  deprecate_cmd (c, alt);
 }
 
 /* Stub functions */
@@ -529,7 +512,7 @@ noprocess (void)
 }
 
 static void
-default_terminal_info (char *args, int from_tty)
+default_terminal_info (const char *args, int from_tty)
 {
   printf_unfiltered (_("No saved terminal information.\n"));
 }
@@ -544,6 +527,18 @@ static ptid_t
 default_get_ada_task_ptid (long lwp, long tid)
 {
   return ptid_build (ptid_get_pid (inferior_ptid), lwp, tid);
+}
+
+static enum exec_direction_kind
+default_execution_direction (void)
+{
+  if (!target_can_execute_reverse)
+    return EXEC_FORWARD;
+  else if (!target_can_async_p ())
+    return EXEC_FORWARD;
+  else
+    gdb_assert_not_reached ("\
+to_execution_direction must be implemented for reverse async");
 }
 
 /* Go through the target stack from top to bottom, copying over zero
@@ -597,6 +592,8 @@ update_current_target (void)
       /* Do not inherit to_ranged_break_num_registers.  */
       INHERIT (to_insert_watchpoint, t);
       INHERIT (to_remove_watchpoint, t);
+      /* Do not inherit to_insert_mask_watchpoint.  */
+      /* Do not inherit to_remove_mask_watchpoint.  */
       INHERIT (to_stopped_data_address, t);
       INHERIT (to_have_steppable_watchpoint, t);
       INHERIT (to_have_continuable_watchpoint, t);
@@ -604,6 +601,7 @@ update_current_target (void)
       INHERIT (to_watchpoint_addr_within_range, t);
       INHERIT (to_region_ok_for_hw_watchpoint, t);
       INHERIT (to_can_accel_watchpoint_condition, t);
+      /* Do not inherit to_masked_watch_num_registers.  */
       INHERIT (to_terminal_init, t);
       INHERIT (to_terminal_inferior, t);
       INHERIT (to_terminal_ours_for_output, t);
@@ -625,7 +623,8 @@ update_current_target (void)
       INHERIT (to_has_exited, t);
       /* Do not inherit to_mourn_inferior.  */
       INHERIT (to_can_run, t);
-      INHERIT (to_notice_signals, t);
+      /* Do not inherit to_pass_signals.  */
+      /* Do not inherit to_program_signals.  */
       /* Do not inherit to_thread_alive.  */
       /* Do not inherit to_find_new_threads.  */
       /* Do not inherit to_pid_to_str.  */
@@ -646,24 +645,30 @@ update_current_target (void)
       INHERIT (to_can_async_p, t);
       INHERIT (to_is_async_p, t);
       INHERIT (to_async, t);
-      INHERIT (to_async_mask, t);
       INHERIT (to_find_memory_regions, t);
       INHERIT (to_make_corefile_notes, t);
       INHERIT (to_get_bookmark, t);
       INHERIT (to_goto_bookmark, t);
       /* Do not inherit to_get_thread_local_address.  */
       INHERIT (to_can_execute_reverse, t);
+      INHERIT (to_execution_direction, t);
       INHERIT (to_thread_architecture, t);
       /* Do not inherit to_read_description.  */
       INHERIT (to_get_ada_task_ptid, t);
       /* Do not inherit to_search_memory.  */
       INHERIT (to_supports_multi_process, t);
+      INHERIT (to_supports_enable_disable_tracepoint, t);
+      INHERIT (to_supports_string_tracing, t);
       INHERIT (to_trace_init, t);
       INHERIT (to_download_tracepoint, t);
+      INHERIT (to_can_download_tracepoint, t);
       INHERIT (to_download_trace_state_variable, t);
+      INHERIT (to_enable_tracepoint, t);
+      INHERIT (to_disable_tracepoint, t);
       INHERIT (to_trace_set_readonly_regions, t);
       INHERIT (to_trace_start, t);
       INHERIT (to_get_trace_status, t);
+      INHERIT (to_get_tracepoint_status, t);
       INHERIT (to_trace_stop, t);
       INHERIT (to_trace_find, t);
       INHERIT (to_get_trace_state_variable_value, t);
@@ -671,14 +676,22 @@ update_current_target (void)
       INHERIT (to_upload_tracepoints, t);
       INHERIT (to_upload_trace_state_variables, t);
       INHERIT (to_get_raw_trace_data, t);
+      INHERIT (to_get_min_fast_tracepoint_insn_len, t);
       INHERIT (to_set_disconnected_tracing, t);
       INHERIT (to_set_circular_trace_buffer, t);
+      INHERIT (to_set_trace_buffer_size, t);
+      INHERIT (to_set_trace_notes, t);
       INHERIT (to_get_tib_address, t);
       INHERIT (to_set_permissions, t);
       INHERIT (to_static_tracepoint_marker_at, t);
       INHERIT (to_static_tracepoint_markers_by_strid, t);
       INHERIT (to_traceframe_info, t);
+      INHERIT (to_use_agent, t);
+      INHERIT (to_can_use_agent, t);
+      INHERIT (to_augmented_libraries_svr4_read, t);
       INHERIT (to_magic, t);
+      INHERIT (to_supports_evaluation_of_breakpoint_conditions, t);
+      INHERIT (to_can_run_breakpoint_commands, t);
       /* Do not inherit to_memory_map.  */
       /* Do not inherit to_flash_erase.  */
       /* Do not inherit to_flash_done.  */
@@ -697,7 +710,7 @@ update_current_target (void)
 	    (void (*) (char *, int))
 	    tcomplain);
   de_fault (to_close,
-	    (void (*) (int))
+	    (void (*) (void))
 	    target_ignore);
   de_fault (to_post_attach,
 	    (void (*) (int))
@@ -793,15 +806,12 @@ update_current_target (void)
 	    return_zero);
   de_fault (to_can_run,
 	    return_zero);
-  de_fault (to_notice_signals,
-	    (void (*) (ptid_t))
-	    target_ignore);
   de_fault (to_extra_thread_info,
 	    (char *(*) (struct thread_info *))
-	    return_zero);
+	    return_null);
   de_fault (to_thread_name,
 	    (char *(*) (struct thread_info *))
-	    return_zero);
+	    return_null);
   de_fault (to_stop,
 	    (void (*) (ptid_t))
 	    target_ignore);
@@ -811,13 +821,10 @@ update_current_target (void)
 	    tcomplain);
   de_fault (to_pid_to_exec_file,
 	    (char *(*) (int))
-	    return_zero);
+	    return_null);
   de_fault (to_async,
 	    (void (*) (void (*) (enum inferior_event_type, void*), void*))
 	    tcomplain);
-  de_fault (to_async_mask,
-	    (int (*) (int))
-	    return_one);
   de_fault (to_thread_architecture,
 	    default_thread_architecture);
   current_target.to_read_description = NULL;
@@ -827,14 +834,29 @@ update_current_target (void)
   de_fault (to_supports_multi_process,
 	    (int (*) (void))
 	    return_zero);
+  de_fault (to_supports_enable_disable_tracepoint,
+	    (int (*) (void))
+	    return_zero);
+  de_fault (to_supports_string_tracing,
+	    (int (*) (void))
+	    return_zero);
   de_fault (to_trace_init,
 	    (void (*) (void))
 	    tcomplain);
   de_fault (to_download_tracepoint,
-	    (void (*) (struct breakpoint *))
+	    (void (*) (struct bp_location *))
 	    tcomplain);
+  de_fault (to_can_download_tracepoint,
+	    (int (*) (void))
+	    return_zero);
   de_fault (to_download_trace_state_variable,
 	    (void (*) (struct trace_state_variable *))
+	    tcomplain);
+  de_fault (to_enable_tracepoint,
+	    (void (*) (struct bp_location *))
+	    tcomplain);
+  de_fault (to_disable_tracepoint,
+	    (void (*) (struct bp_location *))
 	    tcomplain);
   de_fault (to_trace_set_readonly_regions,
 	    (void (*) (void))
@@ -845,11 +867,14 @@ update_current_target (void)
   de_fault (to_get_trace_status,
 	    (int (*) (struct trace_status *))
 	    return_minus_one);
+  de_fault (to_get_tracepoint_status,
+	    (void (*) (struct breakpoint *, struct uploaded_tp *))
+	    tcomplain);
   de_fault (to_trace_stop,
 	    (void (*) (void))
 	    tcomplain);
   de_fault (to_trace_find,
-	    (int (*) (enum trace_find_type, int, ULONGEST, ULONGEST, int *))
+	    (int (*) (enum trace_find_type, int, CORE_ADDR, CORE_ADDR, int *))
 	    return_minus_one);
   de_fault (to_get_trace_state_variable_value,
 	    (int (*) (int, LONGEST *))
@@ -866,12 +891,21 @@ update_current_target (void)
   de_fault (to_get_raw_trace_data,
 	    (LONGEST (*) (gdb_byte *, ULONGEST, LONGEST))
 	    tcomplain);
+  de_fault (to_get_min_fast_tracepoint_insn_len,
+	    (int (*) (void))
+	    return_minus_one);
   de_fault (to_set_disconnected_tracing,
 	    (void (*) (int))
 	    target_ignore);
   de_fault (to_set_circular_trace_buffer,
 	    (void (*) (int))
 	    target_ignore);
+  de_fault (to_set_trace_buffer_size,
+	    (void (*) (LONGEST))
+	    target_ignore);
+  de_fault (to_set_trace_notes,
+	    (int (*) (const char *, const char *, const char *))
+	    return_zero);
   de_fault (to_get_tib_address,
 	    (int (*) (ptid_t, CORE_ADDR *))
 	    tcomplain);
@@ -886,7 +920,24 @@ update_current_target (void)
 	    tcomplain);
   de_fault (to_traceframe_info,
 	    (struct traceframe_info * (*) (void))
+	    return_null);
+  de_fault (to_supports_evaluation_of_breakpoint_conditions,
+	    (int (*) (void))
+	    return_zero);
+  de_fault (to_can_run_breakpoint_commands,
+	    (int (*) (void))
+	    return_zero);
+  de_fault (to_use_agent,
+	    (int (*) (int))
 	    tcomplain);
+  de_fault (to_can_use_agent,
+	    (int (*) (void))
+	    return_zero);
+  de_fault (to_augmented_libraries_svr4_read,
+	    (int (*) (void))
+	    return_zero);
+  de_fault (to_execution_direction, default_execution_direction);
+
 #undef de_fault
 
   /* Finally, position the target-stack beneath the squashed
@@ -939,7 +990,7 @@ push_target (struct target_ops *t)
 
       (*cur) = (*cur)->beneath;
       tmp->beneath = NULL;
-      target_close (tmp, 0);
+      target_close (tmp);
     }
 
   /* We have removed all targets in our stratum, now add the new one.  */
@@ -971,16 +1022,10 @@ unpush_target (struct target_ops *t)
 	break;
     }
 
+  /* If we don't find target_ops, quit.  Only open targets should be
+     closed.  */
   if ((*cur) == NULL)
-    return 0;			/* Didn't find target_ops, quit now.  */
-
-  /* NOTE: cagney/2003-12-06: In '94 the close call was made
-     unconditional by moving it to before the above check that the
-     target was in the target stack (something about "Change the way
-     pushing and popping of targets work to support target overlays
-     and inheritance").  This doesn't make much sense - only open
-     targets should be closed.  */
-  target_close (t, 0);
+    return 0;			
 
   /* Unchain the target.  */
   tmp = (*cur);
@@ -989,29 +1034,19 @@ unpush_target (struct target_ops *t)
 
   update_current_target ();
 
+  /* Finally close the target.  Note we do this after unchaining, so
+     any target method calls from within the target_close
+     implementation don't end up in T anymore.  */
+  target_close (t);
+
   return 1;
 }
 
 void
-pop_target (void)
-{
-  target_close (target_stack, 0);	/* Let it clean up.  */
-  if (unpush_target (target_stack) == 1)
-    return;
-
-  fprintf_unfiltered (gdb_stderr,
-		      "pop_target couldn't find target %s\n",
-		      current_target.to_shortname);
-  internal_error (__FILE__, __LINE__,
-		  _("failed internal consistency check"));
-}
-
-void
-pop_all_targets_above (enum strata above_stratum, int quitting)
+pop_all_targets_above (enum strata above_stratum)
 {
   while ((int) (current_target.to_stratum) > (int) above_stratum)
     {
-      target_close (target_stack, quitting);
       if (!unpush_target (target_stack))
 	{
 	  fprintf_unfiltered (gdb_stderr,
@@ -1025,9 +1060,9 @@ pop_all_targets_above (enum strata above_stratum, int quitting)
 }
 
 void
-pop_all_targets (int quitting)
+pop_all_targets (void)
 {
-  pop_all_targets_above (dummy_stratum, quitting);
+  pop_all_targets_above (dummy_stratum);
 }
 
 /* Return 1 if T is now pushed in the target stack.  Return 0 otherwise.  */
@@ -1072,7 +1107,7 @@ target_translate_tls_address (struct objfile *objfile, CORE_ADDR offset)
     }
 
   if (target != NULL
-      && gdbarch_fetch_tls_load_module_address_p (target_gdbarch))
+      && gdbarch_fetch_tls_load_module_address_p (target_gdbarch ()))
     {
       ptid_t ptid = inferior_ptid;
       volatile struct gdb_exception ex;
@@ -1082,7 +1117,7 @@ target_translate_tls_address (struct objfile *objfile, CORE_ADDR offset)
 	  CORE_ADDR lm_addr;
 	  
 	  /* Fetch the load module address for this objfile.  */
-	  lm_addr = gdbarch_fetch_tls_load_module_address (target_gdbarch,
+	  lm_addr = gdbarch_fetch_tls_load_module_address (target_gdbarch (),
 	                                                   objfile);
 	  /* If it's 0, throw the appropriate exception.  */
 	  if (lm_addr == 0)
@@ -1107,10 +1142,10 @@ target_translate_tls_address (struct objfile *objfile, CORE_ADDR offset)
 	    case TLS_LOAD_MODULE_NOT_FOUND_ERROR:
 	      if (objfile_is_library)
 		error (_("Cannot find shared library `%s' in dynamic"
-		         " linker's load module list"), objfile->name);
+		         " linker's load module list"), objfile_name (objfile));
 	      else
 		error (_("Cannot find executable file `%s' in dynamic"
-		         " linker's load module list"), objfile->name);
+		         " linker's load module list"), objfile_name (objfile));
 	      break;
 	    case TLS_NOT_ALLOCATED_YET_ERROR:
 	      if (objfile_is_library)
@@ -1118,25 +1153,25 @@ target_translate_tls_address (struct objfile *objfile, CORE_ADDR offset)
 		         " thread-local variables in\n"
 		         "the shared library `%s'\n"
 		         "for %s"),
-		       objfile->name, target_pid_to_str (ptid));
+		       objfile_name (objfile), target_pid_to_str (ptid));
 	      else
 		error (_("The inferior has not yet allocated storage for"
 		         " thread-local variables in\n"
 		         "the executable `%s'\n"
 		         "for %s"),
-		       objfile->name, target_pid_to_str (ptid));
+		       objfile_name (objfile), target_pid_to_str (ptid));
 	      break;
 	    case TLS_GENERIC_ERROR:
 	      if (objfile_is_library)
 		error (_("Cannot find thread-local storage for %s, "
 		         "shared library %s:\n%s"),
 		       target_pid_to_str (ptid),
-		       objfile->name, ex.message);
+		       objfile_name (objfile), ex.message);
 	      else
 		error (_("Cannot find thread-local storage for %s, "
 		         "executable file %s:\n%s"),
 		       target_pid_to_str (ptid),
-		       objfile->name, ex.message);
+		       objfile_name (objfile), ex.message);
 	      break;
 	    default:
 	      throw_exception (ex);
@@ -1152,6 +1187,21 @@ target_translate_tls_address (struct objfile *objfile, CORE_ADDR offset)
   return addr;
 }
 
+const char *
+target_xfer_error_to_string (enum target_xfer_error err)
+{
+#define CASE(X) case X: return #X
+  switch (err)
+    {
+      CASE(TARGET_XFER_E_IO);
+      CASE(TARGET_XFER_E_UNAVAILABLE);
+    default:
+      return "<unknown>";
+    }
+#undef CASE
+};
+
+
 #undef	MIN
 #define MIN(A, B) (((A) <= (B)) ? (A) : (B))
 
@@ -1164,7 +1214,7 @@ target_translate_tls_address (struct objfile *objfile, CORE_ADDR offset)
 int
 target_read_string (CORE_ADDR memaddr, char **string, int len, int *errnop)
 {
-  int tlen, origlen, offset, i;
+  int tlen, offset, i;
   gdb_byte buf[4];
   int errcode = 0;
   char *buffer;
@@ -1178,8 +1228,6 @@ target_read_string (CORE_ADDR memaddr, char **string, int len, int *errnop)
   buffer_allocated = 4;
   buffer = xmalloc (buffer_allocated);
   bufptr = buffer;
-
-  origlen = len;
 
   while (len > 0)
     {
@@ -1271,7 +1319,7 @@ static LONGEST
 target_read_live_memory (enum target_object object,
 			 ULONGEST memaddr, gdb_byte *myaddr, LONGEST len)
 {
-  int ret;
+  LONGEST ret;
   struct cleanup *cleanup;
 
   /* Switch momentarily out of tfind mode so to access live memory.
@@ -1306,7 +1354,8 @@ memory_xfer_live_readonly_partial (struct target_ops *ops,
 
   secp = target_section_by_addr (ops, memaddr);
   if (secp != NULL
-      && (bfd_get_section_flags (secp->bfd, secp->the_bfd_section)
+      && (bfd_get_section_flags (secp->the_bfd_section->owner,
+				 secp->the_bfd_section)
 	  & SEC_READONLY))
     {
       struct target_section *p;
@@ -1343,22 +1392,64 @@ memory_xfer_live_readonly_partial (struct target_ops *ops,
   return 0;
 }
 
+/* Read memory from more than one valid target.  A core file, for
+   instance, could have some of memory but delegate other bits to
+   the target below it.  So, we must manually try all targets.  */
+
+static LONGEST
+raw_memory_xfer_partial (struct target_ops *ops, void *readbuf,
+			 const void *writebuf, ULONGEST memaddr, LONGEST len)
+{
+  LONGEST res;
+
+  do
+    {
+      res = ops->to_xfer_partial (ops, TARGET_OBJECT_MEMORY, NULL,
+				  readbuf, writebuf, memaddr, len);
+      if (res > 0)
+	break;
+
+      /* We want to continue past core files to executables, but not
+	 past a running target's memory.  */
+      if (ops->to_has_all_memory (ops))
+	break;
+
+      ops = ops->beneath;
+    }
+  while (ops != NULL);
+
+  /* The cache works at the raw memory level.  Make sure the cache
+     gets updated with raw contents no matter what kind of memory
+     object was originally being written.  Note we do write-through
+     first, so that if it fails, we don't write to the cache contents
+     that never made it to the target.  */
+  if (writebuf != NULL
+      && !ptid_equal (inferior_ptid, null_ptid)
+      && target_dcache_init_p ()
+      && (stack_cache_enabled_p () || code_cache_enabled_p ()))
+    {
+      DCACHE *dcache = target_dcache_get ();
+
+      /* Note that writing to an area of memory which wasn't present
+	 in the cache doesn't cause it to be loaded in.  */
+      dcache_update (dcache, res, memaddr, writebuf, len);
+    }
+
+  return res;
+}
+
 /* Perform a partial memory transfer.
    For docs see target.h, to_xfer_partial.  */
 
 static LONGEST
-memory_xfer_partial (struct target_ops *ops, enum target_object object,
-		     void *readbuf, const void *writebuf, ULONGEST memaddr,
-		     LONGEST len)
+memory_xfer_partial_1 (struct target_ops *ops, enum target_object object,
+		       void *readbuf, const void *writebuf, ULONGEST memaddr,
+		       LONGEST len)
 {
   LONGEST res;
   int reg_len;
   struct mem_region *region;
   struct inferior *inf;
-
-  /* Zero length requests are ok and require no work.  */
-  if (len == 0)
-    return 0;
 
   /* For accesses to unmapped overlay sections, read directly from
      files.  Must do this first, as MEMADDR may need adjustment.  */
@@ -1389,7 +1480,8 @@ memory_xfer_partial (struct target_ops *ops, enum target_object object,
 
       secp = target_section_by_addr (ops, memaddr);
       if (secp != NULL
-	  && (bfd_get_section_flags (secp->bfd, secp->the_bfd_section)
+	  && (bfd_get_section_flags (secp->the_bfd_section->owner,
+				     secp->the_bfd_section)
 	      & SEC_READONLY))
 	{
 	  table = target_get_section_table (ops);
@@ -1441,7 +1533,7 @@ memory_xfer_partial (struct target_ops *ops, enum target_object object,
 
 	      /* No use trying further, we know some memory starting
 		 at MEMADDR isn't available.  */
-	      return -1;
+	      return TARGET_XFER_E_UNAVAILABLE;
 	    }
 
 	  /* Don't try to read more than how much is available, in
@@ -1490,31 +1582,19 @@ memory_xfer_partial (struct target_ops *ops, enum target_object object,
     inf = NULL;
 
   if (inf != NULL
+      && readbuf != NULL
       /* The dcache reads whole cache lines; that doesn't play well
 	 with reading from a trace buffer, because reading outside of
 	 the collected memory range fails.  */
       && get_traceframe_number () == -1
       && (region->attrib.cache
-	  || (stack_cache_enabled_p && object == TARGET_OBJECT_STACK_MEMORY)))
+	  || (stack_cache_enabled_p () && object == TARGET_OBJECT_STACK_MEMORY)
+	  || (code_cache_enabled_p () && object == TARGET_OBJECT_CODE_MEMORY)))
     {
-      if (readbuf != NULL)
-	res = dcache_xfer_memory (ops, target_dcache, memaddr, readbuf,
-				  reg_len, 0);
-      else
-	/* FIXME drow/2006-08-09: If we're going to preserve const
-	   correctness dcache_xfer_memory should take readbuf and
-	   writebuf.  */
-	res = dcache_xfer_memory (ops, target_dcache, memaddr,
-				  (void *) writebuf,
-				  reg_len, 1);
-      if (res <= 0)
-	return -1;
-      else
-	{
-	  if (readbuf && !show_memory_breakpoints)
-	    breakpoint_restore_shadows (readbuf, memaddr, reg_len);
-	  return res;
-	}
+      DCACHE *dcache = target_dcache_get_or_init ();
+
+      return dcache_read_memory_partial (ops, dcache, memaddr, readbuf,
+					 reg_len);
     }
 
   /* If none of those methods found the memory we wanted, fall back
@@ -1522,46 +1602,60 @@ memory_xfer_partial (struct target_ops *ops, enum target_object object,
      to_xfer_partial is enough; if it doesn't recognize an object
      it will call the to_xfer_partial of the next target down.
      But for memory this won't do.  Memory is the only target
-     object which can be read from more than one valid target.
-     A core file, for instance, could have some of memory but
-     delegate other bits to the target below it.  So, we must
-     manually try all targets.  */
-
-  do
-    {
-      res = ops->to_xfer_partial (ops, TARGET_OBJECT_MEMORY, NULL,
-				  readbuf, writebuf, memaddr, reg_len);
-      if (res > 0)
-	break;
-
-      /* We want to continue past core files to executables, but not
-	 past a running target's memory.  */
-      if (ops->to_has_all_memory (ops))
-	break;
-
-      ops = ops->beneath;
-    }
-  while (ops != NULL);
-
-  if (res > 0 && readbuf != NULL && !show_memory_breakpoints)
-    breakpoint_restore_shadows (readbuf, memaddr, reg_len);
-
-  /* Make sure the cache gets updated no matter what - if we are writing
-     to the stack.  Even if this write is not tagged as such, we still need
-     to update the cache.  */
-
-  if (res > 0
-      && inf != NULL
-      && writebuf != NULL
-      && !region->attrib.cache
-      && stack_cache_enabled_p
-      && object != TARGET_OBJECT_STACK_MEMORY)
-    {
-      dcache_update (target_dcache, memaddr, (void *) writebuf, res);
-    }
+     object which can be read from more than one valid target.  */
+  res = raw_memory_xfer_partial (ops, readbuf, writebuf, memaddr, reg_len);
 
   /* If we still haven't got anything, return the last error.  We
      give up.  */
+  return res;
+}
+
+/* Perform a partial memory transfer.  For docs see target.h,
+   to_xfer_partial.  */
+
+static LONGEST
+memory_xfer_partial (struct target_ops *ops, enum target_object object,
+		     void *readbuf, const void *writebuf, ULONGEST memaddr,
+		     LONGEST len)
+{
+  int res;
+
+  /* Zero length requests are ok and require no work.  */
+  if (len == 0)
+    return 0;
+
+  /* Fill in READBUF with breakpoint shadows, or WRITEBUF with
+     breakpoint insns, thus hiding out from higher layers whether
+     there are software breakpoints inserted in the code stream.  */
+  if (readbuf != NULL)
+    {
+      res = memory_xfer_partial_1 (ops, object, readbuf, NULL, memaddr, len);
+
+      if (res > 0 && !show_memory_breakpoints)
+	breakpoint_xfer_memory (readbuf, NULL, NULL, memaddr, res);
+    }
+  else
+    {
+      void *buf;
+      struct cleanup *old_chain;
+
+      /* A large write request is likely to be partially satisfied
+	 by memory_xfer_partial_1.  We will continually malloc
+	 and free a copy of the entire write request for breakpoint
+	 shadow handling even though we only end up writing a small
+	 subset of it.  Cap writes to 4KB to mitigate this.  */
+      len = min (4096, len);
+
+      buf = xmalloc (len);
+      old_chain = make_cleanup (xfree, buf);
+      memcpy (buf, writebuf, len);
+
+      breakpoint_xfer_memory (NULL, buf, writebuf, memaddr, len);
+      res = memory_xfer_partial_1 (ops, object, NULL, buf, memaddr, len);
+
+      do_cleanups (old_chain);
+    }
+
   return res;
 }
 
@@ -1583,10 +1677,10 @@ make_show_memory_breakpoints_cleanup (int show)
 
 /* For docs see target.h, to_xfer_partial.  */
 
-static LONGEST
+LONGEST
 target_xfer_partial (struct target_ops *ops,
 		     enum target_object object, const char *annex,
-		     void *readbuf, const void *writebuf,
+		     gdb_byte *readbuf, const gdb_byte *writebuf,
 		     ULONGEST offset, LONGEST len)
 {
   LONGEST retval;
@@ -1600,21 +1694,18 @@ target_xfer_partial (struct target_ops *ops,
   /* If this is a memory transfer, let the memory-specific code
      have a look at it instead.  Memory transfers are more
      complicated.  */
-  if (object == TARGET_OBJECT_MEMORY || object == TARGET_OBJECT_STACK_MEMORY)
+  if (object == TARGET_OBJECT_MEMORY || object == TARGET_OBJECT_STACK_MEMORY
+      || object == TARGET_OBJECT_CODE_MEMORY)
     retval = memory_xfer_partial (ops, object, readbuf,
 				  writebuf, offset, len);
-  else
+  else if (object == TARGET_OBJECT_RAW_MEMORY)
     {
-      enum target_object raw_object = object;
-
-      /* If this is a raw memory transfer, request the normal
-	 memory object from other layers.  */
-      if (raw_object == TARGET_OBJECT_RAW_MEMORY)
-	raw_object = TARGET_OBJECT_MEMORY;
-
-      retval = ops->to_xfer_partial (ops, raw_object, annex, readbuf,
-				     writebuf, offset, len);
+      /* Request the normal memory object from other layers.  */
+      retval = raw_memory_xfer_partial (ops, readbuf, writebuf, offset, len);
     }
+  else
+    retval = ops->to_xfer_partial (ops, object, annex, readbuf,
+				   writebuf, offset, len);
 
   if (targetdebug)
     {
@@ -1661,9 +1752,9 @@ target_xfer_partial (struct target_ops *ops,
   return retval;
 }
 
-/* Read LEN bytes of target memory at address MEMADDR, placing the results in
-   GDB's memory at MYADDR.  Returns either 0 for success or an errno value
-   if any error occurs.
+/* Read LEN bytes of target memory at address MEMADDR, placing the
+   results in GDB's memory at MYADDR.  Returns either 0 for success or
+   a target_xfer_error value if any error occurs.
 
    If an error occurs, no guarantee is made about the contents of the data at
    MYADDR.  In particular, the caller should not depend upon partial reads
@@ -1673,7 +1764,7 @@ target_xfer_partial (struct target_ops *ops,
    it makes no progress, and then return how much was transferred).  */
 
 int
-target_read_memory (CORE_ADDR memaddr, gdb_byte *myaddr, int len)
+target_read_memory (CORE_ADDR memaddr, gdb_byte *myaddr, ssize_t len)
 {
   /* Dispatch to the topmost target, not the flattened current_target.
      Memory accesses check target->to_has_(all_)memory, and the
@@ -1682,42 +1773,89 @@ target_read_memory (CORE_ADDR memaddr, gdb_byte *myaddr, int len)
 		   myaddr, memaddr, len) == len)
     return 0;
   else
-    return EIO;
+    return TARGET_XFER_E_IO;
+}
+
+/* Like target_read_memory, but specify explicitly that this is a read
+   from the target's raw memory.  That is, this read bypasses the
+   dcache, breakpoint shadowing, etc.  */
+
+int
+target_read_raw_memory (CORE_ADDR memaddr, gdb_byte *myaddr, ssize_t len)
+{
+  /* See comment in target_read_memory about why the request starts at
+     current_target.beneath.  */
+  if (target_read (current_target.beneath, TARGET_OBJECT_RAW_MEMORY, NULL,
+		   myaddr, memaddr, len) == len)
+    return 0;
+  else
+    return TARGET_XFER_E_IO;
 }
 
 /* Like target_read_memory, but specify explicitly that this is a read from
    the target's stack.  This may trigger different cache behavior.  */
 
 int
-target_read_stack (CORE_ADDR memaddr, gdb_byte *myaddr, int len)
+target_read_stack (CORE_ADDR memaddr, gdb_byte *myaddr, ssize_t len)
 {
-  /* Dispatch to the topmost target, not the flattened current_target.
-     Memory accesses check target->to_has_(all_)memory, and the
-     flattened target doesn't inherit those.  */
-
+  /* See comment in target_read_memory about why the request starts at
+     current_target.beneath.  */
   if (target_read (current_target.beneath, TARGET_OBJECT_STACK_MEMORY, NULL,
 		   myaddr, memaddr, len) == len)
     return 0;
   else
-    return EIO;
+    return TARGET_XFER_E_IO;
+}
+
+/* Like target_read_memory, but specify explicitly that this is a read from
+   the target's code.  This may trigger different cache behavior.  */
+
+int
+target_read_code (CORE_ADDR memaddr, gdb_byte *myaddr, ssize_t len)
+{
+  /* See comment in target_read_memory about why the request starts at
+     current_target.beneath.  */
+  if (target_read (current_target.beneath, TARGET_OBJECT_CODE_MEMORY, NULL,
+		   myaddr, memaddr, len) == len)
+    return 0;
+  else
+    return TARGET_XFER_E_IO;
 }
 
 /* Write LEN bytes from MYADDR to target memory at address MEMADDR.
-   Returns either 0 for success or an errno value if any error occurs.
-   If an error occurs, no guarantee is made about how much data got written.
-   Callers that can deal with partial writes should call target_write.  */
+   Returns either 0 for success or a target_xfer_error value if any
+   error occurs.  If an error occurs, no guarantee is made about how
+   much data got written.  Callers that can deal with partial writes
+   should call target_write.  */
 
 int
-target_write_memory (CORE_ADDR memaddr, const gdb_byte *myaddr, int len)
+target_write_memory (CORE_ADDR memaddr, const gdb_byte *myaddr, ssize_t len)
 {
-  /* Dispatch to the topmost target, not the flattened current_target.
-     Memory accesses check target->to_has_(all_)memory, and the
-     flattened target doesn't inherit those.  */
+  /* See comment in target_read_memory about why the request starts at
+     current_target.beneath.  */
   if (target_write (current_target.beneath, TARGET_OBJECT_MEMORY, NULL,
 		    myaddr, memaddr, len) == len)
     return 0;
   else
-    return EIO;
+    return TARGET_XFER_E_IO;
+}
+
+/* Write LEN bytes from MYADDR to target raw memory at address
+   MEMADDR.  Returns either 0 for success or a target_xfer_error value
+   if any error occurs.  If an error occurs, no guarantee is made
+   about how much data got written.  Callers that can deal with
+   partial writes should call target_write.  */
+
+int
+target_write_raw_memory (CORE_ADDR memaddr, const gdb_byte *myaddr, ssize_t len)
+{
+  /* See comment in target_read_memory about why the request starts at
+     current_target.beneath.  */
+  if (target_write (current_target.beneath, TARGET_OBJECT_RAW_MEMORY, NULL,
+		    myaddr, memaddr, len) == len)
+    return 0;
+  else
+    return TARGET_XFER_E_IO;
 }
 
 /* Fetch the target's memory map.  */
@@ -2256,9 +2394,11 @@ target_read_stralloc (struct target_ops *ops, enum target_object object,
 		      const char *annex)
 {
   gdb_byte *buffer;
-  LONGEST transferred;
+  char *bufstr;
+  LONGEST i, transferred;
 
   transferred = target_read_alloc_1 (ops, object, annex, &buffer, 1);
+  bufstr = (char *) buffer;
 
   if (transferred < 0)
     return NULL;
@@ -2266,13 +2406,19 @@ target_read_stralloc (struct target_ops *ops, enum target_object object,
   if (transferred == 0)
     return xstrdup ("");
 
-  buffer[transferred] = 0;
-  if (strlen (buffer) < transferred)
-    warning (_("target object %d, annex %s, "
-	       "contained unexpected null characters"),
-	     (int) object, annex ? annex : "(none)");
+  bufstr[transferred] = 0;
 
-  return (char *) buffer;
+  /* Check for embedded NUL bytes; but allow trailing NULs.  */
+  for (i = strlen (bufstr); i < transferred; i++)
+    if (bufstr[i] != 0)
+      {
+	warning (_("target object %d, annex %s, "
+		   "contained unexpected null characters"),
+		 (int) object, annex ? annex : "(none)");
+	break;
+      }
+
+  return bufstr;
 }
 
 /* Memory transfer methods.  */
@@ -2287,7 +2433,7 @@ get_target_memory (struct target_ops *ops, CORE_ADDR addr, gdb_byte *buf,
      for this target).  */
   if (target_read (ops, TARGET_OBJECT_RAW_MEMORY, NULL, buf, addr, len)
       != len)
-    memory_error (EIO, addr);
+    memory_error (TARGET_XFER_E_IO, addr);
 }
 
 ULONGEST
@@ -2338,7 +2484,8 @@ target_info (char *args, int from_tty)
   int has_all_mem = 0;
 
   if (symfile_objfile != NULL)
-    printf_unfiltered (_("Symbols from \"%s\".\n"), symfile_objfile->name);
+    printf_unfiltered (_("Symbols from \"%s\".\n"),
+		       objfile_name (symfile_objfile));
 
   for (t = target_stack; t != NULL; t = t->beneath)
     {
@@ -2385,7 +2532,7 @@ target_pre_inferior (int from_tty)
   /* In some OSs, the shared library list is the same/global/shared
      across inferiors.  If code is shared between processes, so are
      memory regions and features.  */
-  if (!gdbarch_has_global_solist (target_gdbarch))
+  if (!gdbarch_has_global_solist (target_gdbarch ()))
     {
       no_shared_libraries (NULL, from_tty);
 
@@ -2393,6 +2540,8 @@ target_pre_inferior (int from_tty)
 
       target_clear_description ();
     }
+
+  agent_capability_invalidate ();
 }
 
 /* Callback for iterate_over_inferiors.  Gets rid of the given
@@ -2440,7 +2589,7 @@ target_preopen (int from_tty)
      it doesn't (which seems like a win for UDI), remove it now.  */
   /* Leave the exec target, though.  The user may be switching from a
      live process to a core of the same program.  */
-  pop_all_targets_above (file_stratum, 0);
+  pop_all_targets_above (file_stratum);
 
   target_pre_inferior (from_tty);
 }
@@ -2448,18 +2597,18 @@ target_preopen (int from_tty)
 /* Detach a target after doing deferred register stores.  */
 
 void
-target_detach (char *args, int from_tty)
+target_detach (const char *args, int from_tty)
 {
   struct target_ops* t;
   
-  if (gdbarch_has_global_breakpoints (target_gdbarch))
+  if (gdbarch_has_global_breakpoints (target_gdbarch ()))
     /* Don't remove global breakpoints here.  They're removed on
        disconnection from the target.  */
     ;
   else
     /* If we're in breakpoints-always-inserted mode, have to remove
        them before detaching.  */
-    remove_breakpoints_pid (PIDGET (inferior_ptid));
+    remove_breakpoints_pid (ptid_get_pid (inferior_ptid));
 
   prepare_for_detach ();
 
@@ -2515,13 +2664,17 @@ target_wait (ptid_t ptid, struct target_waitstatus *status, int options)
 	  if (targetdebug)
 	    {
 	      char *status_string;
+	      char *options_string;
 
 	      status_string = target_waitstatus_to_string (status);
+	      options_string = target_options_to_string (options);
 	      fprintf_unfiltered (gdb_stdlog,
-				  "target_wait (%d, status) = %d,   %s\n",
-				  PIDGET (ptid), PIDGET (retval),
-				  status_string);
+				  "target_wait (%d, status, options={%s})"
+				  " = %d,   %s\n",
+				  ptid_get_pid (ptid), options_string,
+				  ptid_get_pid (retval), status_string);
 	      xfree (status_string);
+	      xfree (options_string);
 	    }
 
 	  return retval;
@@ -2560,7 +2713,7 @@ target_thread_name (struct thread_info *info)
 }
 
 void
-target_resume (ptid_t ptid, int step, enum target_signal signal)
+target_resume (ptid_t ptid, int step, enum gdb_signal signal)
 {
   struct target_ops *t;
 
@@ -2573,9 +2726,9 @@ target_resume (ptid_t ptid, int step, enum target_signal signal)
 	  t->to_resume (t, ptid, step, signal);
 	  if (targetdebug)
 	    fprintf_unfiltered (gdb_stdlog, "target_resume (%d, %s, %s)\n",
-				PIDGET (ptid),
+				ptid_get_pid (ptid),
 				step ? "step" : "continue",
-				target_signal_to_name (signal));
+				gdb_signal_to_name (signal));
 
 	  registers_changed_ptid (ptid);
 	  set_executing (ptid, 1);
@@ -2587,11 +2740,72 @@ target_resume (ptid_t ptid, int step, enum target_signal signal)
 
   noprocess ();
 }
+
+void
+target_pass_signals (int numsigs, unsigned char *pass_signals)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    {
+      if (t->to_pass_signals != NULL)
+	{
+	  if (targetdebug)
+	    {
+	      int i;
+
+	      fprintf_unfiltered (gdb_stdlog, "target_pass_signals (%d, {",
+				  numsigs);
+
+	      for (i = 0; i < numsigs; i++)
+		if (pass_signals[i])
+		  fprintf_unfiltered (gdb_stdlog, " %s",
+				      gdb_signal_to_name (i));
+
+	      fprintf_unfiltered (gdb_stdlog, " })\n");
+	    }
+
+	  (*t->to_pass_signals) (numsigs, pass_signals);
+	  return;
+	}
+    }
+}
+
+void
+target_program_signals (int numsigs, unsigned char *program_signals)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    {
+      if (t->to_program_signals != NULL)
+	{
+	  if (targetdebug)
+	    {
+	      int i;
+
+	      fprintf_unfiltered (gdb_stdlog, "target_program_signals (%d, {",
+				  numsigs);
+
+	      for (i = 0; i < numsigs; i++)
+		if (program_signals[i])
+		  fprintf_unfiltered (gdb_stdlog, " %s",
+				      gdb_signal_to_name (i));
+
+	      fprintf_unfiltered (gdb_stdlog, " })\n");
+	    }
+
+	  (*t->to_program_signals) (numsigs, program_signals);
+	  return;
+	}
+    }
+}
+
 /* Look through the list of possible targets for a target that can
    follow forks.  */
 
 int
-target_follow_fork (int follow_child)
+target_follow_fork (int follow_child, int detach_fork)
 {
   struct target_ops *t;
 
@@ -2599,11 +2813,12 @@ target_follow_fork (int follow_child)
     {
       if (t->to_follow_fork != NULL)
 	{
-	  int retval = t->to_follow_fork (t, follow_child);
+	  int retval = t->to_follow_fork (t, follow_child, detach_fork);
 
 	  if (targetdebug)
-	    fprintf_unfiltered (gdb_stdlog, "target_follow_fork (%d) = %d\n",
-				follow_child, retval);
+	    fprintf_unfiltered (gdb_stdlog,
+				"target_follow_fork (%d, %d) = %d\n",
+				follow_child, detach_fork, retval);
 	  return retval;
 	}
     }
@@ -2695,8 +2910,9 @@ simple_search_memory (struct target_ops *ops,
   if (target_read (ops, TARGET_OBJECT_MEMORY, NULL,
 		   search_buf, start_addr, search_buf_size) != search_buf_size)
     {
-      warning (_("Unable to access target memory at %s, halting search."),
-	       hex_string (start_addr));
+      warning (_("Unable to access %s bytes of target "
+		 "memory at %s, halting search."),
+	       pulongest (search_buf_size), hex_string (start_addr));
       do_cleanups (old_cleanups);
       return -1;
     }
@@ -2749,8 +2965,9 @@ simple_search_memory (struct target_ops *ops,
 			   search_buf + keep_len, read_addr,
 			   nr_to_read) != nr_to_read)
 	    {
-	      warning (_("Unable to access target "
+	      warning (_("Unable to access %s bytes of target "
 			 "memory at %s, halting search."),
+		       plongest (nr_to_read),
 		       hex_string (read_addr));
 	      do_cleanups (old_cleanups);
 	      return -1;
@@ -2961,6 +3178,60 @@ target_supports_non_stop (void)
   return 0;
 }
 
+/* Implement the "info proc" command.  */
+
+int
+target_info_proc (char *args, enum info_proc_what what)
+{
+  struct target_ops *t;
+
+  /* If we're already connected to something that can get us OS
+     related data, use it.  Otherwise, try using the native
+     target.  */
+  if (current_target.to_stratum >= process_stratum)
+    t = current_target.beneath;
+  else
+    t = find_default_run_target (NULL);
+
+  for (; t != NULL; t = t->beneath)
+    {
+      if (t->to_info_proc != NULL)
+	{
+	  t->to_info_proc (t, args, what);
+
+	  if (targetdebug)
+	    fprintf_unfiltered (gdb_stdlog,
+				"target_info_proc (\"%s\", %d)\n", args, what);
+
+	  return 1;
+	}
+    }
+
+  return 0;
+}
+
+static int
+find_default_supports_disable_randomization (void)
+{
+  struct target_ops *t;
+
+  t = find_default_run_target (NULL);
+  if (t && t->to_supports_disable_randomization)
+    return (t->to_supports_disable_randomization) ();
+  return 0;
+}
+
+int
+target_supports_disable_randomization (void)
+{
+  struct target_ops *t;
+
+  for (t = &current_target; t != NULL; t = t->beneath)
+    if (t->to_supports_disable_randomization)
+      return t->to_supports_disable_randomization ();
+
+  return 0;
+}
 
 char *
 target_get_osdata (const char *type)
@@ -3018,10 +3289,310 @@ target_thread_address_space (ptid_t ptid)
   return inf->aspace;
 }
 
+
+/* Target file operations.  */
+
+static struct target_ops *
+default_fileio_target (void)
+{
+  /* If we're already connected to something that can perform
+     file I/O, use it. Otherwise, try using the native target.  */
+  if (current_target.to_stratum >= process_stratum)
+    return current_target.beneath;
+  else
+    return find_default_run_target ("file I/O");
+}
+
+/* Open FILENAME on the target, using FLAGS and MODE.  Return a
+   target file descriptor, or -1 if an error occurs (and set
+   *TARGET_ERRNO).  */
+int
+target_fileio_open (const char *filename, int flags, int mode,
+		    int *target_errno)
+{
+  struct target_ops *t;
+
+  for (t = default_fileio_target (); t != NULL; t = t->beneath)
+    {
+      if (t->to_fileio_open != NULL)
+	{
+	  int fd = t->to_fileio_open (filename, flags, mode, target_errno);
+
+	  if (targetdebug)
+	    fprintf_unfiltered (gdb_stdlog,
+				"target_fileio_open (%s,0x%x,0%o) = %d (%d)\n",
+				filename, flags, mode,
+				fd, fd != -1 ? 0 : *target_errno);
+	  return fd;
+	}
+    }
+
+  *target_errno = FILEIO_ENOSYS;
+  return -1;
+}
+
+/* Write up to LEN bytes from WRITE_BUF to FD on the target.
+   Return the number of bytes written, or -1 if an error occurs
+   (and set *TARGET_ERRNO).  */
+int
+target_fileio_pwrite (int fd, const gdb_byte *write_buf, int len,
+		      ULONGEST offset, int *target_errno)
+{
+  struct target_ops *t;
+
+  for (t = default_fileio_target (); t != NULL; t = t->beneath)
+    {
+      if (t->to_fileio_pwrite != NULL)
+	{
+	  int ret = t->to_fileio_pwrite (fd, write_buf, len, offset,
+					 target_errno);
+
+	  if (targetdebug)
+	    fprintf_unfiltered (gdb_stdlog,
+				"target_fileio_pwrite (%d,...,%d,%s) "
+				"= %d (%d)\n",
+				fd, len, pulongest (offset),
+				ret, ret != -1 ? 0 : *target_errno);
+	  return ret;
+	}
+    }
+
+  *target_errno = FILEIO_ENOSYS;
+  return -1;
+}
+
+/* Read up to LEN bytes FD on the target into READ_BUF.
+   Return the number of bytes read, or -1 if an error occurs
+   (and set *TARGET_ERRNO).  */
+int
+target_fileio_pread (int fd, gdb_byte *read_buf, int len,
+		     ULONGEST offset, int *target_errno)
+{
+  struct target_ops *t;
+
+  for (t = default_fileio_target (); t != NULL; t = t->beneath)
+    {
+      if (t->to_fileio_pread != NULL)
+	{
+	  int ret = t->to_fileio_pread (fd, read_buf, len, offset,
+					target_errno);
+
+	  if (targetdebug)
+	    fprintf_unfiltered (gdb_stdlog,
+				"target_fileio_pread (%d,...,%d,%s) "
+				"= %d (%d)\n",
+				fd, len, pulongest (offset),
+				ret, ret != -1 ? 0 : *target_errno);
+	  return ret;
+	}
+    }
+
+  *target_errno = FILEIO_ENOSYS;
+  return -1;
+}
+
+/* Close FD on the target.  Return 0, or -1 if an error occurs
+   (and set *TARGET_ERRNO).  */
+int
+target_fileio_close (int fd, int *target_errno)
+{
+  struct target_ops *t;
+
+  for (t = default_fileio_target (); t != NULL; t = t->beneath)
+    {
+      if (t->to_fileio_close != NULL)
+	{
+	  int ret = t->to_fileio_close (fd, target_errno);
+
+	  if (targetdebug)
+	    fprintf_unfiltered (gdb_stdlog,
+				"target_fileio_close (%d) = %d (%d)\n",
+				fd, ret, ret != -1 ? 0 : *target_errno);
+	  return ret;
+	}
+    }
+
+  *target_errno = FILEIO_ENOSYS;
+  return -1;
+}
+
+/* Unlink FILENAME on the target.  Return 0, or -1 if an error
+   occurs (and set *TARGET_ERRNO).  */
+int
+target_fileio_unlink (const char *filename, int *target_errno)
+{
+  struct target_ops *t;
+
+  for (t = default_fileio_target (); t != NULL; t = t->beneath)
+    {
+      if (t->to_fileio_unlink != NULL)
+	{
+	  int ret = t->to_fileio_unlink (filename, target_errno);
+
+	  if (targetdebug)
+	    fprintf_unfiltered (gdb_stdlog,
+				"target_fileio_unlink (%s) = %d (%d)\n",
+				filename, ret, ret != -1 ? 0 : *target_errno);
+	  return ret;
+	}
+    }
+
+  *target_errno = FILEIO_ENOSYS;
+  return -1;
+}
+
+/* Read value of symbolic link FILENAME on the target.  Return a
+   null-terminated string allocated via xmalloc, or NULL if an error
+   occurs (and set *TARGET_ERRNO).  */
+char *
+target_fileio_readlink (const char *filename, int *target_errno)
+{
+  struct target_ops *t;
+
+  for (t = default_fileio_target (); t != NULL; t = t->beneath)
+    {
+      if (t->to_fileio_readlink != NULL)
+	{
+	  char *ret = t->to_fileio_readlink (filename, target_errno);
+
+	  if (targetdebug)
+	    fprintf_unfiltered (gdb_stdlog,
+				"target_fileio_readlink (%s) = %s (%d)\n",
+				filename, ret? ret : "(nil)",
+				ret? 0 : *target_errno);
+	  return ret;
+	}
+    }
+
+  *target_errno = FILEIO_ENOSYS;
+  return NULL;
+}
+
+static void
+target_fileio_close_cleanup (void *opaque)
+{
+  int fd = *(int *) opaque;
+  int target_errno;
+
+  target_fileio_close (fd, &target_errno);
+}
+
+/* Read target file FILENAME.  Store the result in *BUF_P and
+   return the size of the transferred data.  PADDING additional bytes are
+   available in *BUF_P.  This is a helper function for
+   target_fileio_read_alloc; see the declaration of that function for more
+   information.  */
+
+static LONGEST
+target_fileio_read_alloc_1 (const char *filename,
+			    gdb_byte **buf_p, int padding)
+{
+  struct cleanup *close_cleanup;
+  size_t buf_alloc, buf_pos;
+  gdb_byte *buf;
+  LONGEST n;
+  int fd;
+  int target_errno;
+
+  fd = target_fileio_open (filename, FILEIO_O_RDONLY, 0700, &target_errno);
+  if (fd == -1)
+    return -1;
+
+  close_cleanup = make_cleanup (target_fileio_close_cleanup, &fd);
+
+  /* Start by reading up to 4K at a time.  The target will throttle
+     this number down if necessary.  */
+  buf_alloc = 4096;
+  buf = xmalloc (buf_alloc);
+  buf_pos = 0;
+  while (1)
+    {
+      n = target_fileio_pread (fd, &buf[buf_pos],
+			       buf_alloc - buf_pos - padding, buf_pos,
+			       &target_errno);
+      if (n < 0)
+	{
+	  /* An error occurred.  */
+	  do_cleanups (close_cleanup);
+	  xfree (buf);
+	  return -1;
+	}
+      else if (n == 0)
+	{
+	  /* Read all there was.  */
+	  do_cleanups (close_cleanup);
+	  if (buf_pos == 0)
+	    xfree (buf);
+	  else
+	    *buf_p = buf;
+	  return buf_pos;
+	}
+
+      buf_pos += n;
+
+      /* If the buffer is filling up, expand it.  */
+      if (buf_alloc < buf_pos * 2)
+	{
+	  buf_alloc *= 2;
+	  buf = xrealloc (buf, buf_alloc);
+	}
+
+      QUIT;
+    }
+}
+
+/* Read target file FILENAME.  Store the result in *BUF_P and return
+   the size of the transferred data.  See the declaration in "target.h"
+   function for more information about the return value.  */
+
+LONGEST
+target_fileio_read_alloc (const char *filename, gdb_byte **buf_p)
+{
+  return target_fileio_read_alloc_1 (filename, buf_p, 0);
+}
+
+/* Read target file FILENAME.  The result is NUL-terminated and
+   returned as a string, allocated using xmalloc.  If an error occurs
+   or the transfer is unsupported, NULL is returned.  Empty objects
+   are returned as allocated but empty strings.  A warning is issued
+   if the result contains any embedded NUL bytes.  */
+
+char *
+target_fileio_read_stralloc (const char *filename)
+{
+  gdb_byte *buffer;
+  char *bufstr;
+  LONGEST i, transferred;
+
+  transferred = target_fileio_read_alloc_1 (filename, &buffer, 1);
+  bufstr = (char *) buffer;
+
+  if (transferred < 0)
+    return NULL;
+
+  if (transferred == 0)
+    return xstrdup ("");
+
+  bufstr[transferred] = 0;
+
+  /* Check for embedded NUL bytes; but allow trailing NULs.  */
+  for (i = strlen (bufstr); i < transferred; i++)
+    if (bufstr[i] != 0)
+      {
+	warning (_("target file %s "
+		   "contained unexpected null characters"),
+		 filename);
+	break;
+      }
+
+  return bufstr;
+}
+
+
 static int
 default_region_ok_for_hw_watchpoint (CORE_ADDR addr, int len)
 {
-  return (len <= gdbarch_ptr_bit (target_gdbarch) / TARGET_CHAR_BIT);
+  return (len <= gdbarch_ptr_bit (target_gdbarch ()) / TARGET_CHAR_BIT);
 }
 
 static int
@@ -3035,7 +3606,7 @@ default_watchpoint_addr_within_range (struct target_ops *target,
 static struct gdbarch *
 default_thread_architecture (struct target_ops *ops, ptid_t ptid)
 {
-  return target_gdbarch;
+  return target_gdbarch ();
 }
 
 static int
@@ -3056,28 +3627,10 @@ return_minus_one (void)
   return -1;
 }
 
-/* Find a single runnable target in the stack and return it.  If for
-   some reason there is more than one, return NULL.  */
-
-struct target_ops *
-find_run_target (void)
+static void *
+return_null (void)
 {
-  struct target_ops **t;
-  struct target_ops *runable = NULL;
-  int count;
-
-  count = 0;
-
-  for (t = target_structs; t < target_structs + target_struct_size; ++t)
-    {
-      if ((*t)->to_can_run && target_can_run (*t))
-	{
-	  runable = *t;
-	  ++count;
-	}
-    }
-
-  return (count == 1 ? runable : NULL);
+  return 0;
 }
 
 /*
@@ -3101,13 +3654,22 @@ generic_mourn_inferior (void)
   ptid = inferior_ptid;
   inferior_ptid = null_ptid;
 
+  /* Mark breakpoints uninserted in case something tries to delete a
+     breakpoint while we delete the inferior's threads (which would
+     fail, since the inferior is long gone).  */
+  mark_breakpoints_out ();
+
   if (!ptid_equal (ptid, null_ptid))
     {
       int pid = ptid_get_pid (ptid);
       exit_inferior (pid);
     }
 
+  /* Note this wipes step-resume breakpoints, so needs to be done
+     after exit_inferior, which ends up referencing the step-resume
+     breakpoints through clear_thread_inferior_resources.  */
   breakpoint_init_inferior (inf_exited);
+
   registers_changed ();
 
   reopen_exec_file ();
@@ -3115,29 +3677,6 @@ generic_mourn_inferior (void)
 
   if (deprecated_detach_hook)
     deprecated_detach_hook ();
-}
-
-/* Helper function for child_wait and the derivatives of child_wait.
-   HOSTSTATUS is the waitstatus from wait() or the equivalent; store our
-   translation of that in OURSTATUS.  */
-void
-store_waitstatus (struct target_waitstatus *ourstatus, int hoststatus)
-{
-  if (WIFEXITED (hoststatus))
-    {
-      ourstatus->kind = TARGET_WAITKIND_EXITED;
-      ourstatus->value.integer = WEXITSTATUS (hoststatus);
-    }
-  else if (!WIFSTOPPED (hoststatus))
-    {
-      ourstatus->kind = TARGET_WAITKIND_SIGNALLED;
-      ourstatus->value.sig = target_signal_from_host (WTERMSIG (hoststatus));
-    }
-  else
-    {
-      ourstatus->kind = TARGET_WAITKIND_STOPPED;
-      ourstatus->value.sig = target_signal_from_host (WSTOPSIG (hoststatus));
-    }
 }
 
 /* Convert a normal process ID to a string.  Returns the string in a
@@ -3200,11 +3739,13 @@ init_dummy_target (void)
   dummy_target.to_doc = "";
   dummy_target.to_attach = find_default_attach;
   dummy_target.to_detach = 
-    (void (*)(struct target_ops *, char *, int))target_ignore;
+    (void (*)(struct target_ops *, const char *, int))target_ignore;
   dummy_target.to_create_inferior = find_default_create_inferior;
   dummy_target.to_can_async_p = find_default_can_async_p;
   dummy_target.to_is_async_p = find_default_is_async_p;
   dummy_target.to_supports_non_stop = find_default_supports_non_stop;
+  dummy_target.to_supports_disable_randomization
+    = find_default_supports_disable_randomization;
   dummy_target.to_pid_to_str = dummy_pid_to_str;
   dummy_target.to_stratum = dummy_stratum;
   dummy_target.to_find_memory_regions = dummy_find_memory_regions;
@@ -3233,15 +3774,17 @@ debug_to_open (char *args, int from_tty)
 }
 
 void
-target_close (struct target_ops *targ, int quitting)
+target_close (struct target_ops *targ)
 {
+  gdb_assert (!target_is_pushed (targ));
+
   if (targ->to_xclose != NULL)
-    targ->to_xclose (targ, quitting);
+    targ->to_xclose (targ);
   else if (targ->to_close != NULL)
-    targ->to_close (quitting);
+    targ->to_close ();
 
   if (targetdebug)
-    fprintf_unfiltered (gdb_stdlog, "target_close (%d)\n", quitting);
+    fprintf_unfiltered (gdb_stdlog, "target_close ()\n");
 }
 
 void
@@ -3279,7 +3822,7 @@ target_thread_alive (ptid_t ptid)
 	  retval = t->to_thread_alive (t, ptid);
 	  if (targetdebug)
 	    fprintf_unfiltered (gdb_stdlog, "target_thread_alive (%d) = %d\n",
-				PIDGET (ptid), retval);
+				ptid_get_pid (ptid), retval);
 
 	  return retval;
 	}
@@ -3326,46 +3869,52 @@ debug_to_post_attach (int pid)
   fprintf_unfiltered (gdb_stdlog, "target_post_attach (%d)\n", pid);
 }
 
-/* Return a pretty printed form of target_waitstatus.
-   Space for the result is malloc'd, caller must free.  */
+/* Concatenate ELEM to LIST, a comma separate list, and return the
+   result.  The LIST incoming argument is released.  */
+
+static char *
+str_comma_list_concat_elem (char *list, const char *elem)
+{
+  if (list == NULL)
+    return xstrdup (elem);
+  else
+    return reconcat (list, list, ", ", elem, (char *) NULL);
+}
+
+/* Helper for target_options_to_string.  If OPT is present in
+   TARGET_OPTIONS, append the OPT_STR (string version of OPT) in RET.
+   Returns the new resulting string.  OPT is removed from
+   TARGET_OPTIONS.  */
+
+static char *
+do_option (int *target_options, char *ret,
+	   int opt, char *opt_str)
+{
+  if ((*target_options & opt) != 0)
+    {
+      ret = str_comma_list_concat_elem (ret, opt_str);
+      *target_options &= ~opt;
+    }
+
+  return ret;
+}
 
 char *
-target_waitstatus_to_string (const struct target_waitstatus *ws)
+target_options_to_string (int target_options)
 {
-  const char *kind_str = "status->kind = ";
+  char *ret = NULL;
 
-  switch (ws->kind)
-    {
-    case TARGET_WAITKIND_EXITED:
-      return xstrprintf ("%sexited, status = %d",
-			 kind_str, ws->value.integer);
-    case TARGET_WAITKIND_STOPPED:
-      return xstrprintf ("%sstopped, signal = %s",
-			 kind_str, target_signal_to_name (ws->value.sig));
-    case TARGET_WAITKIND_SIGNALLED:
-      return xstrprintf ("%ssignalled, signal = %s",
-			 kind_str, target_signal_to_name (ws->value.sig));
-    case TARGET_WAITKIND_LOADED:
-      return xstrprintf ("%sloaded", kind_str);
-    case TARGET_WAITKIND_FORKED:
-      return xstrprintf ("%sforked", kind_str);
-    case TARGET_WAITKIND_VFORKED:
-      return xstrprintf ("%svforked", kind_str);
-    case TARGET_WAITKIND_EXECD:
-      return xstrprintf ("%sexecd", kind_str);
-    case TARGET_WAITKIND_SYSCALL_ENTRY:
-      return xstrprintf ("%sentered syscall", kind_str);
-    case TARGET_WAITKIND_SYSCALL_RETURN:
-      return xstrprintf ("%sexited syscall", kind_str);
-    case TARGET_WAITKIND_SPURIOUS:
-      return xstrprintf ("%sspurious", kind_str);
-    case TARGET_WAITKIND_IGNORE:
-      return xstrprintf ("%signore", kind_str);
-    case TARGET_WAITKIND_NO_HISTORY:
-      return xstrprintf ("%sno-history", kind_str);
-    default:
-      return xstrprintf ("%sunknown???", kind_str);
-    }
+#define DO_TARG_OPTION(OPT) \
+  ret = do_option (&target_options, ret, OPT, #OPT)
+
+  DO_TARG_OPTION (TARGET_WNOHANG);
+
+  if (target_options != 0)
+    ret = str_comma_list_concat_elem (ret, "unknown???");
+
+  if (ret == NULL)
+    ret = xstrdup ("");
+  return ret;
 }
 
 static void
@@ -3386,7 +3935,7 @@ debug_print_register (const char * func,
     {
       enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
       int i, size = register_size (gdbarch, regno);
-      unsigned char buf[MAX_REGISTER_SIZE];
+      gdb_byte buf[MAX_REGISTER_SIZE];
 
       regcache_raw_collect (regcache, regno, buf);
       fprintf_unfiltered (gdb_stdlog, " = ");
@@ -3460,7 +4009,7 @@ target_core_of_thread (ptid_t ptid)
 	  if (targetdebug)
 	    fprintf_unfiltered (gdb_stdlog,
 				"target_core_of_thread (%d) = %d\n",
-				PIDGET (ptid), retval);
+				ptid_get_pid (ptid), retval);
 	  return retval;
 	}
     }
@@ -3482,7 +4031,7 @@ target_verify_memory (const gdb_byte *data, CORE_ADDR memaddr, ULONGEST size)
 	  if (targetdebug)
 	    fprintf_unfiltered (gdb_stdlog,
 				"target_verify_memory (%s, %s) = %d\n",
-				paddress (target_gdbarch, memaddr),
+				paddress (target_gdbarch (), memaddr),
 				pulongest (size),
 				retval);
 	  return retval;
@@ -3490,6 +4039,75 @@ target_verify_memory (const gdb_byte *data, CORE_ADDR memaddr, ULONGEST size)
     }
 
   tcomplain ();
+}
+
+/* The documentation for this function is in its prototype declaration in
+   target.h.  */
+
+int
+target_insert_mask_watchpoint (CORE_ADDR addr, CORE_ADDR mask, int rw)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_insert_mask_watchpoint != NULL)
+      {
+	int ret;
+
+	ret = t->to_insert_mask_watchpoint (t, addr, mask, rw);
+
+	if (targetdebug)
+	  fprintf_unfiltered (gdb_stdlog, "\
+target_insert_mask_watchpoint (%s, %s, %d) = %d\n",
+			      core_addr_to_string (addr),
+			      core_addr_to_string (mask), rw, ret);
+
+	return ret;
+      }
+
+  return 1;
+}
+
+/* The documentation for this function is in its prototype declaration in
+   target.h.  */
+
+int
+target_remove_mask_watchpoint (CORE_ADDR addr, CORE_ADDR mask, int rw)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_remove_mask_watchpoint != NULL)
+      {
+	int ret;
+
+	ret = t->to_remove_mask_watchpoint (t, addr, mask, rw);
+
+	if (targetdebug)
+	  fprintf_unfiltered (gdb_stdlog, "\
+target_remove_mask_watchpoint (%s, %s, %d) = %d\n",
+			      core_addr_to_string (addr),
+			      core_addr_to_string (mask), rw, ret);
+
+	return ret;
+      }
+
+  return 1;
+}
+
+/* The documentation for this function is in its prototype declaration
+   in target.h.  */
+
+int
+target_masked_watch_num_registers (CORE_ADDR addr, CORE_ADDR mask)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_masked_watch_num_registers != NULL)
+      return t->to_masked_watch_num_registers (t, addr, mask);
+
+  return -1;
 }
 
 /* The documentation for this function is in its prototype declaration
@@ -3505,6 +4123,334 @@ target_ranged_break_num_registers (void)
       return t->to_ranged_break_num_registers (t);
 
   return -1;
+}
+
+/* See target.h.  */
+
+int
+target_supports_btrace (void)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_supports_btrace != NULL)
+      return t->to_supports_btrace ();
+
+  return 0;
+}
+
+/* See target.h.  */
+
+struct btrace_target_info *
+target_enable_btrace (ptid_t ptid)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_enable_btrace != NULL)
+      return t->to_enable_btrace (ptid);
+
+  tcomplain ();
+  return NULL;
+}
+
+/* See target.h.  */
+
+void
+target_disable_btrace (struct btrace_target_info *btinfo)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_disable_btrace != NULL)
+      {
+	t->to_disable_btrace (btinfo);
+	return;
+      }
+
+  tcomplain ();
+}
+
+/* See target.h.  */
+
+void
+target_teardown_btrace (struct btrace_target_info *btinfo)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_teardown_btrace != NULL)
+      {
+	t->to_teardown_btrace (btinfo);
+	return;
+      }
+
+  tcomplain ();
+}
+
+/* See target.h.  */
+
+VEC (btrace_block_s) *
+target_read_btrace (struct btrace_target_info *btinfo,
+		    enum btrace_read_type type)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_read_btrace != NULL)
+      return t->to_read_btrace (btinfo, type);
+
+  tcomplain ();
+  return NULL;
+}
+
+/* See target.h.  */
+
+void
+target_stop_recording (void)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_stop_recording != NULL)
+      {
+	t->to_stop_recording ();
+	return;
+      }
+
+  /* This is optional.  */
+}
+
+/* See target.h.  */
+
+void
+target_info_record (void)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_info_record != NULL)
+      {
+	t->to_info_record ();
+	return;
+      }
+
+  tcomplain ();
+}
+
+/* See target.h.  */
+
+void
+target_save_record (const char *filename)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_save_record != NULL)
+      {
+	t->to_save_record (filename);
+	return;
+      }
+
+  tcomplain ();
+}
+
+/* See target.h.  */
+
+int
+target_supports_delete_record (void)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_delete_record != NULL)
+      return 1;
+
+  return 0;
+}
+
+/* See target.h.  */
+
+void
+target_delete_record (void)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_delete_record != NULL)
+      {
+	t->to_delete_record ();
+	return;
+      }
+
+  tcomplain ();
+}
+
+/* See target.h.  */
+
+int
+target_record_is_replaying (void)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_record_is_replaying != NULL)
+	return t->to_record_is_replaying ();
+
+  return 0;
+}
+
+/* See target.h.  */
+
+void
+target_goto_record_begin (void)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_goto_record_begin != NULL)
+      {
+	t->to_goto_record_begin ();
+	return;
+      }
+
+  tcomplain ();
+}
+
+/* See target.h.  */
+
+void
+target_goto_record_end (void)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_goto_record_end != NULL)
+      {
+	t->to_goto_record_end ();
+	return;
+      }
+
+  tcomplain ();
+}
+
+/* See target.h.  */
+
+void
+target_goto_record (ULONGEST insn)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_goto_record != NULL)
+      {
+	t->to_goto_record (insn);
+	return;
+      }
+
+  tcomplain ();
+}
+
+/* See target.h.  */
+
+void
+target_insn_history (int size, int flags)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_insn_history != NULL)
+      {
+	t->to_insn_history (size, flags);
+	return;
+      }
+
+  tcomplain ();
+}
+
+/* See target.h.  */
+
+void
+target_insn_history_from (ULONGEST from, int size, int flags)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_insn_history_from != NULL)
+      {
+	t->to_insn_history_from (from, size, flags);
+	return;
+      }
+
+  tcomplain ();
+}
+
+/* See target.h.  */
+
+void
+target_insn_history_range (ULONGEST begin, ULONGEST end, int flags)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_insn_history_range != NULL)
+      {
+	t->to_insn_history_range (begin, end, flags);
+	return;
+      }
+
+  tcomplain ();
+}
+
+/* See target.h.  */
+
+void
+target_call_history (int size, int flags)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_call_history != NULL)
+      {
+	t->to_call_history (size, flags);
+	return;
+      }
+
+  tcomplain ();
+}
+
+/* See target.h.  */
+
+void
+target_call_history_from (ULONGEST begin, int size, int flags)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_call_history_from != NULL)
+      {
+	t->to_call_history_from (begin, size, flags);
+	return;
+      }
+
+  tcomplain ();
+}
+
+/* See target.h.  */
+
+void
+target_call_history_range (ULONGEST begin, ULONGEST end, int flags)
+{
+  struct target_ops *t;
+
+  for (t = current_target.beneath; t != NULL; t = t->beneath)
+    if (t->to_call_history_range != NULL)
+      {
+	t->to_call_history_range (begin, end, flags);
+	return;
+      }
+
+  tcomplain ();
 }
 
 static void
@@ -3527,7 +4473,7 @@ deprecated_debug_xfer_memory (CORE_ADDR memaddr, bfd_byte *myaddr, int len,
 
   fprintf_unfiltered (gdb_stdlog,
 		      "target_xfer_memory (%s, xxx, %d, %s, xxx) = %d",
-		      paddress (target_gdbarch, memaddr), len,
+		      paddress (target_gdbarch (), memaddr), len,
 		      write ? "write" : "read", retval);
 
   if (retval > 0)
@@ -3786,7 +4732,7 @@ debug_to_terminal_save_ours (void)
 }
 
 static void
-debug_to_terminal_info (char *arg, int from_tty)
+debug_to_terminal_info (const char *arg, int from_tty)
 {
   debug_target.to_terminal_info (arg, from_tty);
 
@@ -3808,7 +4754,7 @@ debug_to_post_startup_inferior (ptid_t ptid)
   debug_target.to_post_startup_inferior (ptid);
 
   fprintf_unfiltered (gdb_stdlog, "target_post_startup_inferior (%d)\n",
-		      PIDGET (ptid));
+		      ptid_get_pid (ptid));
 }
 
 static int
@@ -3914,15 +4860,6 @@ debug_to_can_run (void)
   return retval;
 }
 
-static void
-debug_to_notice_signals (ptid_t ptid)
-{
-  debug_target.to_notice_signals (ptid);
-
-  fprintf_unfiltered (gdb_stdlog, "target_notice_signals (%d)\n",
-                      PIDGET (ptid));
-}
-
 static struct gdbarch *
 debug_to_thread_architecture (struct target_ops *ops, ptid_t ptid)
 {
@@ -4010,7 +4947,6 @@ setup_target_debug (void)
   current_target.to_remove_exec_catchpoint = debug_to_remove_exec_catchpoint;
   current_target.to_has_exited = debug_to_has_exited;
   current_target.to_can_run = debug_to_can_run;
-  current_target.to_notice_signals = debug_to_notice_signals;
   current_target.to_stop = debug_to_stop;
   current_target.to_rcmd = debug_to_rcmd;
   current_target.to_pid_to_exec_file = debug_to_pid_to_exec_file;
@@ -4055,12 +4991,12 @@ maintenance_print_target_stack (char *cmd, int from_tty)
 int target_async_permitted = 0;
 
 /* The set command writes to this variable.  If the inferior is
-   executing, linux_nat_async_permitted is *not* updated.  */
+   executing, target_async_permitted is *not* updated.  */
 static int target_async_permitted_1 = 0;
 
 static void
-set_maintenance_target_async_permitted (char *args, int from_tty,
-					struct cmd_list_element *c)
+set_target_async_command (char *args, int from_tty,
+			  struct cmd_list_element *c)
 {
   if (have_live_inferiors ())
     {
@@ -4072,9 +5008,9 @@ set_maintenance_target_async_permitted (char *args, int from_tty,
 }
 
 static void
-show_maintenance_target_async_permitted (struct ui_file *file, int from_tty,
-					 struct cmd_list_element *c,
-					 const char *value)
+show_target_async_command (struct ui_file *file, int from_tty,
+			   struct cmd_list_element *c,
+			   const char *value)
 {
   fprintf_filtered (file,
 		    _("Controlling the inferior in "
@@ -4146,15 +5082,15 @@ initialize_targets (void)
   add_info ("target", target_info, targ_desc);
   add_info ("files", target_info, targ_desc);
 
-  add_setshow_zinteger_cmd ("target", class_maintenance, &targetdebug, _("\
+  add_setshow_zuinteger_cmd ("target", class_maintenance, &targetdebug, _("\
 Set target debugging."), _("\
 Show target debugging."), _("\
 When non-zero, target debugging is enabled.  Higher numbers are more\n\
 verbose.  Changes do not take effect until the next \"run\" or \"target\"\n\
 command."),
-			    NULL,
-			    show_targetdebug,
-			    &setdebuglist, &showdebuglist);
+			     NULL,
+			     show_targetdebug,
+			     &setdebuglist, &showdebuglist);
 
   add_setshow_boolean_cmd ("trust-readonly-sections", class_support,
 			   &trust_readonly, _("\
@@ -4179,21 +5115,10 @@ result in significant performance improvement for remote targets."),
 Set whether gdb controls the inferior in asynchronous mode."), _("\
 Show whether gdb controls the inferior in asynchronous mode."), _("\
 Tells gdb whether to control the inferior in asynchronous mode."),
-			   set_maintenance_target_async_permitted,
-			   show_maintenance_target_async_permitted,
+			   set_target_async_command,
+			   show_target_async_command,
 			   &setlist,
 			   &showlist);
-
-  add_setshow_boolean_cmd ("stack-cache", class_support,
-			   &stack_cache_enabled_p_1, _("\
-Set cache use for stack access."), _("\
-Show cache use for stack access."), _("\
-When on, use the data cache for all stack access, regardless of any\n\
-configured memory regions.  This improves remote performance significantly.\n\
-By default, caching for stack access is on."),
-			   set_stack_cache_enabled_p,
-			   show_stack_cache_enabled_p,
-			   &setlist, &showlist);
 
   add_setshow_boolean_cmd ("may-write-registers", class_support,
 			   &may_write_registers_1, _("\
@@ -4248,7 +5173,4 @@ When this permission is on, GDB may interrupt/stop the target's execution.\n\
 Otherwise, any attempt to interrupt or stop will be ignored."),
 			   set_target_permissions, NULL,
 			   &setlist, &showlist);
-
-
-  target_dcache = dcache_init ();
 }

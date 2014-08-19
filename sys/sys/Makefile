@@ -1,13 +1,16 @@
-#	$NetBSD: Makefile,v 1.143 2012/02/19 21:06:57 rmind Exp $
+#	$NetBSD: Makefile,v 1.143.2.1 2014/08/20 00:04:44 tls Exp $
 
-.include <bsd.sys.mk>
+.include <bsd.own.mk>
 
 INCSDIR= /usr/include/sys
 
 INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h audioio.h \
 	bitops.h bootblock.h bswap.h buf.h \
-	callback.h callout.h cdefs.h cdefs_aout.h \
-	cdefs_elf.h cdio.h chio.h clockctl.h condvar.h conf.h core.h \
+	callback.h callout.h cdbr.h cdefs.h cdefs_aout.h \
+	cdefs_elf.h cdio.h chio.h clockctl.h \
+	common_int_const.h common_int_fmtio.h common_int_limits.h \
+	common_int_mwgwtypes.h common_int_types.h \
+	condvar.h conf.h core.h \
 	cpufreq.h cpuio.h ctype_bits.h ctype_inline.h \
 	device.h device_if.h \
 	dir.h dirent.h \
@@ -20,7 +23,7 @@ INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h audioio.h \
 	ieee754.h inttypes.h ioccom.h ioctl.h ioctl_compat.h iostat.h ipc.h \
 	joystick.h \
 	kcore.h kcpuset.h kgdb.h kmem.h ksem.h ksyms.h ktrace.h \
-	localedef.h lock.h lockf.h lwp.h lwpctl.h \
+	localedef.h lock.h lockf.h lua.h lwp.h lwpctl.h \
 	malloc.h mallocvar.h mbuf.h md4.h md5.h midiio.h \
 	mman.h module.h mount.h mqueue.h msg.h msgbuf.h mtio.h mutex.h \
 	namei.h null.h \
@@ -30,7 +33,7 @@ INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h audioio.h \
 	ras.h rbtree.h reboot.h radioio.h resource.h resourcevar.h rmd160.h \
 	rnd.h rwlock.h \
 	scanio.h sched.h scsiio.h sdt.h select.h selinfo.h sem.h sha1.h \
-	sha2.h shm.h siginfo.h signal.h signalvar.h sigtypes.h simplelock.h \
+	sha2.h shm.h siginfo.h signal.h signalvar.h sigtypes.h \
 	sleepq.h socket.h \
 	socketvar.h sockio.h spawn.h specificdata.h stat.h \
 	statvfs.h syscall.h syscallargs.h sysctl.h stdarg.h stdint.h swap.h \
@@ -43,6 +46,7 @@ INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h audioio.h \
 	wait.h wapbl.h wapbl_replay.h wdog.h xattr.h
 
 INCSYMLINKS=\
+	sys/cdbr.h /usr/include/cdbr.h \
 	sys/exec_elf.h /usr/include/elf.h \
 	sys/fcntl.h /usr/include/fcntl.h \
 	sys/poll.h /usr/include/poll.h \

@@ -1,6 +1,5 @@
 /* Shared library declarations for GDB, the GNU Debugger.
-   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000,
-   2001, 2007, 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1990-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -89,6 +88,11 @@ struct target_so_ops
        associated with a so_list entry.  */
     void (*free_so) (struct so_list *so);
 
+    /* Reset private data structures associated with SO.
+       This is called when SO is about to be reloaded.
+       It is also called before free_so when SO is about to be freed.  */
+    void (*clear_so) (struct so_list *so);
+
     /* Reset or free private data structures not associated with
        so_list entries.  */
     void (*clear_solib) (void);
@@ -96,14 +100,26 @@ struct target_so_ops
     /* Target dependent code to run after child process fork.  */
     void (*solib_create_inferior_hook) (int from_tty);
 
-    /* Do additional symbol handling, lookup, etc. after symbols
-       for a shared object have been loaded.  */
+    /* Do additional symbol handling, lookup, etc. after symbols for a
+       shared object have been loaded in the usual way.  This is
+       called to do any system specific symbol handling that might be
+       needed.  */
     void (*special_symbol_handling) (void);
 
-    /* Construct a list of the currently loaded shared objects.  */
+    /* Construct a list of the currently loaded shared objects.  This
+       list does not include an entry for the main executable file.
+
+       Note that we only gather information directly available from the
+       inferior --- we don't examine any of the shared library files
+       themselves.  The declaration of `struct so_list' says which fields
+       we provide values for.  */
     struct so_list *(*current_sos) (void);
 
-    /* Find, open, and read the symbols for the main executable.  */
+    /* Find, open, and read the symbols for the main executable.  If
+       FROM_TTYP dereferences to a non-zero integer, allow messages to
+       be printed.  This parameter is a pointer rather than an int
+       because open_symbol_file_object is called via catch_errors and
+       catch_errors requires a pointer argument.  */
     int (*open_symbol_file_object) (void *from_ttyp);
 
     /* Determine if PC lies in the dynamic symbol resolution code of
@@ -113,8 +129,10 @@ struct target_so_ops
     /* Find and open shared library binary file.  */
     bfd *(*bfd_open) (char *pathname);
 
-    /* Extra hook for finding and opening a solib.
-       Convenience function for remote debuggers finding host libs.  */
+    /* Optional extra hook for finding and opening a solib.
+       If TEMP_PATHNAME is non-NULL: If the file is successfully opened a
+       pointer to a malloc'd and realpath'd copy of SONAME is stored there,
+       otherwise NULL is stored there.  */
     int (*find_and_open_solib) (char *soname,
         unsigned o_flags, char **temp_pathname);
 
@@ -137,6 +155,19 @@ struct target_so_ops
        core file (in particular, for readonly sections).  */
     int (*keep_data_in_core) (CORE_ADDR vaddr,
 			      unsigned long size);
+
+    /* Enable or disable optional solib event breakpoints as
+       appropriate.  This should be called whenever
+       stop_on_solib_events is changed.  This pointer can be
+       NULL, in which case no enabling or disabling is necessary
+       for this target.  */
+    void (*update_breakpoints) (void);
+
+    /* Target-specific processing of solib events that will be
+       performed before solib_add is called.  This pointer can be
+       NULL, in which case no specific preprocessing is necessary
+       for this target.  */
+    void (*handle_event) (void);
   };
 
 /* Free the memory associated with a (so_list *).  */

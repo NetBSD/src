@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.9.6.1 2012/11/20 03:01:33 tls Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.9.6.2 2014/08/20 00:03:13 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.9.6.1 2012/11/20 03:01:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.9.6.2 2014/08/20 00:03:13 tls Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -188,7 +188,8 @@ static void	rmixl_pcie_conf_write(void *, pcitag_t, int, pcireg_t);
 static int	rmixl_pcie_intr_map(const struct pci_attach_args *,
 		    pci_intr_handle_t *);
 static const char *
-		rmixl_pcie_intr_string(void *, pci_intr_handle_t);
+		rmixl_pcie_intr_string(void *, pci_intr_handle_t, char *,
+		    size_t);
 static const struct evcnt *
 		rmixl_pcie_intr_evcnt(void *, pci_intr_handle_t);
 static pci_intr_handle_t
@@ -1094,7 +1095,7 @@ rmixl_pcie_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *pih)
 }
 
 const char *
-rmixl_pcie_intr_string(void *v, pci_intr_handle_t pih)
+rmixl_pcie_intr_string(void *v, pci_intr_handle_t pih, char *buf, size_t len)
 {
 	const char *name = "(illegal)";
 	u_int link, bitno, irq;
@@ -1143,7 +1144,8 @@ rmixl_pcie_intr_string(void *v, pci_intr_handle_t pih)
 			__func__, MIPS_PRID_IMPL(mips_options.mips_cpu_id));
 	}
 
-	return name;
+	strlcpy(buf, name, len);
+	return buf;
 }
 
 const struct evcnt *

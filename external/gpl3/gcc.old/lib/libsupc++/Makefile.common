@@ -1,0 +1,20 @@
+#	$NetBSD: Makefile.common,v 1.1.1.2.8.2 2014/08/19 23:58:23 tls Exp $
+
+DIST=		${GCCDIST}
+GNUHOSTDIST=	${DIST}
+
+GCC_MACHINE_ARCH=${MACHINE_ARCH:S/earmv5/earm/}
+
+LIBSTDCXXSRCS=	${G_SRC_SOURCES}
+LIBSUPCXXSRCS=	${G_LIBSUPCXX_SOURCES} ${G_LIBSUPCXX_C_SOURCES}
+
+CPPFLAGS+=	-I${DIST}/gcc
+CPPFLAGS+=	-I${DIST}/include
+CPPFLAGS+=	-I${DIST}/libstdc++-v3/libsupc++
+CPPFLAGS+=	-I${.CURDIR}/../libstdc++-v3_4/arch/${GCC_MACHINE_ARCH} -I.
+CPPFLAGS+=	-DHAVE_STDLIB_H -DHAVE_STRING_H
+
+CPPFLAGS.cp-demangle.c=-DIN_GLIBCPP_V3
+#CPPFLAGS.dyn-string.c=-DIN_GLIBCPP_V3
+
+#BUILDSYMLINKS+=	${DIST}/libiberty/cp-demangle.c cxa_demangle.c

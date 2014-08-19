@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2011 Free Software Foundation, Inc.
+   Copyright 2011-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
 	.4byte	func_start			/* DW_AT_low_pc */
 	.4byte	func_end			/* DW_AT_high_pc */
 	.ascii	"main.c\0"			/* DW_AT_name */
-	.ascii	"GNU C 4.0.0\0"			/* DW_AT_producer must be >= 4.0  */
+	.ascii	"GNU C 4.5.0\0"			/* DW_AT_producer must be >= 4.5  */
 	.byte	2				/* DW_AT_language (DW_LANG_C) */
 
 	.uleb128	2			/* Abbrev: DW_TAG_subprogram */
@@ -46,8 +46,8 @@
 
 	.uleb128	0x7			/* (DIE (0x42) DW_TAG_formal_parameter) */
 	.ascii		"param\0"		/* DW_AT_name */
-	.long		.Ltype_int - .Lcu1_begin	/* DW_AT_type */
-	.long		loclist			/* DW_AT_location */
+	.4byte		.Ltype_int - .Lcu1_begin	/* DW_AT_type */
+	.4byte		loclist			/* DW_AT_location */
 
 	.uleb128	4			/* Abbrev: DW_TAG_inlined_subroutine */
 	.ascii		"inlined\0"		/* DW_AT_name */
@@ -115,14 +115,14 @@
 	.section	.debug_loc
 loclist:
 	/* Reset the location list base address first.  */
-	.long		-1, 0
+	.4byte		-1, 0
 
-	.long		func_start, func_end
+	.4byte		func_start, func_end
 	.2byte		2f-1f
 1:	.byte		0x50	/* DW_OP_reg0 */
 2:
 	/* Location list end.  */
-	.long	0, 0
+	.4byte	0, 0
 
 /* Abbrev table */
 	.section .debug_abbrev

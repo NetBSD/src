@@ -1,4 +1,4 @@
-.\" $NetBSD: attribute.3,v 1.11 2011/09/18 17:43:20 jym Exp $
+.\" $NetBSD: attribute.3,v 1.11.8.1 2014/08/20 00:02:34 tls Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,12 +27,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 19, 2010
+.Dd October 25, 2013
 .Dt ATTRIBUTE 3
 .Os
 .Sh NAME
 .Nm attribute
-.Nd non-standard GCC attribute extensions
+.Nd non-standard compiler attribute extensions
 .Sh SYNOPSIS
 .In sys/cdefs.h
 .Pp
@@ -48,6 +48,10 @@
 .Pp
 .Ic __used
 .Pp
+.Ic __diagused
+.Pp
+.Ic __debugused
+.Pp
 .Ic __packed
 .Pp
 .Fn __aligned "x"
@@ -61,30 +65,42 @@
 .Pp
 .Fn __predict_false "exp"
 .Sh DESCRIPTION
+As an extension to the C standard, some compilers allow non-standard
+attributes to be associated with functions, variables, or types, to
+modify some aspect of the way the compiler treats the associated item.
 The
 .Tn GNU
 Compiler Collection
-.Pq Tn GCC
-provides many extensions to the standard C language.
-Among these are the so-called attributes.
-In
-.Nx
-all attributes are provided in a restricted namespace.
-The described macros should be preferred instead of using the
-.Tn GCC's
+.Pq Tn GCC ,
+and
+.Tn LLVM/Clang ,
+use the
 .Em __attribute__
-extension directly.
+syntax for such attributes,
+but different versions of the compilers support different attributes,
+and other compilers may use entirely different syntax.
+.Pp
+.Nx
+code should usually avoid direct use of the
+.Em __attribute__
+or similar syntax provided by specific compilers.
+Instead,
+.Nx Ap s
+.In sys/cdefs.h
+header file
+provides several attribute macros in a namespace
+reserved for the implementation (beginning with
+.Ql __ ) ,
+that expand to the appropriate syntax for the compiler that is in use.
 .Sh ATTRIBUTES
 .Bl -tag -width abc
 .It Ic __dead
-The
-.Xr gcc 1
-compiler knows that certain functions such as
+Certain functions, such as
 .Xr abort 3
 and
-.Xr exit 3
+.Xr exit 3 ,
 can never return any value.
-When such a function is equipped with
+When such a function is declared with
 .Ic __dead ,
 certain optimizations are possible.
 Obviously a
@@ -129,36 +145,78 @@ As with pure functions,
 certain micro-optimizations are possible for functions declared with
 .Ic __constfunc .
 .It Ic __noinline
-.Tn GCC
-is known for aggressive function inlining.
 Sometimes it is known that inlining is undesirable or that
 a function will perform incorrectly when inlined.
 The
 .Ic __noinline
 macro expands to a function attribute that prevents
-.Tn GCC
-for inlining the function, irrespective
-whether the function was declared with the
+the compiler from inlining the function, irrespective
+of whether the function was declared with the
 .Em inline
 keyword.
 The attribute takes precedence over all
 other compiler options related to inlining.
 .It Ic __unused
-In most
-.Tn GCC
-versions the common
-.Fl Wall
-flag enables warnings produced by functions that are defined but unused.
 Marking an unused function with the
 .Ic __unused
-macro inhibits these warnings.
+macro inhibits warnings that a function is defined but not used.
+Marking a variable with the
+.Ic __unused
+macro inhibits warnings that the variable is unused,
+or that it is set but never read.
 .It Ic __used
 The
 .Ic __used
-macro expands to an attribute that informs
-.Tn GCC
+macro expands to an attribute that informs the compiler
 that a static variable or function is to be always retained
 in the object file even if it is unreferenced.
+.It Ic __diagused
+The
+.Ic __diagused
+macro expands to an attribute that informs the compiler
+that a variable or function is used only in diagnostic code,
+and may be unused in non-diagnostic code.
+.Pp
+In the kernel, variables that are used when
+.Dv DIAGNOSTIC
+is defined, but unused when
+.Dv DIAGNOSTIC
+is not defined, may be declared with
+.Ic __diagused .
+In userland, variables that are used when
+.Dv NDEBUG
+is not defined, but unused when
+.Dv NDEBUG
+is defined, may be declared with
+.Ic __diagused .
+.Pp
+Variables used only in
+.Xr assert 3
+or
+.Xr KASSERT 9
+macros are likely candidates for being declared with
+.Ic __diagused .
+.It Ic __debugused
+The
+.Ic __debugused
+macro expands to an attribute that informs the compiler
+that a variable or function is used only in debug code,
+and may be unused in non-debug code.
+.Pp
+In either the kernel or userland, variables that are used when
+.Dv DEBUG
+is defined, but unused when
+.Dv DEBUG
+is not defined, may be declared with
+.Ic __debugused .
+.Pp
+In the kernel, variables used only in
+.Xr KDASSERT 9
+macros are likely candidates for being declared with
+.Ic __debugused .
+There is no established convention for the use of
+.Dv DEBUG
+in userland code.
 .It Ic __packed
 The
 .Ic __packed
@@ -286,7 +344,7 @@ Semantically
 .Ic __predict_true
 expects that the integral expression
 .Fa exp
-equals 1.
+yields nonzero.
 .It Ic __predict_false
 The
 .Ic __predict_false
@@ -300,6 +358,7 @@ and
 .Ic __predict_true .
 .El
 .Sh SEE ALSO
+.Xr clang 1 ,
 .Xr gcc 1 ,
 .Xr __builtin_object_size 3 ,
 .Xr cdefs 3 ,

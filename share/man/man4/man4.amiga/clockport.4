@@ -1,4 +1,4 @@
-.\" $NetBSD: clockport.4,v 1.4.4.1 2013/02/25 00:28:13 tls Exp $
+.\" $NetBSD: clockport.4,v 1.4.4.2 2014/08/20 00:02:35 tls Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,7 +52,7 @@ Individual Computers SilverSurfer 16C550-based serial port.
 .Sh CODE REFERENCES
 The
 .Nm
-interface is implemented within the
+interface and drivers for it are implemented within the
 .Pa sys/arch/amiga/clockport
 directory.
 .Sh SEE ALSO
@@ -68,7 +68,7 @@ subsystem appeared in
 The
 .Nm
 subsystem was written by
-.An Radoslaw Kujawa Aq radoslaw.kujawa@gmail.com .
+.An Radoslaw Kujawa Aq Mt radoslaw.kujawa@gmail.com .
 .Sh CAVEATS
 Clockport performance is very low, even by Amiga standards.
 .Pp

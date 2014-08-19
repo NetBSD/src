@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.42.12.2 2013/06/23 06:28:51 tls Exp $	 */
+/* $NetBSD: inode.c,v 1.42.12.3 2014/08/20 00:02:25 tls Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -259,7 +259,8 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 		for (ap = ((ulfs_daddr_t *) bp->b_data) + nif; ap < aplim; ap++) {
 			if (*ap == 0)
 				continue;
-			(void) sprintf(buf, "PARTIALLY TRUNCATED INODE I=%llu",
+			(void)snprintf(buf, sizeof(buf),
+			    "PARTIALLY TRUNCATED INODE I=%llu",
 			    (unsigned long long)idesc->id_number);
 			if (dofix(idesc, buf)) {
 				*ap = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7.14.1 2013/02/25 00:28:46 tls Exp $	*/
+/*	$NetBSD: main.c,v 1.7.14.2 2014/08/20 00:03:08 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -272,7 +272,8 @@ guid_to_string(EFI_GUID *guid)
 {
 	static char buf[40];
 
-	sprintf(buf, "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+	snprintf(buf, sizeof(buf),
+	    "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
 	    guid->Data1, guid->Data2, guid->Data3, guid->Data4[0],
 	    guid->Data4[1], guid->Data4[2], guid->Data4[3], guid->Data4[4],
 	    guid->Data4[5], guid->Data4[6], guid->Data4[7]);
@@ -443,7 +444,8 @@ print_trs(int type)
 			buf.pte &= ~PTE_DIRTY;
 		if (!(res.pal_result[0] & 8))
 			buf.pte &= ~PTE_MA_MASK;
-		sprintf(lbuf, "%03d %06x %013lx %013lx %4s %d  %d  %d  %d %d "
+		snprintf(lbuf, sizeof(lbuf),
+		    "%03d %06x %013lx %013lx %4s %d  %d  %d  %d %d "
 		    "%-3s %d %06x\n", i, buf.rr.rr_rid, buf.ifa >> 12,
 		    (buf.pte & PTE_PPN_MASK) >> 12,
 		    psnames[(buf.itir & ITIR_PS_MASK) >> 2],

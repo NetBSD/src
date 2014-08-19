@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.79.8.1 2013/02/25 00:28:12 tls Exp $
+#	$NetBSD: Makefile,v 1.79.8.2 2014/08/20 00:02:34 tls Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
-MAN=	_DIAGASSERT.3 __CONCAT.3 __UNCONST.3 CMSG_DATA.3 \
+MAN=	_DIAGASSERT.3 __CONCAT.3 __UNCONST.3 __USE.3 CMSG_DATA.3 \
 	__alignof__.3 __arraycount.3 \
 	__builtin_constant_p.3 __builtin_prefetch.3 \
 	__builtin_return_address.3 \
@@ -26,6 +26,8 @@ MLINKS+=attribute.3 __dead.3 \
 	attribute.3 __noinline.3 \
 	attribute.3 __unused.3 \
 	attribute.3 __used.3 \
+	attribute.3 __diagused.3 \
+	attribute.3 __debugused.3 \
 	attribute.3 __packed.3 \
 	attribute.3 __aligned.3 \
 	attribute.3 __section.3 \
@@ -134,90 +136,99 @@ MLINKS+=gcq.3 GCQ_INIT.3 \
 	gcq.3 GCQ_FIND_REV.3 \
 	gcq.3 GCQ_FIND_TYPED.3 \
 	gcq.3 GCQ_FIND_REV_TYPED.3
-MLINKS+=queue.3 LIST_HEAD.3 \
-	queue.3 LIST_HEAD_INITIALIZER.3 \
+
+MLINKS+=queue.3 LIST.3 \
+	queue.3 LIST_EMPTY.3 \
 	queue.3 LIST_ENTRY.3 \
+	queue.3 LIST_FIRST.3 \
+	queue.3 LIST_FOREACH.3 \
+	queue.3 LIST_FOREACH_SAFE.3 \
+	queue.3 LIST_HEAD.3 \
+	queue.3 LIST_HEAD_INITIALIZER.3 \
 	queue.3 LIST_INIT.3 \
 	queue.3 LIST_INSERT_AFTER.3 \
 	queue.3 LIST_INSERT_BEFORE.3 \
 	queue.3 LIST_INSERT_HEAD.3 \
+	queue.3 LIST_NEXT.3 \
 	queue.3 LIST_REMOVE.3 \
-	queue.3 LIST_FOREACH.3 \
-	queue.3 LIST_EMPTY.3 \
-	queue.3 LIST_FIRST.3 \
-	queue.3 LIST_NEXT.3
-MLINKS+=queue.3 SLIST_HEAD.3 \
-	queue.3 SLIST_HEAD_INITIALIZER.3 \
+	queue.3 LIST_REPLACE.3
+
+MLINKS+=queue.3 SIMPLEQ.3 \
+	queue.3 SIMPLEQ_CONCAT.3 \
+	queue.3 SIMPLEQ_EMPTY.3 \
+	queue.3 SIMPLEQ_ENTRY.3 \
+	queue.3 SIMPLEQ_FIRST.3 \
+	queue.3 SIMPLEQ_FOREACH.3 \
+	queue.3 SIMPLEQ_FOREACH_SAFE.3 \
+	queue.3 SIMPLEQ_HEAD.3 \
+	queue.3 SIMPLEQ_HEAD_INITIALIZER.3 \
+	queue.3 SIMPLEQ_INIT.3 \
+	queue.3 SIMPLEQ_INSERT_AFTER.3 \
+	queue.3 SIMPLEQ_INSERT_HEAD.3 \
+	queue.3 SIMPLEQ_INSERT_TAIL.3 \
+	queue.3 SIMPLEQ_LAST.3 \
+	queue.3 SIMPLEQ_NEXT.3 \
+	queue.3 SIMPLEQ_REMOVE.3 \
+	queue.3 SIMPLEQ_REMOVE_AFTER.3 \
+	queue.3 SIMPLEQ_REMOVE_HEAD.3 \
+	queue.3 SIMPLEQ_REMOVE.3
+
+MLINKS+=queue.3 SLIST.3 \
+	queue.3 SLIST_EMPTY.3 \
 	queue.3 SLIST_ENTRY.3 \
+	queue.3 SLIST_FIRST.3 \
+	queue.3 SLIST_FOREACH.3 \
+	queue.3 SLIST_FOREACH_SAFE.3 \
+	queue.3 SLIST_HEAD.3 \
+	queue.3 SLIST_HEAD_INITIALIZER.3 \
 	queue.3 SLIST_INIT.3 \
 	queue.3 SLIST_INSERT_AFTER.3 \
 	queue.3 SLIST_INSERT_HEAD.3 \
-	queue.3 SLIST_REMOVE_HEAD.3 \
+	queue.3 SLIST_NEXT.3 \
 	queue.3 SLIST_REMOVE.3 \
-	queue.3 SLIST_FOREACH.3 \
-	queue.3 SLIST_EMPTY.3 \
-	queue.3 SLIST_FIRST.3 \
-	queue.3 SLIST_NEXT.3
-MLINKS+=queue.3 STAILQ_HEAD.3 \
-	queue.3 STAILQ_HEAD_INITIALIZER.3 \
+	queue.3 SLIST_REMOVE_AFTER.3 \
+	queue.3 SLIST_REMOVE_HEAD.3
+
+MLINKS+=queue.3 STAILQ.3 \
+	queue.3 STAILQ_CONCAT.3 \
+	queue.3 STAILQ_EMPTY.3 \
 	queue.3 STAILQ_ENTRY.3 \
+	queue.3 STAILQ_FIRST.3 \
+	queue.3 STAILQ_FOREACH.3 \
+	queue.3 STAILQ_FOREACH_SAFE.3 \
+	queue.3 STAILQ_HEAD.3 \
+	queue.3 STAILQ_HEAD_INITIALIZER.3 \
 	queue.3 STAILQ_INIT.3 \
+	queue.3 STAILQ_INSERT_AFTER.3 \
 	queue.3 STAILQ_INSERT_HEAD.3 \
 	queue.3 STAILQ_INSERT_TAIL.3 \
-	queue.3 STAILQ_INSERT_AFTER.3 \
-	queue.3 STAILQ_REMOVE_HEAD.3 \
+	queue.3 STAILQ_LAST.3 \
+	queue.3 STAILQ_NEXT.3 \
 	queue.3 STAILQ_REMOVE.3 \
-	queue.3 STAILQ_FOREACH.3 \
-	queue.3 STAILQ_EMPTY.3 \
-	queue.3 STAILQ_FIRST.3 \
-	queue.3 STAILQ_NEXT.3
-MLINKS+=queue.3 SIMPLEQ_HEAD.3 \
-	queue.3 SIMPLEQ_HEAD_INITIALIZER.3 \
-	queue.3 SIMPLEQ_ENTRY.3 \
-	queue.3 SIMPLEQ_INIT.3 \
-	queue.3 SIMPLEQ_INSERT_HEAD.3 \
-	queue.3 SIMPLEQ_INSERT_TAIL.3 \
-	queue.3 SIMPLEQ_INSERT_AFTER.3 \
-	queue.3 SIMPLEQ_REMOVE_HEAD.3 \
-	queue.3 SIMPLEQ_REMOVE.3 \
-	queue.3 SIMPLEQ_FOREACH.3 \
-	queue.3 SIMPLEQ_EMPTY.3 \
-	queue.3 SIMPLEQ_FIRST.3 \
-	queue.3 SIMPLEQ_NEXT.3
-MLINKS+=queue.3 TAILQ_HEAD.3 \
-	queue.3 TAILQ_HEAD_INITIALIZER.3 \
+	queue.3 STAILQ_REMOVE_HEAD.3
+
+MLINKS+=queue.3 TAILQ.3 \
+	queue.3 TAILQ_CONCAT.3 \
+	queue.3 TAILQ_EMPTY.3 \
 	queue.3 TAILQ_ENTRY.3 \
+	queue.3 TAILQ_FIRST.3 \
+	queue.3 TAILQ_FOREACH.3 \
+	queue.3 TAILQ_FOREACH_SAFE.3 \
+	queue.3 TAILQ_FOREACH_REVERSE.3 \
+	queue.3 TAILQ_FOREACH_REVERSE_SAFE.3 \
+	queue.3 TAILQ_HEAD.3 \
+	queue.3 TAILQ_HEAD_INITIALIZER.3 \
 	queue.3 TAILQ_INIT.3 \
-	queue.3 TAILQ_INSERT_HEAD.3 \
-	queue.3 TAILQ_INSERT_TAIL.3 \
 	queue.3 TAILQ_INSERT_AFTER.3 \
 	queue.3 TAILQ_INSERT_BEFORE.3 \
-	queue.3 TAILQ_REMOVE.3 \
-	queue.3 TAILQ_FOREACH.3 \
-	queue.3 TAILQ_FOREACH_REVERSE.3 \
-	queue.3 TAILQ_EMPTY.3 \
-	queue.3 TAILQ_FIRST.3 \
-	queue.3 TAILQ_NEXT.3 \
+	queue.3 TAILQ_INSERT_HEAD.3 \
+	queue.3 TAILQ_INSERT_TAIL.3 \
 	queue.3 TAILQ_LAST.3 \
-	queue.3 TAILQ_PREV.3
-MLINKS+=queue.3 CIRCLEQ_HEAD.3 \
-	queue.3 CIRCLEQ_HEAD_INITIALIZER.3 \
-	queue.3 CIRCLEQ_ENTRY.3 \
-	queue.3 CIRCLEQ_INIT.3 \
-	queue.3 CIRCLEQ_INSERT_AFTER.3 \
-	queue.3 CIRCLEQ_INSERT_BEFORE.3 \
-	queue.3 CIRCLEQ_INSERT_HEAD.3 \
-	queue.3 CIRCLEQ_INSERT_TAIL.3 \
-	queue.3 CIRCLEQ_REMOVE.3 \
-	queue.3 CIRCLEQ_FOREACH.3 \
-	queue.3 CIRCLEQ_FOREACH_REVERSE.3 \
-	queue.3 CIRCLEQ_EMPTY.3 \
-	queue.3 CIRCLEQ_FIRST.3 \
-	queue.3 CIRCLEQ_LAST.3 \
-	queue.3 CIRCLEQ_NEXT.3 \
-	queue.3 CIRCLEQ_PREV.3 \
-	queue.3 CIRCLEQ_LOOP_NEXT.3 \
-	queue.3 CIRCLEQ_LOOP_PREV.3
+	queue.3 TAILQ_NEXT.3 \
+	queue.3 TAILQ_PREV.3 \
+	queue.3 TAILQ_REMOVE.3 \
+	queue.3 TAILQ_REPLACE.3
+
 MLINKS+=rbtree.3 rb_tree_init.3 \
 	rbtree.3 rb_tree_insert_node.3 \
 	rbtree.3 rb_tree_find_node.3 \

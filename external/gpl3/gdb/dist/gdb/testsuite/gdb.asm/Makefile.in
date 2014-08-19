@@ -9,6 +9,7 @@ all info install-info dvi install uninstall installcheck check:
 
 clean mostlyclean:
 	-rm -f *~ *.o a.out *.x *.ci *.tmp
+	-rm -f *.dwo *.dwp
 	-rm -f core core.coremaker coremaker.core corefile $(EXECUTABLES)
 	-rm -f $(MISCELLANEOUS)
 

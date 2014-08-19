@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.110.2.2 2013/06/23 06:20:09 tls Exp $
+# $NetBSD: GENERIC,v 1.110.2.3 2014/08/20 00:03:15 tls Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,9 @@ include		"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.110.2.2 $"
+#ident 		"GENERIC-$Revision: 1.110.2.3 $"
+
+makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
 maxusers	8
 
@@ -38,7 +40,7 @@ options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
 
-#options 	MODULAR			# new style module(7) framework
+options 	MODULAR			# new style module(7) framework
 
 options 	USERCONF		# userconf(4) support
 #options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
@@ -55,7 +57,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 #options 	KMEMSTATS		# kernel memory statistics (vmstat -m)
 options 	DDB			# kernel dynamic debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-#options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
+#options 	DDB_ONPANIC=1		# see also sysctl(7): `ddb.onpanic'
 options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	SCSIDEBUG		# extra SCSI debugging support
 #makeoptions	DEBUG="-g"		# compile full symbol table
@@ -83,7 +85,7 @@ options 	COMPAT_BSDPTY		# /dev/[pt]ty?? ptys.
 
 # Filesystem options
 file-system	FFS		# Berkeley Fast Filesystem
-file-system	LFS		# log-structured file system
+#file-system	LFS		# log-structured file system
 file-system	NFS		# Sun NFS-compatible filesystem client
 file-system	MFS		# memory-based filesystem
 file-system	CD9660		# ISO 9660 + Rock Ridge file system
@@ -92,10 +94,10 @@ file-system	KERNFS		# /kern
 file-system	PROCFS		# /proc
 file-system	FDESC		# /dev/fd/*
 file-system	NULLFS		# loopback file system
-file-system 	OVERLAY		# overlay file system
-file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
-file-system	UMAPFS		# NULLFS + uid and gid remapping
-file-system	UNION		# union file system
+#file-system 	OVERLAY		# overlay file system
+#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
+#file-system	UMAPFS		# NULLFS + uid and gid remapping
+#file-system	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcode (below)
 file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
@@ -106,7 +108,7 @@ options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# ffs endian independent support
 options 	WAPBL		# File system journaling support
-#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
 # Networking options
@@ -118,10 +120,9 @@ options 	INET6		# IPV6
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking protocols
-options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
-options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
@@ -222,8 +223,8 @@ uk*	at scsibus? target ? lun ?		# unknown SCSI devices
 
 #
 # accept filters
-pseudo-device   accf_data		# "dataready" accept filter
-pseudo-device   accf_http		# "httpready" accept filter
+#pseudo-device   accf_data		# "dataready" accept filter
+#pseudo-device   accf_http		# "httpready" accept filter
 
 # Misc.
 pseudo-device	loop			# loopback interface; required
@@ -243,7 +244,7 @@ pseudo-device	raid			# RAIDframe disk driver
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-pseudo-device	fss			# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 pseudo-device	sl			# SLIP interfaces
 pseudo-device	ppp			# PPP interfaces
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)

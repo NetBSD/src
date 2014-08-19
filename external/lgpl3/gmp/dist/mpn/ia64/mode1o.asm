@@ -1,5 +1,7 @@
 dnl  Itanium-2 mpn_modexact_1c_odd -- mpn by 1 exact remainder.
 
+dnl  Contributed to the GNU project by Kevin Ryde.
+
 dnl  Copyright 2003, 2004, 2005 Free Software Foundation, Inc.
 dnl
 dnl  This file is part of the GNU MP Library.

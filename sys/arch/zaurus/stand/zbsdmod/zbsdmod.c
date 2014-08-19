@@ -1,4 +1,4 @@
-/*	$NetBSD: zbsdmod.c,v 1.8 2011/12/16 14:17:41 nonaka Exp $	*/
+/*	$NetBSD: zbsdmod.c,v 1.8.6.1 2014/08/20 00:03:30 tls Exp $	*/
 /*	$OpenBSD: zbsdmod.c,v 1.7 2005/05/02 02:45:29 uwe Exp $	*/
 
 /*
@@ -152,7 +152,7 @@ elf32bsdboot(void)
 			esymp = (vaddr_t *)phdr[i].p_vaddr;
 	}
 
-	__asm volatile ("mrs %0, cpsr_all" : "=r" (cpsr));
+	__asm volatile ("mrs %0, cpsr" : "=r" (cpsr));
 	cpsr |= 0xc0;  /* set FI */
 	__asm volatile ("msr cpsr_all, %0" :: "r" (cpsr));
 

@@ -1,8 +1,8 @@
-/*	$NetBSD: cissreg.h,v 1.3 2008/10/18 18:53:20 bouyer Exp $	*/
-/*	$OpenBSD: cissreg.h,v 1.4 2005/12/13 15:55:59 brad Exp $	*/
+/*	$NetBSD: cissreg.h,v 1.3.38.1 2014/08/20 00:03:37 tls Exp $	*/
+/*	$OpenBSD: cissreg.h,v 1.11 2010/06/03 01:02:13 dlg Exp $	*/
 
 /*
- * Copyright (c) 2005 Michael Shalayeff
+ * Copyright (c) 2005,2006 Michael Shalayeff
  * All rights reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -30,6 +30,12 @@
 #define	CISS_OUTQ	0x44
 #define	CISS_CFG_BAR	0xb4
 #define	CISS_CFG_OFF	0xb8
+
+/* 64bit FIFO mode input/output post queues */
+#define CISS_INQ64_LO	0xc0
+#define CISS_INQ64_HI	0xc4
+#define CISS_OUTQ64_LO	0xc8
+#define CISS_OUTQ64_HI	0xcc
 
 #define	CISS_DRVMAP_SIZE	(128 / 8)
 
@@ -65,10 +71,15 @@ struct ciss_config {
 #define	CISS_SIGNATURE	(*(const u_int32_t *)"CISS")
 	u_int32_t	version;
 	u_int32_t	methods;
-#define	CISS_METH_READY	0x0001
-#define	CISS_METH_SIMPL	0x0002
-#define	CISS_METH_PERF	0x0004
-#define	CISS_METH_EMQ	0x0008
+#define CISS_METH_READY		0x00000001 /* indicate to accept commands */
+#define CISS_METH_SIMPL		0x00000002 /* simple mode */
+#define CISS_METH_PERF		0x00000004 /* performant mode */
+#define CISS_METH_EMQ		0x00000008 /* MEMQ method */
+#define CISS_METH_BIT63		0x08000000 /* address bit 63 is valid */
+#define CISS_METH_FIFO64_RRO	0x10000000 /* 64bit FIFO reverse read order */
+#define CISS_METH_SHORT_TAG	0x20000000 /* short 4 byte tag support */
+#define CISS_METH_MSIX		0x40000000 /* directed MSI-X support */
+#define CISS_METH_FIFO64	0x80000000 /* 64bit FIFO support */
 	u_int32_t	amethod;
 	u_int32_t	rmethod;
 	u_int32_t	paddr_lim;

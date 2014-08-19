@@ -1,3 +1,20 @@
+/* This testcase is part of GDB, the GNU debugger.
+
+   Copyright 2010-2014 Free Software Foundation, Inc.
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
 /* This program does two things; it generates valid trace files, and
    it can also be traced so as to test trace file creation from
    GDB.  */
@@ -13,11 +30,17 @@ char trbuf[1000];
 char *trptr;
 char *tfsizeptr;
 
+/* These globals are put in the trace buffer.  */
+
 int testglob = 31415;
 
 int testglob2 = 271828;
 
+/* But these below are not.  */
+
 const int constglob = 10000;
+
+int nonconstglob = 14124;
 
 int
 start_trace_file (char *filename)
@@ -49,13 +72,13 @@ void
 add_memory_block (char *addr, int size)
 {
   short short_x;
-  long long ll_x;
+  unsigned long long ll_x;
 
   *((char *) trptr) = 'M';
   trptr += 1;
-  ll_x = (long) addr;
-  memcpy (trptr, &ll_x, sizeof (long long));
-  trptr += sizeof (long long);
+  ll_x = (unsigned long) addr;
+  memcpy (trptr, &ll_x, sizeof (unsigned long long));
+  trptr += sizeof (unsigned long long);
   short_x = size;
   memcpy (trptr, &short_x, 2);
   trptr += 2;
@@ -69,7 +92,7 @@ write_basic_trace_file (void)
   int fd, int_x;
   short short_x;
 
-  fd = start_trace_file ("basic.tf");
+  fd = start_trace_file (TFILE_DIR "tfile-basic.tf");
 
   /* The next part of the file consists of newline-separated lines
      defining status, tracepoints, etc.  The section is terminated by
@@ -154,7 +177,7 @@ write_error_trace_file (void)
   int len = sizeof (made_up) - 1;
   char *hex = alloca (len * 2 + 1);
 
-  fd = start_trace_file ("error.tf");
+  fd = start_trace_file (TFILE_DIR "tfile-error.tf");
 
   /* The next part of the file consists of newline-separated lines
      defining status, tracepoints, etc.  The section is terminated by

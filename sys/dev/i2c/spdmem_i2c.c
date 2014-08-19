@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem_i2c.c,v 1.6 2012/09/12 00:36:41 pgoyette Exp $ */
+/* $NetBSD: spdmem_i2c.c,v 1.6.2.1 2014/08/20 00:03:37 tls Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.6 2012/09/12 00:36:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.6.2.1 2014/08/20 00:03:37 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.6 2012/09/12 00:36:41 pgoyette Exp 
 #include <dev/ic/spdmemvar.h>
 
 /* Constants for matching i2c bus address */
-#define SPDMEM_I2C_ADDRMASK 0x78
+#define SPDMEM_I2C_ADDRMASK 0x3f8
 #define SPDMEM_I2C_ADDR     0x50
 
 struct spdmem_i2c_softc {
@@ -66,8 +66,6 @@ CFATTACH_DECL_NEW(spdmem_iic, sizeof(struct spdmem_i2c_softc),
     spdmem_i2c_match, spdmem_i2c_attach, spdmem_i2c_detach, NULL);
 
 static uint8_t spdmem_i2c_read(struct spdmem_softc *, uint8_t);
-
-SYSCTL_SETUP_PROTO(sysctl_spdmem_setup);
 
 static int
 spdmem_i2c_match(device_t parent, cfdata_t match, void *aux)
@@ -129,7 +127,7 @@ spdmem_i2c_read(struct spdmem_softc *softc, uint8_t reg)
 
 	iic_acquire_bus(sc->sc_tag, 0);
 	iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, &reg, 1,
-		 &val, 1, 0);
+		 &val, 1, I2C_F_POLL);
 	iic_release_bus(sc->sc_tag, 0);
 
 	return val;
@@ -152,7 +150,6 @@ spdmem_modcmd(modcmd_t cmd, void *opaque)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
-		sysctl_spdmem_setup(&spdmem_sysctl_clog);
 		error = config_init_component(cfdriver_ioconf_spdmem,
 		    cfattach_ioconf_spdmem, cfdata_ioconf_spdmem);
 #endif

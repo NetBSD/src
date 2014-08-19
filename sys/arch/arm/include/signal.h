@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.12 2011/06/30 20:09:20 wiz Exp $	*/
+/*	$NetBSD: signal.h,v 1.12.12.1 2014/08/20 00:02:46 tls Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,8 +43,8 @@
  * Created      : 30/09/94
  */
 
-#ifndef _ARM32_SIGNAL_H_
-#define _ARM32_SIGNAL_H_
+#ifndef _ARM_SIGNAL_H_
+#define _ARM_SIGNAL_H_
 
 #include <sys/featuretest.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.28 2010/12/15 00:08:43 matt Exp $ */
+/*	$NetBSD: ts.c,v 1.28.18.1 2014/08/20 00:03:49 tls Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.28 2010/12/15 00:08:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.28.18.1 2014/08/20 00:03:49 tls Exp $");
 
 #undef	TSDEBUG
 
@@ -177,12 +177,29 @@ dev_type_strategy(tsstrategy);
 dev_type_dump(tsdump);
 
 const struct bdevsw ts_bdevsw = {
-	tsopen, tsclose, tsstrategy, tsioctl, tsdump, nosize, D_TAPE
+	.d_open = tsopen,
+	.d_close = tsclose,
+	.d_strategy = tsstrategy,
+	.d_ioctl = tsioctl,
+	.d_dump = tsdump,
+	.d_psize = nosize,
+	.d_discard = nodiscard,
+	.d_flag = D_TAPE
 };
 
 const struct cdevsw ts_cdevsw = {
-	tsopen, tsclose, tsread, tswrite, tsioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
+	.d_open = tsopen,
+	.d_close = tsclose,
+	.d_read = tsread,
+	.d_write = tswrite,
+	.d_ioctl = tsioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TAPE
 };
 
 /* Bits in minor device */

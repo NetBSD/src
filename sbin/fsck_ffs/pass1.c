@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.49.8.2 2013/06/23 06:28:51 tls Exp $	*/
+/*	$NetBSD: pass1.c,v 1.49.8.3 2014/08/20 00:02:24 tls Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.49.8.2 2013/06/23 06:28:51 tls Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.49.8.3 2014/08/20 00:02:24 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -235,15 +235,11 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	int64_t blocks;
 	char symbuf[MAXBSIZE];
 	struct inostat *info;
-	uid_t uid;
-	gid_t gid;
 
 	dp = getnextinode(inumber);
 	info = inoinfo(inumber);
 	mode = iswap16(DIP(dp, mode)) & IFMT;
 	size = iswap64(DIP(dp, size));
-	uid = iswap32(DIP(dp, uid));
-	gid = iswap32(DIP(dp, gid));
 	if (mode == 0) {
 		if ((is_ufs2 && 
 		    (memcmp(dp->dp2.di_db, ufs2_zino.di_db,
@@ -309,7 +305,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		    size > 0 && size < UFS1_MAXSYMLINKLEN &&
 		    DIP(dp, blocks) != 0) {
 			if (bread(fsreadfd, symbuf,
-			    fsbtodb(sblock, iswap32(DIP(dp, db[0]))),
+			    FFS_FSBTODB(sblock, iswap32(DIP(dp, db[0]))),
 			    (long)secsize) != 0)
 				errexit("cannot read symlink");
 			if (debug) {
@@ -432,8 +428,8 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		for (j = 0; j < UFS_NXADDR; j++) {
 			if (--ndb == 0 &&
 			    (offset = ffs_blkoff(sblock, iswap32(dp->dp2.di_extsize))) != 0)
-				idesc->id_numfrags = numfrags(sblock,
-				    fragroundup(sblock, offset));
+				idesc->id_numfrags = ffs_numfrags(sblock,
+				    ffs_fragroundup(sblock, offset));
 			else
 				idesc->id_numfrags = sblock->fs_frag;
 			if (dp->dp2.di_extb[j] == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.1.1.2 2011/03/02 19:32:19 tron Exp $	*/
+/*	$NetBSD: forward.c,v 1.1.1.2.10.1 2014/08/19 23:59:43 tls Exp $	*/
 
 /*++
 /* NAME
@@ -120,6 +120,11 @@ static FORWARD_INFO *forward_open(DELIVER_REQUEST *request, const char *sender)
     FORWARD_INFO *info;
     VSTREAM *cleanup;
 
+#define FORWARD_OPEN_RETURN(res) do { \
+	vstring_free(buffer); \
+	return (res); \
+    } while (0)
+
     /*
      * Contact the cleanup service and save the new mail queue id. Request
      * that the cleanup service bounces bad messages to the sender so that we
@@ -131,13 +136,13 @@ static FORWARD_INFO *forward_open(DELIVER_REQUEST *request, const char *sender)
      */
     cleanup = mail_connect(MAIL_CLASS_PUBLIC, var_cleanup_service, BLOCKING);
     if (cleanup == 0)
-	return (0);
+	FORWARD_OPEN_RETURN(0);
     close_on_exec(vstream_fileno(cleanup), CLOSE_ON_EXEC);
     if (attr_scan(cleanup, ATTR_FLAG_STRICT,
 		  ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, buffer,
 		  ATTR_TYPE_END) != 1) {
 	vstream_fclose(cleanup);
-	return (0);
+	FORWARD_OPEN_RETURN(0);
     }
     info = (FORWARD_INFO *) mymalloc(sizeof(FORWARD_INFO));
     info->cleanup = cleanup;
@@ -192,8 +197,7 @@ static FORWARD_INFO *forward_open(DELIVER_REQUEST *request, const char *sender)
     PASS_ATTR(cleanup, MAIL_ATTR_LOG_IDENT, request->log_ident);
     PASS_ATTR(cleanup, MAIL_ATTR_RWR_CONTEXT, request->rewrite_context);
 
-    vstring_free(buffer);
-    return (info);
+    FORWARD_OPEN_RETURN(info);
 }
 
 /* forward_append - append recipient to message envelope */

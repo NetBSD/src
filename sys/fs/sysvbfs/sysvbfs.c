@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs.c,v 1.12 2008/05/10 02:26:09 rumble Exp $	*/
+/*	$NetBSD: sysvbfs.c,v 1.12.42.1 2014/08/20 00:04:28 tls Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs.c,v 1.12 2008/05/10 02:26:09 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs.c,v 1.12.42.1 2014/08/20 00:04:28 tls Exp $");
 
 #include <sys/resource.h>
 #include <sys/param.h>
@@ -59,6 +59,8 @@ const struct vnodeopv_entry_desc sysvbfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, sysvbfs_setattr },		/* setattr */
 	{ &vop_read_desc, sysvbfs_read },		/* read */
 	{ &vop_write_desc, sysvbfs_write },		/* write */
+	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
+	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, genfs_enoioctl },		/* ioctl */
 	{ &vop_poll_desc, genfs_poll },			/* poll */
@@ -109,32 +111,28 @@ const struct genfs_ops sysvbfs_genfsops = {
 };
 
 struct vfsops sysvbfs_vfsops = {
-	MOUNT_SYSVBFS,
-	sizeof (struct sysvbfs_args),
-	sysvbfs_mount,
-	sysvbfs_start,
-	sysvbfs_unmount,
-	sysvbfs_root,
-	(void *)eopnotsupp,	/* vfs_quotactl */
-	sysvbfs_statvfs,
-	sysvbfs_sync,
-	sysvbfs_vget,
-	sysvbfs_fhtovp,
-	sysvbfs_vptofh,
-	sysvbfs_init,
-	sysvbfs_reinit,
-	sysvbfs_done,
-	NULL,			/* vfs_mountroot */
-	(int (*)(struct mount *, struct vnode *, struct timespec *))
-	    eopnotsupp,		/* snapshot */
-	vfs_stdextattrctl,
-	(void *)eopnotsupp,	/* vfs_suspendctl */
-	genfs_renamelock_enter,
-	genfs_renamelock_exit,
-	(void *)eopnotsupp,
-	sysvbfs_vnodeopv_descs,
-	0,
-	{ NULL, NULL }
+	.vfs_name = MOUNT_SYSVBFS,
+	.vfs_min_mount_data = sizeof (struct sysvbfs_args),
+	.vfs_mount = sysvbfs_mount,
+	.vfs_start = sysvbfs_start,
+	.vfs_unmount = sysvbfs_unmount,
+	.vfs_root = sysvbfs_root,
+	.vfs_quotactl = (void *)eopnotsupp,
+	.vfs_statvfs = sysvbfs_statvfs,
+	.vfs_sync = sysvbfs_sync,
+	.vfs_vget = sysvbfs_vget,
+	.vfs_fhtovp = sysvbfs_fhtovp,
+	.vfs_vptofh = sysvbfs_vptofh,
+	.vfs_init = sysvbfs_init,
+	.vfs_reinit = sysvbfs_reinit,
+	.vfs_done = sysvbfs_done,
+	.vfs_snapshot = (void *)eopnotsupp,
+	.vfs_extattrctl = vfs_stdextattrctl,
+	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_renamelock_enter = genfs_renamelock_enter,
+	.vfs_renamelock_exit = genfs_renamelock_exit,
+	.vfs_fsync = (void *)eopnotsupp,
+	.vfs_opv_descs = sysvbfs_vnodeopv_descs
 };
 
 static int

@@ -1,4 +1,4 @@
-.\"	$NetBSD: stat.2,v 1.50.6.2 2013/02/25 00:27:54 tls Exp $
+.\"	$NetBSD: stat.2,v 1.50.6.3 2014/08/20 00:02:16 tls Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)stat.2	8.4 (Berkeley) 5/1/95
 .\"
-.Dd November 18, 2012
+.Dd April 10, 2014
 .Dt STAT 2
 .Os
 .Sh NAME
@@ -48,6 +48,8 @@
 .Fn lstat "const char *path" "struct stat *sb"
 .Ft int
 .Fn fstat "int fd" "struct stat *sb"
+.In sys/stat.h
+.In fcntl.h
 .Ft int
 .Fn fstatat "int fd" "const char *path" "struct stat *sb" "int flag"
 .Sh DESCRIPTION
@@ -122,7 +124,7 @@ The following standards-compliant fields are defined in the structure:
 "nlink_t " "st_nlink " "Description"
 .It Sy Type Ta Sy Entry Ta Sy Description
 .It Vt dev_t Ta st_dev Ta device ID containing the file
-.It Vt ino_t Ta st_ino Ta serial number of the file
+.It Vt ino_t Ta st_ino Ta serial number of the file (inode number)
 .It Vt mode_t Ta st_mode Ta mode of the file
 .It Vt nlink_t Ta st_nlink Ta number of hard links to the file
 .It Vt uid_t Ta st_uid Ta user ID of the owner
@@ -303,10 +305,7 @@ has the following bits:
 For a description of the flags, see
 .Xr chflags 2 .
 .Sh RETURN VALUES
-Upon successful completion a value of 0 is returned.
-Otherwise, a value of \-1 is returned and
-.Va errno
-is set to indicate the error.
+.Rv -std stat lstat fstat fstatat
 .Sh COMPATIBILITY
 Previous versions of the system used different types for the
 .Li st_dev ,
@@ -319,9 +318,10 @@ and
 .Li st_blocks
 fields.
 .Sh ERRORS
-.Fn stat
-and
+.Fn stat ,
 .Fn lstat
+and
+.Fn fstatat
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EACCES
@@ -332,7 +332,7 @@ This can happen if a file system information node is incorrect.
 .It Bq Er EFAULT
 .Fa sb
 or
-.Em name
+.Fa path
 points to an invalid address.
 .It Bq Er EIO
 An I/O error occurred while reading from or writing to the file system.
@@ -352,6 +352,24 @@ A component of the path prefix is not a directory.
 The named file is a character special or block
 special file, and the device associated with this special file
 does not exist.
+.El
+.Pp
+In addition,
+.Fn fstatat
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+.Fa path
+does not specify an absolute path and
+.Fa fd
+is neither
+.Dv AT_FDCWD
+nor a valid file descriptor open for reading or searching.
+.It Bq Er ENOTDIR
+.Fa path
+is not an absolute path and
+.Fa fd
+is a file descriptor associated with a non-directory file.
 .El
 .Pp
 .Fn fstat

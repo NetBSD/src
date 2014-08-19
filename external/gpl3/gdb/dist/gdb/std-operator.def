@@ -1,7 +1,6 @@
 /* Standard language operator definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1986, 1989, 1992, 1994, 2000, 2003, 2005, 2007, 2008, 2009,
-   2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1986-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -105,11 +104,6 @@ OP (TERNOP_COND)		/* ?: */
    OP1(OP2:OP3).  Return elements OP2 through OP3 of OP1.  */
 OP (TERNOP_SLICE)
 
-/* A sub-string/sub-array.  (The deleted) Chill syntax: OP1(OP2 UP
-   OP3).  Return OP3 elements of OP1, starting with element
-   OP2.  */
-OP (TERNOP_SLICE_COUNT)
-
 /* Multidimensional subscript operator, such as Modula-2 x[a,b,...].
    The dimensionality is encoded in the operator, like the number of
    function arguments in OP_FUNCALL, I.E. <OP><dimension><OP>.
@@ -138,6 +132,12 @@ OP (OP_DOUBLE)
    innermost frame executing in that block; if the block is NULL
    use the selected frame.  */
 OP (OP_VAR_VALUE)
+
+/* OP_VAR_ENTRY_VALUE takes one struct symbol * in the following element,
+   followed by another OP_VAR_ENTRY_VALUE, making three exp_elements.
+   somename@entry may mean parameter value as present at the entry of the
+   current function.  Implemented via DW_OP_GNU_entry_value.  */
+OP (OP_VAR_ENTRY_VALUE)
 
 /* OP_LAST is followed by an integer in the next exp_element.
    The integer is zero for the last value printed,
@@ -188,12 +188,6 @@ OP (OP_COMPLEX)
    is executed.  */
 OP (OP_STRING)
 
-/* OP_BITSTRING represents a packed bitstring constant.
-   Its format is the same as that of a STRUCTOP, but the bitstring
-   data is just made into a bitstring constant when the operation
-   is executed.  */
-OP (OP_BITSTRING)
-
 /* OP_ARRAY creates an array constant out of the following subexpressions.
    It is followed by two exp_elements, the first containing an integer
    that is the lower bound of the array and the second containing another
@@ -209,6 +203,9 @@ OP (OP_ARRAY)
    With another UNOP_CAST at the end, this makes three exp_elements.
    It casts the value of the following subexpression.  */
 OP (UNOP_CAST)
+
+/* Like UNOP_CAST, but the type is a subexpression.  */
+OP (UNOP_CAST_TYPE)
 
 /* The C++ dynamic_cast operator.  */
 OP (UNOP_DYNAMIC_CAST)
@@ -228,6 +225,9 @@ OP (UNOP_MEMVAL)
    It casts the contents of the word offsetted by the value of the
    following subexpression from the TLS specified by `struct objfile'.  */
 OP (UNOP_MEMVAL_TLS)
+
+/* Like UNOP_MEMVAL, but the type is supplied as a subexpression.  */
+OP (UNOP_MEMVAL_TYPE)
 
 /* UNOP_... operate on one value from a following subexpression
    and replace it with a result.  They take no immediate arguments.  */
@@ -277,11 +277,6 @@ OP (STRUCTOP_PTR)
    It just comes in a tight (OP_THIS, OP_THIS) pair.  */
 OP (OP_THIS)
 
-/* Objective-C: OP_OBJC_SELF is just a placeholder for the class
-   instance variable.  It just comes in a tight (OP_OBJC_SELF,
-   OP_OBJC_SELF) pair.  */
-OP (OP_OBJC_SELF)
-
 /* Objective C: "@selector" pseudo-operator.  */
 OP (OP_OBJC_SELECTOR)
 
@@ -289,19 +284,6 @@ OP (OP_OBJC_SELECTOR)
    name is encoded as one element, but the field name stays as
    a string, which, of course, is variable length.  */
 OP (OP_SCOPE)
-
-/* Used to represent named structure field values in brace
-   initializers (or tuples as they are called in (the deleted)
-   Chill).
-
-   The gcc C syntax is NAME:VALUE or .NAME=VALUE, the (the
-   deleted) Chill syntax is .NAME:VALUE.  Multiple labels (as in
-   the (the deleted) Chill syntax .NAME1,.NAME2:VALUE) is
-   represented as if it were .NAME1:(.NAME2:VALUE) (though that is
-   not valid (the deleted) Chill syntax).
-
-   The NAME is represented as for STRUCTOP_STRUCT;  VALUE follows.  */
-OP (OP_LABELED)
 
 /* OP_TYPE is for parsing types, and used with the "ptype" command
    so we can look up types that are qualified by scope, either with
@@ -325,3 +307,15 @@ OP (OP_DECFLOAT)
 /* OP_ADL_FUNC specifies that the function is to be looked up in an
    Argument Dependent manner (Koenig lookup).  */
 OP (OP_ADL_FUNC)
+
+/* The typeof operator.  This has one expression argument, which is
+   evaluated solely for its type.  */
+OP (OP_TYPEOF)
+
+/* The decltype operator.  This has one expression argument, which is
+   evaluated solely for its type.  This is similar to typeof, but has
+   slight different semantics.  */
+OP (OP_DECLTYPE)
+
+/* The typeid operator.  This has one expression argument.  */
+OP (OP_TYPEID)

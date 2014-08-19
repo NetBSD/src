@@ -1,4 +1,4 @@
-/*	$NetBSD: mvcesareg.h,v 1.1 2012/07/27 03:00:01 kiyohara Exp $	*/
+/*	$NetBSD: mvcesareg.h,v 1.1.2.1 2014/08/20 00:03:39 tls Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -27,26 +27,26 @@
 #ifndef _MVCESAREG_H_
 #define _MVCESAREG_H_
 
-#define MVCESA_SIZE	0x10000
+#define MVCESA_SIZE	0x1000
 
 
 /*
  * Cryptographic Engine and Security Accelerator Registers
  */
 /* DES Engine Registers */
-#define MVCESA_DESE_DOL		0xdd78	/* Data Out Low */
-#define MVCESA_DESE_DOH		0xdd7c	/* Data Out High */
-#define MVCESA_DESE_DBL		0xdd70	/* Data Buffer Low */
-#define MVCESA_DESE_DBH		0xdd74	/* Data Buffer High */
-#define MVCESA_DESE_IVL		0xdd40	/* Initial Value Low */
-#define MVCESA_DESE_IVH		0xdd44	/* Initial Value High */
-#define MVCESA_DESE_K0L		0xdd48	/* Key0 Low */
-#define MVCESA_DESE_K0H		0xdd4c	/* Key0 High */
-#define MVCESA_DESE_K1L		0xdd50	/* Key1 Low */
-#define MVCESA_DESE_K1H		0xdd54	/* Key1 High */
-#define MVCESA_DESE_K2L		0xdd60	/* Key2 Low */
-#define MVCESA_DESE_K2H		0xdd64	/* Key2 High */
-#define MVCESA_DESE_C		0xdd58	/* Command */
+#define MVCESA_DESE_DOL		0xd78	/* Data Out Low */
+#define MVCESA_DESE_DOH		0xd7c	/* Data Out High */
+#define MVCESA_DESE_DBL		0xd70	/* Data Buffer Low */
+#define MVCESA_DESE_DBH		0xd74	/* Data Buffer High */
+#define MVCESA_DESE_IVL		0xd40	/* Initial Value Low */
+#define MVCESA_DESE_IVH		0xd44	/* Initial Value High */
+#define MVCESA_DESE_K0L		0xd48	/* Key0 Low */
+#define MVCESA_DESE_K0H		0xd4c	/* Key0 High */
+#define MVCESA_DESE_K1L		0xd50	/* Key1 Low */
+#define MVCESA_DESE_K1H		0xd54	/* Key1 High */
+#define MVCESA_DESE_K2L		0xd60	/* Key2 Low */
+#define MVCESA_DESE_K2H		0xd64	/* Key2 High */
+#define MVCESA_DESE_C		0xd58	/* Command */
 #define MVCESA_DESE_C_DIRECTION_ENC	(0 << 0)
 #define MVCESA_DESE_C_DIRECTION_DEC	(1 << 0)
 #define MVCESA_DESE_C_ALGORITHM_DES	(0 << 1)
@@ -63,15 +63,15 @@
 #define MVCESA_DESE_C_TERMINATION	(1 << 31)
 
 /* SHA-1 and MD5 Interface Registers */
-#define MVCESA_SHA1MD5I_DI	0xdd38	/* Data In */
-#define MVCESA_SHA1MD5I_BCL	0xdd20	/* Bit Count Low */
-#define MVCESA_SHA1MD5I_BCH	0xdd24	/* Bit Count High */
-#define MVCESA_SHA1MD5I_IVDA	0xdd00	/* Initial Value/Digest A */
-#define MVCESA_SHA1MD5I_IVDB	0xdd04	/* Initial Value/Digest B */
-#define MVCESA_SHA1MD5I_IVDC	0xdd08	/* Initial Value/Digest C */
-#define MVCESA_SHA1MD5I_IVDD	0xdd0c	/* Initial Value/Digest D */
-#define MVCESA_SHA1MD5I_IVDE	0xdd10	/* Initial Value/Digest E */
-#define MVCESA_SHA1MD5I_AC	0xdd18	/* Authentication Command */
+#define MVCESA_SHA1MD5I_DI	0xd38	/* Data In */
+#define MVCESA_SHA1MD5I_BCL	0xd20	/* Bit Count Low */
+#define MVCESA_SHA1MD5I_BCH	0xd24	/* Bit Count High */
+#define MVCESA_SHA1MD5I_IVDA	0xd00	/* Initial Value/Digest A */
+#define MVCESA_SHA1MD5I_IVDB	0xd04	/* Initial Value/Digest B */
+#define MVCESA_SHA1MD5I_IVDC	0xd08	/* Initial Value/Digest C */
+#define MVCESA_SHA1MD5I_IVDD	0xd0c	/* Initial Value/Digest D */
+#define MVCESA_SHA1MD5I_IVDE	0xd10	/* Initial Value/Digest E */
+#define MVCESA_SHA1MD5I_AC	0xd18	/* Authentication Command */
 #define MVCESA_SHA1MD5I_AC_ALGORITHM_MD5	(0 << 0)
 #define MVCESA_SHA1MD5I_AC_ALGORITHM_SHA1	(1 << 0)
 #define MVCESA_SHA1MD5I_AC_MODE_USEIV		(0 << 1)
@@ -81,8 +81,8 @@
 #define MVCESA_SHA1MD5I_AC_TERMINATION		(1 << 31)
 
 /* AES Encryption/Decription Interface Registers */
-#define MVCESA_AES_ENCRYPTION	0xdd80
-#define MVCESA_AES_DECRYPTION	0xddc0
+#define MVCESA_AES_ENCRYPTION	0xd80
+#define MVCESA_AES_DECRYPTION	0xdc0
 #define MVCESA_AES_DIOC_OFF	  0x20	/* Data In/Out Column */
 #define MVCESA_AES_DIOC_MAX	3
 #define MVCESA_AES_KC_OFF	  0x00	/* Key Column */
@@ -103,15 +103,15 @@
 
 
 /* Security Accelerator Registers */
-#define MVCESA_SA_C		0xde00	/* Command */
-#define MVCESA_SA_DPS0		0xde04	/* Descriptor Pointer Session 0 */
-#define MVCESA_SA_DPS1		0xde14	/* Descriptor Pointer Session 1 */
-#define MVCESA_SA_CFG		0xde08	/* Configuration */
-#define MVCESA_SA_S		0xde0c	/* Status */
+#define MVCESA_SA_C		0xe00	/* Command */
+#define MVCESA_SA_DPS0		0xe04	/* Descriptor Pointer Session 0 */
+#define MVCESA_SA_DPS1		0xe14	/* Descriptor Pointer Session 1 */
+#define MVCESA_SA_CFG		0xe08	/* Configuration */
+#define MVCESA_SA_S		0xe0c	/* Status */
 
 /* Interrupt Cause Registers */
-#define MVCESA_IC		0xde20	/* Interrupt Cause */
-#define MVCESA_IM		0xde24	/* Interrupt Mask */
+#define MVCESA_IC		0xe20	/* Interrupt Cause */
+#define MVCESA_IM		0xe24	/* Interrupt Mask */
 #define MVCESA_I_ZINT0			(1 << 0) /* auth termination */
 #define MVCESA_I_ZINT1			(1 << 1) /* DES */
 #define MVCESA_I_ZINT2			(1 << 2) /* AES encryption */

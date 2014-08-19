@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 1998, 1999, 2001, 2003, 2004, Free Software Foundation, Inc.
+   Copyright 1998-2014 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -13,8 +13,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-   */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* Test GDB's ability to restore saved registers from stack frames
    when using the `return' command.
@@ -269,10 +268,6 @@ driver (void)
 int main ()
 {
   register int local;
-#ifdef usestubs
-  set_debug_traps();
-  breakpoint();
-#endif
   driver ();
   printf("exiting\n");
   return 0;

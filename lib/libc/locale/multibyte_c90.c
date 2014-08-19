@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte_c90.c,v 1.8.12.1 2013/06/23 06:21:05 tls Exp $	*/
+/*	$NetBSD: multibyte_c90.c,v 1.8.12.2 2014/08/20 00:02:15 tls Exp $	*/
 
 /*-
  * Copyright (c)2002, 2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: multibyte_c90.c,v 1.8.12.1 2013/06/23 06:21:05 tls Exp $");
+__RCSID("$NetBSD: multibyte_c90.c,v 1.8.12.2 2014/08/20 00:02:15 tls Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -46,12 +46,6 @@ __RCSID("$NetBSD: multibyte_c90.c,v 1.8.12.1 2013/06/23 06:21:05 tls Exp $");
 #include "citrus_ctype.h"
 #include "runetype_local.h"
 #include "multibyte.h"
-
-#define _RUNE_LOCALE(loc) \
-    ((_RuneLocale *)((loc)->part_impl[(size_t)LC_CTYPE]))
-
-#define _CITRUS_CTYPE(loc) \
-    (((_RuneLocale *)((loc)->part_impl[(size_t)LC_CTYPE]))->rl_citrus_ctype)
 
 int
 mblen_l(const char *s, size_t n, locale_t loc)
@@ -139,7 +133,7 @@ wcsnrtombs_l(char *s, const wchar_t **ppwcs, size_t in, size_t n, mbstate_t *ps,
 
 	_fixup_ps(_RUNE_LOCALE(loc), ps, s == NULL);
 
-	err0 = _citrus_ctype_wcsnrtombs(_ps_to_ctype(ps), s, ppwcs, in, n,
+	err0 = _citrus_ctype_wcsnrtombs(_ps_to_ctype(ps, loc), s, ppwcs, in, n,
 					_ps_to_private(ps), &ret);
 	if (err0)
 		errno = err0;

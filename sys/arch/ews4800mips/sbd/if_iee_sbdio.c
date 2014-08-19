@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iee_sbdio.c,v 1.10 2009/12/01 23:16:00 skrll Exp $	*/
+/*	$NetBSD: if_iee_sbdio.c,v 1.10.22.1 2014/08/20 00:03:00 tls Exp $	*/
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iee_sbdio.c,v 1.10 2009/12/01 23:16:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iee_sbdio.c,v 1.10.22.1 2014/08/20 00:03:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,6 +197,7 @@ iee_sbdio_channel_attention(void *cookie)
 	/* Issue a Channel Attention */
 	dummy = *sc->sc_port;
 	dummy = *sc->sc_port;
+	__USE(dummy);
 }
 
 static void

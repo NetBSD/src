@@ -1,0 +1,26 @@
+#	$NetBSD: CUBIETRUCK,v 1.2.6.2 2014/08/20 00:02:53 tls Exp $
+#
+#	CUBIETRUCK - Cubieboard3 (mostly cubieboard2 with 2GB)
+#
+
+include "arch/evbarm/conf/CUBIEBOARD"
+
+#
+# Relocate loaded kernel to second GB of memory.
+#
+no makeoptions	KERNEL_BASE_PHYS
+no makeoptions	KERNEL_BASE_VIRT
+makeoptions	KERNEL_BASE_PHYS="0x80000000"
+makeoptions	KERNEL_BASE_VIRT="0x80000000"
+
+#
+# We need this too.
+#
+options 	PMAP_NEED_ALLOC_POOLPAGE
+
+#
+# not fully working yet
+#
+# options	MULTIPROCESSOR
+# cpu* at mainbus?
+# options 	VERBOSE_INIT_ARM # verbose bootstraping messages

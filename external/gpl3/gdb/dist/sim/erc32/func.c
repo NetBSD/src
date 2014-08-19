@@ -6,7 +6,7 @@
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free
- * Software Foundation; either version 2 of the License, or (at your option)
+ * Software Foundation; either version 3 of the License, or (at your option)
  * any later version.
  * 
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -15,11 +15,11 @@
  * more details.
  * 
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 675
- * Mass Ave, Cambridge, MA 02139, USA.
+ * this program; if not, see <http://www.gnu.org/licenses/>.
  * 
  */
 
+#include "config.h"
 #include <signal.h>
 #include <string.h>
 #include <stdio.h>
@@ -63,16 +63,16 @@ uint32		errmec = 0;
 
 /* Forward declarations */
 
-static int	batch PARAMS ((struct pstate *sregs, char *fname));
-static void	set_rega PARAMS ((struct pstate *sregs, char *reg, uint32 rval));
-static void	disp_reg PARAMS ((struct pstate *sregs, char *reg));
-static uint32	limcalc PARAMS ((float32 freq));
-static void	int_handler PARAMS ((int32 sig));
-static void	init_event PARAMS ((void));
-static int	disp_fpu PARAMS ((struct pstate  *sregs));
-static void	disp_regs PARAMS ((struct pstate  *sregs, int cwp));
-static void	disp_ctrl PARAMS ((struct pstate *sregs));
-static void	disp_mem PARAMS ((uint32 addr, uint32 len));
+static int	batch (struct pstate *sregs, char *fname);
+static void	set_rega (struct pstate *sregs, char *reg, uint32 rval);
+static void	disp_reg (struct pstate *sregs, char *reg);
+static uint32	limcalc (float32 freq);
+static void	int_handler (int32 sig);
+static void	init_event (void);
+static int	disp_fpu (struct pstate  *sregs);
+static void	disp_regs (struct pstate  *sregs, int cwp);
+static void	disp_ctrl (struct pstate *sregs);
+static void	disp_mem (uint32 addr, uint32 len);
 
 static int 
 batch(sregs, fname)

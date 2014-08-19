@@ -1,4 +1,4 @@
-#	$NetBSD: files.discovery,v 1.19 2012/07/27 03:00:01 kiyohara Exp $
+#	$NetBSD: files.discovery,v 1.19.2.1 2014/08/20 00:03:39 tls Exp $
 #
 # Config file and device description for machine-independent support for
 # the Marvell (formerly Galileo Technology) Discovery system controllers.
@@ -77,7 +77,7 @@ file	dev/marvell/mvcesa.c		mvcesa
 attach	mvcesa at gt with mvcesa_gt
 
 # Two-Wire Serial Interface
-device	gttwsi: i2cbus
+device	gttwsi: i2cbus, mvi2c
 file	dev/marvell/gttwsi.c		gttwsi
 attach	gttwsi at gt with gttwsi_gt
 
@@ -95,3 +95,7 @@ device	mvsdio: sdmmcbus
 file	dev/marvell/mvsdio.c		mvsdio
 defparam	opt_mvsdio.h		MVSDIO_CARD_DETECT
 					MVSDIO_WRITE_PROTECT
+
+# SPI Serial Peripheral Interface
+device 	mvspi: spibus
+file	dev/marvell/mvspi.c		mvspi

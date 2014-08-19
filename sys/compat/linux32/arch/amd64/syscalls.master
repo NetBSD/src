@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.62 2012/07/13 18:21:33 christos Exp $
+	$NetBSD: syscalls.master,v 1.62.2.1 2014/08/20 00:03:33 tls Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -43,12 +43,13 @@
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
+#include <compat/linux/common/linux_types.h>
+
 #include <compat/linux32/common/linux32_types.h>
 #include <compat/linux32/common/linux32_signal.h>
 #include <compat/linux32/arch/amd64/linux32_missing.h>
 #include <compat/linux32/linux32_syscallargs.h>
 
-#include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_siginfo.h>
@@ -67,11 +68,11 @@
 4	NOARGS	{ netbsd32_ssize_t|netbsd32||write(int fd, \
 		    netbsd32_voidp buf, netbsd32_size_t nbyte); }
 5	STD	{ int|linux32_sys||open(netbsd32_charp path, int flags, \
-		    int mode); }
+		    linux_umode_t mode); }
 6	NOARGS	{ int|netbsd32||close(int fd); }
 7	STD	{ int|linux32_sys||waitpid(int pid, netbsd32_intp status, \
 		    int options);}
-8	STD	{ int|linux32_sys||creat(netbsd32_charp path, int mode); }
+8	STD	{ int|linux32_sys||creat(netbsd32_charp path, linux_umode_t mode); }
 9	NOARGS	{ int|netbsd32||link(netbsd32_charp path, \
 		    netbsd32_charp link); }
 10	STD	{ int|linux32_sys||unlink(netbsd32_charp path); }
@@ -80,8 +81,8 @@
 12	NOARGS	{ int|netbsd32||chdir(netbsd32_charp path); }
 13	STD	{ int|linux32_sys||time(linux32_timep_t t); }
 14	STD	{ int|linux32_sys||mknod(netbsd32_charp path, \
-		    int mode, int dev); }
-15	NOARGS	{ int|netbsd32||chmod(netbsd32_charp path, int mode); }
+		    linux_umode_t mode, unsigned dev); }
+15	NOARGS	{ int|netbsd32||chmod(netbsd32_charp path, linux_umode_t mode); }
 16	STD	{ int|linux32_sys||lchown16(netbsd32_charp path, \
 		    linux32_uid16_t uid, linux32_gid16_t gid); }
 17	STD	{ int|linux32_sys||break(netbsd32_charp nsize); }
@@ -111,9 +112,9 @@
 37	STD	{ int|linux32_sys||kill(int pid, int signum); }
 38	NOARGS	{ int|netbsd32||__posix_rename(netbsd32_charp from, \
 		    netbsd32_charp to); }
-39	NOARGS	{ int|netbsd32||mkdir(netbsd32_charp path, int mode); }
+39	NOARGS	{ int|netbsd32||mkdir(netbsd32_charp path, linux_umode_t mode); }
 40	NOARGS	{ int|netbsd32||rmdir(netbsd32_charp path); }
-41	NOARGS	{ int|netbsd32||dup(u_int fd); }
+41	NOARGS	{ int|netbsd32||dup(int fd); }
 42	STD	{ int|linux32_sys||pipe(netbsd32_intp fd); }
 43	STD	{ int|linux32_sys||times(linux32_tmsp_t tms); }
 44	OBSOL	prof
@@ -188,7 +189,7 @@
 		    netbsd32_long length); }
 93	NOARGS	{ int|compat_43_netbsd32||oftruncate(int fd, \
 		    netbsd32_long length); }
-94	NOARGS	{ int|netbsd32||fchmod(int fd, int mode); }
+94	NOARGS	{ int|netbsd32||fchmod(int fd, linux_umode_t mode); }
 95	STD	{ int|linux32_sys||fchown16(int fd, linux32_uid16_t uid, \
 		    linux32_gid16_t gid); }
 96	STD	{ int|linux32_sys||getpriority(int which, int who); }
@@ -327,10 +328,10 @@
 		    netbsd32_size_t sigsetsize); }
 180	STD	{ netbsd32_ssize_t|linux32_sys||pread(int fd, \
 		    netbsd32_voidp buf, netbsd32_size_t nbyte, \
-		    linux32_off_t offset); }
+		    netbsd32_off_t offset); }
 181	STD	{ netbsd32_ssize_t|linux32_sys||pwrite(int fd, \
 		    netbsd32_voidp buf, netbsd32_size_t nbyte, \
-		    linux32_off_t offset); }
+		    netbsd32_off_t offset); }
 182	STD	{ int|linux32_sys||chown16(netbsd32_charp path, \
 		    linux32_uid16_t uid, linux32_gid16_t gid); }
 183	NOARGS	{ int|netbsd32||__getcwd(netbsd32_charp bufp, \
@@ -400,27 +401,33 @@
 223	UNIMPL	/*	unused	*/
 224	NOARGS	{ pid_t|linux_sys||gettid(void); }
 225	UNIMPL	readahead
-226	NOARGS	{ int|linux_sys||setxattr(char *path, char *name, \
-		    void *value, size_t size, int flags); }
-227	NOARGS	{ int|linux_sys||lsetxattr(char *path, char *name, \
-		    void *value, size_t size, int flags); }
-228	NOARGS	{ int|linux_sys||fsetxattr(int fd, char *name, \
-		    void *value, size_t size, int flags); }
-229	NOARGS	{ ssize_t|linux_sys||getxattr(char *path, char *name, \
-		    void *value, size_t size); }
-230	NOARGS	{ ssize_t|linux_sys||lgetxattr(char *path, char *name, \
-		    void *value, size_t size); }
-231	NOARGS	{ ssize_t|linux_sys||fgetxattr(int fd, char *name, \
-		    void *value, size_t size); }
-232	NOARGS	{ ssize_t|linux_sys||listxattr(char *path, char *list, \
-		    size_t size); }
-233	NOARGS	{ ssize_t|linux_sys||llistxattr(char *path, char *list, \
-		    size_t size); }
-234	NOARGS	{ ssize_t|linux_sys||flistxattr(int fd, char *list, \
-		    size_t size); }
-235	NOARGS	{ int|linux_sys||removexattr(char *path, char *name); }
-236	NOARGS	{ int|linux_sys||lremovexattr(char *path, char *name); }
-237	NOARGS	{ int|linux_sys||fremovexattr(int fd, char *name); }
+226	NOARGS	{ int|netbsd32||setxattr(netbsd32_charp path, \
+		    netbsd32_charp name, netbsd32_voidp value, \
+		    netbsd32_size_t size, int flags); }
+227	NOARGS	{ int|netbsd32||lsetxattr(netbsd32_charp path, \
+		    netbsd32_charp name,  netbsd32_voidp value, \
+		    netbsd32_size_t size, int flags); }
+228	NOARGS	{ int|netbsd32||fsetxattr(int fd, netbsd32_charp name, \
+		    netbsd32_voidp value, netbsd32_size_t size, int flags); }
+229	NOARGS	{ ssize_t|netbsd32||getxattr(netbsd32_charp path, \
+		    netbsd32_charp name, netbsd32_voidp value, \
+		    netbsd32_size_t size); }
+230	NOARGS	{ ssize_t|netbsd32||lgetxattr(netbsd32_charp path, \
+		    netbsd32_charp name, netbsd32_voidp value, \
+		    netbsd32_size_t size); }
+231	NOARGS	{ ssize_t|netbsd32||fgetxattr(int fd, netbsd32_charp name, \
+		    netbsd32_voidp value, netbsd32_size_t size); }
+232	NOARGS	{ ssize_t|netbsd32||listxattr(netbsd32_charp path, \
+		    netbsd32_charp list, netbsd32_size_t size); }
+233	NOARGS	{ ssize_t|netbsd32||llistxattr(netbsd32_charp path, \
+		    netbsd32_charp list, netbsd32_size_t size); }
+234	NOARGS	{ ssize_t|netbsd32||flistxattr(int fd, netbsd32_charp list, \
+		    netbsd32_size_t size); }
+235	NOARGS	{ int|netbsd32||removexattr(netbsd32_charp path, \
+		    netbsd32_charp name); }
+236	NOARGS	{ int|netbsd32||lremovexattr(netbsd32_charp path, \
+		    netbsd32_charp name); }
+237	NOARGS	{ int|netbsd32||fremovexattr(int fd, netbsd32_charp name); }
 238	STD	{ int|linux32_sys||tkill(int tid, int sig); }
 239	UNIMPL	sendfile64
 240	STD	{ int|linux32_sys||futex(linux32_intp_t uaddr, int op, int val, \
@@ -465,7 +472,8 @@
 269	STD	{ int|linux32_sys||fstatfs64(int fd, \
 		    netbsd32_size_t sz, linux32_statfs64p sp); }
 270	STD	{ int|linux32_sys||tgkill(int tgid, int tid, int sig); }
-271	UNIMPL	utimes
+271	NOARGS	{ int|compat_50_netbsd32||utimes(netbsd32_charp path, \
+		    netbsd32_timeval50p_t tptr); }
 272	STD	{ int|linux32_sys||fadvise64_64(int fd, uint32_t offlo, \
 		    uint32_t offhi, uint32_t lenlo, uint32_t lenhi, int advice); }
 273	UNIMPL	vserver
@@ -490,19 +498,31 @@
 292	UNIMPL	inotify_add_watch
 293	UNIMPL	inotify_rm_watch
 294	UNIMPL	migrate_pages
-295	UNIMPL	openat
-296	UNIMPL	mkdirat
-297	UNIMPL	mknodat
-298	UNIMPL	fchownat
+295	STD	{ int|linux32_sys||openat(int fd, netbsd32_charp path, \
+		    int flags, ... linux_umode_t mode); }
+296	NOARGS	{ int|netbsd32||mkdirat(int fd, netbsd32_charp path, \
+		    linux_umode_t mode); }
+297	STD	{ int|linux32_sys||mknodat(int fd, netbsd32_charp path, \
+		    linux_umode_t mode, unsigned dev); }
+298	STD	{ int|linux32_sys||fchownat(int fd, netbsd32_charp path, \
+		    uid_t owner, gid_t group, int flag); }
 299	UNIMPL	futimesat
-300	UNIMPL	fstatat64
-301	UNIMPL	unlinkat
-302	UNIMPL	renameat
-303	UNIMPL	linkat
-304	UNIMPL	symlinkat
-305	UNIMPL	readlinkat
-306	UNIMPL	fchmodat
-307	UNIMPL	faccessat
+300	STD	{ int|linux32_sys||fstatat64(int fd, netbsd32_charp path, \
+		    linux32_stat64p sp, int flag); }
+301	STD	{ int|linux32_sys||unlinkat(int fd, netbsd32_charp path, \
+		    int flag); }
+302	NOARGS	{ int|netbsd32||renameat(int fromfd, netbsd32_charp from, \
+		    int tofd, netbsd32_charp to); }
+303	STD	{ int|linux32_sys||linkat(int fd1, netbsd32_charp name1, \
+		    int fd2, netbsd32_charp name2, int flags); }
+304	NOARGS	{ int|netbsd32||symlinkat(netbsd32_charp path1, int fd, \
+		    netbsd32_charp path2); }
+305	NOARGS	{ int|netbsd32||readlinkat(int fd, netbsd32_charp path, \
+		    netbsd32_charp buf, linux32_size_t bufsize); }
+306	STD	{ int|linux32_sys||fchmodat(int fd, netbsd32_charp path, \
+		    linux_umode_t mode); }
+307	STD	{ int|linux32_sys||faccessat(int fd, netbsd32_charp path, \
+		    int amode); }
 308	UNIMPL	pselect6
 309	UNIMPL	ppoll
 310	UNIMPL	unshare
@@ -517,7 +537,8 @@
 317	UNIMPL	move_pages
 318	UNIMPL	getcpu
 319	UNIMPL	epoll_wait
-320	UNIMPL	utimensat
+320	STD	{ int|linux32_sys||utimensat(int fd, netbsd32_charp path, \
+			    linux32_timespecp_t times, int flag); }
 321	UNIMPL	signalfd
 322	UNIMPL	timerfd_create
 323	UNIMPL	eventfd
@@ -535,3 +556,16 @@
 335	UNIMPL	rt_tgsigqueueinfo
 336	UNIMPL	perf_counter_open
 337	UNIMPL	recvmmsg
+338	UNIMPL	fanotify_init
+339	UNIMPL	fanotify_mark
+340	UNIMPL	prlimit64
+341	UNIMPL	name_to_handle_at
+342	UNIMPL	open_by_handle_at
+343	UNIMPL	clock_adjtime
+344	UNIMPL	syncfs
+345	UNIMPL	sendmmsg
+346	UNIMPL	setns
+347	UNIMPL	process_vm_readv
+348	UNIMPL	process_vm_writev
+349	UNIMPL	kcmp
+350	UNIMPL	finit_module

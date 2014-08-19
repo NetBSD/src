@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.72.6.1 2013/06/23 06:20:24 tls Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.72.6.2 2014/08/20 00:04:30 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.72.6.1 2013/06/23 06:20:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.72.6.2 2014/08/20 00:04:30 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ struct fifoinfo {
 static int
 fifo_lookup(void *v)
 {
-	struct vop_lookup_args /* {
+	struct vop_lookup_v2_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		**a_vpp;
 		struct componentname	*a_cnp;
@@ -116,7 +116,6 @@ fifo_lookup(void *v)
  * Open called to set up a new instance of a fifo or
  * to find an active instance of a fifo.
  */
-/* ARGSUSED */
 static int
 fifo_open(void *v)
 {
@@ -132,14 +131,13 @@ fifo_open(void *v)
 	int		error;
 
 	vp = ap->a_vp;
+	KASSERT(VOP_ISLOCKED(vp));
 
 	if ((fip = vp->v_fifoinfo) == NULL) {
 		fip = kmem_alloc(sizeof(*fip), KM_SLEEP);
-		vp->v_fifoinfo = fip;
 		error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0, l, NULL);
 		if (error != 0) {
 			kmem_free(fip, sizeof(*fip));
-			vp->v_fifoinfo = NULL;
 			return (error);
 		}
 		fip->fi_readsock = rso;
@@ -147,17 +145,15 @@ fifo_open(void *v)
 		if (error != 0) {
 			(void)soclose(rso);
 			kmem_free(fip, sizeof(*fip));
-			vp->v_fifoinfo = NULL;
 			return (error);
 		}
 		fip->fi_writesock = wso;
 		solock(wso);
-		if ((error = unp_connect2(wso, rso, PRU_CONNECT2)) != 0) {
+		if ((error = unp_connect2(wso, rso)) != 0) {
 			sounlock(wso);
 			(void)soclose(wso);
 			(void)soclose(rso);
 			kmem_free(fip, sizeof(*fip));
-			vp->v_fifoinfo = NULL;
 			return (error);
 		}
 		fip->fi_readers = 0;
@@ -166,6 +162,7 @@ fifo_open(void *v)
 		rso->so_state |= SS_CANTSENDMORE;
 		cv_init(&fip->fi_rcv, "fiford");
 		cv_init(&fip->fi_wcv, "fifowr");
+		vp->v_fifoinfo = fip;
 	} else {
 		wso = fip->fi_writesock;
 		rso = fip->fi_readsock;
@@ -636,6 +633,8 @@ const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_setattr_desc, genfs_ebadf },		/* setattr */
 	{ &vop_read_desc, fifo_read },			/* read */
 	{ &vop_write_desc, fifo_write },		/* write */
+	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
+	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
 	{ &vop_poll_desc, fifo_poll },			/* poll */
 	{ &vop_kqfilter_desc, fifo_kqfilter },		/* kqfilter */

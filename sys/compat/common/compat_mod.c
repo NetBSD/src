@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.14.12.2 2013/06/23 06:20:15 tls Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.14.12.3 2014/08/20 00:03:31 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.14.12.2 2013/06/23 06:20:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.14.12.3 2014/08/20 00:03:31 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.14.12.2 2013/06/23 06:20:15 tls Exp
 static struct sysctllog *compat_clog = NULL;
 #endif
  
-MODULE(MODULE_CLASS_MISC, compat, NULL);
+MODULE(MODULE_CLASS_EXEC, compat, NULL);
 
 int	ttcompat(struct tty *, u_long, void *, int, struct lwp *);
 

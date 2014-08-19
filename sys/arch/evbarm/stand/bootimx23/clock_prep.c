@@ -1,4 +1,4 @@
-/* $Id: clock_prep.c,v 1.2.6.2 2013/02/25 00:28:38 tls Exp $ */
+/* $Id: clock_prep.c,v 1.2.6.3 2014/08/20 00:02:56 tls Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/cdefs.h>
+#include <sys/param.h>
 #include <sys/types.h>
 
 #include <arm/imx/imx23_clkctrlreg.h>
@@ -39,217 +39,188 @@
 
 #include "common.h"
 
-static void enable_pll(void);
-static void enable_ref_cpu(int);
-static void enable_ref_emi(int);
-static void enable_ref_io(int);
-static void use_ref_cpu(void);
-static void use_ref_emi(void);
-static void use_ref_io(void);
-static void set_hbus_div(int);
-static void set_emi_div(int);
-static void set_ssp_div(int);
+#define CLKCTRL_HBUS	(HW_CLKCTRL_BASE + HW_CLKCTRL_HBUS)
+#define CLKCTRL_PLL0	(HW_CLKCTRL_BASE + HW_CLKCTRL_PLLCTRL0)
+#define CLKCTRL_PLL0_S	(HW_CLKCTRL_BASE + HW_CLKCTRL_PLLCTRL0_SET)
+#define CLKCTRL_PLL0_C	(HW_CLKCTRL_BASE + HW_CLKCTRL_PLLCTRL0_CLR)
+#define CLKCTRL_PLL1	(HW_CLKCTRL_BASE + HW_CLKCTRL_PLLCTRL1)
+#define CLKCTRL_FRAC	(HW_CLKCTRL_BASE + HW_CLKCTRL_FRAC)
+#define CLKCTRL_FRAC_S	(HW_CLKCTRL_BASE + HW_CLKCTRL_FRAC_SET)
+#define CLKCTRL_FRAC_C	(HW_CLKCTRL_BASE + HW_CLKCTRL_FRAC_CLR)
+#define CLKCTRL_SEQ	(HW_CLKCTRL_BASE + HW_CLKCTRL_CLKSEQ)
+#define CLKCTRL_SEQ_S	(HW_CLKCTRL_BASE + HW_CLKCTRL_CLKSEQ_SET)
+#define CLKCTRL_SEQ_C	(HW_CLKCTRL_BASE + HW_CLKCTRL_CLKSEQ_CLR)
+#define CLKCTRL_EMI	(HW_CLKCTRL_BASE + HW_CLKCTRL_EMI)
+#define CLKCTRL_SSP	(HW_CLKCTRL_BASE + HW_CLKCTRL_SSP)
+
+void en_pll(void);
+void set_hbus_div(unsigned int);
+void set_cpu_frac(unsigned int);
+void bypass_cpu(void);
+void set_emi_div(unsigned int);
+void set_emi_frac(unsigned int);
+void bypass_emi(void);
 
 /*
- * Clock frequences set by clock_prep()
+ * Power on 480 MHz PLL.
  */
-#define CPU_FRAC	0x13		/* CPUCLK @ 454.74 MHz */
-#define HBUS_DIV	0x3		/* AHBCLK @ 151.58 MHz */
-#define EMI_FRAC	0x21		/* EMICLK @ 130.91 MHz */
-#define EMI_DIV		0x2
-#define IO_FRAC		0x12		/* IOCLK  @ 480.00 MHz */
-#define SSP_DIV		0x5		/* SSPCLK @  96.00 MHz */
-
-/* Offset to frac register for CLKCTRL_WR_BYTE macro. */
-#define HW_CLKCTRL_FRAC_CPU (HW_CLKCTRL_FRAC+0)
-#define HW_CLKCTRL_FRAC_EMI (HW_CLKCTRL_FRAC+1)
-#define HW_CLKCTRL_FRAC_IO (HW_CLKCTRL_FRAC+3)
-
-#define CLKCTRL_RD(reg) *(volatile uint32_t *)((HW_CLKCTRL_BASE) + (reg))
-#define CLKCTRL_WR(reg, val)						\
-do {									\
-	*(volatile uint32_t *)((HW_CLKCTRL_BASE) + (reg)) = val;	\
-} while (0)
-#define CLKCTRL_WR_BYTE(reg, val)					\
-do {									\
-	*(volatile uint8_t *)((HW_CLKCTRL_BASE) + (reg)) = val;	\
-} while (0)
-
-/*
- * Initializes fast PLL based clocks for CPU, HBUS and DRAM.
- */
-int
-clock_prep(void)
+void
+en_pll(void)
 {
 
-	enable_pll();
-	enable_ref_cpu(CPU_FRAC);
-	enable_ref_emi(EMI_FRAC);
-	enable_ref_io(IO_FRAC);
-	set_emi_div(EMI_DIV);
-	set_hbus_div(HBUS_DIV);
-	use_ref_cpu();
-	use_ref_emi();
-	use_ref_io();
-	set_ssp_div(SSP_DIV);
-
-	return 0;
-}
-
-/*
- * Turn PLL on and wait until it's locked to 480 MHz.
- */
-static void
-enable_pll(void)
-{
-
-	CLKCTRL_WR(HW_CLKCTRL_PLLCTRL0_SET, HW_CLKCTRL_PLLCTRL0_POWER);
-	while (!(CLKCTRL_RD(HW_CLKCTRL_PLLCTRL1) & HW_CLKCTRL_PLLCTRL1_LOCK));
+	REG_WR(CLKCTRL_PLL0_S, HW_CLKCTRL_PLLCTRL0_POWER);
+	while(!(REG_RD(CLKCTRL_PLL1) & HW_CLKCTRL_PLLCTRL1))
+		;
 
 	return;
 }
-
-/*
- * Enable fractional divider clock ref_cpu with divide value "frac".
- */
-static void
-enable_ref_cpu(int frac)
+void
+bypass_cpu(void)
 {
-	uint32_t reg;
 
-	reg = CLKCTRL_RD(HW_CLKCTRL_FRAC);
-	reg &= ~(HW_CLKCTRL_FRAC_CLKGATECPU | HW_CLKCTRL_FRAC_CPUFRAC);
-	reg |= __SHIFTIN(frac, HW_CLKCTRL_FRAC_CPUFRAC);
-	CLKCTRL_WR_BYTE(HW_CLKCTRL_FRAC_CPU, reg);
+	REG_WR(CLKCTRL_SEQ_C, HW_CLKCTRL_CLKSEQ_BYPASS_CPU);
 
 	return;
 }
-
-/*
- * Enable fractional divider clock ref_emi with divide value "frac".
- */
-static void
-enable_ref_emi(int frac)
+void
+bypass_emi(void)
 {
-	uint32_t reg;
-
-	reg = CLKCTRL_RD(HW_CLKCTRL_FRAC);
-	reg &= ~(HW_CLKCTRL_FRAC_CLKGATEEMI | HW_CLKCTRL_FRAC_EMIFRAC);
-	reg |= __SHIFTIN(frac, HW_CLKCTRL_FRAC_EMIFRAC);
-	CLKCTRL_WR_BYTE(HW_CLKCTRL_FRAC_EMI, (reg >> 8));
+	REG_WR(CLKCTRL_SEQ_C, HW_CLKCTRL_CLKSEQ_BYPASS_EMI);
 
 	return;
 }
-
-/*
- * Enable fractional divider clock ref_io with divide value "frac".
- */
-static void
-enable_ref_io(int frac)
+void
+bypass_ssp(void)
 {
-	uint32_t reg;
-
-	reg = CLKCTRL_RD(HW_CLKCTRL_FRAC);
-	reg &= ~(HW_CLKCTRL_FRAC_CLKGATEIO | HW_CLKCTRL_FRAC_IOFRAC);
-	reg |= __SHIFTIN(frac, HW_CLKCTRL_FRAC_IOFRAC);
-	CLKCTRL_WR_BYTE(HW_CLKCTRL_FRAC_IO, (reg >> 24));
+	REG_WR(CLKCTRL_SEQ_C, HW_CLKCTRL_CLKSEQ_BYPASS_SSP);
 
 	return;
 }
-
-/*
- * Divide CLK_P by "div" to get CLK_H frequency.
- */
-static void
-set_hbus_div(int div)
+void
+bypass_saif(void)
 {
-	uint32_t reg;
+	REG_WR(CLKCTRL_SEQ_C, HW_CLKCTRL_CLKSEQ_BYPASS_SAIF);
+	
+	return;
+}
+/*
+ * Set HBUS divider value.
+ */
+void
+set_hbus_div(unsigned int div)
+{
+	uint32_t tmp_r;
 
-	reg = CLKCTRL_RD(HW_CLKCTRL_HBUS);
-	reg &= ~(HW_CLKCTRL_HBUS_DIV);
-	reg |= __SHIFTIN(div, HW_CLKCTRL_HBUS_DIV);
-	while (CLKCTRL_RD(HW_CLKCTRL_HBUS) & HW_CLKCTRL_HBUS_BUSY);
-	CLKCTRL_WR(HW_CLKCTRL_HBUS, reg);
+	while (REG_RD(CLKCTRL_HBUS) & HW_CLKCTRL_HBUS_BUSY)
+		;
+
+	tmp_r = REG_RD(CLKCTRL_HBUS);
+	tmp_r &= ~HW_CLKCTRL_HBUS_DIV;
+	tmp_r |= __SHIFTIN(div, HW_CLKCTRL_HBUS_DIV);
+	REG_WR(CLKCTRL_HBUS, tmp_r);
+
+	while (REG_RD(CLKCTRL_HBUS) & HW_CLKCTRL_HBUS_BUSY)
+		;
 
 	return;
 }
-
 /*
- * ref_emi is divied "div" to get CLK_EMI.
+ * Set CPU frac.
  */
-static void
-set_emi_div(int div)
+void
+set_cpu_frac(unsigned int frac)
 {
-	uint32_t reg;
+	uint8_t tmp_r;
 
-	reg = CLKCTRL_RD(HW_CLKCTRL_EMI);
-	reg &= ~(HW_CLKCTRL_EMI_DIV_EMI);
-	reg |= __SHIFTIN(div, HW_CLKCTRL_EMI_DIV_EMI);
-	CLKCTRL_WR(HW_CLKCTRL_EMI, reg);
+	tmp_r = REG_RD_BYTE(CLKCTRL_FRAC);
+	tmp_r &= ~(HW_CLKCTRL_FRAC_CLKGATECPU | HW_CLKCTRL_FRAC_CPUFRAC);
+	tmp_r |= __SHIFTIN(frac, HW_CLKCTRL_FRAC_CPUFRAC);
+	REG_WR_BYTE(CLKCTRL_FRAC, tmp_r);
 
 	return;
 }
-
 /*
- * ref_io is divied "div" to get CLK_SSP.
+ * Set EMI frac.
  */
-static void
-set_ssp_div(int div)
+void
+set_emi_frac(unsigned int frac)
 {
-	uint32_t reg;
+	uint8_t *emi_frac;
+	uint16_t tmp_r;
 
-	reg = CLKCTRL_RD(HW_CLKCTRL_SSP);
-	reg &= ~(HW_CLKCTRL_SSP_DIV);
-	reg |= __SHIFTIN(div, HW_CLKCTRL_SSP_DIV);
-	CLKCTRL_WR(HW_CLKCTRL_SSP, reg);
+	emi_frac = (uint8_t *)(CLKCTRL_FRAC);
+	emi_frac++;
+	
+	tmp_r = *emi_frac<<8;
+	tmp_r &= ~(HW_CLKCTRL_FRAC_CLKGATEEMI | HW_CLKCTRL_FRAC_EMIFRAC);
+	tmp_r |= __SHIFTIN(frac, HW_CLKCTRL_FRAC_EMIFRAC);
+
+	*emi_frac = tmp_r>>8;
 
 	return;
 }
-
 /*
- * Transition from ref_xtal to use ref_cpu.
+ * Set EMU divider value.
  */
-static void
-use_ref_cpu(void)
+void
+set_emi_div(unsigned int div)
 {
-	CLKCTRL_WR(HW_CLKCTRL_CLKSEQ_CLR, HW_CLKCTRL_CLKSEQ_BYPASS_CPU);
+	uint32_t tmp_r;
+
+	while (REG_RD(CLKCTRL_EMI) &
+		(HW_CLKCTRL_EMI_BUSY_REF_XTAL | HW_CLKCTRL_EMI_BUSY_REF_EMI))
+		;
+
+	tmp_r = REG_RD(CLKCTRL_EMI);
+	tmp_r &= ~(HW_CLKCTRL_EMI_CLKGATE | HW_CLKCTRL_EMI_DIV_EMI);
+	tmp_r |= __SHIFTIN(div, HW_CLKCTRL_EMI_DIV_EMI);
+	REG_WR(CLKCTRL_EMI, tmp_r);
+	
 	return;
 }
-
 /*
- * Transition from ref_xtal to use ref_emi and source CLK_EMI from ref_emi.
+ * Set SSP divider value.
  */
-static void
-use_ref_emi(void)
+void
+set_ssp_div(unsigned int div)
 {
-	uint32_t reg;
+	uint32_t tmp_r;
 
-	/* Enable ref_emi. */
-	CLKCTRL_WR(HW_CLKCTRL_CLKSEQ_CLR, HW_CLKCTRL_CLKSEQ_BYPASS_EMI);
+	tmp_r = REG_RD(CLKCTRL_SSP);
+	tmp_r &= ~HW_CLKCTRL_SSP_CLKGATE;
+	REG_WR(CLKCTRL_SSP, tmp_r);
 
-	/* CLK_EMI sourced by the ref_emi. */
-	reg = CLKCTRL_RD(HW_CLKCTRL_EMI);
-	reg &= ~(HW_CLKCTRL_EMI_CLKGATE);
-	CLKCTRL_WR(HW_CLKCTRL_EMI, reg);
+	while (REG_RD(CLKCTRL_SSP) & HW_CLKCTRL_SSP_BUSY)
+		;
+
+	tmp_r = REG_RD(CLKCTRL_SSP);
+	tmp_r &= ~HW_CLKCTRL_SSP_DIV;
+	tmp_r |= __SHIFTIN(div, HW_CLKCTRL_SSP_DIV);
+	REG_WR(CLKCTRL_SSP, tmp_r);
+
+	while (REG_RD(CLKCTRL_SSP) & HW_CLKCTRL_SSP_BUSY)
+		;
 
 	return;
 }
-
 /*
- * Transition from ref_xtal to use ref_io and source CLK_SSP from ref_io.
+ * Set IO frac.
  */
-static void
-use_ref_io(void)
+void
+set_io_frac(unsigned int frac)
 {
-	uint32_t reg;
+	uint8_t *io_frac;
+	uint32_t tmp_r;
+	
+	io_frac = (uint8_t *)(CLKCTRL_FRAC);
+	io_frac++; /* emi */
+	io_frac++; /* pix */
+	io_frac++; /* io */
+	tmp_r = (*io_frac)<<24;
+	tmp_r &= ~(HW_CLKCTRL_FRAC_CLKGATEIO | HW_CLKCTRL_FRAC_IOFRAC);
+	tmp_r |= __SHIFTIN(frac, HW_CLKCTRL_FRAC_IOFRAC);
 
-	/* Enable ref_io for SSP. */
-	CLKCTRL_WR(HW_CLKCTRL_CLKSEQ_CLR, HW_CLKCTRL_CLKSEQ_BYPASS_SSP);
-
-	/* CLK_SSP sourced by the ref_io. */
-	reg = CLKCTRL_RD(HW_CLKCTRL_SSP);
-	reg &= ~(HW_CLKCTRL_SSP_CLKGATE);
-	CLKCTRL_WR(HW_CLKCTRL_SSP, reg);
+	*io_frac = (uint8_t)(tmp_r>>24);
 
 	return;
 }

@@ -1,7 +1,6 @@
 /* Native-dependent code for Solaris x86.
 
-   Copyright (C) 2004, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2004-2014 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -69,7 +68,7 @@ static int amd64_sol2_gregset64_reg_offset[] = {
   1 * 8,
   0 * 8,			/* ... %r15 */
   17 * 8,			/* %rip */
-  16 * 8,			/* %eflags */
+  19 * 8,			/* %eflags */
   18 * 8,			/* %cs */
   21 * 8,			/* %ss */
   25 * 8,			/* %ds */
@@ -90,7 +89,7 @@ static int amd64_sol2_gregset32_reg_offset[] = {
   9 * 8,			/* %esi */
   8 * 8,			/* %edi */
   17 * 8,			/* %eip */
-  16 * 8,			/* %eflags */
+  19 * 8,			/* %eflags */
   18 * 8,			/* %cs */
   21 * 8,			/* %ss */
   25 * 8,			/* %ds */

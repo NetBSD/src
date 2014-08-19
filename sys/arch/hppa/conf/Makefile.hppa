@@ -1,0 +1,112 @@
+# $NetBSD: Makefile.hppa,v 1.1.10.2 2014/08/20 00:03:04 tls Exp $
+
+# Makefile for NetBSD
+#
+# This makefile is constructed from a machine description:
+#	config machineid
+# Most changes should be made in the machine description
+#	/sys/arch/hppa/conf/``machineid''
+# after which you should do
+#	config machineid
+# Machine generic makefile changes should be made in
+#	/sys/arch/hppa/conf/Makefile.hppa
+# after which config should be rerun for all machines of that type.
+#
+# To specify debugging, add the config line: makeoptions DEBUG="-g"
+# A better way is to specify -g only for a few files.
+#
+#	makeoptions DEBUGLIST="uvm* trap if_*"
+
+MACHINE_ARCH=hppa
+NEED_OWN_INSTALL_TARGET?=no
+.include <bsd.own.mk>
+
+##
+## (1) port identification
+##
+HPPA=		$S/arch/hppa
+GENASSYM_CONF=	${HPPA}/hppa/genassym.cf
+
+##
+## (2) compile settings
+##
+CPPFLAGS+=	-Dhppa
+CFLAGS+=	-mpa-risc-1-1 -msoft-float -mdisable-fpregs
+
+.include "${HPPA}/spmath/Makefile.inc"
+
+.ifndef PROF
+LIBSPMATH=	${SPMATH}
+.else
+LIBSPMATH=	${SPMATH_PROF}
+.endif
+
+CFLAGS+=	-mno-space-regs -mfast-indirect-calls -mportable-runtime
+AFLAGS+=	-x assembler-with-cpp -P -traditional
+
+OPT_DDB=	%DDB%
+.if !empty(OPT_DDB)
+CFLAGS+=	-fno-omit-frame-pointer
+.endif
+
+##
+## (3) libkern and compat
+##
+KERN_AS=	obj
+
+##
+## (4) local objects, compile rules, and dependencies
+##
+MD_OBJS=	locore.o ${LIBSPMATH}
+MD_CFILES=
+MD_SFILES=	${HPPA}/hppa/locore.S
+
+locore.o: ${HPPA}/hppa/locore.S
+	${NORMAL_S}
+
+##
+## (5) link settings
+##
+LINKFORMAT=	-T ${HPPA}/conf/ld.script
+TEXTADDR?=	00200000
+LINKFLAGS_NORMAL=       -X
+EXTRA_LINKFLAGS= -Map $@.map
+
+##
+## (6) port specific target dependencies
+##
+
+# depend on CPU configuration
+db_machdep.o machdep.o pmap.o vm_machdep.o: Makefile
+
+# depends on KGDBDEV, KGDBRATE, DDB, etc.
+com_gsc.o clock.o pdc.o autoconf.o machdep.o: Makefile
+
+##
+## (7) misc settings
+##
+
+##
+## (8) config(8) generated machinery
+##
+%INCLUDES
+
+%OBJS
+
+%CFILES
+
+%SFILES
+
+%LOAD
+
+%RULES
+
+##
+## (9) port independent kernel machinery
+##
+.include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND

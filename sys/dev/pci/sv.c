@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.46.8.1 2012/11/20 03:02:29 tls Exp $ */
+/*      $NetBSD: sv.c,v 1.46.8.2 2014/08/20 00:03:48 tls Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.46.8.1 2012/11/20 03:02:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.46.8.2 2014/08/20 00:03:48 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,11 +95,8 @@ __KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.46.8.1 2012/11/20 03:02:29 tls Exp $");
  * As long as bus_dmamem_alloc_range() is missing we use the ISA
  * DMA tag on i386.
  */
-#if defined(i386)
-#include "isa.h"
-#if NISA > 0
+#if defined(amd64) || defined(i386)
 #include <dev/isa/isavar.h>
-#endif
 #endif
 
 #ifdef AUDIO_DEBUG
@@ -347,6 +344,7 @@ sv_attach(device_t parent, device_t self, void *aux)
 	char const *intrstr;
 	uint8_t reg;
 	struct audio_attach_args arg;
+	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
 	pa = aux;
@@ -379,7 +377,7 @@ sv_attach(device_t parent, device_t self, void *aux)
 #if defined(alpha)
 	/* XXX Force allocation through the SGMAP. */
 	sc->sc_dmatag = alphabus_dma_get_tag(pa->pa_dmat, ALPHA_BUS_ISA);
-#elif defined(i386) && NISA > 0
+#elif defined(amd64) || defined(i386)
 /* XXX
  * The SonicVibes DMA is broken and only works on 24-bit addresses.
  * As long as bus_dmamem_alloc_range() is missing we use the ISA
@@ -429,7 +427,7 @@ sv_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, sv_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");

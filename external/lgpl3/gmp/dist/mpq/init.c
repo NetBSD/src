@@ -23,16 +23,16 @@ along with the GNU MP Library.  If not, see http://www.gnu.org/licenses/.  */
 void
 mpq_init (MP_RAT *x)
 {
-  x->_mp_num._mp_alloc = 1;
-  x->_mp_num._mp_d = (mp_ptr) (*__gmp_allocate_func) (BYTES_PER_MP_LIMB);
-  x->_mp_num._mp_size = 0;
-  x->_mp_den._mp_alloc = 1;
-  x->_mp_den._mp_d = (mp_ptr) (*__gmp_allocate_func) (BYTES_PER_MP_LIMB);
-  x->_mp_den._mp_d[0] = 1;
-  x->_mp_den._mp_size = 1;
+  ALLOC(NUM(x)) = 1;
+  PTR(NUM(x)) = (mp_ptr) (*__gmp_allocate_func) (BYTES_PER_MP_LIMB);
+  SIZ(NUM(x)) = 0;
+  ALLOC(DEN(x)) = 1;
+  PTR(DEN(x)) = (mp_ptr) (*__gmp_allocate_func) (BYTES_PER_MP_LIMB);
+  PTR(DEN(x))[0] = 1;
+  SIZ(DEN(x)) = 1;
 
 #ifdef __CHECKER__
   /* let the low limb look initialized, for the benefit of mpz_get_ui etc */
-  x->_mp_num._mp_d[0] = 0;
+  PTR(NUM(x))[0] = 0;
 #endif
 }

@@ -1,6 +1,5 @@
 /* Memory breakpoint operations for the remote server for GDB.
-   Copyright (C) 2002, 2003, 2005, 2007, 2008, 2009, 2010, 2011
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2014 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
 
@@ -20,6 +19,9 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "server.h"
+#include "regcache.h"
+#include "ax.h"
+#include <stdint.h>
 
 const unsigned char *breakpoint_data;
 int breakpoint_len;
@@ -85,6 +87,30 @@ enum bkpt_type
     other_breakpoint,
   };
 
+struct point_cond_list
+{
+  /* Pointer to the agent expression that is the breakpoint's
+     conditional.  */
+  struct agent_expr *cond;
+
+  /* Pointer to the next condition.  */
+  struct point_cond_list *next;
+};
+
+struct point_command_list
+{
+  /* Pointer to the agent expression that is the breakpoint's
+     commands.  */
+  struct agent_expr *cmd;
+
+  /* Flag that is true if this command should run even while GDB is
+     disconnected.  */
+  int persistence;
+
+  /* Pointer to the next command.  */
+  struct point_command_list *next;
+};
+
 /* A high level (in gdbserver's perspective) breakpoint.  */
 struct breakpoint
 {
@@ -92,6 +118,15 @@ struct breakpoint
 
   /* The breakpoint's type.  */
   enum bkpt_type type;
+
+  /* Pointer to the condition list that should be evaluated on
+     the target or NULL if the breakpoint is unconditional or
+     if GDB doesn't want us to evaluate the conditionals on the
+     target's side.  */
+  struct point_cond_list *cond_list;
+
+  /* Point to the list of commands to run when this is hit.  */
+  struct point_command_list *command_list;
 
   /* Link to this breakpoint's raw breakpoint.  This is always
      non-NULL.  */
@@ -102,6 +137,23 @@ struct breakpoint
      it will be left inserted.  */
   int (*handler) (CORE_ADDR);
 };
+
+int
+any_persistent_commands ()
+{
+  struct process_info *proc = current_process ();
+  struct breakpoint *bp;
+  struct point_command_list *cl;
+
+  for (bp = proc->breakpoints; bp != NULL; bp = bp->next)
+    {
+      for (cl = bp->command_list; cl != NULL; cl = cl->next)
+	if (cl->persistence)
+	  return 1;
+    }
+
+  return 0;
+}
 
 static struct raw_breakpoint *
 find_raw_breakpoint_at (CORE_ADDR where)
@@ -122,6 +174,7 @@ set_raw_breakpoint_at (CORE_ADDR where)
   struct process_info *proc = current_process ();
   struct raw_breakpoint *bp;
   int err;
+  unsigned char buf[MAX_BREAKPOINT_LEN];
 
   if (breakpoint_data == NULL)
     error ("Target does not support breakpoints.");
@@ -140,7 +193,7 @@ set_raw_breakpoint_at (CORE_ADDR where)
   /* Note that there can be fast tracepoint jumps installed in the
      same memory range, so to get at the original memory, we need to
      use read_inferior_memory, which masks those out.  */
-  err = read_inferior_memory (where, bp->old_data, breakpoint_len);
+  err = read_inferior_memory (where, buf, breakpoint_len);
   if (err != 0)
     {
       if (debug_threads)
@@ -151,6 +204,7 @@ set_raw_breakpoint_at (CORE_ADDR where)
       free (bp);
       return NULL;
     }
+  memcpy (bp->old_data, buf, breakpoint_len);
 
   err = (*the_target->write_memory) (where, breakpoint_data,
 				     breakpoint_len);
@@ -257,6 +311,7 @@ delete_fast_tracepoint_jump (struct fast_tracepoint_jump *todel)
 	  if (--bp->refcount == 0)
 	    {
 	      struct fast_tracepoint_jump *prev_bp_link = *bp_link;
+	      unsigned char *buf;
 
 	      /* Unlink it.  */
 	      *bp_link = bp->next;
@@ -270,9 +325,9 @@ delete_fast_tracepoint_jump (struct fast_tracepoint_jump *todel)
 		 pass the current shadow contents, because
 		 write_inferior_memory updates any shadow memory with
 		 what we pass here, and we want that to be a nop.  */
-	      ret = write_inferior_memory (bp->pc,
-					   fast_tracepoint_jump_shadow (bp),
-					   bp->length);
+	      buf = alloca (bp->length);
+	      memcpy (buf, fast_tracepoint_jump_shadow (bp), bp->length);
+	      ret = write_inferior_memory (bp->pc, buf, bp->length);
 	      if (ret != 0)
 		{
 		  /* Something went wrong, relink the jump.  */
@@ -302,6 +357,12 @@ delete_fast_tracepoint_jump (struct fast_tracepoint_jump *todel)
   return ENOENT;
 }
 
+void
+inc_ref_fast_tracepoint_jump (struct fast_tracepoint_jump *jp)
+{
+  jp->refcount++;
+}
+
 struct fast_tracepoint_jump *
 set_fast_tracepoint_jump (CORE_ADDR where,
 			  unsigned char *insn, ULONGEST length)
@@ -309,6 +370,7 @@ set_fast_tracepoint_jump (CORE_ADDR where,
   struct process_info *proc = current_process ();
   struct fast_tracepoint_jump *jp;
   int err;
+  unsigned char *buf;
 
   /* We refcount fast tracepoint jumps.  Check if we already know
      about a jump at this address.  */
@@ -327,12 +389,12 @@ set_fast_tracepoint_jump (CORE_ADDR where,
   jp->length = length;
   memcpy (fast_tracepoint_jump_insn (jp), insn, length);
   jp->refcount = 1;
+  buf = alloca (length);
 
   /* Note that there can be trap breakpoints inserted in the same
      address range.  To access the original memory contents, we use
      `read_inferior_memory', which masks out breakpoints.  */
-  err = read_inferior_memory (where,
-			      fast_tracepoint_jump_shadow (jp), jp->length);
+  err = read_inferior_memory (where, buf, length);
   if (err != 0)
     {
       if (debug_threads)
@@ -343,6 +405,7 @@ set_fast_tracepoint_jump (CORE_ADDR where,
       free (jp);
       return NULL;
     }
+  memcpy (fast_tracepoint_jump_shadow (jp), buf, length);
 
   /* Link the jump in.  */
   jp->inserted = 1;
@@ -357,8 +420,7 @@ set_fast_tracepoint_jump (CORE_ADDR where,
      the current shadow contents, because write_inferior_memory
      updates any shadow memory with what we pass here, and we want
      that to be a nop.  */
-  err = write_inferior_memory (where, fast_tracepoint_jump_shadow (jp),
-			       length);
+  err = write_inferior_memory (where, buf, length);
   if (err != 0)
     {
       if (debug_threads)
@@ -397,6 +459,8 @@ uninsert_fast_tracepoint_jumps_at (CORE_ADDR pc)
 
   if (jp->inserted)
     {
+      unsigned char *buf;
+
       jp->inserted = 0;
 
       /* Since there can be trap breakpoints inserted in the same
@@ -408,9 +472,9 @@ uninsert_fast_tracepoint_jumps_at (CORE_ADDR pc)
 	 pass the current shadow contents, because
 	 write_inferior_memory updates any shadow memory with what we
 	 pass here, and we want that to be a nop.  */
-      err = write_inferior_memory (jp->pc,
-				   fast_tracepoint_jump_shadow (jp),
-				   jp->length);
+      buf = alloca (jp->length);
+      memcpy (buf, fast_tracepoint_jump_shadow (jp), jp->length);
+      err = write_inferior_memory (jp->pc, buf, jp->length);
       if (err != 0)
 	{
 	  jp->inserted = 1;
@@ -428,6 +492,7 @@ reinsert_fast_tracepoint_jumps_at (CORE_ADDR where)
 {
   struct fast_tracepoint_jump *jp;
   int err;
+  unsigned char *buf;
 
   jp = find_fast_tracepoint_jump_at (where);
   if (jp == NULL)
@@ -455,8 +520,9 @@ reinsert_fast_tracepoint_jumps_at (CORE_ADDR where)
      to pass the current shadow contents, because
      write_inferior_memory updates any shadow memory with what we pass
      here, and we want that to be a nop.  */
-  err = write_inferior_memory (where,
-			       fast_tracepoint_jump_shadow (jp), jp->length);
+  buf = alloca (jp->length);
+  memcpy (buf, fast_tracepoint_jump_shadow (jp), jp->length);
+  err = write_inferior_memory (where, buf, jp->length);
   if (err != 0)
     {
       jp->inserted = 0;
@@ -511,6 +577,7 @@ delete_raw_breakpoint (struct process_info *proc, struct raw_breakpoint *todel)
 	  if (bp->inserted)
 	    {
 	      struct raw_breakpoint *prev_bp_link = *bp_link;
+	      unsigned char buf[MAX_BREAKPOINT_LEN];
 
 	      *bp_link = bp->next;
 
@@ -523,8 +590,8 @@ delete_raw_breakpoint (struct process_info *proc, struct raw_breakpoint *todel)
 		 to pass the current shadow contents, because
 		 write_inferior_memory updates any shadow memory with
 		 what we pass here, and we want that to be a nop.  */
-	      ret = write_inferior_memory (bp->pc, bp->old_data,
-					   breakpoint_len);
+	      memcpy (buf, bp->old_data, breakpoint_len);
+	      ret = write_inferior_memory (bp->pc, buf, breakpoint_len);
 	      if (ret != 0)
 		{
 		  /* Something went wrong, relink the breakpoint.  */
@@ -617,7 +684,7 @@ delete_breakpoint (struct breakpoint *todel)
   return delete_breakpoint_1 (proc, todel);
 }
 
-static struct breakpoint *
+struct breakpoint *
 find_gdb_breakpoint_at (CORE_ADDR where)
 {
   struct process_info *proc = current_process ();
@@ -677,6 +744,9 @@ delete_gdb_breakpoint_at (CORE_ADDR addr)
   if (bp == NULL)
     return -1;
 
+  /* Before deleting the breakpoint, make sure to free
+     its condition list.  */
+  clear_gdb_breakpoint_conditions (addr);
   err = delete_breakpoint (bp);
   if (err)
     return -1;
@@ -684,12 +754,226 @@ delete_gdb_breakpoint_at (CORE_ADDR addr)
   return 0;
 }
 
+/* Clear all conditions associated with this breakpoint address.  */
+
+void
+clear_gdb_breakpoint_conditions (CORE_ADDR addr)
+{
+  struct breakpoint *bp = find_gdb_breakpoint_at (addr);
+  struct point_cond_list *cond;
+
+  if (bp == NULL || bp->cond_list == NULL)
+    return;
+
+  cond = bp->cond_list;
+
+  while (cond != NULL)
+    {
+      struct point_cond_list *cond_next;
+
+      cond_next = cond->next;
+      free (cond->cond->bytes);
+      free (cond->cond);
+      free (cond);
+      cond = cond_next;
+    }
+
+  bp->cond_list = NULL;
+}
+
+/* Add condition CONDITION to GDBserver's breakpoint BP.  */
+
+void
+add_condition_to_breakpoint (struct breakpoint *bp,
+			     struct agent_expr *condition)
+{
+  struct point_cond_list *new_cond;
+
+  /* Create new condition.  */
+  new_cond = xcalloc (1, sizeof (*new_cond));
+  new_cond->cond = condition;
+
+  /* Add condition to the list.  */
+  new_cond->next = bp->cond_list;
+  bp->cond_list = new_cond;
+}
+
+/* Add a target-side condition CONDITION to the breakpoint at ADDR.  */
+
 int
-gdb_breakpoint_here (CORE_ADDR where)
+add_breakpoint_condition (CORE_ADDR addr, char **condition)
+{
+  struct breakpoint *bp = find_gdb_breakpoint_at (addr);
+  char *actparm = *condition;
+  struct agent_expr *cond;
+
+  if (bp == NULL)
+    return 1;
+
+  if (condition == NULL)
+    return 1;
+
+  cond = gdb_parse_agent_expr (&actparm);
+
+  if (cond == NULL)
+    {
+      fprintf (stderr, "Condition evaluation failed. "
+	       "Assuming unconditional.\n");
+      return 0;
+    }
+
+  add_condition_to_breakpoint (bp, cond);
+
+  *condition = actparm;
+
+  return 0;
+}
+
+/* Evaluate condition (if any) at breakpoint BP.  Return 1 if
+   true and 0 otherwise.  */
+
+int
+gdb_condition_true_at_breakpoint (CORE_ADDR where)
+{
+  /* Fetch registers for the current inferior.  */
+  struct breakpoint *bp = find_gdb_breakpoint_at (where);
+  ULONGEST value = 0;
+  struct point_cond_list *cl;
+  int err = 0;
+  struct eval_agent_expr_context ctx;
+
+  if (bp == NULL)
+    return 0;
+
+  /* Check if the breakpoint is unconditional.  If it is,
+     the condition always evaluates to TRUE.  */
+  if (bp->cond_list == NULL)
+    return 1;
+
+  ctx.regcache = get_thread_regcache (current_inferior, 1);
+  ctx.tframe = NULL;
+  ctx.tpoint = NULL;
+
+  /* Evaluate each condition in the breakpoint's list of conditions.
+     Return true if any of the conditions evaluates to TRUE.
+
+     If we failed to evaluate the expression, TRUE is returned.  This
+     forces GDB to reevaluate the conditions.  */
+  for (cl = bp->cond_list;
+       cl && !value && !err; cl = cl->next)
+    {
+      /* Evaluate the condition.  */
+      err = gdb_eval_agent_expr (&ctx, cl->cond, &value);
+    }
+
+  if (err)
+    return 1;
+
+  return (value != 0);
+}
+
+/* Add commands COMMANDS to GDBserver's breakpoint BP.  */
+
+void
+add_commands_to_breakpoint (struct breakpoint *bp,
+			    struct agent_expr *commands, int persist)
+{
+  struct point_command_list *new_cmd;
+
+  /* Create new command.  */
+  new_cmd = xcalloc (1, sizeof (*new_cmd));
+  new_cmd->cmd = commands;
+  new_cmd->persistence = persist;
+
+  /* Add commands to the list.  */
+  new_cmd->next = bp->command_list;
+  bp->command_list = new_cmd;
+}
+
+/* Add a target-side command COMMAND to the breakpoint at ADDR.  */
+
+int
+add_breakpoint_commands (CORE_ADDR addr, char **command, int persist)
+{
+  struct breakpoint *bp = find_gdb_breakpoint_at (addr);
+  char *actparm = *command;
+  struct agent_expr *cmd;
+
+  if (bp == NULL)
+    return 1;
+
+  if (command == NULL)
+    return 1;
+
+  cmd = gdb_parse_agent_expr (&actparm);
+
+  if (cmd == NULL)
+    {
+      fprintf (stderr, "Command evaluation failed. "
+	       "Disabling.\n");
+      return 0;
+    }
+
+  add_commands_to_breakpoint (bp, cmd, persist);
+
+  *command = actparm;
+
+  return 0;
+}
+
+/* Return true if there are no commands to run at this location,
+   which likely means we want to report back to GDB.  */
+int
+gdb_no_commands_at_breakpoint (CORE_ADDR where)
 {
   struct breakpoint *bp = find_gdb_breakpoint_at (where);
 
-  return (bp != NULL);
+  if (bp == NULL)
+    return 0;
+
+  if (debug_threads)
+    fprintf (stderr, "at 0x%s, bp command_list is 0x%s\n",
+	     paddress (where),
+	     phex_nz ((uintptr_t) bp->command_list, 0));
+  return (bp->command_list == NULL);
+}
+
+void
+run_breakpoint_commands (CORE_ADDR where)
+{
+  /* Fetch registers for the current inferior.  */
+  struct breakpoint *bp = find_gdb_breakpoint_at (where);
+  ULONGEST value = 0;
+  struct point_command_list *cl;
+  int err = 0;
+  struct eval_agent_expr_context ctx;
+
+  if (bp == NULL)
+    return;
+
+  ctx.regcache = get_thread_regcache (current_inferior, 1);
+  ctx.tframe = NULL;
+  ctx.tpoint = NULL;
+
+  for (cl = bp->command_list;
+       cl && !value && !err; cl = cl->next)
+    {
+      /* Run the command.  */
+      err = gdb_eval_agent_expr (&ctx, cl->cmd, &value);
+
+      /* If one command has a problem, stop digging the hole deeper.  */
+      if (err)
+	break;
+    }
+}
+
+/* Return 1 if there is a breakpoint inserted in address WHERE
+   and if its condition, if it exists, is true.  */
+
+int
+gdb_breakpoint_here (CORE_ADDR where)
+{
+  return (find_gdb_breakpoint_at (where) != NULL);
 }
 
 void
@@ -732,6 +1016,7 @@ uninsert_raw_breakpoint (struct raw_breakpoint *bp)
   if (bp->inserted)
     {
       int err;
+      unsigned char buf[MAX_BREAKPOINT_LEN];
 
       bp->inserted = 0;
       /* Since there can be fast tracepoint jumps inserted in the same
@@ -742,8 +1027,8 @@ uninsert_raw_breakpoint (struct raw_breakpoint *bp)
 	 that we need to pass the current shadow contents, because
 	 write_inferior_memory updates any shadow memory with what we
 	 pass here, and we want that to be a nop.  */
-      err = write_inferior_memory (bp->pc, bp->old_data,
-				   breakpoint_len);
+      memcpy (buf, bp->old_data, breakpoint_len);
+      err = write_inferior_memory (bp->pc, buf, breakpoint_len);
       if (err != 0)
 	{
 	  bp->inserted = 1;
@@ -969,6 +1254,9 @@ check_mem_read (CORE_ADDR mem_addr, unsigned char *buf, int mem_len)
       CORE_ADDR start, end;
       int copy_offset, copy_len, buf_offset;
 
+      gdb_assert (fast_tracepoint_jump_shadow (jp) >= buf + mem_len
+		  || buf >= fast_tracepoint_jump_shadow (jp) + (jp)->length);
+
       if (mem_addr >= bp_end)
 	continue;
       if (jp->pc >= mem_end)
@@ -997,6 +1285,9 @@ check_mem_read (CORE_ADDR mem_addr, unsigned char *buf, int mem_len)
       CORE_ADDR bp_end = bp->pc + breakpoint_len;
       CORE_ADDR start, end;
       int copy_offset, copy_len, buf_offset;
+
+      gdb_assert (bp->old_data >= buf + mem_len
+		  || buf >= &bp->old_data[sizeof (bp->old_data)]);
 
       if (mem_addr >= bp_end)
 	continue;
@@ -1029,7 +1320,8 @@ check_mem_read (CORE_ADDR mem_addr, unsigned char *buf, int mem_len)
 }
 
 void
-check_mem_write (CORE_ADDR mem_addr, unsigned char *buf, int mem_len)
+check_mem_write (CORE_ADDR mem_addr, unsigned char *buf,
+		 const unsigned char *myaddr, int mem_len)
 {
   struct process_info *proc = current_process ();
   struct raw_breakpoint *bp = proc->raw_breakpoints;
@@ -1044,6 +1336,11 @@ check_mem_write (CORE_ADDR mem_addr, unsigned char *buf, int mem_len)
       CORE_ADDR jp_end = jp->pc + jp->length;
       CORE_ADDR start, end;
       int copy_offset, copy_len, buf_offset;
+
+      gdb_assert (fast_tracepoint_jump_shadow (jp) >= myaddr + mem_len
+		  || myaddr >= fast_tracepoint_jump_shadow (jp) + (jp)->length);
+      gdb_assert (fast_tracepoint_jump_insn (jp) >= buf + mem_len
+		  || buf >= fast_tracepoint_jump_insn (jp) + (jp)->length);
 
       if (mem_addr >= jp_end)
 	continue;
@@ -1063,7 +1360,7 @@ check_mem_write (CORE_ADDR mem_addr, unsigned char *buf, int mem_len)
       buf_offset = start - mem_addr;
 
       memcpy (fast_tracepoint_jump_shadow (jp) + copy_offset,
-	      buf + buf_offset, copy_len);
+	      myaddr + buf_offset, copy_len);
       if (jp->inserted)
 	memcpy (buf + buf_offset,
 		fast_tracepoint_jump_insn (jp) + copy_offset, copy_len);
@@ -1074,6 +1371,9 @@ check_mem_write (CORE_ADDR mem_addr, unsigned char *buf, int mem_len)
       CORE_ADDR bp_end = bp->pc + breakpoint_len;
       CORE_ADDR start, end;
       int copy_offset, copy_len, buf_offset;
+
+      gdb_assert (bp->old_data >= myaddr + mem_len
+		  || myaddr >= &bp->old_data[sizeof (bp->old_data)]);
 
       if (mem_addr >= bp_end)
 	continue;
@@ -1092,7 +1392,7 @@ check_mem_write (CORE_ADDR mem_addr, unsigned char *buf, int mem_len)
       copy_offset = start - bp->pc;
       buf_offset = start - mem_addr;
 
-      memcpy (bp->old_data + copy_offset, buf + buf_offset, copy_len);
+      memcpy (bp->old_data + copy_offset, myaddr + buf_offset, copy_len);
       if (bp->inserted)
 	{
 	  if (validate_inserted_breakpoint (bp))

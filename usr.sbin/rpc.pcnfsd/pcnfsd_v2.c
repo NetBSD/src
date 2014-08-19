@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_v2.c,v 1.12 2011/10/07 10:46:29 joerg Exp $	*/
+/*	$NetBSD: pcnfsd_v2.c,v 1.12.8.1 2014/08/20 00:05:13 tls Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_v2.c 1.2 91/12/18 13:26:13 SMI */
 /*
@@ -238,7 +238,7 @@ pcnfsd2_pr_status_2_svc(arg, req)
 	static char status[128];
 
 	res.stat = get_pr_status(arg->pn, &res.avail, &res.printing,
-	    &res.qlen, &res.needs_operator, &status[0]);
+	    &res.qlen, &res.needs_operator, &status[0], sizeof(status));
 	res.status = &status[0];
 	res.cm = &no_comment[0];
 

@@ -38,6 +38,8 @@
 #include <sys/bus.h>
 #include <sys/kmem.h>
 
+#include <linux/completion.h>
+
 #include <uvm/uvm_extern.h>
 
 #include <arch/arm/broadcom/bcm2835_mbox.h>
@@ -72,15 +74,6 @@ struct semaphore g_free_fragments_sema;
 
 static DEFINE_SEMAPHORE(g_free_fragments_mutex);
 
-#if 0
-static int
-create_pagelist(char __user *buf, size_t count, unsigned short type,
-                lwp_t *l, PAGELIST_T ** ppagelist);
-
-static void
-free_pagelist(PAGELIST_T *pagelist, int actual);
-#endif
-
 int __init
 vchiq_platform_init(VCHIQ_STATE_T *state)
 {
@@ -100,7 +93,7 @@ vchiq_platform_init(VCHIQ_STATE_T *state)
 	dma_nsegs = __arraycount(dma_segs);
 	err = bus_dmamem_alloc(&bcm2835_bus_dma_tag,
 	    g_slot_mem_size + frag_mem_size, PAGE_SIZE, 0,
-	    dma_segs, dma_nsegs, &dma_nsegs, BUS_DMA_COHERENT | BUS_DMA_WAITOK);
+	    dma_segs, dma_nsegs, &dma_nsegs, BUS_DMA_WAITOK);
 	if (err) {
 		vchiq_log_error(vchiq_core_log_level, "Unable to allocate channel memory");
 		err = -ENOMEM;
@@ -251,6 +244,13 @@ typedef struct bulkinfo_struct {
 	int		size;
 } BULKINFO_T;
 
+/* There is a potential problem with partial cache lines (pages?)
+** at the ends of the block when reading. If the CPU accessed anything in
+** the same line (page?) then it may have pulled old data into the cache,
+** obscuring the new data underneath. We can solve this by transferring the
+** partial cache lines separately, and allowing the ARM to copy into the
+** cached area.
+*/
 VCHIQ_STATUS_T
 vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 	void *buf, int size, int dir)
@@ -289,7 +289,7 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 		goto fail1;
 
 	ret = bus_dmamem_map(&bcm2835_bus_dma_tag, bi->pagelist_sgs, nsegs,
-	    bi->pagelist_size, &bi->pagelist, BUS_DMA_WAITOK);
+	    bi->pagelist_size, &bi->pagelist, BUS_DMA_COHERENT | BUS_DMA_WAITOK);
 	if (ret != 0)
 		goto fail2;
 
@@ -307,7 +307,7 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 	/*
 	 * We've now got the bus_addr_t for the pagelist we want the transfer
 	 * to use.
-	 * */
+	 */
 	bulk->data = (void *)bi->pagelist_map->dm_segs[0].ds_addr;
 
 	/*
@@ -335,16 +335,22 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 
 	bulk->handle = memhandle;
 
-	pagelist->type = (dir == VCHIQ_BULK_RECEIVE) ? PAGELIST_READ : PAGELIST_WRITE;
+	pagelist->type = (dir == VCHIQ_BULK_RECEIVE) ?
+	    PAGELIST_READ : PAGELIST_WRITE;
 	pagelist->length = size;
-	pagelist->offset = va & PAGE_MASK;
+	pagelist->offset = va & L2_S_OFFSET;
 
 	/*
 	 * busdma already coalesces contiguous pages for us
 	 */
 	for (int i = 0; i < bi->dmamap->dm_nsegs; i++) {
-		pagelist->addrs[i] = bi->dmamap->dm_segs[i].ds_addr & ~PAGE_MASK;
-		pagelist->addrs[i] |= atop(round_page(bi->dmamap->dm_segs[i].ds_len)) - 1;
+		bus_addr_t addr = bi->dmamap->dm_segs[i].ds_addr;
+		bus_size_t len = bi->dmamap->dm_segs[i].ds_len;
+		bus_size_t off = addr & L2_S_OFFSET;
+		int npgs = ((off + len + L2_S_OFFSET) >> L2_S_SHIFT);
+
+		pagelist->addrs[i] = addr & ~L2_S_OFFSET;
+		pagelist->addrs[i] |= npgs - 1;
 	}
 
 	/* Partial cache lines (fragments) require special measures */
@@ -378,7 +384,7 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 	bulk->remote_data = bi;
 
 	bus_dmamap_sync(&bcm2835_bus_dma_tag, bi->pagelist_map, 0,
-	    bi->pagelist_size, BUS_DMASYNC_PREREAD);
+	    bi->pagelist_size, BUS_DMASYNC_PREWRITE);
 
 	bus_dmamap_sync(&bcm2835_bus_dma_tag, bi->dmamap, 0, bi->size,
 	    pagelist->type == PAGELIST_WRITE ?
@@ -419,6 +425,13 @@ vchiq_complete_bulk(VCHIQ_BULK_T *bulk)
 	if (bulk && bulk->remote_data && bulk->actual) {
 		BULKINFO_T *bi = bulk->remote_data;
 		PAGELIST_T *pagelist = bi->pagelist;
+
+		bus_dmamap_sync(&bcm2835_bus_dma_tag, bi->pagelist_map, 0,
+		    bi->pagelist_size, BUS_DMASYNC_POSTWRITE);
+
+		bus_dmamap_sync(&bcm2835_bus_dma_tag, bi->dmamap, 0, bi->size,
+		    pagelist->type == PAGELIST_WRITE ?
+		    BUS_DMASYNC_POSTWRITE : BUS_DMASYNC_POSTREAD);
 
 		/* Deal with any partial cache lines (fragments) */
 		if (pagelist->type >= PAGELIST_READ_WITH_FRAGMENTS) {
@@ -469,13 +482,6 @@ vchiq_complete_bulk(VCHIQ_BULK_T *bulk)
 			up(&g_free_fragments_mutex);
 			up(&g_free_fragments_sema);
 		}
-		bus_dmamap_sync(&bcm2835_bus_dma_tag, bi->pagelist_map, 0,
-		    bi->pagelist_size, BUS_DMASYNC_POSTREAD);
-
-		bus_dmamap_sync(&bcm2835_bus_dma_tag, bi->dmamap, 0, bi->size,
-		    pagelist->type == PAGELIST_WRITE ?
-		    BUS_DMASYNC_POSTWRITE : BUS_DMASYNC_POSTREAD);
-
 		bus_dmamap_unload(&bcm2835_bus_dma_tag, bi->dmamap);
 		bus_dmamap_destroy(&bcm2835_bus_dma_tag, bi->dmamap);
 		if (IS_USER_ADDRESS(bi->buf))
@@ -547,202 +553,10 @@ vchiq_platform_use_suspend_timer(void)
 void
 vchiq_dump_platform_use_state(VCHIQ_STATE_T *state)
 {
-	vchiq_log_info((vchiq_arm_log_level>=VCHIQ_LOG_INFO),"Suspend timer not in use");
+	vchiq_log_info(vchiq_arm_log_level, "Suspend timer not in use");
 }
 void
 vchiq_platform_handle_timeout(VCHIQ_STATE_T *state)
 {
 	(void)state;
 }
-/*
- * Local functions
- */
-
-/* There is a potential problem with partial cache lines (pages?)
-** at the ends of the block when reading. If the CPU accessed anything in
-** the same line (page?) then it may have pulled old data into the cache,
-** obscuring the new data underneath. We can solve this by transferring the
-** partial cache lines separately, and allowing the ARM to copy into the
-** cached area.
-
-** N.B. This implementation plays slightly fast and loose with the Linux
-** driver programming rules, e.g. its use of __virt_to_bus instead of
-** dma_map_single, but it isn't a multi-platform driver and it benefits
-** from increased speed as a result.
-*/
-
-#if 0
-static int
-create_pagelist(char __user *buf, size_t count, unsigned short type,
-	struct task_struct *task, PAGELIST_T ** ppagelist)
-{
-	PAGELIST_T *pagelist;
-	struct page **pages;
-	struct page *page;
-	unsigned long *addrs;
-	unsigned int num_pages, offset, i;
-	char *addr, *base_addr, *next_addr;
-	int run, addridx, actual_pages;
-
-	offset = (unsigned int)buf & (PAGE_SIZE - 1);
-	num_pages = (count + offset + PAGE_SIZE - 1) / PAGE_SIZE;
-
-	*ppagelist = NULL;
-
-	/* Allocate enough storage to hold the page pointers and the page
-	** list
-	*/
-	pagelist = kmalloc(sizeof(PAGELIST_T) +
-		(num_pages * sizeof(unsigned long)) +
-		(num_pages * sizeof(pages[0])),
-		GFP_KERNEL);
-
-	vchiq_log_trace(vchiq_arm_log_level,
-		"create_pagelist - %x", (unsigned int)pagelist);
-	if (!pagelist)
-		return -ENOMEM;
-
-	addrs = pagelist->addrs;
-	pages = (struct page **)(addrs + num_pages);
-
-	down_read(&task->mm->mmap_sem);
-	actual_pages = get_user_pages(task, task->mm,
-		(unsigned long)buf & ~(PAGE_SIZE - 1), num_pages,
-		(type == PAGELIST_READ) /*Write */ , 0 /*Force */ ,
-		pages, NULL /*vmas */);
-	up_read(&task->mm->mmap_sem);
-
-   if (actual_pages != num_pages)
-   {
-      /* This is probably due to the process being killed */
-      while (actual_pages > 0)
-      {
-         actual_pages--;
-         page_cache_release(pages[actual_pages]);
-      }
-      kfree(pagelist);
-      if (actual_pages == 0)
-         actual_pages = -ENOMEM;
-      return actual_pages;
-	}
-
-	pagelist->length = count;
-	pagelist->type = type;
-	pagelist->offset = offset;
-
-	/* Group the pages into runs of contiguous pages */
-
-	base_addr = VCHIQ_ARM_ADDRESS(page_address(pages[0]));
-	next_addr = base_addr + PAGE_SIZE;
-	addridx = 0;
-	run = 0;
-
-	for (i = 1; i < num_pages; i++) {
-		addr = VCHIQ_ARM_ADDRESS(page_address(pages[i]));
-		if ((addr == next_addr) && (run < (PAGE_SIZE - 1))) {
-			next_addr += PAGE_SIZE;
-			run++;
-		} else {
-			addrs[addridx] = (unsigned long)base_addr + run;
-			addridx++;
-			base_addr = addr;
-			next_addr = addr + PAGE_SIZE;
-			run = 0;
-		}
-	}
-
-	addrs[addridx] = (unsigned long)base_addr + run;
-	addridx++;
-
-	/* Partial cache lines (fragments) require special measures */
-	if ((type == PAGELIST_READ) &&
-		((pagelist->offset & (CACHE_LINE_SIZE - 1)) ||
-		((pagelist->offset + pagelist->length) &
-		(CACHE_LINE_SIZE - 1)))) {
-		FRAGMENTS_T *fragments;
-
-		if (down_interruptible(&g_free_fragments_sema) != 0) {
-			kfree(pagelist);
-			return -EINTR;
-		}
-
-		WARN_ON(g_free_fragments == NULL);
-
-		down(&g_free_fragments_mutex);
-		fragments = (FRAGMENTS_T *) g_free_fragments;
-		WARN_ON(fragments == NULL);
-		g_free_fragments = *(FRAGMENTS_T **) g_free_fragments;
-		up(&g_free_fragments_mutex);
-		pagelist->type =
-			 PAGELIST_READ_WITH_FRAGMENTS + (fragments -
-							 g_fragments_base);
-	}
-
-	for (page = virt_to_page(pagelist);
-		page <= virt_to_page(addrs + num_pages - 1); page++) {
-		flush_dcache_page(page);
-	}
-
-	*ppagelist = pagelist;
-
-	return 0;
-}
-
-static void
-free_pagelist(PAGELIST_T *pagelist, int actual)
-{
-	struct page **pages;
-	unsigned int num_pages, i;
-
-	vchiq_log_trace(vchiq_arm_log_level,
-		"free_pagelist - %x, %d", (unsigned int)pagelist, actual);
-
-	num_pages =
-		(pagelist->length + pagelist->offset + PAGE_SIZE - 1) /
-		PAGE_SIZE;
-
-	pages = (struct page **)(pagelist->addrs + num_pages);
-
-	/* Deal with any partial cache lines (fragments) */
-	if (pagelist->type >= PAGELIST_READ_WITH_FRAGMENTS) {
-		FRAGMENTS_T *fragments = g_fragments_base +
-			(pagelist->type - PAGELIST_READ_WITH_FRAGMENTS);
-		int head_bytes, tail_bytes;
-		head_bytes = (CACHE_LINE_SIZE - pagelist->offset) &
-			(CACHE_LINE_SIZE - 1);
-		tail_bytes = (pagelist->offset + actual) &
-			(CACHE_LINE_SIZE - 1);
-
-		if ((actual >= 0) && (head_bytes != 0)) {
-			if (head_bytes > actual)
-				head_bytes = actual;
-
-			memcpy((char *)page_address(pages[0]) +
-				pagelist->offset,
-				fragments->headbuf,
-				head_bytes);
-		}
-		if ((actual >= 0) && (head_bytes < actual) &&
-			(tail_bytes != 0)) {
-			memcpy((char *)page_address(pages[num_pages - 1]) +
-				((pagelist->offset + actual) &
-				(PAGE_SIZE - 1) & ~(CACHE_LINE_SIZE - 1)),
-					 fragments->tailbuf, tail_bytes);
-		}
-
-		down(&g_free_fragments_mutex);
-		*(FRAGMENTS_T **) fragments = g_free_fragments;
-		g_free_fragments = fragments;
-		up(&g_free_fragments_mutex);
-		up(&g_free_fragments_sema);
-	}
-
-	for (i = 0; i < num_pages; i++) {
-		if (pagelist->type != PAGELIST_WRITE)
-			set_page_dirty(pages[i]);
-		page_cache_release(pages[i]);
-	}
-
-	kfree(pagelist);
-}
-#endif

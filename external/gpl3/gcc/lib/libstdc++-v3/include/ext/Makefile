@@ -1,24 +1,24 @@
-#	$NetBSD: Makefile,v 1.3 2011/06/28 04:07:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.3.8.1 2014/08/19 23:56:56 tls Exp $
 
 .include <bsd.own.mk>
+.include <bsd.init.mk>
 
-.include "${.CURDIR}/../../arch/${MACHINE_ARCH}/defs.mk"
+.include "${.CURDIR}/../../arch/${GCC_MACHINE_ARCH}/defs.mk"
 
 .cc: # disable .cc->NULL transform
 
-DIST=		${NETBSDSRCDIR}/external/gpl3/gcc/dist
-
 INCS=		${G_ext_headers}
+
 INCSDIR=	/usr/include/g++/ext
 
-.PATH: ${DIST}/libstdc++-v3/include/ext
-# for ext/hash_set
-.PATH: ${DIST}/libstdc++-v3/include/backward
+.include "${.CURDIR}/../Makefile.includes"
 
-# Get default targets including <bsd.inc.mk>.
 .include <bsd.prog.mk>
+# Get default targets including <bsd.inc.mk>.
 
-# XXX Not yet
-#SUBDIR=	pb_assoc
-
-#.include <bsd.subdir.mk>
+.PATH: ${DIST}/libstdc++-v3/include/ext
+.PATH: ${DIST}/libstdc++-v3/include
+.PATH: ${DIST}/libstdc++-v3/config
+.PATH: ${DIST}/libstdc++-v3/libsupc++
+# for ext/hash_set
+#.PATH: ${DIST}/libstdc++-v3/include/backward

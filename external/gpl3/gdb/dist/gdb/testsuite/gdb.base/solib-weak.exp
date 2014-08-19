@@ -1,5 +1,4 @@
-#   Copyright 2006, 2007, 2008, 2009, 2010, 2011
-#   Free Software Foundation, Inc.
+#   Copyright 2006-2014 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +30,7 @@ if {([istarget arm*-*-symbianelf*]
 }
 
 # This test uses GCC-specific syntax.
-if [get_compiler_info not-used] {
+if [get_compiler_info] {
     return -1
 }
 
@@ -40,7 +39,7 @@ if {![test_compiler_info "gcc-*"]} {
 }
 
 proc do_test { lib1opts lib2opts lib1first } {
-    global objdir srcdir subdir
+    global srcdir subdir
 
     set testfile "solib-weak"
     set srcfile ${testfile}.c
@@ -73,9 +72,9 @@ proc do_test { lib1opts lib2opts lib1first } {
 	append testfile "-lib2"
     }
 
-    set binfile ${objdir}/${subdir}/${testfile}
-    set lib1 ${objdir}/${subdir}/${libfile1}.sl
-    set lib2 ${objdir}/${subdir}/${libfile2}.sl
+    set binfile [standard_output_file ${testfile}]
+    set lib1 [standard_output_file ${libfile1}.sl]
+    set lib2 [standard_output_file ${libfile2}.sl]
 
     if $lib1first {
 	set exec_opts [list debug shlib=${lib1} shlib=${lib2}]
@@ -100,15 +99,6 @@ proc do_test { lib1opts lib2opts lib1first } {
     runto_main
 
     gdb_breakpoint "bar"
-
-    # If the library which will be used is compiled without debugging
-    # information, GDB will pick the wrong copy of "bar", i.e. the one
-    # with debugging information.
-
-    if {(${lib1opts} == "" && ${lib2opts} != "" && ${lib1first} == 1)
-	|| (${lib1opts} != "" && ${lib2opts} == "" && ${lib1first} == 0)} {
-	setup_kfail gdb/1824 *-*-*
-    }
 
     gdb_test "continue" "Breakpoint .* \\.?bar .*${expected_file}\\..*" \
 	"run to breakpoint - $testopts"

@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.s,v 1.43 2010/07/07 01:16:25 chs Exp $	*/
+/*	$NetBSD: copy.s,v 1.43.18.1 2014/08/20 00:03:11 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,6 +80,12 @@
 	.file	"copy.s"
 	.text
 
+#ifdef CI_CURPCB
+#define	GETCURPCB(r)	movl	_C_LABEL(cpu_info_store)+CI_CURPCB,r
+#else
+#define	GETCURPCB(r)	movl	_C_LABEL(curpcb),r
+#endif
+
 #ifdef	DIAGNOSTIC
 /*
  * The following routines all use the "moves" instruction to access
@@ -91,11 +97,11 @@
  * The diagnostics:  CHECK_SFC,  CHECK_DFC
  * will verify that the sfc/dfc register values are correct.
  */
-Lbadfc:
+.Lbadfc:
 	PANIC("copy.s: bad sfc or dfc")
-	bra	Lbadfc
-#define	CHECK_SFC	movec %sfc,%d0; subql #FC_USERD,%d0; bne Lbadfc
-#define	CHECK_DFC	movec %dfc,%d0; subql #FC_USERD,%d0; bne Lbadfc
+	jra	.Lbadfc
+#define	CHECK_SFC	movec %sfc,%d0; subql #FC_USERD,%d0; bne .Lbadfc
+#define	CHECK_DFC	movec %dfc,%d0; subql #FC_USERD,%d0; bne .Lbadfc
 #else	/* DIAGNOSTIC */
 #define	CHECK_SFC
 #define	CHECK_DFC
@@ -114,57 +120,57 @@ Lbadfc:
  */
 ENTRY(copyin)
 	CHECK_SFC
-	movl	%sp@(12),%d0		| check count
-	beq	Lciret			| == 0, don't do anything
+	movl	12(%sp),%d0		| check count
+	jeq	.Lciret			| == 0, don't do anything
 #ifdef MAPPEDCOPY
 	cmpl	_C_LABEL(mappedcopysize),%d0 | size >= mappedcopysize
-	bcc	_C_LABEL(mappedcopyin)	| yes, go do it the new way
+	jcc	_C_LABEL(mappedcopyin)	| yes, go do it the new way
 #endif
-	movl	%d2,%sp@-		| save scratch register
-	movl	_C_LABEL(curpcb),%a0	| set fault handler
-	movl	#Lcifault,%a0@(PCB_ONFAULT)
-	movl	%sp@(8),%a0		| src address
-	movl	%sp@(12),%a1		| dest address
+	movl	%d2,-(%sp)		| save scratch register
+	GETCURPCB(%a0)			| set fault handler
+	movl	#.Lcifault,PCB_ONFAULT(%a0)
+	movl	8(%sp),%a0		| src address
+	movl	12(%sp),%a1		| dest address
 	movl	%a0,%d1
 	btst	#0,%d1			| src address odd?
-	beq	Lcieven			| no, skip alignment
-	movsb	%a0@+,%d2		| yes, copy a byte
-	movb	%d2,%a1@+
+	jeq	.Lcieven		| no, skip alignment
+	movsb	(%a0)+,%d2		| yes, copy a byte
+	movb	%d2,(%a1)+
 	subql	#1,%d0			| adjust count
-	beq	Lcidone			| count 0, all done
-Lcieven:
+	jeq	.Lcidone		| count 0, all done
+.Lcieven:
 	movl	%a1,%d1
 	btst	#0,%d1			| dest address odd?
-	bne	Lcibytes		| yes, must copy bytes
+	jne	.Lcibytes		| yes, must copy bytes
 	movl	%d0,%d1			| OK, both even.  Get count
 	lsrl	#2,%d1			|   and convert to longwords
-	beq	Lcibytes		| count 0, skip longword loop
+	jeq	.Lcibytes		| count 0, skip longword loop
 	subql	#1,%d1			| predecrement for dbf
-Lcilloop:
-	movsl	%a0@+,%d2		| copy a longword
-	movl	%d2,%a1@+
-	dbf	%d1,Lcilloop		| decrement low word of count
+.Lcilloop:
+	movsl	(%a0)+,%d2		| copy a longword
+	movl	%d2,(%a1)+
+	dbf	%d1,.Lcilloop		| decrement low word of count
 	subil	#0x10000,%d1		| decrement high word of count
-	bcc	Lcilloop
+	jcc	.Lcilloop
 	andl	#3,%d0			| what remains
-	beq	Lcidone			| nothing, all done
-Lcibytes:
+	jeq	.Lcidone		| nothing, all done
+.Lcibytes:
 	subql	#1,%d0			| predecrement for dbf
-Lcibloop:
-	movsb	%a0@+,%d2		| copy a byte
-	movb	%d2,%a1@+
-	dbf	%d0,Lcibloop		| decrement low word of count
+.Lcibloop:
+	movsb	(%a0)+,%d2		| copy a byte
+	movb	%d2,(%a1)+
+	dbf	%d0,.Lcibloop		| decrement low word of count
 	subil	#0x10000,%d0		| decrement high word of count
-	bcc	Lcibloop
+	jcc	.Lcibloop
 	clrl	%d0			| no error
-Lcidone:
-	movl	_C_LABEL(curpcb),%a0	| clear fault handler
-	clrl	%a0@(PCB_ONFAULT)
-	movl	%sp@+,%d2		| restore scratch register
-Lciret:
+.Lcidone:
+	GETCURPCB(%a0)			| clear fault handler
+	clrl	PCB_ONFAULT(%a0)
+	movl	(%sp)+,%d2		| restore scratch register
+.Lciret:
 	rts
-Lcifault:
-	bra	Lcidone
+.Lcifault:
+	jra	.Lcidone
 
 /*
  * copyout(void *from, void *to, size_t len);
@@ -179,57 +185,57 @@ Lcifault:
  */
 ENTRY(copyout)
 	CHECK_DFC
-	movl	%sp@(12),%d0		| check count
-	beq	Lcoret			| == 0, don't do anything
+	movl	12(%sp),%d0		| check count
+	jeq	.Lcoret			| == 0, don't do anything
 #ifdef MAPPEDCOPY
 	cmpl	_C_LABEL(mappedcopysize),%d0 | size >= mappedcopysize
-	bcc	_C_LABEL(mappedcopyout)	| yes, go do it the new way
+	jcc	_C_LABEL(mappedcopyout)	| yes, go do it the new way
 #endif
-	movl	%d2,%sp@-		| save scratch register
-	movl	_C_LABEL(curpcb),%a0	| set fault handler
-	movl	#Lcofault,%a0@(PCB_ONFAULT)
-	movl	%sp@(8),%a0		| src address
-	movl	%sp@(12),%a1		| dest address
+	movl	%d2,-(%sp)		| save scratch register
+	GETCURPCB(%a0)			| set fault handler
+	movl	#.Lcofault,PCB_ONFAULT(%a0)
+	movl	8(%sp),%a0		| src address
+	movl	12(%sp),%a1		| dest address
 	movl	%a0,%d1
 	btst	#0,%d1			| src address odd?
-	beq	Lcoeven			| no, skip alignment
-	movb	%a0@+,%d2		| yes, copy a byte
-	movsb	%d2,%a1@+
+	jeq	.Lcoeven		| no, skip alignment
+	movb	(%a0)+,%d2		| yes, copy a byte
+	movsb	%d2,(%a1)+
 	subql	#1,%d0			| adjust count
-	beq	Lcodone			| count 0, all done
-Lcoeven:
+	jeq	.Lcodone		| count 0, all done
+.Lcoeven:
 	movl	%a1,%d1
 	btst	#0,%d1			| dest address odd?
-	bne	Lcobytes		| yes, must copy bytes
+	jne	.Lcobytes		| yes, must copy bytes
 	movl	%d0,%d1			| OK, both even.  Get count
 	lsrl	#2,%d1			|   and convert to longwords
-	beq	Lcobytes		| count 0, skip longword loop
+	jeq	.Lcobytes		| count 0, skip longword loop
 	subql	#1,%d1			| predecrement for dbf
-Lcolloop:
-	movl	%a0@+,%d2			| copy a longword
-	movsl	%d2,%a1@+
-	dbf	%d1,Lcolloop		| decrement low word of count
+.Lcolloop:
+	movl	(%a0)+,%d2		| copy a longword
+	movsl	%d2,(%a1)+
+	dbf	%d1,.Lcolloop		| decrement low word of count
 	subil	#0x10000,%d1		| decrement high word of count
-	bcc	Lcolloop
+	jcc	.Lcolloop
 	andl	#3,%d0			| what remains
-	beq	Lcodone			| nothing, all done
-Lcobytes:
+	jeq	.Lcodone		| nothing, all done
+.Lcobytes:
 	subql	#1,%d0			| predecrement for dbf
-Lcobloop:
-	movb	%a0@+,%d2		| copy a byte
-	movsb	%d2,%a1@+
-	dbf	%d0,Lcobloop		| decrement low word of count
+.Lcobloop:
+	movb	(%a0)+,%d2		| copy a byte
+	movsb	%d2,(%a1)+
+	dbf	%d0,.Lcobloop		| decrement low word of count
 	subil	#0x10000,%d0		| decrement high word of count
-	bcc	Lcobloop
+	jcc	.Lcobloop
 	clrl	%d0			| no error
-Lcodone:
-	movl	_C_LABEL(curpcb),%a0	| clear fault handler
-	clrl	%a0@(PCB_ONFAULT)
-	movl	%sp@+,%d2		| restore scratch register
-Lcoret:
+.Lcodone:
+	GETCURPCB(%a0)			| clear fault handler
+	clrl	PCB_ONFAULT(%a0)
+	movl	(%sp)+,%d2		| restore scratch register
+.Lcoret:
 	rts
-Lcofault:
-	bra	Lcodone
+.Lcofault:
+	jra	.Lcodone
 
 /*
  * copystr(void *from, void *to, size_t maxlen, size_t *lencopied);
@@ -238,27 +244,27 @@ Lcofault:
  * string is too long, return ENAMETOOLONG; else return 0.
  */
 ENTRY(copystr)
-	movl	%sp@(4),%a0		| a0 = fromaddr
-	movl	%sp@(8),%a1		| a1 = toaddr
+	movl	4(%sp),%a0		| a0 = fromaddr
+	movl	8(%sp),%a1		| a1 = toaddr
 	clrl	%d0
-	movl	%sp@(12),%d1		| count
-	beq	Lcstoolong		| nothing to copy
+	movl	12(%sp),%d1		| count
+	jeq	.Lcstoolong		| nothing to copy
 	subql	#1,%d1			| predecrement for dbeq
-Lcsloop:
-	movb	%a0@+,%a1@+		| copy a byte
-	dbeq	%d1,Lcsloop		| decrement low word of count
-	beq	Lcsdone			| copied null, exit
+.Lcsloop:
+	movb	(%a0)+,(%a1)+		| copy a byte
+	dbeq	%d1,.Lcsloop		| decrement low word of count
+	jeq	.Lcsdone		| copied null, exit
 	subil	#0x10000,%d1		| decrement high word of count
-	bcc	Lcsloop			| more room, keep going
-Lcstoolong:
+	jcc	.Lcsloop		| more room, keep going
+.Lcstoolong:
 	moveq	#ENAMETOOLONG,%d0	| ran out of space
-Lcsdone:
-	tstl	%sp@(16)		| length desired?
-	beq	Lcsret
-	subl	%sp@(4),%a0		| yes, calculate length copied
-	movl	%sp@(16),%a1		| store at return location
-	movl	%a0,%a1@
-Lcsret:
+.Lcsdone:
+	tstl	16(%sp)			| length desired?
+	jeq	.Lcsret
+	subl	4(%sp),%a0		| yes, calculate length copied
+	movl	16(%sp),%a1		| store at return location
+	movl	%a0,(%a1)
+.Lcsret:
 	rts
 
 /*
@@ -270,35 +276,35 @@ Lcsret:
  */
 ENTRY(copyinstr)
 	CHECK_SFC
-	movl	_C_LABEL(curpcb),%a0	| set fault handler
-	movl	#Lcisfault,%a0@(PCB_ONFAULT)
-	movl	%sp@(4),%a0		| a0 = fromaddr
-	movl	%sp@(8),%a1		| a1 = toaddr
+	GETCURPCB(%a0)			| set fault handler
+	movl	#.Lcisfault,PCB_ONFAULT(%a0)
+	movl	4(%sp),%a0		| a0 = fromaddr
+	movl	8(%sp),%a1		| a1 = toaddr
 	clrl	%d0
-	movl	%sp@(12),%d1		| count
-	beq	Lcistoolong		| nothing to copy
+	movl	12(%sp),%d1		| count
+	jeq	.Lcistoolong		| nothing to copy
 	subql	#1,%d1			| predecrement for dbeq
-Lcisloop:
-	movsb	%a0@+,%d0		| copy a byte
-	movb	%d0,%a1@+
-	dbeq	%d1,Lcisloop		| decrement low word of count
-	beq	Lcisdone		| copied null, exit
+.Lcisloop:
+	movsb	(%a0)+,%d0		| copy a byte
+	movb	%d0,(%a1)+
+	dbeq	%d1,.Lcisloop		| decrement low word of count
+	jeq	.Lcisdone		| copied null, exit
 	subil	#0x10000,%d1		| decrement high word of count
-	bcc	Lcisloop		| more room, keep going
-Lcistoolong:
+	jcc	.Lcisloop		| more room, keep going
+.Lcistoolong:
 	moveq	#ENAMETOOLONG,%d0	| ran out of space
-Lcisdone:
-	tstl	%sp@(16)		| length desired?
-	beq	Lcisexit
-	subl	%sp@(4),%a0		| yes, calculate length copied
-	movl	%sp@(16),%a1		| store at return location
-	movl	%a0,%a1@
-Lcisexit:
-	movl	_C_LABEL(curpcb),%a0	| clear fault handler
-	clrl	%a0@(PCB_ONFAULT)
+.Lcisdone:
+	tstl	16(%sp)		| length desired?
+	jeq	.Lcisexit
+	subl	4(%sp),%a0		| yes, calculate length copied
+	movl	16(%sp),%a1		| store at return location
+	movl	%a0,(%a1)
+.Lcisexit:
+	GETCURPCB(%a0)			| clear fault handler
+	clrl	PCB_ONFAULT(%a0)
 	rts
-Lcisfault:
-	bra	Lcisdone
+.Lcisfault:
+	jra	.Lcisdone
 
 /*
  * copyoutstr(void *from, void *to, size_t maxlen, size_t *lencopied);
@@ -309,35 +315,35 @@ Lcisfault:
  */
 ENTRY(copyoutstr)
 	CHECK_DFC
-	movl	_C_LABEL(curpcb),%a0	| set fault handler
-	movl	#Lcosfault,%a0@(PCB_ONFAULT)
-	movl	%sp@(4),%a0		| a0 = fromaddr
-	movl	%sp@(8),%a1		| a1 = toaddr
+	GETCURPCB(%a0)			| set fault handler
+	movl	#.Lcosfault,PCB_ONFAULT(%a0)
+	movl	4(%sp),%a0		| a0 = fromaddr
+	movl	8(%sp),%a1		| a1 = toaddr
 	clrl	%d0
-	movl	%sp@(12),%d1		| count
-	beq	Lcostoolong		| nothing to copy
+	movl	12(%sp),%d1		| count
+	jeq	.Lcostoolong		| nothing to copy
 	subql	#1,%d1			| predecrement for dbeq
-Lcosloop:
-	movb	%a0@+,%d0		| copy a byte
-	movsb	%d0,%a1@+
-	dbeq	%d1,Lcosloop		| decrement low word of count
-	beq	Lcosdone		| copied null, exit
+.Lcosloop:
+	movb	(%a0)+,%d0		| copy a byte
+	movsb	%d0,(%a1)+
+	dbeq	%d1,.Lcosloop		| decrement low word of count
+	jeq	.Lcosdone		| copied null, exit
 	subil	#0x10000,%d1		| decrement high word of count
-	bcc	Lcosloop		| more room, keep going
-Lcostoolong:
+	jcc	.Lcosloop		| more room, keep going
+.Lcostoolong:
 	moveq	#ENAMETOOLONG,%d0	| ran out of space
-Lcosdone:
-	tstl	%sp@(16)		| length desired?
-	beq	Lcosexit
-	subl	%sp@(4),%a0		| yes, calculate length copied
-	movl	%sp@(16),%a1		| store at return location
-	movl	%a0,%a1@
-Lcosexit:
-	movl	_C_LABEL(curpcb),%a0	| clear fault handler
-	clrl	%a0@(PCB_ONFAULT)
+.Lcosdone:
+	tstl	16(%sp)		| length desired?
+	jeq	.Lcosexit
+	subl	4(%sp),%a0		| yes, calculate length copied
+	movl	16(%sp),%a1		| store at return location
+	movl	%a0,(%a1)
+.Lcosexit:
+	GETCURPCB(%a0)			| clear fault handler
+	clrl	PCB_ONFAULT(%a0)
 	rts
-Lcosfault:
-	bra	Lcosdone
+.Lcosfault:
+	jra	.Lcosdone
 
 /*
  * kcopy(const void *src, void *dst, size_t len);
@@ -351,23 +357,23 @@ Lcosfault:
  */
 ENTRY(kcopy)
 	link	%a6,#-4
-	movl	_C_LABEL(curpcb),%a0	 | set fault handler
-	movl	%a0@(PCB_ONFAULT),%a6@(-4) | save old handler first
-	movl	#Lkcfault,%a0@(PCB_ONFAULT)
-	movl	%a6@(16),%sp@-		| push len
-	movl	%a6@(8),%sp@-		| push src
-	movl	%a6@(12),%sp@-		| push dst
+	GETCURPCB(%a0)			| set fault handler
+	movl	PCB_ONFAULT(%a0),-4(%a6) | save old handler first
+	movl	#.Lkcfault,PCB_ONFAULT(%a0)
+	movl	16(%a6),-(%sp)		| push len
+	movl	8(%a6),-(%sp)		| push src
+	movl	12(%a6),-(%sp)		| push dst
 	jbsr	_C_LABEL(memcpy)	| copy it
 	addl	#12,%sp			| pop args
 	clrl	%d0			| success!
-Lkcdone:
-	movl	_C_LABEL(curpcb),%a0	| restore fault handler
-	movl	%a6@(-4),%a0@(PCB_ONFAULT)
+.Lkcdone:
+	GETCURPCB(%a0)			| restore fault handler
+	movl	-4(%a6),PCB_ONFAULT(%a0)
 	unlk	%a6
 	rts
-Lkcfault:
+.Lkcfault:
 	addl	#16,%sp			| pop args and return address
-	bra	Lkcdone
+	jra	.Lkcdone
 
 /*
  * fuword(void *uaddr);
@@ -375,11 +381,11 @@ Lkcfault:
  */
 ENTRY(fuword)
 	CHECK_SFC
-	movl	%sp@(4),%a0		| address to read
-	movl	_C_LABEL(curpcb),%a1	| set fault handler
-	movl	#Lferr,%a1@(PCB_ONFAULT)
-	movsl	%a0@,%d0		| do read from user space
-	bra	Lfdone
+	movl	4(%sp),%a0		| address to read
+	GETCURPCB(%a1)			| set fault handler
+	movl	#.Lferr,PCB_ONFAULT(%a1)
+	movsl	(%a0),%d0		| do read from user space
+	jra	.Lfdone
 
 /*
  * fusword(void *uaddr);
@@ -387,12 +393,12 @@ ENTRY(fuword)
  */
 ENTRY(fusword)
 	CHECK_SFC
-	movl	%sp@(4),%a0		| address to read
-	movl	_C_LABEL(curpcb),%a1	| set fault handler
-	movl	#Lferr,%a1@(PCB_ONFAULT)
+	movl	4(%sp),%a0		| address to read
+	GETCURPCB(%a1)			| set fault handler
+	movl	#.Lferr,PCB_ONFAULT(%a1)
 	moveq	#0,%d0
-	movsw	%a0@,%d0		| do read from user space
-	bra	Lfdone
+	movsw	(%a0),%d0		| do read from user space
+	jra	.Lfdone
 
 /*
  * fuswintr(void *uaddr);
@@ -401,12 +407,12 @@ ENTRY(fusword)
  */
 ENTRY(fuswintr)
 	CHECK_SFC
-	movl	%sp@(4),%a0		| address to read
-	movl	_C_LABEL(curpcb),%a1	| set fault handler
-	movl	#_C_LABEL(fubail),%a1@(PCB_ONFAULT)
+	movl	4(%sp),%a0		| address to read
+	GETCURPCB(%a1)			| set fault handler
+	movl	#_C_LABEL(fubail),PCB_ONFAULT(%a1)
 	moveq	#0,%d0
-	movsw	%a0@,%d0		| do read from user space
-	bra	Lfdone
+	movsw	(%a0),%d0		| do read from user space
+	jra	.Lfdone
 
 /*
  * fubyte(void *uaddr);
@@ -414,12 +420,12 @@ ENTRY(fuswintr)
  */
 ENTRY(fubyte)
 	CHECK_SFC
-	movl	%sp@(4),%a0		| address to read
-	movl	_C_LABEL(curpcb),%a1	| set fault handler
-	movl	#Lferr,%a1@(PCB_ONFAULT)
+	movl	4(%sp),%a0		| address to read
+	GETCURPCB(%a1)			| set fault handler
+	movl	#.Lferr,PCB_ONFAULT(%a1)
 	moveq	#0,%d0
-	movsb	%a0@,%d0		| do read from user space
-	bra	Lfdone
+	movsb	(%a0),%d0		| do read from user space
+	jra	.Lfdone
 
 /*
  * Error routine for fuswintr.  The fault handler in trap.c
@@ -430,10 +436,10 @@ ENTRY(fubyte)
  */
 ENTRY(fubail)
 	nop
-Lferr:
+.Lferr:
 	moveq	#-1,%d0			| error indicator
-Lfdone:
-	clrl	%a1@(PCB_ONFAULT) 	| clear fault handler
+.Lfdone:
+	clrl	PCB_ONFAULT(%a1) 	| clear fault handler
 	rts
 
 /*
@@ -442,13 +448,13 @@ Lfdone:
  */
 ENTRY(suword)
 	CHECK_DFC
-	movl	%sp@(4),%a0		| address to write
-	movl	%sp@(8),%d0		| value to put there
-	movl	_C_LABEL(curpcb),%a1	| set fault handler
-	movl	#Lserr,%a1@(PCB_ONFAULT)
-	movsl	%d0,%a0@		| do write to user space
+	movl	4(%sp),%a0		| address to write
+	movl	8(%sp),%d0		| value to put there
+	GETCURPCB(%a1)			| set fault handler
+	movl	#.Lserr,PCB_ONFAULT(%a1)
+	movsl	%d0,(%a0)		| do write to user space
 	moveq	#0,%d0			| indicate no fault
-	bra	Lsdone
+	jra	.Lsdone
 
 /*
  * susword(void *uaddr, short x);
@@ -456,13 +462,13 @@ ENTRY(suword)
  */
 ENTRY(susword)
 	CHECK_DFC
-	movl	%sp@(4),%a0		| address to write
-	movw	%sp@(10),%d0		| value to put there
-	movl	_C_LABEL(curpcb),%a1	| set fault handler
-	movl	#Lserr,%a1@(PCB_ONFAULT)
-	movsw	%d0,%a0@		| do write to user space
+	movl	4(%sp),%a0		| address to write
+	movw	10(%sp),%d0		| value to put there
+	GETCURPCB(%a1)			| set fault handler
+	movl	#.Lserr,PCB_ONFAULT(%a1)
+	movsw	%d0,(%a0)		| do write to user space
 	moveq	#0,%d0			| indicate no fault
-	bra	Lsdone
+	jra	.Lsdone
 
 /*
  * suswintr(void *uaddr, short x);
@@ -471,13 +477,13 @@ ENTRY(susword)
  */
 ENTRY(suswintr)
 	CHECK_DFC
-	movl	%sp@(4),%a0		| address to write
-	movw	%sp@(10),%d0		| value to put there
-	movl	_C_LABEL(curpcb),%a1	| set fault handler
-	movl	#_C_LABEL(subail),%a1@(PCB_ONFAULT)
-	movsw	%d0,%a0@		| do write to user space
+	movl	4(%sp),%a0		| address to write
+	movw	10(%sp),%d0		| value to put there
+	GETCURPCB(%a1)			| set fault handler
+	movl	#_C_LABEL(subail),PCB_ONFAULT(%a1)
+	movsw	%d0,(%a0)		| do write to user space
 	moveq	#0,%d0			| indicate no fault
-	bra	Lsdone
+	jra	.Lsdone
 
 /*
  * subyte(void *uaddr, char x);
@@ -485,13 +491,13 @@ ENTRY(suswintr)
  */
 ENTRY(subyte)
 	CHECK_DFC
-	movl	%sp@(4),%a0		| address to write
-	movb	%sp@(11),%d0		| value to put there
-	movl	_C_LABEL(curpcb),%a1	| set fault handler
-	movl	#Lserr,%a1@(PCB_ONFAULT)
-	movsb	%d0,%a0@		| do write to user space
+	movl	4(%sp),%a0		| address to write
+	movb	11(%sp),%d0		| value to put there
+	GETCURPCB(%a1)			| set fault handler
+	movl	#.Lserr,PCB_ONFAULT(%a1)
+	movsb	%d0,(%a0)		| do write to user space
 	moveq	#0,%d0			| indicate no fault
-	bra	Lsdone
+	jra	.Lsdone
 
 /*
  * Error routine for suswintr.  The fault handler in trap.c
@@ -502,10 +508,10 @@ ENTRY(subyte)
  */
 ENTRY(subail)
 	nop
-Lserr:
+.Lserr:
 	moveq	#-1,%d0			| error indicator
-Lsdone:
-	clrl	%a1@(PCB_ONFAULT) 	| clear fault handler
+.Lsdone:
+	clrl	PCB_ONFAULT(%a1) 	| clear fault handler
 	rts
 
 /*
@@ -517,25 +523,25 @@ Lsdone:
 ENTRY(ucas_32)
 	CHECK_SFC
 	CHECK_DFC
-	movl	_C_LABEL(curpcb),%a1
-	movl	#Lucasfault,%a1@(PCB_ONFAULT)	| set fault handler
-	movl	%sp@(4),%a0		| a0 = uptr
+	GETCURPCB(%a1)
+	movl	#.Lucasfault,PCB_ONFAULT(%a1)	| set fault handler
+	movl	4(%sp),%a0		| a0 = uptr
 _C_LABEL(ucas_32_ras_start):
-	movl	%sp@(8),%d0		| d0 = old
-	movsl	%a0@,%d1		| d1 = *uptr
+	movl	8(%sp),%d0		| d0 = old
+	movsl	(%a0),%d1		| d1 = *uptr
 	cmpl	%d0,%d1			| does *uptr == old?
-	bne	Lucasdiff		| if not, don't change it
-	movl	%sp@(12),%d0		| d0 = new
-	movsl	%d0,%a0@		| *uptr = new
+	jne	.Lucasdiff		| if not, don't change it
+	movl	12(%sp),%d0		| d0 = new
+	movsl	%d0,(%a0)		| *uptr = new
 	nop				| pipeline sync
 _C_LABEL(ucas_32_ras_end):
-Lucasdiff:
-	movl	%sp@(16),%a0		| a0 = ret
-	movl	%d1,%a0@		| *ret = d1 (old *uptr)
+.Lucasdiff:
+	movl	16(%sp),%a0		| a0 = ret
+	movl	%d1,(%a0)		| *ret = d1 (old *uptr)
 	clrl	%d0			| return 0
 
-Lucasfault:
-	clrl	%a1@(PCB_ONFAULT)	| clear fault handler
+.Lucasfault:
+	clrl	PCB_ONFAULT(%a1)	| clear fault handler
 	rts
 
 STRONG_ALIAS(ucas_int,ucas_32)

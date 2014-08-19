@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.42 2012/03/22 07:58:20 wiz Exp $
+.\"	$NetBSD: systat.1,v 1.42.2.1 2014/08/20 00:05:04 tls Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd January 5, 2012
+.Dd October 19, 2012
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -500,6 +500,9 @@ information about disk drives.
 These commands are used to select a set of drives to report on,
 should your system have more drives configured than can normally
 be displayed on the screen.
+Drives may be specified as drive names or as patterns specified in the
+notation described by
+.Xr fnmatch 3 .
 .Pp
 .Bl -tag -width Ar -compact
 .It Cm display Op Ar drives

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_proxy.h,v 1.1.1.2 2010/06/17 18:07:07 tron Exp $	*/
+/*	$NetBSD: smtpd_proxy.h,v 1.1.1.2.12.1 2014/08/19 23:59:44 tls Exp $	*/
 
 /*++
 /* NAME
@@ -27,7 +27,8 @@ typedef int (*SMTPD_PROXY_REC_PUT_FN) (VSTREAM *, int, const char *, ssize_t);
 typedef struct SMTPD_PROXY {
     /* Public. */
     VSTREAM *stream;
-    VSTRING *buffer;			/* proxy query/reply buffer */
+    VSTRING *request;			/* proxy request buffer */
+    VSTRING *reply;			/* proxy reply buffer */
     SMTPD_PROXY_CMD_FN cmd;
     SMTPD_PROXY_REC_FPRINTF_FN rec_fprintf;
     SMTPD_PROXY_REC_PUT_FN rec_put;

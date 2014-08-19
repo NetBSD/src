@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.39 2010/11/13 13:52:02 uebayasi Exp $	*/
+/*	$NetBSD: osiop.c,v 1.39.18.1 2014/08/20 00:03:38 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.39 2010/11/13 13:52:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.39.18.1 2014/08/20 00:03:38 tls Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -357,7 +357,6 @@ osiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
     void *arg)
 {
 	struct scsipi_xfer *xs;
-	struct scsipi_periph *periph;
 	struct osiop_acb *acb;
 	struct osiop_softc *sc;
 	int err, flags, s;
@@ -367,7 +366,6 @@ osiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
 		xs = arg;
-		periph = xs->xs_periph;
 		flags = xs->xs_control;
 
 		/* XXXX ?? */
@@ -389,7 +387,7 @@ osiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		}
 #ifdef DIAGNOSTIC
 		else {
-			scsipi_printaddr(periph);
+			scsipi_printaddr(xs->xs_periph);
 			printf("unable to allocate acb\n");
 			panic("osiop_scsipi_request");
 		}

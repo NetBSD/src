@@ -1,4 +1,4 @@
-/*	$NetBSD: wdog.c,v 1.16 2008/03/27 02:03:03 uwe Exp $ */
+/*	$NetBSD: wdog.c,v 1.16.48.1 2014/08/20 00:03:23 tls Exp $ */
 
 /*-
  * Copyright (C) 2000 SAITOH Masanobu.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.16 2008/03/27 02:03:03 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.16.48.1 2014/08/20 00:03:23 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -69,8 +69,18 @@ dev_type_close(wdogclose);
 dev_type_ioctl(wdogioctl);
 
 const struct cdevsw wdog_cdevsw = {
-	wdogopen, wdogclose, noread, nowrite, wdogioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	.d_open = wdogopen,
+	.d_close = wdogclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = wdogioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = 0
 };
 
 void
