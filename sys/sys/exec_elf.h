@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.141 2014/07/08 17:16:25 maxv Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.142 2014/08/19 07:26:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -280,7 +280,8 @@ typedef struct {
 #define EM_MN10300	89	/* Matsushita MN10300 */
 #define EM_MN10200	90	/* Matsushita MN10200 */
 #define EM_PJ		91	/* picoJava */
-#define EM_OPENRISC	92	/* OpenRISC 32-bit embedded processor */
+#define EM_OR1K		92	/* OpenRISC 32-bit embedded processor */
+#define EM_OPENRISC	EM_OR1K
 #define EM_ARC_A5	93	/* ARC Cores Tangent-A5 */
 #define EM_XTENSA	94	/* Tensilica Xtensa Architecture */
 #define EM_VIDEOCORE	95	/* Alphamosaic VideoCore processor */
