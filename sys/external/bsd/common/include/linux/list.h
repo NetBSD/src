@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.4 2014/07/16 20:59:57 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.5 2014/08/20 15:26:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -71,6 +71,12 @@ static inline struct list_head *
 list_first(const struct list_head *head)
 {
 	return head->next;
+}
+
+static inline struct list_head *
+list_last(const struct list_head *head)
+{
+	return head->prev;
 }
 
 static inline struct list_head *
@@ -192,8 +198,12 @@ list_del_init(struct list_head *node)
 #define	list_entry(PTR, TYPE, FIELD)	container_of(PTR, TYPE, FIELD)
 #define	list_first_entry(PTR, TYPE, FIELD)				\
 	list_entry(list_first((PTR)), TYPE, FIELD)
+#define	list_last_entry(PTR, TYPE, FIELD)				\
+	list_entry(list_last((PTR)), TYPE, FIELD)
 #define	list_next_entry(ENTRY, FIELD)					\
 	list_entry(list_next(&(ENTRY)->FIELD), typeof(*(ENTRY)), FIELD)
+#define	list_prev_entry(ENTRY, FIELD)					\
+	list_entry(list_prev(&(ENTRY)->FIELD), typeof(*(ENTRY)), FIELD)
 
 #define	list_for_each(VAR, HEAD)					\
 	for ((VAR) = list_first((HEAD));				\
@@ -211,6 +221,12 @@ list_del_init(struct list_head *node)
 		(VAR) = list_entry(list_next(&(VAR)->FIELD), typeof(*(VAR)), \
 		    FIELD))
 
+#define	list_for_each_entry_reverse(VAR, HEAD, FIELD)			\
+	for ((VAR) = list_entry(list_last((HEAD)), typeof(*(VAR)), FIELD); \
+		&(VAR)->FIELD != (HEAD);				\
+		(VAR) = list_entry(list_prev(&(VAR)->FIELD), typeof(*(VAR)), \
+		    FIELD))
+
 #define	list_for_each_entry_safe(VAR, NEXT, HEAD, FIELD)		\
 	for ((VAR) = list_entry(list_first((HEAD)), typeof(*(VAR)), FIELD); \
 		(&(VAR)->FIELD != (HEAD)) &&				\
@@ -222,6 +238,11 @@ list_del_init(struct list_head *node)
 	for ((VAR) = list_next_entry((VAR), FIELD);			\
 		&(VAR)->FIELD != (HEAD);				\
 		(VAR) = list_next_entry((VAR), FIELD))
+
+#define	list_for_each_entry_continue_reverse(VAR, HEAD, FIELD)		\
+	for ((VAR) = list_prev_entry((VAR), FIELD);			\
+		&(VAR)->FIELD != (HEAD);				\
+		(VAR) = list_prev_entry((VAR), FIELD))
 
 #define	list_for_each_entry_safe_from(VAR, NEXT, HEAD, FIELD)		\
 	for (;								\
