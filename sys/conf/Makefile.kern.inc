@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.170 2014/08/17 21:17:44 joerg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.171 2014/08/20 22:02:20 joerg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -265,7 +265,7 @@ LINKFLAGS+=	${LINKFLAGS_NORMAL}
 SYSTEM_LD_HEAD+=${SYSTEM_LD_HEAD_EXTRA}
 SYSTEM_LD_TAIL_STAGE1=	${SYSTEM_LD_TAIL}
 SYSTEM_LD_TAIL_STAGE2=	${SYSTEM_LD_TAIL}
-.if defined(COPY_SYMTAB})
+.if defined(COPY_SYMTAB)
 SYSTEM_LD_TAIL_STAGE2+=	; echo ${DBSYM} $@; ${DBSYM} $@
 .endif
 SYSTEM_LD_TAIL_STAGE2+=	${SYSTEM_LD_TAIL_EXTRA}
