@@ -26,11 +26,12 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpfiber_bio.c,v 1.1 2014/07/11 20:26:31 justin Exp $");
+__RCSID("$NetBSD: rumpfiber_bio.c,v 1.2 2014/08/20 12:09:15 justin Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
 
+#include <errno.h>
 #include <stdint.h>
 #include <unistd.h>
 
