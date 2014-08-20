@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.38 2013/08/28 21:56:50 sjg Exp $
+# $NetBSD: Makefile,v 1.39 2014/08/20 08:39:14 apb Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -46,7 +46,8 @@ SUBFILES= \
 	ternary \
 	unexport \
 	unexport-env \
-	varcmd
+	varcmd \
+	varshell
 
 all: ${SUBFILES}
 
