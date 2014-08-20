@@ -1123,6 +1123,7 @@ hppa*-*-netbsd* | parisc*-*-netbsd*)
 	tm_file="${tm_file} dbxelf.h elfos.h ${nbsd_tm_file} \
 		 pa/pa-netbsd.h pa/pa32-regs.h pa/pa32-netbsd.h"
 	tmake_file="${tmake_file} pa/t-netbsd"
+	tm_defines="${tm_defines} CHAR_FAST8=1 SHORT_FAST16=1"
 	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
 	;;
 hppa[12]*-*-hpux10*)
@@ -1279,6 +1280,7 @@ x86_64-*-freebsd*)
 i[34567]86-*-netbsdelf*)
 	tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h ${nbsd_tm_file} i386/netbsd-elf.h"
 	tmake_file="${tmake_file} i386/t-crtstuff"
+	tm_defines="${tm_defines} CHAR_FAST8=1 SHORT_FAST16=1"
 	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
 	;;
 i[34567]86-*-netbsd*)
@@ -1752,6 +1754,7 @@ m68k-*-elf* | fido-*-elf*)
 m68010-*-netbsdelf* | m68k-*-netbsdelf* | m5407-*-netbsdelf*)
 	tm_file="${tm_file} dbxelf.h elfos.h ${nbsd_tm_file} m68k/netbsd-elf.h"
 	tm_defines="${tm_defines} MOTOROLA=1 USE_GAS=1"
+	tm_defines="${tm_defines} CHAR_FAST8=1 SHORT_FAST16=1"
 	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
 	default_cf_cpu=5475
 	default_m68k_cpu=68020
@@ -2745,6 +2748,7 @@ vax-*-linux*)
 	;;
 vax-*-netbsdelf*)
 	tm_file="${tm_file} elfos.h ${nbsd_tm_file} vax/elf.h vax/netbsd-elf.h"
+	tm_defines="${tm_defines} CHAR_FAST8=1 SHORT_FAST16=1"
 	extra_options="${extra_options} netbsd.opt netbsd-elf.opt vax/elf.opt"
 	;;
 vax-*-openbsd*)
