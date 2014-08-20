@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.26 2014/08/07 19:05:18 macallan Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.27 2014/08/20 00:40:33 macallan Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.26 2014/08/07 19:05:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.27 2014/08/20 00:40:33 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,7 +256,7 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* setup video DMA */
-	sc->sc_vramsize = (12 << 20) + 0x1000; /* 12MB + CLUT */
+	sc->sc_vramsize = (12 << 20) + PAGE_SIZE; /* 12MB + CLUT */
 
 	if (bus_dmamem_alloc(sc->sc_dmat, sc->sc_vramsize, 0, 0,
 	    sc->sc_dmamem, 1, &segs, BUS_DMA_NOWAIT) != 0) {
@@ -271,7 +271,7 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "failed to map video RAM\n");
 		return;
 	}
-	sc->sc_fbaddr = (uint8_t *)sc->sc_vramaddr + 0x1000;
+	sc->sc_fbaddr = (uint8_t *)sc->sc_vramaddr + PAGE_SIZE;
 	sc->sc_clut = sc->sc_vramaddr;
 
 	if (bus_dmamap_create(sc->sc_dmat, sc->sc_vramsize, 1, sc->sc_vramsize,
@@ -321,7 +321,7 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	/* we use overlay 1 for the console and X */
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_GLOBAL_ALPHA,
 	    0x00ff00ff);
-	sc->sc_fbhwaddr = sc->sc_dmamem->ds_addr + 0x1000;
+	sc->sc_fbhwaddr = sc->sc_dmamem->ds_addr + PAGE_SIZE;
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, OMAPFB_DISPC_VID1_BASE_0,
 	    sc->sc_fbhwaddr);
 	bus_space_write_4(sc->sc_iot, sc->sc_regh,
@@ -626,7 +626,7 @@ omapfb_mmap(void *v, void *vs, off_t offset, int prot)
 	/* 'regular' framebuffer mmap()ing */
 	if (offset < sc->sc_vramsize) {
 		pa = bus_dmamem_mmap(sc->sc_dmat, sc->sc_dmamem, 1,
-		    offset + 0x1000, prot, BUS_DMA_PREFETCHABLE);
+		    offset + PAGE_SIZE, prot, BUS_DMA_PREFETCHABLE);
 		return pa;
 	}
 	return pa;
