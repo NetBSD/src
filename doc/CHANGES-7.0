@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.14 2014/08/18 12:42:27 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.15 2014/08/20 13:46:17 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -274,3 +274,19 @@ sys/dev/ccdvar.h				1.34
 	Don't print ccd_size with %zu; it no longer has type size_t.
 	Instead, cast to uintmax_t and print with %ju.
 	[sborrill, ticket #38]
+
+sys/rump/librump/rumpkern/hyperentropy.c	1.4
+sys/rump/librump/rumpkern/hyperentropy.c	1.5
+sys/rump/librump/rumpkern/hyperentropy.c	1.6
+sys/rump/librump/rumpkern/hyperentropy.c	1.7
+
+	Call rnd_add_data asynchronously for the rump hyperentropy callback.
+
+	Avoids recursion rnd_getmore -> rnd_add_data -> rnd_getmore, which is
+	silly but I don't have time to fix it properly right now.
+
+	add sys/atomic.h and order headers correctly
+	Fix header ordering
+	<sys/param.h> comes first, per /usr/share/misc/style.
+	[riastradh, ticket #35]
+
