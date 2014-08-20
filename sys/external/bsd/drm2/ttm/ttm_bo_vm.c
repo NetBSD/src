@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_vm.c,v 1.3 2014/08/18 01:17:34 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_vm.c,v 1.4 2014/08/20 13:48:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.3 2014/08/18 01:17:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.4 2014/08/20 13:48:08 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -91,6 +91,9 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 	pgprot_t pgprot;	/* VM_PROT_* | PMAP_* cacheability flags */
 	unsigned mmapflags;
 	int ret;
+
+	/* Thanks, uvm, but we don't need this lock.  */
+	mutex_exit(uobj->vmobjlock);
 
 	/* Copy-on-write mappings make no sense for the graphics aperture.  */
 	if (UVM_ET_ISCOPYONWRITE(ufi->entry)) {
@@ -199,7 +202,8 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 out3:	pmap_update(ufi->orig_map->pmap);
 out2:	ttm_mem_io_unlock(man);
 out1:	ttm_bo_unreserve(bo);
-out0:	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
+out0:	mutex_enter(uobj->vmobjlock);
+	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 	/* XXX errno Linux->NetBSD */
 	return -ret;
 }
