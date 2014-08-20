@@ -379,5 +379,16 @@ five FU=<v>bar</v> FOO=<v>goo</v> VAR=<v>Internal</v>
 five v=is x k=is x
 six v=is y k=is y
 show-v v=override k=override
+sh: /bin/no/such/command: not found
+make: "varshell" line 5: warning: "/bin/no/such/command" returned non-zero status
+make: "varshell" line 6: warning: "kill -ALRM $$" exited on a signal
+make: "varshell" line 7: warning: "false" returned non-zero status
+make: "varshell" line 8: warning: "echo "output before the error"; false" returned non-zero status
+EXEC_FAILED=''
+TERMINATED_BY_SIGNAL=''
+ERROR_NO_OUTPUT=''
+ERROR_WITH_OUTPUT='output before the error'
+NO_ERROR_NO_OUTPUT=''
+NO_ERROR_WITH_OUTPUT='this is good'
 *** Error code 1 (ignored)
 *** Error code 1 (ignored)
