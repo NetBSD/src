@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.142 2014/06/14 02:05:38 jnemeth Exp $
+$NetBSD: acronyms.comp,v 1.143 2014/08/20 16:05:03 ginsbach Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -985,6 +985,7 @@ RA	router advertisement
 RAD	rapid application development
 RAID	redundant array of {independent,inexpensive} disks
 RAM	random access memory
+RAS	reliability, availability and serviceability
 RAS	remote access service
 RAS	restartable atomic sequence
 RAS	row address strobe
