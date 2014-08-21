@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.15 2014/08/20 13:46:17 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.16 2014/08/21 08:41:18 sborrill Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -14,7 +14,6 @@ sys/sys/param.h					patched by hand
 sys/dev/usb/xhci.c				1.24
 
 	PR/49091: xhci: wrong wMaxPacketSize value
-
 	While this is correct according to the specification only fixed sizes
 	are allowed, i.e. 512 for SS, etc. Maybe these should be used?
 	[skrll, ticket #3]
@@ -33,33 +32,25 @@ external/gpl3/binutils/dist/bfd/elflink.c	1.8
 
 	Apply change from upstream to fix PR/48709 - port-alpha/48709: static
 	threaded programs crash.
-
 	With this fix the new weak symbol's st_other is not merged in, i.e. NOPV
 	is not copied from the libc __libc_thr_init.
-
 	* elflink.c (_bfd_elf_merge_symbol): If merging a new weak
 	symbol that will be skipped, we don't have a new definition.
 	[skrll, ticket #5]
 
 
-sys/dev/usb/motg.c				1.7
-sys/dev/usb/motg.c				1.8
+sys/dev/usb/motg.c				1.7-1.8
 
 	Trailing whitespace.
-
 	Make this compile when DIAGNOSTIC isn't defined.
 	[skrll, ticket #6]
 
-usr.sbin/postinstall/postinstall		1.177
-usr.sbin/postinstall/postinstall		1.178
-usr.sbin/postinstall/postinstall		1.179
+usr.sbin/postinstall/postinstall		1.177-1.179
 
 	Check for and delete ${DEST_DIR}/@RUNDIR@, not /@RUNDIR@.
 	Also remove an unnecessary eval in do_dhcpcdrundir and
 	fix a typo in the description.
-
 	Quoting fixes in several eval commands.
-
 	In get_makevar, ask make to recursively expand the variable,
 	not just print the unexpanded value.  This is done by
 	using make -V '${VAR}' instead of make -V 'VAR'.
@@ -108,10 +99,7 @@ sys/dev/usb/usb.h				1.107
 	Define AXEN_DEBUG.  From Takahiro HAYASHI.
 	[skrll, ticket #10]
 
-sys/crypto/cprng_fast/cprng_fast.c		1.10
-sys/crypto/cprng_fast/cprng_fast.c		1.7
-sys/crypto/cprng_fast/cprng_fast.c		1.8
-sys/crypto/cprng_fast/cprng_fast.c		1.9
+sys/crypto/cprng_fast/cprng_fast.c		1.7-1.10
 
 	Access to struct cprng_fast must be consistently at IPL_VM.
 	Use percpu_foreach instead of manual iteration.
@@ -163,12 +151,10 @@ sys/rump/librump/rumpkern/rump.c		1.310
 
 sys/kern/subr_prf.c				1.155
 
-	avoid calling into time code when cold, and avoid calling nanotime()
+	Avoid calling into time code when cold, and avoid calling nanotime()
 	if we're not going to use the result anyway.
-
-	XXX: not necessarily the best fix, but better than crashing *early*
+	Not necessarily the best fix, but better than crashing *early*
 	boot due to too-early nanotime() calls.
-
 	[mrg, ticket #24]
 
 xsrc/external/mit/libdrm/dist/radeon/radeon_bo_gem.c	1.4
@@ -220,7 +206,7 @@ sys/fs/ptyfs/ptyfs_vnops.c			1.48-1.49
 
 sys/kern/exec_elf.c				1.70
 
-	eliminate COMPAT_OLDNOTE and just always recognize the old notes.
+	Eliminate COMPAT_OLDNOTE and just always recognize the old notes.
 	[chs, ticket #32]
 
 external/bsd/bind/Makefile.inc			1.22
@@ -241,27 +227,23 @@ sys/external/bsd/drm2/dist/drm/ttm/ttm_bo.c	1.5
 sys/external/bsd/drm2/dist/drm/ttm/ttm_bo.c	1.6
 sys/external/bsd/drm2/ttm/ttm_bo_vm.c		1.3
 
-	bus_space_mmap cookies are not paddrs, so don't pmap_enter them!
+	bus_space_mmap cookies are not paddrs, so don't pmap_enter them.
 	For gem and ttm objects backed by uvm_aobjs, share the vmobjlock.
 	Simplify previous.
 	[riastradh, ticket #36]
 
 external/gpl3/gcc/dist/gcc/config/vax/builtins.md 1.4
 external/gpl3/gcc/dist/gcc/config/vax/vax.c	1.10
-	Rework so that the ctzsi builtin is supported.
-
 lib/libc/compiler_rt/Makefile.inc		1.26
-	VAX does need __clzsi2
+libexec/ld.elf_so/arch/vax/rtld_start.S		1.23-1.24
 
-libexec/ld.elf_so/arch/vax/rtld_start.S		1.23
-libexec/ld.elf_so/arch/vax/rtld_start.S		1.24
-	add a missing register prefix.
+	Rework so that the ctzsi builtin is supported.
+	VAX does need __clzsi2.
+	Add a missing register prefix.
 	Add proper registers for register counts.
-
 	[matt, ticket #37]
 
-sbin/ccdconfig/ccdconfig.c			1.54
-sbin/ccdconfig/ccdconfig.c			1.55
+sbin/ccdconfig/ccdconfig.c			1.54-1.55
 sys/dev/ccd.c					1.152
 sys/dev/ccdvar.h				1.34
 
@@ -271,22 +253,15 @@ sys/dev/ccdvar.h				1.34
 	structures.
 	Make kernel print device information when a ccd configured.
 	Fix some typos in comments.
-	Don't print ccd_size with %zu; it no longer has type size_t.
-	Instead, cast to uintmax_t and print with %ju.
+	Use correct printf format when printing sizes.
 	[sborrill, ticket #38]
 
-sys/rump/librump/rumpkern/hyperentropy.c	1.4
-sys/rump/librump/rumpkern/hyperentropy.c	1.5
-sys/rump/librump/rumpkern/hyperentropy.c	1.6
-sys/rump/librump/rumpkern/hyperentropy.c	1.7
+sys/rump/librump/rumpkern/hyperentropy.c	1.4-1.7
 
-	Call rnd_add_data asynchronously for the rump hyperentropy callback.
-
-	Avoids recursion rnd_getmore -> rnd_add_data -> rnd_getmore, which is
-	silly but I don't have time to fix it properly right now.
-
-	add sys/atomic.h and order headers correctly
-	Fix header ordering
+	Call rnd_add_data asynchronously for the rump hyperentropy callback. 
+	Avoids recursion rnd_getmore -> rnd_add_data -> rnd_getmore.
+	Add sys/atomic.h and order headers correctly.
+	Fix header ordering.
 	<sys/param.h> comes first, per /usr/share/misc/style.
 	[riastradh, ticket #35]
 
