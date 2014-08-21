@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.54 2014/08/21 12:25:01 christos Exp $ */
+/* $NetBSD: mfi.c,v 1.55 2014/08/21 15:43:35 christos Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.54 2014/08/21 12:25:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.55 2014/08/21 15:43:35 christos Exp $");
 
 #include "bio.h"
 
@@ -389,6 +389,9 @@ mfi_init_ccb(struct mfi_softc *sc)
 		    MEGASAS_THUNDERBOLT_NEW_MSG_SIZE;
 		io_req_base_phys = MFIMEM_DVA(sc->sc_tbolt_reqmsgpool) +
 		    MEGASAS_THUNDERBOLT_NEW_MSG_SIZE;
+	} else {
+		io_req_base = NULL;	/* XXX: gcc */
+		io_req_base_phys = 0;	/* XXX: gcc */
 	}
 
 	for (i = 0; i < sc->sc_max_cmds; i++) {
