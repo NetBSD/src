@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.50 2013/11/27 17:24:44 christos Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.51 2014/08/21 06:40:35 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.50 2013/11/27 17:24:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.51 2014/08/21 06:40:35 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,6 +314,4 @@ osf1_mount_nfs(struct lwp *l, const struct osf1_sys_mount_args *uap)
 
 	return do_sys_mount(l, vfs_getopsbyname("nfs"), NULL, SCARG(uap, path),
 	    SCARG(uap, flags), &bsd_na, UIO_SYSSPACE, sizeof bsd_na, &dummy);
-
-	return 0;
 }
