@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.171 2014/08/20 22:02:20 joerg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.172 2014/08/21 07:57:25 skrll Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -532,7 +532,7 @@ CWARNFLAGS+=	${CWARNFLAGS.${.IMPSRC:T}}
 
 locore.o machdep.o kern_ksyms.o: Makefile
 
-.if defined(COPY_SYMTAB})
+.if defined(COPY_SYMTAB)
 CPPFLAGS.locore.S+=		-DCOPY_SYMTAB
 CPPFLAGS.machdep.c+=		-DCOPY_SYMTAB
 CPPFLAGS.kern_ksyms.c+=		-DCOPY_SYMTAB
