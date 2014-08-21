@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.42 2014/08/21 13:44:51 apb Exp $
+# $NetBSD: Makefile,v 1.43 2014/08/21 15:37:13 apb Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -48,6 +48,7 @@ TESTNAMES= \
 	unexport \
 	unexport-env \
 	varcmd \
+	varmisc \
 	varshell
 
 # Override make flags for certain tests
