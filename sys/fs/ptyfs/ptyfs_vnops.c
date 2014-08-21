@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.49 2014/08/15 13:40:39 hannken Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.50 2014/08/21 06:40:35 maxv Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.49 2014/08/15 13:40:39 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.50 2014/08/21 06:40:35 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -579,8 +579,6 @@ ptyfs_access(void *v)
 	    KAUTH_ACCESS_ACTION(ap->a_mode, ap->a_vp->v_type, va.va_mode),
 	    ap->a_vp, NULL, genfs_can_access(va.va_type, va.va_mode, va.va_uid,
 	    va.va_gid, ap->a_mode, ap->a_cred));
-
-	return error;
 }
 
 /*
