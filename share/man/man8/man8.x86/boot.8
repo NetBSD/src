@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.1 2013/07/31 21:01:13 soren Exp $
+.\"	$NetBSD: boot.8,v 1.1.6.1 2014/08/21 09:00:12 martin Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,9 @@ the
 and its clones
 .Pc
 that can run
-.Nx Ns /x86
+.Nx Ns /i386
+or
+.Nx Ns /amd64
 can use any of the following boot procedures, depending on what the hardware and
 .Tn BIOS
 support:
@@ -137,7 +139,7 @@ setting the timeout, choosing a console device, altering the banner
 text and displaying a menu allowing boot commands to be easily chosen.
 See
 .Xr boot.cfg 5 .
-.Pp
+.Ss Boot Protocol
 The
 .Nx Ns /x86
 boot loader can boot a kernel using either the native
@@ -347,6 +349,13 @@ Without an argument, print the current setting.
 .Va device
 is of the form specified in
 .Cm boot .
+.It Ic fs Va file
+Load a file system image from the specified
+.Ar file ,
+and request the kernel to use it as the root file system.
+The
+.Xr makefs 8
+utility may be used to create suitable file system images.
 .It Ic help
 Print an overview about commands and arguments.
 .It Ic load Va module Op Ar arguments
@@ -380,7 +389,9 @@ for examples.
 .Pp
 In addition to the
 .Cm boot
-options specified above, the DOM0 kernel accepts
+options specified above, the
+.Tn Xen
+DOM0 kernel accepts
 .Po Ar arguments
 being separated with spaces
 .Pc :
@@ -458,6 +469,10 @@ Print a directory listing of
 containing inode number, filename, and file type.
 .Pa path
 can contain a device specification.
+.It Ic menu
+Display the boot menu and initiate a countdown,
+similarly to what would have happened if interactive mode
+had not been entered.
 .It Ic modules Bro Ar on | off | enabled | disabled Brc
 The values
 .Ar enabled , on
@@ -538,6 +553,32 @@ See the foreign operating system's documentation for the available
 .El
 .It Ic quit
 Reboot the system.
+.It Ic rndseed Ar file
+Load the specified
+.Ar file
+and request the kernel to use it as a seed for the
+.Xr rnd 4
+random number generator.
+The
+.Ar file
+should be in the private format used by
+.Xr rndctl 8 ,
+and should have been saved by
+.Ql "rndctl -S"
+shortly before the previous shutdown.
+See the
+.Va random_seed
+and
+.Va random_file
+variables in
+.Xr rc.conf 5 ,
+and the
+.Pa /etc/rc.d/random_seed
+script, for a way to manage the seed file.
+Using the same seed file on more then one host,
+or for more than one boot on the same host,
+will reduce the quality of random numbers
+and may impact system security.
 .It Ic userconf Va command
 Pass command
 .Va command
@@ -547,6 +588,21 @@ at boot time.
 These commands are processed before the interactive
 .Xr userconf 4
 shell is executed, if requested.
+.It Ic splash Ar file
+Load a graphical image from the specified
+.Ar file
+and request the kernel to use it as a splash screen.
+The
+.Ar file
+should contain an image in one of these formats:
+JPEG (baseline only, not progressive),
+PNG (8-bit only),
+TGA,
+BMP (non-1bpp, non-RLE),
+GIF,
+PSD (composited view only),
+or
+PIC.
 .It Ic vesa Bro Va modenum | Ar on | off | enabled | disabled | list Brc
 Initialise the video card to the specified resolution and bit depth.
 The
@@ -600,6 +656,7 @@ partition by
 .Xr multiboot 8 ,
 .Xr pxeboot 8 ,
 .Xr reboot 8 ,
+.Xr rescue 8 ,
 .Xr shutdown 8 ,
 .Xr boothowto 9
 .Sh BUGS
