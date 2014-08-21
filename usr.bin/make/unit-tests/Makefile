@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.43 2014/08/21 15:37:13 apb Exp $
+# $NetBSD: Makefile,v 1.44 2014/08/21 22:00:30 apb Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -16,6 +16,7 @@
 .MAIN: all
 
 UNIT_TESTS:= ${.PARSEDIR}
+.PATH: ${UNIT_TESTS}
 
 # Each test is in a sub-makefile.
 # Keep the list sorted.
