@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smscreg.h,v 1.4 2014/06/09 14:18:28 mlelstv Exp $	*/
+/*	$NetBSD: if_smscreg.h,v 1.5 2014/08/21 14:02:10 reinoud Exp $	*/
 
 /*	$OpenBSD: if_smscreg.h,v 1.2 2012/09/27 12:38:11 jsg Exp $	*/
 /*-
@@ -52,18 +52,19 @@
  *
  *   Where the headers have the following fields:
  *
- *      TX_CTRL_0 <20:16>  Data offset
+ *      TX_CTRL_0 <31:18>  Reserved
+ *      TX_CTRL_0 <17:16>  Data offset (alignment padding 0-3)
  *      TX_CTRL_0 <13>     First segment of frame indicator
  *      TX_CTRL_0 <12>     Last segment of frame indicator
- *      TX_CTRL_0 <10:0>   Buffer size (?)
+ *      TX_CTRL_0 <10:0>   Buffer size (payload size)
  *
  *      TX_CTRL_1 <14>     Perform H/W checksuming on IP packets
  *      TX_CTRL_1 <13>     Disable automatic ethernet CRC generation
- *      TX_CTRL_1 <12>     Disable padding (?)
+ *      TX_CTRL_1 <12>     Disable ethernet frame padding upto 64 bytes
  *      TX_CTRL_1 <10:0>   Packet byte length
  *
  */
-#define SMSC_TX_CTRL_0_OFFSET(x)	(((x) & 0x1FUL) << 16)
+#define SMSC_TX_CTRL_0_OFFSET(x)	(((x) & 0x3UL) << 16)
 #define SMSC_TX_CTRL_0_FIRST_SEG	(0x1UL << 13)
 #define SMSC_TX_CTRL_0_LAST_SEG		(0x1UL << 12)
 #define SMSC_TX_CTRL_0_BUF_SIZE(x)	((x) & 0x000007FFUL)
@@ -208,14 +209,14 @@
 
 /* Interrupt control register */
 #define SMSC_INTR_NTEP			(0x1UL << 31)
-#define SMSC_INTR_MACRTO		(0x1UL << 19)
-#define SMSC_INTR_TX_STOP		(0x1UL << 17)
-#define SMSC_INTR_RX_STOP		(0x1UL << 16)
-#define SMSC_INTR_PHY_INT		(0x1UL << 15)
-#define SMSC_INTR_TXE			(0x1UL << 14)
-#define SMSC_INTR_TDFU			(0x1UL << 13)
-#define SMSC_INTR_TDFO			(0x1UL << 12)
-#define SMSC_INTR_RXDF			(0x1UL << 11)
+#define SMSC_INTR_MACRTO		(0x1UL << 19)  /* MAC reset timeout */
+#define SMSC_INTR_TX_STOP		(0x1UL << 17)  /* Transmittor halted */
+#define SMSC_INTR_RX_STOP		(0x1UL << 16)  /* Receiver halted */
+#define SMSC_INTR_PHY_INT		(0x1UL << 15)  /* PHY interrupt event */
+#define SMSC_INTR_TXE			(0x1UL << 14)  /* Transmittor error */
+#define SMSC_INTR_TDFU			(0x1UL << 13)  /* TX FIFO underrun */
+#define SMSC_INTR_TDFO			(0x1UL << 12)  /* TX FIFO overrun */
+#define SMSC_INTR_RXDF			(0x1UL << 11)  /* RX dropped frame */
 #define SMSC_INTR_GPIOS			0x000007FFUL
 
 /* Phy MII interface register */
