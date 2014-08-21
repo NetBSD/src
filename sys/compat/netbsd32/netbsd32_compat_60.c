@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_60.c,v 1.1 2013/03/29 01:13:54 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_60.c,v 1.2 2014/08/21 06:40:35 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_60.c,v 1.1 2013/03/29 01:13:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_60.c,v 1.2 2014/08/21 06:40:35 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,5 +83,4 @@ compat_60_netbsd32__lwp_park(struct lwp *l,
 
 	return lwp_park(CLOCK_REALTIME, TIMER_ABSTIME, tsp,
 	    SCARG_P32(uap, hint));
-	return 0;
 }

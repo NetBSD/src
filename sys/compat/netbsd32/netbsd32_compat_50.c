@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.24 2014/06/24 14:33:57 maxv Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.25 2014/08/21 06:40:35 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.24 2014/06/24 14:33:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.25 2014/08/21 06:40:35 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -139,7 +139,6 @@ compat_50_netbsd32_select(struct lwp *l,
 
 	return selcommon(retval, SCARG(uap, nd), SCARG_P32(uap, in),
 	    SCARG_P32(uap, ou), SCARG_P32(uap, ex), ts, NULL);
-	return 0;
 }
 
 int
@@ -563,7 +562,6 @@ compat_50_netbsd32__lwp_park(struct lwp *l,
 
 	return lwp_park(CLOCK_REALTIME, TIMER_ABSTIME, tsp,
 	    SCARG_P32(uap, hint));
-	return 0;
 }
 
 static int
@@ -681,7 +679,6 @@ compat_50_netbsd32_pselect(struct lwp *l,
 
 	return selcommon(retval, SCARG(uap, nd), SCARG_P32(uap, in),
 	    SCARG_P32(uap, ou), SCARG_P32(uap, ex), ts, mask);
-	return 0;
 }
 
 int
