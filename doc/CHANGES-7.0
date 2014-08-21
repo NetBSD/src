@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.16 2014/08/21 08:41:18 sborrill Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.17 2014/08/21 09:12:26 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -264,4 +264,37 @@ sys/rump/librump/rumpkern/hyperentropy.c	1.4-1.7
 	Fix header ordering.
 	<sys/param.h> comes first, per /usr/share/misc/style.
 	[riastradh, ticket #35]
+
+doc/CHANGES					1.120 (CHANGES.prev)
+	Formatting fixes, following the guidelines in the comments
+	at the top of CHANGES.
+	[apb, ticket #30]
+
+share/man/man4/options.4			1.440
+	Document options COMPAT_40, COMPAT_50, and COMPAT_60.
+	[apb, ticket #31]
+
+xsrc/external/mit/xf86-video-nv/dist/src/nv_driver.c	1.5
+external/mit/xorg/server/drivers/xf86-video-nv/Makefile 1.7
+	Put pci_device_has_kernel_driver(dev) into
+	#if NV_TEST_FOR_KERNEL_DRIVER to make it work on non-x86 again.
+	Mention NV_TEST_FOR_KERNEL_DRIVER and explain why it isn't enabled
+	for now.
+	[macallan, ticket #40]
+
+sys/arch/arm/omap/omapfb.c			1.27
+	Do not assume that PAGE_SIZE is 4kB always.
+	[macallan, ticket #41]
+
+share/man/man8/man8.x86/boot.8			1.3, 1.5
+	Document fs, menu, rndseed, and splash commands.
+	Add rescue(8) to SEE ALSO.
+	Document supported subsets of image formats.
+	[apb, ticket #42]
+
+sys/miscfs/umapfs/umap_vfsops.c			1.94
+	Fix error return in mount with value not holding an error code.
+	Bounds check a user controllable copyin size.
+	Both triggerable from root only.
+	[maxv, ticket #43]
 
