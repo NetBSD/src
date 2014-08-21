@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos5_reg.h,v 1.11 2014/08/14 15:41:07 reinoud Exp $	*/
+/*	$NetBSD: exynos5_reg.h,v 1.12 2014/08/21 14:06:39 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -180,7 +180,7 @@
 #define EXYNOS5_I2C5_OFFSET			0x02CB0000
 #define EXYNOS5_I2C6_OFFSET			0x02CC0000
 #define EXYNOS5_I2C7_OFFSET			0x02CD0000
-#define EXYNOS5_I2C_HDMI_OFFSET			0x02CE0000
+#define EXYNOS5_I2CHDMI_OFFSET			0x02CE0000
 #define EXYNOS5_USI_OFFSET			0x02D00000
 #define EXYNOS5_TSADC_OFFSET			0x02D10000
 #define EXYNOS5_SPI0_OFFSET			0x02D20000
