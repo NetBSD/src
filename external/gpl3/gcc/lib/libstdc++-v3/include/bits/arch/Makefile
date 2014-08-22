@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2014/03/01 10:00:47 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2014/08/22 15:27:50 matt Exp $
 
 # install multilib c++config.h files
 
@@ -15,6 +15,11 @@ CXXCONFIGARGS=	x86_64 _LP64 i386
 .if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
 SUBDIR=		mips64 mips32 mipso32
 CXXCONFIGARGS=	mips64 _ABI64 mipso32 _ABIO32 mips32
+.endif
+
+.if ${MACHINE_ARCH} == "powerpc64"
+SUBDIR=		powerpc powerpc64
+CXXCONFIGARGS=	powerpc64 _LP64 powerpc
 .endif
 
 # XXX arm variants are missing, but hopefully won't need them
