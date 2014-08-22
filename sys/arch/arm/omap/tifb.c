@@ -1,4 +1,4 @@
-/*	$NetBSD: tifb.c,v 1.1 2014/07/16 18:30:43 bouyer Exp $	*/
+/*	$NetBSD: tifb.c,v 1.2 2014/08/22 19:59:18 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tifb.c,v 1.1 2014/07/16 18:30:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tifb.c,v 1.2 2014/08/22 19:59:18 jakllsch Exp $");
 
 #include "opt_omap.h"
 
@@ -778,6 +778,17 @@ tifb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				}
 			}
 			return 0;
+
+		case WSDISPLAYIO_GET_FBINFO:
+			{
+				struct wsdisplayio_fbinfo *fbi = data;
+				int ret;
+				
+				ret = wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
+				fbi->fbi_flags |= WSFB_VRAM_IS_RAM;
+				fbi->fbi_fboffset = sc->sc_palettesize;
+				return ret;
+			}
 
 		case WSDISPLAYIO_GVIDEO:
 			{
