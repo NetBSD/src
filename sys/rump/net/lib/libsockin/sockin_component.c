@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin_component.c,v 1.1 2014/03/13 02:05:49 pooka Exp $	*/
+/*	$NetBSD: sockin_component.c,v 1.2 2014/08/22 11:34:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin_component.c,v 1.1 2014/03/13 02:05:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin_component.c,v 1.2 2014/08/22 11:34:28 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -42,6 +42,6 @@ RUMP_COMPONENT(RUMP_COMPONENT_NET)
 	extern struct domain sockindomain;
 	extern struct domain sockin6domain;
 
-	DOMAINADD(sockindomain);
-	DOMAINADD(sockin6domain);
+	domain_attach(&sockindomain);
+	domain_attach(&sockin6domain);
 }
