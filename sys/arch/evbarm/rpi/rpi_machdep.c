@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.43 2014/07/25 11:39:34 jmcneill Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.44 2014/08/22 09:49:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.43 2014/07/25 11:39:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.44 2014/08/22 09:49:13 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -97,8 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.43 2014/07/25 11:39:34 jmcneill Ex
 #if NUKBD > 0
 #include <dev/usb/ukbdvar.h>
 #endif
-
-#include "ksyms.h"
 
 extern int KERNEL_BASE_phys[];
 extern int KERNEL_BASE_virt[];
