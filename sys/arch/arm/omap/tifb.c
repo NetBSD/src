@@ -1,4 +1,4 @@
-/*	$NetBSD: tifb.c,v 1.2 2014/08/22 19:59:18 jakllsch Exp $	*/
+/*	$NetBSD: tifb.c,v 1.3 2014/08/22 20:01:16 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tifb.c,v 1.2 2014/08/22 19:59:18 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tifb.c,v 1.3 2014/08/22 20:01:16 jakllsch Exp $");
 
 #include "opt_omap.h"
 
@@ -443,7 +443,7 @@ tifb_attach(device_t parent, device_t self, void *aux)
 
 #ifdef TI_AM335X
 	/* configure output pins */
-	for (i = 0; i < ((sc->sc_panel->bpp == 16) ? 16 : 23); i++) {
+	for (i = 0; i < ((sc->sc_panel->bpp == 16) ? 16 : 24); i++) {
 		if (sitara_cm_padconf_get(tifb_padconf_data[i].padname,
 		    &mode, &state) == 0) {
 			aprint_debug(": %s mode %s state %d ",
