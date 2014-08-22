@@ -90,7 +90,7 @@
 #define STARTFILE_SPEC NETBSD_STARTFILE_SPEC
 
 #undef  ENDFILE_SPEC
-#define ENDFILE_SPEC "%(netbsd_endfile_spec)"
+#define ENDFILE_SPEC NETBSD_ENDFILE_SPEC
 
 #undef  LIB_SPEC
 #define LIB_SPEC NETBSD_LIB_SPEC
